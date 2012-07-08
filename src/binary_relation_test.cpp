@@ -6,7 +6,7 @@
 Logging::Logger logger("test");
 
 unsigned g_num_moved(0);
-void move_to (int i, int j)
+void move_to (int i __attribute__((unused)), int j __attribute__((unused)))
 {
     //cout << i << '-' << j << ' ' << std::flush; //DEBUG
     ++g_num_moved;

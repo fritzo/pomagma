@@ -12,7 +12,7 @@ using Logging::logger;
 //Note: zero/null items are not allowed
 
 typedef uint32_t Line;
-enum { LINE_STRIDE = 32 };
+enum { LINE_STRIDE = 32 }; // TODO switch to 64 bit
 const Line LINE_MASK = 0x1F;
 
 class bool_ref
@@ -56,9 +56,9 @@ class dense_set
 
     //line wrappers
 public:
-    const Int _lines () const { return M; }
-    const Line  _line (int i_) const { return m_lines[i_]; }
-          Line& _line (int i_)       { return m_lines[i_]; }
+    Int _lines () const { return M; }
+    Line  _line (int i_) const { return m_lines[i_]; }
+    Line& _line (int i_)       { return m_lines[i_]; }
     Line* data () { return m_lines; }
 
     //ctors & dtors
@@ -191,7 +191,7 @@ inline void dense_set::remove (int i)
             "tried to remove item " << i << " from dense_set twice");
     _bit(i).zero();
 }
-inline void dense_set::merge (int i, int j)
+inline void dense_set::merge (int i, int j __attribute__((unused)))
 {
     Assert5(0<i and i<=N, "dense_set.merge(i,j) index i="<<i<<" out of range");
     Assert5(0<j and j<=N, "dense_set.merge(i,j) index j="<<j<<" out of range");
