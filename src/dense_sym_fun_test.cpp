@@ -61,7 +61,6 @@ void test_dense_sym_fun (unsigned N)
 
 int main ()
 {
-    Logging::switch_to_log("test.log");
     Logging::title("Running Dense Symmetric Function Test");
 
     test_dense_sym_fun(3 + (1<<9));

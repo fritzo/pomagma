@@ -19,7 +19,6 @@ void move_to (int i __attribute__((unused)), int j __attribute__((unused)))
 void test_dense_set (size_t N)
 {
     logger.info() << "Testing dense_set" |0;
-    Logging::IndentBlock block;
 
     //========================================================================
     logger.info() << "creating dense_set of size " << N |0;
@@ -60,7 +59,6 @@ enum Direction { LHS_FIXED=true, RHS_FIXED=false };
 void test_dense_bin_rel (size_t N, bool test1(int,int), bool test2(int,int))
 {
     logger.info() << "Testing dense_bin_rel" |0;
-    Logging::IndentBlock block;
 
     logger.info() << "creating dense_bin_rel of size " << N |0;
     Rel R(N);
@@ -210,7 +208,6 @@ void test_dense_bin_rel (size_t N, bool test1(int,int), bool test2(int,int))
 
 int main ()
 {
-    Logging::switch_to_log("test.log");
     Logging::title("Running Binary Relation Test");
 
     test_dense_set(3 + (1<<16));

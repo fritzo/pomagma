@@ -28,7 +28,6 @@ dense_set::~dense_set ()
 void dense_set::move_from (const dense_set& other, const oid_t* new2old)
 {
     logger.debug() << "Copying dense_set" |0;
-    Logging::IndentBlock block(logger.at_debug());
 
     int minM = min(M, other.M);
     if (new2old == NULL) {

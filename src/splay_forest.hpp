@@ -410,7 +410,6 @@ template<class X> void splay_forest<X>::test_range_contains (Pos eqn)
 template<class X> void splay_forest<X>::validate_forest ()
 {
     logger.debug() << "Validating " << nameof<X>() << " forest" |0;
-    Logging::IndentBlock block;
 
     for (typename Pos::sparse_iterator iter=Pos::sbegin();
             iter!=Pos::send(); ++iter) {

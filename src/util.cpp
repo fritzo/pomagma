@@ -1,6 +1,6 @@
 
 #include "util.hpp"
-//#include <ctime>
+#include <iomanip>
 #include <sys/time.h>
 #include <vector>
 #include <sys/resource.h> //for rusage
@@ -9,36 +9,32 @@
 namespace pomagma
 {
 
+inline const char * getenv_default(const char * key, const char * default_val)
+{
+    const char * result = getenv(key);
+    return result ? result : default_val;
+}
+
+inline int getenv_default(const char * key, int default_val)
+{
+    const char * result = getenv(key);
+    return result ? atoi(result) : default_val;
+}
+
 //================================ logging ================================
 
 namespace Logging
 {
 
-const char * log_filename = getenv("POMAGMA_LOGFILE")
-                          ? getenv("POMAGMA_LOGFILE")
-                          : "pomagma.log";
+const char * log_filename = getenv_default("POMAGMA_LOG_FILE", "pomagma.log");
 
-std::ofstream logFile(log_filename, std::ios_base::app);
-void switch_to_log (std::string filename)
-{
-    logFile.close();
-    logFile.open(filename.c_str(), std::ios_base::app);
-    if (not logFile.is_open()) {
-        logFile.open (log_filename, std::ios_base::app);
-        logger.warning() << "could not open log file " << filename |0;
-    }
-}
+std::ofstream g_log_file(log_filename, std::ios_base::app);
 
 //title/section label
 void title (std::string name)
 {
-    live_out << "\033[32m================ "
-             << name << " " << get_date()
-             << " ================\033[37m" |0; // green
+    live_out << "\033[32m" << name << " " << get_date() << "\033[37m" |0; // green
 }
-
-//indentation stuff
-int indentLevel(0);
 
 //time measurement
 timeval g_begin_time;
@@ -73,9 +69,8 @@ const std::string levelBeg[] =
 const std::string levelEnd = "\e[0;39m";
 const fake_ostream& Logger::active_log (LogLevel level) const
 {
-    return live_out << elapsed_time() << '\t'
-                    << levelBeg[level] << m_name << levelEnd
-                    << indentation();
+    return live_out << std::left << std::setw(12) << elapsed_time()
+                    << levelBeg[level] << m_name << levelEnd;
 }
 
 }

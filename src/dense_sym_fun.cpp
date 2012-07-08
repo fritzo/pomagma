@@ -34,7 +34,6 @@ dense_sym_fun::~dense_sym_fun ()
 void dense_sym_fun::move_from (const dense_sym_fun& other)
 {//for growing
     logger.debug() << "Copying dense_sym_fun" |0;
-    Logging::IndentBlock block;
 
     //copy data
     unsigned minM = min(M, other.M);
@@ -64,7 +63,6 @@ unsigned dense_sym_fun::size () const
 void dense_sym_fun::validate () const
 {
     logger.debug() << "Validating dense_sym_fun" |0;
-    Logging::IndentBlock block;
 
     logger.debug() << "validating line-block consistency" |0;
     for (unsigned i_=0; i_<M; ++i_) {

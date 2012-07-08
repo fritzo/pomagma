@@ -34,7 +34,6 @@ sparse_bin_fun::~sparse_bin_fun ()
 void sparse_bin_fun::move_from (sparse_bin_fun& other)
 {//for growing
     logger.debug() << "Copying sparse_bin_fun" |0;
-    Logging::IndentBlock block;
 
     //copy data
     m_map.swap(other.m_map);
@@ -52,7 +51,6 @@ void sparse_bin_fun::move_from (sparse_bin_fun& other)
 void sparse_bin_fun::validate () const
 {
     logger.debug() << "Validating sparse_bin_fun" |0;
-    Logging::IndentBlock block;
 
     logger.debug() << "validating data" |0;
     for (unsigned i=0; i<N; ++i) {

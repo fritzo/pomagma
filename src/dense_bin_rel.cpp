@@ -40,7 +40,6 @@ dense_bin_rel::~dense_bin_rel ()
 void dense_bin_rel::move_from (const dense_bin_rel& other, const oid_t* new2old)
 {
     logger.debug() << "Copying dense_bin_rel" |0;
-    Logging::IndentBlock block;
 
     if (POMAGMA_DEBUG_LEVEL >= 1) other.validate();
 
@@ -90,7 +89,6 @@ unsigned dense_bin_rel::size () const
 void dense_bin_rel::validate () const
 {
     logger.debug() << "Validating dense_bin_rel" |0;
-    Logging::IndentBlock block;
 
     m_support.validate();
 
@@ -141,7 +139,6 @@ void dense_bin_rel::validate () const
 void dense_bin_rel::validate_disjoint (const dense_bin_rel& other) const
 {
     logger.debug() << "Validating disjoint pair of dense_bin_rels" |0;
-    Logging::IndentBlock block;
 
     //validate supports agree
     POMAGMA_ASSERT(0, m_support.capacity() == other.m_support.capacity(),

@@ -28,7 +28,7 @@
 
 #ifndef POMAGMA_DEBUG_LEVEL
 #define POMAGMA_DEBUG_LEVEL 0
-#endif
+#endif // POMAGMA_DEBUG_LEVEL
 
 #define POMAGMA_ERROR(mess) {logger.error()\
     << mess << "\n\t"\
@@ -61,8 +61,7 @@ template <class T> inline const char* nameof () { return "???"; }
 namespace Logging
 {
 
-extern std::ofstream logFile;
-void switch_to_log (std::string filename);
+extern std::ofstream g_log_file;
 
 class fake_ostream
 {
@@ -72,14 +71,14 @@ public:
     template <class Message>
     const fake_ostream& operator<< (const Message& message) const
     {
-        if (m_live) { logFile << message; }
+        if (m_live) { g_log_file << message; }
         return *this;
     }
     const fake_ostream& operator| (int hold) const
     {
         if (m_live) {
-            if (hold)   logFile << std::flush; // log << ... |1; flushes
-            else        logFile << std::endl;  // log << ... |0; ends line
+            if (hold)   g_log_file << std::flush; // log << ... |1; flushes
+            else        g_log_file << std::endl;  // log << ... |0; ends line
         }
         return *this;
     }
@@ -89,24 +88,6 @@ const fake_ostream live_out(true), dead_out(false);
 
 //title/section label
 void title (std::string name);
-
-//indentation stuff
-const int length = 64;
-const int stride = 2;
-const char* const spaces = "                                                                " + length;
-extern int indentLevel;
-inline void indent ();
-inline void outdent ();
-inline const char* indentation ()
-{ return spaces - min(length, indentLevel * stride); }
-class IndentBlock
-{
-    bool m_active;
-public:
-    IndentBlock (bool active=true) : m_active(active)
-    { if (m_active) indent (); }
-    ~IndentBlock () { if (m_active) outdent (); }
-};
 
 //log channels
 enum LogLevel {ERROR, WARNING, INFO, DEBUG};
@@ -138,16 +119,6 @@ public:
 };
 
 const Logging::Logger logger("pomagma", Logging::INFO);
-
-inline void indent ()
-{
-    ++indentLevel;
-}
-inline void outdent ()
-{
-    --indentLevel;
-    POMAGMA_ASSERT(1, indentLevel >= 0, "indent level underflow");
-}
 
 } // namespace Logging
 

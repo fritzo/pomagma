@@ -39,7 +39,6 @@ dense_bin_fun::~dense_bin_fun ()
 void dense_bin_fun::move_from (const dense_bin_fun& other)
 {//for growing
     logger.debug() << "Copying dense_bin_fun" |0;
-    Logging::IndentBlock block;
 
     //copy data
     unsigned minM = min(M, other.M);
@@ -70,7 +69,6 @@ unsigned dense_bin_fun::size () const
 void dense_bin_fun::validate () const
 {
     logger.debug() << "Validating dense_bin_fun" |0;
-    Logging::IndentBlock block;
 
     logger.debug() << "validating line-block consistency" |0;
     for (unsigned i_=0; i_<M; ++i_) {
