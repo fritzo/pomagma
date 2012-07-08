@@ -1,9 +1,3 @@
-cmake_minimum_required(VERSION 2.6)
-
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -fPIC")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
-
-enable_testing()
 
 include_directories(${CMAKE_SOURCE_DIR}/)
 
@@ -38,5 +32,5 @@ add_executable(dense_sym_fun_test dense_sym_fun_test.cpp)
 target_link_libraries(dense_sym_fun_test pomagma)
 add_test(NAME dense_sym_fun COMMAND dense_sym_fun_test)
 
-#install(TARGETS pomagma LIBRARY DESTINATION ${CMAKE_ROOT}/lib)
+#install(TARGETS pomagma LIBRARY DESTINATION ${LIBRARY_OUTPUT_PATH})
 

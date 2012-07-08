@@ -17,3 +17,5 @@
 # Temp files
 *.log
 *.bak
+/build/*
+!/build/test.sh
