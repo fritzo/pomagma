@@ -145,7 +145,7 @@ public:
         //dereferencing
     private:
         void _deref_assert () const
-        {   POMAGMA_ASSERT5(not done(), "dereferenced done br::iterator"); }
+        {   POMAGMA_ASSERT(5, not done(), "dereferenced done br::iterator"); }
     public:
         const Pos& operator *  () const { _deref_assert(); return m_pos; }
         const Pos* operator -> () const { _deref_assert(); return &m_pos; }
@@ -174,12 +174,12 @@ public:
     public:
         void begin ()
         {
-            POMAGMA_ASSERT (m_fixed, "tried to begin() a null br::Iterator");
+            POMAGMA_ASSERT(0, m_fixed, "tried to begin() a null br::Iterator");
             m_moving.begin();
             if (m_moving) { _fix(); _move(); }
         }
         void begin (int fixed)
-        {   POMAGMA_ASSERT2(m_rel.supports(fixed),
+        {   POMAGMA_ASSERT(2, m_rel.supports(fixed),
                     "br::Iterator's fixed pos is unsupported");
             m_fixed = fixed;
             m_set.init(dir ? m_rel.get_Lx_line(fixed)
@@ -196,7 +196,7 @@ public:
                                 : rel->get_Rx_line(fixed)),
               m_moving(&m_set), m_fixed(fixed), m_rel(*rel)
         {
-            POMAGMA_ASSERT2(m_rel.supports(fixed),
+            POMAGMA_ASSERT(2, m_rel.supports(fixed),
                     "br::Iterator's fixed pos is unsupported");
             begin();
         }
@@ -208,7 +208,7 @@ public:
         //dereferencing
     private:
         void _deref_assert () const
-        { POMAGMA_ASSERT5(not done(), "dereferenced done dense_bin_rel'n::iter"); }
+        { POMAGMA_ASSERT(5, not done(), "dereferenced done dense_bin_rel'n::iter"); }
     public:
         const Pos& operator *  () const { _deref_assert(); return m_pos; }
         const Pos* operator -> () const { _deref_assert(); return &m_pos; }
@@ -224,22 +224,22 @@ public:
 //bit wrappers
 inline bool_ref dense_bin_rel::_bit_Lx (int i, int j)
 {
-    POMAGMA_ASSERT5(supports(i,j), "_bit_Lx called on unsupported pair "<<i<<','<<j);
+    POMAGMA_ASSERT(5, supports(i,j), "_bit_Lx called on unsupported pair "<<i<<','<<j);
     return _get_Lx_set(i)(j);
 }
 inline bool_ref dense_bin_rel::_bit_Rx (int i, int j)
 {
-    POMAGMA_ASSERT5(supports(i,j), "_bit_Rx called on unsupported pair "<<i<<','<<j);
+    POMAGMA_ASSERT(5, supports(i,j), "_bit_Rx called on unsupported pair "<<i<<','<<j);
     return _get_Rx_set(j)(i);
 }
 inline bool dense_bin_rel::_bit_Lx (int i, int j) const
 {
-    POMAGMA_ASSERT5(supports(i,j), "_bit_Lx called on unsupported pair "<<i<<','<<j);
+    POMAGMA_ASSERT(5, supports(i,j), "_bit_Lx called on unsupported pair "<<i<<','<<j);
     return _get_Lx_set(i)(j);
 }
 inline bool dense_bin_rel::_bit_Rx (int i, int j) const
 {
-    POMAGMA_ASSERT5(supports(i,j), "_bit_Rx called on unsupported pair "<<i<<','<<j);
+    POMAGMA_ASSERT(5, supports(i,j), "_bit_Rx called on unsupported pair "<<i<<','<<j);
     return _get_Rx_set(j)(i);
 }
 

@@ -28,12 +28,12 @@ void test_dense_sym_fun (unsigned N)
     for (unsigned j=1; j<=N; ++j) {
         int k = gcd(i,j);
         if (k <= 1) {
-            POMAGMA_ASSERT (not fun.contains(i,j),
+            POMAGMA_ASSERT(0, not fun.contains(i,j),
                     "function contains bad pair " << i << ',' << j);
         } else {
-            POMAGMA_ASSERT (fun.contains(i,j),
+            POMAGMA_ASSERT(0, fun.contains(i,j),
                     "function does not contain good pair " << i << ',' << j);
-            POMAGMA_ASSERT (fun.get_value(i,j) == k,
+            POMAGMA_ASSERT(0, fun.get_value(i,j) == k,
                     "function contains wrong value for " << i << ',' << j);
             ++line_size[i];
         }
@@ -46,11 +46,11 @@ void test_dense_sym_fun (unsigned N)
         for (iter.begin(i); iter; iter.next()) {
             unsigned j = iter.moving();
             unsigned k = iter.value();
-            POMAGMA_ASSERT (gcd(i,j) == k and k >= 1,
+            POMAGMA_ASSERT(0, gcd(i,j) == k and k >= 1,
                     "iterator gave wrong function value for " << i << ',' << j);
             ++line_size_i;
         }
-        POMAGMA_ASSERT (line_size[i] == line_size_i,
+        POMAGMA_ASSERT(0, line_size[i] == line_size_i,
                 "line sizes disagree: "
                 << line_size[i] << " != " << line_size_i);
     }

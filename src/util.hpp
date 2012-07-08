@@ -26,9 +26,8 @@
 
 //================================ debugging ================================
 
-#ifndef DEBUG_LEVEL
-    #define DEBUG_LEVEL 0
-    #define NDEBUG
+#ifndef POMAGMA_DEBUG_LEVEL
+#define POMAGMA_DEBUG_LEVEL 0
 #endif
 
 #define POMAGMA_ERROR(mess) {logger.error()\
@@ -37,59 +36,15 @@
     << __PRETTY_FUNCTION__ << "\n" |0;\
     abort();}
 
-#define POMAGMA_ASSERT(cond,mess) {if (!(cond)) POMAGMA_ERROR(mess);}
-
-//controlled assertions
-#if DEBUG_LEVEL >= 1
-  #define POMAGMA_ASSERT1(cond,mess) {POMAGMA_ASSERT(cond,mess)}
-#else
-  #define POMAGMA_ASSERT1(cond,mess)
-#endif
-#if DEBUG_LEVEL >= 2
-  #define POMAGMA_ASSERT2(cond,mess) {POMAGMA_ASSERT(cond,mess)}
-#else
-  #define POMAGMA_ASSERT2(cond,mess)
-#endif
-#if DEBUG_LEVEL >= 3
-  #define POMAGMA_ASSERT3(cond,mess) {POMAGMA_ASSERT(cond,mess)}
-#else
-  #define POMAGMA_ASSERT3(cond,mess)
-#endif
-#if DEBUG_LEVEL >= 4
-  #define POMAGMA_ASSERT4(cond,mess) {POMAGMA_ASSERT(cond,mess)}
-#else
-  #define POMAGMA_ASSERT4(cond,mess)
-#endif
-#if DEBUG_LEVEL >= 5
-  #define POMAGMA_ASSERT5(cond,mess) {POMAGMA_ASSERT(cond,mess)}
-#else
-  #define POMAGMA_ASSERT5(cond,mess)
-#endif
-
-//special assertions
-#define POMAGMA_ASSERTW(cond,mess) {if (!(cond)) {logger.warning() << mess |0;}}
-
-#define POMAGMA_ASSERTP(ptr,block_size,name) { \
-    POMAGMA_ASSERT(ptr, "failed to allocate " << name); \
-    POMAGMA_ASSERTW(0 == reinterpret_cast<size_t>(ptr) % block_size, \
-            "bad alignment given to " << name); }
+#define POMAGMA_ASSERT(level, cond, mess) \
+    { if ((level) >= POMAGMA_DEBUG_LEVEL and not (cond)) POMAGMA_ERROR(mess); }
 
 namespace pomagma
 {
 
-using std::cin;
-using std::cout;
-using std::endl;
-using std::string;
-using std::ostream;
-using std::istream;
-using std::fstream;
-using std::ofstream;
-using std::ifstream;
-
 //time & resources
 float get_elapsed_time ();
-string get_date (bool hour=true);
+std::string get_date (bool hour=true);
 
 //================================ convenience ================================
 
@@ -106,8 +61,8 @@ template <class T> inline const char* nameof () { return "???"; }
 namespace Logging
 {
 
-extern ofstream logFile;
-void switch_to_log (string filename);
+extern std::ofstream logFile;
+void switch_to_log (std::string filename);
 
 class fake_ostream
 {
@@ -133,7 +88,7 @@ public:
 const fake_ostream live_out(true), dead_out(false);
 
 //title/section label
-void title (string name);
+void title (std::string name);
 
 //indentation stuff
 const int length = 64;
@@ -158,10 +113,10 @@ enum LogLevel {ERROR, WARNING, INFO, DEBUG};
 class Logger
 {
 private:
-    const string m_name;
+    const std::string m_name;
     const LogLevel m_level;
 public:
-    Logger (string name, LogLevel level = INFO);
+    Logger (std::string name, LogLevel level = INFO);
     const fake_ostream& active_log (LogLevel level) const;
 
     //status
@@ -191,7 +146,7 @@ inline void indent ()
 inline void outdent ()
 {
     --indentLevel;
-    POMAGMA_ASSERT1(indentLevel >= 0, "indent level underflow");
+    POMAGMA_ASSERT(1, indentLevel >= 0, "indent level underflow");
 }
 
 } // namespace Logging

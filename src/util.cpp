@@ -14,10 +14,12 @@ namespace pomagma
 namespace Logging
 {
 
-const char * log_filename = "pomagma.log";
+const char * log_filename = getenv("POMAGMA_LOGFILE")
+                          ? getenv("POMAGMA_LOGFILE")
+                          : "pomagma.log";
 
-ofstream logFile(log_filename, std::ios_base::app);
-void switch_to_log (string filename)
+std::ofstream logFile(log_filename, std::ios_base::app);
+void switch_to_log (std::string filename)
 {
     logFile.close();
     logFile.open(filename.c_str(), std::ios_base::app);
@@ -28,7 +30,7 @@ void switch_to_log (string filename)
 }
 
 //title/section label
-void title (string name)
+void title (std::string name)
 {
     live_out << "\033[32m================ "
              << name << " " << get_date()
@@ -50,25 +52,25 @@ inline float elapsed_time ()
 }
 
 //log channels
-string fill_8 (string s)
+std::string fill_8 (std::string s)
 {
     while (s.size() < 8) s.push_back(' ');
     return s;
 }
-Logger::Logger (string name, LogLevel level)
+Logger::Logger (std::string name, LogLevel level)
         : m_name(fill_8(name)), m_level(level)
 {}
-const string levelBeg[] =
+const std::string levelBeg[] =
 {
     //these set the color, write the log level, and backspace to write over;
     //  this communicates the log level as color in ansi terminals,
-    //  and as a string usable by grep and non-ansi terminals
+    //  and as a std::string usable by grep and non-ansi terminals
     "\e[7;31merror   \e[8D",  // error   - reverse red
     "\e[31mwarning \e[8D",    // warning - red
     "\e[32minfo    \e[8D",    // info    - green
     "\e[33mdebug   \e[8D"     // debug   - yellow
 };
-const string levelEnd = "\e[0;39m";
+const std::string levelEnd = "\e[0;39m";
 const fake_ostream& Logger::active_log (LogLevel level) const
 {
     return live_out << elapsed_time() << '\t'
@@ -80,7 +82,7 @@ const fake_ostream& Logger::active_log (LogLevel level) const
 
 //time
 float get_elapsed_time () { return Logging::elapsed_time(); }
-string get_date (bool hour)
+std::string get_date (bool hour)
 {
     const size_t size = 20; //fits e.g. 2007:05:17:11:33
     static char buff[size];
