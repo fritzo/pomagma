@@ -13,6 +13,8 @@ add_definitions(-DDEBUG_LEVEL=3)
 
 enable_testing()
 
-#install(TARGETS pomagma LIBRARY DESTINATION ${CMAKE_ROOT}/lib)
+install(DIRECTORY src/
+	DESTINATION /usr/local/include/pomagma
+	FILES_MATCHING PATTERN *.hpp)
 
 add_subdirectory(src)

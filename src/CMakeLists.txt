@@ -1,5 +1,5 @@
 
-include_directories(${CMAKE_SOURCE_DIR}/)
+#include_directories(${CMAKE_SOURCE_DIR}/)
 
 add_library(pomagma SHARED
 	util.cpp
@@ -10,6 +10,8 @@ add_library(pomagma SHARED
 	dense_sym_fun.cpp
 	sparse_bin_fun.cpp
 	)
+install(TARGETS pomagma LIBRARY DESTINATION /usr/local/lib)
+
 
 # TODO use google test as in
 # http://code.google.com/p/googletest/wiki/Primer
