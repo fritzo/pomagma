@@ -15,7 +15,7 @@ sparse_bin_fun::sparse_bin_fun (int num_items)
       m_Rx_lines(new(std::nothrow) Line[(N+1) * num_lines()]),
       m_temp_line(new(std::nothrow) Line[1 * num_lines()])
 {
-    logger.debug() << "creating sparse_bin_fun for " << N * N << " values" |0;
+    POMAGMA_DEBUG("creating sparse_bin_fun for " << N * N << " values");
     POMAGMA_ASSERT(0, N < (1<<15), "sparse_bin_fun is too large");
     POMAGMA_ASSERT(0, m_Lx_lines != NULL, "Lx line allocation failed");
     POMAGMA_ASSERT(0, m_Rx_lines != NULL, "Rx line allocation failed");
@@ -33,7 +33,7 @@ sparse_bin_fun::~sparse_bin_fun ()
 }
 void sparse_bin_fun::move_from (sparse_bin_fun& other)
 {//for growing
-    logger.debug() << "Copying sparse_bin_fun" |0;
+    POMAGMA_DEBUG("Copying sparse_bin_fun");
 
     //copy data
     m_map.swap(other.m_map);
@@ -50,9 +50,9 @@ void sparse_bin_fun::move_from (sparse_bin_fun& other)
 //diagnostics
 void sparse_bin_fun::validate () const
 {
-    logger.debug() << "Validating sparse_bin_fun" |0;
+    POMAGMA_DEBUG("Validating sparse_bin_fun");
 
-    logger.debug() << "validating data" |0;
+    POMAGMA_DEBUG("validating data");
     for (unsigned i=0; i<N; ++i) {
     for (unsigned j=0; j<N; ++j) {
 
@@ -65,7 +65,7 @@ void sparse_bin_fun::validate () const
         }
     }}
 
-    logger.debug() << "validating lines" |0;
+    POMAGMA_DEBUG("validating lines");
     for (unsigned i=1; i<=N; ++i) {
         dense_set L_set(_get_Lx_set(i));
 
@@ -73,10 +73,10 @@ void sparse_bin_fun::validate () const
             dense_set R_set(_get_Rx_set(j));
 
             if (L_set.contains(j) and not R_set.contains(i)) {
-                logger.error() << "L-set exceeds R-set: " << i << "," << j |0;
+                POMAGMA_ERROR("L-set exceeds R-set: " << i << "," << j);
             }
             if (R_set.contains(i) and not L_set.contains(j)) {
-                logger.error() << "R-set exceeds L-set: " << i << "," << j |0;
+                POMAGMA_ERROR("R-set exceeds L-set: " << i << "," << j);
             }
         }
     }

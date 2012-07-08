@@ -16,8 +16,8 @@ dense_bin_fun::dense_bin_fun (int num_items)
       m_Rx_lines(pomagma::alloc_blocks<Line>((N+1) * num_lines())),
       m_temp_line(pomagma::alloc_blocks<Line>(1 * num_lines()))
 {
-    logger.debug() << "creating dense_bin_fun with "
-        << M * M << " blocks" |0;
+    POMAGMA_DEBUG("creating dense_bin_fun with "
+        << M * M << " blocks");
     POMAGMA_ASSERT(0, N < (1<<15), "dense_bin_fun is too large"); // FIXME allow larger
     POMAGMA_ASSERT(0, m_blocks, "failed to allocate blocks");
     POMAGMA_ASSERT(0, m_Lx_lines, "failed to allocate Lx lines");
@@ -38,7 +38,7 @@ dense_bin_fun::~dense_bin_fun ()
 }
 void dense_bin_fun::move_from (const dense_bin_fun& other)
 {//for growing
-    logger.debug() << "Copying dense_bin_fun" |0;
+    POMAGMA_DEBUG("Copying dense_bin_fun");
 
     //copy data
     unsigned minM = min(M, other.M);
@@ -68,9 +68,9 @@ unsigned dense_bin_fun::size () const
 }
 void dense_bin_fun::validate () const
 {
-    logger.debug() << "Validating dense_bin_fun" |0;
+    POMAGMA_DEBUG("Validating dense_bin_fun");
 
-    logger.debug() << "validating line-block consistency" |0;
+    POMAGMA_DEBUG("validating line-block consistency");
     for (unsigned i_=0; i_<M; ++i_) {
     for (unsigned j_=0; j_<M; ++j_) {
         const int* block = _block(i_,j_);
@@ -91,7 +91,7 @@ void dense_bin_fun::validate () const
         }}
     }}
 
-    logger.debug() << "validating left-right line consistency" |0;
+    POMAGMA_DEBUG("validating left-right line consistency");
     for (unsigned i=1; i<=N; ++i) {
         dense_set L_set(_get_Lx_set(i));
 

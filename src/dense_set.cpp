@@ -13,8 +13,8 @@ dense_set::dense_set (int num_items)
       m_lines(pomagma::alloc_blocks<Line>(M)),
       m_borrowing(false)
 {
-    logger.debug() << "creating dense_set with "
-        << M << " lines" |0;
+    POMAGMA_DEBUG("creating dense_set with "
+        << M << " lines");
     POMAGMA_ASSERT(0, N < (1<<26), "dense_set is too large");
     POMAGMA_ASSERT(0, m_lines, "failed to allocate lines");
 
@@ -27,7 +27,7 @@ dense_set::~dense_set ()
 }
 void dense_set::move_from (const dense_set& other, const oid_t* new2old)
 {
-    logger.debug() << "Copying dense_set" |0;
+    POMAGMA_DEBUG("Copying dense_set");
 
     int minM = min(M, other.M);
     if (new2old == NULL) {

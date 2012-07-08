@@ -18,7 +18,7 @@ dense_bin_rel::dense_bin_rel (int num_items, bool is_full)
       m_set(N,NULL),
       m_temp_line(pomagma::alloc_blocks<Line>(M))
 {
-    logger.debug() << "creating dense_bin_rel with " << M << " lines" |0;
+    POMAGMA_DEBUG("creating dense_bin_rel with " << M << " lines");
     POMAGMA_ASSERT(0, N_up <= (1<<16), "dense_bin_rel is too large");
     POMAGMA_ASSERT(0, m_Lx_lines, "failed to allocate Lx lines");
     POMAGMA_ASSERT(0, m_Rx_lines, "failed to allocate Rx lines");
@@ -39,7 +39,7 @@ dense_bin_rel::~dense_bin_rel ()
 }
 void dense_bin_rel::move_from (const dense_bin_rel& other, const oid_t* new2old)
 {
-    logger.debug() << "Copying dense_bin_rel" |0;
+    POMAGMA_DEBUG("Copying dense_bin_rel");
 
     if (POMAGMA_DEBUG_LEVEL >= 1) other.validate();
 
@@ -51,7 +51,7 @@ void dense_bin_rel::move_from (const dense_bin_rel& other, const oid_t* new2old)
     //bzero(m_Rx_lines, sizeof(Line) * NUM_LINES);
 
     if (new2old == NULL) {
-        logger.debug() << "copying by column and by row" |0;
+        POMAGMA_DEBUG("copying by column and by row");
         //copy rows and columns
         int minN = min(N, other.N);
         int minM = min(M, other.M);
@@ -60,7 +60,7 @@ void dense_bin_rel::move_from (const dense_bin_rel& other, const oid_t* new2old)
             memcpy(get_Rx_line(i), other.get_Rx_line(i), sizeof(Line) * minM);
         }
     } else {
-        logger.debug() << "copying and reordering" |0;
+        POMAGMA_DEBUG("copying and reordering");
         //copy & reorder WIKKIT SLOW
         for (unsigned i_new=1; i_new<=N; ++i_new) {
             if (not supports(i_new)) continue;
@@ -88,7 +88,7 @@ unsigned dense_bin_rel::size () const
 }
 void dense_bin_rel::validate () const
 {
-    logger.debug() << "Validating dense_bin_rel" |0;
+    POMAGMA_DEBUG("Validating dense_bin_rel");
 
     m_support.validate();
 
@@ -138,7 +138,7 @@ void dense_bin_rel::validate () const
 }
 void dense_bin_rel::validate_disjoint (const dense_bin_rel& other) const
 {
-    logger.debug() << "Validating disjoint pair of dense_bin_rels" |0;
+    POMAGMA_DEBUG("Validating disjoint pair of dense_bin_rels");
 
     //validate supports agree
     POMAGMA_ASSERT(0, m_support.capacity() == other.m_support.capacity(),

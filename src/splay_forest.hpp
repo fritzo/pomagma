@@ -97,7 +97,7 @@ public: // interface
 
         Ob m_key;
 
-        RangeIterator (Ob) { logger.error() << "this should not be called"; }
+        RangeIterator (Ob) { POMAGMA_ERROR("this should not be called"; }
     public:
         RangeIterator () : Iterator(), m_key(Ob(0)) {}
         RangeIterator (Ob root_ob, Ob key_ob) { begin(root_ob, key_ob); }
@@ -409,7 +409,7 @@ template<class X> void splay_forest<X>::test_range_contains (Pos eqn)
 }
 template<class X> void splay_forest<X>::validate_forest ()
 {
-    logger.debug() << "Validating " << nameof<X>() << " forest" |0;
+    POMAGMA_DEBUG("Validating " << nameof<X>() << " forest");
 
     for (typename Pos::sparse_iterator iter=Pos::sbegin();
             iter!=Pos::send(); ++iter) {

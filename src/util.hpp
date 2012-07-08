@@ -3,50 +3,40 @@
 
 #include <stdint.h>
 #include <cstdlib> //for exit() & abort();
-//#include <cstdio>
 #include <iostream>
 #include <string>
 #include <sstream>
-//#include <cassert>
-//#include <cmath>
 #include <fstream>
+#include <iomanip>
 
-//============================ compiler-specific ============================
+//----------------------------------------------------------------------------
+// Compiler-specific
 
 #ifndef __STDC_VERSION__
-  #define __STDC_VERSION__ 199901L
-#endif
+    #define __STDC_VERSION__ 199901L
+#endif // __STDC_VERSION__
 
 #ifdef __GNUG__
-  #define restrict __restrict__
-#else
-  #warning keyword 'restrict' ignored
-  #define restrict
-#endif
+    #ifndef restrict
+        #define restrict __restrict__
+    #endif // restrict
+#else // __GNUG__
+    #warning keyword 'restrict' ignored
+    #define restrict
+#endif // __GNUG__
 
-//================================ debugging ================================
+//----------------------------------------------------------------------------
+// Debugging
 
 #ifndef POMAGMA_DEBUG_LEVEL
 #define POMAGMA_DEBUG_LEVEL 0
 #endif // POMAGMA_DEBUG_LEVEL
 
-#define POMAGMA_ERROR(mess) {logger.error()\
-    << mess << "\n\t"\
-    << __FILE__ << " : " << __LINE__ << "\n\t"\
-    << __PRETTY_FUNCTION__ << "\n" |0;\
-    abort();}
-
-#define POMAGMA_ASSERT(level, cond, mess) \
-    { if ((level) >= POMAGMA_DEBUG_LEVEL and not (cond)) POMAGMA_ERROR(mess); }
+//----------------------------------------------------------------------------
+// Convenience
 
 namespace pomagma
 {
-
-//time & resources
-float get_elapsed_time ();
-std::string get_date (bool hour=true);
-
-//================================ convenience ================================
 
 typedef uint32_t oid_t;
 
@@ -56,75 +46,72 @@ template<class T> inline T max (T x, T y) { return (x > y) ? x : y; }
 //this is used with template specialization
 template <class T> inline const char* nameof () { return "???"; }
 
-//================================ logging ================================
+float get_elapsed_time ();
+std::string get_date (bool hour=true);
 
-namespace Logging
+//----------------------------------------------------------------------------
+// Logging
+
+const std::string g_log_level_name[4] =
 {
+    "\e[7;31merror   \e[0;39m",  // error   - reverse red
+    "\e[31mwarning \e[0;39m",    // warning - red
+    "\e[32minfo    \e[0;39m",    // info    - green
+    "\e[33mdebug   \e[0;39m"     // debug   - yellow
+};
 
-extern std::ofstream g_log_file;
-
-class fake_ostream
+class Log
 {
-    const bool m_live;
+    static std::ofstream s_log_file;
+    static const unsigned s_log_level;
+
+    std::ostringstream m_message;
+
 public:
-    fake_ostream (bool live) : m_live(live) {}
-    template <class Message>
-    const fake_ostream& operator<< (const Message& message) const
+
+    static unsigned level () { return s_log_level; }
+
+    Log (unsigned level)
     {
-        if (m_live) { g_log_file << message; }
-        return *this;
+        m_message << std::left << std::setw(12) << get_elapsed_time();
+        m_message << g_log_level_name[min(4u, level)];
     }
-    const fake_ostream& operator| (int hold) const
+
+    ~Log ()
     {
-        if (m_live) {
-            if (hold)   g_log_file << std::flush; // log << ... |1; flushes
-            else        g_log_file << std::endl;  // log << ... |0; ends line
-        }
-        return *this;
+       m_message << std::endl;
+       s_log_file << m_message.str() << std::flush;
+    }
+
+    template<class T> Log & operator<< (const T & t)
+    {
+        m_message << t;
+        return * this;
+    }
+
+    static void title (std::string name)
+    {
+        s_log_file
+            << "\e[32m" // green
+            << name << " " << get_date()
+            << "\e[0;39m"
+            << std::endl;
     }
 };
 
-const fake_ostream live_out(true), dead_out(false);
+#define POMAGMA_WARN(message) { if (Log::level() >= 1) { Log(1) << message; } }
+#define POMAGMA_INFO(message) { if (Log::level() >= 2) { Log(2) << message; } }
+#define POMAGMA_DEBUG(message) { if (Log::level() >= 3) { Log(3) << message; } }
 
-//title/section label
-void title (std::string name);
+#define POMAGMA_ERROR(message) { Log(0) \
+    << message << "\n\t" \
+    << __FILE__ << " : " << __LINE__ << "\n\t" \
+    << __PRETTY_FUNCTION__ << "\n"; \
+    abort(); }
 
-//log channels
-enum LogLevel {ERROR, WARNING, INFO, DEBUG};
-class Logger
-{
-private:
-    const std::string m_name;
-    const LogLevel m_level;
-public:
-    Logger (std::string name, LogLevel level = INFO);
-    const fake_ostream& active_log (LogLevel level) const;
-
-    //status
-    bool at_ (LogLevel level) const { return level <= m_level; }
-    bool at_warning () const { return at_(WARNING); }
-    bool at_info    () const { return at_(INFO); }
-    bool at_debug   () const { return at_(DEBUG); }
-
-    //heading
-    void static heading (char* label);
-
-    //log
-    const fake_ostream& log (LogLevel level) const
-    { return (level <= m_level) ? active_log(level) : dead_out; }
-    const fake_ostream& error   () const { return log(ERROR); }
-    const fake_ostream& warning () const { return log(WARNING); }
-    const fake_ostream& info    () const { return log(INFO); }
-    const fake_ostream& debug   () const { return log(DEBUG); }
-};
-
-const Logging::Logger logger("pomagma", Logging::INFO);
-
-} // namespace Logging
-
-using Logging::logger;
+#define POMAGMA_ASSERT(level, cond, mess) \
+    { if (POMAGMA_DEBUG_LEVEL >= (level) and not (cond)) POMAGMA_ERROR(mess); }
 
 } // namespace pomagma
 
 #endif
-

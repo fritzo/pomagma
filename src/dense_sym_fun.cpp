@@ -15,7 +15,7 @@ dense_sym_fun::dense_sym_fun (int num_items)
       m_Lx_lines(pomagma::alloc_blocks<Line>((N+1) * num_lines())),
       m_temp_line(pomagma::alloc_blocks<Line>(1 * num_lines()))
 {
-    logger.debug() << "creating dense_sym_fun with " << unordered_pair_count(M) << " blocks" |0;
+    POMAGMA_DEBUG("creating dense_sym_fun with " << unordered_pair_count(M) << " blocks");
     POMAGMA_ASSERT(0, N < (1<<15), "dense_sym_fun is too large");
     POMAGMA_ASSERT(0, m_blocks, "failed to allocate blocks");
     POMAGMA_ASSERT(0, m_Lx_lines, "failed to allocate Lx lines");
@@ -33,7 +33,7 @@ dense_sym_fun::~dense_sym_fun ()
 }
 void dense_sym_fun::move_from (const dense_sym_fun& other)
 {//for growing
-    logger.debug() << "Copying dense_sym_fun" |0;
+    POMAGMA_DEBUG("Copying dense_sym_fun");
 
     //copy data
     unsigned minM = min(M, other.M);
@@ -62,9 +62,9 @@ unsigned dense_sym_fun::size () const
 }
 void dense_sym_fun::validate () const
 {
-    logger.debug() << "Validating dense_sym_fun" |0;
+    POMAGMA_DEBUG("Validating dense_sym_fun");
 
-    logger.debug() << "validating line-block consistency" |0;
+    POMAGMA_DEBUG("validating line-block consistency");
     for (unsigned i_=0; i_<M; ++i_) {
     for (unsigned j_=i_; j_<M; ++j_) {
         const int* block = _block(i_,j_);

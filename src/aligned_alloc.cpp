@@ -7,7 +7,7 @@
 //log levels
 #define LOG_DEBUG1(mess)
 #define LOG_INDENT_DEBUG1
-//#define LOG_DEBUG1(mess) {logger.debug() << message |0;}
+//#define LOG_DEBUG1(mess) {POMAGMA_DEBUGmessage);}
 
 namespace pomagma
 {
@@ -28,14 +28,14 @@ unsigned roundDown (unsigned i)
 
 void* alloc_blocks (size_t blockSize, size_t numBlocks)
 {//allocates an aligned array, wraps posix_memalign
-    logger.debug() << "Allocating " << numBlocks
-                   << " blocks of size " << blockSize << 'B' |0;
+    POMAGMA_DEBUG("Allocating " << numBlocks
+                   << " blocks of size " << blockSize << 'B');
 
     size_t alignment = max(16u, roundDown(blockSize));
     size_t numBytes = blockSize * numBlocks;
     void * base;
     if (posix_memalign(& base, alignment, numBytes)) {
-        logger.warning() << "posix_memalign failed" |0;
+        POMAGMA_WARN("posix_memalign failed");
         return NULL;
     } else {
         return base;
@@ -43,7 +43,7 @@ void* alloc_blocks (size_t blockSize, size_t numBlocks)
 }
 void free_blocks (void* base)
 {//just wraps free()
-    logger.debug() << "Freeing blocks" |0;
+    POMAGMA_DEBUG("Freeing blocks");
 
     free(base);
 }
