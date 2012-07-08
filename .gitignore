@@ -11,6 +11,9 @@
 *.la
 *.a
 
+# Compiled tests
+*_test
+
 # Temp files
 *.log
 *.bak

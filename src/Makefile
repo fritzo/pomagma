@@ -1,7 +1,7 @@
 
 current_target: all
 
-all: test
+all: libpomagma.a libpomagma.so test
 
 #----( params )----------------------------------------------------------------
 
@@ -34,8 +34,8 @@ GL_CYGWIN = -lglut32 -lglu32 -lopengl32
 #LFLAGS = -d #flex is called manually below
 YFLAGS = -d
 CPPFLAGS = -I. -Wstrict-aliasing --std=c++0x -DDEBUG_LEVEL=$(DEBUG_LEVEL)
-CXXFLAGS = -fno-strict-aliasing $(OPTIM) $(WARNINGS) -ggdb
-LDFLAGS = $(OPTIM)
+CXXFLAGS = -fno-strict-aliasing $(OPTIM) $(WARNINGS) -fPIC -ggdb
+LDFLAGS = $(OPTIM) -L. -lpomagma
 
 #platform-dependent flags
 ifeq ($(PLATFORM), Linux)
@@ -50,28 +50,34 @@ endif
 
 #----( build rules )----------------------------------------------------------
 
-.SUFFIXES:
+#.SUFFIXES:
 
 %.o: %.cpp
 	@echo compiling $@
 	@$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
+%.so:
+	@echo linking $@
+	@$(CXX) -shared $^ -o $@
+%.a:
+	@echo archiving $@
+	@ar rcs $@ $^
 %_test:
 	@echo linking $@
 	@$(CXX) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
-
-#requires_rtti_and_exceptions.o: requires_rtti_and_exceptions.C
-#	@echo compiling $<
-#	@$(CXX) $(CPPFLAGS) $(CXXFLAGS) -frtti -fexceptions -c $< -o $@
 
 #----( modules )--------------------------------------------------------------
 
 ALL_O = dense_sym_fun.o dense_bin_fun.o sparse_bin_fun.o dense_bin_rel.o dense_set.o aligned_alloc.o util.o
 
+libpomagma.a: $(ALL_O)
+
+libpomagma.so: $(ALL_O)
+
 #----( testing )--------------------------------------------------------------
 
-binary_relation_test: binary_relation_test.o $(ALL_O) aligned_alloc.o util.o
+binary_relation_test: binary_relation_test.o
 
-dense_sym_fun_test: dense_sym_fun_test.o $(ALL_O)
+dense_sym_fun_test: dense_sym_fun_test.o
 
 TESTS = binary_relation_test dense_sym_fun_test
 
@@ -85,9 +91,11 @@ test: $(TESTS)
 
 #----( utilities )------------------------------------------------------------
 
-clean: lclean oclean FORCE
+clean: FORCE
 	rm -rf $(TESTS)
 	rm -rf *.o
+	rm -rf *.so
+	rm -rf *.a
 
 depend:
 	@makedepend -D__GNUG__ -Y *.cpp -fcpp.depend 2> makedepend.log
