@@ -55,7 +55,7 @@ class dense_set
 
     //line wrappers
 public:
-    Int _lines () const { return M; }
+    oid_t _lines () const { return M; }
     Line  _line (int i_) const { return m_lines[i_]; }
     Line& _line (int i_)       { return m_lines[i_]; }
     Line* data () { return m_lines; }
@@ -69,7 +69,7 @@ public:
           m_borrowing(true)
     {}
     ~dense_set ();
-    void move_from (const dense_set& other, const Int* new2old=NULL);
+    void move_from (const dense_set& other, const oid_t* new2old=NULL);
     dense_set& init (Line* lines)
     {
         POMAGMA_ASSERT4(m_borrowing, "tried to set lines on non-borrowing dense set");
@@ -79,9 +79,9 @@ public:
 
     //attributes
     bool empty () const; //not fast
-    Int size     () const; //supa-slow, try not to use
-    Int capacity  () const { return N; }
-    Int num_lines () const { return M; }
+    oid_t size     () const; //supa-slow, try not to use
+    oid_t capacity  () const { return N; }
+    oid_t num_lines () const { return M; }
     unsigned data_size () const { return sizeof(Line) * M; }
     void validate () const;
 

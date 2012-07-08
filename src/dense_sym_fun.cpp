@@ -10,19 +10,19 @@ namespace pomagma
 dense_sym_fun::dense_sym_fun (int num_items)
     : N(num_items),
       M((N+DSF_STRIDE)/DSF_STRIDE),
-      m_blocks(pomagma::alloc_blocks<Block4x4W>(isqr(M))),
+      m_blocks(pomagma::alloc_blocks<Block4x4W>(unordered_pair_count(M))),
       m_set(N,NULL),
       m_Lx_lines(pomagma::alloc_blocks<Line>((N+1) * num_lines())),
       m_temp_line(pomagma::alloc_blocks<Line>(1 * num_lines()))
 {
-    logger.debug() << "creating dense_sym_fun with " << isqr(M) << " blocks" |0;
+    logger.debug() << "creating dense_sym_fun with " << unordered_pair_count(M) << " blocks" |0;
     POMAGMA_ASSERT (N < (1<<15), "dense_sym_fun is too large");
     POMAGMA_ASSERTP(m_blocks, sizeof(Line), "blocks");
     POMAGMA_ASSERTP(m_Lx_lines, sizeof(Line), "Lx lines");
     POMAGMA_ASSERTP(m_temp_line, sizeof(Line), "temp lines");
 
     //initialize to zero
-    bzero(m_blocks, isqr(M) * sizeof(Block4x4W));
+    bzero(m_blocks, unordered_pair_count(M) * sizeof(Block4x4W));
     bzero(m_Lx_lines, (N+1) * num_lines() * sizeof(Line));
 }
 dense_sym_fun::~dense_sym_fun ()
@@ -152,7 +152,7 @@ Line* dense_sym_fun::_get_LLx_line (int i, int j) const
 {
     Line* i_line = get_Lx_line(i);
     Line* j_line = get_Lx_line(j);
-    for (Int k_=0; k_<num_lines(); ++k_) {
+    for (oid_t k_=0; k_<num_lines(); ++k_) {
         m_temp_line[k_] = i_line[k_] & j_line[k_];
     }
     return m_temp_line;

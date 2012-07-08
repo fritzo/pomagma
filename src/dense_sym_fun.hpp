@@ -12,7 +12,7 @@ enum { DSF_STRIDE = 4 };
 
 typedef int Block4x4W[DSF_STRIDE * DSF_STRIDE];
 
-inline int isqr (int i) { return (i * (i+1)) / 2; }
+inline int unordered_pair_count (int i) { return (i * (i+1)) / 2; }
 inline void sort (int& i, int& j) { if (j < i) { int k=j; j=i; i=k;}  }
 
 //Note: zero/null items are not allowed
@@ -30,8 +30,8 @@ class dense_sym_fun
     mutable Line* m_temp_line; //this is a temporary
 
     //block wrappers
-          int* _block (int i_, int j_)       { return m_blocks[isqr(j_) + i_]; }
-    const int* _block (int i_, int j_) const { return m_blocks[isqr(j_) + i_]; }
+          int* _block (int i_, int j_)       { return m_blocks[unordered_pair_count(j_) + i_]; }
+    const int* _block (int i_, int j_) const { return m_blocks[unordered_pair_count(j_) + i_]; }
     static int& _block2value (int* block, int i, int j)
     { return block[(j<<2) | i]; }
     static int _block2value (const int* block, int i, int j)

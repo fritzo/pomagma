@@ -40,8 +40,8 @@ private: // Splay tree operations
     static inline Pos RR (Pos p) { while (Pos next = R(p)) p = next; return p; }
 
     //node ordering = lexicographic key-value
-    typedef Int Rank;
-    static inline Rank rank (Int key, Int val) { return (key << 16) | val; }
+    typedef oid_t Rank;
+    static inline Rank rank (oid_t key, oid_t val) { return (key << 16) | val; }
     static inline Rank rank (Pos p) { return rank(get_key(p), get_val(p)); }
 
     //tree manupulation
@@ -202,7 +202,7 @@ template<class X> typename X::Pos splay_forest<X>::find_key (Ob root_ob, Ob key)
 {//finds arbitrary pos in key range
     //find any key
     Pos p = root(root_ob); if (not p) return Pos(0);
-    Int here = get_key(p);
+    oid_t here = get_key(p);
     if (here == key) return p; //p is already root
     do {
         p = (key < here) ? L(p) : R(p);
@@ -340,7 +340,7 @@ template<class X> void splay_forest<X>::RangeIterator::begin(
     if (not p) return;
 
     //find any key
-    Int here;
+    oid_t here;
     while ((here = get_key(p)) != key) {
         p = (key < here) ? L(p) : R(p);
         if (not p) return;

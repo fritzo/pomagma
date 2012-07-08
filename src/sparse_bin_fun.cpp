@@ -166,7 +166,7 @@ Line* sparse_bin_fun::_get_RRx_line (int i, int j) const
 {
     Line* i_line = get_Rx_line(i);
     Line* j_line = get_Rx_line(j);
-    for (Int k_=0; k_<num_lines(); ++k_) {
+    for (oid_t k_=0; k_<num_lines(); ++k_) {
         m_temp_line[k_] = i_line[k_] & j_line[k_];
     }
     return m_temp_line;
@@ -175,7 +175,7 @@ Line* sparse_bin_fun::_get_LRx_line (int i, int j) const
 {
     Line* i_line = get_Lx_line(i);
     Line* j_line = get_Rx_line(j);
-    for (Int k_=0; k_<num_lines(); ++k_) {
+    for (oid_t k_=0; k_<num_lines(); ++k_) {
         m_temp_line[k_] = i_line[k_] & j_line[k_];
     }
     return m_temp_line;
@@ -184,7 +184,7 @@ Line* sparse_bin_fun::_get_LLx_line (int i, int j) const
 {
     Line* i_line = get_Lx_line(i);
     Line* j_line = get_Lx_line(j);
-    for (Int k_=0; k_<num_lines(); ++k_) {
+    for (oid_t k_=0; k_<num_lines(); ++k_) {
         m_temp_line[k_] = i_line[k_] & j_line[k_];
     }
     return m_temp_line;

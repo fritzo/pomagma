@@ -54,7 +54,7 @@ private:
 public:
     dense_bin_rel (int num_items, bool is_full = false);
     ~dense_bin_rel ();
-    void move_from (const dense_bin_rel& other, const Int* new2old=NULL);
+    void move_from (const dense_bin_rel& other, const oid_t* new2old=NULL);
 
     //attributes
     unsigned size     () const; //supa-slow, try not to use
@@ -99,7 +99,7 @@ public:
     void merge    (int dep, int rep, void (*move_to)(int,int));
 
     //saving/loading of block data
-    Int data_size () const;
+    oid_t data_size () const;
     void write_to_file (FILE* file);
     void read_from_file (FILE* file);
 

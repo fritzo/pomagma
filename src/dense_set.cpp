@@ -25,7 +25,7 @@ dense_set::~dense_set ()
 {
   if (not m_borrowing) pomagma::free_blocks(m_lines);
 }
-void dense_set::move_from (const dense_set& other, const Int* new2old)
+void dense_set::move_from (const dense_set& other, const oid_t* new2old)
 {
     logger.debug() << "Copying dense_set" |0;
     Logging::IndentBlock block(logger.at_debug());
@@ -51,7 +51,7 @@ bool dense_set::empty () const
     }
     return true;
 }
-Int dense_set::size () const
+oid_t dense_set::size () const
 {//supa-slow, try not to use
     unsigned result = 0;
     for (int m = 0; m<M; ++m) {
@@ -66,7 +66,7 @@ void dense_set::validate () const
 {
     //make sure extra bits aren't used
     POMAGMA_ASSERT (not (m_lines[0] & 1), "dense set contains null item");
-    Int end = (N+1) % LINE_STRIDE; //number of bits in partially-filled block
+    oid_t end = (N+1) % LINE_STRIDE; //number of bits in partially-filled block
     if (end == 0) return;
     POMAGMA_ASSERT (not (m_lines[M-1] >> end),
             "dense set's end bits are used: " << m_lines[M-1]);
@@ -79,9 +79,9 @@ void dense_set::insert_all ()
     //for (int i=1; i<=N; ++i) { insert(i); }
 
     //fast version
-    Int full = 0xFFFFFFFF;
+    oid_t full = 0xFFFFFFFF;
     for (int i=0; i<M; ++i) m_lines[i] = full;
-    Int end = (N+1) % LINE_STRIDE; //number of bits in partially-filled block
+    oid_t end = (N+1) % LINE_STRIDE; //number of bits in partially-filled block
     if (end) m_lines[M-1] = full >> (LINE_STRIDE - end);
     m_lines[0] ^= 1; //remove zero element
 }

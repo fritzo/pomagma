@@ -37,7 +37,7 @@ dense_bin_rel::~dense_bin_rel ()
     pomagma::free_blocks(m_Rx_lines);
     pomagma::free_blocks(m_temp_line);
 }
-void dense_bin_rel::move_from (const dense_bin_rel& other, const Int* new2old)
+void dense_bin_rel::move_from (const dense_bin_rel& other, const oid_t* new2old)
 {
     logger.debug() << "Copying dense_bin_rel" |0;
     Logging::IndentBlock block;
@@ -266,7 +266,13 @@ void dense_bin_rel::merge (int i, int j,             //dep,rep
 }
 
 //saving/loading, quicker rather than smaller
-Int dense_bin_rel::data_size () const
+
+#define safe_fread(PTR, SIZE, COUNT, FILE) \
+  POMAGMA_ASSERT(COUNT == fread(PTR, SIZE, COUNT, FILE), "fread failed")
+#define safe_fwrite(PTR, SIZE, COUNT, FILE) \
+  POMAGMA_ASSERT(COUNT == fwrite(PTR, SIZE, COUNT, FILE), "fwrite failed")
+
+oid_t dense_bin_rel::data_size () const
 {
     return 2 * sizeof(Line) * NUM_LINES;
 }

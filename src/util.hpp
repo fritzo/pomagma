@@ -27,8 +27,8 @@
 //================================ debugging ================================
 
 #ifndef DEBUG_LEVEL
-  #define DEBUG_LEVEL 0
-  #define NDEBUG
+    #define DEBUG_LEVEL 0
+    #define NDEBUG
 #endif
 
 #define POMAGMA_ERROR(mess) {logger.error()\
@@ -37,8 +37,6 @@
     << __PRETTY_FUNCTION__ << "\n" |0;\
     abort();}
 
-#define TODO() {POMAGMA_ERROR("control reached unfinished code:");}
-#define DEPRICATED() {POMAGMA_ERROR("control reached depricated code:");}
 #define POMAGMA_ASSERT(cond,mess) {if (!(cond)) POMAGMA_ERROR(mess);}
 
 //controlled assertions
@@ -71,20 +69,10 @@
 //special assertions
 #define POMAGMA_ASSERTW(cond,mess) {if (!(cond)) {logger.warning() << mess |0;}}
 
-#define POMAGMA_ASSERTV(cond,mess) {if (!(cond)) {logger.invalid() << mess |0;\
-    decide_invalid();}}
-
-#define POMAGMA_ASSERTA(cond,mess,action) {if (!(cond)) {logger.error()\
-    << mess << "\n\t"\
-    << __FILE__ << " : " << __LINE__ << "\n\t"\
-    << __PRETTY_FUNCTION__ << "\n" |0;\
-    action\
-    abort();}}
-
-#define POMAGMA_ASSERTP(ptr,block_size,name) {                      \
-    POMAGMA_ASSERT (ptr, "failed to allocate " << name);            \
-    POMAGMA_ASSERTW(0 == reinterpret_cast<size_t>(ptr) % block_size,    \
-            "bad alignment given to " << name);}
+#define POMAGMA_ASSERTP(ptr,block_size,name) { \
+    POMAGMA_ASSERT(ptr, "failed to allocate " << name); \
+    POMAGMA_ASSERTW(0 == reinterpret_cast<size_t>(ptr) % block_size, \
+            "bad alignment given to " << name); }
 
 namespace pomagma
 {
@@ -99,74 +87,19 @@ using std::fstream;
 using std::ofstream;
 using std::ifstream;
 
-void start_validating ();
-void decide_invalid   ();
-bool everything_valid ();
-
 //time & resources
 float get_elapsed_time ();
 string get_date (bool hour=true);
 
 //================================ convenience ================================
 
-typedef uint16_t Short;
-typedef uint32_t Int;
-typedef uint64_t Long;
-#ifdef SINGLE_PRECISION_FLOATS
-typedef float Float;
-typedef double Double;
-#else
-typedef double Float;
-typedef long double Double;
-#endif
-
-template<class T> inline void swap (T& x, T& y) { T z=x; x=y; y=z; }
+typedef uint32_t oid_t;
 
 template<class T> inline T min (T x, T y) { return (x < y) ? x : y; }
 template<class T> inline T max (T x, T y) { return (x > y) ? x : y; }
-template<class T> inline void imax (T& x, T y) { if (y > x) x = y; }
-template<class T> inline void imin (T& x, T y) { if (y < x) x = y; }
-
-template <class T> inline int cmp(const T& lhs, const T& rhs)
-{ return int(lhs>rhs) - int(lhs<rhs); }
-
-template <class T> inline T safe_div (T num, T denom)
-{ return num==0 ? 0.0 : num / denom; }
-
-template <class T> inline T sqr (const T& x) { return x*x; }
-//inline Int sqrti (Int x)
-//{ return static_cast<Int>(sqrt(static_cast<double>(x))); }
-//inline Int powi (Int x, double y)
-//{ return static_cast<Int>(pow(static_cast<double>(x),y)); }
-Int powi (Int x, Int y);
-
-bool random_bit ();
-
-//this is passed as a template parameter
-struct do_nothing { void operator () () {} };
 
 //this is used with template specialization
 template <class T> inline const char* nameof () { return "???"; }
-
-template<class T>
-inline string _2string (T t) { std::ostringstream s; s << t; return s.str(); }
-inline double string2float (string s, int d=0)
-{ return s.empty() ? d : atof(s.c_str()); }
-inline int    string2int   (string s, int d=0)
-{ return s.empty() ? d : atoi(s.c_str()); }
-struct compare_nocase {
-    public: bool operator() (const string& s, const string& t) const;
-};
-
-//================================ i/o ================================
-
-bool is_input_interactive ();
-bool is_output_interactive ();
-
-#define safe_fread(PTR, SIZE, COUNT, FILE) \
-  POMAGMA_ASSERT(COUNT == fread(PTR, SIZE, COUNT, FILE), "fread failed")
-#define safe_fwrite(PTR, SIZE, COUNT, FILE) \
-  POMAGMA_ASSERT(COUNT == fwrite(PTR, SIZE, COUNT, FILE), "fwrite failed")
 
 //================================ logging ================================
 
@@ -221,7 +154,7 @@ public:
 };
 
 //log channels
-enum LogLevel {ERROR, WARNING, INVALID, INFO, DEBUG};
+enum LogLevel {ERROR, WARNING, INFO, DEBUG};
 class Logger
 {
 private:
@@ -245,8 +178,6 @@ public:
     { return (level <= m_level) ? active_log(level) : dead_out; }
     const fake_ostream& error   () const { return log(ERROR); }
     const fake_ostream& warning () const { return log(WARNING); }
-    const fake_ostream& invalid () const
-    { decide_invalid(); return log(INVALID); }
     const fake_ostream& info    () const { return log(INFO); }
     const fake_ostream& debug   () const { return log(DEBUG); }
 };
