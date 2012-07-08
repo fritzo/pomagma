@@ -18,11 +18,11 @@ dense_bin_fun::dense_bin_fun (int num_items)
 {
     POMAGMA_DEBUG("creating dense_bin_fun with "
         << M * M << " blocks");
-    POMAGMA_ASSERT(0, N < (1<<15), "dense_bin_fun is too large"); // FIXME allow larger
-    POMAGMA_ASSERT(0, m_blocks, "failed to allocate blocks");
-    POMAGMA_ASSERT(0, m_Lx_lines, "failed to allocate Lx lines");
-    POMAGMA_ASSERT(0, m_Rx_lines, "failed to allocate Rx lines");
-    POMAGMA_ASSERT(0, m_temp_line, "failed to allocate temp line");
+    POMAGMA_ASSERT(N < (1<<15), "dense_bin_fun is too large"); // FIXME allow larger
+    POMAGMA_ASSERT(m_blocks, "failed to allocate blocks");
+    POMAGMA_ASSERT(m_Lx_lines, "failed to allocate Lx lines");
+    POMAGMA_ASSERT(m_Rx_lines, "failed to allocate Rx lines");
+    POMAGMA_ASSERT(m_temp_line, "failed to allocate temp line");
 
     //initialize to zero
     bzero(m_blocks, M * M * sizeof(Block4x4W));
@@ -82,10 +82,10 @@ void dense_bin_fun::validate () const
             int val = _block2value(block,_i,_j);
 
             if (val) {
-                POMAGMA_ASSERT(0, contains(i,j),
+                POMAGMA_ASSERT(contains(i,j),
                         "invalid: found unsupported value: " << i << ',' << j);
             } else {
-                POMAGMA_ASSERT(0, not contains(i,j),
+                POMAGMA_ASSERT(not contains(i,j),
                         "invalid: found supported null value: " << i << ',' << j);
             }
         }}
@@ -112,7 +112,7 @@ void dense_bin_fun::validate () const
 void dense_bin_fun::remove(const int i,
                            void remove_value(int)) //rem
 {
-    POMAGMA_ASSERT(4, 0<i and i<=int(N), "item out of bounds: " << i);
+    POMAGMA_ASSERT4(0<i and i<=int(N), "item out of bounds: " << i);
 
     //(k,i)
     for (Iterator<RHS_FIXED> iter(this,i); not iter.done(); iter.next()) {
@@ -139,9 +139,9 @@ void dense_bin_fun::merge(const int i, //dep
                           void merge_values(int,int),   //dep,rep
                           void move_value(int,int,int)) //moved,lhs,rhs
 {
-    POMAGMA_ASSERT(4, j!=i, "in dense_bin_fun::merge, tried to merge with self");
-    POMAGMA_ASSERT(4, 0<i and i<=int(N), "dep out of bounds: " << i);
-    POMAGMA_ASSERT(4, 0<j and j<=int(N), "rep out of bounds: " << j);
+    POMAGMA_ASSERT4(j!=i, "in dense_bin_fun::merge, tried to merge with self");
+    POMAGMA_ASSERT4(0<i and i<=int(N), "dep out of bounds: " << i);
+    POMAGMA_ASSERT4(0<j and j<=int(N), "rep out of bounds: " << j);
 
     //Note: the spacial case (i,i) --> (i,j) --> (j,j) merges in two steps
 

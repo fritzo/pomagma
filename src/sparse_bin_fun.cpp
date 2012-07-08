@@ -16,10 +16,10 @@ sparse_bin_fun::sparse_bin_fun (int num_items)
       m_temp_line(new(std::nothrow) Line[1 * num_lines()])
 {
     POMAGMA_DEBUG("creating sparse_bin_fun for " << N * N << " values");
-    POMAGMA_ASSERT(0, N < (1<<15), "sparse_bin_fun is too large");
-    POMAGMA_ASSERT(0, m_Lx_lines != NULL, "Lx line allocation failed");
-    POMAGMA_ASSERT(0, m_Rx_lines != NULL, "Rx line allocation failed");
-    POMAGMA_ASSERT(0, m_temp_line != NULL, "int line allocation failed");
+    POMAGMA_ASSERT(N < (1<<15), "sparse_bin_fun is too large");
+    POMAGMA_ASSERT(m_Lx_lines != NULL, "Lx line allocation failed");
+    POMAGMA_ASSERT(m_Rx_lines != NULL, "Rx line allocation failed");
+    POMAGMA_ASSERT(m_temp_line != NULL, "int line allocation failed");
 
     //initialize to zero
     bzero(m_Lx_lines, (N+1) * num_lines() * sizeof(Line));
@@ -57,10 +57,10 @@ void sparse_bin_fun::validate () const
     for (unsigned j=0; j<N; ++j) {
 
         if (m_map.find(Key(i,j)) != m_map.end()) {
-            POMAGMA_ASSERT(0, i and j and contains(i,j),
+            POMAGMA_ASSERT(i and j and contains(i,j),
                     "invalid: found unsupported value: "<<i<<','<<j);
         } else {
-            POMAGMA_ASSERT(0, not (i and j and contains(i,j)),
+            POMAGMA_ASSERT(not (i and j and contains(i,j)),
                     "invalid: found supported null value: "<<i<<','<<j);
         }
     }}
@@ -86,13 +86,13 @@ void sparse_bin_fun::validate () const
 void sparse_bin_fun::remove(const int i,
                            void remove_value(int)) //rem
 {
-    POMAGMA_ASSERT(4, 0<i and i<=int(N), "item out of bounds: " << i);
+    POMAGMA_ASSERT4(0<i and i<=int(N), "item out of bounds: " << i);
 
     //(k,i)
     for (Iterator<RHS_FIXED> iter(this,i); not iter.done(); iter.next()) {
         int k = iter.lhs();
         Map::iterator dep = m_map.find(Key(k,i));
-        POMAGMA_ASSERT(4, dep != m_map.end(), "tried to remove absent element");
+        POMAGMA_ASSERT4(dep != m_map.end(), "tried to remove absent element");
         remove_value(dep->second);
         _get_Lx_set(k).remove(i);
         m_map.erase(dep);
@@ -103,7 +103,7 @@ void sparse_bin_fun::remove(const int i,
     for (Iterator<LHS_FIXED> iter(this,i); not iter.done(); iter.next()) {
         int k = iter.rhs();
         Map::iterator dep = m_map.find(Key(i,k));
-        POMAGMA_ASSERT(4, dep != m_map.end(), "tried to remove absent element");
+        POMAGMA_ASSERT4(dep != m_map.end(), "tried to remove absent element");
         remove_value(dep->second);
         _get_Rx_set(k).remove(i);
         m_map.erase(dep);
@@ -115,16 +115,16 @@ void sparse_bin_fun::merge(const int i, //dep
                           void merge_values(int,int),   //dep,rep
                           void move_value(int,int,int)) //moved,lhs,rhs
 {
-    POMAGMA_ASSERT(4, j!=i, "in sparse_bin_fun::merge, tried to merge with self");
-    POMAGMA_ASSERT(4, 0<i and i<=int(N), "dep out of bounds: " << i);
-    POMAGMA_ASSERT(4, 0<j and j<=int(N), "rep out of bounds: " << j);
+    POMAGMA_ASSERT4(j!=i, "in sparse_bin_fun::merge, tried to merge with self");
+    POMAGMA_ASSERT4(0<i and i<=int(N), "dep out of bounds: " << i);
+    POMAGMA_ASSERT4(0<j and j<=int(N), "rep out of bounds: " << j);
 
     //(k,i) --> (k,i)
     for (Iterator<RHS_FIXED> iter(this,i); iter; iter.next()) {
         int k = iter.lhs();
         Map::iterator dep = m_map.find(Key(k,i));
         Map::iterator rep = m_map.find(Key(k,j));
-        POMAGMA_ASSERT(4, dep != m_map.end(), "tried to merge absent element");
+        POMAGMA_ASSERT4(dep != m_map.end(), "tried to merge absent element");
         _get_Lx_set(k).remove(i);
         if (rep != m_map.end()) {
             merge_values(dep->second,rep->second);

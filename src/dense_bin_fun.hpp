@@ -143,7 +143,7 @@ public:
         //dereferencing
     private:
         void _deref_assert () const
-        { POMAGMA_ASSERT(5, not done(), "dereferenced done dense_set::iter"); }
+        { POMAGMA_ASSERT5(not done(), "dereferenced done dense_set::iter"); }
     public:
         int lhs () const { _deref_assert(); return m_lhs; }
         int rhs () const { _deref_assert(); return m_rhs; }
@@ -253,15 +253,15 @@ public:
 //function calling
 inline int& dense_bin_fun::value (int i, int j)
 {
-    POMAGMA_ASSERT(5, 0<=i and i<=int(N), "i="<<i<<" out of bounds [1,"<<N<<"]");
-    POMAGMA_ASSERT(5, 0<=j and j<=int(N), "j="<<j<<" out of bounds [1,"<<N<<"]");
+    POMAGMA_ASSERT5(0<=i and i<=int(N), "i="<<i<<" out of bounds [1,"<<N<<"]");
+    POMAGMA_ASSERT5(0<=j and j<=int(N), "j="<<j<<" out of bounds [1,"<<N<<"]");
     int* block = _block(i>>2, j>>2);
     return _block2value(block, i&3, j&3);
 }
 inline int dense_bin_fun::value (int i, int j) const
 {
-    POMAGMA_ASSERT(5, 0<=i and i<=int(N), "i="<<i<<" out of bounds [1,"<<N<<"]");
-    POMAGMA_ASSERT(5, 0<=j and j<=int(N), "j="<<j<<" out of bounds [1,"<<N<<"]");
+    POMAGMA_ASSERT5(0<=i and i<=int(N), "i="<<i<<" out of bounds [1,"<<N<<"]");
+    POMAGMA_ASSERT5(0<=j and j<=int(N), "j="<<j<<" out of bounds [1,"<<N<<"]");
     const int* block = _block(i>>2, j>>2);
     return _block2value(block, i&3, j&3);
 }

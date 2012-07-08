@@ -109,8 +109,16 @@ public:
     << __PRETTY_FUNCTION__ << "\n"; \
     abort(); }
 
-#define POMAGMA_ASSERT(level, cond, mess) \
-    { if (POMAGMA_DEBUG_LEVEL >= (level) and not (cond)) POMAGMA_ERROR(mess); }
+#define POMAGMA_ASSERT(cond, mess) { if (not (cond)) POMAGMA_ERROR(mess) }
+
+#define POMAGMA_ASSERT_(level, cond, mess) \
+    { if (POMAGMA_DEBUG_LEVEL >= (level)) POMAGMA_ASSERT(cond, mess) }
+
+#define POMAGMA_ASSERT1(cond, mess) POMAGMA_ASSERT_(1, cond, mess)
+#define POMAGMA_ASSERT2(cond, mess) POMAGMA_ASSERT_(2, cond, mess)
+#define POMAGMA_ASSERT3(cond, mess) POMAGMA_ASSERT_(3, cond, mess)
+#define POMAGMA_ASSERT4(cond, mess) POMAGMA_ASSERT_(4, cond, mess)
+#define POMAGMA_ASSERT5(cond, mess) POMAGMA_ASSERT_(5, cond, mess)
 
 } // namespace pomagma
 
