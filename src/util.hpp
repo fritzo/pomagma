@@ -2,7 +2,7 @@
 #define POMAGMA_DEFINITIONS_H
 
 #include <stdint.h>
-#include <cstdlib> //for exit() & abort();
+#include <cstdlib> // for exit() & abort();
 #include <iostream>
 #include <string>
 #include <sstream>
@@ -16,14 +16,14 @@
     #define __STDC_VERSION__ 199901L
 #endif // __STDC_VERSION__
 
-#ifdef __GNUG__
-    #ifndef restrict
+#ifndef restrict
+    #ifdef __GNUG__
         #define restrict __restrict__
-    #endif // restrict
-#else // __GNUG__
-    #warning keyword 'restrict' ignored
-    #define restrict
-#endif // __GNUG__
+    #else // __GNUG__
+        #warning keyword 'restrict' ignored
+        #define restrict
+    #endif // __GNUG__
+#endif // restrict
 
 //----------------------------------------------------------------------------
 // Debugging
@@ -43,7 +43,7 @@ typedef uint32_t oid_t;
 template<class T> inline T min (T x, T y) { return (x < y) ? x : y; }
 template<class T> inline T max (T x, T y) { return (x > y) ? x : y; }
 
-//this is used with template specialization
+// this is used with template specialization
 template <class T> inline const char* nameof () { return "???"; }
 
 float get_elapsed_time ();

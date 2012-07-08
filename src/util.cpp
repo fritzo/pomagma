@@ -2,8 +2,6 @@
 #include "util.hpp"
 #include <sys/time.h>
 #include <vector>
-#include <sys/resource.h> //for rusage
-#include <unistd.h> //for isatty
 
 namespace pomagma
 {
@@ -44,7 +42,7 @@ float get_elapsed_time ()
 
 std::string get_date (bool hour)
 {
-    const size_t size = 20; //fits e.g. 2007:05:17:11:33
+    const size_t size = 20; // fits e.g. 2007:05:17:11:33
     static char buff[size];
 
     time_t t = time(NULL);
