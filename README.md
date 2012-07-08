@@ -1,0 +1,4 @@
+pomagma
+=======
+
+Performant data structures for partially ordered magmas
