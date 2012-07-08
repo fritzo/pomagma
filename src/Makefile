@@ -12,7 +12,6 @@ PLATFORM := $(shell uname)
 
 # this only applies when debugging
 DEBUG_LEVEL = 3
-OPTIM_LEVEL = 1
 
 #----( compile flags )---------------------------------------------------------
 
@@ -26,13 +25,6 @@ WARNINGS = -Wall -Woverloaded-virtual -Wsign-promo -Wundef -Wpointer-arith -Wcas
 OPTIM = -O2 -pipe
 #OPTIM = -O2 -funswitch-loops -fomit-frame-pointer -pipe -march
 
-# opengl stuff
-GL_LINUX = -lglut -lGLU -lGL
-GL_MAC = -framework OpenGL -framework Glut
-GL_CYGWIN = -lglut32 -lglu32 -lopengl32
-
-#LFLAGS = -d #flex is called manually below
-YFLAGS = -d
 CPPFLAGS = -I. -Wstrict-aliasing --std=c++0x -DDEBUG_LEVEL=$(DEBUG_LEVEL)
 CXXFLAGS = -fno-strict-aliasing $(OPTIM) $(WARNINGS) -fPIC -ggdb
 LDFLAGS = $(OPTIM) -L. -lpomagma
