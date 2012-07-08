@@ -83,10 +83,10 @@ void dense_bin_fun::validate () const
 
             if (val) {
                 POMAGMA_ASSERT(0, contains(i,j),
-                        "invalid: found unsupported value: "<<i<<','<<j);
+                        "invalid: found unsupported value: " << i << ',' << j);
             } else {
                 POMAGMA_ASSERT(0, not contains(i,j),
-                        "invalid: found supported null value: "<<i<<','<<j);
+                        "invalid: found supported null value: " << i << ',' << j);
             }
         }}
     }}
@@ -99,10 +99,10 @@ void dense_bin_fun::validate () const
             dense_set R_set(_get_Rx_set(j));
 
             if (L_set.contains(j) and not R_set.contains(i)) {
-                logger.error() << "L-set exceeds R-set: " << i << "," << j |0;
+                POMAGMA_ERROR("invalid: L-set exceeds R-set: " << i << "," << j);
             }
             if (R_set.contains(i) and not L_set.contains(j)) {
-                logger.error() << "R-set exceeds L-set: " << i << "," << j |0;
+                POMAGMA_ERROR("invalid: R-set exceeds L-set: " << i << "," << j);
             }
         }
     }
