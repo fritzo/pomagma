@@ -6,10 +6,8 @@
 #include <sys/resource.h> //for rusage
 #include <unistd.h> //for isatty
 
-/** \mainpage
- * most of the documentation is in the code, not doxygen.
- * see source files for details.
- */
+namespace pomagma
+{
 
 Int powi (Int x, Int y)
 {
@@ -59,13 +57,16 @@ bool is_output_interactive () { return isatty(1); }
 
 namespace Logging
 {
-ofstream logFile(LOG_FILE, std::ios_base::app);
+
+const char * log_filename = "pomagma.log";
+
+ofstream logFile(log_filename, std::ios_base::app);
 void switch_to_log (string filename)
 {
     logFile.close();
     logFile.open(filename.c_str(), std::ios_base::app);
     if (not logFile.is_open()) {
-        logFile.open (LOG_FILE, std::ios_base::app);
+        logFile.open (log_filename, std::ios_base::app);
         logger.warning() << "could not open log file " << filename |0;
     }
 }
@@ -146,19 +147,4 @@ string get_date (bool hour)
     return buff;
 }
 
-//================================ debugging ================================
-
-void print_resources ()
-{
-    struct rusage results;
-    getrusage(RUSAGE_SELF, &results);
-
-    Logging::logger.debug() << "Process resources:"
-        << "\n  system time:        " << results.ru_stime.tv_sec << "sec"
-        << "\n  user time:          " << results.ru_utime.tv_sec << "sec"
-        << "\n  max mem used:       " << results.ru_maxrss << "K"
-        << "\n  major page faults:  " << results.ru_majflt
-        << "\n  minor page faults:  " << results.ru_minflt
-        |0;
-}
-
+} // namespace pomagma

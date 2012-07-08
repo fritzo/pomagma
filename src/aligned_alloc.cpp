@@ -17,7 +17,6 @@
 namespace pomagma
 {
 
-using Logging::logger;
 
 unsigned roundUp (unsigned i)
 {//rounds up to next power of two
@@ -43,7 +42,7 @@ void* alloc_blocks (size_t blockSize, size_t numBlocks)
     void* base;
 #ifdef MAC_HACKS
     base = malloc(numBytes);
-    AssertW(reinterpret_cast<size_t>(base) % alignment == 0,
+    POMAGMA_ASSERTW(reinterpret_cast<size_t>(base) % alignment == 0,
             "bad alignment of block of size " << numBytes << 'B');
     return base;
 #else

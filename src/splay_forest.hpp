@@ -47,7 +47,7 @@ private: // Splay tree operations
     //tree manupulation
     static inline bool is_left_of (Pos x, Pos y)
     {
-        Assert5(x == R(y) or x == L(y), "orphaned child");
+        POMAGMA_ASSERT5(x == R(y) or x == L(y), "orphaned child");
         return x == L(y);
     }
     static void splay (Pos pos);
@@ -112,11 +112,11 @@ public: // interface
 //tree manipulation
 template<class X> void splay_forest<X>::splay (Pos x)
 {
-    Assert5(is_inserted(x), "node is not inserted before splaying");
+    POMAGMA_ASSERT5(is_inserted(x), "node is not inserted before splaying");
 
     Pos y = U(x);
     if (!y) { //quit if x is root
-        Assert5(root(x) == x, "parentless x is not root after splaying");
+        POMAGMA_ASSERT5(root(x) == x, "parentless x is not root after splaying");
         return;
     }
     bool x_y = is_left_of(x,y); //get initial direction
@@ -215,7 +215,7 @@ template<class X> typename X::Pos splay_forest<X>::find_key (Ob root_ob, Ob key)
 }
 template<class X> void splay_forest<X>::insert (Pos p)
 {
-    Assert5(not is_inserted(p), "pos is inserted before it should be");
+    POMAGMA_ASSERT5(not is_inserted(p), "pos is inserted before it should be");
 
     Pos& root_pos = root(p);
 
@@ -229,7 +229,7 @@ template<class X> void splay_forest<X>::insert (Pos p)
     //seek to bottom of tree
     Rank destin = rank(p);
     for (Pos u = root_pos;;) {
-        Assert5(destin != rank(u), "key-val pair is already inserted");
+        POMAGMA_ASSERT5(destin != rank(u), "key-val pair is already inserted");
         Pos& D = (destin < rank(u)) ? L(u) : R(u);
         if (D) u = D;
         else {
@@ -243,16 +243,16 @@ template<class X> void splay_forest<X>::insert (Pos p)
     R(p) = Pos(0);
     splay(p);
 
-    Assert5(is_inserted(p), "pos is not inserted when it should be");
+    POMAGMA_ASSERT5(is_inserted(p), "pos is not inserted when it should be");
 }
 template<class X> void splay_forest<X>::join (Pos* d, Pos u, Pos l, Pos r)
 {//fast-and-sloppy version, biased to the left
 
     while (true) {
 
-        Assert5(get_root(l) == get_root(r), "L,R keys disagree");
-        Assert5((!u) or get_root(r) == get_root(u), "R,U keys disagree");
-        Assert5(rank(l) < rank(r), "L,R in wrong order");
+        POMAGMA_ASSERT5(get_root(l) == get_root(r), "L,R keys disagree");
+        POMAGMA_ASSERT5((!u) or get_root(r) == get_root(u), "R,U keys disagree");
+        POMAGMA_ASSERT5(rank(l) < rank(r), "L,R in wrong order");
 
         //look for space below l
         Pos x = R(l);
@@ -279,7 +279,7 @@ template<class X> void splay_forest<X>::join (Pos* d, Pos u, Pos l, Pos r)
 }
 template<class X> void splay_forest<X>::remove (Pos p)
 {
-    Assert5(is_inserted(p), "pos not inserted before removal");
+    POMAGMA_ASSERT5(is_inserted(p), "pos not inserted before removal");
 
     Pos u = U(p);
     Pos& d = u ? (is_left_of(p,u) ? L(u)
@@ -302,12 +302,12 @@ template<class X> void splay_forest<X>::remove (Pos p)
         else d = Pos(0);        //   u  ->  u
     }                           //   p
 
-    Assert5(not is_inserted(p), "pos inserted after removal");
+    POMAGMA_ASSERT5(not is_inserted(p), "pos inserted after removal");
 }
 template<class X> bool splay_forest<X>::is_inserted (Pos p)
 {
     Pos found = find_pair(get_root(p), get_key(p), get_val(p), false);
-    Assert5((!found) or (found==p), "two identical pos's have been inserted")
+    POMAGMA_ASSERT5((!found) or (found==p), "two identical pos's have been inserted")
     return found;
 }
 
@@ -376,14 +376,14 @@ template<class X> void splay_forest<X>::test_find (Pos eqn)
 {
     //test find_pair
     Pos pos = find_pair(get_root(eqn), get_key(eqn), get_val(eqn));
-    Assert (pos, "invalid: eqn not found in own " << nameof<X>() << " tree");
-    Assert (pos == eqn,
+    POMAGMA_ASSERT (pos, "invalid: eqn not found in own " << nameof<X>() << " tree");
+    POMAGMA_ASSERT (pos == eqn,
             "invalid: wrong eqn found in own " << nameof<X>() << " tree");
 
     //test find_key
     pos = find_key(get_root(eqn), get_key(eqn));
-    Assert (pos, "invalid: key not found in own " << nameof<X>() << " tree");
-    Assert (get_key(pos) == get_key(eqn),
+    POMAGMA_ASSERT (pos, "invalid: key not found in own " << nameof<X>() << " tree");
+    POMAGMA_ASSERT (get_key(pos) == get_key(eqn),
             "invalid: wrong key found in own " << nameof<X>() << " tree");
 }
 template<class X> void splay_forest<X>::test_contains (Pos eqn)
@@ -395,7 +395,7 @@ template<class X> void splay_forest<X>::test_contains (Pos eqn)
     for (iter.begin(get_root(eqn)); iter; iter.next()) {
         if (*iter == eqn) return;
     }
-    Error("invalid: eqn not contained in own " << nameof<X>() << " tree");
+    POMAGMA_ERROR("invalid: eqn not contained in own " << nameof<X>() << " tree");
 }
 template<class X> void splay_forest<X>::test_range_contains (Pos eqn)
 {
@@ -404,7 +404,7 @@ template<class X> void splay_forest<X>::test_range_contains (Pos eqn)
     for (RangeIterator iter(my_root, my_key); iter; iter.next()) {
         if (*iter == eqn) return;
     }
-    Error("invalid: eqn not (range) contained in own "
+    POMAGMA_ERROR("invalid: eqn not (range) contained in own "
           << nameof<X>() << " tree");
 }
 template<class X> void splay_forest<X>::validate_forest ()
@@ -421,25 +421,25 @@ template<class X> void splay_forest<X>::validate_forest ()
 
         //check L-U agreement
         if (Pos l = L(eqn)) {
-            Assert (rank(l) < rank(eqn), "L-U out of order");
-            Assert (U(l) == eqn, "invalid: runaway L-child");
+            POMAGMA_ASSERT (rank(l) < rank(eqn), "L-U out of order");
+            POMAGMA_ASSERT (U(l) == eqn, "invalid: runaway L-child");
         }
 
         //check R-U agreement
         if (Pos r = R(eqn)) {
-            Assert (rank(eqn) < rank(r), "R-U out of order");
-            Assert (U(r) == eqn, "invalid: runaway R-child");
+            POMAGMA_ASSERT (rank(eqn) < rank(r), "R-U out of order");
+            POMAGMA_ASSERT (U(r) == eqn, "invalid: runaway R-child");
         }
 
         //check U-_ agreement
         if (Pos u = U(eqn)) {
             if (rank(eqn) < rank(u)) {
-                Assert (L(u) == eqn, "invalid: neglected L-child");
+                POMAGMA_ASSERT (L(u) == eqn, "invalid: neglected L-child");
             } else {
-                Assert (R(u) == eqn, "invalid: neglected R-child");
+                POMAGMA_ASSERT (R(u) == eqn, "invalid: neglected R-child");
             }
         } else {
-            Assert (root(eqn) == eqn, "invalid: root mismatch");
+            POMAGMA_ASSERT (root(eqn) == eqn, "invalid: root mismatch");
         }
     }
 }

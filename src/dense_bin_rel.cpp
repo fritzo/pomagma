@@ -19,10 +19,10 @@ dense_bin_rel::dense_bin_rel (int num_items, bool is_full)
       m_temp_line(pomagma::alloc_blocks<Line>(M))
 {
     logger.debug() << "creating dense_bin_rel with " << M << " lines" |0;
-    Assert (N_up <= (1<<16), "dense_bin_rel is too large");
-    AssertP(m_Lx_lines, sizeof(Line), "Lx lines");
-    AssertP(m_Rx_lines, sizeof(Line), "Rx lines");
-    AssertP(m_temp_line, sizeof(Line), "temp line");
+    POMAGMA_ASSERT (N_up <= (1<<16), "dense_bin_rel is too large");
+    POMAGMA_ASSERTP(m_Lx_lines, sizeof(Line), "Lx lines");
+    POMAGMA_ASSERTP(m_Rx_lines, sizeof(Line), "Rx lines");
+    POMAGMA_ASSERTP(m_temp_line, sizeof(Line), "temp line");
 
     //initialize to zeros
     bzero(m_Lx_lines, sizeof(Line) * NUM_LINES);
@@ -103,15 +103,15 @@ void dense_bin_rel::validate () const
     }
 
     //check emptiness of null lines
-    Assert (_get_Lx_set(0).empty(), "Lx(0) line not empty");
-    Assert (_get_Rx_set(0).empty(), "Rx(0) line not empty");
+    POMAGMA_ASSERT (_get_Lx_set(0).empty(), "Lx(0) line not empty");
+    POMAGMA_ASSERT (_get_Rx_set(0).empty(), "Rx(0) line not empty");
 
     dense_set Lx(N_up, NULL), Rx(N_up, NULL);
     for (unsigned i=1; i<=N; ++i) {
         bool sup_i = supports(i);
         Lx.init(get_Lx_line(i));
 
-        Assert(i or not sup_i, "br supports null element");
+        POMAGMA_ASSERT(i or not sup_i, "br supports null element");
 
         for (unsigned j=1; j<=N; ++j) {
             bool sup_ij = sup_i and supports(j);
@@ -121,20 +121,20 @@ void dense_bin_rel::validate () const
             bool Rx_ij = Rx.contains(i);
             num_pairs += Rx_ij;
 
-            Assert (Lx_ij == Rx_ij,
+            POMAGMA_ASSERT (Lx_ij == Rx_ij,
                     "invalid: Lx,Rx disagree at " << i << "," << j
                     << ", Lx is " << Lx_ij << ", Rx is " << Rx_ij  );
 
-            Assert (sup_ij or not Lx_ij,
+            POMAGMA_ASSERT (sup_ij or not Lx_ij,
                     "invalid: Lx unsupported at " << i << "," << j );
 
-            Assert (sup_ij or not Rx_ij,
+            POMAGMA_ASSERT (sup_ij or not Rx_ij,
                     "invalid: Rx unsupported at " << i << "," << j );
         }
     }
 
     unsigned true_size = size();
-    Assert (num_pairs == true_size,
+    POMAGMA_ASSERT (num_pairs == true_size,
             "invalid: incorrect number of pairs: "
             << num_pairs << " should be " << true_size);
 }
@@ -144,16 +144,16 @@ void dense_bin_rel::validate_disjoint (const dense_bin_rel& other) const
     Logging::IndentBlock block;
 
     //validate supports agree
-    Assert (m_support.capacity() == other.m_support.capacity(),
+    POMAGMA_ASSERT (m_support.capacity() == other.m_support.capacity(),
             "invalid: disjoint dense_bin_rel support capacities disagree");
-    Assert (m_support.size() == other.m_support.size(),
+    POMAGMA_ASSERT (m_support.size() == other.m_support.size(),
             "invalid: disjoint dense_bin_rel support sizes disagree");
-    Assert (m_support == other.m_support,
+    POMAGMA_ASSERT (m_support == other.m_support,
             "invalid: disjoint dense_bin_rel supports disagree");
 
     //validate disjointness
     for (dense_set::iterator i = m_support.begin(); i; i.next()) {
-        Assert (_get_Lx_set(*i).disjoint(other._get_Lx_set(*i)),
+        POMAGMA_ASSERT (_get_Lx_set(*i).disjoint(other._get_Lx_set(*i)),
                 "invalid: dense_bin_rels intersect at row " << i);
     }
 }
@@ -202,7 +202,7 @@ void dense_bin_rel::remove_Rx (int i, const dense_set& js)
 }
 void dense_bin_rel::remove (int i)
 {
-    Assert4(supports(i), "tried to remove unsupported element " << i);
+    POMAGMA_ASSERT4(supports(i), "tried to remove unsupported element " << i);
 
     _get_Lx_set(i);  remove_Rx(i,m_set);  m_set.zero();     //remove column
     _get_Rx_set(i);  remove_Lx(m_set,i);  m_set.zero();     //remove row
@@ -234,8 +234,8 @@ void dense_bin_rel::ensure_inserted (const dense_set& is, int j,
 void dense_bin_rel::merge (int i, int j,             //dep,rep
                            void (*move_to)(int,int)) //typically enforce_
 {//policy: call move_to if i~k but not j~k
-    Assert4(j!=i, "dense_bin_rel tried to merge item with self");
-    Assert4(supports(i) and supports(j),
+    POMAGMA_ASSERT4(j!=i, "dense_bin_rel tried to merge item with self");
+    POMAGMA_ASSERT4(supports(i) and supports(j),
             "dense_bin_rel tried to merge unsupported items");
 
     dense_set diff(N,m_temp_line), rep(N,NULL), dep(N,NULL);
@@ -290,7 +290,7 @@ void dense_bin_rel::iterator::_find_rhs ()
         m_rhs.begin();
         if (m_rhs) {
             _rhs(); _lhs();
-            Assert5(m_rel.contains(m_pos),
+            POMAGMA_ASSERT5(m_rel.contains(m_pos),
                     "br::iterator landed outside of relation: "
                     << m_pos.lhs << "," << m_pos.rhs);
             return;

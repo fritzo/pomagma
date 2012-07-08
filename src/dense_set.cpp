@@ -15,8 +15,8 @@ dense_set::dense_set (int num_items)
 {
     logger.debug() << "creating dense_set with "
         << M << " lines" |0;
-    Assert (N < (1<<26), "dense_set is too large");
-    AssertP(m_lines, sizeof(Line), "lines");
+    POMAGMA_ASSERT (N < (1<<26), "dense_set is too large");
+    POMAGMA_ASSERTP(m_lines, sizeof(Line), "lines");
 
     //initialize to zeros
     bzero(m_lines, sizeof(Line) * M);
@@ -65,10 +65,10 @@ Int dense_set::size () const
 void dense_set::validate () const
 {
     //make sure extra bits aren't used
-    Assert (not (m_lines[0] & 1), "dense set contains null item");
+    POMAGMA_ASSERT (not (m_lines[0] & 1), "dense set contains null item");
     Int end = (N+1) % LINE_STRIDE; //number of bits in partially-filled block
     if (end == 0) return;
-    Assert (not (m_lines[M-1] >> end),
+    POMAGMA_ASSERT (not (m_lines[M-1] >> end),
             "dense set's end bits are used: " << m_lines[M-1]);
 }
 
@@ -90,7 +90,7 @@ void dense_set::insert_all ()
 void dense_set::zero () { bzero(m_lines, sizeof(Line) * M); }
 bool dense_set::operator== (const dense_set& other) const
 {
-    Assert1(capacity() == other.capacity(),
+    POMAGMA_ASSERT1(capacity() == other.capacity(),
             "tried to == compare dense_sets of different capacity");
     for (int m=0; m<M; ++m) {
         if (m_lines[m] != other.m_lines[m]) return false;
@@ -99,7 +99,7 @@ bool dense_set::operator== (const dense_set& other) const
 }
 bool dense_set::disjoint (const dense_set& other) const
 {
-    Assert1(capacity() == other.capacity(),
+    POMAGMA_ASSERT1(capacity() == other.capacity(),
             "tried to disjoint-compare dense_sets of different capacity");
     for (int m=0; m<M; ++m) {
         if (m_lines[m] & other.m_lines[m]) return false;
@@ -132,7 +132,7 @@ void dense_set::set_nor (const dense_set& s, const dense_set& t)
 }
 void dense_set::merge (const dense_set& dep)
 {//this += dep; dep = 0;
-    Assert4(N == dep.N, "dep has wrong size in rep.merge(dep)");
+    POMAGMA_ASSERT4(N == dep.N, "dep has wrong size in rep.merge(dep)");
     for (int m=0; m<M; ++m) {
         Line &restrict r = m_lines[m];
         Line &restrict d = dep.m_lines[m];
@@ -142,8 +142,8 @@ void dense_set::merge (const dense_set& dep)
 }
 bool dense_set::merge (const dense_set& dep, dense_set& diff)
 {//diff = dep - this; this += dep; dep = 0; return diff not empty;
-    Assert4(N == dep.N, "dep has wrong size in rep.merge(dep,diff)");
-    Assert4(N == diff.N, "diff has wrong size in rep.merge(dep,diff)");
+    POMAGMA_ASSERT4(N == dep.N, "dep has wrong size in rep.merge(dep,diff)");
+    POMAGMA_ASSERT4(N == diff.N, "diff has wrong size in rep.merge(dep,diff)");
     bool changed = false;
     for (int m=0; m<M; ++m) {
         Line &restrict r = m_lines[m];
@@ -157,8 +157,8 @@ bool dense_set::merge (const dense_set& dep, dense_set& diff)
 }
 bool dense_set::ensure (const dense_set& src, dense_set& diff)
 {//diff = src - this; this += src; return diff not empty;
-    Assert4(N == src.N, "src has wrong size in rep.ensure(src,diff)");
-    Assert4(N == diff.N, "diff has wrong size in rep.ensure(src,diff)");
+    POMAGMA_ASSERT4(N == src.N, "src has wrong size in rep.ensure(src,diff)");
+    POMAGMA_ASSERT4(N == diff.N, "diff has wrong size in rep.ensure(src,diff)");
     bool changed = false;
     for (int m=0; m<M; ++m) {
         Line &restrict r = m_lines[m];
@@ -181,17 +181,17 @@ void dense_set::iterator::_next_block ()
     //traverse to first nonempty bit in a nonempty block
     Line line = lines[m_quot];
     for (m_rem=0, m_mask=1; !(m_mask & line); ++m_rem, m_mask<<=1) {
-        Assert4(m_rem!=LINE_STRIDE, "dense_set::_next_block found no bits");
+        POMAGMA_ASSERT4(m_rem!=LINE_STRIDE, "dense_set::_next_block found no bits");
     }
     m_i = m_rem + LINE_STRIDE * m_quot;
-    Assert5(0<m_i and m_i<=m_set.N,
+    POMAGMA_ASSERT5(0<m_i and m_i<=m_set.N,
             "dense_set::iterator::_next_block landed on invalid pos "<<m_i);
-    Assert5(m_set.contains(m_i),
+    POMAGMA_ASSERT5(m_set.contains(m_i),
             "dense_set::iterator::_next_block landed on empty pos "<<m_i);
 }
 void dense_set::iterator::next ()
 {//PROFILE: this is one of the slowest methods
-    Assert5(not done(), "tried to increment a finished dense_set::iterator");
+    POMAGMA_ASSERT5(not done(), "tried to increment a finished dense_set::iterator");
     Line line = m_set.m_lines[m_quot];
     do {
         ++m_rem;
@@ -200,9 +200,9 @@ void dense_set::iterator::next ()
         else { _next_block(); return; }
     } while (!(m_mask & line));
     m_i = m_rem + LINE_STRIDE * m_quot;
-    Assert5(0<m_i and m_i<=m_set.N,
+    POMAGMA_ASSERT5(0<m_i and m_i<=m_set.N,
             "dense_set::iterator::next landed on invalid pos "<<m_i);
-    Assert5(m_set.contains(m_i),
+    POMAGMA_ASSERT5(m_set.contains(m_i),
             "dense_set::iterator::next landed on empty pos "<<m_i);
 }
 

@@ -16,7 +16,6 @@
 namespace pomagma
 {
 
-using Logging::logger;
 
 //WARNING: zero/null items are not allowed
 
@@ -79,7 +78,7 @@ public:
     void remove (int lhs, int rhs)
     {
         Map::iterator val = m_map.find(Key(lhs,rhs));
-        Assert4(val != m_map.end(), "tried to remove absent item");
+        POMAGMA_ASSERT4(val != m_map.end(), "tried to remove absent item");
         m_map.erase(val);
         _get_Lx_set(lhs).remove(rhs);
         _get_Rx_set(rhs).remove(lhs);
@@ -140,7 +139,7 @@ public:
         //dereferencing
     private:
         void _deref_assert () const
-        { Assert5(not done(), "dereferenced done dense_set::iter"); }
+        { POMAGMA_ASSERT5(not done(), "dereferenced done dense_set::iter"); }
     public:
         int lhs () const { _deref_assert(); return m_lhs; }
         int rhs () const { _deref_assert(); return m_rhs; }

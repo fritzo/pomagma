@@ -16,10 +16,10 @@ dense_sym_fun::dense_sym_fun (int num_items)
       m_temp_line(pomagma::alloc_blocks<Line>(1 * num_lines()))
 {
     logger.debug() << "creating dense_sym_fun with " << isqr(M) << " blocks" |0;
-    Assert (N < (1<<15), "dense_sym_fun is too large");
-    AssertP(m_blocks, sizeof(Line), "blocks");
-    AssertP(m_Lx_lines, sizeof(Line), "Lx lines");
-    AssertP(m_temp_line, sizeof(Line), "temp lines");
+    POMAGMA_ASSERT (N < (1<<15), "dense_sym_fun is too large");
+    POMAGMA_ASSERTP(m_blocks, sizeof(Line), "blocks");
+    POMAGMA_ASSERTP(m_Lx_lines, sizeof(Line), "Lx lines");
+    POMAGMA_ASSERTP(m_temp_line, sizeof(Line), "temp lines");
 
     //initialize to zero
     bzero(m_blocks, isqr(M) * sizeof(Block4x4W));
@@ -78,10 +78,10 @@ void dense_sym_fun::validate () const
             int val = _block2value(block,_i,_j);
 
             if (val) {
-                Assert (contains(i,j),
+                POMAGMA_ASSERT (contains(i,j),
                         "invalid: found unsupported value: "<<i<<','<<j);
             } else {
-                Assert (not contains(i,j),
+                POMAGMA_ASSERT (not contains(i,j),
                         "invalid: found supported null value: "<<i<<','<<j);
             }
         }}
@@ -92,7 +92,7 @@ void dense_sym_fun::validate () const
 void dense_sym_fun::remove(const int i,
                            void remove_value(int)) //rem
 {
-    Assert4(0<i and i<=int(N), "item out of bounds: " << i);
+    POMAGMA_ASSERT4(0<i and i<=int(N), "item out of bounds: " << i);
 
     for (Iterator iter(this,i); not iter.done(); iter.next()) {
         int k = iter.moving();
@@ -108,9 +108,9 @@ void dense_sym_fun::merge(const int i, //dep
                           void merge_values(int,int),   //dep,rep
                           void move_value(int,int,int)) //moved,lhs,rhs
 {
-    Assert4(j!=i, "in dense_sym_fun::merge, tried to merge with self");
-    Assert4(0<i and i<=int(N), "dep out of bounds: " << i);
-    Assert4(0<j and j<=int(N), "rep out of bounds: " << j);
+    POMAGMA_ASSERT4(j!=i, "in dense_sym_fun::merge, tried to merge with self");
+    POMAGMA_ASSERT4(0<i and i<=int(N), "dep out of bounds: " << i);
+    POMAGMA_ASSERT4(0<j and j<=int(N), "rep out of bounds: " << j);
 
     //(i,i) -> (i,j)
     if (contains(i,i)) {

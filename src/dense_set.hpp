@@ -7,7 +7,6 @@
 namespace pomagma
 {
 
-using Logging::logger;
 
 //Note: zero/null items are not allowed
 
@@ -19,7 +18,7 @@ class bool_ref
 {//proxy class for single bit
     Line* const m_line;
     const Line m_mask;
-    void _deref_assert () { Assert4(m_line != NULL, "null bit_ref accessed"); }
+    void _deref_assert () { POMAGMA_ASSERT4(m_line != NULL, "null bit_ref accessed"); }
 public:
     bool_ref (Line* line, int _i) : m_line(line), m_mask(1 << _i) {}
     bool_ref () : m_line(NULL), m_mask(0) {} //for containers
@@ -73,7 +72,7 @@ public:
     void move_from (const dense_set& other, const Int* new2old=NULL);
     dense_set& init (Line* lines)
     {
-        Assert4(m_borrowing, "tried to set lines on non-borrowing dense set");
+        POMAGMA_ASSERT4(m_borrowing, "tried to set lines on non-borrowing dense set");
         m_lines = lines;
         return *this;
     }
@@ -152,7 +151,7 @@ public:
         //dereferencing
     private:
         void _deref_assert () const
-        { Assert5(not done(), "dereferenced done dense_set::iter"); }
+        { POMAGMA_ASSERT5(not done(), "dereferenced done dense_set::iter"); }
     public:
         int        operator *  () const { _deref_assert(); return m_i; }
         const int* operator -> () const { _deref_assert(); return &m_i; }
@@ -167,46 +166,46 @@ public:
 };
 inline bool_ref dense_set::_bit (int i)
 {
-    Assert5(0<i and i<=N, "dense_set[i] index out of range: " << i);
+    POMAGMA_ASSERT5(0<i and i<=N, "dense_set[i] index out of range: " << i);
     div_t I = div(i,LINE_STRIDE);
     return bool_ref(m_lines + I.quot, I.rem);
 }
 inline bool dense_set::_bit (int i) const
 {
-    Assert5(0<i and i<=N, "const dense_set[i] index out of range: " << i);
+    POMAGMA_ASSERT5(0<i and i<=N, "const dense_set[i] index out of range: " << i);
     div_t I = div(i,LINE_STRIDE);
     return m_lines[I.quot] & (1<<I.rem);
 }
 inline void dense_set::insert (int i)
 {
-    Assert5(0<i and i<=N, "dense_set::insert item out of range: " << i);
-    Assert4(not contains(i),
+    POMAGMA_ASSERT5(0<i and i<=N, "dense_set::insert item out of range: " << i);
+    POMAGMA_ASSERT4(not contains(i),
             "tried to insert item " << i << " in dense_set twice");
     _bit(i).one();
 }
 inline void dense_set::remove (int i)
 {
-    Assert5(0<i and i<=N, "dense_set::remove item out of range: " << i);
-    Assert4(contains(i),
+    POMAGMA_ASSERT5(0<i and i<=N, "dense_set::remove item out of range: " << i);
+    POMAGMA_ASSERT4(contains(i),
             "tried to remove item " << i << " from dense_set twice");
     _bit(i).zero();
 }
 inline void dense_set::merge (int i, int j __attribute__((unused)))
 {
-    Assert5(0<i and i<=N, "dense_set.merge(i,j) index i="<<i<<" out of range");
-    Assert5(0<j and j<=N, "dense_set.merge(i,j) index j="<<j<<" out of range");
-    Assert5(i!=j, "dense_set tried to merge item "<<i<<" into itself");
-    Assert5(i>j, "dense_set tried to merge in wrong order: "<<i<<'>'<<j);
-    Assert4(contains(i) and contains(j),
+    POMAGMA_ASSERT5(0<i and i<=N, "dense_set.merge(i,j) index i="<<i<<" out of range");
+    POMAGMA_ASSERT5(0<j and j<=N, "dense_set.merge(i,j) index j="<<j<<" out of range");
+    POMAGMA_ASSERT5(i!=j, "dense_set tried to merge item "<<i<<" into itself");
+    POMAGMA_ASSERT5(i>j, "dense_set tried to merge in wrong order: "<<i<<'>'<<j);
+    POMAGMA_ASSERT4(contains(i) and contains(j),
             "dense_set tried to merge uninserted items: "<<i<<","<<j);
     _bit(i).zero();
 }
 inline void dense_set::iterator::begin ()
 {
-    Assert4(m_set.m_lines, "tried to begin a null dense_set::iterator");
+    POMAGMA_ASSERT4(m_set.m_lines, "tried to begin a null dense_set::iterator");
     m_quot = -1;
     _next_block();
-    Assert5(done() or m_set.contains(m_i),
+    POMAGMA_ASSERT5(done() or m_set.contains(m_i),
             "dense_set::iterator::begin landed on empty pos "<<m_i);
 }
 

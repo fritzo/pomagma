@@ -1,8 +1,6 @@
 #ifndef POMAGMA_DEFINITIONS_H
 #define POMAGMA_DEFINITIONS_H
 
-#define LOG_FILE "log/default.log"
-
 #include <stdint.h>
 #include <cstdlib> //for exit() & abort();
 //#include <cstdio>
@@ -12,16 +10,6 @@
 //#include <cassert>
 //#include <cmath>
 #include <fstream>
-
-using std::cin;
-using std::cout;
-using std::endl;
-using std::string;
-using std::ostream;
-using std::istream;
-using std::fstream;
-using std::ofstream;
-using std::ifstream;
 
 //============================ compiler-specific ============================
 
@@ -43,60 +31,73 @@ using std::ifstream;
   #define NDEBUG
 #endif
 
-#define Error(mess) {logger.error()\
+#define POMAGMA_ERROR(mess) {logger.error()\
     << mess << "\n\t"\
     << __FILE__ << " : " << __LINE__ << "\n\t"\
     << __PRETTY_FUNCTION__ << "\n" |0;\
     abort();}
 
-#define TODO() {Error("control reached unfinished code:");}
-#define DEPRICATED() {Error("control reached depricated code:");}
-#define Assert(cond,mess) {if (!(cond)) Error(mess);}
+#define TODO() {POMAGMA_ERROR("control reached unfinished code:");}
+#define DEPRICATED() {POMAGMA_ERROR("control reached depricated code:");}
+#define POMAGMA_ASSERT(cond,mess) {if (!(cond)) POMAGMA_ERROR(mess);}
 
 //controlled assertions
 #if DEBUG_LEVEL >= 1
-  #define Assert1(cond,mess) {Assert(cond,mess)}
+  #define POMAGMA_ASSERT1(cond,mess) {POMAGMA_ASSERT(cond,mess)}
 #else
-  #define Assert1(cond,mess)
+  #define POMAGMA_ASSERT1(cond,mess)
 #endif
 #if DEBUG_LEVEL >= 2
-  #define Assert2(cond,mess) {Assert(cond,mess)}
+  #define POMAGMA_ASSERT2(cond,mess) {POMAGMA_ASSERT(cond,mess)}
 #else
-  #define Assert2(cond,mess)
+  #define POMAGMA_ASSERT2(cond,mess)
 #endif
 #if DEBUG_LEVEL >= 3
-  #define Assert3(cond,mess) {Assert(cond,mess)}
+  #define POMAGMA_ASSERT3(cond,mess) {POMAGMA_ASSERT(cond,mess)}
 #else
-  #define Assert3(cond,mess)
+  #define POMAGMA_ASSERT3(cond,mess)
 #endif
 #if DEBUG_LEVEL >= 4
-  #define Assert4(cond,mess) {Assert(cond,mess)}
+  #define POMAGMA_ASSERT4(cond,mess) {POMAGMA_ASSERT(cond,mess)}
 #else
-  #define Assert4(cond,mess)
+  #define POMAGMA_ASSERT4(cond,mess)
 #endif
 #if DEBUG_LEVEL >= 5
-  #define Assert5(cond,mess) {Assert(cond,mess)}
+  #define POMAGMA_ASSERT5(cond,mess) {POMAGMA_ASSERT(cond,mess)}
 #else
-  #define Assert5(cond,mess)
+  #define POMAGMA_ASSERT5(cond,mess)
 #endif
 
 //special assertions
-#define AssertW(cond,mess) {if (!(cond)) {logger.warning() << mess |0;}}
+#define POMAGMA_ASSERTW(cond,mess) {if (!(cond)) {logger.warning() << mess |0;}}
 
-#define AssertV(cond,mess) {if (!(cond)) {logger.invalid() << mess |0;\
+#define POMAGMA_ASSERTV(cond,mess) {if (!(cond)) {logger.invalid() << mess |0;\
     decide_invalid();}}
 
-#define AssertA(cond,mess,action) {if (!(cond)) {logger.error()\
+#define POMAGMA_ASSERTA(cond,mess,action) {if (!(cond)) {logger.error()\
     << mess << "\n\t"\
     << __FILE__ << " : " << __LINE__ << "\n\t"\
     << __PRETTY_FUNCTION__ << "\n" |0;\
     action\
     abort();}}
 
-#define AssertP(ptr,block_size,name) {                      \
-    Assert (ptr, "failed to allocate " << name);            \
-    AssertW(0 == reinterpret_cast<size_t>(ptr) % block_size,    \
+#define POMAGMA_ASSERTP(ptr,block_size,name) {                      \
+    POMAGMA_ASSERT (ptr, "failed to allocate " << name);            \
+    POMAGMA_ASSERTW(0 == reinterpret_cast<size_t>(ptr) % block_size,    \
             "bad alignment given to " << name);}
+
+namespace pomagma
+{
+
+using std::cin;
+using std::cout;
+using std::endl;
+using std::string;
+using std::ostream;
+using std::istream;
+using std::fstream;
+using std::ofstream;
+using std::ifstream;
 
 void start_validating ();
 void decide_invalid   ();
@@ -104,7 +105,6 @@ bool everything_valid ();
 
 //time & resources
 float get_elapsed_time ();
-void print_resources ();
 string get_date (bool hour=true);
 
 //================================ convenience ================================
@@ -164,9 +164,9 @@ bool is_input_interactive ();
 bool is_output_interactive ();
 
 #define safe_fread(PTR, SIZE, COUNT, FILE) \
-  Assert(COUNT == fread(PTR, SIZE, COUNT, FILE), "fread failed")
+  POMAGMA_ASSERT(COUNT == fread(PTR, SIZE, COUNT, FILE), "fread failed")
 #define safe_fwrite(PTR, SIZE, COUNT, FILE) \
-  Assert(COUNT == fwrite(PTR, SIZE, COUNT, FILE), "fwrite failed")
+  POMAGMA_ASSERT(COUNT == fwrite(PTR, SIZE, COUNT, FILE), "fwrite failed")
 
 //================================ logging ================================
 
@@ -250,7 +250,6 @@ public:
     const fake_ostream& info    () const { return log(INFO); }
     const fake_ostream& debug   () const { return log(DEBUG); }
 };
-const Logger logger ("general", INFO);
 
 inline void indent ()
 {
@@ -259,10 +258,14 @@ inline void indent ()
 inline void outdent ()
 {
     --indentLevel;
-    Assert1(indentLevel >= 0, "indent level underflow");
+    POMAGMA_ASSERT1(indentLevel >= 0, "indent level underflow");
 }
 
-}
+} // namespace Logging
+
+const Logging::Logger logger("pomagma", Logging::INFO);
+
+} // namespace pomagma
 
 #endif
 

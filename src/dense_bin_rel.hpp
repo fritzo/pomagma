@@ -7,7 +7,6 @@
 namespace pomagma
 {
 
-using Logging::logger;
 
 //Note: zero/null items are not allowed
 
@@ -129,12 +128,12 @@ public:
         iterator ()
             : m_lhs(NULL), m_rhs(NULL), m_rhs_set(0),
               m_rel(*(new dense_bin_rel(0)))
-            { Error("default-constructed a br::tierator"); }
+            { POMAGMA_ERROR("default-constructed a br::tierator"); }
         iterator (const iterator&)
             : m_lhs(NULL), m_rhs(NULL), m_rhs_set(0),
               m_rel(*(new dense_bin_rel(0)))
-            { Error("copy-constructed a br::iterator"); }
-        void operator= (const iterator&) { Error("copied a br::iterator"); }
+            { POMAGMA_ERROR("copy-constructed a br::iterator"); }
+        void operator= (const iterator&) { POMAGMA_ERROR("copied a br::iterator"); }
     public:
         iterator (const dense_bin_rel* rel)
             : m_lhs(&(rel->m_support)),
@@ -146,7 +145,7 @@ public:
         //dereferencing
     private:
         void _deref_assert () const
-        {   Assert5(not done(), "dereferenced done br::iterator"); }
+        {   POMAGMA_ASSERT5(not done(), "dereferenced done br::iterator"); }
     public:
         const Pos& operator *  () const { _deref_assert(); return m_pos; }
         const Pos* operator -> () const { _deref_assert(); return &m_pos; }
@@ -175,12 +174,12 @@ public:
     public:
         void begin ()
         {
-            Assert (m_fixed, "tried to begin() a null br::Iterator");
+            POMAGMA_ASSERT (m_fixed, "tried to begin() a null br::Iterator");
             m_moving.begin();
             if (m_moving) { _fix(); _move(); }
         }
         void begin (int fixed)
-        {   Assert2(m_rel.supports(fixed),
+        {   POMAGMA_ASSERT2(m_rel.supports(fixed),
                     "br::Iterator's fixed pos is unsupported");
             m_fixed = fixed;
             m_set.init(dir ? m_rel.get_Lx_line(fixed)
@@ -197,7 +196,7 @@ public:
                                 : rel->get_Rx_line(fixed)),
               m_moving(&m_set), m_fixed(fixed), m_rel(*rel)
         {
-            Assert2(m_rel.supports(fixed),
+            POMAGMA_ASSERT2(m_rel.supports(fixed),
                     "br::Iterator's fixed pos is unsupported");
             begin();
         }
@@ -209,7 +208,7 @@ public:
         //dereferencing
     private:
         void _deref_assert () const
-        { Assert5(not done(), "dereferenced done dense_bin_rel'n::iter"); }
+        { POMAGMA_ASSERT5(not done(), "dereferenced done dense_bin_rel'n::iter"); }
     public:
         const Pos& operator *  () const { _deref_assert(); return m_pos; }
         const Pos* operator -> () const { _deref_assert(); return &m_pos; }
@@ -225,22 +224,22 @@ public:
 //bit wrappers
 inline bool_ref dense_bin_rel::_bit_Lx (int i, int j)
 {
-    Assert5(supports(i,j), "_bit_Lx called on unsupported pair "<<i<<','<<j);
+    POMAGMA_ASSERT5(supports(i,j), "_bit_Lx called on unsupported pair "<<i<<','<<j);
     return _get_Lx_set(i)(j);
 }
 inline bool_ref dense_bin_rel::_bit_Rx (int i, int j)
 {
-    Assert5(supports(i,j), "_bit_Rx called on unsupported pair "<<i<<','<<j);
+    POMAGMA_ASSERT5(supports(i,j), "_bit_Rx called on unsupported pair "<<i<<','<<j);
     return _get_Rx_set(j)(i);
 }
 inline bool dense_bin_rel::_bit_Lx (int i, int j) const
 {
-    Assert5(supports(i,j), "_bit_Lx called on unsupported pair "<<i<<','<<j);
+    POMAGMA_ASSERT5(supports(i,j), "_bit_Lx called on unsupported pair "<<i<<','<<j);
     return _get_Lx_set(i)(j);
 }
 inline bool dense_bin_rel::_bit_Rx (int i, int j) const
 {
-    Assert5(supports(i,j), "_bit_Rx called on unsupported pair "<<i<<','<<j);
+    POMAGMA_ASSERT5(supports(i,j), "_bit_Rx called on unsupported pair "<<i<<','<<j);
     return _get_Rx_set(j)(i);
 }
 
