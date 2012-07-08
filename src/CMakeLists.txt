@@ -10,7 +10,7 @@ add_library(pomagma SHARED
 	dense_sym_fun.cpp
 	sparse_bin_fun.cpp
 	)
-install(TARGETS pomagma LIBRARY DESTINATION /usr/local/lib)
+install(TARGETS pomagma LIBRARY DESTINATION /usr/lib)
 
 
 # TODO use google test as in

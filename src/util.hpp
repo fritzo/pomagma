@@ -251,6 +251,8 @@ public:
     const fake_ostream& debug   () const { return log(DEBUG); }
 };
 
+const Logging::Logger logger("pomagma", Logging::INFO);
+
 inline void indent ()
 {
     ++indentLevel;
@@ -263,7 +265,7 @@ inline void outdent ()
 
 } // namespace Logging
 
-const Logging::Logger logger("pomagma", Logging::INFO);
+using Logging::logger;
 
 } // namespace pomagma
 
