@@ -97,7 +97,7 @@ public: // interface
 
         Ob m_key;
 
-        RangeIterator (Ob) { POMAGMA_ERROR("this should not be called"; }
+        RangeIterator (Ob) { POMAGMA_ERROR("this should not be called"); }
     public:
         RangeIterator () : Iterator(), m_key(Ob(0)) {}
         RangeIterator (Ob root_ob, Ob key_ob) { begin(root_ob, key_ob); }
