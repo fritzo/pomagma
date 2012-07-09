@@ -115,6 +115,7 @@ public:
     // entire operations
     void zero ();
     bool operator == (const dense_set & other) const;
+    bool operator <= (const dense_set & other) const;
     bool disjoint    (const dense_set & other) const;
     void operator += (const dense_set & other);
     void operator *= (const dense_set & other);
@@ -138,14 +139,14 @@ public:
         size_t m_rem;
         size_t m_quot;
         Line m_mask;
-        const dense_set& m_set;
+        const dense_set & m_set;
 
         // coordinate access
     public:
         size_t rem  () const { return m_rem; }
         size_t quot () const { return m_quot; }
         size_t mask () const { return m_mask; }
-        const dense_set& set () const { return m_set; };
+        const dense_set & set () const { return m_set; };
 
         // comparison
         bool operator == (const_Ref other) const { return m_i == other.m_i; }
@@ -173,7 +174,7 @@ public:
         { POMAGMA_ASSERT5(not done(), "dereferenced done dense_set::iter"); }
     public:
         size_t         operator *  () const { _deref_assert(); return m_i; }
-        const size_t * operator -> () const { _deref_assert(); return &m_i; }
+        const size_t * operator -> () const { _deref_assert(); return & m_i; }
 
         // constructors
         // WARNING careful using these
@@ -196,12 +197,13 @@ inline bool dense_set::_bit (size_t i) const
     POMAGMA_ASSERT5(0 < i and i <= N,
             "const dense_set[i] index out of range: " << i);
     div_t I = div(i,LINE_STRIDE);
-    return m_lines[I.quot] & (1<<I.rem);
+    return m_lines[I.quot] & (1 << I.rem);
 }
 
 inline void dense_set::insert (size_t i)
 {
-    POMAGMA_ASSERT5(0<i and i<=N, "dense_set::insert item out of range: " << i);
+    POMAGMA_ASSERT5(0 < i and i <= N,
+            "dense_set::insert item out of range: " << i);
     POMAGMA_ASSERT4(not contains(i),
             "tried to insert item " << i << " in dense_set twice");
     _bit(i).one();
@@ -232,7 +234,8 @@ inline void dense_set::merge (size_t i, size_t j __attribute__((unused)))
 inline void dense_set::iterator::begin ()
 {
     POMAGMA_ASSERT4(m_set.m_lines, "tried to begin a null dense_set::iterator");
-    m_quot = -1;
+    m_quot = 0;
+    --m_quot;
     _next_block();
     POMAGMA_ASSERT5(done() or m_set.contains(m_i),
             "dense_set::iterator::begin landed on empty pos " << m_i);

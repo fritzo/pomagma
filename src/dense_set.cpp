@@ -112,6 +112,17 @@ bool dense_set::operator== (const dense_set & other) const
     return true;
 }
 
+bool dense_set::operator<= (const dense_set & other) const
+{
+    POMAGMA_ASSERT1(capacity() == other.capacity(),
+            "tried to <= compare dense_sets of different capacity");
+
+    for (size_t m = 0; m < M; ++m) {
+        if (m_lines[m] & ~other.m_lines[m]) return false;
+    }
+    return true;
+}
+
 bool dense_set::disjoint (const dense_set & other) const
 {
     POMAGMA_ASSERT1(capacity() == other.capacity(),

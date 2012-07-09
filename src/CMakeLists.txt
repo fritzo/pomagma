@@ -12,19 +12,9 @@ add_library(pomagma SHARED
 	)
 install(TARGETS pomagma LIBRARY DESTINATION /usr/lib)
 
-
-# TODO use google test as in
-# http://code.google.com/p/googletest/wiki/Primer
-# http://stackoverflow.com/questions/5900447
-#add_executable(run_test
-#	dense_sym_fun_test.cpp
-#	binary_relation_test.cpp
-#	)
-#target_link_libraries(run_test
-#	pomagma
-#	gtest
-#	gtest_main)
-#add_test(NAME run_test COMMAND run_test)
+add_executable(dense_set_test dense_set_test.cpp)
+target_link_libraries(dense_set_test pomagma)
+add_test(NAME dense_set COMMAND dense_set_test)
 
 add_executable(binary_relation_test binary_relation_test.cpp)
 target_link_libraries(binary_relation_test pomagma)
