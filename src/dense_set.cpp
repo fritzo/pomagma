@@ -10,7 +10,7 @@ dense_set::dense_set (size_t num_items)
     : N(num_items),
       M((N+LINE_STRIDE)/LINE_STRIDE),
       m_lines(pomagma::alloc_blocks<Line>(M)),
-      m_borrowing(false)
+      m_alias(false)
 {
     POMAGMA_DEBUG("creating dense_set with "
         << M << " lines");
@@ -23,7 +23,7 @@ dense_set::dense_set (size_t num_items)
 
 dense_set::~dense_set ()
 {
-  if (not m_borrowing) pomagma::free_blocks(m_lines);
+  if (not m_alias) pomagma::free_blocks(m_lines);
 }
 
 void dense_set::move_from (const dense_set & other, const oid_t * new2old)
@@ -260,7 +260,7 @@ void dense_set::iterator::_next_block ()
 {
     // traverse to next nonempty block
     const Line * lines = m_set.m_lines;
-    do { if (++m_quot == m_set.M) { finish(); return; }
+    do { if (++m_quot == m_set.M) { m_i = 0; return; }
     } while (!lines[m_quot]);
 
     // traverse to first nonempty bit in a nonempty block

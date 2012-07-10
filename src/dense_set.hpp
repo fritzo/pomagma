@@ -61,7 +61,7 @@ class dense_set
     // data, in lines
     const size_t N, M; // number of items,lines
     Line * m_lines;
-    const bool m_borrowing;
+    const bool m_alias;
 
     // bit wrappers
     inline bool_ref _bit (size_t i);
@@ -81,14 +81,14 @@ public:
         : N(num_items),
           M((N + LINE_STRIDE) / LINE_STRIDE), // since position 0 is unused
           m_lines(lines),
-          m_borrowing(true)
+          m_alias(true)
     {}
     ~dense_set ();
     void move_from (const dense_set & other, const oid_t * new2old = NULL);
     dense_set & init (Line * lines)
     {
-        POMAGMA_ASSERT4(m_borrowing,
-                "tried to set lines on non-borrowing dense set");
+        POMAGMA_ASSERT4(m_alias,
+                "tried to set lines on non-alias dense set");
         m_lines = lines;
         return * this;
     }
@@ -164,7 +164,6 @@ public:
         Ref operator ++ () { next(); return *this; }
         operator bool () const { return m_i; }
         bool done () const { return not m_i; }
-        void finish () { m_i = 0; }
 
         // dereferencing
     private:
@@ -178,11 +177,11 @@ public:
 
         // constructors
         // WARNING careful using these
-        iterator (const dense_set * set) : m_set(*set) {} // WTF no begin?
+        iterator (const dense_set & set, bool) : m_set(set) {}
         iterator (const dense_set & set) : m_set(set) { begin(); }
     };
-    iterator begin () const { iterator i(this); i.begin(); return i; }
-    iterator end   () const { return iterator(this); }
+    iterator begin () const { return iterator(*this); }
+    iterator end   () const { return iterator(*this, false); }
 };
 
 inline bool_ref dense_set::_bit (size_t i)

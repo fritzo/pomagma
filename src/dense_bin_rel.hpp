@@ -111,10 +111,11 @@ public:
 
     class iterator
     {
-        dense_set::iterator  m_lhs, m_rhs;
-        dense_set            m_rhs_set;
-        const dense_bin_rel& m_rel;
-        Pos                  m_pos;
+        dense_set::iterator m_lhs;
+        dense_set::iterator m_rhs;
+        dense_set m_rhs_set;
+        const dense_bin_rel & m_rel;
+        Pos m_pos;
 
         // traversal
         void _lhs () { m_pos.lhs = *m_lhs; }
@@ -124,25 +125,19 @@ public:
     public:
         void begin () { m_lhs.begin(); _find_rhs(); }
         void next () { if (++m_rhs) _rhs(); else { m_lhs.next(); _find_rhs(); }}
-        iterator& operator ++ () { next(); return *this; }
+        iterator & operator ++ () { next(); return *this; }
         operator bool () const { return m_lhs; }
         bool done () const { return m_lhs.done(); }
 
         // constructors
     private:
-        iterator ()
-            : m_lhs(NULL), m_rhs(NULL), m_rhs_set(0),
-              m_rel(*(new dense_bin_rel(0)))
-            { POMAGMA_ERROR("default-constructed a br::tierator"); }
-        iterator (const iterator&)
-            : m_lhs(NULL), m_rhs(NULL), m_rhs_set(0),
-              m_rel(*(new dense_bin_rel(0)))
-            { POMAGMA_ERROR("copy-constructed a br::iterator"); }
-        void operator= (const iterator&) { POMAGMA_ERROR("copied a br::iterator"); }
+        iterator (); // intentionally undefined
+        iterator (const iterator &); // intentionally undefined
+        void operator= (const iterator&); // intentionally undefined
     public:
-        iterator (const dense_bin_rel* rel)
-            : m_lhs(&(rel->m_support)),
-              m_rhs(&m_rhs_set),
+        iterator (const dense_bin_rel * rel)
+            : m_lhs(rel->m_support, false),
+              m_rhs(m_rhs_set, false),
               m_rhs_set(rel->N, NULL),
               m_rel(*rel)
         { begin(); }
@@ -201,7 +196,9 @@ public:
         Iterator (int fixed, const dense_bin_rel* rel)
             : m_set(rel->N, dir ? rel->get_Lx_line(fixed)
                                 : rel->get_Rx_line(fixed)),
-              m_moving(&m_set), m_fixed(fixed), m_rel(*rel)
+              m_moving(m_set, false),
+              m_fixed(fixed),
+              m_rel(*rel)
         {
             POMAGMA_ASSERT2(m_rel.supports(fixed),
                     "br::Iterator's fixed pos is unsupported");
@@ -209,7 +206,9 @@ public:
         }
         Iterator (const dense_bin_rel* rel)
             : m_set(rel->N, NULL),
-              m_moving(&m_set), m_fixed(0), m_rel(*rel)
+              m_moving(m_set, false),
+              m_fixed(0),
+              m_rel(*rel)
         {}
 
         // dereferencing

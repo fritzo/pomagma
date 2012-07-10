@@ -301,7 +301,8 @@ void dense_bin_rel::iterator::_find_rhs ()
         m_rhs_set.init(m_rel.get_Lx_line(*m_lhs));
         m_rhs.begin();
         if (m_rhs) {
-            _rhs(); _lhs();
+            _rhs();
+            _lhs();
             POMAGMA_ASSERT5(m_rel.contains(m_pos),
                     "br::iterator landed outside of relation: "
                     << m_pos.lhs << "," << m_pos.rhs);

@@ -102,10 +102,11 @@ public:
     enum { LHS_FIXED = false, RHS_FIXED = true };
     template<int idx> class Iterator
     {
-        dense_set           m_set;
+        dense_set m_set;
         dense_set::iterator m_iter;
-        const dense_bin_fun *m_fun;
-        int m_lhs, m_rhs;
+        const dense_bin_fun * m_fun;
+        int m_lhs;
+        int m_rhs;
 
         void _set_pos () { if (idx) m_lhs = *m_iter; else m_rhs = *m_iter; }
     public:
@@ -122,19 +123,31 @@ public:
         void next () { m_iter.next(); if (not done()) _set_pos(); }
 
         // construction
-        Iterator (const dense_bin_fun* fun)
-            : m_set(fun->N, NULL), m_iter(&m_set), m_fun(fun),
-              m_lhs(0), m_rhs(0) {}
+        Iterator (const dense_bin_fun * fun)
+            : m_set(fun->N, NULL),
+              m_iter(m_set, false),
+              m_fun(fun),
+              m_lhs(0),
+              m_rhs(0)
+        {}
 
-        Iterator (const dense_bin_fun* fun, int fixed)
+        Iterator (const dense_bin_fun * fun, int fixed)
             : m_set(fun->N, idx ? fun->get_Rx_line(fixed)
                                 : fun->get_Lx_line(fixed)),
-              m_iter(&m_set), m_fun(fun), m_lhs(fixed), m_rhs(fixed)
-        { begin(); }
+              m_iter(m_set, false),
+              m_fun(fun),
+              m_lhs(fixed),
+              m_rhs(fixed)
+        {
+            begin();
+        }
 
         Iterator (const dense_bin_fun* fun, int fixed, dense_set& subset)
             : m_set(fun->N, subset.data()),
-              m_iter(&m_set), m_fun(fun), m_lhs(fixed), m_rhs(fixed)
+              m_iter(m_set, false),
+              m_fun(fun),
+              m_lhs(fixed),
+              m_rhs(fixed)
         {
             dense_set line(fun->N, idx ? fun->get_Rx_line(fixed)
                                        : fun->get_Lx_line(fixed));
@@ -145,12 +158,17 @@ public:
         // dereferencing
     private:
         void _deref_assert () const
-        { POMAGMA_ASSERT5(not done(), "dereferenced done dense_set::iter"); }
+        {
+            POMAGMA_ASSERT5(not done(), "dereferenced done dense_set::iter");
+        }
     public:
         int lhs () const { _deref_assert(); return m_lhs; }
         int rhs () const { _deref_assert(); return m_rhs; }
         int value () const
-        { _deref_assert(); return m_fun->get_value(m_lhs,m_rhs); }
+        {
+            _deref_assert();
+            return m_fun->get_value(m_lhs,m_rhs);
+        }
     };
 
     //------------------------------------------------------------------------
@@ -180,8 +198,9 @@ public:
         void next () { m_iter.next(); if (not done()) m_lhs = *m_iter; }
 
         // construction
-        RRxx_Iter (const dense_bin_fun* fun)
-            : m_set(fun->N, NULL), m_iter(&m_set), m_fun(fun) {}
+        RRxx_Iter (const dense_bin_fun * fun)
+            : m_set(fun->N, NULL), m_iter(m_set, false), m_fun(fun)
+        {}
 
         // dereferencing
         int lhs    () const { return m_lhs; }
@@ -192,7 +211,7 @@ public:
     {
         dense_set           m_set;
         dense_set::iterator m_iter;
-        const dense_bin_fun *m_fun;
+        const dense_bin_fun * m_fun;
         int m_lhs1, m_rhs2, m_rhs1;
     public:
         // traversal
@@ -212,20 +231,21 @@ public:
         void next () { m_iter.next(); if (not done()) m_rhs1 = *m_iter; }
 
         // construction
-        LRxx_Iter (const dense_bin_fun* fun)
-            : m_set(fun->N, NULL), m_iter(&m_set), m_fun(fun) {}
+        LRxx_Iter (const dense_bin_fun * fun)
+            : m_set(fun->N, NULL), m_iter(m_set, false), m_fun(fun)
+        {}
 
         // dereferencing
         int rhs1   () const { return m_rhs1; }
         int lhs2   () const { return m_rhs1; }
-        int value1 () const { return m_fun->get_value(m_lhs1,m_rhs1); }
-        int value2 () const { return m_fun->get_value(m_rhs1,m_rhs2); }
+        int value1 () const { return m_fun->get_value(m_lhs1, m_rhs1); }
+        int value2 () const { return m_fun->get_value(m_rhs1, m_rhs2); }
     };
     class LLxx_Iter
     {
         dense_set           m_set;
         dense_set::iterator m_iter;
-        const dense_bin_fun *m_fun;
+        const dense_bin_fun * m_fun;
         int m_lhs1, m_lhs2, m_rhs;
     public:
         // traversal
@@ -246,7 +266,8 @@ public:
 
         // construction
         LLxx_Iter (const dense_bin_fun* fun)
-            : m_set(fun->N, NULL), m_iter(&m_set), m_fun(fun) {}
+            : m_set(fun->N, NULL), m_iter(m_set, false), m_fun(fun)
+        {}
 
         // dereferencing
         int rhs    () const { return m_rhs; }

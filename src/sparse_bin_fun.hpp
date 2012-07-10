@@ -113,8 +113,13 @@ public:
         Iterator (const sparse_bin_fun* fun, int fixed)
             : m_set(fun->N, idx ? fun->get_Rx_line(fixed)
                                 : fun->get_Lx_line(fixed)),
-              m_iter(&m_set), m_fun(fun), m_lhs(fixed), m_rhs(fixed)
-        { begin(); }
+              m_iter(m_set, false),
+              m_fun(fun),
+              m_lhs(fixed),
+              m_rhs(fixed)
+        {
+            begin();
+        }
 
         Iterator (const sparse_bin_fun* fun, int fixed, dense_set& subset)
             : m_set(fun->N, subset),
@@ -162,7 +167,7 @@ public:
 
         // construction
         RRxx_Iter (const sparse_bin_fun* fun)
-            : m_set(fun->N, NULL), m_iter(&m_set), m_fun(fun) {}
+            : m_set(fun->N, NULL), m_iter(m_set, false), m_fun(fun) {}
 
         // dereferencing
         int lhs    () const { return m_lhs; }
@@ -171,10 +176,12 @@ public:
     };
     class LRxx_Iter
     {
-        dense_set           m_set;
+        dense_set m_set;
         dense_set::iterator m_iter;
-        const sparse_bin_fun *m_fun;
-        int m_lhs1, m_rhs2, m_rhs1;
+        const sparse_bin_fun * m_fun;
+        int m_lhs1;
+        int m_rhs2;
+        int m_rhs1;
     public:
         // traversal
         void begin () { m_iter.begin(); if (not done()) m_rhs1 = *m_iter; }
@@ -194,7 +201,10 @@ public:
 
         // construction
         LRxx_Iter (const sparse_bin_fun* fun)
-            : m_set(fun->N, NULL), m_iter(&m_set), m_fun(fun) {}
+            : m_set(fun->N, NULL),
+              m_iter(m_set, false),
+              m_fun(fun)
+        {}
 
         // dereferencing
         int rhs1   () const { return m_rhs1; }
@@ -227,7 +237,10 @@ public:
 
         // construction
         LLxx_Iter (const sparse_bin_fun* fun)
-            : m_set(fun->N, NULL), m_iter(&m_set), m_fun(fun) {}
+            : m_set(fun->N, NULL),
+              m_iter(m_set, false),
+              m_fun(fun)
+        {}
 
         // dereferencing
         int rhs    () const { return m_rhs; }

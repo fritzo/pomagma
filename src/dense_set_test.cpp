@@ -63,8 +63,8 @@ void test_iterator(size_t size)
     }
 
     size_t count = 0;
-    for (auto i : set) {
-        POMAGMA_ASSERT(vect[i-1], "unexpected item " << i);
+    for (dense_set::iterator i(set); i; i.next()) {
+        POMAGMA_ASSERT(vect[*i - 1], "unexpected item " << *i);
         ++count;
     }
     POMAGMA_ASSERT_EQUAL(count, true_count);

@@ -6,7 +6,6 @@
 namespace pomagma
 {
 
-// ctor & dtor
 dense_bin_fun::dense_bin_fun (int num_items)
     : N(num_items),
       M((N+ARG_STRIDE)/ARG_STRIDE),
@@ -28,6 +27,7 @@ dense_bin_fun::dense_bin_fun (int num_items)
     bzero(m_Lx_lines, (N+1) * num_lines() * sizeof(Line));
     bzero(m_Rx_lines, (N+1) * num_lines() * sizeof(Line));
 }
+
 dense_bin_fun::~dense_bin_fun ()
 {
     pomagma::free_blocks(m_blocks);
@@ -35,8 +35,10 @@ dense_bin_fun::~dense_bin_fun ()
     pomagma::free_blocks(m_Rx_lines);
     pomagma::free_blocks(m_temp_line);
 }
+
+// for growing
 void dense_bin_fun::move_from (const dense_bin_fun& other)
-{// for growing
+{
     POMAGMA_DEBUG("Copying dense_bin_fun");
 
     // copy data
@@ -56,7 +58,9 @@ void dense_bin_fun::move_from (const dense_bin_fun& other)
     }
 }
 
-// diagnostics
+//----------------------------------------------------------------------------
+// Diagnostics
+
 unsigned dense_bin_fun::size () const
 {
     unsigned result = 0;
@@ -65,6 +69,7 @@ unsigned dense_bin_fun::size () const
     }
     return result;
 }
+
 void dense_bin_fun::validate () const
 {
     POMAGMA_DEBUG("Validating dense_bin_fun");
@@ -107,16 +112,19 @@ void dense_bin_fun::validate () const
     }
 }
 
-// dense_bin_fun operations
-void dense_bin_fun::remove(const int i,
-                           void remove_value(int)) // rem
+//----------------------------------------------------------------------------
+// Operations
+
+void dense_bin_fun::remove(
+        const int i,
+        void remove_value(int)) // rem
 {
-    POMAGMA_ASSERT4(0<i and i<=int(N), "item out of bounds: " << i);
+    POMAGMA_ASSERT4(0 < i and i <= int(N), "item out of bounds: " << i);
 
     // (k,i)
-    for (Iterator<RHS_FIXED> iter(this,i); not iter.done(); iter.next()) {
+    for (Iterator<RHS_FIXED> iter(this, i); not iter.done(); iter.next()) {
         int k = iter.lhs();
-        int& dep = value(k,i);
+        int & dep = value(k, i);
         remove_value(dep);
         _get_Lx_set(k).remove(i);
         dep = 0;
@@ -124,23 +132,25 @@ void dense_bin_fun::remove(const int i,
     _get_Rx_set(i).zero();
 
     // (i,k)
-    for (Iterator<LHS_FIXED> iter(this,i); not iter.done(); iter.next()) {
+    for (Iterator<LHS_FIXED> iter(this, i); not iter.done(); iter.next()) {
         int k = iter.rhs();
-        int& dep = value(i,k);
+        int & dep = value(i, k);
         remove_value(dep);
         _get_Rx_set(k).remove(i);
         dep = 0;
     }
     _get_Lx_set(i).zero();
 }
-void dense_bin_fun::merge(const int i, // dep
-                          const int j, // rep
-                          void merge_values(int,int),   // dep,rep
-                          void move_value(int,int,int)) // moved,lhs,rhs
+
+void dense_bin_fun::merge(
+        const int i, // dep
+        const int j, // rep
+        void merge_values(int,int),   // dep,rep
+        void move_value(int,int,int)) // moved,lhs,rhs
 {
-    POMAGMA_ASSERT4(j!=i, "in dense_bin_fun::merge, tried to merge with self");
-    POMAGMA_ASSERT4(0<i and i<=int(N), "dep out of bounds: " << i);
-    POMAGMA_ASSERT4(0<j and j<=int(N), "rep out of bounds: " << j);
+    POMAGMA_ASSERT4(j != i, "in dense_bin_fun::merge, tried to merge with self");
+    POMAGMA_ASSERT4(0 < i and i <= int(N), "dep out of bounds: " << i);
+    POMAGMA_ASSERT4(0 < j and j <= int(N), "rep out of bounds: " << j);
 
     // Note: the spacial case (i,i) --> (i,j) --> (j,j) merges in two steps
 

@@ -115,23 +115,31 @@ public:
 
         //construction
         Iterator (const dense_sym_fun* fun)
-            : m_set(fun->N, NULL), m_iter(&m_set), m_fun(fun),
-              m_fixed(0), m_moving(0) {}
+            : m_set(fun->N, NULL), m_iter(m_set, false), m_fun(fun),
+              m_fixed(0), m_moving(0)
+        {}
 
         Iterator (const dense_sym_fun* fun, int fixed)
             : m_set(fun->N, fun->get_Lx_line(fixed)),
-              m_iter(&m_set), m_fun(fun), m_fixed(fixed), m_moving(0)
-        { begin(); }
+              m_iter(m_set, false), m_fun(fun), m_fixed(fixed), m_moving(0)
+        {
+            begin();
+        }
 
         //dereferencing
     private:
         void _deref_assert () const
-        { POMAGMA_ASSERT5(not done(), "dereferenced done dense_set::iter"); }
+        {
+            POMAGMA_ASSERT5(not done(), "dereferenced done dense_set::iter");
+        }
     public:
         int fixed  () const { _deref_assert(); return m_fixed; }
         int moving () const { _deref_assert(); return m_moving; }
         int value  () const
-        { _deref_assert(); return m_fun->get_value(m_fixed,m_moving); }
+        {
+            _deref_assert();
+            return m_fun->get_value(m_fixed,m_moving);
+        }
     };
 
     //================ intersection iteration over 2 lines ================
@@ -160,7 +168,7 @@ public:
 
         //construction
         LLxx_Iter (const dense_sym_fun* fun)
-            : m_set(fun->N, NULL), m_iter(&m_set), m_fun(fun) {}
+            : m_set(fun->N, NULL), m_iter(m_set, false), m_fun(fun) {}
 
         //dereferencing
         int fixed1 () const { return m_fixed1; }
