@@ -12,23 +12,26 @@ namespace pomagma
 // a pair of dense sets of dense sets, one col-row, one row-col
 class dense_bin_rel
 {
-    typedef dense_bin_rel MyType;
     struct Pos
     {
-        int lhs,rhs;
-        Pos (int l=0, int r=0) : lhs(l), rhs(r) {}
+        int lhs, rhs;
+        Pos (int l = 0, int r = 0) : lhs(l), rhs(r) {}
         bool operator == (const Pos& p) const
-        { return lhs == p.lhs and rhs == p.rhs; }
+        {
+            return lhs == p.lhs and rhs == p.rhs;
+        }
         bool operator != (const Pos& p) const
-        { return lhs != p.lhs or rhs != p.rhs; }
+        {
+            return lhs != p.lhs or rhs != p.rhs;
+        }
     };
 
     // data
-    const unsigned N,M;         // number of items,Lines per slice
+    const unsigned N, M;        // number of items,Lines per slice
     const unsigned N_up;        // N rounded up, = M * LINE_STRIDE
     const unsigned NUM_LINES;   // number of Lines in each orientation
     dense_set m_support;
-    Line *m_Lx_lines, *m_Rx_lines;
+    Line * m_Lx_lines, * m_Rx_lines;
     mutable dense_set m_set;    // this is a temporary
     mutable Line* m_temp_line;  // this is a temporary
 

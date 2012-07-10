@@ -16,8 +16,6 @@ typedef int Block4x4W[ARG_STRIDE * ARG_STRIDE];
 // a tight binary function in 4x4 word blocks
 class dense_bin_fun
 {
-    typedef dense_bin_fun MyType;
-
     // data, in blocks
     const unsigned N,M; // item,block dimension
     Block4x4W* const m_blocks;

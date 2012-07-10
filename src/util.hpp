@@ -43,6 +43,16 @@ typedef uint32_t oid_t;
 template<class T> inline T min (T x, T y) { return (x < y) ? x : y; }
 template<class T> inline T max (T x, T y) { return (x > y) ? x : y; }
 
+inline size_t random_int (size_t LB, size_t UB)
+{
+    return LB + lrand48() % (UB - LB);
+}
+
+inline bool random_bool (double prob)
+{
+    return drand48() < prob;
+}
+
 // this is used with template specialization
 template <class T> inline const char* nameof () { return "???"; }
 
@@ -119,6 +129,10 @@ public:
 #define POMAGMA_ASSERT3(cond, mess) POMAGMA_ASSERT_(3, cond, mess)
 #define POMAGMA_ASSERT4(cond, mess) POMAGMA_ASSERT_(4, cond, mess)
 #define POMAGMA_ASSERT5(cond, mess) POMAGMA_ASSERT_(5, cond, mess)
+
+#define POMAGMA_ASSERT_EQUAL(x, y) \
+    POMAGMA_ASSERT((x) == (y), \
+            "expected " #x " == " #y "; actual " << (x) << " vs " << (y))
 
 } // namespace pomagma
 

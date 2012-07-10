@@ -8,8 +8,8 @@ namespace pomagma
 
 // WARNING zero/null items are not allowed
 
-typedef uint32_t Line;
-enum { LINE_STRIDE = 32 }; // TODO switch to 64 bit
+typedef uint32_t Line; // TODO switch to uint64_t
+enum { LINE_STRIDE = 8 * sizeof(Line) };
 const Line LINE_MASK = 0x1F;
 
 // proxy class for single bit
@@ -58,8 +58,6 @@ public:
 // basically a bitfield
 class dense_set
 {
-    typedef dense_set MyType;
-
     // data, in lines
     const size_t N, M; // number of items,lines
     Line * m_lines;
@@ -171,14 +169,16 @@ public:
         // dereferencing
     private:
         void _deref_assert () const
-        { POMAGMA_ASSERT5(not done(), "dereferenced done dense_set::iter"); }
+        {
+            POMAGMA_ASSERT5(not done(), "dereferenced done dense_set::iter");
+        }
     public:
         size_t         operator *  () const { _deref_assert(); return m_i; }
         const size_t * operator -> () const { _deref_assert(); return & m_i; }
 
         // constructors
         // WARNING careful using these
-        iterator (const dense_set * set) : m_set(*set) {}
+        iterator (const dense_set * set) : m_set(*set) {} // WTF no begin?
         iterator (const dense_set & set) : m_set(set) { begin(); }
     };
     iterator begin () const { iterator i(this); i.begin(); return i; }
@@ -189,14 +189,14 @@ inline bool_ref dense_set::_bit (size_t i)
 {
     POMAGMA_ASSERT5(0 < i and i <= N,
             "dense_set[i] index out of range: " << i);
-    div_t I = div(i,LINE_STRIDE);
+    auto I = div(i,LINE_STRIDE); // either div_t or ldiv_t
     return bool_ref(m_lines + I.quot, I.rem);
 }
 inline bool dense_set::_bit (size_t i) const
 {
     POMAGMA_ASSERT5(0 < i and i <= N,
             "const dense_set[i] index out of range: " << i);
-    div_t I = div(i,LINE_STRIDE);
+    auto I = div(i, LINE_STRIDE); // either div_t or ldiv_t
     return m_lines[I.quot] & (1 << I.rem);
 }
 

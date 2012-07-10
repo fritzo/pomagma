@@ -7,19 +7,19 @@
 namespace pomagma
 {
 
+// WARNING zero/null items are not allowed
 
 enum { DSF_STRIDE = 4 };
 
+// TODO try a redundant row-major + column-major representation
 typedef int Block4x4W[DSF_STRIDE * DSF_STRIDE];
 
 inline int unordered_pair_count (int i) { return (i * (i+1)) / 2; }
 inline void sort (int& i, int& j) { if (j < i) { int k=j; j=i; i=k;}  }
 
-//Note: zero/null items are not allowed
+// a tight binary function in 4x4 word blocks
 class dense_sym_fun
-{//a tight binary function in 4x4 word blocks
-    typedef dense_sym_fun MyType;
-
+{
     //data, in blocks
     const unsigned N,M;     //item,block dimension
     Block4x4W* const m_blocks;

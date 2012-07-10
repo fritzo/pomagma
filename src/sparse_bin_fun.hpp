@@ -12,8 +12,6 @@ namespace pomagma
 
 class sparse_bin_fun
 {
-    typedef sparse_bin_fun MyType;
-
     // data, as hash table
     const unsigned N; // item dimension
     typedef std::pair<size_t,size_t> Key;

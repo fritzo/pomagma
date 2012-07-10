@@ -3,6 +3,7 @@
 
 using pomagma::Log;
 using pomagma::dense_set;
+using pomagma::random_bool;
 
 bool is_even (size_t i, size_t modulus = 2) { return i % modulus == 0; }
 
@@ -43,9 +44,30 @@ void test_even (size_t size)
     evens6.validate();
 }
 
-void test_random (size_t size)
+void test_iterator(size_t size)
 {
-    // TODO
+    dense_set set(size);
+    std::vector<bool> vect(size, false);
+    size_t true_count = 0;
+
+    for (size_t i = 1; i <= size; ++i) {
+        if (random_bool(0.2)) {
+            set.insert(i);
+            vect[i-1] = true;
+            ++true_count;
+        }
+    }
+
+    for (size_t i = 1; i <= size; ++i) {
+        POMAGMA_ASSERT_EQUAL(bool(set(i)), vect[i-1]);
+    }
+
+    size_t count = 0;
+    for (auto i : set) {
+        POMAGMA_ASSERT(vect[i-1], "unexpected item " << i);
+        ++count;
+    }
+    POMAGMA_ASSERT_EQUAL(count, true_count);
 }
 
 int main ()
@@ -54,9 +76,8 @@ int main ()
 
     for (size_t size = 0; size < 100; ++size) {
         test_even(size);
+        test_iterator(size);
     }
-
-    test_random(1 << 10);
 
     return 0;
 }
