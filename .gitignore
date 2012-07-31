@@ -1,21 +1,16 @@
-# Compiled Object files
 *.slo
 *.lo
 *.o
-
-# Compiled Dynamic libraries
+*.pyc
+*.pyo
 *.so
-
-# Compiled Static libraries
 *.lai
 *.la
 *.a
-
-# Compiled tests
 *_test
-
-# Temp files
 *.log
 *.bak
 /build/*
 !/build/test.sh
+/include
+/lib
