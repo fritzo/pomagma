@@ -20,7 +20,7 @@ enable_testing()
 
 if(CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
 install(DIRECTORY src/
-	DESTINATION ${PROJECT_SOURCE_DIR}/include/pomagma
+	DESTINATION ${PROJECT_SOURCE_DIR}/include
 	FILES_MATCHING PATTERN *.hpp)
 endif()
 
