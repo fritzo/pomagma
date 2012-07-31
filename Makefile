@@ -24,6 +24,7 @@ test: build/debug log
 	POMAGMA_LOG_FILE=$(CURDIR)/log/test.log \
 	$(MAKE) -C build/debug test \
 	|| (grep -C3 -i error log/test.log && false)
+	$(MAKE) -C pomagma test
 
 clean: FORCE
 	rm -rf lib include build log
