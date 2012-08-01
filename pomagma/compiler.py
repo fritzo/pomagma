@@ -92,19 +92,25 @@ def add_costs(*args):
     return log_sum_exp(*[LOG_OBJECT_COUNT * a for a in args]) / LOG_OBJECT_COUNT
 
 
-class Iter(object):
-    def __init__(self, var, tests=None, lets=None):
-        tests = tests or []
-        lets = lets or []
+class Strategy(object):
+    def cost(self):
+        return math.log(self._cost()) / math.log(OBJECT_COUNT)
+
+
+class Iter(Strategy):
+    def __init__(self, var, body):
         assert isinstance(var, Variable)
-        assert all(isinstance(t, Test) for t in tests)
-        assert all(isinstance(l, Let) for l in lets)
+        assert isinstance(body, Strategy)
         self.var = var
-        self.tests = tests
-        self.lets = lets
+        self.body = body
+        self.tests = []
+        self.lets = {}
 
     def copy(self):
-        return Iter(self.var, self.tests, self.lets)
+        result = Iter(self.var, self.body)
+        result.tests = self.tests[:]
+        result.lets = self.lets.copy()
+        return result
 
     def add_test(self, test):
         assert isinstance(test, Test)
@@ -112,47 +118,75 @@ class Iter(object):
 
     def add_let(self, let):
         assert isinstance(let, Let)
-        self.lets.append(let)
+        assert let.var not in self.lets
+        self.lets[let.var] = let.expr
 
     def __repr__(self):
-        tests = ['if {}'.format(t.expr) for t in self.tests]
-        lets = ['let {}'.format(l.var) for l in self.lets]
-        return 'for {}:'.format(' '.join([str(self.var)] + tests + lets))
+        tests = ['if {}'.format(t) for t in self.tests]
+        lets = ['let {}'.format(l) for l in self.lets.keys()]
+        return 'for {}: {}'.format(
+                ' '.join([str(self.var)] + tests + lets),
+                self.body)
 
-    def cost(self, callback):
+    def _cost(self):
         test_count = len(self.tests) + len(self.lets)
         logic_cost = LOGIC_COST * test_count
         object_count = OBJECT_COUNT * 0.5 ** test_count
         let_cost = len(self.lets)
-        return logic_cost + object_count * (let_cost + callback)
+        return logic_cost + object_count * (let_cost + self.body._cost())
+
+    def optimize(self):
+        parent = self
+        child = self.body
+        while isinstance(child, Test) or isinstance(child, Let):
+            if self.var in child.expr.get_vars():
+                if isinstance(child, Test):
+                    self.add_test(child)
+                else:
+                    self.add_let(child)
+                child = child.body
+                parent.body = child
+            else:
+                parent = child
+                child = child.body
 
 
-class Let(object):
-    def __init__(self, expr):
+class Let(Strategy):
+    def __init__(self, expr, body):
         assert isinstance(expr, Function)
+        assert isinstance(body, Strategy)
         self.var = Variable(expr)
         self.expr = expr
+        self.body = body
 
     def __repr__(self):
-        return 'let {}:'.format(self.var)
+        return 'let {}: {}'.format(self.var, self.body)
 
-    def cost(self, callback):
-        return 1.0 + 0.5 * callback
+    def _cost(self):
+        return 1.0 + 0.5 * self.body._cost()
+
+    def optimize(self):
+        self.body.optimize()
 
 
-class Test(object):
-    def __init__(self, expr):
+class Test(Strategy):
+    def __init__(self, expr, body):
         assert isinstance(expr, Expression)
+        assert isinstance(body, Strategy)
         self.expr = expr
+        self.body = body
 
     def __repr__(self):
-        return 'if {}:'.format(self.expr)
+        return 'if {}: {}'.format(self.expr, self.body)
 
-    def cost(self, callback):
-        return 1.0 + callback
+    def _cost(self):
+        return 1.0 + self.body._cost()
+
+    def optimize(self):
+        self.body.optimize()
 
 
-class Ensure(object):
+class Ensure(Strategy):
     def __init__(self, expr):
         assert isinstance(expr, Compound)
         self.expr = expr
@@ -160,11 +194,14 @@ class Ensure(object):
     def __repr__(self):
         return 'ensure {}'.format(self.expr)
 
-    def cost(self, callback):
-        return 1.0 + callback
+    def _cost(self):
+        return 1.0
+
+    def optimize(self):
+        pass
 
 
-class Strategy(object):
+class OBSOLETE_Strategy(object):
     def __init__(self, sequence, succedent):
         self.sequence = list(sequence)  # TODO generalize to trees
         self.succedent = Ensure(succedent)
@@ -190,18 +227,16 @@ class Strategy(object):
             cost = op.cost(cost)
         return math.log(cost) / math.log(OBJECT_COUNT)
 
-    def optimized(self):
+    def optimize(self):
         '''
         Pull tests into preceding iterators
         '''
         last_iter = None
         sequence = []
-        bound = set()
         for op in self.sequence:
             if isinstance(op, Iter):
                 last_iter = op.copy()
                 sequence.append(last_iter)
-                bound.add(op.var)
             elif isinstance(op, Test):
                 if last_iter and last_iter.var in op.expr.get_vars():
                     last_iter.add_test(op)
@@ -214,7 +249,6 @@ class Strategy(object):
                 else:
                     self.last_iter = None
                     sequence.append(op)
-                bound.add(op.var)
         return Strategy(sequence, self.succedent.expr)
 
 
@@ -279,10 +313,15 @@ class Sequent(object):
     # TODO deal with EQUAL succedent where one side need not exist
     def compile(self):
         free = self.get_vars()
-
-        # HEURISTIC test for constants first
         constants = self.get_constants()
-        pre = map(Let, constants)
+
+        def rank(s):
+            # HEURISTIC test for constants first
+            for c in constants:
+                s = Let(c, s)
+            s.optimize()
+            return s.cost(), s
+
         context = set(constants)
         bound = set(map(Variable, constants))
 
@@ -290,11 +329,10 @@ class Sequent(object):
         for part in self._normalized():
             ranked = []
             for v in free:
-                pre_v = pre + [Iter(v)]
+                rank_v = lambda s: rank(Iter(v, s))
                 bound_v = set_with(bound, v)
-                ranked += list(part._compile(pre_v, context, bound_v))
-            #ranked.sort()
-            print '# minimizing cost over {} versions'.format(len(ranked))
+                ranked += map(rank_v, part._compile(context, bound_v))
+            print '# optimizing over {} versions'.format(len(ranked))
             results.append(min(ranked))
         return results
 
@@ -304,39 +342,39 @@ class Sequent(object):
         bound = atom.get_vars()
         if isinstance(atom, Function):
             bound.add(Variable(atom))
-
-        # HEURISTIC test for constants first
         constants = self.get_constants()
-        pre = map(Test, constants)
+
+        def rank(s):
+            # HEURISTIC test for constants first
+            for c in constants:
+                s = Let(c, s)
+            s.optimize()
+            return s.cost(), s
+
         context |= set(constants)
         bound |= set(map(Variable, constants))
 
         results = []
         for part in self._normalized():
             if atom in part.antecedents:
-                ranked = list(part._compile(pre, context, bound))
-                #ranked.sort()
-                print '# minimizing cost over {} versions'.format(len(ranked))
+                ranked = map(rank, part._compile(context, bound))
+                print '# optimizing over {} versions'.format(len(ranked))
                 results.append(min(ranked))
         return results
 
-    def _compile(self, pre, context, bound):
+    def _compile(self, context, bound):
         assert self._is_normal()
-        free = self.get_vars() - bound
         antecedents = self.antecedents - context
         succedent = self.succedents.copy().pop()
-        for s in iter_compiled(antecedents, bound, free):
-            strategy = Strategy(pre + s, succedent).optimized()
-            yield (strategy.cost(), strategy)
+        return iter_compiled(antecedents, succedent, bound)
 
 
-def iter_compiled(antecedents, bound, free):
-    #print 'DEBUG', list(antecedents), list(bound), list(free)
+def iter_compiled(antecedents, succedent, bound):
+    #print 'DEBUG', list(antecedents), succedent, list(bound)
     assert bound
 
     if not antecedents:
-        assert not free
-        return [[]]
+        return [Ensure(succedent)]
 
     results = []
 
@@ -345,20 +383,18 @@ def iter_compiled(antecedents, bound, free):
         if isinstance(a, Relation):
             if a.get_vars() <= bound:
                 antecedents_a = set_without(antecedents, a)
-                pre = [Test(a)]
-                for s in iter_compiled(antecedents_a, bound, free):
-                    results.append(pre + s)
+                for s in iter_compiled(antecedents_a, succedent, bound):
+                    results.append(Test(a, s))
         else:
             assert isinstance(a, Function)
             if a.get_vars() <= bound and Variable(a) in bound:
                 antecedents_a = set_without(antecedents, a)
-                pre = [Test(a)]
-                for s in iter_compiled(antecedents_a, bound, free):
-                    results.append(pre + s)
-        #if results:
-        #    return results  # HEURISTIC ignore test order
-    if results:
-        return results  # HEURISTIC test eagerly
+                for s in iter_compiled(antecedents_a, succedent, bound):
+                    results.append(Test(a, s))
+        if results:
+            return results  # HEURISTIC ignore test order
+    #if results:
+    #    return results  # HEURISTIC test eagerly
 
     # find & bind variable
     for a in antecedents:
@@ -368,25 +404,21 @@ def iter_compiled(antecedents, bound, free):
                 assert var_a not in bound
                 antecedents_a = set_without(antecedents, a)
                 bound_a = set_with(bound, var_a)
-                free_a = set_without(free, var_a)
-                pre = [Let(a)]
-                for s in iter_compiled(antecedents_a, bound_a, free_a):
-                    results.append(pre + s)
-        #if results:
-        #    return results  # HEURISTIC ignore bind order
-    if results:
-        return results  # HEURISTIC bind eagerly
+                for s in iter_compiled(antecedents_a, succedent, bound_a):
+                    results.append(Let(a, s))
+        if results:
+            return results  # HEURISTIC ignore bind order
+    #if results:
+    #    return results  # HEURISTIC bind eagerly
 
     # iterate forward eagerly
     for a in antecedents:
         # works for both Relation and Function antecedents
         if a.get_vars() & bound:
             for v in a.get_vars() - bound:
-                free_v = set_without(free, v)
                 bound_v = set_with(bound, v)
-                pre = [Iter(v)]
-                for s in iter_compiled(antecedents, bound_v, free_v):
-                    results.append(pre + s)
+                for s in iter_compiled(antecedents, succedent, bound_v):
+                    results.append(Iter(v, s))
     if results:
         return results  # HEURISTIC iterate forward eagerly
 
@@ -395,11 +427,9 @@ def iter_compiled(antecedents, bound, free):
         if isinstance(a, Function):
             if Variable(a) in bound:
                 for v in a.get_vars() - bound:
-                    free_v = set_without(free, v)
                     bound_v = set_with(bound, v)
-                    pre = [Iter(v)]
-                    for s in iter_compiled(antecedents, bound_v, free_v):
-                        results.append(pre + s)
+                    for s in iter_compiled(antecedents, succedent, bound_v):
+                        results.append(Iter(v, s))
 
     return results
 
