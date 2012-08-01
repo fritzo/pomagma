@@ -1,10 +1,11 @@
 import re
 import math
-import itertools
 from pomagma.util import TODO, union, set_with, set_without, log_sum_exp
+
 
 #-----------------------------------------------------------------------------
 # Syntax
+
 
 class Expression:
     def __init__(self, _repr):
@@ -83,18 +84,20 @@ NLESS = lambda x, y: Relation('NLESS', x, y)
 #-----------------------------------------------------------------------------
 # Strategies
 
+
 OBJECT_COUNT = 1e4
 LOGIC_COST = OBJECT_COUNT / 256.0
 LOG_OBJECT_COUNT = math.log(OBJECT_COUNT)
 
 
 def add_costs(*args):
-    return log_sum_exp(*[LOG_OBJECT_COUNT * a for a in args]) / LOG_OBJECT_COUNT
+    return (log_sum_exp(*[LOG_OBJECT_COUNT * a for a in args])
+            / LOG_OBJECT_COUNT)
 
 
 class Strategy(object):
     def cost(self):
-        return math.log(self._cost()) / math.log(OBJECT_COUNT)
+        return math.log(self.op_count()) / LOG_OBJECT_COUNT
 
 
 class Iter(Strategy):
@@ -105,12 +108,6 @@ class Iter(Strategy):
         self.body = body
         self.tests = []
         self.lets = {}
-
-    def copy(self):
-        result = Iter(self.var, self.body)
-        result.tests = self.tests[:]
-        result.lets = self.lets.copy()
-        return result
 
     def add_test(self, test):
         assert isinstance(test, Test)
@@ -128,12 +125,12 @@ class Iter(Strategy):
                 ' '.join([str(self.var)] + tests + lets),
                 self.body)
 
-    def _cost(self):
+    def op_count(self):
         test_count = len(self.tests) + len(self.lets)
         logic_cost = LOGIC_COST * test_count
         object_count = OBJECT_COUNT * 0.5 ** test_count
         let_cost = len(self.lets)
-        return logic_cost + object_count * (let_cost + self.body._cost())
+        return logic_cost + object_count * (let_cost + self.body.op_count())
 
     def optimize(self):
         parent = self
@@ -162,8 +159,8 @@ class Let(Strategy):
     def __repr__(self):
         return 'let {}: {}'.format(self.var, self.body)
 
-    def _cost(self):
-        return 1.0 + 0.5 * self.body._cost()
+    def op_count(self):
+        return 1.0 + 0.5 * self.body.op_count()
 
     def optimize(self):
         self.body.optimize()
@@ -179,8 +176,8 @@ class Test(Strategy):
     def __repr__(self):
         return 'if {}: {}'.format(self.expr, self.body)
 
-    def _cost(self):
-        return 1.0 + self.body._cost()
+    def op_count(self):
+        return 1.0 + self.body.op_count()
 
     def optimize(self):
         self.body.optimize()
@@ -194,62 +191,11 @@ class Ensure(Strategy):
     def __repr__(self):
         return 'ensure {}'.format(self.expr)
 
-    def _cost(self):
+    def op_count(self):
         return 1.0
 
     def optimize(self):
         pass
-
-
-class OBSOLETE_Strategy(object):
-    def __init__(self, sequence, succedent):
-        self.sequence = list(sequence)  # TODO generalize to trees
-        self.succedent = Ensure(succedent)
-        self._str = ' '.join(map(str, self.sequence))
-        self._repr = ' '.join(map(str, self.sequence + [self.succedent]))
-        self._hash = hash(self._repr)
-
-    def __eq__(self, other):
-        return self._repr == other._repr
-
-    def __hash__(self):
-        return self._hash
-
-    def __str__(self):
-        return self._str
-
-    def __repr__(self):
-        return self._repr
-
-    def cost(self):
-        cost = 1.0
-        for op in reversed(self.sequence):
-            cost = op.cost(cost)
-        return math.log(cost) / math.log(OBJECT_COUNT)
-
-    def optimize(self):
-        '''
-        Pull tests into preceding iterators
-        '''
-        last_iter = None
-        sequence = []
-        for op in self.sequence:
-            if isinstance(op, Iter):
-                last_iter = op.copy()
-                sequence.append(last_iter)
-            elif isinstance(op, Test):
-                if last_iter and last_iter.var in op.expr.get_vars():
-                    last_iter.add_test(op)
-                else:
-                    sequence.append(op)
-            else:
-                assert isinstance(op, Let)
-                if last_iter and last_iter.var in op.expr.get_vars():
-                    last_iter.add_let(op)
-                else:
-                    self.last_iter = None
-                    sequence.append(op)
-        return Strategy(sequence, self.succedent.expr)
 
 
 #-----------------------------------------------------------------------------
@@ -271,7 +217,8 @@ class Sequent(object):
             ', '.join(map(str, self.succedents)))
 
     def get_vars(self):
-        return union([e.get_vars() for e in self.antecedents | self.succedents])
+        return union([e.get_vars()
+                      for e in self.antecedents | self.succedents])
 
     def get_constants(self):
         return union([e.get_constants()
@@ -432,6 +379,7 @@ def iter_compiled(antecedents, succedent, bound):
                         results.append(Iter(v, s))
 
     return results
+
 
 class Theory(object):
     def __init__(self, sequents):
