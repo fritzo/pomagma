@@ -37,7 +37,7 @@ class Variable(Expression):
     def get_constants(self):
         return set()
 
-    def get_tests(self):
+    def as_antecedent(self):
         return set()
 
 
@@ -58,14 +58,24 @@ class Compound(Expression):
             assert isinstance(self, Function)
             return set([self])
 
-    def get_atom(self):
+    def as_atom(self):
         return self.__class__(self.name, *map(Variable, self.children))
 
-    def get_tests(self):
-        result = set([self.get_atom()])
-        for c in self.children:
-            result |= c.get_tests()
-        return result
+    def as_antecedent(self):
+        antecedents = union([c.as_antecedent() for c in self.children])
+        antecedents.add(self.as_atom())
+        return antecedents
+
+    def is_antecedent(self):
+        return all(isinstance(c, Variable) for c in self.children)
+
+    def as_succedent(self, bound=set()):
+        antecedents = union([c.as_antecedent() for c in self.children])
+        succedent = self.as_atom()
+        return antecedents, succedent
+
+    def is_succedent(self):
+        return all(isinstance(c, Variable) for c in self.children)
 
 
 class Function(Compound):
@@ -76,7 +86,41 @@ class Relation(Compound):
     pass
 
 
-EQUAL = lambda x, y: Relation('EQUAL', x, y)
+class Equation(Compound):
+    def __init__(self, lhs, rhs):
+        Compound.__init__(self, 'EQUAL', lhs, rhs)
+
+    def as_atom(self):
+        return Equation(*map(Variable, self.children))
+
+    def as_succedent(self, bound=set()):
+        lhs, rhs = self.children
+        antecedents = set()
+        if isinstance(lhs, Function):
+            var = Variable(lhs)
+            if var in bound:
+                antecedents |= lhs.as_antecedent()
+                lhs = var
+            else:
+                antecedents |= union([c.as_antecedent() for c in lhs.children])
+                lhs = lhs.as_atom()
+        if isinstance(rhs, Function):
+            var = Variable(rhs)
+            if var in bound:
+                antecedents |= rhs.as_antecedent()
+                rhs = var
+            else:
+                antecedents |= union([c.as_antecedent() for c in rhs.children])
+                rhs = rhs.as_atom()
+        succedent = Equation(lhs, rhs)
+        return antecedents, succedent
+
+    def is_succedent(self):
+        return all(isinstance(c, Variable) or c.is_succedent()
+                   for c in self.children)
+
+
+EQUAL = lambda x, y: Equation(x, y)
 LESS = lambda x, y: Relation('LESS', x, y)
 NLESS = lambda x, y: Relation('NLESS', x, y)
 
@@ -111,7 +155,7 @@ class Iter(Strategy):
 
     def add_test(self, test):
         assert isinstance(test, Test)
-        self.tests.append(test)
+        self.tests.append(test.expr)
 
     def add_let(self, let):
         assert isinstance(let, Let)
@@ -146,6 +190,7 @@ class Iter(Strategy):
             else:
                 parent = child
                 child = child.body
+        child.optimize()
 
 
 class Let(Strategy):
@@ -192,7 +237,13 @@ class Ensure(Strategy):
         return 'ensure {}'.format(self.expr)
 
     def op_count(self):
-        return 1.0
+        fun_count = 0
+        if isinstance(self.expr, Equation):
+            lhs, rhs = self.expr.children
+            fun_count += 1 if isinstance(lhs, Function) else 0
+            fun_count += 1 if isinstance(rhs, Function) else 0
+
+        return [1.0, 1.0 + 0.5 * 1.0, 2.0 + 0.75 * 1.0][fun_count]
 
     def optimize(self):
         pass
@@ -234,13 +285,15 @@ class Sequent(object):
         '''
         if len(self.succedents) != 1:
             return False
-        for node in self.antecedents | self.succedents:
-            for child in node.children:
-                if isinstance(child, Compound):
-                    return False
+        for expr in self.antecedents:
+            if not expr.is_antecedent():
+                return False
+        for expr in self.succedents:
+            if not expr.is_succedent():
+                return False
         return True
 
-    def _normalized(self):
+    def _normalized(self, bound=set()):
         '''
         Return a list of normalized sequents.
         '''
@@ -248,16 +301,23 @@ class Sequent(object):
             TODO('allow multiple succedents')
         elif len(self.succedents) > 1:
             TODO('allow empty succedents')
-        succedent = self.succedents.copy().pop()
-        succedents = set([succedent.get_atom()])
-        antecedents = union([r.get_tests() for r in self.antecedents] +
-                            [e.get_tests() for e in succedent.children])
-        return [Sequent(antecedents, succedents)]
+        self_succedent = iter(self.succedents).next()
+        antecedents, succedent = self_succedent.as_succedent(bound)
+        for a in self.antecedents:
+            antecedents |= a.as_antecedent()
+        return [Sequent(antecedents, set([succedent]))]
 
     def get_events(self):
-        return union([s.antecedents for s in self._normalized()])
+        events = set()
+        for sequent in self._normalized():
+            events |= sequent.antecedents
+            # HACK to deal with Equation children
+            succedent = iter(sequent.succedents).next()
+            for child in succedent.children:
+                if isinstance(child, Compound):
+                    events.add(child)
+        return events
 
-    # TODO deal with EQUAL succedent where one side need not exist
     def compile(self):
         free = self.get_vars()
         constants = self.get_constants()
@@ -281,6 +341,7 @@ class Sequent(object):
                 ranked += map(rank_v, part._compile(context, bound_v))
             print '# optimizing over {} versions'.format(len(ranked))
             results.append(min(ranked))
+        assert results, 'failed to compile'
         return results
 
     def compile_given(self, atom):
@@ -302,11 +363,12 @@ class Sequent(object):
         bound |= set(map(Variable, constants))
 
         results = []
-        for part in self._normalized():
+        for part in self._normalized(bound):
             if atom in part.antecedents:
                 ranked = map(rank, part._compile(context, bound))
                 print '# optimizing over {} versions'.format(len(ranked))
                 results.append(min(ranked))
+        assert results, 'failed to compile_given: {}'.format(atom)
         return results
 
     def _compile(self, context, bound):
