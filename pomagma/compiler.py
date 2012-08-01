@@ -294,6 +294,7 @@ class Sequent(object):
                 bound_v = set_with(bound, v)
                 ranked += list(part._compile(pre_v, context, bound_v))
             #ranked.sort()
+            print '# minimizing cost over {} versions'.format(len(ranked))
             results.append(min(ranked))
         return results
 
@@ -315,6 +316,7 @@ class Sequent(object):
             if atom in part.antecedents:
                 ranked = list(part._compile(pre, context, bound))
                 #ranked.sort()
+                print '# minimizing cost over {} versions'.format(len(ranked))
                 results.append(min(ranked))
         return results
 
@@ -331,29 +333,34 @@ class Sequent(object):
 def iter_compiled(antecedents, bound, free):
     #print 'DEBUG', list(antecedents), list(bound), list(free)
     assert bound
-    if not (free or antecedents):
-        yield []
-        return
 
-    # HEURISTIC test eagerly
+    if not antecedents:
+        assert not free
+        return [[]]
+
+    results = []
+
+    # conditionals
     for a in antecedents:
         if isinstance(a, Relation):
             if a.get_vars() <= bound:
                 antecedents_a = set_without(antecedents, a)
                 pre = [Test(a)]
                 for s in iter_compiled(antecedents_a, bound, free):
-                    yield pre + s
-                return  # ignore order
+                    results.append(pre + s)
         else:
             assert isinstance(a, Function)
             if a.get_vars() <= bound and Variable(a) in bound:
                 antecedents_a = set_without(antecedents, a)
                 pre = [Test(a)]
                 for s in iter_compiled(antecedents_a, bound, free):
-                    yield pre + s
-                return  # ignore order
+                    results.append(pre + s)
+        #if results:
+        #    return results  # HEURISTIC ignore test order
+    if results:
+        return results  # HEURISTIC test eagerly
 
-    # HEURISTIC bind eagerly
+    # find & bind variable
     for a in antecedents:
         if isinstance(a, Function):
             if a.get_vars() <= bound:
@@ -364,11 +371,13 @@ def iter_compiled(antecedents, bound, free):
                 free_a = set_without(free, var_a)
                 pre = [Let(a)]
                 for s in iter_compiled(antecedents_a, bound_a, free_a):
-                    yield pre + s
-                return  # ignore order
+                    results.append(pre + s)
+        #if results:
+        #    return results  # HEURISTIC ignore bind order
+    if results:
+        return results  # HEURISTIC bind eagerly
 
-    # HEURISTIC iterate forward eagerly
-    forward_iterable = False
+    # iterate forward eagerly
     for a in antecedents:
         # works for both Relation and Function antecedents
         if a.get_vars() & bound:
@@ -377,10 +386,9 @@ def iter_compiled(antecedents, bound, free):
                 bound_v = set_with(bound, v)
                 pre = [Iter(v)]
                 for s in iter_compiled(antecedents, bound_v, free_v):
-                    yield pre + s
-                forward_iterable = True
-    if forward_iterable:
-        return
+                    results.append(pre + s)
+    if results:
+        return results  # HEURISTIC iterate forward eagerly
 
     # iterate backward
     for a in antecedents:
@@ -391,8 +399,9 @@ def iter_compiled(antecedents, bound, free):
                     bound_v = set_with(bound, v)
                     pre = [Iter(v)]
                     for s in iter_compiled(antecedents, bound_v, free_v):
-                        yield pre + s
+                        results.append(pre + s)
 
+    return results
 
 class Theory(object):
     def __init__(self, sequents):
