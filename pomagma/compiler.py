@@ -379,7 +379,8 @@ class Sequent(object):
 
 
 def iter_compiled(antecedents, succedent, bound):
-    #print 'DEBUG', list(antecedents), succedent, list(bound)
+    #print 'DEBUG', list(bound)
+    print 'DEBUG', list(antecedents), '|-', succedent
     assert bound
 
     if not antecedents:
