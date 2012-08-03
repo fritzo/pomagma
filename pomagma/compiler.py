@@ -163,9 +163,9 @@ class Iter(Strategy):
         self.lets[let.var] = let.expr
 
     def __repr__(self):
-        tests = ['if {}'.format(t) for t in self.tests]
-        lets = ['let {}'.format(l) for l in self.lets.keys()]
-        return 'for {}: {}'.format(
+        tests = ['if {0}'.format(t) for t in self.tests]
+        lets = ['let {0}'.format(l) for l in self.lets.keys()]
+        return 'for {0}: {1}'.format(
                 ' '.join([str(self.var)] + tests + lets),
                 self.body)
 
@@ -202,7 +202,7 @@ class Let(Strategy):
         self.body = body
 
     def __repr__(self):
-        return 'let {}: {}'.format(self.var, self.body)
+        return 'let {0}: {1}'.format(self.var, self.body)
 
     def op_count(self):
         return 1.0 + 0.5 * self.body.op_count()
@@ -219,7 +219,7 @@ class Test(Strategy):
         self.body = body
 
     def __repr__(self):
-        return 'if {}: {}'.format(self.expr, self.body)
+        return 'if {0}: {1}'.format(self.expr, self.body)
 
     def op_count(self):
         return 1.0 + self.body.op_count()
@@ -234,7 +234,7 @@ class Ensure(Strategy):
         self.expr = expr
 
     def __repr__(self):
-        return 'ensure {}'.format(self.expr)
+        return 'ensure {0}'.format(self.expr)
 
     def op_count(self):
         fun_count = 0
@@ -263,7 +263,7 @@ class Sequent(object):
         self.succedents = succedents
 
     def __str__(self):
-        return '{} |- {}'.format(
+        return '{0} |- {1}'.format(
             ', '.join(map(str, self.antecedents)),
             ', '.join(map(str, self.succedents)))
 
@@ -339,7 +339,7 @@ class Sequent(object):
                 rank_v = lambda s: rank(Iter(v, s))
                 bound_v = set_with(bound, v)
                 ranked += map(rank_v, part._compile(context, bound_v))
-            print '# optimizing over {} versions'.format(len(ranked))
+            print '# optimizing over {0} versions'.format(len(ranked))
             results.append(min(ranked))
         assert results, 'failed to compile'
         return results
@@ -366,9 +366,9 @@ class Sequent(object):
         for part in self._normalized(bound):
             if atom in part.antecedents:
                 ranked = map(rank, part._compile(context, bound))
-                print '# optimizing over {} versions'.format(len(ranked))
+                print '# optimizing over {0} versions'.format(len(ranked))
                 results.append(min(ranked))
-        assert results, 'failed to compile_given: {}'.format(atom)
+        assert results, 'failed to compile_given: {0}'.format(atom)
         return results
 
     def _compile(self, context, bound):

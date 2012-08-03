@@ -22,21 +22,21 @@ z = Variable('z')
 
 def print_compiles(compiles):
     for cost, strategy in compiles:
-        print '# cost = {}'.format(cost)
+        print '# cost = {0}'.format(cost)
         print re.sub(': ', '\n', repr(strategy))
         print
 
 def _test_sequent(*args):
     sequent = Sequent(*args)
     print '-' * 78
-    print 'Compiling full search: {}'.format(sequent)
+    print 'Compiling full search: {0}'.format(sequent)
     compiles = sequent.compile()
     print_compiles(compiles)
     full_cost = add_costs(*[cost for cost, _ in compiles])
 
     incremental_cost = None
     for event in sequent.get_events():
-        print 'Compiling incremental search given: {}'.format(event)
+        print 'Compiling incremental search given: {0}'.format(event)
         compiles = sequent.compile_given(event)
         print_compiles(compiles)
         if event.children:
