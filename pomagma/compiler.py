@@ -79,11 +79,12 @@ class Compound(Expression):
 
 
 class Function(Compound):
-    def get_vars(self):
-        if self.children:
-            return Compound.get_vars(self)
-        else:
-            return set([Variable(self)])
+    #def get_vars(self):
+    #    if self.children:
+    #        return Compound.get_vars(self)
+    #    else:
+    #        return set([Variable(self)])
+    pass
 
 
 class Relation(Compound):
@@ -195,6 +196,63 @@ class Iter(Strategy):
                 parent = child
                 child = child.body
         child.optimize()
+
+
+class IterInvUnary(Strategy):
+    def __init__(self, fun, body):
+        self.fun = fun.name
+        (self.var,) = fun.children
+        self.body = body
+
+    def __repr__(self):
+        return 'for {0} {1}: {2}'.format(self.fun, self.var, self.body)
+
+    def op_count(self):
+        return 4.0 + 0.5 * self.body.op_count()  # amortized
+
+    def optimize(self):
+        self.body.optimize()
+
+
+class IterInvBinary(Strategy):
+    def __init__(self, fun, body):
+        self.fun = fun.name
+        self.var1, self.var2 = fun.children
+        self.body = body
+
+    def __repr__(self):
+        return 'for {0} {1} {2}: {3}'.format(
+                self.fun, self.var1, self.var2, self.body)
+
+    def op_count(self):
+        return 4.0 + 0.25 * OBJECT_COUNT * self.body.op_count()  # amortized
+
+    def optimize(self):
+        self.body.optimize()
+
+
+class IterInvBinaryRange(Strategy):
+    def __init__(self, fun, fixed, body):
+        self.fun = fun.name
+        self.var1, self.var2 = fun.children
+        assert self.var1 != self.var2
+        assert self.var1 == fixed or self.var2 == fixed
+        self.lhs_fixed = (fixed == self.var1)
+        self.body = body
+
+    def __repr__(self):
+        if self.lhs_fixed:
+            return 'for {0} ({1}) {2}: {3}'.format(
+                    self.fun, self.var1, self.var2, self.body)
+        else:
+            return 'for {0} {1} ({2}): {3}'.format(
+                    self.fun, self.var1, self.var2, self.body)
+
+    def op_count(self):
+        return 4.0 + 0.5 * self.body.op_count()  # amortized
+
+    def optimize(self):
+        self.body.optimize()
 
 
 class Let(Strategy):
@@ -378,7 +436,7 @@ class Sequent(object):
     def _compile(self, context, bound):
         assert self._is_normal()
         antecedents = self.antecedents - context
-        succedent = self.succedents.copy().pop()
+        (succedent,) = list(self.succedents)
         return iter_compiled(antecedents, succedent, bound)
 
 
@@ -424,7 +482,7 @@ def iter_compiled(antecedents, succedent, bound):
     #if results:
     #    return results  # HEURISTIC bind eagerly
 
-    # iterate forward eagerly
+    # iterate forward
     for a in antecedents:
         # works for both Relation and Function antecedents
         if a.get_vars() & bound:
@@ -432,21 +490,35 @@ def iter_compiled(antecedents, succedent, bound):
                 bound_v = set_with(bound, v)
                 for s in iter_compiled(antecedents, succedent, bound_v):
                     results.append(Iter(v, s))
-    if results:
-        return results  # HEURISTIC iterate forward eagerly
 
     # iterate backward
     for a in antecedents:
-        if isinstance(a, Function):
-            if Variable(a) in bound:
-                for v in a.get_vars() - bound:
-                    bound_v = set_with(bound, v)
-                    for s in iter_compiled(antecedents, succedent, bound_v):
-                        results.append(Iter(v, s))
-    if results:
-        return results  # HEURISTIC iterate backward eagerly
+        if isinstance(a, Function) and Variable(a) in bound:
+            a_vars = a.get_vars()
+            a_free = a_vars - bound
+            a_bound = a_vars & bound
+            arity = len(a.children)
+            assert len(a_free) in [0, 1, 2]
+            assert arity in [0, 1, 2]
+            if arity and a_free:
+                bound_v = bound | a_free
+                antecedents_a = antecedents.copy()
+                antecedents_a.remove(a)
+                if arity == 1 and len(a_free) == 1:
+                    for s in iter_compiled(antecedents_a, succedent, bound_v):
+                        results.append(IterInvUnary(a, s))
+                elif arity == 2 and len(a_free) == 1:
+                    for s in iter_compiled(antecedents_a, succedent, bound_v):
+                        (fixed,) = list(a.get_vars() - a_free)
+                        results.append(IterInvBinaryRange(a, fixed, s))
+                elif arity == 2 and len(a_free) == 2:
+                    for s in iter_compiled(antecedents_a, succedent, bound_v):
+                        results.append(IterInvBinary(a, s))
 
-    # iterate anywhere
+    if results:
+        return results  # HEURISTIC iterate locally eagerly
+
+    # iterate anything
     free = union([a.get_vars() for a in antecedents]) - bound
     for v in free:
         bound_v = set_with(bound, v)

@@ -101,11 +101,11 @@ def test_compile_S():
     # for x let APP_S_x
     # for y if APP x y let APP_APP_S_x_y
     # for z if APP y z let APP_APP_APP_S_x_y_z
-    # ensure EQUAL APP_APP_APP_S_x_y_z APP_APP_x_y_APP_y_z
+    # ensure EQUAL APP_APP_APP_S_x_y_z APP_APP_x_z_APP_y_z
     S = Function('S')
     _test_sequent(
         [],
-        [EQUAL(APP(APP(APP(S, x), y), z), APP(APP(x, y), APP(y, z)))])
+        [EQUAL(APP(APP(APP(S, x), y), z), APP(APP(x, z), APP(y, z)))])
 
 def test_compile_Y():
     Y = Function('Y')
