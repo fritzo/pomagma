@@ -79,7 +79,11 @@ class Compound(Expression):
 
 
 class Function(Compound):
-    pass
+    def get_vars(self):
+        if self.children:
+            return Compound.get_vars(self)
+        else:
+            return set([Variable(self)])
 
 
 class Relation(Compound):
@@ -379,8 +383,7 @@ class Sequent(object):
 
 
 def iter_compiled(antecedents, succedent, bound):
-    #print 'DEBUG', list(bound)
-    print 'DEBUG', list(antecedents), '|-', succedent
+    #print 'DEBUG', list(bound), '|', list(antecedents), '|-', succedent
     assert bound
 
     if not antecedents:
@@ -440,13 +443,15 @@ def iter_compiled(antecedents, succedent, bound):
                     bound_v = set_with(bound, v)
                     for s in iter_compiled(antecedents, succedent, bound_v):
                         results.append(Iter(v, s))
+    if results:
+        return results  # HEURISTIC iterate backward eagerly
 
+    # iterate anywhere
+    free = union([a.get_vars() for a in antecedents]) - bound
+    for v in free:
+        bound_v = set_with(bound, v)
+        for s in iter_compiled(antecedents, succedent, bound_v):
+            results.append(Iter(v, s))
+
+    assert results
     return results
-
-
-class Theory(object):
-    def __init__(self, sequents):
-        self.sequents = sequents
-
-    def compile(self):
-        TODO()
