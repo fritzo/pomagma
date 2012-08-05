@@ -20,6 +20,10 @@ x = Variable('x')
 y = Variable('y')
 z = Variable('z')
 
+
+outfile = None
+
+
 def print_compiles(compiles):
     for cost, strategy in compiles:
         print '# cost = {0}'.format(cost)

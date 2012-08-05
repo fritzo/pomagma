@@ -174,6 +174,29 @@ class Iter(Strategy):
                 ' '.join([str(self.var)] + tests + lets),
                 self.body)
 
+    def cpp_lines(self):
+        body = []
+        for let in self.lets:
+            body += let.cpp_lines()
+        body += self.body.cpp_lines()
+        body = ['    ' + line for line in body]
+        if self.tests or self.lets:
+            lines = [
+                'dense_set set(support.object_dim());',
+                'set.set_union({0})'.format(', '.join(sets)),
+                'for (dense_set::iterator iter(set); iter.ok(); iter.next()) {',
+                ] + body + [
+                '}',
+                ]
+        else:
+            lines = [
+                'dense_set set(support.object_dim(), support.get_set());',
+                'for (dense_set::iterator iter(set); iter.ok(); iter.next()) {',
+                ] + body + [
+                '}',
+                ]
+        return lines
+
     def op_count(self):
         test_count = len(self.tests) + len(self.lets)
         logic_cost = LOGIC_COST * test_count
@@ -201,11 +224,24 @@ class Iter(Strategy):
 class IterInvUnary(Strategy):
     def __init__(self, fun, body):
         self.fun = fun.name
+        self.value = str(Variable(fun))
         (self.var,) = fun.children
         self.body = body
 
     def __repr__(self):
         return 'for {0} {1}: {2}'.format(self.fun, self.var, self.body)
+
+    def cpp_lines(self):
+        body = []
+        body.append('oid_t {0} = iter.arg();'.format(self.var))
+        body += self.body.cpp_lines()
+        body = ['    ' + line for line in body]
+        iter = 'unary_function::inverse_iterator iter({0})'.format(self.value)
+        return [
+            'for ({0}; iter.ok(); iter.next()) {'.format(iter),
+            ] + body + [
+            '}',
+            ]
 
     def op_count(self):
         return 4.0 + 0.5 * self.body.op_count()  # amortized
@@ -217,12 +253,26 @@ class IterInvUnary(Strategy):
 class IterInvBinary(Strategy):
     def __init__(self, fun, body):
         self.fun = fun.name
+        self.value = str(Variable(fun))
         self.var1, self.var2 = fun.children
         self.body = body
 
     def __repr__(self):
         return 'for {0} {1} {2}: {3}'.format(
                 self.fun, self.var1, self.var2, self.body)
+
+    def cpp_lines(self):
+        body = []
+        body.append('oid_t {0} = iter.lhs();'.format(self.var1))
+        body.append('oid_t {0} = iter.rhs();'.format(self.var2))
+        body += self.body.cpp_lines()
+        body = ['    ' + line for line in body]
+        iter = 'binary_function::inverse_iterator iter({0})'.format(self.value)
+        return [
+            'for ({0}; iter.ok(); iter.next()) {'.format(iter),
+            ] + body + [
+            '}',
+            ]
 
     def op_count(self):
         return 4.0 + 0.25 * OBJECT_COUNT * self.body.op_count()  # amortized
@@ -234,6 +284,7 @@ class IterInvBinary(Strategy):
 class IterInvBinaryRange(Strategy):
     def __init__(self, fun, fixed, body):
         self.fun = fun.name
+        self.value = str(Variable(fun))
         self.var1, self.var2 = fun.children
         assert self.var1 != self.var2
         assert self.var1 == fixed or self.var2 == fixed
@@ -247,6 +298,26 @@ class IterInvBinaryRange(Strategy):
         else:
             return 'for {0} {1} ({2}): {3}'.format(
                     self.fun, self.var1, self.var2, self.body)
+
+    def cpp_lines(self):
+        body = []
+        if self.lhs_fixed:
+            body.append('oid_t {0} = iter.rhs();'.format(self.var2))
+        else:
+            body.append('oid_t {0} = iter.lhs();'.format(self.var1))
+        body += self.body.cpp_lines()
+        body = ['    ' + line for line in body]
+        if self.lhs_fixed:
+            iter = 'binary_function::inv_range_iterator iter({0}, {1})'.format(
+                    self.value, self.var2)
+        else:
+            iter = 'binary_function::inv_range_iterator iter({0}, {1})'.format(
+                    self.value, self.var1)
+        return [
+            'for ({0}; iter.ok(); iter.next()) {',
+            ] + body + [
+            '}',
+            ]
 
     def op_count(self):
         return 4.0 + 0.5 * self.body.op_count()  # amortized
@@ -266,6 +337,11 @@ class Let(Strategy):
     def __repr__(self):
         return 'let {0}: {1}'.format(self.var, self.body)
 
+    def cpp_lines(self):
+        return [
+            'oid_t {0} = {1};'.format(self.var, self.expr)
+            ] + self.body.cpp_lines()
+
     def op_count(self):
         return 1.0 + 0.5 * self.body.op_count()
 
@@ -283,6 +359,14 @@ class Test(Strategy):
     def __repr__(self):
         return 'if {0}: {1}'.format(self.expr, self.body)
 
+    def cpp_lines(self):
+        body = ['    ' + line for line in self.body.cpp_lines()]
+        return [
+            'if ({0}) {'.format(self.expr)
+            ] + body + [
+            '}',
+            ]
+
     def op_count(self):
         return 1.0 + self.body.op_count()
 
@@ -297,6 +381,9 @@ class Ensure(Strategy):
 
     def __repr__(self):
         return 'ensure {0}'.format(self.expr)
+
+    def cpp_lines(self):
+        return 'TODO ensure({0})'.format(self.expr)
 
     def op_count(self):
         fun_count = 0
