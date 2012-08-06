@@ -5,6 +5,7 @@ from pomagma.compiler import SYMBOL_TABLE, Function, Variable, Sequent
 
 re_bar = re.compile('---+')
 re_padding = re.compile('   +')
+re_comment = re.compile('#.*$')
 
 
 class ParseError(Exception):
@@ -60,7 +61,6 @@ def parse_lines_to_sequents(lines):
         c, concs = get_sections(lines, xrange(lineno + 1, len(lines)), beg, end)
         sequents.append(Sequent(prems, concs))
         blocks.append((p - 1, c, beg, end))
-    print 'DEBUG', blocks
     for line0, line1, beg, end in blocks:
         for lineno in range(line0, line1):
             line = lines[lineno]
@@ -107,4 +107,5 @@ def parse_string_to_expr(string):
 def parse(filename):
     #sys.stderr.write('# parsing {}\n'.format(filename))
     with open(filename) as f:
-        return parse_lines_to_sequents([''] + list(f.readlines()) + [''])
+        lines = [re_comment.sub('', line) for line in f.readlines()]
+    return parse_lines_to_sequents([''] + lines + [''])

@@ -131,6 +131,7 @@ class Equation(Compound):
 EQUAL = lambda x, y: Equation(x, y)
 LESS = lambda x, y: Relation('LESS', x, y)
 NLESS = lambda x, y: Relation('NLESS', x, y)
+OF_TYPE = lambda x, y: Relation('OF_TYPE', x, y)
 
 BINARY_FUNCTIONS = ['APP', 'COMP', 'JOIN']
 UNARY_FUNCTIONS = ['QUOTE']
@@ -139,6 +140,7 @@ SYMBOL_TABLE = {
     'EQUAL': (2, EQUAL),
     'LESS': (2, LESS),
     'NLESS': (2, NLESS),
+    'OF_TYPE': (2, OF_TYPE),
     }
 
 for fun in BINARY_FUNCTIONS:
