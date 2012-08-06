@@ -25,7 +25,8 @@ class Expression:
 class Variable(Expression):
     def __init__(self, name):
         if isinstance(name, str):
-            assert not re.match('[A-Z]', name[-1])
+            assert not re.match('[A-Z_]', name[-1]),\
+                    'Bad variable name: {0}'.format(name)
         else:
             name = re.sub('[(), ]+', '_', repr(name))
         self.name = name
@@ -43,7 +44,8 @@ class Variable(Expression):
 
 class Compound(Expression):
     def __init__(self, name, *children):
-        assert re.match('[A-Z]', name[-1])
+        assert re.match('[A-Z_]', name[-1]),\
+                    'Bad coumpound name: {0}'.format(name)
         self.name = name
         self.children = list(children)
         Expression.__init__(self, ' '.join([name] + map(repr, children)))
@@ -55,7 +57,8 @@ class Compound(Expression):
         if self.children:
             return union([c.get_constants() for c in self.children])
         else:
-            assert isinstance(self, Function)
+            assert isinstance(self, Function),\
+                    'Relation {} has no children'.format(self.name)
             return set([self])
 
     def as_atom(self):
@@ -129,6 +132,23 @@ EQUAL = lambda x, y: Equation(x, y)
 LESS = lambda x, y: Relation('LESS', x, y)
 NLESS = lambda x, y: Relation('NLESS', x, y)
 
+BINARY_FUNCTIONS = ['APP', 'COMP', 'JOIN']
+UNARY_FUNCTIONS = ['QUOTE']
+NULLARY_FUNCTIONS = list('IKFBCWSY_T') + ['AP', 'EVAL', 'QT']
+
+SYMBOL_TABLE = {
+    'EQUAL': (2, EQUAL),
+    'LESS': (2, LESS),
+    'NLESS': (2, NLESS),
+    }
+
+for fun in BINARY_FUNCTIONS:
+    SYMBOL_TABLE[fun] = (2, lambda x, y: Function(fun, x, y))
+for fun in UNARY_FUNCTIONS:
+    SYMBOL_TABLE[fun] = (1, lambda x: Function(fun, x))
+for fun in NULLARY_FUNCTIONS:
+    SYMBOL_TABLE[fun] = (0, lambda: Function(fun))
+
 
 #-----------------------------------------------------------------------------
 # Strategies
@@ -151,20 +171,20 @@ class Strategy(object):
 
 class Iter(Strategy):
     def __init__(self, var, body):
-        assert isinstance(var, Variable)
-        assert isinstance(body, Strategy)
+        assert isinstance(var, Variable), 'Iter var is not a Variable'
+        assert isinstance(body, Strategy), 'Iter body is not a Strategy'
         self.var = var
         self.body = body
         self.tests = []
         self.lets = {}
 
     def add_test(self, test):
-        assert isinstance(test, Test)
+        assert isinstance(test, Test), 'add_test arg is not a Test'
         self.tests.append(test.expr)
 
     def add_let(self, let):
-        assert isinstance(let, Let)
-        assert let.var not in self.lets
+        assert isinstance(let, Let), 'add_let arg is not a Let'
+        assert let.var not in self.lets, 'add_let var is not in Iter.lets'
         self.lets[let.var] = let.expr
 
     def __repr__(self):
