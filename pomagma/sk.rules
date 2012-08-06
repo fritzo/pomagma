@@ -5,6 +5,9 @@ EQUAL APP APP APP S x y z APP APP x y APP y z
 ------------------------
 EQUAL APP EVAL QUOTE x x
 
+                                     LESS x y   LESS x z
+----------------   ---------------   -------------------
+EQUAL x JOIN x x   LESS x JOIN x y     LESS x JOIN y z
 
 LESS x y   LESS y z        LESS x y               LESS f g
 -------------------   --------------------   --------------------

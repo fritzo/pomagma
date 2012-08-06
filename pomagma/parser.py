@@ -1,6 +1,6 @@
 import re
 import sys
-from pomagma.compiler import SYMBOL_TABLE, Variable, Sequent
+from pomagma.compiler import SYMBOL_TABLE, Function, Variable, Sequent
 
 
 re_bar = re.compile('---+')
@@ -30,7 +30,7 @@ def find_bars(lines):
     return bars
 
 
-def _get_sections(lines, linenos, beg, end):
+def get_sections(lines, linenos, beg, end):
     results = []
     for lineno in linenos:
         line = lines[lineno]
@@ -45,32 +45,47 @@ def _get_sections(lines, linenos, beg, end):
                 except Exception as e:
                     raise ParseError('{0}\n{1}'.format(e, line), lineno)
                 results.append(expr)
-            lines[lineno] = line[:beg] + ' ' * (end - beg) + line[end:]
         else:
             break
-    return results
+    return lineno, results
 
 
 def parse_lines_to_sequents(lines):
     lines = (lines)
     bars = find_bars(lines)
     sequents = []
+    blocks = []
     for lineno, beg, end in bars:
-        prems = _get_sections(lines, xrange(lineno - 1, -1, -1), beg, end)
-        concs = _get_sections(lines, xrange(lineno + 1, len(lines)), beg, end)
+        p, prems = get_sections(lines, xrange(lineno - 1, -1, -1), beg, end)
+        c, concs = get_sections(lines, xrange(lineno + 1, len(lines)), beg, end)
         sequents.append(Sequent(prems, concs))
-    for lineno, beg, end in bars:
-        line = lines[lineno]
-        lines[lineno] = line[:beg] + ' ' * (end - beg) + line[end:]
+        blocks.append((p - 1, c, beg, end))
+    print 'DEBUG', blocks
+    for line0, line1, beg, end in blocks:
+        for lineno in range(line0, line1):
+            line = lines[lineno]
+            lines[lineno] = line[:beg] + ' ' * (end - beg) + line[end:]
+        for lineno in range(max(0, line0 - 1), min(len(lines), line1 + 1)):
+            line = lines[lineno]
+            if line[max(0, beg - 3): end + 3].strip():
+                raise ParseError(
+                    'insufficient padding {0}-{1}\n{2}'.format(beg, end, line),
+                    lineno)
     for lineno, line in enumerate(lines):
-        if not line.isspace():
+        if line.strip():
             raise ParseError('text outside of block\n{0}'.format(line), lineno)
     return sequents
 
 
+def default_parser(token):
+    if re.match('[A-Z_]', token[-1]):
+        return 0, lambda: Function(token)
+    else:
+        return 0, lambda: Variable(token)
+
 def parse_tokens_to_expr(tokens):
     head = tokens.pop()
-    arity, parser = SYMBOL_TABLE.get(head, (0, lambda: Variable(head)))
+    arity, parser = SYMBOL_TABLE.get(head, default_parser(head))
     args = [parse_tokens_to_expr(tokens) for _ in xrange(arity)]
     return parser(*args)
 
@@ -84,10 +99,12 @@ def tokenize(string):
 def parse_string_to_expr(string):
     tokens = tokenize(string)
     expr = parse_tokens_to_expr(tokens)
+    if tokens:
+        raise ValueError('trailing tokens: {0} in {1}'.format(tokens, string))
     return expr
 
 
 def parse(filename):
-    sys.stderr.write('# parsing {}\n'.format(filename))
+    #sys.stderr.write('# parsing {}\n'.format(filename))
     with open(filename) as f:
-        return parse_lines_to_sequents(f.readlines())
+        return parse_lines_to_sequents([''] + list(f.readlines()) + [''])

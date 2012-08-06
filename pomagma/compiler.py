@@ -134,7 +134,6 @@ NLESS = lambda x, y: Relation('NLESS', x, y)
 
 BINARY_FUNCTIONS = ['APP', 'COMP', 'JOIN']
 UNARY_FUNCTIONS = ['QUOTE']
-NULLARY_FUNCTIONS = list('IKFBCWSY_T') + ['AP', 'EVAL', 'QT']
 
 SYMBOL_TABLE = {
     'EQUAL': (2, EQUAL),
@@ -146,8 +145,6 @@ for fun in BINARY_FUNCTIONS:
     SYMBOL_TABLE[fun] = (2, lambda x, y: Function(fun, x, y))
 for fun in UNARY_FUNCTIONS:
     SYMBOL_TABLE[fun] = (1, lambda x: Function(fun, x))
-for fun in NULLARY_FUNCTIONS:
-    SYMBOL_TABLE[fun] = (0, lambda: Function(fun))
 
 
 #-----------------------------------------------------------------------------
