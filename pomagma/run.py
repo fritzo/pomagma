@@ -41,12 +41,21 @@ def measure_sequent(sequent):
 @parsable.command
 def measure(*filenames):
     '''
+    Measure complexity of rules in files
     '''
     sequents = []
     for filename in filenames:
         sequents += parser.parse(filename)
     for sequent in sequents:
         measure_sequent(sequent)
+
+
+@parsable.command
+def report(*filenames):
+    '''
+    Make report.html of rule complexity in files
+    '''
+    TODO('write sequents to file, coloring by incremental complexity')
 
 
 if __name__ == '__main__':

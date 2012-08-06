@@ -435,6 +435,19 @@ class Sequent(object):
             ', '.join(map(str, self.antecedents)),
             ', '.join(map(str, self.succedents)))
 
+    def html(self):
+        antecedents = '   '.join(map(str, self.antecedents))
+        succedents = '   '.join(map(str, self.succedents))
+        bar = '&emdash;' * max(len(antecedents), len(succedents))
+        lines = ['<code> <pre>']
+        if antecedents:
+            lines.append(antecedents)
+        lines.append(bar)
+        if succedents:
+            lines.append(succedents)
+        lines.append('</pre> </code>')
+        return '\n'.join(lines)
+
     def get_vars(self):
         return union([e.get_vars()
                       for e in self.antecedents | self.succedents])
