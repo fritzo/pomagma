@@ -11,7 +11,7 @@ namespace pomagma
 // WARNING zero/null items are not allowed
 
 // a tight binary function in 4x4 word blocks
-class dense_bin_fun : noncopyable
+class BinaryFunction : noncopyable
 {
     base_bin_rel m_lines;
     const size_t m_block_dim;
@@ -34,9 +34,9 @@ public:
     dense_set get_Rx_set (oid_t rhs) const { return m_lines.Rx_set(rhs); }
 
     // ctors & dtors
-    dense_bin_fun (const dense_set & support);
-    ~dense_bin_fun ();
-    void move_from (const dense_bin_fun & other); // for growing
+    BinaryFunction (const dense_set & support);
+    ~BinaryFunction ();
+    void move_from (const BinaryFunction & other); // for growing
 
     // function calling
 private:
@@ -83,7 +83,7 @@ public:
     class LLxx_Iter;
 };
 
-inline oid_t & dense_bin_fun::value (oid_t i, oid_t j)
+inline oid_t & BinaryFunction::value (oid_t i, oid_t j)
 {
     POMAGMA_ASSERT_RANGE_(5, i, item_dim());
     POMAGMA_ASSERT_RANGE_(5, j, item_dim());
@@ -92,7 +92,7 @@ inline oid_t & dense_bin_fun::value (oid_t i, oid_t j)
     return _block2value(block, i & BLOCK_POS_MASK, j & BLOCK_POS_MASK);
 }
 
-inline oid_t dense_bin_fun::value (oid_t i, oid_t j) const
+inline oid_t BinaryFunction::value (oid_t i, oid_t j) const
 {
     POMAGMA_ASSERT_RANGE_(5, i, item_dim());
     POMAGMA_ASSERT_RANGE_(5, j, item_dim());
@@ -101,7 +101,7 @@ inline oid_t dense_bin_fun::value (oid_t i, oid_t j) const
     return _block2value(block, i & BLOCK_POS_MASK, j & BLOCK_POS_MASK);
 }
 
-inline void dense_bin_fun::insert (oid_t lhs, oid_t rhs, oid_t val)
+inline void BinaryFunction::insert (oid_t lhs, oid_t rhs, oid_t val)
 {
     POMAGMA_ASSERT5(support().contains(lhs), "unsupported lhs: " << lhs);
     POMAGMA_ASSERT5(support().contains(rhs), "unsupported rhs: " << rhs);
@@ -120,7 +120,7 @@ inline void dense_bin_fun::insert (oid_t lhs, oid_t rhs, oid_t val)
     Rx_bit.one();
 }
 
-inline void dense_bin_fun::remove (oid_t lhs, oid_t rhs)
+inline void BinaryFunction::remove (oid_t lhs, oid_t rhs)
 {
     POMAGMA_ASSERT5(support().contains(lhs), "unsupported lhs: " << lhs);
     POMAGMA_ASSERT5(support().contains(rhs), "unsupported rhs: " << rhs);
@@ -141,9 +141,9 @@ inline void dense_bin_fun::remove (oid_t lhs, oid_t rhs)
 //----------------------------------------------------------------------------
 // Iteration over full table
 
-class dense_bin_fun::lr_iterator : noncopyable
+class BinaryFunction::lr_iterator : noncopyable
 {
-    const dense_bin_fun & m_fun;
+    const BinaryFunction & m_fun;
     oid_t m_lhs;
     dense_set m_rhs_set;
     dense_set::iterator m_rhs_iter;
@@ -151,7 +151,7 @@ class dense_bin_fun::lr_iterator : noncopyable
 public:
 
     // construction
-    lr_iterator (const dense_bin_fun & fun)
+    lr_iterator (const BinaryFunction & fun)
         : m_fun(fun),
           m_lhs(1),
           m_rhs_set(fun.item_dim(), fun.m_lines.Lx(1)),
@@ -204,18 +204,18 @@ public:
 // Iteration over a line
 
 template<bool idx>
-class dense_bin_fun::Iterator : noncopyable
+class BinaryFunction::Iterator : noncopyable
 {
     dense_set m_set;
     dense_set::iterator m_iter;
-    const dense_bin_fun & m_fun;
+    const BinaryFunction & m_fun;
     oid_t m_lhs;
     oid_t m_rhs;
 
 public:
 
     // construction
-    Iterator (const dense_bin_fun * fun)
+    Iterator (const BinaryFunction * fun)
         : m_set(fun->item_dim(), NULL),
           m_iter(m_set, false),
           m_fun(*fun),
@@ -223,7 +223,7 @@ public:
           m_rhs(0)
     {
     }
-    Iterator (const dense_bin_fun * fun, oid_t fixed)
+    Iterator (const BinaryFunction * fun, oid_t fixed)
         : m_set(fun->item_dim(),
                 idx ? fun->m_lines.Rx(fixed)
                     : fun->m_lines.Lx(fixed)),
@@ -262,11 +262,11 @@ public:
 //----------------------------------------------------------------------------
 // Intersection iteration over two lines
 
-class dense_bin_fun::RRxx_Iter : noncopyable
+class BinaryFunction::RRxx_Iter : noncopyable
 {
     dense_set m_set;
     dense_set::iterator m_iter;
-    const dense_bin_fun & m_fun;
+    const BinaryFunction & m_fun;
     oid_t m_lhs;
     oid_t m_rhs1;
     oid_t m_rhs2;
@@ -274,7 +274,7 @@ class dense_bin_fun::RRxx_Iter : noncopyable
 public:
 
     // construction
-    RRxx_Iter (const dense_bin_fun * fun)
+    RRxx_Iter (const BinaryFunction * fun)
         : m_set(fun->item_dim()),
           m_iter(m_set, false),
           m_fun(*fun)
@@ -312,11 +312,11 @@ public:
     }
 };
 
-class dense_bin_fun::LRxx_Iter : noncopyable
+class BinaryFunction::LRxx_Iter : noncopyable
 {
     dense_set m_set;
     dense_set::iterator m_iter;
-    const dense_bin_fun & m_fun;
+    const BinaryFunction & m_fun;
     oid_t m_lhs1;
     oid_t m_rhs2;
     oid_t m_rhs1;
@@ -324,7 +324,7 @@ class dense_bin_fun::LRxx_Iter : noncopyable
 public:
 
     // construction
-    LRxx_Iter (const dense_bin_fun * fun)
+    LRxx_Iter (const BinaryFunction * fun)
         : m_set(fun->item_dim()),
           m_iter(m_set, false),
           m_fun(*fun)
@@ -363,11 +363,11 @@ public:
     }
 };
 
-class dense_bin_fun::LLxx_Iter : noncopyable
+class BinaryFunction::LLxx_Iter : noncopyable
 {
     dense_set           m_set;
     dense_set::iterator m_iter;
-    const dense_bin_fun & m_fun;
+    const BinaryFunction & m_fun;
     oid_t m_lhs1;
     oid_t m_lhs2;
     oid_t m_rhs;
@@ -375,7 +375,7 @@ class dense_bin_fun::LLxx_Iter : noncopyable
 public:
 
     // construction
-    LLxx_Iter (const dense_bin_fun * fun)
+    LLxx_Iter (const BinaryFunction * fun)
         : m_set(fun->item_dim()),
           m_iter(m_set, false),
           m_fun(*fun)

@@ -1,26 +1,26 @@
-#include "dense_bin_rel.hpp"
+#include "binary_relation.hpp"
 #include "aligned_alloc.hpp"
 #include <cstring>
 
 namespace pomagma
 {
 
-dense_bin_rel::dense_bin_rel (const dense_set & support)
+BinaryRelation::BinaryRelation (const dense_set & support)
     : m_lines(support)
 {
-    POMAGMA_DEBUG("creating dense_bin_rel with "
+    POMAGMA_DEBUG("creating BinaryRelation with "
             << round_word_dim() << " words");
 }
 
-dense_bin_rel::~dense_bin_rel ()
+BinaryRelation::~BinaryRelation ()
 {
 }
 
-void dense_bin_rel::move_from (
-        const dense_bin_rel & other,
+void BinaryRelation::move_from (
+        const BinaryRelation & other,
         const oid_t * new2old)
 {
-    POMAGMA_DEBUG("Copying dense_bin_rel");
+    POMAGMA_DEBUG("Copying BinaryRelation");
 
     if (POMAGMA_DEBUG_LEVEL >= 1) other.validate();
 
@@ -53,7 +53,7 @@ void dense_bin_rel::move_from (
 // Diagnostics
 
 // supa-slow, try not to use
-size_t dense_bin_rel::count_pairs () const
+size_t BinaryRelation::count_pairs () const
 {
     size_t result = 0;
     for (dense_set::iterator i(support()); i.ok(); i.next()) {
@@ -62,9 +62,9 @@ size_t dense_bin_rel::count_pairs () const
     return result;
 }
 
-void dense_bin_rel::validate () const
+void BinaryRelation::validate () const
 {
-    POMAGMA_DEBUG("Validating dense_bin_rel");
+    POMAGMA_DEBUG("Validating BinaryRelation");
 
     support().validate();
     m_lines.validate();
@@ -103,9 +103,9 @@ void dense_bin_rel::validate () const
             << num_pairs << " should be " << true_size);
 }
 
-void dense_bin_rel::validate_disjoint (const dense_bin_rel & other) const
+void BinaryRelation::validate_disjoint (const BinaryRelation & other) const
 {
-    POMAGMA_DEBUG("Validating disjoint pair of dense_bin_rels");
+    POMAGMA_DEBUG("Validating disjoint pair of BinaryRelations");
 
     // validate supports agree
     POMAGMA_ASSERT_EQ(support().item_dim(), other.support().item_dim());
@@ -113,7 +113,7 @@ void dense_bin_rel::validate_disjoint (const dense_bin_rel & other) const
             support().count_items(),
             other.support().count_items());
     POMAGMA_ASSERT(support() == other.support(),
-            "dense_bin_rel supports differ");
+            "BinaryRelation supports differ");
 
     // validate disjointness
     dense_set this_set(item_dim(), NULL);
@@ -122,11 +122,11 @@ void dense_bin_rel::validate_disjoint (const dense_bin_rel & other) const
         this_set.init(m_lines.Lx(*i));
         other_set.init(other.m_lines.Lx(*i));
         POMAGMA_ASSERT(this_set.disjoint(other_set),
-                "dense_bin_rels intersect at row " << *i);
+                "BinaryRelations intersect at row " << *i);
     }
 }
 
-void dense_bin_rel::print_table (size_t n) const
+void BinaryRelation::print_table (size_t n) const
 {
     if (n == 0) n = item_dim();
     for (oid_t i = 1; i <= n; ++i) {
@@ -141,7 +141,7 @@ void dense_bin_rel::print_table (size_t n) const
 //----------------------------------------------------------------------------
 // Operations
 
-void dense_bin_rel::remove_Lx (const dense_set & is, oid_t j)
+void BinaryRelation::remove_Lx (const dense_set & is, oid_t j)
 {
     // slower version
     //for (dense_set::iterator i(is); i.ok(); i.next()) {
@@ -157,7 +157,7 @@ void dense_bin_rel::remove_Lx (const dense_set & is, oid_t j)
     }
 }
 
-void dense_bin_rel::remove_Rx (oid_t i, const dense_set& js)
+void BinaryRelation::remove_Rx (oid_t i, const dense_set& js)
 {
     // slower version
     //for (dense_set::iterator j(js); j.ok(); j.next()) {
@@ -173,7 +173,7 @@ void dense_bin_rel::remove_Rx (oid_t i, const dense_set& js)
     }
 }
 
-void dense_bin_rel::remove (oid_t i)
+void BinaryRelation::remove (oid_t i)
 {
     dense_set set(item_dim(), NULL);
 
@@ -188,7 +188,7 @@ void dense_bin_rel::remove (oid_t i)
     set.zero();
 }
 
-void dense_bin_rel::ensure_inserted (
+void BinaryRelation::ensure_inserted (
         oid_t i,
         const dense_set & js,
         void (*change)(oid_t, oid_t))
@@ -203,7 +203,7 @@ void dense_bin_rel::ensure_inserted (
     }
 }
 
-void dense_bin_rel::ensure_inserted (
+void BinaryRelation::ensure_inserted (
         const dense_set & is,
         oid_t j,
         void (*change)(oid_t, oid_t))
@@ -219,12 +219,12 @@ void dense_bin_rel::ensure_inserted (
 }
 
 // policy: call move_to if i~k but not j~k
-void dense_bin_rel::merge (
+void BinaryRelation::merge (
         oid_t i, // dep
         oid_t j, // rep
         void (*move_to)(oid_t, oid_t)) // typically enforce_
 {
-    POMAGMA_ASSERT4(j != i, "dense_bin_rel tried to merge item with self");
+    POMAGMA_ASSERT4(j != i, "BinaryRelation tried to merge item with self");
 
     dense_set diff(item_dim());
     dense_set rep(item_dim(), NULL);
@@ -265,16 +265,16 @@ inline void safe_fwrite (const void * ptr, size_t size, size_t count, FILE * fil
     POMAGMA_ASSERT(written == count, "fwrite failed");
 }
 
-oid_t dense_bin_rel::data_size () const
+oid_t BinaryRelation::data_size () const
 {
     return 2 * sizeof(Word) * data_size_words();
 }
-void dense_bin_rel::write_to_file (FILE * file)
+void BinaryRelation::write_to_file (FILE * file)
 {
     safe_fwrite(m_lines.Lx(), sizeof(Word), data_size_words(), file);
     safe_fwrite(m_lines.Rx(), sizeof(Word), data_size_words(), file);
 }
-void dense_bin_rel::read_from_file (FILE * file)
+void BinaryRelation::read_from_file (FILE * file)
 {
     // WARNING assumes support is full
     safe_fread(m_lines.Lx(), sizeof(Word), data_size_words(), file);
@@ -282,7 +282,7 @@ void dense_bin_rel::read_from_file (FILE * file)
 }
 
 // iteration
-void dense_bin_rel::iterator::_find_rhs ()
+void BinaryRelation::iterator::_find_rhs ()
 {
     while (m_lhs.ok()) {
         m_rhs_set.init(m_rel.m_lines.Lx(*m_lhs));
@@ -291,7 +291,7 @@ void dense_bin_rel::iterator::_find_rhs ()
             _update_rhs();
             _update_lhs();
             POMAGMA_ASSERT5(m_rel.contains(m_pos),
-                    "dense_bin_rel::iterator landed outside of relation: "
+                    "BinaryRelation::iterator landed outside of relation: "
                     << m_pos.lhs << "," << m_pos.rhs);
             return;
         }

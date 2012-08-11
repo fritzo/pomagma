@@ -1,4 +1,4 @@
-#include "dense_sym_fun.hpp"
+#include "symmetric_function.hpp"
 #include <vector>
 
 using namespace pomagma;
@@ -14,7 +14,7 @@ void test_basic (oid_t size)
             support.insert(i);
         }
     }
-    dense_sym_fun fun(support);
+    SymmetricFunction fun(support);
     for (dense_set::iterator i(support); i.ok(); i.next()) {
     for (dense_set::iterator j(support); j.ok() and *j <= *i; j.next()) {
         oid_t k = gcd(*i, *j);
@@ -42,7 +42,7 @@ void test_basic (oid_t size)
     }}
 
     POMAGMA_INFO("Checking line iterators");
-    dense_sym_fun::Iterator iter(&fun);
+    SymmetricFunction::Iterator iter(&fun);
     for (dense_set::iterator i(support); i.ok(); i.next()) {
         size_t line_size_i = 0;
         for (iter.begin(*i); iter.ok(); iter.next()) {
