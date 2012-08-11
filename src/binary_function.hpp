@@ -1,5 +1,5 @@
-#ifndef POMAGMA_DENSE_BIN_FUN_HPP
-#define POMAGMA_DENSE_BIN_FUN_HPP
+#ifndef POMAGMA_BINARY_FUNCTION_HPP
+#define POMAGMA_BINARY_FUNCTION_HPP
 
 #include "util.hpp"
 #include "dense_set.hpp"
@@ -415,4 +415,4 @@ public:
 
 } // namespace pomagma
 
-#endif // POMAGMA_DENSE_BIN_FUN_HPP
+#endif // POMAGMA_BINARY_FUNCTION_HPP

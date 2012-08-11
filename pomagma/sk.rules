@@ -12,8 +12,8 @@ EQUAL APP I x x   EQUAL COMP I x x   EQUAL COMP x I x
 ---------------------   ----------------------------
 EQUAL APP APP K x y x   EQUAL COMP APP K x y APP K x
 
-----------------------   -----------------
-EQUAL APP APP KI x y y   EUAL COMP KI x KI
+----------------------   ------------------
+EQUAL APP APP KI x y y   EQUAL COMP KI x KI
 
 ----------------------------
 EQUAL COMP x y APP APP B x y

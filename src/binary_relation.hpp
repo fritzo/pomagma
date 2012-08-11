@@ -1,5 +1,5 @@
-#ifndef POMAGMA_DENSE_BIN_REL_HPP
-#define POMAGMA_DENSE_BIN_REL_HPP
+#ifndef POMAGMA_BINARY_RELATION_HPP
+#define POMAGMA_BINARY_RELATION_HPP
 
 #include "util.hpp"
 #include "dense_set.hpp"
@@ -274,4 +274,4 @@ public:
 
 } // namespace pomagma
 
-#endif // POMAGMA_DENSE_BIN_REL_HPP
+#endif // POMAGMA_BINARY_RELATION_HPP
