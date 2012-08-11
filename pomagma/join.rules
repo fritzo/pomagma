@@ -31,3 +31,21 @@ EQUAL APP W JOIN x y JOIN APP W x APP W y
 
 -----------------------------------------
 EQUAL APP S JOIN x y JOIN APP S x APP S y
+
+# closures
+
+EQUAL APP V x x
+----------------
+EQUAL COMP x x x
+
+EQUAL APP V x x      NLESS I x
+---------------   ---------------
+   LESS I x       NLESS APP V x x
+
+EQUAL COMP x x x   LESS I x
+---------------------------
+      EQUAL APP V x x
+
+   LESS APP f x x       NLESS APP APP V f x x
+---------------------   ---------------------
+EQUAL APP APP V f x x      NLESS APP f x x
