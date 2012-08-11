@@ -133,7 +133,7 @@ LESS = lambda x, y: Relation('LESS', x, y)
 NLESS = lambda x, y: Relation('NLESS', x, y)
 OF_TYPE = lambda x, y: Relation('OF_TYPE', x, y)
 
-BINARY_FUNCTIONS = ['APP', 'COMP', 'JOIN']
+BINARY_FUNCTIONS = ['APP', 'COMP', 'JOIN', 'RAND']
 UNARY_FUNCTIONS = ['QUOTE']
 
 SYMBOL_TABLE = {

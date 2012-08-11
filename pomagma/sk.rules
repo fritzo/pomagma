@@ -1,20 +1,28 @@
 
 # combinators
 
----------------   ---------------------   ----------------------
-EQUAL APP I x x   EQUAL APP APP K x y x   EQUAL APP APP KI x y y
+----------------------------------   -------------------------------------
+EQUAL APP COMP x y z APP x APP y z   EQUAL COMP x COMP y z COMP COMP x y z
+
+---------------   ----------------   ----------------
+EQUAL APP I x x   EQUAL COMP I x x   EQUAL COMP x I x
+
+# TODO are there COMP-versions of the combinator axioms?
+
+---------------------
+EQUAL APP APP K x y x
+
+----------------------
+EQUAL APP APP KI x y y
 
 ----------------------------
 EQUAL COMP x y APP APP B x y
-
-----------------------------------   -------------------------------------
-EQUAL APP COMP x y z APP x APP y z   EQUAL COMP x COMP y z COMP COMP x y z
 
 ---------------------------------------
 EQUAL APP APP APP C x y z APP APP x z y
 
 ---------------------------------------------
-EQUAL APP APP APP S x y z APP APP x y APP y z
+EQUAL APP APP APP S x y z APP APP x z APP y z
 
 ---------------------------------
 EQUAL APP APP W x y APP APP x y y
@@ -22,34 +30,31 @@ EQUAL APP APP W x y APP APP x y y
 ---------------------------
 EQUAL APP Y f APP f APP Y f
 
+# TODO  U, V
+
 
 # order
 
-LESS x y   LESS y z        LESS x y               LESS f g
--------------------   --------------------   --------------------
-    LESS x z          LESS APP f x APP f y   LESS APP f x APP g x
-
 LESS x y   LESS y x
--------------------   --------   --------
-    EQUAL x y         LESS _ x   LESS x T
+-------------------   --------   --------   --------
+    EQUAL x y         LESS x x   LESS _ x   LESS x T
 
-----------------------------
-EQUAL APP APP J x y JOIN x y
+LESS x y   LESS y z   LESS x y   NLESS x z   NLESS x z   LESS y z
+-------------------   --------------------   --------------------
+    LESS x z               NLESS y z              NLESS x y
 
------------------------------------------
-EQUAL APP JOIN f g x JOIN APP f x APP g x
+     LESS x y          NLESS APP f x APP f y
+--------------------   ---------------------
+LESS APP f x APP f y         NLESS x y
 
-                  LESS x y   LESS x z
----------------   -------------------   ----------------
-LESS x JOIN x y     LESS x JOIN y z     EQUAL x JOIN x x
+     LESS f g          NLESS APP f x APP g x
+--------------------   ---------------------
+LESS APP f x APP g x         NLESS f g
 
-# by implementation, also EQUAL JOIN x y JOIN y x
+      LESS x y           NLESS COMP f x COMP f y
+----------------------   -----------------------
+LESS COMP f x COMP f y         NLESS x y
 
-
-# extensional codes
-
-------------------------   ------------------------
-NLESS T APP CODE QUOTE x   NLESS APP CODE QUOTE x _
-
-------------------------   ------------------------------------
-EQUAL x APP EVAL QUOTE x   EQUAL APP APP QAPP x y QUOTE APP x y
+      LESS f g           NLESS COMP f x COMP g x
+----------------------   -----------------------
+LESS COMP f x COMP g x          NLESS f g
