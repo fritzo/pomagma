@@ -8,6 +8,7 @@ add_library(pomagma SHARED
 	carrier.cpp
 	base_bin_rel.cpp
 	binary_relation.cpp
+	nullary_function.cpp
 	unary_function.cpp
 	binary_function.cpp
 	symmetric_function.cpp
@@ -26,6 +27,10 @@ add_test(NAME carrier COMMAND carrier_test)
 add_executable(binary_relation_test binary_relation_test.cpp)
 target_link_libraries(binary_relation_test pomagma tbb)
 add_test(NAME binary_relation COMMAND binary_relation_test)
+
+add_executable(nullary_function_test nullary_function_test.cpp)
+target_link_libraries(nullary_function_test pomagma tbb)
+add_test(NAME nullary_function COMMAND nullary_function_test)
 
 add_executable(unary_function_test unary_function_test.cpp)
 target_link_libraries(unary_function_test pomagma tbb)
