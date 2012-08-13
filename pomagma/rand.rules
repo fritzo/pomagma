@@ -13,13 +13,13 @@ EQUAL COMP RAND f g x RAND COMP f x COMP g x
 --------------------------------------------
 EQUAL RAND x RAND y z RAND RAND x y RAND x z
 
-LESS x z   LESS y z   NLESS RAND x y z   LESS y z
--------------------   ---------------------------
-  LESS RAND x y z             NLESS x z
+LESS x z   LESS y z
+-------------------
+  LESS RAND x y z
 
-LESS x y   LESS x z   NLESS x RAND y z   LESS x z
--------------------   ---------------------------
-  LESS x RAND y z             NLESS x y
+LESS x y   LESS x z
+-------------------
+  LESS x RAND y z
 
 -----------------------------------------
 EQUAL APP K RAND x y RAND APP K x APP K y

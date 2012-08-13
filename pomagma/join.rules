@@ -1,9 +1,9 @@
 # join
 # by implementation, EQUAL JOIN x y JOIN y x
 
-                  LESS x z   LESS y z   NLESS JOIN x y z   LESS y z
----------------   -------------------   ---------------------------
-LESS x JOIN x y     LESS JOIN x y z             NLESS x z
+                  LESS x z   LESS y z
+---------------   -------------------
+LESS x JOIN x y     LESS JOIN x y z
 
 ----------------------------
 EQUAL APP APP J x y JOIN x y
@@ -39,14 +39,14 @@ EQUAL APP S JOIN x y JOIN APP S x APP S y
 #----------------
 #EQUAL COMP x x x
 #
-#EQUAL APP V x x      NLESS I x
-#---------------   ---------------
-#   LESS I x       NLESS APP V x x
+#EQUAL APP V x x
+#---------------
+#   LESS I x
 #
 #EQUAL COMP x x x   LESS I x
 #---------------------------
-#      EQUAL APP V x x
+#      LESS APP V x x
 
-   LESS APP f x x       NLESS APP APP V f x x
----------------------   ---------------------
-EQUAL APP APP V f x x      NLESS APP f x x
+   LESS APP f x x
+--------------------
+LESS APP APP V f x x

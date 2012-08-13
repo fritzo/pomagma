@@ -91,12 +91,26 @@ class Function(Compound):
 
 
 class Relation(Compound):
-    pass
+    def is_positive(self):
+        return self.name[0] != 'N'
+
+    def negated(self):
+        'Returns a disjunction'
+        name = re.sub('^(NN)+', '', 'N{0}'.format(self.name))
+        return set([Relation(name, *self.children)])
 
 
 class Equation(Compound):
     def __init__(self, lhs, rhs):
         Compound.__init__(self, 'EQUAL', lhs, rhs)
+
+    def is_positive(self):
+        return True
+
+    def negated(self):
+        'Returns a disjunction'
+        lhs, rhs = self.children
+        return set([Relation('NLESS', lhs, rhs), Relation('NLESS', rhs, lhs)])
 
     def as_atom(self):
         return Equation(*map(Variable, self.children))
@@ -133,8 +147,8 @@ LESS = lambda x, y: Relation('LESS', x, y)
 NLESS = lambda x, y: Relation('NLESS', x, y)
 OF_TYPE = lambda x, y: Relation('OF_TYPE', x, y)
 
-BINARY_FUNCTIONS = ['APP', 'COMP', 'JOIN', 'RAND']
 UNARY_FUNCTIONS = ['QUOTE']
+BINARY_FUNCTIONS = ['APP', 'COMP', 'JOIN', 'RAND']
 
 SYMBOL_TABLE = {
     'EQUAL': (2, EQUAL),
@@ -143,10 +157,15 @@ SYMBOL_TABLE = {
     'OF_TYPE': (2, OF_TYPE),
     }
 
-for fun in BINARY_FUNCTIONS:
-    SYMBOL_TABLE[fun] = (2, lambda x, y: Function(fun, x, y))
-for fun in UNARY_FUNCTIONS:
-    SYMBOL_TABLE[fun] = (1, lambda x: Function(fun, x))
+def _declare_unary(name):
+    SYMBOL_TABLE[name] = (1, lambda x: Function(name, x))
+for name in UNARY_FUNCTIONS:
+    _declare_unary(name)
+
+def _declare_binary(name):
+    SYMBOL_TABLE[name] = (2, lambda x, y: Function(name, x, y))
+for name in BINARY_FUNCTIONS:
+    _declare_binary(name)
 
 
 #-----------------------------------------------------------------------------
@@ -486,7 +505,23 @@ class Sequent(object):
         antecedents, succedent = self_succedent.as_succedent(bound)
         for a in self.antecedents:
             antecedents |= a.as_antecedent()
-        return [Sequent(antecedents, set([succedent]))]
+        result = [Sequent(antecedents, set([succedent]))]
+
+        # close under contrapositive
+        if all([a.is_positive() for a in self.antecedents]):
+            negated_succedents = self_succedent.negated()
+            for disjunct in negated_succedents:
+                antecedents = set_with(self.antecedents, disjunct)
+                for antecedent in self.antecedents:
+                    contrapositive = Sequent(
+                            set_without(antecedents, antecedent),
+                            antecedent.negated())
+                    result += contrapositive._normalized()
+            # TODO eliminate name-permutation duplicated sequents
+            # TODO recognize symmetric functions
+            # TODO recognize injective functions
+        return result
+
 
     def get_events(self):
         events = set()

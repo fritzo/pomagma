@@ -37,22 +37,22 @@ LESS x y   LESS y x
 -------------------   --------   --------   --------
     EQUAL x y         LESS x x   LESS _ x   LESS x T
 
-LESS x y   LESS y z   LESS x y   NLESS x z   NLESS x z   LESS y z
--------------------   --------------------   --------------------
-    LESS x z               NLESS y z              NLESS x y
+LESS x y   LESS y z
+-------------------
+    LESS x z
 
-     LESS x y          NLESS APP f x APP f y
---------------------   ---------------------
-LESS APP f x APP f y         NLESS x y
+     LESS x y
+--------------------
+LESS APP f x APP f y
 
-     LESS f g          NLESS APP f x APP g x
---------------------   ---------------------
-LESS APP f x APP g x         NLESS f g
+     LESS f g
+--------------------
+LESS APP f x APP g x
 
-      LESS x y           NLESS COMP f x COMP f y
-----------------------   -----------------------
-LESS COMP f x COMP f y         NLESS x y
+      LESS x y
+----------------------
+LESS COMP f x COMP f y
 
-      LESS f g           NLESS COMP f x COMP g x
-----------------------   -----------------------
-LESS COMP f x COMP g x          NLESS f g
+      LESS f g
+----------------------
+LESS COMP f x COMP g x
