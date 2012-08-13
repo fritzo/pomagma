@@ -33,26 +33,18 @@ EQUAL APP Y f APP f APP Y f
 
 # order
 
-LESS x y   LESS y x
--------------------   --------   --------   --------
-    EQUAL x y         LESS x x   LESS _ x   LESS x T
+                                 LESS x y   LESS y x   LESS x y   LESS y z
+--------   --------   --------   -------------------   -------------------
+LESS x x   LESS _ x   LESS x T       EQUAL x y             LESS x z
 
-LESS x y   LESS y z
--------------------
-    LESS x z
+     LESS x y               LESS f g
+--------------------   --------------------
+LESS APP f x APP f y   LESS APP f x APP g x
 
-     LESS x y
---------------------
-LESS APP f x APP f y
+      LESS x y                 LESS f g
+----------------------   ----------------------
+LESS COMP f x COMP f y   LESS COMP f x COMP g x
 
-     LESS f g
---------------------
-LESS APP f x APP g x
 
-      LESS x y
-----------------------
-LESS COMP f x COMP f y
 
-      LESS f g
-----------------------
-LESS COMP f x COMP g x
+
