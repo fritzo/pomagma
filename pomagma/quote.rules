@@ -16,6 +16,8 @@ EQUAL APP APP QCOMP x y QUOTE COMP x y
 --------------------------------------
 EQUAL APP APP QJOIN x y QUOTE JOIN x y
 
+# XXX are the following consistent?
+
               LESS x y
 -------------------------------------
 EQUAL APP APP QLESS QUOTE x QUOTE y K

@@ -4,6 +4,9 @@
 ----------------------------   ----------------
 EQUAL RAND x y APP APP R x y   EQUAL x RAND x x
 
+--------------------------------------------
+EQUAL RAND x RAND y z RAND RAND x y RAND x z
+
 -----------------------------------------
 EQUAL APP RAND f g x RAND APP f x APP g x
 

@@ -89,6 +89,8 @@ class Function(Compound):
     #        return set([Variable(self)])
     pass
 
+# TODO SymmetricFunction
+# TODO InjectiveFunction
 
 class Relation(Compound):
     def is_positive(self):

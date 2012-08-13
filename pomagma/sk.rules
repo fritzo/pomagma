@@ -1,19 +1,13 @@
-
 # combinators
 
 ----------------------------------   -------------------------------------
 EQUAL APP COMP x y z APP x APP y z   EQUAL COMP x COMP y z COMP COMP x y z
-
-# TODO are there COMP-versions of all combinator axioms?
 
 ---------------   ----------------   ----------------
 EQUAL APP I x x   EQUAL COMP I x x   EQUAL COMP x I x
 
 ---------------------   ----------------------------
 EQUAL APP APP K x y x   EQUAL COMP APP K x y APP K x
-
-----------------------   ------------------
-EQUAL APP APP KI x y y   EQUAL COMP KI x KI
 
 ----------------------------
 EQUAL COMP x y APP APP B x y
@@ -37,14 +31,10 @@ EQUAL APP Y f APP f APP Y f
 --------   --------   --------   -------------------   -------------------
 LESS x x   LESS _ x   LESS x T       EQUAL x y             LESS x z
 
-     LESS x y               LESS f g
+      LESS x y               LESS f g
 --------------------   --------------------
 LESS APP f x APP f y   LESS APP f x APP g x
 
-      LESS x y                 LESS f g
+       LESS x y                 LESS f g
 ----------------------   ----------------------
 LESS COMP f x COMP f y   LESS COMP f x COMP g x
-
-
-
-
