@@ -498,9 +498,9 @@ class Sequent(object):
         Return a list of normalized sequents.
         '''
         if not self.succedents:
-            TODO('allow multiple succedents')
-        elif len(self.succedents) > 1:
             TODO('allow empty succedents')
+        elif len(self.succedents) > 1:
+            TODO('allow multiple succedents')
         self_succedent = iter(self.succedents).next()
         antecedents, succedent = self_succedent.as_succedent(bound)
         for a in self.antecedents:
@@ -509,14 +509,20 @@ class Sequent(object):
 
         # close under contrapositive
         if all([a.is_positive() for a in self.antecedents]):
-            negated_succedents = self_succedent.negated()
-            for disjunct in negated_succedents:
+            for disjunct in self_succedent.negated():
                 antecedents = set_with(self.antecedents, disjunct)
                 for antecedent in self.antecedents:
-                    contrapositive = Sequent(
-                            set_without(antecedents, antecedent),
-                            antecedent.negated())
-                    result += contrapositive._normalized()
+                    negated_antecedent = antecedent.negated()
+                    for disjunct in negated_antecedent:
+                        neg_neg_antecedents = union(
+                                a.negated()
+                                for a in antecedents
+                                if a is not disjunct)
+                        contrapositive = Sequent(
+                                set_without(antecedents, antecedent) |
+                                neg_neg_antecedents,
+                                set([disjunct]))
+                        result += contrapositive._normalized()
             # TODO eliminate name-permutation duplicated sequents
             # TODO recognize symmetric functions
             # TODO recognize injective functions
@@ -611,7 +617,7 @@ def iter_compiled(antecedents, succedent, bound):
                 for s in iter_compiled(antecedents_a, succedent, bound):
                     results.append(Test(a, s))
         else:
-            assert isinstance(a, Function)
+            assert isinstance(a, Function), a
             if a.get_vars() <= bound and Variable(a) in bound:
                 antecedents_a = set_without(antecedents, a)
                 for s in iter_compiled(antecedents_a, succedent, bound):

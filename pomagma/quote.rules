@@ -1,7 +1,36 @@
 # extensional codes
+# by implementation, QUOTE injects
 
 ------------------------   ------------------------
 NLESS T APP CODE QUOTE x   NLESS APP CODE QUOTE x _
 
-------------------------   ------------------------------------
-EQUAL x APP EVAL QUOTE x   EQUAL APP APP QAPP x y QUOTE APP x y
+---------------------   ---------------------------------
+EQUAL APP E QUOTE x x   EQUAL APP Q QUOTE x QUOTE QUOTE x
+
+------------------------------------
+EQUAL APP APP QAPP x y QUOTE APP x y
+
+--------------------------------------
+EQUAL APP APP QCOMP x y QUOTE COMP x y
+
+--------------------------------------
+EQUAL APP APP QJOIN x y QUOTE JOIN x y
+
+              LESS x y
+-------------------------------------
+EQUAL APP APP QLESS QUOTE x QUOTE y K
+
+                NLESS x y
+-------------------------------------------
+EQUAL APP APP QLESS QUOTE x QUOTE y APP K I
+
+--------------------------------------
+EQUAL APP APP QEQUAL QUOTE x QUOTE x K
+
+                 NLESS x y
+--------------------------------------------
+EQUAL APP APP QEQUAL QUOTE x QUOTE y APP K I
+
+                 NLESS y x
+--------------------------------------------
+EQUAL APP APP QEQUAL QUOTE x QUOTE y APP K I
