@@ -2,7 +2,7 @@
 #define POMAGMA_INVERSE_BIN_FUN_HPP
 
 #include "util.hpp"
-#include "dense_bin_fun.hpp"
+#include "binary_function.hpp"
 #include <vector>
 #include <utility>
 #include <tbb/concurrent_unordered_map.h>
@@ -70,7 +70,7 @@ public:
 
     void insert (oid_t lhs, oid_t rhs, oid_t val);
     void unsafe_remove (oid_t lhs, oid_t rhs, oid_t val);
-    void validate (dense_bin_fun & fun);
+    void validate (BinaryFunction & fun);
 
     class Vlr_Iterator;
 

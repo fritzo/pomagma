@@ -1,5 +1,5 @@
-#ifndef POMAGMA_DENSE_SYM_FUN_HPP
-#define POMAGMA_DENSE_SYM_FUN_HPP
+#ifndef POMAGMA_SYMMETRIC_FUNCTION_HPP
+#define POMAGMA_SYMMETRIC_FUNCTION_HPP
 
 #include "util.hpp"
 #include "dense_set.hpp"
@@ -13,7 +13,7 @@ namespace pomagma
 inline size_t unordered_pair_count (size_t i) { return (i * (i + 1)) / 2; }
 
 // a tight symmetric binary function in 4x4 word blocks
-class dense_sym_fun : noncopyable
+class SymmetricFunction : noncopyable
 {
     base_sym_rel m_lines;
     const size_t m_block_dim;
@@ -37,9 +37,9 @@ public:
     dense_set get_Lx_set (oid_t lhs) const { return m_lines.Lx_set(lhs); }
 
     // ctors & dtors
-    dense_sym_fun (const dense_set & support);
-    ~dense_sym_fun ();
-    void move_from (const dense_sym_fun & other); // for growing
+    SymmetricFunction (const dense_set & support);
+    ~SymmetricFunction ();
+    void move_from (const SymmetricFunction & other); // for growing
 
     // function calling
 private:
@@ -82,7 +82,7 @@ public:
     class LLxx_Iter;
 };
 
-inline oid_t & dense_sym_fun::value (oid_t i, oid_t j)
+inline oid_t & SymmetricFunction::value (oid_t i, oid_t j)
 {
     sort(i, j);
 
@@ -93,7 +93,7 @@ inline oid_t & dense_sym_fun::value (oid_t i, oid_t j)
     return _block2value(block, i & BLOCK_POS_MASK, j & BLOCK_POS_MASK);
 }
 
-inline oid_t dense_sym_fun::value (oid_t i, oid_t j) const
+inline oid_t SymmetricFunction::value (oid_t i, oid_t j) const
 {
     sort(i, j);
 
@@ -104,7 +104,7 @@ inline oid_t dense_sym_fun::value (oid_t i, oid_t j) const
     return _block2value(block, i & BLOCK_POS_MASK, j & BLOCK_POS_MASK);
 }
 
-inline void dense_sym_fun::insert (oid_t lhs, oid_t rhs, oid_t val)
+inline void SymmetricFunction::insert (oid_t lhs, oid_t rhs, oid_t val)
 {
     POMAGMA_ASSERT5(support().contains(lhs), "unsupported lhs: " << lhs);
     POMAGMA_ASSERT5(support().contains(rhs), "unsupported rhs: " << rhs);
@@ -125,7 +125,7 @@ inline void dense_sym_fun::insert (oid_t lhs, oid_t rhs, oid_t val)
     Rx_bit.one();
 }
 
-inline void dense_sym_fun::remove (oid_t lhs, oid_t rhs)
+inline void SymmetricFunction::remove (oid_t lhs, oid_t rhs)
 {
     POMAGMA_ASSERT5(support().contains(lhs), "unsupported lhs: " << lhs);
     POMAGMA_ASSERT5(support().contains(rhs), "unsupported rhs: " << rhs);
@@ -148,25 +148,25 @@ inline void dense_sym_fun::remove (oid_t lhs, oid_t rhs)
 //----------------------------------------------------------------------------
 // Iteration over a line
 
-class dense_sym_fun::Iterator : noncopyable
+class SymmetricFunction::Iterator : noncopyable
 {
     dense_set m_set;
     dense_set::iterator m_iter;
-    const dense_sym_fun * m_fun;
+    const SymmetricFunction * m_fun;
     oid_t m_fixed;
     oid_t m_moving;
 
 public:
 
     // construction
-    Iterator (const dense_sym_fun * fun)
+    Iterator (const SymmetricFunction * fun)
         : m_set(fun->item_dim(), NULL),
           m_iter(m_set, false),
           m_fun(fun),
           m_fixed(0),
           m_moving(0)
     {}
-    Iterator (const dense_sym_fun * fun, oid_t fixed)
+    Iterator (const SymmetricFunction * fun, oid_t fixed)
         : m_set(fun->item_dim(), fun->m_lines.Lx(fixed)),
           m_iter(m_set, false),
           m_fun(fun),
@@ -209,11 +209,11 @@ public:
 //------------------------------------------------------------------------
 // Intersection iteration over 2 lines
 
-class dense_sym_fun::LLxx_Iter : noncopyable
+class SymmetricFunction::LLxx_Iter : noncopyable
 {
     dense_set m_set;
     dense_set::iterator m_iter;
-    const dense_sym_fun * m_fun;
+    const SymmetricFunction * m_fun;
     oid_t m_fixed1;
     oid_t m_fixed2;
     oid_t m_moving;
@@ -221,7 +221,7 @@ class dense_sym_fun::LLxx_Iter : noncopyable
 public:
 
     // construction
-    LLxx_Iter (const dense_sym_fun* fun)
+    LLxx_Iter (const SymmetricFunction* fun)
         : m_set(fun->item_dim()),
           m_iter(m_set, false),
           m_fun(fun)
@@ -255,4 +255,4 @@ public:
 
 } // namespace pomagma
 
-#endif // POMAGMA_DENSE_SYM_FUN_HPP
+#endif // POMAGMA_SYMMETRIC_FUNCTION_HPP

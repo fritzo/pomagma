@@ -1,6 +1,6 @@
 #include "util.hpp"
 #include "inverse_bin_fun.hpp"
-#include "dense_bin_fun.hpp"
+#include "binary_function.hpp"
 
 using namespace pomagma;
 
@@ -13,7 +13,7 @@ void test_random (size_t size, float fill = 0.3)
             support.insert(i);
         }
     }
-    dense_bin_fun fun(support);
+    BinaryFunction fun(support);
     inverse_bin_fun inv(support);
 
     POMAGMA_INFO("testing insertion");

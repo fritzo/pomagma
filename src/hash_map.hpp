@@ -10,6 +10,7 @@ namespace std
 template <>
 struct hash<pair<uint32_t, uint32_t> >
 {
+    // TODO should __x be a const references?
     uint32_t operator()(pair<uint32_t, uint32_t> __x) const
     {
         uint32_t x = __x.first;
