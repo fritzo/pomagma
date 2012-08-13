@@ -1,5 +1,5 @@
-#ifndef POMAGMA_DENSE_BIN_REL_HPP
-#define POMAGMA_DENSE_BIN_REL_HPP
+#ifndef POMAGMA_BINARY_RELATION_HPP
+#define POMAGMA_BINARY_RELATION_HPP
 
 #include "util.hpp"
 #include "dense_set.hpp"
@@ -11,7 +11,7 @@ namespace pomagma
 // WARNING zero/null items are not allowed
 
 // a pair of dense sets of dense sets, one col-row, one row-col
-class dense_bin_rel : noncopyable
+class BinaryRelation : noncopyable
 {
     struct Pos
     {
@@ -44,15 +44,15 @@ public:
     dense_set get_Rx_set (oid_t rhs) const { return m_lines.Rx_set(rhs); }
 
     // ctors & dtors
-    dense_bin_rel (const dense_set & support);
-    ~dense_bin_rel ();
-    void move_from (const dense_bin_rel & other, const oid_t* new2old=NULL);
+    BinaryRelation (const dense_set & support);
+    ~BinaryRelation ();
+    void move_from (const BinaryRelation & other, const oid_t* new2old=NULL);
 
     // attributes
     const dense_set & support () const { return m_lines.support(); }
     size_t count_pairs () const; // supa-slow, try not to use
     void validate () const;
-    void validate_disjoint (const dense_bin_rel & other) const;
+    void validate_disjoint (const BinaryRelation & other) const;
     void print_table (size_t n = 0) const;
 
     // element operations
@@ -117,7 +117,7 @@ public:
 // Operations
 
 // returns whether there was a change
-inline bool dense_bin_rel::ensure_inserted_Lx (oid_t i, oid_t j)
+inline bool BinaryRelation::ensure_inserted_Lx (oid_t i, oid_t j)
 {
     bool_ref contained = m_lines.Lx(i, j);
     if (contained) return false;
@@ -127,7 +127,7 @@ inline bool dense_bin_rel::ensure_inserted_Lx (oid_t i, oid_t j)
 }
 
 // returns whether there was a change
-inline bool dense_bin_rel::ensure_inserted_Rx (oid_t i, oid_t j)
+inline bool BinaryRelation::ensure_inserted_Rx (oid_t i, oid_t j)
 {
     bool_ref contained = m_lines.Rx(i, j);
     if (contained) return false;
@@ -139,18 +139,18 @@ inline bool dense_bin_rel::ensure_inserted_Rx (oid_t i, oid_t j)
 //----------------------------------------------------------------------------
 // Iteration, always LR
 
-class dense_bin_rel::iterator : noncopyable
+class BinaryRelation::iterator : noncopyable
 {
     dense_set::iterator m_lhs;
     dense_set::iterator m_rhs;
     dense_set m_rhs_set;
-    const dense_bin_rel & m_rel;
+    const BinaryRelation & m_rel;
     Pos m_pos;
 
 public:
 
     // construction
-    iterator (const dense_bin_rel * rel)
+    iterator (const BinaryRelation * rel)
         : m_lhs(rel->support(), false),
           m_rhs(m_rhs_set, false),
           m_rhs_set(rel->item_dim(), NULL),
@@ -199,19 +199,19 @@ public:
 
 enum Direction { LHS_FIXED=true, RHS_FIXED=false };
 template<bool dir>
-class dense_bin_rel::Iterator : noncopyable
+class BinaryRelation::Iterator : noncopyable
 {
 protected:
     dense_set m_moving_set;
     dense_set::iterator m_moving;
     oid_t m_fixed;
     Pos m_pos;
-    const dense_bin_rel & m_rel;
+    const BinaryRelation & m_rel;
 
 public:
 
     // construction
-    Iterator (oid_t fixed, const dense_bin_rel * rel)
+    Iterator (oid_t fixed, const BinaryRelation * rel)
         : m_moving_set(rel->item_dim(), dir ? rel->m_lines.Lx(fixed)
                                             : rel->m_lines.Rx(fixed)),
           m_moving(m_moving_set, false),
@@ -222,7 +222,7 @@ public:
                 "br::Iterator's fixed pos is unsupported");
         begin();
     }
-    Iterator (const dense_bin_rel * rel)
+    Iterator (const BinaryRelation * rel)
         : m_moving_set(rel->item_dim(), NULL),
           m_moving(m_moving_set, false),
           m_fixed(0),
@@ -259,7 +259,7 @@ public:
 private:
     void _deref_assert () const
     {
-        POMAGMA_ASSERT5(ok(), "dereferenced done dense_bin_rel'n::iter");
+        POMAGMA_ASSERT5(ok(), "dereferenced done BinaryRelation'n::iter");
     }
 public:
     const Pos & operator *  () const { _deref_assert(); return m_pos; }
@@ -274,4 +274,4 @@ public:
 
 } // namespace pomagma
 
-#endif // POMAGMA_DENSE_BIN_REL_HPP
+#endif // POMAGMA_BINARY_RELATION_HPP

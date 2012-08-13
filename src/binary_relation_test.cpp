@@ -1,4 +1,4 @@
-#include "dense_bin_rel.hpp"
+#include "binary_relation.hpp"
 #include <utility>
 
 using namespace pomagma;
@@ -13,18 +13,18 @@ void move_to (oid_t i __attribute__((unused)), oid_t j __attribute__((unused)))
 bool br_test1 (oid_t i, oid_t j) { return i and j and i % 61u <= j % 31u; }
 bool br_test2 (oid_t i, oid_t j) { return i and j and i % 61u == j % 31u; }
 
-typedef pomagma::dense_bin_rel dense_bin_rel;
+typedef pomagma::BinaryRelation BinaryRelation;
 
-void test_dense_bin_rel (
+void test_BinaryRelation (
         size_t size,
         bool test1(oid_t, oid_t),
         bool test2(oid_t, oid_t))
 {
-    POMAGMA_INFO("Testing dense_bin_rel");
+    POMAGMA_INFO("Testing BinaryRelation");
 
-    POMAGMA_INFO("creating dense_bin_rel of size " << size);
+    POMAGMA_INFO("creating BinaryRelation of size " << size);
     dense_set support(size);
-    dense_bin_rel rel(support);
+    BinaryRelation rel(support);
 
     POMAGMA_INFO("testing position insertion");
     size_t item_count = 0;
@@ -63,7 +63,7 @@ void test_dense_bin_rel (
 
     POMAGMA_INFO("testing table iterator");
     size_t num_pairs_seen = 0;
-    for (dense_bin_rel::iterator iter(&rel); iter.ok(); iter.next()) {
+    for (BinaryRelation::iterator iter(&rel); iter.ok(); iter.next()) {
         ++num_pairs_seen;
     }
     POMAGMA_INFO("  iterated over "
@@ -111,7 +111,7 @@ void test_dense_bin_rel (
 
     POMAGMA_INFO("testing table iterator again");
     num_pairs_seen = 0;
-    for (dense_bin_rel::iterator iter(&rel); iter.ok(); iter.next()) {
+    for (BinaryRelation::iterator iter(&rel); iter.ok(); iter.next()) {
         ++num_pairs_seen;
     }
     num_pairs = rel.count_pairs();
@@ -126,7 +126,7 @@ void test_dense_bin_rel (
     item_count = rel.support().count_items();
     for (dense_set::iterator i(support); i.ok(); i.next()) {
         ++seen_item_count;
-        dense_bin_rel::Iterator<dense_bin_rel::LHS_FIXED> iter(*i, &rel);
+        BinaryRelation::Iterator<BinaryRelation::LHS_FIXED> iter(*i, &rel);
         for (iter.begin(); iter.ok(); iter.next()) {
             ++num_pairs;
         }
@@ -144,7 +144,7 @@ void test_dense_bin_rel (
     for (size_t i = 1; i <= size; ++i) {
         if (not rel.supports(i)) continue;
         ++seen_item_count;
-        dense_bin_rel::Iterator<dense_bin_rel::RHS_FIXED> iter(i, &rel);
+        BinaryRelation::Iterator<BinaryRelation::RHS_FIXED> iter(i, &rel);
         for (iter.begin(); iter.ok(); iter.next()) {
             ++num_pairs;
         }
@@ -161,7 +161,7 @@ int main ()
     Log::title("Running Binary Relation Test");
 
     for (size_t i = 0; i < 4; ++i) {
-        test_dense_bin_rel(i + (1 << 9), br_test1, br_test2);
+        test_BinaryRelation(i + (1 << 9), br_test1, br_test2);
     }
 
     return 0;

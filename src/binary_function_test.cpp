@@ -1,4 +1,4 @@
-#include "dense_bin_fun.hpp"
+#include "binary_function.hpp"
 #include <vector>
 
 using namespace pomagma;
@@ -17,7 +17,7 @@ void test_basic (size_t size)
             support.insert(i);
         }
     }
-    dense_bin_fun fun(support);
+    BinaryFunction fun(support);
     for (dense_set::iterator i(support); i.ok(); i.next()) {
     for (dense_set::iterator j(support); j.ok(); j.next()) {
         oid_t k = example_fun(*i, *j);
@@ -48,7 +48,7 @@ void test_basic (size_t size)
 
     POMAGMA_INFO("Checking line Iterators<LHS_FIXED>");
     {
-        dense_bin_fun::Iterator<dense_bin_fun::LHS_FIXED> iter(&fun);
+        BinaryFunction::Iterator<BinaryFunction::LHS_FIXED> iter(&fun);
         for (dense_set::iterator i(support); i.ok(); i.next()) {
             size_t line_size_i = 0;
             for (iter.begin(*i); iter.ok(); iter.next()) {
@@ -65,7 +65,7 @@ void test_basic (size_t size)
 
     POMAGMA_INFO("Checking line Iterators<RHS_FIXED>");
     {
-        dense_bin_fun::Iterator<dense_bin_fun::RHS_FIXED> iter(&fun);
+        BinaryFunction::Iterator<BinaryFunction::RHS_FIXED> iter(&fun);
         for (dense_set::iterator j(support); j.ok(); j.next()) {
             size_t line_size_j = 0;
             for (iter.begin(*j); iter.ok(); iter.next()) {

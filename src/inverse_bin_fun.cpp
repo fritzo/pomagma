@@ -7,11 +7,11 @@ namespace pomagma
     POMAGMA_ASSERT(contains(POMAGMA_set, POMAGMA_x, POMAGMA_y, POMAGMA_z),\
     #POMAGMA_set " is missing " #POMAGMA_x ", " #POMAGMA_y ", " #POMAGMA_z)
 
-void inverse_bin_fun::validate (dense_bin_fun & fun)
+void inverse_bin_fun::validate (BinaryFunction & fun)
 {
     POMAGMA_INFO("Validating inverse_bin_fun");
 
-    for (dense_bin_fun::lr_iterator iter(fun); iter.ok(); iter.next()) {
+    for (BinaryFunction::lr_iterator iter(fun); iter.ok(); iter.next()) {
         oid_t lhs = iter.lhs();
         oid_t rhs = iter.rhs();
         oid_t val = iter.value();
