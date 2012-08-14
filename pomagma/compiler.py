@@ -456,6 +456,22 @@ class Sequent(object):
             ', '.join(map(str, self.antecedents)),
             ', '.join(map(str, self.succedents)))
 
+    def ascii(self, indent = 0):
+        top = '   '.join(map(str, self.antecedents))
+        bot = '   '.join(map(str, self.succedents))
+        bar = '-' * max(len(top), len(bot))
+        diff = len(top) - len(bot)
+        lpad = abs(diff) / 2
+        rpad = diff - lpad
+        if diff > 0 and bot:
+            bot = ' ' * lpad + bot + ' ' * rpad
+        if diff < 0 and top:
+            top = ' ' * lpad + top + ' ' * rpad
+        lines = [top, bar, bot]
+        lines = filter(bool, lines)
+        lines = map((' ' * indent).__add__, lines)
+        return '\n'.join(lines)
+
     def html(self):
         antecedents = '   '.join(map(str, self.antecedents))
         succedents = '   '.join(map(str, self.succedents))
@@ -495,41 +511,57 @@ class Sequent(object):
                 return False
         return True
 
-    def _normalized(self, bound=set()):
+    def contrapositives(self):
+        if not self.succedents:
+            TODO('allow empty succedents')
+        elif len(self.succedents) > 1:
+            TODO('allow multiple succedents')
+        self_succedent = iter(self.succedents).next()
+        result = set()
+        for antecedent in self.antecedents:
+            antecedents = set_without(self.antecedents, antecedent)
+            succedents = antecedent.negated()
+            for disjunct in self_succedent.negated():
+                if disjunct.negated() & antecedents:
+                    pass # contradiction
+                else:
+                    result.add(Sequent(
+                        set_with(antecedents, disjunct),
+                        succedents))
+        return result
+
+    def _atomic(self, bound=set()):
         '''
         Return a list of normalized sequents.
         '''
         if not self.succedents:
             TODO('allow empty succedents')
         elif len(self.succedents) > 1:
-            TODO('allow multiple succedents')
+            result = set()
+            for succedent in self.succedents:
+                remaining = set_without(self.succedents, succedent)
+                negated = union(set(s.negated()) for s in remaining)
+                neg_neg = union(set(a.negated()) for a in self.antecedents)
+                if not (negated & neg_neg):
+                    antecedents = self.antecedents | negated
+                    sequent = Sequent(antecedents, set([succedent]))
+                    result |= sequent._atomic()
+            return result
+
         self_succedent = iter(self.succedents).next()
         antecedents, succedent = self_succedent.as_succedent(bound)
         for a in self.antecedents:
             antecedents |= a.as_antecedent()
-        result = [Sequent(antecedents, set([succedent]))]
+        return [Sequent(antecedents, set([succedent]))]
 
-        # close under contrapositive
-        if all([a.is_positive() for a in self.antecedents]):
-            for disjunct in self_succedent.negated():
-                antecedents = set_with(self.antecedents, disjunct)
-                for antecedent in self.antecedents:
-                    negated_antecedent = antecedent.negated()
-                    for disjunct in negated_antecedent:
-                        neg_neg_antecedents = union(
-                                a.negated()
-                                for a in antecedents
-                                if a is not disjunct)
-                        contrapositive = Sequent(
-                                set_without(antecedents, antecedent) |
-                                neg_neg_antecedents,
-                                set([disjunct]))
-                        result += contrapositive._normalized()
-            # TODO eliminate name-permutation duplicated sequents
-            # TODO recognize symmetric functions
-            # TODO recognize injective functions
+    def _normalized(self, bound=set()):
+        result = self._atomic(bound)
+        for neg in self.contrapositives():
+            result += neg._atomic(bound)
+        # TODO eliminate name-permutation duplicated sequents
+        # TODO recognize symmetric functions
+        # TODO recognize injective functions
         return result
-
 
     def get_events(self):
         events = set()

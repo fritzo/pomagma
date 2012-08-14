@@ -6,6 +6,7 @@ def TODO(message=''):
 
 
 def union(sets):
+    sets = list(sets)
     if sets:
         return set.union(*sets)
     else:

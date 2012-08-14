@@ -1,5 +1,13 @@
 from pomagma import run
 
+def test_contrapositive():
+    run.contrapositves(
+            'sk.rules',
+            'join.rules',
+            'rand.rules',
+            'quote.rules',
+            )
+
 def test_sk():
     run.measure('sk.rules')
 

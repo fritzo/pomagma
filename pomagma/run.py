@@ -39,6 +39,22 @@ def measure_sequent(sequent):
 
 
 @parsable.command
+def contrapositves(*filenames):
+    '''
+    Close rules under contrapositve
+    '''
+    sequents = []
+    for filename in filenames:
+        sequents += parser.parse(filename)
+    for sequent in sequents:
+        print sequent.ascii()
+        print
+        for neg in sequent.contrapositives():
+            print neg.ascii(indent=4)
+            print
+
+
+@parsable.command
 def measure(*filenames):
     '''
     Measure complexity of rules in files
