@@ -1,6 +1,11 @@
 import re
 import math
+import sys
 from pomagma.util import TODO, union, set_with, set_without, log_sum_exp
+
+
+def logger(message):
+    print '#', message
 
 
 #-----------------------------------------------------------------------------
@@ -216,25 +221,36 @@ class Iter(Strategy):
 
     def cpp_lines(self):
         body = []
-        for let in self.lets:
-            body += let.cpp_lines()
+        for var, expr in self.lets.iteritems():
+            body.append('oid_t {0} = {1}({2});'.format(
+                var, expr.name, ', '.join(map(str, expr.children))))
         body += self.body.cpp_lines()
         body = ['    ' + line for line in body]
-        if self.tests or self.lets:
-            lines = [
-                'dense_set set(support.object_dim());',
-                'set.set_union({0})'.format(', '.join(sets)),
-                'for (dense_set::iterator iter(set); iter.ok(); iter.next()) {',
-                ] + body + [
-                '}',
+        sets = []
+        for test in self.tests:
+            sets.append('TODO {0}'.format(str(test)))
+        for var, expr in self.lets.iteritems():
+            sets.append('TODO {0}'.format(str(var)))
+        lines = []
+        if len(sets) == 0:
+            lines += [
+                'dense_set set(support.object_dim(), support.get_set());',
+                ]
+        elif len(sets) == 1:
+            one_set = iter(sets).next()
+            lines += [
+                'dense_set set(support.object_dim(), {0});'.format(one_set),
                 ]
         else:
-            lines = [
-                'dense_set set(support.object_dim(), support.get_set());',
-                'for (dense_set::iterator iter(set); iter.ok(); iter.next()) {',
-                ] + body + [
-                '}',
+            lines += [
+                'dense_set set(support.object_dim());',
+                'set.set_union({0})'.format(', '.join(sets)),
                 ]
+        lines += [
+            'for (dense_set::iterator iter(set); iter.ok(); iter.next()) {',
+            ] + body + [
+            '}',
+            ]
         return lines
 
     def op_count(self):
@@ -278,7 +294,7 @@ class IterInvUnary(Strategy):
         body = ['    ' + line for line in body]
         iter = 'unary_function::inverse_iterator iter({0})'.format(self.value)
         return [
-            'for ({0}; iter.ok(); iter.next()) {'.format(iter),
+            'for ({0}; iter.ok(); iter.next()) {{'.format(iter),
             ] + body + [
             '}',
             ]
@@ -309,7 +325,7 @@ class IterInvBinary(Strategy):
         body = ['    ' + line for line in body]
         iter = 'binary_function::inverse_iterator iter({0})'.format(self.value)
         return [
-            'for ({0}; iter.ok(); iter.next()) {'.format(iter),
+            'for ({0}; iter.ok(); iter.next()) {{'.format(iter),
             ] + body + [
             '}',
             ]
@@ -354,7 +370,7 @@ class IterInvBinaryRange(Strategy):
             iter = 'binary_function::inv_range_iterator iter({0}, {1})'.format(
                     self.value, self.var1)
         return [
-            'for ({0}; iter.ok(); iter.next()) {',
+            'for ({0}; iter.ok(); iter.next()) {{'.format(iter),
             ] + body + [
             '}',
             ]
@@ -402,7 +418,7 @@ class Test(Strategy):
     def cpp_lines(self):
         body = ['    ' + line for line in self.body.cpp_lines()]
         return [
-            'if ({0}) {'.format(self.expr)
+            'if ({0}) {{'.format(self.expr)
             ] + body + [
             '}',
             ]
@@ -423,7 +439,7 @@ class Ensure(Strategy):
         return 'ensure {0}'.format(self.expr)
 
     def cpp_lines(self):
-        return 'TODO ensure({0})'.format(self.expr)
+        return ['TODO ensure({0})'.format(self.expr)]
 
     def op_count(self):
         fun_count = 0
@@ -595,7 +611,7 @@ class Sequent(object):
                 rank_v = lambda s: rank(Iter(v, s))
                 bound_v = set_with(bound, v)
                 ranked += map(rank_v, part._compile(context, bound_v))
-            print '# optimizing over {0} versions'.format(len(ranked))
+            logger('optimizing over {0} versions'.format(len(ranked)))
             results.append(min(ranked))
         assert results, 'failed to compile'
         return results
@@ -622,7 +638,7 @@ class Sequent(object):
         for part in self._normalized(bound):
             if atom in part.antecedents:
                 ranked = map(rank, part._compile(context, bound))
-                print '# optimizing over {0} versions'.format(len(ranked))
+                logger('optimizing over {0} versions'.format(len(ranked)))
                 results.append(min(ranked))
         assert results, 'failed to compile_given: {0}'.format(atom)
         return results

@@ -74,5 +74,30 @@ def report(*filenames):
     TODO('write sequents to file, coloring by incremental complexity')
 
 
+@parsable.command
+def compile(*filenames):
+    '''
+    Compile rules -> C++
+    '''
+    for stem_rules in filenames:
+        assert stem_rules[-6:] == '.rules', stem_rules
+        stem = stem_rules[:6]
+        cpp = stem + '.cpp'
+
+        sequents = parser.parse(stem_rules)
+        for sequent in sequents:
+            for cost, compile in sequent.compile():
+                for line in compile.cpp_lines():
+                    print line
+                print
+
+            for event in sequent.get_events():
+                for cost, compile in sequent.compile_given(event):
+                    for line in compile.cpp_lines():
+                        print line
+                    print
+
+    # TODO('embed code in functions')
+
 if __name__ == '__main__':
     parsable.dispatch()
