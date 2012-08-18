@@ -132,8 +132,6 @@ public:
             << "\e[0;39m"
             << std::endl;
     }
-
-    static void stack_trace_abort();
 };
 
 #define POMAGMA_WARN(message) { if (Log::level() >= 1) { Log(1) << message; } }
@@ -144,7 +142,7 @@ public:
     << message << "\n\t" \
     << __FILE__ << " : " << __LINE__ << "\n\t" \
     << __PRETTY_FUNCTION__ << "\n"; \
-    Log::stack_trace_abort(); }
+    abort(); }
 
 #define POMAGMA_ASSERT(cond, mess) { if (not (cond)) POMAGMA_ERROR(mess) }
 
