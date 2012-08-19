@@ -1,7 +1,7 @@
 from pomagma import run
 
 def test_cpp():
-    run.compile(
+    run.test_compile(
             'sk.rules',
             'join.rules',
             'rand.rules',
