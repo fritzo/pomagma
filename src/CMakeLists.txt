@@ -54,9 +54,9 @@ add_library(pomagma_tasks SHARED
 	)
 install(TARGETS pomagma_tasks LIBRARY DESTINATION ${PROJECT_SOURCE_DIR}/lib)
 
-set_source_files_properties(task_manager.cpp
-	PROPERTIES
-	COMPILE_FLAGS "-fexceptions -frtti")
+#set_source_files_properties(task_manager.cpp
+#	PROPERTIES
+#	COMPILE_FLAGS "-fexceptions -frtti")
 
 add_executable(task_manager_test task_manager_test.cpp)
 target_link_libraries(task_manager_test
@@ -65,3 +65,12 @@ target_link_libraries(task_manager_test
        	tbb
        	boost_thread)
 add_test(NAME task_manger COMMAND task_manager_test)
+
+
+add_executable(server server.cpp)
+target_link_libraries(server
+       	pomagma_store
+       	pomagma_tasks
+       	tbb
+       	boost_thread
+	zmq)
