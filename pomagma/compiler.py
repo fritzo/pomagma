@@ -561,7 +561,7 @@ class Sequent(object):
                 if not (negated & neg_neg):
                     antecedents = self.antecedents | negated
                     sequent = Sequent(antecedents, set([succedent]))
-                    result |= sequent._atomic()
+                    result |= set(sequent._atomic())
             return result
 
         self_succedent = iter(self.succedents).next()

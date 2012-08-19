@@ -20,7 +20,6 @@ set(POMAGMA_LIBS pomagma boost_thread tbb)
 
 
 add_library(pomagma_dummy SHARED dummy.theory.cpp)
-#install(TARGETS pomagma LIBRARY DESTINATION ${PROJECT_SOURCE_DIR}/lib)
 set(POMAGMA_TEST_LIBS pomagma pomagma_dummy boost_thread tbb)
 
 
