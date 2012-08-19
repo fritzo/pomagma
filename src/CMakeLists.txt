@@ -69,3 +69,16 @@ set(POMAGMA_SERVER_LIBS pomagma_server ${POMAGMA_LIBS} zmq)
 
 add_executable(dummy.server dummy.theory.cpp)
 target_link_libraries(dummy.server ${POMAGMA_SERVER_LIBS})
+
+
+add_custom_command(
+	OUTPUT ${PROJECT_SOURCE_DIR}/src/sk.theory.cpp
+	COMMAND python ${PROJECT_SOURCE_DIR}/pomagma/run.py compile
+		${PROJECT_SOURCE_DIR}/pomagma/sk.rules
+		outfile=${PROJECT_SOURCE_DIR}/src/sk.theory.cpp
+	DEPENDS ${PROJECT_SOURCE_DIR}/pomagma/run.py
+		${PROJECT_SOURCE_DIR}/pomagma/sk.rules
+	)
+# TODO get sk.theory.cpp to compile
+#add_executable(sk.server sk.theory.cpp)
+#target_link_libraries(sk.server ${POMAGMA_SERVER_LIBS})

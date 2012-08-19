@@ -28,7 +28,6 @@ test: build/debug log
 
 clean: FORCE
 	rm -rf lib include build log
-	find . -type f | grep '\.log$$' | xargs rm -f
-	find . -type f | grep '^core' | xargs rm -f
+	git clean -fdx -e pomagma.egg-info
 
 FORCE:
