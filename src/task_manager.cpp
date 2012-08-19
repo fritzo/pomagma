@@ -7,80 +7,10 @@
 #include <boost/thread/locks.hpp>
 #include <boost/thread/condition_variable.hpp>
 #include <tbb/concurrent_queue.h>
-#include <tbb/concurrent_unordered_set.h>
 
 #define POMAGMA_ASSERT_MERGE(POMAGMA_dep, POMAGMA_rep)\
     POMAGMA_ASSERT3(dep < rep,\
             "out of order merge: " << (dep) << ", " << (rep))
-
-
-namespace tbb
-{
-
-template<>
-struct tbb_hash<pomagma::EquationTask>
-{
-    size_t operator() (const pomagma::EquationTask & task) const
-    {
-        return task.dep ^ task.rep;
-    }
-};
-
-template<>
-struct tbb_hash<pomagma::NullaryFunctionTask>
-{
-    size_t operator() (const pomagma::NullaryFunctionTask & task) const
-    {
-        return tbb_hasher(task.fun);
-    }
-};
-
-template<>
-struct tbb_hash<pomagma::UnaryFunctionTask>
-{
-    size_t operator() (const pomagma::UnaryFunctionTask & task) const
-    {
-        return tbb_hasher(task.fun) ^ task.arg;
-    }
-};
-
-template<>
-struct tbb_hash<pomagma::BinaryFunctionTask>
-{
-    size_t operator() (const pomagma::BinaryFunctionTask & task) const
-    {
-        return tbb_hasher(task.fun) ^ task.lhs ^ task.rhs;
-    }
-};
-
-template<>
-struct tbb_hash<pomagma::SymmetricFunctionTask>
-{
-    size_t operator() (const pomagma::SymmetricFunctionTask & task) const
-    {
-        return tbb_hasher(task.fun) ^ task.lhs ^ task.rhs;
-    }
-};
-
-template<>
-struct tbb_hash<pomagma::PositiveRelationTask>
-{
-    size_t operator() (const pomagma::PositiveRelationTask & task) const
-    {
-        return tbb_hasher(task.rel) ^ task.lhs ^ task.rhs;
-    }
-};
-
-template<>
-struct tbb_hash<pomagma::NegativeRelationTask>
-{
-    size_t operator() (const pomagma::NegativeRelationTask & task) const
-    {
-        return tbb_hasher(task.rel) ^ task.lhs ^ task.rhs;
-    }
-};
-
-} // namespace tbb
 
 
 namespace pomagma
@@ -135,12 +65,9 @@ inline bool merge (NegativeRelationTask & task, oid_t dep, oid_t)
 // task queuing
 
 template<class Task>
-class UniqueQueue
+class TaskQueue
 {
-    typedef tbb::concurrent_unordered_set<Task> Index;
     typedef tbb::concurrent_queue<Task> Queue;
-
-    Index m_index;
     Queue m_queue;
     boost::shared_mutex m_mutex;
 
@@ -149,17 +76,13 @@ public:
     void push (const Task & task)
     {
         boost::shared_lock<boost::shared_mutex> lock(m_mutex);
-        auto inserted = m_index.insert(task);
-        if (inserted.second) {
-            m_queue.push(task);
-        }
+        m_queue.push(task);
     }
 
     bool try_pop (Task & task)
     {
         boost::shared_lock<boost::shared_mutex> lock(m_mutex);
         return m_queue.try_pop(task);
-        // task remains in index until garbage collected
     }
 
     bool try_execute ()
@@ -177,25 +100,12 @@ public:
     {
         boost::unique_lock<boost::shared_mutex> lock(m_mutex);
 
-        Queue queue;    std::swap(queue, m_queue);
-        Index index;    std::swap(index, m_index);
-
+        Queue queue;
+        std::swap(queue, m_queue);
         for (Task task; queue.try_pop(task);) {
             if (merge(task, dep, rep)) {
                 push(task);
             }
-        }
-    }
-
-    void gc ()
-    {
-        boost::unique_lock<boost::shared_mutex> lock(m_mutex);
-
-        Queue queue;    std::swap(queue, m_queue);
-        Index index;    std::swap(index, m_index);
-
-        for (Task task; queue.try_pop(task);) {
-            push(task);
         }
     }
 };
@@ -209,13 +119,13 @@ namespace TaskManager
 namespace // anonymous
 {
 
-static UniqueQueue<EquationTask> g_equations;
-static UniqueQueue<NullaryFunctionTask> g_nullary_functions;
-static UniqueQueue<UnaryFunctionTask> g_unary_functions;
-static UniqueQueue<BinaryFunctionTask> g_binary_functions;
-static UniqueQueue<SymmetricFunctionTask> g_symmetric_functions;
-static UniqueQueue<PositiveRelationTask> g_positive_relations;
-static UniqueQueue<NegativeRelationTask> g_negative_relations;
+static TaskQueue<EquationTask> g_equations;
+static TaskQueue<NullaryFunctionTask> g_nullary_functions;
+static TaskQueue<UnaryFunctionTask> g_unary_functions;
+static TaskQueue<BinaryFunctionTask> g_binary_functions;
+static TaskQueue<SymmetricFunctionTask> g_symmetric_functions;
+static TaskQueue<PositiveRelationTask> g_positive_relations;
+static TaskQueue<NegativeRelationTask> g_negative_relations;
 
 static std::atomic<bool> g_alive(false);
 static std::atomic<uint_fast64_t> g_merge_count(0);

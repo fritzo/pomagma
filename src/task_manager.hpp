@@ -20,11 +20,6 @@ struct EquationTask
 
     EquationTask () {}
     EquationTask (oid_t d, oid_t r) : dep(d), rep(r) {}
-
-    bool operator== (const EquationTask & other) const
-    {
-        return dep == other.dep and rep == other.rep;
-    }
 };
 
 struct NullaryFunctionTask
@@ -33,11 +28,6 @@ struct NullaryFunctionTask
 
     NullaryFunctionTask () {}
     NullaryFunctionTask (NullaryFunction * f) : fun(f) {}
-
-    bool operator== (const NullaryFunctionTask & other) const
-    {
-        return fun == other.fun;
-    }
 };
 
 struct UnaryFunctionTask
@@ -47,11 +37,6 @@ struct UnaryFunctionTask
 
     UnaryFunctionTask () {}
     UnaryFunctionTask (UnaryFunction * f, oid_t a) : fun(f), arg(a) {}
-
-    bool operator== (const UnaryFunctionTask & other) const
-    {
-        return fun == other.fun and arg == other.arg;
-    }
 };
 
 struct BinaryFunctionTask
@@ -64,11 +49,6 @@ struct BinaryFunctionTask
     BinaryFunctionTask (BinaryFunction * f, oid_t l, oid_t r)
         : fun(f), lhs(l), rhs(r)
     {}
-
-    bool operator== (const BinaryFunctionTask & other) const
-    {
-        return fun == other.fun and lhs == other.lhs and rhs == other.rhs;
-    }
 };
 
 struct SymmetricFunctionTask
@@ -81,11 +61,6 @@ struct SymmetricFunctionTask
     SymmetricFunctionTask (SymmetricFunction * f, oid_t l, oid_t r)
         : fun(f), lhs(l), rhs(r)
     {}
-
-    bool operator== (const SymmetricFunctionTask & other) const
-    {
-        return fun == other.fun and lhs == other.lhs and rhs == other.rhs;
-    }
 };
 
 struct PositiveRelationTask
@@ -98,11 +73,6 @@ struct PositiveRelationTask
     PositiveRelationTask (BinaryRelation * p, oid_t l, oid_t r)
         : rel(p), lhs(l), rhs(r)
     {}
-
-    bool operator== (const PositiveRelationTask & other) const
-    {
-        return rel == other.rel and lhs == other.lhs and rhs == other.rhs;
-    }
 };
 
 struct NegativeRelationTask
@@ -115,11 +85,6 @@ struct NegativeRelationTask
     NegativeRelationTask (BinaryRelation * n, oid_t l, oid_t r)
         : rel(n), lhs(l), rhs(r)
     {}
-
-    bool operator== (const NegativeRelationTask & other) const
-    {
-        return rel == other.rel and lhs == other.lhs and rhs == other.rhs;
-    }
 };
 
 
