@@ -6,6 +6,7 @@
 #include <boost/thread/shared_mutex.hpp>
 #include <boost/thread/locks.hpp>
 #include <boost/thread/condition_variable.hpp>
+#include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <tbb/concurrent_queue.h>
 
 
@@ -137,10 +138,11 @@ inline bool try_work ()
 
 void do_work ()
 {
+    const auto timeout = boost::posix_time::seconds(60);
     while (g_alive) {
         if (not try_work()) {
             boost::unique_lock<boost::mutex> lock(g_mutex);
-            g_condition.wait(lock);
+            g_condition.timed_wait(lock, timeout);
         }
     }
 }
@@ -183,36 +185,43 @@ void enqueue (const EquationTask & task)
 {
     TaskManager::merge(task.dep);
     TaskManager::g_equations.push(task);
+    TaskManager::g_condition.notify_one();
 }
 
 void enqueue (const NullaryFunctionTask & task)
 {
     TaskManager::g_nullary_functions.push(task);
+    TaskManager::g_condition.notify_one();
 }
 
 void enqueue (const UnaryFunctionTask & task)
 {
     TaskManager::g_unary_functions.push(task);
+    TaskManager::g_condition.notify_one();
 }
 
 void enqueue (const BinaryFunctionTask & task)
 {
     TaskManager::g_binary_functions.push(task);
+    TaskManager::g_condition.notify_one();
 }
 
 void enqueue (const SymmetricFunctionTask & task)
 {
     TaskManager::g_symmetric_functions.push(task);
+    TaskManager::g_condition.notify_one();
 }
 
 void enqueue (const PositiveRelationTask & task)
 {
     TaskManager::g_positive_relations.push(task);
+    TaskManager::g_condition.notify_one();
 }
 
 void enqueue (const NegativeRelationTask & task)
 {
     TaskManager::g_negative_relations.push(task);
+    TaskManager::g_condition.notify_one();
 }
 
 } // namespace pomagma
