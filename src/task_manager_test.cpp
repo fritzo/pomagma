@@ -2,25 +2,6 @@
 #include <chrono>
 #include <thread>
 
-namespace pomagma
-{
-
-#define DEF_EXECUTE(POMAGMA_name)\
-    void execute (const POMAGMA_name &)\
-    { POMAGMA_INFO("executing " #POMAGMA_name) }
-
-DEF_EXECUTE(EquationTask)
-DEF_EXECUTE(NullaryFunctionTask)
-DEF_EXECUTE(UnaryFunctionTask)
-DEF_EXECUTE(BinaryFunctionTask)
-DEF_EXECUTE(SymmetricFunctionTask)
-DEF_EXECUTE(PositiveRelationTask)
-DEF_EXECUTE(NegativeRelationTask)
-
-#undef DEF_EXECUTE
-
-} // namespace pomagma
-
 using namespace pomagma;
 
 void test_simple (size_t max_threads = 20)

@@ -21,6 +21,16 @@ inline bool merge (const EquationTask & task, oid_t dep)
     return task.dep != dep;
 }
 
+inline bool merge (const PositiveOrderTask & task, oid_t dep)
+{
+    return task.lhs != dep and task.lhs != dep;
+}
+
+inline bool merge (const NegativeOrderTask & task, oid_t dep)
+{
+    return task.lhs != dep and task.lhs != dep;
+}
+
 inline bool merge (const NullaryFunctionTask &, oid_t)
 {
     return true;
@@ -37,16 +47,6 @@ inline bool merge (const BinaryFunctionTask & task, oid_t dep)
 }
 
 inline bool merge (const SymmetricFunctionTask & task, oid_t dep)
-{
-    return task.lhs != dep and task.lhs != dep;
-}
-
-inline bool merge (const PositiveRelationTask & task, oid_t dep)
-{
-    return task.lhs != dep and task.lhs != dep;
-}
-
-inline bool merge (const NegativeRelationTask & task, oid_t dep)
 {
     return task.lhs != dep and task.lhs != dep;
 }
@@ -110,12 +110,12 @@ namespace // anonymous
 {
 
 static TaskQueue<EquationTask> g_equations;
+static TaskQueue<PositiveOrderTask> g_positive_orders;
+static TaskQueue<NegativeOrderTask> g_negative_orders;
 static TaskQueue<NullaryFunctionTask> g_nullary_functions;
 static TaskQueue<UnaryFunctionTask> g_unary_functions;
 static TaskQueue<BinaryFunctionTask> g_binary_functions;
 static TaskQueue<SymmetricFunctionTask> g_symmetric_functions;
-static TaskQueue<PositiveRelationTask> g_positive_relations;
-static TaskQueue<NegativeRelationTask> g_negative_relations;
 
 static std::atomic<bool> g_alive(false);
 static std::atomic<uint_fast64_t> g_merge_count(0);
@@ -132,8 +132,8 @@ inline bool try_work ()
         or g_unary_functions.try_execute()
         or g_binary_functions.try_execute()
         or g_symmetric_functions.try_execute()
-        or g_positive_relations.try_execute()
-        or g_negative_relations.try_execute();
+        or g_positive_orders.try_execute()
+        or g_negative_orders.try_execute();
 }
 
 void do_work ()
@@ -154,8 +154,8 @@ void merge (oid_t dep)
     g_unary_functions.merge(dep);
     g_binary_functions.merge(dep);
     g_symmetric_functions.merge(dep);
-    g_positive_relations.merge(dep);
-    g_negative_relations.merge(dep);
+    g_positive_orders.merge(dep);
+    g_negative_orders.merge(dep);
 }
 
 } // anonymous namespace
@@ -188,6 +188,18 @@ void enqueue (const EquationTask & task)
     TaskManager::g_condition.notify_one();
 }
 
+void enqueue (const PositiveOrderTask & task)
+{
+    TaskManager::g_positive_orders.push(task);
+    TaskManager::g_condition.notify_one();
+}
+
+void enqueue (const NegativeOrderTask & task)
+{
+    TaskManager::g_negative_orders.push(task);
+    TaskManager::g_condition.notify_one();
+}
+
 void enqueue (const NullaryFunctionTask & task)
 {
     TaskManager::g_nullary_functions.push(task);
@@ -209,18 +221,6 @@ void enqueue (const BinaryFunctionTask & task)
 void enqueue (const SymmetricFunctionTask & task)
 {
     TaskManager::g_symmetric_functions.push(task);
-    TaskManager::g_condition.notify_one();
-}
-
-void enqueue (const PositiveRelationTask & task)
-{
-    TaskManager::g_positive_relations.push(task);
-    TaskManager::g_condition.notify_one();
-}
-
-void enqueue (const NegativeRelationTask & task)
-{
-    TaskManager::g_negative_relations.push(task);
     TaskManager::g_condition.notify_one();
 }
 
