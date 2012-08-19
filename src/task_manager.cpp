@@ -8,10 +8,6 @@
 #include <boost/thread/condition_variable.hpp>
 #include <tbb/concurrent_queue.h>
 
-#define POMAGMA_ASSERT_MERGE(POMAGMA_dep, POMAGMA_rep)\
-    POMAGMA_ASSERT3(dep < rep,\
-            "out of order merge: " << (dep) << ", " << (rep))
-
 
 namespace pomagma
 {
@@ -19,44 +15,37 @@ namespace pomagma
 //----------------------------------------------------------------------------
 // merging
 
-inline bool merge (EquationTask & task, oid_t dep, oid_t rep)
+inline bool merge (const EquationTask & task, oid_t dep)
 {
-    if (task.dep == dep) {
-        return false; // assume "rep = m_rep" is already enqueued
-    } else {
-        if (task.rep == dep) {
-            task.rep = rep;
-        }
-        return true;
-    }
+    return task.dep != dep;
 }
 
-inline bool merge (NullaryFunctionTask &, oid_t, oid_t)
+inline bool merge (const NullaryFunctionTask &, oid_t)
 {
     return true;
 }
 
-inline bool merge (UnaryFunctionTask & task, oid_t dep, oid_t)
+inline bool merge (const UnaryFunctionTask & task, oid_t dep)
 {
     return task.arg != dep;
 }
 
-inline bool merge (BinaryFunctionTask & task, oid_t dep, oid_t)
+inline bool merge (const BinaryFunctionTask & task, oid_t dep)
 {
     return task.lhs != dep and task.lhs != dep;
 }
 
-inline bool merge (SymmetricFunctionTask & task, oid_t dep, oid_t)
+inline bool merge (const SymmetricFunctionTask & task, oid_t dep)
 {
     return task.lhs != dep and task.lhs != dep;
 }
 
-inline bool merge (PositiveRelationTask & task, oid_t dep, oid_t)
+inline bool merge (const PositiveRelationTask & task, oid_t dep)
 {
     return task.lhs != dep and task.lhs != dep;
 }
 
-inline bool merge (NegativeRelationTask & task, oid_t dep, oid_t)
+inline bool merge (const NegativeRelationTask & task, oid_t dep)
 {
     return task.lhs != dep and task.lhs != dep;
 }
@@ -96,14 +85,14 @@ public:
         }
     }
 
-    void merge (oid_t dep, oid_t rep)
+    void merge (oid_t dep)
     {
         boost::unique_lock<boost::shared_mutex> lock(m_mutex);
 
         Queue queue;
         std::swap(queue, m_queue);
         for (Task task; queue.try_pop(task);) {
-            if (merge(task, dep, rep)) {
+            if (pomagma::merge(task, dep)) {
                 push(task);
             }
         }
@@ -156,6 +145,17 @@ void do_work ()
     }
 }
 
+void merge (oid_t dep)
+{
+    g_equations.merge(dep);
+    g_nullary_functions.merge(dep);
+    g_unary_functions.merge(dep);
+    g_binary_functions.merge(dep);
+    g_symmetric_functions.merge(dep);
+    g_positive_relations.merge(dep);
+    g_negative_relations.merge(dep);
+}
+
 } // anonymous namespace
 
 void start (size_t thread_count)
@@ -181,6 +181,7 @@ void stopall ()
 
 void enqueue (const EquationTask & task)
 {
+    TaskManager::merge(task.dep);
     TaskManager::g_equations.push(task);
 }
 

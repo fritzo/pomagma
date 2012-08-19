@@ -16,10 +16,9 @@ class BinaryRelation;
 struct EquationTask
 {
     oid_t dep;
-    oid_t rep;
 
     EquationTask () {}
-    EquationTask (oid_t d, oid_t r) : dep(d), rep(r) {}
+    EquationTask (oid_t d) : dep(d) {}
 };
 
 struct NullaryFunctionTask
