@@ -80,7 +80,7 @@ struct SymmetricFunctionTask
 };
 
 
-// these are defined by the TaskManager and called by the user
+// These are defined by the TaskManager and called by the user
 void enqueue (const EquationTask & task);
 void enqueue (const PositiveOrderTask & task);
 void enqueue (const NegativeOrderTask & task);
@@ -90,7 +90,10 @@ void enqueue (const BinaryFunctionTask & task);
 void enqueue (const SymmetricFunctionTask & task);
 
 
-// these are defined by the user and called by the TaskManager
+// These are defined by the user and called by the TaskManager
+// The TaskManager guarantees:
+// - never to execute an EquationTask while any other task is being executed
+// - to execute an EquationTask as soon as all previous tasks complete
 void execute (const EquationTask & task);
 void execute (const PositiveOrderTask & task);
 void execute (const NegativeOrderTask & task);

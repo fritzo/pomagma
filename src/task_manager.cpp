@@ -14,6 +14,37 @@ namespace pomagma
 {
 
 //----------------------------------------------------------------------------
+// execution
+
+static boost::shared_mutex g_merge_mutex;
+
+template<class Task>
+struct LockedExecutor
+{
+    static void execute (const Task & task)
+    {
+        boost::shared_lock<boost::shared_mutex> lock(g_merge_mutex);
+        pomagma::execute(task);
+    }
+};
+
+template<>
+struct LockedExecutor<EquationTask>
+{
+    static void execute (const EquationTask & task)
+    {
+        boost::unique_lock<boost::shared_mutex> lock(g_merge_mutex);
+        pomagma::execute(task);
+    }
+};
+
+template<class Task>
+inline void safe_execute (const Task & task)
+{
+    LockedExecutor<Task>::execute(task);
+}
+
+//----------------------------------------------------------------------------
 // merging
 
 inline bool merge (const EquationTask & task, oid_t dep)
@@ -79,7 +110,7 @@ public:
     {
         Task task;
         if (try_pop(task)) {
-            execute(task);
+            safe_execute(task);
             return true;
         } else {
             return false;
