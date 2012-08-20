@@ -9,6 +9,10 @@ def logger(message):
     print '#', message
 
 
+def indent(text):
+    return '    ' + text.replace('\n', '\n    ')
+
+
 #-----------------------------------------------------------------------------
 # Syntax
 
@@ -235,7 +239,7 @@ class Iter(Strategy):
             body.append('oid_t {0} = {1}({2});'.format(
                 var, expr.name, ', '.join(map(str, expr.children))))
         body += self.body.cpp_lines()
-        body = ['    ' + line for line in body]
+        body = map(indent, body)
         sets = []
         for test in self.tests:
             sets.append('TODO {0}'.format(str(test)))
@@ -405,8 +409,10 @@ class Let(Strategy):
 
     def cpp_lines(self):
         return [
-            'oid_t {0} = {1};'.format(self.var, self.expr)
-            ] + self.body.cpp_lines()
+            'if (oid_t {0} = {1}) {{'.format(self.var, self.expr)
+            ] + map(indent, self.body.cpp_lines()) + [
+            '}'
+            ]
 
     def op_count(self):
         return 1.0 + 0.5 * self.body.op_count()
@@ -426,7 +432,7 @@ class Test(Strategy):
         return 'if {0}: {1}'.format(self.expr, self.body)
 
     def cpp_lines(self):
-        body = ['    ' + line for line in self.body.cpp_lines()]
+        body = map(indent, self.body.cpp_lines())
         return [
             'if ({0}) {{'.format(self.expr)
             ] + body + [
@@ -833,8 +839,6 @@ class Theory:
                 oid_t rep = lhs < rhs ? rhs : lhs;
                 carrier.merge(dep, rep);
                 enqueue(EquationTask(dep));
-            } else if (lhs > rhs) {
-                carrier.merge(rhs, lhs)
             }
         }
         ''').strip())
@@ -908,26 +912,31 @@ class Theory:
                 .strip())
                 write()
 
-
-
-    def _write_tasks(self, write, section):
+    def _write_full_tasks(self, write, section):
 
         full_tasks = []
-        event_tasks = {}
         for sequent in self.sequents:
             full_tasks += sequent.compile()
-            for event in sequent.get_events():
-                tasks = event_tasks.setdefault(event, [])
-                tasks += sequent.compile_given(event)
 
         full_tasks.sort(key=(lambda (cost, _): cost))
         for cost, strategy in full_tasks:
-            section('cost = {0}'.format(cost))
+            write('// cost = {0}'.format(cost))
             for line in strategy.cpp_lines():
                 write(line)
             write()
 
-        for event, tasks in event_tasks.iteritems():
+    def _write_event_tasks(self, write, section):
+
+        event_tasks = {}
+        for sequent in self.sequents:
+            for event in sequent.get_events():
+                tasks = event_tasks.setdefault(event.name, [])
+                tasks += sequent.compile_given(event)
+
+        event_tasks = sorted(
+                event_tasks.items(),
+                key=(lambda (name, tasks): (len(tasks), len(name), name)))
+        for event, tasks in event_tasks:
             tasks.sort(key=(lambda (cost, _): cost))
 
             section('TODO given {0}'.format(event))
@@ -952,6 +961,7 @@ class Theory:
 
         self._write_signature(write, section)
         self._write_ensurers(write, section)
-        self._write_tasks(write, section)
+        self._write_full_tasks(write, section)
+        self._write_event_tasks(write, section)
 
         return lines
