@@ -43,7 +43,7 @@ struct NullaryFunctionTask
     NullaryFunction * fun;
 
     NullaryFunctionTask () {}
-    NullaryFunctionTask (NullaryFunction * f) : fun(f) {}
+    NullaryFunctionTask (NullaryFunction & f) : fun(&f) {}
 };
 
 struct UnaryFunctionTask
@@ -52,7 +52,7 @@ struct UnaryFunctionTask
     oid_t arg;
 
     UnaryFunctionTask () {}
-    UnaryFunctionTask (UnaryFunction * f, oid_t a) : fun(f), arg(a) {}
+    UnaryFunctionTask (UnaryFunction & f, oid_t a) : fun(&f), arg(a) {}
 };
 
 struct BinaryFunctionTask
@@ -62,8 +62,8 @@ struct BinaryFunctionTask
     oid_t rhs;
 
     BinaryFunctionTask () {}
-    BinaryFunctionTask (BinaryFunction * f, oid_t l, oid_t r)
-        : fun(f), lhs(l), rhs(r)
+    BinaryFunctionTask (BinaryFunction & f, oid_t l, oid_t r)
+        : fun(&f), lhs(l), rhs(r)
     {}
 };
 
@@ -74,8 +74,8 @@ struct SymmetricFunctionTask
     oid_t rhs;
 
     SymmetricFunctionTask () {}
-    SymmetricFunctionTask (SymmetricFunction * f, oid_t l, oid_t r)
-        : fun(f), lhs(l), rhs(r)
+    SymmetricFunctionTask (SymmetricFunction & f, oid_t l, oid_t r)
+        : fun(&f), lhs(l), rhs(r)
     {}
 };
 

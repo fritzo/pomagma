@@ -1,6 +1,7 @@
 import re
-import math
 import sys
+import math
+from textwrap import dedent
 from pomagma.util import TODO, union, set_with, set_without, log_sum_exp
 
 
@@ -25,6 +26,9 @@ class Expression:
 
     def __eq__(self, other):
         return self._repr == other._repr
+
+    def get_signature(self):
+        return set()
 
 
 class Variable(Expression):
@@ -85,6 +89,9 @@ class Compound(Expression):
     def is_succedent(self):
         return all(isinstance(c, Variable) for c in self.children)
 
+    def get_signature(self):
+        return union(c.get_signature() for c in self.children)
+
 
 class Function(Compound):
     #def get_vars(self):
@@ -92,7 +99,9 @@ class Function(Compound):
     #        return Compound.get_vars(self)
     #    else:
     #        return set([Variable(self)])
-    pass
+    def get_signature(self):
+        return set([self.name]) | union(c.get_signature()
+                                        for c in self.children)
 
 # TODO SymmetricFunction
 # TODO InjectiveFunction
@@ -155,7 +164,8 @@ NLESS = lambda x, y: Relation('NLESS', x, y)
 OF_TYPE = lambda x, y: Relation('OF_TYPE', x, y)
 
 UNARY_FUNCTIONS = ['QUOTE']
-BINARY_FUNCTIONS = ['APP', 'COMP', 'JOIN', 'RAND']
+BINARY_FUNCTIONS = ['APP', 'COMP']
+SYMMETRIC_FUNCTIONS = ['JOIN', 'RAND']
 
 SYMBOL_TABLE = {
     'EQUAL': (2, EQUAL),
@@ -171,7 +181,7 @@ for name in UNARY_FUNCTIONS:
 
 def _declare_binary(name):
     SYMBOL_TABLE[name] = (2, lambda x, y: Function(name, x, y))
-for name in BINARY_FUNCTIONS:
+for name in BINARY_FUNCTIONS + SYMMETRIC_FUNCTIONS:
     _declare_binary(name)
 
 
@@ -234,16 +244,16 @@ class Iter(Strategy):
         lines = []
         if len(sets) == 0:
             lines += [
-                'dense_set set(support.object_dim(), support.get_set());',
+                'dense_set set(carrier.object_dim(), carrier.get_set());',
                 ]
         elif len(sets) == 1:
             one_set = iter(sets).next()
             lines += [
-                'dense_set set(support.object_dim(), {0});'.format(one_set),
+                'dense_set set(carrier.object_dim(), {0});'.format(one_set),
                 ]
         else:
             lines += [
-                'dense_set set(support.object_dim());',
+                'dense_set set(carrier.object_dim());',
                 'set.set_union({0})'.format(', '.join(sets)),
                 ]
         lines += [
@@ -439,7 +449,29 @@ class Ensure(Strategy):
         return 'ensure {0}'.format(self.expr)
 
     def cpp_lines(self):
-        return ['TODO ensure({0})'.format(self.expr)]
+        expr = self.expr
+        assert len(expr.children) == 2
+        lhs, rhs = expr.children
+        if isinstance(lhs, Variable) and isinstance(rhs, Variable):
+            args = ', '.join(map(str, expr.children))
+            return ['ensure_{0}({1});'.format(expr.name.lower(), args)]
+        else:
+            assert isinstance(self.expr, Equation)
+            if isinstance(lhs, Variable):
+                name = rhs.name.lower()
+                args = ', '.join(map(str, rhs.children))
+                return ['ensure_{0}({1}, {2});'.format(name, args, lhs)]
+            elif isinstance(rhs, Variable):
+                name = lhs.name.lower()
+                args = ', '.join(map(str, lhs.children))
+                return ['ensure_{0}({1}, {2});'.format(name, args, rhs)]
+            else:
+                if rhs.name < lhs.name:
+                    lhs, rhs = rhs, lhs
+                name = '{0}_{1}'.format(lhs.name.lower(), rhs.name.lower())
+                args = ', '.join(map(str, lhs.children + rhs.children))
+                return ['ensure_{0}({1});'.format(name, args)]
+
 
     def op_count(self):
         fun_count = 0
@@ -507,6 +539,10 @@ class Sequent(object):
 
     def get_constants(self):
         return union([e.get_constants()
+                      for e in self.antecedents | self.succedents])
+
+    def get_signature(self):
+        return union([e.get_signature()
                       for e in self.antecedents | self.succedents])
 
     def _is_normal(self):
@@ -737,3 +773,185 @@ def iter_compiled(antecedents, succedent, bound):
 
     assert results
     return results
+
+
+#-----------------------------------------------------------------------------
+# Theory
+
+
+class Theory:
+    def __init__(self, sequents):
+        self.sequents = sequents
+        self.signature = {
+            'nullary': [],
+            'unary': [],
+            'binary': [],
+            'symmetric': [],
+            }
+        symbols = union([s.get_signature() for s in sequents])
+        for c in symbols:
+            if c in UNARY_FUNCTIONS:
+                self.signature['unary'].append(c)
+            elif c in BINARY_FUNCTIONS:
+                self.signature['binary'].append(c)
+            elif c in SYMMETRIC_FUNCTIONS:
+                self.signature['symmetric'].append(c)
+            else:
+                self.signature['nullary'].append(c)
+        for val in self.signature.itervalues():
+            val.sort()
+
+    def _write_signature(self, write, section):
+
+        section('signature')
+        write()
+
+        write('Carrier carrier;')
+        write()
+
+        write('BinaryRelation LESS(carrier);')
+        write('BinaryRelation NLESS(carrier);')
+        write()
+
+        for arity in ['nullary', 'unary', 'binary', 'symmetric']:
+            Arity = arity.capitalize()
+            if self.signature[arity]:
+                for name in self.signature[arity]:
+                    write('{0}Function {1}(carrier);'.format(Arity, name))
+                write()
+
+    def _write_ensurers(self, write, section):
+
+        section('ensurers')
+        write()
+
+        write(dedent('''
+        inline void ensure_equal (oid_t lhs, oid_t rhs)
+        {
+            if (lhs != rhs) {
+                oid_t dep = lhs < rhs ? lhs : rhs;
+                oid_t rep = lhs < rhs ? rhs : lhs;
+                carrier.merge(dep, rep);
+                enqueue(EquationTask(dep));
+            } else if (lhs > rhs) {
+                carrier.merge(rhs, lhs)
+            }
+        }
+        ''').strip())
+        write()
+
+        arities = [('unary', 1), ('binary', 2), ('symmetric', 2)]
+        functions = [(name, arity, argc)
+                     for arity, argc in arities
+                     for name in self.signature[arity]]
+
+        def oid_t(x):
+            return 'oid_t {0}'.format(x)
+
+        for name, arity, argc in functions:
+            vars_ = ['key'] if argc == 1 else ['lhs', 'rhs']
+            write(dedent('''
+            inline void ensure_{name} ({typed_args}, oid_t val)
+            {{
+                if (oid_t old_val = {NAME}({args})) {{
+                    ensure_equal(old_val, val);
+                }} else {{
+                    {NAME}.insert({args}, val);
+                    enqueue({Arity}FunctionTask({NAME}, {args}));
+                }}
+            }}
+            ''')
+            .format(
+                name=name.lower(),
+                NAME=name,
+                args=', '.join(vars_),
+                typed_args=', '.join(map(oid_t, vars_)),
+                Arity=arity.capitalize(),
+                )
+            .strip())
+            write()
+
+        for name1, arity1, argc1 in functions:
+            for name2, arity2, argc2 in functions:
+                if name2 > name1:
+                    continue
+
+                vars1 = ['key1'] if argc1 == 1 else ['lhs1', 'rhs1']
+                vars2 = ['key2'] if argc2 == 1 else ['lhs2', 'rhs2']
+                write(dedent('''
+                inline void ensure_{name1}_{name2} (
+                    {typed_args1},
+                    {typed_args2})
+                {{
+                    if (oid_t val1 = {NAME1}({args1})) {{
+                        ensure_{name2}({args2}, val1);
+                    }} else {{
+                        if (oid_t val2 = {NAME2}({args2})) {{
+                            {NAME1}.insert({args1}, val2);
+                            enqueue({Arity1}FunctionTask({NAME1}, {args1}));
+                        }}
+                    }}
+                }}
+                ''')
+                .format(
+                    name1=name1.lower(),
+                    name2=name2.lower(),
+                    NAME1=name1,
+                    NAME2=name2,
+                    args1=', '.join(vars1),
+                    args2=', '.join(vars2),
+                    typed_args1=', '.join(map(oid_t, vars1)),
+                    typed_args2=', '.join(map(oid_t, vars2)),
+                    Arity1=arity.capitalize(),
+                    Arity2=arity2.capitalize(),
+                    )
+                .strip())
+                write()
+
+
+
+    def _write_tasks(self, write, section):
+
+        full_tasks = []
+        event_tasks = {}
+        for sequent in self.sequents:
+            full_tasks += sequent.compile()
+            for event in sequent.get_events():
+                tasks = event_tasks.setdefault(event, [])
+                tasks += sequent.compile_given(event)
+
+        full_tasks.sort(key=(lambda (cost, _): cost))
+        for cost, strategy in full_tasks:
+            section('cost = {0}'.format(cost))
+            for line in strategy.cpp_lines():
+                write(line)
+            write()
+
+        for event, tasks in event_tasks.iteritems():
+            tasks.sort(key=(lambda (cost, _): cost))
+
+            section('TODO given {0}'.format(event))
+            for cost, strategy in tasks:
+                write()
+                write('// cost = {0}'.format(cost))
+                for line in strategy.cpp_lines():
+                    write(line)
+                write()
+
+    def cpp_lines(self):
+        lines = []
+
+        def write(line_with_newlines=''):
+            for line in line_with_newlines.split('\n'):
+                lines.append(line)
+
+        def section(name):
+            write()
+            write('//' + '-' * 76)
+            write('// {0}'.format(name))
+
+        self._write_signature(write, section)
+        self._write_ensurers(write, section)
+        self._write_tasks(write, section)
+
+        return lines

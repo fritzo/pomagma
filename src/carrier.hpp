@@ -25,7 +25,7 @@ class Carrier
 
 public:
 
-    Carrier (size_t item_dim);
+    Carrier (size_t item_dim = 511);
     void move_from (const Carrier & other, const oid_t * new2old);
 
     size_t item_dim () const { return m_support.item_dim(); }

@@ -27,9 +27,9 @@ EQUAL APP Y f APP f APP Y f
 
 # order
 
-                                 LESS x y   LESS y x   LESS x y   LESS y z
---------   --------   --------   -------------------   -------------------
-LESS x x   LESS _ x   LESS x T       EQUAL x y             LESS x z
+                                     LESS x y   LESS y x   LESS x y   LESS y z
+--------   ----------   ----------   -------------------   -------------------
+LESS x x   LESS BOT x   LESS x TOP        EQUAL x y             LESS x z
 
       LESS x y               LESS f g
 --------------------   --------------------

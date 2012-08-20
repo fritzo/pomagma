@@ -1,8 +1,8 @@
 # extensional codes
 # by implementation, QUOTE injects
 
-------------------------   ------------------------
-NLESS T APP CODE QUOTE x   NLESS APP CODE QUOTE x _
+--------------------------   --------------------------
+NLESS TOP APP CODE QUOTE x   NLESS APP CODE QUOTE x BOT
 
 ---------------------   ---------------------------------
 EQUAL APP E QUOTE x x   EQUAL APP Q QUOTE x QUOTE QUOTE x
