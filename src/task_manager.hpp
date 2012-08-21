@@ -27,6 +27,8 @@ struct PositiveOrderTask
 
     PositiveOrderTask () {}
     PositiveOrderTask (oid_t l, oid_t r) : lhs(l), rhs(r) {}
+
+    bool touches (oid_t dep) const { return lhs == dep or rhs == dep; }
 };
 
 struct NegativeOrderTask
@@ -36,6 +38,8 @@ struct NegativeOrderTask
 
     NegativeOrderTask () {}
     NegativeOrderTask (oid_t l, oid_t r) : lhs(l), rhs(r) {}
+
+    bool touches (oid_t dep) const { return lhs == dep or rhs == dep; }
 };
 
 struct NullaryFunctionTask
@@ -44,6 +48,8 @@ struct NullaryFunctionTask
 
     NullaryFunctionTask () {}
     NullaryFunctionTask (NullaryFunction & f) : fun(&f) {}
+
+    bool touches (oid_t) const { return false; }
 };
 
 struct UnaryFunctionTask
@@ -53,6 +59,8 @@ struct UnaryFunctionTask
 
     UnaryFunctionTask () {}
     UnaryFunctionTask (UnaryFunction & f, oid_t a) : fun(&f), arg(a) {}
+
+    bool touches (oid_t dep) const { return arg == dep; }
 };
 
 struct BinaryFunctionTask
@@ -65,6 +73,8 @@ struct BinaryFunctionTask
     BinaryFunctionTask (BinaryFunction & f, oid_t l, oid_t r)
         : fun(&f), lhs(l), rhs(r)
     {}
+
+    bool touches (oid_t dep) const { return lhs == dep or rhs == dep; }
 };
 
 struct SymmetricFunctionTask
@@ -77,8 +87,15 @@ struct SymmetricFunctionTask
     SymmetricFunctionTask (SymmetricFunction & f, oid_t l, oid_t r)
         : fun(&f), lhs(l), rhs(r)
     {}
+
+    bool touches (oid_t dep) const { return lhs == dep or rhs == dep; }
 };
 
+
+// The TaskManager guarantees:
+// - never to execute an EquationTask while any other task is being executed
+// - to execute an EquationTask as soon as all previous tasks complete
+// - while executing an EquationTask(dep), to discard all tasks touching dep
 
 // These are defined by the TaskManager and called by the user
 void enqueue (const EquationTask & task);
@@ -89,11 +106,7 @@ void enqueue (const UnaryFunctionTask & task);
 void enqueue (const BinaryFunctionTask & task);
 void enqueue (const SymmetricFunctionTask & task);
 
-
 // These are defined by the user and called by the TaskManager
-// The TaskManager guarantees:
-// - never to execute an EquationTask while any other task is being executed
-// - to execute an EquationTask as soon as all previous tasks complete
 void execute (const EquationTask & task);
 void execute (const PositiveOrderTask & task);
 void execute (const NegativeOrderTask & task);

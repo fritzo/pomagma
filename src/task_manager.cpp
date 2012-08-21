@@ -13,104 +13,38 @@
 namespace pomagma
 {
 
-//----------------------------------------------------------------------------
-// execution
+namespace TaskManager
+{
 
+static std::atomic<bool> g_alive(false);
+static std::atomic<uint_fast64_t> g_merge_count(0);
+static std::atomic<uint_fast64_t> g_enforce_count(0);
+static boost::mutex g_work_mutex;
+static boost::condition_variable g_work_condition;
 static boost::shared_mutex g_merge_mutex;
+static std::vector<boost::thread> g_threads;
 
-template<class Task>
-struct LockedExecutor
-{
-    static void execute (const Task & task)
-    {
-        boost::shared_lock<boost::shared_mutex> lock(g_merge_mutex);
-        pomagma::execute(task);
-    }
-};
-
-template<>
-struct LockedExecutor<EquationTask>
-{
-    static void execute (const EquationTask & task)
-    {
-        boost::unique_lock<boost::shared_mutex> lock(g_merge_mutex);
-        pomagma::execute(task);
-    }
-};
-
-template<class Task>
-inline void safe_execute (const Task & task)
-{
-    LockedExecutor<Task>::execute(task);
-}
-
-//----------------------------------------------------------------------------
-// merging
-
-inline bool merge (const EquationTask & task, oid_t dep)
-{
-    return task.dep != dep;
-}
-
-inline bool merge (const PositiveOrderTask & task, oid_t dep)
-{
-    return task.lhs != dep and task.lhs != dep;
-}
-
-inline bool merge (const NegativeOrderTask & task, oid_t dep)
-{
-    return task.lhs != dep and task.lhs != dep;
-}
-
-inline bool merge (const NullaryFunctionTask &, oid_t)
-{
-    return true;
-}
-
-inline bool merge (const UnaryFunctionTask & task, oid_t dep)
-{
-    return task.arg != dep;
-}
-
-inline bool merge (const BinaryFunctionTask & task, oid_t dep)
-{
-    return task.lhs != dep and task.lhs != dep;
-}
-
-inline bool merge (const SymmetricFunctionTask & task, oid_t dep)
-{
-    return task.lhs != dep and task.lhs != dep;
-}
-
-//----------------------------------------------------------------------------
-// task queuing
+void merge_tasks (oid_t dep);
 
 template<class Task>
 class TaskQueue
 {
-    typedef tbb::concurrent_queue<Task> Queue;
-    Queue m_queue;
-    boost::shared_mutex m_mutex;
+    tbb::concurrent_queue<Task> m_queue;
 
 public:
 
     void push (const Task & task)
     {
-        boost::shared_lock<boost::shared_mutex> lock(m_mutex);
         m_queue.push(task);
-    }
-
-    bool try_pop (Task & task)
-    {
-        boost::shared_lock<boost::shared_mutex> lock(m_mutex);
-        return m_queue.try_pop(task);
+        g_work_condition.notify_one();
     }
 
     bool try_execute ()
     {
+        boost::shared_lock<boost::shared_mutex> lock(g_merge_mutex);
         Task task;
-        if (try_pop(task)) {
-            safe_execute(task);
+        if (m_queue.try_pop(task)) {
+            execute(task);
             return true;
         } else {
             return false;
@@ -119,26 +53,42 @@ public:
 
     void merge (oid_t dep)
     {
-        boost::unique_lock<boost::shared_mutex> lock(m_mutex);
-
-        Queue queue;
+        tbb::concurrent_queue<Task> queue;
         std::swap(queue, m_queue);
         for (Task task; queue.try_pop(task);) {
-            if (pomagma::merge(task, dep)) {
+            if (not task.touches(dep)) {
                 push(task);
             }
         }
     }
 };
 
-//----------------------------------------------------------------------------
-// task manager
-
-namespace TaskManager
+template<>
+class TaskQueue<EquationTask>
 {
+    tbb::concurrent_queue<EquationTask> m_queue;
 
-namespace // anonymous
-{
+public:
+
+    void push (const EquationTask & task)
+    {
+        m_queue.push(task);
+        g_work_condition.notify_one();
+    }
+
+    bool try_execute ()
+    {
+        EquationTask task;
+        if (m_queue.try_pop(task)) {
+            boost::unique_lock<boost::shared_mutex> lock(g_merge_mutex);
+            execute(task);
+            merge_tasks(task.dep);
+            return true;
+        } else {
+            return false;
+        }
+    }
+};
 
 static TaskQueue<EquationTask> g_equations;
 static TaskQueue<PositiveOrderTask> g_positive_orders;
@@ -148,13 +98,6 @@ static TaskQueue<UnaryFunctionTask> g_unary_functions;
 static TaskQueue<BinaryFunctionTask> g_binary_functions;
 static TaskQueue<SymmetricFunctionTask> g_symmetric_functions;
 
-static std::atomic<bool> g_alive(false);
-static std::atomic<uint_fast64_t> g_merge_count(0);
-static std::atomic<uint_fast64_t> g_enforce_count(0);
-
-static boost::mutex g_mutex;
-static boost::condition_variable g_condition;
-static std::vector<boost::thread> g_threads;
 
 inline bool try_work ()
 {
@@ -167,20 +110,8 @@ inline bool try_work ()
         or g_negative_orders.try_execute();
 }
 
-void do_work ()
+inline void merge_tasks (oid_t dep)
 {
-    const auto timeout = boost::posix_time::seconds(60);
-    while (g_alive) {
-        if (not try_work()) {
-            boost::unique_lock<boost::mutex> lock(g_mutex);
-            g_condition.timed_wait(lock, timeout);
-        }
-    }
-}
-
-void merge (oid_t dep)
-{
-    g_equations.merge(dep);
     g_nullary_functions.merge(dep);
     g_unary_functions.merge(dep);
     g_binary_functions.merge(dep);
@@ -189,7 +120,16 @@ void merge (oid_t dep)
     g_negative_orders.merge(dep);
 }
 
-} // anonymous namespace
+void do_work ()
+{
+    const auto timeout = boost::posix_time::seconds(60);
+    while (g_alive) {
+        if (not try_work()) {
+            boost::unique_lock<boost::mutex> lock(g_work_mutex);
+            g_work_condition.timed_wait(lock, timeout);
+        }
+    }
+}
 
 void start (size_t thread_count)
 {
@@ -202,7 +142,7 @@ void start (size_t thread_count)
 void stopall ()
 {
     g_alive = false;
-    g_condition.notify_all();
+    g_work_condition.notify_all();
     while (not g_threads.empty()) {
         g_threads.back().join();
         g_threads.pop_back();
@@ -214,45 +154,37 @@ void stopall ()
 
 void enqueue (const EquationTask & task)
 {
-    TaskManager::merge(task.dep);
     TaskManager::g_equations.push(task);
-    TaskManager::g_condition.notify_one();
 }
 
 void enqueue (const PositiveOrderTask & task)
 {
     TaskManager::g_positive_orders.push(task);
-    TaskManager::g_condition.notify_one();
 }
 
 void enqueue (const NegativeOrderTask & task)
 {
     TaskManager::g_negative_orders.push(task);
-    TaskManager::g_condition.notify_one();
 }
 
 void enqueue (const NullaryFunctionTask & task)
 {
     TaskManager::g_nullary_functions.push(task);
-    TaskManager::g_condition.notify_one();
 }
 
 void enqueue (const UnaryFunctionTask & task)
 {
     TaskManager::g_unary_functions.push(task);
-    TaskManager::g_condition.notify_one();
 }
 
 void enqueue (const BinaryFunctionTask & task)
 {
     TaskManager::g_binary_functions.push(task);
-    TaskManager::g_condition.notify_one();
 }
 
 void enqueue (const SymmetricFunctionTask & task)
 {
     TaskManager::g_symmetric_functions.push(task);
-    TaskManager::g_condition.notify_one();
 }
 
 } // namespace pomagma
