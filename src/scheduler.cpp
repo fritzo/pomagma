@@ -1,4 +1,4 @@
-#include "task_manager.hpp"
+#include "scheduler.hpp"
 #include <vector>
 #include <atomic>
 #include <boost/thread/thread.hpp>
@@ -13,7 +13,7 @@
 namespace pomagma
 {
 
-namespace TaskManager
+namespace Scheduler
 {
 
 static std::atomic<bool> g_alive(false);
@@ -149,42 +149,42 @@ void stopall ()
     }
 }
 
-} // namespace TaskManager
+} // namespace Scheduler
 
 
 void enqueue (const EquationTask & task)
 {
-    TaskManager::g_equations.push(task);
+    Scheduler::g_equations.push(task);
 }
 
 void enqueue (const PositiveOrderTask & task)
 {
-    TaskManager::g_positive_orders.push(task);
+    Scheduler::g_positive_orders.push(task);
 }
 
 void enqueue (const NegativeOrderTask & task)
 {
-    TaskManager::g_negative_orders.push(task);
+    Scheduler::g_negative_orders.push(task);
 }
 
 void enqueue (const NullaryFunctionTask & task)
 {
-    TaskManager::g_nullary_functions.push(task);
+    Scheduler::g_nullary_functions.push(task);
 }
 
 void enqueue (const UnaryFunctionTask & task)
 {
-    TaskManager::g_unary_functions.push(task);
+    Scheduler::g_unary_functions.push(task);
 }
 
 void enqueue (const BinaryFunctionTask & task)
 {
-    TaskManager::g_binary_functions.push(task);
+    Scheduler::g_binary_functions.push(task);
 }
 
 void enqueue (const SymmetricFunctionTask & task)
 {
-    TaskManager::g_symmetric_functions.push(task);
+    Scheduler::g_symmetric_functions.push(task);
 }
 
 } // namespace pomagma

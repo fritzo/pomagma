@@ -1,5 +1,5 @@
-#ifndef POMAGMA_TASK_MANAGER_HPP
-#define POMAGMA_TASK_MANAGER_HPP
+#ifndef POMAGMA_SCHEDULER_HPP
+#define POMAGMA_SCHEDULER_HPP
 
 #include "util.hpp"
 
@@ -92,12 +92,12 @@ struct SymmetricFunctionTask
 };
 
 
-// The TaskManager guarantees:
+// The Scheduler guarantees:
 // - never to execute an EquationTask while any other task is being executed
 // - to execute an EquationTask as soon as all previous tasks complete
 // - while executing an EquationTask(dep), to discard all tasks touching dep
 
-// These are defined by the TaskManager and called by the user
+// These are defined by the Scheduler and called by the user
 void enqueue (const EquationTask & task);
 void enqueue (const PositiveOrderTask & task);
 void enqueue (const NegativeOrderTask & task);
@@ -106,7 +106,7 @@ void enqueue (const UnaryFunctionTask & task);
 void enqueue (const BinaryFunctionTask & task);
 void enqueue (const SymmetricFunctionTask & task);
 
-// These are defined by the user and called by the TaskManager
+// These are defined by the user and called by the Scheduler
 void execute (const EquationTask & task);
 void execute (const PositiveOrderTask & task);
 void execute (const NegativeOrderTask & task);
@@ -116,15 +116,15 @@ void execute (const BinaryFunctionTask & task);
 void execute (const SymmetricFunctionTask & task);
 
 
-namespace TaskManager
+namespace Scheduler
 {
 
 void start (size_t thread_count);
 void stopall ();
 
-} // namespace TaskManager
+} // namespace Scheduler
 
 
 } // namespace pomagma
 
-#endif // POMAGMA_TASK_MANAGER_HPP
+#endif // POMAGMA_SCHEDULER_HPP

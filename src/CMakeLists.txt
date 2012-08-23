@@ -13,7 +13,7 @@ add_library(pomagma SHARED
 	binary_function.cpp
 	symmetric_function.cpp
 	inverse_bin_fun.cpp
-	task_manager.cpp
+	scheduler.cpp
 	)
 install(TARGETS pomagma LIBRARY DESTINATION ${PROJECT_SOURCE_DIR}/lib)
 set(POMAGMA_LIBS pomagma boost_thread tbb)
@@ -55,9 +55,9 @@ add_executable(inverse_bin_fun_test inverse_bin_fun_test.cpp)
 target_link_libraries(inverse_bin_fun_test ${POMAGMA_TEST_LIBS})
 add_test(NAME inverse_bin_fun COMMAND inverse_bin_fun_test)
 
-add_executable(task_manager_test task_manager_test.cpp)
-target_link_libraries(task_manager_test ${POMAGMA_TEST_LIBS})
-add_test(NAME task_manger COMMAND task_manager_test)
+add_executable(scheduler_test scheduler_test.cpp)
+target_link_libraries(scheduler_test ${POMAGMA_TEST_LIBS})
+add_test(NAME scheduler COMMAND scheduler_test)
 
 
 add_library(pomagma_server SHARED

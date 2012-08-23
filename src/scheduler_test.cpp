@@ -1,4 +1,4 @@
-#include "task_manager.hpp"
+#include "scheduler.hpp"
 #include <chrono>
 #include <thread>
 
@@ -8,9 +8,9 @@ void test_simple (size_t max_threads = 20)
 {
     for (size_t i = 1; i <= max_threads; ++i) {
         POMAGMA_INFO("Starting " << i << " threads");
-        TaskManager::start(i);
+        Scheduler::start(i);
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
-        TaskManager::stopall();
+        Scheduler::stopall();
         POMAGMA_INFO("Stopped " << i << " threads");
     }
 }

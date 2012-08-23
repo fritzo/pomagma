@@ -1,5 +1,5 @@
 #include "util.hpp"
-#include "task_manager.hpp"
+#include "scheduler.hpp"
 #include <zmq.hpp>
 #include <unistd.h>
 
@@ -19,7 +19,7 @@ void serve (const char * endpoint)
     zmq::socket_t socket (context, ZMQ_REP);
     socket.bind(endpoint);
 
-    TaskManager::start(4);
+    Scheduler::start(4);
 
     while (true) {
         zmq::message_t request;
@@ -29,7 +29,7 @@ void serve (const char * endpoint)
         test(socket);
     }
 
-    TaskManager::stopall();
+    Scheduler::stopall();
 }
 
 } // namespace pomagma
