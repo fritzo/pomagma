@@ -1,6 +1,7 @@
 #include "scheduler.hpp"
 #include <vector>
 #include <atomic>
+#include "threading.hpp"
 #include <boost/thread/thread.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/shared_mutex.hpp>
@@ -21,7 +22,7 @@ static std::atomic<uint_fast64_t> g_merge_count(0);
 static std::atomic<uint_fast64_t> g_enforce_count(0);
 static boost::mutex g_work_mutex;
 static boost::condition_variable g_work_condition;
-static boost::shared_mutex g_merge_mutex;
+static SharedMutex g_merge_mutex;
 static std::vector<boost::thread> g_threads;
 
 void merge_tasks (oid_t dep);
@@ -41,7 +42,7 @@ public:
 
     bool try_execute ()
     {
-        boost::shared_lock<boost::shared_mutex> lock(g_merge_mutex);
+        SharedMutex::SharedLock lock(g_merge_mutex);
         Task task;
         if (m_queue.try_pop(task)) {
             execute(task);
@@ -80,7 +81,7 @@ public:
     {
         EquationTask task;
         if (m_queue.try_pop(task)) {
-            boost::unique_lock<boost::shared_mutex> lock(g_merge_mutex);
+            SharedMutex::UniqueLock lock(g_merge_mutex);
             execute(task);
             merge_tasks(task.dep);
             return true;
