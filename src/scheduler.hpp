@@ -28,7 +28,7 @@ struct PositiveOrderTask
     PositiveOrderTask () {}
     PositiveOrderTask (oid_t l, oid_t r) : lhs(l), rhs(r) {}
 
-    bool touches (oid_t dep) const { return lhs == dep or rhs == dep; }
+    bool references (oid_t dep) const { return lhs == dep or rhs == dep; }
 };
 
 struct NegativeOrderTask
@@ -39,7 +39,7 @@ struct NegativeOrderTask
     NegativeOrderTask () {}
     NegativeOrderTask (oid_t l, oid_t r) : lhs(l), rhs(r) {}
 
-    bool touches (oid_t dep) const { return lhs == dep or rhs == dep; }
+    bool references (oid_t dep) const { return lhs == dep or rhs == dep; }
 };
 
 struct NullaryFunctionTask
@@ -49,7 +49,7 @@ struct NullaryFunctionTask
     NullaryFunctionTask () {}
     NullaryFunctionTask (NullaryFunction & f) : fun(&f) {}
 
-    bool touches (oid_t) const { return false; }
+    bool references (oid_t) const { return false; }
 };
 
 struct UnaryFunctionTask
@@ -60,7 +60,7 @@ struct UnaryFunctionTask
     UnaryFunctionTask () {}
     UnaryFunctionTask (UnaryFunction & f, oid_t a) : fun(&f), arg(a) {}
 
-    bool touches (oid_t dep) const { return arg == dep; }
+    bool references (oid_t dep) const { return arg == dep; }
 };
 
 struct BinaryFunctionTask
@@ -74,7 +74,7 @@ struct BinaryFunctionTask
         : fun(&f), lhs(l), rhs(r)
     {}
 
-    bool touches (oid_t dep) const { return lhs == dep or rhs == dep; }
+    bool references (oid_t dep) const { return lhs == dep or rhs == dep; }
 };
 
 struct SymmetricFunctionTask
@@ -88,7 +88,7 @@ struct SymmetricFunctionTask
         : fun(&f), lhs(l), rhs(r)
     {}
 
-    bool touches (oid_t dep) const { return lhs == dep or rhs == dep; }
+    bool references (oid_t dep) const { return lhs == dep or rhs == dep; }
 };
 
 
@@ -98,13 +98,13 @@ struct SymmetricFunctionTask
 // - while executing an EquationTask(dep), to discard all tasks touching dep
 
 // These are defined by the Scheduler and called by the user
-void enqueue (const EquationTask & task);
-void enqueue (const PositiveOrderTask & task);
-void enqueue (const NegativeOrderTask & task);
-void enqueue (const NullaryFunctionTask & task);
-void enqueue (const UnaryFunctionTask & task);
-void enqueue (const BinaryFunctionTask & task);
-void enqueue (const SymmetricFunctionTask & task);
+void schedule (const EquationTask & task);
+void schedule (const PositiveOrderTask & task);
+void schedule (const NegativeOrderTask & task);
+void schedule (const NullaryFunctionTask & task);
+void schedule (const UnaryFunctionTask & task);
+void schedule (const BinaryFunctionTask & task);
+void schedule (const SymmetricFunctionTask & task);
 
 // These are defined by the user and called by the Scheduler
 void execute (const EquationTask & task);

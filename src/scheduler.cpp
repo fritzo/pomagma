@@ -56,7 +56,7 @@ public:
         tbb::concurrent_queue<Task> queue;
         std::swap(queue, m_queue);
         for (Task task; queue.try_pop(task);) {
-            if (not task.touches(dep)) {
+            if (not task.references(dep)) {
                 push(task);
             }
         }
@@ -152,37 +152,37 @@ void stopall ()
 } // namespace Scheduler
 
 
-void enqueue (const EquationTask & task)
+void schedule (const EquationTask & task)
 {
     Scheduler::g_equations.push(task);
 }
 
-void enqueue (const PositiveOrderTask & task)
+void schedule (const PositiveOrderTask & task)
 {
     Scheduler::g_positive_orders.push(task);
 }
 
-void enqueue (const NegativeOrderTask & task)
+void schedule (const NegativeOrderTask & task)
 {
     Scheduler::g_negative_orders.push(task);
 }
 
-void enqueue (const NullaryFunctionTask & task)
+void schedule (const NullaryFunctionTask & task)
 {
     Scheduler::g_nullary_functions.push(task);
 }
 
-void enqueue (const UnaryFunctionTask & task)
+void schedule (const UnaryFunctionTask & task)
 {
     Scheduler::g_unary_functions.push(task);
 }
 
-void enqueue (const BinaryFunctionTask & task)
+void schedule (const BinaryFunctionTask & task)
 {
     Scheduler::g_binary_functions.push(task);
 }
 
-void enqueue (const SymmetricFunctionTask & task)
+void schedule (const SymmetricFunctionTask & task)
 {
     Scheduler::g_symmetric_functions.push(task);
 }
