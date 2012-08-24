@@ -838,7 +838,7 @@ class Theory:
                 oid_t dep = lhs < rhs ? lhs : rhs;
                 oid_t rep = lhs < rhs ? rhs : lhs;
                 carrier.merge(dep, rep);
-                enqueue(EquationTask(dep));
+                schedule(EquationTask(dep));
             }
         }
         ''').strip())
@@ -861,7 +861,7 @@ class Theory:
                     ensure_equal(old_val, val);
                 }} else {{
                     {NAME}.insert({args}, val);
-                    enqueue({Arity}FunctionTask({NAME}, {args}));
+                    schedule({Arity}FunctionTask({NAME}, {args}));
                 }}
             }}
             ''')
@@ -892,7 +892,7 @@ class Theory:
                     }} else {{
                         if (oid_t val2 = {NAME2}({args2})) {{
                             {NAME1}.insert({args1}, val2);
-                            enqueue({Arity1}FunctionTask({NAME1}, {args1}));
+                            schedule({Arity1}FunctionTask({NAME1}, {args1}));
                         }}
                     }}
                 }}

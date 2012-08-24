@@ -141,7 +141,7 @@ def compile(*infiles, **kwargs):
         #include "binary_function.hpp"
         #include "symmetric_function.hpp"
         #include "binary_relation.hpp"
-        #include "task_manager.hpp"
+        #include "scheduler.hpp"
         
         namespace pomagma {{
         ''').format(argstring=argstring))
