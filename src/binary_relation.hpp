@@ -59,6 +59,7 @@ public:
     bool contains_Lx (oid_t i, oid_t j) const { return m_lines.Lx(i, j); }
     bool contains_Rx (oid_t i, oid_t j) const { return m_lines.Rx(i, j); }
     bool contains (oid_t i, oid_t j) const { return contains_Lx(i, j); }
+    bool operator() (oid_t i, oid_t j) const { return contains(i, j); }
     bool contains (const Pos & p) const { return contains_Lx(p); }
     bool contains_Lx (const Pos & p) const
     {

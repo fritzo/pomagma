@@ -234,7 +234,7 @@ class Iter(Strategy):
                 self.body)
 
     def cpp_lines(self):
-        body = []
+        body = ['oid_t {0} = *iter;'.format(self.var)]
         for var, expr in self.lets.iteritems():
             body.append('oid_t {0} = {1}({2});'.format(
                 var, expr.name, ', '.join(map(str, expr.children))))
@@ -248,16 +248,16 @@ class Iter(Strategy):
         lines = []
         if len(sets) == 0:
             lines += [
-                'dense_set set(carrier.object_dim(), carrier.get_set());',
+                'const dense_set & set = carrier.support();',
                 ]
         elif len(sets) == 1:
             one_set = iter(sets).next()
             lines += [
-                'dense_set set(carrier.object_dim(), {0});'.format(one_set),
+                'dense_set set(carrier.item_dim(), {0});'.format(one_set),
                 ]
         else:
             lines += [
-                'dense_set set(carrier.object_dim());',
+                'dense_set set(carrier.item_dim());',
                 'set.set_union({0})'.format(', '.join(sets)),
                 ]
         lines += [
@@ -408,8 +408,12 @@ class Let(Strategy):
         return 'let {0}: {1}'.format(self.var, self.body)
 
     def cpp_lines(self):
+        if self.expr.children:
+            expr = str(self.expr)
+        else:
+            expr = 'signature::{0}()'.format(self.expr)
         return [
-            'if (oid_t {0} = {1}) {{'.format(self.var, self.expr)
+            'if (oid_t {0} = {1}) {{'.format(self.var, expr)
             ] + map(indent, self.body.cpp_lines()) + [
             '}'
             ]
@@ -812,6 +816,9 @@ class Theory:
         section('signature')
         write()
 
+        write('namespace signature {')
+        write()
+
         write('Carrier carrier;')
         write()
 
@@ -826,6 +833,10 @@ class Theory:
                     write('{0}Function {1}(carrier);'.format(Arity, name))
                 write()
 
+        write('} // namespace signature')
+        write('using namespace signature;')
+        write()
+
     def _write_ensurers(self, write, section):
 
         section('ensurers')
@@ -838,7 +849,29 @@ class Theory:
                 oid_t dep = lhs < rhs ? lhs : rhs;
                 oid_t rep = lhs < rhs ? rhs : lhs;
                 carrier.merge(dep, rep);
-                schedule(EquationTask(dep));
+                schedule(MergeTask(dep));
+            }
+        }
+
+        // TODO most uses of this can be vectorized
+        // TODO use .contains_Lx/.contains_Rx based on iterator direction
+        inline void ensure_less (oid_t lhs, oid_t rhs)
+        {
+            // TODO do this more atomically
+            if (not LESS(lhs, rhs)) {
+                LESS.insert(lhs, rhs);
+                schedule(PositiveOrderTask(lhs, rhs));
+            }
+        }
+
+        // TODO most uses of this can be vectorized
+        // TODO use .contains_Lx/.contains_Rx based on iterator direction
+        inline void ensure_nless (oid_t lhs, oid_t rhs)
+        {
+            // TODO do this more atomically
+            if (not NLESS(lhs, rhs)) {
+                NLESS.insert(lhs, rhs);
+                schedule(NegativeOrderTask(lhs, rhs));
             }
         }
         ''').strip())
@@ -917,15 +950,42 @@ class Theory:
         full_tasks = []
         for sequent in self.sequents:
             full_tasks += sequent.compile()
-
         full_tasks.sort(key=(lambda (cost, _): cost))
-        for cost, strategy in full_tasks:
-            write('// cost = {0}'.format(cost))
-            for line in strategy.cpp_lines():
-                write(line)
+
+        section('full tasks')
+        write(dedent('''
+        void execute (const CleanupTask & task)
+        {
+            switch (task.type)
+            {
+        ''').rstrip())
+
+        for i, (cost, strategy) in enumerate(full_tasks):
             write()
+            write('    case {0}: {{ // cost = {1}'.format(i, cost))
+            for line in strategy.cpp_lines():
+                write('        ' + line)
+            write('    } break;')
+
+        write(dedent('''
+            // TODO find a better cleanup scheduling policy
+            default:
+                schedule(CleanupTask(0)); // HACK
+                return;
+            }}
+
+            // HACK
+            size_t next_type = (task.type + 1) % {type_count};
+            schedule(CleanupTask(next_type));
+        }}
+        '''.format(
+            type_count=len(full_tasks)
+            )))
 
     def _write_event_tasks(self, write, section):
+
+        section('event tasks')
+        write()
 
         event_tasks = {}
         for sequent in self.sequents:

@@ -43,8 +43,8 @@ private:
     inline oid_t & value (oid_t lhs, oid_t rhs);
 public:
     inline oid_t value (oid_t lhs, oid_t rhs) const;
-    oid_t operator() (oid_t lhs, oid_t rhs) const { return value(lhs, rhs); }
     oid_t get_value (oid_t lhs, oid_t rhs) const { return value(lhs, rhs); }
+    oid_t operator() (oid_t lhs, oid_t rhs) const { return value(lhs, rhs); }
 
     // attributes
     size_t item_dim () const { return m_lines.item_dim(); }

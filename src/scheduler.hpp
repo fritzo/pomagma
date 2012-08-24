@@ -12,12 +12,22 @@ class BinaryFunction;
 class SymmetricFunction;
 
 
-struct EquationTask
+struct MergeTask
 {
     oid_t dep;
 
-    EquationTask () {}
-    EquationTask (oid_t d) : dep(d) {}
+    MergeTask () {}
+    MergeTask (oid_t d) : dep(d) {}
+};
+
+struct CleanupTask
+{
+    size_t type;
+
+    CleanupTask () {}
+    CleanupTask (size_t t) : type(t) {}
+
+    bool references (oid_t) const { return false; }
 };
 
 struct PositiveOrderTask
@@ -93,12 +103,13 @@ struct SymmetricFunctionTask
 
 
 // The Scheduler guarantees:
-// - never to execute an EquationTask while any other task is being executed
-// - to execute an EquationTask as soon as all previous tasks complete
-// - while executing an EquationTask(dep), to discard all tasks touching dep
+// - never to execute an MergeTask while any other task is being executed
+// - to execute an MergeTask as soon as all previous tasks complete
+// - while executing an MergeTask(dep), to discard all tasks touching dep
 
 // These are defined by the Scheduler and called by the user
-void schedule (const EquationTask & task);
+void schedule (const MergeTask & task);
+void schedule (const CleanupTask & task);
 void schedule (const PositiveOrderTask & task);
 void schedule (const NegativeOrderTask & task);
 void schedule (const NullaryFunctionTask & task);
@@ -107,7 +118,8 @@ void schedule (const BinaryFunctionTask & task);
 void schedule (const SymmetricFunctionTask & task);
 
 // These are defined by the user and called by the Scheduler
-void execute (const EquationTask & task);
+void execute (const MergeTask & task);
+void execute (const CleanupTask & task);
 void execute (const PositiveOrderTask & task);
 void execute (const NegativeOrderTask & task);
 void execute (const NullaryFunctionTask & task);

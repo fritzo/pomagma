@@ -33,6 +33,7 @@ private:
 public:
     inline oid_t value (oid_t key) const;
     oid_t get_value (oid_t key) const { return value(key); }
+    oid_t operator() (oid_t key) const { return value(key); }
 
     // attributes
     size_t item_dim () const { return m_set.item_dim(); }

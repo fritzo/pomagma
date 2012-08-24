@@ -27,6 +27,7 @@ private:
 public:
     oid_t value () const { return m_value; }
     oid_t get_value () const { return m_value; }
+    oid_t operator() () const { return m_value; }
 
     // attributes
 private:

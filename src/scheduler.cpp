@@ -65,13 +65,13 @@ public:
 };
 
 template<>
-class TaskQueue<EquationTask>
+class TaskQueue<MergeTask>
 {
-    tbb::concurrent_queue<EquationTask> m_queue;
+    tbb::concurrent_queue<MergeTask> m_queue;
 
 public:
 
-    void push (const EquationTask & task)
+    void push (const MergeTask & task)
     {
         m_queue.push(task);
         g_work_condition.notify_one();
@@ -79,7 +79,7 @@ public:
 
     bool try_execute ()
     {
-        EquationTask task;
+        MergeTask task;
         if (m_queue.try_pop(task)) {
             SharedMutex::UniqueLock lock(g_merge_mutex);
             execute(task);
@@ -91,7 +91,8 @@ public:
     }
 };
 
-static TaskQueue<EquationTask> g_equations;
+static TaskQueue<MergeTask> g_mergers;
+static TaskQueue<CleanupTask> g_cleanups;
 static TaskQueue<PositiveOrderTask> g_positive_orders;
 static TaskQueue<NegativeOrderTask> g_negative_orders;
 static TaskQueue<NullaryFunctionTask> g_nullary_functions;
@@ -102,13 +103,14 @@ static TaskQueue<SymmetricFunctionTask> g_symmetric_functions;
 
 inline bool try_work ()
 {
-    return g_equations.try_execute()
+    return g_mergers.try_execute()
         or g_nullary_functions.try_execute()
         or g_unary_functions.try_execute()
         or g_binary_functions.try_execute()
         or g_symmetric_functions.try_execute()
         or g_positive_orders.try_execute()
-        or g_negative_orders.try_execute();
+        or g_negative_orders.try_execute()
+        or g_cleanups.try_execute();
 }
 
 inline void merge_tasks (oid_t dep)
@@ -153,9 +155,9 @@ void stopall ()
 } // namespace Scheduler
 
 
-void schedule (const EquationTask & task)
+void schedule (const MergeTask & task)
 {
-    Scheduler::g_equations.push(task);
+    Scheduler::g_mergers.push(task);
 }
 
 void schedule (const PositiveOrderTask & task)

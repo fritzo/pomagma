@@ -8,7 +8,8 @@ namespace pomagma
     void execute (const POMAGMA_name &)\
     { POMAGMA_INFO("executing " #POMAGMA_name) }
 
-DEF_EXECUTE(EquationTask)
+DEF_EXECUTE(MergeTask)
+DEF_EXECUTE(CleanupTask)
 DEF_EXECUTE(PositiveOrderTask)
 DEF_EXECUTE(NegativeOrderTask)
 DEF_EXECUTE(NullaryFunctionTask)
