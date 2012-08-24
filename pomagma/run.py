@@ -142,6 +142,8 @@ def compile(*infiles, **kwargs):
         #include "symmetric_function.hpp"
         #include "binary_relation.hpp"
         #include "scheduler.hpp"
+        #include <atomic>
+        #include <vector>
         
         namespace pomagma {{
         ''').format(argstring=argstring))

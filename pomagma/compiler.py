@@ -165,7 +165,6 @@ class Equation(Compound):
 EQUAL = lambda x, y: Equation(x, y)
 LESS = lambda x, y: Relation('LESS', x, y)
 NLESS = lambda x, y: Relation('NLESS', x, y)
-OF_TYPE = lambda x, y: Relation('OF_TYPE', x, y)
 
 UNARY_FUNCTIONS = ['QUOTE']
 BINARY_FUNCTIONS = ['APP', 'COMP']
@@ -175,7 +174,6 @@ SYMBOL_TABLE = {
     'EQUAL': (2, EQUAL),
     'LESS': (2, LESS),
     'NLESS': (2, NLESS),
-    'OF_TYPE': (2, OF_TYPE),
     }
 
 def _declare_unary(name):
@@ -187,6 +185,14 @@ def _declare_binary(name):
     SYMBOL_TABLE[name] = (2, lambda x, y: Function(name, x, y))
 for name in BINARY_FUNCTIONS + SYMMETRIC_FUNCTIONS:
     _declare_binary(name)
+
+
+TYPE_TABLE = dict(
+    [('LESS', 'PositiveOrder'), ('NLESS', 'NegativeOrder')] +
+    [(name, 'UnaryFunction') for name in UNARY_FUNCTIONS] +
+    [(name, 'BinaryFunction') for name in BINARY_FUNCTIONS] +
+    [(name, 'SymmetricFunction') for name in SYMMETRIC_FUNCTIONS] +
+    [])
 
 
 #-----------------------------------------------------------------------------
@@ -337,7 +343,7 @@ class IterInvBinary(Strategy):
         body.append('oid_t {0} = iter.rhs();'.format(self.var2))
         body += self.body.cpp_lines()
         body = ['    ' + line for line in body]
-        iter = 'binary_function::inverse_iterator iter({0})'.format(self.value)
+        iter = 'BinaryFunction::inverse_iterator iter({0})'.format(self.value)
         return [
             'for ({0}; iter.ok(); iter.next()) {{'.format(iter),
             ] + body + [
@@ -378,10 +384,10 @@ class IterInvBinaryRange(Strategy):
         body += self.body.cpp_lines()
         body = ['    ' + line for line in body]
         if self.lhs_fixed:
-            iter = 'binary_function::inv_range_iterator iter({0}, {1})'.format(
+            iter = 'BinaryFunction::inv_range_iterator iter({0}, {1})'.format(
                     self.value, self.var2)
         else:
-            iter = 'binary_function::inv_range_iterator iter({0}, {1})'.format(
+            iter = 'BinaryFunction::inv_range_iterator iter({0}, {1})'.format(
                     self.value, self.var1)
         return [
             'for ({0}; iter.ok(); iter.next()) {{'.format(iter),
@@ -951,14 +957,39 @@ class Theory:
         for sequent in self.sequents:
             full_tasks += sequent.compile()
         full_tasks.sort(key=(lambda (cost, _): cost))
+        type_count = len(full_tasks)
 
         section('full tasks')
         write(dedent('''
+
+        const size_t g_type_count = {type_count};
+        std::vector<std::atomic_flag> g_clean_state(g_type_count, true);
+
+        void set_state_dirty ()
+        {{
+            for (auto & state : g_clean_state) {{
+                state.clear();
+            }}
+        }}
+
         void execute (const CleanupTask & task)
-        {
+        {{
+            // HACK
+            // TODO find a better cleanup scheduling policy
+            size_t next_type = (task.type + 1) % g_type_count;
+            if (task.type >= g_type_count) {{
+                schedule(CleanupTask(0));
+            }}
+            if (not g_clean_state[task.type].test_and_set()) {{
+                schedule(CleanupTask(next_type));
+                return;
+            }}
+
             switch (task.type)
-            {
-        ''').rstrip())
+            {{
+        ''').rstrip().format(
+            type_count=type_count
+            ))
 
         for i, (cost, strategy) in enumerate(full_tasks):
             write()
@@ -968,19 +999,12 @@ class Theory:
             write('    } break;')
 
         write(dedent('''
-            // TODO find a better cleanup scheduling policy
-            default:
-                schedule(CleanupTask(0)); // HACK
-                return;
-            }}
+            default: POMAGMA_ERROR("bad cleanup type" << task.type);
+            }
 
-            // HACK
-            size_t next_type = (task.type + 1) % {type_count};
             schedule(CleanupTask(next_type));
-        }}
-        '''.format(
-            type_count=len(full_tasks)
-            )))
+        }
+        '''))
 
     def _write_event_tasks(self, write, section):
 
@@ -998,14 +1022,22 @@ class Theory:
                 key=(lambda (name, tasks): (len(tasks), len(name), name)))
         for event, tasks in event_tasks:
             tasks.sort(key=(lambda (cost, _): cost))
+            Type = TYPE_TABLE.get(event, 'NullaryFunction')
 
-            section('TODO given {0}'.format(event))
+            write(dedent('''
+            void execute (const {Type}Task & task)
+            {{
+            ''').rstrip().format(
+                Type=Type
+                ))
+
             for cost, strategy in tasks:
                 write()
-                write('// cost = {0}'.format(cost))
+                write('    // cost = {0}'.format(cost))
                 for line in strategy.cpp_lines():
-                    write(line)
-                write()
+                    write('    ' + line)
+
+            write('}')
 
     def cpp_lines(self):
         lines = []
