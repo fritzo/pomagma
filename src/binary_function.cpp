@@ -5,8 +5,8 @@
 namespace pomagma
 {
 
-BinaryFunction::BinaryFunction (const dense_set & support)
-    : m_lines(support),
+BinaryFunction::BinaryFunction (const Carrier & carrier)
+    : m_lines(carrier),
       m_block_dim((item_dim() + ITEMS_PER_BLOCK) / ITEMS_PER_BLOCK),
       m_blocks(pomagma::alloc_blocks<Block4x4>(m_block_dim * m_block_dim))
 {

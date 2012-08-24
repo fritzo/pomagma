@@ -5,9 +5,10 @@
 namespace pomagma
 {
 
-UnaryFunction::UnaryFunction (const dense_set & support)
-    : m_support(support),
-      m_set(support.item_dim()),
+UnaryFunction::UnaryFunction (const Carrier & carrier)
+    : m_carrier(carrier),
+      m_support(carrier.support(), yes_copy_construct),
+      m_set(support().item_dim()),
       m_values(pomagma::alloc_blocks<oid_t>(1 + item_dim()))
 {
     POMAGMA_DEBUG("creating UnaryFunction with " << item_dim() << " values");

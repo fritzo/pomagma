@@ -6,8 +6,9 @@ namespace pomagma
 {
 
 template<bool symmetric>
-base_bin_rel_<symmetric>::base_bin_rel_ (const dense_set & support)
-    : m_support(support, yes_copy_construct),
+base_bin_rel_<symmetric>::base_bin_rel_ (const Carrier & carrier)
+    : m_carrier(carrier),
+      m_support(carrier.support(), yes_copy_construct),
       m_round_item_dim(dense_set::round_item_dim(item_dim())),
       m_round_word_dim(dense_set::round_word_dim(item_dim())),
       m_data_size_words((1 + m_round_item_dim) * m_round_word_dim),
@@ -127,12 +128,12 @@ void base_bin_rel_<symmetric>::validate() const
 //----------------------------------------------------------------------------
 // Explicit template instantiation
 
-template base_bin_rel_<true>::base_bin_rel_ (const dense_set &);
+template base_bin_rel_<true>::base_bin_rel_ (const Carrier &);
 template base_bin_rel_<true>::~base_bin_rel_ ();
 template void base_bin_rel_<true>::validate () const;
 template void base_bin_rel_<true>::move_from (const base_bin_rel_<true> &);
 
-template base_bin_rel_<false>::base_bin_rel_ (const dense_set &);
+template base_bin_rel_<false>::base_bin_rel_ (const Carrier &);
 template base_bin_rel_<false>::~base_bin_rel_ ();
 template void base_bin_rel_<false>::validate () const;
 template void base_bin_rel_<false>::move_from (const base_bin_rel_<false> &);

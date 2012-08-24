@@ -6,13 +6,14 @@ using namespace pomagma;
 void test_basic (size_t size)
 {
     POMAGMA_INFO("Defining function");
-    dense_set support(size);
+    Carrier carrier(size);
+    NullaryFunction fun(carrier);
+
     for (oid_t i = 1; i <= size; ++i) {
         if (random_bool(0.8)) {
-            support.insert(i);
+            carrier.insert(i);
         }
     }
-    NullaryFunction fun(support);
     fun.validate();
 
     fun.insert(1);

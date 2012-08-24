@@ -44,7 +44,7 @@ public:
     dense_set get_Rx_set (oid_t rhs) const { return m_lines.Rx_set(rhs); }
 
     // ctors & dtors
-    BinaryRelation (const dense_set & support);
+    BinaryRelation (const Carrier & carrier);
     ~BinaryRelation ();
     void move_from (const BinaryRelation & other, const oid_t* new2old=NULL);
 

@@ -5,8 +5,8 @@
 namespace pomagma
 {
 
-BinaryRelation::BinaryRelation (const dense_set & support)
-    : m_lines(support)
+BinaryRelation::BinaryRelation (const Carrier & carrier)
+    : m_lines(carrier)
 {
     POMAGMA_DEBUG("creating BinaryRelation with "
             << round_word_dim() << " words");
@@ -66,7 +66,6 @@ void BinaryRelation::validate () const
 {
     POMAGMA_DEBUG("Validating BinaryRelation");
 
-    support().validate();
     m_lines.validate();
 
     size_t num_pairs = 0;

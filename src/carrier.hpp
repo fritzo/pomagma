@@ -28,6 +28,7 @@ public:
     Carrier (size_t item_dim = 511);
     void move_from (const Carrier & other, const oid_t * new2old);
 
+    const dense_set & support () const { return m_support; }
     size_t item_dim () const { return m_support.item_dim(); }
     size_t item_count () const { return m_item_count; }
     size_t rep_count () const { return m_rep_count; }
@@ -61,7 +62,7 @@ public:
 
     void merge (oid_t dep, oid_t rep) const
     {
-        POMAGMA_ASSERT2(dep < rep,
+        POMAGMA_ASSERT2(dep > rep,
                 "out of order merge: " << dep << "," << rep);
         POMAGMA_ASSERT2(m_support.contains(dep), "bad merge dep " << dep);
         POMAGMA_ASSERT2(m_support.contains(rep), "bad merge rep " << rep);

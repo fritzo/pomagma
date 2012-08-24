@@ -11,13 +11,15 @@ inline oid_t example_fun (oid_t i, oid_t j)
 void test_basic (size_t size)
 {
     POMAGMA_INFO("Defining function");
-    dense_set support(size);
+    Carrier carrier(size);
+    const dense_set & support = carrier.support();
+    BinaryFunction fun(carrier);
+
     for (oid_t i = 1; i <= size; ++i) {
         if (random_bool(0.8)) {
-            support.insert(i);
+            carrier.insert(i);
         }
     }
-    BinaryFunction fun(support);
     for (dense_set::iterator i(support); i.ok(); i.next()) {
     for (dense_set::iterator j(support); j.ok(); j.next()) {
         oid_t k = example_fun(*i, *j);

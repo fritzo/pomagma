@@ -8,13 +8,15 @@ oid_t gcd (oid_t n, oid_t m) { return m ? gcd(m, n % m) : n; }
 void test_basic (oid_t size)
 {
     POMAGMA_INFO("Defining function");
-    dense_set support(size);
+    Carrier carrier(size);
+    const dense_set & support = carrier.support();
+    SymmetricFunction fun(carrier);
+
     for (oid_t i = 1; i <= size; ++i) {
         if (random_bool(0.8)) {
-            support.insert(i);
+            carrier.insert(i);
         }
     }
-    SymmetricFunction fun(support);
     for (dense_set::iterator i(support); i.ok(); i.next()) {
     for (dense_set::iterator j(support); j.ok() and *j <= *i; j.next()) {
         oid_t k = gcd(*i, *j);

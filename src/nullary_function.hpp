@@ -3,7 +3,7 @@
 
 #include "util.hpp"
 #include "dense_set.hpp"
-#include "base_bin_rel.hpp"
+#include "carrier.hpp"
 
 namespace pomagma
 {
@@ -12,12 +12,13 @@ namespace pomagma
 
 class NullaryFunction : noncopyable
 {
-    const dense_set & m_support;
+    const Carrier & m_carrier;
+    const dense_set m_support; // aliased
     oid_t m_value;
 
 public:
 
-    NullaryFunction (const dense_set & support);
+    NullaryFunction (const Carrier & carrier);
     void move_from (const NullaryFunction & other); // for growing
 
     // function calling

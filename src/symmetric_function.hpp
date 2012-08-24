@@ -37,7 +37,7 @@ public:
     dense_set get_Lx_set (oid_t lhs) const { return m_lines.Lx_set(lhs); }
 
     // ctors & dtors
-    SymmetricFunction (const dense_set & support);
+    SymmetricFunction (const Carrier & carrier);
     ~SymmetricFunction ();
     void move_from (const SymmetricFunction & other); // for growing
 

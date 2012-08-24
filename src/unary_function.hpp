@@ -3,7 +3,7 @@
 
 #include "util.hpp"
 #include "dense_set.hpp"
-#include "base_bin_rel.hpp"
+#include "carrier.hpp"
 
 namespace pomagma
 {
@@ -12,7 +12,8 @@ namespace pomagma
 
 class UnaryFunction : noncopyable
 {
-    const dense_set & m_support;
+    const Carrier & m_carrier;
+    const dense_set m_support;
     dense_set m_set;
     oid_t * const m_values;
 
@@ -22,7 +23,7 @@ public:
     const dense_set & get_set () const { return m_set; }
 
     // ctors & dtors
-    UnaryFunction (const dense_set & support);
+    UnaryFunction (const Carrier & carrier);
     ~UnaryFunction ();
     void move_from (const UnaryFunction & other); // for growing
 

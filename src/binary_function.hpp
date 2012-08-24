@@ -34,7 +34,7 @@ public:
     dense_set get_Rx_set (oid_t rhs) const { return m_lines.Rx_set(rhs); }
 
     // ctors & dtors
-    BinaryFunction (const dense_set & support);
+    BinaryFunction (const Carrier & carrier);
     ~BinaryFunction ();
     void move_from (const BinaryFunction & other); // for growing
 

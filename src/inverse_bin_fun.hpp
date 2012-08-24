@@ -57,8 +57,8 @@ class inverse_bin_fun : noncopyable
 
 public:
 
-    inverse_bin_fun (const dense_set & support)
-        : m_support(support, yes_copy_construct),
+    inverse_bin_fun (const Carrier & carrier)
+        : m_support(carrier.support(), yes_copy_construct),
           m_Vlr_data(item_dim()),
           m_VLr_data(),
           m_VRl_data()

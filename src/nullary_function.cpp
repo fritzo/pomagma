@@ -5,8 +5,9 @@
 namespace pomagma
 {
 
-NullaryFunction::NullaryFunction (const dense_set & support)
-    : m_support(support),
+NullaryFunction::NullaryFunction (const Carrier & carrier)
+    : m_carrier(carrier),
+      m_support(carrier.support(), yes_copy_construct),
       m_value(0)
 {
     POMAGMA_DEBUG("creating NullaryFunction");

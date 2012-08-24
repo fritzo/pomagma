@@ -7,14 +7,16 @@ using namespace pomagma;
 void test_random (size_t size, float fill = 0.3)
 {
     POMAGMA_INFO("Buiding fun,inv of size " << size);
-    dense_set support(size);
+    Carrier carrier(size);
+    const dense_set & support = carrier.support();
+    BinaryFunction fun(carrier);
+    inverse_bin_fun inv(carrier);
+
     for (oid_t i = 1; i <= size; ++i) {
         if (random_bool(0.8)) {
-            support.insert(i);
+            carrier.insert(i);
         }
     }
-    BinaryFunction fun(support);
-    inverse_bin_fun inv(support);
 
     POMAGMA_INFO("testing insertion");
     size_t insert_count = size * size * fill;

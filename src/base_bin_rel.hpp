@@ -3,6 +3,7 @@
 
 #include "util.hpp"
 #include "dense_set.hpp"
+#include "carrier.hpp"
 
 namespace pomagma
 {
@@ -12,7 +13,7 @@ namespace pomagma
 template<bool symmetric>
 class base_bin_rel_ : noncopyable
 {
-    // TODO switch m_support to Carrier & m_carrier
+    const Carrier & m_carrier;
     const dense_set m_support; // aliased
     const size_t m_round_item_dim;
     const size_t m_round_word_dim;
@@ -22,7 +23,7 @@ class base_bin_rel_ : noncopyable
 
 public:
 
-    base_bin_rel_ (const dense_set & support);
+    base_bin_rel_ (const Carrier & carrier);
     ~base_bin_rel_ ();
     void move_from (const base_bin_rel_<symmetric> & other); // for growing
     void validate () const;

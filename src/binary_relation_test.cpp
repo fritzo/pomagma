@@ -23,18 +23,19 @@ void test_BinaryRelation (
     POMAGMA_INFO("Testing BinaryRelation");
 
     POMAGMA_INFO("creating BinaryRelation of size " << size);
-    dense_set support(size);
-    BinaryRelation rel(support);
+    Carrier carrier(size);
+    BinaryRelation rel(carrier);
+    const dense_set & support = carrier.support();
 
     POMAGMA_INFO("testing position insertion");
     size_t item_count = 0;
     for (oid_t i = 1; i <= size; ++i) {
         if (random_bool(0.5)) {
-            support.insert(i);
+            carrier.insert(i);
             ++item_count;
         }
     }
-    POMAGMA_ASSERT_EQ(item_count, rel.support().count_items());
+    POMAGMA_ASSERT_EQ(item_count, support.count_items());
 
     POMAGMA_INFO("testing pair insertion");
     size_t num_pairs = 0;
@@ -102,7 +103,8 @@ void test_BinaryRelation (
         if (not support.contains(n)) continue;
         if (m < n) std::swap(m, n);
         rel.merge(m, n, move_to);
-        support.merge(m, n);
+        carrier.merge(m, n);
+        carrier.remove(m);
         --item_count;
     }
     POMAGMA_INFO("  " << g_num_moved << " pairs moved in merging");
