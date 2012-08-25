@@ -23,12 +23,20 @@ ARITY_TABLE = {
     }
 
 
+FUNCTION_ARITIES = set([
+    'NullaryFunction',
+    'UnaryFunction',
+    'BinaryFunction',
+    'SymmetricFunction',
+    ])
+
+
 def is_var(symbol):
-    return re.match('[a-z_]', symbol[-1]) is not None
+    return re.match('[A-Z]+$', symbol) is None
 
 
-for symbol in ARITY_TABLE:
-    assert not is_var(symbol)
+def is_fun(symbol):
+    return get_arity(symbol) in FUNCTION_ARITIES
 
 
 def get_arity(symbol):
@@ -40,3 +48,18 @@ def get_arity(symbol):
 
 def get_nargs(arity):
     return NARGS_TABLE[arity]
+
+
+def is_positive(symbol):
+    if symbol == 'NLESS':
+        return False
+    else:
+        return True
+
+
+def validate():
+    for symbol, arity in ARITY_TABLE.iteritems():
+        assert not is_var(symbol)
+        assert arity in NARGS_TABLE
+    assert get_arity('x') == 'Variable'
+    assert get_arity('S') == 'NullaryFunction'

@@ -1,4 +1,4 @@
-from pomagma import parser
+from pomagma import parser, expressions
 import glob
 
 

@@ -1,6 +1,8 @@
 import re
 import sys
-from pomagma.signature import is_var, get_arity, get_nargs
+from pomagma.signature import get_arity, get_nargs
+from pomagma.expressions import Expression
+from pomagma.sequents import Sequent
 
 
 RE_BAR = re.compile('---+')
@@ -61,19 +63,16 @@ def parse_lines_to_rules(lines, filename):
         a, above = get_spans(lines, bar_to_top, left, right)
         b, below = get_spans(lines, bar_to_bottom, left, right)
         block = {'top': a - 1, 'bottom': b, 'left': left, 'right': right}
-        rules.append({
-            'above': above,
-            'below': below,
-            'file': filename,
-            'block': block,
-            })
+        rule = Sequent(above, below)
+        rule.debuginfo = {'file': filename, 'block': block}
+        rules.append(rule)
     return rules
 
 
 def check_whitespace(lines, rules):
     lines = list(lines)
     for rule in rules:
-        block = rule['block']
+        block = rule.debuginfo['block']
         top = block['top']
         bottom = block['bottom']
         left = block['left']
@@ -97,8 +96,8 @@ def parse_tokens_to_expr(tokens):
     head = tokens.pop()
     arity = get_arity(head)
     nargs = get_nargs(arity)
-    args = tuple(parse_tokens_to_expr(tokens) for _ in xrange(nargs))
-    return {'name': head, 'arity': arity, 'args': args}
+    args = [parse_tokens_to_expr(tokens) for _ in xrange(nargs)]
+    return Expression(head, *args)
 
 
 def parse_string_to_expr(string):
