@@ -1,11 +1,11 @@
 import re
 import sys
-from pomagma.compiler import SYMBOL_TABLE, Function, Variable, Sequent
+from pomagma.signature import is_var, get_arity, get_nargs
 
 
-re_bar = re.compile('---+')
-re_padding = re.compile('   +')
-re_comment = re.compile('#.*$')
+RE_BAR = re.compile('---+')
+RE_PADDING = re.compile('   +')
+RE_COMMENT = re.compile('#.*$')
 
 
 class ParseError(Exception):
@@ -20,27 +20,27 @@ class ParseError(Exception):
 def find_bars(lines):
     bars = []
     for lineno, line in enumerate(lines):
-        match = re_bar.search(line)
+        match = RE_BAR.search(line)
         while match:
-            beg = match.start()
-            end = match.end()
-            bars.append((lineno, beg, end))
-            match = re_bar.search(line, end)
-            if match and match.start() - end < 3:
+            left = match.start()
+            right = match.end()
+            bars.append((lineno, left, right))
+            match = RE_BAR.search(line, right)
+            if match and match.start() - right < 3:
                 raise ParseError('horizontal rule overlap', lineno)
     return bars
 
 
-def get_sections(lines, linenos, beg, end):
+def get_spans(lines, linenos, left, right):
     results = []
     for lineno in linenos:
         line = lines[lineno]
-        section = lines[lineno][beg:end]
+        section = lines[lineno][left:right]
         stripped = section.strip()
-        if re_bar.match(stripped):
+        if RE_BAR.match(stripped):
             raise ParseError('vertical rule overlap', lineno)
         if stripped:
-            for string in re_padding.split(stripped):
+            for string in RE_PADDING.split(stripped):
                 try:
                     expr = parse_string_to_expr(string)
                 except Exception as e:
@@ -51,53 +51,59 @@ def get_sections(lines, linenos, beg, end):
     return lineno, results
 
 
-def parse_lines_to_sequents(lines):
-    lines = (lines)
+def parse_lines_to_rules(lines, filename):
+    lines = list(lines)
     bars = find_bars(lines)
-    sequents = []
-    blocks = []
-    for lineno, beg, end in bars:
-        p, prems = get_sections(lines, xrange(lineno - 1, -1, -1), beg, end)
-        c, concs = get_sections(lines, xrange(lineno + 1, len(lines)), beg, end)
-        sequents.append(Sequent(prems, concs))
-        blocks.append((p - 1, c, beg, end))
-    for line0, line1, beg, end in blocks:
-        for lineno in range(line0, line1):
+    rules = []
+    for lineno, left, right in bars:
+        bar_to_top = xrange(lineno - 1, -1, -1)
+        bar_to_bottom = xrange(lineno + 1, len(lines))
+        a, above = get_spans(lines, bar_to_top, left, right)
+        b, below = get_spans(lines, bar_to_bottom, left, right)
+        block = {'top': a - 1, 'bottom': b, 'left': left, 'right': right}
+        rules.append({
+            'above': above,
+            'below': below,
+            'file': filename,
+            'block': block,
+            })
+    return rules
+
+
+def check_whitespace(lines, rules):
+    lines = list(lines)
+    for rule in rules:
+        block = rule['block']
+        top = block['top']
+        bottom = block['bottom']
+        left = block['left']
+        right = block['right']
+        for lineno in range(top, bottom):
             line = lines[lineno]
-            lines[lineno] = line[:beg] + ' ' * (end - beg) + line[end:]
-        for lineno in range(max(0, line0 - 1), min(len(lines), line1 + 1)):
+            lines[lineno] = line[:left] + ' ' * (right - left) + line[right:]
+        for lineno in range(max(0, top - 1), min(len(lines), bottom + 1)):
             line = lines[lineno]
-            if line[max(0, beg - 3): end + 3].strip():
+            if line[max(0, left - 3): right + 3].strip():
                 raise ParseError(
-                    'insufficient padding {0}-{1}\n{2}'.format(beg, end, line),
+                    'insufficient padding {0}-{1}\n{2}'.format(
+                        left, right, line),
                     lineno)
     for lineno, line in enumerate(lines):
         if line.strip():
             raise ParseError('text outside of block\n{0}'.format(line), lineno)
-    return sequents
 
-
-def default_parser(token):
-    if re.match('[A-Z_]', token[-1]):
-        return 0, lambda: Function(token)
-    else:
-        return 0, lambda: Variable(token)
 
 def parse_tokens_to_expr(tokens):
     head = tokens.pop()
-    arity, parser = SYMBOL_TABLE.get(head, default_parser(head))
-    args = [parse_tokens_to_expr(tokens) for _ in xrange(arity)]
-    return parser(*args)
-
-
-def tokenize(string):
-    tokens = string.split()
-    tokens.reverse()
-    return tokens
+    arity = get_arity(head)
+    nargs = get_nargs(arity)
+    args = tuple(parse_tokens_to_expr(tokens) for _ in xrange(nargs))
+    return {'name': head, 'arity': arity, 'args': args}
 
 
 def parse_string_to_expr(string):
-    tokens = tokenize(string)
+    tokens = string.split()
+    tokens.reverse()
     expr = parse_tokens_to_expr(tokens)
     if tokens:
         raise ValueError('trailing tokens: {0} in {1}'.format(tokens, string))
@@ -105,7 +111,11 @@ def parse_string_to_expr(string):
 
 
 def parse(filename):
-    #sys.stderr.write('# parsing {}\n'.format(filename))
+    lines = ['']
     with open(filename) as f:
-        lines = [re_comment.sub('', line) for line in f.readlines()]
-    return parse_lines_to_sequents([''] + lines + [''])
+        for line in f.readlines():
+            lines.append(RE_COMMENT.sub('', line))
+    lines.append('')
+    rules = parse_lines_to_rules(lines, filename)
+    check_whitespace(lines, rules)
+    return rules

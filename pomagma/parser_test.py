@@ -1,21 +1,7 @@
-from pomagma import run
+from pomagma import parser
+import glob
 
-def test_contrapositive():
-    run.contrapositves(
-            'sk.rules',
-            'join.rules',
-            'rand.rules',
-            'quote.rules',
-            )
 
-def test_sk():
-    run.measure('sk.rules')
-
-def test_join():
-    run.measure('join.rules')
-
-def test_rand():
-    run.measure('rand.rules')
-
-def test_quote():
-    run.measure('quote.rules')
+def test_parse():
+    for filename in glob.glob('*.rules'):
+        yield parser.parse, filename
