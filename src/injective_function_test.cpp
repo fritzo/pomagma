@@ -9,6 +9,11 @@ inline oid_t example_fun (oid_t i)
     return big_prime % (i + 1);
 }
 
+void merge_values (oid_t i, oid_t j)
+{
+    POMAGMA_DEBUG("merging " << i << " into " << j);
+}
+
 void test_basic (size_t size)
 {
     POMAGMA_INFO("Defining function");
@@ -24,7 +29,7 @@ void test_basic (size_t size)
     for (dense_set::iterator i(support); i.ok(); i.next()) {
         oid_t val = example_fun(*i);
         if (val > 1) {
-            fun.insert(*i, val);
+            fun.insert(*i, val, merge_values);
         }
     }
     fun.validate();

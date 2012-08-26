@@ -15,12 +15,15 @@ class InjectiveFunction : noncopyable
     const Carrier & m_carrier;
     const dense_set m_support;
     dense_set m_set;
+    dense_set m_inverse_set;
     oid_t * const m_values;
+    oid_t * const m_inverse;
 
 public:
 
     // set wrappers
     const dense_set & get_set () const { return m_set; }
+    const dense_set & get_inverse_set () const { return m_inverse_set; }
 
     // ctors & dtors
     InjectiveFunction (const Carrier & carrier);
@@ -29,10 +32,13 @@ public:
 
     // function calling
 private:
-    inline oid_t & value (oid_t key);
+    oid_t & value (oid_t key);
+    oid_t & inverse (oid_t val);
 public:
-    inline oid_t value (oid_t key) const;
+    oid_t value (oid_t key) const;
+    oid_t inverse (oid_t val) const;
     oid_t get_value (oid_t key) const { return value(key); }
+    oid_t get_inverse (oid_t val) const { return inverse(val); }
     oid_t operator() (oid_t key) const { return value(key); }
 
     // attributes
@@ -45,7 +51,10 @@ public:
 
     // element operations
     // TODO add a replace method for merging
-    void insert (oid_t key, oid_t val);
+    void insert (
+            oid_t key,
+            oid_t val,
+            void merge_values(oid_t, oid_t)); // dep, rep
     void remove (oid_t key);
     bool contains (oid_t key) const
     {
@@ -76,7 +85,22 @@ inline oid_t InjectiveFunction::value (oid_t key) const
     return m_values[key];
 }
 
-inline void InjectiveFunction::insert (oid_t key, oid_t val)
+inline oid_t & InjectiveFunction::inverse (oid_t val)
+{
+    POMAGMA_ASSERT_RANGE_(5, val, item_dim());
+    return m_inverse[val];
+}
+
+inline oid_t InjectiveFunction::inverse (oid_t val) const
+{
+    POMAGMA_ASSERT_RANGE_(5, val, item_dim());
+    return m_inverse[val];
+}
+
+inline void InjectiveFunction::insert (
+        oid_t key,
+        oid_t val,
+        void merge_values(oid_t, oid_t)) // dep, rep
 {
     POMAGMA_ASSERT5(support().contains(key), "unsupported key: " << key);
     POMAGMA_ASSERT5(val, "tried to set val to zero at " << key);
@@ -88,11 +112,27 @@ inline void InjectiveFunction::insert (oid_t key, oid_t val)
     bool_ref bit = m_set(key);
     POMAGMA_ASSERT4(not bit, "double insertion at " << key);
     bit.one();
+
+    oid_t & old_key = inverse(val);
+    if (old_key) {
+        TODO("deal with inverse insertion")
+        if (old_key < key) {
+            merge_values(old_key, key);
+        } else if (old_key > key) {
+            merge_values(key, old_key);
+        }
+    } else {
+        bool_ref bit = m_inverse_set(val);
+        POMAGMA_ASSERT4(not bit, "double insertion at " << val);
+        bit.one();
+    }
 }
 
 inline void InjectiveFunction::remove (oid_t key)
 {
     POMAGMA_ASSERT5(support().contains(key), "unsupported key: " << key);
+
+    TODO("deal with inverse removal")
 
     oid_t & old_val = value(key);
     POMAGMA_ASSERT2(old_val, "double removal at " << key);

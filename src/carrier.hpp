@@ -46,6 +46,7 @@ public:
         return rep == oid ? oid : _find(rep);
         // TODO this could be more clever
     }
+    oid_t get_rep (oid_t oid) const { return find(oid); }
 
     void insert (oid_t oid) // WARNING not thread safe
     {
