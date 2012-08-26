@@ -1,5 +1,7 @@
-from math import log, exp
+import os
 import functools
+from math import log, exp
+from contextlib import contextmanager
 
 
 def TODO(message=''):
@@ -46,3 +48,20 @@ def methodof(class_):
     def deco(fun):
         setattr(class_, fun.__name__, fun)
     return deco
+
+
+@contextmanager
+def line_writer(filename):
+    succeded = False
+    try:
+        with open(filename, 'w') as out:
+            def write(line=None):
+                if line:
+                    out.write(line)
+                out.write('\n')
+            yield write
+        succeded = True
+    finally:
+        if not succeded:
+            if os.path.exists(filename):
+                os.remove(filename)

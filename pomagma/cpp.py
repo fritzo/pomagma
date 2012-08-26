@@ -1,5 +1,6 @@
 from textwrap import dedent
-from pomagma.util import TODO, inputs, methodof
+from pomagma.util import TODO, inputs, union, methodof
+from pomagma import signature
 from pomagma import compiler
 
 
@@ -147,22 +148,18 @@ class Theory:
     def __init__(self, sequents):
         self.sequents = set(sequents)
         self.signature = {
-            'nullary': [],
-            'injective': [],
-            'binary': [],
-            'symmetric': [],
+            'NullaryFunction': [],
+            'InjectiveFunction': [],
+            'BinaryFunction': [],
+            'SymmetricFunction': [],
             }
-        symbols = union(set(s.polish.split()) for s in sequents)
+        symbols = set()
+        for seq in sequents:
+            for expr in seq.antecedents | seq.succedents:
+                symbols |= set(expr.polish.split())
         for c in symbols:
-            if not signature.is_var(c):
-                if c in UNARY_FUNCTIONS:
-                    self.signature['injective'].append(c)
-                elif c in BINARY_FUNCTIONS:
-                    self.signature['binary'].append(c)
-                elif c in SYMMETRIC_FUNCTIONS:
-                    self.signature['symmetric'].append(c)
-                else:
-                    self.signature['nullary'].append(c)
+            if signature.is_fun(c):
+                self.signature[signature.get_arity(c)].append(c)
         for val in self.signature.itervalues():
             val.sort()
 
@@ -181,11 +178,10 @@ class Theory:
         write('BinaryRelation NLESS(carrier);')
         write()
 
-        for arity in ['nullary', 'injective', 'binary', 'symmetric']:
-            Arity = arity.capitalize()
-            if self.signature[arity]:
-                for name in self.signature[arity]:
-                    write('{0}Function {1}(carrier);'.format(Arity, name))
+        for arity, funs in self.signature.iteritems():
+            for name in funs:
+                write('{0} {1}(carrier);'.format(arity, name))
+            if funs:
                 write()
 
         write('} // namespace signature')
@@ -232,10 +228,9 @@ class Theory:
         ''').strip())
         write()
 
-        arities = [('injective', 1), ('binary', 2), ('symmetric', 2)]
-        functions = [(name, arity, argc)
-                     for arity, argc in arities
-                     for name in self.signature[arity]]
+        functions = [(name, arity, signature.get_nargs(arity))
+                     for arity, funs in self.signature.iteritems()
+                     for name in funs]
 
         def oid_t(x):
             return 'oid_t {0}'.format(x)
@@ -304,7 +299,7 @@ class Theory:
 
         full_tasks = []
         for sequent in self.sequents:
-            full_tasks += sequent.compile()
+            full_tasks += compiler.compile_full(sequent)
         full_tasks.sort(key=(lambda (cost, _): cost))
         type_count = len(full_tasks)
 
@@ -362,22 +357,21 @@ class Theory:
 
         event_tasks = {}
         for sequent in self.sequents:
-            for event in sequent.get_events():
+            for event in compiler.get_events(sequent):
                 tasks = event_tasks.setdefault(event.name, [])
-                tasks += sequent.compile_given(event)
+                tasks += compiler.compile_given(sequent, event)
 
         event_tasks = sorted(
                 event_tasks.items(),
                 key=(lambda (name, tasks): (len(tasks), len(name), name)))
         for event, tasks in event_tasks:
             tasks.sort(key=(lambda (cost, _): cost))
-            Type = TYPE_TABLE.get(event, 'NullaryFunction')
-
+            arity = signature.get_arity(event)
             write(dedent('''
-            void execute (const {Type}Task & task)
+            void execute (const {arity}Task & task)
             {{
             ''').rstrip().format(
-                Type=Type
+                arity=arity
                 ))
 
             for cost, strategy in tasks:

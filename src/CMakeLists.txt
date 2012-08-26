@@ -76,9 +76,13 @@ add_custom_command(
 	COMMAND python ${PROJECT_SOURCE_DIR}/pomagma/run.py compile
 		${PROJECT_SOURCE_DIR}/pomagma/sk.rules
 		outfile=${PROJECT_SOURCE_DIR}/src/sk.theory.cpp
-	DEPENDS ${PROJECT_SOURCE_DIR}/pomagma/run.py
+	DEPENDS ${PROJECT_SOURCE_DIR}/pomagma/util.py
+		${PROJECT_SOURCE_DIR}/pomagma/expressions.py
+		${PROJECT_SOURCE_DIR}/pomagma/sequents.py
 		${PROJECT_SOURCE_DIR}/pomagma/parser.py
 		${PROJECT_SOURCE_DIR}/pomagma/compiler.py
+		${PROJECT_SOURCE_DIR}/pomagma/cpp.py
+		${PROJECT_SOURCE_DIR}/pomagma/run.py
 		${PROJECT_SOURCE_DIR}/pomagma/sk.rules
 	)
 # TODO sk.theory.cpp does not yet compile

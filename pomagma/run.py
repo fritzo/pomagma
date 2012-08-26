@@ -1,7 +1,7 @@
 import re
 import parsable
 from textwrap import dedent
-from contextlib import contextmanager
+from pomagma.util import line_writer
 from pomagma import parser
 from pomagma.compiler import add_costs, get_events, compile_full, compile_given
 from pomagma.cpp import Theory
@@ -92,16 +92,6 @@ def test_compile(*filenames):
             for event in get_events(sequent):
                 for cost, strategy in compile_given(sequent, event):
                     print '\n'.join(strategy.cpp_lines())
-
-
-@contextmanager
-def line_writer(filename):
-    with open(filename, 'w') as out:
-        def write(line=None):
-            if line:
-                out.write(line)
-            out.write('\n')
-        yield write
 
 
 @parsable.command
