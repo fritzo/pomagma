@@ -207,18 +207,6 @@ class Ensure(Strategy):
 #-----------------------------------------------------------------------------
 # Sequents
 
-@inputs(Sequent)
-def get_events(seq):
-    events = set()
-    for sequent in normalize(seq):
-        events |= sequent.antecedents
-        # HACK to deal with Equation args
-        succedent = iter(sequent.succedents).next()
-        for arg in succedent.args:
-            if not arg.is_var():
-                events.add(arg)
-    return events
-
 
 @inputs(Sequent)
 def compile_full(seq):
@@ -233,6 +221,38 @@ def compile_full(seq):
     return results
 
 
+@inputs(Sequent)
+def get_events(seq):
+    events = set()
+    for sequent in normalize(seq):
+        events |= sequent.antecedents
+        # HACK to deal with Equation args
+        succedent = iter(sequent.succedents).next()
+        for arg in succedent.args:
+            if not arg.is_var():
+                events.add(arg)
+    return events
+
+
+@inputs(Sequent, Expression)
+def normalize_given(seq, atom, bound):
+    for normal in normalize(seq):
+        if atom in normal.antecedents:
+            yield normal
+        # HACK to deal with Equation args
+        succedent = iter(normal.succedents).next()
+        if succedent.name == 'EQUAL':
+            lhs, rhs = succedent.args
+            if lhs == atom:
+                yield Sequent(
+                    set_with(normal.antecedents, lhs),
+                    set([Expression('EQUAL', lhs.var, rhs)]))
+            elif rhs == atom:
+                yield Sequent(
+                    set_with(normal.antecedents, rhs),
+                    set([Expression('EQUAL', lhs, rhs.var)]))
+
+
 @inputs(Sequent, Expression)
 def compile_given(seq, atom):
     context = set([atom])
@@ -240,11 +260,10 @@ def compile_given(seq, atom):
     if atom.is_fun():
         bound.add(atom.var)
     results = []
-    for part in normalize(seq, bound):
-        print 'DEBUG', part
-        if atom in part.antecedents:
-            ranked = rank_compiled(part, context, bound)
-            results.append(min(ranked))
+    for normal in normalize_given(seq, atom, bound):
+        #print 'DEBUG normal =', normal
+        ranked = rank_compiled(normal, context, bound)
+        results.append(min(ranked))
     assert results, 'failed to compile {0} given {1}'.format(seq, atom)
     return results
 
@@ -277,9 +296,8 @@ def get_compiled(antecedents, succedent, bound):
 
     # bind constants
     for a in antecedents:
-        if not a.args:
-            assert a.is_fun()
-            assert a.var not in bound
+        if not a.args and a.var not in bound:
+            assert a.is_fun(), a
             antecedents_a = set_without(antecedents, a)
             bound_a = set_with(bound, a.var)
             for s in get_compiled(antecedents_a, succedent, bound_a):

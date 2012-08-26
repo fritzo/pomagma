@@ -134,6 +134,7 @@ def get_pointed(seq):
 def get_atomic(seq, bound=set()):
     '''
     Return a set of normal sequents.
+    Atoms whose every variable is bound are excluded from antecedents.
     '''
     result = set()
     for pointed in get_pointed(seq):
@@ -171,6 +172,7 @@ def get_contrapositives(seq):
 def normalize(seq, bound=set()):
     '''
     Return a set of normal sequents, closed under contrapositive.
+    Atoms whose every variable is bound are excluded from antecedents.
     '''
     result = get_atomic(seq, bound)
     for contra in get_contrapositives(seq):
