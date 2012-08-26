@@ -1,4 +1,4 @@
-#include "unary_function.hpp"
+#include "injective_function.hpp"
 #include <vector>
 
 using namespace pomagma;
@@ -14,7 +14,7 @@ void test_basic (size_t size)
     POMAGMA_INFO("Defining function");
     Carrier carrier(size);
     const dense_set & support = carrier.support();
-    UnaryFunction fun(carrier);
+    InjectiveFunction fun(carrier);
 
     for (oid_t i = 1; i <= size; ++i) {
         if (random_bool(0.8)) {

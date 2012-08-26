@@ -96,7 +96,7 @@ static TaskQueue<CleanupTask> g_cleanups;
 static TaskQueue<PositiveOrderTask> g_positive_orders;
 static TaskQueue<NegativeOrderTask> g_negative_orders;
 static TaskQueue<NullaryFunctionTask> g_nullary_functions;
-static TaskQueue<UnaryFunctionTask> g_unary_functions;
+static TaskQueue<InjectiveFunctionTask> g_injective_functions;
 static TaskQueue<BinaryFunctionTask> g_binary_functions;
 static TaskQueue<SymmetricFunctionTask> g_symmetric_functions;
 
@@ -105,7 +105,7 @@ inline bool try_work ()
 {
     return g_mergers.try_execute()
         or g_nullary_functions.try_execute()
-        or g_unary_functions.try_execute()
+        or g_injective_functions.try_execute()
         or g_binary_functions.try_execute()
         or g_symmetric_functions.try_execute()
         or g_positive_orders.try_execute()
@@ -116,7 +116,7 @@ inline bool try_work ()
 inline void merge_tasks (oid_t dep)
 {
     g_nullary_functions.merge(dep);
-    g_unary_functions.merge(dep);
+    g_injective_functions.merge(dep);
     g_binary_functions.merge(dep);
     g_symmetric_functions.merge(dep);
     g_positive_orders.merge(dep);
@@ -175,9 +175,9 @@ void schedule (const NullaryFunctionTask & task)
     Scheduler::g_nullary_functions.push(task);
 }
 
-void schedule (const UnaryFunctionTask & task)
+void schedule (const InjectiveFunctionTask & task)
 {
-    Scheduler::g_unary_functions.push(task);
+    Scheduler::g_injective_functions.push(task);
 }
 
 void schedule (const BinaryFunctionTask & task)
