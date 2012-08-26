@@ -58,6 +58,9 @@ class Expression(object):
     def __str__(self):
         return self._polish
 
+    def __repr__(self):
+        return self._polish
+
     def is_var(self):
         return signature.is_var(self.name)
 

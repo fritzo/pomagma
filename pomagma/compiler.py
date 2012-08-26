@@ -229,7 +229,7 @@ def compile_full(seq):
         bound = set()
         ranked = rank_compiled(part, context, bound)
         results.append(min(ranked))
-    assert results, 'failed to compile'
+    assert results, 'failed to compile {0}'.format(seq)
     return results
 
 
@@ -241,10 +241,11 @@ def compile_given(seq, atom):
         bound.add(atom.var)
     results = []
     for part in normalize(seq, bound):
+        print 'DEBUG', part
         if atom in part.antecedents:
             ranked = rank_compiled(part, context, bound)
             results.append(min(ranked))
-    assert results, 'failed to compile_given: {0}'.format(atom)
+    assert results, 'failed to compile {0} given {1}'.format(seq, atom)
     return results
 
 
@@ -254,6 +255,7 @@ def rank_compiled(seq, context, bound):
     antecedents = seq.antecedents - context
     (succedent,) = list(seq.succedents)
     compiled = get_compiled(antecedents, succedent, bound)
+    assert compiled, 'failed to compile {0}'.format(seq)
     logger('optimizing {0} versions'.format(len(compiled)))
     ranked = []
     for s in compiled:

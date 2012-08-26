@@ -175,6 +175,7 @@ def normalize(seq, bound=set()):
     result = get_atomic(seq, bound)
     for contra in get_contrapositives(seq):
         result |= get_atomic(contra, bound)
+    assert result, 'failed to normalize {0} binding {1}'.format(seq, bound)
     return result
 
 

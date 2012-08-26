@@ -24,12 +24,22 @@ ARITY_TABLE = {
     }
 
 
-FUNCTION_ARITIES = set([
+FUNCTION_ARITIES = frozenset([
     'NullaryFunction',
     'UnaryFunction',
     'BinaryFunction',
     'SymmetricFunction',
     ])
+
+
+def declare_arity(name, arity):
+    assert isinstance(name, str)
+    assert not is_var(name), name
+    assert arity in FUNCTION_ARITIES
+    if name in ARITY_TABLE:
+        assert ARITY_TABLE[name] == arity, 'Cannot change arity'
+    else:
+        ARITY_TABLE[name] = arity
 
 
 def is_var(symbol):
