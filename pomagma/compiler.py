@@ -86,9 +86,9 @@ class Iter(Strategy):
         child.optimize()
 
 
-class IterInvUnary(Strategy):
+class IterInvInjective(Strategy):
     def __init__(self, fun, body):
-        assert fun.arity == 'UnaryFunction'
+        assert fun.arity == 'InjectiveFunction'
         self.fun = fun.name
         self.value = fun.var
         (self.var,) = fun.args
@@ -338,7 +338,7 @@ def get_compiled(antecedents, succedent, bound):
                 antecedents_a.remove(a)
                 if nargs == 1 and len(a_free) == 1:
                     for s in get_compiled(antecedents_a, succedent, bound_v):
-                        results.append(IterInvUnary(a, s))
+                        results.append(IterInvInjective(a, s))
                 elif nargs == 2 and len(a_free) == 1:
                     for s in get_compiled(antecedents_a, succedent, bound_v):
                         (fixed,) = list(a.get_vars() - a_free)

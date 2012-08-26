@@ -22,7 +22,7 @@ class Expression(object):
             self._var = self
         elif arity == 'NullaryFunction':
             self._var = Expression(name + '_')
-        elif arity in ['UnaryFunction', 'BinaryFunction', 'SymmetricFunction']:
+        elif arity in ['InjectiveFunction', 'BinaryFunction', 'SymmetricFunction']:
             var = re.sub('[ _]+', '_', self.polish).rstrip('_')
             self._var = Expression(var)
         else:

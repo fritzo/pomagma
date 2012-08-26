@@ -5,7 +5,7 @@ NARGS_TABLE = {
     'Equation': 2,
     'BinaryRelation': 2,
     'NullaryFunction': 0,
-    'UnaryFunction': 1,
+    'InjectiveFunction': 1,
     'BinaryFunction': 2,
     'SymmetricFunction': 2,
     'Variable': 0,
@@ -15,8 +15,8 @@ ARITY_TABLE = {
     'EQUAL': 'Equation',
     'LESS': 'BinaryRelation',
     'NLESS': 'BinaryRelation',
-    'CO': 'UnaryFunction',
-    'QUOTE': 'UnaryFunction',
+    'CO': 'InjectiveFunction',
+    'QUOTE': 'InjectiveFunction',
     'APP': 'BinaryFunction',
     'COMP': 'BinaryFunction',
     'JOIN': 'SymmetricFunction',
@@ -26,7 +26,7 @@ ARITY_TABLE = {
 
 FUNCTION_ARITIES = frozenset([
     'NullaryFunction',
-    'UnaryFunction',
+    'InjectiveFunction',
     'BinaryFunction',
     'SymmetricFunction',
     ])

@@ -135,7 +135,7 @@ def test_compile_join_less():
         [LESS(x, JOIN(x, y))])
 
 def test_compile_co():
-    # TODO use inverse iteration for unary_function::inverse_iterator
+    # TODO use inverse iteration for injective_function::inverse_iterator
     # Compiling incremental search given: APP CO_x y
     # cost = 0.926425846749
     # for x if CO x let APP_y_x

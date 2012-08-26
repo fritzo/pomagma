@@ -43,13 +43,13 @@ def cpp_lines(self):
     return lines
 
 
-@methodof(compiler.IterInvUnary)
+@methodof(compiler.IterInvInjective)
 def cpp_lines(self):
     body = []
     body.append('oid_t {0} = iter.arg();'.format(self.var))
     body += self.body.cpp_lines()
     body = ['    ' + line for line in body]
-    iter = 'UnaryFunction::inverse_iterator iter({0})'.format(self.value)
+    iter = 'InjectiveFunction::inverse_iterator iter({0})'.format(self.value)
     return [
         'for ({0}; iter.ok(); iter.next()) {{'.format(iter),
         ] + body + [
@@ -148,7 +148,7 @@ class Theory:
         self.sequents = set(sequents)
         self.signature = {
             'nullary': [],
-            'unary': [],
+            'injective': [],
             'binary': [],
             'symmetric': [],
             }
@@ -156,7 +156,7 @@ class Theory:
         for c in symbols:
             if not signature.is_var(c):
                 if c in UNARY_FUNCTIONS:
-                    self.signature['unary'].append(c)
+                    self.signature['injective'].append(c)
                 elif c in BINARY_FUNCTIONS:
                     self.signature['binary'].append(c)
                 elif c in SYMMETRIC_FUNCTIONS:
@@ -181,7 +181,7 @@ class Theory:
         write('BinaryRelation NLESS(carrier);')
         write()
 
-        for arity in ['nullary', 'unary', 'binary', 'symmetric']:
+        for arity in ['nullary', 'injective', 'binary', 'symmetric']:
             Arity = arity.capitalize()
             if self.signature[arity]:
                 for name in self.signature[arity]:
@@ -232,7 +232,7 @@ class Theory:
         ''').strip())
         write()
 
-        arities = [('unary', 1), ('binary', 2), ('symmetric', 2)]
+        arities = [('injective', 1), ('binary', 2), ('symmetric', 2)]
         functions = [(name, arity, argc)
                      for arity, argc in arities
                      for name in self.signature[arity]]
