@@ -1,5 +1,5 @@
 import re
-from pomagma.util import TODO, inputs
+from pomagma.util import TODO, inputs, union
 from pomagma import signature
 
 
@@ -16,15 +16,17 @@ class Expression(object):
         self._name = name
         self._args = args
         self._arity = arity
-        self._polish = ' '.join([name] + map(get_polish, args))
+        self._polish = ' '.join([name] + [arg._polish for arg in args])
         self._hash = hash(self._polish)
         if arity == 'Variable':
-            self._varname = name
+            self._var = self
         elif arity == 'NullaryFunction':
-            self._varname = name + '_'
+            self._var = Expression(name + '_')
+        elif arity in ['UnaryFunction', 'BinaryFunction', 'SymmetricFunction']:
+            var = re.sub('[ _]+', '_', self.polish).rstrip('_')
+            self._var = Expression(var)
         else:
-            self._varname = re.sub('[ _]+', '_', self.polish)
-        assert signature.is_var(self._varname)
+            self._var = None
 
     @property
     def name(self):
@@ -43,91 +45,27 @@ class Expression(object):
         return self._polish
 
     @property
-    def varname(self):
-        return self._varname
+    def var(self):
+        return self._var
 
     def __hash__(self):
         return self._hash
 
     def __eq__(self, other):
+        assert isinstance(other, Expression), other
         return self._polish == other._polish
 
     def __str__(self):
         return self._polish
 
+    def is_var(self):
+        return signature.is_var(self.name)
 
-@inputs(Expression)
-def get_polish(expr):
-    return expr.polish
+    def is_fun(self):
+        return signature.is_fun(self.name)
 
-
-@inputs(Expression)
-def as_variable(expr):
-    if expr.arity == 'Variable':
-        return expr
-    else:
-        return Expression(expr.varname)
-
-
-
-
-
-
-def pretty(expr):
-    name = expr['name']
-    args = expr['args']
-    if args:
-        return '{0}({1})'.format(name, ', '.join(map(pretty, args)))
-    else:
-        return name
-
-
-def get_signature(expr, result=None):
-    if result is None:
-        result = set()
-    name = expr['name']
-    if not signature.is_var(name):
-        result.add(name)
-        for arg in expr['args']:
-            get_signature(arg, result)
-    return result
-
-
-def get_vars(expr, result=None):
-    if result is None:
-        result = set()
-    name = expr['name']
-    if signature.is_var(name):
-        result.add(name)
-    else:
-        for arg in expr['args']:
-            get_vars(arg, result)
-    return result
-
-
-def get_constants(expr, result=None):
-    if result is None:
-        result = set()
-    name = expr['name']
-    args = expr['args']
-    if args:
-        for arg in args:
-            get_constants(arg, result)
-    elif not signature.is_var(name):
-        result.add(name)
-    return result
-
-
-def as_atom(expr):
-    return {'name': expr['name'],
-            'args': map(as_variable, expr['args'])}
-
-
-def as_antecedent(expr, result=None):
-    if result is None:
-        result = []
-    name = expr['name']
-    if not signature.is_var(name):
-        result.append(as_atom(expr))
-        for arg in args:
-            as_antecedent(arg, result)
+    def get_vars(self):
+        if self.is_var():
+            return set([self])
+        else:
+            return union(arg.get_vars() for arg in self.args)

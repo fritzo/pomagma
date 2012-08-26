@@ -1,6 +1,6 @@
 import re
 from pomagma.util import TODO, union, set_with, set_without, inputs
-from pomagma.expressions import Expression, as_variable
+from pomagma.expressions import Expression
 
 
 class Sequent(object):
@@ -50,10 +50,13 @@ class Sequent(object):
         lines = map((' ' * indent).__add__, lines)
         return '\n'.join(lines)
 
+    def get_vars(self):
+        return union(s.get_vars() for s in self.antecedents | self.succedents)
+
 
 @inputs(Expression)
 def as_atom(expr):
-    args = map(as_variable, expr.args)
+    args = [arg.var for arg in expr.args]
     return Expression(expr.name, *args)
 
 
@@ -77,8 +80,7 @@ def as_antecedents(expr, bound):
     antecedents = set()
     if expr.arity != 'Variable':
         atom = as_atom(expr)
-        if not (atom.varname in bound and
-                all(arg.name in bound for arg in atom.args)):
+        if not (atom.var in bound and all(arg in bound for arg in atom.args)):
             antecedents.add(atom)
         for arg in expr.args:
             antecedents |= as_antecedents(arg, bound)
@@ -91,8 +93,8 @@ def as_succedent(expr, bound):
     if expr.arity == 'Equation':
         args = []
         for arg in expr.args:
-            if arg.varname in bound:
-                args.append(as_variable(arg))
+            if arg.var in bound:
+                args.append(arg.var)
             else:
                 args.append(as_atom(arg))
                 for argarg in arg.args:
@@ -181,12 +183,12 @@ def assert_normal(seq):
     assert len(seq.succedents) == 1
     for expr in seq.antecedents:
         for arg in expr.args:
-            assert arg.arity == 'Variable'
+            assert arg.arity == 'Variable', arg
     for expr in seq.succedents:
         if expr.arity == 'Equation':
             for arg in expr.args:
-                for argarg in arg.args:
-                    assert arg.arity == 'Variable'
+                for arg_arg in arg.args:
+                    assert arg_arg.arity == 'Variable', arg_arg
         else:
             for arg in expr.args:
-                assert arg.arity == 'Variable'
+                assert arg.arity == 'Variable', arg

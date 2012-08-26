@@ -40,3 +40,9 @@ def inputs(*types):
             return fun(*args)
         return typed
     return deco
+
+
+def methodof(class_):
+    def deco(fun):
+        setattr(class_, fun.__name__, fun)
+    return deco

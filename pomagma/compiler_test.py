@@ -1,24 +1,21 @@
 import re
-from pomagma.compiler import (
-    Variable,
-    Function,
-    Sequent,
-    EQUAL,
-    LESS,
-    NLESS,
-    add_costs,
-    )
+from pomagma.expressions import Expression
+from pomagma.sequents import Sequent, assert_normal
+from pomagma.compiler import add_costs, get_events, compile_full, compile_given
 
-CO = lambda x: Function('CO', x)
-APP = lambda x, y: Function('APP', x, y)
-COMP = lambda x, y: Function('COMP', x, y)
-JOIN = lambda x, y: Function('JOIN', x, y)
-QUOTE = lambda x: Function('QUOTE', x)
-f = Variable('f')
-g = Variable('g')
-x = Variable('x')
-y = Variable('y')
-z = Variable('z')
+EQUAL = lambda x, y: Expression('EQUAL', x, y)
+LESS = lambda x, y: Expression('LESS', x, y)
+NLESS = lambda x, y: Expression('NLESS', x, y)
+CO = lambda x: Expression('CO', x)
+QUOTE = lambda x: Expression('QUOTE', x)
+APP = lambda x, y: Expression('APP', x, y)
+COMP = lambda x, y: Expression('COMP', x, y)
+JOIN = lambda x, y: Expression('JOIN', x, y)
+f = Expression('f')
+g = Expression('g')
+x = Expression('x')
+y = Expression('y')
+z = Expression('z')
 
 
 outfile = None
@@ -34,16 +31,16 @@ def _test_sequent(*args):
     sequent = Sequent(*args)
     print '-' * 78
     print 'Compiling full search: {0}'.format(sequent)
-    compiles = sequent.compile()
+    compiles = compile_full(sequent)
     print_compiles(compiles)
     full_cost = add_costs(*[cost for cost, _ in compiles])
 
     incremental_cost = None
-    for event in sequent.get_events():
+    for event in get_events(sequent):
         print 'Compiling incremental search given: {0}'.format(event)
-        compiles = sequent.compile_given(event)
+        compiles = compile_given(sequent, event)
         print_compiles(compiles)
-        if event.children:
+        if event.args:
             cost = add_costs(*[cost for cost, _ in compiles])
             if incremental_cost:
                 incremental_cost = add_costs(incremental_cost, cost)
@@ -53,31 +50,31 @@ def _test_sequent(*args):
     print '# full cost =', full_cost, 'incremental cost =', incremental_cost
 
 def test_compile_I():
-    I = Function('I')
+    I = Expression('I')
     _test_sequent(
         [],
         [EQUAL(APP(I, x), x)])
 
 def test_compile_K():
-    K = Function('K')
+    K = Expression('K')
     _test_sequent(
         [],
         [EQUAL(APP(APP(K, x), y), x)])
 
 def test_compile_W():
-    W = Function('W')
+    W = Expression('W')
     _test_sequent(
         [],
         [EQUAL(APP(APP(W, x), y), APP(APP(x, y), y))])
 
 def test_compile_B_app():
-    B = Function('B')
+    B = Expression('B')
     _test_sequent(
         [],
         [EQUAL(APP(APP(APP(B, x), y), z), APP(x, APP(y, z)))])
 
 def test_compile_B_comp():
-    B = Function('B')
+    B = Expression('B')
     _test_sequent(
         [],
         [EQUAL(APP(APP(B, x), y), COMP(x, y))])
@@ -93,7 +90,7 @@ def test_compile_comp_assoc():
         [EQUAL(COMP(COMP(x, y), z), COMP(x, COMP(y, z)))])
 
 def test_compile_C():
-    C = Function('C')
+    C = Expression('C')
     _test_sequent(
         [],
         [EQUAL(APP(APP(APP(C, x), y), z), APP(APP(x, z), y))])
@@ -106,13 +103,13 @@ def test_compile_S():
     # for y if APP x y let APP_APP_S_x_y
     # for z if APP y z let APP_APP_APP_S_x_y_z
     # ensure EQUAL APP_APP_APP_S_x_y_z APP_APP_x_z_APP_y_z
-    S = Function('S')
+    S = Expression('S')
     _test_sequent(
         [],
         [EQUAL(APP(APP(APP(S, x), y), z), APP(APP(x, z), APP(y, z)))])
 
 def test_compile_Y():
-    Y = Function('Y')
+    Y = Expression('Y')
     _test_sequent(
         [],
         [EQUAL(APP(Y, f), APP(f, APP(Y, f)))])
@@ -148,19 +145,19 @@ def test_compile_co():
         [LESS(APP(CO(x), y), APP(y, x))])
 
 def test_compile_eval():
-    EVAL = Function('EVAL')
+    EVAL = Expression('EVAL')
     _test_sequent(
         [],
         [EQUAL(APP(EVAL, QUOTE(x)), x)])
 
 def test_compile_qt_quote():
-    QT = Function('QT')
+    QT = Expression('QT')
     _test_sequent(
         [],
         [EQUAL(APP(QT, QUOTE(x)), QUOTE(QUOTE(x)))])
 
 def test_compile_ap_quote():
-    AP = Function('AP')
+    AP = Expression('AP')
     _test_sequent(
         [],
         [EQUAL(APP(APP(AP, QUOTE(x)), QUOTE(y)), QUOTE(APP(x, y)))])

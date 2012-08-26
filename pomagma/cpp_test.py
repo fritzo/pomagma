@@ -1,9 +1,6 @@
+import glob
 from pomagma import run
 
 def test_cpp():
-    run.test_compile(
-            'sk.rules',
-            'join.rules',
-            'rand.rules',
-            'quote.rules',
-            )
+    for filename in glob.glob('*.rules'):
+        yield run.test_compile, filename

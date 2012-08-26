@@ -15,6 +15,7 @@ ARITY_TABLE = {
     'EQUAL': 'Equation',
     'LESS': 'BinaryRelation',
     'NLESS': 'BinaryRelation',
+    'CO': 'UnaryFunction',
     'QUOTE': 'UnaryFunction',
     'APP': 'BinaryFunction',
     'COMP': 'BinaryFunction',

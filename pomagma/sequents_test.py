@@ -38,6 +38,7 @@ def _test_normalize(rules):
         for seq in sequents.normalize(rule):
             print seq.ascii(indent=4)
             print
+            sequents.assert_normal(seq)
 
 
 def test_normalize():

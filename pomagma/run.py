@@ -2,14 +2,9 @@ import re
 import parsable
 from textwrap import dedent
 from contextlib import contextmanager
-from pomagma import parser, compiler
-from pomagma.compiler import (
-    Variable,
-    Function,
-    Sequent,
-    Theory,
-    add_costs,
-    )
+from pomagma import parser
+from pomagma.compiler import add_costs, get_events, compile_full, compile_given
+from pomagma.cpp import Theory
 
 
 def print_compiles(compiles):
@@ -22,21 +17,23 @@ def print_compiles(compiles):
 def measure_sequent(sequent):
     print '-' * 78
     print 'Compiling full search: {0}'.format(sequent)
-    compiles = sequent.compile()
+    compiles = compile_full(sequent)
     print_compiles(compiles)
     full_cost = add_costs(*[cost for cost, _ in compiles])
 
     incremental_cost = None
-    for event in sequent.get_events():
+    for event in get_events(sequent):
         print 'Compiling incremental search given: {0}'.format(event)
-        compiles = sequent.compile_given(event)
+        compiles = compile_given(sequent, event)
         print_compiles(compiles)
-        if event.children:
+        if event.args:
             cost = add_costs(*[cost for cost, _ in compiles])
             if incremental_cost:
                 incremental_cost = add_costs(incremental_cost, cost)
             else:
                 incremental_cost = cost
+        else:
+            pass  # event is only triggered once, so ignore cost
 
     print '# full cost =', full_cost, 'incremental cost =', incremental_cost
 
@@ -89,11 +86,11 @@ def test_compile(*filenames):
 
         sequents = parser.parse(stem_rules)
         for sequent in sequents:
-            for cost, strategy in sequent.compile():
+            for cost, strategy in compile_full(sequent):
                 print '\n'.join(strategy.cpp_lines())
 
-            for event in sequent.get_events():
-                for cost, strategy in sequent.compile_given(event):
+            for event in get_events(sequent):
+                for cost, strategy in compile_given(sequent, event):
                     print '\n'.join(strategy.cpp_lines())
 
 
