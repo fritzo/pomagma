@@ -9,7 +9,7 @@ add_library(pomagma SHARED
 	base_bin_rel.cpp
 	binary_relation.cpp
 	nullary_function.cpp
-	unary_function.cpp
+	injective_function.cpp
 	binary_function.cpp
 	symmetric_function.cpp
 	inverse_bin_fun.cpp
@@ -39,9 +39,9 @@ add_executable(nullary_function_test nullary_function_test.cpp)
 target_link_libraries(nullary_function_test ${POMAGMA_TEST_LIBS})
 add_test(NAME nullary_function COMMAND nullary_function_test)
 
-add_executable(unary_function_test unary_function_test.cpp)
-target_link_libraries(unary_function_test ${POMAGMA_TEST_LIBS})
-add_test(NAME unary_function COMMAND unary_function_test)
+add_executable(injective_function_test injective_function_test.cpp)
+target_link_libraries(injective_function_test ${POMAGMA_TEST_LIBS})
+add_test(NAME injective_function COMMAND injective_function_test)
 
 add_executable(binary_function_test binary_function_test.cpp)
 target_link_libraries(binary_function_test ${POMAGMA_TEST_LIBS})

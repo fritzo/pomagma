@@ -13,7 +13,7 @@ DEF_EXECUTE(CleanupTask)
 DEF_EXECUTE(PositiveOrderTask)
 DEF_EXECUTE(NegativeOrderTask)
 DEF_EXECUTE(NullaryFunctionTask)
-DEF_EXECUTE(UnaryFunctionTask)
+DEF_EXECUTE(InjectiveFunctionTask)
 DEF_EXECUTE(BinaryFunctionTask)
 DEF_EXECUTE(SymmetricFunctionTask)
 

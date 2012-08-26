@@ -1,30 +1,30 @@
-#include "unary_function.hpp"
+#include "injective_function.hpp"
 #include "aligned_alloc.hpp"
 #include <cstring>
 
 namespace pomagma
 {
 
-UnaryFunction::UnaryFunction (const Carrier & carrier)
+InjectiveFunction::InjectiveFunction (const Carrier & carrier)
     : m_carrier(carrier),
       m_support(carrier.support(), yes_copy_construct),
       m_set(support().item_dim()),
       m_values(pomagma::alloc_blocks<oid_t>(1 + item_dim()))
 {
-    POMAGMA_DEBUG("creating UnaryFunction with " << item_dim() << " values");
+    POMAGMA_DEBUG("creating InjectiveFunction with " << item_dim() << " values");
 
     bzero(m_values, (1 + item_dim()) * sizeof(oid_t));
 }
 
-UnaryFunction::~UnaryFunction ()
+InjectiveFunction::~InjectiveFunction ()
 {
     pomagma::free_blocks(m_values);
 }
 
 // for growing
-void UnaryFunction::move_from (const UnaryFunction & other)
+void InjectiveFunction::move_from (const InjectiveFunction & other)
 {
-    POMAGMA_DEBUG("Copying UnaryFunction");
+    POMAGMA_DEBUG("Copying InjectiveFunction");
 
     size_t min_item_dim = min(item_dim(), other.item_dim());
     oid_t * destin = m_values;
@@ -37,9 +37,9 @@ void UnaryFunction::move_from (const UnaryFunction & other)
 //----------------------------------------------------------------------------
 // Diagnostics
 
-void UnaryFunction::validate () const
+void InjectiveFunction::validate () const
 {
-    POMAGMA_DEBUG("Validating UnaryFunction");
+    POMAGMA_DEBUG("Validating InjectiveFunction");
 
     m_set.validate();
 
@@ -62,7 +62,7 @@ void UnaryFunction::validate () const
 //----------------------------------------------------------------------------
 // Operations
 
-void UnaryFunction::remove(
+void InjectiveFunction::remove(
         const oid_t dep,
         void remove_value(oid_t)) // rem
 {
@@ -77,7 +77,7 @@ void UnaryFunction::remove(
     }
 }
 
-void UnaryFunction::merge(
+void InjectiveFunction::merge(
         const oid_t dep,
         const oid_t rep,
         void merge_values(oid_t, oid_t), // dep, rep

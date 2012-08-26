@@ -7,7 +7,7 @@ namespace pomagma
 {
 
 class NullaryFunction;
-class UnaryFunction;
+class InjectiveFunction;
 class BinaryFunction;
 class SymmetricFunction;
 
@@ -62,13 +62,13 @@ struct NullaryFunctionTask
     bool references (oid_t) const { return false; }
 };
 
-struct UnaryFunctionTask
+struct InjectiveFunctionTask
 {
-    UnaryFunction * fun;
+    InjectiveFunction * fun;
     oid_t arg;
 
-    UnaryFunctionTask () {}
-    UnaryFunctionTask (UnaryFunction & f, oid_t a) : fun(&f), arg(a) {}
+    InjectiveFunctionTask () {}
+    InjectiveFunctionTask (InjectiveFunction & f, oid_t a) : fun(&f), arg(a) {}
 
     bool references (oid_t dep) const { return arg == dep; }
 };
@@ -113,7 +113,7 @@ void schedule (const CleanupTask & task);
 void schedule (const PositiveOrderTask & task);
 void schedule (const NegativeOrderTask & task);
 void schedule (const NullaryFunctionTask & task);
-void schedule (const UnaryFunctionTask & task);
+void schedule (const InjectiveFunctionTask & task);
 void schedule (const BinaryFunctionTask & task);
 void schedule (const SymmetricFunctionTask & task);
 
@@ -123,7 +123,7 @@ void execute (const CleanupTask & task);
 void execute (const PositiveOrderTask & task);
 void execute (const NegativeOrderTask & task);
 void execute (const NullaryFunctionTask & task);
-void execute (const UnaryFunctionTask & task);
+void execute (const InjectiveFunctionTask & task);
 void execute (const BinaryFunctionTask & task);
 void execute (const SymmetricFunctionTask & task);
 

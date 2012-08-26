@@ -1,5 +1,5 @@
-#ifndef POMAGMA_UNARY_FUNCTION_HPP
-#define POMAGMA_UNARY_FUNCTION_HPP
+#ifndef POMAGMA_INJECTIVE_FUNCTION_HPP
+#define POMAGMA_INJECTIVE_FUNCTION_HPP
 
 #include "util.hpp"
 #include "dense_set.hpp"
@@ -10,7 +10,7 @@ namespace pomagma
 
 // WARNING zero/null items are not allowed
 
-class UnaryFunction : noncopyable
+class InjectiveFunction : noncopyable
 {
     const Carrier & m_carrier;
     const dense_set m_support;
@@ -23,9 +23,9 @@ public:
     const dense_set & get_set () const { return m_set; }
 
     // ctors & dtors
-    UnaryFunction (const Carrier & carrier);
-    ~UnaryFunction ();
-    void move_from (const UnaryFunction & other); // for growing
+    InjectiveFunction (const Carrier & carrier);
+    ~InjectiveFunction ();
+    void move_from (const InjectiveFunction & other); // for growing
 
     // function calling
 private:
@@ -64,19 +64,19 @@ public:
             void move_value(oid_t, oid_t)); // val, key
 };
 
-inline oid_t & UnaryFunction::value (oid_t key)
+inline oid_t & InjectiveFunction::value (oid_t key)
 {
     POMAGMA_ASSERT_RANGE_(5, key, item_dim());
     return m_values[key];
 }
 
-inline oid_t UnaryFunction::value (oid_t key) const
+inline oid_t InjectiveFunction::value (oid_t key) const
 {
     POMAGMA_ASSERT_RANGE_(5, key, item_dim());
     return m_values[key];
 }
 
-inline void UnaryFunction::insert (oid_t key, oid_t val)
+inline void InjectiveFunction::insert (oid_t key, oid_t val)
 {
     POMAGMA_ASSERT5(support().contains(key), "unsupported key: " << key);
     POMAGMA_ASSERT5(val, "tried to set val to zero at " << key);
@@ -90,7 +90,7 @@ inline void UnaryFunction::insert (oid_t key, oid_t val)
     bit.one();
 }
 
-inline void UnaryFunction::remove (oid_t key)
+inline void InjectiveFunction::remove (oid_t key)
 {
     POMAGMA_ASSERT5(support().contains(key), "unsupported key: " << key);
 
@@ -105,4 +105,4 @@ inline void UnaryFunction::remove (oid_t key)
 
 } // namespace pomagma
 
-#endif // POMAGMA_UNARY_FUNCTION_HPP
+#endif // POMAGMA_INJECTIVE_FUNCTION_HPP
