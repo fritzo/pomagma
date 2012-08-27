@@ -37,14 +37,10 @@ class Sequent(object):
     def ascii(self, indent = 0):
         top = '   '.join(map(str, self.antecedents))
         bot = '   '.join(map(str, self.succedents))
-        bar = '-' * max(len(top), len(bot))
-        diff = len(top) - len(bot)
-        lpad = abs(diff) / 2
-        rpad = diff - lpad
-        if diff > 0 and bot:
-            bot = ' ' * lpad + bot + ' ' * rpad
-        if diff < 0 and top:
-            top = ' ' * lpad + top + ' ' * rpad
+        width = max(len(top), len(bot))
+        top = top.center(width)
+        bot = bot.center(width)
+        bar = '-' * width
         lines = [top, bar, bot]
         lines = filter(bool, lines)
         lines = map((' ' * indent).__add__, lines)
