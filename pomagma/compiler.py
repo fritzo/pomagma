@@ -289,7 +289,7 @@ def get_compiled(antecedents, succedent, bound):
     '''
     #print 'DEBUG', list(bound), '|', list(antecedents), '|-', succedent
 
-    if not antecedents:
+    if not antecedents and succedent.get_vars() <= bound:
         return [Ensure(succedent)]
 
     results = []
@@ -369,7 +369,10 @@ def get_compiled(antecedents, succedent, bound):
         return results  # HEURISTIC iterate locally eagerly
 
     # iterate anything
-    free = union([a.get_vars() for a in antecedents]) - bound
+    free = ( union([a.get_vars() for a in antecedents])
+           | succedent.get_vars()
+           - bound
+           )
     for v in free:
         bound_v = set_with(bound, v)
         for s in get_compiled(antecedents, succedent, bound_v):

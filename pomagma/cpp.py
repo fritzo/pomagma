@@ -68,16 +68,31 @@ def cpp(self, code):
     self.body.cpp(body)
     sets = []
     for test in self.tests:
-        sets.append('TODO %s' % test)
-    for var, expr in self.lets.iteritems():
-        sets.append('TODO %s' % var)
+        assert test.name in ['LESS', 'NLESS']
+        lhs, rhs = test.args
+        assert lhs != rhs
+        if self.var == lhs:
+            sets.append('%s.get_Rx_set(%s)' % (test.name, rhs))
+        else:
+            sets.append('%s.get_Lx_set(%s)' % (test.name, lhs))
+    for expr in self.lets.itervalues():
+        assert self.var in expr.args
+        if len(expr.args) == 1:
+            sets.append('%s.get_set()' % expr.name)
+        else:
+            lhs, rhs = expr.args
+            assert lhs != rhs
+            if self.var == lhs:
+                sets.append('%s.get_Rx_set(%s)' % (expr.name, rhs))
+            else:
+                sets.append('%s.get_Lx_set(%s)' % (expr.name, lhs))
     if len(sets) == 0:
         code('''
             const dense_set & set = carrier.support();
             ''')
     elif len(sets) == 1:
         code('''
-            dense_set set(carrier.item_dim(), $one_set);
+            dense_set set($one_set, yes_copy_construct);
             ''',
             one_set = iter(sets).next())
     else:
@@ -88,7 +103,7 @@ def cpp(self, code):
             sets = ', '.join(sets),
             )
     code('''
-        for (dense_set::iterator iter(set); iter.ok(); iter.next()) {',
+        for (dense_set::iterator iter(set); iter.ok(); iter.next()) {
             $body
         }
         ''',
@@ -101,15 +116,13 @@ def cpp(self, code):
     body = Code('''
         oid_t $var = iter.arg();
         ''', var=self.var)
-    body += self.body.cpp_lines()
-    body = ['    ' + line for line in body]
+    self.body.cpp(body)
     code('''
-        for (InjectiveFunction::inverse_iterator iter($value);
-            iter.ok(); iter.next())
-        {
+        for ($Iter iter($value); iter.ok(); iter.next()) {
             $body
         }
         ''',
+        Iter = 'InjectiveFunction::inverse_iterator',
         value = self.value,
         body = wrapindent(body),
         )
@@ -126,12 +139,11 @@ def cpp(self, code):
         )
     self.body.cpp(body)
     code('''
-        for (BinaryFunction::inverse_iterator iter($value);
-            iter.ok(); iter.next())
-        {
+        for ($Iter iter($value); iter.ok(); iter.next()) {
             $body
         }
         ''',
+        Iter = 'BinaryFunction::inverse_iterator',
         value = self.value,
         body = wrapindent(body),
         )
@@ -147,12 +159,11 @@ def cpp(self, code):
         )
     self.body.cpp(body)
     code('''
-        for (BinaryFunction::inv_range_iterator iter($var1, $var2);
-            iter.ok(); iter.next())
-        {
+        for ($Iter iter($var1, $var2); iter.ok(); iter.next()) {
             $body
         }
         ''',
+        Iter = 'BinaryFunction::inv_range_iterator',
         var1 = self.value,
         var2 = self.var2 if self.lhs_fixed else self.var1,
         body = wrapindent(body),
@@ -163,17 +174,14 @@ def cpp(self, code):
 def cpp(self, code):
     body = Code()
     self.body.cpp(body)
-    if self.expr.args:
-        expr = str(self.expr)
-    else:
-        expr = 'signature::%s()' % self.expr
     code('''
-        if (oid_t $var = $expr) {
+        if (oid_t $var = $fun.find($args)) {
             $body
         }
         ''',
         var = self.var,
-        expr = expr,
+        fun = self.expr.name,
+        args = ', '.join(map(str, self.expr.args)),
         body = wrapindent(body),
         )
 
@@ -181,7 +189,9 @@ def cpp(self, code):
 @methodof(compiler.Test)
 def cpp(self, code):
     body = Code()
-    self.body.cpp(code)
+    self.body.cpp(body)
+    # TODO FIXME this fails with self.expr = I, Y
+    #assert self.expr.name in ['EQUAL', 'LESS', 'NLESS'], self.expr
     code('''
         if ($expr) {
             $body
@@ -253,8 +263,6 @@ def write_signature(code, functions):
         $bar
         // signature
 
-        namespace signature {
-
         Carrier carrier;
         const dense_set support(carrier.support(), yes_copy_construct);
         inline size_t item_dim () { return support.item_dim(); }
@@ -263,9 +271,6 @@ def write_signature(code, functions):
         BinaryRelation NLESS(carrier);
         
         $funs
-        } // namespace signature
-
-        using namespace signature;
         ''',
         bar = bar,
         funs = funs,
@@ -342,7 +347,7 @@ def write_ensurers(code, functions):
 
     for name1, arity1, argc1 in functions:
         for name2, arity2, argc2 in functions:
-            if name2 > name1:
+            if name1 > name2:
                 continue
 
             vars1 = ['key1'] if argc1 == 1 else ['lhs1', 'rhs1']
@@ -384,6 +389,8 @@ def write_full_tasks(code, sequents):
 
     cases = Code()
     for i, (cost, strategy) in enumerate(full_tasks):
+        if i:
+            cases.newline()
         case = Code()
         strategy.cpp(case)
         cases('''
@@ -394,7 +401,7 @@ def write_full_tasks(code, sequents):
             index = i,
             cost = cost,
             case = wrapindent(case),
-            ).newline()
+            )
 
     code('''
         $bar
@@ -426,6 +433,7 @@ def write_full_tasks(code, sequents):
             switch (task.type) {
 
                 $cases
+
                 default: POMAGMA_ERROR("bad cleanup type" << task.type);
             }
 
@@ -445,7 +453,7 @@ def write_event_tasks(code, sequents):
         // event tasks
         ''',
         bar = bar,
-        )
+        ).newline()
 
     event_tasks = {}
     for sequent in sequents:
@@ -453,25 +461,64 @@ def write_event_tasks(code, sequents):
             tasks = event_tasks.setdefault(event.name, [])
             tasks += compiler.compile_given(sequent, event)
 
-    event_tasks = event_tasks.items()
-    event_tasks.sort(key=(lambda (name, tasks): (len(tasks), len(name), name)))
-    for event, tasks in event_tasks:
+    def get_group(name):
+        relations = {
+            'LESS': 'PositiveOrder',
+            'NLESS': 'NegativeOrder',
+            }
+        return relations.get(name, signature.get_arity(name))
+
+    group_tasks = {}
+    for name, tasks in event_tasks.iteritems():
+        groupname = get_group(name)
+        group_tasks.setdefault(groupname, {})[name] = tasks
+
+    # TODO sort groups
+    #event_tasks = event_tasks.items()
+    #event_tasks.sort(key=(lambda (name, tasks): (len(tasks), len(name), name)))
+    for tasks in event_tasks.itervalues():
         tasks.sort(key=(lambda (cost, _): cost))
 
+    group_tasks = list(group_tasks.iteritems())
+    group_tasks.sort()
+
+    for groupname, group in group_tasks:
+        group = list(group.iteritems())
+        group.sort()
+
         body = Code()
-        for i, (cost, strategy) in enumerate(tasks):
-            body('// cost = $cost', cost = cost)
-            strategy.cpp(body)
-            if i:
+
+        for g, (event, tasks) in enumerate(group):
+            if g:
                 body.newline()
 
+            subbody = Code()
+            for i, (cost, strategy) in enumerate(tasks):
+                if i:
+                    subbody.newline()
+                subbody('// cost = $cost', cost = cost)
+                strategy.cpp(subbody)
+
+            if event in ['LESS', 'NLESS']:
+                body(str(subbody))
+            else:
+                body('''
+                if (task.fun == & $event) {
+
+                    $subbody
+                }
+                ''',
+                event = event,
+                subbody = wrapindent(subbody),
+                )
+
         code('''
-            void execute (const ${arity}Task & task)
+            void execute (const ${groupname}Task & task)
             {
                 $body
             }
             ''',
-            arity = signature.get_arity(event),
+            groupname = groupname,
             body = wrapindent(body),
             ).newline()
 
