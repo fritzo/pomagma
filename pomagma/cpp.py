@@ -524,7 +524,7 @@ def write_event_tasks(code, sequents):
 
 
 def get_functions_used_in(sequents):
-    functions = {arity: [] for arity in signature.FUNCTION_ARITIES}
+    functions = dict((arity, []) for arity in signature.FUNCTION_ARITIES)
     symbols = set()
     for seq in sequents:
         assert isinstance(seq, Sequent)

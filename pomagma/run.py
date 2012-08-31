@@ -106,7 +106,7 @@ def compile(*infiles, **kwargs):
     print '# writing', outfile
     argstring = ' '.join(
             list(infiles) +
-            ['{}={}'.format(key, val) for key, val in kwargs.iteritems()])
+            ['{0}={1}'.format(key, val) for key, val in kwargs.iteritems()])
 
     sequents = []
     for infile in infiles:
