@@ -44,6 +44,9 @@ public:
     bool equal (Ob lhs, Ob rhs) const;
     Ob merge (Ob dep, Ob rep) const;
     Ob ensure_equal (Ob lhs, Ob rhs) const;
+    Ob set_and_merge (
+            Ob source,
+            std::atomic<Ob> & destin) const; // return old val
 
     // unsafe operations
     Ob insert ();
@@ -83,6 +86,21 @@ inline Ob Carrier::ensure_equal (Ob lhs, Ob rhs) const
         Ob rep = lhs < rhs ? lhs : rhs;
         return merge(dep, rep);
     }
+}
+
+inline Ob Carrier::set_and_merge (
+        Ob source,
+        std::atomic<Ob> & destin) const
+{
+    POMAGMA_ASSERT2(source, "tried to set_and_merge destin to 0");
+
+    Ob old = 0;
+    while (not destin.compare_exchange_weak(old, source)) {
+        if (old == source) break;
+        else if (source > old) { merge(source, old); break; }
+        else { source = merge(old, source); }
+    }
+    return old;
 }
 
 } // namespace pomagma

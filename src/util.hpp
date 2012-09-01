@@ -8,6 +8,7 @@
 #include <sstream>
 #include <fstream>
 #include <iomanip>
+#include <atomic>
 
 namespace pomagma
 {
@@ -28,7 +29,7 @@ namespace pomagma
     #endif // __GNUG__
 #endif // restrict
 
-#define barrier() __sync_synchronize()
+#define memory_barrier() __sync_synchronize()
 
 //----------------------------------------------------------------------------
 // Debugging
@@ -184,6 +185,8 @@ public:
 // Ob is a 1-based index type with 0 = none
 typedef uint16_t Ob;
 const size_t MAX_ITEM_DIM = (1UL << (8UL * sizeof(Ob))) - 1UL;
+static_assert(sizeof(Ob) == sizeof(std::atomic<Ob>),
+        "std::atomic<Ob> is larger than Ob");
 
 const size_t BITS_PER_CACHE_LINE = 512;
 const size_t DEFAULT_ITEM_DIM = BITS_PER_CACHE_LINE - 1; // for one-based sets
