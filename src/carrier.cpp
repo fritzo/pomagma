@@ -103,15 +103,23 @@ void Carrier::validate () const
 {
     m_support.validate();
 
+    size_t actual_item_count = 0;
+    size_t actual_rep_count = 0;
     for (Ob i = 1; i <= item_dim(); ++i) {
         if (contains(i)) {
             POMAGMA_ASSERT(m_reps[i], "supported object has no rep: " << i);
             POMAGMA_ASSERT(m_reps[i] <= i,
                 "rep out of order: " << m_reps[i] << "," << i);
+            ++actual_item_count;
+            if (find(i) == i) {
+                ++actual_rep_count;
+            }
         } else {
             POMAGMA_ASSERT(m_reps[i] == 0, "unsupported object has rep: " << i);
         }
     }
+    POMAGMA_ASSERT_EQ(item_count(), actual_item_count);
+    POMAGMA_ASSERT_EQ(rep_count(), actual_rep_count);
 }
 
 } // namespace pomagma
