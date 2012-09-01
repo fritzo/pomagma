@@ -3,80 +3,80 @@
 
 #include "util.hpp"
 #include "dense_set.hpp"
+#include "threading.hpp"
 #include <functional>
 #include <algorithm>
-//#include <boost/thread/mutex.hpp>
-//#include <boost/thread/shared_mutex.hpp>
-//#include <boost/thread/locks.hpp>
+#include <vector>
+#include <atomic>
 
 namespace pomagma
 {
 
-// WARNING nonstandard use of constness:
-// insert, find are const
-// merge, remove are nonconst
-
-class Carrier
+class Carrier : noncopyable
 {
     DenseSet m_support;
     size_t m_item_count;
-    size_t m_rep_count;
-    Ob * const m_reps;
+    mutable size_t m_rep_count;
+    typedef std::atomic<Ob> Rep;
+    Rep * const m_reps;
+    Mutex m_mutex;
 
 public:
 
-    Carrier (size_t item_dim = 511);
+    Carrier (size_t item_dim = DEFAULT_ITEM_DIM);
+    ~Carrier ();
     void move_from (const Carrier & other, const Ob * new2old);
 
+    // attributes
     const DenseSet & support () const { return m_support; }
     size_t item_dim () const { return m_support.item_dim(); }
     size_t item_count () const { return m_item_count; }
     size_t rep_count () const { return m_rep_count; }
     bool contains (Ob ob) const { return m_support.contains(ob); }
 
-    // merge trees
-private:
-    Ob _find (Ob & ob) const;
-public:
-    Ob find (Ob ob) const
-    {
-        POMAGMA_ASSERT5(contains(ob),
-                "tried to find unsupported object " << ob);
-        Ob & rep = m_reps[ob];
-        return rep == ob ? ob : _find(rep);
-        // TODO this could be more clever
-    }
-
-    bool equivalent (Ob lhs, Ob rhs) const
-    {
-        return find(lhs) == find(rhs);
-    }
-
-    void insert (Ob ob) // WARNING not thread safe
-    {
-        POMAGMA_ASSERT1(not contains(ob), "double insertion: " << ob);
-        POMAGMA_ASSERT1(not m_reps[ob], "double insertion: " << ob);
-
-        m_support.insert(ob);
-        m_reps[ob] = ob;
-    }
-
-    Ob insert (); // WARNING not thread safe
-
-    void remove (Ob ob); // WARNING not thread safe
-
-    void merge (Ob dep, Ob rep) const
-    {
-        POMAGMA_ASSERT2(dep > rep,
-                "out of order merge: " << dep << "," << rep);
-        POMAGMA_ASSERT2(m_support.contains(dep), "bad merge dep " << dep);
-        POMAGMA_ASSERT2(m_support.contains(rep), "bad merge rep " << rep);
-
-        m_reps[find(dep)] = find(rep); // ATOMIC
-    }
-
+    // non-blocking interface
+    Ob find (Ob ob) const;
+    bool equivalent (Ob lhs, Ob rhs) const;
+    bool merge (Ob dep, Ob rep) const; // return true if not already merged
     void validate () const;
+
+    // blocking
+    Ob insert ();
+    void insert (Ob ob);
+    void remove (Ob ob);
+
+private:
+
+    Ob _find (Ob ob, Ob rep) const;
 };
+
+inline Ob Carrier::find (Ob ob) const
+{
+    POMAGMA_ASSERT5(contains(ob), "tried to find unsupported object " << ob);
+    Ob rep = m_reps[ob];
+    return rep == ob ? ob : _find(ob, rep);
+}
+
+inline bool Carrier::equivalent (Ob lhs, Ob rhs) const
+{
+    return find(lhs) == find(rhs);
+}
+
+inline bool Carrier::merge (Ob dep, Ob rep) const
+{
+    POMAGMA_ASSERT2(dep > rep,
+            "out of order merge: " << dep << "," << rep);
+    POMAGMA_ASSERT2(m_support.contains(dep), "bad merge dep " << dep);
+    POMAGMA_ASSERT2(m_support.contains(rep), "bad merge rep " << rep);
+
+    while (not m_reps[dep].compare_exchange_weak(dep, rep)) {
+        rep = m_reps[rep];
+        if (dep == rep) return false;
+        if (dep < rep) std::swap(dep, rep);
+    }
+    --m_rep_count;
+    return true;
+}
 
 } // namespace pomagma
 

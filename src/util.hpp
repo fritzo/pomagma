@@ -183,6 +183,7 @@ typedef uint16_t Ob;
 const size_t MAX_ITEM_DIM = (1UL << (8UL * sizeof(Ob))) - 1UL;
 
 const size_t BITS_PER_CACHE_LINE = 512;
+const size_t DEFAULT_ITEM_DIM = BITS_PER_CACHE_LINE - 1; // for one-based sets
 
 //----------------------------------------------------------------------------
 // Words of bits

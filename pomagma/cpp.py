@@ -285,8 +285,8 @@ def write_ensurers(code, functions):
         inline void ensure_equal (Ob lhs, Ob rhs)
         {
             if (lhs != rhs) {
-                Ob dep = lhs < rhs ? lhs : rhs;
-                Ob rep = lhs < rhs ? rhs : lhs;
+                Ob dep = lhs < rhs ? rhs : lhs;
+                Ob rep = lhs < rhs ? lhs : rhs;
                 carrier.merge(dep, rep);
                 schedule(MergeTask(dep));
             }
@@ -378,6 +378,39 @@ def write_ensurers(code, functions):
                 arity1 = arity,
                 arity2 = arity2,
                 ).newline()
+
+
+def write_merge_task(code, functions):
+    TODO()
+    body = Code()
+    body('''
+        const Ob dep = task.dep;
+        const Ob rep = carrier.find(dep);
+        POMAGMA_ASSERT(dep < rep, "bad merge: " << dep << ", " << rep);
+        ''')
+
+    for name, arity, argc in functions:
+        # TODO provide merge(-,-) for injective_fun
+        body('''
+            $name.merge(dep, rep);
+            ''',
+            name = name,
+            )
+
+    body('''
+        carrier.remove(dep);
+        '''
+        )
+
+    code('''
+        void execute (const ${groupname}Task & task)
+        {
+            $body
+        }
+        ''',
+        body = wrapindent(body),
+        )
+
 
 def write_full_tasks(code, sequents):
 

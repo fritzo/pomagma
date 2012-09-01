@@ -3,10 +3,16 @@
 
 #include "util.hpp"
 #include <pthread.h>
+#include <mutex>
 #include <boost/thread/locks.hpp>
 
 namespace pomagma
 {
+
+struct Mutex : std::mutex
+{
+    typedef std::lock_guard<Mutex> Lock;
+};
 
 // this wraps pthread_wrlock, which is smaller & faster than boost::shared_mutex.
 //

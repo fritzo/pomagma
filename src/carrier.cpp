@@ -8,31 +8,65 @@ namespace pomagma
 Carrier::Carrier (size_t item_dim)
     : m_support(item_dim),
       m_item_count(0),
-      m_reps(alloc_blocks<Ob>(1 + item_dim))
+      m_rep_count(0),
+      m_reps(alloc_blocks<Rep>(1 + item_dim))
 {
     POMAGMA_DEBUG("creating Carrier with " << item_dim << " items");
-    bzero(m_reps, sizeof(Ob) * (1 + item_dim));
+    for (Ob ob = 0; ob <= item_dim; ++ob) {
+        new (&m_reps[ob]) Rep(0);
+    }
+}
+
+Carrier::~Carrier ()
+{
+    for (Ob ob = 0; ob <= item_dim(); ++ob) {
+        m_reps[ob].~Rep();
+    }
+    free_blocks(m_reps);
 }
 
 void Carrier::move_from (
-        const Carrier & other __attribute__((unused)),
+        const Carrier & other,
         const Ob * new2old __attribute__((unused)))
 {
-    // TODO
+    Mutex::Lock lock(m_mutex);
+
+    m_item_count = other.m_item_count;
+    m_rep_count = other.m_rep_count;
+    TODO("move from other")
 }
 
-Ob Carrier::insert () // WARNING not thread safe
+Ob Carrier::insert ()
 {
+    Mutex::Lock lock(m_mutex);
+
     POMAGMA_ASSERT1(item_count() < item_dim(),
             "tried to insert in full Carrier");
 
     Ob ob = m_support.insert_one();
     m_reps[ob] = ob;
+    ++m_item_count;
+    ++m_rep_count;
     return ob;
 }
 
-void Carrier::remove (Ob ob) // WARNING not thread safe
+void Carrier::insert (Ob ob)
 {
+    Mutex::Lock lock(m_mutex);
+
+    POMAGMA_ASSERT1(not contains(ob), "double insertion: " << ob);
+    POMAGMA_ASSERT1(not m_reps[ob], "double insertion: " << ob);
+
+    m_support.insert(ob);
+    m_reps[ob] = ob;
+    ++m_item_count;
+    ++m_rep_count;
+}
+
+void Carrier::remove (Ob ob)
+{
+    Mutex::Lock lock(m_mutex);
+
     POMAGMA_ASSERT2(m_support.contains(ob), "double removal: " << ob);
     POMAGMA_ASSERT2(m_reps[ob], "double removal: " << ob);
 
@@ -41,6 +75,7 @@ void Carrier::remove (Ob ob) // WARNING not thread safe
         for (Ob other = ob + 1; other <= item_dim(); ++other) {
             POMAGMA_ASSERT2(m_reps[other] != ob, "removed a rep: " << ob);
         }
+        --m_rep_count;
     } else {
         for (Ob other = ob + 1; other <= item_dim(); ++other) {
             if (m_reps[other] == ob) {
@@ -51,14 +86,17 @@ void Carrier::remove (Ob ob) // WARNING not thread safe
 
     m_support.remove(ob);
     m_reps[ob] = 0;
+    --m_item_count;
 }
 
-//----------------------------------------------------------------------------
-// Merge trees
-
-Ob Carrier::_find (Ob & ob) const
+Ob Carrier::_find (Ob ob, Ob rep) const
 {
-    return ob = find(m_reps[ob]); // ATOMIC
+    Ob rep_rep = find(rep);
+    if (m_reps[ob].compare_exchange_weak(rep, rep_rep)) {
+        return rep_rep;
+    } else {
+        return rep < rep_rep ? rep : rep_rep;
+    }
 }
 
 void Carrier::validate () const
