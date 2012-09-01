@@ -224,7 +224,7 @@ public:
 //----------------------------------------------------------------------------
 // Blocks of Ob
 
-const size_t LOG2_ITEMS_PER_BLOCK = 2;
+const size_t LOG2_ITEMS_PER_BLOCK = 3;
 const size_t ITEMS_PER_BLOCK = 1 << LOG2_ITEMS_PER_BLOCK;
 const size_t BLOCK_POS_MASK = ITEMS_PER_BLOCK - 1;
 typedef Ob Block[ITEMS_PER_BLOCK * ITEMS_PER_BLOCK];
