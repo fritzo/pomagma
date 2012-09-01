@@ -106,7 +106,8 @@ inline void InjectiveFunction::insert (
     POMAGMA_ASSERT5(val, "tried to set val to zero at " << key);
 
     oid_t & old_val = value(key);
-    POMAGMA_ASSERT2(not old_val, "double insertion at " << key);
+    POMAGMA_ASSERT2(not old_val,
+            "double insertion at " << key << ": " << old_val);
     old_val = val;
 
     bool_ref bit = m_set(key);
@@ -115,16 +116,18 @@ inline void InjectiveFunction::insert (
 
     oid_t & old_key = inverse(val);
     if (old_key) {
-        TODO("deal with inverse insertion")
         if (old_key < key) {
-            merge_values(old_key, key);
-        } else if (old_key > key) {
             merge_values(key, old_key);
+        } else if (old_key > key) {
+            merge_values(old_key, key);
+            old_key = key;
         }
     } else {
         bool_ref bit = m_inverse_set(val);
-        POMAGMA_ASSERT4(not bit, "double insertion at " << val);
+        POMAGMA_ASSERT4(not bit, "double inverse insertion at " << val);
         bit.one();
+
+        old_key = key;
     }
 }
 

@@ -6,18 +6,27 @@ using namespace pomagma;
 inline oid_t example_fun (oid_t i)
 {
     const size_t big_prime = (1ul << 31ul) - 1;
-    return big_prime % (i + 1);
+    oid_t result = big_prime % (i + 1);
+    if (result > 1) {
+        return result;
+    } else {
+        return 0;
+    }
 }
+
+Carrier * g_carrier = NULL;
 
 void merge_values (oid_t i, oid_t j)
 {
     POMAGMA_DEBUG("merging " << i << " into " << j);
+    g_carrier->merge(i, j);
 }
 
 void test_basic (size_t size)
 {
     POMAGMA_INFO("Defining function");
     Carrier carrier(size);
+    g_carrier = & carrier;
     const dense_set & support = carrier.support();
     InjectiveFunction fun(carrier);
 
@@ -28,7 +37,7 @@ void test_basic (size_t size)
     }
     for (dense_set::iterator i(support); i.ok(); i.next()) {
         oid_t val = example_fun(*i);
-        if (val > 1) {
+        if (val and support.contains(val)) {
             fun.insert(*i, val, merge_values);
         }
     }
@@ -37,7 +46,7 @@ void test_basic (size_t size)
     POMAGMA_INFO("Checking function values");
     for (dense_set::iterator i(support); i.ok(); i.next()) {
         oid_t val = example_fun(*i);
-        if (val > 1) {
+        if (val and support.contains(val)) {
             POMAGMA_ASSERT(fun.contains(*i), "missing value at " << *i);
             POMAGMA_ASSERT(fun.get_value(*i) == val, "bad value at " << *i);
         } else {

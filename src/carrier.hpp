@@ -48,6 +48,11 @@ public:
     }
     oid_t get_rep (oid_t oid) const { return find(oid); }
 
+    bool equivalent (oid_t lhs, oid_t rhs) const
+    {
+        return find(lhs) == find(rhs);
+    }
+
     void insert (oid_t oid) // WARNING not thread safe
     {
         POMAGMA_ASSERT1(not contains(oid), "double insertion: " << oid);

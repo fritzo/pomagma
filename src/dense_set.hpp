@@ -116,6 +116,7 @@ public:
     void operator *= (const dense_set & other);
     void set_union   (const dense_set & lhs, const dense_set & rhs);
     void set_insn    (const dense_set & lhs, const dense_set & rhs);
+    void set_diff    (const dense_set & lhs, const dense_set & rhs);
     void merge       (dense_set & dep);
     bool merge       (dense_set & dep, dense_set & diff);
     bool ensure      (const dense_set & dep, dense_set & diff);

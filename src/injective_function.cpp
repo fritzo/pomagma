@@ -71,14 +71,15 @@ void InjectiveFunction::validate () const
         bool bit = m_inverse_set(val);
         oid_t key = m_inverse[val];
 
-        if (not m_support.contains(key)) {
-            POMAGMA_ASSERT(not val, "found unsupported key at " << val);
+        if (not m_support.contains(val)) {
+            POMAGMA_ASSERT(not key, "found unsupported key at " << val);
             POMAGMA_ASSERT(not bit, "found unsupported bit at " << val);
         } else if (not key) {
             POMAGMA_ASSERT(not bit, "found supported null key at " << val);
         } else {
             POMAGMA_ASSERT(bit, "found unsupported value at " << val);
-            POMAGMA_ASSERT(m_values[key] == m_carrier.get_rep(val),
+            //POMAGMA_ASSERT(m_values[key] == m_carrier.get_rep(val),
+            POMAGMA_ASSERT(m_carrier.equivalent(m_values[key], val),
                     "inverse, value mismatch: " <<
                     val << " <- " << key << " -> " << m_values[key]);
         }

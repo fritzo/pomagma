@@ -224,6 +224,20 @@ void dense_set::set_insn (const dense_set & lhs, const dense_set & rhs)
     }
 }
 
+void dense_set::set_diff (const dense_set & lhs, const dense_set & rhs)
+{
+    POMAGMA_ASSERT1(item_dim() == lhs.item_dim(), "lhs.item_dim mismatch");
+    POMAGMA_ASSERT1(item_dim() == rhs.item_dim(), "rhs.item_dim mismatch");
+
+    const Word * restrict s = lhs.m_words;
+    const Word * restrict t = rhs.m_words;
+    Word * restrict u = m_words;
+
+    for (size_t m = 0, M = m_word_dim; m < M; ++m) {
+        u[m] = s[m] | ~ t[m];
+    }
+}
+
 // this += dep; dep = 0;
 void dense_set::merge (dense_set & dep)
 {
