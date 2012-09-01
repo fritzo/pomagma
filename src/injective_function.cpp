@@ -10,19 +10,21 @@ InjectiveFunction::InjectiveFunction (const Carrier & carrier)
       m_support(carrier.support(), yes_copy_construct),
       m_set(support().item_dim()),
       m_inverse_set(support().item_dim()),
-      m_values(alloc_blocks<Ob>(1 + item_dim())),
-      m_inverse(alloc_blocks<Ob>(1 + item_dim()))
+      m_values(alloc_blocks<std::atomic<Ob>>(1 + item_dim())),
+      m_inverse(alloc_blocks<std::atomic<Ob>>(1 + item_dim()))
 {
     POMAGMA_DEBUG("creating InjectiveFunction with "
             << item_dim() << " values");
 
-    zero_blocks(m_values, 1 + item_dim());
-    zero_blocks(m_inverse, 1 + item_dim());
+    construct_blocks(m_values, 1 + item_dim(), 0);
+    construct_blocks(m_inverse, 1 + item_dim(), 0);
 }
 
 InjectiveFunction::~InjectiveFunction ()
 {
+    destroy_blocks(m_values, 1 + item_dim());
     free_blocks(m_values);
+    destroy_blocks(m_inverse, 1 + item_dim());
     free_blocks(m_inverse);
 }
 
@@ -92,21 +94,13 @@ void InjectiveFunction::insert (Ob key, Ob val) const
     POMAGMA_ASSERT5(support().contains(key), "unsupported key: " << key);
     POMAGMA_ASSERT5(support().contains(val), "unsupported val: " << val);
 
-    // TODO add memory barrier or make reads atomic
+    m_carrier.set_and_merge(val, m_values[key]);
+    m_carrier.set_and_merge(key, m_inverse[val]);
 
-    Ob & old_val = m_values[key];
-    POMAGMA_ASSERT2(not old_val,
-            "double insertion at " << key << ": " << old_val);
-    old_val = val;
-    m_set.insert(key);
+    memory_barrier();
 
-    Ob & old_key = m_inverse[val];
-    if (old_key) {
-        old_key = m_carrier.ensure_equal(old_key, key);
-    } else {
-        old_key = key;
-        m_inverse_set.insert(val);
-    }
+    m_set(key).one();
+    m_inverse_set(val).one();
 }
 
 void InjectiveFunction::remove (Ob ob)
@@ -115,7 +109,7 @@ void InjectiveFunction::remove (Ob ob)
 
     POMAGMA_ASSERT_RANGE_(4, ob, item_dim());
 
-    TODO("remove inverse")
+    TODO("merge occurrences as values")
 
     if (bool_ref bit = m_set(ob)) {
         bit.zero();
@@ -136,18 +130,28 @@ void InjectiveFunction::merge (Ob dep, Ob rep)
     POMAGMA_ASSERT_RANGE_(4, dep, item_dim());
     POMAGMA_ASSERT_RANGE_(4, rep, item_dim());
 
-    TODO("merge inverse")
+    TODO("merge occurrences as values")
 
     if (bool_ref dep_bit = m_set(dep)) {
-        Ob & restrict dep_val = value(dep);
-        Ob & restrict rep_val = value(rep);
-        if (rep_val and rep_val != dep_val) {
-            rep_val = m_carrier.ensure_equal(dep_val, rep_val);
-        } else {
-            rep_val = dep_val;
-            m_set.insert(rep);
-        }
         dep_bit.zero();
+        m_set(rep).one();
+
+        std::atomic<Ob> & dep_val = value(dep);
+        std::atomic<Ob> & rep_val = value(rep);
+
+        m_carrier.set_and_merge(dep_val, rep_val);
+        dep_val = 0;
+
+    }
+
+    if (bool_ref dep_bit = m_inverse_set(dep)) {
+        dep_bit.zero();
+        m_inverse_set(rep).one();
+
+        std::atomic<Ob> & dep_val = inverse(dep);
+        std::atomic<Ob> & rep_val = inverse(rep);
+
+        m_carrier.set_and_merge(dep_val, rep_val);
         dep_val = 0;
     }
 }

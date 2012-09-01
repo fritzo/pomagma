@@ -13,16 +13,12 @@ Carrier::Carrier (size_t item_dim, void (*merge_callback)(Ob))
       m_merge_callback(merge_callback)
 {
     POMAGMA_DEBUG("creating Carrier with " << item_dim << " items");
-    for (Ob ob = 0; ob <= item_dim; ++ob) {
-        new (&m_reps[ob]) Rep(0);
-    }
+    construct_blocks(m_reps, 1 + item_dim, 0);
 }
 
 Carrier::~Carrier ()
 {
-    for (Ob ob = 0; ob <= item_dim(); ++ob) {
-        m_reps[ob].~Rep();
-    }
+    destroy_blocks(m_reps, 1 + item_dim());
     free_blocks(m_reps);
 }
 

@@ -14,8 +14,8 @@ class InjectiveFunction : noncopyable
     const DenseSet m_support; // aliased
     mutable DenseSet m_set;
     mutable DenseSet m_inverse_set;
-    Ob * const m_values;
-    Ob * const m_inverse;
+    std::atomic<Ob> * const m_values;
+    std::atomic<Ob> * const m_inverse;
 
     mutable AssertSharedMutex m_mutex;
     typedef AssertSharedMutex::SharedLock SharedLock;
@@ -45,8 +45,8 @@ private:
 
     size_t item_dim () const { return m_support.item_dim(); }
     const DenseSet & support () const { return m_support; }
-    Ob & value (Ob key);
-    Ob & inverse (Ob val);
+    std::atomic<Ob> & value (Ob key);
+    std::atomic<Ob> & inverse (Ob val);
     Ob value (Ob key) const;
     Ob inverse (Ob val) const;
 };
@@ -63,7 +63,7 @@ inline bool InjectiveFunction::inverse_defined (Ob key) const
     return m_inverse_set.contains(key);
 }
 
-inline Ob & InjectiveFunction::value (Ob key)
+inline std::atomic<Ob> & InjectiveFunction::value (Ob key)
 {
     POMAGMA_ASSERT_RANGE_(5, key, item_dim());
     return m_values[key];
@@ -75,7 +75,7 @@ inline Ob InjectiveFunction::value (Ob key) const
     return m_values[key];
 }
 
-inline Ob & InjectiveFunction::inverse (Ob val)
+inline std::atomic<Ob> & InjectiveFunction::inverse (Ob val)
 {
     POMAGMA_ASSERT_RANGE_(5, val, item_dim());
     return m_inverse[val];

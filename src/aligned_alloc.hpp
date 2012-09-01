@@ -25,6 +25,22 @@ inline void zero_blocks (T * base, size_t count)
     bzero(base, count * sizeof(T));
 }
 
+template<class T, class Init = T>
+inline void construct_blocks (T * base, size_t count, Init init)
+{
+    for (size_t i = 0; i < count; ++i) {
+        new (base + i) T (init);
+    }
+}
+
+template<class T>
+inline void destroy_blocks (T * base, size_t count)
+{
+    for (size_t i = 0; i < count; ++i) {
+        base[i].~T();
+    }
+}
+
 void free_blocks (void * base);
 
 template<class T>
