@@ -9,8 +9,8 @@ template<bool symmetric>
 base_bin_rel_<symmetric>::base_bin_rel_ (const Carrier & carrier)
     : m_carrier(carrier),
       m_support(carrier.support(), yes_copy_construct),
-      m_round_item_dim(dense_set::round_item_dim(item_dim())),
-      m_round_word_dim(dense_set::round_word_dim(item_dim())),
+      m_round_item_dim(DenseSet::round_item_dim(item_dim())),
+      m_round_word_dim(DenseSet::round_word_dim(item_dim())),
       m_data_size_words((1 + m_round_item_dim) * m_round_word_dim),
       m_Lx_lines(pomagma::alloc_blocks<Word>(m_data_size_words)),
       m_Rx_lines(symmetric ? m_Lx_lines
@@ -66,8 +66,8 @@ void base_bin_rel_<symmetric>::validate() const
     if (symmetric) {
 
         // check emptiness outside of support
-        dense_set set(item_dim(), NULL);
-        dense_set round_set(m_round_item_dim, NULL);
+        DenseSet set(item_dim(), NULL);
+        DenseSet round_set(m_round_item_dim, NULL);
         for (oid_t i = 0; i < m_round_item_dim; ++i) {
             if (1 <= i and i <= item_dim() and m_support.contains(i)) {
                 set.init(Lx(i));
@@ -92,8 +92,8 @@ void base_bin_rel_<symmetric>::validate() const
     } else {
 
         // check emptiness outside of support
-        dense_set set(item_dim(), NULL);
-        dense_set round_set(m_round_item_dim, NULL);
+        DenseSet set(item_dim(), NULL);
+        DenseSet round_set(m_round_item_dim, NULL);
         for (oid_t i = 0; i < m_round_item_dim; ++i) {
             if (1 <= i and i <= item_dim() and m_support.contains(i)) {
                 set.init(Lx(i));
@@ -117,8 +117,8 @@ void base_bin_rel_<symmetric>::validate() const
         }
 
         // check for Lx/Rx agreement
-        for (dense_set::iterator i(m_support); i.ok(); i.next()) {
-        for (dense_set::iterator j(m_support); j.ok(); j.next()) {
+        for (DenseSet::Iter i(m_support); i.ok(); i.next()) {
+        for (DenseSet::Iter j(m_support); j.ok(); j.next()) {
             POMAGMA_ASSERT(Lx(*i, *j) == Rx(*i, *j),
                     "Lx, Rx disagree at " << *i << ',' << *j);
         }}

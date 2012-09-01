@@ -18,7 +18,7 @@ namespace pomagma
 
 class Carrier
 {
-    dense_set m_support;
+    DenseSet m_support;
     size_t m_item_count;
     size_t m_rep_count;
     oid_t * const m_reps;
@@ -28,7 +28,7 @@ public:
     Carrier (size_t item_dim = 511);
     void move_from (const Carrier & other, const oid_t * new2old);
 
-    const dense_set & support () const { return m_support; }
+    const DenseSet & support () const { return m_support; }
     size_t item_dim () const { return m_support.item_dim(); }
     size_t item_count () const { return m_item_count; }
     size_t rep_count () const { return m_rep_count; }

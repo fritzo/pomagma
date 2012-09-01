@@ -43,7 +43,7 @@ void SymmetricFunction::move_from (const SymmetricFunction & other)
 
 size_t SymmetricFunction::count_pairs () const
 {
-    dense_set set(item_dim(), NULL);
+    DenseSet set(item_dim(), NULL);
 
     size_t result = 0;
     for (size_t i = 1; i <= item_dim(); ++i) {
@@ -95,7 +95,7 @@ void SymmetricFunction::remove(
 {
     POMAGMA_ASSERT_RANGE_(4, dep, item_dim());
 
-    dense_set set(item_dim(), NULL);
+    DenseSet set(item_dim(), NULL);
 
     for (Iterator iter(this, dep); iter.ok(); iter.next()) {
         oid_t rhs = iter.moving();
@@ -119,9 +119,9 @@ void SymmetricFunction::merge(
     POMAGMA_ASSERT_RANGE_(4, dep, item_dim());
     POMAGMA_ASSERT_RANGE_(4, rep, item_dim());
 
-    dense_set set(item_dim(), NULL);
-    dense_set dep_set(item_dim(), NULL);
-    dense_set rep_set(item_dim(), NULL);
+    DenseSet set(item_dim(), NULL);
+    DenseSet dep_set(item_dim(), NULL);
+    DenseSet rep_set(item_dim(), NULL);
 
     // (dep, dep) -> (dep, rep)
     if (contains(dep, dep)) {

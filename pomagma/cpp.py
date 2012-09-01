@@ -88,22 +88,22 @@ def cpp(self, code):
                 sets.append('%s.get_Lx_set(%s)' % (expr.name, lhs))
     if len(sets) == 0:
         code('''
-            const dense_set & set = carrier.support();
+            const DenseSet & set = carrier.support();
             ''')
     elif len(sets) == 1:
         code('''
-            dense_set set($one_set, yes_copy_construct);
+            DenseSet set($one_set, yes_copy_construct);
             ''',
             one_set = iter(sets).next())
     else:
         code('''
-            dense_set set(carrier.item_dim());
+            DenseSet set(carrier.item_dim());
             set.set_union($sets);
             ''',
             sets = ', '.join(sets),
             )
     code('''
-        for (dense_set::iterator iter(set); iter.ok(); iter.next()) {
+        for (DenseSet::Iter iter(set); iter.ok(); iter.next()) {
             $body
         }
         ''',
@@ -264,7 +264,7 @@ def write_signature(code, functions):
         // signature
 
         Carrier carrier;
-        const dense_set support(carrier.support(), yes_copy_construct);
+        const DenseSet support(carrier.support(), yes_copy_construct);
         inline size_t item_dim () { return support.item_dim(); }
 
         BinaryRelation LESS(carrier);

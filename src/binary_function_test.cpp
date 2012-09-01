@@ -12,7 +12,7 @@ void test_basic (size_t size)
 {
     POMAGMA_INFO("Defining function");
     Carrier carrier(size);
-    const dense_set & support = carrier.support();
+    const DenseSet & support = carrier.support();
     BinaryFunction fun(carrier);
 
     for (oid_t i = 1; i <= size; ++i) {
@@ -20,8 +20,8 @@ void test_basic (size_t size)
             carrier.insert(i);
         }
     }
-    for (dense_set::iterator i(support); i.ok(); i.next()) {
-    for (dense_set::iterator j(support); j.ok(); j.next()) {
+    for (DenseSet::Iter i(support); i.ok(); i.next()) {
+    for (DenseSet::Iter j(support); j.ok(); j.next()) {
         oid_t k = example_fun(*i, *j);
         if (k > 1) {
             fun.insert(*i, *j, k);
@@ -32,8 +32,8 @@ void test_basic (size_t size)
     POMAGMA_INFO("Checking function values");
     std::vector<size_t> Lx_line_size(size + 1, 0);
     std::vector<size_t> Rx_line_size(size + 1, 0);
-    for (dense_set::iterator i(support); i.ok(); i.next()) {
-    for (dense_set::iterator j(support); j.ok(); j.next()) {
+    for (DenseSet::Iter i(support); i.ok(); i.next()) {
+    for (DenseSet::Iter j(support); j.ok(); j.next()) {
         oid_t k = example_fun(*i, *j);
         if (k > 1) {
             POMAGMA_ASSERT(fun.contains(*i, *j),
@@ -51,7 +51,7 @@ void test_basic (size_t size)
     POMAGMA_INFO("Checking line Iterators<LHS_FIXED>");
     {
         BinaryFunction::Iterator<BinaryFunction::LHS_FIXED> iter(&fun);
-        for (dense_set::iterator i(support); i.ok(); i.next()) {
+        for (DenseSet::Iter i(support); i.ok(); i.next()) {
             size_t line_size_i = 0;
             for (iter.begin(*i); iter.ok(); iter.next()) {
                 oid_t j = iter.rhs();
@@ -68,7 +68,7 @@ void test_basic (size_t size)
     POMAGMA_INFO("Checking line Iterators<RHS_FIXED>");
     {
         BinaryFunction::Iterator<BinaryFunction::RHS_FIXED> iter(&fun);
-        for (dense_set::iterator j(support); j.ok(); j.next()) {
+        for (DenseSet::Iter j(support); j.ok(); j.next()) {
             size_t line_size_j = 0;
             for (iter.begin(*j); iter.ok(); iter.next()) {
                 oid_t i = iter.lhs();

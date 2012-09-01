@@ -27,7 +27,7 @@ void test_basic (size_t size)
     POMAGMA_INFO("Defining function");
     Carrier carrier(size);
     g_carrier = & carrier;
-    const dense_set & support = carrier.support();
+    const DenseSet & support = carrier.support();
     InjectiveFunction fun(carrier);
 
     for (oid_t i = 1; i <= size; ++i) {
@@ -35,7 +35,7 @@ void test_basic (size_t size)
             carrier.insert(i);
         }
     }
-    for (dense_set::iterator i(support); i.ok(); i.next()) {
+    for (DenseSet::Iter i(support); i.ok(); i.next()) {
         oid_t val = example_fun(*i);
         if (val and support.contains(val)) {
             fun.insert(*i, val, merge_values);
@@ -44,7 +44,7 @@ void test_basic (size_t size)
     fun.validate();
 
     POMAGMA_INFO("Checking function values");
-    for (dense_set::iterator i(support); i.ok(); i.next()) {
+    for (DenseSet::Iter i(support); i.ok(); i.next()) {
         oid_t val = example_fun(*i);
         if (val and support.contains(val)) {
             POMAGMA_ASSERT(fun.contains(*i), "missing value at " << *i);

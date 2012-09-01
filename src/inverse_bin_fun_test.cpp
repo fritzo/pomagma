@@ -8,7 +8,7 @@ void test_random (size_t size, float fill = 0.3)
 {
     POMAGMA_INFO("Buiding fun,inv of size " << size);
     Carrier carrier(size);
-    const dense_set & support = carrier.support();
+    const DenseSet & support = carrier.support();
     BinaryFunction fun(carrier);
     inverse_bin_fun inv(carrier);
 

@@ -25,7 +25,7 @@ void test_BinaryRelation (
     POMAGMA_INFO("creating BinaryRelation of size " << size);
     Carrier carrier(size);
     BinaryRelation rel(carrier);
-    const dense_set & support = carrier.support();
+    const DenseSet & support = carrier.support();
 
     POMAGMA_INFO("testing position insertion");
     size_t item_count = 0;
@@ -39,8 +39,8 @@ void test_BinaryRelation (
 
     POMAGMA_INFO("testing pair insertion");
     size_t num_pairs = 0;
-    for (dense_set::iterator i(support); i.ok(); i.next()) {
-    for (dense_set::iterator j(support); j.ok(); j.next()) {
+    for (DenseSet::Iter i(support); i.ok(); i.next()) {
+    for (DenseSet::Iter j(support); j.ok(); j.next()) {
         if (test1(*i, *j)) {
             rel.insert(*i, *j);
             ++num_pairs;
@@ -51,8 +51,8 @@ void test_BinaryRelation (
     POMAGMA_ASSERT_EQ(num_pairs, rel.count_pairs());
 
     POMAGMA_INFO("testing pair removal");
-    for (dense_set::iterator i(support); i.ok(); i.next()) {
-    for (dense_set::iterator j(support); j.ok(); j.next()) {
+    for (DenseSet::Iter i(support); i.ok(); i.next()) {
+    for (DenseSet::Iter j(support); j.ok(); j.next()) {
         if (test1(*i, *j) and test2(*i, *j)) {
             rel.remove(*i, *j);
             --num_pairs;
@@ -74,8 +74,8 @@ void test_BinaryRelation (
 
     POMAGMA_INFO("testing pair containment");
     num_pairs = 0;
-    for (dense_set::iterator i(support); i.ok(); i.next()) {
-    for (dense_set::iterator j(support); j.ok(); j.next()) {
+    for (DenseSet::Iter i(support); i.ok(); i.next()) {
+    for (DenseSet::Iter j(support); j.ok(); j.next()) {
         if (test1(*i, *j) and not test2(*i, *j)) {
             POMAGMA_ASSERT(rel.contains_Lx(*i, *j),
                     "Lx relation missing " << *i << ',' << *j);
@@ -126,7 +126,7 @@ void test_BinaryRelation (
     num_pairs = 0;
     size_t seen_item_count = 0;
     item_count = rel.support().count_items();
-    for (dense_set::iterator i(support); i.ok(); i.next()) {
+    for (DenseSet::Iter i(support); i.ok(); i.next()) {
         ++seen_item_count;
         BinaryRelation::Iterator<BinaryRelation::LHS_FIXED> iter(*i, &rel);
         for (iter.begin(); iter.ok(); iter.next()) {

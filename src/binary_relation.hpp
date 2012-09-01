@@ -40,8 +40,8 @@ class BinaryRelation : noncopyable
 public:
 
     // set wrappers
-    dense_set get_Lx_set (oid_t lhs) const { return m_lines.Lx_set(lhs); }
-    dense_set get_Rx_set (oid_t rhs) const { return m_lines.Rx_set(rhs); }
+    DenseSet get_Lx_set (oid_t lhs) const { return m_lines.Lx_set(lhs); }
+    DenseSet get_Rx_set (oid_t rhs) const { return m_lines.Rx_set(rhs); }
 
     // ctors & dtors
     BinaryRelation (const Carrier & carrier);
@@ -49,7 +49,7 @@ public:
     void move_from (const BinaryRelation & other, const oid_t* new2old=NULL);
 
     // attributes
-    const dense_set & support () const { return m_lines.support(); }
+    const DenseSet & support () const { return m_lines.support(); }
     size_t count_pairs () const; // supa-slow, try not to use
     void validate () const;
     void validate_disjoint (const BinaryRelation & other) const;
@@ -75,8 +75,8 @@ private:
     void insert_Rx (oid_t i, oid_t j) { m_lines.Rx(i, j).one(); }
     void remove_Lx (oid_t i, oid_t j) { m_lines.Lx(i, j).zero(); }
     void remove_Rx (oid_t i, oid_t j) { m_lines.Rx(i, j).zero(); }
-    void remove_Lx (const dense_set & is, oid_t i);
-    void remove_Rx (oid_t i, const dense_set & js);
+    void remove_Lx (const DenseSet & is, oid_t i);
+    void remove_Rx (oid_t i, const DenseSet & js);
 public:
     // two-sided versions
     void insert (oid_t i, oid_t j) { insert_Lx(i, j); insert_Rx(i, j); }
@@ -87,10 +87,10 @@ public:
     bool ensure_inserted (oid_t i, oid_t j) { return ensure_inserted_Lx(i, j); }
     void ensure_inserted (
             oid_t i,
-            const dense_set & js,
+            const DenseSet & js,
             void (*change)(oid_t, oid_t));
     void ensure_inserted (
-            const dense_set & is,
+            const DenseSet & is,
             oid_t j,
             void (*change)(oid_t, oid_t));
 
@@ -142,9 +142,9 @@ inline bool BinaryRelation::ensure_inserted_Rx (oid_t i, oid_t j)
 
 class BinaryRelation::iterator : noncopyable
 {
-    dense_set::iterator m_lhs;
-    dense_set::iterator m_rhs;
-    dense_set m_rhs_set;
+    DenseSet::Iter m_lhs;
+    DenseSet::Iter m_rhs;
+    DenseSet m_rhs_set;
     const BinaryRelation & m_rel;
     Pos m_pos;
 
@@ -203,8 +203,8 @@ template<bool dir>
 class BinaryRelation::Iterator : noncopyable
 {
 protected:
-    dense_set m_moving_set;
-    dense_set::iterator m_moving;
+    DenseSet m_moving_set;
+    DenseSet::Iter m_moving;
     oid_t m_fixed;
     Pos m_pos;
     const BinaryRelation & m_rel;

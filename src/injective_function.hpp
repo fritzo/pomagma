@@ -13,17 +13,17 @@ namespace pomagma
 class InjectiveFunction : noncopyable
 {
     const Carrier & m_carrier;
-    const dense_set m_support;
-    dense_set m_set;
-    dense_set m_inverse_set;
+    const DenseSet m_support;
+    DenseSet m_set;
+    DenseSet m_inverse_set;
     oid_t * const m_values;
     oid_t * const m_inverse;
 
 public:
 
     // set wrappers
-    const dense_set & get_set () const { return m_set; }
-    const dense_set & get_inverse_set () const { return m_inverse_set; }
+    const DenseSet & get_set () const { return m_set; }
+    const DenseSet & get_inverse_set () const { return m_inverse_set; }
 
     // ctors & dtors
     InjectiveFunction (const Carrier & carrier);
@@ -46,7 +46,7 @@ public:
     // attributes
     size_t item_dim () const { return m_set.item_dim(); }
 private:
-    const dense_set & support () const { return m_support; }
+    const DenseSet & support () const { return m_support; }
 public:
     size_t count_items () const { return m_set.count_items(); } // slow!
     void validate () const;

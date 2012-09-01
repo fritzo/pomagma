@@ -34,7 +34,7 @@ class SymmetricFunction : noncopyable
 public:
 
     // set wrappers
-    dense_set get_Lx_set (oid_t lhs) const { return m_lines.Lx_set(lhs); }
+    DenseSet get_Lx_set (oid_t lhs) const { return m_lines.Lx_set(lhs); }
 
     // ctors & dtors
     SymmetricFunction (const Carrier & carrier);
@@ -52,7 +52,7 @@ public:
     // attributes
     size_t item_dim () const { return m_lines.item_dim(); }
 private:
-    const dense_set & support () const { return m_lines.support(); }
+    const DenseSet & support () const { return m_lines.support(); }
 public:
     size_t count_pairs () const; // slow!
     void validate () const;
@@ -151,8 +151,8 @@ inline void SymmetricFunction::remove (oid_t lhs, oid_t rhs)
 
 class SymmetricFunction::Iterator : noncopyable
 {
-    dense_set m_set;
-    dense_set::iterator m_iter;
+    DenseSet m_set;
+    DenseSet::Iter m_iter;
     const SymmetricFunction * m_fun;
     oid_t m_fixed;
     oid_t m_moving;
@@ -195,7 +195,7 @@ public:
 private:
     void _deref_assert () const
     {
-        POMAGMA_ASSERT5(ok(), "dereferenced done dense_set::iter");
+        POMAGMA_ASSERT5(ok(), "dereferenced done DenseSet::iter");
     }
 public:
     oid_t fixed () const { _deref_assert(); return m_fixed; }
@@ -212,8 +212,8 @@ public:
 
 class SymmetricFunction::LLxx_Iter : noncopyable
 {
-    dense_set m_set;
-    dense_set::iterator m_iter;
+    DenseSet m_set;
+    DenseSet::Iter m_iter;
     const SymmetricFunction * m_fun;
     oid_t m_fixed1;
     oid_t m_fixed2;
@@ -233,8 +233,8 @@ public:
     void begin () { m_iter.begin(); if (ok()) m_moving = *m_iter; }
     void begin (oid_t fixed1, oid_t fixed2)
     {
-        dense_set set1 = m_fun->get_Lx_set(fixed1);
-        dense_set set2 = m_fun->get_Lx_set(fixed2);
+        DenseSet set1 = m_fun->get_Lx_set(fixed1);
+        DenseSet set2 = m_fun->get_Lx_set(fixed2);
         m_set.set_insn(set1, set2);
         m_iter.begin();
         if (ok()) {

@@ -49,7 +49,7 @@ inline void unsafe_erase (VXx_Data & VXx_data, oid_t V, oid_t X, oid_t x)
 
 class inverse_bin_fun : noncopyable
 {
-    const dense_set m_support;
+    const DenseSet m_support;
 
     Vlr_Data m_Vlr_data;
     VXx_Data m_VLr_data;
@@ -65,7 +65,7 @@ public:
     {
     }
 
-    const dense_set & support () const { return m_support; }
+    const DenseSet & support () const { return m_support; }
     size_t item_dim () const { return support().item_dim(); }
 
     void insert (oid_t lhs, oid_t rhs, oid_t val);

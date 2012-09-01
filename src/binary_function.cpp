@@ -41,7 +41,7 @@ void BinaryFunction::move_from (const BinaryFunction & other)
 
 size_t BinaryFunction::count_pairs () const
 {
-    dense_set Lx_set(item_dim(), NULL);
+    DenseSet Lx_set(item_dim(), NULL);
     size_t result = 0;
     for (size_t i = 1; i <= item_dim(); ++i) {
         Lx_set.init(m_lines.Lx(i));
@@ -92,7 +92,7 @@ void BinaryFunction::remove(
 {
     POMAGMA_ASSERT_RANGE_(4, dep, item_dim());
 
-    dense_set set(item_dim(), NULL);
+    DenseSet set(item_dim(), NULL);
 
     // (lhs, dep)
     for (Iterator<RHS_FIXED> iter(this, dep); iter.ok(); iter.next()) {
@@ -129,9 +129,9 @@ void BinaryFunction::merge(
     POMAGMA_ASSERT_RANGE_(4, dep, item_dim());
     POMAGMA_ASSERT_RANGE_(4, rep, item_dim());
 
-    dense_set set(item_dim(), NULL);
-    dense_set dep_set(item_dim(), NULL);
-    dense_set rep_set(item_dim(), NULL);
+    DenseSet set(item_dim(), NULL);
+    DenseSet dep_set(item_dim(), NULL);
+    DenseSet rep_set(item_dim(), NULL);
 
     // Note: the spacial case
     //   (dep, dep) --> (dep, rep) --> (rep, rep)

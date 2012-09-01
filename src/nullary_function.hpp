@@ -13,7 +13,7 @@ namespace pomagma
 class NullaryFunction : noncopyable
 {
     const Carrier & m_carrier;
-    const dense_set m_support; // aliased
+    const DenseSet m_support; // aliased
     oid_t m_value;
 
 public:
@@ -31,7 +31,7 @@ public:
 
     // attributes
 private:
-    const dense_set & support () const { return m_support; }
+    const DenseSet & support () const { return m_support; }
 public:
     void validate () const;
 

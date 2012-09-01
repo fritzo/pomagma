@@ -12,7 +12,7 @@ namespace pomagma
 //----------------------------------------------------------------------------
 // Dense set - basically a bitfield
 
-class dense_set
+class DenseSet
 {
     // data
     const size_t m_item_dim;
@@ -41,8 +41,8 @@ public:
     }
 
     // ctors & dtors
-    dense_set (size_t item_dim);
-    dense_set (size_t item_dim, Word * line)
+    DenseSet (size_t item_dim);
+    DenseSet (size_t item_dim, Word * line)
         : m_item_dim(item_dim),
           m_word_dim(word_count(item_dim)),
           m_words(line),
@@ -52,15 +52,15 @@ public:
     }
 
     // return-by-value is allowed, but general copy is not
-    dense_set (const dense_set & other)
+    DenseSet (const DenseSet & other)
         : m_item_dim(other.m_item_dim),
           m_word_dim(other.m_word_dim),
           m_words(other.m_words),
           m_alias(other.m_alias)
     {
-        POMAGMA_ASSERT(m_alias, "copy-constructed a non-alias dense_set");
+        POMAGMA_ASSERT(m_alias, "copy-constructed a non-alias DenseSet");
     }
-    dense_set (const dense_set & other, verify_copy_construction)
+    DenseSet (const DenseSet & other, verify_copy_construction)
         : m_item_dim(other.m_item_dim),
           m_word_dim(other.m_word_dim),
           m_words(other.m_words),
@@ -68,17 +68,17 @@ public:
     {
     }
 private:
-    void operator= (const dense_set & other); // intentionally undefined
+    void operator= (const DenseSet & other); // intentionally undefined
 public:
-    //dense_set (size_t item_dim, AlignedBuffer<Word> & buffer)
+    //DenseSet (size_t item_dim, AlignedBuffer<Word> & buffer)
     //    : m_item_dim(item_dim),
     //      m_word_dim(word_count(item_dim)),
     //      m_words(buffer(m_word_dim)),
     //      m_alias(true)
     //{
     //}
-    ~dense_set ();
-    void move_from (const dense_set & other, const oid_t * new2old = NULL);
+    ~DenseSet ();
+    void move_from (const DenseSet & other, const oid_t * new2old = NULL);
     void init (Word * line)
     {
         POMAGMA_ASSERT4(m_alias, "tried to init() non-alias dense set");
@@ -107,47 +107,46 @@ public:
     void insert_all ();
     oid_t insert_one ();
 
-    // entire operations
+    // entire operations (note that all are monotonic)
     void zero ();
-    bool operator == (const dense_set & other) const;
-    bool operator <= (const dense_set & other) const;
-    bool disjoint    (const dense_set & other) const;
-    void operator += (const dense_set & other);
-    void operator *= (const dense_set & other);
-    void set_union   (const dense_set & lhs, const dense_set & rhs);
-    void set_insn    (const dense_set & lhs, const dense_set & rhs);
-    void set_diff    (const dense_set & lhs, const dense_set & rhs);
-    void merge       (dense_set & dep);
-    bool merge       (dense_set & dep, dense_set & diff);
-    bool ensure      (const dense_set & dep, dense_set & diff);
+    bool operator == (const DenseSet & other) const;
+    bool operator <= (const DenseSet & other) const;
+    bool disjoint    (const DenseSet & other) const;
+    void operator += (const DenseSet & other);
+    void operator *= (const DenseSet & other);
+    void set_union   (const DenseSet & lhs, const DenseSet & rhs);
+    void set_insn    (const DenseSet & lhs, const DenseSet & rhs);
+    void merge       (DenseSet & dep);
+    bool merge       (DenseSet & dep, DenseSet & diff);
+    bool ensure      (const DenseSet & dep, DenseSet & diff);
     // returns true if anything in rep changes
 
     // iteration
-    class iterator;
+    class Iter;
 };
 
-inline bool_ref dense_set::_bit (size_t i)
+inline bool_ref DenseSet::_bit (size_t i)
 {
     POMAGMA_ASSERT_RANGE_(5, i, m_item_dim);
     return bool_ref::index(m_words, i);
 }
-inline bool dense_set::_bit (size_t i) const
+inline bool DenseSet::_bit (size_t i) const
 {
     POMAGMA_ASSERT_RANGE_(5, i, m_item_dim);
     return bool_ref::index(m_words, i);
 }
 
-inline void dense_set::insert (size_t i)
+inline void DenseSet::insert (size_t i)
 {
     POMAGMA_ASSERT4(not contains(i), "double insertion: " << i);
     _bit(i).one();
 }
-inline void dense_set::remove (size_t i)
+inline void DenseSet::remove (size_t i)
 {
     POMAGMA_ASSERT4(contains(i), "double removal: " << i);
     _bit(i).zero();
 }
-inline void dense_set::merge (size_t i, size_t j __attribute__((unused)))
+inline void DenseSet::merge (size_t i, size_t j __attribute__((unused)))
 {
     POMAGMA_ASSERT5(0 < i and i <= m_item_dim, "rep out of range: " << i);
     POMAGMA_ASSERT5(0 < j and j <= m_item_dim, "dep out of range: " << j);
@@ -161,18 +160,18 @@ inline void dense_set::merge (size_t i, size_t j __attribute__((unused)))
 //----------------------------------------------------------------------------
 // Iteration
 
-class dense_set::iterator : noncopyable
+class DenseSet::Iter : noncopyable
 {
     size_t m_i;
     size_t m_rem;
     size_t m_quot;
     Word m_mask;
-    const dense_set & m_set;
+    const DenseSet & m_set;
 
 public:
 
     // construction
-    iterator (const dense_set & set, bool b = true)
+    Iter (const DenseSet & set, bool b = true)
         : m_set(set)
     {
         if (b) { begin(); }
@@ -191,7 +190,7 @@ public:
     const size_t * operator -> () const { POMAGMA_ASSERT_OK return & m_i; }
 };
 
-inline void dense_set::iterator::begin ()
+inline void DenseSet::Iter::begin ()
 {
     POMAGMA_ASSERT4(m_set.m_words, "begin with null set");
     m_quot = 0;

@@ -30,8 +30,8 @@ class BinaryFunction : noncopyable
 public:
 
     // set wrappers
-    dense_set get_Lx_set (oid_t lhs) const { return m_lines.Lx_set(lhs); }
-    dense_set get_Rx_set (oid_t rhs) const { return m_lines.Rx_set(rhs); }
+    DenseSet get_Lx_set (oid_t lhs) const { return m_lines.Lx_set(lhs); }
+    DenseSet get_Rx_set (oid_t rhs) const { return m_lines.Rx_set(rhs); }
 
     // ctors & dtors
     BinaryFunction (const Carrier & carrier);
@@ -49,7 +49,7 @@ public:
     // attributes
     size_t item_dim () const { return m_lines.item_dim(); }
 private:
-    const dense_set & support () const { return m_lines.support(); }
+    const DenseSet & support () const { return m_lines.support(); }
 public:
     size_t count_pairs () const; // slow!
     void validate () const;
@@ -146,8 +146,8 @@ class BinaryFunction::lr_iterator : noncopyable
 {
     const BinaryFunction & m_fun;
     oid_t m_lhs;
-    dense_set m_rhs_set;
-    dense_set::iterator m_rhs_iter;
+    DenseSet m_rhs_set;
+    DenseSet::Iter m_rhs_iter;
 
 public:
 
@@ -207,8 +207,8 @@ public:
 template<bool idx>
 class BinaryFunction::Iterator : noncopyable
 {
-    dense_set m_set;
-    dense_set::iterator m_iter;
+    DenseSet m_set;
+    DenseSet::Iter m_iter;
     const BinaryFunction & m_fun;
     oid_t m_lhs;
     oid_t m_rhs;
@@ -265,8 +265,8 @@ public:
 
 class BinaryFunction::RRxx_Iter : noncopyable
 {
-    dense_set m_set;
-    dense_set::iterator m_iter;
+    DenseSet m_set;
+    DenseSet::Iter m_iter;
     const BinaryFunction & m_fun;
     oid_t m_lhs;
     oid_t m_rhs1;
@@ -286,8 +286,8 @@ public:
     void begin () { m_iter.begin(); if (ok()) m_lhs = *m_iter; }
     void begin (oid_t fixed1, oid_t fixed2)
     {
-        dense_set set1 = m_fun.get_Rx_set(fixed1);
-        dense_set set2 = m_fun.get_Rx_set(fixed2);
+        DenseSet set1 = m_fun.get_Rx_set(fixed1);
+        DenseSet set2 = m_fun.get_Rx_set(fixed2);
         m_set.set_insn(set1, set2);
         m_iter.begin();
         if (ok()) {
@@ -315,8 +315,8 @@ public:
 
 class BinaryFunction::LRxx_Iter : noncopyable
 {
-    dense_set m_set;
-    dense_set::iterator m_iter;
+    DenseSet m_set;
+    DenseSet::Iter m_iter;
     const BinaryFunction & m_fun;
     oid_t m_lhs1;
     oid_t m_rhs2;
@@ -336,8 +336,8 @@ public:
     void begin () { m_iter.begin(); if (ok()) m_rhs1 = *m_iter; }
     void begin (oid_t fixed1, oid_t fixed2)
     {
-        dense_set set1 = m_fun.get_Lx_set(fixed1);
-        dense_set set2 = m_fun.get_Rx_set(fixed2);
+        DenseSet set1 = m_fun.get_Lx_set(fixed1);
+        DenseSet set2 = m_fun.get_Rx_set(fixed2);
         m_set.set_insn(set1, set2);
         m_iter.begin();
         if (ok()) {
@@ -366,8 +366,8 @@ public:
 
 class BinaryFunction::LLxx_Iter : noncopyable
 {
-    dense_set           m_set;
-    dense_set::iterator m_iter;
+    DenseSet           m_set;
+    DenseSet::Iter m_iter;
     const BinaryFunction & m_fun;
     oid_t m_lhs1;
     oid_t m_lhs2;
@@ -387,8 +387,8 @@ public:
     void begin () { m_iter.begin(); if (ok()) m_rhs = *m_iter; }
     void begin (oid_t fixed1, oid_t fixed2)
     {
-        dense_set set1 = m_fun.get_Lx_set(fixed1);
-        dense_set set2 = m_fun.get_Lx_set(fixed2);
+        DenseSet set1 = m_fun.get_Lx_set(fixed1);
+        DenseSet set2 = m_fun.get_Lx_set(fixed2);
         m_set.set_insn(set1, set2);
         m_iter.begin();
         if (ok()) {

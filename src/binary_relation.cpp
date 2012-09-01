@@ -56,7 +56,7 @@ void BinaryRelation::move_from (
 size_t BinaryRelation::count_pairs () const
 {
     size_t result = 0;
-    for (dense_set::iterator i(support()); i.ok(); i.next()) {
+    for (DenseSet::Iter i(support()); i.ok(); i.next()) {
         result += get_Lx_set(*i).count_items();
     }
     return result;
@@ -70,8 +70,8 @@ void BinaryRelation::validate () const
 
     size_t num_pairs = 0;
 
-    dense_set Lx(round_item_dim(), NULL);
-    dense_set Rx(round_item_dim(), NULL);
+    DenseSet Lx(round_item_dim(), NULL);
+    DenseSet Rx(round_item_dim(), NULL);
     for (oid_t i = 1; i <= item_dim(); ++i) {
         bool sup_i = supports(i);
         Lx.init(m_lines.Lx(i));
@@ -115,9 +115,9 @@ void BinaryRelation::validate_disjoint (const BinaryRelation & other) const
             "BinaryRelation supports differ");
 
     // validate disjointness
-    dense_set this_set(item_dim(), NULL);
-    dense_set other_set(item_dim(), NULL);
-    for (dense_set::iterator i(support()); i.ok(); i.next()) {
+    DenseSet this_set(item_dim(), NULL);
+    DenseSet other_set(item_dim(), NULL);
+    for (DenseSet::Iter i(support()); i.ok(); i.next()) {
         this_set.init(m_lines.Lx(*i));
         other_set.init(other.m_lines.Lx(*i));
         POMAGMA_ASSERT(this_set.disjoint(other_set),
@@ -140,10 +140,10 @@ void BinaryRelation::print_table (size_t n) const
 //----------------------------------------------------------------------------
 // Operations
 
-void BinaryRelation::remove_Lx (const dense_set & is, oid_t j)
+void BinaryRelation::remove_Lx (const DenseSet & is, oid_t j)
 {
     // slower version
-    //for (dense_set::iterator i(is); i.ok(); i.next()) {
+    //for (DenseSet::Iter i(is); i.ok(); i.next()) {
     //    remove_Lx(*i, j);
     //}
 
@@ -151,15 +151,15 @@ void BinaryRelation::remove_Lx (const dense_set & is, oid_t j)
     Word mask = ~(1u << (j % BITS_PER_WORD));
     size_t offset = j / BITS_PER_WORD;
     Word * lines = m_lines.Lx() + offset;
-    for (dense_set::iterator i(is); i.ok(); i.next()) {
+    for (DenseSet::Iter i(is); i.ok(); i.next()) {
          lines[*i * round_word_dim()] &= mask; // ATOMIC
     }
 }
 
-void BinaryRelation::remove_Rx (oid_t i, const dense_set& js)
+void BinaryRelation::remove_Rx (oid_t i, const DenseSet& js)
 {
     // slower version
-    //for (dense_set::iterator j(js); j.ok(); j.next()) {
+    //for (DenseSet::Iter j(js); j.ok(); j.next()) {
     //    remove_Rx(i, *j);
     //}
 
@@ -167,14 +167,14 @@ void BinaryRelation::remove_Rx (oid_t i, const dense_set& js)
     Word mask = ~(1u << (i % BITS_PER_WORD));
     size_t offset = i / BITS_PER_WORD;
     Word * lines = m_lines.Rx() + offset;
-    for (dense_set::iterator j(js); j.ok(); j.next()) {
+    for (DenseSet::Iter j(js); j.ok(); j.next()) {
          lines[*j * round_word_dim()] &= mask; // ATOMIC
     }
 }
 
 void BinaryRelation::remove (oid_t i)
 {
-    dense_set set(item_dim(), NULL);
+    DenseSet set(item_dim(), NULL);
 
     // remove column
     set.init(m_lines.Lx(i));
@@ -189,13 +189,13 @@ void BinaryRelation::remove (oid_t i)
 
 void BinaryRelation::ensure_inserted (
         oid_t i,
-        const dense_set & js,
+        const DenseSet & js,
         void (*change)(oid_t, oid_t))
 {
-    dense_set diff(item_dim());
-    dense_set dest(item_dim(), m_lines.Lx(i));
+    DenseSet diff(item_dim());
+    DenseSet dest(item_dim(), m_lines.Lx(i));
     if (dest.ensure(js, diff)) {
-        for (dense_set::iterator k(diff); k.ok(); k.next()) {
+        for (DenseSet::Iter k(diff); k.ok(); k.next()) {
             insert_Rx(i, *k);
             change(i, *k);
         }
@@ -203,14 +203,14 @@ void BinaryRelation::ensure_inserted (
 }
 
 void BinaryRelation::ensure_inserted (
-        const dense_set & is,
+        const DenseSet & is,
         oid_t j,
         void (*change)(oid_t, oid_t))
 {
-    dense_set diff(item_dim());
-    dense_set dest(item_dim(), m_lines.Rx(j));
+    DenseSet diff(item_dim());
+    DenseSet dest(item_dim(), m_lines.Rx(j));
     if (dest.ensure(is, diff)) {
-        for (dense_set::iterator k(diff); k.ok(); k.next()) {
+        for (DenseSet::Iter k(diff); k.ok(); k.next()) {
             insert_Lx(*k, j);
             change(*k, j);
         }
@@ -225,16 +225,16 @@ void BinaryRelation::merge (
 {
     POMAGMA_ASSERT4(j != i, "BinaryRelation tried to merge item with self");
 
-    dense_set diff(item_dim());
-    dense_set rep(item_dim(), NULL);
-    dense_set dep(item_dim(), NULL);
+    DenseSet diff(item_dim());
+    DenseSet rep(item_dim(), NULL);
+    DenseSet dep(item_dim(), NULL);
 
     // merge rows (i, _) into (j, _)
     dep.init(m_lines.Lx(i));
     remove_Rx(i, dep);
     rep.init(m_lines.Lx(j));
     if (rep.merge(dep, diff)) {
-        for (dense_set::iterator k(diff); k.ok(); k.next()) {
+        for (DenseSet::Iter k(diff); k.ok(); k.next()) {
             insert_Rx(j, *k);
             move_to(j, *k);
         }
@@ -245,7 +245,7 @@ void BinaryRelation::merge (
     remove_Lx(dep, i);
     rep.init(m_lines.Rx(j));
     if (rep.merge(dep, diff)) {
-        for (dense_set::iterator k(diff); k.ok(); k.next()) {
+        for (DenseSet::Iter k(diff); k.ok(); k.next()) {
             insert_Lx(*k, j);
             move_to(*k, j);
         }
