@@ -96,7 +96,7 @@ void BinaryFunction::remove(
 
     // (lhs, dep)
     DenseSet rhs_fixed = get_Rx_set(dep);
-    for (DenseSet::Iter iter(rhs_fixed); iter.ok(); iter.next()) {
+    for (DenseSet::Iterator iter(rhs_fixed); iter.ok(); iter.next()) {
         Ob lhs = *iter;
         Ob & dep_val = value(lhs, dep);
         remove_value(dep_val);
@@ -109,7 +109,7 @@ void BinaryFunction::remove(
 
     // (dep, rhs)
     DenseSet lhs_fixed = get_Lx_set(dep);
-    for (DenseSet::Iter iter(lhs_fixed); iter.ok(); iter.next()) {
+    for (DenseSet::Iterator iter(lhs_fixed); iter.ok(); iter.next()) {
         Ob rhs = *iter;
         Ob & dep_val = value(dep, rhs);
         remove_value(dep_val);
@@ -141,7 +141,7 @@ void BinaryFunction::merge(
 
     // (lhs, dep) --> (lhs, rep)
     DenseSet rhs_fixed = get_Rx_set(dep);
-    for (DenseSet::Iter iter(rhs_fixed); iter.ok(); iter.next()) {
+    for (DenseSet::Iterator iter(rhs_fixed); iter.ok(); iter.next()) {
         Ob lhs = *iter;
         Ob & dep_val = value(lhs,dep);
         Ob & rep_val = value(lhs,rep);
@@ -162,7 +162,7 @@ void BinaryFunction::merge(
 
     // (dep, rhs) --> (rep, rhs)
     DenseSet lhs_fixed = get_Lx_set(dep);
-    for (DenseSet::Iter iter(lhs_fixed); iter.ok(); iter.next()) {
+    for (DenseSet::Iterator iter(lhs_fixed); iter.ok(); iter.next()) {
         Ob rhs = *iter;
         Ob & dep_val = value(dep, rhs);
         Ob & rep_val = value(rep, rhs);

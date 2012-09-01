@@ -142,8 +142,8 @@ inline bool BinaryRelation::ensure_inserted_Rx (Ob i, Ob j)
 
 class BinaryRelation::iterator : noncopyable
 {
-    DenseSet::Iter m_lhs;
-    DenseSet::Iter m_rhs;
+    DenseSet::Iterator m_lhs;
+    DenseSet::Iterator m_rhs;
     DenseSet m_rhs_set;
     const BinaryRelation & m_rel;
     Pos m_pos;
@@ -204,7 +204,7 @@ class BinaryRelation::Iterator : noncopyable
 {
 protected:
     DenseSet m_moving_set;
-    DenseSet::Iter m_moving;
+    DenseSet::Iterator m_moving;
     Ob m_fixed;
     Pos m_pos;
     const BinaryRelation & m_rel;

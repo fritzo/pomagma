@@ -122,7 +122,7 @@ public:
     // returns true if anything in rep changes
 
     // iteration
-    class Iter;
+    class Iterator;
 };
 
 inline bool_ref DenseSet::_bit (size_t i)
@@ -160,7 +160,7 @@ inline void DenseSet::merge (size_t i, size_t j __attribute__((unused)))
 //----------------------------------------------------------------------------
 // Iteration
 
-class DenseSet::Iter : noncopyable
+class DenseSet::Iterator : noncopyable
 {
     size_t m_i;
     size_t m_rem;
@@ -171,7 +171,7 @@ class DenseSet::Iter : noncopyable
 public:
 
     // construction
-    Iter (const DenseSet & set, bool b = true)
+    Iterator (const DenseSet & set, bool b = true)
         : m_set(set)
     {
         if (b) { begin(); }
@@ -190,7 +190,7 @@ public:
     const size_t * operator -> () const { POMAGMA_ASSERT_OK return & m_i; }
 };
 
-inline void DenseSet::Iter::begin ()
+inline void DenseSet::Iterator::begin ()
 {
     POMAGMA_ASSERT4(m_set.m_words, "begin with null set");
     m_quot = 0;

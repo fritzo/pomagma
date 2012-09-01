@@ -152,7 +152,7 @@ inline void SymmetricFunction::remove (Ob lhs, Ob rhs)
 class SymmetricFunction::Iterator : noncopyable
 {
     DenseSet m_set;
-    DenseSet::Iter m_iter;
+    DenseSet::Iterator m_iter;
     const SymmetricFunction * m_fun;
     Ob m_fixed;
     Ob m_moving;
@@ -213,7 +213,7 @@ public:
 class SymmetricFunction::LLxx_Iter : noncopyable
 {
     DenseSet m_set;
-    DenseSet::Iter m_iter;
+    DenseSet::Iterator m_iter;
     const SymmetricFunction * m_fun;
     Ob m_fixed1;
     Ob m_fixed2;

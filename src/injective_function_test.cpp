@@ -35,7 +35,7 @@ void test_basic (size_t size)
             carrier.insert(i);
         }
     }
-    for (DenseSet::Iter i(support); i.ok(); i.next()) {
+    for (DenseSet::Iterator i(support); i.ok(); i.next()) {
         Ob val = example_fun(*i);
         if (val and support.contains(val)) {
             fun.insert(*i, val, merge_values);
@@ -44,7 +44,7 @@ void test_basic (size_t size)
     fun.validate();
 
     POMAGMA_INFO("Checking function values");
-    for (DenseSet::Iter i(support); i.ok(); i.next()) {
+    for (DenseSet::Iterator i(support); i.ok(); i.next()) {
         Ob val = example_fun(*i);
         if (val and support.contains(val)) {
             POMAGMA_ASSERT(fun.contains(*i), "missing value at " << *i);

@@ -11,13 +11,13 @@ void inverse_bin_fun::validate (BinaryFunction & fun)
 {
     POMAGMA_INFO("Validating inverse_bin_fun");
 
-    for (DenseSet::Iter lhs_iter(fun.support());
+    for (DenseSet::Iterator lhs_iter(fun.support());
         lhs_iter.ok();
         lhs_iter.next())
     {
         Ob lhs = *lhs_iter;
         DenseSet rhs_set = fun.get_Lx_set(lhs);
-        for (DenseSet::Iter rhs_iter(rhs_set);
+        for (DenseSet::Iterator rhs_iter(rhs_set);
             rhs_iter.ok();
             rhs_iter.next())
         {

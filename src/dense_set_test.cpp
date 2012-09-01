@@ -42,7 +42,7 @@ void test_basic (size_t size)
     }
     POMAGMA_ASSERT_EQ(set.count_items(), size / 2);
     unsigned item_count = 0;
-    for (DenseSet::Iter iter(set); iter.ok(); iter.next()) {
+    for (DenseSet::Iterator iter(set); iter.ok(); iter.next()) {
         POMAGMA_ASSERT(set.contains(*iter), "iterated over uncontained item");
         ++item_count;
     }
@@ -96,7 +96,7 @@ void test_even (size_t size)
 
 void test_iterator (size_t size)
 {
-    POMAGMA_INFO("Testing DenseSet::Iter");
+    POMAGMA_INFO("Testing DenseSet::Iterator");
     DenseSet set(size);
     std::vector<bool> vect(size, false);
     size_t true_count = 0;
@@ -114,7 +114,7 @@ void test_iterator (size_t size)
     }
 
     size_t count = 0;
-    for (DenseSet::Iter i(set); i.ok(); i.next()) {
+    for (DenseSet::Iterator i(set); i.ok(); i.next()) {
         POMAGMA_ASSERT(vect[*i - 1], "unexpected item " << *i);
         ++count;
     }

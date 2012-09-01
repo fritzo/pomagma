@@ -280,7 +280,7 @@ bool DenseSet::ensure (const DenseSet & src, DenseSet & diff)
 //----------------------------------------------------------------------------
 // Iteration
 
-void DenseSet::Iter::_next_block ()
+void DenseSet::Iterator::_next_block ()
 {
     // traverse to next nonempty block
     const Word * lines = m_set.m_words;
@@ -297,7 +297,7 @@ void DenseSet::Iter::_next_block ()
 }
 
 // PROFILE this is one of the slowest methods
-void DenseSet::Iter::next ()
+void DenseSet::Iterator::next ()
 {
     POMAGMA_ASSERT_OK
     Word word = m_set.m_words[m_quot];

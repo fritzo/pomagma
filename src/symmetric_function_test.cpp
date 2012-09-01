@@ -17,8 +17,8 @@ void test_basic (Ob size)
             carrier.insert(i);
         }
     }
-    for (DenseSet::Iter i(support); i.ok(); i.next()) {
-    for (DenseSet::Iter j(support); j.ok() and *j <= *i; j.next()) {
+    for (DenseSet::Iterator i(support); i.ok(); i.next()) {
+    for (DenseSet::Iterator j(support); j.ok() and *j <= *i; j.next()) {
         Ob k = gcd(*i, *j);
         if (k > 1) {
             fun.insert(*i, *j, k);
@@ -28,8 +28,8 @@ void test_basic (Ob size)
 
     POMAGMA_INFO("Checking function values");
     std::vector<size_t> line_size(1 + size, 0);
-    for (DenseSet::Iter i(support); i.ok(); i.next()) {
-    for (DenseSet::Iter j(support); j.ok(); j.next()) {
+    for (DenseSet::Iterator i(support); i.ok(); i.next()) {
+    for (DenseSet::Iterator j(support); j.ok(); j.next()) {
         Ob k = gcd(*i, *j);
         if (k > 1) {
             POMAGMA_ASSERT(fun.contains(*i, *j),
@@ -45,7 +45,7 @@ void test_basic (Ob size)
 
     POMAGMA_INFO("Checking line iterators");
     SymmetricFunction::Iterator iter(&fun);
-    for (DenseSet::Iter i(support); i.ok(); i.next()) {
+    for (DenseSet::Iterator i(support); i.ok(); i.next()) {
         size_t line_size_i = 0;
         for (iter.begin(*i); iter.ok(); iter.next()) {
             Ob j = iter.moving();

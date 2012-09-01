@@ -20,8 +20,8 @@ void test_basic (size_t size)
             carrier.insert(i);
         }
     }
-    for (DenseSet::Iter i(support); i.ok(); i.next()) {
-    for (DenseSet::Iter j(support); j.ok(); j.next()) {
+    for (DenseSet::Iterator i(support); i.ok(); i.next()) {
+    for (DenseSet::Iterator j(support); j.ok(); j.next()) {
         Ob k = example_fun(*i, *j);
         if (k > 1) {
             fun.insert(*i, *j, k);
@@ -32,8 +32,8 @@ void test_basic (size_t size)
     POMAGMA_INFO("Checking function values");
     std::vector<size_t> Lx_line_size(size + 1, 0);
     std::vector<size_t> Rx_line_size(size + 1, 0);
-    for (DenseSet::Iter i(support); i.ok(); i.next()) {
-    for (DenseSet::Iter j(support); j.ok(); j.next()) {
+    for (DenseSet::Iterator i(support); i.ok(); i.next()) {
+    for (DenseSet::Iterator j(support); j.ok(); j.next()) {
         Ob k = example_fun(*i, *j);
         if (k > 1) {
             POMAGMA_ASSERT(fun.contains(*i, *j),
