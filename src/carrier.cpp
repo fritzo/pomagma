@@ -29,7 +29,7 @@ void Carrier::move_from (
         const Carrier & other,
         const Ob * new2old __attribute__((unused)))
 {
-    Mutex::Lock lock(m_mutex);
+    UniqueLock lock(m_mutex);
 
     m_item_count = other.m_item_count;
     m_rep_count = other.m_rep_count;
@@ -38,7 +38,7 @@ void Carrier::move_from (
 
 Ob Carrier::insert ()
 {
-    Mutex::Lock lock(m_mutex);
+    UniqueLock lock(m_mutex);
 
     POMAGMA_ASSERT1(item_count() < item_dim(),
             "tried to insert in full Carrier");
@@ -52,7 +52,7 @@ Ob Carrier::insert ()
 
 void Carrier::insert (Ob ob)
 {
-    Mutex::Lock lock(m_mutex);
+    UniqueLock lock(m_mutex);
 
     POMAGMA_ASSERT1(not contains(ob), "double insertion: " << ob);
     POMAGMA_ASSERT1(not m_reps[ob], "double insertion: " << ob);
@@ -65,7 +65,7 @@ void Carrier::insert (Ob ob)
 
 void Carrier::remove (Ob ob)
 {
-    Mutex::Lock lock(m_mutex);
+    UniqueLock lock(m_mutex);
 
     POMAGMA_ASSERT2(m_support.contains(ob), "double removal: " << ob);
     POMAGMA_ASSERT2(m_reps[ob], "double removal: " << ob);
@@ -89,6 +89,24 @@ void Carrier::remove (Ob ob)
     --m_item_count;
 }
 
+bool Carrier::merge (Ob dep, Ob rep) const
+{
+    SharedLock lock(m_mutex);
+
+    POMAGMA_ASSERT2(dep > rep,
+            "out of order merge: " << dep << "," << rep);
+    POMAGMA_ASSERT2(m_support.contains(dep), "bad merge dep " << dep);
+    POMAGMA_ASSERT2(m_support.contains(rep), "bad merge rep " << rep);
+
+    while (not m_reps[dep].compare_exchange_weak(dep, rep)) {
+        rep = m_reps[rep];
+        if (dep == rep) return false;
+        if (dep < rep) std::swap(dep, rep);
+    }
+    --m_rep_count;
+    return true;
+}
+
 Ob Carrier::_find (Ob ob, Ob rep) const
 {
     Ob rep_rep = find(rep);
@@ -101,6 +119,8 @@ Ob Carrier::_find (Ob ob, Ob rep) const
 
 void Carrier::validate () const
 {
+    SharedLock lock(m_mutex);
+
     m_support.validate();
 
     size_t actual_item_count = 0;

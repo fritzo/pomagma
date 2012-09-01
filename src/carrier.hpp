@@ -19,7 +19,10 @@ class Carrier : noncopyable
     mutable size_t m_rep_count;
     typedef std::atomic<Ob> Rep;
     Rep * const m_reps;
-    Mutex m_mutex;
+
+    mutable AssertSharedMutex m_mutex;
+    typedef AssertSharedMutex::SharedLock SharedLock;
+    typedef AssertSharedMutex::UniqueLock UniqueLock;
 
 public:
 
@@ -52,6 +55,7 @@ private:
 
 inline Ob Carrier::find (Ob ob) const
 {
+    SharedLock lock(m_mutex);
     POMAGMA_ASSERT5(contains(ob), "tried to find unsupported object " << ob);
     Ob rep = m_reps[ob];
     return rep == ob ? ob : _find(ob, rep);
@@ -60,22 +64,6 @@ inline Ob Carrier::find (Ob ob) const
 inline bool Carrier::equivalent (Ob lhs, Ob rhs) const
 {
     return find(lhs) == find(rhs);
-}
-
-inline bool Carrier::merge (Ob dep, Ob rep) const
-{
-    POMAGMA_ASSERT2(dep > rep,
-            "out of order merge: " << dep << "," << rep);
-    POMAGMA_ASSERT2(m_support.contains(dep), "bad merge dep " << dep);
-    POMAGMA_ASSERT2(m_support.contains(rep), "bad merge rep " << rep);
-
-    while (not m_reps[dep].compare_exchange_weak(dep, rep)) {
-        rep = m_reps[rep];
-        if (dep == rep) return false;
-        if (dep < rep) std::swap(dep, rep);
-    }
-    --m_rep_count;
-    return true;
 }
 
 } // namespace pomagma

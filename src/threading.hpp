@@ -2,17 +2,85 @@
 #define POMAGMA_THREADING_HPP
 
 #include "util.hpp"
-#include <pthread.h>
 #include <mutex>
-#include <boost/thread/locks.hpp>
+#include <atomic>
+#include <pthread.h>
 
 namespace pomagma
 {
 
-struct Mutex : std::mutex
+template<class Mutex>
+struct unique_lock
 {
-    typedef std::lock_guard<Mutex> Lock;
+    Mutex & m_mutex;
+public:
+    unique_lock (Mutex & mutex) : m_mutex(mutex) { mutex.lock(); }
+    ~unique_lock () { m_mutex.unlock(); }
 };
+
+template<class Mutex>
+struct shared_lock
+{
+    Mutex & m_mutex;
+public:
+    shared_lock (Mutex & mutex) : m_mutex(mutex) { m_mutex.lock_shared(); }
+    ~shared_lock () { m_mutex.unlock_shared(); }
+};
+
+
+
+class Mutex
+{
+    std::mutex m_mutex;
+public:
+    void lock () { m_mutex.lock(); }
+    void unlock () { m_mutex.unlock(); }
+    typedef unique_lock<Mutex> Lock;
+};
+
+
+
+#if (POMAGMA_DEBUG_LEVEL == 0)
+
+struct AssertMutex
+{
+    void lock () {}
+    void unlock () {}
+    struct Lock { Lock (AssertMutex &) {} };
+};
+
+#else // (POMAGMA_DEBUG_LEVEL == 0)
+
+class AssertMutex
+{
+    std::atomic<bool> m_flag;
+
+public:
+
+    AssertMutex () : m_flag(false) {}
+
+    bool is_locked () const { return m_flag; }
+
+    void lock ()
+    {
+        bool expected = false;
+        POMAGMA_ASSERT(m_flag.compare_exchange_strong(expected, true),
+                "lock contention");
+    }
+
+    void unlock ()
+    {
+        bool expected = true;
+        POMAGMA_ASSERT(m_flag.compare_exchange_strong(expected, false),
+                "unlock contention");
+    }
+
+    typedef unique_lock<Mutex> Lock;
+};
+
+#endif // (POMAGMA_DEBUG_LEVEL == 0)
+
+
 
 // this wraps pthread_wrlock, which is smaller & faster than boost::shared_mutex.
 //
@@ -42,24 +110,6 @@ public:
         POMAGMA_ASSERT1(status == 0, "pthread_rwlock_wrlock failed");
     }
 
-    bool try_lock ()
-    {
-        int status = pthread_rwlock_trywrlock(&m_rwlock);
-
-        switch (status)
-        {
-            case 0:
-                return true;
-
-            case EBUSY:
-                return false;
-
-            case EDEADLK:
-            default:
-                POMAGMA_ERROR("deadlock");
-        }
-    }
-
     // glibc seems to be buggy; don't unlock more often than it has been locked
     // see http://sourceware.org/bugzilla/show_bug.cgi?id=4825
     void unlock ()
@@ -74,26 +124,68 @@ public:
         POMAGMA_ASSERT1(status == 0, "pthread_rwlock_rdlock failed");
     }
 
-    bool try_lock_shared ()
-    {
-        int status = pthread_rwlock_tryrdlock(&m_rwlock);
-
-        if (status == 0)
-            return true;
-        if (status == EBUSY)
-            return false;
-
-        POMAGMA_ERROR("pthread_rwlock_trylock failed");
-    }
-
     void unlock_shared ()
     {
         unlock();
     }
 
-    typedef boost::unique_lock<SharedMutex> SharedLock;
-    typedef boost::shared_lock<SharedMutex> UniqueLock;
+    typedef unique_lock<SharedMutex> UniqueLock;
+    typedef shared_lock<SharedMutex> SharedLock;
 };
+
+
+
+#if (POMAGMA_DEBUG_LEVEL == 0)
+
+struct AssertSharedMutex
+{
+    struct UniqueLock { UniqueLock (AssertSharedMutex &) {} };
+    struct SharedLock { SharedLock (AssertSharedMutex &) {} };
+};
+
+#else // (POMAGMA_DEBUG_LEVEL == 0)
+
+class AssertSharedMutex
+{
+    std::atomic<size_t> m_shared;
+    AssertMutex m_unique;
+
+public:
+
+    AssertSharedMutex () : m_shared(0), m_unique() {}
+
+    void lock ()
+    {
+        m_unique.lock();
+        POMAGMA_ASSERT(m_shared == 0, "lock while lock_shared");
+    }
+
+    void unlock ()
+    {
+        POMAGMA_ASSERT(m_shared == 0, "unllock while lock_shared");
+        m_unique.unlock();
+    }
+
+    void lock_shared ()
+    {
+        ++m_shared;
+        POMAGMA_ASSERT(not m_unique.is_locked(),
+                "lock_shared while unique locked");
+    }
+
+    void unlock_shared ()
+    {
+        POMAGMA_ASSERT(not m_unique.is_locked(),
+                "unlock_shared while unique locked");
+        --m_shared;
+    }
+
+    typedef unique_lock<AssertSharedMutex> UniqueLock;
+    typedef shared_lock<AssertSharedMutex> SharedLock;
+};
+
+#endif // (POMAGMA_DEBUG_LEVEL == 0)
+
 
 } // namespace pomagma
 
