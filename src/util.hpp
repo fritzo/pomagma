@@ -144,6 +144,8 @@ public:
     << __PRETTY_FUNCTION__ << "\n"; \
     abort(); }
 
+#define TODO(message) POMAGMA_ERROR("TODO " << message)
+
 #define POMAGMA_ASSERT(cond, mess) { if (not (cond)) POMAGMA_ERROR(mess) }
 
 #define POMAGMA_ASSERT_(level, cond, mess) \
