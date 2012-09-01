@@ -90,7 +90,7 @@ public:
     size_t count_items () const; // supa-slow, try not to use
     size_t item_dim () const { return m_item_dim; }
     size_t word_dim () const { return m_word_dim; }
-    unsigned data_size_bytes () const { return sizeof(Word) * m_word_dim; }
+    size_t data_size_bytes () const { return sizeof(Word) * m_word_dim; }
     void validate () const;
 
     // element operations

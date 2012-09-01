@@ -187,7 +187,7 @@ const size_t BITS_PER_CACHE_LINE = 512;
 //----------------------------------------------------------------------------
 // Words of bits
 
-typedef uint32_t Word; // TODO switch to uint64_t
+typedef uint64_t Word;
 const size_t BITS_PER_WORD = 8 * sizeof(Word);
 const size_t WORD_POS_MASK = BITS_PER_WORD - 1;
 const size_t WORD_POS_SHIFT = static_log2i<BITS_PER_WORD>::val();
@@ -203,7 +203,7 @@ public:
 
     bool_ref (Word & word, size_t _i)
         : m_word(word),
-          m_mask(1u << _i)
+          m_mask(Word(1) << _i)
     {
         POMAGMA_ASSERT6(_i < BITS_PER_WORD, "out of range: " << _i);
     }

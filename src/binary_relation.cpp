@@ -148,7 +148,7 @@ void BinaryRelation::remove_Lx (const DenseSet & is, oid_t j)
     //}
 
     // faster version
-    Word mask = ~(1u << (j % BITS_PER_WORD));
+    Word mask = ~(Word(1) << (j % BITS_PER_WORD));
     size_t offset = j / BITS_PER_WORD;
     Word * lines = m_lines.Lx() + offset;
     for (DenseSet::Iter i(is); i.ok(); i.next()) {
@@ -164,7 +164,7 @@ void BinaryRelation::remove_Rx (oid_t i, const DenseSet& js)
     //}
 
     // faster version
-    Word mask = ~(1u << (i % BITS_PER_WORD));
+    Word mask = ~(Word(1) << (i % BITS_PER_WORD));
     size_t offset = i / BITS_PER_WORD;
     Word * lines = m_lines.Rx() + offset;
     for (DenseSet::Iter j(js); j.ok(); j.next()) {

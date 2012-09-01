@@ -69,7 +69,7 @@ size_t DenseSet::count_items () const
         // WARNING only unsigned's work with >>
         static_assert(Word(1) >> 1 == 0, "bitshifting Word fails");
         for (Word word = m_words[m]; word; word >>= 1) {
-            result += word & 1U;
+            result += word & Word(1);
         }
     }
     return result;
@@ -123,7 +123,7 @@ oid_t DenseSet::insert_one () // WARNING not thread safe
     const Word free = ~ * word;
     Word mask = 1;
     while (not (mask & free)) {
-        mask <<= 1u;
+        mask <<= Word(1);
         ++oid;
     }
     *word |= mask;
