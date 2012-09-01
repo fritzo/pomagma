@@ -48,40 +48,6 @@ void test_basic (size_t size)
         }
     }}
 
-    POMAGMA_INFO("Checking line Iterators<LHS_FIXED>");
-    {
-        BinaryFunction::Iterator<BinaryFunction::LHS_FIXED> iter(&fun);
-        for (DenseSet::Iter i(support); i.ok(); i.next()) {
-            size_t line_size_i = 0;
-            for (iter.begin(*i); iter.ok(); iter.next()) {
-                oid_t j = iter.rhs();
-                oid_t k = iter.value();
-                POMAGMA_ASSERT(k, "null item at " << *i << ',' << j);
-                POMAGMA_ASSERT(example_fun(*i, j) == k,
-                        "bad value at " << *i << ',' << j);
-                ++line_size_i;
-            }
-            POMAGMA_ASSERT_EQ(Lx_line_size[*i], line_size_i);
-        }
-    }
-
-    POMAGMA_INFO("Checking line Iterators<RHS_FIXED>");
-    {
-        BinaryFunction::Iterator<BinaryFunction::RHS_FIXED> iter(&fun);
-        for (DenseSet::Iter j(support); j.ok(); j.next()) {
-            size_t line_size_j = 0;
-            for (iter.begin(*j); iter.ok(); iter.next()) {
-                oid_t i = iter.lhs();
-                oid_t k = iter.value();
-                POMAGMA_ASSERT(k >= 1, "missing value at " << i << ',' << *j);
-                POMAGMA_ASSERT(example_fun(i, *j) == k,
-                        "bad value at " << i << ',' << *j);
-                ++line_size_j;
-            }
-            POMAGMA_ASSERT_EQ(Rx_line_size[*j], line_size_j);
-        }
-    }
-
     POMAGMA_INFO("Validating");
     fun.validate();
 }

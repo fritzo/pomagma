@@ -61,7 +61,7 @@ void InjectiveFunction::validate () const
             POMAGMA_ASSERT(not bit, "found supported null value at " << key);
         } else {
             POMAGMA_ASSERT(bit, "found unsupported value at " << key);
-            POMAGMA_ASSERT(m_inverse[val] == m_carrier.get_rep(key),
+            POMAGMA_ASSERT(m_carrier.equivalent(m_inverse[val], key),
                     "value, inverse mismatch: " <<
                     key << " -> " << val << " <- " << m_inverse[val]);
         }
@@ -78,7 +78,6 @@ void InjectiveFunction::validate () const
             POMAGMA_ASSERT(not bit, "found supported null key at " << val);
         } else {
             POMAGMA_ASSERT(bit, "found unsupported value at " << val);
-            //POMAGMA_ASSERT(m_values[key] == m_carrier.get_rep(val),
             POMAGMA_ASSERT(m_carrier.equivalent(m_values[key], val),
                     "inverse, value mismatch: " <<
                     val << " <- " << key << " -> " << m_values[key]);

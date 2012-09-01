@@ -11,14 +11,23 @@ void inverse_bin_fun::validate (BinaryFunction & fun)
 {
     POMAGMA_INFO("Validating inverse_bin_fun");
 
-    for (BinaryFunction::lr_iterator iter(fun); iter.ok(); iter.next()) {
-        oid_t lhs = iter.lhs();
-        oid_t rhs = iter.rhs();
-        oid_t val = iter.value();
+    for (DenseSet::Iter lhs_iter(fun.support());
+        lhs_iter.ok();
+        lhs_iter.next())
+    {
+        oid_t lhs = *lhs_iter;
+        DenseSet rhs_set = fun.get_Lx_set(lhs);
+        for (DenseSet::Iter rhs_iter(rhs_set);
+            rhs_iter.ok();
+            rhs_iter.next())
+        {
+            oid_t rhs = *rhs_iter;
+            oid_t val = fun.find(lhs, rhs);
 
-        POMAGMA_ASSERT_CONTAINS(m_Vlr_data, val, lhs, rhs);
-        POMAGMA_ASSERT_CONTAINS(m_VLr_data, val, lhs, rhs);
-        POMAGMA_ASSERT_CONTAINS(m_VRl_data, val, rhs, lhs);
+            POMAGMA_ASSERT_CONTAINS(m_Vlr_data, val, lhs, rhs);
+            POMAGMA_ASSERT_CONTAINS(m_VLr_data, val, lhs, rhs);
+            POMAGMA_ASSERT_CONTAINS(m_VRl_data, val, rhs, lhs);
+        }
     }
 
     for (oid_t val = 1; val <= item_dim(); ++val) {

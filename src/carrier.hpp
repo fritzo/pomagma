@@ -46,7 +46,6 @@ public:
         return rep == oid ? oid : _find(rep);
         // TODO this could be more clever
     }
-    oid_t get_rep (oid_t oid) const { return find(oid); }
 
     bool equivalent (oid_t lhs, oid_t rhs) const
     {
