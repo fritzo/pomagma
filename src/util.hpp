@@ -179,7 +179,7 @@ public:
 //----------------------------------------------------------------------------
 // Data types
 
-typedef uint32_t oid_t; // object id TODO switch to uint16_t
+typedef uint16_t oid_t;
 const size_t MAX_ITEM_DIM = (1UL << (8UL * sizeof(oid_t))) - 1UL;
 
 const size_t BITS_PER_CACHE_LINE = 512;

@@ -249,7 +249,7 @@ int main ()
     test_sizes();
 
     for (size_t i = 0; i < 4; ++i) {
-        test_basic(i + (1 << 16));
+        test_basic(i + (1 << 15));
     }
 
     for (size_t size = 0; size < 100; ++size) {
