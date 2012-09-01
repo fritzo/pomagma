@@ -8,57 +8,60 @@
 namespace pomagma
 {
 
-// WARNING zero/null items are not allowed
-
 class NullaryFunction : noncopyable
 {
     const Carrier & m_carrier;
     const DenseSet m_support; // aliased
-    Ob m_value;
+    mutable std::atomic<Ob> m_value;
+
+    mutable AssertSharedMutex m_mutex;
+    typedef AssertSharedMutex::SharedLock SharedLock;
+    typedef AssertSharedMutex::UniqueLock UniqueLock;
 
 public:
 
     NullaryFunction (const Carrier & carrier);
-    void move_from (const NullaryFunction & other); // for growing
-
-    // function calling
-private:
-    Ob & value () { return m_value; }
-public:
-    Ob value () const { return m_value; }
-    Ob get_value () const { return m_value; }
-    Ob find () const { return m_value; }
-
-    // attributes
-private:
-    const DenseSet & support () const { return m_support; }
-public:
+    void move_from (const NullaryFunction & other);
     void validate () const;
 
-    // element operations
-    // TODO add a replace method for merging
-    void insert (Ob val);
-    void remove ();
-    bool defined () const { return m_value; }
+    // safe operations
+    bool defined () const;
+    Ob find () const;
+    void insert (Ob val) const;
 
-    // support operations
-    void remove (const Ob i);
-    void merge (const Ob i, const Ob j);
+    // unsafe operations
+    void remove (Ob ob);
+    void merge (Ob dep, Ob rep);
+
+private:
+
+    const DenseSet & support () const { return m_support; }
 };
 
-inline void NullaryFunction::insert (Ob val)
+inline bool NullaryFunction::defined () const
 {
+    SharedLock lock(m_mutex);
+    return m_value;
+}
+
+inline Ob NullaryFunction::find () const
+{
+    SharedLock lock(m_mutex);
+    return m_value;
+}
+
+inline void NullaryFunction::insert (Ob val) const
+{
+    SharedLock lock(m_mutex);
+
     POMAGMA_ASSERT5(val, "tried to set value to zero");
     POMAGMA_ASSERT5(support().contains(val), "unsupported value: " << val);
 
-    POMAGMA_ASSERT2(not m_value, "double insertion");
-    m_value = val;
-}
-
-inline void NullaryFunction::remove ()
-{
-    POMAGMA_ASSERT2(m_value, "double removal");
-    m_value = 0;
+    Ob old_val = 0;
+    while (not m_value.compare_exchange_weak(old_val, val)) {
+        val = m_carrier.ensure_equal(old_val, val);
+        if (val == old_val) break;
+    }
 }
 
 } // namespace pomagma

@@ -28,6 +28,8 @@ namespace pomagma
     #endif // __GNUG__
 #endif // restrict
 
+#define barrier() __sync_synchronize()
+
 //----------------------------------------------------------------------------
 // Debugging
 
@@ -179,6 +181,7 @@ public:
 //----------------------------------------------------------------------------
 // Data types
 
+// Ob is a 1-based index type with 0 = none
 typedef uint16_t Ob;
 const size_t MAX_ITEM_DIM = (1UL << (8UL * sizeof(Ob))) - 1UL;
 

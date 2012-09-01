@@ -262,13 +262,6 @@ def write_signature(code, functions):
     code('''
         $bar
         // signature
-
-        Carrier carrier;
-        const DenseSet support(carrier.support(), yes_copy_construct);
-        inline size_t item_dim () { return support.item_dim(); }
-
-        BinaryRelation LESS(carrier);
-        BinaryRelation NLESS(carrier);
         
         $funs
         ''',
@@ -281,38 +274,6 @@ def write_ensurers(code, functions):
     code('''
         $bar
         // ensurers
-
-        inline void ensure_equal (Ob lhs, Ob rhs)
-        {
-            if (lhs != rhs) {
-                Ob dep = lhs < rhs ? rhs : lhs;
-                Ob rep = lhs < rhs ? lhs : rhs;
-                carrier.merge(dep, rep);
-                schedule(MergeTask(dep));
-            }
-        }
-
-        // TODO most uses of this can be vectorized
-        // TODO use .contains_Lx/.contains_Rx based on iterator direction
-        inline void ensure_less (Ob lhs, Ob rhs)
-        {
-            // TODO do this more atomically
-            if (not LESS(lhs, rhs)) {
-                LESS.insert(lhs, rhs);
-                schedule(PositiveOrderTask(lhs, rhs));
-            }
-        }
-
-        // TODO most uses of this can be vectorized
-        // TODO use .contains_Lx/.contains_Rx based on iterator direction
-        inline void ensure_nless (Ob lhs, Ob rhs)
-        {
-            // TODO do this more atomically
-            if (not NLESS(lhs, rhs)) {
-                NLESS.insert(lhs, rhs);
-                schedule(NegativeOrderTask(lhs, rhs));
-            }
-        }
         ''',
         bar = bar,
         ).newline()
@@ -577,16 +538,7 @@ def write_theory(code, sequents):
     functions = get_functions_used_in(sequents)
 
     code('''
-        #include "util.hpp"
-        #include "carrier.hpp"
-        #include "nullary_function.hpp"
-        #include "injective_function.hpp"
-        #include "binary_function.hpp"
-        #include "symmetric_function.hpp"
-        #include "binary_relation.hpp"
-        #include "scheduler.hpp"
-        #include <atomic>
-        #include <vector>
+        #include "theory.hpp"
         
         namespace pomagma {
         ''').newline()

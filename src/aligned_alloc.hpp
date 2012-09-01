@@ -3,6 +3,8 @@
 
 #include "util.hpp"
 
+extern "C" void bzero(void * data, size_t byte_count) throw ();
+
 namespace pomagma
 {
 
@@ -11,12 +13,19 @@ void * alloc_blocks (
         size_t block_count,
         size_t alignment = 32);
 
-template<class T> T * alloc_blocks (size_t block_count)
+template<class T>
+inline T * alloc_blocks (size_t block_count)
 {
   return static_cast<T *>(alloc_blocks(sizeof(T), block_count));
 }
 
-void  free_blocks (void * base);
+template<class T>
+inline void zero_blocks (T * base, size_t count)
+{
+    bzero(base, count * sizeof(T));
+}
+
+void free_blocks (void * base);
 
 template<class T>
 class AlignedBuffer : noncopyable

@@ -16,16 +16,15 @@ inline Ob example_fun (Ob i)
 
 Carrier * g_carrier = NULL;
 
-void merge_values (Ob i, Ob j)
+void merge_callback (Ob i)
 {
-    POMAGMA_DEBUG("merging " << i << " into " << j);
-    g_carrier->merge(i, j);
+    POMAGMA_DEBUG("merging " << i);
 }
 
 void test_basic (size_t size)
 {
     POMAGMA_INFO("Defining function");
-    Carrier carrier(size);
+    Carrier carrier(size, merge_callback);
     g_carrier = & carrier;
     const DenseSet & support = carrier.support();
     InjectiveFunction fun(carrier);
@@ -38,7 +37,7 @@ void test_basic (size_t size)
     for (DenseSet::Iterator i(support); i.ok(); i.next()) {
         Ob val = example_fun(*i);
         if (val and support.contains(val)) {
-            fun.insert(*i, val, merge_values);
+            fun.insert(*i, val);
         }
     }
     fun.validate();
@@ -47,10 +46,10 @@ void test_basic (size_t size)
     for (DenseSet::Iterator i(support); i.ok(); i.next()) {
         Ob val = example_fun(*i);
         if (val and support.contains(val)) {
-            POMAGMA_ASSERT(fun.contains(*i), "missing value at " << *i);
-            POMAGMA_ASSERT(fun.get_value(*i) == val, "bad value at " << *i);
+            POMAGMA_ASSERT(fun.defined(*i), "missing value at " << *i);
+            POMAGMA_ASSERT(fun.find(*i) == val, "bad value at " << *i);
         } else {
-            POMAGMA_ASSERT(not fun.contains(*i), "unexpected value at " << *i);
+            POMAGMA_ASSERT(not fun.defined(*i), "unexpected value at " << *i);
         }
     }
 

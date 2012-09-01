@@ -2,7 +2,7 @@
 #include "util.hpp"
 #include "aligned_alloc.hpp"
 #include <cstdlib> //for posix_memalign, free
-#include <cstring> //for memset
+#include <cstring> //for memset, bzero
 
 //log levels
 #define LOG_DEBUG1(mess)

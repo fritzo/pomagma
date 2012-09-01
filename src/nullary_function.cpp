@@ -13,42 +13,42 @@ NullaryFunction::NullaryFunction (const Carrier & carrier)
     POMAGMA_DEBUG("creating NullaryFunction");
 }
 
-// for growing
 void NullaryFunction::move_from (const NullaryFunction & other)
 {
     POMAGMA_DEBUG("Copying NullaryFunction");
 
-    m_value = other.m_value;
+    m_value = other.m_value.load();
 }
-
-//----------------------------------------------------------------------------
-// Diagnostics
 
 void NullaryFunction::validate () const
 {
+    SharedLock lock(m_mutex);
+
     POMAGMA_DEBUG("Validating NullaryFunction");
 
-    if (m_value) {
-        POMAGMA_ASSERT(m_support.contains(m_value),
-                "unsupported value: " << m_value);
+    Ob value = m_value;
+    if (value) {
+        POMAGMA_ASSERT(m_support.contains(value),
+                "unsupported value: " << value);
     }
 }
 
-//----------------------------------------------------------------------------
-// Operations
-
-void NullaryFunction::remove(const Ob dep)
+void NullaryFunction::remove (Ob ob)
 {
-    POMAGMA_ASSERT_RANGE_(4, dep, m_support.item_dim());
+    UniqueLock lock(m_mutex);
 
-    if (m_value == dep) {
+    POMAGMA_ASSERT_RANGE_(4, ob, m_support.item_dim());
+
+    if (m_value == ob) {
         m_value = 0;
     }
 }
 
-void NullaryFunction::merge(const Ob dep, const Ob rep)
+void NullaryFunction::merge (Ob dep, Ob rep)
 {
-    POMAGMA_ASSERT4(rep != dep, "self merge: " << dep << "," << rep);
+    UniqueLock lock(m_mutex);
+
+    POMAGMA_ASSERT4(rep < dep, "bad merge: " << dep << "," << rep);
     POMAGMA_ASSERT_RANGE_(4, dep, m_support.item_dim());
     POMAGMA_ASSERT_RANGE_(4, rep, m_support.item_dim());
 

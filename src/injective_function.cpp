@@ -10,22 +10,22 @@ InjectiveFunction::InjectiveFunction (const Carrier & carrier)
       m_support(carrier.support(), yes_copy_construct),
       m_set(support().item_dim()),
       m_inverse_set(support().item_dim()),
-      m_values(pomagma::alloc_blocks<Ob>(1 + item_dim())),
-      m_inverse(pomagma::alloc_blocks<Ob>(1 + item_dim()))
+      m_values(alloc_blocks<Ob>(1 + item_dim())),
+      m_inverse(alloc_blocks<Ob>(1 + item_dim()))
 {
-    POMAGMA_DEBUG("creating InjectiveFunction with " << item_dim() << " values");
+    POMAGMA_DEBUG("creating InjectiveFunction with "
+            << item_dim() << " values");
 
-    bzero(m_values, (1 + item_dim()) * sizeof(Ob));
-    bzero(m_inverse, (1 + item_dim()) * sizeof(Ob));
+    zero_blocks(m_values, 1 + item_dim());
+    zero_blocks(m_inverse, 1 + item_dim());
 }
 
 InjectiveFunction::~InjectiveFunction ()
 {
-    pomagma::free_blocks(m_values);
-    pomagma::free_blocks(m_inverse);
+    free_blocks(m_values);
+    free_blocks(m_inverse);
 }
 
-// for growing
 void InjectiveFunction::move_from (const InjectiveFunction & other)
 {
     POMAGMA_DEBUG("Copying InjectiveFunction");
@@ -39,11 +39,10 @@ void InjectiveFunction::move_from (const InjectiveFunction & other)
     m_inverse_set.move_from(other.m_inverse_set);
 }
 
-//----------------------------------------------------------------------------
-// Diagnostics
-
 void InjectiveFunction::validate () const
 {
+    SharedLock lock(m_mutex);
+
     POMAGMA_DEBUG("Validating InjectiveFunction");
 
     m_set.validate();
@@ -61,7 +60,7 @@ void InjectiveFunction::validate () const
             POMAGMA_ASSERT(not bit, "found supported null value at " << key);
         } else {
             POMAGMA_ASSERT(bit, "found unsupported value at " << key);
-            POMAGMA_ASSERT(m_carrier.equivalent(m_inverse[val], key),
+            POMAGMA_ASSERT(m_carrier.equal(m_inverse[val], key),
                     "value, inverse mismatch: " <<
                     key << " -> " << val << " <- " << m_inverse[val]);
         }
@@ -78,38 +77,61 @@ void InjectiveFunction::validate () const
             POMAGMA_ASSERT(not bit, "found supported null key at " << val);
         } else {
             POMAGMA_ASSERT(bit, "found unsupported value at " << val);
-            POMAGMA_ASSERT(m_carrier.equivalent(m_values[key], val),
+            POMAGMA_ASSERT(m_carrier.equal(m_values[key], val),
                     "inverse, value mismatch: " <<
                     val << " <- " << key << " -> " << m_values[key]);
         }
     }
 }
 
-//----------------------------------------------------------------------------
-// Operations
-
-void InjectiveFunction::remove(
-        const Ob dep,
-        void remove_value(Ob)) // rem
+void InjectiveFunction::insert (Ob key, Ob val) const
 {
-    POMAGMA_ASSERT_RANGE_(4, dep, item_dim());
+    SharedLock lock(m_mutex);
 
-    TODO("remove inverse")
+    POMAGMA_ASSERT5(val, "tried to set val to zero at " << key);
+    POMAGMA_ASSERT5(support().contains(key), "unsupported key: " << key);
+    POMAGMA_ASSERT5(support().contains(val), "unsupported val: " << val);
 
-    if (bool_ref dep_bit = m_set(dep)) {
-        Ob & dep_val = value(dep);
-        remove_value(dep_val);
-        dep_bit.zero();
-        dep_val = 0;
+    // TODO add memory barrier or make reads atomic
+
+    Ob & old_val = m_values[key];
+    POMAGMA_ASSERT2(not old_val,
+            "double insertion at " << key << ": " << old_val);
+    old_val = val;
+    m_set.insert(key);
+
+    Ob & old_key = m_inverse[val];
+    if (old_key) {
+        old_key = m_carrier.ensure_equal(old_key, key);
+    } else {
+        old_key = key;
+        m_inverse_set.insert(val);
     }
 }
 
-void InjectiveFunction::merge(
-        const Ob dep,
-        const Ob rep,
-        void merge_values(Ob, Ob), // dep, rep
-        void move_value(Ob, Ob)) // val, key
+void InjectiveFunction::remove (Ob ob)
 {
+    UniqueLock lock(m_mutex);
+
+    POMAGMA_ASSERT_RANGE_(4, ob, item_dim());
+
+    TODO("remove inverse")
+
+    if (bool_ref bit = m_set(ob)) {
+        bit.zero();
+        value(ob) = 0;
+    }
+
+    if (bool_ref bit = m_inverse_set(ob)) {
+        bit.zero();
+        inverse(ob) = 0;
+    }
+}
+
+void InjectiveFunction::merge (Ob dep, Ob rep)
+{
+    UniqueLock lock(m_mutex);
+
     POMAGMA_ASSERT4(rep != dep, "self merge: " << dep << "," << rep);
     POMAGMA_ASSERT_RANGE_(4, dep, item_dim());
     POMAGMA_ASSERT_RANGE_(4, rep, item_dim());
@@ -117,15 +139,13 @@ void InjectiveFunction::merge(
     TODO("merge inverse")
 
     if (bool_ref dep_bit = m_set(dep)) {
-        bool_ref rep_bit = m_set(rep);
-        Ob & dep_val = value(dep);
-        Ob & rep_val = value(rep);
-        if (rep_val) {
-            merge_values(dep_val, rep_val);
+        Ob & restrict dep_val = value(dep);
+        Ob & restrict rep_val = value(rep);
+        if (rep_val and rep_val != dep_val) {
+            rep_val = m_carrier.ensure_equal(dep_val, rep_val);
         } else {
-            move_value(dep_val, rep);
             rep_val = dep_val;
-            rep_bit.one();
+            m_set.insert(rep);
         }
         dep_bit.zero();
         dep_val = 0;

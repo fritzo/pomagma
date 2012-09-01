@@ -19,16 +19,18 @@ class Carrier : noncopyable
     mutable size_t m_rep_count;
     typedef std::atomic<Ob> Rep;
     Rep * const m_reps;
+    void (*m_merge_callback)(Ob);
 
     mutable AssertSharedMutex m_mutex;
-    typedef AssertSharedMutex::SharedLock SharedLock;
-    typedef AssertSharedMutex::UniqueLock UniqueLock;
+    typedef AssertSharedMutex::SharedLock SharedLock; // for const methods
+    typedef AssertSharedMutex::UniqueLock UniqueLock; // for non-const methods
 
 public:
 
-    Carrier (size_t item_dim = DEFAULT_ITEM_DIM);
+    Carrier (size_t item_dim, void (*merge_callback)(Ob) = NULL);
     ~Carrier ();
     void move_from (const Carrier & other, const Ob * new2old);
+    void validate () const;
 
     // attributes
     const DenseSet & support () const { return m_support; }
@@ -37,13 +39,13 @@ public:
     size_t rep_count () const { return m_rep_count; }
     bool contains (Ob ob) const { return m_support.contains(ob); }
 
-    // non-blocking interface
+    // safe operations
     Ob find (Ob ob) const;
-    bool equivalent (Ob lhs, Ob rhs) const;
-    bool merge (Ob dep, Ob rep) const; // return true if not already merged
-    void validate () const;
+    bool equal (Ob lhs, Ob rhs) const;
+    Ob merge (Ob dep, Ob rep) const;
+    Ob ensure_equal (Ob lhs, Ob rhs) const;
 
-    // blocking
+    // unsafe operations
     Ob insert ();
     void insert (Ob ob);
     void remove (Ob ob);
@@ -57,13 +59,30 @@ inline Ob Carrier::find (Ob ob) const
 {
     SharedLock lock(m_mutex);
     POMAGMA_ASSERT5(contains(ob), "tried to find unsupported object " << ob);
+
+    // Version 1.
     Ob rep = m_reps[ob];
+
+    // Version 2.
+    //Ob rep = m_reps[ob].load(std::memory_order_relaxed); // does this work?
+
     return rep == ob ? ob : _find(ob, rep);
 }
 
-inline bool Carrier::equivalent (Ob lhs, Ob rhs) const
+inline bool Carrier::equal (Ob lhs, Ob rhs) const
 {
     return find(lhs) == find(rhs);
+}
+
+inline Ob Carrier::ensure_equal (Ob lhs, Ob rhs) const
+{
+    if (lhs == rhs) {
+        return lhs;
+    } else {
+        Ob dep = lhs > rhs ? lhs : rhs;
+        Ob rep = lhs < rhs ? lhs : rhs;
+        return merge(dep, rep);
+    }
 }
 
 } // namespace pomagma

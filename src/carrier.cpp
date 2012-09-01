@@ -5,11 +5,12 @@
 namespace pomagma
 {
 
-Carrier::Carrier (size_t item_dim)
+Carrier::Carrier (size_t item_dim, void (*merge_callback)(Ob))
     : m_support(item_dim),
       m_item_count(0),
       m_rep_count(0),
-      m_reps(alloc_blocks<Rep>(1 + item_dim))
+      m_reps(alloc_blocks<Rep>(1 + item_dim)),
+      m_merge_callback(merge_callback)
 {
     POMAGMA_DEBUG("creating Carrier with " << item_dim << " items");
     for (Ob ob = 0; ob <= item_dim; ++ob) {
@@ -89,7 +90,7 @@ void Carrier::remove (Ob ob)
     --m_item_count;
 }
 
-bool Carrier::merge (Ob dep, Ob rep) const
+Ob Carrier::merge (Ob dep, Ob rep) const
 {
     SharedLock lock(m_mutex);
 
@@ -100,11 +101,14 @@ bool Carrier::merge (Ob dep, Ob rep) const
 
     while (not m_reps[dep].compare_exchange_weak(dep, rep)) {
         rep = m_reps[rep];
-        if (dep == rep) return false;
+        if (dep == rep) return rep;
         if (dep < rep) std::swap(dep, rep);
     }
+    if (m_merge_callback) {
+        m_merge_callback(dep);
+    }
     --m_rep_count;
-    return true;
+    return rep;
 }
 
 Ob Carrier::_find (Ob ob, Ob rep) const
