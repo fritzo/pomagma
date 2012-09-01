@@ -54,13 +54,13 @@ class Code:
 @methodof(compiler.Iter)
 def cpp(self, code):
     body = Code('''
-        oid_t $var = *iter;
+        Ob $var = *iter;
         ''',
         var = self.var,
         )
     for var, expr in self.lets.iteritems():
         body('''
-            oid_t $var = $fun.find($args);
+            Ob $var = $fun.find($args);
             ''',
             var = var,
             fun = expr.name,
@@ -114,7 +114,7 @@ def cpp(self, code):
 @methodof(compiler.IterInvInjective)
 def cpp(self, code):
     body = Code('''
-        oid_t $var = iter.arg();
+        Ob $var = iter.arg();
         ''', var=self.var)
     self.body.cpp(body)
     code('''
@@ -131,8 +131,8 @@ def cpp(self, code):
 @methodof(compiler.IterInvBinary)
 def cpp(self, code):
     body = Code('''
-        oid_t $var1 = iter.lhs();
-        oid_t $var2 = iter.rhs();
+        Ob $var1 = iter.lhs();
+        Ob $var2 = iter.rhs();
         ''',
         var1 = self.var1,
         var2 = self.var2,
@@ -152,7 +152,7 @@ def cpp(self, code):
 @methodof(compiler.IterInvBinaryRange)
 def cpp(self, code):
     body = Code('''
-        oid_t $var = iter.$moving();
+        Ob $var = iter.$moving();
         ''',
         var = self.var2 if self.lhs_fixed else self.var1,
         moving = 'rhs' if self.lhs_fixed else 'lhs',
@@ -175,7 +175,7 @@ def cpp(self, code):
     body = Code()
     self.body.cpp(body)
     code('''
-        if (oid_t $var = $fun.find($args)) {
+        if (Ob $var = $fun.find($args)) {
             $body
         }
         ''',
@@ -282,11 +282,11 @@ def write_ensurers(code, functions):
         $bar
         // ensurers
 
-        inline void ensure_equal (oid_t lhs, oid_t rhs)
+        inline void ensure_equal (Ob lhs, Ob rhs)
         {
             if (lhs != rhs) {
-                oid_t dep = lhs < rhs ? lhs : rhs;
-                oid_t rep = lhs < rhs ? rhs : lhs;
+                Ob dep = lhs < rhs ? lhs : rhs;
+                Ob rep = lhs < rhs ? rhs : lhs;
                 carrier.merge(dep, rep);
                 schedule(MergeTask(dep));
             }
@@ -294,7 +294,7 @@ def write_ensurers(code, functions):
 
         // TODO most uses of this can be vectorized
         // TODO use .contains_Lx/.contains_Rx based on iterator direction
-        inline void ensure_less (oid_t lhs, oid_t rhs)
+        inline void ensure_less (Ob lhs, Ob rhs)
         {
             // TODO do this more atomically
             if (not LESS(lhs, rhs)) {
@@ -305,7 +305,7 @@ def write_ensurers(code, functions):
 
         // TODO most uses of this can be vectorized
         // TODO use .contains_Lx/.contains_Rx based on iterator direction
-        inline void ensure_nless (oid_t lhs, oid_t rhs)
+        inline void ensure_nless (Ob lhs, Ob rhs)
         {
             // TODO do this more atomically
             if (not NLESS(lhs, rhs)) {
@@ -322,15 +322,15 @@ def write_ensurers(code, functions):
                  if signature.get_nargs(arity) > 0
                  for name in funs]
 
-    def oid_t(x):
-        return 'oid_t %s' % x
+    def Ob(x):
+        return 'Ob %s' % x
 
     for name, arity, argc in functions:
         vars_ = ['key'] if argc == 1 else ['lhs', 'rhs']
         code('''
-            inline void ensure_${name} ($typed_args, oid_t val)
+            inline void ensure_${name} ($typed_args, Ob val)
             {
-                if (oid_t old_val = $NAME($args)) {
+                if (Ob old_val = $NAME($args)) {
                     ensure_equal(old_val, val);
                 } else {
                     $NAME.insert($args, val);
@@ -341,7 +341,7 @@ def write_ensurers(code, functions):
             name=name.lower(),
             NAME=name,
             args=', '.join(vars_),
-            typed_args=', '.join(map(oid_t, vars_)),
+            typed_args=', '.join(map(Ob, vars_)),
             arity=arity,
             ).newline()
 
@@ -357,10 +357,10 @@ def write_ensurers(code, functions):
                     $typed_args1,
                     $typed_args2)
                 {
-                    if (oid_t val1 = $NAME1.find($args1)) {
+                    if (Ob val1 = $NAME1.find($args1)) {
                         ensure_${name2}($args2, val1);
                     } else {
-                        if (oid_t val2 = $NAME2.find($args2)) {
+                        if (Ob val2 = $NAME2.find($args2)) {
                             $NAME1.insert($args1, val2);
                             schedule(${arity1}Task($NAME1, $args1));
                         }
@@ -373,8 +373,8 @@ def write_ensurers(code, functions):
                 NAME2 = name2,
                 args1 = ', '.join(vars1),
                 args2 = ', '.join(vars2),
-                typed_args1 = ', '.join(map(oid_t, vars1)),
-                typed_args2 = ', '.join(map(oid_t, vars2)),
+                typed_args1 = ', '.join(map(Ob, vars1)),
+                typed_args2 = ', '.join(map(Ob, vars2)),
                 arity1 = arity,
                 arity2 = arity2,
                 ).newline()

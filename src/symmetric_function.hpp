@@ -17,16 +17,16 @@ class SymmetricFunction : noncopyable
 {
     base_sym_rel m_lines;
     const size_t m_block_dim;
-    Block4x4 * const m_blocks;
+    Block * const m_blocks;
 
     // block wrappers
     template<class T>
     static void sort (T & i, T & j) { if (j < i) { T k = j; j = i; i = k; }  }
-    oid_t * _block (int i_, int j_)
+    Ob * _block (int i_, int j_)
     {
         return m_blocks[unordered_pair_count(j_) + i_];
     }
-    const oid_t * _block (int i_, int j_) const
+    const Ob * _block (int i_, int j_) const
     {
         return m_blocks[unordered_pair_count(j_) + i_];
     }
@@ -34,7 +34,7 @@ class SymmetricFunction : noncopyable
 public:
 
     // set wrappers
-    DenseSet get_Lx_set (oid_t lhs) const { return m_lines.Lx_set(lhs); }
+    DenseSet get_Lx_set (Ob lhs) const { return m_lines.Lx_set(lhs); }
 
     // ctors & dtors
     SymmetricFunction (const Carrier & carrier);
@@ -43,11 +43,11 @@ public:
 
     // function calling
 private:
-    inline oid_t & value (oid_t lhs, oid_t rhs);
+    inline Ob & value (Ob lhs, Ob rhs);
 public:
-    inline oid_t value (oid_t lhs, oid_t rhs) const;
-    oid_t get_value (oid_t lhs, oid_t rhs) const { return value(lhs, rhs); }
-    oid_t find (oid_t lhs, oid_t rhs) const { return value(lhs, rhs); }
+    inline Ob value (Ob lhs, Ob rhs) const;
+    Ob get_value (Ob lhs, Ob rhs) const { return value(lhs, rhs); }
+    Ob find (Ob lhs, Ob rhs) const { return value(lhs, rhs); }
 
     // attributes
     size_t item_dim () const { return m_lines.item_dim(); }
@@ -59,9 +59,9 @@ public:
 
     // element operations
     // TODO add a replace method for merging
-    void insert (oid_t lhs, oid_t rhs, oid_t val);
-    void remove (oid_t lhs, oid_t rhs);
-    bool contains (oid_t lhs, oid_t rhs) const
+    void insert (Ob lhs, Ob rhs, Ob val);
+    void remove (Ob lhs, Ob rhs);
+    bool contains (Ob lhs, Ob rhs) const
     {
         POMAGMA_ASSERT5(support().contains(lhs), "unsupported lhs: " << lhs);
         POMAGMA_ASSERT5(support().contains(rhs), "unsupported rhs: " << rhs);
@@ -70,48 +70,48 @@ public:
 
     // support operations
     void remove (
-            const oid_t i,
-            void remove_value(oid_t)); // rem
+            const Ob i,
+            void remove_value(Ob)); // rem
     void merge (
-            const oid_t i,
-            const oid_t j,
-            void merge_values(oid_t, oid_t),     // dep, rep
-            void move_value(oid_t, oid_t, oid_t)); // moved, lhs, rhs
+            const Ob i,
+            const Ob j,
+            void merge_values(Ob, Ob),     // dep, rep
+            void move_value(Ob, Ob, Ob)); // moved, lhs, rhs
 
     // iteration
     class Iterator;
     class LLxx_Iter;
 };
 
-inline oid_t & SymmetricFunction::value (oid_t i, oid_t j)
+inline Ob & SymmetricFunction::value (Ob i, Ob j)
 {
     sort(i, j);
 
     POMAGMA_ASSERT_RANGE_(5, i, item_dim());
     POMAGMA_ASSERT_RANGE_(5, j, item_dim());
 
-    oid_t * block = _block(i / ITEMS_PER_BLOCK, j / ITEMS_PER_BLOCK);
+    Ob * block = _block(i / ITEMS_PER_BLOCK, j / ITEMS_PER_BLOCK);
     return _block2value(block, i & BLOCK_POS_MASK, j & BLOCK_POS_MASK);
 }
 
-inline oid_t SymmetricFunction::value (oid_t i, oid_t j) const
+inline Ob SymmetricFunction::value (Ob i, Ob j) const
 {
     sort(i, j);
 
     POMAGMA_ASSERT_RANGE_(5, i, item_dim());
     POMAGMA_ASSERT_RANGE_(5, j, item_dim());
 
-    const oid_t * block = _block(i / ITEMS_PER_BLOCK, j / ITEMS_PER_BLOCK);
+    const Ob * block = _block(i / ITEMS_PER_BLOCK, j / ITEMS_PER_BLOCK);
     return _block2value(block, i & BLOCK_POS_MASK, j & BLOCK_POS_MASK);
 }
 
-inline void SymmetricFunction::insert (oid_t lhs, oid_t rhs, oid_t val)
+inline void SymmetricFunction::insert (Ob lhs, Ob rhs, Ob val)
 {
     POMAGMA_ASSERT5(support().contains(lhs), "unsupported lhs: " << lhs);
     POMAGMA_ASSERT5(support().contains(rhs), "unsupported rhs: " << rhs);
     POMAGMA_ASSERT5(val, "tried to set val to zero at " << lhs << "," << rhs);
 
-    oid_t & old_val = value(lhs, rhs);
+    Ob & old_val = value(lhs, rhs);
     POMAGMA_ASSERT2(not old_val, "double insertion: " << lhs << "," << rhs);
     old_val = val;
 
@@ -126,12 +126,12 @@ inline void SymmetricFunction::insert (oid_t lhs, oid_t rhs, oid_t val)
     Rx_bit.one();
 }
 
-inline void SymmetricFunction::remove (oid_t lhs, oid_t rhs)
+inline void SymmetricFunction::remove (Ob lhs, Ob rhs)
 {
     POMAGMA_ASSERT5(support().contains(lhs), "unsupported lhs: " << lhs);
     POMAGMA_ASSERT5(support().contains(rhs), "unsupported rhs: " << rhs);
 
-    oid_t & old_val = value(lhs, rhs);
+    Ob & old_val = value(lhs, rhs);
     POMAGMA_ASSERT2(old_val, "double removal: " << lhs << "," << rhs);
     old_val = 0;
 
@@ -154,8 +154,8 @@ class SymmetricFunction::Iterator : noncopyable
     DenseSet m_set;
     DenseSet::Iter m_iter;
     const SymmetricFunction * m_fun;
-    oid_t m_fixed;
-    oid_t m_moving;
+    Ob m_fixed;
+    Ob m_moving;
 
 public:
 
@@ -167,7 +167,7 @@ public:
           m_fixed(0),
           m_moving(0)
     {}
-    Iterator (const SymmetricFunction * fun, oid_t fixed)
+    Iterator (const SymmetricFunction * fun, Ob fixed)
         : m_set(fun->item_dim(), fun->m_lines.Lx(fixed)),
           m_iter(m_set, false),
           m_fun(fun),
@@ -183,7 +183,7 @@ private:
 public:
     bool ok () const { return m_iter.ok(); }
     void begin () { m_iter.begin(); if (ok()) _set_pos(); }
-    void begin (oid_t fixed)
+    void begin (Ob fixed)
     {
         m_fixed=fixed;
         m_set.init(m_fun->m_lines.Lx(fixed));
@@ -198,9 +198,9 @@ private:
         POMAGMA_ASSERT5(ok(), "dereferenced done DenseSet::iter");
     }
 public:
-    oid_t fixed () const { _deref_assert(); return m_fixed; }
-    oid_t moving () const { _deref_assert(); return m_moving; }
-    oid_t value () const
+    Ob fixed () const { _deref_assert(); return m_fixed; }
+    Ob moving () const { _deref_assert(); return m_moving; }
+    Ob value () const
     {
         _deref_assert();
         return m_fun->get_value(m_fixed,m_moving);
@@ -215,9 +215,9 @@ class SymmetricFunction::LLxx_Iter : noncopyable
     DenseSet m_set;
     DenseSet::Iter m_iter;
     const SymmetricFunction * m_fun;
-    oid_t m_fixed1;
-    oid_t m_fixed2;
-    oid_t m_moving;
+    Ob m_fixed1;
+    Ob m_fixed2;
+    Ob m_moving;
 
 public:
 
@@ -231,7 +231,7 @@ public:
 
     // traversal
     void begin () { m_iter.begin(); if (ok()) m_moving = *m_iter; }
-    void begin (oid_t fixed1, oid_t fixed2)
+    void begin (Ob fixed1, Ob fixed2)
     {
         DenseSet set1 = m_fun->get_Lx_set(fixed1);
         DenseSet set2 = m_fun->get_Lx_set(fixed2);
@@ -247,11 +247,11 @@ public:
     void next () { m_iter.next(); if (ok()) m_moving = *m_iter; }
 
     // dereferencing
-    oid_t fixed1 () const { return m_fixed1; }
-    oid_t fixed2 () const { return m_fixed2; }
-    oid_t moving () const { return m_moving; }
-    oid_t value1 () const { return m_fun->get_value(m_fixed1, m_moving); }
-    oid_t value2 () const { return m_fun->get_value(m_fixed2, m_moving); }
+    Ob fixed1 () const { return m_fixed1; }
+    Ob fixed2 () const { return m_fixed2; }
+    Ob moving () const { return m_moving; }
+    Ob value1 () const { return m_fun->get_value(m_fixed1, m_moving); }
+    Ob value2 () const { return m_fun->get_value(m_fixed2, m_moving); }
 };
 
 } // namespace pomagma

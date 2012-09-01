@@ -10,13 +10,13 @@ InjectiveFunction::InjectiveFunction (const Carrier & carrier)
       m_support(carrier.support(), yes_copy_construct),
       m_set(support().item_dim()),
       m_inverse_set(support().item_dim()),
-      m_values(pomagma::alloc_blocks<oid_t>(1 + item_dim())),
-      m_inverse(pomagma::alloc_blocks<oid_t>(1 + item_dim()))
+      m_values(pomagma::alloc_blocks<Ob>(1 + item_dim())),
+      m_inverse(pomagma::alloc_blocks<Ob>(1 + item_dim()))
 {
     POMAGMA_DEBUG("creating InjectiveFunction with " << item_dim() << " values");
 
-    bzero(m_values, (1 + item_dim()) * sizeof(oid_t));
-    bzero(m_inverse, (1 + item_dim()) * sizeof(oid_t));
+    bzero(m_values, (1 + item_dim()) * sizeof(Ob));
+    bzero(m_inverse, (1 + item_dim()) * sizeof(Ob));
 }
 
 InjectiveFunction::~InjectiveFunction ()
@@ -31,7 +31,7 @@ void InjectiveFunction::move_from (const InjectiveFunction & other)
     POMAGMA_DEBUG("Copying InjectiveFunction");
 
     size_t min_item_dim = min(item_dim(), other.item_dim());
-    size_t byte_count = sizeof(oid_t) * min_item_dim;
+    size_t byte_count = sizeof(Ob) * min_item_dim;
     memcpy(m_values, other.m_values, byte_count);
     memcpy(m_inverse, other.m_inverse, byte_count);
 
@@ -50,9 +50,9 @@ void InjectiveFunction::validate () const
     m_inverse_set.validate();
 
     POMAGMA_DEBUG("validating set-values consistency");
-    for (oid_t key = 1; key <= item_dim(); ++key) {
+    for (Ob key = 1; key <= item_dim(); ++key) {
         bool bit = m_set(key);
-        oid_t val = m_values[key];
+        Ob val = m_values[key];
 
         if (not m_support.contains(key)) {
             POMAGMA_ASSERT(not val, "found unsupported val at " << key);
@@ -67,9 +67,9 @@ void InjectiveFunction::validate () const
         }
     }
 
-    for (oid_t val = 1; val <= item_dim(); ++val) {
+    for (Ob val = 1; val <= item_dim(); ++val) {
         bool bit = m_inverse_set(val);
-        oid_t key = m_inverse[val];
+        Ob key = m_inverse[val];
 
         if (not m_support.contains(val)) {
             POMAGMA_ASSERT(not key, "found unsupported key at " << val);
@@ -89,15 +89,15 @@ void InjectiveFunction::validate () const
 // Operations
 
 void InjectiveFunction::remove(
-        const oid_t dep,
-        void remove_value(oid_t)) // rem
+        const Ob dep,
+        void remove_value(Ob)) // rem
 {
     POMAGMA_ASSERT_RANGE_(4, dep, item_dim());
 
     TODO("remove inverse")
 
     if (bool_ref dep_bit = m_set(dep)) {
-        oid_t & dep_val = value(dep);
+        Ob & dep_val = value(dep);
         remove_value(dep_val);
         dep_bit.zero();
         dep_val = 0;
@@ -105,10 +105,10 @@ void InjectiveFunction::remove(
 }
 
 void InjectiveFunction::merge(
-        const oid_t dep,
-        const oid_t rep,
-        void merge_values(oid_t, oid_t), // dep, rep
-        void move_value(oid_t, oid_t)) // val, key
+        const Ob dep,
+        const Ob rep,
+        void merge_values(Ob, Ob), // dep, rep
+        void move_value(Ob, Ob)) // val, key
 {
     POMAGMA_ASSERT4(rep != dep, "self merge: " << dep << "," << rep);
     POMAGMA_ASSERT_RANGE_(4, dep, item_dim());
@@ -118,8 +118,8 @@ void InjectiveFunction::merge(
 
     if (bool_ref dep_bit = m_set(dep)) {
         bool_ref rep_bit = m_set(rep);
-        oid_t & dep_val = value(dep);
-        oid_t & rep_val = value(rep);
+        Ob & dep_val = value(dep);
+        Ob & rep_val = value(rep);
         if (rep_val) {
             merge_values(dep_val, rep_val);
         } else {

@@ -3,10 +3,10 @@
 
 using namespace pomagma;
 
-inline oid_t example_fun (oid_t i)
+inline Ob example_fun (Ob i)
 {
     const size_t big_prime = (1ul << 31ul) - 1;
-    oid_t result = big_prime % (i + 1);
+    Ob result = big_prime % (i + 1);
     if (result > 1) {
         return result;
     } else {
@@ -16,7 +16,7 @@ inline oid_t example_fun (oid_t i)
 
 Carrier * g_carrier = NULL;
 
-void merge_values (oid_t i, oid_t j)
+void merge_values (Ob i, Ob j)
 {
     POMAGMA_DEBUG("merging " << i << " into " << j);
     g_carrier->merge(i, j);
@@ -30,13 +30,13 @@ void test_basic (size_t size)
     const DenseSet & support = carrier.support();
     InjectiveFunction fun(carrier);
 
-    for (oid_t i = 1; i <= size; ++i) {
+    for (Ob i = 1; i <= size; ++i) {
         if (random_bool(0.8)) {
             carrier.insert(i);
         }
     }
     for (DenseSet::Iter i(support); i.ok(); i.next()) {
-        oid_t val = example_fun(*i);
+        Ob val = example_fun(*i);
         if (val and support.contains(val)) {
             fun.insert(*i, val, merge_values);
         }
@@ -45,7 +45,7 @@ void test_basic (size_t size)
 
     POMAGMA_INFO("Checking function values");
     for (DenseSet::Iter i(support); i.ok(); i.next()) {
-        oid_t val = example_fun(*i);
+        Ob val = example_fun(*i);
         if (val and support.contains(val)) {
             POMAGMA_ASSERT(fun.contains(*i), "missing value at " << *i);
             POMAGMA_ASSERT(fun.get_value(*i) == val, "bad value at " << *i);

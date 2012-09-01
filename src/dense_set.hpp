@@ -78,7 +78,7 @@ public:
     //{
     //}
     ~DenseSet ();
-    void move_from (const DenseSet & other, const oid_t * new2old = NULL);
+    void move_from (const DenseSet & other, const Ob * new2old = NULL);
     void init (Word * line)
     {
         POMAGMA_ASSERT4(m_alias, "tried to init() non-alias dense set");
@@ -105,7 +105,7 @@ public:
     inline void remove (size_t i);
     inline void merge  (size_t i, size_t j);
     void insert_all ();
-    oid_t insert_one ();
+    Ob insert_one ();
 
     // entire operations (note that all are monotonic)
     void zero ();

@@ -14,10 +14,10 @@ class SymmetricFunction;
 
 struct MergeTask
 {
-    oid_t dep;
+    Ob dep;
 
     MergeTask () {}
-    MergeTask (oid_t d) : dep(d) {}
+    MergeTask (Ob d) : dep(d) {}
 };
 
 struct CleanupTask
@@ -27,29 +27,29 @@ struct CleanupTask
     CleanupTask () {}
     CleanupTask (size_t t) : type(t) {}
 
-    bool references (oid_t) const { return false; }
+    bool references (Ob) const { return false; }
 };
 
 struct PositiveOrderTask
 {
-    oid_t lhs;
-    oid_t rhs;
+    Ob lhs;
+    Ob rhs;
 
     PositiveOrderTask () {}
-    PositiveOrderTask (oid_t l, oid_t r) : lhs(l), rhs(r) {}
+    PositiveOrderTask (Ob l, Ob r) : lhs(l), rhs(r) {}
 
-    bool references (oid_t dep) const { return lhs == dep or rhs == dep; }
+    bool references (Ob dep) const { return lhs == dep or rhs == dep; }
 };
 
 struct NegativeOrderTask
 {
-    oid_t lhs;
-    oid_t rhs;
+    Ob lhs;
+    Ob rhs;
 
     NegativeOrderTask () {}
-    NegativeOrderTask (oid_t l, oid_t r) : lhs(l), rhs(r) {}
+    NegativeOrderTask (Ob l, Ob r) : lhs(l), rhs(r) {}
 
-    bool references (oid_t dep) const { return lhs == dep or rhs == dep; }
+    bool references (Ob dep) const { return lhs == dep or rhs == dep; }
 };
 
 struct NullaryFunctionTask
@@ -59,46 +59,46 @@ struct NullaryFunctionTask
     NullaryFunctionTask () {}
     NullaryFunctionTask (NullaryFunction & f) : fun(&f) {}
 
-    bool references (oid_t) const { return false; }
+    bool references (Ob) const { return false; }
 };
 
 struct InjectiveFunctionTask
 {
     InjectiveFunction * fun;
-    oid_t arg;
+    Ob arg;
 
     InjectiveFunctionTask () {}
-    InjectiveFunctionTask (InjectiveFunction & f, oid_t a) : fun(&f), arg(a) {}
+    InjectiveFunctionTask (InjectiveFunction & f, Ob a) : fun(&f), arg(a) {}
 
-    bool references (oid_t dep) const { return arg == dep; }
+    bool references (Ob dep) const { return arg == dep; }
 };
 
 struct BinaryFunctionTask
 {
     BinaryFunction * fun;
-    oid_t lhs;
-    oid_t rhs;
+    Ob lhs;
+    Ob rhs;
 
     BinaryFunctionTask () {}
-    BinaryFunctionTask (BinaryFunction & f, oid_t l, oid_t r)
+    BinaryFunctionTask (BinaryFunction & f, Ob l, Ob r)
         : fun(&f), lhs(l), rhs(r)
     {}
 
-    bool references (oid_t dep) const { return lhs == dep or rhs == dep; }
+    bool references (Ob dep) const { return lhs == dep or rhs == dep; }
 };
 
 struct SymmetricFunctionTask
 {
     SymmetricFunction * fun;
-    oid_t lhs;
-    oid_t rhs;
+    Ob lhs;
+    Ob rhs;
 
     SymmetricFunctionTask () {}
-    SymmetricFunctionTask (SymmetricFunction & f, oid_t l, oid_t r)
+    SymmetricFunctionTask (SymmetricFunction & f, Ob l, Ob r)
         : fun(&f), lhs(l), rhs(r)
     {}
 
-    bool references (oid_t dep) const { return lhs == dep or rhs == dep; }
+    bool references (Ob dep) const { return lhs == dep or rhs == dep; }
 };
 
 

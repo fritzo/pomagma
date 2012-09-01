@@ -25,7 +25,7 @@ static boost::condition_variable g_work_condition;
 static SharedMutex g_merge_mutex;
 static std::vector<boost::thread> g_threads;
 
-void merge_tasks (oid_t dep);
+void merge_tasks (Ob dep);
 
 template<class Task>
 class TaskQueue
@@ -52,7 +52,7 @@ public:
         }
     }
 
-    void merge (oid_t dep)
+    void merge (Ob dep)
     {
         tbb::concurrent_queue<Task> queue;
         std::swap(queue, m_queue);
@@ -113,7 +113,7 @@ inline bool try_work ()
         or g_cleanups.try_execute();
 }
 
-inline void merge_tasks (oid_t dep)
+inline void merge_tasks (Ob dep)
 {
     g_nullary_functions.merge(dep);
     g_injective_functions.merge(dep);

@@ -14,7 +14,7 @@ class NullaryFunction : noncopyable
 {
     const Carrier & m_carrier;
     const DenseSet m_support; // aliased
-    oid_t m_value;
+    Ob m_value;
 
 public:
 
@@ -23,11 +23,11 @@ public:
 
     // function calling
 private:
-    oid_t & value () { return m_value; }
+    Ob & value () { return m_value; }
 public:
-    oid_t value () const { return m_value; }
-    oid_t get_value () const { return m_value; }
-    oid_t find () const { return m_value; }
+    Ob value () const { return m_value; }
+    Ob get_value () const { return m_value; }
+    Ob find () const { return m_value; }
 
     // attributes
 private:
@@ -37,16 +37,16 @@ public:
 
     // element operations
     // TODO add a replace method for merging
-    void insert (oid_t val);
+    void insert (Ob val);
     void remove ();
     bool defined () const { return m_value; }
 
     // support operations
-    void remove (const oid_t i);
-    void merge (const oid_t i, const oid_t j);
+    void remove (const Ob i);
+    void merge (const Ob i, const Ob j);
 };
 
-inline void NullaryFunction::insert (oid_t val)
+inline void NullaryFunction::insert (Ob val)
 {
     POMAGMA_ASSERT5(val, "tried to set value to zero");
     POMAGMA_ASSERT5(support().contains(val), "unsupported value: " << val);

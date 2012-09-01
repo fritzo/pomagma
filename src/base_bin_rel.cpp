@@ -68,7 +68,7 @@ void base_bin_rel_<symmetric>::validate() const
         // check emptiness outside of support
         DenseSet set(item_dim(), NULL);
         DenseSet round_set(m_round_item_dim, NULL);
-        for (oid_t i = 0; i < m_round_item_dim; ++i) {
+        for (Ob i = 0; i < m_round_item_dim; ++i) {
             if (1 <= i and i <= item_dim() and m_support.contains(i)) {
                 set.init(Lx(i));
                 set.validate();
@@ -83,8 +83,8 @@ void base_bin_rel_<symmetric>::validate() const
         }
 
         // check for Lx/Rx agreement
-        for (oid_t i = 1; i <= item_dim(); ++i) {
-        for (oid_t j = i; j <= item_dim(); ++j) {
+        for (Ob i = 1; i <= item_dim(); ++i) {
+        for (Ob j = i; j <= item_dim(); ++j) {
             POMAGMA_ASSERT(Lx(i, j) == Rx(i, j),
                     "Lx, Rx disagree at " << i << ',' << j);
         }}
@@ -94,7 +94,7 @@ void base_bin_rel_<symmetric>::validate() const
         // check emptiness outside of support
         DenseSet set(item_dim(), NULL);
         DenseSet round_set(m_round_item_dim, NULL);
-        for (oid_t i = 0; i < m_round_item_dim; ++i) {
+        for (Ob i = 0; i < m_round_item_dim; ++i) {
             if (1 <= i and i <= item_dim() and m_support.contains(i)) {
                 set.init(Lx(i));
                 set.validate();

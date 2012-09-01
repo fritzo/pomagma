@@ -3,7 +3,7 @@
 
 using namespace pomagma;
 
-inline oid_t example_fun (oid_t i, oid_t j)
+inline Ob example_fun (Ob i, Ob j)
 {
     return ((i % j) > (j % i)) * ((i * i + j + 1) % max(i, j));
 }
@@ -15,14 +15,14 @@ void test_basic (size_t size)
     const DenseSet & support = carrier.support();
     BinaryFunction fun(carrier);
 
-    for (oid_t i = 1; i <= size; ++i) {
+    for (Ob i = 1; i <= size; ++i) {
         if (random_bool(0.8)) {
             carrier.insert(i);
         }
     }
     for (DenseSet::Iter i(support); i.ok(); i.next()) {
     for (DenseSet::Iter j(support); j.ok(); j.next()) {
-        oid_t k = example_fun(*i, *j);
+        Ob k = example_fun(*i, *j);
         if (k > 1) {
             fun.insert(*i, *j, k);
         }
@@ -34,7 +34,7 @@ void test_basic (size_t size)
     std::vector<size_t> Rx_line_size(size + 1, 0);
     for (DenseSet::Iter i(support); i.ok(); i.next()) {
     for (DenseSet::Iter j(support); j.ok(); j.next()) {
-        oid_t k = example_fun(*i, *j);
+        Ob k = example_fun(*i, *j);
         if (k > 1) {
             POMAGMA_ASSERT(fun.contains(*i, *j),
                     "missing pair " << *i << ',' << *j);

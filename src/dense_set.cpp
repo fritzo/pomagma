@@ -32,7 +32,7 @@ DenseSet::~DenseSet ()
 //    }
 //}
 
-void DenseSet::move_from (const DenseSet & other, const oid_t * new2old)
+void DenseSet::move_from (const DenseSet & other, const Ob * new2old)
 {
     POMAGMA_DEBUG("Copying DenseSet");
 
@@ -110,7 +110,7 @@ void DenseSet::insert_all ()
     m_words[0] ^= 1; // remove zero element
 }
 
-oid_t DenseSet::insert_one () // WARNING not thread safe
+Ob DenseSet::insert_one () // WARNING not thread safe
 {
     m_words[0] ^= Word(1); // simplifies code
 
@@ -118,18 +118,18 @@ oid_t DenseSet::insert_one () // WARNING not thread safe
     while (! ~ * word) {
         ++word;
     }
-    oid_t oid = BITS_PER_WORD * (word - m_words);
+    Ob ob = BITS_PER_WORD * (word - m_words);
 
     const Word free = ~ * word;
     Word mask = 1;
     while (not (mask & free)) {
         mask <<= Word(1);
-        ++oid;
+        ++ob;
     }
     *word |= mask;
 
     m_words[0] ^= Word(1); // simplifies code
-    return oid;
+    return ob;
 }
 
 //----------------------------------------------------------------------------

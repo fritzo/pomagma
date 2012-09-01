@@ -40,45 +40,45 @@ public:
     Word * Rx () const { return m_Rx_lines; }
 
     // single line
-    Word * Lx (oid_t lhs) const
+    Word * Lx (Ob lhs) const
     {
         POMAGMA_ASSERT_RANGE_(5, lhs, item_dim());
         return m_Lx_lines + (lhs * m_round_word_dim);
     }
-    Word * Rx (oid_t rhs) const
+    Word * Rx (Ob rhs) const
     {
         POMAGMA_ASSERT_RANGE_(5, rhs, item_dim());
         return m_Rx_lines + (rhs * m_round_word_dim);
     }
 
     // single element
-    bool Lx (oid_t lhs, oid_t rhs) const
+    bool Lx (Ob lhs, Ob rhs) const
     {
         POMAGMA_ASSERT_RANGE_(5, rhs, item_dim());
         return bool_ref::index(Lx(lhs), rhs);
     }
-    bool Rx (oid_t lhs, oid_t rhs) const
+    bool Rx (Ob lhs, Ob rhs) const
     {
         POMAGMA_ASSERT_RANGE_(5, lhs, item_dim());
         return bool_ref::index(Rx(rhs), lhs);
     }
-    bool_ref Lx (oid_t lhs, oid_t rhs)
+    bool_ref Lx (Ob lhs, Ob rhs)
     {
         POMAGMA_ASSERT_RANGE_(5, rhs, item_dim());
         return bool_ref::index(Lx(lhs), rhs);
     }
-    bool_ref Rx (oid_t lhs, oid_t rhs)
+    bool_ref Rx (Ob lhs, Ob rhs)
     {
         POMAGMA_ASSERT_RANGE_(5, lhs, item_dim());
         return bool_ref::index(Rx(rhs), lhs);
     }
 
     // set wrappers
-    DenseSet Lx_set (oid_t lhs) const
+    DenseSet Lx_set (Ob lhs) const
     {
         return DenseSet(item_dim(), Lx(lhs));
     }
-    DenseSet Rx_set (oid_t rhs) const
+    DenseSet Rx_set (Ob rhs) const
     {
         return DenseSet(item_dim(), Rx(rhs));
     }

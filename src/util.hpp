@@ -179,8 +179,8 @@ public:
 //----------------------------------------------------------------------------
 // Data types
 
-typedef uint16_t oid_t;
-const size_t MAX_ITEM_DIM = (1UL << (8UL * sizeof(oid_t))) - 1UL;
+typedef uint16_t Ob;
+const size_t MAX_ITEM_DIM = (1UL << (8UL * sizeof(Ob))) - 1UL;
 
 const size_t BITS_PER_CACHE_LINE = 512;
 
@@ -221,21 +221,21 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// Blocks of oid_t
+// Blocks of Ob
 
 const size_t LOG2_ITEMS_PER_BLOCK = 2;
 const size_t ITEMS_PER_BLOCK = 1 << LOG2_ITEMS_PER_BLOCK;
 const size_t BLOCK_POS_MASK = ITEMS_PER_BLOCK - 1;
-typedef oid_t Block4x4[ITEMS_PER_BLOCK * ITEMS_PER_BLOCK];
+typedef Ob Block[ITEMS_PER_BLOCK * ITEMS_PER_BLOCK];
 
-inline oid_t & _block2value (oid_t * block, oid_t i, oid_t j)
+inline Ob & _block2value (Ob * block, Ob i, Ob j)
 {
     POMAGMA_ASSERT6(i < ITEMS_PER_BLOCK, "out of range " << i);
     POMAGMA_ASSERT6(j < ITEMS_PER_BLOCK, "out of range " << j);
     return block[(j << LOG2_ITEMS_PER_BLOCK) | i];
 }
 
-inline oid_t _block2value (const oid_t * block, oid_t i, oid_t j)
+inline Ob _block2value (const Ob * block, Ob i, Ob j)
 {
     POMAGMA_ASSERT6(i < ITEMS_PER_BLOCK, "out of range " << i);
     POMAGMA_ASSERT6(j < ITEMS_PER_BLOCK, "out of range " << j);

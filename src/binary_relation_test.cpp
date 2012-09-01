@@ -4,21 +4,21 @@
 using namespace pomagma;
 
 size_t g_num_moved(0);
-void move_to (oid_t i __attribute__((unused)), oid_t j __attribute__((unused)))
+void move_to (Ob i __attribute__((unused)), Ob j __attribute__((unused)))
 {
     //std::cout << i << '-' << j << ' ' << std::flush; //DEBUG
     ++g_num_moved;
 }
 
-bool br_test1 (oid_t i, oid_t j) { return i and j and i % 61u <= j % 31u; }
-bool br_test2 (oid_t i, oid_t j) { return i and j and i % 61u == j % 31u; }
+bool br_test1 (Ob i, Ob j) { return i and j and i % 61u <= j % 31u; }
+bool br_test2 (Ob i, Ob j) { return i and j and i % 61u == j % 31u; }
 
 typedef pomagma::BinaryRelation BinaryRelation;
 
 void test_BinaryRelation (
         size_t size,
-        bool test1(oid_t, oid_t),
-        bool test2(oid_t, oid_t))
+        bool test1(Ob, Ob),
+        bool test2(Ob, Ob))
 {
     POMAGMA_INFO("Testing BinaryRelation");
 
@@ -29,7 +29,7 @@ void test_BinaryRelation (
 
     POMAGMA_INFO("testing position insertion");
     size_t item_count = 0;
-    for (oid_t i = 1; i <= size; ++i) {
+    for (Ob i = 1; i <= size; ++i) {
         if (random_bool(0.5)) {
             carrier.insert(i);
             ++item_count;
@@ -94,10 +94,10 @@ void test_BinaryRelation (
     POMAGMA_ASSERT_EQ(num_pairs, rel.count_pairs());
 
     POMAGMA_INFO("testing position merging");
-    for (oid_t i = 1; i <= size / 3; ++i) {
+    for (Ob i = 1; i <= size / 3; ++i) {
         if (i % 3) continue;
-        oid_t m = (2 * i) % size;
-        oid_t n = (2 * (size - i - 1) + 1) % size;
+        Ob m = (2 * i) % size;
+        Ob n = (2 * (size - i - 1) + 1) % size;
         if (m == n) continue;
         if (not support.contains(m)) continue;
         if (not support.contains(n)) continue;

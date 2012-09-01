@@ -37,7 +37,7 @@ void NullaryFunction::validate () const
 //----------------------------------------------------------------------------
 // Operations
 
-void NullaryFunction::remove(const oid_t dep)
+void NullaryFunction::remove(const Ob dep)
 {
     POMAGMA_ASSERT_RANGE_(4, dep, m_support.item_dim());
 
@@ -46,7 +46,7 @@ void NullaryFunction::remove(const oid_t dep)
     }
 }
 
-void NullaryFunction::merge(const oid_t dep, const oid_t rep)
+void NullaryFunction::merge(const Ob dep, const Ob rep)
 {
     POMAGMA_ASSERT4(rep != dep, "self merge: " << dep << "," << rep);
     POMAGMA_ASSERT_RANGE_(4, dep, m_support.item_dim());

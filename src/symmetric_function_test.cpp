@@ -3,23 +3,23 @@
 
 using namespace pomagma;
 
-oid_t gcd (oid_t n, oid_t m) { return m ? gcd(m, n % m) : n; }
+Ob gcd (Ob n, Ob m) { return m ? gcd(m, n % m) : n; }
 
-void test_basic (oid_t size)
+void test_basic (Ob size)
 {
     POMAGMA_INFO("Defining function");
     Carrier carrier(size);
     const DenseSet & support = carrier.support();
     SymmetricFunction fun(carrier);
 
-    for (oid_t i = 1; i <= size; ++i) {
+    for (Ob i = 1; i <= size; ++i) {
         if (random_bool(0.8)) {
             carrier.insert(i);
         }
     }
     for (DenseSet::Iter i(support); i.ok(); i.next()) {
     for (DenseSet::Iter j(support); j.ok() and *j <= *i; j.next()) {
-        oid_t k = gcd(*i, *j);
+        Ob k = gcd(*i, *j);
         if (k > 1) {
             fun.insert(*i, *j, k);
         }
@@ -30,7 +30,7 @@ void test_basic (oid_t size)
     std::vector<size_t> line_size(1 + size, 0);
     for (DenseSet::Iter i(support); i.ok(); i.next()) {
     for (DenseSet::Iter j(support); j.ok(); j.next()) {
-        oid_t k = gcd(*i, *j);
+        Ob k = gcd(*i, *j);
         if (k > 1) {
             POMAGMA_ASSERT(fun.contains(*i, *j),
                     "function does not contain good pair " << *i << ',' << *j);
@@ -48,8 +48,8 @@ void test_basic (oid_t size)
     for (DenseSet::Iter i(support); i.ok(); i.next()) {
         size_t line_size_i = 0;
         for (iter.begin(*i); iter.ok(); iter.next()) {
-            oid_t j = iter.moving();
-            oid_t k = iter.value();
+            Ob j = iter.moving();
+            Ob k = iter.value();
             POMAGMA_ASSERT(k, "null item at " << *i << ',' << j);
             POMAGMA_ASSERT(gcd(*i, j) == k, "bad value at " << *i << ',' << j);
             ++line_size_i;

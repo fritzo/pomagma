@@ -3,7 +3,7 @@
 
 using namespace pomagma;
 
-bool is_even (oid_t i, oid_t modulus = 2) { return i % modulus == 0; }
+bool is_even (Ob i, Ob modulus = 2) { return i % modulus == 0; }
 
 void test_sizes ()
 {
@@ -25,19 +25,19 @@ void test_basic (size_t size)
     POMAGMA_ASSERT_EQ(set.count_items(), 0);
 
     POMAGMA_INFO("testing position insertion");
-    for (oid_t i = 1; i <= size; ++i) {
+    for (Ob i = 1; i <= size; ++i) {
         set.insert(i);
     }
     POMAGMA_ASSERT_EQ(set.count_items(), size);
 
     POMAGMA_INFO("testing position removal");
-    for (oid_t i = 1; i <= size; ++i) {
+    for (Ob i = 1; i <= size; ++i) {
         set.remove(i);
     }
     POMAGMA_ASSERT_EQ(set.count_items(), 0);
 
     POMAGMA_INFO("testing iteration");
-    for (oid_t i = 1; i <= size / 2; ++i) {
+    for (Ob i = 1; i <= size / 2; ++i) {
         set.insert(i);
     }
     POMAGMA_ASSERT_EQ(set.count_items(), size / 2);
@@ -58,15 +58,15 @@ void test_even (size_t size)
         e = new DenseSet(size);
     }
 
-    for (oid_t i = 1; i <= 6; ++i) {
-        for (oid_t j = 1; j < 1 + size; ++j) {
+    for (Ob i = 1; i <= 6; ++i) {
+        for (Ob j = 1; j < 1 + size; ++j) {
             if (is_even(j, i)) { evens[i]->insert(j); }
         }
     }
 
     POMAGMA_INFO("Testing set containment");
-    for (oid_t i = 1; i <= 6; ++i) {
-    for (oid_t j = 1; j <= 6; ++j) {
+    for (Ob i = 1; i <= 6; ++i) {
+    for (Ob j = 1; j <= 6; ++j) {
         POMAGMA_INFO(j << " % " << i << " = " << (j % i));
         if (j % i == 0) {
             POMAGMA_ASSERT(*evens[j] <= *evens[i],
@@ -84,7 +84,7 @@ void test_even (size_t size)
     POMAGMA_ASSERT(evens6 == *evens[6], "expected 6 = lcm(2, 3)")
 
     POMAGMA_INFO("Validating");
-    for (oid_t i = 0; i <= 6; ++i) {
+    for (Ob i = 0; i <= 6; ++i) {
         evens[i]->validate();
     }
     evens6.validate();
@@ -101,7 +101,7 @@ void test_iterator (size_t size)
     std::vector<bool> vect(size, false);
     size_t true_count = 0;
 
-    for (oid_t i = 1; i <= size; ++i) {
+    for (Ob i = 1; i <= size; ++i) {
         if (random_bool(0.2)) {
             set.insert(i);
             vect[i-1] = true;
@@ -109,7 +109,7 @@ void test_iterator (size_t size)
         }
     }
 
-    for (oid_t i = 1; i <= size; ++i) {
+    for (Ob i = 1; i <= size; ++i) {
         POMAGMA_ASSERT_EQ(bool(set(i)), vect[i-1]);
     }
 
@@ -140,7 +140,7 @@ void test_operations (size_t size)
     POMAGMA_INFO("testing insert_all");
     expected.zero();
     actual.zero();
-    for (oid_t i = 1; i <= size; ++i) {
+    for (Ob i = 1; i <= size; ++i) {
         expected.insert(i);
     }
     actual.insert_all();
@@ -149,8 +149,8 @@ void test_operations (size_t size)
     POMAGMA_INFO("testing insert_one");
     expected.zero();
     actual.zero();
-    std::vector<oid_t> free_list;
-    for (oid_t i = 1; i <= size; ++i) {
+    std::vector<Ob> free_list;
+    for (Ob i = 1; i <= size; ++i) {
         if (x(1)) {
             expected.insert(i);
             actual.insert(i);
@@ -158,9 +158,9 @@ void test_operations (size_t size)
             free_list.push_back(i);
         }
     }
-    for (oid_t i : free_list) {
+    for (Ob i : free_list) {
         expected.insert(i);
-        oid_t j = actual.insert_one();
+        Ob j = actual.insert_one();
         POMAGMA_ASSERT(i == j, "wrong insert_one " << j << " vs " << i);
         POMAGMA_ASSERT(actual == expected, "insert_one is wrong");
     }
@@ -168,7 +168,7 @@ void test_operations (size_t size)
     POMAGMA_INFO("testing union");
     expected.zero();
     actual.zero();
-    for (oid_t i = 1; i <= size; ++i) {
+    for (Ob i = 1; i <= size; ++i) {
         if (x(i) or y(i)) { expected.insert(i); }
         if (x(i)) { actual.insert(i); }
     }
@@ -183,7 +183,7 @@ void test_operations (size_t size)
     POMAGMA_INFO("testing intersection");
     expected.zero();
     actual.zero();
-    for (oid_t i = 1; i <= size; ++i) {
+    for (Ob i = 1; i <= size; ++i) {
         if (x(i) and y(i)) { expected.insert(i); }
         if (x(i)) { actual.insert(i); }
     }
@@ -203,14 +203,14 @@ void test_operations (size_t size)
     DenseSet actual_dep(size);
     DenseSet actual_diff(size);
     expected_rep.set_union(x, y);
-    for (oid_t i = 1; i <= size; ++i) {
+    for (Ob i = 1; i <= size; ++i) {
         if (y(i) and not x(i)) { expected_diff.insert(i); }
     }
 
     POMAGMA_INFO("testing merge(DenseSet)");
     actual_rep.zero();
     actual_dep.zero();
-    for (oid_t i = 1; i <= size; ++i) {
+    for (Ob i = 1; i <= size; ++i) {
         if (x(i)) { actual_rep.insert(i); }
         if (y(i)) { actual_dep.insert(i); }
     }
@@ -222,7 +222,7 @@ void test_operations (size_t size)
     actual_diff.zero();
     actual_rep.zero();
     actual_dep.zero();
-    for (oid_t i = 1; i <= size; ++i) {
+    for (Ob i = 1; i <= size; ++i) {
         if (x(i)) { actual_rep.insert(i); }
         if (y(i)) { actual_dep.insert(i); }
     }
@@ -234,7 +234,7 @@ void test_operations (size_t size)
     POMAGMA_INFO("testing merge(DenseSet, DenseSet)");
     actual_diff.zero();
     actual_rep.zero();
-    for (oid_t i = 1; i <= size; ++i) {
+    for (Ob i = 1; i <= size; ++i) {
         if (x(i)) { actual_rep.insert(i); }
     }
     actual_rep.ensure(y, actual_diff);

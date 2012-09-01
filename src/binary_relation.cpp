@@ -18,7 +18,7 @@ BinaryRelation::~BinaryRelation ()
 
 void BinaryRelation::move_from (
         const BinaryRelation & other,
-        const oid_t * new2old)
+        const Ob * new2old)
 {
     POMAGMA_DEBUG("Copying BinaryRelation");
 
@@ -34,13 +34,13 @@ void BinaryRelation::move_from (
     } else {
         POMAGMA_DEBUG("copying and reordering");
         // copy & reorder WIKKIT SLOW
-        for (oid_t i_new = 1; i_new <= item_dim(); ++i_new) {
+        for (Ob i_new = 1; i_new <= item_dim(); ++i_new) {
             if (not supports(i_new)) continue;
-            oid_t i_old = new2old[i_new];
+            Ob i_old = new2old[i_new];
 
-            for (oid_t j_new = 1; j_new <= item_dim(); ++j_new) {
+            for (Ob j_new = 1; j_new <= item_dim(); ++j_new) {
                 if (not supports(j_new)) continue;
-                oid_t j_old = new2old[j_new];
+                Ob j_old = new2old[j_new];
 
                 if (other.contains(i_old, j_old)) insert(i_new, j_new);
             }
@@ -72,11 +72,11 @@ void BinaryRelation::validate () const
 
     DenseSet Lx(round_item_dim(), NULL);
     DenseSet Rx(round_item_dim(), NULL);
-    for (oid_t i = 1; i <= item_dim(); ++i) {
+    for (Ob i = 1; i <= item_dim(); ++i) {
         bool sup_i = supports(i);
         Lx.init(m_lines.Lx(i));
 
-        for (oid_t j = 1; j <= item_dim(); ++j) {
+        for (Ob j = 1; j <= item_dim(); ++j) {
             bool sup_ij = sup_i and supports(j);
             Rx.init(m_lines.Rx(j));
 
@@ -128,9 +128,9 @@ void BinaryRelation::validate_disjoint (const BinaryRelation & other) const
 void BinaryRelation::print_table (size_t n) const
 {
     if (n == 0) n = item_dim();
-    for (oid_t i = 1; i <= n; ++i) {
+    for (Ob i = 1; i <= n; ++i) {
         std::cout << '\n';
-        for (oid_t j = 1; j <= n; ++j) {
+        for (Ob j = 1; j <= n; ++j) {
             std::cout << (contains(i, j) ? 'O' : '.');
         }
     }
@@ -140,7 +140,7 @@ void BinaryRelation::print_table (size_t n) const
 //----------------------------------------------------------------------------
 // Operations
 
-void BinaryRelation::remove_Lx (const DenseSet & is, oid_t j)
+void BinaryRelation::remove_Lx (const DenseSet & is, Ob j)
 {
     // slower version
     //for (DenseSet::Iter i(is); i.ok(); i.next()) {
@@ -156,7 +156,7 @@ void BinaryRelation::remove_Lx (const DenseSet & is, oid_t j)
     }
 }
 
-void BinaryRelation::remove_Rx (oid_t i, const DenseSet& js)
+void BinaryRelation::remove_Rx (Ob i, const DenseSet& js)
 {
     // slower version
     //for (DenseSet::Iter j(js); j.ok(); j.next()) {
@@ -172,7 +172,7 @@ void BinaryRelation::remove_Rx (oid_t i, const DenseSet& js)
     }
 }
 
-void BinaryRelation::remove (oid_t i)
+void BinaryRelation::remove (Ob i)
 {
     DenseSet set(item_dim(), NULL);
 
@@ -188,9 +188,9 @@ void BinaryRelation::remove (oid_t i)
 }
 
 void BinaryRelation::ensure_inserted (
-        oid_t i,
+        Ob i,
         const DenseSet & js,
-        void (*change)(oid_t, oid_t))
+        void (*change)(Ob, Ob))
 {
     DenseSet diff(item_dim());
     DenseSet dest(item_dim(), m_lines.Lx(i));
@@ -204,8 +204,8 @@ void BinaryRelation::ensure_inserted (
 
 void BinaryRelation::ensure_inserted (
         const DenseSet & is,
-        oid_t j,
-        void (*change)(oid_t, oid_t))
+        Ob j,
+        void (*change)(Ob, Ob))
 {
     DenseSet diff(item_dim());
     DenseSet dest(item_dim(), m_lines.Rx(j));
@@ -219,9 +219,9 @@ void BinaryRelation::ensure_inserted (
 
 // policy: call move_to if i~k but not j~k
 void BinaryRelation::merge (
-        oid_t i, // dep
-        oid_t j, // rep
-        void (*move_to)(oid_t, oid_t)) // typically enforce_
+        Ob i, // dep
+        Ob j, // rep
+        void (*move_to)(Ob, Ob)) // typically enforce_
 {
     POMAGMA_ASSERT4(j != i, "BinaryRelation tried to merge item with self");
 
@@ -264,7 +264,7 @@ inline void safe_fwrite (const void * ptr, size_t size, size_t count, FILE * fil
     POMAGMA_ASSERT(written == count, "fwrite failed");
 }
 
-oid_t BinaryRelation::data_size () const
+Ob BinaryRelation::data_size () const
 {
     return 2 * sizeof(Word) * data_size_words();
 }

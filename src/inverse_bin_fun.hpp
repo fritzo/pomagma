@@ -12,19 +12,19 @@ namespace pomagma
 {
 
 typedef std::vector<
-    tbb::concurrent_unordered_set<std::pair<oid_t, oid_t>>> Vlr_Data;
+    tbb::concurrent_unordered_set<std::pair<Ob, Ob>>> Vlr_Data;
 
 typedef tbb::concurrent_unordered_map<
-    std::pair<oid_t, oid_t>,
-    tbb::concurrent_unordered_set<oid_t>> VXx_Data;
+    std::pair<Ob, Ob>,
+    tbb::concurrent_unordered_set<Ob>> VXx_Data;
 
-inline bool contains (const Vlr_Data & Vlr_data, oid_t V, oid_t l, oid_t r)
+inline bool contains (const Vlr_Data & Vlr_data, Ob V, Ob l, Ob r)
 {
     auto & lr_set = Vlr_data[V];
     return lr_set.find(std::make_pair(l, r)) != lr_set.end();
 }
 
-inline bool contains (const VXx_Data & VXx_data, oid_t V, oid_t X, oid_t x)
+inline bool contains (const VXx_Data & VXx_data, Ob V, Ob X, Ob x)
 {
     auto i = VXx_data.find(std::make_pair(V, X));
     if (i == VXx_data.end()) {
@@ -33,7 +33,7 @@ inline bool contains (const VXx_Data & VXx_data, oid_t V, oid_t X, oid_t x)
     return i->second.find(x) != i->second.end();
 }
 
-inline void unsafe_erase (VXx_Data & VXx_data, oid_t V, oid_t X, oid_t x)
+inline void unsafe_erase (VXx_Data & VXx_data, Ob V, Ob X, Ob x)
 {
     auto i = VXx_data.find(std::make_pair(V, X));
     POMAGMA_ASSERT1(i != VXx_data.end(),
@@ -68,8 +68,8 @@ public:
     const DenseSet & support () const { return m_support; }
     size_t item_dim () const { return support().item_dim(); }
 
-    void insert (oid_t lhs, oid_t rhs, oid_t val);
-    void unsafe_remove (oid_t lhs, oid_t rhs, oid_t val);
+    void insert (Ob lhs, Ob rhs, Ob val);
+    void unsafe_remove (Ob lhs, Ob rhs, Ob val);
     void validate (BinaryFunction & fun);
 
     class Vlr_Iterator;
@@ -78,14 +78,14 @@ public:
     template<bool idx> class VXx_Iterator;
 };
 
-inline void inverse_bin_fun::insert (oid_t lhs, oid_t rhs, oid_t val)
+inline void inverse_bin_fun::insert (Ob lhs, Ob rhs, Ob val)
 {
     m_Vlr_data[val].insert(std::make_pair(lhs, rhs));
     m_VLr_data[std::make_pair(val, lhs)].insert(rhs);
     m_VRl_data[std::make_pair(val, rhs)].insert(lhs);
 }
 
-inline void inverse_bin_fun::unsafe_remove (oid_t lhs, oid_t rhs, oid_t val)
+inline void inverse_bin_fun::unsafe_remove (Ob lhs, Ob rhs, Ob val)
 {
     m_Vlr_data[val].unsafe_erase(std::make_pair(lhs, rhs));
     unsafe_erase(m_VLr_data, val, lhs, rhs);
@@ -98,9 +98,9 @@ inline void inverse_bin_fun::unsafe_remove (oid_t lhs, oid_t rhs, oid_t val)
 class inverse_bin_fun::Vlr_Iterator : noncopyable
 {
     inverse_bin_fun & m_fun;
-    tbb::concurrent_unordered_set<std::pair<oid_t, oid_t>>::iterator m_iter;
-    tbb::concurrent_unordered_set<std::pair<oid_t, oid_t>>::iterator m_end;
-    oid_t m_val;
+    tbb::concurrent_unordered_set<std::pair<Ob, Ob>>::iterator m_iter;
+    tbb::concurrent_unordered_set<std::pair<Ob, Ob>>::iterator m_end;
+    Ob m_val;
 
 public:
 
@@ -111,7 +111,7 @@ public:
           // XXX FIXME is it ok to default-construct m_iter, m_end?
     {
     }
-    Vlr_Iterator (inverse_bin_fun & fun, oid_t val)
+    Vlr_Iterator (inverse_bin_fun & fun, Ob val)
         : m_fun(fun),
           m_val(val)
     {
@@ -125,14 +125,14 @@ public:
         m_iter = i.begin();
         m_end = i.end();
     }
-    void begin (oid_t val) { m_val = val; begin(); }
+    void begin (Ob val) { m_val = val; begin(); }
     bool ok () const { return m_iter != m_end; }
     void next () { ++m_iter; }
 
     // dereferencing
-    oid_t value () const { POMAGMA_ASSERT_OK return m_val; }
-    oid_t lhs () const { POMAGMA_ASSERT_OK return m_iter->first; }
-    oid_t rhs () const { POMAGMA_ASSERT_OK return m_iter->second; }
+    Ob value () const { POMAGMA_ASSERT_OK return m_val; }
+    Ob lhs () const { POMAGMA_ASSERT_OK return m_iter->first; }
+    Ob rhs () const { POMAGMA_ASSERT_OK return m_iter->second; }
 };
 
 //----------------------------------------------------------------------------
@@ -142,9 +142,9 @@ template<bool idx>
 class inverse_bin_fun::VXx_Iterator : noncopyable
 {
     inverse_bin_fun & m_fun;
-    tbb::concurrent_unordered_set<oid_t>::iterator m_iter;
-    tbb::concurrent_unordered_set<oid_t>::iterator m_end;
-    std::pair<oid_t, oid_t> m_pair;
+    tbb::concurrent_unordered_set<Ob>::iterator m_iter;
+    tbb::concurrent_unordered_set<Ob>::iterator m_end;
+    std::pair<Ob, Ob> m_pair;
 
 public:
 
@@ -154,7 +154,7 @@ public:
           m_pair(0,0)
     {
     }
-    VXx_Iterator (inverse_bin_fun & fun, oid_t val, oid_t fixed)
+    VXx_Iterator (inverse_bin_fun & fun, Ob val, Ob fixed)
         : m_fun(fun),
           m_pair(val, fixed)
     {
@@ -173,7 +173,7 @@ public:
             m_iter = m_end;
         }
     }
-    void begin (oid_t val, oid_t fixed)
+    void begin (Ob val, Ob fixed)
     {
         m_pair = std::make_pair(val, fixed);
         begin();
@@ -182,11 +182,11 @@ public:
     void next  () { ++m_iter; }
 
     // dereferencing
-    oid_t value () const { POMAGMA_ASSERT_OK return m_pair.first; }
-    oid_t fixed () const { POMAGMA_ASSERT_OK return m_pair.second; }
-    oid_t moving () const { POMAGMA_ASSERT_OK return *m_iter; }
-    oid_t lhs () const { return idx ? moving() : fixed(); }
-    oid_t rhs () const { return idx ? fixed() : moving(); }
+    Ob value () const { POMAGMA_ASSERT_OK return m_pair.first; }
+    Ob fixed () const { POMAGMA_ASSERT_OK return m_pair.second; }
+    Ob moving () const { POMAGMA_ASSERT_OK return *m_iter; }
+    Ob lhs () const { return idx ? moving() : fixed(); }
+    Ob rhs () const { return idx ? fixed() : moving(); }
 };
 
 } // namespace pomagma

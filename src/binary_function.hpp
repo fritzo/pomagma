@@ -15,14 +15,14 @@ class BinaryFunction : noncopyable
 {
     base_bin_rel m_lines;
     const size_t m_block_dim;
-    Block4x4 * const m_blocks;
+    Block * const m_blocks;
 
     // block wrappers
-    oid_t * _block (size_t i_, size_t j_)
+    Ob * _block (size_t i_, size_t j_)
     {
         return m_blocks[m_block_dim * j_ + i_];
     }
-    const oid_t * _block (size_t i_, size_t j_) const
+    const Ob * _block (size_t i_, size_t j_) const
     {
         return m_blocks[m_block_dim * j_ + i_];
     }
@@ -30,8 +30,8 @@ class BinaryFunction : noncopyable
 public:
 
     // set wrappers
-    DenseSet get_Lx_set (oid_t lhs) const { return m_lines.Lx_set(lhs); }
-    DenseSet get_Rx_set (oid_t rhs) const { return m_lines.Rx_set(rhs); }
+    DenseSet get_Lx_set (Ob lhs) const { return m_lines.Lx_set(lhs); }
+    DenseSet get_Rx_set (Ob rhs) const { return m_lines.Rx_set(rhs); }
 
     // ctors & dtors
     BinaryFunction (const Carrier & carrier);
@@ -40,11 +40,11 @@ public:
 
     // function calling
 private:
-    inline oid_t & value (oid_t lhs, oid_t rhs);
+    inline Ob & value (Ob lhs, Ob rhs);
 public:
-    inline oid_t value (oid_t lhs, oid_t rhs) const;
-    oid_t get_value (oid_t lhs, oid_t rhs) const { return value(lhs, rhs); }
-    oid_t find (oid_t lhs, oid_t rhs) const { return value(lhs, rhs); }
+    inline Ob value (Ob lhs, Ob rhs) const;
+    Ob get_value (Ob lhs, Ob rhs) const { return value(lhs, rhs); }
+    Ob find (Ob lhs, Ob rhs) const { return value(lhs, rhs); }
 
     // attributes
     size_t item_dim () const { return m_lines.item_dim(); }
@@ -54,9 +54,9 @@ public:
 
     // element operations
     // TODO add a replace method for merging
-    void insert (oid_t lhs, oid_t rhs, oid_t val);
-    void remove (oid_t lhs, oid_t rhs);
-    bool contains (oid_t lhs, oid_t rhs) const
+    void insert (Ob lhs, Ob rhs, Ob val);
+    void remove (Ob lhs, Ob rhs);
+    bool contains (Ob lhs, Ob rhs) const
     {
         POMAGMA_ASSERT5(support().contains(lhs), "unsupported lhs: " << lhs);
         POMAGMA_ASSERT5(support().contains(rhs), "unsupported rhs: " << rhs);
@@ -65,40 +65,40 @@ public:
 
     // support operations
     void remove (
-            const oid_t i,
-            void remove_value(oid_t)); // rem
+            const Ob i,
+            void remove_value(Ob)); // rem
     void merge (
-            const oid_t i,
-            const oid_t j,
-            void merge_values(oid_t, oid_t), // dep, rep
-            void move_value(oid_t, oid_t, oid_t)); // moved, lhs, rhs
+            const Ob i,
+            const Ob j,
+            void merge_values(Ob, Ob), // dep, rep
+            void move_value(Ob, Ob, Ob)); // moved, lhs, rhs
 };
 
-inline oid_t & BinaryFunction::value (oid_t i, oid_t j)
+inline Ob & BinaryFunction::value (Ob i, Ob j)
 {
     POMAGMA_ASSERT_RANGE_(5, i, item_dim());
     POMAGMA_ASSERT_RANGE_(5, j, item_dim());
 
-    oid_t * block = _block(i / ITEMS_PER_BLOCK, j / ITEMS_PER_BLOCK);
+    Ob * block = _block(i / ITEMS_PER_BLOCK, j / ITEMS_PER_BLOCK);
     return _block2value(block, i & BLOCK_POS_MASK, j & BLOCK_POS_MASK);
 }
 
-inline oid_t BinaryFunction::value (oid_t i, oid_t j) const
+inline Ob BinaryFunction::value (Ob i, Ob j) const
 {
     POMAGMA_ASSERT_RANGE_(5, i, item_dim());
     POMAGMA_ASSERT_RANGE_(5, j, item_dim());
 
-    const oid_t * block = _block(i / ITEMS_PER_BLOCK, j / ITEMS_PER_BLOCK);
+    const Ob * block = _block(i / ITEMS_PER_BLOCK, j / ITEMS_PER_BLOCK);
     return _block2value(block, i & BLOCK_POS_MASK, j & BLOCK_POS_MASK);
 }
 
-inline void BinaryFunction::insert (oid_t lhs, oid_t rhs, oid_t val)
+inline void BinaryFunction::insert (Ob lhs, Ob rhs, Ob val)
 {
     POMAGMA_ASSERT5(support().contains(lhs), "unsupported lhs: " << lhs);
     POMAGMA_ASSERT5(support().contains(rhs), "unsupported rhs: " << rhs);
     POMAGMA_ASSERT5(val, "tried to set val to zero at " << lhs << "," << rhs);
 
-    oid_t & old_val = value(lhs, rhs);
+    Ob & old_val = value(lhs, rhs);
     POMAGMA_ASSERT2(not old_val, "double insertion: " << lhs << "," << rhs);
     old_val = val;
 
@@ -111,12 +111,12 @@ inline void BinaryFunction::insert (oid_t lhs, oid_t rhs, oid_t val)
     Rx_bit.one();
 }
 
-inline void BinaryFunction::remove (oid_t lhs, oid_t rhs)
+inline void BinaryFunction::remove (Ob lhs, Ob rhs)
 {
     POMAGMA_ASSERT5(support().contains(lhs), "unsupported lhs: " << lhs);
     POMAGMA_ASSERT5(support().contains(rhs), "unsupported rhs: " << rhs);
 
-    oid_t & old_val = value(lhs, rhs);
+    Ob & old_val = value(lhs, rhs);
     POMAGMA_ASSERT2(old_val, "double removal: " << lhs << "," << rhs);
     old_val = 0;
 

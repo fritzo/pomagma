@@ -15,9 +15,9 @@ class BinaryRelation : noncopyable
 {
     struct Pos
     {
-        oid_t lhs;
-        oid_t rhs;
-        Pos (oid_t l = 0, oid_t r = 0) : lhs(l), rhs(r) {}
+        Ob lhs;
+        Ob rhs;
+        Pos (Ob l = 0, Ob r = 0) : lhs(l), rhs(r) {}
         bool operator == (const Pos & p) const
         {
             return lhs == p.lhs and rhs == p.rhs;
@@ -40,13 +40,13 @@ class BinaryRelation : noncopyable
 public:
 
     // set wrappers
-    DenseSet get_Lx_set (oid_t lhs) const { return m_lines.Lx_set(lhs); }
-    DenseSet get_Rx_set (oid_t rhs) const { return m_lines.Rx_set(rhs); }
+    DenseSet get_Lx_set (Ob lhs) const { return m_lines.Lx_set(lhs); }
+    DenseSet get_Rx_set (Ob rhs) const { return m_lines.Rx_set(rhs); }
 
     // ctors & dtors
     BinaryRelation (const Carrier & carrier);
     ~BinaryRelation ();
-    void move_from (const BinaryRelation & other, const oid_t* new2old=NULL);
+    void move_from (const BinaryRelation & other, const Ob* new2old=NULL);
 
     // attributes
     const DenseSet & support () const { return m_lines.support(); }
@@ -56,10 +56,10 @@ public:
     void print_table (size_t n = 0) const;
 
     // element operations
-    bool contains_Lx (oid_t i, oid_t j) const { return m_lines.Lx(i, j); }
-    bool contains_Rx (oid_t i, oid_t j) const { return m_lines.Rx(i, j); }
-    bool contains (oid_t i, oid_t j) const { return contains_Lx(i, j); }
-    bool operator() (oid_t i, oid_t j) const { return contains(i, j); }
+    bool contains_Lx (Ob i, Ob j) const { return m_lines.Lx(i, j); }
+    bool contains_Rx (Ob i, Ob j) const { return m_lines.Rx(i, j); }
+    bool contains (Ob i, Ob j) const { return contains_Lx(i, j); }
+    bool operator() (Ob i, Ob j) const { return contains(i, j); }
     bool contains (const Pos & p) const { return contains_Lx(p); }
     bool contains_Lx (const Pos & p) const
     {
@@ -71,40 +71,40 @@ public:
     }
 private:
     // one-sided versions
-    void insert_Lx (oid_t i, oid_t j) { m_lines.Lx(i, j).one(); }
-    void insert_Rx (oid_t i, oid_t j) { m_lines.Rx(i, j).one(); }
-    void remove_Lx (oid_t i, oid_t j) { m_lines.Lx(i, j).zero(); }
-    void remove_Rx (oid_t i, oid_t j) { m_lines.Rx(i, j).zero(); }
-    void remove_Lx (const DenseSet & is, oid_t i);
-    void remove_Rx (oid_t i, const DenseSet & js);
+    void insert_Lx (Ob i, Ob j) { m_lines.Lx(i, j).one(); }
+    void insert_Rx (Ob i, Ob j) { m_lines.Rx(i, j).one(); }
+    void remove_Lx (Ob i, Ob j) { m_lines.Lx(i, j).zero(); }
+    void remove_Rx (Ob i, Ob j) { m_lines.Rx(i, j).zero(); }
+    void remove_Lx (const DenseSet & is, Ob i);
+    void remove_Rx (Ob i, const DenseSet & js);
 public:
     // two-sided versions
-    void insert (oid_t i, oid_t j) { insert_Lx(i, j); insert_Rx(i, j); }
-    void remove (oid_t i, oid_t j) { remove_Lx(i, j); remove_Rx(i, j); }
+    void insert (Ob i, Ob j) { insert_Lx(i, j); insert_Rx(i, j); }
+    void remove (Ob i, Ob j) { remove_Lx(i, j); remove_Rx(i, j); }
     // these return whether there was a change
-    inline bool ensure_inserted_Lx (oid_t i, oid_t j);
-    inline bool ensure_inserted_Rx (oid_t i, oid_t j);
-    bool ensure_inserted (oid_t i, oid_t j) { return ensure_inserted_Lx(i, j); }
+    inline bool ensure_inserted_Lx (Ob i, Ob j);
+    inline bool ensure_inserted_Rx (Ob i, Ob j);
+    bool ensure_inserted (Ob i, Ob j) { return ensure_inserted_Lx(i, j); }
     void ensure_inserted (
-            oid_t i,
+            Ob i,
             const DenseSet & js,
-            void (*change)(oid_t, oid_t));
+            void (*change)(Ob, Ob));
     void ensure_inserted (
             const DenseSet & is,
-            oid_t j,
-            void (*change)(oid_t, oid_t));
+            Ob j,
+            void (*change)(Ob, Ob));
 
     // support operations
-    bool supports (oid_t i) const { return support().contains(i); }
-    bool supports (oid_t i, oid_t j) const
+    bool supports (Ob i) const { return support().contains(i); }
+    bool supports (Ob i, Ob j) const
     {
         return supports(i) and supports(j);
     }
-    void remove (oid_t i);
-    void merge (oid_t dep, oid_t rep, void (*move_to)(oid_t, oid_t));
+    void remove (Ob i);
+    void merge (Ob dep, Ob rep, void (*move_to)(Ob, Ob));
 
     // saving/loading of block data
-    oid_t data_size () const;
+    Ob data_size () const;
     void write_to_file (FILE* file);
     void read_from_file (FILE* file);
 
@@ -118,7 +118,7 @@ public:
 // Operations
 
 // returns whether there was a change
-inline bool BinaryRelation::ensure_inserted_Lx (oid_t i, oid_t j)
+inline bool BinaryRelation::ensure_inserted_Lx (Ob i, Ob j)
 {
     bool_ref contained = m_lines.Lx(i, j);
     if (contained) return false;
@@ -128,7 +128,7 @@ inline bool BinaryRelation::ensure_inserted_Lx (oid_t i, oid_t j)
 }
 
 // returns whether there was a change
-inline bool BinaryRelation::ensure_inserted_Rx (oid_t i, oid_t j)
+inline bool BinaryRelation::ensure_inserted_Rx (Ob i, Ob j)
 {
     bool_ref contained = m_lines.Rx(i, j);
     if (contained) return false;
@@ -191,8 +191,8 @@ public:
     const Pos * operator -> () const { _deref_assert(); return &m_pos; }
 
     // access
-    oid_t lhs () const { return m_pos.lhs; }
-    oid_t rhs () const { return m_pos.rhs; }
+    Ob lhs () const { return m_pos.lhs; }
+    Ob rhs () const { return m_pos.rhs; }
 };
 
 //----------------------------------------------------------------------------
@@ -205,14 +205,14 @@ class BinaryRelation::Iterator : noncopyable
 protected:
     DenseSet m_moving_set;
     DenseSet::Iter m_moving;
-    oid_t m_fixed;
+    Ob m_fixed;
     Pos m_pos;
     const BinaryRelation & m_rel;
 
 public:
 
     // construction
-    Iterator (oid_t fixed, const BinaryRelation * rel)
+    Iterator (Ob fixed, const BinaryRelation * rel)
         : m_moving_set(rel->item_dim(), dir ? rel->m_lines.Lx(fixed)
                                             : rel->m_lines.Rx(fixed)),
           m_moving(m_moving_set, false),
@@ -241,7 +241,7 @@ public:
         m_moving.begin();
         if (m_moving.ok()) { _fix(); _move(); }
     }
-    void begin (oid_t fixed)
+    void begin (Ob fixed)
     {   POMAGMA_ASSERT2(m_rel.supports(fixed),
                 "br::Iterator's fixed pos is unsupported");
         m_fixed = fixed;
@@ -267,10 +267,10 @@ public:
     const Pos * operator -> () const { _deref_assert(); return &m_pos; }
 
     // access
-    oid_t fixed () const { return m_fixed; }
-    oid_t moving () const { return * m_moving; }
-    oid_t lhs () const { return m_pos.lhs; }
-    oid_t rhs () const { return m_pos.rhs; }
+    Ob fixed () const { return m_fixed; }
+    Ob moving () const { return * m_moving; }
+    Ob lhs () const { return m_pos.lhs; }
+    Ob rhs () const { return m_pos.rhs; }
 };
 
 } // namespace pomagma

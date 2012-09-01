@@ -21,51 +21,51 @@ class Carrier
     DenseSet m_support;
     size_t m_item_count;
     size_t m_rep_count;
-    oid_t * const m_reps;
+    Ob * const m_reps;
 
 public:
 
     Carrier (size_t item_dim = 511);
-    void move_from (const Carrier & other, const oid_t * new2old);
+    void move_from (const Carrier & other, const Ob * new2old);
 
     const DenseSet & support () const { return m_support; }
     size_t item_dim () const { return m_support.item_dim(); }
     size_t item_count () const { return m_item_count; }
     size_t rep_count () const { return m_rep_count; }
-    bool contains (oid_t oid) const { return m_support.contains(oid); }
+    bool contains (Ob ob) const { return m_support.contains(ob); }
 
     // merge trees
 private:
-    oid_t _find (oid_t & oid) const;
+    Ob _find (Ob & ob) const;
 public:
-    oid_t find (oid_t oid) const
+    Ob find (Ob ob) const
     {
-        POMAGMA_ASSERT5(contains(oid),
-                "tried to find unsupported object " << oid);
-        oid_t & rep = m_reps[oid];
-        return rep == oid ? oid : _find(rep);
+        POMAGMA_ASSERT5(contains(ob),
+                "tried to find unsupported object " << ob);
+        Ob & rep = m_reps[ob];
+        return rep == ob ? ob : _find(rep);
         // TODO this could be more clever
     }
 
-    bool equivalent (oid_t lhs, oid_t rhs) const
+    bool equivalent (Ob lhs, Ob rhs) const
     {
         return find(lhs) == find(rhs);
     }
 
-    void insert (oid_t oid) // WARNING not thread safe
+    void insert (Ob ob) // WARNING not thread safe
     {
-        POMAGMA_ASSERT1(not contains(oid), "double insertion: " << oid);
-        POMAGMA_ASSERT1(not m_reps[oid], "double insertion: " << oid);
+        POMAGMA_ASSERT1(not contains(ob), "double insertion: " << ob);
+        POMAGMA_ASSERT1(not m_reps[ob], "double insertion: " << ob);
 
-        m_support.insert(oid);
-        m_reps[oid] = oid;
+        m_support.insert(ob);
+        m_reps[ob] = ob;
     }
 
-    oid_t insert (); // WARNING not thread safe
+    Ob insert (); // WARNING not thread safe
 
-    void remove (oid_t oid); // WARNING not thread safe
+    void remove (Ob ob); // WARNING not thread safe
 
-    void merge (oid_t dep, oid_t rep) const
+    void merge (Ob dep, Ob rep) const
     {
         POMAGMA_ASSERT2(dep > rep,
                 "out of order merge: " << dep << "," << rep);

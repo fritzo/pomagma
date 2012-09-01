@@ -15,14 +15,14 @@ void inverse_bin_fun::validate (BinaryFunction & fun)
         lhs_iter.ok();
         lhs_iter.next())
     {
-        oid_t lhs = *lhs_iter;
+        Ob lhs = *lhs_iter;
         DenseSet rhs_set = fun.get_Lx_set(lhs);
         for (DenseSet::Iter rhs_iter(rhs_set);
             rhs_iter.ok();
             rhs_iter.next())
         {
-            oid_t rhs = *rhs_iter;
-            oid_t val = fun.find(lhs, rhs);
+            Ob rhs = *rhs_iter;
+            Ob val = fun.find(lhs, rhs);
 
             POMAGMA_ASSERT_CONTAINS(m_Vlr_data, val, lhs, rhs);
             POMAGMA_ASSERT_CONTAINS(m_VLr_data, val, lhs, rhs);
@@ -30,26 +30,26 @@ void inverse_bin_fun::validate (BinaryFunction & fun)
         }
     }
 
-    for (oid_t val = 1; val <= item_dim(); ++val) {
+    for (Ob val = 1; val <= item_dim(); ++val) {
         for (auto lr : m_Vlr_data[val]) {
-            oid_t lhs = lr.first;
-            oid_t rhs = lr.second;
+            Ob lhs = lr.first;
+            Ob rhs = lr.second;
             POMAGMA_ASSERT_EQ(fun.get_value(lhs, rhs), val);
         }
     }
 
     for (auto VL_iter : m_VLr_data) {
-        oid_t val = VL_iter.first.first;
-        oid_t lhs = VL_iter.first.second;
-        for (oid_t rhs : VL_iter.second) {
+        Ob val = VL_iter.first.first;
+        Ob lhs = VL_iter.first.second;
+        for (Ob rhs : VL_iter.second) {
             POMAGMA_ASSERT_EQ(fun.get_value(lhs, rhs), val);
         }
     }
 
     for (auto VR_iter : m_VRl_data) {
-        oid_t val = VR_iter.first.first;
-        oid_t rhs = VR_iter.first.second;
-        for (oid_t lhs : VR_iter.second) {
+        Ob val = VR_iter.first.first;
+        Ob rhs = VR_iter.first.second;
+        for (Ob lhs : VR_iter.second) {
             POMAGMA_ASSERT_EQ(fun.get_value(lhs, rhs), val);
         }
     }
