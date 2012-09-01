@@ -147,38 +147,25 @@ struct AssertSharedMutex
 
 class AssertSharedMutex
 {
-    std::atomic<size_t> m_shared;
-    AssertMutex m_unique;
+    std::atomic<int_fast64_t> m_count; // unique < 0, shared > 0
 
 public:
 
-    AssertSharedMutex () : m_shared(0), m_unique() {}
+    AssertSharedMutex () : m_count(0) {}
 
     void lock ()
     {
-        m_unique.lock();
-        POMAGMA_ASSERT(m_shared == 0, "lock while lock_shared");
+        POMAGMA_ASSERT(--m_count < 0, "lock contention");
     }
 
-    void unlock ()
-    {
-        POMAGMA_ASSERT(m_shared == 0, "unllock while lock_shared");
-        m_unique.unlock();
-    }
+    void unlock () { ++m_count; }
 
     void lock_shared ()
     {
-        ++m_shared;
-        POMAGMA_ASSERT(not m_unique.is_locked(),
-                "lock_shared while unique locked");
+        POMAGMA_ASSERT(++m_count > 0, "lock_shared contention");
     }
 
-    void unlock_shared ()
-    {
-        POMAGMA_ASSERT(not m_unique.is_locked(),
-                "unlock_shared while unique locked");
-        --m_shared;
-    }
+    void unlock_shared () { --m_count; }
 
     typedef unique_lock<AssertSharedMutex> UniqueLock;
     typedef shared_lock<AssertSharedMutex> SharedLock;
