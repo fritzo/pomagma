@@ -49,9 +49,6 @@ void BinaryRelation::move_from (
     if (POMAGMA_DEBUG_LEVEL >= 1) validate();
 }
 
-//----------------------------------------------------------------------------
-// Diagnostics
-
 // supa-slow, try not to use
 size_t BinaryRelation::count_pairs () const
 {
@@ -124,21 +121,6 @@ void BinaryRelation::validate_disjoint (const BinaryRelation & other) const
                 "BinaryRelations intersect at row " << *i);
     }
 }
-
-void BinaryRelation::print_table (size_t n) const
-{
-    if (n == 0) n = item_dim();
-    for (Ob i = 1; i <= n; ++i) {
-        std::cout << '\n';
-        for (Ob j = 1; j <= n; ++j) {
-            std::cout << (contains(i, j) ? 'O' : '.');
-        }
-    }
-    std::cout << std::endl;
-}
-
-//----------------------------------------------------------------------------
-// Operations
 
 void BinaryRelation::remove_Lx (const DenseSet & is, Ob j)
 {
@@ -278,25 +260,6 @@ void BinaryRelation::read_from_file (FILE * file)
     // WARNING assumes support is full
     safe_fread(m_lines.Lx(), sizeof(Word), data_size_words(), file);
     safe_fread(m_lines.Rx(), sizeof(Word), data_size_words(), file);
-}
-
-// iteration
-void BinaryRelation::iterator::_find_rhs ()
-{
-    while (m_lhs.ok()) {
-        m_rhs_set.init(m_rel.m_lines.Lx(*m_lhs));
-        m_rhs.begin();
-        if (m_rhs.ok()) {
-            _update_rhs();
-            _update_lhs();
-            POMAGMA_ASSERT5(m_rel.contains(m_pos),
-                    "BinaryRelation::iterator landed outside of relation: "
-                    << m_pos.lhs << "," << m_pos.rhs);
-            return;
-        }
-        m_lhs.next();
-    }
-    _finish();
 }
 
 } // namespace pomagma

@@ -62,16 +62,6 @@ void test_BinaryRelation (
     rel.validate();
     POMAGMA_ASSERT_EQ(num_pairs, rel.count_pairs());
 
-    POMAGMA_INFO("testing table iterator");
-    size_t num_pairs_seen = 0;
-    for (BinaryRelation::iterator iter(&rel); iter.ok(); iter.next()) {
-        ++num_pairs_seen;
-    }
-    POMAGMA_INFO("  iterated over "
-        << num_pairs_seen << " / " << num_pairs << " pairs");
-    rel.validate();
-    POMAGMA_ASSERT_EQ(num_pairs_seen, num_pairs);
-
     POMAGMA_INFO("testing pair containment");
     num_pairs = 0;
     for (DenseSet::Iterator i(support); i.ok(); i.next()) {
@@ -111,25 +101,17 @@ void test_BinaryRelation (
     rel.validate();
     POMAGMA_ASSERT_EQ(item_count, rel.support().count_items());
 
-    POMAGMA_INFO("testing table iterator again");
-    num_pairs_seen = 0;
-    for (BinaryRelation::iterator iter(&rel); iter.ok(); iter.next()) {
-        ++num_pairs_seen;
-    }
-    num_pairs = rel.count_pairs();
-    POMAGMA_INFO("  iterated over "
-        << num_pairs_seen << " / " << num_pairs << " pairs");
-    rel.validate();
-    POMAGMA_ASSERT_EQ(num_pairs_seen, num_pairs);
-
-    POMAGMA_INFO("testing line Iterator<LHS_FIXED>");
+    POMAGMA_INFO("testing line iterator (lhs fixed)");
     num_pairs = 0;
     size_t seen_item_count = 0;
     item_count = rel.support().count_items();
-    for (DenseSet::Iterator i(support); i.ok(); i.next()) {
+    for (DenseSet::Iterator lhs_iter(rel.support());
+        lhs_iter.ok();
+        lhs_iter.next())
+    {
         ++seen_item_count;
-        BinaryRelation::Iterator<BinaryRelation::LHS_FIXED> iter(*i, &rel);
-        for (iter.begin(); iter.ok(); iter.next()) {
+        DenseSet set = rel.get_Lx_set(*lhs_iter);
+        for (DenseSet::Iterator rhs_iter(set); rhs_iter.ok(); rhs_iter.next()) {
             ++num_pairs;
         }
     }
@@ -140,14 +122,16 @@ void test_BinaryRelation (
     size_t true_size = rel.count_pairs();
     POMAGMA_ASSERT_EQ(num_pairs, true_size);
 
-    POMAGMA_INFO("testing line Iterator<RHS_FIXED>");
+    POMAGMA_INFO("testing line iterator (rhs fixed)");
     num_pairs = 0;
     seen_item_count = 0;
-    for (size_t i = 1; i <= size; ++i) {
-        if (not rel.supports(i)) continue;
+    for (DenseSet::Iterator rhs_iter(rel.support());
+        rhs_iter.ok();
+        rhs_iter.next())
+    {
         ++seen_item_count;
-        BinaryRelation::Iterator<BinaryRelation::RHS_FIXED> iter(i, &rel);
-        for (iter.begin(); iter.ok(); iter.next()) {
+        DenseSet set = rel.get_Rx_set(*rhs_iter);
+        for (DenseSet::Iterator lhs_iter(set); lhs_iter.ok(); lhs_iter.next()) {
             ++num_pairs;
         }
     }
