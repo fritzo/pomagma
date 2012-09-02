@@ -113,12 +113,12 @@ void InjectiveFunction::remove (Ob ob)
 
     if (bool_ref bit = m_set(ob)) {
         bit.zero();
-        value(ob) = 0;
+        m_values[ob] = 0;
     }
 
     if (bool_ref bit = m_inverse_set(ob)) {
         bit.zero();
-        inverse(ob) = 0;
+        m_inverse[ob] = 0;
     }
 }
 
@@ -136,21 +136,18 @@ void InjectiveFunction::merge (Ob dep, Ob rep)
         dep_bit.zero();
         m_set(rep).one();
 
-        std::atomic<Ob> & dep_val = value(dep);
-        std::atomic<Ob> & rep_val = value(rep);
-
+        std::atomic<Ob> & dep_val = m_values[dep];
+        std::atomic<Ob> & rep_val = m_values[rep];
         m_carrier.set_and_merge(dep_val, rep_val);
         dep_val = 0;
-
     }
 
     if (bool_ref dep_bit = m_inverse_set(dep)) {
         dep_bit.zero();
         m_inverse_set(rep).one();
 
-        std::atomic<Ob> & dep_val = inverse(dep);
-        std::atomic<Ob> & rep_val = inverse(rep);
-
+        std::atomic<Ob> & dep_val = m_inverse[dep];
+        std::atomic<Ob> & rep_val = m_inverse[rep];
         m_carrier.set_and_merge(dep_val, rep_val);
         dep_val = 0;
     }

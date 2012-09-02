@@ -33,8 +33,8 @@ public:
     const DenseSet & inverse_defined () const { return m_inverse_set; }
     bool defined (Ob key) const;
     bool inverse_defined (Ob key) const;
-    Ob find (Ob key) const { return value(key); }
-    Ob inverse_find (Ob val) const { return inverse(val); }
+    Ob find (Ob key) const;
+    Ob inverse_find (Ob val) const;
     void insert (Ob key, Ob val) const;
 
     // unsafe operations
@@ -45,10 +45,6 @@ private:
 
     size_t item_dim () const { return m_support.item_dim(); }
     const DenseSet & support () const { return m_support; }
-    std::atomic<Ob> & value (Ob key);
-    std::atomic<Ob> & inverse (Ob val);
-    Ob value (Ob key) const;
-    Ob inverse (Ob val) const;
 };
 
 inline bool InjectiveFunction::defined (Ob key) const
@@ -63,25 +59,13 @@ inline bool InjectiveFunction::inverse_defined (Ob key) const
     return m_inverse_set.contains(key);
 }
 
-inline std::atomic<Ob> & InjectiveFunction::value (Ob key)
+inline Ob InjectiveFunction::find (Ob key) const
 {
     POMAGMA_ASSERT_RANGE_(5, key, item_dim());
     return m_values[key];
 }
 
-inline Ob InjectiveFunction::value (Ob key) const
-{
-    POMAGMA_ASSERT_RANGE_(5, key, item_dim());
-    return m_values[key];
-}
-
-inline std::atomic<Ob> & InjectiveFunction::inverse (Ob val)
-{
-    POMAGMA_ASSERT_RANGE_(5, val, item_dim());
-    return m_inverse[val];
-}
-
-inline Ob InjectiveFunction::inverse (Ob val) const
+inline Ob InjectiveFunction::inverse_find (Ob val) const
 {
     POMAGMA_ASSERT_RANGE_(5, val, item_dim());
     return m_inverse[val];
