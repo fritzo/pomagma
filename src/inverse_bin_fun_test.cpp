@@ -28,7 +28,7 @@ void test_random (size_t size, float fill = 0.3)
             if (not support.contains(lhs)) continue;
             rhs = random_int(1, size);
             if (not support.contains(rhs)) continue;
-            if (fun.contains(lhs, rhs)) continue;
+            if (fun.defined(lhs, rhs)) continue;
             break;
         }
         Ob val = random_int(1, size);

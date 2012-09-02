@@ -8,8 +8,6 @@
 namespace pomagma
 {
 
-// WARNING zero/null items are not allowed
-
 template<bool symmetric>
 class base_bin_rel_ : noncopyable
 {
@@ -28,6 +26,7 @@ public:
     void move_from (const base_bin_rel_<symmetric> & other); // for growing
     void validate () const;
 
+    const Carrier & carrier () const { return m_carrier; }
     const DenseSet & support () const { return m_support; }
     size_t item_dim () const { return m_support.item_dim(); }
     size_t word_dim () const { return m_support.word_dim(); }

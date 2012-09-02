@@ -11,7 +11,7 @@ void inverse_bin_fun::validate (BinaryFunction & fun)
 {
     POMAGMA_INFO("Validating inverse_bin_fun");
 
-    for (DenseSet::Iterator lhs_iter(fun.support());
+    for (DenseSet::Iterator lhs_iter(m_support);
         lhs_iter.ok();
         lhs_iter.next())
     {
@@ -34,7 +34,7 @@ void inverse_bin_fun::validate (BinaryFunction & fun)
         for (auto lr : m_Vlr_data[val]) {
             Ob lhs = lr.first;
             Ob rhs = lr.second;
-            POMAGMA_ASSERT_EQ(fun.get_value(lhs, rhs), val);
+            POMAGMA_ASSERT_EQ(fun.find(lhs, rhs), val);
         }
     }
 
@@ -42,7 +42,7 @@ void inverse_bin_fun::validate (BinaryFunction & fun)
         Ob val = VL_iter.first.first;
         Ob lhs = VL_iter.first.second;
         for (Ob rhs : VL_iter.second) {
-            POMAGMA_ASSERT_EQ(fun.get_value(lhs, rhs), val);
+            POMAGMA_ASSERT_EQ(fun.find(lhs, rhs), val);
         }
     }
 
@@ -50,7 +50,7 @@ void inverse_bin_fun::validate (BinaryFunction & fun)
         Ob val = VR_iter.first.first;
         Ob rhs = VR_iter.first.second;
         for (Ob lhs : VR_iter.second) {
-            POMAGMA_ASSERT_EQ(fun.get_value(lhs, rhs), val);
+            POMAGMA_ASSERT_EQ(fun.find(lhs, rhs), val);
         }
     }
 }

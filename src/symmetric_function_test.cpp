@@ -32,30 +32,16 @@ void test_basic (Ob size)
     for (DenseSet::Iterator j(support); j.ok(); j.next()) {
         Ob k = gcd(*i, *j);
         if (k > 1) {
-            POMAGMA_ASSERT(fun.contains(*i, *j),
+            POMAGMA_ASSERT(fun.defined(*i, *j),
                     "function does not contain good pair " << *i << ',' << *j);
-            POMAGMA_ASSERT(fun.get_value(*i, *j) == k,
+            POMAGMA_ASSERT(fun.find(*i, *j) == k,
                     "bad value at " << *i << ',' << *j);
             ++line_size[*i];
         } else {
-            POMAGMA_ASSERT(not fun.contains(*i, *j),
+            POMAGMA_ASSERT(not fun.defined(*i, *j),
                     "function contains bad pair " << *i << ',' << *j);
         }
     }}
-
-    POMAGMA_INFO("Checking line iterators");
-    SymmetricFunction::Iterator iter(&fun);
-    for (DenseSet::Iterator i(support); i.ok(); i.next()) {
-        size_t line_size_i = 0;
-        for (iter.begin(*i); iter.ok(); iter.next()) {
-            Ob j = iter.moving();
-            Ob k = iter.value();
-            POMAGMA_ASSERT(k, "null item at " << *i << ',' << j);
-            POMAGMA_ASSERT(gcd(*i, j) == k, "bad value at " << *i << ',' << j);
-            ++line_size_i;
-        }
-        POMAGMA_ASSERT_EQ(line_size[*i], line_size_i);
-    }
 
     POMAGMA_INFO("Validating");
     fun.validate();

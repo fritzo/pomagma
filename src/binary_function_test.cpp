@@ -36,14 +36,14 @@ void test_basic (size_t size)
     for (DenseSet::Iterator j(support); j.ok(); j.next()) {
         Ob k = example_fun(*i, *j);
         if (k > 1) {
-            POMAGMA_ASSERT(fun.contains(*i, *j),
+            POMAGMA_ASSERT(fun.defined(*i, *j),
                     "missing pair " << *i << ',' << *j);
-            POMAGMA_ASSERT(fun.get_value(*i, *j) == k,
+            POMAGMA_ASSERT(fun.find(*i, *j) == k,
                     "bad value at " << *i << ',' << *j);
             ++Lx_line_size[*i];
             ++Rx_line_size[*j];
         } else {
-            POMAGMA_ASSERT(not fun.contains(*i, *j),
+            POMAGMA_ASSERT(not fun.defined(*i, *j),
                     "unexpected pair " << *i << ',' << *j);
         }
     }}

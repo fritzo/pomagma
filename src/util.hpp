@@ -228,21 +228,21 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// Blocks of Ob
+// Blocks of atomic Ob
 
 const size_t LOG2_ITEMS_PER_BLOCK = 3;
 const size_t ITEMS_PER_BLOCK = 1 << LOG2_ITEMS_PER_BLOCK;
 const size_t BLOCK_POS_MASK = ITEMS_PER_BLOCK - 1;
-typedef Ob Block[ITEMS_PER_BLOCK * ITEMS_PER_BLOCK];
+typedef std::atomic<Ob> Block[ITEMS_PER_BLOCK * ITEMS_PER_BLOCK];
 
-inline Ob & _block2value (Ob * block, Ob i, Ob j)
+inline std::atomic<Ob> & _block2value (std::atomic<Ob> * block, Ob i, Ob j)
 {
     POMAGMA_ASSERT6(i < ITEMS_PER_BLOCK, "out of range " << i);
     POMAGMA_ASSERT6(j < ITEMS_PER_BLOCK, "out of range " << j);
     return block[(j << LOG2_ITEMS_PER_BLOCK) | i];
 }
 
-inline Ob _block2value (const Ob * block, Ob i, Ob j)
+inline Ob _block2value (const std::atomic<Ob> * block, Ob i, Ob j)
 {
     POMAGMA_ASSERT6(i < ITEMS_PER_BLOCK, "out of range " << i);
     POMAGMA_ASSERT6(j < ITEMS_PER_BLOCK, "out of range " << j);

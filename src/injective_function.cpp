@@ -86,23 +86,6 @@ void InjectiveFunction::validate () const
     }
 }
 
-void InjectiveFunction::insert (Ob key, Ob val) const
-{
-    SharedLock lock(m_mutex);
-
-    POMAGMA_ASSERT5(val, "tried to set val to zero at " << key);
-    POMAGMA_ASSERT5(support().contains(key), "unsupported key: " << key);
-    POMAGMA_ASSERT5(support().contains(val), "unsupported val: " << val);
-
-    m_carrier.set_and_merge(val, m_values[key]);
-    m_carrier.set_and_merge(key, m_inverse[val]);
-
-    memory_barrier();
-
-    m_set(key).one();
-    m_inverse_set(val).one();
-}
-
 void InjectiveFunction::remove (Ob ob)
 {
     UniqueLock lock(m_mutex);

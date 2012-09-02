@@ -92,7 +92,7 @@ inline Ob Carrier::set_and_merge (
         Ob source,
         std::atomic<Ob> & destin) const
 {
-    POMAGMA_ASSERT2(source, "tried to set_and_merge destin to 0");
+    POMAGMA_ASSERT_RANGE_(5, source, item_dim());
 
     Ob old = 0;
     while (not destin.compare_exchange_weak(old, source)) {

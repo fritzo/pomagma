@@ -71,6 +71,25 @@ inline Ob InjectiveFunction::inverse_find (Ob val) const
     return m_inverse[val];
 }
 
+inline void InjectiveFunction::insert (Ob key, Ob val) const
+{
+    SharedLock lock(m_mutex);
+
+    POMAGMA_ASSERT5(val, "tried to set val to zero at " << key);
+    POMAGMA_ASSERT5(support().contains(key), "unsupported key: " << key);
+    POMAGMA_ASSERT5(support().contains(val), "unsupported val: " << val);
+
+    if (m_carrier.set_and_merge(val, m_values[key]) == 0) {
+        memory_barrier(); // FIXME move into DenseSet
+        m_set(key).one();
+    }
+
+    if (m_carrier.set_and_merge(key, m_inverse[val]) == 0) {
+        memory_barrier(); // FIXME move into DenseSet
+        m_inverse_set(val).one();
+    }
+}
+
 } // namespace pomagma
 
 #endif // POMAGMA_INJECTIVE_FUNCTION_HPP
