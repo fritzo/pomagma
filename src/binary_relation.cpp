@@ -54,18 +54,10 @@ void BinaryRelation::move_from (
     if (POMAGMA_DEBUG_LEVEL >= 1) validate();
 }
 
-// supa-slow, try not to use
-size_t BinaryRelation::count_pairs () const
-{
-    size_t result = 0;
-    for (DenseSet::Iterator i(support()); i.ok(); i.next()) {
-        result += get_Lx_set(*i).count_items();
-    }
-    return result;
-}
-
 void BinaryRelation::validate () const
 {
+    UniqueLock lock(m_mutex);
+
     POMAGMA_DEBUG("Validating BinaryRelation");
 
     m_lines.validate();
@@ -106,6 +98,8 @@ void BinaryRelation::validate () const
 
 void BinaryRelation::validate_disjoint (const BinaryRelation & other) const
 {
+    UniqueLock lock(m_mutex);
+
     POMAGMA_DEBUG("Validating disjoint pair of BinaryRelations");
 
     // validate supports agree
@@ -124,6 +118,40 @@ void BinaryRelation::validate_disjoint (const BinaryRelation & other) const
         other_set.init(other.m_lines.Lx(*i));
         POMAGMA_ASSERT(this_set.disjoint(other_set),
                 "BinaryRelations intersect at row " << *i);
+    }
+}
+
+// supa-slow, try not to use
+size_t BinaryRelation::count_pairs () const
+{
+    size_t result = 0;
+    for (DenseSet::Iterator i(support()); i.ok(); i.next()) {
+        result += get_Lx_set(*i).count_items();
+    }
+    return result;
+}
+
+void BinaryRelation::insert (Ob i, const DenseSet & js)
+{
+    DenseSet diff(item_dim());
+    DenseSet dest(item_dim(), m_lines.Lx(i));
+    if (dest.ensure(js, diff)) {
+        for (DenseSet::Iterator k(diff); k.ok(); k.next()) {
+            _insert_Rx(i, *k);
+            m_insert_callback(i, *k);
+        }
+    }
+}
+
+void BinaryRelation::insert (const DenseSet & is, Ob j)
+{
+    DenseSet diff(item_dim());
+    DenseSet dest(item_dim(), m_lines.Rx(j));
+    if (dest.ensure(is, diff)) {
+        for (DenseSet::Iterator k(diff); k.ok(); k.next()) {
+            _insert_Lx(*k, j);
+            m_insert_callback(*k, j);
+        }
     }
 }
 
@@ -159,48 +187,28 @@ void BinaryRelation::_remove_Rx (Ob i, const DenseSet& js)
     }
 }
 
-void BinaryRelation::remove (Ob i)
+void BinaryRelation::remove (Ob ob)
 {
+    UniqueLock lock(m_mutex);
+
     DenseSet set(item_dim(), NULL);
 
     // remove column
-    set.init(m_lines.Lx(i));
-    _remove_Rx(i, set);
+    set.init(m_lines.Lx(ob));
+    _remove_Rx(ob, set);
     set.zero();
 
     // remove row
-    set.init(m_lines.Rx(i));
-    _remove_Lx(set, i);
+    set.init(m_lines.Rx(ob));
+    _remove_Lx(set, ob);
     set.zero();
-}
-
-void BinaryRelation::insert (Ob i, const DenseSet & js)
-{
-    DenseSet diff(item_dim());
-    DenseSet dest(item_dim(), m_lines.Lx(i));
-    if (dest.ensure(js, diff)) {
-        for (DenseSet::Iterator k(diff); k.ok(); k.next()) {
-            _insert_Rx(i, *k);
-            m_insert_callback(i, *k);
-        }
-    }
-}
-
-void BinaryRelation::insert (const DenseSet & is, Ob j)
-{
-    DenseSet diff(item_dim());
-    DenseSet dest(item_dim(), m_lines.Rx(j));
-    if (dest.ensure(is, diff)) {
-        for (DenseSet::Iterator k(diff); k.ok(); k.next()) {
-            _insert_Lx(*k, j);
-            m_insert_callback(*k, j);
-        }
-    }
 }
 
 // policy: callback whenever i~k but not j~k
 void BinaryRelation::merge (Ob i, Ob j)
 {
+    UniqueLock lock(m_mutex);
+
     POMAGMA_ASSERT4(j != i, "BinaryRelation tried to merge item with self");
 
     DenseSet diff(item_dim());
@@ -228,34 +236,6 @@ void BinaryRelation::merge (Ob i, Ob j)
             m_insert_callback(*k, j);
         }
     }
-}
-
-// saving/loading, quicker rather than smaller
-inline void safe_fread (void * ptr, size_t size, size_t count, FILE * file)
-{
-    size_t read = fread(ptr, size, count, file);
-    POMAGMA_ASSERT(read == count, "fread failed");
-}
-inline void safe_fwrite (const void * ptr, size_t size, size_t count, FILE * file)
-{
-    size_t written = fwrite(ptr, size, count, file);
-    POMAGMA_ASSERT(written == count, "fwrite failed");
-}
-
-Ob BinaryRelation::data_size () const
-{
-    return 2 * sizeof(Word) * data_size_words();
-}
-void BinaryRelation::write_to_file (FILE * file)
-{
-    safe_fwrite(m_lines.Lx(), sizeof(Word), data_size_words(), file);
-    safe_fwrite(m_lines.Rx(), sizeof(Word), data_size_words(), file);
-}
-void BinaryRelation::read_from_file (FILE * file)
-{
-    // WARNING assumes support is full
-    safe_fread(m_lines.Lx(), sizeof(Word), data_size_words(), file);
-    safe_fread(m_lines.Rx(), sizeof(Word), data_size_words(), file);
 }
 
 } // namespace pomagma

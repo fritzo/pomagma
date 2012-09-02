@@ -13,8 +13,6 @@ void move_to (Ob i __attribute__((unused)), Ob j __attribute__((unused)))
 bool test_fun1 (Ob i, Ob j) { return i and j and i % 61u <= j % 31u; }
 bool test_fun2 (Ob i, Ob j) { return i and j and i % 61u == j % 31u; }
 
-typedef pomagma::BinaryRelation BinaryRelation;
-
 void test_BinaryRelation (
         size_t size,
         bool (*test_fun) (Ob, Ob))

@@ -14,6 +14,10 @@ class BinaryRelation : noncopyable
     mutable base_bin_rel m_lines;
     void (*m_insert_callback) (Ob, Ob);
 
+    mutable SharedMutex m_mutex;
+    typedef SharedMutex::SharedLock SharedLock;
+    typedef SharedMutex::UniqueLock UniqueLock;
+
 public:
 
     BinaryRelation (
@@ -26,11 +30,11 @@ public:
 
     // attributes
     const DenseSet & support () const { return m_lines.support(); }
+    bool supports (Ob i) const { return support().contains(i); }
+    bool supports (Ob i, Ob j) const { return supports(i) and supports(j); }
     size_t count_pairs () const; // supa-slow, try not to use
 
     // safe operations
-    bool supports (Ob i) const { return support().contains(i); }
-    bool supports (Ob i, Ob j) const { return supports(i) and supports(j); }
     DenseSet get_Lx_set (Ob lhs) const { return m_lines.Lx_set(lhs); }
     DenseSet get_Rx_set (Ob rhs) const { return m_lines.Rx_set(rhs); }
     bool find_Lx (Ob i, Ob j) const { return m_lines.Lx(i, j); }
@@ -43,13 +47,8 @@ public:
     void insert (const DenseSet & is, Ob j);
 
     // unsafe operations
-    void remove (Ob i);
+    void remove (Ob ob);
     void merge (Ob dep, Ob rep);
-
-    // saving/loading of block data
-    Ob data_size () const;
-    void write_to_file (FILE* file);
-    void read_from_file (FILE* file);
 
 private:
 

@@ -18,14 +18,16 @@ namespace pomagma
 //----------------------------------------------------------------------------
 // signature
 
-void schedule_merge_task (Ob dep) { schedule(MergeTask(dep)); }
+void schedule_merge (Ob dep) { schedule(MergeTask(dep)); }
+void schedule_less (Ob lhs, Ob rhs) { schedule(PositiveOrderTask(lhs, rhs)); }
+void schedule_nless (Ob lhs, Ob rhs) { schedule(NegativeOrderTask(lhs, rhs)); }
 
-Carrier carrier(DEFAULT_ITEM_DIM, schedule_merge_task);
+Carrier carrier(DEFAULT_ITEM_DIM, schedule_merge);
 const DenseSet support(carrier.support(), yes_copy_construct);
 inline size_t item_dim () { return support.item_dim(); }
 
-BinaryRelation LESS(carrier);
-BinaryRelation NLESS(carrier);
+BinaryRelation LESS(carrier, schedule_less);
+BinaryRelation NLESS(carrier, schedule_nless);
 
 //----------------------------------------------------------------------------
 // ensurers
