@@ -82,7 +82,6 @@ inline void SymmetricFunction::insert (Ob lhs, Ob rhs, Ob val) const
 
     std::atomic<Ob> & old_val = value(lhs, rhs);
     if (carrier().set_and_merge(val, old_val) == 0) {
-        memory_barrier(); // FIXME move into DenseSet
         m_lines.Lx(lhs, rhs).one();
         m_lines.Lx(rhs, lhs).one();
     }

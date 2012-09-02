@@ -2,7 +2,7 @@
 #define POMAGMA_DENSE_SET_HPP
 
 #include "util.hpp"
-//#include "aligned_alloc.hpp"
+#include "bool_ref.hpp"
 
 namespace pomagma
 {

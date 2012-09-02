@@ -29,8 +29,6 @@ namespace pomagma
     #endif // __GNUG__
 #endif // restrict
 
-#define memory_barrier() __sync_synchronize()
-
 //----------------------------------------------------------------------------
 // Debugging
 
@@ -200,32 +198,6 @@ const size_t WORD_POS_MASK = BITS_PER_WORD - 1;
 const size_t WORD_POS_SHIFT = static_log2i<BITS_PER_WORD>::val();
 const Word FULL_WORD = ~Word(0);
 static_assert(FULL_WORD + Word(1) == 0, "FULL_WORD is bad");
-
-class bool_ref
-{
-    Word & m_word;
-    const Word m_mask;
-
-public:
-
-    bool_ref (Word & word, size_t _i)
-        : m_word(word),
-          m_mask(Word(1) << _i)
-    {
-        POMAGMA_ASSERT6(_i < BITS_PER_WORD, "out of range: " << _i);
-    }
-    static bool_ref index (Word * line, size_t i)
-    {
-        return bool_ref(line[i >> WORD_POS_SHIFT], i & WORD_POS_MASK);
-    }
-
-    operator bool () const { return m_word & m_mask; } // ATOMIC
-    void operator |= (bool b) { m_word |= b * m_mask; } // ATOMIC
-    void operator &= (bool b) { m_word &= ~(!b * m_mask); } // ATOMIC
-    void zero () { m_word &= ~m_mask; } // ATOMIC
-    void one () { m_word |= m_mask; } // ATOMIC
-    void invert () { m_word ^= m_mask; } // ATOMIC
-};
 
 //----------------------------------------------------------------------------
 // Blocks of atomic Ob

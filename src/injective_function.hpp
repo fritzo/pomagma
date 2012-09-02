@@ -80,12 +80,10 @@ inline void InjectiveFunction::insert (Ob key, Ob val) const
     POMAGMA_ASSERT5(support().contains(val), "unsupported val: " << val);
 
     if (m_carrier.set_and_merge(val, m_values[key]) == 0) {
-        memory_barrier(); // FIXME move into DenseSet
         m_set(key).one();
     }
 
     if (m_carrier.set_and_merge(key, m_inverse[val]) == 0) {
-        memory_barrier(); // FIXME move into DenseSet
         m_inverse_set(val).one();
     }
 }
