@@ -5,8 +5,13 @@
 namespace pomagma
 {
 
-BinaryRelation::BinaryRelation (const Carrier & carrier)
-    : m_lines(carrier)
+namespace { void noop_callback (Ob, Ob) {} }
+
+BinaryRelation::BinaryRelation (
+        const Carrier & carrier,
+        void (*insert_callback) (Ob, Ob))
+    : m_lines(carrier),
+      m_insert_callback(insert_callback ? insert_callback : noop_callback)
 {
     POMAGMA_DEBUG("creating BinaryRelation with "
             << round_word_dim() << " words");
@@ -42,7 +47,7 @@ void BinaryRelation::move_from (
                 if (not supports(j_new)) continue;
                 Ob j_old = new2old[j_new];
 
-                if (other.contains(i_old, j_old)) insert(i_new, j_new);
+                if (other.find(i_old, j_old)) _insert(i_new, j_new);
             }
         }
     }
@@ -122,11 +127,11 @@ void BinaryRelation::validate_disjoint (const BinaryRelation & other) const
     }
 }
 
-void BinaryRelation::remove_Lx (const DenseSet & is, Ob j)
+void BinaryRelation::_remove_Lx (const DenseSet & is, Ob j)
 {
     // slower version
     //for (DenseSet::Iterator i(is); i.ok(); i.next()) {
-    //    remove_Lx(*i, j);
+    //    _remove_Lx(*i, j);
     //}
 
     // faster version
@@ -138,11 +143,11 @@ void BinaryRelation::remove_Lx (const DenseSet & is, Ob j)
     }
 }
 
-void BinaryRelation::remove_Rx (Ob i, const DenseSet& js)
+void BinaryRelation::_remove_Rx (Ob i, const DenseSet& js)
 {
     // slower version
     //for (DenseSet::Iterator j(js); j.ok(); j.next()) {
-    //    remove_Rx(i, *j);
+    //    _remove_Rx(i, *j);
     //}
 
     // faster version
@@ -160,50 +165,41 @@ void BinaryRelation::remove (Ob i)
 
     // remove column
     set.init(m_lines.Lx(i));
-    remove_Rx(i, set);
+    _remove_Rx(i, set);
     set.zero();
 
     // remove row
     set.init(m_lines.Rx(i));
-    remove_Lx(set, i);
+    _remove_Lx(set, i);
     set.zero();
 }
 
-void BinaryRelation::ensure_inserted (
-        Ob i,
-        const DenseSet & js,
-        void (*change)(Ob, Ob))
+void BinaryRelation::insert (Ob i, const DenseSet & js)
 {
     DenseSet diff(item_dim());
     DenseSet dest(item_dim(), m_lines.Lx(i));
     if (dest.ensure(js, diff)) {
         for (DenseSet::Iterator k(diff); k.ok(); k.next()) {
-            insert_Rx(i, *k);
-            change(i, *k);
+            _insert_Rx(i, *k);
+            m_insert_callback(i, *k);
         }
     }
 }
 
-void BinaryRelation::ensure_inserted (
-        const DenseSet & is,
-        Ob j,
-        void (*change)(Ob, Ob))
+void BinaryRelation::insert (const DenseSet & is, Ob j)
 {
     DenseSet diff(item_dim());
     DenseSet dest(item_dim(), m_lines.Rx(j));
     if (dest.ensure(is, diff)) {
         for (DenseSet::Iterator k(diff); k.ok(); k.next()) {
-            insert_Lx(*k, j);
-            change(*k, j);
+            _insert_Lx(*k, j);
+            m_insert_callback(*k, j);
         }
     }
 }
 
-// policy: call move_to if i~k but not j~k
-void BinaryRelation::merge (
-        Ob i, // dep
-        Ob j, // rep
-        void (*move_to)(Ob, Ob)) // typically enforce_
+// policy: callback whenever i~k but not j~k
+void BinaryRelation::merge (Ob i, Ob j)
 {
     POMAGMA_ASSERT4(j != i, "BinaryRelation tried to merge item with self");
 
@@ -213,23 +209,23 @@ void BinaryRelation::merge (
 
     // merge rows (i, _) into (j, _)
     dep.init(m_lines.Lx(i));
-    remove_Rx(i, dep);
+    _remove_Rx(i, dep);
     rep.init(m_lines.Lx(j));
     if (rep.merge(dep, diff)) {
         for (DenseSet::Iterator k(diff); k.ok(); k.next()) {
-            insert_Rx(j, *k);
-            move_to(j, *k);
+            _insert_Rx(j, *k);
+            m_insert_callback(j, *k);
         }
     }
 
     // merge cols (_, i) into (_, j)
     dep.init(m_lines.Rx(i));
-    remove_Lx(dep, i);
+    _remove_Lx(dep, i);
     rep.init(m_lines.Rx(j));
     if (rep.merge(dep, diff)) {
         for (DenseSet::Iterator k(diff); k.ok(); k.next()) {
-            insert_Lx(*k, j);
-            move_to(*k, j);
+            _insert_Lx(*k, j);
+            m_insert_callback(*k, j);
         }
     }
 }

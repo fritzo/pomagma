@@ -10,21 +10,20 @@ void move_to (Ob i __attribute__((unused)), Ob j __attribute__((unused)))
     ++g_num_moved;
 }
 
-bool br_test1 (Ob i, Ob j) { return i and j and i % 61u <= j % 31u; }
-bool br_test2 (Ob i, Ob j) { return i and j and i % 61u == j % 31u; }
+bool test_fun1 (Ob i, Ob j) { return i and j and i % 61u <= j % 31u; }
+bool test_fun2 (Ob i, Ob j) { return i and j and i % 61u == j % 31u; }
 
 typedef pomagma::BinaryRelation BinaryRelation;
 
 void test_BinaryRelation (
         size_t size,
-        bool test1(Ob, Ob),
-        bool test2(Ob, Ob))
+        bool (*test_fun) (Ob, Ob))
 {
     POMAGMA_INFO("Testing BinaryRelation");
 
     POMAGMA_INFO("creating BinaryRelation of size " << size);
     Carrier carrier(size);
-    BinaryRelation rel(carrier);
+    BinaryRelation rel(carrier, move_to);
     const DenseSet & support = carrier.support();
 
     POMAGMA_INFO("testing position insertion");
@@ -41,7 +40,7 @@ void test_BinaryRelation (
     size_t num_pairs = 0;
     for (DenseSet::Iterator i(support); i.ok(); i.next()) {
     for (DenseSet::Iterator j(support); j.ok(); j.next()) {
-        if (test1(*i, *j)) {
+        if (test_fun(*i, *j)) {
             rel.insert(*i, *j);
             ++num_pairs;
         }
@@ -50,32 +49,20 @@ void test_BinaryRelation (
     rel.validate();
     POMAGMA_ASSERT_EQ(num_pairs, rel.count_pairs());
 
-    POMAGMA_INFO("testing pair removal");
-    for (DenseSet::Iterator i(support); i.ok(); i.next()) {
-    for (DenseSet::Iterator j(support); j.ok(); j.next()) {
-        if (test1(*i, *j) and test2(*i, *j)) {
-            rel.remove(*i, *j);
-            --num_pairs;
-        }
-    } }
-    POMAGMA_INFO("  " << num_pairs << " pairs remain");
-    rel.validate();
-    POMAGMA_ASSERT_EQ(num_pairs, rel.count_pairs());
-
     POMAGMA_INFO("testing pair containment");
     num_pairs = 0;
     for (DenseSet::Iterator i(support); i.ok(); i.next()) {
     for (DenseSet::Iterator j(support); j.ok(); j.next()) {
-        if (test1(*i, *j) and not test2(*i, *j)) {
-            POMAGMA_ASSERT(rel.contains_Lx(*i, *j),
+        if (test_fun(*i, *j)) {
+            POMAGMA_ASSERT(rel.find_Lx(*i, *j),
                     "Lx relation missing " << *i << ',' << *j);
-            POMAGMA_ASSERT(rel.contains_Rx(*i, *j),
+            POMAGMA_ASSERT(rel.find_Rx(*i, *j),
                     "Rx relation missing " << *i << ',' << *j);
             ++num_pairs;
         } else {
-            POMAGMA_ASSERT(not rel.contains_Lx(*i, *j),
+            POMAGMA_ASSERT(not rel.find_Lx(*i, *j),
                     "Lx relation has extra " << *i << ',' << *j);
-            POMAGMA_ASSERT(not rel.contains_Rx(*i, *j),
+            POMAGMA_ASSERT(not rel.find_Rx(*i, *j),
                     "Rx relation has extra " << *i << ',' << *j);
         }
     } }
@@ -92,7 +79,7 @@ void test_BinaryRelation (
         if (not support.contains(m)) continue;
         if (not support.contains(n)) continue;
         if (m < n) std::swap(m, n);
-        rel.merge(m, n, move_to);
+        rel.merge(m, n);
         carrier.merge(m, n);
         carrier.remove(m);
         --item_count;
@@ -147,7 +134,8 @@ int main ()
     Log::title("Running Binary Relation Test");
 
     for (size_t i = 0; i < 4; ++i) {
-        test_BinaryRelation(i + (1 << 9), br_test1, br_test2);
+        test_BinaryRelation(i + (1 << 9), test_fun1);
+        test_BinaryRelation(i + (1 << 9), test_fun2);
     }
 
     return 0;

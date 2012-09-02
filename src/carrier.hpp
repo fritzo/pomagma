@@ -19,7 +19,7 @@ class Carrier : noncopyable
     mutable size_t m_rep_count;
     typedef std::atomic<Ob> Rep;
     Rep * const m_reps;
-    void (*m_merge_callback)(Ob);
+    void (*m_merge_callback) (Ob);
 
     mutable AssertSharedMutex m_mutex;
     typedef AssertSharedMutex::SharedLock SharedLock; // for const methods
@@ -27,7 +27,7 @@ class Carrier : noncopyable
 
 public:
 
-    Carrier (size_t item_dim, void (*merge_callback)(Ob) = NULL);
+    Carrier (size_t item_dim, void (*merge_callback) (Ob) = NULL);
     ~Carrier ();
     void move_from (const Carrier & other, const Ob * new2old);
     void validate () const;
