@@ -41,7 +41,7 @@ Ob Carrier::insert ()
             "tried to insert in full Carrier");
 
     Ob ob = m_support.insert_one();
-    m_reps[ob] = ob;
+    m_reps[ob].store(ob);
     ++m_item_count;
     ++m_rep_count;
     return ob;
@@ -52,10 +52,10 @@ void Carrier::insert (Ob ob)
     UniqueLock lock(m_mutex);
 
     POMAGMA_ASSERT1(not contains(ob), "double insertion: " << ob);
-    POMAGMA_ASSERT1(not m_reps[ob], "double insertion: " << ob);
+    POMAGMA_ASSERT1(not m_reps[ob].load(), "double insertion: " << ob);
 
     m_support.insert(ob);
-    m_reps[ob] = ob;
+    m_reps[ob].store(ob);
     ++m_item_count;
     ++m_rep_count;
 }
@@ -65,24 +65,24 @@ void Carrier::remove (Ob ob)
     UniqueLock lock(m_mutex);
 
     POMAGMA_ASSERT2(m_support.contains(ob), "double removal: " << ob);
-    POMAGMA_ASSERT2(m_reps[ob], "double removal: " << ob);
-
-    Ob rep = m_reps[ob];
+    Ob rep = ob;
+    while (not m_reps[rep].compare_exchange_strong(rep, rep)) {}
+    POMAGMA_ASSERT2(rep, "double removal: " << ob);
     if (rep == ob) {
-        for (Ob other = ob + 1; other <= item_dim(); ++other) {
-            POMAGMA_ASSERT2(m_reps[other] != ob, "removed a rep: " << ob);
+        for (Ob other = ob + 1, end = item_dim(); other <= end; ++other) {
+            POMAGMA_ASSERT2(m_reps[other].load() != ob,
+                    "removed rep " << ob << " before dep " << other);
         }
         --m_rep_count;
     } else {
-        for (Ob other = ob + 1; other <= item_dim(); ++other) {
-            if (m_reps[other] == ob) {
-                m_reps[other] = rep;
-            }
+        for (Ob other = ob + 1, end = item_dim(); other <= end; ++other) {
+            Ob expected = ob;
+            m_reps[other].compare_exchange_strong(expected, rep);
         }
     }
 
     m_support.remove(ob);
-    m_reps[ob] = 0;
+    m_reps[ob].store(0);
     --m_item_count;
 }
 
@@ -95,8 +95,13 @@ Ob Carrier::merge (Ob dep, Ob rep) const
     POMAGMA_ASSERT2(m_support.contains(dep), "bad merge dep " << dep);
     POMAGMA_ASSERT2(m_support.contains(rep), "bad merge rep " << rep);
 
-    while (not m_reps[dep].compare_exchange_weak(dep, rep)) {
-        rep = m_reps[rep];
+    while (not m_reps[dep].compare_exchange_weak(
+                dep,
+                rep,
+                std::memory_order_acq_rel,
+                std::memory_order_acquire))
+    {
+        rep = m_reps[rep].load(std::memory_order_acquire);
         if (dep == rep) return rep;
         if (dep < rep) std::swap(dep, rep);
     }
@@ -110,7 +115,12 @@ Ob Carrier::merge (Ob dep, Ob rep) const
 Ob Carrier::_find (Ob ob, Ob rep) const
 {
     Ob rep_rep = find(rep);
-    if (m_reps[ob].compare_exchange_weak(rep, rep_rep)) {
+    if (m_reps[ob].compare_exchange_weak(
+                rep,
+                rep_rep,
+                std::memory_order_acq_rel,
+                std::memory_order_acquire))
+    {
         return rep_rep;
     } else {
         return rep < rep_rep ? rep : rep_rep;
@@ -119,23 +129,23 @@ Ob Carrier::_find (Ob ob, Ob rep) const
 
 void Carrier::validate () const
 {
-    SharedLock lock(m_mutex);
+    UniqueLock lock(m_mutex);
 
     m_support.validate();
 
     size_t actual_item_count = 0;
     size_t actual_rep_count = 0;
     for (Ob i = 1; i <= item_dim(); ++i) {
+        Ob rep = m_reps[i].load();
         if (contains(i)) {
-            POMAGMA_ASSERT(m_reps[i], "supported object has no rep: " << i);
-            POMAGMA_ASSERT(m_reps[i] <= i,
-                "rep out of order: " << m_reps[i] << "," << i);
+            POMAGMA_ASSERT(rep, "supported object has no rep: " << i);
+            POMAGMA_ASSERT(rep <= i, "rep out of order: " << rep << "," << i);
             ++actual_item_count;
-            if (find(i) == i) {
+            if (rep == i) {
                 ++actual_rep_count;
             }
         } else {
-            POMAGMA_ASSERT(m_reps[i] == 0, "unsupported object has rep: " << i);
+            POMAGMA_ASSERT(rep == 0, "unsupported object has rep: " << i);
         }
     }
     POMAGMA_ASSERT_EQ(item_count(), actual_item_count);

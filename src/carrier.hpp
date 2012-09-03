@@ -39,7 +39,7 @@ public:
     size_t rep_count () const { return m_rep_count; }
     bool contains (Ob ob) const { return m_support.contains(ob); }
 
-    // safe operations
+    // relaxed operations
     Ob find (Ob ob) const;
     bool equal (Ob lhs, Ob rhs) const;
     Ob merge (Ob dep, Ob rep) const;
@@ -48,7 +48,7 @@ public:
             Ob source,
             std::atomic<Ob> & destin) const; // return old val
 
-    // unsafe operations
+    // strict operations
     Ob insert ();
     void insert (Ob ob);
     void remove (Ob ob);
@@ -63,12 +63,7 @@ inline Ob Carrier::find (Ob ob) const
     SharedLock lock(m_mutex);
     POMAGMA_ASSERT5(contains(ob), "tried to find unsupported object " << ob);
 
-    // Version 1.
-    Ob rep = m_reps[ob];
-
-    // Version 2.
-    //Ob rep = m_reps[ob].load(std::memory_order_relaxed); // does this work?
-
+    Ob rep = m_reps[ob].load(std::memory_order_relaxed);
     return rep == ob ? ob : _find(ob, rep);
 }
 
@@ -95,7 +90,12 @@ inline Ob Carrier::set_and_merge (
     POMAGMA_ASSERT_RANGE_(5, source, item_dim());
 
     Ob old = 0;
-    while (not destin.compare_exchange_weak(old, source)) {
+    while (not destin.compare_exchange_weak(
+                old,
+                source,
+                std::memory_order_acq_rel,
+                std::memory_order_acquire))
+    {
         if (old == source) break;
         else if (source > old) { merge(source, old); break; }
         else { source = merge(old, source); }
