@@ -3,6 +3,12 @@
 
 #include "util.hpp"
 
+#if __GNUC_PREREQ(4,7)
+#  define assume_aligned(POMAGMA_arg) __builtin_assume_aligned(POMAGMA_arg, 32)
+#else // __GNUC_PREREQ(4,7)
+#  define assume_aligned(POMAGMA_arg) (POMAGMA_arg)
+#endif // __GNUC_PREREQ(4,7)
+
 extern "C" void bzero(void * data, size_t byte_count) throw ();
 
 namespace pomagma

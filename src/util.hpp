@@ -16,24 +16,34 @@ namespace pomagma
 //----------------------------------------------------------------------------
 // Compiler-specific
 
-#ifndef __STDC_VERSION__
-    #define __STDC_VERSION__ 199901L
-#endif // __STDC_VERSION__
+//#ifndef __STDC_VERSION__
+//#  warning "__STDC_VERSION__ was undefined"
+//#  define __STDC_VERSION__ 199901L
+//#endif // __STDC_VERSION__
 
 #ifndef restrict
-    #ifdef __GNUG__
-        #define restrict __restrict__
-    #else // __GNUG__
-        #warning keyword 'restrict' ignored
-        #define restrict
-    #endif // __GNUG__
+#  ifdef __GNUG__
+#    define restrict __restrict__
+#  else // __GNUG__
+#    warning "ignoring keyword 'restrict'"
+#    define restrict
+#  endif // __GNUG__
 #endif // restrict
+
+#ifdef __GNUG__
+#  define likely(x) __builtin_expect(bool(x), true)
+#  define unlikely(x) __builtin_expect(bool(x), false)
+#else // __GNUG__
+#  warning "ignoring likely(-), unlikely(-)"
+#  define likely(x) (x)
+#  define unlikely(x) (x)
+#endif // __GNUG__
 
 //----------------------------------------------------------------------------
 // Debugging
 
 #ifndef POMAGMA_DEBUG_LEVEL
-#define POMAGMA_DEBUG_LEVEL 0
+#  define POMAGMA_DEBUG_LEVEL 0
 #endif // POMAGMA_DEBUG_LEVEL
 
 //----------------------------------------------------------------------------

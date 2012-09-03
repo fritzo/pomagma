@@ -114,7 +114,7 @@ Ob DenseSet::insert_one () // WARNING not thread safe
 {
     m_words[0] ^= Word(1); // simplifies code
 
-    Word * restrict word = m_words;
+    Word * restrict word = assume_aligned(m_words);
     while (! ~ * word) {
         ++word;
     }
@@ -175,8 +175,8 @@ void DenseSet::operator += (const DenseSet & other)
 {
     POMAGMA_ASSERT1(item_dim() == other.item_dim(), "item_dim mismatch");
 
-    const Word * restrict s = other.m_words;
-    Word * restrict t = m_words;
+    const Word * restrict s = assume_aligned(other.m_words);
+    Word * restrict t = assume_aligned(m_words);
 
     for (size_t m = 0, M = m_word_dim; m < M; ++m) {
         t[m] |= s[m];
@@ -188,8 +188,8 @@ void DenseSet::operator *= (const DenseSet & other)
 {
     POMAGMA_ASSERT1(item_dim() == other.item_dim(), "item_dim mismatch");
 
-    const Word * restrict s = other.m_words;
-    Word * restrict t = m_words;
+    const Word * restrict s = assume_aligned(other.m_words);
+    Word * restrict t = assume_aligned(m_words);
 
     for (size_t m = 0, M = m_word_dim; m < M; ++m) {
         t[m] &= s[m];
@@ -201,9 +201,9 @@ void DenseSet::set_union (const DenseSet & lhs, const DenseSet & rhs)
     POMAGMA_ASSERT1(item_dim() == lhs.item_dim(), "lhs.item_dim mismatch");
     POMAGMA_ASSERT1(item_dim() == rhs.item_dim(), "rhs.item_dim mismatch");
 
-    const Word * restrict s = lhs.m_words;
-    const Word * restrict t = rhs.m_words;
-    Word * restrict u = m_words;
+    const Word * restrict s = assume_aligned(lhs.m_words);
+    const Word * restrict t = assume_aligned(rhs.m_words);
+    Word * restrict u = assume_aligned(m_words);
 
     for (size_t m = 0, M = m_word_dim; m < M; ++m) {
         u[m] = s[m] | t[m];
@@ -215,9 +215,9 @@ void DenseSet::set_insn (const DenseSet & lhs, const DenseSet & rhs)
     POMAGMA_ASSERT1(item_dim() == lhs.item_dim(), "lhs.item_dim mismatch");
     POMAGMA_ASSERT1(item_dim() == rhs.item_dim(), "rhs.item_dim mismatch");
 
-    const Word * restrict s = lhs.m_words;
-    const Word * restrict t = rhs.m_words;
-    Word * restrict u = m_words;
+    const Word * restrict s = assume_aligned(lhs.m_words);
+    const Word * restrict t = assume_aligned(rhs.m_words);
+    Word * restrict u = assume_aligned(m_words);
 
     for (size_t m = 0, M = m_word_dim; m < M; ++m) {
         u[m] = s[m] & t[m];
@@ -229,8 +229,8 @@ void DenseSet::merge (DenseSet & dep)
 {
     POMAGMA_ASSERT4(m_item_dim == dep.m_item_dim, "dep has wrong size");
 
-    Word * restrict d = dep.m_words;
-    Word * restrict r = m_words;
+    Word * restrict d = assume_aligned(dep.m_words);
+    Word * restrict r = assume_aligned(m_words);
 
     for (size_t m = 0, M = m_word_dim; m < M; ++m) {
         r[m] |= d[m];
@@ -244,9 +244,9 @@ bool DenseSet::merge (DenseSet & dep, DenseSet & diff)
     POMAGMA_ASSERT4(m_item_dim == dep.m_item_dim, "dep has wrong size");
     POMAGMA_ASSERT4(m_item_dim == diff.m_item_dim, "diff has wrong size");
 
-    Word * restrict d = dep.m_words;
-    Word * restrict r = m_words;
-    Word * restrict c = diff.m_words;
+    Word * restrict d = assume_aligned(dep.m_words);
+    Word * restrict r = assume_aligned(m_words);
+    Word * restrict c = assume_aligned(diff.m_words);
 
     Word changed = 0;
     for (size_t m = 0, M = m_word_dim; m < M; ++m) {
@@ -264,9 +264,9 @@ bool DenseSet::ensure (const DenseSet & src, DenseSet & diff)
     POMAGMA_ASSERT4(m_item_dim == src.m_item_dim, "src has wrong size");
     POMAGMA_ASSERT4(m_item_dim == diff.m_item_dim, "diff has wrong size");
 
-    const Word * restrict d = src.m_words;
-    Word * restrict r = m_words;
-    Word * restrict c = diff.m_words;
+    const Word * restrict d = assume_aligned(src.m_words);
+    Word * restrict r = assume_aligned(m_words);
+    Word * restrict c = assume_aligned(diff.m_words);
 
     Word changed = 0;
     for (size_t m = 0, M = m_word_dim; m < M; ++m) {
