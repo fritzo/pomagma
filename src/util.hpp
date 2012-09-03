@@ -187,6 +187,12 @@ public:
         1 <= (POMAGMA_i) and (POMAGMA_i) <= (POMAGMA_dim),\
         "out of range: " #POMAGMA_i " = " << (POMAGMA_i))
 
+#define POMAGMA_ASSERT_ALIGNED_(POMAGMA_level, POMAGMA_ptr)\
+    POMAGMA_ASSERT_(\
+        (POMAGMA_level),\
+        (reinterpret_cast<size_t>(POMAGMA_ptr) & size_t(31)) == 0,\
+        "bad alignment for variable " #POMAGMA_ptr)
+
 //----------------------------------------------------------------------------
 // Data types
 

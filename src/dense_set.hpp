@@ -49,6 +49,7 @@ public:
           m_alias(true)
     {
         POMAGMA_ASSERT_LE(item_dim, MAX_ITEM_DIM);
+        POMAGMA_ASSERT_ALIGNED_(1, line);
     }
 
     // return-by-value is allowed, but general copy is not
@@ -82,6 +83,7 @@ public:
     void init (Word * line)
     {
         POMAGMA_ASSERT4(m_alias, "tried to init() non-alias dense set");
+        POMAGMA_ASSERT_ALIGNED_(1, line);
         m_words = line;
     }
 
