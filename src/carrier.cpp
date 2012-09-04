@@ -28,8 +28,8 @@ void Carrier::move_from (
 {
     UniqueLock lock(m_mutex);
 
-    m_item_count = other.m_item_count;
-    m_rep_count = other.m_rep_count;
+    m_item_count.store(other.m_item_count.load());
+    m_rep_count.store(other.m_rep_count.load());
     TODO("move from other")
 }
 
@@ -37,27 +37,13 @@ Ob Carrier::insert ()
 {
     UniqueLock lock(m_mutex);
 
-    POMAGMA_ASSERT1(item_count() < item_dim(),
-            "tried to insert in full Carrier");
-
+    POMAGMA_ASSERT1(item_count() < item_dim(), "insertion in full Carrier");
     Ob ob = m_support.insert_one();
+    POMAGMA_ASSERT1(not m_reps[ob].load(), "double insertion: " << ob);
     m_reps[ob].store(ob);
     ++m_item_count;
     ++m_rep_count;
     return ob;
-}
-
-void Carrier::insert (Ob ob)
-{
-    UniqueLock lock(m_mutex);
-
-    POMAGMA_ASSERT1(not contains(ob), "double insertion: " << ob);
-    POMAGMA_ASSERT1(not m_reps[ob].load(), "double insertion: " << ob);
-
-    m_support.insert(ob);
-    m_reps[ob].store(ob);
-    ++m_item_count;
-    ++m_rep_count;
 }
 
 void Carrier::remove (Ob ob)

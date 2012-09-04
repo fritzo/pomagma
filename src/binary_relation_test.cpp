@@ -21,20 +21,25 @@ void test_BinaryRelation (
 
     POMAGMA_INFO("creating BinaryRelation of size " << size);
     Carrier carrier(size);
-    BinaryRelation rel(carrier, move_to);
     const DenseSet & support = carrier.support();
 
+
     POMAGMA_INFO("testing position insertion");
-    size_t item_count = 0;
+    for (Ob i = 1; i <= size; ++i) {
+         carrier.insert();
+    }
+    size_t item_count = size;
     for (Ob i = 1; i <= size; ++i) {
         if (random_bool(0.5)) {
-            carrier.insert(i);
-            ++item_count;
+            carrier.remove(i);
+            --item_count;
         }
     }
     POMAGMA_ASSERT_EQ(item_count, support.count_items());
 
     POMAGMA_INFO("testing pair insertion");
+    BinaryRelation rel(carrier, move_to);
+    rel.validate();
     size_t num_pairs = 0;
     for (DenseSet::Iterator i(support); i.ok(); i.next()) {
     for (DenseSet::Iterator j(support); j.ok(); j.next()) {

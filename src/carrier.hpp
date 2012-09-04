@@ -15,8 +15,8 @@ namespace pomagma
 class Carrier : noncopyable
 {
     DenseSet m_support;
-    size_t m_item_count;
-    mutable size_t m_rep_count;
+    std::atomic<size_t> m_item_count;
+    mutable std::atomic<size_t> m_rep_count;
     typedef std::atomic<Ob> Rep;
     Rep * const m_reps;
     void (*m_merge_callback) (Ob);
@@ -50,7 +50,6 @@ public:
 
     // strict operations
     Ob insert ();
-    void insert (Ob ob);
     void remove (Ob ob);
 
 private:

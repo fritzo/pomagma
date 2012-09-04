@@ -7,16 +7,25 @@ void test_basic (size_t size)
 {
     POMAGMA_INFO("Defining function");
     Carrier carrier(size);
-    NullaryFunction fun(carrier);
-
     for (Ob i = 1; i <= size; ++i) {
-        if (random_bool(0.8)) {
-            carrier.insert(i);
+        carrier.insert();
+    }
+    size_t item_count = size;
+    for (Ob i = 1; i <= size and item_count > 1; ++i) {
+        if (random_bool(0.2)) {
+            carrier.remove(i);
+            --item_count;
         }
     }
+
+    NullaryFunction fun(carrier);
     fun.validate();
 
-    fun.insert(1);
+    Ob ob = 1;
+    while (not carrier.contains(ob)) {
+        ++ob;
+    }
+    fun.insert(ob);
     fun.validate();
 }
 

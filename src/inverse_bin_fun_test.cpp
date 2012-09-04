@@ -9,14 +9,19 @@ void test_random (size_t size, float fill = 0.3)
     POMAGMA_INFO("Buiding fun,inv of size " << size);
     Carrier carrier(size);
     const DenseSet & support = carrier.support();
-    BinaryFunction fun(carrier);
-    inverse_bin_fun inv(carrier);
-
     for (Ob i = 1; i <= size; ++i) {
-        if (random_bool(0.8)) {
-            carrier.insert(i);
+        carrier.insert();
+    }
+    for (Ob i = 1; i <= size; ++i) {
+        if (random_bool(0.2)) {
+            carrier.remove(i);
         }
     }
+
+    BinaryFunction fun(carrier);
+    inverse_bin_fun inv(carrier);
+    fun.validate();
+    inv.validate(fun);
 
     POMAGMA_INFO("testing insertion");
     size_t insert_count = size * size * fill;

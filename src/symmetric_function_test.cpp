@@ -13,8 +13,11 @@ void test_basic (Ob size)
     SymmetricFunction fun(carrier);
 
     for (Ob i = 1; i <= size; ++i) {
-        if (random_bool(0.8)) {
-            carrier.insert(i);
+        carrier.insert();
+    }
+    for (Ob i = 1; i <= size; ++i) {
+        if (random_bool(0.2)) {
+            carrier.remove(i);
         }
     }
     for (DenseSet::Iterator i(support); i.ok(); i.next()) {
