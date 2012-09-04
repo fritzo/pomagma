@@ -12,7 +12,6 @@ template<bool symmetric>
 class base_bin_rel_ : noncopyable
 {
     const Carrier & m_carrier;
-    const DenseSet m_support; // aliased
     const size_t m_round_item_dim;
     const size_t m_round_word_dim;
     const size_t m_data_size_words;
@@ -27,9 +26,9 @@ public:
     void validate () const;
 
     const Carrier & carrier () const { return m_carrier; }
-    const DenseSet & support () const { return m_support; }
-    size_t item_dim () const { return m_support.item_dim(); }
-    size_t word_dim () const { return m_support.word_dim(); }
+    const DenseSet & support () const { return m_carrier.support(); }
+    size_t item_dim () const { return support().item_dim(); }
+    size_t word_dim () const { return support().word_dim(); }
     size_t round_item_dim () const { return m_round_item_dim; }
     size_t round_word_dim () const { return m_round_word_dim; }
     size_t data_size_words () const { return m_data_size_words; }

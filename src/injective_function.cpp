@@ -7,7 +7,6 @@ namespace pomagma
 
 InjectiveFunction::InjectiveFunction (const Carrier & carrier)
     : m_carrier(carrier),
-      m_support(carrier.support(), yes_copy_construct),
       m_set(support().item_dim()),
       m_inverse_set(support().item_dim()),
       m_values(alloc_blocks<std::atomic<Ob>>(1 + item_dim())),
@@ -55,7 +54,7 @@ void InjectiveFunction::validate () const
         bool bit = m_set(key);
         Ob val = m_values[key];
 
-        if (not m_support.contains(key)) {
+        if (not support().contains(key)) {
             POMAGMA_ASSERT(not val, "found unsupported val at " << key);
             POMAGMA_ASSERT(not bit, "found unsupported bit at " << key);
         } else if (not val) {
@@ -72,7 +71,7 @@ void InjectiveFunction::validate () const
         bool bit = m_inverse_set(val);
         Ob key = m_inverse[val];
 
-        if (not m_support.contains(val)) {
+        if (not support().contains(val)) {
             POMAGMA_ASSERT(not key, "found unsupported key at " << val);
             POMAGMA_ASSERT(not bit, "found unsupported bit at " << val);
         } else if (not key) {

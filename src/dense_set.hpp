@@ -61,13 +61,6 @@ public:
     {
         POMAGMA_ASSERT(m_alias, "copy-constructed a non-alias DenseSet");
     }
-    DenseSet (const DenseSet & other, verify_copy_construction)
-        : m_item_dim(other.m_item_dim),
-          m_word_dim(other.m_word_dim),
-          m_words(other.m_words),
-          m_alias(true)
-    {
-    }
 private:
     void operator= (const DenseSet & other); // intentionally undefined
 public:
@@ -96,16 +89,12 @@ public:
     void validate () const;
 
     // element operations
-private:
-    inline bool_ref _bit (size_t i);
-    inline bool _bit (size_t i) const;
-public:
     bool_ref operator() (size_t i) { return _bit(i); }
     bool operator() (size_t i) const { return _bit(i); }
     bool contains (size_t i) const { return _bit(i); }
-    inline void insert (size_t i);
-    inline void remove (size_t i);
-    inline void merge  (size_t i, size_t j);
+    void insert (size_t i);
+    void remove (size_t i);
+    void merge  (size_t i, size_t j);
     void insert_all ();
     Ob insert_one ();
 
@@ -125,6 +114,11 @@ public:
 
     // iteration
     class Iterator;
+
+private:
+
+    bool_ref _bit (size_t i);
+    bool _bit (size_t i) const;
 };
 
 inline bool_ref DenseSet::_bit (size_t i)

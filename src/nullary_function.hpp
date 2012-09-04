@@ -11,7 +11,6 @@ namespace pomagma
 class NullaryFunction : noncopyable
 {
     const Carrier & m_carrier;
-    const DenseSet m_support; // aliased
     mutable std::atomic<Ob> m_value;
 
     mutable AssertSharedMutex m_mutex;
@@ -35,7 +34,7 @@ public:
 
 private:
 
-    const DenseSet & support () const { return m_support; }
+    const DenseSet & support () const { return m_carrier.support(); }
 };
 
 inline bool NullaryFunction::defined () const

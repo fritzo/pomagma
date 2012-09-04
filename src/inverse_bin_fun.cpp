@@ -11,7 +11,7 @@ void inverse_bin_fun::validate (BinaryFunction & fun)
 {
     POMAGMA_INFO("Validating inverse_bin_fun");
 
-    for (DenseSet::Iterator lhs_iter(m_support);
+    for (DenseSet::Iterator lhs_iter(support());
         lhs_iter.ok();
         lhs_iter.next())
     {

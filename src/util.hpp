@@ -85,9 +85,6 @@ public:
     noncopyable () {}
 };
 
-struct verify_copy_construction {};
-const verify_copy_construction yes_copy_construct;
-
 #define POMAGMA_FOR(POMAGMA_type, POMAGMA_var, POMAGMA_init) \
     for (POMAGMA_type POMAGMA_var POMAGMA_init; \
          POMAGMA_var.ok(); \

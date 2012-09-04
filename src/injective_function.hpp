@@ -11,7 +11,6 @@ namespace pomagma
 class InjectiveFunction : noncopyable
 {
     const Carrier & m_carrier;
-    const DenseSet m_support; // aliased
     mutable DenseSet m_set;
     mutable DenseSet m_inverse_set;
     std::atomic<Ob> * const m_values;
@@ -43,8 +42,8 @@ public:
 
 private:
 
-    size_t item_dim () const { return m_support.item_dim(); }
-    const DenseSet & support () const { return m_support; }
+    const DenseSet & support () const { return m_carrier.support(); }
+    size_t item_dim () const { return support().item_dim(); }
 };
 
 inline bool InjectiveFunction::defined (Ob key) const

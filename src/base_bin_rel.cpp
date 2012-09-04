@@ -8,7 +8,6 @@ namespace pomagma
 template<bool symmetric>
 base_bin_rel_<symmetric>::base_bin_rel_ (const Carrier & carrier)
     : m_carrier(carrier),
-      m_support(carrier.support(), yes_copy_construct),
       m_round_item_dim(DenseSet::round_item_dim(item_dim())),
       m_round_word_dim(DenseSet::round_word_dim(item_dim())),
       m_data_size_words((1 + m_round_item_dim) * m_round_word_dim),
@@ -69,7 +68,7 @@ void base_bin_rel_<symmetric>::validate() const
         DenseSet set(item_dim(), NULL);
         DenseSet round_set(m_round_item_dim, NULL);
         for (Ob i = 0; i < m_round_item_dim; ++i) {
-            if (1 <= i and i <= item_dim() and m_support.contains(i)) {
+            if (1 <= i and i <= item_dim() and support().contains(i)) {
                 set.init(Lx(i));
                 set.validate();
                 POMAGMA_ASSERT(set <= support(), "Lx(i) exceeds support");
@@ -95,7 +94,7 @@ void base_bin_rel_<symmetric>::validate() const
         DenseSet set(item_dim(), NULL);
         DenseSet round_set(m_round_item_dim, NULL);
         for (Ob i = 0; i < m_round_item_dim; ++i) {
-            if (1 <= i and i <= item_dim() and m_support.contains(i)) {
+            if (1 <= i and i <= item_dim() and support().contains(i)) {
                 set.init(Lx(i));
                 set.validate();
                 POMAGMA_ASSERT(set <= support(), "Lx(i) exceeds support");
@@ -117,8 +116,8 @@ void base_bin_rel_<symmetric>::validate() const
         }
 
         // check for Lx/Rx agreement
-        for (DenseSet::Iterator i(m_support); i.ok(); i.next()) {
-        for (DenseSet::Iterator j(m_support); j.ok(); j.next()) {
+        for (DenseSet::Iterator i(support()); i.ok(); i.next()) {
+        for (DenseSet::Iterator j(support()); j.ok(); j.next()) {
             POMAGMA_ASSERT(Lx(*i, *j) == Rx(*i, *j),
                     "Lx, Rx disagree at " << *i << ',' << *j);
         }}

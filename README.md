@@ -1,6 +1,5 @@
 Pomagma
 =======
 
-Performant data structures for partially ordered magmas
-
+Equational reasoning in partially ordered magmas.
 
