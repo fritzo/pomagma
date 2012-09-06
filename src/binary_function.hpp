@@ -4,6 +4,7 @@
 #include "util.hpp"
 #include "dense_set.hpp"
 #include "base_bin_rel.hpp"
+#include "inverse_bin_fun.hpp"
 
 namespace pomagma
 {
@@ -14,6 +15,9 @@ class BinaryFunction : noncopyable
     mutable base_bin_rel m_lines;
     const size_t m_block_dim;
     Block * const m_blocks;
+    mutable Vlr_Table m_Vlr_table;
+    mutable VLr_Table m_VLr_table;
+    mutable VLr_Table m_VRl_table;
 
     mutable AssertSharedMutex m_mutex;
     typedef AssertSharedMutex::SharedLock SharedLock;
@@ -26,16 +30,16 @@ public:
     void move_from (const BinaryFunction & other);
     void validate () const;
 
-    // safe operations
+    // relaxed operations
     DenseSet get_Lx_set (Ob lhs) const { return m_lines.Lx_set(lhs); }
     DenseSet get_Rx_set (Ob rhs) const { return m_lines.Rx_set(rhs); }
     bool defined (Ob lhs, Ob rhs) const;
     Ob find (Ob lhs, Ob rhs) const { return value(lhs, rhs); }
     void insert (Ob lhs, Ob rhs, Ob val) const;
 
-    // unsafe operations
-    void remove (const Ob i);
-    void merge (const Ob i, const Ob j);
+    // strict operations
+    void unsafe_remove (const Ob i);
+    void unsafe_merge (const Ob i, const Ob j);
 
 private:
 
@@ -66,21 +70,6 @@ inline std::atomic<Ob> & BinaryFunction::value (Ob i, Ob j) const
 
     std::atomic<Ob> * block = _block(i / ITEMS_PER_BLOCK, j / ITEMS_PER_BLOCK);
     return _block2value(block, i & BLOCK_POS_MASK, j & BLOCK_POS_MASK);
-}
-
-inline void BinaryFunction::insert (Ob lhs, Ob rhs, Ob val) const
-{
-    SharedLock lock(m_mutex);
-
-    POMAGMA_ASSERT5(support().contains(lhs), "unsupported lhs: " << lhs);
-    POMAGMA_ASSERT5(support().contains(rhs), "unsupported rhs: " << rhs);
-    POMAGMA_ASSERT_RANGE_(5, val, item_dim());
-
-    std::atomic<Ob> & old_val = value(lhs, rhs);
-    if (carrier().set_and_merge(val, old_val) == 0) {
-        m_lines.Lx(lhs, rhs).one();
-        m_lines.Rx(lhs, rhs).one();
-    }
 }
 
 } // namespace pomagma

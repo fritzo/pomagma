@@ -8,7 +8,8 @@ namespace pomagma
 BinaryFunction::BinaryFunction (const Carrier & carrier)
     : m_lines(carrier),
       m_block_dim((item_dim() + ITEMS_PER_BLOCK) / ITEMS_PER_BLOCK),
-      m_blocks(alloc_blocks<Block>(m_block_dim * m_block_dim))
+      m_blocks(alloc_blocks<Block>(m_block_dim * m_block_dim)),
+      m_Vlr_table(1 + item_dim())
 {
     POMAGMA_DEBUG("creating BinaryFunction with "
             << (m_block_dim * m_block_dim) << " blocks");
@@ -48,6 +49,8 @@ void BinaryFunction::validate () const
 
     m_lines.validate();
 
+    // TODO move test from inverse_bin_fun.cpp here
+
     POMAGMA_DEBUG("validating line-block consistency");
     for (size_t i_ = 0; i_ < m_block_dim; ++i_) {
     for (size_t j_ = 0; j_ < m_block_dim; ++j_) {
@@ -75,7 +78,25 @@ void BinaryFunction::validate () const
     }}
 }
 
-void BinaryFunction::remove (const Ob dep)
+void BinaryFunction::insert (Ob lhs, Ob rhs, Ob val) const
+{
+    SharedLock lock(m_mutex);
+
+    POMAGMA_ASSERT5(support().contains(lhs), "unsupported lhs: " << lhs);
+    POMAGMA_ASSERT5(support().contains(rhs), "unsupported rhs: " << rhs);
+    POMAGMA_ASSERT_RANGE_(5, val, item_dim());
+
+    std::atomic<Ob> & old_val = value(lhs, rhs);
+    if (carrier().set_and_merge(val, old_val) == 0) {
+        m_lines.Lx(lhs, rhs).one();
+        m_lines.Rx(lhs, rhs).one();
+        m_Vlr_table.insert(lhs, rhs, val);
+        m_VLr_table.insert(lhs, rhs, val);
+        m_VRl_table.insert(rhs, lhs, val);
+    }
+}
+
+void BinaryFunction::unsafe_remove (const Ob dep)
 {
     UniqueLock lock(m_mutex);
 
@@ -83,32 +104,56 @@ void BinaryFunction::remove (const Ob dep)
 
     DenseSet set(item_dim(), NULL);
 
-    // (lhs, dep)
-    DenseSet rhs_fixed = get_Rx_set(dep);
-    for (DenseSet::Iterator iter(rhs_fixed); iter.ok(); iter.next()) {
-        Ob lhs = *iter;
-        value(lhs, dep) = 0;
-
-        set.init(m_lines.Lx(lhs));
-        set.remove(dep);
-    }
-    set.init(m_lines.Rx(dep));
-    set.zero();
-
-    // (dep, rhs)
-    DenseSet lhs_fixed = get_Lx_set(dep);
-    for (DenseSet::Iterator iter(lhs_fixed); iter.ok(); iter.next()) {
-        Ob rhs = *iter;
-        value(dep, rhs) = 0;
-
+    {   Ob rhs = dep;
+        DenseSet rhs_fixed = get_Rx_set(rhs);
+        for (DenseSet::Iterator iter(rhs_fixed); iter.ok(); iter.next()) {
+            Ob lhs = *iter;
+            std::atomic<Ob> & atomic_val = value(lhs, rhs);
+            atomic_val.store(0, std::memory_order_relaxed);
+            Ob val = atomic_val.load(std::memory_order_relaxed);
+            m_Vlr_table.unsafe_remove(lhs, rhs, val);
+            m_VLr_table.unsafe_remove(lhs, rhs, val);
+            m_VRl_table.unsafe_remove(rhs, lhs, val);
+            set.init(m_lines.Lx(lhs));
+            set.remove(rhs);
+        }
         set.init(m_lines.Rx(rhs));
-        set.remove(dep);
+        set.zero();
     }
-    set.init(m_lines.Lx(dep));
-    set.zero();
+
+    {   Ob lhs = dep;
+        DenseSet lhs_fixed = get_Lx_set(lhs);
+        for (DenseSet::Iterator iter(lhs_fixed); iter.ok(); iter.next()) {
+            Ob rhs = *iter;
+            std::atomic<Ob> & atomic_val = value(lhs, rhs);
+            atomic_val.store(0, std::memory_order_relaxed);
+            Ob val = atomic_val.load(std::memory_order_relaxed);
+            m_Vlr_table.unsafe_remove(lhs, rhs, val);
+            m_VLr_table.unsafe_remove(lhs, rhs, val);
+            m_VRl_table.unsafe_remove(rhs, lhs, val);
+            set.init(m_lines.Rx(rhs));
+            set.remove(lhs);
+        }
+        set.init(m_lines.Lx(lhs));
+        set.zero();
+    }
+
+    {   Ob val = dep;
+        Vlr_Table::Iterator iter(m_Vlr_table, val);
+        for (iter.begin(); iter.ok(); iter.next()) {
+            Ob lhs = iter.lhs();
+            Ob rhs = iter.rhs();
+            value(lhs, rhs).store(0, std::memory_order_relaxed);
+            m_lines.Lx(lhs, rhs).zero();
+            m_lines.Rx(rhs, lhs).zero();
+            m_VLr_table.unsafe_remove(lhs, rhs, val);
+            m_VRl_table.unsafe_remove(rhs, lhs, val);
+        }
+        m_Vlr_table.unsafe_remove(val);
+    }
 }
 
-void BinaryFunction::merge (const Ob dep, const Ob rep)
+void BinaryFunction::unsafe_merge (const Ob dep, const Ob rep)
 {
     UniqueLock lock(m_mutex);
 
@@ -120,9 +165,11 @@ void BinaryFunction::merge (const Ob dep, const Ob rep)
     DenseSet dep_set(item_dim(), NULL);
     DenseSet rep_set(item_dim(), NULL);
 
-    // Note: the spacial case
+    // Note: the special case
     //   (dep, dep) --> (dep, rep) --> (rep, rep)
     // merges in two steps
+
+    // TODO merge m_Vlr_table, m_VLr_table, m_VRl_table
 
     // (lhs, dep) --> (lhs, rep)
     DenseSet rhs_fixed = get_Rx_set(dep);

@@ -2,7 +2,6 @@
 #define POMAGMA_INVERSE_BIN_FUN_HPP
 
 #include "util.hpp"
-#include "binary_function.hpp"
 #include <vector>
 #include <utility>
 #include <tbb/concurrent_unordered_map.h>
@@ -11,117 +10,66 @@
 namespace pomagma
 {
 
-typedef std::vector<
-    tbb::concurrent_unordered_set<std::pair<Ob, Ob>>> Vlr_Data;
-
-typedef tbb::concurrent_unordered_map<
-    std::pair<Ob, Ob>,
-    tbb::concurrent_unordered_set<Ob>> VXx_Data;
-
-inline bool contains (const Vlr_Data & Vlr_data, Ob V, Ob l, Ob r)
-{
-    auto & lr_set = Vlr_data[V];
-    return lr_set.find(std::make_pair(l, r)) != lr_set.end();
-}
-
-inline bool contains (const VXx_Data & VXx_data, Ob V, Ob X, Ob x)
-{
-    auto i = VXx_data.find(std::make_pair(V, X));
-    if (i == VXx_data.end()) {
-        return false;
-    }
-    return i->second.find(x) != i->second.end();
-}
-
-inline void unsafe_erase (VXx_Data & VXx_data, Ob V, Ob X, Ob x)
-{
-    auto i = VXx_data.find(std::make_pair(V, X));
-    POMAGMA_ASSERT1(i != VXx_data.end(),
-            "double erase: " << V << "," << X << "," << x);
-    i->second.unsafe_erase(x);
-    if (i->second.empty()) {
-        VXx_data.unsafe_erase(i);
-    }
-}
-
 //----------------------------------------------------------------------------
-// Inverse binary function
+// val -> lhs, rhs
 
-class inverse_bin_fun : noncopyable
+class Vlr_Table
 {
-    const Carrier & m_carrier;
-
-    Vlr_Data m_Vlr_data;
-    VXx_Data m_VLr_data;
-    VXx_Data m_VRl_data;
+    typedef tbb::concurrent_unordered_set<std::pair<Ob, Ob>> Set;
+    typedef std::vector<Set> Data;
+    Data m_data;
 
 public:
 
-    inverse_bin_fun (const Carrier & carrier)
-        : m_carrier(carrier),
-          m_Vlr_data(item_dim()),
-          m_VLr_data(),
-          m_VRl_data()
+    Vlr_Table (size_t size) : m_data(size) {}
+
+    bool contains (Ob lhs, Ob rhs, Ob val) const
     {
+        const auto & lr_set = m_data[val];
+        return lr_set.find(std::make_pair(lhs, rhs)) != lr_set.end();
+    }
+    void insert (Ob lhs, Ob rhs, Ob val)
+    {
+        m_data[val].insert(std::make_pair(lhs, rhs));
     }
 
-    const DenseSet & support () const { return m_carrier.support(); }
-    size_t item_dim () const { return support().item_dim(); }
+    void unsafe_remove (Ob lhs, Ob rhs, Ob val)
+    {
+        m_data[val].unsafe_erase(std::make_pair(lhs, rhs));
+    }
+    void unsafe_remove (Ob val)
+    {
+        m_data[val].clear();
+    }
 
-    void insert (Ob lhs, Ob rhs, Ob val);
-    void unsafe_remove (Ob lhs, Ob rhs, Ob val);
-    void validate (BinaryFunction & fun);
-
-    class Vlr_Iterator;
-
-    enum { LHS_FIXED = false, RHS_FIXED = true };
-    template<bool idx> class VXx_Iterator;
+    class Iterator;
 };
 
-inline void inverse_bin_fun::insert (Ob lhs, Ob rhs, Ob val)
+class Vlr_Table::Iterator : noncopyable
 {
-    m_Vlr_data[val].insert(std::make_pair(lhs, rhs));
-    m_VLr_data[std::make_pair(val, lhs)].insert(rhs);
-    m_VRl_data[std::make_pair(val, rhs)].insert(lhs);
-}
-
-inline void inverse_bin_fun::unsafe_remove (Ob lhs, Ob rhs, Ob val)
-{
-    m_Vlr_data[val].unsafe_erase(std::make_pair(lhs, rhs));
-    unsafe_erase(m_VLr_data, val, lhs, rhs);
-    unsafe_erase(m_VRl_data, val, rhs, lhs);
-}
-
-//----------------------------------------------------------------------------
-// Iteration
-
-class inverse_bin_fun::Vlr_Iterator : noncopyable
-{
-    inverse_bin_fun & m_fun;
-    tbb::concurrent_unordered_set<std::pair<Ob, Ob>>::iterator m_iter;
-    tbb::concurrent_unordered_set<std::pair<Ob, Ob>>::iterator m_end;
+    const Vlr_Table::Data & m_data;
+    Vlr_Table::Set::const_iterator m_iter;
+    Vlr_Table::Set::const_iterator m_end;
     Ob m_val;
 
 public:
 
-    // construction
-    Vlr_Iterator (inverse_bin_fun & fun)
-        : m_fun(fun),
+    Iterator (const Vlr_Table & fun)
+        : m_data(fun.m_data),
           m_val(0)
           // XXX FIXME is it ok to default-construct m_iter, m_end?
     {
     }
-    Vlr_Iterator (inverse_bin_fun & fun, Ob val)
-        : m_fun(fun),
+    Iterator (const Vlr_Table & fun, Ob val)
+        : m_data(fun.m_data),
           m_val(val)
     {
         begin();
     }
 
-    // traversal
     void begin ()
     {
-        auto i = m_fun.m_Vlr_data[m_val];
+        const Vlr_Table::Set & i = m_data[m_val];
         m_iter = i.begin();
         m_end = i.end();
     }
@@ -129,64 +77,88 @@ public:
     bool ok () const { return m_iter != m_end; }
     void next () { ++m_iter; }
 
-    // dereferencing
-    Ob value () const { POMAGMA_ASSERT_OK return m_val; }
     Ob lhs () const { POMAGMA_ASSERT_OK return m_iter->first; }
     Ob rhs () const { POMAGMA_ASSERT_OK return m_iter->second; }
 };
 
 //----------------------------------------------------------------------------
-// Range iteration
+// val, lhs -> rhs
 
-template<bool idx>
-class inverse_bin_fun::VXx_Iterator : noncopyable
+class VLr_Table
 {
-    inverse_bin_fun & m_fun;
-    tbb::concurrent_unordered_set<Ob>::iterator m_iter;
-    tbb::concurrent_unordered_set<Ob>::iterator m_end;
+    typedef tbb::concurrent_unordered_set<Ob> Set;
+    typedef tbb::concurrent_unordered_map<std::pair<Ob, Ob>, Set> Data;
+    Data m_data;
+
+public:
+
+    bool contains (Ob lhs, Ob rhs, Ob val) const
+    {
+        Data::const_iterator i = m_data.find(std::make_pair(val, lhs));
+        if (i == m_data.end()) {
+            return false;
+        }
+        return i->second.find(rhs) != i->second.end();
+    }
+    void insert (Ob lhs, Ob rhs, Ob val)
+    {
+        m_data[std::make_pair(val, lhs)].insert(rhs);
+    }
+
+    void unsafe_remove (Ob lhs, Ob rhs, Ob val)
+    {
+        Data::const_iterator i = m_data.find(std::make_pair(val, lhs));
+        POMAGMA_ASSERT1(i != m_data.end(),
+                "double erase: " << val << "," << lhs << "," << rhs);
+        i->second.unsafe_erase(rhs);
+        if (i->second.empty()) {
+            m_data.unsafe_erase(i);
+        }
+    }
+
+    class Iterator;
+};
+
+class VLr_Table::Iterator : noncopyable
+{
+    const VLr_Table::Data & m_data;
+    VLr_Table::Set::const_iterator m_iter;
+    VLr_Table::Set::const_iterator m_end;
     std::pair<Ob, Ob> m_pair;
 
 public:
 
-    // construction
-    VXx_Iterator (inverse_bin_fun & fun)
-        : m_fun(fun),
-          m_pair(0,0)
+    Iterator (const VLr_Table & fun)
+        : m_data(fun.m_data),
+          m_pair(0, 0)
     {
     }
-    VXx_Iterator (inverse_bin_fun & fun, Ob val, Ob fixed)
-        : m_fun(fun),
-          m_pair(val, fixed)
+    Iterator (const VLr_Table & fun, Ob val, Ob lhs)
+        : m_data(fun.m_data),
+          m_pair(val, lhs)
     {
         begin();
     }
 
-    // traversal
     void begin ()
     {
-        auto & map = idx ? m_fun.m_VRl_data : m_fun.m_VLr_data;
-        auto i = map.find(m_pair);
-        if (i != map.end()) {
+        VLr_Table::Data::const_iterator i = m_data.find(m_pair);
+        if (i != m_data.end()) {
             m_iter = i->second.begin();
             m_end = i->second.end();
         } else {
             m_iter = m_end;
         }
     }
-    void begin (Ob val, Ob fixed)
+    void begin (Ob val, Ob lhs)
     {
-        m_pair = std::make_pair(val, fixed);
+        m_pair = std::make_pair(val, lhs);
         begin();
     }
     bool ok () const { return m_iter != m_end; }
-    void next  () { ++m_iter; }
+    void next () { ++m_iter; }
 
-    // dereferencing
-    Ob value () const { POMAGMA_ASSERT_OK return m_pair.first; }
-    Ob fixed () const { POMAGMA_ASSERT_OK return m_pair.second; }
-    Ob moving () const { POMAGMA_ASSERT_OK return *m_iter; }
-    Ob lhs () const { return idx ? moving() : fixed(); }
-    Ob rhs () const { return idx ? fixed() : moving(); }
+    Ob operator * () const { POMAGMA_ASSERT_OK return *m_iter; }
 };
 
 } // namespace pomagma
