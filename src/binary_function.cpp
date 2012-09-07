@@ -139,8 +139,7 @@ void BinaryFunction::unsafe_remove (const Ob dep)
     }
 
     {   Ob val = dep;
-        Vlr_Table::Iterator iter(m_Vlr_table, val);
-        for (iter.begin(); iter.ok(); iter.next()) {
+        for (auto iter = iter_val(val); iter.ok(); iter.next()) {
             Ob lhs = iter.lhs();
             Ob rhs = iter.rhs();
             value(lhs, rhs).store(0, std::memory_order_relaxed);

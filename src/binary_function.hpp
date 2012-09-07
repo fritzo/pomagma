@@ -41,6 +41,10 @@ public:
     void unsafe_remove (const Ob i);
     void unsafe_merge (const Ob i, const Ob j);
 
+    Vlr_Table::Iterator iter_val (Ob val) const;
+    VLr_Table::Iterator iter_val_lhs (Ob val, Ob lhs) const;
+    VLr_Table::Iterator iter_val_rhs (Ob val, Ob rhs) const;
+
 private:
 
     const Carrier & carrier () const { return m_lines.carrier(); }
@@ -70,6 +74,21 @@ inline std::atomic<Ob> & BinaryFunction::value (Ob i, Ob j) const
 
     std::atomic<Ob> * block = _block(i / ITEMS_PER_BLOCK, j / ITEMS_PER_BLOCK);
     return _block2value(block, i & BLOCK_POS_MASK, j & BLOCK_POS_MASK);
+}
+
+inline Vlr_Table::Iterator BinaryFunction::iter_val (Ob val) const
+{
+    return m_Vlr_table.iter(val);
+}
+
+inline VLr_Table::Iterator BinaryFunction::iter_val_lhs (Ob val, Ob lhs) const
+{
+    return m_VLr_table.iter(val, lhs);
+}
+
+inline VLr_Table::Iterator BinaryFunction::iter_val_rhs (Ob val, Ob rhs) const
+{
+    return m_VLr_table.iter(val, rhs);
 }
 
 } // namespace pomagma

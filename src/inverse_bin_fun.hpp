@@ -10,10 +10,8 @@
 namespace pomagma
 {
 
-//----------------------------------------------------------------------------
 // val -> lhs, rhs
-
-class Vlr_Table
+class Vlr_Table : noncopyable
 {
     typedef tbb::concurrent_unordered_set<std::pair<Ob, Ob>> Set;
     typedef std::vector<Set> Data;
@@ -42,49 +40,38 @@ public:
         m_data[val].clear();
     }
 
-    class Iterator;
+    class Iterator
+    {
+        friend class Vlr_Table;
+
+        const Data & m_data;
+        Set::const_iterator m_iter;
+        Set::const_iterator m_end;
+        Ob m_val;
+
+        Iterator (const Vlr_Table * fun, Ob val)
+            : m_data(fun->m_data),
+              m_val(val)
+        {
+            const Set & i = m_data[m_val];
+            m_iter = i.begin();
+            m_end = i.end();
+        }
+
+    public:
+
+        bool ok () const { return m_iter != m_end; }
+        void next () { ++m_iter; }
+
+        Ob lhs () const { POMAGMA_ASSERT_OK return m_iter->first; }
+        Ob rhs () const { POMAGMA_ASSERT_OK return m_iter->second; }
+    };
+
+    Iterator iter (Ob val) const { return Iterator(this, val); }
 };
 
-class Vlr_Table::Iterator : noncopyable
-{
-    const Vlr_Table::Data & m_data;
-    Vlr_Table::Set::const_iterator m_iter;
-    Vlr_Table::Set::const_iterator m_end;
-    Ob m_val;
-
-public:
-
-    Iterator (const Vlr_Table & fun)
-        : m_data(fun.m_data),
-          m_val(0)
-          // XXX FIXME is it ok to default-construct m_iter, m_end?
-    {
-    }
-    Iterator (const Vlr_Table & fun, Ob val)
-        : m_data(fun.m_data),
-          m_val(val)
-    {
-        begin();
-    }
-
-    void begin ()
-    {
-        const Vlr_Table::Set & i = m_data[m_val];
-        m_iter = i.begin();
-        m_end = i.end();
-    }
-    void begin (Ob val) { m_val = val; begin(); }
-    bool ok () const { return m_iter != m_end; }
-    void next () { ++m_iter; }
-
-    Ob lhs () const { POMAGMA_ASSERT_OK return m_iter->first; }
-    Ob rhs () const { POMAGMA_ASSERT_OK return m_iter->second; }
-};
-
-//----------------------------------------------------------------------------
 // val, lhs -> rhs
-
-class VLr_Table
+class VLr_Table : noncopyable
 {
     typedef tbb::concurrent_unordered_set<Ob> Set;
     typedef tbb::concurrent_unordered_map<std::pair<Ob, Ob>, Set> Data;
@@ -116,49 +103,40 @@ public:
         }
     }
 
-    class Iterator;
-};
-
-class VLr_Table::Iterator : noncopyable
-{
-    const VLr_Table::Data & m_data;
-    VLr_Table::Set::const_iterator m_iter;
-    VLr_Table::Set::const_iterator m_end;
-    std::pair<Ob, Ob> m_pair;
-
-public:
-
-    Iterator (const VLr_Table & fun)
-        : m_data(fun.m_data),
-          m_pair(0, 0)
+    class Iterator
     {
-    }
-    Iterator (const VLr_Table & fun, Ob val, Ob lhs)
-        : m_data(fun.m_data),
-          m_pair(val, lhs)
-    {
-        begin();
-    }
+        friend class VLr_Table;
 
-    void begin ()
-    {
-        VLr_Table::Data::const_iterator i = m_data.find(m_pair);
-        if (i != m_data.end()) {
-            m_iter = i->second.begin();
-            m_end = i->second.end();
-        } else {
-            m_iter = m_end;
+        const Data & m_data;
+        Set::const_iterator m_iter;
+        Set::const_iterator m_end;
+        std::pair<Ob, Ob> m_pair;
+
+        Iterator (const VLr_Table * fun, Ob val, Ob lhs)
+            : m_data(fun->m_data),
+              m_pair(val, lhs)
+        {
+            Data::const_iterator i = m_data.find(m_pair);
+            if (i != m_data.end()) {
+                m_iter = i->second.begin();
+                m_end = i->second.end();
+            } else {
+                POMAGMA_ASSERT6(
+                    not (Set::const_iterator() != Set::const_iterator()),
+                    "default constructed iterators do not equality compare");
+                m_iter = m_end;
+            }
         }
-    }
-    void begin (Ob val, Ob lhs)
-    {
-        m_pair = std::make_pair(val, lhs);
-        begin();
-    }
-    bool ok () const { return m_iter != m_end; }
-    void next () { ++m_iter; }
 
-    Ob operator * () const { POMAGMA_ASSERT_OK return *m_iter; }
+    public:
+
+        bool ok () const { return m_iter != m_end; }
+        void next () { ++m_iter; }
+
+        Ob operator * () const { POMAGMA_ASSERT_OK return *m_iter; }
+    };
+
+    Iterator iter (Ob val, Ob lhs) const { return Iterator(this, val, lhs); }
 };
 
 } // namespace pomagma

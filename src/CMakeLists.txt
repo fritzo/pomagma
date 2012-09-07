@@ -50,6 +50,10 @@ add_executable(symmetric_function_test symmetric_function_test.cpp)
 target_link_libraries(symmetric_function_test ${POMAGMA_TEST_LIBS})
 add_test(NAME symmetric_function COMMAND symmetric_function_test)
 
+#add_executable(inverse_bin_fun_test inverse_bin_fun_test.cpp)
+#target_link_libraries(inverse_bin_fun_test ${POMAGMA_TEST_LIBS})
+#add_test(NAME inverse_bin_fun COMMAND inverse_bin_fun_test)
+
 add_executable(scheduler_test scheduler_test.cpp)
 target_link_libraries(scheduler_test ${POMAGMA_TEST_LIBS})
 add_test(NAME scheduler COMMAND scheduler_test)
