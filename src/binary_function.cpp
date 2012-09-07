@@ -2,10 +2,6 @@
 #include "aligned_alloc.hpp"
 #include <cstring>
 
-#define POMAGMA_ASSERT_CONTAINS(POMAGMA_set, POMAGMA_x, POMAGMA_y, POMAGMA_z)\
-    POMAGMA_ASSERT(POMAGMA_set.contains(POMAGMA_x, POMAGMA_y, POMAGMA_z),\
-    #POMAGMA_set " is missing " #POMAGMA_x ", " #POMAGMA_y ", " #POMAGMA_z)
-
 namespace pomagma
 {
 
@@ -93,16 +89,16 @@ void BinaryFunction::validate () const
             Ob rhs = *rhs_iter;
             Ob val = find(lhs, rhs);
 
-            POMAGMA_ASSERT_CONTAINS(m_Vlr_table, lhs, rhs, val);
-            POMAGMA_ASSERT_CONTAINS(m_VLr_table, lhs, rhs, val);
-            POMAGMA_ASSERT_CONTAINS(m_VRl_table, rhs, lhs, val);
+            POMAGMA_ASSERT_CONTAINS3(m_Vlr_table, lhs, rhs, val);
+            POMAGMA_ASSERT_CONTAINS3(m_VLr_table, lhs, rhs, val);
+            POMAGMA_ASSERT_CONTAINS3(m_VRl_table, lhs, rhs, val);
         }
     }
 
     POMAGMA_INFO("Validating function contains inverse");
     m_Vlr_table.validate(this);
-    m_VLr_table.validate(this, false);
-    m_VRl_table.validate(this, true);
+    m_VLr_table.validate(this);
+    m_VRl_table.validate(this);
 }
 
 void BinaryFunction::insert (Ob lhs, Ob rhs, Ob val) const
@@ -119,7 +115,7 @@ void BinaryFunction::insert (Ob lhs, Ob rhs, Ob val) const
         m_lines.Rx(lhs, rhs).one();
         m_Vlr_table.insert(lhs, rhs, val);
         m_VLr_table.insert(lhs, rhs, val);
-        m_VRl_table.insert(rhs, lhs, val);
+        m_VRl_table.insert(lhs, rhs, val);
     }
 }
 
@@ -140,7 +136,7 @@ void BinaryFunction::unsafe_remove (const Ob dep)
             Ob val = atomic_val.load(std::memory_order_relaxed);
             m_Vlr_table.unsafe_remove(lhs, rhs, val);
             m_VLr_table.unsafe_remove(lhs, rhs, val);
-            m_VRl_table.unsafe_remove(rhs, lhs, val);
+            m_VRl_table.unsafe_remove(lhs, rhs, val);
             set.init(m_lines.Lx(lhs));
             set.remove(rhs);
         }
@@ -157,7 +153,7 @@ void BinaryFunction::unsafe_remove (const Ob dep)
             Ob val = atomic_val.load(std::memory_order_relaxed);
             m_Vlr_table.unsafe_remove(lhs, rhs, val);
             m_VLr_table.unsafe_remove(lhs, rhs, val);
-            m_VRl_table.unsafe_remove(rhs, lhs, val);
+            m_VRl_table.unsafe_remove(lhs, rhs, val);
             set.init(m_lines.Rx(rhs));
             set.remove(lhs);
         }
@@ -173,7 +169,7 @@ void BinaryFunction::unsafe_remove (const Ob dep)
             m_lines.Lx(lhs, rhs).zero();
             m_lines.Rx(rhs, lhs).zero();
             m_VLr_table.unsafe_remove(lhs, rhs, val);
-            m_VRl_table.unsafe_remove(rhs, lhs, val);
+            m_VRl_table.unsafe_remove(lhs, rhs, val);
         }
         m_Vlr_table.unsafe_remove(val);
     }
@@ -195,9 +191,7 @@ void BinaryFunction::unsafe_merge (const Ob dep, const Ob rep)
     //   (dep, dep) --> (dep, rep) --> (rep, rep)
     // merges in two steps
 
-    // TODO merge m_Vlr_table, m_VLr_table, m_VRl_table
-
-    // (lhs, dep) --> (lhs, rep)
+    // dep as rhs
     DenseSet rhs_fixed = get_Rx_set(dep);
     for (DenseSet::Iterator iter(rhs_fixed); iter.ok(); iter.next()) {
         Ob lhs = *iter;
@@ -209,12 +203,17 @@ void BinaryFunction::unsafe_merge (const Ob dep, const Ob rep)
         set.init(m_lines.Lx(lhs));
         set(dep).zero();
         set(rep).one();
+
+        Ob val = rep_val;
+        m_Vlr_table.unsafe_remove(lhs, dep, val).insert(lhs, rep, val);
+        m_VLr_table.unsafe_remove(lhs, dep, val).insert(lhs, rep, val);
+        m_VRl_table.unsafe_remove(lhs, dep, val).insert(lhs, rep, val);
     }
     rep_set.init(m_lines.Rx(rep));
     dep_set.init(m_lines.Rx(dep));
     rep_set.merge(dep_set);
 
-    // (dep, rhs) --> (rep, rhs)
+    // dep as lhs
     DenseSet lhs_fixed = get_Lx_set(dep);
     for (DenseSet::Iterator iter(lhs_fixed); iter.ok(); iter.next()) {
         Ob rhs = *iter;
@@ -226,10 +225,26 @@ void BinaryFunction::unsafe_merge (const Ob dep, const Ob rep)
         set.init(m_lines.Rx(rhs));
         set(dep).zero();
         set(rep).one();
+
+        Ob val = rep_val;
+        m_Vlr_table.unsafe_remove(dep, rhs, val).insert(rep, rhs, val);
+        m_VLr_table.unsafe_remove(dep, rhs, val).insert(rep, rhs, val);
+        m_VRl_table.unsafe_remove(dep, rhs, val).insert(rep, rhs, val);
     }
     rep_set.init(m_lines.Lx(rep));
     dep_set.init(m_lines.Lx(dep));
     rep_set.merge(dep_set);
+
+    // dep as val
+    for (auto iter = iter_val(dep); iter.ok(); iter.next()) {
+        Ob lhs = iter.lhs();
+        Ob rhs = iter.rhs();
+        value(lhs, rhs) = rep;
+        m_Vlr_table.insert(lhs, rhs, rep);
+        m_VLr_table.unsafe_remove(lhs, rhs, dep).insert(lhs, rhs, rep);
+        m_VRl_table.unsafe_remove(lhs, rhs, dep).insert(lhs, rhs, rep);
+    }
+    m_Vlr_table.unsafe_remove(dep);
 }
 
 } // namespace pomagma

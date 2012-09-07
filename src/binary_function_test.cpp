@@ -14,11 +14,11 @@ void test_basic (size_t size)
     Carrier carrier(size);
     const DenseSet & support = carrier.support();
     for (Ob i = 1; i <= size; ++i) {
-        carrier.insert();
+        carrier.unsafe_insert();
     }
     for (Ob i = 1; i <= size; ++i) {
-        if (random_bool(0.2)) {
-            carrier.remove(i);
+        if (random_bool(0.5)) {
+            carrier.unsafe_remove(i);
         }
     }
 
@@ -57,19 +57,18 @@ void test_basic (size_t size)
     POMAGMA_INFO("Checking merging");
     for (DenseSet::Iterator dep(support); dep.ok(); dep.next()) {
         for (DenseSet::Iterator rep(support); rep.ok(); rep.next()) {
-            if ((*rep < *dep) and random_bool(0.1)) {
+            if ((*rep < *dep) and random_bool(0.25)) {
                 carrier.merge(*dep, *rep);
                 break;
             }
         }
     }
-    fun.validate();
     for (DenseSet::Iterator iter(support); iter.ok(); iter.next()) {
         Ob dep = *iter;
         Ob rep = carrier.find(dep);
         if (rep != dep) {
             fun.unsafe_merge(dep, rep);
-            carrier.remove(dep);
+            carrier.unsafe_remove(dep);
         }
     }
     fun.validate();
@@ -77,9 +76,9 @@ void test_basic (size_t size)
 
 int main ()
 {
-    Log::title("Dense Binary Function Test");
+    Log::title("BinaryFunction Test");
 
-    for (size_t i = 0; i < 4; ++i) {
+    for (size_t i = 1; i < 4; ++i) {
         test_basic(i + (1 << 9));
     }
 

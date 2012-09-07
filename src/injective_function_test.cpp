@@ -28,11 +28,11 @@ void test_basic (size_t size)
     g_carrier = & carrier;
     const DenseSet & support = carrier.support();
     for (Ob i = 1; i <= size; ++i) {
-        carrier.insert();
+        carrier.unsafe_insert();
     }
     for (Ob i = 1; i <= size; ++i) {
         if (random_bool(0.2)) {
-            carrier.remove(i);
+            carrier.unsafe_remove(i);
         }
     }
 

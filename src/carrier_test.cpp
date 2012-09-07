@@ -8,7 +8,7 @@ void test_random (size_t size)
     carrier.validate();
 
     for (size_t i = 1; i <= size; ++i) {
-        POMAGMA_ASSERT_EQ(carrier.insert(), i);
+        POMAGMA_ASSERT_EQ(carrier.unsafe_insert(), i);
         carrier.validate();
     }
 
@@ -28,7 +28,7 @@ void test_random (size_t size)
     for (size_t i = 1; i <= size; ++i) {
         if (random_bool(0.5)) {
             if (carrier.contains(i) and carrier.find(i) != i) {
-                carrier.remove(i);
+                carrier.unsafe_remove(i);
             }
             carrier.validate();
         }

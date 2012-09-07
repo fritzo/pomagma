@@ -49,8 +49,8 @@ public:
             std::atomic<Ob> & destin) const; // return old val
 
     // strict operations
-    Ob insert ();
-    void remove (Ob ob);
+    Ob unsafe_insert ();
+    void unsafe_remove (Ob ob);
 
 private:
 

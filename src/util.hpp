@@ -179,6 +179,10 @@ public:
 #define POMAGMA_ASSERT_OK \
     POMAGMA_ASSERT5(ok(), "tried to use done iterator")
 
+#define POMAGMA_ASSERT_CONTAINS3(POMAGMA_set, POMAGMA_x, POMAGMA_y, POMAGMA_z)\
+    POMAGMA_ASSERT(POMAGMA_set.contains(POMAGMA_x, POMAGMA_y, POMAGMA_z),\
+    #POMAGMA_set " is missing " #POMAGMA_x ", " #POMAGMA_y ", " #POMAGMA_z)
+
 #define POMAGMA_ASSERT_RANGE_(POMAGMA_level, POMAGMA_i, POMAGMA_dim)\
     POMAGMA_ASSERT_(POMAGMA_level,\
         1 <= (POMAGMA_i) and (POMAGMA_i) <= (POMAGMA_dim),\

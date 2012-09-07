@@ -26,12 +26,12 @@ void test_BinaryRelation (
 
     POMAGMA_INFO("testing position insertion");
     for (Ob i = 1; i <= size; ++i) {
-         carrier.insert();
+         carrier.unsafe_insert();
     }
     size_t item_count = size;
     for (Ob i = 1; i <= size; ++i) {
         if (random_bool(0.5)) {
-            carrier.remove(i);
+            carrier.unsafe_remove(i);
             --item_count;
         }
     }
@@ -84,7 +84,7 @@ void test_BinaryRelation (
         if (m < n) std::swap(m, n);
         rel.merge(m, n);
         carrier.merge(m, n);
-        carrier.remove(m);
+        carrier.unsafe_remove(m);
         --item_count;
     }
     POMAGMA_INFO("  " << g_num_moved << " pairs moved in merging");

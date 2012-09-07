@@ -17,7 +17,7 @@ class BinaryFunction : noncopyable
     Block * const m_blocks;
     mutable Vlr_Table m_Vlr_table;
     mutable VLr_Table m_VLr_table;
-    mutable VLr_Table m_VRl_table;
+    mutable VRl_Table m_VRl_table;
 
     mutable AssertSharedMutex m_mutex;
     typedef AssertSharedMutex::SharedLock SharedLock;
@@ -34,16 +34,15 @@ public:
     DenseSet get_Lx_set (Ob lhs) const { return m_lines.Lx_set(lhs); }
     DenseSet get_Rx_set (Ob rhs) const { return m_lines.Rx_set(rhs); }
     bool defined (Ob lhs, Ob rhs) const;
-    Ob find (Ob lhs, Ob rhs) const { return value(lhs, rhs); }
+    Ob find (Ob lhs, Ob rhs) const { return value(lhs, rhs).load(); }
+    Vlr_Table::Iterator iter_val (Ob val) const;
+    VLr_Table::Iterator iter_val_lhs (Ob val, Ob lhs) const;
+    VRl_Table::Iterator iter_val_rhs (Ob val, Ob rhs) const;
     void insert (Ob lhs, Ob rhs, Ob val) const;
 
     // strict operations
     void unsafe_remove (const Ob i);
     void unsafe_merge (const Ob i, const Ob j);
-
-    Vlr_Table::Iterator iter_val (Ob val) const;
-    VLr_Table::Iterator iter_val_lhs (Ob val, Ob lhs) const;
-    VLr_Table::Iterator iter_val_rhs (Ob val, Ob rhs) const;
 
 private:
 
@@ -86,9 +85,9 @@ inline VLr_Table::Iterator BinaryFunction::iter_val_lhs (Ob val, Ob lhs) const
     return m_VLr_table.iter(val, lhs);
 }
 
-inline VLr_Table::Iterator BinaryFunction::iter_val_rhs (Ob val, Ob rhs) const
+inline VRl_Table::Iterator BinaryFunction::iter_val_rhs (Ob val, Ob rhs) const
 {
-    return m_VLr_table.iter(val, rhs);
+    return m_VRl_table.iter(val, rhs);
 }
 
 } // namespace pomagma

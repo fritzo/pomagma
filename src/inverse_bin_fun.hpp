@@ -31,13 +31,15 @@ public:
         m_data[val].insert(std::make_pair(lhs, rhs));
     }
 
-    void unsafe_remove (Ob lhs, Ob rhs, Ob val)
+    Vlr_Table & unsafe_remove (Ob lhs, Ob rhs, Ob val)
     {
         m_data[val].unsafe_erase(std::make_pair(lhs, rhs));
+        return * this;
     }
-    void unsafe_remove (Ob val)
+    Vlr_Table & unsafe_remove (Ob val)
     {
         m_data[val].clear();
+        return * this;
     }
 
     class Iterator
@@ -83,7 +85,8 @@ public:
 };
 
 // val, lhs -> rhs
-class VLr_Table : noncopyable
+template<bool transpose>
+class VXx_Table : noncopyable
 {
     typedef tbb::concurrent_unordered_set<Ob> Set;
     typedef tbb::concurrent_unordered_map<std::pair<Ob, Ob>, Set> Data;
@@ -93,40 +96,47 @@ public:
 
     bool contains (Ob lhs, Ob rhs, Ob val) const
     {
-        Data::const_iterator i = m_data.find(std::make_pair(val, lhs));
+        Ob fixed = transpose ? rhs : lhs;
+        Ob moving = transpose ? lhs : rhs;
+        Data::const_iterator i = m_data.find(std::make_pair(val, fixed));
         if (i == m_data.end()) {
             return false;
         }
-        return i->second.find(rhs) != i->second.end();
+        return i->second.find(moving) != i->second.end();
     }
     void insert (Ob lhs, Ob rhs, Ob val)
     {
-        m_data[std::make_pair(val, lhs)].insert(rhs);
+        Ob fixed = transpose ? rhs : lhs;
+        Ob moving = transpose ? lhs : rhs;
+        m_data[std::make_pair(val, fixed)].insert(moving);
     }
 
-    void unsafe_remove (Ob lhs, Ob rhs, Ob val)
+    VXx_Table<transpose> & unsafe_remove (Ob lhs, Ob rhs, Ob val)
     {
-        Data::const_iterator i = m_data.find(std::make_pair(val, lhs));
+        Ob fixed = transpose ? rhs : lhs;
+        Ob moving = transpose ? lhs : rhs;
+        Data::const_iterator i = m_data.find(std::make_pair(val, fixed));
         POMAGMA_ASSERT1(i != m_data.end(),
                 "double erase: " << val << "," << lhs << "," << rhs);
-        i->second.unsafe_erase(rhs);
+        i->second.unsafe_erase(moving);
         if (i->second.empty()) {
             m_data.unsafe_erase(i);
         }
+        return * this;
     }
 
     class Iterator
     {
-        friend class VLr_Table;
+        friend class VXx_Table<transpose>;
 
         const Data & m_data;
         Set::const_iterator m_iter;
         Set::const_iterator m_end;
         std::pair<Ob, Ob> m_pair;
 
-        Iterator (const VLr_Table * fun, Ob val, Ob lhs)
+        Iterator (const VXx_Table<transpose> * fun, Ob val, Ob fixed)
             : m_data(fun->m_data),
-              m_pair(val, lhs)
+              m_pair(val, fixed)
         {
             Data::const_iterator i = m_data.find(m_pair);
             if (i != m_data.end()) {
@@ -148,24 +158,28 @@ public:
         Ob operator * () const { POMAGMA_ASSERT_OK return *m_iter; }
     };
 
-    Iterator iter (Ob val, Ob lhs) const { return Iterator(this, val, lhs); }
+    Iterator iter (Ob val, Ob fixed) const
+    {
+        return Iterator(this, val, fixed);
+    }
 
     template<class Fun>
-    void validate (const Fun * fun, bool transpose) const
+    void validate (const Fun * fun) const
     {
-        for (const auto & val_lhs : m_data) {
-            Ob val = val_lhs.first.first;
-            Ob lhs = val_lhs.first.second;
-            for (Ob rhs : val_lhs.second) {
-                if (transpose) {
-                    POMAGMA_ASSERT_EQ(fun->find(rhs, lhs), val);
-                } else {
-                    POMAGMA_ASSERT_EQ(fun->find(lhs, rhs), val);
-                }
+        for (const auto & val_fixed : m_data) {
+            Ob val = val_fixed.first.first;
+            Ob fixed = val_fixed.first.second;
+            for (Ob moving : val_fixed.second) {
+                Ob lhs = transpose ? moving : fixed;
+                Ob rhs = transpose ? fixed : moving;
+                POMAGMA_ASSERT_EQ(fun->find(lhs, rhs), val);
             }
         }
     }
 };
+
+typedef VXx_Table<0> VLr_Table;
+typedef VXx_Table<1> VRl_Table;
 
 } // namespace pomagma
 

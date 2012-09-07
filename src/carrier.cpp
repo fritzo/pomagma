@@ -33,7 +33,7 @@ void Carrier::move_from (
     TODO("move from other")
 }
 
-Ob Carrier::insert ()
+Ob Carrier::unsafe_insert ()
 {
     UniqueLock lock(m_mutex);
 
@@ -46,7 +46,7 @@ Ob Carrier::insert ()
     return ob;
 }
 
-void Carrier::remove (Ob ob)
+void Carrier::unsafe_remove (Ob ob)
 {
     UniqueLock lock(m_mutex);
 
