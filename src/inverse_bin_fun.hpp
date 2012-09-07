@@ -68,6 +68,18 @@ public:
     };
 
     Iterator iter (Ob val) const { return Iterator(this, val); }
+
+    template<class Fun>
+    void validate (const Fun * fun) const
+    {
+        for (Ob val = 1, end = m_data.size(); val < end; ++val) {
+            for (auto lhs_rhs : m_data[val]) {
+                Ob lhs = lhs_rhs.first;
+                Ob rhs = lhs_rhs.second;
+                POMAGMA_ASSERT_EQ(fun->find(lhs, rhs), val);
+            }
+        }
+    }
 };
 
 // val, lhs -> rhs
@@ -137,6 +149,22 @@ public:
     };
 
     Iterator iter (Ob val, Ob lhs) const { return Iterator(this, val, lhs); }
+
+    template<class Fun>
+    void validate (const Fun * fun, bool transpose) const
+    {
+        for (const auto & val_lhs : m_data) {
+            Ob val = val_lhs.first.first;
+            Ob lhs = val_lhs.first.second;
+            for (Ob rhs : val_lhs.second) {
+                if (transpose) {
+                    POMAGMA_ASSERT_EQ(fun->find(rhs, lhs), val);
+                } else {
+                    POMAGMA_ASSERT_EQ(fun->find(lhs, rhs), val);
+                }
+            }
+        }
+    }
 };
 
 } // namespace pomagma

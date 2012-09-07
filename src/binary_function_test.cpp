@@ -52,8 +52,26 @@ void test_basic (size_t size)
                     "unexpected pair " << *i << ',' << *j);
         }
     }}
+    fun.validate();
 
-    POMAGMA_INFO("Validating");
+    POMAGMA_INFO("Checking merging");
+    for (DenseSet::Iterator dep(support); dep.ok(); dep.next()) {
+        for (DenseSet::Iterator rep(support); rep.ok(); rep.next()) {
+            if ((*rep < *dep) and random_bool(0.1)) {
+                carrier.merge(*dep, *rep);
+                break;
+            }
+        }
+    }
+    fun.validate();
+    for (DenseSet::Iterator iter(support); iter.ok(); iter.next()) {
+        Ob dep = *iter;
+        Ob rep = carrier.find(dep);
+        if (rep != dep) {
+            fun.unsafe_merge(dep, rep);
+            carrier.remove(dep);
+        }
+    }
     fun.validate();
 }
 

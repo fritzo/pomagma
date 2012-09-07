@@ -2,6 +2,10 @@
 #include "aligned_alloc.hpp"
 #include <cstring>
 
+#define POMAGMA_ASSERT_CONTAINS(POMAGMA_set, POMAGMA_x, POMAGMA_y, POMAGMA_z)\
+    POMAGMA_ASSERT(POMAGMA_set.contains(POMAGMA_x, POMAGMA_y, POMAGMA_z),\
+    #POMAGMA_set " is missing " #POMAGMA_x ", " #POMAGMA_y ", " #POMAGMA_z)
+
 namespace pomagma
 {
 
@@ -49,14 +53,12 @@ void BinaryFunction::validate () const
 
     m_lines.validate();
 
-    // TODO move test from inverse_bin_fun.cpp here
-
     POMAGMA_DEBUG("validating line-block consistency");
-    for (size_t i_ = 0; i_ < m_block_dim; ++i_) {
+    for (size_t i_ = 0; i_ < m_block_dim; ++i_)
     for (size_t j_ = 0; j_ < m_block_dim; ++j_) {
-        const std::atomic<Ob> * block = _block(i_,j_);
+        const std::atomic<Ob> * block = _block(i_, j_);
 
-        for (size_t _i = 0; _i < ITEMS_PER_BLOCK; ++_i) {
+        for (size_t _i = 0; _i < ITEMS_PER_BLOCK; ++_i)
         for (size_t _j = 0; _j < ITEMS_PER_BLOCK; ++_j) {
             size_t i = i_ * ITEMS_PER_BLOCK + _i;
             size_t j = j_ * ITEMS_PER_BLOCK + _j;
@@ -74,8 +76,33 @@ void BinaryFunction::validate () const
                 POMAGMA_ASSERT(not defined(i, j),
                         "found supported null value: " << i << ',' << j);
             }
-        }}
-    }}
+        }
+    }
+
+    POMAGMA_INFO("Validating inverse contains function");
+    for (DenseSet::Iterator lhs_iter(support());
+        lhs_iter.ok();
+        lhs_iter.next())
+    {
+        Ob lhs = *lhs_iter;
+        DenseSet rhs_set = get_Lx_set(lhs);
+        for (DenseSet::Iterator rhs_iter(rhs_set);
+            rhs_iter.ok();
+            rhs_iter.next())
+        {
+            Ob rhs = *rhs_iter;
+            Ob val = find(lhs, rhs);
+
+            POMAGMA_ASSERT_CONTAINS(m_Vlr_table, lhs, rhs, val);
+            POMAGMA_ASSERT_CONTAINS(m_VLr_table, lhs, rhs, val);
+            POMAGMA_ASSERT_CONTAINS(m_VRl_table, rhs, lhs, val);
+        }
+    }
+
+    POMAGMA_INFO("Validating function contains inverse");
+    m_Vlr_table.validate(this);
+    m_VLr_table.validate(this, false);
+    m_VRl_table.validate(this, true);
 }
 
 void BinaryFunction::insert (Ob lhs, Ob rhs, Ob val) const
