@@ -107,7 +107,7 @@ void BinaryFunction::insert (Ob lhs, Ob rhs, Ob val) const
 
     POMAGMA_ASSERT5(support().contains(lhs), "unsupported lhs: " << lhs);
     POMAGMA_ASSERT5(support().contains(rhs), "unsupported rhs: " << rhs);
-    POMAGMA_ASSERT_RANGE_(5, val, item_dim());
+    POMAGMA_ASSERT5(support().contains(val), "unsupported val: " << val);
 
     std::atomic<Ob> & old_val = value(lhs, rhs);
     if (carrier().set_and_merge(val, old_val) == 0) {
@@ -123,7 +123,7 @@ void BinaryFunction::unsafe_remove (const Ob dep)
 {
     UniqueLock lock(m_mutex);
 
-    POMAGMA_ASSERT_RANGE_(4, dep, item_dim());
+    POMAGMA_ASSERT5(support().contains(dep), "unsupported dep: " << dep);
 
     DenseSet set(item_dim(), NULL);
 
@@ -180,8 +180,8 @@ void BinaryFunction::unsafe_merge (const Ob dep, const Ob rep)
     UniqueLock lock(m_mutex);
 
     POMAGMA_ASSERT4(rep != dep, "self merge: " << dep << "," << rep);
-    POMAGMA_ASSERT_RANGE_(4, dep, item_dim());
-    POMAGMA_ASSERT_RANGE_(4, rep, item_dim());
+    POMAGMA_ASSERT5(support().contains(dep), "unsupported dep: " << dep);
+    POMAGMA_ASSERT5(support().contains(rep), "unsupported rep: " << rep);
 
     DenseSet set(item_dim(), NULL);
     DenseSet dep_set(item_dim(), NULL);
@@ -229,7 +229,9 @@ void BinaryFunction::unsafe_merge (const Ob dep, const Ob rep)
         Ob val = rep_val;
         m_Vlr_table.unsafe_remove(dep, rhs, val).insert(rep, rhs, val);
         m_VLr_table.unsafe_remove(dep, rhs, val).insert(rep, rhs, val);
-        m_VRl_table.unsafe_remove(dep, rhs, val).insert(rep, rhs, val);
+        m_VRl_table.unsafe_remove(dep, rhs, val).insert(rep, rhs, val); // XXX
+        // FIXME segfault here with inverse_bin_fun::unsafe_remove erring with
+        // "double erase"
     }
     rep_set.init(m_lines.Lx(rep));
     dep_set.init(m_lines.Lx(dep));

@@ -70,23 +70,27 @@ inline std::atomic<Ob> & BinaryFunction::value (Ob i, Ob j) const
 {
     POMAGMA_ASSERT_RANGE_(5, i, item_dim());
     POMAGMA_ASSERT_RANGE_(5, j, item_dim());
-
     std::atomic<Ob> * block = _block(i / ITEMS_PER_BLOCK, j / ITEMS_PER_BLOCK);
     return _block2value(block, i & BLOCK_POS_MASK, j & BLOCK_POS_MASK);
 }
 
 inline Vlr_Table::Iterator BinaryFunction::iter_val (Ob val) const
 {
+    POMAGMA_ASSERT5(support().contains(val), "unsupported val: " << val);
     return m_Vlr_table.iter(val);
 }
 
 inline VLr_Table::Iterator BinaryFunction::iter_val_lhs (Ob val, Ob lhs) const
 {
+    POMAGMA_ASSERT5(support().contains(val), "unsupported val: " << val);
+    POMAGMA_ASSERT5(support().contains(lhs), "unsupported lhs: " << lhs);
     return m_VLr_table.iter(val, lhs);
 }
 
 inline VRl_Table::Iterator BinaryFunction::iter_val_rhs (Ob val, Ob rhs) const
 {
+    POMAGMA_ASSERT5(support().contains(val), "unsupported val: " << val);
+    POMAGMA_ASSERT5(support().contains(rhs), "unsupported rhs: " << rhs);
     return m_VRl_table.iter(val, rhs);
 }
 

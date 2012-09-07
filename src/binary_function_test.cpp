@@ -17,7 +17,7 @@ void test_basic (size_t size)
         carrier.unsafe_insert();
     }
     for (Ob i = 1; i <= size; ++i) {
-        if (random_bool(0.5)) {
+        if (random_bool(0.2)) {
             carrier.unsafe_remove(i);
         }
     }
@@ -28,7 +28,7 @@ void test_basic (size_t size)
     for (DenseSet::Iterator i(support); i.ok(); i.next()) {
     for (DenseSet::Iterator j(support); j.ok(); j.next()) {
         Ob k = example_fun(*i, *j);
-        if (k > 1) {
+        if ((k > 1) and carrier.contains(k)) {
             fun.insert(*i, *j, k);
         }
     }}
@@ -40,7 +40,7 @@ void test_basic (size_t size)
     for (DenseSet::Iterator i(support); i.ok(); i.next()) {
     for (DenseSet::Iterator j(support); j.ok(); j.next()) {
         Ob k = example_fun(*i, *j);
-        if (k > 1) {
+        if ((k > 1) and carrier.contains(k)) {
             POMAGMA_ASSERT(fun.defined(*i, *j),
                     "missing pair " << *i << ',' << *j);
             POMAGMA_ASSERT(fun.find(*i, *j) == k,
