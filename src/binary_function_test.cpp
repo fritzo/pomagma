@@ -54,7 +54,7 @@ void test_basic (size_t size)
     }}
     fun.validate();
 
-    POMAGMA_INFO("Checking merging");
+    POMAGMA_INFO("Checking unsafe_merge");
     for (DenseSet::Iterator dep(support); dep.ok(); dep.next()) {
         for (DenseSet::Iterator rep(support); rep.ok(); rep.next()) {
             if ((*rep < *dep) and random_bool(0.25)) {
@@ -63,10 +63,25 @@ void test_basic (size_t size)
             }
         }
     }
+    bool merged;
+    do {
+        merged = false;
+        for (DenseSet::Iterator iter(support); iter.ok(); iter.next()) {
+            Ob dep = *iter;
+            if (carrier.find(dep) != dep) {
+                fun.unsafe_merge(dep);
+                carrier.unsafe_remove(dep);
+                merged = true;
+            }
+        }
+    } while (merged);
+    fun.validate();
+
+    POMAGMA_INFO("Checking unsafe_remove");
     for (DenseSet::Iterator iter(support); iter.ok(); iter.next()) {
-        Ob dep = *iter;
-        if (carrier.find(dep) != dep) {
-            fun.unsafe_merge(dep);
+        if (random_bool(0.5)) {
+            Ob dep = *iter;
+            fun.unsafe_remove(dep);
             carrier.unsafe_remove(dep);
         }
     }

@@ -127,36 +127,32 @@ void BinaryFunction::unsafe_remove (const Ob dep)
     DenseSet set(item_dim(), NULL);
 
     {   Ob rhs = dep;
-        DenseSet rhs_fixed = get_Rx_set(rhs);
-        for (DenseSet::Iterator iter(rhs_fixed); iter.ok(); iter.next()) {
+        set.init(m_lines.Rx(rhs));
+        for (DenseSet::Iterator iter(set); iter.ok(); iter.next()) {
             Ob lhs = *iter;
             std::atomic<Ob> & atomic_val = value(lhs, rhs);
-            atomic_val.store(0, std::memory_order_relaxed);
             Ob val = atomic_val.load(std::memory_order_relaxed);
+            atomic_val.store(0, std::memory_order_relaxed);
             m_Vlr_table.unsafe_remove(lhs, rhs, val);
             m_VLr_table.unsafe_remove(lhs, rhs, val);
             m_VRl_table.unsafe_remove(lhs, rhs, val);
-            set.init(m_lines.Lx(lhs));
-            set.remove(rhs);
+            m_lines.Lx(lhs, rhs).zero();
         }
-        set.init(m_lines.Rx(rhs));
         set.zero();
     }
 
     {   Ob lhs = dep;
-        DenseSet lhs_fixed = get_Lx_set(lhs);
-        for (DenseSet::Iterator iter(lhs_fixed); iter.ok(); iter.next()) {
+        set.init(m_lines.Lx(lhs));
+        for (DenseSet::Iterator iter(set); iter.ok(); iter.next()) {
             Ob rhs = *iter;
             std::atomic<Ob> & atomic_val = value(lhs, rhs);
-            atomic_val.store(0, std::memory_order_relaxed);
             Ob val = atomic_val.load(std::memory_order_relaxed);
+            atomic_val.store(0, std::memory_order_relaxed);
             m_Vlr_table.unsafe_remove(lhs, rhs, val);
             m_VLr_table.unsafe_remove(lhs, rhs, val);
             m_VRl_table.unsafe_remove(lhs, rhs, val);
-            set.init(m_lines.Rx(rhs));
-            set.remove(lhs);
+            m_lines.Rx(lhs, rhs).zero();
         }
-        set.init(m_lines.Lx(lhs));
         set.zero();
     }
 
@@ -164,9 +160,12 @@ void BinaryFunction::unsafe_remove (const Ob dep)
         for (auto iter = iter_val(val); iter.ok(); iter.next()) {
             Ob lhs = iter.lhs();
             Ob rhs = iter.rhs();
-            value(lhs, rhs).store(0, std::memory_order_relaxed);
+            std::atomic<Ob> & atomic_val = value(lhs, rhs);
+            POMAGMA_ASSERT3(val == atomic_val.load(),
+                    "double removal: " << lhs << ", " << rhs << ", " << val);
+            atomic_val.store(0, std::memory_order_relaxed);
             m_lines.Lx(lhs, rhs).zero();
-            m_lines.Rx(rhs, lhs).zero();
+            m_lines.Rx(lhs, rhs).zero();
             m_VLr_table.unsafe_remove(lhs, rhs, val);
             m_VRl_table.unsafe_remove(lhs, rhs, val);
         }

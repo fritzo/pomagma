@@ -82,7 +82,7 @@ inline void SymmetricFunction::insert (Ob lhs, Ob rhs, Ob val) const
 
     if (carrier().set_or_merge(value(lhs, rhs), val)) {
         m_lines.Lx(lhs, rhs).one();
-        m_lines.Lx(rhs, lhs).one();
+        m_lines.Rx(lhs, rhs).one();
     }
 }
 
