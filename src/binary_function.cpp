@@ -27,7 +27,7 @@ BinaryFunction::~BinaryFunction ()
     free_blocks(m_blocks);
 }
 
-void BinaryFunction::move_from (const BinaryFunction & other)
+void BinaryFunction::copy_from (const BinaryFunction & other)
 {
     POMAGMA_DEBUG("Copying BinaryFunction");
 
@@ -38,10 +38,10 @@ void BinaryFunction::move_from (const BinaryFunction & other)
         memcpy(destin, source, sizeof(Block) * min_block_dim); // unsafe
     }
 
-    m_lines.move_from(other.m_lines);
-    m_Vlr_table.move_from(other.m_Vlr_table);
-    m_VLr_table.move_from(other.m_VLr_table);
-    m_VRl_table.move_from(other.m_VRl_table);
+    m_lines.copy_from(other.m_lines);
+    m_Vlr_table.copy_from(other.m_Vlr_table);
+    m_VLr_table.copy_from(other.m_VLr_table);
+    m_VRl_table.copy_from(other.m_VRl_table);
 }
 
 void BinaryFunction::validate () const

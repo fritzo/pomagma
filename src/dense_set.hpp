@@ -7,12 +7,14 @@
 namespace pomagma
 {
 
+void free_blocks (void *);
+
 // WARNING zero/null items are not allowed
 
 //----------------------------------------------------------------------------
 // Dense set - basically a bitfield
 
-class DenseSet
+class DenseSet : noncopyable
 {
     // data
     const size_t m_item_dim;
@@ -51,19 +53,14 @@ public:
         POMAGMA_ASSERT_LE(item_dim, MAX_ITEM_DIM);
         POMAGMA_ASSERT_ALIGNED_(1, line);
     }
-
-    // return-by-value is allowed, but general copy is not
-    DenseSet (const DenseSet & other)
+    DenseSet (DenseSet && other)
         : m_item_dim(other.m_item_dim),
           m_word_dim(other.m_word_dim),
           m_words(other.m_words),
           m_alias(other.m_alias)
     {
-        POMAGMA_ASSERT(m_alias, "copy-constructed a non-alias DenseSet");
+        other.m_words = NULL;
     }
-private:
-    void operator= (const DenseSet & other); // intentionally undefined
-public:
     //DenseSet (size_t item_dim, AlignedBuffer<Word> & buffer)
     //    : m_item_dim(item_dim),
     //      m_word_dim(word_count(item_dim)),
@@ -71,8 +68,8 @@ public:
     //      m_alias(true)
     //{
     //}
-    ~DenseSet ();
-    void move_from (const DenseSet & other, const Ob * new2old = NULL);
+    ~DenseSet () { if (not m_alias and m_words) free_blocks(m_words); }
+    void copy_from (const DenseSet & other, const Ob * new2old = NULL);
     void init (Word * line)
     {
         POMAGMA_ASSERT4(m_alias, "tried to init() non-alias dense set");

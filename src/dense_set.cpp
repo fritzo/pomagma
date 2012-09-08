@@ -18,11 +18,6 @@ DenseSet::DenseSet (size_t item_dim)
     bzero(m_words, sizeof(Word) * m_word_dim);
 }
 
-DenseSet::~DenseSet ()
-{
-  if (not m_alias) pomagma::free_blocks(m_words);
-}
-
 // intentionally undefined
 //void DenseSet::operator= (const DenseSet & other)
 //{
@@ -32,7 +27,7 @@ DenseSet::~DenseSet ()
 //    }
 //}
 
-void DenseSet::move_from (const DenseSet & other, const Ob * new2old)
+void DenseSet::copy_from (const DenseSet & other, const Ob * new2old)
 {
     POMAGMA_DEBUG("Copying DenseSet");
 

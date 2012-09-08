@@ -28,7 +28,7 @@ public:
 
     SymmetricFunction (const Carrier & carrier);
     ~SymmetricFunction ();
-    void move_from (const SymmetricFunction & other);
+    void copy_from (const SymmetricFunction & other);
     void validate () const;
 
     // relaxed operations

@@ -79,8 +79,8 @@ std::string get_date (bool hour=true);
 
 class noncopyable
 {
-    noncopyable (const noncopyable &); // intentionally undefined
-    void operator= (const noncopyable &); // intentionally undefined
+    noncopyable (const noncopyable &) = delete;
+    void operator= (const noncopyable &) = delete;
 public:
     noncopyable () {}
 };

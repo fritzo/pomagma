@@ -22,7 +22,7 @@ public:
     Vlr_Table (size_t size) : m_data(size)
     {
     }
-    void move_from (const Vlr_Table & other)
+    void copy_from (const Vlr_Table & other)
     {
         size_t min_size = min(m_data.size(), other.m_data.size());
         for (size_t i = 1; i < min_size; ++i) {
@@ -103,7 +103,7 @@ class VXx_Table : noncopyable
 
 public:
 
-    void move_from (const VXx_Table & other)
+    void copy_from (const VXx_Table & other)
     {
         m_data = other.m_data;
     }

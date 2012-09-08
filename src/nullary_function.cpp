@@ -12,7 +12,7 @@ NullaryFunction::NullaryFunction (const Carrier & carrier)
     POMAGMA_DEBUG("creating NullaryFunction");
 }
 
-void NullaryFunction::move_from (const NullaryFunction & other)
+void NullaryFunction::copy_from (const NullaryFunction & other)
 {
     POMAGMA_DEBUG("Copying NullaryFunction");
 

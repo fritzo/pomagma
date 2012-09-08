@@ -22,7 +22,7 @@ Carrier::~Carrier ()
     free_blocks(m_reps);
 }
 
-void Carrier::move_from (
+void Carrier::copy_from (
         const Carrier & other,
         const Ob * new2old __attribute__((unused)))
 {

@@ -27,7 +27,7 @@ InjectiveFunction::~InjectiveFunction ()
     free_blocks(m_inverse);
 }
 
-void InjectiveFunction::move_from (const InjectiveFunction & other)
+void InjectiveFunction::copy_from (const InjectiveFunction & other)
 {
     POMAGMA_DEBUG("Copying InjectiveFunction");
 
@@ -36,8 +36,8 @@ void InjectiveFunction::move_from (const InjectiveFunction & other)
     memcpy(m_values, other.m_values, byte_count);
     memcpy(m_inverse, other.m_inverse, byte_count);
 
-    m_set.move_from(other.m_set);
-    m_inverse_set.move_from(other.m_inverse_set);
+    m_set.copy_from(other.m_set);
+    m_inverse_set.copy_from(other.m_inverse_set);
 }
 
 void InjectiveFunction::validate () const

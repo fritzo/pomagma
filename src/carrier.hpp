@@ -29,7 +29,7 @@ public:
 
     Carrier (size_t item_dim, void (*merge_callback) (Ob) = NULL);
     ~Carrier ();
-    void move_from (const Carrier & other, const Ob * new2old);
+    void copy_from (const Carrier & other, const Ob * new2old);
     void validate () const;
 
     // attributes

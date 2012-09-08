@@ -20,7 +20,7 @@ class NullaryFunction : noncopyable
 public:
 
     NullaryFunction (const Carrier & carrier);
-    void move_from (const NullaryFunction & other);
+    void copy_from (const NullaryFunction & other);
     void validate () const;
 
     // safe operations

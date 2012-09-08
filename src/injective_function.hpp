@@ -24,7 +24,7 @@ public:
 
     InjectiveFunction (const Carrier & carrier);
     ~InjectiveFunction ();
-    void move_from (const InjectiveFunction & other); // for growing
+    void copy_from (const InjectiveFunction & other); // for growing
     void validate () const;
 
     // relaxed operations

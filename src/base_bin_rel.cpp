@@ -37,7 +37,7 @@ base_bin_rel_<symmetric>::~base_bin_rel_ ()
 
 // for growing
 template<bool symmetric>
-void base_bin_rel_<symmetric>::move_from (
+void base_bin_rel_<symmetric>::copy_from (
         const base_bin_rel_<symmetric> & other)
 {
     POMAGMA_DEBUG("Copying base_bin_rel_");
@@ -130,11 +130,11 @@ void base_bin_rel_<symmetric>::validate() const
 template base_bin_rel_<true>::base_bin_rel_ (const Carrier &);
 template base_bin_rel_<true>::~base_bin_rel_ ();
 template void base_bin_rel_<true>::validate () const;
-template void base_bin_rel_<true>::move_from (const base_bin_rel_<true> &);
+template void base_bin_rel_<true>::copy_from (const base_bin_rel_<true> &);
 
 template base_bin_rel_<false>::base_bin_rel_ (const Carrier &);
 template base_bin_rel_<false>::~base_bin_rel_ ();
 template void base_bin_rel_<false>::validate () const;
-template void base_bin_rel_<false>::move_from (const base_bin_rel_<false> &);
+template void base_bin_rel_<false>::copy_from (const base_bin_rel_<false> &);
 
 } // namespace pomagma

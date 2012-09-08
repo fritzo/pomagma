@@ -22,7 +22,7 @@ public:
 
     base_bin_rel_ (const Carrier & carrier);
     ~base_bin_rel_ ();
-    void move_from (const base_bin_rel_<symmetric> & other); // for growing
+    void copy_from (const base_bin_rel_<symmetric> & other); // for growing
     void validate () const;
 
     const Carrier & carrier () const { return m_carrier; }

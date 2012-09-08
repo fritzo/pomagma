@@ -21,7 +21,7 @@ BinaryRelation::~BinaryRelation ()
 {
 }
 
-void BinaryRelation::move_from (
+void BinaryRelation::copy_from (
         const BinaryRelation & other,
         const Ob * new2old)
 {
@@ -35,7 +35,7 @@ void BinaryRelation::move_from (
 
     if (new2old == NULL) {
         POMAGMA_DEBUG("copying by column and by row");
-        m_lines.move_from(other.m_lines);
+        m_lines.copy_from(other.m_lines);
     } else {
         POMAGMA_DEBUG("copying and reordering");
         // copy & reorder WIKKIT SLOW

@@ -23,8 +23,7 @@ void schedule_less (Ob lhs, Ob rhs) { schedule(PositiveOrderTask(lhs, rhs)); }
 void schedule_nless (Ob lhs, Ob rhs) { schedule(NegativeOrderTask(lhs, rhs)); }
 
 Carrier carrier(DEFAULT_ITEM_DIM, schedule_merge);
-const DenseSet support(carrier.support(), yes_copy_construct);
-inline size_t item_dim () { return support.item_dim(); }
+inline size_t item_dim () { return carrier.support().item_dim(); }
 
 BinaryRelation LESS(carrier, schedule_less);
 BinaryRelation NLESS(carrier, schedule_nless);

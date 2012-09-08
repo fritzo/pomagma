@@ -29,7 +29,7 @@ SymmetricFunction::~SymmetricFunction ()
     pomagma::free_blocks(m_blocks);
 }
 
-void SymmetricFunction::move_from (const SymmetricFunction & other)
+void SymmetricFunction::copy_from (const SymmetricFunction & other)
 {
     POMAGMA_DEBUG("Copying SymmetricFunction");
 
@@ -40,9 +40,9 @@ void SymmetricFunction::move_from (const SymmetricFunction & other)
         memcpy(destin, source, sizeof(Block) * (1 + j_));
     }
 
-    m_lines.move_from(other.m_lines);
-    m_Vlr_table.move_from(other.m_Vlr_table);
-    m_VLr_table.move_from(other.m_VLr_table);
+    m_lines.copy_from(other.m_lines);
+    m_Vlr_table.copy_from(other.m_Vlr_table);
+    m_VLr_table.copy_from(other.m_VLr_table);
 }
 
 void SymmetricFunction::validate () const

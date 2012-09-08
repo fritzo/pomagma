@@ -24,7 +24,7 @@ public:
         const Carrier & carrier,
         void (*insert_callback) (Ob, Ob) = NULL);
     ~BinaryRelation ();
-    void move_from (const BinaryRelation & other, const Ob * new2old = NULL);
+    void copy_from (const BinaryRelation & other, const Ob * new2old = NULL);
     void validate () const;
     void validate_disjoint (const BinaryRelation & other) const;
 

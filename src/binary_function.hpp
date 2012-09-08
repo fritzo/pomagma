@@ -27,7 +27,7 @@ public:
 
     BinaryFunction (const Carrier & carrier);
     ~BinaryFunction ();
-    void move_from (const BinaryFunction & other);
+    void copy_from (const BinaryFunction & other);
     void validate () const;
 
     // relaxed operations
