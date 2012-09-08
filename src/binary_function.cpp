@@ -182,7 +182,6 @@ void BinaryFunction::unsafe_merge (const Ob dep)
     POMAGMA_ASSERT5(support().contains(rep), "unsupported rep: " << rep);
     POMAGMA_ASSERT4(rep != dep, "self merge: " << dep << "," << rep);
 
-    DenseSet set(item_dim(), NULL);
     DenseSet dep_set(item_dim(), NULL);
     DenseSet rep_set(item_dim(), NULL);
 
@@ -196,20 +195,18 @@ void BinaryFunction::unsafe_merge (const Ob dep)
         Ob lhs = *iter;
         std::atomic<Ob> & dep_val = value(lhs, dep);
         std::atomic<Ob> & rep_val = value(lhs, rep);
-        set.init(m_lines.Lx(lhs));
-
         Ob val = dep_val.load(std::memory_order_relaxed);
         dep_val.store(0, std::memory_order_relaxed);
-        set(dep).zero();
-        m_Vlr_table.unsafe_remove(lhs, dep, val);
-        m_VLr_table.unsafe_remove(lhs, dep, val);
-        m_VRl_table.unsafe_remove(lhs, dep, val);
-
+        m_lines.Lx(lhs, dep).zero();
         if (carrier().set_or_merge(rep_val, val)) {
-            set(rep).one();
-            m_Vlr_table.insert(lhs, rep, val);
-            m_VLr_table.insert(lhs, rep, val);
-            m_VRl_table.insert(lhs, rep, val);
+            m_lines.Lx(lhs, rep).one();
+            m_Vlr_table.unsafe_remove(lhs, dep, val).insert(lhs, rep, val);
+            m_VLr_table.unsafe_remove(lhs, dep, val).insert(lhs, rep, val);
+            m_VRl_table.unsafe_remove(lhs, dep, val).insert(lhs, rep, val);
+        } else {
+            m_Vlr_table.unsafe_remove(lhs, dep, val);
+            m_VLr_table.unsafe_remove(lhs, dep, val);
+            m_VRl_table.unsafe_remove(lhs, dep, val);
         }
     }
     rep_set.init(m_lines.Rx(rep));
@@ -222,20 +219,18 @@ void BinaryFunction::unsafe_merge (const Ob dep)
         Ob rhs = *iter;
         std::atomic<Ob> & dep_val = value(dep, rhs);
         std::atomic<Ob> & rep_val = value(rep, rhs);
-        set.init(m_lines.Rx(rhs));
-
         Ob val = dep_val.load(std::memory_order_relaxed);
         dep_val.store(0, std::memory_order_relaxed);
-        set(dep).zero();
-        m_Vlr_table.unsafe_remove(dep, rhs, val);
-        m_VLr_table.unsafe_remove(dep, rhs, val);
-        m_VRl_table.unsafe_remove(dep, rhs, val);
-
+        m_lines.Rx(dep, rhs).zero();
         if (carrier().set_or_merge(rep_val, val)) {
-            set(rep).one();
-            m_Vlr_table.insert(rep, rhs, val);
-            m_VLr_table.insert(rep, rhs, val);
-            m_VRl_table.insert(rep, rhs, val);
+            m_lines.Rx(rep, rhs).one();
+            m_Vlr_table.unsafe_remove(dep, rhs, val).insert(rep, rhs, val);
+            m_VLr_table.unsafe_remove(dep, rhs, val).insert(rep, rhs, val);
+            m_VRl_table.unsafe_remove(dep, rhs, val).insert(rep, rhs, val);
+        } else {
+            m_Vlr_table.unsafe_remove(dep, rhs, val);
+            m_VLr_table.unsafe_remove(dep, rhs, val);
+            m_VRl_table.unsafe_remove(dep, rhs, val);
         }
     }
     rep_set.init(m_lines.Lx(rep));
