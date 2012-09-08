@@ -41,8 +41,8 @@ public:
     void insert (Ob lhs, Ob rhs, Ob val) const;
 
     // strict operations
-    void unsafe_remove (const Ob i);
-    void unsafe_merge (const Ob i);
+    void unsafe_remove (const Ob dep);
+    void unsafe_merge (const Ob dep);
 
 private:
 
@@ -68,8 +68,8 @@ inline std::atomic<Ob> * BinaryFunction::_block (size_t i_, size_t j_) const
 
 inline std::atomic<Ob> & BinaryFunction::value (Ob i, Ob j) const
 {
-    POMAGMA_ASSERT_RANGE_(5, i, item_dim());
-    POMAGMA_ASSERT_RANGE_(5, j, item_dim());
+    POMAGMA_ASSERT5(support().contains(i), "unsupported lhs: " << i);
+    POMAGMA_ASSERT5(support().contains(j), "unsupported rhs: " << j);
     std::atomic<Ob> * block = _block(i / ITEMS_PER_BLOCK, j / ITEMS_PER_BLOCK);
     return _block2value(block, i & BLOCK_POS_MASK, j & BLOCK_POS_MASK);
 }

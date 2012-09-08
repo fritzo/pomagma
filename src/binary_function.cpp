@@ -14,7 +14,7 @@ BinaryFunction::BinaryFunction (const Carrier & carrier)
     POMAGMA_DEBUG("creating BinaryFunction with "
             << (m_block_dim * m_block_dim) << " blocks");
 
-    std::atomic<Ob> * obs = &m_blocks[0][0];
+    std::atomic<Ob> * obs = & m_blocks[0][0];
     size_t ob_dim = m_block_dim * ITEMS_PER_BLOCK;
     construct_blocks(obs, ob_dim * ob_dim, 0);
 }
@@ -39,6 +39,9 @@ void BinaryFunction::move_from (const BinaryFunction & other)
     }
 
     m_lines.move_from(other.m_lines);
+    m_Vlr_table.move_from(other.m_Vlr_table);
+    m_VLr_table.move_from(other.m_VLr_table);
+    m_VRl_table.move_from(other.m_VRl_table);
 }
 
 void BinaryFunction::validate () const
@@ -185,9 +188,8 @@ void BinaryFunction::unsafe_merge (const Ob dep)
     DenseSet dep_set(item_dim(), NULL);
     DenseSet rep_set(item_dim(), NULL);
 
-    // Note: in special cases, triples may move multiple times
+    // Note: in some cases, triples may move multiple times, e.g.
     //   (dep, dep) --> (dep, rep) --> (rep, rep)
-    // merges in two steps
 
     // dep as rhs
     dep_set.init(m_lines.Rx(dep));

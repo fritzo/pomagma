@@ -19,7 +19,16 @@ class Vlr_Table : noncopyable
 
 public:
 
-    Vlr_Table (size_t size) : m_data(size) {}
+    Vlr_Table (size_t size) : m_data(size)
+    {
+    }
+    void move_from (const Vlr_Table & other)
+    {
+        size_t min_size = min(m_data.size(), other.m_data.size());
+        for (size_t i = 1; i < min_size; ++i) {
+            m_data[i] = other.m_data[i];
+        }
+    }
 
     bool contains (Ob lhs, Ob rhs, Ob val) const
     {
@@ -93,6 +102,11 @@ class VXx_Table : noncopyable
     mutable Data m_data;
 
 public:
+
+    void move_from (const VXx_Table & other)
+    {
+        m_data = other.m_data;
+    }
 
     bool contains (Ob lhs, Ob rhs, Ob val) const
     {

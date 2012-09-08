@@ -25,19 +25,19 @@ void test_basic (size_t size)
     BinaryFunction fun(carrier);
     fun.validate();
 
-    for (DenseSet::Iterator i(support); i.ok(); i.next()) {
+    for (DenseSet::Iterator i(support); i.ok(); i.next())
     for (DenseSet::Iterator j(support); j.ok(); j.next()) {
         Ob k = example_fun(*i, *j);
         if ((k > 1) and carrier.contains(k)) {
             fun.insert(*i, *j, k);
         }
-    }}
+    }
     fun.validate();
 
     POMAGMA_INFO("Checking function values");
     std::vector<size_t> Lx_line_size(size + 1, 0);
     std::vector<size_t> Rx_line_size(size + 1, 0);
-    for (DenseSet::Iterator i(support); i.ok(); i.next()) {
+    for (DenseSet::Iterator i(support); i.ok(); i.next())
     for (DenseSet::Iterator j(support); j.ok(); j.next()) {
         Ob k = example_fun(*i, *j);
         if ((k > 1) and carrier.contains(k)) {
@@ -51,7 +51,7 @@ void test_basic (size_t size)
             POMAGMA_ASSERT(not fun.defined(*i, *j),
                     "unexpected pair " << *i << ',' << *j);
         }
-    }}
+    }
     fun.validate();
 
     POMAGMA_INFO("Checking unsafe_merge");

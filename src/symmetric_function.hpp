@@ -4,6 +4,7 @@
 #include "util.hpp"
 #include "dense_set.hpp"
 #include "base_bin_rel.hpp"
+#include "inverse_bin_fun.hpp"
 
 namespace pomagma
 {
@@ -16,6 +17,8 @@ class SymmetricFunction : noncopyable
     mutable base_sym_rel m_lines;
     const size_t m_block_dim;
     Block * const m_blocks;
+    Vlr_Table m_Vlr_table;
+    VLr_Table m_VLr_table;
 
     mutable AssertSharedMutex m_mutex;
     typedef AssertSharedMutex::SharedLock SharedLock;
@@ -25,18 +28,21 @@ public:
 
     SymmetricFunction (const Carrier & carrier);
     ~SymmetricFunction ();
-    void move_from (const SymmetricFunction & other); // for growing
+    void move_from (const SymmetricFunction & other);
     void validate () const;
 
-    // safe operations
+    // relaxed operations
     DenseSet get_Lx_set (Ob lhs) const { return m_lines.Lx_set(lhs); }
     bool defined (Ob lhs, Ob rhs) const;
-    Ob find (Ob lhs, Ob rhs) const { return value(lhs, rhs); }
+    Ob find (Ob lhs, Ob rhs) const { return value(lhs, rhs).load(); }
+    Vlr_Table::Iterator iter_val (Ob val) const;
+    VLr_Table::Iterator iter_val_lhs (Ob val, Ob lhs) const;
+    VLr_Table::Iterator iter_val_rhs (Ob val, Ob lhs) const;
     void insert (Ob lhs, Ob rhs, Ob val) const;
 
-    // unsafe operations
-    void remove (const Ob i);
-    void merge (const Ob i, const Ob j);
+    // strict operations
+    void unsafe_remove (const Ob dep);
+    void unsafe_merge (const Ob dep);
 
 private:
 
@@ -64,26 +70,32 @@ inline bool SymmetricFunction::defined (Ob lhs, Ob rhs) const
 inline std::atomic<Ob> & SymmetricFunction::value (Ob i, Ob j) const
 {
     sort(i, j);
-
-    POMAGMA_ASSERT_RANGE_(5, i, item_dim());
-    POMAGMA_ASSERT_RANGE_(5, j, item_dim());
-
+    POMAGMA_ASSERT5(support().contains(i), "unsupported lhs: " << i);
+    POMAGMA_ASSERT5(support().contains(j), "unsupported rhs: " << j);
     std::atomic<Ob> * block = _block(i / ITEMS_PER_BLOCK, j / ITEMS_PER_BLOCK);
     return _block2value(block, i & BLOCK_POS_MASK, j & BLOCK_POS_MASK);
 }
 
-inline void SymmetricFunction::insert (Ob lhs, Ob rhs, Ob val) const
+inline Vlr_Table::Iterator SymmetricFunction::iter_val (Ob val) const
 {
-    SharedLock lock(m_mutex);
+    POMAGMA_ASSERT5(support().contains(val), "unsupported val: " << val);
+    return m_Vlr_table.iter(val);
+}
 
+inline VLr_Table::Iterator SymmetricFunction::iter_val_lhs (
+        Ob val,
+        Ob lhs) const
+{
+    POMAGMA_ASSERT5(support().contains(val), "unsupported val: " << val);
     POMAGMA_ASSERT5(support().contains(lhs), "unsupported lhs: " << lhs);
-    POMAGMA_ASSERT5(support().contains(rhs), "unsupported rhs: " << rhs);
-    POMAGMA_ASSERT_RANGE_(5, val, item_dim());
+    return m_VLr_table.iter(val, lhs);
+}
 
-    if (carrier().set_or_merge(value(lhs, rhs), val)) {
-        m_lines.Lx(lhs, rhs).one();
-        m_lines.Rx(lhs, rhs).one();
-    }
+inline VLr_Table::Iterator SymmetricFunction::iter_val_rhs (
+        Ob val,
+        Ob rhs) const
+{
+    return iter_val_lhs(val, rhs);
 }
 
 } // namespace pomagma
