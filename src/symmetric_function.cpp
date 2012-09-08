@@ -113,8 +113,8 @@ void SymmetricFunction::merge (const Ob dep, const Ob rep)
     if (defined(dep, dep)) {
         std::atomic<Ob> & dep_val = value(dep, dep);
         std::atomic<Ob> & rep_val = value(rep, rep);
-        carrier().set_and_merge(dep_val, rep_val);
-        dep_val = 0;
+        carrier().set_or_merge(rep_val, dep_val.load());
+        dep_val.store(0);
 
         set.init(m_lines.Lx(dep));
         set(dep).zero();
@@ -127,8 +127,8 @@ void SymmetricFunction::merge (const Ob dep, const Ob rep)
         Ob rhs = *iter;
         std::atomic<Ob> & dep_val = value(rhs, dep);
         std::atomic<Ob> & rep_val = value(rhs, rep);
-        carrier().set_and_merge(dep_val, rep_val);
-        dep_val = 0;
+        carrier().set_or_merge(rep_val, dep_val.load());
+        dep_val.store(0);
 
         set.init(m_lines.Rx(dep));
         set(dep).zero();

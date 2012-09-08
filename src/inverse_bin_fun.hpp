@@ -15,7 +15,7 @@ class Vlr_Table : noncopyable
 {
     typedef tbb::concurrent_unordered_set<std::pair<Ob, Ob>> Set;
     typedef std::vector<Set> Data;
-    Data m_data;
+    mutable Data m_data;
 
 public:
 
@@ -26,7 +26,7 @@ public:
         const auto & lr_set = m_data[val];
         return lr_set.find(std::make_pair(lhs, rhs)) != lr_set.end();
     }
-    void insert (Ob lhs, Ob rhs, Ob val)
+    void insert (Ob lhs, Ob rhs, Ob val) const
     {
         m_data[val].insert(std::make_pair(lhs, rhs));
     }
@@ -90,7 +90,7 @@ class VXx_Table : noncopyable
 {
     typedef tbb::concurrent_unordered_set<Ob> Set;
     typedef tbb::concurrent_unordered_map<std::pair<Ob, Ob>, Set> Data;
-    Data m_data;
+    mutable Data m_data;
 
 public:
 
@@ -104,7 +104,7 @@ public:
         }
         return i->second.find(moving) != i->second.end();
     }
-    void insert (Ob lhs, Ob rhs, Ob val)
+    void insert (Ob lhs, Ob rhs, Ob val) const
     {
         Ob fixed = transpose ? rhs : lhs;
         Ob moving = transpose ? lhs : rhs;

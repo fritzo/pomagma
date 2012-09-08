@@ -15,9 +15,9 @@ class BinaryFunction : noncopyable
     mutable base_bin_rel m_lines;
     const size_t m_block_dim;
     Block * const m_blocks;
-    mutable Vlr_Table m_Vlr_table;
-    mutable VLr_Table m_VLr_table;
-    mutable VRl_Table m_VRl_table;
+    Vlr_Table m_Vlr_table;
+    VLr_Table m_VLr_table;
+    VRl_Table m_VRl_table;
 
     mutable AssertSharedMutex m_mutex;
     typedef AssertSharedMutex::SharedLock SharedLock;
@@ -42,7 +42,7 @@ public:
 
     // strict operations
     void unsafe_remove (const Ob i);
-    void unsafe_merge (const Ob i, const Ob j);
+    void unsafe_merge (const Ob i);
 
 private:
 

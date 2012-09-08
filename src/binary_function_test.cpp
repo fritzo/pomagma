@@ -65,9 +65,8 @@ void test_basic (size_t size)
     }
     for (DenseSet::Iterator iter(support); iter.ok(); iter.next()) {
         Ob dep = *iter;
-        Ob rep = carrier.find(dep);
-        if (rep != dep) {
-            fun.unsafe_merge(dep, rep);
+        if (carrier.find(dep) != dep) {
+            fun.unsafe_merge(dep);
             carrier.unsafe_remove(dep);
         }
     }

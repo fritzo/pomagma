@@ -109,8 +109,7 @@ void BinaryFunction::insert (Ob lhs, Ob rhs, Ob val) const
     POMAGMA_ASSERT5(support().contains(rhs), "unsupported rhs: " << rhs);
     POMAGMA_ASSERT5(support().contains(val), "unsupported val: " << val);
 
-    std::atomic<Ob> & old_val = value(lhs, rhs);
-    if (carrier().set_and_merge(val, old_val) == 0) {
+    if (carrier().set_or_merge(value(lhs, rhs), val)) {
         m_lines.Lx(lhs, rhs).one();
         m_lines.Rx(lhs, rhs).one();
         m_Vlr_table.insert(lhs, rhs, val);
@@ -175,73 +174,80 @@ void BinaryFunction::unsafe_remove (const Ob dep)
     }
 }
 
-void BinaryFunction::unsafe_merge (const Ob dep, const Ob rep)
+void BinaryFunction::unsafe_merge (const Ob dep)
 {
     UniqueLock lock(m_mutex);
 
-    POMAGMA_ASSERT4(rep != dep, "self merge: " << dep << "," << rep);
     POMAGMA_ASSERT5(support().contains(dep), "unsupported dep: " << dep);
+    Ob rep = carrier().find(dep);
     POMAGMA_ASSERT5(support().contains(rep), "unsupported rep: " << rep);
+    POMAGMA_ASSERT4(rep != dep, "self merge: " << dep << "," << rep);
 
     DenseSet set(item_dim(), NULL);
     DenseSet dep_set(item_dim(), NULL);
     DenseSet rep_set(item_dim(), NULL);
 
-    // Note: the special case
+    // Note: in special cases, triples may move multiple times
     //   (dep, dep) --> (dep, rep) --> (rep, rep)
     // merges in two steps
 
     // dep as rhs
-    DenseSet rhs_fixed = get_Rx_set(dep);
-    for (DenseSet::Iterator iter(rhs_fixed); iter.ok(); iter.next()) {
+    dep_set.init(m_lines.Rx(dep));
+    for (DenseSet::Iterator iter(dep_set); iter.ok(); iter.next()) {
         Ob lhs = *iter;
         std::atomic<Ob> & dep_val = value(lhs, dep);
         std::atomic<Ob> & rep_val = value(lhs, rep);
-        carrier().set_and_merge(dep_val, rep_val);
-        dep_val = 0;
-
         set.init(m_lines.Lx(lhs));
-        set(dep).zero();
-        set(rep).one();
 
-        Ob val = rep_val;
-        m_Vlr_table.unsafe_remove(lhs, dep, val).insert(lhs, rep, val);
-        m_VLr_table.unsafe_remove(lhs, dep, val).insert(lhs, rep, val);
-        m_VRl_table.unsafe_remove(lhs, dep, val).insert(lhs, rep, val);
+        Ob val = dep_val.load(std::memory_order_relaxed);
+        dep_val.store(0, std::memory_order_relaxed);
+        set(dep).zero();
+        m_Vlr_table.unsafe_remove(lhs, dep, val);
+        m_VLr_table.unsafe_remove(lhs, dep, val);
+        m_VRl_table.unsafe_remove(lhs, dep, val);
+
+        if (carrier().set_or_merge(rep_val, val)) {
+            set(rep).one();
+            m_Vlr_table.insert(lhs, rep, val);
+            m_VLr_table.insert(lhs, rep, val);
+            m_VRl_table.insert(lhs, rep, val);
+        }
     }
     rep_set.init(m_lines.Rx(rep));
-    dep_set.init(m_lines.Rx(dep));
     rep_set.merge(dep_set);
 
     // dep as lhs
-    DenseSet lhs_fixed = get_Lx_set(dep);
-    for (DenseSet::Iterator iter(lhs_fixed); iter.ok(); iter.next()) {
+    rep = carrier().find(rep);
+    dep_set.init(m_lines.Lx(dep));
+    for (DenseSet::Iterator iter(dep_set); iter.ok(); iter.next()) {
         Ob rhs = *iter;
         std::atomic<Ob> & dep_val = value(dep, rhs);
         std::atomic<Ob> & rep_val = value(rep, rhs);
-        carrier().set_and_merge(dep_val, rep_val);
-        dep_val = 0;
-
         set.init(m_lines.Rx(rhs));
-        set(dep).zero();
-        set(rep).one();
 
-        Ob val = rep_val;
-        m_Vlr_table.unsafe_remove(dep, rhs, val).insert(rep, rhs, val);
-        m_VLr_table.unsafe_remove(dep, rhs, val).insert(rep, rhs, val);
-        m_VRl_table.unsafe_remove(dep, rhs, val).insert(rep, rhs, val); // XXX
-        // FIXME segfault here with inverse_bin_fun::unsafe_remove erring with
-        // "double erase"
+        Ob val = dep_val.load(std::memory_order_relaxed);
+        dep_val.store(0, std::memory_order_relaxed);
+        set(dep).zero();
+        m_Vlr_table.unsafe_remove(dep, rhs, val);
+        m_VLr_table.unsafe_remove(dep, rhs, val);
+        m_VRl_table.unsafe_remove(dep, rhs, val);
+
+        if (carrier().set_or_merge(rep_val, val)) {
+            set(rep).one();
+            m_Vlr_table.insert(rep, rhs, val);
+            m_VLr_table.insert(rep, rhs, val);
+            m_VRl_table.insert(rep, rhs, val);
+        }
     }
     rep_set.init(m_lines.Lx(rep));
-    dep_set.init(m_lines.Lx(dep));
     rep_set.merge(dep_set);
 
     // dep as val
+    rep = carrier().find(rep);
     for (auto iter = iter_val(dep); iter.ok(); iter.next()) {
         Ob lhs = iter.lhs();
         Ob rhs = iter.rhs();
-        value(lhs, rhs) = rep;
+        value(lhs, rhs).store(rep, std::memory_order_relaxed);
         m_Vlr_table.insert(lhs, rhs, rep);
         m_VLr_table.unsafe_remove(lhs, rhs, dep).insert(lhs, rhs, rep);
         m_VRl_table.unsafe_remove(lhs, rhs, dep).insert(lhs, rhs, rep);

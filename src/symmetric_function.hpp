@@ -80,8 +80,7 @@ inline void SymmetricFunction::insert (Ob lhs, Ob rhs, Ob val) const
     POMAGMA_ASSERT5(support().contains(rhs), "unsupported rhs: " << rhs);
     POMAGMA_ASSERT_RANGE_(5, val, item_dim());
 
-    std::atomic<Ob> & old_val = value(lhs, rhs);
-    if (carrier().set_and_merge(val, old_val) == 0) {
+    if (carrier().set_or_merge(value(lhs, rhs), val)) {
         m_lines.Lx(lhs, rhs).one();
         m_lines.Lx(rhs, lhs).one();
     }

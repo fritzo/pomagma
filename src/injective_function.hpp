@@ -27,7 +27,7 @@ public:
     void move_from (const InjectiveFunction & other); // for growing
     void validate () const;
 
-    // safe operations
+    // relaxed operations
     const DenseSet & defined () const { return m_set; }
     const DenseSet & inverse_defined () const { return m_inverse_set; }
     bool defined (Ob key) const;
@@ -36,9 +36,9 @@ public:
     Ob inverse_find (Ob val) const;
     void insert (Ob key, Ob val) const;
 
-    // unsafe operations
-    void remove (Ob ob);
-    void merge (Ob dep, Ob rep);
+    // strict operations
+    void unsafe_remove (Ob ob);
+    void unsafe_merge (Ob dep);
 
 private:
 
@@ -78,11 +78,11 @@ inline void InjectiveFunction::insert (Ob key, Ob val) const
     POMAGMA_ASSERT5(support().contains(key), "unsupported key: " << key);
     POMAGMA_ASSERT5(support().contains(val), "unsupported val: " << val);
 
-    if (m_carrier.set_and_merge(val, m_values[key]) == 0) {
+    if (m_carrier.set_and_merge(m_values[key], val)) {
         m_set(key).one();
     }
 
-    if (m_carrier.set_and_merge(key, m_inverse[val]) == 0) {
+    if (m_carrier.set_and_merge(m_inverse[val], key)) {
         m_inverse_set(val).one();
     }
 }

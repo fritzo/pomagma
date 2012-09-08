@@ -44,9 +44,9 @@ public:
     bool equal (Ob lhs, Ob rhs) const;
     Ob merge (Ob dep, Ob rep) const;
     Ob ensure_equal (Ob lhs, Ob rhs) const;
-    Ob set_and_merge (
-            Ob source,
-            std::atomic<Ob> & destin) const; // return old val
+    // these return true if value was set
+    bool set_and_merge (std::atomic<Ob> & destin, Ob source) const;
+    bool set_or_merge (std::atomic<Ob> & destin, Ob source) const;
 
     // strict operations
     Ob unsafe_insert ();
@@ -82,24 +82,39 @@ inline Ob Carrier::ensure_equal (Ob lhs, Ob rhs) const
     }
 }
 
-inline Ob Carrier::set_and_merge (
-        Ob source,
-        std::atomic<Ob> & destin) const
+inline bool Carrier::set_and_merge (std::atomic<Ob> & destin, Ob source) const
 {
     POMAGMA_ASSERT_RANGE_(5, source, item_dim());
 
     Ob old = 0;
-    while (not destin.compare_exchange_weak(
+    while (not destin.compare_exchange_strong(
                 old,
                 source,
                 std::memory_order_acq_rel,
                 std::memory_order_acquire))
     {
-        if (old == source) break;
-        else if (source > old) { merge(source, old); break; }
-        else { source = merge(old, source); }
+        source = ensure_equal(source, old);
+        if (old == source) return false;
     }
-    return old;
+    return old == 0;
+}
+
+inline bool Carrier::set_or_merge (std::atomic<Ob> & destin, Ob source) const
+{
+    POMAGMA_ASSERT_RANGE_(5, source, item_dim());
+
+    Ob old = 0;
+    if (destin.compare_exchange_strong(
+                old,
+                source,
+                std::memory_order_acq_rel,
+                std::memory_order_acquire))
+    {
+        return true;
+    } else {
+        ensure_equal(source, old);
+        return false;
+    }
 }
 
 } // namespace pomagma

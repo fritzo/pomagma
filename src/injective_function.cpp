@@ -85,7 +85,7 @@ void InjectiveFunction::validate () const
     }
 }
 
-void InjectiveFunction::remove (Ob ob)
+void InjectiveFunction::unsafe_remove (Ob ob)
 {
     UniqueLock lock(m_mutex);
 
@@ -104,13 +104,14 @@ void InjectiveFunction::remove (Ob ob)
     }
 }
 
-void InjectiveFunction::merge (Ob dep, Ob rep)
+void InjectiveFunction::unsafe_merge (Ob dep)
 {
     UniqueLock lock(m_mutex);
 
-    POMAGMA_ASSERT4(rep != dep, "self merge: " << dep << "," << rep);
     POMAGMA_ASSERT_RANGE_(4, dep, item_dim());
+    Ob rep = m_carrier.find(dep);
     POMAGMA_ASSERT_RANGE_(4, rep, item_dim());
+    POMAGMA_ASSERT4(rep != dep, "self merge: " << dep << "," << rep);
 
     TODO("merge occurrences as values")
 
@@ -120,8 +121,8 @@ void InjectiveFunction::merge (Ob dep, Ob rep)
 
         std::atomic<Ob> & dep_val = m_values[dep];
         std::atomic<Ob> & rep_val = m_values[rep];
-        m_carrier.set_and_merge(dep_val, rep_val);
-        dep_val = 0;
+        m_carrier.set_and_merge(rep_val, dep_val.load()); // XXX is this safe?
+        dep_val.store(0);
     }
 
     if (bool_ref dep_bit = m_inverse_set(dep)) {
@@ -130,8 +131,8 @@ void InjectiveFunction::merge (Ob dep, Ob rep)
 
         std::atomic<Ob> & dep_val = m_inverse[dep];
         std::atomic<Ob> & rep_val = m_inverse[rep];
-        m_carrier.set_and_merge(dep_val, rep_val);
-        dep_val = 0;
+        m_carrier.set_and_merge(rep_val, dep_val.load()); // XXX is this safe?
+        dep_val.store(0);
     }
 }
 
