@@ -55,19 +55,10 @@ public:
     {
         friend class Vlr_Table;
 
-        const Data & m_data;
         Set::const_iterator m_iter;
         Set::const_iterator m_end;
-        Ob m_val;
 
-        Iterator (const Vlr_Table * fun, Ob val)
-            : m_data(fun->m_data),
-              m_val(val)
-        {
-            const Set & i = m_data[m_val];
-            m_iter = i.begin();
-            m_end = i.end();
-        }
+        Iterator (const Set & set) : m_iter(set.begin()), m_end(set.end()) {}
 
     public:
 
@@ -78,7 +69,7 @@ public:
         Ob rhs () const { POMAGMA_ASSERT_OK return m_iter->second; }
     };
 
-    Iterator iter (Ob val) const { return Iterator(this, val); }
+    Iterator iter (Ob val) const { return Iterator(m_data[val]); }
 
     template<class Fun>
     void validate (const Fun * fun) const
@@ -143,24 +134,19 @@ public:
     {
         friend class VXx_Table<transpose>;
 
-        const Data & m_data;
         Set::const_iterator m_iter;
         Set::const_iterator m_end;
-        std::pair<Ob, Ob> m_pair;
 
-        Iterator (const VXx_Table<transpose> * fun, Ob val, Ob fixed)
-            : m_data(fun->m_data),
-              m_pair(val, fixed)
+        Iterator (const Data & data, Ob val, Ob fixed)
         {
-            Data::const_iterator i = m_data.find(m_pair);
-            if (i != m_data.end()) {
+            Data::const_iterator i = data.find(std::make_pair(val, fixed));
+            if (i != data.end()) {
                 m_iter = i->second.begin();
                 m_end = i->second.end();
             } else {
-                POMAGMA_ASSERT6(
-                    not (Set::const_iterator() != Set::const_iterator()),
-                    "default constructed iterators do not equality compare");
                 m_iter = m_end;
+                POMAGMA_ASSERT6(not (m_iter != m_end),
+                    "default constructed iterators do not equality compare");
             }
         }
 
@@ -174,7 +160,7 @@ public:
 
     Iterator iter (Ob val, Ob fixed) const
     {
-        return Iterator(this, val, fixed);
+        return Iterator(m_data, val, fixed);
     }
 
     template<class Fun>

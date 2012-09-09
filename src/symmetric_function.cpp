@@ -194,8 +194,8 @@ void SymmetricFunction::unsafe_merge (const Ob dep)
     dep_set.init(m_lines.Lx(dep));
     for (DenseSet::Iterator iter(dep_set); iter.ok(); iter.next()) {
         Ob rhs = *iter;
-        std::atomic<Ob> & dep_val = value(rhs, dep);
-        std::atomic<Ob> & rep_val = value(rhs, rep);
+        std::atomic<Ob> & dep_val = value(dep, rhs);
+        std::atomic<Ob> & rep_val = value(rep, rhs);
         Ob val = dep_val.load(std::memory_order_relaxed);
         dep_val.store(0, std::memory_order_relaxed);
         m_lines.Rx(dep, rhs).zero();
@@ -216,7 +216,8 @@ void SymmetricFunction::unsafe_merge (const Ob dep)
     for (auto iter = iter_val(dep); iter.ok(); iter.next()) {
         Ob lhs = iter.lhs();
         Ob rhs = iter.rhs();
-        value(lhs, rhs).store(rep, std::memory_order_relaxed);
+        value(lhs, rhs).store(rep, std::memory_order_relaxed); // XXX error
+        // XXX unsupported lhs = 50
         m_Vlr_table.insert(lhs, rhs, rep);
         m_VLr_table.unsafe_remove(lhs, rhs, dep).insert(lhs, rhs, rep);
     }
