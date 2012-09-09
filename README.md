@@ -6,8 +6,6 @@ Equational reasoning in partially ordered magmas
 Roadmap
 -------
 
-- Merge inverse_bin_fun into BinaryFunction and SymmetricFunction
-    - Abstract out the Vlr_Data and VXx_Data classes, following base_bin_rel
 - Reimplement DenseSet using std::atomic<Word> instead of Word
     - In DenseSet::Iterator, store raw word data instead of set reference
     - Implement DenseSet::IntersectionIterator2, 3, 4 for delayed intersection
