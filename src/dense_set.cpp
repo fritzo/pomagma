@@ -32,7 +32,7 @@ void DenseSet::copy_from (const DenseSet & other, const Ob * new2old)
     POMAGMA_DEBUG("Copying DenseSet");
 
     size_t minM = min(m_word_dim, other.m_word_dim);
-    if (new2old == NULL) {
+    if (new2old == nullptr) {
         // just copy
         memcpy(m_words, other.m_words, sizeof(Word) * minM);
     } else {

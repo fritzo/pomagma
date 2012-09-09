@@ -112,7 +112,7 @@ public:
 
     SharedMutex ()
     {
-        int status = pthread_rwlock_init(&m_rwlock, NULL);
+        int status = pthread_rwlock_init(&m_rwlock, nullptr);
         POMAGMA_ASSERT1(status == 0, "pthread_rwlock_init failed");
     }
 

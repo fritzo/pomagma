@@ -127,7 +127,7 @@ void BinaryFunction::unsafe_remove (const Ob dep)
 
     POMAGMA_ASSERT5(support().contains(dep), "unsupported dep: " << dep);
 
-    DenseSet set(item_dim(), NULL);
+    DenseSet set(item_dim(), nullptr);
 
     {   Ob rhs = dep;
         set.init(m_lines.Rx(rhs));
@@ -185,8 +185,8 @@ void BinaryFunction::unsafe_merge (const Ob dep)
     POMAGMA_ASSERT5(support().contains(rep), "unsupported rep: " << rep);
     POMAGMA_ASSERT4(rep != dep, "self merge: " << dep << "," << rep);
 
-    DenseSet dep_set(item_dim(), NULL);
-    DenseSet rep_set(item_dim(), NULL);
+    DenseSet dep_set(item_dim(), nullptr);
+    DenseSet rep_set(item_dim(), nullptr);
 
     // Note: in some cases, triples may move multiple times, e.g.
     //   (dep, dep) --> (dep, rep) --> (rep, rep)

@@ -59,7 +59,7 @@ public:
           m_words(other.m_words),
           m_alias(other.m_alias)
     {
-        other.m_words = NULL;
+        other.m_words = nullptr;
     }
     //DenseSet (size_t item_dim, AlignedBuffer<Word> & buffer)
     //    : m_item_dim(item_dim),
@@ -69,7 +69,7 @@ public:
     //{
     //}
     ~DenseSet () { if (not m_alias and m_words) free_blocks(m_words); }
-    void copy_from (const DenseSet & other, const Ob * new2old = NULL);
+    void copy_from (const DenseSet & other, const Ob * new2old = nullptr);
     void init (Word * line)
     {
         POMAGMA_ASSERT4(m_alias, "tried to init() non-alias dense set");

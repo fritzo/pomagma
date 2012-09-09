@@ -53,7 +53,7 @@ void test_basic (size_t size)
 
 void test_even (size_t size)
 {
-    std::vector<DenseSet *> evens(7, NULL);
+    std::vector<DenseSet *> evens(7, nullptr);
     for (auto & e : evens) {
         e = new DenseSet(size);
     }

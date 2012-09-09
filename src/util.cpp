@@ -30,11 +30,11 @@ const unsigned Log::s_log_level(getenv_default("POMAGMA_LOG_LEVEL", 1));
 // Time
 
 timeval g_begin_time;
-const int g_init_time __attribute__((unused)) (gettimeofday(&g_begin_time, NULL));
+const int g_init_time __attribute__((unused)) (gettimeofday(&g_begin_time, nullptr));
 float get_elapsed_time ()
 {
     timeval current_time;
-    gettimeofday(& current_time, NULL);
+    gettimeofday(& current_time, nullptr);
     return current_time.tv_sec - g_begin_time.tv_sec +
         (current_time.tv_usec - g_begin_time.tv_usec) * 1e-6;
 }
@@ -44,7 +44,7 @@ std::string get_date (bool hour)
     const size_t size = 20; // fits e.g. 2007:05:17:11:33
     static char buff[size];
 
-    time_t t = time(NULL);
+    time_t t = time(nullptr);
     tm T;
     gmtime_r (&t,&T);
     if (hour) strftime(buff,size, "%Y:%m:%d:%H:%M", &T);

@@ -14,7 +14,7 @@ inline Ob example_fun (Ob i)
     }
 }
 
-Carrier * g_carrier = NULL;
+Carrier * g_carrier = nullptr;
 
 void merge_callback (Ob i)
 {

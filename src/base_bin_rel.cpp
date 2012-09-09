@@ -65,8 +65,8 @@ void base_bin_rel_<symmetric>::validate() const
     if (symmetric) {
 
         // check emptiness outside of support
-        DenseSet set(item_dim(), NULL);
-        DenseSet round_set(m_round_item_dim, NULL);
+        DenseSet set(item_dim(), nullptr);
+        DenseSet round_set(m_round_item_dim, nullptr);
         for (Ob i = 0; i < m_round_item_dim; ++i) {
             if (1 <= i and i <= item_dim() and support().contains(i)) {
                 set.init(Lx(i));
@@ -91,8 +91,8 @@ void base_bin_rel_<symmetric>::validate() const
     } else {
 
         // check emptiness outside of support
-        DenseSet set(item_dim(), NULL);
-        DenseSet round_set(m_round_item_dim, NULL);
+        DenseSet set(item_dim(), nullptr);
+        DenseSet round_set(m_round_item_dim, nullptr);
         for (Ob i = 0; i < m_round_item_dim; ++i) {
             if (1 <= i and i <= item_dim() and support().contains(i)) {
                 set.init(Lx(i));

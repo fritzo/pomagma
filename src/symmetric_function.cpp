@@ -127,7 +127,7 @@ void SymmetricFunction::unsafe_remove (const Ob dep)
 
     POMAGMA_ASSERT5(support().contains(dep), "unsupported dep: " << dep);
 
-    DenseSet set(item_dim(), NULL);
+    DenseSet set(item_dim(), nullptr);
 
     {   Ob lhs = dep;
         set.init(m_lines.Lx(lhs));
@@ -168,9 +168,9 @@ void SymmetricFunction::unsafe_merge (const Ob dep)
     POMAGMA_ASSERT5(support().contains(rep), "unsupported rep: " << rep);
     POMAGMA_ASSERT4(rep != dep, "self merge: " << dep << "," << rep);
 
-    DenseSet set(item_dim(), NULL);
-    DenseSet dep_set(item_dim(), NULL);
-    DenseSet rep_set(item_dim(), NULL);
+    DenseSet set(item_dim(), nullptr);
+    DenseSet dep_set(item_dim(), nullptr);
+    DenseSet rep_set(item_dim(), nullptr);
 
     // (dep, dep) -> (dep, rep)
     if (defined(dep, dep)) {

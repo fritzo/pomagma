@@ -33,7 +33,7 @@ void BinaryRelation::copy_from (
     //bzero(m_lines.Lx(), sizeof(Word) * data_size_words());
     //bzero(m_lines.Rx(), sizeof(Word) * data_size_words());
 
-    if (new2old == NULL) {
+    if (new2old == nullptr) {
         POMAGMA_DEBUG("copying by column and by row");
         m_lines.copy_from(other.m_lines);
     } else {
@@ -64,8 +64,8 @@ void BinaryRelation::validate () const
 
     size_t num_pairs = 0;
 
-    DenseSet Lx(round_item_dim(), NULL);
-    DenseSet Rx(round_item_dim(), NULL);
+    DenseSet Lx(round_item_dim(), nullptr);
+    DenseSet Rx(round_item_dim(), nullptr);
     for (Ob i = 1; i <= item_dim(); ++i) {
         bool sup_i = supports(i);
         Lx.init(m_lines.Lx(i));
@@ -111,8 +111,8 @@ void BinaryRelation::validate_disjoint (const BinaryRelation & other) const
             "BinaryRelation supports differ");
 
     // validate disjointness
-    DenseSet this_set(item_dim(), NULL);
-    DenseSet other_set(item_dim(), NULL);
+    DenseSet this_set(item_dim(), nullptr);
+    DenseSet other_set(item_dim(), nullptr);
     for (DenseSet::Iterator i(support()); i.ok(); i.next()) {
         this_set.init(m_lines.Lx(*i));
         other_set.init(other.m_lines.Lx(*i));
@@ -191,7 +191,7 @@ void BinaryRelation::remove (Ob ob)
 {
     UniqueLock lock(m_mutex);
 
-    DenseSet set(item_dim(), NULL);
+    DenseSet set(item_dim(), nullptr);
 
     // remove column
     set.init(m_lines.Lx(ob));
@@ -212,8 +212,8 @@ void BinaryRelation::merge (Ob i, Ob j)
     POMAGMA_ASSERT4(j != i, "BinaryRelation tried to merge item with self");
 
     DenseSet diff(item_dim());
-    DenseSet rep(item_dim(), NULL);
-    DenseSet dep(item_dim(), NULL);
+    DenseSet rep(item_dim(), nullptr);
+    DenseSet dep(item_dim(), nullptr);
 
     // merge rows (i, _) into (j, _)
     dep.init(m_lines.Lx(i));
