@@ -65,9 +65,7 @@ void test_basic (Ob size)
             Ob dep = *iter;
             if (carrier.find(dep) != dep) {
                 fun.unsafe_merge(dep);
-                fun.validate(); // DEBUG
                 carrier.unsafe_remove(dep);
-                fun.validate(); // DEBUG
                 merged = true;
             }
         }

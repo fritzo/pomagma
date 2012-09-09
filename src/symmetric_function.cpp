@@ -177,7 +177,7 @@ void SymmetricFunction::unsafe_merge (const Ob dep)
     DenseSet dep_set(item_dim(), nullptr);
     DenseSet rep_set(item_dim(), nullptr);
 
-    // (dep, dep) -> (dep, rep)
+    // (dep, dep) -> (rep, rep)
     if (defined(dep, dep)) {
         std::atomic<Ob> & dep_val = value(dep, dep);
         std::atomic<Ob> & rep_val = value(rep, rep);
@@ -208,9 +208,13 @@ void SymmetricFunction::unsafe_merge (const Ob dep)
             m_lines.Rx(rep, rhs).one();
             m_Vlr_table.unsafe_remove(dep, rhs, val).insert(rep, rhs, val);
             m_VLr_table.unsafe_remove(dep, rhs, val).insert(rep, rhs, val);
+            m_Vlr_table.unsafe_remove(rhs, dep, val).insert(rhs, rep, val);
+            m_VLr_table.unsafe_remove(rhs, dep, val).insert(rhs, rep, val);
         } else {
             m_Vlr_table.unsafe_remove(dep, rhs, val);
             m_VLr_table.unsafe_remove(dep, rhs, val);
+            m_Vlr_table.unsafe_remove(rhs, dep, val);
+            m_VLr_table.unsafe_remove(rhs, dep, val);
         }
     }
     rep_set.init(m_lines.Lx(rep));
