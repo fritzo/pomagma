@@ -49,7 +49,6 @@ void test_basic (Ob size)
     }
     fun.validate();
 
-
     POMAGMA_INFO("Checking unsafe_merge");
     for (DenseSet::Iterator dep(support); dep.ok(); dep.next()) {
         for (DenseSet::Iterator rep(support); rep.ok(); rep.next()) {
@@ -66,7 +65,9 @@ void test_basic (Ob size)
             Ob dep = *iter;
             if (carrier.find(dep) != dep) {
                 fun.unsafe_merge(dep);
+                fun.validate(); // DEBUG
                 carrier.unsafe_remove(dep);
+                fun.validate(); // DEBUG
                 merged = true;
             }
         }

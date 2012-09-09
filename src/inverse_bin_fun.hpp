@@ -78,6 +78,8 @@ public:
             for (auto lhs_rhs : m_data[val]) {
                 Ob lhs = lhs_rhs.first;
                 Ob rhs = lhs_rhs.second;
+                POMAGMA_ASSERT(fun->defined(lhs, rhs),
+                    "unsupported keys: " << lhs << "," << rhs);
                 POMAGMA_ASSERT_EQ(fun->find(lhs, rhs), val);
             }
         }
@@ -172,6 +174,8 @@ public:
             for (Ob moving : val_fixed.second) {
                 Ob lhs = transpose ? moving : fixed;
                 Ob rhs = transpose ? fixed : moving;
+                POMAGMA_ASSERT(fun->defined(lhs, rhs),
+                    "unsupported keys: " << lhs << "," << rhs);
                 POMAGMA_ASSERT_EQ(fun->find(lhs, rhs), val);
             }
         }
