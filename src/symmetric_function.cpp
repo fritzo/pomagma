@@ -80,16 +80,9 @@ void SymmetricFunction::validate () const
     }
 
     POMAGMA_INFO("Validating inverse contains function");
-    for (auto lhs_iter = support().iter();
-        lhs_iter.ok();
-        lhs_iter.next())
-    {
+    for (auto lhs_iter = support().iter(); lhs_iter.ok(); lhs_iter.next()) {
         Ob lhs = *lhs_iter;
-        DenseSet rhs_set = get_Lx_set(lhs);
-        for (auto rhs_iter = rhs_set.iter();
-            rhs_iter.ok();
-            rhs_iter.next())
-        {
+        for (auto rhs_iter = iter_lhs(lhs); rhs_iter.ok(); rhs_iter.next()) {
             Ob rhs = *rhs_iter;
             Ob val = find(lhs, rhs);
 
@@ -127,11 +120,8 @@ void SymmetricFunction::unsafe_remove (const Ob dep)
 
     POMAGMA_ASSERT5(support().contains(dep), "unsupported dep: " << dep);
 
-    DenseSet set(item_dim(), nullptr);
-
     {   Ob lhs = dep;
-        set.init(m_lines.Lx(lhs));
-        for (auto iter = set.iter(); iter.ok(); iter.next()) {
+        for (auto iter = iter_lhs(lhs); iter.ok(); iter.next()) {
             Ob rhs = *iter;
             std::atomic<Ob> & atomic_val = value(lhs, rhs);
             Ob val = atomic_val.load(std::memory_order_relaxed);
@@ -145,6 +135,7 @@ void SymmetricFunction::unsafe_remove (const Ob dep)
             }
             atomic_val.store(0, std::memory_order_relaxed);
         }
+        DenseSet set(item_dim(), m_lines.Lx(lhs));
         set.zero();
     }
 
@@ -173,10 +164,6 @@ void SymmetricFunction::unsafe_merge (const Ob dep)
     POMAGMA_ASSERT5(support().contains(rep), "unsupported rep: " << rep);
     POMAGMA_ASSERT4(rep != dep, "self merge: " << dep << "," << rep);
 
-    DenseSet set(item_dim(), nullptr);
-    DenseSet dep_set(item_dim(), nullptr);
-    DenseSet rep_set(item_dim(), nullptr);
-
     // (dep, dep) -> (rep, rep)
     if (defined(dep, dep)) {
         std::atomic<Ob> & dep_val = value(dep, dep);
@@ -196,8 +183,7 @@ void SymmetricFunction::unsafe_merge (const Ob dep)
 
     // (dep, rhs) --> (rep, rhs) for rhs != dep
     rep = carrier().find(rep);
-    dep_set.init(m_lines.Lx(dep));
-    for (auto iter = dep_set.iter(); iter.ok(); iter.next()) {
+    for (auto iter = iter_lhs(dep); iter.ok(); iter.next()) {
         Ob rhs = *iter;
         std::atomic<Ob> & dep_val = value(dep, rhs);
         std::atomic<Ob> & rep_val = value(rep, rhs);
@@ -217,7 +203,8 @@ void SymmetricFunction::unsafe_merge (const Ob dep)
             m_VLr_table.unsafe_remove(rhs, dep, val);
         }
     }
-    rep_set.init(m_lines.Lx(rep));
+    DenseSet dep_set(item_dim(), m_lines.Lx(dep));
+    DenseSet rep_set(item_dim(), m_lines.Lx(rep));
     rep_set.merge(dep_set);
 
     // dep as val

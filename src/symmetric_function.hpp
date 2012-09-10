@@ -35,6 +35,8 @@ public:
     DenseSet get_Lx_set (Ob lhs) const { return m_lines.Lx_set(lhs); }
     bool defined (Ob lhs, Ob rhs) const;
     Ob find (Ob lhs, Ob rhs) const { return value(lhs, rhs).load(); }
+    DenseSet::Iterator iter_lhs (Ob lhs) const;
+    DenseSet::Iterator iter_rhs (Ob rhs) const;
     Vlr_Table::Iterator iter_val (Ob val) const;
     VLr_Table::Iterator iter_val_lhs (Ob val, Ob lhs) const;
     VLr_Table::Iterator iter_val_rhs (Ob val, Ob lhs) const;
@@ -74,6 +76,18 @@ inline std::atomic<Ob> & SymmetricFunction::value (Ob i, Ob j) const
     POMAGMA_ASSERT5(support().contains(j), "unsupported rhs: " << j);
     std::atomic<Ob> * block = _block(i / ITEMS_PER_BLOCK, j / ITEMS_PER_BLOCK);
     return _block2value(block, i & BLOCK_POS_MASK, j & BLOCK_POS_MASK);
+}
+
+inline DenseSet::Iterator SymmetricFunction::iter_lhs (Ob lhs) const
+{
+    POMAGMA_ASSERT5(support().contains(lhs), "unsupported lhs: " << lhs);
+    return DenseSet::Iterator(item_dim(), m_lines.Lx(lhs));
+}
+
+inline DenseSet::Iterator SymmetricFunction::iter_rhs (Ob rhs) const
+{
+    POMAGMA_ASSERT5(support().contains(rhs), "unsupported rhs: " << rhs);
+    return DenseSet::Iterator(item_dim(), m_lines.Rx(rhs));
 }
 
 inline Vlr_Table::Iterator SymmetricFunction::iter_val (Ob val) const

@@ -178,9 +178,6 @@ void BinaryFunction::unsafe_merge (const Ob dep)
     POMAGMA_ASSERT5(support().contains(rep), "unsupported rep: " << rep);
     POMAGMA_ASSERT4(rep != dep, "self merge: " << dep << "," << rep);
 
-    DenseSet dep_set(item_dim(), nullptr);
-    DenseSet rep_set(item_dim(), nullptr);
-
     // Note: in some cases, triples may move multiple times, e.g.
     //   (dep, dep) --> (dep, rep) --> (rep, rep)
 
@@ -203,9 +200,11 @@ void BinaryFunction::unsafe_merge (const Ob dep)
             m_VRl_table.unsafe_remove(lhs, dep, val);
         }
     }
-    dep_set.init(m_lines.Rx(dep));
-    rep_set.init(m_lines.Rx(rep));
-    rep_set.merge(dep_set);
+    {
+        DenseSet dep_set(item_dim(), m_lines.Rx(dep));
+        DenseSet rep_set(item_dim(), m_lines.Rx(rep));
+        rep_set.merge(dep_set);
+    }
 
     // dep as lhs
     rep = carrier().find(rep);
@@ -227,9 +226,11 @@ void BinaryFunction::unsafe_merge (const Ob dep)
             m_VRl_table.unsafe_remove(dep, rhs, val);
         }
     }
-    dep_set.init(m_lines.Lx(dep));
-    rep_set.init(m_lines.Lx(rep));
-    rep_set.merge(dep_set);
+    {
+        DenseSet dep_set(item_dim(), m_lines.Lx(dep));
+        DenseSet rep_set(item_dim(), m_lines.Lx(rep));
+        rep_set.merge(dep_set);
+    }
 
     // dep as val
     rep = carrier().find(rep);

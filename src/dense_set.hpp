@@ -33,6 +33,7 @@ public:
         POMAGMA_ASSERT_LE(item_dim, MAX_ITEM_DIM);
         POMAGMA_ASSERT_ALIGNED_(1, line);
     }
+    DenseSet (const DenseSet & other) = delete;
     DenseSet (DenseSet && other)
         : m_item_dim(other.m_item_dim),
           m_word_dim(other.m_word_dim),
