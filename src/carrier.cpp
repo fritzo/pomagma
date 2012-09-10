@@ -46,7 +46,7 @@ Ob Carrier::unsafe_insert ()
     return ob;
 }
 
-void Carrier::unsafe_remove (Ob ob)
+void Carrier::unsafe_remove (const Ob ob)
 {
     UniqueLock lock(m_mutex);
 

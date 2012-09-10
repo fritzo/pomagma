@@ -50,7 +50,7 @@ public:
 
     // strict operations
     Ob unsafe_insert ();
-    void unsafe_remove (Ob ob);
+    void unsafe_remove (const Ob ob);
 
 private:
 
