@@ -85,23 +85,51 @@ void InjectiveFunction::validate () const
     }
 }
 
+inline bool replace (Ob patt, Ob repl, std::atomic<Ob> & destin)
+{
+    return destin.compare_exchange_strong(
+            patt,
+            repl,
+            std::memory_order_relaxed,
+            std::memory_order_relaxed);
+}
+
 void InjectiveFunction::unsafe_remove (Ob ob)
 {
     UniqueLock lock(m_mutex);
 
     POMAGMA_ASSERT_RANGE_(4, ob, item_dim());
 
-    TODO("merge occurrences as values")
-
     if (bool_ref bit = m_set(ob)) {
         bit.zero();
         m_values[ob] = 0;
+    }
+    for (auto iter = this->iter(); iter.ok(); iter.next()) {
+        Ob key = *iter;
+        if (replace(ob, 0, m_values[key])) {
+            m_set.remove(key);
+        }
     }
 
     if (bool_ref bit = m_inverse_set(ob)) {
         bit.zero();
         m_inverse[ob] = 0;
     }
+    for (auto iter = inverse_iter(); iter.ok(); iter.next()) {
+        Ob val = *iter;
+        if (replace(ob, 0, m_inverse[val])) {
+            m_inverse_set.remove(val);
+        }
+    }
+}
+
+inline bool set_if_match (Ob ob, std::atomic<Ob> & destin)
+{
+    return destin.compare_exchange_strong(
+            ob,
+            0,
+            std::memory_order_relaxed,
+            std::memory_order_relaxed);
 }
 
 void InjectiveFunction::unsafe_merge (Ob dep)
@@ -113,8 +141,6 @@ void InjectiveFunction::unsafe_merge (Ob dep)
     POMAGMA_ASSERT_RANGE_(4, rep, item_dim());
     POMAGMA_ASSERT4(rep != dep, "self merge: " << dep << "," << rep);
 
-    TODO("merge occurrences as values")
-
     if (bool_ref dep_bit = m_set(dep)) {
         dep_bit.zero();
         m_set(rep).one();
@@ -124,7 +150,11 @@ void InjectiveFunction::unsafe_merge (Ob dep)
         m_carrier.set_and_merge(rep_val, dep_val.load()); // XXX is this safe?
         dep_val.store(0);
     }
+    for (auto iter = this->iter(); iter.ok(); iter.next()) {
+        replace(dep, rep, m_values[*iter]);
+    }
 
+    rep = m_carrier.find(rep);
     if (bool_ref dep_bit = m_inverse_set(dep)) {
         dep_bit.zero();
         m_inverse_set(rep).one();
@@ -133,6 +163,9 @@ void InjectiveFunction::unsafe_merge (Ob dep)
         std::atomic<Ob> & rep_val = m_inverse[rep];
         m_carrier.set_and_merge(rep_val, dep_val.load()); // XXX is this safe?
         dep_val.store(0);
+    }
+    for (auto iter = inverse_iter(); iter.ok(); iter.next()) {
+        replace(dep, rep, m_inverse[*iter]);
     }
 }
 

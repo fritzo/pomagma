@@ -57,8 +57,39 @@ void test_basic (size_t size)
             POMAGMA_ASSERT(not fun.defined(*i), "unexpected value at " << *i);
         }
     }
+    fun.validate();
 
-    POMAGMA_INFO("Validating");
+    POMAGMA_INFO("Checking unsafe_merge");
+    for (auto dep = support.iter(); dep.ok(); dep.next()) {
+        for (auto rep = support.iter(); rep.ok(); rep.next()) {
+            if ((*rep < *dep) and random_bool(0.25)) {
+                carrier.merge(*dep, *rep);
+                break;
+            }
+        }
+    }
+    bool merged;
+    do {
+        merged = false;
+        for (auto iter = support.iter(); iter.ok(); iter.next()) {
+            Ob dep = *iter;
+            if (carrier.find(dep) != dep) {
+                fun.unsafe_merge(dep);
+                carrier.unsafe_remove(dep);
+                merged = true;
+            }
+        }
+    } while (merged);
+    fun.validate();
+
+    POMAGMA_INFO("Checking unsafe_remove");
+    for (auto iter = support.iter(); iter.ok(); iter.next()) {
+        if (random_bool(0.5)) {
+            Ob dep = *iter;
+            fun.unsafe_remove(dep);
+            carrier.unsafe_remove(dep);
+        }
+    }
     fun.validate();
 }
 

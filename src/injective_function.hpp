@@ -34,6 +34,8 @@ public:
     bool inverse_defined (Ob key) const;
     Ob find (Ob key) const;
     Ob inverse_find (Ob val) const;
+    DenseSet::Iterator iter () const { return m_set.iter(); }
+    DenseSet::Iterator inverse_iter () const { return m_inverse_set.iter(); }
     void insert (Ob key, Ob val) const;
 
     // strict operations
