@@ -116,8 +116,8 @@ void base_bin_rel_<symmetric>::validate() const
         }
 
         // check for Lx/Rx agreement
-        for (DenseSet::Iterator i(support()); i.ok(); i.next()) {
-        for (DenseSet::Iterator j(support()); j.ok(); j.next()) {
+        for (auto i = support().iter(); i.ok(); i.next()) {
+        for (auto j = support().iter(); j.ok(); j.next()) {
             POMAGMA_ASSERT(Lx(*i, *j) == Rx(*i, *j),
                     "Lx, Rx disagree at " << *i << ',' << *j);
         }}

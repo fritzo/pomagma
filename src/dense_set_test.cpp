@@ -42,7 +42,7 @@ void test_basic (size_t size)
     }
     POMAGMA_ASSERT_EQ(set.count_items(), size / 2);
     unsigned item_count = 0;
-    for (DenseSet::Iterator iter(set); iter.ok(); iter.next()) {
+    for (auto iter = set.iter(); iter.ok(); iter.next()) {
         POMAGMA_ASSERT(set.contains(*iter), "iterated over uncontained item");
         ++item_count;
     }
@@ -114,7 +114,7 @@ void test_iterator (size_t size)
     }
 
     size_t count = 0;
-    for (DenseSet::Iterator i(set); i.ok(); i.next()) {
+    for (auto i = set.iter(); i.ok(); i.next()) {
         POMAGMA_ASSERT(vect[*i - 1], "unexpected item " << *i);
         ++count;
     }

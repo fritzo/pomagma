@@ -39,7 +39,7 @@ void test_basic (size_t size)
     InjectiveFunction fun(carrier);
     fun.validate();
 
-    for (DenseSet::Iterator i(support); i.ok(); i.next()) {
+    for (auto i = support.iter(); i.ok(); i.next()) {
         Ob val = example_fun(*i);
         if (val and support.contains(val)) {
             fun.insert(*i, val);
@@ -48,7 +48,7 @@ void test_basic (size_t size)
     fun.validate();
 
     POMAGMA_INFO("Checking function values");
-    for (DenseSet::Iterator i(support); i.ok(); i.next()) {
+    for (auto i = support.iter(); i.ok(); i.next()) {
         Ob val = example_fun(*i);
         if (val and support.contains(val)) {
             POMAGMA_ASSERT(fun.defined(*i), "missing value at " << *i);

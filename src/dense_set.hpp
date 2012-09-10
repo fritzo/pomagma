@@ -16,7 +16,6 @@ void free_blocks (void *);
 
 class DenseSet : noncopyable
 {
-    // data
     const size_t m_item_dim;
     const size_t m_word_dim;
     Word * m_words;
@@ -24,25 +23,6 @@ class DenseSet : noncopyable
 
 public:
 
-    // position 0 is unused, so we count from item 1
-    static size_t word_count (size_t item_dim)
-    {
-        return (item_dim + BITS_PER_WORD) / BITS_PER_WORD;
-    }
-
-    // using round dimensions ensures cache alignenet and autovectorizability
-    static size_t round_item_dim (size_t min_item_dim)
-    {
-        return (min_item_dim + BITS_PER_CACHE_LINE) / BITS_PER_CACHE_LINE
-            * BITS_PER_CACHE_LINE - 1;
-    }
-    static size_t round_word_dim (size_t min_item_dim)
-    {
-        return (min_item_dim + BITS_PER_CACHE_LINE) / BITS_PER_CACHE_LINE
-            * (BITS_PER_CACHE_LINE / BITS_PER_WORD);
-    }
-
-    // ctors & dtors
     DenseSet (size_t item_dim);
     DenseSet (size_t item_dim, Word * line)
         : m_item_dim(item_dim),
@@ -77,6 +57,24 @@ public:
         m_words = line;
     }
 
+    // position 0 is unused, so we count from item 1
+    static size_t word_count (size_t item_dim)
+    {
+        return (item_dim + BITS_PER_WORD) / BITS_PER_WORD;
+    }
+
+    // using round dimensions ensures cache alignenet and autovectorizability
+    static size_t round_item_dim (size_t min_item_dim)
+    {
+        return (min_item_dim + BITS_PER_CACHE_LINE) / BITS_PER_CACHE_LINE
+            * BITS_PER_CACHE_LINE - 1;
+    }
+    static size_t round_word_dim (size_t min_item_dim)
+    {
+        return (min_item_dim + BITS_PER_CACHE_LINE) / BITS_PER_CACHE_LINE
+            * (BITS_PER_CACHE_LINE / BITS_PER_WORD);
+    }
+
     // attributes
     bool empty () const; // not fast
     size_t count_items () const; // supa-slow, try not to use
@@ -109,8 +107,9 @@ public:
     bool ensure      (const DenseSet & dep, DenseSet & diff);
     // returns true if anything in rep changes
 
-    // iteration
     class Iterator;
+
+    Iterator iter () const;
 
 private:
 
@@ -153,44 +152,49 @@ inline void DenseSet::merge (size_t i, size_t j __attribute__((unused)))
 //----------------------------------------------------------------------------
 // Iteration
 
-class DenseSet::Iterator : noncopyable
+class DenseSet::Iterator
 {
+    const size_t m_word_dim;
+    const Word * const m_words;
     size_t m_i;
     size_t m_rem;
     size_t m_quot;
     Word m_mask;
-    const DenseSet & m_set;
 
 public:
 
-    // construction
-    Iterator (const DenseSet & set, bool b = true)
-        : m_set(set)
+    Iterator (size_t word_dim, const Word * words, bool begin_ = true)
+        : m_word_dim(word_dim),
+          m_words(words)
     {
-        if (b) { begin(); }
+        POMAGMA_ASSERT4(m_words, "constructed Iterator with null words");
+        if (begin_) { begin(); }
     }
 
-    // traversal
-private:
-    void _next_block ();
-public:
-    inline void begin ();
+    void begin ();
     void next ();
     bool ok () const { return m_i; }
 
-    // dereferencing
     size_t operator * () const { POMAGMA_ASSERT_OK return m_i; }
     const size_t * operator -> () const { POMAGMA_ASSERT_OK return & m_i; }
+
+private:
+
+    void _next_block ();
 };
 
 inline void DenseSet::Iterator::begin ()
 {
-    POMAGMA_ASSERT4(m_set.m_words, "begin with null set");
     m_quot = 0;
     --m_quot;
     _next_block();
-    POMAGMA_ASSERT5(not ok() or m_set.contains(m_i),
+    POMAGMA_ASSERT5(not ok() or bool_ref::index(m_words, m_i),
             "begin on empty pos: " << m_i);
+}
+
+inline DenseSet::Iterator DenseSet::iter () const
+{
+    return Iterator(m_word_dim, m_words);
 }
 
 } // namespace pomagma

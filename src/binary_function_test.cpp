@@ -25,8 +25,8 @@ void test_basic (size_t size)
     BinaryFunction fun(carrier);
     fun.validate();
 
-    for (DenseSet::Iterator i(support); i.ok(); i.next())
-    for (DenseSet::Iterator j(support); j.ok(); j.next()) {
+    for (auto i = support.iter(); i.ok(); i.next())
+    for (auto j = support.iter(); j.ok(); j.next()) {
         Ob k = example_fun(*i, *j);
         if ((k > 1) and carrier.contains(k)) {
             fun.insert(*i, *j, k);
@@ -37,8 +37,8 @@ void test_basic (size_t size)
     POMAGMA_INFO("Checking function values");
     std::vector<size_t> Lx_line_size(size + 1, 0);
     std::vector<size_t> Rx_line_size(size + 1, 0);
-    for (DenseSet::Iterator i(support); i.ok(); i.next())
-    for (DenseSet::Iterator j(support); j.ok(); j.next()) {
+    for (auto i = support.iter(); i.ok(); i.next())
+    for (auto j = support.iter(); j.ok(); j.next()) {
         Ob k = example_fun(*i, *j);
         if ((k > 1) and carrier.contains(k)) {
             POMAGMA_ASSERT(fun.defined(*i, *j),
@@ -55,8 +55,8 @@ void test_basic (size_t size)
     fun.validate();
 
     POMAGMA_INFO("Checking unsafe_merge");
-    for (DenseSet::Iterator dep(support); dep.ok(); dep.next()) {
-        for (DenseSet::Iterator rep(support); rep.ok(); rep.next()) {
+    for (auto dep = support.iter(); dep.ok(); dep.next()) {
+        for (auto rep = support.iter(); rep.ok(); rep.next()) {
             if ((*rep < *dep) and random_bool(0.25)) {
                 carrier.merge(*dep, *rep);
                 break;
@@ -66,7 +66,7 @@ void test_basic (size_t size)
     bool merged;
     do {
         merged = false;
-        for (DenseSet::Iterator iter(support); iter.ok(); iter.next()) {
+        for (auto iter = support.iter(); iter.ok(); iter.next()) {
             Ob dep = *iter;
             if (carrier.find(dep) != dep) {
                 fun.unsafe_merge(dep);
@@ -78,7 +78,7 @@ void test_basic (size_t size)
     fun.validate();
 
     POMAGMA_INFO("Checking unsafe_remove");
-    for (DenseSet::Iterator iter(support); iter.ok(); iter.next()) {
+    for (auto iter = support.iter(); iter.ok(); iter.next()) {
         if (random_bool(0.5)) {
             Ob dep = *iter;
             fun.unsafe_remove(dep);

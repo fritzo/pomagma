@@ -41,8 +41,8 @@ void test_BinaryRelation (
     BinaryRelation rel(carrier, move_to);
     rel.validate();
     size_t num_pairs = 0;
-    for (DenseSet::Iterator i(support); i.ok(); i.next()) {
-    for (DenseSet::Iterator j(support); j.ok(); j.next()) {
+    for (auto i = support.iter(); i.ok(); i.next()) {
+    for (auto j = support.iter(); j.ok(); j.next()) {
         if (test_fun(*i, *j)) {
             rel.insert(*i, *j);
             ++num_pairs;
@@ -54,8 +54,8 @@ void test_BinaryRelation (
 
     POMAGMA_INFO("testing pair containment");
     num_pairs = 0;
-    for (DenseSet::Iterator i(support); i.ok(); i.next()) {
-    for (DenseSet::Iterator j(support); j.ok(); j.next()) {
+    for (auto i = support.iter(); i.ok(); i.next()) {
+    for (auto j = support.iter(); j.ok(); j.next()) {
         if (test_fun(*i, *j)) {
             POMAGMA_ASSERT(rel.find_Lx(*i, *j),
                     "Lx relation missing " << *i << ',' << *j);
@@ -95,13 +95,13 @@ void test_BinaryRelation (
     num_pairs = 0;
     size_t seen_item_count = 0;
     item_count = rel.support().count_items();
-    for (DenseSet::Iterator lhs_iter(rel.support());
+    for (auto lhs_iter = rel.support().iter();
         lhs_iter.ok();
         lhs_iter.next())
     {
         ++seen_item_count;
         DenseSet set = rel.get_Lx_set(*lhs_iter);
-        for (DenseSet::Iterator rhs_iter(set); rhs_iter.ok(); rhs_iter.next()) {
+        for (auto rhs_iter = set.iter(); rhs_iter.ok(); rhs_iter.next()) {
             ++num_pairs;
         }
     }
@@ -115,13 +115,13 @@ void test_BinaryRelation (
     POMAGMA_INFO("testing line iterator (rhs fixed)");
     num_pairs = 0;
     seen_item_count = 0;
-    for (DenseSet::Iterator rhs_iter(rel.support());
+    for (auto rhs_iter = rel.support().iter();
         rhs_iter.ok();
         rhs_iter.next())
     {
         ++seen_item_count;
         DenseSet set = rel.get_Rx_set(*rhs_iter);
-        for (DenseSet::Iterator lhs_iter(set); lhs_iter.ok(); lhs_iter.next()) {
+        for (auto lhs_iter = set.iter(); lhs_iter.ok(); lhs_iter.next()) {
             ++num_pairs;
         }
     }

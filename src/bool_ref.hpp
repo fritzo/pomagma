@@ -23,6 +23,12 @@ public:
     {
         return unsafe_bool_ref(line[i >> WORD_POS_SHIFT], i & WORD_POS_MASK);
     }
+    static bool index (const Word * line, size_t i)
+    {
+        Word word = line[i >> WORD_POS_SHIFT];
+        Word mask = Word(1) << (i & WORD_POS_MASK);
+        return word & mask;
+    }
 
     operator bool () const { return m_word & m_mask; }
     void operator |= (bool b) { m_word |= b * m_mask; }
@@ -48,6 +54,12 @@ public:
     static atomic_bool_ref index (Word * line, size_t i)
     {
         return atomic_bool_ref(line[i >> WORD_POS_SHIFT], i & WORD_POS_MASK);
+    }
+    static bool index (const Word * line, size_t i)
+    {
+        Word word = line[i >> WORD_POS_SHIFT];
+        Word mask = Word(1) << (i & WORD_POS_MASK);
+        return word & mask;
     }
 
     operator bool () const { return m_word->load() & m_mask; }

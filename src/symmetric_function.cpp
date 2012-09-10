@@ -80,13 +80,13 @@ void SymmetricFunction::validate () const
     }
 
     POMAGMA_INFO("Validating inverse contains function");
-    for (DenseSet::Iterator lhs_iter(support());
+    for (auto lhs_iter = support().iter();
         lhs_iter.ok();
         lhs_iter.next())
     {
         Ob lhs = *lhs_iter;
         DenseSet rhs_set = get_Lx_set(lhs);
-        for (DenseSet::Iterator rhs_iter(rhs_set);
+        for (auto rhs_iter = rhs_set.iter();
             rhs_iter.ok();
             rhs_iter.next())
         {
@@ -131,7 +131,7 @@ void SymmetricFunction::unsafe_remove (const Ob dep)
 
     {   Ob lhs = dep;
         set.init(m_lines.Lx(lhs));
-        for (DenseSet::Iterator iter(set); iter.ok(); iter.next()) {
+        for (auto iter = set.iter(); iter.ok(); iter.next()) {
             Ob rhs = *iter;
             std::atomic<Ob> & atomic_val = value(lhs, rhs);
             Ob val = atomic_val.load(std::memory_order_relaxed);
@@ -197,7 +197,7 @@ void SymmetricFunction::unsafe_merge (const Ob dep)
     // (dep, rhs) --> (rep, rhs) for rhs != dep
     rep = carrier().find(rep);
     dep_set.init(m_lines.Lx(dep));
-    for (DenseSet::Iterator iter(dep_set); iter.ok(); iter.next()) {
+    for (auto iter = dep_set.iter(); iter.ok(); iter.next()) {
         Ob rhs = *iter;
         std::atomic<Ob> & dep_val = value(dep, rhs);
         std::atomic<Ob> & rep_val = value(rep, rhs);
