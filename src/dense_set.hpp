@@ -163,8 +163,8 @@ class DenseSet::Iterator
 
 public:
 
-    Iterator (size_t word_dim, const Word * words, bool begin_ = true)
-        : m_word_dim(word_dim),
+    Iterator (size_t item_dim, const Word * words, bool begin_ = true)
+        : m_word_dim(word_count(item_dim)),
           m_words(words)
     {
         POMAGMA_ASSERT4(m_words, "constructed Iterator with null words");
@@ -194,7 +194,7 @@ inline void DenseSet::Iterator::begin ()
 
 inline DenseSet::Iterator DenseSet::iter () const
 {
-    return Iterator(m_word_dim, m_words);
+    return Iterator(m_item_dim, m_words);
 }
 
 } // namespace pomagma

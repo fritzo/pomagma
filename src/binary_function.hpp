@@ -35,6 +35,8 @@ public:
     DenseSet get_Rx_set (Ob rhs) const { return m_lines.Rx_set(rhs); }
     bool defined (Ob lhs, Ob rhs) const;
     Ob find (Ob lhs, Ob rhs) const { return value(lhs, rhs).load(); }
+    DenseSet::Iterator iter_lhs (Ob lhs) const;
+    DenseSet::Iterator iter_rhs (Ob rhs) const;
     Vlr_Table::Iterator iter_val (Ob val) const;
     VLr_Table::Iterator iter_val_lhs (Ob val, Ob lhs) const;
     VRl_Table::Iterator iter_val_rhs (Ob val, Ob rhs) const;
@@ -72,6 +74,18 @@ inline std::atomic<Ob> & BinaryFunction::value (Ob i, Ob j) const
     POMAGMA_ASSERT5(support().contains(j), "unsupported rhs: " << j);
     std::atomic<Ob> * block = _block(i / ITEMS_PER_BLOCK, j / ITEMS_PER_BLOCK);
     return _block2value(block, i & BLOCK_POS_MASK, j & BLOCK_POS_MASK);
+}
+
+inline DenseSet::Iterator BinaryFunction::iter_lhs (Ob lhs) const
+{
+    POMAGMA_ASSERT5(support().contains(lhs), "unsupported lhs: " << lhs);
+    return DenseSet::Iterator(item_dim(), m_lines.Lx(lhs));
+}
+
+inline DenseSet::Iterator BinaryFunction::iter_rhs (Ob rhs) const
+{
+    POMAGMA_ASSERT5(support().contains(rhs), "unsupported rhs: " << rhs);
+    return DenseSet::Iterator(item_dim(), m_lines.Rx(rhs));
 }
 
 inline Vlr_Table::Iterator BinaryFunction::iter_val (Ob val) const

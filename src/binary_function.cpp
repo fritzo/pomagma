@@ -79,16 +79,9 @@ void BinaryFunction::validate () const
     }
 
     POMAGMA_INFO("Validating inverse contains function");
-    for (auto lhs_iter = support().iter();
-        lhs_iter.ok();
-        lhs_iter.next())
-    {
+    for (auto lhs_iter = support().iter(); lhs_iter.ok(); lhs_iter.next()) {
         Ob lhs = *lhs_iter;
-        DenseSet rhs_set = get_Lx_set(lhs);
-        for (auto rhs_iter = rhs_set.iter();
-            rhs_iter.ok();
-            rhs_iter.next())
-        {
+        for (auto rhs_iter = iter_lhs(lhs); rhs_iter.ok(); rhs_iter.next()) {
             Ob rhs = *rhs_iter;
             Ob val = find(lhs, rhs);
 
@@ -130,8 +123,7 @@ void BinaryFunction::unsafe_remove (const Ob dep)
     DenseSet set(item_dim(), nullptr);
 
     {   Ob rhs = dep;
-        set.init(m_lines.Rx(rhs));
-        for (auto iter = set.iter(); iter.ok(); iter.next()) {
+        for (auto iter = iter_rhs(rhs); iter.ok(); iter.next()) {
             Ob lhs = *iter;
             std::atomic<Ob> & atomic_val = value(lhs, rhs);
             Ob val = atomic_val.load(std::memory_order_relaxed);
@@ -141,12 +133,12 @@ void BinaryFunction::unsafe_remove (const Ob dep)
             m_VRl_table.unsafe_remove(lhs, rhs, val);
             m_lines.Lx(lhs, rhs).zero();
         }
+        set.init(m_lines.Rx(rhs));
         set.zero();
     }
 
     {   Ob lhs = dep;
-        set.init(m_lines.Lx(lhs));
-        for (auto iter = set.iter(); iter.ok(); iter.next()) {
+        for (auto iter = iter_lhs(lhs); iter.ok(); iter.next()) {
             Ob rhs = *iter;
             std::atomic<Ob> & atomic_val = value(lhs, rhs);
             Ob val = atomic_val.load(std::memory_order_relaxed);
@@ -156,6 +148,7 @@ void BinaryFunction::unsafe_remove (const Ob dep)
             m_VRl_table.unsafe_remove(lhs, rhs, val);
             m_lines.Rx(lhs, rhs).zero();
         }
+        set.init(m_lines.Lx(lhs));
         set.zero();
     }
 
@@ -192,8 +185,7 @@ void BinaryFunction::unsafe_merge (const Ob dep)
     //   (dep, dep) --> (dep, rep) --> (rep, rep)
 
     // dep as rhs
-    dep_set.init(m_lines.Rx(dep));
-    for (auto iter = dep_set.iter(); iter.ok(); iter.next()) {
+    for (auto iter = iter_rhs(dep); iter.ok(); iter.next()) {
         Ob lhs = *iter;
         std::atomic<Ob> & dep_val = value(lhs, dep);
         std::atomic<Ob> & rep_val = value(lhs, rep);
@@ -211,13 +203,13 @@ void BinaryFunction::unsafe_merge (const Ob dep)
             m_VRl_table.unsafe_remove(lhs, dep, val);
         }
     }
+    dep_set.init(m_lines.Rx(dep));
     rep_set.init(m_lines.Rx(rep));
     rep_set.merge(dep_set);
 
     // dep as lhs
     rep = carrier().find(rep);
-    dep_set.init(m_lines.Lx(dep));
-    for (auto iter = dep_set.iter(); iter.ok(); iter.next()) {
+    for (auto iter = iter_lhs(dep); iter.ok(); iter.next()) {
         Ob rhs = *iter;
         std::atomic<Ob> & dep_val = value(dep, rhs);
         std::atomic<Ob> & rep_val = value(rep, rhs);
@@ -235,6 +227,7 @@ void BinaryFunction::unsafe_merge (const Ob dep)
             m_VRl_table.unsafe_remove(dep, rhs, val);
         }
     }
+    dep_set.init(m_lines.Lx(dep));
     rep_set.init(m_lines.Lx(rep));
     rep_set.merge(dep_set);
 
