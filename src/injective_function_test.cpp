@@ -15,11 +15,6 @@ inline Ob example_fun (Ob i)
     }
 }
 
-void merge_callback (Ob i)
-{
-    POMAGMA_DEBUG("merging " << i);
-}
-
 struct Example
 {
     InjectiveFunction fun;

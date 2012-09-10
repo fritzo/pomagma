@@ -1,4 +1,5 @@
 #include "binary_function.hpp"
+#include "function_test.hpp"
 #include <vector>
 
 using namespace pomagma;
@@ -8,97 +9,48 @@ inline Ob example_fun (Ob i, Ob j)
     return ((i % j) > (j % i)) * ((i * i + j + 1) % max(i, j));
 }
 
-void test_basic (size_t size)
+struct Example
 {
-    POMAGMA_INFO("Defining function");
-    Carrier carrier(size);
-    const DenseSet & support = carrier.support();
-    for (Ob i = 1; i <= size; ++i) {
-        carrier.unsafe_insert();
-    }
-    for (Ob i = 1; i <= size; ++i) {
-        if (random_bool(0.2)) {
-            carrier.unsafe_remove(i);
-        }
-    }
+    BinaryFunction fun;
 
-    BinaryFunction fun(carrier);
-    fun.validate();
+    Example (Carrier & carrier) : fun(carrier)
+    {
+        const DenseSet & support = carrier.support();
 
-    for (auto i = support.iter(); i.ok(); i.next())
-    for (auto j = support.iter(); j.ok(); j.next()) {
-        Ob k = example_fun(*i, *j);
-        if ((k > 1) and carrier.contains(k)) {
-            fun.insert(*i, *j, k);
-        }
-    }
-    fun.validate();
+        POMAGMA_INFO("Defining function");
+        fun.validate();
 
-    POMAGMA_INFO("Checking function values");
-    std::vector<size_t> Lx_line_size(size + 1, 0);
-    std::vector<size_t> Rx_line_size(size + 1, 0);
-    for (auto i = support.iter(); i.ok(); i.next())
-    for (auto j = support.iter(); j.ok(); j.next()) {
-        Ob k = example_fun(*i, *j);
-        if ((k > 1) and carrier.contains(k)) {
-            POMAGMA_ASSERT(fun.defined(*i, *j),
-                    "missing pair " << *i << ',' << *j);
-            POMAGMA_ASSERT(fun.find(*i, *j) == k,
-                    "bad value at " << *i << ',' << *j);
-            ++Lx_line_size[*i];
-            ++Rx_line_size[*j];
-        } else {
-            POMAGMA_ASSERT(not fun.defined(*i, *j),
-                    "unexpected pair " << *i << ',' << *j);
-        }
-    }
-    fun.validate();
-
-    POMAGMA_INFO("Checking unsafe_merge");
-    for (auto dep = support.iter(); dep.ok(); dep.next()) {
-        for (auto rep = support.iter(); rep.ok(); rep.next()) {
-            if ((*rep < *dep) and random_bool(0.25)) {
-                carrier.merge(*dep, *rep);
-                break;
+        for (auto i = support.iter(); i.ok(); i.next())
+        for (auto j = support.iter(); j.ok(); j.next()) {
+            Ob k = example_fun(*i, *j);
+            if ((k > 1) and carrier.contains(k)) {
+                fun.insert(*i, *j, k);
             }
         }
-    }
-    bool merged;
-    do {
-        merged = false;
-        for (auto iter = support.iter(); iter.ok(); iter.next()) {
-            Ob dep = *iter;
-            if (carrier.find(dep) != dep) {
-                fun.unsafe_merge(dep);
-                carrier.unsafe_remove(dep);
-                merged = true;
+        fun.validate();
+
+        POMAGMA_INFO("Checking function values");
+        for (auto i = support.iter(); i.ok(); i.next())
+        for (auto j = support.iter(); j.ok(); j.next()) {
+            Ob k = example_fun(*i, *j);
+            if ((k > 1) and carrier.contains(k)) {
+                POMAGMA_ASSERT(fun.defined(*i, *j),
+                        "missing pair " << *i << ',' << *j);
+                POMAGMA_ASSERT(fun.find(*i, *j) == k,
+                        "bad value at " << *i << ',' << *j);
+            } else {
+                POMAGMA_ASSERT(not fun.defined(*i, *j),
+                        "unexpected pair " << *i << ',' << *j);
             }
         }
-    } while (merged);
-    fun.validate();
-
-    POMAGMA_INFO("Checking unsafe_remove");
-    for (auto iter = support.iter(); iter.ok(); iter.next()) {
-        if (random_bool(0.5)) {
-            Ob dep = *iter;
-            fun.unsafe_remove(dep);
-            carrier.unsafe_remove(dep);
-        }
+        fun.validate();
     }
-    fun.validate();
-}
+};
 
 int main ()
 {
     Log::title("BinaryFunction Test");
-
-    for (size_t i = 1; i < 4; ++i) {
-        test_basic(i + (1 << 9));
-    }
-
-    for (size_t exponent = 0; exponent < 10; ++exponent) {
-        test_basic(1 << exponent);
-    }
+    test_function<Example>();
 
     return 0;
 }

@@ -23,7 +23,7 @@ inline void random_init (Carrier & carrier)
         carrier.unsafe_insert();
     }
     for (Ob i = 1; i <= size; ++i) {
-        if (random_bool(0.2)) {
+        if (random_bool(0.5)) {
             carrier.unsafe_remove(i);
         }
     }
@@ -56,7 +56,7 @@ void test_remove (Carrier & carrier, Function & fun)
     POMAGMA_INFO("Checking unsafe_remove");
     const DenseSet & support = carrier.support();
     for (auto iter = support.iter(); iter.ok(); iter.next()) {
-        if (random_bool(0.5)) {
+        if (random_bool(0.2)) {
             Ob dep = *iter;
             fun.unsafe_remove(dep);
             carrier.unsafe_remove(dep);
