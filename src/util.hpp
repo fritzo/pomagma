@@ -9,6 +9,7 @@
 #include <fstream>
 #include <iomanip>
 #include <atomic>
+#include <chrono>
 
 namespace pomagma
 {
@@ -77,6 +78,21 @@ template <class T> inline const char * nameof () { return "???"; }
 float get_elapsed_time ();
 std::string get_date (bool hour=true);
 
+class Timer
+{
+    typedef std::chrono::high_resolution_clock Clock;
+    typedef std::chrono::time_point<Clock> Time;
+    Time m_start;
+public:
+    Timer () : m_start(Clock::now()) {}
+    double elapsed () const
+    {
+        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(
+                Clock::now() - m_start);
+        return duration.count() * 1e-6;
+    }
+};
+
 class noncopyable
 {
     noncopyable (const noncopyable &) = delete;
@@ -121,9 +137,9 @@ public:
 
     ~Log ()
     {
-       m_message << std::endl;
-       s_log_stream << m_message.str() << std::flush;
-       std::cerr << m_message.str() << std::flush; // DEBUG
+        m_message << std::endl;
+        s_log_stream << m_message.str() << std::flush;
+        //std::cerr << m_message.str() << std::flush; // DEBUG
     }
 
     template<class T> Log & operator<< (const T & t)
@@ -134,11 +150,14 @@ public:
 
     static void title (std::string name)
     {
-        s_log_stream
+        std::ostringstream message;
+        message
             << "\e[32m" // green
             << name << " " << get_date()
             << "\e[0;39m"
             << std::endl;
+        s_log_stream << message.str() << std::flush;
+        //std::cerr << message.str() << std::flush; // DEBUG
     }
 };
 

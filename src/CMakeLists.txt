@@ -25,6 +25,8 @@ set(POMAGMA_TEST_LIBS pomagma pomagma_dummy boost_thread tbb)
 add_executable(dense_set_test dense_set_test.cpp)
 target_link_libraries(dense_set_test ${POMAGMA_TEST_LIBS})
 add_test(NAME dense_set COMMAND dense_set_test)
+add_executable(dense_set_profile dense_set_profile.cpp)
+target_link_libraries(dense_set_profile ${POMAGMA_TEST_LIBS})
 
 add_executable(carrier_test carrier_test.cpp)
 target_link_libraries(carrier_test ${POMAGMA_TEST_LIBS})
