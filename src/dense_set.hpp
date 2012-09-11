@@ -37,6 +37,71 @@ public:
     Word get_word (size_t quot) const { return m_words[quot]; }
 };
 
+class Intersection2
+{
+    const size_t m_word_dim;
+    const Word * const m_words1;
+    const Word * const m_words2;
+
+public:
+
+    Intersection2 (size_t item_dim, const Word * words1, const Word * words2)
+        : m_word_dim(items_to_words(item_dim)),
+          m_words1(words1),
+          m_words2(words2)
+    {
+        POMAGMA_ASSERT4(m_words1, "constructed Intersection2 with null words1");
+        POMAGMA_ASSERT4(m_words2, "constructed Intersection2 with null words2");
+    }
+
+    size_t word_dim () const { return m_word_dim; }
+    bool get_bit (size_t pos) const
+    {
+        Word mask = Word(1) << (pos & WORD_POS_MASK);
+        return mask & get_word(pos >> WORD_POS_SHIFT);
+    }
+    Word get_word (size_t quot) const
+    {
+        return m_words1[quot] & m_words2[quot];
+    }
+};
+
+class Intersection3
+{
+    const size_t m_word_dim;
+    const Word * const m_words1;
+    const Word * const m_words2;
+    const Word * const m_words3;
+
+public:
+
+    Intersection3 (
+            size_t item_dim,
+            const Word * words1,
+            const Word * words2,
+            const Word * words3)
+        : m_word_dim(items_to_words(item_dim)),
+          m_words1(words1),
+          m_words2(words2),
+          m_words3(words3)
+    {
+        POMAGMA_ASSERT4(m_words1, "constructed Intersection3 with null words1");
+        POMAGMA_ASSERT4(m_words2, "constructed Intersection3 with null words2");
+        POMAGMA_ASSERT4(m_words3, "constructed Intersection3 with null words3");
+    }
+
+    size_t word_dim () const { return m_word_dim; }
+    bool get_bit (size_t pos) const
+    {
+        Word mask = Word(1) << (pos & WORD_POS_MASK);
+        return mask & get_word(pos >> WORD_POS_SHIFT);
+    }
+    Word get_word (size_t quot) const
+    {
+        return m_words1[quot] & m_words2[quot] & m_words3[quot];
+    }
+};
+
 template<class Set>
 class SetIterator
 {
@@ -192,13 +257,12 @@ public:
     bool ensure      (const DenseSet & dep, DenseSet & diff);
     // returns true if anything in rep changes
 
-    struct Iterator : SetIterator<SimpleSet>
-    {
-        Iterator (size_t item_dim, Word * words)
-            : SetIterator<SimpleSet>(SimpleSet(item_dim, words))
-        {}
-    };
-    Iterator iter () const { return Iterator(m_item_dim, m_words); }
+    struct Iterator;
+    struct Iterator2;
+    struct Iterator3;
+    Iterator iter () const;
+    Iterator2 iter_insn (const DenseSet & other) const;
+    Iterator3 iter_insn (const DenseSet & set2, const DenseSet & set3) const;
 
 private:
 
@@ -238,6 +302,55 @@ inline void DenseSet::merge (size_t i, size_t j __attribute__((unused)))
     POMAGMA_ASSERT4(contains(i), "merge rep not contained: " << i);
     POMAGMA_ASSERT4(contains(j), "merge dep not contained: " << j);
     _bit(i).zero();
+}
+
+//----------------------------------------------------------------------------
+// Iteration
+
+struct DenseSet::Iterator : SetIterator<SimpleSet>
+{
+    Iterator (size_t item_dim, const Word * words)
+        : SetIterator<SimpleSet>(SimpleSet(item_dim, words))
+    {
+    }
+};
+
+struct DenseSet::Iterator2 : SetIterator<Intersection2>
+{
+    Iterator2 (size_t item_dim, const Word * words1, const Word * words2)
+        : SetIterator<Intersection2>(Intersection2(item_dim, words1, words2))
+    {
+    }
+};
+
+struct DenseSet::Iterator3 : SetIterator<Intersection3>
+{
+    Iterator3 (
+            size_t item_dim,
+            const Word * words1,
+            const Word * words2,
+            const Word * words3)
+        : SetIterator<Intersection3>(
+                Intersection3(item_dim, words1, words2, words3))
+    {
+    }
+};
+
+inline DenseSet::Iterator DenseSet::iter () const
+{
+    return Iterator(m_item_dim, m_words);
+}
+
+inline DenseSet::Iterator2 DenseSet::iter_insn (const DenseSet & other) const
+{
+    return Iterator2(m_item_dim, m_words, other.m_words);
+}
+
+inline DenseSet::Iterator3 DenseSet::iter_insn (
+        const DenseSet & set2,
+        const DenseSet & set3) const
+{
+    return Iterator3(m_item_dim, m_words, set2.m_words, set3.m_words);
 }
 
 } // namespace pomagma

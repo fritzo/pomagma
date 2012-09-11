@@ -8,9 +8,8 @@ Roadmap
 
 - Reimplement DenseSet using std::atomic<Word> instead of Word
     - In DenseSet::Iterator, store raw word data instead of set reference
-    - Implement DenseSet::IntersectionIterator2, 3, 4 for delayed intersection
-    - Add .iter(), .iter_insn(-), .iter_insn(-,-) methods to DenseSet
 - Flesh out unit test to exercise all methods
+    - Add tests for DenseSet::Iterator2, 3
 - Work out relaxed-vs-strict operation and monotonicity requirements
     - Carrier is already in good shape
     - Functions should make sure .defined(-) matches .value(-)
@@ -20,7 +19,6 @@ Roadmap
 - Get sk.theory.cpp to compile
     - This is mundane no-brain python work, after BinaryFunction's
       InverseIterator and InverseRangeIterator are implemented
-- Refactor unit tests to eliminate duplicate patterns
 - Implement copy_from operations for all types and for theory
     - Implement sorting version for compaction & efficiency
 - Implement binary dump operations for an external insert/remove process
