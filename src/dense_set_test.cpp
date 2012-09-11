@@ -258,5 +258,13 @@ int main ()
         test_operations(size);
     }
 
+    for (size_t exponent = 1; exponent <= 10; ++exponent) {
+        size_t size = (1 << exponent) - 1;
+        test_basic(size);
+        test_even(size);
+        test_iterator(size);
+        test_operations(size);
+    }
+
     return 0;
 }

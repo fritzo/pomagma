@@ -164,34 +164,27 @@ class DenseSet::Iterator
 
 public:
 
-    Iterator (size_t item_dim, const Word * words, bool begin_ = true)
+    Iterator (size_t item_dim, const Word * words)
         : m_word_dim(word_count(item_dim)),
           m_words(words)
     {
         POMAGMA_ASSERT4(m_words, "constructed Iterator with null words");
-        if (begin_) { begin(); }
+        m_quot = 0;
+        --m_quot;
+        _next_block();
+        POMAGMA_ASSERT5(not ok() or bool_ref::index(m_words, m_i),
+                "begin on empty pos: " << m_i);
     }
 
-    void begin ();
     void next ();
     bool ok () const { return m_i; }
 
     size_t operator * () const { POMAGMA_ASSERT_OK return m_i; }
-    const size_t * operator -> () const { POMAGMA_ASSERT_OK return & m_i; }
 
 private:
 
     void _next_block ();
 };
-
-inline void DenseSet::Iterator::begin ()
-{
-    m_quot = 0;
-    --m_quot;
-    _next_block();
-    POMAGMA_ASSERT5(not ok() or bool_ref::index(m_words, m_i),
-            "begin on empty pos: " << m_i);
-}
 
 inline DenseSet::Iterator DenseSet::iter () const
 {
