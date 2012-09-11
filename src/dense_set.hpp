@@ -25,7 +25,7 @@ class DenseSetIterator
     size_t m_i;
     size_t m_rem;
     size_t m_quot;
-    Word m_mask;
+    Word m_word;
 
 public:
 
@@ -49,6 +49,7 @@ public:
 private:
 
     void _next_block ();
+    bool _contained () const { return bool_ref::index(m_words, m_i); }
 };
 
 //----------------------------------------------------------------------------
