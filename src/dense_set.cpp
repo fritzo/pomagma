@@ -6,43 +6,6 @@
 namespace pomagma
 {
 
-//----------------------------------------------------------------------------
-// Iteration
-
-void DenseSetIterator::_next_block ()
-{
-    // traverse to next nonempty block
-    do {
-        if (++m_quot == m_word_dim) { m_i = 0; return; }
-        m_word = m_words[m_quot];
-    } while (!m_word);
-
-    // traverse to first nonempty bit in a nonempty block
-    for (m_rem = 0; !(m_word & 1); ++m_rem, m_word >>= 1) {
-        POMAGMA_ASSERT4(m_rem != BITS_PER_WORD, "found no bits");
-    }
-    m_i = m_rem + BITS_PER_WORD * m_quot;
-    _contained();
-    POMAGMA_ASSERT5(_contained(), "landed on empty pos: " << m_i);
-}
-
-// PROFILE this is one of the slowest methods
-void DenseSetIterator::next ()
-{
-    POMAGMA_ASSERT_OK
-    do {
-        ++m_rem;
-        //if (m_rem < BITS_PER_WORD) m_word >>=1; // slow version
-        if (m_rem & WORD_POS_MASK) m_word >>= 1;    // fast version
-        else { _next_block(); return; }
-    } while (!(m_word & 1));
-    m_i = m_rem + BITS_PER_WORD * m_quot;
-    POMAGMA_ASSERT5(_contained(), "landed on empty pos: " << m_i);
-}
-
-//----------------------------------------------------------------------------
-// DenseSet
-
 DenseSet::DenseSet (size_t item_dim)
     : m_item_dim(item_dim),
       m_word_dim(items_to_words(m_item_dim)),

@@ -18,39 +18,88 @@ inline size_t items_to_words (size_t item_dim)
 //----------------------------------------------------------------------------
 // Iteration
 
-class DenseSetIterator
+class SimpleSet
 {
     const size_t m_word_dim;
     const Word * const m_words;
+
+public:
+
+    SimpleSet (size_t item_dim, const Word * words)
+        : m_word_dim(items_to_words(item_dim)),
+          m_words(words)
+    {
+        POMAGMA_ASSERT4(m_words, "constructed SimpleSet with null words");
+    }
+
+    size_t word_dim () const { return m_word_dim; }
+    bool get_bit (size_t pos) const { return bool_ref::index(m_words, pos); }
+    Word get_word (size_t quot) const { return m_words[quot]; }
+};
+
+template<class Set>
+class SetIterator
+{
+    Set m_set;
     size_t m_i;
     size_t m_rem;
     size_t m_quot;
     Word m_word;
 
-public:
+protected:
 
-    DenseSetIterator (size_t item_dim, const Word * words)
-        : m_word_dim(items_to_words(item_dim)),
-          m_words(words)
+    SetIterator (const Set & set)
+        : m_set(set)
     {
-        POMAGMA_ASSERT4(m_words, "constructed Iterator with null words");
         m_quot = 0;
         --m_quot;
         _next_block();
-        POMAGMA_ASSERT5(not ok() or bool_ref::index(m_words, m_i),
+        POMAGMA_ASSERT5(not ok() or m_set.get_bit(m_i),
                 "begin on empty pos: " << m_i);
     }
 
+public:
+
     void next ();
     bool ok () const { return m_i; }
-
     size_t operator * () const { POMAGMA_ASSERT_OK return m_i; }
 
 private:
 
     void _next_block ();
-    bool _contained () const { return bool_ref::index(m_words, m_i); }
 };
+
+template<class Set>
+void SetIterator<Set>::_next_block ()
+{
+    // traverse to next nonempty block
+    do {
+        if (++m_quot == m_set.word_dim()) { m_i = 0; return; }
+        m_word = m_set.get_word(m_quot);
+    } while (!m_word);
+
+    // traverse to first nonempty bit in a nonempty block
+    for (m_rem = 0; !(m_word & 1); ++m_rem, m_word >>= 1) {
+        POMAGMA_ASSERT4(m_rem != BITS_PER_WORD, "found no bits");
+    }
+    m_i = m_rem + BITS_PER_WORD * m_quot;
+    POMAGMA_ASSERT5(m_set.get_bit(m_i), "landed on empty pos: " << m_i);
+}
+
+// PROFILE this is one of the slowest methods
+template<class Set>
+void SetIterator<Set>::next ()
+{
+    POMAGMA_ASSERT_OK
+    do {
+        ++m_rem;
+        //if (m_rem < BITS_PER_WORD) m_word >>=1; // slow version
+        if (m_rem & WORD_POS_MASK) m_word >>= 1;    // fast version
+        else { _next_block(); return; }
+    } while (!(m_word & 1));
+    m_i = m_rem + BITS_PER_WORD * m_quot;
+    POMAGMA_ASSERT5(m_set.get_bit(m_i), "landed on empty pos: " << m_i);
+}
 
 //----------------------------------------------------------------------------
 // Dense set - basically a bitfield
@@ -143,7 +192,12 @@ public:
     bool ensure      (const DenseSet & dep, DenseSet & diff);
     // returns true if anything in rep changes
 
-    typedef DenseSetIterator Iterator;
+    struct Iterator : SetIterator<SimpleSet>
+    {
+        Iterator (size_t item_dim, Word * words)
+            : SetIterator<SimpleSet>(SimpleSet(item_dim, words))
+        {}
+    };
     Iterator iter () const { return Iterator(m_item_dim, m_words); }
 
 private:
