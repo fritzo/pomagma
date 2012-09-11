@@ -6,9 +6,47 @@
 namespace pomagma
 {
 
+//----------------------------------------------------------------------------
+// Iteration
+
+void DenseSetIterator::_next_block ()
+{
+    // traverse to next nonempty block
+    do { if (++m_quot == m_word_dim) { m_i = 0; return; }
+    } while (!m_words[m_quot]);
+
+    // traverse to first nonempty bit in a nonempty block
+    Word word = m_words[m_quot];
+    for (m_rem = 0, m_mask = 1; !(m_mask & word); ++m_rem, m_mask <<= 1) {
+        POMAGMA_ASSERT4(m_rem != BITS_PER_WORD, "found no bits");
+    }
+    m_i = m_rem + BITS_PER_WORD * m_quot;
+    POMAGMA_ASSERT5(bool_ref::index(m_words, m_i),
+            "landed on empty pos: " << m_i);
+}
+
+// PROFILE this is one of the slowest methods
+void DenseSetIterator::next ()
+{
+    POMAGMA_ASSERT_OK
+    Word word = m_words[m_quot];
+    do {
+        ++m_rem;
+        //if (m_rem < BITS_PER_WORD) m_mask <<=1; // slow version
+        if (m_rem & WORD_POS_MASK) m_mask <<= 1;    // fast version
+        else { _next_block(); return; }
+    } while (!(m_mask & word));
+    m_i = m_rem + BITS_PER_WORD * m_quot;
+    POMAGMA_ASSERT5(bool_ref::index(m_words, m_i),
+            "landed on empty pos: " << m_i);
+}
+
+//----------------------------------------------------------------------------
+// DenseSet
+
 DenseSet::DenseSet (size_t item_dim)
     : m_item_dim(item_dim),
-      m_word_dim(word_count(m_item_dim)),
+      m_word_dim(items_to_words(m_item_dim)),
       m_words(pomagma::alloc_blocks<Word>(m_word_dim)),
       m_alias(false)
 {
@@ -270,41 +308,6 @@ bool DenseSet::ensure (const DenseSet & src, DenseSet & diff)
     }
 
     return changed;
-}
-
-//----------------------------------------------------------------------------
-// Iteration
-
-void DenseSet::Iterator::_next_block ()
-{
-    // traverse to next nonempty block
-    do { if (++m_quot == m_word_dim) { m_i = 0; return; }
-    } while (!m_words[m_quot]);
-
-    // traverse to first nonempty bit in a nonempty block
-    Word word = m_words[m_quot];
-    for (m_rem = 0, m_mask = 1; !(m_mask & word); ++m_rem, m_mask <<= 1) {
-        POMAGMA_ASSERT4(m_rem != BITS_PER_WORD, "found no bits");
-    }
-    m_i = m_rem + BITS_PER_WORD * m_quot;
-    POMAGMA_ASSERT5(bool_ref::index(m_words, m_i),
-            "landed on empty pos: " << m_i);
-}
-
-// PROFILE this is one of the slowest methods
-void DenseSet::Iterator::next ()
-{
-    POMAGMA_ASSERT_OK
-    Word word = m_words[m_quot];
-    do {
-        ++m_rem;
-        //if (m_rem < BITS_PER_WORD) m_mask <<=1; // slow version
-        if (m_rem & WORD_POS_MASK) m_mask <<= 1;    // fast version
-        else { _next_block(); return; }
-    } while (!(m_mask & word));
-    m_i = m_rem + BITS_PER_WORD * m_quot;
-    POMAGMA_ASSERT5(bool_ref::index(m_words, m_i),
-            "landed on empty pos: " << m_i);
 }
 
 } // namespace pomagma

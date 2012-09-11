@@ -9,7 +9,47 @@ namespace pomagma
 
 void free_blocks (void *);
 
-// WARNING zero/null items are not allowed
+// position 0 is unused, so count from item 1
+inline size_t items_to_words (size_t item_dim)
+{
+    return (item_dim + BITS_PER_WORD) / BITS_PER_WORD;
+}
+
+//----------------------------------------------------------------------------
+// Iteration
+
+class DenseSetIterator
+{
+    const size_t m_word_dim;
+    const Word * const m_words;
+    size_t m_i;
+    size_t m_rem;
+    size_t m_quot;
+    Word m_mask;
+
+public:
+
+    DenseSetIterator (size_t item_dim, const Word * words)
+        : m_word_dim(items_to_words(item_dim)),
+          m_words(words)
+    {
+        POMAGMA_ASSERT4(m_words, "constructed Iterator with null words");
+        m_quot = 0;
+        --m_quot;
+        _next_block();
+        POMAGMA_ASSERT5(not ok() or bool_ref::index(m_words, m_i),
+                "begin on empty pos: " << m_i);
+    }
+
+    void next ();
+    bool ok () const { return m_i; }
+
+    size_t operator * () const { POMAGMA_ASSERT_OK return m_i; }
+
+private:
+
+    void _next_block ();
+};
 
 //----------------------------------------------------------------------------
 // Dense set - basically a bitfield
@@ -26,7 +66,7 @@ public:
     DenseSet (size_t item_dim);
     DenseSet (size_t item_dim, Word * line)
         : m_item_dim(item_dim),
-          m_word_dim(word_count(item_dim)),
+          m_word_dim(items_to_words(item_dim)),
           m_words(line),
           m_alias(true)
     {
@@ -44,7 +84,7 @@ public:
     }
     //DenseSet (size_t item_dim, AlignedBuffer<Word> & buffer)
     //    : m_item_dim(item_dim),
-    //      m_word_dim(word_count(item_dim)),
+    //      m_word_dim(items_to_words(item_dim)),
     //      m_words(buffer(m_word_dim)),
     //      m_alias(true)
     //{
@@ -56,12 +96,6 @@ public:
         POMAGMA_ASSERT4(m_alias, "tried to init() non-alias dense set");
         POMAGMA_ASSERT_ALIGNED_(1, line);
         m_words = line;
-    }
-
-    // position 0 is unused, so we count from item 1
-    static size_t word_count (size_t item_dim)
-    {
-        return (item_dim + BITS_PER_WORD) / BITS_PER_WORD;
     }
 
     // using round dimensions ensures cache alignenet and autovectorizability
@@ -108,9 +142,8 @@ public:
     bool ensure      (const DenseSet & dep, DenseSet & diff);
     // returns true if anything in rep changes
 
-    class Iterator;
-
-    Iterator iter () const;
+    typedef DenseSetIterator Iterator;
+    Iterator iter () const { return Iterator(m_item_dim, m_words); }
 
 private:
 
@@ -134,11 +167,13 @@ inline void DenseSet::insert (size_t i)
     POMAGMA_ASSERT4(not contains(i), "double insertion: " << i);
     _bit(i).one();
 }
+
 inline void DenseSet::remove (size_t i)
 {
     POMAGMA_ASSERT4(contains(i), "double removal: " << i);
     _bit(i).zero();
 }
+
 inline void DenseSet::merge (size_t i, size_t j __attribute__((unused)))
 {
     POMAGMA_ASSERT5(0 < i and i <= m_item_dim, "rep out of range: " << i);
@@ -148,47 +183,6 @@ inline void DenseSet::merge (size_t i, size_t j __attribute__((unused)))
     POMAGMA_ASSERT4(contains(i), "merge rep not contained: " << i);
     POMAGMA_ASSERT4(contains(j), "merge dep not contained: " << j);
     _bit(i).zero();
-}
-
-//----------------------------------------------------------------------------
-// Iteration
-
-class DenseSet::Iterator
-{
-    const size_t m_word_dim;
-    const Word * const m_words;
-    size_t m_i;
-    size_t m_rem;
-    size_t m_quot;
-    Word m_mask;
-
-public:
-
-    Iterator (size_t item_dim, const Word * words)
-        : m_word_dim(word_count(item_dim)),
-          m_words(words)
-    {
-        POMAGMA_ASSERT4(m_words, "constructed Iterator with null words");
-        m_quot = 0;
-        --m_quot;
-        _next_block();
-        POMAGMA_ASSERT5(not ok() or bool_ref::index(m_words, m_i),
-                "begin on empty pos: " << m_i);
-    }
-
-    void next ();
-    bool ok () const { return m_i; }
-
-    size_t operator * () const { POMAGMA_ASSERT_OK return m_i; }
-
-private:
-
-    void _next_block ();
-};
-
-inline DenseSet::Iterator DenseSet::iter () const
-{
-    return Iterator(m_item_dim, m_words);
 }
 
 } // namespace pomagma
