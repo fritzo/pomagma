@@ -26,7 +26,7 @@ test: build/debug log
 	|| (grep -C3 -i error log/test.log && false)
 	@$(MAKE) -C pomagma test
 
-profile: build/release log
+profile: build/release log FORCE
 	@echo 'PWD =' `pwd`
 	@(cd build/release && cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo ../..)
 	@$(MAKE) -C build/release

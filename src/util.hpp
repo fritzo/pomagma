@@ -139,7 +139,7 @@ public:
     {
         m_message << std::endl;
         s_log_stream << m_message.str() << std::flush;
-        //std::cerr << m_message.str() << std::flush; // DEBUG
+        std::cerr << m_message.str() << std::flush; // DEBUG
     }
 
     template<class T> Log & operator<< (const T & t)
@@ -157,7 +157,7 @@ public:
             << "\e[0;39m"
             << std::endl;
         s_log_stream << message.str() << std::flush;
-        //std::cerr << message.str() << std::flush; // DEBUG
+        std::cerr << message.str() << std::flush; // DEBUG
     }
 };
 
