@@ -38,7 +38,7 @@ Ob Carrier::unsafe_insert ()
     UniqueLock lock(m_mutex);
 
     POMAGMA_ASSERT1(item_count() < item_dim(), "insertion in full Carrier");
-    Ob ob = m_support.insert_one();
+    Ob ob = m_support.unsafe_insert_one();
     POMAGMA_ASSERT1(not m_reps[ob].load(), "double insertion: " << ob);
     m_reps[ob].store(ob);
     ++m_item_count;

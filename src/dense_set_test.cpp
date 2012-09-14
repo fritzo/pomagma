@@ -137,16 +137,16 @@ void test_operations (size_t size)
     POMAGMA_ASSERT(bool(x.count_items()) ^ x.empty(), ".empty() is wrong");
     POMAGMA_ASSERT(bool(y.count_items()) ^ y.empty(), ".empty() is wrong");
 
-    POMAGMA_INFO("testing insert_all");
+    POMAGMA_INFO("testing unsafe_insert_all");
     expected.zero();
     actual.zero();
     for (Ob i = 1; i <= size; ++i) {
         expected.insert(i);
     }
-    actual.insert_all();
-    POMAGMA_ASSERT(actual == expected, "insert_all is wrong");
+    actual.unsafe_insert_all();
+    POMAGMA_ASSERT(actual == expected, "unsafe_insert_all is wrong");
 
-    POMAGMA_INFO("testing insert_one");
+    POMAGMA_INFO("testing unsafe_insert_one");
     expected.zero();
     actual.zero();
     std::vector<Ob> free_list;
@@ -160,9 +160,9 @@ void test_operations (size_t size)
     }
     for (Ob i : free_list) {
         expected.insert(i);
-        Ob j = actual.insert_one();
-        POMAGMA_ASSERT(i == j, "wrong insert_one " << j << " vs " << i);
-        POMAGMA_ASSERT(actual == expected, "insert_one is wrong");
+        Ob j = actual.unsafe_insert_one();
+        POMAGMA_ASSERT(i == j, "wrong unsafe_insert_one " << j << " vs " << i);
+        POMAGMA_ASSERT(actual == expected, "unsafe_insert_one is wrong");
     }
 
     POMAGMA_INFO("testing union");

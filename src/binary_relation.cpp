@@ -29,7 +29,7 @@ void BinaryRelation::copy_from (
 
     if (POMAGMA_DEBUG_LEVEL >= 1) other.validate();
 
-    // WARNING: assumes this has been done
+    // WARNING assume this has been done
     //bzero(m_lines.Lx(), sizeof(Word) * data_size_words());
     //bzero(m_lines.Rx(), sizeof(Word) * data_size_words());
 

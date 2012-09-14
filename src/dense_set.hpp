@@ -251,8 +251,8 @@ public:
     void insert (size_t i);
     void remove (size_t i);
     void merge  (size_t i, size_t j);
-    void insert_all ();
-    Ob insert_one ();
+    void unsafe_insert_all ();
+    Ob unsafe_insert_one ();
 
     // entire operations (note that all are monotonic)
     void zero ();

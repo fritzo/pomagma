@@ -79,7 +79,7 @@ void DenseSet::validate () const
 //----------------------------------------------------------------------------
 // Insertion
 
-void DenseSet::insert_all ()
+void DenseSet::unsafe_insert_all ()
 {
     // slow version
     // for (size_t i = 1; i <= m_item_dim; ++i) { insert(i); }
@@ -99,7 +99,7 @@ void DenseSet::insert_all ()
     m_words[0].fetch_xor(1, relaxed); // remove zero element
 }
 
-Ob DenseSet::insert_one () // WARNING not thread safe
+Ob DenseSet::unsafe_insert_one ()
 {
     m_words[0].fetch_xor(1, relaxed); // simplifies code
 
