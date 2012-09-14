@@ -6,53 +6,22 @@
 namespace pomagma
 {
 
-class unsafe_bool_ref
-{
-    Word & m_word;
-    const Word m_mask;
-
-public:
-
-    unsafe_bool_ref (Word & word, size_t _i)
-        : m_word(word),
-          m_mask(Word(1) << _i)
-    {
-        POMAGMA_ASSERT6(_i < BITS_PER_WORD, "out of range: " << _i);
-    }
-    static unsafe_bool_ref index (Word * line, size_t i)
-    {
-        return unsafe_bool_ref(line[i >> WORD_POS_SHIFT], i & WORD_POS_MASK);
-    }
-    static bool index (const Word * line, size_t i)
-    {
-        Word word = line[i >> WORD_POS_SHIFT];
-        Word mask = Word(1) << (i & WORD_POS_MASK);
-        return word & mask;
-    }
-
-    operator bool () const { return m_word & m_mask; }
-    void operator |= (bool b) { m_word |= b * m_mask; }
-    void operator &= (bool b) { m_word &= ~(!b * m_mask); }
-    void zero () { m_word &= ~m_mask; }
-    void one () { m_word |= m_mask; }
-};
-
-class atomic_bool_ref
+class bool_ref
 {
     std::atomic<Word> * const m_word;
     const Word m_mask;
 
 public:
 
-    atomic_bool_ref (std::atomic<Word> & word, size_t _i)
+    bool_ref (std::atomic<Word> & word, size_t _i)
         : m_word(& word),
           m_mask(Word(1) << _i)
     {
         POMAGMA_ASSERT6(_i < BITS_PER_WORD, "out of range: " << _i);
     }
-    static atomic_bool_ref index (std::atomic<Word> * line, size_t i)
+    static bool_ref index (std::atomic<Word> * line, size_t i)
     {
-        return atomic_bool_ref(line[i >> WORD_POS_SHIFT], i & WORD_POS_MASK);
+        return bool_ref(line[i >> WORD_POS_SHIFT], i & WORD_POS_MASK);
     }
     static bool index (
             const std::atomic<Word> * line,
@@ -76,8 +45,6 @@ public:
         return m_word->fetch_and(~m_mask, order) & m_mask;
     }
 };
-
-typedef atomic_bool_ref bool_ref;
 
 } // namespace pomagma
 
