@@ -51,7 +51,7 @@ void InjectiveFunction::validate () const
 
     POMAGMA_DEBUG("validating set-values consistency");
     for (Ob key = 1; key <= item_dim(); ++key) {
-        bool bit = m_set(key);
+        bool bit = m_set.contains(key);
         Ob val = m_values[key];
 
         if (not support().contains(key)) {
@@ -68,7 +68,7 @@ void InjectiveFunction::validate () const
     }
 
     for (Ob val = 1; val <= item_dim(); ++val) {
-        bool bit = m_inverse_set(val);
+        bool bit = m_inverse_set.contains(val);
         Ob key = m_inverse[val];
 
         if (not support().contains(val)) {
@@ -100,8 +100,7 @@ void InjectiveFunction::unsafe_remove (Ob ob)
 
     POMAGMA_ASSERT_RANGE_(4, ob, item_dim());
 
-    if (bool_ref bit = m_set(ob)) {
-        bit.zero();
+    if (m_set(ob).fetch_zero()) {
         m_values[ob] = 0;
     }
     for (auto iter = this->iter(); iter.ok(); iter.next()) {
@@ -111,8 +110,7 @@ void InjectiveFunction::unsafe_remove (Ob ob)
         }
     }
 
-    if (bool_ref bit = m_inverse_set(ob)) {
-        bit.zero();
+    if (m_inverse_set(ob).fetch_zero()) {
         m_inverse[ob] = 0;
     }
     for (auto iter = inverse_iter(); iter.ok(); iter.next()) {
@@ -141,8 +139,7 @@ void InjectiveFunction::unsafe_merge (Ob dep)
     POMAGMA_ASSERT_RANGE_(4, rep, item_dim());
     POMAGMA_ASSERT4(rep != dep, "self merge: " << dep << "," << rep);
 
-    if (bool_ref dep_bit = m_set(dep)) {
-        dep_bit.zero();
+    if (m_set(dep).fetch_zero()) {
         m_set(rep).one();
 
         std::atomic<Ob> & dep_val = m_values[dep];
@@ -155,8 +152,7 @@ void InjectiveFunction::unsafe_merge (Ob dep)
     }
 
     rep = m_carrier.find(rep);
-    if (bool_ref dep_bit = m_inverse_set(dep)) {
-        dep_bit.zero();
+    if (m_inverse_set(dep).fetch_zero()) {
         m_inverse_set(rep).one();
 
         std::atomic<Ob> & dep_val = m_inverse[dep];

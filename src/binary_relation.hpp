@@ -37,8 +37,8 @@ public:
     // safe operations
     DenseSet get_Lx_set (Ob lhs) const { return m_lines.Lx_set(lhs); }
     DenseSet get_Rx_set (Ob rhs) const { return m_lines.Rx_set(rhs); }
-    bool find_Lx (Ob i, Ob j) const { return m_lines.Lx(i, j); }
-    bool find_Rx (Ob i, Ob j) const { return m_lines.Rx(i, j); }
+    bool find_Lx (Ob i, Ob j) const { return m_lines.get_Lx(i, j); }
+    bool find_Rx (Ob i, Ob j) const { return m_lines.get_Rx(i, j); }
     bool find (Ob i, Ob j) const { return find_Lx(i, j); }
     void insert_Lx (Ob i, Ob j);
     void insert_Rx (Ob i, Ob j);
@@ -69,10 +69,7 @@ private:
 
 inline void BinaryRelation::insert_Lx (Ob i, Ob j)
 {
-    bool_ref val = m_lines.Lx(i, j);
-    if (not val) {
-        val.one();
-        val.one();
+    if (not m_lines.Lx(i, j).fetch_one()) {
         _insert_Rx(i, j);
         m_insert_callback(i, j);
     }
@@ -80,9 +77,7 @@ inline void BinaryRelation::insert_Lx (Ob i, Ob j)
 
 inline void BinaryRelation::insert_Rx (Ob i, Ob j)
 {
-    bool_ref val = m_lines.Rx(i, j);
-    if (not val) {
-        val.one();
+    if (not m_lines.Rx(i, j).fetch_one()) {
         _insert_Lx(i, j);
         m_insert_callback(i, j);
     }

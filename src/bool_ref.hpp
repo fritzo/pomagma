@@ -35,7 +35,6 @@ public:
     void operator &= (bool b) { m_word &= ~(!b * m_mask); }
     void zero () { m_word &= ~m_mask; }
     void one () { m_word |= m_mask; }
-    void invert () { m_word ^= m_mask; }
 };
 
 class atomic_bool_ref
@@ -45,32 +44,40 @@ class atomic_bool_ref
 
 public:
 
-    atomic_bool_ref (Word & word, size_t _i)
-        : m_word(reinterpret_cast<std::atomic<Word> *>(& word)), // HACK
+    atomic_bool_ref (std::atomic<Word> & word, size_t _i)
+        : m_word(& word),
           m_mask(Word(1) << _i)
     {
         POMAGMA_ASSERT6(_i < BITS_PER_WORD, "out of range: " << _i);
     }
-    static atomic_bool_ref index (Word * line, size_t i)
+    static atomic_bool_ref index (std::atomic<Word> * line, size_t i)
     {
         return atomic_bool_ref(line[i >> WORD_POS_SHIFT], i & WORD_POS_MASK);
     }
-    static bool index (const Word * line, size_t i)
+    static bool index (
+            const std::atomic<Word> * line,
+            size_t i,
+            order_t order = relaxed)
     {
-        Word word = line[i >> WORD_POS_SHIFT];
+        Word word = line[i >> WORD_POS_SHIFT].load(order);
         Word mask = Word(1) << (i & WORD_POS_MASK);
         return word & mask;
     }
 
-    operator bool () const { return m_word->load() & m_mask; }
-    void operator |= (bool b) { m_word->fetch_or(b * m_mask); }
-    void operator &= (bool b) { m_word->fetch_and(~(!b * m_mask)); }
-    void zero () { m_word->fetch_and(~m_mask); }
-    void one () { m_word->fetch_or(m_mask); }
-    void invert () { m_word->fetch_xor(m_mask); }
+    bool load (order_t order = relaxed) { return m_word->load(order) & m_mask; }
+    void zero (order_t order = relaxed) { m_word->fetch_and(~m_mask, order); }
+    void one (order_t order = relaxed) { m_word->fetch_or(m_mask, order); }
+    bool fetch_one (order_t order = relaxed)
+    {
+        return m_word->fetch_or(m_mask, order) & m_mask;
+    }
+    bool fetch_zero (order_t order = relaxed)
+    {
+        return m_word->fetch_and(~m_mask, order) & m_mask;
+    }
 };
 
-typedef unsafe_bool_ref bool_ref;
+typedef atomic_bool_ref bool_ref;
 
 } // namespace pomagma
 

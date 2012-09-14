@@ -15,8 +15,8 @@ class base_bin_rel_ : noncopyable
     const size_t m_round_item_dim;
     const size_t m_round_word_dim;
     const size_t m_data_size_words;
-    Word * const m_Lx_lines;
-    Word * const m_Rx_lines;
+    std::atomic<Word> * const m_Lx_lines;
+    std::atomic<Word> * const m_Rx_lines;
 
 public:
 
@@ -34,16 +34,28 @@ public:
     size_t data_size_words () const { return m_data_size_words; }
 
     // full table
-    Word * Lx () const { return m_Lx_lines; }
-    Word * Rx () const { return m_Rx_lines; }
+    const std::atomic<Word> * Lx () const { return m_Lx_lines; }
+    const std::atomic<Word> * Rx () const { return m_Rx_lines; }
+    std::atomic<Word> * Lx () { return m_Lx_lines; }
+    std::atomic<Word> * Rx () { return m_Rx_lines; }
 
     // single line
-    Word * Lx (Ob lhs) const
+    const std::atomic<Word> * Lx (Ob lhs) const
     {
         POMAGMA_ASSERT_RANGE_(5, lhs, item_dim());
         return m_Lx_lines + (lhs * m_round_word_dim);
     }
-    Word * Rx (Ob rhs) const
+    const std::atomic<Word> * Rx (Ob rhs) const
+    {
+        POMAGMA_ASSERT_RANGE_(5, rhs, item_dim());
+        return m_Rx_lines + (rhs * m_round_word_dim);
+    }
+    std::atomic<Word> * Lx (Ob lhs)
+    {
+        POMAGMA_ASSERT_RANGE_(5, lhs, item_dim());
+        return m_Lx_lines + (lhs * m_round_word_dim);
+    }
+    std::atomic<Word> * Rx (Ob rhs)
     {
         POMAGMA_ASSERT_RANGE_(5, rhs, item_dim());
         return m_Rx_lines + (rhs * m_round_word_dim);
@@ -70,15 +82,17 @@ public:
         POMAGMA_ASSERT_RANGE_(5, lhs, item_dim());
         return bool_ref::index(Rx(rhs), lhs);
     }
+    bool get_Lx (Ob lhs, Ob rhs) const { return Lx(lhs, rhs); }
+    bool get_Rx (Ob lhs, Ob rhs) const { return Rx(lhs, rhs); }
 
     // set wrappers
     DenseSet Lx_set (Ob lhs) const
     {
-        return DenseSet(item_dim(), Lx(lhs));
+        return DenseSet(item_dim(), const_cast<std::atomic<Word> *>(Lx(lhs)));
     }
     DenseSet Rx_set (Ob rhs) const
     {
-        return DenseSet(item_dim(), Rx(rhs));
+        return DenseSet(item_dim(), const_cast<std::atomic<Word> *>(Rx(rhs)));
     }
 };
 

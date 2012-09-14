@@ -165,9 +165,9 @@ void BinaryRelation::_remove_Lx (const DenseSet & is, Ob j)
     // faster version
     Word mask = ~(Word(1) << (j % BITS_PER_WORD));
     size_t offset = j / BITS_PER_WORD;
-    Word * lines = m_lines.Lx() + offset;
+    std::atomic<Word> * lines = m_lines.Lx() + offset;
     for (auto i = is.iter(); i.ok(); i.next()) {
-         lines[*i * round_word_dim()] &= mask; // ATOMIC
+         lines[*i * round_word_dim()].fetch_and(mask, relaxed);
     }
 }
 
@@ -181,9 +181,9 @@ void BinaryRelation::_remove_Rx (Ob i, const DenseSet& js)
     // faster version
     Word mask = ~(Word(1) << (i % BITS_PER_WORD));
     size_t offset = i / BITS_PER_WORD;
-    Word * lines = m_lines.Rx() + offset;
+    std::atomic<Word> * lines = m_lines.Rx() + offset;
     for (auto j = js.iter(); j.ok(); j.next()) {
-         lines[*j * round_word_dim()] &= mask; // ATOMIC
+         lines[*j * round_word_dim()].fetch_and(mask, relaxed);
     }
 }
 

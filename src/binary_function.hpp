@@ -60,7 +60,7 @@ inline bool BinaryFunction::defined (Ob lhs, Ob rhs) const
 {
     POMAGMA_ASSERT5(support().contains(lhs), "unsupported lhs: " << lhs);
     POMAGMA_ASSERT5(support().contains(rhs), "unsupported rhs: " << rhs);
-    return m_lines.Lx(lhs, rhs);
+    return m_lines.get_Lx(lhs, rhs);
 }
 
 inline std::atomic<Ob> * BinaryFunction::_block (size_t i_, size_t j_) const

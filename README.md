@@ -6,8 +6,6 @@ Equational reasoning in partially ordered magmas
 Roadmap
 -------
 
-- Reimplement DenseSet using std::atomic<Word> instead of Word
-    - In DenseSet::Iterator, store raw word data instead of set reference
 - Flesh out unit test to exercise all methods
     - Add tests for DenseSet::Iterator2, 3
 - Work out relaxed-vs-strict operation and monotonicity requirements

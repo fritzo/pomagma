@@ -110,7 +110,7 @@ void test_iterator (size_t size)
     }
 
     for (Ob i = 1; i <= size; ++i) {
-        POMAGMA_ASSERT_EQ(bool(set(i)), vect[i-1]);
+        POMAGMA_ASSERT_EQ(set.contains(i), vect[i-1]);
     }
 
     size_t count = 0;
@@ -151,7 +151,7 @@ void test_operations (size_t size)
     actual.zero();
     std::vector<Ob> free_list;
     for (Ob i = 1; i <= size; ++i) {
-        if (x(1)) {
+        if (x.contains(1)) {
             expected.insert(i);
             actual.insert(i);
         } else {
@@ -169,8 +169,8 @@ void test_operations (size_t size)
     expected.zero();
     actual.zero();
     for (Ob i = 1; i <= size; ++i) {
-        if (x(i) or y(i)) { expected.insert(i); }
-        if (x(i)) { actual.insert(i); }
+        if (x.contains(i) or y.contains(i)) { expected.insert(i); }
+        if (x.contains(i)) { actual.insert(i); }
     }
     actual += y;
     POMAGMA_ASSERT(actual == expected, "operator += is wrong");
@@ -184,8 +184,8 @@ void test_operations (size_t size)
     expected.zero();
     actual.zero();
     for (Ob i = 1; i <= size; ++i) {
-        if (x(i) and y(i)) { expected.insert(i); }
-        if (x(i)) { actual.insert(i); }
+        if (x.contains(i) and y.contains(i)) { expected.insert(i); }
+        if (x.contains(i)) { actual.insert(i); }
     }
     actual *= y;
     POMAGMA_ASSERT(actual == expected, "operator *= is wrong");
@@ -204,15 +204,15 @@ void test_operations (size_t size)
     DenseSet actual_diff(size);
     expected_rep.set_union(x, y);
     for (Ob i = 1; i <= size; ++i) {
-        if (y(i) and not x(i)) { expected_diff.insert(i); }
+        if (y.contains(i) and not x.contains(i)) { expected_diff.insert(i); }
     }
 
     POMAGMA_INFO("testing merge(DenseSet)");
     actual_rep.zero();
     actual_dep.zero();
     for (Ob i = 1; i <= size; ++i) {
-        if (x(i)) { actual_rep.insert(i); }
-        if (y(i)) { actual_dep.insert(i); }
+        if (x.contains(i)) { actual_rep.insert(i); }
+        if (y.contains(i)) { actual_dep.insert(i); }
     }
     actual_rep.merge(actual_dep);
     POMAGMA_ASSERT(actual_rep == expected_rep, "merge rep is wrong");
@@ -223,8 +223,8 @@ void test_operations (size_t size)
     actual_rep.zero();
     actual_dep.zero();
     for (Ob i = 1; i <= size; ++i) {
-        if (x(i)) { actual_rep.insert(i); }
-        if (y(i)) { actual_dep.insert(i); }
+        if (x.contains(i)) { actual_rep.insert(i); }
+        if (y.contains(i)) { actual_dep.insert(i); }
     }
     actual_rep.merge(actual_dep, actual_diff);
     POMAGMA_ASSERT(actual_rep == expected_rep, "merge rep is wrong");
@@ -235,7 +235,7 @@ void test_operations (size_t size)
     actual_diff.zero();
     actual_rep.zero();
     for (Ob i = 1; i <= size; ++i) {
-        if (x(i)) { actual_rep.insert(i); }
+        if (x.contains(i)) { actual_rep.insert(i); }
     }
     actual_rep.ensure(y, actual_diff);
     POMAGMA_ASSERT(actual_rep == expected_rep, "merge rep is wrong");

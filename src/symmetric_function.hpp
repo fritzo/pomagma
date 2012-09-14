@@ -66,7 +66,7 @@ inline bool SymmetricFunction::defined (Ob lhs, Ob rhs) const
 {
     POMAGMA_ASSERT5(support().contains(lhs), "unsupported lhs: " << lhs);
     POMAGMA_ASSERT5(support().contains(rhs), "unsupported rhs: " << rhs);
-    return m_lines.Lx(lhs, rhs);
+    return m_lines.get_Lx(lhs, rhs);
 }
 
 inline std::atomic<Ob> & SymmetricFunction::value (Ob i, Ob j) const

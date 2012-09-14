@@ -11,9 +11,10 @@ base_bin_rel_<symmetric>::base_bin_rel_ (const Carrier & carrier)
       m_round_item_dim(DenseSet::round_item_dim(item_dim())),
       m_round_word_dim(DenseSet::round_word_dim(item_dim())),
       m_data_size_words((1 + m_round_item_dim) * m_round_word_dim),
-      m_Lx_lines(pomagma::alloc_blocks<Word>(m_data_size_words)),
-      m_Rx_lines(symmetric ? m_Lx_lines
-                           : pomagma::alloc_blocks<Word>(m_data_size_words))
+      m_Lx_lines(pomagma::alloc_blocks<std::atomic<Word>>(m_data_size_words)),
+      m_Rx_lines( symmetric
+                ? m_Lx_lines
+                : pomagma::alloc_blocks<std::atomic<Word>>(m_data_size_words))
 {
     POMAGMA_DEBUG("creating base_bin_rel_ with "
             << m_data_size_words << " words");
@@ -65,8 +66,8 @@ void base_bin_rel_<symmetric>::validate() const
     if (symmetric) {
 
         // check emptiness outside of support
-        DenseSet set(item_dim(), nullptr);
-        DenseSet round_set(m_round_item_dim, nullptr);
+        const DenseSet set(item_dim(), nullptr);
+        const DenseSet round_set(m_round_item_dim, nullptr);
         for (Ob i = 0; i < m_round_item_dim; ++i) {
             if (1 <= i and i <= item_dim() and support().contains(i)) {
                 set.init(Lx(i));

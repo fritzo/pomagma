@@ -9,23 +9,14 @@ namespace pomagma
 DenseSet::DenseSet (size_t item_dim)
     : m_item_dim(item_dim),
       m_word_dim(items_to_words(m_item_dim)),
-      m_words(pomagma::alloc_blocks<Word>(m_word_dim)),
+      m_words(pomagma::alloc_blocks<std::atomic<Word>>(m_word_dim)),
       m_alias(false)
 {
     POMAGMA_DEBUG("creating DenseSet with " << m_word_dim << " lines");
     POMAGMA_ASSERT_LE(item_dim, MAX_ITEM_DIM);
 
-    bzero(m_words, sizeof(Word) * m_word_dim);
+    bzero(m_words, sizeof(std::atomic<Word>) * m_word_dim);
 }
-
-// intentionally undefined
-//void DenseSet::operator= (const DenseSet & other)
-//{
-//    POMAGMA_ASSERT_EQ(m_item_dim, other.m_item_dim);
-//    if (m_words != other.m_words) {
-//        memcpy(m_words, other.m_words, sizeof(Word) * m_word_dim);
-//    }
-//}
 
 void DenseSet::copy_from (const DenseSet & other, const Ob * new2old)
 {
@@ -51,7 +42,7 @@ void DenseSet::copy_from (const DenseSet & other, const Ob * new2old)
 bool DenseSet::empty () const
 {
     for (size_t m = 0, M = m_word_dim; m < M; ++m) {
-        if (m_words[m]) return false;
+        if (m_words[m].load(relaxed)) return false;
     }
     return true;
 }
@@ -63,7 +54,7 @@ size_t DenseSet::count_items () const
     for (size_t m = 0, M = m_word_dim; m < M; ++m) {
         // WARNING only unsigned's work with >>
         static_assert(Word(1) >> 1 == 0, "bitshifting Word fails");
-        for (Word word = m_words[m]; word; word >>= 1) {
+        for (Word word = m_words[m].load(relaxed); word; word >>= 1) {
             result += word & Word(1);
         }
     }
@@ -73,13 +64,15 @@ size_t DenseSet::count_items () const
 void DenseSet::validate () const
 {
     // make sure padding bits are zero
-    POMAGMA_ASSERT(not (m_words[0] & 1), "dense set contains null item");
+    POMAGMA_ASSERT(not (m_words[0].load(relaxed) & 1),
+            "dense set contains null item");
 
     // deal with partially-filled final block
     size_t end = (m_item_dim + 1) % BITS_PER_WORD;
     if (end == 0) return;
-    POMAGMA_ASSERT(not (m_words[m_word_dim - 1] >> end),
-            "dense set's end bits are used: " << m_words[m_word_dim - 1]);
+    POMAGMA_ASSERT(not (m_words[m_word_dim - 1].load(relaxed) >> end),
+            "dense set's end bits are used: "
+            << m_words[m_word_dim - 1].load(relaxed));
 }
 
 
@@ -93,37 +86,38 @@ void DenseSet::insert_all ()
 
     // fast version
     for (size_t m = 0; m < m_word_dim; ++m) {
-        m_words[m] = FULL_WORD;
+        m_words[m].store(FULL_WORD, relaxed);
     }
 
     // deal with partially-filled final block
     size_t end = (m_item_dim + 1) % BITS_PER_WORD;
     if (end) {
-        m_words[m_word_dim - 1] = FULL_WORD >> (BITS_PER_WORD - end);
+        Word word = FULL_WORD >> (BITS_PER_WORD - end);
+        m_words[m_word_dim - 1].store(word, relaxed);
     }
 
-    m_words[0] ^= 1; // remove zero element
+    m_words[0].fetch_xor(1, relaxed); // remove zero element
 }
 
 Ob DenseSet::insert_one () // WARNING not thread safe
 {
-    m_words[0] ^= Word(1); // simplifies code
+    m_words[0].fetch_xor(1, relaxed); // simplifies code
 
-    Word * restrict word = assume_aligned(m_words);
-    while (! ~ * word) {
+    std::atomic<Word> * restrict word = assume_aligned(m_words);
+    while (! ~ word->load(relaxed)) {
         ++word;
     }
     Ob ob = BITS_PER_WORD * (word - m_words);
 
-    const Word free = ~ * word;
+    const Word free = ~ word->load(relaxed);
     Word mask = 1;
     while (not (mask & free)) {
         mask <<= Word(1);
         ++ob;
     }
-    *word |= mask;
+    word->fetch_or(mask, relaxed);
 
-    m_words[0] ^= Word(1); // simplifies code
+    m_words[0].fetch_xor(1, relaxed); // simplifies code
     return ob;
 }
 
@@ -140,7 +134,9 @@ bool DenseSet::operator== (const DenseSet & other) const
     POMAGMA_ASSERT1(item_dim() == other.item_dim(), "item_dim mismatch");
 
     for (size_t m = 0, M = m_word_dim; m < M; ++m) {
-        if (m_words[m] != other.m_words[m]) return false;
+        if (m_words[m].load(relaxed) != other.m_words[m].load(relaxed)) {
+            return false;
+        }
     }
     return true;
 }
@@ -150,7 +146,9 @@ bool DenseSet::operator<= (const DenseSet & other) const
     POMAGMA_ASSERT1(item_dim() == other.item_dim(), "item_dim mismatch");
 
     for (size_t m = 0, M = m_word_dim; m < M; ++m) {
-        if (m_words[m] & ~other.m_words[m]) return false;
+        if (m_words[m].load(relaxed) & ~other.m_words[m].load(relaxed)) {
+            return false;
+        }
     }
     return true;
 }
@@ -160,7 +158,9 @@ bool DenseSet::disjoint (const DenseSet & other) const
     POMAGMA_ASSERT1(item_dim() == other.item_dim(), "item_dim mismatch");
 
     for (size_t m = 0, M = m_word_dim; m < M; ++m) {
-        if (m_words[m] & other.m_words[m]) return false;
+        if (m_words[m].load(relaxed) & other.m_words[m].load(relaxed)) {
+            return false;
+        }
     }
     return true;
 }
@@ -170,11 +170,11 @@ void DenseSet::operator += (const DenseSet & other)
 {
     POMAGMA_ASSERT1(item_dim() == other.item_dim(), "item_dim mismatch");
 
-    const Word * restrict s = assume_aligned(other.m_words);
-    Word * restrict t = assume_aligned(m_words);
+    const std::atomic<Word> * restrict s = assume_aligned(other.m_words);
+    std::atomic<Word> * restrict t = assume_aligned(m_words);
 
     for (size_t m = 0, M = m_word_dim; m < M; ++m) {
-        t[m] |= s[m];
+        t[m].fetch_or(s[m].load(relaxed), relaxed);
     }
 }
 
@@ -183,11 +183,11 @@ void DenseSet::operator *= (const DenseSet & other)
 {
     POMAGMA_ASSERT1(item_dim() == other.item_dim(), "item_dim mismatch");
 
-    const Word * restrict s = assume_aligned(other.m_words);
-    Word * restrict t = assume_aligned(m_words);
+    const std::atomic<Word> * restrict s = assume_aligned(other.m_words);
+    std::atomic<Word> * restrict t = assume_aligned(m_words);
 
     for (size_t m = 0, M = m_word_dim; m < M; ++m) {
-        t[m] &= s[m];
+        t[m].fetch_and(s[m].load(relaxed), relaxed);
     }
 }
 
@@ -196,12 +196,12 @@ void DenseSet::set_union (const DenseSet & lhs, const DenseSet & rhs)
     POMAGMA_ASSERT1(item_dim() == lhs.item_dim(), "lhs.item_dim mismatch");
     POMAGMA_ASSERT1(item_dim() == rhs.item_dim(), "rhs.item_dim mismatch");
 
-    const Word * restrict s = assume_aligned(lhs.m_words);
-    const Word * restrict t = assume_aligned(rhs.m_words);
-    Word * restrict u = assume_aligned(m_words);
+    const std::atomic<Word> * restrict s = assume_aligned(lhs.m_words);
+    const std::atomic<Word> * restrict t = assume_aligned(rhs.m_words);
+    std::atomic<Word> * restrict u = assume_aligned(m_words);
 
     for (size_t m = 0, M = m_word_dim; m < M; ++m) {
-        u[m] = s[m] | t[m];
+        u[m].store(s[m].load(relaxed) | t[m].load(relaxed), relaxed);
     }
 }
 
@@ -210,12 +210,12 @@ void DenseSet::set_insn (const DenseSet & lhs, const DenseSet & rhs)
     POMAGMA_ASSERT1(item_dim() == lhs.item_dim(), "lhs.item_dim mismatch");
     POMAGMA_ASSERT1(item_dim() == rhs.item_dim(), "rhs.item_dim mismatch");
 
-    const Word * restrict s = assume_aligned(lhs.m_words);
-    const Word * restrict t = assume_aligned(rhs.m_words);
-    Word * restrict u = assume_aligned(m_words);
+    const std::atomic<Word> * restrict s = assume_aligned(lhs.m_words);
+    const std::atomic<Word> * restrict t = assume_aligned(rhs.m_words);
+    std::atomic<Word> * restrict u = assume_aligned(m_words);
 
     for (size_t m = 0, M = m_word_dim; m < M; ++m) {
-        u[m] = s[m] & t[m];
+        u[m].store(s[m].load(relaxed) & t[m].load(relaxed), relaxed);
     }
 }
 
@@ -224,12 +224,12 @@ void DenseSet::merge (DenseSet & dep)
 {
     POMAGMA_ASSERT4(m_item_dim == dep.m_item_dim, "dep has wrong size");
 
-    Word * restrict d = assume_aligned(dep.m_words);
-    Word * restrict r = assume_aligned(m_words);
+    std::atomic<Word> * restrict d = assume_aligned(dep.m_words);
+    std::atomic<Word> * restrict r = assume_aligned(m_words);
 
     for (size_t m = 0, M = m_word_dim; m < M; ++m) {
-        r[m] |= d[m];
-        d[m] = 0;
+        r[m].fetch_or(d[m].load(relaxed), relaxed);
+        d[m].store(0, relaxed);
     }
 }
 
@@ -239,15 +239,19 @@ bool DenseSet::merge (DenseSet & dep, DenseSet & diff)
     POMAGMA_ASSERT4(m_item_dim == dep.m_item_dim, "dep has wrong size");
     POMAGMA_ASSERT4(m_item_dim == diff.m_item_dim, "diff has wrong size");
 
-    Word * restrict d = assume_aligned(dep.m_words);
-    Word * restrict r = assume_aligned(m_words);
-    Word * restrict c = assume_aligned(diff.m_words);
+    std::atomic<Word> * restrict d = assume_aligned(dep.m_words);
+    std::atomic<Word> * restrict r = assume_aligned(m_words);
+    std::atomic<Word> * restrict c = assume_aligned(diff.m_words);
 
     Word changed = 0;
     for (size_t m = 0, M = m_word_dim; m < M; ++m) {
-        changed |= (c[m] = d[m] & ~r[m]);
-        r[m] |= d[m];
-        d[m] = 0;
+        Word dm = d[m].load(relaxed);
+        Word rm = r[m].load(relaxed);
+        Word change = dm & ~ rm;
+        d[m].store(0, relaxed);
+        r[m].fetch_or(dm, relaxed);
+        c[m].store(change, relaxed);
+        changed |= change;
     }
 
     return changed;
@@ -259,14 +263,18 @@ bool DenseSet::ensure (const DenseSet & src, DenseSet & diff)
     POMAGMA_ASSERT4(m_item_dim == src.m_item_dim, "src has wrong size");
     POMAGMA_ASSERT4(m_item_dim == diff.m_item_dim, "diff has wrong size");
 
-    const Word * restrict d = assume_aligned(src.m_words);
-    Word * restrict r = assume_aligned(m_words);
-    Word * restrict c = assume_aligned(diff.m_words);
+    const std::atomic<Word> * restrict d = assume_aligned(src.m_words);
+    std::atomic<Word> * restrict r = assume_aligned(m_words);
+    std::atomic<Word> * restrict c = assume_aligned(diff.m_words);
 
     Word changed = 0;
     for (size_t m = 0, M = m_word_dim; m < M; ++m) {
-        changed |= (c[m] = d[m] & ~r[m]);
-        r[m] |= d[m];
+        Word dm = d[m].load(relaxed);
+        Word rm = r[m].load(relaxed);
+        Word change = dm & ~ rm;
+        r[m].fetch_or(dm, relaxed);
+        c[m].store(change, relaxed);
+        changed |= change;
     }
 
     return changed;

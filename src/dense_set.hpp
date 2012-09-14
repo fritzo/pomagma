@@ -21,11 +21,11 @@ inline size_t items_to_words (size_t item_dim)
 class SimpleSet
 {
     const size_t m_word_dim;
-    const Word * const m_words;
+    const std::atomic<Word> * const m_words;
 
 public:
 
-    SimpleSet (size_t item_dim, const Word * words)
+    SimpleSet (size_t item_dim, const std::atomic<Word> * words)
         : m_word_dim(items_to_words(item_dim)),
           m_words(words)
     {
@@ -34,18 +34,21 @@ public:
 
     size_t word_dim () const { return m_word_dim; }
     bool get_bit (size_t pos) const { return bool_ref::index(m_words, pos); }
-    Word get_word (size_t quot) const { return m_words[quot]; }
+    Word get_word (size_t quot) const { return m_words[quot].load(relaxed); }
 };
 
 class Intersection2
 {
     const size_t m_word_dim;
-    const Word * const m_words1;
-    const Word * const m_words2;
+    const std::atomic<Word> * const m_words1;
+    const std::atomic<Word> * const m_words2;
 
 public:
 
-    Intersection2 (size_t item_dim, const Word * words1, const Word * words2)
+    Intersection2 (
+            size_t item_dim,
+            const std::atomic<Word> * words1,
+            const std::atomic<Word> * words2)
         : m_word_dim(items_to_words(item_dim)),
           m_words1(words1),
           m_words2(words2)
@@ -62,24 +65,24 @@ public:
     }
     Word get_word (size_t quot) const
     {
-        return m_words1[quot] & m_words2[quot];
+        return m_words1[quot].load(relaxed) & m_words2[quot].load(relaxed);
     }
 };
 
 class Intersection3
 {
     const size_t m_word_dim;
-    const Word * const m_words1;
-    const Word * const m_words2;
-    const Word * const m_words3;
+    const std::atomic<Word> * const m_words1;
+    const std::atomic<Word> * const m_words2;
+    const std::atomic<Word> * const m_words3;
 
 public:
 
     Intersection3 (
             size_t item_dim,
-            const Word * words1,
-            const Word * words2,
-            const Word * words3)
+            const std::atomic<Word> * words1,
+            const std::atomic<Word> * words2,
+            const std::atomic<Word> * words3)
         : m_word_dim(items_to_words(item_dim)),
           m_words1(words1),
           m_words2(words2),
@@ -98,7 +101,9 @@ public:
     }
     Word get_word (size_t quot) const
     {
-        return m_words1[quot] & m_words2[quot] & m_words3[quot];
+        return m_words1[quot].load(relaxed)
+             & m_words2[quot].load(relaxed)
+             & m_words3[quot].load(relaxed);
     }
 };
 
@@ -173,13 +178,13 @@ class DenseSet : noncopyable
 {
     const size_t m_item_dim;
     const size_t m_word_dim;
-    Word * m_words;
+    std::atomic<Word> mutable * m_words;
     const bool m_alias;
 
 public:
 
     DenseSet (size_t item_dim);
-    DenseSet (size_t item_dim, Word * line)
+    DenseSet (size_t item_dim, std::atomic<Word> * line)
         : m_item_dim(item_dim),
           m_word_dim(items_to_words(item_dim)),
           m_words(line),
@@ -206,11 +211,17 @@ public:
     //}
     ~DenseSet () { if (not m_alias and m_words) free_blocks(m_words); }
     void copy_from (const DenseSet & other, const Ob * new2old = nullptr);
-    void init (Word * line)
+    void init (std::atomic<Word> * line)
     {
         POMAGMA_ASSERT4(m_alias, "tried to init() non-alias dense set");
         POMAGMA_ASSERT_ALIGNED_(1, line);
         m_words = line;
+    }
+    void init (const std::atomic<Word> * line) const
+    {
+        POMAGMA_ASSERT4(m_alias, "tried to init() non-alias dense set");
+        POMAGMA_ASSERT_ALIGNED_(1, line);
+        m_words = const_cast<std::atomic<Word> *>(line);
     }
 
     // using round dimensions ensures cache alignenet and autovectorizability
@@ -278,7 +289,7 @@ inline bool_ref DenseSet::_bit (size_t i)
 inline bool DenseSet::_bit (size_t i) const
 {
     POMAGMA_ASSERT_RANGE_(5, i, m_item_dim);
-    return bool_ref::index(m_words, i);
+    return bool_ref::index(m_words, i, relaxed);
 }
 
 inline void DenseSet::insert (size_t i)
@@ -309,7 +320,7 @@ inline void DenseSet::merge (size_t i, size_t j __attribute__((unused)))
 
 struct DenseSet::Iterator : SetIterator<SimpleSet>
 {
-    Iterator (size_t item_dim, const Word * words)
+    Iterator (size_t item_dim, const std::atomic<Word> * words)
         : SetIterator<SimpleSet>(SimpleSet(item_dim, words))
     {
     }
@@ -317,7 +328,7 @@ struct DenseSet::Iterator : SetIterator<SimpleSet>
 
 struct DenseSet::Iterator2 : SetIterator<Intersection2>
 {
-    Iterator2 (size_t item_dim, const Word * words1, const Word * words2)
+    Iterator2 (size_t item_dim, const std::atomic<Word> * words1, const std::atomic<Word> * words2)
         : SetIterator<Intersection2>(Intersection2(item_dim, words1, words2))
     {
     }
@@ -327,9 +338,9 @@ struct DenseSet::Iterator3 : SetIterator<Intersection3>
 {
     Iterator3 (
             size_t item_dim,
-            const Word * words1,
-            const Word * words2,
-            const Word * words3)
+            const std::atomic<Word> * words1,
+            const std::atomic<Word> * words2,
+            const std::atomic<Word> * words3)
         : SetIterator<Intersection3>(
                 Intersection3(item_dim, words1, words2, words3))
     {
