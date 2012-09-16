@@ -5,7 +5,7 @@
 namespace pomagma
 {
 
-namespace { void noop_callback (Ob, Ob) {} }
+static void noop_callback (Ob, Ob) {}
 
 BinaryRelation::BinaryRelation (
         const Carrier & carrier,

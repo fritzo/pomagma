@@ -5,11 +5,16 @@
 namespace pomagma
 {
 
-BinaryFunction::BinaryFunction (const Carrier & carrier)
+static void noop_callback (Ob, Ob) {}
+
+BinaryFunction::BinaryFunction (
+        const Carrier & carrier,
+        void (*insert_callback) (Ob, Ob))
     : m_lines(carrier),
       m_block_dim((item_dim() + ITEMS_PER_BLOCK) / ITEMS_PER_BLOCK),
       m_blocks(alloc_blocks<Block>(m_block_dim * m_block_dim)),
-      m_Vlr_table(1 + item_dim())
+      m_Vlr_table(1 + item_dim()),
+      m_insert_callback(insert_callback ? insert_callback : noop_callback)
 {
     POMAGMA_DEBUG("creating BinaryFunction with "
             << (m_block_dim * m_block_dim) << " blocks");
@@ -111,6 +116,7 @@ void BinaryFunction::insert (Ob lhs, Ob rhs, Ob val) const
         m_Vlr_table.insert(lhs, rhs, val);
         m_VLr_table.insert(lhs, rhs, val);
         m_VRl_table.insert(lhs, rhs, val);
+        m_insert_callback(lhs, rhs);
     }
 }
 

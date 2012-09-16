@@ -6,6 +6,7 @@ Equational reasoning in partially ordered magmas
 Roadmap
 -------
 
+- Update BinaryRelation interface to match BinaryFunction (eg unsafe_ methods)
 - Flesh out unit test to exercise all methods
     - Add tests for DenseSet::Iterator2, 3
 - Work out relaxed-vs-strict operation and monotonicity requirements

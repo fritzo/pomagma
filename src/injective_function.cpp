@@ -5,12 +5,17 @@
 namespace pomagma
 {
 
-InjectiveFunction::InjectiveFunction (const Carrier & carrier)
+static void noop_callback (Ob) {}
+
+InjectiveFunction::InjectiveFunction (
+        const Carrier & carrier,
+        void (*insert_callback) (Ob))
     : m_carrier(carrier),
       m_set(support().item_dim()),
       m_inverse_set(support().item_dim()),
       m_values(alloc_blocks<std::atomic<Ob>>(1 + item_dim())),
-      m_inverse(alloc_blocks<std::atomic<Ob>>(1 + item_dim()))
+      m_inverse(alloc_blocks<std::atomic<Ob>>(1 + item_dim())),
+      m_insert_callback(insert_callback ? insert_callback : noop_callback)
 {
     POMAGMA_DEBUG("creating InjectiveFunction with "
             << item_dim() << " values");

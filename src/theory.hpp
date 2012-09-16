@@ -31,32 +31,12 @@ BinaryRelation NLESS(carrier, schedule_nless);
 //----------------------------------------------------------------------------
 // ensurers
 
-inline void ensure_equal (Ob lhs, Ob rhs)
-{
-    carrier.ensure_equal(lhs, rhs);
-}
+inline void ensure_equal (Ob lhs, Ob rhs) { carrier.ensure_equal(lhs, rhs); }
 
 // TODO most uses of this can be vectorized
 // TODO use .contains_Lx/.contains_Rx based on iterator direction
-inline void ensure_less (Ob lhs, Ob rhs)
-{
-    // TODO do this more atomically
-    if (not LESS(lhs, rhs)) {
-        LESS.insert(lhs, rhs);
-        schedule(PositiveOrderTask(lhs, rhs));
-    }
-}
-
-// TODO most uses of this can be vectorized
-// TODO use .contains_Lx/.contains_Rx based on iterator direction
-inline void ensure_nless (Ob lhs, Ob rhs)
-{
-    // TODO do this more atomically
-    if (not NLESS(lhs, rhs)) {
-        NLESS.insert(lhs, rhs);
-        schedule(NegativeOrderTask(lhs, rhs));
-    }
-}
+inline void ensure_less (Ob lhs, Ob rhs) { LESS.insert(lhs, rhs); }
+inline void ensure_nless (Ob lhs, Ob rhs) { NLESS.insert(lhs, rhs); }
 
 } // namespace pomagma
 

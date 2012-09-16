@@ -19,6 +19,7 @@ class SymmetricFunction : noncopyable
     Block * const m_blocks;
     Vlr_Table m_Vlr_table;
     VLr_Table m_VLr_table;
+    void (*m_insert_callback) (Ob, Ob);
 
     mutable AssertSharedMutex m_mutex;
     typedef AssertSharedMutex::SharedLock SharedLock;
@@ -26,7 +27,9 @@ class SymmetricFunction : noncopyable
 
 public:
 
-    SymmetricFunction (const Carrier & carrier);
+    SymmetricFunction (
+        const Carrier & carrier,
+        void (*insert_callback) (Ob, Ob) = nullptr);
     ~SymmetricFunction ();
     void copy_from (const SymmetricFunction & other);
     void validate () const;

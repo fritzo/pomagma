@@ -5,9 +5,14 @@
 namespace pomagma
 {
 
-NullaryFunction::NullaryFunction (const Carrier & carrier)
+static void noop_callback () {}
+
+NullaryFunction::NullaryFunction (
+        const Carrier & carrier,
+        void (*insert_callback) ())
     : m_carrier(carrier),
-      m_value(0)
+      m_value(0),
+      m_insert_callback(insert_callback ? insert_callback : noop_callback)
 {
     POMAGMA_DEBUG("creating NullaryFunction");
 }

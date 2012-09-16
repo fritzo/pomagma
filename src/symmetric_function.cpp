@@ -6,12 +6,17 @@
 namespace pomagma
 {
 
-SymmetricFunction::SymmetricFunction (const Carrier & carrier)
+static void noop_callback (Ob, Ob) {}
+
+SymmetricFunction::SymmetricFunction (
+        const Carrier & carrier,
+        void (*insert_callback) (Ob, Ob))
     : m_lines(carrier),
       m_block_dim((item_dim() + ITEMS_PER_BLOCK) / ITEMS_PER_BLOCK),
       m_blocks(pomagma::alloc_blocks<Block>(
                   unordered_pair_count(m_block_dim))),
-      m_Vlr_table(1 + item_dim())
+      m_Vlr_table(1 + item_dim()),
+      m_insert_callback(insert_callback ? insert_callback : noop_callback)
 {
     POMAGMA_DEBUG("creating SymmetricFunction with "
             << unordered_pair_count(m_block_dim) << " blocks");
@@ -111,6 +116,7 @@ void SymmetricFunction::insert (Ob lhs, Ob rhs, Ob val) const
         m_Vlr_table.insert(rhs, lhs, val);
         m_VLr_table.insert(lhs, rhs, val);
         m_VLr_table.insert(rhs, lhs, val);
+        m_insert_callback(lhs, rhs);
     }
 }
 

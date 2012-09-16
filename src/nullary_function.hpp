@@ -16,10 +16,13 @@ class NullaryFunction : noncopyable
     mutable AssertSharedMutex m_mutex;
     typedef AssertSharedMutex::SharedLock SharedLock;
     typedef AssertSharedMutex::UniqueLock UniqueLock;
+    void (*m_insert_callback) ();
 
 public:
 
-    NullaryFunction (const Carrier & carrier);
+    NullaryFunction (
+        const Carrier & carrier,
+        void (*insert_callback) () = nullptr);
     void copy_from (const NullaryFunction & other);
     void validate () const;
 
@@ -56,7 +59,9 @@ inline void NullaryFunction::insert (Ob val) const
     POMAGMA_ASSERT5(val, "tried to set value to zero");
     POMAGMA_ASSERT5(support().contains(val), "unsupported value: " << val);
 
-    m_carrier.set_and_merge(m_value, val);
+    if (m_carrier.set_and_merge(m_value, val)) {
+        m_insert_callback();
+    }
 }
 
 } // namespace pomagma

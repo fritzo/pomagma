@@ -15,6 +15,7 @@ class InjectiveFunction : noncopyable
     mutable DenseSet m_inverse_set;
     std::atomic<Ob> * const m_values;
     std::atomic<Ob> * const m_inverse;
+    void (*m_insert_callback) (Ob);
 
     mutable AssertSharedMutex m_mutex;
     typedef AssertSharedMutex::SharedLock SharedLock;
@@ -22,7 +23,9 @@ class InjectiveFunction : noncopyable
 
 public:
 
-    InjectiveFunction (const Carrier & carrier);
+    InjectiveFunction (
+        const Carrier & carrier,
+        void (*insert_callback) (Ob) = nullptr);
     ~InjectiveFunction ();
     void copy_from (const InjectiveFunction & other); // for growing
     void validate () const;
@@ -82,6 +85,7 @@ inline void InjectiveFunction::insert (Ob key, Ob val) const
 
     if (m_carrier.set_and_merge(m_values[key], val)) {
         m_set(key).one();
+        m_insert_callback(key);
     }
 
     if (m_carrier.set_and_merge(m_inverse[val], key)) {

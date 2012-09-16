@@ -67,46 +67,39 @@ def cpp(self, code):
             args = ', '.join(map(str, expr.args)))
     self.body.cpp(body)
     sets = []
+    iter_ = 'carrier.iter()'
     for test in self.tests:
         assert test.name in ['LESS', 'NLESS']
         lhs, rhs = test.args
         assert lhs != rhs
         if self.var == lhs:
+            iter_ = '%s.iter_rhs(%s)' % (test.name, rhs)
             sets.append('%s.get_Rx_set(%s)' % (test.name, rhs))
         else:
+            iter_ = '%s.iter_lhs(%s)' % (test.name, lhs)
             sets.append('%s.get_Lx_set(%s)' % (test.name, lhs))
     for expr in self.lets.itervalues():
         assert self.var in expr.args
         if len(expr.args) == 1:
+            iter_ = '%s.iter()' % expr.name
             sets.append('%s.get_set()' % expr.name)
         else:
             lhs, rhs = expr.args
             assert lhs != rhs
             if self.var == lhs:
+                iter_ = '%s.iter_rhs(%s)' % (expr.name, rhs)
                 sets.append('%s.get_Rx_set(%s)' % (expr.name, rhs))
             else:
+                iter_ = '%s.iter_lhs(%s)' % (expr.name, lhs)
                 sets.append('%s.get_Lx_set(%s)' % (expr.name, lhs))
-    if len(sets) == 0:
-        code('''
-            const DenseSet & set = carrier.support();
-            ''')
-    elif len(sets) == 1:
-        code('''
-            DenseSet set($one_set, yes_copy_construct);
-            ''',
-            one_set = iter(sets).next())
-    else:
-        code('''
-            DenseSet set(carrier.item_dim());
-            set.set_union($sets);
-            ''',
-            sets = ', '.join(sets),
-            )
+    if len(sets) > 1:
+        iter_ = '{}.iter_insn({})'.format(sets[0], ', '.join(sets[1:]))
     code('''
-        for (DenseSet::Iter iter(set); iter.ok(); iter.next()) {
+        for (auto iter = $iter; iter.ok(); iter.next()) {
             $body
         }
         ''',
+        iter=iter_,
         body=wrapindent(body),
         )
 
@@ -118,11 +111,10 @@ def cpp(self, code):
         ''', var=self.var)
     self.body.cpp(body)
     code('''
-        for ($Iter iter($value); iter.ok(); iter.next()) {
+        for (auto $value.iter(); iter.ok(); iter.next()) {
             $body
         }
         ''',
-        Iter = 'InjectiveFunction::inverse_iterator',
         value = self.value,
         body = wrapindent(body),
         )
@@ -139,11 +131,11 @@ def cpp(self, code):
         )
     self.body.cpp(body)
     code('''
-        for ($Iter iter($value); iter.ok(); iter.next()) {
+        for (auto iter = $fun.iter_val($value); iter.ok(); iter.next()) {
             $body
         }
         ''',
-        Iter = 'BinaryFunction::inverse_iterator',
+        fun = self.fun,
         value = self.value,
         body = wrapindent(body),
         )
@@ -152,20 +144,20 @@ def cpp(self, code):
 @methodof(compiler.IterInvBinaryRange)
 def cpp(self, code):
     body = Code('''
-        Ob $var = iter.$moving();
+        Ob $var = *iter;
         ''',
         var = self.var2 if self.lhs_fixed else self.var1,
-        moving = 'rhs' if self.lhs_fixed else 'lhs',
         )
     self.body.cpp(body)
     code('''
-        for ($Iter iter($var1, $var2); iter.ok(); iter.next()) {
+        for (auto iter = $fun.iter_val_$parity($value, $var); iter.ok(); iter.next()) {
             $body
         }
         ''',
-        Iter = 'BinaryFunction::inv_range_iterator',
-        var1 = self.value,
-        var2 = self.var2 if self.lhs_fixed else self.var1,
+        fun = self.fun,
+        value = self.value,
+        parity = 'lhs' if self.lhs_fixed else 'rhs',
+        var = self.var1 if self.lhs_fixed else self.var2,
         body = wrapindent(body),
         )
 
@@ -252,9 +244,10 @@ def write_signature(code, functions):
     for arity, names in functions.iteritems():
         for name in names:
             funs('''
-                $arity $name(carrier);
+                $Arity $name(carrier, schedule_$arity);
                 ''',
-                arity = arity,
+                Arity = arity,
+                arity = arity.lower(),
                 name = name)
         if names:
             funs.newline()
@@ -278,7 +271,7 @@ def write_ensurers(code, functions):
         bar = bar,
         ).newline()
 
-    functions = [(name, arity, signature.get_nargs(arity))
+    functions = [(name, signature.get_nargs(arity))
                  for arity, funs in functions.iteritems()
                  if signature.get_nargs(arity) > 0
                  for name in funs]
@@ -286,28 +279,22 @@ def write_ensurers(code, functions):
     def Ob(x):
         return 'Ob %s' % x
 
-    for name, arity, argc in functions:
+    for name, argc in functions:
         vars_ = ['key'] if argc == 1 else ['lhs', 'rhs']
         code('''
             inline void ensure_${name} ($typed_args, Ob val)
             {
-                if (Ob old_val = $NAME($args)) {
-                    ensure_equal(old_val, val);
-                } else {
-                    $NAME.insert($args, val);
-                    schedule(${arity}Task($NAME, $args));
-                }
+                $NAME.insert($args, val);
             }
             ''',
             name=name.lower(),
             NAME=name,
             args=', '.join(vars_),
             typed_args=', '.join(map(Ob, vars_)),
-            arity=arity,
             ).newline()
 
-    for name1, arity1, argc1 in functions:
-        for name2, arity2, argc2 in functions:
+    for name1, argc1 in functions:
+        for name2, argc2 in functions:
             if name1 > name2:
                 continue
 
@@ -323,7 +310,6 @@ def write_ensurers(code, functions):
                     } else {
                         if (Ob val2 = $NAME2.find($args2)) {
                             $NAME1.insert($args1, val2);
-                            schedule(${arity1}Task($NAME1, $args1));
                         }
                     }
                 }
@@ -336,8 +322,6 @@ def write_ensurers(code, functions):
                 args2 = ', '.join(vars2),
                 typed_args1 = ', '.join(map(Ob, vars1)),
                 typed_args2 = ', '.join(map(Ob, vars2)),
-                arity1 = arity,
-                arity2 = arity2,
                 ).newline()
 
 
@@ -350,7 +334,12 @@ def write_merge_task(code, functions):
         POMAGMA_ASSERT(dep < rep, "bad merge: " << dep << ", " << rep);
         ''')
 
-    for name, arity, argc in functions:
+    functions = [(name, signature.get_nargs(arity))
+                 for arity, funs in functions.iteritems()
+                 if signature.get_nargs(arity) > 0
+                 for name in funs]
+
+    for name, argc in functions:
         # TODO provide merge(-,-) for injective_fun
         body('''
             $name.merge(dep, rep);
