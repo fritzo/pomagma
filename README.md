@@ -6,6 +6,8 @@ Equational reasoning in partially ordered magmas
 Roadmap
 -------
 
+- Get skj.theory.cpp to compile (probably by fixing pomagma/compiler.py)
+- Make DenseSet::, Carrier::unsafe_insert safe as try_insert()
 - Flesh out unit test to exercise all methods
     - Add tests for DenseSet::Iterator2, 3
 - Implement copy_from operations for all types and for theory

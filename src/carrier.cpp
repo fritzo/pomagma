@@ -39,8 +39,9 @@ Ob Carrier::unsafe_insert ()
 
     POMAGMA_ASSERT1(item_count() < item_dim(), "insertion in full Carrier");
     Ob ob = m_support.unsafe_insert_one();
-    POMAGMA_ASSERT1(not m_reps[ob].load(), "double insertion: " << ob);
-    m_reps[ob].store(ob);
+    Ob zero = 0;
+    POMAGMA_ASSERT(m_reps[ob].compare_exchange_strong(zero, ob),
+            "double insertion: " << ob);
     ++m_item_count;
     ++m_rep_count;
     return ob;

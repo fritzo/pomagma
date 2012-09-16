@@ -36,6 +36,7 @@ public:
 
     // relaxed operations
     DenseSet get_Lx_set (Ob lhs) const { return m_lines.Lx_set(lhs); }
+    DenseSet get_Rx_set (Ob rhs) const { return m_lines.Rx_set(rhs); }
     bool defined (Ob lhs, Ob rhs) const;
     Ob find (Ob lhs, Ob rhs) const { return value(lhs, rhs).load(); }
     DenseSet::Iterator iter_lhs (Ob lhs) const;
