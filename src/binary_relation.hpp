@@ -27,14 +27,9 @@ public:
     void copy_from (const BinaryRelation & other, const Ob * new2old = nullptr);
     void validate () const;
     void validate_disjoint (const BinaryRelation & other) const;
-
-    // attributes
-    const DenseSet & support () const { return m_lines.support(); }
-    bool supports (Ob i) const { return support().contains(i); }
-    bool supports (Ob i, Ob j) const { return supports(i) and supports(j); }
     size_t count_pairs () const; // supa-slow, try not to use
 
-    // safe operations
+    // relaxed operations
     DenseSet get_Lx_set (Ob lhs) const { return m_lines.Lx_set(lhs); }
     DenseSet get_Rx_set (Ob rhs) const { return m_lines.Rx_set(rhs); }
     bool find_Lx (Ob i, Ob j) const { return m_lines.get_Lx(i, j); }
@@ -48,11 +43,16 @@ public:
     void insert (Ob i, const DenseSet & js);
     void insert (const DenseSet & is, Ob j);
 
-    // unsafe operations
-    void remove (Ob ob);
-    void merge (Ob dep, Ob rep);
+    // strict operations
+    void unsafe_remove (Ob ob);
+    void unsafe_merge (Ob dep);
 
 private:
+
+    const Carrier & carrier () const { return m_lines.carrier(); }
+    const DenseSet & support () const { return m_lines.support(); }
+    bool supports (Ob i) const { return support().contains(i); }
+    bool supports (Ob i, Ob j) const { return supports(i) and supports(j); }
 
     size_t item_dim () const { return m_lines.item_dim(); }
     size_t word_dim () const { return m_lines.word_dim(); }

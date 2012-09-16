@@ -1,7 +1,7 @@
 import re
 from textwrap import dedent
 from string import Template
-from pomagma.util import TODO, inputs, union, methodof
+from pomagma.util import TODO, inputs, union, methodof, log_sum_exp
 from pomagma.sequents import Sequent
 from pomagma import signature
 from pomagma import compiler
@@ -192,16 +192,14 @@ def cpp(self, code):
     elif self.expr.name in ['LESS', 'NLESS']:
         expr = '{0}.find({1}, {2})'.format(self.expr.name, *args)
     else:
-        expr = 'Ob {0} = {1}({2})'.format(
+        expr = '{0} == {1}.find({2})'.format(
             self.expr.var.name, self.expr.name, ', '.join(args))
     code('''
-        // FIXME $TODO
         if ($expr) {
             $body
         }
         ''',
         expr = expr,
-        TODO = self.expr,
         body = wrapindent(body),
         )
 
@@ -278,11 +276,51 @@ def write_signature(code, functions):
         if names:
             code.newline()
 
+
+def write_merge_task(code, functions):
+    body = Code()
+    body('''
+        const Ob dep = task.dep;
+        const Ob rep = carrier.find(dep);
+        POMAGMA_ASSERT(dep > rep, "bad merge: " << dep << ", " << rep);
+
+        // TODO parallelize these mergers
+        LESS.unsafe_merge(dep);
+        NLESS.unsafe_merge(dep);
+        ''')
+
+    functions = [(name, signature.get_nargs(arity))
+                 for arity, funs in functions.iteritems()
+                 if signature.get_nargs(arity) > 0
+                 for name in funs]
+
+    for name, argc in functions:
+        body('''
+            $name.unsafe_merge(dep);
+            ''',
+            name = name,
+            )
+
+    body('''
+        carrier.unsafe_remove(dep);
+        '''
+        )
+
+    code('''
+        void execute (const MergeTask & task)
+        {
+            $body
+        }
+        ''',
+        body = wrapindent(body),
+        ).newline()
+
+
 def write_ensurers(code, functions):
 
     code('''
         $bar
-        // ensurers
+        // compound ensurers
         ''',
         bar = bar,
         ).newline()
@@ -327,43 +365,6 @@ def write_ensurers(code, functions):
                 ).newline()
 
 
-def write_merge_task(code, functions):
-    TODO()
-    body = Code()
-    body('''
-        const Ob dep = task.dep;
-        const Ob rep = carrier.find(dep);
-        POMAGMA_ASSERT(dep < rep, "bad merge: " << dep << ", " << rep);
-        ''')
-
-    functions = [(name, signature.get_nargs(arity))
-                 for arity, funs in functions.iteritems()
-                 if signature.get_nargs(arity) > 0
-                 for name in funs]
-
-    for name, argc in functions:
-        # TODO provide merge(-,-) for injective_fun
-        body('''
-            $name.merge(dep, rep);
-            ''',
-            name = name,
-            )
-
-    body('''
-        carrier.remove(dep);
-        '''
-        )
-
-    code('''
-        void execute (const ${groupname}Task & task)
-        {
-            $body
-        }
-        ''',
-        body = wrapindent(body),
-        )
-
-
 def write_full_tasks(code, sequents):
 
     full_tasks = []
@@ -393,7 +394,20 @@ def write_full_tasks(code, sequents):
         // full tasks
 
         const size_t g_type_count = $type_count;
-        std::vector<std::atomic_flag> g_clean_state(g_type_count, true);
+        struct atomic_flag : std::atomic_flag
+        {
+            atomic_flag () : std::atomic_flag(ATOMIC_FLAG_INIT)
+            {
+                test_and_set();
+            }
+            atomic_flag (const atomic_flag &)
+                : std::atomic_flag(ATOMIC_FLAG_INIT)
+            {
+                POMAGMA_ERROR("fail");
+            }
+            void operator= (const atomic_flag &) { POMAGMA_ERROR("fail"); }
+        };
+        std::vector<atomic_flag> g_clean_state(g_type_count);
 
         void set_state_dirty ()
         {
@@ -444,7 +458,11 @@ def write_event_tasks(code, sequents):
     for sequent in sequents:
         for event in compiler.get_events(sequent):
             tasks = event_tasks.setdefault(event.name, [])
-            tasks += compiler.compile_given(sequent, event)
+            strategies = compiler.compile_given(sequent, event)
+            strategies.sort(key = lambda (cost, _): cost)
+            costs = [cost for cost, _ in strategies]
+            cost = log_sum_exp(*costs)
+            tasks.append((event, cost, strategies))
 
     def get_group(name):
         relations = {
@@ -461,8 +479,6 @@ def write_event_tasks(code, sequents):
     # TODO sort groups
     #event_tasks = event_tasks.items()
     #event_tasks.sort(key=(lambda (name, tasks): (len(tasks), len(name), name)))
-    for tasks in event_tasks.itervalues():
-        tasks.sort(key=(lambda (cost, _): cost))
 
     group_tasks = list(group_tasks.iteritems())
     group_tasks.sort()
@@ -473,27 +489,53 @@ def write_event_tasks(code, sequents):
 
         body = Code()
 
-        for g, (event, tasks) in enumerate(group):
-            if g:
-                body.newline()
+        for g, (eventname, tasks) in enumerate(group):
+            if g: body.newline()
 
             subbody = Code()
-            for i, (cost, strategy) in enumerate(tasks):
-                if i:
-                    subbody.newline()
-                subbody('// cost = $cost', cost = cost)
-                strategy.cpp(subbody)
+            nargs = signature.get_nargs(signature.get_arity(group[0][0]))
+            args = [[], ['arg'], ['lhs', 'rhs']][nargs]
+            for arg in args:
+                subbody('const Ob $arg = task.$arg;', arg=arg)
+            if signature.is_fun(eventname):
+                subbody('''
+                    const Ob val = $eventname.find($args);
+                    ''',
+                    eventname = eventname,
+                    args = ', '.join(args))
 
-            if event in ['LESS', 'NLESS']:
+            for event, _, strategies in tasks:
+                subsubbody = Code()
+                for local, arg in zip(event.args, args):
+                    subsubbody('''
+                        const Ob $local __attribute__((unused)) = $arg;
+                        ''',
+                        local=local,
+                        arg=arg,
+                        )
+                if event.is_fun():
+                    subsubbody('const Ob $arg = val;', arg=event.var.name)
+                for cost, strategy in strategies:
+                    subsubbody.newline()
+                    subsubbody('// cost = $cost', cost = cost)
+                    strategy.cpp(subsubbody)
+                subbody('''
+                    {
+                        $subsubbody
+                    }
+                    ''',
+                    subsubbody = wrapindent(subsubbody),
+                    )
+
+            if eventname in ['LESS', 'NLESS']:
                 body(str(subbody))
             else:
                 body('''
-                if (task.fun == & $event) {
-
+                if (task.fun == & $eventname) {
                     $subbody
                 }
                 ''',
-                event = event,
+                eventname = eventname,
                 subbody = wrapindent(subbody),
                 )
 
@@ -506,6 +548,16 @@ def write_event_tasks(code, sequents):
             groupname = groupname,
             body = wrapindent(body),
             ).newline()
+
+    nontrivial_arities = [groupname for groupname, _ in group_tasks]
+    for arity in signature.FUNCTION_ARITIES:
+        if arity not in nontrivial_arities:
+            code('''
+                void execute (const ${arity}Task &) {}
+                ''',
+                arity = arity,
+                ).newline()
+
 
 
 def get_functions_used_in(sequents):
@@ -535,6 +587,7 @@ def write_theory(code, sequents):
         ''').newline()
 
     write_signature(code, functions)
+    write_merge_task(code, functions)
     write_ensurers(code, functions)
     write_full_tasks(code, sequents)
     write_event_tasks(code, sequents)

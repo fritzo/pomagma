@@ -187,7 +187,7 @@ void BinaryRelation::_remove_Rx (Ob i, const DenseSet& js)
     }
 }
 
-void BinaryRelation::remove (Ob ob)
+void BinaryRelation::unsafe_remove (Ob ob)
 {
     UniqueLock lock(m_mutex);
 
@@ -205,11 +205,12 @@ void BinaryRelation::remove (Ob ob)
 }
 
 // policy: callback whenever i~k but not j~k
-void BinaryRelation::merge (Ob i, Ob j)
+void BinaryRelation::unsafe_merge (Ob i)
 {
     UniqueLock lock(m_mutex);
 
-    POMAGMA_ASSERT4(j != i, "BinaryRelation tried to merge item with self");
+    Ob j = carrier().find(i);
+    POMAGMA_ASSERT4(j < i, "BinaryRelation tried to merge item with self");
 
     DenseSet diff(item_dim());
     DenseSet rep(item_dim(), nullptr);

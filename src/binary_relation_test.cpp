@@ -82,20 +82,20 @@ void test_BinaryRelation (
         if (not support.contains(m)) continue;
         if (not support.contains(n)) continue;
         if (m < n) std::swap(m, n);
-        rel.merge(m, n);
         carrier.merge(m, n);
+        rel.unsafe_merge(m);
         carrier.unsafe_remove(m);
         --item_count;
     }
     POMAGMA_INFO("  " << g_num_moved << " pairs moved in merging");
     rel.validate();
-    POMAGMA_ASSERT_EQ(item_count, rel.support().count_items());
+    POMAGMA_ASSERT_EQ(item_count, support.count_items());
 
     POMAGMA_INFO("testing line iterator (lhs fixed)");
     num_pairs = 0;
     size_t seen_item_count = 0;
-    item_count = rel.support().count_items();
-    for (auto lhs_iter = rel.support().iter();
+    item_count = support.count_items();
+    for (auto lhs_iter = support.iter();
         lhs_iter.ok();
         lhs_iter.next())
     {
@@ -115,7 +115,7 @@ void test_BinaryRelation (
     POMAGMA_INFO("testing line iterator (rhs fixed)");
     num_pairs = 0;
     seen_item_count = 0;
-    for (auto rhs_iter = rel.support().iter();
+    for (auto rhs_iter = support.iter();
         rhs_iter.ok();
         rhs_iter.next())
     {

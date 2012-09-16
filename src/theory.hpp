@@ -25,9 +25,9 @@ void schedule_nullary_function (const NullaryFunction * fun)
 {
     schedule(NullaryFunctionTask(*fun));
 }
-void schedule_injective_function (const InjectiveFunction * fun, Ob key)
+void schedule_injective_function (const InjectiveFunction * fun, Ob arg)
 {
-    schedule(InjectiveFunctionTask(*fun, key));
+    schedule(InjectiveFunctionTask(*fun, arg));
 }
 void schedule_binary_function (const BinaryFunction * fun, Ob lhs, Ob rhs)
 {

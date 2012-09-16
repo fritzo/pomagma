@@ -160,6 +160,11 @@ void schedule (const MergeTask & task)
     Scheduler::g_mergers.push(task);
 }
 
+void schedule (const CleanupTask & task)
+{
+    Scheduler::g_cleanups.push(task);
+}
+
 void schedule (const PositiveOrderTask & task)
 {
     Scheduler::g_positive_orders.push(task);

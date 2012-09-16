@@ -86,6 +86,6 @@ add_custom_command(
 		${PROJECT_SOURCE_DIR}/pomagma/run.py
 		${PROJECT_SOURCE_DIR}/pomagma/sk.rules
 	)
-# TODO sk.theory.cpp does not yet compile
-#add_executable(sk.server sk.theory.cpp)
-#target_link_libraries(sk.server ${POMAGMA_SERVER_LIBS})
+
+add_executable(sk.server sk.theory.cpp)
+target_link_libraries(sk.server ${POMAGMA_SERVER_LIBS})
