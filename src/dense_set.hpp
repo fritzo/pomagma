@@ -3,6 +3,7 @@
 
 #include "util.hpp"
 #include "bool_ref.hpp"
+#include "threading.hpp"
 
 namespace pomagma
 {
@@ -146,6 +147,7 @@ void SetIterator<Set>::_next_block ()
     do {
         if (++m_quot == m_set.word_dim()) { m_i = 0; return; }
         m_word = m_set.get_word(m_quot);
+        load_barrier();
     } while (!m_word);
 
     // traverse to first nonempty bit in a nonempty block

@@ -2,6 +2,7 @@
 #define POMAGMA_BOOL_REF_HPP
 
 #include "util.hpp"
+#include "threading.hpp"
 
 namespace pomagma
 {

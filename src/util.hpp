@@ -50,9 +50,6 @@ namespace pomagma
 //----------------------------------------------------------------------------
 // Convenience
 
-typedef std::memory_order order_t;
-const order_t relaxed = std::memory_order_relaxed;
-
 template<class T> inline T min (T x, T y) { return (x < y) ? x : y; }
 template<class T> inline T max (T x, T y) { return (x > y) ? x : y; }
 

@@ -27,6 +27,9 @@
 namespace pomagma
 {
 
+typedef std::memory_order order_t;
+const order_t relaxed = std::memory_order_relaxed;
+
 template<class Mutex>
 struct unique_lock
 {
