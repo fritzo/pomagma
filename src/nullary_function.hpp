@@ -26,14 +26,14 @@ public:
     void copy_from (const NullaryFunction & other);
     void validate () const;
 
-    // safe operations
+    // relaxed operations
     bool defined () const;
     Ob find () const;
     void insert (Ob val) const;
 
-    // unsafe operations
-    void remove (Ob ob);
-    void merge (Ob dep, Ob rep);
+    // strict operations
+    void unsafe_remove (Ob ob);
+    void unsafe_merge (Ob dep);
 
 private:
 

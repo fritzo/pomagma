@@ -37,7 +37,7 @@ void NullaryFunction::validate () const
     }
 }
 
-void NullaryFunction::remove (Ob ob)
+void NullaryFunction::unsafe_remove (Ob ob)
 {
     UniqueLock lock(m_mutex);
 
@@ -48,10 +48,11 @@ void NullaryFunction::remove (Ob ob)
     }
 }
 
-void NullaryFunction::merge (Ob dep, Ob rep)
+void NullaryFunction::unsafe_merge (Ob dep)
 {
     UniqueLock lock(m_mutex);
 
+    Ob rep = m_carrier.find(dep);
     POMAGMA_ASSERT4(rep < dep, "bad merge: " << dep << "," << rep);
     POMAGMA_ASSERT_RANGE_(4, dep, support().item_dim());
     POMAGMA_ASSERT_RANGE_(4, rep, support().item_dim());

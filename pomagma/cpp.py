@@ -291,7 +291,6 @@ def write_merge_task(code, functions):
 
     functions = [(name, signature.get_nargs(arity))
                  for arity, funs in functions.iteritems()
-                 if signature.get_nargs(arity) > 0
                  for name in funs]
 
     for name, argc in functions:
