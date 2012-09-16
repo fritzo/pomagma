@@ -47,6 +47,7 @@ public:
     // these return true if value was set
     bool set_and_merge (std::atomic<Ob> & destin, Ob source) const;
     bool set_or_merge (std::atomic<Ob> & destin, Ob source) const;
+    DenseSet::Iterator iter () const { return m_support.iter(); }
 
     // strict operations
     Ob unsafe_insert ();

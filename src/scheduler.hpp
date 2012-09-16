@@ -54,33 +54,35 @@ struct NegativeOrderTask
 
 struct NullaryFunctionTask
 {
-    NullaryFunction * fun;
+    const NullaryFunction * fun;
 
     NullaryFunctionTask () {}
-    NullaryFunctionTask (NullaryFunction & f) : fun(&f) {}
+    NullaryFunctionTask (const NullaryFunction & f) : fun(&f) {}
 
     bool references (Ob) const { return false; }
 };
 
 struct InjectiveFunctionTask
 {
-    InjectiveFunction * fun;
+    const InjectiveFunction * fun;
     Ob arg;
 
     InjectiveFunctionTask () {}
-    InjectiveFunctionTask (InjectiveFunction & f, Ob a) : fun(&f), arg(a) {}
+    InjectiveFunctionTask (const InjectiveFunction & f, Ob a)
+        : fun(&f), arg(a)
+    {}
 
     bool references (Ob dep) const { return arg == dep; }
 };
 
 struct BinaryFunctionTask
 {
-    BinaryFunction * fun;
+    const BinaryFunction * fun;
     Ob lhs;
     Ob rhs;
 
     BinaryFunctionTask () {}
-    BinaryFunctionTask (BinaryFunction & f, Ob l, Ob r)
+    BinaryFunctionTask (const BinaryFunction & f, Ob l, Ob r)
         : fun(&f), lhs(l), rhs(r)
     {}
 
@@ -89,12 +91,12 @@ struct BinaryFunctionTask
 
 struct SymmetricFunctionTask
 {
-    SymmetricFunction * fun;
+    const SymmetricFunction * fun;
     Ob lhs;
     Ob rhs;
 
     SymmetricFunctionTask () {}
-    SymmetricFunctionTask (SymmetricFunction & f, Ob l, Ob r)
+    SymmetricFunctionTask (const SymmetricFunction & f, Ob l, Ob r)
         : fun(&f), lhs(l), rhs(r)
     {}
 

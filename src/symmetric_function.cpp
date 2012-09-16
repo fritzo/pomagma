@@ -6,11 +6,11 @@
 namespace pomagma
 {
 
-static void noop_callback (Ob, Ob) {}
+static void noop_callback (const SymmetricFunction *, Ob, Ob) {}
 
 SymmetricFunction::SymmetricFunction (
         const Carrier & carrier,
-        void (*insert_callback) (Ob, Ob))
+        void (*insert_callback) (const SymmetricFunction *, Ob, Ob))
     : m_lines(carrier),
       m_block_dim((item_dim() + ITEMS_PER_BLOCK) / ITEMS_PER_BLOCK),
       m_blocks(pomagma::alloc_blocks<Block>(
@@ -116,7 +116,7 @@ void SymmetricFunction::insert (Ob lhs, Ob rhs, Ob val) const
         m_Vlr_table.insert(rhs, lhs, val);
         m_VLr_table.insert(lhs, rhs, val);
         m_VLr_table.insert(rhs, lhs, val);
-        m_insert_callback(lhs, rhs);
+        m_insert_callback(this, lhs, rhs);
     }
 }
 

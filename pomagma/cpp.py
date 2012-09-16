@@ -7,6 +7,10 @@ from pomagma import signature
 from pomagma import compiler
 
 
+def camel_to_underscore(camel):
+    return re.sub('(.)([A-Z][a-z]+)', r'\1_\2', camel).lower()
+
+
 def sub(template, **kwds):
     return Template(dedent(template)).substitute(kwds)
 
@@ -182,14 +186,22 @@ def cpp(self, code):
 def cpp(self, code):
     body = Code()
     self.body.cpp(body)
-    # TODO FIXME this fails with self.expr = I, Y
-    #assert self.expr.name in ['EQUAL', 'LESS', 'NLESS'], self.expr
+    args = [arg.name for arg in self.expr.args]
+    if self.expr.name == 'EQUAL':
+        expr = 'carrier.equal({0}, {1})'.format(*args)
+    elif self.expr.name in ['LESS', 'NLESS']:
+        expr = '{0}.find({1}, {2})'.format(self.expr.name, *args)
+    else:
+        expr = 'Ob {0} = {1}({2})'.format(
+            self.expr.var.name, self.expr.name, ', '.join(args))
     code('''
+        // FIXME $TODO
         if ($expr) {
             $body
         }
         ''',
-        expr = self.expr,
+        expr = expr,
+        TODO = self.expr,
         body = wrapindent(body),
         )
 
@@ -200,27 +212,34 @@ def cpp(self, code):
     assert len(expr.args) == 2
     lhs, rhs = expr.args
     if lhs.is_var() and rhs.is_var():
-        code('''
-            ensure_${name}($args);
+        if self.expr.name == 'EQUAL':
+            code('''
+            carrier.ensure_equal($args);
             ''',
-            name = expr.name.lower(),
+            args = ', '.join(map(str, expr.args)),
+            )
+        else:
+            code('''
+            ${name}.insert($args);
+            ''',
+            name = expr.name,
             args = ', '.join(map(str, expr.args)),
             )
     else:
         assert self.expr.name == 'EQUAL'
         if lhs.is_var():
             code('''
-                ensure_${name}($arg1, $arg2);
+                $name.insert($arg1, $arg2);
                 ''',
-                name = rhs.name.lower(),
+                name = rhs.name,
                 arg1 = ', '.join(map(str, rhs.args)),
                 arg2 = lhs,
                 )
         elif rhs.is_var():
             code('''
-                ensure_${name}($arg1, $arg2);
+                $name.insert($arg1, $arg2);
                 ''',
-                name = lhs.name.lower(),
+                name = lhs.name,
                 arg1 = ', '.join(map(str, lhs.args)),
                 arg2 = rhs,
                 )
@@ -240,27 +259,24 @@ def cpp(self, code):
 @inputs(Code)
 def write_signature(code, functions):
 
-    funs = Code()
-    for arity, names in functions.iteritems():
-        for name in names:
-            funs('''
-                $Arity $name(carrier, schedule_$arity);
-                ''',
-                Arity = arity,
-                arity = arity.lower(),
-                name = name)
-        if names:
-            funs.newline()
-
     code('''
         $bar
         // signature
-        
-        $funs
         ''',
         bar = bar,
-        funs = funs,
         ).newline()
+
+    for arity, names in functions.iteritems():
+        for name in names:
+            code('''
+                $Arity $NAME (carrier, schedule_$arity);
+                ''',
+                Arity = arity,
+                arity = camel_to_underscore(arity),
+                NAME = name,
+                name = name.lower())
+        if names:
+            code.newline()
 
 def write_ensurers(code, functions):
 
@@ -279,20 +295,6 @@ def write_ensurers(code, functions):
     def Ob(x):
         return 'Ob %s' % x
 
-    for name, argc in functions:
-        vars_ = ['key'] if argc == 1 else ['lhs', 'rhs']
-        code('''
-            inline void ensure_${name} ($typed_args, Ob val)
-            {
-                $NAME.insert($args, val);
-            }
-            ''',
-            name=name.lower(),
-            NAME=name,
-            args=', '.join(vars_),
-            typed_args=', '.join(map(Ob, vars_)),
-            ).newline()
-
     for name1, argc1 in functions:
         for name2, argc2 in functions:
             if name1 > name2:
@@ -306,7 +308,7 @@ def write_ensurers(code, functions):
                     $typed_args2)
                 {
                     if (Ob val1 = $NAME1.find($args1)) {
-                        ensure_${name2}($args2, val1);
+                        $NAME2.insert($args2, val1);
                     } else {
                         if (Ob val2 = $NAME2.find($args2)) {
                             $NAME1.insert($args1, val2);

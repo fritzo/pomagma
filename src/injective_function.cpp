@@ -5,11 +5,11 @@
 namespace pomagma
 {
 
-static void noop_callback (Ob) {}
+static void noop_callback (const InjectiveFunction *, Ob) {}
 
 InjectiveFunction::InjectiveFunction (
         const Carrier & carrier,
-        void (*insert_callback) (Ob))
+        void (*insert_callback) (const InjectiveFunction *, Ob))
     : m_carrier(carrier),
       m_set(support().item_dim()),
       m_inverse_set(support().item_dim()),

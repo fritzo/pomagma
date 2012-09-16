@@ -40,6 +40,8 @@ public:
     bool find_Lx (Ob i, Ob j) const { return m_lines.get_Lx(i, j); }
     bool find_Rx (Ob i, Ob j) const { return m_lines.get_Rx(i, j); }
     bool find (Ob i, Ob j) const { return find_Lx(i, j); }
+    DenseSet::Iterator iter_lhs (Ob lhs) const;
+    DenseSet::Iterator iter_rhs (Ob rhs) const;
     void insert_Lx (Ob i, Ob j);
     void insert_Rx (Ob i, Ob j);
     void insert (Ob i, Ob j) { return insert_Lx(i, j); }
@@ -66,6 +68,18 @@ private:
     void _remove_Lx (const DenseSet & is, Ob i);
     void _remove_Rx (Ob i, const DenseSet & js);
 };
+
+inline DenseSet::Iterator BinaryRelation::iter_lhs (Ob lhs) const
+{
+    POMAGMA_ASSERT5(support().contains(lhs), "unsupported lhs: " << lhs);
+    return DenseSet::Iterator(item_dim(), m_lines.Lx(lhs));
+}
+
+inline DenseSet::Iterator BinaryRelation::iter_rhs (Ob rhs) const
+{
+    POMAGMA_ASSERT5(support().contains(rhs), "unsupported rhs: " << rhs);
+    return DenseSet::Iterator(item_dim(), m_lines.Rx(rhs));
+}
 
 inline void BinaryRelation::insert_Lx (Ob i, Ob j)
 {

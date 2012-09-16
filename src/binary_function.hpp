@@ -18,7 +18,7 @@ class BinaryFunction : noncopyable
     Vlr_Table m_Vlr_table;
     VLr_Table m_VLr_table;
     VRl_Table m_VRl_table;
-    void (*m_insert_callback) (Ob, Ob);
+    void (*m_insert_callback) (const BinaryFunction *, Ob, Ob);
 
     mutable AssertSharedMutex m_mutex;
     typedef AssertSharedMutex::SharedLock SharedLock;
@@ -28,7 +28,7 @@ public:
 
     BinaryFunction (
         const Carrier & carrier,
-        void (*insert_callback) (Ob, Ob) = nullptr);
+        void (*insert_callback) (const BinaryFunction *, Ob, Ob) = nullptr);
     ~BinaryFunction ();
     void copy_from (const BinaryFunction & other);
     void validate () const;
