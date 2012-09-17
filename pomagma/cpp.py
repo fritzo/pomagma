@@ -284,23 +284,42 @@ def write_merge_task(code, functions):
         const Ob rep = carrier.find(dep);
         POMAGMA_ASSERT(dep > rep, "bad merge: " << dep << ", " << rep);
 
-        // TODO parallelize these mergers
-        LESS.unsafe_merge(dep);
-        NLESS.unsafe_merge(dep);
+        std::vector<std::future<void>> futures;
+        futures.push_back(std::async(
+            std::launch::async,
+            &BinaryRelation::unsafe_merge,
+            &LESS,
+            dep));
+        futures.push_back(std::async(
+            std::launch::async,
+            &BinaryRelation::unsafe_merge,
+            &NLESS,
+            dep));
         ''')
 
-    functions = [(name, signature.get_nargs(arity))
+    functions = [(name, arity, signature.get_nargs(arity))
                  for arity, funs in functions.iteritems()
                  for name in funs]
+    functions.sort(key = lambda (name, arity, argc): -argc)
 
-    for name, argc in functions:
-        body('''
-            $name.unsafe_merge(dep);
-            ''',
-            name = name,
-            )
+    for name, arity, argc in functions:
+        if argc <= 1:
+            body('$name.unsafe_merge(dep);', name=name)
+        else:
+            body('''
+                futures.push_back(std::async(
+                    std::launch::async,
+                    &$arity::unsafe_merge,
+                    &$name,
+                    dep));
+                ''',
+                name = name,
+                arity = arity,
+                )
+    body.newline()
 
     body('''
+        for (auto & f : futures) { f.wait(); }
         carrier.unsafe_remove(dep);
         '''
         )
@@ -581,6 +600,7 @@ def write_theory(code, sequents):
 
     code('''
         #include "theory.hpp"
+        #include <future>
         
         namespace pomagma {
         ''').newline()

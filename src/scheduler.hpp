@@ -105,8 +105,8 @@ struct SymmetricFunctionTask
 
 
 // The Scheduler guarantees:
-// - never to execute an MergeTask while any other task is being executed
-// - to execute an MergeTask as soon as all previous tasks complete
+// - never to execute a MergeTask while any other task is being executed
+// - to execute a MergeTask as soon as all previous tasks complete
 // - while executing an MergeTask(dep), to discard all tasks touching dep
 
 // These are defined by the Scheduler and called by the user
