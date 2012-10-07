@@ -1,0 +1,44 @@
+digraph G {
+	node [shape=box];
+
+	lang_reviewer [label="Reviewer\n(human)"];
+	theory_reviewer [label="Reviewer\n(human)"];
+	db_init [label="DB Init"];
+	db_queue [label="DB Queue"];
+
+	Globe -> Trimmer;
+	Language -> Trimmer;
+	Trimmer -> db_init -> Mixer -> db_queue -> Aggregator -> Globe;
+	Globe -> Aggregator;
+
+	Globe -> Theorist;
+	Language ->  Theorist;
+	Theorist -> theory_reviewer -> Theory -> Compiler -> Mixer;
+	Compiler -> Mixer;
+
+	Globe -> Linguist;
+	Language -> Linguist;
+	Linguist -> Language [label="local"];
+	Linguist -> lang_reviewer -> Language [label="grammar"];
+
+	subgraph navigator {
+		node [shape=box];
+		nav_server [label="Navigator\nServer"];
+		nav_client [label="Navigator\nClient"];
+		nav_server -> nav_client [label="neighborhood"];
+		nav_client -> nav_server [label="position"];
+		nav_client -> User;
+		User -> nav_client;
+		label = "Navigator";
+	}
+	Globe -> nav_server;
+	Language -> nav_server;
+
+	db_queue [shape=ellipse];
+	Language [shape=ellipse];
+	Theory [shape=ellipse];
+	Globe [shape=ellipse];
+	db_init [shape=ellipse];
+
+	overlap=false;
+}
