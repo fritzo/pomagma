@@ -1,9 +1,9 @@
 import re
 import parsable
-from pomagma.util import TODO
-from pomagma import parser
-from pomagma.compiler import add_costs, get_events, compile_full, compile_given
-from pomagma import cpp
+from pomagma.compiler.util import TODO
+from pomagma.compiler import parser
+from pomagma.compiler.compiler import add_costs, get_events, compile_full, compile_given
+from pomagma.compiler import cpp
 
 
 def print_compiles(compiles):

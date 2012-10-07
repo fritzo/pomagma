@@ -1,4 +1,4 @@
-from pomagma import signature
+from pomagma.compiler import signature
 
 
 def test_valid():

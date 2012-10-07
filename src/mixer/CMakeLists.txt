@@ -71,39 +71,41 @@ set(POMAGMA_SERVER_LIBS pomagma_server ${POMAGMA_LIBS} zmq)
 add_executable(dummy.server dummy.theory.cpp)
 target_link_libraries(dummy.server ${POMAGMA_SERVER_LIBS})
 
+set(COMPILER_DIR ${PROJECT_SOURCE_DIR}/src/compiler)
+
 # TODO abstract these out as functions
 add_custom_command(
 	OUTPUT ${CMAKE_CURRENT_LIST_DIR}/sk.theory.cpp
-	COMMAND python ${PROJECT_SOURCE_DIR}/pomagma/run.py compile
-		${PROJECT_SOURCE_DIR}/pomagma/sk.rules
+	COMMAND python ${COMPILER_DIR}/run.py compile
+		${COMPILER_DIR}/sk.rules
 		outfile=${CMAKE_CURRENT_LIST_DIR}/sk.theory.cpp
-	DEPENDS ${PROJECT_SOURCE_DIR}/pomagma/util.py
-		${PROJECT_SOURCE_DIR}/pomagma/expressions.py
-		${PROJECT_SOURCE_DIR}/pomagma/sequents.py
-		${PROJECT_SOURCE_DIR}/pomagma/parser.py
-		${PROJECT_SOURCE_DIR}/pomagma/compiler.py
-		${PROJECT_SOURCE_DIR}/pomagma/cpp.py
-		${PROJECT_SOURCE_DIR}/pomagma/run.py
-		${PROJECT_SOURCE_DIR}/pomagma/sk.rules
+	DEPENDS ${COMPILER_DIR}/util.py
+		${COMPILER_DIR}/expressions.py
+		${COMPILER_DIR}/sequents.py
+		${COMPILER_DIR}/parser.py
+		${COMPILER_DIR}/compiler.py
+		${COMPILER_DIR}/cpp.py
+		${COMPILER_DIR}/run.py
+		${COMPILER_DIR}/sk.rules
 	)
 add_executable(sk.server sk.theory.cpp)
 target_link_libraries(sk.server ${POMAGMA_SERVER_LIBS})
 
 add_custom_command(
 	OUTPUT ${CMAKE_CURRENT_LIST_DIR}/skj.theory.cpp
-	COMMAND python ${PROJECT_SOURCE_DIR}/pomagma/run.py compile
-		${PROJECT_SOURCE_DIR}/pomagma/sk.rules
-		${PROJECT_SOURCE_DIR}/pomagma/join.rules
+	COMMAND python ${COMPILER_DIR}/run.py compile
+		${COMPILER_DIR}/sk.rules
+		${COMPILER_DIR}/join.rules
 		outfile=${CMAKE_CURRENT_LIST_DIR}/skj.theory.cpp
-	DEPENDS ${PROJECT_SOURCE_DIR}/pomagma/util.py
-		${PROJECT_SOURCE_DIR}/pomagma/expressions.py
-		${PROJECT_SOURCE_DIR}/pomagma/sequents.py
-		${PROJECT_SOURCE_DIR}/pomagma/parser.py
-		${PROJECT_SOURCE_DIR}/pomagma/compiler.py
-		${PROJECT_SOURCE_DIR}/pomagma/cpp.py
-		${PROJECT_SOURCE_DIR}/pomagma/run.py
-		${PROJECT_SOURCE_DIR}/pomagma/sk.rules
-		${PROJECT_SOURCE_DIR}/pomagma/join.rules
+	DEPENDS ${COMPILER_DIR}/util.py
+		${COMPILER_DIR}/expressions.py
+		${COMPILER_DIR}/sequents.py
+		${COMPILER_DIR}/parser.py
+		${COMPILER_DIR}/compiler.py
+		${COMPILER_DIR}/cpp.py
+		${COMPILER_DIR}/run.py
+		${COMPILER_DIR}/sk.rules
+		${COMPILER_DIR}/join.rules
 	)
 # TODO get skj.theory.cpp to compile
 #add_executable(skj.server skj.theory.cpp)

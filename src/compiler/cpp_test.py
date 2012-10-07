@@ -1,6 +1,6 @@
 import os
 import glob
-from pomagma import run
+from pomagma.compiler import run
 
 
 def _test_cpp(filename):

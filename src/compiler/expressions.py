@@ -1,6 +1,6 @@
 import re
-from pomagma.util import TODO, inputs, union
-from pomagma import signature
+from pomagma.compiler.util import TODO, inputs, union
+from pomagma.compiler import signature
 
 
 class Expression(object):

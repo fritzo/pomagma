@@ -2,9 +2,9 @@ import re
 import sys
 import math
 from textwrap import dedent
-from pomagma.expressions import Expression
-from pomagma.sequents import Sequent, normalize, assert_normal
-from pomagma.util import (
+from pomagma.compiler.expressions import Expression
+from pomagma.compiler.sequents import Sequent, normalize, assert_normal
+from pomagma.compiler.util import (
         TODO,
         inputs,
         union,

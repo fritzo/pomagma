@@ -1,5 +1,5 @@
-from pomagma import sequents
-from pomagma import parser
+from pomagma.compiler import sequents
+from pomagma.compiler import parser
 import glob
 
 RULE_SETS = map(parser.parse, glob.glob('*.rules'))

@@ -1,8 +1,8 @@
 import re
 import sys
-from pomagma.signature import get_arity, get_nargs
-from pomagma.expressions import Expression
-from pomagma.sequents import Sequent
+from pomagma.compiler.signature import get_arity, get_nargs
+from pomagma.compiler.expressions import Expression
+from pomagma.compiler.sequents import Sequent
 
 
 RE_BAR = re.compile('---+')

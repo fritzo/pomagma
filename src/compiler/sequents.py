@@ -1,6 +1,6 @@
 import re
-from pomagma.util import TODO, union, set_with, set_without, inputs
-from pomagma.expressions import Expression
+from pomagma.compiler.util import TODO, union, set_with, set_without, inputs
+from pomagma.compiler.expressions import Expression
 
 
 class Sequent(object):
