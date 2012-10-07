@@ -1,7 +1,9 @@
 all: architecture.pdf
 
+GRAPHVIZ=dot
+
 architecture.pdf: architecture.dot FORCE
-	neato -T pdf architecture.dot -o architecture.pdf
-	@#dot -T pdf architecture.dot -o architecture.pdf
+	$(GRAPHVIZ) -T pdf architecture.dot -o architecture.pdf
+	$(GRAPHVIZ) -T png architecture.dot -o architecture.png
 
 FORCE:
