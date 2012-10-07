@@ -1,6 +1,5 @@
 digraph G {
 	overlap=false;
-	//rankdir=LR;
 	size="6,6";
 
 	node [shape=box];
@@ -8,12 +7,11 @@ digraph G {
 
 	lang_reviewer [label="Reviewer", style=filled, fillcolor=pink];
 	theory_reviewer [label="Reviewer", style=filled, fillcolor=pink];
-	db_init [label="DB Init"];
-	db_queue [label="DB Queue"];
+	db_queue [label="Snapshot\nQueue"];
 
 	Globe -> Trimmer;
 	Language -> Trimmer;
-	Trimmer -> db_init -> Mixers -> db_queue -> Aggregator -> Globe;
+	Trimmer -> Mixers -> db_queue -> Aggregator -> Globe;
 	Globe -> Aggregator;
 
 	Globe -> Theorist;
@@ -26,6 +24,9 @@ digraph G {
 	Linguist -> Language [label="weights"];
 	Linguist -> lang_reviewer -> Language [label="rules"];
 
+	//subgraph cluster_navigator {
+	//	color = purple;
+	//	label = "Navigator";
 	subgraph navigator {
 		node [shape=box];
 		Users [style=filled, fillcolor=pink];
@@ -35,7 +36,6 @@ digraph G {
 		nav_clients -> nav_server [label="pos"];
 		nav_clients -> Users;
 		Users -> nav_clients;
-		label = "Navigator";
 	}
 	Globe -> nav_server;
 	Language -> nav_server;
@@ -45,5 +45,4 @@ digraph G {
 	Language [shape=ellipse];
 	Theory [shape=ellipse];
 	Globe [shape=ellipse];
-	db_init [shape=ellipse];
 }
