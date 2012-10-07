@@ -16,5 +16,5 @@
 /lib
 *.egg-info/
 /pomagma/*.theory.cpp
-/src/*.theory.cpp
-!/src/dummy.theory.cpp
+/src/mixer/*.theory.cpp
+!/src/mixer/dummy.theory.cpp

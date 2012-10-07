@@ -31,7 +31,7 @@ profile: build/release log FORCE
 	@(cd build/release && cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo ../..)
 	@$(MAKE) -C build/release
 	@echo '' > log/profile.log
-	@for i in `ls build/release/src/*_profile`; do \
+	@for i in `ls build/release/src/*/*_profile`; do \
 		POMAGMA_LOG_LEVEL=2 \
 		POMAGMA_LOG_FILE=$(CURDIR)/log/profile.log \
 		$$i; \

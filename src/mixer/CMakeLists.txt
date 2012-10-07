@@ -1,7 +1,7 @@
 
 #include_directories(${CMAKE_SOURCE_DIR}/)
 
-add_library(pomagma SHARED
+add_library(pomagma_mixer SHARED
 	util.cpp
 	aligned_alloc.cpp
 	dense_set.cpp
@@ -14,12 +14,12 @@ add_library(pomagma SHARED
 	symmetric_function.cpp
 	scheduler.cpp
 	)
-install(TARGETS pomagma LIBRARY DESTINATION ${PROJECT_SOURCE_DIR}/lib)
-set(POMAGMA_LIBS pomagma boost_thread tbb)
+#install(TARGETS pomagma_mixer LIBRARY DESTINATION ${PROJECT_SOURCE_DIR}/lib)
+set(POMAGMA_LIBS pomagma_mixer boost_thread tbb)
 
 
-add_library(pomagma_dummy SHARED dummy.theory.cpp)
-set(POMAGMA_TEST_LIBS pomagma pomagma_dummy boost_thread tbb)
+add_library(pomagma_mixer_dummy SHARED dummy.theory.cpp)
+set(POMAGMA_TEST_LIBS pomagma_mixer pomagma_mixer_dummy boost_thread tbb)
 
 
 add_executable(dense_set_test dense_set_test.cpp)
@@ -64,7 +64,7 @@ add_test(NAME scheduler COMMAND scheduler_test)
 add_library(pomagma_server SHARED
 	server.cpp
 	)
-install(TARGETS pomagma_server LIBRARY DESTINATION ${PROJECT_SOURCE_DIR}/lib)
+#install(TARGETS pomagma_server LIBRARY DESTINATION ${PROJECT_SOURCE_DIR}/lib)
 set(POMAGMA_SERVER_LIBS pomagma_server ${POMAGMA_LIBS} zmq)
 
 
@@ -73,10 +73,10 @@ target_link_libraries(dummy.server ${POMAGMA_SERVER_LIBS})
 
 # TODO abstract these out as functions
 add_custom_command(
-	OUTPUT ${PROJECT_SOURCE_DIR}/src/sk.theory.cpp
+	OUTPUT ${CMAKE_CURRENT_LIST_DIR}/sk.theory.cpp
 	COMMAND python ${PROJECT_SOURCE_DIR}/pomagma/run.py compile
 		${PROJECT_SOURCE_DIR}/pomagma/sk.rules
-		outfile=${PROJECT_SOURCE_DIR}/src/sk.theory.cpp
+		outfile=${CMAKE_CURRENT_LIST_DIR}/sk.theory.cpp
 	DEPENDS ${PROJECT_SOURCE_DIR}/pomagma/util.py
 		${PROJECT_SOURCE_DIR}/pomagma/expressions.py
 		${PROJECT_SOURCE_DIR}/pomagma/sequents.py
@@ -90,11 +90,11 @@ add_executable(sk.server sk.theory.cpp)
 target_link_libraries(sk.server ${POMAGMA_SERVER_LIBS})
 
 add_custom_command(
-	OUTPUT ${PROJECT_SOURCE_DIR}/src/skj.theory.cpp
+	OUTPUT ${CMAKE_CURRENT_LIST_DIR}/skj.theory.cpp
 	COMMAND python ${PROJECT_SOURCE_DIR}/pomagma/run.py compile
 		${PROJECT_SOURCE_DIR}/pomagma/sk.rules
 		${PROJECT_SOURCE_DIR}/pomagma/join.rules
-		outfile=${PROJECT_SOURCE_DIR}/src/skj.theory.cpp
+		outfile=${CMAKE_CURRENT_LIST_DIR}/skj.theory.cpp
 	DEPENDS ${PROJECT_SOURCE_DIR}/pomagma/util.py
 		${PROJECT_SOURCE_DIR}/pomagma/expressions.py
 		${PROJECT_SOURCE_DIR}/pomagma/sequents.py

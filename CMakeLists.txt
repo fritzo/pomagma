@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.6)
 project(pomagma)
 
-set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
+#set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
@@ -17,15 +17,15 @@ set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS} -DNDEBUG=1")
 #add_definitions(-DPOMAGMA_DEBUG_LEVEL=0)
 #add_definitions(-DNDEBUG)
 
-find_package(Boost 1.46 COMPONENTS thread REQUIRED)
+find_package(Boost 1.48 COMPONENTS thread REQUIRED)
 #include_directories(${Boost_INCLUDE_DIR})
 
 enable_testing()
 
-if(CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
-install(DIRECTORY src/
-	DESTINATION ${PROJECT_SOURCE_DIR}/include
-	FILES_MATCHING PATTERN *.hpp)
-endif()
+#if(CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
+#install(DIRECTORY src/
+#	DESTINATION ${PROJECT_SOURCE_DIR}/include
+#	FILES_MATCHING PATTERN *.hpp)
+#endif()
 
-add_subdirectory(src)
+add_subdirectory(src/mixer)
