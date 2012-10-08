@@ -1,5 +1,4 @@
-#ifndef POMAGMA_SCHEDULER_HPP
-#define POMAGMA_SCHEDULER_HPP
+#pragma once
 
 #include "util.hpp"
 
@@ -140,5 +139,3 @@ void stopall ();
 
 
 } // namespace pomagma
-
-#endif // POMAGMA_SCHEDULER_HPP

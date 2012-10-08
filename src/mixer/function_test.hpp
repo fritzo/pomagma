@@ -1,6 +1,4 @@
-#ifdef POMAGMA_FUNCTION_TEST_HPP
-#  error "function_test.hpp should only be included once"
-#endif // POMAGMA_FUNCTION_TEST_HPP 
+#pragma once 
 
 #include "carrier.hpp"
 

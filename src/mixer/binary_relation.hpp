@@ -1,5 +1,4 @@
-#ifndef POMAGMA_BINARY_RELATION_HPP
-#define POMAGMA_BINARY_RELATION_HPP
+#pragma once
 
 #include "util.hpp"
 #include "dense_set.hpp"
@@ -98,5 +97,3 @@ inline void BinaryRelation::insert_Rx (Ob i, Ob j)
 }
 
 } // namespace pomagma
-
-#endif // POMAGMA_BINARY_RELATION_HPP

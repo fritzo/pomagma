@@ -1,5 +1,4 @@
-#ifndef POMAGMA_HASH_MAP_H
-#define POMAGMA_HASH_MAP_H
+#pragma once
 
 #include <unordered_map>
 #include <utility>
@@ -30,6 +29,4 @@ struct hash<pair<uint64_t, uint64_t> >
     }
 };
 
-}
-
-#endif // POMAGMA_HASH_MAP_H
+} // namespace std

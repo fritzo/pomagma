@@ -1,5 +1,4 @@
-#ifndef POMAGMA_THEORY_HPP
-#define POMAGMA_THEORY_HPP
+#pragma once
 
 #include "util.hpp"
 #include "carrier.hpp"
@@ -45,5 +44,3 @@ BinaryRelation LESS(carrier, schedule_less);
 BinaryRelation NLESS(carrier, schedule_nless);
 
 } // namespace pomagma
-
-#endif // POMAGMA_THEORY_HPP

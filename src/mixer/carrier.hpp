@@ -1,5 +1,4 @@
-#ifndef POMAGMA_CARRIER_HPP
-#define POMAGMA_CARRIER_HPP
+#pragma once
 
 #include "util.hpp"
 #include "dense_set.hpp"
@@ -119,5 +118,3 @@ inline bool Carrier::set_or_merge (std::atomic<Ob> & destin, Ob source) const
 }
 
 } // namespace pomagma
-
-#endif // POMAGMA_CARRIER_HPP

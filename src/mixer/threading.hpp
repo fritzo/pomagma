@@ -1,5 +1,4 @@
-#ifndef POMAGMA_THREADING_HPP
-#define POMAGMA_THREADING_HPP
+#pragma once
 
 #include "util.hpp"
 #include <mutex>
@@ -196,5 +195,3 @@ public:
 
 
 } // namespace pomagma
-
-#endif // POMAGMA_THREADING_HPP

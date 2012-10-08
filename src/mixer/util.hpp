@@ -1,5 +1,4 @@
-#ifndef POMAGMA_UTIL_HPP
-#define POMAGMA_UTIL_HPP
+#pragma once
 
 #include <stdint.h>
 #include <cstdlib> // for exit() & abort();
@@ -258,5 +257,3 @@ inline Ob _block2value (const std::atomic<Ob> * block, Ob i, Ob j)
 }
 
 } // namespace pomagma
-
-#endif // POMAGMA_UTIL_HPP

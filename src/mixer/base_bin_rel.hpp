@@ -1,5 +1,4 @@
-#ifndef POMAGMA_BASE_BIN_REL_HPP
-#define POMAGMA_BASE_BIN_REL_HPP
+#pragma once
 
 #include "util.hpp"
 #include "dense_set.hpp"
@@ -100,5 +99,3 @@ typedef base_bin_rel_<false> base_bin_rel;
 typedef base_bin_rel_<true> base_sym_rel;
 
 } // namespace pomagma
-
-#endif // POMAGMA_BASE_BIN_REL_HPP

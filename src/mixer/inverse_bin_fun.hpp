@@ -1,5 +1,4 @@
-#ifndef POMAGMA_INVERSE_BIN_FUN_HPP
-#define POMAGMA_INVERSE_BIN_FUN_HPP
+#pragma once
 
 #include "util.hpp"
 #include <vector>
@@ -186,5 +185,3 @@ typedef VXx_Table<0> VLr_Table;
 typedef VXx_Table<1> VRl_Table;
 
 } // namespace pomagma
-
-#endif // POMAGMA_INVERSE_BIN_FUN_HPP

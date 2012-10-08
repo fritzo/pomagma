@@ -24,7 +24,7 @@ test: build/debug log
 	POMAGMA_LOG_FILE=$(CURDIR)/log/test.log \
 	$(MAKE) -C build/debug test \
 	|| (grep -C3 -i error log/test.log && false)
-	@$(MAKE) -C pomagma test
+	@$(MAKE) -C src/compiler test
 
 profile: build/release log FORCE
 	@echo 'PWD =' `pwd`

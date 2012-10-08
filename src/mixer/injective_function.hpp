@@ -1,5 +1,4 @@
-#ifndef POMAGMA_INJECTIVE_FUNCTION_HPP
-#define POMAGMA_INJECTIVE_FUNCTION_HPP
+#pragma once
 
 #include "util.hpp"
 #include "dense_set.hpp"
@@ -94,5 +93,3 @@ inline void InjectiveFunction::insert (Ob key, Ob val) const
 }
 
 } // namespace pomagma
-
-#endif // POMAGMA_INJECTIVE_FUNCTION_HPP

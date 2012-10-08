@@ -1,5 +1,4 @@
-#ifndef POMAGMA_SYMMETRIC_FUNCTION_HPP
-#define POMAGMA_SYMMETRIC_FUNCTION_HPP
+#pragma once
 
 #include "util.hpp"
 #include "dense_set.hpp"
@@ -117,5 +116,3 @@ inline VLr_Table::Iterator SymmetricFunction::iter_val_rhs (
 }
 
 } // namespace pomagma
-
-#endif // POMAGMA_SYMMETRIC_FUNCTION_HPP

@@ -1,5 +1,4 @@
-#ifndef NONSTD_ALIGNED_ALLOC_H
-#define NONSTD_ALIGNED_ALLOC_H
+#pragma once
 
 #include "util.hpp"
 
@@ -83,5 +82,3 @@ public:
 };
 
 } // namespace pomagma
-
-#endif // NONSTD_ALIGNED_ALLOC_H

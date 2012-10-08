@@ -1,5 +1,4 @@
-#ifndef POMAGMA_DENSE_SET_HPP
-#define POMAGMA_DENSE_SET_HPP
+#pragma once
 
 #include "util.hpp"
 #include "bool_ref.hpp"
@@ -367,5 +366,3 @@ inline DenseSet::Iterator3 DenseSet::iter_insn (
 }
 
 } // namespace pomagma
-
-#endif // POMAGMA_DENSE_SET_HPP

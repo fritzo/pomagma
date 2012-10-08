@@ -1,5 +1,4 @@
-#ifndef POMAGMA_BINARY_FUNCTION_HPP
-#define POMAGMA_BINARY_FUNCTION_HPP
+#pragma once
 
 #include "util.hpp"
 #include "dense_set.hpp"
@@ -112,5 +111,3 @@ inline VRl_Table::Iterator BinaryFunction::iter_val_rhs (Ob val, Ob rhs) const
 }
 
 } // namespace pomagma
-
-#endif // POMAGMA_BINARY_FUNCTION_HPP

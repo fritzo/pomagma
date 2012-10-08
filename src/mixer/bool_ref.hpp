@@ -1,5 +1,4 @@
-#ifndef POMAGMA_BOOL_REF_HPP
-#define POMAGMA_BOOL_REF_HPP
+#pragma once
 
 #include "util.hpp"
 #include "threading.hpp"
@@ -48,5 +47,3 @@ public:
 };
 
 } // namespace pomagma
-
-#endif // POMAGMA_BOOL_REF_HPP
