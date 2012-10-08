@@ -12,8 +12,8 @@
 *.bak
 /build/*
 !/build/test.sh
-/include
 /lib
+/bin
 *.egg-info/
 /pomagma/*.theory.cpp
 /src/mixer/*.theory.cpp

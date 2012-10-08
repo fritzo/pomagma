@@ -10,6 +10,11 @@ class InjectiveFunction;
 class BinaryFunction;
 class SymmetricFunction;
 
+// TODO add tasks for:
+// * updating sampler weights
+// * inserting random ob
+// * removing random ob
+
 
 struct MergeTask
 {

@@ -12,9 +12,10 @@ add_library(pomagma_mixer SHARED
 	injective_function.cpp
 	binary_function.cpp
 	symmetric_function.cpp
+	sampler.cpp
 	scheduler.cpp
 	)
-#install(TARGETS pomagma_mixer LIBRARY DESTINATION ${PROJECT_SOURCE_DIR}/lib)
+install(TARGETS pomagma_mixer LIBRARY DESTINATION ${PROJECT_SOURCE_DIR}/lib)
 set(POMAGMA_LIBS pomagma_mixer boost_thread tbb)
 
 
@@ -61,15 +62,17 @@ target_link_libraries(scheduler_test ${POMAGMA_TEST_LIBS})
 add_test(NAME scheduler COMMAND scheduler_test)
 
 
-add_library(pomagma_server SHARED
+add_library(pomagma_mixer_server SHARED
 	server.cpp
 	)
-#install(TARGETS pomagma_server LIBRARY DESTINATION ${PROJECT_SOURCE_DIR}/lib)
-set(POMAGMA_SERVER_LIBS pomagma_server ${POMAGMA_LIBS} zmq)
+install(TARGETS pomagma_mixer_server LIBRARY
+       	DESTINATION ${PROJECT_SOURCE_DIR}/lib
+	)
+set(POMAGMA_SERVER_LIBS pomagma_mixer_server ${POMAGMA_LIBS} zmq)
 
 
-add_executable(dummy.server dummy.theory.cpp)
-target_link_libraries(dummy.server ${POMAGMA_SERVER_LIBS})
+add_executable(dummy.mixer dummy.theory.cpp)
+target_link_libraries(dummy.mixer ${POMAGMA_SERVER_LIBS})
 
 set(COMPILER_DIR ${PROJECT_SOURCE_DIR}/src/compiler)
 
@@ -88,8 +91,9 @@ add_custom_command(
 		${COMPILER_DIR}/run.py
 		${COMPILER_DIR}/sk.rules
 	)
-add_executable(sk.server sk.theory.cpp)
-target_link_libraries(sk.server ${POMAGMA_SERVER_LIBS})
+add_executable(sk.mixer sk.theory.cpp)
+target_link_libraries(sk.mixer ${POMAGMA_SERVER_LIBS})
+install(TARGETS sk.mixer DESTINATION ${PROJECT_SOURCE_DIR}/bin)
 
 add_custom_command(
 	OUTPUT ${CMAKE_CURRENT_LIST_DIR}/skj.theory.cpp
@@ -108,5 +112,6 @@ add_custom_command(
 		${COMPILER_DIR}/join.rules
 	)
 # TODO get skj.theory.cpp to compile
-#add_executable(skj.server skj.theory.cpp)
-#target_link_libraries(skj.server ${POMAGMA_SERVER_LIBS})
+#add_executable(skj.mixer skj.theory.cpp)
+#target_link_libraries(skj.mixer ${POMAGMA_SERVER_LIBS})
+#install(TARGETS skj.mixer DESTINATION ${PROJECT_SOURCE_DIR}/bin)
