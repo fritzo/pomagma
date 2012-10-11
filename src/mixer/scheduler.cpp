@@ -94,40 +94,40 @@ class TaskQueue<ResizeTask>
     // TODO
 };
 
-static TaskQueue<MergeTask> g_mergers;
+static TaskQueue<MergeTask> g_merge_tasks;
 //static TaskQueue<ResizeTask> g_resize_tasks; // TODO
-static TaskQueue<CleanupTask> g_cleanups;
+static TaskQueue<CleanupTask> g_cleanup_tasks;
 static TaskQueue<ExistsTask> g_exists_tasks;
-static TaskQueue<PositiveOrderTask> g_positive_orders;
-static TaskQueue<NegativeOrderTask> g_negative_orders;
-static TaskQueue<NullaryFunctionTask> g_nullary_functions;
-static TaskQueue<InjectiveFunctionTask> g_injective_functions;
-static TaskQueue<BinaryFunctionTask> g_binary_functions;
-static TaskQueue<SymmetricFunctionTask> g_symmetric_functions;
+static TaskQueue<PositiveOrderTask> g_positive_order_tasks;
+static TaskQueue<NegativeOrderTask> g_negative_order_tasks;
+static TaskQueue<NullaryFunctionTask> g_nullary_function_tasks;
+static TaskQueue<InjectiveFunctionTask> g_injective_function_tasks;
+static TaskQueue<BinaryFunctionTask> g_binary_function_tasks;
+static TaskQueue<SymmetricFunctionTask> g_symmetric_function_tasks;
 
 
 inline bool try_work ()
 {
-    return g_mergers.try_execute()
+    return g_merge_tasks.try_execute()
         or g_exists_tasks.try_execute()
-        or g_nullary_functions.try_execute()
-        or g_injective_functions.try_execute()
-        or g_binary_functions.try_execute()
-        or g_symmetric_functions.try_execute()
-        or g_positive_orders.try_execute()
-        or g_negative_orders.try_execute()
-        or g_cleanups.try_execute();
+        or g_nullary_function_tasks.try_execute()
+        or g_injective_function_tasks.try_execute()
+        or g_binary_function_tasks.try_execute()
+        or g_symmetric_function_tasks.try_execute()
+        or g_positive_order_tasks.try_execute()
+        or g_negative_order_tasks.try_execute()
+        or g_cleanup_tasks.try_execute();
 }
 
 inline void cancel_tasks_referencing (Ob dep)
 {
     g_exists_tasks.cancel_referencing(dep);
-    g_nullary_functions.cancel_referencing(dep);
-    g_injective_functions.cancel_referencing(dep);
-    g_binary_functions.cancel_referencing(dep);
-    g_symmetric_functions.cancel_referencing(dep);
-    g_positive_orders.cancel_referencing(dep);
-    g_negative_orders.cancel_referencing(dep);
+    g_nullary_function_tasks.cancel_referencing(dep);
+    g_injective_function_tasks.cancel_referencing(dep);
+    g_binary_function_tasks.cancel_referencing(dep);
+    g_symmetric_function_tasks.cancel_referencing(dep);
+    g_positive_order_tasks.cancel_referencing(dep);
+    g_negative_order_tasks.cancel_referencing(dep);
 }
 
 void do_work ()
@@ -164,7 +164,7 @@ void stopall ()
 
 void schedule (const MergeTask & task)
 {
-    Scheduler::g_mergers.push(task);
+    Scheduler::g_merge_tasks.push(task);
 }
 
 void schedule (const ResizeTask &)
@@ -174,7 +174,7 @@ void schedule (const ResizeTask &)
 
 void schedule (const CleanupTask & task)
 {
-    Scheduler::g_cleanups.push(task);
+    Scheduler::g_cleanup_tasks.push(task);
 }
 
 void schedule (const ExistsTask & task)
@@ -184,32 +184,32 @@ void schedule (const ExistsTask & task)
 
 void schedule (const PositiveOrderTask & task)
 {
-    Scheduler::g_positive_orders.push(task);
+    Scheduler::g_positive_order_tasks.push(task);
 }
 
 void schedule (const NegativeOrderTask & task)
 {
-    Scheduler::g_negative_orders.push(task);
+    Scheduler::g_negative_order_tasks.push(task);
 }
 
 void schedule (const NullaryFunctionTask & task)
 {
-    Scheduler::g_nullary_functions.push(task);
+    Scheduler::g_nullary_function_tasks.push(task);
 }
 
 void schedule (const InjectiveFunctionTask & task)
 {
-    Scheduler::g_injective_functions.push(task);
+    Scheduler::g_injective_function_tasks.push(task);
 }
 
 void schedule (const BinaryFunctionTask & task)
 {
-    Scheduler::g_binary_functions.push(task);
+    Scheduler::g_binary_function_tasks.push(task);
 }
 
 void schedule (const SymmetricFunctionTask & task)
 {
-    Scheduler::g_symmetric_functions.push(task);
+    Scheduler::g_symmetric_function_tasks.push(task);
 }
 
 } // namespace pomagma
