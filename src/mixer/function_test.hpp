@@ -5,8 +5,14 @@
 namespace pomagma
 {
 
-size_t g_merge_count = 0;
+size_t g_insert_count = 0;
+void insert_callback (Ob i)
+{
+    POMAGMA_DEBUG("inserting " << i);
+    ++g_insert_count;
+}
 
+size_t g_merge_count = 0;
 void merge_callback (Ob i)
 {
     POMAGMA_DEBUG("merging " << i);
@@ -17,9 +23,11 @@ inline void random_init (Carrier & carrier)
 {
     POMAGMA_ASSERT_EQ(carrier.item_count(), 0);
     const size_t size = carrier.item_dim();
+    g_insert_count = 0;
     for (Ob i = 1; i <= size; ++i) {
         carrier.unsafe_insert();
     }
+    POMAGMA_ASSERT_EQ(g_insert_count, size);
     for (Ob i = 1; i <= size; ++i) {
         if (random_bool(0.5)) {
             carrier.unsafe_remove(i);
@@ -85,7 +93,7 @@ void test_merge (Carrier & carrier)
 template<class Example>
 void test_function (size_t size)
 {
-    Carrier carrier(size, merge_callback);
+    Carrier carrier(size, insert_callback, merge_callback);
     random_init(carrier);
     Example example(carrier);
     remove_deps(carrier, example.fun);

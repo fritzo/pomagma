@@ -5,11 +5,15 @@
 namespace pomagma
 {
 
-Carrier::Carrier (size_t item_dim, void (*merge_callback)(Ob))
+Carrier::Carrier (
+        size_t item_dim,
+        void (*insert_callback) (Ob),
+        void (*merge_callback) (Ob))
     : m_support(item_dim),
       m_item_count(0),
       m_rep_count(0),
       m_reps(alloc_blocks<Rep>(1 + item_dim)),
+      m_insert_callback(insert_callback),
       m_merge_callback(merge_callback)
 {
     POMAGMA_DEBUG("creating Carrier with " << item_dim << " items");
@@ -44,6 +48,9 @@ Ob Carrier::unsafe_insert ()
             "double insertion: " << ob);
     ++m_item_count;
     ++m_rep_count;
+    if (m_insert_callback) {
+        m_insert_callback(ob);
+    }
     return ob;
 }
 

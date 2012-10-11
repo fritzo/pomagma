@@ -22,10 +22,10 @@ static std::atomic<uint_fast64_t> g_merge_count(0);
 static std::atomic<uint_fast64_t> g_enforce_count(0);
 static boost::mutex g_work_mutex;
 static boost::condition_variable g_work_condition;
-static SharedMutex g_merge_mutex;
+static SharedMutex g_strict_mutex;
 static std::vector<boost::thread> g_threads;
 
-void merge_tasks (Ob dep);
+void cancel_tasks_referencing (Ob dep);
 
 template<class Task>
 class TaskQueue
@@ -42,7 +42,7 @@ public:
 
     bool try_execute ()
     {
-        SharedMutex::SharedLock lock(g_merge_mutex);
+        SharedMutex::SharedLock lock(g_strict_mutex);
         Task task;
         if (m_queue.try_pop(task)) {
             execute(task);
@@ -52,7 +52,7 @@ public:
         }
     }
 
-    void merge (Ob dep)
+    void cancel_referencing (Ob dep)
     {
         tbb::concurrent_queue<Task> queue;
         std::swap(queue, m_queue);
@@ -81,9 +81,9 @@ public:
     {
         MergeTask task;
         if (m_queue.try_pop(task)) {
-            SharedMutex::UniqueLock lock(g_merge_mutex);
+            SharedMutex::UniqueLock lock(g_strict_mutex);
             execute(task);
-            merge_tasks(task.dep);
+            cancel_tasks_referencing(task.dep);
             return true;
         } else {
             return false;
@@ -91,8 +91,16 @@ public:
     }
 };
 
+template<>
+class TaskQueue<ResizeTask>
+{
+    // TODO
+};
+
 static TaskQueue<MergeTask> g_mergers;
+//static TaskQueue<ResizeTask> g_resize_tasks; // TODO
 static TaskQueue<CleanupTask> g_cleanups;
+static TaskQueue<ExistsTask> g_exists_tasks;
 static TaskQueue<PositiveOrderTask> g_positive_orders;
 static TaskQueue<NegativeOrderTask> g_negative_orders;
 static TaskQueue<NullaryFunctionTask> g_nullary_functions;
@@ -104,6 +112,7 @@ static TaskQueue<SymmetricFunctionTask> g_symmetric_functions;
 inline bool try_work ()
 {
     return g_mergers.try_execute()
+        or g_exists_tasks.try_execute()
         or g_nullary_functions.try_execute()
         or g_injective_functions.try_execute()
         or g_binary_functions.try_execute()
@@ -113,14 +122,15 @@ inline bool try_work ()
         or g_cleanups.try_execute();
 }
 
-inline void merge_tasks (Ob dep)
+inline void cancel_tasks_referencing (Ob dep)
 {
-    g_nullary_functions.merge(dep);
-    g_injective_functions.merge(dep);
-    g_binary_functions.merge(dep);
-    g_symmetric_functions.merge(dep);
-    g_positive_orders.merge(dep);
-    g_negative_orders.merge(dep);
+    g_exists_tasks.cancel_referencing(dep);
+    g_nullary_functions.cancel_referencing(dep);
+    g_injective_functions.cancel_referencing(dep);
+    g_binary_functions.cancel_referencing(dep);
+    g_symmetric_functions.cancel_referencing(dep);
+    g_positive_orders.cancel_referencing(dep);
+    g_negative_orders.cancel_referencing(dep);
 }
 
 void do_work ()
@@ -160,9 +170,19 @@ void schedule (const MergeTask & task)
     Scheduler::g_mergers.push(task);
 }
 
+void schedule (const ResizeTask &)
+{
+    TODO("Scheduler::g_resize_tasks.push(task);");
+}
+
 void schedule (const CleanupTask & task)
 {
     Scheduler::g_cleanups.push(task);
+}
+
+void schedule (const ExistsTask & task)
+{
+    Scheduler::g_exists_tasks.push(task);
 }
 
 void schedule (const PositiveOrderTask & task)

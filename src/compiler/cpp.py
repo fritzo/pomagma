@@ -284,6 +284,7 @@ def write_merge_task(code, functions):
         const Ob rep = carrier.find(dep);
         POMAGMA_ASSERT(dep > rep, "bad merge: " << dep << ", " << rep);
 
+        // TODO create per-data-structure merge workers instead of async tasks
         std::vector<std::future<void>> futures;
         futures.push_back(std::async(
             std::launch::async,
@@ -470,6 +471,16 @@ def write_event_tasks(code, sequents):
         // event tasks
         ''',
         bar = bar,
+        ).newline()
+
+    code('''
+        //void execute (const ExistsTask & task)
+        void execute (const ExistsTask &)
+        {
+            $body
+        }
+        ''',
+        body = wrapindent('TODO("add existence tasks");'),
         ).newline()
 
     event_tasks = {}

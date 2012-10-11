@@ -10,6 +10,7 @@ namespace pomagma
 
 DEF_EXECUTE(MergeTask)
 DEF_EXECUTE(CleanupTask)
+DEF_EXECUTE(ExistsTask)
 DEF_EXECUTE(PositiveOrderTask)
 DEF_EXECUTE(NegativeOrderTask)
 DEF_EXECUTE(NullaryFunctionTask)

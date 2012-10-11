@@ -225,6 +225,13 @@ def compile_full(seq):
 def get_events(seq):
     events = set()
     for sequent in normalize(seq):
+        '''
+        TODO
+        vars = sequent.get_vars()
+        if len(vars) == 1:
+            var = iter(vars).next()
+            events.add(var)
+        '''
         events |= sequent.antecedents
         # HACK to deal with Equation args
         succedent = iter(sequent.succedents).next()

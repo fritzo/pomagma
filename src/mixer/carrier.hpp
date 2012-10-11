@@ -18,6 +18,7 @@ class Carrier : noncopyable
     mutable std::atomic<size_t> m_rep_count;
     typedef std::atomic<Ob> Rep;
     Rep * const m_reps;
+    void (*m_insert_callback) (Ob);
     void (*m_merge_callback) (Ob);
 
     mutable AssertSharedMutex m_mutex;
@@ -26,7 +27,10 @@ class Carrier : noncopyable
 
 public:
 
-    Carrier (size_t item_dim, void (*merge_callback) (Ob) = nullptr);
+    Carrier (
+        size_t item_dim,
+        void (*insert_callback) (Ob) = nullptr,
+        void (*merge_callback) (Ob) = nullptr);
     ~Carrier ();
     void copy_from (const Carrier & other, const Ob * new2old);
     void validate () const;

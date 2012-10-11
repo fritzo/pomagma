@@ -7,16 +7,24 @@
 
 namespace pomagma {
 
-Sampler::Sampler (const Carrier & carrier)
+Sampler::Sampler (Carrier & carrier)
     : m_carrier(carrier),
-      m_weights(alloc_blocks<float>(1 + carrier.item_dim()))
+      m_probs(alloc_blocks<float>(1 + carrier.item_dim())),
+      m_ephemeral(carrier.item_dim())
 {
-    zero_blocks(m_weights, 1 + carrier.item_dim());
+    zero_blocks(m_probs, 1 + carrier.item_dim());
+
+    m_ephemeral.copy_from(carrier.support());
+    for (const auto & pair : m_nullary_probs) {
+        const auto & fun = * pair.first;
+        Ob ob = fun.find();
+        m_ephemeral.remove(ob);
+    }
 }
 
 Sampler::~Sampler ()
 {
-    free_blocks(m_weights);
+    free_blocks(m_probs);
 }
 
 void Sampler::update_all ()
@@ -28,46 +36,140 @@ void Sampler::update_all ()
 
 void Sampler::update_one (Ob ob)
 {
-    float * restrict weights = m_weights;
+    m_probs[ob] = compute_prob(ob);
+}
 
-    double weight = 0;
+float Sampler::compute_prob (Ob ob) const
+{
+    const float * restrict probs = m_probs;
 
-    for (auto & pair : m_nullary_weights) {
+    float prob = 0;
+
+    for (const auto & pair : m_nullary_probs) {
         const auto & fun = * pair.first;
         if (fun.find() == ob) {
-            weight += pair.second;
+            const float coeff = pair.second;
+            prob += coeff;
         }
     }
 
-    for (auto & pair : m_injective_weights) {
+    for (const auto & pair : m_injective_probs) {
         const auto & fun = * pair.first;
-        const float coeff = pair.second;
         if (Ob inv = fun.inverse_find(ob)) {
-            weight += coeff * weights[inv];
+            const float coeff = pair.second;
+            prob += coeff * probs[inv];
         }
     }
 
-    for (auto & pair : m_binary_weights) {
+    for (const auto & pair : m_binary_probs) {
         const auto & fun = * pair.first;
-        const float coeff = pair.second;
         double sum = 0;
         for (auto iter = fun.iter_val(ob); iter.ok(); iter.next()) {
-            sum += weights[iter.lhs()] * weights[iter.rhs()];
+            sum += probs[iter.lhs()] * probs[iter.rhs()];
         }
-        weight += coeff * sum;
+        const float coeff = pair.second;
+        prob += coeff * sum;
     }
 
-    for (auto & pair : m_symmetric_weights) {
+    for (const auto & pair : m_symmetric_probs) {
         const auto & fun = * pair.first;
-        const float coeff = pair.second;
         double sum = 0;
         for (auto iter = fun.iter_val(ob); iter.ok(); iter.next()) {
-            sum += weights[iter.lhs()] * weights[iter.rhs()];
+            sum += probs[iter.lhs()] * probs[iter.rhs()];
         }
-        weight += coeff * sum;
+        const float coeff = pair.second;
+        prob += coeff * sum;
     }
 
-    weights[ob] = weight;
+    return prob;
+}
+
+template<class Key>
+inline Key sample (
+        const std::unordered_map<Key, float> & probs,
+        float total)
+{
+    while (true) {
+        float r = random_01() * total;
+        for (const auto & pair : probs) {
+            Key key = pair.first;
+            float prob = pair.second;
+            if ((r -= prob) < 0) {
+                return key;
+            }
+        }
+    }
+};
+
+void Sampler::unsafe_insert_random ()
+{
+    while (true) {
+        auto pair = try_insert_random();
+        bool inserted = pair.second;
+        if (inserted) {
+            return;
+        }
+    }
+}
+
+std::pair<Ob, bool> Sampler::try_insert_random ()
+{
+    while (true) {
+        float r = random_01();
+
+        if ((r -= m_nullary_prob) < 0) {
+            auto & fun = * sample(m_nullary_probs, m_nullary_prob);
+            Ob val = fun.find();
+            return std::make_pair(val, false);
+        }
+
+        auto arg1_inserted = try_insert_random();
+        if (arg1_inserted.second) return arg1_inserted;
+        Ob arg1 = arg1_inserted.first;
+
+        if ((r -= m_injective_prob) < 0) {
+            auto & fun = * sample(m_injective_probs, m_injective_prob);
+            if (Ob val = fun.find(arg1)) {
+                return std::make_pair(val, false);
+            } else {
+                Ob val = m_carrier.unsafe_insert();
+                fun.insert(arg1, val);
+                return std::make_pair(val, true);
+            }
+        }
+
+        auto arg2_inserted = try_insert_random();
+        if (arg2_inserted.second) return arg2_inserted;
+        Ob arg2 = arg2_inserted.first;
+
+        if ((r -= m_binary_prob) < 0) {
+            auto & fun = * sample(m_binary_probs, m_binary_prob);
+            if (Ob val = fun.find(arg1, arg2)) {
+                return std::make_pair(val, false);
+            } else {
+                Ob val = m_carrier.unsafe_insert();
+                fun.insert(arg1, arg2, val);
+                return std::make_pair(val, true);
+            }
+        }
+
+        if ((r -= m_symmetric_prob) < 0) {
+            auto & fun = * sample(m_symmetric_probs, m_symmetric_prob);
+            if (Ob val = fun.find(arg1, arg2)) {
+                return std::make_pair(val, false);
+            } else {
+                Ob val = m_carrier.unsafe_insert();
+                fun.insert(arg1, arg2, val);
+                return std::make_pair(val, true);
+            }
+        }
+    }
+}
+
+void Sampler::unsafe_remove_random ()
+{
+    TODO("chose ephemeral ob WRT recursive reciprocal prob"
+         "\n(ie the prob mass that would be lost from db on remval)");
 }
 
 } // namespace pomagma

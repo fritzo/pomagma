@@ -2,6 +2,12 @@
 
 #include "util.hpp"
 
+// The Scheduler guarantees:
+// - never to execute a MergeTask while any other task is being executed
+// - to execute a MergeTask as soon as all previous tasks complete
+// - while executing an MergeTask(dep), to discard all tasks touching dep
+// TODO work out insert/remove/merge constraints
+
 namespace pomagma
 {
 
@@ -10,11 +16,9 @@ class InjectiveFunction;
 class BinaryFunction;
 class SymmetricFunction;
 
-// TODO add tasks for:
-// * updating sampler weights
-// * inserting random ob
-// * removing random ob
-
+struct ResizeTask
+{
+};
 
 struct MergeTask
 {
@@ -32,6 +36,16 @@ struct CleanupTask
     CleanupTask (size_t t) : type(t) {}
 
     bool references (Ob) const { return false; }
+};
+
+struct ExistsTask
+{
+    Ob ob;
+
+    ExistsTask () {}
+    ExistsTask (Ob o) : ob(o) {}
+
+    bool references (Ob dep) const { return ob == dep; }
 };
 
 struct PositiveOrderTask
@@ -108,14 +122,10 @@ struct SymmetricFunctionTask
 };
 
 
-// The Scheduler guarantees:
-// - never to execute a MergeTask while any other task is being executed
-// - to execute a MergeTask as soon as all previous tasks complete
-// - while executing an MergeTask(dep), to discard all tasks touching dep
-
 // These are defined by the Scheduler and called by the user
 void schedule (const MergeTask & task);
 void schedule (const CleanupTask & task);
+void schedule (const ExistsTask & task);
 void schedule (const PositiveOrderTask & task);
 void schedule (const NegativeOrderTask & task);
 void schedule (const NullaryFunctionTask & task);
@@ -126,6 +136,7 @@ void schedule (const SymmetricFunctionTask & task);
 // These are defined by the user and called by the Scheduler
 void execute (const MergeTask & task);
 void execute (const CleanupTask & task);
+void execute (const ExistsTask & task);
 void execute (const PositiveOrderTask & task);
 void execute (const NegativeOrderTask & task);
 void execute (const NullaryFunctionTask & task);

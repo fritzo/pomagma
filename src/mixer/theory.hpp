@@ -18,6 +18,7 @@ namespace pomagma
 // signature
 
 void schedule_merge (Ob dep) { schedule(MergeTask(dep)); }
+void schedule_exists (Ob ob) { schedule(ExistsTask(ob)); }
 void schedule_less (Ob lhs, Ob rhs) { schedule(PositiveOrderTask(lhs, rhs)); }
 void schedule_nless (Ob lhs, Ob rhs) { schedule(NegativeOrderTask(lhs, rhs)); }
 void schedule_nullary_function (const NullaryFunction * fun)
@@ -37,7 +38,7 @@ void schedule_symmetric_function (const SymmetricFunction * fun, Ob lhs, Ob rhs)
     schedule(SymmetricFunctionTask(*fun, lhs, rhs));
 }
 
-Carrier carrier(DEFAULT_ITEM_DIM, schedule_merge);
+Carrier carrier(DEFAULT_ITEM_DIM, schedule_exists, schedule_merge);
 inline size_t item_dim () { return carrier.support().item_dim(); }
 
 BinaryRelation LESS(carrier, schedule_less);
