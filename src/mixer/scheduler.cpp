@@ -2,12 +2,9 @@
 #include <vector>
 #include <atomic>
 #include "threading.hpp"
-#include <boost/thread/thread.hpp>
-#include <boost/thread/mutex.hpp>
-#include <boost/thread/shared_mutex.hpp>
-#include <boost/thread/locks.hpp>
-#include <boost/thread/condition_variable.hpp>
-#include <boost/date_time/posix_time/posix_time_types.hpp>
+#include <thread>
+#include <mutex>
+#include <chrono>
 #include <tbb/concurrent_queue.h>
 
 
@@ -20,10 +17,10 @@ namespace Scheduler
 static std::atomic<bool> g_alive(false);
 static std::atomic<uint_fast64_t> g_merge_count(0);
 static std::atomic<uint_fast64_t> g_enforce_count(0);
-static boost::mutex g_work_mutex;
-static boost::condition_variable g_work_condition;
+static std::mutex g_work_mutex;
+static std::condition_variable g_work_condition;
 static SharedMutex g_strict_mutex;
-static std::vector<boost::thread> g_threads;
+static std::vector<std::thread> g_threads;
 
 void cancel_tasks_referencing (Ob dep);
 
@@ -135,11 +132,11 @@ inline void cancel_tasks_referencing (Ob dep)
 
 void do_work ()
 {
-    const auto timeout = boost::posix_time::seconds(60);
+    const auto timeout = std::chrono::seconds(60);
     while (g_alive) {
         if (not try_work()) {
-            boost::unique_lock<boost::mutex> lock(g_work_mutex);
-            g_work_condition.timed_wait(lock, timeout);
+            std::unique_lock<std::mutex> lock(g_work_mutex);
+            g_work_condition.wait_for(lock, timeout);
         }
     }
 }
@@ -148,7 +145,7 @@ void start (size_t thread_count)
 {
     g_alive = true;
     for (size_t i = 0; i < thread_count; ++i) {
-        g_threads.push_back(boost::thread(do_work));
+        g_threads.push_back(std::thread(do_work));
     }
 }
 

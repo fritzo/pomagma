@@ -23,6 +23,9 @@ add_library(pomagma_mixer_dummy SHARED dummy.theory.cpp)
 set(POMAGMA_TEST_LIBS pomagma_mixer pomagma_mixer_dummy boost_thread tbb)
 
 
+add_executable(threading_profile threading_profile.cpp)
+target_link_libraries(threading_profile ${POMAGMA_TEST_LIBS})
+
 add_executable(dense_set_test dense_set_test.cpp)
 target_link_libraries(dense_set_test ${POMAGMA_TEST_LIBS})
 add_test(NAME dense_set COMMAND dense_set_test)

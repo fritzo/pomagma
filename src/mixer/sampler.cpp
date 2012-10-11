@@ -98,11 +98,14 @@ inline Key sample (
                 return key;
             }
         }
+
+        // occasionally fall through due to rounding error
     }
 };
 
 void Sampler::unsafe_insert_random ()
 {
+    // TODO measure rejection rate
     while (true) {
         auto pair = try_insert_random();
         bool inserted = pair.second;
@@ -163,6 +166,8 @@ std::pair<Ob, bool> Sampler::try_insert_random ()
                 return std::make_pair(val, true);
             }
         }
+
+        // occasionally fall through due to rounding error
     }
 }
 
