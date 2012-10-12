@@ -7,6 +7,7 @@
 // - to execute a MergeTask as soon as all previous tasks complete
 // - while executing an MergeTask(dep), to discard all tasks touching dep
 // TODO work out insert/remove/merge constraints
+// - ??? do not remove a rep ob without removing its deps
 
 namespace pomagma
 {

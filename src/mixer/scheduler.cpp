@@ -43,6 +43,7 @@ public:
         Task task;
         if (m_queue.try_pop(task)) {
             execute(task);
+            g_enforce_count.fetch_add(1, relaxed);
             return true;
         } else {
             return false;
@@ -80,6 +81,7 @@ public:
         if (m_queue.try_pop(task)) {
             SharedMutex::UniqueLock lock(g_strict_mutex);
             execute(task);
+            g_merge_count.fetch_add(1, relaxed);
             cancel_tasks_referencing(task.dep);
             return true;
         } else {
@@ -157,6 +159,9 @@ void stopall ()
         g_threads.back().join();
         g_threads.pop_back();
     }
+
+    POMAGMA_INFO("processed " << g_merge_count.load() << " merge tasks");
+    POMAGMA_INFO("processed " << g_enforce_count.load() << " enforce tasks");
 }
 
 } // namespace Scheduler

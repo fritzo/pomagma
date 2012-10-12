@@ -78,9 +78,6 @@ template<> struct static_log2i<1>
     static size_t val () { return 0; };
 };
 
-// this is used with template specialization
-template <class T> inline const char * nameof () { return "???"; }
-
 float get_elapsed_time ();
 std::string get_date (bool hour=true);
 
@@ -97,6 +94,17 @@ public:
                 Clock::now() - m_start);
         return duration.count() * 1e-6;
     }
+};
+
+class Stopwatch
+{
+    typedef std::chrono::high_resolution_clock Clock;
+    typedef std::chrono::time_point<Clock> Time;
+    Time m_stop;
+public:
+    Stopwatch (std::chrono::milliseconds dt) : m_stop(Clock::now() + dt) {}
+    bool done () const { return Clock::now() >= m_stop; }
+    bool ok () const { return Clock::now() < m_stop; }
 };
 
 class noncopyable
