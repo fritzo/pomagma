@@ -1,7 +1,7 @@
 
 #include_directories(${CMAKE_SOURCE_DIR}/)
 
-add_library(pomagma_mixer SHARED
+add_library(pomagma_engine SHARED
 	util.cpp
 	aligned_alloc.cpp
 	dense_set.cpp
@@ -15,12 +15,12 @@ add_library(pomagma_mixer SHARED
 	sampler.cpp
 	scheduler.cpp
 	)
-install(TARGETS pomagma_mixer LIBRARY DESTINATION ${PROJECT_SOURCE_DIR}/lib)
-set(POMAGMA_LIBS pomagma_mixer boost_thread tbb)
+install(TARGETS pomagma_engine LIBRARY DESTINATION ${PROJECT_SOURCE_DIR}/lib)
+set(POMAGMA_LIBS pomagma_engine boost_thread tbb)
 
 
-add_library(pomagma_mixer_dummy SHARED dummy.theory.cpp)
-set(POMAGMA_TEST_LIBS pomagma_mixer pomagma_mixer_dummy boost_thread tbb)
+add_library(pomagma_engine_dummy SHARED dummy.theory.cpp)
+set(POMAGMA_TEST_LIBS pomagma_engine pomagma_engine_dummy boost_thread tbb)
 
 
 add_executable(threading_profile threading_profile.cpp)
@@ -65,17 +65,17 @@ target_link_libraries(scheduler_test ${POMAGMA_TEST_LIBS})
 add_test(NAME scheduler COMMAND scheduler_test)
 
 
-add_library(pomagma_mixer_server SHARED
+add_library(pomagma_engine_server SHARED
 	server.cpp
 	)
-install(TARGETS pomagma_mixer_server LIBRARY
+install(TARGETS pomagma_engine_server LIBRARY
        	DESTINATION ${PROJECT_SOURCE_DIR}/lib
 	)
-set(POMAGMA_SERVER_LIBS pomagma_mixer_server ${POMAGMA_LIBS} zmq)
+set(POMAGMA_SERVER_LIBS pomagma_engine_server ${POMAGMA_LIBS} zmq)
 
 
-add_executable(dummy.mixer dummy.theory.cpp)
-target_link_libraries(dummy.mixer ${POMAGMA_SERVER_LIBS})
+add_executable(dummy.engine dummy.theory.cpp)
+target_link_libraries(dummy.engine ${POMAGMA_SERVER_LIBS})
 
 set(COMPILER_DIR ${PROJECT_SOURCE_DIR}/src/compiler)
 
@@ -94,9 +94,9 @@ add_custom_command(
 		${COMPILER_DIR}/run.py
 		${COMPILER_DIR}/sk.rules
 	)
-add_executable(sk.mixer sk.theory.cpp)
-target_link_libraries(sk.mixer ${POMAGMA_SERVER_LIBS})
-install(TARGETS sk.mixer DESTINATION ${PROJECT_SOURCE_DIR}/bin)
+add_executable(sk.engine sk.theory.cpp)
+target_link_libraries(sk.engine ${POMAGMA_SERVER_LIBS})
+install(TARGETS sk.engine DESTINATION ${PROJECT_SOURCE_DIR}/bin)
 
 add_custom_command(
 	OUTPUT ${CMAKE_CURRENT_LIST_DIR}/skj.theory.cpp
@@ -115,6 +115,6 @@ add_custom_command(
 		${COMPILER_DIR}/join.rules
 	)
 # TODO get skj.theory.cpp to compile
-#add_executable(skj.mixer skj.theory.cpp)
-#target_link_libraries(skj.mixer ${POMAGMA_SERVER_LIBS})
-#install(TARGETS skj.mixer DESTINATION ${PROJECT_SOURCE_DIR}/bin)
+#add_executable(skj.engine skj.theory.cpp)
+#target_link_libraries(skj.engine ${POMAGMA_SERVER_LIBS})
+#install(TARGETS skj.engine DESTINATION ${PROJECT_SOURCE_DIR}/bin)

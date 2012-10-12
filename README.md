@@ -15,7 +15,7 @@ Roadmap
     - Implement general persistent serialization via hdf5
 - Controller
     - Implement master controller in python
-- Mixer
+- Engine
     - Implement expression sampler
         - Sampler computes ob probabilities in a single background thread
         - Supports operations: insert, unsafe_merge, unsafe_remove
@@ -35,7 +35,7 @@ Roadmap
     - Implement HTML5 UI
     - Implement native mobile UIs
 - Aggregator
-    - Implement following merge logic in mixer
+    - Implement following merge logic in engine
     - Assume only forward-mapping tables
         - Work out injective function merge logic
     - Use 32-bit ob indices
@@ -51,7 +51,7 @@ Roadmap
 Milestones
 ----------
 
-- Minimum: run mixer system tests
+- Minimum: run engine system tests
 - Interactive: implement navigator as web-app
 - Scalable: implement aggregator, trimmer
 - Evolvable: implement linguist, theorist

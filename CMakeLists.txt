@@ -28,4 +28,4 @@ enable_testing()
 #	FILES_MATCHING PATTERN *.hpp)
 #endif()
 
-add_subdirectory(src/mixer)
+add_subdirectory(src/engine)
