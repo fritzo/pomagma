@@ -413,19 +413,6 @@ def write_full_tasks(code, sequents):
         // full tasks
 
         const size_t g_type_count = $type_count;
-        struct atomic_flag : std::atomic_flag
-        {
-            atomic_flag () : std::atomic_flag(ATOMIC_FLAG_INIT)
-            {
-                test_and_set();
-            }
-            atomic_flag (const atomic_flag &)
-                : std::atomic_flag(ATOMIC_FLAG_INIT)
-            {
-                POMAGMA_ERROR("fail");
-            }
-            void operator= (const atomic_flag &) { POMAGMA_ERROR("fail"); }
-        };
         std::vector<atomic_flag> g_clean_state(g_type_count);
 
         void set_state_dirty ()
@@ -435,27 +422,21 @@ def write_full_tasks(code, sequents):
             }
         }
 
-        void execute (const CleanupTask & task)
+        void execute (const CleanupTask &)
         {
-            // HACK
-            // TODO find a better cleanup scheduling policy
-            size_t next_type = (task.type + 1) % g_type_count;
-            if (task.type >= g_type_count) {
-                schedule(CleanupTask(0));
-            }
-            if (not g_clean_state[task.type].test_and_set()) {
-                schedule(CleanupTask(next_type));
-                return;
-            }
+            static std::atomic<uint_fast64_t> type(g_type_count - 1);
+            uint_fast64_t old_type = type.load();
+            uint_fast64_t new_type;
+            do {
+                new_type = (old_type + 1) % g_type_count;
+            } while (type.compare_exchange_weak(old_type, new_type));
 
-            switch (task.type) {
+            switch (type) {
 
                 $cases
 
-                default: POMAGMA_ERROR("bad cleanup type" << task.type);
+                default: POMAGMA_ERROR("bad cleanup type" << type);
             }
-
-            schedule(CleanupTask(next_type));
         }
         ''',
         bar = bar,
@@ -611,7 +592,6 @@ def write_theory(code, sequents):
 
     code('''
         #include "theory.hpp"
-        #include <future>
         
         namespace pomagma {
         ''').newline()

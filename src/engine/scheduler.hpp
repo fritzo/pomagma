@@ -3,8 +3,11 @@
 #include "util.hpp"
 
 // The Scheduler guarantees:
-// - never to execute a MergeTask while any other task is being executed
+// - never to execute a strict while any other task is being executed
+//   (strict tasks are: MergeTask, SampleTask)
 // - to execute a MergeTask as soon as all previous tasks complete
+// - never to execute a SampleTask when dep obs exist
+//   (ie until all scheduled MergeTasks have been executed)
 // - while executing an MergeTask(dep), to discard all tasks touching dep
 // TODO work out insert/remove/merge constraints
 // - ??? do not remove a rep ob without removing its deps
@@ -17,7 +20,8 @@ class InjectiveFunction;
 class BinaryFunction;
 class SymmetricFunction;
 
-struct ResizeTask
+
+struct SampleTask
 {
 };
 
@@ -27,16 +31,6 @@ struct MergeTask
 
     MergeTask () {}
     MergeTask (Ob d) : dep(d) {}
-};
-
-struct CleanupTask
-{
-    size_t type;
-
-    CleanupTask () {}
-    CleanupTask (size_t t) : type(t) {}
-
-    bool references (Ob) const { return false; }
 };
 
 struct ExistsTask
@@ -122,10 +116,61 @@ struct SymmetricFunctionTask
     bool references (Ob dep) const { return lhs == dep or rhs == dep; }
 };
 
+struct DiffuseTask
+{
+    //Ob ob;
+    //DiffuseTask () {}
+    //DiffuseTask (Ob ob) : type(ob) {}
+};
+
+struct CleanupTask
+{
+    //size_t type;
+    //CleanupTask () {}
+    //CleanupTask (size_t t) : type(t) {}
+};
+
+
+class CyclicQueue
+{
+    std::atomic<uint_fast64_t> m_state;
+public:
+    CyclicQueue () : m_state(0) {}
+
+    uint_fast64_t pop_modulo (uint_fast64_t modulus)
+    {
+        uint_fast64_t state = m_state.load();
+        uint_fast64_t next;
+        do {
+            next = state + 1 % modulus;
+        } while (not m_state.compare_exchange_weak(state, next));
+        return next;
+    }
+};
+
+/*
+// TODO move this to sampler.cpp for execute (const DiffuseTask &)
+template<class Task>
+class CyclicObQueue
+{
+    CyclicQueue m_queue;
+
+public:
+
+    void execute ()
+    {
+        // TODO move this logic to execute(const DiffuseTask &) in sampler.cpp
+        Ob ob;
+        do {
+            ob = 1 + m_queue.pop_modulo(carrier.item_dim());
+        } while (not carrier.support().contains(ob));
+        execute(Task(ob));
+    }
+};
+*/
 
 // These are defined by the Scheduler and called by the user
 void schedule (const MergeTask & task);
-void schedule (const CleanupTask & task);
 void schedule (const ExistsTask & task);
 void schedule (const PositiveOrderTask & task);
 void schedule (const NegativeOrderTask & task);
@@ -133,10 +178,11 @@ void schedule (const NullaryFunctionTask & task);
 void schedule (const InjectiveFunctionTask & task);
 void schedule (const BinaryFunctionTask & task);
 void schedule (const SymmetricFunctionTask & task);
+// Other tasks are run continuously, not scheduled:
+// SampleTask, CleanupTask, DiffuseTask
 
 // These are defined by the user and called by the Scheduler
 void execute (const MergeTask & task);
-void execute (const CleanupTask & task);
 void execute (const ExistsTask & task);
 void execute (const PositiveOrderTask & task);
 void execute (const NegativeOrderTask & task);
@@ -144,13 +190,21 @@ void execute (const NullaryFunctionTask & task);
 void execute (const InjectiveFunctionTask & task);
 void execute (const BinaryFunctionTask & task);
 void execute (const SymmetricFunctionTask & task);
+void execute (const CleanupTask & task);
+void execute (const DiffuseTask & task);
+Ob execute (const SampleTask & task);
 
 
 namespace Scheduler
 {
 
-void start (size_t thread_count);
-void stopall ();
+bool is_alive ();
+void set_thread_counts (
+        size_t worker_threads,
+        size_t cleanup_threads,
+        size_t diffuse_threads);
+void start ();
+void stop ();
 
 } // namespace Scheduler
 

@@ -105,6 +105,7 @@ inline Key sample (
 
 void Sampler::unsafe_insert_random ()
 {
+    // TODO ASSERT(all obs are rep obs)
     // TODO measure rejection rate
     while (true) {
         auto pair = try_insert_random();
@@ -171,8 +172,9 @@ std::pair<Ob, bool> Sampler::try_insert_random ()
     }
 }
 
-void Sampler::unsafe_remove_random ()
+Ob Sampler::unsafe_remove_random ()
 {
+    // TODO ASSERT(all obs are rep obs)
     TODO("chose ephemeral ob WRT recursive reciprocal prob"
          "\n(ie the prob mass that would be lost from db on remval)");
 }

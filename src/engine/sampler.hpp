@@ -33,6 +33,8 @@ class Sampler
 
 public:
 
+    const Carrier & carrier () { return m_carrier; }
+
     Sampler (Carrier & carrier);
     ~Sampler ();
 
@@ -43,7 +45,7 @@ public:
     void update_one (Ob ob);
 
     void unsafe_insert_random ();
-    void unsafe_remove_random ();
+    Ob unsafe_remove_random ();
 
     void insert () { TODO("deal with m_ephemeral"); }
     void remove (Ob ob) { m_probs[ob] = 0; TODO("deal with m_ephemeral"); }

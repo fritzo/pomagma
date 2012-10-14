@@ -7,8 +7,10 @@
 #include "binary_function.hpp"
 #include "symmetric_function.hpp"
 #include "binary_relation.hpp"
+#include "sampler.hpp"
 #include "scheduler.hpp"
 #include <atomic>
+#include <future>
 #include <vector>
 
 namespace pomagma
@@ -41,7 +43,35 @@ void schedule_symmetric_function (const SymmetricFunction * fun, Ob lhs, Ob rhs)
 Carrier carrier(DEFAULT_ITEM_DIM, schedule_exists, schedule_merge);
 inline size_t item_dim () { return carrier.support().item_dim(); }
 
+Sampler sampler(carrier);
+
 BinaryRelation LESS(carrier, schedule_less);
 BinaryRelation NLESS(carrier, schedule_nless);
+
+
+void execute (const DiffuseTask &)
+{
+    static std::atomic<unsigned> ob(0);
+    unsigned old_ob = ob.load();
+    unsigned new_ob;
+    do {
+        do {
+        new_ob = old_ob % carrier.item_dim() + 1;
+        } while (not carrier.contains(new_ob));
+    } while (ob.compare_exchange_weak(old_ob, new_ob));
+
+    sampler.update_one(new_ob); // TODO aggregate tasks
+}
+
+Ob execute (const SampleTask &)
+{
+    // TODO ASSERT(all obs are rep obs)
+    if (carrier.item_count() == carrier.item_dim()) {
+        return sampler.unsafe_remove_random();
+    } else {
+        sampler.unsafe_insert_random();
+        return 0;
+    }
+}
 
 } // namespace pomagma

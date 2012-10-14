@@ -26,6 +26,21 @@
 namespace pomagma
 {
 
+// add default constructor for use in std::vector
+struct atomic_flag : std::atomic_flag
+{
+    atomic_flag () : std::atomic_flag(ATOMIC_FLAG_INIT)
+    {
+        test_and_set();
+    }
+    atomic_flag (const atomic_flag &)
+        : std::atomic_flag(ATOMIC_FLAG_INIT)
+    {
+        POMAGMA_ERROR("fail");
+    }
+    void operator= (const atomic_flag &) { POMAGMA_ERROR("fail"); }
+};
+
 typedef std::memory_order order_t;
 const order_t relaxed = std::memory_order_relaxed;
 
