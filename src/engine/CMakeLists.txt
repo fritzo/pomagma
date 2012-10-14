@@ -78,12 +78,13 @@ add_executable(dummy.engine dummy.theory.cpp)
 target_link_libraries(dummy.engine ${POMAGMA_SERVER_LIBS})
 
 set(COMPILER_DIR ${PROJECT_SOURCE_DIR}/src/compiler)
+set(THEORY_DIR ${PROJECT_SOURCE_DIR}/src/theory)
 
 # TODO abstract these out as functions
 add_custom_command(
 	OUTPUT ${CMAKE_CURRENT_LIST_DIR}/sk.theory.cpp
 	COMMAND python ${COMPILER_DIR}/run.py compile
-		${COMPILER_DIR}/sk.rules
+	${THEORY_DIR}/sk.rules
 		outfile=${CMAKE_CURRENT_LIST_DIR}/sk.theory.cpp
 	DEPENDS ${COMPILER_DIR}/util.py
 		${COMPILER_DIR}/expressions.py
@@ -92,7 +93,7 @@ add_custom_command(
 		${COMPILER_DIR}/compiler.py
 		${COMPILER_DIR}/cpp.py
 		${COMPILER_DIR}/run.py
-		${COMPILER_DIR}/sk.rules
+		${THEORY_DIR}/sk.rules
 	)
 add_executable(sk.engine sk.theory.cpp)
 target_link_libraries(sk.engine ${POMAGMA_SERVER_LIBS})
@@ -101,8 +102,8 @@ install(TARGETS sk.engine DESTINATION ${PROJECT_SOURCE_DIR}/bin)
 add_custom_command(
 	OUTPUT ${CMAKE_CURRENT_LIST_DIR}/skj.theory.cpp
 	COMMAND python ${COMPILER_DIR}/run.py compile
-		${COMPILER_DIR}/sk.rules
-		${COMPILER_DIR}/join.rules
+		${THEORY_DIR}/sk.rules
+		${THEORY_DIR}/join.rules
 		outfile=${CMAKE_CURRENT_LIST_DIR}/skj.theory.cpp
 	DEPENDS ${COMPILER_DIR}/util.py
 		${COMPILER_DIR}/expressions.py
@@ -111,8 +112,8 @@ add_custom_command(
 		${COMPILER_DIR}/compiler.py
 		${COMPILER_DIR}/cpp.py
 		${COMPILER_DIR}/run.py
-		${COMPILER_DIR}/sk.rules
-		${COMPILER_DIR}/join.rules
+		${THEORY_DIR}/sk.rules
+		${THEORY_DIR}/join.rules
 	)
 # TODO get skj.theory.cpp to compile
 #add_executable(skj.engine skj.theory.cpp)

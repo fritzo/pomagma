@@ -9,5 +9,5 @@ def _test_cpp(filename):
 
 
 def test_cpp():
-    for filename in glob.glob('*.rules'):
+    for filename in glob.glob('../theory/*.rules'):
         yield _test_cpp, filename
