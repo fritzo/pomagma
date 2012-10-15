@@ -51,30 +51,11 @@ BinaryRelation NLESS(carrier, schedule_nless);
 //----------------------------------------------------------------------------
 // background task execution
 
-void execute (const DiffuseTask &)
+void execute (const SampleTask &)
 {
-    static std::atomic<unsigned> ob(0);
-    unsigned old_ob = ob.load();
-    unsigned new_ob;
-    do {
-        new_ob = old_ob % item_dim() + 1;
-        while (not carrier.contains(new_ob)) {
-            new_ob = new_ob % item_dim() + 1;
-        }
-    } while (ob.compare_exchange_weak(old_ob, new_ob));
-
-    sampler.update_one(new_ob); // TODO aggregate tasks
-}
-
-Ob execute (const SampleTask &)
-{
-    // TODO ASSERT(all obs are rep obs)
-    if (carrier.item_count() == item_dim()) {
-        return sampler.unsafe_remove_random();
-    } else {
-        sampler.unsafe_insert_random();
-        return 0;
-    }
+    POMAGMA_ASSERT(carrier.item_count() != item_dim(),
+            "tried to insert in full carrier");
+    sampler.unsafe_insert_random();
 }
 
 } // namespace pomagma

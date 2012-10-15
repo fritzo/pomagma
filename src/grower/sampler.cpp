@@ -1,87 +1,15 @@
 #include "sampler.hpp"
-#include "aligned_alloc.hpp"
 #include "nullary_function.hpp"
 #include "injective_function.hpp"
 #include "binary_function.hpp"
 #include "symmetric_function.hpp"
 
-namespace pomagma {
+namespace pomagma
+{
 
 Sampler::Sampler (Carrier & carrier)
-    : m_carrier(carrier),
-      m_probs(alloc_blocks<float>(1 + carrier.item_dim())),
-      m_ephemeral(carrier.item_dim())
+    : m_carrier(carrier)
 {
-    zero_blocks(m_probs, 1 + carrier.item_dim());
-
-    m_ephemeral.copy_from(carrier.support());
-    for (const auto & pair : m_nullary_probs) {
-        const auto & fun = * pair.first;
-        Ob ob = fun.find();
-        m_ephemeral.remove(ob);
-    }
-}
-
-Sampler::~Sampler ()
-{
-    free_blocks(m_probs);
-}
-
-void Sampler::update_all ()
-{
-    for (auto iter = m_carrier.iter(); iter.ok(); iter.next()) {
-        update_one(*iter);
-    }
-}
-
-void Sampler::update_one (Ob ob)
-{
-    m_probs[ob] = compute_prob(ob);
-}
-
-float Sampler::compute_prob (Ob ob) const
-{
-    const float * restrict probs = m_probs;
-
-    float prob = 0;
-
-    for (const auto & pair : m_nullary_probs) {
-        const auto & fun = * pair.first;
-        if (fun.find() == ob) {
-            const float coeff = pair.second;
-            prob += coeff;
-        }
-    }
-
-    for (const auto & pair : m_injective_probs) {
-        const auto & fun = * pair.first;
-        if (Ob inv = fun.inverse_find(ob)) {
-            const float coeff = pair.second;
-            prob += coeff * probs[inv];
-        }
-    }
-
-    for (const auto & pair : m_binary_probs) {
-        const auto & fun = * pair.first;
-        double sum = 0;
-        for (auto iter = fun.iter_val(ob); iter.ok(); iter.next()) {
-            sum += probs[iter.lhs()] * probs[iter.rhs()];
-        }
-        const float coeff = pair.second;
-        prob += coeff * sum;
-    }
-
-    for (const auto & pair : m_symmetric_probs) {
-        const auto & fun = * pair.first;
-        double sum = 0;
-        for (auto iter = fun.iter_val(ob); iter.ok(); iter.next()) {
-            sum += probs[iter.lhs()] * probs[iter.rhs()];
-        }
-        const float coeff = pair.second;
-        prob += coeff * sum;
-    }
-
-    return prob;
 }
 
 template<class Key>
@@ -170,13 +98,6 @@ std::pair<Ob, bool> Sampler::try_insert_random ()
 
         // occasionally fall through due to rounding error
     }
-}
-
-Ob Sampler::unsafe_remove_random ()
-{
-    // TODO ASSERT(all obs are rep obs)
-    TODO("chose ephemeral ob WRT recursive reciprocal prob"
-         "\n(ie the prob mass that would be lost from db on remval)");
 }
 
 } // namespace pomagma

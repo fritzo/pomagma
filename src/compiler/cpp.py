@@ -412,6 +412,7 @@ def write_full_tasks(code, sequents):
         $bar
         // full tasks
 
+        // TODO actually use g_clean_state
         const size_t g_type_count = $type_count;
         std::vector<atomic_flag> g_clean_state(g_type_count);
 

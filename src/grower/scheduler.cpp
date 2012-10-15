@@ -15,12 +15,11 @@ namespace Scheduler
 static const size_t DEFAULT_THREAD_COUNT = 1;
 
 static size_t g_worker_count = DEFAULT_THREAD_COUNT;
-static size_t g_cleanup_count = DEFAULT_THREAD_COUNT;
-static size_t g_diffuse_count = DEFAULT_THREAD_COUNT;
 
 static std::atomic<bool> g_alive(false);
 static std::atomic<uint_fast64_t> g_merge_count(0);
 static std::atomic<uint_fast64_t> g_enforce_count(0);
+static std::atomic<uint_fast64_t> g_cleanup_count(0);
 static std::mutex g_work_mutex;
 static SharedMutex g_strict_mutex;
 static std::vector<std::thread> g_threads;
@@ -31,18 +30,10 @@ bool is_alive ()
     return g_alive.load();
 }
 
-void set_thread_counts (
-        size_t worker_threads,
-        size_t cleanup_threads,
-        size_t diffuse_threads)
+void set_thread_counts (size_t worker_count)
 {
-    POMAGMA_ASSERT_LE(1, worker_threads);
-    POMAGMA_ASSERT_LE(1, cleanup_threads);
-    POMAGMA_ASSERT_LE(1, diffuse_threads);
-
-    g_worker_count = worker_threads;
-    g_cleanup_count = cleanup_threads;
-    g_diffuse_count = diffuse_threads;
+    POMAGMA_ASSERT_LE(1, worker_count);
+    g_worker_count = worker_count;
 }
 
 template<class Task>
@@ -112,6 +103,19 @@ public:
     }
 };
 
+bool sample_try_execute ()
+{
+    // TODO make insert safe and use shared lock instead
+    SharedMutex::UniqueLock lock(g_strict_mutex);
+    //TODO
+    //if (carrier.item_count() == carrier.item_dim()) {
+    //    return false;
+    //} else {
+        execute(SampleTask());
+        return true;
+    //}
+}
+
 
 static TaskQueue<MergeTask> g_merge_tasks;
 static TaskQueue<ExistsTask> g_exists_tasks;
@@ -154,14 +158,8 @@ void do_work ()
             g_positive_order_tasks.try_execute() or
             g_negative_order_tasks.try_execute()) return;
 
-        // XXX this is not sufficiently safe; instead:
-        // lock global mutex
-        // check again for merge tasks
-        if (Ob removed = execute(SampleTask())) {
-            // XXX this is not safe; instead lock the global mutex
-            // around execution of SampleTask and cancellation
-            cancel_tasks_referencing(removed);
-        }
+        if (sample_try_execute()) return;
+        execute(SampleTask());
     }
 }
 
@@ -170,14 +168,6 @@ void do_cleanup ()
     while (g_alive.load()) {
         SharedMutex::SharedLock lock(g_strict_mutex);
         execute(CleanupTask());
-    }
-}
-
-void do_diffuse ()
-{
-    while (g_alive.load()) {
-        SharedMutex::SharedLock lock(g_strict_mutex);
-        execute(DiffuseTask());
     }
 }
 
@@ -191,20 +181,11 @@ void start ()
 
     g_merge_count = 0;
     g_enforce_count = 0;
+    g_cleanup_count = 0;
 
     POMAGMA_INFO("starting " << g_worker_count << " worker threads");
     for (size_t i = 0; i < g_worker_count; ++i) {
         g_threads.push_back(std::thread(do_work));
-    }
-
-    POMAGMA_INFO("starting " << g_cleanup_count << " cleanup threads");
-    for (size_t i = 0; i < g_cleanup_count; ++i) {
-        g_threads.push_back(std::thread(do_cleanup));
-    }
-
-    POMAGMA_INFO("starting " << g_diffuse_count << " diffuse threads");
-    for (size_t i = 0; i < g_diffuse_count; ++i) {
-        g_threads.push_back(std::thread(do_diffuse));
     }
 }
 
@@ -224,6 +205,7 @@ void stop ()
 
     POMAGMA_INFO("processed " << g_merge_count.load() << " merge tasks");
     POMAGMA_INFO("processed " << g_enforce_count.load() << " enforce tasks");
+    POMAGMA_INFO("processed " << g_cleanup_count.load() << " cleanup tasks");
 }
 
 } // namespace Scheduler

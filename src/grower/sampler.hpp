@@ -4,8 +4,6 @@
 #include "carrier.hpp"
 #include <unordered_map>
 
-
-
 namespace pomagma {
 
 class NullaryFunction;
@@ -26,34 +24,15 @@ class Sampler
     float m_binary_prob;
     float m_symmetric_prob;
 
-    // TODO maintain removal probs
-    //std::atomic<float> * const m_probs;
-    float * const m_probs;
-    DenseSet m_ephemeral;
-
 public:
 
-    const Carrier & carrier () { return m_carrier; }
-
     Sampler (Carrier & carrier);
-    ~Sampler ();
 
     // TODO init, set probs
 
-    // TODO update insert+remove weights n+n background threads
-    void update_all ();
-    void update_one (Ob ob);
-
     void unsafe_insert_random ();
-    Ob unsafe_remove_random ();
-
-    void insert () { TODO("deal with m_ephemeral"); }
-    void remove (Ob ob) { m_probs[ob] = 0; TODO("deal with m_ephemeral"); }
-    void merge (Ob dep) { m_probs[dep] = 0; TODO("deal with m_ephemeral"); }
 
 private:
-
-    float compute_prob (Ob ob) const;
 
     std::pair<Ob, bool> try_insert_random ();
 };

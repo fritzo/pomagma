@@ -16,14 +16,8 @@ DEF_EXECUTE(NullaryFunctionTask)
 DEF_EXECUTE(InjectiveFunctionTask)
 DEF_EXECUTE(BinaryFunctionTask)
 DEF_EXECUTE(SymmetricFunctionTask)
-DEF_EXECUTE(DiffuseTask)
 DEF_EXECUTE(CleanupTask)
-
-Ob execute(const SampleTask &)
-{
-    POMAGMA_INFO("executing SampleTask");
-    return 0;
-}
+DEF_EXECUTE(SampleTask)
 
 #undef DEF_EXECUTE
 
