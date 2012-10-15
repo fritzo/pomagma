@@ -12,12 +12,12 @@ digraph G {
 
 	Globe -> Trimmer;
 	Language -> Trimmer;
-	Trimmer -> Engines -> db_queue -> Aggregator -> Globe;
+	Trimmer -> Growers -> db_queue -> Aggregator -> Globe;
 	Globe -> Aggregator;
 
 	Globe -> Theorist;
 	Language ->  Theorist;
-	Theorist -> theory_reviewer -> Theory -> Compiler -> Engines;
+	Theorist -> theory_reviewer -> Theory -> Compiler -> Growers;
 
 	Globe -> Linguist;
 	Language -> Linguist;

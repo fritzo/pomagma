@@ -33,4 +33,4 @@ enable_testing()
 #	FILES_MATCHING PATTERN *.hpp)
 #endif()
 
-add_subdirectory(src/engine)
+add_subdirectory(src/grower)

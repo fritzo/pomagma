@@ -18,4 +18,4 @@
 *.pb.h
 *.pb.cc
 *.theory.cpp
-!/src/engine/dummy.theory.cpp
+!/src/grower/dummy.theory.cpp

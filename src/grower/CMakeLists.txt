@@ -1,7 +1,7 @@
 
 #include_directories(${CMAKE_SOURCE_DIR}/)
 
-add_library(pomagma_engine SHARED
+add_library(pomagma_grower SHARED
 	util.cpp
 	aligned_alloc.cpp
 	dense_set.cpp
@@ -15,12 +15,12 @@ add_library(pomagma_engine SHARED
 	sampler.cpp
 	scheduler.cpp
 	)
-install(TARGETS pomagma_engine LIBRARY DESTINATION ${PROJECT_SOURCE_DIR}/lib)
-set(POMAGMA_LIBS pomagma_engine boost_thread tbb)
+install(TARGETS pomagma_grower LIBRARY DESTINATION ${PROJECT_SOURCE_DIR}/lib)
+set(POMAGMA_LIBS pomagma_grower boost_thread tbb)
 
 
-add_library(pomagma_engine_dummy SHARED dummy.theory.cpp)
-set(POMAGMA_TEST_LIBS pomagma_engine pomagma_engine_dummy boost_thread tbb)
+add_library(pomagma_grower_dummy SHARED dummy.theory.cpp)
+set(POMAGMA_TEST_LIBS pomagma_grower pomagma_grower_dummy boost_thread tbb)
 
 
 add_executable(threading_profile threading_profile.cpp)
@@ -65,24 +65,24 @@ target_link_libraries(scheduler_test ${POMAGMA_TEST_LIBS})
 add_test(NAME scheduler COMMAND scheduler_test)
 
 
-add_library(pomagma_engine_server SHARED
+add_library(pomagma_grower_server SHARED
 	server.cpp
 	language.pb.cc
 	structure.pb.cc
 	)
-install(TARGETS pomagma_engine_server LIBRARY
+install(TARGETS pomagma_grower_server LIBRARY
        	DESTINATION ${PROJECT_SOURCE_DIR}/lib
 	)
 set(POMAGMA_SERVER_LIBS
-	pomagma_engine_server
+	pomagma_grower_server
 	${POMAGMA_LIBS}
 	zmq
 	protobuf
 	)
 
 
-add_executable(dummy.engine dummy.theory.cpp)
-target_link_libraries(dummy.engine ${POMAGMA_SERVER_LIBS})
+add_executable(dummy.grower dummy.theory.cpp)
+target_link_libraries(dummy.grower ${POMAGMA_SERVER_LIBS})
 
 set(SRC_DIR ${PROJECT_SOURCE_DIR}/src)
 
@@ -118,9 +118,9 @@ add_custom_command(
 		${SRC_DIR}/compiler/run.py
 		${SRC_DIR}/theory/sk.rules
 	)
-add_executable(sk.engine sk.theory.cpp)
-target_link_libraries(sk.engine ${POMAGMA_SERVER_LIBS})
-install(TARGETS sk.engine DESTINATION ${PROJECT_SOURCE_DIR}/bin)
+add_executable(sk.grower sk.theory.cpp)
+target_link_libraries(sk.grower ${POMAGMA_SERVER_LIBS})
+install(TARGETS sk.grower DESTINATION ${PROJECT_SOURCE_DIR}/bin)
 
 add_custom_command(
 	OUTPUT ${CMAKE_CURRENT_LIST_DIR}/skj.theory.cpp
@@ -139,6 +139,6 @@ add_custom_command(
 		${SRC_DIR}/theory/join.rules
 	)
 # TODO get skj.theory.cpp to compile
-#add_executable(skj.engine skj.theory.cpp)
-#target_link_libraries(skj.engine ${POMAGMA_SERVER_LIBS})
-#install(TARGETS skj.engine DESTINATION ${PROJECT_SOURCE_DIR}/bin)
+#add_executable(skj.grower skj.theory.cpp)
+#target_link_libraries(skj.grower ${POMAGMA_SERVER_LIBS})
+#install(TARGETS skj.grower DESTINATION ${PROJECT_SOURCE_DIR}/bin)

@@ -183,7 +183,7 @@ void do_diffuse ()
 
 void start ()
 {
-    POMAGMA_INFO("starting engine");
+    POMAGMA_INFO("starting grower");
 
     bool was_alive = false;
     POMAGMA_ASSERT(g_alive.compare_exchange_strong(was_alive, true),
@@ -210,7 +210,7 @@ void start ()
 
 void stop ()
 {
-    POMAGMA_INFO("stopping engine");
+    POMAGMA_INFO("stopping grower");
 
     bool was_alive = true;
     POMAGMA_ASSERT(g_alive.compare_exchange_strong(was_alive, false),
