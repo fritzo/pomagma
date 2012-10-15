@@ -1,5 +1,6 @@
 #include "util.hpp"
 #include "scheduler.hpp"
+#include "language.pb.h"
 #include <zmq.hpp>
 #include <unistd.h>
 

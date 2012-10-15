@@ -15,6 +15,7 @@
 /lib
 /bin
 *.egg-info/
-/pomagma/*.theory.cpp
-/src/engine/*.theory.cpp
+*.pb.h
+*.pb.cc
+*.theory.cpp
 !/src/engine/dummy.theory.cpp

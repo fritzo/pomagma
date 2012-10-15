@@ -1,0 +1,12 @@
+package pomagma;
+
+message WeightedTerm {
+  required string name = 1;
+  required float weight = 2;
+}
+
+// TODO add rule weights for theorist
+
+message Language {
+  repeated WeightedTerm terms = 1;
+}

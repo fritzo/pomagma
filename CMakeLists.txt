@@ -20,6 +20,11 @@ set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS} -DNDEBUG=1")
 find_package(Boost 1.48 COMPONENTS thread REQUIRED)
 #include_directories(${Boost_INCLUDE_DIR})
 
+# FIXME
+#find_package(Protobuf)
+#include_directories(${PROTOBUF_INCLUDE_DIRS})
+#include_directories(${CMAKE_CURRENT_BINARY_DIR})
+
 enable_testing()
 
 #if(CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
