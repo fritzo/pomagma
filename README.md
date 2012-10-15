@@ -20,9 +20,9 @@ Roadmap
         - Sampler computes ob probabilities in a single background thread
         - Supports operations: insert, unsafe_merge, unsafe_remove
         - Sampler is parametrized by probabilistic grammar
-    - Implement copy_from operations for all types and for theory
-        - Implement sorting version for compaction & efficiency
-    - Implement API
+    - Implement dump, load operations
+    - Implement language reading & data structure
+    - Implement server API
     - Make DenseSet::, Carrier::unsafe_insert safe as try_insert()
     - Flesh out unit test to exercise all methods
         - Add tests for DenseSet::Iterator2, 3

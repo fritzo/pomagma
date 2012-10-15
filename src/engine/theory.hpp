@@ -41,13 +41,15 @@ void schedule_symmetric_function (const SymmetricFunction * fun, Ob lhs, Ob rhs)
 }
 
 Carrier carrier(DEFAULT_ITEM_DIM, schedule_exists, schedule_merge);
-inline size_t item_dim () { return carrier.support().item_dim(); }
+inline size_t item_dim () { return carrier.item_dim(); }
 
 Sampler sampler(carrier);
 
 BinaryRelation LESS(carrier, schedule_less);
 BinaryRelation NLESS(carrier, schedule_nless);
 
+//----------------------------------------------------------------------------
+// background task execution
 
 void execute (const DiffuseTask &)
 {
@@ -55,9 +57,10 @@ void execute (const DiffuseTask &)
     unsigned old_ob = ob.load();
     unsigned new_ob;
     do {
-        do {
-        new_ob = old_ob % carrier.item_dim() + 1;
-        } while (not carrier.contains(new_ob));
+        new_ob = old_ob % item_dim() + 1;
+        while (not carrier.contains(new_ob)) {
+            new_ob = new_ob % item_dim() + 1;
+        }
     } while (ob.compare_exchange_weak(old_ob, new_ob));
 
     sampler.update_one(new_ob); // TODO aggregate tasks
@@ -66,7 +69,7 @@ void execute (const DiffuseTask &)
 Ob execute (const SampleTask &)
 {
     // TODO ASSERT(all obs are rep obs)
-    if (carrier.item_count() == carrier.item_dim()) {
+    if (carrier.item_count() == item_dim()) {
         return sampler.unsafe_remove_random();
     } else {
         sampler.unsafe_insert_random();
