@@ -68,6 +68,7 @@ add_test(NAME scheduler COMMAND scheduler_test)
 add_library(pomagma_engine_server SHARED
 	server.cpp
 	language.pb.cc
+	structure.pb.cc
 	)
 install(TARGETS pomagma_engine_server LIBRARY
        	DESTINATION ${PROJECT_SOURCE_DIR}/lib
@@ -93,6 +94,14 @@ add_custom_command(
 		--proto_path=${SRC_DIR}/messaging
 		--cpp_out=${CMAKE_CURRENT_LIST_DIR}
 	DEPENDS ${SRC_DIR}/messaging/language.proto
+	)
+
+add_custom_command(
+	OUTPUT ${CMAKE_CURRENT_LIST_DIR}/structure.pb.cc
+	COMMAND protoc ${SRC_DIR}/messaging/structure.proto
+		--proto_path=${SRC_DIR}/messaging
+		--cpp_out=${CMAKE_CURRENT_LIST_DIR}
+	DEPENDS ${SRC_DIR}/messaging/structure.proto
 	)
 
 add_custom_command(

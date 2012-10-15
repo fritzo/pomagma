@@ -1,11 +1,17 @@
 #include "util.hpp"
 #include "scheduler.hpp"
 #include "language.pb.h"
+#include "structure.pb.h"
 #include <zmq.hpp>
 #include <unistd.h>
 
 namespace pomagma
 {
+
+namespace messaging
+{
+    using namespace pomagma_messaging;
+}
 
 void ping (zmq::socket_t & socket)
 {

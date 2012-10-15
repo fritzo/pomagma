@@ -1,8 +1,16 @@
-package pomagma;
+package pomagma_messaging;
 
 message WeightedTerm {
+  enum Arity {
+    NULLARY = 1;
+    INJECTIVE = 2;
+    BINARY = 3;
+    SYMMETRIC = 4;
+  };
+
   required string name = 1;
-  required float weight = 2;
+  required Arity arity = 2;
+  required float weight = 3;
 }
 
 // TODO add rule weights for theorist
