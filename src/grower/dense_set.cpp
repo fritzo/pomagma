@@ -79,46 +79,37 @@ void DenseSet::validate () const
 //----------------------------------------------------------------------------
 // Insertion
 
-void DenseSet::unsafe_insert_all ()
+void DenseSet::insert_all ()
 {
-    // slow version
-    // for (size_t i = 1; i <= m_item_dim; ++i) { insert(i); }
-
-    // fast version
-    for (size_t m = 0; m < m_word_dim; ++m) {
-        m_words[m].store(FULL_WORD, relaxed);
+    Word all = ~Word(0);
+    if (item_dim() < BITS_PER_WORD) {
+        size_t trim = BITS_PER_WORD - (item_dim() + 1);
+        m_words[0].store(~ Word(1) & (all >> trim), relaxed);
+    } else {
+        m_words[0].store(~ Word(1));
+        for (size_t w = 1; w < word_dim() - 1; ++w) {
+            m_words[w].store(all, relaxed);
+        }
+        size_t trim = BITS_PER_WORD - ((item_dim() + 1) % BITS_PER_WORD);
+        m_words[word_dim() - 1].store(all >> trim, relaxed);
     }
-
-    // deal with partially-filled final block
-    size_t end = (m_item_dim + 1) % BITS_PER_WORD;
-    if (end) {
-        Word word = FULL_WORD >> (BITS_PER_WORD - end);
-        m_words[m_word_dim - 1].store(word, relaxed);
-    }
-
-    m_words[0].fetch_xor(1, relaxed); // remove zero element
 }
 
-Ob DenseSet::unsafe_insert_one ()
+size_t DenseSet::try_insert_one ()
 {
-    m_words[0].fetch_xor(1, relaxed); // simplifies code
-
-    std::atomic<Word> * restrict word = assume_aligned(m_words);
-    while (! ~ word->load(relaxed)) {
-        ++word;
+    for (size_t w = 0; w < word_dim(); ++w) {
+        Word all = ~Word(w ? 0 : 1);
+        if (m_words[w].load(relaxed) != all) {
+            size_t i_ = w * BITS_PER_WORD;
+            for (size_t _i = w ? 0 : 1; _i < BITS_PER_WORD; ++_i) {
+                size_t ob = i_ + _i;
+                if (ob <= item_dim() and try_insert(ob)) {
+                    return ob;
+                }
+            }
+        }
     }
-    Ob ob = BITS_PER_WORD * (word - m_words);
-
-    const Word free = ~ word->load(relaxed);
-    Word mask = 1;
-    while (not (mask & free)) {
-        mask <<= Word(1);
-        ++ob;
-    }
-    word->fetch_or(mask, relaxed);
-
-    m_words[0].fetch_xor(1, relaxed); // simplifies code
-    return ob;
+    return 0;
 }
 
 //----------------------------------------------------------------------------

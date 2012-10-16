@@ -53,7 +53,6 @@ BinaryRelation NLESS(carrier, schedule_nless);
 
 bool sample_tasks_try_pop (SampleTask &)
 {
-    // XXX FIXME this is not safe without a lock
     return carrier.item_count() != item_dim();
 }
 

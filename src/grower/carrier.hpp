@@ -53,7 +53,7 @@ public:
     DenseSet::Iterator iter () const { return m_support.iter(); }
 
     // strict operations
-    Ob unsafe_insert (); // TODO make this safe
+    Ob unsafe_insert (); // TODO make this safe as try_insert
     void unsafe_remove (const Ob ob);
 
 private:

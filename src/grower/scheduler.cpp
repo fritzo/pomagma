@@ -100,7 +100,6 @@ public:
     bool try_execute ()
     {
         MergeTask task;
-        // XXX TODO this is unsafe in presence of insert,remove tasks
         if (m_queue.try_pop(task)) {
             SharedMutex::UniqueLock lock(g_strict_mutex);
             execute(task);
@@ -157,6 +156,7 @@ inline bool sample_tasks_try_execute ()
 {
     SampleTask task;
     if (sample_tasks_try_pop(task)) {
+        // TODO use shared lock once execute(const SampleTask &) is safe
         SharedMutex::UniqueLock lock(g_strict_mutex);
         execute(task);
         g_sample_count.fetch_add(1);

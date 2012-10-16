@@ -33,7 +33,6 @@ inline Key sample (
 
 void Sampler::unsafe_insert_random ()
 {
-    // TODO ASSERT(all obs are rep obs)
     // TODO measure rejection rate
     while (true) {
         auto pair = try_insert_random();
@@ -51,7 +50,7 @@ std::pair<Ob, bool> Sampler::try_insert_random ()
 
         if ((r -= m_nullary_prob) < 0) {
             auto & fun = * sample(m_nullary_probs, m_nullary_prob);
-            Ob val = fun.find();
+            Ob val = fun.find(); // TODO get_rep
             return std::make_pair(val, false);
         }
 

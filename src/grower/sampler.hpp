@@ -30,7 +30,7 @@ public:
 
     // TODO init, set probs
 
-    void unsafe_insert_random ();
+    void unsafe_insert_random (); // TODO make safe as try_insert
 
 private:
 
