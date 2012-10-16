@@ -157,6 +157,7 @@ inline bool sample_tasks_try_execute ()
 {
     SampleTask task;
     if (sample_tasks_try_pop(task)) {
+        SharedMutex::UniqueLock lock(g_strict_mutex);
         execute(task);
         g_sample_count.fetch_add(1);
         return true;
@@ -169,6 +170,7 @@ inline bool cleanup_tasks_try_execute ()
 {
     CleanupTask task;
     if (cleanup_tasks_try_pop(task)) {
+        SharedMutex::SharedLock lock(g_strict_mutex);
         execute(task);
         g_cleanup_count.fetch_add(1);
         return true;
