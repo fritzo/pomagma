@@ -7,43 +7,47 @@ digraph G {
 
 	lang_reviewer [label="Reviewer", style=filled, fillcolor=pink];
 	theory_reviewer [label="Reviewer", style=filled, fillcolor=pink];
-	db_queue [label="Snapshot\nQueue"];
-	Theory [label="Theory\n(rules)"]
 
-	Globe -> Trimmer;
+	subgraph _cluster_grower {
+		color = gray;
+		Grower;
+	}
+
+	Structure -> Trimmer;
 	Language -> Trimmer;
-	Trimmer -> Growers -> db_queue -> Aggregator -> Globe;
-	Globe -> Aggregator;
+	Trimmer -> Grower;
+	Grower -> Aggregator [label="queued"];
+	Aggregator -> Structure;
+	Structure -> Aggregator;
 
-	Globe -> Theorist;
+	Structure -> Theorist;
 	Language ->  Theorist;
-	Theorist -> theory_reviewer -> Theory -> Compiler -> Growers;
+	Theorist -> theory_reviewer -> Theory -> Compiler -> Grower;
 
-	Globe -> Linguist;
+	Structure -> Linguist;
 	Language -> Linguist;
 	//Linguist -> lang_reviewer -> Language;
 	Linguist -> Language [label="weights"];
 	Linguist -> lang_reviewer -> Language [label="rules"];
 
-	//subgraph cluster_navigator {
-	//	color = purple;
-	//	label = "Navigator";
-	subgraph navigator {
-		node [shape=box];
-		Players [style=filled, fillcolor=pink];
-		nav_server [label="Navigator\nServer"];
-		nav_clients [label="Navigator\nClients"];
-		nav_server -> nav_clients [label="nbhd"];
-		nav_clients -> nav_server [label="pos"];
-		nav_clients -> Players;
-		Players -> nav_clients;
+	subgraph _cluster_navigator {
+		color = gray;
+		//node [shape=box];
+		Player [style=filled, fillcolor=pink];
+		nav_client [label="Navigator\nClient"];
+		nav_client -> Player;
+		Player -> nav_client;
 	}
-	Globe -> nav_server;
+
+	nav_server [label="Navigator\nServer"];
+	nav_client -> nav_server [label="pos"];
+	nav_server -> nav_client [label="nbhd"];
+	Structure -> nav_server;
 	Language -> nav_server;
 	nav_server -> Linguist [label="usage"];
 
-	db_queue [shape=ellipse];
+	// data
 	Language [shape=ellipse];
 	Theory [shape=ellipse];
-	Globe [shape=ellipse];
+	Structure [shape=ellipse];
 }
