@@ -114,6 +114,10 @@ struct SymmetricFunctionTask
 
 struct CleanupTask
 {
+    unsigned long type;
+
+    CleanupTask () {}
+    CleanupTask (unsigned long t) : type(t) {}
 };
 
 struct SampleTask
@@ -145,14 +149,21 @@ void execute (const SymmetricFunctionTask & task);
 void execute (const CleanupTask & task);
 void execute (const SampleTask & task);
 
+void cleanup_tasks_push_all ();
+bool cleanup_tasks_try_pop (CleanupTask & task);
+bool sample_tasks_try_pop (SampleTask & task);
+
 
 namespace Scheduler
 {
 
-bool is_alive ();
 void set_thread_counts (size_t worker_count);
-void start ();
-void stop ();
+
+// blocking api, requires access from single thread
+void cleanup ();
+void grow ();
+void load ();
+void dump ();
 
 } // namespace Scheduler
 

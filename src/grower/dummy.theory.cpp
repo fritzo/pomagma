@@ -21,4 +21,21 @@ DEF_EXECUTE(SampleTask)
 
 #undef DEF_EXECUTE
 
+void cleanup_tasks_push_all ()
+{
+    POMAGMA_INFO("cleanup_tasks_push_all()");
+}
+
+bool cleanup_tasks_try_pop (CleanupTask &)
+{
+    POMAGMA_INFO("cleanup_tasks_try_pop()");
+    return false;
+}
+
+bool sample_tasks_try_pop (SampleTask &)
+{
+    POMAGMA_INFO("sample_tasks_try_pop()");
+    return false;
+}
+
 } // namespace pomagma

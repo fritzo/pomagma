@@ -49,7 +49,13 @@ BinaryRelation LESS(carrier, schedule_less);
 BinaryRelation NLESS(carrier, schedule_nless);
 
 //----------------------------------------------------------------------------
-// background task execution
+// sample tasks
+
+bool sample_tasks_try_pop (SampleTask &)
+{
+    // XXX FIXME this is not safe without a lock
+    return carrier.item_count() != item_dim();
+}
 
 void execute (const SampleTask &)
 {

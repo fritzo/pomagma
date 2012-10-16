@@ -284,7 +284,6 @@ def write_merge_task(code, functions):
         const Ob rep = carrier.find(dep);
         POMAGMA_ASSERT(dep > rep, "bad merge: " << dep << ", " << rep);
 
-        // TODO create per-data-structure merge workers instead of async tasks
         std::vector<std::future<void>> futures;
         futures.push_back(std::async(
             std::launch::async,
@@ -410,33 +409,36 @@ def write_full_tasks(code, sequents):
 
     code('''
         $bar
-        // full tasks
+        // cleanup tasks
 
-        // TODO actually use g_clean_state
         const size_t g_type_count = $type_count;
-        std::vector<atomic_flag> g_clean_state(g_type_count);
+        std::atomic<unsigned long> g_cleanup_type(0);
 
-        void set_state_dirty ()
+        void cleanup_tasks_push_all()
         {
-            for (auto & state : g_clean_state) {
-                state.clear();
-            }
+            g_cleanup_type.store(0);
         }
 
-        void execute (const CleanupTask &)
+        bool cleanup_tasks_try_pop (CleanupTask & task)
         {
-            static std::atomic<uint_fast64_t> type(g_type_count - 1);
-            uint_fast64_t old_type = type.load();
-            uint_fast64_t new_type;
+            unsigned long type = g_cleanup_type.load();
             do {
-                new_type = (old_type + 1) % g_type_count;
-            } while (type.compare_exchange_weak(old_type, new_type));
+                if (type == g_type_count) {
+                    return false;
+                }
+            } while (g_cleanup_type.compare_exchange_weak(type, type + 1));
 
-            switch (type) {
+            task.type = type;
+            return true;
+        }
+
+        void execute (const CleanupTask & task)
+        {
+            switch (task.type) {
 
                 $cases
 
-                default: POMAGMA_ERROR("bad cleanup type" << type);
+                default: POMAGMA_ERROR("bad cleanup type" << task.type);
             }
         }
         ''',
