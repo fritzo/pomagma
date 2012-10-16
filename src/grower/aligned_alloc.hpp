@@ -1,5 +1,8 @@
 #pragma once
 
+// TODO try out google's tcmalloc:
+// http://gperftools.googlecode.com/svn/trunk/doc/tcmalloc.html
+
 #include "util.hpp"
 
 #if __GNUC_PREREQ(4,7)
