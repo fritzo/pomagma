@@ -13,64 +13,69 @@ namespace messaging
     using namespace pomagma_messaging;
 }
 
-void ping (zmq::socket_t & socket)
-{
-    std::string message = "ping";
-    zmq::message_t reply(4);
-    socket.send(reply);
-}
-
-enum Command
-{
-    COMMAND_PING,
-    COMMAND_CLEANUP,
-    COMMAND_GROW,
-    COMMAND_LOAD,
-    COMMAND_DUMP,
-    COMMAND_KILL
-};
-
-inline Command parse (const zmq::message_t &)
-{
-    // TODO parse message
-    return COMMAND_PING;
-}
-
-void serve (const char * endpoint)
+void load_langauge (const char * endpoint)
 {
     zmq::context_t context(1);
     zmq::socket_t socket (context, ZMQ_REP);
     socket.bind(endpoint);
 
-    while (true) {
-        zmq::message_t request;
-        socket.recv(&request);
+    zmq::message_t request;
+    socket.recv(&request);
 
-        Command command = parse(request);
+    messaging::Language language;
+    language.ParseFromArray(request.data(), request.size());
 
-        switch (command) {
-            case COMMAND_PING: { ping(socket); } break;
-            case COMMAND_CLEANUP: { Scheduler::cleanup(); } break;
-            case COMMAND_GROW: { Scheduler::grow(); } break;
-            case COMMAND_LOAD: { Scheduler::load(); } break;
-            case COMMAND_DUMP: { Scheduler::dump(); } break;
-            case COMMAND_KILL: { abort(); } break;
-        }
-    }
+    TODO("load language");
 }
+
+void load_structure (const char * endpoint)
+{
+    zmq::context_t context(1);
+    zmq::socket_t socket (context, ZMQ_REP);
+    socket.bind(endpoint);
+
+    TODO("load structure");
+}
+
+void dump_structure (const char * endpoint)
+{
+    zmq::context_t context(1);
+    zmq::socket_t socket (context, ZMQ_REP);
+    socket.bind(endpoint);
+
+    TODO("dump structure");
+
+    std::string message = "ping";
+    zmq::message_t reply(4);
+    socket.send(reply);}
 
 } // namespace pomagma
 
+using namespace pomagma;
 
-int main (/* int argc, char ** argv */)
+int main (int argc, char ** argv)
 {
-    // TODO add boost::program_options to set thread count etc.
+    if (argc != 4) {
+        std::cout
+            << "Usage: "
+            << argv[0]
+            << " language_in"
+            << " structure_in"
+            << " structure_out"
+            << std::endl;
+        POMAGMA_WARN("expected 3 program args, got " << (argc - 1));
+        exit(1);
+    }
 
-    // TODO do not serve command parser; only use zmq to:
-    // (1) load language
-    // (2) load structure
-    // (3) dump structure
-    pomagma::serve("ipc:///tmp/pomagma");
+    const char * language_in = argv[1];
+    const char * structure_in = argv[2];
+    const char * structure_out = argv[3];
+
+    pomagma::load_langauge(language_in);
+    pomagma::load_structure(structure_in);
+    pomagma::Scheduler::cleanup();
+    pomagma::Scheduler::grow();
+    pomagma::dump_structure(structure_out);
 
     return 0;
 }

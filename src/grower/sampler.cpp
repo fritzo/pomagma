@@ -12,6 +12,41 @@ Sampler::Sampler (Carrier & carrier)
 {
 }
 
+template<class T>
+inline float sum (const std::unordered_map<T, float> & map)
+{
+    float result = 0;
+    for (auto & pair : map) {
+        result += pair.second;
+    }
+    return result;
+}
+
+void Sampler::set_prob (const NullaryFunction * fun, float prob)
+{
+    m_nullary_probs[fun] = prob;
+    m_nullary_prob = sum(m_nullary_probs);
+}
+
+void Sampler::set_prob (const InjectiveFunction * fun, float prob)
+{
+    m_injective_probs[fun] = prob;
+    m_injective_prob = sum(m_injective_probs);
+}
+
+void Sampler::set_prob (const BinaryFunction * fun, float prob)
+{
+    m_binary_probs[fun] = prob;
+    m_binary_prob = sum(m_binary_probs);
+}
+
+void Sampler::set_prob (const SymmetricFunction * fun, float prob)
+{
+    m_symmetric_probs[fun] = prob;
+    m_symmetric_prob = sum(m_symmetric_probs);
+}
+
+
 template<class Key>
 inline Key sample (
         const std::unordered_map<Key, float> & probs,

@@ -277,6 +277,12 @@ def write_signature(code, functions):
             code.newline()
 
 
+# TODO Add language loader
+def write_language_loader(code):
+    TODO("")
+
+
+@inputs(Code)
 def write_merge_task(code, functions):
     body = Code()
     body('''
@@ -334,6 +340,7 @@ def write_merge_task(code, functions):
         ).newline()
 
 
+@inputs(Code)
 def write_ensurers(code, functions):
 
     code('''
@@ -383,6 +390,7 @@ def write_ensurers(code, functions):
                 ).newline()
 
 
+@inputs(Code)
 def write_full_tasks(code, sequents):
 
     full_tasks = []
@@ -448,6 +456,7 @@ def write_full_tasks(code, sequents):
         ).newline()
 
 
+@inputs(Code)
 def write_event_tasks(code, sequents):
 
     code('''
@@ -588,6 +597,7 @@ def get_functions_used_in(sequents):
     return functions
 
 
+@inputs(Code)
 def write_theory(code, sequents):
 
     sequents = set(sequents)
