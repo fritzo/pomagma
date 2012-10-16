@@ -203,13 +203,6 @@ public:
     {
         other.m_words = nullptr;
     }
-    //DenseSet (size_t item_dim, AlignedBuffer<Word> & buffer)
-    //    : m_item_dim(item_dim),
-    //      m_word_dim(items_to_words(item_dim)),
-    //      m_words(buffer(m_word_dim)),
-    //      m_alias(true)
-    //{
-    //}
     ~DenseSet () { if (not m_alias and m_words) free_blocks(m_words); }
     void copy_from (const DenseSet & other, const Ob * new2old = nullptr);
     void init (std::atomic<Word> * line)

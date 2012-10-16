@@ -48,37 +48,4 @@ inline void destroy_blocks (T * base, size_t count)
 
 void free_blocks (void * base);
 
-template<class T>
-class AlignedBuffer : noncopyable
-{
-    enum { default_size = 1024 };
-    size_t m_size;
-    T * m_data;
-
-public:
-
-    AlignedBuffer ()
-        : m_size(default_size),
-          m_data(alloc_blocks<T>(m_size))
-    {
-    }
-
-    ~AlignedBuffer ()
-    {
-        free_blocks(m_data);
-    }
-
-    T * operator() (size_t size)
-    {
-        if (m_size < size) {
-            while (m_size < size) {
-                m_size *= 2;
-            }
-            free_blocks(m_data);
-            m_data = alloc_blocks<T>(m_size);
-        }
-        return m_data;
-    }
-};
-
 } // namespace pomagma
