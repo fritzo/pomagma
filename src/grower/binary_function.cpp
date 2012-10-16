@@ -120,61 +120,6 @@ void BinaryFunction::insert (Ob lhs, Ob rhs, Ob val) const
     }
 }
 
-void BinaryFunction::unsafe_remove (const Ob dep)
-{
-    UniqueLock lock(m_mutex);
-
-    POMAGMA_ASSERT5(support().contains(dep), "unsupported dep: " << dep);
-
-    DenseSet set(item_dim(), nullptr);
-
-    {   Ob rhs = dep;
-        for (auto iter = iter_rhs(rhs); iter.ok(); iter.next()) {
-            Ob lhs = *iter;
-            std::atomic<Ob> & atomic_val = value(lhs, rhs);
-            Ob val = atomic_val.load(std::memory_order_relaxed);
-            atomic_val.store(0, std::memory_order_relaxed);
-            m_Vlr_table.unsafe_remove(lhs, rhs, val);
-            m_VLr_table.unsafe_remove(lhs, rhs, val);
-            m_VRl_table.unsafe_remove(lhs, rhs, val);
-            m_lines.Lx(lhs, rhs).zero();
-        }
-        set.init(m_lines.Rx(rhs));
-        set.zero();
-    }
-
-    {   Ob lhs = dep;
-        for (auto iter = iter_lhs(lhs); iter.ok(); iter.next()) {
-            Ob rhs = *iter;
-            std::atomic<Ob> & atomic_val = value(lhs, rhs);
-            Ob val = atomic_val.load(std::memory_order_relaxed);
-            atomic_val.store(0, std::memory_order_relaxed);
-            m_Vlr_table.unsafe_remove(lhs, rhs, val);
-            m_VLr_table.unsafe_remove(lhs, rhs, val);
-            m_VRl_table.unsafe_remove(lhs, rhs, val);
-            m_lines.Rx(lhs, rhs).zero();
-        }
-        set.init(m_lines.Lx(lhs));
-        set.zero();
-    }
-
-    {   Ob val = dep;
-        for (auto iter = iter_val(val); iter.ok(); iter.next()) {
-            Ob lhs = iter.lhs();
-            Ob rhs = iter.rhs();
-            std::atomic<Ob> & atomic_val = value(lhs, rhs);
-            POMAGMA_ASSERT3(val == atomic_val.load(),
-                    "double removal: " << lhs << ", " << rhs << ", " << val);
-            atomic_val.store(0, std::memory_order_relaxed);
-            m_lines.Lx(lhs, rhs).zero();
-            m_lines.Rx(lhs, rhs).zero();
-            m_VLr_table.unsafe_remove(lhs, rhs, val);
-            m_VRl_table.unsafe_remove(lhs, rhs, val);
-        }
-        m_Vlr_table.unsafe_remove(val);
-    }
-}
-
 void BinaryFunction::unsafe_merge (const Ob dep)
 {
     UniqueLock lock(m_mutex);

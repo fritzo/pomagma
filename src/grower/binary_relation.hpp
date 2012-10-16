@@ -43,7 +43,6 @@ public:
     void insert (const DenseSet & is, Ob j);
 
     // strict operations
-    void unsafe_remove (Ob ob);
     void unsafe_merge (Ob dep);
 
 private:

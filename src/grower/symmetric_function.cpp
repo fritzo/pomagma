@@ -120,47 +120,6 @@ void SymmetricFunction::insert (Ob lhs, Ob rhs, Ob val) const
     }
 }
 
-void SymmetricFunction::unsafe_remove (const Ob dep)
-{
-    UniqueLock lock(m_mutex);
-
-    POMAGMA_ASSERT5(support().contains(dep), "unsupported dep: " << dep);
-
-    {   Ob lhs = dep;
-        for (auto iter = iter_lhs(lhs); iter.ok(); iter.next()) {
-            Ob rhs = *iter;
-            std::atomic<Ob> & atomic_val = value(lhs, rhs);
-            Ob val = atomic_val.load(std::memory_order_relaxed);
-            POMAGMA_ASSERT3(val, "double removal: " << lhs << ", " << rhs);
-            m_lines.Rx(lhs, rhs).zero();
-            m_Vlr_table.unsafe_remove(lhs, rhs, val);
-            m_VLr_table.unsafe_remove(lhs, rhs, val);
-            if (lhs != rhs) {
-                m_Vlr_table.unsafe_remove(rhs, lhs, val);
-                m_VLr_table.unsafe_remove(rhs, lhs, val);
-            }
-            atomic_val.store(0, std::memory_order_relaxed);
-        }
-        DenseSet set(item_dim(), m_lines.Lx(lhs));
-        set.zero();
-    }
-
-    {   Ob val = dep;
-        for (auto iter = iter_val(val); iter.ok(); iter.next()) {
-            Ob lhs = iter.lhs();
-            Ob rhs = iter.rhs();
-            m_lines.Lx(lhs, rhs).zero();
-            m_VLr_table.unsafe_remove(lhs, rhs, val);
-            if (lhs <= rhs) {
-                POMAGMA_ASSERT3(value(lhs, rhs).load(),
-                    "double removal: " << lhs << ", " << rhs);
-                value(lhs, rhs).store(0, std::memory_order_relaxed);
-            }
-        }
-        m_Vlr_table.unsafe_remove(val);
-    }
-}
-
 void SymmetricFunction::unsafe_merge (const Ob dep)
 {
     UniqueLock lock(m_mutex);

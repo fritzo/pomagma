@@ -187,23 +187,6 @@ void BinaryRelation::_remove_Rx (Ob i, const DenseSet& js)
     }
 }
 
-void BinaryRelation::unsafe_remove (Ob ob)
-{
-    UniqueLock lock(m_mutex);
-
-    DenseSet set(item_dim(), nullptr);
-
-    // remove column
-    set.init(m_lines.Lx(ob));
-    _remove_Rx(ob, set);
-    set.zero();
-
-    // remove row
-    set.init(m_lines.Rx(ob));
-    _remove_Lx(set, ob);
-    set.zero();
-}
-
 // policy: callback whenever i~k but not j~k
 void BinaryRelation::unsafe_merge (Ob i)
 {

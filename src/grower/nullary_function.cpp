@@ -37,17 +37,6 @@ void NullaryFunction::validate () const
     }
 }
 
-void NullaryFunction::unsafe_remove (Ob ob)
-{
-    UniqueLock lock(m_mutex);
-
-    POMAGMA_ASSERT_RANGE_(4, ob, support().item_dim());
-
-    if (m_value == ob) {
-        m_value = 0;
-    }
-}
-
 void NullaryFunction::unsafe_merge (Ob dep)
 {
     UniqueLock lock(m_mutex);

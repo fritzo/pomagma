@@ -56,21 +56,6 @@ void remove_deps (Carrier & carrier, Function & fun)
     fun.validate();
 }
 
-template<class Function>
-void test_remove (Carrier & carrier, Function & fun)
-{
-    POMAGMA_INFO("Checking unsafe_remove");
-    const DenseSet & support = carrier.support();
-    for (auto iter = support.iter(); iter.ok(); iter.next()) {
-        if (random_bool(0.2)) {
-            Ob dep = *iter;
-            fun.unsafe_remove(dep);
-            carrier.unsafe_remove(dep);
-        }
-    }
-    fun.validate();
-}
-
 void test_merge (Carrier & carrier)
 {
     POMAGMA_INFO("Checking unsafe_merge");
@@ -97,10 +82,8 @@ void test_function (size_t size)
     random_init(carrier);
     Example example(carrier);
     remove_deps(carrier, example.fun);
-    test_remove(carrier, example.fun);
     test_merge(carrier);
     remove_deps(carrier, example.fun);
-    test_remove(carrier, example.fun);
 }
 
 template<class Example>

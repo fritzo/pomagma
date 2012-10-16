@@ -46,7 +46,6 @@ public:
     void insert (Ob lhs, Ob rhs, Ob val) const;
 
     // strict operations
-    void unsafe_remove (const Ob dep);
     void unsafe_merge (const Ob dep);
 
 private:
