@@ -51,7 +51,6 @@ void dump_structure (const char * endpoint)
 
 } // namespace pomagma
 
-using namespace pomagma;
 
 int main (int argc, char ** argv)
 {

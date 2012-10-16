@@ -175,11 +175,14 @@ public:
     }
 };
 
-#define POMAGMA_WARN(message) { if (Log::level() >= 1) { Log(1) << message; } }
-#define POMAGMA_INFO(message) { if (Log::level() >= 2) { Log(2) << message; } }
-#define POMAGMA_DEBUG(message) { if (Log::level() >= 3) { Log(3) << message; } }
+#define POMAGMA_WARN(message) \
+    { if (pomagma::Log::level() >= 1) { pomagma::Log(1) << message; } }
+#define POMAGMA_INFO(message) \
+    { if (pomagma::Log::level() >= 2) { pomagma::Log(2) << message; } }
+#define POMAGMA_DEBUG(message) \
+    { if (pomagma::Log::level() >= 3) { pomagma::Log(3) << message; } }
 
-#define POMAGMA_ERROR(message) { Log(0) \
+#define POMAGMA_ERROR(message) { pomagma::Log(0) \
     << message << "\n\t" \
     << __FILE__ << " : " << __LINE__ << "\n\t" \
     << __PRETTY_FUNCTION__ << "\n"; \
