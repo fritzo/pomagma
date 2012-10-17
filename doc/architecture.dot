@@ -1,6 +1,6 @@
 digraph G {
 	overlap=false;
-	size="6,6";
+	size="4,4";
 
 	node [shape=box];
 	Human [style=filled, fillcolor=pink];

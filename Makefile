@@ -10,12 +10,16 @@ build/release: build
 log:
 	mkdir log
 
-install: build/release
+python-libs:
+	@$(MAKE) -C src/language all
+	@$(MAKE) -C src/structure all
+
+install: python-libs build/release
 	@(cd build/release && \
 	cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo ../.. \
 	&& $(MAKE) && $(MAKE) install)
 
-test: build/debug log
+test: python-libs build/debug log
 	@echo 'PWD =' `pwd`
 	@(cd build/debug && cmake -DCMAKE_BUILD_TYPE=Debug ../..)
 	@$(MAKE) -C build/debug
