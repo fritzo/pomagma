@@ -8,9 +8,15 @@ digraph G {
 	lang_reviewer [label="Reviewer", style=filled, fillcolor=pink];
 	theory_reviewer [label="Reviewer", style=filled, fillcolor=pink];
 
-	subgraph _cluster_grower {
+	{
+		rank="min";
+	 	Theorist;
+		Linguist;
+	}
+
+	subgraph cluster_grower {
 		color = gray;
-		Grower;
+		{ rank="min"; Grower; }
 	}
 
 	Structure -> Trimmer;
@@ -22,7 +28,9 @@ digraph G {
 
 	Structure -> Theorist;
 	Language ->  Theorist;
-	Theorist -> theory_reviewer -> Theory -> Compiler -> Grower;
+	Theorist -> theory_reviewer;
+	theory_reviewer -> Theory;
+	Theory -> Compiler -> Grower;
 
 	Structure -> Linguist;
 	Language -> Linguist;
@@ -30,10 +38,10 @@ digraph G {
 	Linguist -> Language [label="weights"];
 	Linguist -> lang_reviewer -> Language [label="rules"];
 
-	subgraph _cluster_navigator {
+	subgraph cluster_navigator {
 		color = gray;
 		//node [shape=box];
-		Player [style=filled, fillcolor=pink];
+		{ rank="max"; Player [style=filled, fillcolor=pink]; }
 		nav_client [label="Navigator\nClient"];
 		nav_client -> Player;
 		Player -> nav_client;
@@ -47,7 +55,10 @@ digraph G {
 	nav_server -> Linguist [label="usage"];
 
 	// data
-	Language [shape=ellipse];
-	Theory [shape=ellipse];
-	Structure [shape=ellipse];
+	{
+	 	rank="same";
+		Language [shape=ellipse, rank="min"];
+		Theory [shape=ellipse];
+		Structure [shape=ellipse];
+	}
 }
