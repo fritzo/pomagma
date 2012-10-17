@@ -8,11 +8,6 @@
 namespace pomagma
 {
 
-namespace messaging
-{
-    using namespace pomagma_messaging;
-}
-
 void load_langauge (const char * endpoint)
 {
     zmq::context_t context(1);
