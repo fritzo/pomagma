@@ -8,22 +8,20 @@ A lens into a supremely beautiful mathematical object.
 Roadmap
 -------
 
-- Messaging
-    - Design control message API
-    - Serialize structural db via protobuf
-    - Serialize pcfg language via protobuf
-    - Implement general persistent serialization via hdf5
-- Controller
-    - Implement master controller in python
+- Structure
+    - Implement persistent serializer
+    - Create core structures from theory
+- Language
+    - Add python language server or python+cpp file reading libraries
+    - Add langauges to git: sk, skj
+- Theory
+    - Implement core writer (for Hindley's extensionality axioms)
 - Grower
+    - Figure out how to set item_dim at runtime
     - Implement expression sampler
-        - Sampler computes ob probabilities in a single background thread
-        - Supports operations: insert, unsafe_merge, unsafe_remove
-        - Sampler is parametrized by probabilistic grammar
     - Implement dump, load operations
     - Implement language reading & data structure
-    - Implement server API
-    - Make DenseSet::, Carrier::unsafe_insert safe as try_insert()
+    - Make Carrier::unsafe_insert safe as try_insert()
     - Flesh out unit test to exercise all methods
         - Add tests for DenseSet::Iterator2, 3
     - Add full test that builds 14400-element H4 group via insert requests
@@ -47,6 +45,9 @@ Roadmap
 - Linguist
     - Adapt language optimization algorithms from [Johann](http://github.com/fritzo/Johann)
     - Implement via CUDA/GPU or Eigen+OpenMP
+- Controller
+    - Implement master controller in python
+    - Use boto to provision machines
 
 Milestones
 ----------

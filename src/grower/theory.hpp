@@ -40,6 +40,7 @@ void schedule_symmetric_function (const SymmetricFunction * fun, Ob lhs, Ob rhs)
     schedule(SymmetricFunctionTask(*fun, lhs, rhs));
 }
 
+// TODO set item dim at run time
 Carrier carrier(DEFAULT_ITEM_DIM, schedule_exists, schedule_merge);
 inline size_t item_dim () { return carrier.item_dim(); }
 
