@@ -85,8 +85,12 @@ std::pair<Ob, bool> Sampler::try_insert_random ()
 
         if ((r -= m_nullary_prob) < 0) {
             auto & fun = * sample(m_nullary_probs, m_nullary_prob);
-            Ob val = fun.find(); // TODO get_rep
-            return std::make_pair(val, false);
+            if (Ob val = fun.find()) {
+                val = m_carrier.find(val);
+                return std::make_pair(val, false);
+            } else {
+                return std::make_pair(0, false);
+            }
         }
 
         auto arg1_inserted = try_insert_random();
@@ -96,6 +100,7 @@ std::pair<Ob, bool> Sampler::try_insert_random ()
         if ((r -= m_injective_prob) < 0) {
             auto & fun = * sample(m_injective_probs, m_injective_prob);
             if (Ob val = fun.find(arg1)) {
+                val = m_carrier.find(val);
                 return std::make_pair(val, false);
             } else {
                 if (Ob val = m_carrier.try_insert()) {
@@ -114,6 +119,7 @@ std::pair<Ob, bool> Sampler::try_insert_random ()
         if ((r -= m_binary_prob) < 0) {
             auto & fun = * sample(m_binary_probs, m_binary_prob);
             if (Ob val = fun.find(arg1, arg2)) {
+                val = m_carrier.find(val);
                 return std::make_pair(val, false);
             } else {
                 if (Ob val = m_carrier.try_insert()) {
@@ -128,6 +134,7 @@ std::pair<Ob, bool> Sampler::try_insert_random ()
         if ((r -= m_symmetric_prob) < 0) {
             auto & fun = * sample(m_symmetric_probs, m_symmetric_prob);
             if (Ob val = fun.find(arg1, arg2)) {
+                val = m_carrier.find(val);
                 return std::make_pair(val, false);
             } else {
                 if (Ob val = m_carrier.try_insert()) {
