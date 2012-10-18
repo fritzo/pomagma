@@ -16,12 +16,17 @@ static const size_t DEFAULT_THREAD_COUNT = 1;
 
 static size_t g_worker_count = DEFAULT_THREAD_COUNT;
 
+static std::atomic<bool> g_working_flag(false);
+static std::atomic<uint_fast64_t> g_working_count(0);
+static std::mutex g_working_mutex;
+static std::condition_variable g_working_condition;
+
+static SharedMutex g_strict_mutex;
+
 static std::atomic<uint_fast64_t> g_merge_count(0);
 static std::atomic<uint_fast64_t> g_enforce_count(0);
 static std::atomic<uint_fast64_t> g_sample_count(0);
 static std::atomic<uint_fast64_t> g_cleanup_count(0);
-static std::mutex g_work_mutex;
-static SharedMutex g_strict_mutex;
 
 
 void set_thread_counts (size_t worker_count)
@@ -56,6 +61,7 @@ public:
     void push (const Task & task)
     {
         m_queue.push(task);
+        g_working_condition.notify_one();
     }
 
     bool try_execute ()
@@ -95,6 +101,7 @@ public:
     void push (const MergeTask & task)
     {
         m_queue.push(task);
+        g_working_condition.notify_one();
     }
 
     bool try_execute ()
@@ -178,30 +185,37 @@ inline bool cleanup_tasks_try_execute ()
     }
 }
 
-void do_grow_work ()
+bool try_grow_work ()
 {
-    while (true) {
-
-        if (g_merge_tasks.try_execute()) continue;
-        if (enforce_tasks_try_execute()) continue;
-        if (sample_tasks_try_execute()) continue;
-        if (cleanup_tasks_try_execute()) continue;
-
-        // TODO wait on condition variable herel; exit when all tasks are done
-        break;
-    }
+    return g_merge_tasks.try_execute()
+        or enforce_tasks_try_execute()
+        or sample_tasks_try_execute()
+        or cleanup_tasks_try_execute();
 }
 
-void do_cleanup_work ()
+bool try_cleanup_work ()
 {
-    while (true) {
+    return g_merge_tasks.try_execute()
+        or enforce_tasks_try_execute()
+        or cleanup_tasks_try_execute();
+}
 
-        if (g_merge_tasks.try_execute()) continue;
-        if (enforce_tasks_try_execute()) continue;
-        if (cleanup_tasks_try_execute()) continue;
-
-        // TODO wait on condition variable herel; exit when all tasks are done
-        break;
+void do_work (bool (*try_work)())
+{
+    g_working_flag.store(true);
+    while (likely(g_working_flag.load())) {
+        ++g_working_count;
+        while (try_work()) {}
+        if (unlikely(--g_working_count)) {
+            std::unique_lock<std::mutex> lock(g_working_mutex);
+            // HACK the timeout should be longer, but something is broken...
+            //const auto timeout = std::chrono::seconds(60);
+            const auto timeout = std::chrono::milliseconds(100);
+            g_working_condition.wait_for(lock, timeout);
+        } else {
+            g_working_flag.store(false);
+            g_working_condition.notify_all();
+        }
     }
 }
 
@@ -211,7 +225,7 @@ void grow ()
     reset_stats();
     std::vector<std::thread> threads;
     for (size_t i = 0; i < g_worker_count; ++i) {
-        threads.push_back(std::thread(do_grow_work));
+        threads.push_back(std::thread(do_work, try_grow_work));
     }
     for (auto & thread : threads) {
         thread.join();
@@ -226,7 +240,7 @@ void cleanup ()
     reset_stats();
     std::vector<std::thread> threads;
     for (size_t i = 0; i < g_worker_count; ++i) {
-        threads.push_back(std::thread(do_cleanup_work));
+        threads.push_back(std::thread(do_work, try_cleanup_work));
     }
     for (auto & thread : threads) {
         thread.join();
