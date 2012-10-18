@@ -26,7 +26,7 @@ void test_BinaryRelation (
 
     POMAGMA_INFO("testing position insertion");
     for (Ob i = 1; i <= size; ++i) {
-         carrier.unsafe_insert();
+         POMAGMA_ASSERT(carrier.try_insert(), "insertion failed");
     }
     size_t item_count = size;
     for (Ob i = 1; i <= size; ++i) {

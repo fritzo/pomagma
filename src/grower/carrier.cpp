@@ -37,22 +37,33 @@ void Carrier::copy_from (
     TODO("move from other")
 }
 
-Ob Carrier::unsafe_insert ()
+Ob Carrier::try_insert () const
 {
-    UniqueLock lock(m_mutex);
+    SharedLock lock(m_mutex);
 
-    POMAGMA_ASSERT1(item_count() < item_dim(), "insertion in full Carrier");
-    Ob ob = m_support.try_insert_one();
-    POMAGMA_ASSERT(ob, "failed to insert one");
-    Ob zero = 0;
-    POMAGMA_ASSERT(m_reps[ob].compare_exchange_strong(zero, ob),
-            "double insertion: " << ob);
-    ++m_item_count;
-    ++m_rep_count;
-    if (m_insert_callback) {
-        m_insert_callback(ob);
+    while (item_count() < item_dim()) {
+        for (Ob ob = 1, end = item_dim(); ob <= end; ++ob) {
+            Ob zero = 0;
+            // This could be optimized using m_support iteration.
+            // See DenseSet::try_insert for example low-level code.
+            bool inserted = m_reps[ob].compare_exchange_strong(
+                    zero,
+                    ob,
+                    std::memory_order_acq_rel,
+                    std::memory_order_acquire);
+            if (unlikely(inserted)) {
+                m_support.insert(ob, std::memory_order_release);
+                ++m_item_count;
+                ++m_rep_count;
+                if (m_insert_callback) {
+                    m_insert_callback(ob);
+                }
+                return ob;
+            }
+        }
     }
-    return ob;
+
+    return 0;
 }
 
 void Carrier::unsafe_remove (const Ob ob)

@@ -25,7 +25,7 @@ inline void random_init (Carrier & carrier)
     const size_t size = carrier.item_dim();
     g_insert_count = 0;
     for (Ob i = 1; i <= size; ++i) {
-        carrier.unsafe_insert();
+        POMAGMA_ASSERT(carrier.try_insert(), "insertion failed");
     }
     POMAGMA_ASSERT_EQ(g_insert_count, size);
     for (Ob i = 1; i <= size; ++i) {

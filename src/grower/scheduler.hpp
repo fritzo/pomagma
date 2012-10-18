@@ -3,13 +3,10 @@
 #include "util.hpp"
 
 // The Scheduler guarantees:
-// - never to execute a strict while any other task is being executed
-//   (strict tasks are: MergeTask, SampleTask)
+// - never to execute a MergeTask while any other task is being executed
 // - to execute a MergeTask as soon as all previous tasks complete
-// - never to execute a SampleTask when dep obs exist
-//   (ie until all scheduled MergeTasks have been executed)
 // - while executing an MergeTask(dep), to discard all tasks touching dep
-// TODO work out insert/remove/merge constraints
+// TODO work out insert/merge constraints
 // - ??? do not remove a rep ob without removing its deps
 
 namespace pomagma

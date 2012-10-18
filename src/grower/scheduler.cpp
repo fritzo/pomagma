@@ -156,8 +156,7 @@ inline bool sample_tasks_try_execute ()
 {
     SampleTask task;
     if (sample_tasks_try_pop(task)) {
-        // TODO use shared lock once execute(const SampleTask &) is safe
-        SharedMutex::UniqueLock lock(g_strict_mutex);
+        SharedMutex::SharedLock lock(g_strict_mutex);
         execute(task);
         g_sample_count.fetch_add(1);
         return true;

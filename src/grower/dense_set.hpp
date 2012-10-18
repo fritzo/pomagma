@@ -240,11 +240,17 @@ public:
 
     // element operations
     bool_ref operator() (size_t i) { return _bit(i); }
-    bool operator() (size_t i) const { return _bit(i); }
-    bool contains (size_t i) const { return _bit(i); }
-    void insert (size_t i);
+    bool operator() (size_t i, order_t order = relaxed) const
+    {
+        return _bit(i, order);
+    }
+    bool contains (size_t i, order_t order = relaxed) const
+    {
+        return _bit(i, order);
+    }
+    void insert (size_t i, order_t order = relaxed);
     bool try_insert (size_t i);
-    void remove (size_t i);
+    void remove (size_t i, order_t order = relaxed);
     void merge  (size_t i, size_t j);
     void insert_all ();
     size_t try_insert_one ();
@@ -273,7 +279,7 @@ public:
 private:
 
     bool_ref _bit (size_t i);
-    bool _bit (size_t i) const;
+    bool _bit (size_t i, order_t = relaxed) const;
 };
 
 inline bool_ref DenseSet::_bit (size_t i)
@@ -281,16 +287,17 @@ inline bool_ref DenseSet::_bit (size_t i)
     POMAGMA_ASSERT_RANGE_(5, i, m_item_dim);
     return bool_ref::index(m_words, i);
 }
-inline bool DenseSet::_bit (size_t i) const
+
+inline bool DenseSet::_bit (size_t i, order_t order) const
 {
     POMAGMA_ASSERT_RANGE_(5, i, m_item_dim);
-    return bool_ref::index(m_words, i, relaxed);
+    return bool_ref::index(m_words, i, order);
 }
 
-inline void DenseSet::insert (size_t i)
+inline void DenseSet::insert (size_t i, order_t order)
 {
-    POMAGMA_ASSERT4(not contains(i), "double insertion: " << i);
-    _bit(i).one();
+    POMAGMA_ASSERT4(not contains(i, order), "double insertion: " << i);
+    _bit(i).one(order);
 }
 
 inline bool DenseSet::try_insert (size_t i)
@@ -298,10 +305,10 @@ inline bool DenseSet::try_insert (size_t i)
     return not _bit(i).fetch_one(relaxed);
 }
 
-inline void DenseSet::remove (size_t i)
+inline void DenseSet::remove (size_t i, order_t order)
 {
     POMAGMA_ASSERT4(contains(i), "double removal: " << i);
-    _bit(i).zero();
+    _bit(i).zero(order);
 }
 
 inline void DenseSet::merge (size_t i, size_t j __attribute__((unused)))

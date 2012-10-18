@@ -22,7 +22,6 @@ Roadmap
     - Get skj.theory.cpp to compile (probably by fixing pomagma/compiler.py)
 - Grower
     - Figure out how to set item_dim at runtime
-    - Make Carrier::unsafe_insert safe as try_insert()
     - Implement expression sampler
     - Implement dump, load operations
     - Implement language reading & data structure

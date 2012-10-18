@@ -69,7 +69,7 @@ inline Key sample (
 void Sampler::unsafe_insert_random ()
 {
     // TODO measure rejection rate
-    while (true) {
+    while (m_carrier.item_count() < m_carrier.item_dim()) {
         auto pair = try_insert_random();
         bool inserted = pair.second;
         if (inserted) {
@@ -98,9 +98,12 @@ std::pair<Ob, bool> Sampler::try_insert_random ()
             if (Ob val = fun.find(arg1)) {
                 return std::make_pair(val, false);
             } else {
-                Ob val = m_carrier.unsafe_insert();
-                fun.insert(arg1, val);
-                return std::make_pair(val, true);
+                if (Ob val = m_carrier.try_insert()) {
+                    fun.insert(arg1, val);
+                    return std::make_pair(val, true);
+                } else {
+                    return std::make_pair(0, false);
+                }
             }
         }
 
@@ -113,9 +116,12 @@ std::pair<Ob, bool> Sampler::try_insert_random ()
             if (Ob val = fun.find(arg1, arg2)) {
                 return std::make_pair(val, false);
             } else {
-                Ob val = m_carrier.unsafe_insert();
-                fun.insert(arg1, arg2, val);
-                return std::make_pair(val, true);
+                if (Ob val = m_carrier.try_insert()) {
+                    fun.insert(arg1, arg2, val);
+                    return std::make_pair(val, true);
+                } else {
+                    return std::make_pair(0, false);
+                }
             }
         }
 
@@ -124,9 +130,12 @@ std::pair<Ob, bool> Sampler::try_insert_random ()
             if (Ob val = fun.find(arg1, arg2)) {
                 return std::make_pair(val, false);
             } else {
-                Ob val = m_carrier.unsafe_insert();
-                fun.insert(arg1, arg2, val);
-                return std::make_pair(val, true);
+                if (Ob val = m_carrier.try_insert()) {
+                    fun.insert(arg1, arg2, val);
+                    return std::make_pair(val, true);
+                } else {
+                    return std::make_pair(0, false);
+                }
             }
         }
 

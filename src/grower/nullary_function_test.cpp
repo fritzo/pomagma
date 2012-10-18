@@ -8,7 +8,7 @@ void test_basic (size_t size)
     POMAGMA_INFO("Defining function");
     Carrier carrier(size);
     for (Ob i = 1; i <= size; ++i) {
-        carrier.unsafe_insert();
+        POMAGMA_ASSERT(carrier.try_insert(), "insertion failed");
     }
     size_t item_count = size;
     for (Ob i = 1; i <= size and item_count > 1; ++i) {

@@ -8,7 +8,7 @@ void test_random (size_t size)
     carrier.validate();
 
     for (size_t i = 1; i <= size; ++i) {
-        POMAGMA_ASSERT_EQ(carrier.unsafe_insert(), i);
+        POMAGMA_ASSERT_EQ(carrier.try_insert(), i);
         carrier.validate();
     }
 
