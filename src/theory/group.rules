@@ -1,0 +1,15 @@
+# groups, with elements ordered by syntactic complexity
+
+---------------------------------
+EQUAL APP x APP y z APP APP x y z
+
+---------------   ---------------
+EQUAL APP I x x   EQUAL APP x I x
+
+           LESS x y   LESS y z
+--------   -------------------
+LESS I x        LESS x z
+
+      LESS x y               LESS f g
+--------------------   --------------------
+LESS APP f x APP f y   LESS APP f x APP g x

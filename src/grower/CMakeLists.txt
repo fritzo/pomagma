@@ -105,9 +105,27 @@ add_custom_command(
 	)
 
 add_custom_command(
+	OUTPUT ${CMAKE_CURRENT_LIST_DIR}/group.theory.cpp
+	COMMAND python ${SRC_DIR}/compiler/run.py compile
+		${SRC_DIR}/theory/group.rules
+		outfile=${CMAKE_CURRENT_LIST_DIR}/group.theory.cpp
+	DEPENDS ${SRC_DIR}/compiler/util.py
+		${SRC_DIR}/compiler/expressions.py
+		${SRC_DIR}/compiler/sequents.py
+		${SRC_DIR}/compiler/parser.py
+		${SRC_DIR}/compiler/compiler.py
+		${SRC_DIR}/compiler/cpp.py
+		${SRC_DIR}/compiler/run.py
+		${SRC_DIR}/theory/group.rules
+	)
+add_executable(group.grower group.theory.cpp)
+target_link_libraries(group.grower ${POMAGMA_SERVER_LIBS})
+install(TARGETS group.grower DESTINATION ${PROJECT_SOURCE_DIR}/bin)
+
+add_custom_command(
 	OUTPUT ${CMAKE_CURRENT_LIST_DIR}/sk.theory.cpp
 	COMMAND python ${SRC_DIR}/compiler/run.py compile
-	${SRC_DIR}/theory/sk.rules
+		${SRC_DIR}/theory/sk.rules
 		outfile=${CMAKE_CURRENT_LIST_DIR}/sk.theory.cpp
 	DEPENDS ${SRC_DIR}/compiler/util.py
 		${SRC_DIR}/compiler/expressions.py
