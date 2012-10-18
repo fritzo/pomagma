@@ -3,20 +3,61 @@ digraph G {
 	size="4,4";
 
 	node [shape=box];
-	Human [style=filled, fillcolor=pink];
 
-	lang_reviewer [label="Reviewer", style=filled, fillcolor=pink];
-	theory_reviewer [label="Reviewer", style=filled, fillcolor=pink];
+	//subgraph cluster_legend {
+	//	rank = "min";
+		Human [style=filled, fillcolor=pink];
+	//	Process;
+	//	Data [shape=ellipse];
+	//	color = "#666666";
+	//}
 
 	{
-		rank="min";
+		rank = "min";
 	 	Theorist;
 		Linguist;
 	}
 
+	{
+		rank = "same";
+		node [label="Reviewer", style=filled, fillcolor=pink];
+		lang_reviewer;
+		theory_reviewer;
+	}
+
+	{
+	 	rank="same";
+		Language [shape=ellipse];
+		Theory [shape=ellipse];
+		Structure [shape=ellipse];
+	}
+
+	{
+		rank="same";
+		Trimmer;
+		Aggregator;
+		Compiler;
+		nav_server [label="Navigator\nServer"];
+	}
+
 	subgraph cluster_grower {
-		color = gray;
-		{ rank="min"; Grower; }
+		Grower;
+
+		color = "#666666";
+		fontcolor = "#666666";
+		label = "many";
+		labelloc = "b";
+	}
+
+	subgraph cluster_navigator {
+		rank="max";
+		{ rank="max"; Player [style=filled, fillcolor=pink]; }
+		nav_client [label="Navigator\nClient"];
+
+		color = "#666666";
+		fontcolor = "#666666";
+		label = "many";
+		labelloc = "b";
 	}
 
 	Structure -> Trimmer;
@@ -34,18 +75,9 @@ digraph G {
 
 	Structure -> Linguist;
 	Language -> Linguist;
-	//Linguist -> lang_reviewer -> Language;
-	Linguist -> Language [label="weights"];
-	Linguist -> lang_reviewer -> Language [label="rules"];
-
-	subgraph cluster_navigator {
-		color = gray;
-		//node [shape=box];
-		{ rank="max"; Player [style=filled, fillcolor=pink]; }
-		nav_client [label="Navigator\nClient"];
-		nav_client -> Player;
-		Player -> nav_client;
-	}
+	Linguist -> lang_reviewer -> Language;
+	//Linguist -> Language [label="weights"];
+	//Linguist -> lang_reviewer -> Language [label="rules"];
 
 	nav_server [label="Navigator\nServer"];
 	nav_client -> nav_server [label="pos"];
@@ -53,12 +85,6 @@ digraph G {
 	Structure -> nav_server;
 	Language -> nav_server;
 	nav_server -> Linguist [label="usage"];
-
-	// data
-	{
-	 	rank="same";
-		Language [shape=ellipse, rank="min"];
-		Theory [shape=ellipse];
-		Structure [shape=ellipse];
-	}
+	nav_client -> Player;
+	Player -> nav_client;
 }
