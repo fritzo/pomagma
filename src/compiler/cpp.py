@@ -508,20 +508,11 @@ def write_event_tasks(code, sequents):
         bar = bar,
         ).newline()
 
-    code('''
-        //void execute (const ExistsTask & task)
-        void execute (const ExistsTask &)
-        {
-            $body
-        }
-        ''',
-        body = wrapindent('TODO("add existence tasks");'),
-        ).newline()
-
     event_tasks = {}
     for sequent in sequents:
         for event in compiler.get_events(sequent):
-            tasks = event_tasks.setdefault(event.name, [])
+            name = '<variable>' if event.is_var() else event.name
+            tasks = event_tasks.setdefault(name, [])
             strategies = compiler.compile_given(sequent, event)
             strategies.sort(key = lambda (cost, _): cost)
             costs = [cost for cost, _ in strategies]
@@ -529,11 +520,12 @@ def write_event_tasks(code, sequents):
             tasks.append((event, cost, strategies))
 
     def get_group(name):
-        relations = {
+        special = {
             'LESS': 'PositiveOrder',
             'NLESS': 'NegativeOrder',
+            '<variable>': 'Exists',
             }
-        return relations.get(name, signature.get_arity(name))
+        return special.get(name, signature.get_arity(name))
 
     group_tasks = {}
     for name, tasks in event_tasks.iteritems():
@@ -579,19 +571,21 @@ def write_event_tasks(code, sequents):
                         )
                 if event.is_fun():
                     subsubbody('const Ob $arg = val;', arg=event.var.name)
+                elif event.is_var():
+                    subsubbody('const Ob $arg = task.ob;', arg=event.name)
                 for cost, strategy in strategies:
                     subsubbody.newline()
-                    subsubbody('// cost = $cost', cost = cost)
                     strategy.cpp(subsubbody)
                 subbody('''
-                    {
+                    { // cost = $cost
                         $subsubbody
                     }
                     ''',
+                    cost = cost,
                     subsubbody = wrapindent(subsubbody),
                     )
 
-            if eventname in ['LESS', 'NLESS']:
+            if eventname in ['LESS', 'NLESS', '<variable>']:
                 body(str(subbody))
             else:
                 body('''

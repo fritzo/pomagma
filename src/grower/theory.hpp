@@ -55,7 +55,7 @@ BinaryRelation NLESS(carrier, schedule_nless);
 inline Ob make ()
 {
     Ob val = carrier.try_insert();
-    POMAGMA_ASSERT(val, "make failed");
+    POMAGMA_ASSERT(val, "make failed (out of space)");
     return val;
 }
 

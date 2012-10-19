@@ -224,14 +224,11 @@ def compile_full(seq):
 @inputs(Sequent)
 def get_events(seq):
     events = set()
+    vars = seq.get_vars()
+    if len(vars) == 1:
+        var = iter(vars).next()
+        events.add(var)
     for sequent in normalize(seq):
-        '''
-        TODO
-        vars = sequent.get_vars()
-        if len(vars) == 1:
-            var = iter(vars).next()
-            events.add(var)
-        '''
         events |= sequent.antecedents
         # HACK to deal with Equation args
         succedent = iter(sequent.succedents).next()
@@ -244,7 +241,7 @@ def get_events(seq):
 @inputs(Sequent, Expression)
 def normalize_given(seq, atom, bound):
     for normal in normalize(seq):
-        if atom in normal.antecedents:
+        if atom in normal.antecedents or atom.is_var():
             yield normal
         # HACK to deal with Equation args
         succedent = iter(normal.succedents).next()
@@ -268,7 +265,7 @@ def compile_given(seq, atom):
         bound.add(atom.var)
     results = []
     for normal in normalize_given(seq, atom, bound):
-        #print 'DEBUG normal =', normal
+        print 'DEBUG normal =', normal
         ranked = rank_compiled(normal, context, bound)
         results.append(min(ranked))
     assert results, 'failed to compile {0} given {1}'.format(seq, atom)

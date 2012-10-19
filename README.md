@@ -12,12 +12,11 @@ Roadmap
 -------
 
 - Language
-    - Add langauges to git: sk, skj
+    - Add langauges to git: h4, sk, skj
 - Theory
-    - Implement fact compiler for Hindley's extensionality axioms
+    - Implement fact compiler to enumerate Hindley's extensionality axioms
 - Structure
     - Implement persistent serializer
-    - Create core structures from theory
 - Compiler
     - Get skj.theory.cpp to compile (probably by fixing pomagma/compiler.py)
 - Grower

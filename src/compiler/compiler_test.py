@@ -114,6 +114,17 @@ def test_compile_Y():
         [],
         [EQUAL(APP(Y, f), APP(f, APP(Y, f)))])
 
+def test_compile_bot():
+    BOT = Expression('BOT')
+    _test_sequent(
+        [],
+        [LESS(BOT, x)])
+
+def test_compile_reflexive():
+    _test_sequent(
+        [],
+        [LESS(x, x)])
+
 def test_compile_mono():
     _test_sequent(
         [LESS(x, y), LESS(f, g)],
