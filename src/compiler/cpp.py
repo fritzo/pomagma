@@ -291,14 +291,12 @@ def write_merge_task(code, functions):
         const Ob rep = carrier.find(dep);
         POMAGMA_ASSERT(dep > rep, "bad merge: " << dep << ", " << rep);
 
-        std::vector<std::future<void>> futures;
-        futures.push_back(std::async(
-            std::launch::async,
+        std::vector<std::thread> threads;
+        threads.push_back(std::thread(
             &BinaryRelation::unsafe_merge,
             &LESS,
             dep));
-        futures.push_back(std::async(
-            std::launch::async,
+        threads.push_back(std::thread(
             &BinaryRelation::unsafe_merge,
             &NLESS,
             dep));
@@ -314,8 +312,7 @@ def write_merge_task(code, functions):
             body('$name.unsafe_merge(dep);', name=name)
         else:
             body('''
-                futures.push_back(std::async(
-                    std::launch::async,
+                threads.push_back(std::thread(
                     &$arity::unsafe_merge,
                     &$name,
                     dep));
@@ -326,7 +323,7 @@ def write_merge_task(code, functions):
     body.newline()
 
     body('''
-        for (auto & f : futures) { f.wait(); }
+        for (auto & thread : threads) { thread.join(); }
         carrier.unsafe_remove(dep);
         '''
         )

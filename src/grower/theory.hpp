@@ -10,7 +10,7 @@
 #include "sampler.hpp"
 #include "scheduler.hpp"
 #include <atomic>
-#include <future>
+#include <thread>
 #include <vector>
 
 namespace pomagma
