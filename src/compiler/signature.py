@@ -24,6 +24,12 @@ ARITY_TABLE = {
     }
 
 
+RELATION_ARITIES = frozenset([
+    'Equation',
+    'BinaryRelation',
+    ])
+
+
 FUNCTION_ARITIES = frozenset([
     'NullaryFunction',
     'InjectiveFunction',
@@ -48,6 +54,10 @@ def is_var(symbol):
 
 def is_fun(symbol):
     return get_arity(symbol) in FUNCTION_ARITIES
+
+
+def is_rel(symbol):
+    return get_arity(symbol) in RELATION_ARITIES
 
 
 def get_arity(symbol):

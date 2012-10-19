@@ -2,6 +2,7 @@ import re
 from textwrap import dedent
 from string import Template
 from pomagma.compiler.util import TODO, inputs, union, methodof, log_sum_exp
+from pomagma.compiler.expressions import Expression
 from pomagma.compiler.sequents import Sequent
 from pomagma.compiler import signature
 from pomagma.compiler import compiler
@@ -390,6 +391,50 @@ def write_ensurers(code, functions):
                 ).newline()
 
 
+@inputs(Expression)
+def make_expression(expr):
+    assert expr.is_fun(), 'bad expression: %s' % expr
+    args = [expr.name] + map(make_expression, expr.args)
+    return 'make(%s)' % ', '.join(args)
+
+
+@inputs(Code, Expression)
+def write_fact(code, fact):
+    assert fact.is_rel(), 'bad fact: %s' % fact
+    lhs, rhs = fact.args
+
+    code('''
+        carrier.ensure_equal(
+            $lhs,
+            $rhs);
+        ''',
+        lhs = make_expression(lhs),
+        rhs = make_expression(rhs),
+        )
+
+
+@inputs(Code)
+def write_facts(code, facts):
+    body = Code()
+    for i, fact in enumerate(facts):
+        if i:
+            body.newline()
+        write_fact(body, fact)
+
+    code('''
+        $bar
+        // core facts
+
+        void assume_core_facts ()
+        {
+            $body
+        }
+        ''',
+        bar = bar,
+        body = wrapindent(body),
+        ).newline()
+
+
 @inputs(Code)
 def write_full_tasks(code, sequents):
 
@@ -581,14 +626,16 @@ def write_event_tasks(code, sequents):
                 ).newline()
 
 
-
-def get_functions_used_in(sequents):
+def get_functions_used_in(sequents, exprs):
     functions = dict((arity, []) for arity in signature.FUNCTION_ARITIES)
     symbols = set()
     for seq in sequents:
         assert isinstance(seq, Sequent)
         for expr in seq.antecedents | seq.succedents:
             symbols |= set(expr.polish.split())
+    for expr in exprs:
+        assert isinstance(expr, Expression)
+        symbols |= set(expr.polish.split())
     for c in symbols:
         if signature.is_fun(c):
             functions[signature.get_arity(c)].append(c)
@@ -598,10 +645,11 @@ def get_functions_used_in(sequents):
 
 
 @inputs(Code)
-def write_theory(code, sequents):
+def write_theory(code, rules=None, facts=None):
 
-    sequents = set(sequents)
-    functions = get_functions_used_in(sequents)
+    sequents = set(rules) if rules else set()
+    facts = set(facts) if facts else set()
+    functions = get_functions_used_in(sequents, facts)
 
     code('''
         #include "theory.hpp"
@@ -612,6 +660,7 @@ def write_theory(code, sequents):
     write_signature(code, functions)
     write_merge_task(code, functions)
     write_ensurers(code, functions)
+    write_facts(code, facts)
     write_full_tasks(code, sequents)
     write_event_tasks(code, sequents)
 

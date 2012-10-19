@@ -219,6 +219,23 @@ void do_work (bool (*try_work)())
     }
 }
 
+void cleanup ()
+{
+    POMAGMA_INFO("assuming core facts");
+    assume_core_facts();
+    POMAGMA_INFO("starting " << g_worker_count << " cleanup threads");
+    reset_stats();
+    std::vector<std::thread> threads;
+    for (size_t i = 0; i < g_worker_count; ++i) {
+        threads.push_back(std::thread(do_work, try_cleanup_work));
+    }
+    for (auto & thread : threads) {
+        thread.join();
+    }
+    POMAGMA_INFO("finished " << g_worker_count << " cleanup threads");
+    log_stats();
+}
+
 void grow ()
 {
     POMAGMA_INFO("starting " << g_worker_count << " grow threads");
@@ -231,21 +248,6 @@ void grow ()
         thread.join();
     }
     POMAGMA_INFO("finished " << g_worker_count << " grow threads");
-    log_stats();
-}
-
-void cleanup ()
-{
-    POMAGMA_INFO("starting " << g_worker_count << " cleanup threads");
-    reset_stats();
-    std::vector<std::thread> threads;
-    for (size_t i = 0; i < g_worker_count; ++i) {
-        threads.push_back(std::thread(do_work, try_cleanup_work));
-    }
-    for (auto & thread : threads) {
-        thread.join();
-    }
-    POMAGMA_INFO("finished " << g_worker_count << " cleanup threads");
     log_stats();
 }
 

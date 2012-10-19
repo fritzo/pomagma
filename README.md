@@ -14,7 +14,7 @@ Roadmap
 - Language
     - Add langauges to git: sk, skj
 - Theory
-    - Implement core writer (for Hindley's extensionality axioms)
+    - Implement fact compiler for Hindley's extensionality axioms
 - Structure
     - Implement persistent serializer
     - Create core structures from theory

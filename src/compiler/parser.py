@@ -109,7 +109,7 @@ def parse_string_to_expr(string):
     return expr
 
 
-def parse(filename):
+def parse_rules(filename):
     lines = ['']
     with open(filename) as f:
         for line in f.readlines():
@@ -118,3 +118,13 @@ def parse(filename):
     rules = parse_lines_to_rules(lines, filename)
     check_whitespace(lines, rules)
     return rules
+
+
+def parse_facts(filename):
+    facts = []
+    with open(filename) as f:
+        for line in f.readlines():
+            line = RE_COMMENT.sub('', line).strip()
+            if line:
+                facts.append(parse_string_to_expr(line))
+    return facts

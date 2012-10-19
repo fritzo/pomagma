@@ -105,10 +105,11 @@ add_custom_command(
 	)
 
 add_custom_command(
-	OUTPUT ${CMAKE_CURRENT_LIST_DIR}/group.theory.cpp
+	OUTPUT ${CMAKE_CURRENT_LIST_DIR}/h4.theory.cpp
 	COMMAND python ${SRC_DIR}/compiler/run.py compile
 		${SRC_DIR}/theory/group.rules
-		outfile=${CMAKE_CURRENT_LIST_DIR}/group.theory.cpp
+		${SRC_DIR}/theory/h4.facts
+		outfile=${CMAKE_CURRENT_LIST_DIR}/h4.theory.cpp
 	DEPENDS ${SRC_DIR}/compiler/util.py
 		${SRC_DIR}/compiler/expressions.py
 		${SRC_DIR}/compiler/sequents.py
@@ -117,10 +118,11 @@ add_custom_command(
 		${SRC_DIR}/compiler/cpp.py
 		${SRC_DIR}/compiler/run.py
 		${SRC_DIR}/theory/group.rules
+		${SRC_DIR}/theory/h4.facts
 	)
-add_executable(group.grower group.theory.cpp)
-target_link_libraries(group.grower ${POMAGMA_SERVER_LIBS})
-install(TARGETS group.grower DESTINATION ${PROJECT_SOURCE_DIR}/bin)
+add_executable(h4.grower h4.theory.cpp)
+target_link_libraries(h4.grower ${POMAGMA_SERVER_LIBS})
+install(TARGETS h4.grower DESTINATION ${PROJECT_SOURCE_DIR}/bin)
 
 add_custom_command(
 	OUTPUT ${CMAKE_CURRENT_LIST_DIR}/sk.theory.cpp

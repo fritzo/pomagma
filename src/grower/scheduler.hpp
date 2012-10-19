@@ -146,6 +146,7 @@ void execute (const SymmetricFunctionTask & task);
 void execute (const CleanupTask & task);
 void execute (const SampleTask & task);
 
+void assume_core_facts ();
 void cleanup_tasks_push_all ();
 bool cleanup_tasks_try_pop (CleanupTask & task);
 bool sample_tasks_try_pop (SampleTask & task);

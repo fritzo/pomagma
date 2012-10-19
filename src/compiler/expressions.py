@@ -67,6 +67,9 @@ class Expression(object):
     def is_fun(self):
         return signature.is_fun(self.name)
 
+    def is_rel(self):
+        return signature.is_rel(self.name)
+
     def get_vars(self):
         if self.is_var():
             return set([self])

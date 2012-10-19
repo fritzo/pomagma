@@ -50,6 +50,60 @@ BinaryRelation LESS(carrier, schedule_less);
 BinaryRelation NLESS(carrier, schedule_nless);
 
 //----------------------------------------------------------------------------
+// make expressions
+
+inline Ob make ()
+{
+    Ob val = carrier.try_insert();
+    POMAGMA_ASSERT(val, "make failed");
+    return val;
+}
+
+inline Ob make (NullaryFunction & fun)
+{
+    if (Ob val = fun.find()) {
+        return val;
+    } else {
+        Ob val = make();
+        fun.insert(val);
+        return val;
+    }
+}
+
+inline Ob make (InjectiveFunction & fun, Ob key)
+{
+    if (Ob val = fun.find(key)) {
+        return val;
+    } else {
+        Ob val = make();
+        fun.insert(key, val);
+        return val;
+    }
+}
+
+inline Ob make (BinaryFunction & fun, Ob lhs, Ob rhs)
+{
+    if (Ob val = fun.find(lhs, rhs)) {
+        return val;
+    } else {
+        Ob val = make();
+        fun.insert(lhs, rhs, val);
+        return val;
+    }
+}
+
+inline Ob make (SymmetricFunction & fun, Ob lhs, Ob rhs)
+{
+    if (Ob val = fun.find(lhs, rhs)) {
+        return val;
+    } else {
+        Ob val = make();
+        fun.insert(lhs, rhs, val);
+        return val;
+    }
+}
+
+//----------------------------------------------------------------------------
 // sample tasks
 
 bool sample_tasks_try_pop (SampleTask &)

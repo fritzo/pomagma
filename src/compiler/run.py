@@ -44,7 +44,7 @@ def contrapositves(*filenames):
     '''
     sequents = []
     for filename in filenames:
-        sequents += parser.parse(filename)
+        sequents += parser.parse_rules(filename)
     for sequent in sequents:
         print sequent.ascii()
         print
@@ -60,7 +60,7 @@ def measure(*filenames):
     '''
     sequents = []
     for filename in filenames:
-        sequents += parser.parse(filename)
+        sequents += parser.parse_rules(filename)
     for sequent in sequents:
         measure_sequent(sequent)
 
@@ -82,7 +82,7 @@ def test_compile(*filenames):
         assert stem_rules[-6:] == '.rules', stem_rules
         stem = stem_rules[:6]
 
-        sequents = parser.parse(stem_rules)
+        sequents = parser.parse_rules(stem_rules)
         for sequent in sequents:
             for cost, strategy in compile_full(sequent):
                 print '\n'.join(strategy.cpp_lines())
@@ -108,9 +108,16 @@ def compile(*infiles, **kwargs):
             list(infiles) +
             ['{0}={1}'.format(key, val) for key, val in kwargs.iteritems()])
 
-    sequents = []
+    rules = []
+    facts = []
     for infile in infiles:
-        sequents += parser.parse(infile)
+        extension = infile.split('.')[-1]
+        if extension == 'rules':
+            rules += parser.parse_rules(infile)
+        elif extension == 'facts':
+            facts += parser.parse_facts(infile)
+        else:
+            raise TypeError('unknown file type: %s' % infile)
 
     code = cpp.Code()
     code('''
@@ -120,7 +127,7 @@ def compile(*infiles, **kwargs):
         argstring = argstring,
         ).newline()
 
-    cpp.write_theory(code, sequents)
+    cpp.write_theory(code, rules, facts)
 
     with open(outfile, 'w') as f:
         f.write(str(code))

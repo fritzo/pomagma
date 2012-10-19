@@ -21,6 +21,11 @@ DEF_EXECUTE(SampleTask)
 
 #undef DEF_EXECUTE
 
+void assume_core_facts ()
+{
+    POMAGMA_INFO("assume_core_facts()");
+}
+
 void cleanup_tasks_push_all ()
 {
     POMAGMA_INFO("cleanup_tasks_push_all()");
