@@ -128,6 +128,7 @@ add_custom_command(
 	OUTPUT ${CMAKE_CURRENT_LIST_DIR}/sk.theory.cpp
 	COMMAND python ${SRC_DIR}/compiler/run.py compile
 		${SRC_DIR}/theory/sk.rules
+		${SRC_DIR}/theory/order.facts
 		outfile=${CMAKE_CURRENT_LIST_DIR}/sk.theory.cpp
 	DEPENDS ${SRC_DIR}/compiler/util.py
 		${SRC_DIR}/compiler/expressions.py
@@ -137,6 +138,7 @@ add_custom_command(
 		${SRC_DIR}/compiler/cpp.py
 		${SRC_DIR}/compiler/run.py
 		${SRC_DIR}/theory/sk.rules
+		${SRC_DIR}/theory/order.facts
 	)
 add_executable(sk.grower sk.theory.cpp)
 target_link_libraries(sk.grower ${POMAGMA_SERVER_LIBS})
@@ -147,6 +149,7 @@ add_custom_command(
 	COMMAND python ${SRC_DIR}/compiler/run.py compile
 		${SRC_DIR}/theory/sk.rules
 		${SRC_DIR}/theory/join.rules
+		${SRC_DIR}/theory/order.facts
 		outfile=${CMAKE_CURRENT_LIST_DIR}/skj.theory.cpp
 	DEPENDS ${SRC_DIR}/compiler/util.py
 		${SRC_DIR}/compiler/expressions.py
@@ -157,6 +160,7 @@ add_custom_command(
 		${SRC_DIR}/compiler/run.py
 		${SRC_DIR}/theory/sk.rules
 		${SRC_DIR}/theory/join.rules
+		${SRC_DIR}/theory/order.facts
 	)
 # TODO get skj.theory.cpp to compile
 #add_executable(skj.grower skj.theory.cpp)

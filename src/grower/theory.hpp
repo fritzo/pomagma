@@ -50,6 +50,24 @@ BinaryRelation LESS(carrier, schedule_less);
 BinaryRelation NLESS(carrier, schedule_nless);
 
 //----------------------------------------------------------------------------
+// basic ensurers
+
+inline void ensure_equal (Ob lhs, Ob rhs)
+{
+    carrier.ensure_equal(lhs, rhs);
+}
+
+inline void ensure_less (Ob lhs, Ob rhs)
+{
+    LESS.insert(lhs, rhs);
+}
+
+inline void ensure_nless (Ob lhs, Ob rhs)
+{
+    NLESS.insert(lhs, rhs);
+}
+
+//----------------------------------------------------------------------------
 // make expressions
 
 inline Ob make ()
@@ -108,13 +126,11 @@ inline Ob make (SymmetricFunction & fun, Ob lhs, Ob rhs)
 
 bool sample_tasks_try_pop (SampleTask &)
 {
-    return carrier.item_count() != item_dim();
+    return carrier.item_count() < item_dim();
 }
 
 void execute (const SampleTask &)
 {
-    POMAGMA_ASSERT(carrier.item_count() != item_dim(),
-            "tried to insert in full carrier");
     sampler.unsafe_insert_random();
 }
 

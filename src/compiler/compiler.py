@@ -265,7 +265,7 @@ def compile_given(seq, atom):
         bound.add(atom.var)
     results = []
     for normal in normalize_given(seq, atom, bound):
-        print 'DEBUG normal =', normal
+        #print 'DEBUG normal =', normal
         ranked = rank_compiled(normal, context, bound)
         results.append(min(ranked))
     assert results, 'failed to compile {0} given {1}'.format(seq, atom)

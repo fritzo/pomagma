@@ -211,19 +211,12 @@ def cpp(self, code):
     assert len(expr.args) == 2
     lhs, rhs = expr.args
     if lhs.is_var() and rhs.is_var():
-        if self.expr.name == 'EQUAL':
-            code('''
-            carrier.ensure_equal($args);
-            ''',
-            args = ', '.join(map(str, expr.args)),
-            )
-        else:
-            code('''
-            ${name}.insert($args);
-            ''',
-            name = expr.name,
-            args = ', '.join(map(str, expr.args)),
-            )
+        code('''
+        ensure_$name($args);
+        ''',
+        name = expr.name.lower(),
+        args = ', '.join(map(str, expr.args)),
+        )
     else:
         assert self.expr.name == 'EQUAL'
         if lhs.is_var():
@@ -401,10 +394,11 @@ def write_fact(code, fact):
     lhs, rhs = fact.args
 
     code('''
-        carrier.ensure_equal(
+        ensure_$name(
             $lhs,
             $rhs);
         ''',
+        name = fact.name.lower(),
         lhs = make_expression(lhs),
         rhs = make_expression(rhs),
         )
