@@ -224,10 +224,7 @@ def compile_full(seq):
 @inputs(Sequent)
 def get_events(seq):
     events = set()
-    vars = seq.get_vars()
-    if len(vars) == 1:
-        var = iter(vars).next()
-        events.add(var)
+    free_vars = seq.get_vars()
     for sequent in normalize(seq):
         events |= sequent.antecedents
         # HACK to deal with Equation args
@@ -235,6 +232,14 @@ def get_events(seq):
         for arg in succedent.args:
             if not arg.is_var():
                 events.add(arg)
+        antecedent_vars = union([a.get_vars() for a in sequent.antecedents])
+        for var in succedent.get_vars() & free_vars - antecedent_vars:
+            compound_count = sum(1 for arg in succedent.args if arg.args)
+            in_count = sum(1 for arg in succedent.args if var in arg.get_vars())
+            # if the var is in a compound in both succedent.args,
+            # then succedent.args are sufficient events.
+            if in_count < 2 or compound_count < 2:
+                events.add(var)
     return events
 
 
