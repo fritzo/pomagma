@@ -12,6 +12,8 @@
 namespace pomagma
 {
 
+const size_t DEFAULT_THREAD_COUNT = 1;
+
 class NullaryFunction;
 class InjectiveFunction;
 class BinaryFunction;
@@ -155,7 +157,7 @@ bool sample_tasks_try_pop (SampleTask & task);
 namespace Scheduler
 {
 
-void set_thread_counts (size_t worker_count);
+void set_thread_count (size_t worker_count);
 
 // blocking api, requires access from single thread
 void cleanup ();

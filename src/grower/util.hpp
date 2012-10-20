@@ -1,7 +1,7 @@
 #pragma once
 
 #include <stdint.h>
-#include <cstdlib> // for exit() & abort();
+#include <cstdlib>
 #include <iostream>
 #include <string>
 #include <sstream>
@@ -126,7 +126,37 @@ public:
          POMAGMA_var.next())
 
 //----------------------------------------------------------------------------
-// Logging
+// environment variables
+
+inline const char * getenv_default(const char * key, const char * default_val)
+{
+    const char * val = getenv(key);
+    return val ? val : default_val;
+}
+
+inline size_t getenv_default (const char * key, size_t default_val)
+{
+    const char * val = getenv(key);
+    return val ? atoi(val) : default_val;
+}
+
+inline int getenv_default (const char * key, int default_val)
+{
+    const char * val = getenv(key);
+    return val ? atoi(val) : default_val;
+}
+
+inline float getenv_default (const char * key, float default_val)
+{
+    const char * val = getenv(key);
+    return val ? atof(val) : default_val;
+}
+
+//----------------------------------------------------------------------------
+// logging
+
+const char * const DEFAULT_LOG_FILE = "pomagma.log";
+const size_t DEFAULT_LOG_LEVEL = 1;
 
 const std::string g_log_level_name[4] =
 {

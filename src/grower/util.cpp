@@ -6,28 +6,17 @@ namespace pomagma
 {
 
 //----------------------------------------------------------------------------
-// Logging
-
-inline const char * getenv_default(const char * key, const char * default_val)
-{
-    const char * result = getenv(key);
-    return result ? result : default_val;
-}
-
-inline int getenv_default(const char * key, int default_val)
-{
-    const char * result = getenv(key);
-    return result ? atoi(result) : default_val;
-}
+// logging
 
 const char * Log::s_log_filename =
-    getenv_default("POMAGMA_LOG_FILE", "pomagma.log");
+    getenv_default("POMAGMA_LOG_FILE", DEFAULT_LOG_FILE);
 std::ofstream Log::s_log_stream(s_log_filename, std::ios_base::app);
 
-const unsigned Log::s_log_level(getenv_default("POMAGMA_LOG_LEVEL", 1));
+const unsigned Log::s_log_level(
+    getenv_default("POMAGMA_LOG_LEVEL", DEFAULT_LOG_LEVEL));
 
 //----------------------------------------------------------------------------
-// Time
+// time
 
 timeval g_begin_time;
 const int g_init_time __attribute__((unused)) (gettimeofday(&g_begin_time, nullptr));

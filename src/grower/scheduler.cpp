@@ -12,8 +12,6 @@ namespace pomagma
 namespace Scheduler
 {
 
-static const size_t DEFAULT_THREAD_COUNT = 1;
-
 static size_t g_worker_count = DEFAULT_THREAD_COUNT;
 
 static std::atomic<bool> g_working_flag(false);
@@ -29,7 +27,7 @@ static std::atomic<uint_fast64_t> g_sample_count(0);
 static std::atomic<uint_fast64_t> g_cleanup_count(0);
 
 
-void set_thread_counts (size_t worker_count)
+void set_thread_count (size_t worker_count)
 {
     POMAGMA_ASSERT_LE(1, worker_count);
     g_worker_count = worker_count;

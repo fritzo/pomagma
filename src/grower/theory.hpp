@@ -40,9 +40,10 @@ void schedule_symmetric_function (const SymmetricFunction * fun, Ob lhs, Ob rhs)
     schedule(SymmetricFunctionTask(*fun, lhs, rhs));
 }
 
-// TODO set item dim at run time
-Carrier carrier(DEFAULT_ITEM_DIM, schedule_exists, schedule_merge);
-inline size_t item_dim () { return carrier.item_dim(); }
+Carrier carrier(
+    getenv_default("POMAGMA_SIZE", DEFAULT_ITEM_DIM),
+    schedule_exists,
+    schedule_merge);
 
 Sampler sampler(carrier);
 
@@ -126,7 +127,7 @@ inline Ob make (SymmetricFunction & fun, Ob lhs, Ob rhs)
 
 bool sample_tasks_try_pop (SampleTask &)
 {
-    return carrier.item_count() < item_dim();
+    return carrier.item_count() < carrier.item_dim();
 }
 
 void execute (const SampleTask &)

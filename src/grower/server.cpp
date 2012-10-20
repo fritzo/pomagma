@@ -46,17 +46,30 @@ void dump_structure (const char * endpoint)
 
 } // namespace pomagma
 
+inline std::string get_filename (const std::string & path)
+{
+    size_t pos = path.find_last_of("/");
+    if (pos != std::string::npos) {
+        return std::string(path.begin() + pos + 1, path.end());
+    } else {
+        return path;
+    }
+}
 
 int main (int argc, char ** argv)
 {
     if (argc != 4) {
         std::cout
             << "Usage: "
-            << argv[0]
-            << " language_in"
-            << " structure_in"
-            << " structure_out"
-            << std::endl;
+                << get_filename(argv[0])
+                << " language_in structure_in structure_out" << "\n"
+            << "Environment Variables:\n"
+            << "  POMAGMA_SIZE = " << pomagma::DEFAULT_ITEM_DIM << "\n"
+            << "  POMAGMA_THREADS = "
+                << pomagma::DEFAULT_THREAD_COUNT << "\n"
+            << "  POMAGMA_LOG_FILE = " << pomagma::DEFAULT_LOG_FILE << "\n"
+            << "  POMAGMA_LOG_LEVEL = " << pomagma::DEFAULT_LOG_LEVEL << "\n"
+            ;
         POMAGMA_WARN("expected 3 program args, got " << (argc - 1));
         exit(1);
     }
@@ -64,9 +77,13 @@ int main (int argc, char ** argv)
     const char * language_in = argv[1];
     const char * structure_in = argv[2];
     const char * structure_out = argv[3];
+    const size_t thread_count = pomagma::getenv_default(
+            "POMAGMA_THREADS",
+            pomagma::DEFAULT_THREAD_COUNT);
 
     pomagma::load_langauge(language_in);
     pomagma::load_structure(structure_in);
+    pomagma::Scheduler::set_thread_count(thread_count);
     pomagma::Scheduler::cleanup();
     pomagma::Scheduler::grow();
     pomagma::dump_structure(structure_out);

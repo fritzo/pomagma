@@ -7,7 +7,7 @@ using namespace pomagma;
 void test_simple (size_t max_threads = 20)
 {
     for (size_t i = 1; i <= max_threads; ++i) {
-        Scheduler::set_thread_counts(i);
+        Scheduler::set_thread_count(i);
         schedule(ExistsTask(1));
         Scheduler::cleanup();
         schedule(ExistsTask(1));

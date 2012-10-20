@@ -20,7 +20,6 @@ Roadmap
 - Compiler
     - Get skj.theory.cpp to compile (probably by fixing pomagma/compiler.py)
 - Grower
-    - Figure out how to set item_dim at runtime
     - Implement expression sampler
     - Implement dump, load operations
     - Implement language reading & data structure
