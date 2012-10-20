@@ -19,7 +19,7 @@ namespace pomagma
 namespace messaging { using namespace pomagma_messaging; }
 
 //----------------------------------------------------------------------------
-// Compiler-specific
+// compiler-specific
 
 //#ifndef __STDC_VERSION__
 //#  warning "__STDC_VERSION__ was undefined"
@@ -45,14 +45,14 @@ namespace messaging { using namespace pomagma_messaging; }
 #endif // __GNUG__
 
 //----------------------------------------------------------------------------
-// Debugging
+// debugging
 
 #ifndef POMAGMA_DEBUG_LEVEL
 #  define POMAGMA_DEBUG_LEVEL 0
 #endif // POMAGMA_DEBUG_LEVEL
 
 //----------------------------------------------------------------------------
-// Convenience
+// convenience
 
 template<class T> inline T min (T x, T y) { return (x < y) ? x : y; }
 template<class T> inline T max (T x, T y) { return (x > y) ? x : y; }
@@ -82,6 +82,9 @@ template<> struct static_log2i<1>
 {
     static size_t val () { return 0; };
 };
+
+//----------------------------------------------------------------------------
+// time
 
 float get_elapsed_time ();
 std::string get_date (bool hour=true);
@@ -119,11 +122,6 @@ class noncopyable
 public:
     noncopyable () {}
 };
-
-#define POMAGMA_FOR(POMAGMA_type, POMAGMA_var, POMAGMA_init) \
-    for (POMAGMA_type POMAGMA_var POMAGMA_init; \
-         POMAGMA_var.ok(); \
-         POMAGMA_var.next())
 
 //----------------------------------------------------------------------------
 // environment variables
@@ -170,18 +168,18 @@ class Log
 {
     static const char * s_log_filename;
     static std::ofstream s_log_stream;
-    static const unsigned s_log_level;
+    static const size_t s_log_level;
 
     std::ostringstream m_message;
 
 public:
 
-    static unsigned level () { return s_log_level; }
+    static size_t level () { return s_log_level; }
 
-    Log (unsigned level)
+    Log (size_t level)
     {
         m_message << std::left << std::setw(12) << get_elapsed_time();
-        m_message << g_log_level_name[min(4u, level)];
+        m_message << g_log_level_name[min(size_t(4), level)];
     }
 
     ~Log ()
@@ -266,7 +264,7 @@ public:
         "bad alignment for variable " #POMAGMA_ptr)
 
 //----------------------------------------------------------------------------
-// Data types
+// data types
 
 // Ob is a 1-based index type with 0 = none
 typedef uint16_t Ob;
@@ -278,7 +276,7 @@ const size_t BITS_PER_CACHE_LINE = 512;
 const size_t DEFAULT_ITEM_DIM = BITS_PER_CACHE_LINE - 1; // for one-based sets
 
 //----------------------------------------------------------------------------
-// Words of bits
+// words of bits
 
 typedef uint64_t Word;
 const size_t BITS_PER_WORD = 8 * sizeof(Word);
@@ -288,7 +286,7 @@ const Word FULL_WORD = ~Word(0);
 static_assert(FULL_WORD + Word(1) == 0, "FULL_WORD is bad");
 
 //----------------------------------------------------------------------------
-// Blocks of atomic Ob
+// blocks of atomic Ob
 
 const size_t LOG2_ITEMS_PER_BLOCK = 3;
 const size_t ITEMS_PER_BLOCK = 1 << LOG2_ITEMS_PER_BLOCK;
