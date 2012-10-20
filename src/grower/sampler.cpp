@@ -22,6 +22,26 @@ inline float sum (const std::unordered_map<T, float> & map)
     return result;
 }
 
+void Sampler::declare (const std::string & name, const NullaryFunction & fun)
+{
+    m_nullary_funs[name] = & fun;
+}
+
+void Sampler::declare (const std::string & name, const InjectiveFunction & fun)
+{
+    m_injective_funs[name] = & fun;
+}
+
+void Sampler::declare (const std::string & name, const BinaryFunction & fun)
+{
+    m_binary_funs[name] = & fun;
+}
+
+void Sampler::declare (const std::string & name, const SymmetricFunction & fun)
+{
+    m_symmetric_funs[name] = & fun;
+}
+
 void Sampler::set_prob (const NullaryFunction * fun, float prob)
 {
     m_nullary_probs[fun] = prob;
@@ -46,6 +66,31 @@ void Sampler::set_prob (const SymmetricFunction * fun, float prob)
     m_symmetric_prob = sum(m_symmetric_probs);
 }
 
+template<class Function>
+bool Sampler::try_set_prob_ (
+        const std::unordered_map<std::string, const Function *> & funs,
+        const std::string & name,
+        float prob)
+{
+    auto iter = funs.find(name);
+    if (iter == funs.end()) {
+        return false;
+    } else {
+        set_prob(iter->second, prob);
+        return true;
+    }
+}
+
+void Sampler::set_prob (const std::string & name, float prob)
+{
+    bool found =
+        try_set_prob_(m_nullary_funs, name, prob) or
+        try_set_prob_(m_injective_funs, name, prob) or
+        try_set_prob_(m_binary_funs, name, prob) or
+        try_set_prob_(m_symmetric_funs, name, prob);
+    POMAGMA_ASSERT(found, "failed to set prob of function: " << name);
+}
+
 
 template<class Key>
 inline Key sample (
@@ -66,19 +111,19 @@ inline Key sample (
     }
 };
 
-void Sampler::unsafe_insert_random ()
+bool Sampler::try_insert_random ()
 {
-    // TODO measure rejection rate
     while (m_carrier.item_count() < m_carrier.item_dim()) {
-        auto pair = try_insert_random();
+        auto pair = try_insert_random_();
         bool inserted = pair.second;
         if (inserted) {
-            return;
+            return true;
         }
     }
+    return false;
 }
 
-std::pair<Ob, bool> Sampler::try_insert_random ()
+std::pair<Ob, bool> Sampler::try_insert_random_ ()
 {
     while (true) {
         float r = random_01();
@@ -93,7 +138,7 @@ std::pair<Ob, bool> Sampler::try_insert_random ()
             }
         }
 
-        auto arg1_inserted = try_insert_random();
+        auto arg1_inserted = try_insert_random_();
         if (arg1_inserted.second) return arg1_inserted;
         Ob arg1 = arg1_inserted.first;
 
@@ -112,7 +157,7 @@ std::pair<Ob, bool> Sampler::try_insert_random ()
             }
         }
 
-        auto arg2_inserted = try_insert_random();
+        auto arg2_inserted = try_insert_random_();
         if (arg2_inserted.second) return arg2_inserted;
         Ob arg2 = arg2_inserted.first;
 

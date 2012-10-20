@@ -1,5 +1,6 @@
 #include "util.hpp"
 #include "scheduler.hpp"
+#include "sampler.hpp"
 #include "language.pb.h"
 #include "structure.pb.h"
 #include <zmq.hpp>
@@ -8,20 +9,22 @@
 namespace pomagma
 {
 
-void load_language (const char * language_file)
+void set_language_prob (const std::string & name, float prob);
+
+void load_language (const char * filename)
 {
-    //zmq::context_t context(1);
-    //zmq::socket_t socket (context, ZMQ_REP);
-    //socket.bind(endpoint);
+    messaging::Language language;
 
-    //zmq::message_t request;
-    //socket.recv(&request);
+    std::ifstream file(filename, std::ios::in | std::ios::binary);
+    POMAGMA_ASSERT(file.is_open(),
+        "failed to open language file " << filename);
+    POMAGMA_ASSERT(language.ParseFromIstream(&file),
+        "failed tp parse language file " << filename);
 
-    //messaging::Language language;
-    //language.ParseFromArray(request.data(), request.size());
-
-    std::ifstream file(language_file);
-    TODO("load language");
+    for (int i = 0; i < language.terms_size(); ++i) {
+        const auto & term = language.terms(i);
+        set_language_prob(term.name(), term.weight());
+    }
 }
 
 void load_structure (const char * endpoint)
@@ -57,8 +60,24 @@ inline std::string get_filename (const std::string & path)
     }
 }
 
+inline std::string get_language (const std::string & path)
+{
+    const std::string server = get_filename(path);
+    size_t pos = server.find_last_of(".");
+    const std::string stem(server.begin(), server.begin() + pos);
+    const std::string home = getenv("HOME");
+    return home + "/src/language/" + stem + ".language";
+}
+
 int main (int argc, char ** argv)
 {
+    const std::string DEFAULT_LANGUAGE = get_language(argv[0]);
+    const char * language_file = pomagma::getenv_default(
+            "POMAGMA_LANGUAGE",
+            DEFAULT_LANGUAGE.c_str());
+    const size_t thread_count = pomagma::getenv_default(
+            "POMAGMA_THREADS",
+            pomagma::DEFAULT_THREAD_COUNT);
     const char * structure_in = nullptr;
     const char * structure_out = nullptr;
 
@@ -73,7 +92,7 @@ int main (int argc, char ** argv)
                 << get_filename(argv[0])
                 << " [structure_in] structure_out" << "\n"
             << "Environment Variables:\n"
-            << "  POMAGMA_LANGUAGE (required)" << "\n"
+            << "  POMAGMA_LANGUAGE = " << DEFAULT_LANGUAGE << "\n"
             << "  POMAGMA_SIZE = " << pomagma::DEFAULT_ITEM_DIM << "\n"
             << "  POMAGMA_THREADS = "
                 << pomagma::DEFAULT_THREAD_COUNT << "\n"
@@ -84,13 +103,6 @@ int main (int argc, char ** argv)
         exit(1);
     }
 
-    const char * language_file = getenv("POMAGMA_LANGUAGE");
-    const size_t thread_count = pomagma::getenv_default(
-            "POMAGMA_THREADS",
-            pomagma::DEFAULT_THREAD_COUNT);
-
-    POMAGMA_ASSERT(language_file,
-        "environment variable POMAGMA_LANGUAGE is not defined");
     pomagma::load_language(language_file);
 
     if (structure_in) {

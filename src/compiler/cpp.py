@@ -270,6 +270,31 @@ def write_signature(code, functions):
         if names:
             code.newline()
 
+    body = Code()
+    for arity, names in functions.iteritems():
+        for name in names:
+            body('''
+                sampler.declare("$NAME", $NAME);
+                ''',
+                NAME = name)
+    code('''
+        inline bool init_language ()
+        {
+            $body
+
+            return true;
+        }
+
+        void set_language_prob (const std::string & name, float prob)
+        {
+            static const bool initialized __attribute__((unused)) =
+                init_language();
+            sampler.set_prob(name, prob);
+            
+        }
+        ''',
+        body = body,
+        ).newline()
 
 # TODO Add language loader
 def write_language_loader(code):
@@ -639,7 +664,8 @@ def write_theory(code, rules=None, facts=None):
     code('''
         #include "theory.hpp"
         
-        namespace pomagma {
+        namespace pomagma
+        {
         ''').newline()
 
     write_signature(code, functions)

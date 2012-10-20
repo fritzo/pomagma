@@ -1,4 +1,5 @@
 #pragma once
+// WARNING this should only be linked to once
 
 #include "util.hpp"
 #include "carrier.hpp"
@@ -132,7 +133,7 @@ bool sample_tasks_try_pop (SampleTask &)
 
 void execute (const SampleTask &)
 {
-    sampler.unsafe_insert_random();
+    sampler.try_insert_random();
 }
 
 } // namespace pomagma

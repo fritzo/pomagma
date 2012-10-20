@@ -1,4 +1,6 @@
 #include "util.hpp"
+#include "carrier.hpp"
+#include "sampler.hpp"
 #include "scheduler.hpp"
 
 namespace pomagma
@@ -20,6 +22,11 @@ DEF_EXECUTE(CleanupTask)
 DEF_EXECUTE(SampleTask)
 
 #undef DEF_EXECUTE
+
+void set_language_prob (const std::string & name, float prob)
+{
+    POMAGMA_INFO("set p(" << name << ") = " << prob);
+}
 
 void assume_core_facts ()
 {

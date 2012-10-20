@@ -15,6 +15,11 @@ class Sampler
 {
     Carrier & m_carrier;
 
+    std::unordered_map<std::string, const NullaryFunction *> m_nullary_funs;
+    std::unordered_map<std::string, const InjectiveFunction *> m_injective_funs;
+    std::unordered_map<std::string, const BinaryFunction *> m_binary_funs;
+    std::unordered_map<std::string, const SymmetricFunction *> m_symmetric_funs;
+
     std::unordered_map<const NullaryFunction *, float> m_nullary_probs;
     std::unordered_map<const InjectiveFunction *, float> m_injective_probs;
     std::unordered_map<const BinaryFunction *, float> m_binary_probs;
@@ -28,16 +33,28 @@ public:
 
     Sampler (Carrier & carrier);
 
+    void declare (const std::string & name, const NullaryFunction & fun);
+    void declare (const std::string & name, const InjectiveFunction & fun);
+    void declare (const std::string & name, const BinaryFunction & fun);
+    void declare (const std::string & name, const SymmetricFunction & fun);
+
     void set_prob (const NullaryFunction * fun, float prob);
     void set_prob (const InjectiveFunction * fun, float prob);
     void set_prob (const BinaryFunction * fun, float prob);
     void set_prob (const SymmetricFunction * fun, float prob);
+    void set_prob (const std::string &, float prob);
 
-    void unsafe_insert_random (); // TODO make safe as try_insert
+    bool try_insert_random ();
 
 private:
 
-    std::pair<Ob, bool> try_insert_random ();
+    template<class Function>
+    bool try_set_prob_ (
+            const std::unordered_map<std::string, const Function *> & funs,
+            const std::string & name,
+            float prob);
+
+    std::pair<Ob, bool> try_insert_random_ ();
 };
 
 } // namespace pomagma
