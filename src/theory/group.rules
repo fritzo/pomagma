@@ -1,4 +1,4 @@
-# groups, with elements ordered by syntactic complexity
+# groups, where order is an equivalence relation
 
 ---------------------------------
 EQUAL APP x APP y z APP APP x y z
@@ -6,9 +6,9 @@ EQUAL APP x APP y z APP APP x y z
 ---------------   ---------------
 EQUAL APP I x x   EQUAL APP x I x
 
-           LESS x y   LESS y z
---------   -------------------
-LESS I x        LESS x z
+           LESS x y   LESS x y   LESS y z
+--------   --------   -------------------
+LESS x x   LESS y x        LESS x z
 
       LESS x y               LESS f g
 --------------------   --------------------

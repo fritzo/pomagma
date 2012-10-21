@@ -49,7 +49,7 @@ void InjectiveFunction::validate () const
 {
     SharedLock lock(m_mutex);
 
-    POMAGMA_DEBUG("Validating InjectiveFunction");
+    POMAGMA_INFO("Validating InjectiveFunction");
 
     m_set.validate();
     m_inverse_set.validate();

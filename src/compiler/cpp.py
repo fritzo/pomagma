@@ -321,6 +321,9 @@ def write_validator(code, functions):
 
             threads.push_back(std::thread([](){ LESS.validate(); }));
             threads.push_back(std::thread([](){ NLESS.validate(); }));
+            threads.push_back(std::thread([](){
+                NLESS.validate_disjoint(LESS);
+            }));
             $body1
 
             carrier.validate();

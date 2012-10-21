@@ -28,7 +28,7 @@ void NullaryFunction::validate () const
 {
     SharedLock lock(m_mutex);
 
-    POMAGMA_DEBUG("Validating NullaryFunction");
+    POMAGMA_INFO("Validating NullaryFunction");
 
     Ob value = m_value;
     if (value) {

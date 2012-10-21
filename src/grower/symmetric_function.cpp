@@ -54,7 +54,7 @@ void SymmetricFunction::validate () const
 {
     SharedLock lock(m_mutex);
 
-    POMAGMA_DEBUG("Validating SymmetricFunction");
+    POMAGMA_INFO("Validating SymmetricFunction");
 
     m_lines.validate();
 
@@ -84,7 +84,7 @@ void SymmetricFunction::validate () const
         }
     }
 
-    POMAGMA_INFO("Validating inverse contains function");
+    POMAGMA_DEBUG("validating inverse contains function");
     for (auto lhs_iter = support().iter(); lhs_iter.ok(); lhs_iter.next()) {
         Ob lhs = *lhs_iter;
         for (auto rhs_iter = iter_lhs(lhs); rhs_iter.ok(); rhs_iter.next()) {
@@ -96,7 +96,7 @@ void SymmetricFunction::validate () const
         }
     }
 
-    POMAGMA_INFO("Validating function contains inverse");
+    POMAGMA_DEBUG("validating function contains inverse");
     m_Vlr_table.validate(this);
     m_VLr_table.validate(this);
 }

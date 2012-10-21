@@ -14,6 +14,8 @@ Sampler::Sampler (Carrier & carrier)
 
 void Sampler::validate () const
 {
+    POMAGMA_INFO("Validating Sampler");
+
     float total =
         m_nullary_prob +
         m_injective_prob +

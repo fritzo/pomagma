@@ -1,10 +1,9 @@
 # the group H4 with 14400 elements
 
-LESS R S
-LESS S T
-LESS T U
-LESS U R
-NLESS R I
+LESS R I
+LESS S I
+LESS T I
+NLESS U I
 
 EQUAL APP R R I
 EQUAL APP S S I

@@ -58,7 +58,7 @@ void BinaryRelation::validate () const
 {
     UniqueLock lock(m_mutex);
 
-    POMAGMA_DEBUG("Validating BinaryRelation");
+    POMAGMA_INFO("Validating BinaryRelation");
 
     m_lines.validate();
 
@@ -100,7 +100,7 @@ void BinaryRelation::validate_disjoint (const BinaryRelation & other) const
 {
     UniqueLock lock(m_mutex);
 
-    POMAGMA_DEBUG("Validating disjoint pair of BinaryRelations");
+    POMAGMA_INFO("Validating disjoint pair of BinaryRelations");
 
     // validate supports agree
     POMAGMA_ASSERT_EQ(support().item_dim(), other.support().item_dim());

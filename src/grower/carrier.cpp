@@ -139,6 +139,8 @@ void Carrier::validate () const
 {
     UniqueLock lock(m_mutex);
 
+    POMAGMA_INFO("Validating Carrier");
+
     m_support.validate();
 
     size_t actual_item_count = 0;
