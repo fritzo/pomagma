@@ -163,7 +163,7 @@ inline bool sample_tasks_try_execute ()
     if (sample_tasks_try_pop(task)) {
         SharedMutex::SharedLock lock(g_strict_mutex);
         execute(task);
-        g_sample_count.fetch_add(1);
+        g_sample_count.fetch_add(1, relaxed);
         return true;
     } else {
         return false;
@@ -176,7 +176,7 @@ inline bool cleanup_tasks_try_execute ()
     if (cleanup_tasks_try_pop(task)) {
         SharedMutex::SharedLock lock(g_strict_mutex);
         execute(task);
-        g_cleanup_count.fetch_add(1);
+        g_cleanup_count.fetch_add(1, relaxed);
         return true;
     } else {
         return false;

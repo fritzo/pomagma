@@ -109,23 +109,26 @@ int main (int argc, char ** argv)
         exit(1);
     }
 
+    pomagma::Scheduler::set_thread_count(thread_count);
     pomagma::load_language(language_file);
-
     if (structure_in) {
         pomagma::load_structure(structure_in);
     }
-
     if (POMAGMA_DEBUG_LEVEL > 1) {
         pomagma::validate_all();
     }
 
-    pomagma::Scheduler::set_thread_count(thread_count);
     pomagma::Scheduler::cleanup();
-    pomagma::Scheduler::grow();
+    if (POMAGMA_DEBUG_LEVEL > 1) {
+        pomagma::validate_all();
+    }
 
+    pomagma::Scheduler::grow();
     if (POMAGMA_DEBUG_LEVEL > 0) {
         pomagma::validate_all();
     }
+
+    // TODO log structure statistics: density of relations & functions
 
     pomagma::dump_structure(structure_out);
 

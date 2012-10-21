@@ -291,7 +291,7 @@ def write_signature(code, functions):
             sampler.set_prob(name, prob);
         }
         ''',
-        body = body,
+        body = wrapindent(body),
         ).newline()
 
 
@@ -529,7 +529,7 @@ def write_full_tasks(code, sequents):
                 if (type == g_type_count) {
                     return false;
                 }
-            } while (g_cleanup_type.compare_exchange_weak(type, type + 1));
+            } while (not g_cleanup_type.compare_exchange_weak(type, type + 1));
 
             task.type = type;
             return true;
