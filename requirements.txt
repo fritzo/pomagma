@@ -1,2 +1,1 @@
-zmq
 git+ssh://git@github.com/fritzo/parsable.py
