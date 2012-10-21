@@ -298,22 +298,32 @@ def write_signature(code, functions):
 @inputs(Code)
 def write_validator(code, functions):
     body = Code()
-    for arity, funs in functions.iteritems():
+    functions = functions.items()
+    functions.sort(key=lambda (arity, _): -signature.get_nargs(arity))
+    for arity, funs in functions:
         for name in funs:
-            body('''
-                $name.validate();
-                ''',
-                name = name,
-                )
+            if signature.get_nargs(arity) < 2:
+                body('''
+                    $name.validate();
+                    ''',
+                    name = name)
+            else:
+                body('''
+                    threads.push_back(std::thread([](){ $name.validate(); }));
+                    ''',
+                    name = name)
 
     code('''
         void validate_all ()
         {
-            // TODO switch to multiple threads once system stabilizes
-            carrier.validate();
-            LESS.validate();
-            NLESS.validate();
+            std::vector<std::thread> threads;
+
+            threads.push_back(std::thread([](){ carrier.validate(); }));
+            threads.push_back(std::thread([](){ LESS.validate(); }));
+            threads.push_back(std::thread([](){ NLESS.validate(); }));
             $body
+
+            for (auto & thread : threads) { thread.join(); }
         }
         ''',
         body = wrapindent(body),
