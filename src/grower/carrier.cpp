@@ -58,6 +58,7 @@ Ob Carrier::try_insert () const
                 if (m_insert_callback) {
                     m_insert_callback(ob);
                 }
+                POMAGMA_DEBUG1(m_item_count.load() << " obs after insert()");
                 return ob;
             }
         }
@@ -90,6 +91,7 @@ void Carrier::unsafe_remove (const Ob ob)
     m_support.remove(ob);
     m_reps[ob].store(0);
     --m_item_count;
+    POMAGMA_DEBUG1(m_item_count.load() << " obs after remove()");
 }
 
 Ob Carrier::merge (Ob dep, Ob rep) const

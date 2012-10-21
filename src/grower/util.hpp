@@ -179,7 +179,7 @@ public:
     Log (size_t level)
     {
         m_message << std::left << std::setw(12) << get_elapsed_time();
-        m_message << g_log_level_name[min(size_t(4), level)];
+        m_message << g_log_level_name[min(size_t(3), level)];
     }
 
     ~Log ()
@@ -204,7 +204,7 @@ public:
             << "\e[0;39m"
             << std::endl;
         s_log_stream << message.str() << std::flush;
-        std::cerr << message.str() << std::flush; // DEBUG
+        //std::cerr << message.str() << std::flush; // DEBUG
     }
 };
 
@@ -214,6 +214,8 @@ public:
     { if (pomagma::Log::level() >= 2) { pomagma::Log(2) << message; } }
 #define POMAGMA_DEBUG(message) \
     { if (pomagma::Log::level() >= 3) { pomagma::Log(3) << message; } }
+#define POMAGMA_DEBUG1(message) \
+    { if (pomagma::Log::level() >= 4) { pomagma::Log(4) << message; } }
 
 #define POMAGMA_ERROR(message) { pomagma::Log(0) \
     << message << "\n\t" \

@@ -147,11 +147,15 @@ inline Key sample (
 
 bool Sampler::try_insert_random () const
 {
-    while (m_carrier.item_count() < m_carrier.item_dim()) {
+    size_t attempt = 0;
+    while (m_carrier.item_count() == m_carrier.item_dim()) {
         auto pair = try_insert_random_();
         bool inserted = pair.second;
         if (inserted) {
             return true;
+        }
+        if (++attempt % 10000 == 0) {
+            POMAGMA_WARN("failed " << attempt << " insertion attempts");
         }
     }
     return false;
@@ -159,6 +163,7 @@ bool Sampler::try_insert_random () const
 
 std::pair<Ob, bool> Sampler::try_insert_random_ () const
 {
+    size_t attempt = 0;
     while (true) {
         float r = random_01();
 
@@ -226,6 +231,9 @@ std::pair<Ob, bool> Sampler::try_insert_random_ () const
         }
 
         // occasionally fall through due to rounding error
+        if (++attempt % 10 == 0) {
+            POMAGMA_WARN("failed " << attempt << " insertion attempts");
+        }
     }
 }
 

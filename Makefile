@@ -38,7 +38,7 @@ h4-test: build/debug log
 	@echo '' > log/h4.log
 	#POMAGMA_SIZE=14400 # slow reenable later
 	POMAGMA_THREADS=1 \
-	POMAGMA_LOG_LEVEL=3 \
+	POMAGMA_LOG_LEVEL=4 \
 	POMAGMA_LOG_FILE=log/h4.log \
 	build/debug/src/grower/h4.grower TODO_structure_out \
 	|| (grep -C3 -i error log/h4.log && false)
