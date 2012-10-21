@@ -20,7 +20,6 @@ install: python-libs build/release
 	&& $(MAKE) && $(MAKE) install)
 
 test: python-libs build/debug log
-	@echo 'PWD =' `pwd`
 	@(cd build/debug && cmake -DCMAKE_BUILD_TYPE=Debug ../..)
 	@$(MAKE) -C build/debug
 	@echo '' > log/test.log
@@ -29,6 +28,18 @@ test: python-libs build/debug log
 	$(MAKE) -C build/debug test \
 	|| (grep -C3 -i error log/test.log && false)
 	@$(MAKE) -C src/compiler test
+
+h4-test: build/debug log
+	@$(MAKE) -C src/language h4.language
+	@(cd build/debug && cmake -DCMAKE_BUILD_TYPE=Debug ../..)
+	@$(MAKE) -C build/debug/src/grower h4.grower
+	@echo '' > log/h4.log
+	#POMAGMA_THREADS=4 # XXX this freezes
+	POMAGMA_THREADS=1 \
+	POMAGMA_LOG_LEVEL=3 \
+	POMAGMA_LOG_FILE=log/h4.log \
+	build/debug/src/grower/h4.grower TODO_structure_out \
+	|| (grep -C3 -i error log/h4.log && false)
 
 profile: build/release log FORCE
 	@echo 'PWD =' `pwd`

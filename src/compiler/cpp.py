@@ -278,19 +278,17 @@ def write_signature(code, functions):
                 ''',
                 NAME = name)
     code('''
-        inline bool init_language ()
+        void init_language ()
         {
             $body
-
-            return true;
         }
 
         void set_language_prob (const std::string & name, float prob)
         {
-            static const bool initialized __attribute__((unused)) =
-                init_language();
+            static std::once_flag flag;
+            std::call_once(flag, init_language);
+
             sampler.set_prob(name, prob);
-            
         }
         ''',
         body = body,
@@ -507,7 +505,7 @@ def write_full_tasks(code, sequents):
 
                 $cases
 
-                default: POMAGMA_ERROR("bad cleanup type" << task.type);
+                default: POMAGMA_ERROR("bad cleanup type " << task.type);
             }
         }
         ''',

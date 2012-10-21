@@ -20,3 +20,4 @@
 *_pb2.py
 *.theory.cpp
 !/src/grower/dummy.theory.cpp
+*.language

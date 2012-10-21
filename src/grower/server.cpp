@@ -66,7 +66,7 @@ inline std::string get_language (const std::string & path)
     size_t pos = server.find_last_of(".");
     const std::string stem(server.begin(), server.begin() + pos);
     const std::string home = getenv("HOME");
-    return home + "/src/language/" + stem + ".language";
+    return home + "/pomagma/src/language/" + stem + ".language";
 }
 
 int main (int argc, char ** argv)
