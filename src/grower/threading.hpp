@@ -79,9 +79,13 @@ public:
 
 struct AssertMutex
 {
-    void lock () {}
-    void unlock () {}
-    struct Lock { Lock (AssertMutex &) {} };
+    void lock () { load_barrier(); }
+    void unlock () { store_barrier(); }
+    struct Lock
+    {
+        Lock (AssertMutex &) { load_barrier(); }
+        ~Lock () { store_barrier(); }
+    };
 };
 
 #else // (POMAGMA_DEBUG_LEVEL == 0)
@@ -98,6 +102,7 @@ public:
 
     void lock ()
     {
+        load_barrier();
         bool expected = false;
         POMAGMA_ASSERT(m_flag.compare_exchange_strong(expected, true),
                 "lock contention");
@@ -108,6 +113,7 @@ public:
         bool expected = true;
         POMAGMA_ASSERT(m_flag.compare_exchange_strong(expected, false),
                 "unlock contention");
+        store_barrier();
     }
 
     typedef unique_lock<Mutex> Lock;
@@ -174,8 +180,16 @@ public:
 
 struct AssertSharedMutex
 {
-    struct UniqueLock { UniqueLock (AssertSharedMutex &) {} };
-    struct SharedLock { SharedLock (AssertSharedMutex &) {} };
+    struct UniqueLock
+    {
+        UniqueLock (AssertSharedMutex &) { load_barrier(); }
+        ~UniqueLock () { store_barrier(); }
+    };
+    struct SharedLock
+    {
+        SharedLock (AssertSharedMutex &) { load_barrier(); }
+        ~SharedLock () { store_barrier(); }
+    };
 };
 
 #else // (POMAGMA_DEBUG_LEVEL == 0)
@@ -190,17 +204,27 @@ public:
 
     void lock ()
     {
+        load_barrier();
         POMAGMA_ASSERT(--m_count < 0, "lock contention");
     }
 
-    void unlock () { ++m_count; }
+    void unlock ()
+    {
+        ++m_count;
+        store_barrier();
+    }
 
     void lock_shared ()
     {
+        load_barrier();
         POMAGMA_ASSERT(++m_count > 0, "lock_shared contention");
     }
 
-    void unlock_shared () { --m_count; }
+    void unlock_shared ()
+    {
+        --m_count;
+        store_barrier();
+    }
 
     typedef unique_lock<AssertSharedMutex> UniqueLock;
     typedef shared_lock<AssertSharedMutex> SharedLock;
