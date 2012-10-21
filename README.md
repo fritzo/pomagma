@@ -12,7 +12,7 @@ Roadmap
 -------
 
 - Language
-    - Add langauges to git: sk, skj
+    - Add languages to git: sk, skj
 - Theory
     - Implement fact compiler to enumerate Hindley's extensionality axioms
 - Structure
@@ -58,14 +58,14 @@ System Architecture
 
 ![Architecture](pomagma/raw/master/doc/architecture.png)
 
-- Language - A probabilistic grammar defining an algebra's generators
-- Theory - Inference rules and facts definint an algebra's relations
-- Structure - A finite piece representing the target algebra
-- Compiler - An optimizing compiler for forward-chaining inference
-- Grower - A parallel Todd-Coxeter rules engine
-- Aggregator - Joins charts from growers into a global atlas
-- Trimmer - Cuts off pieces of the structure for further growth
-- Navigator - The user interface for exploring the mapped algebra
-- Theorist - Statistically conjectures new relations
-- Linguist - A Bayesian grammar optimizer / MCMC sampler
+- Language - a probabilistic grammar defining an algebra's generators
+- Theory - inference rules and facts defining an algebra's relations
+- Structure - a finite piece representing the target algebra
+- Compiler - an optimizing compiler for forward-chaining inference
+- Grower - a parallel Todd-Coxeter rules engine
+- Aggregator - joins charts from growers into a global atlas
+- Trimmer - cuts off pieces of the structure for further growth
+- Navigator - the user interface for exploring the mapped algebra
+- Theorist - statistically conjectures new relations
+- Linguist - a Bayesian grammar optimizer / MCMC sampler
 
