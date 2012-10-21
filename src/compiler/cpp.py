@@ -297,19 +297,20 @@ def write_signature(code, functions):
 
 @inputs(Code)
 def write_validator(code, functions):
-    body = Code()
+    body1 = Code()
+    body2 = Code()
     functions = functions.items()
     functions.sort(key=lambda (arity, _): -signature.get_nargs(arity))
     for arity, funs in functions:
         for name in funs:
-            if signature.get_nargs(arity) < 2:
-                body('''
-                    $name.validate();
+            if signature.get_nargs(arity) >= 2:
+                body1('''
+                    threads.push_back(std::thread([](){ $name.validate(); }));
                     ''',
                     name = name)
             else:
-                body('''
-                    threads.push_back(std::thread([](){ $name.validate(); }));
+                body2('''
+                    $name.validate();
                     ''',
                     name = name)
 
@@ -318,15 +319,19 @@ def write_validator(code, functions):
         {
             std::vector<std::thread> threads;
 
-            threads.push_back(std::thread([](){ carrier.validate(); }));
             threads.push_back(std::thread([](){ LESS.validate(); }));
             threads.push_back(std::thread([](){ NLESS.validate(); }));
-            $body
+            $body1
+
+            carrier.validate();
+            sampler.validate();
+            $body2
 
             for (auto & thread : threads) { thread.join(); }
         }
         ''',
-        body = wrapindent(body),
+        body1 = wrapindent(body1),
+        body2 = wrapindent(body2),
         ).newline()
 
 

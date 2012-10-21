@@ -33,20 +33,23 @@ public:
 
     Sampler (Carrier & carrier);
 
+    void validate () const;
+
     void declare (const std::string & name, const NullaryFunction & fun);
     void declare (const std::string & name, const InjectiveFunction & fun);
     void declare (const std::string & name, const BinaryFunction & fun);
     void declare (const std::string & name, const SymmetricFunction & fun);
 
+    void set_prob (const std::string &, float prob);
+
+    bool try_insert_random () const;
+
+private:
+
     void set_prob (const NullaryFunction * fun, float prob);
     void set_prob (const InjectiveFunction * fun, float prob);
     void set_prob (const BinaryFunction * fun, float prob);
     void set_prob (const SymmetricFunction * fun, float prob);
-    void set_prob (const std::string &, float prob);
-
-    bool try_insert_random ();
-
-private:
 
     template<class Function>
     bool try_set_prob_ (
@@ -54,7 +57,7 @@ private:
             const std::string & name,
             float prob);
 
-    std::pair<Ob, bool> try_insert_random_ ();
+    std::pair<Ob, bool> try_insert_random_ () const;
 };
 
 } // namespace pomagma

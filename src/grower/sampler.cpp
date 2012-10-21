@@ -12,6 +12,36 @@ Sampler::Sampler (Carrier & carrier)
 {
 }
 
+void Sampler::validate () const
+{
+    float total =
+        m_nullary_prob +
+        m_injective_prob +
+        m_binary_prob +
+        m_symmetric_prob;
+
+    float tol = 1e-6;
+    POMAGMA_ASSERT_LE(total, 1 + tol);
+    POMAGMA_ASSERT_LE(1 - tol, total);
+
+    for (auto & pair : m_nullary_funs) {
+        float prob = m_nullary_probs.find(pair.second)->second;
+        POMAGMA_ASSERT_LT(0, prob);
+    }
+    for (auto & pair : m_injective_funs) {
+        float prob = m_injective_probs.find(pair.second)->second;
+        POMAGMA_ASSERT_LT(0, prob);
+    }
+    for (auto & pair : m_binary_funs) {
+        float prob = m_binary_probs.find(pair.second)->second;
+        POMAGMA_ASSERT_LT(0, prob);
+    }
+    for (auto & pair : m_symmetric_funs) {
+        float prob = m_symmetric_probs.find(pair.second)->second;
+        POMAGMA_ASSERT_LT(0, prob);
+    }
+}
+
 template<class T>
 inline float sum (const std::unordered_map<T, float> & map)
 {
@@ -25,49 +55,53 @@ inline float sum (const std::unordered_map<T, float> & map)
 void Sampler::declare (const std::string & name, const NullaryFunction & fun)
 {
     m_nullary_funs[name] = & fun;
+    set_prob(& fun, 0);
 }
 
 void Sampler::declare (const std::string & name, const InjectiveFunction & fun)
 {
     m_injective_funs[name] = & fun;
+    set_prob(& fun, 0);
 }
 
 void Sampler::declare (const std::string & name, const BinaryFunction & fun)
 {
     m_binary_funs[name] = & fun;
+    set_prob(& fun, 0);
 }
 
 void Sampler::declare (const std::string & name, const SymmetricFunction & fun)
 {
     m_symmetric_funs[name] = & fun;
+    set_prob(& fun, 0);
 }
 
-void Sampler::set_prob (const NullaryFunction * fun, float prob)
+inline void Sampler::set_prob (const NullaryFunction * fun, float prob)
 {
     m_nullary_probs[fun] = prob;
     m_nullary_prob = sum(m_nullary_probs);
 }
 
-void Sampler::set_prob (const InjectiveFunction * fun, float prob)
+inline void Sampler::set_prob (const InjectiveFunction * fun, float prob)
 {
     m_injective_probs[fun] = prob;
     m_injective_prob = sum(m_injective_probs);
 }
 
-void Sampler::set_prob (const BinaryFunction * fun, float prob)
+inline void Sampler::set_prob (const BinaryFunction * fun, float prob)
 {
     m_binary_probs[fun] = prob;
     m_binary_prob = sum(m_binary_probs);
 }
 
-void Sampler::set_prob (const SymmetricFunction * fun, float prob)
+inline void Sampler::set_prob (const SymmetricFunction * fun, float prob)
 {
     m_symmetric_probs[fun] = prob;
     m_symmetric_prob = sum(m_symmetric_probs);
 }
 
 template<class Function>
-bool Sampler::try_set_prob_ (
+inline bool Sampler::try_set_prob_ (
         const std::unordered_map<std::string, const Function *> & funs,
         const std::string & name,
         float prob)
@@ -111,7 +145,7 @@ inline Key sample (
     }
 };
 
-bool Sampler::try_insert_random ()
+bool Sampler::try_insert_random () const
 {
     while (m_carrier.item_count() < m_carrier.item_dim()) {
         auto pair = try_insert_random_();
@@ -123,7 +157,7 @@ bool Sampler::try_insert_random ()
     return false;
 }
 
-std::pair<Ob, bool> Sampler::try_insert_random_ ()
+std::pair<Ob, bool> Sampler::try_insert_random_ () const
 {
     while (true) {
         float r = random_01();
