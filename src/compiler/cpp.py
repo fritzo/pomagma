@@ -294,9 +294,30 @@ def write_signature(code, functions):
         body = body,
         ).newline()
 
-# TODO Add language loader
-def write_language_loader(code):
-    TODO("")
+
+@inputs(Code)
+def write_validator(code, functions):
+    body = Code()
+    for arity, funs in functions.iteritems():
+        for name in funs:
+            body('''
+                $name.validate();
+                ''',
+                name = name,
+                )
+
+    code('''
+        void validate_all ()
+        {
+            // TODO switch to multiple threads once system stabilizes
+            carrier.validate();
+            LESS.validate();
+            NLESS.validate();
+            $body
+        }
+        ''',
+        body = wrapindent(body),
+        ).newline()
 
 
 @inputs(Code)
@@ -667,6 +688,7 @@ def write_theory(code, rules=None, facts=None):
         ''').newline()
 
     write_signature(code, functions)
+    write_validator(code, functions)
     write_merge_task(code, functions)
     write_ensurers(code, functions)
     write_facts(code, facts)

@@ -50,4 +50,9 @@ bool sample_tasks_try_pop (SampleTask &)
     return false;
 }
 
+void validate_all ()
+{
+    POMAGMA_INFO("validate_all()");
+}
+
 } // namespace pomagma

@@ -20,12 +20,9 @@ Roadmap
 - Compiler
     - Get skj.theory.cpp to compile (probably by fixing pomagma/compiler.py)
 - Grower
-    - Implement expression sampler
     - Implement dump, load operations
-    - Implement language reading & data structure
     - Flesh out unit test to exercise all methods
         - Add tests for DenseSet::Iterator2, 3
-    - Add full test that builds 14400-element H4 group
 - Aggregator
     - Implement following merge logic in grower
     - Assume only forward-mapping tables
@@ -51,7 +48,7 @@ Roadmap
 Milestones
 ----------
 
-- Minimum: run grower system tests
+- Minimum: run grower system tests (h4, sk, skj)
 - Interactive: implement navigator as web-app
 - Scalable: implement aggregator, trimmer
 - Evolvable: implement linguist, theorist

@@ -10,6 +10,7 @@ namespace pomagma
 {
 
 void set_language_prob (const std::string & name, float prob);
+void validate_all ();
 
 void load_language (const char * filename)
 {
@@ -114,9 +115,17 @@ int main (int argc, char ** argv)
         pomagma::load_structure(structure_in);
     }
 
+    if (POMAGMA_DEBUG_LEVEL > 1) {
+        pomagma::validate_all();
+    }
+
     pomagma::Scheduler::set_thread_count(thread_count);
     pomagma::Scheduler::cleanup();
     pomagma::Scheduler::grow();
+
+    if (POMAGMA_DEBUG_LEVEL > 0) {
+        pomagma::validate_all();
+    }
 
     pomagma::dump_structure(structure_out);
 
