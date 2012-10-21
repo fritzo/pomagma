@@ -66,7 +66,11 @@ inline std::string get_language (const std::string & path)
     size_t pos = server.find_last_of(".");
     const std::string stem(server.begin(), server.begin() + pos);
     const std::string home = getenv("HOME");
-    return home + "/pomagma/src/language/" + stem + ".language";
+    const std::string pomagma_default = home + "/pomagma";
+    const std::string pomagma_root = pomagma::getenv_default(
+            "POMAGMA_ROOT",
+            pomagma_default.c_str());
+    return pomagma_root + "/src/language/" + stem + ".language";
 }
 
 int main (int argc, char ** argv)
@@ -92,6 +96,7 @@ int main (int argc, char ** argv)
                 << get_filename(argv[0])
                 << " [structure_in] structure_out" << "\n"
             << "Environment Variables:\n"
+            << "  POMAGMA_ROOT = $HOME/pomagma\n"
             << "  POMAGMA_LANGUAGE = " << DEFAULT_LANGUAGE << "\n"
             << "  POMAGMA_SIZE = " << pomagma::DEFAULT_ITEM_DIM << "\n"
             << "  POMAGMA_THREADS = "

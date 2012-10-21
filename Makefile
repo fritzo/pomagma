@@ -1,6 +1,8 @@
 
 all: install
 
+test: unit-test
+
 build:
 	mkdir build
 build/debug: build
@@ -19,7 +21,7 @@ install: python-libs build/release
 	cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo ../.. \
 	&& $(MAKE) && $(MAKE) install)
 
-test: python-libs build/debug log
+unit-test: python-libs build/debug log
 	@(cd build/debug && cmake -DCMAKE_BUILD_TYPE=Debug ../..)
 	@$(MAKE) -C build/debug
 	@echo '' > log/test.log
