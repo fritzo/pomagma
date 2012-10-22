@@ -2,6 +2,8 @@
 #include "aligned_alloc.hpp"
 #include <cstring>
 
+#define POMAGMA_DEBUG1(message) POMAGMA_DEBUG(message)
+
 namespace pomagma
 {
 

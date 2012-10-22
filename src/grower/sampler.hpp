@@ -31,9 +31,8 @@ class Sampler
     float m_symmetric_prob;
 
     enum Arity { NULLARY, INJECTIVE, BINARY, SYMMETRIC };
-    struct BoundedSampler
+    class BoundedSampler
     {
-        float nullary;
         float injective;
         float binary;
         float symmetric;
@@ -43,40 +42,15 @@ class Sampler
         float compound_symmetric;
         float compound_total;
 
-        BoundedSampler () {}
+    public:
 
-        // base case
-        BoundedSampler (const Sampler & sampler)
-            : nullary(sampler.m_nullary_prob),
-              injective(0),
-              binary(0),
-              symmetric(0),
-              total(nullary),
-              compound_injective(0),
-              compound_binary(0),
-              compound_symmetric(0),
-              compound_total(0)
-        {
-        }
-        // induction step
-        BoundedSampler (const Sampler & sampler, const BoundedSampler & prev)
-            : nullary(sampler.m_nullary_prob),
-              injective(sampler.m_injective_prob * prev.total),
-              binary(sampler.m_binary_prob * (prev.total * prev.total)),
-              symmetric(sampler.m_symmetric_prob * (prev.total * prev.total)),
-              total(nullary + injective + binary + symmetric),
-              compound_injective(sampler.m_injective_prob),
-              compound_binary(sampler.m_binary_prob * prev.total),
-              compound_symmetric(sampler.m_symmetric_prob * prev.total),
-              compound_total(compound_injective +
-                             compound_binary +
-                             compound_symmetric)
-        {
-        }
+        BoundedSampler () { POMAGMA_ERROR("unused"); }
+        BoundedSampler (const Sampler & sampler);
+        BoundedSampler (const Sampler & sampler, const BoundedSampler & prev);
 
         Arity sample_arity () const;
         Arity sample_compound_arity () const;
-    };
+    } __attribute__((aligned(64)));
     mutable std::vector<BoundedSampler> m_bounded_samplers;
     const BoundedSampler & bounded_sampler (size_t max_depth) const;
 
@@ -113,8 +87,8 @@ private:
         Ob inserted;
         InsertException (Ob i) : inserted(i) {}
     };
-    Ob insert_random_compound (Ob ob, size_t max_depth) const;
     Ob insert_random (size_t max_depth) const;
+    Ob insert_random_compound (Ob ob, size_t max_depth) const;
     Ob insert_random_nullary () const;
     Ob insert_random_injective (Ob key) const;
     Ob insert_random_binary (Ob lhs, Ob rhs) const;

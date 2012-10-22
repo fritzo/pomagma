@@ -214,8 +214,6 @@ public:
     { if (pomagma::Log::level() >= 2) { pomagma::Log(2) << message; } }
 #define POMAGMA_DEBUG(message) \
     { if (pomagma::Log::level() >= 3) { pomagma::Log(3) << message; } }
-#define POMAGMA_DEBUG1(message) \
-    { if (pomagma::Log::level() >= 4) { pomagma::Log(4) << message; } }
 
 #define POMAGMA_ERROR(message) { pomagma::Log(0) \
     << message << "\n\t" \

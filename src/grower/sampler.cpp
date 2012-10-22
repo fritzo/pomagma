@@ -4,6 +4,9 @@
 #include "binary_function.hpp"
 #include "symmetric_function.hpp"
 
+#define POMAGMA_DEBUG1(message)
+//#define POMAGMA_DEBUG1(message) POMAGMA_DEBUG(message)
+
 namespace pomagma
 {
 
@@ -48,8 +51,9 @@ void Sampler::validate () const
     validate_function_probs(m_binary_funs, m_binary_probs);
     validate_function_probs(m_symmetric_funs, m_symmetric_probs);
 
-    float compound_total = m_injective_prob + m_binary_prob + m_symmetric_prob;
-    POMAGMA_ASSERT_LT(0, compound_total);
+    // these are required for the implementation of sampling below
+    POMAGMA_ASSERT_LT(0, m_nullary_prob);
+    POMAGMA_ASSERT_LT(0, m_binary_prob);
 }
 
 template<class T>
@@ -157,29 +161,60 @@ void Sampler::set_prob (const std::string & name, float prob)
 //----------------------------------------------------------------------------
 // sampling
 
+// base case
+Sampler::BoundedSampler::BoundedSampler (
+        const Sampler & sampler)
+    : injective(0),
+      binary(0),
+      symmetric(0),
+      total(sampler.m_nullary_prob),
+      compound_injective(0),
+      compound_binary(0),
+      compound_symmetric(0),
+      compound_total(0)
+{
+}
+
+// induction step
+Sampler::BoundedSampler::BoundedSampler (
+        const Sampler & sampler,
+        const BoundedSampler & prev)
+    : injective(sampler.m_injective_prob * prev.total),
+      binary(sampler.m_binary_prob * (prev.total * prev.total)),
+      symmetric(sampler.m_symmetric_prob * (prev.total * prev.total)),
+      total(sampler.m_nullary_prob + injective + binary + symmetric),
+      compound_injective(sampler.m_injective_prob),
+      compound_binary(sampler.m_binary_prob * prev.total),
+      compound_symmetric(sampler.m_symmetric_prob * prev.total),
+      compound_total(compound_injective +
+                     compound_binary +
+                     compound_symmetric)
+{
+}
+
 inline Sampler::Arity Sampler::BoundedSampler::sample_arity () const
 {
     POMAGMA_ASSERT3(total > 0, "zero probability mass");
-    while (true) {
-        float r = random_01() * total;
-        if ((r -= nullary) < 0) return NULLARY;
-        if ((r -= injective) < 0) return INJECTIVE;
-        if ((r -= binary) < 0) return BINARY;
-        if ((r -= symmetric) < 0) return SYMMETRIC;
-        // occasionally fall through due to rounding error
-    }
+    POMAGMA_ASSERT4(total > injective + binary + symmetric,
+            "implementation assumes P(nullary) > 0");
+
+    float r = random_01() * total;
+    if (binary and (r -= binary) < 0) return BINARY;
+    if (symmetric and (r -= symmetric) < 0) return SYMMETRIC;
+    if (injective and (r -= injective) < 0) return INJECTIVE;
+    return NULLARY;
 }
 
 inline Sampler::Arity Sampler::BoundedSampler::sample_compound_arity () const
 {
     POMAGMA_ASSERT3(compound_total > 0, "zero probability mass");
-    while (true) {
-        float r = random_01() * compound_total;
-        if ((r -= compound_injective) < 0) return INJECTIVE;
-        if ((r -= compound_binary) < 0) return BINARY;
-        if ((r -= compound_symmetric) < 0) return SYMMETRIC;
-        // occasionally fall through due to rounding error
-    }
+    POMAGMA_ASSERT4(compound_binary > 0,
+            "implementation assumes P(compound_binary) > 0");
+
+    float r = random_01() * compound_total;
+    if (symmetric and (r -= compound_symmetric) < 0) return SYMMETRIC;
+    if (injective and (r -= compound_injective) < 0) return INJECTIVE;
+    return BINARY;
 }
 
 inline const Sampler::BoundedSampler & Sampler::bounded_sampler (
@@ -202,7 +237,7 @@ Ob Sampler::try_insert_random () const
     try {
         Ob ob = insert_random_nullary();
         for (size_t depth = 1; depth; ++depth) {
-            //POMAGMA_DEBUG1("sampling at depth " << depth);
+            POMAGMA_DEBUG1("sampling at depth " << depth);
             ob = insert_random_compound(ob, depth);
         }
     } catch (InsertException e) {
@@ -226,7 +261,7 @@ inline Ob Sampler::insert_random_compound (Ob ob, size_t max_depth) const
     POMAGMA_ASSERT3(max_depth > 0, "cannot make compound with max_depth 0");
     const BoundedSampler & sampler = bounded_sampler(max_depth);
     Arity arity = sampler.sample_compound_arity();
-    //POMAGMA_DEBUG1("compound_arity = " << g_arity_names[arity]);
+    POMAGMA_DEBUG1("compound_arity = " << g_arity_names[arity]);
     switch (arity) {
         case NULLARY: {
             POMAGMA_ERROR("unreachable");
@@ -256,7 +291,7 @@ inline Ob Sampler::insert_random (size_t max_depth) const
 {
     const BoundedSampler & sampler = bounded_sampler(max_depth);
     Arity arity = sampler.sample_arity();
-    //POMAGMA_DEBUG1("arity = " << g_arity_names[arity]);
+    POMAGMA_DEBUG1("arity = " << g_arity_names[arity]);
     switch (arity) {
         case NULLARY: {
             return insert_random_nullary();
@@ -291,8 +326,7 @@ inline Ob Sampler::insert_random_nullary () const
 {
     auto & fun = * sample(m_nullary_probs, m_nullary_prob);
     if (Ob val = fun.find()) {
-        val = m_carrier.find(val);
-        return val;
+        return m_carrier.find(val);
     } else {
         if (Ob val = m_carrier.try_insert()) {
             fun.insert(val);
@@ -307,8 +341,7 @@ inline Ob Sampler::insert_random_injective (Ob key) const
 {
     auto & fun = * sample(m_injective_probs, m_injective_prob);
     if (Ob val = fun.find(key)) {
-        val = m_carrier.find(val);
-        return val;
+        return m_carrier.find(val);
     } else {
         if (Ob val = m_carrier.try_insert()) {
             fun.insert(key, val);
@@ -323,8 +356,7 @@ inline Ob Sampler::insert_random_binary (Ob lhs, Ob rhs) const
 {
     auto & fun = * sample(m_binary_probs, m_binary_prob);
     if (Ob val = fun.find(lhs, rhs)) {
-        val = m_carrier.find(val);
-        return val;
+        return m_carrier.find(val);
     } else {
         if (Ob val = m_carrier.try_insert()) {
             fun.insert(lhs, rhs, val);
@@ -339,8 +371,7 @@ inline Ob Sampler::insert_random_symmetric (Ob lhs, Ob rhs) const
 {
     auto & fun = * sample(m_symmetric_probs, m_symmetric_prob);
     if (Ob val = fun.find(lhs, rhs)) {
-        val = m_carrier.find(val);
-        return val;
+        return m_carrier.find(val);
     } else {
         if (Ob val = m_carrier.try_insert()) {
             fun.insert(lhs, rhs, val);
