@@ -150,7 +150,7 @@ inline Key sample (
 bool Sampler::try_insert_random () const
 {
     size_t attempt = 0;
-    while (m_carrier.item_count() == m_carrier.item_dim()) {
+    while (m_carrier.item_count() < m_carrier.item_dim()) {
         auto pair = try_insert_random_();
         bool inserted = pair.second;
         if (inserted) {
@@ -175,7 +175,12 @@ std::pair<Ob, bool> Sampler::try_insert_random_ () const
                 val = m_carrier.find(val);
                 return std::make_pair(val, false);
             } else {
-                return std::make_pair(0, false);
+                if (Ob val = m_carrier.try_insert()) {
+                    fun.insert(val);
+                    return std::make_pair(val, true);
+                } else {
+                    return std::make_pair(0, false);
+                }
             }
         }
 
