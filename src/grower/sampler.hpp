@@ -38,6 +38,10 @@ class Sampler
         float binary;
         float symmetric;
         float total;
+        float compound_injective;
+        float compound_binary;
+        float compound_symmetric;
+        float compound_total;
 
         BoundedSampler () {}
 
@@ -47,7 +51,11 @@ class Sampler
               injective(0),
               binary(0),
               symmetric(0),
-              total(nullary)
+              total(nullary),
+              compound_injective(0),
+              compound_binary(0),
+              compound_symmetric(0),
+              compound_total(0)
         {
         }
         // induction step
@@ -56,7 +64,13 @@ class Sampler
               injective(sampler.m_injective_prob * prev.total),
               binary(sampler.m_binary_prob * (prev.total * prev.total)),
               symmetric(sampler.m_symmetric_prob * (prev.total * prev.total)),
-              total(nullary + injective + binary + symmetric)
+              total(nullary + injective + binary + symmetric),
+              compound_injective(sampler.m_injective_prob),
+              compound_binary(sampler.m_binary_prob * prev.total),
+              compound_symmetric(sampler.m_symmetric_prob * prev.total),
+              compound_total(compound_injective +
+                             compound_binary +
+                             compound_symmetric)
         {
         }
 
@@ -99,12 +113,12 @@ private:
         Ob inserted;
         InsertException (Ob i) : inserted(i) {}
     };
-    Ob try_insert_random_compound (Ob ob, size_t max_depth) const;
-    Ob try_insert_random (size_t max_depth) const;
-    Ob try_insert_random_nullary () const;
-    Ob try_insert_random_injective (Ob key) const;
-    Ob try_insert_random_binary (Ob lhs, Ob rhs) const;
-    Ob try_insert_random_symmetric (Ob lhs, Ob rhs) const;
+    Ob insert_random_compound (Ob ob, size_t max_depth) const;
+    Ob insert_random (size_t max_depth) const;
+    Ob insert_random_nullary () const;
+    Ob insert_random_injective (Ob key) const;
+    Ob insert_random_binary (Ob lhs, Ob rhs) const;
+    Ob insert_random_symmetric (Ob lhs, Ob rhs) const;
 };
 
 } // namespace pomagma
