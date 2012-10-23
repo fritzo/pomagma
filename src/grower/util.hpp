@@ -215,6 +215,8 @@ public:
 #define POMAGMA_DEBUG(message) \
     { if (pomagma::Log::level() >= 3) { pomagma::Log(3) << message; } }
 
+#define POMAGMA_PRINT(variable) POMAGMA_INFO(#variable " = " << (variable))
+
 #define POMAGMA_ERROR(message) { pomagma::Log(0) \
     << message << "\n\t" \
     << __FILE__ << " : " << __LINE__ << "\n\t" \

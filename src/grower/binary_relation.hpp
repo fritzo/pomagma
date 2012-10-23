@@ -26,7 +26,8 @@ public:
     void copy_from (const BinaryRelation & other, const Ob * new2old = nullptr);
     void validate () const;
     void validate_disjoint (const BinaryRelation & other) const;
-    size_t count_pairs () const; // supa-slow, try not to use
+    void log_stats () const;
+    size_t count_pairs () const { return m_lines.count_pairs(); }
 
     // relaxed operations
     DenseSet get_Lx_set (Ob lhs) const { return m_lines.Lx_set(lhs); }

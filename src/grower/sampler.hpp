@@ -54,11 +54,16 @@ class Sampler
     mutable std::vector<BoundedSampler> m_bounded_samplers;
     const BoundedSampler & bounded_sampler (size_t max_depth) const;
 
+    mutable std::atomic<uint_fast64_t> m_sample_count;
+    mutable std::atomic<uint_fast64_t> m_arity_sample_count;
+    mutable std::atomic<uint_fast64_t> m_compound_arity_sample_count;
+
 public:
 
     Sampler (Carrier & carrier);
 
     void validate () const;
+    void log_stats () const;
 
     void declare (const std::string & name, const NullaryFunction & fun);
     void declare (const std::string & name, const InjectiveFunction & fun);

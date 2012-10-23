@@ -32,6 +32,7 @@ public:
     ~SymmetricFunction ();
     void copy_from (const SymmetricFunction & other);
     void validate () const;
+    void log_stats () const;
 
     // relaxed operations
     DenseSet get_Lx_set (Ob lhs) const { return m_lines.Lx_set(lhs); }

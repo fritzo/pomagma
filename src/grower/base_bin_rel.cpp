@@ -125,17 +125,41 @@ void base_bin_rel_<symmetric>::validate() const
     }
 }
 
+template<bool symmetric>
+void base_bin_rel_<symmetric>::log_stats () const
+{
+    size_t pair_count = count_pairs();
+    size_t pair_capacity = item_dim() * item_dim();
+    float density = 1.0f * pair_count / pair_capacity;
+    POMAGMA_INFO(pair_count << " / " << pair_capacity << " = "
+            << density << " full");
+}
+
+template<bool symmetric>
+size_t base_bin_rel_<symmetric>::count_pairs () const
+{
+    size_t result = 0;
+    for (auto i = support().iter(); i.ok(); i.next()) {
+        result += Lx_set(*i).count_items();
+    }
+    return result;
+}
+
 //----------------------------------------------------------------------------
 // Explicit template instantiation
 
 template base_bin_rel_<true>::base_bin_rel_ (const Carrier &);
 template base_bin_rel_<true>::~base_bin_rel_ ();
 template void base_bin_rel_<true>::validate () const;
+template void base_bin_rel_<true>::log_stats () const;
 template void base_bin_rel_<true>::copy_from (const base_bin_rel_<true> &);
+template size_t base_bin_rel_<true>::count_pairs () const;
 
 template base_bin_rel_<false>::base_bin_rel_ (const Carrier &);
 template base_bin_rel_<false>::~base_bin_rel_ ();
 template void base_bin_rel_<false>::validate () const;
+template void base_bin_rel_<false>::log_stats () const;
 template void base_bin_rel_<false>::copy_from (const base_bin_rel_<false> &);
+template size_t base_bin_rel_<false>::count_pairs () const;
 
 } // namespace pomagma

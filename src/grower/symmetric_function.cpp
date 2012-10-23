@@ -101,6 +101,11 @@ void SymmetricFunction::validate () const
     m_VLr_table.validate(this);
 }
 
+void SymmetricFunction::log_stats () const
+{
+    m_lines.log_stats();
+}
+
 void SymmetricFunction::insert (Ob lhs, Ob rhs, Ob val) const
 {
     SharedLock lock(m_mutex);

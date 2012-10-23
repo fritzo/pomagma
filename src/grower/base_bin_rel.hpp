@@ -23,6 +23,7 @@ public:
     ~base_bin_rel_ ();
     void copy_from (const base_bin_rel_<symmetric> & other); // for growing
     void validate () const;
+    void log_stats () const;
 
     const Carrier & carrier () const { return m_carrier; }
     const DenseSet & support () const { return m_carrier.support(); }
@@ -31,6 +32,7 @@ public:
     size_t round_item_dim () const { return m_round_item_dim; }
     size_t round_word_dim () const { return m_round_word_dim; }
     size_t data_size_words () const { return m_data_size_words; }
+    size_t count_pairs () const; // supa-slow, try not to use
 
     // full table
     const std::atomic<Word> * Lx () const { return m_Lx_lines; }

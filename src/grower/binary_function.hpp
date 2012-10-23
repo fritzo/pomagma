@@ -31,6 +31,7 @@ public:
     ~BinaryFunction ();
     void copy_from (const BinaryFunction & other);
     void validate () const;
+    void log_stats () const;
 
     // relaxed operations
     DenseSet get_Lx_set (Ob lhs) const { return m_lines.Lx_set(lhs); }

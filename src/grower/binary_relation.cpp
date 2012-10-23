@@ -121,14 +121,9 @@ void BinaryRelation::validate_disjoint (const BinaryRelation & other) const
     }
 }
 
-// supa-slow, try not to use
-size_t BinaryRelation::count_pairs () const
+void BinaryRelation::log_stats () const
 {
-    size_t result = 0;
-    for (auto i = support().iter(); i.ok(); i.next()) {
-        result += get_Lx_set(*i).count_items();
-    }
-    return result;
+    m_lines.log_stats();
 }
 
 void BinaryRelation::insert (Ob i, const DenseSet & js)

@@ -102,6 +102,11 @@ void BinaryFunction::validate () const
     m_VRl_table.validate(this);
 }
 
+void BinaryFunction::log_stats () const
+{
+    m_lines.log_stats();
+}
+
 void BinaryFunction::insert (Ob lhs, Ob rhs, Ob val) const
 {
     SharedLock lock(m_mutex);

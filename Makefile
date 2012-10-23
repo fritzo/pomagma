@@ -36,7 +36,9 @@ h4-test: build/debug log
 	@(cd build/debug && cmake -DCMAKE_BUILD_TYPE=Debug ../..)
 	@$(MAKE) -C build/debug/src/grower h4.grower
 	@echo '' > log/h4.log
-	#POMAGMA_SIZE=14400 # slow reenable later
+	#POMAGMA_SIZE=14400 # TODO slow
+	#POMAGMA_THREADS=4 # TODO hangs
+	POMAGMA_SIZE=1023 \
 	POMAGMA_THREADS=1 \
 	POMAGMA_LOG_LEVEL=4 \
 	POMAGMA_LOG_FILE=log/h4.log \

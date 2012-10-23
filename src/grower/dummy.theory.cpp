@@ -55,4 +55,9 @@ void validate_all ()
     POMAGMA_INFO("validate_all()");
 }
 
+void log_stats ()
+{
+    POMAGMA_INFO("log_stats()");
+}
+
 } // namespace pomagma

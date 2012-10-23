@@ -164,4 +164,12 @@ void Carrier::validate () const
     POMAGMA_ASSERT_EQ(rep_count(), actual_rep_count);
 }
 
+void Carrier::log_stats () const
+{
+    const Carrier & carrier = * this;
+    POMAGMA_PRINT(carrier.item_dim());
+    POMAGMA_PRINT(carrier.item_count());
+    POMAGMA_PRINT(carrier.rep_count());
+}
+
 } // namespace pomagma

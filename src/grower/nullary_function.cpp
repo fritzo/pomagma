@@ -37,6 +37,11 @@ void NullaryFunction::validate () const
     }
 }
 
+void NullaryFunction::log_stats () const
+{
+    POMAGMA_INFO((m_value.load() ? "defined" : "undefined"));
+}
+
 void NullaryFunction::unsafe_merge (Ob dep)
 {
     UniqueLock lock(m_mutex);

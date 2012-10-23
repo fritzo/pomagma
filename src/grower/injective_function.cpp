@@ -90,6 +90,12 @@ void InjectiveFunction::validate () const
     }
 }
 
+void InjectiveFunction::log_stats () const
+{
+    POMAGMA_PRINT(m_set.count_items());
+    POMAGMA_PRINT(m_inverse_set.count_items());
+}
+
 inline bool replace (Ob patt, Ob repl, std::atomic<Ob> & destin)
 {
     return destin.compare_exchange_strong(

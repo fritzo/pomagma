@@ -34,6 +34,7 @@ public:
     ~Carrier ();
     void copy_from (const Carrier & other, const Ob * new2old);
     void validate () const;
+    void log_stats () const;
 
     // attributes
     const DenseSet & support () const { return m_support; }

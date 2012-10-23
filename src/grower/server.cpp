@@ -11,9 +11,12 @@ namespace pomagma
 
 void set_language_prob (const std::string & name, float prob);
 void validate_all ();
+void log_stats ();
 
 void load_language (const char * filename)
 {
+    POMAGMA_INFO("Loading language");
+
     messaging::Language language;
 
     std::ifstream file(filename, std::ios::in | std::ios::binary);
@@ -30,6 +33,8 @@ void load_language (const char * filename)
 
 void load_structure (const char * endpoint)
 {
+    POMAGMA_INFO("Loading structure");
+
     zmq::context_t context(1);
     zmq::socket_t socket (context, ZMQ_REP);
     socket.bind(endpoint);
@@ -39,6 +44,8 @@ void load_structure (const char * endpoint)
 
 void dump_structure (const char * endpoint)
 {
+    POMAGMA_INFO("Dumping structure");
+
     zmq::context_t context(1);
     zmq::socket_t socket (context, ZMQ_REP);
     socket.bind(endpoint);
@@ -47,9 +54,11 @@ void dump_structure (const char * endpoint)
 
     std::string message = "ping";
     zmq::message_t reply(4);
-    socket.send(reply);}
+    socket.send(reply);
+}
 
 } // namespace pomagma
+
 
 inline std::string get_filename (const std::string & path)
 {
@@ -128,7 +137,7 @@ int main (int argc, char ** argv)
         pomagma::validate_all();
     }
 
-    // TODO log structure statistics: density of relations & functions
+    pomagma::log_stats();
 
     pomagma::dump_structure(structure_out);
 

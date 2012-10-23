@@ -14,7 +14,10 @@ namespace pomagma
 // construction
 
 Sampler::Sampler (Carrier & carrier)
-    : m_carrier(carrier)
+    : m_carrier(carrier),
+      m_sample_count(0),
+      m_arity_sample_count(0),
+      m_compound_arity_sample_count(0)
 {
 }
 
@@ -54,6 +57,14 @@ void Sampler::validate () const
     // these are required for the implementation of sampling below
     POMAGMA_ASSERT_LT(0, m_nullary_prob);
     POMAGMA_ASSERT_LT(0, m_binary_prob);
+}
+
+void Sampler::log_stats () const
+{
+    const Sampler & sampler = * this;
+    POMAGMA_PRINT(sampler.m_sample_count.load());
+    POMAGMA_PRINT(sampler.m_arity_sample_count.load());
+    POMAGMA_PRINT(sampler.m_compound_arity_sample_count.load());
 }
 
 template<class T>
@@ -241,6 +252,9 @@ Ob Sampler::try_insert_random () const
             ob = insert_random_compound(ob, depth);
         }
     } catch (InsertException e) {
+        if (e.inserted) {
+            m_sample_count.fetch_add(1, relaxed);
+        }
         return e.inserted;
     }
 
@@ -261,6 +275,7 @@ inline Ob Sampler::insert_random_compound (Ob ob, size_t max_depth) const
     POMAGMA_ASSERT3(max_depth > 0, "cannot make compound with max_depth 0");
     const BoundedSampler & sampler = bounded_sampler(max_depth);
     Arity arity = sampler.sample_compound_arity();
+    m_compound_arity_sample_count.fetch_add(1, relaxed);
     POMAGMA_DEBUG1("compound_arity = " << g_arity_names[arity]);
     switch (arity) {
         case NULLARY: {
@@ -291,6 +306,7 @@ inline Ob Sampler::insert_random (size_t max_depth) const
 {
     const BoundedSampler & sampler = bounded_sampler(max_depth);
     Arity arity = sampler.sample_arity();
+    m_arity_sample_count.fetch_add(1, relaxed);
     POMAGMA_DEBUG1("arity = " << g_arity_names[arity]);
     switch (arity) {
         case NULLARY: {

@@ -28,6 +28,7 @@ public:
     ~InjectiveFunction ();
     void copy_from (const InjectiveFunction & other); // for growing
     void validate () const;
+    void log_stats () const;
 
     // relaxed operations
     const DenseSet & defined () const { return m_set; }

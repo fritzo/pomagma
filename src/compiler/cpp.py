@@ -19,7 +19,7 @@ def sub(template, **kwds):
 def wrapindent(text, indent='    '):
     if not isinstance(text, str):
         text = str(text)
-    return re.sub(r'(\n+)', r'\1' + indent, text)
+    return re.sub(r'(\n+)', r'\1' + indent, text.strip())
 
 
 def join(*lines):
@@ -335,6 +335,40 @@ def write_validator(code, functions):
         ''',
         body1 = wrapindent(body1),
         body2 = wrapindent(body2),
+        ).newline()
+
+
+@inputs(Code)
+def write_stats_logger(code, functions):
+    body = Code()
+    functions = functions.items()
+    functions.sort(key=lambda (arity, _): -signature.get_nargs(arity))
+    for arity, funs in functions:
+        for name in funs:
+            body('''
+                POMAGMA_INFO("$name:");
+                $name.log_stats();
+                ''',
+                name = name,
+                ).newline()
+
+    code('''
+        void log_stats ()
+        {
+            carrier.log_stats();
+
+            POMAGMA_INFO("LESS:");
+            LESS.log_stats();
+
+            POMAGMA_INFO("NLESS:");
+            NLESS.log_stats();
+
+            $body
+
+            sampler.log_stats();
+        }
+        ''',
+        body = wrapindent(body),
         ).newline()
 
 
@@ -707,6 +741,7 @@ def write_theory(code, rules=None, facts=None):
 
     write_signature(code, functions)
     write_validator(code, functions)
+    write_stats_logger(code, functions)
     write_merge_task(code, functions)
     write_ensurers(code, functions)
     write_facts(code, facts)
