@@ -9,7 +9,3 @@ EQUAL APP I x x   EQUAL APP x I x
            LESS x y   LESS x y   LESS y z
 --------   --------   -------------------
 LESS x x   LESS y x        LESS x z
-
-      LESS x y               LESS f g
---------------------   --------------------
-LESS APP f x APP f y   LESS APP f x APP g x

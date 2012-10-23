@@ -108,6 +108,7 @@ add_custom_command(
 	OUTPUT ${CMAKE_CURRENT_LIST_DIR}/h4.theory.cpp
 	COMMAND python ${SRC_DIR}/compiler/run.py compile
 		${SRC_DIR}/theory/group.rules
+		${SRC_DIR}/theory/h4.rules
 		${SRC_DIR}/theory/h4.facts
 		outfile=${CMAKE_CURRENT_LIST_DIR}/h4.theory.cpp
 	DEPENDS ${SRC_DIR}/compiler/util.py
@@ -118,6 +119,7 @@ add_custom_command(
 		${SRC_DIR}/compiler/cpp.py
 		${SRC_DIR}/compiler/run.py
 		${SRC_DIR}/theory/group.rules
+		${SRC_DIR}/theory/h4.rules
 		${SRC_DIR}/theory/h4.facts
 	)
 add_executable(h4.grower h4.theory.cpp)
