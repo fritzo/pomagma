@@ -68,7 +68,6 @@ public:
         Task task;
         if (m_queue.try_pop(task)) {
             execute(task);
-            g_enforce_count.fetch_add(1, relaxed);
             return true;
         } else {
             return false;
@@ -148,6 +147,7 @@ inline bool enforce_tasks_try_execute ()
         g_positive_order_tasks.try_execute() or
         g_negative_order_tasks.try_execute())
     {
+        g_enforce_count.fetch_add(1, relaxed);
         if (g_worker_count > 1) {
             cleanup_tasks_push_all();
         }
