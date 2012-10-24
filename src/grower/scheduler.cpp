@@ -6,6 +6,10 @@
 #include <tbb/concurrent_queue.h>
 
 
+//#define POMAGMA_DEBUG1(message)
+#define POMAGMA_DEBUG1(message) POMAGMA_DEBUG(message)
+
+
 namespace pomagma
 {
 
@@ -21,10 +25,37 @@ static std::condition_variable g_working_condition;
 
 static SharedMutex g_strict_mutex;
 
-static std::atomic<uint_fast64_t> g_merge_count(0);
-static std::atomic<uint_fast64_t> g_enforce_count(0);
-static std::atomic<uint_fast64_t> g_sample_count(0);
-static std::atomic<uint_fast64_t> g_cleanup_count(0);
+class TaskStats
+{
+    std::atomic<uint_fast64_t> m_schedule_count;
+    std::atomic<uint_fast64_t> m_execute_count;
+public:
+    TaskStats ()
+        : m_schedule_count(0),
+          m_execute_count(0)
+    {
+    }
+
+    void schedule () { m_schedule_count.fetch_add(1, relaxed); }
+    void execute () { m_execute_count.fetch_add(1, relaxed); }
+    void clear ()
+    {
+        m_schedule_count.store(0);
+        m_execute_count.store(0);
+    }
+
+    friend inline std::ostream & operator << (
+            std::ostream & os,
+            const TaskStats & stats)
+    {
+        return os << stats.m_execute_count.load() << " executed / "
+                  << stats.m_schedule_count.load() << " scheduled";
+    }
+};
+static TaskStats g_merge_stats;
+static TaskStats g_enforce_stats;
+static TaskStats g_sample_stats;
+static TaskStats g_cleanup_stats;
 
 
 void set_thread_count (size_t worker_count)
@@ -35,18 +66,18 @@ void set_thread_count (size_t worker_count)
 
 void reset_stats ()
 {
-    g_merge_count = 0;
-    g_enforce_count = 0;
-    g_sample_count = 0;
-    g_cleanup_count = 0;
+    g_merge_stats.clear();
+    g_enforce_stats.clear();
+    g_sample_stats.clear();
+    g_cleanup_stats.clear();
 }
 
 void log_stats ()
 {
-    POMAGMA_INFO("processed " << g_merge_count.load() << " merge tasks");
-    POMAGMA_INFO("processed " << g_enforce_count.load() << " enforce tasks");
-    POMAGMA_INFO("processed " << g_sample_count.load() << " sample tasks");
-    POMAGMA_INFO("processed " << g_cleanup_count.load() << " cleanup tasks");
+    POMAGMA_INFO("merge tasks: " << g_merge_stats);
+    POMAGMA_INFO("enforce tasks: " << g_enforce_stats);
+    POMAGMA_INFO("sample tasks: " << g_sample_stats);
+    POMAGMA_INFO("cleanup tasks: " << g_cleanup_stats);
 }
 
 template<class Task>
@@ -60,6 +91,7 @@ public:
     {
         m_queue.push(task);
         g_working_condition.notify_one();
+        g_enforce_stats.schedule();
     }
 
     bool try_execute ()
@@ -68,6 +100,7 @@ public:
         Task task;
         if (m_queue.try_pop(task)) {
             execute(task);
+            g_enforce_stats.execute();
             return true;
         } else {
             return false;
@@ -76,11 +109,11 @@ public:
 
     void cancel_referencing (Ob ob)
     {
-        tbb::concurrent_queue<Task> queue;
-        std::swap(queue, m_queue);
-        for (Task task; queue.try_pop(task);) {
+        for (size_t i = 0, I = m_queue.unsafe_size(); i != I; ++i) {
+            Task task;
+            m_queue.try_pop(task);
             if (not task.references(ob)) {
-                push(task);
+                m_queue.push(task);
             }
         }
     }
@@ -99,6 +132,7 @@ public:
     {
         m_queue.push(task);
         g_working_condition.notify_one();
+        g_merge_stats.schedule();
     }
 
     bool try_execute ()
@@ -107,7 +141,7 @@ public:
         if (m_queue.try_pop(task)) {
             SharedMutex::UniqueLock lock(g_strict_mutex);
             execute(task);
-            g_merge_count.fetch_add(1, relaxed);
+            g_merge_stats.execute();
             cancel_tasks_referencing(task.dep);
             return true;
         } else {
@@ -147,7 +181,6 @@ inline bool enforce_tasks_try_execute ()
         g_positive_order_tasks.try_execute() or
         g_negative_order_tasks.try_execute())
     {
-        g_enforce_count.fetch_add(1, relaxed);
         if (g_worker_count > 1) {
             cleanup_tasks_push_all();
         }
@@ -163,7 +196,7 @@ inline bool sample_tasks_try_execute ()
     if (sample_tasks_try_pop(task)) {
         SharedMutex::SharedLock lock(g_strict_mutex);
         execute(task);
-        g_sample_count.fetch_add(1, relaxed);
+        g_sample_stats.execute();
         return true;
     } else {
         return false;
@@ -176,7 +209,7 @@ inline bool cleanup_tasks_try_execute ()
     if (cleanup_tasks_try_pop(task)) {
         SharedMutex::SharedLock lock(g_strict_mutex);
         execute(task);
-        g_cleanup_count.fetch_add(1, relaxed);
+        g_cleanup_stats.execute();
         return true;
     } else {
         return false;
