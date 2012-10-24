@@ -18,21 +18,12 @@ DenseSet::DenseSet (size_t item_dim)
     bzero(m_words, sizeof(std::atomic<Word>) * m_word_dim);
 }
 
-void DenseSet::copy_from (const DenseSet & other, const Ob * new2old)
+void DenseSet::operator = (const DenseSet & other)
 {
     POMAGMA_DEBUG("Copying DenseSet");
+    POMAGMA_ASSERT1(item_dim() == other.item_dim(), "item_dim mismatch");
 
-    size_t minM = min(m_word_dim, other.m_word_dim);
-    if (new2old == nullptr) {
-        // just copy
-        memcpy(m_words, other.m_words, sizeof(Word) * minM);
-    } else {
-        // copy & reorder
-        bzero(m_words, sizeof(Word) * m_word_dim);
-        for (size_t n = 1; n <= m_item_dim; ++n) {
-            if (other.contains(new2old[n])) insert(n);
-        }
-    }
+    memcpy(m_words, other.m_words, sizeof(std::atomic<Word>) * m_word_dim);
 }
 
 //----------------------------------------------------------------------------

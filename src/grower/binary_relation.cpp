@@ -21,39 +21,6 @@ BinaryRelation::~BinaryRelation ()
 {
 }
 
-void BinaryRelation::copy_from (
-        const BinaryRelation & other,
-        const Ob * new2old)
-{
-    POMAGMA_DEBUG("Copying BinaryRelation");
-
-    if (POMAGMA_DEBUG_LEVEL >= 1) other.validate();
-
-    // WARNING assume this has been done
-    //bzero(m_lines.Lx(), sizeof(Word) * data_size_words());
-    //bzero(m_lines.Rx(), sizeof(Word) * data_size_words());
-
-    if (new2old == nullptr) {
-        POMAGMA_DEBUG("copying by column and by row");
-        m_lines.copy_from(other.m_lines);
-    } else {
-        POMAGMA_DEBUG("copying and reordering");
-        // copy & reorder WIKKIT SLOW
-        for (Ob i_new = 1; i_new <= item_dim(); ++i_new) {
-            if (not supports(i_new)) continue;
-            Ob i_old = new2old[i_new];
-
-            for (Ob j_new = 1; j_new <= item_dim(); ++j_new) {
-                if (not supports(j_new)) continue;
-                Ob j_old = new2old[j_new];
-
-                if (other.find(i_old, j_old)) _insert(i_new, j_new);
-            }
-        }
-    }
-    if (POMAGMA_DEBUG_LEVEL >= 1) validate();
-}
-
 void BinaryRelation::validate () const
 {
     UniqueLock lock(m_mutex);

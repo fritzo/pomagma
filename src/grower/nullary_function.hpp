@@ -22,7 +22,6 @@ public:
     NullaryFunction (
         const Carrier & carrier,
         void (*insert_callback) (const NullaryFunction *) = nullptr);
-    void copy_from (const NullaryFunction & other);
     void validate () const;
     void log_stats () const;
 

@@ -34,22 +34,6 @@ SymmetricFunction::~SymmetricFunction ()
     pomagma::free_blocks(m_blocks);
 }
 
-void SymmetricFunction::copy_from (const SymmetricFunction & other)
-{
-    POMAGMA_DEBUG("Copying SymmetricFunction");
-
-    size_t min_block_dim = min(m_block_dim, other.m_block_dim);
-    for (size_t j_ = 0; j_ < min_block_dim; ++j_) {
-        std::atomic<Ob> * destin = _block(0, j_);
-        const std::atomic<Ob> * source = other._block(0, j_);
-        memcpy(destin, source, sizeof(Block) * (1 + j_));
-    }
-
-    m_lines.copy_from(other.m_lines);
-    m_Vlr_table.copy_from(other.m_Vlr_table);
-    m_VLr_table.copy_from(other.m_VLr_table);
-}
-
 void SymmetricFunction::validate () const
 {
     SharedLock lock(m_mutex);

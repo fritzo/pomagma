@@ -29,7 +29,6 @@ public:
         const Carrier & carrier,
         void (*insert_callback) (const BinaryFunction *, Ob, Ob) = nullptr);
     ~BinaryFunction ();
-    void copy_from (const BinaryFunction & other);
     void validate () const;
     void log_stats () const;
 

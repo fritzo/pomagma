@@ -28,17 +28,6 @@ Carrier::~Carrier ()
     free_blocks(m_reps);
 }
 
-void Carrier::copy_from (
-        const Carrier & other,
-        const Ob * new2old __attribute__((unused)))
-{
-    UniqueLock lock(m_mutex);
-
-    m_item_count.store(other.m_item_count.load());
-    m_rep_count.store(other.m_rep_count.load());
-    TODO("move from other")
-}
-
 Ob Carrier::try_insert () const
 {
     SharedLock lock(m_mutex);

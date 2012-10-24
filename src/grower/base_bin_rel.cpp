@@ -36,28 +36,6 @@ base_bin_rel_<symmetric>::~base_bin_rel_ ()
     }
 }
 
-// for growing
-template<bool symmetric>
-void base_bin_rel_<symmetric>::copy_from (
-        const base_bin_rel_<symmetric> & other)
-{
-    POMAGMA_DEBUG("Copying base_bin_rel_");
-
-    size_t min_item_dim = min(item_dim(), other.item_dim());
-    size_t min_word_dim = min(word_dim(), other.word_dim());
-
-    if (symmetric) {
-        for (size_t i = 1; i <= min_item_dim; ++i) {
-            memcpy(Lx(i), other.Lx(i), sizeof(Word) * min_word_dim);
-        }
-    } else {
-        for (size_t i = 1; i <= min_item_dim; ++i) {
-            memcpy(Lx(i), other.Lx(i), sizeof(Word) * min_word_dim);
-            memcpy(Rx(i), other.Rx(i), sizeof(Word) * min_word_dim);
-        }
-    }
-}
-
 template<bool symmetric>
 void base_bin_rel_<symmetric>::validate() const
 {
@@ -152,14 +130,12 @@ template base_bin_rel_<true>::base_bin_rel_ (const Carrier &);
 template base_bin_rel_<true>::~base_bin_rel_ ();
 template void base_bin_rel_<true>::validate () const;
 template void base_bin_rel_<true>::log_stats () const;
-template void base_bin_rel_<true>::copy_from (const base_bin_rel_<true> &);
 template size_t base_bin_rel_<true>::count_pairs () const;
 
 template base_bin_rel_<false>::base_bin_rel_ (const Carrier &);
 template base_bin_rel_<false>::~base_bin_rel_ ();
 template void base_bin_rel_<false>::validate () const;
 template void base_bin_rel_<false>::log_stats () const;
-template void base_bin_rel_<false>::copy_from (const base_bin_rel_<false> &);
 template size_t base_bin_rel_<false>::count_pairs () const;
 
 } // namespace pomagma

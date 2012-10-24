@@ -32,23 +32,6 @@ BinaryFunction::~BinaryFunction ()
     free_blocks(m_blocks);
 }
 
-void BinaryFunction::copy_from (const BinaryFunction & other)
-{
-    POMAGMA_DEBUG("Copying BinaryFunction");
-
-    size_t min_block_dim = min(m_block_dim, other.m_block_dim);
-    for (size_t j_ = 0; j_ < min_block_dim; ++j_) {
-        std::atomic<Ob> * destin = _block(0, j_);
-        const std::atomic<Ob> * source = other._block(0, j_);
-        memcpy(destin, source, sizeof(Block) * min_block_dim); // unsafe
-    }
-
-    m_lines.copy_from(other.m_lines);
-    m_Vlr_table.copy_from(other.m_Vlr_table);
-    m_VLr_table.copy_from(other.m_VLr_table);
-    m_VRl_table.copy_from(other.m_VRl_table);
-}
-
 void BinaryFunction::validate () const
 {
     SharedLock lock(m_mutex);

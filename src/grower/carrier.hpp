@@ -32,7 +32,6 @@ public:
         void (*insert_callback) (Ob) = nullptr,
         void (*merge_callback) (Ob) = nullptr);
     ~Carrier ();
-    void copy_from (const Carrier & other, const Ob * new2old);
     void validate () const;
     void log_stats () const;
 

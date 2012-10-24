@@ -21,7 +21,6 @@ public:
 
     base_bin_rel_ (const Carrier & carrier);
     ~base_bin_rel_ ();
-    void copy_from (const base_bin_rel_<symmetric> & other); // for growing
     void validate () const;
     void log_stats () const;
 

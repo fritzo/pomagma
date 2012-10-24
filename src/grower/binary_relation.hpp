@@ -23,7 +23,6 @@ public:
         const Carrier & carrier,
         void (*insert_callback) (Ob, Ob) = nullptr);
     ~BinaryRelation ();
-    void copy_from (const BinaryRelation & other, const Ob * new2old = nullptr);
     void validate () const;
     void validate_disjoint (const BinaryRelation & other) const;
     void log_stats () const;

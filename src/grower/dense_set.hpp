@@ -204,7 +204,7 @@ public:
         other.m_words = nullptr;
     }
     ~DenseSet () { if (not m_alias and m_words) free_blocks(m_words); }
-    void copy_from (const DenseSet & other, const Ob * new2old = nullptr);
+    void operator = (const DenseSet & other);
     void init (std::atomic<Word> * line)
     {
         POMAGMA_ASSERT4(m_alias, "tried to init() non-alias dense set");

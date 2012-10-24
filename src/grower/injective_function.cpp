@@ -32,19 +32,6 @@ InjectiveFunction::~InjectiveFunction ()
     free_blocks(m_inverse);
 }
 
-void InjectiveFunction::copy_from (const InjectiveFunction & other)
-{
-    POMAGMA_DEBUG("Copying InjectiveFunction");
-
-    size_t min_item_dim = min(item_dim(), other.item_dim());
-    size_t byte_count = sizeof(Ob) * min_item_dim;
-    memcpy(m_values, other.m_values, byte_count);
-    memcpy(m_inverse, other.m_inverse, byte_count);
-
-    m_set.copy_from(other.m_set);
-    m_inverse_set.copy_from(other.m_inverse_set);
-}
-
 void InjectiveFunction::validate () const
 {
     SharedLock lock(m_mutex);

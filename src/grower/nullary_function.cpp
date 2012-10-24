@@ -17,13 +17,6 @@ NullaryFunction::NullaryFunction (
     POMAGMA_DEBUG("creating NullaryFunction");
 }
 
-void NullaryFunction::copy_from (const NullaryFunction & other)
-{
-    POMAGMA_DEBUG("Copying NullaryFunction");
-
-    m_value = other.m_value.load();
-}
-
 void NullaryFunction::validate () const
 {
     SharedLock lock(m_mutex);

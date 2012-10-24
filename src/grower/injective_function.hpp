@@ -26,7 +26,6 @@ public:
         const Carrier & carrier,
         void (*insert_callback) (const InjectiveFunction *, Ob) = nullptr);
     ~InjectiveFunction ();
-    void copy_from (const InjectiveFunction & other); // for growing
     void validate () const;
     void log_stats () const;
 

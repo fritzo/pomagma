@@ -30,7 +30,6 @@ public:
         const Carrier & carrier,
         void (*insert_callback) (const SymmetricFunction *, Ob, Ob) = nullptr);
     ~SymmetricFunction ();
-    void copy_from (const SymmetricFunction & other);
     void validate () const;
     void log_stats () const;
 
