@@ -56,6 +56,19 @@ h4: install log
 	bin/h4.grower TODO_structure_out \
 	|| (grep -C3 -i error log/h4.log && false)
 
+sk-test: build/debug log
+	@$(MAKE) -C src/language sk.language
+	@(cd build/debug && cmake -DCMAKE_BUILD_TYPE=Debug ../..)
+	@$(MAKE) -C build/debug/src/grower sk.grower
+	@echo '' > log/sk.log
+	#POMAGMA_SIZE=14400 # TODO slow
+	POMAGMA_SIZE=1023 \
+	POMAGMA_THREADS=4 \
+	POMAGMA_LOG_LEVEL=4 \
+	POMAGMA_LOG_FILE=log/sk.log \
+	build/debug/src/grower/sk.grower TODO_structure_out \
+	|| (grep -C3 -i error log/sk.log && false)
+
 profile: build/release log FORCE
 	@echo 'PWD =' `pwd`
 	@(cd build/release && cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo ../..)
