@@ -44,6 +44,18 @@ h4-test: build/debug log
 	build/debug/src/grower/h4.grower TODO_structure_out \
 	|| (grep -C3 -i error log/h4.log && false)
 
+h4: install log
+	@$(MAKE) -C src/language h4.language
+	@(cd build/debug && cmake -DCMAKE_BUILD_TYPE=Debug ../..)
+	@$(MAKE) -C build/debug/src/grower h4.grower
+	@echo '' > log/h4.log
+	POMAGMA_SIZE=14400 \
+	POMAGMA_THREADS=4 \
+	POMAGMA_LOG_LEVEL=4 \
+	POMAGMA_LOG_FILE=log/h4.log \
+	bin/h4.grower TODO_structure_out \
+	|| (grep -C3 -i error log/h4.log && false)
+
 profile: build/release log FORCE
 	@echo 'PWD =' `pwd`
 	@(cd build/release && cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo ../..)
