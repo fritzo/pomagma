@@ -4,10 +4,8 @@
 #include <cstdlib> //for posix_memalign, free
 #include <cstring> //for memset, bzero
 
-//log levels
-#define LOG_DEBUG1(mess)
-#define LOG_INDENT_DEBUG1
-//#define LOG_DEBUG1(mess) {POMAGMA_DEBUGmessage);}
+#define POMAGMA_DEBUG1(mess)
+//#define POMAGMA_DEBUG1(mess) POMAGMA_DEBUG(message)
 
 namespace pomagma
 {
@@ -15,7 +13,7 @@ namespace pomagma
 // allocates an aligned array, wraps posix_memalign
 void * alloc_blocks (size_t block_size, size_t block_count, size_t alignment)
 {
-    POMAGMA_DEBUG("Allocating " << block_count
+    POMAGMA_DEBUG1("Allocating " << block_count
                    << " blocks of size " << block_size << 'B');
 
     size_t byte_count = block_size * block_count;
@@ -31,7 +29,7 @@ void * alloc_blocks (size_t block_size, size_t block_count, size_t alignment)
 // just wraps free()
 void free_blocks (void * base)
 {
-    POMAGMA_DEBUG("Freeing blocks");
+    POMAGMA_DEBUG1("Freeing blocks");
 
     free(base);
 }

@@ -37,9 +37,8 @@ h4-test: build/debug log
 	@$(MAKE) -C build/debug/src/grower h4.grower
 	@echo '' > log/h4.log
 	#POMAGMA_SIZE=14400 # TODO slow
-	#POMAGMA_THREADS=4 # TODO hangs
 	POMAGMA_SIZE=1023 \
-	POMAGMA_THREADS=1 \
+	POMAGMA_THREADS=4 \
 	POMAGMA_LOG_LEVEL=4 \
 	POMAGMA_LOG_FILE=log/h4.log \
 	build/debug/src/grower/h4.grower TODO_structure_out \

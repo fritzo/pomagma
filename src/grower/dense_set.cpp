@@ -3,6 +3,9 @@
 #include "aligned_alloc.hpp"
 #include <cstring>
 
+#define POMAGMA_DEBUG1(message)
+//#define POMAGMA_DEBUG1(message) POMAGMA_DEBUG(message)
+
 namespace pomagma
 {
 
@@ -12,7 +15,7 @@ DenseSet::DenseSet (size_t item_dim)
       m_words(pomagma::alloc_blocks<std::atomic<Word>>(m_word_dim)),
       m_alias(false)
 {
-    POMAGMA_DEBUG("creating DenseSet with " << m_word_dim << " lines");
+    POMAGMA_DEBUG1("creating DenseSet with " << m_word_dim << " lines");
     POMAGMA_ASSERT_LE(item_dim, MAX_ITEM_DIM);
 
     bzero(m_words, sizeof(std::atomic<Word>) * m_word_dim);
@@ -20,7 +23,7 @@ DenseSet::DenseSet (size_t item_dim)
 
 void DenseSet::operator = (const DenseSet & other)
 {
-    POMAGMA_DEBUG("Copying DenseSet");
+    POMAGMA_DEBUG1("copying DenseSet");
     POMAGMA_ASSERT1(item_dim() == other.item_dim(), "item_dim mismatch");
 
     memcpy(m_words, other.m_words, sizeof(std::atomic<Word>) * m_word_dim);

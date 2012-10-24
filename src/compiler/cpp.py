@@ -552,12 +552,12 @@ def write_full_tasks(code, sequents):
 
         bool cleanup_tasks_try_pop (CleanupTask & task)
         {
-            unsigned long type = g_cleanup_type.load();
-            do {
+            unsigned long type = 0;
+            while (not g_cleanup_type.compare_exchange_weak(type, type + 1)) {
                 if (type == g_type_count) {
                     return false;
                 }
-            } while (not g_cleanup_type.compare_exchange_weak(type, type + 1));
+            }
 
             task.type = type;
             return true;
@@ -565,6 +565,8 @@ def write_full_tasks(code, sequents):
 
         void execute (const CleanupTask & task)
         {
+            POMAGMA_DEBUG("executing cleanup task " << (1 + task.type) << "/$type_count");
+
             switch (task.type) {
 
                 $cases
