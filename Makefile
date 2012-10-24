@@ -1,4 +1,6 @@
 
+PROCS=$(shell python -c 'from multiprocessing import cpu_count as c; print c()')
+
 all: install
 
 test: unit-test
@@ -38,7 +40,7 @@ h4-test: build/debug log
 	@echo '' > log/h4.log
 	#POMAGMA_SIZE=14400 # TODO slow
 	POMAGMA_SIZE=1023 \
-	POMAGMA_THREADS=4 \
+	POMAGMA_THREADS=$(PROCS) \
 	POMAGMA_LOG_LEVEL=4 \
 	POMAGMA_LOG_FILE=log/h4.log \
 	build/debug/src/grower/h4.grower TODO_structure_out \
@@ -50,7 +52,7 @@ h4: install log
 	@$(MAKE) -C build/debug/src/grower h4.grower
 	@echo '' > log/h4.log
 	POMAGMA_SIZE=14400 \
-	POMAGMA_THREADS=4 \
+	POMAGMA_THREADS=$(PROCS) \
 	POMAGMA_LOG_LEVEL=4 \
 	POMAGMA_LOG_FILE=log/h4.log \
 	bin/h4.grower TODO_structure_out \
@@ -61,9 +63,8 @@ sk-test: build/debug log
 	@(cd build/debug && cmake -DCMAKE_BUILD_TYPE=Debug ../..)
 	@$(MAKE) -C build/debug/src/grower sk.grower
 	@echo '' > log/sk.log
-	#POMAGMA_SIZE=14400 # TODO slow
 	POMAGMA_SIZE=1023 \
-	POMAGMA_THREADS=4 \
+	POMAGMA_THREADS=$(PROCS) \
 	POMAGMA_LOG_LEVEL=4 \
 	POMAGMA_LOG_FILE=log/sk.log \
 	build/debug/src/grower/sk.grower TODO_structure_out \
