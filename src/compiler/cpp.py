@@ -484,29 +484,22 @@ def make_expression(expr):
     return 'make(%s)' % ', '.join(args)
 
 
-@inputs(Code, Expression)
-def write_fact(code, fact):
-    assert fact.is_rel(), 'bad fact: %s' % fact
-    lhs, rhs = fact.args
-
-    code('''
-        ensure_$name(
-            $lhs,
-            $rhs);
-        ''',
-        name = fact.name.lower(),
-        lhs = make_expression(lhs),
-        rhs = make_expression(rhs),
-        )
-
-
 @inputs(Code)
 def write_facts(code, facts):
     body = Code()
-    for i, fact in enumerate(facts):
-        if i:
-            body.newline()
-        write_fact(body, fact)
+    for fact in facts:
+        assert fact.is_rel(), 'bad fact: %s' % fact
+        lhs, rhs = fact.args
+
+        body('''
+            ensure_$name(
+                $lhs,
+                $rhs);
+            ''',
+            name = fact.name.lower(),
+            lhs = make_expression(lhs),
+            rhs = make_expression(rhs),
+            ).newline()
 
     code('''
         $bar
@@ -533,8 +526,6 @@ def write_full_tasks(code, sequents):
 
     cases = Code()
     for i, (cost, strategy) in enumerate(full_tasks):
-        if i:
-            cases.newline()
         case = Code()
         strategy.cpp(case)
         cases('''
@@ -545,7 +536,7 @@ def write_full_tasks(code, sequents):
             index = i,
             cost = cost,
             case = wrapindent(case),
-            )
+            ).newline()
 
     code('''
         $bar
@@ -635,9 +626,7 @@ def write_event_tasks(code, sequents):
 
         body = Code()
 
-        for g, (eventname, tasks) in enumerate(group):
-            if g: body.newline()
-
+        for eventname, tasks in group:
             subbody = Code()
             nargs = signature.get_nargs(signature.get_arity(group[0][0]))
             args = [[], ['arg'], ['lhs', 'rhs']][nargs]
@@ -676,7 +665,7 @@ def write_event_tasks(code, sequents):
                     )
 
             if eventname in ['LESS', 'NLESS', '<variable>']:
-                body(str(subbody))
+                body(str(subbody)).newline()
             else:
                 body('''
                 if (task.fun == & $eventname) {
@@ -685,7 +674,7 @@ def write_event_tasks(code, sequents):
                 ''',
                 eventname = eventname,
                 subbody = wrapindent(subbody),
-                )
+                ).newline()
 
         code('''
             void execute (const ${groupname}Task & task)
