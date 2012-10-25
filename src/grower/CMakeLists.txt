@@ -111,6 +111,7 @@ add_custom_command(
 		${SRC_DIR}/theory/h4.rules
 		${SRC_DIR}/theory/h4.facts
 		outfile=${CMAKE_CURRENT_LIST_DIR}/h4.theory.cpp
+		extensional=false
 	DEPENDS ${SRC_DIR}/compiler/util.py
 		${SRC_DIR}/compiler/expressions.py
 		${SRC_DIR}/compiler/sequents.py
@@ -137,6 +138,7 @@ add_custom_command(
 		${SRC_DIR}/compiler/expressions.py
 		${SRC_DIR}/compiler/sequents.py
 		${SRC_DIR}/compiler/parser.py
+		${SRC_DIR}/compiler/extensional.py
 		${SRC_DIR}/compiler/compiler.py
 		${SRC_DIR}/compiler/cpp.py
 		${SRC_DIR}/compiler/run.py
@@ -159,6 +161,7 @@ add_custom_command(
 		${SRC_DIR}/compiler/expressions.py
 		${SRC_DIR}/compiler/sequents.py
 		${SRC_DIR}/compiler/parser.py
+		${SRC_DIR}/compiler/extensional.py
 		${SRC_DIR}/compiler/compiler.py
 		${SRC_DIR}/compiler/cpp.py
 		${SRC_DIR}/compiler/run.py

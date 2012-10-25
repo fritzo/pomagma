@@ -486,6 +486,7 @@ def make_expression(expr):
 
 @inputs(Code)
 def write_facts(code, facts):
+    facts = sorted(list(facts), key=lambda expr: len(expr.polish))
     body = Code()
     for fact in facts:
         assert fact.is_rel(), 'bad fact: %s' % fact

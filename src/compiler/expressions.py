@@ -89,4 +89,4 @@ class Expression(object):
         else:
             return Expression(
                     self.name,
-                    [arg.substitute(var, defn) for arg in self.args])
+                    *[arg.substitute(var, defn) for arg in self.args])

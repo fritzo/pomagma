@@ -6,6 +6,10 @@ def TODO(message=''):
     raise NotImplementedError('TODO {}'.format(message))
 
 
+def logger(message):
+    print '#', message
+
+
 def union(sets):
     sets = list(sets)
     if sets:

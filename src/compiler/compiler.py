@@ -8,11 +8,8 @@ from pomagma.compiler.util import (
         set_with,
         set_without,
         log_sum_exp,
+        logger,
         )
-
-
-def logger(message):
-    print '#', message
 
 
 #-----------------------------------------------------------------------------
