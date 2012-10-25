@@ -32,6 +32,10 @@ EQUAL APP Y f APP f APP Y f
 
 # FIXME these break
 #
+#EQUAL y APP APP S I y
+#---------------------
+#     EQUAL y Y
+#
 #-------------------   --------------------
 #EQUAL APP BOT x BOT   EQUAL COMP BOT x BOT
 #
@@ -52,3 +56,9 @@ LESS APP f x APP f y   LESS APP f x APP g x
        LESS x y                 LESS f g
 ----------------------   ----------------------
 LESS COMP f x COMP f y   LESS COMP f x COMP g x
+
+# FIXME these break
+#
+#LESS APP f x x
+#--------------
+#LESS APP Y f x
