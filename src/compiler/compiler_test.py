@@ -1,6 +1,6 @@
 import re
 from pomagma.compiler.expressions import Expression
-from pomagma.compiler.sequents import Sequent, assert_normal
+from pomagma.compiler.sequents import Sequent
 from pomagma.compiler.compiler import add_costs, get_events, compile_full, compile_given
 
 EQUAL = lambda x, y: Expression('EQUAL', x, y)

@@ -1,7 +1,7 @@
 import re
 from textwrap import dedent
 from string import Template
-from pomagma.compiler.util import TODO, inputs, union, methodof, log_sum_exp
+from pomagma.compiler.util import TODO, inputs, methodof, log_sum_exp
 from pomagma.compiler.expressions import Expression
 from pomagma.compiler.sequents import Sequent
 from pomagma.compiler import signature

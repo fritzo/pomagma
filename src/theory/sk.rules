@@ -10,13 +10,13 @@ EQUAL APP I x x   EQUAL COMP I x x   EQUAL COMP x I x
 EQUAL APP APP K x y x   EQUAL COMP APP K x y APP K x
 
 ----------------------------
-EQUAL APP x y APP APP CI y x
+EQUAL APP APP CI x y APP y x
 
 ----------------------------
-EQUAL COMP x y APP APP B x y
+EQUAL APP APP B x y COMP x y
 
 -----------------------------
-EQUAL COMP x y APP APP CB y x
+EQUAL APP APP CB x y COMP y x 
 
 ---------------------------------
 EQUAL APP APP W x y APP APP x y y
@@ -29,6 +29,14 @@ EQUAL APP APP APP S x y z APP APP x z APP y z
 
 ---------------------------
 EQUAL APP Y f APP f APP Y f
+
+# FIXME these break
+#
+#-------------------   --------------------
+#EQUAL APP BOT x BOT   EQUAL COMP BOT x BOT
+#
+#-------------------   --------------------
+#EQUAL APP TOP x TOP   EQUAL COMP TOP x TOP
 
 
 # order

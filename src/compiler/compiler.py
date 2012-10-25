@@ -1,7 +1,4 @@
-import re
-import sys
 import math
-from textwrap import dedent
 from pomagma.compiler.expressions import Expression
 from pomagma.compiler.sequents import Sequent, normalize, assert_normal
 from pomagma.compiler.util import (
@@ -73,7 +70,7 @@ class Iter(Strategy):
         parent = self
         child = self.body
         while isinstance(child, Test) or isinstance(child, Let):
-            if self.var in child.expr.get_vars():
+            if self.var in child.expr.vars:
                 if isinstance(child, Test):
                     self.add_test(child)
                 else:
@@ -195,7 +192,7 @@ class Ensure(Strategy):
     def op_count(self):
         fun_count = 0
         if self.expr.name == 'EQUATION':
-            for arg in expr.args:
+            for arg in self.expr.args:
                 if arg.is_fun():
                     fun_count += 1
         return [1.0, 1.0 + 0.5 * 1.0, 2.0 + 0.75 * 1.0][fun_count]
@@ -211,7 +208,6 @@ class Ensure(Strategy):
 @inputs(Sequent)
 def compile_full(seq):
     results = []
-    free = seq.get_vars()
     for part in normalize(seq):
         context = set()
         bound = set()
@@ -224,7 +220,7 @@ def compile_full(seq):
 @inputs(Sequent)
 def get_events(seq):
     events = set()
-    free_vars = seq.get_vars()
+    free_vars = seq.vars
     for sequent in normalize(seq):
         events |= sequent.antecedents
         # HACK to deal with Equation args
@@ -232,10 +228,10 @@ def get_events(seq):
         for arg in succedent.args:
             if not arg.is_var():
                 events.add(arg)
-        antecedent_vars = union([a.get_vars() for a in sequent.antecedents])
-        for var in succedent.get_vars() & free_vars - antecedent_vars:
+        antecedent_vars = union([a.vars for a in sequent.antecedents])
+        for var in succedent.vars & free_vars - antecedent_vars:
             compound_count = sum(1 for arg in succedent.args if arg.args)
-            in_count = sum(1 for arg in succedent.args if var in arg.get_vars())
+            in_count = sum(1 for arg in succedent.args if var in arg.vars)
             # if the var is in a compound in both succedent.args,
             # then succedent.args are sufficient events.
             if in_count < 2 or compound_count < 2:
@@ -265,7 +261,7 @@ def normalize_given(seq, atom, bound):
 @inputs(Sequent, Expression)
 def compile_given(seq, atom):
     context = set([atom])
-    bound = atom.get_vars()
+    bound = atom.vars
     if atom.is_fun():
         bound.add(atom.var)
     results = []
@@ -298,7 +294,7 @@ def get_compiled(antecedents, succedent, bound):
     '''
     #print 'DEBUG', list(bound), '|', list(antecedents), '|-', succedent
 
-    if not antecedents and succedent.get_vars() <= bound:
+    if not antecedents and succedent.vars <= bound:
         return [Ensure(succedent)]
 
     results = []
@@ -316,13 +312,13 @@ def get_compiled(antecedents, succedent, bound):
     # conditionals
     for a in antecedents:
         if a.name in ['LESS', 'NLESS']:
-            if a.get_vars() <= bound:
+            if a.vars <= bound:
                 antecedents_a = set_without(antecedents, a)
                 for s in get_compiled(antecedents_a, succedent, bound):
                     results.append(Test(a, s))
         else:
             assert a.is_fun(), a
-            if a.get_vars() <= bound and a.var in bound:
+            if a.vars <= bound and a.var in bound:
                 antecedents_a = set_without(antecedents, a)
                 for s in get_compiled(antecedents_a, succedent, bound):
                     results.append(Test(a, s))
@@ -332,7 +328,7 @@ def get_compiled(antecedents, succedent, bound):
     # find & bind variable
     for a in antecedents:
         if a.is_fun():
-            if a.get_vars() <= bound:
+            if a.vars <= bound:
                 assert a.var not in bound
                 antecedents_a = set_without(antecedents, a)
                 bound_a = set_with(bound, a.var)
@@ -344,8 +340,8 @@ def get_compiled(antecedents, succedent, bound):
     # iterate forward
     for a in antecedents:
         # works for both Relation and Function antecedents
-        if a.get_vars() & bound:
-            for v in a.get_vars() - bound:
+        if a.vars & bound:
+            for v in a.vars - bound:
                 bound_v = set_with(bound, v)
                 for s in get_compiled(antecedents, succedent, bound_v):
                     results.append(Iter(v, s))
@@ -353,9 +349,8 @@ def get_compiled(antecedents, succedent, bound):
     # iterate backward
     for a in antecedents:
         if a.is_fun() and a.var in bound:
-            a_vars = a.get_vars()
+            a_vars = a.vars
             a_free = a_vars - bound
-            a_bound = a_vars & bound
             assert len(a_free) in [0, 1, 2]
             nargs = len(a.args)
             assert nargs in [0, 1, 2]
@@ -368,7 +363,7 @@ def get_compiled(antecedents, succedent, bound):
                         results.append(IterInvInjective(a, s))
                 elif nargs == 2 and len(a_free) == 1:
                     for s in get_compiled(antecedents_a, succedent, bound_v):
-                        (fixed,) = list(a.get_vars() - a_free)
+                        (fixed,) = list(a.vars - a_free)
                         results.append(IterInvBinaryRange(a, fixed, s))
                 elif nargs == 2 and len(a_free) == 2:
                     for s in get_compiled(antecedents_a, succedent, bound_v):
@@ -378,8 +373,8 @@ def get_compiled(antecedents, succedent, bound):
         return results  # HEURISTIC iterate locally eagerly
 
     # iterate anything
-    free = ( union([a.get_vars() for a in antecedents])
-           | succedent.get_vars()
+    free = ( union([a.vars for a in antecedents])
+           | succedent.vars
            - bound
            )
     for v in free:

@@ -1,5 +1,5 @@
 import re
-from pomagma.compiler.util import TODO, inputs, union
+from pomagma.compiler.util import TODO, union
 from pomagma.compiler import signature
 
 
@@ -20,13 +20,17 @@ class Expression(object):
         self._hash = hash(self._polish)
         if arity == 'Variable':
             self._var = self
+            self._vars = set([self])
         elif arity == 'NullaryFunction':
             self._var = Expression(name + '_')
+            self._vars = set()
         elif arity in ['InjectiveFunction', 'BinaryFunction', 'SymmetricFunction']:
             var = re.sub('[ _]+', '_', self.polish).rstrip('_')
             self._var = Expression(var)
+            self._vars = union(arg.vars for arg in args)
         else:
             self._var = None
+            self._vars = union(arg.vars for arg in args)
 
     @property
     def name(self):
@@ -47,6 +51,10 @@ class Expression(object):
     @property
     def var(self):
         return self._var
+
+    @property
+    def vars(self):
+        return self._vars.copy()
 
     def __hash__(self):
         return self._hash
@@ -70,8 +78,15 @@ class Expression(object):
     def is_rel(self):
         return signature.is_rel(self.name)
 
-    def get_vars(self):
-        if self.is_var():
-            return set([self])
+    def substitute(self, var, defn):
+        assert isinstance(var, Expression)
+        assert isinstance(defn, Expression)
+        assert var.is_var()
+        if var not in self.vars:
+            return self
+        elif self.is_var():
+            return defn
         else:
-            return union(arg.get_vars() for arg in self.args)
+            return Expression(
+                    self.name,
+                    [arg.substitute(var, defn) for arg in self.args])

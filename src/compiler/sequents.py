@@ -1,4 +1,3 @@
-import re
 from pomagma.compiler.util import TODO, union, set_with, set_without, inputs
 from pomagma.compiler.expressions import Expression
 
@@ -46,8 +45,9 @@ class Sequent(object):
         lines = map((' ' * indent).__add__, lines)
         return '\n'.join(lines)
 
-    def get_vars(self):
-        return union(s.get_vars() for s in self.antecedents | self.succedents)
+    @property
+    def vars(self):
+        return union(s.vars for s in self.antecedents | self.succedents)
 
 
 @inputs(Expression)
