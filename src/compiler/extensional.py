@@ -39,7 +39,7 @@ def abstract(self, var):
             if var in lhs.vars:
                 lhs_abs = lhs.abstract(var)
                 if var in rhs.vars:
-                    if lhs == rhs:
+                    if rhs == var:
                         return APP(W, lhs_abs)
                     else:
                         return APP(APP(S, lhs_abs), rhs.abstract(var))
@@ -59,7 +59,10 @@ def abstract(self, var):
                 if var in rhs.vars:
                     return APP(APP(S, COMP(B, lhs_abs)), rhs.abstract(var))
                 else:
-                    return COMP(APP(APP(C, B), rhs), lhs_abs)
+                    if lhs == var:
+                        return APP(APP(C, B), rhs)
+                    else:
+                        return COMP(APP(APP(C, B), rhs), lhs_abs)
             else:
                 assert var in rhs.vars
                 if rhs == var:
@@ -118,7 +121,10 @@ def iter_eta_substitutions(expr):
                 result = result.substitute(var, APP(var, fresh))
             #elif case == 3:
             #    result = result.substitute(var, COMP(var, fresh))
-        yield result.abstract(fresh)
+        if any(cases):
+            yield result.abstract(fresh)
+        else:
+            yield result
     raise StopIteration
 
 

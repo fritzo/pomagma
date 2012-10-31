@@ -10,8 +10,26 @@ def test_abstraction():
     y = Expression('y')
     z = Expression('z')
     lam = lambda v, e: e.abstract(v)
+
     assert_equal(lam(x, x), I)
     assert_equal(lam(x, y), APP(K, y))
+
+    assert_equal(lam(y, APP(APP(x, y), y)), APP(W, x))
+    assert_equal(lam(z, APP(APP(x, z), APP(y, z))), APP(APP(S, x), y))
+    assert_equal(lam(z, APP(APP(x, z), y)), APP(APP(C, x), y))
+    assert_equal(lam(z, APP(x, APP(y, z))), COMP(x, y))
+
+    assert_equal(lam(z, COMP(APP(x, z), APP(y, z))), APP(APP(S, COMP(B, x)), y))
+    assert_equal(lam(z, COMP(APP(x, z), y)), COMP(APP(APP(C, B), y), x))
+    assert_equal(lam(z, COMP(x, APP(y, z))), COMP(APP(B, x), y))
+    assert_equal(lam(y, COMP(x, y)), APP(B, x))
+    assert_equal(lam(x, COMP(x, y)), APP(APP(C, B), y))
+
+    assert_equal(lam(z, JOIN(APP(x, z), APP(y, z))), JOIN(x, y))
+    assert_equal(lam(z, JOIN(x, APP(y, z))), COMP(APP(J, x), y))
+    assert_equal(lam(z, JOIN(APP(x, z), y)), COMP(APP(J, y), x))
+    assert_equal(lam(y, JOIN(x, y)), APP(J, x))
+    assert_equal(lam(x, JOIN(x, y)), APP(J, y))
 
 
 def test_iter_subsets():
@@ -36,7 +54,7 @@ def test_iter_eta_substitutions():
     assert_set_equal(
         set(iter_eta_substitutions(x)),
         set([
-            x.abstract(a),
+            x,
             a.abstract(a),
             APP(x, a).abstract(a),
             ]))
