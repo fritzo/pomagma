@@ -20,6 +20,7 @@ DEF_EXECUTE(BinaryFunctionTask)
 DEF_EXECUTE(SymmetricFunctionTask)
 DEF_EXECUTE(CleanupTask)
 DEF_EXECUTE(SampleTask)
+DEF_EXECUTE(AssumeTask)
 
 #undef DEF_EXECUTE
 

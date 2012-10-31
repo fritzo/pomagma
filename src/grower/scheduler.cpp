@@ -159,6 +159,7 @@ static TaskQueue<NullaryFunctionTask> g_nullary_function_tasks;
 static TaskQueue<InjectiveFunctionTask> g_injective_function_tasks;
 static TaskQueue<BinaryFunctionTask> g_binary_function_tasks;
 static TaskQueue<SymmetricFunctionTask> g_symmetric_function_tasks;
+static TaskQueue<AssumeTask> g_assume_tasks;
 
 inline void cancel_tasks_referencing (Ob ob)
 {
@@ -216,18 +217,19 @@ inline bool cleanup_tasks_try_execute ()
     }
 }
 
+bool try_initialize_work ()
+{
+    return g_merge_tasks.try_execute()
+        or enforce_tasks_try_execute()
+        or g_assume_tasks.try_execute()
+        or cleanup_tasks_try_execute();
+}
+
 bool try_grow_work ()
 {
     return g_merge_tasks.try_execute()
         or enforce_tasks_try_execute()
         or sample_tasks_try_execute()
-        or cleanup_tasks_try_execute();
-}
-
-bool try_cleanup_work ()
-{
-    return g_merge_tasks.try_execute()
-        or enforce_tasks_try_execute()
         or cleanup_tasks_try_execute();
 }
 
@@ -250,15 +252,14 @@ void do_work (bool (*try_work)())
     }
 }
 
-void cleanup ()
+void initialize ()
 {
-    POMAGMA_INFO("assuming core facts");
     assume_core_facts();
-    POMAGMA_INFO("starting " << g_worker_count << " cleanup threads");
+    POMAGMA_INFO("starting " << g_worker_count << " initialize threads");
     reset_stats();
     std::vector<std::thread> threads;
     for (size_t i = 0; i < g_worker_count; ++i) {
-        threads.push_back(std::thread(do_work, try_cleanup_work));
+        threads.push_back(std::thread(do_work, try_initialize_work));
     }
     for (auto & thread : threads) {
         thread.join();
@@ -333,6 +334,11 @@ void schedule (const BinaryFunctionTask & task)
 void schedule (const SymmetricFunctionTask & task)
 {
     Scheduler::g_symmetric_function_tasks.push(task);
+}
+
+void schedule (const AssumeTask & task)
+{
+    Scheduler::g_assume_tasks.push(task);
 }
 
 } // namespace pomagma

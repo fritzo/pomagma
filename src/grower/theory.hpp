@@ -72,29 +72,49 @@ inline void ensure_nless (Ob lhs, Ob rhs)
 //----------------------------------------------------------------------------
 // expression parsing
 
-inline Ob parse (const char * source)
+inline void assume_equal (const char * lhs, const char * rhs)
+{
+    schedule(AssumeTask(AssumeTask::EQUAL, lhs, rhs));
+}
+
+inline void assume_less (const char * lhs, const char * rhs)
+{
+    schedule(AssumeTask(AssumeTask::LESS, lhs, rhs));
+}
+
+inline void assume_nless (const char * lhs, const char * rhs)
+{
+    schedule(AssumeTask(AssumeTask::NLESS, lhs, rhs));
+}
+
+inline Ob parse_ob (const char * source)
 {
     Ob ob = sampler.try_insert(source);
     POMAGMA_ASSERT(ob, "failed to insert " << source);
     return ob;
 }
 
-inline void assume_equal (const char * lhs, const char * rhs)
+void execute (const AssumeTask & task)
 {
-    POMAGMA_INFO("assume EQUAL\n\t" << lhs << "\n\t" << rhs);
-    ensure_equal(parse(lhs), parse(rhs));
-}
+    Ob lhs = parse_ob(task.lhs);
+    Ob rhs = parse_ob(task.rhs);
 
-inline void assume_less (const char * lhs, const char * rhs)
-{
-    POMAGMA_INFO("assume LESS\n\t" << lhs << "\n\t" << rhs);
-    ensure_less(parse(lhs), parse(rhs));
-}
+    switch (task.type) {
+        case AssumeTask::EQUAL: {
+            POMAGMA_INFO("assume EQUAL\n\t" << task.lhs << "\n\t" << task.rhs);
+            ensure_equal(lhs, rhs);
+        } break;
 
-inline void assume_nless (const char * lhs, const char * rhs)
-{
-    POMAGMA_INFO("assume LESS\n\t" << lhs << "\n\t" << rhs);
-    ensure_nless(parse(lhs), parse(rhs));
+        case AssumeTask::LESS: {
+            POMAGMA_INFO("assume LESS\n\t" << task.lhs << "\n\t" << task.rhs);
+            ensure_less(lhs, rhs);
+        } break;
+
+        case AssumeTask::NLESS: {
+            POMAGMA_INFO("assume LESS\n\t" << task.lhs << "\n\t" << task.rhs);
+            ensure_nless(lhs, rhs);
+        } break;
+    }
 }
 
 //----------------------------------------------------------------------------

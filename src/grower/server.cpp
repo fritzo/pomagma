@@ -127,7 +127,7 @@ int main (int argc, char ** argv)
         pomagma::validate_all();
     }
 
-    pomagma::Scheduler::cleanup();
+    pomagma::Scheduler::initialize();
     if (POMAGMA_DEBUG_LEVEL > 1) {
         pomagma::validate_all();
     }

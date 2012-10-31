@@ -111,6 +111,21 @@ struct SymmetricFunctionTask
     bool references (Ob dep) const { return lhs == dep or rhs == dep; }
 };
 
+struct AssumeTask
+{
+    enum Type { EQUAL, LESS, NLESS };
+    Type type;
+    const char * lhs;
+    const char * rhs;
+
+    AssumeTask () {}
+    AssumeTask (Type t, const char * l, const char * r)
+        : type(t), lhs(l), rhs(r)
+    {}
+
+    bool references (Ob) = delete;
+};
+
 struct CleanupTask
 {
     unsigned long type;
@@ -133,6 +148,7 @@ void schedule (const NullaryFunctionTask & task);
 void schedule (const InjectiveFunctionTask & task);
 void schedule (const BinaryFunctionTask & task);
 void schedule (const SymmetricFunctionTask & task);
+void schedule (const AssumeTask & task);
 // Other tasks are run continuously, not scheduled:
 // SampleTask, CleanupTask
 
@@ -145,6 +161,7 @@ void execute (const NullaryFunctionTask & task);
 void execute (const InjectiveFunctionTask & task);
 void execute (const BinaryFunctionTask & task);
 void execute (const SymmetricFunctionTask & task);
+void execute (const AssumeTask & task);
 void execute (const CleanupTask & task);
 void execute (const SampleTask & task);
 
@@ -160,7 +177,7 @@ namespace Scheduler
 void set_thread_count (size_t worker_count);
 
 // blocking api, requires access from single thread
-void cleanup ();
+void initialize ();
 void grow ();
 void load ();
 void dump ();

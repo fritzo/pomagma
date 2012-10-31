@@ -9,7 +9,7 @@ void test_simple (size_t max_threads = 20)
     for (size_t i = 1; i <= max_threads; ++i) {
         Scheduler::set_thread_count(i);
         schedule(ExistsTask(1));
-        Scheduler::cleanup();
+        Scheduler::initialize();
         schedule(ExistsTask(1));
         Scheduler::grow();
     }

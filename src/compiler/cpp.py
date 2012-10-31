@@ -499,10 +499,13 @@ def write_facts(code, facts):
 
         void assume_core_facts ()
         {
+            POMAGMA_INFO("scheduling $count assume tasks");
+
             $body
         }
         ''',
         bar = bar,
+        count = len(facts),
         body = wrapindent(body),
         ).newline()
 
