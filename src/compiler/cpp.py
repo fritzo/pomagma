@@ -321,9 +321,7 @@ def write_validator(code, functions):
 
             threads.push_back(std::thread([](){ LESS.validate(); }));
             threads.push_back(std::thread([](){ NLESS.validate(); }));
-            threads.push_back(std::thread([](){
-                NLESS.validate_disjoint(LESS);
-            }));
+            threads.push_back(std::thread([](){ NLESS.validate_disjoint(LESS); }));
             $body1
 
             carrier.validate();
@@ -477,13 +475,6 @@ def write_ensurers(code, functions):
                 ).newline()
 
 
-@inputs(Expression)
-def make_expression(expr):
-    assert expr.is_fun(), 'bad expression: %s' % expr
-    args = [expr.name] + map(make_expression, expr.args)
-    return 'make(%s)' % ', '.join(args)
-
-
 @inputs(Code)
 def write_facts(code, facts):
     facts = sorted(list(facts), key=lambda expr: len(expr.polish))
@@ -493,13 +484,13 @@ def write_facts(code, facts):
         lhs, rhs = fact.args
 
         body('''
-            ensure_$name(
-                $lhs,
-                $rhs);
+            assume_$name(
+                "$lhs",
+                "$rhs");
             ''',
             name = fact.name.lower(),
-            lhs = make_expression(lhs),
-            rhs = make_expression(rhs),
+            lhs = lhs.polish,
+            rhs = rhs.polish,
             ).newline()
 
     code('''

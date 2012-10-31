@@ -70,57 +70,31 @@ inline void ensure_nless (Ob lhs, Ob rhs)
 }
 
 //----------------------------------------------------------------------------
-// make expressions
+// expression parsing
 
-inline Ob make ()
+inline Ob parse (const char * source)
 {
-    Ob val = carrier.try_insert();
-    POMAGMA_ASSERT(val, "make failed (out of space)");
-    return val;
+    Ob ob = sampler.try_insert(source);
+    POMAGMA_ASSERT(ob, "failed to insert " << source);
+    return ob;
 }
 
-inline Ob make (NullaryFunction & fun)
+inline void assume_equal (const char * lhs, const char * rhs)
 {
-    if (Ob val = fun.find()) {
-        return val;
-    } else {
-        Ob val = make();
-        fun.insert(val);
-        return val;
-    }
+    POMAGMA_INFO("assume EQUAL\n\t" << lhs << "\n\t" << rhs);
+    ensure_equal(parse(lhs), parse(rhs));
 }
 
-inline Ob make (InjectiveFunction & fun, Ob key)
+inline void assume_less (const char * lhs, const char * rhs)
 {
-    if (Ob val = fun.find(key)) {
-        return val;
-    } else {
-        Ob val = make();
-        fun.insert(key, val);
-        return val;
-    }
+    POMAGMA_INFO("assume LESS\n\t" << lhs << "\n\t" << rhs);
+    ensure_less(parse(lhs), parse(rhs));
 }
 
-inline Ob make (BinaryFunction & fun, Ob lhs, Ob rhs)
+inline void assume_nless (const char * lhs, const char * rhs)
 {
-    if (Ob val = fun.find(lhs, rhs)) {
-        return val;
-    } else {
-        Ob val = make();
-        fun.insert(lhs, rhs, val);
-        return val;
-    }
-}
-
-inline Ob make (SymmetricFunction & fun, Ob lhs, Ob rhs)
-{
-    if (Ob val = fun.find(lhs, rhs)) {
-        return val;
-    } else {
-        Ob val = make();
-        fun.insert(lhs, rhs, val);
-        return val;
-    }
+    POMAGMA_INFO("assume LESS\n\t" << lhs << "\n\t" << rhs);
+    ensure_nless(parse(lhs), parse(rhs));
 }
 
 //----------------------------------------------------------------------------

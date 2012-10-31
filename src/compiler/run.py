@@ -120,8 +120,7 @@ def compile(*infiles, **kwargs):
             '{0}.theory.cpp'.format(infiles[-1].split('.')[0])
             )
     parse_bool = lambda s: {'true':True, 'false':False}[s.lower()]
-    #extensional = parse_bool(kwargs.get('extensional', 'true')) # TODO
-    extensional = parse_bool(kwargs.get('extensional', 'false'))
+    extensional = parse_bool(kwargs.get('extensional', 'true'))
 
     print '# writing', outfile
     argstring = ' '.join(

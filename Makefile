@@ -63,7 +63,7 @@ sk-test: build/debug log
 	@(cd build/debug && cmake -DCMAKE_BUILD_TYPE=Debug ../..)
 	@$(MAKE) -C build/debug/src/grower sk.grower
 	@echo '' > log/sk.log
-	POMAGMA_SIZE=1023 \
+	POMAGMA_SIZE=2047 \
 	POMAGMA_THREADS=$(PROCS) \
 	POMAGMA_LOG_LEVEL=4 \
 	POMAGMA_LOG_FILE=log/sk.log \

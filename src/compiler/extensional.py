@@ -24,13 +24,16 @@ class AbstractionFailed(Exception):
 def abstract(self, var):
     assert isinstance(var, Expression)
     assert var.is_var()
-    if var not in self.vars:
-        return APP(K, self)
-    elif self.is_var():
-        return I
+    if self.is_var():
+        if self == var:
+            return I
+        else:
+            return APP(K, self)
     elif self.is_fun():
         name = self.name
-        if name == 'APP':
+        if var not in self.vars:
+            return APP(K, self)
+        elif name == 'APP':
             # IKCSW-compose-eta abstraction
             lhs, rhs = self.args
             if var in lhs.vars:
@@ -82,7 +85,8 @@ def abstract(self, var):
         else:
             raise AbstractionFailed
     elif self.is_rel():
-        return Expression(self.name, *[arg.abstract(var) for arg in self.args])
+        args = [arg.abstract(var) for arg in self.args]
+        return Expression(self.name, *args)
     else:
         raise ValueError('bad expression: %s' % self.name)
 
@@ -114,7 +118,7 @@ def iter_eta_substitutions(expr):
                 result = result.substitute(var, APP(var, fresh))
             #elif case == 3:
             #    result = result.substitute(var, COMP(var, fresh))
-        yield result
+        yield result.abstract(fresh)
     raise StopIteration
 
 
@@ -163,13 +167,15 @@ def iter_closure_permutations(expr):
 @inputs(Expression)
 def iter_closures(expr):
     try:
-        assert expr.is_rel()
+        assert expr.is_rel(), expr
         lhs, rhs = expr.args
         if not expr.vars:
             yield expr
         elif is_positive(expr.name):
             for expr2 in iter_eta_substitutions(expr):
+                assert expr2.is_rel(), expr2
                 for expr3 in iter_closure_maps(expr2):
+                    assert expr3.is_rel(), expr3
                     yield expr3
         else:
             for expr2 in iter_closure_permutations(expr):
@@ -187,6 +193,7 @@ def derive_facts(rule):
         for derived in iter_closures(expr):
             lhs, rhs = derived.args
             if lhs != rhs:
+                assert derived.is_rel()
                 facts.add(derived)
         facts = sorted(list(facts), key=lambda expr: len(expr.polish))
         logger('derived {0} facts from {1}'.format(len(facts), expr))

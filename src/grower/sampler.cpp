@@ -398,4 +398,103 @@ inline Ob Sampler::insert_random_symmetric (Ob lhs, Ob rhs) const
     }
 }
 
+//----------------------------------------------------------------------------
+// parsing
+
+Ob Sampler::try_insert (const std::string & expression) const
+{
+    std::stringstream stream(expression);
+    return try_insert(stream);
+}
+
+template<class Function>
+inline const Function * find (
+    const std::unordered_map<std::string, const Function *> & funs,
+    const std::string & key)
+{
+    const auto & i = funs.find(key);
+    return i == funs.end() ? nullptr : i->second;
+}
+
+Ob Sampler::try_insert (std::stringstream & stream) const
+{
+    std::string token;
+    POMAGMA_ASSERT(std::getline(stream, token, ' '),
+            "expression terminated prematurely");
+
+    if (const auto * fun = find(m_nullary_funs, token)) {
+        return try_insert(fun);
+    } else if (const auto * fun = find(m_injective_funs, token)) {
+        if (Ob key = try_insert(stream)) {
+            return try_insert(fun, key);
+        }
+    } else if (const auto * fun = find(m_binary_funs, token)) {
+        if (Ob lhs = try_insert(stream)) {
+            if (Ob rhs = try_insert(stream)) {
+                return try_insert(fun, lhs, rhs);
+            }
+        }
+    } else if (const auto * fun = find(m_symmetric_funs, token)) {
+        if (Ob lhs = try_insert(stream)) {
+            if (Ob rhs = try_insert(stream)) {
+                return try_insert(fun, lhs, rhs);
+            }
+        }
+    } else {
+        POMAGMA_ERROR("bad token: " << token);
+    }
+    return 0;
+}
+
+inline Ob Sampler::try_insert (const NullaryFunction * fun) const
+{
+    if (Ob val = fun->find()) {
+        return val;
+    } else if (Ob val = m_carrier.try_insert()) {
+        fun->insert(val);
+        return val;
+    } else {
+        return 0;
+    }
+}
+
+inline Ob Sampler::try_insert (const InjectiveFunction * fun, Ob key) const
+{
+    if (Ob val = fun->find(key)) {
+        return val;
+    } else if (Ob val = m_carrier.try_insert()) {
+        fun->insert(key, val);
+        return val;
+    } else {
+        return 0;
+    }
+}
+
+inline Ob Sampler::try_insert (const BinaryFunction * fun, Ob lhs, Ob rhs) const
+{
+    if (Ob val = fun->find(lhs, rhs)) {
+        return val;
+    } else if (Ob val = m_carrier.try_insert()) {
+        fun->insert(lhs, rhs, val);
+        return val;
+    } else {
+        return 0;
+    }
+}
+
+inline Ob Sampler::try_insert (
+        const SymmetricFunction * fun,
+        Ob lhs,
+        Ob rhs) const
+{
+    if (Ob val = fun->find(lhs, rhs)) {
+        return val;
+    } else if (Ob val = m_carrier.try_insert()) {
+        fun->insert(lhs, rhs, val);
+        return val;
+    } else {
+        return 0;
+    }
+}
+
 } // namespace pomagma
