@@ -209,13 +209,14 @@ def cpp(self, code):
 def cpp(self, code):
     expr = self.expr
     assert len(expr.args) == 2
-    lhs, rhs = expr.args
+    args = [arg if arg.args else arg.var for arg in expr.args]
+    lhs, rhs = args
     if lhs.is_var() and rhs.is_var():
         code('''
         ensure_$name($args);
         ''',
         name = expr.name.lower(),
-        args = ', '.join(map(str, expr.args)),
+        args = ', '.join(map(str, args)),
         )
     else:
         assert self.expr.name == 'EQUAL'

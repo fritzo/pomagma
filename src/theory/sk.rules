@@ -46,12 +46,12 @@ EQUAL APP Y f APP f APP Y f
 #EQUAL y APP APP S I y
 #---------------------
 #     EQUAL y Y
-#
-#-------------------   --------------------
-#EQUAL APP BOT x BOT   EQUAL COMP BOT x BOT
-#
-#-------------------   --------------------
-#EQUAL APP TOP x TOP   EQUAL COMP TOP x TOP
+
+-------------------   --------------------
+EQUAL APP BOT x BOT   EQUAL COMP BOT x BOT
+
+-------------------   --------------------
+EQUAL APP TOP x TOP   EQUAL COMP TOP x TOP
 
 
 # order
