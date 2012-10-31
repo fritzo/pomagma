@@ -12,9 +12,10 @@ Roadmap
 -------
 
 - Language
-    - Add languages to git: sk, skj
+    - Add languages to git: skj
 - Theory
-    - Implement fact compiler to enumerate Hindley's extensionality axioms
+    - Debug fact compiler
+    - Add extensionality axioms so that abstraction commutes with reduction
 - Structure
     - Implement persistent serializer
 - Compiler
