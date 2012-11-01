@@ -11,6 +11,8 @@ B = Expression('B')
 C = Expression('C')
 W = Expression('W')
 S = Expression('S')
+BOT = Expression('BOT')
+TOP = Expression('TOP')
 APP = lambda x, y: Expression('APP', x, y)
 COMP = lambda x, y: Expression('COMP', x, y)
 JOIN = lambda x, y: Expression('JOIN', x, y)
@@ -94,12 +96,109 @@ def abstract(self, var):
         raise ValueError('bad expression: %s' % self.name)
 
 
+class RequireVariable(Exception):
+    pass
+
+
+class SkipValidation(Exception):
+    pass
+
+
 def get_fresh(bound):
     for name in 'abcdefghijklmnopqrstuvwxyz':
         fresh = Expression(name)
         if fresh not in bound:
             return fresh
-    raise NotImplementedError
+    raise NotImplementedError('Exceeded fresh variable limit')
+
+
+def pop_arg(args):
+    if args:
+        return args[0], args[1:]
+    else:
+        raise RequireVariable
+
+
+def head_normalize(expr, *args):
+    if expr.is_var():
+        return [expr] + list(args)
+    else:
+        assert expr.is_fun(), expr
+        name = expr.name
+        if name == 'APP':
+            lhs, rhs = expr.args
+            return head_normalize(lhs, rhs, *args)
+        elif name == 'COMP':
+            lhs, rhs = expr.args
+            arg0, args = pop_arg(args)
+            return head_normalize(lhs, APP(rhs, arg0), *args)
+        elif name in ['BOT', 'TOP']:
+            return [expr]
+        elif name == 'I':
+            arg0, args = pop_arg(args)
+            return head_normalize(arg0, *args)
+        elif name == 'K':
+            arg0, args = pop_arg(args)
+            arg1, args = pop_arg(args)
+            return head_normalize(arg0, *args)
+        elif name == 'B':
+            arg0, args = pop_arg(args)
+            arg1, args = pop_arg(args)
+            arg2, args = pop_arg(args)
+            return head_normalize(arg0, APP(arg1, arg2), *args)
+        elif name == 'C':
+            arg0, args = pop_arg(args)
+            arg1, args = pop_arg(args)
+            arg2, args = pop_arg(args)
+            return head_normalize(arg0, arg2, arg1, *args)
+        elif name == 'W':
+            arg0, args = pop_arg(args)
+            arg1, args = pop_arg(args)
+            return head_normalize(arg0, arg1, arg1, *args)
+        elif name == 'S':
+            arg0, args = pop_arg(args)
+            arg1, args = pop_arg(args)
+            arg2, args = pop_arg(args)
+            return head_normalize(arg0, arg2, APP(arg1, arg2), *args)
+        elif name == 'CI':
+            return head_normalize(C, I, *args)
+        elif name == 'CB':
+            return head_normalize(C, B, *args)
+        elif name in ['Y', 'J', 'JOIN']:
+            raise SkipValidation
+        else:
+            raise TODO('head normalize %s expressions' % name)
+
+
+def validate(expr):
+    assert expr.is_rel(), expr
+    assert expr.name in ['LESS', 'EQUAL']
+    if expr.name != 'EQUAL':
+        print 'WARNING: not validating {0}'.format(expr)
+        return
+    while True:
+        try:
+            lhs, rhs = expr.args
+            lhs = head_normalize(lhs)
+            rhs = head_normalize(rhs)
+            assert len(lhs) == len(rhs),\
+                    'Failed to validate\n  {0}\nbecause\n  {1} != {2}'.format(
+                            expr, lhs, rhs)
+            assert lhs[0] == rhs[0],\
+                    'Failed to validate\n  {0}\nbecause  \n{1} != {2}'.format(
+                            expr, lhs[0], rhs[0])
+            for args in zip(lhs[1:], rhs[1:]):
+                validate(Expression(expr.name, *args))
+            break
+        except RequireVariable:
+            lhs, rhs = expr.args
+            fresh = get_fresh(expr.vars)
+            lhs = APP(lhs, fresh)
+            rhs = APP(rhs, fresh)
+            expr = Expression(expr.name, lhs, rhs)
+        except SkipValidation:
+            print 'WARNING: not validating {0}'.format(expr)
+            return
 
 
 @inputs(Expression)
@@ -204,4 +303,3 @@ def derive_facts(rule):
         facts = sorted(list(facts), key=lambda expr: len(expr.polish))
         logger('derived {0} facts from {1}'.format(len(facts), expr))
     return facts
-

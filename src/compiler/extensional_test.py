@@ -1,4 +1,3 @@
-import os
 import glob
 from nose.tools import assert_equal, assert_set_equal
 from pomagma.compiler.extensional import *
@@ -74,10 +73,14 @@ def test_iter_closure_maps():
             set([I, APP(C, I), APP(W, I)]))
 
 
-def _test_close_rules(filename):
-    run.test_close_rules(filename)
-
-
 def test_close_rules():
+    blacklist = [
+        # not abstractable:
+        'group.rules',
+        'h4.rules',
+        # no validator implemented:
+        'quote.rules',
+        ]
     for filename in glob.glob('../theory/*.rules'):
-        yield _test_close_rules, filename
+        is_extensional = filename.split('/')[-1] not in blacklist
+        yield run.test_close_rules, filename, is_extensional

@@ -3,7 +3,7 @@ import parsable
 from pomagma.compiler.util import TODO
 from pomagma.compiler import parser
 from pomagma.compiler.compiler import add_costs, get_events, compile_full, compile_given
-from pomagma.compiler.extensional import derive_facts
+from pomagma.compiler.extensional import derive_facts, validate
 from pomagma.compiler import cpp
 
 
@@ -93,7 +93,7 @@ def test_compile(*filenames):
 
 
 @parsable.command
-def test_close_rules(infile):
+def test_close_rules(infile, is_extensional=True):
     '''
     Compile extensionally some.rules -> some.derived.facts
     '''
@@ -104,6 +104,8 @@ def test_close_rules(infile):
         print '#', rule
         for fact in derive_facts(rule):
             print fact
+            if is_extensional:
+                validate(fact)
 
 
 @parsable.command
