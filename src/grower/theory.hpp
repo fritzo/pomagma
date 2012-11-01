@@ -125,9 +125,9 @@ bool sample_tasks_try_pop (SampleTask &)
     return carrier.item_count() < carrier.item_dim();
 }
 
-void execute (const SampleTask &)
+void execute (const SampleTask &, rng_t & rng)
 {
-    sampler.try_insert_random();
+    sampler.try_insert_random(rng);
 }
 
 } // namespace pomagma

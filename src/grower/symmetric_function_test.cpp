@@ -4,6 +4,8 @@
 
 using namespace pomagma;
 
+rng_t rng;
+
 Ob gcd (Ob n, Ob m) { return m ? gcd(m, n % m) : n; }
 
 struct Example
@@ -45,7 +47,7 @@ struct Example
 int main ()
 {
     Log::title("SymmetricFunction Test");
-    test_function<Example>();
+    test_function<Example>(rng);
 
     return 0;
 }

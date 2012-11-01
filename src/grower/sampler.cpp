@@ -80,10 +80,12 @@ inline float sum (const std::unordered_map<T, float> & map)
 template<class Key>
 inline Key sample (
         const std::unordered_map<Key, float> & probs,
-        float total)
+        float total,
+        rng_t & rng)
 {
+    std::uniform_real_distribution<float> random_point(0, total);
     while (true) {
-        float r = random_01() * total;
+        float r = random_point(rng);
         for (const auto & pair : probs) {
             Key key = pair.first;
             float prob = pair.second;
@@ -203,26 +205,29 @@ Sampler::BoundedSampler::BoundedSampler (
 {
 }
 
-inline Sampler::Arity Sampler::BoundedSampler::sample_arity () const
+inline Sampler::Arity Sampler::BoundedSampler::sample_arity (rng_t & rng) const
 {
     POMAGMA_ASSERT3(total > 0, "zero probability mass");
     POMAGMA_ASSERT4(total > injective + binary + symmetric,
             "implementation assumes P(nullary) > 0");
 
-    float r = random_01() * total;
+    std::uniform_real_distribution<float> random_point(0, total);
+    float r = random_point(rng);
     if (binary and (r -= binary) < 0) return BINARY;
     if (symmetric and (r -= symmetric) < 0) return SYMMETRIC;
     if (injective and (r -= injective) < 0) return INJECTIVE;
     return NULLARY;
 }
 
-inline Sampler::Arity Sampler::BoundedSampler::sample_compound_arity () const
+inline Sampler::Arity Sampler::BoundedSampler::sample_compound_arity (
+        rng_t & rng) const
 {
     POMAGMA_ASSERT3(compound_total > 0, "zero probability mass");
     POMAGMA_ASSERT4(compound_binary > 0,
             "implementation assumes P(compound_binary) > 0");
 
-    float r = random_01() * compound_total;
+    std::uniform_real_distribution<float> random_point(0, compound_total);
+    float r = random_point(rng);
     if (symmetric and (r -= compound_symmetric) < 0) return SYMMETRIC;
     if (injective and (r -= compound_injective) < 0) return INJECTIVE;
     return BINARY;
@@ -243,13 +248,13 @@ inline const Sampler::BoundedSampler & Sampler::bounded_sampler (
     return m_bounded_samplers[max_depth];
 }
 
-Ob Sampler::try_insert_random () const
+Ob Sampler::try_insert_random (rng_t & rng) const
 {
     try {
-        Ob ob = insert_random_nullary();
+        Ob ob = insert_random_nullary(rng);
         for (size_t depth = 1; depth; ++depth) {
             POMAGMA_DEBUG1("sampling at depth " << depth);
-            ob = insert_random_compound(ob, depth);
+            ob = insert_random_compound(ob, depth, rng);
         }
     } catch (InsertException e) {
         if (e.inserted) {
@@ -270,11 +275,14 @@ static const char * g_arity_names[] __attribute__((unused)) =
     "SYMMETRIC"
 };
 
-inline Ob Sampler::insert_random_compound (Ob ob, size_t max_depth) const
+inline Ob Sampler::insert_random_compound (
+        Ob ob,
+        size_t max_depth,
+        rng_t & rng) const
 {
     POMAGMA_ASSERT3(max_depth > 0, "cannot make compound with max_depth 0");
     const BoundedSampler & sampler = bounded_sampler(max_depth);
-    Arity arity = sampler.sample_compound_arity();
+    Arity arity = sampler.sample_compound_arity(rng);
     m_compound_arity_sample_count.fetch_add(1, relaxed);
     POMAGMA_DEBUG1("compound_arity = " << g_arity_names[arity]);
     switch (arity) {
@@ -283,18 +291,19 @@ inline Ob Sampler::insert_random_compound (Ob ob, size_t max_depth) const
         } break;
 
         case INJECTIVE: {
-            return insert_random_injective(ob);
+            return insert_random_injective(ob, rng);
         } break;
 
         case BINARY: {
-            Ob other = insert_random(max_depth - 1);
-            if (random_bool(0.5)) std::swap(ob, other);
-            return insert_random_binary(ob, other);
+            Ob other = insert_random(max_depth - 1, rng);
+            std::bernoulli_distribution randomly_swap(0.5);
+            if (randomly_swap(rng)) std::swap(ob, other);
+            return insert_random_binary(ob, other, rng);
         } break;
 
         case SYMMETRIC: {
-            Ob other = insert_random(max_depth - 1);
-            return insert_random_symmetric(ob, other);
+            Ob other = insert_random(max_depth - 1, rng);
+            return insert_random_symmetric(ob, other, rng);
         } break;
     }
 
@@ -302,35 +311,35 @@ inline Ob Sampler::insert_random_compound (Ob ob, size_t max_depth) const
     return 0;
 }
 
-inline Ob Sampler::insert_random (size_t max_depth) const
+inline Ob Sampler::insert_random (size_t max_depth, rng_t & rng) const
 {
     const BoundedSampler & sampler = bounded_sampler(max_depth);
-    Arity arity = sampler.sample_arity();
+    Arity arity = sampler.sample_arity(rng);
     m_arity_sample_count.fetch_add(1, relaxed);
     POMAGMA_DEBUG1("arity = " << g_arity_names[arity]);
     switch (arity) {
         case NULLARY: {
-            return insert_random_nullary();
+            return insert_random_nullary(rng);
         } break;
 
         case INJECTIVE: {
             POMAGMA_ASSERT3(max_depth > 0, "max_depth bottomed-out");
-            Ob key = insert_random(max_depth - 1);
-            return insert_random_injective(key);
+            Ob key = insert_random(max_depth - 1, rng);
+            return insert_random_injective(key, rng);
         } break;
 
         case BINARY: {
             POMAGMA_ASSERT3(max_depth > 0, "max_depth bottomed-out");
-            Ob lhs = insert_random(max_depth - 1);
-            Ob rhs = insert_random(max_depth - 1);
-            return insert_random_binary(lhs, rhs);
+            Ob lhs = insert_random(max_depth - 1, rng);
+            Ob rhs = insert_random(max_depth - 1, rng);
+            return insert_random_binary(lhs, rhs, rng);
         } break;
 
         case SYMMETRIC: {
             POMAGMA_ASSERT3(max_depth > 0, "max_depth bottomed-out");
-            Ob lhs = insert_random(max_depth - 1);
-            Ob rhs = insert_random(max_depth - 1);
-            return insert_random_symmetric(lhs, rhs);
+            Ob lhs = insert_random(max_depth - 1, rng);
+            Ob rhs = insert_random(max_depth - 1, rng);
+            return insert_random_symmetric(lhs, rhs, rng);
         } break;
     }
 
@@ -338,9 +347,9 @@ inline Ob Sampler::insert_random (size_t max_depth) const
     return 0;
 }
 
-inline Ob Sampler::insert_random_nullary () const
+inline Ob Sampler::insert_random_nullary (rng_t & rng) const
 {
-    auto & fun = * sample(m_nullary_probs, m_nullary_prob);
+    auto & fun = * sample(m_nullary_probs, m_nullary_prob, rng);
     if (Ob val = fun.find()) {
         return m_carrier.find(val);
     } else {
@@ -353,9 +362,9 @@ inline Ob Sampler::insert_random_nullary () const
     }
 }
 
-inline Ob Sampler::insert_random_injective (Ob key) const
+inline Ob Sampler::insert_random_injective (Ob key, rng_t & rng) const
 {
-    auto & fun = * sample(m_injective_probs, m_injective_prob);
+    auto & fun = * sample(m_injective_probs, m_injective_prob, rng);
     if (Ob val = fun.find(key)) {
         return m_carrier.find(val);
     } else {
@@ -368,9 +377,9 @@ inline Ob Sampler::insert_random_injective (Ob key) const
     }
 }
 
-inline Ob Sampler::insert_random_binary (Ob lhs, Ob rhs) const
+inline Ob Sampler::insert_random_binary (Ob lhs, Ob rhs, rng_t & rng) const
 {
-    auto & fun = * sample(m_binary_probs, m_binary_prob);
+    auto & fun = * sample(m_binary_probs, m_binary_prob, rng);
     if (Ob val = fun.find(lhs, rhs)) {
         return m_carrier.find(val);
     } else {
@@ -383,9 +392,9 @@ inline Ob Sampler::insert_random_binary (Ob lhs, Ob rhs) const
     }
 }
 
-inline Ob Sampler::insert_random_symmetric (Ob lhs, Ob rhs) const
+inline Ob Sampler::insert_random_symmetric (Ob lhs, Ob rhs, rng_t & rng) const
 {
-    auto & fun = * sample(m_symmetric_probs, m_symmetric_prob);
+    auto & fun = * sample(m_symmetric_probs, m_symmetric_prob, rng);
     if (Ob val = fun.find(lhs, rhs)) {
         return m_carrier.find(val);
     } else {

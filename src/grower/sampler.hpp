@@ -48,8 +48,8 @@ class Sampler
         BoundedSampler (const Sampler & sampler);
         BoundedSampler (const Sampler & sampler, const BoundedSampler & prev);
 
-        Arity sample_arity () const;
-        Arity sample_compound_arity () const;
+        Arity sample_arity (rng_t & rng) const;
+        Arity sample_compound_arity (rng_t & rng) const;
     } __attribute__((aligned(64)));
     mutable std::vector<BoundedSampler> m_bounded_samplers;
     const BoundedSampler & bounded_sampler (size_t max_depth) const;
@@ -72,7 +72,7 @@ public:
 
     void set_prob (const std::string &, float prob);
 
-    Ob try_insert_random () const;
+    Ob try_insert_random (rng_t & rng) const;
     Ob try_insert (const std::string & expression) const;
 
 private:
@@ -93,12 +93,12 @@ private:
         Ob inserted;
         InsertException (Ob i) : inserted(i) {}
     };
-    Ob insert_random (size_t max_depth) const;
-    Ob insert_random_compound (Ob ob, size_t max_depth) const;
-    Ob insert_random_nullary () const;
-    Ob insert_random_injective (Ob key) const;
-    Ob insert_random_binary (Ob lhs, Ob rhs) const;
-    Ob insert_random_symmetric (Ob lhs, Ob rhs) const;
+    Ob insert_random (size_t max_depth, rng_t & rng) const;
+    Ob insert_random_compound (Ob ob, size_t max_depth, rng_t & rng) const;
+    Ob insert_random_nullary (rng_t & rng) const;
+    Ob insert_random_injective (Ob key, rng_t & rng) const;
+    Ob insert_random_binary (Ob lhs, Ob rhs, rng_t & rng) const;
+    Ob insert_random_symmetric (Ob lhs, Ob rhs, rng_t & rng) const;
 
     Ob try_insert (std::stringstream & stream) const;
     Ob try_insert (const NullaryFunction * fun) const;

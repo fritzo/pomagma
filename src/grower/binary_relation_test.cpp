@@ -3,6 +3,8 @@
 
 using namespace pomagma;
 
+rng_t rng;
+
 size_t g_num_moved(0);
 void move_to (Ob i __attribute__((unused)), Ob j __attribute__((unused)))
 {
@@ -29,8 +31,9 @@ void test_BinaryRelation (
          POMAGMA_ASSERT(carrier.try_insert(), "insertion failed");
     }
     size_t item_count = size;
+    std::bernoulli_distribution randomly_remove(0.5);
     for (Ob i = 1; i <= size; ++i) {
-        if (random_bool(0.5)) {
+        if (randomly_remove(rng)) {
             carrier.unsafe_remove(i);
             --item_count;
         }

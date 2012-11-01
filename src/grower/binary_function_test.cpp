@@ -4,6 +4,8 @@
 
 using namespace pomagma;
 
+rng_t rng;
+
 inline Ob example_fun (Ob i, Ob j)
 {
     return ((i % j) > (j % i)) * ((i * i + j + 1) % max(i, j));
@@ -50,7 +52,7 @@ struct Example
 int main ()
 {
     Log::title("BinaryFunction Test");
-    test_function<Example>();
+    test_function<Example>(rng);
 
     return 0;
 }

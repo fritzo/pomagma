@@ -4,6 +4,8 @@
 
 using namespace pomagma;
 
+rng_t rng;
+
 inline Ob example_fun (Ob i)
 {
     const size_t big_prime = (1ul << 31ul) - 1;
@@ -53,7 +55,7 @@ struct Example
 int main ()
 {
     Log::title("InjectiveFunction Test");
-    test_function<Example>();
+    test_function<Example>(rng);
 
     return 0;
 }

@@ -19,10 +19,14 @@ DEF_EXECUTE(InjectiveFunctionTask)
 DEF_EXECUTE(BinaryFunctionTask)
 DEF_EXECUTE(SymmetricFunctionTask)
 DEF_EXECUTE(CleanupTask)
-DEF_EXECUTE(SampleTask)
 DEF_EXECUTE(AssumeTask)
 
 #undef DEF_EXECUTE
+
+void execute (const SampleTask &, rng_t &)
+{
+    POMAGMA_INFO("executing SampleTask");
+}
 
 void set_language_prob (const std::string & name, float prob)
 {

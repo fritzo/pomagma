@@ -191,12 +191,12 @@ inline bool enforce_tasks_try_execute ()
     }
 }
 
-inline bool sample_tasks_try_execute ()
+inline bool sample_tasks_try_execute (rng_t & rng)
 {
     SampleTask task;
     if (sample_tasks_try_pop(task)) {
         SharedMutex::SharedLock lock(g_strict_mutex);
-        execute(task);
+        execute(task, rng);
         g_sample_stats.execute();
         return true;
     } else {
@@ -217,7 +217,7 @@ inline bool cleanup_tasks_try_execute ()
     }
 }
 
-bool try_initialize_work ()
+bool try_initialize_work (rng_t &)
 {
     return g_merge_tasks.try_execute()
         or enforce_tasks_try_execute()
@@ -225,20 +225,23 @@ bool try_initialize_work ()
         or cleanup_tasks_try_execute();
 }
 
-bool try_grow_work ()
+bool try_grow_work (rng_t & rng)
 {
     return g_merge_tasks.try_execute()
         or enforce_tasks_try_execute()
-        or sample_tasks_try_execute()
+        or sample_tasks_try_execute(rng)
         or cleanup_tasks_try_execute();
 }
 
-void do_work (bool (*try_work)())
+void do_work (bool (*try_work)(rng_t &))
 {
+    std::random_device device;
+    rng_t rng(device());
+
     g_working_flag.store(true);
     while (likely(g_working_flag.load())) {
         ++g_working_count;
-        while (try_work()) {}
+        while (try_work(rng)) {}
         if (unlikely(--g_working_count)) {
             std::unique_lock<std::mutex> lock(g_working_mutex);
             // HACK the timeout should be longer, but something is broken...

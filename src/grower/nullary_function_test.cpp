@@ -3,6 +3,8 @@
 
 using namespace pomagma;
 
+rng_t rng;
+
 void test_basic (size_t size)
 {
     POMAGMA_INFO("Defining function");
@@ -11,8 +13,9 @@ void test_basic (size_t size)
         POMAGMA_ASSERT(carrier.try_insert(), "insertion failed");
     }
     size_t item_count = size;
+    std::bernoulli_distribution randomly_remove(0.2);
     for (Ob i = 1; i <= size and item_count > 1; ++i) {
-        if (random_bool(0.2)) {
+        if (randomly_remove(rng)) {
             carrier.unsafe_remove(i);
             --item_count;
         }

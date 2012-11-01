@@ -3,6 +3,8 @@
 
 using namespace pomagma;
 
+rng_t rng;
+
 bool is_even (Ob i, Ob modulus = 2) { return i % modulus == 0; }
 
 void test_sizes ()
@@ -94,15 +96,16 @@ void test_even (size_t size)
     }
 }
 
-void test_iterator (size_t size)
+void test_iterator (size_t size, rng_t & rng)
 {
     POMAGMA_INFO("Testing DenseSet::Iterator");
     DenseSet set(size);
     std::vector<bool> vect(size, false);
     size_t true_count = 0;
 
+    std::bernoulli_distribution randomly_insert(0.2);
     for (Ob i = 1; i <= size; ++i) {
-        if (random_bool(0.2)) {
+        if (randomly_insert(rng)) {
             set.insert(i);
             vect[i-1] = true;
             ++true_count;
@@ -121,7 +124,7 @@ void test_iterator (size_t size)
     POMAGMA_ASSERT_EQ(count, true_count);
 }
 
-void test_operations (size_t size)
+void test_operations (size_t size, rng_t & rng)
 {
     POMAGMA_INFO("Testing DenseSet operations");
 
@@ -130,9 +133,10 @@ void test_operations (size_t size)
     DenseSet expected(size);
     DenseSet actual(size);
 
+    std::bernoulli_distribution randomly_insert(0.5);
     for (size_t i = 1; i <= size; ++i) {
-        if (random_bool(0.5)) x.insert(i);
-        if (random_bool(0.5)) y.insert(i);
+        if (randomly_insert(rng)) x.insert(i);
+        if (randomly_insert(rng)) y.insert(i);
     }
     POMAGMA_ASSERT(bool(x.count_items()) ^ x.empty(), ".empty() is wrong");
     POMAGMA_ASSERT(bool(y.count_items()) ^ y.empty(), ".empty() is wrong");
@@ -258,16 +262,16 @@ int main ()
 
     for (size_t size = 0; size < 100; ++size) {
         test_even(size);
-        test_iterator(size);
-        test_operations(size);
+        test_iterator(size, rng);
+        test_operations(size, rng);
     }
 
     for (size_t exponent = 1; exponent <= 10; ++exponent) {
         size_t size = (1 << exponent) - 1;
         test_basic(size);
         test_even(size);
-        test_iterator(size);
-        test_operations(size);
+        test_iterator(size, rng);
+        test_operations(size, rng);
     }
 
     return 0;

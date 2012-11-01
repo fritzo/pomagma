@@ -2,12 +2,15 @@
 
 using namespace pomagma;
 
+rng_t rng;
+
 double test_iterator (size_t exponent, float density, size_t iters = 10000)
 {
     size_t item_count = (1 << exponent) - 1;
     DenseSet set(item_count);
+    std::bernoulli_distribution randomly_insert(density);
     for (size_t i = 1; i <= item_count; ++i) {
-        if (random_bool(density)) {
+        if (randomly_insert(rng)) {
             set.insert(i);
         }
     }
@@ -27,9 +30,10 @@ double test_iterator2 (size_t exponent, float density, size_t iters = 10000)
     size_t item_count = (1 << exponent) - 1;
     DenseSet set1(item_count);
     DenseSet set2(item_count);
+    std::bernoulli_distribution randomly_insert(density);
     for (size_t i = 1; i <= item_count; ++i) {
-        if (random_bool(density)) set1.insert(i);
-        if (random_bool(density)) set2.insert(i);
+        if (randomly_insert(rng)) set1.insert(i);
+        if (randomly_insert(rng)) set2.insert(i);
     }
 
     size_t count = 0;

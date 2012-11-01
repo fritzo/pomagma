@@ -9,6 +9,7 @@
 #include <iomanip>
 #include <atomic>
 #include <chrono>
+#include <random>
 
 namespace pomagma_messaging {}
 
@@ -57,22 +58,7 @@ namespace messaging { using namespace pomagma_messaging; }
 template<class T> inline T min (T x, T y) { return (x < y) ? x : y; }
 template<class T> inline T max (T x, T y) { return (x > y) ? x : y; }
 
-// TODO switch to std::random_uniform_distribution<float>, etc.
-
-inline size_t random_int (size_t LB, size_t UB)
-{
-    return LB + lrand48() % (UB - LB);
-}
-
-inline bool random_bool (double prob)
-{
-    return drand48() < prob;
-}
-
-inline double random_01 ()
-{
-    return drand48();
-}
+typedef std::default_random_engine rng_t;
 
 template<size_t x> struct static_log2i
 {

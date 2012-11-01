@@ -163,7 +163,7 @@ void execute (const BinaryFunctionTask & task);
 void execute (const SymmetricFunctionTask & task);
 void execute (const AssumeTask & task);
 void execute (const CleanupTask & task);
-void execute (const SampleTask & task);
+void execute (const SampleTask & task, rng_t & rng);
 
 void assume_core_facts ();
 void cleanup_tasks_push_all ();
