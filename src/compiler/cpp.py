@@ -377,7 +377,9 @@ def write_merge_task(code, functions):
     body('''
         const Ob dep = task.dep;
         const Ob rep = carrier.find(dep);
-        POMAGMA_ASSERT(dep > rep, "bad merge: " << dep << ", " << rep);
+        POMAGMA_ASSERT(dep > rep, "ill-formed merge: " << dep << ", " << rep);
+        bool invalid = NLESS.find(dep, rep) or NLESS.find(rep, dep);
+        POMAGMA_ASSERT(not invalid, "invalid merge: " << dep << ", " << rep);
 
         std::vector<std::thread> threads;
         threads.push_back(std::thread(
