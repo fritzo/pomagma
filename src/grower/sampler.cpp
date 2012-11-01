@@ -236,16 +236,26 @@ inline Sampler::Arity Sampler::BoundedSampler::sample_compound_arity (
 inline const Sampler::BoundedSampler & Sampler::bounded_sampler (
         size_t max_depth) const
 {
-    while (unlikely(max_depth >= m_bounded_samplers.size())) {
-        if (unlikely(m_bounded_samplers.empty())) {
-            m_bounded_samplers.push_back(BoundedSampler(*this));
-        } else {
-            m_bounded_samplers.push_back(
-                    BoundedSampler(*this, m_bounded_samplers.back()));
+    // this may safely overgrow the cache by (thread_count - 1) items
+    while (true) {
+        {
+            SharedMutex::SharedLock lock(m_bounded_samplers_mutex);
+            if (likely(max_depth < m_bounded_samplers.size())) {
+                // use cached value
+                return m_bounded_samplers[max_depth];
+            }
+        }
+        {
+            // grow cache
+            SharedMutex::UniqueLock lock(m_bounded_samplers_mutex);
+            if (unlikely(m_bounded_samplers.empty())) {
+                m_bounded_samplers.push_back(BoundedSampler(*this));
+            } else {
+                m_bounded_samplers.push_back(
+                        BoundedSampler(*this, m_bounded_samplers.back()));
+            }
         }
     }
-
-    return m_bounded_samplers[max_depth];
 }
 
 Ob Sampler::try_insert_random (rng_t & rng) const

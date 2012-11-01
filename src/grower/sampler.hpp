@@ -52,6 +52,7 @@ class Sampler
         Arity sample_compound_arity (rng_t & rng) const;
     } __attribute__((aligned(64)));
     mutable std::vector<BoundedSampler> m_bounded_samplers;
+    mutable SharedMutex m_bounded_samplers_mutex;
     const BoundedSampler & bounded_sampler (size_t max_depth) const;
 
     mutable std::atomic<uint_fast64_t> m_sample_count;
