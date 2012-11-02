@@ -14,8 +14,7 @@ Roadmap
 - Language
     - Add languages to git: skj
 - Theory
-    - Debug fact compiler
-    - Add extensionality axioms so that abstraction commutes with reduction
+    - Implement extensionality for join rules (skj)
 - Structure
     - Implement persistent serializer
 - Compiler
@@ -24,6 +23,7 @@ Roadmap
     - Implement dump, load operations
     - Flesh out unit test to exercise all methods
         - Add tests for DenseSet::Iterator2, 3
+    - Profile & optimize using system tests for sk, skj
 - Aggregator
     - Implement following merge logic in grower
     - Assume only forward-mapping tables
@@ -50,8 +50,8 @@ Milestones
 ----------
 
 - Minimum: run grower system tests (h4, sk, skj)
-- Interactive: implement navigator as web-app
 - Scalable: implement aggregator, trimmer
+- Interactive: implement navigator as web-app
 - Evolvable: implement linguist, theorist
 
 System Architecture
