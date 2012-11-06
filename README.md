@@ -28,7 +28,7 @@ Roadmap
     - Implement following merge logic in grower
     - Assume only forward-mapping tables
         - Work out injective function merge logic
-    - Use 32-bit ob indices (how big a structure can we stored in memory?)
+    - Use 32-bit ob indices (how big a structure can be stored in memory?)
 - Trimmer
     - Read globe; randomly prune to given size; write
 - Navigator Server
@@ -66,7 +66,7 @@ System Architecture
 - Grower - a parallel Todd-Coxeter rules engine
 - Aggregator - joins charts from growers into a global atlas
 - Trimmer - cuts off pieces of the structure for further growth
-- Navigator - the user interface for exploring the mapped algebra
+- Navigator - a user interface for exploring the mapped algebra
 - Theorist - statistically conjectures new relations
 - Linguist - a Bayesian grammar optimizer / MCMC sampler
 
