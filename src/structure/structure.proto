@@ -1,37 +1,79 @@
 package pomagma_messaging;
 
-message Support {
-  required uint32 capacity = 1;
-  repeated bool support = 2 [packed=true];
-}
+// Example
+// A binary function "APP" is represented as a strem of Data messages
+// { name:"APP",
+//   sparse_function: [
+//     { bound: 1,
+//       keys: [1, 2, 5],
+//       vals: [2, 2, 1]
+//     },
+//     { bound: 2,
+//       keys: [1, 2],
+//       vals: [1, 2]
+//     }
+//   ]
+// }
 
-message DenseFunction {
-  enum Arity {
-    NULLARY = 1;
-    INJECTIVE = 2;
-    BINARY = 3;
-    SYMMETRIC = 4;
-  };
+message Algebra {
 
-  required string name = 1;
-  required Arity arity = 2;
-  repeated uint32 obs = 3 [packed=true];
-}
+  message Carrier {
+    // carrier data is always dense, ranging in [1, ..., capacity]
+    required uint32 capacity = 1;
+    repeated uint32 reps = 2 [packed = true];
+  }
 
-message DenseRelation {
-  enum Arity {
-    NULLARY = 1;
-    UNARY = 2;
-    BINARY = 3;
-  };
+  message Function {
+    enum Arity {
+      NULLARY = 1;
+      INJECTIVE = 2;
+      BINARY = 3;
+      SYMMETRIC = 4;
+    }
 
-  required string name = 1;
-  required Arity arity = 2;
-  repeated fixed64 words = 3 [packed=true];
-}
+    message DenseData {
+      repeated uint32 bound_variables = 1;
+      repeated uint32 vals = 2 [packed = true];
+    }
 
-message Structure {
-  required Support support = 1;
-  repeated DenseFunction functions = 2;
-  repeated DenseRelation relations = 3;
+    message SparseData {
+      repeated uint32 bound_variables = 1;
+      // two parallel lists of key,value pairs
+      repeated uint32 keys = 2 [packed = true];
+      repeated uint32 vals = 3 [packed = true];
+    }
+
+    required string name = 1;
+    required Arity arity = 2;
+  }
+
+  message Relation {
+    enum Arity {
+      NULLARY = 1;
+      UNARY = 2;
+      BINARY = 3;
+    }
+
+    message DenseData {
+      repeated uint32 bound_variables = 1;
+      // bits are packed into 64-bit words
+      repeated fixed64 words = 2 [packed = true];
+    }
+
+    required string name = 1;
+    required Arity arity = 2;
+  }
+
+  message Signature {
+    required Carrier carrier = 1;
+    repeated Function functions = 2;
+    repeated Relation relations = 3;
+  }
+
+  message Data {
+    required string name = 1;
+    optional Function.DenseData dense_function = 2;
+    optional Function.SparseData sparse_function = 3;
+    optional Relation.DenseData dense_relation = 4;
+  }
 }
