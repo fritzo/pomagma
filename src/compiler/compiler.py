@@ -2,7 +2,6 @@ import math
 from pomagma.compiler.expressions import Expression
 from pomagma.compiler.sequents import Sequent, normalize, assert_normal
 from pomagma.compiler.util import (
-        TODO,
         inputs,
         union,
         set_with,
@@ -10,6 +9,18 @@ from pomagma.compiler.util import (
         log_sum_exp,
         logger,
         )
+
+
+def assert_in(element, set_):
+    assert element in set_, '{0} not in {1}'.format(element, set_)
+
+
+def assert_not_in(element, set_):
+    assert element not in set_, '{0} in {1}'.format(element, set_)
+
+
+def assert_subset(subset, set_):
+    assert subset <= set_, '{0} not <= {1}'.format(subset, set_)
 
 
 #-----------------------------------------------------------------------------
@@ -56,6 +67,17 @@ class Iter(Strategy):
             ' '.join([str(self.var)] + tests + lets),
             self.body)
 
+    def validate(self, bound):
+        assert_not_in(self.var, bound)
+        bound = set_with(bound, self.var)
+        for test in self.tests:
+            assert_subset(test.vars, bound)
+        for var, expr in self.lets.iteritems():
+            assert_subset(expr.vars, bound)
+            assert_not_in(var, bound)
+            bound.add(var)
+        self.body.validate(bound)
+
     def op_count(self):
         test_count = len(self.tests) + len(self.lets)
         logic_cost = LOGIC_COST * test_count
@@ -66,8 +88,14 @@ class Iter(Strategy):
     def optimize(self):
         parent = self
         child = self.body
+        new_lets = set()
         while isinstance(child, Test) or isinstance(child, Let):
-            if self.var in child.expr.vars:
+            if isinstance(child, Let):
+                new_lets.add(child.var)
+            if (self.var in child.expr.vars and
+                not child.expr.vars & new_lets and
+                sum(1 for arg in child.expr.args if self.var == arg) == 1 and
+                sum(1 for arg in child.expr.args if self.var in arg.vars) == 1):
                 if isinstance(child, Test):
                     self.add_test(child)
                 else:
@@ -91,6 +119,11 @@ class IterInvInjective(Strategy):
     def __repr__(self):
         return 'for {0} {1}: {2}'.format(self.fun, self.var, self.body)
 
+    def validate(self, bound):
+        assert_in(self.value, bound)
+        assert_not_in(self.var, bound)
+        self.body.validate(set_with(bound, self.var))
+
     def op_count(self):
         return 4.0 + 0.5 * self.body.op_count()  # amortized
 
@@ -109,6 +142,12 @@ class IterInvBinary(Strategy):
     def __repr__(self):
         return 'for {0} {1} {2}: {3}'.format(
             self.fun, self.var1, self.var2, self.body)
+
+    def validate(self, bound):
+        assert_in(self.value, bound)
+        assert_not_in(self.var1, bound)
+        assert_not_in(self.var2, bound)
+        self.body.validate(set_with(bound, self.var1, self.var2))
 
     def op_count(self):
         return 4.0 + 0.25 * OBJECT_COUNT * self.body.op_count()  # amortized
@@ -136,6 +175,17 @@ class IterInvBinaryRange(Strategy):
             return 'for {0} {1} ({2}): {3}'.format(
                 self.fun, self.var1, self.var2, self.body)
 
+    def validate(self, bound):
+        assert self.value in bound
+        if self.lhs_fixed:
+            assert_in(self.var1, bound)
+            assert_not_in(self.var2, bound)
+            self.body.validate(set_with(bound, self.var2))
+        else:
+            assert_in(self.var2, bound)
+            assert_not_in(self.var1, bound)
+            self.body.validate(set_with(bound, self.var1))
+
     def op_count(self):
         return 4.0 + 0.5 * self.body.op_count()  # amortized
 
@@ -154,6 +204,11 @@ class Let(Strategy):
     def __repr__(self):
         return 'let {0}: {1}'.format(self.var, self.body)
 
+    def validate(self, bound):
+        assert_subset(self.expr.vars, bound)
+        assert_not_in(self.var, bound)
+        self.body.validate(set_with(bound, self.var))
+
     def op_count(self):
         return 1.0 + 0.5 * self.body.op_count()
 
@@ -171,6 +226,10 @@ class Test(Strategy):
     def __repr__(self):
         return 'if {0}: {1}'.format(self.expr, self.body)
 
+    def validate(self, bound):
+        assert_subset(self.expr.vars, bound)
+        self.body.validate(bound)
+
     def op_count(self):
         return 1.0 + self.body.op_count()
 
@@ -185,6 +244,9 @@ class Ensure(Strategy):
 
     def __repr__(self):
         return 'ensure {0}'.format(self.expr)
+
+    def validate(self, bound):
+        assert_subset(self.expr.vars, bound)
 
     def op_count(self):
         fun_count = 0
@@ -219,7 +281,13 @@ def get_events(seq):
     events = set()
     free_vars = seq.vars
     for sequent in normalize(seq):
-        events |= sequent.antecedents
+        for antecedent in sequent.antecedents:
+            if antecedent.name == 'EQUAL':
+                lhs, rhs = antecedent.args
+                assert lhs.is_var() and rhs.is_var(), antecedents
+                # HACK ignore equations
+            else:
+                events.add(antecedent)
         # HACK to deal with Equation args
         succedent = iter(sequent.succedents).next()
         for arg in succedent.args:
@@ -280,7 +348,12 @@ def rank_compiled(seq, context, bound):
     logger('optimizing {0} versions'.format(len(compiled)))
     ranked = []
     for s in compiled:
+        s.validate(bound)
+        #print 'DEBUG', '-' * 8
+        #print 'DEBUG', s
         s.optimize()
+        #print 'DEBUG', s
+        s.validate(bound)
         ranked.append((s.cost(), s))
     return ranked
 
@@ -308,7 +381,8 @@ def get_compiled(antecedents, succedent, bound):
 
     # conditionals
     for a in antecedents:
-        if a.name in ['LESS', 'NLESS']:
+        #if a.name in ['LESS', 'NLESS']:
+        if a.is_rel():
             if a.vars <= bound:
                 antecedents_a = set_without(antecedents, a)
                 for s in get_compiled(antecedents_a, succedent, bound):
