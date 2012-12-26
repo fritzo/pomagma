@@ -1,13 +1,16 @@
-from pomagma.language import dict_to_language
+import simplejson as json
 from math import log
 
-compound_probs = {
+binary_probs = {
     'APP'   : 0.374992,
     'COMP'  : 0.198589,
+}
+
+symmetric_probs = {
     'JOIN'  : 0.0569286,
 }
 
-atom_weights = {
+nullary_weights = {
     'B'     : 1.0,
     'C'     : 1.30428,
     #'C B'   : 1.35451,
@@ -20,8 +23,8 @@ atom_weights = {
     'V'     : 2.87327,
     #'div'   : 3.06752,
     #'S B'   : 3.5036,
-    'P'     : 3.69204,
-    'F'     : 3.72682,
+    #'P'     : 3.69204,
+    #'F'     : 3.72682,
     #'S I'   : 4.12483,
     #'semi'  : 4.18665,
     'W'     : 4.36313,
@@ -37,21 +40,24 @@ atom_weights = {
     #'sset'  : 12.0,
 }
 
-atom_prob = 1.0 - sum(compound_probs.values())
-atom_probs = { key: -log(val) for key, val in atom_weights.iteritems() }
-scale = atom_prob / sum(atom_probs.values())
-for key in atom_probs.keys():
-    atom_probs[key] *= scale
+compound_prob = sum(binary_probs.values()) - sum(symmetric_probs.values())
+assert compound_prob < 1
+nullary_prob = 1.0 - compound_prob
+nullary_probs = { key: -log(val) for key, val in nullary_weights.iteritems() }
+scale = nullary_prob / sum(nullary_probs.values())
+for key in nullary_probs.keys():
+    nullary_probs[key] *= scale
 
-probs = {}
-probs.update(compound_probs)
-probs.update(atom_probs)
+probs = {
+    'Nullary': nullary_probs,
+    'Binary': binary_probs,
+    'Symmetric': symmetric_probs,
+}
 
 
-def make(outfile='skj.language'):
-    lang = dict_to_language(probs)
-    with open(outfile, 'wb') as f:
-        outfile.write(lang.SerializeToString())
+def make(outfile='skj.json'):
+    with open(outfile, 'w') as f:
+        json.dump(probs, f, indent=4)
 
 
 if __name__ == '__main__':

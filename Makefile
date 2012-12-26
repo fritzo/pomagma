@@ -76,6 +76,27 @@ sk: install log
 	bin/sk.grower TODO_structure_out \
 	|| (grep -C3 -i error log/sk.log && false)
 
+skj-test: build/debug log
+	@$(MAKE) -C src/language skj.language
+	@(cd build/debug && cmake -DCMAKE_BUILD_TYPE=Debug ../..)
+	@$(MAKE) -C build/debug/src/grower skj.grower
+	@echo '' > log/skj.log
+	POMAGMA_SIZE=2047 \
+	POMAGMA_THREADS=$(PROCS) \
+	POMAGMA_LOG_LEVEL=4 \
+	POMAGMA_LOG_FILE=log/skj.log \
+	build/debug/src/grower/skj.grower TODO_structure_out \
+	|| (grep -C3 -i error log/skj.log && false)
+
+skj: install log
+	@echo '' > log/skj.log
+	POMAGMA_SIZE=4095 \
+	POMAGMA_THREADS=$(PROCS) \
+	POMAGMA_LOG_LEVEL=4 \
+	POMAGMA_LOG_FILE=log/skj.log \
+	bin/skj.grower TODO_structure_out \
+	|| (grep -C3 -i error log/skj.log && false)
+
 profile: build/release log FORCE
 	@echo 'PWD =' `pwd`
 	@(cd build/release && cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo ../..)

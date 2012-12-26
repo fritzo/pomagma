@@ -7,7 +7,8 @@ language_pb2.py: language.proto
 sk.json: sk.py
 	python sk.py
 
+skj.json: skj.py
+	python skj.py
+
 %.language: %.json run.py language_pb2.py __init__.py
 	python run.py compile $< $@
-
-# TODO add make target for *.language
