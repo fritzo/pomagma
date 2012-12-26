@@ -134,8 +134,8 @@ def get_atomic(seq, bound=set()):
     '''
     result = set()
     for pointed in get_pointed(seq):
-        seq_succedent = iter(pointed.succedents).next()
-        antecedents, succedent = as_succedent(seq_succedent, bound)
+        improper_succedent = iter(pointed.succedents).next()
+        antecedents, succedent = as_succedent(improper_succedent, bound)
         for a in pointed.antecedents:
             antecedents |= as_antecedents(a, bound)
         result.add(Sequent(antecedents, set([succedent])))

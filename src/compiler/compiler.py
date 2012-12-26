@@ -285,7 +285,7 @@ def get_events(seq):
             if antecedent.name == 'EQUAL':
                 lhs, rhs = antecedent.args
                 assert lhs.is_var() and rhs.is_var(), antecedents
-                # HACK ignore equations
+                # HACK ignore equation antecedents
             else:
                 events.add(antecedent)
         # HACK to deal with Equation args
@@ -369,7 +369,15 @@ def get_compiled(antecedents, succedent, bound):
 
     results = []
 
-    # bind constants
+    # bind succedent constants
+    for c in succedent.consts:
+        if c.var not in bound:
+            bound_c = set_with(bound, c.var)
+            for s in get_compiled(antecedents, succedent, bound_c):
+                results.append(Let(c, s))
+            return results # HEURISTIC bind eagerly in arbitrary order
+
+    # bind antecedent constants
     for a in antecedents:
         if not a.args and a.var not in bound:
             assert a.is_fun(), a
