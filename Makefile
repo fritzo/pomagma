@@ -90,7 +90,7 @@ skj-test: build/debug log
 
 skj: install log
 	@echo '' > log/skj.log
-	POMAGMA_SIZE=4095 \
+	POMAGMA_SIZE=2047 \
 	POMAGMA_THREADS=$(PROCS) \
 	POMAGMA_LOG_LEVEL=4 \
 	POMAGMA_LOG_FILE=log/skj.log \
