@@ -127,13 +127,20 @@ def cpp(self, code):
 
 @methodof(compiler.IterInvBinary)
 def cpp(self, code):
-    body = Code('''
-        Ob $var1 = iter.lhs();
-        Ob $var2 = iter.rhs();
-        ''',
-        var1 = self.var1,
-        var2 = self.var2,
-        )
+    if self.var1 == self.var2:
+        body = Code('''
+            Ob $var1 __attribute__((unused)) = iter.lhs();
+            ''',
+            var1 = self.var1,
+            )
+    else:
+        body = Code('''
+            Ob $var1 __attribute__((unused)) = iter.lhs();
+            Ob $var2 __attribute__((unused)) = iter.rhs();
+            ''',
+            var1 = self.var1,
+            var2 = self.var2,
+            )
     self.body.cpp(body)
     code('''
         for (auto iter = $fun.iter_val($value); iter.ok(); iter.next()) {
@@ -641,13 +648,22 @@ def write_event_tasks(code, sequents):
 
             for event, _, strategies in tasks:
                 subsubbody = Code()
-                for local, arg in zip(event.args, args):
+                diagonal = (nargs == 2 and event.args[0] == event.args[1])
+                if diagonal:
                     subsubbody('''
                         const Ob $local __attribute__((unused)) = $arg;
                         ''',
-                        local=local,
-                        arg=arg,
+                        local=event.args[0],
+                        arg=args[0],
                         )
+                else:
+                    for local, arg in zip(event.args, args):
+                        subsubbody('''
+                            const Ob $local __attribute__((unused)) = $arg;
+                            ''',
+                            local=local,
+                            arg=arg,
+                            )
                 if event.is_fun():
                     subsubbody('const Ob $arg = val;', arg=event.var.name)
                 elif event.is_var():
@@ -655,14 +671,24 @@ def write_event_tasks(code, sequents):
                 for cost, strategy in strategies:
                     subsubbody.newline()
                     strategy.cpp(subsubbody)
-                subbody('''
-                    { // cost = $cost
-                        $subsubbody
-                    }
-                    ''',
-                    cost = cost,
-                    subsubbody = wrapindent(subsubbody),
-                    )
+                if diagonal:
+                    subbody('''
+                        if (lhs == rhs) { // cost = $cost
+                            $subsubbody
+                        }
+                        ''',
+                        cost = cost,
+                        subsubbody = wrapindent(subsubbody),
+                        )
+                else:
+                    subbody('''
+                        { // cost = $cost
+                            $subsubbody
+                        }
+                        ''',
+                        cost = cost,
+                        subsubbody = wrapindent(subsubbody),
+                        )
 
             if eventname in ['LESS', 'NLESS', '<variable>']:
                 body(str(subbody)).newline()

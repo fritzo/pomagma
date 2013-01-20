@@ -12,13 +12,12 @@ Roadmap
 -------
 
 - Language
-    - Add languages to git: skj
+    - Add languages to git: skjo
 - Theory
-    - Implement extensionality for join rules (skj)
+    - Implement extensionality for quote/eval rules (skjo)
 - Structure
     - Implement persistent serializer
 - Compiler
-    - Get skj.theory.cpp to compile (probably by fixing pomagma/compiler.py)
 - Grower
     - Implement dump, load operations
     - Flesh out unit test to exercise all methods

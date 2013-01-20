@@ -56,6 +56,13 @@ class Expression(object):
     def vars(self):
         return self._vars.copy()
 
+    @property
+    def consts(self):
+        if self.is_fun() and not self.args:
+            return set([self])
+        else:
+            return union([arg.consts for arg in self.args])
+
     def __hash__(self):
         return self._hash
 

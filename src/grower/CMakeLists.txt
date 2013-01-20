@@ -171,7 +171,6 @@ add_custom_command(
 		${SRC_DIR}/theory/sk.facts
 		${SRC_DIR}/theory/order.facts
 	)
-# TODO get skj.theory.cpp to compile
-#add_executable(skj.grower skj.theory.cpp)
-#target_link_libraries(skj.grower ${POMAGMA_SERVER_LIBS})
-#install(TARGETS skj.grower DESTINATION ${PROJECT_SOURCE_DIR}/bin)
+add_executable(skj.grower skj.theory.cpp)
+target_link_libraries(skj.grower ${POMAGMA_SERVER_LIBS})
+install(TARGETS skj.grower DESTINATION ${PROJECT_SOURCE_DIR}/bin)

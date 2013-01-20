@@ -18,15 +18,17 @@ def union(sets):
         return set()
 
 
-def set_with(set_, element):
+def set_with(set_, *elements):
     result = set(set_)
-    result.add(element)
+    for e in elements:
+        result.add(e)
     return result
 
 
-def set_without(set_, element):
+def set_without(set_, *elements):
     result = set(set_)
-    result.remove(element)
+    for e in elements:
+        result.remove(e)
     return result
 
 
