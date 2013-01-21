@@ -36,6 +36,7 @@ void Structure::dump (const std::string & filename)
     dump_injective_functions(file_id);
     dump_binary_functions(file_id);
     dump_symmetric_functions(file_id);
+    // TODO dump order
 
     // Terminate access to the file
     status = H5Fclose(file_id);
@@ -43,7 +44,7 @@ void Structure::dump (const std::string & filename)
 
 void Structure::load_binary_functions (const hid_t & file_id)
 {
-    const std::string prefix = "/function/binary/"
+    const std::string prefix = "/function/binary/";
     for (const auto & pair : m_binary_functions) {
         std::string name = prefix + pair.first;
         BinaryFunction * fun = pair.second;
@@ -74,7 +75,7 @@ void Structure::dump_injective_functions (const hid_t & file_id)
     hsize_t dims[] = {item_dim};
     hid_t dataspace_id = H5Screate_simple(1, dims, NULL);
 
-    const std::string prefix = "/function/binary/"
+    const std::string prefix = "/function/injective/";
     for (const auto & pair : m_binary_functions) {
         std::string name = prefix + pair.first;
         const BinaryFunction * fun = pair.second;
@@ -113,7 +114,7 @@ void Structure::dump_binary_functions (const hid_t & file_id)
     hsize_t dims[] = {item_dim, item_dim};
     hid_t dataspace_id = H5Screate_simple(2, dims, NULL);
 
-    const std::string prefix = "/function/binary/"
+    const std::string prefix = "/function/binary/";
     for (const auto & pair : m_binary_functions) {
         std::string name = prefix + pair.first;
         const BinaryFunction * fun = pair.second;
