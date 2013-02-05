@@ -56,7 +56,7 @@ Milestones
 System Architecture
 -------------------
 
-![Architecture](pomagma/raw/master/doc/architecture.png)
+![Architecture](doc/architecture.png)
 
 - Language - a probabilistic grammar defining an algebra's generators
 - Theory - inference rules and facts defining an algebra's relations
