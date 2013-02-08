@@ -13,14 +13,24 @@ add_library(pomagma_grower SHARED
 	binary_function.cpp
 	symmetric_function.cpp
 	sampler.cpp
+	structure.cpp
 	scheduler.cpp
 	)
 install(TARGETS pomagma_grower LIBRARY DESTINATION ${PROJECT_SOURCE_DIR}/lib)
-set(POMAGMA_LIBS pomagma_grower boost_thread tbb)
+set(POMAGMA_LIBS
+	pomagma_grower
+       	boost_thread
+       	tbb
+       	hdf5_hl hdf5)
 
 
 add_library(pomagma_grower_dummy SHARED dummy.theory.cpp)
-set(POMAGMA_TEST_LIBS pomagma_grower pomagma_grower_dummy boost_thread tbb)
+set(POMAGMA_TEST_LIBS
+	pomagma_grower
+	pomagma_grower_dummy
+	boost_thread
+	tbb
+       	hdf5_hl hdf5)
 
 
 add_executable(threading_profile threading_profile.cpp)

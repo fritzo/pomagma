@@ -279,10 +279,14 @@ def write_signature(code, functions):
             code.newline()
 
     body = Code()
+    body('''
+        signature.declare("LESS", LESS);
+        signature.declare("NLESS", NLESS);
+        ''')
     for arity, names in functions.iteritems():
         for name in names:
             body('''
-                sampler.declare("$NAME", $NAME);
+                signature.declare("$NAME", $NAME);
                 ''',
                 NAME = name)
     code('''

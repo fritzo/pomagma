@@ -1,17 +1,14 @@
 #pragma once
 
 #include "util.hpp"
-#include "carrier.hpp"
+#include "signature.hpp"
+#include "threading.hpp"
 #include <unordered_map>
 
-namespace pomagma {
+namespace pomagma
+{
 
-class NullaryFunction;
-class InjectiveFunction;
-class BinaryFunction;
-class SymmetricFunction;
-
-class Sampler
+class Sampler : public Signature::Observer
 {
     Carrier & m_carrier;
 
@@ -61,15 +58,16 @@ class Sampler
 
 public:
 
-    Sampler (Carrier & carrier);
+    Sampler (Signature & signature);
 
     void validate () const;
     void log_stats () const;
 
-    void declare (const std::string & name, const NullaryFunction & fun);
-    void declare (const std::string & name, const InjectiveFunction & fun);
-    void declare (const std::string & name, const BinaryFunction & fun);
-    void declare (const std::string & name, const SymmetricFunction & fun);
+    void declare (const std::string &, BinaryRelation &) {}
+    void declare (const std::string & name, NullaryFunction & fun);
+    void declare (const std::string & name, InjectiveFunction & fun);
+    void declare (const std::string & name, BinaryFunction & fun);
+    void declare (const std::string & name, SymmetricFunction & fun);
 
     void set_prob (const std::string &, float prob);
 

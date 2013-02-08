@@ -8,7 +8,9 @@
 #include "binary_function.hpp"
 #include "symmetric_function.hpp"
 #include "binary_relation.hpp"
+#include "signature.hpp"
 #include "sampler.hpp"
+#include "structure.hpp"
 #include "scheduler.hpp"
 #include <atomic>
 #include <thread>
@@ -46,7 +48,10 @@ Carrier carrier(
     schedule_exists,
     schedule_merge);
 
-Sampler sampler(carrier);
+Signature signature(carrier);
+
+Sampler sampler(signature);
+Structure structure(signature);
 
 BinaryRelation LESS(carrier, schedule_less);
 BinaryRelation NLESS(carrier, schedule_nless);

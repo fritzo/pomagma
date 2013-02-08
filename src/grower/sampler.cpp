@@ -13,8 +13,9 @@ namespace pomagma
 //----------------------------------------------------------------------------
 // construction
 
-Sampler::Sampler (Carrier & carrier)
-    : m_carrier(carrier),
+Sampler::Sampler (Signature & signature)
+    : Signature::Observer(signature),
+      m_carrier(signature.carrier()),
       m_sample_count(0),
       m_arity_sample_count(0),
       m_compound_arity_sample_count(0)
@@ -97,25 +98,25 @@ inline Key sample (
     }
 }
 
-void Sampler::declare (const std::string & name, const NullaryFunction & fun)
+void Sampler::declare (const std::string & name, NullaryFunction & fun)
 {
     m_nullary_funs[name] = & fun;
     set_prob(& fun, 0);
 }
 
-void Sampler::declare (const std::string & name, const InjectiveFunction & fun)
+void Sampler::declare (const std::string & name, InjectiveFunction & fun)
 {
     m_injective_funs[name] = & fun;
     set_prob(& fun, 0);
 }
 
-void Sampler::declare (const std::string & name, const BinaryFunction & fun)
+void Sampler::declare (const std::string & name, BinaryFunction & fun)
 {
     m_binary_funs[name] = & fun;
     set_prob(& fun, 0);
 }
 
-void Sampler::declare (const std::string & name, const SymmetricFunction & fun)
+void Sampler::declare (const std::string & name, SymmetricFunction & fun)
 {
     m_symmetric_funs[name] = & fun;
     set_prob(& fun, 0);

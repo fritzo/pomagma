@@ -47,6 +47,10 @@ public:
     // strict operations
     void unsafe_merge (const Ob dep);
 
+    // totally unsafe
+    Block * raw_data () { return m_blocks; }
+    const Block * raw_data () const { return m_blocks; }
+
 private:
 
     const Carrier & carrier () const { return m_lines.carrier(); }
