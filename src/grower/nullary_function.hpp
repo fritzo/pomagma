@@ -25,6 +25,9 @@ public:
     void validate () const;
     void log_stats () const;
 
+    // raw operations
+    void raw_insert (Ob val);
+
     // relaxed operations
     bool defined () const;
     Ob find () const;
@@ -48,6 +51,14 @@ inline Ob NullaryFunction::find () const
 {
     SharedLock lock(m_mutex);
     return m_value;
+}
+
+inline void NullaryFunction::raw_insert (Ob val)
+{
+    POMAGMA_ASSERT5(val, "tried to set value to zero");
+    POMAGMA_ASSERT5(support().contains(val), "unsupported value: " << val);
+
+    m_value.store(val, relaxed);
 }
 
 inline void NullaryFunction::insert (Ob val) const

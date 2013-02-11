@@ -32,6 +32,9 @@ public:
     void validate () const;
     void log_stats () const;
 
+    // raw operations
+    void raw_insert (Ob lhs, Ob rhs, Ob val);
+
     // relaxed operations
     DenseSet get_Lx_set (Ob lhs) const { return m_lines.Lx_set(lhs); }
     DenseSet get_Rx_set (Ob rhs) const { return m_lines.Rx_set(rhs); }
