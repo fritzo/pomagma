@@ -29,6 +29,9 @@ public:
     void validate () const;
     void log_stats () const;
 
+    // raw operations
+    void raw_insert (Ob key, Ob val);
+
     // relaxed operations
     const DenseSet & defined () const { return m_set; }
     const DenseSet & inverse_defined () const { return m_inverse_set; }
@@ -71,6 +74,19 @@ inline Ob InjectiveFunction::inverse_find (Ob val) const
 {
     POMAGMA_ASSERT_RANGE_(5, val, item_dim());
     return m_inverse[val];
+}
+
+inline void InjectiveFunction::raw_insert (Ob key, Ob val)
+{
+    POMAGMA_ASSERT5(val, "tried to set val to zero at " << key);
+    POMAGMA_ASSERT5(support().contains(key), "unsupported key: " << key);
+    POMAGMA_ASSERT5(support().contains(val), "unsupported val: " << val);
+
+    m_values[key].store(val, relaxed);
+    m_set(key).one(relaxed);
+
+    m_inverse[val].store(key, relaxed);
+    m_inverse_set(val).one(relaxed);
 }
 
 inline void InjectiveFunction::insert (Ob key, Ob val) const
