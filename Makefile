@@ -4,7 +4,11 @@ export POMAGMA_THREADS := $(PROCS)
 
 all: install
 
-test: unit-test
+test:
+	@$(MAKE) unit-test
+	@$(MAKE) h4-test
+	#@$(MAKE) sk-test
+	#@$(MAKE) skj-test
 
 build:
 	mkdir build
@@ -41,7 +45,8 @@ h4-test: build/debug log data
 	@(cd build/debug && cmake -DCMAKE_BUILD_TYPE=Debug ../..)
 	@$(MAKE) -C build/debug/src/grower h4.grower
 	@echo '' > log/h4-test.log
-	#POMAGMA_SIZE=14400 # TODO slow
+	@echo -e '\nTesting grower with theory h4'
+	@#POMAGMA_SIZE=14400 # TODO slow
 	POMAGMA_SIZE=511 \
 	POMAGMA_LOG_LEVEL=4 \
 	POMAGMA_LOG_FILE=log/h4-test.log \
@@ -55,6 +60,7 @@ h4-test: build/debug log data
 
 h4: install log data
 	@echo '' > log/h4.log
+	@echo -e '\nRunning grower with theory h4'
 	POMAGMA_SIZE=14400 \
 	POMAGMA_LOG_LEVEL=4 \
 	POMAGMA_LOG_FILE=log/h4.log \
@@ -66,6 +72,7 @@ sk-test: build/debug log data
 	@(cd build/debug && cmake -DCMAKE_BUILD_TYPE=Debug ../..)
 	@$(MAKE) -C build/debug/src/grower sk.grower
 	@echo '' > log/sk-test.log
+	@echo -e '\nTesting grower with theory sk'
 	POMAGMA_SIZE=1023 \
 	POMAGMA_LOG_LEVEL=4 \
 	POMAGMA_LOG_FILE=log/sk-test.log \
@@ -79,6 +86,7 @@ sk-test: build/debug log data
 
 sk: install log data
 	@echo '' > log/sk.log
+	@echo -e '\nRunning grower with theory skj'
 	POMAGMA_SIZE=2047 \
 	POMAGMA_LOG_LEVEL=4 \
 	POMAGMA_LOG_FILE=log/sk.log \
@@ -90,6 +98,7 @@ skj-test: build/debug log data
 	@(cd build/debug && cmake -DCMAKE_BUILD_TYPE=Debug ../..)
 	@$(MAKE) -C build/debug/src/grower skj.grower
 	@echo '' > log/skj-test.log
+	@echo -e '\nTesting grower with theory skj'
 	POMAGMA_SIZE=1535 \
 	POMAGMA_LOG_LEVEL=4 \
 	POMAGMA_LOG_FILE=log/skj-test.log \
@@ -103,6 +112,7 @@ skj-test: build/debug log data
 
 skj: install log data
 	@echo '' > log/skj.log
+	@echo -e '\nRunning grower with theory skj'
 	POMAGMA_SIZE=2047 \
 	POMAGMA_LOG_LEVEL=4 \
 	POMAGMA_LOG_FILE=log/skj.log \
