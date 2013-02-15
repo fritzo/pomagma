@@ -44,13 +44,13 @@ private:
 inline bool NullaryFunction::defined () const
 {
     SharedLock lock(m_mutex);
-    return m_value;
+    return m_value.load(relaxed);
 }
 
 inline Ob NullaryFunction::find () const
 {
     SharedLock lock(m_mutex);
-    return m_value;
+    return m_value.load(acquire);
 }
 
 inline void NullaryFunction::raw_insert (Ob val)

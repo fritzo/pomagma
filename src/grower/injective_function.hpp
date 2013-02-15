@@ -30,9 +30,11 @@ public:
     void log_stats () const;
 
     // raw operations
+    Ob raw_find (Ob key) const;
     void raw_insert (Ob key, Ob val);
 
     // relaxed operations
+    // m_values & m_inverse are source of truth; m_set & m_inverse_set lag
     const DenseSet & defined () const { return m_set; }
     const DenseSet & inverse_defined () const { return m_inverse_set; }
     bool defined (Ob key) const;
@@ -64,16 +66,22 @@ inline bool InjectiveFunction::inverse_defined (Ob key) const
     return m_inverse_set.contains(key);
 }
 
+inline Ob InjectiveFunction::raw_find (Ob key) const
+{
+    POMAGMA_ASSERT_RANGE_(5, key, item_dim());
+    return m_values[key].load(relaxed);
+}
+
 inline Ob InjectiveFunction::find (Ob key) const
 {
     POMAGMA_ASSERT_RANGE_(5, key, item_dim());
-    return m_values[key];
+    return m_values[key].load(acquire);
 }
 
 inline Ob InjectiveFunction::inverse_find (Ob val) const
 {
     POMAGMA_ASSERT_RANGE_(5, val, item_dim());
-    return m_inverse[val];
+    return m_inverse[val].load(acquire);
 }
 
 inline void InjectiveFunction::raw_insert (Ob key, Ob val)
@@ -83,10 +91,10 @@ inline void InjectiveFunction::raw_insert (Ob key, Ob val)
     POMAGMA_ASSERT5(support().contains(val), "unsupported val: " << val);
 
     m_values[key].store(val, relaxed);
-    m_set(key).one(relaxed);
+    m_set(key).one();
 
     m_inverse[val].store(key, relaxed);
-    m_inverse_set(val).one(relaxed);
+    m_inverse_set(val).one();
 }
 
 inline void InjectiveFunction::insert (Ob key, Ob val) const

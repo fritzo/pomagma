@@ -90,6 +90,19 @@ void SymmetricFunction::log_stats () const
     m_lines.log_stats();
 }
 
+size_t SymmetricFunction::count_pairs () const
+{
+    size_t ordered_pair_count = m_lines.count_pairs();
+    size_t diagonal = 0;
+    for (auto i = carrier().iter(); i.ok(); i.next()) {
+        if (defined(*i, *i)) {
+            ++diagonal;
+        }
+    }
+    size_t unordered_pair_count = (ordered_pair_count + diagonal) / 2;
+    return unordered_pair_count;
+}
+
 void SymmetricFunction::raw_insert (Ob lhs, Ob rhs, Ob val)
 {
     POMAGMA_ASSERT5(support().contains(lhs), "unsupported lhs: " << lhs);

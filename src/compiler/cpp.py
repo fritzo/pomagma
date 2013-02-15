@@ -309,6 +309,7 @@ def write_signature(code, functions):
 
 @inputs(Code)
 def write_validator(code, functions):
+    # TODO move this to grower/signature.cpp
     body1 = Code()
     body2 = Code()
     functions = functions.items()

@@ -295,4 +295,34 @@ inline Ob _block2value (const std::atomic<Ob> * block, Ob i, Ob j)
     return block[(j << LOG2_ITEMS_PER_BLOCK) | i];
 }
 
+//----------------------------------------------------------------------------
+// vector operations
+
+template<class T>
+std::ostream & operator<< (std::ostream & o, const std::vector<T> & x)
+{
+    o << "[";
+    if (not x.empty()) {
+        o << x[0];
+        for (size_t i = 1; i < x.size(); ++i) {
+            o << ", " << x[i];
+        }
+    }
+    return o << "]";
+}
+
+template<class T>
+inline bool operator== (const std::vector<T> & x, const std::vector<T> & y)
+{
+    if (x.size() != y.size()) {
+        return false;
+    }
+    for (size_t i = 0, I = x.size(); i != I; ++i) {
+        if (x[i] != y[i]) {
+            return false;
+        }
+    }
+    return true;
+}
+
 } // namespace pomagma

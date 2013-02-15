@@ -236,6 +236,8 @@ public:
     size_t item_dim () const { return m_item_dim; }
     size_t word_dim () const { return m_word_dim; }
     size_t data_size_bytes () const { return sizeof(Word) * m_word_dim; }
+    std::atomic<Word> * raw_data () { return m_words; }
+    const std::atomic<Word> * raw_data () const { return m_words; }
     void validate () const;
 
     // element operations

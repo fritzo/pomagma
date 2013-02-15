@@ -43,6 +43,8 @@ struct atomic_flag : std::atomic_flag
 
 typedef std::memory_order order_t;
 const order_t relaxed = std::memory_order_relaxed;
+const order_t acquire = std::memory_order_acquire;
+const order_t release = std::memory_order_release;
 
 template<class Mutex>
 struct unique_lock

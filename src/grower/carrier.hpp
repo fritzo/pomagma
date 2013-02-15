@@ -42,6 +42,9 @@ public:
     size_t rep_count () const { return m_rep_count; }
     bool contains (Ob ob) const { return m_support.contains(ob); }
 
+    // raw operations
+    void raw_insert (Ob ob);
+
     // relaxed operations
     Ob find (Ob ob) const;
     bool equal (Ob lhs, Ob rhs) const;
@@ -60,6 +63,12 @@ private:
 
     Ob _find (Ob ob, Ob rep) const;
 };
+
+inline void Carrier::raw_insert (Ob ob)
+{
+    m_support.insert(ob, relaxed);
+    m_reps[ob].store(ob, relaxed);
+}
 
 inline Ob Carrier::find (Ob ob) const
 {

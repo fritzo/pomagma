@@ -34,13 +34,17 @@ public:
     void log_stats () const;
 
     // raw operations
+    // m_blocks is source of truth; m_lines lag
+    static bool is_symmetric () { return true; }
+    size_t count_pairs () const; // unordered
+    Ob raw_find (Ob lhs, Ob rhs) const { return value(lhs, rhs).load(relaxed); }
     void raw_insert (Ob lhs, Ob rhs, Ob val);
 
     // relaxed operations
     DenseSet get_Lx_set (Ob lhs) const { return m_lines.Lx_set(lhs); }
     DenseSet get_Rx_set (Ob rhs) const { return m_lines.Rx_set(rhs); }
     bool defined (Ob lhs, Ob rhs) const;
-    Ob find (Ob lhs, Ob rhs) const { return value(lhs, rhs).load(); }
+    Ob find (Ob lhs, Ob rhs) const { return value(lhs, rhs).load(acquire); }
     DenseSet::Iterator iter_lhs (Ob lhs) const;
     DenseSet::Iterator iter_rhs (Ob rhs) const;
     Vlr_Table::Iterator iter_val (Ob val) const;

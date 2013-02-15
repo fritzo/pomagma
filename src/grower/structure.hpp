@@ -4,10 +4,14 @@
 #include "signature.hpp"
 #include <map>
 
-typedef int hid_t;
-
 namespace pomagma
 {
+
+namespace hdf5
+{
+struct InFile;
+struct OutFile;
+};
 
 class Structure : public Signature::Observer
 {
@@ -21,10 +25,7 @@ class Structure : public Signature::Observer
 
 public:
 
-    Structure (Signature & signature)
-        : Signature::Observer(signature),
-          m_carrier(signature.carrier())
-    {}
+    Structure (Signature & signature);
 
     void declare (const std::string & name, BinaryRelation & rel);
     void declare (const std::string & name, NullaryFunction & fun);
@@ -37,17 +38,19 @@ public:
 
 private:
 
-    void load_binary_relations (const hid_t & file_id);
-    void load_nullary_functions (const hid_t & file_id);
-    void load_injective_functions (const hid_t & file_id);
-    void load_binary_functions (const hid_t & file_id);
-    void load_symmetric_functions (const hid_t & file_id);
+    void load_carrier (hdf5::InFile & file);
+    void load_binary_relations (hdf5::InFile & file);
+    void load_nullary_functions (hdf5::InFile & file);
+    void load_injective_functions (hdf5::InFile & file);
+    void load_binary_functions (hdf5::InFile & file);
+    void load_symmetric_functions (hdf5::InFile & file);
 
-    void dump_binary_relations (const hid_t & file_id);
-    void dump_nullary_functions (const hid_t & file_id);
-    void dump_injective_functions (const hid_t & file_id);
-    void dump_binary_functions (const hid_t & file_id);
-    void dump_symmetric_functions (const hid_t & file_id);
+    void dump_carrier (hdf5::OutFile & file);
+    void dump_binary_relations (hdf5::OutFile & file);
+    void dump_nullary_functions (hdf5::OutFile & file);
+    void dump_injective_functions (hdf5::OutFile & file);
+    void dump_binary_functions (hdf5::OutFile & file);
+    void dump_symmetric_functions (hdf5::OutFile & file);
 };
 
 } // namespace pomagma

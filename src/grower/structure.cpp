@@ -4,16 +4,20 @@
 #include "injective_function.hpp"
 #include "binary_function.hpp"
 #include "symmetric_function.hpp"
-
-extern "C" {
-#include <hdf5.h>
-}
+#include "pomagma_hdf5.hpp"
 
 namespace pomagma
 {
 
 //----------------------------------------------------------------------------
 // construction
+
+Structure::Structure (Signature & signature)
+    : Signature::Observer(signature),
+      m_carrier(signature.carrier())
+{
+    hdf5::init();
+}
 
 void Structure::declare (const std::string & name, BinaryRelation & rel)
 {
@@ -48,209 +52,351 @@ void Structure::declare (const std::string & name, SymmetricFunction & fun)
 
 void Structure::load (const std::string & filename)
 {
-    herr_t status;
-
-    // Open file
-    hid_t file_id = H5Fopen(filename.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
-    POMAGMA_ASSERT(file_id, "failed to open file " << filename);
+    hdf5::InFile file(filename);
 
     // TODO do this in parallel
-    load_binary_relations(file_id);
-    load_nullary_functions(file_id);
-    load_injective_functions(file_id);
-    load_binary_functions(file_id);
-    load_symmetric_functions(file_id);
-
-    // Close file
-    status = H5Fclose(file_id);
-    herr_t FIXME = 0;
-    POMAGMA_ASSERT(status == FIXME, "failed to close file");
+    // TODO verify SHA1 hash http://www.openssl.org/docs/crypto/sha.html
+    load_carrier(file);
+    load_binary_relations(file);
+    load_nullary_functions(file);
+    load_injective_functions(file);
+    load_binary_functions(file);
+    load_symmetric_functions(file);
 }
 
-void Structure::load_binary_relations (const hid_t & file_id __attribute__((unused)))
+void Structure::load_carrier (hdf5::InFile & file)
 {
-    TODO("load binary relations");
-}
+    hdf5::Dataset dataset(file, "/carrier/support");
 
-void Structure::load_nullary_functions (const hid_t & file_id __attribute__((unused)))
-{
-    TODO("load nullary functions");
-}
+    hdf5::Dataspace dataspace(dataset);
+    const auto shape = dataspace.shape();
+    POMAGMA_ASSERT_EQ(shape.size(), 1);
+    POMAGMA_ASSERT_LE(shape[0], 1 + MAX_ITEM_DIM);
 
-void Structure::load_injective_functions (const hid_t & file_id __attribute__((unused)))
-{
-    TODO("load injective functions");
-}
+    DenseSet support(m_carrier.item_dim());
+    dataset.read_all(support);
 
-void Structure::load_binary_functions (const hid_t & file_id)
-{
-    herr_t status;
-    herr_t FIXME = 0;
-
-    const std::string prefix = "/function/binary/";
-    for (const auto & pair : m_binary_functions) {
-        std::string name = prefix + pair.first;
-        BinaryFunction * fun = pair.second;
-
-        // Create the dataset
-        hid_t dataset_id = H5Dopen(
-                file_id,
-                name.c_str()
-                //, H5P_DEFAULT
-                );
-
-        status = H5Dread(
-                dataset_id,
-                H5T_NATIVE_USHORT, // 16-bit, or should this be H5T_NATIVE_INT
-                H5S_ALL,
-                H5S_ALL,
-                H5P_DEFAULT,
-                fun->raw_data());
-        POMAGMA_ASSERT(status == FIXME, "failed to read " << name);
-
-        // End access to the dataset and release resources used by it
-        status = H5Dclose(dataset_id);
-        POMAGMA_ASSERT(status == FIXME, "failed to close " << name);
+    for (auto i = support.iter(); i.ok(); i.next()) {
+        m_carrier.raw_insert(*i);
     }
 }
 
-void Structure::load_symmetric_functions (const hid_t & file_id __attribute__((unused)))
+void Structure::load_binary_relations (hdf5::InFile & file)
 {
-    TODO("load symmetric functions");
+    const std::string prefix = "/relations/binary/";
+    // TODO parallelize loop
+    for (const auto & pair : m_binary_relations) {
+        std::string name = prefix + pair.first;
+        BinaryRelation * rel = pair.second;
+
+        size_t dim1 = 1 + rel->item_dim();
+        size_t dim2 = rel->round_word_dim();
+        std::atomic<Word> * destin = rel->raw_data();
+
+        hdf5::Dataset dataset(file, name);
+        dataset.read_rectangle(destin, dim1, dim2);
+        rel->update();
+    }
+}
+
+void Structure::load_nullary_functions (hdf5::InFile & file)
+{
+    const std::string prefix = "/functions/nullary/";
+    for (const auto & pair : m_nullary_functions) {
+        std::string name = prefix + pair.first;
+        NullaryFunction * fun = pair.second;
+
+        hdf5::Dataset dataset(file, name + "/value");
+
+        Ob data;
+        dataset.read_scalar(data);
+        fun->raw_insert(data);
+    }
+}
+
+void Structure::load_injective_functions (hdf5::InFile & file)
+{
+    const size_t item_dim = m_carrier.item_dim();
+    std::vector<Ob> data(1 + item_dim);
+
+    const std::string prefix = "/functions/injective/";
+    for (const auto & pair : m_injective_functions) {
+        std::string name = prefix + pair.first;
+        InjectiveFunction * fun = pair.second;
+
+        hdf5::Dataset dataset(file, name + "/value");
+
+        dataset.read_all(data);
+
+        for (Ob key = 1; key <= item_dim; ++key) {
+            Ob value = data[key];
+            if (value) {
+                fun->insert(key, value);
+            }
+        }
+    }
+}
+
+namespace detail
+{
+
+template<class Function>
+inline void load_functions (
+        const std::string & arity,
+        std::map<std::string, Function *> functions,
+        const Carrier & carrier,
+        hdf5::InFile & file)
+
+{
+    const size_t item_dim = carrier.item_dim();
+    std::vector<hsize_t> lhs_ptr_shape(1, 1 + item_dim);
+    std::vector<Ob> lhs_ptr_data(1 + item_dim);
+    std::vector<Ob> rhs_data(item_dim);
+    std::vector<Ob> value_data(item_dim);
+
+    const std::string prefix = "/functions/" + arity + "/";
+    // TODO parallelize loop
+    for (const auto & pair : functions) {
+        std::string name = prefix + pair.first;
+        Function * fun = pair.second;
+
+        hdf5::Dataset lhs_ptr_dataset(file, name + "/lhs_ptr");
+        hdf5::Dataset rhs_dataset(file, name + "/rhs");
+        hdf5::Dataset value_dataset(file, name + "/value");
+
+        hdf5::Dataspace lhs_ptr_dataspace(lhs_ptr_dataset);
+        hdf5::Dataspace rhs_dataspace(rhs_dataset);
+        hdf5::Dataspace value_dataspace(value_dataset);
+
+        POMAGMA_ASSERT_EQ(lhs_ptr_dataspace.shape(), lhs_ptr_shape);
+        POMAGMA_ASSERT_EQ(rhs_dataspace.shape(), value_dataspace.shape());
+
+        lhs_ptr_dataset.read_all(lhs_ptr_data);
+        lhs_ptr_data.push_back(rhs_dataspace.volume());
+        for (Ob lhs = 1; lhs <= item_dim; ++lhs) {
+            size_t begin = lhs_ptr_data[lhs];
+            size_t end = lhs_ptr_data[lhs + 1];
+            size_t count = end - begin;
+            if (count) {
+
+                rhs_data.resize(count);
+                value_data.resize(count);
+
+                rhs_dataset.read_block(rhs_data, begin);
+                value_dataset.read_block(value_data, begin);
+
+                for (size_t i = 0; i < count; ++i) {
+                    fun->insert(lhs, rhs_data[i], value_data[i]);
+                }
+            }
+        }
+        lhs_ptr_data.pop_back();
+    }
+}
+
+} // namespace detail
+
+void Structure::load_binary_functions (hdf5::InFile & file)
+{
+    detail::load_functions("binary", m_binary_functions, m_carrier, file);
+}
+
+void Structure::load_symmetric_functions (hdf5::InFile & file)
+{
+    detail::load_functions("symmetric", m_symmetric_functions, m_carrier, file);
 }
 
 void Structure::dump (const std::string & filename)
 {
-    herr_t status;
-    herr_t FIXME = 0;
-
-    // Create a new file using default properties
-    hid_t file_id = H5Fcreate(
-            filename.c_str(),
-            H5F_ACC_TRUNC,  // creation mode
-            H5P_DEFAULT,    // creation property list
-            H5P_DEFAULT);   // access property list
-    POMAGMA_ASSERT(file_id, "failed to open file " << filename);
+    hdf5::OutFile file(filename);
 
     // TODO do this in parallel
-    dump_binary_relations(file_id);
-    dump_nullary_functions(file_id);
-    dump_injective_functions(file_id);
-    dump_binary_functions(file_id);
-    dump_symmetric_functions(file_id);
-
-    // Terminate access to the file
-    status = H5Fclose(file_id);
-    POMAGMA_ASSERT(status == FIXME, "failed to close file");
+    // TODO compute SHA1 hash http://www.openssl.org/docs/crypto/sha.html
+    dump_carrier(file);
+    dump_binary_relations(file);
+    dump_nullary_functions(file);
+    dump_injective_functions(file);
+    dump_binary_functions(file);
+    dump_symmetric_functions(file);
 }
 
-void Structure::dump_binary_relations (const hid_t & file_id __attribute__((unused)))
+void Structure::dump_carrier (hdf5::OutFile & file)
 {
-    TODO("dump binary relations");
+    const DenseSet & support = m_carrier.support();
+
+    hdf5::Dataspace dataspace(support.word_dim());
+
+    hdf5::Dataset dataset(
+            file,
+            "/carrier/support",
+            hdf5::Bitfield<Word>::id(),
+            dataspace);
+
+    dataset.write_all(support);
 }
 
-void Structure::dump_nullary_functions (const hid_t & file_id __attribute__((unused)))
+void Structure::dump_binary_relations (hdf5::OutFile & file)
 {
-    TODO("dump nullary functions");
-}
+    const DenseSet & support = m_carrier.support();
+    const size_t item_dim = support.item_dim();
+    const size_t word_dim = support.word_dim();
 
-void Structure::dump_injective_functions (const hid_t & file_id)
-{
-    herr_t status;
-    herr_t FIXME = 0;
+    hdf5::Dataspace dataspace(1 + item_dim, word_dim);
 
-    // Create the data space for the dataset
-    const size_t item_dim = m_carrier.item_dim();
-    hsize_t dims[] = {item_dim};
-    hid_t dataspace_id = H5Screate_simple(1, dims, NULL);
-
-    const std::string prefix = "/function/injective/";
-    for (const auto & pair : m_binary_functions) {
+    const std::string prefix = "/relations/binary/";
+    // TODO parallelize loop
+    for (const auto & pair : m_binary_relations) {
         std::string name = prefix + pair.first;
-        const BinaryFunction * fun = pair.second;
+        const BinaryRelation * rel = pair.second;
 
-        // Create the dataset
-        hid_t dataset_id = H5Dcreate(
-                file_id,
-                name.c_str(),
-                H5T_STD_U32LE, // 32-bit
-                dataspace_id,
-                H5P_DEFAULT
-                //, H5P_DEFAULT
-                //, H5P_DEFAULT
-                );
+        hdf5::Dataset dataset(
+                file,
+                name,
+                hdf5::Unsigned<Ob>::id(),
+                dataspace);
 
-        static_assert(sizeof(Ob) == 2, "H5 datatype does not match size");
-        hid_t native_ob = H5T_NATIVE_USHORT;
-        status = H5Dwrite(
-                dataset_id,
-                native_ob,
-                H5S_ALL,
-                H5S_ALL,
-                H5P_DEFAULT,
-                fun->raw_data());
-        POMAGMA_ASSERT(status == FIXME, "failed to write " << name);
+        size_t dim1 = 1 + rel->item_dim();
+        size_t dim2 = rel->round_word_dim();
+        const std::atomic<Word> * source = rel->raw_data();
 
-        // End access to the dataset and release resources used by it
-        status = H5Dclose(dataset_id);
-        POMAGMA_ASSERT(status == FIXME, "failed to close " << name);
+        dataset.write_rectangle(source, dim1, dim2);
     }
-
-    // Terminate access to the data space
-    status = H5Sclose(dataspace_id);
 }
 
-void Structure::dump_binary_functions (const hid_t & file_id)
+void Structure::dump_nullary_functions (hdf5::OutFile & file)
 {
-    herr_t status;
-    herr_t FIXME = 0;
+    hdf5::Dataspace dataspace;
 
-    // Create the data space for the dataset
-    const size_t item_dim = m_carrier.item_dim();
-    hsize_t dims[] = {item_dim, item_dim};
-    hid_t dataspace_id = H5Screate_simple(2, dims, NULL);
-
-    const std::string prefix = "/function/binary/";
-    for (const auto & pair : m_binary_functions) {
+    const std::string prefix = "/functions/nullary/";
+    for (const auto & pair : m_nullary_functions) {
         std::string name = prefix + pair.first;
-        const BinaryFunction * fun = pair.second;
+        const NullaryFunction * fun = pair.second;
 
-        // Create the dataset
-        hid_t dataset_id = H5Dcreate(
-                file_id,
-                name.c_str(),
-                H5T_STD_U32LE, // 32-bit
-                dataspace_id,
-                H5P_DEFAULT
-                //, H5P_DEFAULT
-                //, H5P_DEFAULT
-                );
+        hdf5::Dataset dataset(
+                file,
+                name + "/value",
+                hdf5::Unsigned<Ob>::id(),
+                dataspace);
 
-        // TODO loop over blocks, using H5 hyperslab selection
-        // http://www.hdfgroup.org/HDF5/Tutor/selectsimple.html
-        static_assert(sizeof(Ob) == 2, "H5 datatype does not match size");
-        hid_t native_ob = H5T_NATIVE_USHORT;
-        status = H5Dwrite(
-                dataset_id,
-                native_ob,
-                H5S_ALL,
-                H5S_ALL,
-                H5P_DEFAULT,
-                fun->raw_data());
-        POMAGMA_ASSERT(status == FIXME, "failed to write " << name);
-
-        // End access to the dataset and release resources used by it
-        status = H5Dclose(dataset_id);
-        POMAGMA_ASSERT(status == FIXME, "failed to close " << name);
+        Ob data = fun->find();
+        dataset.write_scalar(data);
     }
-
-    // Terminate access to the data space
-    status = H5Sclose(dataspace_id);
 }
 
-void Structure::dump_symmetric_functions (const hid_t & file_id __attribute__((unused)))
+void Structure::dump_injective_functions (hdf5::OutFile & file)
 {
-    TODO("dump symmetric functions");
+    // format:
+    // dense array with null entries
+
+    const size_t item_dim = m_carrier.item_dim();
+    hdf5::Dataspace dataspace(1 + item_dim);
+
+    const std::string prefix = "/functions/injective/";
+    for (const auto & pair : m_injective_functions) {
+        std::string name = prefix + pair.first;
+        const InjectiveFunction * fun = pair.second;
+
+        hdf5::Dataset dataset(
+                file,
+                name + "/value",
+                hdf5::Unsigned<Ob>::id(),
+                dataspace);
+
+        std::vector<Ob> data(1 + item_dim, 0);
+        for (auto key = fun->iter(); key.ok(); key.next()) {
+            data[*key] = fun->raw_find(*key);
+        }
+
+        dataset.write_all(data);
+    }
+}
+
+namespace detail
+{
+
+template<class Function>
+inline void dump_functions (
+        const std::string & arity,
+        std::map<std::string, Function *> functions,
+        const Carrier & carrier,
+        hdf5::OutFile & file)
+{
+    // format:
+    // compressed sparse row (CSR) matrix
+
+    const size_t item_dim = carrier.item_dim();
+
+    typedef uint32_t ptr_t;
+    static_assert(sizeof(ptr_t) == 2 * sizeof(Ob), "bad ptr type");
+    auto ptr_type = hdf5::Unsigned<ptr_t>::id();
+    auto ob_type = hdf5::Unsigned<Ob>::id();
+
+    hdf5::Dataspace ptr_dataspace(1 + item_dim);
+
+    std::vector<ptr_t> lhs_ptr_data(1 + item_dim);
+    std::vector<Ob> rhs_data(1 + item_dim);
+    std::vector<Ob> value_data(1 + item_dim);
+
+    const std::string prefix = "/functions/" + arity + "/";
+    // TODO parallelize loop
+    for (const auto & pair : functions) {
+        std::string name = prefix + pair.first;
+        const Function * fun = pair.second;
+
+        size_t pair_count = fun->count_pairs();
+        hdf5::Dataspace ob_dataspace(pair_count);
+
+        hdf5::Dataset lhs_ptr_dataset(
+                file,
+                name + "/lhs_ptr",
+                ptr_type,
+                ptr_dataspace);
+        hdf5::Dataset rhs_dataset(
+                file,
+                name + "/rhs",
+                ob_type,
+                ob_dataspace);
+        hdf5::Dataset value_dataset(
+                file,
+                name + "/value",
+                ob_type,
+                ob_dataspace);
+
+        lhs_ptr_data[0] = 0;
+        rhs_data.clear();
+        value_data.clear();
+        for (Ob lhs = 1; lhs <= item_dim; ++lhs) {
+            ptr_t begin = lhs_ptr_data[lhs - 1] + value_data.size();
+            lhs_ptr_data[lhs] = begin;
+            rhs_data.clear();
+            value_data.clear();
+            if (carrier.contains(lhs)) {
+                for (auto rhs = fun->iter_lhs(lhs); rhs.ok(); rhs.next()) {
+                    if (Function::is_symmetric() and *rhs > lhs) { break; }
+                    rhs_data.push_back(*rhs);
+                    value_data.push_back(fun->raw_find(lhs, *rhs));
+                }
+                rhs_dataset.write_block(rhs_data, begin);
+                value_dataset.write_block(value_data, begin);
+            }
+        }
+        ptr_t end = lhs_ptr_data[item_dim] + value_data.size();
+        POMAGMA_ASSERT_EQ(end, pair_count);
+
+        lhs_ptr_dataset.write_all(lhs_ptr_data);
+    }
+}
+
+} // namespace detail
+
+void Structure::dump_binary_functions (hdf5::OutFile & file)
+{
+    detail::dump_functions("binary", m_binary_functions, m_carrier, file);
+}
+
+void Structure::dump_symmetric_functions (hdf5::OutFile & file)
+{
+    detail::dump_functions("symmetric", m_symmetric_functions, m_carrier, file);
 }
 
 } // namespace pomagma

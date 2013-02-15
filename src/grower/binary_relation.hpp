@@ -28,6 +28,13 @@ public:
     void log_stats () const;
     size_t count_pairs () const { return m_lines.count_pairs(); }
 
+    // raw operations
+    size_t item_dim () const { return m_lines.item_dim(); }
+    size_t round_word_dim () const { return m_lines.round_word_dim(); }
+    const std::atomic<Word> * raw_data () const { return m_lines.Lx(); }
+    std::atomic<Word> * raw_data () { return m_lines.Lx(); }
+    void update () { m_lines.copy_Lx_to_Rx(); }
+
     // relaxed operations
     DenseSet get_Lx_set (Ob lhs) const { return m_lines.Lx_set(lhs); }
     DenseSet get_Rx_set (Ob rhs) const { return m_lines.Rx_set(rhs); }
@@ -52,10 +59,8 @@ private:
     bool supports (Ob i) const { return support().contains(i); }
     bool supports (Ob i, Ob j) const { return supports(i) and supports(j); }
 
-    size_t item_dim () const { return m_lines.item_dim(); }
     size_t word_dim () const { return m_lines.word_dim(); }
     size_t round_item_dim () const { return m_lines.round_item_dim(); }
-    size_t round_word_dim () const { return m_lines.round_word_dim(); }
     size_t data_size_words () const { return m_lines.data_size_words(); }
 
     void _insert (Ob i, Ob j) { _insert_Lx(i, j); _insert_Rx(i, j); }
