@@ -1,5 +1,6 @@
 
 PROCS=$(shell python -c 'from multiprocessing import cpu_count as c; print c()')
+export POMAGMA_THREADS := $(PROCS)
 
 all: install
 
@@ -13,6 +14,8 @@ build/release: build
 	test -e build/release || mkdir build/release
 log:
 	mkdir log
+data:
+	mkdir data
 
 python-libs:
 	@$(MAKE) -C src/language all
@@ -33,68 +36,77 @@ unit-test: python-libs build/debug log
 	|| (grep -C3 -i error log/test.log && false)
 	@$(MAKE) -C src/compiler test
 
-h4-test: build/debug log
+h4-test: build/debug log data
 	@$(MAKE) -C src/language h4.language
 	@(cd build/debug && cmake -DCMAKE_BUILD_TYPE=Debug ../..)
 	@$(MAKE) -C build/debug/src/grower h4.grower
-	@echo '' > log/h4.log
+	@echo '' > log/h4-test.log
 	#POMAGMA_SIZE=14400 # TODO slow
-	POMAGMA_SIZE=1023 \
-	POMAGMA_THREADS=$(PROCS) \
+	POMAGMA_SIZE=511 \
 	POMAGMA_LOG_LEVEL=4 \
-	POMAGMA_LOG_FILE=log/h4.log \
-	build/debug/src/grower/h4.grower TODO_structure_out \
-	|| (grep -C3 -i error log/h4.log && false)
+	POMAGMA_LOG_FILE=log/h4-test.log \
+	build/debug/src/grower/h4.grower data/h4-test.h5 \
+	|| (grep -C3 -i error log/h4-test.log && false)
+	POMAGMA_SIZE=1023 \
+	POMAGMA_LOG_LEVEL=4 \
+	POMAGMA_LOG_FILE=log/h4-test.log \
+	build/debug/src/grower/h4.grower data/h4-test.h5 data/h4-test.h5 \
+	|| (grep -C3 -i error log/h4-test.log && false)
 
-h4: install log
+h4: install log data
 	@echo '' > log/h4.log
 	POMAGMA_SIZE=14400 \
-	POMAGMA_THREADS=$(PROCS) \
 	POMAGMA_LOG_LEVEL=4 \
 	POMAGMA_LOG_FILE=log/h4.log \
-	bin/h4.grower TODO_structure_out \
+	bin/h4.grower data/h4.h5 \
 	|| (grep -C3 -i error log/h4.log && false)
 
-sk-test: build/debug log
+sk-test: build/debug log data
 	@$(MAKE) -C src/language sk.language
 	@(cd build/debug && cmake -DCMAKE_BUILD_TYPE=Debug ../..)
 	@$(MAKE) -C build/debug/src/grower sk.grower
-	@echo '' > log/sk.log
+	@echo '' > log/sk-test.log
 	POMAGMA_SIZE=1023 \
-	POMAGMA_THREADS=$(PROCS) \
 	POMAGMA_LOG_LEVEL=4 \
-	POMAGMA_LOG_FILE=log/sk.log \
-	build/debug/src/grower/sk.grower TODO_structure_out \
-	|| (grep -C3 -i error log/sk.log && false)
+	POMAGMA_LOG_FILE=log/sk-test.log \
+	build/debug/src/grower/sk.grower data/sk-test.h5 \
+	|| (grep -C3 -i error log/sk-test.log && false)
+	POMAGMA_SIZE=1535 
+	POMAGMA_LOG_LEVEL=4 
+	POMAGMA_LOG_FILE=log/sk-test.log \
+	build/debug/src/grower/sk.grower data/sk-test.h5 data/sk-test.h5 \
+	|| (grep -C3 -i error log/sk-test.log && false)
 
-sk: install log
+sk: install log data
 	@echo '' > log/sk.log
 	POMAGMA_SIZE=2047 \
-	POMAGMA_THREADS=$(PROCS) \
 	POMAGMA_LOG_LEVEL=4 \
 	POMAGMA_LOG_FILE=log/sk.log \
-	bin/sk.grower TODO_structure_out \
+	bin/sk.grower data/sk.h5 \
 	|| (grep -C3 -i error log/sk.log && false)
 
-skj-test: build/debug log
+skj-test: build/debug log data
 	@$(MAKE) -C src/language skj.language
 	@(cd build/debug && cmake -DCMAKE_BUILD_TYPE=Debug ../..)
 	@$(MAKE) -C build/debug/src/grower skj.grower
-	@echo '' > log/skj.log
-	POMAGMA_SIZE=2047 \
-	POMAGMA_THREADS=$(PROCS) \
+	@echo '' > log/skj-test.log
+	POMAGMA_SIZE=1535 \
 	POMAGMA_LOG_LEVEL=4 \
-	POMAGMA_LOG_FILE=log/skj.log \
-	build/debug/src/grower/skj.grower TODO_structure_out \
-	|| (grep -C3 -i error log/skj.log && false)
+	POMAGMA_LOG_FILE=log/skj-test.log \
+	build/debug/src/grower/skj.grower data/skj-test.h5 \
+	|| (grep -C3 -i error log/skj-test.log && false)
+	POMAGMA_SIZE=2047 \
+	POMAGMA_LOG_LEVEL=4 \
+	POMAGMA_LOG_FILE=log/skj-test.log \
+	build/debug/src/grower/skj.grower data/skj-test.h5 data/skj-test.h5 \
+	|| (grep -C3 -i error log/skj-test.log && false)
 
-skj: install log
+skj: install log data
 	@echo '' > log/skj.log
 	POMAGMA_SIZE=2047 \
-	POMAGMA_THREADS=$(PROCS) \
 	POMAGMA_LOG_LEVEL=4 \
 	POMAGMA_LOG_FILE=log/skj.log \
-	bin/skj.grower TODO_structure_out \
+	bin/skj.grower data/skj.h5 \
 	|| (grep -C3 -i error log/skj.log && false)
 
 profile: build/release log FORCE

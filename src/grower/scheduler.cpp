@@ -267,7 +267,7 @@ void initialize ()
     for (auto & thread : threads) {
         thread.join();
     }
-    POMAGMA_INFO("finished " << g_worker_count << " cleanup threads");
+    POMAGMA_INFO("finished " << g_worker_count << " initialize threads");
     log_stats();
 }
 

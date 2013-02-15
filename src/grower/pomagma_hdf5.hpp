@@ -14,7 +14,7 @@ inline void init ()
 {
     // permanently turn off error reporting to stderr
     // http://www.hdfgroup.org/HDF5/doc/UG/UG_frame13ErrorHandling.html
-    H5Eset_auto(NULL, NULL);
+    H5Eset_auto(nullptr, nullptr);
 }
 
 //----------------------------------------------------------------------------
@@ -23,7 +23,7 @@ inline void init ()
 
 std::string get_error ()
 {
-    std::string message(1024, '\0');
+    std::string message(4096, '\0');
     FILE * file = fmemopen(&message[0], message.size(), "w");
     POMAGMA_ASSERT(file, "failed to open error message buffer");
     H5Eprint(file);
@@ -95,7 +95,7 @@ struct InFile : noncopyable
                     H5F_ACC_RDONLY,
                     H5P_DEFAULT))
     {
-        POMAGMA_ASSERT(id,
+        POMAGMA_ASSERT(id >= 0,
                 "failed to open file " << filename << "\n" << get_error());
     }
     ~InFile ()
@@ -115,7 +115,7 @@ struct OutFile : noncopyable
                     H5P_DEFAULT,    // creation property list
                     H5P_DEFAULT))   // access property list
     {
-        POMAGMA_ASSERT(id,
+        POMAGMA_ASSERT(id >= 0,
                 "failed to create file " << filename << "\n" << get_error());
     }
     ~OutFile ()
@@ -137,20 +137,23 @@ struct Dataspace : noncopyable
     Dataspace ()
     {
         id = H5Screate(H5S_SCALAR);
+        POMAGMA_ASSERT(id >= 0, "failed to create dataspace\n" << get_error());
     }
 
     Dataspace (hsize_t dim)
     {
         int rank = 1;
         hsize_t dims[] = {dim};
-        id = H5Screate_simple(rank, dims, dims);
+        id = H5Screate_simple(rank, dims, nullptr);
+        POMAGMA_ASSERT(id >= 0, "failed to create dataspace\n" << get_error());
     }
 
     Dataspace (hsize_t dim1, hsize_t dim2)
     {
         int rank = 2;
         hsize_t dims[] = {dim1, dim2};
-        id = H5Screate_simple(rank, dims, dims);
+        id = H5Screate_simple(rank, dims, nullptr);
+        POMAGMA_ASSERT(id >= 0, "failed to create dataspace\n" << get_error());
     }
 
     Dataspace (Dataset & dataset);
@@ -194,9 +197,9 @@ struct Dataspace : noncopyable
                 id,
                 H5S_SELECT_SET,
                 offset,
-                NULL, // stride
+                nullptr, // stride
                 count,
-                NULL)); // block
+                nullptr)); // block
     }
 
     void select_block (hsize_t offset, hsize_t count)
@@ -220,7 +223,7 @@ struct Dataset : noncopyable
             //, H5P_DEFAULT
             ))
     {
-        POMAGMA_ASSERT(id,
+        POMAGMA_ASSERT(id >= 0,
                 "failed to open dataset " << name << "\n" << get_error());
     }
 
@@ -239,14 +242,17 @@ struct Dataset : noncopyable
                 //, H5P_DEFAULT
                 ))
     {
-        POMAGMA_ASSERT(id,
+        POMAGMA_ASSERT(id >= 0,
                 "failed to create dataset " << name << "\n" << get_error());
+        POMAGMA_ASSERT_EQ(type(), type_id);
     }
 
     ~Dataset ()
     {
         POMAGMA_HDF5_OK(H5Dclose(id));
     }
+
+    hid_t type () const { return H5Dget_type(id); }
 
     template<class T>
     void write_scalar (const T & source)
@@ -306,7 +312,7 @@ struct Dataset : noncopyable
 
     void write_all (const DenseSet & source)
     {
-        POMAGMA_ASSERT_EQ(H5Dget_type(id), Bitfield<Word>::id());
+        POMAGMA_ASSERT_EQ(type(), Bitfield<Word>::id());
         POMAGMA_ASSERT_EQ(Dataspace(* this).volume(), source.word_dim());
 
         POMAGMA_HDF5_OK(H5Dwrite(
@@ -320,7 +326,7 @@ struct Dataset : noncopyable
 
     void read_all (DenseSet & destin)
     {
-        POMAGMA_ASSERT_EQ(H5Dget_type(id), Bitfield<Word>::id());
+        POMAGMA_ASSERT_EQ(type(), Bitfield<Word>::id());
         POMAGMA_ASSERT_LE(Dataspace(* this).volume(), destin.word_dim());
 
         POMAGMA_HDF5_OK(H5Dread(
@@ -370,7 +376,7 @@ struct Dataset : noncopyable
         Dataspace destin_dataspace(*this);
         auto shape = destin_dataspace.shape();
         POMAGMA_ASSERT_EQ(shape.size(), 2);
-        POMAGMA_ASSERT_EQ(H5Dget_type(id), Bitfield<Word>::id());
+        POMAGMA_ASSERT_EQ(type(), Bitfield<Word>::id());
 
         Dataspace source_dataspace(dim1, dim2);
 
@@ -392,7 +398,7 @@ struct Dataset : noncopyable
         Dataspace destin_dataspace(*this);
         auto shape = destin_dataspace.shape();
         POMAGMA_ASSERT_EQ(shape.size(), 2);
-        POMAGMA_ASSERT_EQ(H5Dget_type(id), Bitfield<Word>::id());
+        POMAGMA_ASSERT_EQ(type(), Bitfield<Word>::id());
 
         Dataspace source_dataspace(dim1, dim2);
 

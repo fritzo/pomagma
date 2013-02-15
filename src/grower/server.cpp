@@ -1,14 +1,13 @@
 #include "util.hpp"
 #include "scheduler.hpp"
-#include "sampler.hpp"
 #include "language.pb.h"
 #include "structure.pb.h"
-#include <zmq.hpp>
-#include <unistd.h>
 
 namespace pomagma
 {
 
+void load_structure (const std::string & filename);
+void dump_structure (const std::string & filename);
 void set_language_prob (const std::string & name, float prob);
 void validate_all ();
 void log_stats ();
@@ -29,32 +28,6 @@ void load_language (const char * filename)
         const auto & term = language.terms(i);
         set_language_prob(term.name(), term.weight());
     }
-}
-
-void load_structure (const char * endpoint)
-{
-    POMAGMA_INFO("Loading structure");
-
-    zmq::context_t context(1);
-    zmq::socket_t socket (context, ZMQ_REP);
-    socket.bind(endpoint);
-
-    TODO("load structure");
-}
-
-void dump_structure (const char * endpoint)
-{
-    POMAGMA_INFO("Dumping structure");
-
-    zmq::context_t context(1);
-    zmq::socket_t socket (context, ZMQ_REP);
-    socket.bind(endpoint);
-
-    TODO("dump structure");
-
-    std::string message = "ping";
-    zmq::message_t reply(4);
-    socket.send(reply);
 }
 
 } // namespace pomagma
@@ -118,6 +91,7 @@ int main (int argc, char ** argv)
         exit(1);
     }
 
+    // set params
     pomagma::Scheduler::set_thread_count(thread_count);
     pomagma::load_language(language_file);
     if (structure_in) {
@@ -127,11 +101,16 @@ int main (int argc, char ** argv)
         pomagma::validate_all();
     }
 
+    // initialize
+    if (structure_in) {
+        pomagma::cleanup_tasks_push_all();
+    }
     pomagma::Scheduler::initialize();
     if (POMAGMA_DEBUG_LEVEL > 1) {
         pomagma::validate_all();
     }
 
+    // grow
     pomagma::Scheduler::grow();
     if (POMAGMA_DEBUG_LEVEL > 0) {
         pomagma::validate_all();

@@ -52,6 +52,8 @@ void Structure::declare (const std::string & name, SymmetricFunction & fun)
 
 void Structure::load (const std::string & filename)
 {
+    POMAGMA_INFO("Loading structure from file " << filename);
+
     hdf5::InFile file(filename);
 
     // TODO do this in parallel
@@ -66,6 +68,8 @@ void Structure::load (const std::string & filename)
 
 void Structure::load_carrier (hdf5::InFile & file)
 {
+    POMAGMA_INFO("loading carrier");
+
     hdf5::Dataset dataset(file, "/carrier/support");
 
     hdf5::Dataspace dataspace(dataset);
@@ -88,6 +92,7 @@ void Structure::load_binary_relations (hdf5::InFile & file)
     for (const auto & pair : m_binary_relations) {
         std::string name = prefix + pair.first;
         BinaryRelation * rel = pair.second;
+        POMAGMA_INFO("loading " << name);
 
         size_t dim1 = 1 + rel->item_dim();
         size_t dim2 = rel->round_word_dim();
@@ -105,6 +110,7 @@ void Structure::load_nullary_functions (hdf5::InFile & file)
     for (const auto & pair : m_nullary_functions) {
         std::string name = prefix + pair.first;
         NullaryFunction * fun = pair.second;
+        POMAGMA_INFO("loading " << name);
 
         hdf5::Dataset dataset(file, name + "/value");
 
@@ -123,6 +129,7 @@ void Structure::load_injective_functions (hdf5::InFile & file)
     for (const auto & pair : m_injective_functions) {
         std::string name = prefix + pair.first;
         InjectiveFunction * fun = pair.second;
+        POMAGMA_INFO("loading " << name);
 
         hdf5::Dataset dataset(file, name + "/value");
 
@@ -159,6 +166,7 @@ inline void load_functions (
     for (const auto & pair : functions) {
         std::string name = prefix + pair.first;
         Function * fun = pair.second;
+        POMAGMA_INFO("loading " << name);
 
         hdf5::Dataset lhs_ptr_dataset(file, name + "/lhs_ptr");
         hdf5::Dataset rhs_dataset(file, name + "/rhs");
@@ -208,6 +216,7 @@ void Structure::load_symmetric_functions (hdf5::InFile & file)
 
 void Structure::dump (const std::string & filename)
 {
+    POMAGMA_INFO("Dumping structure to file " << filename);
     hdf5::OutFile file(filename);
 
     // TODO do this in parallel
@@ -222,6 +231,8 @@ void Structure::dump (const std::string & filename)
 
 void Structure::dump_carrier (hdf5::OutFile & file)
 {
+    POMAGMA_INFO("dumping carrier");
+
     const DenseSet & support = m_carrier.support();
 
     hdf5::Dataspace dataspace(support.word_dim());
@@ -248,6 +259,7 @@ void Structure::dump_binary_relations (hdf5::OutFile & file)
     for (const auto & pair : m_binary_relations) {
         std::string name = prefix + pair.first;
         const BinaryRelation * rel = pair.second;
+        POMAGMA_INFO("dumping " << name);
 
         hdf5::Dataset dataset(
                 file,
@@ -271,6 +283,7 @@ void Structure::dump_nullary_functions (hdf5::OutFile & file)
     for (const auto & pair : m_nullary_functions) {
         std::string name = prefix + pair.first;
         const NullaryFunction * fun = pair.second;
+        POMAGMA_INFO("dumping " << name);
 
         hdf5::Dataset dataset(
                 file,
@@ -295,6 +308,7 @@ void Structure::dump_injective_functions (hdf5::OutFile & file)
     for (const auto & pair : m_injective_functions) {
         std::string name = prefix + pair.first;
         const InjectiveFunction * fun = pair.second;
+        POMAGMA_INFO("dumping " << name);
 
         hdf5::Dataset dataset(
                 file,
@@ -342,6 +356,7 @@ inline void dump_functions (
     for (const auto & pair : functions) {
         std::string name = prefix + pair.first;
         const Function * fun = pair.second;
+        POMAGMA_INFO("dumping " << name);
 
         size_t pair_count = fun->count_pairs();
         hdf5::Dataspace ob_dataspace(pair_count);

@@ -53,6 +53,9 @@ Signature signature(carrier);
 Sampler sampler(signature);
 Structure structure(signature);
 
+void load_structure (const std::string & filename) { structure.load(filename); }
+void dump_structure (const std::string & filename) { structure.dump(filename); }
+
 BinaryRelation LESS(carrier, schedule_less);
 BinaryRelation NLESS(carrier, schedule_nless);
 

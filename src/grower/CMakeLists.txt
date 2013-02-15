@@ -86,7 +86,7 @@ install(TARGETS pomagma_grower_server LIBRARY
 set(POMAGMA_SERVER_LIBS
 	pomagma_grower_server
 	${POMAGMA_LIBS}
-	zmq
+	#zmq
 	protobuf
 	)
 

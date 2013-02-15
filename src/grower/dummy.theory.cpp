@@ -23,6 +23,16 @@ DEF_EXECUTE(AssumeTask)
 
 #undef DEF_EXECUTE
 
+void load_structure (const std::string & filename)
+{
+    POMAGMA_INFO("loading structure from " << filename);
+}
+
+void dump_structure (const std::string & filename)
+{
+    POMAGMA_INFO("dumping structure to " << filename);
+}
+
 void execute (const SampleTask &, rng_t &)
 {
     POMAGMA_INFO("executing SampleTask");
