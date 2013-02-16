@@ -23,15 +23,15 @@ inline void init ()
 
 std::string get_error ()
 {
-    std::string message(4096, '\0');
-    FILE * file = fmemopen(&message[0], message.size(), "w");
+    std::string buffer(4096, '\0');
+    FILE * file = fmemopen(&buffer[0], buffer.size(), "w");
     POMAGMA_ASSERT(file, "failed to open error message buffer");
     H5Eprint(file);
     fclose(file);
-    return message;
+    return buffer.substr(0, buffer.find('\0'));
 }
 
-#define POMAGMA_HDF5_OK(status) POMAGMA_ASSERT(status, get_error())
+#define POMAGMA_HDF5_OK(status) POMAGMA_ASSERT(status >= 0, get_error())
 
 //----------------------------------------------------------------------------
 // Datatypes
@@ -118,9 +118,41 @@ struct OutFile : noncopyable
         POMAGMA_ASSERT(id >= 0,
                 "failed to create file " << filename << "\n" << get_error());
     }
+
     ~OutFile ()
     {
         POMAGMA_HDF5_OK(H5Fclose(id));
+    }
+};
+
+//----------------------------------------------------------------------------
+// Groups
+// http://www.hdfgroup.org/HDF5/doc/RM/RM_H5G.html
+
+struct Group : noncopyable
+{
+    const hid_t id;
+private:
+    static size_t size_estimate () { return 0; }
+public:
+
+    Group (OutFile & file, const std::string & name)
+        : id(H5Gcreate(file.id, name.c_str(), size_estimate()))
+    {
+        POMAGMA_ASSERT(id >= 0,
+                "failed to create group " << name << "\n" << get_error());
+    }
+
+    Group (InFile & file, const std::string & name)
+        : id(H5Gopen(file.id, name.c_str()))
+    {
+        POMAGMA_ASSERT(id >= 0,
+                "failed to open group " << name << "\n" << get_error());
+    }
+
+    ~Group ()
+    {
+        POMAGMA_HDF5_OK(H5Gclose(id));
     }
 };
 
@@ -244,7 +276,8 @@ struct Dataset : noncopyable
     {
         POMAGMA_ASSERT(id >= 0,
                 "failed to create dataset " << name << "\n" << get_error());
-        POMAGMA_ASSERT_EQ(type(), type_id);
+        POMAGMA_ASSERT(H5Tequal(type(), type_id),
+                "created dataset with wrong type");
     }
 
     ~Dataset ()
@@ -312,7 +345,8 @@ struct Dataset : noncopyable
 
     void write_all (const DenseSet & source)
     {
-        POMAGMA_ASSERT_EQ(type(), Bitfield<Word>::id());
+        POMAGMA_ASSERT(H5Tequal(type(), Bitfield<Word>::id()),
+                    "tried to write wrong datatype");
         POMAGMA_ASSERT_EQ(Dataspace(* this).volume(), source.word_dim());
 
         POMAGMA_HDF5_OK(H5Dwrite(
@@ -326,7 +360,8 @@ struct Dataset : noncopyable
 
     void read_all (DenseSet & destin)
     {
-        POMAGMA_ASSERT_EQ(type(), Bitfield<Word>::id());
+        POMAGMA_ASSERT(H5Tequal(type(), Bitfield<Word>::id()),
+                    "tried to read wrong datatype");
         POMAGMA_ASSERT_LE(Dataspace(* this).volume(), destin.word_dim());
 
         POMAGMA_HDF5_OK(H5Dread(
@@ -376,7 +411,8 @@ struct Dataset : noncopyable
         Dataspace destin_dataspace(*this);
         auto shape = destin_dataspace.shape();
         POMAGMA_ASSERT_EQ(shape.size(), 2);
-        POMAGMA_ASSERT_EQ(type(), Bitfield<Word>::id());
+        POMAGMA_ASSERT(H5Tequal(type(), Bitfield<Word>::id()),
+                    "tried to write wrong datatype");
 
         Dataspace source_dataspace(dim1, dim2);
 
@@ -399,6 +435,8 @@ struct Dataset : noncopyable
         auto shape = destin_dataspace.shape();
         POMAGMA_ASSERT_EQ(shape.size(), 2);
         POMAGMA_ASSERT_EQ(type(), Bitfield<Word>::id());
+        POMAGMA_ASSERT(H5Tequal(type(), Bitfield<Word>::id()),
+                    "tried to read wrong datatype");
 
         Dataspace source_dataspace(dim1, dim2);
 

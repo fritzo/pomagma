@@ -55,10 +55,14 @@ void Structure::load (const std::string & filename)
     POMAGMA_INFO("Loading structure from file " << filename);
 
     hdf5::InFile file(filename);
+    hdf5::Group carrier_group(file, "/carrier");
+    hdf5::Group relations_group(file, "/relations");
+    hdf5::Group functions_group(file, "/functions");
 
     // TODO do this in parallel
     // TODO verify SHA1 hash http://www.openssl.org/docs/crypto/sha.html
     load_carrier(file);
+
     load_binary_relations(file);
     load_nullary_functions(file);
     load_injective_functions(file);
@@ -87,10 +91,12 @@ void Structure::load_carrier (hdf5::InFile & file)
 
 void Structure::load_binary_relations (hdf5::InFile & file)
 {
-    const std::string prefix = "/relations/binary/";
+    const std::string groupname = "/relations/binary";
+    hdf5::Group group(file, groupname);
+
     // TODO parallelize loop
     for (const auto & pair : m_binary_relations) {
-        std::string name = prefix + pair.first;
+        std::string name = groupname + "/" + pair.first;
         BinaryRelation * rel = pair.second;
         POMAGMA_INFO("loading " << name);
 
@@ -106,12 +112,15 @@ void Structure::load_binary_relations (hdf5::InFile & file)
 
 void Structure::load_nullary_functions (hdf5::InFile & file)
 {
-    const std::string prefix = "/functions/nullary/";
+    const std::string groupname = "/functions/nullary";
+    hdf5::Group group(file, groupname);
+
     for (const auto & pair : m_nullary_functions) {
-        std::string name = prefix + pair.first;
+        std::string name = groupname + "/" + pair.first;
         NullaryFunction * fun = pair.second;
         POMAGMA_INFO("loading " << name);
 
+        hdf5::Group subgroup(file, name);
         hdf5::Dataset dataset(file, name + "/value");
 
         Ob data;
@@ -125,12 +134,15 @@ void Structure::load_injective_functions (hdf5::InFile & file)
     const size_t item_dim = m_carrier.item_dim();
     std::vector<Ob> data(1 + item_dim);
 
-    const std::string prefix = "/functions/injective/";
+    const std::string groupname = "/functions/injective";
+    hdf5::Group group(file, groupname);
+
     for (const auto & pair : m_injective_functions) {
-        std::string name = prefix + pair.first;
+        std::string name = groupname + "/" + pair.first;
         InjectiveFunction * fun = pair.second;
         POMAGMA_INFO("loading " << name);
 
+        hdf5::Group subgroup(file, name);
         hdf5::Dataset dataset(file, name + "/value");
 
         dataset.read_all(data);
@@ -161,13 +173,16 @@ inline void load_functions (
     std::vector<Ob> rhs_data(item_dim);
     std::vector<Ob> value_data(item_dim);
 
-    const std::string prefix = "/functions/" + arity + "/";
+    const std::string groupname = "/functions/" + arity;
+    hdf5::Group group(file, groupname);
+
     // TODO parallelize loop
     for (const auto & pair : functions) {
-        std::string name = prefix + pair.first;
+        std::string name = groupname + "/" + pair.first;
         Function * fun = pair.second;
         POMAGMA_INFO("loading " << name);
 
+        hdf5::Group subgroup(file, name);
         hdf5::Dataset lhs_ptr_dataset(file, name + "/lhs_ptr");
         hdf5::Dataset rhs_dataset(file, name + "/rhs");
         hdf5::Dataset value_dataset(file, name + "/value");
@@ -218,6 +233,9 @@ void Structure::dump (const std::string & filename)
 {
     POMAGMA_INFO("Dumping structure to file " << filename);
     hdf5::OutFile file(filename);
+    hdf5::Group carrier_group(file, "/carrier");
+    hdf5::Group relations_group(file, "/relations");
+    hdf5::Group functions_group(file, "/functions");
 
     // TODO do this in parallel
     // TODO compute SHA1 hash http://www.openssl.org/docs/crypto/sha.html
@@ -254,17 +272,19 @@ void Structure::dump_binary_relations (hdf5::OutFile & file)
 
     hdf5::Dataspace dataspace(1 + item_dim, word_dim);
 
-    const std::string prefix = "/relations/binary/";
+    const std::string groupname = "/relations/binary";
+    hdf5::Group group(file, groupname);
+
     // TODO parallelize loop
     for (const auto & pair : m_binary_relations) {
-        std::string name = prefix + pair.first;
+        std::string name = groupname + "/" + pair.first;
         const BinaryRelation * rel = pair.second;
         POMAGMA_INFO("dumping " << name);
 
         hdf5::Dataset dataset(
                 file,
                 name,
-                hdf5::Unsigned<Ob>::id(),
+                hdf5::Bitfield<Word>::id(),
                 dataspace);
 
         size_t dim1 = 1 + rel->item_dim();
@@ -279,12 +299,15 @@ void Structure::dump_nullary_functions (hdf5::OutFile & file)
 {
     hdf5::Dataspace dataspace;
 
-    const std::string prefix = "/functions/nullary/";
+    const std::string groupname = "/functions/nullary";
+    hdf5::Group group(file, groupname);
+
     for (const auto & pair : m_nullary_functions) {
-        std::string name = prefix + pair.first;
+        std::string name = groupname + "/" + pair.first;
         const NullaryFunction * fun = pair.second;
         POMAGMA_INFO("dumping " << name);
 
+        hdf5::Group subgroup(file, name);
         hdf5::Dataset dataset(
                 file,
                 name + "/value",
@@ -304,12 +327,15 @@ void Structure::dump_injective_functions (hdf5::OutFile & file)
     const size_t item_dim = m_carrier.item_dim();
     hdf5::Dataspace dataspace(1 + item_dim);
 
-    const std::string prefix = "/functions/injective/";
+    const std::string groupname = "/functions/injective";
+    hdf5::Group group(file, groupname);
+
     for (const auto & pair : m_injective_functions) {
-        std::string name = prefix + pair.first;
+        std::string name = groupname + "/" + pair.first;
         const InjectiveFunction * fun = pair.second;
         POMAGMA_INFO("dumping " << name);
 
+        hdf5::Group subgroup(file, name);
         hdf5::Dataset dataset(
                 file,
                 name + "/value",
@@ -351,16 +377,19 @@ inline void dump_functions (
     std::vector<Ob> rhs_data(1 + item_dim);
     std::vector<Ob> value_data(1 + item_dim);
 
-    const std::string prefix = "/functions/" + arity + "/";
+    const std::string groupname = "/functions/" + arity;
+    hdf5::Group group(file, groupname);
+
     // TODO parallelize loop
     for (const auto & pair : functions) {
-        std::string name = prefix + pair.first;
+        std::string name = groupname + "/" + pair.first;
         const Function * fun = pair.second;
         POMAGMA_INFO("dumping " << name);
 
         size_t pair_count = fun->count_pairs();
         hdf5::Dataspace ob_dataspace(pair_count);
 
+        hdf5::Group subgroup(file, name);
         hdf5::Dataset lhs_ptr_dataset(
                 file,
                 name + "/lhs_ptr",
