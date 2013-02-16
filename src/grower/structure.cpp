@@ -406,26 +406,26 @@ inline void dump_functions (
                 ob_type,
                 ob_dataspace);
 
-        lhs_ptr_data[0] = 0;
-        rhs_data.clear();
-        value_data.clear();
+        ptr_t pos = 0;
+        lhs_ptr_data[0] = pos;
         for (Ob lhs = 1; lhs <= item_dim; ++lhs) {
-            ptr_t begin = lhs_ptr_data[lhs - 1] + value_data.size();
-            lhs_ptr_data[lhs] = begin;
-            rhs_data.clear();
-            value_data.clear();
+            lhs_ptr_data[lhs] = pos;
             if (carrier.contains(lhs)) {
+                rhs_data.clear();
+                value_data.clear();
                 for (auto rhs = fun->iter_lhs(lhs); rhs.ok(); rhs.next()) {
                     if (Function::is_symmetric() and *rhs > lhs) { break; }
                     rhs_data.push_back(*rhs);
                     value_data.push_back(fun->raw_find(lhs, *rhs));
                 }
-                rhs_dataset.write_block(rhs_data, begin);
-                value_dataset.write_block(value_data, begin);
+                ptr_t nextpos = pos + rhs_data.size();
+                POMAGMA_ASSERT_LE(nextpos, pair_count);
+                rhs_dataset.write_block(rhs_data, pos);
+                value_dataset.write_block(value_data, pos);
+                pos = nextpos;
             }
         }
-        ptr_t end = lhs_ptr_data[item_dim] + value_data.size();
-        POMAGMA_ASSERT_EQ(end, pair_count);
+        POMAGMA_ASSERT_EQ(pos, pair_count);
 
         lhs_ptr_dataset.write_all(lhs_ptr_data);
     }
