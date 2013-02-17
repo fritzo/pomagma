@@ -32,7 +32,7 @@ public:
     size_t round_word_dim () const { return m_round_word_dim; }
     size_t data_size_words () const { return m_data_size_words; }
     size_t count_pairs () const; // supa-slow, try not to use
-    void copy_Lx_to_Rx () { TODO("copy Lx to Rx"); }
+    void copy_Lx_to_Rx ();
 
     // full table
     const std::atomic<Word> * Lx () const { return m_Lx_lines; }

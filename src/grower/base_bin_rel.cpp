@@ -123,6 +123,44 @@ size_t base_bin_rel_<symmetric>::count_pairs () const
     return result;
 }
 
+namespace
+{
+inline Word mask (const Word & shift) { return Word(1) << shift; }
+}
+
+template<bool symmetric>
+void base_bin_rel_<symmetric>::copy_Lx_to_Rx ()
+{
+    if (symmetric) { return; }
+
+    zero_blocks(m_Rx_lines, data_size_words());
+
+    const size_t size_ = m_round_word_dim;
+    const size_t _size = BITS_PER_WORD;
+    const size_t size = item_dim();
+
+    for (size_t i_ = 0; i_ < size_; ++i_)
+    for (size_t j_ = 0; j_ < size_; ++j_) {
+        for (size_t _i = 0; _i < _size; ++_i) {
+            const size_t i = i_ * _size + _i;
+            if (i > size) { break; }
+            if (i == 0) { continue; }
+            const std::atomic<Word> & source = Lx(i)[j_];
+            const Word destin_mask = Word(1) << _i;
+            for (size_t _j = 0; _j < _size; ++_j) {
+                size_t j = j_ * _size + _j;
+                if (j > size) { break; }
+                if (j == 0) { continue; }
+                const Word source_mask = Word(1) << _j;
+                if (source_mask & source) {
+                    std::atomic<Word> & destin = Rx(j_ * _size + _j)[i_];
+                    destin.fetch_or(destin_mask, relaxed);
+                }
+            }
+        }
+    }
+}
+
 //----------------------------------------------------------------------------
 // Explicit template instantiation
 
@@ -131,11 +169,13 @@ template base_bin_rel_<true>::~base_bin_rel_ ();
 template void base_bin_rel_<true>::validate () const;
 template void base_bin_rel_<true>::log_stats () const;
 template size_t base_bin_rel_<true>::count_pairs () const;
+template void base_bin_rel_<true>::copy_Lx_to_Rx ();
 
 template base_bin_rel_<false>::base_bin_rel_ (const Carrier &);
 template base_bin_rel_<false>::~base_bin_rel_ ();
 template void base_bin_rel_<false>::validate () const;
 template void base_bin_rel_<false>::log_stats () const;
 template size_t base_bin_rel_<false>::count_pairs () const;
+template void base_bin_rel_<false>::copy_Lx_to_Rx ();
 
 } // namespace pomagma

@@ -133,6 +133,10 @@ void test_BinaryRelation (
     rel.validate();
     POMAGMA_ASSERT_EQ(seen_item_count, item_count);
     POMAGMA_ASSERT_EQ(num_pairs, true_size);
+
+    POMAGMA_INFO("testing copy_Lx_to_Rx update");
+    rel.update();
+    rel.validate();
 }
 
 int main ()
