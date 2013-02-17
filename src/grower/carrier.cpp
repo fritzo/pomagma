@@ -28,6 +28,11 @@ Carrier::~Carrier ()
     free_blocks(m_reps);
 }
 
+void Carrier::update ()
+{
+    m_rep_count = m_item_count = m_support.count_items();
+}
+
 Ob Carrier::try_insert () const
 {
     SharedLock lock(m_mutex);

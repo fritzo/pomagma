@@ -87,6 +87,7 @@ void Structure::load_carrier (hdf5::InFile & file)
     for (auto i = support.iter(); i.ok(); i.next()) {
         m_carrier.raw_insert(*i);
     }
+    m_carrier.update();
 }
 
 void Structure::load_binary_relations (hdf5::InFile & file)
@@ -167,7 +168,8 @@ inline void load_functions (
 
 {
     const size_t item_dim = carrier.item_dim();
-    std::vector<Ob> lhs_ptr_data(1 + item_dim);
+    typedef uint_<2 * sizeof(Ob)>::t ptr_t;
+    std::vector<ptr_t> lhs_ptr_data(1 + item_dim);
     std::vector<Ob> rhs_data(item_dim);
     std::vector<Ob> value_data(item_dim);
 
@@ -365,8 +367,7 @@ inline void dump_functions (
 
     const size_t item_dim = carrier.item_dim();
 
-    typedef uint32_t ptr_t;
-    static_assert(sizeof(ptr_t) == 2 * sizeof(Ob), "bad ptr type");
+    typedef uint_<2 * sizeof(Ob)>::t ptr_t;
     auto ptr_type = hdf5::Unsigned<ptr_t>::id();
     auto ob_type = hdf5::Unsigned<Ob>::id();
 
@@ -425,7 +426,6 @@ inline void dump_functions (
             }
         }
         POMAGMA_ASSERT_EQ(pos, pair_count);
-
         lhs_ptr_dataset.write_all(lhs_ptr_data);
     }
 }

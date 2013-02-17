@@ -232,6 +232,9 @@ public:
 #define POMAGMA_ASSERT_LT(x, y) \
     POMAGMA_ASSERT((x) <= (y), \
             "expected " #x " <= " #y "; actual " << (x) << " vs " << (y))
+#define POMAGMA_ASSERT_NE(x, y) \
+    POMAGMA_ASSERT((x) != (y), \
+            "expected " #x " != " #y "; actual " << (x) << " vs " << (y))
 
 #define POMAGMA_ASSERT_OK \
     POMAGMA_ASSERT5(ok(), "tried to use done iterator")
@@ -253,6 +256,12 @@ public:
 
 //----------------------------------------------------------------------------
 // data types
+
+template<size_t bytes> struct uint_;
+template<> struct uint_<1> { typedef uint8_t t; };
+template<> struct uint_<2> { typedef uint16_t t; };
+template<> struct uint_<4> { typedef uint32_t t; };
+template<> struct uint_<8> { typedef uint64_t t; };
 
 // Ob is a 1-based index type with 0 = none
 typedef uint16_t Ob;

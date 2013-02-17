@@ -285,73 +285,93 @@ struct Dataset : noncopyable
         POMAGMA_HDF5_OK(H5Dclose(id));
     }
 
-    hid_t type () const { return H5Dget_type(id); }
+    hid_t type () { return H5Dget_type(id); }
+    size_t rank () { return Dataspace(* this).rank(); }
+    size_t volume () { return Dataspace(* this).volume(); }
 
     template<class T>
     void write_scalar (const T & source)
     {
-        POMAGMA_ASSERT_EQ(Dataspace(* this).rank(), 0);
+        hid_t source_type = Unsigned<T>::id();
+        hid_t destin_type = type();
+        POMAGMA_ASSERT_LE(H5Tget_size(source_type), H5Tget_size(destin_type));
+
+        POMAGMA_ASSERT_EQ(rank(), 0);
 
         POMAGMA_HDF5_OK(H5Dwrite(
-                id,                 // dataset_id
-                Unsigned<T>::id(),  // mem_type_id
-                H5S_ALL,            // mem_space_id
-                H5S_ALL,            // file_space_id
-                H5P_DEFAULT,        // xfer_plist_id
-                &source));          // buf
+                id,             // dataset_id
+                source_type,    // mem_type_id
+                H5S_ALL,        // mem_space_id
+                H5S_ALL,        // file_space_id
+                H5P_DEFAULT,    // xfer_plist_id
+                & source));     // buf
     }
 
     template<class T>
     void read_scalar (T & destin)
     {
-        POMAGMA_ASSERT_EQ(Dataspace(* this).rank(), 0);
+        hid_t source_type = type();
+        hid_t destin_type = Unsigned<T>::id();
+        POMAGMA_ASSERT_LE(H5Tget_size(source_type), H5Tget_size(destin_type));
+
+        POMAGMA_ASSERT_EQ(rank(), 0);
 
         POMAGMA_HDF5_OK(H5Dread(
-                id,                 // dataset_id
-                Unsigned<T>::id(),  // mem_type_id, 16-bit
-                H5S_ALL,            // mem_space_id
-                H5S_ALL,            // file_space_id
-                H5P_DEFAULT,        // xfer_plist_id
-                &destin));          // buf
+                id,             // dataset_id
+                destin_type,    // mem_type_id, 16-bit
+                H5S_ALL,        // mem_space_id
+                H5S_ALL,        // file_space_id
+                H5P_DEFAULT,    // xfer_plist_id
+                & destin));     // buf
     }
 
     template<class T>
     void write_all (const std::vector<T> & source)
     {
-        POMAGMA_ASSERT_EQ(Dataspace(* this).volume(), source.size());
+        hid_t source_type = Unsigned<T>::id();
+        hid_t destin_type = type();
+        POMAGMA_ASSERT_LE(H5Tget_size(source_type), H5Tget_size(destin_type));
+
+        POMAGMA_ASSERT_EQ(volume(), source.size());
 
         POMAGMA_HDF5_OK(H5Dwrite(
-                id,                 // dataset_id
-                Unsigned<T>::id(),  // mem_type_id
-                H5S_ALL,            // mem_space_id
-                H5S_ALL,            // file_space_id
-                H5P_DEFAULT,        // xfer_plist_id
-                &source[0]));       // buf
+                id,             // dataset_id
+                destin_type,    // mem_type_id
+                H5S_ALL,        // mem_space_id
+                H5S_ALL,        // file_space_id
+                H5P_DEFAULT,    // xfer_plist_id
+                & source[0]));  // buf
     }
 
     template<class T>
     void read_all (std::vector<T> & destin)
     {
-        destin.resize(Dataspace(* this).volume());
+        hid_t source_type = type();
+        hid_t destin_type = Unsigned<T>::id();
+        POMAGMA_ASSERT_LE(H5Tget_size(source_type), H5Tget_size(destin_type));
+
+        destin.resize(volume());
 
         POMAGMA_HDF5_OK(H5Dread(
-                id,                 // dataset_id
-                Unsigned<T>::id(),  // mem_type_id, 16-bit
-                H5S_ALL,            // mem_space_id
-                H5S_ALL,            // file_space_id
-                H5P_DEFAULT,        // xfer_plist_id
-                &destin[0]));       // buf
+                id,             // dataset_id
+                source_type,    // mem_type_id, 16-bit
+                H5S_ALL,        // mem_space_id
+                H5S_ALL,        // file_space_id
+                H5P_DEFAULT,    // xfer_plist_id
+                & destin[0]));  // buf
     }
 
     void write_all (const DenseSet & source)
     {
-        POMAGMA_ASSERT(H5Tequal(type(), Bitfield<Word>::id()),
-                    "tried to write wrong datatype");
-        POMAGMA_ASSERT_EQ(Dataspace(* this).volume(), source.word_dim());
+        hid_t source_type = Bitfield<Word>::id();
+        hid_t destin_type = type();
+        POMAGMA_ASSERT(H5Tequal(source_type, destin_type), "datatype mismatch");
+
+        POMAGMA_ASSERT_EQ(volume(), source.word_dim());
 
         POMAGMA_HDF5_OK(H5Dwrite(
                 id,                     // dataset_id
-                Bitfield<Word>::id(),   // mem_type_id
+                source_type,            // mem_type_id
                 H5S_ALL,                // mem_space_id
                 H5S_ALL,                // file_space_id
                 H5P_DEFAULT,            // xfer_plist_id
@@ -360,13 +380,15 @@ struct Dataset : noncopyable
 
     void read_all (DenseSet & destin)
     {
-        POMAGMA_ASSERT(H5Tequal(type(), Bitfield<Word>::id()),
-                    "tried to read wrong datatype");
-        POMAGMA_ASSERT_LE(Dataspace(* this).volume(), destin.word_dim());
+        hid_t source_type = type();
+        hid_t destin_type = Bitfield<Word>::id();
+        POMAGMA_ASSERT(H5Tequal(source_type, destin_type), "datatype mismatch");
+
+        POMAGMA_ASSERT_LE(volume(), destin.word_dim());
 
         POMAGMA_HDF5_OK(H5Dread(
                 id,                     // dataset_id
-                Bitfield<Word>::id(),   // mem_type_id
+                destin_type,            // mem_type_id
                 H5S_ALL,                // mem_space_id
                 H5S_ALL,                // file_space_id
                 H5P_DEFAULT,            // xfer_plist_id
@@ -376,13 +398,17 @@ struct Dataset : noncopyable
     template<class T>
     void write_block (const std::vector<T> & source, size_t offset)
     {
+        hid_t source_type = Unsigned<T>::id();
+        hid_t destin_type = type();
+        POMAGMA_ASSERT_LE(H5Tget_size(source_type), H5Tget_size(destin_type));
+
         Dataspace source_dataspace(source.size());
         Dataspace destin_dataspace(* this);
         destin_dataspace.select_block(offset, source.size());
 
         POMAGMA_HDF5_OK(H5Dwrite(
                 id,                     // dataset_id
-                Unsigned<T>::id(),      // mem_type_id
+                destin_type,            // mem_type_id
                 source_dataspace.id,    // mem_space_id
                 destin_dataspace.id,    // file_space_id
                 H5P_DEFAULT,            // xfer_plist_id
@@ -392,13 +418,17 @@ struct Dataset : noncopyable
     template<class T>
     void read_block (std::vector<T> & destin, size_t offset)
     {
+        hid_t source_type = type();
+        hid_t destin_type = Unsigned<T>::id();
+        POMAGMA_ASSERT_LE(H5Tget_size(source_type), H5Tget_size(destin_type));
+
         Dataspace destin_dataspace(destin.size());
         Dataspace source_dataspace(* this);
         source_dataspace.select_block(offset, destin.size());
 
         POMAGMA_HDF5_OK(H5Dread(
                 id,                     // dataset_id
-                Unsigned<T>::id(),      // mem_type_id
+                source_type,            // mem_type_id
                 destin_dataspace.id,    // mem_space_id
                 source_dataspace.id,    // file_space_id
                 H5P_DEFAULT,            // xfer_plist_id
@@ -410,21 +440,22 @@ struct Dataset : noncopyable
             size_t dim1,
             size_t dim2)
     {
-        Dataspace destin_dataspace(*this);
+        hid_t source_type = Bitfield<Word>::id();
+        hid_t destin_type = type();
+        POMAGMA_ASSERT(H5Tequal(source_type, destin_type), "datatype mismatch");
+
+        Dataspace destin_dataspace(* this);
         auto shape = destin_dataspace.shape();
         POMAGMA_ASSERT_EQ(shape.size(), 2);
-        POMAGMA_ASSERT(H5Tequal(type(), Bitfield<Word>::id()),
-                    "tried to write wrong datatype");
 
         Dataspace source_dataspace(dim1, dim2);
-
         const hsize_t offset[] = {0, 0};
         const hsize_t count[] = {shape[0], shape[1]};
         source_dataspace.select_hyperslab(offset, count);
 
         POMAGMA_HDF5_OK(H5Dwrite(
                 id,                     // dataset_id
-                Bitfield<Word>::id(),   // mem_type_id
+                destin_type,            // mem_type_id
                 source_dataspace.id,    // mem_space_id
                 destin_dataspace.id,    // file_space_id
                 H5P_DEFAULT,            // xfer_plist_id
@@ -433,21 +464,22 @@ struct Dataset : noncopyable
 
     void read_rectangle (std::atomic<Word> * destin, size_t dim1, size_t dim2)
     {
-        Dataspace destin_dataspace(*this);
-        auto shape = destin_dataspace.shape();
+        hid_t source_type = type();
+        hid_t destin_type = Bitfield<Word>::id();
+        POMAGMA_ASSERT(H5Tequal(source_type, destin_type), "datatype mismatch");
+
+        Dataspace source_dataspace(* this);
+        auto shape = source_dataspace.shape();
         POMAGMA_ASSERT_EQ(shape.size(), 2);
-        POMAGMA_ASSERT(H5Tequal(type(), Bitfield<Word>::id()),
-                    "tried to read wrong datatype");
 
-        Dataspace source_dataspace(dim1, dim2);
-
+        Dataspace destin_dataspace(dim1, dim2);
         const hsize_t offset[] = {0, 0};
         const hsize_t count[] = {shape[0], shape[1]};
-        source_dataspace.select_hyperslab(offset, count);
+        destin_dataspace.select_hyperslab(offset, count);
 
         POMAGMA_HDF5_OK(H5Dread(
                 id,                     // dataset_id
-                Bitfield<Word>::id(),   // mem_type_id
+                source_type,            // mem_type_id
                 destin_dataspace.id,    // mem_space_id
                 source_dataspace.id,    // file_space_id
                 H5P_DEFAULT,            // xfer_plist_id

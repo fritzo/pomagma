@@ -7,8 +7,8 @@ all: install
 test:
 	@$(MAKE) unit-test
 	@$(MAKE) h4-test
-	#@$(MAKE) sk-test
-	#@$(MAKE) skj-test
+	@$(MAKE) sk-test
+	@$(MAKE) skj-test
 
 build:
 	mkdir build

@@ -44,6 +44,7 @@ public:
 
     // raw operations
     void raw_insert (Ob ob);
+    void update ();
 
     // relaxed operations
     Ob find (Ob ob) const;
