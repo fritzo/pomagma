@@ -230,8 +230,8 @@ public:
     POMAGMA_ASSERT((x) <= (y), \
             "expected " #x " <= " #y "; actual " << (x) << " vs " << (y))
 #define POMAGMA_ASSERT_LT(x, y) \
-    POMAGMA_ASSERT((x) <= (y), \
-            "expected " #x " <= " #y "; actual " << (x) << " vs " << (y))
+    POMAGMA_ASSERT((x) < (y), \
+            "expected " #x " < " #y "; actual " << (x) << " vs " << (y))
 #define POMAGMA_ASSERT_NE(x, y) \
     POMAGMA_ASSERT((x) != (y), \
             "expected " #x " != " #y "; actual " << (x) << " vs " << (y))

@@ -4,7 +4,7 @@
 #include "injective_function.hpp"
 #include "binary_function.hpp"
 #include "symmetric_function.hpp"
-#include "pomagma_hdf5.hpp"
+#include "hdf5.hpp"
 
 namespace pomagma
 {
@@ -79,9 +79,12 @@ void Structure::load_carrier (hdf5::InFile & file)
     hdf5::Dataspace dataspace(dataset);
     const auto shape = dataspace.shape();
     POMAGMA_ASSERT_EQ(shape.size(), 1);
-    POMAGMA_ASSERT_LE(shape[0], 1 + MAX_ITEM_DIM);
+    size_t source_item_dim = shape[0] * BITS_PER_WORD - 1;
+    size_t destin_item_dim = m_carrier.item_dim();
+    POMAGMA_ASSERT_LE(source_item_dim, destin_item_dim);
 
     DenseSet support(m_carrier.item_dim());
+
     dataset.read_all(support);
 
     for (auto i = support.iter(); i.ok(); i.next()) {
@@ -387,6 +390,7 @@ inline void dump_functions (
         POMAGMA_INFO("dumping " << name);
 
         size_t pair_count = fun->count_pairs();
+        POMAGMA_DEBUG("dumping " << pair_count << " lhs,rhs pairs");
         hdf5::Dataspace ob_dataspace(pair_count);
 
         hdf5::Group subgroup(file, name);
@@ -418,11 +422,13 @@ inline void dump_functions (
                     rhs_data.push_back(*rhs);
                     value_data.push_back(fun->raw_find(lhs, *rhs));
                 }
-                ptr_t nextpos = pos + rhs_data.size();
-                POMAGMA_ASSERT_LE(nextpos, pair_count);
-                rhs_dataset.write_block(rhs_data, pos);
-                value_dataset.write_block(value_data, pos);
-                pos = nextpos;
+                if (size_t count = rhs_data.size()) {
+                    ptr_t nextpos = pos + count;
+                    POMAGMA_ASSERT_LE(nextpos, pair_count);
+                    rhs_dataset.write_block(rhs_data, pos);
+                    value_dataset.write_block(value_data, pos);
+                    pos = nextpos;
+                }
             }
         }
         POMAGMA_ASSERT_EQ(pos, pair_count);

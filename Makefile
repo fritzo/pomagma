@@ -78,8 +78,8 @@ sk-test: build/debug log data
 	POMAGMA_LOG_FILE=log/sk-test.log \
 	build/debug/src/grower/sk.grower data/sk-test.h5 \
 	|| (grep -C3 -i error log/sk-test.log && false)
-	POMAGMA_SIZE=1535 
-	POMAGMA_LOG_LEVEL=4 
+	POMAGMA_SIZE=1535 \
+	POMAGMA_LOG_LEVEL=4 \
 	POMAGMA_LOG_FILE=log/sk-test.log \
 	build/debug/src/grower/sk.grower data/sk-test.h5 data/sk-test.h5 \
 	|| (grep -C3 -i error log/sk-test.log && false)
