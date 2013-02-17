@@ -148,9 +148,8 @@ void Structure::load_injective_functions (hdf5::InFile & file)
         dataset.read_all(data);
 
         for (Ob key = 1; key <= item_dim; ++key) {
-            Ob value = data[key];
-            if (value) {
-                fun->insert(key, value);
+            if (Ob value = data[key]) {
+                fun->raw_insert(key, value);
             }
         }
     }
@@ -168,7 +167,6 @@ inline void load_functions (
 
 {
     const size_t item_dim = carrier.item_dim();
-    std::vector<hsize_t> lhs_ptr_shape(1, 1 + item_dim);
     std::vector<Ob> lhs_ptr_data(1 + item_dim);
     std::vector<Ob> rhs_data(item_dim);
     std::vector<Ob> value_data(item_dim);
@@ -191,29 +189,30 @@ inline void load_functions (
         hdf5::Dataspace rhs_dataspace(rhs_dataset);
         hdf5::Dataspace value_dataspace(value_dataset);
 
-        POMAGMA_ASSERT_EQ(lhs_ptr_dataspace.shape(), lhs_ptr_shape);
+        auto lhs_ptr_shape = lhs_ptr_dataspace.shape();
+        POMAGMA_ASSERT_EQ(lhs_ptr_shape.size(), 1);
+        POMAGMA_ASSERT_LE(lhs_ptr_shape[0], 1 + item_dim);
         POMAGMA_ASSERT_EQ(rhs_dataspace.shape(), value_dataspace.shape());
 
         lhs_ptr_dataset.read_all(lhs_ptr_data);
         lhs_ptr_data.push_back(rhs_dataspace.volume());
-        for (Ob lhs = 1; lhs <= item_dim; ++lhs) {
+        for (Ob lhs = 1; lhs < lhs_ptr_data.size() - 1; ++lhs) {
             size_t begin = lhs_ptr_data[lhs];
             size_t end = lhs_ptr_data[lhs + 1];
-            size_t count = end - begin;
-            if (count) {
+            POMAGMA_ASSERT_LE(begin, end);
+            if (size_t count = end - begin) {
 
                 rhs_data.resize(count);
-                value_data.resize(count);
-
                 rhs_dataset.read_block(rhs_data, begin);
+
+                value_data.resize(count);
                 value_dataset.read_block(value_data, begin);
 
                 for (size_t i = 0; i < count; ++i) {
-                    fun->insert(lhs, rhs_data[i], value_data[i]);
+                    fun->raw_insert(lhs, rhs_data[i], value_data[i]);
                 }
             }
         }
-        lhs_ptr_data.pop_back();
     }
 }
 
