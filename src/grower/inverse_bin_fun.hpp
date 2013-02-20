@@ -32,6 +32,12 @@ public:
         m_data[val].insert(std::make_pair(lhs, rhs));
     }
 
+    void clear ()
+    {
+        for (auto & set : m_data) {
+            set.clear();
+        }
+    }
     Vlr_Table & unsafe_remove (Ob lhs, Ob rhs, Ob val)
     {
         m_data[val].unsafe_erase(std::make_pair(lhs, rhs));
@@ -105,6 +111,10 @@ public:
         m_data[std::make_pair(val, fixed)].insert(moving);
     }
 
+    void clear ()
+    {
+        m_data.clear();
+    }
     VXx_Table<transpose> & unsafe_remove (Ob lhs, Ob rhs, Ob val)
     {
         Ob fixed = transpose ? rhs : lhs;

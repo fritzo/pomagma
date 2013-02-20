@@ -30,8 +30,10 @@ public:
     void log_stats () const;
 
     // raw operations
+    size_t count_items () const { return m_set.count_items(); }
     Ob raw_find (Ob key) const;
     void raw_insert (Ob key, Ob val);
+    void clear ();
 
     // relaxed operations
     // m_values & m_inverse are source of truth; m_set & m_inverse_set lag

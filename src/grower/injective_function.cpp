@@ -83,6 +83,16 @@ void InjectiveFunction::log_stats () const
     POMAGMA_PRINT(m_inverse_set.count_items());
 }
 
+void InjectiveFunction::clear ()
+{
+    memory_barrier();
+    zero_blocks(m_values, 1 + item_dim());
+    zero_blocks(m_inverse, 1 + item_dim());
+    m_set.zero();
+    m_inverse_set.zero();
+    memory_barrier();
+}
+
 inline bool replace (Ob patt, Ob repl, std::atomic<Ob> & destin)
 {
     return destin.compare_exchange_strong(

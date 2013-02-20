@@ -103,6 +103,16 @@ size_t SymmetricFunction::count_pairs () const
     return unordered_pair_count;
 }
 
+void SymmetricFunction::clear ()
+{
+    memory_barrier();
+    m_lines.clear();
+    zero_blocks(m_blocks, unordered_pair_count(m_block_dim));
+    m_Vlr_table.clear();
+    m_VLr_table.clear();
+    memory_barrier();
+}
+
 void SymmetricFunction::raw_insert (Ob lhs, Ob rhs, Ob val)
 {
     POMAGMA_ASSERT5(support().contains(lhs), "unsupported lhs: " << lhs);

@@ -37,6 +37,7 @@ public:
     // m_blocks is source of truth; m_lines lag
     static bool is_symmetric () { return true; }
     size_t count_pairs () const; // unordered
+    void clear ();
     Ob raw_find (Ob lhs, Ob rhs) const { return value(lhs, rhs).load(relaxed); }
     void raw_insert (Ob lhs, Ob rhs, Ob val);
 

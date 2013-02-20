@@ -37,6 +37,7 @@ public:
     size_t count_pairs () const { return m_lines.count_pairs(); }
     Ob raw_find (Ob lhs, Ob rhs) const { return value(lhs, rhs).load(relaxed); }
     void raw_insert (Ob lhs, Ob rhs, Ob val);
+    void clear ();
 
     // relaxed operations
     // m_blocks is source of truth; m_lines lag

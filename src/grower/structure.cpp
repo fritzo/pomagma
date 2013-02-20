@@ -53,10 +53,9 @@ void Structure::clear ()
     m_carrier.clear();
     for (auto pair : m_binary_relations) { pair.second->clear(); }
     for (auto pair : m_nullary_functions) { pair.second->clear(); }
-    // TODO
-    //for (auto pair : m_injective_functions) { pair.second->clear(); }
-    //for (auto pair : m_binary_functions) { pair.second->clear(); }
-    //for (auto pair : m_symmetric_functions) { pair.second->clear(); }
+    for (auto pair : m_injective_functions) { pair.second->clear(); }
+    for (auto pair : m_binary_functions) { pair.second->clear(); }
+    for (auto pair : m_symmetric_functions) { pair.second->clear(); }
 }
 
 //----------------------------------------------------------------------------

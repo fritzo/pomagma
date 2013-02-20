@@ -90,6 +90,17 @@ void BinaryFunction::log_stats () const
     m_lines.log_stats();
 }
 
+void BinaryFunction::clear ()
+{
+    memory_barrier();
+    m_lines.clear();
+    zero_blocks(m_blocks, m_block_dim * m_block_dim);
+    m_Vlr_table.clear();
+    m_VLr_table.clear();
+    m_VRl_table.clear();
+    memory_barrier();
+}
+
 void BinaryFunction::raw_insert (Ob lhs, Ob rhs, Ob val)
 {
     POMAGMA_ASSERT5(support().contains(lhs), "unsupported lhs: " << lhs);

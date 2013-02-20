@@ -46,6 +46,10 @@ struct Example
             }
         }
         fun.validate();
+
+        fun.clear();
+        fun.validate();
+        POMAGMA_ASSERT_EQ(fun.count_pairs(), 0);
     }
 };
 
