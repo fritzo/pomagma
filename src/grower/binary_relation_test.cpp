@@ -137,6 +137,11 @@ void test_BinaryRelation (
     POMAGMA_INFO("testing copy_Lx_to_Rx update");
     rel.update();
     rel.validate();
+
+    POMAGMA_INFO("testing clear");
+    rel.clear();
+    rel.validate();
+    POMAGMA_ASSERT_EQ(rel.count_pairs(), 0);
 }
 
 int main ()

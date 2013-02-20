@@ -129,6 +129,17 @@ inline Word mask (const Word & shift) { return Word(1) << shift; }
 }
 
 template<bool symmetric>
+void base_bin_rel_<symmetric>::clear ()
+{
+    if (symmetric) {
+        zero_blocks(m_Lx_lines, data_size_words());
+    } else {
+        zero_blocks(m_Lx_lines, data_size_words());
+        zero_blocks(m_Rx_lines, data_size_words());
+    }
+}
+
+template<bool symmetric>
 void base_bin_rel_<symmetric>::copy_Lx_to_Rx ()
 {
     if (symmetric) { return; }
@@ -169,6 +180,7 @@ template base_bin_rel_<true>::~base_bin_rel_ ();
 template void base_bin_rel_<true>::validate () const;
 template void base_bin_rel_<true>::log_stats () const;
 template size_t base_bin_rel_<true>::count_pairs () const;
+template void base_bin_rel_<true>::clear ();
 template void base_bin_rel_<true>::copy_Lx_to_Rx ();
 
 template base_bin_rel_<false>::base_bin_rel_ (const Carrier &);
@@ -176,6 +188,7 @@ template base_bin_rel_<false>::~base_bin_rel_ ();
 template void base_bin_rel_<false>::validate () const;
 template void base_bin_rel_<false>::log_stats () const;
 template size_t base_bin_rel_<false>::count_pairs () const;
+template void base_bin_rel_<false>::clear ();
 template void base_bin_rel_<false>::copy_Lx_to_Rx ();
 
 } // namespace pomagma

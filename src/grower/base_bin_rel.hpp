@@ -32,6 +32,7 @@ public:
     size_t round_word_dim () const { return m_round_word_dim; }
     size_t data_size_words () const { return m_data_size_words; }
     size_t count_pairs () const; // supa-slow, try not to use
+    void clear ();
     void copy_Lx_to_Rx ();
 
     // full table

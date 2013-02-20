@@ -103,6 +103,7 @@ void Structure::load_binary_relations (hdf5::InFile & file)
         std::string name = groupname + "/" + pair.first;
         BinaryRelation * rel = pair.second;
         POMAGMA_INFO("loading " << name);
+        rel->clear();
 
         size_t dim1 = 1 + rel->item_dim();
         size_t dim2 = rel->round_word_dim();
