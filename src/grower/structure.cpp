@@ -45,13 +45,30 @@ void Structure::declare (const std::string & name, SymmetricFunction & fun)
 }
 
 //----------------------------------------------------------------------------
-// persistence
+// clearing
+
+void Structure::clear ()
+{
+    POMAGMA_INFO("Clearing structure");
+    m_carrier.clear();
+    for (auto pair : m_binary_relations) { pair.second->clear(); }
+    for (auto pair : m_nullary_functions) { pair.second->clear(); }
+    // TODO
+    //for (auto pair : m_injective_functions) { pair.second->clear(); }
+    //for (auto pair : m_binary_functions) { pair.second->clear(); }
+    //for (auto pair : m_symmetric_functions) { pair.second->clear(); }
+}
+
+//----------------------------------------------------------------------------
+// loading
 
 // adapted from
 // http://www.hdfgroup.org/HDF5/Tutor/crtfile.html
 
 void Structure::load (const std::string & filename)
 {
+    if (m_carrier.item_count()) { clear(); }
+
     POMAGMA_INFO("Loading structure from file " << filename);
 
     hdf5::InFile file(filename);
@@ -103,7 +120,6 @@ void Structure::load_binary_relations (hdf5::InFile & file)
         std::string name = groupname + "/" + pair.first;
         BinaryRelation * rel = pair.second;
         POMAGMA_INFO("loading " << name);
-        rel->clear();
 
         size_t dim1 = 1 + rel->item_dim();
         size_t dim2 = rel->round_word_dim();
@@ -233,6 +249,9 @@ void Structure::load_symmetric_functions (hdf5::InFile & file)
 {
     detail::load_functions("symmetric", m_symmetric_functions, m_carrier, file);
 }
+
+//----------------------------------------------------------------------------
+// dumping
 
 void Structure::dump (const std::string & filename)
 {

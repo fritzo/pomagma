@@ -37,6 +37,10 @@ void test_random (size_t size)
             carrier.validate();
         }
     }
+
+    carrier.clear();
+    carrier.validate();
+    POMAGMA_ASSERT_EQ(carrier.item_count(), 0);
 }
 
 int main ()

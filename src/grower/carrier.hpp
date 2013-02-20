@@ -43,6 +43,7 @@ public:
     bool contains (Ob ob) const { return m_support.contains(ob); }
 
     // raw operations
+    void clear ();
     void raw_insert (Ob ob);
     void update ();
 

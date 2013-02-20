@@ -33,6 +33,7 @@ public:
     void declare (const std::string & name, BinaryFunction & fun);
     void declare (const std::string & name, SymmetricFunction & fun);
 
+    void clear ();
     void load (const std::string & filename);
     void dump (const std::string & filename);
 

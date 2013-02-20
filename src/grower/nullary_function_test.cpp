@@ -30,6 +30,11 @@ void test_basic (size_t size)
     }
     fun.insert(ob);
     fun.validate();
+
+    POMAGMA_ASSERT(fun.defined(), "nullary function has nothing to clear");
+    fun.clear();
+    fun.validate();
+    POMAGMA_ASSERT(not fun.defined(), "nullary function was not cleared");
 }
 
 int main ()

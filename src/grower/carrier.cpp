@@ -28,9 +28,21 @@ Carrier::~Carrier ()
     free_blocks(m_reps);
 }
 
+void Carrier::clear ()
+{
+    memory_barrier();
+    m_support.zero();
+    zero_blocks(m_reps, 1 + item_dim());
+    m_rep_count = 0;
+    m_item_count = 0;
+    memory_barrier();
+}
+
 void Carrier::update ()
 {
+    memory_barrier();
     m_rep_count = m_item_count = m_support.count_items();
+    memory_barrier();
 }
 
 Ob Carrier::try_insert () const
