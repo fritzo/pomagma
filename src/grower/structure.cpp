@@ -5,6 +5,7 @@
 #include "binary_function.hpp"
 #include "symmetric_function.hpp"
 #include "hdf5.hpp"
+#include "hasher.hpp"
 
 namespace pomagma
 {
@@ -59,6 +60,107 @@ void Structure::clear ()
 }
 
 //----------------------------------------------------------------------------
+// Hashing
+
+template<class Object>
+inline void dump_hash (const Object & object, const Hasher::Digest & digest)
+{
+    hdf5::Dataspace dataspace(digest.size());
+    auto type_id = hdf5::Unsigned<Hasher::Digest::value_type>::id();
+    hdf5::Attribute attribute(object, "hash", type_id, dataspace);
+    attribute.write(digest);
+}
+
+template<class Object>
+inline Hasher::Digest load_hash (const Object & object)
+{
+    hdf5::Attribute attribute(object, "hash");
+    Hasher::Digest digest;
+    attribute.read(digest);
+    return digest;
+}
+
+static Hasher::Digest get_hash (const Carrier & carrier)
+{
+    Hasher hasher;
+    for (auto i = carrier.iter(); i.ok(); i.next()) {
+        uint32_t data = *i;
+        hasher.add(data);
+    }
+    return hasher.finish();
+}
+
+static Hasher::Digest get_hash (
+        const Carrier & carrier,
+        const BinaryRelation & rel)
+{
+    Hasher hasher;
+    std::vector<uint32_t> tuple(2);
+    for (auto lhs = carrier.iter(); lhs.ok(); lhs.next()) {
+        tuple[0] = *lhs;
+        for (auto rhs = rel.iter_lhs(*lhs); rhs.ok(); rhs.next()) {
+            tuple[1] = *lhs;
+            hasher.add(tuple);
+        }
+    }
+    return hasher.finish();
+}
+
+static Hasher::Digest get_hash (const NullaryFunction & fun)
+{
+    std::vector<uint32_t> tuple(1);
+    tuple[0] = fun.find();
+    return Hasher::digest(tuple);
+}
+
+static Hasher::Digest get_hash (const InjectiveFunction & fun)
+{
+    Hasher hasher;
+    std::vector<uint32_t> tuple(2);
+    for (auto key = fun.iter(); key.ok(); key.next()) {
+        tuple[0] = *key;
+        tuple[1] = fun.find(*key);
+        hasher.add(tuple);
+    }
+    return hasher.finish();
+}
+
+static Hasher::Digest get_hash (
+        const Carrier & carrier,
+        const BinaryFunction & fun)
+{
+    Hasher hasher;
+    std::vector<uint32_t> tuple(3);
+    for (auto lhs = carrier.iter(); lhs.ok(); lhs.next()) {
+        tuple[0] = *lhs;
+        for (auto rhs = fun.iter_lhs(*lhs); rhs.ok(); rhs.next()) {
+            tuple[1] = *rhs;
+            tuple[2] = fun.find(*lhs, *rhs);
+            hasher.add(tuple);
+        }
+    }
+    return hasher.finish();
+}
+
+static Hasher::Digest get_hash (
+        const Carrier & carrier,
+        const SymmetricFunction & fun)
+{
+    Hasher hasher;
+    std::vector<uint32_t> tuple(3);
+    for (auto lhs = carrier.iter(); lhs.ok(); lhs.next()) {
+        tuple[0] = *lhs;
+        for (auto rhs = fun.iter_lhs(*lhs); rhs.ok(); rhs.next()) {
+            if (*rhs > *lhs) { break; }
+            tuple[1] = *rhs;
+            tuple[2] = fun.find(*lhs, *rhs);
+            hasher.add(tuple);
+        }
+    }
+    return hasher.finish();
+}
+
+//----------------------------------------------------------------------------
 // loading
 
 // adapted from
@@ -71,26 +173,30 @@ void Structure::load (const std::string & filename)
     POMAGMA_INFO("Loading structure from file " << filename);
 
     hdf5::InFile file(filename);
-    hdf5::Group carrier_group(file, "/carrier");
     hdf5::Group relations_group(file, "/relations");
     hdf5::Group functions_group(file, "/functions");
 
-    // TODO do this in parallel
-    // TODO verify SHA1 hash http://www.openssl.org/docs/crypto/sha.html
-    load_carrier(file);
+    std::map<std::string, Hasher::Digest> digests;
 
-    load_binary_relations(file);
-    load_nullary_functions(file);
-    load_injective_functions(file);
-    load_binary_functions(file);
-    load_symmetric_functions(file);
+    // TODO parallelize
+    digests["carrier"] = load_carrier(file);
+    digests["relations/binary"] = load_binary_relations(file);
+    digests["functions/nullary"] = load_nullary_functions(file);
+    digests["functions/injective"] = load_injective_functions(file);
+    digests["functions/binary"] = load_binary_functions(file);
+    digests["functions/symmetric"] = load_symmetric_functions(file);
+
+    auto digest = Hasher::digest(digests);
+    POMAGMA_ASSERT(digest == load_hash(file), "file is corrupt");
 }
 
-void Structure::load_carrier (hdf5::InFile & file)
+Hasher::Digest Structure::load_carrier (hdf5::InFile & file)
 {
     POMAGMA_INFO("loading carrier");
 
-    hdf5::Dataset dataset(file, "/carrier/support");
+    const std::string groupname = "/carrier";
+    hdf5::Group group(file, groupname);
+    hdf5::Dataset dataset(file, groupname + "/support");
 
     hdf5::Dataspace dataspace(dataset);
     const auto shape = dataspace.shape();
@@ -107,14 +213,21 @@ void Structure::load_carrier (hdf5::InFile & file)
         m_carrier.raw_insert(*i);
     }
     m_carrier.update();
+    POMAGMA_ASSERT_EQ(m_carrier.rep_count(), m_carrier.item_count());
+
+    auto digest = get_hash(m_carrier);
+    POMAGMA_ASSERT(digest == load_hash(group), groupname << " is corrupt");
+    return digest;
 }
 
-void Structure::load_binary_relations (hdf5::InFile & file)
+Hasher::Digest Structure::load_binary_relations (hdf5::InFile & file)
 {
     const std::string groupname = "/relations/binary";
     hdf5::Group group(file, groupname);
 
-    // TODO parallelize loop
+    std::map<std::string, Hasher::Digest> digests;
+
+    // TODO parallelize
     for (const auto & pair : m_binary_relations) {
         std::string name = groupname + "/" + pair.first;
         BinaryRelation * rel = pair.second;
@@ -127,13 +240,23 @@ void Structure::load_binary_relations (hdf5::InFile & file)
         hdf5::Dataset dataset(file, name);
         dataset.read_rectangle(destin, dim1, dim2);
         rel->update();
+
+        auto digest = get_hash(m_carrier, *rel);
+        POMAGMA_ASSERT(digest == load_hash(dataset), name << " is corrupt");
+        digests[pair.first] = digest;
     }
+
+    auto digest = Hasher::digest(digests);
+    POMAGMA_ASSERT(digest == load_hash(group), groupname << " is corrupt");
+    return digest;
 }
 
-void Structure::load_nullary_functions (hdf5::InFile & file)
+Hasher::Digest Structure::load_nullary_functions (hdf5::InFile & file)
 {
     const std::string groupname = "/functions/nullary";
     hdf5::Group group(file, groupname);
+
+    std::map<std::string, Hasher::Digest> digests;
 
     for (const auto & pair : m_nullary_functions) {
         std::string name = groupname + "/" + pair.first;
@@ -146,16 +269,26 @@ void Structure::load_nullary_functions (hdf5::InFile & file)
         Ob data;
         dataset.read_scalar(data);
         fun->raw_insert(data);
+
+        auto digest = get_hash(*fun);
+        POMAGMA_ASSERT(digest == load_hash(subgroup), name << " is corrupt");
+        digests[pair.first] = digest;
     }
+
+    auto digest = Hasher::digest(digests);
+    POMAGMA_ASSERT(digest == load_hash(group), groupname << " is corrupt");
+    return digest;
 }
 
-void Structure::load_injective_functions (hdf5::InFile & file)
+Hasher::Digest Structure::load_injective_functions (hdf5::InFile & file)
 {
     const size_t item_dim = m_carrier.item_dim();
     std::vector<Ob> data(1 + item_dim);
 
     const std::string groupname = "/functions/injective";
     hdf5::Group group(file, groupname);
+
+    std::map<std::string, Hasher::Digest> digests;
 
     for (const auto & pair : m_injective_functions) {
         std::string name = groupname + "/" + pair.first;
@@ -172,14 +305,22 @@ void Structure::load_injective_functions (hdf5::InFile & file)
                 fun->raw_insert(key, value);
             }
         }
+
+        auto digest = get_hash(*fun);
+        POMAGMA_ASSERT(digest == load_hash(dataset), name << " is corrupt");
+        digests[pair.first] = digest;
     }
+
+    auto digest = Hasher::digest(digests);
+    POMAGMA_ASSERT(digest == load_hash(group), groupname << " is corrupt");
+    return digest;
 }
 
 namespace detail
 {
 
 template<class Function>
-inline void load_functions (
+inline Hasher::Digest load_functions (
         const std::string & arity,
         std::map<std::string, Function *> functions,
         const Carrier & carrier,
@@ -194,6 +335,8 @@ inline void load_functions (
 
     const std::string groupname = "/functions/" + arity;
     hdf5::Group group(file, groupname);
+
+    std::map<std::string, Hasher::Digest> digests;
 
     // TODO parallelize loop
     for (const auto & pair : functions) {
@@ -234,19 +377,35 @@ inline void load_functions (
                 }
             }
         }
+
+        auto digest = get_hash(carrier, *fun);
+        POMAGMA_ASSERT(digest == load_hash(subgroup), name << " is corrupt");
+        digests[pair.first] = digest;
     }
+
+    auto digest = Hasher::digest(digests);
+    POMAGMA_ASSERT(digest == load_hash(group), groupname << " is corrupt");
+    return digest;
 }
 
 } // namespace detail
 
-void Structure::load_binary_functions (hdf5::InFile & file)
+Hasher::Digest Structure::load_binary_functions (hdf5::InFile & file)
 {
-    detail::load_functions("binary", m_binary_functions, m_carrier, file);
+    return detail::load_functions(
+            "binary",
+            m_binary_functions,
+            m_carrier,
+            file);
 }
 
-void Structure::load_symmetric_functions (hdf5::InFile & file)
+Hasher::Digest Structure::load_symmetric_functions (hdf5::InFile & file)
 {
-    detail::load_functions("symmetric", m_symmetric_functions, m_carrier, file);
+    return detail::load_functions(
+            "symmetric",
+            m_symmetric_functions,
+            m_carrier,
+            file);
 }
 
 //----------------------------------------------------------------------------
@@ -256,38 +415,47 @@ void Structure::dump (const std::string & filename)
 {
     POMAGMA_INFO("Dumping structure to file " << filename);
     hdf5::OutFile file(filename);
-    hdf5::Group carrier_group(file, "/carrier");
     hdf5::Group relations_group(file, "/relations");
     hdf5::Group functions_group(file, "/functions");
 
-    // TODO do this in parallel
-    // TODO compute SHA1 hash http://www.openssl.org/docs/crypto/sha.html
-    dump_carrier(file);
-    dump_binary_relations(file);
-    dump_nullary_functions(file);
-    dump_injective_functions(file);
-    dump_binary_functions(file);
-    dump_symmetric_functions(file);
+    std::map<std::string, Hasher::Digest> digests;
+
+    // TODO parallelize
+    digests["carrier"] = dump_carrier(file);
+    digests["relations/binary"] = dump_binary_relations(file);
+    digests["functions/nullary"] = dump_nullary_functions(file);
+    digests["functions/injective"] = dump_injective_functions(file);
+    digests["functions/binary"] = dump_binary_functions(file);
+    digests["functions/symmetric"] = dump_symmetric_functions(file);
+
+    auto digest = Hasher::digest(digests);
+    dump_hash(file, digest);
 }
 
-void Structure::dump_carrier (hdf5::OutFile & file)
+Hasher::Digest Structure::dump_carrier (hdf5::OutFile & file)
 {
     POMAGMA_INFO("dumping carrier");
 
     const DenseSet & support = m_carrier.support();
 
+    const std::string groupname = "/carrier";
+    hdf5::Group group(file, groupname);
     hdf5::Dataspace dataspace(support.word_dim());
 
     hdf5::Dataset dataset(
             file,
-            "/carrier/support",
+            groupname + "/support",
             hdf5::Bitfield<Word>::id(),
             dataspace);
 
     dataset.write_all(support);
+
+    auto digest = get_hash(m_carrier);
+    dump_hash(group, digest);
+    return digest;
 }
 
-void Structure::dump_binary_relations (hdf5::OutFile & file)
+Hasher::Digest Structure::dump_binary_relations (hdf5::OutFile & file)
 {
     const DenseSet & support = m_carrier.support();
     const size_t item_dim = support.item_dim();
@@ -297,6 +465,8 @@ void Structure::dump_binary_relations (hdf5::OutFile & file)
 
     const std::string groupname = "/relations/binary";
     hdf5::Group group(file, groupname);
+
+    std::map<std::string, Hasher::Digest> digests;
 
     // TODO parallelize loop
     for (const auto & pair : m_binary_relations) {
@@ -315,15 +485,25 @@ void Structure::dump_binary_relations (hdf5::OutFile & file)
         const std::atomic<Word> * source = rel->raw_data();
 
         dataset.write_rectangle(source, dim1, dim2);
+
+        auto digest = get_hash(m_carrier, *rel);
+        dump_hash(dataset, digest);
+        digests[pair.first] = digest;
     }
+
+    auto digest = Hasher::digest(digests);
+    dump_hash(group, digest);
+    return digest;
 }
 
-void Structure::dump_nullary_functions (hdf5::OutFile & file)
+Hasher::Digest Structure::dump_nullary_functions (hdf5::OutFile & file)
 {
     hdf5::Dataspace dataspace;
 
     const std::string groupname = "/functions/nullary";
     hdf5::Group group(file, groupname);
+
+    std::map<std::string, Hasher::Digest> digests;
 
     for (const auto & pair : m_nullary_functions) {
         std::string name = groupname + "/" + pair.first;
@@ -339,10 +519,18 @@ void Structure::dump_nullary_functions (hdf5::OutFile & file)
 
         Ob data = fun->find();
         dataset.write_scalar(data);
+
+        auto digest = get_hash(*fun);
+        dump_hash(subgroup, digest);
+        digests[pair.first] = digest;
     }
+
+    auto digest = Hasher::digest(digests);
+    dump_hash(group, digest);
+    return digest;
 }
 
-void Structure::dump_injective_functions (hdf5::OutFile & file)
+Hasher::Digest Structure::dump_injective_functions (hdf5::OutFile & file)
 {
     // format:
     // dense array with null entries
@@ -352,6 +540,8 @@ void Structure::dump_injective_functions (hdf5::OutFile & file)
 
     const std::string groupname = "/functions/injective";
     hdf5::Group group(file, groupname);
+
+    std::map<std::string, Hasher::Digest> digests;
 
     for (const auto & pair : m_injective_functions) {
         std::string name = groupname + "/" + pair.first;
@@ -371,14 +561,22 @@ void Structure::dump_injective_functions (hdf5::OutFile & file)
         }
 
         dataset.write_all(data);
+
+        auto digest = get_hash(*fun);
+        dump_hash(subgroup, digest);
+        digests[pair.first] = digest;
     }
+
+    auto digest = Hasher::digest(digests);
+    dump_hash(group, digest);
+    return digest;
 }
 
 namespace detail
 {
 
 template<class Function>
-inline void dump_functions (
+inline Hasher::Digest dump_functions (
         const std::string & arity,
         std::map<std::string, Function *> functions,
         const Carrier & carrier,
@@ -401,6 +599,8 @@ inline void dump_functions (
 
     const std::string groupname = "/functions/" + arity;
     hdf5::Group group(file, groupname);
+
+    std::map<std::string, Hasher::Digest> digests;
 
     // TODO parallelize loop
     for (const auto & pair : functions) {
@@ -452,19 +652,35 @@ inline void dump_functions (
         }
         POMAGMA_ASSERT_EQ(pos, pair_count);
         lhs_ptr_dataset.write_all(lhs_ptr_data);
+
+        auto digest = get_hash(carrier, *fun);
+        dump_hash(subgroup, digest);
+        digests[pair.first] = digest;
     }
+
+    auto digest = Hasher::digest(digests);
+    dump_hash(group, digest);
+    return digest;
 }
 
 } // namespace detail
 
-void Structure::dump_binary_functions (hdf5::OutFile & file)
+Hasher::Digest Structure::dump_binary_functions (hdf5::OutFile & file)
 {
-    detail::dump_functions("binary", m_binary_functions, m_carrier, file);
+    return detail::dump_functions(
+            "binary",
+            m_binary_functions,
+            m_carrier,
+            file);
 }
 
-void Structure::dump_symmetric_functions (hdf5::OutFile & file)
+Hasher::Digest Structure::dump_symmetric_functions (hdf5::OutFile & file)
 {
-    detail::dump_functions("symmetric", m_symmetric_functions, m_carrier, file);
+    return detail::dump_functions(
+            "symmetric",
+            m_symmetric_functions,
+            m_carrier,
+            file);
 }
 
 } // namespace pomagma

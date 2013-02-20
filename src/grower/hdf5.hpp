@@ -162,6 +162,7 @@ public:
 // Dataspaces
 // http://www.hdfgroup.org/HDF5/doc/RM/RM_H5S.html
 
+class Attribute;
 class Dataset;
 
 struct Dataspace : noncopyable
@@ -190,6 +191,7 @@ struct Dataspace : noncopyable
         POMAGMA_ASSERT(id >= 0, "failed to create dataspace\n" << get_error());
     }
 
+    Dataspace (Attribute & attribute);
     Dataspace (Dataset & dataset);
 
     ~Dataspace ()
@@ -241,6 +243,83 @@ struct Dataspace : noncopyable
         select_hyperslab(&offset, &count);
     }
 };
+
+//----------------------------------------------------------------------------
+// Attributes
+// http://www.hdfgroup.org/HDF5/doc/RM/RM_H5A.html
+
+struct Attribute : noncopyable
+{
+    const hid_t id;
+
+    template<class Object>
+    Attribute (Object & object, const std::string & name)
+        : id(H5Aopen(
+            object.id,
+            name.c_str(),
+            H5P_DEFAULT
+            ))
+    {
+        POMAGMA_ASSERT(id >= 0,
+                "failed to open attribute " << name << "\n" << get_error());
+    }
+
+    template<class Object>
+    Attribute (
+            Object & object,
+            const std::string & name,
+            hid_t type_id,
+            Dataspace & dataspace)
+        : id(H5Acreate(
+                object.id,
+                name.c_str(),
+                type_id,
+                dataspace.id,
+                H5P_DEFAULT
+                ))
+    {
+        POMAGMA_ASSERT(id >= 0,
+                "failed to create attribute " << name << "\n" << get_error());
+        POMAGMA_ASSERT(H5Tequal(type(), type_id),
+                "created attribute with wrong type");
+    }
+
+    ~Attribute ()
+    {
+        POMAGMA_HDF5_OK(H5Aclose(id));
+    }
+
+    hid_t type () { return H5Aget_type(id); }
+    size_t rank () { return Dataspace(* this).rank(); }
+    size_t volume () { return Dataspace(* this).volume(); }
+
+    template<class T>
+    void write (const std::vector<T> & source)
+    {
+        hid_t source_type = Unsigned<T>::id();
+        hid_t destin_type = type();
+        POMAGMA_ASSERT_EQ(H5Tget_size(source_type), H5Tget_size(destin_type));
+        POMAGMA_ASSERT_EQ(volume(), source.size());
+
+        POMAGMA_HDF5_OK(H5Awrite(id, destin_type, & source[0]));
+    }
+
+    template<class T>
+    void read (std::vector<T> & destin)
+    {
+        hid_t source_type = type();
+        hid_t destin_type = Unsigned<T>::id();
+        POMAGMA_ASSERT_EQ(H5Tget_size(source_type), H5Tget_size(destin_type));
+        destin.resize(volume());
+
+        POMAGMA_HDF5_OK(H5Aread(id, source_type, & destin[0]));
+    }
+};
+
+inline Dataspace::Dataspace (Attribute & attribute)
+    : id(H5Aget_space(attribute.id))
+{
+}
 
 //----------------------------------------------------------------------------
 // Datasets
@@ -320,7 +399,7 @@ struct Dataset : noncopyable
 
         POMAGMA_HDF5_OK(H5Dread(
                 id,             // dataset_id
-                destin_type,    // mem_type_id, 16-bit
+                destin_type,    // mem_type_id
                 H5S_ALL,        // mem_space_id
                 H5S_ALL,        // file_space_id
                 H5P_DEFAULT,    // xfer_plist_id
@@ -356,7 +435,7 @@ struct Dataset : noncopyable
 
         POMAGMA_HDF5_OK(H5Dread(
                 id,             // dataset_id
-                source_type,    // mem_type_id, 16-bit
+                source_type,    // mem_type_id
                 H5S_ALL,        // mem_space_id
                 H5S_ALL,        // file_space_id
                 H5P_DEFAULT,    // xfer_plist_id

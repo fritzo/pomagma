@@ -8,6 +8,7 @@ $i libtbb-dev
 #$i libzmq-dev python-zmq
 $i libprotobuf-dev protobuf-compiler python-protobuf
 $i libhdf5-serial-dev
+$i libssl-dev
 
 $i python-pip virtualenvwrapper
 mkvirtualenv --system-site-packages pomagma

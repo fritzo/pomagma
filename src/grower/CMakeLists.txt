@@ -21,7 +21,8 @@ set(POMAGMA_LIBS
 	pomagma_grower
        	boost_thread
        	tbb
-       	hdf5_hl hdf5)
+       	hdf5_hl hdf5
+	crypto ssl)
 
 
 add_library(pomagma_grower_dummy SHARED dummy.theory.cpp)
@@ -30,7 +31,8 @@ set(POMAGMA_TEST_LIBS
 	pomagma_grower_dummy
 	boost_thread
 	tbb
-       	hdf5_hl hdf5)
+       	hdf5_hl hdf5
+	crypto ssl)
 
 
 add_executable(threading_profile threading_profile.cpp)
