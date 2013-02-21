@@ -62,11 +62,6 @@ h4-test: build/debug log data
 	POMAGMA_LOG_FILE=log/h4-test.log \
 	build/debug/src/grower/h4.grower data/h4-test.h5 data/h4-test.h5 \
 	|| (grep -C3 -i error log/h4-test.log && false)
-	POMAGMA_SIZE=1023 \
-	POMAGMA_LOG_LEVEL=4 \
-	POMAGMA_LOG_FILE=log/h4-test.log \
-	build/debug/src/grower/h4.grower data/h4-test.h5 data/h4-test.h5 \
-	|| (grep -C3 -i error log/h4-test.log && false)
 
 h4: install log data
 	@echo '' > log/h4.log
