@@ -1,6 +1,7 @@
 #pragma once
 
 #include "util.hpp"
+#include "hasher.hpp"
 
 extern "C" {
 #include <hdf5.h>
@@ -33,7 +34,7 @@ std::string get_error ()
     return buffer.substr(0, buffer.find('\0'));
 }
 
-#define POMAGMA_HDF5_OK(status) POMAGMA_ASSERT(status >= 0, get_error())
+#define POMAGMA_HDF5_OK(status) POMAGMA_ASSERT((status) >= 0, get_error())
 
 //----------------------------------------------------------------------------
 // Datatypes
@@ -100,6 +101,7 @@ struct InFile : noncopyable
         POMAGMA_ASSERT(id >= 0,
                 "failed to open file " << filename << "\n" << get_error());
     }
+
     ~InFile ()
     {
         POMAGMA_HDF5_OK(H5Fclose(id));
@@ -256,6 +258,17 @@ struct Attribute : noncopyable
     Attribute (Object & object, const std::string & name)
         : id(H5Aopen(
             object.id,
+            name.c_str(),
+            H5P_DEFAULT
+            ))
+    {
+        POMAGMA_ASSERT(id >= 0,
+                "failed to open attribute " << name << "\n" << get_error());
+    }
+
+    Attribute (hid_t o_id, const std::string & name)
+        : id(H5Aopen(
+            o_id,
             name.c_str(),
             H5P_DEFAULT
             ))
@@ -571,6 +584,86 @@ struct Dataset : noncopyable
 inline Dataspace::Dataspace (Dataset & dataset)
     : id(H5Dget_space(dataset.id))
 {
+}
+
+//----------------------------------------------------------------------------
+// Hashing
+
+
+template<class Object>
+bool has_hash (Object & object)
+{
+    herr_t exists = H5Aexists(object.id, "hash");
+    POMAGMA_HDF5_OK(exists);
+    return exists;
+}
+
+template<class Object>
+inline void dump_hash (const Object & object, const Hasher::Digest & digest)
+{
+    Dataspace dataspace(digest.size());
+    auto type_id = Unsigned<Hasher::Digest::value_type>::id();
+    Attribute attribute(object, "hash", type_id, dataspace);
+    attribute.write(digest);
+}
+
+template<class Object>
+inline Hasher::Digest load_hash (const Object & object)
+{
+    Attribute attribute(object, "hash");
+    Hasher::Digest digest;
+    attribute.read(digest);
+    return digest;
+}
+
+namespace
+{
+struct OpaqueObject
+{
+    const hid_t id;
+
+    OpaqueObject (hid_t loc_id, haddr_t addr)
+        : id(H5Oopen_by_addr(loc_id, addr))
+    {
+        POMAGMA_ASSERT(id >= 0, "failed to create raw object");
+    }
+
+    ~OpaqueObject ()
+    {
+        H5Oclose(id);
+    }
+};
+} // anonymous namespace
+
+extern "C" herr_t _tree_hash_visitor (
+        hid_t root_id,
+        const char * name,
+        const H5O_info_t * object_info __attribute__((unused)),
+        void * op_data __attribute__((unused)))
+{
+    if (name[0] != '.') { // ignore root group
+        OpaqueObject object(root_id, object_info->addr);
+        if (has_hash(object)) {
+            POMAGMA_DEBUG("adding hash at " << name);
+            auto & dict = * static_cast<Hasher::Dict *>(op_data);
+            dict[name] = load_hash(object);
+        }
+    }
+    return 0;
+}
+
+template<class Object>
+inline Hasher::Digest get_tree_hash (const Object & object)
+{
+    Hasher::Dict dict;
+    POMAGMA_HDF5_OK(H5Ovisit(
+                object.id,
+                H5_INDEX_NAME,
+                H5_ITER_NATIVE,
+                _tree_hash_visitor,
+                & dict));
+    POMAGMA_ASSERT(not dict.empty(), "no hashes were found in object tree");
+    return Hasher::digest(dict);
 }
 
 #undef POMAGMA_HDF5_OK

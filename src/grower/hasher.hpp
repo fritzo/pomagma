@@ -21,6 +21,7 @@ class Hasher
 public:
 
     typedef std::vector<uint8_t> Digest;
+    typedef std::map<std::string, Digest> Dict;
 
     Hasher ()
         : m_state(ADDING),
@@ -56,7 +57,7 @@ public:
         }
     }
 
-    void add (const std::map<std::string, Digest> & t)
+    void add (const Dict & t)
     {
         for (const auto & i : t) {
             add(i.first);

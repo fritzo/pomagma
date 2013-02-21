@@ -62,24 +62,6 @@ void Structure::clear ()
 //----------------------------------------------------------------------------
 // Hashing
 
-template<class Object>
-inline void dump_hash (const Object & object, const Hasher::Digest & digest)
-{
-    hdf5::Dataspace dataspace(digest.size());
-    auto type_id = hdf5::Unsigned<Hasher::Digest::value_type>::id();
-    hdf5::Attribute attribute(object, "hash", type_id, dataspace);
-    attribute.write(digest);
-}
-
-template<class Object>
-inline Hasher::Digest load_hash (const Object & object)
-{
-    hdf5::Attribute attribute(object, "hash");
-    Hasher::Digest digest;
-    attribute.read(digest);
-    return digest;
-}
-
 static Hasher::Digest get_hash (const Carrier & carrier)
 {
     Hasher hasher;
@@ -187,7 +169,7 @@ void Structure::load (const std::string & filename)
     digests["functions/symmetric"] = load_symmetric_functions(file);
 
     auto digest = Hasher::digest(digests);
-    POMAGMA_ASSERT(digest == load_hash(file), "file is corrupt");
+    POMAGMA_ASSERT(digest == hdf5::load_hash(file), "file is corrupt");
 }
 
 Hasher::Digest Structure::load_carrier (hdf5::InFile & file)
@@ -216,7 +198,8 @@ Hasher::Digest Structure::load_carrier (hdf5::InFile & file)
     POMAGMA_ASSERT_EQ(m_carrier.rep_count(), m_carrier.item_count());
 
     auto digest = get_hash(m_carrier);
-    POMAGMA_ASSERT(digest == load_hash(group), groupname << " is corrupt");
+    POMAGMA_ASSERT(digest == hdf5::load_hash(group),
+            groupname << " is corrupt");
     return digest;
 }
 
@@ -242,12 +225,13 @@ Hasher::Digest Structure::load_binary_relations (hdf5::InFile & file)
         rel->update();
 
         auto digest = get_hash(m_carrier, *rel);
-        POMAGMA_ASSERT(digest == load_hash(dataset), name << " is corrupt");
+        POMAGMA_ASSERT(digest == hdf5::load_hash(dataset),
+                name << " is corrupt");
         digests[pair.first] = digest;
     }
 
     auto digest = Hasher::digest(digests);
-    POMAGMA_ASSERT(digest == load_hash(group), groupname << " is corrupt");
+    POMAGMA_ASSERT(digest == hdf5::load_hash(group), groupname << " is corrupt");
     return digest;
 }
 
@@ -271,12 +255,14 @@ Hasher::Digest Structure::load_nullary_functions (hdf5::InFile & file)
         fun->raw_insert(data);
 
         auto digest = get_hash(*fun);
-        POMAGMA_ASSERT(digest == load_hash(subgroup), name << " is corrupt");
+        POMAGMA_ASSERT(digest == hdf5::load_hash(subgroup),
+                name << " is corrupt");
         digests[pair.first] = digest;
     }
 
     auto digest = Hasher::digest(digests);
-    POMAGMA_ASSERT(digest == load_hash(group), groupname << " is corrupt");
+    POMAGMA_ASSERT(digest == hdf5::load_hash(group),
+            groupname << " is corrupt");
     return digest;
 }
 
@@ -307,12 +293,14 @@ Hasher::Digest Structure::load_injective_functions (hdf5::InFile & file)
         }
 
         auto digest = get_hash(*fun);
-        POMAGMA_ASSERT(digest == load_hash(dataset), name << " is corrupt");
+        POMAGMA_ASSERT(digest == hdf5::load_hash(dataset),
+                name << " is corrupt");
         digests[pair.first] = digest;
     }
 
     auto digest = Hasher::digest(digests);
-    POMAGMA_ASSERT(digest == load_hash(group), groupname << " is corrupt");
+    POMAGMA_ASSERT(digest == hdf5::load_hash(group),
+            groupname << " is corrupt");
     return digest;
 }
 
@@ -379,12 +367,14 @@ inline Hasher::Digest load_functions (
         }
 
         auto digest = get_hash(carrier, *fun);
-        POMAGMA_ASSERT(digest == load_hash(subgroup), name << " is corrupt");
+        POMAGMA_ASSERT(digest == hdf5::load_hash(subgroup),
+                name << " is corrupt");
         digests[pair.first] = digest;
     }
 
     auto digest = Hasher::digest(digests);
-    POMAGMA_ASSERT(digest == load_hash(group), groupname << " is corrupt");
+    POMAGMA_ASSERT(digest == hdf5::load_hash(group),
+            groupname << " is corrupt");
     return digest;
 }
 
@@ -429,7 +419,10 @@ void Structure::dump (const std::string & filename)
     digests["functions/symmetric"] = dump_symmetric_functions(file);
 
     auto digest = Hasher::digest(digests);
-    dump_hash(file, digest);
+    hdf5::dump_hash(file, digest);
+
+    // DEBUG
+    hdf5::get_tree_hash(file);
 }
 
 Hasher::Digest Structure::dump_carrier (hdf5::OutFile & file)
@@ -451,7 +444,7 @@ Hasher::Digest Structure::dump_carrier (hdf5::OutFile & file)
     dataset.write_all(support);
 
     auto digest = get_hash(m_carrier);
-    dump_hash(group, digest);
+    hdf5::dump_hash(group, digest);
     return digest;
 }
 
@@ -487,12 +480,12 @@ Hasher::Digest Structure::dump_binary_relations (hdf5::OutFile & file)
         dataset.write_rectangle(source, dim1, dim2);
 
         auto digest = get_hash(m_carrier, *rel);
-        dump_hash(dataset, digest);
+        hdf5::dump_hash(dataset, digest);
         digests[pair.first] = digest;
     }
 
     auto digest = Hasher::digest(digests);
-    dump_hash(group, digest);
+    hdf5::dump_hash(group, digest);
     return digest;
 }
 
@@ -521,12 +514,12 @@ Hasher::Digest Structure::dump_nullary_functions (hdf5::OutFile & file)
         dataset.write_scalar(data);
 
         auto digest = get_hash(*fun);
-        dump_hash(subgroup, digest);
+        hdf5::dump_hash(subgroup, digest);
         digests[pair.first] = digest;
     }
 
     auto digest = Hasher::digest(digests);
-    dump_hash(group, digest);
+    hdf5::dump_hash(group, digest);
     return digest;
 }
 
@@ -563,12 +556,12 @@ Hasher::Digest Structure::dump_injective_functions (hdf5::OutFile & file)
         dataset.write_all(data);
 
         auto digest = get_hash(*fun);
-        dump_hash(subgroup, digest);
+        hdf5::dump_hash(subgroup, digest);
         digests[pair.first] = digest;
     }
 
     auto digest = Hasher::digest(digests);
-    dump_hash(group, digest);
+    hdf5::dump_hash(group, digest);
     return digest;
 }
 
@@ -654,12 +647,12 @@ inline Hasher::Digest dump_functions (
         lhs_ptr_dataset.write_all(lhs_ptr_data);
 
         auto digest = get_hash(carrier, *fun);
-        dump_hash(subgroup, digest);
+        hdf5::dump_hash(subgroup, digest);
         digests[pair.first] = digest;
     }
 
     auto digest = Hasher::digest(digests);
-    dump_hash(group, digest);
+    hdf5::dump_hash(group, digest);
     return digest;
 }
 
