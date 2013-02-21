@@ -158,21 +158,19 @@ void Structure::load (const std::string & filename)
     hdf5::Group relations_group(file, "/relations");
     hdf5::Group functions_group(file, "/functions");
 
-    std::map<std::string, Hasher::Digest> digests;
-
     // TODO parallelize
-    digests["carrier"] = load_carrier(file);
-    digests["relations/binary"] = load_binary_relations(file);
-    digests["functions/nullary"] = load_nullary_functions(file);
-    digests["functions/injective"] = load_injective_functions(file);
-    digests["functions/binary"] = load_binary_functions(file);
-    digests["functions/symmetric"] = load_symmetric_functions(file);
+    load_carrier(file);
+    load_binary_relations(file);
+    load_nullary_functions(file);
+    load_injective_functions(file);
+    load_binary_functions(file);
+    load_symmetric_functions(file);
 
-    auto digest = Hasher::digest(digests);
+    auto digest = hdf5::get_tree_hash(file);
     POMAGMA_ASSERT(digest == hdf5::load_hash(file), "file is corrupt");
 }
 
-Hasher::Digest Structure::load_carrier (hdf5::InFile & file)
+void Structure::load_carrier (hdf5::InFile & file)
 {
     POMAGMA_INFO("loading carrier");
 
@@ -200,15 +198,12 @@ Hasher::Digest Structure::load_carrier (hdf5::InFile & file)
     auto digest = get_hash(m_carrier);
     POMAGMA_ASSERT(digest == hdf5::load_hash(group),
             groupname << " is corrupt");
-    return digest;
 }
 
-Hasher::Digest Structure::load_binary_relations (hdf5::InFile & file)
+void Structure::load_binary_relations (hdf5::InFile & file)
 {
     const std::string groupname = "/relations/binary";
     hdf5::Group group(file, groupname);
-
-    std::map<std::string, Hasher::Digest> digests;
 
     // TODO parallelize
     for (const auto & pair : m_binary_relations) {
@@ -227,20 +222,13 @@ Hasher::Digest Structure::load_binary_relations (hdf5::InFile & file)
         auto digest = get_hash(m_carrier, *rel);
         POMAGMA_ASSERT(digest == hdf5::load_hash(dataset),
                 name << " is corrupt");
-        digests[pair.first] = digest;
     }
-
-    auto digest = Hasher::digest(digests);
-    POMAGMA_ASSERT(digest == hdf5::load_hash(group), groupname << " is corrupt");
-    return digest;
 }
 
-Hasher::Digest Structure::load_nullary_functions (hdf5::InFile & file)
+void Structure::load_nullary_functions (hdf5::InFile & file)
 {
     const std::string groupname = "/functions/nullary";
     hdf5::Group group(file, groupname);
-
-    std::map<std::string, Hasher::Digest> digests;
 
     for (const auto & pair : m_nullary_functions) {
         std::string name = groupname + "/" + pair.first;
@@ -257,24 +245,16 @@ Hasher::Digest Structure::load_nullary_functions (hdf5::InFile & file)
         auto digest = get_hash(*fun);
         POMAGMA_ASSERT(digest == hdf5::load_hash(subgroup),
                 name << " is corrupt");
-        digests[pair.first] = digest;
     }
-
-    auto digest = Hasher::digest(digests);
-    POMAGMA_ASSERT(digest == hdf5::load_hash(group),
-            groupname << " is corrupt");
-    return digest;
 }
 
-Hasher::Digest Structure::load_injective_functions (hdf5::InFile & file)
+void Structure::load_injective_functions (hdf5::InFile & file)
 {
     const size_t item_dim = m_carrier.item_dim();
     std::vector<Ob> data(1 + item_dim);
 
     const std::string groupname = "/functions/injective";
     hdf5::Group group(file, groupname);
-
-    std::map<std::string, Hasher::Digest> digests;
 
     for (const auto & pair : m_injective_functions) {
         std::string name = groupname + "/" + pair.first;
@@ -295,20 +275,14 @@ Hasher::Digest Structure::load_injective_functions (hdf5::InFile & file)
         auto digest = get_hash(*fun);
         POMAGMA_ASSERT(digest == hdf5::load_hash(dataset),
                 name << " is corrupt");
-        digests[pair.first] = digest;
     }
-
-    auto digest = Hasher::digest(digests);
-    POMAGMA_ASSERT(digest == hdf5::load_hash(group),
-            groupname << " is corrupt");
-    return digest;
 }
 
 namespace detail
 {
 
 template<class Function>
-inline Hasher::Digest load_functions (
+inline void load_functions (
         const std::string & arity,
         std::map<std::string, Function *> functions,
         const Carrier & carrier,
@@ -323,8 +297,6 @@ inline Hasher::Digest load_functions (
 
     const std::string groupname = "/functions/" + arity;
     hdf5::Group group(file, groupname);
-
-    std::map<std::string, Hasher::Digest> digests;
 
     // TODO parallelize loop
     for (const auto & pair : functions) {
@@ -369,18 +341,12 @@ inline Hasher::Digest load_functions (
         auto digest = get_hash(carrier, *fun);
         POMAGMA_ASSERT(digest == hdf5::load_hash(subgroup),
                 name << " is corrupt");
-        digests[pair.first] = digest;
     }
-
-    auto digest = Hasher::digest(digests);
-    POMAGMA_ASSERT(digest == hdf5::load_hash(group),
-            groupname << " is corrupt");
-    return digest;
 }
 
 } // namespace detail
 
-Hasher::Digest Structure::load_binary_functions (hdf5::InFile & file)
+void Structure::load_binary_functions (hdf5::InFile & file)
 {
     return detail::load_functions(
             "binary",
@@ -389,7 +355,7 @@ Hasher::Digest Structure::load_binary_functions (hdf5::InFile & file)
             file);
 }
 
-Hasher::Digest Structure::load_symmetric_functions (hdf5::InFile & file)
+void Structure::load_symmetric_functions (hdf5::InFile & file)
 {
     return detail::load_functions(
             "symmetric",
@@ -408,24 +374,19 @@ void Structure::dump (const std::string & filename)
     hdf5::Group relations_group(file, "/relations");
     hdf5::Group functions_group(file, "/functions");
 
-    std::map<std::string, Hasher::Digest> digests;
-
     // TODO parallelize
-    digests["carrier"] = dump_carrier(file);
-    digests["relations/binary"] = dump_binary_relations(file);
-    digests["functions/nullary"] = dump_nullary_functions(file);
-    digests["functions/injective"] = dump_injective_functions(file);
-    digests["functions/binary"] = dump_binary_functions(file);
-    digests["functions/symmetric"] = dump_symmetric_functions(file);
+    dump_carrier(file);
+    dump_binary_relations(file);
+    dump_nullary_functions(file);
+    dump_injective_functions(file);
+    dump_binary_functions(file);
+    dump_symmetric_functions(file);
 
-    auto digest = Hasher::digest(digests);
+    auto digest = hdf5::get_tree_hash(file);
     hdf5::dump_hash(file, digest);
-
-    // DEBUG
-    hdf5::get_tree_hash(file);
 }
 
-Hasher::Digest Structure::dump_carrier (hdf5::OutFile & file)
+void Structure::dump_carrier (hdf5::OutFile & file)
 {
     POMAGMA_INFO("dumping carrier");
 
@@ -445,10 +406,9 @@ Hasher::Digest Structure::dump_carrier (hdf5::OutFile & file)
 
     auto digest = get_hash(m_carrier);
     hdf5::dump_hash(group, digest);
-    return digest;
 }
 
-Hasher::Digest Structure::dump_binary_relations (hdf5::OutFile & file)
+void Structure::dump_binary_relations (hdf5::OutFile & file)
 {
     const DenseSet & support = m_carrier.support();
     const size_t item_dim = support.item_dim();
@@ -458,8 +418,6 @@ Hasher::Digest Structure::dump_binary_relations (hdf5::OutFile & file)
 
     const std::string groupname = "/relations/binary";
     hdf5::Group group(file, groupname);
-
-    std::map<std::string, Hasher::Digest> digests;
 
     // TODO parallelize loop
     for (const auto & pair : m_binary_relations) {
@@ -481,22 +439,15 @@ Hasher::Digest Structure::dump_binary_relations (hdf5::OutFile & file)
 
         auto digest = get_hash(m_carrier, *rel);
         hdf5::dump_hash(dataset, digest);
-        digests[pair.first] = digest;
     }
-
-    auto digest = Hasher::digest(digests);
-    hdf5::dump_hash(group, digest);
-    return digest;
 }
 
-Hasher::Digest Structure::dump_nullary_functions (hdf5::OutFile & file)
+void Structure::dump_nullary_functions (hdf5::OutFile & file)
 {
     hdf5::Dataspace dataspace;
 
     const std::string groupname = "/functions/nullary";
     hdf5::Group group(file, groupname);
-
-    std::map<std::string, Hasher::Digest> digests;
 
     for (const auto & pair : m_nullary_functions) {
         std::string name = groupname + "/" + pair.first;
@@ -515,15 +466,10 @@ Hasher::Digest Structure::dump_nullary_functions (hdf5::OutFile & file)
 
         auto digest = get_hash(*fun);
         hdf5::dump_hash(subgroup, digest);
-        digests[pair.first] = digest;
     }
-
-    auto digest = Hasher::digest(digests);
-    hdf5::dump_hash(group, digest);
-    return digest;
 }
 
-Hasher::Digest Structure::dump_injective_functions (hdf5::OutFile & file)
+void Structure::dump_injective_functions (hdf5::OutFile & file)
 {
     // format:
     // dense array with null entries
@@ -533,8 +479,6 @@ Hasher::Digest Structure::dump_injective_functions (hdf5::OutFile & file)
 
     const std::string groupname = "/functions/injective";
     hdf5::Group group(file, groupname);
-
-    std::map<std::string, Hasher::Digest> digests;
 
     for (const auto & pair : m_injective_functions) {
         std::string name = groupname + "/" + pair.first;
@@ -557,19 +501,14 @@ Hasher::Digest Structure::dump_injective_functions (hdf5::OutFile & file)
 
         auto digest = get_hash(*fun);
         hdf5::dump_hash(subgroup, digest);
-        digests[pair.first] = digest;
     }
-
-    auto digest = Hasher::digest(digests);
-    hdf5::dump_hash(group, digest);
-    return digest;
 }
 
 namespace detail
 {
 
 template<class Function>
-inline Hasher::Digest dump_functions (
+inline void dump_functions (
         const std::string & arity,
         std::map<std::string, Function *> functions,
         const Carrier & carrier,
@@ -592,8 +531,6 @@ inline Hasher::Digest dump_functions (
 
     const std::string groupname = "/functions/" + arity;
     hdf5::Group group(file, groupname);
-
-    std::map<std::string, Hasher::Digest> digests;
 
     // TODO parallelize loop
     for (const auto & pair : functions) {
@@ -648,32 +585,19 @@ inline Hasher::Digest dump_functions (
 
         auto digest = get_hash(carrier, *fun);
         hdf5::dump_hash(subgroup, digest);
-        digests[pair.first] = digest;
     }
-
-    auto digest = Hasher::digest(digests);
-    hdf5::dump_hash(group, digest);
-    return digest;
 }
 
 } // namespace detail
 
-Hasher::Digest Structure::dump_binary_functions (hdf5::OutFile & file)
+void Structure::dump_binary_functions (hdf5::OutFile & file)
 {
-    return detail::dump_functions(
-            "binary",
-            m_binary_functions,
-            m_carrier,
-            file);
+    detail::dump_functions("binary", m_binary_functions, m_carrier, file);
 }
 
-Hasher::Digest Structure::dump_symmetric_functions (hdf5::OutFile & file)
+void Structure::dump_symmetric_functions (hdf5::OutFile & file)
 {
-    return detail::dump_functions(
-            "symmetric",
-            m_symmetric_functions,
-            m_carrier,
-            file);
+    detail::dump_functions("symmetric", m_symmetric_functions, m_carrier, file);
 }
 
 } // namespace pomagma

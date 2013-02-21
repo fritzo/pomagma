@@ -266,17 +266,6 @@ struct Attribute : noncopyable
                 "failed to open attribute " << name << "\n" << get_error());
     }
 
-    Attribute (hid_t o_id, const std::string & name)
-        : id(H5Aopen(
-            o_id,
-            name.c_str(),
-            H5P_DEFAULT
-            ))
-    {
-        POMAGMA_ASSERT(id >= 0,
-                "failed to open attribute " << name << "\n" << get_error());
-    }
-
     template<class Object>
     Attribute (
             Object & object,
@@ -591,7 +580,7 @@ inline Dataspace::Dataspace (Dataset & dataset)
 
 
 template<class Object>
-bool has_hash (Object & object)
+inline bool has_hash (Object & object)
 {
     herr_t exists = H5Aexists(object.id, "hash");
     POMAGMA_HDF5_OK(exists);
