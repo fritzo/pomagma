@@ -47,10 +47,20 @@ h4-test: build/debug log data
 	@echo '' > log/h4-test.log
 	@echo -e '\nTesting grower with theory h4'
 	@#POMAGMA_SIZE=14400 # TODO slow
-	POMAGMA_SIZE=511 \
+	POMAGMA_SIZE=127 \
 	POMAGMA_LOG_LEVEL=4 \
 	POMAGMA_LOG_FILE=log/h4-test.log \
 	build/debug/src/grower/h4.grower data/h4-test.h5 \
+	|| (grep -C3 -i error log/h4-test.log && false)
+	POMAGMA_SIZE=255 \
+	POMAGMA_LOG_LEVEL=4 \
+	POMAGMA_LOG_FILE=log/h4-test.log \
+	build/debug/src/grower/h4.grower data/h4-test.h5 data/h4-test.h5 \
+	|| (grep -C3 -i error log/h4-test.log && false)
+	POMAGMA_SIZE=511 \
+	POMAGMA_LOG_LEVEL=4 \
+	POMAGMA_LOG_FILE=log/h4-test.log \
+	build/debug/src/grower/h4.grower data/h4-test.h5 data/h4-test.h5 \
 	|| (grep -C3 -i error log/h4-test.log && false)
 	POMAGMA_SIZE=1023 \
 	POMAGMA_LOG_LEVEL=4 \
