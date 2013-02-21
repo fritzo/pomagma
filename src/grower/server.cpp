@@ -1,4 +1,4 @@
-#include "util.hpp"
+#include <pomagma/util/util.hpp>
 #include "scheduler.hpp"
 #include "language.pb.h"
 #include "structure.pb.h"

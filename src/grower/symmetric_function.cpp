@@ -1,6 +1,6 @@
 
 #include "symmetric_function.hpp"
-#include "aligned_alloc.hpp"
+#include <pomagma/util/aligned_alloc.hpp>
 #include <cstring>
 
 namespace pomagma

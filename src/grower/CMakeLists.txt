@@ -1,10 +1,10 @@
 
-#include_directories(${CMAKE_SOURCE_DIR}/)
+include_directories(${CMAKE_SOURCE_DIR}/)
 
 add_library(pomagma_grower SHARED
-	util.cpp
-	aligned_alloc.cpp
-	dense_set.cpp
+	../util/util.cpp
+	../util/aligned_alloc.cpp
+	../util/dense_set.cpp
 	carrier.cpp
 	base_bin_rel.cpp
 	binary_relation.cpp

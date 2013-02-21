@@ -1,7 +1,7 @@
 #pragma once
 
-#include "util.hpp"
-#include "hasher.hpp"
+#include <pomagma/util/util.hpp>
+#include <pomagma/util/hasher.hpp>
 
 extern "C" {
 #include <hdf5.h>

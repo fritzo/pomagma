@@ -4,8 +4,8 @@
 #include "injective_function.hpp"
 #include "binary_function.hpp"
 #include "symmetric_function.hpp"
-#include "hdf5.hpp"
-#include "hasher.hpp"
+#include <pomagma/util/hdf5.hpp>
+#include <pomagma/util/hasher.hpp>
 
 namespace pomagma
 {

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "util.hpp"
+#include <pomagma/util/util.hpp>
 
 // The Scheduler guarantees:
 // - never to execute a MergeTask while any other task is being executed

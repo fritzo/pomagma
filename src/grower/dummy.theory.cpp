@@ -1,4 +1,4 @@
-#include "util.hpp"
+#include <pomagma/util/util.hpp>
 #include "carrier.hpp"
 #include "sampler.hpp"
 #include "scheduler.hpp"

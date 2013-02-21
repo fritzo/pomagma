@@ -1,7 +1,7 @@
 #pragma once
 
-#include "util.hpp"
-#include "threading.hpp"
+#include <pomagma/util/util.hpp>
+#include <pomagma/util/threading.hpp>
 
 namespace pomagma
 {

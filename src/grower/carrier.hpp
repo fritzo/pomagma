@@ -1,8 +1,8 @@
 #pragma once
 
-#include "util.hpp"
-#include "dense_set.hpp"
-#include "threading.hpp"
+#include <pomagma/util/util.hpp>
+#include <pomagma/util/dense_set.hpp>
+#include <pomagma/util/threading.hpp>
 #include <functional>
 #include <algorithm>
 #include <vector>

@@ -1,4 +1,4 @@
-#include "dense_set.hpp"
+#include <pomagma/util/dense_set.hpp>
 
 using namespace pomagma;
 

@@ -3,7 +3,7 @@
 // TODO try out google's tcmalloc:
 // http://gperftools.googlecode.com/svn/trunk/doc/tcmalloc.html
 
-#include "util.hpp"
+#include <pomagma/util/util.hpp>
 
 #if __GNUC_PREREQ(4,7)
 #  define assume_aligned(POMAGMA_arg) __builtin_assume_aligned(POMAGMA_arg, 32)

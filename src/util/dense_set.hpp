@@ -1,8 +1,8 @@
 #pragma once
 
-#include "util.hpp"
-#include "bool_ref.hpp"
-#include "threading.hpp"
+#include <pomagma/util/util.hpp>
+#include <pomagma/util/bool_ref.hpp>
+#include <pomagma/util/threading.hpp>
 
 namespace pomagma
 {
