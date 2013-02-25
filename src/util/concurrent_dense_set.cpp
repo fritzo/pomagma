@@ -1,5 +1,5 @@
 
-#include <pomagma/util/dense_set.hpp>
+#include <pomagma/util/concurrent_dense_set.hpp>
 #include <pomagma/util/aligned_alloc.hpp>
 #include <cstring>
 

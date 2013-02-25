@@ -4,7 +4,7 @@ include_directories(${CMAKE_SOURCE_DIR}/)
 add_library(pomagma_grower SHARED
 	../util/util.cpp
 	../util/aligned_alloc.cpp
-	../util/dense_set.cpp
+	../util/concurrent_dense_set.cpp
 	carrier.cpp
 	base_bin_rel.cpp
 	binary_relation.cpp
@@ -26,7 +26,7 @@ set(POMAGMA_LIBS
 
 
 add_library(pomagma_grower_dummy SHARED dummy.theory.cpp)
-set(POMAGMA_TEST_LIBS
+set(POMAGMA_GROWER_TEST_LIBS
 	pomagma_grower
 	pomagma_grower_dummy
 	boost_thread
@@ -34,46 +34,36 @@ set(POMAGMA_TEST_LIBS
        	hdf5_hl hdf5
 	crypto ssl)
 
-
-add_executable(threading_profile threading_profile.cpp)
-target_link_libraries(threading_profile ${POMAGMA_TEST_LIBS})
-
-add_executable(dense_set_test dense_set_test.cpp)
-target_link_libraries(dense_set_test ${POMAGMA_TEST_LIBS})
-add_test(NAME dense_set COMMAND dense_set_test)
-add_executable(dense_set_profile dense_set_profile.cpp)
-target_link_libraries(dense_set_profile ${POMAGMA_TEST_LIBS})
-
 add_executable(carrier_test carrier_test.cpp)
-target_link_libraries(carrier_test ${POMAGMA_TEST_LIBS})
+target_link_libraries(carrier_test ${POMAGMA_GROWER_TEST_LIBS})
 add_test(NAME carrier COMMAND carrier_test)
 
 add_executable(binary_relation_test binary_relation_test.cpp)
-target_link_libraries(binary_relation_test ${POMAGMA_TEST_LIBS})
+target_link_libraries(binary_relation_test ${POMAGMA_GROWER_TEST_LIBS})
 add_test(NAME binary_relation COMMAND binary_relation_test)
 
 add_executable(nullary_function_test nullary_function_test.cpp)
-target_link_libraries(nullary_function_test ${POMAGMA_TEST_LIBS})
+target_link_libraries(nullary_function_test ${POMAGMA_GROWER_TEST_LIBS})
 add_test(NAME nullary_function COMMAND nullary_function_test)
 
 add_executable(injective_function_test injective_function_test.cpp)
-target_link_libraries(injective_function_test ${POMAGMA_TEST_LIBS})
+target_link_libraries(injective_function_test ${POMAGMA_GROWER_TEST_LIBS})
 add_test(NAME injective_function COMMAND injective_function_test)
 
 add_executable(binary_function_test binary_function_test.cpp)
-target_link_libraries(binary_function_test ${POMAGMA_TEST_LIBS})
+target_link_libraries(binary_function_test ${POMAGMA_GROWER_TEST_LIBS})
 add_test(NAME binary_function COMMAND binary_function_test)
 
 add_executable(symmetric_function_test symmetric_function_test.cpp)
-target_link_libraries(symmetric_function_test ${POMAGMA_TEST_LIBS})
+target_link_libraries(symmetric_function_test ${POMAGMA_GROWER_TEST_LIBS})
 add_test(NAME symmetric_function COMMAND symmetric_function_test)
 
 #add_executable(inverse_bin_fun_test inverse_bin_fun_test.cpp)
-#target_link_libraries(inverse_bin_fun_test ${POMAGMA_TEST_LIBS})
+#target_link_libraries(inverse_bin_fun_test ${POMAGMA_GROWER_TEST_LIBS})
 #add_test(NAME inverse_bin_fun COMMAND inverse_bin_fun_test)
 
 add_executable(scheduler_test scheduler_test.cpp)
-target_link_libraries(scheduler_test ${POMAGMA_TEST_LIBS})
+target_link_libraries(scheduler_test ${POMAGMA_GROWER_TEST_LIBS})
 add_test(NAME scheduler COMMAND scheduler_test)
 
 

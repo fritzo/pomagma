@@ -7,7 +7,6 @@
 #include <sstream>
 #include <fstream>
 #include <iomanip>
-#include <atomic>
 #include <chrono>
 #include <random>
 
@@ -266,8 +265,6 @@ template<> struct uint_<8> { typedef uint64_t t; };
 // Ob is a 1-based index type with 0 = none
 typedef uint16_t Ob;
 const size_t MAX_ITEM_DIM = (1UL << (8UL * sizeof(Ob))) - 1UL;
-static_assert(sizeof(Ob) == sizeof(std::atomic<Ob>),
-        "std::atomic<Ob> is larger than Ob");
 
 const size_t BITS_PER_CACHE_LINE = 512;
 const size_t DEFAULT_ITEM_DIM = BITS_PER_CACHE_LINE - 1; // for one-based sets
@@ -281,28 +278,6 @@ const size_t WORD_POS_MASK = BITS_PER_WORD - 1;
 const size_t WORD_POS_SHIFT = static_log2i<BITS_PER_WORD>::val();
 const Word FULL_WORD = ~Word(0);
 static_assert(FULL_WORD + Word(1) == 0, "FULL_WORD is bad");
-
-//----------------------------------------------------------------------------
-// blocks of atomic Ob
-
-const size_t LOG2_ITEMS_PER_BLOCK = 3;
-const size_t ITEMS_PER_BLOCK = 1 << LOG2_ITEMS_PER_BLOCK;
-const size_t BLOCK_POS_MASK = ITEMS_PER_BLOCK - 1;
-typedef std::atomic<Ob> Block[ITEMS_PER_BLOCK * ITEMS_PER_BLOCK];
-
-inline std::atomic<Ob> & _block2value (std::atomic<Ob> * block, Ob i, Ob j)
-{
-    POMAGMA_ASSERT6(i < ITEMS_PER_BLOCK, "out of range " << i);
-    POMAGMA_ASSERT6(j < ITEMS_PER_BLOCK, "out of range " << j);
-    return block[(j << LOG2_ITEMS_PER_BLOCK) | i];
-}
-
-inline Ob _block2value (const std::atomic<Ob> * block, Ob i, Ob j)
-{
-    POMAGMA_ASSERT6(i < ITEMS_PER_BLOCK, "out of range " << i);
-    POMAGMA_ASSERT6(j < ITEMS_PER_BLOCK, "out of range " << j);
-    return block[(j << LOG2_ITEMS_PER_BLOCK) | i];
-}
 
 //----------------------------------------------------------------------------
 // vector operations

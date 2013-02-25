@@ -1,7 +1,7 @@
 #pragma once
 
 #include <pomagma/util/util.hpp>
-#include <pomagma/util/bool_ref.hpp>
+#include <pomagma/util/concurrent_bool_ref.hpp>
 #include <pomagma/util/threading.hpp>
 
 namespace pomagma

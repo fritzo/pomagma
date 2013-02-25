@@ -1,7 +1,8 @@
 #pragma once
 
 #include <pomagma/util/util.hpp>
-#include <pomagma/util/dense_set.hpp>
+#include <pomagma/util/concurrent_dense_set.hpp>
+#include "tiles.hpp"
 #include "base_bin_rel.hpp"
 #include "inverse_bin_fun.hpp"
 
