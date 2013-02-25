@@ -12,26 +12,26 @@ SymmetricFunction::SymmetricFunction (
         const Carrier & carrier,
         void (*insert_callback) (const SymmetricFunction *, Ob, Ob))
     : m_lines(carrier),
-      m_block_dim((item_dim() + ITEMS_PER_BLOCK) / ITEMS_PER_BLOCK),
-      m_blocks(pomagma::alloc_blocks<Block>(
-                  unordered_pair_count(m_block_dim))),
+      m_tile_dim((item_dim() + ITEMS_PER_TILE) / ITEMS_PER_TILE),
+      m_tiles(pomagma::alloc_blocks<Tile>(
+                  unordered_pair_count(m_tile_dim))),
       m_Vlr_table(1 + item_dim()),
       m_insert_callback(insert_callback ? insert_callback : noop_callback)
 {
     POMAGMA_DEBUG("creating SymmetricFunction with "
-            << unordered_pair_count(m_block_dim) << " blocks");
+            << unordered_pair_count(m_tile_dim) << " tiles");
 
-    std::atomic<Ob> * obs = & m_blocks[0][0];
-    size_t block_count = unordered_pair_count(m_block_dim);
-    construct_blocks(obs, block_count * ITEMS_PER_BLOCK * ITEMS_PER_BLOCK, 0);
+    std::atomic<Ob> * obs = & m_tiles[0][0];
+    size_t tile_count = unordered_pair_count(m_tile_dim);
+    construct_blocks(obs, tile_count * ITEMS_PER_TILE * ITEMS_PER_TILE, 0);
 }
 
 SymmetricFunction::~SymmetricFunction ()
 {
-    std::atomic<Ob> * obs = &m_blocks[0][0];
-    size_t block_count = unordered_pair_count(m_block_dim);
-    destroy_blocks(obs, block_count * ITEMS_PER_BLOCK * ITEMS_PER_BLOCK);
-    pomagma::free_blocks(m_blocks);
+    std::atomic<Ob> * obs = &m_tiles[0][0];
+    size_t tile_count = unordered_pair_count(m_tile_dim);
+    destroy_blocks(obs, tile_count * ITEMS_PER_TILE * ITEMS_PER_TILE);
+    pomagma::free_blocks(m_tiles);
 }
 
 void SymmetricFunction::validate () const
@@ -42,18 +42,18 @@ void SymmetricFunction::validate () const
 
     m_lines.validate();
 
-    POMAGMA_DEBUG("validating line-block consistency");
-    for (size_t i_ = 0; i_ < m_block_dim; ++i_)
-    for (size_t j_ = i_; j_ < m_block_dim; ++j_) {
-        const std::atomic<Ob> * block = _block(i_, j_);
+    POMAGMA_DEBUG("validating line-tile consistency");
+    for (size_t i_ = 0; i_ < m_tile_dim; ++i_)
+    for (size_t j_ = i_; j_ < m_tile_dim; ++j_) {
+        const std::atomic<Ob> * tile = _tile(i_, j_);
 
-        for (size_t _i = 0; _i < ITEMS_PER_BLOCK; ++_i)
-        for (size_t _j = 0; _j < ITEMS_PER_BLOCK; ++_j) {
-            size_t i = i_ * ITEMS_PER_BLOCK + _i;
-            size_t j = j_ * ITEMS_PER_BLOCK + _j;
+        for (size_t _i = 0; _i < ITEMS_PER_TILE; ++_i)
+        for (size_t _j = 0; _j < ITEMS_PER_TILE; ++_j) {
+            size_t i = i_ * ITEMS_PER_TILE + _i;
+            size_t j = j_ * ITEMS_PER_TILE + _j;
             if (i == 0 or item_dim() < i) continue;
             if (j < i or item_dim() < j) continue;
-            Ob val = _block2value(block, _i, _j);
+            Ob val = _tile2value(tile, _i, _j);
 
             if (not (support().contains(i) and support().contains(j))) {
                 POMAGMA_ASSERT(not val,
@@ -107,7 +107,7 @@ void SymmetricFunction::clear ()
 {
     memory_barrier();
     m_lines.clear();
-    zero_blocks(m_blocks, unordered_pair_count(m_block_dim));
+    zero_blocks(m_tiles, unordered_pair_count(m_tile_dim));
     m_Vlr_table.clear();
     m_VLr_table.clear();
     memory_barrier();

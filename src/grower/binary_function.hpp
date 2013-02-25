@@ -13,8 +13,8 @@ namespace pomagma
 class BinaryFunction : noncopyable
 {
     mutable base_bin_rel m_lines;
-    const size_t m_block_dim;
-    Block * const m_blocks;
+    const size_t m_tile_dim;
+    Tile * const m_tiles;
     Vlr_Table m_Vlr_table;
     VLr_Table m_VLr_table;
     VRl_Table m_VRl_table;
@@ -41,7 +41,7 @@ public:
     void clear ();
 
     // relaxed operations
-    // m_blocks is source of truth; m_lines lag
+    // m_tiles is source of truth; m_lines lag
     DenseSet get_Lx_set (Ob lhs) const { return m_lines.Lx_set(lhs); }
     DenseSet get_Rx_set (Ob rhs) const { return m_lines.Rx_set(rhs); }
     bool defined (Ob lhs, Ob rhs) const;
@@ -63,7 +63,7 @@ private:
     size_t item_dim () const { return support().item_dim(); }
 
     std::atomic<Ob> & value (Ob lhs, Ob rhs) const;
-    std::atomic<Ob> * _block (size_t i_, size_t j_) const;
+    std::atomic<Ob> * _tile (size_t i_, size_t j_) const;
 };
 
 inline bool BinaryFunction::defined (Ob lhs, Ob rhs) const
@@ -73,17 +73,17 @@ inline bool BinaryFunction::defined (Ob lhs, Ob rhs) const
     return m_lines.get_Lx(lhs, rhs);
 }
 
-inline std::atomic<Ob> * BinaryFunction::_block (size_t i_, size_t j_) const
+inline std::atomic<Ob> * BinaryFunction::_tile (size_t i_, size_t j_) const
 {
-    return m_blocks[m_block_dim * j_ + i_];
+    return m_tiles[m_tile_dim * j_ + i_];
 }
 
 inline std::atomic<Ob> & BinaryFunction::value (Ob i, Ob j) const
 {
     POMAGMA_ASSERT5(support().contains(i), "unsupported lhs: " << i);
     POMAGMA_ASSERT5(support().contains(j), "unsupported rhs: " << j);
-    std::atomic<Ob> * block = _block(i / ITEMS_PER_BLOCK, j / ITEMS_PER_BLOCK);
-    return _block2value(block, i & BLOCK_POS_MASK, j & BLOCK_POS_MASK);
+    std::atomic<Ob> * tile = _tile(i / ITEMS_PER_TILE, j / ITEMS_PER_TILE);
+    return _tile2value(tile, i & TILE_POS_MASK, j & TILE_POS_MASK);
 }
 
 inline DenseSet::Iterator BinaryFunction::iter_lhs (Ob lhs) const

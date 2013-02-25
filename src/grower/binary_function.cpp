@@ -11,25 +11,25 @@ BinaryFunction::BinaryFunction (
         const Carrier & carrier,
         void (*insert_callback) (const BinaryFunction *, Ob, Ob))
     : m_lines(carrier),
-      m_block_dim((item_dim() + ITEMS_PER_BLOCK) / ITEMS_PER_BLOCK),
-      m_blocks(alloc_blocks<Block>(m_block_dim * m_block_dim)),
+      m_tile_dim((item_dim() + ITEMS_PER_TILE) / ITEMS_PER_TILE),
+      m_tiles(alloc_blocks<Tile>(m_tile_dim * m_tile_dim)),
       m_Vlr_table(1 + item_dim()),
       m_insert_callback(insert_callback ? insert_callback : noop_callback)
 {
     POMAGMA_DEBUG("creating BinaryFunction with "
-            << (m_block_dim * m_block_dim) << " blocks");
+            << (m_tile_dim * m_tile_dim) << " tiles");
 
-    std::atomic<Ob> * obs = & m_blocks[0][0];
-    size_t ob_dim = m_block_dim * ITEMS_PER_BLOCK;
+    std::atomic<Ob> * obs = & m_tiles[0][0];
+    size_t ob_dim = m_tile_dim * ITEMS_PER_TILE;
     construct_blocks(obs, ob_dim * ob_dim, 0);
 }
 
 BinaryFunction::~BinaryFunction ()
 {
-    std::atomic<Ob> * obs = &m_blocks[0][0];
-    size_t ob_dim = m_block_dim * ITEMS_PER_BLOCK;
+    std::atomic<Ob> * obs = &m_tiles[0][0];
+    size_t ob_dim = m_tile_dim * ITEMS_PER_TILE;
     destroy_blocks(obs, ob_dim * ob_dim);
-    free_blocks(m_blocks);
+    free_blocks(m_tiles);
 }
 
 void BinaryFunction::validate () const
@@ -40,18 +40,18 @@ void BinaryFunction::validate () const
 
     m_lines.validate();
 
-    POMAGMA_DEBUG("validating line-block consistency");
-    for (size_t i_ = 0; i_ < m_block_dim; ++i_)
-    for (size_t j_ = 0; j_ < m_block_dim; ++j_) {
-        const std::atomic<Ob> * block = _block(i_, j_);
+    POMAGMA_DEBUG("validating line-tile consistency");
+    for (size_t i_ = 0; i_ < m_tile_dim; ++i_)
+    for (size_t j_ = 0; j_ < m_tile_dim; ++j_) {
+        const std::atomic<Ob> * tile = _tile(i_, j_);
 
-        for (size_t _i = 0; _i < ITEMS_PER_BLOCK; ++_i)
-        for (size_t _j = 0; _j < ITEMS_PER_BLOCK; ++_j) {
-            size_t i = i_ * ITEMS_PER_BLOCK + _i;
-            size_t j = j_ * ITEMS_PER_BLOCK + _j;
+        for (size_t _i = 0; _i < ITEMS_PER_TILE; ++_i)
+        for (size_t _j = 0; _j < ITEMS_PER_TILE; ++_j) {
+            size_t i = i_ * ITEMS_PER_TILE + _i;
+            size_t j = j_ * ITEMS_PER_TILE + _j;
             if (i == 0 or item_dim() < i) continue;
             if (j == 0 or item_dim() < j) continue;
-            Ob val = _block2value(block, _i, _j);
+            Ob val = _tile2value(tile, _i, _j);
 
             if (not (support().contains(i) and support().contains(j))) {
                 POMAGMA_ASSERT(not val,
@@ -94,7 +94,7 @@ void BinaryFunction::clear ()
 {
     memory_barrier();
     m_lines.clear();
-    zero_blocks(m_blocks, m_block_dim * m_block_dim);
+    zero_blocks(m_tiles, m_tile_dim * m_tile_dim);
     m_Vlr_table.clear();
     m_VLr_table.clear();
     m_VRl_table.clear();

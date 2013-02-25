@@ -15,8 +15,8 @@ inline size_t unordered_pair_count (size_t i) { return (i * (i + 1)) / 2; }
 class SymmetricFunction : noncopyable
 {
     mutable base_sym_rel m_lines;
-    const size_t m_block_dim;
-    Block * const m_blocks;
+    const size_t m_tile_dim;
+    Tile * const m_tiles;
     Vlr_Table m_Vlr_table;
     VLr_Table m_VLr_table;
     void (*m_insert_callback) (const SymmetricFunction *, Ob, Ob);
@@ -35,7 +35,7 @@ public:
     void log_stats () const;
 
     // raw operations
-    // m_blocks is source of truth; m_lines lag
+    // m_tiles is source of truth; m_lines lag
     static bool is_symmetric () { return true; }
     size_t count_pairs () const; // unordered
     void clear ();
@@ -67,9 +67,9 @@ private:
     static void sort (T & i, T & j) { if (j < i) { T k = j; j = i; i = k; }  }
 
     std::atomic<Ob> & value (Ob lhs, Ob rhs) const;
-    std::atomic<Ob> * _block (int i_, int j_) const
+    std::atomic<Ob> * _tile (int i_, int j_) const
     {
-        return m_blocks[unordered_pair_count(j_) + i_];
+        return m_tiles[unordered_pair_count(j_) + i_];
     }
 };
 
@@ -85,8 +85,8 @@ inline std::atomic<Ob> & SymmetricFunction::value (Ob i, Ob j) const
     sort(i, j);
     POMAGMA_ASSERT5(support().contains(i), "unsupported lhs: " << i);
     POMAGMA_ASSERT5(support().contains(j), "unsupported rhs: " << j);
-    std::atomic<Ob> * block = _block(i / ITEMS_PER_BLOCK, j / ITEMS_PER_BLOCK);
-    return _block2value(block, i & BLOCK_POS_MASK, j & BLOCK_POS_MASK);
+    std::atomic<Ob> * tile = _tile(i / ITEMS_PER_TILE, j / ITEMS_PER_TILE);
+    return _tile2value(tile, i & TILE_POS_MASK, j & TILE_POS_MASK);
 }
 
 inline DenseSet::Iterator SymmetricFunction::iter_lhs (Ob lhs) const
