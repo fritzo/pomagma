@@ -1,8 +1,7 @@
 #pragma once
 
 #include <pomagma/util/util.hpp>
-#include <pomagma/util/concurrent_bool_ref.hpp>
-#include <pomagma/util/threading.hpp>
+#include <pomagma/util/bool_ref.hpp>
 
 namespace pomagma
 {
@@ -21,11 +20,11 @@ inline size_t items_to_words (size_t item_dim)
 class SimpleSet
 {
     const size_t m_word_dim;
-    const std::atomic<Word> * const m_words;
+    const Word * const m_words;
 
 public:
 
-    SimpleSet (size_t item_dim, const std::atomic<Word> * words)
+    SimpleSet (size_t item_dim, const Word * words)
         : m_word_dim(items_to_words(item_dim)),
           m_words(words)
     {
@@ -34,21 +33,21 @@ public:
 
     size_t word_dim () const { return m_word_dim; }
     bool get_bit (size_t pos) const { return bool_ref::index(m_words, pos); }
-    Word get_word (size_t quot) const { return m_words[quot].load(relaxed); }
+    Word get_word (size_t quot) const { return m_words[quot]; }
 };
 
 class Intersection2
 {
     const size_t m_word_dim;
-    const std::atomic<Word> * const m_words1;
-    const std::atomic<Word> * const m_words2;
+    const Word * const m_words1;
+    const Word * const m_words2;
 
 public:
 
     Intersection2 (
             size_t item_dim,
-            const std::atomic<Word> * words1,
-            const std::atomic<Word> * words2)
+            const Word * words1,
+            const Word * words2)
         : m_word_dim(items_to_words(item_dim)),
           m_words1(words1),
           m_words2(words2)
@@ -65,24 +64,24 @@ public:
     }
     Word get_word (size_t quot) const
     {
-        return m_words1[quot].load(relaxed) & m_words2[quot].load(relaxed);
+        return m_words1[quot] & m_words2[quot];
     }
 };
 
 class Intersection3
 {
     const size_t m_word_dim;
-    const std::atomic<Word> * const m_words1;
-    const std::atomic<Word> * const m_words2;
-    const std::atomic<Word> * const m_words3;
+    const Word * const m_words1;
+    const Word * const m_words2;
+    const Word * const m_words3;
 
 public:
 
     Intersection3 (
             size_t item_dim,
-            const std::atomic<Word> * words1,
-            const std::atomic<Word> * words2,
-            const std::atomic<Word> * words3)
+            const Word * words1,
+            const Word * words2,
+            const Word * words3)
         : m_word_dim(items_to_words(item_dim)),
           m_words1(words1),
           m_words2(words2),
@@ -101,9 +100,7 @@ public:
     }
     Word get_word (size_t quot) const
     {
-        return m_words1[quot].load(relaxed)
-             & m_words2[quot].load(relaxed)
-             & m_words3[quot].load(relaxed);
+        return m_words1[quot] & m_words2[quot] & m_words3[quot];
     }
 };
 
@@ -146,7 +143,6 @@ void SetIterator<Set>::_next_block ()
     do {
         if (++m_quot == m_set.word_dim()) { m_i = 0; return; }
         m_word = m_set.get_word(m_quot);
-        load_barrier();
     } while (!m_word);
 
     // traverse to first nonempty bit in a nonempty block
@@ -179,13 +175,13 @@ class DenseSet : noncopyable
 {
     const size_t m_item_dim;
     const size_t m_word_dim;
-    std::atomic<Word> mutable * m_words;
+    Word mutable * m_words;
     const bool m_alias;
 
 public:
 
     DenseSet (size_t item_dim);
-    DenseSet (size_t item_dim, std::atomic<Word> * line)
+    DenseSet (size_t item_dim, Word * line)
         : m_item_dim(item_dim),
           m_word_dim(items_to_words(item_dim)),
           m_words(line),
@@ -205,17 +201,18 @@ public:
     }
     ~DenseSet () { if (not m_alias and m_words) free_blocks(m_words); }
     void operator= (const DenseSet & other);
-    void init (std::atomic<Word> * line)
+    void copy_from (const DenseSet & other, const Ob * new2old);
+    void init (Word * line)
     {
         POMAGMA_ASSERT4(m_alias, "tried to init() non-alias dense set");
         POMAGMA_ASSERT_ALIGNED_(1, line);
         m_words = line;
     }
-    void init (const std::atomic<Word> * line) const
+    void init (const Word * line) const
     {
         POMAGMA_ASSERT4(m_alias, "tried to init() non-alias dense set");
         POMAGMA_ASSERT_ALIGNED_(1, line);
-        m_words = const_cast<std::atomic<Word> *>(line);
+        m_words = const_cast<Word *>(line);
     }
 
     // using round dimensions ensures cache alignenet and autovectorizability
@@ -236,26 +233,20 @@ public:
     size_t item_dim () const { return m_item_dim; }
     size_t word_dim () const { return m_word_dim; }
     size_t data_size_bytes () const { return sizeof(Word) * m_word_dim; }
-    std::atomic<Word> * raw_data () { return m_words; }
-    const std::atomic<Word> * raw_data () const { return m_words; }
+    Word * raw_data () { return m_words; }
+    const Word * raw_data () const { return m_words; }
     void validate () const;
 
     // element operations
     bool_ref operator() (size_t i) { return _bit(i); }
-    bool operator() (size_t i, order_t order = relaxed) const
-    {
-        return _bit(i, order);
-    }
-    bool contains (size_t i, order_t order = relaxed) const
-    {
-        return _bit(i, order);
-    }
-    void insert (size_t i, order_t order = relaxed);
-    bool try_insert (size_t i);
-    void remove (size_t i, order_t order = relaxed);
+    bool operator() (size_t i) const { return _bit(i); }
+    bool contains (size_t i) const { return _bit(i); }
+    void insert (size_t i);
+    //bool try_insert (size_t i); // necessary? see concurrent_dense_set
+    void remove (size_t i);
     void merge  (size_t i, size_t j);
     void insert_all ();
-    size_t try_insert_one (); // FIXME why does this not return Ob?
+    Ob insert_one ();
 
     // entire operations (note that all are monotonic)
     void zero ();
@@ -281,7 +272,7 @@ public:
 private:
 
     bool_ref _bit (size_t i);
-    bool _bit (size_t i, order_t = relaxed) const;
+    bool _bit (size_t i) const;
 };
 
 inline bool_ref DenseSet::_bit (size_t i)
@@ -289,28 +280,22 @@ inline bool_ref DenseSet::_bit (size_t i)
     POMAGMA_ASSERT_RANGE_(5, i, m_item_dim);
     return bool_ref::index(m_words, i);
 }
-
-inline bool DenseSet::_bit (size_t i, order_t order) const
+inline bool DenseSet::_bit (size_t i) const
 {
     POMAGMA_ASSERT_RANGE_(5, i, m_item_dim);
-    return bool_ref::index(m_words, i, order);
+    return bool_ref::index(m_words, i).load();
 }
 
-inline void DenseSet::insert (size_t i, order_t order)
+inline void DenseSet::insert (size_t i)
 {
-    POMAGMA_ASSERT4(not contains(i, order), "double insertion: " << i);
-    _bit(i).one(order);
+    POMAGMA_ASSERT4(not contains(i), "double insertion: " << i);
+    _bit(i).one();
 }
 
-inline bool DenseSet::try_insert (size_t i)
-{
-    return not _bit(i).fetch_one(relaxed);
-}
-
-inline void DenseSet::remove (size_t i, order_t order)
+inline void DenseSet::remove (size_t i)
 {
     POMAGMA_ASSERT4(contains(i), "double removal: " << i);
-    _bit(i).zero(order);
+    _bit(i).zero();
 }
 
 inline void DenseSet::merge (size_t i, size_t j __attribute__((unused)))
@@ -329,7 +314,7 @@ inline void DenseSet::merge (size_t i, size_t j __attribute__((unused)))
 
 struct DenseSet::Iterator : SetIterator<SimpleSet>
 {
-    Iterator (size_t item_dim, const std::atomic<Word> * words)
+    Iterator (size_t item_dim, const Word * words)
         : SetIterator<SimpleSet>(SimpleSet(item_dim, words))
     {
     }
@@ -337,10 +322,7 @@ struct DenseSet::Iterator : SetIterator<SimpleSet>
 
 struct DenseSet::Iterator2 : SetIterator<Intersection2>
 {
-    Iterator2 (
-            size_t item_dim,
-            const std::atomic<Word> * words1,
-            const std::atomic<Word> * words2)
+    Iterator2 (size_t item_dim, const Word * words1, const Word * words2)
         : SetIterator<Intersection2>(Intersection2(item_dim, words1, words2))
     {
     }
@@ -350,9 +332,9 @@ struct DenseSet::Iterator3 : SetIterator<Intersection3>
 {
     Iterator3 (
             size_t item_dim,
-            const std::atomic<Word> * words1,
-            const std::atomic<Word> * words2,
-            const std::atomic<Word> * words3)
+            const Word * words1,
+            const Word * words2,
+            const Word * words3)
         : SetIterator<Intersection3>(
                 Intersection3(item_dim, words1, words2, words3))
     {

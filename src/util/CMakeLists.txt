@@ -2,6 +2,10 @@
 include_directories(${CMAKE_SOURCE_DIR}/)
 
 
+add_library(pomagma_util_sequential SHARED
+	util.cpp
+	aligned_alloc.cpp
+	dense_set.cpp)
 add_library(pomagma_util_concurrent SHARED
 	util.cpp
 	aligned_alloc.cpp
@@ -17,6 +21,16 @@ add_executable(threading_profile threading_profile.cpp)
 target_link_libraries(threading_profile
        	${POMAGMA_UTIL_TEST_LIBS}
 	pomagma_util_concurrent)
+
+add_executable(dense_set_test dense_set_test.cpp)
+target_link_libraries(dense_set_test
+       	${POMAGMA_UTIL_TEST_LIBS}
+	pomagma_util_sequential)
+add_test(NAME dense_set COMMAND dense_set_test)
+add_executable(dense_set_profile dense_set_profile.cpp)
+target_link_libraries(dense_set_profile
+       	${POMAGMA_UTIL_TEST_LIBS}
+	pomagma_util_sequential)
 
 add_executable(concurrent_dense_set_test concurrent_dense_set_test.cpp)
 target_link_libraries(concurrent_dense_set_test
