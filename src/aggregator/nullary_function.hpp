@@ -48,11 +48,7 @@ inline void NullaryFunction::insert (Ob val)
     POMAGMA_ASSERT5(val, "tried to set value to zero");
     POMAGMA_ASSERT5(support().contains(val), "unsupported value: " << val);
 
-    if (m_value) {
-        m_carrier.ensure_equal(m_value, val);
-    } else {
-        m_value = val;
-    }
+    m_carrier.set_or_merge(m_value, val);
 }
 
 } // namespace pomagma

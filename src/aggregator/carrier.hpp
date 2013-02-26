@@ -43,8 +43,8 @@ public:
     Ob merge (Ob dep, Ob rep);
     Ob ensure_equal (Ob lhs, Ob rhs);
     // these return true if value was set
-    //bool set_and_merge (Ob & destin, Ob source);
-    //bool set_or_merge (Ob & destin, Ob source);
+    bool set_and_merge (Ob & destin, Ob source); // if destin is nonzero
+    bool set_or_merge (Ob & destin, Ob source); //  if destin is possibly zero
     DenseSet::Iterator iter () { return m_support.iter(); }
     Ob insert ();
 
@@ -83,6 +83,27 @@ inline Ob Carrier::ensure_equal (Ob lhs, Ob rhs)
         Ob dep = lhs > rhs ? lhs : rhs;
         Ob rep = lhs < rhs ? lhs : rhs;
         return merge(dep, rep);
+    }
+}
+
+inline bool Carrier::set_and_merge (Ob & destin, Ob source)
+{
+    if (destin == source) {
+        return false;
+    } else {
+        destin = ensure_equal(destin, source);
+        return true;
+    }
+}
+
+inline bool Carrier::set_or_merge (Ob & destin, Ob source)
+{
+    if (destin) {
+        ensure_equal(destin, source);
+        return false;
+    } else {
+        destin = source;
+        return true;
     }
 }
 

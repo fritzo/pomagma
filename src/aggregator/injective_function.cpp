@@ -5,17 +5,12 @@
 namespace pomagma
 {
 
-static void noop_callback (const InjectiveFunction *, Ob) {}
-
-InjectiveFunction::InjectiveFunction (
-        const Carrier & carrier,
-        void (*insert_callback) (const InjectiveFunction *, Ob))
+InjectiveFunction::InjectiveFunction (Carrier & carrier)
     : m_carrier(carrier),
       m_set(support().item_dim()),
       m_inverse_set(support().item_dim()),
-      m_values(alloc_blocks<std::atomic<Ob>>(1 + item_dim())),
-      m_inverse(alloc_blocks<std::atomic<Ob>>(1 + item_dim())),
-      m_insert_callback(insert_callback ? insert_callback : noop_callback)
+      m_values(alloc_blocks<Ob>(1 + item_dim())),
+      m_inverse(alloc_blocks<Ob>(1 + item_dim()))
 {
     POMAGMA_DEBUG("creating InjectiveFunction with "
             << item_dim() << " values");
@@ -34,8 +29,6 @@ InjectiveFunction::~InjectiveFunction ()
 
 void InjectiveFunction::validate () const
 {
-    SharedLock lock(m_mutex);
-
     POMAGMA_INFO("Validating InjectiveFunction");
 
     m_set.validate();
@@ -93,19 +86,15 @@ void InjectiveFunction::clear ()
     memory_barrier();
 }
 
-inline bool replace (Ob patt, Ob repl, std::atomic<Ob> & destin)
+inline void replace (Ob patt, Ob repl, Ob & destin)
 {
-    return destin.compare_exchange_strong(
-            patt,
-            repl,
-            std::memory_order_relaxed,
-            std::memory_order_relaxed);
+    if (destin == patt) {
+        destin = repl;
+    }
 }
 
 void InjectiveFunction::unsafe_merge (Ob dep)
 {
-    UniqueLock lock(m_mutex);
-
     POMAGMA_ASSERT_RANGE_(4, dep, item_dim());
     Ob rep = m_carrier.find(dep);
     POMAGMA_ASSERT_RANGE_(4, rep, item_dim());
@@ -114,10 +103,10 @@ void InjectiveFunction::unsafe_merge (Ob dep)
     if (m_set(dep).fetch_zero()) {
         m_set(rep).one();
 
-        std::atomic<Ob> & dep_val = m_values[dep];
-        std::atomic<Ob> & rep_val = m_values[rep];
-        m_carrier.set_and_merge(rep_val, dep_val.load()); // XXX is this safe?
-        dep_val.store(0);
+        Ob & dep_val = m_values[dep];
+        Ob & rep_val = m_values[rep];
+        m_carrier.set_and_merge(rep_val, dep_val);
+        dep_val = 0;
     }
     for (auto iter = this->iter(); iter.ok(); iter.next()) {
         replace(dep, rep, m_values[*iter]);
@@ -127,10 +116,10 @@ void InjectiveFunction::unsafe_merge (Ob dep)
     if (m_inverse_set(dep).fetch_zero()) {
         m_inverse_set(rep).one();
 
-        std::atomic<Ob> & dep_val = m_inverse[dep];
-        std::atomic<Ob> & rep_val = m_inverse[rep];
-        m_carrier.set_and_merge(rep_val, dep_val.load()); // XXX is this safe?
-        dep_val.store(0);
+        Ob & dep_val = m_inverse[dep];
+        Ob & rep_val = m_inverse[rep];
+        m_carrier.set_and_merge(rep_val, dep_val); // XXX is this safe?
+        dep_val = 0;
     }
     for (auto iter = inverse_iter(); iter.ok(); iter.next()) {
         replace(dep, rep, m_inverse[*iter]);
