@@ -78,12 +78,10 @@ void InjectiveFunction::log_stats () const
 
 void InjectiveFunction::clear ()
 {
-    memory_barrier();
     zero_blocks(m_values, 1 + item_dim());
     zero_blocks(m_inverse, 1 + item_dim());
     m_set.zero();
     m_inverse_set.zero();
-    memory_barrier();
 }
 
 inline void replace (Ob patt, Ob repl, Ob & destin)

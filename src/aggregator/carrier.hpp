@@ -2,8 +2,6 @@
 
 #include "util.hpp"
 #include <pomagma/util/sequential_dense_set.hpp>
-#include <pomagma/util/threading.hpp>
-#include <atomic>
 
 namespace pomagma
 {

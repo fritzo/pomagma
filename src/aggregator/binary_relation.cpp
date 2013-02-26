@@ -84,20 +84,6 @@ void BinaryRelation::log_stats () const
     m_lines.log_stats();
 }
 
-void BinaryRelation::clear ()
-{
-    memory_barrier();
-    m_lines.clear();
-    memory_barrier();
-}
-
-void BinaryRelation::update ()
-{
-    memory_barrier();
-    m_lines.copy_Lx_to_Rx();
-    memory_barrier();
-}
-
 void BinaryRelation::insert (Ob i, const DenseSet & js)
 {
     DenseSet diff(item_dim());
