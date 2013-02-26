@@ -8,7 +8,7 @@ add_library(pomagma_aggregator SHARED
 	carrier.cpp
 	base_bin_rel.cpp
 	binary_relation.cpp
-	#nullary_function.cpp
+	nullary_function.cpp
 	#injective_function.cpp
 	#binary_function.cpp
 	#symmetric_function.cpp
@@ -37,9 +37,9 @@ add_executable(binary_relation_test binary_relation_test.cpp)
 target_link_libraries(binary_relation_test ${POMAGMA_AGGREGATOR_TEST_LIBS})
 add_test(NAME aggregator_binary_relation COMMAND binary_relation_test)
 
-#add_executable(nullary_function_test nullary_function_test.cpp)
-#target_link_libraries(nullary_function_test ${POMAGMA_AGGREGATOR_TEST_LIBS})
-#add_test(NAME aggregator_nullary_function COMMAND nullary_function_test)
+add_executable(nullary_function_test nullary_function_test.cpp)
+target_link_libraries(nullary_function_test ${POMAGMA_AGGREGATOR_TEST_LIBS})
+add_test(NAME aggregator_nullary_function COMMAND nullary_function_test)
 
 #add_executable(injective_function_test injective_function_test.cpp)
 #target_link_libraries(injective_function_test ${POMAGMA_AGGREGATOR_TEST_LIBS})
