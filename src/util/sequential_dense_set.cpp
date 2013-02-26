@@ -9,6 +9,8 @@
 namespace pomagma
 {
 
+typedef size_t Ob;
+
 DenseSet::DenseSet (size_t item_dim)
     : m_item_dim(item_dim),
       m_word_dim(items_to_words(m_item_dim)),
@@ -16,7 +18,6 @@ DenseSet::DenseSet (size_t item_dim)
       m_alias(false)
 {
     POMAGMA_DEBUG1("creating DenseSet with " << m_word_dim << " lines");
-    POMAGMA_ASSERT_LE(item_dim, MAX_ITEM_DIM);
 
     bzero(m_words, sizeof(Word) * m_word_dim);
 }
@@ -29,6 +30,7 @@ void DenseSet::operator= (const DenseSet & other)
     memcpy(m_words, other.m_words, sizeof(Word) * m_word_dim);
 }
 
+template<class Ob>
 void DenseSet::copy_from (const DenseSet & other, const Ob * new2old)
 {
     POMAGMA_DEBUG1("copying DenseSet");
@@ -45,6 +47,13 @@ void DenseSet::copy_from (const DenseSet & other, const Ob * new2old)
         }
     }
 }
+
+template void DenseSet::copy_from<uint16_t> (
+        const DenseSet &,
+        const uint16_t *);
+template void DenseSet::copy_from<uint32_t> (
+        const DenseSet &,
+        const uint32_t *);
 
 //----------------------------------------------------------------------------
 // Diagnostics
@@ -110,7 +119,7 @@ void DenseSet::insert_all ()
     m_words[0] ^= 1; // remove zero element
 }
 
-Ob DenseSet::insert_one ()
+size_t DenseSet::insert_one ()
 {
     m_words[0] ^= 1; // simplifies code
 
@@ -118,7 +127,7 @@ Ob DenseSet::insert_one ()
     while (! ~ * word) {
         ++word;
     }
-    Ob ob = BITS_PER_WORD * (word - m_words);
+    size_t ob = BITS_PER_WORD * (word - m_words);
 
     const Word free = ~ * word;
     Word mask = 1;

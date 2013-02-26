@@ -19,6 +19,7 @@ Carrier::Carrier (
       m_merge_callback(merge_callback)
 {
     POMAGMA_DEBUG("creating Carrier with " << item_dim << " items");
+    POMAGMA_ASSERT_LE(item_dim, MAX_ITEM_DIM);
     construct_blocks(m_reps, 1 + item_dim, 0);
 }
 

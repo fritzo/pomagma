@@ -256,23 +256,10 @@ public:
 //----------------------------------------------------------------------------
 // data types
 
-template<size_t bytes> struct uint_;
-template<> struct uint_<1> { typedef uint8_t t; };
-template<> struct uint_<2> { typedef uint16_t t; };
-template<> struct uint_<4> { typedef uint32_t t; };
-template<> struct uint_<8> { typedef uint64_t t; };
-
-// Ob is a 1-based index type with 0 = none
-typedef uint16_t Ob;
-const size_t MAX_ITEM_DIM = (1UL << (8UL * sizeof(Ob))) - 1UL;
-
 const size_t BITS_PER_CACHE_LINE = 512;
 const size_t DEFAULT_ITEM_DIM = BITS_PER_CACHE_LINE - 1; // for one-based sets
 
-//----------------------------------------------------------------------------
-// words of bits
-
-typedef uint64_t Word;
+typedef size_t Word;
 const size_t BITS_PER_WORD = 8 * sizeof(Word);
 const size_t WORD_POS_MASK = BITS_PER_WORD - 1;
 const size_t WORD_POS_SHIFT = static_log2i<BITS_PER_WORD>::val();

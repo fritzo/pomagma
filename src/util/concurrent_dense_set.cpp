@@ -9,6 +9,8 @@
 namespace pomagma
 {
 
+typedef size_t Ob;
+
 DenseSet::DenseSet (size_t item_dim)
     : m_item_dim(item_dim),
       m_word_dim(items_to_words(m_item_dim)),
@@ -16,7 +18,6 @@ DenseSet::DenseSet (size_t item_dim)
       m_alias(false)
 {
     POMAGMA_DEBUG1("creating DenseSet with " << m_word_dim << " lines");
-    POMAGMA_ASSERT_LE(item_dim, MAX_ITEM_DIM);
 
     bzero(m_words, sizeof(std::atomic<Word>) * m_word_dim);
 }

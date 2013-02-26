@@ -1,6 +1,6 @@
 #pragma once
 
-#include <pomagma/util/util.hpp>
+#include <pomagma/grower/util.hpp>
 #include <vector>
 #include <utility>
 #include <tbb/concurrent_unordered_map.h>

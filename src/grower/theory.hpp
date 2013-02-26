@@ -1,7 +1,7 @@
 #pragma once
 // WARNING this should only be linked to once
 
-#include <pomagma/util/util.hpp>
+#include <pomagma/grower/util.hpp>
 #include "carrier.hpp"
 #include "nullary_function.hpp"
 #include "injective_function.hpp"

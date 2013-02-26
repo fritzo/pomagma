@@ -3,6 +3,8 @@
 
 using namespace pomagma;
 
+typedef size_t Ob;
+
 rng_t rng;
 
 bool is_even (Ob i, Ob modulus = 2) { return i % modulus == 0; }

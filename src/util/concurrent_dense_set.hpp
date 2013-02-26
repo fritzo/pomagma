@@ -191,7 +191,6 @@ public:
           m_words(line),
           m_alias(true)
     {
-        POMAGMA_ASSERT_LE(item_dim, MAX_ITEM_DIM);
         POMAGMA_ASSERT_ALIGNED_(1, line);
     }
     DenseSet (const DenseSet & other) = delete;
@@ -255,7 +254,7 @@ public:
     void remove (size_t i, order_t order = relaxed);
     void merge  (size_t i, size_t j);
     void insert_all ();
-    size_t try_insert_one (); // FIXME why does this not return Ob?
+    size_t try_insert_one ();
 
     // entire operations (note that all are monotonic)
     void zero ();

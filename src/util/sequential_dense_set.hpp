@@ -187,7 +187,6 @@ public:
           m_words(line),
           m_alias(true)
     {
-        POMAGMA_ASSERT_LE(item_dim, MAX_ITEM_DIM);
         POMAGMA_ASSERT_ALIGNED_(1, line);
     }
     DenseSet (const DenseSet & other) = delete;
@@ -201,6 +200,7 @@ public:
     }
     ~DenseSet () { if (not m_alias and m_words) free_blocks(m_words); }
     void operator= (const DenseSet & other);
+    template<class Ob>
     void copy_from (const DenseSet & other, const Ob * new2old);
     void init (Word * line)
     {
@@ -246,7 +246,7 @@ public:
     void remove (size_t i);
     void merge  (size_t i, size_t j);
     void insert_all ();
-    Ob insert_one ();
+    size_t insert_one ();
 
     // entire operations (note that all are monotonic)
     void zero ();
