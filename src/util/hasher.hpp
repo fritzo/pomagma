@@ -8,7 +8,7 @@
 #include <map>
 
 // one of these should be included
-//#include <pomagma/util/dense_set.hpp>
+//#include <pomagma/util/sequential_dense_set.hpp>
 //#include <pomagma/util/concurrent_dense_set.hpp>
 
 // http://www.openssl.org/docs/crypto/sha.html
