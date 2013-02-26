@@ -26,15 +26,12 @@ Roadmap
 - Aggregator
     - Implement following merge logic in grower
     - Assume only forward-mapping tables
-        - Work out injective function merge logic
-    - Use 32-bit ob indices (how big a structure can be stored in memory?)
 - Trimmer
     - Read globe; randomly prune to given size; write
 - Navigator Server
     - Adapt syntactic algorithms from [Johann](http://github.com/fritzo/Johann)
 - Navigator Client
     - Implement HTML5 UI
-    - Implement native mobile UIs
 - Theorist
     - Adapt auto conjecturing algorithms from [Johann](Johann)
     - Implement via CUDA/GPU or Eigen+OpenMP
@@ -48,7 +45,7 @@ Roadmap
 Milestones
 ----------
 
-- Minimum: run grower system tests (h4, sk, skj)
+- Minimum: run grower system tests (h4, sk, skj) DONE
 - Scalable: implement aggregator, trimmer
 - Interactive: implement navigator as web-app
 - Evolvable: implement linguist, theorist
