@@ -6,8 +6,8 @@ add_library(pomagma_aggregator SHARED
 	../util/aligned_alloc.cpp
 	../util/sequential_dense_set.cpp
 	carrier.cpp
-	#base_bin_rel.cpp
-	#binary_relation.cpp
+	base_bin_rel.cpp
+	binary_relation.cpp
 	#nullary_function.cpp
 	#injective_function.cpp
 	#binary_function.cpp
@@ -33,25 +33,25 @@ add_executable(aggregator_carrier_test carrier_test.cpp)
 target_link_libraries(aggregator_carrier_test ${POMAGMA_AGGREGATOR_TEST_LIBS})
 add_test(NAME aggregator_carrier COMMAND aggregator_carrier_test)
 
-#add_executable(binary_relation_test binary_relation_test.cpp)
-#target_link_libraries(binary_relation_test ${POMAGMA_AGGREGATOR_TEST_LIBS})
-#add_test(NAME binary_relation COMMAND binary_relation_test)
+add_executable(binary_relation_test binary_relation_test.cpp)
+target_link_libraries(binary_relation_test ${POMAGMA_AGGREGATOR_TEST_LIBS})
+add_test(NAME aggregator_binary_relation COMMAND binary_relation_test)
 
 #add_executable(nullary_function_test nullary_function_test.cpp)
 #target_link_libraries(nullary_function_test ${POMAGMA_AGGREGATOR_TEST_LIBS})
-#add_test(NAME nullary_function COMMAND nullary_function_test)
+#add_test(NAME aggregator_nullary_function COMMAND nullary_function_test)
 
 #add_executable(injective_function_test injective_function_test.cpp)
 #target_link_libraries(injective_function_test ${POMAGMA_AGGREGATOR_TEST_LIBS})
-#add_test(NAME injective_function COMMAND injective_function_test)
+#add_test(NAME aggregator_injective_function COMMAND injective_function_test)
 
 #add_executable(binary_function_test binary_function_test.cpp)
 #target_link_libraries(binary_function_test ${POMAGMA_AGGREGATOR_TEST_LIBS})
-#add_test(NAME binary_function COMMAND binary_function_test)
+#add_test(NAME aggregator_binary_function COMMAND binary_function_test)
 
 #add_executable(symmetric_function_test symmetric_function_test.cpp)
 #target_link_libraries(symmetric_function_test ${POMAGMA_AGGREGATOR_TEST_LIBS})
-#add_test(NAME symmetric_function COMMAND symmetric_function_test)
+#add_test(NAME aggregator_symmetric_function COMMAND symmetric_function_test)
 
 
 #add_library(pomagma_aggregator_server SHARED

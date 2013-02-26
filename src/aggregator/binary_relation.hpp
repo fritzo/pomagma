@@ -2,7 +2,7 @@
 
 #include "util.hpp"
 #include "base_bin_rel.hpp"
-#include <pomagma/util/concurrent_dense_set.hpp>
+#include <pomagma/util/sequential_dense_set.hpp>
 
 namespace pomagma
 {
@@ -11,17 +11,10 @@ namespace pomagma
 class BinaryRelation : noncopyable
 {
     mutable base_bin_rel m_lines;
-    void (*m_insert_callback) (Ob, Ob);
-
-    mutable SharedMutex m_mutex;
-    typedef SharedMutex::SharedLock SharedLock;
-    typedef SharedMutex::UniqueLock UniqueLock;
 
 public:
 
-    BinaryRelation (
-        const Carrier & carrier,
-        void (*insert_callback) (Ob, Ob) = nullptr);
+    BinaryRelation (const Carrier & carrier);
     ~BinaryRelation ();
     void validate () const;
     void validate_disjoint (const BinaryRelation & other) const;
@@ -31,12 +24,12 @@ public:
     // raw operations
     size_t item_dim () const { return m_lines.item_dim(); }
     size_t round_word_dim () const { return m_lines.round_word_dim(); }
-    const std::atomic<Word> * raw_data () const { return m_lines.Lx(); }
-    std::atomic<Word> * raw_data () { return m_lines.Lx(); }
+    const Word * raw_data () const { return m_lines.Lx(); }
+    Word * raw_data () { return m_lines.Lx(); }
     void clear ();
     void update ();
 
-    // relaxed operations
+    // safe operations
     DenseSet get_Lx_set (Ob lhs) const { return m_lines.Lx_set(lhs); }
     DenseSet get_Rx_set (Ob rhs) const { return m_lines.Rx_set(rhs); }
     bool find_Lx (Ob i, Ob j) const { return m_lines.get_Lx(i, j); }
@@ -50,7 +43,7 @@ public:
     void insert (Ob i, const DenseSet & js);
     void insert (const DenseSet & is, Ob j);
 
-    // strict operations
+    // unsafe operations
     void unsafe_merge (Ob dep);
 
 private:
@@ -89,7 +82,6 @@ inline void BinaryRelation::insert_Lx (Ob i, Ob j)
 {
     if (not m_lines.Lx(i, j).fetch_one()) {
         _insert_Rx(i, j);
-        m_insert_callback(i, j);
     }
 }
 
@@ -97,7 +89,6 @@ inline void BinaryRelation::insert_Rx (Ob i, Ob j)
 {
     if (not m_lines.Rx(i, j).fetch_one()) {
         _insert_Lx(i, j);
-        m_insert_callback(i, j);
     }
 }
 

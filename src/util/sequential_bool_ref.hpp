@@ -34,6 +34,8 @@ public:
     void operator &= (bool b) { m_word &= ~(!b * m_mask); }
     void zero () { m_word &= ~m_mask; }
     void one () { m_word |= m_mask; }
+    bool fetch_zero () { bool result = load(); zero(); return result; }
+    bool fetch_one () { bool result = load(); one(); return result; }
 };
 
 } // namespace pomagma
