@@ -1,6 +1,6 @@
 #pragma once
 
-#include <pomagma/grower/util.hpp>
+#include "util.hpp"
 #include <pomagma/util/concurrent_dense_set.hpp>
 #include "carrier.hpp"
 

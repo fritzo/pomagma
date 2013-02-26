@@ -256,8 +256,11 @@ public:
 //----------------------------------------------------------------------------
 // data types
 
-const size_t BITS_PER_CACHE_LINE = 512;
-const size_t DEFAULT_ITEM_DIM = BITS_PER_CACHE_LINE - 1; // for one-based sets
+template<size_t bytes> struct uint_;
+template<> struct uint_<1> { typedef uint8_t t; };
+template<> struct uint_<2> { typedef uint16_t t; };
+template<> struct uint_<4> { typedef uint32_t t; };
+template<> struct uint_<8> { typedef uint64_t t; };
 
 typedef size_t Word;
 const size_t BITS_PER_WORD = 8 * sizeof(Word);
@@ -265,6 +268,8 @@ const size_t WORD_POS_MASK = BITS_PER_WORD - 1;
 const size_t WORD_POS_SHIFT = static_log2i<BITS_PER_WORD>::val();
 const Word FULL_WORD = ~Word(0);
 static_assert(FULL_WORD + Word(1) == 0, "FULL_WORD is bad");
+
+const size_t BITS_PER_CACHE_LINE = 512;
 
 //----------------------------------------------------------------------------
 // vector operations
