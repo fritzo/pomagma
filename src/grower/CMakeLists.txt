@@ -34,37 +34,37 @@ set(POMAGMA_GROWER_TEST_LIBS
        	hdf5_hl hdf5
 	crypto ssl)
 
-add_executable(carrier_test carrier_test.cpp)
-target_link_libraries(carrier_test ${POMAGMA_GROWER_TEST_LIBS})
-add_test(NAME carrier COMMAND carrier_test)
+add_executable(grower_carrier_test carrier_test.cpp)
+target_link_libraries(grower_carrier_test ${POMAGMA_GROWER_TEST_LIBS})
+add_test(NAME grower_carrier COMMAND grower_carrier_test)
 
-add_executable(binary_relation_test binary_relation_test.cpp)
-target_link_libraries(binary_relation_test ${POMAGMA_GROWER_TEST_LIBS})
-add_test(NAME binary_relation COMMAND binary_relation_test)
+add_executable(grower_binary_relation_test binary_relation_test.cpp)
+target_link_libraries(grower_binary_relation_test ${POMAGMA_GROWER_TEST_LIBS})
+add_test(NAME grower_binary_relation COMMAND grower_binary_relation_test)
 
-add_executable(nullary_function_test nullary_function_test.cpp)
-target_link_libraries(nullary_function_test ${POMAGMA_GROWER_TEST_LIBS})
-add_test(NAME nullary_function COMMAND nullary_function_test)
+add_executable(grower_nullary_function_test nullary_function_test.cpp)
+target_link_libraries(grower_nullary_function_test ${POMAGMA_GROWER_TEST_LIBS})
+add_test(NAME grower_nullary_function COMMAND grower_nullary_function_test)
 
-add_executable(injective_function_test injective_function_test.cpp)
-target_link_libraries(injective_function_test ${POMAGMA_GROWER_TEST_LIBS})
-add_test(NAME injective_function COMMAND injective_function_test)
+add_executable(grower_injective_function_test injective_function_test.cpp)
+target_link_libraries(grower_injective_function_test ${POMAGMA_GROWER_TEST_LIBS})
+add_test(NAME grower_injective_function COMMAND grower_injective_function_test)
 
-add_executable(binary_function_test binary_function_test.cpp)
-target_link_libraries(binary_function_test ${POMAGMA_GROWER_TEST_LIBS})
-add_test(NAME binary_function COMMAND binary_function_test)
+add_executable(grower_binary_function_test binary_function_test.cpp)
+target_link_libraries(grower_binary_function_test ${POMAGMA_GROWER_TEST_LIBS})
+add_test(NAME grower_binary_function COMMAND grower_binary_function_test)
 
-add_executable(symmetric_function_test symmetric_function_test.cpp)
-target_link_libraries(symmetric_function_test ${POMAGMA_GROWER_TEST_LIBS})
-add_test(NAME symmetric_function COMMAND symmetric_function_test)
+add_executable(grower_symmetric_function_test symmetric_function_test.cpp)
+target_link_libraries(grower_symmetric_function_test ${POMAGMA_GROWER_TEST_LIBS})
+add_test(NAME grower_symmetric_function COMMAND grower_symmetric_function_test)
 
-#add_executable(inverse_bin_fun_test inverse_bin_fun_test.cpp)
-#target_link_libraries(inverse_bin_fun_test ${POMAGMA_GROWER_TEST_LIBS})
-#add_test(NAME inverse_bin_fun COMMAND inverse_bin_fun_test)
+#add_executable(grower_inverse_bin_fun_test inverse_bin_fun_test.cpp)
+#target_link_libraries(grower_inverse_bin_fun_test ${POMAGMA_GROWER_TEST_LIBS})
+#add_test(NAME grower_inverse_bin_fun COMMAND grower_inverse_bin_fun_test)
 
-add_executable(scheduler_test scheduler_test.cpp)
-target_link_libraries(scheduler_test ${POMAGMA_GROWER_TEST_LIBS})
-add_test(NAME scheduler COMMAND scheduler_test)
+add_executable(grower_scheduler_test scheduler_test.cpp)
+target_link_libraries(grower_scheduler_test ${POMAGMA_GROWER_TEST_LIBS})
+add_test(NAME grower_scheduler COMMAND grower_scheduler_test)
 
 
 add_library(pomagma_grower_server SHARED

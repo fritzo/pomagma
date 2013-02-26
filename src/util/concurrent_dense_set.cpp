@@ -94,7 +94,7 @@ size_t DenseSet::try_insert_one ()
 {
     for (size_t w = 0; w < word_dim(); ++w) {
         Word all = ~Word(w ? 0 : 1);
-        if (m_words[w].load(relaxed) != all) {
+        if (unlikely(m_words[w].load(relaxed) != all)) {
             size_t i_ = w * BITS_PER_WORD;
             for (size_t _i = w ? 0 : 1; _i < BITS_PER_WORD; ++_i) {
                 size_t ob = i_ + _i;

@@ -3,8 +3,6 @@
 #include "util.hpp"
 #include <pomagma/util/concurrent_dense_set.hpp>
 #include <pomagma/util/threading.hpp>
-//#include <functional>
-//#include <algorithm>
 #include <atomic>
 
 namespace pomagma

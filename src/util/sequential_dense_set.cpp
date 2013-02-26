@@ -124,7 +124,7 @@ size_t DenseSet::insert_one ()
     m_words[0] ^= 1; // simplifies code
 
     Word * restrict word = assume_aligned(m_words);
-    while (! ~ * word) {
+    while (likely(! ~ * word)) {
         ++word;
     }
     size_t ob = BITS_PER_WORD * (word - m_words);
