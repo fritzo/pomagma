@@ -10,7 +10,7 @@ void test_basic (size_t size)
     POMAGMA_INFO("Defining function");
     Carrier carrier(size);
     for (Ob i = 1; i <= size; ++i) {
-        POMAGMA_ASSERT(carrier.insert(), "insertion failed");
+        POMAGMA_ASSERT(carrier.unsafe_insert(), "insertion failed");
     }
     size_t item_count = size;
     std::bernoulli_distribution randomly_remove(0.2);

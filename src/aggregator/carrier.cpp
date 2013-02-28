@@ -40,7 +40,7 @@ void Carrier::update ()
     m_rep_count = m_item_count = m_support.count_items();
 }
 
-Ob Carrier::insert ()
+Ob Carrier::unsafe_insert ()
 {
     POMAGMA_ASSERT_LT(item_count(), item_dim());
     Ob ob = m_support.insert_one();
@@ -78,7 +78,7 @@ void Carrier::unsafe_remove (const Ob ob)
     POMAGMA_DEBUG1(m_item_count << " obs after remove()");
 }
 
-Ob Carrier::merge (Ob dep, Ob rep)
+Ob Carrier::merge (Ob dep, Ob rep) const
 {
     POMAGMA_ASSERT2(dep > rep,
             "out of order merge: " << dep << "," << rep);

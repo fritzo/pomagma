@@ -38,15 +38,17 @@ public:
     // safe operations
     Ob find (Ob ob) const;
     bool equal (Ob lhs, Ob rhs) const;
-    Ob merge (Ob dep, Ob rep);
-    Ob ensure_equal (Ob lhs, Ob rhs);
+    Ob merge (Ob dep, Ob rep) const;
+    Ob ensure_equal (Ob lhs, Ob rhs) const;
     // these return true if value was set
-    bool set_and_merge (Ob & destin, Ob source); // if destin is nonzero
-    bool set_or_merge (Ob & destin, Ob source); //  if destin is possibly zero
-    DenseSet::Iterator iter () { return m_support.iter(); }
-    Ob insert ();
+    // set_and_merge is for when destin is nonzero
+    // set_or_merge is for when destin is possibly zero
+    bool set_and_merge (Ob & destin, Ob source) const;
+    bool set_or_merge (Ob & destin, Ob source) const;
+    DenseSet::Iterator iter () const { return m_support.iter(); }
 
     // unsafe operations
+    Ob unsafe_insert ();
     void unsafe_remove (const Ob ob);
 
 private:
@@ -73,7 +75,7 @@ inline bool Carrier::equal (Ob lhs, Ob rhs) const
     return find(lhs) == find(rhs);
 }
 
-inline Ob Carrier::ensure_equal (Ob lhs, Ob rhs)
+inline Ob Carrier::ensure_equal (Ob lhs, Ob rhs) const
 {
     if (lhs == rhs) {
         return lhs;
@@ -84,7 +86,7 @@ inline Ob Carrier::ensure_equal (Ob lhs, Ob rhs)
     }
 }
 
-inline bool Carrier::set_and_merge (Ob & destin, Ob source)
+inline bool Carrier::set_and_merge (Ob & destin, Ob source) const
 {
     if (destin == source) {
         return false;
@@ -94,7 +96,7 @@ inline bool Carrier::set_and_merge (Ob & destin, Ob source)
     }
 }
 
-inline bool Carrier::set_or_merge (Ob & destin, Ob source)
+inline bool Carrier::set_or_merge (Ob & destin, Ob source) const
 {
     if (destin) {
         ensure_equal(destin, source);

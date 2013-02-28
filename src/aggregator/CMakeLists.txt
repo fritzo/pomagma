@@ -10,7 +10,7 @@ add_library(pomagma_aggregator SHARED
 	binary_relation.cpp
 	nullary_function.cpp
 	injective_function.cpp
-	#binary_function.cpp
+	binary_function.cpp
 	#symmetric_function.cpp
 	#sampler.cpp
 	#structure.cpp
@@ -45,9 +45,9 @@ add_executable(injective_function_test injective_function_test.cpp)
 target_link_libraries(injective_function_test ${POMAGMA_AGGREGATOR_TEST_LIBS})
 add_test(NAME aggregator_injective_function COMMAND injective_function_test)
 
-#add_executable(binary_function_test binary_function_test.cpp)
-#target_link_libraries(binary_function_test ${POMAGMA_AGGREGATOR_TEST_LIBS})
-#add_test(NAME aggregator_binary_function COMMAND binary_function_test)
+add_executable(binary_function_test binary_function_test.cpp)
+target_link_libraries(binary_function_test ${POMAGMA_AGGREGATOR_TEST_LIBS})
+add_test(NAME aggregator_binary_function COMMAND binary_function_test)
 
 #add_executable(symmetric_function_test symmetric_function_test.cpp)
 #target_link_libraries(symmetric_function_test ${POMAGMA_AGGREGATOR_TEST_LIBS})

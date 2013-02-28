@@ -21,7 +21,7 @@ void test_BinaryRelation (
 
     POMAGMA_INFO("testing position insertion");
     for (Ob i = 1; i <= size; ++i) {
-         POMAGMA_ASSERT(carrier.insert(), "insertion failed");
+         POMAGMA_ASSERT(carrier.unsafe_insert(), "insertion failed");
     }
     size_t item_count = size;
     std::bernoulli_distribution randomly_remove(0.5);

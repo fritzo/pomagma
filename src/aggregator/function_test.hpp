@@ -17,7 +17,7 @@ inline void random_init (Carrier & carrier, rng_t & rng)
     POMAGMA_ASSERT_EQ(carrier.item_count(), 0);
     const size_t size = carrier.item_dim();
     for (Ob i = 1; i <= size; ++i) {
-        POMAGMA_ASSERT(carrier.insert(), "insertion failed");
+        POMAGMA_ASSERT(carrier.unsafe_insert(), "insertion failed");
     }
     POMAGMA_ASSERT_EQ(carrier.item_count(), size);
     std::bernoulli_distribution randomly_remove(0.5);
@@ -45,6 +45,7 @@ void remove_deps (Carrier & carrier, Function & fun)
             }
         }
     } while (merged);
+    fun.update_values();
     POMAGMA_ASSERT_EQ(carrier.rep_count(), carrier.item_count());
     fun.validate();
 }
