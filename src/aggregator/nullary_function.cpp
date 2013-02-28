@@ -5,7 +5,7 @@
 namespace pomagma
 {
 
-NullaryFunction::NullaryFunction (Carrier & carrier)
+NullaryFunction::NullaryFunction (const Carrier & carrier)
     : m_carrier(carrier),
       m_value(0)
 {

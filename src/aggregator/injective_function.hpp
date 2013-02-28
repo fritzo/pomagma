@@ -9,7 +9,7 @@ namespace pomagma
 
 class InjectiveFunction : noncopyable
 {
-    Carrier & m_carrier;
+    const Carrier & m_carrier;
     DenseSet m_set;
     DenseSet m_inverse_set;
     Ob * const m_values;
@@ -17,7 +17,7 @@ class InjectiveFunction : noncopyable
 
 public:
 
-    InjectiveFunction (Carrier & carrier);
+    InjectiveFunction (const Carrier & carrier);
     ~InjectiveFunction ();
     void validate () const;
     void log_stats () const;

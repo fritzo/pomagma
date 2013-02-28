@@ -5,7 +5,7 @@
 namespace pomagma
 {
 
-InjectiveFunction::InjectiveFunction (Carrier & carrier)
+InjectiveFunction::InjectiveFunction (const Carrier & carrier)
     : m_carrier(carrier),
       m_set(support().item_dim()),
       m_inverse_set(support().item_dim()),

@@ -9,12 +9,12 @@ namespace pomagma
 
 class NullaryFunction : noncopyable
 {
-    Carrier & m_carrier;
-    Ob m_value;
+    const Carrier & m_carrier;
+    mutable Ob m_value;
 
 public:
 
-    NullaryFunction (Carrier & carrier);
+    NullaryFunction (const Carrier & carrier);
     void validate () const;
     void log_stats () const;
 
@@ -25,7 +25,7 @@ public:
     // safe operations
     bool defined () const { return m_value; }
     Ob find () const { return m_value; }
-    void insert (Ob val);
+    void insert (Ob val) const;
 
     // unsafe operations
     void unsafe_merge (Ob dep);
@@ -43,7 +43,7 @@ inline void NullaryFunction::raw_insert (Ob val)
     m_value = val;
 }
 
-inline void NullaryFunction::insert (Ob val)
+inline void NullaryFunction::insert (Ob val) const
 {
     POMAGMA_ASSERT5(val, "tried to set value to zero");
     POMAGMA_ASSERT5(support().contains(val), "unsupported value: " << val);

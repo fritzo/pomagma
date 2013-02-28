@@ -24,15 +24,17 @@ void BinaryFunction::validate () const
 
             if (not (support().contains(i) and support().contains(j))) {
                 POMAGMA_ASSERT(val_iter == m_values.end(),
-                        "found unsupported val: " << i << ',' << j);
+                        "found unsupported lhs, rhs: " << i << ',' << j);
             } else if (val_iter != m_values.end()) {
                 POMAGMA_ASSERT(defined(i, j),
+                        "found undefined value: " << i << ',' << j);
+                Ob val = val_iter->second;
+                POMAGMA_ASSERT(val, "found zero value: " << i << ',' << j);
+                POMAGMA_ASSERT(support().contains(val),
                         "found unsupported value: " << i << ',' << j);
-                POMAGMA_ASSERT(val_iter->second,
-                        "found zero value: " << i << ',' << j);
             } else {
                 POMAGMA_ASSERT(not defined(i, j),
-                        "found supported null value: " << i << ',' << j);
+                        "found defined null value: " << i << ',' << j);
             }
         }
     }
