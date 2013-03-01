@@ -8,10 +8,10 @@
 #include "binary_function.hpp"
 #include "symmetric_function.hpp"
 #include "binary_relation.hpp"
-#include "signature.hpp"
 #include "sampler.hpp"
 #include "structure.hpp"
 #include "scheduler.hpp"
+#include <pomagma/util/signature.hpp>
 #include <atomic>
 #include <thread>
 #include <vector>
