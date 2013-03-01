@@ -26,6 +26,7 @@ void load_language (const char * filename)
 
     for (int i = 0; i < language.terms_size(); ++i) {
         const auto & term = language.terms(i);
+        POMAGMA_DEBUG("setting P(" << term.name() << ") = " << term.weight());
         set_language_prob(term.name(), term.weight());
     }
 }

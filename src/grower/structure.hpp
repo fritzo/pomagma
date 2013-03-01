@@ -2,7 +2,6 @@
 
 #include "util.hpp"
 #include "signature.hpp"
-#include <map>
 
 namespace pomagma
 {
@@ -13,25 +12,13 @@ struct InFile;
 struct OutFile;
 };
 
-class Structure : public Signature::Observer
+class Structure : noncopyable
 {
-    Carrier & m_carrier;
-
-    std::map<std::string, BinaryRelation *> m_binary_relations;
-    std::map<std::string, NullaryFunction *> m_nullary_functions;
-    std::map<std::string, InjectiveFunction *> m_injective_functions;
-    std::map<std::string, BinaryFunction *> m_binary_functions;
-    std::map<std::string, SymmetricFunction *> m_symmetric_functions;
+    Signature & m_signature;
 
 public:
 
     Structure (Signature & signature);
-
-    void declare (const std::string & name, BinaryRelation & rel);
-    void declare (const std::string & name, NullaryFunction & fun);
-    void declare (const std::string & name, InjectiveFunction & fun);
-    void declare (const std::string & name, BinaryFunction & fun);
-    void declare (const std::string & name, SymmetricFunction & fun);
 
     void clear ();
     void load (const std::string & filename);

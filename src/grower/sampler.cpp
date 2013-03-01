@@ -14,26 +14,11 @@ namespace pomagma
 // construction
 
 Sampler::Sampler (Signature & signature)
-    : Signature::Observer(signature),
-      m_carrier(signature.carrier()),
+    : m_signature(signature),
       m_sample_count(0),
       m_arity_sample_count(0),
       m_compound_arity_sample_count(0)
 {
-}
-
-template<class Function>
-inline void validate_function_probs (
-        const std::unordered_map<std::string, const Function *> & funs,
-        const std::unordered_map<const Function *, float> & probs)
-{
-    for (const auto & ifun : funs) {
-        auto iprob = probs.find(ifun.second);
-        POMAGMA_ASSERT(iprob != probs.end(), "is missing " << ifun.first);
-        float prob = iprob->second;
-        POMAGMA_ASSERT(prob >= 0,
-                "P(" << ifun.first << ") = " << iprob->second);
-    }
 }
 
 void Sampler::validate () const
@@ -49,11 +34,6 @@ void Sampler::validate () const
     float tol = 1e-6;
     POMAGMA_ASSERT_LE(total, 1 + tol);
     POMAGMA_ASSERT_LE(1 - tol, total);
-
-    validate_function_probs(m_nullary_funs, m_nullary_probs);
-    validate_function_probs(m_injective_funs, m_injective_probs);
-    validate_function_probs(m_binary_funs, m_binary_probs);
-    validate_function_probs(m_symmetric_funs, m_symmetric_probs);
 
     // these are required for the implementation of sampling below
     POMAGMA_ASSERT_LT(0, m_nullary_prob);
@@ -98,30 +78,6 @@ inline Key sample (
     }
 }
 
-void Sampler::declare (const std::string & name, NullaryFunction & fun)
-{
-    m_nullary_funs[name] = & fun;
-    set_prob(& fun, 0);
-}
-
-void Sampler::declare (const std::string & name, InjectiveFunction & fun)
-{
-    m_injective_funs[name] = & fun;
-    set_prob(& fun, 0);
-}
-
-void Sampler::declare (const std::string & name, BinaryFunction & fun)
-{
-    m_binary_funs[name] = & fun;
-    set_prob(& fun, 0);
-}
-
-void Sampler::declare (const std::string & name, SymmetricFunction & fun)
-{
-    m_symmetric_funs[name] = & fun;
-    set_prob(& fun, 0);
-}
-
 inline void Sampler::set_prob (const NullaryFunction * fun, float prob)
 {
     m_nullary_probs[fun] = prob;
@@ -148,7 +104,7 @@ inline void Sampler::set_prob (const SymmetricFunction * fun, float prob)
 
 template<class Function>
 inline bool Sampler::try_set_prob_ (
-        const std::unordered_map<std::string, const Function *> & funs,
+        const std::unordered_map<std::string, Function *> & funs,
         const std::string & name,
         float prob)
 {
@@ -164,10 +120,10 @@ inline bool Sampler::try_set_prob_ (
 void Sampler::set_prob (const std::string & name, float prob)
 {
     bool found =
-        try_set_prob_(m_nullary_funs, name, prob) or
-        try_set_prob_(m_injective_funs, name, prob) or
-        try_set_prob_(m_binary_funs, name, prob) or
-        try_set_prob_(m_symmetric_funs, name, prob);
+        try_set_prob_(m_signature.nullary_functions(), name, prob) or
+        try_set_prob_(m_signature.injective_functions(), name, prob) or
+        try_set_prob_(m_signature.binary_functions(), name, prob) or
+        try_set_prob_(m_signature.symmetric_functions(), name, prob);
     POMAGMA_ASSERT(found, "failed to set prob of function: " << name);
     m_bounded_samplers.clear();
 }
@@ -362,9 +318,9 @@ inline Ob Sampler::insert_random_nullary (rng_t & rng) const
 {
     auto & fun = * sample(m_nullary_probs, m_nullary_prob, rng);
     if (Ob val = fun.find()) {
-        return m_carrier.find(val);
+        return m_signature.carrier().find(val);
     } else {
-        if (Ob val = m_carrier.try_insert()) {
+        if (Ob val = m_signature.carrier().try_insert()) {
             fun.insert(val);
             throw(InsertException(val));
         } else {
@@ -377,9 +333,9 @@ inline Ob Sampler::insert_random_injective (Ob key, rng_t & rng) const
 {
     auto & fun = * sample(m_injective_probs, m_injective_prob, rng);
     if (Ob val = fun.find(key)) {
-        return m_carrier.find(val);
+        return m_signature.carrier().find(val);
     } else {
-        if (Ob val = m_carrier.try_insert()) {
+        if (Ob val = m_signature.carrier().try_insert()) {
             fun.insert(key, val);
             throw(InsertException(val));
         } else {
@@ -392,9 +348,9 @@ inline Ob Sampler::insert_random_binary (Ob lhs, Ob rhs, rng_t & rng) const
 {
     auto & fun = * sample(m_binary_probs, m_binary_prob, rng);
     if (Ob val = fun.find(lhs, rhs)) {
-        return m_carrier.find(val);
+        return m_signature.carrier().find(val);
     } else {
-        if (Ob val = m_carrier.try_insert()) {
+        if (Ob val = m_signature.carrier().try_insert()) {
             fun.insert(lhs, rhs, val);
             throw(InsertException(val));
         } else {
@@ -407,9 +363,9 @@ inline Ob Sampler::insert_random_symmetric (Ob lhs, Ob rhs, rng_t & rng) const
 {
     auto & fun = * sample(m_symmetric_probs, m_symmetric_prob, rng);
     if (Ob val = fun.find(lhs, rhs)) {
-        return m_carrier.find(val);
+        return m_signature.carrier().find(val);
     } else {
-        if (Ob val = m_carrier.try_insert()) {
+        if (Ob val = m_signature.carrier().try_insert()) {
             fun.insert(lhs, rhs, val);
             throw(InsertException(val));
         } else {
@@ -427,34 +383,25 @@ Ob Sampler::try_insert (const std::string & expression) const
     return try_insert(stream);
 }
 
-template<class Function>
-inline const Function * find (
-    const std::unordered_map<std::string, const Function *> & funs,
-    const std::string & key)
-{
-    const auto & i = funs.find(key);
-    return i == funs.end() ? nullptr : i->second;
-}
-
 Ob Sampler::try_insert (std::stringstream & stream) const
 {
     std::string token;
     POMAGMA_ASSERT(std::getline(stream, token, ' '),
             "expression terminated prematurely");
 
-    if (const auto * fun = find(m_nullary_funs, token)) {
+    if (const auto * fun = m_signature.nullary_functions(token)) {
         return try_insert(fun);
-    } else if (const auto * fun = find(m_injective_funs, token)) {
+    } else if (const auto * fun = m_signature.injective_functions(token)) {
         if (Ob key = try_insert(stream)) {
             return try_insert(fun, key);
         }
-    } else if (const auto * fun = find(m_binary_funs, token)) {
+    } else if (const auto * fun = m_signature.binary_functions(token)) {
         if (Ob lhs = try_insert(stream)) {
             if (Ob rhs = try_insert(stream)) {
                 return try_insert(fun, lhs, rhs);
             }
         }
-    } else if (const auto * fun = find(m_symmetric_funs, token)) {
+    } else if (const auto * fun = m_signature.symmetric_functions(token)) {
         if (Ob lhs = try_insert(stream)) {
             if (Ob rhs = try_insert(stream)) {
                 return try_insert(fun, lhs, rhs);
@@ -470,7 +417,7 @@ inline Ob Sampler::try_insert (const NullaryFunction * fun) const
 {
     if (Ob val = fun->find()) {
         return val;
-    } else if (Ob val = m_carrier.try_insert()) {
+    } else if (Ob val = m_signature.carrier().try_insert()) {
         fun->insert(val);
         return val;
     } else {
@@ -482,7 +429,7 @@ inline Ob Sampler::try_insert (const InjectiveFunction * fun, Ob key) const
 {
     if (Ob val = fun->find(key)) {
         return val;
-    } else if (Ob val = m_carrier.try_insert()) {
+    } else if (Ob val = m_signature.carrier().try_insert()) {
         fun->insert(key, val);
         return val;
     } else {
@@ -494,7 +441,7 @@ inline Ob Sampler::try_insert (const BinaryFunction * fun, Ob lhs, Ob rhs) const
 {
     if (Ob val = fun->find(lhs, rhs)) {
         return val;
-    } else if (Ob val = m_carrier.try_insert()) {
+    } else if (Ob val = m_signature.carrier().try_insert()) {
         fun->insert(lhs, rhs, val);
         return val;
     } else {
@@ -509,7 +456,7 @@ inline Ob Sampler::try_insert (
 {
     if (Ob val = fun->find(lhs, rhs)) {
         return val;
-    } else if (Ob val = m_carrier.try_insert()) {
+    } else if (Ob val = m_signature.carrier().try_insert()) {
         fun->insert(lhs, rhs, val);
         return val;
     } else {

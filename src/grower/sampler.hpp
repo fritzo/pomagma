@@ -3,19 +3,13 @@
 #include "util.hpp"
 #include "signature.hpp"
 #include <pomagma/util/threading.hpp>
-#include <unordered_map>
 
 namespace pomagma
 {
 
-class Sampler : public Signature::Observer
+class Sampler : noncopyable
 {
-    Carrier & m_carrier;
-
-    std::unordered_map<std::string, const NullaryFunction *> m_nullary_funs;
-    std::unordered_map<std::string, const InjectiveFunction *> m_injective_funs;
-    std::unordered_map<std::string, const BinaryFunction *> m_binary_funs;
-    std::unordered_map<std::string, const SymmetricFunction *> m_symmetric_funs;
+    Signature & m_signature;
 
     std::unordered_map<const NullaryFunction *, float> m_nullary_probs;
     std::unordered_map<const InjectiveFunction *, float> m_injective_probs;
@@ -63,13 +57,7 @@ public:
     void validate () const;
     void log_stats () const;
 
-    void declare (const std::string &, BinaryRelation &) {}
-    void declare (const std::string & name, NullaryFunction & fun);
-    void declare (const std::string & name, InjectiveFunction & fun);
-    void declare (const std::string & name, BinaryFunction & fun);
-    void declare (const std::string & name, SymmetricFunction & fun);
-
-    void set_prob (const std::string &, float prob);
+    void set_prob (const std::string & name, float prob);
 
     Ob try_insert_random (rng_t & rng) const;
     Ob try_insert (const std::string & expression) const;
@@ -83,7 +71,7 @@ private:
 
     template<class Function>
     bool try_set_prob_ (
-            const std::unordered_map<std::string, const Function *> & funs,
+            const std::unordered_map<std::string, Function *> & funs,
             const std::string & name,
             float prob);
 
