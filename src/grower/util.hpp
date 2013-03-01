@@ -6,6 +6,9 @@
 namespace pomagma
 {
 
+namespace concurrent {}
+using namespace concurrent;
+
 //----------------------------------------------------------------------------
 // Obs
 

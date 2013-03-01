@@ -24,7 +24,7 @@ inline void init ()
 // Errors
 // http://www.hdfgroup.org/HDF5/doc/RM/RM_H5E.html
 
-std::string get_error ()
+inline std::string get_error ()
 {
     std::string buffer(4096, '\0');
     FILE * file = fmemopen(&buffer[0], buffer.size(), "w");
@@ -444,7 +444,8 @@ struct Dataset : noncopyable
                 & destin[0]));  // buf
     }
 
-    void write_all (const DenseSet & source)
+    template<class DenseSet>
+    void write_set (const DenseSet & source)
     {
         hid_t source_type = Bitfield<Word>::id();
         hid_t destin_type = type();
@@ -461,7 +462,8 @@ struct Dataset : noncopyable
                 source.raw_data()));    // buf
     }
 
-    void read_all (DenseSet & destin)
+    template<class DenseSet>
+    void read_set (DenseSet & destin)
     {
         hid_t source_type = type();
         hid_t destin_type = Bitfield<Word>::id();
@@ -518,11 +520,13 @@ struct Dataset : noncopyable
                 & destin[0]));          // buf
     }
 
+    template<class atomic_Word>
     void write_rectangle (
-            const std::atomic<Word> * source,
+            const atomic_Word * source,
             size_t dim1,
             size_t dim2)
     {
+        static_assert(sizeof(atomic_Word) == sizeof(Word), "bad word type");
         hid_t source_type = Bitfield<Word>::id();
         hid_t destin_type = type();
         POMAGMA_ASSERT(H5Tequal(source_type, destin_type), "datatype mismatch");
@@ -545,8 +549,10 @@ struct Dataset : noncopyable
                 source));               // buf
     }
 
-    void read_rectangle (std::atomic<Word> * destin, size_t dim1, size_t dim2)
+    template<class atomic_Word>
+    void read_rectangle (atomic_Word * destin, size_t dim1, size_t dim2)
     {
+        static_assert(sizeof(atomic_Word) == sizeof(Word), "bad word type");
         hid_t source_type = type();
         hid_t destin_type = Bitfield<Word>::id();
         POMAGMA_ASSERT(H5Tequal(source_type, destin_type), "datatype mismatch");
@@ -624,7 +630,9 @@ struct OpaqueObject
 };
 } // anonymous namespace
 
-extern "C" herr_t _tree_hash_visitor (
+extern "C"
+{
+static herr_t _tree_hash_visitor (
         hid_t root_id,
         const char * name,
         const H5O_info_t * object_info __attribute__((unused)),
@@ -633,12 +641,13 @@ extern "C" herr_t _tree_hash_visitor (
     if (name[0] != '.') { // ignore root group
         OpaqueObject object(root_id, object_info->addr);
         if (has_hash(object)) {
-            POMAGMA_DEBUG("adding hash at " << name);
+            POMAGMA_DEBUG("loading hash at " << name);
             auto & dict = * static_cast<Hasher::Dict *>(op_data);
             dict[name] = load_hash(object);
         }
     }
     return 0;
+}
 }
 
 template<class Object>

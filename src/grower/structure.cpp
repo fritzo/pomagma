@@ -5,7 +5,7 @@
 #include "binary_function.hpp"
 #include "symmetric_function.hpp"
 #include <pomagma/util/hdf5.hpp>
-#include <pomagma/util/hasher.hpp>
+#include <pomagma/util/check_structure.hpp>
 
 namespace pomagma
 {
@@ -129,8 +129,11 @@ void Structure::load (const std::string & filename)
     POMAGMA_INFO("Loading structure from file " << filename);
 
     hdf5::InFile file(filename);
-    hdf5::Group relations_group(file, "/relations");
-    hdf5::Group functions_group(file, "/functions");
+    //check_structure(file, m_signature); // XXX FIXME this dies with error
+    // "failed to open group relations/binary/NLESS"
+
+    hdf5::Group relations_group(file, "relations");
+    hdf5::Group functions_group(file, "functions");
 
     // TODO parallelize
     load_carrier(file);
@@ -148,7 +151,7 @@ void Structure::load_carrier (hdf5::InFile & file)
 {
     POMAGMA_INFO("loading carrier");
 
-    const std::string groupname = "/carrier";
+    const std::string groupname = "carrier";
     hdf5::Group group(file, groupname);
     hdf5::Dataset dataset(file, groupname + "/support");
 
@@ -161,22 +164,26 @@ void Structure::load_carrier (hdf5::InFile & file)
 
     DenseSet support(m_signature.carrier().item_dim());
 
-    dataset.read_all(support);
+    dataset.read_set(support);
 
     for (auto i = support.iter(); i.ok(); i.next()) {
         m_signature.carrier().raw_insert(*i);
     }
     m_signature.carrier().update();
-    POMAGMA_ASSERT_EQ(m_signature.carrier().rep_count(), m_signature.carrier().item_count());
+    POMAGMA_ASSERT_EQ(
+            m_signature.carrier().rep_count(),
+            m_signature.carrier().item_count());
 
-    auto digest = get_hash(m_signature.carrier());
-    POMAGMA_ASSERT(digest == hdf5::load_hash(group),
-            groupname << " is corrupt");
+    if (POMAGMA_DEBUG_LEVEL) {
+        auto digest = get_hash(m_signature.carrier());
+        POMAGMA_ASSERT(digest == hdf5::load_hash(group),
+                groupname << " is corrupt");
+    }
 }
 
 void Structure::load_binary_relations (hdf5::InFile & file)
 {
-    const std::string groupname = "/relations/binary";
+    const std::string groupname = "relations/binary";
     hdf5::Group group(file, groupname);
 
     // TODO parallelize
@@ -193,15 +200,17 @@ void Structure::load_binary_relations (hdf5::InFile & file)
         dataset.read_rectangle(destin, dim1, dim2);
         rel->update();
 
-        auto digest = get_hash(m_signature.carrier(), *rel);
-        POMAGMA_ASSERT(digest == hdf5::load_hash(dataset),
-                name << " is corrupt");
+        if (POMAGMA_DEBUG_LEVEL) {
+            auto digest = get_hash(m_signature.carrier(), *rel);
+            POMAGMA_ASSERT(digest == hdf5::load_hash(dataset),
+                    name << " is corrupt");
+        }
     }
 }
 
 void Structure::load_nullary_functions (hdf5::InFile & file)
 {
-    const std::string groupname = "/functions/nullary";
+    const std::string groupname = "functions/nullary";
     hdf5::Group group(file, groupname);
 
     for (const auto & pair : m_signature.nullary_functions()) {
@@ -216,9 +225,11 @@ void Structure::load_nullary_functions (hdf5::InFile & file)
         dataset.read_scalar(data);
         fun->raw_insert(data);
 
-        auto digest = get_hash(*fun);
-        POMAGMA_ASSERT(digest == hdf5::load_hash(subgroup),
-                name << " is corrupt");
+        if (POMAGMA_DEBUG_LEVEL) {
+            auto digest = get_hash(*fun);
+            POMAGMA_ASSERT(digest == hdf5::load_hash(subgroup),
+                    name << " is corrupt");
+        }
     }
 }
 
@@ -227,7 +238,7 @@ void Structure::load_injective_functions (hdf5::InFile & file)
     const size_t item_dim = m_signature.carrier().item_dim();
     std::vector<Ob> data(1 + item_dim);
 
-    const std::string groupname = "/functions/injective";
+    const std::string groupname = "functions/injective";
     hdf5::Group group(file, groupname);
 
     for (const auto & pair : m_signature.injective_functions()) {
@@ -246,9 +257,11 @@ void Structure::load_injective_functions (hdf5::InFile & file)
             }
         }
 
-        auto digest = get_hash(*fun);
-        POMAGMA_ASSERT(digest == hdf5::load_hash(dataset),
-                name << " is corrupt");
+        if (POMAGMA_DEBUG_LEVEL) {
+            auto digest = get_hash(*fun);
+            POMAGMA_ASSERT(digest == hdf5::load_hash(dataset),
+                    name << " is corrupt");
+        }
     }
 }
 
@@ -268,7 +281,7 @@ inline void load_functions (
     std::vector<Ob> rhs_data(item_dim);
     std::vector<Ob> value_data(item_dim);
 
-    const std::string groupname = "/functions/" + arity;
+    const std::string groupname = "functions/" + arity;
     hdf5::Group group(file, groupname);
 
     // TODO parallelize loop
@@ -311,9 +324,11 @@ inline void load_functions (
             }
         }
 
-        auto digest = get_hash(carrier, *fun);
-        POMAGMA_ASSERT(digest == hdf5::load_hash(subgroup),
-                name << " is corrupt");
+        if (POMAGMA_DEBUG_LEVEL) {
+            auto digest = get_hash(carrier, *fun);
+            POMAGMA_ASSERT(digest == hdf5::load_hash(subgroup),
+                    name << " is corrupt");
+        }
     }
 }
 
@@ -365,7 +380,7 @@ void Structure::dump_carrier (hdf5::OutFile & file)
 
     const DenseSet & support = m_signature.carrier().support();
 
-    const std::string groupname = "/carrier";
+    const std::string groupname = "carrier";
     hdf5::Group group(file, groupname);
     hdf5::Dataspace dataspace(support.word_dim());
 
@@ -375,7 +390,7 @@ void Structure::dump_carrier (hdf5::OutFile & file)
             hdf5::Bitfield<Word>::id(),
             dataspace);
 
-    dataset.write_all(support);
+    dataset.write_set(support);
 
     auto digest = get_hash(m_signature.carrier());
     hdf5::dump_hash(group, digest);
@@ -389,7 +404,7 @@ void Structure::dump_binary_relations (hdf5::OutFile & file)
 
     hdf5::Dataspace dataspace(1 + item_dim, word_dim);
 
-    const std::string groupname = "/relations/binary";
+    const std::string groupname = "relations/binary";
     hdf5::Group group(file, groupname);
 
     // TODO parallelize loop
@@ -419,7 +434,7 @@ void Structure::dump_nullary_functions (hdf5::OutFile & file)
 {
     hdf5::Dataspace dataspace;
 
-    const std::string groupname = "/functions/nullary";
+    const std::string groupname = "functions/nullary";
     hdf5::Group group(file, groupname);
 
     for (const auto & pair : m_signature.nullary_functions()) {
@@ -450,7 +465,7 @@ void Structure::dump_injective_functions (hdf5::OutFile & file)
     const size_t item_dim = m_signature.carrier().item_dim();
     hdf5::Dataspace dataspace(1 + item_dim);
 
-    const std::string groupname = "/functions/injective";
+    const std::string groupname = "functions/injective";
     hdf5::Group group(file, groupname);
 
     for (const auto & pair : m_signature.injective_functions()) {
@@ -502,7 +517,7 @@ inline void dump_functions (
     std::vector<Ob> rhs_data(1 + item_dim);
     std::vector<Ob> value_data(1 + item_dim);
 
-    const std::string groupname = "/functions/" + arity;
+    const std::string groupname = "functions/" + arity;
     hdf5::Group group(file, groupname);
 
     // TODO parallelize loop

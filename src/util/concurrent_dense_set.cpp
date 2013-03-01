@@ -8,6 +8,8 @@
 
 namespace pomagma
 {
+namespace concurrent
+{
 
 typedef size_t Ob;
 
@@ -266,4 +268,5 @@ bool DenseSet::ensure (const DenseSet & src, DenseSet & diff)
     return changed;
 }
 
+} // namespace concurrent
 } // namespace pomagma

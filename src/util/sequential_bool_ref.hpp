@@ -4,6 +4,8 @@
 
 namespace pomagma
 {
+namespace sequential
+{
 
 class bool_ref
 {
@@ -38,4 +40,5 @@ public:
     bool fetch_one () { bool result = load(); one(); return result; }
 };
 
+} // namespace sequential
 } // namespace pomagma

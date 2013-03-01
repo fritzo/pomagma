@@ -1,6 +1,6 @@
 #pragma once
 
-#include "util.hpp"
+#include <pomagma/util/util.hpp>
 #include <pomagma/util/signature.hpp>
 
 namespace pomagma
@@ -8,8 +8,8 @@ namespace pomagma
 
 namespace hdf5
 {
-struct InFile;
-struct OutFile;
+class InFile;
+class OutFile;
 };
 
 class Structure : noncopyable

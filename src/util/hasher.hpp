@@ -33,25 +33,26 @@ public:
         POMAGMA_ASSERT(SHA1_Init(&m_context), "SHA1_Init failed");
     }
 
-    void add (const uint8_t & t) { update(&t, 1); }
-    void add (const uint16_t & t) { update(&t, 2); }
-    void add (const uint32_t & t) { update(&t, 4); }
-    void add (const uint64_t & t) { update(&t, 8); }
+    void add (const uint8_t & t) { add_raw(&t, 1); }
+    void add (const uint16_t & t) { add_raw(&t, 2); }
+    void add (const uint32_t & t) { add_raw(&t, 4); }
+    void add (const uint64_t & t) { add_raw(&t, 8); }
 
-    void add (const std::vector<uint8_t> & t) { update(&t[0], 1 * t.size()); }
-    void add (const std::vector<uint16_t> & t) { update(&t[0], 2 * t.size()); }
-    void add (const std::vector<uint32_t> & t) { update(&t[0], 4 * t.size()); }
-    void add (const std::vector<uint64_t> & t) { update(&t[0], 8 * t.size()); }
+    void add (const std::vector<uint8_t> & t) { add_raw(&t[0], 1 * t.size()); }
+    void add (const std::vector<uint16_t> & t) { add_raw(&t[0], 2 * t.size()); }
+    void add (const std::vector<uint32_t> & t) { add_raw(&t[0], 4 * t.size()); }
+    void add (const std::vector<uint64_t> & t) { add_raw(&t[0], 8 * t.size()); }
 
     void add (const std::string & t)
     {
-        update(t.data(), t.size());
+        add_raw(t.data(), t.size());
     }
 
-    void add (const DenseSet & t)
-    {
-        update(t.raw_data(), t.data_size_bytes());
-    }
+    //template<class DenseSet>
+    //void add_set (const DenseSet & t)
+    //{
+    //    add_raw(t.raw_data(), t.data_size_bytes());
+    //}
 
     void add (const std::vector<Digest> & t)
     {
@@ -66,6 +67,15 @@ public:
             add(i.first);
             add(i.second);
         }
+    }
+
+    void add_raw (const void * data, size_t bytes)
+    {
+        POMAGMA_ASSERT1(m_state == ADDING,
+                "adding to Hasher state when finished");
+        POMAGMA_ASSERT(
+                SHA1_Update(&m_context, data, bytes),
+                "SHA1_Update failed");
     }
 
     const Digest & finish ()
@@ -115,15 +125,6 @@ private:
     enum State { ADDING, FINISHED };
     State m_state;
     Digest m_data;
-
-    void update (const void * data, size_t bytes)
-    {
-        POMAGMA_ASSERT1(m_state == ADDING,
-                "adding to Hasher state when finished");
-        POMAGMA_ASSERT(
-                SHA1_Update(&m_context, data, bytes),
-                "SHA1_Update failed");
-    }
 };
 
 } // namespace pomagma

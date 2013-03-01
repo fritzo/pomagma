@@ -8,6 +8,9 @@ namespace pomagma
 
 void free_blocks (void *);
 
+namespace sequential
+{
+
 // position 0 is unused, so count from item 1
 inline size_t items_to_words (size_t item_dim)
 {
@@ -358,4 +361,5 @@ inline DenseSet::Iterator3 DenseSet::iter_insn (
     return Iterator3(m_item_dim, m_words, set2.m_words, set3.m_words);
 }
 
+} // namespace sequential
 } // namespace pomagma

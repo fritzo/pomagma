@@ -8,6 +8,8 @@
 
 namespace pomagma
 {
+namespace sequential
+{
 
 typedef size_t Ob;
 
@@ -300,4 +302,5 @@ bool DenseSet::ensure (const DenseSet & src, DenseSet & diff)
     return changed;
 }
 
+} // namespace sequential
 } // namespace pomagma

@@ -4,7 +4,9 @@ include_directories(${CMAKE_SOURCE_DIR}/)
 add_library(pomagma_grower SHARED
 	../util/util.cpp
 	../util/aligned_alloc.cpp
+	../util/sequential_dense_set.cpp
 	../util/concurrent_dense_set.cpp
+	../util/check_structure.cpp
 	carrier.cpp
 	base_bin_rel.cpp
 	binary_relation.cpp

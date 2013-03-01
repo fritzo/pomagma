@@ -5,6 +5,9 @@
 namespace pomagma
 {
 
+namespace sequential {}
+using namespace sequential;
+
 //----------------------------------------------------------------------------
 // Obs
 

@@ -2,6 +2,7 @@
 #include <vector>
 
 using namespace pomagma;
+using namespace concurrent;
 
 typedef size_t Ob;
 

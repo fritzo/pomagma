@@ -5,6 +5,8 @@
 
 namespace pomagma
 {
+namespace concurrent
+{
 
 class bool_ref
 {
@@ -46,4 +48,5 @@ public:
     }
 };
 
+} // namespace concurrent
 } // namespace pomagma

@@ -1,6 +1,7 @@
 #include <pomagma/util/sequential_dense_set.hpp>
 
 using namespace pomagma;
+using namespace sequential;
 
 rng_t rng;
 

@@ -1,6 +1,7 @@
 #include <pomagma/util/concurrent_dense_set.hpp>
 
 using namespace pomagma;
+using namespace concurrent;
 
 rng_t rng;
 
