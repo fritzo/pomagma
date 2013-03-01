@@ -48,6 +48,18 @@ private:
 
     template<class T>
     static void sort (T & i, T & j) { if (j < i) { T k = j; j = i; i = k; }  }
+
+    static std::pair<Ob, Ob> make_sorted_pair (Ob i, Ob j)
+    {
+        sort(i, j);
+        return std::make_pair(i, j);
+    }
+
+    static std::pair<Ob, Ob> assert_sorted_pair (Ob i, Ob j)
+    {
+        POMAGMA_ASSERT2(i <= j, "out of order pair: " << i << ", " << j);
+        return std::make_pair(i, j);
+    }
 };
 
 inline bool SymmetricFunction::defined (Ob lhs, Ob rhs) const
@@ -59,10 +71,9 @@ inline bool SymmetricFunction::defined (Ob lhs, Ob rhs) const
 
 inline Ob SymmetricFunction::find (Ob lhs, Ob rhs) const
 {
-    sort(lhs, rhs);
     POMAGMA_ASSERT5(support().contains(lhs), "unsupported lhs: " << lhs);
     POMAGMA_ASSERT5(support().contains(rhs), "unsupported rhs: " << rhs);
-    auto i = m_values.find(std::make_pair(lhs, rhs));
+    auto i = m_values.find(make_sorted_pair(lhs, rhs));
     return i == m_values.end() ? 0 : i->second;
     //if (i == m_values.end()) {
     //    return 0;
@@ -90,24 +101,22 @@ inline DenseSet::Iterator SymmetricFunction::iter_rhs (Ob rhs) const
 
 inline void SymmetricFunction::raw_insert (Ob lhs, Ob rhs, Ob val)
 {
-    POMAGMA_ASSERT1(lhs <= rhs, "raw inserted out-of-order pair");
     POMAGMA_ASSERT5(support().contains(lhs), "unsupported lhs: " << lhs);
     POMAGMA_ASSERT5(support().contains(rhs), "unsupported rhs: " << rhs);
     POMAGMA_ASSERT5(support().contains(val), "unsupported val: " << val);
 
-    m_values.insert(std::make_pair(std::make_pair(lhs, rhs), val));
+    m_values.insert(std::make_pair(assert_sorted_pair(lhs, rhs), val));
     m_lines.Lx(lhs, rhs).one();
     m_lines.Rx(lhs, rhs).one();
 }
 
 inline void SymmetricFunction::insert (Ob lhs, Ob rhs, Ob val) const
 {
-    sort(lhs, rhs);
     POMAGMA_ASSERT5(support().contains(lhs), "unsupported lhs: " << lhs);
     POMAGMA_ASSERT5(support().contains(rhs), "unsupported rhs: " << rhs);
     POMAGMA_ASSERT5(support().contains(val), "unsupported val: " << val);
 
-    Ob & val_ref = m_values[std::make_pair(lhs, rhs)];
+    Ob & val_ref = m_values[make_sorted_pair(lhs, rhs)];
     if (val_ref) {
         carrier().set_and_merge(val_ref, val);
     } else {

@@ -20,7 +20,7 @@ void SymmetricFunction::validate () const
     POMAGMA_DEBUG("validating line-value consistency");
     for (size_t i = 1; i <= item_dim(); ++i)
     for (size_t j = i; j <= item_dim(); ++j) {
-        auto val_iter = m_values.find(std::make_pair(i, j));
+        auto val_iter = m_values.find(assert_sorted_pair(i, j));
 
         if (not (support().contains(i) and support().contains(j))) {
             POMAGMA_ASSERT(val_iter == m_values.end(),
@@ -74,11 +74,11 @@ void SymmetricFunction::unsafe_merge (const Ob dep)
     // dep as rhs
     for (auto iter = iter_rhs(dep); iter.ok(); iter.next()) {
         Ob lhs = *iter;
-        auto dep_iter = m_values.find(std::make_pair(lhs, dep));
+        auto dep_iter = m_values.find(assert_sorted_pair(lhs, dep));
         Ob val = dep_iter->second;
-        auto rep_iter = m_values.find(std::make_pair(lhs, rep));
+        auto rep_iter = m_values.find(make_sorted_pair(lhs, rep));
         if (rep_iter == m_values.end()) {
-            m_values.insert(std::make_pair(std::make_pair(lhs, rep), val));
+            m_values.insert(std::make_pair(make_sorted_pair(lhs, rep), val));
             m_lines.Lx(lhs, rep).one();
         } else {
             carrier().set_and_merge(rep_iter->second, val);
@@ -96,11 +96,11 @@ void SymmetricFunction::unsafe_merge (const Ob dep)
     rep = carrier().find(rep);
     for (auto iter = iter_lhs(dep); iter.ok(); iter.next()) {
         Ob rhs = *iter;
-        auto dep_iter = m_values.find(std::make_pair(dep, rhs));
+        auto dep_iter = m_values.find(assert_sorted_pair(dep, rhs));
         Ob val = dep_iter->second;
-        auto rep_iter = m_values.find(std::make_pair(rep, rhs));
+        auto rep_iter = m_values.find(assert_sorted_pair(rep, rhs));
         if (rep_iter == m_values.end()) {
-            m_values.insert(std::make_pair(std::make_pair(rep, rhs), val));
+            m_values.insert(std::make_pair(assert_sorted_pair(rep, rhs), val));
             m_lines.Rx(rep, rhs).one();
         } else {
             carrier().set_and_merge(rep_iter->second, val);
