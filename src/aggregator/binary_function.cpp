@@ -75,16 +75,13 @@ void BinaryFunction::unsafe_merge (const Ob dep)
     for (auto iter = iter_rhs(dep); iter.ok(); iter.next()) {
         Ob lhs = *iter;
         auto dep_iter = m_values.find(std::make_pair(lhs, dep));
-        Ob val = dep_iter->second;
-        auto rep_iter = m_values.find(std::make_pair(lhs, rep));
-        if (rep_iter == m_values.end()) {
-            m_values.insert(std::make_pair(std::make_pair(lhs, rep), val));
-            m_lines.Lx(lhs, rep).one();
-        } else {
-            carrier().set_and_merge(rep_iter->second, val);
-        }
+        Ob dep_val = dep_iter->second;
         m_values.erase(dep_iter);
         m_lines.Lx(lhs, dep).zero();
+        Ob & rep_val = m_values[std::make_pair(lhs, rep)];
+        if (carrier().set_or_merge(rep_val, dep_val)) {
+            m_lines.Lx(lhs, rep).one();
+        }
     }
     {
         DenseSet dep_set(item_dim(), m_lines.Rx(dep));
@@ -97,16 +94,13 @@ void BinaryFunction::unsafe_merge (const Ob dep)
     for (auto iter = iter_lhs(dep); iter.ok(); iter.next()) {
         Ob rhs = *iter;
         auto dep_iter = m_values.find(std::make_pair(dep, rhs));
-        Ob val = dep_iter->second;
-        auto rep_iter = m_values.find(std::make_pair(rep, rhs));
-        if (rep_iter == m_values.end()) {
-            m_values.insert(std::make_pair(std::make_pair(rep, rhs), val));
-            m_lines.Rx(rep, rhs).one();
-        } else {
-            carrier().set_and_merge(rep_iter->second, val);
-        }
+        Ob dep_val = dep_iter->second;
         m_values.erase(dep_iter);
         m_lines.Rx(dep, rhs).zero();
+        Ob & rep_val = m_values[std::make_pair(rep, rhs)];
+        if (carrier().set_or_merge(rep_val, dep_val)) {
+            m_lines.Rx(rep, rhs).one();
+        }
     }
     {
         DenseSet dep_set(item_dim(), m_lines.Lx(dep));
