@@ -17,8 +17,10 @@ struct Example
         const DenseSet & support = carrier.support();
 
         POMAGMA_INFO("Defining function");
+        fun.validate();
+
         for (auto i = support.iter(); i.ok(); i.next())
-        for (auto j = support.iter(); j.ok() and *j <= *i; j.next()) {
+        for (auto j = support.iter(); j.ok(); j.next()) {
             Ob k = gcd(*i, *j);
             if ((k > 1) and carrier.contains(k)) {
                 fun.insert(*i, *j, k);

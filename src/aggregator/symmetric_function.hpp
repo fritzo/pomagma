@@ -8,20 +8,20 @@
 namespace pomagma
 {
 
-// a tight binary function
-class BinaryFunction : noncopyable
+// a tight symmetric binary function
+class SymmetricFunction : noncopyable
 {
-    mutable base_bin_rel m_lines;
+    mutable base_sym_rel m_lines;
     mutable std::unordered_map<std::pair<Ob, Ob>, Ob, ObPairHash> m_values;
 
 public:
 
-    BinaryFunction (Carrier & carrier);
+    SymmetricFunction (Carrier & carrier);
     void validate () const;
     void log_stats () const;
 
     // raw operations
-    static bool is_symmetric () { return false; }
+    static bool is_symmetric () { return true; }
     size_t count_pairs () const { return m_values.size(); }
     void raw_insert (Ob lhs, Ob rhs, Ob val);
     void clear ();
@@ -45,17 +45,21 @@ private:
     const Carrier & carrier () const { return m_lines.carrier(); }
     const DenseSet & support () const { return m_lines.support(); }
     size_t item_dim () const { return support().item_dim(); }
+
+    template<class T>
+    static void sort (T & i, T & j) { if (j < i) { T k = j; j = i; i = k; }  }
 };
 
-inline bool BinaryFunction::defined (Ob lhs, Ob rhs) const
+inline bool SymmetricFunction::defined (Ob lhs, Ob rhs) const
 {
     POMAGMA_ASSERT5(support().contains(lhs), "unsupported lhs: " << lhs);
     POMAGMA_ASSERT5(support().contains(rhs), "unsupported rhs: " << rhs);
     return m_lines.get_Lx(lhs, rhs);
 }
 
-inline Ob BinaryFunction::find (Ob lhs, Ob rhs) const
+inline Ob SymmetricFunction::find (Ob lhs, Ob rhs) const
 {
+    sort(lhs, rhs);
     POMAGMA_ASSERT5(support().contains(lhs), "unsupported lhs: " << lhs);
     POMAGMA_ASSERT5(support().contains(rhs), "unsupported rhs: " << rhs);
     auto i = m_values.find(std::make_pair(lhs, rhs));
@@ -72,20 +76,21 @@ inline Ob BinaryFunction::find (Ob lhs, Ob rhs) const
     //}
 }
 
-inline DenseSet::Iterator BinaryFunction::iter_lhs (Ob lhs) const
+inline DenseSet::Iterator SymmetricFunction::iter_lhs (Ob lhs) const
 {
     POMAGMA_ASSERT5(support().contains(lhs), "unsupported lhs: " << lhs);
     return DenseSet::Iterator(item_dim(), m_lines.Lx(lhs));
 }
 
-inline DenseSet::Iterator BinaryFunction::iter_rhs (Ob rhs) const
+inline DenseSet::Iterator SymmetricFunction::iter_rhs (Ob rhs) const
 {
     POMAGMA_ASSERT5(support().contains(rhs), "unsupported rhs: " << rhs);
     return DenseSet::Iterator(item_dim(), m_lines.Rx(rhs));
 }
 
-inline void BinaryFunction::raw_insert (Ob lhs, Ob rhs, Ob val)
+inline void SymmetricFunction::raw_insert (Ob lhs, Ob rhs, Ob val)
 {
+    POMAGMA_ASSERT1(lhs <= rhs, "raw inserted out-of-order pair");
     POMAGMA_ASSERT5(support().contains(lhs), "unsupported lhs: " << lhs);
     POMAGMA_ASSERT5(support().contains(rhs), "unsupported rhs: " << rhs);
     POMAGMA_ASSERT5(support().contains(val), "unsupported val: " << val);
@@ -95,8 +100,9 @@ inline void BinaryFunction::raw_insert (Ob lhs, Ob rhs, Ob val)
     m_lines.Rx(lhs, rhs).one();
 }
 
-inline void BinaryFunction::insert (Ob lhs, Ob rhs, Ob val) const
+inline void SymmetricFunction::insert (Ob lhs, Ob rhs, Ob val) const
 {
+    sort(lhs, rhs);
     POMAGMA_ASSERT5(support().contains(lhs), "unsupported lhs: " << lhs);
     POMAGMA_ASSERT5(support().contains(rhs), "unsupported rhs: " << rhs);
     POMAGMA_ASSERT5(support().contains(val), "unsupported val: " << val);

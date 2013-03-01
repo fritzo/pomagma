@@ -1,25 +1,25 @@
-#include "binary_function.hpp"
+#include "symmetric_function.hpp"
 #include <pomagma/util/aligned_alloc.hpp>
 #include <cstring>
 
 namespace pomagma
 {
 
-BinaryFunction::BinaryFunction (Carrier & carrier)
+SymmetricFunction::SymmetricFunction (Carrier & carrier)
     : m_lines(carrier)
 {
-    POMAGMA_DEBUG("creating BinaryFunction");
+    POMAGMA_DEBUG("creating SymmetricFunction");
 }
 
-void BinaryFunction::validate () const
+void SymmetricFunction::validate () const
 {
-    POMAGMA_INFO("Validating BinaryFunction");
+    POMAGMA_INFO("Validating SymmetricFunction");
 
     m_lines.validate();
 
     POMAGMA_DEBUG("validating line-value consistency");
     for (size_t i = 1; i <= item_dim(); ++i)
-    for (size_t j = 1; j <= item_dim(); ++j) {
+    for (size_t j = i; j <= item_dim(); ++j) {
         auto val_iter = m_values.find(std::make_pair(i, j));
 
         if (not (support().contains(i) and support().contains(j))) {
@@ -39,18 +39,18 @@ void BinaryFunction::validate () const
     }
 }
 
-void BinaryFunction::log_stats () const
+void SymmetricFunction::log_stats () const
 {
     m_lines.log_stats();
 }
 
-void BinaryFunction::clear ()
+void SymmetricFunction::clear ()
 {
     m_lines.clear();
     m_values.clear();
 }
 
-void BinaryFunction::update_values () const
+void SymmetricFunction::update_values () const
 {
     for (auto & pair : m_values) {
         Ob & dep = pair.second;
@@ -61,7 +61,7 @@ void BinaryFunction::update_values () const
     }
 }
 
-void BinaryFunction::unsafe_merge (const Ob dep)
+void SymmetricFunction::unsafe_merge (const Ob dep)
 {
     POMAGMA_ASSERT5(support().contains(dep), "unsupported dep: " << dep);
     Ob rep = carrier().find(dep);
