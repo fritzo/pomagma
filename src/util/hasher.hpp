@@ -5,6 +5,7 @@
 #include <sstream>
 #include <iomanip>
 #include <vector>
+#include <array>
 #include <map>
 
 // one of these should be included
@@ -33,6 +34,15 @@ public:
         POMAGMA_ASSERT(SHA1_Init(&m_context), "SHA1_Init failed");
     }
 
+    void add_raw (const void * data, size_t bytes)
+    {
+        POMAGMA_ASSERT1(m_state == ADDING,
+                "adding to Hasher state when finished");
+        POMAGMA_ASSERT(
+                SHA1_Update(&m_context, data, bytes),
+                "SHA1_Update failed");
+    }
+
     void add (const uint8_t & t) { add_raw(&t, 1); }
     void add (const uint16_t & t) { add_raw(&t, 2); }
     void add (const uint32_t & t) { add_raw(&t, 4); }
@@ -46,6 +56,12 @@ public:
     void add (const std::string & t)
     {
         add_raw(t.data(), t.size());
+    }
+
+    template<class T, size_t size>
+    void add (const std::array<T, size> & t)
+    {
+        add_raw(t.data(), size * sizeof(T));
     }
 
     //template<class DenseSet>
@@ -67,15 +83,6 @@ public:
             add(i.first);
             add(i.second);
         }
-    }
-
-    void add_raw (const void * data, size_t bytes)
-    {
-        POMAGMA_ASSERT1(m_state == ADDING,
-                "adding to Hasher state when finished");
-        POMAGMA_ASSERT(
-                SHA1_Update(&m_context, data, bytes),
-                "SHA1_Update failed");
     }
 
     const Digest & finish ()

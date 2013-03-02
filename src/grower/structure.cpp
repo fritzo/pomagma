@@ -5,7 +5,7 @@
 #include "binary_function.hpp"
 #include "symmetric_function.hpp"
 #include <pomagma/util/hdf5.hpp>
-#include <pomagma/util/check_structure.hpp>
+#include <array>
 
 namespace pomagma
 {
@@ -40,7 +40,7 @@ static Hasher::Digest get_hash (const Carrier & carrier)
 {
     Hasher hasher;
     for (auto i = carrier.iter(); i.ok(); i.next()) {
-        uint32_t data = *i;
+        uint32_t data = * i;
         hasher.add(data);
     }
     return hasher.finish();
@@ -51,11 +51,11 @@ static Hasher::Digest get_hash (
         const BinaryRelation & rel)
 {
     Hasher hasher;
-    std::vector<uint32_t> tuple(2);
+    std::array<uint32_t, 2> tuple;
     for (auto lhs = carrier.iter(); lhs.ok(); lhs.next()) {
-        tuple[0] = *lhs;
-        for (auto rhs = rel.iter_lhs(*lhs); rhs.ok(); rhs.next()) {
-            tuple[1] = *lhs;
+        tuple[0] = * lhs;
+        for (auto rhs = rel.iter_lhs(* lhs); rhs.ok(); rhs.next()) {
+            tuple[1] = * rhs;
             hasher.add(tuple);
         }
     }
@@ -64,7 +64,7 @@ static Hasher::Digest get_hash (
 
 static Hasher::Digest get_hash (const NullaryFunction & fun)
 {
-    std::vector<uint32_t> tuple(1);
+    std::array<uint32_t, 1> tuple;
     tuple[0] = fun.find();
     return Hasher::digest(tuple);
 }
@@ -72,10 +72,10 @@ static Hasher::Digest get_hash (const NullaryFunction & fun)
 static Hasher::Digest get_hash (const InjectiveFunction & fun)
 {
     Hasher hasher;
-    std::vector<uint32_t> tuple(2);
+    std::array<uint32_t, 2> tuple;
     for (auto key = fun.iter(); key.ok(); key.next()) {
-        tuple[0] = *key;
-        tuple[1] = fun.find(*key);
+        tuple[0] = * key;
+        tuple[1] = fun.find(* key);
         hasher.add(tuple);
     }
     return hasher.finish();
@@ -86,12 +86,12 @@ static Hasher::Digest get_hash (
         const BinaryFunction & fun)
 {
     Hasher hasher;
-    std::vector<uint32_t> tuple(3);
+    std::array<uint32_t, 3> tuple;
     for (auto lhs = carrier.iter(); lhs.ok(); lhs.next()) {
-        tuple[0] = *lhs;
-        for (auto rhs = fun.iter_lhs(*lhs); rhs.ok(); rhs.next()) {
-            tuple[1] = *rhs;
-            tuple[2] = fun.find(*lhs, *rhs);
+        tuple[0] = * lhs;
+        for (auto rhs = fun.iter_lhs(* lhs); rhs.ok(); rhs.next()) {
+            tuple[1] = * rhs;
+            tuple[2] = fun.find(* lhs, * rhs);
             hasher.add(tuple);
         }
     }
@@ -103,13 +103,13 @@ static Hasher::Digest get_hash (
         const SymmetricFunction & fun)
 {
     Hasher hasher;
-    std::vector<uint32_t> tuple(3);
+    std::array<uint32_t, 3> tuple;
     for (auto lhs = carrier.iter(); lhs.ok(); lhs.next()) {
-        tuple[0] = *lhs;
-        for (auto rhs = fun.iter_lhs(*lhs); rhs.ok(); rhs.next()) {
-            if (*rhs > *lhs) { break; }
-            tuple[1] = *rhs;
-            tuple[2] = fun.find(*lhs, *rhs);
+        tuple[0] = * lhs;
+        for (auto rhs = fun.iter_lhs(* lhs); rhs.ok(); rhs.next()) {
+            if (* rhs > * lhs) { break; }
+            tuple[1] = * rhs;
+            tuple[2] = fun.find(* lhs, * rhs);
             hasher.add(tuple);
         }
     }
@@ -129,8 +129,6 @@ void Structure::load (const std::string & filename)
     POMAGMA_INFO("Loading structure from file " << filename);
 
     hdf5::InFile file(filename);
-    //check_structure(file, m_signature); // XXX FIXME this dies with error
-    // "failed to open group relations/binary/NLESS"
 
     hdf5::Group relations_group(file, "relations");
     hdf5::Group functions_group(file, "functions");
@@ -167,24 +165,27 @@ void Structure::load_carrier (hdf5::InFile & file)
     dataset.read_set(support);
 
     for (auto i = support.iter(); i.ok(); i.next()) {
-        m_signature.carrier().raw_insert(*i);
+        m_signature.carrier().raw_insert(* i);
     }
     m_signature.carrier().update();
     POMAGMA_ASSERT_EQ(
             m_signature.carrier().rep_count(),
             m_signature.carrier().item_count());
 
-    if (POMAGMA_DEBUG_LEVEL) {
-        auto digest = get_hash(m_signature.carrier());
-        POMAGMA_ASSERT(digest == hdf5::load_hash(group),
-                groupname << " is corrupt");
-    }
+    auto digest = get_hash(m_signature.carrier());
+    POMAGMA_ASSERT(digest == hdf5::load_hash(group),
+            groupname << " is corrupt");
 }
 
 void Structure::load_binary_relations (hdf5::InFile & file)
 {
     const std::string groupname = "relations/binary";
     hdf5::Group group(file, groupname);
+
+    for (auto name : group.children()) {
+        POMAGMA_ASSERT(m_signature.binary_relations(name),
+                "file has unknown " << groupname << "/" << name);
+    }
 
     // TODO parallelize
     for (const auto & pair : m_signature.binary_relations()) {
@@ -200,11 +201,9 @@ void Structure::load_binary_relations (hdf5::InFile & file)
         dataset.read_rectangle(destin, dim1, dim2);
         rel->update();
 
-        if (POMAGMA_DEBUG_LEVEL) {
-            auto digest = get_hash(m_signature.carrier(), *rel);
-            POMAGMA_ASSERT(digest == hdf5::load_hash(dataset),
-                    name << " is corrupt");
-        }
+        auto digest = get_hash(m_signature.carrier(), * rel);
+        POMAGMA_ASSERT(digest == hdf5::load_hash(dataset),
+                name << " is corrupt");
     }
 }
 
@@ -212,6 +211,11 @@ void Structure::load_nullary_functions (hdf5::InFile & file)
 {
     const std::string groupname = "functions/nullary";
     hdf5::Group group(file, groupname);
+
+    for (auto name : group.children()) {
+        POMAGMA_ASSERT(m_signature.nullary_functions(name),
+                "file has unknown " << groupname << "/" << name);
+    }
 
     for (const auto & pair : m_signature.nullary_functions()) {
         std::string name = groupname + "/" + pair.first;
@@ -225,11 +229,9 @@ void Structure::load_nullary_functions (hdf5::InFile & file)
         dataset.read_scalar(data);
         fun->raw_insert(data);
 
-        if (POMAGMA_DEBUG_LEVEL) {
-            auto digest = get_hash(*fun);
-            POMAGMA_ASSERT(digest == hdf5::load_hash(subgroup),
-                    name << " is corrupt");
-        }
+        auto digest = get_hash(* fun);
+        POMAGMA_ASSERT(digest == hdf5::load_hash(subgroup),
+                name << " is corrupt");
     }
 }
 
@@ -240,6 +242,11 @@ void Structure::load_injective_functions (hdf5::InFile & file)
 
     const std::string groupname = "functions/injective";
     hdf5::Group group(file, groupname);
+
+    for (auto name : group.children()) {
+        POMAGMA_ASSERT(m_signature.injective_functions(name),
+                "file has unknown " << groupname << "/" << name);
+    }
 
     for (const auto & pair : m_signature.injective_functions()) {
         std::string name = groupname + "/" + pair.first;
@@ -257,11 +264,9 @@ void Structure::load_injective_functions (hdf5::InFile & file)
             }
         }
 
-        if (POMAGMA_DEBUG_LEVEL) {
-            auto digest = get_hash(*fun);
-            POMAGMA_ASSERT(digest == hdf5::load_hash(dataset),
-                    name << " is corrupt");
-        }
+        auto digest = get_hash(* fun);
+        POMAGMA_ASSERT(digest == hdf5::load_hash(dataset),
+                name << " is corrupt");
     }
 }
 
@@ -271,7 +276,7 @@ namespace detail
 template<class Function>
 inline void load_functions (
         const std::string & arity,
-        std::unordered_map<std::string, Function *> functions,
+        const std::unordered_map<std::string, Function *> & functions,
         const Carrier & carrier,
         hdf5::InFile & file)
 {
@@ -283,6 +288,11 @@ inline void load_functions (
 
     const std::string groupname = "functions/" + arity;
     hdf5::Group group(file, groupname);
+
+    for (auto name : group.children()) {
+        POMAGMA_ASSERT(functions.find(name) != functions.end(),
+                "file has unknown " << groupname << "/" << name);
+    }
 
     // TODO parallelize loop
     for (const auto & pair : functions) {
@@ -324,11 +334,9 @@ inline void load_functions (
             }
         }
 
-        if (POMAGMA_DEBUG_LEVEL) {
-            auto digest = get_hash(carrier, *fun);
-            POMAGMA_ASSERT(digest == hdf5::load_hash(subgroup),
-                    name << " is corrupt");
-        }
+        auto digest = get_hash(carrier, * fun);
+        POMAGMA_ASSERT(digest == hdf5::load_hash(subgroup),
+                name << " is corrupt");
     }
 }
 
@@ -359,8 +367,8 @@ void Structure::dump (const std::string & filename)
 {
     POMAGMA_INFO("Dumping structure to file " << filename);
     hdf5::OutFile file(filename);
-    hdf5::Group relations_group(file, "/relations");
-    hdf5::Group functions_group(file, "/functions");
+    hdf5::Group relations_group(file, "relations");
+    hdf5::Group functions_group(file, "functions");
 
     // TODO parallelize
     dump_carrier(file);
@@ -425,7 +433,7 @@ void Structure::dump_binary_relations (hdf5::OutFile & file)
 
         dataset.write_rectangle(source, dim1, dim2);
 
-        auto digest = get_hash(m_signature.carrier(), *rel);
+        auto digest = get_hash(m_signature.carrier(), * rel);
         hdf5::dump_hash(dataset, digest);
     }
 }
@@ -452,7 +460,7 @@ void Structure::dump_nullary_functions (hdf5::OutFile & file)
         Ob data = fun->find();
         dataset.write_scalar(data);
 
-        auto digest = get_hash(*fun);
+        auto digest = get_hash(* fun);
         hdf5::dump_hash(subgroup, digest);
     }
 }
@@ -482,12 +490,12 @@ void Structure::dump_injective_functions (hdf5::OutFile & file)
 
         std::vector<Ob> data(1 + item_dim, 0);
         for (auto key = fun->iter(); key.ok(); key.next()) {
-            data[*key] = fun->raw_find(*key);
+            data[* key] = fun->raw_find(* key);
         }
 
         dataset.write_all(data);
 
-        auto digest = get_hash(*fun);
+        auto digest = get_hash(* fun);
         hdf5::dump_hash(subgroup, digest);
     }
 }
@@ -498,7 +506,7 @@ namespace detail
 template<class Function>
 inline void dump_functions (
         const std::string & arity,
-        std::unordered_map<std::string, Function *> functions,
+        const std::unordered_map<std::string, Function *> & functions,
         const Carrier & carrier,
         hdf5::OutFile & file)
 {
@@ -555,9 +563,9 @@ inline void dump_functions (
                 rhs_data.clear();
                 value_data.clear();
                 for (auto rhs = fun->iter_lhs(lhs); rhs.ok(); rhs.next()) {
-                    if (Function::is_symmetric() and *rhs > lhs) { break; }
-                    rhs_data.push_back(*rhs);
-                    value_data.push_back(fun->raw_find(lhs, *rhs));
+                    if (Function::is_symmetric() and * rhs > lhs) { break; }
+                    rhs_data.push_back(* rhs);
+                    value_data.push_back(fun->raw_find(lhs, * rhs));
                 }
                 if (size_t count = rhs_data.size()) {
                     ptr_t nextpos = pos + count;
@@ -571,7 +579,7 @@ inline void dump_functions (
         POMAGMA_ASSERT_EQ(pos, pair_count);
         lhs_ptr_dataset.write_all(lhs_ptr_data);
 
-        auto digest = get_hash(carrier, *fun);
+        auto digest = get_hash(carrier, * fun);
         hdf5::dump_hash(subgroup, digest);
     }
 }

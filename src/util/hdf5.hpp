@@ -133,6 +133,24 @@ struct OutFile : noncopyable
 // Groups
 // http://www.hdfgroup.org/HDF5/doc/RM/RM_H5G.html
 
+extern "C"
+{
+static herr_t _group_children_visitor (
+        hid_t root_id __attribute__((unused)),
+        const char * name,
+        const H5L_info_t * object_info __attribute__((unused)),
+        void * op_data)
+{
+    auto * names = static_cast<std::vector<std::string> *>(op_data);
+    if (name[0] != '.') { // ignore root group
+        //POMAGMA_DEBUG("found child " << name);
+        names->push_back(name);
+    }
+    return 0;
+}
+}
+
+
 struct Group : noncopyable
 {
     const hid_t id;
@@ -157,6 +175,20 @@ public:
     ~Group ()
     {
         POMAGMA_HDF5_OK(H5Gclose(id));
+    }
+
+    std::vector<std::string> children ()
+    {
+        hsize_t idx = 0;
+        std::vector<std::string> result;
+        POMAGMA_HDF5_OK(H5Literate(
+                    id,
+                    H5_INDEX_NAME,
+                    H5_ITER_NATIVE,
+                    & idx,
+                    _group_children_visitor,
+                    & result));
+        return result;
     }
 };
 
@@ -331,9 +363,10 @@ struct Dataset : noncopyable
 {
     const hid_t id;
 
-    Dataset (InFile & file, const std::string & name)
+    template<class Object>
+    Dataset (Object & object, const std::string & name)
         : id(H5Dopen(
-            file.id,
+            object.id,
             name.c_str()
             //, H5P_DEFAULT
             ))
@@ -560,6 +593,8 @@ struct Dataset : noncopyable
         Dataspace source_dataspace(* this);
         auto shape = source_dataspace.shape();
         POMAGMA_ASSERT_EQ(shape.size(), 2);
+        POMAGMA_ASSERT_LE(shape[0], dim1);
+        POMAGMA_ASSERT_LE(shape[1], dim2);
 
         Dataspace destin_dataspace(dim1, dim2);
         const hsize_t offset[] = {0, 0};
@@ -583,7 +618,6 @@ inline Dataspace::Dataspace (Dataset & dataset)
 
 //----------------------------------------------------------------------------
 // Hashing
-
 
 template<class Object>
 inline bool has_hash (Object & object)
@@ -635,8 +669,8 @@ extern "C"
 static herr_t _tree_hash_visitor (
         hid_t root_id,
         const char * name,
-        const H5O_info_t * object_info __attribute__((unused)),
-        void * op_data __attribute__((unused)))
+        const H5O_info_t * object_info,
+        void * op_data)
 {
     if (name[0] != '.') { // ignore root group
         OpaqueObject object(root_id, object_info->addr);
