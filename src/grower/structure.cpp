@@ -11,14 +11,6 @@ namespace pomagma
 {
 
 //----------------------------------------------------------------------------
-// construction
-
-Structure::Structure (Signature & signature)
-    : m_signature(signature)
-{
-}
-
-//----------------------------------------------------------------------------
 // clearing
 
 void Structure::clear ()

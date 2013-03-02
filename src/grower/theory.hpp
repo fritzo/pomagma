@@ -22,6 +22,12 @@ namespace pomagma
 //----------------------------------------------------------------------------
 // signature
 
+Structure structure;
+Signature & signature = structure.signature();
+Sampler sampler(structure.signature());
+void load_structure (const std::string & filename) { structure.load(filename); }
+void dump_structure (const std::string & filename) { structure.dump(filename); }
+
 void schedule_merge (Ob dep) { schedule(MergeTask(dep)); }
 void schedule_exists (Ob ob) { schedule(ExistsTask(ob)); }
 void schedule_less (Ob lhs, Ob rhs) { schedule(PositiveOrderTask(lhs, rhs)); }
@@ -43,18 +49,10 @@ void schedule_symmetric_function (const SymmetricFunction * fun, Ob lhs, Ob rhs)
     schedule(SymmetricFunctionTask(*fun, lhs, rhs));
 }
 
-Signature signature;
-
 Carrier carrier(
     getenv_default("POMAGMA_SIZE", DEFAULT_ITEM_DIM),
     schedule_exists,
     schedule_merge);
-
-Sampler sampler(signature);
-Structure structure(signature);
-
-void load_structure (const std::string & filename) { structure.load(filename); }
-void dump_structure (const std::string & filename) { structure.dump(filename); }
 
 BinaryRelation LESS(carrier, schedule_less);
 BinaryRelation NLESS(carrier, schedule_nless);

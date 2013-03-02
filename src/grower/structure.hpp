@@ -14,11 +14,11 @@ class OutFile;
 
 class Structure : noncopyable
 {
-    Signature & m_signature;
+    Signature m_signature;
 
 public:
 
-    Structure (Signature & signature);
+    Structure () {}
 
     Signature & signature () { return m_signature; }
     Carrier & carrier () { return * m_signature.carrier(); }
