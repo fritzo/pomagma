@@ -11,25 +11,18 @@ namespace pomagma
 {
 
 //----------------------------------------------------------------------------
-// construction
-
-Structure::Structure (Signature & signature)
-    : m_signature(signature)
-{
-}
-
-//----------------------------------------------------------------------------
 // clearing
 
 void Structure::clear ()
 {
     POMAGMA_INFO("Clearing structure");
-    carrier().clear();
-    for (auto i : m_signature.binary_relations()) { i.second->clear(); }
-    for (auto i : m_signature.nullary_functions()) { i.second->clear(); }
-    for (auto i : m_signature.injective_functions()) { i.second->clear(); }
-    for (auto i : m_signature.binary_functions()) { i.second->clear(); }
-    for (auto i : m_signature.symmetric_functions()) { i.second->clear(); }
+    delete & carrier();
+    for (auto i : m_signature.binary_relations()) { delete i.second; }
+    for (auto i : m_signature.nullary_functions()) { delete i.second; }
+    for (auto i : m_signature.injective_functions()) { delete i.second; }
+    for (auto i : m_signature.binary_functions()) { delete i.second; }
+    for (auto i : m_signature.symmetric_functions()) { delete i.second; }
+    m_signature.clear();
 }
 
 //----------------------------------------------------------------------------
@@ -121,20 +114,19 @@ static Hasher::Digest get_hash (
 // adapted from
 // http://www.hdfgroup.org/HDF5/Tutor/crtfile.html
 
-void Structure::load (const std::string & filename)
+void Structure::load (const std::string & filename, size_t extra_item_dim)
 {
-    if (carrier().item_count()) { clear(); }
-
     POMAGMA_INFO("Loading structure from file " << filename);
+
+    clear();
 
     hdf5::init();
     hdf5::InFile file(filename);
-
     hdf5::Group relations_group(file, "relations");
     hdf5::Group functions_group(file, "functions");
 
     // TODO parallelize
-    load_carrier(file);
+    load_carrier(file, extra_item_dim);
     load_binary_relations(file);
     load_nullary_functions(file);
     load_injective_functions(file);
@@ -145,7 +137,7 @@ void Structure::load (const std::string & filename)
     POMAGMA_ASSERT(digest == hdf5::load_hash(file), "file is corrupt");
 }
 
-void Structure::load_carrier (hdf5::InFile & file)
+void Structure::load_carrier (hdf5::InFile & file, size_t extra_item_dim)
 {
     POMAGMA_INFO("loading carrier");
 
@@ -157,8 +149,8 @@ void Structure::load_carrier (hdf5::InFile & file)
     const auto shape = dataspace.shape();
     POMAGMA_ASSERT_EQ(shape.size(), 1);
     size_t source_item_dim = shape[0] * BITS_PER_WORD - 1;
-    size_t destin_item_dim = carrier().item_dim();
-    POMAGMA_ASSERT_LE(source_item_dim, destin_item_dim);
+    size_t destin_item_dim = source_item_dim + extra_item_dim;
+    m_signature.declare(* new Carrier(destin_item_dim));
 
     DenseSet support(carrier().item_dim());
 
@@ -182,15 +174,10 @@ void Structure::load_binary_relations (hdf5::InFile & file)
     const std::string groupname = "relations/binary";
     hdf5::Group group(file, groupname);
 
-    for (auto name : group.children()) {
-        POMAGMA_ASSERT(m_signature.binary_relations(name),
-                "file has unknown " << groupname << "/" << name);
-    }
-
     // TODO parallelize
-    for (const auto & pair : m_signature.binary_relations()) {
-        std::string name = groupname + "/" + pair.first;
-        BinaryRelation * rel = pair.second;
+    for (auto name : group.children()) {
+        auto * rel = new BinaryRelation(carrier());
+        m_signature.declare(name, * rel);
         POMAGMA_INFO("loading " << name);
 
         size_t dim1 = 1 + rel->item_dim();
@@ -203,7 +190,7 @@ void Structure::load_binary_relations (hdf5::InFile & file)
 
         auto digest = get_hash(carrier(), * rel);
         POMAGMA_ASSERT(digest == hdf5::load_hash(dataset),
-                name << " is corrupt");
+                groupname << "/" << name << " is corrupt");
     }
 }
 
@@ -213,17 +200,12 @@ void Structure::load_nullary_functions (hdf5::InFile & file)
     hdf5::Group group(file, groupname);
 
     for (auto name : group.children()) {
-        POMAGMA_ASSERT(m_signature.nullary_functions(name),
-                "file has unknown " << groupname << "/" << name);
-    }
-
-    for (const auto & pair : m_signature.nullary_functions()) {
-        std::string name = groupname + "/" + pair.first;
-        NullaryFunction * fun = pair.second;
+        auto * fun = new NullaryFunction(carrier());
+        m_signature.declare(name, * fun);
         POMAGMA_INFO("loading " << name);
 
-        hdf5::Group subgroup(file, name);
-        hdf5::Dataset dataset(file, name + "/value");
+        hdf5::Group subgroup(group, name);
+        hdf5::Dataset dataset(subgroup, "value");
 
         Ob data;
         dataset.read_scalar(data);
@@ -231,7 +213,7 @@ void Structure::load_nullary_functions (hdf5::InFile & file)
 
         auto digest = get_hash(* fun);
         POMAGMA_ASSERT(digest == hdf5::load_hash(subgroup),
-                name << " is corrupt");
+                groupname << "/" << name << " is corrupt");
     }
 }
 
@@ -244,17 +226,12 @@ void Structure::load_injective_functions (hdf5::InFile & file)
     hdf5::Group group(file, groupname);
 
     for (auto name : group.children()) {
-        POMAGMA_ASSERT(m_signature.injective_functions(name),
-                "file has unknown " << groupname << "/" << name);
-    }
-
-    for (const auto & pair : m_signature.injective_functions()) {
-        std::string name = groupname + "/" + pair.first;
-        InjectiveFunction * fun = pair.second;
+        auto * fun = new InjectiveFunction(carrier());
+        m_signature.declare(name, * fun);
         POMAGMA_INFO("loading " << name);
 
-        hdf5::Group subgroup(file, name);
-        hdf5::Dataset dataset(file, name + "/value");
+        hdf5::Group subgroup(group, name);
+        hdf5::Dataset dataset(subgroup, "value");
 
         dataset.read_all(data);
 
@@ -266,7 +243,7 @@ void Structure::load_injective_functions (hdf5::InFile & file)
 
         auto digest = get_hash(* fun);
         POMAGMA_ASSERT(digest == hdf5::load_hash(dataset),
-                name << " is corrupt");
+                groupname << "/" << name << " is corrupt");
     }
 }
 
@@ -276,10 +253,10 @@ namespace detail
 template<class Function>
 inline void load_functions (
         const std::string & arity,
-        const std::unordered_map<std::string, Function *> & functions,
-        const Carrier & carrier,
+        Signature & signature,
         hdf5::InFile & file)
 {
+    Carrier & carrier = * signature.carrier();
     const size_t item_dim = carrier.item_dim();
     typedef uint_<2 * sizeof(Ob)>::t ptr_t;
     std::vector<ptr_t> lhs_ptr_data(1 + item_dim);
@@ -289,21 +266,16 @@ inline void load_functions (
     const std::string groupname = "functions/" + arity;
     hdf5::Group group(file, groupname);
 
-    for (auto name : group.children()) {
-        POMAGMA_ASSERT(functions.find(name) != functions.end(),
-                "file has unknown " << groupname << "/" << name);
-    }
-
     // TODO parallelize loop
-    for (const auto & pair : functions) {
-        std::string name = groupname + "/" + pair.first;
-        Function * fun = pair.second;
+    for (auto name : group.children()) {
+        auto * fun = new Function(carrier);
+        signature.declare(name, * fun);
         POMAGMA_INFO("loading " << name);
 
-        hdf5::Group subgroup(file, name);
-        hdf5::Dataset lhs_ptr_dataset(file, name + "/lhs_ptr");
-        hdf5::Dataset rhs_dataset(file, name + "/rhs");
-        hdf5::Dataset value_dataset(file, name + "/value");
+        hdf5::Group subgroup(group, name);
+        hdf5::Dataset lhs_ptr_dataset(subgroup,"lhs_ptr");
+        hdf5::Dataset rhs_dataset(subgroup, "rhs");
+        hdf5::Dataset value_dataset(subgroup, "value");
 
         hdf5::Dataspace lhs_ptr_dataspace(lhs_ptr_dataset);
         hdf5::Dataspace rhs_dataspace(rhs_dataset);
@@ -336,7 +308,7 @@ inline void load_functions (
 
         auto digest = get_hash(carrier, * fun);
         POMAGMA_ASSERT(digest == hdf5::load_hash(subgroup),
-                name << " is corrupt");
+                groupname << "/" << name << " is corrupt");
     }
 }
 
@@ -344,19 +316,17 @@ inline void load_functions (
 
 void Structure::load_binary_functions (hdf5::InFile & file)
 {
-    return detail::load_functions(
+    return detail::load_functions<BinaryFunction>(
             "binary",
-            m_signature.binary_functions(),
-            carrier(),
+            m_signature,
             file);
 }
 
 void Structure::load_symmetric_functions (hdf5::InFile & file)
 {
-    return detail::load_functions(
+    return detail::load_functions<SymmetricFunction>(
             "symmetric",
-            m_signature.symmetric_functions(),
-            carrier(),
+            m_signature,
             file);
 }
 
@@ -507,7 +477,7 @@ namespace detail
 template<class Function>
 inline void dump_functions (
         const std::string & arity,
-        const std::unordered_map<std::string, Function *> & functions,
+        std::unordered_map<std::string, Function *> functions,
         const Carrier & carrier,
         hdf5::OutFile & file)
 {
@@ -566,7 +536,7 @@ inline void dump_functions (
                 for (auto rhs = fun->iter_lhs(lhs); rhs.ok(); rhs.next()) {
                     if (Function::is_symmetric() and * rhs > lhs) { break; }
                     rhs_data.push_back(* rhs);
-                    value_data.push_back(fun->raw_find(lhs, * rhs));
+                    value_data.push_back(fun->find(lhs, * rhs));
                 }
                 if (size_t count = rhs_data.size()) {
                     ptr_t nextpos = pos + count;
@@ -603,6 +573,16 @@ void Structure::dump_symmetric_functions (hdf5::OutFile & file)
             m_signature.symmetric_functions(),
             carrier(),
             file);
+}
+
+//----------------------------------------------------------------------------
+// Merging
+
+bool Structure::try_merge (Structure & other)
+{
+    POMAGMA_ASSERT(this != & other, "cannot merge with self");
+    POMAGMA_ERROR("TODO");
+    return false;
 }
 
 } // namespace pomagma

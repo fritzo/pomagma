@@ -172,6 +172,13 @@ public:
                 "failed to open group " << name << "\n" << get_error());
     }
 
+    Group (Group & group, const std::string & name)
+        : id(H5Gopen(group.id, name.c_str()))
+    {
+        POMAGMA_ASSERT(id >= 0,
+                "failed to open group " << name << "\n" << get_error());
+    }
+
     ~Group ()
     {
         POMAGMA_HDF5_OK(H5Gclose(id));

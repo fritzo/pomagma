@@ -64,6 +64,8 @@ public:
 
 private:
 
+    const Carrier & carrier () const { return * m_signature.carrier(); }
+
     void set_prob (const NullaryFunction * fun, float prob);
     void set_prob (const InjectiveFunction * fun, float prob);
     void set_prob (const BinaryFunction * fun, float prob);

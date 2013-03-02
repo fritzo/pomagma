@@ -15,7 +15,7 @@ class SymmetricFunction;
 
 class Signature : noncopyable
 {
-    Carrier & m_carrier;
+    Carrier * m_carrier;
     std::unordered_map<std::string, BinaryRelation *> m_binary_relations;
     std::unordered_map<std::string, NullaryFunction *> m_nullary_functions;
     std::unordered_map<std::string, InjectiveFunction *> m_injective_functions;
@@ -24,18 +24,18 @@ class Signature : noncopyable
 
 public:
 
-    Signature (Carrier & carrier)
-        : m_carrier(carrier)
-    {
-    }
+    Signature () : m_carrier(nullptr) {}
 
+    void clear ();
+
+    void declare (Carrier & carrier) { m_carrier = & carrier; }
     void declare (const std::string & name, BinaryRelation & rel);
     void declare (const std::string & name, NullaryFunction & fun);
     void declare (const std::string & name, InjectiveFunction & fun);
     void declare (const std::string & name, BinaryFunction & fun);
     void declare (const std::string & name, SymmetricFunction & fun);
 
-    Carrier & carrier () { return m_carrier; }
+    Carrier * carrier () { return m_carrier; }
 
     const std::unordered_map<std::string, BinaryRelation *> &
         binary_relations () const;
@@ -65,6 +65,18 @@ private:
         return i == funs.end() ? nullptr : i->second;
     }
 };
+
+
+inline void Signature::clear ()
+{
+    POMAGMA_INFO("Clearing signature");
+    m_carrier = nullptr;
+    m_binary_relations.clear();
+    m_nullary_functions.clear();
+    m_injective_functions.clear();
+    m_binary_functions.clear();
+    m_symmetric_functions.clear();
+}
 
 
 inline void Signature::declare (

@@ -280,6 +280,7 @@ def write_signature(code, functions):
 
     body = Code()
     body('''
+        signature.declare(carrier);
         signature.declare("LESS", LESS);
         signature.declare("NLESS", NLESS);
         ''')

@@ -318,9 +318,9 @@ inline Ob Sampler::insert_random_nullary (rng_t & rng) const
 {
     auto & fun = * sample(m_nullary_probs, m_nullary_prob, rng);
     if (Ob val = fun.find()) {
-        return m_signature.carrier().find(val);
+        return carrier().find(val);
     } else {
-        if (Ob val = m_signature.carrier().try_insert()) {
+        if (Ob val = carrier().try_insert()) {
             fun.insert(val);
             throw(InsertException(val));
         } else {
@@ -333,9 +333,9 @@ inline Ob Sampler::insert_random_injective (Ob key, rng_t & rng) const
 {
     auto & fun = * sample(m_injective_probs, m_injective_prob, rng);
     if (Ob val = fun.find(key)) {
-        return m_signature.carrier().find(val);
+        return carrier().find(val);
     } else {
-        if (Ob val = m_signature.carrier().try_insert()) {
+        if (Ob val = carrier().try_insert()) {
             fun.insert(key, val);
             throw(InsertException(val));
         } else {
@@ -348,9 +348,9 @@ inline Ob Sampler::insert_random_binary (Ob lhs, Ob rhs, rng_t & rng) const
 {
     auto & fun = * sample(m_binary_probs, m_binary_prob, rng);
     if (Ob val = fun.find(lhs, rhs)) {
-        return m_signature.carrier().find(val);
+        return carrier().find(val);
     } else {
-        if (Ob val = m_signature.carrier().try_insert()) {
+        if (Ob val = carrier().try_insert()) {
             fun.insert(lhs, rhs, val);
             throw(InsertException(val));
         } else {
@@ -363,9 +363,9 @@ inline Ob Sampler::insert_random_symmetric (Ob lhs, Ob rhs, rng_t & rng) const
 {
     auto & fun = * sample(m_symmetric_probs, m_symmetric_prob, rng);
     if (Ob val = fun.find(lhs, rhs)) {
-        return m_signature.carrier().find(val);
+        return carrier().find(val);
     } else {
-        if (Ob val = m_signature.carrier().try_insert()) {
+        if (Ob val = carrier().try_insert()) {
             fun.insert(lhs, rhs, val);
             throw(InsertException(val));
         } else {
@@ -417,7 +417,7 @@ inline Ob Sampler::try_insert (const NullaryFunction * fun) const
 {
     if (Ob val = fun->find()) {
         return val;
-    } else if (Ob val = m_signature.carrier().try_insert()) {
+    } else if (Ob val = carrier().try_insert()) {
         fun->insert(val);
         return val;
     } else {
@@ -429,7 +429,7 @@ inline Ob Sampler::try_insert (const InjectiveFunction * fun, Ob key) const
 {
     if (Ob val = fun->find(key)) {
         return val;
-    } else if (Ob val = m_signature.carrier().try_insert()) {
+    } else if (Ob val = carrier().try_insert()) {
         fun->insert(key, val);
         return val;
     } else {
@@ -441,7 +441,7 @@ inline Ob Sampler::try_insert (const BinaryFunction * fun, Ob lhs, Ob rhs) const
 {
     if (Ob val = fun->find(lhs, rhs)) {
         return val;
-    } else if (Ob val = m_signature.carrier().try_insert()) {
+    } else if (Ob val = carrier().try_insert()) {
         fun->insert(lhs, rhs, val);
         return val;
     } else {
@@ -456,7 +456,7 @@ inline Ob Sampler::try_insert (
 {
     if (Ob val = fun->find(lhs, rhs)) {
         return val;
-    } else if (Ob val = m_signature.carrier().try_insert()) {
+    } else if (Ob val = carrier().try_insert()) {
         fun->insert(lhs, rhs, val);
         return val;
     } else {

@@ -43,12 +43,12 @@ void schedule_symmetric_function (const SymmetricFunction * fun, Ob lhs, Ob rhs)
     schedule(SymmetricFunctionTask(*fun, lhs, rhs));
 }
 
+Signature signature;
+
 Carrier carrier(
     getenv_default("POMAGMA_SIZE", DEFAULT_ITEM_DIM),
     schedule_exists,
     schedule_merge);
-
-Signature signature(carrier);
 
 Sampler sampler(signature);
 Structure structure(signature);

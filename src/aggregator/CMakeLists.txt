@@ -12,7 +12,7 @@ add_library(pomagma_aggregator SHARED
 	injective_function.cpp
 	binary_function.cpp
 	symmetric_function.cpp
-	#structure.cpp
+	structure.cpp
 	)
 install(TARGETS pomagma_aggregator
 	LIBRARY
@@ -52,6 +52,8 @@ add_executable(symmetric_function_test symmetric_function_test.cpp)
 target_link_libraries(symmetric_function_test ${POMAGMA_AGGREGATOR_TEST_LIBS})
 add_test(NAME aggregator_symmetric_function COMMAND symmetric_function_test)
 
+add_executable(load_item_dim load_item_dim.cpp)
+target_link_libraries(load_item_dim ${POMAGMA_LIBS})
 
 #add_library(pomagma_aggregator_server SHARED
 #	server.cpp
