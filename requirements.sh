@@ -11,6 +11,6 @@ $i libhdf5-serial-dev
 $i libssl-dev
 
 $i python-pip virtualenvwrapper
-mkvirtualenv --system-site-packages pomagma
+workon pomagma || mkvirtualenv --system-site-packages pomagma
 workon pomagma
 pip install nose
