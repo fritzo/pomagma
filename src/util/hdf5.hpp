@@ -204,6 +204,13 @@ public:
                     & result));
         return result;
     }
+
+    bool exists (const std::string & name)
+    {
+        htri_t result = H5Lexists(id, name.c_str(), H5P_DEFAULT);
+        POMAGMA_HDF5_OK(result);
+        return result;
+    }
 };
 
 //----------------------------------------------------------------------------

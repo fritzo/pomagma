@@ -13,6 +13,7 @@ add_library(pomagma_aggregator SHARED
 	binary_function.cpp
 	symmetric_function.cpp
 	structure.cpp
+	aggregator.cpp
 	)
 install(TARGETS pomagma_aggregator
 	LIBRARY

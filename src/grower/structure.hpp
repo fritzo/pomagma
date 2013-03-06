@@ -6,12 +6,6 @@
 namespace pomagma
 {
 
-namespace hdf5
-{
-class InFile;
-class OutFile;
-};
-
 class Structure : noncopyable
 {
     Signature m_signature;
@@ -26,15 +20,6 @@ public:
     void clear ();
     void load (const std::string & filename);
     void dump (const std::string & filename);
-
-private:
-
-    void load_carrier (hdf5::InFile & file);
-    void load_binary_relations (hdf5::InFile & file);
-    void load_nullary_functions (hdf5::InFile & file);
-    void load_injective_functions (hdf5::InFile & file);
-    void load_binary_functions (hdf5::InFile & file);
-    void load_symmetric_functions (hdf5::InFile & file);
 };
 
 } // namespace pomagma

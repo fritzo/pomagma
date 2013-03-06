@@ -13,6 +13,7 @@ class InjectiveFunction;
 class BinaryFunction;
 class SymmetricFunction;
 
+// a shallow data structure managing opaque carrier, relations, and functions
 class Signature : noncopyable
 {
     Carrier * m_carrier;
@@ -66,18 +67,15 @@ private:
     }
 };
 
-
 inline void Signature::clear ()
 {
-    POMAGMA_INFO("Clearing signature");
-    m_carrier = nullptr;
     m_binary_relations.clear();
     m_nullary_functions.clear();
     m_injective_functions.clear();
     m_binary_functions.clear();
     m_symmetric_functions.clear();
+    m_carrier = nullptr;
 }
-
 
 inline void Signature::declare (
         const std::string & name,
