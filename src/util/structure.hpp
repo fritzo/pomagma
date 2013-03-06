@@ -626,6 +626,7 @@ inline void load_data (
         size_t end = lhs_ptr_data[lhs + 1];
         POMAGMA_ASSERT_LE(begin, end);
         if (size_t count = end - begin) {
+            POMAGMA_ASSERT_LE(count, item_dim);
 
             rhs_data.resize(count); // XXX FIXME segfault here in free.copy
             rhs_dataset.read_block(rhs_data, begin);
