@@ -5,7 +5,6 @@
 #include "binary_function.hpp"
 #include "symmetric_function.hpp"
 #include <pomagma/util/structure.hpp>
-#include <pomagma/util/hdf5.hpp>
 
 namespace pomagma
 {
@@ -17,20 +16,13 @@ void Structure::clear ()
 
 void Structure::load (const std::string & filename)
 {
-    POMAGMA_INFO("Loading structure from file " << filename);
     clear();
-    // TODO move all hdf5 stuff to util/structure.hpp
-    hdf5::init();
-    hdf5::InFile file(filename);
-    pomagma::load_data(m_signature, file);
+    pomagma::load_data(m_signature, filename);
 }
 
 void Structure::dump (const std::string & filename)
 {
-    POMAGMA_INFO("Dumping structure to file " << filename);
-    hdf5::init();
-    hdf5::OutFile file(filename);
-    pomagma::dump(signature(), file);
+    pomagma::dump(signature(), filename);
 }
 
 } // namespace pomagma

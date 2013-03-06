@@ -25,16 +25,16 @@ inline void clear_data (
 
 inline void dump (
         Signature & signature,
-        hdf5::OutFile & file);
+        const std::string & filename);
 
 inline void load (
         Signature & signature,
-        hdf5::InFile & file,
+        const std::string & filename,
         size_t extra_item_dim = 0);
 
 inline void load_data (
         Signature & signature,
-        hdf5::InFile & file);
+        const std::string & filename);
 
 //----------------------------------------------------------------------------
 // Clearing
@@ -334,8 +334,13 @@ inline void dump (
 
 inline void dump (
         Signature & signature,
-        hdf5::OutFile & file)
+        const std::string & filename)
 {
+    POMAGMA_INFO("Dumping structure to file " << filename);
+
+    hdf5::init();
+    hdf5::OutFile file(filename);
+
     POMAGMA_ASSERT(signature.carrier(), "carrier is not defined");
     const Carrier & carrier = * signature.carrier();
 
@@ -677,9 +682,14 @@ inline void load_data (
 
 inline void load (
         Signature & signature,
-        hdf5::InFile & file,
+        const std::string & filename,
         size_t extra_item_dim)
 {
+    POMAGMA_INFO("Loading structure from file " << filename);
+
+    hdf5::init();
+    hdf5::InFile file(filename);
+
     auto digest = hdf5::get_tree_hash(file);
     POMAGMA_ASSERT(digest == hdf5::load_hash(file), "file is corrupt");
 
@@ -689,8 +699,11 @@ inline void load (
 
 inline void load_data (
         Signature & signature,
-        hdf5::InFile & file)
+        const std::string & filename)
 {
+    hdf5::init();
+    hdf5::InFile file(filename);
+
     auto digest = hdf5::get_tree_hash(file);
     POMAGMA_ASSERT(digest == hdf5::load_hash(file), "file is corrupt");
 
