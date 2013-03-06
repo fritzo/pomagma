@@ -24,6 +24,7 @@ int main (int argc, char ** argv)
 
     pomagma::Structure structure;
     structure.load(structure_in);
+    structure.validate();
     structure.dump(structure_out);
 
     return 0;

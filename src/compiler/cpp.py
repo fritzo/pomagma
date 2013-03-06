@@ -309,48 +309,6 @@ def write_signature(code, functions):
 
 
 @inputs(Code)
-def write_validator(code, functions):
-    # TODO move this to grower/signature.cpp
-    body1 = Code()
-    body2 = Code()
-    functions = functions.items()
-    functions.sort(key=lambda (arity, _): -signature.get_nargs(arity))
-    for arity, funs in functions:
-        for name in funs:
-            if signature.get_nargs(arity) >= 2:
-                body1('''
-                    threads.push_back(std::thread([](){ $name.validate(); }));
-                    ''',
-                    name = name)
-            else:
-                body2('''
-                    $name.validate();
-                    ''',
-                    name = name)
-
-    code('''
-        void validate_all ()
-        {
-            std::vector<std::thread> threads;
-
-            threads.push_back(std::thread([](){ LESS.validate(); }));
-            threads.push_back(std::thread([](){ NLESS.validate(); }));
-            threads.push_back(std::thread([](){ NLESS.validate_disjoint(LESS); }));
-            $body1
-
-            carrier.validate();
-            sampler.validate();
-            $body2
-
-            for (auto & thread : threads) { thread.join(); }
-        }
-        ''',
-        body1 = wrapindent(body1),
-        body2 = wrapindent(body2),
-        ).newline()
-
-
-@inputs(Code)
 def write_stats_logger(code, functions):
     body = Code()
     functions = functions.items()
@@ -761,7 +719,6 @@ def write_theory(code, rules=None, facts=None):
         ''').newline()
 
     write_signature(code, functions)
-    write_validator(code, functions)
     write_stats_logger(code, functions)
     write_merge_task(code, functions)
     write_ensurers(code, functions)

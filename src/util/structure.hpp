@@ -10,12 +10,16 @@
 // SymmetricFunction
 #include <pomagma/util/hdf5.hpp>
 #include <array>
+#include <thread>
 
 namespace pomagma
 {
 
 //----------------------------------------------------------------------------
 // Interface
+
+inline void validate (
+        Signature & signature);
 
 inline void clear (
         Signature & signature);
@@ -35,6 +39,50 @@ inline void load (
 inline void load_data (
         Signature & signature,
         const std::string & filename);
+
+//----------------------------------------------------------------------------
+// Validation
+
+inline void validate (Signature & signature)
+{
+    POMAGMA_ASSERT(signature.carrier(), "carrier is not defined");
+
+    std::vector<std::thread> threads;
+
+    // do expensive tasks in parallel
+    for (auto i : signature.binary_relations()) {
+        auto * rel = i.second;
+        threads.push_back(std::thread([=](){ rel->validate(); }));
+
+        std::string negated = "N" + i.first;
+        if (auto * nrel = signature.binary_relations(negated)) {
+            threads.push_back(std::thread([=](){
+                nrel->validate_disjoint(*rel);
+            }));
+        }
+    }
+    for (auto i : signature.binary_functions()) {
+        auto * fun = i.second;
+        threads.push_back(std::thread([=](){ fun->validate(); }));
+    }
+    for (auto i : signature.symmetric_functions()) {
+        auto * fun = i.second;
+        threads.push_back(std::thread([=](){ fun->validate(); }));
+    }
+
+    // do everything else in this thread
+    for (auto i : signature.injective_functions()) {
+        auto * fun = i.second;
+        fun->validate();
+    }
+    for (auto i : signature.nullary_functions()) {
+        auto * fun = i.second;
+        fun->validate();
+    }
+    signature.carrier()->validate();
+
+    for (auto & thread : threads) { thread.join(); }
+}
 
 //----------------------------------------------------------------------------
 // Clearing

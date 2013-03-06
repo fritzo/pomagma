@@ -58,6 +58,15 @@ BinaryRelation LESS(carrier, schedule_less);
 BinaryRelation NLESS(carrier, schedule_nless);
 
 //----------------------------------------------------------------------------
+// validation
+
+void validate_all ()
+{
+    structure.validate();
+    sampler.validate();
+}
+
+//----------------------------------------------------------------------------
 // basic ensurers
 
 inline void ensure_equal (Ob lhs, Ob rhs)
