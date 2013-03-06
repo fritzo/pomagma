@@ -18,43 +18,41 @@ add_library(pomagma_aggregator SHARED
 install(TARGETS pomagma_aggregator
 	LIBRARY
 	DESTINATION ${PROJECT_SOURCE_DIR}/lib)
-set(POMAGMA_LIBS
-	pomagma_aggregator
-       	hdf5_hl hdf5
-	crypto ssl)
-
-
-set(POMAGMA_AGGREGATOR_TEST_LIBS
+set(POMAGMA_FREE_LIBS
 	pomagma_aggregator
        	hdf5_hl hdf5
 	crypto ssl)
 
 add_executable(aggregator_carrier_test carrier_test.cpp)
-target_link_libraries(aggregator_carrier_test ${POMAGMA_AGGREGATOR_TEST_LIBS})
+target_link_libraries(aggregator_carrier_test ${POMAGMA_FREE_LIBS})
 add_test(NAME aggregator_carrier COMMAND aggregator_carrier_test)
 
 add_executable(binary_relation_test binary_relation_test.cpp)
-target_link_libraries(binary_relation_test ${POMAGMA_AGGREGATOR_TEST_LIBS})
+target_link_libraries(binary_relation_test ${POMAGMA_FREE_LIBS})
 add_test(NAME aggregator_binary_relation COMMAND binary_relation_test)
 
 add_executable(nullary_function_test nullary_function_test.cpp)
-target_link_libraries(nullary_function_test ${POMAGMA_AGGREGATOR_TEST_LIBS})
+target_link_libraries(nullary_function_test ${POMAGMA_FREE_LIBS})
 add_test(NAME aggregator_nullary_function COMMAND nullary_function_test)
 
 add_executable(injective_function_test injective_function_test.cpp)
-target_link_libraries(injective_function_test ${POMAGMA_AGGREGATOR_TEST_LIBS})
+target_link_libraries(injective_function_test ${POMAGMA_FREE_LIBS})
 add_test(NAME aggregator_injective_function COMMAND injective_function_test)
 
 add_executable(binary_function_test binary_function_test.cpp)
-target_link_libraries(binary_function_test ${POMAGMA_AGGREGATOR_TEST_LIBS})
+target_link_libraries(binary_function_test ${POMAGMA_FREE_LIBS})
 add_test(NAME aggregator_binary_function COMMAND binary_function_test)
 
 add_executable(symmetric_function_test symmetric_function_test.cpp)
-target_link_libraries(symmetric_function_test ${POMAGMA_AGGREGATOR_TEST_LIBS})
+target_link_libraries(symmetric_function_test ${POMAGMA_FREE_LIBS})
 add_test(NAME aggregator_symmetric_function COMMAND symmetric_function_test)
 
 add_executable(load_item_dim load_item_dim.cpp)
-target_link_libraries(load_item_dim ${POMAGMA_LIBS})
+target_link_libraries(load_item_dim ${POMAGMA_FREE_LIBS})
+
+add_executable(free.copy copy_main.cpp)
+target_link_libraries(free.copy ${POMAGMA_FREE_LIBS})
+install(TARGETS free.copy DESTINATION ${PROJECT_SOURCE_DIR}/bin)
 
 #add_library(pomagma_aggregator_server SHARED
 #	server.cpp
@@ -66,7 +64,7 @@ target_link_libraries(load_item_dim ${POMAGMA_LIBS})
 #	)
 #set(POMAGMA_SERVER_LIBS
 #	pomagma_aggregator_server
-#	${POMAGMA_LIBS}
+#	${POMAGMA_FREE_LIBS}
 #	#zmq
 #	protobuf
 #	)

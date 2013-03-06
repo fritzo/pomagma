@@ -301,4 +301,17 @@ inline bool operator== (const std::vector<T> & x, const std::vector<T> & y)
     return true;
 }
 
+//----------------------------------------------------------------------------
+// string operations
+
+inline std::string get_filename (const std::string & path)
+{
+    size_t pos = path.find_last_of("/");
+    if (pos != std::string::npos) {
+        return std::string(path.begin() + pos + 1, path.end());
+    } else {
+        return path;
+    }
+}
+
 } // namespace pomagma

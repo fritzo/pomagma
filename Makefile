@@ -44,9 +44,9 @@ h4-test: build/debug log data
 	@$(MAKE) -C src/language h4.language
 	@(cd build/debug && cmake -DCMAKE_BUILD_TYPE=Debug ../..)
 	@$(MAKE) -C build/debug/src/grower h4.grow
+	@$(MAKE) -C build/debug/src/free free.copy
 	@echo '' > log/h4-test.log
 	@echo -e '\nTesting grower with theory h4'
-	@#POMAGMA_SIZE=14400 # TODO slow
 	POMAGMA_SIZE=127 \
 	POMAGMA_LOG_LEVEL=4 \
 	POMAGMA_LOG_FILE=log/h4-test.log \
@@ -56,6 +56,10 @@ h4-test: build/debug log data
 	POMAGMA_LOG_LEVEL=4 \
 	POMAGMA_LOG_FILE=log/h4-test.log \
 	build/debug/src/grower/h4.grow data/h4-test.h5 data/h4-test.h5 \
+	|| (grep -C3 -i error log/h4-test.log && false)
+	POMAGMA_LOG_LEVEL=4 \
+	POMAGMA_LOG_FILE=log/h4-test.log \
+	build/debug/src/free/free.copy data/h4-test.h5 data/h4-test.h5 \
 	|| (grep -C3 -i error log/h4-test.log && false)
 	POMAGMA_SIZE=511 \
 	POMAGMA_LOG_LEVEL=4 \

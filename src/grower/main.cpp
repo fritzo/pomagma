@@ -34,19 +34,9 @@ void load_language (const char * filename)
 } // namespace pomagma
 
 
-inline std::string get_filename (const std::string & path)
-{
-    size_t pos = path.find_last_of("/");
-    if (pos != std::string::npos) {
-        return std::string(path.begin() + pos + 1, path.end());
-    } else {
-        return path;
-    }
-}
-
 inline std::string get_language (const std::string & path)
 {
-    const std::string server = get_filename(path);
+    const std::string server = pomagma::get_filename(path);
     size_t pos = server.find_last_of(".");
     const std::string stem(server.begin(), server.begin() + pos);
     const std::string home = getenv("HOME");
@@ -77,7 +67,7 @@ int main (int argc, char ** argv)
     } else {
         std::cout
             << "Usage: "
-                << get_filename(argv[0])
+                << pomagma::get_filename(argv[0])
                 << " [structure_in] structure_out" << "\n"
             << "Environment Variables:\n"
             << "  POMAGMA_ROOT = $HOME/pomagma\n"

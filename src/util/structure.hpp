@@ -43,15 +43,15 @@ inline void clear (
         Signature & signature)
 {
     POMAGMA_INFO("Clearing signature");
-    POMAGMA_ASSERT(signature.carrier(), "carrier is not defined");
 
-    for (auto i : signature.binary_relations()) { delete i.second; }
-    for (auto i : signature.nullary_functions()) { delete i.second; }
-    for (auto i : signature.injective_functions()) { delete i.second; }
-    for (auto i : signature.binary_functions()) { delete i.second; }
-    for (auto i : signature.symmetric_functions()) { delete i.second; }
-    delete signature.carrier();
-
+    if (signature.carrier()) {
+        for (auto i : signature.binary_relations()) { delete i.second; }
+        for (auto i : signature.nullary_functions()) { delete i.second; }
+        for (auto i : signature.injective_functions()) { delete i.second; }
+        for (auto i : signature.binary_functions()) { delete i.second; }
+        for (auto i : signature.symmetric_functions()) { delete i.second; }
+        delete signature.carrier();
+    }
     signature.clear();
 }
 
@@ -627,7 +627,7 @@ inline void load_data (
         POMAGMA_ASSERT_LE(begin, end);
         if (size_t count = end - begin) {
 
-            rhs_data.resize(count);
+            rhs_data.resize(count); // XXX FIXME segfault here in free.copy
             rhs_dataset.read_block(rhs_data, begin);
 
             value_data.resize(count);
