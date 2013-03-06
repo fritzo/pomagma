@@ -43,24 +43,24 @@ unit-test: python-libs build/debug log
 h4-test: build/debug log data
 	@$(MAKE) -C src/language h4.language
 	@(cd build/debug && cmake -DCMAKE_BUILD_TYPE=Debug ../..)
-	@$(MAKE) -C build/debug/src/grower h4.grower
+	@$(MAKE) -C build/debug/src/grower h4.grow
 	@echo '' > log/h4-test.log
 	@echo -e '\nTesting grower with theory h4'
 	@#POMAGMA_SIZE=14400 # TODO slow
 	POMAGMA_SIZE=127 \
 	POMAGMA_LOG_LEVEL=4 \
 	POMAGMA_LOG_FILE=log/h4-test.log \
-	build/debug/src/grower/h4.grower data/h4-test.h5 \
+	build/debug/src/grower/h4.grow data/h4-test.h5 \
 	|| (grep -C3 -i error log/h4-test.log && false)
 	POMAGMA_SIZE=255 \
 	POMAGMA_LOG_LEVEL=4 \
 	POMAGMA_LOG_FILE=log/h4-test.log \
-	build/debug/src/grower/h4.grower data/h4-test.h5 data/h4-test.h5 \
+	build/debug/src/grower/h4.grow data/h4-test.h5 data/h4-test.h5 \
 	|| (grep -C3 -i error log/h4-test.log && false)
 	POMAGMA_SIZE=511 \
 	POMAGMA_LOG_LEVEL=4 \
 	POMAGMA_LOG_FILE=log/h4-test.log \
-	build/debug/src/grower/h4.grower data/h4-test.h5 data/h4-test.h5 \
+	build/debug/src/grower/h4.grow data/h4-test.h5 data/h4-test.h5 \
 	|| (grep -C3 -i error log/h4-test.log && false)
 
 h4: install log data
@@ -69,24 +69,24 @@ h4: install log data
 	POMAGMA_SIZE=14400 \
 	POMAGMA_LOG_LEVEL=4 \
 	POMAGMA_LOG_FILE=log/h4.log \
-	bin/h4.grower data/h4.h5 \
+	bin/h4.grow data/h4.h5 \
 	|| (grep -C3 -i error log/h4.log && false)
 
 sk-test: build/debug log data
 	@$(MAKE) -C src/language sk.language
 	@(cd build/debug && cmake -DCMAKE_BUILD_TYPE=Debug ../..)
-	@$(MAKE) -C build/debug/src/grower sk.grower
+	@$(MAKE) -C build/debug/src/grower sk.grow
 	@echo '' > log/sk-test.log
 	@echo -e '\nTesting grower with theory sk'
 	POMAGMA_SIZE=1023 \
 	POMAGMA_LOG_LEVEL=4 \
 	POMAGMA_LOG_FILE=log/sk-test.log \
-	build/debug/src/grower/sk.grower data/sk-test.h5 \
+	build/debug/src/grower/sk.grow data/sk-test.h5 \
 	|| (grep -C3 -i error log/sk-test.log && false)
 	POMAGMA_SIZE=1535 \
 	POMAGMA_LOG_LEVEL=4 \
 	POMAGMA_LOG_FILE=log/sk-test.log \
-	build/debug/src/grower/sk.grower data/sk-test.h5 data/sk-test.h5 \
+	build/debug/src/grower/sk.grow data/sk-test.h5 data/sk-test.h5 \
 	|| (grep -C3 -i error log/sk-test.log && false)
 
 sk: install log data
@@ -95,24 +95,24 @@ sk: install log data
 	POMAGMA_SIZE=2047 \
 	POMAGMA_LOG_LEVEL=4 \
 	POMAGMA_LOG_FILE=log/sk.log \
-	bin/sk.grower data/sk.h5 \
+	bin/sk.grow data/sk.h5 \
 	|| (grep -C3 -i error log/sk.log && false)
 
 skj-test: build/debug log data
 	@$(MAKE) -C src/language skj.language
 	@(cd build/debug && cmake -DCMAKE_BUILD_TYPE=Debug ../..)
-	@$(MAKE) -C build/debug/src/grower skj.grower
+	@$(MAKE) -C build/debug/src/grower skj.grow
 	@echo '' > log/skj-test.log
 	@echo -e '\nTesting grower with theory skj'
 	POMAGMA_SIZE=1535 \
 	POMAGMA_LOG_LEVEL=4 \
 	POMAGMA_LOG_FILE=log/skj-test.log \
-	build/debug/src/grower/skj.grower data/skj-test.h5 \
+	build/debug/src/grower/skj.grow data/skj-test.h5 \
 	|| (grep -C3 -i error log/skj-test.log && false)
 	POMAGMA_SIZE=2047 \
 	POMAGMA_LOG_LEVEL=4 \
 	POMAGMA_LOG_FILE=log/skj-test.log \
-	build/debug/src/grower/skj.grower data/skj-test.h5 data/skj-test.h5 \
+	build/debug/src/grower/skj.grow data/skj-test.h5 data/skj-test.h5 \
 	|| (grep -C3 -i error log/skj-test.log && false)
 
 skj: install log data
@@ -121,7 +121,7 @@ skj: install log data
 	POMAGMA_SIZE=2047 \
 	POMAGMA_LOG_LEVEL=4 \
 	POMAGMA_LOG_FILE=log/skj.log \
-	bin/skj.grower data/skj.h5 \
+	bin/skj.grow data/skj.h5 \
 	|| (grep -C3 -i error log/skj.log && false)
 
 profile: build/release log FORCE

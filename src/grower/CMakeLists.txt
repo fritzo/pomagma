@@ -67,24 +67,24 @@ target_link_libraries(grower_scheduler_test ${POMAGMA_GROWER_TEST_LIBS})
 add_test(NAME grower_scheduler COMMAND grower_scheduler_test)
 
 
-add_library(pomagma_grower_server SHARED
-	server.cpp
+add_library(pomagma_grower_main SHARED
+	main.cpp
 	language.pb.cc
 	structure.pb.cc
 	)
-install(TARGETS pomagma_grower_server LIBRARY
+install(TARGETS pomagma_grower_main LIBRARY
        	DESTINATION ${PROJECT_SOURCE_DIR}/lib
 	)
 set(POMAGMA_SERVER_LIBS
-	pomagma_grower_server
+	pomagma_grower_main
 	${POMAGMA_LIBS}
 	#zmq
 	protobuf
 	)
 
 
-add_executable(dummy.grower dummy.theory.cpp)
-target_link_libraries(dummy.grower ${POMAGMA_SERVER_LIBS})
+add_executable(dummy.grow dummy.theory.cpp)
+target_link_libraries(dummy.grow ${POMAGMA_SERVER_LIBS})
 
 set(SRC_DIR ${PROJECT_SOURCE_DIR}/src)
 
@@ -125,9 +125,9 @@ add_custom_command(
 		${SRC_DIR}/theory/h4.rules
 		${SRC_DIR}/theory/h4.facts
 	)
-add_executable(h4.grower h4.theory.cpp)
-target_link_libraries(h4.grower ${POMAGMA_SERVER_LIBS})
-install(TARGETS h4.grower DESTINATION ${PROJECT_SOURCE_DIR}/bin)
+add_executable(h4.grow h4.theory.cpp)
+target_link_libraries(h4.grow ${POMAGMA_SERVER_LIBS})
+install(TARGETS h4.grow DESTINATION ${PROJECT_SOURCE_DIR}/bin)
 
 add_custom_command(
 	OUTPUT ${CMAKE_CURRENT_LIST_DIR}/sk.theory.cpp
@@ -148,9 +148,9 @@ add_custom_command(
 		${SRC_DIR}/theory/sk.facts
 		${SRC_DIR}/theory/order.facts
 	)
-add_executable(sk.grower sk.theory.cpp)
-target_link_libraries(sk.grower ${POMAGMA_SERVER_LIBS})
-install(TARGETS sk.grower DESTINATION ${PROJECT_SOURCE_DIR}/bin)
+add_executable(sk.grow sk.theory.cpp)
+target_link_libraries(sk.grow ${POMAGMA_SERVER_LIBS})
+install(TARGETS sk.grow DESTINATION ${PROJECT_SOURCE_DIR}/bin)
 
 add_custom_command(
 	OUTPUT ${CMAKE_CURRENT_LIST_DIR}/skj.theory.cpp
@@ -173,6 +173,6 @@ add_custom_command(
 		${SRC_DIR}/theory/sk.facts
 		${SRC_DIR}/theory/order.facts
 	)
-add_executable(skj.grower skj.theory.cpp)
-target_link_libraries(skj.grower ${POMAGMA_SERVER_LIBS})
-install(TARGETS skj.grower DESTINATION ${PROJECT_SOURCE_DIR}/bin)
+add_executable(skj.grow skj.theory.cpp)
+target_link_libraries(skj.grow ${POMAGMA_SERVER_LIBS})
+install(TARGETS skj.grow DESTINATION ${PROJECT_SOURCE_DIR}/bin)
