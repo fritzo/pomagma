@@ -27,7 +27,7 @@ public:
     void clear ();
     void load (const std::string & filename, size_t extra_item_dim = 0);
     void dump (const std::string & filename);
-    bool try_merge (Structure & other);
+    bool try_merge (Structure & other); // TODO this belongs elsewhere
 
 private:
 
@@ -37,13 +37,6 @@ private:
     void load_injective_functions (hdf5::InFile & file);
     void load_binary_functions (hdf5::InFile & file);
     void load_symmetric_functions (hdf5::InFile & file);
-
-    void dump_carrier (hdf5::OutFile & file);
-    void dump_binary_relations (hdf5::OutFile & file);
-    void dump_nullary_functions (hdf5::OutFile & file);
-    void dump_injective_functions (hdf5::OutFile & file);
-    void dump_binary_functions (hdf5::OutFile & file);
-    void dump_symmetric_functions (hdf5::OutFile & file);
 };
 
 } // namespace pomagma

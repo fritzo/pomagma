@@ -35,13 +35,6 @@ private:
     void load_injective_functions (hdf5::InFile & file);
     void load_binary_functions (hdf5::InFile & file);
     void load_symmetric_functions (hdf5::InFile & file);
-
-    void dump_carrier (hdf5::OutFile & file);
-    void dump_binary_relations (hdf5::OutFile & file);
-    void dump_nullary_functions (hdf5::OutFile & file);
-    void dump_injective_functions (hdf5::OutFile & file);
-    void dump_binary_functions (hdf5::OutFile & file);
-    void dump_symmetric_functions (hdf5::OutFile & file);
 };
 
 } // namespace pomagma

@@ -32,6 +32,7 @@ public:
     DenseSet get_Rx_set (Ob rhs) const { return m_lines.Rx_set(rhs); }
     bool defined (Ob lhs, Ob rhs) const;
     Ob find (Ob lhs, Ob rhs) const;
+    Ob raw_find (Ob lhs, Ob rhs) const { return find(lhs, rhs); }
     DenseSet::Iterator iter_lhs (Ob lhs) const;
     DenseSet::Iterator iter_rhs (Ob rhs) const;
     void insert (Ob lhs, Ob rhs, Ob val) const;

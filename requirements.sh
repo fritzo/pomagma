@@ -9,8 +9,9 @@ $i libtbb-dev
 $i libprotobuf-dev protobuf-compiler python-protobuf
 $i libhdf5-serial-dev
 $i libssl-dev
-
+$i python-tables
 $i python-pip virtualenvwrapper
+
 workon pomagma || mkvirtualenv --system-site-packages pomagma
 workon pomagma
 pip install nose

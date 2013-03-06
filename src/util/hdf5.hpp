@@ -154,29 +154,36 @@ static herr_t _group_children_visitor (
 struct Group : noncopyable
 {
     const hid_t id;
-private:
-    static size_t size_estimate () { return 0; }
-public:
 
-    Group (OutFile & file, const std::string & name)
-        : id(H5Gcreate(file.id, name.c_str(), size_estimate()))
+private:
+
+    static size_t size_estimate () { return 0; }
+
+    static hid_t open (hid_t loc_id, const std::string & name)
     {
+        hid_t id = H5Gopen(loc_id, name.c_str());
+        POMAGMA_ASSERT(id >= 0,
+                "failed to open group " << name << "\n" << get_error());
+        return id;
+    }
+
+    static hid_t open_or_create (hid_t loc_id, const std::string & name)
+    {
+        hid_t id = H5Gopen(loc_id, name.c_str());
+        if (id < 0) {
+            id = H5Gcreate(loc_id, name.c_str(), size_estimate());
+        }
         POMAGMA_ASSERT(id >= 0,
                 "failed to create group " << name << "\n" << get_error());
+        return id;
     }
 
-    Group (InFile & file, const std::string & name)
-        : id(H5Gopen(file.id, name.c_str()))
-    {
-        POMAGMA_ASSERT(id >= 0,
-                "failed to open group " << name << "\n" << get_error());
-    }
+public:
 
-    Group (Group & group, const std::string & name)
-        : id(H5Gopen(group.id, name.c_str()))
+    template<class Object>
+    Group (Object & object, const std::string & name, bool create = false)
+        : id(create ? open_or_create(object.id, name) : open(object.id, name))
     {
-        POMAGMA_ASSERT(id >= 0,
-                "failed to open group " << name << "\n" << get_error());
     }
 
     ~Group ()
@@ -382,13 +389,14 @@ struct Dataset : noncopyable
                 "failed to open dataset " << name << "\n" << get_error());
     }
 
+    template<class Object>
     Dataset (
-            OutFile & file,
+            Object & object,
             const std::string & name,
             hid_t type_id,
             Dataspace & dataspace)
         : id(H5Dcreate(
-                file.id,
+                object.id,
                 name.c_str(),
                 type_id,
                 dataspace.id,
