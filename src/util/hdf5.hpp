@@ -84,6 +84,37 @@ template<> struct Bitfield<uint64_t>
     static hid_t id () { return H5T_NATIVE_B64; }
 };
 
+inline hid_t unsigned_type_wide_enough_for (size_t max_value)
+{
+    if (max_value <= std::numeric_limits<uint8_t>::max()) {
+        return H5T_NATIVE_UCHAR;
+    } else if (max_value <= std::numeric_limits<uint16_t>::max()) {
+        return H5T_NATIVE_USHORT;
+    } else if (max_value <= std::numeric_limits<uint32_t>::max()) {
+        return H5T_NATIVE_UINT;
+    } else {
+        return H5T_NATIVE_ULONG;
+    }
+}
+
+inline size_t max_value_of_type (hid_t type)
+{
+    if (H5Tequal(type, H5T_NATIVE_UCHAR)) {
+        return std::numeric_limits<uint8_t>::max();
+    } else
+    if (H5Tequal(type, H5T_NATIVE_USHORT)) {
+        return std::numeric_limits<uint16_t>::max();
+    } else
+    if (H5Tequal(type, H5T_NATIVE_UINT)) {
+        return std::numeric_limits<uint32_t>::max();
+    } else
+    if (H5Tequal(type, H5T_NATIVE_ULONG)) {
+        return std::numeric_limits<uint64_t>::max();
+    } else {
+        POMAGMA_ERROR("unknown type");
+    }
+}
+
 //----------------------------------------------------------------------------
 // Files
 // http://www.hdfgroup.org/HDF5/doc/RM/RM_H5F.html
@@ -432,7 +463,9 @@ struct Dataset : noncopyable
     {
         hid_t source_type = Unsigned<T>::id();
         hid_t destin_type = type();
-        POMAGMA_ASSERT_LE(H5Tget_size(source_type), H5Tget_size(destin_type));
+        if (H5Tget_size(source_type) > H5Tget_size(destin_type)) {
+            POMAGMA_ASSERT_LE(source, max_value_of_type(destin_type));
+        }
 
         POMAGMA_ASSERT_EQ(rank(), 0);
 
@@ -468,7 +501,10 @@ struct Dataset : noncopyable
     {
         hid_t source_type = Unsigned<T>::id();
         hid_t destin_type = type();
-        POMAGMA_ASSERT_LE(H5Tget_size(source_type), H5Tget_size(destin_type));
+        if (H5Tget_size(source_type) > H5Tget_size(destin_type)) {
+            size_t max_value = * std::max(source.begin(), source.end());
+            POMAGMA_ASSERT_LE(max_value, max_value_of_type(destin_type));
+        }
 
         POMAGMA_ASSERT_EQ(volume(), source.size());
 
@@ -540,7 +576,10 @@ struct Dataset : noncopyable
     {
         hid_t source_type = Unsigned<T>::id();
         hid_t destin_type = type();
-        POMAGMA_ASSERT_LE(H5Tget_size(source_type), H5Tget_size(destin_type));
+        if (H5Tget_size(source_type) > H5Tget_size(destin_type)) {
+            size_t max_value = * std::max(source.begin(), source.end());
+            POMAGMA_ASSERT_LE(max_value, max_value_of_type(destin_type));
+        }
 
         Dataspace source_dataspace(source.size());
         Dataspace destin_dataspace(* this);

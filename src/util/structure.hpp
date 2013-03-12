@@ -219,13 +219,13 @@ inline void dump (
 {
     POMAGMA_INFO("dumping carrier");
 
-    auto ob_type = hdf5::Bitfield<Word>::id();
+    auto word_type = hdf5::Bitfield<Word>::id();
 
     const DenseSet & support = carrier.support();
     hdf5::Dataspace dataspace(support.word_dim());
 
     hdf5::Group group(file, "carrier", true);
-    hdf5::Dataset dataset(group, "support", ob_type, dataspace);
+    hdf5::Dataset dataset(group, "support", word_type, dataspace);
 
     dataset.write_set(support);
 
@@ -269,7 +269,8 @@ inline void dump (
 {
     POMAGMA_INFO("dumping functions/nullary/" << name);
 
-    auto ob_type = hdf5::Unsigned<Ob>::id();
+    size_t max_ob = carrier.item_dim();
+    auto ob_type = hdf5::unsigned_type_wide_enough_for(max_ob);
 
     hdf5::Dataspace dataspace;
 
@@ -297,7 +298,8 @@ inline void dump (
 
     POMAGMA_INFO("dumping functions/injective/" << name);
 
-    auto ob_type = hdf5::Unsigned<Ob>::id();
+    size_t max_ob = carrier.item_dim();
+    auto ob_type = hdf5::unsigned_type_wide_enough_for(max_ob);
 
     const size_t item_dim = carrier.item_dim();
     hdf5::Dataspace dataspace(1 + item_dim);
@@ -331,8 +333,10 @@ inline void dump (
     POMAGMA_INFO("dumping functions/" << arity << "/" << name);
 
     typedef uint_<2 * sizeof(Ob)>::t ptr_t;
-    auto ptr_type = hdf5::Unsigned<ptr_t>::id();
-    auto ob_type = hdf5::Unsigned<Ob>::id();
+    size_t max_ob = carrier.item_dim();
+    size_t max_ptr = max_ob * max_ob;
+    auto ob_type = hdf5::unsigned_type_wide_enough_for(max_ob);
+    auto ptr_type = hdf5::unsigned_type_wide_enough_for(max_ptr);
 
     const size_t item_dim = carrier.item_dim();
     hdf5::Dataspace ptr_dataspace(1 + item_dim);
