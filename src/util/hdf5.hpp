@@ -474,7 +474,7 @@ struct Dataset : noncopyable
 
         POMAGMA_HDF5_OK(H5Dwrite(
                 id,             // dataset_id
-                destin_type,    // mem_type_id
+                source_type,    // mem_type_id
                 H5S_ALL,        // mem_space_id
                 H5S_ALL,        // file_space_id
                 H5P_DEFAULT,    // xfer_plist_id
@@ -492,7 +492,7 @@ struct Dataset : noncopyable
 
         POMAGMA_HDF5_OK(H5Dread(
                 id,             // dataset_id
-                source_type,    // mem_type_id
+                destin_type,    // mem_type_id
                 H5S_ALL,        // mem_space_id
                 H5S_ALL,        // file_space_id
                 H5P_DEFAULT,    // xfer_plist_id
@@ -548,7 +548,7 @@ struct Dataset : noncopyable
 
         POMAGMA_HDF5_OK(H5Dwrite(
                 id,                     // dataset_id
-                destin_type,            // mem_type_id
+                source_type,            // mem_type_id
                 source_dataspace.id,    // mem_space_id
                 destin_dataspace.id,    // file_space_id
                 H5P_DEFAULT,            // xfer_plist_id
@@ -568,7 +568,7 @@ struct Dataset : noncopyable
 
         POMAGMA_HDF5_OK(H5Dread(
                 id,                     // dataset_id
-                source_type,            // mem_type_id
+                destin_type,            // mem_type_id
                 destin_dataspace.id,    // mem_space_id
                 source_dataspace.id,    // file_space_id
                 H5P_DEFAULT,            // xfer_plist_id
@@ -597,7 +597,7 @@ struct Dataset : noncopyable
 
         POMAGMA_HDF5_OK(H5Dwrite(
                 id,                     // dataset_id
-                destin_type,            // mem_type_id
+                source_type,            // mem_type_id
                 source_dataspace.id,    // mem_space_id
                 destin_dataspace.id,    // file_space_id
                 H5P_DEFAULT,            // xfer_plist_id
@@ -625,7 +625,7 @@ struct Dataset : noncopyable
 
         POMAGMA_HDF5_OK(H5Dread(
                 id,                     // dataset_id
-                source_type,            // mem_type_id
+                destin_type,            // mem_type_id
                 destin_dataspace.id,    // mem_space_id
                 source_dataspace.id,    // file_space_id
                 H5P_DEFAULT,            // xfer_plist_id
