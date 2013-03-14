@@ -11,6 +11,7 @@ $i libhdf5-serial-dev
 $i libssl-dev
 $i python-tables
 $i python-pip virtualenvwrapper
+$i graphviz
 
 workon pomagma || mkvirtualenv --system-site-packages pomagma
 workon pomagma
