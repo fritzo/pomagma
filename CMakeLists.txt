@@ -35,4 +35,4 @@ enable_testing()
 
 add_subdirectory(src/util)
 add_subdirectory(src/grower)
-add_subdirectory(src/free)
+add_subdirectory(src/atlas)
