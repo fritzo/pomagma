@@ -14,7 +14,7 @@ add_library(pomagma_aggregator SHARED
 	symmetric_function.cpp
 	structure.cpp
 	scheduler.cpp
-	aggregator.cpp
+	aggregate.cpp
 	)
 install(TARGETS pomagma_aggregator
 	LIBRARY

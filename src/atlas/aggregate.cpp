@@ -1,4 +1,4 @@
-#include "aggregator.hpp"
+#include "aggregate.hpp"
 #include "carrier.hpp"
 #include "binary_relation.hpp"
 #include "nullary_function.hpp"

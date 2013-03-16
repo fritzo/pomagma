@@ -1,5 +1,5 @@
 #include "util.hpp"
-#include "aggregator.hpp"
+#include "aggregate.hpp"
 #include "structure.hpp"
 #include "carrier.hpp"
 
