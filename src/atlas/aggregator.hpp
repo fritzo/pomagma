@@ -6,7 +6,7 @@ namespace pomagma
 {
 
 void aggregate (
-        Structure & destin,
-        Structure & src);
+        Structure & destin, // may grow or shrink
+        Structure & src);   // may only shrink
 
 } // namespace pomagma
