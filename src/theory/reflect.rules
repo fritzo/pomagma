@@ -1,0 +1,27 @@
+
+              LESS x y
+-------------------------------------
+EQUAL APP APP QLESS QUOTE x QUOTE y I
+
+              LESS x y
+----------------------------------------
+EQUAL APP APP QNLESS QUOTE x QUOTE y BOT
+
+                NLESS x y
+---------------------------------------
+EQUAL APP APP QLESS QUOTE x QUOTE y BOT
+
+                NLESS x y
+--------------------------------------
+EQUAL APP APP QNLESS QUOTE x QUOTE y I
+
+--------------------------------------
+EQUAL APP APP QEQUAL QUOTE x QUOTE x I
+
+                 NLESS x y
+--------------------------------------------
+EQUAL APP APP QEQUAL QUOTE x QUOTE y APP BOT
+
+                 NLESS y x
+--------------------------------------------
+EQUAL APP APP QEQUAL QUOTE x QUOTE y APP BOT

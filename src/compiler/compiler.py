@@ -108,6 +108,7 @@ class Iter(Strategy):
         child.optimize()
 
 
+# TODO injective function inverse need not be iterated
 class IterInvInjective(Strategy):
     def __init__(self, fun, body):
         assert fun.arity == 'InjectiveFunction'
@@ -413,6 +414,9 @@ def get_compiled(antecedents, succedent, bound):
                 bound_a = set_with(bound, a.var)
                 for s in get_compiled(antecedents_a, succedent, bound_a):
                     results.append(Let(a, s))
+            else:
+                # TODO find inverse if injective function
+                pass
         if results:
             return results  # HEURISTIC bind eagerly in arbitrary order
 
@@ -438,6 +442,7 @@ def get_compiled(antecedents, succedent, bound):
                 antecedents_a = set(antecedents)
                 antecedents_a.remove(a)
                 if nargs == 1 and len(a_free) == 1:
+                    # TODO injective function inverse need not be iterated
                     for s in get_compiled(antecedents_a, succedent, bound_v):
                         results.append(IterInvInjective(a, s))
                 elif nargs == 2 and len(a_free) == 1:

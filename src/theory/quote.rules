@@ -1,8 +1,11 @@
 # extensional codes
 # by implementation, QUOTE injects
 
---------------------------   --------------------------
-NLESS TOP APP CODE QUOTE x   NLESS APP CODE QUOTE x BOT
+-----------------   -----------------
+NLESS TOP QUOTE x   NLESS QUOTE x BOT
+
+------------------------------
+EQUAL QUOTE X APP CODE QUOTE X
 
 ---------------------   ---------------------------------
 EQUAL APP E QUOTE x x   EQUAL APP Q QUOTE x QUOTE QUOTE x
@@ -15,24 +18,3 @@ EQUAL APP APP QCOMP x y QUOTE COMP x y
 
 --------------------------------------
 EQUAL APP APP QJOIN x y QUOTE JOIN x y
-
-# XXX are the following consistent?
-
-              LESS x y
--------------------------------------
-EQUAL APP APP QLESS QUOTE x QUOTE y K
-
-                NLESS x y
--------------------------------------------
-EQUAL APP APP QLESS QUOTE x QUOTE y APP K I
-
---------------------------------------
-EQUAL APP APP QEQUAL QUOTE x QUOTE x K
-
-                 NLESS x y
---------------------------------------------
-EQUAL APP APP QEQUAL QUOTE x QUOTE y APP K I
-
-                 NLESS y x
---------------------------------------------
-EQUAL APP APP QEQUAL QUOTE x QUOTE y APP K I

@@ -16,7 +16,7 @@ EQUAL APP APP CI x y APP y x
 EQUAL APP APP B x y COMP x y
 
 -----------------------------
-EQUAL APP APP CB x y COMP y x 
+EQUAL APP APP CB x y COMP y x
 
 ---------------------------------
 EQUAL APP APP W x y APP APP x y y
