@@ -5,8 +5,6 @@
 namespace pomagma
 {
 
-void aggregate (
-        Structure & destin, // may grow or shrink
-        Structure & src);   // may only shrink
+void aggregate (Structure & destin, Structure & src);
 
 } // namespace pomagma
