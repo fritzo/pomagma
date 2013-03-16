@@ -4,15 +4,21 @@
 #include "base_bin_rel.hpp"
 #include <pomagma/util/sequential_dense_set.hpp>
 #include <unordered_map>
+#include <google/sparse_hash_map>
 
 namespace pomagma
 {
 
-// a tight binary function
 class BinaryFunction : noncopyable
 {
+    // DEPRECATED
     mutable base_bin_rel m_lines;
     mutable std::unordered_map<std::pair<Ob, Ob>, Ob, ObPairHash> m_values;
+
+    // TODO
+    typedef std::vector<google::sparse_hash_map<Ob, Ob>> Map;
+    mutable Map m_lhs_rhs_val;
+    mutable Map m_rhs_lhs_val;
 
 public:
 

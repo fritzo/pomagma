@@ -24,4 +24,8 @@ struct ObPairHash
     }
 };
 
+// TODO define a better ObHash and ObPairHash
+// see references section of the google sparsehash performance page:
+//   http://sparsehash.googlecode.com/svn/trunk/doc/performance.html
+
 } // namespace pomagma

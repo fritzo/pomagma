@@ -233,6 +233,7 @@ inline void dump (
     hdf5::dump_hash(group, digest);
 }
 
+// TODO switch to sparse CSR representation, following BinaryFunction
 inline void dump (
         const Carrier & carrier,
         const BinaryRelation & rel,
@@ -567,6 +568,7 @@ inline void load_data (
     POMAGMA_ASSERT(digest == hdf5::load_hash(group), "carrier is corrupt");
 }
 
+// TODO switch to sparse CSR representation, following BinaryFunction
 inline void load_data (
         const Carrier & carrier,
         BinaryRelation & rel,

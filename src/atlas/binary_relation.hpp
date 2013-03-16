@@ -3,6 +3,7 @@
 #include "util.hpp"
 #include "base_bin_rel.hpp"
 #include <pomagma/util/sequential_dense_set.hpp>
+#include <google/sparse_hash_set>
 
 namespace pomagma
 {
@@ -10,7 +11,13 @@ namespace pomagma
 // a pair of dense sets of dense sets, one col-row, one row-col
 class BinaryRelation : noncopyable
 {
+    // DEPRECATED
     mutable base_bin_rel m_lines;
+
+    // TODO
+    typedef std::vector<google::sparse_hash_set<Ob>> Set;
+    mutable Set m_lhs_rhs;
+    mutable Set m_rhs_lhs;
 
 public:
 
