@@ -50,21 +50,30 @@ h4-test: build/debug log data
 	POMAGMA_SIZE=127 \
 	POMAGMA_LOG_LEVEL=4 \
 	POMAGMA_LOG_FILE=log/h4-test.log \
-	build/debug/src/grower/h4.grow data/h4-test.h5 \
+	build/debug/src/grower/h4.grow data/h4-test1.h5 \
 	|| (grep -C3 -i error log/h4-test.log && false)
 	POMAGMA_SIZE=255 \
 	POMAGMA_LOG_LEVEL=4 \
 	POMAGMA_LOG_FILE=log/h4-test.log \
-	build/debug/src/grower/h4.grow data/h4-test.h5 data/h4-test.h5 \
+	build/debug/src/grower/h4.grow data/h4-test1.h5 data/h4-test1.h5 \
+	|| (grep -C3 -i error log/h4-test.log && false)
+	POMAGMA_SIZE=127 \
+	POMAGMA_LOG_LEVEL=4 \
+	POMAGMA_LOG_FILE=log/h4-test.log \
+	build/debug/src/grower/h4.grow data/h4-test2.h5 \
 	|| (grep -C3 -i error log/h4-test.log && false)
 	POMAGMA_LOG_LEVEL=4 \
 	POMAGMA_LOG_FILE=log/h4-test.log \
-	build/debug/src/atlas/free.copy data/h4-test.h5 data/h4-test.h5 \
+	build/debug/src/atlas/free.copy data/h4-test2.h5 data/h4-test2.h5 \
+	|| (grep -C3 -i error log/h4-test.log && false)
+	POMAGMA_LOG_LEVEL=4 \
+	POMAGMA_LOG_FILE=log/h4-test.log \
+	build/debug/src/atlas/free.aggregate data/h4-test1.h5 data/h4-test2.h5 data/h4-test12.h5 \
 	|| (grep -C3 -i error log/h4-test.log && false)
 	POMAGMA_SIZE=511 \
 	POMAGMA_LOG_LEVEL=4 \
 	POMAGMA_LOG_FILE=log/h4-test.log \
-	build/debug/src/grower/h4.grow data/h4-test.h5 data/h4-test.h5 \
+	build/debug/src/grower/h4.grow data/h4-test12.h5 data/h4-test12.h5 \
 	|| (grep -C3 -i error log/h4-test.log && false)
 
 h4: install log data

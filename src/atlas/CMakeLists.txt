@@ -13,6 +13,7 @@ add_library(pomagma_aggregator SHARED
 	binary_function.cpp
 	symmetric_function.cpp
 	structure.cpp
+	scheduler.cpp
 	aggregator.cpp
 	)
 install(TARGETS pomagma_aggregator
@@ -53,6 +54,10 @@ target_link_libraries(load_item_dim ${POMAGMA_FREE_LIBS})
 add_executable(free.copy copy_main.cpp)
 target_link_libraries(free.copy ${POMAGMA_FREE_LIBS})
 install(TARGETS free.copy DESTINATION ${PROJECT_SOURCE_DIR}/bin)
+
+add_executable(free.aggregate aggregate_main.cpp)
+target_link_libraries(free.aggregate ${POMAGMA_FREE_LIBS})
+install(TARGETS free.aggregate DESTINATION ${PROJECT_SOURCE_DIR}/bin)
 
 #add_library(pomagma_aggregator_server SHARED
 #	server.cpp

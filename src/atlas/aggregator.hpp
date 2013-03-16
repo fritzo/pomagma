@@ -5,6 +5,9 @@
 namespace pomagma
 {
 
-void aggregate (Structure & destin, Structure & src);
+void aggregate (
+        Structure & destin,
+        Structure & src,
+        bool clear_src = true);
 
 } // namespace pomagma

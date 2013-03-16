@@ -5,6 +5,7 @@
 #include "injective_function.hpp"
 #include "binary_function.hpp"
 #include "symmetric_function.hpp"
+#include "scheduler.hpp"
 #include <pomagma/util/aligned_alloc.hpp>
 
 namespace pomagma
@@ -102,8 +103,13 @@ void copy_all (
 
 } // namespace detail
 
-void aggregate (Structure & destin, Structure & src)
+void aggregate (
+        Structure & destin,
+        Structure & src,
+        bool clear_src)
 {
+    POMAGMA_INFO("Aggregating structure");
+
     POMAGMA_ASSERT(& destin != & src, "cannot merge structure into self");
     POMAGMA_ASSERT_LE(
             destin.carrier().item_count() + src.carrier().item_count(),
@@ -112,6 +118,7 @@ void aggregate (Structure & destin, Structure & src)
     Ob * const translate = alloc_blocks<Ob>(src.carrier().item_dim());
     zero_blocks(translate, src.carrier().item_dim());
 
+    destin.carrier().set_merge_callback(schedule_merge);
     for (auto iter = src.carrier().iter(); iter.ok(); iter.next()) {
         translate[*iter] = destin.carrier().unsafe_insert();
     }
@@ -132,8 +139,11 @@ void aggregate (Structure & destin, Structure & src)
 #undef POMAGMA_COPY_ALL
 
     free_blocks(translate);
+    if (clear_src) {
+        src.clear();
+    }
 
-    TODO("process merge tasks");
+    process_mergers(destin.signature());
 }
 
 } // namespace pomagma
