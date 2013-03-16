@@ -53,13 +53,14 @@ void process_mergers (Signature & signature)
 
     size_t merge_count = 0;
     while (Ob dep = g_merge_queue.pop()) {
+        POMAGMA_DEBUG("merging " << dep);
         const Ob rep = carrier.find(dep);
         POMAGMA_ASSERT(dep > rep, "ill-formed merge: " << dep << ", " << rep);
-
 
 #define POMAGMA_MERGE(arity)\
         for (auto i : signature.arity()) { i.second->unsafe_merge(dep); }
 
+        // order by most-likely-to-merge
         POMAGMA_MERGE(binary_functions);
         POMAGMA_MERGE(symmetric_functions);
         POMAGMA_MERGE(injective_functions);

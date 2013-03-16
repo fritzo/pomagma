@@ -26,12 +26,14 @@ int main (int argc, char ** argv)
         exit(1);
     }
 
+    // load src
     pomagma::Structure src;
     src.load(structure_in2);
     if (POMAGMA_DEBUG_LEVEL > 1) {
         src.validate();
     }
 
+    // load destin
     pomagma::Structure destin;
     size_t src_item_count = src.carrier().item_count();
     destin.load(structure_in1, src_item_count);
@@ -41,7 +43,14 @@ int main (int argc, char ** argv)
     size_t destin_item_count = destin.carrier().item_count();
     POMAGMA_ASSERT_LE(src_item_count, destin_item_count);
 
-    aggregate(destin, src);
+    // aggregate
+    pomagma::aggregate(destin, src);
+    if (POMAGMA_DEBUG_LEVEL > 1) {
+        destin.validate();
+    }
+
+    // TODO
+    //pomagma::log_stats();
 
     destin.dump(structure_out);
 

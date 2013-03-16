@@ -45,6 +45,7 @@ h4-test: build/debug log data
 	@(cd build/debug && cmake -DCMAKE_BUILD_TYPE=Debug ../..)
 	@$(MAKE) -C build/debug/src/grower h4.grow
 	@$(MAKE) -C build/debug/src/atlas free.copy
+	@$(MAKE) -C build/debug/src/atlas free.aggregate
 	@echo '' > log/h4-test.log
 	@echo -e '\nTesting grower with theory h4'
 	POMAGMA_SIZE=127 \
@@ -68,12 +69,12 @@ h4-test: build/debug log data
 	|| (grep -C3 -i error log/h4-test.log && false)
 	POMAGMA_LOG_LEVEL=4 \
 	POMAGMA_LOG_FILE=log/h4-test.log \
-	build/debug/src/atlas/free.aggregate data/h4-test1.h5 data/h4-test2.h5 data/h4-test12.h5 \
+	build/debug/src/atlas/free.aggregate data/h4-test1.h5 data/h4-test2.h5 data/h4-test2.h5 \
 	|| (grep -C3 -i error log/h4-test.log && false)
 	POMAGMA_SIZE=511 \
 	POMAGMA_LOG_LEVEL=4 \
 	POMAGMA_LOG_FILE=log/h4-test.log \
-	build/debug/src/grower/h4.grow data/h4-test12.h5 data/h4-test12.h5 \
+	build/debug/src/grower/h4.grow data/h4-test2.h5 data/h4-test2.h5 \
 	|| (grep -C3 -i error log/h4-test.log && false)
 
 h4: install log data
