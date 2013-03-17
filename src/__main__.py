@@ -3,6 +3,7 @@ import sys
 import shutil
 import subprocess
 import contextlib
+import nose
 import parsable
 import pomagma.util
 import pomagma.wrapper
@@ -26,17 +27,12 @@ def info(infile):
 
 
 @parsable.command
-def unit_test():
+def unit_test(*noseflags):
     '''
     Run unit tests.
     '''
-    buildtype = 'debug' if pomagma.util.debug else 'release'
-    opts = {
-        'log_file': os.path.join(pomagma.util.LOG, buildtype + '.test.log'),
-        'log_level': 3,
-        }
-    pomagma.util.build('test', **opts)
-    # TODO show log file upon error, as done in batch_test
+    pomagma.util.check_call('nosetests', pomagma.util.SRC, *noseflags)
+    pomagma.util.test()
 
 
 @parsable.command
@@ -48,7 +44,7 @@ def batch_test(theory='all'):
         theories = pomagma.util.MIN_SIZES.keys()
         theories.sort(key=pomagma.util.MIN_SIZES.__getitem__)
         for theory in theories:
-            test_batch(theory)
+            pomagma.batch.test(theory)
     else:
         theories = [theory]
 

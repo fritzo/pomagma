@@ -31,6 +31,10 @@ MIN_SIZES = {
     }
 
 
+class PomagmaError(Exception):
+    pass
+
+
 @contextlib.contextmanager
 def chdir(path):
     old_path = os.path.abspath(os.path.curdir)
@@ -69,17 +73,40 @@ def make_env(**kwargs):
 def check_call(*args, **kwargs):
     env = make_env(**kwargs)
     sys.stderr.write('{}\n'.format(' \\\n'.join(args)))
-    subprocess.check_call(args, env=env)
+    info = subprocess.call(args, env=env)
+    if info:
+        if 'log_file' in kwargs:
+            log_file = kwargs['log_file']
+            subprocess.call(['grep', '-C3', '-i', 'error', log_file])
+            subprocess.call([
+                'gdb',
+                args[0],
+                'core',
+                '--batch',
+                '-ex',
+                'thread apply all bt',
+                ])
+        raise PomagmaError(' '.join(args))
 
 
-def build(*args, **kwargs):
+def build():
     buildtype = 'Debug' if debug else 'RelWithDebInfo'
     buildflag = '-DCMAKE_BUILD_TYPE={}'.format(buildtype)
     if not os.path.exists(BUILD):
         os.makedirs(BUILD)
     with chdir(BUILD):
         check_call('cmake', buildflag, ROOT)
-    check_call('make', '-C', BUILD, *args)
+        check_call('make')
+
+
+def test():
+    build()
+    buildtype = 'debug' if debug else 'release'
+    opts = {
+        'log_file': os.path.join(LOG, '{}.test.log'.format(buildtype)),
+        'log_level': 3,
+        }
+    check_call('make', '-C', BUILD, 'test', **opts)
 
 
 def count_obs(structure):

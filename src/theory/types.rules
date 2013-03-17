@@ -1,19 +1,20 @@
----------------------------------
-LESS COMP APP U x APP U x APP U x
+# TODO get these to compile
+#---------------------------------
+#LESS COMP APP U x APP U x APP U x
+#
+#LESS COMP x x x         LESS APP f x x
+#---------------   ---------------------------
+#EQUAL x APP U x   EQUAL APP APP U f x APP f x
+#
+#--------------   ----------------------------------
+#LESS I APP V x   EQUAL COMP APP V x APP V x APP V x
+#
+#EQUAL x COMP x x   LESS I x      LESS APP f x x
+#---------------------------   ---------------------
+#     EQUAL x APP V x          EQUAL APP APP V f x x
 
-LESS COMP x x x         LESS APP f x x
----------------   ---------------------------
-EQUAL x APP U x   EQUAL APP APP U f x APP f x
 
---------------   ----------------------------------
-LESS I APP V x   EQUAL COMP APP V x APP V x APP V x
-
-EQUAL x COMP x x   LESS I x      LESS APP f x x
----------------------------   ---------------------
-     EQUAL x APP V x          EQUAL APP APP V f x x
-
-
-# TODO FIXME these do not yet compile
+# TODO get these to compile
 #
 #LESS APP f TOP APP g TOP
 #LESS APP f BOT APP g BOT     EQUAL APP DIV x x
