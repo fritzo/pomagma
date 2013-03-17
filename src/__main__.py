@@ -36,10 +36,11 @@ def unit_test():
         'log_level': 3,
         }
     pomagma.util.build('test', **opts)
+    # TODO show log file upon error, as done in batch_test
 
 
 @parsable.command
-def test_batch_test(theory='all'):
+def batch_test(theory='all'):
     '''
     Test batch operations.
     '''
