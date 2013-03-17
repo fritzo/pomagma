@@ -1,7 +1,7 @@
-import glob
 from nose.tools import assert_equal, assert_set_equal
 from pomagma.compiler.extensional import *
 from pomagma.compiler import run
+from pomagma.compiler.util import find_rules
 
 
 def test_abstraction():
@@ -81,6 +81,6 @@ def test_close_rules():
         # no validator implemented:
         'quote.rules',
         ]
-    for filename in glob.glob('../theory/*.rules'):
+    for filename in find_rules():
         is_extensional = filename.split('/')[-1] not in blacklist
         yield run.test_close_rules, filename, is_extensional

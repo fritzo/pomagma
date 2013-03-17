@@ -1,17 +1,32 @@
-# FIXME XXX these do not yet compile
+---------------------------------
+LESS COMP APP U x APP U x APP U x
+
+LESS COMP x x x         LESS APP f x x
+---------------   ---------------------------
+EQUAL x APP U x   EQUAL APP APP U f x APP f x
+
+--------------   ----------------------------------
+LESS I APP V x   EQUAL COMP APP V x APP V x APP V x
+
+EQUAL x COMP x x   LESS I x      LESS APP f x x
+---------------------------   ---------------------
+     EQUAL x APP V x          EQUAL APP APP V f x x
+
+
+# TODO FIXME these do not yet compile
 #
 #LESS APP f TOP APP g TOP
 #LESS APP f BOT APP g BOT     EQUAL APP DIV x x
 #--------------------------   -----------------
 #LESS COMP f DIV COMP g DIV   EQUAL BOT x
 #			     EQUAL TOP x
-#    
+#
 #LESS APP f TOP APP g TOP
 #LESS APP f I APP g I           EQUAL APP UNIT x x
 #----------------------------   ------------------
 #LESS COMP f UNIT COMP g UNIT   EQUAL I x
 #			       EQUAL TOP x
-#    
+#
 #LESS APP f TOP APP g TOP
 #LESS APP f I APP g I
 #LESS APP f BOT APP g BOT       EQUAL APP SEMI x x
@@ -19,7 +34,7 @@
 #LESS COMP f SEMI COMP g SEMI   EQUAL BOT x
 #			       EQUAL I x
 #			       EQUAL TOP x
-#    
+#
 #LESS APP f TOP APP g TOP
 #LESS APP f K APP g K
 #LESS APP f APP K I APP g APP K I

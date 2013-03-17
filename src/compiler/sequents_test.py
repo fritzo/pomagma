@@ -1,8 +1,8 @@
 from pomagma.compiler import sequents
 from pomagma.compiler import parser
-import glob
+from pomagma.compiler.util import find_rules
 
-RULE_SETS = map(parser.parse_rules, glob.glob('../theory/*.rules'))
+RULE_SETS = map(parser.parse_rules, find_rules())
 
 
 def _test_contrapositives(rules):

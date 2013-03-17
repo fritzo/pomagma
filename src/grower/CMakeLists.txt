@@ -58,10 +58,6 @@ add_executable(grower_symmetric_function_test symmetric_function_test.cpp)
 target_link_libraries(grower_symmetric_function_test ${POMAGMA_GROWER_TEST_LIBS})
 add_test(NAME grower_symmetric_function COMMAND grower_symmetric_function_test)
 
-#add_executable(grower_inverse_bin_fun_test inverse_bin_fun_test.cpp)
-#target_link_libraries(grower_inverse_bin_fun_test ${POMAGMA_GROWER_TEST_LIBS})
-#add_test(NAME grower_inverse_bin_fun COMMAND grower_inverse_bin_fun_test)
-
 add_executable(grower_scheduler_test scheduler_test.cpp)
 target_link_libraries(grower_scheduler_test ${POMAGMA_GROWER_TEST_LIBS})
 add_test(NAME grower_scheduler COMMAND grower_scheduler_test)
@@ -152,13 +148,16 @@ add_executable(sk.grow sk.theory.cpp)
 target_link_libraries(sk.grow ${POMAGMA_GROWER_MAIN_LIBS})
 install(TARGETS sk.grow DESTINATION ${PROJECT_SOURCE_DIR}/bin)
 
+# TODO get types.rules to compile
 add_custom_command(
 	OUTPUT ${CMAKE_CURRENT_LIST_DIR}/skj.theory.cpp
 	COMMAND python ${SRC_DIR}/compiler/run.py compile
 		${SRC_DIR}/theory/sk.rules
 		${SRC_DIR}/theory/join.rules
+		#${SRC_DIR}/theory/types.rules
 		${SRC_DIR}/theory/sk.facts
 		${SRC_DIR}/theory/order.facts
+		${SRC_DIR}/theory/types.facts
 		outfile=${CMAKE_CURRENT_LIST_DIR}/skj.theory.cpp
 	DEPENDS ${SRC_DIR}/compiler/util.py
 		${SRC_DIR}/compiler/expressions.py
@@ -170,9 +169,50 @@ add_custom_command(
 		${SRC_DIR}/compiler/run.py
 		${SRC_DIR}/theory/sk.rules
 		${SRC_DIR}/theory/join.rules
+		${SRC_DIR}/theory/types.rules
 		${SRC_DIR}/theory/sk.facts
 		${SRC_DIR}/theory/order.facts
+		${SRC_DIR}/theory/types.facts
 	)
 add_executable(skj.grow skj.theory.cpp)
 target_link_libraries(skj.grow ${POMAGMA_GROWER_MAIN_LIBS})
 install(TARGETS skj.grow DESTINATION ${PROJECT_SOURCE_DIR}/bin)
+
+# TODO get reflect.rules to compile
+add_custom_command(
+	OUTPUT ${CMAKE_CURRENT_LIST_DIR}/skjo.theory.cpp
+	COMMAND python ${SRC_DIR}/compiler/run.py compile
+		${SRC_DIR}/theory/sk.rules
+		${SRC_DIR}/theory/join.rules
+		#${SRC_DIR}/theory/types.rules
+		${SRC_DIR}/theory/quote.rules
+		#${SRC_DIR}/theory/reflect.rules
+		${SRC_DIR}/theory/sk.facts
+		${SRC_DIR}/theory/order.facts
+		${SRC_DIR}/theory/types.facts
+		${SRC_DIR}/theory/quote.facts
+		${SRC_DIR}/theory/reflect.facts
+		outfile=${CMAKE_CURRENT_LIST_DIR}/skjo.theory.cpp
+	DEPENDS ${SRC_DIR}/compiler/util.py
+		${SRC_DIR}/compiler/expressions.py
+		${SRC_DIR}/compiler/sequents.py
+		${SRC_DIR}/compiler/parser.py
+		${SRC_DIR}/compiler/extensional.py
+		${SRC_DIR}/compiler/compiler.py
+		${SRC_DIR}/compiler/cpp.py
+		${SRC_DIR}/compiler/run.py
+		${SRC_DIR}/theory/sk.rules
+		${SRC_DIR}/theory/join.rules
+		${SRC_DIR}/theory/types.rules
+		${SRC_DIR}/theory/quote.rules
+		${SRC_DIR}/theory/reflect.rules
+		${SRC_DIR}/theory/sk.facts
+		${SRC_DIR}/theory/order.facts
+		${SRC_DIR}/theory/types.facts
+		${SRC_DIR}/theory/quote.facts
+		${SRC_DIR}/theory/reflect.facts
+	)
+add_executable(skjo.grow skjo.theory.cpp)
+target_link_libraries(skjo.grow ${POMAGMA_GROWER_MAIN_LIBS})
+install(TARGETS skjo.grow DESTINATION ${PROJECT_SOURCE_DIR}/bin)
+

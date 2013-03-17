@@ -20,6 +20,7 @@ public:
         size_t item_dim,
         void (*merge_callback) (Ob) = nullptr);
     ~Carrier ();
+    void set_merge_callback (void (*cb) (Ob)) { m_merge_callback = cb; }
     void validate () const;
     void log_stats () const;
 

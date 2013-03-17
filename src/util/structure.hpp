@@ -554,6 +554,7 @@ inline void load_data (
     POMAGMA_INFO("loading carrier");
 
     hdf5::Group group(file, "carrier");
+    // TODO switch to a sparse list of items here
     hdf5::Dataset dataset(group, "support");
 
     DenseSet support(carrier.item_dim());

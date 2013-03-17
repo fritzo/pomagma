@@ -109,17 +109,18 @@ def cpp(self, code):
         )
 
 
+# TODO injective function inverse need not be iterated
 @methodof(compiler.IterInvInjective)
 def cpp(self, code):
-    body = Code('''
-        Ob $var = iter.arg();
-        ''', var=self.var)
+    body = Code()
     self.body.cpp(body)
     code('''
-        for (auto $value.iter(); iter.ok(); iter.next()) {
+        if (Ob $var __attribute__((unused)) = $fun.inverse_find($value)) {
             $body
         }
         ''',
+        var = self.var,
+        fun = self.fun,
         value = self.value,
         body = wrapindent(body),
         )

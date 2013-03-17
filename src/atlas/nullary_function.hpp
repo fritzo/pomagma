@@ -26,6 +26,7 @@ public:
     bool defined () const { return m_value; }
     Ob find () const { return m_value; }
     void insert (Ob val) const;
+    void update_values () const {} // postcondition: all values are reps
 
     // unsafe operations
     void unsafe_merge (Ob dep);

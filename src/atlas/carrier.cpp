@@ -47,6 +47,7 @@ Ob Carrier::unsafe_insert ()
     m_reps[ob] = ob;
     ++m_item_count;
     ++m_rep_count;
+    //POMAGMA_DEBUG1(m_item_count << " obs after inserting " << ob);
     return ob;
 }
 
@@ -75,7 +76,7 @@ void Carrier::unsafe_remove (const Ob ob)
     m_support.remove(ob);
     m_reps[ob] = 0;
     --m_item_count;
-    POMAGMA_DEBUG1(m_item_count << " obs after remove()");
+    POMAGMA_DEBUG1(m_item_count << " obs after removing " << ob);
 }
 
 Ob Carrier::merge (Ob dep, Ob rep) const
@@ -87,14 +88,15 @@ Ob Carrier::merge (Ob dep, Ob rep) const
 
     while (m_reps[dep] != dep) {
         dep = m_reps[dep];
-        if (dep == rep) return rep;
-        if (dep < rep) std::swap(dep, rep);
+        if (dep == rep) { return rep; }
+        if (dep < rep) { std::swap(dep, rep); }
     }
     m_reps[dep] = rep;
     if (m_merge_callback) {
         m_merge_callback(dep);
     }
     --m_rep_count;
+    POMAGMA_ASSERT2(m_rep_count, "no reps remain");
     return rep;
 }
 
