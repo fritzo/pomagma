@@ -51,13 +51,13 @@ add_test(NAME aggregator_symmetric_function COMMAND symmetric_function_test)
 add_executable(load_item_dim load_item_dim.cpp)
 target_link_libraries(load_item_dim ${POMAGMA_FREE_LIBS})
 
-add_executable(free.copy copy_main.cpp)
-target_link_libraries(free.copy ${POMAGMA_FREE_LIBS})
-install(TARGETS free.copy DESTINATION ${PROJECT_SOURCE_DIR}/bin)
+add_executable(copy copy_main.cpp)
+target_link_libraries(copy ${POMAGMA_FREE_LIBS})
+install(TARGETS copy DESTINATION ${PROJECT_SOURCE_DIR}/bin)
 
-add_executable(free.aggregate aggregate_main.cpp)
-target_link_libraries(free.aggregate ${POMAGMA_FREE_LIBS})
-install(TARGETS free.aggregate DESTINATION ${PROJECT_SOURCE_DIR}/bin)
+add_executable(aggregate aggregate_main.cpp)
+target_link_libraries(aggregate ${POMAGMA_FREE_LIBS})
+install(TARGETS aggregate DESTINATION ${PROJECT_SOURCE_DIR}/bin)
 
 #add_library(pomagma_aggregator_server SHARED
 #	server.cpp
