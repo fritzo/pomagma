@@ -19,7 +19,25 @@ LOG = os.path.join(ROOT, 'log')
 
 THEORIES = ['h4', 'sk', 'skj']
 
-call = subprocess.check_call
+
+def make_env(**kwargs):
+    kwargs.setdefault('log_level', 4 if debug else 0)
+    env = os.environ.copy()
+    for key, val in kwargs.iteritems():
+        pomagma_key = 'POMAGMA_{}'.format(key.upper())
+        sys.stderr.write('{} = {} \\\n'.format(pomagma_key, val))
+        env[pomagma_key] = str(val)
+    return env
+
+
+def call(*args, **kwargs):
+    env = make_env(**kwargs)
+    log_file = env['POMAGMA_LOG_FILE']
+    sys.stderr.write('{}\n'.format(' \\\n'.join(args)))
+    info = subprocess.call(args, env=env)
+    if info:
+        subprocess.call(['grep', '-C3', '-i', 'error', log_file])
+    return info
 
 
 @contextlib.contextmanager
@@ -32,23 +50,14 @@ def cd(path):
         os.chdir(old_path)
 
 
-def make_env(**kwargs):
-    kwargs.setdefault('log_level', 4 if debug else 0)
-    env = os.environ.copy()
-    for key, val in kwargs.iteritems():
-        pomagma_key = 'POMAGMA_{}'.format(key.upper())
-        env[pomagma_key] = str(val)
-    return env
-
-
 @parsable.command
 def build():
     '''
     Build pomagma tools from source.
     '''
     with cd(BUILD):
-        call(['cmake', ROOT])
-        call(['make'])
+        call('cmake', ROOT)
+        call('make')
 
 
 def count_obs(structure):
@@ -80,9 +89,8 @@ def init(theory, infile, size_kobs=1):
     assert theory in THEORIES, 'unknown theory: {}'.format(theory)
     tool = os.path.join(BIN, 'grower', '{}.grow'.format(theory))
     log_file = os.path.join(LOG, theory + LOG_SUFFIX)
-    env = make_env(size=size, log_file=log_file)
     size = size_kobs * 1024 - 1
-    call([tool, infile], env=env)
+    call(tool, infile, size=size, log_file=log_file)
 
 
 @parsable.command
@@ -93,8 +101,7 @@ def grow(theory, infile, outfile, size_kobs=1):
     tool = os.path.join(BIN, 'grower', '{}.grow'.format(theory))
     log_file = os.path.join(LOG, theory + LOG_SUFFIX)
     size = count_obs(infile) + 1024 * size_kobs
-    env = make_env(size=size, log_file=log_file)
-    call([tool, infile, outfile], env=env)
+    call(tool, infile, outfile, size=size, log_file=log_file)
 
 
 @parsable.command
@@ -104,8 +111,7 @@ def aggregate(theory, atlas_in, chart_in, atlas_out):
     '''
     tool = os.path.join(BIN, 'atlas', 'free.aggregate')
     log_file = os.path.join(LOG, theory + LOG_SUFFIX)
-    env = make_env(log_file=log_file)
-    call([tool, atlas_in, chart_in, atlas_out], env=env)
+    call(tool, atlas_in, chart_in, atlas_out, log_file=log_file)
 
 
 if __name__ == '__main__':
