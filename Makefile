@@ -5,8 +5,8 @@ export POMAGMA_THREADS := $(PROCS)
 all: install
 
 test:
-	@$(MAKE) unit-test
-	POMAGMA_DEBUG= python -m pomagma test-build
+	POMAGMA_DEBUG= python -m pomagma unit-test
+	POMAGMA_DEBUG= python -m pomagma build-test
 
 build:
 	mkdir build
