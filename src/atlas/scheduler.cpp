@@ -51,7 +51,7 @@ void process_mergers (Signature & signature)
     POMAGMA_INFO("Processing mergers");
     Carrier & carrier = * signature.carrier();
 
-    size_t merge_count = 0;
+    std::vector<Ob> remove_queue;
     while (Ob dep = g_merge_queue.pop()) {
         POMAGMA_DEBUG("merging " << dep);
         const Ob rep = carrier.find(dep);
@@ -69,11 +69,26 @@ void process_mergers (Signature & signature)
 
 #undef POMAGMA_MERGE
 
-        carrier.unsafe_remove(dep);
-        ++merge_count;
+        remove_queue.push_back(dep);
     }
+    POMAGMA_INFO("processed " << remove_queue.size() << " mergers");
 
-    POMAGMA_INFO("processed " << merge_count << " mergers");
+    POMAGMA_INFO("updating values");
+#define POMAGMA_UPDATE(arity)\
+    for (auto i : signature.arity()) { i.second->update_values(); }
+
+    POMAGMA_UPDATE(binary_functions);
+    POMAGMA_UPDATE(symmetric_functions);
+    POMAGMA_UPDATE(injective_functions);
+    POMAGMA_UPDATE(nullary_functions);
+
+#undef POMAGMA_UPDATE
+
+    POMAGMA_INFO("removing deprecated obs");
+    for (Ob dep : remove_queue) {
+        carrier.unsafe_remove(dep);
+    }
+    remove_queue.clear();
 }
 
 } // namespace pomagma

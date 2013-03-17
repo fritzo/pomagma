@@ -18,7 +18,7 @@ void copy_one (
         BinaryRelation & destin_rel,
         const BinaryRelation & src_rel,
         const Carrier & src_carrier,
-        const Ob * translate)
+        const std::vector<Ob> & translate)
 {
     for (auto iter = src_carrier.iter(); iter.ok(); iter.next()) {
         Ob src_lhs = * iter;
@@ -35,7 +35,7 @@ void copy_one (
         NullaryFunction & destin_fun,
         const NullaryFunction & src_fun,
         const Carrier & src_carrier __attribute__((unused)),
-        const Ob * translate)
+        const std::vector<Ob> & translate)
 {
     if (Ob src_val = src_fun.find()) {
         Ob destin_val = translate[src_val];
@@ -47,7 +47,7 @@ void copy_one (
         InjectiveFunction & destin_fun,
         const InjectiveFunction & src_fun,
         const Carrier & src_carrier __attribute__((unused)),
-        const Ob * translate)
+        const std::vector<Ob> & translate)
 {
     for (auto iter = src_fun.iter(); iter.ok(); iter.next()) {
         Ob src_arg = * iter;
@@ -63,7 +63,7 @@ void copy_one (
         Function & destin_fun,
         const Function & src_fun,
         const Carrier & src_carrier,
-        const Ob * translate)
+        const std::vector<Ob> & translate)
 {
     for (auto iter = src_carrier.iter(); iter.ok(); iter.next()) {
         Ob src_lhs = * iter;
@@ -84,7 +84,7 @@ void copy_all (
         const std::unordered_map<std::string, T *> & destin_map,
         const std::unordered_map<std::string, T *> & src_map,
         const Carrier & src_carrier,
-        const Ob * translate)
+        const std::vector<Ob> & translate)
 {
 
     for (auto pair : destin_map) {
@@ -115,9 +115,7 @@ void aggregate (
             destin.carrier().item_count() + src.carrier().item_count(),
             destin.carrier().item_dim());
 
-    Ob * const translate = alloc_blocks<Ob>(src.carrier().item_dim());
-    zero_blocks(translate, src.carrier().item_dim());
-
+    std::vector<Ob> translate(src.carrier().item_dim(), 0);
     destin.carrier().set_merge_callback(schedule_merge);
     for (auto iter = src.carrier().iter(); iter.ok(); iter.next()) {
         translate[*iter] = destin.carrier().unsafe_insert();
@@ -138,10 +136,7 @@ void aggregate (
 
 #undef POMAGMA_COPY_ALL
 
-    free_blocks(translate);
-    if (clear_src) {
-        src.clear();
-    }
+    if (clear_src) { src.clear(); }
 
     process_mergers(destin.signature());
 }
