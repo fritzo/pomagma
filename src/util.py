@@ -7,6 +7,7 @@ import tables
 
 SRC = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(SRC)
+THEORY = os.path.join(SRC, 'theory')
 DATA = os.path.join(ROOT, 'data')
 LOG = os.path.join(ROOT, 'log')
 debug = 'POMAGMA_DEBUG' in os.environ
@@ -53,6 +54,9 @@ def make_env(**kwargs):
     log_file = os.path.join(LOG, 'default.log')
     log_file = abspath(kwargs.get('log_file', log_file))
     kwargs['log_file'] = log_file
+    log_dir = os.path.dirname(log_file)
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir)
     kwargs.setdefault('log_level', 4 if debug else 0)
     env = os.environ.copy()
     for key, val in kwargs.iteritems():
@@ -75,7 +79,7 @@ def build(*args, **kwargs):
         os.makedirs(BUILD)
     with chdir(BUILD):
         check_call('cmake', buildflag, ROOT)
-        check_call('make', *args)
+    check_call('make', '-C', BUILD, *args)
 
 
 def count_obs(structure):

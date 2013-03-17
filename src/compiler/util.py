@@ -1,4 +1,7 @@
+import os
+import glob
 import functools
+import pomagma.util
 from math import log, exp
 
 
@@ -52,3 +55,17 @@ def methodof(class_):
     def deco(fun):
         setattr(class_, fun.__name__, fun)
     return deco
+
+
+def find_facts():
+    return [
+        os.path.abspath(f)
+        for f in glob.glob(os.path.join(pomagma.util.THEORY, '*.facts'))
+        ]
+
+
+def find_rules():
+    return [
+        os.path.abspath(f)
+        for f in glob.glob(os.path.join(pomagma.util.THEORY, '*.rules'))
+        ]
