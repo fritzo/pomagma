@@ -1,7 +1,8 @@
 #include "util.hpp"
-#include "aggregate.hpp"
-#include "structure.hpp"
 #include "carrier.hpp"
+#include "structure.hpp"
+#include "aggregate.hpp"
+#include "compact.hpp"
 
 int main (int argc, char ** argv)
 {
@@ -47,6 +48,12 @@ int main (int argc, char ** argv)
 
     // aggregate
     pomagma::aggregate(destin, src);
+    if (POMAGMA_DEBUG_LEVEL > 1) {
+        destin.validate();
+    }
+
+    // compact
+    pomagma::compact(destin);
     if (POMAGMA_DEBUG_LEVEL > 1) {
         destin.validate();
     }

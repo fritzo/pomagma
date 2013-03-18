@@ -1,5 +1,6 @@
 #include "util.hpp"
 #include "structure.hpp"
+#include "compact.hpp"
 
 int main (int argc, char ** argv)
 {
@@ -24,9 +25,19 @@ int main (int argc, char ** argv)
         exit(1);
     }
 
+    // load
     pomagma::Structure structure;
     structure.load(structure_in);
-    structure.validate();
+    if (POMAGMA_DEBUG_LEVEL > 1) {
+        structure.validate();
+    }
+
+    // compact
+    pomagma::compact(structure);
+    if (POMAGMA_DEBUG_LEVEL > 1) {
+        structure.validate();
+    }
+
     structure.dump(structure_out);
 
     return 0;

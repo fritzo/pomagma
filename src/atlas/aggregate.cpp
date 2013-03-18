@@ -6,7 +6,6 @@
 #include "binary_function.hpp"
 #include "symmetric_function.hpp"
 #include "scheduler.hpp"
-#include <pomagma/util/aligned_alloc.hpp>
 
 namespace pomagma
 {

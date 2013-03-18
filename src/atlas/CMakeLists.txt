@@ -15,6 +15,7 @@ add_library(pomagma_aggregator SHARED
 	structure.cpp
 	scheduler.cpp
 	aggregate.cpp
+	compact.cpp
 	)
 install(TARGETS pomagma_aggregator
 	LIBRARY
