@@ -1,5 +1,6 @@
 import os
 import sys
+import glob
 import shutil
 import subprocess
 import contextlib
@@ -55,6 +56,26 @@ def batch_test(theory='all'):
         print '-' * 78
         print 'Testing', theory
         pomagma.batch.test(theory)
+
+
+@parsable.command
+def profile():
+    '''
+    Profile data structures.
+    '''
+    pomagma.util.build()
+    buildtype = 'debug' if pomagma.util.debug else 'release'
+    log_file = os.path.join(pomagma.util.LOG, buildtype + '.profile.log')
+    if os.path.exists(log_file):
+        os.remove(log_file)
+    opts = dict(log_file=log_file, log_level=2)
+    pattern = os.path.join(pomagma.util.BIN, '*', '*_profile')
+    cmds = glob.glob(pattern)
+    assert cmds, 'no profiles match {}'.format(pattern)
+    for cmd in cmds:
+        print 'Profiling', cmd
+        pomagma.util.check_call(cmd, **opts)
+    pomagma.util.check_call('cat', log_file)
 
 
 @parsable.command

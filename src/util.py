@@ -71,7 +71,7 @@ def make_env(**kwargs):
 
 
 def check_call(*args, **kwargs):
-    env = make_env(**kwargs)
+    env = make_env(**kwargs) if kwargs else None
     sys.stderr.write('{}\n'.format(' \\\n'.join(args)))
     info = subprocess.call(args, env=env)
     if info:
@@ -96,7 +96,7 @@ def build():
         os.makedirs(BUILD)
     with chdir(BUILD):
         check_call('cmake', buildflag, ROOT)
-        check_call('make')
+        check_call('make', '--quiet')
 
 
 def test():
