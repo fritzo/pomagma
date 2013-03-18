@@ -20,11 +20,14 @@ def build():
 
 
 @parsable.command
-def info(infile):
+def info(*infiles):
     '''
     Print information about a structure file.
     '''
-    pomagma.util.print_info(infile)
+    for infile in infiles:
+        print '-' * 80
+        print infile
+        pomagma.util.print_info(infile)
 
 
 @parsable.command

@@ -11,6 +11,7 @@
 #include <pomagma/util/hdf5.hpp>
 #include <array>
 #include <thread>
+#include <algorithm>
 
 namespace pomagma
 {
@@ -219,21 +220,25 @@ inline void dump (
 {
     POMAGMA_INFO("dumping carrier");
 
-    auto word_type = hdf5::Bitfield<Word>::id();
+    size_t max_ob = carrier.item_dim();
+    auto ob_type = hdf5::unsigned_type_wide_enough_for(max_ob);
 
-    const DenseSet & support = carrier.support();
-    hdf5::Dataspace dataspace(support.word_dim());
+    hdf5::Dataspace dataspace(carrier.item_count());
 
     hdf5::Group group(file, "carrier", true);
-    hdf5::Dataset dataset(group, "support", word_type, dataspace);
+    hdf5::Dataset dataset(group, "points", ob_type, dataspace);
 
-    dataset.write_set(support);
+    std::vector<Ob> data;
+    data.reserve(carrier.item_count());
+    for (auto iter = carrier.iter(); iter.ok(); iter.next()) {
+        data.push_back(* iter);
+    }
+    dataset.write_all(data);
 
     auto digest = get_hash(carrier);
     hdf5::dump_hash(group, digest);
 }
 
-// TODO switch to sparse CSR representation, following BinaryFunction
 inline void dump (
         const Carrier & carrier,
         const BinaryRelation & rel,
@@ -439,10 +444,12 @@ inline void load_signature (
     // there must at least be a carrier and nullary functions
     {
         hdf5::Group group(file, "carrier");
-        hdf5::Dataset dataset(group, "support");
+        hdf5::Dataset dataset(group, "points");
         hdf5::Dataspace dataspace(dataset);
         POMAGMA_ASSERT_EQ(dataspace.rank(), 1);
-        size_t source_item_dim = dataspace.volume() * BITS_PER_WORD - 1;
+        std::vector<Ob> data;
+        dataset.read_all(data);
+        size_t source_item_dim = * std::max_element(data.begin(), data.end());
         size_t destin_item_dim = source_item_dim + extra_item_dim;
         signature.declare(* new Carrier(destin_item_dim));
     }
@@ -497,10 +504,12 @@ inline void check_signature (
     const Carrier & carrier = * signature.carrier();
     {
         hdf5::Group group(file, "carrier");
-        hdf5::Dataset dataset(group, "support");
+        hdf5::Dataset dataset(group, "points");
         hdf5::Dataspace dataspace(dataset);
         POMAGMA_ASSERT_EQ(dataspace.rank(), 1);
-        size_t source_item_dim = dataspace.volume() * BITS_PER_WORD - 1;
+        std::vector<Ob> data;
+        dataset.read_all(data);
+        size_t source_item_dim = * std::max_element(data.begin(), data.end());
         size_t destin_item_dim = carrier.item_dim();
         POMAGMA_ASSERT_LE(source_item_dim, destin_item_dim);
     }
@@ -554,13 +563,14 @@ inline void load_data (
     POMAGMA_INFO("loading carrier");
 
     hdf5::Group group(file, "carrier");
-    // TODO switch to a sparse list of items here
-    hdf5::Dataset dataset(group, "support");
+    hdf5::Dataset dataset(group, "points");
 
-    DenseSet support(carrier.item_dim());
-    dataset.read_set(support);
-    for (auto i = support.iter(); i.ok(); i.next()) {
-        carrier.raw_insert(* i);
+    std::vector<Ob> data;
+    dataset.read_all(data);
+    Ob max_ob = * std::max_element(data.begin(), data.end());
+    POMAGMA_ASSERT_LE(max_ob, carrier.item_dim());
+    for (Ob ob : data) {
+        carrier.raw_insert(ob);
     }
     carrier.update();
     POMAGMA_ASSERT_EQ(carrier.rep_count(), carrier.item_count());
@@ -569,7 +579,6 @@ inline void load_data (
     POMAGMA_ASSERT(digest == hdf5::load_hash(group), "carrier is corrupt");
 }
 
-// TODO switch to sparse CSR representation, following BinaryFunction
 inline void load_data (
         const Carrier & carrier,
         BinaryRelation & rel,

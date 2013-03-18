@@ -6,6 +6,8 @@ unit-test:
 	POMAGMA_DEBUG= python -m pomagma unit-test
 batch-test:
 	POMAGMA_DEBUG= python -m pomagma batch-test
+h4-test:
+	POMAGMA_DEBUG= python -m pomagma batch-test h4
 test:
 	POMAGMA_DEBUG= python -m pomagma unit-test
 	POMAGMA_DEBUG= python -m pomagma batch-test

@@ -78,7 +78,14 @@ def check_call(*args, **kwargs):
     if info:
         if 'log_file' in kwargs:
             log_file = kwargs['log_file']
-            subprocess.call(['grep', '-C3', '-i', 'error', log_file])
+            subprocess.call([
+                'grep',
+				'--context=3',
+				'--ignore-case',
+				'--color=always',
+				'error',
+				log_file,
+                ])
             subprocess.call([
                 'gdb',
                 args[0],
@@ -111,18 +118,18 @@ def test():
 
 
 def count_obs(structure):
-    # TODO return item_count rather than item_dim
     if isinstance(structure, basestring):
         structure = tables.openFile(structure)
-    support = structure.getNode('/carrier/support')
-    word_dim, = support.shape
-    item_dim = 64 * word_dim - 1
-    return item_dim  # only an upper bound on ob count
+    points = structure.getNode('/carrier/points')
+    item_dim = max(points)
+    item_count, = points.shape
+    return item_dim, item_count
 
 
 def print_info(infile):
     structure = tables.openFile(infile)
-    item_count = count_obs(structure)
-    print 'ob count <=', item_count
+    item_dim, item_count = count_obs(structure)
+    print 'item_dim =', item_dim
+    print 'item_count =', item_count
     for o in structure:
         print o
