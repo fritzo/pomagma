@@ -13,6 +13,10 @@ def parsable_command(fun):
 
 @parsable_command
 def test(theory):
+    '''
+    Test basic operations with a given theory:
+    init, copy, grow, aggregate
+    '''
     buildtype = 'debug' if pomagma.util.debug else 'release'
     data = '{}.{}.test'.format(theory, buildtype)
     data = os.path.join(pomagma.util.DATA, data)

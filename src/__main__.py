@@ -76,7 +76,7 @@ def profile():
     assert cmds, 'no profiles match {}'.format(pattern)
     for cmd in cmds:
         print 'Profiling', cmd
-        pomagma.util.check_call(cmd, **opts)
+        pomagma.util.log_call(cmd, **opts)
     pomagma.util.check_call('cat', log_file)
 
 

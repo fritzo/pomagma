@@ -32,10 +32,6 @@ MIN_SIZES = {
     }
 
 
-class PomagmaError(Exception):
-    pass
-
-
 @contextlib.contextmanager
 def chdir(path):
     old_path = os.path.abspath(os.path.curdir)
@@ -78,30 +74,43 @@ def make_env(**kwargs):
     return env
 
 
-def check_call(*args, **kwargs):
-    env = make_env(**kwargs) if kwargs else None
+def check_call(*args):
     sys.stderr.write('{}\n'.format(' \\\n'.join(args)))
+    subprocess.check_call(args)
+
+
+def log_call(*args, **kwargs):
+    env = make_env(**kwargs)
+    sys.stderr.write('{}\n'.format(' \\\n'.join(args)))
+    if os.path.exists('core'):
+        os.remove('core')
+    if subprocess.check_output('ulimit -c', shell=True).strip() == '0':
+        print 'WARNING cannot write core file; try `ulimit -c unlimited`'
     info = subprocess.call(args, env=env)
     if info:
-        if 'log_file' in kwargs:
-            log_file = kwargs['log_file']
-            subprocess.call([
-                'grep',
-				'--context=3',
-				'--ignore-case',
-				'--color=always',
-				'error',
-				log_file,
-                ])
-            subprocess.call([
-                'gdb',
-                args[0],
-                'core',
-                '--batch',
-                '-ex',
-                'thread apply all bt',
-                ])
-        raise PomagmaError(' '.join(args))
+        print
+        print '==== LOG FILE ===='
+        subprocess.call([
+            'grep',
+            '--before-context=3',
+            '--after-context=40',
+            '--ignore-case',
+            '--color=always',
+            'error',
+            env['POMAGMA_LOG_FILE'],
+            ])
+        print '==== STACK TRACE ===='
+        subprocess.call([
+            'gdb',
+            args[0],
+            'core',
+            '--batch',
+            '-ex',
+            'thread apply all bt',
+            ])
+        print
+        print '==== ERROR CODE {:d} ===='.format(info)
+        sys.exit(info)
 
 
 def build():
@@ -111,7 +120,7 @@ def build():
         os.makedirs(BUILD)
     with chdir(BUILD):
         check_call('cmake', buildflag, ROOT)
-        check_call('make', '--quiet', '-j', str(1 + CPU_COUNT))
+        check_call('make', '--quiet', '--jobs=%d' % (1 + CPU_COUNT))
 
 
 def test():
@@ -121,7 +130,7 @@ def test():
         'log_file': os.path.join(LOG, '{}.test.log'.format(buildtype)),
         'log_level': 3,
         }
-    check_call('make', '-C', BUILD, 'test', **opts)
+    log_call('make', '-C', BUILD, 'test', **opts)
 
 
 def count_obs(structure):
