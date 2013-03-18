@@ -109,7 +109,6 @@ def log_call(*args, **kwargs):
             'thread apply all bt',
             ])
         print
-        print '==== ERROR CODE {:d} ===='.format(info)
         sys.exit(info)
 
 
