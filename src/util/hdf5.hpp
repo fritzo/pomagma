@@ -2,6 +2,7 @@
 
 #include <pomagma/util/util.hpp>
 #include <pomagma/util/hasher.hpp>
+#include <algorithm>
 
 extern "C" {
 #include <hdf5.h>
@@ -502,7 +503,7 @@ struct Dataset : noncopyable
         hid_t source_type = Unsigned<T>::id();
         hid_t destin_type = type();
         if (H5Tget_size(source_type) > H5Tget_size(destin_type)) {
-            size_t max_value = * std::max(source.begin(), source.end());
+            size_t max_value = * std::max_element(source.begin(), source.end());
             POMAGMA_ASSERT_LE(max_value, max_value_of_type(destin_type));
         }
 
@@ -577,7 +578,7 @@ struct Dataset : noncopyable
         hid_t source_type = Unsigned<T>::id();
         hid_t destin_type = type();
         if (H5Tget_size(source_type) > H5Tget_size(destin_type)) {
-            size_t max_value = * std::max(source.begin(), source.end());
+            size_t max_value = * std::max_element(source.begin(), source.end());
             POMAGMA_ASSERT_LE(max_value, max_value_of_type(destin_type));
         }
 

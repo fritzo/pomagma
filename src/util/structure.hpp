@@ -338,16 +338,17 @@ inline void dump (
 
     POMAGMA_INFO("dumping functions/" << arity << "/" << name);
 
+    size_t pair_count = fun.count_pairs();
+    POMAGMA_DEBUG("dumping " << pair_count << " lhs,rhs pairs");
+
     typedef uint_<2 * sizeof(Ob)>::t ptr_t;
     size_t max_ob = carrier.item_dim();
-    size_t max_ptr = max_ob * max_ob;
+    size_t max_ptr = pair_count;
     auto ob_type = hdf5::unsigned_type_wide_enough_for(max_ob);
     auto ptr_type = hdf5::unsigned_type_wide_enough_for(max_ptr);
 
     const size_t item_dim = carrier.item_dim();
     hdf5::Dataspace ptr_dataspace(1 + item_dim);
-    size_t pair_count = fun.count_pairs();
-    POMAGMA_DEBUG("dumping " << pair_count << " lhs,rhs pairs");
     hdf5::Dataspace ob_dataspace(pair_count);
 
     hdf5::Group group1(file, "functions", true);
