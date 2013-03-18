@@ -369,7 +369,7 @@ inline void dump (
             rhs_data.clear();
             value_data.clear();
             for (auto rhs = fun.iter_lhs(lhs); rhs.ok(); rhs.next()) {
-                if (Function::is_symmetric() and * rhs > lhs) { break; }
+                if (Function::is_symmetric() and * rhs < lhs) { continue; }
                 rhs_data.push_back(* rhs);
                 value_data.push_back(fun.raw_find(lhs, * rhs));
             }
@@ -698,7 +698,7 @@ inline void load_data (
         if (size_t count = end - begin) {
             POMAGMA_ASSERT_LE(count, item_dim);
 
-            rhs_data.resize(count); // XXX FIXME segfault here in free.copy
+            rhs_data.resize(count);
             rhs_dataset.read_block(rhs_data, begin);
 
             value_data.resize(count);

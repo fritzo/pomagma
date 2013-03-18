@@ -69,7 +69,7 @@ void copy_one (
         Ob destin_lhs = translate[src_lhs];
         for (auto iter = src_fun.iter_lhs(src_lhs); iter.ok(); iter.next()) {
             Ob src_rhs = * iter;
-            if (Function::is_symmetric() and src_rhs > src_lhs) { break; }
+            if (Function::is_symmetric() and src_rhs < src_lhs) { continue; }
             Ob src_val = src_fun.find(src_lhs, src_rhs);
             Ob destin_rhs = translate[src_rhs];
             Ob destin_val = translate[src_val];
