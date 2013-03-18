@@ -13,7 +13,7 @@ void compact (Structure & structure)
     size_t item_count = carrier.item_count();
     POMAGMA_ASSERT_EQ(carrier.rep_count(), item_count);
 
-    structure.carrier().set_merge_callback(schedule_merge);
+    carrier.set_merge_callback(schedule_merge);
     for (auto iter = carrier.iter(); iter.ok(); iter.next()) {
         Ob dep = * iter;
         if (dep > item_count) {

@@ -49,6 +49,13 @@ def chdir(path):
         os.chdir(old_path)
 
 
+@contextlib.contextmanager
+def load(filename):
+    structure = tables.openFile(filename)
+    yield structure
+    structure.close()
+
+
 def abspath(path):
     return os.path.abspath(os.path.expanduser(path))
 
@@ -118,18 +125,22 @@ def test():
 
 
 def count_obs(structure):
-    if isinstance(structure, basestring):
-        structure = tables.openFile(structure)
     points = structure.getNode('/carrier/points')
     item_dim = max(points)
     item_count, = points.shape
     return item_dim, item_count
 
 
+def get_hash(infile):
+    with load(infile) as structure:
+        digest = structure.getNodeAttr('/', 'hash').tolist()
+        return digest
+
+
 def print_info(infile):
-    structure = tables.openFile(infile)
-    item_dim, item_count = count_obs(structure)
-    print 'item_dim =', item_dim
-    print 'item_count =', item_count
-    for o in structure:
-        print o
+    with load(infile) as structure:
+        item_dim, item_count = count_obs(structure)
+        print 'item_dim =', item_dim
+        print 'item_count =', item_count
+        for o in structure:
+            print o

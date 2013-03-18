@@ -32,6 +32,10 @@ def test(theory):
         pomagma.wrapper.grow(theory, '1.h5', '2.h5', sizes[1], **opts)
         pomagma.wrapper.init(theory, '3.h5', sizes[0], **opts)
         pomagma.wrapper.aggregate('2.h5', '3.h5', '4.h5', **opts)
+        pomagma.wrapper.aggregate('4.h5', '0.h5', '5.h5', **opts)
+        digest4 = pomagma.util.get_hash('4.h5')
+        digest5 = pomagma.util.get_hash('5.h5')
+        assert digest4 == digest5
 
 
 if __name__ == '__main__':
