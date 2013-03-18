@@ -8,9 +8,24 @@ namespace pomagma
 //----------------------------------------------------------------------------
 // logging
 
+
+int Log::init ()
+{
+    s_log_stream <<
+        "\e[32m" // green
+        "----------------------------------------"
+        "----------------------------------------"
+        "\n"
+        << get_date()
+        << "\e[0;39m\n"
+        ;
+    return 0;
+}
+
 const char * Log::s_log_filename =
     getenv_default("POMAGMA_LOG_FILE", DEFAULT_LOG_FILE);
 std::ofstream Log::s_log_stream(s_log_filename, std::ios_base::app);
+static int init __attribute__((unused)) = Log::init();
 
 const size_t Log::s_log_level(
     getenv_default("POMAGMA_LOG_LEVEL", DEFAULT_LOG_LEVEL));

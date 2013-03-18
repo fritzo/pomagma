@@ -5,6 +5,8 @@
 
 int main (int argc, char ** argv)
 {
+    pomagma::Log::title(argc, argv);
+
     const char * structure_in1 = nullptr;
     const char * structure_in2 = nullptr;
     const char * structure_out = nullptr;

@@ -17,6 +17,7 @@ if debug:
 else:
     BUILD = os.path.join(ROOT, 'build', 'release')
 BIN = os.path.join(BUILD, 'src')
+CPU_COUNT = multiprocessing.cpu_count()
 
 GROWERS = {
     'h4': 'h4.grow',
@@ -54,7 +55,7 @@ def abspath(path):
 
 def make_env(**kwargs):
     kwargs['root'] = ROOT
-    kwargs.setdefault('threads', multiprocessing.cpu_count())
+    kwargs.setdefault('threads', CPU_COUNT)
     log_file = os.path.join(LOG, 'default.log')
     log_file = abspath(kwargs.get('log_file', log_file))
     kwargs['log_file'] = log_file
@@ -96,7 +97,7 @@ def build():
         os.makedirs(BUILD)
     with chdir(BUILD):
         check_call('cmake', buildflag, ROOT)
-        check_call('make', '--quiet')
+        check_call('make', '--quiet', '-j', str(1 + CPU_COUNT))
 
 
 def test():

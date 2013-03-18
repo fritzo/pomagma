@@ -2,6 +2,10 @@ all:
 	POMAGMA_DEBUG= python -m pomagma build
 	python -m pomagma build
 
+unit-test:
+	POMAGMA_DEBUG= python -m pomagma unit-test
+batch-test:
+	POMAGMA_DEBUG= python -m pomagma batch-test
 test:
 	POMAGMA_DEBUG= python -m pomagma unit-test
 	POMAGMA_DEBUG= python -m pomagma batch-test

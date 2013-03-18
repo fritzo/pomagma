@@ -33,6 +33,7 @@ def unit_test(*noseflags):
     Run unit tests.
     '''
     pomagma.util.check_call('nosetests', pomagma.util.SRC, *noseflags)
+    pomagma.util.build()
     pomagma.util.test()
 
 
@@ -44,8 +45,6 @@ def batch_test(theory='all'):
     if theory == 'all':
         theories = pomagma.util.MIN_SIZES.keys()
         theories.sort(key=pomagma.util.MIN_SIZES.__getitem__)
-        for theory in theories:
-            pomagma.batch.test(theory)
     else:
         theories = [theory]
 

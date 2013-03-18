@@ -49,6 +49,8 @@ inline std::string get_language (const std::string & path)
 
 int main (int argc, char ** argv)
 {
+    pomagma::Log::title(argc, argv);
+
     const std::string DEFAULT_LANGUAGE = get_language(argv[0]);
     const char * language_file = pomagma::getenv_default(
             "POMAGMA_LANGUAGE",
