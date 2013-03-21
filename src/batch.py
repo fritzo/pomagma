@@ -72,6 +72,7 @@ def grow(theory, max_size=8191, step_size=512):
     seed_size = max_size - step_size
     assert seed_size >= pomagma.util.MIN_SIZES[theory]
 
+    data = os.path.join(pomagma.util.DATA, '{}.grow'.format(theory))
     assert os.path.exists(data), 'First initialize atlas'
     with pomagma.util.chdir(data):
 
@@ -91,6 +92,18 @@ def grow(theory, max_size=8191, step_size=512):
             pomagma.wrapper.aggregate(atlas, chart, atlas_temp, **opts)
             sys.stderr.write('cp {} {}\n'.format(atlas_temp, atlas))
             os.copyfile(atlas_temp, atlas)
+
+
+@parsable_command
+def clean(theory):
+    '''
+    Remove all work for given theory. DANGER
+    '''
+    print 'Are you sure? [Y/n]',
+    if raw_input().lower()[:1] == 'y':
+        data = os.path.join(pomagma.util.DATA, '{}.grow'.format(theory))
+        if os.path.exists(data):
+            shutil.rmtree(data)
 
 
 if __name__ == '__main__':
