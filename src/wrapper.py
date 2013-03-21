@@ -34,6 +34,15 @@ def aggregate(atlas_in, chart_in, atlas_out, **opts):
         **opts)
 
 
+def trim(atlas_in, chart_out, size, **opts):
+    pomagma.util.log_call(
+        os.path.join(pomagma.util.BIN, 'atlas', 'trim'),
+        abspath(atlas_in),
+        abspath(chart_out),
+        size=size,
+        **opts)
+
+
 def copy(chart_in, chart_out, **opts):
     pomagma.util.log_call(
         os.path.join(pomagma.util.BIN, 'atlas', 'copy'),

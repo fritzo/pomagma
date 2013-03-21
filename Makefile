@@ -16,6 +16,13 @@ test:
 	POMAGMA_DEBUG= python -m pomagma unit-test
 	POMAGMA_DEBUG= python -m pomagma batch-test
 
+h4:
+	python -m pomagma.batch grow h4
+sk:
+	python -m pomagma.batch grow sk
+skj:
+	python -m pomagma.batch grow skj
+
 python-libs:
 	@$(MAKE) -C src/language all
 	@$(MAKE) -C src/structure all

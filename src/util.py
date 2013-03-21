@@ -92,6 +92,7 @@ def log_call(*args, **kwargs):
         print 'WARNING cannot write core file; try `ulimit -c unlimited`'
     info = subprocess.call(args, env=env)
     if info:
+        # TODO also dump this information to the log file
         print
         print '==== LOG FILE ===='
         subprocess.call([
