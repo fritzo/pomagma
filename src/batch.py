@@ -45,7 +45,7 @@ def test(theory):
         assert digest4 == digest5
 
 
-@parsable.command
+@parsable_command
 def init(theory, size=8191):
     '''
     Init atlas for given theory.
@@ -62,7 +62,7 @@ def init(theory, size=8191):
         pomagma.wrapper.init(theory, atlas, size, **opts)
 
 
-@parsable.command
+@parsable_command
 def grow(theory, max_size=8191, step_size=512):
     '''
     Work on atlas for given theory. (trim; grow; aggregate)
