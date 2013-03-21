@@ -75,8 +75,12 @@ def make_env(**kwargs):
 
 
 def check_call(*args):
-    sys.stderr.write('{}\n'.format(' \\\n'.join(args)))
-    subprocess.check_call(args)
+    message = '{}\n'.format(' \\\n'.join(args))
+    sys.stderr.write(message)
+    info = subprocess.call(args)
+    if info:
+        sys.stderr.write('ERROR in {}'.format(message))
+        sys.exit(info)
 
 
 def log_call(*args, **kwargs):
