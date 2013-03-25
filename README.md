@@ -15,17 +15,16 @@ Roadmap
     - Add languages to git: skjo
 - Theory
     - Implement extensionality for quote/eval rules (skjo)
-- Structure
-    - Implement persistent serializer
+- Atlas
+- Corpus
+    - Decide on representation
+    - Decide on ownership/personalization rules
 - Compiler
 - Grower
-    - Implement dump, load operations
     - Flesh out unit test to exercise all methods
         - Add tests for DenseSet::Iterator2, 3
     - Profile & optimize using system tests for sk, skj
 - Aggregator
-    - Implement following merge logic in grower
-    - Assume only forward-mapping tables
 - Trimmer
     - Read globe; randomly prune to given size; write
 - Navigator Server
@@ -57,7 +56,8 @@ System Architecture
 
 - Language - a probabilistic grammar defining an algebra's generators
 - Theory - inference rules and facts defining an algebra's relations
-- Structure - a finite piece representing the target algebra
+- Atlas - a finite substructure of the algebra; a knowledge base
+- Corpus - a working set of interesting terms/positions in the algebra
 - Compiler - an optimizing compiler for forward-chaining inference
 - Grower - a parallel Todd-Coxeter rules engine
 - Aggregator - joins charts from growers into a global atlas

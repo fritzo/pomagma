@@ -29,7 +29,8 @@ digraph G {
 	 	rank="same";
 		Language [shape=ellipse];
 		Theory [shape=ellipse];
-		Structure [shape=ellipse];
+		Atlas [shape=ellipse];
+		Corpus [shape=ellipse];
 	}
 
 	{
@@ -60,31 +61,33 @@ digraph G {
 		labelloc = "b";
 	}
 
-	Structure -> Trimmer;
+	Atlas -> Trimmer;
 	Language -> Trimmer;
 	Trimmer -> Grower;
 	Grower -> Aggregator [label="queued"];
-	Aggregator -> Structure;
-	Structure -> Aggregator;
+	Aggregator -> Atlas;
+	Atlas -> Aggregator;
 
-	Structure -> Theorist;
+	Atlas -> Theorist;
 	Language ->  Theorist;
 	Theorist -> theory_reviewer;
 	theory_reviewer -> Theory;
 	Theory -> Compiler -> Grower;
 
-	Structure -> Linguist;
+	Atlas -> Linguist;
 	Language -> Linguist;
 	Linguist -> lang_reviewer -> Language;
 	//Linguist -> Language [label="weights"];
 	//Linguist -> lang_reviewer -> Language [label="rules"];
 
 	nav_server [label="Navigator\nServer"];
-	nav_client -> nav_server [label="pos"];
-	nav_server -> nav_client [label="nbhd"];
-	Structure -> nav_server;
+	nav_server -> nav_client;
+	nav_client -> nav_server;
+	Atlas -> nav_server;
 	Language -> nav_server;
-	nav_server -> Linguist [label="usage"];
+	Corpus -> nav_server;
+	nav_server -> Corpus;
+	Corpus -> Linguist;
 	nav_client -> Player;
 	Player -> nav_client;
 }
