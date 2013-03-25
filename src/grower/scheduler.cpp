@@ -257,6 +257,7 @@ void do_work (bool (*try_work)(rng_t &))
 
 void initialize ()
 {
+    insert_nullary_functions();
     assume_core_facts();
     POMAGMA_INFO("starting " << g_worker_count << " initialize threads");
     reset_stats();

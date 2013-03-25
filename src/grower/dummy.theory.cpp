@@ -43,6 +43,11 @@ void set_language_prob (const std::string & name, float prob)
     POMAGMA_INFO("set p(" << name << ") = " << prob);
 }
 
+void insert_nullary_functions ()
+{
+    POMAGMA_INFO("insert_nullary_functions()");
+}
+
 void assume_core_facts ()
 {
     POMAGMA_INFO("assume_core_facts()");

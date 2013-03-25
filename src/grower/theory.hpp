@@ -135,6 +135,21 @@ void execute (const AssumeTask & task)
 //----------------------------------------------------------------------------
 // sample tasks
 
+void insert_nullary_functions ()
+{
+    const auto & functions = signature.nullary_functions();
+    POMAGMA_INFO("Inserting " << functions.size() << " nullary functions");
+
+    for (auto pair : functions) {
+        NullaryFunction * fun = pair.second;
+        if (not fun->find()) {
+            Ob val = carrier.try_insert();
+            POMAGMA_ASSERT(val, "no space to insert nullary functions");
+            fun->insert(val);
+        }
+    }
+}
+
 bool sample_tasks_try_pop (SampleTask &)
 {
     return carrier.item_count() < carrier.item_dim();

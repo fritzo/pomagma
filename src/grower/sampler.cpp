@@ -223,7 +223,7 @@ Ob Sampler::try_insert_random (rng_t & rng) const
             POMAGMA_DEBUG1("sampling at depth " << depth);
             ob = insert_random_compound(ob, depth, rng);
         }
-    } catch (InsertException e) {
+    } catch (ObInsertedException e) {
         if (e.inserted) {
             m_sample_count.fetch_add(1, relaxed);
         }
@@ -322,9 +322,9 @@ inline Ob Sampler::insert_random_nullary (rng_t & rng) const
     } else {
         if (Ob val = carrier().try_insert()) {
             fun.insert(val);
-            throw(InsertException(val));
+            throw(ObInsertedException(val));
         } else {
-            throw(InsertException(0));
+            throw(ObInsertedException(0));
         }
     }
 }
@@ -337,9 +337,9 @@ inline Ob Sampler::insert_random_injective (Ob key, rng_t & rng) const
     } else {
         if (Ob val = carrier().try_insert()) {
             fun.insert(key, val);
-            throw(InsertException(val));
+            throw(ObInsertedException(val));
         } else {
-            throw(InsertException(0));
+            throw(ObInsertedException(0));
         }
     }
 }
@@ -352,9 +352,9 @@ inline Ob Sampler::insert_random_binary (Ob lhs, Ob rhs, rng_t & rng) const
     } else {
         if (Ob val = carrier().try_insert()) {
             fun.insert(lhs, rhs, val);
-            throw(InsertException(val));
+            throw(ObInsertedException(val));
         } else {
-            throw(InsertException(0));
+            throw(ObInsertedException(0));
         }
     }
 }
@@ -367,9 +367,9 @@ inline Ob Sampler::insert_random_symmetric (Ob lhs, Ob rhs, rng_t & rng) const
     } else {
         if (Ob val = carrier().try_insert()) {
             fun.insert(lhs, rhs, val);
-            throw(InsertException(val));
+            throw(ObInsertedException(val));
         } else {
-            throw(InsertException(0));
+            throw(ObInsertedException(0));
         }
     }
 }

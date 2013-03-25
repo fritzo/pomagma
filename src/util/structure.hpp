@@ -2,6 +2,7 @@
 
 // Assumes the following are defined:
 // DenseSet
+// Ob
 // Carrier
 // BinaryRelation
 // NullaryFunction

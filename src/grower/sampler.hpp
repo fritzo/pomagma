@@ -77,10 +77,10 @@ private:
             const std::string & name,
             float prob);
 
-    struct InsertException
+    struct ObInsertedException
     {
         Ob inserted;
-        InsertException (Ob i) : inserted(i) {}
+        ObInsertedException (Ob i) : inserted(i) {}
     };
     Ob insert_random (size_t max_depth, rng_t & rng) const;
     Ob insert_random_compound (Ob ob, size_t max_depth, rng_t & rng) const;
