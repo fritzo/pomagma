@@ -377,91 +377,79 @@ inline Ob Sampler::insert_random_symmetric (Ob lhs, Ob rhs, rng_t & rng) const
 //----------------------------------------------------------------------------
 // parsing
 
-Ob Sampler::try_insert (const std::string & expression) const
-{
-    std::stringstream stream(expression);
-    return try_insert(stream);
-}
-
-Ob Sampler::try_insert (std::stringstream & stream) const
+Ob Sampler::parse_insert (std::istringstream & stream) const
 {
     std::string token;
     POMAGMA_ASSERT(std::getline(stream, token, ' '),
             "expression terminated prematurely");
 
     if (const auto * fun = m_signature.nullary_functions(token)) {
-        return try_insert(fun);
+        return check_insert(fun);
     } else if (const auto * fun = m_signature.injective_functions(token)) {
-        if (Ob key = try_insert(stream)) {
-            return try_insert(fun, key);
-        }
+        Ob key = parse_insert(stream);
+        return check_insert(fun, key);
     } else if (const auto * fun = m_signature.binary_functions(token)) {
-        if (Ob lhs = try_insert(stream)) {
-            if (Ob rhs = try_insert(stream)) {
-                return try_insert(fun, lhs, rhs);
-            }
-        }
+        Ob lhs = parse_insert(stream);
+        Ob rhs = parse_insert(stream);
+        return check_insert(fun, lhs, rhs);
     } else if (const auto * fun = m_signature.symmetric_functions(token)) {
-        if (Ob lhs = try_insert(stream)) {
-            if (Ob rhs = try_insert(stream)) {
-                return try_insert(fun, lhs, rhs);
-            }
-        }
+        Ob lhs = parse_insert(stream);
+        Ob rhs = parse_insert(stream);
+        return check_insert(fun, lhs, rhs);
     } else {
         POMAGMA_ERROR("bad token: " << token);
+        return 0;
     }
-    return 0;
 }
 
-inline Ob Sampler::try_insert (const NullaryFunction * fun) const
+inline Ob Sampler::check_insert (const NullaryFunction * fun) const
 {
-    if (Ob val = fun->find()) {
-        return val;
-    } else if (Ob val = carrier().try_insert()) {
+    Ob val = fun->find();
+    if (not val) {
+        val = carrier().try_insert();
+        POMAGMA_ASSERT(val, "carrier is full");
         fun->insert(val);
-        return val;
-    } else {
-        return 0;
     }
+    return val;
 }
 
-inline Ob Sampler::try_insert (const InjectiveFunction * fun, Ob key) const
+inline Ob Sampler::check_insert (const InjectiveFunction * fun, Ob key) const
 {
-    if (Ob val = fun->find(key)) {
-        return val;
-    } else if (Ob val = carrier().try_insert()) {
+    Ob val = fun->find(key);
+    if (not val) {
+        val = carrier().try_insert();
+        POMAGMA_ASSERT(val, "carrier is full");
         fun->insert(key, val);
-        return val;
-    } else {
-        return 0;
     }
+    return val;
 }
 
-inline Ob Sampler::try_insert (const BinaryFunction * fun, Ob lhs, Ob rhs) const
+inline Ob Sampler::check_insert (
+        const BinaryFunction * fun,
+        Ob lhs,
+        Ob rhs) const
 {
-    if (Ob val = fun->find(lhs, rhs)) {
-        return val;
-    } else if (Ob val = carrier().try_insert()) {
+    Ob val = fun->find(lhs, rhs);
+    if (not val) {
+        val = carrier().try_insert();
+        POMAGMA_ASSERT(val, "carrier is full");
         fun->insert(lhs, rhs, val);
-        return val;
-    } else {
-        return 0;
     }
+    return val;
 }
 
-inline Ob Sampler::try_insert (
+inline Ob Sampler::check_insert (
         const SymmetricFunction * fun,
         Ob lhs,
         Ob rhs) const
 {
-    if (Ob val = fun->find(lhs, rhs)) {
-        return val;
-    } else if (Ob val = carrier().try_insert()) {
+    Ob val = fun->find(lhs, rhs);
+    if (not val) {
+        val = carrier().try_insert();
+        POMAGMA_ASSERT(val, "carrier is full");
         fun->insert(lhs, rhs, val);
-        return val;
-    } else {
-        return 0;
     }
+    return val;
 }
 
 } // namespace pomagma

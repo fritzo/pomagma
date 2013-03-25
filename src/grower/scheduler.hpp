@@ -113,15 +113,10 @@ struct SymmetricFunctionTask
 
 struct AssumeTask
 {
-    enum Type { EQUAL, LESS, NLESS };
-    Type type;
-    const char * lhs;
-    const char * rhs;
+    std::string expression;
 
     AssumeTask () {}
-    AssumeTask (Type t, const char * l, const char * r)
-        : type(t), lhs(l), rhs(r)
-    {}
+    AssumeTask (const std::string & e) : expression(e) {}
 
     bool references (Ob) = delete;
 };
@@ -166,7 +161,7 @@ void execute (const CleanupTask & task);
 void execute (const SampleTask & task, rng_t & rng);
 
 void insert_nullary_functions ();
-void assume_core_facts ();
+void assume_core_facts (const char * theory_file);
 void cleanup_tasks_push_all ();
 bool cleanup_tasks_try_pop (CleanupTask & task);
 bool sample_tasks_try_pop (SampleTask & task);
@@ -178,7 +173,7 @@ namespace Scheduler
 void set_thread_count (size_t worker_count);
 
 // blocking api, requires access from single thread
-void initialize ();
+void initialize (const char * theory_file = nullptr);
 void grow ();
 void load ();
 void dump ();

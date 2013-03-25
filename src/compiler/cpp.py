@@ -451,41 +451,6 @@ def write_ensurers(code, functions):
 
 
 @inputs(Code)
-def write_facts(code, facts):
-    facts = sorted(list(facts), key=lambda expr: len(expr.polish))
-    body = Code()
-    for fact in facts:
-        assert fact.is_rel(), 'bad fact: %s' % fact
-        lhs, rhs = fact.args
-
-        body('''
-            assume_$name(
-                "$lhs",
-                "$rhs");
-            ''',
-            name = fact.name.lower(),
-            lhs = lhs.polish,
-            rhs = rhs.polish,
-            ).newline()
-
-    code('''
-        $bar
-        // core facts
-
-        void assume_core_facts ()
-        {
-            POMAGMA_INFO("scheduling $count assume tasks");
-
-            $body
-        }
-        ''',
-        bar = bar,
-        count = len(facts),
-        body = wrapindent(body),
-        ).newline()
-
-
-@inputs(Code)
 def write_full_tasks(code, sequents):
 
     full_tasks = []
@@ -723,7 +688,6 @@ def write_theory(code, rules=None, facts=None):
     write_stats_logger(code, functions)
     write_merge_task(code, functions)
     write_ensurers(code, functions)
-    write_facts(code, facts)
     write_full_tasks(code, sequents)
     write_event_tasks(code, sequents)
 

@@ -87,49 +87,37 @@ inline void ensure_nless (Ob lhs, Ob rhs)
 //----------------------------------------------------------------------------
 // expression parsing
 
-inline void assume_equal (const char * lhs, const char * rhs)
+void assume_core_facts (const char * theory_file)
 {
-    schedule(AssumeTask(AssumeTask::EQUAL, lhs, rhs));
-}
-
-inline void assume_less (const char * lhs, const char * rhs)
-{
-    schedule(AssumeTask(AssumeTask::LESS, lhs, rhs));
-}
-
-inline void assume_nless (const char * lhs, const char * rhs)
-{
-    schedule(AssumeTask(AssumeTask::NLESS, lhs, rhs));
-}
-
-inline Ob parse_ob (const char * source)
-{
-    Ob ob = sampler.try_insert(source);
-    POMAGMA_ASSERT(ob, "failed to insert " << source);
-    return ob;
+    std::string expression;
+    std::ifstream file(theory_file);
+    POMAGMA_ASSERT(file, "failed to open " << theory_file);
+    while (getline(file, expression)) {
+        if (not expression.empty() and expression[0] != '#') {
+            schedule(AssumeTask(expression));
+        }
+    }
 }
 
 void execute (const AssumeTask & task)
 {
-    Ob lhs = parse_ob(task.lhs);
-    Ob rhs = parse_ob(task.rhs);
+    POMAGMA_INFO("assume " << task.expression);
+    std::istringstream expression(task.expression);
 
-    switch (task.type) {
-        case AssumeTask::EQUAL: {
-            POMAGMA_INFO("assume EQUAL\n\t" << task.lhs << "\n\t" << task.rhs);
-            ensure_equal(lhs, rhs);
-        } break;
+    std::string type;
+    POMAGMA_ASSERT(getline(expression, type, ' '), "bad line: " << expression);
+    Ob lhs = sampler.parse_insert(expression);
+    Ob rhs = sampler.parse_insert(expression);
 
-        case AssumeTask::LESS: {
-            POMAGMA_INFO("assume LESS\n\t" << task.lhs << "\n\t" << task.rhs);
-            ensure_less(lhs, rhs);
-        } break;
-
-        case AssumeTask::NLESS: {
-            POMAGMA_INFO("assume LESS\n\t" << task.lhs << "\n\t" << task.rhs);
-            ensure_nless(lhs, rhs);
-        } break;
-    }
+    if (type == "EQUAL") {
+        ensure_equal(lhs, rhs);
+	} else if (type == "LESS") {
+        ensure_less(lhs, rhs);
+	} else if (type == "NLESS") {
+        ensure_nless(lhs, rhs);
+	} else {
+        POMAGMA_ERROR("bad relation type: " << type);
+	}
 }
 
 //----------------------------------------------------------------------------

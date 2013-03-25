@@ -21,5 +21,6 @@
 *.pb.cc
 *_pb2.py
 *.theory.cpp
+*.compiled
 !/src/grower/dummy.theory.cpp
 *.language

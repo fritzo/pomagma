@@ -60,7 +60,7 @@ public:
     void set_prob (const std::string & name, float prob);
 
     Ob try_insert_random (rng_t & rng) const;
-    Ob try_insert (const std::string & expression) const;
+    Ob parse_insert (std::istringstream & stream) const;
 
 private:
 
@@ -89,11 +89,10 @@ private:
     Ob insert_random_binary (Ob lhs, Ob rhs, rng_t & rng) const;
     Ob insert_random_symmetric (Ob lhs, Ob rhs, rng_t & rng) const;
 
-    Ob try_insert (std::stringstream & stream) const;
-    Ob try_insert (const NullaryFunction * fun) const;
-    Ob try_insert (const InjectiveFunction * fun, Ob key) const;
-    Ob try_insert (const BinaryFunction * fun, Ob lhs, Ob rhs) const;
-    Ob try_insert (const SymmetricFunction * fun, Ob lhs, Ob rhs) const;
+    Ob check_insert (const NullaryFunction * fun) const;
+    Ob check_insert (const InjectiveFunction * fun, Ob key) const;
+    Ob check_insert (const BinaryFunction * fun, Ob lhs, Ob rhs) const;
+    Ob check_insert (const SymmetricFunction * fun, Ob lhs, Ob rhs) const;
 };
 
 } // namespace pomagma

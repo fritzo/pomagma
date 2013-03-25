@@ -34,7 +34,7 @@ void load_language (const char * filename)
 } // namespace pomagma
 
 
-inline std::string get_language (const std::string & path)
+inline std::string get_pomagma_root (const std::string & path)
 {
     const std::string server = pomagma::get_filename(path);
     size_t pos = server.find_last_of(".");
@@ -47,11 +47,32 @@ inline std::string get_language (const std::string & path)
     return pomagma_root + "/src/language/" + stem + ".language";
 }
 
+
+
+inline std::string get_name (const std::string & path)
+{
+    const std::string server = pomagma::get_filename(path);
+    size_t pos = server.find_last_of(".");
+    return std::string(server.begin(), server.begin() + pos);
+}
+
 int main (int argc, char ** argv)
 {
     pomagma::Log::title(argc, argv);
 
-    const std::string DEFAULT_LANGUAGE = get_language(argv[0]);
+    const std::string HOME = getenv("HOME");
+    const std::string DEFAULT_ROOT = HOME + "/pomagma";
+    const std::string POMAGMA_ROOT = pomagma::getenv_default(
+            "POMAGMA_ROOT",
+            DEFAULT_ROOT.c_str());
+    const std::string STEM = get_name(argv[0]);
+    const std::string DEFAULT_THEORY =
+        POMAGMA_ROOT + "/src/theory/" + STEM + ".compiled";
+    const std::string DEFAULT_LANGUAGE =
+        POMAGMA_ROOT + "/src/language/" + STEM + ".language";
+    const char * theory_file = pomagma::getenv_default(
+            "POMAGMA_THEORY",
+            DEFAULT_THEORY.c_str());
     const char * language_file = pomagma::getenv_default(
             "POMAGMA_LANGUAGE",
             DEFAULT_LANGUAGE.c_str());
@@ -73,6 +94,7 @@ int main (int argc, char ** argv)
                 << " [structure_in] structure_out" << "\n"
             << "Environment Variables:\n"
             << "  POMAGMA_ROOT = $HOME/pomagma\n"
+            << "  POMAGMA_THEORY = " << DEFAULT_THEORY << "\n"
             << "  POMAGMA_LANGUAGE = " << DEFAULT_LANGUAGE << "\n"
             << "  POMAGMA_SIZE = " << pomagma::DEFAULT_ITEM_DIM << "\n"
             << "  POMAGMA_THREADS = "
@@ -98,7 +120,7 @@ int main (int argc, char ** argv)
     if (structure_in) {
         pomagma::cleanup_tasks_push_all();
     }
-    pomagma::Scheduler::initialize();
+    pomagma::Scheduler::initialize(theory_file);
     if (POMAGMA_DEBUG_LEVEL > 1) {
         pomagma::validate_all();
     }

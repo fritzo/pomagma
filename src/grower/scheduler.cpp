@@ -255,10 +255,12 @@ void do_work (bool (*try_work)(rng_t &))
     }
 }
 
-void initialize ()
+void initialize (const char * theory_file)
 {
     insert_nullary_functions();
-    assume_core_facts();
+    if (theory_file) {
+        assume_core_facts(theory_file);
+    }
     POMAGMA_INFO("starting " << g_worker_count << " initialize threads");
     reset_stats();
     std::vector<std::thread> threads;

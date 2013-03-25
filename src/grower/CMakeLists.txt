@@ -104,11 +104,13 @@ add_custom_command(
 
 add_custom_command(
 	OUTPUT ${CMAKE_CURRENT_LIST_DIR}/h4.theory.cpp
+		${SRC_DIR}/theory/h4.compiled
 	COMMAND python ${SRC_DIR}/compiler/run.py compile
 		${SRC_DIR}/theory/group.rules
 		${SRC_DIR}/theory/h4.rules
 		${SRC_DIR}/theory/h4.facts
-		outfile=${CMAKE_CURRENT_LIST_DIR}/h4.theory.cpp
+		cpp_out=${CMAKE_CURRENT_LIST_DIR}/h4.theory.cpp
+		theory_out=${SRC_DIR}/theory/h4.compiled
 		extensional=false
 	DEPENDS ${SRC_DIR}/compiler/util.py
 		${SRC_DIR}/compiler/expressions.py
@@ -127,11 +129,13 @@ install(TARGETS h4.grow DESTINATION ${PROJECT_SOURCE_DIR}/bin)
 
 add_custom_command(
 	OUTPUT ${CMAKE_CURRENT_LIST_DIR}/sk.theory.cpp
+		${SRC_DIR}/theory/sk.compiled
 	COMMAND python ${SRC_DIR}/compiler/run.py compile
 		${SRC_DIR}/theory/sk.rules
 		${SRC_DIR}/theory/sk.facts
 		${SRC_DIR}/theory/order.facts
-		outfile=${CMAKE_CURRENT_LIST_DIR}/sk.theory.cpp
+		cpp_out=${CMAKE_CURRENT_LIST_DIR}/sk.theory.cpp
+		theory_out=${SRC_DIR}/theory/sk.compiled
 	DEPENDS ${SRC_DIR}/compiler/util.py
 		${SRC_DIR}/compiler/expressions.py
 		${SRC_DIR}/compiler/sequents.py
@@ -151,6 +155,7 @@ install(TARGETS sk.grow DESTINATION ${PROJECT_SOURCE_DIR}/bin)
 # TODO get types.rules to compile
 add_custom_command(
 	OUTPUT ${CMAKE_CURRENT_LIST_DIR}/skj.theory.cpp
+		${SRC_DIR}/theory/skj.compiled
 	COMMAND python ${SRC_DIR}/compiler/run.py compile
 		${SRC_DIR}/theory/sk.rules
 		${SRC_DIR}/theory/join.rules
@@ -158,7 +163,8 @@ add_custom_command(
 		${SRC_DIR}/theory/sk.facts
 		${SRC_DIR}/theory/order.facts
 		${SRC_DIR}/theory/types.facts
-		outfile=${CMAKE_CURRENT_LIST_DIR}/skj.theory.cpp
+		cpp_out=${CMAKE_CURRENT_LIST_DIR}/skj.theory.cpp
+		theory_out=${SRC_DIR}/theory/skj.compiled
 	DEPENDS ${SRC_DIR}/compiler/util.py
 		${SRC_DIR}/compiler/expressions.py
 		${SRC_DIR}/compiler/sequents.py
@@ -181,6 +187,7 @@ install(TARGETS skj.grow DESTINATION ${PROJECT_SOURCE_DIR}/bin)
 # TODO get reflect.rules to compile
 add_custom_command(
 	OUTPUT ${CMAKE_CURRENT_LIST_DIR}/skjo.theory.cpp
+		${SRC_DIR}/theory/skjo.compiled
 	COMMAND python ${SRC_DIR}/compiler/run.py compile
 		${SRC_DIR}/theory/sk.rules
 		${SRC_DIR}/theory/join.rules
@@ -192,7 +199,8 @@ add_custom_command(
 		${SRC_DIR}/theory/types.facts
 		${SRC_DIR}/theory/quote.facts
 		${SRC_DIR}/theory/reflect.facts
-		outfile=${CMAKE_CURRENT_LIST_DIR}/skjo.theory.cpp
+		cpp_out=${CMAKE_CURRENT_LIST_DIR}/skjo.theory.cpp
+		theory_out=${SRC_DIR}/theory/skjo.compiled
 	DEPENDS ${SRC_DIR}/compiler/util.py
 		${SRC_DIR}/compiler/expressions.py
 		${SRC_DIR}/compiler/sequents.py
