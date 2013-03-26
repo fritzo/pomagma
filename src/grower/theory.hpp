@@ -145,7 +145,8 @@ bool sample_tasks_try_pop (SampleTask &)
 
 void execute (const SampleTask &, rng_t & rng)
 {
-    sampler.try_insert_random(rng);
+    Sampler::Policy policy(rng, carrier);
+    sampler.try_insert_random(policy);
 }
 
 } // namespace pomagma

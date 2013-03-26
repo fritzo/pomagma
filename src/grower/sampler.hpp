@@ -1,106 +1,73 @@
 #pragma once
 
 #include "util.hpp"
-#include <pomagma/util/signature.hpp>
-#include <pomagma/util/threading.hpp>
+#include "carrier.hpp"
+#include "nullary_function.hpp"
+#include "injective_function.hpp"
+#include "binary_function.hpp"
+#include "symmetric_function.hpp"
+#include <pomagma/util/sampler.hpp>
 
 namespace pomagma
 {
 
-class Sampler : noncopyable
+struct Sampler::Policy : noncopyable
 {
-    Signature & m_signature;
+    rng_t & rng;
+    Carrier & carrier;
 
-    std::unordered_map<const NullaryFunction *, float> m_nullary_probs;
-    std::unordered_map<const InjectiveFunction *, float> m_injective_probs;
-    std::unordered_map<const BinaryFunction *, float> m_binary_probs;
-    std::unordered_map<const SymmetricFunction *, float> m_symmetric_probs;
+    Policy (rng_t & r, Carrier & c)
+        : rng(r),
+          carrier(c)
+    {}
 
-    float m_nullary_prob;
-    float m_injective_prob;
-    float m_binary_prob;
-    float m_symmetric_prob;
-
-    enum Arity { NULLARY, INJECTIVE, BINARY, SYMMETRIC };
-    class BoundedSampler
+    Ob sample (const NullaryFunction & fun)
     {
-        float injective;
-        float binary;
-        float symmetric;
-        float total;
-        float compound_injective;
-        float compound_binary;
-        float compound_symmetric;
-        float compound_total;
+        if (Ob val = fun.find()) {
+            return carrier.find(val);
+        }
+        if (Ob val = carrier.try_insert()) {
+            fun.insert(val);
+            throw ObInsertedException(val);
+        }
+        throw InsertionFailedException();
+    }
 
-    public:
-
-        BoundedSampler () { POMAGMA_ERROR("unused"); }
-        BoundedSampler (const Sampler & sampler);
-        BoundedSampler (const Sampler & sampler, const BoundedSampler & prev);
-
-        Arity sample_arity (rng_t & rng) const;
-        Arity sample_compound_arity (rng_t & rng) const;
-    } __attribute__((aligned(64)));
-    mutable std::vector<BoundedSampler> m_bounded_samplers;
-    mutable SharedMutex m_bounded_samplers_mutex;
-    const BoundedSampler & bounded_sampler (size_t max_depth) const;
-
-    mutable std::atomic<uint_fast64_t> m_sample_count;
-    mutable std::atomic<uint_fast64_t> m_arity_sample_count;
-    mutable std::atomic<uint_fast64_t> m_compound_arity_sample_count;
-
-public:
-
-    Sampler (Signature & signature);
-
-    void validate () const;
-    void log_stats () const;
-
-    void set_prob (const std::string & name, float prob);
-
-    Ob try_insert_random (rng_t & rng) const;
-    Ob parse_insert (std::istringstream & stream) const;
-
-private:
-
-    const Carrier & carrier () const { return * m_signature.carrier(); }
-
-    void set_prob (const NullaryFunction * fun, float prob);
-    void set_prob (const InjectiveFunction * fun, float prob);
-    void set_prob (const BinaryFunction * fun, float prob);
-    void set_prob (const SymmetricFunction * fun, float prob);
-
-    template<class Function>
-    bool try_set_prob_ (
-            const std::unordered_map<std::string, Function *> & funs,
-            const std::string & name,
-            float prob);
-
-    struct ObInsertedException
+    Ob sample (const InjectiveFunction & fun, Ob key)
     {
-        Ob inserted;
-        ObInsertedException (Ob i) : inserted(i) {}
-    };
-    struct ObRejectedException
-    {
-        ObRejectedException () {}
-    };
-    struct InsertionFailedException
-    {
-        InsertionFailedException () {}
-    };
-    Ob insert_random (size_t max_depth, rng_t & rng) const;
-    Ob insert_random_compound (Ob ob, size_t max_depth, rng_t & rng) const;
-    Ob insert_random_nullary (rng_t & rng) const;
-    Ob insert_random_injective (Ob key, rng_t & rng) const;
-    Ob insert_random_binary (Ob lhs, Ob rhs, rng_t & rng) const;
-    Ob insert_random_symmetric (Ob lhs, Ob rhs, rng_t & rng) const;
+        if (Ob val = fun.find(key)) {
+            return carrier.find(val);
+        }
+        if (Ob val = carrier.try_insert()) {
+            fun.insert(key, val);
+            throw ObInsertedException(val);
+        }
+        throw InsertionFailedException();
+    }
 
-    Ob check_insert (const NullaryFunction * fun) const;
-    Ob check_insert (const InjectiveFunction * fun, Ob key) const;
-    Ob check_insert (const BinaryFunction * fun, Ob lhs, Ob rhs) const;
-    Ob check_insert (const SymmetricFunction * fun, Ob lhs, Ob rhs) const;
+    Ob sample (const BinaryFunction & fun, Ob lhs, Ob rhs)
+    {
+        if (Ob val = fun.find(lhs, rhs)) {
+            return carrier.find(val);
+        }
+        if (Ob val = carrier.try_insert()) {
+            fun.insert(lhs, rhs, val);
+            throw ObInsertedException(val);
+        }
+        throw InsertionFailedException();
+    }
+
+    Ob sample (const SymmetricFunction & fun, Ob lhs, Ob rhs)
+    {
+        if (Ob val = fun.find(lhs, rhs)) {
+            return carrier.find(val);
+        }
+        if (Ob val = carrier.try_insert()) {
+            fun.insert(lhs, rhs, val);
+            throw ObInsertedException(val);
+        }
+        throw InsertionFailedException();
+    }
 };
 
 } // namespace pomagma
