@@ -217,20 +217,24 @@ inline const Sampler::BoundedSampler & Sampler::bounded_sampler (
 
 Ob Sampler::try_insert_random (rng_t & rng) const
 {
-    try {
-        Ob ob = insert_random_nullary(rng);
-        for (size_t depth = 1; depth; ++depth) {
-            POMAGMA_DEBUG1("sampling at depth " << depth);
-            ob = insert_random_compound(ob, depth, rng);
-        }
-    } catch (ObInsertedException e) {
-        if (e.inserted) {
+    while (true) {
+        try {
+            Ob ob = insert_random_nullary(rng);
+            for (size_t depth = 1; depth; ++depth) {
+                POMAGMA_DEBUG1("sampling at depth " << depth);
+                ob = insert_random_compound(ob, depth, rng);
+            }
+        } catch (ObInsertedException e) {
             m_sample_count.fetch_add(1, relaxed);
+            return e.inserted;
+        } catch (ObRejectedException) {
+            continue;
+        } catch (InsertionFailedException e) {
+            return 0;
         }
-        return e.inserted;
+        POMAGMA_ERROR("unreachable");
     }
 
-    POMAGMA_ERROR("sampler failed");
     return 0;
 }
 
@@ -319,14 +323,12 @@ inline Ob Sampler::insert_random_nullary (rng_t & rng) const
     auto & fun = * sample(m_nullary_probs, m_nullary_prob, rng);
     if (Ob val = fun.find()) {
         return carrier().find(val);
-    } else {
-        if (Ob val = carrier().try_insert()) {
-            fun.insert(val);
-            throw(ObInsertedException(val));
-        } else {
-            throw(ObInsertedException(0));
-        }
     }
+    if (Ob val = carrier().try_insert()) {
+        fun.insert(val);
+        throw ObInsertedException(val);
+    }
+    throw InsertionFailedException();
 }
 
 inline Ob Sampler::insert_random_injective (Ob key, rng_t & rng) const
@@ -334,14 +336,12 @@ inline Ob Sampler::insert_random_injective (Ob key, rng_t & rng) const
     auto & fun = * sample(m_injective_probs, m_injective_prob, rng);
     if (Ob val = fun.find(key)) {
         return carrier().find(val);
-    } else {
-        if (Ob val = carrier().try_insert()) {
-            fun.insert(key, val);
-            throw(ObInsertedException(val));
-        } else {
-            throw(ObInsertedException(0));
-        }
     }
+    if (Ob val = carrier().try_insert()) {
+        fun.insert(key, val);
+        throw ObInsertedException(val);
+    }
+    throw InsertionFailedException();
 }
 
 inline Ob Sampler::insert_random_binary (Ob lhs, Ob rhs, rng_t & rng) const
@@ -349,14 +349,12 @@ inline Ob Sampler::insert_random_binary (Ob lhs, Ob rhs, rng_t & rng) const
     auto & fun = * sample(m_binary_probs, m_binary_prob, rng);
     if (Ob val = fun.find(lhs, rhs)) {
         return carrier().find(val);
-    } else {
-        if (Ob val = carrier().try_insert()) {
-            fun.insert(lhs, rhs, val);
-            throw(ObInsertedException(val));
-        } else {
-            throw(ObInsertedException(0));
-        }
     }
+    if (Ob val = carrier().try_insert()) {
+        fun.insert(lhs, rhs, val);
+        throw ObInsertedException(val);
+    }
+    throw InsertionFailedException();
 }
 
 inline Ob Sampler::insert_random_symmetric (Ob lhs, Ob rhs, rng_t & rng) const
@@ -364,14 +362,12 @@ inline Ob Sampler::insert_random_symmetric (Ob lhs, Ob rhs, rng_t & rng) const
     auto & fun = * sample(m_symmetric_probs, m_symmetric_prob, rng);
     if (Ob val = fun.find(lhs, rhs)) {
         return carrier().find(val);
-    } else {
-        if (Ob val = carrier().try_insert()) {
-            fun.insert(lhs, rhs, val);
-            throw(ObInsertedException(val));
-        } else {
-            throw(ObInsertedException(0));
-        }
     }
+    if (Ob val = carrier().try_insert()) {
+        fun.insert(lhs, rhs, val);
+        throw ObInsertedException(val);
+    }
+    throw InsertionFailedException();
 }
 
 //----------------------------------------------------------------------------

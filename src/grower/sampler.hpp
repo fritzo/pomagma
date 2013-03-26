@@ -82,6 +82,14 @@ private:
         Ob inserted;
         ObInsertedException (Ob i) : inserted(i) {}
     };
+    struct ObRejectedException
+    {
+        ObRejectedException () {}
+    };
+    struct InsertionFailedException
+    {
+        InsertionFailedException () {}
+    };
     Ob insert_random (size_t max_depth, rng_t & rng) const;
     Ob insert_random_compound (Ob ob, size_t max_depth, rng_t & rng) const;
     Ob insert_random_nullary (rng_t & rng) const;
