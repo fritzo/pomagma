@@ -1,7 +1,7 @@
 
 include_directories(${CMAKE_SOURCE_DIR}/)
 
-add_library(pomagma_aggregator SHARED
+add_library(pomagma_atlas SHARED
 	../util/util.cpp
 	../util/aligned_alloc.cpp
 	../util/sequential_dense_set.cpp
@@ -12,68 +12,54 @@ add_library(pomagma_aggregator SHARED
 	injective_function.cpp
 	binary_function.cpp
 	symmetric_function.cpp
+	sampler.cpp
 	structure.cpp
 	scheduler.cpp
 	aggregate.cpp
 	compact.cpp
 	)
-install(TARGETS pomagma_aggregator
+install(TARGETS pomagma_atlas
 	LIBRARY
 	DESTINATION ${PROJECT_SOURCE_DIR}/lib)
-set(POMAGMA_FREE_LIBS
-	pomagma_aggregator
+set(POMAGMA_ATLAS_LIBS
+	pomagma_atlas
        	hdf5_hl hdf5
 	crypto ssl)
 
 add_executable(aggregator_carrier_test carrier_test.cpp)
-target_link_libraries(aggregator_carrier_test ${POMAGMA_FREE_LIBS})
+target_link_libraries(aggregator_carrier_test ${POMAGMA_ATLAS_LIBS})
 add_test(NAME aggregator_carrier COMMAND aggregator_carrier_test)
 
 add_executable(binary_relation_test binary_relation_test.cpp)
-target_link_libraries(binary_relation_test ${POMAGMA_FREE_LIBS})
+target_link_libraries(binary_relation_test ${POMAGMA_ATLAS_LIBS})
 add_test(NAME aggregator_binary_relation COMMAND binary_relation_test)
 
 add_executable(nullary_function_test nullary_function_test.cpp)
-target_link_libraries(nullary_function_test ${POMAGMA_FREE_LIBS})
+target_link_libraries(nullary_function_test ${POMAGMA_ATLAS_LIBS})
 add_test(NAME aggregator_nullary_function COMMAND nullary_function_test)
 
 add_executable(injective_function_test injective_function_test.cpp)
-target_link_libraries(injective_function_test ${POMAGMA_FREE_LIBS})
+target_link_libraries(injective_function_test ${POMAGMA_ATLAS_LIBS})
 add_test(NAME aggregator_injective_function COMMAND injective_function_test)
 
 add_executable(binary_function_test binary_function_test.cpp)
-target_link_libraries(binary_function_test ${POMAGMA_FREE_LIBS})
+target_link_libraries(binary_function_test ${POMAGMA_ATLAS_LIBS})
 add_test(NAME aggregator_binary_function COMMAND binary_function_test)
 
 add_executable(symmetric_function_test symmetric_function_test.cpp)
-target_link_libraries(symmetric_function_test ${POMAGMA_FREE_LIBS})
+target_link_libraries(symmetric_function_test ${POMAGMA_ATLAS_LIBS})
 add_test(NAME aggregator_symmetric_function COMMAND symmetric_function_test)
 
 add_executable(load_item_dim load_item_dim.cpp)
-target_link_libraries(load_item_dim ${POMAGMA_FREE_LIBS})
+target_link_libraries(load_item_dim ${POMAGMA_ATLAS_LIBS})
 
 add_executable(copy copy_main.cpp)
-target_link_libraries(copy ${POMAGMA_FREE_LIBS})
+target_link_libraries(copy ${POMAGMA_ATLAS_LIBS})
 install(TARGETS copy DESTINATION ${PROJECT_SOURCE_DIR}/bin)
 
 add_executable(aggregate aggregate_main.cpp)
-target_link_libraries(aggregate ${POMAGMA_FREE_LIBS})
+target_link_libraries(aggregate ${POMAGMA_ATLAS_LIBS})
 install(TARGETS aggregate DESTINATION ${PROJECT_SOURCE_DIR}/bin)
-
-#add_library(pomagma_aggregator_server SHARED
-#	server.cpp
-#	language.pb.cc
-#	structure.pb.cc
-#	)
-#install(TARGETS pomagma_aggregator_server LIBRARY
-#	DESTINATION ${PROJECT_SOURCE_DIR}/lib
-#	)
-#set(POMAGMA_SERVER_LIBS
-#	pomagma_aggregator_server
-#	${POMAGMA_FREE_LIBS}
-#	#zmq
-#	protobuf
-#	)
 
 #set(SRC_DIR ${PROJECT_SOURCE_DIR}/src)
 

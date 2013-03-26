@@ -109,6 +109,7 @@ void execute (const AssumeTask & task)
     Sampler::Policy policy(carrier);
     Ob lhs = sampler.parse_insert(expression, policy);
     Ob rhs = sampler.parse_insert(expression, policy);
+    POMAGMA_ASSERT(lhs and rhs, "parse_insert failed");
 
     if (type == "EQUAL") {
         ensure_equal(lhs, rhs);
