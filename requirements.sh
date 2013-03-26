@@ -16,4 +16,4 @@ $i graphviz
 
 workon pomagma || mkvirtualenv --system-site-packages pomagma
 workon pomagma
-pip install nose
+pip install -r requirements.txt
