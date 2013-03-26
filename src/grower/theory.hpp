@@ -106,8 +106,9 @@ void execute (const AssumeTask & task)
 
     std::string type;
     POMAGMA_ASSERT(getline(expression, type, ' '), "bad line: " << expression);
-    Ob lhs = sampler.parse_insert(expression);
-    Ob rhs = sampler.parse_insert(expression);
+    Sampler::Policy policy(carrier);
+    Ob lhs = sampler.parse_insert(expression, policy);
+    Ob rhs = sampler.parse_insert(expression, policy);
 
     if (type == "EQUAL") {
         ensure_equal(lhs, rhs);
@@ -145,8 +146,8 @@ bool sample_tasks_try_pop (SampleTask &)
 
 void execute (const SampleTask &, rng_t & rng)
 {
-    Sampler::Policy policy(rng, carrier);
-    sampler.try_insert_random(policy);
+    Sampler::Policy policy(carrier);
+    sampler.try_insert_random(rng, policy);
 }
 
 } // namespace pomagma

@@ -68,8 +68,8 @@ public:
     void set_prob (const std::string & name, float prob);
 
     class Policy; // implementation-specific
-    Ob try_insert_random (Policy & policy) const;
-    Ob parse_insert (std::istringstream & stream) const;
+    Ob try_insert_random (rng_t & rng, Policy & policy) const;
+    Ob parse_insert (std::istringstream & stream, Policy & policy) const;
 
 private:
 
@@ -100,17 +100,50 @@ private:
         InsertionFailedException () {}
     };
 
-    Ob insert_random (size_t max_depth, Policy & policy) const;
-    Ob insert_random_compound (Ob ob, size_t max_depth, Policy & policy) const;
-    Ob insert_random_nullary (Policy & policy) const;
-    Ob insert_random_injective (Ob key, Policy & policy) const;
-    Ob insert_random_binary (Ob lhs, Ob rhs, Policy & policy) const;
-    Ob insert_random_symmetric (Ob lhs, Ob rhs, Policy & policy) const;
+    Ob insert_random (
+            size_t max_depth,
+            rng_t & rng,
+            Policy & policy) const;
+    Ob insert_random_compound (
+            Ob ob,
+            size_t max_depth,
+            rng_t & rng,
+            Policy & policy) const;
+    Ob insert_random_nullary (
+            rng_t & rng,
+            Policy & policy) const;
+    Ob insert_random_injective (
+            Ob key,
+            rng_t & rng,
+            Policy & policy) const;
+    Ob insert_random_binary (
+            Ob lhs,
+            Ob rhs,
+            rng_t & rng,
+            Policy & policy) const;
+    Ob insert_random_symmetric (
+            Ob lhs,
+            Ob rhs,
+            rng_t & rng,
+            Policy & policy) const;
 
-    Ob check_insert (const NullaryFunction * fun) const;
-    Ob check_insert (const InjectiveFunction * fun, Ob key) const;
-    Ob check_insert (const BinaryFunction * fun, Ob lhs, Ob rhs) const;
-    Ob check_insert (const SymmetricFunction * fun, Ob lhs, Ob rhs) const;
+    Ob check_insert (
+            const NullaryFunction * fun,
+            Policy & policy) const;
+    Ob check_insert (
+            const InjectiveFunction * fun,
+            Ob key,
+            Policy & policy) const;
+    Ob check_insert (
+            const BinaryFunction * fun,
+            Ob lhs,
+            Ob rhs,
+            Policy & policy) const;
+    Ob check_insert (
+            const SymmetricFunction * fun,
+            Ob lhs,
+            Ob rhs,
+            Policy & policy) const;
 };
 
 } // namespace pomagma

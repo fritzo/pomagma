@@ -212,14 +212,14 @@ inline const Sampler::BoundedSampler & Sampler::bounded_sampler (
     }
 }
 
-Ob Sampler::try_insert_random (Policy & policy) const
+Ob Sampler::try_insert_random (rng_t & rng, Policy & policy) const
 {
     while (true) {
         try {
-            Ob ob = insert_random_nullary(policy);
+            Ob ob = insert_random_nullary(rng, policy);
             for (size_t depth = 1; depth; ++depth) {
                 //POMAGMA_DEBUG1("sampling at depth " << depth);
-                ob = insert_random_compound(ob, depth, policy);
+                ob = insert_random_compound(ob, depth, rng, policy);
             }
         } catch (ObInsertedException e) {
             m_sample_count += 1;
@@ -247,11 +247,12 @@ static const char * g_sampler_arity_names[] __attribute__((unused)) =
 inline Ob Sampler::insert_random_compound (
         Ob ob,
         size_t max_depth,
+        rng_t & rng,
         Policy & policy) const
 {
     POMAGMA_ASSERT3(max_depth > 0, "cannot make compound with max_depth 0");
     const BoundedSampler & sampler = bounded_sampler(max_depth);
-    Arity arity = sampler.sample_compound_arity(policy.rng);
+    Arity arity = sampler.sample_compound_arity(rng);
     m_compound_arity_sample_count += 1;
     //POMAGMA_DEBUG1("compound_arity = " << g_sampler_arity_names[arity]);
     switch (arity) {
@@ -260,19 +261,19 @@ inline Ob Sampler::insert_random_compound (
         } break;
 
         case INJECTIVE: {
-            return insert_random_injective(ob, policy);
+            return insert_random_injective(ob, rng, policy);
         } break;
 
         case BINARY: {
-            Ob other = insert_random(max_depth - 1, policy);
+            Ob other = insert_random(max_depth - 1, rng, policy);
             std::bernoulli_distribution randomly_swap(0.5);
-            if (randomly_swap(policy.rng)) std::swap(ob, other);
-            return insert_random_binary(ob, other, policy);
+            if (randomly_swap(rng)) std::swap(ob, other);
+            return insert_random_binary(ob, other, rng, policy);
         } break;
 
         case SYMMETRIC: {
-            Ob other = insert_random(max_depth - 1, policy);
-            return insert_random_symmetric(ob, other, policy);
+            Ob other = insert_random(max_depth - 1, rng, policy);
+            return insert_random_symmetric(ob, other, rng, policy);
         } break;
     }
 
@@ -280,35 +281,38 @@ inline Ob Sampler::insert_random_compound (
     return 0;
 }
 
-inline Ob Sampler::insert_random (size_t max_depth, Policy & policy) const
+inline Ob Sampler::insert_random (
+        size_t max_depth,
+        rng_t & rng,
+        Policy & policy) const
 {
     const BoundedSampler & sampler = bounded_sampler(max_depth);
-    Arity arity = sampler.sample_arity(policy.rng);
+    Arity arity = sampler.sample_arity(rng);
     m_arity_sample_count += 1;
     //POMAGMA_DEBUG1("arity = " << g_sampler_arity_names[arity]);
     switch (arity) {
         case NULLARY: {
-            return insert_random_nullary(policy);
+            return insert_random_nullary(rng, policy);
         } break;
 
         case INJECTIVE: {
             POMAGMA_ASSERT3(max_depth > 0, "max_depth bottomed-out");
-            Ob key = insert_random(max_depth - 1, policy);
-            return insert_random_injective(key, policy);
+            Ob key = insert_random(max_depth - 1, rng, policy);
+            return insert_random_injective(key, rng, policy);
         } break;
 
         case BINARY: {
             POMAGMA_ASSERT3(max_depth > 0, "max_depth bottomed-out");
-            Ob lhs = insert_random(max_depth - 1, policy);
-            Ob rhs = insert_random(max_depth - 1, policy);
-            return insert_random_binary(lhs, rhs, policy);
+            Ob lhs = insert_random(max_depth - 1, rng, policy);
+            Ob rhs = insert_random(max_depth - 1, rng, policy);
+            return insert_random_binary(lhs, rhs, rng, policy);
         } break;
 
         case SYMMETRIC: {
             POMAGMA_ASSERT3(max_depth > 0, "max_depth bottomed-out");
-            Ob lhs = insert_random(max_depth - 1, policy);
-            Ob rhs = insert_random(max_depth - 1, policy);
-            return insert_random_symmetric(lhs, rhs, policy);
+            Ob lhs = insert_random(max_depth - 1, rng, policy);
+            Ob rhs = insert_random(max_depth - 1, rng, policy);
+            return insert_random_symmetric(lhs, rhs, rng, policy);
         } break;
     }
 
@@ -316,114 +320,69 @@ inline Ob Sampler::insert_random (size_t max_depth, Policy & policy) const
     return 0;
 }
 
-inline Ob Sampler::insert_random_nullary (Policy & policy) const
+inline Ob Sampler::insert_random_nullary (
+        rng_t & rng,
+        Policy & policy) const
 {
-    auto & fun = * sample(m_nullary_probs, m_nullary_prob, policy.rng);
+    auto & fun = * sample(m_nullary_probs, m_nullary_prob, rng);
     return policy.sample(fun);
 }
 
 inline Ob Sampler::insert_random_injective (
         Ob key,
+        rng_t & rng,
         Policy & policy) const
 {
-    auto & fun = * sample(m_injective_probs, m_injective_prob, policy.rng);
+    auto & fun = * sample(m_injective_probs, m_injective_prob, rng);
     return policy.sample(fun, key);
 }
 
 inline Ob Sampler::insert_random_binary (
         Ob lhs,
         Ob rhs,
+        rng_t & rng,
         Policy & policy) const
 {
-    auto & fun = * sample(m_binary_probs, m_binary_prob, policy.rng);
+    auto & fun = * sample(m_binary_probs, m_binary_prob, rng);
     return policy.sample(fun, lhs, rhs);
 }
 
 inline Ob Sampler::insert_random_symmetric (
         Ob lhs,
         Ob rhs,
+        rng_t & rng,
         Policy & policy) const
 {
-    auto & fun = * sample(m_symmetric_probs, m_symmetric_prob, policy.rng);
+    auto & fun = * sample(m_symmetric_probs, m_symmetric_prob, rng);
     return policy.sample(fun, lhs, rhs);
 }
 
 //----------------------------------------------------------------------------
 // Parsing
 
-Ob Sampler::parse_insert (std::istringstream & stream) const
+Ob Sampler::parse_insert (std::istringstream & stream, Policy & policy) const
 {
     std::string token;
     POMAGMA_ASSERT(std::getline(stream, token, ' '),
             "expression terminated prematurely");
 
     if (const auto * fun = m_signature.nullary_functions(token)) {
-        return check_insert(fun);
+        return policy.check_insert(fun);
     } else if (const auto * fun = m_signature.injective_functions(token)) {
-        Ob key = parse_insert(stream);
-        return check_insert(fun, key);
+        Ob key = parse_insert(stream, policy);
+        return policy.check_insert(fun, key);
     } else if (const auto * fun = m_signature.binary_functions(token)) {
-        Ob lhs = parse_insert(stream);
-        Ob rhs = parse_insert(stream);
-        return check_insert(fun, lhs, rhs);
+        Ob lhs = parse_insert(stream, policy);
+        Ob rhs = parse_insert(stream, policy);
+        return policy.check_insert(fun, lhs, rhs);
     } else if (const auto * fun = m_signature.symmetric_functions(token)) {
-        Ob lhs = parse_insert(stream);
-        Ob rhs = parse_insert(stream);
-        return check_insert(fun, lhs, rhs);
+        Ob lhs = parse_insert(stream, policy);
+        Ob rhs = parse_insert(stream, policy);
+        return policy.check_insert(fun, lhs, rhs);
     } else {
         POMAGMA_ERROR("bad token: " << token);
         return 0;
     }
-}
-
-inline Ob Sampler::check_insert (const NullaryFunction * fun) const
-{
-    Ob val = fun->find();
-    if (not val) {
-        val = carrier().try_insert();
-        POMAGMA_ASSERT(val, "carrier is full");
-        fun->insert(val);
-    }
-    return val;
-}
-
-inline Ob Sampler::check_insert (const InjectiveFunction * fun, Ob key) const
-{
-    Ob val = fun->find(key);
-    if (not val) {
-        val = carrier().try_insert();
-        POMAGMA_ASSERT(val, "carrier is full");
-        fun->insert(key, val);
-    }
-    return val;
-}
-
-inline Ob Sampler::check_insert (
-        const BinaryFunction * fun,
-        Ob lhs,
-        Ob rhs) const
-{
-    Ob val = fun->find(lhs, rhs);
-    if (not val) {
-        val = carrier().try_insert();
-        POMAGMA_ASSERT(val, "carrier is full");
-        fun->insert(lhs, rhs, val);
-    }
-    return val;
-}
-
-inline Ob Sampler::check_insert (
-        const SymmetricFunction * fun,
-        Ob lhs,
-        Ob rhs) const
-{
-    Ob val = fun->find(lhs, rhs);
-    if (not val) {
-        val = carrier().try_insert();
-        POMAGMA_ASSERT(val, "carrier is full");
-        fun->insert(lhs, rhs, val);
-    }
-    return val;
 }
 
 } // namespace pomagma
