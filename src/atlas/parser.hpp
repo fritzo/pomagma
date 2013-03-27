@@ -1,17 +1,16 @@
 #pragma once
 
 #include "util.hpp"
-#include "carrier.hpp"
 #include "nullary_function.hpp"
 #include "injective_function.hpp"
 #include "binary_function.hpp"
 #include "symmetric_function.hpp"
-#include <pomagma/util/sampler.hpp>
+#include <pomagma/util/parser.hpp>
 
 namespace pomagma
 {
 
-class Sampler::Policy : noncopyable
+class Parser::Policy : noncopyable
 {
     DenseSet & m_set;
     size_t m_size;
@@ -27,43 +26,39 @@ public:
         POMAGMA_ASSERT_LE(m_size, m_capacity);
     }
 
-    Ob sample (const NullaryFunction & fun)
+    Ob check_insert (const NullaryFunction * fun)
     {
-        return sample(fun.find());
+        return check_insert(fun->find());
     }
 
-    Ob sample (const InjectiveFunction & fun, Ob key)
+    Ob check_insert (const InjectiveFunction * fun, Ob key)
     {
-        return sample(fun.find(key));
+        return check_insert(fun->find(key));
     }
 
-    Ob sample (const BinaryFunction & fun, Ob lhs, Ob rhs)
+    Ob check_insert (const BinaryFunction * fun, Ob lhs, Ob rhs)
     {
-        return sample(fun.find(lhs, rhs));
+        return check_insert(fun->find(lhs, rhs));
     }
 
-    Ob sample (const SymmetricFunction & fun, Ob lhs, Ob rhs)
+    Ob check_insert (const SymmetricFunction * fun, Ob lhs, Ob rhs)
     {
-        return sample(fun.find(lhs, rhs));
+        return check_insert(fun->find(lhs, rhs));
     }
 
 private:
 
-    Ob sample (Ob val)
+    Ob check_insert (Ob val)
     {
         if (val) {
             bool_ref contained = m_set(val);
-            if (likely(contained.load())) {
-                return val;
-            } else {
+            if (unlikely(not contained.load())) {
                 POMAGMA_ASSERT_LT(m_size, m_capacity);
                 contained.one();
                 m_size += 1;
-                throw ObInsertedException(val);
             }
-        } else {
-            throw ObRejectedException();
         }
+        return val;
     }
 };
 

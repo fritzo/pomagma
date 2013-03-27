@@ -12,6 +12,7 @@ add_library(pomagma_grower SHARED
 	injective_function.cpp
 	binary_function.cpp
 	symmetric_function.cpp
+	parser.cpp
 	sampler.cpp
 	structure.cpp
 	scheduler.cpp

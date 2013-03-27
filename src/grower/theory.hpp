@@ -8,6 +8,7 @@
 #include "binary_function.hpp"
 #include "symmetric_function.hpp"
 #include "binary_relation.hpp"
+#include "parser.hpp"
 #include "sampler.hpp"
 #include "structure.hpp"
 #include "scheduler.hpp"
@@ -24,7 +25,9 @@ namespace pomagma
 
 Structure structure;
 Signature & signature = structure.signature();
+Parser parser(structure.signature());
 Sampler sampler(structure.signature());
+
 void load_structure (const std::string & filename) { structure.load(filename); }
 void dump_structure (const std::string & filename) { structure.dump(filename); }
 
@@ -106,9 +109,9 @@ void execute (const AssumeTask & task)
 
     std::string type;
     POMAGMA_ASSERT(getline(expression, type, ' '), "bad line: " << expression);
-    Sampler::Policy policy(carrier);
-    Ob lhs = sampler.parse_insert(expression, policy);
-    Ob rhs = sampler.parse_insert(expression, policy);
+    Parser::Policy policy(carrier);
+    Ob lhs = parser.parse_insert(expression, policy);
+    Ob rhs = parser.parse_insert(expression, policy);
     POMAGMA_ASSERT(lhs and rhs, "parse_insert failed");
 
     if (type == "EQUAL") {

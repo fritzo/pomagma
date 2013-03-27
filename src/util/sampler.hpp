@@ -69,7 +69,6 @@ public:
 
     class Policy; // implementation-specific
     Ob try_insert_random (rng_t & rng, Policy & policy) const;
-    Ob parse_insert (std::istringstream & stream, Policy & policy) const;
 
 private:
 
