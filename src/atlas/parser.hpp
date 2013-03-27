@@ -1,14 +1,16 @@
 #pragma once
 
 #include "util.hpp"
-#include "nullary_function.hpp"
-#include "injective_function.hpp"
-#include "binary_function.hpp"
-#include "symmetric_function.hpp"
 #include <pomagma/util/parser.hpp>
+#include <pomagma/util/sequential_dense_set.hpp>
 
 namespace pomagma
 {
+
+class NullaryFunction;
+class InjectiveFunction;
+class BinaryFunction;
+class SymmetricFunction;
 
 class Parser::Policy : noncopyable
 {
@@ -26,40 +28,16 @@ public:
         POMAGMA_ASSERT_LE(m_size, m_capacity);
     }
 
-    Ob check_insert (const NullaryFunction * fun)
-    {
-        return check_insert(fun->find());
-    }
+    size_t size () { return m_size; }
 
-    Ob check_insert (const InjectiveFunction * fun, Ob key)
-    {
-        return check_insert(fun->find(key));
-    }
-
-    Ob check_insert (const BinaryFunction * fun, Ob lhs, Ob rhs)
-    {
-        return check_insert(fun->find(lhs, rhs));
-    }
-
-    Ob check_insert (const SymmetricFunction * fun, Ob lhs, Ob rhs)
-    {
-        return check_insert(fun->find(lhs, rhs));
-    }
+    Ob check_insert (const NullaryFunction * fun);
+    Ob check_insert (const InjectiveFunction * fun, Ob key);
+    Ob check_insert (const BinaryFunction * fun, Ob lhs, Ob rhs);
+    Ob check_insert (const SymmetricFunction * fun, Ob lhs, Ob rhs);
 
 private:
 
-    Ob check_insert (Ob val)
-    {
-        if (val) {
-            bool_ref contained = m_set(val);
-            if (unlikely(not contained.load())) {
-                POMAGMA_ASSERT_LT(m_size, m_capacity);
-                contained.one();
-                m_size += 1;
-            }
-        }
-        return val;
-    }
+    Ob check_insert (Ob val);
 };
 
 } // namespace pomagma

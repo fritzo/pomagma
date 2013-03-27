@@ -125,24 +125,6 @@ private:
             Ob rhs,
             rng_t & rng,
             Policy & policy) const;
-
-    Ob check_insert (
-            const NullaryFunction * fun,
-            Policy & policy) const;
-    Ob check_insert (
-            const InjectiveFunction * fun,
-            Ob key,
-            Policy & policy) const;
-    Ob check_insert (
-            const BinaryFunction * fun,
-            Ob lhs,
-            Ob rhs,
-            Policy & policy) const;
-    Ob check_insert (
-            const SymmetricFunction * fun,
-            Ob lhs,
-            Ob rhs,
-            Policy & policy) const;
 };
 
 } // namespace pomagma
