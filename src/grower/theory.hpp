@@ -92,9 +92,10 @@ inline void ensure_nless (Ob lhs, Ob rhs)
 
 void assume_core_facts (const char * theory_file)
 {
-    std::string expression;
     std::ifstream file(theory_file);
     POMAGMA_ASSERT(file, "failed to open " << theory_file);
+
+    std::string expression;
     while (getline(file, expression)) {
         if (not expression.empty() and expression[0] != '#') {
             schedule(AssumeTask(expression));

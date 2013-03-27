@@ -28,13 +28,42 @@ void insert_nullary_functions (
     POMAGMA_ASSERT_LE(subset.count_items(), target_item_count);
 }
 
-void assume_core_facts (
-        Structure & structure __attribute__((unused)),
-        DenseSet & subset __attribute__((unused)),
-        size_t target_item_count __attribute__((unused)),
-        const char * theory_file __attribute__((unused)))
+void assume (
+        Parser & parser,
+        Parser::Policy & policy,
+        const std::string & expression_str)
 {
-    TODO("implement parsing");
+    POMAGMA_INFO("assume " << expression_str);
+    std::istringstream expression(expression_str);
+
+    std::string type;
+    POMAGMA_ASSERT(getline(expression, type, ' '), "bad line: " << expression);
+    Ob lhs = parser.parse_insert(expression, policy);
+    Ob rhs = parser.parse_insert(expression, policy);
+    POMAGMA_ASSERT(lhs and rhs, "parse_insert failed");
+
+    POMAGMA_ASSERT(
+            (type == "EQUAL") or (type == "LESS") or (type == "NLESS"),
+            "bad relation type: " << type);
+}
+
+void assume_core_facts (
+        Structure & structure,
+        DenseSet & subset,
+        size_t target_item_count,
+        const char * theory_file)
+{
+    std::ifstream file(theory_file);
+    POMAGMA_ASSERT(file, "failed to open " << theory_file);
+
+    Parser parser(structure.signature());
+    Parser::Policy policy(subset, target_item_count);
+    std::string expression;
+    while (getline(file, expression)) {
+        if (not expression.empty() and expression[0] != '#') {
+            assume(parser, policy, expression);
+        }
+    }
 }
 
 void fill_random(
