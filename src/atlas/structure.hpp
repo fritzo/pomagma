@@ -21,6 +21,7 @@ public:
     void clear ();
     void load (const std::string & filename, size_t extra_item_dim = 0);
     void dump (const std::string & filename);
+    void init_signature (Structure & other, size_t item_dim);
 };
 
 } // namespace pomagma

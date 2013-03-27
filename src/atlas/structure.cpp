@@ -30,4 +30,25 @@ void Structure::dump (const std::string & filename)
     pomagma::dump(signature(), filename);
 }
 
+void Structure::init_signature (Structure & other, size_t item_dim)
+{
+    clear();
+    m_signature.declare(* new Carrier(item_dim));
+    for (auto i : other.signature().binary_relations()) {
+        m_signature.declare(i.first, * new BinaryRelation(carrier()));
+    }
+    for (auto i : other.signature().nullary_functions()) {
+        m_signature.declare(i.first, * new NullaryFunction(carrier()));
+    }
+    for (auto i : other.signature().injective_functions()) {
+        m_signature.declare(i.first, * new InjectiveFunction(carrier()));
+    }
+    for (auto i : other.signature().binary_functions()) {
+        m_signature.declare(i.first, * new BinaryFunction(carrier()));
+    }
+    for (auto i : other.signature().symmetric_functions()) {
+        m_signature.declare(i.first, * new SymmetricFunction(carrier()));
+    }
+}
+
 } // namespace pomagma
