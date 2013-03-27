@@ -1,35 +1,15 @@
 #include "util.hpp"
 #include "scheduler.hpp"
-#include "language.pb.h"
-#include "structure.pb.h"
 
 namespace pomagma
 {
 
 void load_structure (const std::string & filename);
 void dump_structure (const std::string & filename);
-void set_language_prob (const std::string & name, float prob);
+void load_language (const std::string & filename);
+void declare_signature ();
 void validate_all ();
 void log_stats ();
-
-void load_language (const char * filename)
-{
-    POMAGMA_INFO("Loading language");
-
-    messaging::Language language;
-
-    std::ifstream file(filename, std::ios::in | std::ios::binary);
-    POMAGMA_ASSERT(file.is_open(),
-        "failed to open language file " << filename);
-    POMAGMA_ASSERT(language.ParseFromIstream(&file),
-        "failed tp parse language file " << filename);
-
-    for (int i = 0; i < language.terms_size(); ++i) {
-        const auto & term = language.terms(i);
-        POMAGMA_DEBUG("setting P(" << term.name() << ") = " << term.weight());
-        set_language_prob(term.name(), term.weight());
-    }
-}
 
 } // namespace pomagma
 
@@ -108,6 +88,7 @@ int main (int argc, char ** argv)
 
     // set params
     pomagma::Scheduler::set_thread_count(thread_count);
+    pomagma::declare_signature();
     pomagma::load_language(language_file);
     if (structure_in) {
         pomagma::load_structure(structure_in);

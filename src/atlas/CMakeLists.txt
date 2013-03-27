@@ -5,6 +5,7 @@ add_library(pomagma_atlas SHARED
 	../util/util.cpp
 	../util/aligned_alloc.cpp
 	../util/sequential_dense_set.cpp
+	../language/language.pb.cc
 	carrier.cpp
 	base_bin_rel.cpp
 	binary_relation.cpp
@@ -26,7 +27,9 @@ install(TARGETS pomagma_atlas
 set(POMAGMA_ATLAS_LIBS
 	pomagma_atlas
        	hdf5_hl hdf5
-	crypto ssl)
+	crypto ssl
+	protobuf
+	)
 
 add_executable(aggregator_carrier_test carrier_test.cpp)
 target_link_libraries(aggregator_carrier_test ${POMAGMA_ATLAS_LIBS})

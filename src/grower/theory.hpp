@@ -30,6 +30,7 @@ Sampler sampler(structure.signature());
 
 void load_structure (const std::string & filename) { structure.load(filename); }
 void dump_structure (const std::string & filename) { structure.dump(filename); }
+void load_language (const std::string & filename) { sampler.load(filename); }
 
 void schedule_merge (Ob dep) { schedule(MergeTask(dep)); }
 void schedule_exists (Ob ob) { schedule(ExistsTask(ob)); }

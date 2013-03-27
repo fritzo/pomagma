@@ -32,14 +32,19 @@ void dump_structure (const std::string & filename)
     POMAGMA_INFO("dumping structure to " << filename);
 }
 
+void load_language (const std::string & filename)
+{
+    POMAGMA_INFO("loading language from " << filename);
+}
+
 void execute (const SampleTask &, rng_t &)
 {
     POMAGMA_INFO("executing SampleTask");
 }
 
-void set_language_prob (const std::string & name, float prob)
+void declare_signature ()
 {
-    POMAGMA_INFO("set p(" << name << ") = " << prob);
+    POMAGMA_INFO("declare_signature()");
 }
 
 void insert_nullary_functions ()

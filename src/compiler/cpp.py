@@ -292,17 +292,9 @@ def write_signature(code, functions):
                 ''',
                 NAME = name)
     code('''
-        void init_language ()
+        void declare_signature ()
         {
             $body
-        }
-
-        void set_language_prob (const std::string & name, float prob)
-        {
-            static std::once_flag flag;
-            std::call_once(flag, init_language);
-
-            sampler.set_prob(name, prob);
         }
         ''',
         body = wrapindent(body),

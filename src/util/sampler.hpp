@@ -65,7 +65,7 @@ public:
     void validate () const;
     void log_stats () const;
 
-    void set_prob (const std::string & name, float prob);
+    void load (const std::string & language_file);
 
     class Policy; // implementation-specific
     Ob try_insert_random (rng_t & rng, Policy & policy) const;
@@ -74,6 +74,7 @@ private:
 
     const Carrier & carrier () const { return * m_signature.carrier(); }
 
+    void set_prob (const std::string & name, float prob);
     void set_prob (const NullaryFunction * fun, float prob);
     void set_prob (const InjectiveFunction * fun, float prob);
     void set_prob (const BinaryFunction * fun, float prob);

@@ -72,7 +72,14 @@ void fill_random(
         size_t target_item_count __attribute__((unused)),
         const char * language_file __attribute__((unused)))
 {
-    TODO("implement random insertion");
+    std::random_device device;
+    rng_t rng(device());
+    Sampler sampler(structure.signature());
+    sampler.load(language_file);
+    Sampler::Policy policy(subset, target_item_count);
+
+    TODO("do this in a loop until subset is large enough")
+    sampler.try_insert_random(rng, policy);
 }
 
 } // namespace detail

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "sampler.hpp"
+#include <pomagma/language/language.pb.h>
 
 namespace pomagma
 {
@@ -123,6 +124,24 @@ void Sampler::set_prob (const std::string & name, float prob)
         try_set_prob_(m_signature.symmetric_functions(), name, prob);
     POMAGMA_ASSERT(found, "failed to set prob of function: " << name);
     m_bounded_samplers.clear();
+}
+void Sampler::load (const std::string & language_file)
+{
+    POMAGMA_INFO("Loading language");
+
+    messaging::Language language;
+
+    std::ifstream file(language_file, std::ios::in | std::ios::binary);
+    POMAGMA_ASSERT(file.is_open(),
+        "failed to open language file " << language_file);
+    POMAGMA_ASSERT(language.ParseFromIstream(&file),
+        "failed tp parse language file " << language_file);
+
+    for (int i = 0; i < language.terms_size(); ++i) {
+        const auto & term = language.terms(i);
+        POMAGMA_DEBUG("setting P(" << term.name() << ") = " << term.weight());
+        set_prob(term.name(), term.weight());
+    }
 }
 
 //----------------------------------------------------------------------------
