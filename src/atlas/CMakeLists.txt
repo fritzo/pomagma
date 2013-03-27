@@ -16,8 +16,9 @@ add_library(pomagma_atlas SHARED
 	sampler.cpp
 	structure.cpp
 	scheduler.cpp
-	aggregate.cpp
 	compact.cpp
+	aggregate.cpp
+	trim.cpp
 	)
 install(TARGETS pomagma_atlas
 	LIBRARY
@@ -61,6 +62,10 @@ install(TARGETS copy DESTINATION ${PROJECT_SOURCE_DIR}/bin)
 add_executable(aggregate aggregate_main.cpp)
 target_link_libraries(aggregate ${POMAGMA_ATLAS_LIBS})
 install(TARGETS aggregate DESTINATION ${PROJECT_SOURCE_DIR}/bin)
+
+add_executable(trim trim_main.cpp)
+target_link_libraries(trim ${POMAGMA_ATLAS_LIBS})
+install(TARGETS trim DESTINATION ${PROJECT_SOURCE_DIR}/bin)
 
 #set(SRC_DIR ${PROJECT_SOURCE_DIR}/src)
 

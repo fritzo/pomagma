@@ -28,8 +28,6 @@ public:
         POMAGMA_ASSERT_LE(m_size, m_capacity);
     }
 
-    size_t size () { return m_size; }
-
     Ob sample (const NullaryFunction & fun);
     Ob sample (const InjectiveFunction & fun, Ob key);
     Ob sample (const BinaryFunction & fun, Ob lhs, Ob rhs);

@@ -109,12 +109,12 @@ void aggregate (
 {
     POMAGMA_INFO("Aggregating structure");
 
-    POMAGMA_ASSERT(& destin != & src, "cannot merge structure into self");
+    POMAGMA_ASSERT(& destin != & src, "cannot aggregate structure into self");
     POMAGMA_ASSERT_LE(
             destin.carrier().item_count() + src.carrier().item_count(),
             destin.carrier().item_dim());
 
-    std::vector<Ob> translate(src.carrier().item_dim(), 0);
+    std::vector<Ob> translate(1 + src.carrier().item_dim(), 0);
     destin.carrier().set_merge_callback(schedule_merge);
     for (auto iter = src.carrier().iter(); iter.ok(); iter.next()) {
         translate[*iter] = destin.carrier().unsafe_insert();

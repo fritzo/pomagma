@@ -28,8 +28,6 @@ public:
         POMAGMA_ASSERT_LE(m_size, m_capacity);
     }
 
-    size_t size () { return m_size; }
-
     Ob check_insert (const NullaryFunction * fun);
     Ob check_insert (const InjectiveFunction * fun, Ob key);
     Ob check_insert (const BinaryFunction * fun, Ob lhs, Ob rhs);
