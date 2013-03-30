@@ -3,6 +3,7 @@ import sys
 import subprocess
 import multiprocessing
 import contextlib
+import timeit
 import tables
 
 SRC = os.path.dirname(os.path.abspath(__file__))
@@ -47,6 +48,16 @@ def chdir(path):
 
 
 @contextlib.contextmanager
+def log_duration():
+    try:
+        start_time = timeit.default_timer()
+        yield
+    finally:
+        duration = timeit.default_timer() - start_time
+        print '# took {:0.3g} sec'.format(duration)
+
+
+@contextlib.contextmanager
 def load(filename):
     structure = tables.openFile(filename)
     yield structure
@@ -78,7 +89,8 @@ def make_env(**kwargs):
 def check_call(*args):
     message = '{}\n'.format(' \\\n'.join(args))
     sys.stderr.write(message)
-    info = subprocess.call(args)
+    with log_duration():
+        info = subprocess.call(args)
     if info:
         sys.stderr.write('ERROR in {}'.format(message))
         sys.exit(info)
@@ -92,7 +104,8 @@ def log_call(*args, **kwargs):
         os.remove('core')
     if subprocess.check_output('ulimit -c', shell=True).strip() == '0':
         print 'WARNING cannot write core file; try `ulimit -c unlimited`'
-    info = subprocess.call(args, env=env)
+    with log_duration():
+        info = subprocess.call(args, env=env)
     if info:
         # TODO also dump this information to the log file
         print
