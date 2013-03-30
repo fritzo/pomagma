@@ -80,7 +80,7 @@ void fill_random(
     sampler.load(language_file);
     Sampler::Policy policy(subset, target_item_count);
 
-    while (sampler.try_insert_random(rng, policy)) {
+    while (policy.ok() and sampler.try_insert_random(rng, policy)) {
         POMAGMA_DEBUG(policy.size() << " obs after insertion");
     }
 }

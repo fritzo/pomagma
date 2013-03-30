@@ -85,6 +85,7 @@ def check_call(*args):
 
 
 def log_call(*args, **kwargs):
+    args = map(str, args)
     env = make_env(**kwargs)
     sys.stderr.write('{}\n'.format(' \\\n'.join(args)))
     if os.path.exists('core'):
@@ -102,6 +103,7 @@ def log_call(*args, **kwargs):
             '--after-context=40',
             '--ignore-case',
             '--color=always',
+            '--text',
             'error',
             env['POMAGMA_LOG_FILE'],
             ])

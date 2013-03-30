@@ -28,6 +28,7 @@ public:
         POMAGMA_ASSERT_LE(m_size, m_capacity);
     }
 
+    bool ok () const { return m_size < m_capacity; }
     size_t size () const { return m_size; }
 
     Ob sample (const NullaryFunction & fun);

@@ -46,8 +46,8 @@ def trim(theory, atlas_in, chart_out, size, **opts):
         abspath(atlas_in),
         abspath(chart_out),
         size,
-        os.path.join(util.THEORY, '{}.compiled'.format(theory)),
-        os.path.join(util.LANGUAGE, '{}.language'.format(theory)),
+        os.path.join(pomagma.util.THEORY, '{}.compiled'.format(theory)),
+        os.path.join(pomagma.util.LANGUAGE, '{}.language'.format(theory)),
         **opts)
 
 
