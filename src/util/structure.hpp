@@ -263,15 +263,15 @@ inline void dump (
     auto word_type = hdf5::Bitfield<Word>::id();
 
     size_t destin_dim1 = 1 + carrier.item_count();
-    size_t destin_dim2 = DenseSet::round_word_dim(destin_dim1);
+    size_t destin_dim2 = (carrier.item_count() + BITS_PER_WORD) / BITS_PER_WORD;
     hdf5::Dataspace dataspace(destin_dim1, destin_dim2);
 
     hdf5::Group group1(file, "relations", true);
     hdf5::Group group2(group1, "binary", true);
     hdf5::Dataset dataset(group2, name, word_type, dataspace);
 
-    hdf5::Dataspace::Dim source_dim1(destin_dim1, 1 + rel.item_dim());
-    hdf5::Dataspace::Dim source_dim2(destin_dim2, rel.round_word_dim());
+    size_t source_dim1 = 1 + rel.item_dim();
+    size_t source_dim2 = rel.round_word_dim();
     const auto * source = rel.raw_data();
     dataset.write_rectangle(source, source_dim1, source_dim2);
 
@@ -601,15 +601,15 @@ inline void load_data (
 {
     POMAGMA_INFO("loading binary relation " << name);
 
-    size_t dim1 = 1 + rel.item_dim();
-    size_t dim2 = rel.round_word_dim();
+    size_t destin_dim1 = 1 + rel.item_dim();
+    size_t destin_dim2 = rel.round_word_dim();
     auto * destin = rel.raw_data();
 
     hdf5::Group group1(file, "relations");
     hdf5::Group group2(group1, "binary");
     hdf5::Dataset dataset(group2, name);
 
-    dataset.read_rectangle(destin, dim1, dim2);
+    dataset.read_rectangle(destin, destin_dim1, destin_dim2);
     rel.update();
 
     auto digest = get_hash(carrier, rel);

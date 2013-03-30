@@ -256,34 +256,25 @@ struct Dataspace : noncopyable
 {
     hid_t id;
 
-    struct Dim
-    {
-        hsize_t dim, max;
-        Dim (hsize_t d) : dim(d), max(d) {}
-        Dim (hsize_t d, hsize_t m) : dim(d), max(m) {}
-    };
-
     Dataspace ()
     {
         id = H5Screate(H5S_SCALAR);
         POMAGMA_ASSERT(id >= 0, "failed to create dataspace\n" << get_error());
     }
 
-    Dataspace (Dim dim)
+    Dataspace (hsize_t dim)
     {
         int rank = 1;
-        hsize_t dims[] = {dim.dim};
-        hsize_t maxdims[] = {dim.max};
-        id = H5Screate_simple(rank, dims, maxdims);
+        hsize_t dims[] = {dim};
+        id = H5Screate_simple(rank, dims, nullptr);
         POMAGMA_ASSERT(id >= 0, "failed to create dataspace\n" << get_error());
     }
 
-    Dataspace (Dim dim1, Dim dim2)
+    Dataspace (hsize_t dim1, hsize_t dim2)
     {
         int rank = 2;
-        hsize_t dims[] = {dim1.dim, dim2.dim};
-        hsize_t maxdims[] = {dim1.max, dim2.max};
-        id = H5Screate_simple(rank, dims, maxdims);
+        hsize_t dims[] = {dim1, dim2};
+        id = H5Screate_simple(rank, dims, nullptr);
         POMAGMA_ASSERT(id >= 0, "failed to create dataspace\n" << get_error());
     }
 
@@ -627,8 +618,8 @@ struct Dataset : noncopyable
     template<class atomic_Word>
     void write_rectangle (
             const atomic_Word * source,
-            Dataspace::Dim dim1,
-            Dataspace::Dim dim2)
+            size_t source_dim1,
+            size_t source_dim2)
     {
         static_assert(sizeof(atomic_Word) == sizeof(Word), "bad word type");
         hid_t source_type = Bitfield<Word>::id();
@@ -639,7 +630,7 @@ struct Dataset : noncopyable
         auto shape = destin_dataspace.shape();
         POMAGMA_ASSERT_EQ(shape.size(), 2);
 
-        Dataspace source_dataspace(dim1, dim2);
+        Dataspace source_dataspace(source_dim1, source_dim2);
         const hsize_t offset[] = {0, 0};
         const hsize_t count[] = {shape[0], shape[1]};
         source_dataspace.select_hyperslab(offset, count);
@@ -656,8 +647,8 @@ struct Dataset : noncopyable
     template<class atomic_Word>
     void read_rectangle (
             atomic_Word * destin,
-            size_t dim1,
-            size_t dim2)
+            size_t destin_dim1,
+            size_t destin_dim2)
     {
         static_assert(sizeof(atomic_Word) == sizeof(Word), "bad word type");
         hid_t source_type = type();
@@ -667,10 +658,10 @@ struct Dataset : noncopyable
         Dataspace source_dataspace(* this);
         auto shape = source_dataspace.shape();
         POMAGMA_ASSERT_EQ(shape.size(), 2);
-        POMAGMA_ASSERT_LE(shape[0], dim1);
-        POMAGMA_ASSERT_LE(shape[1], dim2);
+        POMAGMA_ASSERT_LE(shape[0], destin_dim1);
+        POMAGMA_ASSERT_LE(shape[1], destin_dim2);
 
-        Dataspace destin_dataspace(dim1, dim2);
+        Dataspace destin_dataspace(destin_dim1, destin_dim2);
         const hsize_t offset[] = {0, 0};
         const hsize_t count[] = {shape[0], shape[1]};
         destin_dataspace.select_hyperslab(offset, count);
