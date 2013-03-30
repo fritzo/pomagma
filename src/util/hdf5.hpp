@@ -256,25 +256,34 @@ struct Dataspace : noncopyable
 {
     hid_t id;
 
+    struct Dim
+    {
+        hsize_t dim, max;
+        Dim (hsize_t d) : dim(d), max(d) {}
+        Dim (hsize_t d, hsize_t m) : dim(d), max(m) {}
+    };
+
     Dataspace ()
     {
         id = H5Screate(H5S_SCALAR);
         POMAGMA_ASSERT(id >= 0, "failed to create dataspace\n" << get_error());
     }
 
-    Dataspace (hsize_t dim)
+    Dataspace (Dim dim)
     {
         int rank = 1;
-        hsize_t dims[] = {dim};
-        id = H5Screate_simple(rank, dims, nullptr);
+        hsize_t dims[] = {dim.dim};
+        hsize_t maxdims[] = {dim.max};
+        id = H5Screate_simple(rank, dims, maxdims);
         POMAGMA_ASSERT(id >= 0, "failed to create dataspace\n" << get_error());
     }
 
-    Dataspace (hsize_t dim1, hsize_t dim2)
+    Dataspace (Dim dim1, Dim dim2)
     {
         int rank = 2;
-        hsize_t dims[] = {dim1, dim2};
-        id = H5Screate_simple(rank, dims, nullptr);
+        hsize_t dims[] = {dim1.dim, dim2.dim};
+        hsize_t maxdims[] = {dim1.max, dim2.max};
+        id = H5Screate_simple(rank, dims, maxdims);
         POMAGMA_ASSERT(id >= 0, "failed to create dataspace\n" << get_error());
     }
 
@@ -618,8 +627,8 @@ struct Dataset : noncopyable
     template<class atomic_Word>
     void write_rectangle (
             const atomic_Word * source,
-            size_t dim1,
-            size_t dim2)
+            Dataspace::Dim dim1,
+            Dataspace::Dim dim2)
     {
         static_assert(sizeof(atomic_Word) == sizeof(Word), "bad word type");
         hid_t source_type = Bitfield<Word>::id();
@@ -645,7 +654,10 @@ struct Dataset : noncopyable
     }
 
     template<class atomic_Word>
-    void read_rectangle (atomic_Word * destin, size_t dim1, size_t dim2)
+    void read_rectangle (
+            atomic_Word * destin,
+            size_t dim1,
+            size_t dim2)
     {
         static_assert(sizeof(atomic_Word) == sizeof(Word), "bad word type");
         hid_t source_type = type();

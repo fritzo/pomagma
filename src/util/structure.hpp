@@ -215,13 +215,25 @@ inline Hasher::Digest get_hash (
 namespace detail
 {
 
+inline void assert_contiguous (const Carrier & carrier)
+{
+    size_t max_item = 0;
+    size_t item_count = 0;
+    for (auto iter = carrier.iter(); iter.ok(); iter.next()) {
+        max_item = * iter;
+        ++item_count;
+    }
+    POMAGMA_ASSERT(max_item == item_count,
+            "dumping requires contiguous carrier; try compacting first");
+}
+
 inline void dump (
         const Carrier & carrier,
         hdf5::OutFile & file)
 {
     POMAGMA_INFO("dumping carrier");
 
-    size_t max_ob = carrier.item_dim();
+    size_t max_ob = carrier.item_count(); // carrier is contiguous
     auto ob_type = hdf5::unsigned_type_wide_enough_for(max_ob);
 
     hdf5::Dataspace dataspace(carrier.item_count());
@@ -250,19 +262,18 @@ inline void dump (
 
     auto word_type = hdf5::Bitfield<Word>::id();
 
-    const DenseSet & support = carrier.support();
-    const size_t item_dim = support.item_dim();
-    const size_t word_dim = support.word_dim();
-    hdf5::Dataspace dataspace(1 + item_dim, word_dim);
+    size_t destin_dim1 = 1 + carrier.item_count();
+    size_t destin_dim2 = DenseSet::round_word_dim(destin_dim1);
+    hdf5::Dataspace dataspace(destin_dim1, destin_dim2);
 
     hdf5::Group group1(file, "relations", true);
     hdf5::Group group2(group1, "binary", true);
     hdf5::Dataset dataset(group2, name, word_type, dataspace);
 
-    size_t dim1 = 1 + rel.item_dim();
-    size_t dim2 = rel.round_word_dim();
+    hdf5::Dataspace::Dim source_dim1(destin_dim1, 1 + rel.item_dim());
+    hdf5::Dataspace::Dim source_dim2(destin_dim2, rel.round_word_dim());
     const auto * source = rel.raw_data();
-    dataset.write_rectangle(source, dim1, dim2);
+    dataset.write_rectangle(source, source_dim1, source_dim2);
 
     auto digest = get_hash(carrier, rel);
     hdf5::dump_hash(dataset, digest);
@@ -305,18 +316,18 @@ inline void dump (
 
     POMAGMA_INFO("dumping functions/injective/" << name);
 
-    size_t max_ob = carrier.item_dim();
+    size_t max_ob = carrier.item_count();
     auto ob_type = hdf5::unsigned_type_wide_enough_for(max_ob);
 
-    const size_t item_dim = carrier.item_dim();
-    hdf5::Dataspace dataspace(1 + item_dim);
+    const size_t destin_dim = 1 + carrier.item_count();
+    hdf5::Dataspace dataspace(destin_dim);
 
     hdf5::Group group1(file, "functions", true);
     hdf5::Group group2(group1, "injective", true);
     hdf5::Group group3(group2, name, true);
     hdf5::Dataset dataset(group3, "value", ob_type, dataspace);
 
-    std::vector<Ob> data(1 + item_dim, 0);
+    std::vector<Ob> data(destin_dim, 0);
     for (auto key = fun.iter(); key.ok(); key.next()) {
         data[* key] = fun.raw_find(* key);
     }
@@ -343,13 +354,13 @@ inline void dump (
     POMAGMA_DEBUG("dumping " << pair_count << " lhs,rhs pairs");
 
     typedef uint_<2 * sizeof(Ob)>::t ptr_t;
-    size_t max_ob = carrier.item_dim();
+    size_t max_ob = carrier.item_count();
     size_t max_ptr = pair_count;
     auto ob_type = hdf5::unsigned_type_wide_enough_for(max_ob);
     auto ptr_type = hdf5::unsigned_type_wide_enough_for(max_ptr);
 
-    const size_t item_dim = carrier.item_dim();
-    hdf5::Dataspace ptr_dataspace(1 + item_dim);
+    const size_t destin_dim = 1 + carrier.item_count();
+    hdf5::Dataspace ptr_dataspace(destin_dim);
     hdf5::Dataspace ob_dataspace(pair_count);
 
     hdf5::Group group1(file, "functions", true);
@@ -359,12 +370,12 @@ inline void dump (
     hdf5::Dataset rhs_dataset(group3, "rhs", ob_type, ob_dataspace);
     hdf5::Dataset value_dataset(group3, "value", ob_type, ob_dataspace);
 
-    std::vector<ptr_t> lhs_ptr_data(1 + item_dim);
-    std::vector<Ob> rhs_data(item_dim);
-    std::vector<Ob> value_data(item_dim);
+    std::vector<ptr_t> lhs_ptr_data(destin_dim);
+    std::vector<Ob> rhs_data(destin_dim);
+    std::vector<Ob> value_data(destin_dim);
     ptr_t pos = 0;
     lhs_ptr_data[0] = pos;
-    for (Ob lhs = 1; lhs <= item_dim; ++lhs) {
+    for (Ob lhs = 1; lhs < destin_dim; ++lhs) {
         lhs_ptr_data[lhs] = pos;
         if (carrier.contains(lhs)) {
             rhs_data.clear();
@@ -403,6 +414,7 @@ inline void dump (
 
     POMAGMA_ASSERT(signature.carrier(), "carrier is not defined");
     const Carrier & carrier = * signature.carrier();
+    detail::assert_contiguous(carrier);
 
     // TODO parallelize
     detail::dump(carrier, file);

@@ -85,7 +85,7 @@ void inject_all (
         const Carrier & src_carrier,
         const std::vector<Ob> & src_to_destin)
 {
-
+    // TODO parallelize, except for nullary relations
     for (auto pair : destin_map) {
         auto & name = pair.first;
         auto & destin = * pair.second;
@@ -127,6 +127,7 @@ void aggregate (
             src.carrier(),\
             src_to_destin)
 
+    // TODO parallelize, except for nullary relations
     POMAGMA_INJECT_ALL(binary_relations);
     POMAGMA_INJECT_ALL(nullary_functions);
     POMAGMA_INJECT_ALL(injective_functions);
