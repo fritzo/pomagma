@@ -287,7 +287,7 @@ inline void dump (
 {
     POMAGMA_INFO("dumping functions/nullary/" << name);
 
-    size_t max_ob = carrier.item_dim();
+    size_t max_ob = carrier.item_count();
     auto ob_type = hdf5::unsigned_type_wide_enough_for(max_ob);
 
     hdf5::Dataspace dataspace;
@@ -298,7 +298,7 @@ inline void dump (
     hdf5::Dataset dataset(group3, "value", ob_type, dataspace);
 
     Ob data = fun.find();
-    POMAGMA_ASSERT_LE(data, carrier.item_dim());
+    POMAGMA_ASSERT_LE(data, max_ob);
     dataset.write_scalar(data);
 
     auto digest = get_hash(fun);
