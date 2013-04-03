@@ -5,5 +5,5 @@ sudo apt-get update
 sudo apt-get install -y git-core
 git clone git@github.com:fritzo/pomagma
 cd pomagma
-./requirements.sh
+./install.sh
 

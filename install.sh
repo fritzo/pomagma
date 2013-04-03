@@ -19,4 +19,5 @@ source ~/.bashrc
 workon pomagma || mkvirtualenv --system-site-packages pomagma
 workon pomagma
 pip install -r requirements.txt
+make
 
