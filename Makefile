@@ -1,20 +1,24 @@
 all:
 	pip install -e .
 	$(MAKE) -C src/language
+	$(MAKE) -C src/structure
 	POMAGMA_DEBUG= python -m pomagma build
 	python -m pomagma build
 
-unit-test:
+set-ulimit: FORCE
+	$(call ulimit -c unlimited)
+
+unit-test: set-ulimit
 	POMAGMA_DEBUG= python -m pomagma unit-test
-batch-test:
+batch-test: set-ulimit
 	POMAGMA_DEBUG= python -m pomagma batch-test
-h4-test:
+h4-test: set-ulimit
 	POMAGMA_DEBUG= python -m pomagma batch-test h4
-sk-test:
+sk-test: set-ulimit
 	POMAGMA_DEBUG= python -m pomagma batch-test sk
-skj-test:
+skj-test: set-ulimit
 	POMAGMA_DEBUG= python -m pomagma batch-test skj
-test:
+test: set-ulimit
 	POMAGMA_DEBUG= python -m pomagma unit-test
 	POMAGMA_DEBUG= python -m pomagma batch-test
 
