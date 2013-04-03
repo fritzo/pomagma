@@ -1,24 +1,6 @@
 
 include_directories(${CMAKE_SOURCE_DIR}/)
 
-add_library(pomagma_grower SHARED
-	../util/util.cpp
-	../util/aligned_alloc.cpp
-	../util/concurrent_dense_set.cpp
-	../language/language.pb.cc
-	carrier.cpp
-	base_bin_rel.cpp
-	binary_relation.cpp
-	nullary_function.cpp
-	injective_function.cpp
-	binary_function.cpp
-	symmetric_function.cpp
-	parser.cpp
-	sampler.cpp
-	structure.cpp
-	scheduler.cpp
-	)
-install(TARGETS pomagma_grower LIBRARY DESTINATION ${PROJECT_SOURCE_DIR}/lib)
 set(POMAGMA_GROWER_LIBS
 	pomagma_grower
        	boost_thread
@@ -69,10 +51,7 @@ target_link_libraries(grower_scheduler_test ${POMAGMA_GROWER_TEST_LIBS})
 add_test(NAME grower_scheduler COMMAND grower_scheduler_test)
 
 
-add_library(pomagma_grower_main SHARED
-	main.cpp
-	../language/language.pb.cc
-	)
+add_library(pomagma_grower_main SHARED main.cpp)
 install(TARGETS pomagma_grower_main LIBRARY
        	DESTINATION ${PROJECT_SOURCE_DIR}/lib
 	)
@@ -87,24 +66,6 @@ add_executable(dummy.grow dummy.theory.cpp)
 target_link_libraries(dummy.grow ${POMAGMA_GROWER_MAIN_LIBS})
 
 set(SRC_DIR ${PROJECT_SOURCE_DIR}/src)
-
-# TODO abstract these out as functions
-
-add_custom_command(
-	OUTPUT ${SRC_DIR}/language.pb.cc
-	COMMAND protoc ${SRC_DIR}/language/language.proto
-		--proto_path=${SRC_DIR}/language
-		--cpp_out=${SRC_DIR}/language
-	DEPENDS ${SRC_DIR}/language/language.proto
-	)
-
-add_custom_command(
-	OUTPUT ${SRC_DIR}/structure.pb.cc
-	COMMAND protoc ${SRC_DIR}/structure/structure.proto
-		--proto_path=${SRC_DIR}/structure
-		--cpp_out=${SRC_DIR}/structure
-	DEPENDS ${SRC_DIR}/structure/structure.proto
-	)
 
 add_custom_command(
 	OUTPUT ${CMAKE_CURRENT_LIST_DIR}/h4.theory.cpp

@@ -33,6 +33,4 @@ enable_testing()
 #	FILES_MATCHING PATTERN *.hpp)
 #endif()
 
-add_subdirectory(src/util)
-add_subdirectory(src/grower)
-add_subdirectory(src/atlas)
+add_subdirectory(src)

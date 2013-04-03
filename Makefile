@@ -1,4 +1,5 @@
 all:
+	$(MAKE) -C src/language
 	POMAGMA_DEBUG= python -m pomagma build
 	python -m pomagma build
 
