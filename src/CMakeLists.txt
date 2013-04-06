@@ -19,7 +19,7 @@ add_library(pomagma_grower SHARED
 	grower/structure.cpp
 	grower/scheduler.cpp
 	)
-install(TARGETS pomagma_grower LIBRARY DESTINATION ${PROJECT_SOURCE_DIR}/lib)
+#install(TARGETS pomagma_grower LIBRARY DESTINATION ${PROJECT_SOURCE_DIR}/lib)
 
 add_library(pomagma_atlas SHARED
 	util/util.cpp
@@ -41,9 +41,7 @@ add_library(pomagma_atlas SHARED
 	atlas/aggregate.cpp
 	atlas/trim.cpp
 	)
-install(TARGETS pomagma_atlas
-	LIBRARY
-	DESTINATION ${PROJECT_SOURCE_DIR}/lib)
+#install(TARGETS pomagma_atlas LIBRARY DESTINATION ${PROJECT_SOURCE_DIR}/lib)
 
 add_custom_command(
 	OUTPUT ${SRC_DIR}/language/language.pb.cc

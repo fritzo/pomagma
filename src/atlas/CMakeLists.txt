@@ -37,13 +37,13 @@ target_link_libraries(load_item_dim ${POMAGMA_ATLAS_LIBS})
 
 add_executable(copy copy_main.cpp)
 target_link_libraries(copy ${POMAGMA_ATLAS_LIBS})
-install(TARGETS copy DESTINATION ${PROJECT_SOURCE_DIR}/bin)
+#install(TARGETS copy DESTINATION ${PROJECT_SOURCE_DIR}/bin)
 
 add_executable(aggregate aggregate_main.cpp)
 target_link_libraries(aggregate ${POMAGMA_ATLAS_LIBS})
-install(TARGETS aggregate DESTINATION ${PROJECT_SOURCE_DIR}/bin)
+#install(TARGETS aggregate DESTINATION ${PROJECT_SOURCE_DIR}/bin)
 
 add_executable(trim trim_main.cpp)
 target_link_libraries(trim ${POMAGMA_ATLAS_LIBS})
-install(TARGETS trim DESTINATION ${PROJECT_SOURCE_DIR}/bin)
+#install(TARGETS trim DESTINATION ${PROJECT_SOURCE_DIR}/bin)
 

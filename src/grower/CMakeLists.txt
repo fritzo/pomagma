@@ -52,9 +52,9 @@ add_test(NAME grower_scheduler COMMAND grower_scheduler_test)
 
 
 add_library(pomagma_grower_main SHARED main.cpp)
-install(TARGETS pomagma_grower_main LIBRARY
-       	DESTINATION ${PROJECT_SOURCE_DIR}/lib
-	)
+#install(TARGETS pomagma_grower_main LIBRARY
+#	DESTINATION ${PROJECT_SOURCE_DIR}/lib
+#	)
 set(POMAGMA_GROWER_MAIN_LIBS
 	pomagma_grower_main
 	${POMAGMA_GROWER_LIBS}
@@ -90,7 +90,7 @@ add_custom_command(
 	)
 add_executable(h4.grow h4.theory.cpp)
 target_link_libraries(h4.grow ${POMAGMA_GROWER_MAIN_LIBS})
-install(TARGETS h4.grow DESTINATION ${PROJECT_SOURCE_DIR}/bin)
+#install(TARGETS h4.grow DESTINATION ${PROJECT_SOURCE_DIR}/bin)
 
 add_custom_command(
 	OUTPUT ${CMAKE_CURRENT_LIST_DIR}/sk.theory.cpp
@@ -115,7 +115,7 @@ add_custom_command(
 	)
 add_executable(sk.grow sk.theory.cpp)
 target_link_libraries(sk.grow ${POMAGMA_GROWER_MAIN_LIBS})
-install(TARGETS sk.grow DESTINATION ${PROJECT_SOURCE_DIR}/bin)
+#install(TARGETS sk.grow DESTINATION ${PROJECT_SOURCE_DIR}/bin)
 
 # TODO get types.rules to compile
 add_custom_command(
@@ -147,7 +147,7 @@ add_custom_command(
 	)
 add_executable(skj.grow skj.theory.cpp)
 target_link_libraries(skj.grow ${POMAGMA_GROWER_MAIN_LIBS})
-install(TARGETS skj.grow DESTINATION ${PROJECT_SOURCE_DIR}/bin)
+#install(TARGETS skj.grow DESTINATION ${PROJECT_SOURCE_DIR}/bin)
 
 # TODO get reflect.rules to compile
 add_custom_command(
@@ -187,5 +187,5 @@ add_custom_command(
 	)
 add_executable(skjo.grow skjo.theory.cpp)
 target_link_libraries(skjo.grow ${POMAGMA_GROWER_MAIN_LIBS})
-install(TARGETS skjo.grow DESTINATION ${PROJECT_SOURCE_DIR}/bin)
+#install(TARGETS skjo.grow DESTINATION ${PROJECT_SOURCE_DIR}/bin)
 
