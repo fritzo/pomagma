@@ -5,8 +5,7 @@ A deductive database for partially ordered magmas.<br />
 An experiment in coding under extensional semantics.<br />
 A lens into a supremely beautiful mathematical object.<br />
 A toy model of Lakatosian mathematical evolution.<br />
-A mashup of first-person-shooter with theorem prover.<br />
-A distributed rewrite of [Johann](Johann) with an artsy front-end.
+A distributed rewrite of [http://github.com/fritzo/Johann](Johann) with an artsy front-end.
 
 Roadmap
 -------
@@ -66,3 +65,9 @@ System Architecture
 - Theorist - statistically conjectures new relations
 - Linguist - a Bayesian grammar optimizer / MCMC sampler
 
+License
+-------
+
+Copyright (C) 2005-2013 Fritz Obermeyer
+Licensed under the MIT license:
+http://www.opensource.org/licenses/mit-license.php
