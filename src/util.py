@@ -166,6 +166,12 @@ def get_hash(infile):
         return digest
 
 
+def get_info(infile):
+    with load(infile) as structure:
+        item_dim, item_count = count_obs(structure)
+        info = dict(item_dim=item_dim, item_count=item_count)
+        return info
+
 def print_info(infile):
     with load(infile) as structure:
         item_dim, item_count = count_obs(structure)

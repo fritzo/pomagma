@@ -45,7 +45,7 @@ def test(theory):
 
 
 @parsable_command
-def init(theory, size=8191):
+def init(theory):
     '''
     Init atlas for given theory.
     '''
@@ -58,18 +58,21 @@ def init(theory, size=8191):
         opts = dict(log_file='grow.log')
 
         print 'Initializing'
+        size = pomagma.util.MIN_SIZES[theory]
         pomagma.wrapper.init(theory, atlas, size, **opts)
 
 
 @parsable_command
 def grow(theory, max_size=8191, step_size=512):
     '''
-    Work on atlas for given theory. (trim; grow; aggregate)
+    Work on atlas for given theory.
+    Grow atlas until at given size, then (trim; grow; aggregate)-loop
     '''
     # TODO make starting this idempotent, with a mutext or killer or sth
     assert step_size > 0
     seed_size = max_size - step_size
-    assert seed_size >= pomagma.util.MIN_SIZES[theory]
+    min_size = pomagma.util.MIN_SIZES[theory]
+    assert seed_size >= min_size
 
     data = os.path.join(pomagma.util.DATA, '{}.grow'.format(theory))
     assert os.path.exists(data), 'First initialize atlas'
@@ -80,17 +83,28 @@ def grow(theory, max_size=8191, step_size=512):
         atlas = 'atlas.h5'
         atlas_temp = 'temp.atlas.h5'
         assert os.path.exists(atlas), 'First initialize atlas'
+        atlas_size = pomagma.util.get_info(atlas)['item_count']
         opts = dict(log_file='grow.log')
 
         step = 0
-        while True:
+        while atlas_size < max_size:
+            atlas_size = min(atlas_size + step_size, max_size)
+            print 'Step {}: grow to {}'.format(step, atlas_size)
+            pomagma.wrapper.grow(theory, atlas, atlas_temp, atlas_size, **opts)
+            pomagma.wrapper.copy(atlas_temp, atlas, **opts) # verifies file
+            atlas_size = pomagma.util.get_info(atlas)['item_count']
+            print 'atlas_size = {}'.format(atlas_size)
             step += 1
-            print 'Grow step', step
+
+        while True:
+            print 'Step {}: trim-grow-aggregate'.format(step)
             pomagma.wrapper.trim(atlas, seed, seed_size, **opts)
             pomagma.wrapper.grow(theory, seed, chart, max_size, **opts)
             pomagma.wrapper.aggregate(atlas, chart, atlas_temp, **opts)
-            sys.stderr.write('cp {} {}\n'.format(atlas_temp, atlas))
-            os.copyfile(atlas_temp, atlas)
+            pomagma.wrapper.copy(atlas_temp, atlas, **opts) # verifies file
+            atlas_size = pomagma.util.get_info(atlas)['item_count']
+            print 'atlas_size = {}'.format(atlas_size)
+            step += 1
 
 
 @parsable_command
