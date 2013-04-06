@@ -68,18 +68,31 @@ def abspath(path):
     return os.path.abspath(os.path.expanduser(path))
 
 
-def make_env(**kwargs):
-    kwargs['root'] = ROOT
-    kwargs.setdefault('threads', CPU_COUNT)
+def get_log_file(options):
     log_file = os.path.join(LOG, 'default.log')
-    log_file = abspath(kwargs.get('log_file', log_file))
-    kwargs['log_file'] = log_file
+    log_file = abspath(options.get('log_file', log_file))
+    return log_file
+
+
+def log_print(message, log_file):
+    with open(log_file, 'a') as log:
+        log.write(message)
+        log.write('\n')
+    print message
+
+
+def make_env(options):
+    options = dict(options)
+    options['root'] = ROOT
+    options.setdefault('threads', CPU_COUNT)
+    log_file = get_log_file(options)
+    options['log_file'] = log_file
     log_dir = os.path.dirname(log_file)
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
-    kwargs.setdefault('log_level', 4 if debug else 0)
+    options.setdefault('log_level', 4 if debug else 0)
     env = os.environ.copy()
-    for key, val in kwargs.iteritems():
+    for key, val in options.iteritems():
         pomagma_key = 'POMAGMA_{}'.format(key.upper())
         sys.stderr.write('{}={} \\\n'.format(pomagma_key, val))
         env[pomagma_key] = str(val)
@@ -96,9 +109,43 @@ def check_call(*args):
         sys.exit(info)
 
 
-def log_call(*args, **kwargs):
+def print_logged_error(log_file):
+    print
+    print '==== LOG FILE ===='
+    grep = ' '.join([
+        'grep',
+        '--before-context=40',
+        '--after-context=3',
+        '--ignore-case',
+        '--color=always',
+        '--text',
+        '--max-count=1',
+        'error'
+        ])
+    revgrep = 'tac {} | {} | tac'.format(log_file, grep)
+    subprocess.call(revgrep, shell=True)
+
+
+def get_stack_trace(binary):
+    trace = '==== STACK TRACE ====\n'
+    try:
+        trace += subprocess.check_output([
+            'gdb',
+            binary,
+            'core',
+            '--batch',
+            '-ex',
+            'thread apply all bt',
+            ])
+    except subprocess.CalledProcessError:
+        trace += 'ERROR stack trace failed'
+    return trace
+
+
+def log_call(*args, **options):
     args = map(str, args)
-    env = make_env(**kwargs)
+    env = make_env(options)
+    log_file = env['POMAGMA_LOG_FILE']
     sys.stderr.write('{}\n'.format(' \\\n'.join(args)))
     if os.path.exists('core'):
         os.remove('core')
@@ -107,29 +154,9 @@ def log_call(*args, **kwargs):
     with log_duration():
         info = subprocess.call(args, env=env)
     if info:
-        # TODO also dump this information to the log file
-        print
-        print '==== LOG FILE ===='
-        subprocess.call([
-            'grep',
-            '--before-context=3',
-            '--after-context=40',
-            '--ignore-case',
-            '--color=always',
-            '--text',
-            'error',
-            env['POMAGMA_LOG_FILE'],
-            ])
-        print '==== STACK TRACE ===='
-        subprocess.call([
-            'gdb',
-            args[0],
-            'core',
-            '--batch',
-            '-ex',
-            'thread apply all bt',
-            ])
-        print
+        print_logged_error(log_file)
+        trace = get_stack_trace(args[0])
+        log_print(trace, log_file)
         sys.exit(info)
 
 

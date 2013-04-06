@@ -60,7 +60,7 @@ def init(theory, **options):
         opts = options
         opts.setdefault('log_file', 'init.log')
 
-        print 'Initializing'
+        pomagma.util.log_print('Initializing', options['log_file'])
         size = pomagma.util.MIN_SIZES[theory]
         pomagma.wrapper.init(theory, atlas, size, **opts)
 
@@ -85,30 +85,32 @@ def grow(theory, max_size=8191, step_size=512, **options):
         seed = 'seed.h5'
         chart = 'chart.h5'
         atlas = 'atlas.h5'
-        atlas_temp = 'temp.atlas.h5'
+        temp = 'temp.atlas.h5'
         assert os.path.exists(atlas), 'First initialize atlas'
         atlas_size = pomagma.util.get_info(atlas)['item_count']
         opts = options
         opts.setdefault('log_file', 'grow.log')
+        def log_print(message):
+            pomagma.util.log_print(message, opts['log_file'])
 
         step = 0
-        while atlas_size < max_size:
-            atlas_size = min(atlas_size + step_size, max_size)
-            print 'Step {}: grow to {}'.format(step, atlas_size)
-            pomagma.wrapper.grow(theory, atlas, atlas_temp, atlas_size, **opts)
-            pomagma.wrapper.copy(atlas_temp, atlas, **opts) # verifies file
-            atlas_size = pomagma.util.get_info(atlas)['item_count']
-            print 'atlas_size = {}'.format(atlas_size)
-            step += 1
-
         while True:
-            print 'Step {}: trim-grow-aggregate'.format(step)
-            pomagma.wrapper.trim(theory, atlas, seed, seed_size, **opts)
-            pomagma.wrapper.grow(theory, seed, chart, max_size, **opts)
-            pomagma.wrapper.aggregate(atlas, chart, atlas_temp, **opts)
-            pomagma.wrapper.copy(atlas_temp, atlas, **opts) # verifies file
+
+            if atlas_size < max_size:
+                atlas_size = min(atlas_size + step_size, max_size)
+                log_print('Step {}: grow to {}'.format(step, atlas_size))
+                pomagma.wrapper.grow(theory, atlas, temp, atlas_size, **opts)
+                pomagma.wrapper.copy(temp, atlas, **opts) # verifies file
+
+            else:
+                log_print('Step {}: trim-grow-aggregate'.format(step))
+                pomagma.wrapper.trim(theory, atlas, seed, seed_size, **opts)
+                pomagma.wrapper.grow(theory, seed, chart, max_size, **opts)
+                pomagma.wrapper.aggregate(atlas, chart, temp, **opts)
+                pomagma.wrapper.copy(temp, atlas, **opts) # verifies file
+
             atlas_size = pomagma.util.get_info(atlas)['item_count']
-            print 'atlas_size = {}'.format(atlas_size)
+            log_print('atlas_size = {}'.format(atlas_size))
             step += 1
 
 
