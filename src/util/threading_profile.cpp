@@ -68,7 +68,7 @@ void print_rate (std::string name, Function function)
 
 int main ()
 {
-    Log::title("Threading profile");
+    Log::Context log_context("Threading profile");
 
     print_rate("call", [&](size_t i){
         task(i);

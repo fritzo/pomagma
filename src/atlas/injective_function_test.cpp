@@ -58,7 +58,7 @@ struct Example
 
 int main ()
 {
-    Log::title("InjectiveFunction Test");
+    Log::Context log_context("InjectiveFunction Test");
     test_function<Example>(rng);
 
     return 0;

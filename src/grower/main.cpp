@@ -38,7 +38,7 @@ inline std::string get_name (const std::string & path)
 
 int main (int argc, char ** argv)
 {
-    pomagma::Log::title(argc, argv);
+    pomagma::Log::Context log_context(argc, argv);
 
     const std::string HOME = getenv("HOME");
     const std::string DEFAULT_ROOT = HOME + "/pomagma";

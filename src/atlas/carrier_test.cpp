@@ -45,7 +45,7 @@ void test_random (size_t size)
 
 int main ()
 {
-    Log::title("Carrier Test");
+    Log::Context log_context("Carrier Test");
 
     POMAGMA_INFO("Testing random carrier");
     for (size_t size = 2; size < 200; ++size) {

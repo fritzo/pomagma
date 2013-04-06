@@ -5,7 +5,7 @@
 
 int main (int argc, char ** argv)
 {
-    pomagma::Log::title(argc, argv);
+    pomagma::Log::Context log_context(argc, argv);
 
     const char * source_file = nullptr;
     const char * destin_file = nullptr;

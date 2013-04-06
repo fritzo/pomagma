@@ -180,25 +180,12 @@ public:
         return * this;
     }
 
-    static void title (std::string name)
+    struct Context
     {
-        std::ostringstream message;
-        message << "\e[32m" << name << "\e[0;39m\n";
-        s_log_stream << message.str() << std::flush;
-        //std::cerr << message.str() << std::flush; // DEBUG
-    }
-
-    static void title (int argc, char ** argv)
-    {
-        std::ostringstream message;
-        message << "\e[32m";
-        for (int i = 0; i < argc; ++i) {
-            message << argv[i] << ' ';
-        }
-        message << "\e[0;39m\n";
-        s_log_stream << message.str() << std::flush;
-        //std::cerr << message.str() << std::flush; // DEBUG
-    }
+        Context(std::string name);
+        Context(int argc, char ** argv);
+        ~Context();
+    };
 
     static int init ();
 };

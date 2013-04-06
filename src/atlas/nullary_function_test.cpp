@@ -39,7 +39,7 @@ void test_basic (size_t size)
 
 int main ()
 {
-    Log::title("Dense Nullary Function Test");
+    Log::Context log_context("Dense Nullary Function Test");
 
     for (size_t i = 0; i < 4; ++i) {
         test_basic(i + (1 << 9));

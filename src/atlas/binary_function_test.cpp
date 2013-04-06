@@ -55,7 +55,7 @@ struct Example
 
 int main ()
 {
-    Log::title("BinaryFunction Test");
+    Log::Context log_context("BinaryFunction Test");
     test_function<Example>(rng);
 
     return 0;

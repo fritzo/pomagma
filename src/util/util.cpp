@@ -1,5 +1,6 @@
 #include <pomagma/util/util.hpp>
 #include <sys/time.h>
+#include <sys/resource.h>
 #include <vector>
 
 namespace pomagma
@@ -7,7 +8,6 @@ namespace pomagma
 
 //----------------------------------------------------------------------------
 // logging
-
 
 int Log::init ()
 {
@@ -29,6 +29,49 @@ static int init __attribute__((unused)) = Log::init();
 
 const size_t Log::s_log_level(
     getenv_default("POMAGMA_LOG_LEVEL", DEFAULT_LOG_LEVEL));
+
+
+Log::Context::Context (std::string name)
+{
+    std::ostringstream message;
+    message << "\e[32m" << name << "\e[0;39m\n";
+    s_log_stream << message.str() << std::flush;
+    //std::cerr << message.str() << std::flush; // DEBUG
+}
+
+Log::Context::Context (int argc, char ** argv)
+{
+    std::ostringstream message;
+    message << "\e[32m";
+    for (int i = 0; i < argc; ++i) {
+        message << argv[i] << ' ';
+    }
+    message << "\e[0;39m\n";
+    s_log_stream << message.str() << std::flush;
+    //std::cerr << message.str() << std::flush; // DEBUG
+}
+
+inline std::ostream & operator<< (std::ostream & o, const timeval & t)
+{
+    return o
+        << t.tv_sec
+        << '.'
+        << std::setfill('0') << std::setw(6) << t.tv_usec;
+}
+
+Log::Context::~Context ()
+{
+    rusage usage;
+    getrusage(RUSAGE_SELF, & usage);
+    std::ostringstream message;
+    message
+        << "rusage.ru_utime = " << usage.ru_utime << "\n"
+        << "rusage.ru_stime = " << usage.ru_stime << "\n"
+        << "rusage.ru_max_rss = " << usage.ru_maxrss << "\n"
+        ;
+    s_log_stream << message.str() << std::flush;
+    //std::cerr << message.str() << std::flush; // DEBUG
+}
 
 //----------------------------------------------------------------------------
 // time

@@ -146,7 +146,7 @@ void test_BinaryRelation (
 
 int main ()
 {
-    Log::title("Running Binary Relation Test");
+    Log::Context log_context("Running Binary Relation Test");
 
     for (size_t i = 0; i < 4; ++i) {
         test_BinaryRelation(i + (1 << 9), test_fun1);

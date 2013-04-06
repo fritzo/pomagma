@@ -255,7 +255,7 @@ void test_operations (size_t size, rng_t & rng)
 
 int main ()
 {
-    Log::title("Dense Set Test");
+    Log::Context log_context("Dense Set Test");
 
     test_sizes();
 

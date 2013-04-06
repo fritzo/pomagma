@@ -50,7 +50,7 @@ struct Example
 
 int main ()
 {
-    Log::title("SymmetricFunction Test");
+    Log::Context log_context("SymmetricFunction Test");
     test_function<Example>(rng);
 
     return 0;
