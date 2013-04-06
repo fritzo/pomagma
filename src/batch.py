@@ -13,10 +13,10 @@ def parsable_command(fun):
 
 
 @parsable_command
-def test(theory):
+def test(theory, **options):
     '''
-    Test basic operations with a given theory:
-    init, copy, grow, aggregate
+    Test basic operations in one theory: init, copy, grow, aggregate
+    Options: log_level, log_file
     '''
     buildtype = 'debug' if pomagma.util.debug else 'release'
     data = '{}.{}.test'.format(theory, buildtype)
@@ -30,7 +30,8 @@ def test(theory):
         min_size = pomagma.util.MIN_SIZES[theory]
         dsize = min(512, 1 + min_size)
         sizes = [min_size + i * dsize for i in range(10)]
-        opts = dict(log_file='test.log')
+        opts = options
+        opts.setdefault('log_file', 'test.log')
 
         pomagma.wrapper.init(theory, '0.h5', sizes[0], **opts)
         pomagma.wrapper.copy('0.h5', '1.h5', **opts)
@@ -45,9 +46,10 @@ def test(theory):
 
 
 @parsable_command
-def init(theory):
+def init(theory, **options):
     '''
     Init atlas for given theory.
+    Options: log_level, log_file
     '''
     data = os.path.join(pomagma.util.DATA, '{}.grow'.format(theory))
     assert not os.path.exists(data), 'Atlas has already been initialized'
@@ -55,7 +57,8 @@ def init(theory):
     with pomagma.util.chdir(data):
 
         atlas = 'atlas.h5'
-        opts = dict(log_file='grow.log')
+        opts = options
+        opts.setdefault('log_file', 'init.log')
 
         print 'Initializing'
         size = pomagma.util.MIN_SIZES[theory]
@@ -63,10 +66,11 @@ def init(theory):
 
 
 @parsable_command
-def grow(theory, max_size=8191, step_size=512):
+def grow(theory, max_size=8191, step_size=512, **options):
     '''
     Work on atlas for given theory.
     Grow atlas until at given size, then (trim; grow; aggregate)-loop
+    Options: log_level, log_file
     '''
     # TODO make starting this idempotent, with a mutext or killer or sth
     assert step_size > 0
@@ -84,7 +88,8 @@ def grow(theory, max_size=8191, step_size=512):
         atlas_temp = 'temp.atlas.h5'
         assert os.path.exists(atlas), 'First initialize atlas'
         atlas_size = pomagma.util.get_info(atlas)['item_count']
-        opts = dict(log_file='grow.log')
+        opts = options
+        opts.setdefault('log_file', 'grow.log')
 
         step = 0
         while atlas_size < max_size:
