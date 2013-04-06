@@ -103,7 +103,7 @@ def grow(theory, max_size=8191, step_size=512, **options):
 
         while True:
             print 'Step {}: trim-grow-aggregate'.format(step)
-            pomagma.wrapper.trim(atlas, seed, seed_size, **opts)
+            pomagma.wrapper.trim(theory, atlas, seed, seed_size, **opts)
             pomagma.wrapper.grow(theory, seed, chart, max_size, **opts)
             pomagma.wrapper.aggregate(atlas, chart, atlas_temp, **opts)
             pomagma.wrapper.copy(atlas_temp, atlas, **opts) # verifies file
