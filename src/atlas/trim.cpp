@@ -33,7 +33,7 @@ void assume (
         Parser::Policy & policy,
         const std::string & expression_str)
 {
-    POMAGMA_INFO("assume " << expression_str);
+    POMAGMA_DEBUG("assume " << expression_str);
     std::istringstream expression(expression_str);
 
     std::string type;

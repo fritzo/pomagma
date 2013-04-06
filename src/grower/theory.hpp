@@ -106,7 +106,7 @@ void assume_core_facts (const char * theory_file)
 
 void execute (const AssumeTask & task)
 {
-    POMAGMA_INFO("assume " << task.expression);
+    POMAGMA_DEBUG("assume " << task.expression);
     std::istringstream expression(task.expression);
 
     std::string type;
