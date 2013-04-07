@@ -1,9 +1,7 @@
 all: architecture.pdf
 
-GRAPHVIZ=dot
-
 architecture.pdf: architecture.dot FORCE
-	$(GRAPHVIZ) -T pdf architecture.dot -o architecture.pdf
-	$(GRAPHVIZ) -T png architecture.dot -o architecture.png
+	dot architecture.dot -T pdf -o architecture.pdf
+	dot architecture.dot -T png -o architecture.png
 
 FORCE:
