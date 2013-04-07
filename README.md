@@ -1,10 +1,10 @@
 # Pomagma
 
-A deductive database for partially ordered magmas.<br />
-An experiment in coding under extensional semantics.<br />
-A lens into a supremely beautiful mathematical object.<br />
-A toy model of Lakatosian mathematical evolution.<br />
-A distributed rewrite of [Johann](http://github.com/fritzo/Johann) with an artsy front-end.
+A deductive database for partially ordered <a href="http://en.wikipedia.org/wiki/Magma_(algebra)">magmas</a>.<br />
+An experiment IDE for coding under <a href="https://en.wikipedia.org/wiki/Extension_(semantics)">extensional semantics</a>.<br />
+A portal into the supremely beautiful mathematical universe.<br />
+A toy model of <a href="http://en.wikipedia.org/wiki/Proofs_and_Refutations)">Lakatosian mathematical evolution</a>.<br />
+A parllel distributed rewrite of <a href="http://github.com/fritzo/Johann">Johann</a> with a web front-end.
 
 ## System Architecture
 
