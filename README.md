@@ -10,12 +10,15 @@ A parllel distributed rewrite of <a href="http://github.com/fritzo/Johann">Johan
 
 ![Architecture](doc/architecture.png)
 
-### Actors
+### State
 
-- Language - a probabilistic grammar defining an algebra's generators
 - Theory - inference rules and facts defining an algebra's relations
+- Language - a probabilistic grammar defining an algebra's generators
 - Structure - a finite substructure of the algebra; a knowledge base
 - Corpus - a working set of interesting terms/positions in the algebra
+
+### Actors
+
 - Compiler - an optimizing compiler for forward-chaining inference
 - Grower - a parallel Todd-Coxeter rules engine
 - Aggregator - joins charts from growers into a global atlas
