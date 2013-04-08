@@ -1,10 +1,49 @@
 import simplejson as json
 import parsable
+import pomagma.util
+import pomagma.store
+import pomagma.wrapper
 import pomagma.workflow.util
 
 
-def TODO(message):
-    raise NotImplementedError('TODO {}'.format(message))
+STEP_SIZE = 512
+
+
+def random_filename():
+    return 'temp/{}.h5'.format(pomagma.workflow.util.random_uuid())
+
+
+def normalize_filename(prefix, old_filename):
+    hash_ = pomagma.util.get_hash(old_filename)
+    new_filename = '{}/{}.h5'.format(prefix, hash_)
+    os.rename(old_filename, new_filename)
+    return new_filename
+
+
+def init_atlas(theory):
+    filenames = pomagma.store.listdir('{}/atlas/'.format(theory))
+    if filenames:
+        raise ValueError('Atlas already exists')
+    return '{}/atlas/0.h5'.format(theory)
+
+
+def get_atlas(theory):
+    filenames = pomagma.store.listdir('{}/atlas/'.format(theory))
+    versions = [int(filename.lstrip('.h5.bz2')) for f in filenames]
+    if not versions:
+        raise ValueError('Atlas has not been initialized')
+    version = max(versions)
+    filename = '{}/atlas/{}.h5'.format(theory, version)
+    return version, pomagma.store.get(filename)
+
+
+def put_atlas(theory, version):
+    filenames = pomagma.store.listdir('{}/atlas/'.format(theory))
+    versions = [int(filename.lstrip('.h5.bz2')) for f in filenames]
+    if version in versions:
+        raise ValueError('Atlas version {} already exists'.format(version))
+    filename = '{}/atlas/{}.h5'.format(theory, version)
+    pomagma.store.put(filename)
 
 
 def iter_recent_events(decision_task):
@@ -18,6 +57,13 @@ def iter_recent_events(decision_task):
             if event['eventId'] == prev_id:
                 break
         yield event
+
+
+# see http://docs.aws.amazon.com/amazonswf/latest/developerguide/swf-dg-using-swf-api.html#swf-dg-error-handling
+FAILURE_MODES = set([
+    'ActivityTaskFailed',
+    'ActivityTaskTimedOut',
+    ])
 
 
 @parsable.command
@@ -54,6 +100,10 @@ def start_decider():
             else:
                 pomagma.workflow.util.decide_to_complete(task)
 
+        elif event_type in FAILURE_MODES:
+            print 'ERROR canceling workflow after {}'.format(event_type)
+            pomagma.workflow.util.decide_to_complete(task)
+
 
 @parsable.command
 def start_trimmer():
@@ -67,16 +117,25 @@ def start_trimmer():
         input = json.loads(task['input'])
         theory = input['theory']
         size = input['size']
+        min_size = pomagma.util.MIN_SIZES[theory]
+        seed_size = max(min_size, size - STEP_SIZE)
 
-        TODO('get atlas if not cached locally')
-        TODO('trim atlas to seed')
-        TODO('put seed')
+        with pomagma.util.chdir(pomagma.util.DATA):
+            atlas = pomagma.store.get('/{}/atlas.h5'.format(theory))
+            atlas_size = pomagma.util.get_info(atlas)['item_count']
+            if seed_size < atlas_size:
+                seed = random_filename()
+                pomagma.wrapper.trim(theory, atlas, seed, size)
+            else:
+                seed = atlas
+            seed = normalize_filename('{}/seed'.format(theory), seed)
+            pomagma.store.put(seed)
 
         result = {
             'nextActivity': {
                 'activityType': '{}_{}_{}'.format('Grow', theory, size),
                 'input': {
-                    'seedFile': seed_file,
+                    'seedFile': seed,
                     },
                 }
             }
@@ -94,11 +153,14 @@ def start_aggregator(theory):
     while True:
         task = pomagma.workflow.util.poll_activity_task(name)
         input = json.loads(task['input'])
+        chart = input['chartFile']
 
-        TODO('get atlas if not cached locally')
-        TODO('get seed if not cached locally')
-        TODO('aggregate')
-        TODO('put atlas')
+        with pomagma.util.chdir(pomagma.util.DATA):
+            atlas = pomagma.store.get('/{}/atlas.h5'.format(theory))
+            chart = pomagma.store.get(chart)
+            pomagma.wrapper.aggregate(atlas, chart, atlas)
+            pomagma.store.put(atlas)
+            pomagma.store.remove_local(chart)
 
         pomagma.workflow.util.finish_activity_task(task)
 
@@ -116,20 +178,54 @@ def start_grower(theory, size):
         pomagma.workflow.util.start_workflow_execution(workflow_name, param)
         task = pomagma.workflow.util.poll_activity_task(name)
         input = json.loads(task['input'])
+        seed = input['seedFile']
 
-        TODO('get seed')
-        TODO('grow')
-        TODO('put chart')
+        with pomagma.util.chdir(pomagma.util.DATA):
+            seed = pomagma.store.get(seed)
+            seed_size = pomagma.util.get_info(atlas)['item_count']
+            chart_size = min(size, seed_size + STEP_SIZE)
+            chart = random_filename()
+            pomagma.wrapper.grow(theory, seed, chart, chart_size)
+            chart = normalize_filename('{}/chart'.format(theory), chart)
+            pomagma.store.put(chart)
+            pomagma.store.remove_local(seed)
 
         result = {
             'nextActivity': {
                 'activityType': '{}_{}'.format('Aggregate', theory),
                 'input': {
-                    'chartFile': chart_file,
+                    'chartFile': chart,
                     },
                 }
             }
         pomagma.workflow.util.finish_activity_task(task, result)
+
+
+@parsable.command
+def init(theory):
+    '''
+    Initialize atlas for growing.
+    '''
+    with pomagma.util.chdir(pomagma.util.DATA):
+        atlas = init_atlas()
+        size = pomagma.util.MIN_SIZES[theory]
+        pomagma.wrapper.init(theory, atlas, size)
+        pomagma.store.put(atlas)
+
+
+@parsable.command
+def clean(theory):
+    '''
+    Clean out all structures for theory.
+    '''
+    print 'Are you sure? [y/N]'
+    if raw_input()[:1].lower() != 'y':
+        return
+    filenames = pomagma.store.listdir('{}'.format(theory))
+    for filename in filenames:
+        pomagma.store.s3_remove(filename)
+    with pomagma.util.chdir(pomagma.util.DATA):
+        shutil.rmtree(theory)
 
 
 if __name__ == '__main__':

@@ -41,7 +41,7 @@ def chdir(path):
         #os.makedirs(path)
         sys.stderr.write('cd {}\n'.format(path))
         os.chdir(path)
-        yield
+        yield os.path.curdir
     finally:
         sys.stderr.write('cd {}\n'.format(old_path))
         os.chdir(old_path)
