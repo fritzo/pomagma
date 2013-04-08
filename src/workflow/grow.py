@@ -20,13 +20,6 @@ def iter_recent_events(decision_task):
         yield event
 
 
-def find_schedule_event(events, activity_id):
-    for event in reversed(events):
-        if event['eventType'] == 'ActivityTaskScheduled':
-            if event['activityId'] == activity_id:
-                return event
-
-
 @parsable.command
 def start_decider():
     '''

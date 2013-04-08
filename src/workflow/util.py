@@ -7,25 +7,7 @@ import boto.swf.exceptions
 
 DOMAIN = 'pomagma'
 VERSION = '1.0'
-#boto.swf.connect_to_region(REGION)
 SWF = boto.swf.layer1.Layer1()
-
-
-def get_hostip():
-    # Actors might request data be sent directly if possible else via s3
-    import netifaces
-    addresses = netifaces.ifaddresses('eth0')
-    return addresses[netifaces.AF_INET][0]['addr']
-
-
-def fork(fun, *args, **kwargs):
-    import multiprocessing
-    return multiprocessing.Process(target=fun, args=args, kwargs=kwargs)
-
-
-def onsigint(handler):
-    import signal
-    signal.signal(signal.SIGINT, handler)
 
 
 def random_uuid():
