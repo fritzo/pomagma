@@ -2,7 +2,7 @@
 
 A deductive database for partially ordered <a href="http://en.wikipedia.org/wiki/Magma_(algebra)">magmas</a>.<br />
 An experimental <a href="http://en.wikipedia.org/wiki/Integrated_development_environment">IDE</a> for coding under <a href="https://en.wikipedia.org/wiki/Extension_(semantics)">extensional semantics</a>.<br />
-A portal into the supremely beautiful mathematical universe.<br />
+A portal into a supremely beautiful mathematical object.<br />
 A toy model of <a href="http://en.wikipedia.org/wiki/Proofs_and_Refutations)">Lakatosian mathematical evolution</a>.<br />
 A parallel distributed rewrite of <a href="http://github.com/fritzo/Johann">Johann</a> with a web front-end.
 
