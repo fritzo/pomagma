@@ -20,30 +20,8 @@ def normalize_filename(prefix, old_filename):
     return new_filename
 
 
-def init_atlas(theory):
-    filenames = pomagma.store.listdir('{}/atlas/'.format(theory))
-    if filenames:
-        raise ValueError('Atlas already exists')
-    return '{}/atlas/0.h5'.format(theory)
-
-
-def get_atlas(theory):
-    filenames = pomagma.store.listdir('{}/atlas/'.format(theory))
-    versions = [int(filename.lstrip('.h5.bz2')) for f in filenames]
-    if not versions:
-        raise ValueError('Atlas has not been initialized')
-    version = max(versions)
-    filename = '{}/atlas/{}.h5'.format(theory, version)
-    return version, pomagma.store.get(filename)
-
-
-def put_atlas(theory, version):
-    filenames = pomagma.store.listdir('{}/atlas/'.format(theory))
-    versions = [int(filename.lstrip('.h5.bz2')) for f in filenames]
-    if version in versions:
-        raise ValueError('Atlas version {} already exists'.format(version))
-    filename = '{}/atlas/{}.h5'.format(theory, version)
-    pomagma.store.put(filename)
+def get_size(filename):
+    return pomagma.util.get_info(filename)['item_count']
 
 
 def iter_recent_events(decision_task):
@@ -121,8 +99,8 @@ def start_trimmer():
         seed_size = max(min_size, size - STEP_SIZE)
 
         with pomagma.util.chdir(pomagma.util.DATA):
-            atlas = pomagma.store.get('/{}/atlas.h5'.format(theory))
-            atlas_size = pomagma.util.get_info(atlas)['item_count']
+            atlas = pomagma.store.get('{}/atlas.h5'.format(theory))
+            atlas_size = get_size(atlas)
             if seed_size < atlas_size:
                 seed = random_filename()
                 pomagma.wrapper.trim(theory, atlas, seed, size)
@@ -156,11 +134,11 @@ def start_aggregator(theory):
         chart = input['chartFile']
 
         with pomagma.util.chdir(pomagma.util.DATA):
-            atlas = pomagma.store.get('/{}/atlas.h5'.format(theory))
+            atlas = pomagma.store.get('{}/atlas.h5'.format(theory))
             chart = pomagma.store.get(chart)
             pomagma.wrapper.aggregate(atlas, chart, atlas)
             pomagma.store.put(atlas)
-            pomagma.store.remove_local(chart)
+            pomagma.store.remove(chart)
 
         pomagma.workflow.util.finish_activity_task(task)
 
@@ -182,13 +160,13 @@ def start_grower(theory, size):
 
         with pomagma.util.chdir(pomagma.util.DATA):
             seed = pomagma.store.get(seed)
-            seed_size = pomagma.util.get_info(atlas)['item_count']
+            seed_size = get_size(seed)
             chart_size = min(size, seed_size + STEP_SIZE)
             chart = random_filename()
             pomagma.wrapper.grow(theory, seed, chart, chart_size)
             chart = normalize_filename('{}/chart'.format(theory), chart)
             pomagma.store.put(chart)
-            pomagma.store.remove_local(seed)
+            pomagma.store.remove(seed)
 
         result = {
             'nextActivity': {
@@ -207,7 +185,7 @@ def init(theory):
     Initialize atlas for growing.
     '''
     with pomagma.util.chdir(pomagma.util.DATA):
-        atlas = init_atlas()
+        atlas = '{}/atlas.h5'.format(theory)
         size = pomagma.util.MIN_SIZES[theory]
         pomagma.wrapper.init(theory, atlas, size)
         pomagma.store.put(atlas)
