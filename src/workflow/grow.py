@@ -1,8 +1,15 @@
+'''
+Decider and activities for grow workflow.
+
+References:
+http://docs.aws.amazon.com/amazonswf/latest/developerguide/swf-dg-using-swf-api.html#swf-dg-error-handling
+'''
+
 import simplejson as json
 import parsable
 import pomagma.util
 import pomagma.store
-import pomagma.wrapper
+import pomagma.actions
 import pomagma.workflow.util
 
 
@@ -35,13 +42,6 @@ def iter_recent_events(decision_task):
             if event['eventId'] == prev_id:
                 break
         yield event
-
-
-# see http://docs.aws.amazon.com/amazonswf/latest/developerguide/swf-dg-using-swf-api.html#swf-dg-error-handling
-FAILURE_MODES = set([
-    'ActivityTaskFailed',
-    'ActivityTaskTimedOut',
-    ])
 
 
 @parsable.command
@@ -78,8 +78,12 @@ def start_decider():
             else:
                 pomagma.workflow.util.decide_to_complete(task)
 
-        elif event_type in FAILURE_MODES:
-            print 'ERROR canceling workflow after {}'.format(event_type)
+        elif event_type == 'ActivityTaskFailed':
+            print 'ERROR canceling workflow after failure'
+            pomagma.workflow.util.decide_to_complete(task)
+
+        elif event_type == 'ActivityTaskTimedOut':
+            print 'ERROR canceling workflow after timeout'
             pomagma.workflow.util.decide_to_complete(task)
 
 
@@ -103,7 +107,7 @@ def start_trimmer():
             atlas_size = get_size(atlas)
             if seed_size < atlas_size:
                 seed = random_filename()
-                pomagma.wrapper.trim(theory, atlas, seed, size)
+                pomagma.actions.trim(theory, atlas, seed, size)
             else:
                 seed = atlas
             seed = normalize_filename('{}/seed'.format(theory), seed)
@@ -136,7 +140,7 @@ def start_aggregator(theory):
         with pomagma.util.chdir(pomagma.util.DATA):
             atlas = pomagma.store.get('{}/atlas.h5'.format(theory))
             chart = pomagma.store.get(chart)
-            pomagma.wrapper.aggregate(atlas, chart, atlas)
+            pomagma.actions.aggregate(atlas, chart, atlas)
             pomagma.store.put(atlas)
             pomagma.store.remove(chart)
 
@@ -163,7 +167,7 @@ def start_grower(theory, size):
             seed_size = get_size(seed)
             chart_size = min(size, seed_size + STEP_SIZE)
             chart = random_filename()
-            pomagma.wrapper.grow(theory, seed, chart, chart_size)
+            pomagma.actions.grow(theory, seed, chart, chart_size)
             chart = normalize_filename('{}/chart'.format(theory), chart)
             pomagma.store.put(chart)
             pomagma.store.remove(seed)
@@ -187,7 +191,7 @@ def init(theory):
     with pomagma.util.chdir(pomagma.util.DATA):
         atlas = '{}/atlas.h5'.format(theory)
         size = pomagma.util.MIN_SIZES[theory]
-        pomagma.wrapper.init(theory, atlas, size)
+        pomagma.actions.init(theory, atlas, size)
         pomagma.store.put(atlas)
 
 

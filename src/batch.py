@@ -3,7 +3,7 @@ import sys
 import shutil
 import parsable
 import pomagma.util
-import pomagma.wrapper
+import pomagma.actions
 
 
 parsable_commands = []
@@ -33,13 +33,13 @@ def test(theory, **options):
         opts = options
         opts.setdefault('log_file', 'test.log')
 
-        pomagma.wrapper.init(theory, '0.h5', sizes[0], **opts)
-        pomagma.wrapper.copy('0.h5', '1.h5', **opts)
-        pomagma.wrapper.grow(theory, '1.h5', '2.h5', sizes[1], **opts)
-        pomagma.wrapper.trim(theory, '2.h5', '3.h5', sizes[0], **opts)
-        pomagma.wrapper.grow(theory, '3.h5', '4.h5', sizes[1], **opts)
-        pomagma.wrapper.aggregate('2.h5', '4.h5', '5.h5', **opts)
-        pomagma.wrapper.aggregate('5.h5', '0.h5', '6.h5', **opts)
+        pomagma.actions.init(theory, '0.h5', sizes[0], **opts)
+        pomagma.actions.copy('0.h5', '1.h5', **opts)
+        pomagma.actions.grow(theory, '1.h5', '2.h5', sizes[1], **opts)
+        pomagma.actions.trim(theory, '2.h5', '3.h5', sizes[0], **opts)
+        pomagma.actions.grow(theory, '3.h5', '4.h5', sizes[1], **opts)
+        pomagma.actions.aggregate('2.h5', '4.h5', '5.h5', **opts)
+        pomagma.actions.aggregate('5.h5', '0.h5', '6.h5', **opts)
         digest5 = pomagma.util.get_hash('5.h5')
         digest6 = pomagma.util.get_hash('6.h5')
         assert digest5 == digest6
@@ -62,7 +62,7 @@ def init(theory, **options):
 
         pomagma.util.log_print('Initializing', options['log_file'])
         size = pomagma.util.MIN_SIZES[theory]
-        pomagma.wrapper.init(theory, atlas, size, **opts)
+        pomagma.actions.init(theory, atlas, size, **opts)
 
 
 @parsable_command
@@ -99,15 +99,15 @@ def grow(theory, max_size=8191, step_size=512, **options):
             if atlas_size < max_size:
                 atlas_size = min(atlas_size + step_size, max_size)
                 log_print('Step {}: grow to {}'.format(step, atlas_size))
-                pomagma.wrapper.grow(theory, atlas, temp, atlas_size, **opts)
-                pomagma.wrapper.copy(temp, atlas, **opts) # verifies file
+                pomagma.actions.grow(theory, atlas, temp, atlas_size, **opts)
+                pomagma.actions.copy(temp, atlas, **opts) # verifies file
 
             else:
                 log_print('Step {}: trim-grow-aggregate'.format(step))
-                pomagma.wrapper.trim(theory, atlas, seed, seed_size, **opts)
-                pomagma.wrapper.grow(theory, seed, chart, max_size, **opts)
-                pomagma.wrapper.aggregate(atlas, chart, temp, **opts)
-                pomagma.wrapper.copy(temp, atlas, **opts) # verifies file
+                pomagma.actions.trim(theory, atlas, seed, seed_size, **opts)
+                pomagma.actions.grow(theory, seed, chart, max_size, **opts)
+                pomagma.actions.aggregate(atlas, chart, temp, **opts)
+                pomagma.actions.copy(temp, atlas, **opts) # verifies file
 
             atlas_size = pomagma.util.get_info(atlas)['item_count']
             log_print('atlas_size = {}'.format(atlas_size))

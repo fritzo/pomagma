@@ -90,7 +90,7 @@ def make_env(options):
     log_dir = os.path.dirname(log_file)
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
-    options.setdefault('log_level', 4 if debug else 0)
+    options.setdefault('log_level', 9 if debug else 0)
     env = os.environ.copy()
     for key, val in options.iteritems():
         pomagma_key = 'POMAGMA_{}'.format(key.upper())

@@ -7,7 +7,7 @@ import contextlib
 import nose
 import parsable
 import pomagma.util
-import pomagma.wrapper
+import pomagma.actions
 import pomagma.batch
 
 

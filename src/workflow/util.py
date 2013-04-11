@@ -1,3 +1,15 @@
+'''
+Wrapper for Amazon SWF (Simple Workflows).
+
+References:
+http://docs.aws.amazon.com/amazonswf/latest/developerguide
+http://docs.aws.amazon.com/amazonswf/latest/apireference
+http://boto.readthedocs.org/en/2.6.0/ref/swf.html
+https://github.com/boto/boto/blob/develop/boto/swf/layer1.py
+https://github.com/boto/boto/blob/develop/boto/swf/layer1_decisions.py
+https://github.com/boto/boto/blob/develop/boto/swf/exceptions.py
+'''
+
 import uuid
 import boto.swf
 import boto.swf.layer1

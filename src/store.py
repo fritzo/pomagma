@@ -1,3 +1,10 @@
+'''
+Wrapper for Amazon S3 and bzip2 compression.
+
+References:
+http://boto.readthedocs.org/en/latest/ref/s3.html
+'''
+
 import os
 import shutil
 import functools
