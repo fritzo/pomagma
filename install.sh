@@ -12,6 +12,7 @@ sudo apt-get install -y \
   python-pip virtualenvwrapper \
   graphviz \
   gdb \
+  p7zip-full \
   #libzmq-dev python-zmq \
   #
 
