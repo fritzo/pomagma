@@ -21,7 +21,7 @@ reproducible = pomagma.workflow.swf.reproducible('pomagma.workflow.grow')
 
 
 def random_filename():
-    return 'temp/{}.h5'.format(pomagma.workflow.swf.random_uuid())
+    return 'temp/{}.h5'.format(pomagma.util.random_uuid())
 
 
 def normalize_filename(prefix, old_filename):
@@ -46,7 +46,8 @@ def trim(task):
     atlas_size = get_size(atlas)
     if seed_size < atlas_size:
         seed = random_filename()
-        pomagma.actions.trim(theory, atlas, seed, size)
+        log_file = '{}/grow.log'.format(theory)
+        pomagma.actions.trim(theory, atlas, seed, size, log_file=log_file)
     else:
         seed = atlas
     seed = normalize_filename('{}/seed'.format(theory), seed)
@@ -73,7 +74,8 @@ def grow(task):
     seed_size = get_size(seed)
     chart_size = min(size, seed_size + STEP_SIZE)
     chart = random_filename()
-    pomagma.actions.grow(theory, seed, chart, chart_size)
+    log_file = '{}/grow.log'.format(theory)
+    pomagma.actions.grow(theory, seed, chart, chart_size, log_file=log_file)
     chart = normalize_filename('{}/chart'.format(theory), chart)
     pomagma.store.put(chart)
     pomagma.store.remove(seed)
@@ -96,7 +98,8 @@ def aggregate(task):
     chart = args['chartFile']
     atlas = pomagma.store.get('{}/atlas.h5'.format(theory))
     chart = pomagma.store.get(chart)
-    pomagma.actions.aggregate(atlas, chart, atlas)
+    log_file = '{}/grow.log'.format(theory)
+    pomagma.actions.aggregate(atlas, chart, atlas, log_file=log_file)
     pomagma.store.put(atlas)
     pomagma.store.remove(chart)
 
@@ -137,7 +140,11 @@ def start_grower(theory, size):
     pomagma.workflow.swf.register_activity_type(name)
     pomagma.workflow.swf.register_workflow_type(workflow_name)
     while True:
-        pomagma.workflow.swf.start_workflow_execution(workflow_name, param)
+        workflow_id = pomagma.util.random_uuid()
+        pomagma.workflow.swf.start_workflow_execution(
+                workflow_id,
+                workflow_name,
+                param)
         task = pomagma.workflow.swf.poll_activity_task(name)
         grow(task)
 
@@ -150,7 +157,8 @@ def init(theory):
     with pomagma.util.chdir(pomagma.util.DATA):
         atlas = '{}/atlas.h5'.format(theory)
         size = pomagma.util.MIN_SIZES[theory]
-        pomagma.actions.init(theory, atlas, size)
+        log_file = '{}/init.log'
+        pomagma.actions.init(theory, atlas, size, log_file=log_file)
         pomagma.store.put(atlas)
 
 

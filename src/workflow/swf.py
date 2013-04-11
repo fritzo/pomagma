@@ -18,6 +18,7 @@ import boto.swf.layer1_decisions
 import boto.swf.exceptions
 import parsable
 import pomagma.util
+import pomagma.store
 import pomagma.workflow.report
 
 
@@ -58,10 +59,10 @@ def register_workflow_type(name):
         pass
 
 
-def start_workflow_execution(workflow, version):
+def start_workflow_execution(workflow_id, workflow, version):
     SWF.start_workflow_execution(
         domain=DOMAIN,
-        workflow_id=pomagma.util.random_uuid(),
+        workflow_id=workflow_id,
         workflow_name=workflow,
         version=VERSION)
 
@@ -200,6 +201,7 @@ def reproducible(module):
                     'import json',
                     'import pomagma.util',
                     'import pomagma.workflow.grow',
+                    'pomagma.store.get(log_file)',
                     'task = json.load({r})'.format(task_str),
                     'with pomagma.util.chdir(pomagma.util.DATA):',
                     '    {}.{}({})'.format(module, fun.__name__, task),
