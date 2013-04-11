@@ -1,5 +1,5 @@
 import re
-from pomagma.compiler.util import TODO, union
+from pomagma.compiler.util import union
 from pomagma.compiler import signature
 
 

@@ -7,7 +7,6 @@ https://github.com/boto/boto/blob/develop/boto/s3
 '''
 
 import os
-import sys
 import subprocess
 import boto
 
@@ -16,13 +15,11 @@ def try_connect_s3(bucket):
     try:
         return boto.connect_s3().get_bucket(bucket)
     except boto.exception.NoAuthHandlerFound:
-        sys.stderr.write(
-            'WARNING failed to connect to s3 bucket {}\n'.format(bucket))
-        sys.stderr.flush()
+        print 'WARNING failed to connect to s3 bucket {}\n'.format(bucket)
         return None
 
 
-BUCKET = try_connect_s3('pomagma')
+BUCKET = try_connect_s3(os.environ.get('POMAGMA_BUCKET', 'pomagma'))
 
 
 def s3_lazy_put(filename):

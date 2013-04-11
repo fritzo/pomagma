@@ -1,7 +1,7 @@
 import re
 from textwrap import dedent
 from string import Template
-from pomagma.compiler.util import TODO, inputs, methodof, log_sum_exp
+from pomagma.compiler.util import inputs, methodof, log_sum_exp
 from pomagma.compiler.expressions import Expression
 from pomagma.compiler.sequents import Sequent
 from pomagma.compiler import signature
@@ -56,8 +56,8 @@ class Code:
         return 'Code(%s)' % self.text
 
 
-@methodof(compiler.Iter)
-def cpp(self, code):
+@methodof(compiler.Iter, 'cpp')
+def Iter_cpp(self, code):
     body = Code('''
         Ob $var = *iter;
         ''',
@@ -110,8 +110,8 @@ def cpp(self, code):
 
 
 # TODO injective function inverse need not be iterated
-@methodof(compiler.IterInvInjective)
-def cpp(self, code):
+@methodof(compiler.IterInvInjective, 'cpp')
+def IterInvInjective_cpp(self, code):
     body = Code()
     self.body.cpp(body)
     code('''
@@ -126,8 +126,8 @@ def cpp(self, code):
         )
 
 
-@methodof(compiler.IterInvBinary)
-def cpp(self, code):
+@methodof(compiler.IterInvBinary, 'cpp')
+def IterInvBinary_cpp(self, code):
     if self.var1 == self.var2:
         body = Code('''
             Ob $var1 __attribute__((unused)) = iter.lhs();
@@ -154,8 +154,8 @@ def cpp(self, code):
         )
 
 
-@methodof(compiler.IterInvBinaryRange)
-def cpp(self, code):
+@methodof(compiler.IterInvBinaryRange, 'cpp')
+def IterInvBinaryRange_cpp(self, code):
     body = Code('''
         Ob $var = *iter;
         ''',
@@ -175,8 +175,8 @@ def cpp(self, code):
         )
 
 
-@methodof(compiler.Let)
-def cpp(self, code):
+@methodof(compiler.Let, 'cpp')
+def Let_cpp(self, code):
     body = Code()
     self.body.cpp(body)
     code('''
@@ -191,8 +191,8 @@ def cpp(self, code):
         )
 
 
-@methodof(compiler.Test)
-def cpp(self, code):
+@methodof(compiler.Test, 'cpp')
+def Test_cpp(self, code):
     body = Code()
     self.body.cpp(body)
     args = [arg.name for arg in self.expr.args]
@@ -213,8 +213,8 @@ def cpp(self, code):
         )
 
 
-@methodof(compiler.Ensure)
-def cpp(self, code):
+@methodof(compiler.Ensure, 'cpp')
+def Ensure_cpp(self, code):
     expr = self.expr
     assert len(expr.args) == 2
     args = [arg if arg.args else arg.var for arg in expr.args]

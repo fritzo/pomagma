@@ -8,8 +8,9 @@ sudo apt-get install -y \
   libprotobuf-dev protobuf-compiler python-protobuf \
   libhdf5-serial-dev \
   libssl-dev \
-  python-tables \
   python-pip virtualenvwrapper \
+  python-tables \
+  pyflakes \
   graphviz \
   gdb \
   p7zip-full \

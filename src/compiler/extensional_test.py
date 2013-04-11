@@ -1,7 +1,14 @@
 from nose.tools import assert_equal, assert_set_equal
-from pomagma.compiler.extensional import *
 from pomagma.compiler import run
 from pomagma.compiler.util import find_rules
+from pomagma.compiler.extensional import (
+        Expression,
+        APP, COMP, JOIN,
+        I, K, B, C, W, S, J,
+        iter_subsets,
+        iter_eta_substitutions,
+        iter_closure_maps,
+        )
 
 
 def test_abstraction():
@@ -49,7 +56,6 @@ def test_iter_subsets():
 def test_iter_eta_substitutions():
     a = Expression('a')
     x = Expression('x')
-    y = Expression('y')
     assert_set_equal(
         set(iter_eta_substitutions(x)),
         set([

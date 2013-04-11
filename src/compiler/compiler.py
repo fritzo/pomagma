@@ -285,7 +285,7 @@ def get_events(seq):
         for antecedent in sequent.antecedents:
             if antecedent.name == 'EQUAL':
                 lhs, rhs = antecedent.args
-                assert lhs.is_var() and rhs.is_var(), antecedents
+                assert lhs.is_var() and rhs.is_var(), antecedent
                 # HACK ignore equation antecedents
             else:
                 events.add(antecedent)

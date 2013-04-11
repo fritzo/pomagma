@@ -51,8 +51,10 @@ def inputs(*types):
     return deco
 
 
-def methodof(class_):
+def methodof(class_, name=None):
     def deco(fun):
+        if name is not None:
+            fun.__name__ = name
         setattr(class_, fun.__name__, fun)
     return deco
 

@@ -8,7 +8,10 @@ all:
 set-ulimit: FORCE
 	$(call ulimit -c unlimited)
 
+PYFLAKES = find src | grep '.py$$' | grep -v '_pb2.py' | xargs pyflakes
+
 unit-test: set-ulimit
+	@$(PYFLAKES)
 	POMAGMA_DEBUG= python -m pomagma unit-test
 batch-test: set-ulimit
 	POMAGMA_DEBUG= python -m pomagma batch-test
@@ -18,7 +21,8 @@ sk-test: set-ulimit
 	POMAGMA_DEBUG= python -m pomagma batch-test sk
 skj-test: set-ulimit
 	POMAGMA_DEBUG= python -m pomagma batch-test skj
-test: set-ulimit
+test: unit-test
+	@$(PYFLAKES)
 	POMAGMA_DEBUG= python -m pomagma unit-test
 	POMAGMA_DEBUG= python -m pomagma batch-test
 
