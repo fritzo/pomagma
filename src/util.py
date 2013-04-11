@@ -1,8 +1,11 @@
 import os
 import sys
+import shutil
 import subprocess
 import multiprocessing
 import contextlib
+import uuid
+import tempfile
 import timeit
 import tables
 
@@ -34,17 +37,31 @@ MIN_SIZES = {
     }
 
 
+def random_uuid():
+    return str(uuid.uuid4())
+
+
 @contextlib.contextmanager
 def chdir(path):
     old_path = os.path.abspath(os.path.curdir)
     try:
         #os.makedirs(path)
-        sys.stderr.write('cd {}\n'.format(path))
+        print 'cd {}\n'.format(path)
         os.chdir(path)
         yield os.path.curdir
     finally:
-        sys.stderr.write('cd {}\n'.format(old_path))
+        print 'cd {}\n'.format(old_path)
         os.chdir(old_path)
+
+
+@contextlib.contextmanager
+def in_temp_dir():
+    path = os.path.abspath(tempfile.mkdtemp())
+    try:
+        with chdir(path):
+            yield path
+    finally:
+        shutil.rmtree(path)
 
 
 @contextlib.contextmanager

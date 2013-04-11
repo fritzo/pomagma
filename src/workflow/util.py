@@ -10,20 +10,16 @@ https://github.com/boto/boto/blob/develop/boto/swf/layer1_decisions.py
 https://github.com/boto/boto/blob/develop/boto/swf/exceptions.py
 '''
 
-import uuid
 import boto.swf
 import boto.swf.layer1
 import boto.swf.layer1_decisions
 import boto.swf.exceptions
+import pomagma.util
 
 
 DOMAIN = 'pomagma'
 VERSION = '1.0'
 SWF = boto.swf.layer1.Layer1()
-
-
-def random_uuid():
-    return str(uuid.uuid4())
 
 
 #-----------------------------------------------------------------------------
@@ -61,7 +57,7 @@ def register_workflow_type(name):
 def start_workflow_execution(workflow, version):
     SWF.start_workflow_execution(
         domain=DOMAIN,
-        workflow_id=random_uuid(),
+        workflow_id=pomagma.util.random_uuid(),
         workflow_name=workflow,
         version=VERSION)
 
@@ -81,7 +77,7 @@ def decide_to_schedule(decision_task, activity_type, input=None):
     task_token = decision_task['taskToken']
     decisions = boto.swf.layer1_decisions.Layer1Decisions()
     task_list = '{}TaskList'.format(activity_type)
-    activity_id = random_uuid()
+    activity_id = pomagma.util.random_uuid()
     decisions.schedule_activity_task(
         activity_id=activity_id,
         activity_type_name='{}ActivityType'.format(activity_type),

@@ -6,17 +6,22 @@ http://boto.readthedocs.org/en/latest/ref/s3.html
 '''
 
 import os
-import shutil
-import functools
+import sys
 import subprocess
-import urllib
-import contextlib
-import tempfile
 import boto
-import pomagma.util
 
 
-BUCKET = boto.connect_s3().get_bucket('pomagma')
+def try_connect_s3(bucket):
+    try:
+        return boto.connect_s3().get_bucket(bucket)
+    except boto.exception.NoAuthHandlerFound:
+        sys.stderr.write(
+            'WARNING failed to connect to s3 bucket {}\n'.format(bucket))
+        sys.stderr.flush()
+        return None
+
+
+BUCKET = try_connect_s3('pomagma')
 
 
 def s3_put(filename):
@@ -39,9 +44,15 @@ def s3_remove(filename):
         key.delete()
 
 
+def s3_exists(filename):
+    key = BUCKET.get_key(filename)
+    return key is not None
+
+
 def bzip2(filename):
     subprocess.check_call(['bzip2', '--keep', '--force', filename])
-    return compressed_name(filename)
+    filename_bz2 = '{}.bz2'.format(filename)
+    return filename_bz2
 
 
 def bunzip2(filename_bz2):
@@ -57,7 +68,7 @@ def get(filename):
     if os.path.exists(filename_bz2):
         return bunzip2(filename_bz2)
     s3_get(filename_bz2)
-        return bunzip2(filename_bz2)
+    return bunzip2(filename_bz2)
 
 
 def put(filename):

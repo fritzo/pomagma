@@ -3,8 +3,6 @@ Wrapper for pomagma actions implemented in foreign languages (C++).
 '''
 
 import os
-import sys
-import subprocess
 import pomagma.util
 
 

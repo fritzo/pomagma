@@ -5,6 +5,8 @@ References:
 http://docs.aws.amazon.com/amazonswf/latest/developerguide/swf-dg-using-swf-api.html#swf-dg-error-handling
 '''
 
+import os
+import shutil
 import simplejson as json
 import parsable
 import pomagma.util
