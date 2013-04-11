@@ -26,7 +26,7 @@ def email(args):
 
 
 @parsable.command
-def start_reporter():
+def start():
     '''
     Start reporter, typically on master node.
     '''

@@ -135,16 +135,20 @@ def start_grower(theory, size):
     Start grow worker, typically on a high-memory high-cpu node.
     '''
     workflow_name = 'Grow'
+    task_list = 'Simple'
     name = '{}_{}_{}'.format('Grow', theory, size)
-    param = json.dumps({'theory': theory, 'size': size})
+    input = json.dumps({
+        'nextTask': 'Trim',
+        'input': {'theory': theory, 'size': size}
+        })
     pomagma.workflow.swf.register_activity_type(name)
-    pomagma.workflow.swf.register_workflow_type(workflow_name)
+    pomagma.workflow.swf.register_workflow_type(workflow_name, task_list)
     while True:
         workflow_id = pomagma.util.random_uuid()
         pomagma.workflow.swf.start_workflow_execution(
                 workflow_id,
                 workflow_name,
-                param)
+                input)
         task = pomagma.workflow.swf.poll_activity_task(name)
         grow(task)
 

@@ -19,6 +19,7 @@ def try_connect_s3(bucket):
         return None
 
 
+# TODO allow different buckets to be specified, e.g. for a logging bucket
 BUCKET = try_connect_s3(os.environ.get('POMAGMA_BUCKET', 'pomagma'))
 
 

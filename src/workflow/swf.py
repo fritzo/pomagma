@@ -16,10 +16,8 @@ import boto.swf
 import boto.swf.layer1
 import boto.swf.layer1_decisions
 import boto.swf.exceptions
-import parsable
 import pomagma.util
 import pomagma.store
-import pomagma.workflow.report
 
 
 DOMAIN = 'pomagma'
@@ -50,11 +48,11 @@ def register_activity_type(name):
         pass
 
 
-def register_workflow_type(name):
+def register_workflow_type(name, task_list):
     workflow_type = '{}ActivityType'.format(name)
     print 'Registering workflow type {}'.format(workflow_type)
     try:
-        SWF.register_workflow_type(DOMAIN, workflow_type, VERSION)
+        SWF.register_workflow_type(DOMAIN, workflow_type, VERSION, task_list)
     except boto.swf.exceptions.SWFTypeAlreadyExistsError:
         pass
 
@@ -100,68 +98,6 @@ def decide_to_complete(decision_task):
     SWF.respond_decision_task_completed(task_token, decisions)
 
 
-def simple_decide(nextActivity):
-    activity_type = nextActivity['activityType']
-    json_input = nextActivity['input']
-    input = json.dumps(json_input)
-    decide_to_schedule(activity_type, input)
-
-
-def iter_recent_events(decision_task):
-    '''
-    Reverse-chronologically iterats over events since the last decision.
-    '''
-    prev_id = decision_task['previousStartedEventId']
-    events = decision_task['events']
-    for event in reversed(events):
-        if event['eventType'] == 'DecisionTaskStarted':
-            if event['eventId'] == prev_id:
-                break
-        yield event
-
-
-@parsable.command
-def start_decider():
-    '''
-    Start decider, typically on master node.
-    '''
-    name = 'Simple'
-    register_domain()
-    while True:
-        task = poll_decision_task(name)
-        events = [
-            e for e in iter_recent_events(task)
-            if not e['eventType'].startswith('Decision')
-            ]
-
-        last_event = events[0]
-        event_type = last_event['eventType']
-
-        if event_type == 'WorkflowExecutionStarted':
-            nextActivity = json.loads(last_event['input'])
-            simple_decide(nextActivity)
-
-        elif event_type == 'ActivityTaskCompleted':
-            result = json.loads(last_event.get('result', ''))
-            nextActivity = result.get('nextActivity')
-            if nextActivity:
-                simple_decide(nextActivity)
-            else:
-                decide_to_complete(task)
-
-        elif event_type == 'ActivityTaskFailed':
-            activity_type = 'Report'
-            subject = last_event.get('reason', 'Unknown failure')
-            message = last_event.get('detail', '(no details available)')
-            json_input = {'subject': subject, 'message': message}
-            input = json.dumps(json_input)
-            decide_to_schedule(activity_type, input)
-
-        elif event_type == 'ActivityTaskTimedOut':
-            print 'ERROR canceling workflow after timeout'
-            decide_to_complete(task)
-
-
 #-----------------------------------------------------------------------------
 # Activities
 
@@ -186,6 +122,11 @@ def fail_activity_task(task, reason=None, details=None):
 
 
 def reproducible(module):
+    '''
+    Create decorator to run activities inreproducible environment.
+
+    TODO send log file in error message
+    '''
     def reproducible_(fun):
         @functools.wraps(fun)
         def reproducible_fun(task):
@@ -209,7 +150,3 @@ def reproducible(module):
                 fail_activity_task(task, reason, details)
         return reproducible_fun
     return reproducible_
-
-
-if __name__ == '__main__':
-    parsable.dispatch()
