@@ -37,6 +37,11 @@ MIN_SIZES = {
     }
 
 
+def print_dot(out=sys.stdout):
+    out.write('.')
+    out.flush()
+
+
 def random_uuid():
     return str(uuid.uuid4())
 

@@ -17,7 +17,7 @@ import pomagma.workflow.swf
 
 STEP_SIZE = 512
 
-reproducible = pomagma.workflow.swf.reproducible('pomagma.workflow.grow')
+reproducible = pomagma.workflow.swf.reproducible(__name__)
 
 
 def random_filename():
@@ -35,33 +35,69 @@ def get_size(filename):
     return pomagma.util.get_info(filename)['item_count']
 
 
-@reproducible
-def trim(task):
-    args = json.loads(task['input'])
-    theory = args['theory']
-    size = args['size']
+@parsable.command
+def init(theory):
+    '''
+    Initialize atlas for growing.
+    Requires: medium-memory, high-cpu.
+    '''
+    with pomagma.util.chdir(pomagma.util.DATA):
+        atlas = '{}/atlas.h5'.format(theory)
+        size = pomagma.util.MIN_SIZES[theory]
+        log_file = '{}/init.log'
+        pomagma.actions.init(theory, atlas, size, log_file=log_file)
+        pomagma.store.put(atlas)
+
+
+def trim(theory, size):
     min_size = pomagma.util.MIN_SIZES[theory]
     seed_size = max(min_size, size - STEP_SIZE)
     atlas = pomagma.store.get('{}/atlas.h5'.format(theory))
     atlas_size = get_size(atlas)
     if seed_size < atlas_size:
         seed = random_filename()
-        log_file = '{}/grow.log'.format(theory)
+        log_file = '{}/advise.log'.format(theory)
         pomagma.actions.trim(theory, atlas, seed, size, log_file=log_file)
     else:
         seed = atlas
     seed = normalize_filename('{}/seed'.format(theory), seed)
     pomagma.store.put(seed)
-    return {
-        'nextActivity': {
-            'activityType': '{}_{}_{}'.format('Grow', theory, size),
-            'input': {
-                'theory': theory,
-                'size': size,
-                'seedFile': seed,
-                },
+    return seed
+
+
+def aggregate(theory, chart):
+    atlas = pomagma.store.get('{}/atlas.h5'.format(theory))
+    chart = pomagma.store.get(chart)
+    log_file = '{}/advisor.log'.format(theory)
+    pomagma.actions.aggregate(atlas, chart, atlas, log_file=log_file)
+    pomagma.store.put(atlas)
+    pomagma.store.remove(chart)
+
+
+@reproducible
+def advise(task):
+    args = json.loads(task['input'])
+    action = args['advisorAction']
+    if action == 'Trim':
+        theory = args['theory']
+        size = args['size']
+        seed = trim(theory, size)
+        return {
+            'nextActivity': {
+                'activityType': '{}_{}_{}'.format('Grow', theory, size),
+                'input': {
+                    'theory': theory,
+                    'size': size,
+                    'seedFile': seed,
+                    },
+                }
             }
-        }
+    else:
+        assert action == 'Aggregate'
+        theory = args['theory']
+        chart = args['chartFile']
+        aggregate(theory, chart)
+        return None
 
 
 @reproducible
@@ -81,67 +117,49 @@ def grow(task):
     pomagma.store.remove(seed)
     return {
         'nextActivity': {
-            'activityType': '{}_{}'.format('Aggregate', theory),
+            'activityType': '{}_{}'.format('Advise', theory),
             'input': {
+                'advisorAction': 'Aggregate',
                 'theory': theory,
-                'size': size,
                 'chartFile': chart,
                 },
             }
         }
 
 
-@reproducible
-def aggregate(task):
-    args = json.loads(task['input'])
-    theory = args['theory']
-    chart = args['chartFile']
-    atlas = pomagma.store.get('{}/atlas.h5'.format(theory))
-    chart = pomagma.store.get(chart)
-    log_file = '{}/grow.log'.format(theory)
-    pomagma.actions.aggregate(atlas, chart, atlas, log_file=log_file)
-    pomagma.store.put(atlas)
-    pomagma.store.remove(chart)
-
-
 @parsable.command
-def start_trimmer():
+def start_advisor(theory):
     '''
-    Start trimmer, typically on a high-memory node.
+    Start advisor = aggregator + trimmer.
+    Constraint: there must be exactly one advisor per theory.
+    Requires: high-memory.
     '''
-    name = 'Trim'
-    pomagma.workflow.swf.register_activity_type(name)
+    activity_name = '{}_{}'.format('Advise', theory)
+    pomagma.workflow.swf.register_activity_type(activity_name)
     while True:
-        task = pomagma.workflow.swf.poll_activity_task(name)
-        trim(task)
-
-
-@parsable.command
-def start_aggregator(theory):
-    '''
-    Start aggregator, typically on a high-memory node.
-    WARNING There must be exactly one aggregator per theory.
-    '''
-    name = '{}_{}'.format('Aggregate', theory)
-    pomagma.workflow.swf.register_activity_type(name)
-    while True:
-        task = pomagma.workflow.swf.poll_activity_task(name)
-        aggregate(task)
+        task = pomagma.workflow.swf.poll_activity_task(activity_name)
+        advise(task)
 
 
 @parsable.command
 def start_grower(theory, size):
     '''
-    Start grow worker, typically on a high-memory high-cpu node.
+    Start grow worker.
+    Requires: high-memory, high-cpu node.
     '''
     workflow_name = 'Grow'
     task_list = 'Simple'
-    name = '{}_{}_{}'.format('Grow', theory, size)
-    input = json.dumps({
-        'nextTask': 'Trim',
-        'input': {'theory': theory, 'size': size}
-        })
-    pomagma.workflow.swf.register_activity_type(name)
+    activity_name = '{}_{}_{}'.format('Grow', theory, size)
+    nextActivity = {
+        'activityType': '{}_{}'.format('Advise', theory),
+        'input': {
+            'advisorAction': 'Trim',
+            'theory': theory,
+            'size': size,
+            }
+        }
+    input = json.dumps(nextActivity)
+    pomagma.workflow.swf.register_activity_type(activity_name)
     pomagma.workflow.swf.register_workflow_type(workflow_name, task_list)
     while True:
         workflow_id = pomagma.util.random_uuid()
@@ -149,21 +167,8 @@ def start_grower(theory, size):
                 workflow_id,
                 workflow_name,
                 input)
-        task = pomagma.workflow.swf.poll_activity_task(name)
+        task = pomagma.workflow.swf.poll_activity_task(activity_name)
         grow(task)
-
-
-@parsable.command
-def init(theory):
-    '''
-    Initialize atlas for growing.
-    '''
-    with pomagma.util.chdir(pomagma.util.DATA):
-        atlas = '{}/atlas.h5'.format(theory)
-        size = pomagma.util.MIN_SIZES[theory]
-        log_file = '{}/init.log'
-        pomagma.actions.init(theory, atlas, size, log_file=log_file)
-        pomagma.store.put(atlas)
 
 
 @parsable.command

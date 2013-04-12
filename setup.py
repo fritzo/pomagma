@@ -1,4 +1,4 @@
-import re
+#import re
 from setuptools import setup, find_packages
 
 # TODO add MANIFEST.in as described in

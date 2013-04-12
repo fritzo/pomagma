@@ -32,6 +32,7 @@ def start():
     '''
     name = 'Report'
     pomagma.workflow.swf.register_activity_type(name)
+    print 'Starting reporter'
     while True:
         task = pomagma.workflow.swf.poll_activity_task(name)
         input = json.loads(task['input'])

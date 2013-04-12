@@ -8,11 +8,11 @@ import pomagma.workflow.swf
 import pomagma.workflow.reporter
 
 
-def simple_decide(nextActivity):
+def simple_decide(task, nextActivity):
     activity_type = nextActivity['activityType']
     json_input = nextActivity['input']
     input = json.dumps(json_input)
-    pomagma.workflow.swf.decide_to_schedule(activity_type, input)
+    pomagma.workflow.swf.decide_to_schedule(task, activity_type, input)
 
 
 def iter_recent_events(decision_task):
@@ -35,6 +35,7 @@ def start():
     '''
     name = 'Simple'
     pomagma.workflow.swf.register_domain()
+    print 'Starting decider'
     while True:
         task = pomagma.workflow.swf.poll_decision_task(name)
         events = [
@@ -44,26 +45,40 @@ def start():
 
         last_event = events[0]
         event_type = last_event['eventType']
+        print 'Processing', event_type
 
         if event_type == 'WorkflowExecutionStarted':
-            nextActivity = json.loads(last_event['input'])
-            simple_decide(nextActivity)
+            attrs = last_event['workflowExecutionStartedEventAttributes']
+            nextActivity = json.loads(attrs['input'])
+            simple_decide(task, nextActivity)
 
         elif event_type == 'ActivityTaskCompleted':
-            result = json.loads(last_event.get('result', ''))
+            attrs = last_event['activityTaskCompletedEventAttributes']
+            result = json.loads(attrs.get('result', '')) # FIXME can't be right
             nextActivity = result.get('nextActivity')
             if nextActivity:
-                simple_decide(nextActivity)
+                simple_decide(task, nextActivity)
             else:
                 pomagma.workflow.swf.decide_to_complete(task)
 
         elif event_type == 'ActivityTaskFailed':
-            activity_type = 'Report'
-            subject = last_event.get('reason', 'Unknown failure')
-            message = last_event.get('detail', '(no details available)')
-            json_input = {'subject': subject, 'message': message}
-            input = json.dumps(json_input)
-            pomagma.workflow.swf.decide_to_schedule(activity_type, input)
+            print 'ERROR task failed'
+            attrs = last_event['activityTaskFailedEventAttributes']
+            print 'Reason:\n'.format(attrs.get('reason', 'unknown'))
+            print 'Details:\n{}'.format(attrs.get('details', 'none'))
+            #activity_type = 'Report'
+            #subject = '{} {}'.format(DOMAIN, event_type)
+            #message = 'Reason: {}\nDetail:\n{}'.format(
+            #    attrs.get('reason', 'unknown'),
+            #    attrs.get('detail', 'none'))
+            #json_input = {'subject': subject, 'message': message}
+            #input = json.dumps(json_input)
+            #pomagma.workflow.swf.decide_to_schedule(task, activity_type, input)
+
+        elif event_type == 'ScheduleActivityTaskFailed':
+            print 'ERROR failed to schedule task'
+            attrs = last_event['scheduleActivityTaskFailedEventAttributes']
+            print 'Cause:', attrs.get('cause', 'unknown')
 
         elif event_type == 'ActivityTaskTimedOut':
             print 'ERROR canceling workflow after timeout'
