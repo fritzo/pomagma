@@ -41,23 +41,30 @@ int main (int argc, char ** argv)
         source.validate();
     }
 
-    // init destin
-    pomagma::Structure destin;
-    destin.init_signature(source, destin_item_dim);
-    if (POMAGMA_DEBUG_LEVEL > 1) {
-        destin.validate();
-    }
+    if (source.carrier().item_dim() <= destin_item_dim) {
 
-    // trim
-    pomagma::trim(source, destin, theory_file, language_file);
-    if (POMAGMA_DEBUG_LEVEL > 1) {
-        destin.validate();
+        source.dump(destin_file);
+
+    } else {
+
+        // init destin
+        pomagma::Structure destin;
+        destin.init_signature(source, destin_item_dim);
+        if (POMAGMA_DEBUG_LEVEL > 1) {
+            destin.validate();
+        }
+
+        // trim
+        pomagma::trim(source, destin, theory_file, language_file);
+        if (POMAGMA_DEBUG_LEVEL > 1) {
+            destin.validate();
+        }
+
+        destin.dump(destin_file);
     }
 
     // TODO
     //pomagma::log_stats();
-
-    destin.dump(destin_file);
 
     return 0;
 }
