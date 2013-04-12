@@ -54,7 +54,7 @@ def start():
 
         elif event_type == 'ActivityTaskCompleted':
             attrs = last_event['activityTaskCompletedEventAttributes']
-            result = json.loads(attrs.get('result', '')) # FIXME can't be right
+            result = json.loads(attrs.get('result') or '{}')
             nextActivity = result.get('nextActivity')
             if nextActivity:
                 simple_decide(task, nextActivity)
