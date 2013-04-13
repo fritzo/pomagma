@@ -60,7 +60,7 @@ STATE = None
 @reproducible
 def step3(task):
     args = json.loads(task['input'])
-    assert_equal(args['state'])
+    assert_equal(args['state'], STATE)
 
 
 @parsable.command
