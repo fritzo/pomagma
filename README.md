@@ -25,18 +25,14 @@ An atlas of Abstractland.
 
 ### Workflows
 
-- Compile: build inference strategies and elementary facts from theory
-- Grow: trim off piece of structure; grow it a little; aggregate it back in
-- Edit: suggest code modifications around current editor state;
-  record state in corpus
-- Browse: traverse global history of recorded states
-- Learn Language: optimize grammar weights and propose new concepts from corpus;
-  review; commit language to git
-- Revise Corpus: simplify corpus wrt grammar weights in language
-  and equations known in structure
+- Strategize: find optimal legal surveying strategies
+- Survey: select a region; survey it; aggregate measurements in atlas
+- Tour: travel around Abstractland visiting significant destinations
+- Work on vehicle: ...
+- Develop new vehicle: ... legalize them
+- Build new roadways: ...
 - Theorize: conjecture new equations from data in structure
-- Recover (after an inconsistency event):
-  empathize with Frege; regain composure; debug; start afresh
+- Recover (after Fregean collapse): assess damage; pinpoint problem; rebuild
 
 ## Progress
 
