@@ -1,10 +1,6 @@
 # Pomagma
 
-A deductive database for partially ordered <a href="http://en.wikipedia.org/wiki/Magma_(algebra)">magmas</a>.<br />
-An experimental <a href="http://en.wikipedia.org/wiki/Integrated_development_environment">IDE</a> for coding under <a href="https://en.wikipedia.org/wiki/Extension_(semantics)">extensional semantics</a>.<br />
-A portal into a supremely beautiful mathematical object.<br />
-A toy model of <a href="http://en.wikipedia.org/wiki/Proofs_and_Refutations)">Lakatosian mathematical evolution</a>.<br />
-A parallel distributed rewrite of <a href="http://github.com/fritzo/Johann">Johann</a> with a web front-end.
+An atlas of Abstractland.
 
 ## System Architecture
 
@@ -12,21 +8,20 @@ A parallel distributed rewrite of <a href="http://github.com/fritzo/Johann">Joha
 
 ### State
 
-- Theory - inference rules and facts defining an algebra's relations
-- Language - a probabilistic grammar defining an algebra's generators
-- Structure - a finite substructure of the algebra; a knowledge base
-- Corpus - a working set of interesting terms/positions in the algebra
+- Law - XXX
+- Vehicle - known means of navigating Abstractland
+- Physical Atlas - a knowledge base of a prior facts about Abstractland
+- Cultural Atlas - a knowledge base of humankind's presence in Abstractland
 
 ### Actors
 
-- Compiler - an optimizing compiler for forward-chaining inference
-- Grower - a parallel Todd-Coxeter rules engine
-- Aggregator - joins charts from growers into a global atlas
-- Trimmer - cuts off pieces of the structure for further growth
-- Editor - a user interface for exploring the mapped algebra
-- Browser - a user interface for exploring the mapped algebra
-- Theorist - statistically conjectures new relations
-- Linguist - a Bayesian grammar optimizer / MCMC sampler
+- Strategist - finds optimal legal surveying strategies
+- Surveyor - explores and measures uncharted territory
+- Cartographer - directs surveyors and incorporates surveys into the atlas
+- Vehicle - carries passengers on tours through Abstractland
+- Mechanical Engineer - optimizes vehicles for specific terrain
+- Materials Engineer - develops new modes of transportation
+- Civil Engineer - carefully constructs roads between common destinations
 
 ### Workflows
 
@@ -43,50 +38,17 @@ A parallel distributed rewrite of <a href="http://github.com/fritzo/Johann">Joha
 - Recover (after an inconsistency event):
   empathize with Frege; regain composure; debug; start afresh
 
-## Roadmap
-
-- Language
-    - Add languages to git: skjo
-- Theory
-    - Implement extensionality for quote/eval rules (skjo)
-- Structure
-    - Implement compressed S3 storage for atlas
-- Compiler
-    - Get types-as-closures rules to compile
-    - Get quoting and reflection to compile
-- Grower, Aggregator, Trimmer
-    - Flesh out unit test to exercise all methods
-        - Add tests for DenseSet::Iterator2, 3
-    - Profile & optimize using system tests for sk, skj
-- Controller
-    - Implement master controller via python + SWF
-    - Use boto to provision spot instances
-- Editor
-    - Adapt syntactic algorithms from [Johann](http://github.com/fritzo/Johann)
-    - Implement HTML5 client
-- Theorist
-    - Adapt auto conjecturing algorithms from [Johann](http://github.com/fritzo/Johann)
-    - Implement via Eigen+OpenMP
-- Corpus, Browser
-    - Decide on representation
-    - Implement HTML5 client
-- Linguist
-    - Adapt language optimization algorithms from [Johann](http://github.com/fritzo/Johann)
-    - Implement via Eigen+OpenMP
-- Revisor
-    - Adapt simplification algorithms from [Johann](http://github.com/fritzo/Johann)
-
-## Milestones
+## Progress
 
 - Prototyped - prove concept [DONE](http://github.com/fritzo/Johann)
-- Parallel - run grower system tests (h4, sk, skj) DONE
-- Scalable - implement aggregator, trimmer DONE
-- Distributed - run grower workflow on ec2
-- Interactive - implement editor as web-app
-- Persistent - store edited documents in browsable corpus
-- Adaptive - tune language to corpus
-- Creative - make conjectures from structural knowledge
-- Reflective - model grower within the theory
+- Parallel - run surveyor system tests (h4, sk, skj) DONE
+- Scalable - implement cartographer DONE
+- Distributed - run survey workflow on ec2
+- Interactive - implement vehicle as web-app
+- Persistent - record routes in cultural atlas
+- Adaptive - tune vehicle based on routes
+- Productive - build new roads based on travel patterns
+- Reflective - locate agents within Abstractland
 
 ## License
 
