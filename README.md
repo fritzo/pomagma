@@ -45,7 +45,8 @@ Adventures in Abstractland.
 - Interactive - implement guide as web-app
 - Cumulative - record adventures in history
 - Efficient - tune vehicle based on routes
-- Industrious - build new roads based on travel patterns
+- Innovative - propose new vehicle components based on routes
+- Economical - propose new routes between common destinations
 - Reflective - locate actors within Abstractland
 
 ## License
