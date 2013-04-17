@@ -36,7 +36,7 @@ Adventures in Abstractland.
 - Legislate: propose new routes; evaluate economic effects; legislate
 - Recover (after Fregean collapse): assess damage; pinpoint problem; rebuild
 
-## Progress
+## Milestones
 
 - Prototyped - prove concept [DONE](http://github.com/fritzo/Johann)
 - Parallel - run surveyor system tests (h4, sk, skj) DONE
