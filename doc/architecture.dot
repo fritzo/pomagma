@@ -1,36 +1,35 @@
 digraph G {
 	overlap=false;
-	size="5,5";
+	size="4,4";
 	node [shape=box];
 
 
 	//subgraph cluster_legend {
 	//	rank="max";
 	//	Human [style=filled, fillcolor=pink];
-	//	TODO;
 	//	Data [shape=ellipse];
 	//}
 
-	Theorist;
-	Linguist;
-	Revisor;
-	{
-		node [style=filled, fillcolor=pink];
-		LanguageReviewer [label="Reviewer"];
-		TheoryReviewer [label="Reviewer"];
-	}
+	Economist;
+	Engineer;
+    {
+        rank="same";
+        node [style=filled, fillcolor=pink];
+        Committee [label="Transportation\nCommittee"];
+        SafetyBoard [label="Safety\nBoard"];
+    }
 	{
 		node [shape=ellipse];
-		Language;
-		Theory;
-		Structure;
-		Corpus;
+		Vehicle;
+		Law;
+		Atlas;
+		History;
 	}
-	EditorServer [label="Editor\nServer"];
-	BrowserServer [label="Browser\nServer"];
+    Planner [label="City\nPlanner"];
+	TourAgency [label="Tour\nAgency"];
 
-	subgraph cluster_grower {
-		Grower;
+	subgraph cluster_survey {
+		Surveyor;
 
 		color = "#666666";
 		fontcolor = "#666666";
@@ -38,12 +37,12 @@ digraph G {
 		labelloc = "b";
 	}
 
-	subgraph cluster_writer {
+	subgraph cluster_adventure {
 		rank="max";
-		EditorClient [label="Editor\nClient"];
+		Guide;
 		{
 			rank="max";
-			Writer [style=filled, fillcolor=pink];
+			Adventurer [style=filled, fillcolor=pink];
 		}
 
 		color = "#666666";
@@ -52,91 +51,56 @@ digraph G {
 		labelloc = "b";
 	}
 
-	subgraph cluster_reader {
-		rank="max";
-		BrowserClient [label="Browser\nClient"];
-		{
-			rank="max";
-			Reader [style=filled, fillcolor=pink];
-		}
-
-		color = "#666666";
-		fontcolor = "#666666";
-		label = "many";
-		labelloc = "b";
-	}
+	{ rank="min"; Engineer; Economist; }
+	{ rank="same"; Vehicle; Law; Atlas; History; }
+	{ rank="same"; Cartographer; Planner; TourAgency; }
+	{ rank="max"; Adventurer; }
 
 
-	{ rank="min"; Theorist; Linguist; }
-	{ rank="same"; LanguageReviewer; TheoryReviewer; }
-	{ rank="same"; Language; Theory; Structure; Corpus; }
-	{ rank="same"; Trimmer; Aggregator; Compiler; }
-	{ rank="same"; EditorServer; BrowserServer; }
-	{ rank="same"; EditorClient; BrowserClient; }
-	{ rank="max"; Writer; Reader; }
-
-
-	// Workflow: Compile
+	// Workflow: Plan
 	edge [dir=forward arrowhead=normal]; // pull
-	Theory -> Compiler;
-	edge [dir=both arrowtail=inv arrowhead=empty]; // push
-	Compiler -> Grower;
-	Compiler -> Trimmer;
-	Compiler -> EditorServer;
+	Law -> Planner;
+	Planner -> Surveyor;
+	Planner -> Cartographer;
 
-	// Workflow:  Grow
+	// Workflow: Survey
 	edge [dir=forward arrowhead=normal]; // pull
-	Structure -> Trimmer;
-	Language -> Trimmer;
-	Trimmer -> Grower;
-	Structure -> Aggregator;
+	Atlas -> Cartographer;
+	Vehicle -> Cartographer;
+	Cartographer -> Surveyor;
 	edge [dir=both arrowtail=inv arrowhead=empty]; // push
-	Grower -> Aggregator;
-	Aggregator -> Structure;
+	Surveyor -> Cartographer;
+	Cartographer -> Atlas;
 
-	// Workflow:  Edit
+	// Workflow: Adventure
 	edge [dir=forward arrowhead=normal]; // pull
-	Structure -> EditorServer;
-	Language -> EditorServer;
-	EditorServer -> EditorClient;
-	EditorClient -> Writer;
+	Law -> TourAgency;
+	Atlas -> TourAgency;
+	Vehicle -> TourAgency;
+	TourAgency -> Guide;
+	Guide -> Adventurer;
+	History -> TourAgency;
 	edge [dir=both arrowtail=inv arrowhead=empty]; // push
-	Writer -> EditorClient;
-	EditorClient -> EditorServer;
-	EditorServer -> Corpus;
+	Adventurer -> Guide;
+	Guide -> TourAgency;
+	TourAgency -> History;
 
-	// Workflow:  Browse
+	// Workflow: Engineer
 	edge [dir=forward arrowhead=normal]; // pull
-	Corpus -> BrowserServer;
-	Language -> BrowserServer;
-	BrowserServer -> BrowserClient;
-	BrowserClient -> Reader;
+	History -> Engineer;
+	Atlas -> Engineer;
+	Vehicle -> Engineer;
+	Engineer -> SafetyBoard;
 	edge [dir=both arrowtail=inv arrowhead=empty]; // push
-	Reader -> BrowserClient;
+	Engineer -> Vehicle;
+	SafetyBoard -> Vehicle;
+	SafetyBoard -> Law;
 
-	// Workflow:  LearnLanguage
+	// Workflow: Legislate
 	edge [dir=forward arrowhead=normal]; // pull
-	Corpus -> Linguist;
-	Structure -> Linguist;
-	Language -> Linguist;
-	Linguist -> LanguageReviewer;
+	Atlas -> Economist;
+	Vehicle ->  Economist;
+	Economist -> Committee;
 	edge [dir=both arrowtail=inv arrowhead=empty]; // push
-	LanguageReviewer -> Language;
-	LanguageReviewer -> Theory;
-
-	// Workflow:  ReviseCorpus
-	edge [dir=forward arrowhead=normal]; // pull
-	Corpus -> Revisor;
-	Language -> Revisor;
-	Structure -> Revisor;
-	edge [dir=both arrowtail=inv arrowhead=empty]; // push
-	Revisor -> Corpus;
-
-	// Workflow:  Theorize
-	edge [dir=forward arrowhead=normal]; // pull
-	Structure -> Theorist;
-	Language ->  Theorist;
-	Theorist -> TheoryReviewer;
-	edge [dir=both arrowtail=inv arrowhead=empty]; // push
-	TheoryReviewer -> Theory;
+	Committee -> Law;
 }
