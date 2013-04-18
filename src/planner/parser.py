@@ -1,7 +1,7 @@
 import re
-from pomagma.compiler.signature import get_arity, get_nargs
-from pomagma.compiler.expressions import Expression
-from pomagma.compiler.sequents import Sequent
+from pomagma.planner.signature import get_arity, get_nargs
+from pomagma.planner.expressions import Expression
+from pomagma.planner.sequents import Sequent
 
 
 RE_BAR = re.compile('---+')

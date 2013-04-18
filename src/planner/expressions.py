@@ -1,6 +1,6 @@
 import re
-from pomagma.compiler.util import union
-from pomagma.compiler import signature
+from pomagma.planner.util import union
+from pomagma.planner import signature
 
 
 class Expression(object):

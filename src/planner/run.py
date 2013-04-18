@@ -1,11 +1,11 @@
 import os
 import re
 import parsable
-from pomagma.compiler.util import TODO
-from pomagma.compiler import parser
-from pomagma.compiler.compiler import add_costs, get_events, compile_full, compile_given
-from pomagma.compiler.extensional import derive_facts, validate
-from pomagma.compiler import cpp
+from pomagma.planner.util import TODO
+from pomagma.planner import parser
+from pomagma.planner.compiler import add_costs, get_events, compile_full, compile_given
+from pomagma.planner.extensional import derive_facts, validate
+from pomagma.planner import cpp
 
 
 SCRIPT_PATH = os.path.dirname(os.path.abspath(__file__))

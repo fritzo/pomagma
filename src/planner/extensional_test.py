@@ -1,7 +1,7 @@
 from nose.tools import assert_equal, assert_set_equal
-from pomagma.compiler import run
-from pomagma.compiler.util import find_rules
-from pomagma.compiler.extensional import (
+from pomagma.planner import run
+from pomagma.planner.util import find_rules
+from pomagma.planner.extensional import (
         Expression,
         APP, COMP, JOIN,
         I, K, B, C, W, S, J,

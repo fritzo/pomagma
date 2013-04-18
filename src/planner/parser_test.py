@@ -1,5 +1,5 @@
-from pomagma.compiler import parser
-from pomagma.compiler.util import find_facts, find_rules
+from pomagma.planner import parser
+from pomagma.planner.util import find_facts, find_rules
 
 
 def test_parse_rule():

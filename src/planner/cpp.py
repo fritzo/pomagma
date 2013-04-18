@@ -1,11 +1,11 @@
 import re
 from textwrap import dedent
 from string import Template
-from pomagma.compiler.util import inputs, methodof, log_sum_exp
-from pomagma.compiler.expressions import Expression
-from pomagma.compiler.sequents import Sequent
-from pomagma.compiler import signature
-from pomagma.compiler import compiler
+from pomagma.planner.util import inputs, methodof, log_sum_exp
+from pomagma.planner.expressions import Expression
+from pomagma.planner.sequents import Sequent
+from pomagma.planner import signature
+from pomagma.planner import compiler
 
 
 def camel_to_underscore(camel):
