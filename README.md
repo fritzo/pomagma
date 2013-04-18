@@ -38,7 +38,7 @@ Adventures in Abstractland.
 
 ## Milestones
 
-- Prototyped - prove concept [DONE](http://github.com/fritzo/Johann)
+- Viable - prove concept in prototype [DONE](http://github.com/fritzo/Johann)
 - Parallel - run surveyor system tests (h4, sk, skj) DONE
 - Scalable - implement cartographer DONE
 - Distributed - run survey workflow on ec2
