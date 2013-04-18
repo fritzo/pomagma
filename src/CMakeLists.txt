@@ -55,22 +55,6 @@ add_custom_command(
 	DEPENDS ${SRC_DIR}/vehicles/vehicles.proto
 	)
 
-#add_custom_command(
-#	OUTPUT ${SRC_DIR}/vehicles/vehicles_pb2.py
-#	COMMAND protoc ${SRC_DIR}/vehicles/vehicles.proto
-#		--proto_path=${SRC_DIR}/vehicles
-#		--python_out=${CMAKE_CURRENT_LIST_DIR}/vehicles
-#	DEPENDS ${SRC_DIR}/vehicles/vehicles.proto
-#	)
-
-add_custom_command(
-	OUTPUT ${SRC_DIR}/structure/structure.pb.cc
-	COMMAND protoc ${SRC_DIR}/structure/structure.proto
-		--proto_path=${SRC_DIR}/structure
-		--cpp_out=${CMAKE_CURRENT_LIST_DIR}/structure
-	DEPENDS ${SRC_DIR}/structure/structure.proto
-	)
-
 add_subdirectory(util)
 add_subdirectory(surveyor)
 add_subdirectory(cartographer)

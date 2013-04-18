@@ -1,7 +1,6 @@
 all:
 	pip install -e .
 	$(MAKE) -C src/vehicles
-	$(MAKE) -C src/structure
 	POMAGMA_DEBUG= python -m pomagma build
 	python -m pomagma build
 
@@ -35,7 +34,6 @@ skj: all
 
 python-libs:
 	@$(MAKE) -C src/vehicles all
-	@$(MAKE) -C src/structure all
 
 profile:
 	python -m pomagma profile
