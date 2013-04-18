@@ -1,8 +1,8 @@
 
 include_directories(${CMAKE_SOURCE_DIR}/)
 
-set(POMAGMA_GROWER_LIBS
-	pomagma_grower
+set(POMAGMA_SURVEYOR_LIBS
+	pomagma_surveyor
        	boost_thread
        	tbb
        	hdf5_hl hdf5
@@ -11,10 +11,10 @@ set(POMAGMA_GROWER_LIBS
 	)
 
 
-add_library(pomagma_grower_dummy SHARED dummy.theory.cpp)
-set(POMAGMA_GROWER_TEST_LIBS
-	pomagma_grower
-	pomagma_grower_dummy
+add_library(pomagma_surveyor_dummy SHARED dummy.theory.cpp)
+set(POMAGMA_SURVEYOR_TEST_LIBS
+	pomagma_surveyor
+	pomagma_surveyor_dummy
 	boost_thread
 	tbb
        	hdf5_hl hdf5
@@ -22,48 +22,55 @@ set(POMAGMA_GROWER_TEST_LIBS
 	protobuf
 	)
 
-add_executable(grower_carrier_test carrier_test.cpp)
-target_link_libraries(grower_carrier_test ${POMAGMA_GROWER_TEST_LIBS})
-add_test(NAME grower_carrier COMMAND grower_carrier_test)
+add_executable(surveyor_carrier_test carrier_test.cpp)
+target_link_libraries(surveyor_carrier_test ${POMAGMA_SURVEYOR_TEST_LIBS})
+add_test(NAME surveyor_carrier
+	COMMAND surveyor_carrier_test)
 
-add_executable(grower_binary_relation_test binary_relation_test.cpp)
-target_link_libraries(grower_binary_relation_test ${POMAGMA_GROWER_TEST_LIBS})
-add_test(NAME grower_binary_relation COMMAND grower_binary_relation_test)
+add_executable(surveyor_binary_relation_test binary_relation_test.cpp)
+target_link_libraries(surveyor_binary_relation_test ${POMAGMA_SURVEYOR_TEST_LIBS})
+add_test(NAME surveyor_binary_relation
+	COMMAND surveyor_binary_relation_test)
 
-add_executable(grower_nullary_function_test nullary_function_test.cpp)
-target_link_libraries(grower_nullary_function_test ${POMAGMA_GROWER_TEST_LIBS})
-add_test(NAME grower_nullary_function COMMAND grower_nullary_function_test)
+add_executable(surveyor_nullary_function_test nullary_function_test.cpp)
+target_link_libraries(surveyor_nullary_function_test ${POMAGMA_SURVEYOR_TEST_LIBS})
+add_test(NAME surveyor_nullary_function
+	COMMAND surveyor_nullary_function_test)
 
-add_executable(grower_injective_function_test injective_function_test.cpp)
-target_link_libraries(grower_injective_function_test ${POMAGMA_GROWER_TEST_LIBS})
-add_test(NAME grower_injective_function COMMAND grower_injective_function_test)
+add_executable(surveyor_injective_function_test injective_function_test.cpp)
+target_link_libraries(surveyor_injective_function_test ${POMAGMA_SURVEYOR_TEST_LIBS})
+add_test(NAME surveyor_injective_function
+       COMMAND surveyor_injective_function_test)
 
-add_executable(grower_binary_function_test binary_function_test.cpp)
-target_link_libraries(grower_binary_function_test ${POMAGMA_GROWER_TEST_LIBS})
-add_test(NAME grower_binary_function COMMAND grower_binary_function_test)
+add_executable(surveyor_binary_function_test binary_function_test.cpp)
+target_link_libraries(surveyor_binary_function_test ${POMAGMA_SURVEYOR_TEST_LIBS})
+add_test(NAME surveyor_binary_function
+       	COMMAND surveyor_binary_function_test)
 
-add_executable(grower_symmetric_function_test symmetric_function_test.cpp)
-target_link_libraries(grower_symmetric_function_test ${POMAGMA_GROWER_TEST_LIBS})
-add_test(NAME grower_symmetric_function COMMAND grower_symmetric_function_test)
+add_executable(surveyor_symmetric_function_test symmetric_function_test.cpp)
+target_link_libraries(surveyor_symmetric_function_test ${POMAGMA_SURVEYOR_TEST_LIBS})
+add_test(NAME surveyor_symmetric_function
+	COMMAND surveyor_symmetric_function_test)
 
-add_executable(grower_scheduler_test scheduler_test.cpp)
-target_link_libraries(grower_scheduler_test ${POMAGMA_GROWER_TEST_LIBS})
-add_test(NAME grower_scheduler COMMAND grower_scheduler_test)
+add_executable(surveyor_scheduler_test scheduler_test.cpp)
+target_link_libraries(surveyor_scheduler_test ${POMAGMA_SURVEYOR_TEST_LIBS})
+add_test(NAME surveyor_scheduler
+	COMMAND surveyor_scheduler_test)
 
 
-add_library(pomagma_grower_main SHARED main.cpp)
-#install(TARGETS pomagma_grower_main LIBRARY
+add_library(pomagma_surveyor_main SHARED main.cpp)
+#install(TARGETS pomagma_surveyor_main LIBRARY
 #	DESTINATION ${PROJECT_SOURCE_DIR}/lib
 #	)
-set(POMAGMA_GROWER_MAIN_LIBS
-	pomagma_grower_main
-	${POMAGMA_GROWER_LIBS}
+set(POMAGMA_SURVEYOR_MAIN_LIBS
+	pomagma_surveyor_main
+	${POMAGMA_SURVEYOR_LIBS}
 	#zmq
 	)
 
 
-add_executable(dummy.grow dummy.theory.cpp)
-target_link_libraries(dummy.grow ${POMAGMA_GROWER_MAIN_LIBS})
+add_executable(dummy.survey dummy.theory.cpp)
+target_link_libraries(dummy.survey ${POMAGMA_SURVEYOR_MAIN_LIBS})
 
 set(SRC_DIR ${PROJECT_SOURCE_DIR}/src)
 
@@ -88,9 +95,9 @@ add_custom_command(
 		${SRC_DIR}/theory/h4.rules
 		${SRC_DIR}/theory/h4.facts
 	)
-add_executable(h4.grow h4.theory.cpp)
-target_link_libraries(h4.grow ${POMAGMA_GROWER_MAIN_LIBS})
-#install(TARGETS h4.grow DESTINATION ${PROJECT_SOURCE_DIR}/bin)
+add_executable(h4.survey h4.theory.cpp)
+target_link_libraries(h4.survey ${POMAGMA_SURVEYOR_MAIN_LIBS})
+#install(TARGETS h4.survey DESTINATION ${PROJECT_SOURCE_DIR}/bin)
 
 add_custom_command(
 	OUTPUT ${CMAKE_CURRENT_LIST_DIR}/sk.theory.cpp
@@ -113,9 +120,9 @@ add_custom_command(
 		${SRC_DIR}/theory/sk.facts
 		${SRC_DIR}/theory/order.facts
 	)
-add_executable(sk.grow sk.theory.cpp)
-target_link_libraries(sk.grow ${POMAGMA_GROWER_MAIN_LIBS})
-#install(TARGETS sk.grow DESTINATION ${PROJECT_SOURCE_DIR}/bin)
+add_executable(sk.survey sk.theory.cpp)
+target_link_libraries(sk.survey ${POMAGMA_SURVEYOR_MAIN_LIBS})
+#install(TARGETS sk.survey DESTINATION ${PROJECT_SOURCE_DIR}/bin)
 
 # TODO get types.rules to compile
 add_custom_command(
@@ -145,9 +152,9 @@ add_custom_command(
 		${SRC_DIR}/theory/order.facts
 		${SRC_DIR}/theory/types.facts
 	)
-add_executable(skj.grow skj.theory.cpp)
-target_link_libraries(skj.grow ${POMAGMA_GROWER_MAIN_LIBS})
-#install(TARGETS skj.grow DESTINATION ${PROJECT_SOURCE_DIR}/bin)
+add_executable(skj.survey skj.theory.cpp)
+target_link_libraries(skj.survey ${POMAGMA_SURVEYOR_MAIN_LIBS})
+#install(TARGETS skj.survey DESTINATION ${PROJECT_SOURCE_DIR}/bin)
 
 # TODO get reflect.rules to compile
 add_custom_command(
@@ -185,7 +192,7 @@ add_custom_command(
 		${SRC_DIR}/theory/quote.facts
 		${SRC_DIR}/theory/reflect.facts
 	)
-add_executable(skjo.grow skjo.theory.cpp)
-target_link_libraries(skjo.grow ${POMAGMA_GROWER_MAIN_LIBS})
-#install(TARGETS skjo.grow DESTINATION ${PROJECT_SOURCE_DIR}/bin)
+add_executable(skjo.survey skjo.theory.cpp)
+target_link_libraries(skjo.survey ${POMAGMA_SURVEYOR_MAIN_LIBS})
+#install(TARGETS skjo.survey DESTINATION ${PROJECT_SOURCE_DIR}/bin)
 

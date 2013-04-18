@@ -1,2 +1,2 @@
-sk.advisor: python -m pomagma.workflow.grow start-advisor sk
-skj.advisor: python -m pomagma.workflow.grow start-advisor skj
+sk.advisor: python -m pomagma.workflow.survey start-advisor sk
+skj.advisor: python -m pomagma.workflow.survey start-advisor skj

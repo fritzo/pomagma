@@ -174,7 +174,7 @@ void set_thread_count (size_t worker_count);
 
 // blocking api, requires access from single thread
 void initialize (const char * theory_file = nullptr);
-void grow ();
+void survey ();
 void load ();
 void dump ();
 

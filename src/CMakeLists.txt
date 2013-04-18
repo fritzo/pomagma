@@ -2,24 +2,24 @@
 set(SRC_DIR ${PROJECT_SOURCE_DIR}/src)
 include_directories(${CMAKE_SOURCE_DIR}/)
 
-add_library(pomagma_grower SHARED
+add_library(pomagma_surveyor SHARED
 	util/util.cpp
 	util/aligned_alloc.cpp
 	util/concurrent_dense_set.cpp
 	language/language.pb.cc
-	grower/carrier.cpp
-	grower/base_bin_rel.cpp
-	grower/binary_relation.cpp
-	grower/nullary_function.cpp
-	grower/injective_function.cpp
-	grower/binary_function.cpp
-	grower/symmetric_function.cpp
-	grower/parser.cpp
-	grower/sampler.cpp
-	grower/structure.cpp
-	grower/scheduler.cpp
+	surveyor/carrier.cpp
+	surveyor/base_bin_rel.cpp
+	surveyor/binary_relation.cpp
+	surveyor/nullary_function.cpp
+	surveyor/injective_function.cpp
+	surveyor/binary_function.cpp
+	surveyor/symmetric_function.cpp
+	surveyor/parser.cpp
+	surveyor/sampler.cpp
+	surveyor/structure.cpp
+	surveyor/scheduler.cpp
 	)
-#install(TARGETS pomagma_grower LIBRARY DESTINATION ${PROJECT_SOURCE_DIR}/lib)
+#install(TARGETS pomagma_surveyor LIBRARY DESTINATION ${PROJECT_SOURCE_DIR}/lib)
 
 add_library(pomagma_atlas SHARED
 	util/util.cpp
@@ -68,5 +68,5 @@ add_custom_command(
 	)
 
 add_subdirectory(util)
-add_subdirectory(grower)
+add_subdirectory(surveyor)
 add_subdirectory(atlas)

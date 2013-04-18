@@ -14,7 +14,7 @@ class BinaryRelation : noncopyable
 
     // TODO
     // use a single 1-bit-per-entry 32x32-tiled representation
-    // following the block math in grower/binary_function
+    // following the block math in surveyor/binary_function
 
 public:
 

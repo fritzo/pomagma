@@ -23,10 +23,10 @@ else:
 BIN = os.path.join(BUILD, 'src')
 CPU_COUNT = multiprocessing.cpu_count()
 
-GROWERS = {
-    'h4': 'h4.grow',
-    'sk': 'sk.grow',
-    'skj': 'skj.grow',
+SURVEYORS = {
+    'h4': 'h4.survey',
+    'sk': 'sk.survey',
+    'skj': 'skj.survey',
     }
 
 MIN_SIZES = {

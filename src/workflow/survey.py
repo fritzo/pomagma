@@ -1,5 +1,5 @@
 '''
-Activities for grow workflow.
+Activities for survey workflow.
 
 References:
 http://docs.aws.amazon.com/amazonswf/latest/developerguide/swf-dg-using-swf-api.html#swf-dg-error-handling
@@ -38,7 +38,7 @@ def get_size(filename):
 @parsable.command
 def init(theory):
     '''
-    Initialize atlas for growing.
+    Initialize atlas for surveying.
     Requires: medium-memory, high-cpu.
     '''
     with pomagma.util.chdir(pomagma.util.DATA):
@@ -84,7 +84,7 @@ def advise(task):
         seed = trim(theory, size)
         return {
             'nextActivity': {
-                'activityType': '{}_{}_{}'.format('Grow', theory, size),
+                'activityType': '{}_{}_{}'.format('Survey', theory, size),
                 'input': {
                     'theory': theory,
                     'size': size,
@@ -101,7 +101,7 @@ def advise(task):
 
 
 @reproducible
-def grow(task):
+def survey(task):
     args = json.loads(task['input'])
     theory = args['theory']
     size = args['size']
@@ -110,8 +110,8 @@ def grow(task):
     seed_size = get_size(seed)
     chart_size = min(size, seed_size + STEP_SIZE)
     chart = random_filename()
-    log_file = '{}/grow.log'.format(theory)
-    pomagma.actions.grow(theory, seed, chart, chart_size, log_file=log_file)
+    log_file = '{}/survey.log'.format(theory)
+    pomagma.actions.survey(theory, seed, chart, chart_size, log_file=log_file)
     chart = normalize_filename('{}/chart'.format(theory), chart)
     pomagma.store.put(chart)
     pomagma.store.remove(seed)
@@ -142,14 +142,14 @@ def start_advisor(theory):
 
 
 @parsable.command
-def start_grower(theory, size):
+def start_surveyor(theory, size):
     '''
-    Start grow worker.
+    Start survey worker.
     Requires: high-memory, high-cpu node.
     '''
-    workflow_name = 'Grow'
+    workflow_name = 'Survey'
     task_list = 'Simple'
-    activity_name = '{}_{}_{}'.format('Grow', theory, size)
+    activity_name = '{}_{}_{}'.format('Survey', theory, size)
     nextActivity = {
         'activityType': '{}_{}'.format('Advise', theory),
         'input': {
@@ -168,7 +168,7 @@ def start_grower(theory, size):
                 workflow_name,
                 input)
         task = pomagma.workflow.swf.poll_activity_task(activity_name)
-        grow(task)
+        survey(task)
 
 
 @parsable.command

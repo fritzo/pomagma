@@ -27,11 +27,11 @@ test: unit-test
 	POMAGMA_DEBUG= python -m pomagma batch-test
 
 h4:
-	python -m pomagma.batch grow h4
+	python -m pomagma.batch survey h4
 sk:
-	python -m pomagma.batch grow sk
+	python -m pomagma.batch survey sk
 skj:
-	python -m pomagma.batch grow skj
+	python -m pomagma.batch survey skj
 
 python-libs:
 	@$(MAKE) -C src/language all
@@ -41,7 +41,7 @@ profile:
 	python -m pomagma profile
 
 clean: FORCE
-	rm -rf lib include build log
+	rm -rf build lib include
 	git clean -fdx -e pomagma.egg-info
 
 FORCE:

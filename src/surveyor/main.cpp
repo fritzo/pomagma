@@ -106,8 +106,8 @@ int main (int argc, char ** argv)
         pomagma::validate_all();
     }
 
-    // grow
-    pomagma::Scheduler::grow();
+    // survey
+    pomagma::Scheduler::survey();
     if (POMAGMA_DEBUG_LEVEL > 0) {
         pomagma::validate_all();
     }

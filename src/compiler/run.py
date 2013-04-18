@@ -118,7 +118,7 @@ def compile(*infiles, **kwargs):
     '''
     Compile rules -> C++.
     Optional keyword arguments:
-        cpp_out=$POMAGMA_ROOT/src/grower/<STEM>.theory.cpp
+        cpp_out=$POMAGMA_ROOT/src/surveyor/<STEM>.theory.cpp
         theory_out=$POMAGMA_ROOT/src/theory/<STEM>.compiled
         theory_out=FILENAME
         extensional=true
@@ -126,7 +126,7 @@ def compile(*infiles, **kwargs):
     stem = infiles[-1].split('.')[0]
     cpp_out = kwargs.get(
             'cpp_out',
-            os.path.join(POMAGMA_SRC, 'grower', '{0}.theory.cpp'.format(stem)))
+            os.path.join(POMAGMA_SRC, 'surveyor', '{0}.theory.cpp'.format(stem)))
     theory_out = kwargs.get(
             'theory_out',
             os.path.join(POMAGMA_SRC, 'theory', '{0}.compiled'.format(stem)))

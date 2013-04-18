@@ -11,7 +11,7 @@ void test_simple (size_t max_threads = 20)
         schedule(ExistsTask(1));
         Scheduler::initialize();
         schedule(ExistsTask(1));
-        Scheduler::grow();
+        Scheduler::survey();
     }
 }
 

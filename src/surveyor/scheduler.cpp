@@ -225,7 +225,7 @@ bool try_initialize_work (rng_t &)
         or cleanup_tasks_try_execute();
 }
 
-bool try_grow_work (rng_t & rng)
+bool try_survey_work (rng_t & rng)
 {
     return g_merge_tasks.try_execute()
         or enforce_tasks_try_execute()
@@ -274,18 +274,18 @@ void initialize (const char * theory_file)
     log_stats();
 }
 
-void grow ()
+void survey ()
 {
-    POMAGMA_INFO("starting " << g_worker_count << " grow threads");
+    POMAGMA_INFO("starting " << g_worker_count << " survey threads");
     reset_stats();
     std::vector<std::thread> threads;
     for (size_t i = 0; i < g_worker_count; ++i) {
-        threads.push_back(std::thread(do_work, try_grow_work));
+        threads.push_back(std::thread(do_work, try_survey_work));
     }
     for (auto & thread : threads) {
         thread.join();
     }
-    POMAGMA_INFO("finished " << g_worker_count << " grow threads");
+    POMAGMA_INFO("finished " << g_worker_count << " survey threads");
     log_stats();
 }
 
