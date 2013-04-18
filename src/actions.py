@@ -35,7 +35,7 @@ def survey(theory, chart_in, chart_out, size, **opts):
 
 def aggregate(world_in, region_in, world_out, **opts):
     pomagma.util.log_call(
-        os.path.join(pomagma.util.BIN, 'atlas', 'aggregate'),
+        os.path.join(pomagma.util.BIN, 'cartographer', 'aggregate'),
         abspath(world_in),
         abspath(region_in),
         abspath(world_out),
@@ -46,7 +46,7 @@ def trim(theory, world_in, region_out, size, **opts):
     if size < pomagma.util.MIN_SIZES[theory]:
         raise ValueError('chart is too small for theory')
     pomagma.util.log_call(
-        os.path.join(pomagma.util.BIN, 'atlas', 'trim'),
+        os.path.join(pomagma.util.BIN, 'cartographer', 'trim'),
         abspath(world_in),
         abspath(region_out),
         size,
@@ -57,7 +57,7 @@ def trim(theory, world_in, region_out, size, **opts):
 
 def copy(chart_in, chart_out, **opts):
     pomagma.util.log_call(
-        os.path.join(pomagma.util.BIN, 'atlas', 'copy'),
+        os.path.join(pomagma.util.BIN, 'cartographer', 'copy'),
         abspath(chart_in),
         abspath(chart_out),
         **opts)

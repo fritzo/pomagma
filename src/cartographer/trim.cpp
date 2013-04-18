@@ -210,7 +210,7 @@ void restrict_structure (
     POMAGMA_ASSERT_EQ(destin.carrier().item_count(), 0);
 
     // build mapping
-    // TODO sort intelligently here, or make sure atlas is sorted intelligently
+    // TODO sort intelligently here, or make sure chart is sorted intelligently
     std::vector<Ob> src_to_destin(1 + src.carrier().item_dim(), 0);
     std::vector<Ob> destin_to_src(1 + destin.carrier().item_dim(), 0);
     Ob destin_ob = 1;

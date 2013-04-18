@@ -47,46 +47,46 @@ def test(theory, **options):
 @parsable_command
 def init(theory, **options):
     '''
-    Init atlas for given theory.
+    Initialize world map for given theory.
     Options: log_level, log_file
     '''
     data = os.path.join(pomagma.util.DATA, '{}.survey'.format(theory))
-    assert not os.path.exists(data), 'Atlas has already been initialized'
+    assert not os.path.exists(data), 'World map has already been initialized'
     os.makedirs(data)
     with pomagma.util.chdir(data):
 
-        atlas = 'atlas.h5'
+        world = 'world.h5'
         opts = options
         opts.setdefault('log_file', 'init.log')
 
         pomagma.util.log_print('Initializing', options['log_file'])
         size = pomagma.util.MIN_SIZES[theory]
-        pomagma.actions.init(theory, atlas, size, **opts)
+        pomagma.actions.init(theory, world, size, **opts)
 
 
 @parsable_command
 def survey(theory, max_size=8191, step_size=512, **options):
     '''
-    Work on atlas for given theory.
-    Survey atlas until at given size, then (trim; survey; aggregate)-loop
+    Expand world map for given theory.
+    Survey until world reaches given size, then (trim; survey; aggregate)-loop
     Options: log_level, log_file
     '''
     # TODO make starting this idempotent, with a mutext or killer or sth
     assert step_size > 0
-    seed_size = max_size - step_size
+    region_size = max_size - step_size
     min_size = pomagma.util.MIN_SIZES[theory]
-    assert seed_size >= min_size
+    assert region_size >= min_size
 
     data = os.path.join(pomagma.util.DATA, '{}.survey'.format(theory))
-    assert os.path.exists(data), 'First initialize atlas'
+    assert os.path.exists(data), 'First initialize world map'
     with pomagma.util.chdir(data):
 
-        seed = 'seed.h5'
-        chart = 'chart.h5'
-        atlas = 'atlas.h5'
-        temp = 'temp.atlas.h5'
-        assert os.path.exists(atlas), 'First initialize atlas'
-        atlas_size = pomagma.util.get_info(atlas)['item_count']
+        world = 'world.h5'
+        region = 'region.h5'
+        survey = 'survey.h5'
+        temp = 'temp.world.h5'
+        assert os.path.exists(world), 'First initialize world map'
+        world_size = pomagma.util.get_info(world)['item_count']
         opts = options
         opts.setdefault('log_file', 'survey.log')
         def log_print(message):
@@ -95,21 +95,21 @@ def survey(theory, max_size=8191, step_size=512, **options):
         step = 0
         while True:
 
-            if atlas_size < max_size:
-                atlas_size = min(atlas_size + step_size, max_size)
-                log_print('Step {}: survey to {}'.format(step, atlas_size))
-                pomagma.actions.survey(theory, atlas, temp, atlas_size, **opts)
-                pomagma.actions.copy(temp, atlas, **opts) # verifies file
+            if world_size < max_size:
+                world_size = min(world_size + step_size, max_size)
+                log_print('Step {}: survey to {}'.format(step, world_size))
+                pomagma.actions.survey(theory, world, temp, world_size, **opts)
+                pomagma.actions.copy(temp, world, **opts) # verifies file
 
             else:
                 log_print('Step {}: trim-survey-aggregate'.format(step))
-                pomagma.actions.trim(theory, atlas, seed, seed_size, **opts)
-                pomagma.actions.survey(theory, seed, chart, max_size, **opts)
-                pomagma.actions.aggregate(atlas, chart, temp, **opts)
-                pomagma.actions.copy(temp, atlas, **opts) # verifies file
+                pomagma.actions.trim(theory, world, region, region_size, **opts)
+                pomagma.actions.survey(theory, region, survey, max_size, **opts)
+                pomagma.actions.aggregate(world, survey, temp, **opts)
+                pomagma.actions.copy(temp, world, **opts) # verifies file
 
-            atlas_size = pomagma.util.get_info(atlas)['item_count']
-            log_print('atlas_size = {}'.format(atlas_size))
+            world_size = pomagma.util.get_info(world)['item_count']
+            log_print('world_size = {}'.format(world_size))
             step += 1
 
 

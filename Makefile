@@ -13,24 +13,24 @@ PYFLAKES = find src | grep '.py$$' | grep -v '_pb2.py' | xargs pyflakes
 unit-test: set-ulimit
 	@$(PYFLAKES)
 	POMAGMA_DEBUG= python -m pomagma unit-test
-batch-test: set-ulimit
+batch-test: all set-ulimit
 	POMAGMA_DEBUG= python -m pomagma batch-test
-h4-test: set-ulimit
+h4-test: all set-ulimit
 	POMAGMA_DEBUG= python -m pomagma batch-test h4
-sk-test: set-ulimit
+sk-test: all set-ulimit
 	POMAGMA_DEBUG= python -m pomagma batch-test sk
-skj-test: set-ulimit
+skj-test: all set-ulimit
 	POMAGMA_DEBUG= python -m pomagma batch-test skj
-test: unit-test
+test: all set-ulimit
 	@$(PYFLAKES)
 	POMAGMA_DEBUG= python -m pomagma unit-test
 	POMAGMA_DEBUG= python -m pomagma batch-test
 
-h4:
+h4: all
 	python -m pomagma.batch survey h4
-sk:
+sk: all
 	python -m pomagma.batch survey sk
-skj:
+skj: all
 	python -m pomagma.batch survey skj
 
 python-libs:

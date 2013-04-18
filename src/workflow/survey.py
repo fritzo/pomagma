@@ -38,39 +38,39 @@ def get_size(filename):
 @parsable.command
 def init(theory):
     '''
-    Initialize atlas for surveying.
+    Initialize world map for surveying.
     Requires: medium-memory, high-cpu.
     '''
     with pomagma.util.chdir(pomagma.util.DATA):
-        atlas = '{}/atlas.h5'.format(theory)
+        world = '{}/world.h5'.format(theory)
         size = pomagma.util.MIN_SIZES[theory]
         log_file = '{}/init.log'
-        pomagma.actions.init(theory, atlas, size, log_file=log_file)
-        pomagma.store.put(atlas)
+        pomagma.actions.init(theory, world, size, log_file=log_file)
+        pomagma.store.put(world)
 
 
 def trim(theory, size):
     min_size = pomagma.util.MIN_SIZES[theory]
-    seed_size = max(min_size, size - STEP_SIZE)
-    atlas = pomagma.store.get('{}/atlas.h5'.format(theory))
-    atlas_size = get_size(atlas)
-    if seed_size < atlas_size:
-        seed = random_filename()
+    region_size = max(min_size, size - STEP_SIZE)
+    world = pomagma.store.get('{}/world.h5'.format(theory))
+    world_size = get_size(world)
+    if region_size < world_size:
+        region = random_filename()
         log_file = '{}/advise.log'.format(theory)
-        pomagma.actions.trim(theory, atlas, seed, size, log_file=log_file)
+        pomagma.actions.trim(theory, world, region, size, log_file=log_file)
     else:
-        seed = atlas
-    seed = normalize_filename('{}/seed'.format(theory), seed)
-    pomagma.store.put(seed)
-    return seed
+        region = world
+    region = normalize_filename('{}/region'.format(theory), region)
+    pomagma.store.put(region)
+    return region
 
 
 def aggregate(theory, chart):
-    atlas = pomagma.store.get('{}/atlas.h5'.format(theory))
+    world = pomagma.store.get('{}/world.h5'.format(theory))
     chart = pomagma.store.get(chart)
     log_file = '{}/advisor.log'.format(theory)
-    pomagma.actions.aggregate(atlas, chart, atlas, log_file=log_file)
-    pomagma.store.put(atlas)
+    pomagma.actions.aggregate(world, chart, world, log_file=log_file)
+    pomagma.store.put(world)
     pomagma.store.remove(chart)
 
 
@@ -81,14 +81,14 @@ def advise(task):
     if action == 'Trim':
         theory = args['theory']
         size = args['size']
-        seed = trim(theory, size)
+        region = trim(theory, size)
         return {
             'nextActivity': {
                 'activityType': '{}_{}_{}'.format('Survey', theory, size),
                 'input': {
                     'theory': theory,
                     'size': size,
-                    'seedFile': seed,
+                    'regionFile': region,
                     },
                 }
             }
@@ -105,16 +105,16 @@ def survey(task):
     args = json.loads(task['input'])
     theory = args['theory']
     size = args['size']
-    seed = args['seedFile']
-    seed = pomagma.store.get(seed)
-    seed_size = get_size(seed)
-    chart_size = min(size, seed_size + STEP_SIZE)
+    region = args['regionFile']
+    region = pomagma.store.get(region)
+    region_size = get_size(region)
+    chart_size = min(size, region_size + STEP_SIZE)
     chart = random_filename()
     log_file = '{}/survey.log'.format(theory)
-    pomagma.actions.survey(theory, seed, chart, chart_size, log_file=log_file)
+    pomagma.actions.survey(theory, region, chart, chart_size, log_file=log_file)
     chart = normalize_filename('{}/chart'.format(theory), chart)
     pomagma.store.put(chart)
-    pomagma.store.remove(seed)
+    pomagma.store.remove(region)
     return {
         'nextActivity': {
             'activityType': '{}_{}'.format('Advise', theory),

@@ -19,29 +19,33 @@ add_library(pomagma_surveyor SHARED
 	surveyor/structure.cpp
 	surveyor/scheduler.cpp
 	)
-#install(TARGETS pomagma_surveyor LIBRARY DESTINATION ${PROJECT_SOURCE_DIR}/lib)
+#install(TARGETS pomagma_surveyor
+#	LIBRARY
+#	DESTINATION ${PROJECT_SOURCE_DIR}/lib)
 
-add_library(pomagma_atlas SHARED
+add_library(pomagma_cartographer SHARED
 	util/util.cpp
 	util/aligned_alloc.cpp
 	util/sequential_dense_set.cpp
 	language/language.pb.cc
-	atlas/carrier.cpp
-	atlas/base_bin_rel.cpp
-	atlas/binary_relation.cpp
-	atlas/nullary_function.cpp
-	atlas/injective_function.cpp
-	atlas/binary_function.cpp
-	atlas/symmetric_function.cpp
-	atlas/parser.cpp
-	atlas/sampler.cpp
-	atlas/structure.cpp
-	atlas/scheduler.cpp
-	atlas/compact.cpp
-	atlas/aggregate.cpp
-	atlas/trim.cpp
+	cartographer/carrier.cpp
+	cartographer/base_bin_rel.cpp
+	cartographer/binary_relation.cpp
+	cartographer/nullary_function.cpp
+	cartographer/injective_function.cpp
+	cartographer/binary_function.cpp
+	cartographer/symmetric_function.cpp
+	cartographer/parser.cpp
+	cartographer/sampler.cpp
+	cartographer/structure.cpp
+	cartographer/scheduler.cpp
+	cartographer/compact.cpp
+	cartographer/aggregate.cpp
+	cartographer/trim.cpp
 	)
-#install(TARGETS pomagma_atlas LIBRARY DESTINATION ${PROJECT_SOURCE_DIR}/lib)
+#install(TARGETS pomagma_cartographer
+#	LIBRARY
+#	DESTINATION ${PROJECT_SOURCE_DIR}/lib)
 
 add_custom_command(
 	OUTPUT ${SRC_DIR}/language/language.pb.cc
@@ -69,4 +73,4 @@ add_custom_command(
 
 add_subdirectory(util)
 add_subdirectory(surveyor)
-add_subdirectory(atlas)
+add_subdirectory(cartographer)
