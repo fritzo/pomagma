@@ -30,8 +30,8 @@ for key in nullary_probs.keys():
     nullary_probs[key] *= scale
 
 probs = {
-    'Nullary': nullary_probs,
-    'Binary': binary_probs,
+    'NULLARY': nullary_probs,
+    'BINARY': binary_probs,
 }
 
 

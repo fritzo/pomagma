@@ -13,8 +13,8 @@ symmetric_probs = {
 nullary_weights = {
     'B'     : 1.0,
     'C'     : 1.30428,
-    #'C B'   : 1.35451,
-    #'C I'   : 1.74145,
+    'CB'    : 1.35451,
+    'CI'    : 1.74145,
     'I'     : 2.21841,
     'Y'     : 2.2918,
     'K'     : 2.6654,
@@ -49,9 +49,9 @@ for key in nullary_probs.keys():
     nullary_probs[key] *= scale
 
 probs = {
-    'Nullary': nullary_probs,
-    'Binary': binary_probs,
-    'Symmetric': symmetric_probs,
+    'NULLARY': nullary_probs,
+    'BINARY': binary_probs,
+    'SYMMETRIC': symmetric_probs,
 }
 
 
