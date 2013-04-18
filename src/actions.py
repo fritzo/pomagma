@@ -61,3 +61,13 @@ def copy(chart_in, chart_out, **opts):
         abspath(chart_in),
         abspath(chart_out),
         **opts)
+
+
+def engineer(chart_in, history_in, vehicle_in, vehicle_out, **opts):
+    pomagma.util.log_call(
+        os.path.join(pomagma.util.BIN, 'engineer', 'engineer'),
+        abspath(chart_in),
+        abspath(history_in),
+        abspath(vehicle_in),
+        abspath(vehicle_out),
+        **opts)
