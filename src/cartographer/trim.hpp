@@ -10,6 +10,6 @@ void trim (
         Structure & src,
         Structure & destin,
         const char * theory_file,
-        const char * language_file);
+        const char * vehicle_file);
 
 } // namespace pomagma

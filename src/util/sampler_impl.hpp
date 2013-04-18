@@ -1,7 +1,7 @@
 #pragma once
 
 #include "sampler.hpp"
-#include <pomagma/language/language.pb.h>
+#include <pomagma/vehicles/vehicles.pb.h>
 
 namespace pomagma
 {
@@ -125,20 +125,20 @@ void Sampler::set_prob (const std::string & name, float prob)
     POMAGMA_ASSERT(found, "failed to set prob of function: " << name);
     m_bounded_samplers.clear();
 }
-void Sampler::load (const std::string & language_file)
+void Sampler::load (const std::string & vehicle_file)
 {
-    POMAGMA_INFO("Loading language");
+    POMAGMA_INFO("Loading vehicle");
 
-    messaging::Language language;
+    messaging::Vehicle vehicle;
 
-    std::ifstream file(language_file, std::ios::in | std::ios::binary);
+    std::ifstream file(vehicle_file, std::ios::in | std::ios::binary);
     POMAGMA_ASSERT(file.is_open(),
-        "failed to open language file " << language_file);
-    POMAGMA_ASSERT(language.ParseFromIstream(&file),
-        "failed tp parse language file " << language_file);
+        "failed to open vehicle file " << vehicle_file);
+    POMAGMA_ASSERT(vehicle.ParseFromIstream(&file),
+        "failed tp parse vehicle file " << vehicle_file);
 
-    for (int i = 0; i < language.terms_size(); ++i) {
-        const auto & term = language.terms(i);
+    for (int i = 0; i < vehicle.terms_size(); ++i) {
+        const auto & term = vehicle.terms(i);
         POMAGMA_DEBUG("setting P(" << term.name() << ") = " << term.weight());
         set_prob(term.name(), term.weight());
     }

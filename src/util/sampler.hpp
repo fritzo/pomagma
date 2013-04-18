@@ -65,7 +65,7 @@ public:
     void validate () const;
     void log_stats () const;
 
-    void load (const std::string & language_file);
+    void load (const std::string & vehicle_file);
 
     class Policy; // implementation-specific
     Ob try_insert_random (rng_t & rng, Policy & policy) const;

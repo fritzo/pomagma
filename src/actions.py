@@ -1,5 +1,5 @@
 '''
-Wrapper for pomagma actions implemented in foreign languages (C++).
+Wrapper for pomagma actions implemented in C++.
 '''
 
 import os
@@ -51,7 +51,7 @@ def trim(theory, world_in, region_out, size, **opts):
         abspath(region_out),
         size,
         os.path.join(pomagma.util.THEORY, '{}.compiled'.format(theory)),
-        os.path.join(pomagma.util.LANGUAGE, '{}.language'.format(theory)),
+        os.path.join(pomagma.util.VEHICLES, '{}.vehicle'.format(theory)),
         **opts)
 
 

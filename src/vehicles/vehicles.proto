@@ -15,6 +15,6 @@ message WeightedTerm {
 
 // TODO add rule weights for theorist
 
-message Language {
+message Vehicle {
   repeated WeightedTerm terms = 1;
 }

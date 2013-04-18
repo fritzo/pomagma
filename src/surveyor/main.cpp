@@ -6,7 +6,7 @@ namespace pomagma
 
 void load_structure (const std::string & filename);
 void dump_structure (const std::string & filename);
-void load_language (const std::string & filename);
+void load_vehicle (const std::string & filename);
 void declare_signature ();
 void validate_all ();
 void log_stats ();
@@ -24,7 +24,7 @@ inline std::string get_pomagma_root (const std::string & path)
     const std::string pomagma_root = pomagma::getenv_default(
             "POMAGMA_ROOT",
             pomagma_default.c_str());
-    return pomagma_root + "/src/language/" + stem + ".language";
+    return pomagma_root + "/src/vehicles/" + stem + ".vehicle";
 }
 
 
@@ -48,14 +48,14 @@ int main (int argc, char ** argv)
     const std::string STEM = get_name(argv[0]);
     const std::string DEFAULT_THEORY =
         POMAGMA_ROOT + "/src/theory/" + STEM + ".compiled";
-    const std::string DEFAULT_LANGUAGE =
-        POMAGMA_ROOT + "/src/language/" + STEM + ".language";
+    const std::string DEFAULT_VEHICLE =
+        POMAGMA_ROOT + "/src/vehicles/" + STEM + ".vehicle";
     const char * theory_file = pomagma::getenv_default(
             "POMAGMA_THEORY",
             DEFAULT_THEORY.c_str());
-    const char * language_file = pomagma::getenv_default(
-            "POMAGMA_LANGUAGE",
-            DEFAULT_LANGUAGE.c_str());
+    const char * vehicle_file = pomagma::getenv_default(
+            "POMAGMA_VEHICLE",
+            DEFAULT_VEHICLE.c_str());
     const size_t thread_count = pomagma::getenv_default(
             "POMAGMA_THREADS",
             pomagma::DEFAULT_THREAD_COUNT);
@@ -75,7 +75,7 @@ int main (int argc, char ** argv)
             << "Environment Variables:\n"
             << "  POMAGMA_ROOT = $HOME/pomagma\n"
             << "  POMAGMA_THEORY = " << DEFAULT_THEORY << "\n"
-            << "  POMAGMA_LANGUAGE = " << DEFAULT_LANGUAGE << "\n"
+            << "  POMAGMA_VEHICLE = " << DEFAULT_VEHICLE << "\n"
             << "  POMAGMA_SIZE = " << pomagma::DEFAULT_ITEM_DIM << "\n"
             << "  POMAGMA_THREADS = "
                 << pomagma::DEFAULT_THREAD_COUNT << "\n"
@@ -89,7 +89,7 @@ int main (int argc, char ** argv)
     // set params
     pomagma::Scheduler::set_thread_count(thread_count);
     pomagma::declare_signature();
-    pomagma::load_language(language_file);
+    pomagma::load_vehicle(vehicle_file);
     if (structure_in) {
         pomagma::load_structure(structure_in);
     }

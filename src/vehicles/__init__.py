@@ -1,9 +1,9 @@
-#from language_pb2 import Language, WeightedTerm
-from pomagma.language.language_pb2 import Language
+#from vehicles_pb2 import Vehicle, WeightedTerm
+from pomagma.vehicles.vehicles_pb2 import Vehicle
 
 
-def dict_to_language(dict_):
-    lang = Language()
+def dict_to_vehicle(dict_):
+    lang = Vehicle()
     total = sum(dict_.values())
     scale = 1.0 / total
     for key, val in dict_.iteritems():

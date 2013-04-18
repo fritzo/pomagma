@@ -1,5 +1,5 @@
 import simplejson as json
-from pomagma.language.language_pb2 import Language, WeightedTerm
+from pomagma.vehicles.vehicles_pb2 import Vehicle, WeightedTerm
 import parsable
 
 
@@ -12,9 +12,9 @@ arity_map = {
 
 
 @parsable.command
-def compile(json_in, language_out):
+def compile(json_in, vehicle_out):
     '''
-    Convert language from json to protobuf format
+    Convert vehicle from json to protobuf format
     '''
     with open(json_in) as f:
         grouped = json.load(f)
@@ -24,16 +24,16 @@ def compile(json_in, language_out):
     assert total > 0, "total weight is zero"
     scale = 1.0 / total
 
-    language = Language()
+    vehicle = Vehicle()
     for arity, group in grouped.iteritems():
         for name, weight in group.iteritems():
-            term = language.terms.add()
+            term = vehicle.terms.add()
             term.name = name
             term.arity = arity_map[arity.upper()]
             term.weight = scale * weight
 
-    with open(language_out, 'wb') as f:
-        f.write(language.SerializeToString())
+    with open(vehicle_out, 'wb') as f:
+        f.write(vehicle.SerializeToString())
 
 
 if __name__ == '__main__':

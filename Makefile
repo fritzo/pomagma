@@ -1,6 +1,6 @@
 all:
 	pip install -e .
-	$(MAKE) -C src/language
+	$(MAKE) -C src/vehicles
 	$(MAKE) -C src/structure
 	POMAGMA_DEBUG= python -m pomagma build
 	python -m pomagma build
@@ -34,7 +34,7 @@ skj: all
 	python -m pomagma.batch survey skj
 
 python-libs:
-	@$(MAKE) -C src/language all
+	@$(MAKE) -C src/vehicles all
 	@$(MAKE) -C src/structure all
 
 profile:

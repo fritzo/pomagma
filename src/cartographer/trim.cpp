@@ -71,13 +71,13 @@ void fill_random(
         Structure & structure,
         DenseSet & subset,
         size_t target_item_count,
-        const char * language_file)
+        const char * vehicle_file)
 {
     POMAGMA_INFO("filling randomly facts");
     std::random_device device;
     rng_t rng(device());
     Sampler sampler(structure.signature());
-    sampler.load(language_file);
+    sampler.load(vehicle_file);
     Sampler::Policy policy(subset, target_item_count);
 
     while (policy.ok() and sampler.try_insert_random(rng, policy)) {
@@ -248,7 +248,7 @@ void trim (
         Structure & src,
         Structure & destin,
         const char * theory_file,
-        const char * language_file)
+        const char * vehicle_file)
 {
     POMAGMA_INFO("Trimming structure");
 
@@ -261,7 +261,7 @@ void trim (
     DenseSet src_subset(src.carrier().item_dim());
     detail::insert_nullary_functions(src, src_subset, destin_item_dim);
     detail::assume_core_facts(src, src_subset, destin_item_dim, theory_file);
-    detail::fill_random(src, src_subset, destin_item_dim, language_file);
+    detail::fill_random(src, src_subset, destin_item_dim, vehicle_file);
     POMAGMA_ASSERT_EQ(src_subset.count_items(), destin_item_dim);
 
     // restrict structure
