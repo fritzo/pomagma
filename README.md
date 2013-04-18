@@ -15,7 +15,7 @@ Adventures in Abstractland.
 
 ### Actors
 
-- City Planner - decides city extents and creates surveying strategies
+- Planner - decides city extents and creates surveying strategies
 - Surveyors - explore and measures uncharted territory
 - Cartographers - direct surveyors and incorporate surveys into the atlas
 - Adventurers - wander the world, driven by curiosity and a penchant for pattern
