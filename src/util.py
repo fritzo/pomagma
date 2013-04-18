@@ -14,7 +14,6 @@ ROOT = os.path.dirname(SRC)
 THEORY = os.path.join(SRC, 'theory')
 LANGUAGE = os.path.join(SRC, 'language')
 DATA = os.path.join(ROOT, 'data')
-LOG = os.path.join(ROOT, 'log')
 debug = 'POMAGMA_DEBUG' in os.environ
 if debug:
     print 'Running in debug mode'
@@ -91,7 +90,7 @@ def abspath(path):
 
 
 def get_log_file(options):
-    log_file = os.path.join(LOG, 'default.log')
+    log_file = os.path.join(DATA, 'default.log')
     log_file = abspath(options.get('log_file', log_file))
     return log_file
 
@@ -196,7 +195,7 @@ def test():
     build()
     buildtype = 'debug' if debug else 'release'
     opts = {
-        'log_file': os.path.join(LOG, '{}.test.log'.format(buildtype)),
+        'log_file': os.path.join(DATA, 'test', '{}.log'.format(buildtype)),
         'log_level': 3,
         }
     log_call('make', '-C', BUILD, 'test', **opts)

@@ -22,9 +22,16 @@ import pomagma.util
 import pomagma.store
 
 
+def try_connect_swf():
+    try:
+        return boto.swf.layer1.Layer1()
+    except boto.exception.NoAuthHandlerFound:
+        print 'WARNING failed to connect to SWF'
+
+
 DOMAIN = os.environ.get('POMAGMA_DOMAIN', 'pomagma')
 VERSION = '1.0.13'
-SWF = boto.swf.layer1.Layer1()
+SWF = try_connect_swf()
 
 HEARTBEAT_TIMEOUT = 1200
 SCHEDULE_TO_CLOSE_TIMEOUT = 1200

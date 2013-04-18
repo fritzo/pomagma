@@ -64,7 +64,7 @@ def profile():
     '''
     pomagma.util.build()
     buildtype = 'debug' if pomagma.util.debug else 'release'
-    log_file = os.path.join(pomagma.util.LOG, buildtype + '.profile.log')
+    log_file = os.path.join(pomagma.util.DATA, 'profile', buildtype + '.log')
     if os.path.exists(log_file):
         os.remove(log_file)
     opts = dict(log_file=log_file, log_level=2)
