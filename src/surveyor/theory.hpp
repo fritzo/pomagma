@@ -91,10 +91,10 @@ inline void ensure_nless (Ob lhs, Ob rhs)
 //----------------------------------------------------------------------------
 // expression parsing
 
-void assume_core_facts (const char * theory_file)
+void assume_core_facts (const char * laws_file)
 {
-    std::ifstream file(theory_file);
-    POMAGMA_ASSERT(file, "failed to open " << theory_file);
+    std::ifstream file(laws_file);
+    POMAGMA_ASSERT(file, "failed to open " << laws_file);
 
     std::string expression;
     while (getline(file, expression)) {

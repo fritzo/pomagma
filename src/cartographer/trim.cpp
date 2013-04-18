@@ -51,11 +51,11 @@ void assume_core_facts (
         Structure & structure,
         DenseSet & subset,
         size_t target_item_count,
-        const char * theory_file)
+        const char * laws_file)
 {
     POMAGMA_INFO("assuming core facts");
-    std::ifstream file(theory_file);
-    POMAGMA_ASSERT(file, "failed to open " << theory_file);
+    std::ifstream file(laws_file);
+    POMAGMA_ASSERT(file, "failed to open " << laws_file);
 
     Parser parser(structure.signature());
     Parser::Policy policy(subset, target_item_count);
@@ -247,7 +247,7 @@ void restrict_structure (
 void trim (
         Structure & src,
         Structure & destin,
-        const char * theory_file,
+        const char * laws_file,
         const char * vehicle_file)
 {
     POMAGMA_INFO("Trimming structure");
@@ -260,7 +260,7 @@ void trim (
     const size_t destin_item_dim = destin.carrier().item_dim();
     DenseSet src_subset(src.carrier().item_dim());
     detail::insert_nullary_functions(src, src_subset, destin_item_dim);
-    detail::assume_core_facts(src, src_subset, destin_item_dim, theory_file);
+    detail::assume_core_facts(src, src_subset, destin_item_dim, laws_file);
     detail::fill_random(src, src_subset, destin_item_dim, vehicle_file);
     POMAGMA_ASSERT_EQ(src_subset.count_items(), destin_item_dim);
 

@@ -255,11 +255,11 @@ void do_work (bool (*try_work)(rng_t &))
     }
 }
 
-void initialize (const char * theory_file)
+void initialize (const char * laws_file)
 {
     insert_nullary_functions();
-    if (theory_file) {
-        assume_core_facts(theory_file);
+    if (laws_file) {
+        assume_core_facts(laws_file);
     }
     POMAGMA_INFO("starting " << g_worker_count << " initialize threads");
     reset_stats();

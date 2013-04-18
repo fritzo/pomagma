@@ -10,14 +10,14 @@ int main (int argc, char ** argv)
     const char * source_file = nullptr;
     const char * destin_file = nullptr;
     size_t destin_item_dim = 0;
-    const char * theory_file = nullptr;
+    const char * laws_file = nullptr;
     const char * vehicle_file = nullptr;
 
     if (argc == 6) {
         source_file = argv[1];
         destin_file = argv[2];
         destin_item_dim = atoi(argv[3]);
-        theory_file = argv[4];
+        laws_file = argv[4];
         vehicle_file = argv[5];
         POMAGMA_ASSERT_LT(0, destin_item_dim);
         POMAGMA_ASSERT_NE(std::string(source_file), std::string(destin_file));
@@ -25,7 +25,7 @@ int main (int argc, char ** argv)
         std::cout
             << "Usage: "
                 << pomagma::get_filename(argv[0])
-                << " source destin size theory vehicle" << "\n"
+                << " source destin size laws vehicle" << "\n"
             << "Environment Variables:\n"
             << "  POMAGMA_LOG_FILE = " << pomagma::DEFAULT_LOG_FILE << "\n"
             << "  POMAGMA_LOG_LEVEL = " << pomagma::DEFAULT_LOG_LEVEL << "\n"
@@ -55,7 +55,7 @@ int main (int argc, char ** argv)
         }
 
         // trim
-        pomagma::trim(source, destin, theory_file, vehicle_file);
+        pomagma::trim(source, destin, laws_file, vehicle_file);
         if (POMAGMA_DEBUG_LEVEL > 1) {
             destin.validate();
         }

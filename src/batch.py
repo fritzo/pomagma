@@ -12,13 +12,13 @@ def parsable_command(fun):
 
 
 @parsable_command
-def test(theory, **options):
+def test(laws, **options):
     '''
-    Test basic operations in one theory: init, copy, survey, aggregate
+    Test basic operations in one laws: init, copy, survey, aggregate
     Options: log_level, log_file
     '''
     buildtype = 'debug' if pomagma.util.debug else 'release'
-    data = '{}.{}.test'.format(theory, buildtype)
+    data = '{}.{}.test'.format(laws, buildtype)
     data = os.path.join(pomagma.util.DATA, data)
     if os.path.exists(data):
         os.system('rm -f {}/*'.format(data))
@@ -26,17 +26,17 @@ def test(theory, **options):
         os.makedirs(data)
     with pomagma.util.chdir(data):
 
-        min_size = pomagma.util.MIN_SIZES[theory]
+        min_size = pomagma.util.MIN_SIZES[laws]
         dsize = min(512, 1 + min_size)
         sizes = [min_size + i * dsize for i in range(10)]
         opts = options
         opts.setdefault('log_file', 'test.log')
 
-        pomagma.actions.init(theory, '0.h5', sizes[0], **opts)
+        pomagma.actions.init(laws, '0.h5', sizes[0], **opts)
         pomagma.actions.copy('0.h5', '1.h5', **opts)
-        pomagma.actions.survey(theory, '1.h5', '2.h5', sizes[1], **opts)
-        pomagma.actions.trim(theory, '2.h5', '3.h5', sizes[0], **opts)
-        pomagma.actions.survey(theory, '3.h5', '4.h5', sizes[1], **opts)
+        pomagma.actions.survey(laws, '1.h5', '2.h5', sizes[1], **opts)
+        pomagma.actions.trim(laws, '2.h5', '3.h5', sizes[0], **opts)
+        pomagma.actions.survey(laws, '3.h5', '4.h5', sizes[1], **opts)
         pomagma.actions.aggregate('2.h5', '4.h5', '5.h5', **opts)
         pomagma.actions.aggregate('5.h5', '0.h5', '6.h5', **opts)
         digest5 = pomagma.util.get_hash('5.h5')
@@ -45,12 +45,12 @@ def test(theory, **options):
 
 
 @parsable_command
-def init(theory, **options):
+def init(laws, **options):
     '''
-    Initialize world map for given theory.
+    Initialize world map for given laws.
     Options: log_level, log_file
     '''
-    data = os.path.join(pomagma.util.DATA, '{}.survey'.format(theory))
+    data = os.path.join(pomagma.util.DATA, '{}.survey'.format(laws))
     assert not os.path.exists(data), 'World map has already been initialized'
     os.makedirs(data)
     with pomagma.util.chdir(data):
@@ -60,24 +60,24 @@ def init(theory, **options):
         opts.setdefault('log_file', 'init.log')
 
         pomagma.util.log_print('Initializing', options['log_file'])
-        size = pomagma.util.MIN_SIZES[theory]
-        pomagma.actions.init(theory, world, size, **opts)
+        size = pomagma.util.MIN_SIZES[laws]
+        pomagma.actions.init(laws, world, size, **opts)
 
 
 @parsable_command
-def survey(theory, max_size=8191, step_size=512, **options):
+def survey(laws, max_size=8191, step_size=512, **options):
     '''
-    Expand world map for given theory.
+    Expand world map for given laws.
     Survey until world reaches given size, then (trim; survey; aggregate)-loop
     Options: log_level, log_file
     '''
     # TODO make starting this idempotent, with a mutext or killer or sth
     assert step_size > 0
     region_size = max_size - step_size
-    min_size = pomagma.util.MIN_SIZES[theory]
+    min_size = pomagma.util.MIN_SIZES[laws]
     assert region_size >= min_size
 
-    data = os.path.join(pomagma.util.DATA, '{}.survey'.format(theory))
+    data = os.path.join(pomagma.util.DATA, '{}.survey'.format(laws))
     assert os.path.exists(data), 'First initialize world map'
     with pomagma.util.chdir(data):
 
@@ -98,13 +98,13 @@ def survey(theory, max_size=8191, step_size=512, **options):
             if world_size < max_size:
                 world_size = min(world_size + step_size, max_size)
                 log_print('Step {}: survey to {}'.format(step, world_size))
-                pomagma.actions.survey(theory, world, temp, world_size, **opts)
+                pomagma.actions.survey(laws, world, temp, world_size, **opts)
                 pomagma.actions.copy(temp, world, **opts) # verifies file
 
             else:
                 log_print('Step {}: trim-survey-aggregate'.format(step))
-                pomagma.actions.trim(theory, world, region, region_size, **opts)
-                pomagma.actions.survey(theory, region, survey, max_size, **opts)
+                pomagma.actions.trim(laws, world, region, region_size, **opts)
+                pomagma.actions.survey(laws, region, survey, max_size, **opts)
                 pomagma.actions.aggregate(world, survey, temp, **opts)
                 pomagma.actions.copy(temp, world, **opts) # verifies file
 
@@ -114,13 +114,13 @@ def survey(theory, max_size=8191, step_size=512, **options):
 
 
 @parsable_command
-def clean(theory):
+def clean(laws):
     '''
-    Remove all work for given theory. DANGER
+    Remove all work for given laws. DANGER
     '''
     print 'Are you sure? [Y/n]',
     if raw_input().lower()[:1] == 'y':
-        data = os.path.join(pomagma.util.DATA, '{}.survey'.format(theory))
+        data = os.path.join(pomagma.util.DATA, '{}.survey'.format(laws))
         if os.path.exists(data):
             shutil.rmtree(data)
 

@@ -11,7 +11,7 @@ import tables
 
 SRC = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(SRC)
-THEORY = os.path.join(SRC, 'theory')
+LAWS = os.path.join(SRC, 'laws')
 VEHICLES = os.path.join(SRC, 'vehicles')
 DATA = os.path.join(ROOT, 'data')
 debug = 'POMAGMA_DEBUG' in os.environ

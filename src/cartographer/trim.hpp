@@ -9,7 +9,7 @@ namespace pomagma
 void trim (
         Structure & src,
         Structure & destin,
-        const char * theory_file,
+        const char * laws_file,
         const char * vehicle_file);
 
 } // namespace pomagma

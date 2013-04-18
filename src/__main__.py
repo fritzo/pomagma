@@ -38,23 +38,23 @@ def unit_test(*noseflags):
 
 
 @parsable.command
-def batch_test(theory='all'):
+def batch_test(laws='all'):
     '''
     Test batch operations.
     '''
-    if theory == 'all':
+    if laws == 'all':
         theories = pomagma.util.MIN_SIZES.keys()
         theories.sort(key=pomagma.util.MIN_SIZES.__getitem__)
     else:
-        theories = [theory]
+        theories = [laws]
 
     print '-' * 78
     print 'Building'
     pomagma.util.build()
-    for theory in theories:
+    for laws in theories:
         print '-' * 78
-        print 'Testing', theory
-        pomagma.batch.test(theory)
+        print 'Testing', laws
+        pomagma.batch.test(laws)
 
 
 @parsable.command

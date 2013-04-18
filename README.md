@@ -8,7 +8,7 @@ Adventures in Abstractland.
 
 ### State
 
-- Law - regulations for roadways in Abstractland
+- Laws - regulations for roadways in Abstractland
 - Vehicles - various means of navigating Abstractland
 - Atlas - charts of the known extents of Abstractland
 - History - a record of past adventures in Abstractland
@@ -28,7 +28,7 @@ Adventures in Abstractland.
 
 ### Workflows
 
-- Plan: interpret law to decide city extents and create surveying strategies
+- Plan: interpret laws to decide city extents and create surveying strategies
 - Survey: select a region; survey it; aggregate measurements into atlas
 - Adventure: travel around Abstractland with a guide
 - Engineer: optimize vehicles based on driving history

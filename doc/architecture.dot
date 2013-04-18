@@ -21,7 +21,7 @@ digraph G {
 	{
 		node [shape=ellipse];
 		Vehicle;
-		Law;
+		Laws;
 		Atlas;
 		History;
 	}
@@ -52,14 +52,14 @@ digraph G {
 	}
 
 	{ rank="min"; Engineer; Economist; }
-	{ rank="same"; Vehicle; Law; Atlas; History; }
+	{ rank="same"; Vehicle; Laws; Atlas; History; }
 	{ rank="same"; Cartographer; Planner; TourAgency; }
 	{ rank="max"; Adventurer; }
 
 
 	// Workflow: Plan
 	edge [dir=forward arrowhead=normal]; // pull
-	Law -> Planner;
+	Laws -> Planner;
 	Planner -> Surveyor;
 	Planner -> Cartographer;
 
@@ -74,7 +74,7 @@ digraph G {
 
 	// Workflow: Adventure
 	edge [dir=forward arrowhead=normal]; // pull
-	Law -> TourAgency;
+	Laws -> TourAgency;
 	Atlas -> TourAgency;
 	Vehicle -> TourAgency;
 	TourAgency -> Guide;
@@ -94,7 +94,7 @@ digraph G {
 	edge [dir=both arrowtail=inv arrowhead=empty]; // push
 	Engineer -> Vehicle;
 	SafetyBoard -> Vehicle;
-	SafetyBoard -> Law;
+	SafetyBoard -> Laws;
 
 	// Workflow: Legislate
 	edge [dir=forward arrowhead=normal]; // pull
@@ -102,5 +102,5 @@ digraph G {
 	Vehicle ->  Economist;
 	Economist -> Committee;
 	edge [dir=both arrowtail=inv arrowhead=empty]; // push
-	Committee -> Law;
+	Committee -> Laws;
 }
