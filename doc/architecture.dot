@@ -67,6 +67,7 @@ digraph G {
 	edge [dir=forward arrowhead=normal]; // pull
 	Atlas -> Cartographer;
 	Vehicle -> Cartographer;
+	Vehicle -> Surveyor;
 	Cartographer -> Surveyor;
 	edge [dir=both arrowtail=inv arrowhead=empty]; // push
 	Surveyor -> Cartographer;
