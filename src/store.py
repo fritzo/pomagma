@@ -54,6 +54,7 @@ def s3_lazy_get(filename):
     if key is not None:
         if os.path.exists(filename):
             with open(filename) as f:
+                print 'checking cached', filename
                 md5 = key.compute_md5(f)
             if md5 == key.md5:
                 return key
@@ -154,7 +155,7 @@ if __name__ =='__main__':
 
     def parallel_map(fun, args):
         if len(args) <= 1:
-            return fun(args)
+            return map(fun, args)
         else:
             return multiprocessing.Pool().map(fun, args)
 
