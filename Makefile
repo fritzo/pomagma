@@ -26,11 +26,11 @@ test: all set-ulimit
 	POMAGMA_DEBUG= python -m pomagma batch-test
 
 h4: all
-	python -m pomagma.batch survey h4
+	python -m pomagma.batch make h4
 sk: all
-	python -m pomagma.batch survey sk
+	python -m pomagma.batch make sk
 skj: all
-	python -m pomagma.batch survey skj
+	python -m pomagma.batch make skj
 
 python-libs:
 	@$(MAKE) -C src/vehicles all

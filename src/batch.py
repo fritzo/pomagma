@@ -1,17 +1,11 @@
 import os
 import shutil
-import parsable
+import parsable; parsable = parsable.Parsable()
 import pomagma.util
 import pomagma.actions
 
 
-parsable_commands = []
-def parsable_command(fun):
-    parsable_commands.append(fun)
-    return fun
-
-
-@parsable_command
+@parsable.command
 def test(laws, **options):
     '''
     Test basic operations in one laws: init, copy, survey, aggregate
@@ -24,7 +18,7 @@ def test(laws, **options):
         os.system('rm -f {}/*'.format(data))
     else:
         os.makedirs(data)
-    with pomagma.util.chdir(data):
+    with pomagma.util.chdir(data), pomagma.util.mutex(block=False):
 
         min_size = pomagma.util.MIN_SIZES[laws]
         dsize = min(512, 1 + min_size)
@@ -44,7 +38,7 @@ def test(laws, **options):
         assert digest5 == digest6
 
 
-@parsable_command
+@parsable.command
 def init(laws, **options):
     '''
     Initialize world map for given laws.
@@ -53,25 +47,26 @@ def init(laws, **options):
     data = os.path.join(pomagma.util.DATA, '{}.survey'.format(laws))
     assert not os.path.exists(data), 'World map has already been initialized'
     os.makedirs(data)
-    with pomagma.util.chdir(data):
+    with pomagma.util.chdir(data), pomagma.util.mutex(block=False):
 
         world = 'world.h5'
         opts = options
-        opts.setdefault('log_file', 'init.log')
+        opts.setdefault('log_file', 'survey.log')
+        def log_print(message):
+            pomagma.util.log_print(message, opts['log_file'])
 
-        pomagma.util.log_print('Initializing', options['log_file'])
-        size = pomagma.util.MIN_SIZES[laws]
-        pomagma.actions.init(laws, world, size, **opts)
+        world_size = pomagma.util.MIN_SIZES[laws]
+        log_print('Step 0: initialize to {}'.format(world_size))
+        pomagma.actions.init(laws, world, world_size, **opts)
 
 
-@parsable_command
+@parsable.command
 def survey(laws, max_size=8191, step_size=512, **options):
     '''
     Expand world map for given laws.
     Survey until world reaches given size, then (trim; survey; aggregate)-loop
     Options: log_level, log_file
     '''
-    # TODO make starting this idempotent, with a mutext or killer or sth
     assert step_size > 0
     region_size = max_size - step_size
     min_size = pomagma.util.MIN_SIZES[laws]
@@ -79,7 +74,7 @@ def survey(laws, max_size=8191, step_size=512, **options):
 
     data = os.path.join(pomagma.util.DATA, '{}.survey'.format(laws))
     assert os.path.exists(data), 'First initialize world map'
-    with pomagma.util.chdir(data):
+    with pomagma.util.chdir(data), pomagma.util.mutex(block=False):
 
         world = 'world.h5'
         region = 'region.h5'
@@ -92,7 +87,7 @@ def survey(laws, max_size=8191, step_size=512, **options):
         def log_print(message):
             pomagma.util.log_print(message, opts['log_file'])
 
-        step = 0
+        step = 1
         while True:
 
             if world_size < max_size:
@@ -113,7 +108,18 @@ def survey(laws, max_size=8191, step_size=512, **options):
             step += 1
 
 
-@parsable_command
+@parsable.command
+def make(laws, max_size=8191, step_size=512, **options):
+    '''
+    Initialize; survey.
+    '''
+    data = os.path.join(pomagma.util.DATA, '{}.survey'.format(laws))
+    if not os.path.exists(data):
+        init(laws, **options)
+    survey(laws, max_size, step_size, **options)
+
+
+@parsable.command
 def clean(laws):
     '''
     Remove all work for given laws. DANGER
@@ -126,5 +132,4 @@ def clean(laws):
 
 
 if __name__ == '__main__':
-    map(parsable.command, parsable_commands)
     parsable.dispatch()

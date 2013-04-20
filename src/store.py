@@ -9,6 +9,7 @@ https://github.com/boto/boto/blob/develop/boto/s3
 import os
 import subprocess
 import boto
+import parsable; parsable = parsable.Parsable()
 
 
 def try_connect_s3(bucket):
@@ -112,27 +113,39 @@ EXTRACT = extract_7z
 EXT = '.7z'
 
 
+@parsable.command
 def get(filename):
+    '''Pull file from S3 into local cache.'''
     filename_ext = filename + EXT
     s3_lazy_get(filename_ext)
     return EXTRACT(filename_ext)
 
 
+@parsable.command
 def put(filename):
+    '''Push file to S3 from local cache.'''
     filename_ext = ARCHIVE(filename)
     s3_lazy_put(filename_ext)
 
 
-def listdir(prefix):
+@parsable.command
+def listdir(prefix=''):
+    '''List matching files on S3.'''
     for filename_ext in s3_listdir(prefix):
         assert filename_ext[-len(EXT):] == EXT, filename_ext
         yield filename_ext[:-len(EXT)].lstrip('/')
 
 
+@parsable.command
 def remove(filename):
+    '''Remove files from S3 and local cache.'''
     if os.path.exists(filename):
         os.remove(filename)
     filename_ext = filename + EXT
     if os.path.exists(filename_ext):
         os.remove(filename_ext)
     s3_remove(filename_ext)
+
+
+if __name__ =='__main__':
+    parsable.dispatch()

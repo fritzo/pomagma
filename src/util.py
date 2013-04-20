@@ -1,5 +1,7 @@
 import os
 import sys
+import fcntl
+import errno
 import shutil
 import subprocess
 import multiprocessing
@@ -8,6 +10,7 @@ import uuid
 import tempfile
 import timeit
 import tables
+
 
 SRC = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(SRC)
@@ -66,6 +69,37 @@ def in_temp_dir():
             yield path
     finally:
         shutil.rmtree(path)
+
+
+class MutexLockedException(Exception):
+    def __init__(self, filename):
+        self.filename = os.path.abspath(filename)
+    def __str__(self):
+        return 'Failed to acquire lock on {}'.format(self.filename)
+
+
+# Adapted from:
+# http://blog.vmfarms.com/2011/03/cross-process-locking-and.html
+@contextlib.contextmanager
+def mutex(filename='mutex', block=False):
+    with open(filename, 'w') as fd:
+        if block:
+            try:
+                fcntl.flock(fd, fcntl.LOCK_EX)
+                yield
+            finally:
+                fcntl.flock(fd, fcntl.LOCK_UN)
+        else:
+            try:
+                fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except IOError, e:
+                assert e.errno in [errno.EACCES, errno.EAGAIN]
+                raise MutexLockedException(filename)
+            else:
+                try:
+                    yield
+                finally:
+                    fcntl.flock(fd, fcntl.LOCK_UN)
 
 
 @contextlib.contextmanager
