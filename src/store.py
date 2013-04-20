@@ -8,13 +8,16 @@ https://github.com/boto/boto/blob/develop/boto/s3
 
 import os
 import subprocess
+import multiprocessing
 import boto
-import parsable; parsable = parsable.Parsable()
+import parsable
 
 
 def try_connect_s3(bucket):
     try:
-        return boto.connect_s3().get_bucket(bucket)
+        connection = boto.connect_s3().get_bucket(bucket)
+        print 'connected to bucket', bucket
+        return connection
     except boto.exception.NoAuthHandlerFound:
         print 'WARNING failed to connect to s3 bucket {}\n'.format(bucket)
         return None
@@ -31,11 +34,14 @@ def s3_lazy_put(filename):
     key = BUCKET.get_key(filename)
     if key is None:
         key = BUCKET.new_key(filename)
+        print 'uploading', filename
         key.set_contents_from_filename(filename)
     else:
         with open(filename) as f:
+            print 'checking cached', filename
             md5 = key.compute_md5(f)
         if md5 != key.md5:
+            print 'uploading', filename
             key.set_contents_from_filename(filename, md5=md5)
     return key
 
@@ -54,6 +60,7 @@ def s3_lazy_get(filename):
         dirname = os.path.dirname(filename)
         if dirname and not os.path.exists(dirname):
             os.makedirs(dirname)
+        print 'downloading', filename
         key.get_contents_to_filename(filename)
     return key
 
@@ -95,6 +102,7 @@ def archive_7z(filename):
     filename_ext = filename + '.7z'
     if os.path.exists(filename_ext):
         os.remove(filename_ext)
+    print 'compressing', filename
     _silent_check_call(['7z', 'a', '-y', filename_ext, filename])
     return filename_ext
 
@@ -104,6 +112,7 @@ def extract_7z(filename_ext):
     filename = filename_ext[:-3]
     if os.path.exists(filename):
         os.remove(filename)
+    print 'extracting', filename_ext
     _silent_check_call(['7z', 'x', '-y', filename_ext])
     return filename
 
@@ -113,32 +122,26 @@ EXTRACT = extract_7z
 EXT = '.7z'
 
 
-@parsable.command
 def get(filename):
-    '''Pull file from S3 into local cache.'''
     filename_ext = filename + EXT
     s3_lazy_get(filename_ext)
     return EXTRACT(filename_ext)
 
 
-@parsable.command
 def put(filename):
-    '''Push file to S3 from local cache.'''
     filename_ext = ARCHIVE(filename)
     s3_lazy_put(filename_ext)
 
 
-@parsable.command
 def listdir(prefix=''):
-    '''List matching files on S3.'''
-    for filename_ext in s3_listdir(prefix):
+    for key in s3_listdir(prefix):
+        filename_ext = key.name
         assert filename_ext[-len(EXT):] == EXT, filename_ext
-        yield filename_ext[:-len(EXT)].lstrip('/')
+        filename = filename_ext[:-len(EXT)]
+        yield filename
 
 
-@parsable.command
 def remove(filename):
-    '''Remove files from S3 and local cache.'''
     if os.path.exists(filename):
         os.remove(filename)
     filename_ext = filename + EXT
@@ -148,4 +151,35 @@ def remove(filename):
 
 
 if __name__ =='__main__':
+
+    def parallel_map(fun, args):
+        if len(args) <= 1:
+            return fun(args)
+        else:
+            return multiprocessing.Pool().map(fun, args)
+
+    def filter_cache(filenames):
+        return [f for f in filenames if f[:-len(EXT)] != EXT]
+
+    @parsable.command
+    def ls(prefix=''):
+        '''List matching files on S3.'''
+        for filename in listdir(prefix):
+            print filename
+
+    @parsable.command
+    def pull(*filenames):
+        '''Pull files from S3 into local cache.'''
+        parallel_map(get, filter_cache(filenames))
+
+    @parsable.command
+    def push(*filenames):
+        '''Push files to S3 from local cache.'''
+        parallel_map(put, filter_cache(filenames))
+
+    @parsable.command
+    def rm(*filenames):
+        '''Remove files from S3 and local cache.'''
+        parallel_map(remove, filter_cache(filenames))
+
     parsable.dispatch()
