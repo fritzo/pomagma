@@ -159,7 +159,12 @@ if __name__ =='__main__':
             return multiprocessing.Pool().map(fun, args)
 
     def filter_cache(filenames):
-        return [f for f in filenames if f[-len(EXT):] != EXT]
+        return [
+            f
+            for f in filenames
+            if f[-len(EXT):] != EXT
+            if not os.path.exists(f) or os.path.isfile(f)
+            ]
 
     @parsable.command
     def ls(prefix=''):
