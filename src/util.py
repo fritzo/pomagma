@@ -86,12 +86,16 @@ def mutex(filename='mutex', block=False):
         if block:
             try:
                 fcntl.flock(fd, fcntl.LOCK_EX)
+                fd.write('{}\n'.format(os.getpid()))
+                fd.flush()
                 yield
             finally:
                 fcntl.flock(fd, fcntl.LOCK_UN)
         else:
             try:
                 fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                fd.write('{}\n'.format(os.getpid()))
+                fd.flush()
             except IOError, e:
                 assert e.errno in [errno.EACCES, errno.EAGAIN]
                 raise MutexLockedException(filename)
