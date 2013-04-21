@@ -36,14 +36,19 @@ def s3_lazy_put(filename):
         key = BUCKET.new_key(filename)
         print 'uploading', filename
         key.set_contents_from_filename(filename)
+        return key
     else:
-        with open(filename) as f:
+        with open(filename, 'rb') as f:
             print 'checking cached', filename
             md5 = key.compute_md5(f)
-        if md5 != key.md5:
+        key_md5_0 = key.etag.strip('"')  # WTF
+        if md5[0] == key_md5_0:
+            print 'already synchronized'
+            return key
+        else:
             print 'uploading', filename
             key.set_contents_from_filename(filename, md5=md5)
-    return key
+            return key
 
 
 def s3_lazy_get(filename):
@@ -51,18 +56,22 @@ def s3_lazy_get(filename):
     Get file from s3 only if out of sync.
     '''
     key = BUCKET.get_key(filename)
-    if key is not None:
-        if os.path.exists(filename):
-            with open(filename) as f:
-                print 'checking cached', filename
-                md5 = key.compute_md5(f)
-            if md5 == key.md5:
-                return key
-        dirname = os.path.dirname(filename)
-        if dirname and not os.path.exists(dirname):
-            os.makedirs(dirname)
-        print 'downloading', filename
-        key.get_contents_to_filename(filename)
+    if key is None:
+        print 'missing', filename
+        return key
+    if os.path.exists(filename):
+        with open(filename, 'rb') as f:
+            print 'checking cached', filename
+            md5 = key.compute_md5(f)
+        key_md5_0 = key.etag.strip('"')  # WTF
+        if md5[0] == key_md5_0:
+            print 'already synchronized'
+            return key
+    dirname = os.path.dirname(filename)
+    if dirname and not os.path.exists(dirname):
+        os.makedirs(dirname)
+    print 'downloading', filename
+    key.get_contents_to_filename(filename)
     return key
 
 
@@ -114,7 +123,7 @@ def extract_7z(filename_ext):
     if os.path.exists(filename):
         os.remove(filename)
     print 'extracting', filename_ext
-    _silent_check_call(['7z', 'x', '-y', filename_ext])
+    _silent_check_call(['7z', 'x', '-mtm=off', '-y', filename_ext])
     return filename
 
 
