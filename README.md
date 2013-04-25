@@ -51,6 +51,7 @@ To run actors in debug mode, define an environment variable
 License
 -------
 
-Copyright (c) 2005-2013 Fritz Obermeyer<br/>
-Licensed under the MIT license:<br/>
-http://www.opensource.org/licenses/mit-license.php
+Copyright (c) 205-2013, Fritz Obermeyer <br/>
+Dual licensed under the MIT or GPL Version 2 licenses. <br/>
+http://www.opensource.org/licenses/MIT <br/>
+http://www.opensource.org/licenses/GPL-2.0
