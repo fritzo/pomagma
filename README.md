@@ -16,7 +16,7 @@ Organization
 
 - [/src](src) - source code: python, C++
 - [/pomagma](pomagma) - a symbolic link to appease `pip install -e`
-- [/doc](doc) - just figures; see `/src/*` for code documentation
+- [/doc](doc) - just figures; see [/src/*](/src) for code documentation
 - [/build](build) - destination of C++ builds
 - [/data](data) - generated data, mirroring S3 bucket
 
@@ -51,6 +51,6 @@ To run actors in debug mode, define an environment variable
 License
 -------
 
-Copyright (c) 205-2013, Fritz Obermeyer <br/>
+Copyright (c) 2005-2013, Fritz Obermeyer <br/>
 Licensed under the MIT license. <br/>
-http://www.opensource.org/licenses/MIT
+[LICENSE](LICENSE) or http://www.opensource.org/licenses/MIT
