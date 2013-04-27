@@ -8,8 +8,8 @@ a cartoon of mathematics as a scientific research program a la Imre Lakatos.
 Some of the roles we play as mathematicians are captured as algorithms
 performed by software actors in a [system](src/README.md),
 while some less well-defined roles are performed by human actors.
-The most important, most open-ended, most creative role of all is Adventuring,
-and Pomagma aims to make abstract adventuring easy, fun, and safe.
+The most important, most open-ended, most creative role of all is that of the
+Adventurer, and Pomagma aims to make abstract adventuring easy, fun, and safe.
 
 Organization
 ------------
