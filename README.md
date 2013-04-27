@@ -3,8 +3,8 @@ Pomagma
 
 Adventures in Abstractland.
 
-Pomagma is a toy model of human exploration of the abstract universe,
-of mathematics as a scientific research program a la Imre Lakatos.
+Pomagma is a toy model of human exploration in the abstract universe,
+a cartoon of mathematics as a scientific research program a la Imre Lakatos.
 Some of the roles we play as mathematicians are captured as algorithms
 performed by software actors in a [system](src/README.md),
 while some less well-defined roles are performed by human actors.
@@ -52,6 +52,5 @@ License
 -------
 
 Copyright (c) 205-2013, Fritz Obermeyer <br/>
-Dual licensed under the MIT or GPL Version 2 licenses. <br/>
-http://www.opensource.org/licenses/MIT <br/>
-http://www.opensource.org/licenses/GPL-2.0
+Licensed under the MIT license. <br/>
+http://www.opensource.org/licenses/MIT

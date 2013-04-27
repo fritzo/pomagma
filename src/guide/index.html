@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<!--
+  Pomagma
+  http://fritzo.org/pomagma
+  http://github.com/fritzo/pomagma
+
+  Copyright (c) 20, Fritz Obermeyer
+  Licensed under the MIT license:
+  http://www.opensource.org/licenses/MIT
+-->
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<title>Pomagma Guide</title>
+<meta name="description" content="Adventures in abstractland. Pomagma is a toy model of human exploration in the abstract universe, a cartoon of mathematics as a scientific research program a la Imre Lakatos." />
+<meta name="keywords" content="math,algebra,logic,reasoning,lambda-calculus" />
+<link rel="icon" href="favicon.ico" type="image/x-icon" />
+
+<!---------------------------------------------------------------------------->
+
+<!-- MIT,GPL2 -->
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/2.0.0/jquery.min.js"></script>
+<script>
+!window.jQuery && document.write('<script src="jquery.min.js"><\/script>')
+</script>
+
+<!-- MIT,GPL2 -->
+<script type='text/javascript' src='safety.js'></script>
+<script type='text/javascript' src='testing.js'></script>
+
+<!-- MIT -->
+<script type='text/javascript' src='ast.js'></script>
+<script type='text/javascript'>
+
+$(function(){
+
+  var main = function () {
+    // TODO
+  };
+
+  if (window.location.hash && window.location.hash.substr(1) === 'test') {
+
+    document.title = 'Pomagma Guide - Unit Test';
+    test.runAll(function(){
+          document.title = 'Pomagma Guide';
+          window.location.hash = '';
+          main();
+        });
+
+  } else {
+
+    main();
+
+  };
+});
+
+</script>
+
+<!---------------------------------------------------------------------------->
+
+<style>
+body {
+  background-color: black;
+  font-color: white;
+  width:  100%;
+  height: 100%;
+  margin: 0px;
+}
+</style>
+</head>
+<!---------------------------------------------------------------------------->
+<body>
+</body>
+</html>
+

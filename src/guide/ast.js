@@ -96,18 +96,18 @@ Cursor.prototype.polish = function () {
 //----------------------------------------------------------------------------
 // Parsing from polish notation
 
-var Parse = function (string) {
+var Parser = function (string) {
   this.tokens = string.split(' ');
   this.pos = 0;
 };
 
-Parse.prototype.pop = function () {
+Parser.prototype.pop = function () {
   return this.tokens[this.pos++];
 };
 
-Parse.prototype.parse = function () {
+Parser.prototype.parse = function () {
   var head = this.pop();
-  return parse_head[head](this);
+  return new parse_head[head](this);
 };
 
 var parse_head = {
@@ -116,7 +116,7 @@ var parse_head = {
   },
   VARY: function(state) {
     var name = state.pop();
-    return Variable(name);
+    return Vary(name);
   },
   ABSTRACT: function (state) {
     var patt = state.parse();
@@ -135,11 +135,12 @@ var parse_head = {
   CURSOR: function(state) {
     var body = state.parse();
     return Cursor(body);
-  },
+  }
 };
 
 var parse = function (string) {
-  return Parse(string).parse();
+  parser = new Parser(string);
+  return parser.parse();
 };
 
 test('Simple parsing', function(){
@@ -244,9 +245,9 @@ Cursor.prototype.try_move = function (direction) {
 };
 
 test('Cursor movement', function(){
-  var start = 'ABSTRACT QUOTE VAR this APPLY VAR is APPLY VAR a VAR test';
+  var start = 'ABSTRACT QUOTE VARY this APPLY VARY is APPLY VARY a VARY test';
   var expr = parse(start);
-  var cursor = Cursor(expr);
+  var cursor = new Cursor(expr);
   var path =  'UDDDULRUL';
   var trace = '011010011';
   for (var i = 0; i < path.length; ++i) {
@@ -259,7 +260,7 @@ test('Cursor movement', function(){
 
 var PointedExpression = function (root) {
   assert(root.above == null);
-  this.cursor = Cursor(root);
+  this.cursor = new Cursor(root);
   this.root = this.cursor;
 };
 
