@@ -41,6 +41,14 @@ var Abstract = function (patt, body) {
   body.above = this;
 };
 
+var Let = function (patt, defn, body) {
+  this.below = [patt, defn, body];
+  this.above = null;
+  patt.above = this;
+  defn.above = this;
+  body.above = this;
+};
+
 var Apply = function (fun, arg) {
   this.below = [fun, arg];
   this.above = null;
@@ -75,6 +83,13 @@ Abstract.prototype.polish = function () {
   var patt = this.below[0];
   var body = this.below[1];
   return 'ABSTRACT ' + patt.polish() + ' ' + body.polish();
+};
+
+Let.prototype.polish = function () {
+  var patt = this.below[0];
+  var defn = this.below[1];
+  var body = this.below[2];
+  return 'LET ' + patt.polish() + ' ' + defn.polish() + ' ' + body.polish();
 };
 
 Apply.prototype.polish = function () {
@@ -123,6 +138,12 @@ var parse_head = {
     var body = state.parse();
     return new Abstract(patt, body);
   },
+  LET: function (state) {
+    var patt = state.parse();
+    var defn = state.parse();
+    var body = state.parse();
+    return new Let(patt, defn, body);
+  },
   APPLY: function (state) {
     var fun = state.parse();
     var arg = state.parse();
@@ -146,7 +167,8 @@ var parse = function (string) {
 test('Simple parsing', function(){
   var cases = [
     'VARY x',
-    'QUOTE APPLY ABSTRACT CURSOR VARY x VARY x HOLE'
+    'QUOTE APPLY ABSTRACT CURSOR VARY x VARY x HOLE',
+    'LET VARY i ABSTRACT VARY x VARY x APPLY VARY i VARY i',
     ];
   for (var i = 0; i < cases.length; ++i) {
     var string = cases[i];
@@ -257,15 +279,6 @@ test('Cursor movement', function(){
     assertEqual(cursor.try_move(path[i]), Boolean(parseInt(trace[i])));
   }
 });
-
-//----------------------------------------------------------------------------
-// Focus
-
-var PointedExpression = function (root) {
-  assert(root.above == null);
-  this.cursor = new Cursor(root);
-  this.root = this.cursor;
-};
 
 //----------------------------------------------------------------------------
 // Transformations
