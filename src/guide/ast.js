@@ -20,6 +20,9 @@
  *          | CURSOR patt
  */
 
+var ast = (function(){
+var ast = {};
+
 //----------------------------------------------------------------------------
 // Construction
 
@@ -122,10 +125,10 @@ Parser.prototype.pop = function () {
 
 Parser.prototype.parse = function () {
   var head = this.pop();
-  return parse_head[head](this);
+  return parseHead[head](this);
 };
 
-var parse_head = {
+var parseHead = {
   HOLE: function (state) {
     return new Hole();
   },
@@ -163,6 +166,7 @@ var parse = function (string) {
   var parser = new Parser(string);
   return parser.parse();
 };
+ast.parse = parse;
 
 test('Simple parsing', function(){
   var cases = [
@@ -192,7 +196,7 @@ Cursor.prototype.remove = function () {
   }
 };
 
-Cursor.prototype.insert_below = function (above, pos) {
+Cursor.prototype.insertBelow = function (above, pos) {
   var below = above.below[pos];
   above.below[pos] = this;
   this.above = above;
@@ -200,7 +204,7 @@ Cursor.prototype.insert_below = function (above, pos) {
   this.below[0] = below;
 };
 
-Cursor.prototype.insert_above = function (below) {
+Cursor.prototype.insertAbove = function (below) {
   this.below[0] = below;
   var above = below.above;
   below.above = this;
@@ -211,18 +215,18 @@ Cursor.prototype.insert_above = function (below) {
   }
 };
 
-Cursor.prototype.try_move_down = function () {
+Cursor.prototype.tryMoveDown = function () {
   var pivot = this.below[0];
   if (pivot.below.length === 0) {
     return false;
   } else {
     this.remove();
-    this.insert_below(pivot, 0);
+    this.insertBelow(pivot, 0);
     return true;
   }
 };
 
-Cursor.prototype.try_move_up = function () {
+Cursor.prototype.tryMoveUp = function () {
   var pivot = this.above;
   if (pivot === null) {
     return false;
@@ -230,41 +234,41 @@ Cursor.prototype.try_move_up = function () {
     this.remove();
     var above = pivot.above;
     if (above === null) {
-      this.insert_above(pivot);
+      this.insertAbove(pivot);
     } else {
       var pos = above.below.indexOf(pivot);
-      this.insert_below(above, pos);
+      this.insertBelow(above, pos);
     }
     return true;
   }
 };
 
-Cursor.prototype.try_move_sideways = function (direction) {
+Cursor.prototype.tryMoveSideways = function (direction) {
   var pivot = this.above;
   if ((pivot === null) || (pivot.below.length === 1)) {
     return false;
   } else {
     var pos = this.remove();
     pos = (pos + direction + pivot.below.length) % pivot.below.length;
-    this.insert_below(pivot, pos);
+    this.insertBelow(pivot, pos);
     return true;
   }
 };
 
-Cursor.prototype.try_move_left = function () {
-  return this.try_move_sideways(-1);
+Cursor.prototype.tryMoveLeft = function () {
+  return this.tryMoveSideways(-1);
 };
 
-Cursor.prototype.try_move_right = function () {
-  return this.try_move_sideways(+1);
+Cursor.prototype.tryMoveRight = function () {
+  return this.tryMoveSideways(+1);
 };
 
-Cursor.prototype.try_move = function (direction) {
+Cursor.prototype.tryMove = function (direction) {
   switch (direction) {
-    case 'U': return this.try_move_up();
-    case 'D': return this.try_move_down();
-    case 'L': return this.try_move_left();
-    case 'R': return this.try_move_right();
+    case 'U': return this.tryMoveUp();
+    case 'D': return this.tryMoveDown();
+    case 'L': return this.tryMoveLeft();
+    case 'R': return this.tryMoveRight();
   }
 };
 
@@ -276,11 +280,30 @@ test('Cursor movement', function(){
   var path =  'UDDDLRULDRDLDUUUU';
   var trace = '01100011111101110';
   for (var i = 0; i < path.length; ++i) {
-    assertEqual(cursor.try_move(path[i]), Boolean(parseInt(trace[i])));
+    assertEqual(cursor.tryMove(path[i]), Boolean(parseInt(trace[i])));
   }
 });
+
+ast.getRoot = function (expr) {
+  while (expr.above !== null) {
+    expr = expr.above;
+  }
+  return expr;
+};
 
 //----------------------------------------------------------------------------
 // Transformations
 
-// TODO
+Hole.prototype.transform = {
+  VARY: function (cursor) {
+  }
+};
+
+Vary.transform = {
+  HOLE: function (cursor) {
+    
+  }
+};
+
+return ast;
+})(); // ast
