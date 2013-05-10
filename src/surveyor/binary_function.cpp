@@ -90,6 +90,13 @@ void BinaryFunction::log_stats () const
     m_lines.log_stats();
 }
 
+void BinaryFunction::update ()
+{
+    memory_barrier();
+    m_lines.copy_Lx_to_Rx();
+    memory_barrier();
+}
+
 void BinaryFunction::clear ()
 {
     memory_barrier();
@@ -99,38 +106,6 @@ void BinaryFunction::clear ()
     m_VLr_table.clear();
     m_VRl_table.clear();
     memory_barrier();
-}
-
-void BinaryFunction::raw_insert (Ob lhs, Ob rhs, Ob val)
-{
-    POMAGMA_ASSERT5(support().contains(lhs), "unsupported lhs: " << lhs);
-    POMAGMA_ASSERT5(support().contains(rhs), "unsupported rhs: " << rhs);
-    POMAGMA_ASSERT5(support().contains(val), "unsupported val: " << val);
-
-    value(lhs, rhs).store(val, relaxed);
-    m_lines.Lx(lhs, rhs).one(relaxed);
-    m_lines.Rx(lhs, rhs).one(relaxed);
-    m_Vlr_table.insert(lhs, rhs, val);
-    m_VLr_table.insert(lhs, rhs, val);
-    m_VRl_table.insert(lhs, rhs, val);
-}
-
-void BinaryFunction::insert (Ob lhs, Ob rhs, Ob val) const
-{
-    SharedLock lock(m_mutex);
-
-    POMAGMA_ASSERT5(support().contains(lhs), "unsupported lhs: " << lhs);
-    POMAGMA_ASSERT5(support().contains(rhs), "unsupported rhs: " << rhs);
-    POMAGMA_ASSERT5(support().contains(val), "unsupported val: " << val);
-
-    if (carrier().set_or_merge(value(lhs, rhs), val)) {
-        m_lines.Lx(lhs, rhs).one();
-        m_lines.Rx(lhs, rhs).one();
-        m_Vlr_table.insert(lhs, rhs, val);
-        m_VLr_table.insert(lhs, rhs, val);
-        m_VRl_table.insert(lhs, rhs, val);
-        m_insert_callback(this, lhs, rhs);
-    }
 }
 
 void BinaryFunction::unsafe_merge (const Ob dep)

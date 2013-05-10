@@ -37,6 +37,7 @@ public:
     size_t count_pairs () const { return m_lines.count_pairs(); }
     Ob raw_find (Ob lhs, Ob rhs) const { return value(lhs, rhs).load(relaxed); }
     void raw_insert (Ob lhs, Ob rhs, Ob val);
+    void update ();
     void clear ();
 
     // relaxed operations
@@ -115,6 +116,37 @@ inline VRl_Table::Iterator BinaryFunction::iter_val_rhs (Ob val, Ob rhs) const
     POMAGMA_ASSERT5(support().contains(val), "unsupported val: " << val);
     POMAGMA_ASSERT5(support().contains(rhs), "unsupported rhs: " << rhs);
     return m_VRl_table.iter(val, rhs);
+}
+
+inline void BinaryFunction::raw_insert (Ob lhs, Ob rhs, Ob val)
+{
+    POMAGMA_ASSERT5(support().contains(lhs), "unsupported lhs: " << lhs);
+    POMAGMA_ASSERT5(support().contains(rhs), "unsupported rhs: " << rhs);
+    POMAGMA_ASSERT5(support().contains(val), "unsupported val: " << val);
+
+    value(lhs, rhs).store(val, relaxed);
+    m_lines.Lx(lhs, rhs).one(relaxed);
+    m_Vlr_table.insert(lhs, rhs, val);
+    m_VLr_table.insert(lhs, rhs, val);
+    m_VRl_table.insert(lhs, rhs, val);
+}
+
+inline void BinaryFunction::insert (Ob lhs, Ob rhs, Ob val) const
+{
+    SharedLock lock(m_mutex);
+
+    POMAGMA_ASSERT5(support().contains(lhs), "unsupported lhs: " << lhs);
+    POMAGMA_ASSERT5(support().contains(rhs), "unsupported rhs: " << rhs);
+    POMAGMA_ASSERT5(support().contains(val), "unsupported val: " << val);
+
+    if (carrier().set_or_merge(value(lhs, rhs), val)) {
+        m_lines.Lx(lhs, rhs).one();
+        m_lines.Rx(lhs, rhs).one();
+        m_Vlr_table.insert(lhs, rhs, val);
+        m_VLr_table.insert(lhs, rhs, val);
+        m_VRl_table.insert(lhs, rhs, val);
+        m_insert_callback(this, lhs, rhs);
+    }
 }
 
 } // namespace pomagma

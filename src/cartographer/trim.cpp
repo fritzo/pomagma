@@ -120,6 +120,7 @@ void restrict_one (
             destin_fun.insert(destin_val);
         }
     }
+    destin_fun.update();
 }
 
 void restrict_one (
@@ -138,6 +139,7 @@ void restrict_one (
             }
         }
     }
+    destin_fun.update();
 }
 
 template<class Function>
@@ -172,6 +174,7 @@ void restrict_one (
             }
         }
     }
+    destin_fun.update();
 }
 
 template<class T>

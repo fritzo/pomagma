@@ -26,8 +26,9 @@ public:
     void log_stats () const;
 
     // raw operations
-    void clear () { m_value.store(0); }
     void raw_insert (Ob val);
+    void update () {}
+    void clear () { m_value.store(0); }
 
     // relaxed operations
     bool defined () const;

@@ -636,6 +636,7 @@ inline void load_data (
     dataset.read_scalar(data);
     POMAGMA_ASSERT_LE(data, item_dim);
     fun.raw_insert(data);
+    fun.update();
 
     auto digest = get_hash(fun);
     POMAGMA_ASSERT(digest == hdf5::load_hash(group3),
@@ -664,6 +665,7 @@ inline void load_data (
             fun.raw_insert(key, value);
         }
     }
+    fun.update();
 
     auto digest = get_hash(fun);
     POMAGMA_ASSERT(digest == hdf5::load_hash(dataset),
@@ -722,6 +724,7 @@ inline void load_data (
             }
         }
     }
+    fun.update();
 
     auto digest = get_hash(carrier, fun);
     POMAGMA_ASSERT(digest == hdf5::load_hash(group3),

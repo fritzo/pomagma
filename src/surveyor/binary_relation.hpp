@@ -33,8 +33,8 @@ public:
     size_t round_word_dim () const { return m_lines.round_word_dim(); }
     const std::atomic<Word> * raw_data () const { return m_lines.Lx(); }
     std::atomic<Word> * raw_data () { return m_lines.Lx(); }
-    void clear ();
     void update ();
+    void clear ();
 
     // relaxed operations
     DenseSet get_Lx_set (Ob lhs) const { return m_lines.Lx_set(lhs); }

@@ -31,6 +31,7 @@ public:
     static bool is_symmetric () { return true; }
     size_t count_pairs () const { return m_values.size(); }
     void raw_insert (Ob lhs, Ob rhs, Ob val);
+    void update () {}
     void clear ();
 
     // safe operations

@@ -19,8 +19,9 @@ public:
     void log_stats () const;
 
     // raw operations
-    void clear () { m_value = 0; }
     void raw_insert (Ob val);
+    void update () {}
+    void clear () { m_value = 0; }
 
     // safe operations
     bool defined () const { return m_value; }

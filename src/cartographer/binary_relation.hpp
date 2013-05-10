@@ -30,8 +30,8 @@ public:
     size_t round_word_dim () const { return m_lines.round_word_dim(); }
     const Word * raw_data () const { return m_lines.Lx(); }
     Word * raw_data () { return m_lines.Lx(); }
-    void clear () { m_lines.clear(); }
     void update () { m_lines.copy_Lx_to_Rx(); }
+    void clear () { m_lines.clear(); }
 
     // safe operations
     DenseSet get_Lx_set (Ob lhs) const { return m_lines.Lx_set(lhs); }

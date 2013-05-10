@@ -30,6 +30,7 @@ public:
     static bool is_symmetric () { return false; }
     size_t count_pairs () const { return m_values.size(); }
     void raw_insert (Ob lhs, Ob rhs, Ob val);
+    void update() { m_lines.copy_Lx_to_Rx(); }
     void clear ();
 
     // safe operations
@@ -99,7 +100,6 @@ inline void BinaryFunction::raw_insert (Ob lhs, Ob rhs, Ob val)
 
     m_values.insert(std::make_pair(std::make_pair(lhs, rhs), val));
     m_lines.Lx(lhs, rhs).one();
-    m_lines.Rx(lhs, rhs).one();
 }
 
 inline void BinaryFunction::insert (Ob lhs, Ob rhs, Ob val) const

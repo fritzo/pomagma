@@ -37,9 +37,10 @@ public:
     // m_tiles is source of truth; m_lines lag
     static bool is_symmetric () { return true; }
     size_t count_pairs () const; // unordered
-    void clear ();
     Ob raw_find (Ob lhs, Ob rhs) const { return value(lhs, rhs).load(relaxed); }
     void raw_insert (Ob lhs, Ob rhs, Ob val);
+    void update () {}
+    void clear ();
 
     // relaxed operations
     DenseSet get_Lx_set (Ob lhs) const { return m_lines.Lx_set(lhs); }
@@ -120,6 +121,40 @@ inline VLr_Table::Iterator SymmetricFunction::iter_val_rhs (
         Ob rhs) const
 {
     return iter_val_lhs(val, rhs);
+}
+
+inline void SymmetricFunction::raw_insert (Ob lhs, Ob rhs, Ob val)
+{
+    POMAGMA_ASSERT5(support().contains(lhs), "unsupported lhs: " << lhs);
+    POMAGMA_ASSERT5(support().contains(rhs), "unsupported rhs: " << rhs);
+    POMAGMA_ASSERT5(support().contains(val), "unsupported val: " << val);
+
+    value(lhs, rhs).store(val, relaxed);
+    m_lines.Lx(lhs, rhs).one(relaxed);
+    m_lines.Rx(lhs, rhs).one(relaxed);
+    m_Vlr_table.insert(lhs, rhs, val);
+    m_Vlr_table.insert(rhs, lhs, val);
+    m_VLr_table.insert(lhs, rhs, val);
+    m_VLr_table.insert(rhs, lhs, val);
+}
+
+inline void SymmetricFunction::insert (Ob lhs, Ob rhs, Ob val) const
+{
+    SharedLock lock(m_mutex);
+
+    POMAGMA_ASSERT5(support().contains(lhs), "unsupported lhs: " << lhs);
+    POMAGMA_ASSERT5(support().contains(rhs), "unsupported rhs: " << rhs);
+    POMAGMA_ASSERT5(support().contains(val), "unsupported val: " << val);
+
+    if (carrier().set_or_merge(value(lhs, rhs), val)) {
+        m_lines.Lx(lhs, rhs).one();
+        m_lines.Rx(lhs, rhs).one();
+        m_Vlr_table.insert(lhs, rhs, val);
+        m_Vlr_table.insert(rhs, lhs, val);
+        m_VLr_table.insert(lhs, rhs, val);
+        m_VLr_table.insert(rhs, lhs, val);
+        m_insert_callback(this, lhs, rhs);
+    }
 }
 
 } // namespace pomagma

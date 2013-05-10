@@ -33,6 +33,7 @@ public:
     size_t count_items () const { return m_set.count_items(); }
     Ob raw_find (Ob key) const;
     void raw_insert (Ob key, Ob val);
+    void update () {}
     void clear ();
 
     // relaxed operations
