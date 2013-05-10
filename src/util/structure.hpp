@@ -595,6 +595,8 @@ inline void update_data (
         Carrier & carrier,
         const std::unordered_map<std::string, Hasher::Digest> & hash)
 {
+    POMAGMA_INFO("updating carrier");
+
     carrier.update();
     POMAGMA_ASSERT_EQ(carrier.rep_count(), carrier.item_count());
     auto actual = get_hash(carrier);
@@ -630,6 +632,8 @@ inline void update_data (
         const std::string & name,
         const std::unordered_map<std::string, Hasher::Digest> & hash)
 {
+    POMAGMA_INFO("updating binary relation " << name);
+
     rel.update();
     auto actual = get_hash(carrier, rel);
     auto expected = hash.find("relations/binary/" + name)->second;
@@ -667,6 +671,8 @@ inline void update_data (
         const std::string & name,
         const std::unordered_map<std::string, Hasher::Digest> & hash)
 {
+    POMAGMA_INFO("updating nullary function " << name);
+
     fun.update();
     auto actual = get_hash(fun);
     auto expected = hash.find("functions/nullary/" + name)->second;
@@ -707,6 +713,8 @@ inline void update_data (
         const std::string & name,
         const std::unordered_map<std::string, Hasher::Digest> & hash)
 {
+    POMAGMA_INFO("updating injective function " << name);
+
     fun.update();
     auto actual = get_hash(fun);
     auto expected = hash.find("functions/injective/" + name)->second;
@@ -779,6 +787,8 @@ inline void update_data (
         const std::string & name,
         const std::unordered_map<std::string, Hasher::Digest> & hash)
 {
+    POMAGMA_INFO("updating " << arity << " function " << name);
+
     fun.update();
     auto actual = get_hash(carrier, fun);
     auto expected = hash.find("functions/" + arity + "/" + name)->second;
@@ -816,22 +826,34 @@ inline void load_data (
         load_data(carrier, * pair.second, file, "symmetric", pair.first, hash);
     }
 
-    // TODO parallelize
+    std::vector<std::thread> threads;
+
+    // do expensive tasks in parallel
     for (const auto & pair : signature.binary_relations()) {
-        update_data(carrier, * pair.second, pair.first, hash);
+        threads.push_back(std::thread([&](){
+            update_data(carrier, * pair.second, pair.first, hash);
+            }));
     }
+    for (const auto & pair : signature.binary_functions()) {
+        threads.push_back(std::thread([&](){
+            update_data(carrier, * pair.second, "binary", pair.first, hash);
+            }));
+    }
+    for (const auto & pair : signature.symmetric_functions()) {
+        threads.push_back(std::thread([&](){
+            update_data(carrier, * pair.second, "symmetric", pair.first, hash);
+            }));
+    }
+
+    // do everything else in this thread
     for (const auto & pair : signature.nullary_functions()) {
         update_data(carrier, * pair.second, pair.first, hash);
     }
     for (const auto & pair : signature.injective_functions()) {
         update_data(carrier, * pair.second, pair.first, hash);
     }
-    for (const auto & pair : signature.binary_functions()) {
-        update_data(carrier, * pair.second, "binary", pair.first, hash);
-    }
-    for (const auto & pair : signature.symmetric_functions()) {
-        update_data(carrier, * pair.second, "symmetric", pair.first, hash);
-    }
+
+    for (auto & thread : threads) { thread.join(); }
 }
 
 } // namespace detail
