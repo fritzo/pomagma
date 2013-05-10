@@ -126,9 +126,6 @@ inline void BinaryFunction::raw_insert (Ob lhs, Ob rhs, Ob val)
 
     value(lhs, rhs).store(val, relaxed);
     m_lines.Lx(lhs, rhs).one(relaxed);
-    m_Vlr_table.insert(lhs, rhs, val);
-    m_VLr_table.insert(lhs, rhs, val);
-    m_VRl_table.insert(lhs, rhs, val);
 }
 
 inline void BinaryFunction::insert (Ob lhs, Ob rhs, Ob val) const

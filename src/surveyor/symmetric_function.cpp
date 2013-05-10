@@ -113,6 +113,22 @@ void SymmetricFunction::clear ()
     memory_barrier();
 }
 
+void SymmetricFunction::update ()
+{
+    memory_barrier();
+    for (auto lhs_iter = support().iter(); lhs_iter.ok(); lhs_iter.next()) {
+        Ob lhs = *lhs_iter;
+        for (auto rhs_iter = iter_lhs(lhs); rhs_iter.ok(); rhs_iter.next()) {
+            Ob rhs = *rhs_iter;
+            Ob val = find(lhs, rhs);
+
+            m_Vlr_table.insert(lhs, rhs, val);
+            m_VLr_table.insert(lhs, rhs, val);
+        }
+    }
+    memory_barrier();
+}
+
 void SymmetricFunction::unsafe_merge (const Ob dep)
 {
     UniqueLock lock(m_mutex);
