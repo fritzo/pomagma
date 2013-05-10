@@ -602,6 +602,8 @@ inline void update_data (
     auto actual = get_hash(carrier);
     auto expected = hash.find("carrier")->second;
     POMAGMA_ASSERT(actual == expected, "carrier is corrupt");
+
+    POMAGMA_INFO("done updating carrier");
 }
 
 inline void load_data (
@@ -639,6 +641,8 @@ inline void update_data (
     auto expected = hash.find("relations/binary/" + name)->second;
     POMAGMA_ASSERT(actual == expected,
             "binary relation " << name << " is corrupt");
+
+    POMAGMA_INFO("done updating binary relation " << name);
 }
 
 inline void load_data (
@@ -678,6 +682,8 @@ inline void update_data (
     auto expected = hash.find("functions/nullary/" + name)->second;
     POMAGMA_ASSERT(actual == expected,
             "nullary function " << name << " is corrupt");
+
+    POMAGMA_INFO("done updating nullary function " << name);
 }
 
 inline void load_data (
@@ -720,6 +726,8 @@ inline void update_data (
     auto expected = hash.find("functions/injective/" + name)->second;
     POMAGMA_ASSERT(actual == expected,
             "injective function " << name << " is corrupt");
+
+    POMAGMA_INFO("done updating injective function " << name);
 }
 
 template<class Function>
@@ -794,6 +802,8 @@ inline void update_data (
     auto expected = hash.find("functions/" + arity + "/" + name)->second;
     POMAGMA_ASSERT(actual == expected,
             arity << " function " << name << " is corrupt");
+
+    POMAGMA_INFO("done updating " << arity << " function " << name);
 }
 
 inline void load_data (
