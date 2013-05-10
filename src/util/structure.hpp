@@ -572,7 +572,8 @@ inline void check_signature (
 
 inline void load_data (
         Carrier & carrier,
-        hdf5::InFile & file)
+        hdf5::InFile & file,
+        std::unordered_map<std::string, Hasher::Digest> & hash)
 {
     POMAGMA_INFO("loading carrier");
 
@@ -586,18 +587,27 @@ inline void load_data (
     for (Ob ob : data) {
         carrier.raw_insert(ob);
     }
+
+    hash["carrier"] = hdf5::load_hash(group);
+}
+
+inline void update_data (
+        Carrier & carrier,
+        const std::unordered_map<std::string, Hasher::Digest> & hash)
+{
     carrier.update();
     POMAGMA_ASSERT_EQ(carrier.rep_count(), carrier.item_count());
-
-    auto digest = get_hash(carrier);
-    POMAGMA_ASSERT(digest == hdf5::load_hash(group), "carrier is corrupt");
+    auto actual = get_hash(carrier);
+    auto expected = hash.find("carrier")->second;
+    POMAGMA_ASSERT(actual == expected, "carrier is corrupt");
 }
 
 inline void load_data (
-        const Carrier & carrier,
+        const Carrier &,
         BinaryRelation & rel,
         hdf5::InFile & file,
-        const std::string & name)
+        const std::string & name,
+        std::unordered_map<std::string, Hasher::Digest> & hash)
 {
     POMAGMA_INFO("loading binary relation " << name);
 
@@ -610,10 +620,20 @@ inline void load_data (
     hdf5::Dataset dataset(group2, name);
 
     dataset.read_rectangle(destin, destin_dim1, destin_dim2);
-    rel.update();
 
-    auto digest = get_hash(carrier, rel);
-    POMAGMA_ASSERT(digest == hdf5::load_hash(dataset),
+    hash["relations/binary/" + name] = hdf5::load_hash(dataset);
+}
+
+inline void update_data (
+        const Carrier & carrier,
+        BinaryRelation & rel,
+        const std::string & name,
+        const std::unordered_map<std::string, Hasher::Digest> & hash)
+{
+    rel.update();
+    auto actual = get_hash(carrier, rel);
+    auto expected = hash.find("relations/binary/" + name)->second;
+    POMAGMA_ASSERT(actual == expected,
             "binary relation " << name << " is corrupt");
 }
 
@@ -621,7 +641,8 @@ inline void load_data (
         const Carrier & carrier,
         NullaryFunction & fun,
         hdf5::InFile & file,
-        const std::string & name)
+        const std::string & name,
+        std::unordered_map<std::string, Hasher::Digest> & hash)
 {
     POMAGMA_INFO("loading nullary function " << name);
 
@@ -636,10 +657,20 @@ inline void load_data (
     dataset.read_scalar(data);
     POMAGMA_ASSERT_LE(data, item_dim);
     fun.raw_insert(data);
-    fun.update();
 
-    auto digest = get_hash(fun);
-    POMAGMA_ASSERT(digest == hdf5::load_hash(group3),
+    hash["functions/nullary/" + name] = hdf5::load_hash(group3);
+}
+
+inline void update_data (
+        const Carrier &,
+        NullaryFunction & fun,
+        const std::string & name,
+        const std::unordered_map<std::string, Hasher::Digest> & hash)
+{
+    fun.update();
+    auto actual = get_hash(fun);
+    auto expected = hash.find("functions/nullary/" + name)->second;
+    POMAGMA_ASSERT(actual == expected,
             "nullary function " << name << " is corrupt");
 }
 
@@ -647,7 +678,8 @@ inline void load_data (
         const Carrier & carrier,
         InjectiveFunction & fun,
         hdf5::InFile & file,
-        const std::string & name)
+        const std::string & name,
+        std::unordered_map<std::string, Hasher::Digest> & hash)
 {
     POMAGMA_INFO("loading injective function " << name);
 
@@ -665,10 +697,20 @@ inline void load_data (
             fun.raw_insert(key, value);
         }
     }
-    fun.update();
 
-    auto digest = get_hash(fun);
-    POMAGMA_ASSERT(digest == hdf5::load_hash(dataset),
+    hash["functions/injective/"] = hdf5::load_hash(dataset);
+}
+
+inline void update_data (
+        const Carrier &,
+        InjectiveFunction & fun,
+        const std::string & name,
+        const std::unordered_map<std::string, Hasher::Digest> & hash)
+{
+    fun.update();
+    auto actual = get_hash(fun);
+    auto expected = hash.find("functions/injective/" + name)->second;
+    POMAGMA_ASSERT(actual == expected,
             "injective function " << name << " is corrupt");
 }
 
@@ -678,7 +720,8 @@ inline void load_data (
         Function & fun,
         hdf5::InFile & file,
         const std::string & arity,
-        const std::string & name)
+        const std::string & name,
+        std::unordered_map<std::string, Hasher::Digest> & hash)
 {
     POMAGMA_INFO("loading " << arity << " function " << name);
 
@@ -724,10 +767,22 @@ inline void load_data (
             }
         }
     }
-    fun.update();
 
-    auto digest = get_hash(carrier, fun);
-    POMAGMA_ASSERT(digest == hdf5::load_hash(group3),
+    hash["functions/" + arity + "/" + name] = hdf5::load_hash(group3);
+}
+
+template<class Function>
+inline void update_data (
+        const Carrier & carrier,
+        Function & fun,
+        const std::string & arity,
+        const std::string & name,
+        const std::unordered_map<std::string, Hasher::Digest> & hash)
+{
+    fun.update();
+    auto actual = get_hash(carrier, fun);
+    auto expected = hash.find("functions/" + arity + "/" + name)->second;
+    POMAGMA_ASSERT(actual == expected,
             arity << " function " << name << " is corrupt");
 }
 
@@ -740,22 +795,42 @@ inline void load_data (
     POMAGMA_ASSERT(signature.carrier(), "carrier is not defined");
     Carrier & carrier = * signature.carrier();
 
-    // TODO parallelize
-    load_data(carrier, file);
+    std::unordered_map<std::string, Hasher::Digest> hash;
+
+    load_data(carrier, file, hash);
+    update_data(carrier, hash);
+
     for (const auto & pair : signature.binary_relations()) {
-        load_data(carrier, * pair.second, file, pair.first);
+        load_data(carrier, * pair.second, file, pair.first, hash);
     }
     for (const auto & pair : signature.nullary_functions()) {
-        load_data(carrier, * pair.second, file, pair.first);
+        load_data(carrier, * pair.second, file, pair.first, hash);
     }
     for (const auto & pair : signature.injective_functions()) {
-        load_data(carrier, * pair.second, file, pair.first);
+        load_data(carrier, * pair.second, file, pair.first, hash);
     }
     for (const auto & pair : signature.binary_functions()) {
-        load_data(carrier, * pair.second, file, "binary", pair.first);
+        load_data(carrier, * pair.second, file, "binary", pair.first, hash);
     }
     for (const auto & pair : signature.symmetric_functions()) {
-        load_data(carrier, * pair.second, file, "symmetric", pair.first);
+        load_data(carrier, * pair.second, file, "symmetric", pair.first, hash);
+    }
+
+    // TODO parallelize
+    for (const auto & pair : signature.binary_relations()) {
+        update_data(carrier, * pair.second, pair.first, hash);
+    }
+    for (const auto & pair : signature.nullary_functions()) {
+        update_data(carrier, * pair.second, pair.first, hash);
+    }
+    for (const auto & pair : signature.injective_functions()) {
+        update_data(carrier, * pair.second, pair.first, hash);
+    }
+    for (const auto & pair : signature.binary_functions()) {
+        update_data(carrier, * pair.second, "binary", pair.first, hash);
+    }
+    for (const auto & pair : signature.symmetric_functions()) {
+        update_data(carrier, * pair.second, "symmetric", pair.first, hash);
     }
 }
 
