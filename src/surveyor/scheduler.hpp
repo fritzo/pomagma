@@ -165,6 +165,7 @@ void assume_core_facts (const char * laws_file);
 void cleanup_tasks_push_all ();
 bool cleanup_tasks_try_pop (CleanupTask & task);
 bool sample_tasks_try_pop (SampleTask & task);
+bool merge_task_waiting ();
 
 
 namespace Scheduler

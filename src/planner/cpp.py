@@ -57,8 +57,11 @@ class Code:
 
 
 @methodof(compiler.Iter, 'cpp')
-def Iter_cpp(self, code):
-    body = Code('''
+def Iter_cpp(self, code, poll=None):
+    body = Code()
+    if poll:
+        body(poll)
+    body('''
         Ob $var = *iter;
         ''',
         var = self.var,
@@ -111,9 +114,9 @@ def Iter_cpp(self, code):
 
 # TODO injective function inverse need not be iterated
 @methodof(compiler.IterInvInjective, 'cpp')
-def IterInvInjective_cpp(self, code):
+def IterInvInjective_cpp(self, code, poll=None):
     body = Code()
-    self.body.cpp(body)
+    self.body.cpp(body, poll=poll)
     code('''
         if (Ob $var __attribute__((unused)) = $fun.inverse_find($value)) {
             $body
@@ -127,15 +130,18 @@ def IterInvInjective_cpp(self, code):
 
 
 @methodof(compiler.IterInvBinary, 'cpp')
-def IterInvBinary_cpp(self, code):
+def IterInvBinary_cpp(self, code, poll=None):
+    body = Code()
+    if poll:
+        body(poll)
     if self.var1 == self.var2:
-        body = Code('''
+        body('''
             Ob $var1 __attribute__((unused)) = iter.lhs();
             ''',
             var1 = self.var1,
             )
     else:
-        body = Code('''
+        body('''
             Ob $var1 __attribute__((unused)) = iter.lhs();
             Ob $var2 __attribute__((unused)) = iter.rhs();
             ''',
@@ -155,8 +161,11 @@ def IterInvBinary_cpp(self, code):
 
 
 @methodof(compiler.IterInvBinaryRange, 'cpp')
-def IterInvBinaryRange_cpp(self, code):
-    body = Code('''
+def IterInvBinaryRange_cpp(self, code, poll=None):
+    body = Code()
+    if poll:
+        body(poll)
+    body('''
         Ob $var = *iter;
         ''',
         var = self.var2 if self.lhs_fixed else self.var1,
@@ -176,9 +185,9 @@ def IterInvBinaryRange_cpp(self, code):
 
 
 @methodof(compiler.Let, 'cpp')
-def Let_cpp(self, code):
+def Let_cpp(self, code, poll=None):
     body = Code()
-    self.body.cpp(body)
+    self.body.cpp(body, poll=poll)
     code('''
         if (Ob $var = $fun.find($args)) {
             $body
@@ -192,9 +201,9 @@ def Let_cpp(self, code):
 
 
 @methodof(compiler.Test, 'cpp')
-def Test_cpp(self, code):
+def Test_cpp(self, code, poll=None):
     body = Code()
-    self.body.cpp(body)
+    self.body.cpp(body, poll=poll)
     args = [arg.name for arg in self.expr.args]
     if self.expr.name == 'EQUAL':
         expr = 'carrier.equal({0}, {1})'.format(*args)
@@ -214,7 +223,7 @@ def Test_cpp(self, code):
 
 
 @methodof(compiler.Ensure, 'cpp')
-def Ensure_cpp(self, code):
+def Ensure_cpp(self, code, poll=None):
     expr = self.expr
     assert len(expr.args) == 2
     args = [arg if arg.args else arg.var for arg in expr.args]
@@ -451,10 +460,12 @@ def write_full_tasks(code, sequents):
     full_tasks.sort(key=(lambda (cost, _): cost))
     type_count = len(full_tasks)
 
+    poll = 'if (merge_task_waiting()) { return; }'
+    min_poll_cost = 1.5  # above which there are probably multiple for loops
     cases = Code()
     for i, (cost, strategy) in enumerate(full_tasks):
         case = Code()
-        strategy.cpp(case)
+        strategy.cpp(case, poll if cost > min_poll_cost else None)
         cases('''
             case $index: { // cost = $cost
                 $case
@@ -469,7 +480,7 @@ def write_full_tasks(code, sequents):
         $bar
         // cleanup tasks
 
-        const size_t g_type_count = $type_count;
+        const size_t g_cleanup_type_count = $type_count;
         std::atomic<unsigned long> g_cleanup_type(0);
 
         void cleanup_tasks_push_all()
@@ -481,7 +492,7 @@ def write_full_tasks(code, sequents):
         {
             unsigned long type = 0;
             while (not g_cleanup_type.compare_exchange_weak(type, type + 1)) {
-                if (type == g_type_count) {
+                if (type == g_cleanup_type_count) {
                     return false;
                 }
             }
@@ -549,6 +560,8 @@ def write_event_tasks(code, sequents):
     group_tasks = list(group_tasks.iteritems())
     group_tasks.sort()
 
+    #poll = 'if (merge_task_waiting()) { schedule(task); return; }'
+
     for groupname, group in group_tasks:
         group = list(group.iteritems())
         group.sort()
@@ -590,9 +603,14 @@ def write_event_tasks(code, sequents):
                     subsubbody('const Ob $arg = val;', arg=event.var.name)
                 elif event.is_var():
                     subsubbody('const Ob $arg = task.ob;', arg=event.name)
+                subcost = 0
                 for cost, strategy in strategies:
                     subsubbody.newline()
                     strategy.cpp(subsubbody)
+                    subcost += cost
+                # this slows things way down
+                #if subcost >= 1:
+                #    subbody(poll)
                 if diagonal:
                     subbody('''
                         if (lhs == rhs) { // cost = $cost

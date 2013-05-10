@@ -125,8 +125,11 @@ template<>
 class TaskQueue<MergeTask>
 {
     tbb::concurrent_queue<MergeTask> m_queue;
+    std::atomic<unsigned> m_waiting_count;
 
 public:
+
+    TaskQueue () : m_waiting_count(0) {}
 
     void push (const MergeTask & task)
     {
@@ -139,7 +142,9 @@ public:
     {
         MergeTask task;
         if (m_queue.try_pop(task)) {
+            m_waiting_count++;
             SharedMutex::UniqueLock lock(g_strict_mutex);
+            m_waiting_count--;
             execute(task);
             g_merge_stats.execute();
             cancel_tasks_referencing(task.dep);
@@ -147,6 +152,11 @@ public:
         } else {
             return false;
         }
+    }
+
+    bool waiting () const
+    {
+        return m_waiting_count.load(std::memory_order_acquire);
     }
 };
 
@@ -345,6 +355,11 @@ void schedule (const SymmetricFunctionTask & task)
 void schedule (const AssumeTask & task)
 {
     Scheduler::g_assume_tasks.push(task);
+}
+
+bool merge_task_waiting ()
+{
+    return Scheduler::g_merge_tasks.waiting();
 }
 
 } // namespace pomagma
