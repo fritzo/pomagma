@@ -40,6 +40,6 @@ profile:
 
 clean: FORCE
 	rm -rf build lib include
-	git clean -fdx -e pomagma.egg-info
+	git clean -fdx -e pomagma.egg-info -e data
 
 FORCE:
