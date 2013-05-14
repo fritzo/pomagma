@@ -22,7 +22,9 @@ struct small_pair_hasher<uint16_t>
     size_t operator() (const std::pair<uint16_t, uint16_t> & pair) const
     {
         static_assert(sizeof(size_t) == 8, "invalid sizeof(size_t)");
-        return * reinterpret_cast<const uint32_t *>(& pair) * hash_multiplier;
+        size_t x = pair.first;
+        size_t y = pair.second;
+        return ((x << 16) | y) * hash_multiplier;
     }
 };
 
@@ -32,7 +34,9 @@ struct small_pair_hasher<uint32_t>
     size_t operator() (const std::pair<uint32_t, uint32_t> & pair) const
     {
         static_assert(sizeof(size_t) == 8, "invalid sizeof(size_t)");
-        return * reinterpret_cast<const uint64_t *>(& pair) * hash_multiplier;
+        size_t x = pair.first;
+        size_t y = pair.second;
+        return ((x << 32) | y) * hash_multiplier;
     }
 };
 
