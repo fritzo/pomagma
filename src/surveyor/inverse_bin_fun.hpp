@@ -9,10 +9,27 @@
 namespace pomagma
 {
 
+namespace detail
+{
+static const size_t hash_multiplier = 11400714819323198485ULL;
+
+struct uin16_pair_hasher
+{
+    size_t operator() (const std::pair<uint16_t, uint16_t> & pair) const
+    {
+        return * reinterpret_cast<const uint32_t *>(& pair) * hash_multiplier;
+    }
+};
+
+} // namespace detail
+
 // val -> lhs, rhs
 class Vlr_Table : noncopyable
 {
-    typedef tbb::concurrent_unordered_set<std::pair<Ob, Ob>> Set;
+    typedef tbb::concurrent_unordered_set<
+            std::pair<Ob, Ob>,
+            detail::uin16_pair_hasher>
+        Set;
     typedef std::vector<Set> Data;
     mutable Data m_data;
 
@@ -89,7 +106,11 @@ template<bool transpose>
 class VXx_Table : noncopyable
 {
     typedef tbb::concurrent_unordered_set<Ob> Set;
-    typedef tbb::concurrent_unordered_map<std::pair<Ob, Ob>, Set> Data;
+    typedef tbb::concurrent_unordered_map<
+            std::pair<Ob, Ob>,
+            Set,
+            detail::uin16_pair_hasher>
+        Data;
     mutable Data m_data;
 
 public:
