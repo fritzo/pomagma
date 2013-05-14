@@ -27,6 +27,9 @@ EQUAL APP APP APP C x y z APP APP x z y
 ---------------------------------------------
 EQUAL APP APP APP S x y z APP APP x z APP y z
 
+#---------------------   -----------------------
+#EQUAL APP C APP C x x   EQUAL COMP C COMP C x x
+
 # Possible B,C,S for composition abstraction:
 #
 #-----------------------------------------
