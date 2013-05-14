@@ -40,7 +40,6 @@ def examples(suffix):
         yield path
 
 
-
 @requires_auth
 def test_s3():
     with mock.patch('pomagma.store.BUCKET', new=TEST_BUCKET):

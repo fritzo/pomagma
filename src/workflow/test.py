@@ -24,34 +24,36 @@ def random_filename():
 
 @reproducible
 def step1(task):
-    args = json.loads(task['input'])
-    state = args['state']
-    filename = random_filename()
-    with open(filename, 'w') as f:
-        json.dump(state, f)
-    pomagma.store.put(filename)
-    return {
-        'nextActivity': {
-            'activityType': 'Step2',
-            'input': {'filename': filename},
+    with pomagma.util.chdir(pomagma.util.DATA):
+        args = json.loads(task['input'])
+        state = args['state']
+        filename = random_filename()
+        with open(filename, 'w') as f:
+            json.dump(state, f)
+        pomagma.store.put(filename)
+        return {
+            'nextActivity': {
+                'activityType': 'Step2',
+                'input': {'filename': filename},
+                }
             }
-        }
 
 
 @reproducible
 def step2(task):
-    args = json.loads(task['input'])
-    filename = args['filename']
-    pomagma.store.get(filename)
-    with open(filename) as f:
-        state = json.load(f)
-    pomagma.store.remove(filename)
-    return {
-        'nextActivity': {
-            'activityType': 'Step3',
-            'input': {'state': state},
+    with pomagma.util.chdir(pomagma.util.DATA):
+        args = json.loads(task['input'])
+        filename = args['filename']
+        pomagma.store.get(filename)
+        with open(filename) as f:
+            state = json.load(f)
+        pomagma.store.remove(filename)
+        return {
+            'nextActivity': {
+                'activityType': 'Step3',
+                'input': {'state': state},
+                }
             }
-        }
 
 
 STATE = None
