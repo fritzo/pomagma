@@ -13,11 +13,26 @@ namespace detail
 {
 static const size_t hash_multiplier = 11400714819323198485ULL;
 
-struct uin16_pair_hasher
+template<class smallint_t>
+struct small_pair_hasher;
+
+template<>
+struct small_pair_hasher<uint16_t>
 {
     size_t operator() (const std::pair<uint16_t, uint16_t> & pair) const
     {
+        static_assert(sizeof(size_t) == 8, "invalid sizeof(size_t)");
         return * reinterpret_cast<const uint32_t *>(& pair) * hash_multiplier;
+    }
+};
+
+template<>
+struct small_pair_hasher<uint32_t>
+{
+    size_t operator() (const std::pair<uint32_t, uint32_t> & pair) const
+    {
+        static_assert(sizeof(size_t) == 8, "invalid sizeof(size_t)");
+        return * reinterpret_cast<const uint64_t *>(& pair) * hash_multiplier;
     }
 };
 
@@ -28,7 +43,7 @@ class Vlr_Table : noncopyable
 {
     typedef tbb::concurrent_unordered_set<
             std::pair<Ob, Ob>,
-            detail::uin16_pair_hasher>
+            detail::small_pair_hasher<Ob>>
         Set;
     typedef std::vector<Set> Data;
     mutable Data m_data;
@@ -109,7 +124,7 @@ class VXx_Table : noncopyable
     typedef tbb::concurrent_unordered_map<
             std::pair<Ob, Ob>,
             Set,
-            detail::uin16_pair_hasher>
+            detail::small_pair_hasher<Ob>>
         Data;
     mutable Data m_data;
 
