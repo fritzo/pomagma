@@ -109,6 +109,35 @@ def survey(laws, max_size=8191, step_size=512, **options):
 
 
 @parsable.command
+def profile(laws='skj', size_blocks=3, dsize_blocks=0, **options):
+    '''
+    Profile surveyor through callgrind on random region of world.
+    Inputs: laws, region size in blocks (1 block = 512 obs)
+    Options: log_level, log_file
+    '''
+    size = size_blocks * 512 - 1
+    dsize = dsize_blocks * 512
+    min_size = pomagma.util.MIN_SIZES[laws]
+    assert size >= min_size
+
+    data = os.path.join(pomagma.util.DATA, '{}.survey'.format(laws))
+    assert os.path.exists(data), 'First initialize world map'
+    with pomagma.util.chdir(data):
+
+        opts = options
+        opts.setdefault('log_file', 'profile.log')
+        region = 'region.{:d}.h5'.format(size)
+        temp = 'temp.profile.h5'.format(size + 1)
+        world = 'world.h5'
+
+        if not os.path.exists(region):
+            assert os.path.exists(world), 'First initialize world map'
+            pomagma.actions.trim(laws, world, region, size, **opts)
+        opts.setdefault('runner', 'valgrind --tool=callgrind')
+        pomagma.actions.survey(laws, region, temp, size + dsize, **opts)
+
+
+@parsable.command
 def make(laws, max_size=8191, step_size=512, **options):
     '''
     Initialize; survey.

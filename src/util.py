@@ -203,6 +203,7 @@ def get_stack_trace(binary):
 
 def log_call(*args, **options):
     args = map(str, args)
+    args = options.pop('runner', '').split() + args
     env = make_env(options)
     log_file = env['POMAGMA_LOG_FILE']
     sys.stderr.write('{}\n'.format(' \\\n'.join(args)))
