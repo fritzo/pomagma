@@ -1,22 +1,16 @@
 Pomagma
 =======
 
-Adventures in Abstractland.
+Parallel distributed forward-chaining inference in partially ordered magmas.
 
-Pomagma is a toy model of human exploration in the abstract universe,
-a cartoon of mathematics as a scientific research program a la Imre Lakatos.
-Some of the roles we play as mathematicians are captured as algorithms
-performed by software actors in a [system](src/README.md),
-while some less well-defined roles are performed by human actors.
-The most important, most open-ended, most creative role of all is that of the
-Adventurer, and Pomagma aims to make abstract adventuring easy, fun, and safe.
+[System Architecture](src/README.md)
 
 Organization
 ------------
 
 - [/src](src) - source code: python, C++
 - [/pomagma](pomagma) - a symbolic link to appease `pip install -e`
-- [/doc](doc) - just figures; see [/src/*](/src) for code documentation
+- [/doc](doc) - figures. see [/src](/src) for code documentation
 - [/build](build) - destination of C++ builds
 - [/data](data) - generated data, mirroring S3 bucket
 

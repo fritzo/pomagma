@@ -10,23 +10,24 @@ digraph G {
 	//	Data [shape=ellipse];
 	//}
 
-	Economist;
-	Engineer;
+	Theorist;
+	Linguist;
     {
         rank="same";
         node [style=filled, fillcolor=pink];
-        Committee [label="Transportation\nCommittee"];
-        SafetyBoard [label="Safety\nBoard"];
+        TheoriesReviewer [label="Reviewer"];
+        LanguagesReviewer [label="Reviewer"];
+        Writer;
     }
 	{
 		node [shape=ellipse];
-		Vehicle;
-		Laws;
+		Languages;
+		Theories;
 		Atlas;
-		History;
+		Corpus;
 	}
-    Planner;
-	TourAgency [label="Tour\nAgency"];
+    Compiler;
+	Simplifier;
 
 	subgraph cluster_survey {
 		Surveyor;
@@ -37,71 +38,56 @@ digraph G {
 		labelloc = "b";
 	}
 
-	subgraph cluster_adventure {
-		rank="max";
-		Guide;
-		{
-			rank="max";
-			Adventurer [style=filled, fillcolor=pink];
-		}
-
-		color = "#666666";
-		fontcolor = "#666666";
-		label = "many";
-		labelloc = "b";
-	}
-
-	{ rank="min"; Engineer; Economist; }
-	{ rank="same"; Vehicle; Laws; Atlas; History; }
-	{ rank="same"; Cartographer; Planner; TourAgency; }
-	{ rank="max"; Adventurer; }
+	{ rank="min"; Linguist; Theorist; }
+	{ rank="same"; Languages; Theories; Atlas; Corpus; }
+	{ rank="same"; Cartographer; Compiler; Simplifier; }
 
 
-	// Workflow: Plan
+	// Workflow: Compile
 	edge [dir=forward arrowhead=normal]; // pull
-	Laws -> Planner;
-	Planner -> Surveyor;
-	Planner -> Cartographer;
+	Theories -> Compiler;
+	Compiler -> Surveyor;
+	Compiler -> Cartographer;
 
 	// Workflow: Survey
 	edge [dir=forward arrowhead=normal]; // pull
 	Atlas -> Cartographer;
-	Vehicle -> Cartographer;
-	Vehicle -> Surveyor;
+	Languages -> Cartographer;
+	Languages -> Surveyor;
 	Cartographer -> Surveyor;
 	edge [dir=both arrowtail=inv arrowhead=empty]; // push
 	Surveyor -> Cartographer;
 	Cartographer -> Atlas;
 
-	// Workflow: Adventure
+	// Workflow: Simplify
 	edge [dir=forward arrowhead=normal]; // pull
-	Laws -> TourAgency;
-	Atlas -> TourAgency;
-	Vehicle -> TourAgency;
-	TourAgency -> Guide;
-	Guide -> Adventurer;
-	History -> TourAgency;
+	Atlas -> Simplifier;
+	Languages -> Simplifier;
+	Corpus -> Simplifier;
 	edge [dir=both arrowtail=inv arrowhead=empty]; // push
-	Adventurer -> Guide;
-	Guide -> TourAgency;
-	TourAgency -> History;
+	Simplifier -> Corpus;
 
-	// Workflow: Engineer
+	// Workflow: Fit Language
 	edge [dir=forward arrowhead=normal]; // pull
-	History -> Engineer;
-	Atlas -> Engineer;
-	Vehicle -> Engineer;
-	Engineer -> SafetyBoard;
+	Corpus -> Linguist;
+	Atlas -> Linguist;
+	Languages -> Linguist;
+	Linguist -> LanguagesReviewer;
 	edge [dir=both arrowtail=inv arrowhead=empty]; // push
-	Engineer -> Vehicle;
-	SafetyBoard -> Vehicle;
-	SafetyBoard -> Laws;
+	Linguist -> Languages;
+	LanguagesReviewer -> Languages;
+	LanguagesReviewer -> Theories;
 
-	// Workflow: Legislate
+	// Workflow: Theorize
 	edge [dir=forward arrowhead=normal]; // pull
-	Atlas -> Economist;
-	Vehicle ->  Economist;
-	Economist -> Committee;
+	Atlas -> Theorist;
+	Languages ->  Theorist;
+	Theorist -> TheoriesReviewer;
 	edge [dir=both arrowtail=inv arrowhead=empty]; // push
-	Committee -> Laws;
+	TheoriesReviewer -> Theories;
+
+	// Workflow: Write
+	edge [dir=forward arrowhead=normal]; // pull
+	edge [dir=both arrowtail=inv arrowhead=empty]; // push
+	Writer -> Corpus;
 }
