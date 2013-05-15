@@ -12,12 +12,11 @@ namespace pomagma
 int Log::init ()
 {
     s_log_stream <<
-        "\e[32m" // green
         "----------------------------------------"
         "----------------------------------------"
         "\n"
         << get_date()
-        << "\e[0;39m\n"
+        << "\n"
         ;
     return 0;
 }
@@ -34,7 +33,7 @@ const size_t Log::s_log_level(
 Log::Context::Context (std::string name)
 {
     std::ostringstream message;
-    message << "\e[32m" << name << "\e[0;39m\n";
+    message << name << "\n";
     s_log_stream << message.str() << std::flush;
     //std::cerr << message.str() << std::flush; // DEBUG
 }
@@ -42,11 +41,10 @@ Log::Context::Context (std::string name)
 Log::Context::Context (int argc, char ** argv)
 {
     std::ostringstream message;
-    message << "\e[32m";
     for (int i = 0; i < argc; ++i) {
         message << argv[i] << ' ';
     }
-    message << "\e[0;39m\n";
+    message << "\n";
     s_log_stream << message.str() << std::flush;
     //std::cerr << message.str() << std::flush; // DEBUG
 }

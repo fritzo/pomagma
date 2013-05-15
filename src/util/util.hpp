@@ -87,6 +87,12 @@ public:
                 Clock::now() - m_start);
         return duration.count() * 1e-6;
     }
+    unsigned long elapsed_us () const
+    {
+        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(
+                Clock::now() - m_start);
+        return duration.count();
+    }
 };
 
 class Stopwatch
@@ -143,10 +149,10 @@ const size_t DEFAULT_LOG_LEVEL = 1;
 
 const std::string g_log_level_name[4] =
 {
-    "\e[7;31merror   \e[0;39m",  // error   - reverse red
-    "\e[31mwarning \e[0;39m",    // warning - red
-    "\e[32minfo    \e[0;39m",    // info    - green
-    "\e[33mdebug   \e[0;39m"     // debug   - yellow
+    "ERROR   ",
+    "WARNING ",
+    "INFO    ",
+    "DEBUG   "
 };
 
 class Log

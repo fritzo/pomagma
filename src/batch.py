@@ -126,6 +126,7 @@ def profile(laws='skj', size_blocks=3, dsize_blocks=0, **options):
 
         opts = options
         opts.setdefault('log_file', 'profile.log')
+        opts.setdefault('log_level', 2)
         region = 'region.{:d}.h5'.format(size)
         temp = 'temp.profile.h5'.format(size + 1)
         world = 'world.h5'

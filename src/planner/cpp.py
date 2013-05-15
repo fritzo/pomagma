@@ -482,6 +482,7 @@ def write_full_tasks(code, sequents):
 
         const size_t g_cleanup_type_count = $type_count;
         std::atomic<unsigned long> g_cleanup_type(0);
+        CleanupProfiler g_cleanup_profiler($type_count);
 
         void cleanup_tasks_push_all()
         {
@@ -504,6 +505,7 @@ def write_full_tasks(code, sequents):
         void execute (const CleanupTask & task)
         {
             POMAGMA_DEBUG("executing cleanup task " << (1 + task.type) << "/$type_count");
+            CleanupProfiler::Block block(task.type);
 
             switch (task.type) {
 
