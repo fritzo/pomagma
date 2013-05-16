@@ -460,12 +460,15 @@ def write_full_tasks(code, sequents):
     full_tasks.sort(key=(lambda (cost, _): cost))
     type_count = len(full_tasks)
 
-    poll = 'if (merge_task_waiting()) { return; }'
-    min_poll_cost = 1.5  # above which there are probably multiple for loops
+    block_size = 128
+    split = 'if (*iter / {} != block) {{ continue; }}'.format(block_size)
+    min_split_cost = 1.5  # above which we split the outermost for loop
+    unsplit_count = sum(1 for cost, _ in full_tasks if cost < min_split_cost)
+
     cases = Code()
     for i, (cost, strategy) in enumerate(full_tasks):
         case = Code()
-        strategy.cpp(case, poll if cost > min_poll_cost else None)
+        strategy.cpp(case, split if cost >= min_split_cost else None)
         cases('''
             case $index: { // cost = $cost
                 $case
@@ -481,8 +484,17 @@ def write_full_tasks(code, sequents):
         // cleanup tasks
 
         const size_t g_cleanup_type_count = $type_count;
+        const size_t g_cleanup_block_count =
+            carrier.item_dim() / $block_size + 1;
         std::atomic<unsigned long> g_cleanup_type(0);
-        CleanupProfiler g_cleanup_profiler($type_count);
+        CleanupProfiler g_cleanup_profiler(g_cleanup_type_count);
+
+        inline unsigned long next_cleanup_type (const unsigned long & type)
+        {
+            return type < $unsplit_count * g_cleanup_block_count
+                        ? type + g_cleanup_block_count
+                        : type + 1;
+        }
 
         void cleanup_tasks_push_all()
         {
@@ -492,8 +504,11 @@ def write_full_tasks(code, sequents):
         bool cleanup_tasks_try_pop (CleanupTask & task)
         {
             unsigned long type = 0;
-            while (not g_cleanup_type.compare_exchange_weak(type, type + 1)) {
-                if (type == g_cleanup_type_count) {
+            while (not g_cleanup_type.compare_exchange_weak(
+                type,
+                next_cleanup_type(type)))
+            {
+                if (type == g_cleanup_type_count * g_cleanup_block_count) {
                     return false;
                 }
             }
@@ -504,19 +519,26 @@ def write_full_tasks(code, sequents):
 
         void execute (const CleanupTask & task)
         {
-            POMAGMA_DEBUG("executing cleanup task " << (1 + task.type) << "/$type_count");
-            CleanupProfiler::Block block(task.type);
+            const unsigned long type = task.type / g_cleanup_block_count;
+            const unsigned long block = task.type % g_cleanup_block_count;
+            POMAGMA_DEBUG(
+                "executing cleanup task"
+                " type " << (1 + type) << "/" << g_cleanup_type_count <<
+                " block " << (1 + block) << "/" << g_cleanup_block_count);
+            CleanupProfiler::Block profiler_block(type);
 
-            switch (task.type) {
+            switch (type) {
 
                 $cases
 
-                default: POMAGMA_ERROR("bad cleanup type " << task.type);
+                default: POMAGMA_ERROR("bad cleanup type " << type);
             }
         }
         ''',
         bar = bar,
         type_count = type_count,
+        unsplit_count = unsplit_count,
+        block_size = block_size,
         cases = wrapindent(cases, '        '),
         ).newline()
 

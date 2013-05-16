@@ -357,9 +357,4 @@ void schedule (const AssumeTask & task)
     Scheduler::g_assume_tasks.push(task);
 }
 
-bool merge_task_waiting ()
-{
-    return Scheduler::g_merge_tasks.waiting();
-}
-
 } // namespace pomagma

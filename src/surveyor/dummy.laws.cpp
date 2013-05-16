@@ -74,12 +74,6 @@ bool sample_tasks_try_pop (SampleTask &)
     return false;
 }
 
-bool merge_task_waiting ()
-{
-    POMAGMA_INFO("merge_task_waiting()");
-    return false;
-}
-
 void validate_all ()
 {
     POMAGMA_INFO("validate_all()");
