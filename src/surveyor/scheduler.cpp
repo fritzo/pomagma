@@ -182,7 +182,7 @@ inline void cancel_tasks_referencing (Ob ob)
     g_negative_order_tasks.cancel_referencing(ob);
 }
 
-inline bool enforce_tasks_try_execute ()
+inline bool enforce_tasks_try_execute (bool cleanup)
 {
     if (g_exists_tasks.try_execute() or
         g_nullary_function_tasks.try_execute() or
@@ -192,7 +192,7 @@ inline bool enforce_tasks_try_execute ()
         g_positive_order_tasks.try_execute() or
         g_negative_order_tasks.try_execute())
     {
-        if (g_worker_count > 1) {
+        if (cleanup and g_worker_count > 1) {
             cleanup_tasks_push_all();
         }
         return true;
@@ -230,7 +230,7 @@ inline bool cleanup_tasks_try_execute ()
 bool try_initialize_work (rng_t &)
 {
     return g_merge_tasks.try_execute()
-        or enforce_tasks_try_execute()
+        or enforce_tasks_try_execute(false)
         or g_assume_tasks.try_execute()
         or cleanup_tasks_try_execute();
 }
@@ -238,7 +238,7 @@ bool try_initialize_work (rng_t &)
 bool try_survey_work (rng_t & rng)
 {
     return g_merge_tasks.try_execute()
-        or enforce_tasks_try_execute()
+        or enforce_tasks_try_execute(true)
         or sample_tasks_try_execute(rng)
         or cleanup_tasks_try_execute();
 }
@@ -271,6 +271,7 @@ void initialize (const char * laws_file)
     if (laws_file) {
         assume_core_facts(laws_file);
     }
+    cleanup_tasks_push_all();
     POMAGMA_INFO("starting " << g_worker_count << " initialize threads");
     reset_stats();
     std::vector<std::thread> threads;

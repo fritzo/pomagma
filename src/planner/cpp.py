@@ -460,7 +460,7 @@ def write_full_tasks(code, sequents):
     full_tasks.sort(key=(lambda (cost, _): cost))
     type_count = len(full_tasks)
 
-    block_size = 128
+    block_size = 64
     split = 'if (*iter / {} != block) {{ continue; }}'.format(block_size)
     min_split_cost = 1.5  # above which we split the outermost for loop
     unsplit_count = sum(1 for cost, _ in full_tasks if cost < min_split_cost)
@@ -486,31 +486,43 @@ def write_full_tasks(code, sequents):
         const size_t g_cleanup_type_count = $type_count;
         const size_t g_cleanup_block_count =
             carrier.item_dim() / $block_size + 1;
+        const size_t g_cleanup_task_count =
+            $unsplit_count +
+            ($type_count - $unsplit_count) * g_cleanup_block_count;
         std::atomic<unsigned long> g_cleanup_type(0);
+        std::atomic<unsigned long> g_cleanup_remaining(0);
         CleanupProfiler g_cleanup_profiler(g_cleanup_type_count);
 
         inline unsigned long next_cleanup_type (const unsigned long & type)
         {
-            return type < $unsplit_count * g_cleanup_block_count
-                        ? type + g_cleanup_block_count
-                        : type + 1;
+            unsigned long next = type < $unsplit_count * g_cleanup_block_count
+                                      ? type + g_cleanup_block_count
+                                      : type + 1;
+            return next % (g_cleanup_type_count * g_cleanup_block_count);
         }
 
         void cleanup_tasks_push_all()
         {
-            g_cleanup_type.store(0);
+            g_cleanup_remaining.store(g_cleanup_task_count);
         }
 
         bool cleanup_tasks_try_pop (CleanupTask & task)
         {
-            unsigned long type = 0;
-            while (not g_cleanup_type.compare_exchange_weak(
-                type,
-                next_cleanup_type(type)))
+            unsigned long remaining = 1;
+            while (not g_cleanup_remaining.compare_exchange_weak(
+                remaining, remaining - 1))
             {
-                if (type == g_cleanup_type_count * g_cleanup_block_count) {
+                if (remaining == 0) {
                     return false;
                 }
+            }
+
+            // is this absolutely correct?
+
+            unsigned long type = 0;
+            while (not g_cleanup_type.compare_exchange_weak(
+                type, next_cleanup_type(type)))
+            {
             }
 
             task.type = type;
