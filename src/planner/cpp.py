@@ -596,8 +596,6 @@ def write_event_tasks(code, sequents):
     group_tasks = list(group_tasks.iteritems())
     group_tasks.sort()
 
-    #poll = 'if (merge_task_waiting()) { schedule(task); return; }'
-
     for groupname, group in group_tasks:
         group = list(group.iteritems())
         group.sort()
@@ -644,9 +642,6 @@ def write_event_tasks(code, sequents):
                     subsubbody.newline()
                     strategy.cpp(subsubbody)
                     subcost += cost
-                # this slows things way down
-                #if subcost >= 1:
-                #    subbody(poll)
                 if diagonal:
                     subbody('''
                         if (lhs == rhs) { // cost = $cost

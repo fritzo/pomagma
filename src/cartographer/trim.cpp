@@ -161,8 +161,8 @@ void restrict_one (
                 if (Ob destin_val = src_to_destin[src_val]) {
                     if (Function::is_symmetric() and destin_rhs < destin_lhs) {
                         destin_fun.raw_insert(
-                                destin_lhs,
                                 destin_rhs,
+                                destin_lhs,
                                 destin_val);
                     } else {
                         destin_fun.raw_insert(
