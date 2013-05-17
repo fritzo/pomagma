@@ -11,7 +11,8 @@ namespace pomagma
 
 namespace detail
 {
-static const size_t hash_multiplier = 11400714819323198485ULL;
+
+static const size_t HASH_MULTIPLIER = 11400714819323198485ULL;
 
 template<class smallint_t>
 struct small_pair_hasher;
@@ -24,7 +25,7 @@ struct small_pair_hasher<uint16_t>
         static_assert(sizeof(size_t) == 8, "invalid sizeof(size_t)");
         size_t x = pair.first;
         size_t y = pair.second;
-        return ((x << 16) | y) * hash_multiplier;
+        return ((x << 16) | y) * HASH_MULTIPLIER;
     }
 };
 
@@ -36,7 +37,7 @@ struct small_pair_hasher<uint32_t>
         static_assert(sizeof(size_t) == 8, "invalid sizeof(size_t)");
         size_t x = pair.first;
         size_t y = pair.second;
-        return ((x << 32) | y) * hash_multiplier;
+        return ((x << 32) | y) * HASH_MULTIPLIER;
     }
 };
 

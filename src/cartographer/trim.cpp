@@ -73,7 +73,7 @@ void fill_random(
         size_t target_item_count,
         const char * vehicle_file)
 {
-    POMAGMA_INFO("filling randomly facts");
+    POMAGMA_INFO("filling randomly");
     std::random_device device;
     rng_t rng(device());
     Sampler sampler(structure.signature());
@@ -205,24 +205,73 @@ void restrict_all (
     }
 }
 
+std::vector<Ob> sort_subset(
+        Structure & structure,
+        const DenseSet & subset)
+{
+    POMAGMA_INFO("Sorting subset");
+
+    std::vector<std::pair<long, Ob>> weighted_obs;
+    for (auto iter = subset.iter(); iter.ok(); iter.next()) {
+        weighted_obs.push_back(std::make_pair<long, Ob>(0, *iter));
+    }
+
+    // TODO parallelize
+    for (auto pair : structure.signature().binary_relations()) {
+        auto rel = pair.second;
+        for (auto & weighted_ob : weighted_obs) {
+            long & weight = weighted_ob.first;
+            Ob & ob = weighted_ob.second;
+            weight -= rel->get_Lx_set(ob).count_items();
+            weight -= rel->get_Rx_set(ob).count_items();
+        }
+    }
+    for (auto pair : structure.signature().binary_functions()) {
+        auto fun = pair.second;
+        for (auto & weighted_ob : weighted_obs) {
+            long & weight = weighted_ob.first;
+            Ob & ob = weighted_ob.second;
+            weight -= 16 * fun->get_Lx_set(ob).count_items();
+            weight -= 16 * fun->get_Rx_set(ob).count_items();
+        }
+    }
+    for (auto pair : structure.signature().symmetric_functions()) {
+        auto fun = pair.second;
+        for (auto & weighted_ob : weighted_obs) {
+            long & weight = weighted_ob.first;
+            Ob & ob = weighted_ob.second;
+            weight -= 32 * fun->get_Lx_set(ob).count_items();
+        }
+    }
+
+    std::sort(weighted_obs.begin(), weighted_obs.end());
+
+    std::vector<Ob> sorted;
+    sorted.push_back(0);
+    for (auto weighted_ob : weighted_obs) {
+        Ob ob = weighted_ob.second;
+        sorted.push_back(ob);
+    }
+
+    return sorted;
+}
+
 void restrict_structure (
         Structure & destin,
         Structure & src,
-        const DenseSet & src_subset)
+        const std::vector<Ob> & destin_to_src)
 {
+    POMAGMA_INFO("Restricting structure");
     POMAGMA_ASSERT_EQ(destin.carrier().item_count(), 0);
+    POMAGMA_ASSERT_EQ(
+        destin_to_src.size(),
+        1 + destin.carrier().item_dim());
 
     // build mapping
-    // TODO sort intelligently here, or make sure chart is sorted intelligently
     std::vector<Ob> src_to_destin(1 + src.carrier().item_dim(), 0);
-    std::vector<Ob> destin_to_src(1 + destin.carrier().item_dim(), 0);
-    Ob destin_ob = 1;
-    for (auto iter = src_subset.iter(); iter.ok(); iter.next()) {
-        Ob src_ob = * iter;
+    for (size_t destin_ob = 1; destin_ob < destin_to_src.size(); ++destin_ob) {
         destin.carrier().raw_insert(destin_ob);
-        src_to_destin[src_ob] = destin_ob;
-        destin_to_src[destin_ob] = src_ob;
-        ++destin_ob;
+        src_to_destin[destin_to_src[destin_ob]] = destin_ob;
     }
     destin.carrier().update();
 
@@ -268,7 +317,8 @@ void trim (
     POMAGMA_ASSERT_EQ(src_subset.count_items(), destin_item_dim);
 
     // restrict structure
-    detail::restrict_structure(destin, src, src_subset);
+    std::vector<Ob> destin_to_src = detail::sort_subset(src, src_subset);
+    detail::restrict_structure(destin, src, destin_to_src);
 }
 
 } // namespace pomagma

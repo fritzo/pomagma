@@ -266,13 +266,13 @@ template<> struct uint_<4> { typedef uint32_t t; };
 template<> struct uint_<8> { typedef uint64_t t; };
 
 typedef size_t Word;
-const size_t BITS_PER_WORD = 8 * sizeof(Word);
-const size_t WORD_POS_MASK = BITS_PER_WORD - 1;
-const size_t WORD_POS_SHIFT = static_log2i<BITS_PER_WORD>::val();
-const Word FULL_WORD = ~Word(0);
+static const size_t BITS_PER_WORD = 8 * sizeof(Word);
+static const size_t WORD_POS_MASK = BITS_PER_WORD - 1;
+static const size_t WORD_POS_SHIFT = static_log2i<BITS_PER_WORD>::val();
+static const Word FULL_WORD = ~Word(0);
 static_assert(FULL_WORD + Word(1) == 0, "FULL_WORD is bad");
 
-const size_t BITS_PER_CACHE_LINE = 512;
+static const size_t BITS_PER_CACHE_LINE = 512;
 
 //----------------------------------------------------------------------------
 // vector operations
