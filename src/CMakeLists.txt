@@ -19,9 +19,6 @@ add_library(pomagma_surveyor SHARED
 	surveyor/structure.cpp
 	surveyor/scheduler.cpp
 	)
-#install(TARGETS pomagma_surveyor
-#	LIBRARY
-#	DESTINATION ${PROJECT_SOURCE_DIR}/lib)
 
 add_library(pomagma_cartographer SHARED
 	util/util.cpp
@@ -42,10 +39,8 @@ add_library(pomagma_cartographer SHARED
 	cartographer/compact.cpp
 	cartographer/aggregate.cpp
 	cartographer/trim.cpp
+	cartographer/theorize.cpp
 	)
-#install(TARGETS pomagma_cartographer
-#	LIBRARY
-#	DESTINATION ${PROJECT_SOURCE_DIR}/lib)
 
 add_custom_command(
 	OUTPUT ${SRC_DIR}/language/language.pb.cc
