@@ -172,6 +172,20 @@ void test_operations (size_t size, rng_t & rng)
         POMAGMA_ASSERT(actual == expected, "insert_one is wrong");
     }
 
+    POMAGMA_INFO("testing complement");
+    expected.zero();
+    actual.zero();
+    for (Ob i = 1; i <= size; ++i) {
+        if (x.contains(i)) {
+            actual.insert(i);
+        } else {
+            expected.insert(i);
+        }
+    }
+    actual.complement();
+    actual.validate();
+    POMAGMA_ASSERT(actual == expected, "complement is wrong");
+
     POMAGMA_INFO("testing union");
     expected.zero();
     actual.zero();
