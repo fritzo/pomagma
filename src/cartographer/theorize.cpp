@@ -36,7 +36,8 @@ std::unordered_map<std::string, float> load_language (
 
 std::vector<float> measure_weights (
         Structure & structure,
-        const std::unordered_map<std::string, float> & language)
+        const std::unordered_map<std::string, float> & language,
+        float reltol)
 {
     POMAGMA_INFO("Measuring ob weights");
     POMAGMA_ASSERT(not language.empty(), "language is empty");
@@ -44,7 +45,24 @@ std::vector<float> measure_weights (
     const size_t item_count = structure.carrier().item_count();
     std::vector<float> weights(1 + item_count, 0);
 
-    POMAGMA_ERROR("TODO");
+    const float max_increase = 1.0 + reltol;
+    bool changed = true;
+    while (changed) {
+        changed = false;
+
+        for (auto iter = structure.carrier().iter(); iter.ok(); iter.next()) {
+            Ob ob = * iter;
+            float weight = 0;
+
+            POMAGMA_ERROR("TODO add weight of all local parses");
+
+            float old_weight = weights[ob];
+            weights[ob] = weight;
+            if (weight > old_weight * max_increase) {
+                changed = true;
+            }
+        }
+    }
 
     return weights;
 }
@@ -78,7 +96,7 @@ std::vector<std::string> parse_all (
     std::vector<LocalParse> max_parses(1 + item_count);
     std::vector<float> max_weights(1 + item_count, 0);
 
-    // initialize nullary functions
+    POMAGMA_DEBUG("initializing nullary functions");
     for (auto pair : structure.signature().nullary_functions()) {
         const auto & name = pair.first;
         const auto & fun = * pair.second;
@@ -87,7 +105,7 @@ std::vector<std::string> parse_all (
         max_weights[ob] = language.find(name)->second;
     }
 
-    // iteratively find best local parses
+    POMAGMA_DEBUG("iteratively finding best local parses");
     // TODO parallelize
     bool changed = true;
     while (changed) {
@@ -97,7 +115,7 @@ std::vector<std::string> parse_all (
         }
     }
 
-    // find full parses
+    POMAGMA_DEBUG("finding full parses");
     std::vector<std::string> parses(1 + item_count);
     std::deque<Ob> parse_queue;
     for (auto iter = structure.carrier().iter(); iter.ok(); iter.next()) {
@@ -149,7 +167,7 @@ void theorize (
         const char * conjectures_file,
         size_t max_count)
 {
-    POMAGMA_INFO("Conjecturing equations");
+    POMAGMA_INFO("Conjecturing " << max_count << " equations");
     auto & signature = structure.signature();
 
     const BinaryRelation & nless = * signature.binary_relations("NLESS");

@@ -63,11 +63,10 @@ def copy(chart_in, chart_out, **opts):
         **opts)
 
 
-def engineer(chart_in, history_in, language_in, language_out, **opts):
+def theorize(theory, world_in, conjectures_out, **opts):
     pomagma.util.log_call(
-        os.path.join(pomagma.util.BIN, 'engineer', 'engineer'),
-        abspath(chart_in),
-        abspath(history_in),
-        abspath(language_in),
-        abspath(language_out),
+        os.path.join(pomagma.util.BIN, 'cartographer', 'theorize'),
+        abspath(world_in),
+        os.path.join(pomagma.util.LANGUAGE, '{}.language'.format(theory)),
+        abspath(conjectures_out),
         **opts)
