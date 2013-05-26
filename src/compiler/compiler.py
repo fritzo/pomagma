@@ -1,7 +1,7 @@
 import math
-from pomagma.planner.expressions import Expression
-from pomagma.planner.sequents import Sequent, normalize, assert_normal
-from pomagma.planner.util import (
+from pomagma.compiler.expressions import Expression
+from pomagma.compiler.sequents import Sequent, normalize, assert_normal
+from pomagma.compiler.util import (
         inputs,
         union,
         set_with,

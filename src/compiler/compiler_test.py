@@ -1,7 +1,7 @@
 import re
-from pomagma.planner.expressions import Expression
-from pomagma.planner.sequents import Sequent
-from pomagma.planner.compiler import add_costs, get_events, compile_full, compile_given
+from pomagma.compiler.expressions import Expression
+from pomagma.compiler.sequents import Sequent
+from pomagma.compiler.compiler import add_costs, get_events, compile_full, compile_given
 
 EQUAL = lambda x, y: Expression('EQUAL', x, y)
 LESS = lambda x, y: Expression('LESS', x, y)

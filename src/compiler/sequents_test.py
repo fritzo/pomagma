@@ -1,6 +1,6 @@
-from pomagma.planner import sequents
-from pomagma.planner import parser
-from pomagma.planner.util import find_rules
+from pomagma.compiler import sequents
+from pomagma.compiler import parser
+from pomagma.compiler.util import find_rules
 
 RULE_SETS = map(parser.parse_rules, find_rules())
 

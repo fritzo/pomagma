@@ -77,20 +77,20 @@ set(SRC_DIR ${PROJECT_SOURCE_DIR}/src)
 add_custom_command(
 	OUTPUT ${CMAKE_CURRENT_LIST_DIR}/h4.laws.cpp
 		${SRC_DIR}/laws/h4.compiled
-	COMMAND python ${SRC_DIR}/planner/run.py compile
+	COMMAND python ${SRC_DIR}/compiler/run.py compile
 		${SRC_DIR}/laws/group.rules
 		${SRC_DIR}/laws/h4.rules
 		${SRC_DIR}/laws/h4.facts
 		cpp_out=${CMAKE_CURRENT_LIST_DIR}/h4.laws.cpp
 		laws_out=${SRC_DIR}/laws/h4.compiled
 		extensional=false
-	DEPENDS ${SRC_DIR}/planner/util.py
-		${SRC_DIR}/planner/expressions.py
-		${SRC_DIR}/planner/sequents.py
-		${SRC_DIR}/planner/parser.py
-		${SRC_DIR}/planner/compiler.py
-		${SRC_DIR}/planner/cpp.py
-		${SRC_DIR}/planner/run.py
+	DEPENDS ${SRC_DIR}/compiler/util.py
+		${SRC_DIR}/compiler/expressions.py
+		${SRC_DIR}/compiler/sequents.py
+		${SRC_DIR}/compiler/parser.py
+		${SRC_DIR}/compiler/compiler.py
+		${SRC_DIR}/compiler/cpp.py
+		${SRC_DIR}/compiler/run.py
 		${SRC_DIR}/laws/group.rules
 		${SRC_DIR}/laws/h4.rules
 		${SRC_DIR}/laws/h4.facts
@@ -102,20 +102,20 @@ target_link_libraries(h4.survey ${POMAGMA_SURVEYOR_MAIN_LIBS})
 add_custom_command(
 	OUTPUT ${CMAKE_CURRENT_LIST_DIR}/sk.laws.cpp
 		${SRC_DIR}/laws/sk.compiled
-	COMMAND python ${SRC_DIR}/planner/run.py compile
+	COMMAND python ${SRC_DIR}/compiler/run.py compile
 		${SRC_DIR}/laws/sk.rules
 		${SRC_DIR}/laws/sk.facts
 		${SRC_DIR}/laws/order.facts
 		cpp_out=${CMAKE_CURRENT_LIST_DIR}/sk.laws.cpp
 		laws_out=${SRC_DIR}/laws/sk.compiled
-	DEPENDS ${SRC_DIR}/planner/util.py
-		${SRC_DIR}/planner/expressions.py
-		${SRC_DIR}/planner/sequents.py
-		${SRC_DIR}/planner/parser.py
-		${SRC_DIR}/planner/extensional.py
-		${SRC_DIR}/planner/compiler.py
-		${SRC_DIR}/planner/cpp.py
-		${SRC_DIR}/planner/run.py
+	DEPENDS ${SRC_DIR}/compiler/util.py
+		${SRC_DIR}/compiler/expressions.py
+		${SRC_DIR}/compiler/sequents.py
+		${SRC_DIR}/compiler/parser.py
+		${SRC_DIR}/compiler/extensional.py
+		${SRC_DIR}/compiler/compiler.py
+		${SRC_DIR}/compiler/cpp.py
+		${SRC_DIR}/compiler/run.py
 		${SRC_DIR}/laws/sk.rules
 		${SRC_DIR}/laws/sk.facts
 		${SRC_DIR}/laws/order.facts
@@ -128,7 +128,7 @@ target_link_libraries(sk.survey ${POMAGMA_SURVEYOR_MAIN_LIBS})
 add_custom_command(
 	OUTPUT ${CMAKE_CURRENT_LIST_DIR}/skj.laws.cpp
 		${SRC_DIR}/laws/skj.compiled
-	COMMAND python ${SRC_DIR}/planner/run.py compile
+	COMMAND python ${SRC_DIR}/compiler/run.py compile
 		${SRC_DIR}/laws/sk.rules
 		${SRC_DIR}/laws/join.rules
 		#${SRC_DIR}/laws/types.rules
@@ -137,14 +137,14 @@ add_custom_command(
 		${SRC_DIR}/laws/types.facts
 		cpp_out=${CMAKE_CURRENT_LIST_DIR}/skj.laws.cpp
 		laws_out=${SRC_DIR}/laws/skj.compiled
-	DEPENDS ${SRC_DIR}/planner/util.py
-		${SRC_DIR}/planner/expressions.py
-		${SRC_DIR}/planner/sequents.py
-		${SRC_DIR}/planner/parser.py
-		${SRC_DIR}/planner/extensional.py
-		${SRC_DIR}/planner/compiler.py
-		${SRC_DIR}/planner/cpp.py
-		${SRC_DIR}/planner/run.py
+	DEPENDS ${SRC_DIR}/compiler/util.py
+		${SRC_DIR}/compiler/expressions.py
+		${SRC_DIR}/compiler/sequents.py
+		${SRC_DIR}/compiler/parser.py
+		${SRC_DIR}/compiler/extensional.py
+		${SRC_DIR}/compiler/compiler.py
+		${SRC_DIR}/compiler/cpp.py
+		${SRC_DIR}/compiler/run.py
 		${SRC_DIR}/laws/sk.rules
 		${SRC_DIR}/laws/join.rules
 		${SRC_DIR}/laws/types.rules
@@ -160,7 +160,7 @@ target_link_libraries(skj.survey ${POMAGMA_SURVEYOR_MAIN_LIBS})
 add_custom_command(
 	OUTPUT ${CMAKE_CURRENT_LIST_DIR}/skjo.laws.cpp
 		${SRC_DIR}/laws/skjo.compiled
-	COMMAND python ${SRC_DIR}/planner/run.py compile
+	COMMAND python ${SRC_DIR}/compiler/run.py compile
 		${SRC_DIR}/laws/sk.rules
 		${SRC_DIR}/laws/join.rules
 		#${SRC_DIR}/laws/types.rules
@@ -173,14 +173,14 @@ add_custom_command(
 		${SRC_DIR}/laws/reflect.facts
 		cpp_out=${CMAKE_CURRENT_LIST_DIR}/skjo.laws.cpp
 		laws_out=${SRC_DIR}/laws/skjo.compiled
-	DEPENDS ${SRC_DIR}/planner/util.py
-		${SRC_DIR}/planner/expressions.py
-		${SRC_DIR}/planner/sequents.py
-		${SRC_DIR}/planner/parser.py
-		${SRC_DIR}/planner/extensional.py
-		${SRC_DIR}/planner/compiler.py
-		${SRC_DIR}/planner/cpp.py
-		${SRC_DIR}/planner/run.py
+	DEPENDS ${SRC_DIR}/compiler/util.py
+		${SRC_DIR}/compiler/expressions.py
+		${SRC_DIR}/compiler/sequents.py
+		${SRC_DIR}/compiler/parser.py
+		${SRC_DIR}/compiler/extensional.py
+		${SRC_DIR}/compiler/compiler.py
+		${SRC_DIR}/compiler/cpp.py
+		${SRC_DIR}/compiler/run.py
 		${SRC_DIR}/laws/sk.rules
 		${SRC_DIR}/laws/join.rules
 		${SRC_DIR}/laws/types.rules

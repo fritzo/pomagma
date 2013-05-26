@@ -1,6 +1,6 @@
 import os
-from pomagma.planner import run
-from pomagma.planner.util import find_facts, find_rules
+from pomagma.compiler import run
+from pomagma.compiler.util import find_facts, find_rules
 
 
 def _test_compile(filename):
