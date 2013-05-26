@@ -1,93 +1,101 @@
 digraph G {
-	overlap=false;
-	size="4,4";
-	node [shape=box];
+    overlap=false;
+    size="4,4";
+    node [shape=box];
 
 
-	//subgraph cluster_legend {
-	//	rank="max";
-	//	Human [style=filled, fillcolor=pink];
-	//	Data [shape=ellipse];
-	//}
+    //subgraph cluster_legend {
+    //    rank="max";
+    //    Human [style=filled, fillcolor=pink];
+    //    Data [shape=ellipse];
+    //}
 
-	Theorist;
-	Linguist;
+    Theorist;
+    Linguist;
     {
         rank="same";
         node [style=filled, fillcolor=pink];
         TheoriesReviewer [label="Reviewer"];
         LanguagesReviewer [label="Reviewer"];
-        Writer;
     }
-	{
-		node [shape=ellipse];
-		Languages;
-		Theories;
-		Atlas;
-		Corpus;
-	}
+    {
+        node [shape=ellipse];
+        Languages;
+        Theories;
+        Atlas;
+        Corpus;
+    }
     Compiler;
-	Simplifier;
+    Analyst;
 
-	subgraph cluster_survey {
-		Surveyor;
+    subgraph cluster_survey {
+        Surveyor;
 
-		color = "#666666";
-		fontcolor = "#666666";
-		label = "many";
-		labelloc = "b";
-	}
+        color = "#666666";
+        fontcolor = "#666666";
+        label = "many";
+        labelloc = "b";
+    }
 
-	{ rank="min"; Linguist; Theorist; }
-	{ rank="same"; Languages; Theories; Atlas; Corpus; }
-	{ rank="same"; Cartographer; Compiler; Simplifier; }
+    subgraph cluster_edit {
+        Editor;
+        Writer [style=filled, fillcolor=pink];
+
+        color = "#666666";
+        fontcolor = "#666666";
+        label = "many";
+        labelloc = "b";
+    }
+
+    { rank="min"; Linguist; Theorist; }
+    { rank="same"; Languages; Theories; Atlas; Corpus; }
+    { rank="same"; Cartographer; Compiler; Analyst; }
 
 
-	// Workflow: Compile
-	edge [dir=forward arrowhead=normal]; // pull
-	Theories -> Compiler;
-	Compiler -> Surveyor;
-	Compiler -> Cartographer;
+    // Workflow: Compile
+    edge [dir=forward arrowhead=normal]; // pull
+    Theories -> Compiler;
+    Compiler -> Surveyor;
+    Compiler -> Cartographer;
 
-	// Workflow: Survey
-	edge [dir=forward arrowhead=normal]; // pull
-	Atlas -> Cartographer;
-	Languages -> Cartographer;
-	Languages -> Surveyor;
-	Cartographer -> Surveyor;
-	edge [dir=both arrowtail=inv arrowhead=empty]; // push
-	Surveyor -> Cartographer;
-	Cartographer -> Atlas;
+    // Workflow: Survey
+    edge [dir=forward arrowhead=normal]; // pull
+    Atlas -> Cartographer;
+    Languages -> Cartographer;
+    Languages -> Surveyor;
+    Cartographer -> Surveyor;
+    edge [dir=both arrowtail=inv arrowhead=empty]; // push
+    Surveyor -> Cartographer;
+    Cartographer -> Atlas;
 
-	// Workflow: Simplify
-	edge [dir=forward arrowhead=normal]; // pull
-	Atlas -> Simplifier;
-	Languages -> Simplifier;
-	Corpus -> Simplifier;
-	edge [dir=both arrowtail=inv arrowhead=empty]; // push
-	Simplifier -> Corpus;
+    // Workflow: Edit
+    edge [dir=forward arrowhead=normal]; // pull
+    Atlas -> Analyst;
+    Languages -> Analyst;
+    Corpus -> Analyst;
+    Analyst -> Editor;
+    Editor -> Writer;
+    edge [dir=both arrowtail=inv arrowhead=empty]; // push
+    Analyst -> Corpus;
+    Editor -> Analyst;
+    Writer -> Editor;
 
-	// Workflow: Fit Language
-	edge [dir=forward arrowhead=normal]; // pull
-	Corpus -> Linguist;
-	Atlas -> Linguist;
-	Languages -> Linguist;
-	Linguist -> LanguagesReviewer;
-	edge [dir=both arrowtail=inv arrowhead=empty]; // push
-	Linguist -> Languages;
-	LanguagesReviewer -> Languages;
-	LanguagesReviewer -> Theories;
+    // Workflow: Fit Language
+    edge [dir=forward arrowhead=normal]; // pull
+    Corpus -> Linguist;
+    Atlas -> Linguist;
+    Languages -> Linguist;
+    Linguist -> LanguagesReviewer;
+    edge [dir=both arrowtail=inv arrowhead=empty]; // push
+    Linguist -> Languages;
+    LanguagesReviewer -> Languages;
+    LanguagesReviewer -> Theories;
 
-	// Workflow: Theorize
-	edge [dir=forward arrowhead=normal]; // pull
-	Atlas -> Theorist;
-	Languages ->  Theorist;
-	Theorist -> TheoriesReviewer;
-	edge [dir=both arrowtail=inv arrowhead=empty]; // push
-	TheoriesReviewer -> Theories;
-
-	// Workflow: Write
-	edge [dir=forward arrowhead=normal]; // pull
-	edge [dir=both arrowtail=inv arrowhead=empty]; // push
-	Writer -> Corpus;
+    // Workflow: Theorize
+    edge [dir=forward arrowhead=normal]; // pull
+    Atlas -> Theorist;
+    Languages ->  Theorist;
+    Theorist -> TheoriesReviewer;
+    edge [dir=both arrowtail=inv arrowhead=empty]; // push
+    TheoriesReviewer -> Theories;
 }
