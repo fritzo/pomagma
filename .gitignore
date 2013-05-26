@@ -18,4 +18,4 @@
 *.compiled
 *.laws.cpp
 !/src/grower/dummy.laws.cpp
-*.vehicle
+*.language

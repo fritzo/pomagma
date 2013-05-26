@@ -51,7 +51,7 @@ def trim(laws, world_in, region_out, size, **opts):
         abspath(region_out),
         size,
         os.path.join(pomagma.util.LAWS, '{}.compiled'.format(laws)),
-        os.path.join(pomagma.util.VEHICLES, '{}.vehicle'.format(laws)),
+        os.path.join(pomagma.util.LANGUAGE, '{}.language'.format(laws)),
         **opts)
 
 
@@ -63,11 +63,11 @@ def copy(chart_in, chart_out, **opts):
         **opts)
 
 
-def engineer(chart_in, history_in, vehicle_in, vehicle_out, **opts):
+def engineer(chart_in, history_in, language_in, language_out, **opts):
     pomagma.util.log_call(
         os.path.join(pomagma.util.BIN, 'engineer', 'engineer'),
         abspath(chart_in),
         abspath(history_in),
-        abspath(vehicle_in),
-        abspath(vehicle_out),
+        abspath(language_in),
+        abspath(language_out),
         **opts)

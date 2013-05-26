@@ -1,4 +1,4 @@
-from pomagma.vehicles.vehicles_pb2 import Vehicle, WeightedTerm
+from pomagma.language.language_pb2 import Language, WeightedTerm
 
 
 ARITY_TO_PB2 = {
@@ -28,7 +28,7 @@ def normalize_dict(grouped):
             group[key] *= scale
 
 
-def dict_to_vehicle(grouped):
+def dict_to_language(grouped):
     '''
     Convert from grouped dict to protobuf format.
 
@@ -52,23 +52,23 @@ def dict_to_vehicle(grouped):
     '''
     grouped = grouped.copy()
     normalize_dict(grouped)
-    vehicle = Vehicle()
+    language = Language()
     for arity, group in grouped.iteritems():
         for name, weight in group.iteritems():
-            term = vehicle.terms.add()
+            term = language.terms.add()
             term.name = name
             term.arity = ARITY_TO_PB2[arity.upper()]
             term.weight = weight
 
-    return vehicle
+    return language
 
 
-def vehicle_to_dict(vehicle):
+def language_to_dict(language):
     '''
     Convert from protobuf format to grouped dict.
     '''
     grouped = {}
-    for term in vehicle.terms:
+    for term in language.terms:
         arity = ARITY_FROM_PB2[term.arity]
         grouped.setdefault(arity, {})[term.name] = term.weight
     return grouped

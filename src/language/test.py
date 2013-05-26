@@ -2,15 +2,15 @@ import os
 import glob
 import simplejson as json
 from nose.tools import assert_list_equal, assert_almost_equal
-from pomagma.vehicles import dict_to_vehicle, vehicle_to_dict, normalize_dict
+from pomagma.language import dict_to_language, language_to_dict, normalize_dict
 
 
 SCRIPT_DIR = os.path.abspath(os.path.dirname(__file__))
 
 
 def assert_converts(expected):
-    vehicle = dict_to_vehicle(expected)
-    actual = vehicle_to_dict(vehicle)
+    language = dict_to_language(expected)
+    actual = language_to_dict(language)
     assert_list_equal(expected.keys(), actual.keys())
     for arity in expected.keys():
         assert_list_equal(expected[arity].keys(), actual[arity].keys())

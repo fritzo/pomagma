@@ -32,9 +32,9 @@ void dump_structure (const std::string & filename)
     POMAGMA_INFO("dumping structure to " << filename);
 }
 
-void load_vehicle (const std::string & filename)
+void load_language (const std::string & filename)
 {
-    POMAGMA_INFO("loading vehicle from " << filename);
+    POMAGMA_INFO("loading language from " << filename);
 }
 
 void execute (const SampleTask &, rng_t &)

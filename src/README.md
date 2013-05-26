@@ -18,8 +18,8 @@ Actors
 - Surveyors - explore and measures uncharted territory
 - Cartographers - direct surveyors and incorporate surveys into the atlas
 - Simplifier - coordinates guides, dispatches information, records routes
-- Linguist - develop vehicles for various terrain
-- Language Reviewer - ensure new vehicles will be safe for future traffic patterns
+- Linguist - fits language to corpus and proposes new terms
+- Language Reviewer - ensure new language modifications are safe
 - Theorist - propose new routes between common destinations
 - Theory Reviewer - evaluates transportation bills
 
@@ -29,7 +29,7 @@ Workflows
 - Compile: interpret laws to decide city extents and create surveying strategies
 - Survey: select a region; survey it; aggregate measurements into atlas
 - Write: travel around Abstractland with a guide
-- Learn Language: optimize vehicles based on driving history
-- Make Language: invent new parts for vehicles; review for safety
+- Learn Language: optimize language weights based on corpus
+- Make Language: propose new terms to add to the language; review for safety
 - Theorize: propose new routes; evaluate economic effects; legislate
 - Recover (after Fregean collapse): assess damage; pinpoint problem; rebuild
