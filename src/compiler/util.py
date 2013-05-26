@@ -62,12 +62,12 @@ def methodof(class_, name=None):
 def find_facts():
     return [
         os.path.abspath(f)
-        for f in glob.glob(os.path.join(pomagma.util.LAWS, '*.facts'))
+        for f in glob.glob(os.path.join(pomagma.util.THEORY, '*.facts'))
         ]
 
 
 def find_rules():
     return [
         os.path.abspath(f)
-        for f in glob.glob(os.path.join(pomagma.util.LAWS, '*.rules'))
+        for f in glob.glob(os.path.join(pomagma.util.THEORY, '*.rules'))
         ]

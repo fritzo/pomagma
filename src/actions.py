@@ -10,10 +10,10 @@ def abspath(path):
     return os.path.abspath(os.path.expanduser(path))
 
 
-def init(laws, chart_out, size=None, **opts):
+def init(theory, chart_out, size=None, **opts):
     if size is None:
-        size = pomagma.util.MIN_SIZES[laws]
-    surveyor = pomagma.util.SURVEYORS[laws]
+        size = pomagma.util.MIN_SIZES[theory]
+    surveyor = pomagma.util.SURVEYORS[theory]
     pomagma.util.log_call(
         os.path.join(pomagma.util.BIN, 'surveyor', surveyor),
         abspath(chart_out),
@@ -21,10 +21,10 @@ def init(laws, chart_out, size=None, **opts):
         **opts)
 
 
-def survey(laws, chart_in, chart_out, size, **opts):
-    if size < pomagma.util.MIN_SIZES[laws]:
-        raise ValueError('chart is too small for laws')
-    surveyor = pomagma.util.SURVEYORS[laws]
+def survey(theory, chart_in, chart_out, size, **opts):
+    if size < pomagma.util.MIN_SIZES[theory]:
+        raise ValueError('chart is too small for theory')
+    surveyor = pomagma.util.SURVEYORS[theory]
     pomagma.util.log_call(
         os.path.join(pomagma.util.BIN, 'surveyor', surveyor),
         abspath(chart_in),
@@ -42,16 +42,16 @@ def aggregate(world_in, region_in, world_out, **opts):
         **opts)
 
 
-def trim(laws, world_in, region_out, size, **opts):
-    if size < pomagma.util.MIN_SIZES[laws]:
-        raise ValueError('chart is too small for laws')
+def trim(theory, world_in, region_out, size, **opts):
+    if size < pomagma.util.MIN_SIZES[theory]:
+        raise ValueError('chart is too small for theory')
     pomagma.util.log_call(
         os.path.join(pomagma.util.BIN, 'cartographer', 'trim'),
         abspath(world_in),
         abspath(region_out),
         size,
-        os.path.join(pomagma.util.LAWS, '{}.compiled'.format(laws)),
-        os.path.join(pomagma.util.LANGUAGE, '{}.language'.format(laws)),
+        os.path.join(pomagma.util.THEORY, '{}.compiled'.format(theory)),
+        os.path.join(pomagma.util.LANGUAGE, '{}.language'.format(theory)),
         **opts)
 
 

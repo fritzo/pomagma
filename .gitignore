@@ -16,6 +16,6 @@
 *.pb.cc
 *_pb2.py
 *.compiled
-*.laws.cpp
-!/src/grower/dummy.laws.cpp
+*.theory.cpp
+!/src/grower/dummy.theory.cpp
 *.language

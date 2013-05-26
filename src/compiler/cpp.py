@@ -712,14 +712,14 @@ def get_functions_used_in(sequents, exprs):
 
 
 @inputs(Code)
-def write_laws(code, rules=None, facts=None):
+def write_theory(code, rules=None, facts=None):
 
     sequents = set(rules) if rules else set()
     facts = set(facts) if facts else set()
     functions = get_functions_used_in(sequents, facts)
 
     code('''
-        #include "laws.hpp"
+        #include "theory.hpp"
         
         namespace pomagma
         {

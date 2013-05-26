@@ -52,9 +52,9 @@ void insert_nullary_functions ()
     POMAGMA_INFO("insert_nullary_functions()");
 }
 
-void assume_core_facts (const char * laws_file)
+void assume_core_facts (const char * theory_file)
 {
-    POMAGMA_INFO("assume_core_facts(" << laws_file << ")");
+    POMAGMA_INFO("assume_core_facts(" << theory_file << ")");
 }
 
 void cleanup_tasks_push_all ()

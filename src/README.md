@@ -26,7 +26,7 @@ Actors
 Workflows
 ---------
 
-- Compile: interpret laws to decide city extents and create surveying strategies
+- Compile: interpret theory to decide city extents and create surveying strategies
 - Survey: select a region; survey it; aggregate measurements into atlas
 - Write: travel around Abstractland with a guide
 - Learn Language: optimize language weights based on corpus
