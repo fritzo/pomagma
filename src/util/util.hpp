@@ -305,6 +305,19 @@ inline bool operator== (const std::vector<T> & x, const std::vector<T> & y)
 }
 
 //----------------------------------------------------------------------------
+// map operations
+
+template<class Map>
+const typename Map::mapped_type & map_find (
+        const Map & map,
+        const typename Map::key_type & key)
+{
+    auto iter = map.find(key);
+    POMAGMA_ASSERT(iter != map.end(), "missing key " << key);
+    return iter->second;
+}
+
+//----------------------------------------------------------------------------
 // string operations
 
 inline std::string get_filename (const std::string & path)

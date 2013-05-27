@@ -600,7 +600,7 @@ inline void update_data (
     carrier.update();
     POMAGMA_ASSERT_EQ(carrier.rep_count(), carrier.item_count());
     auto actual = get_hash(carrier);
-    auto expected = hash.find("carrier")->second;
+    auto expected = map_find(hash, "carrier");
     POMAGMA_ASSERT(actual == expected, "carrier is corrupt");
 
     POMAGMA_INFO("done updating carrier");
@@ -638,7 +638,7 @@ inline void update_data (
 
     rel.update();
     auto actual = get_hash(carrier, rel);
-    auto expected = hash.find("relations/binary/" + name)->second;
+    auto expected = map_find(hash, "relations/binary/" + name);
     POMAGMA_ASSERT(actual == expected,
             "binary relation " << name << " is corrupt");
 
@@ -679,7 +679,7 @@ inline void update_data (
 
     fun.update();
     auto actual = get_hash(fun);
-    auto expected = hash.find("functions/nullary/" + name)->second;
+    auto expected = map_find(hash, "functions/nullary/" + name);
     POMAGMA_ASSERT(actual == expected,
             "nullary function " << name << " is corrupt");
 
@@ -723,7 +723,7 @@ inline void update_data (
 
     fun.update();
     auto actual = get_hash(fun);
-    auto expected = hash.find("functions/injective/" + name)->second;
+    auto expected = map_find(hash, "functions/injective/" + name);
     POMAGMA_ASSERT(actual == expected,
             "injective function " << name << " is corrupt");
 
@@ -799,7 +799,7 @@ inline void update_data (
 
     fun.update();
     auto actual = get_hash(carrier, fun);
-    auto expected = hash.find("functions/" + arity + "/" + name)->second;
+    auto expected = map_find(hash, "functions/" + arity + "/" + name);
     POMAGMA_ASSERT(actual == expected,
             arity << " function " << name << " is corrupt");
 

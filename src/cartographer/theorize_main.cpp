@@ -40,19 +40,14 @@ int main (int argc, char ** argv)
     if (POMAGMA_DEBUG_LEVEL > 1) {
         structure.validate();
     }
-
-    // load language
-    const auto language = pomagma::load_language(language_file);
-
-    // compute language weights
-    const auto weights = pomagma::measure_weights(structure, language);
-    const auto parses = pomagma::parse_all(structure, language);
+    POMAGMA_ASSERT_EQ(
+        structure.carrier().item_dim(),
+        structure.carrier().item_count());
 
     // theorize
     pomagma::theorize(
         structure,
-        weights,
-        parses,
+        language_file,
         conjectures_file,
         conjecture_count);
 
