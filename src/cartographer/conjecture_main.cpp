@@ -1,7 +1,7 @@
 #include "util.hpp"
 #include "carrier.hpp"
 #include "structure.hpp"
-#include "theorize.hpp"
+#include "conjecture.hpp"
 
 int main (int argc, char ** argv)
 {
@@ -44,8 +44,8 @@ int main (int argc, char ** argv)
         structure.carrier().item_dim(),
         structure.carrier().item_count());
 
-    // theorize
-    pomagma::theorize(
+    // conjecture
+    pomagma::conjecture(
         structure,
         language_file,
         conjectures_file,

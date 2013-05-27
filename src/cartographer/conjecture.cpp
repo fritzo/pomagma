@@ -1,4 +1,4 @@
-#include "theorize.hpp"
+#include "conjecture.hpp"
 #include "carrier.hpp"
 #include "nullary_function.hpp"
 #include "injective_function.hpp"
@@ -128,7 +128,7 @@ Router::Router (
     POMAGMA_ASSERT(not language.empty(), "language is empty");
     Signature & signature = structure.signature();
 
-    POMAGMA_DEBUG("building router indices");
+    POMAGMA_INFO("Building router indices");
 
     for (auto pair : signature.nullary_functions()) {
         const auto & name = pair.first;
@@ -397,7 +397,7 @@ void conjecture (
 
 } // namespace detail
 
-void theorize (
+void conjecture (
         Structure & structure,
         const char * language_file,
         const char * conjectures_file,

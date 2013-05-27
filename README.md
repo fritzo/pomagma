@@ -32,7 +32,7 @@ An integrated development environment for formal mathematics.
 - Edit: write code; respond to static analysis of code
 - Learn Language: optimize language weights based on corpus
 - Make Language: propose new terms to add to the language; review for safety
-- Theorize: propose new equations; evaluate economic effects; commit
+- Conjecture: propose new equations; evaluate economic effects; commit
 - Recover (after Fregean collapse): assess damage; pinpoint problem; rebuild
 
 ## Milestones

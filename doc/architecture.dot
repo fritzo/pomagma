@@ -91,7 +91,7 @@ digraph G {
     LanguagesReviewer -> Languages;
     LanguagesReviewer -> Theories;
 
-    // Workflow: Theorize
+    // Workflow: Conjecture
     edge [dir=forward arrowhead=normal]; // pull
     Atlas -> Theorist;
     Languages ->  Theorist;

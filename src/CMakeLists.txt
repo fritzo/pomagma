@@ -39,7 +39,7 @@ add_library(pomagma_cartographer SHARED
 	cartographer/compact.cpp
 	cartographer/aggregate.cpp
 	cartographer/trim.cpp
-	cartographer/theorize.cpp
+	cartographer/conjecture.cpp
 	)
 
 add_custom_command(

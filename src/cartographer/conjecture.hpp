@@ -11,7 +11,7 @@ namespace pomagma
 
 static const size_t DEFAULT_CONJECTURE_COUNT = 1000;
 
-void theorize (
+void conjecture (
         Structure & structure,
         const char * language_file,
         const char * conjectures_file,

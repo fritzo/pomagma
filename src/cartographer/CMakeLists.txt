@@ -44,6 +44,6 @@ target_link_libraries(aggregate ${POMAGMA_CARTOGRAPHER_LIBS})
 add_executable(trim trim_main.cpp)
 target_link_libraries(trim ${POMAGMA_CARTOGRAPHER_LIBS})
 
-add_executable(theorize theorize_main.cpp)
-target_link_libraries(theorize ${POMAGMA_CARTOGRAPHER_LIBS})
+add_executable(conjecture conjecture_main.cpp)
+target_link_libraries(conjecture ${POMAGMA_CARTOGRAPHER_LIBS})
 
