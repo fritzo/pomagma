@@ -5,8 +5,13 @@
 #include "binary_function.hpp"
 #include "binary_relation.hpp"
 #include "symmetric_function.hpp"
+#include "compact.hpp"
+#include "scheduler.hpp"
 #include <pomagma/language/language.pb.h>
 #include <deque>
+#include <cstdlib>
+#include <unistd.h> // for fork
+#include <sys/wait.h> // for wait
 
 namespace pomagma
 {
@@ -123,7 +128,7 @@ Router::Router (
         const std::unordered_map<std::string, float> & language)
     : m_carrier(structure.carrier()),
       m_language(language),
-      m_value_index(structure.carrier().item_dim())
+      m_value_index(structure.carrier().item_count())
 {
     POMAGMA_ASSERT(not language.empty(), "language is empty");
     Signature & signature = structure.signature();
@@ -187,7 +192,7 @@ Router::Router (
         });
 
     // assume all values are reached by at least one segment
-    m_value_index.resize(1 + m_carrier.item_dim(), 0);
+    m_value_index.resize(1 + m_carrier.item_count(), 0);
     for (size_t i = 0; i < m_segments.size(); ++i) {
         m_value_index[m_segments[i].val] = i;
     }
@@ -196,18 +201,18 @@ Router::Router (
 std::vector<float> Router::measure_probs (float reltol) const
 {
     POMAGMA_INFO("Measuring ob probs");
-    const size_t item_dim = m_carrier.item_dim();
-    std::vector<float> probs(1 + item_dim, 0);
+    const size_t item_count = m_carrier.item_count();
+    std::vector<float> probs(1 + item_count, 0);
 
     const float max_increase = 1.0 + reltol;
     bool changed = true;
     while (changed) {
         changed = false;
 
-        POMAGMA_DEBUG("accumulating route probabilities");
+        POMAGMA_INFO("accumulating route probabilities");
 
         # pragma omp parallel for schedule(dynamic, 1)
-        for (size_t i = 0; i < item_dim; ++i) {
+        for (size_t i = 0; i < item_count; ++i) {
             Ob ob = 1 + i;
 
             float prob = 0;
@@ -246,18 +251,18 @@ std::vector<std::string> Router::find_routes () const
 {
     POMAGMA_INFO("Routing all obs");
 
-    const size_t item_dim = m_carrier.item_dim();
-    std::vector<float> best_probs(1 + item_dim, 0);
-    std::vector<Segment> best_segments(1 + item_dim);
+    const size_t item_count = m_carrier.item_count();
+    std::vector<float> best_probs(1 + item_count, 0);
+    std::vector<Segment> best_segments(1 + item_count);
 
     bool changed = true;
     while (changed) {
         changed = false;
 
-        POMAGMA_DEBUG("finding best local routes");
+        POMAGMA_INFO("finding best local routes");
 
         #pragma omp parallel for schedule(dynamic, 1)
-        for (size_t i = 0; i < item_dim; ++i) {
+        for (size_t i = 0; i < item_count; ++i) {
             Ob ob = 1 + i;
 
             float & best_prob = best_probs[ob];
@@ -298,7 +303,7 @@ std::vector<std::string> Router::find_routes () const
 
     POMAGMA_DEBUG("scheduling route building");
     std::vector<Ob> schedule;
-    schedule.reserve(item_dim);
+    schedule.reserve(item_count);
     for (auto iter = m_carrier.iter(); iter.ok(); iter.next()) {
         Ob ob = * iter;
         POMAGMA_ASSERT_LT(0, best_probs[ob]);
@@ -312,7 +317,7 @@ std::vector<std::string> Router::find_routes () const
         });
 
     POMAGMA_DEBUG("building full routes");
-    std::vector<std::string> routes(1 + item_dim);
+    std::vector<std::string> routes(1 + item_count);
     for (Ob ob : schedule) {
 
         const Segment & segment = best_segments[ob];
@@ -341,7 +346,7 @@ std::vector<std::string> Router::find_routes () const
     return routes;
 }
 
-void conjecture (
+std::vector<std::pair<Ob, Ob>> conjecture (
         Structure & structure,
         const std::vector<float> & probs,
         const std::vector<std::string> & routes,
@@ -393,11 +398,95 @@ void conjecture (
         const auto & rhs = routes[pair.second];
         file << "\nEQUAL " << lhs << " " << rhs;
     }
+
+    return conjectures;
+}
+
+inline float get_entropy (const std::vector<float> & probs)
+{
+    float entropy = 0;
+    for (float p : probs) {
+        if (p > 0) {
+            entropy += p * logf(p);
+        }
+    }
+    return entropy;
+}
+
+void weigh_conjecture (
+        Structure & structure,
+        const std::unordered_map<std::string, float> & language,
+        Ob lhs,
+        Ob rhs,
+        const std::string & equation,
+        const char * conjectures_file)
+{
+    pid_t child = fork();
+    POMAGMA_ASSERT(child != -1, "fork failed");
+
+    if (child == 0) {
+        POMAGMA_INFO("Assuming " << equation);
+        Carrier & carrier = structure.carrier();
+        carrier.set_merge_callback(schedule_merge);
+        Ob dep = std::max(lhs, rhs);
+        Ob rep = std::min(lhs, rhs);
+        carrier.merge(dep, rep);
+        process_mergers(structure.signature());
+        size_t nullary_count = structure.signature().nullary_functions().size();
+        bool consistent = carrier.item_count() >= nullary_count;
+        if (consistent) {
+            compact(structure);
+
+            POMAGMA_DEBUG("measuring entropy");
+            detail::Router router(structure, language);
+            const std::vector<float> probs = router.measure_probs(0.01f);
+            float entropy = get_entropy(probs);
+            std::ofstream file(conjectures_file, std::ios::app);
+            POMAGMA_ASSERT(file, "failed to open " << conjectures_file);
+            file << "\n" << entropy << " " << equation;
+        }
+        _exit(0);
+    } else {
+        int status;
+        wait(&status);
+        POMAGMA_ASSERT(status == 0, "child process failed");
+    }
+}
+
+void conjecture_deep (
+        Structure & structure,
+        const std::unordered_map<std::string, float> & language,
+        const std::vector<std::string> & routes,
+        const std::vector<std::pair<Ob, Ob>> & shallow_conjectures,
+        const char * conjectures_file)
+{
+    POMAGMA_INFO("Generating deep conjectures");
+    // TODO omit binary relations
+    //structure.signature().binary_relations().clear();
+
+    POMAGMA_DEBUG("writing conjectures to " << conjectures_file);
+    {
+        std::ofstream file(conjectures_file, std::ios::out);
+        POMAGMA_ASSERT(file, "failed to open " << conjectures_file);
+        file << "# deep conjectures generated by pomagma";
+    }
+    for (auto pair : shallow_conjectures) {
+        const Ob lhs = pair.first;
+        const Ob rhs = pair.second;
+        std::string equation = "EQUAL " + routes[lhs] + " " + routes[rhs];
+        weigh_conjecture(
+            structure,
+            language,
+            lhs,
+            rhs,
+            equation,
+            conjectures_file);
+    }
 }
 
 } // namespace detail
 
-void conjecture (
+void conjecture_shallow (
         Structure & structure,
         const char * language_file,
         const char * conjectures_file,
@@ -408,6 +497,30 @@ void conjecture (
     const std::vector<float> probs = router.measure_probs();
     std::vector<std::string> routes = router.find_routes();
     detail::conjecture(structure, probs, routes, conjectures_file, max_count);
+}
+
+void conjecture_deep (
+        Structure & structure,
+        const char * language_file,
+        const char * conjectures_file,
+        size_t max_count)
+{
+    const auto language = detail::load_language(language_file);
+    detail::Router router(structure, language);
+    const std::vector<float> probs = router.measure_probs();
+    std::vector<std::string> routes = router.find_routes();
+    const auto conjectures = detail::conjecture(
+        structure,
+        probs,
+        routes,
+        conjectures_file,
+        max_count);
+    detail::conjecture_deep(
+        structure,
+        language,
+        routes,
+        conjectures,
+        conjectures_file);
 }
 
 } // namespace pomagma
