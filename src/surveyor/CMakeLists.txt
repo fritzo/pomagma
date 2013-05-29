@@ -1,6 +1,20 @@
 
 include_directories(${CMAKE_SOURCE_DIR}/)
 
+
+add_library(pomagma_surveyor SHARED
+	carrier.cpp
+	base_bin_rel.cpp
+	binary_relation.cpp
+	nullary_function.cpp
+	injective_function.cpp
+	binary_function.cpp
+	symmetric_function.cpp
+	parser.cpp
+	sampler.cpp
+	structure.cpp
+	scheduler.cpp
+	)
 set(POMAGMA_SURVEYOR_LIBS
 	pomagma_surveyor
 	pomagma_util_concurrent

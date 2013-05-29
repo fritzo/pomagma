@@ -1,6 +1,24 @@
 
 include_directories(${CMAKE_SOURCE_DIR}/)
 
+add_library(pomagma_cartographer SHARED
+	carrier.cpp
+	base_bin_rel.cpp
+	binary_relation.cpp
+	nullary_function.cpp
+	injective_function.cpp
+	binary_function.cpp
+	symmetric_function.cpp
+	parser.cpp
+	sampler.cpp
+	structure.cpp
+	scheduler.cpp
+	compact.cpp
+	aggregate.cpp
+	trim.cpp
+	router.cpp
+	conjecture.cpp
+	)
 set(POMAGMA_CARTOGRAPHER_LIBS
 	pomagma_cartographer
 	pomagma_util_sequential

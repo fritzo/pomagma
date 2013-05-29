@@ -18,38 +18,6 @@ add_library(pomagma_util_concurrent SHARED
 	language/language.pb.cc
 	)
 
-add_library(pomagma_surveyor SHARED
-	surveyor/carrier.cpp
-	surveyor/base_bin_rel.cpp
-	surveyor/binary_relation.cpp
-	surveyor/nullary_function.cpp
-	surveyor/injective_function.cpp
-	surveyor/binary_function.cpp
-	surveyor/symmetric_function.cpp
-	surveyor/parser.cpp
-	surveyor/sampler.cpp
-	surveyor/structure.cpp
-	surveyor/scheduler.cpp
-	)
-
-add_library(pomagma_cartographer SHARED
-	cartographer/carrier.cpp
-	cartographer/base_bin_rel.cpp
-	cartographer/binary_relation.cpp
-	cartographer/nullary_function.cpp
-	cartographer/injective_function.cpp
-	cartographer/binary_function.cpp
-	cartographer/symmetric_function.cpp
-	cartographer/parser.cpp
-	cartographer/sampler.cpp
-	cartographer/structure.cpp
-	cartographer/scheduler.cpp
-	cartographer/compact.cpp
-	cartographer/aggregate.cpp
-	cartographer/trim.cpp
-	cartographer/conjecture.cpp
-	)
-
 add_custom_command(
 	OUTPUT ${SRC_DIR}/language/language.pb.cc
 	COMMAND protoc ${SRC_DIR}/language/language.proto

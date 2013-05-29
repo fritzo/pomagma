@@ -49,7 +49,7 @@ int main (int argc, char ** argv)
         structure.carrier().item_count());
 
     // conjecture
-    pomagma::conjecture_deep(
+    pomagma::conjecture_shallow(
         structure,
         language_file,
         conjectures_file,
