@@ -74,6 +74,7 @@ void schedule_merge_if_consistent (Ob dep)
     if (likely(g_consistency_checker->check(dep))) {
         schedule_merge(dep);
     } else {
+        POMAGMA_INFO("INCONSISTENT");
         _exit(INCONSISTENT);
     }
 }
