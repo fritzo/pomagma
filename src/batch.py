@@ -161,8 +161,7 @@ def conjecture(theory, **options):
 
         world = 'world.h5'
         conjectures_out = 'conjectures.out'
-        assert os.path.exists(world), 'First initialize world map'
-        world_size = pomagma.util.get_info(world)['item_count']
+        assert os.path.exists(world), 'First build world map'
         opts = options
         opts.setdefault('log_file', 'conjecture.log')
         pomagma.actions.conjecture(theory, world, conjectures_out, **opts)

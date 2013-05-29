@@ -109,9 +109,11 @@ void conjecture_shallow (
         size_t max_count)
 {
     const auto language = load_language(language_file);
-    Router router(structure, language);
-    const std::vector<float> probs = router.measure_probs();
-    std::vector<std::string> routes = router.find_routes();
+    Router * router = new Router(structure, language);
+    const std::vector<float> probs = router->measure_probs();
+    const std::vector<std::string> routes = router->find_routes();
+    delete router;
+
     detail::conjecture(structure, probs, routes, conjectures_file, max_count);
 }
 
@@ -122,15 +124,18 @@ void conjecture_deep (
         size_t max_count)
 {
     const auto language = load_language(language_file);
-    Router router(structure, language);
-    const std::vector<float> probs = router.measure_probs();
-    std::vector<std::string> routes = router.find_routes();
+    Router * router = new Router(structure, language);
+    const std::vector<float> probs = router->measure_probs();
+    const std::vector<std::string> routes = router->find_routes();
+    delete router;
+
     const auto conjectures = detail::conjecture(
         structure,
         probs,
         routes,
         conjectures_file,
         max_count);
+
     detail::conjecture_deep(
         structure,
         language,
