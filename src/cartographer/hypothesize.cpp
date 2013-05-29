@@ -110,7 +110,7 @@ float hypothesize_entropy (
     POMAGMA_ASSERT(child != -1, "fork failed");
     if (child == 0) {
 
-        POMAGMA_INFO("Assuming " << equation.first << " = " << equation.second);
+        POMAGMA_DEBUG("assuming equation");
         detail::merge_if_consistent(structure, equation);
 
         POMAGMA_DEBUG("measuring entropy");
@@ -123,7 +123,7 @@ float hypothesize_entropy (
     } else {
 
         int status;
-        POMAGMA_INFO("Waiting for child process " << child);
+        POMAGMA_DEBUG("Waiting for child process " << child);
         waitpid(child, &status, 0);
         POMAGMA_ASSERT(WIFEXITED(status),
             "child process failed with status " << status);
@@ -140,7 +140,7 @@ float hypothesize_entropy (
                 break;
 
             default:
-                POMAGMA_ERROR("child process failed with status " << status);
+                POMAGMA_ERROR("child process failed with code " << info);
         }
 
         return entropy;

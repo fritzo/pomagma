@@ -80,10 +80,11 @@ void conjecture_deep (
     for (auto pair : shallow_conjectures) {
         const Ob lhs = pair.first;
         const Ob rhs = pair.second;
+        std::string equation = "EQUAL " + routes[lhs] + " " + routes[rhs];
+        POMAGMA_INFO("Hypothesizing " << equation);
         float entropy = hypothesize_entropy(structure, language, pair);
         bool consistent = (entropy > 0);
         if (consistent) {
-            std::string equation = "EQUAL " + routes[lhs] + " " + routes[rhs];
             deep_conjectures.push_back(std::make_pair(entropy, equation));
         }
     }
