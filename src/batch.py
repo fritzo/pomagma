@@ -151,6 +151,28 @@ def make(theory, max_size=8191, step_size=512, **options):
 
 
 @parsable.command
+def conjecture(theory, **options):
+    '''
+    Conjecture equations from world map.
+    '''
+    data = os.path.join(pomagma.util.DATA, '{}.survey'.format(theory))
+    assert os.path.exists(data), 'First build world map'
+    with pomagma.util.chdir(data), pomagma.util.mutex(block=False):
+
+        world = 'world.h5'
+        conjectures_out = 'conjectures.out'
+        assert os.path.exists(world), 'First initialize world map'
+        world_size = pomagma.util.get_info(world)['item_count']
+        opts = options
+        opts.setdefault('log_file', 'conjecture.log')
+        pomagma.actions.conjecture(theory, world, conjectures_out, **opts)
+
+        with open(conjectures_out) as f:
+            for line in f:
+                print line.strip()
+
+
+@parsable.command
 def clean(theory):
     '''
     Remove all work for given theory. DANGER

@@ -9,16 +9,18 @@
 namespace pomagma
 {
 
+static const size_t DEFAULT_CONJECTURE_COUNT = 1000;
+
 void conjecture_shallow (
         Structure & structure,
         const char * language_file,
         const char * conjectures_file,
-        size_t max_count = 1000);
+        size_t max_count = DEFAULT_CONJECTURE_COUNT);
 
 void conjecture_deep (
         Structure & structure,
         const char * language_file,
         const char * conjectures_file,
-        size_t max_count = 100);
+        size_t max_count = DEFAULT_CONJECTURE_COUNT);
 
 } // namespace pomagma
