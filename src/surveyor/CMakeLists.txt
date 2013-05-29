@@ -3,6 +3,7 @@ include_directories(${CMAKE_SOURCE_DIR}/)
 
 set(POMAGMA_SURVEYOR_LIBS
 	pomagma_surveyor
+	pomagma_util_concurrent
        	boost_thread
        	tbb
        	hdf5_hl hdf5
@@ -15,6 +16,7 @@ add_library(pomagma_surveyor_dummy SHARED dummy.theory.cpp)
 set(POMAGMA_SURVEYOR_TEST_LIBS
 	pomagma_surveyor
 	pomagma_surveyor_dummy
+	pomagma_util_concurrent
 	boost_thread
 	tbb
        	hdf5_hl hdf5
@@ -59,13 +61,9 @@ add_test(NAME surveyor_scheduler
 
 
 add_library(pomagma_surveyor_main SHARED main.cpp)
-#install(TARGETS pomagma_surveyor_main LIBRARY
-#	DESTINATION ${PROJECT_SOURCE_DIR}/lib
-#	)
 set(POMAGMA_SURVEYOR_MAIN_LIBS
 	pomagma_surveyor_main
 	${POMAGMA_SURVEYOR_LIBS}
-	#zmq
 	)
 
 
@@ -97,7 +95,6 @@ add_custom_command(
 	)
 add_executable(h4.survey h4.theory.cpp)
 target_link_libraries(h4.survey ${POMAGMA_SURVEYOR_MAIN_LIBS})
-#install(TARGETS h4.survey DESTINATION ${PROJECT_SOURCE_DIR}/bin)
 
 add_custom_command(
 	OUTPUT ${CMAKE_CURRENT_LIST_DIR}/sk.theory.cpp
@@ -122,7 +119,6 @@ add_custom_command(
 	)
 add_executable(sk.survey sk.theory.cpp)
 target_link_libraries(sk.survey ${POMAGMA_SURVEYOR_MAIN_LIBS})
-#install(TARGETS sk.survey DESTINATION ${PROJECT_SOURCE_DIR}/bin)
 
 # TODO get types.rules to compile
 add_custom_command(
@@ -154,7 +150,6 @@ add_custom_command(
 	)
 add_executable(skj.survey skj.theory.cpp)
 target_link_libraries(skj.survey ${POMAGMA_SURVEYOR_MAIN_LIBS})
-#install(TARGETS skj.survey DESTINATION ${PROJECT_SOURCE_DIR}/bin)
 
 # TODO get reflect.rules to compile
 add_custom_command(
@@ -194,5 +189,4 @@ add_custom_command(
 	)
 add_executable(skjo.survey skjo.theory.cpp)
 target_link_libraries(skjo.survey ${POMAGMA_SURVEYOR_MAIN_LIBS})
-#install(TARGETS skjo.survey DESTINATION ${PROJECT_SOURCE_DIR}/bin)
 

@@ -275,6 +275,27 @@ static_assert(FULL_WORD + Word(1) == 0, "FULL_WORD is bad");
 static const size_t BITS_PER_CACHE_LINE = 512;
 
 //----------------------------------------------------------------------------
+// iteration
+
+template<class Iterator>
+class Range
+{
+    const Iterator m_begin;
+    const Iterator m_end;
+public:
+    Range (const Iterator & b, const Iterator & e) : m_begin(b), m_end(e) {}
+    const Iterator & begin () const { return m_begin; }
+    const Iterator & end () const { return m_end; }
+};
+
+template<class Iterator>
+inline Range<Iterator> range (const Iterator & begin, const Iterator & end)
+{
+    return Range<Iterator>(begin, end);
+}
+
+
+//----------------------------------------------------------------------------
 // vector operations
 
 template<class T>

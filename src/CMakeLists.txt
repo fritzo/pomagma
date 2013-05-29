@@ -2,11 +2,23 @@
 set(SRC_DIR ${PROJECT_SOURCE_DIR}/src)
 include_directories(${CMAKE_SOURCE_DIR}/)
 
-add_library(pomagma_surveyor SHARED
+add_library(pomagma_util_sequential SHARED
+	util/util.cpp
+	util/aligned_alloc.cpp
+	util/sequential_dense_set.cpp
+	util/language.cpp
+	language/language.pb.cc
+	)
+
+add_library(pomagma_util_concurrent SHARED
 	util/util.cpp
 	util/aligned_alloc.cpp
 	util/concurrent_dense_set.cpp
+	util/language.cpp
 	language/language.pb.cc
+	)
+
+add_library(pomagma_surveyor SHARED
 	surveyor/carrier.cpp
 	surveyor/base_bin_rel.cpp
 	surveyor/binary_relation.cpp
@@ -21,10 +33,6 @@ add_library(pomagma_surveyor SHARED
 	)
 
 add_library(pomagma_cartographer SHARED
-	util/util.cpp
-	util/aligned_alloc.cpp
-	util/sequential_dense_set.cpp
-	language/language.pb.cc
 	cartographer/carrier.cpp
 	cartographer/base_bin_rel.cpp
 	cartographer/binary_relation.cpp

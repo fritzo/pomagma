@@ -7,7 +7,7 @@
 #include "symmetric_function.hpp"
 #include "compact.hpp"
 #include "scheduler.hpp"
-#include <pomagma/language/language.pb.h>
+#include <pomagma/util/language.hpp>
 #include <deque>
 #include <cstdlib>
 #include <unistd.h> // for fork
@@ -18,29 +18,6 @@ namespace pomagma
 
 namespace detail
 {
-
-std::unordered_map<std::string, float> load_language (
-        const char * language_file)
-{
-    POMAGMA_INFO("Loading languge");
-
-    messaging::Language language;
-
-    std::ifstream file(language_file, std::ios::in | std::ios::binary);
-    POMAGMA_ASSERT(file.is_open(),
-        "failed to open language file " << language_file);
-    POMAGMA_ASSERT(language.ParseFromIstream(&file),
-        "failed to parse language file " << language_file);
-
-    std::unordered_map<std::string, float> result;
-    for (int i = 0; i < language.terms_size(); ++i) {
-        const auto & term = language.terms(i);
-        POMAGMA_DEBUG("setting P(" << term.name() << ") = " << term.weight());
-        result[term.name()] = term.weight();
-    }
-
-    return result;
-}
 
 class Router
 {
@@ -99,21 +76,11 @@ private:
 
     typedef std::vector<Segment>::const_iterator Iterator;
 
-    class Range
-    {
-        const Iterator m_begin;
-        const Iterator m_end;
-    public:
-        Range (const Iterator & b, const Iterator & e) : m_begin(b), m_end(e) {}
-        const Iterator & begin () const { return m_begin; }
-        const Iterator & end () const { return m_end; }
-    };
-
-    Range iter_val (Ob val) const
+    Range<Iterator> iter_val (Ob val) const
     {
         size_t begin = m_value_index[val - 1];
         size_t end = m_value_index[val] + 1;
-        return Range(m_segments.begin() + begin, m_segments.begin() + end);
+        return range(m_segments.begin() + begin, m_segments.begin() + end);
     }
 
     Carrier & m_carrier;
@@ -492,7 +459,7 @@ void conjecture_shallow (
         const char * conjectures_file,
         size_t max_count)
 {
-    const auto language = detail::load_language(language_file);
+    const auto language = load_language(language_file);
     detail::Router router(structure, language);
     const std::vector<float> probs = router.measure_probs();
     std::vector<std::string> routes = router.find_routes();
@@ -505,7 +472,7 @@ void conjecture_deep (
         const char * conjectures_file,
         size_t max_count)
 {
-    const auto language = detail::load_language(language_file);
+    const auto language = load_language(language_file);
     detail::Router router(structure, language);
     const std::vector<float> probs = router.measure_probs();
     std::vector<std::string> routes = router.find_routes();

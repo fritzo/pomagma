@@ -25,7 +25,11 @@ int main (int argc, char ** argv)
         std::cout
             << "Usage: "
                 << pomagma::get_filename(argv[0])
-                << " structure_in language_in conjectures_out" << "\n"
+                << " structure_in"
+                << " language_in"
+                << " conjectures_out"
+                << " [max_count]"
+                << "\n"
             << "Environment Variables:\n"
             << "  POMAGMA_LOG_FILE = " << pomagma::DEFAULT_LOG_FILE << "\n"
             << "  POMAGMA_LOG_LEVEL = " << pomagma::DEFAULT_LOG_LEVEL << "\n"

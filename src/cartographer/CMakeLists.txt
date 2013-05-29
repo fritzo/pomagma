@@ -3,6 +3,7 @@ include_directories(${CMAKE_SOURCE_DIR}/)
 
 set(POMAGMA_CARTOGRAPHER_LIBS
 	pomagma_cartographer
+	pomagma_util_sequential
        	hdf5_hl hdf5
 	crypto ssl
 	protobuf
