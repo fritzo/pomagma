@@ -169,6 +169,7 @@ public:
 
     Log (size_t level)
     {
+        m_message << std::left << std::setw(8) << getpid();
         m_message << std::left << std::setw(12) << get_elapsed_time();
         m_message << g_log_level_name[min(size_t(3), level)];
     }

@@ -60,4 +60,15 @@ private:
     std::vector<size_t> m_value_index;
 };
 
+inline float get_entropy (const std::vector<float> & probs)
+{
+    float entropy = 0;
+    for (float p : probs) {
+        if (p > 0) {
+            entropy -= p * logf(p);
+        }
+    }
+    return entropy;
+}
+
 } // namespace pomagma

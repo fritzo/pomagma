@@ -113,7 +113,9 @@ std::vector<float> Router::measure_probs (float reltol) const
 
         POMAGMA_INFO("accumulating route probabilities");
 
-        # pragma omp parallel for schedule(dynamic, 1)
+        // The following cannot be mixed: openmp, gc, fork.
+        // see http://bisqwit.iki.fi/story/howto/openmp/#OpenmpAndFork
+        //# pragma omp parallel for schedule(dynamic, 1)
         for (size_t i = 0; i < item_count; ++i) {
             Ob ob = 1 + i;
 
@@ -139,7 +141,7 @@ std::vector<float> Router::measure_probs (float reltol) const
             }
 
             if (prob > probs[ob] * max_increase) {
-                #pragma omp atomic
+                //#pragma omp atomic
                 changed |= true;
             }
             probs[ob] = prob; // relaxed memory order
@@ -163,7 +165,7 @@ std::vector<std::string> Router::find_routes () const
 
         POMAGMA_INFO("finding best local routes");
 
-        #pragma omp parallel for schedule(dynamic, 1)
+        //#pragma omp parallel for schedule(dynamic, 1)
         for (size_t i = 0; i < item_count; ++i) {
             Ob ob = 1 + i;
 
@@ -197,7 +199,7 @@ std::vector<std::string> Router::find_routes () const
             }
 
             if (best_changed) {
-                #pragma omp atomic
+                //#pragma omp atomic
                 changed |= true;
             }
         }

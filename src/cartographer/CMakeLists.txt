@@ -17,6 +17,7 @@ add_library(pomagma_cartographer SHARED
 	aggregate.cpp
 	trim.cpp
 	router.cpp
+	hypothesize.cpp
 	conjecture.cpp
 	)
 set(POMAGMA_CARTOGRAPHER_LIBS
