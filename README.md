@@ -42,11 +42,11 @@ The vision for pomagma extends beyond its present codebase.
 - Viable - prove concept in prototype [DONE](http://github.com/fritzo/Johann)
 - Parallel - run surveyor system tests (h4, sk, skj) DONE
 - Scalable - run surveyor-cartographer loop DONE
+- Economical - propose new equations based on atlas DONE
 - Literate - populate corpus by writing code in editor
-- Interactive - show static analysis layer in editor
 - Efficient - fit language parameters to corpus
 - Innovative - propose new basic terms based on corpus
-- Economical - propose new equations based on atlas
+- Interactive - show static analysis layer in editor
 - Reflective - model pomagma actors in corpus
 - Distributed - run survey workflow on ec2
 
