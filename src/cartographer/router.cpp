@@ -113,7 +113,7 @@ std::vector<float> Router::measure_probs (float reltol) const
 
         POMAGMA_DEBUG("accumulating route probabilities");
 
-        // The following cannot be mixed: openmp, gc, fork.
+        // The following three cannot be mixed: openmp, gcc, fork.
         // see http://bisqwit.iki.fi/story/howto/openmp/#OpenmpAndFork
         //# pragma omp parallel for schedule(dynamic, 1)
         for (size_t i = 0; i < item_count; ++i) {
