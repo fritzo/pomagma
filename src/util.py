@@ -23,6 +23,7 @@ if debug:
     BUILD = os.path.join(ROOT, 'build', 'debug')
 else:
     BUILD = os.path.join(ROOT, 'build', 'release')
+COVERITY = os.path.join(ROOT, 'cov-int')
 BIN = os.path.join(BUILD, 'src')
 CPU_COUNT = multiprocessing.cpu_count()
 
@@ -238,6 +239,21 @@ def test():
         'log_level': 3,
         }
     log_call('make', '-C', BUILD, 'test', **opts)
+
+
+def coverity():
+    '''
+    See 
+    '''
+    buildtype = 'Debug'
+    buildflag = '-DCMAKE_BUILD_TYPE={}'.format(buildtype)
+    for d in [BUILD, COVERITY]:
+        if os.path.exists(d):
+            shutil.rmtree(d)
+        os.makedirs(d)
+    with chdir(BUILD):
+        check_call('cmake', buildflag, ROOT)
+        check_call('cov-build', '--dir', COVERITY, 'make')
 
 
 def count_obs(structure):

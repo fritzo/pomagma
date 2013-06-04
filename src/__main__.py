@@ -78,6 +78,14 @@ def profile():
 
 
 @parsable.command
+def coverity():
+    '''
+    Check pomagma build with coverity. (see http://coverity.com)
+    '''
+    pomagma.util.coverity()
+
+
+@parsable.command
 def clean():
     '''
     Clean out temporary files: build, log, data

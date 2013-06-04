@@ -9,9 +9,6 @@
 *.a
 *.log
 *.bak
-/build/*
-/data
-*.egg-info/
 *.pb.h
 *.pb.cc
 *_pb2.py
@@ -19,3 +16,7 @@
 *.theory.cpp
 !/src/grower/dummy.theory.cpp
 *.language
+/data/
+/build/
+/cov-int/
+*.egg-info/
