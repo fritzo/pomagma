@@ -19,10 +19,7 @@ add_library(pomagma_macrostructure SHARED
 set(POMAGMA_MACROSTRUCTURE_LIBS
 	pomagma_macrostructure
 	pomagma_platform_sequential
-       	hdf5_hl hdf5
-	crypto ssl
-	protobuf
-	)
+	${POMAGMA_SEQUENTIAL_LIBS})
 
 add_executable(macrostructure_carrier_test carrier_test.cpp)
 target_link_libraries(macrostructure_carrier_test

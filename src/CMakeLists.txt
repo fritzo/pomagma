@@ -26,6 +26,20 @@ add_custom_command(
 	DEPENDS ${SRC_DIR}/language/language.proto
 	)
 
+set(POMAGMA_SEQUENTIAL_LIBS
+       	hdf5_hl hdf5
+	crypto ssl
+	protobuf
+	)
+
+set(POMAGMA_CONCURRENT_LIBS
+       	boost_thread
+       	tbb
+       	hdf5_hl hdf5
+	crypto ssl
+	protobuf
+	)
+
 add_subdirectory(platform)
 add_subdirectory(macrostructure)
 add_subdirectory(surveyor)

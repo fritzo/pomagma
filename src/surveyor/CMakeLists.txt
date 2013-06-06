@@ -18,12 +18,7 @@ add_library(pomagma_surveyor SHARED
 set(POMAGMA_SURVEYOR_LIBS
 	pomagma_surveyor
 	pomagma_platform_concurrent
-       	boost_thread
-       	tbb
-       	hdf5_hl hdf5
-	crypto ssl
-	protobuf
-	)
+	${POMAGMA_CONCURRENT_LIBS})
 
 
 add_library(pomagma_surveyor_dummy SHARED dummy.theory.cpp)
@@ -31,12 +26,7 @@ set(POMAGMA_SURVEYOR_TEST_LIBS
 	pomagma_surveyor
 	pomagma_surveyor_dummy
 	pomagma_platform_concurrent
-	boost_thread
-	tbb
-       	hdf5_hl hdf5
-	crypto ssl
-	protobuf
-	)
+	${POMAGMA_CONCURRENT_LIBS})
 
 add_executable(surveyor_carrier_test carrier_test.cpp)
 target_link_libraries(surveyor_carrier_test ${POMAGMA_SURVEYOR_TEST_LIBS})
@@ -77,8 +67,7 @@ add_test(NAME surveyor_scheduler
 add_library(pomagma_surveyor_main SHARED main.cpp)
 set(POMAGMA_SURVEYOR_MAIN_LIBS
 	pomagma_surveyor_main
-	${POMAGMA_SURVEYOR_LIBS}
-	)
+	${POMAGMA_SURVEYOR_LIBS})
 
 
 add_executable(dummy.survey dummy.theory.cpp)
