@@ -1,6 +1,6 @@
 #pragma once
 
-#include <pomagma/platform/util.hpp>
+#include <string>
 #include <unordered_map>
 
 namespace pomagma

@@ -7,6 +7,7 @@ set(POMAGMA_SURVEYOR_LIBS
 	pomagma_surveyor
 	pomagma_microstructure
 	pomagma_platform_concurrent
+	pomagma_language
 	${POMAGMA_CONCURRENT_LIBS})
 
 

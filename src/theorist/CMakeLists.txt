@@ -9,6 +9,7 @@ set(POMAGMA_THEORIST_LIBS
 	pomagma_theorist
 	pomagma_macrostructure
 	pomagma_platform_sequential
+	pomagma_language
 	${POMAGMA_SEQUENTIAL_LIBS})
 
 add_executable(conjecture conjecture_main.cpp)

@@ -9,6 +9,7 @@ set(POMAGMA_CARTOGRAPHER_LIBS
 	pomagma_cartographer
 	pomagma_macrostructure
 	pomagma_platform_sequential
+	pomagma_language
 	${POMAGMA_SEQUENTIAL_LIBS})
 
 add_executable(copy copy_main.cpp)

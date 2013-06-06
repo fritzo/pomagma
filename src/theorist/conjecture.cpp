@@ -3,7 +3,7 @@
 #include <pomagma/macrostructure/carrier.hpp>
 #include <pomagma/macrostructure/binary_relation.hpp>
 #include <pomagma/macrostructure/router.hpp>
-#include <pomagma/platform/language.hpp>
+#include <pomagma/language/language.hpp>
 #include <algorithm>
 
 namespace pomagma

@@ -19,6 +19,7 @@ add_library(pomagma_macrostructure SHARED
 set(POMAGMA_MACROSTRUCTURE_LIBS
 	pomagma_macrostructure
 	pomagma_platform_sequential
+	pomagma_language
 	${POMAGMA_SEQUENTIAL_LIBS})
 
 add_executable(macrostructure_carrier_test carrier_test.cpp)
