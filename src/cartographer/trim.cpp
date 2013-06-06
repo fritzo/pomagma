@@ -1,12 +1,7 @@
 #include "trim.hpp"
-#include "carrier.hpp"
-#include "binary_relation.hpp"
-#include "nullary_function.hpp"
-#include "injective_function.hpp"
-#include "binary_function.hpp"
-#include "symmetric_function.hpp"
-#include "parser.hpp"
-#include "sampler.hpp"
+#include <pomagma/macrostructure/structure_impl.hpp>
+#include <pomagma/macrostructure/parser.hpp>
+#include <pomagma/macrostructure/sampler.hpp>
 
 namespace pomagma
 {

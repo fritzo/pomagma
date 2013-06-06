@@ -27,5 +27,6 @@ add_custom_command(
 	)
 
 add_subdirectory(platform)
+add_subdirectory(macrostructure)
 add_subdirectory(surveyor)
 add_subdirectory(cartographer)

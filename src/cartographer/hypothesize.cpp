@@ -1,8 +1,8 @@
 #include "hypothesize.hpp"
-#include "binary_relation.hpp"
-#include "compact.hpp"
-#include "router.hpp"
-#include "scheduler.hpp"
+#include <pomagma/macrostructure/binary_relation.hpp>
+#include <pomagma/macrostructure/compact.hpp>
+#include <pomagma/macrostructure/router.hpp>
+#include <pomagma/macrostructure/scheduler.hpp>
 #include <cstdlib>
 #include <unistd.h> // for fork
 #include <sys/wait.h> // for wait

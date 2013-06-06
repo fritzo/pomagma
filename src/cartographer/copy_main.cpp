@@ -1,6 +1,5 @@
-#include "util.hpp"
-#include "structure.hpp"
-#include "compact.hpp"
+#include <pomagma/macrostructure/structure.hpp>
+#include <pomagma/macrostructure/compact.hpp>
 
 int main (int argc, char ** argv)
 {

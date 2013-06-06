@@ -1,8 +1,8 @@
 #include "conjecture.hpp"
-#include "carrier.hpp"
-#include "binary_relation.hpp"
-#include "router.hpp"
 #include "hypothesize.hpp"
+#include <pomagma/macrostructure/carrier.hpp>
+#include <pomagma/macrostructure/binary_relation.hpp>
+#include <pomagma/macrostructure/router.hpp>
 #include <pomagma/platform/language.hpp>
 #include <algorithm>
 

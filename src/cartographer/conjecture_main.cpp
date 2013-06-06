@@ -1,7 +1,5 @@
-#include "util.hpp"
-#include "carrier.hpp"
-#include "structure.hpp"
 #include "conjecture.hpp"
+#include <pomagma/macrostructure/carrier.hpp>
 
 int main (int argc, char ** argv)
 {

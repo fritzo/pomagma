@@ -1,8 +1,7 @@
-#include "util.hpp"
-#include "carrier.hpp"
-#include "structure.hpp"
 #include "aggregate.hpp"
-#include "compact.hpp"
+#include <pomagma/macrostructure/carrier.hpp>
+#include <pomagma/macrostructure/structure.hpp>
+#include <pomagma/macrostructure/compact.hpp>
 
 int main (int argc, char ** argv)
 {

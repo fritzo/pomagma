@@ -1,6 +1,7 @@
 #pragma once
 
-#include "structure.hpp"
+#include <pomagma/macrostructure/util.hpp>
+#include <pomagma/macrostructure/structure.hpp>
 
 namespace pomagma
 {

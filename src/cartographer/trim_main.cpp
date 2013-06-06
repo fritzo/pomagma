@@ -1,6 +1,5 @@
-#include "util.hpp"
-#include "carrier.hpp"
-#include "structure.hpp"
+#include <pomagma/macrostructure/carrier.hpp>
+#include <pomagma/macrostructure/structure.hpp>
 #include "trim.hpp"
 
 int main (int argc, char ** argv)
