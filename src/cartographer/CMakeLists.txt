@@ -4,8 +4,6 @@ include_directories(${CMAKE_SOURCE_DIR}/)
 add_library(pomagma_cartographer SHARED
 	aggregate.cpp
 	trim.cpp
-	hypothesize.cpp
-	conjecture.cpp
 	)
 set(POMAGMA_CARTOGRAPHER_LIBS
 	pomagma_cartographer
@@ -24,7 +22,4 @@ target_link_libraries(aggregate ${POMAGMA_CARTOGRAPHER_LIBS})
 
 add_executable(trim trim_main.cpp)
 target_link_libraries(trim ${POMAGMA_CARTOGRAPHER_LIBS})
-
-add_executable(conjecture conjecture_main.cpp)
-target_link_libraries(conjecture ${POMAGMA_CARTOGRAPHER_LIBS})
 
