@@ -11,7 +11,8 @@ import simplejson as json
 import parsable
 import pomagma.util
 import pomagma.store
-import pomagma.actions
+import pomagma.surveyor
+import pomagma.cartographer
 import pomagma.workflow.swf
 
 
@@ -45,7 +46,7 @@ def init(theory):
         world = '{}/world.h5'.format(theory)
         size = pomagma.util.MIN_SIZES[theory]
         log_file = '{}/init.log'
-        pomagma.actions.init(theory, world, size, log_file=log_file)
+        pomagma.surveyor.init(theory, world, size, log_file=log_file)
         pomagma.store.put(world)
 
 
@@ -57,7 +58,12 @@ def trim(theory, size):
     if region_size < world_size:
         region = random_filename()
         log_file = '{}/advise.log'.format(theory)
-        pomagma.actions.trim(theory, world, region, size, log_file=log_file)
+        pomagma.cartographer.trim(
+            theory,
+			world,
+			region,
+			size,
+			log_file=log_file)
     else:
         region = world
     region = normalize_filename('{}/region'.format(theory), region)
@@ -69,7 +75,7 @@ def aggregate(theory, chart):
     world = pomagma.store.get('{}/world.h5'.format(theory))
     chart = pomagma.store.get(chart)
     log_file = '{}/advisor.log'.format(theory)
-    pomagma.actions.aggregate(world, chart, world, log_file=log_file)
+    pomagma.cartographer.aggregate(world, chart, world, log_file=log_file)
     pomagma.store.put(world)
     pomagma.store.remove(chart)
 
@@ -111,7 +117,12 @@ def survey(task):
     chart_size = min(size, region_size + STEP_SIZE)
     chart = random_filename()
     log_file = '{}/survey.log'.format(theory)
-    pomagma.actions.survey(theory, region, chart, chart_size, log_file=log_file)
+    pomagma.surveyor.survey(
+        theory,
+		region,
+		chart,
+		chart_size,
+		log_file=log_file)
     chart = normalize_filename('{}/chart'.format(theory), chart)
     pomagma.store.put(chart)
     pomagma.store.remove(region)

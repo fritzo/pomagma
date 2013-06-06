@@ -4,7 +4,6 @@ import glob
 import shutil
 import parsable
 import pomagma.util
-import pomagma.actions
 import pomagma.batch
 
 
