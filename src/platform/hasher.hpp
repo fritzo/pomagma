@@ -9,8 +9,8 @@
 #include <map>
 
 // one of these should be included
-//#include <pomagma/platform/sequential_dense_set.hpp>
-//#include <pomagma/platform/concurrent_dense_set.hpp>
+//#include <pomagma/platform/sequential/dense_set.hpp>
+//#include <pomagma/platform/concurrent/dense_set.hpp>
 
 // http://www.openssl.org/docs/crypto/sha.html
 extern "C" {

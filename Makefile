@@ -37,6 +37,7 @@ python-libs:
 
 profile:
 	python -m pomagma profile
+	# TODO add profile for sequential & concurrent dense_set
 
 clean: FORCE
 	rm -rf build lib include

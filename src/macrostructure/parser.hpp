@@ -2,7 +2,7 @@
 
 #include "util.hpp"
 #include <pomagma/platform/parser.hpp>
-#include <pomagma/platform/sequential_dense_set.hpp>
+#include <pomagma/platform/sequential/dense_set.hpp>
 
 namespace pomagma
 {

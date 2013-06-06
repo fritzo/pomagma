@@ -2,10 +2,11 @@
 set(SRC_DIR ${PROJECT_SOURCE_DIR}/src)
 include_directories(${CMAKE_SOURCE_DIR}/)
 
+# TODO split language off into pomagma_language
 add_library(pomagma_platform_sequential SHARED
 	platform/util.cpp
 	platform/aligned_alloc.cpp
-	platform/sequential_dense_set.cpp
+	platform/sequential/dense_set.cpp
 	platform/language.cpp
 	language/language.pb.cc
 	)
@@ -13,7 +14,7 @@ add_library(pomagma_platform_sequential SHARED
 add_library(pomagma_platform_concurrent SHARED
 	platform/util.cpp
 	platform/aligned_alloc.cpp
-	platform/concurrent_dense_set.cpp
+	platform/concurrent/dense_set.cpp
 	platform/language.cpp
 	language/language.pb.cc
 	)

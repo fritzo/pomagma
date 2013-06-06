@@ -1,7 +1,7 @@
-#include <pomagma/platform/concurrent_dense_set.hpp>
+#include <pomagma/platform/sequential/dense_set.hpp>
 
 using namespace pomagma;
-using namespace concurrent;
+using namespace sequential;
 
 rng_t rng;
 
@@ -49,7 +49,7 @@ double test_iterator2 (size_t exponent, float density, size_t iters = 10000)
 
 int main ()
 {
-    Log::Context log_context("concurrent DenseSet profile");
+    Log::Context log_context("sequential DenseSet profile");
 
     size_t min_exponent = 10;
     size_t max_exponent = 16;

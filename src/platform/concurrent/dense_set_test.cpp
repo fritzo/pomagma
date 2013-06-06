@@ -1,4 +1,4 @@
-#include <pomagma/platform/concurrent_dense_set.hpp>
+#include <pomagma/platform/concurrent/dense_set.hpp>
 #include <vector>
 
 using namespace pomagma;

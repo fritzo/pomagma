@@ -2,7 +2,7 @@
 
 #include "util.hpp"
 #include "base_bin_rel.hpp"
-#include <pomagma/platform/concurrent_dense_set.hpp>
+#include <pomagma/platform/concurrent/dense_set.hpp>
 
 namespace pomagma
 {
