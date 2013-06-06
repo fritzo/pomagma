@@ -8,8 +8,8 @@ import parsable
 import pomagma.workflow.swf
 
 
-SPAMMER = 'automated@pomagma.info'
-SPAMMEE = os.environ.get('POMAGMA_SPAMMEE')
+SENDER = 'automated@pomagma.info'
+RECIPIENT = os.environ.get('POMAGMA_EMAIL')
 
 
 def email(args):
@@ -17,11 +17,11 @@ def email(args):
     message = args['message']
     msg = MIMEText(message)
     msg['Subject'] = subject
-    msg['From'] = SPAMMER
-    msg['To'] = SPAMMEE
+    msg['From'] = SENDER
+    msg['To'] = RECIPIENT
 
     s = smtplib.SMTP('localhost')
-    s.sendmail(SPAMMER, [SPAMMEE], msg.as_string())
+    s.sendmail(SENDER, [RECIPIENT], msg.as_string())
     s.quit()
 
 
