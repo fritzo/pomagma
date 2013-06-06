@@ -16,17 +16,6 @@ def build():
 
 
 @parsable.command
-def info(*infiles):
-    '''
-    Print information about a structure file.
-    '''
-    for infile in infiles:
-        print '-' * 80
-        print infile
-        pomagma.util.print_info(infile)
-
-
-@parsable.command
 def unit_test(*noseflags):
     '''
     Run unit tests.
