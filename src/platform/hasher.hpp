@@ -1,6 +1,6 @@
 #pragma once
 
-#include <pomagma/util/util.hpp>
+#include <pomagma/platform/util.hpp>
 #include <string>
 #include <sstream>
 #include <iomanip>
@@ -9,8 +9,8 @@
 #include <map>
 
 // one of these should be included
-//#include <pomagma/util/sequential_dense_set.hpp>
-//#include <pomagma/util/concurrent_dense_set.hpp>
+//#include <pomagma/platform/sequential_dense_set.hpp>
+//#include <pomagma/platform/concurrent_dense_set.hpp>
 
 // http://www.openssl.org/docs/crypto/sha.html
 extern "C" {

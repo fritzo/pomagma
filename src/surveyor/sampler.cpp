@@ -4,7 +4,7 @@
 #include "injective_function.hpp"
 #include "binary_function.hpp"
 #include "symmetric_function.hpp"
-#include <pomagma/util/sampler_impl.hpp>
+#include <pomagma/platform/sampler_impl.hpp>
 
 namespace pomagma
 {

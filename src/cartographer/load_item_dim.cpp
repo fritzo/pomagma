@@ -1,5 +1,5 @@
-#include <pomagma/util/util.hpp>
-#include <pomagma/util/hdf5.hpp>
+#include <pomagma/platform/util.hpp>
+#include <pomagma/platform/hdf5.hpp>
 
 using namespace pomagma;
 using namespace hdf5;

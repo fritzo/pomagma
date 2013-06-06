@@ -1,4 +1,4 @@
-#include <pomagma/util/language.hpp>
+#include <pomagma/platform/language.hpp>
 #include <pomagma/language/language.pb.h>
 
 namespace pomagma

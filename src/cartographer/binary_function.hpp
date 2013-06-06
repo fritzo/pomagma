@@ -2,7 +2,7 @@
 
 #include "util.hpp"
 #include "base_bin_rel.hpp"
-#include <pomagma/util/sequential_dense_set.hpp>
+#include <pomagma/platform/sequential_dense_set.hpp>
 #include <unordered_map>
 #include <google/sparse_hash_map>
 

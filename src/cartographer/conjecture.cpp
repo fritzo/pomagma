@@ -3,7 +3,7 @@
 #include "binary_relation.hpp"
 #include "router.hpp"
 #include "hypothesize.hpp"
-#include <pomagma/util/language.hpp>
+#include <pomagma/platform/language.hpp>
 #include <algorithm>
 
 namespace pomagma

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "util.hpp"
-#include <pomagma/util/concurrent_dense_set.hpp>
+#include <pomagma/platform/concurrent_dense_set.hpp>
 #include "carrier.hpp"
 
 namespace pomagma

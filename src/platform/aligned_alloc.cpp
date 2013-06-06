@@ -1,6 +1,6 @@
 
-#include <pomagma/util/util.hpp>
-#include <pomagma/util/aligned_alloc.hpp>
+#include <pomagma/platform/util.hpp>
+#include <pomagma/platform/aligned_alloc.hpp>
 #include <cstdlib> //for posix_memalign, free
 #include <cstring> //for memset, bzero
 

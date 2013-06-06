@@ -1,5 +1,5 @@
 #include "carrier.hpp"
-#include <pomagma/util/aligned_alloc.hpp>
+#include <pomagma/platform/aligned_alloc.hpp>
 #include <cstring>
 
 #define POMAGMA_DEBUG1(message) POMAGMA_DEBUG(message)

@@ -1,7 +1,7 @@
 #pragma once
 
-#include <pomagma/util/util.hpp>
-#include <pomagma/util/hasher.hpp>
+#include <pomagma/platform/util.hpp>
+#include <pomagma/platform/hasher.hpp>
 #include <algorithm>
 
 extern "C" {

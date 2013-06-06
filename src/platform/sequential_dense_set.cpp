@@ -1,6 +1,6 @@
 
-#include <pomagma/util/sequential_dense_set.hpp>
-#include <pomagma/util/aligned_alloc.hpp>
+#include <pomagma/platform/sequential_dense_set.hpp>
+#include <pomagma/platform/aligned_alloc.hpp>
 #include <cstring>
 
 #define POMAGMA_DEBUG1(message)

@@ -9,7 +9,7 @@
 // InjectiveFunction
 // BinaryFunction
 // SymmetricFunction
-#include <pomagma/util/hdf5.hpp>
+#include <pomagma/platform/hdf5.hpp>
 #include <array>
 #include <thread>
 #include <algorithm>

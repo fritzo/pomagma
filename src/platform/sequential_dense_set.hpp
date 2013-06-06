@@ -1,7 +1,7 @@
 #pragma once
 
-#include <pomagma/util/util.hpp>
-#include <pomagma/util/sequential_bool_ref.hpp>
+#include <pomagma/platform/util.hpp>
+#include <pomagma/platform/sequential_bool_ref.hpp>
 
 namespace pomagma
 {

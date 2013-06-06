@@ -1,4 +1,4 @@
-#include <pomagma/util/concurrent_dense_set.hpp>
+#include <pomagma/platform/concurrent_dense_set.hpp>
 
 using namespace pomagma;
 using namespace concurrent;

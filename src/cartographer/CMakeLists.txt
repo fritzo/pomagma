@@ -22,7 +22,7 @@ add_library(pomagma_cartographer SHARED
 	)
 set(POMAGMA_CARTOGRAPHER_LIBS
 	pomagma_cartographer
-	pomagma_util_sequential
+	pomagma_platform_sequential
        	hdf5_hl hdf5
 	crypto ssl
 	protobuf

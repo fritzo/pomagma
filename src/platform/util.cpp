@@ -1,4 +1,4 @@
-#include <pomagma/util/util.hpp>
+#include <pomagma/platform/util.hpp>
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <vector>

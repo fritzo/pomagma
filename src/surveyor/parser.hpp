@@ -1,7 +1,7 @@
 #pragma once
 
 #include "util.hpp"
-#include <pomagma/util/parser.hpp>
+#include <pomagma/platform/parser.hpp>
 
 namespace pomagma
 {

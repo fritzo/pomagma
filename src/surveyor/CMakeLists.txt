@@ -17,7 +17,7 @@ add_library(pomagma_surveyor SHARED
 	)
 set(POMAGMA_SURVEYOR_LIBS
 	pomagma_surveyor
-	pomagma_util_concurrent
+	pomagma_platform_concurrent
        	boost_thread
        	tbb
        	hdf5_hl hdf5
@@ -30,7 +30,7 @@ add_library(pomagma_surveyor_dummy SHARED dummy.theory.cpp)
 set(POMAGMA_SURVEYOR_TEST_LIBS
 	pomagma_surveyor
 	pomagma_surveyor_dummy
-	pomagma_util_concurrent
+	pomagma_platform_concurrent
 	boost_thread
 	tbb
        	hdf5_hl hdf5

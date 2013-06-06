@@ -1,8 +1,8 @@
 #pragma once
 
 #include "util.hpp"
-#include <pomagma/util/parser.hpp>
-#include <pomagma/util/sequential_dense_set.hpp>
+#include <pomagma/platform/parser.hpp>
+#include <pomagma/platform/sequential_dense_set.hpp>
 
 namespace pomagma
 {

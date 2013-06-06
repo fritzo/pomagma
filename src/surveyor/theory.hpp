@@ -12,7 +12,7 @@
 #include "sampler.hpp"
 #include "structure.hpp"
 #include "scheduler.hpp"
-#include <pomagma/util/signature.hpp>
+#include <pomagma/platform/signature.hpp>
 #include <atomic>
 #include <thread>
 #include <vector>

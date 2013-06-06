@@ -1,8 +1,8 @@
-#include <pomagma/util/concurrent_dense_set.hpp>
+#include <pomagma/platform/sequential_dense_set.hpp>
 #include <vector>
 
 using namespace pomagma;
-using namespace concurrent;
+using namespace sequential;
 
 typedef size_t Ob;
 
@@ -153,7 +153,7 @@ void test_operations (size_t size, rng_t & rng)
     actual.insert_all();
     POMAGMA_ASSERT(actual == expected, "insert_all is wrong");
 
-    POMAGMA_INFO("testing try_insert_one");
+    POMAGMA_INFO("testing insert_one");
     expected.zero();
     actual.zero();
     std::vector<Ob> free_list;
@@ -167,14 +167,24 @@ void test_operations (size_t size, rng_t & rng)
     }
     for (Ob i : free_list) {
         expected.insert(i);
-        Ob j = actual.try_insert_one();
-        POMAGMA_ASSERT(i == j, "wrong try_insert_one " << j << " vs " << i);
-        POMAGMA_ASSERT(actual == expected, "try_insert_one is wrong");
+        Ob j = actual.insert_one();
+        POMAGMA_ASSERT(i == j, "wrong insert_one " << j << " vs " << i);
+        POMAGMA_ASSERT(actual == expected, "insert_one is wrong");
     }
-    {
-        Ob zero = actual.try_insert_one();
-        POMAGMA_ASSERT_EQ(zero, 0);
+
+    POMAGMA_INFO("testing complement");
+    expected.zero();
+    actual.zero();
+    for (Ob i = 1; i <= size; ++i) {
+        if (x.contains(i)) {
+            actual.insert(i);
+        } else {
+            expected.insert(i);
+        }
     }
+    actual.complement();
+    actual.validate();
+    POMAGMA_ASSERT(actual == expected, "complement is wrong");
 
     POMAGMA_INFO("testing union");
     expected.zero();
