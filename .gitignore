@@ -13,8 +13,7 @@
 *.pb.cc
 *_pb2.py
 *.compiled
-*.theory.cpp
-!/src/grower/dummy.theory.cpp
+/src/surveyor/*.theory.cpp
 *.language
 /data/
 /build/

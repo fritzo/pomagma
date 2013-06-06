@@ -2,76 +2,13 @@
 include_directories(${CMAKE_SOURCE_DIR}/)
 
 
-add_library(pomagma_surveyor SHARED
-	carrier.cpp
-	base_bin_rel.cpp
-	binary_relation.cpp
-	nullary_function.cpp
-	injective_function.cpp
-	binary_function.cpp
-	symmetric_function.cpp
-	parser.cpp
-	sampler.cpp
-	structure.cpp
-	scheduler.cpp
-	)
+add_library(pomagma_surveyor SHARED main.cpp)
 set(POMAGMA_SURVEYOR_LIBS
 	pomagma_surveyor
+	pomagma_microstructure
 	pomagma_platform_concurrent
 	${POMAGMA_CONCURRENT_LIBS})
 
-
-add_library(pomagma_surveyor_dummy SHARED dummy.theory.cpp)
-set(POMAGMA_SURVEYOR_TEST_LIBS
-	pomagma_surveyor
-	pomagma_surveyor_dummy
-	pomagma_platform_concurrent
-	${POMAGMA_CONCURRENT_LIBS})
-
-add_executable(surveyor_carrier_test carrier_test.cpp)
-target_link_libraries(surveyor_carrier_test ${POMAGMA_SURVEYOR_TEST_LIBS})
-add_test(NAME surveyor_carrier
-	COMMAND surveyor_carrier_test)
-
-add_executable(surveyor_binary_relation_test binary_relation_test.cpp)
-target_link_libraries(surveyor_binary_relation_test ${POMAGMA_SURVEYOR_TEST_LIBS})
-add_test(NAME surveyor_binary_relation
-	COMMAND surveyor_binary_relation_test)
-
-add_executable(surveyor_nullary_function_test nullary_function_test.cpp)
-target_link_libraries(surveyor_nullary_function_test ${POMAGMA_SURVEYOR_TEST_LIBS})
-add_test(NAME surveyor_nullary_function
-	COMMAND surveyor_nullary_function_test)
-
-add_executable(surveyor_injective_function_test injective_function_test.cpp)
-target_link_libraries(surveyor_injective_function_test ${POMAGMA_SURVEYOR_TEST_LIBS})
-add_test(NAME surveyor_injective_function
-       COMMAND surveyor_injective_function_test)
-
-add_executable(surveyor_binary_function_test binary_function_test.cpp)
-target_link_libraries(surveyor_binary_function_test ${POMAGMA_SURVEYOR_TEST_LIBS})
-add_test(NAME surveyor_binary_function
-       	COMMAND surveyor_binary_function_test)
-
-add_executable(surveyor_symmetric_function_test symmetric_function_test.cpp)
-target_link_libraries(surveyor_symmetric_function_test ${POMAGMA_SURVEYOR_TEST_LIBS})
-add_test(NAME surveyor_symmetric_function
-	COMMAND surveyor_symmetric_function_test)
-
-add_executable(surveyor_scheduler_test scheduler_test.cpp)
-target_link_libraries(surveyor_scheduler_test ${POMAGMA_SURVEYOR_TEST_LIBS})
-add_test(NAME surveyor_scheduler
-	COMMAND surveyor_scheduler_test)
-
-
-add_library(pomagma_surveyor_main SHARED main.cpp)
-set(POMAGMA_SURVEYOR_MAIN_LIBS
-	pomagma_surveyor_main
-	${POMAGMA_SURVEYOR_LIBS})
-
-
-add_executable(dummy.survey dummy.theory.cpp)
-target_link_libraries(dummy.survey ${POMAGMA_SURVEYOR_MAIN_LIBS})
 
 set(SRC_DIR ${PROJECT_SOURCE_DIR}/src)
 
@@ -97,7 +34,7 @@ add_custom_command(
 		${SRC_DIR}/theory/h4.facts
 	)
 add_executable(h4.survey h4.theory.cpp)
-target_link_libraries(h4.survey ${POMAGMA_SURVEYOR_MAIN_LIBS})
+target_link_libraries(h4.survey ${POMAGMA_SURVEYOR_LIBS})
 
 add_custom_command(
 	OUTPUT ${CMAKE_CURRENT_LIST_DIR}/sk.theory.cpp
@@ -121,7 +58,7 @@ add_custom_command(
 		${SRC_DIR}/theory/order.facts
 	)
 add_executable(sk.survey sk.theory.cpp)
-target_link_libraries(sk.survey ${POMAGMA_SURVEYOR_MAIN_LIBS})
+target_link_libraries(sk.survey ${POMAGMA_SURVEYOR_LIBS})
 
 # TODO get types.rules to compile
 add_custom_command(
@@ -152,7 +89,7 @@ add_custom_command(
 		${SRC_DIR}/theory/types.facts
 	)
 add_executable(skj.survey skj.theory.cpp)
-target_link_libraries(skj.survey ${POMAGMA_SURVEYOR_MAIN_LIBS})
+target_link_libraries(skj.survey ${POMAGMA_SURVEYOR_LIBS})
 
 # TODO get reflect.rules to compile
 add_custom_command(
@@ -191,5 +128,5 @@ add_custom_command(
 		${SRC_DIR}/theory/reflect.facts
 	)
 add_executable(skjo.survey skjo.theory.cpp)
-target_link_libraries(skjo.survey ${POMAGMA_SURVEYOR_MAIN_LIBS})
+target_link_libraries(skjo.survey ${POMAGMA_SURVEYOR_LIBS})
 

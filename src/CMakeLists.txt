@@ -41,6 +41,7 @@ set(POMAGMA_CONCURRENT_LIBS
 	)
 
 add_subdirectory(platform)
+add_subdirectory(microstructure)
 add_subdirectory(macrostructure)
 add_subdirectory(surveyor)
 add_subdirectory(cartographer)

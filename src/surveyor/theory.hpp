@@ -1,17 +1,17 @@
 #pragma once
 // WARNING this should only be linked to once
 
-#include "util.hpp"
-#include "carrier.hpp"
-#include "nullary_function.hpp"
-#include "injective_function.hpp"
-#include "binary_function.hpp"
-#include "symmetric_function.hpp"
-#include "binary_relation.hpp"
-#include "parser.hpp"
-#include "sampler.hpp"
-#include "structure.hpp"
-#include "scheduler.hpp"
+#include <pomagma/microstructure/util.hpp>
+#include <pomagma/microstructure/carrier.hpp>
+#include <pomagma/microstructure/nullary_function.hpp>
+#include <pomagma/microstructure/injective_function.hpp>
+#include <pomagma/microstructure/binary_function.hpp>
+#include <pomagma/microstructure/symmetric_function.hpp>
+#include <pomagma/microstructure/binary_relation.hpp>
+#include <pomagma/microstructure/parser.hpp>
+#include <pomagma/microstructure/sampler.hpp>
+#include <pomagma/microstructure/structure.hpp>
+#include <pomagma/microstructure/scheduler.hpp>
 #include <pomagma/platform/signature.hpp>
 #include <atomic>
 #include <thread>

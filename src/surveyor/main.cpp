@@ -1,5 +1,5 @@
-#include "util.hpp"
-#include "scheduler.hpp"
+#include <pomagma/microstructure/util.hpp>
+#include <pomagma/microstructure/scheduler.hpp>
 
 namespace pomagma
 {

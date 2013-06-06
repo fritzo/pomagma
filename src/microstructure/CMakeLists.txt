@@ -1,0 +1,65 @@
+
+include_directories(${CMAKE_SOURCE_DIR}/)
+
+add_library(pomagma_microstructure SHARED
+	carrier.cpp
+	base_bin_rel.cpp
+	binary_relation.cpp
+	nullary_function.cpp
+	injective_function.cpp
+	binary_function.cpp
+	symmetric_function.cpp
+	parser.cpp
+	sampler.cpp
+	structure.cpp
+	scheduler.cpp
+	)
+set(POMAGMA_MICROSTRUCTURE_LIBS
+	pomagma_microstructure
+	pomagma_platform_concurrent
+	${POMAGMA_CONCURRENT_LIBS})
+
+add_library(pomagma_microstructure_dummy SHARED dummy.theory.cpp)
+set(POMAGMA_MICROSTRUCTURE_TEST_LIBS
+	pomagma_microstructure
+	pomagma_microstructure_dummy
+	pomagma_platform_concurrent
+	${POMAGMA_CONCURRENT_LIBS})
+
+add_executable(microstructure_carrier_test carrier_test.cpp)
+target_link_libraries(microstructure_carrier_test ${POMAGMA_MICROSTRUCTURE_TEST_LIBS})
+add_test(NAME microstructure_carrier
+	COMMAND microstructure_carrier_test)
+
+add_executable(microstructure_binary_relation_test binary_relation_test.cpp)
+target_link_libraries(microstructure_binary_relation_test ${POMAGMA_MICROSTRUCTURE_TEST_LIBS})
+add_test(NAME microstructure_binary_relation
+	COMMAND microstructure_binary_relation_test)
+
+add_executable(microstructure_nullary_function_test nullary_function_test.cpp)
+target_link_libraries(microstructure_nullary_function_test ${POMAGMA_MICROSTRUCTURE_TEST_LIBS})
+add_test(NAME microstructure_nullary_function
+	COMMAND microstructure_nullary_function_test)
+
+# TODO either omit the microstructure_ prefix on tests
+# or add a macrostructure_ prefix to macrostructure tests.
+add_executable(microstructure_injective_function_test injective_function_test.cpp)
+target_link_libraries(microstructure_injective_function_test ${POMAGMA_MICROSTRUCTURE_TEST_LIBS})
+add_test(NAME microstructure_injective_function
+       COMMAND microstructure_injective_function_test)
+
+add_executable(microstructure_binary_function_test binary_function_test.cpp)
+target_link_libraries(microstructure_binary_function_test ${POMAGMA_MICROSTRUCTURE_TEST_LIBS})
+add_test(NAME microstructure_binary_function
+       	COMMAND microstructure_binary_function_test)
+
+add_executable(microstructure_symmetric_function_test symmetric_function_test.cpp)
+target_link_libraries(microstructure_symmetric_function_test ${POMAGMA_MICROSTRUCTURE_TEST_LIBS})
+add_test(NAME microstructure_symmetric_function
+	COMMAND microstructure_symmetric_function_test)
+
+add_executable(microstructure_scheduler_test scheduler_test.cpp)
+target_link_libraries(microstructure_scheduler_test ${POMAGMA_MICROSTRUCTURE_TEST_LIBS})
+add_test(NAME microstructure_scheduler
+	COMMAND microstructure_scheduler_test)
+
