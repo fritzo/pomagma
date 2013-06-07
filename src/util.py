@@ -9,7 +9,7 @@ import contextlib
 import uuid
 import tempfile
 import timeit
-import tables
+
 
 
 SRC = os.path.dirname(os.path.abspath(__file__))
@@ -119,6 +119,7 @@ def log_duration():
 
 @contextlib.contextmanager
 def load(filename):
+    import tables
     structure = tables.openFile(filename)
     yield structure
     structure.close()

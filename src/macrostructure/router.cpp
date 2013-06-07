@@ -4,6 +4,8 @@
 #include "injective_function.hpp"
 #include "binary_function.hpp"
 #include "symmetric_function.hpp"
+#include <algorithm>
+#include <tuple>
 
 namespace pomagma
 {

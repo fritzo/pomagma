@@ -2,6 +2,7 @@
 #include <pomagma/macrostructure/structure_impl.hpp>
 #include <pomagma/macrostructure/parser.hpp>
 #include <pomagma/macrostructure/sampler.hpp>
+#include <algorithm>
 
 namespace pomagma
 {
