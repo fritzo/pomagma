@@ -8,7 +8,7 @@ ARITY_TO_PB2 = {
     'SYMMETRIC': WeightedTerm.SYMMETRIC,
     }
 
-ARITY_FROM_PB2 = {val:key for key, val in ARITY_TO_PB2.iteritems()}
+ARITY_FROM_PB2 = {val: key for key, val in ARITY_TO_PB2.iteritems()}
 
 
 def normalize_dict(grouped):

@@ -2,7 +2,8 @@
 Activities for survey workflow.
 
 References:
-http://docs.aws.amazon.com/amazonswf/latest/developerguide/swf-dg-using-swf-api.html#swf-dg-error-handling
+http://docs.aws.amazon.com/amazonswf/latest/developerguide/\
+swf-dg-using-swf-api.html#swf-dg-error-handling
 '''
 
 import os
@@ -60,10 +61,10 @@ def trim(theory, size):
         log_file = '{}/advise.log'.format(theory)
         pomagma.cartographer.trim(
             theory,
-			world,
-			region,
-			size,
-			log_file=log_file)
+            world,
+            region,
+            size,
+            log_file=log_file)
     else:
         region = world
     region = normalize_filename('{}/region'.format(theory), region)
@@ -119,10 +120,10 @@ def survey(task):
     log_file = '{}/survey.log'.format(theory)
     pomagma.surveyor.survey(
         theory,
-		region,
-		chart,
-		chart_size,
-		log_file=log_file)
+        region,
+        chart,
+        chart_size,
+        log_file=log_file)
     chart = normalize_filename('{}/chart'.format(theory), chart)
     pomagma.store.put(chart)
     pomagma.store.remove(region)

@@ -73,7 +73,11 @@ def start():
             #    attrs.get('detail', 'none'))
             #json_input = {'subject': subject, 'message': message}
             #input = json.dumps(json_input)
-            #pomagma.workflow.swf.decide_to_schedule(task, activity_type, input)
+            #pomagma.workflow.swf.decide_to_schedule(
+            #    task,
+            #    activity_type,
+            #    input,
+            #    )
 
         elif event_type == 'ScheduleActivityTaskFailed':
             print 'ERROR failed to schedule task'

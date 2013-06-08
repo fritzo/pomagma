@@ -25,7 +25,9 @@ def test_abstraction():
     assert_equal(lam(z, APP(APP(x, z), y)), APP(APP(C, x), y))
     assert_equal(lam(z, APP(x, APP(y, z))), COMP(x, y))
 
-    assert_equal(lam(z, COMP(APP(x, z), APP(y, z))), APP(APP(S, COMP(B, x)), y))
+    assert_equal(
+        lam(z, COMP(APP(x, z), APP(y, z))),
+        APP(APP(S, COMP(B, x)), y))
     assert_equal(lam(z, COMP(APP(x, z), y)), COMP(APP(APP(C, B), y), x))
     assert_equal(lam(z, COMP(x, APP(y, z))), COMP(APP(B, x), y))
     assert_equal(lam(y, COMP(x, y)), APP(B, x))
@@ -43,13 +45,13 @@ def test_iter_subsets():
             set(map(frozenset, iter_subsets(range(3)))),
             set(map(frozenset, [
                 [],
-                [1,],
-                [2,],
-                [1,2,],
-                [0,],
-                [0,1,],
-                [0,2,],
-                [0,1,2,],
+                [1],
+                [2],
+                [1, 2],
+                [0],
+                [0, 1],
+                [0, 2],
+                [0, 1, 2],
                 ])))
 
 

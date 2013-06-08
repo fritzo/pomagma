@@ -195,7 +195,9 @@ def reproducible(module):
     TODO send log file in error message
     '''
     module = 'pomagma.workflow.{}'.format(module)
+
     def reproducible_(fun):
+
         @functools.wraps(fun)
         def reproducible_fun(task):
             try:

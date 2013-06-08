@@ -1,6 +1,7 @@
 import os
 import shutil
-import parsable; parsable = parsable.Parsable()
+import parsable
+parsable = parsable.Parsable()
 import pomagma.util
 import pomagma.surveyor
 import pomagma.cartographer
@@ -55,6 +56,7 @@ def init(theory, **options):
         world = 'world.h5'
         opts = options
         opts.setdefault('log_file', 'survey.log')
+
         def log_print(message):
             pomagma.util.log_print(message, opts['log_file'])
 
@@ -87,6 +89,7 @@ def survey(theory, max_size=8191, step_size=512, **options):
         world_size = pomagma.util.get_info(world)['item_count']
         opts = options
         opts.setdefault('log_file', 'survey.log')
+
         def log_print(message):
             pomagma.util.log_print(message, opts['log_file'])
 
@@ -97,11 +100,11 @@ def survey(theory, max_size=8191, step_size=512, **options):
                 world_size = min(world_size + step_size, max_size)
                 log_print('Step {}: survey to {}'.format(step, world_size))
                 pomagma.surveyor.survey(theory,
-					world,
-					temp,
-					world_size,
-					**opts)
-                pomagma.cartographer.copy(temp, world, **opts) # verifies file
+                    world,
+                    temp,
+                    world_size,
+                    **opts)
+                pomagma.cartographer.copy(temp, world, **opts)  # verifies file
 
             else:
                 log_print('Step {}: trim-survey-aggregate'.format(step))
@@ -118,7 +121,7 @@ def survey(theory, max_size=8191, step_size=512, **options):
                     max_size,
                     **opts)
                 pomagma.cartographer.aggregate(world, survey, temp, **opts)
-                pomagma.cartographer.copy(temp, world, **opts) # verifies file
+                pomagma.cartographer.copy(temp, world, **opts)  # verifies file
 
             world_size = pomagma.util.get_info(world)['item_count']
             log_print('world_size = {}'.format(world_size))

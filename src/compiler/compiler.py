@@ -95,7 +95,8 @@ class Iter(Strategy):
             if (self.var in child.expr.vars and
                 not child.expr.vars & new_lets and
                 sum(1 for arg in child.expr.args if self.var == arg) == 1 and
-                sum(1 for arg in child.expr.args if self.var in arg.vars) == 1):
+                sum(1 for arg in child.expr.args if self.var in arg.vars) == 1
+                ):
                 if isinstance(child, Test):
                     self.add_test(child)
                 else:
@@ -376,7 +377,7 @@ def get_compiled(antecedents, succedent, bound):
             bound_c = set_with(bound, c.var)
             for s in get_compiled(antecedents, succedent, bound_c):
                 results.append(Let(c, s))
-            return results # HEURISTIC bind eagerly in arbitrary order
+            return results  # HEURISTIC bind eagerly in arbitrary order
 
     # bind antecedent constants
     for a in antecedents:
@@ -386,7 +387,7 @@ def get_compiled(antecedents, succedent, bound):
             bound_a = set_with(bound, a.var)
             for s in get_compiled(antecedents_a, succedent, bound_a):
                 results.append(Let(a, s))
-            return results # HEURISTIC bind eagerly in arbitrary order
+            return results  # HEURISTIC bind eagerly in arbitrary order
 
     # conditionals
     for a in antecedents:
@@ -457,10 +458,7 @@ def get_compiled(antecedents, succedent, bound):
         return results  # HEURISTIC iterate locally eagerly
 
     # iterate anything
-    free = ( union([a.vars for a in antecedents])
-           | succedent.vars
-           - bound
-           )
+    free = (union([a.vars for a in antecedents]) | succedent.vars - bound)
     for v in free:
         bound_v = set_with(bound, v)
         for s in get_compiled(antecedents, succedent, bound_v):

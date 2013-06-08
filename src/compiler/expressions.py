@@ -24,7 +24,11 @@ class Expression(object):
         elif arity == 'NullaryFunction':
             self._var = Expression(name + '_')
             self._vars = set()
-        elif arity in ['InjectiveFunction', 'BinaryFunction', 'SymmetricFunction']:
+        elif arity in [
+                'InjectiveFunction',
+                'BinaryFunction',
+                'SymmetricFunction',
+                ]:
             var = re.sub('[ _]+', '_', self.polish).rstrip('_')
             self._var = Expression(var)
             self._vars = union(arg.vars for arg in args)

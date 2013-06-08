@@ -11,7 +11,6 @@ import tempfile
 import timeit
 
 
-
 SRC = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(SRC)
 THEORY = os.path.join(SRC, 'theory')
@@ -75,6 +74,7 @@ def in_temp_dir():
 class MutexLockedException(Exception):
     def __init__(self, filename):
         self.filename = os.path.abspath(filename)
+
     def __str__(self):
         return 'Failed to acquire lock on {}'.format(self.filename)
 
@@ -244,7 +244,7 @@ def test():
 
 def coverity():
     '''
-    See 
+    See http://scan.coverity.com
     '''
     buildtype = 'Debug'
     buildflag = '-DCMAKE_BUILD_TYPE={}'.format(buildtype)

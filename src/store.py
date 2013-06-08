@@ -160,7 +160,7 @@ def remove(filename):
     s3_remove(filename_ext)
 
 
-if __name__ =='__main__':
+if __name__ == '__main__':
 
     def parallel_map(fun, args):
         if len(args) <= 1:

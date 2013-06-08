@@ -33,7 +33,7 @@ class Sequent(object):
             ', '.join(map(str, self.antecedents)),
             ', '.join(map(str, self.succedents)))
 
-    def ascii(self, indent = 0):
+    def ascii(self, indent=0):
         top = '   '.join(map(str, self.antecedents))
         bot = '   '.join(map(str, self.succedents))
         width = max(len(top), len(bot))
@@ -152,7 +152,7 @@ def get_contrapositives(seq):
             succedents = get_negated(antecedent)
             for disjunct in get_negated(seq_succedent):
                 if get_negated(disjunct) & antecedents:
-                    pass # contradiction
+                    pass  # contradiction
                 else:
                     result.add(Sequent(
                         set_with(antecedents, disjunct),

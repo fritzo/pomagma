@@ -64,15 +64,15 @@ def Iter_cpp(self, code, poll=None):
     body('''
         Ob $var = *iter;
         ''',
-        var = self.var,
+        var=self.var,
         )
     for var, expr in self.lets.iteritems():
         body('''
             Ob $var = $fun.find($args);
             ''',
-            var = var,
-            fun = expr.name,
-            args = ', '.join(map(str, expr.args)))
+            var=var,
+            fun=expr.name,
+            args=', '.join(map(str, expr.args)))
     self.body.cpp(body)
     sets = []
     iter_ = 'carrier.iter()'
@@ -122,10 +122,10 @@ def IterInvInjective_cpp(self, code, poll=None):
             $body
         }
         ''',
-        var = self.var,
-        fun = self.fun,
-        value = self.value,
-        body = wrapindent(body),
+        var=self.var,
+        fun=self.fun,
+        value=self.value,
+        body=wrapindent(body),
         )
 
 
@@ -138,15 +138,15 @@ def IterInvBinary_cpp(self, code, poll=None):
         body('''
             Ob $var1 __attribute__((unused)) = iter.lhs();
             ''',
-            var1 = self.var1,
+            var1=self.var1,
             )
     else:
         body('''
             Ob $var1 __attribute__((unused)) = iter.lhs();
             Ob $var2 __attribute__((unused)) = iter.rhs();
             ''',
-            var1 = self.var1,
-            var2 = self.var2,
+            var1=self.var1,
+            var2=self.var2,
             )
     self.body.cpp(body)
     code('''
@@ -154,9 +154,9 @@ def IterInvBinary_cpp(self, code, poll=None):
             $body
         }
         ''',
-        fun = self.fun,
-        value = self.value,
-        body = wrapindent(body),
+        fun=self.fun,
+        value=self.value,
+        body=wrapindent(body),
         )
 
 
@@ -168,19 +168,25 @@ def IterInvBinaryRange_cpp(self, code, poll=None):
     body('''
         Ob $var = *iter;
         ''',
-        var = self.var2 if self.lhs_fixed else self.var1,
+        var=self.var2 if self.lhs_fixed else self.var1,
         )
     self.body.cpp(body)
+    iter_ = Code()
+    iter_('''
+        $fun.iter_val_$parity($value, $var)
+        ''',
+        fun=self.fun,
+        value=self.value,
+        parity=('lhs' if self.lhs_fixed else 'rhs'),
+        var=(self.var1 if self.lhs_fixed else self.var2),
+        )
     code('''
-        for (auto iter = $fun.iter_val_$parity($value, $var); iter.ok(); iter.next()) {
+        for (auto iter = $iter_; iter.ok(); iter.next()) {
             $body
         }
         ''',
-        fun = self.fun,
-        value = self.value,
-        parity = 'lhs' if self.lhs_fixed else 'rhs',
-        var = self.var1 if self.lhs_fixed else self.var2,
-        body = wrapindent(body),
+        iter_=iter_,
+        body=wrapindent(body),
         )
 
 
@@ -193,10 +199,10 @@ def Let_cpp(self, code, poll=None):
             $body
         }
         ''',
-        var = self.var,
-        fun = self.expr.name,
-        args = ', '.join(map(str, self.expr.args)),
-        body = wrapindent(body),
+        var=self.var,
+        fun=self.expr.name,
+        args=', '.join(map(str, self.expr.args)),
+        body=wrapindent(body),
         )
 
 
@@ -217,8 +223,8 @@ def Test_cpp(self, code, poll=None):
             $body
         }
         ''',
-        expr = expr,
-        body = wrapindent(body),
+        expr=expr,
+        body=wrapindent(body),
         )
 
 
@@ -232,8 +238,8 @@ def Ensure_cpp(self, code, poll=None):
         code('''
         ensure_$name($args);
         ''',
-        name = expr.name.lower(),
-        args = ', '.join(map(str, args)),
+        name=expr.name.lower(),
+        args=', '.join(map(str, args)),
         )
     else:
         assert self.expr.name == 'EQUAL'
@@ -241,17 +247,17 @@ def Ensure_cpp(self, code, poll=None):
             code('''
                 $name.insert($arg1, $arg2);
                 ''',
-                name = rhs.name,
-                arg1 = ', '.join(map(str, rhs.args)),
-                arg2 = lhs,
+                name=rhs.name,
+                arg1=', '.join(map(str, rhs.args)),
+                arg2=lhs,
                 )
         elif rhs.is_var():
             code('''
                 $name.insert($arg1, $arg2);
                 ''',
-                name = lhs.name,
-                arg1 = ', '.join(map(str, lhs.args)),
-                arg2 = rhs,
+                name=lhs.name,
+                arg1=', '.join(map(str, lhs.args)),
+                arg2=rhs,
                 )
         else:
             if rhs.name < lhs.name:
@@ -259,11 +265,10 @@ def Ensure_cpp(self, code, poll=None):
             code('''
                 ensure_${name1}_${name2}($args);
                 ''',
-                name1 = lhs.name.lower(),
-                name2 = rhs.name.lower(),
-                args = ', '.join(map(str, lhs.args + rhs.args)),
+                name1=lhs.name.lower(),
+                name2=rhs.name.lower(),
+                args=', '.join(map(str, lhs.args + rhs.args)),
                 )
-
 
 
 @inputs(Code)
@@ -273,7 +278,7 @@ def write_signature(code, functions):
         $bar
         // signature
         ''',
-        bar = bar,
+        bar=bar,
         ).newline()
 
     for arity, names in functions.iteritems():
@@ -281,10 +286,10 @@ def write_signature(code, functions):
             code('''
                 $Arity $NAME (carrier, schedule_$arity);
                 ''',
-                Arity = arity,
-                arity = camel_to_underscore(arity),
-                NAME = name,
-                name = name.lower())
+                Arity=arity,
+                arity=camel_to_underscore(arity),
+                NAME=name,
+                name=name.lower())
         if names:
             code.newline()
 
@@ -299,14 +304,14 @@ def write_signature(code, functions):
             body('''
                 signature.declare("$NAME", $NAME);
                 ''',
-                NAME = name)
+                NAME=name)
     code('''
         void declare_signature ()
         {
             $body
         }
         ''',
-        body = wrapindent(body),
+        body=wrapindent(body),
         ).newline()
 
 
@@ -321,7 +326,7 @@ def write_stats_logger(code, functions):
                 POMAGMA_INFO("$name:");
                 $name.log_stats();
                 ''',
-                name = name,
+                name=name,
                 ).newline()
 
     code('''
@@ -340,7 +345,7 @@ def write_stats_logger(code, functions):
             sampler.log_stats();
         }
         ''',
-        body = wrapindent(body),
+        body=wrapindent(body),
         ).newline()
 
 
@@ -365,10 +370,12 @@ def write_merge_task(code, functions):
             dep));
         ''')
 
-    functions = [(name, arity, signature.get_nargs(arity))
-                 for arity, funs in functions.iteritems()
-                 for name in funs]
-    functions.sort(key = lambda (name, arity, argc): -argc)
+    functions = [
+        (name, arity, signature.get_nargs(arity))
+        for arity, funs in functions.iteritems()
+        for name in funs
+        ]
+    functions.sort(key=lambda (name, arity, argc): -argc)
 
     for name, arity, argc in functions:
         if argc <= 1:
@@ -380,8 +387,8 @@ def write_merge_task(code, functions):
                     &$name,
                     dep));
                 ''',
-                name = name,
-                arity = arity,
+                name=name,
+                arity=arity,
                 )
     body.newline()
 
@@ -397,7 +404,7 @@ def write_merge_task(code, functions):
             $body
         }
         ''',
-        body = wrapindent(body),
+        body=wrapindent(body),
         ).newline()
 
 
@@ -408,7 +415,7 @@ def write_ensurers(code, functions):
         $bar
         // compound ensurers
         ''',
-        bar = bar,
+        bar=bar,
         ).newline()
 
     functions = [(name, signature.get_nargs(arity))
@@ -440,14 +447,14 @@ def write_ensurers(code, functions):
                     }
                 }
                 ''',
-                name1 = name1.lower(),
-                name2 = name2.lower(),
-                NAME1 = name1,
-                NAME2 = name2,
-                args1 = ', '.join(vars1),
-                args2 = ', '.join(vars2),
-                typed_args1 = ', '.join(map(Ob, vars1)),
-                typed_args2 = ', '.join(map(Ob, vars2)),
+                name1=name1.lower(),
+                name2=name2.lower(),
+                NAME1=name1,
+                NAME2=name2,
+                args1=', '.join(vars1),
+                args2=', '.join(vars2),
+                typed_args1=', '.join(map(Ob, vars1)),
+                typed_args2=', '.join(map(Ob, vars2)),
                 ).newline()
 
 
@@ -474,9 +481,9 @@ def write_full_tasks(code, sequents):
                 $case
             } break;
             ''',
-            index = i,
-            cost = cost,
-            case = wrapindent(case),
+            index=i,
+            cost=cost,
+            case=wrapindent(case),
             ).newline()
 
     code('''
@@ -547,11 +554,11 @@ def write_full_tasks(code, sequents):
             }
         }
         ''',
-        bar = bar,
-        type_count = type_count,
-        unsplit_count = unsplit_count,
-        block_size = block_size,
-        cases = wrapindent(cases, '        '),
+        bar=bar,
+        type_count=type_count,
+        unsplit_count=unsplit_count,
+        block_size=block_size,
+        cases=wrapindent(cases, '        '),
         ).newline()
 
 
@@ -562,7 +569,7 @@ def write_event_tasks(code, sequents):
         $bar
         // event tasks
         ''',
-        bar = bar,
+        bar=bar,
         ).newline()
 
     event_tasks = {}
@@ -571,7 +578,7 @@ def write_event_tasks(code, sequents):
             name = '<variable>' if event.is_var() else event.name
             tasks = event_tasks.setdefault(name, [])
             strategies = compiler.compile_given(sequent, event)
-            strategies.sort(key = lambda (cost, _): cost)
+            strategies.sort(key=lambda (cost, _): cost)
             costs = [cost for cost, _ in strategies]
             cost = log_sum_exp(*costs)
             tasks.append((event, cost, strategies))
@@ -591,7 +598,7 @@ def write_event_tasks(code, sequents):
 
     # TODO sort groups
     #event_tasks = event_tasks.items()
-    #event_tasks.sort(key=(lambda (name, tasks): (len(tasks), len(name), name)))
+    #event_tasks.sort(key=lambda (name, tasks): (len(tasks), len(name), name))
 
     group_tasks = list(group_tasks.iteritems())
     group_tasks.sort()
@@ -612,8 +619,8 @@ def write_event_tasks(code, sequents):
                 subbody('''
                     const Ob val = $eventname.find($args);
                     ''',
-                    eventname = eventname,
-                    args = ', '.join(args))
+                    eventname=eventname,
+                    args=', '.join(args))
 
             for event, _, strategies in tasks:
                 subsubbody = Code()
@@ -648,8 +655,8 @@ def write_event_tasks(code, sequents):
                             $subsubbody
                         }
                         ''',
-                        cost = cost,
-                        subsubbody = wrapindent(subsubbody),
+                        cost=cost,
+                        subsubbody=wrapindent(subsubbody),
                         )
                 else:
                     subbody('''
@@ -657,8 +664,8 @@ def write_event_tasks(code, sequents):
                             $subsubbody
                         }
                         ''',
-                        cost = cost,
-                        subsubbody = wrapindent(subsubbody),
+                        cost=cost,
+                        subsubbody=wrapindent(subsubbody),
                         )
 
             if eventname in ['LESS', 'NLESS', '<variable>']:
@@ -669,8 +676,8 @@ def write_event_tasks(code, sequents):
                     $subbody
                 }
                 ''',
-                eventname = eventname,
-                subbody = wrapindent(subbody),
+                eventname=eventname,
+                subbody=wrapindent(subbody),
                 ).newline()
 
         code('''
@@ -679,8 +686,8 @@ def write_event_tasks(code, sequents):
                 $body
             }
             ''',
-            groupname = groupname,
-            body = wrapindent(body),
+            groupname=groupname,
+            body=wrapindent(body),
             ).newline()
 
     nontrivial_arities = [groupname for groupname, _ in group_tasks]
@@ -689,7 +696,7 @@ def write_event_tasks(code, sequents):
             code('''
                 void execute (const ${arity}Task &) {}
                 ''',
-                arity = arity,
+                arity=arity,
                 ).newline()
 
 
@@ -720,7 +727,7 @@ def write_theory(code, rules=None, facts=None):
 
     code('''
         #include "theory.hpp"
-        
+
         namespace pomagma
         {
         ''').newline()

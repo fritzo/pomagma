@@ -4,11 +4,10 @@ from nose.tools import assert_equal
 import pomagma.util
 
 
-
 def _blocking_mutex((_id, curdir)):
     with pomagma.util.chdir(curdir), pomagma.util.mutex(block=True):
-            print 'Running process', _id
-            time.sleep(0.1)
+        print 'Running process', _id
+        time.sleep(0.1)
 
 
 def test_blocking_mutex():
