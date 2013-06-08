@@ -66,6 +66,11 @@ def diverge_step(term):
         raise Converged()
 
 
+def try_converge(term, steps):
+    for _ in xrange(steps):
+        term = diverge_step(term)
+
+
 def iter_terms(atoms, max_atom_count):
     assert max_atom_count > 0
     for atom_count in xrange(1, 1 + max_atom_count):
@@ -106,6 +111,20 @@ def count_terms(max_count=8):
     for m in max_counts:
         counts = [count(a, m) for a in atom_counts if a + m <= max_count + 1]
         print '\t'.join(map(str, [m] + counts))
+
+
+@parsable.command
+def may_diverge(atoms='I,K,B,C,W,S,Y', max_atom_count=4, max_steps=20):
+    '''
+    Print terms that have not been found to converge.
+    '''
+    atoms = atoms.split(',')
+    for term in iter_terms(atoms, max_atom_count):
+        try:
+            try_converge(term, max_steps)
+            print term
+        except Converged:
+            pass
 
 
 if __name__ == '__main__':
