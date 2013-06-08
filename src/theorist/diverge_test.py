@@ -1,5 +1,5 @@
 from nose.tools import assert_equal, assert_raises
-from pomagma.theorist.diverge import I, K, B, C, W, S, TOP
+from pomagma.theorist.diverge import I, K, B, C, W, S, Y, TOP
 from pomagma.theorist.diverge import diverge_step, Converged
 
 
@@ -39,6 +39,10 @@ STEPS = [
     ([S, [x], [y]], [x, [TOP], [y, [TOP]]]),
     ([S, [x], [y], a], [x, a, [y, a]]),
     ([S, [x], [y], a, b], [x, a, [y, a], b]),
+
+    ([Y], [TOP]),
+    ([Y, [x]], [x, [Y, [x]]]),
+    ([Y, [x], a], [x, [Y, [x]], a]),
     ]
 
 
