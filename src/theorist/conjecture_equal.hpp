@@ -9,7 +9,7 @@
 namespace pomagma
 {
 
-static const size_t DEFAULT_CONJECTURE_COUNT = 1000;
+static const size_t DEFAULT_CONJECTURE_COUNT = 100;
 
 void conjecture_shallow (
         Structure & structure,
