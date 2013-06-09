@@ -18,7 +18,9 @@ void insert_nullary_functions (
     for (auto pair : structure.signature().nullary_functions()) {
         auto fun = pair.second;
         if (Ob val = fun->find()) {
-            subset.insert(val);
+            if (not subset.contains(val)) {
+                subset.insert(val);
+            }
         }
     }
     POMAGMA_ASSERT_LE(subset.count_items(), target_item_count);

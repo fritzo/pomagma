@@ -1,5 +1,7 @@
 # the group H4 with 14400 elements
 
+EQUAL BOT I  # so conjecture_diverge can run
+
 NLESS R I
 LESS S I
 LESS T I

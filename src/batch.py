@@ -36,10 +36,15 @@ def test(theory, **options):
         pomagma.surveyor.survey(theory, '3.h5', '4.h5', sizes[1], **opts)
         pomagma.cartographer.aggregate('2.h5', '4.h5', '5.h5', **opts)
         pomagma.cartographer.aggregate('5.h5', '0.h5', '6.h5', **opts)
+        pomagma.theorist.conjecture_diverge(
+            theory,
+            '6.h5',
+            'diverge.conjectures',
+            **opts)
         pomagma.theorist.conjecture_equal(
             theory,
             '6.h5',
-            'conjectures.out',
+            'equal.conjectures',
             **opts)
         digest5 = pomagma.util.get_hash('5.h5')
         digest6 = pomagma.util.get_hash('6.h5')
