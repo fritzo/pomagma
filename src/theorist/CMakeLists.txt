@@ -3,7 +3,7 @@ include_directories(${CMAKE_SOURCE_DIR}/)
 
 add_library(pomagma_theorist SHARED
 	hypothesize.cpp
-	conjecture.cpp
+	conjecture_equal.cpp
 	)
 set(POMAGMA_THEORIST_LIBS
 	pomagma_theorist
@@ -12,6 +12,6 @@ set(POMAGMA_THEORIST_LIBS
 	pomagma_language
 	${POMAGMA_SEQUENTIAL_LIBS})
 
-add_executable(conjecture conjecture_main.cpp)
-target_link_libraries(conjecture ${POMAGMA_THEORIST_LIBS})
+add_executable(conjecture_equal conjecture_equal_main.cpp)
+target_link_libraries(conjecture_equal ${POMAGMA_THEORIST_LIBS})
 

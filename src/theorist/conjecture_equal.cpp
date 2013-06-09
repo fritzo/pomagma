@@ -1,4 +1,4 @@
-#include "conjecture.hpp"
+#include "conjecture_equal.hpp"
 #include "hypothesize.hpp"
 #include <pomagma/macrostructure/carrier.hpp>
 #include <pomagma/macrostructure/binary_relation.hpp>

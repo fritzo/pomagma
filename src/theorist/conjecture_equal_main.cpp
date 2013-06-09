@@ -1,4 +1,4 @@
-#include "conjecture.hpp"
+#include "conjecture_equal.hpp"
 #include <pomagma/macrostructure/carrier.hpp>
 
 int main (int argc, char ** argv)
