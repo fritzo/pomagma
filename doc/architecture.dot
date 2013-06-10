@@ -15,13 +15,13 @@ digraph G {
     {
         rank="same";
         node [style=filled, fillcolor=pink];
-        TheoriesReviewer [label="Reviewer"];
+        TheoryReviewer [label="Reviewer"];
         LanguagesReviewer [label="Reviewer"];
     }
     {
         node [shape=ellipse];
         Languages;
-        Theories;
+        Theory;
         Atlas;
         Corpus;
     }
@@ -48,13 +48,13 @@ digraph G {
     }
 
     { rank="min"; Linguist; Theorist; }
-    { rank="same"; Languages; Theories; Atlas; Corpus; }
+    { rank="same"; Languages; Theory; Atlas; Corpus; }
     { rank="same"; Cartographer; Compiler; Analyst; }
 
 
     // Workflow: Compile
     edge [dir=forward arrowhead=normal]; // pull
-    Theories -> Compiler;
+    Theory -> Compiler;
     Compiler -> Surveyor;
     Compiler -> Cartographer;
 
@@ -89,13 +89,14 @@ digraph G {
     edge [dir=both arrowtail=inv arrowhead=empty]; // push
     Linguist -> Languages;
     LanguagesReviewer -> Languages;
-    LanguagesReviewer -> Theories;
+    LanguagesReviewer -> Theory;
 
     // Workflow: Conjecture
     edge [dir=forward arrowhead=normal]; // pull
     Atlas -> Theorist;
     Languages ->  Theorist;
-    Theorist -> TheoriesReviewer;
+    Theorist -> TheoryReviewer;
     edge [dir=both arrowtail=inv arrowhead=empty]; // push
-    TheoriesReviewer -> Theories;
+    TheoryReviewer -> Theory;
+    Theorist -> Atlas;
 }
