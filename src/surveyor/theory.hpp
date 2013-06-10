@@ -2,17 +2,10 @@
 // WARNING this should only be linked to once
 
 #include <pomagma/microstructure/util.hpp>
-#include <pomagma/microstructure/carrier.hpp>
-#include <pomagma/microstructure/nullary_function.hpp>
-#include <pomagma/microstructure/injective_function.hpp>
-#include <pomagma/microstructure/binary_function.hpp>
-#include <pomagma/microstructure/symmetric_function.hpp>
-#include <pomagma/microstructure/binary_relation.hpp>
-#include <pomagma/microstructure/parser.hpp>
 #include <pomagma/microstructure/sampler.hpp>
-#include <pomagma/microstructure/structure.hpp>
+#include <pomagma/microstructure/structure_impl.hpp>
 #include <pomagma/microstructure/scheduler.hpp>
-#include <pomagma/platform/signature.hpp>
+#include "insert_parser.hpp"
 #include <atomic>
 #include <thread>
 #include <vector>
@@ -25,8 +18,7 @@ namespace pomagma
 
 Structure structure;
 Signature & signature = structure.signature();
-Parser parser(structure.signature());
-Sampler sampler(structure.signature());
+Sampler sampler(signature);
 
 void load_structure (const std::string & filename) { structure.load(filename); }
 void dump_structure (const std::string & filename) { structure.dump(filename); }
@@ -111,9 +103,9 @@ void execute (const AssumeTask & task)
 
     std::string type;
     POMAGMA_ASSERT(getline(expression, type, ' '), "bad line: " << expression);
-    Parser::Policy policy(carrier);
-    Ob lhs = parser.parse_insert(expression, policy);
-    Ob rhs = parser.parse_insert(expression, policy);
+    InsertParser parser(signature);
+    Ob lhs = parser.parse(expression);
+    Ob rhs = parser.parse(expression);
     POMAGMA_ASSERT(lhs and rhs, "parse_insert failed");
 
     if (type == "EQUAL") {

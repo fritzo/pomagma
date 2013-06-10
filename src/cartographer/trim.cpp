@@ -1,7 +1,7 @@
 #include "trim.hpp"
 #include <pomagma/macrostructure/structure_impl.hpp>
-#include <pomagma/macrostructure/parser.hpp>
 #include <pomagma/macrostructure/sampler.hpp>
+#include "collect_parser.hpp"
 #include <algorithm>
 
 namespace pomagma
@@ -27,8 +27,7 @@ void insert_nullary_functions (
 }
 
 void assume (
-        Parser & parser,
-        Parser::Policy & policy,
+        CollectParser & parser,
         const std::string & expression_str)
 {
     POMAGMA_DEBUG("assume " << expression_str);
@@ -36,8 +35,8 @@ void assume (
 
     std::string type;
     POMAGMA_ASSERT(getline(expression, type, ' '), "bad line: " << expression);
-    Ob lhs = parser.parse_insert(expression, policy);
-    Ob rhs = parser.parse_insert(expression, policy);
+    Ob lhs = parser.parse(expression);
+    Ob rhs = parser.parse(expression);
     POMAGMA_ASSERT(lhs and rhs, "parse_insert failed");
 
     POMAGMA_ASSERT(
@@ -55,12 +54,11 @@ void assume_core_facts (
     std::ifstream file(theory_file);
     POMAGMA_ASSERT(file, "failed to open " << theory_file);
 
-    Parser parser(structure.signature());
-    Parser::Policy policy(subset, target_item_count);
+    CollectParser parser(structure.signature(), subset, target_item_count);
     std::string expression;
     while (getline(file, expression)) {
         if (not expression.empty() and expression[0] != '#') {
-            assume(parser, policy, expression);
+            assume(parser, expression);
         }
     }
 }

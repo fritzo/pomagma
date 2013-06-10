@@ -46,6 +46,7 @@ def test(theory, **options):
             '6.h5',
             'equal.conjectures',
             **opts)
+        # TODO test pomagma.theorist.assume here
         digest5 = pomagma.util.get_hash('5.h5')
         digest6 = pomagma.util.get_hash('6.h5')
         assert digest5 == digest6

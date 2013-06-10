@@ -1,4 +1,5 @@
 #include "hypothesize.hpp"
+#include "consistency.hpp"
 #include <pomagma/macrostructure/binary_relation.hpp>
 #include <pomagma/macrostructure/compact.hpp>
 #include <pomagma/macrostructure/router.hpp>
@@ -41,44 +42,6 @@ inline void tempfile_load (pid_t pid, T & t)
     remove(filename.c_str());
 }
 
-class ConsistencyChecker
-{
-public:
-
-    ConsistencyChecker (Structure & structure)
-        : m_carrier(structure.carrier()),
-          m_nless(* structure.signature().binary_relations("NLESS"))
-    {
-    }
-
-    bool check (Ob dep)
-    {
-        Ob rep = m_carrier.find(dep);
-        POMAGMA_ASSERT_LT(rep, dep);
-        return not (m_nless.find(dep, rep) or m_nless.find(rep, dep));
-    }
-
-public:
-
-    Carrier & m_carrier;
-    BinaryRelation & m_nless;
-};
-
-ConsistencyChecker * g_consistency_checker = nullptr;
-
-static const int CONSISTENT = EXIT_SUCCESS;
-static const int INCONSISTENT = EXIT_FAILURE;
-
-void schedule_merge_if_consistent (Ob dep)
-{
-    if (likely(g_consistency_checker->check(dep))) {
-        schedule_merge(dep);
-    } else {
-        POMAGMA_INFO("INCONSISTENT");
-        _exit(INCONSISTENT);
-    }
-}
-
 void merge_if_consistent (
         Structure & structure,
         const std::pair<Ob, Ob> & equation)
@@ -86,12 +49,8 @@ void merge_if_consistent (
     // TODO omit binary relation LESS
     //structure.signature().binary_relations().erase("LESS");
 
-    Ob dep = std::max(equation.first, equation.second);
-    Ob rep = std::min(equation.first, equation.second);
-    Carrier & carrier = structure.carrier();
-    g_consistency_checker = new ConsistencyChecker(structure);
-    carrier.set_merge_callback(schedule_merge);
-    carrier.merge(dep, rep);
+    configure_scheduler_to_merge_if_consistent(structure);
+    structure.carrier().ensure_equal(equation.first, equation.second);
     process_mergers(structure.signature());
     compact(structure);
 }
@@ -119,7 +78,7 @@ float hypothesize_entropy (
         const std::vector<float> probs = router.measure_probs(reltol);
         float entropy = get_entropy(probs);
         detail::tempfile_dump(getpid(), entropy);
-        _exit(detail::CONSISTENT);
+        _exit(EXIT_CONSISTENT);
 
     } else {
 
@@ -132,11 +91,11 @@ float hypothesize_entropy (
 
         float entropy = NAN;
         switch (info) {
-            case detail::CONSISTENT:
+            case EXIT_CONSISTENT:
                 detail::tempfile_load(child, entropy);
                 break;
 
-            case detail::INCONSISTENT:
+            case EXIT_INCONSISTENT:
                 entropy = 0.0;
                 break;
 

@@ -18,3 +18,12 @@ def conjecture_diverge(theory, world_in, conjectures_out, **opts):
         os.path.join(pomagma.util.LANGUAGE, '{}.language'.format(theory)),
         pomagma.util.abspath(conjectures_out),
         **opts)
+
+
+def assume(world_in, world_out, theory_in, **opts):
+    pomagma.util.log_call(
+        os.path.join(pomagma.util.BIN, 'theorist', 'assume'),
+        pomagma.util.abspath(world_in),
+        pomagma.util.abspath(world_out),
+        pomagma.util.abspath(theory_in),
+        **opts)
