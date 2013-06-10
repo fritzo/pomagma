@@ -9,7 +9,7 @@ Adventures in Abstractland.
 ### State
 
 - Languages - finite generating grammars of combinatory algebras
-- Theories - finite relational theories of combinatory algebras
+- Theory - finite relational theories of combinatory algebras
 - Atlas - an algebraic knowledge bases of relations in each algebra
 - Corpus - collected writings compilable to combinatory algebra expressions
 
@@ -27,12 +27,11 @@ Adventures in Abstractland.
 
 ### Workflows
 
-- Compile: interpret theory to create core facts and surveying strategies
-- Survey: select a region; survey it; aggregate measurements into atlas
+- Compile: interpret theory to create core facts and inference strategies
+- Survey: select a region; explore nearby regions; add observations to atlas
+- Theorize: make conjectures; prove some, ponder others; add theorems to atlas
 - Edit: write code; respond to static analysis of code
-- Learn Language: optimize language weights based on corpus
-- Make Language: propose new terms to add to the language; review for safety
-- Conjecture: propose new equations; evaluate economic effects; commit
+- Evolve Language: optimize grammar weights based on corpus; propose new words
 - Recover (after Fregean collapse): assess damage; pinpoint problem; rebuild
 
 ## Milestones
