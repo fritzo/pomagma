@@ -12,7 +12,7 @@ public:
 
     FindParser (Signature & signature) : Parser(signature) {}
 
-    Ob parse (std::istringstream & stream);
+protected:
 
     Ob check_insert (const NullaryFunction * fun)
     {
@@ -34,10 +34,5 @@ public:
         return fun->find(lhs, rhs);
     }
 };
-
-inline Ob FindParser::parse (std::istringstream & stream)
-{
-    return Parser::parse(stream, this);
-}
 
 } // namespace pomagma

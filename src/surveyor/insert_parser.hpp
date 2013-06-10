@@ -8,8 +8,6 @@ namespace pomagma
 
 class InsertParser : public Parser
 {
-    Carrier & m_carrier;
-
 public:
 
     InsertParser (Signature & signature)
@@ -18,9 +16,9 @@ public:
     {
     }
 
-    Ob parse (std::istringstream & stream);
+protected:
 
-    Ob check_insert (const NullaryFunction * fun) const
+    Ob check_insert (const NullaryFunction * fun)
     {
         Ob val = fun->find();
         if (not val) {
@@ -31,7 +29,7 @@ public:
         return val;
     }
 
-    Ob check_insert (const InjectiveFunction * fun, Ob key) const
+    Ob check_insert (const InjectiveFunction * fun, Ob key)
     {
         Ob val = fun->find(key);
         if (not val) {
@@ -42,7 +40,7 @@ public:
         return val;
     }
 
-    Ob check_insert (const BinaryFunction * fun, Ob lhs, Ob rhs) const
+    Ob check_insert (const BinaryFunction * fun, Ob lhs, Ob rhs)
     {
         Ob val = fun->find(lhs, rhs);
         if (not val) {
@@ -53,7 +51,7 @@ public:
         return val;
     }
 
-    Ob check_insert (const SymmetricFunction * fun, Ob lhs, Ob rhs) const
+    Ob check_insert (const SymmetricFunction * fun, Ob lhs, Ob rhs)
     {
         Ob val = fun->find(lhs, rhs);
         if (not val) {
@@ -63,11 +61,10 @@ public:
         }
         return val;
     }
+
+private:
+
+    Carrier & m_carrier;
 };
-
-inline Ob InsertParser::parse (std::istringstream & stream)
-{
-    return Parser::parse(stream, this);
-}
 
 } // namespace pomagma

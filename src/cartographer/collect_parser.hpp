@@ -8,10 +8,6 @@ namespace pomagma
 
 class CollectParser : public Parser
 {
-    DenseSet & m_set;
-    size_t m_size;
-    const size_t m_capacity;
-
 public:
 
     CollectParser (Signature & signature, DenseSet & set, size_t capacity)
@@ -23,7 +19,7 @@ public:
         POMAGMA_ASSERT_LE(m_size, m_capacity);
     }
 
-    Ob parse (std::istringstream & stream);
+protected:
 
     Ob check_insert (const NullaryFunction * fun)
     {
@@ -59,11 +55,11 @@ private:
         }
         return val;
     }
-};
 
-inline Ob CollectParser::parse (std::istringstream & stream)
-{
-    return Parser::parse(stream, this);
-}
+    DenseSet & m_set;
+    size_t m_size;
+    const size_t m_capacity;
+
+};
 
 } // namespace pomagma
