@@ -156,7 +156,7 @@ def theorize(theory, **options):
 
         world = 'world.h5'
         assume = '{}.assume.h5'.format(os.getpid())
-        conjectures = 'conjecture_diverge.terms'
+        conjectures = 'conjecture_diverge.facts'
         theorems = 'filter_diverge.facts'
         assert os.path.exists(world), 'First build world map'
         opts = options

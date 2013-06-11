@@ -92,11 +92,12 @@ def test_filter_diverge():
             f.write('# test terms')
             for term in iter_terms(atoms, max_atom_count):
                 f.write('\n')
-                f.write(print_term(term))
+                f.write('EQUAL BOT {}'.format(print_term(term)))
         filter_diverge('source.facts', 'destin.facts', max_steps)
         with open('destin.facts') as f:
             for line in f:
                 line = line.split('#')[0].strip()
                 if line:
-                    term = parse_term(line)
+                    assert line.startswith('EQUAL BOT ')
+                    term = parse_term(line[len('EQUAL BOT '):])
                     assert_raises(Diverged, try_converge, term, max_steps)

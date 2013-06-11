@@ -225,11 +225,12 @@ def must_diverge(atoms='I,K,B,C,W,S,Y', max_atom_count=4, max_steps=20):
 
 
 @parsable.command
-def filter_diverge(file_in, file_out, max_steps=20):
-    with open(file_out, 'w') as out:
+def filter_diverge(facts_in, facts_out, max_steps=20):
+    with open(facts_out, 'w') as out:
         out.write('# theorems proved by pomagma')
-        for line in stripped_lines(file_in):
-            term = parse_term(line)
+        for line in stripped_lines(facts_in):
+            assert line.startswith('EQUAL BOT ')
+            term = parse_term(line[len('EQUAL BOT '):])
             try:
                 try_converge(term, max_steps)
             except Converged:

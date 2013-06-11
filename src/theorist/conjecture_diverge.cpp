@@ -34,7 +34,7 @@ std::vector<Ob> conjecture_diverge (
         conjectures.push_back(ob);
     }
 
-    POMAGMA_DEBUG("sorting conjectures");
+    POMAGMA_DEBUG("sorting " << conjectures.size() << " conjectures");
     std::sort(
         conjectures.begin(),
         conjectures.end(),
