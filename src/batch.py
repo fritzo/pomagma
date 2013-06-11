@@ -120,7 +120,7 @@ def survey(theory, max_size=8191, step_size=512, **options):
                 region,
                 region_size,
                 **opts)
-            region_size = pomagma.util.get_info(region)['item_count']
+            region_size = pomagma.util.get_item_count(region)
             survey_size = min(region_size + step_size, max_size)
             pomagma.surveyor.survey(
                 theory,
@@ -140,7 +140,7 @@ def survey(theory, max_size=8191, step_size=512, **options):
                 os.rename(aggregate, world)
             os.remove(survey)
 
-            world_size = pomagma.util.get_info(world)['item_count']
+            world_size = pomagma.util.get_item_count(world)
             log_print('world_size = {}'.format(world_size))
             step += 1
 
@@ -214,16 +214,20 @@ def sparse_range(min_size, max_size):
 
 
 @parsable.command
-def trim_regions(theory='skj', **opts):
+def trim_regions(theory='skj', **options):
     '''
     Trim a set of regions for testing on small machines.
     '''
     path = os.path.join(pomagma.util.DATA, 'atlas', theory)
     assert os.path.exists(path), 'First initialize world map'
     with pomagma.util.chdir(path):
+
+        opts = options
+        opts.setdefault('log_file', 'trim_regions.log')
+        opts.setdefault('log_level', 2)
         world = 'world.h5'
         min_size = pomagma.util.MIN_SIZES[theory]
-        max_size = pomagma.util.get_info(world)['item_count']
+        max_size = pomagma.util.get_item_count(world)
         sizes = reversed(sparse_range(min_size, max_size))
         larger = world
         for size in sizes:
@@ -250,7 +254,7 @@ def clean(theory):
     '''
     Remove all work for given theory. DANGER
     '''
-    print 'Are you sure? [Y/n]',
+    print 'Clearing {} Are you sure? [Y/n]'.format(theory),
     if raw_input().lower()[:1] == 'y':
         path = os.path.join(pomagma.util.DATA, 'atlas', theory)
         if os.path.exists(path):

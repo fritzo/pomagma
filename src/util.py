@@ -278,6 +278,13 @@ def get_info(infile):
         return info
 
 
+def get_item_count(infile):
+    with load(infile) as structure:
+        item_dim, item_count = count_obs(structure)
+        info = dict(item_dim=item_dim, item_count=item_count)
+        return info['item_count']
+
+
 def print_info(infile):
     with load(infile) as structure:
         item_dim, item_count = count_obs(structure)
