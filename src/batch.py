@@ -77,7 +77,7 @@ def init(theory, **options):
         log_print('Step 0: initialize to {}'.format(world_size))
         pomagma.surveyor.init(theory, survey, world_size, **opts)
         with pomagma.util.mutex():
-            pomagma.cartographer.validate(theory, survey, **opts)
+            pomagma.cartographer.validate(survey, **opts)
             assert not os.path.exists(world), 'already initialized'
             os.rename(survey, world)
 
@@ -111,7 +111,7 @@ def survey(theory, max_size=8191, step_size=512, **options):
 
         step = 1
         while True:
-            log_print('Step {}'.format(step))
+            log_print('Step {}: survey'.format(step))
 
             region_size = max(min_size, max_size - step_size)
             pomagma.cartographer.trim(
