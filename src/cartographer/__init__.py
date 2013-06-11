@@ -4,7 +4,7 @@ import pomagma.util
 
 def validate(chart_in, **opts):
     pomagma.util.log_call(
-        os.path.join(pomagma.util.BIN, 'cartographer', 'copy'),
+        os.path.join(pomagma.util.BIN, 'cartographer', 'validate'),
         pomagma.util.abspath(chart_in),
         **opts)
 

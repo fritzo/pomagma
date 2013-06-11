@@ -162,7 +162,7 @@ def theorize(theory, **options):
         opts = options
         opts.setdefault('log_file', 'conjecture.log')
         pomagma.theorist.conjecture_diverge(theory, world, conjectures, **opts)
-        pomagma.theorist.filter_diverge(conjectures, theorems)
+        pomagma.theorist.filter_diverge(conjectures, theorems, **opts)
         pomagma.theorist.assume(world, assume, theorems, **opts)
         with pomagma.util.mutex():
             pomagma.cartographer.validate(assume, **opts)

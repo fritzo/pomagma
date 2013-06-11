@@ -11,17 +11,17 @@ static-check: FORCE
 	find src | grep '.py$$' | grep -v '_pb2.py' | xargs pyflakes
 	find src | grep '.py$$' | grep -v '_pb2.py' | xargs pep8
 
-unit-test: static-check set-ulimit
+unit-test: static-check set-ulimit FORCE
 	POMAGMA_DEBUG= python -m pomagma unit-test
-batch-test: all set-ulimit
+batch-test: all set-ulimit FORCE
 	POMAGMA_DEBUG= python -m pomagma batch-test
-h4-test: all set-ulimit
+h4-test: all set-ulimit FORCE
 	POMAGMA_DEBUG= python -m pomagma batch-test h4
-sk-test: all set-ulimit
+sk-test: all set-ulimit FORCE
 	POMAGMA_DEBUG= python -m pomagma batch-test sk
-skj-test: all set-ulimit
+skj-test: all set-ulimit FORCE
 	POMAGMA_DEBUG= python -m pomagma batch-test skj
-test: all static-check set-ulimit
+test: all static-check set-ulimit FORCE
 	POMAGMA_DEBUG= python -m pomagma unit-test
 	POMAGMA_DEBUG= python -m pomagma batch-test
 

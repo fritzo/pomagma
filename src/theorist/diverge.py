@@ -239,6 +239,5 @@ def filter_diverge(file_in, file_out, max_steps=20):
                 out.write(line)
 
 
-
 if __name__ == '__main__':
     parsable.dispatch()
