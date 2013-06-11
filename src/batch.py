@@ -207,8 +207,8 @@ def sparse_range(min_size, max_size):
             sizes.append(size)
         else:
             break
-    sizes += [3 * size for size in sizes if 3 * size < max_size]
-    sizes = [size - 1 for size in sizes if size > min_size]
+    sizes += [3 * s for s in sizes if 3 * s < max_size]
+    sizes = [s - 1 for s in sizes if s > min_size]
     sizes.sort()
     return sizes
 

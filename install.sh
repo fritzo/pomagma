@@ -10,7 +10,6 @@ sudo apt-get install -y \
   libssl-dev \
   python-pip virtualenvwrapper \
   python-tables \
-  pyflakes \
   graphviz \
   gdb \
   p7zip-full \

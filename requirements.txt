@@ -1,5 +1,7 @@
 nose
 mock
+pep8
+pyflakes
 tables
 git+ssh://git@github.com/boto/boto
 git+ssh://git@github.com/fritzo/parsable.py
