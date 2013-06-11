@@ -174,7 +174,7 @@ if __name__ == '__main__':
             for f in filenames
             if f[-len(EXT):] != EXT
             if not os.path.exists(f) or os.path.isfile(f)
-            ]
+        ]
 
     @parsable.command
     def ls(prefix=''):

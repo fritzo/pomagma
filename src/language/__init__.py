@@ -6,7 +6,7 @@ ARITY_TO_PB2 = {
     'INJECTIVE': WeightedTerm.INJECTIVE,
     'BINARY': WeightedTerm.BINARY,
     'SYMMETRIC': WeightedTerm.SYMMETRIC,
-    }
+}
 
 ARITY_FROM_PB2 = {val: key for key, val in ARITY_TO_PB2.iteritems()}
 
@@ -19,7 +19,7 @@ def normalize_dict(grouped):
         weight
         for group in grouped.itervalues()
         for weight in group.itervalues()
-        )
+    )
     assert total > 0, "total weight is zero"
     scale = 1.0 / total
 

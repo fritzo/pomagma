@@ -6,7 +6,7 @@ from pomagma.compiler.compiler import (
     get_events,
     compile_full,
     compile_given,
-    )
+)
 
 EQUAL = lambda x, y: Expression('EQUAL', x, y)
 LESS = lambda x, y: Expression('LESS', x, y)

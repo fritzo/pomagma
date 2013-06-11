@@ -41,7 +41,7 @@ def start():
         events = [
             e for e in iter_recent_events(task)
             if not e['eventType'].startswith('Decision')
-            ]
+        ]
 
         last_event = events[0]
         event_type = last_event['eventType']
@@ -66,14 +66,14 @@ def start():
             attrs = last_event['activityTaskFailedEventAttributes']
             print 'Reason:\n'.format(attrs.get('reason', 'unknown'))
             print 'Details:\n{}'.format(attrs.get('details', 'none'))
-            #activity_type = 'Report'
-            #subject = '{} {}'.format(DOMAIN, event_type)
-            #message = 'Reason: {}\nDetail:\n{}'.format(
+            # activity_type = 'Report'
+            # subject = '{} {}'.format(DOMAIN, event_type)
+            # message = 'Reason: {}\nDetail:\n{}'.format(
             #    attrs.get('reason', 'unknown'),
             #    attrs.get('detail', 'none'))
-            #json_input = {'subject': subject, 'message': message}
-            #input = json.dumps(json_input)
-            #pomagma.workflow.swf.decide_to_schedule(
+            # json_input = {'subject': subject, 'message': message}
+            # input = json.dumps(json_input)
+            # pomagma.workflow.swf.decide_to_schedule(
             #    task,
             #    activity_type,
             #    input,

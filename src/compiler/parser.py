@@ -10,6 +10,7 @@ RE_COMMENT = re.compile('#.*$')
 
 
 class ParseError(Exception):
+
     def __init__(self, message, lineno='unknown'):
         self.message = str(message)
         self.lineno = lineno

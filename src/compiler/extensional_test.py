@@ -2,13 +2,13 @@ from nose.tools import assert_equal, assert_set_equal
 from pomagma.compiler import run
 from pomagma.compiler.util import find_rules
 from pomagma.compiler.extensional import (
-        Expression,
-        APP, COMP, JOIN,
-        I, K, B, C, W, S, J,
-        iter_subsets,
-        iter_eta_substitutions,
-        iter_closure_maps,
-        )
+    Expression,
+    APP, COMP, JOIN,
+    I, K, B, C, W, S, J,
+    iter_subsets,
+    iter_eta_substitutions,
+    iter_closure_maps,
+)
 
 
 def test_abstraction():
@@ -42,8 +42,8 @@ def test_abstraction():
 
 def test_iter_subsets():
     assert_set_equal(
-            set(map(frozenset, iter_subsets(range(3)))),
-            set(map(frozenset, [
+        set(map(frozenset, iter_subsets(range(3)))),
+        set(map(frozenset, [
                 [],
                 [1],
                 [2],
@@ -71,14 +71,14 @@ def test_iter_closure_maps():
     x = Expression('x')
     y = Expression('y')
     assert_set_equal(
-            set(iter_closure_maps(x)),
-            set([I]))
+        set(iter_closure_maps(x)),
+        set([I]))
     assert_set_equal(
-            set(iter_closure_maps(APP(x, x))),
-            set([APP(W, I)]))
+        set(iter_closure_maps(APP(x, x))),
+        set([APP(W, I)]))
     assert_set_equal(
-            set(iter_closure_maps(APP(x, y))),
-            set([I, APP(C, I), APP(W, I)]))
+        set(iter_closure_maps(APP(x, y))),
+        set([I, APP(C, I), APP(W, I)]))
 
 
 def test_close_rules():
@@ -88,7 +88,7 @@ def test_close_rules():
         'h4.rules',
         # no validator implemented:
         'quote.rules',
-        ]
+    ]
     for filename in find_rules():
         is_extensional = filename.split('/')[-1] not in blacklist
         yield run.test_close_rules, filename, is_extensional

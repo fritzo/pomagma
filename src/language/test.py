@@ -26,12 +26,12 @@ def test_example():
             'I': 2.21841,
             'K': 2.6654,
             'S': 2.69459,
-            },
+        },
         'BINARY': {
             'APP': 0.4,
             'COMP': 0.2,
-            },
-        }
+        },
+    }
     normalize_dict(example)
     assert_converts(example)
 

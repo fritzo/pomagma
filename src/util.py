@@ -30,13 +30,13 @@ SURVEYORS = {
     'h4': 'h4.survey',
     'sk': 'sk.survey',
     'skj': 'skj.survey',
-    }
+}
 
 MIN_SIZES = {
     'h4': 127,
     'sk': 1023,
     'skj': 1535,
-    }
+}
 
 
 def print_dot(out=sys.stdout):
@@ -52,7 +52,7 @@ def random_uuid():
 def chdir(path):
     old_path = os.path.abspath(os.path.curdir)
     try:
-        #os.makedirs(path)
+        # os.makedirs(path)
         print 'cd {}\n'.format(path)
         os.chdir(path)
         yield os.path.curdir
@@ -72,6 +72,7 @@ def in_temp_dir():
 
 
 class MutexLockedException(Exception):
+
     def __init__(self, filename):
         self.filename = os.path.abspath(filename)
 
@@ -182,7 +183,7 @@ def print_logged_error(log_file):
         '--text',
         '--max-count=1',
         'error'
-        ])
+    ])
     revgrep = 'tac {} | {} | tac'.format(log_file, grep)
     subprocess.call(revgrep, shell=True)
 
@@ -197,7 +198,7 @@ def get_stack_trace(binary):
             '--batch',
             '-ex',
             'thread apply all bt',
-            ])
+        ])
     except subprocess.CalledProcessError:
         trace += 'ERROR stack trace failed'
     return trace
@@ -238,7 +239,7 @@ def test():
     opts = {
         'log_file': os.path.join(DATA, 'test', '{}.log'.format(buildtype)),
         'log_level': 3,
-        }
+    }
     log_call('make', '-C', BUILD, 'test', **opts)
 
 

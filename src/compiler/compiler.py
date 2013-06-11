@@ -2,13 +2,13 @@ import math
 from pomagma.compiler.expressions import Expression
 from pomagma.compiler.sequents import Sequent, normalize, assert_normal
 from pomagma.compiler.util import (
-        inputs,
-        union,
-        set_with,
-        set_without,
-        log_sum_exp,
-        logger,
-        )
+    inputs,
+    union,
+    set_with,
+    set_without,
+    log_sum_exp,
+    logger,
+)
 
 
 def assert_in(element, set_):
@@ -38,11 +38,13 @@ def add_costs(*args):
 
 
 class Strategy(object):
+
     def cost(self):
         return math.log(self.op_count()) / LOG_OBJECT_COUNT
 
 
 class Iter(Strategy):
+
     def __init__(self, var, body):
         assert var.is_var(), 'Iter var is not a Variable: {0}'.format(var)
         assert isinstance(body, Strategy), 'Iter body is not a Strategy'
@@ -92,11 +94,13 @@ class Iter(Strategy):
         while isinstance(child, Test) or isinstance(child, Let):
             if isinstance(child, Let):
                 new_lets.add(child.var)
-            if (self.var in child.expr.vars and
+            optimizable = (
+                self.var in child.expr.vars and
                 not child.expr.vars & new_lets and
                 sum(1 for arg in child.expr.args if self.var == arg) == 1 and
                 sum(1 for arg in child.expr.args if self.var in arg.vars) == 1
-                ):
+            )
+            if optimizable:
                 if isinstance(child, Test):
                     self.add_test(child)
                 else:
@@ -111,6 +115,7 @@ class Iter(Strategy):
 
 # TODO injective function inverse need not be iterated
 class IterInvInjective(Strategy):
+
     def __init__(self, fun, body):
         assert fun.arity == 'InjectiveFunction'
         self.fun = fun.name
@@ -134,6 +139,7 @@ class IterInvInjective(Strategy):
 
 
 class IterInvBinary(Strategy):
+
     def __init__(self, fun, body):
         assert fun.arity in ['BinaryFunction', 'SymmetricFunction']
         self.fun = fun.name
@@ -159,6 +165,7 @@ class IterInvBinary(Strategy):
 
 
 class IterInvBinaryRange(Strategy):
+
     def __init__(self, fun, fixed, body):
         assert fun.arity in ['BinaryFunction', 'SymmetricFunction']
         self.fun = fun.name
@@ -196,6 +203,7 @@ class IterInvBinaryRange(Strategy):
 
 
 class Let(Strategy):
+
     def __init__(self, expr, body):
         assert isinstance(body, Strategy)
         assert expr.is_fun()
@@ -219,6 +227,7 @@ class Let(Strategy):
 
 
 class Test(Strategy):
+
     def __init__(self, expr, body):
         assert not expr.is_var()
         assert isinstance(body, Strategy)
@@ -240,6 +249,7 @@ class Test(Strategy):
 
 
 class Ensure(Strategy):
+
     def __init__(self, expr):
         assert expr.args, 'expr is not compound: {0}'.format(expr)
         self.expr = expr
@@ -333,7 +343,7 @@ def compile_given(seq, atom):
         bound.add(atom.var)
     results = []
     for normal in normalize_given(seq, atom, bound):
-        #print 'DEBUG normal =', normal
+        # print 'DEBUG normal =', normal
         ranked = rank_compiled(normal, context, bound)
         results.append(min(ranked))
     assert results, 'failed to compile {0} given {1}'.format(seq, atom)
@@ -351,10 +361,10 @@ def rank_compiled(seq, context, bound):
     ranked = []
     for s in compiled:
         s.validate(bound)
-        #print 'DEBUG', '-' * 8
-        #print 'DEBUG', s
+        # print 'DEBUG', '-' * 8
+        # print 'DEBUG', s
         s.optimize()
-        #print 'DEBUG', s
+        # print 'DEBUG', s
         s.validate(bound)
         ranked.append((s.cost(), s))
     return ranked
@@ -364,7 +374,7 @@ def get_compiled(antecedents, succedent, bound):
     '''
     Iterate through the space of strategies, narrowing heuristically.
     '''
-    #print 'DEBUG', list(bound), '|', list(antecedents), '|-', succedent
+    # print 'DEBUG', list(bound), '|', list(antecedents), '|-', succedent
 
     if not antecedents and succedent.vars <= bound:
         return [Ensure(succedent)]
@@ -391,7 +401,7 @@ def get_compiled(antecedents, succedent, bound):
 
     # conditionals
     for a in antecedents:
-        #if a.name in ['LESS', 'NLESS']:
+        # if a.name in ['LESS', 'NLESS']:
         if a.is_rel():
             if a.vars <= bound:
                 antecedents_a = set_without(antecedents, a)

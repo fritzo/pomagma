@@ -3,6 +3,7 @@ from pomagma.compiler.expressions import Expression
 
 
 class Sequent(object):
+
     def __init__(self, antecedents, succedents):
         antecedents = frozenset(antecedents)
         succedents = frozenset(succedents)

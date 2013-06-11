@@ -17,7 +17,7 @@ from pomagma.theorist.diverge import (
     parse_term,
     print_term,
     filter_diverge,
-    )
+)
 
 
 a, b, c = ('a',), ('b',), ('c',)  # argument lists
@@ -60,7 +60,7 @@ STEPS = [
     ((Y,), (TOP,)),
     ((Y, (x,),), (x, (Y, (x,),),)),
     ((Y, (x,), a,), (x, (Y, (x,),), a,)),
-    ]
+]
 
 
 def _test_converge_step(term, expected):

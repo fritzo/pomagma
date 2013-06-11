@@ -182,11 +182,11 @@ def validate(expr):
             lhs = head_normalize(lhs)
             rhs = head_normalize(rhs)
             assert len(lhs) == len(rhs),\
-                    'Failed to validate\n  {0}\nbecause\n  {1} != {2}'.format(
-                            expr, lhs, rhs)
+                'Failed to validate\n  {0}\nbecause\n  {1} != {2}'.format(
+                expr, lhs, rhs)
             assert lhs[0] == rhs[0],\
-                    'Failed to validate\n  {0}\nbecause  \n{1} != {2}'.format(
-                            expr, lhs[0], rhs[0])
+                'Failed to validate\n  {0}\nbecause  \n{1} != {2}'.format(
+                expr, lhs[0], rhs[0])
             for args in zip(lhs[1:], rhs[1:]):
                 validate(Expression(expr.name, *args))
             break
@@ -218,7 +218,7 @@ def iter_eta_substitutions(expr):
                 result = result.substitute(var, fresh)
             elif case == 2:
                 result = result.substitute(var, APP(var, fresh))
-            #elif case == 3:
+            # elif case == 3:
             #    result = result.substitute(var, COMP(var, fresh))
         if any(cases):
             yield result.abstract(fresh)

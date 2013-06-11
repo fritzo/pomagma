@@ -35,8 +35,8 @@ def step1(task):
             'nextActivity': {
                 'activityType': 'Step2',
                 'input': {'filename': filename},
-                }
             }
+        }
 
 
 @reproducible
@@ -52,8 +52,8 @@ def step2(task):
             'nextActivity': {
                 'activityType': 'Step3',
                 'input': {'state': state},
-                }
             }
+        }
 
 
 STATE = None
@@ -100,12 +100,12 @@ def start(step):
             nextActivity = {
                 'activityType': 'Step1',
                 'input': {'state': state},
-                }
+            }
             input = json.dumps(nextActivity)
             pomagma.workflow.swf.start_workflow_execution(
-                    workflow_id,
-                    workflow_name,
-                    input)
+                workflow_id,
+                workflow_name,
+                input)
             task = pomagma.workflow.swf.poll_activity_task(activity_name)
             print 'iter', i, 'step3'
             global STATE

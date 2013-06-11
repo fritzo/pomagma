@@ -4,10 +4,11 @@ from pomagma.compiler import signature
 
 
 class Expression(object):
+
     def __init__(self, name, *args):
         assert isinstance(name, str)
         assert re.match('[a-zA-Z][a-zA-Z_]*$', name),\
-                'invalid name: {0}'.format(name)
+            'invalid name: {0}'.format(name)
         args = list(args)
         arity = signature.get_arity(name)
         assert len(args) == signature.get_nargs(arity)
@@ -28,7 +29,7 @@ class Expression(object):
                 'InjectiveFunction',
                 'BinaryFunction',
                 'SymmetricFunction',
-                ]:
+        ]:
             var = re.sub('[ _]+', '_', self.polish).rstrip('_')
             self._var = Expression(var)
             self._vars = union(arg.vars for arg in args)
@@ -99,5 +100,5 @@ class Expression(object):
             return defn
         else:
             return Expression(
-                    self.name,
-                    *[arg.substitute(var, defn) for arg in self.args])
+                self.name,
+                *[arg.substitute(var, defn) for arg in self.args])

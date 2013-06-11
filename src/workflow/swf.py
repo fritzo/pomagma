@@ -63,7 +63,7 @@ def register_activity_type(
         schedule_to_close_timeout=SCHEDULE_TO_CLOSE_TIMEOUT,
         schedule_to_start_timeout=SCHEDULE_TO_START_TIMEOUT,
         start_to_close_timeout=START_TO_CLOSE_TIMEOUT,
-        ):
+):
     activity_type = '{}ActivityType'.format(name)
     task_list = '{}TaskList'.format(name)
     print 'Registering', activity_type
@@ -77,7 +77,7 @@ def register_activity_type(
             str(schedule_to_close_timeout),
             str(schedule_to_start_timeout),
             str(start_to_close_timeout),
-            )
+        )
         print 'Registered', activity_type
     except boto.swf.exceptions.SWFTypeAlreadyExistsError:
         print activity_type, 'is already registered'
@@ -90,7 +90,7 @@ def register_workflow_type(
         child_policy='TERMINATE',
         execution_timeout=EXECUTION_TIMEOUT,
         task_timeout=TASK_TIMEOUT,
-        ):
+):
     workflow = '{}WorkflowType'.format(workflow)
     task_list = '{}TaskList'.format(task_list)
     print 'Registering', workflow
@@ -103,7 +103,7 @@ def register_workflow_type(
             child_policy,
             str(execution_timeout),
             str(task_timeout),
-            )
+        )
         print 'Registered', workflow
     except boto.swf.exceptions.SWFTypeAlreadyExistsError:
         print workflow, 'is already registered'
@@ -119,7 +119,7 @@ def start_workflow_execution(workflow_id, name, input=None):
         workflow_name=workflow_type,
         workflow_version=VERSION,
         input=input,
-        )
+    )
 
 
 #-----------------------------------------------------------------------------
@@ -146,7 +146,7 @@ def decide_to_schedule(decision_task, activity_type, input=None):
         activity_type_name=activity_type,
         activity_type_version=VERSION,
         input=input,
-        )
+    )
     SWF.respond_decision_task_completed(task_token, decisions._data)
 
 
@@ -210,7 +210,7 @@ def reproducible(module):
                 print 'ERROR {}.{} failed'.format(module, fun.__name__)
                 trace = traceback.format_exc()
                 reason = str(exc)
-                #task_str = json.dumps(task, sort_keys=True)
+                # task_str = json.dumps(task, sort_keys=True)
                 details = '\n'.join([
                     trace,
                     # FIXME need environment variables and all manner of muck
@@ -221,7 +221,7 @@ def reproducible(module):
                     #'task = json.load({})'.format(repr(task_str)),
                     #'with pomagma.util.chdir(pomagma.util.DATA):',
                     #'    {}.{}({})'.format(module, fun.__name__, task),
-                    ])
+                ])
                 print details
                 fail_activity_task(task, reason, details)
         return reproducible_fun

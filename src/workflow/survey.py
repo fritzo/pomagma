@@ -96,9 +96,9 @@ def advise(task):
                     'theory': theory,
                     'size': size,
                     'regionFile': region,
-                    },
-                }
+                },
             }
+        }
     else:
         assert action == 'Aggregate'
         theory = args['theory']
@@ -134,9 +134,9 @@ def survey(task):
                 'advisorAction': 'Aggregate',
                 'theory': theory,
                 'chartFile': chart,
-                },
-            }
+            },
         }
+    }
 
 
 @parsable.command
@@ -169,8 +169,8 @@ def start_surveyor(theory, size):
             'advisorAction': 'Trim',
             'theory': theory,
             'size': size,
-            }
         }
+    }
     input = json.dumps(nextActivity)
     pomagma.workflow.swf.register_activity_type(activity_name)
     pomagma.workflow.swf.register_workflow_type(workflow_name, task_list)
@@ -178,9 +178,9 @@ def start_surveyor(theory, size):
         while True:
             workflow_id = pomagma.util.random_uuid()
             pomagma.workflow.swf.start_workflow_execution(
-                    workflow_id,
-                    workflow_name,
-                    input)
+                workflow_id,
+                workflow_name,
+                input)
             task = pomagma.workflow.swf.poll_activity_task(activity_name)
             survey(task)
 

@@ -9,7 +9,7 @@ NARGS_TABLE = {
     'BinaryFunction': 2,
     'SymmetricFunction': 2,
     'Variable': 0,
-    }
+}
 
 ARITY_TABLE = {
     'EQUAL': 'Equation',
@@ -21,13 +21,13 @@ ARITY_TABLE = {
     'COMP': 'BinaryFunction',
     'JOIN': 'SymmetricFunction',
     'RAND': 'SymmetricFunction',
-    }
+}
 
 
 RELATION_ARITIES = frozenset([
     'Equation',
     'BinaryRelation',
-    ])
+])
 
 
 FUNCTION_ARITIES = frozenset([
@@ -35,7 +35,7 @@ FUNCTION_ARITIES = frozenset([
     'InjectiveFunction',
     'BinaryFunction',
     'SymmetricFunction',
-    ])
+])
 
 
 def declare_arity(name, arity):
