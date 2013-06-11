@@ -12,6 +12,9 @@ set(POMAGMA_CARTOGRAPHER_LIBS
 	pomagma_language
 	${POMAGMA_SEQUENTIAL_LIBS})
 
+add_executable(validate validate_main.cpp)
+target_link_libraries(validate ${POMAGMA_CARTOGRAPHER_LIBS})
+
 add_executable(copy copy_main.cpp)
 target_link_libraries(copy ${POMAGMA_CARTOGRAPHER_LIBS})
 

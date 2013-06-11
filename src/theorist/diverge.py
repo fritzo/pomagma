@@ -225,7 +225,7 @@ def must_diverge(atoms='I,K,B,C,W,S,Y', max_atom_count=4, max_steps=20):
 
 
 @parsable.command
-def filter_diverging(file_in, file_out, max_steps=20):
+def filter_diverge(file_in, file_out, max_steps=20):
     with open(file_out, 'w') as out:
         out.write('# theorems proved by pomagma')
         for line in stripped_lines(file_in):

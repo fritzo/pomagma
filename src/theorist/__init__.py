@@ -1,5 +1,6 @@
 import os
 import pomagma.util
+from pomagma.theorist.diverge import filter_diverge
 
 
 def conjecture_equal(theory, world_in, conjectures_out, **opts):

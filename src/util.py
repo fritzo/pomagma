@@ -82,7 +82,7 @@ class MutexLockedException(Exception):
 # Adapted from:
 # http://blog.vmfarms.com/2011/03/cross-process-locking-and.html
 @contextlib.contextmanager
-def mutex(filename='mutex', block=False):
+def mutex(filename='mutex', block=True):
     with open(filename, 'w') as fd:
         if block:
             try:

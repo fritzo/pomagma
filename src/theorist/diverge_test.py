@@ -16,7 +16,7 @@ from pomagma.theorist.diverge import (
     iter_terms,
     parse_term,
     print_term,
-    filter_diverging,
+    filter_diverge,
     )
 
 
@@ -83,7 +83,7 @@ def test_diverge():
     assert_raises(Diverged, try_converge, WWW, 1)
 
 
-def test_filter_diverging():
+def test_filter_diverge():
     atoms = [I, K, B, C, W, S]
     max_atom_count = 3
     max_steps = 20
@@ -93,7 +93,7 @@ def test_filter_diverging():
             for term in iter_terms(atoms, max_atom_count):
                 f.write('\n')
                 f.write(print_term(term))
-        filter_diverging('source.facts', 'destin.facts', max_steps)
+        filter_diverge('source.facts', 'destin.facts', max_steps)
         with open('destin.facts') as f:
             for line in f:
                 line = line.split('#')[0].strip()

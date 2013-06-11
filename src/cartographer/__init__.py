@@ -2,12 +2,18 @@ import os
 import pomagma.util
 
 
-def aggregate(world_in, region_in, world_out, **opts):
+def validate(chart_in, **opts):
     pomagma.util.log_call(
-        os.path.join(pomagma.util.BIN, 'cartographer', 'aggregate'),
-        pomagma.util.abspath(world_in),
-        pomagma.util.abspath(region_in),
-        pomagma.util.abspath(world_out),
+        os.path.join(pomagma.util.BIN, 'cartographer', 'copy'),
+        pomagma.util.abspath(chart_in),
+        **opts)
+
+
+def copy(chart_in, chart_out, **opts):
+    pomagma.util.log_call(
+        os.path.join(pomagma.util.BIN, 'cartographer', 'copy'),
+        pomagma.util.abspath(chart_in),
+        pomagma.util.abspath(chart_out),
         **opts)
 
 
@@ -24,9 +30,10 @@ def trim(theory, world_in, region_out, size, **opts):
         **opts)
 
 
-def copy(chart_in, chart_out, **opts):
+def aggregate(world_in, region_in, world_out, **opts):
     pomagma.util.log_call(
-        os.path.join(pomagma.util.BIN, 'cartographer', 'copy'),
-        pomagma.util.abspath(chart_in),
-        pomagma.util.abspath(chart_out),
+        os.path.join(pomagma.util.BIN, 'cartographer', 'aggregate'),
+        pomagma.util.abspath(world_in),
+        pomagma.util.abspath(region_in),
+        pomagma.util.abspath(world_out),
         **opts)
