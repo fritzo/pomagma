@@ -1,4 +1,5 @@
 from nose.tools import assert_equal, assert_raises
+import pomagma.util
 from pomagma.theorist.diverge import (
     I,
     K,
@@ -12,6 +13,10 @@ from pomagma.theorist.diverge import (
     try_converge,
     Converged,
     Diverged,
+    iter_terms,
+    parse_term,
+    print_term,
+    filter_diverging,
     )
 
 
@@ -76,3 +81,22 @@ def test_diverge():
     WWW = (W, (W,), (W,),)
     assert_equal(converge_step(WWW), WWW)
     assert_raises(Diverged, try_converge, WWW, 1)
+
+
+def test_filter_diverging():
+    atoms = [I, K, B, C, W, S]
+    max_atom_count = 3
+    max_steps = 20
+    with pomagma.util.in_temp_dir():
+        with open('source.facts', 'w') as f:
+            f.write('# test terms')
+            for term in iter_terms(atoms, max_atom_count):
+                f.write('\n')
+                f.write(print_term(term))
+        filter_diverging('source.facts', 'destin.facts', max_steps)
+        with open('destin.facts') as f:
+            for line in f:
+                line = line.split('#')[0].strip()
+                if line:
+                    term = parse_term(line)
+                    assert_raises(Diverged, try_converge, term, max_steps)

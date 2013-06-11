@@ -6,7 +6,9 @@ parsable = parsable.Parsable()
 # Term enumeration
 
 
-I, K, B, C, W, S, Y, TOP = 'I', 'K', 'B', 'C', 'W', 'S', 'Y', 'TOP'
+BOT, TOP = 'BOT', 'TOP'
+I, K, B, C, W, S, Y = 'I', 'K', 'B', 'C', 'W', 'S', 'Y'
+J, U, V = 'J', 'U', 'V'
 
 
 def iter_terms(atoms, max_atom_count):
@@ -104,6 +106,63 @@ def try_converge(term, steps):
 
 
 #-----------------------------------------------------------------------------
+# Parsing
+
+
+def parse_tokens_unsafe(tokens):
+    head = tokens.pop()
+    if head == 'APP':
+        lhs = parse_tokens_unsafe(tokens)
+        rhs = parse_tokens_unsafe(tokens)
+        return lhs + (rhs,)
+    elif head == 'COMP':
+        lhs = parse_tokens_unsafe(tokens)
+        rhs = parse_tokens_unsafe(tokens)
+        return (B, (lhs,), (rhs,),)
+    elif head == 'JOIN':
+        lhs = parse_tokens_unsafe(tokens)
+        rhs = parse_tokens_unsafe(tokens)
+        return (J, (lhs,), (rhs,),)
+    else:
+        return (head,)
+
+
+def parse_tokens(tokens):
+    term = parse_tokens_unsafe(tokens)
+    assert not tokens, 'unexpected tokens: {}'.format(' '.join(tokens))
+    return term
+
+
+def parse_term(string):
+    tokens = string.split()
+    tokens.reverse()
+    return parse_tokens(tokens)
+
+
+def add_tokens(tokens, term):
+    head, args = term[0], term[1:]
+    tokens += ['APP'] * len(args)
+    tokens.append(head)
+    for arg in args:
+        add_tokens(tokens, arg)
+
+
+def print_term(term):
+    tokens = []
+    add_tokens(tokens, term)
+    return ' '.join(tokens)
+
+
+def stripped_lines(file_in):
+    with open(file_in) as f:
+        for line in f:
+            line = line.split('#')[0].strip()
+            if line:
+                yield line
+    raise StopIteration()
+
+
+#-----------------------------------------------------------------------------
 # Commands
 
 
@@ -115,7 +174,7 @@ def print_terms(atoms='x,y', max_atom_count=3):
     '''
     atoms = atoms.split(',')
     for term in iter_terms(atoms, max_atom_count):
-        print term
+        print print_term(term)
 
 
 @parsable.command
@@ -163,6 +222,22 @@ def must_diverge(atoms='I,K,B,C,W,S,Y', max_atom_count=4, max_steps=20):
             pass
         except Diverged:
             print term
+
+
+@parsable.command
+def filter_diverging(file_in, file_out, max_steps=20):
+    with open(file_out, 'w') as out:
+        out.write('# theorems proved by pomagma')
+        for line in stripped_lines(file_in):
+            term = parse_term(line)
+            try:
+                try_converge(term, max_steps)
+            except Converged:
+                pass
+            except Diverged:
+                out.write('\n')
+                out.write(line)
+
 
 
 if __name__ == '__main__':
