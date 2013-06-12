@@ -164,12 +164,21 @@ def theorize(theory, **options):
         assert os.path.exists(world), 'First build world map'
         opts = options
         opts.setdefault('log_file', 'conjecture.log')
+
+        def log_print(message):
+            pomagma.util.log_print(message, opts['log_file'])
+
         pomagma.theorist.conjecture_diverge(theory, world, conjectures, **opts)
-        pomagma.theorist.filter_diverge(conjectures, theorems, **opts)
-        pomagma.theorist.assume(world, assume, theorems, **opts)
-        with pomagma.util.mutex():
-            pomagma.cartographer.validate(assume, **opts)
-            os.rename(assume, world)
+        theorem_count = pomagma.theorist.filter_diverge(
+            conjectures,
+            theorems,
+            **opts)
+        log_print('Proved {} conjectures'.format(theorem_count))
+        if theorem_count > 0:
+            pomagma.theorist.assume(world, assume, theorems, **opts)
+            with pomagma.util.mutex():
+                pomagma.cartographer.validate(assume, **opts)
+                os.rename(assume, world)
 
 
 @parsable.command

@@ -251,6 +251,7 @@ def must_diverge(atoms='I,K,B,C,W,S,Y', max_atom_count=4, max_steps=20):
 
 @parsable.command
 def filter_diverge(facts_in, facts_out, max_steps=20):
+    theorem_count = 0
     with open(facts_out, 'w') as out:
         out.write('# theorems proved by pomagma')
         for line in stripped_lines(facts_in):
@@ -263,6 +264,8 @@ def filter_diverge(facts_in, facts_out, max_steps=20):
             except Diverged:
                 out.write('\n')
                 out.write(line)
+                theorem_count += 1
+    return theorem_count
 
 
 if __name__ == '__main__':

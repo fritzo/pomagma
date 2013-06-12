@@ -6,7 +6,9 @@ import pomagma.theorist.diverge
 def filter_diverge(conjectures_in, theorems_out, **opts):
     log_file = opts['log_file']
     pomagma.util.log_print('Filtering divergence conjectures', log_file)
-    pomagma.theorist.diverge.filter_diverge(conjectures_in, theorems_out)
+    return pomagma.theorist.diverge.filter_diverge(
+        conjectures_in,
+        theorems_out)
 
 
 def conjecture_equal(theory, world_in, conjectures_out, **opts):
