@@ -8,6 +8,7 @@ void load_structure (const std::string & filename);
 void dump_structure (const std::string & filename);
 void load_language (const std::string & filename);
 void declare_signature ();
+void validate_consistent ();
 void validate_all ();
 void log_stats ();
 
@@ -104,12 +105,16 @@ int main (int argc, char ** argv)
     pomagma::Scheduler::initialize(theory_file);
     if (POMAGMA_DEBUG_LEVEL > 1) {
         pomagma::validate_all();
+    } else {
+        pomagma::validate_consistent();
     }
 
     // survey
     pomagma::Scheduler::survey();
     if (POMAGMA_DEBUG_LEVEL > 0) {
         pomagma::validate_all();
+    } else {
+        pomagma::validate_consistent();
     }
 
     pomagma::log_stats();

@@ -9,6 +9,11 @@
 namespace pomagma
 {
 
+void Structure::validate_consistent ()
+{
+    pomagma::validate_consistent(m_signature);
+}
+
 void Structure::validate ()
 {
     pomagma::validate(m_signature);

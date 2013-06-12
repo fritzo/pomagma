@@ -35,6 +35,8 @@ int main (int argc, char ** argv)
     pomagma::compact(structure);
     if (POMAGMA_DEBUG_LEVEL > 1) {
         structure.validate();
+    } else {
+        structure.validate_consistent();
     }
 
     structure.dump(structure_out);

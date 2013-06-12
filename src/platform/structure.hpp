@@ -20,6 +20,9 @@ namespace pomagma
 //----------------------------------------------------------------------------
 // Interface
 
+inline void validate_consistent (
+        Signature & signature);
+
 inline void validate (
         Signature & signature);
 
@@ -44,6 +47,19 @@ inline void load_data (
 
 //----------------------------------------------------------------------------
 // Validation
+
+inline void validate_consistent (Signature & signature)
+{
+    POMAGMA_ASSERT(signature.carrier(), "carrier is not defined");
+
+    for (auto i : signature.binary_relations()) {
+        auto * rel = i.second;
+        std::string negated = "N" + i.first;
+        if (auto * nrel = signature.binary_relations(negated)) {
+            nrel->validate_disjoint(*rel);
+        }
+    }
+}
 
 inline void validate (Signature & signature)
 {

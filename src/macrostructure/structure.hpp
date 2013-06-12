@@ -22,6 +22,7 @@ public:
     BinaryFunction & binary_function(const std::string & name);
     SymmetricFunction & symmetric_function(const std::string & name);
 
+    void validate_consistent ();
     void validate ();
     void clear ();
     void load (const std::string & filename, size_t extra_item_dim = 0);

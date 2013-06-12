@@ -56,6 +56,11 @@ BinaryRelation NLESS(carrier, schedule_nless);
 //----------------------------------------------------------------------------
 // validation
 
+void validate_consistent ()
+{
+    structure.validate_consistent();
+}
+
 void validate_all ()
 {
     structure.validate();

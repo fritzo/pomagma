@@ -21,9 +21,16 @@ int main (int argc, char ** argv)
         exit(1);
     }
 
+    // load
     pomagma::Structure structure;
     structure.load(structure_in);
-    structure.validate();
+
+    // validate
+    if (POMAGMA_DEBUG_LEVEL > 1) {
+        structure.validate();
+    } else {
+        structure.validate_consistent();
+    }
 
     return 0;
 }

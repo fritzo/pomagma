@@ -58,6 +58,8 @@ int main (int argc, char ** argv)
     pomagma::compact(destin);
     if (POMAGMA_DEBUG_LEVEL > 1) {
         destin.validate();
+    } else {
+        destin.validate_consistent();
     }
 
     // TODO
