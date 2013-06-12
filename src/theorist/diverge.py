@@ -42,7 +42,9 @@ def converge_step(term):
     head = term[0]
     argv = term[1:]
     argc = len(argv)
-    if head == I:
+    if head == TOP:
+        raise Converged()
+    elif head == I:
         if argc == 0:
             return (TOP,)
         else:
@@ -91,8 +93,27 @@ def converge_step(term):
             return (TOP,)
         else:
             return argv[0] + ((Y, argv[0],),) + argv[1:]
-    elif head == TOP:
-        raise Converged()
+    elif head == J:
+        if argc <= 1:
+            return (TOP,)
+        elif argc == 2:
+            return (J, converge_step(argv[1]), argv[0],)
+        else:
+            return (J, argv[0] + argv[2:], argv[1] + argv[2:],)
+    elif head == U:
+        if argc == 0:
+            return (TOP,)
+        else:
+            f = argv[0]
+            return (J, f, (B, f, (U, f,),),) + argv[1:]
+    elif head == V:
+        if argc == 0:
+            return (TOP,)
+        else:
+            f = argv[0]
+            return (J, (I,), (B, f, (U, f,),),) + argv[1:]
+    else:
+        raise ValueError('unrecognized atom: {}'.format(head))
 
 
 def try_converge(term, steps):
@@ -118,11 +139,15 @@ def parse_tokens_unsafe(tokens):
     elif head == 'COMP':
         lhs = parse_tokens_unsafe(tokens)
         rhs = parse_tokens_unsafe(tokens)
-        return (B, (lhs,), (rhs,),)
+        return (B, lhs, rhs,)
     elif head == 'JOIN':
         lhs = parse_tokens_unsafe(tokens)
         rhs = parse_tokens_unsafe(tokens)
-        return (J, (lhs,), (rhs,),)
+        return (J, lhs, rhs,)
+    elif head == 'CI':
+        return (C, (I,),)
+    elif head == 'CB':
+        return (C, (B,),)
     else:
         return (head,)
 

@@ -22,11 +22,14 @@ std::vector<Ob> conjecture_diverge (
     const Carrier & carrier = structure.carrier();
     const BinaryRelation & NLESS = structure.binary_relation("NLESS");
     const Ob BOT = structure.nullary_function("BOT").find();
+    const Ob TOP = structure.nullary_function("TOP").find();
 
     POMAGMA_DEBUG("collecting conjectures");
     DenseSet conjecture_set(carrier.item_count());
-    conjecture_set = NLESS.get_Lx_set(BOT);
+    conjecture_set = NLESS.get_Rx_set(BOT);
     conjecture_set.complement();
+    POMAGMA_ASSERT(conjecture_set.contains(BOT), "BOT not conjectured");
+    POMAGMA_ASSERT(not conjecture_set.contains(TOP), "TOP conjectured");
     conjecture_set.remove(BOT);
     std::vector<Ob> conjectures;
     for (auto iter = conjecture_set.iter(); iter.ok(); iter.next()) {

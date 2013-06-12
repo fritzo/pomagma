@@ -36,7 +36,11 @@ int main (int argc, char ** argv)
     }
 
     // assume
+    int pre_item_count = structure.carrier().item_count();
     pomagma::assume(structure, theory_file);
+    int post_item_count = structure.carrier().item_count();
+    int merge_count = pre_item_count - post_item_count;
+    POMAGMA_INFO("assumption merged " << merge_count << " obs");
     if (POMAGMA_DEBUG_LEVEL > 1) {
         structure.validate();
     }
