@@ -8,6 +8,9 @@ import pomagma.cartographer
 import pomagma.theorist
 
 
+DEFAULT_SURVEY_SIZE = 16384 + 512 - 1
+
+
 @parsable.command
 def test(theory, **options):
     '''
@@ -83,7 +86,7 @@ def init(theory, **options):
 
 
 @parsable.command
-def survey(theory, max_size=8191, step_size=512, **options):
+def survey(theory, max_size=DEFAULT_SURVEY_SIZE, step_size=512, **options):
     '''
     Expand world map for given theory.
     Survey until world reaches given size, then (trim; survey; aggregate)-loop
