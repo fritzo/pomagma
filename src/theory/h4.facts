@@ -1,6 +1,8 @@
 # the group H4 with 14400 elements
 
-EQUAL BOT I  # so conjecture_diverge can run
+# define BOT, TOP conjecture_diverge can run
+EQUAL BOT I
+EQUAL TOP R
 
 NLESS R I
 LESS S I
