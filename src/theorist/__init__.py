@@ -3,11 +3,11 @@ import pomagma.util
 import pomagma.theorist.diverge
 
 
-def filter_diverge(conjectures_in, theorems_out, **opts):
+def filter_diverge(conjectures_io, theorems_out, **opts):
     log_file = opts['log_file']
     pomagma.util.log_print('Filtering divergence conjectures', log_file)
     return pomagma.theorist.diverge.filter_diverge(
-        conjectures_in,
+        conjectures_io,
         theorems_out)
 
 

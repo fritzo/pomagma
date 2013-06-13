@@ -250,21 +250,32 @@ def must_diverge(atoms='I,K,B,C,W,S,Y', max_atom_count=4, max_steps=20):
 
 
 @parsable.command
-def filter_diverge(facts_in, facts_out, max_steps=20):
+def filter_diverge(
+        conjectures_io,
+        theorems_out,
+        max_steps=20,
+        log_file=None,
+        log_level=0):
+    assert conjectures_io != theorems_out
     theorem_count = 0
-    with open(facts_out, 'w') as out:
-        out.write('# theorems proved by pomagma')
-        for line in stripped_lines(facts_in):
-            assert line.startswith('EQUAL BOT ')
-            term = parse_term(line[len('EQUAL BOT '):])
-            try:
-                try_converge(term, max_steps)
-            except Converged:
-                pass
-            except Diverged:
-                out.write('\n')
-                out.write(line)
-                theorem_count += 1
+    lines = list(stripped_lines(conjectures_io))
+    with open(conjectures_io, 'w') as conjectures:
+        conjectures.write('# conjectures filtered by pomagma')
+        with open(theorems_out, 'w') as theorems:
+            theorems.write('# theorems proved by pomagma')
+            for line in lines:
+                assert line.startswith('EQUAL BOT ')
+                term = parse_term(line[len('EQUAL BOT '):])
+                try:
+                    try_converge(term, max_steps)
+                    conjectures.write('\n')
+                    conjectures.write(line)
+                except Diverged:
+                    theorems.write('\n')
+                    theorems.write(line)
+                    theorem_count += 1
+                except Converged:
+                    pass
     return theorem_count
 
 

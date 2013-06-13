@@ -159,8 +159,9 @@ def theorize(theory, **options):
 
         world = 'world.h5'
         assume = '{}.assume.h5'.format(os.getpid())
-        conjectures = 'conjecture_diverge.facts'
-        theorems = 'filter_diverge.facts'
+        diverge_conjectures = 'diverge_conjectures.facts'
+        diverge_theorems = 'diverge_theorems.facts'
+        equal_conjectures = 'equal_conjectures.facts'
         assert os.path.exists(world), 'First build world map'
         opts = options
         opts.setdefault('log_file', 'conjecture.log')
@@ -168,17 +169,27 @@ def theorize(theory, **options):
         def log_print(message):
             pomagma.util.log_print(message, opts['log_file'])
 
-        pomagma.theorist.conjecture_diverge(theory, world, conjectures, **opts)
+        pomagma.theorist.conjecture_diverge(
+            theory,
+            world,
+            diverge_conjectures,
+            **opts)
+        log_print('Filtering divergence conjectures')
         theorem_count = pomagma.theorist.filter_diverge(
-            conjectures,
-            theorems,
+            diverge_conjectures,
+            diverge_theorems,
             **opts)
         log_print('Proved {} conjectures'.format(theorem_count))
         if theorem_count > 0:
-            pomagma.theorist.assume(world, assume, theorems, **opts)
+            pomagma.theorist.assume(world, assume, diverge_theorems, **opts)
             with pomagma.util.mutex():
                 pomagma.cartographer.validate(assume, **opts)
                 os.rename(assume, world)
+        pomagma.theorist.conjecture_equal(
+            theory,
+            world,
+            equal_conjectures,
+            **opts)
 
 
 @parsable.command
