@@ -31,7 +31,6 @@ void assume_fact (
     } else {
         BinaryRelation & rel = structure.binary_relation(type);
         rel.insert(lhs, rhs);
-        POMAGMA_ERROR("unknown relation type: " << type);
     }
 }
 

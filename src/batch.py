@@ -46,15 +46,17 @@ def test(theory, **options):
         digest5 = pomagma.util.get_hash('5.h5')
         digest6 = pomagma.util.get_hash('6.h5')
         assert digest5 == digest6
-        pomagma.theorist.conjecture_diverge(
-            theory,
-            '6.h5',
-            conjectures,
-            **opts)
+
+        theorist = pomagma.theorist
+        theorist.conjecture_diverge(theory, '6.h5', conjectures, **opts)
         if theory != 'h4':
-            pomagma.theorist.try_prove_diverge(conjectures, theorems, **opts)
-            pomagma.theorist.assume('6.h5', '7.h5', theorems, **opts)
-        pomagma.theorist.conjecture_equal(theory, '6.h5', conjectures, **opts)
+            theorist.try_prove_diverge(conjectures, theorems, **opts)
+            theorist.assume('6.h5', '7.h5', theorems, **opts)
+        pomagma.cartographer.validate('7.h5', **opts)
+        theorist.conjecture_equal(theory, '7.h5', conjectures, **opts)
+        theorist.try_prove_nless(theory, '7.h5', conjectures, theorems, **opts)
+        theorist.assume('7.h5', '8.h5', theorems, **opts)
+        pomagma.cartographer.validate('8.h5', **opts)
 
 
 @parsable.command

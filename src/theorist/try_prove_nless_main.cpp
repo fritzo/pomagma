@@ -8,18 +8,21 @@ int main (int argc, char ** argv)
     const char * structure_file = nullptr;
     const char * language_file = nullptr;
     const char * conjectures_file = nullptr;
+    const char * theorems_file = nullptr;
 
-    if (argc == 4) {
+    if (argc == 5) {
         structure_file = argv[1];
         language_file = argv[2];
         conjectures_file = argv[3];
+        theorems_file = argv[4];
     } else {
         std::cout
             << "Usage: "
                 << pomagma::get_filename(argv[0])
                 << " structure_in"
                 << " language_in"
-                << " conjectures_out"
+                << " conjectures_io"
+                << " theorems_out"
                 << "\n"
             << "Environment Variables:\n"
             << "  POMAGMA_LOG_FILE = " << pomagma::DEFAULT_LOG_FILE << "\n"
@@ -40,10 +43,11 @@ int main (int argc, char ** argv)
         structure.carrier().item_count());
 
     // conjecture
-    pomagma::conjecture_equal(
+    pomagma::try_prove_nless(
         structure,
         language_file,
-        conjectures_file);
+        conjectures_file,
+        theorems_file);
 
     return 0;
 }

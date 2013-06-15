@@ -12,6 +12,16 @@ def conjecture_equal(theory, world_in, conjectures_out, **opts):
         **opts)
 
 
+def try_prove_nless(theory, world_in, conjectures_io, theorems_out, **opts):
+    pomagma.util.log_call(
+        os.path.join(pomagma.util.BIN, 'theorist', 'try_prove_nless'),
+        pomagma.util.abspath(world_in),
+        os.path.join(pomagma.util.LANGUAGE, '{}.language'.format(theory)),
+        pomagma.util.abspath(conjectures_io),
+        pomagma.util.abspath(theorems_out),
+        **opts)
+
+
 def conjecture_diverge(theory, world_in, conjectures_out, **opts):
     pomagma.util.log_call(
         os.path.join(pomagma.util.BIN, 'theorist', 'conjecture_diverge'),
