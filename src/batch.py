@@ -52,11 +52,12 @@ def test(theory, **options):
         if theory != 'h4':
             theorist.try_prove_diverge(conjectures, theorems, **opts)
             theorist.assume('6.h5', '7.h5', theorems, **opts)
-        pomagma.cartographer.validate('7.h5', **opts)
-        theorist.conjecture_equal(theory, '7.h5', conjectures, **opts)
-        theorist.try_prove_nless(theory, '7.h5', conjectures, theorems, **opts)
-        theorist.assume('7.h5', '8.h5', theorems, **opts)
-        pomagma.cartographer.validate('8.h5', **opts)
+            pomagma.cartographer.validate('7.h5', **opts)
+        theorist.conjecture_equal(theory, '6.h5', conjectures, **opts)
+        theorist.try_prove_nless(theory, '6.h5', conjectures, theorems, **opts)
+        if theory != 'h4':
+            theorist.assume('6.h5', '7.h5', theorems, **opts)
+            pomagma.cartographer.validate('7.h5', **opts)
 
 
 @parsable.command
@@ -160,13 +161,20 @@ def theorize(theory, **options):
     with pomagma.util.chdir(path):
 
         world = 'world.h5'
-        assume = '{}.assume.h5'.format(os.getpid())
+        updated = '{}.assume.h5'.format(os.getpid())
         diverge_conjectures = 'diverge_conjectures.facts'
         diverge_theorems = 'diverge_theorems.facts'
         equal_conjectures = 'equal_conjectures.facts'
+        nless_theorems = 'nless_theorems.facts'
         assert os.path.exists(world), 'First build world map'
         opts = options
         opts.setdefault('log_file', 'conjecture.log')
+
+        def assume(theorems):
+            pomagma.theorist.assume(world, updated, theorems, **opts)
+            with pomagma.util.mutex():
+                pomagma.cartographer.validate(updated, **opts)
+                os.rename(updated, world)
 
         pomagma.theorist.conjecture_diverge(
             theory,
@@ -178,15 +186,16 @@ def theorize(theory, **options):
             diverge_theorems,
             **opts)
         if theorem_count > 0:
-            pomagma.theorist.assume(world, assume, diverge_theorems, **opts)
-            with pomagma.util.mutex():
-                pomagma.cartographer.validate(assume, **opts)
-                os.rename(assume, world)
-        pomagma.theorist.conjecture_equal(
+            assume(diverge_theorems)
+
+        theorem_count = pomagma.theorist.try_prove_nless(
             theory,
             world,
             equal_conjectures,
+            nless_theorems,
             **opts)
+        if theorem_count > 0:
+            assume(diverge_theorems)
 
 
 @parsable.command
