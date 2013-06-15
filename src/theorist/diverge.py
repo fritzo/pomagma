@@ -1,3 +1,4 @@
+from itertools import izip
 import parsable
 parsable = parsable.Parsable()
 import pomagma.util
@@ -117,14 +118,39 @@ def converge_step(term):
         raise ValueError('unrecognized atom: {}'.format(head))
 
 
+def trivially_less(lhs, rhs):
+    return lhs == (BOT,) or lhs == rhs or rhs == (TOP,)
+
+
+def converge_less(lhs, rhs):
+    if lhs == rhs:
+        return True
+    if len(rhs) < len(lhs):
+        rhs = rhs + ((TOP,),) * (len(lhs) - len(rhs))
+    if len(lhs) < len(rhs):
+        lhs = lhs + ((TOP,),) * (len(rhs) - len(lhs))
+    lhs_head, lhs_args = lhs[:1], lhs[1:]
+    rhs_head, rhs_args = rhs[:1], rhs[1:]
+    if not trivially_less(lhs_head, rhs_head):
+        return False
+    for lhs_arg, rhs_arg in izip(lhs_args, rhs_args):
+        if not trivially_less(lhs_arg, rhs_arg):
+            return False
+    return True
+
+
 def try_converge(term, steps):
+    '''
+    If a term 'DIV x' head reduces to a term less than or equal to itself,
+    then it diverges.
+    '''
     seen = set([term])
     for _ in xrange(steps):
         term = converge_step(term)
-        if term in seen:
-            raise Diverged
-        else:
-            seen.add(term)
+        for other in seen:
+            if converge_less(term, other):
+                raise Diverged
+        seen.add(term)
 
 
 #-----------------------------------------------------------------------------
@@ -189,6 +215,64 @@ def stripped_lines(file_in):
 
 
 #-----------------------------------------------------------------------------
+# Main
+
+
+def try_prove_diverge(
+        conjectures_io,
+        theorems_out,
+        max_steps=20,
+        log_file=None,
+        log_level=0):
+    assert conjectures_io != theorems_out
+
+    def log_print(message):
+        if log_file:
+            pomagma.util.log_print(message, log_file)
+
+    lines = list(stripped_lines(conjectures_io))
+    log_print('Trying to prove {} conjectures'.format(len(lines)))
+
+    conjecture_count = 0
+    diverge_count = 0
+    converge_count = 0
+    with open(conjectures_io, 'w') as conjectures:
+        conjectures.write('# divergence conjectures filtered by pomagma\n')
+        with open(theorems_out, 'a') as theorems:
+            theorems.write('# divergence theorems proved by pomagma\n')
+
+            def write_theorem(theorem):
+                if log_level >= pomagma.util.LOG_LEVEL_DEBUG:
+                    log_print('proved {}'.format(theorem))
+                theorems.write(theorem)
+                theorems.write('\n')
+
+            for line in lines:
+                assert line.startswith('EQUAL BOT ')
+                term_string = line[len('EQUAL BOT '):]
+                term = parse_term(term_string)
+                try:
+                    try_converge(term, max_steps)
+                    conjectures.write(line)
+                    conjectures.write('\n')
+                    conjecture_count += 1
+                except Diverged:
+                    theorem = 'EQUAL BOT {}'.format(term_string)
+                    write_theorem(theorem)
+                    diverge_count += 1
+                except Converged:
+                    theorem = 'NLESS {} BOT'.format(term_string)
+                    write_theorem(theorem)
+                    converge_count += 1
+    if log_level >= pomagma.util.LOG_LEVEL_INFO:
+        log_print('Proved {} diverge theorems'.format(diverge_count))
+        log_print('Proved {} converge theorems'.format(converge_count))
+        log_print('Failed to prove {} conjectures'.format(conjecture_count))
+    theorem_count = diverge_count + converge_count
+    return theorem_count
+
+
+#-----------------------------------------------------------------------------
 # Commands
 
 
@@ -248,60 +332,6 @@ def must_diverge(atoms='I,K,B,C,W,S,Y', max_atom_count=4, max_steps=20):
             pass
         except Diverged:
             print term
-
-
-def try_prove_diverge(
-        conjectures_io,
-        theorems_out,
-        max_steps=20,
-        log_file=None,
-        log_level=0):
-    assert conjectures_io != theorems_out
-
-    def log_print(message):
-        if log_file:
-            pomagma.util.log_print(message, log_file)
-
-    lines = list(stripped_lines(conjectures_io))
-    log_print('Trying to prove {} conjectures'.format(len(lines)))
-
-    conjecture_count = 0
-    diverge_count = 0
-    converge_count = 0
-    with open(conjectures_io, 'w') as conjectures:
-        conjectures.write('# divergence conjectures filtered by pomagma')
-        with open(theorems_out, 'w') as theorems:
-            theorems.write('# divergence theorems proved by pomagma')
-
-            def write_theorem(theorem):
-                if log_level >= pomagma.util.LOG_LEVEL_DEBUG:
-                    log_print('proved {}'.format(theorem))
-                theorems.write('\n')
-                theorems.write(theorem)
-
-            for line in lines:
-                assert line.startswith('EQUAL BOT ')
-                term_string = line[len('EQUAL BOT '):]
-                term = parse_term(term_string)
-                try:
-                    try_converge(term, max_steps)
-                    conjectures.write('\n')
-                    conjectures.write(line)
-                    conjecture_count += 1
-                except Diverged:
-                    theorem = 'EQUAL BOT {}'.format(term_string)
-                    write_theorem(theorem)
-                    diverge_count += 1
-                except Converged:
-                    theorem = 'NLESS {} BOT'.format(term_string)
-                    write_theorem(theorem)
-                    converge_count += 1
-    if log_level >= pomagma.util.LOG_LEVEL_INFO:
-        log_print('Proved {} diverge theorems'.format(diverge_count))
-        log_print('Proved {} converge theorems'.format(converge_count))
-        log_print('Failed to prove {} conjectures'.format(conjecture_count))
-    theorem_count = diverge_count + converge_count
-    return theorem_count
 
 
 if __name__ == '__main__':

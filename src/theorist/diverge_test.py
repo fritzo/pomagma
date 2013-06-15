@@ -92,12 +92,12 @@ def assert_diverges(string):
 def test_diverges():
     strings = [
         'APP APP W W W',
-        #'APP APP W W APP W W',
-        #'COMP Y CI',
-        #'COMP Y CB',
-        #'COMP Y APP S I',
-        #'COMP Y APP S W',
-        #'COMP Y APP S S',
+        'APP APP W W APP W W',
+        'COMP Y CI',
+        'COMP Y CB',
+        'COMP Y APP S I',
+        'COMP Y APP S W',
+        'COMP Y APP S S',
     ]
     for string in strings:
         yield assert_diverges, string
