@@ -5,6 +5,9 @@
 ---------------   -------------------
 LESS x JOIN x y     LESS JOIN x y z
 
+------------------   --------------------
+EQUAL JOIN BOT x x   EQUAL JOIN TOP x TOP
+
 ----------------------------
 EQUAL APP APP J x y JOIN x y
 
