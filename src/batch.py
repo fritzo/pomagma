@@ -32,6 +32,8 @@ def test(theory, **options):
         sizes = [min_size + i * dsize for i in range(10)]
         opts = options
         opts.setdefault('log_file', 'test.log')
+        theorems = 'theorems.facts'
+        conjectures = 'conjectures.facts'
 
         pomagma.surveyor.init(theory, '0.h5', sizes[0], **opts)
         pomagma.cartographer.validate('0.h5', **opts)
@@ -41,20 +43,18 @@ def test(theory, **options):
         pomagma.surveyor.survey(theory, '3.h5', '4.h5', sizes[1], **opts)
         pomagma.cartographer.aggregate('2.h5', '4.h5', '5.h5', **opts)
         pomagma.cartographer.aggregate('5.h5', '0.h5', '6.h5', **opts)
-        pomagma.theorist.conjecture_diverge(
-            theory,
-            '6.h5',
-            'diverge.conjectures',
-            **opts)
-        pomagma.theorist.conjecture_equal(
-            theory,
-            '6.h5',
-            'equal.conjectures',
-            **opts)
-        # TODO test pomagma.theorist.assume here
         digest5 = pomagma.util.get_hash('5.h5')
         digest6 = pomagma.util.get_hash('6.h5')
         assert digest5 == digest6
+        pomagma.theorist.conjecture_diverge(
+            theory,
+            '6.h5',
+            conjectures,
+            **opts)
+        if theory != 'h4':
+            pomagma.theorist.try_prove_diverge(conjectures, theorems, **opts)
+            pomagma.theorist.assume('6.h5', '7.h5', theorems, **opts)
+        pomagma.theorist.conjecture_equal(theory, '6.h5', conjectures, **opts)
 
 
 @parsable.command
@@ -166,20 +166,15 @@ def theorize(theory, **options):
         opts = options
         opts.setdefault('log_file', 'conjecture.log')
 
-        def log_print(message):
-            pomagma.util.log_print(message, opts['log_file'])
-
         pomagma.theorist.conjecture_diverge(
             theory,
             world,
             diverge_conjectures,
             **opts)
-        log_print('Filtering divergence conjectures')
-        theorem_count = pomagma.theorist.filter_diverge(
+        theorem_count = pomagma.theorist.try_prove_diverge(
             diverge_conjectures,
             diverge_theorems,
             **opts)
-        log_print('Proved {} conjectures'.format(theorem_count))
         if theorem_count > 0:
             pomagma.theorist.assume(world, assume, diverge_theorems, **opts)
             with pomagma.util.mutex():
@@ -210,7 +205,6 @@ def profile(theory='skj', size_blocks=3, dsize_blocks=0, **options):
 
         opts = options
         opts.setdefault('log_file', 'profile.log')
-        opts.setdefault('log_level', 2)
         region = 'region.{:d}.h5'.format(size)
         temp = '{}.profile.h5'.format(os.getpid())
         world = 'world.h5'
@@ -247,7 +241,6 @@ def trim_regions(theory='skj', **options):
 
         opts = options
         opts.setdefault('log_file', 'trim_regions.log')
-        opts.setdefault('log_level', 2)
         world = 'world.h5'
         min_size = pomagma.util.MIN_SIZES[theory]
         max_size = pomagma.util.get_item_count(world)

@@ -26,6 +26,11 @@ COVERITY = os.path.join(ROOT, 'cov-int')
 BIN = os.path.join(BUILD, 'src')
 CPU_COUNT = multiprocessing.cpu_count()
 
+LOG_LEVEL_ERROR = 0
+LOG_LEVEL_WARNING = 1
+LOG_LEVEL_INFO = 2
+LOG_LEVEL_DEBUG = 3
+
 SURVEYORS = {
     'h4': 'h4.survey',
     'sk': 'sk.survey',
@@ -152,7 +157,8 @@ def make_env(options):
     log_dir = os.path.dirname(log_file)
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
-    options.setdefault('log_level', 9 if debug else 0)
+    default_log_level = LOG_LEVEL_DEBUG if debug else LOG_LEVEL_INFO
+    options.setdefault('log_level', default_log_level)
     env = os.environ.copy()
     for key, val in options.iteritems():
         pomagma_key = 'POMAGMA_{}'.format(key.upper())
@@ -238,7 +244,7 @@ def test():
     buildtype = 'debug' if debug else 'release'
     opts = {
         'log_file': os.path.join(DATA, 'test', '{}.log'.format(buildtype)),
-        'log_level': 3,
+        'log_level': LOG_LEVEL_DEBUG,
     }
     log_call('make', '-C', BUILD, 'test', **opts)
 

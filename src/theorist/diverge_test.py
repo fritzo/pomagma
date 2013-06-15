@@ -16,7 +16,7 @@ from pomagma.theorist.diverge import (
     iter_terms,
     parse_term,
     print_term,
-    filter_diverge,
+    try_prove_diverge,
 )
 
 
@@ -77,13 +77,33 @@ def test_converge():
     assert_raises(Converged, converge_step, (TOP,))
 
 
-def test_diverge():
+def test_www_diverges():
     WWW = (W, (W,), (W,),)
     assert_equal(converge_step(WWW), WWW)
     assert_raises(Diverged, try_converge, WWW, 1)
 
 
-def test_filter_diverge():
+def assert_diverges(string):
+    steps = 10
+    term = parse_term(string)
+    assert_raises(Diverged, try_converge, term, steps)
+
+
+def test_diverges():
+    strings = [
+        'APP APP W W W',
+        #'APP APP W W APP W W',
+        #'COMP Y CI',
+        #'COMP Y CB',
+        #'COMP Y APP S I',
+        #'COMP Y APP S W',
+        #'COMP Y APP S S',
+    ]
+    for string in strings:
+        yield assert_diverges, string
+
+
+def test_try_prove_diverge():
     atoms = [I, K, B, C, W, S]
     max_atom_count = 3
     max_steps = 20
@@ -93,11 +113,15 @@ def test_filter_diverge():
             for term in iter_terms(atoms, max_atom_count):
                 f.write('\n')
                 f.write('EQUAL BOT {}'.format(print_term(term)))
-        filter_diverge('source.facts', 'destin.facts', max_steps)
+        try_prove_diverge('source.facts', 'destin.facts', max_steps)
         with open('destin.facts') as f:
             for line in f:
                 line = line.split('#')[0].strip()
-                if line:
-                    assert line.startswith('EQUAL BOT ')
+                if line.startswith('EQUAL BOT '):
                     term = parse_term(line[len('EQUAL BOT '):])
                     assert_raises(Diverged, try_converge, term, max_steps)
+                elif line.startswith('NLESS ') and line.endswith(' BOT'):
+                    term = parse_term(line[len('NLESS '): 1 - len(' BOT')])
+                    assert_raises(Converged, try_converge, term, max_steps)
+                elif line:
+                    raise ValueError('Bad line:\n{}'.format(line))

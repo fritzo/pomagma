@@ -28,10 +28,8 @@ def conjectures(theory):
             <title> Pomagma {theory} Conjectures </title>
             </head>
             <body>
-            '''.format(
-                theory=theory,
-                )
-            )
+            '''.format(theory=theory)
+        )
         for conjectures_file in conjectures_files:
             with open(conjectures_file) as conjectures:
                 html.write('<p><pre>\n')
@@ -41,7 +39,8 @@ def conjectures(theory):
             '''
             </body>
             </html>
-            ''')
+            '''
+        )
 
 
 if __name__ == '__main__':

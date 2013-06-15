@@ -1,5 +1,6 @@
 import parsable
 parsable = parsable.Parsable()
+import pomagma.util
 
 
 #-----------------------------------------------------------------------------
@@ -249,33 +250,57 @@ def must_diverge(atoms='I,K,B,C,W,S,Y', max_atom_count=4, max_steps=20):
             print term
 
 
-@parsable.command
-def filter_diverge(
+def try_prove_diverge(
         conjectures_io,
         theorems_out,
         max_steps=20,
         log_file=None,
         log_level=0):
     assert conjectures_io != theorems_out
-    theorem_count = 0
+
+    def log_print(message):
+        if log_file:
+            pomagma.util.log_print(message, log_file)
+
     lines = list(stripped_lines(conjectures_io))
+    log_print('Trying to prove {} conjectures'.format(len(lines)))
+
+    conjecture_count = 0
+    diverge_count = 0
+    converge_count = 0
     with open(conjectures_io, 'w') as conjectures:
-        conjectures.write('# conjectures filtered by pomagma')
+        conjectures.write('# divergence conjectures filtered by pomagma')
         with open(theorems_out, 'w') as theorems:
-            theorems.write('# theorems proved by pomagma')
+            theorems.write('# divergence theorems proved by pomagma')
+
+            def write_theorem(theorem):
+                if log_level >= pomagma.util.LOG_LEVEL_DEBUG:
+                    log_print('proved {}'.format(theorem))
+                theorems.write('\n')
+                theorems.write(theorem)
+
             for line in lines:
                 assert line.startswith('EQUAL BOT ')
-                term = parse_term(line[len('EQUAL BOT '):])
+                term_string = line[len('EQUAL BOT '):]
+                term = parse_term(term_string)
                 try:
                     try_converge(term, max_steps)
                     conjectures.write('\n')
                     conjectures.write(line)
+                    conjecture_count += 1
                 except Diverged:
-                    theorems.write('\n')
-                    theorems.write(line)
-                    theorem_count += 1
+                    theorem = 'EQUAL BOT {}'.format(term_string)
+                    write_theorem(theorem)
+                    diverge_count += 1
                 except Converged:
-                    pass
+                    theorem = 'NLESS {} BOT'.format(term_string)
+                    write_theorem(theorem)
+                    converge_count += 1
+    if log_level >= pomagma.util.LOG_LEVEL_INFO:
+        log_print('Proved {} diverge theorems'.format(diverge_count))
+        log_print('Proved {} converge theorems'.format(converge_count))
+        log_print('Failed to prove {} conjectures'.format(conjecture_count))
+    theorem_count = diverge_count + converge_count
     return theorem_count
 
 

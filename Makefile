@@ -1,4 +1,5 @@
 all:
+	$(MAKE) static-check
 	pip install -e .
 	$(MAKE) -C src/language
 	POMAGMA_DEBUG= python -m pomagma build
@@ -11,7 +12,7 @@ static-check: FORCE
 	find src | grep '.py$$' | grep -v '_pb2.py' | xargs pyflakes
 	find src | grep '.py$$' | grep -v '_pb2.py' | xargs pep8
 
-unit-test: static-check set-ulimit FORCE
+unit-test: set-ulimit FORCE
 	POMAGMA_DEBUG= python -m pomagma unit-test
 batch-test: all set-ulimit FORCE
 	POMAGMA_DEBUG= python -m pomagma batch-test
@@ -21,7 +22,7 @@ sk-test: all set-ulimit FORCE
 	POMAGMA_DEBUG= python -m pomagma batch-test sk
 skj-test: all set-ulimit FORCE
 	POMAGMA_DEBUG= python -m pomagma batch-test skj
-test: all static-check set-ulimit FORCE
+test: all set-ulimit FORCE
 	POMAGMA_DEBUG= python -m pomagma unit-test
 	POMAGMA_DEBUG= python -m pomagma batch-test
 

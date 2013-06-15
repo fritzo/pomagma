@@ -71,7 +71,7 @@ To install:
 ## Environment Variables
 
 To run a full system, pomagma needs Amazon AWS credentials, an S3 bucket,
-an SWF domain, an optionally an email address to receive errors.
+an SWF domain, and optionally an email address to receive errors.
  
     AWS_ACCESS_KEY_ID=...
     AWS_SECRET_ACCESS_KEY=...

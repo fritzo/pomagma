@@ -3,14 +3,6 @@ import pomagma.util
 import pomagma.theorist.diverge
 
 
-def filter_diverge(conjectures_io, theorems_out, **opts):
-    log_file = opts['log_file']
-    pomagma.util.log_print('Filtering divergence conjectures', log_file)
-    return pomagma.theorist.diverge.filter_diverge(
-        conjectures_io,
-        theorems_out)
-
-
 def conjecture_equal(theory, world_in, conjectures_out, **opts):
     pomagma.util.log_call(
         os.path.join(pomagma.util.BIN, 'theorist', 'conjecture_equal'),
@@ -26,6 +18,13 @@ def conjecture_diverge(theory, world_in, conjectures_out, **opts):
         pomagma.util.abspath(world_in),
         os.path.join(pomagma.util.LANGUAGE, '{}.language'.format(theory)),
         pomagma.util.abspath(conjectures_out),
+        **opts)
+
+
+def try_prove_diverge(conjectures_io, theorems_out, **opts):
+    return pomagma.theorist.diverge.try_prove_diverge(
+        pomagma.util.abspath(conjectures_io),
+        pomagma.util.abspath(theorems_out),
         **opts)
 
 
