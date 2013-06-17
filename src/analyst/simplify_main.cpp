@@ -47,7 +47,7 @@ int main (int argc, char ** argv)
     }
 
     // simplify
-    pomagma::analyst::batch_simplify(
+    pomagma::batch_simplify(
         structure,
         routes,
         source_file,

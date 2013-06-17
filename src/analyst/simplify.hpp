@@ -5,8 +5,6 @@
 
 namespace pomagma
 {
-namespace analyst
-{
 
 struct ParsedTerm
 {
@@ -25,5 +23,4 @@ void batch_simplify(
         const char * source_file,
         const char * destin_file);
 
-} // namespace analyst
 } // namespace pomagma

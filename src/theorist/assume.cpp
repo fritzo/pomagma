@@ -12,42 +12,28 @@ namespace pomagma
 namespace detail
 {
 
-void assume_fact (
-        Structure & structure,
-        FindParser & parser,
-        const std::string & expression_str)
-{
-    POMAGMA_DEBUG("assume " << expression_str);
-    std::istringstream expression(expression_str);
-
-    std::string type;
-    POMAGMA_ASSERT(getline(expression, type, ' '), "bad line: " << expression);
-    Ob lhs = parser.parse(expression);
-    Ob rhs = parser.parse(expression);
-    POMAGMA_ASSERT(expression.eof(), "unexpected tokens in " << expression);
-    POMAGMA_ASSERT(lhs and rhs, "parse_insert failed");
-
-    if (type == "EQUAL") {
-        structure.carrier().ensure_equal(lhs, rhs);
-    } else {
-        BinaryRelation & rel = structure.binary_relation(type);
-        rel.insert(lhs, rhs);
-    }
-}
-
 void assume_facts (
         Structure & structure,
         const char * theory_file)
 {
     POMAGMA_INFO("assuming core facts");
-    std::ifstream file(theory_file);
-    POMAGMA_ASSERT(file, "failed to open " << theory_file);
 
-    FindParser parser(structure.signature());
-    std::string expression;
-    while (getline(file, expression)) {
-        if (not expression.empty() and expression[0] != '#') {
-            assume_fact(structure, parser, expression);
+    for (LineParser iter(theory_file); iter.ok(); iter.next()) {
+        const std::string & expression = * iter;
+        POMAGMA_DEBUG("assume " << expression);
+
+        FindParser parser(structure.signature());
+        parser.begin(expression);
+        std::string type = parser.parse_token();
+        Ob lhs = parser.parse_term();
+        Ob rhs = parser.parse_term();
+        parser.end();
+
+        if (type == "EQUAL") {
+            structure.carrier().ensure_equal(lhs, rhs);
+        } else {
+            BinaryRelation & rel = structure.binary_relation(type);
+            rel.insert(lhs, rhs);
         }
     }
 }

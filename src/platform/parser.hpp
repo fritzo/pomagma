@@ -7,6 +7,7 @@
 namespace pomagma
 {
 
+
 template<class Reducer>
 class Parser
 {
@@ -65,6 +66,38 @@ private:
     Signature & m_signature;
     Reducer & m_reducer;
     std::istringstream m_stream;
+};
+
+
+class LineParser
+{
+public:
+
+    LineParser (const char * filename)
+        : m_file(filename)
+    {
+        POMAGMA_ASSERT(m_file, "failed to open " << filename);
+        next();
+    }
+
+    bool ok () const { return not m_line.empty(); }
+
+    const std::string & operator* () const { return m_line; }
+
+    void next ()
+    {
+        while (std::getline(m_file, m_line)) {
+            if (not m_line.empty() and m_line[0] != '#') {
+                return;
+            }
+        }
+        m_line.clear();
+    }
+
+private:
+
+    std::ifstream m_file;
+    std::string m_line;
 };
 
 

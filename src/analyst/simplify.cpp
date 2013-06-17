@@ -1,11 +1,26 @@
 #include "simplify.hpp"
 #include <pomagma/macrostructure/structure_impl.hpp>
+#include <pomagma/platform/parser.hpp>
 #include <tuple>
 
 namespace pomagma
 {
-namespace analyst
+
+class SimplifyReducer
 {
+public:
+
+    typedef ParsedTerm Term;
+
+    SimplifyReducer (const std::vector<std::string> & routes)
+        : m_routes(routes)
+    {
+    }
+
+private:
+
+    const std::vector<std::string> & m_routes;
+};
 
 class Simplifier : noncopyable
 {
@@ -90,25 +105,19 @@ void batch_simplify(
         const char * destin_file)
 {
     POMAGMA_INFO("simplifying expressions");
-    pomagma::analyst::Simplifier simplifier(structure.signature(), routes);
-
-    std::ifstream source(source_file);
-    POMAGMA_ASSERT(source, "failed to open " << source_file);
+    pomagma::Simplifier simplifier(structure.signature(), routes);
 
     std::ofstream destin(destin_file);
     POMAGMA_ASSERT(destin, "failed to open " << destin_file);
     destin << "# expressions simplifed by pomagma\n";
 
-    std::string expression;
-    while (getline(source, expression)) {
-        if (not expression.empty() and expression[0] != '#') {
-            POMAGMA_DEBUG("simplifying " << expression);
-            ParsedTerm simplified = simplifier.simplify(expression);
-            POMAGMA_DEBUG("simplified to " << simplified.route);
-            destin << simplified.route << "\n";
-        }
+    for (LineParser iter(source_file); iter.ok(); iter.next()) {
+        const std::string & expression = * iter;
+        POMAGMA_DEBUG("simplifying " << expression);
+        ParsedTerm simplified = simplifier.simplify(expression);
+        POMAGMA_DEBUG("simplified to " << simplified.route);
+        destin << simplified.route << "\n";
     }
 }
 
-} // namespace analyst
 } // namespace pomagma
