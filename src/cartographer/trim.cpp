@@ -37,6 +37,7 @@ void assume (
     POMAGMA_ASSERT(getline(expression, type, ' '), "bad line: " << expression);
     Ob lhs = parser.parse(expression);
     Ob rhs = parser.parse(expression);
+    POMAGMA_ASSERT(expression.eof(), "unexpected tokens in " << expression);
     POMAGMA_ASSERT(lhs and rhs, "parse_insert failed");
 
     POMAGMA_ASSERT(

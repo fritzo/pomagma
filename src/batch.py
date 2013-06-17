@@ -3,9 +3,7 @@ import shutil
 import parsable
 parsable = parsable.Parsable()
 import pomagma.util
-import pomagma.surveyor
-import pomagma.cartographer
-import pomagma.theorist
+from pomagma import surveyor, cartographer, theorist, analyst
 
 
 DEFAULT_SURVEY_SIZE = 16384 + 512 - 1
@@ -28,36 +26,40 @@ def test(theory, **options):
     with pomagma.util.chdir(path), pomagma.util.mutex(block=False):
 
         min_size = pomagma.util.MIN_SIZES[theory]
-        dsize = min(512, 1 + min_size)
+        dsize = min(64, 1 + min_size)
         sizes = [min_size + i * dsize for i in range(10)]
         opts = options
         opts.setdefault('log_file', 'test.log')
         theorems = 'theorems.facts'
         conjectures = 'conjectures.facts'
+        simplified = 'simplified.facts'
 
-        pomagma.surveyor.init(theory, '0.h5', sizes[0], **opts)
-        pomagma.cartographer.validate('0.h5', **opts)
-        pomagma.cartographer.copy('0.h5', '1.h5', **opts)
-        pomagma.surveyor.survey(theory, '1.h5', '2.h5', sizes[1], **opts)
-        pomagma.cartographer.trim(theory, '2.h5', '3.h5', sizes[0], **opts)
-        pomagma.surveyor.survey(theory, '3.h5', '4.h5', sizes[1], **opts)
-        pomagma.cartographer.aggregate('2.h5', '4.h5', '5.h5', **opts)
-        pomagma.cartographer.aggregate('5.h5', '0.h5', '6.h5', **opts)
+        surveyor.init(theory, '0.h5', sizes[0], **opts)
+        cartographer.validate('0.h5', **opts)
+        cartographer.copy('0.h5', '1.h5', **opts)
+        surveyor.survey(theory, '1.h5', '2.h5', sizes[1], **opts)
+        cartographer.trim(theory, '2.h5', '3.h5', sizes[0], **opts)
+        surveyor.survey(theory, '3.h5', '4.h5', sizes[1], **opts)
+        cartographer.aggregate('2.h5', '4.h5', '5.h5', **opts)
+        cartographer.aggregate('5.h5', '0.h5', '6.h5', **opts)
         digest5 = pomagma.util.get_hash('5.h5')
         digest6 = pomagma.util.get_hash('6.h5')
         assert digest5 == digest6
 
-        theorist = pomagma.theorist
         theorist.conjecture_diverge(theory, '6.h5', conjectures, **opts)
         if theory != 'h4':
             theorist.try_prove_diverge(conjectures, theorems, **opts)
             theorist.assume('6.h5', '7.h5', theorems, **opts)
-            pomagma.cartographer.validate('7.h5', **opts)
+            cartographer.validate('7.h5', **opts)
         theorist.conjecture_equal(theory, '6.h5', conjectures, **opts)
         theorist.try_prove_nless(theory, '6.h5', conjectures, theorems, **opts)
         if theory != 'h4':
             theorist.assume('6.h5', '7.h5', theorems, **opts)
-            pomagma.cartographer.validate('7.h5', **opts)
+            cartographer.validate('7.h5', **opts)
+
+        # TODO get this working
+        if False:
+            analyst.simplify(theory, '6.h5', conjectures, simplified, **opts)
 
 
 @parsable.command
@@ -81,9 +83,9 @@ def init(theory, **options):
 
         world_size = pomagma.util.MIN_SIZES[theory]
         log_print('Step 0: initialize to {}'.format(world_size))
-        pomagma.surveyor.init(theory, survey, world_size, **opts)
+        surveyor.init(theory, survey, world_size, **opts)
         with pomagma.util.mutex():
-            pomagma.cartographer.validate(survey, **opts)
+            cartographer.validate(survey, **opts)
             assert not os.path.exists(world), 'already initialized'
             os.rename(survey, world)
 
@@ -120,7 +122,7 @@ def survey(theory, max_size=DEFAULT_SURVEY_SIZE, step_size=512, **options):
             log_print('Step {}: survey'.format(step))
 
             region_size = max(min_size, max_size - step_size)
-            pomagma.cartographer.trim(
+            cartographer.trim(
                 theory,
                 world,
                 region,
@@ -128,7 +130,7 @@ def survey(theory, max_size=DEFAULT_SURVEY_SIZE, step_size=512, **options):
                 **opts)
             region_size = pomagma.util.get_item_count(region)
             survey_size = min(region_size + step_size, max_size)
-            pomagma.surveyor.survey(
+            surveyor.survey(
                 theory,
                 region,
                 survey,
@@ -137,12 +139,12 @@ def survey(theory, max_size=DEFAULT_SURVEY_SIZE, step_size=512, **options):
             os.remove(region)
 
             with pomagma.util.mutex():
-                pomagma.cartographer.aggregate(
+                cartographer.aggregate(
                     world,
                     survey,
                     aggregate,
                     **opts)
-                pomagma.cartographer.validate(aggregate, **opts)
+                cartographer.validate(aggregate, **opts)
                 os.rename(aggregate, world)
             os.remove(survey)
 
@@ -171,24 +173,20 @@ def theorize(theory, **options):
         opts.setdefault('log_file', 'conjecture.log')
 
         def assume(theorems):
-            pomagma.theorist.assume(world, updated, theorems, **opts)
+            theorist.assume(world, updated, theorems, **opts)
             with pomagma.util.mutex():
-                pomagma.cartographer.validate(updated, **opts)
+                cartographer.validate(updated, **opts)
                 os.rename(updated, world)
 
-        pomagma.theorist.conjecture_diverge(
-            theory,
-            world,
-            diverge_conjectures,
-            **opts)
-        theorem_count = pomagma.theorist.try_prove_diverge(
+        theorist.conjecture_diverge(theory, world, diverge_conjectures, **opts)
+        theorem_count = theorist.try_prove_diverge(
             diverge_conjectures,
             diverge_theorems,
             **opts)
         if theorem_count > 0:
             assume(diverge_theorems)
 
-        theorem_count = pomagma.theorist.try_prove_nless(
+        theorem_count = theorist.try_prove_nless(
             theory,
             world,
             equal_conjectures,
@@ -222,9 +220,9 @@ def profile(theory='skj', size_blocks=3, dsize_blocks=0, **options):
 
         if not os.path.exists(region):
             assert os.path.exists(world), 'First initialize world map'
-            pomagma.cartographer.trim(theory, world, region, size, **opts)
+            cartographer.trim(theory, world, region, size, **opts)
         opts.setdefault('runner', 'valgrind --tool=callgrind')
-        pomagma.surveyor.survey(theory, region, temp, size + dsize, **opts)
+        surveyor.survey(theory, region, temp, size + dsize, **opts)
 
 
 def sparse_range(min_size, max_size):
@@ -260,9 +258,9 @@ def trim_regions(theory='skj', **options):
         for size in sizes:
             print 'Trimming region of size', size
             smaller = 'region.{:d}.h5'.format(size)
-            pomagma.cartographer.trim(theory, larger, smaller, size, **opts)
+            cartographer.trim(theory, larger, smaller, size, **opts)
             larger = smaller
-        pomagma.cartographer.validate(larger, **opts)
+        cartographer.validate(larger, **opts)
 
 
 @parsable.command

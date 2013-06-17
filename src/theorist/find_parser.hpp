@@ -6,11 +6,11 @@
 namespace pomagma
 {
 
-class FindParser : public Parser
+class FindParser : public OldParser
 {
 public:
 
-    FindParser (Signature & signature) : Parser(signature) {}
+    FindParser (Signature & signature) : OldParser(signature) {}
 
 protected:
 

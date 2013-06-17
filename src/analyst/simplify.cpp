@@ -22,7 +22,9 @@ public:
     ParsedTerm simplify (const std::string & term)
     {
         m_stream.str(term);
-        return pop_simplify();
+        ParsedTerm parsed_term = pop_simplify();
+        POMAGMA_ASSERT(m_stream.eof(), "unexpected tokens in " << m_stream);
+        return parsed_term;
     }
 
 private:
@@ -34,7 +36,7 @@ private:
     std::istringstream m_stream;
 };
 
-ParsedTerm Simplifier::simplify ()
+ParsedTerm Simplifier::pop_simplify ()
 {
     std::string token;
     POMAGMA_ASSERT(std::getline(m_stream, token, ' '),

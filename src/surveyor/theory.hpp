@@ -104,14 +104,13 @@ void assume_core_facts (const char * theory_file)
 void execute (const AssumeTask & task)
 {
     POMAGMA_DEBUG("assume " << task.expression);
-    std::istringstream expression(task.expression);
 
-    std::string type;
-    POMAGMA_ASSERT(getline(expression, type, ' '), "bad line: " << expression);
     InsertParser parser(signature);
-    Ob lhs = parser.parse(expression);
-    Ob rhs = parser.parse(expression);
-    POMAGMA_ASSERT(lhs and rhs, "parse_insert failed");
+    parser.begin(task.expression);
+    std::string type = parser.parse_token();
+    Ob lhs = parser.parse_term();
+    Ob rhs = parser.parse_term();
+    parser.end();
 
     if (type == "EQUAL") {
         ensure_equal(lhs, rhs);

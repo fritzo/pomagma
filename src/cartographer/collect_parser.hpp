@@ -6,12 +6,12 @@
 namespace pomagma
 {
 
-class CollectParser : public Parser
+class CollectParser : public OldParser
 {
 public:
 
     CollectParser (Signature & signature, DenseSet & set, size_t capacity)
-        : Parser(signature),
+        : OldParser(signature),
           m_set(set),
           m_size(set.count_items()),
           m_capacity(capacity)

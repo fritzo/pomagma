@@ -6,19 +6,17 @@
 namespace pomagma
 {
 
-class InsertParser : public Parser
+class InsertReducer
 {
 public:
 
-    InsertParser (Signature & signature)
-        : Parser(signature),
-          m_carrier(* signature.carrier())
-    {
-    }
+    typedef Ob Term;
 
-protected:
+    InsertReducer(Carrier & carrier) : m_carrier(carrier) {}
 
-    Ob check_insert (const NullaryFunction * fun)
+    Ob reduce (
+            const std::string &,
+            const NullaryFunction * fun)
     {
         Ob val = fun->find();
         if (not val) {
@@ -29,7 +27,10 @@ protected:
         return val;
     }
 
-    Ob check_insert (const InjectiveFunction * fun, Ob key)
+    Ob reduce (
+            const std::string &,
+            const InjectiveFunction * fun,
+            Ob key)
     {
         Ob val = fun->find(key);
         if (not val) {
@@ -40,7 +41,11 @@ protected:
         return val;
     }
 
-    Ob check_insert (const BinaryFunction * fun, Ob lhs, Ob rhs)
+    Ob reduce (
+            const std::string &,
+            const BinaryFunction * fun,
+            Ob lhs,
+            Ob rhs)
     {
         Ob val = fun->find(lhs, rhs);
         if (not val) {
@@ -51,7 +56,11 @@ protected:
         return val;
     }
 
-    Ob check_insert (const SymmetricFunction * fun, Ob lhs, Ob rhs)
+    Ob reduce (
+            const std::string &,
+            const SymmetricFunction * fun,
+            Ob lhs,
+            Ob rhs)
     {
         Ob val = fun->find(lhs, rhs);
         if (not val) {
@@ -65,6 +74,21 @@ protected:
 private:
 
     Carrier & m_carrier;
+};
+
+class InsertParser : public Parser<InsertReducer>
+{
+public:
+
+    InsertParser (Signature & signature)
+        : Parser<InsertReducer>(signature, m_reducer),
+          m_reducer(* signature.carrier())
+    {
+    }
+
+private:
+
+    InsertReducer m_reducer;
 };
 
 } // namespace pomagma
