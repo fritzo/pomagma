@@ -15,5 +15,5 @@ set(POMAGMA_THEORIST_LIBS
 add_executable(simplify simplify_main.cpp)
 target_link_libraries(simplify ${POMAGMA_THEORIST_LIBS})
 
-add_executable(serve serve_main.cpp)
+add_executable(serve serve_main.cpp server.cpp)
 target_link_libraries(serve ${POMAGMA_THEORIST_LIBS} zmq)

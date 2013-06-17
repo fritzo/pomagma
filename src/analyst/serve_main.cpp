@@ -1,39 +1,4 @@
-#include <pomagma/macrostructure/structure.hpp>
-#include <pomagma/macrostructure/router.hpp>
-#include <pomagma/language/language.hpp>
-#include "simplify.hpp"
-
-namespace pomagma
-{
-namespace analyst
-{
-
-class Server
-{
-public:
-    Server (Structure & structure, const char * language_file)
-    {
-        auto language = load_language(language_file);
-        Router router(structure, language);
-        m_probs = router.measure_probs();
-        m_routes = router.find_routes();
-    }
-
-    void serve ()
-    {
-        POMAGMA_ERROR("TODO implement server");
-    }
-
-private:
-
-    std::vector<float> m_probs;
-    std::vector<std::string> m_routes;
-
-};
-
-} // namespace analyst
-} // namespace pomagma
-
+#include "server.hpp"
 
 int main (int argc, char ** argv)
 {
@@ -66,7 +31,7 @@ int main (int argc, char ** argv)
     }
 
     // serve
-    pomagma::analyst::Server server(structure, language_file);
+    pomagma::Server server(structure, language_file);
     server.serve();
 
     return 0;

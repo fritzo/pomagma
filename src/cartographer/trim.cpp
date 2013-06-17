@@ -40,11 +40,15 @@ void assume_core_facts (
         parser.begin(expression);
         std::string type = parser.parse_token();
         POMAGMA_ASSERT(
-                (type == "EQUAL") or (type == "LESS") or (type == "NLESS"),
-                "bad relation type: " << type);
-        parser.parse_term();
-        parser.parse_term();
+            (type == "EQUAL") or (type == "LESS") or (type == "NLESS"),
+            "bad relation type: " << type);
+        Ob lhs = parser.parse_term();
+        Ob rhs = parser.parse_term();
         parser.end();
+
+        if (not (lhs and rhs)) {
+            POMAGMA_WARN("failed to assume " << expression);
+        }
     }
 }
 
