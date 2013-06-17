@@ -26,41 +26,25 @@ void insert_nullary_functions (
     POMAGMA_ASSERT_LE(subset.count_items(), target_item_count);
 }
 
-void assume (
-        CollectParser & parser,
-        const std::string & expression_str)
-{
-    POMAGMA_DEBUG("assume " << expression_str);
-    std::istringstream expression(expression_str);
-
-    std::string type;
-    POMAGMA_ASSERT(getline(expression, type, ' '), "bad line: " << expression);
-    Ob lhs = parser.parse(expression);
-    Ob rhs = parser.parse(expression);
-    POMAGMA_ASSERT(expression.eof(), "unexpected tokens in " << expression);
-    POMAGMA_ASSERT(lhs and rhs, "parse_insert failed");
-
-    POMAGMA_ASSERT(
-            (type == "EQUAL") or (type == "LESS") or (type == "NLESS"),
-            "bad relation type: " << type);
-}
-
 void assume_core_facts (
         Structure & structure,
         DenseSet & subset,
         size_t target_item_count,
         const char * theory_file)
 {
-    POMAGMA_INFO("assuming core facts");
-    std::ifstream file(theory_file);
-    POMAGMA_ASSERT(file, "failed to open " << theory_file);
-
     CollectParser parser(structure.signature(), subset, target_item_count);
-    std::string expression;
-    while (getline(file, expression)) {
-        if (not expression.empty() and expression[0] != '#') {
-            assume(parser, expression);
-        }
+    for (LineParser iter(theory_file); iter.ok(); iter.next()) {
+        const std::string & expression = * iter;
+        POMAGMA_DEBUG("assume " << expression);
+
+        parser.begin(expression);
+        std::string type = parser.parse_token();
+        POMAGMA_ASSERT(
+                (type == "EQUAL") or (type == "LESS") or (type == "NLESS"),
+                "bad relation type: " << type);
+        parser.parse_term();
+        parser.parse_term();
+        parser.end();
     }
 }
 
