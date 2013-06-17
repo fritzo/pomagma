@@ -57,9 +57,7 @@ def test(theory, **options):
             theorist.assume('6.h5', '7.h5', theorems, **opts)
             cartographer.validate('7.h5', **opts)
 
-        # TODO get this working
-        if False:
-            analyst.simplify(theory, '6.h5', conjectures, simplified, **opts)
+        analyst.simplify(theory, '6.h5', conjectures, simplified, **opts)
 
 
 @parsable.command

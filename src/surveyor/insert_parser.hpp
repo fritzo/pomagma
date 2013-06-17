@@ -6,7 +6,7 @@
 namespace pomagma
 {
 
-class InsertReducer
+class InsertReducer : noncopyable
 {
 public:
 

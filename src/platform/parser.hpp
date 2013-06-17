@@ -29,7 +29,7 @@ public:
     {
         std::string token;
         POMAGMA_ASSERT(std::getline(m_stream, token, ' '),
-            "expression terminated prematurely: " << m_stream);
+            "expression terminated prematurely: " << m_stream.str());
         return token;
     }
 
@@ -52,13 +52,14 @@ public:
             return m_reducer.reduce(token, fun, lhs, rhs);
         } else {
             POMAGMA_ERROR("unrecognized token: " << token);
-            return 0;
+            return Term();
         }
     }
 
     void end ()
     {
-        POMAGMA_ASSERT(m_stream.eof(), "unexpected tokens in: " << m_stream);
+        POMAGMA_ASSERT(m_stream.eof(),
+            "unexpected tokens in: " << m_stream.str());
     }
 
 private:

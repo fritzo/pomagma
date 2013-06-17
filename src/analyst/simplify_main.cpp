@@ -3,6 +3,7 @@
 #include <pomagma/language/language.hpp>
 #include "simplify.hpp"
 
+
 int main (int argc, char ** argv)
 {
     pomagma::Log::Context log_context(argc, argv);

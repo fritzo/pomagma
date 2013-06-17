@@ -6,7 +6,7 @@
 namespace pomagma
 {
 
-class FindReducer
+class FindReducer : noncopyable
 {
 public:
 
