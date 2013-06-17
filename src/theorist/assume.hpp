@@ -1,4 +1,3 @@
-
 #pragma once
 
 #include <pomagma/macrostructure/util.hpp>

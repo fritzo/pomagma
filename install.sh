@@ -14,7 +14,8 @@ sudo apt-get install -y \
   gdb \
   p7zip-full \
   rubygems \
-  #libzmq-dev python-zmq \
+  libzmq-dev \
+  #python-zmq \
   #
 
 sudo gem install foreman

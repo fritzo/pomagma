@@ -13,6 +13,7 @@
 #include <array>
 #include <thread>
 #include <algorithm>
+#include <sys/stat.h>  // for chmod
 
 namespace pomagma
 {
@@ -417,17 +418,10 @@ inline void dump (
     hdf5::dump_hash(group3, digest);
 }
 
-} // namespace detail
-
 inline void dump (
         Signature & signature,
-        const std::string & filename)
+        hdf5::OutFile & file)
 {
-    POMAGMA_INFO("Dumping structure to file " << filename);
-
-    hdf5::init();
-    hdf5::OutFile file(filename);
-
     POMAGMA_ASSERT(signature.carrier(), "carrier is not defined");
     const Carrier & carrier = * signature.carrier();
     detail::assert_contiguous(carrier);
@@ -452,6 +446,28 @@ inline void dump (
 
     auto digest = hdf5::get_tree_hash(file);
     hdf5::dump_hash(file, digest);
+}
+
+} // namespace detail
+
+inline void dump (
+        Signature & signature,
+        const std::string & filename)
+{
+    POMAGMA_INFO("Dumping structure to file " << filename);
+
+    hdf5::init();
+    {
+        hdf5::OutFile file(filename);
+        detail::dump(signature, file);
+    }
+
+    bool readonly = true;
+    if (readonly) {
+        int info = chmod(filename.c_str(), 444);
+        POMAGMA_ASSERT(info == 0,
+            "chmod(" << filename << " , 444) failed with code " << info );
+    }
 }
 
 //----------------------------------------------------------------------------

@@ -133,11 +133,14 @@ void conjecture_equal (
         const char * conjectures_file,
         size_t max_count)
 {
-    const auto language = load_language(language_file);
-    Router * router = new Router(structure, language);
-    const std::vector<float> probs = router->measure_probs();
-    const std::vector<std::string> routes = router->find_routes();
-    delete router;
+    std::vector<float> probs;
+    std::vector<std::string> routes;
+    {
+        const auto language = load_language(language_file);
+        Router router(structure, language);
+        probs = router.measure_probs();
+        routes = router.find_routes();
+    }
 
     detail::conjecture_equal(
         structure,
@@ -154,11 +157,14 @@ void try_prove_nless (
         const char * theorems_file,
         size_t max_count)
 {
-    const auto language = load_language(language_file);
-    Router * router = new Router(structure, language);
-    const std::vector<float> probs = router->measure_probs();
-    const std::vector<std::string> routes = router->find_routes();
-    delete router;
+    std::vector<float> probs;
+    std::vector<std::string> routes;
+    auto language = load_language(language_file);
+    {
+        Router router(structure, language);
+        probs = router.measure_probs();
+        routes = router.find_routes();
+    }
 
     const auto conjectures = detail::conjecture_equal(
         structure,

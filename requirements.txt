@@ -3,5 +3,6 @@ mock
 pep8
 pyflakes
 tables
+pyzmq
 git+ssh://git@github.com/boto/boto
 git+ssh://git@github.com/fritzo/parsable.py
