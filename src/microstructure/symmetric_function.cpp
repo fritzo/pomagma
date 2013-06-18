@@ -85,9 +85,9 @@ void SymmetricFunction::validate () const
     m_VLr_table.validate(this);
 }
 
-void SymmetricFunction::log_stats () const
+void SymmetricFunction::log_stats (const std::string & prefix) const
 {
-    m_lines.log_stats();
+    m_lines.log_stats(prefix);
 }
 
 size_t SymmetricFunction::count_pairs () const

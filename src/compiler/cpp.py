@@ -339,42 +339,6 @@ def write_signature(code, functions):
 
 
 @inputs(Code)
-def write_stats_logger(code, functions):
-    body = Code()
-    functions = functions.items()
-    functions.sort(key=lambda (arity, _): -signature.get_nargs(arity))
-    for arity, funs in functions:
-        for name in funs:
-            body(
-                '''
-                POMAGMA_INFO("$name:");
-                $name.log_stats();
-                ''',
-                name=name,
-            ).newline()
-
-    code(
-        '''
-        void log_stats ()
-        {
-            carrier.log_stats();
-
-            POMAGMA_INFO("LESS:");
-            LESS.log_stats();
-
-            POMAGMA_INFO("NLESS:");
-            NLESS.log_stats();
-
-            $body
-
-            sampler.log_stats();
-        }
-        ''',
-        body=wrapindent(body),
-    ).newline()
-
-
-@inputs(Code)
 def write_merge_task(code, functions):
     body = Code()
     body(
@@ -778,7 +742,6 @@ def write_theory(code, rules=None, facts=None):
     ).newline()
 
     write_signature(code, functions)
-    write_stats_logger(code, functions)
     write_merge_task(code, functions)
     write_ensurers(code, functions)
     write_full_tasks(code, sequents)

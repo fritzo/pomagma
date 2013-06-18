@@ -88,9 +88,9 @@ void BinaryRelation::validate_disjoint (const BinaryRelation & other) const
     }
 }
 
-void BinaryRelation::log_stats () const
+void BinaryRelation::log_stats (const std::string & prefix) const
 {
-    m_lines.log_stats();
+    m_lines.log_stats(prefix);
 }
 
 void BinaryRelation::update ()

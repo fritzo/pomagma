@@ -22,7 +22,7 @@ public:
     base_bin_rel_ (const Carrier & carrier);
     ~base_bin_rel_ ();
     void validate () const;
-    void log_stats () const;
+    void log_stats (const std::string & prefix) const;
 
     const Carrier & carrier () const { return m_carrier; }
     const DenseSet & support () const { return m_carrier.support(); }

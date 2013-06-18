@@ -30,9 +30,9 @@ void NullaryFunction::validate () const
     }
 }
 
-void NullaryFunction::log_stats () const
+void NullaryFunction::log_stats (const std::string & prefix) const
 {
-    POMAGMA_INFO((m_value.load() ? "defined" : "undefined"));
+    POMAGMA_INFO(prefix << " " << (m_value.load() ? "defined" : "undefined"));
 }
 
 void NullaryFunction::unsafe_merge (Ob dep)

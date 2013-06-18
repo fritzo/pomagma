@@ -77,10 +77,11 @@ void InjectiveFunction::validate () const
     }
 }
 
-void InjectiveFunction::log_stats () const
+void InjectiveFunction::log_stats (const std::string & prefix) const
 {
-    POMAGMA_PRINT(m_set.count_items());
-    POMAGMA_PRINT(m_inverse_set.count_items());
+    POMAGMA_INFO(prefix << " "
+        "count = " << m_set.count_items() << ", "
+        "inverse_count = " << m_inverse_set.count_items());
 }
 
 void InjectiveFunction::clear ()

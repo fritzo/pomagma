@@ -104,13 +104,13 @@ void base_bin_rel_<symmetric>::validate() const
 }
 
 template<bool symmetric>
-void base_bin_rel_<symmetric>::log_stats () const
+void base_bin_rel_<symmetric>::log_stats (const std::string & prefix) const
 {
     size_t pair_count = count_pairs();
     size_t pair_capacity = item_dim() * item_dim();
     float density = 1.0f * pair_count / pair_capacity;
-    POMAGMA_INFO(pair_count << " / " << pair_capacity << " = "
-            << density << " full");
+    POMAGMA_INFO(prefix << " " <<
+        pair_count << " / " << pair_capacity << " = " << density << " full");
 }
 
 template<bool symmetric>
@@ -178,7 +178,7 @@ void base_bin_rel_<symmetric>::copy_Lx_to_Rx ()
 template base_bin_rel_<true>::base_bin_rel_ (const Carrier &);
 template base_bin_rel_<true>::~base_bin_rel_ ();
 template void base_bin_rel_<true>::validate () const;
-template void base_bin_rel_<true>::log_stats () const;
+template void base_bin_rel_<true>::log_stats (const std::string &) const;
 template size_t base_bin_rel_<true>::count_pairs () const;
 template void base_bin_rel_<true>::clear ();
 template void base_bin_rel_<true>::copy_Lx_to_Rx ();
@@ -186,7 +186,7 @@ template void base_bin_rel_<true>::copy_Lx_to_Rx ();
 template base_bin_rel_<false>::base_bin_rel_ (const Carrier &);
 template base_bin_rel_<false>::~base_bin_rel_ ();
 template void base_bin_rel_<false>::validate () const;
-template void base_bin_rel_<false>::log_stats () const;
+template void base_bin_rel_<false>::log_stats (const std::string &) const;
 template size_t base_bin_rel_<false>::count_pairs () const;
 template void base_bin_rel_<false>::clear ();
 template void base_bin_rel_<false>::copy_Lx_to_Rx ();

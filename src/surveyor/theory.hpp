@@ -68,6 +68,15 @@ void validate_all ()
 }
 
 //----------------------------------------------------------------------------
+// logging
+
+void log_stats ()
+{
+    structure.log_stats();
+    sampler.log_stats();
+}
+
+//----------------------------------------------------------------------------
 // basic ensurers
 
 inline void ensure_equal (Ob lhs, Ob rhs)

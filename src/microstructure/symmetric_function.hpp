@@ -31,7 +31,7 @@ public:
         void (*insert_callback) (const SymmetricFunction *, Ob, Ob) = nullptr);
     ~SymmetricFunction ();
     void validate () const;
-    void log_stats () const;
+    void log_stats (const std::string & prefix) const;
 
     // raw operations
     // m_tiles is source of truth; m_lines lag

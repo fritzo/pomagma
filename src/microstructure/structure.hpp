@@ -22,6 +22,7 @@ public:
     void clear ();
     void load (const std::string & filename);
     void dump (const std::string & filename);
+    void log_stats ();
 };
 
 } // namespace pomagma

@@ -23,7 +23,7 @@ public:
         const Carrier & carrier,
         void (*insert_callback) (const NullaryFunction *) = nullptr);
     void validate () const;
-    void log_stats () const;
+    void log_stats (const std::string & prefix) const;
 
     // raw operations
     void raw_insert (Ob val);
