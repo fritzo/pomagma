@@ -179,6 +179,13 @@ def test_compile_co():
         [LESS(APP(CO(x), y), APP(y, x))])
 
 
+def test_compile_comp_x_x_x():
+    U = Expression('U')
+    _test_sequent(
+        [EQUAL(COMP(x, x), x)],
+        [EQUAL(x, APP(U, x))])
+
+
 def test_compile_eval():
     EVAL = Expression('EVAL')
     _test_sequent(

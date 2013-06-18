@@ -1,4 +1,6 @@
 import math
+import inspect
+import pomagma.util
 from pomagma.compiler.expressions import Expression
 from pomagma.compiler.sequents import Sequent, normalize, assert_normal
 from pomagma.compiler.util import (
@@ -21,6 +23,28 @@ def assert_not_in(element, set_):
 
 def assert_subset(subset, set_):
     assert subset <= set_, '{0} not <= {1}'.format(subset, set_)
+
+
+MIN_STACK_DEPTH = float('inf')
+
+
+def stack_depth():
+    global MIN_STACK_DEPTH
+    depth = len(inspect.stack())
+    MIN_STACK_DEPTH = min(MIN_STACK_DEPTH, depth)
+    return depth - MIN_STACK_DEPTH
+
+
+if pomagma.util.LOG_LEVEL >= pomagma.util.LOG_LEVEL_DEBUG:
+
+    def POMAGMA_DEBUG(message, *args):
+        print 'DEBUG{}'.format(' ' * stack_depth()),
+        print message.format(*args)
+
+else:
+
+    def POMAGMA_DEBUG(*args):
+        pass
 
 
 #-----------------------------------------------------------------------------
@@ -285,6 +309,7 @@ def compile_full(seq):
         ranked = rank_compiled(part, context, bound)
         results.append(min(ranked))
     assert results, 'failed to compile {0}'.format(seq)
+    logger('derived {0} rules from {1}'.format(len(results), seq))
     return results
 
 
@@ -347,6 +372,7 @@ def compile_given(seq, atom):
         ranked = rank_compiled(normal, context, bound)
         results.append(min(ranked))
     assert results, 'failed to compile {0} given {1}'.format(seq, atom)
+    logger('derived {0} rules from {1} | {2}'.format(len(results), atom, seq))
     return results
 
 
@@ -357,7 +383,7 @@ def rank_compiled(seq, context, bound):
     (succedent,) = list(seq.succedents)
     compiled = get_compiled(antecedents, succedent, bound)
     assert compiled, 'failed to compile {0}'.format(seq)
-    logger('optimizing {0} versions'.format(len(compiled)))
+    # logger('optimizing {0} versions'.format(len(compiled)))
     ranked = []
     for s in compiled:
         s.validate(bound)
@@ -374,9 +400,10 @@ def get_compiled(antecedents, succedent, bound):
     '''
     Iterate through the space of strategies, narrowing heuristically.
     '''
-    # print 'DEBUG', list(bound), '|', list(antecedents), '|-', succedent
+    POMAGMA_DEBUG('{} | {} |- {}', list(bound), list(antecedents), succedent)
 
     if not antecedents and succedent.vars <= bound:
+        POMAGMA_DEBUG('ensure')
         return [Ensure(succedent)]
 
     results = []
@@ -385,6 +412,7 @@ def get_compiled(antecedents, succedent, bound):
     for c in succedent.consts:
         if c.var not in bound:
             bound_c = set_with(bound, c.var)
+            POMAGMA_DEBUG('bind succedent constant')
             for s in get_compiled(antecedents, succedent, bound_c):
                 results.append(Let(c, s))
             return results  # HEURISTIC bind eagerly in arbitrary order
@@ -395,6 +423,7 @@ def get_compiled(antecedents, succedent, bound):
             assert a.is_fun(), a
             antecedents_a = set_without(antecedents, a)
             bound_a = set_with(bound, a.var)
+            POMAGMA_DEBUG('bind antecedent constant')
             for s in get_compiled(antecedents_a, succedent, bound_a):
                 results.append(Let(a, s))
             return results  # HEURISTIC bind eagerly in arbitrary order
@@ -405,12 +434,14 @@ def get_compiled(antecedents, succedent, bound):
         if a.is_rel():
             if a.vars <= bound:
                 antecedents_a = set_without(antecedents, a)
+                POMAGMA_DEBUG('conditional')
                 for s in get_compiled(antecedents_a, succedent, bound):
                     results.append(Test(a, s))
         else:
             assert a.is_fun(), a
             if a.vars <= bound and a.var in bound:
                 antecedents_a = set_without(antecedents, a)
+                POMAGMA_DEBUG('conditional')
                 for s in get_compiled(antecedents_a, succedent, bound):
                     results.append(Test(a, s))
         if results:
@@ -423,6 +454,7 @@ def get_compiled(antecedents, succedent, bound):
                 assert a.var not in bound
                 antecedents_a = set_without(antecedents, a)
                 bound_a = set_with(bound, a.var)
+                POMAGMA_DEBUG('bind variable')
                 for s in get_compiled(antecedents_a, succedent, bound_a):
                     results.append(Let(a, s))
             else:
@@ -437,6 +469,7 @@ def get_compiled(antecedents, succedent, bound):
         if a.vars & bound:
             for v in a.vars - bound:
                 bound_v = set_with(bound, v)
+                POMAGMA_DEBUG('iterate forward')
                 for s in get_compiled(antecedents, succedent, bound_v):
                     results.append(Iter(v, s))
 
@@ -452,11 +485,12 @@ def get_compiled(antecedents, succedent, bound):
                 bound_v = bound | a_free
                 antecedents_a = set(antecedents)
                 antecedents_a.remove(a)
+                POMAGMA_DEBUG('iterate backward')
                 if nargs == 1 and len(a_free) == 1:
                     # TODO injective function inverse need not be iterated
                     for s in get_compiled(antecedents_a, succedent, bound_v):
                         results.append(IterInvInjective(a, s))
-                elif nargs == 2 and len(a_free) == 1:
+                elif nargs == 2 and len(a_free) == 1 and len(a_vars) == 2:
                     for s in get_compiled(antecedents_a, succedent, bound_v):
                         (fixed,) = list(a.vars - a_free)
                         results.append(IterInvBinaryRange(a, fixed, s))
@@ -471,6 +505,7 @@ def get_compiled(antecedents, succedent, bound):
     free = (union([a.vars for a in antecedents]) | succedent.vars - bound)
     for v in free:
         bound_v = set_with(bound, v)
+        POMAGMA_DEBUG('iterate non-locally')
         for s in get_compiled(antecedents, succedent, bound_v):
             results.append(Iter(v, s))
 

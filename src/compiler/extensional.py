@@ -164,7 +164,7 @@ def head_normalize(expr, *args):
             return head_normalize(C, I, *args)
         elif name == 'CB':
             return head_normalize(C, B, *args)
-        elif name in ['Y', 'J', 'JOIN']:
+        elif name in ['Y', 'J', 'JOIN', 'U', 'V']:
             raise SkipValidation
         else:
             raise TODO('head normalize %s expressions' % name)
