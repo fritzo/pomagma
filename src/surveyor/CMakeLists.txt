@@ -61,14 +61,13 @@ add_custom_command(
 add_executable(sk.survey sk.theory.cpp)
 target_link_libraries(sk.survey ${POMAGMA_SURVEYOR_LIBS})
 
-# TODO get types.rules to compile
 add_custom_command(
 	OUTPUT ${CMAKE_CURRENT_LIST_DIR}/skj.theory.cpp
 		${SRC_DIR}/theory/skj.compiled
 	COMMAND python ${SRC_DIR}/compiler/run.py compile
 		${SRC_DIR}/theory/sk.rules
 		${SRC_DIR}/theory/join.rules
-		#${SRC_DIR}/theory/types.rules
+		${SRC_DIR}/theory/types.rules
 		${SRC_DIR}/theory/sk.facts
 		${SRC_DIR}/theory/order.facts
 		${SRC_DIR}/theory/types.facts
@@ -92,16 +91,15 @@ add_custom_command(
 add_executable(skj.survey skj.theory.cpp)
 target_link_libraries(skj.survey ${POMAGMA_SURVEYOR_LIBS})
 
-# TODO get reflect.rules to compile
 add_custom_command(
 	OUTPUT ${CMAKE_CURRENT_LIST_DIR}/skjo.theory.cpp
 		${SRC_DIR}/theory/skjo.compiled
 	COMMAND python ${SRC_DIR}/compiler/run.py compile
 		${SRC_DIR}/theory/sk.rules
 		${SRC_DIR}/theory/join.rules
-		#${SRC_DIR}/theory/types.rules
+		${SRC_DIR}/theory/types.rules
 		${SRC_DIR}/theory/quote.rules
-		#${SRC_DIR}/theory/reflect.rules
+		${SRC_DIR}/theory/reflect.rules
 		${SRC_DIR}/theory/sk.facts
 		${SRC_DIR}/theory/order.facts
 		${SRC_DIR}/theory/types.facts

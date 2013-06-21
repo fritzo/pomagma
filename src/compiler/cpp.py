@@ -80,9 +80,9 @@ def Iter_cpp(self, code, poll=None):
     sets = []
     iter_ = 'carrier.iter()'
     for test in self.tests:
-        assert test.name in ['LESS', 'NLESS']
+        assert test.name in ['LESS', 'NLESS'], test.name
         lhs, rhs = test.args
-        assert lhs != rhs
+        assert lhs != rhs, lhs
         if self.var == lhs:
             iter_ = '%s.iter_rhs(%s)' % (test.name, rhs)
             sets.append('%s.get_Rx_set(%s)' % (test.name, rhs))
@@ -90,13 +90,14 @@ def Iter_cpp(self, code, poll=None):
             iter_ = '%s.iter_lhs(%s)' % (test.name, lhs)
             sets.append('%s.get_Lx_set(%s)' % (test.name, lhs))
     for expr in self.lets.itervalues():
-        assert self.var in expr.args
+        assert self.var in expr.args,\
+            '{} not in {}'.format(self.var, expr.args)
         if len(expr.args) == 1:
             iter_ = '%s.iter()' % expr.name
             sets.append('%s.get_set()' % expr.name)
         else:
             lhs, rhs = expr.args
-            assert lhs != rhs
+            assert lhs != rhs, lhs
             if self.var == lhs:
                 iter_ = '%s.iter_rhs(%s)' % (expr.name, rhs)
                 sets.append('%s.get_Rx_set(%s)' % (expr.name, rhs))
@@ -175,7 +176,7 @@ def IterInvBinaryRange_cpp(self, code, poll=None):
         body(poll)
     body(
         '''
-        Ob $var = *iter;
+        Ob $var __attribute__((unused)) = *iter;
         ''',
         var=self.var2 if self.lhs_fixed else self.var1,
     )
@@ -244,7 +245,7 @@ def Test_cpp(self, code, poll=None):
 @methodof(compiler.Ensure, 'cpp')
 def Ensure_cpp(self, code, poll=None):
     expr = self.expr
-    assert len(expr.args) == 2
+    assert len(expr.args) == 2, expr.args
     args = [arg if arg.args else arg.var for arg in expr.args]
     lhs, rhs = args
     if lhs.is_var() and rhs.is_var():
@@ -256,7 +257,7 @@ def Ensure_cpp(self, code, poll=None):
             args=', '.join(map(str, args)),
         )
     else:
-        assert self.expr.name == 'EQUAL'
+        assert self.expr.name == 'EQUAL', self.expr.name
         if lhs.is_var():
             code(
                 '''
@@ -711,11 +712,11 @@ def get_functions_used_in(sequents, exprs):
     functions = dict((arity, []) for arity in signature.FUNCTION_ARITIES)
     symbols = set()
     for seq in sequents:
-        assert isinstance(seq, Sequent)
+        assert isinstance(seq, Sequent), seq
         for expr in seq.antecedents | seq.succedents:
             symbols |= set(expr.polish.split())
     for expr in exprs:
-        assert isinstance(expr, Expression)
+        assert isinstance(expr, Expression), expr
         symbols |= set(expr.polish.split())
     for c in symbols:
         if signature.is_fun(c):
