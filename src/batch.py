@@ -82,10 +82,13 @@ def init(theory, **options):
         world_size = pomagma.util.MIN_SIZES[theory]
         log_print('Step 0: initialize to {}'.format(world_size))
         surveyor.init(theory, survey, world_size, **opts)
-        with pomagma.util.mutex():
+
+        # TODO factor this out as atlas.init
+        with pomagma.util.mutex(world):
             cartographer.validate(survey, **opts)
             assert not os.path.exists(world), 'already initialized'
             os.rename(survey, world)
+            # TODO fork and push to s3
 
 
 @parsable.command
@@ -119,6 +122,9 @@ def survey(theory, max_size=DEFAULT_SURVEY_SIZE, step_size=512, **options):
         while True:
             log_print('Step {}: survey'.format(step))
 
+            # TODO split this up into separate survey + aggregate actors
+            #   surveyors pull from s3 and aggregators push to s3
+
             region_size = max(min_size, max_size - step_size)
             cartographer.trim(
                 theory,
@@ -136,7 +142,8 @@ def survey(theory, max_size=DEFAULT_SURVEY_SIZE, step_size=512, **options):
                 **opts)
             os.remove(region)
 
-            with pomagma.util.mutex():
+            # TODO factor this out as atlas.aggregate
+            with pomagma.util.mutex(world):
                 cartographer.aggregate(
                     world,
                     survey,
@@ -144,6 +151,7 @@ def survey(theory, max_size=DEFAULT_SURVEY_SIZE, step_size=512, **options):
                     **opts)
                 cartographer.validate(aggregate, **opts)
                 os.rename(aggregate, world)
+                # TODO fork and push to s3
             os.remove(survey)
 
             world_size = pomagma.util.get_item_count(world)
@@ -170,11 +178,13 @@ def theorize(theory, **options):
         opts = options
         opts.setdefault('log_file', 'conjecture.log')
 
+        # TODO factor this out as atlas.assume
         def assume(theorems):
             theorist.assume(world, updated, theorems, **opts)
-            with pomagma.util.mutex():
+            with pomagma.util.mutex(world):
                 cartographer.validate(updated, **opts)
                 os.rename(updated, world)
+                # TODO fork and push to s3
 
         theorist.conjecture_diverge(theory, world, diverge_conjectures, **opts)
         theorem_count = theorist.try_prove_diverge(

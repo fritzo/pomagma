@@ -89,8 +89,14 @@ class MutexLockedException(Exception):
 # Adapted from:
 # http://blog.vmfarms.com/2011/03/cross-process-locking-and.html
 @contextlib.contextmanager
-def mutex(filename='mutex', block=True):
-    with open(filename, 'w') as fd:
+def mutex(filename=None, block=True):
+    if filename is None:
+        mutex_filename = 'mutex'
+    elif os.path.isdir(filename):
+        mutex_filename = os.path.join(filename, 'mutex')
+    else:
+        mutex_filename = '{}.mutex'.format(filename)
+    with open(mutex_filename, 'w') as fd:
         if block:
             try:
                 fcntl.flock(fd, fcntl.LOCK_EX)
@@ -106,7 +112,7 @@ def mutex(filename='mutex', block=True):
                 fd.flush()
             except IOError, e:
                 assert e.errno in [errno.EACCES, errno.EAGAIN]
-                raise MutexLockedException(filename)
+                raise MutexLockedException(mutex_filename)
             else:
                 try:
                     yield
@@ -125,7 +131,7 @@ def log_duration():
 
 
 @contextlib.contextmanager
-def load(filename):
+def h5_open(filename):
     import tables
     structure = tables.openFile(filename)
     yield structure
@@ -273,27 +279,27 @@ def count_obs(structure):
 
 
 def get_hash(infile):
-    with load(infile) as structure:
+    with h5_open(infile) as structure:
         digest = structure.getNodeAttr('/', 'hash').tolist()
         return digest
 
 
 def get_info(infile):
-    with load(infile) as structure:
+    with h5_open(infile) as structure:
         item_dim, item_count = count_obs(structure)
         info = dict(item_dim=item_dim, item_count=item_count)
         return info
 
 
 def get_item_count(infile):
-    with load(infile) as structure:
+    with h5_open(infile) as structure:
         item_dim, item_count = count_obs(structure)
         info = dict(item_dim=item_dim, item_count=item_count)
         return info['item_count']
 
 
 def print_info(infile):
-    with load(infile) as structure:
+    with h5_open(infile) as structure:
         item_dim, item_count = count_obs(structure)
         print 'item_dim =', item_dim
         print 'item_count =', item_count
