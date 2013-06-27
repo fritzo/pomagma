@@ -1,6 +1,16 @@
 # Pomagma
 
-Adventures in Abstractland.
+An Extensional Development Environment.
+
+Pomagma is an environment for programming behaviors,
+or programs modulo observable equivalence.
+Pomagma is founded in the simplest model of computation,
+combinatory algebra (a <b>p</b>artially <b>o</b>rdered <b>magma</b>),
+and reasons with a napkin-sized semantic theory
+that is yet strong enough to serve as a foundation for mathematics.
+
+Pomagma began as a PhD [thesis](http://fritzo.org/thesis.pdf) and
+[codebase](http://github.com/fritzo/Johann).
 
 ## System Architecture
 
@@ -16,14 +26,14 @@ Adventures in Abstractland.
 ### Actors
 
 - Compiler - creates core theory and surveying strategies
-- Surveyors - explore a region of a combinatory algebra
+- Surveyors - explore a region of a combinatory algebra via forward chaining
 - Cartographers - direct surveyors and incorporate surveys into the atlas
-- Linguist - fits language to corpus and proposes new terms
-- Language Reviewer - ensure new language modifications are safe
-- Theorist - propose new routes between common destinations
-- Theory Reviewer - evaluates transportation bills
-- Editor - user interface for editing algebraic code
-- Analyst - server-side static analyzer for algebraic code
+- Linguist - fits languages to the corpus and proposes new basic terms
+- Language Reviewer - ensures new language modifications are safe
+- Theorist - makes conjectures and tries to prove them using various strategies
+- Theory Reviewer - suggests new inference stragies to address open conjectures
+- Editor - provides user interface for editing algebraic code
+- Analyst - performs deeper static analysis to support editor
 
 ### Workflows
 
@@ -34,20 +44,19 @@ Adventures in Abstractland.
 - Evolve Language: optimize grammar weights based on corpus; propose new words
 - Recover (after Fregean collapse): assess damage; pinpoint problem; rebuild
 
-## Milestones
+## Milestones 
 
-How awesome is pomagma? In a few ways so far...
-
-- Viable - prove concept in prototype [DONE](http://github.com/fritzo/Johann)
+- Viable - prove concept in prototype DONE
 - Parallel - run surveyor system tests (h4, sk, skj) DONE
 - Scalable - run surveyor-cartographer loop DONE
 - Thrifty - propose new equations based on atlas DONE
+- Distributed - run survey workflow on ec2
 - Literate - populate corpus by writing code in editor
 - Tasteful - fit language parameters to corpus
 - Innovative - propose new basic terms based on corpus
 - Interactive - show static analysis layer in editor
 - Reflective - model pomagma actors in corpus
-- Distributed - run survey workflow on ec2
+- Social - integrate with other languages and environments
 
 ## Organization
 
@@ -55,9 +64,9 @@ How awesome is pomagma? In a few ways so far...
 - [/pomagma](pomagma) - a symbolic link to appease `pip install -e`
 - [/doc](doc) - figures
 - [/build](build) - destination of C++ builds
-- [/data](data) - generated data, mirroring S3 bucket
+- [/data](data) - generated data, mirroring an S3 bucket
 
-## Installing Full System
+## Installing
 
 Pomagma is targeted for Ubuntu 12.04 LTS.
 To install:
