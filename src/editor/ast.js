@@ -37,11 +37,11 @@ var Vary = function (name) {
   this.above = null;
 };
 
-var Abstract = function (patt, body) {
-  this.below = [patt, body];
+var Define = function (patt, defn) {
+  this.below = [patt, defn];
   this.above = null;
   patt.above = this;
-  body.above = this;
+  defn.above = this;
 };
 
 var Let = function (patt, defn, body) {
@@ -49,6 +49,13 @@ var Let = function (patt, defn, body) {
   this.above = null;
   patt.above = this;
   defn.above = this;
+  body.above = this;
+};
+
+var Abstract = function (patt, body) {
+  this.below = [patt, body];
+  this.above = null;
+  patt.above = this;
   body.above = this;
 };
 
@@ -72,7 +79,7 @@ var Cursor = function (body) {
 };
 
 //----------------------------------------------------------------------------
-// Printing to polish notation
+// Serializing to polish notation
 
 Hole.prototype.polish = function () {
   return 'HOLE';
@@ -82,10 +89,10 @@ Vary.prototype.polish = function () {
   return 'VARY ' + this.name;
 };
 
-Abstract.prototype.polish = function () {
+Define.prototype.polish = function () {
   var patt = this.below[0];
-  var body = this.below[1];
-  return 'ABSTRACT ' + patt.polish() + ' ' + body.polish();
+  var defn = this.below[1];
+  return 'DEFINE ' + patt.polish() + ' ' + defn.polish();
 };
 
 Let.prototype.polish = function () {
@@ -95,6 +102,12 @@ Let.prototype.polish = function () {
   return 'LET ' + patt.polish() + ' ' + defn.polish() + ' ' + body.polish();
 };
 
+Abstract.prototype.polish = function () {
+  var patt = this.below[0];
+  var body = this.below[1];
+  return 'ABSTRACT ' + patt.polish() + ' ' + body.polish();
+};
+
 Apply.prototype.polish = function () {
   var fun = this.below[0];
   var arg = this.below[1];
@@ -102,12 +115,12 @@ Apply.prototype.polish = function () {
 };
 
 Quote.prototype.polish = function () {
-  var body = this.below[0]
+  var body = this.below[0];
   return 'QUOTE ' + body.polish();
 };
 
 Cursor.prototype.polish = function () {
-  var body = this.below[0]
+  var body = this.below[0];
   return 'CURSOR ' + body.polish();
 };
 
@@ -136,16 +149,21 @@ var parseHead = {
     var name = state.pop();
     return new Vary(name);
   },
-  ABSTRACT: function (state) {
+  DEFINE: function (state) {
     var patt = state.parse();
-    var body = state.parse();
-    return new Abstract(patt, body);
+    var defn = state.parse();
+    return new Define(patt, defn);
   },
   LET: function (state) {
     var patt = state.parse();
     var defn = state.parse();
     var body = state.parse();
     return new Let(patt, defn, body);
+  },
+  ABSTRACT: function (state) {
+    var patt = state.parse();
+    var body = state.parse();
+    return new Abstract(patt, body);
   },
   APPLY: function (state) {
     var fun = state.parse();
@@ -266,9 +284,9 @@ Cursor.prototype.tryMoveRight = function () {
 Cursor.prototype.tryMove = function (direction) {
   switch (direction) {
     case 'U': return this.tryMoveUp();
-    case 'D': return this.tryMoveDown();
-    case 'L': return this.tryMoveLeft();
-    case 'R': return this.tryMoveRight();
+    case 'L': return this.tryMoveLeft() || this.tryMoveUp();
+    case 'D': return this.tryMoveDown() || this.tryMoveRight();
+    case 'R': return this.tryMoveRight() || this.tryMoveDown();
   }
 };
 
@@ -289,6 +307,93 @@ ast.getRoot = function (expr) {
     expr = expr.above;
   }
   return expr;
+};
+
+//----------------------------------------------------------------------------
+// Pretty printing
+
+var KEYWORDS = {
+  'let': '<span class=keyword>let</span>',
+  '=': '<span class=keyword>=</span>',
+  'in': '<span class=keyword>in</span>',
+  'fun': '<span class=keyword>fun</span>'
+};
+
+var indent = function (line) {
+  return '    ' + line;
+};
+
+Hole.prototype.lines = function () {
+  return ['?'];
+};
+
+Vary.prototype.lines = function () {
+  return [this.name];
+};
+
+Define.prototype.lines = function () {
+  var patt = this.below[0];
+  var defn = this.below[1];
+  var pattLines = patt.lines();
+  var defnLines = defn.lines(' ');
+  assert(pattLines.length == 1, 'too many pattern lines: ' + pattLines);
+  return [KEYWORDS['let'] + ' ' + pattLines[0] + ' ' + KEYWORDS['=']].concat(
+    defnLines.map(indent));
+};
+
+Let.prototype.lines = function () {
+  var patt = this.below[0];
+  var defn = this.below[1];
+  var body = this.below[2];
+  var pattLines = patt.lines();
+  var defnLines = defn.lines(' ');
+  assert(pattLines.length == 1, 'too many pattern lines: ' + pattLines);
+  if (defnLines.length == 1) {
+    return [KEYWORDS['let'] + ' ' + pattLines[0] + ' ' + KEYWORDS['='] +
+      ' ' + defnLines[0] + ' ' + KEYWORDS['in']].concat(
+      body.lines().map(indent));
+  } else {
+    return [KEYWORDS['let'] + ' ' + pattLines[0] + ' ' + KEYWORDS['=']].concat(
+      defnLines.map(indent),
+      KEYWORDS['in'],
+      body.lines().map(indent));
+  }
+};
+
+Abstract.prototype.lines = function () {
+  var patt = this.below[0];
+  var body = this.below[1];
+  var pattLines = patt.lines();
+  assert(pattLines.length == 1, 'too many pattern lines: ' + pattLines);
+  return [KEYWORDS['fun'] + ' ' + patt.lines()[0]].concat(body.lines());
+};
+
+Apply.prototype.lines = function () {
+  var fun = this.below[0];
+  var arg = this.below[1];
+  var funLines = fun.lines();
+  var argLines = arg.lines();
+  assert(funLines.length == 1, 'too many function lines: ' + funLines);
+  assert(argLines.length == 1, 'too many argument lines: ' + argLines);
+  return [fun.lines() + ' ' +  arg.lines()];  // FIXME assumes associativity
+};
+
+Quote.prototype.lines = function () {
+  var body = this.below[0];
+  var bodyLines = body.lines();
+  var end = bodyLines.length - 1;
+  bodyLines[0] = '{' + bodyLines[0];
+  bodyLines[end] = bodyLines[end] + '}';
+  return bodyLines;
+};
+
+Cursor.prototype.lines = function () {
+  var body = this.below[0];
+  var bodyLines = body.lines();
+  var end = bodyLines.length - 1;
+  bodyLines[0] = '<span class=cursor>' + bodyLines[0];
+  bodyLines[end] = bodyLines[end] + '</span>';
+  return bodyLines;
 };
 
 //----------------------------------------------------------------------------

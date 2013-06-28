@@ -6,8 +6,9 @@ var cursor;
 
 ui.draw = function () {
   var root = ast.getRoot(cursor);
-  var text = root.polish();
-  $(document.body).text(text);
+  //var text = root.polish();
+  var text = root.lines().join('\n');
+  $('#code').html(text);
 };
 
 ui.move = function (direction) {
@@ -54,7 +55,11 @@ $(window).keydown(function (event) {
 });
 
 ui.main = function () {
-  var start = 'ABSTRACT QUOTE VARY this APPLY VARY is APPLY VARY a VARY test';
+  var start = [
+    'DEFINE VARY example',
+    'LET VARY test APPLY VARY this VARY test',
+    'ABSTRACT QUOTE VARY this APPLY VARY is APPLY VARY a VARY test'
+    ].join(' ');
   cursor = ast.parse('CURSOR ' + start);
   ui.draw();
 };
