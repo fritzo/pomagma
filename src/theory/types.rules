@@ -6,12 +6,28 @@ LESS COMP x x x         LESS APP f x x
 ---------------   ---------------------------
 EQUAL x APP U x   EQUAL APP APP U f x APP f x
 
+
 --------------   --------------   ----------------------------------
 LESS I APP V x   LESS x APP V x   EQUAL COMP APP V x APP V x APP V x
 
 EQUAL x COMP x x   LESS I x      LESS APP f x x
 ---------------------------   ---------------------
      EQUAL x APP V x          EQUAL APP APP V f x x
+
+
+----------------------------------
+EQUAL APP APP P x y APP V JOIN x y
+
+---------------------------   ---------------------------------
+EQUAL APP APP P x x APP V x   EQUAL APP APP P x y APP APP P y x
+
+---------------------------------------------------------
+EQUAL APP APP P x APP APP P y z APP APP P APP APP P x y z
+
+
+         LESS COMP y x I
+----------------------------------
+LESS COMP APP CI y APP CI x SIMPLE
 
 
 # TODO get these to compile
