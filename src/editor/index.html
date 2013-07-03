@@ -41,9 +41,9 @@ $(function(){
 
   if (window.location.hash && window.location.hash.substr(1) === 'test') {
 
-    document.title = 'Pomagma Guide - Unit Test';
+    document.title = 'Pomagma Editor - Unit Test';
     test.runAll(function(){
-          document.title = 'Pomagma Guide';
+          document.title = 'Pomagma Editor';
           window.location.hash = '';
           main();
         });

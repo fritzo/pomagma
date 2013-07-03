@@ -284,9 +284,9 @@ Cursor.prototype.tryMoveRight = function () {
 Cursor.prototype.tryMove = function (direction) {
   switch (direction) {
     case 'U': return this.tryMoveUp();
-    case 'L': return this.tryMoveLeft() || this.tryMoveUp();
-    case 'D': return this.tryMoveDown() || this.tryMoveRight();
-    case 'R': return this.tryMoveRight() || this.tryMoveDown();
+    case 'L': return this.tryMoveLeft(); // || this.tryMoveUp();
+    case 'D': return this.tryMoveDown(); // || this.tryMoveRight();
+    case 'R': return this.tryMoveRight(); // || this.tryMoveDown();
   }
 };
 
