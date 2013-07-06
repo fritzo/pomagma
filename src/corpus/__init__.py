@@ -22,26 +22,19 @@ def assert_defs(defs):
 
 
 def _get_module_path(module_name):
-    parts = module_name.split('.')
+    parts = module_name.split('.') if module_name else []
     for part in parts:
         assert_identifier(part)
     return os.path.join(CORPUS, * parts)
 
 
-def _list_modules_here():
-    modules = []
-    dirs = []
-    for f in os.path.listdir('.'):
-        if IDENTIFIER_RE.match(f) and os.path.isdir(f):
-            dirs.append(f)
-        elif FILE_RE.match(f) and not os.path.isdir(f):
-            modules.append(f.split('.')[0])
-    modules.sort()
-    dirs.sort()
-    for d in dirs:
-        with pomagma.util.chdir(d):
-            modules += _list_modules_here()
-    return modules
+def _collect_modules(path, modules):
+    with pomagma.util.chdir(path):
+        for f in os.listdir('.'):
+            if FILE_RE.match(f) and not os.path.isdir(f):
+                modules.append(f.split('.')[0])
+            elif IDENTIFIER_RE.match(f) and os.path.isdir(f):
+                _collect_modules(f, modules)
 
 
 def list_modules(prefix=''):
@@ -49,11 +42,12 @@ def list_modules(prefix=''):
     Return a flat sorted list of all modules with given prefix.
     '''
     path = _get_module_path(prefix)
-    with pomagma.util.chdir(path):
-        modules = _list_modules_here()
+    modules = []
+    _collect_modules(path, modules)
     if prefix:
         parts = prefix.split('.')
-    modules = ['.'.join(parts + [m]) for m in modules]
+        modules = ['.'.join(parts + [m]) for m in modules]
+    modules.sort()
     return modules
 
 

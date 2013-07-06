@@ -59,11 +59,11 @@ def chdir(path):
     old_path = os.path.abspath(os.path.curdir)
     try:
         # os.makedirs(path)
-        print 'cd {}\n'.format(path)
+        #print 'cd {}\n'.format(path)
         os.chdir(path)
         yield os.path.curdir
     finally:
-        print 'cd {}\n'.format(old_path)
+        #print 'cd {}\n'.format(old_path)
         os.chdir(old_path)
 
 
