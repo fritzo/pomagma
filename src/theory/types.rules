@@ -25,12 +25,9 @@ EQUAL APP APP P x x APP V x   EQUAL APP APP P x y APP APP P y x
 EQUAL APP APP P x APP APP P y z APP APP P APP APP P x y z
 
 
-------------------------------
-LESS APP A f APP APP f TOP TOP
-
        LESS COMP r s I
------------------------------
-LESS COMP APP CI r APP CI s A
+-----------------------------   ------------------------------
+LESS COMP APP CI r APP CI s A   LESS APP A f APP APP f TOP TOP
 
 
 # TODO get these to compile
