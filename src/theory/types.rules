@@ -6,6 +6,7 @@ LESS COMP x x x         LESS APP f x x
 ---------------   ---------------------------
 EQUAL x APP U x   EQUAL APP APP U f x APP f x
 
+
 --------------   --------------   ----------------------------------
 LESS I APP V x   LESS x APP V x   EQUAL COMP APP V x APP V x APP V x
 
@@ -14,23 +15,41 @@ EQUAL x COMP x x   LESS I x      LESS APP f x x
      EQUAL x APP V x          EQUAL APP APP V f x x
 
 
+----------------------------------
+EQUAL APP APP P x y APP V JOIN x y
+
+---------------------------   ---------------------------------
+EQUAL APP APP P x x APP V x   EQUAL APP APP P x y APP APP P y x
+
+---------------------------------------------------------
+EQUAL APP APP P x APP APP P y z APP APP P APP APP P x y z
+
+
+------------------------------
+LESS APP A f APP APP f TOP TOP
+
+       LESS COMP r s I
+-----------------------------
+LESS COMP APP CI r APP CI s A
+
+
 # TODO get these to compile
-# WARNING these do not hold in SKRJ
+# WARNING the left rules may not hold in SKRJ (do they?)
 #
-#LESS APP f TOP APP g TOP
+#LESS APP f TOP APP g TOP     SKJDEFINABLE x
 #LESS APP f BOT APP g BOT     EQUAL APP DIV x x
 #--------------------------   -----------------
 #LESS COMP f DIV COMP g DIV   EQUAL BOT x
 #                             EQUAL TOP x
 #
-#LESS APP f TOP APP g TOP
+#LESS APP f TOP APP g TOP       SKJDEFINABLE x
 #LESS APP f I APP g I           EQUAL APP UNIT x x
 #----------------------------   ------------------
 #LESS COMP f UNIT COMP g UNIT   EQUAL I x
 #                               EQUAL TOP x
 #
 #LESS APP f TOP APP g TOP
-#LESS APP f I APP g I
+#LESS APP f I APP g I           SKJDEFINABLE x
 #LESS APP f BOT APP g BOT       EQUAL APP SEMI x x
 #----------------------------   ------------------
 #LESS COMP f SEMI COMP g SEMI   EQUAL BOT x
@@ -39,7 +58,7 @@ EQUAL x COMP x x   LESS I x      LESS APP f x x
 #
 #LESS APP f TOP APP g TOP
 #LESS APP f K APP g K
-#LESS APP f APP K I APP g APP K I
+#LESS APP f APP K I APP g APP K I   SKJDEFINABLE x
 #LESS APP f BOT APP g BOT           EQUAL APP BOOL x x
 #--------------------------------   ------------------
 #LESS COMP f BOOL COMP g BOOL       EQUAL TOP x
