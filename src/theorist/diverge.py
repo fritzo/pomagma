@@ -10,7 +10,7 @@ import pomagma.util
 
 BOT, TOP = 'BOT', 'TOP'
 I, K, B, C, W, S, Y = 'I', 'K', 'B', 'C', 'W', 'S', 'Y'
-J, U, V, P, SIMPLE = 'J', 'U', 'V', 'P', 'SIMPLE'
+J, U, V, P, A = 'J', 'U', 'V', 'P', 'A'
 
 
 def iter_terms(atoms, max_atom_count):
@@ -125,7 +125,7 @@ def converge_step(term):
             f = argv[0]
             g = argv[1]
             return (V, (J, (f,), (g,),),) + argv[2:]
-    elif head == SIMPLE:
+    elif head == A:
         raise Unknown()
     else:
         raise ValueError('unrecognized atom: {}'.format(head))
