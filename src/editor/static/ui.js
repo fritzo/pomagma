@@ -20,7 +20,18 @@ ui.move = function (direction) {
   }
 };
 
-$(window).keydown(function (event) {
+var query_handle_keydown = function (event) {
+  console.log(event.which);
+  switch (event.which) {
+    case 13: // enter
+      event.preventDefault();
+      $('#query').blur();
+      break;
+  }
+};
+
+var code_handle_keydown = function (event) {
+  console.log(event.which);
   switch (event.which) {
     // see http://www.javascripter.net/faq/keycodes.htm
 
@@ -51,10 +62,16 @@ $(window).keydown(function (event) {
       ui.move('R');
       event.preventDefault();
       break;
+
+    case 27: // escape
+      event.preventDefault();
+      $('#query').focus();
+      break;
   }
-});
+};
 
 ui.main = function () {
+
   var start = [
     'DEFINE VARY example',
     'LET VARY test APPLY VARY this VARY test',
@@ -62,6 +79,17 @@ ui.main = function () {
     ].join(' ');
   cursor = ast.parse('CURSOR ' + start);
   ui.draw();
+
+  var $query = $('#query');
+  $query.focus(function(){
+    console.log('query');
+    $(window).off('keydown').on('keydown', query_handle_keydown);
+  });
+  $query.blur(function(){
+    console.log('code');
+    $(window).off('keydown').on('keydown', code_handle_keydown);
+  });
+  $query.focus();
 };
 
 return ui;

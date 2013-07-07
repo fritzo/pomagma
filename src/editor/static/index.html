@@ -73,13 +73,32 @@ span.cursor {
 span.keyword {
   color: yellow;
 }
+.toolbar textarea {
+    font-family: Courier,'Courier New','Nimbus Mono L',fixed,monospace;
+    background-color: white;
+    color: black;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+    width: 100%;
+    resize: none;
+    height: 1.8em;
+    overflow: hidden;
+    border-radius: 0.8em;
+    border-width: 2px;
+    border-color: #777;
+}
 </style>
 </head>
 
 <!---------------------------------------------------------------------------->
 
 <body>
-<pre id=code>
-</pre>
+<div class=toolbar>
+    <textarea id=query rows=1></textarea>
+</div>
+<div>
+    <pre id=code></pre>
+</div>
 </body>
 </html>
