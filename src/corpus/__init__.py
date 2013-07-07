@@ -63,7 +63,7 @@ def load_module(module_name):
         lines = []
     defs = {}
     for line in lines:
-        let, name, ugly = line.split(maxsplit=2)
+        let, name, ugly = line.split(' ', 2)
         assert let == 'LET', 'bad line: {}'.format(line)
         assert_identifier(name)
         defs[name] = ugly

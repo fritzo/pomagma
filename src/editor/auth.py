@@ -53,6 +53,11 @@ class Stub():
         pass
 
 
+def require_stub():
+    assert bottle.request.remote_addr == '127.0.0.1', 'auth failed'
+    assert bottle.request.remote_route == ['127.0.0.1'], 'auth failed'
+
+
 active = os.path.exists(AUTH)
 
 if active:

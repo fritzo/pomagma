@@ -24,19 +24,12 @@ if pomagma.editor.auth.active:
     app = beaker.middleware.SessionMiddleware(app, session_options)
 
 
-def post_get(name, default=''):
-    return bottle.request.POST.get(name, default).strip()
-
-
-@bottle.route('/login', method='POST')
-def login():
-    username = post_get('username')
-    password = post_get('password')
-    pomagma.editor.auth.login(
-        username,
-        password,
-        success_redirect='/',
-        fail_redirect='/login')
+@bottle.route('/test')
+def _test():
+    return {
+        'remote_addr': bottle.request.remote_addr,
+        'remote_route': bottle.request.remote_route,
+    }
 
 
 @bottle.route('/login')
@@ -49,6 +42,17 @@ def login_form():
         </form>
         '''
 
+@bottle.route('/login', method='POST')
+def login():
+    username = bottle.request.POST.get('username', '').strip()
+    password = bottle.request.POST.get('password', '').strip()
+    pomagma.editor.auth.login(
+        username,
+        password,
+        success_redirect='/',
+        fail_redirect='/login')
+
+
 @bottle.route('/logout')
 def logout():
     pomagma.editor.auth.current_user.logout(redirect='/login')
@@ -60,6 +64,12 @@ def get_index():
     return bottle.static_file('index.html', root=STATIC)
 
 
+@bottle.route('/static/<filepath:path>')
+def get_static(filepath):
+    pomagma.editor.auth.require(fail_redirect='/login')
+    return bottle.static_file(filepath, root=STATIC)
+
+
 @bottle.route('/corpus', method='GET')
 def get_corpus():
     pomagma.editor.auth.require(fail_redirect='/login')
@@ -67,10 +77,19 @@ def get_corpus():
     return {'modules': modules}
 
 
-@bottle.route('/static/<filepath:path>')
-def get_static(filepath):
+@bottle.route('/corpus/<module_name>', method='GET')
+def get_module(module_name):
     pomagma.editor.auth.require(fail_redirect='/login')
-    return bottle.static_file(filepath, root=STATIC)
+    module = pomagma.corpus.load_module(module_name)
+    return {'module': module}
+
+
+@bottle.route('/corpus/<module_name>', method='POST')
+def post_module(module_name):
+    pomagma.editor.auth.require(fail_redirect='/login')
+    module = bottle.request.json
+    assert module is not None, 'failed to store module {}'.format(module_name)
+    pomagma.corpus.store_module(module_name, module)
 
 
 @parsable.command
