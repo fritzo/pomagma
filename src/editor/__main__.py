@@ -14,7 +14,12 @@ STATIC = os.path.join(pomagma.util.SRC, 'editor', 'static')
 AUTH = os.path.join(pomagma.util.DATA, 'users')
 
 
-if not os.path.exists(AUTH):
+@parsable.command
+def init_auth():
+    '''
+    Initialize cork authorization database.
+    '''
+    assert not os.path.exists(AUTH), 'auth already initialized'
     print 'Initializing cork auth'
     os.makedirs(AUTH)
     auth = cork.Cork(AUTH, initialize=True)
@@ -45,20 +50,21 @@ if not os.path.exists(AUTH):
     auth._store.save_users()
 
 
-auth = cork.Cork(AUTH)
+auth = cork.Cork(AUTH) if os.path.exists(AUTH) else None
 
-# wtf http://stackoverflow.com/questions/14818550
-#app = bottle.default_app()
 app = bottle.app()
 
-session_options = {
-    'session.type': 'cookie',
-    'session.validate_key': True,
-    'session.cookie_expires': True,
-    'session.timeout': 3600 * 24,  # 1 day
-    'session.encrypt_key': pomagma.util.random_uuid(),
-}
-app = beaker.middleware.SessionMiddleware(app, session_options)
+if auth:
+    session_options = {
+        'session.type': 'cookie',
+        'session.validate_key': True,
+        'session.cookie_expires': True,
+        'session.timeout': 3600 * 24,  # 1 day
+        'session.encrypt_key': pomagma.util.random_uuid(),
+    }
+    app = beaker.middleware.SessionMiddleware(app, session_options)
+else:
+    print 'WARNING cork auth disabled'
 
 
 def post_get(name, default=''):
@@ -93,13 +99,15 @@ def logout():
 
 @bottle.route('/')
 def index():
-    auth.require(fail_redirect='/login')
+    if auth:
+        auth.require(fail_redirect='/login')
     return bottle.static_file('index.html', root=STATIC)
 
 
 @bottle.route('/static/<filepath:path>')
 def static(filepath):
-    auth.require(fail_redirect='/login')
+    if auth:
+        auth.require(fail_redirect='/login')
     return bottle.static_file(filepath, root=STATIC)
 
 
