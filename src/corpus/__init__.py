@@ -4,9 +4,9 @@ import pomagma.util
 
 
 CORPUS = os.path.join(pomagma.util.SRC, 'corpus')
+EXT = 'pmod'
 IDENTIFIER_RE = re.compile(r'^[^\d\W]\w*$')
-FILE_RE = re.compile(r'^[^\d\W]\w*\.defs$')
-EXT = '.defs'
+FILE_RE = re.compile(r'^[^\d\W]\w*\.{}$'.format(EXT))
 
 
 def assert_identifier(name):
@@ -55,7 +55,7 @@ def load_module(module_name):
     '''
     Atomically load module.
     '''
-    path = _get_module_path(module_name) + EXT
+    path = '.'.join((_get_module_path(module_name), EXT))
     if os.path.exists(path):
         with open(path) as file:
             lines = filter(bool, (line.strip() for line in file))
@@ -79,7 +79,7 @@ def store_module(module_name, defs):
         'LET {} {}'.format(name, defs[name])
         for name in sorted(defs.iterkeys())
     )
-    path = _get_module_path(module_name) + EXT
+    path = '.'.join((_get_module_path(module_name), EXT))
     dirname = os.path.dirname(path)
     if not os.path.exists(dirname):
         os.makedirs(dirname)

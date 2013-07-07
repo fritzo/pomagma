@@ -55,13 +55,20 @@ def logout():
 
 
 @bottle.route('/')
-def index():
+def get_index():
     pomagma.editor.auth.require(fail_redirect='/login')
     return bottle.static_file('index.html', root=STATIC)
 
 
+@bottle.route('/corpus', method='GET')
+def get_corpus():
+    pomagma.editor.auth.require(fail_redirect='/login')
+    modules = pomagma.corpus.list_modules()
+    return {'modules': modules}
+
+
 @bottle.route('/static/<filepath:path>')
-def static(filepath):
+def get_static(filepath):
     pomagma.editor.auth.require(fail_redirect='/login')
     return bottle.static_file(filepath, root=STATIC)
 
