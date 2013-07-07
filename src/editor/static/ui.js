@@ -82,11 +82,11 @@ ui.main = function () {
 
   var $query = $('#query');
   $query.focus(function(){
-    console.log('query');
+    $query.css('border-color', '#fb7');
     $(window).off('keydown').on('keydown', query_handle_keydown);
   });
   $query.blur(function(){
-    console.log('code');
+    $query.css('border-color', '#777');
     $(window).off('keydown').on('keydown', code_handle_keydown);
   });
   $query.focus();
