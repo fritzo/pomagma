@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Pomagma Editor Test</title>
+
+<!-- MIT,GPL2 -->
+<script type='text/javascript' src='static/lib/jquery.min.js'></script>
+
+<!-- MIT,GPL2 -->
+<script type='text/javascript' src='static/safety.js'></script>
+<script type='text/javascript' src='static/testing.js'></script>
+
+<!-- MIT -->
+<script type='text/javascript' src='static/ast.js'></script>
+<script type='text/javascript' src='static/ui.js'></script>
+<script type='text/javascript'>
+
+$(function(){
+    test.runAll(function() {
+        var parts = window.location.toString().split('/');
+        parts.pop();
+        window.location.assign(parts.join('/'));
+    })
+});
+
+</script>
+</head>
+</html>

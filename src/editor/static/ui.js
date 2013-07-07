@@ -25,7 +25,7 @@ var query_handle_keydown = function (event) {
   switch (event.which) {
     case 13: // enter
       event.preventDefault();
-      $('#query').blur();
+      ui.$query.blur();
       break;
   }
 };
@@ -80,7 +80,7 @@ ui.main = function () {
   cursor = ast.parse('CURSOR ' + start);
   ui.draw();
 
-  var $query = $('#query');
+  var $query = ui.$query = $('#query');
   $query.focus(function(){
     $query.css('border-color', '#fb7');
     $(window).off('keydown').on('keydown', query_handle_keydown);

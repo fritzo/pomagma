@@ -24,8 +24,8 @@ if pomagma.editor.auth.active:
     app = beaker.middleware.SessionMiddleware(app, session_options)
 
 
-@bottle.route('/test')
-def _test():
+@bottle.route('/info')
+def _info():
     return {
         'remote_addr': bottle.request.remote_addr,
         'remote_route': bottle.request.remote_route,
@@ -56,6 +56,12 @@ def login():
 @bottle.route('/logout')
 def logout():
     pomagma.editor.auth.current_user.logout(redirect='/login')
+
+
+@bottle.route('/test')
+def _test():
+    pomagma.editor.auth.require(fail_redirect='/login')
+    return bottle.static_file('test.html', root=STATIC)
 
 
 @bottle.route('/')

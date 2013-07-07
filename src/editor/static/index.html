@@ -33,27 +33,7 @@ window.jQuery || document.write('<script src="static/lib/jquery.min.js"><\/scrip
 <script type='text/javascript' src='static/ui.js'></script>
 <script type='text/javascript'>
 
-$(function(){
-
-  var main = function () {
-    ui.main();
-  };
-
-  if (window.location.hash && window.location.hash.substr(1) === 'test') {
-
-    document.title = 'Pomagma Editor - Unit Test';
-    test.runAll(function(){
-          document.title = 'Pomagma Editor';
-          window.location.hash = '';
-          main();
-        });
-
-  } else {
-
-    main();
-
-  };
-});
+$(ui.main);
 
 </script>
 
