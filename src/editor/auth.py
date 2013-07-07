@@ -1,5 +1,6 @@
 import os
 import datetime
+import bottle
 import cork
 import parsable
 parsable = parsable.Parsable()
@@ -53,7 +54,7 @@ class Stub():
         pass
 
 
-def require_stub():
+def fake_require(*args, **kwargs):
     assert bottle.request.remote_addr == '127.0.0.1', 'auth failed'
     assert bottle.request.remote_route == ['127.0.0.1'], 'auth failed'
 
@@ -66,7 +67,7 @@ if active:
     login = auth.login
 else:
     print 'WARNING cork auth disabled'
-    require = Stub()
+    require = fake_require
     login = Stub()
 
 if __name__ == '__main__':
