@@ -14,9 +14,8 @@
 <title>Pomagma Editor</title>
 <meta name="description" content="An Extensional Development Environment." />
 <meta name="keywords" content="math,algebra,logic,reasoning,lambda-calculus" />
-<link rel="icon" href="static/favicon.ico" type="image/x-icon" />
-
-<!---------------------------------------------------------------------------->
+<link rel="icon" type="image/x-icon" href="static/favicon.ico" />
+<link rel="stylesheet" type="text/css" href="static/main.css" />
 
 <!-- MIT,GPL2 -->
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/2.0.0/jquery.min.js"></script>
@@ -25,6 +24,7 @@ window.jQuery || document.write('<script src="static/lib/jquery.min.js"><\/scrip
 </script>
 
 <!-- MIT,GPL2 -->
+<script type='text/javascript' src='static/lib/jquery.min.js'></script>
 <script type='text/javascript' src='static/safety.js'></script>
 <script type='text/javascript' src='static/testing.js'></script>
 
@@ -34,50 +34,8 @@ window.jQuery || document.write('<script src="static/lib/jquery.min.js"><\/scrip
 <script type='text/javascript' src='static/editor.js'></script>
 <script type='text/javascript' src='static/analyst.js'></script>
 <script type='text/javascript' src='static/ui.js'></script>
-<script type='text/javascript'>
 
-$(function(){
-    $('#query').focus();
-});
-
-</script>
-
-<!---------------------------------------------------------------------------->
-
-<style>
-body {
-  background-color: black;
-  color: white;
-  width:  100%;
-  height: 100%;
-  margin: 0px;
-}
-span.cursor {
-  background-color: gray;
-}
-span.keyword {
-  color: yellow;
-}
-.toolbar textarea {
-    font-family: Courier,'Courier New','Nimbus Mono L',fixed,monospace;
-    background-color: white;
-    color: black;
-    -webkit-box-sizing: border-box;
-    -moz-box-sizing: border-box;
-    box-sizing: border-box;
-    width: 100%;
-    resize: none;
-    height: 1.8em;
-    overflow: hidden;
-    border-radius: 0.8em;
-    border-width: 2px;
-    border-color: #777;
-}
-</style>
 </head>
-
-<!---------------------------------------------------------------------------->
-
 <body>
 <div class=toolbar>
     <textarea id=query rows=1></textarea>
