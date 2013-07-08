@@ -82,7 +82,7 @@ def store_module(module_name, defs):
     Atomically store module.
     '''
     assert_defs(defs)
-    TODO('allow assertions and defs')
+    raise NotImplementedError('TODO allow assertions and defs')
     text = '\n'.join(
         'LET {} {}'.format(name, defs[name])
         for name in sorted(defs.iterkeys())
