@@ -29,11 +29,16 @@ window.jQuery || document.write('<script src="static/lib/jquery.min.js"><\/scrip
 <script type='text/javascript' src='static/testing.js'></script>
 
 <!-- MIT -->
+<script type='text/javascript' src='static/query.js'></script>
+<script type='text/javascript' src='static/corpus.js'></script>
 <script type='text/javascript' src='static/ast.js'></script>
+<script type='text/javascript' src='static/edit.js'></script>
 <script type='text/javascript' src='static/ui.js'></script>
 <script type='text/javascript'>
 
-$(ui.main);
+$(function(){
+    $('#query').focus();
+});
 
 </script>
 
@@ -76,6 +81,8 @@ span.keyword {
 <body>
 <div class=toolbar>
     <textarea id=query rows=1></textarea>
+</div>
+<div id=modules>
 </div>
 <div>
     <pre id=code></pre>

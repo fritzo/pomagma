@@ -62,12 +62,19 @@ def load_module(module_name):
     else:
         lines = []
     defs = {}
+    asserts = []
     for line in lines:
-        let, name, ugly = line.split(' ', 2)
-        assert let == 'LET', 'bad line: {}'.format(line)
-        assert_identifier(name)
-        defs[name] = ugly
-    return defs
+        head, tail = line.split(' ', 1)
+        if head == 'DEFINE':
+            name, ugly = tail.split(' ', 1)
+            assert_identifier(name)
+            defs[name] = ugly
+        elif head == 'ASSERT':
+            ugly = tail
+            asserts.append(tail)
+        else:
+            raise ValueError('bad line: {}'.format(line))
+    return {'defs': defs, 'asserts': asserts}
 
 
 def store_module(module_name, defs):
@@ -75,6 +82,7 @@ def store_module(module_name, defs):
     Atomically store module.
     '''
     assert_defs(defs)
+    TODO('allow assertions and defs')
     text = '\n'.join(
         'LET {} {}'.format(name, defs[name])
         for name in sorted(defs.iterkeys())

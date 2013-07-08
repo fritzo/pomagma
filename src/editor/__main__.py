@@ -91,8 +91,8 @@ def get_module(module_name):
     return {'module': module}
 
 
-@bottle.route('/corpus/<module_name>', method='POST')
-def post_module(module_name):
+@bottle.route('/corpus/<module_name>', method='PUT')
+def put_module(module_name):
     pomagma.editor.auth.require(fail_redirect='/login')
     module = bottle.request.json
     assert module is not None, 'failed to store module {}'.format(module_name)
