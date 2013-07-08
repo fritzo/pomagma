@@ -42,6 +42,7 @@ def login_form():
         </form>
         '''
 
+
 @bottle.route('/login', method='POST')
 def login():
     username = bottle.request.POST.get('username', '').strip()
