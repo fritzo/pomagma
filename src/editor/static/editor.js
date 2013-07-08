@@ -1,19 +1,19 @@
-var edit = (function(){
-var edit = {};
+var editor = (function(){
+var editor = {};
 
 var cursor;
 
-edit.draw = function () {
-  var root = ast.getRoot(cursor);
+editor.draw = function () {
+  var root = compiler.getRoot(cursor);
   //var text = root.polish();
   var text = root.lines().join('\n');
   $('#code').html(text);
 };
 
-edit.move = function (direction) {
+editor.move = function (direction) {
   // log('move: ' + direction);
   if (cursor.tryMove(direction)) {
-    edit.draw();
+    editor.draw();
   } else {
     TODO('visual bell');
   }
@@ -33,22 +33,22 @@ handle_keydown = function (event) {
       break;
 
     case 38: // up
-      edit.move('U');
+      editor.move('U');
       event.preventDefault();
       break;
 
     case 40: // down
-      edit.move('D');
+      editor.move('D');
       event.preventDefault();
       break;
 
     case 37: // left
-      edit.move('L');
+      editor.move('L');
       event.preventDefault();
       break;
 
     case 39: // right
-      edit.move('R');
+      editor.move('R');
       event.preventDefault();
       break;
 
@@ -66,10 +66,10 @@ $(function(){
     'LET VARY test APPLY VARY this VARY test',
     'ABSTRACT QUOTE VARY this APPLY VARY is APPLY VARY a VARY test'
     ].join(' ');
-  cursor = ast.parse('CURSOR ' + start);
-  edit.draw();
+  cursor = compiler.parse('CURSOR ' + start);
+  editor.draw();
 
-  var $code = edit.$code = $('#code');
+  var $code = editor.$code = $('#code');
   $code.focus(function(){
     $(window).off('keydown').on('keydown', handle_keydown);
   });
@@ -79,5 +79,5 @@ $(function(){
 
 });
 
-return edit;
-})(); // edit
+return editor;
+})();

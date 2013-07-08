@@ -36,4 +36,4 @@ corpus.storeModule = function (name, value) {
 };
 
 return corpus;
-})(); // corpus
+})();

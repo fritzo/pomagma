@@ -20,8 +20,8 @@
  *          | CURSOR patt
  */
 
-var ast = (function(){
-var ast = {};
+var compiler = (function(){
+var compiler = {};
 
 //----------------------------------------------------------------------------
 // Construction
@@ -184,7 +184,7 @@ var parse = function (string) {
   var parser = new Parser(string);
   return parser.parse();
 };
-ast.parse = parse;
+compiler.parse = parse;
 
 test('Simple parsing', function(){
   var cases = [
@@ -302,7 +302,7 @@ test('Cursor movement', function(){
   }
 });
 
-ast.getRoot = function (expr) {
+compiler.getRoot = function (expr) {
   while (expr.above !== null) {
     expr = expr.above;
   }
@@ -410,5 +410,5 @@ Vary.transform = {
   }
 };
 
-return ast;
-})(); // ast
+return compiler;
+})();
