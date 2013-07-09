@@ -7,15 +7,7 @@ int main (int argc, char ** argv)
 {
     pomagma::Log::Context log_context(argc, argv);
 
-    const char * structure_in1 = nullptr;
-    const char * structure_in2 = nullptr;
-    const char * structure_out = nullptr;
-
-    if (argc == 4) {
-        structure_in1 = argv[1];
-        structure_in2 = argv[2];
-        structure_out = argv[3];
-    } else {
+    if (argc != 4) {
         std::cout
             << "Usage: "
                 << pomagma::get_filename(argv[0])
@@ -28,6 +20,10 @@ int main (int argc, char ** argv)
         POMAGMA_WARN("incorrect program args");
         exit(1);
     }
+
+    const char * structure_in1 = argv[1];
+    const char * structure_in2 = argv[2];
+    const char * structure_out = argv[3];
 
     // load src
     pomagma::Structure src;

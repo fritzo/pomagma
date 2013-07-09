@@ -2,9 +2,7 @@
 include_directories(${CMAKE_SOURCE_DIR}/)
 
 
-add_library(pomagma_surveyor SHARED main.cpp)
 set(POMAGMA_SURVEYOR_LIBS
-	pomagma_surveyor
 	pomagma_microstructure
 	pomagma_platform_concurrent
 	pomagma_language
@@ -34,8 +32,15 @@ add_custom_command(
 		${SRC_DIR}/theory/h4.rules
 		${SRC_DIR}/theory/h4.facts
 	)
-add_executable(h4.survey h4.theory.cpp)
-target_link_libraries(h4.survey ${POMAGMA_SURVEYOR_LIBS})
+add_library(pomagma_surveyor_h4 SHARED h4.theory.cpp)
+add_executable(h4.init init_main.cpp)
+target_link_libraries(h4.init
+	pomagma_surveyor_h4
+	${POMAGMA_SURVEYOR_LIBS})
+add_executable(h4.survey survey_main.cpp)
+target_link_libraries(h4.survey
+	pomagma_surveyor_h4
+	${POMAGMA_SURVEYOR_LIBS})
 
 add_custom_command(
 	OUTPUT ${CMAKE_CURRENT_LIST_DIR}/sk.theory.cpp
@@ -58,8 +63,15 @@ add_custom_command(
 		${SRC_DIR}/theory/sk.facts
 		${SRC_DIR}/theory/order.facts
 	)
-add_executable(sk.survey sk.theory.cpp)
-target_link_libraries(sk.survey ${POMAGMA_SURVEYOR_LIBS})
+add_library(pomagma_surveyor_sk SHARED sk.theory.cpp)
+add_executable(sk.init init_main.cpp)
+target_link_libraries(sk.init
+	pomagma_surveyor_sk
+	${POMAGMA_SURVEYOR_LIBS})
+add_executable(sk.survey survey_main.cpp)
+target_link_libraries(sk.survey
+	pomagma_surveyor_sk
+	${POMAGMA_SURVEYOR_LIBS})
 
 add_custom_command(
 	OUTPUT ${CMAKE_CURRENT_LIST_DIR}/skj.theory.cpp
@@ -88,8 +100,15 @@ add_custom_command(
 		${SRC_DIR}/theory/order.facts
 		${SRC_DIR}/theory/types.facts
 	)
-add_executable(skj.survey skj.theory.cpp)
-target_link_libraries(skj.survey ${POMAGMA_SURVEYOR_LIBS})
+add_library(pomagma_surveyor_skj SHARED skj.theory.cpp)
+add_executable(skj.init init_main.cpp)
+target_link_libraries(skj.init
+	pomagma_surveyor_skj
+	${POMAGMA_SURVEYOR_LIBS})
+add_executable(skj.survey survey_main.cpp)
+target_link_libraries(skj.survey
+	pomagma_surveyor_skj
+	${POMAGMA_SURVEYOR_LIBS})
 
 add_custom_command(
 	OUTPUT ${CMAKE_CURRENT_LIST_DIR}/skjo.theory.cpp
@@ -126,6 +145,13 @@ add_custom_command(
 		${SRC_DIR}/theory/quote.facts
 		${SRC_DIR}/theory/reflect.facts
 	)
-add_executable(skjo.survey skjo.theory.cpp)
-target_link_libraries(skjo.survey ${POMAGMA_SURVEYOR_LIBS})
+add_library(pomagma_surveyor_skjo SHARED skjo.theory.cpp)
+add_executable(skjo.init init_main.cpp)
+target_link_libraries(skjo.init
+	pomagma_surveyor_skjo
+	${POMAGMA_SURVEYOR_LIBS})
+add_executable(skjo.survey survey_main.cpp)
+target_link_libraries(skjo.survey
+	pomagma_surveyor_skjo
+	${POMAGMA_SURVEYOR_LIBS})
 

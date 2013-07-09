@@ -192,6 +192,7 @@ public:
         s_elapsed.resize(task_count);
     }
 
+    // FIXME HACK this depends on link order, dying if log has been destroyed
     ~CleanupProfiler ()
     {
         unsigned long task_count = s_counts.size();

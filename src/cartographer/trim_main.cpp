@@ -6,21 +6,7 @@ int main (int argc, char ** argv)
 {
     pomagma::Log::Context log_context(argc, argv);
 
-    const char * source_file = nullptr;
-    const char * destin_file = nullptr;
-    size_t destin_item_dim = 0;
-    const char * theory_file = nullptr;
-    const char * language_file = nullptr;
-
-    if (argc == 6) {
-        source_file = argv[1];
-        destin_file = argv[2];
-        destin_item_dim = atoi(argv[3]);
-        theory_file = argv[4];
-        language_file = argv[5];
-        POMAGMA_ASSERT_LT(0, destin_item_dim);
-        POMAGMA_ASSERT_NE(std::string(source_file), std::string(destin_file));
-    } else {
+    if (argc != 6) {
         std::cout
             << "Usage: "
                 << pomagma::get_filename(argv[0])
@@ -32,6 +18,14 @@ int main (int argc, char ** argv)
         POMAGMA_WARN("incorrect program args");
         exit(1);
     }
+
+    const char * source_file = argv[1];
+    const char * destin_file = argv[2];
+    const size_t destin_item_dim = atoi(argv[3]);
+    const char * theory_file = argv[4];
+    const char * language_file = argv[5];
+    POMAGMA_ASSERT_LT(0, destin_item_dim);
+    POMAGMA_ASSERT_NE(std::string(source_file), std::string(destin_file));
 
     // load source
     pomagma::Structure source;

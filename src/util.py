@@ -32,12 +32,6 @@ LOG_LEVEL_WARNING = 1
 LOG_LEVEL_INFO = 2
 LOG_LEVEL_DEBUG = 3
 
-SURVEYORS = {
-    'h4': 'h4.survey',
-    'sk': 'sk.survey',
-    'skj': 'skj.survey',
-}
-
 MIN_SIZES = {
     'h4': 127,
     'sk': 1023,
@@ -157,8 +151,6 @@ def log_print(message, log_file):
 
 def make_env(options):
     options = dict(options)
-    options['root'] = ROOT
-    options.setdefault('threads', CPU_COUNT)
     log_file = get_log_file(options)
     options['log_file'] = log_file
     log_dir = os.path.dirname(log_file)
@@ -218,6 +210,11 @@ def get_stack_trace(binary):
 
 
 def log_call(*args, **options):
+    '''
+    Pass arguments to command line.
+    Pass options into environment variables.
+    Log process; if it crashes, dump stack trace to log file.
+    '''
     args = map(str, args)
     args = options.pop('runner', '').split() + args
     env = make_env(options)
