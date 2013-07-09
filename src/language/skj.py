@@ -30,10 +30,10 @@ nullary_weights = {
     'W':    4.36313,
     #'unit': 4.3634,
     #'W B':  4.3719,
+    'A':    5.0,
     #'bool': 5.21614,
     #'W I':  6.21147,
     'U':    6.3754,
-    'A': 10.0,
     #'prod': 12.0,
     #'sum':  12.0,
     #'maybe': 12.0,
@@ -57,7 +57,7 @@ probs = {
 
 def make(outfile='skj.json'):
     with open(outfile, 'w') as f:
-        json.dump(probs, f, indent=4)
+        json.dump(probs, f, indent=4, sort_keys=True)
 
 
 if __name__ == '__main__':
