@@ -158,7 +158,7 @@ def extend(theory, **options):
         aggregate = '{}.aggregate.h5'.format(os.getpid())
         assert os.path.exists(world), 'First initialize world map'
         opts = options
-        opts.setdefault('log_file', 'init.log')
+        opts.setdefault('log_file', 'extend.log')
 
         def log_print(message):
             pomagma.util.log_print(message, opts['log_file'])
@@ -185,7 +185,7 @@ def theorize(theory, **options):
         nless_theorems = 'nless_theorems.facts'
         assert os.path.exists(world), 'First build world map'
         opts = options
-        opts.setdefault('log_file', 'conjecture.log')
+        opts.setdefault('log_file', 'theorize.log')
 
         theorist.conjecture_diverge(theory, world, diverge_conjectures, **opts)
         theorem_count = theorist.try_prove_diverge(
