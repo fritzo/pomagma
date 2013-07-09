@@ -48,7 +48,7 @@ int main (int argc, char ** argv)
 
         // init destin
         pomagma::Structure destin;
-        destin.init_signature(source, destin_item_dim);
+        destin.init_signature(source.signature(), destin_item_dim);
         if (POMAGMA_DEBUG_LEVEL > 1) {
             destin.validate();
         }
