@@ -3,7 +3,7 @@ import shutil
 import parsable
 parsable = parsable.Parsable()
 import pomagma.util
-from pomagma import surveyor, cartographer, theorist, analyst
+from pomagma import surveyor, cartographer, theorist, analyst, atlas
 
 
 DEFAULT_SURVEY_SIZE = 16384 + 512 - 1
@@ -83,12 +83,7 @@ def init(theory, **options):
         log_print('Step 0: initialize to {}'.format(world_size))
         surveyor.init(theory, survey, world_size, **opts)
 
-        # TODO factor this out as atlas.init
-        with pomagma.util.mutex(world):
-            cartographer.validate(survey, **opts)
-            assert not os.path.exists(world), 'already initialized'
-            os.rename(survey, world)
-            # TODO fork and push to s3
+        atlas.insert(world, survey, **opts)
 
 
 @parsable.command
@@ -141,22 +136,36 @@ def survey(theory, max_size=DEFAULT_SURVEY_SIZE, step_size=512, **options):
                 survey_size,
                 **opts)
             os.remove(region)
-
-            # TODO factor this out as atlas.aggregate
-            with pomagma.util.mutex(world):
-                cartographer.aggregate(
-                    world,
-                    survey,
-                    aggregate,
-                    **opts)
-                cartographer.validate(aggregate, **opts)
-                os.rename(aggregate, world)
-                # TODO fork and push to s3
-            os.remove(survey)
+            atlas.aggregate(world, survey, aggregate, **opts)
 
             world_size = pomagma.util.get_item_count(world)
             log_print('world_size = {}'.format(world_size))
             step += 1
+
+
+@parsable.command
+def extend(theory, **options):
+    '''
+    Extend language of world map (only needed when language changes).
+    Options: log_level, log_file
+    '''
+    path = os.path.join(pomagma.util.DATA, 'atlas', theory)
+    assert os.path.exists(path), 'First initialize world map'
+    with pomagma.util.chdir(path):
+
+        world = 'world.h5'
+        init = '{}.init.h5'.format(os.getpid())
+        aggregate = '{}.aggregate.h5'.format(os.getpid())
+        assert os.path.exists(world), 'First initialize world map'
+        opts = options
+        opts.setdefault('log_file', 'init.log')
+
+        def log_print(message):
+            pomagma.util.log_print(message, opts['log_file'])
+
+        init_size = pomagma.util.MIN_SIZES[theory]
+        surveyor.init(theory, init, init_size, **opts)
+        atlas.aggregate(world, init, aggregate, **opts)
 
 
 @parsable.command
@@ -178,21 +187,13 @@ def theorize(theory, **options):
         opts = options
         opts.setdefault('log_file', 'conjecture.log')
 
-        # TODO factor this out as atlas.assume
-        def assume(theorems):
-            theorist.assume(world, updated, theorems, **opts)
-            with pomagma.util.mutex(world):
-                cartographer.validate(updated, **opts)
-                os.rename(updated, world)
-                # TODO fork and push to s3
-
         theorist.conjecture_diverge(theory, world, diverge_conjectures, **opts)
         theorem_count = theorist.try_prove_diverge(
             diverge_conjectures,
             diverge_theorems,
             **opts)
         if theorem_count > 0:
-            assume(diverge_theorems)
+            atlas.assume(world, updated, diverge_theorems, **opts)
 
         theorem_count = theorist.try_prove_nless(
             theory,
@@ -201,7 +202,7 @@ def theorize(theory, **options):
             nless_theorems,
             **opts)
         if theorem_count > 0:
-            assume(diverge_theorems)
+            atlas.assume(world, updated, nless_theorems, **opts)
 
 
 @parsable.command

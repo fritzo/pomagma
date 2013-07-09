@@ -53,7 +53,7 @@ public:
             return m_reducer.reduce(token, fun, lhs, rhs);
         } else {
             POMAGMA_ERROR(
-                "unrecognized token '" << token << "' in:" <<  m_stream.str());
+                "unrecognized token '" << token << "' in:" << m_stream.str());
             return Term();
         }
     }
