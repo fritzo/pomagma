@@ -1,5 +1,5 @@
 import simplejson as json
-from math import log
+from math import exp
 
 binary_probs = {
     'APP':  0.374992,
@@ -24,7 +24,7 @@ nullary_weights = {
 }
 
 nullary_prob = 1.0 - sum(binary_probs.values())
-nullary_probs = {key: -log(val) for key, val in nullary_weights.iteritems()}
+nullary_probs = {key: exp(-val) for key, val in nullary_weights.iteritems()}
 scale = nullary_prob / sum(nullary_probs.values())
 for key in nullary_probs.keys():
     nullary_probs[key] *= scale
