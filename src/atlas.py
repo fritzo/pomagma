@@ -26,9 +26,9 @@ def aggregate(world, source, aggregate, **opts):
 
 def assume(world, updated, theorems, **opts):
     assert not os.path.exists(updated)
-    pomagma.theorist.assume(world, updated, theorems, **opts)
     with pomagma.util.mutex(world):
         assert os.path.exists(world)
+        pomagma.theorist.assume(world, updated, theorems, **opts)
         pomagma.cartographer.validate(updated, **opts)
         os.rename(updated, world)
         # TODO fork and push to s3
