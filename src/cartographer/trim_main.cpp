@@ -1,6 +1,7 @@
+#include "trim.hpp"
+#include "signature.hpp"
 #include <pomagma/macrostructure/carrier.hpp>
 #include <pomagma/macrostructure/structure.hpp>
-#include "trim.hpp"
 
 int main (int argc, char ** argv)
 {
@@ -42,7 +43,8 @@ int main (int argc, char ** argv)
 
         // init destin
         pomagma::Structure destin;
-        destin.init_signature(source.signature(), destin_item_dim);
+        destin.init_carrier(destin_item_dim);
+        extend(destin.signature(), source.signature());
         if (POMAGMA_DEBUG_LEVEL > 1) {
             destin.validate();
         }

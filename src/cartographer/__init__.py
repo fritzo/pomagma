@@ -21,6 +21,9 @@ def copy(chart_in, chart_out, **opts):
 
 
 def trim(theory, world_in, region_out, size, **opts):
+    '''
+    Randomly trim a world map down to region of given size.
+    '''
     if size < pomagma.util.MIN_SIZES[theory]:
         raise ValueError('chart is too small for theory')
     pomagma.util.log_call(
@@ -34,6 +37,9 @@ def trim(theory, world_in, region_out, size, **opts):
 
 
 def aggregate(world_in, region_in, world_out, **opts):
+    '''
+    Symmetrically combine two regions, extending langauges and merging facts.
+    '''
     inputs = map(pomagma.util.abspath, [world_in, region_in])
     sizes = map(pomagma.util.get_item_count, inputs)
     if sizes[0] < sizes[1]:

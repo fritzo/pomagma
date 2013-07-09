@@ -16,18 +16,18 @@ public:
 
     Signature & signature () { return m_signature; }
     Carrier & carrier () { return * m_signature.carrier(); }
-    BinaryRelation & binary_relation(const std::string & name);
-    NullaryFunction & nullary_function(const std::string & name);
-    InjectiveFunction & injective_function(const std::string & name);
-    BinaryFunction & binary_function(const std::string & name);
-    SymmetricFunction & symmetric_function(const std::string & name);
+    BinaryRelation & binary_relation (const std::string & name);
+    NullaryFunction & nullary_function (const std::string & name);
+    InjectiveFunction & injective_function (const std::string & name);
+    BinaryFunction & binary_function (const std::string & name);
+    SymmetricFunction & symmetric_function (const std::string & name);
 
     void validate_consistent ();
     void validate ();
     void clear ();
     void load (const std::string & filename, size_t extra_item_dim = 0);
     void dump (const std::string & filename);
-    void init_signature (const Signature & source, size_t item_dim);
+    void init_carrier (size_t item_dim);
 };
 
 inline BinaryRelation & Structure::binary_relation(

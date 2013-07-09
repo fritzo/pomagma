@@ -1,4 +1,5 @@
 #include "aggregate.hpp"
+#include "signature.hpp"
 #include <pomagma/macrostructure/carrier.hpp>
 #include <pomagma/macrostructure/structure.hpp>
 #include <pomagma/macrostructure/compact.hpp>
@@ -25,27 +26,28 @@ int main (int argc, char ** argv)
     const char * structure_in2 = argv[2];
     const char * structure_out = argv[3];
 
-    // load src
-    pomagma::Structure src;
-    src.load(structure_in2);
+    // load source
+    pomagma::Structure source;
+    source.load(structure_in2);
     if (POMAGMA_DEBUG_LEVEL > 1) {
-        src.validate();
+        source.validate();
     }
 
     // load destin
     pomagma::Structure destin;
-    size_t src_item_count = src.carrier().item_count();
-    destin.load(structure_in1, src_item_count);
+    size_t source_item_count = source.carrier().item_count();
+    destin.load(structure_in1, source_item_count);
+    extend(destin.signature(), source.signature());
     if (POMAGMA_DEBUG_LEVEL > 1) {
         destin.validate();
     }
     size_t destin_item_count = destin.carrier().item_count();
-    if (src_item_count > destin_item_count) {
+    if (source_item_count > destin_item_count) {
         POMAGMA_WARN("aggregating larger structure into smaller structure");
     }
 
     // aggregate
-    pomagma::aggregate(destin, src);
+    pomagma::aggregate(destin, source);
     if (POMAGMA_DEBUG_LEVEL > 1) {
         destin.validate();
     }

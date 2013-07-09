@@ -2,6 +2,7 @@
 include_directories(${CMAKE_SOURCE_DIR}/)
 
 add_library(pomagma_cartographer SHARED
+	signature.cpp
 	aggregate.cpp
 	trim.cpp
 	)
