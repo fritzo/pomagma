@@ -10,7 +10,7 @@ DEFAULT_STORE = os.path.join(pomagma.util.SRC, 'corpus', 'store.dump')
 
 
 example_object = {
-    '_id': 'asfgvg1tr457et46979yujkm',
+    'id': 'asfgvg1tr457et46979yujkm',
     'name': 'div',      # or None for
     'code': 'APP V K',  # compiled code
     'args': [],         # names this object references, list w/o repeats

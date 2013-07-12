@@ -6,6 +6,7 @@ import pomagma.corpus
 
 PORT = int(os.environ.get('POMAGMA_EDITOR_PORT', 34934))
 STATIC = os.path.join(pomagma.util.SRC, 'editor', 'static')
+#CORPUS = pomagma.corpus.load()
 
 
 @bottle.route('/info')
