@@ -163,7 +163,7 @@ def load():
     '''
     assert not os.path.exists(STORE)
     corpus = Corpus()
-    corpus.load()
+    #corpus.load()  # corpus loads automatically
     corpus.close()
 
 
