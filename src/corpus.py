@@ -36,7 +36,7 @@ def table_exists(conn, name):
     return cursor.fetchone() is not None
 
 
-def load_line(line):
+def _load_line(line):
     assert isinstance(line, basestring)
     tokens = deque(line.split())
     head = tokens.popleft()
@@ -64,7 +64,7 @@ def load_line(line):
     return name, code, args
 
 
-def dump_line(name, code, args):
+def _dump_line(name, code, args):
     assert isinstance(name, basestring) or name is None, name
     assert isinstance(code, basestring), code
     assert isinstance(args, basestring), args
@@ -124,7 +124,7 @@ class Corpus:
             with open(DUMP, 'r') as f:
                 self.conn.executemany(
                     'INSERT INTO lines (name, code, args) VALUES (?, ?, ?)',
-                    (load_line(line) for line in nonblank_lines(f)))
+                    (_load_line(line) for line in nonblank_lines(f)))
         self.conn.commit()
 
     def dump(self):
@@ -132,10 +132,10 @@ class Corpus:
         lines = []
         cursor = self.conn.execute('SELECT name, code, args FROM lines')
         for name, code, args in cursor:
-            line = dump_line(name, code, args)
+            line = _dump_line(name, code, args)
             lines.append(line)
         lines.sort()
-        db_version = self.conn.execute('SELECT sha1 FROM version').fetchone()[0]
+        db_version, = self.conn.execute('SELECT sha1 FROM version').fetchone()
         with pomagma.util.mutex(DUMP):
             dump_version = get_dump_version()
             assert dump_version == db_version, 'db is out of sync with dump'
@@ -146,9 +146,11 @@ class Corpus:
                     f.write('\n')
 
     def insert(self, name, code, args):
-        self.conn.execute(
+        cursor = self.conn.execute(
             'INSERT INTO lines (name, code, args) VALUES (?, ?, ?)',
             (name, code, args))
+        return cursor.lastrowid
+        # FIXME at this point multiple clients may go out of sync
 
     def update(self, id, name, code, args):
         self.conn.execute(

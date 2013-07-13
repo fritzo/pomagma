@@ -11,7 +11,7 @@ var corpus = {};
 // client state
 
 /*
-var example_line = {
+var exampleLine = {
   'id': 'asfgvg1tr457et46979yujkm',
   'name': 'div',      // or null for anonymous lines
   'code': 'APP V K',  // compiled code
@@ -27,16 +27,16 @@ var state = (function(){
   var refs = {};  // name -> (set id)
 
   var insertRef = function (name, id) {
-    var refs_name = refs[name] || {};
-    refs_name[id] = null;
-    _refs[name] = refs_name;
+    var refsName = refs[name] || {};
+    refsName[id] = null;
+    _refs[name] = refsName;
   };
 
   var removeRef = function (name, id) {
-    var refs_name = refs[name];
-    assert(refs_name !== undefined);
-    assert(refs_name[id] != undefined);
-    delete refs_name[id];
+    var refsName = refs[name];
+    assert(refsName !== undefined);
+    assert(refsName[id] != undefined);
+    delete refsName[id];
   };
 
   var insertDef = function (name, id) {
@@ -58,11 +58,13 @@ var state = (function(){
 
   var insertLine = function (line) {
     var id = line.id;
+    log('DEBUG inserting ' + id);
+    lines[id] = line;
     var name = line.name;
     if (name !== null) {
       insertDef(name, id);
     }
-    line.refs.forEach(function(name){
+    line.args.forEach(function(name){
       insertRef(name, id);
     });
   };
@@ -75,33 +77,32 @@ var state = (function(){
     lines = {};
     defs = {};
     refs = {};
-    for (var id in linesToLoad) {
-      insertLine(linesToLoad[id]);
-    }
+    linesToLoad.forEach(insertLine);
   };
 
   var init = function () {
     $.ajax({
-      url: 'corpus',
+      type: 'GET',
+      url: 'corpus/lines',
       cache: false
     }).fail(function(_, textStatus){
       log('Request failed: ' + textStatus);
     }).done(function(msg){
-      loadAll(msg.lines);
+      loadAll(msg.data);
     });
   };
 
   state.insert = function (line) {
     $.ajax({
-      url: 'corpus/create_hole',
-      cache: false
+      type: 'POST',
+      url: 'corpus/line',
+      data: line
     }).fail(function(_, textStatus){
       log('Request failed: ' + textStatus);
     }).done(function(msg){
       log('created line: ' + msg.id);
-      line.id = msg.id;
+      line.id = msg.data;
       insertLine(line);
-      sync.update(line);
     });
   };
 
@@ -119,7 +120,16 @@ var state = (function(){
     sync.remove(line);
   };
 
-  state.find_all = function () {
+  state.find = function (id) {
+    var line = lines[id];
+    return {
+      name: line.name,
+      code: line.code,
+      args: line.args.slice(0)
+    };
+  };
+
+  state.findAll = function () {
     var result = [];
     for (var id in lines) {
       result.push(id);
@@ -127,7 +137,18 @@ var state = (function(){
     return result;
   };
 
-  state.find_def = function (name) {
+  state.findAllNames = function () {
+    var result = [];
+    for (var id in lines) {
+      var name = lines[id].name;
+      if (name) {
+        result.push(name);
+      }
+    }
+    return result;
+  };
+
+  state.findDef = function (name) {
     var id = defs[name];
     if (id !== undefined) {
       return id;
@@ -136,18 +157,20 @@ var state = (function(){
     }
   };
 
-  state.find_refs = function (name) {
-    var refs_name = refs[name];
-    if (refs_name === undefined) {
+  state.findRefs = function (name) {
+    var refsName = refs[name];
+    if (refsName === undefined) {
       return [];
     } else {
-      var refs_list = [];
-      for (var id in refs_name) {
-        refs_list.push(id);
+      var refsList = [];
+      for (var id in refsName) {
+        refsList.push(id);
       }
-      return refs_list;
+      return refsList;
     }
   };
+
+  corpus.DEBUG_lines = lines;
 
   init();
   return state;
@@ -221,8 +244,11 @@ var sync = (function(){
 //----------------------------------------------------------------------------
 // interface
 
-corpus.find_all = state.find_all;
-corpus.find_def = state.find_def;
+corpus.find = state.find;
+corpus.findAll = state.findAll;
+corpus.findAllNames = state.findAllNames;
+corpus.findDef = state.findDef;
+corpus.findRefs = state.findRefs;
 
 return corpus;
 })();

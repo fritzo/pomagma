@@ -40,27 +40,51 @@ def get_static(filepath):
     return bottle.static_file(filepath, root=STATIC)
 
 
-# TODO revise corpus methods
-@bottle.route('/corpus', method='GET')
+@bottle.route('/corpus/lines', method='GET')
 def get_corpus():
     require_auth()
-    modules = pomagma.corpus.list_modules()
-    return {'modules': modules}
+    lines = [
+        {'id': str(id), 'name': name, 'code': code, 'args': args.split()}
+        for id, name, code, args in CORPUS.find_all()
+    ]
+    return {'data': lines}
 
 
-@bottle.route('/corpus/<module_name>', method='GET')
-def get_module(module_name):
+@bottle.route('/corpus/line/<line_id>', method='GET')
+def get_line(line_id):
     require_auth()
-    module = pomagma.corpus.load_module(module_name)
-    return {'module': module}
+    id = int(line_id)
+    line = CORPUS.find_by_id(id)
+    return {'data': line}
 
 
-@bottle.route('/corpus/<module_name>', method='PUT')
-def put_module(module_name):
+@bottle.route('/corpus/line', method='POST')
+def post_line(line_id):
     require_auth()
-    module = bottle.request.json
-    assert module is not None, 'failed to store module {}'.format(module_name)
-    pomagma.corpus.store_module(module_name, module)
+    line = bottle.request.json
+    name = line['name']
+    code = line['code']
+    args = ' '.join(line['args'])
+    id = CORPUS.update(name, code, args)
+    return {'data': id}
+
+
+@bottle.route('/corpus/line/<line_id>', method='PUT')
+def put_line(line_id):
+    require_auth()
+    line = bottle.request.json
+    name = line['name']
+    code = line['code']
+    args = ' '.join(line['args'])
+    id = int(line_id)
+    CORPUS.update(id, name, code, args)
+
+
+@bottle.route('/corpus/line/<line_id>', method='DELETE')
+def delete_line(line_id):
+    require_auth()
+    id = int(line_id)
+    CORPUS.remove(id)
 
 
 def serve(port=PORT):
