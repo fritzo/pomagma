@@ -116,6 +116,7 @@ var state = (function(){
     var line = lines[id];
     assert(line !== undefined);
     removeLine(line);
+    sync.remove(line);
   };
 
   state.find_all = function () {
@@ -208,7 +209,6 @@ var sync = (function(){
     }
     setTimeout(pushChanges, delay);
   };
-
 
   var init = function () {
     setTimeout(pushChanges, 0);
