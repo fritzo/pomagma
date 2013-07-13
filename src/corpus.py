@@ -1,6 +1,7 @@
 import re
 from collections import deque
 import os
+import subprocess
 import sqlite3
 import parsable
 parsable = parsable.Parsable()
@@ -12,12 +13,17 @@ STORE = os.path.join(pomagma.util.DATA, 'corpus.db')
 IDENTIFIER_RE = re.compile(r'^[^\d\W]\w*(\.[^\d\W]\w*)*$')
 KEYWORD_RE = re.compile(r'^[A-Z]+$')
 
-SCHEMA = '''(
+VERSION_SCHEMA = '''(sha1 text not null)'''
+LINES_SCHEMA = '''(
     id integer primary key,
-    name text,
-    code text,
-    args text
+    name text unique,
+    code text not null,
+    args text not null
 )'''
+
+
+def get_dump_version():
+    return subprocess.check_output(['sha1sum', DUMP]).split()[0]
 
 
 def table_exists(conn, name):
@@ -40,14 +46,17 @@ def load_line(line):
         assert IDENTIFIER_RE.match(name), name
         assert not KEYWORD_RE.match(name), name
     elif head == 'ASSERT':
-        name = ''
+        name = None
     args = []
-    while tokens and not KEYWORD_RE.match(tokens[-1]):
+    assert tokens, line
+    while not KEYWORD_RE.match(tokens[-1]):
         args.append(tokens.pop())
         if tokens:
-            assert tokens.popleft() == 'APP', line
-    if not tokens:
-        tokens.append('I')
+            head = tokens.popleft()
+            assert head == 'APP', line
+        else:
+            tokens.append('I')
+            break
     args.reverse()
     args = ' '.join(args)
     assert len(set(args)) == len(args), line
@@ -56,10 +65,10 @@ def load_line(line):
 
 
 def dump_line(name, code, args):
-    assert isinstance(name, basestring), name
+    assert isinstance(name, basestring) or name is None, name
     assert isinstance(code, basestring), code
     assert isinstance(args, basestring), args
-    if name:
+    if name is not None:
         assert IDENTIFIER_RE.match(name), name
         assert not KEYWORD_RE.match(name), name
         parts = ['LET', name]
@@ -95,20 +104,27 @@ class Corpus:
         self.conn.close()
 
     def _clear_tables(self):
+        self.conn.execute('DELETE FROM version')
         self.conn.execute('DELETE FROM lines')
         self.conn.commit()
 
     def _init_tables(self):
-        self.conn.execute('CREATE TABLE lines {}'.format(SCHEMA))
+        self.conn.execute('CREATE TABLE version {}'.format(VERSION_SCHEMA))
+        self.conn.execute('CREATE TABLE lines {}'.format(LINES_SCHEMA))
         self.conn.commit()
 
     def load(self):
         print 'loading corpus'
         self._clear_tables()
-        with open(DUMP, 'r') as f:
-            self.conn.executemany(
-                'INSERT INTO lines (name, code, args) VALUES (?, ?, ?)',
-                (load_line(line) for line in nonblank_lines(f)))
+        with pomagma.util.mutex(DUMP):
+            dump_version = get_dump_version()
+            self.conn.execute(
+                'INSERT INTO version (sha1) VALUES (?)',
+                (dump_version,))
+            with open(DUMP, 'r') as f:
+                self.conn.executemany(
+                    'INSERT INTO lines (name, code, args) VALUES (?, ?, ?)',
+                    (load_line(line) for line in nonblank_lines(f)))
         self.conn.commit()
 
     def dump(self):
@@ -119,11 +135,15 @@ class Corpus:
             line = dump_line(name, code, args)
             lines.append(line)
         lines.sort()
-        with open(DUMP, 'w') as f:
-            f.write('# this file is managed by corpus.py\n')
-            for line in lines:
-                f.write(line)
-                f.write('\n')
+        db_version = self.conn.execute('SELECT sha1 FROM version').fetchone()[0]
+        with pomagma.util.mutex(DUMP):
+            dump_version = get_dump_version()
+            assert dump_version == db_version, 'db is out of sync with dump'
+            with open(DUMP, 'w') as f:
+                f.write('# this file is managed by corpus.py\n')
+                for line in lines:
+                    f.write(line)
+                    f.write('\n')
 
     def insert(self, name, code, args):
         self.conn.execute(
@@ -144,13 +164,13 @@ class Corpus:
         cursor = self.conn.execute(
             'SELECT * FROM lines WHERE id=?',
             (id,))
-        return cursor.findone()
+        return cursor.fetchone()
 
     def find_by_name(self, name):
         cursor = self.conn.execute(
             'SELECT * FROM lines WHERE name=?',
             (name,))
-        return cursor.findone()
+        return cursor.fetchone()
 
     def find_all(self):
         return self.conn.execute('SELECT * FROM lines')

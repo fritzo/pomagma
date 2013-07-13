@@ -6,7 +6,7 @@ import pomagma.corpus
 
 PORT = int(os.environ.get('POMAGMA_EDITOR_PORT', 34934))
 STATIC = os.path.join(pomagma.util.SRC, 'editor', 'static')
-#CORPUS = pomagma.corpus.load()
+CORPUS = pomagma.corpus.Corpus()
 
 
 @bottle.route('/info')
@@ -40,6 +40,7 @@ def get_static(filepath):
     return bottle.static_file(filepath, root=STATIC)
 
 
+# TODO revise corpus methods
 @bottle.route('/corpus', method='GET')
 def get_corpus():
     require_auth()

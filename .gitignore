@@ -13,6 +13,7 @@
 *.pb.cc
 *_pb2.py
 *.compiled
+*.mutex
 /src/surveyor/*.theory.cpp
 *.language
 /data/
