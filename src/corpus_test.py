@@ -20,4 +20,3 @@ def test_create_database():
         conn = corpus.conn
         assert pomagma.corpus.table_exists(conn, 'lines')
         corpus.close()
-

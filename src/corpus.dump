@@ -1,0 +1,3 @@
+# this file is managed by corpus.py
+ASSERT EQUAL types.div APP V APP CI TOP 
+LET types.div APP V K 
