@@ -15,6 +15,35 @@ test('assert(!"asdf".match(KEYWORD_RE))');
 test('assert("ASDF".match(IDENTIFIER_RE))');
 test('assert("ASDF".match(KEYWORD_RE))');
 
+var getFreeVariables = function (code) {
+  var free = {};
+  code.split(/\s+/).forEach(function(token){
+    assert(token.match(IDENTIFIER_RE));
+    if (!token.match(KEYWORD_RE)) {
+      free[token] = null;
+    }
+  });
+  return free;
+};
+
+test('no-free-variables', function(){
+  var code = 'APP J I';
+  var free = {};
+  assert(_.isEqual(getFreeVariables(code), free));
+});
+
+test('one-free-variables', function(){
+  var code = 'APP CI types.div';
+  var free = {'types.div': null};
+  assert(_.isEqual(getFreeVariables(code), free));
+});
+
+test('many-free-variables', function(){
+  var code = 'APP APP P COMP types.div types.semi types.div';
+  var free = {'types.div': null, 'types.semi': null};
+  assert(_.isEqual(getFreeVariables(code), free));
+});
+
 //----------------------------------------------------------------------------
 // client state
 
@@ -70,19 +99,11 @@ var state = (function(){
     var id = line.id;
     log('loading line ' + id);
     lines[id] = line;
-    var name = line.name;
-    if (name !== null) {
-      insertDefinition(name, id);
+    if (line.name !== null) {
+      insertDefinition(line.name, id);
     }
-    free = {}
-    var tokens = line.code.split(/\s/);
-    tokens.forEach(function(token){
-      assert(token.match(IDENTIFIER_RE));
-      if (!token.match(KEYWORD_RE)) {
-        free[token] = null;
-      }
-    });
-    for (var name in free) {
+    line.free = getFreeVariables(line.code);
+    for (var name in line.free) {
       insertOccurrence(name, id);
     }
   };
@@ -103,10 +124,10 @@ var state = (function(){
       type: 'GET',
       url: 'corpus/lines',
       cache: false
-    }).fail(function(_, textStatus){
+    }).fail(function(jqXHR, textStatus){
       log('Request failed: ' + textStatus);
-    }).done(function(msg){
-      loadAll(msg.data);
+    }).done(function(data){
+      loadAll(data.data);
     });
   };
 
@@ -115,11 +136,11 @@ var state = (function(){
       type: 'POST',
       url: 'corpus/line',
       data: line
-    }).fail(function(_, textStatus){
+    }).fail(function(jqXHR, textStatus){
       log('Request failed: ' + textStatus);
-    }).done(function(msg){
-      log('created line: ' + msg.id);
-      line.id = msg.data;
+    }).done(function(data){
+      log('created line: ' + data.id);
+      line.id = data.data;
       insertLine(line);
     });
   };
@@ -136,6 +157,25 @@ var state = (function(){
     assert(line !== undefined);
     removeLine(line);
     sync.remove(line);
+  };
+
+  state.validate = function () {
+    for (var id in lines) {
+      var line = lines[id];
+      var name = line.name;
+      if (line.name !== null) {
+        assert(name.match(IDENTIFIER_RE), 'name is not identifier: ' + name);
+        assert(!name.match(KEYWORD_RE), 'name is keyword: ' + name);
+        assert(definitions[name] === line.id, 'missing definition: ' + name);
+      }
+      var free = getFreeVariables(line.code);
+      assert(_.isEqual(line.free, free), 'wrong free variables: ' + line.code);
+      for (var name in free) {
+        var occurrencesName = occurrences[name];
+        assert(occurrencesName !== undefined, 'missing occurrences: ' + name);
+        assert(occurrencesName[id] === null, 'missing occurrence: ' + name);
+      }
+    }
   };
 
   state.findLine = function (id) {
@@ -188,7 +228,7 @@ var state = (function(){
     }
   };
 
-  corpus.DEBUG_lines = lines;
+  state.DEBUG_lines = lines;
 
   init();
   return state;
@@ -222,10 +262,10 @@ var sync = (function(){
             type: 'PUT',
             url: 'corpus/line/' + id,
             data: change.line
-          }).fail(function(_, textStatus){
+          }).fail(function(jqXHR, textStatus){
             log('putChanges PUT failed: ' + textStatus);
             setTimeout(pushChanges, delay);
-          }).done(function(msg){
+          }).done(function(){
             log('putChanges PUT succeeded: ' + id);
             setTimeout(pushChanges, 0);
           });
@@ -235,10 +275,10 @@ var sync = (function(){
           $.ajax({
             type: 'DELETE',
             url: 'corpus/line/' + id
-          }).fail(function(_, textStatus){
+          }).fail(function(jqXHR, textStatus){
             log('putChanges DELETE failed: ' + textStatus);
             setTimeout(pushChanges, delay);
-          }).done(function(msg){
+          }).done(function(){
             log('putChanges DELETE succeeded: ' + id);
             setTimeout(pushChanges, 0);
           });
@@ -261,6 +301,10 @@ var sync = (function(){
 
 //----------------------------------------------------------------------------
 // interface
+
+corpus.validate = function () {
+  state.validate();
+};
 
 corpus.findLine = state.findLine;
 corpus.findAllLines = state.findAllLines;
