@@ -17,8 +17,7 @@ VERSION_SCHEMA = '''(sha1 text not null)'''
 LINES_SCHEMA = '''(
     id integer primary key,
     name text unique,
-    code text not null,
-    args text not null
+    code text not null
 )'''
 
 
@@ -47,39 +46,19 @@ def _load_line(line):
         assert not KEYWORD_RE.match(name), name
     elif head == 'ASSERT':
         name = None
-    args = []
-    assert tokens, line
-    while not KEYWORD_RE.match(tokens[-1]):
-        args.append(tokens.pop())
-        if tokens:
-            head = tokens.popleft()
-            assert head == 'APP', line
-        else:
-            tokens.append('I')
-            break
-    args.reverse()
-    args = ' '.join(args)
-    assert len(set(args)) == len(args), line
     code = ' '.join(tokens)
-    return name, code, args
+    return name, code
 
 
-def _dump_line(name, code, args):
+def _dump_line(name, code):
     assert isinstance(name, basestring) or name is None, name
     assert isinstance(code, basestring), code
-    assert isinstance(args, basestring), args
     if name is not None:
         assert IDENTIFIER_RE.match(name), name
         assert not KEYWORD_RE.match(name), name
-        parts = ['LET', name]
+        return 'LET {} {}'.format(name, code)
     else:
-        parts = ['ASSERT']
-    for _ in args.split():
-        parts.append('APP')
-    parts.append(code)
-    parts.append(args)
-    line = ' '.join(parts)
-    return line
+        return 'ASSERT {}'.format(code)
 
 
 def nonblank_lines(fd):
@@ -123,16 +102,16 @@ class Corpus:
                 (dump_version,))
             with open(DUMP, 'r') as f:
                 self.conn.executemany(
-                    'INSERT INTO lines (name, code, args) VALUES (?, ?, ?)',
+                    'INSERT INTO lines (name, code) VALUES (?, ?)',
                     (_load_line(line) for line in nonblank_lines(f)))
         self.conn.commit()
 
     def dump(self):
         print 'dumping corpus'
         lines = []
-        cursor = self.conn.execute('SELECT name, code, args FROM lines')
-        for name, code, args in cursor:
-            line = _dump_line(name, code, args)
+        cursor = self.conn.execute('SELECT name, code FROM lines')
+        for name, code in cursor:
+            line = _dump_line(name, code)
             lines.append(line)
         lines.sort()
         db_version, = self.conn.execute('SELECT sha1 FROM version').fetchone()
@@ -145,17 +124,17 @@ class Corpus:
                     f.write(line)
                     f.write('\n')
 
-    def insert(self, name, code, args):
+    def insert(self, name, code):
         cursor = self.conn.execute(
-            'INSERT INTO lines (name, code, args) VALUES (?, ?, ?)',
-            (name, code, args))
+            'INSERT INTO lines (name, code) VALUES (?, ?, ?)',
+            (name, code))
         return cursor.lastrowid
         # FIXME at this point multiple clients may go out of sync
 
-    def update(self, id, name, code, args):
+    def update(self, id, name, code):
         self.conn.execute(
-            'UPDATE lines SET name=?, code=?, args=?  WHERE id=?',
-            (name, code, args, id))
+            'UPDATE lines SET name=?, code=?  WHERE id=?',
+            (name, code, id))
         self.conn.commit()
 
     def remove(self, id):

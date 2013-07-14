@@ -44,8 +44,8 @@ def get_static(filepath):
 def get_corpus():
     require_auth()
     lines = [
-        {'id': str(id), 'name': name, 'code': code, 'args': args.split()}
-        for id, name, code, args in CORPUS.find_all()
+        {'id': str(id), 'name': name, 'code': code}
+        for id, name, code in CORPUS.find_all()
     ]
     return {'data': lines}
 
@@ -64,8 +64,7 @@ def post_line(line_id):
     line = bottle.request.json
     name = line['name']
     code = line['code']
-    args = ' '.join(line['args'])
-    id = CORPUS.update(name, code, args)
+    id = CORPUS.update(name, code)
     return {'data': id}
 
 
@@ -75,9 +74,8 @@ def put_line(line_id):
     line = bottle.request.json
     name = line['name']
     code = line['code']
-    args = ' '.join(line['args'])
     id = int(line_id)
-    CORPUS.update(id, name, code, args)
+    CORPUS.update(id, name, code)
 
 
 @bottle.route('/corpus/line/<line_id>', method='DELETE')

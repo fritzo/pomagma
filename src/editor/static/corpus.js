@@ -7,6 +7,14 @@
 var corpus = (function(){
 var corpus = {};
 
+IDENTIFIER_RE = /^[^\d\W]\w*(\.[^\d\W]\w*)*$/;
+KEYWORD_RE = /^[A-Z]+$/;
+
+test('assert("asdf".match(IDENTIFIER_RE))');
+test('assert(!"asdf".match(KEYWORD_RE))');
+test('assert("ASDF".match(IDENTIFIER_RE))');
+test('assert("ASDF".match(KEYWORD_RE))');
+
 //----------------------------------------------------------------------------
 // client state
 
@@ -15,58 +23,68 @@ var exampleLine = {
   'id': 'asfgvg1tr457et46979yujkm',
   'name': 'div',      // or null for anonymous lines
   'code': 'APP V K',  // compiled code
-  'args': []          // names which this line referencess, list w/o repeats
+  'free': {}          // set of free variables in this line : string -> null
 };
 */
 
 var state = (function(){
   var state = {};
 
+  // FIXME these maps fail with names like 'constructor';
+  //   maybe fix by requiring a '.' in all names in corpus.
   var lines = {};  // id -> line
-  var defs = {};  // name -> id
-  var refs = {};  // name -> (set id)
+  var definitions = {};  // name -> id
+  var occurrences = {};  // name -> (set id)
 
-  var insertRef = function (name, id) {
-    var refsName = refs[name] || {};
-    refsName[id] = null;
-    _refs[name] = refsName;
+  var insertOccurrence = function (name, id) {
+    var occurrencesName = occurrences[name] || {};
+    occurrencesName[id] = null;
+    occurrences[name] = occurrencesName;
   };
 
-  var removeRef = function (name, id) {
-    var refsName = refs[name];
-    assert(refsName !== undefined);
-    assert(refsName[id] != undefined);
-    delete refsName[id];
+  var removeOccurrence = function (name, id) {
+    var occurrencesName = occurrences[name];
+    assert(occurrencesName !== undefined);
+    assert(occurrencesName[id] != undefined);
+    delete occurrencesName[id];
   };
 
-  var insertDef = function (name, id) {
-    assert(defs[name] === undefined);
-    defs[name] = id;
+  var insertDefinition = function (name, id) {
+    assert(definitions[name] === undefined);
+    definitions[name] = id;
   };
 
-  var updateDef = function (name, id) {
-    assert(defs[name] !== undefined);
-    defs[name] = id;
+  var updateDefinition = function (name, id) {
+    assert(definitions[name] !== undefined);
+    definitions[name] = id;
   };
 
-  var removeDef = function (name) {
-    assert(defs[name] !== undefined);
-    assert(!refs[name]);
-    delete defs[name];
-    delete refs[name];
+  var removeDefinition = function (name) {
+    assert(definitions[name] !== undefined);
+    assert(!occurrences[name]);
+    delete definitions[name];
+    delete occurrences[name];
   };
 
   var insertLine = function (line) {
     var id = line.id;
-    log('DEBUG inserting ' + id);
+    log('loading line ' + id);
     lines[id] = line;
     var name = line.name;
     if (name !== null) {
-      insertDef(name, id);
+      insertDefinition(name, id);
     }
-    line.args.forEach(function(name){
-      insertRef(name, id);
+    free = {}
+    var tokens = line.code.split(/\s/);
+    tokens.forEach(function(token){
+      assert(token.match(IDENTIFIER_RE));
+      if (!token.match(KEYWORD_RE)) {
+        free[token] = null;
+      }
     });
+    for (var name in free) {
+      insertOccurrence(name, id);
+    }
   };
 
   var removeLine = function (line) {
@@ -75,8 +93,8 @@ var state = (function(){
 
   var loadAll = function (linesToLoad) {
     lines = {};
-    defs = {};
-    refs = {};
+    definitions = {};
+    occurrences = {};
     linesToLoad.forEach(insertLine);
   };
 
@@ -120,16 +138,16 @@ var state = (function(){
     sync.remove(line);
   };
 
-  state.find = function (id) {
+  state.findLine = function (id) {
     var line = lines[id];
     return {
       name: line.name,
       code: line.code,
-      args: line.args.slice(0)
+      free: $.clone(line.free)
     };
   };
 
-  state.findAll = function () {
+  state.findAllLines = function () {
     var result = [];
     for (var id in lines) {
       result.push(id);
@@ -148,8 +166,8 @@ var state = (function(){
     return result;
   };
 
-  state.findDef = function (name) {
-    var id = defs[name];
+  state.findDefinition = function (name) {
+    var id = definitions[name];
     if (id !== undefined) {
       return id;
     } else {
@@ -157,16 +175,16 @@ var state = (function(){
     }
   };
 
-  state.findRefs = function (name) {
-    var refsName = refs[name];
-    if (refsName === undefined) {
+  state.findOccurrences = function (name) {
+    var occurrencesName = occurrences[name];
+    if (occurrencesName === undefined) {
       return [];
     } else {
-      var refsList = [];
-      for (var id in refsName) {
-        refsList.push(id);
+      var occurrencesList = [];
+      for (var id in occurrencesName) {
+        occurrencesList.push(id);
       }
-      return refsList;
+      return occurrencesList;
     }
   };
 
@@ -244,11 +262,11 @@ var sync = (function(){
 //----------------------------------------------------------------------------
 // interface
 
-corpus.find = state.find;
-corpus.findAll = state.findAll;
+corpus.findLine = state.findLine;
+corpus.findAllLines = state.findAllLines;
 corpus.findAllNames = state.findAllNames;
-corpus.findDef = state.findDef;
-corpus.findRefs = state.findRefs;
+corpus.findDefinition = state.findDefinition;
+corpus.findOccurrences = state.findOccurrences;
 
 return corpus;
 })();
