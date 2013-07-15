@@ -8,14 +8,22 @@
  */
 
 var testing = false;
+var hasRun = false;
+var passed = false;
+var allTests = [];
 
 /** @const */
 var test = function (title, callback) {
   callback = callback || function(){ globalEval(title); };
   callback.title = title;
-  test._all.push(callback);
+  allTests.push(callback);
 };
-test._all = [];
+
+test.testing = function () { return testing; }
+test.hasRun = function () { return hasRun; }
+test.passed = function () { return passed; }
+
+
 test.runAll = function (onExit) {
 
   var $log = $('<div>')
@@ -70,40 +78,42 @@ test.runAll = function (onExit) {
       .appendTo(document.body);
   }
 
-  log('[ Running ' + test._all.length + ' unit tests ]');
+  log('[ Running ' + allTests.length + ' unit tests ]');
   testing = true;
 
+  passed = true;
   var failed = [];
-  for (var i = 0; i < test._all.length; ++i) {
-    var callback = test._all[i];
+  for (var i = 0; i < allTests.length; ++i) {
+    var callback = allTests[i];
     try {
       callback($log);
     }
     catch (err) {
+      passed = false;
       log('FAILED ' + callback.title + '\n  ' + err);
       failed.push(callback);
     }
   }
+  hasRun = true;
 
   if (failed.length) {
-    log('[ failed ' + failed.length + ' tests ]');
+    log('[ Failed ' + failed.length + ' tests ]');
     $log.css({
           'background-color': '#ffaaaa',
           'border-color': '#ffaaaa'
         });
   } else {
-    log('[ passed all tests :) ]');
+    log('[ Passed all tests :) ]');
     $log.css({
           'background-color': '#aaffaa',
           'border-color': '#aaffaa'
         });
   }
 
-  // call all failed tests to get stack traces
-  for (var i = 0; i < failed.length; ++i) {
-    (function(i){
-      setTimeout(failed[i], 0);
-    })(i);
-  }
-};
+  log = oldLog;
 
+  // call all failed tests to get stack traces
+  failed.forEach(function(failedTest){
+    setTimeout(failedTest, 0);
+  });
+};
