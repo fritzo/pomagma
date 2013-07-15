@@ -45,11 +45,9 @@ var test = (function(){
           })
       .appendTo(document.body);
 
-    var oldLog = log;
-    log = function (message) {
+    log.pushListener(function (message) {
       $('<pre>').text(message).appendTo($log);
-      oldLog(message);
-    };
+    });
 
     if (onExit !== undefined) {
 
@@ -112,7 +110,7 @@ var test = (function(){
           });
     }
 
-    log = oldLog;
+    log.popListener();
 
     // call all failed tests to get stack traces
     failed.forEach(function(failedTest){

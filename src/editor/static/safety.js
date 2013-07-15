@@ -10,7 +10,6 @@
 //------------------------------------------------------------------------------
 // Global safety
 
-var globalEval = eval;
 'use strict';
 
 /** @constructor */
@@ -38,11 +37,6 @@ var assert = function (condition, message) {
   }
 };
 assert.help = 'assert(condition, optionalMessage) throws if condition is false';
-
-var assertEval = function (message) {
-  assert(eval(message), message);
-};
-assertEval.help = 'assertEval(message) throws if eval(message) is false';
 
 var assertEqual = function (actual, expected, message) {
   if (!(actual instanceof String) || !(expected instanceof String)) {
