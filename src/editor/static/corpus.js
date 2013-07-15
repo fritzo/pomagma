@@ -112,11 +112,24 @@ var state = (function(){
     TODO('remove line');
   };
 
+  var readyQueue = [];
+  state.ready = function (cb) {
+    readyQueue.push(cb);
+  };
+  var markReady = function () {
+    state.ready = function (cb) {
+      setTimeout(cb, 0);
+    };
+    readyQueue.forEach(state.ready);
+    readyQueue = [];
+  };
+
   var loadAll = function (linesToLoad) {
     lines = {};
     definitions = {};
     occurrences = {};
     linesToLoad.forEach(insertLine);
+    markReady();
   };
 
   var init = function () {
@@ -160,6 +173,7 @@ var state = (function(){
   };
 
   state.validate = function () {
+    log('validating corpus');
     for (var id in lines) {
       var line = lines[id];
       var name = line.name;
@@ -177,6 +191,8 @@ var state = (function(){
       }
     }
   };
+
+  test('corpus valid', function(){ state.ready(state.validate); });
 
   state.findLine = function (id) {
     var line = lines[id];

@@ -83,8 +83,7 @@ var test = (function(){
 
     passed = true;
     var failed = [];
-    for (var i = 0; i < allTests.length; ++i) {
-      var callback = allTests[i];
+    allTests.forEach(function(callback){
       try {
         callback($log);
       }
@@ -93,7 +92,7 @@ var test = (function(){
         log('FAILED ' + callback.title + '\n  ' + err);
         failed.push(callback);
       }
-    }
+    });
     hasRun = true;
 
     if (failed.length) {
