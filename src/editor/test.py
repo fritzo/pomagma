@@ -33,11 +33,3 @@ def test_all():
     while not browser.evaluate_script('test.hasRun()'):
         time.sleep(0.2)
     assert browser.evaluate_script('test.passed()')
-
-
-if __name__ == '__main__':
-    setUp()
-    try:
-        test_corpus()
-    finally:
-        tearDown()
