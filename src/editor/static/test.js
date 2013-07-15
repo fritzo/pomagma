@@ -14,7 +14,7 @@ var allTests = [];
 
 /** @const */
 var test = function (title, callback) {
-  callback = callback || function(){ globalEval(title); };
+  callback = callback || function(){ $.globalEval(title); };
   callback.title = title;
   allTests.push(callback);
 };
