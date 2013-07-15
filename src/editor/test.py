@@ -7,6 +7,7 @@ browser = None
 def setUp():
     global browser
     browser = splinter.Browser()
+    #browser = splinter.Browser('phantomjs')
 
 
 def tearDown():
