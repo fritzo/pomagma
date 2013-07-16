@@ -1,4 +1,4 @@
-var editor = (function(){
+define(['compiler'], function(){
 var editor = {};
 
 var cursor;
@@ -80,4 +80,4 @@ $(function(){
 });
 
 return editor;
-})();
+});

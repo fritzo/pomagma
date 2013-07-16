@@ -1,4 +1,12 @@
-require([], function () {
+require(['corpus', 'editor'],
+function( corpus,   editor )
+{
+  test('corpus loaded', function(){
+    assert(corpus !== undefined, 'corpus not loaded');
+  });
+  test('editor loaded', function(){
+    assert(editor !== undefined, 'corpus not loaded');
+  });
 
   var main = function () {
     // TODO

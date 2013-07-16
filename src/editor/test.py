@@ -3,6 +3,7 @@ import time
 import splinter
 
 browser = None
+TEST_COUNT = 12
 failure_count = 0
 
 
@@ -31,5 +32,10 @@ def tearDown():
 def test_all():
     browser.visit('http://localhost:34934/#test')
     while not browser.evaluate_script('test.hasRun()'):
-        time.sleep(0.2)
-    assert browser.evaluate_script('test.passed()')
+        print 'waiting...'
+        time.sleep(0.1)
+    fail_count = browser.evaluate_script('test.failCount()')
+    assert fail_count == 0, '{} tests failed'.format(fail_count)
+    test_count = browser.evaluate_script('test.testCount()')
+    assert test_count == TEST_COUNT,\
+        'expected {} tests, actual {}'.format(TEST_COUNT, test_count)

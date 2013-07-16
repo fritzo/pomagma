@@ -20,6 +20,7 @@
  *          | CURSOR patt
  */
 
+// FIXME why does "define([], function(){...})" not work here?
 var compiler = (function(){
 var compiler = {};
 
@@ -191,7 +192,7 @@ test('Simple parsing', function(){
     'VARY x',
     'QUOTE APPLY ABSTRACT CURSOR VARY x VARY x HOLE',
     'LET VARY i ABSTRACT VARY x VARY x APPLY VARY i VARY i',
-    ];
+  ];
   for (var i = 0; i < cases.length; ++i) {
     var string = cases[i];
     log('Parsing ' + string);

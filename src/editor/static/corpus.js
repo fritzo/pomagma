@@ -4,7 +4,7 @@
  * FIXME this is all concurrency-unsafe; client assumes it is the only writer.
  */
 
-var corpus = (function(){
+define([], function(){
 var corpus = {};
 
 IDENTIFIER_RE = /^[^\d\W]\w*(\.[^\d\W]\w*)*$/;
@@ -329,4 +329,4 @@ corpus.findDefinition = state.findDefinition;
 corpus.findOccurrences = state.findOccurrences;
 
 return corpus;
-})();
+});

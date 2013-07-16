@@ -18,12 +18,13 @@ var test = (function(){
 
   var testing = false;
   var hasRun = false;
-  var passed = false;
   var allTests = [];
+  var failedTests = [];
 
   test.testing = function () { return testing; }
   test.hasRun = function () { return hasRun; }
-  test.passed = function () { return passed; }
+  test.testCount = function () { return allTests.length; }
+  test.failCount = function () { return failedTests.length; }
 
 
   test.runAll = function (onExit) {
@@ -81,22 +82,20 @@ var test = (function(){
     log('[ Running ' + allTests.length + ' unit tests ]');
     testing = true;
 
-    passed = true;
-    var failed = [];
+    failedTests = [];
     allTests.forEach(function(callback){
       try {
         callback($log);
       }
       catch (err) {
-        passed = false;
         log('FAILED ' + callback.title + '\n  ' + err);
-        failed.push(callback);
+        failedTests.push(callback);
       }
     });
     hasRun = true;
 
-    if (failed.length) {
-      log('[ Failed ' + failed.length + ' tests ]');
+    if (failedTests.length) {
+      log('[ Failed ' + failedTests.length + ' tests ]');
       $log.css({
             'background-color': '#ffaaaa',
             'border-color': '#ffaaaa'
@@ -112,7 +111,7 @@ var test = (function(){
     log.popListener();
 
     // call all failed tests to get stack traces
-    failed.forEach(function(failedTest){
+    failedTests.forEach(function(failedTest){
       setTimeout(failedTest, 0);
     });
   };
