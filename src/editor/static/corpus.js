@@ -4,8 +4,8 @@
  * FIXME this is all concurrency-unsafe; client assumes it is the only writer.
  */
 
-define(['test'],
-function(test)
+define(['log', 'test'],
+function(log,   test)
 {
 
 var corpus = {};

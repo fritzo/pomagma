@@ -21,8 +21,8 @@
  */
 
 // FIXME why does "define([], function(){...})" not work here?
-define(['test'],
-function(test)
+define(['log', 'test'],
+function(log, test)
 {
 
 var compiler = {};

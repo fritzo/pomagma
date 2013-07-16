@@ -1,4 +1,7 @@
-var ui = (function(){
+define(['log'],
+function(log)
+{
+
 var ui = {};
 
 var handle_keydown = function (event) {
@@ -26,4 +29,4 @@ $(function(){
 });
 
 return ui;
-})();
+});

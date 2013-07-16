@@ -1,4 +1,7 @@
-var log = (function(){
+define([],
+function()
+{
+
   var log;
 
   if (this.document) { // in main window
@@ -33,5 +36,5 @@ var log = (function(){
   };
 
   return log;
-})();
 
+});

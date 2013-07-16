@@ -2,7 +2,9 @@
  * Unit testing.
  */
 
-define([], function(){
+define(['log'],
+function(log)
+{
 
   /** @const */
   var test = function (title, callback) {

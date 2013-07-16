@@ -1,5 +1,5 @@
-define(['test', 'compiler'],
-function(test,   compiler)
+define(['log', 'test', 'compiler'],
+function(log,   test,   compiler)
 {
 
 var editor = {};
