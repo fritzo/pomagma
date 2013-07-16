@@ -21,7 +21,10 @@
  */
 
 // FIXME why does "define([], function(){...})" not work here?
-var compiler = (function(){
+define(['test'],
+function(test)
+{
+
 var compiler = {};
 
 //----------------------------------------------------------------------------
@@ -412,4 +415,4 @@ Vary.transform = {
 };
 
 return compiler;
-})();
+});

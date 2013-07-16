@@ -4,7 +4,10 @@
  * FIXME this is all concurrency-unsafe; client assumes it is the only writer.
  */
 
-define([], function(){
+define(['test'],
+function(test)
+{
+
 var corpus = {};
 
 IDENTIFIER_RE = /^[^\d\W]\w*(\.[^\d\W]\w*)*$/;

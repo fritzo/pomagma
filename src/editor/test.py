@@ -2,9 +2,10 @@ import functools
 import time
 import splinter
 
-browser = None
-TEST_COUNT = 12
+TEST_COUNT = 12  # this must be updated every time tests are added
+
 failure_count = 0
+browser = None
 
 
 def count_failures(fun):
@@ -31,6 +32,7 @@ def tearDown():
 @count_failures
 def test_all():
     browser.visit('http://localhost:34934/#test')
+    browser.execute_script('window.test = require("test");')
     while not browser.evaluate_script('test.hasRun()'):
         print 'waiting...'
         time.sleep(0.1)

@@ -1,4 +1,7 @@
-define(['compiler'], function(){
+define(['test', 'compiler'],
+function(test,   compiler)
+{
+
 var editor = {};
 
 var cursor;

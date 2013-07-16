@@ -1,6 +1,7 @@
-require(['corpus', 'editor'],
-function( corpus,   editor )
+require(['test', 'corpus', 'editor'],
+function( test,   corpus,   editor )
 {
+
   test('corpus loaded', function(){
     assert(corpus !== undefined, 'corpus not loaded');
   });
