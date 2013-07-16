@@ -1,5 +1,5 @@
-require(['test', 'corpus', 'editor', 'ui'],
-function( test,   corpus,   editor,   ui)
+require(['test', 'corpus', 'editor', 'analyst', 'ui'],
+function( test,   corpus,   editor,   analyst,   ui)
 {
 
   var main = function () {

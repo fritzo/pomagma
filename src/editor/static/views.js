@@ -1,4 +1,7 @@
-var views = (function(){
+define([],
+function()
+{
+
 var views = {};
 
 var sortLines = function (lineSet) {
@@ -20,4 +23,4 @@ var sortLines = function (lineSet) {
 };
 
 return views;
-})();
+});

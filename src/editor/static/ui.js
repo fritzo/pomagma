@@ -1,5 +1,5 @@
-define(['log'],
-function(log)
+define(['log', 'views'],
+function(log,   views)
 {
 
 var ui = {};
