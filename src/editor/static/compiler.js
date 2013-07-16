@@ -201,7 +201,7 @@ test('Simple parsing', function(){
     log('Parsing ' + string);
     var expr = parse(string);
     var polish = expr.polish();
-    assertEqual(string, polish);
+    assert.equal(string, polish);
   }
 });
 
@@ -302,7 +302,7 @@ test('Cursor movement', function(){
   var path =  'UDDDLRULDRDLDUUUU';
   var trace = '01100011111101110';
   for (var i = 0; i < path.length; ++i) {
-    assertEqual(cursor.tryMove(path[i]), Boolean(parseInt(trace[i])));
+    assert.equal(cursor.tryMove(path[i]), Boolean(parseInt(trace[i])));
   }
 });
 
