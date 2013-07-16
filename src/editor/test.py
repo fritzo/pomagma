@@ -29,7 +29,7 @@ def tearDown():
 
 @count_failures
 def test_all():
-    browser.visit('http://localhost:34934/test')
+    browser.visit('http://localhost:34934/#test')
     while not browser.evaluate_script('test.hasRun()'):
         time.sleep(0.2)
     assert browser.evaluate_script('test.passed()')
