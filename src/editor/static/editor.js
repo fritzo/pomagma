@@ -66,8 +66,8 @@ $(function(){
 
   var start = [
     'DEFINE VARY example',
-    'LET VARY test APPLY VARY this VARY test',
-    'ABSTRACT QUOTE VARY this APPLY VARY is APPLY VARY a VARY test'
+    'LET VARY test APP VARY this VARY test',
+    'LAMBDA QUOTE VARY this APP VARY is APP VARY a VARY test'
     ].join(' ');
   cursor = compiler.parse('CURSOR ' + start);
   editor.draw();
