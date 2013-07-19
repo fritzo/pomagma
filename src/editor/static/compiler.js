@@ -94,10 +94,18 @@ function(log,   test,   pattern)
   var Symbol = function (name, arity, parser) {
     arity = arity || 0;
     parse.declareSymbol(name, arity, parser);
-    return compiler[name] = function () {
-      assert.equal(arguments.length, arity);
-      return [name].concat(_.toArray(arguments));
-    };
+    var symbol;
+    if (arity == 0) {
+      symbol = name;
+    } else {
+      symbol = function () {
+        assert.equal(arguments.length, arity);
+        return [name].concat(_.toArray(arguments));
+      };
+      symbol.name = name;
+    }
+    //compiler[name] = symbol;
+    return symbol;
   };
 
   var I = Symbol('I');
@@ -113,7 +121,8 @@ function(log,   test,   pattern)
   var CURSOR = Symbol('CURSOR', 1);
   var ASSERT = Symbol('ASSERT', 1);
   var VAR = Symbol('VAR', 1, function(tokens){
-    return ['VAR', tokens.pop()];
+    var name = tokens.pop();
+    return ['VAR', name];
   });
   var APP = Symbol('APP', 2);
   var COMP = Symbol('COMP', 2);
@@ -248,7 +257,7 @@ function(log,   test,   pattern)
       [I, LAMBDA(a, a)]
     ];
     examples.forEach(function(pair){
-      log('DEBUG ' + JSON.stringify(pair[0]));
+      log('DEBUG ' + JSON.stringify(pair));
       var actual = pair[1];
       var expected = decompile(pair[0]);
       assert.equal(actual, expected);
