@@ -102,7 +102,7 @@ function(log, test)
     }
   };
 
-  pattern.match = function (pattHandlers) {
+  var match = pattern.match = function (pattHandlers) {
     // static check
     assert(pattHandlers.length % 2 == 0, 'bad pattern,handler list');
     var lineCount = pattHandlers.length / 2;
@@ -124,6 +124,45 @@ function(log, test)
       }
     };
   };
+
+  test('pattern.match', function(){
+    var x = variable('x');
+    var y = variable('y');
+    var z = variable('z');
+
+    var t = pattern.match([
+      ['APP', 'I', x], function (matched) {
+        var tx = t(matched.x);
+        return tx;
+      },
+      ['APP', ['APP', 'K', x], y], function (matched) {
+        var tx = t(matched.x);
+        return tx;
+      },
+      ['APP', ['APP', ['APP', 'B', x], y], z], function (matched) {
+        var xyz = ['APP', matched.x, ['APP', matched.y, matched.z]];
+        return t(xyz);
+      },
+      ['APP', x, y], function (matched) {
+        var tx = t(matched.x);
+        var ty = t(matched.y);
+        return ['APP', tx, ty];
+      },
+      x, function (matched) {
+        return matched.x;
+      }
+    ]);
+
+    var examples = [
+      [['APP', 'I', 'a'], 'a'],
+      [['APP', ['APP', 'K', 'a'], 'b'], 'a']
+    ];
+    examples.forEach(function(pair){
+      var actual = t(pair[0]);
+      var expected = pair[1];
+      assert.equal(actual, expected);
+    });
+  });
 
   return pattern;
 });

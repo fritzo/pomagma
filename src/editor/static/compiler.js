@@ -254,12 +254,12 @@ function(log,   test,   pattern)
     var b = VAR('b');
     var c = VAR('c');
     var examples = [
-      [I, LAMBDA(a, a)]
+      [I, LAMBDA(a, a)],
+      [K, LAMBDA(a, LAMBDA(b, a))]
     ];
     examples.forEach(function(pair){
-      log('DEBUG ' + JSON.stringify(pair));
-      var actual = pair[1];
-      var expected = decompile(pair[0]);
+      var actual = decompile(pair[0]);
+      var expected = pair[1];
       assert.equal(actual, expected);
     });
   });
