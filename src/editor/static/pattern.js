@@ -3,23 +3,21 @@ function(log, test)
 {
   var pattern = {};
 
-  var variable = pattern.variable = (function(){
-    /** @constructor */
-    var Variable = function Variable (name) {
-      this.name = name;
-    };
-    
-    Variable.prototype.toString = function () {
-      return 'Variable(' + this.name + ')';
-    };
+  /** @constructor */
+  var Variable = function Variable (name) {
+    this.name = name;
+  };
+  
+  Variable.prototype.toString = function () {
+    return 'Variable(' + this.name + ')';
+  };
 
-    return function (name) {
-      return new Variable(name);
-    };
-  })();
+  var variable = pattern.variable = function (name) {
+    return new Variable(name);
+  };
 
   var isVariable = function (thing) {
-    if (thing && thing.constructor && thing.constructor.name === 'Variable') {
+    if (thing && thing.constructor === Variable) {
       return true;
     } else {
       return false;
@@ -83,9 +81,7 @@ function(log, test)
   });
 
   var unify = function (patt, struct, matched) {
-    if (_.isEqual(patt, struct)) {
-      return matched;
-    } else if (isVariable(patt)) {
+    if (isVariable(patt)) {
       //matched = _.clone(matched);  // only needed when backtracking
       matched[patt.name] = struct;
       return matched;
@@ -99,17 +95,19 @@ function(log, test)
         }
         return matched;
       }
+    } else if (patt === struct) {
+      return matched;
     }
   };
 
   var match = pattern.match = function (pattHandlers) {
-    // static check
+    // check statically
     assert(pattHandlers.length % 2 == 0, 'bad pattern,handler list');
     var lineCount = pattHandlers.length / 2;
     for (var line = 0; line < lineCount; ++line) {
       var patt = pattHandlers[2 * line];
       var handler = pattHandlers[2 * line + 1];
-      assert(isPattern(patt), 'bad pattern at pos ' + line + ': ' + patt);
+      assert(isPattern(patt), 'bad pattern at line ' + line + ': ' + patt);
       assert(_.isFunction(handler), 'bad handler at line ' + line);
     }
     // run optimized
