@@ -61,7 +61,7 @@ assert.backward = function (bwd, pairs) {
 
 assert.inverses = function (fwd, bwd, items) {
   items.forEach(function(item, lineno){
-    var errorMessage = 'Inverse example ' + lineno;
+    var errorMessage = 'Inverses example ' + lineno;
     assert.equal(bwd(fwd(item)), item, errorMessage);
   });
 };

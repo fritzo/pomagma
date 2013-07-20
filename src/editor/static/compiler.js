@@ -1,5 +1,7 @@
 /** 
- * Transforms : string <-> ugly tree <-> pretty tree
+ * Syntactic Transforms.
+ *
+ * appTree is the lingua franca.
  */
 
 define(['log', 'test', 'pattern'],
@@ -152,9 +154,45 @@ function(log,   test,   pattern)
   });
 
   //--------------------------------------------------------------------------
-  // Conversion : code <-> appTree
+  // Lingua Franca
 
-  var toAppTree = (function(){
+  var isAppTree = compiler.isAppTree = (function(){
+    var x = pattern.variable('x');
+    var y = pattern.variable('y');
+    var t = pattern.match([
+      APP(x, y), function (matched) {
+        return t(matched.x) && t(matched.y);
+      },
+      QUOTE(x), function (matched) {
+        return t(matched.x);
+      },
+      VAR(x), function (matched) {
+        return true;
+      },
+      x, function (matched) {
+        return _.isString(matched.x);
+      }
+    ]);
+    return t;
+  })();
+
+  test('compiler.isAppTree', function () {
+    var examples = [
+      [APP(K, I), true],
+      [QUOTE(K), true],
+      [VAR('x'), true],
+      [COMP(K, I), false],
+      [LET(VAR('x'), I, I), false],
+      [APP(COMP(I, I), I), false],
+      [QUOTE(COMP(I, I)), false]
+    ];
+    assert.forward(isAppTree, examples);
+  });
+
+  //--------------------------------------------------------------------------
+  // Conversion : appTree <-> code
+
+  var fromCode = compiler.fromCode = (function(){
     var x = pattern.variable('x');
     var y = pattern.variable('y');
     var t = pattern.match([
@@ -180,7 +218,7 @@ function(log,   test,   pattern)
     return t;
   })();
 
-  var fromAppTree = (function(){
+  var toCode = compiler.toCode = (function(){
     var x = pattern.variable('x');
     var y = pattern.variable('y');
     var t = pattern.match([
@@ -206,7 +244,7 @@ function(log,   test,   pattern)
     return t;
   })();
 
-  test('compiler.toAppTree, compiler.fromAppTree', function(){
+  test('compiler.fromCode, compiler.toCode', function(){
     var x = VAR('x');
     var y = VAR('y');
     var z = VAR('z');
@@ -218,8 +256,8 @@ function(log,   test,   pattern)
       [APP(COMP(x, y), COMP(y, z)), APP(APP(APP(B, x), y), APP(APP(B, y), z))],
       [QUOTE(COMP(x, y)), QUOTE(APP(APP(B, x), y))]
     ];
-    assert.forward(toAppTree, examples);
-    assert.backward(fromAppTree, examples);
+    assert.forward(fromCode, examples);
+    assert.backward(toCode, examples);
   });
 
   //--------------------------------------------------------------------------
@@ -232,15 +270,6 @@ function(log,   test,   pattern)
     var t = pattern.match([
       APP(x, y), function (matched, tail) {
         return t(matched.x, stack(matched.y, tail));
-      },
-      COMP(x, y), function (matched, tail) {
-        return t(B, stack(matched.x,  matched.y, tail));
-      },
-      JOIN(x, y), function (matched, tail) {
-        return t(J, stack(matched.x,  matched.y, tail));
-      },
-      RAND(x, y), function (matched, tail) {
-        return t(R, stack(matched.x,  matched.y, tail));
       },
       x, function (matched, tail) {
         return stack(matched.x, tail)
@@ -259,15 +288,6 @@ function(log,   test,   pattern)
     var y = pattern.variable('y');
     var tail = pattern.variable('tail');
     var t = pattern.match([
-      stack(B, x, y, tail), function (matched) {
-        return t(stack(COMP(matched.x, matched.y), matched.tail));
-      },
-      stack(J, x, y, tail), function (matched) {
-        return t(stack(JOIN(matched.x, matched.y), matched.tail));
-      },
-      stack(R, x, y, tail), function (matched) {
-        return t(stack(RAND(matched.x, matched.y), matched.tail));
-      },
       stack(x, y, tail), function (matched) {
         return t(stack(APP(matched.x, matched.y), matched.tail));
       },
@@ -286,17 +306,14 @@ function(log,   test,   pattern)
       [I, stack(I, [])],
       [APP(x, y), stack(x, y, [])],
       [APP(APP(x, y), z), stack(x, y, z, [])],
-      [COMP(x, y), stack(B, x, y, [])],
-      [JOIN(x, y), stack(J, x, y, [])],
-      [RAND(x, y), stack(R, x, y, [])],
-      [APP(COMP(APP(K, x), y), z), stack(B, APP(K, x), y, z, [])]
+      [APP(APP(APP(S, APP(K, x)), y), z), stack(S, APP(K, x), y, z, [])]
     ];
     assert.forward(toStack, examples);
     assert.backward(fromStack, examples);
   });
 
   //--------------------------------------------------------------------------
-  // Simplify : appTree -(-> stack -> stack -)-> appTree
+  // Simplify : appTree -> simple appTree
 
   var simplify = compiler.simplify = (function(){
     var x = pattern.variable('x');
@@ -384,15 +401,15 @@ function(log,   test,   pattern)
       [APP(APP(APP(B, x), y), z), APP(APP(x, y), z)],
       [APP(APP(APP(C, x), y), z), APP(APP(x, z), y)],
       [APP(APP(APP(B, APP(K, x)), y), z), APP(x, z)],
-      [APP(APP(B, APP(I, x)), APP(APP(K, y), z)), COMP(x, y)]
+      [APP(APP(B, APP(I, x)), APP(APP(K, y), z)), APP(APP(B, x), y)]
     ];
     assert.forward(simplify, examples);
   });
 
   //--------------------------------------------------------------------------
-  // Convert : appTree -> pretty
+  // Convert : simple appTree -> lambda
 
-  var decompile = compiler.decomple = (function(){
+  var toLambda = compiler.decomple = (function(){
 
     var fresh = (function(){
       var alphabet = 'abcdefghijklmnopqrstuvwxyz';
@@ -417,12 +434,15 @@ function(log,   test,   pattern)
     var z = pattern.variable('z');
 
     var t = pattern.match([
+      TOP, function () { 
+        return TOP;
+      },
+      BOT, function () { 
+        return BOT;
+      },
       I, function () {
         var x = fresh();
         return LAMBDA(x, x);
-      },
-      APP(I, x), function (matched) {
-        return t(matched.x);
       },
       K, function () {
         var x = fresh();
@@ -434,9 +454,26 @@ function(log,   test,   pattern)
         var tx = t(matched.x);
         return LAMBDA(y, tx);
       },
-      APP(APP(K, x), y), function (matched) {
-        return t(matched.x);
+      B, function () {
+        var x = fresh();
+        var y = fresh();
+        var z = fresh();
+        return LAMBDA(x, LAMBDA(y, LAMBDA(z, APP(x, APP(y, z)))));
       },
+      APP(B, x), function (matched) {
+        var y = fresh();
+        var z = fresh();
+        var tx = t(matched.x);
+        return LAMBDA(y, LAMBDA(z, APP(tx, APP(y, z))));
+      },
+      APP(APP(B, x), y), function (matched) {
+        var z = fresh();
+        var tx = t(matched.x);
+        var ty = t(matched.y);
+        return LAMBDA(z, APP(tx, APP(ty, z)));
+      },
+      // TODO C
+      // TODO W
       S, function () {
         var x = fresh();
         var y = fresh();
@@ -478,32 +515,25 @@ function(log,   test,   pattern)
         var ty = t(matched.y);
         return JOIN(tx, ty);
       },
-      JOIN(x, y), function (matched) {
-        var tx = t(matched.x);
-        var ty = t(matched.y);
-        return JOIN(tx, ty);
-      },
+      // TODO R
       APP(x, y), function (matched) {
         // FIXME is this the right reduction order?
         var tx = t(matched.x);
         var ty = t(matched.y);
         return APP(tx, ty);
       },
-      COMP(x, y), function (matched) {
-        return t(APP(APP(B, matched.x), matched.y));
-      },
       QUOTE(x), function (matched) {
         return QUOTE(t(matched.x));
       }
     ]);
 
-    return function (ugly) {
+    return function (simpleAppTree) {
       fresh.reset();
-      return t(ugly);
+      return t(simpleAppTree);
     };
   })();
 
-  test('compiler.decompile', function(){
+  test('compiler.toLambda', function(){
     var a = VAR('a');
     var b = VAR('b');
     var c = VAR('c');
@@ -511,21 +541,21 @@ function(log,   test,   pattern)
       [I, LAMBDA(a, a)],
       [K, LAMBDA(a, LAMBDA(b, a))]
     ];
-    assert.forward(decompile, examples);
+    assert.forward(toLambda, examples);
   });
 
   //--------------------------------------------------------------------------
-  // Convert pretty -> appTree
+  // Convert : lambda -> appTree
 
-  var compile = compiler.compile = (function(){
+  var fromLambda = compiler.fromLambda = (function(){
     var x = pattern.variable('x');
     var y = pattern.variable('y');
     var z = pattern.variable('z');
     var name = pattern.variable('name');
 
-    var abstract = (function(){
+    var lambda = (function(){
       var notFound = {};
-      var abstract = pattern.match([
+      var t = pattern.match([
         VAR(name), function (matched, varName) {
           if (name == varName) {
             return I;
@@ -534,25 +564,25 @@ function(log,   test,   pattern)
           }
         },
         APP(x, y), function (matched, varName) {
-          var ax = abstract(matched.x, varName);
-          var ay = abstract(matched.y, varName);
-          if (ax === notFound) {
-            if (ay === notFound) {
+          var tx = t(matched.x, varName);
+          var ty = t(matched.y, varName);
+          if (tx === notFound) {
+            if (ty === notFound) {
               return notFound;
             } else {
-              return COMP(matched.x, ay);
+              return COMP(matched.x, ty);
             }
           } else {
-            if (ay === notFound) {
-              return APP(APP(C, ax), matched.y);
+            if (ty === notFound) {
+              return APP(APP(C, tx), matched.y);
             } else {
-              return APP(APP(S, ax), ay);
+              return APP(APP(S, tx), ty);
             }
           }
         },
       ]);
-      return function (term, varname) {
-        var result = abstract(term, varname);
+      return function (varName, term) {
+        var result = t(term, varName);
         if (result === notFound) {
           return term;
         } else {
@@ -565,14 +595,20 @@ function(log,   test,   pattern)
       APP(x, y), function (matched) {
         return APP(t(matched.x), t(matched.y));
       },
-      COMP(x, y), function (matched) {
-        return COMP(t(matched.x), t(matched.y));
+      LAMBDA(VAR(name), x), function (matched) {
+        return lambda(name, t(matched.x));
+      },
+      LET(VAR(name), x, y), function (matched) {
+        return APP(lambda(name, t(matched.y)), t(matched.x));
       },
       JOIN(x, y), function (matched) {
-        return JOIN(t(matched.x), t(matched.y));
+        return APP(APP(J, t(matched.x)),  t(matched.y));
       },
       RAND(x, y), function (matched) {
-        return RAND(t(matched.x), t(matched.y));
+        return APP(APP(R, t(matched.x)),  t(matched.y));
+      },
+      QUOTE(x), function (matched) {
+        return QUOTE(t(matched.x));
       },
       x, function (matched) {
         return matched.x;
