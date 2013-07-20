@@ -100,6 +100,11 @@ function(log, test)
     }
   };
 
+  pattern.unify = function (patt, struct) {
+    assert(isPattern(patt), 'bad pattern: ' + patt);
+    return unify(patt, struct, {});
+  };
+
   var match = pattern.match = function (pattHandlers) {
     // check statically
     assert(pattHandlers.length % 2 == 0, 'bad pattern,handler list');
@@ -107,19 +112,22 @@ function(log, test)
     for (var line = 0; line < lineCount; ++line) {
       var patt = pattHandlers[2 * line];
       var handler = pattHandlers[2 * line + 1];
-      assert(isPattern(patt), 'bad pattern at line ' + line + ': ' + patt);
+      assert(isPattern(patt), 'bad pattern at line ' + line + ':\n  ' + patt);
       assert(_.isFunction(handler), 'bad handler at line ' + line);
     }
     // run optimized
+    var slice = Array.prototype.slice;
     return function (struct) {
       for (var line = 0; line < lineCount; ++line) {
         var patt = pattHandlers[2 * line];
         var matched = unify(patt, struct, {});
         if (matched !== undefined) {
           var handler = pattHandlers[2 * line + 1];
-          return handler(matched);
+          var args = [matched].concat(slice.call(arguments, 1));
+          return handler.apply(this, args);
         }
       }
+      throw 'unmatched expression:\n  ' + JSON.stringify(struct);
     };
   };
 

@@ -2,7 +2,7 @@ import functools
 import time
 import splinter
 
-TEST_COUNT = 15  # this must be updated every time tests are added
+TEST_COUNT = 18  # this must be updated every time tests are added
 
 failure_count = 0
 browser = None
