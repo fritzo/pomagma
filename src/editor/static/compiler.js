@@ -162,10 +162,19 @@ function(log,   test,   pattern)
     var tail = pattern.variable('tail');
     var t = pattern.match([
       APP(x, y), function (matched, tail) {
-        return t(matched.x, STACK(matched.y, tail));
+        return t(matched.x, stack(matched.y, tail));
+      },
+      COMP(x, y), function (matched, tail) {
+        return t(B, stack(matched.x,  matched.y, tail));
+      },
+      JOIN(x, y), function (matched, tail) {
+        return t(J, stack(matched.x,  matched.y, tail));
+      },
+      RAND(x, y), function (matched, tail) {
+        return t(R, stack(matched.x,  matched.y, tail));
       },
       x, function (matched, tail) {
-        return STACK(matched.x, tail)
+        return stack(matched.x, tail)
       }
     ]);
     return function (appTree, tail) {
@@ -181,6 +190,15 @@ function(log,   test,   pattern)
     var y = pattern.variable('y');
     var tail = pattern.variable('tail');
     var t = pattern.match([
+      stack(B, x, y, tail), function (matched) {
+        return t(stack(COMP(matched.x, matched.y), matched.tail));
+      },
+      stack(J, x, y, tail), function (matched) {
+        return t(stack(JOIN(matched.x, matched.y), matched.tail));
+      },
+      stack(R, x, y, tail), function (matched) {
+        return t(stack(RAND(matched.x, matched.y), matched.tail));
+      },
       stack(x, y, tail), function (matched) {
         return t(stack(APP(matched.x, matched.y), matched.tail));
       },
@@ -199,7 +217,10 @@ function(log,   test,   pattern)
       [I, stack(I, [])],
       [APP(x, y), stack(x, y, [])],
       [APP(APP(x, y), z), stack(x, y, z, [])],
-      [APP(APP(APP(B, APP(K, x)), y), z), stack(B, APP(K, x), y, z, [])]
+      [COMP(x, y), stack(B, x, y, [])],
+      [JOIN(x, y), stack(J, x, y, [])],
+      [RAND(x, y), stack(R, x, y, [])],
+      [APP(COMP(APP(K, x), y), z), stack(B, APP(K, x), y, z, [])]
     ];
     examples.forEach(function(pair){
       assert.equal(toStack(pair[0]), pair[1]);
@@ -217,11 +238,11 @@ function(log,   test,   pattern)
     var tail = pattern.variable('tail');
 
     var simplifyStack = pattern.match([
-      stack(BOT, tail), function (matched) {
-        return stack(BOT, []);
-      },
       stack(TOP, tail), function (matched) {
         return stack(TOP, []);
+      },
+      stack(BOT, tail), function (matched) {
+        return stack(BOT, []);
       },
       stack(I, x, tail), function (matched) {
         var step = stack(matched.x, matched.tail);
@@ -241,6 +262,20 @@ function(log,   test,   pattern)
         var xz = APP(matched.x, matched.z);
         var tail = stack(matched.y, matched.tail);
         var step = toStack(xz, tail);
+        return simplifyStack(step);
+      },
+      stack(J, TOP, tail), function (matched) {
+        return stack(TOP, []);
+      },
+      stack(J, x, TOP, tail), function (matched) {
+        return stack(TOP, []);
+      },
+      stack(J, BOT, tail), function (matched) {
+        var step = stack(I, tail);
+        return simplifyStack(step);
+      },
+      stack(J, x, BOT, tail), function (matched) {
+        var step = stack(x, tail);
         return simplifyStack(step);
       },
       stack(x, tail), function (matched) {
@@ -281,10 +316,8 @@ function(log,   test,   pattern)
       [APP(APP(K, x), y), x],
       [APP(APP(APP(B, x), y), z), APP(APP(x, y), z)],
       [APP(APP(APP(C, x), y), z), APP(APP(x, z), y)],
-      [APP(APP(APP(B, APP(K, x)), y), z),
-       APP(x, z)],
-      [APP(APP(B, APP(I, x)), APP(APP(K, y), z)),
-       APP(APP(B, x), y)]
+      [APP(APP(APP(B, APP(K, x)), y), z), APP(x, z)],
+      [APP(APP(B, APP(I, x)), APP(APP(K, y), z)), COMP(x, y)]
     ];
     examples.forEach(function(pair){
       assert.equal(simplify(pair[0]), pair[1]);
