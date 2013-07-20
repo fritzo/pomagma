@@ -4,8 +4,8 @@
  * appTree is the lingua franca.
  */
 
-define(['log', 'test', 'pattern'],
-function(log,   test,   pattern)
+define(['log', 'test', 'pattern', 'memoized'],
+function(log,   test,   pattern,   memoized)
 {
   var compiler = {};
 
@@ -275,9 +275,17 @@ function(log,   test,   pattern)
         return stack(matched.x, tail)
       }
     ]);
-    return function (appTree, tail) {
-      if (tail === undefined) {
+    var pop = Array.prototype.pop;
+    var head = 'STACK';
+    return function (appTree) {
+      var tail;
+      if (arguments.length === 1) {
         tail = [];
+      } else {
+        tail = pop.call(arguments);
+      }
+      while (arguments.length > 1) {
+        tail = [head, pop.call(arguments), tail];
       }
       return t(appTree, tail);
     };
@@ -338,15 +346,23 @@ function(log,   test,   pattern)
         return simplifyStack(step);
       },
       stack(B, x, y, z, tail), function (matched) {
-        var xy = APP(matched.x, matched.y);
-        var tail = stack(matched.z, matched.tail);
-        var step = toStack(xy, tail);
+        var yz = APP(matched.y, matched.z);
+        var step = toStack(matched.x, yz, matched.tail);
         return simplifyStack(step);
       },
       stack(C, x, y, z, tail), function (matched) {
-        var xz = APP(matched.x, matched.z);
-        var tail = stack(matched.y, matched.tail);
-        var step = toStack(xz, tail);
+        var step = toStack(matched.x, matched.z, matched.y, matched.tail);
+        return simplifyStack(step);
+      },
+      stack(W, x, VAR(name), tail), function (matched) {
+        var y = VAR(name);
+        var step = toStack(matched.x, y, y, matched.tail);
+        return simplifyStack(step);
+      },
+      stack(S, x, y, VAR(name), tail), function (matched) {
+        var z = VAR(name);
+        var yz = APP(matched.y, z);
+        var step = toStack(matched.x, z, yz, matched.tail);
         return simplifyStack(step);
       },
       stack(J, TOP, tail), function (matched) {
@@ -399,9 +415,9 @@ function(log,   test,   pattern)
       [APP(BOT, x), BOT],
       [APP(TOP, x), TOP],
       [APP(APP(K, x), y), x],
-      [APP(APP(APP(B, x), y), z), APP(APP(x, y), z)],
+      [APP(APP(APP(B, x), y), z), APP(x, APP(y, z))],
       [APP(APP(APP(C, x), y), z), APP(APP(x, z), y)],
-      [APP(APP(APP(B, APP(K, x)), y), z), APP(x, z)],
+      [APP(APP(APP(B, x), APP(K, y)), z), APP(x, y)],
       [APP(APP(B, APP(I, x)), APP(APP(K, y), z)), APP(APP(B, x), y)]
     ];
     assert.forward(simplify, examples);
@@ -457,6 +473,7 @@ function(log,   test,   pattern)
         var tx = toLambda(matched.x);
         return LAMBDA(y, tx);
       },
+      // TODO simplify B, C, W, S cases with a popFresh(cb) function
       stack(B, []), function () {
         var x = fresh();
         var y = fresh();
@@ -504,7 +521,6 @@ function(log,   test,   pattern)
         return LAMBDA(y, APP(APP(tx, y), y));
       },
       stack(W, x, VAR(name), tail), function (matched) {
-        // FIXME is this case really a simple appTree?
         var y = VAR(matched.name);
         var xy = APP(matched.x, y);
         var head = toLambda(APP(xy, y));
@@ -538,7 +554,6 @@ function(log,   test,   pattern)
         return LAMBDA(z, APP(APP(tx, z), APP(ty, z)));
       },
       stack(S, x, y, VAR(name), tail), function (matched) {
-        // FIXME is this case really a simple appTree?
         var z = VAR(matched.name);
         var xz = APP(matched.x, z);
         var yz = APP(matched.y, z);
@@ -620,7 +635,116 @@ function(log,   test,   pattern)
     return toLambda;
   })();
 
-  test('compiler.toLambda', function(){
+  //--------------------------------------------------------------------------
+  // Abstract : varName x appTree -> appTree
+
+  var lambda = compiler.lambda = (function(){
+    var x = pattern.variable('x');
+    var y = pattern.variable('y');
+    var notFound = {};
+
+    var curriedLambda = memoized(function (varName) {
+      var t = pattern.match([
+        VAR(varName), function (matched) {
+          return I;
+        },
+        // TODO match J
+        // TODO match R
+        // TODO match QUOTE
+        APP(x, VAR(varName)), function (matched) {
+          var tx = t(matched.x);
+          if (tx === notFound) {
+            return matched.x;
+          } else {
+            return APP(W, tx);
+          }
+        },
+        APP(x, y), function (matched) {
+          var tx = t(matched.x);
+          var ty = t(matched.y);
+          if (tx === notFound) {
+            if (ty === notFound) {
+              return notFound;
+            } else {
+              return APP(APP(B, matched.x), ty);
+            }
+          } else {
+            if (ty === notFound) {
+              return APP(APP(C, tx), matched.y);
+            } else {
+              return APP(APP(S, tx), ty);
+            }
+          }
+        },
+        x, function () {
+          return notFound;
+        }
+      ]);
+      return t;
+    });
+    return function (varName, term) {
+      var result = curriedLambda(varName)(term);
+      if (result === notFound) {
+        return APP(K, term);
+      } else {
+        return result;
+      }
+    };
+  })();
+
+  test('compile.lambda', function () {
+    var a = VAR('a');
+    var x = VAR('x');
+    var y = VAR('y');
+    var lambdaA = _.partial(lambda, 'a');
+    var examples = [
+      [a, I],
+      [APP(x, a), x],
+      [APP(APP(x, a), a), APP(W, x)],
+      [APP(y, APP(x, a)), APP(APP(B, y), x)],
+      [APP(APP(x, a), y), APP(APP(C, x), y)],
+      [APP(APP(x, a), APP(x, a)), APP(APP(S, x), x)],
+      [x, APP(K,x)]
+    ];
+    assert.forward(lambdaA, examples);
+  });
+
+  //--------------------------------------------------------------------------
+  // Convert : lambda -> appTree
+
+  var fromLambda = compiler.fromLambda = (function(){
+    var x = pattern.variable('x');
+    var y = pattern.variable('y');
+    var z = pattern.variable('z');
+    var name = pattern.variable('name');
+
+    var t = pattern.match([
+      APP(x, y), function (matched) {
+        return APP(t(matched.x), t(matched.y));
+      },
+      LAMBDA(VAR(name), x), function (matched) {
+        return lambda(matched.name, t(matched.x));
+      },
+      LET(VAR(name), x, y), function (matched) {
+        return APP(lambda(matched.name, t(matched.y)), t(matched.x));
+      },
+      JOIN(x, y), function (matched) {
+        return APP(APP(J, t(matched.x)),  t(matched.y));
+      },
+      RAND(x, y), function (matched) {
+        return APP(APP(R, t(matched.x)),  t(matched.y));
+      },
+      QUOTE(x), function (matched) {
+        return QUOTE(t(matched.x));
+      },
+      x, function (matched) {
+        return matched.x;
+      }
+    ]);
+    return t;
+  })();
+
+  test('compiler.toLambda, compiler.fromLambda', function(){
     var a = VAR('a');
     var b = VAR('b');
     var c = VAR('c');
@@ -640,13 +764,13 @@ function(log,   test,   pattern)
       [C, LAMBDA(a, LAMBDA(b, LAMBDA(c, APP(APP(a, c), b))))],
       [APP(C, x), LAMBDA(a, LAMBDA(b, APP(APP(x, b), a)))],
       [APP(APP(C, x), y), LAMBDA(a, APP(APP(x, a), y))],
+      [W, LAMBDA(a, LAMBDA(b, APP(APP(a, b), b)))],
+      [APP(W, x), LAMBDA(a, APP(APP(x, a), a))],
+      [APP(APP(W, x), xy), LET(a, xy, APP(APP(x, a), a))],
       [S, LAMBDA(a, LAMBDA(b, LAMBDA(c, APP(APP(a, c), APP(b, c)))))],
       [APP(S, x), LAMBDA(a, LAMBDA(b, APP(APP(x, b), APP(a, b))))],
       [APP(APP(S, x), y), LAMBDA(a, APP(APP(x, a), APP(y, a)))],
-      [APP(APP(APP(S, x), y), z), APP(APP(x, z), APP(y, z))],
       [APP(APP(APP(S, x), y), xy), LET(a, xy, APP(APP(x, a), APP(y, a)))],
-      [APP(APP(APP(APP(S, x), y), z), I),
-       APP(APP(APP(x, z), APP(y, z)), LAMBDA(a, a))],
       [J, LAMBDA(a, LAMBDA(b, JOIN(a, b)))],
       [APP(J, x), LAMBDA(a, JOIN(x, a))],
       [APP(APP(J, x), y), JOIN(x, y)],
@@ -661,80 +785,35 @@ function(log,   test,   pattern)
       [APP(VAR(x), I), APP(VAR(x), LAMBDA(a, a))],
     ];
     assert.forward(toLambda, examples);
+    assert.backward(fromLambda, examples);
   });
 
-  //--------------------------------------------------------------------------
-  // Convert : lambda -> appTree
+  test('compiler.toLambda', function(){
+    // fromLambda would fail these because they involve pattern matching
+    var a = VAR('a');
+    var x = VAR('x');
+    var y = VAR('y');
+    var z = VAR('z');
+    var xy = APP(x, y);  // just something that is not a variable
+    var examples = [
+      [APP(APP(W, x), y), APP(APP(x, y), y)],
+      [APP(APP(APP(W, x), y), I), APP(APP(APP(x, y), y), LAMBDA(a, a))],
+      [APP(APP(APP(S, x), y), z), APP(APP(x, z), APP(y, z))],
+      [APP(APP(APP(APP(S, x), y), z), I),
+       APP(APP(APP(x, z), APP(y, z)), LAMBDA(a, a))]
+    ];
+    assert.forward(toLambda, examples);
+  });
 
-  var fromLambda = compiler.fromLambda = (function(){
-    var x = pattern.variable('x');
-    var y = pattern.variable('y');
-    var z = pattern.variable('z');
-    var name = pattern.variable('name');
-
-    var lambda = (function(){
-      var notFound = {};
-      var t = pattern.match([
-        VAR(name), function (matched, varName) {
-          if (name == varName) {
-            return I;
-          } else {
-            return APP(K, VAR(matched.name));
-          }
-        },
-        APP(x, y), function (matched, varName) {
-          var tx = t(matched.x, varName);
-          var ty = t(matched.y, varName);
-          if (tx === notFound) {
-            if (ty === notFound) {
-              return notFound;
-            } else {
-              return COMP(matched.x, ty);
-            }
-          } else {
-            if (ty === notFound) {
-              return APP(APP(C, tx), matched.y);
-            } else {
-              return APP(APP(S, tx), ty);
-            }
-          }
-        },
-      ]);
-      return function (varName, term) {
-        var result = t(term, varName);
-        if (result === notFound) {
-          return term;
-        } else {
-          return result;
-        }
-      }
-    })();
-
-    var t = pattern.match([
-      APP(x, y), function (matched) {
-        return APP(t(matched.x), t(matched.y));
-      },
-      LAMBDA(VAR(name), x), function (matched) {
-        return lambda(name, t(matched.x));
-      },
-      LET(VAR(name), x, y), function (matched) {
-        return APP(lambda(name, t(matched.y)), t(matched.x));
-      },
-      JOIN(x, y), function (matched) {
-        return APP(APP(J, t(matched.x)),  t(matched.y));
-      },
-      RAND(x, y), function (matched) {
-        return APP(APP(R, t(matched.x)),  t(matched.y));
-      },
-      QUOTE(x), function (matched) {
-        return QUOTE(t(matched.x));
-      },
-      x, function (matched) {
-        return matched.x;
-      }
-    ]);
-    return t;
-  })();
+  test('compiler.fromLambda', function () {
+    // toLamda would fail these because input is not simple
+    var a = VAR('a');
+    var x = VAR('x');
+    var examples = [
+      [APP(LAMBDA(a, a), x), APP(I, x)]
+    ];
+    assert.forward(fromLambda, examples);
+  });
 
   return compiler;
 });
