@@ -8,28 +8,7 @@ function(log,   test,   pattern)
   var compiler = {};
 
   //--------------------------------------------------------------------------
-  // Testing
-
-  var assertForward = function (fwd, pairs) {
-    pairs.forEach(function(pair, lineno){
-      var errorMessage = 'Forward example ' + lineno;
-      assert.equal(fwd(pair[0]), pair[1], errorMessage);
-    });
-  };
-
-  var assertBackward = function (bwd, pairs) {
-    pairs.forEach(function(pair, lineno){
-      var errorMessage = 'Backward example ' + lineno;
-      assert.equal(bwd(pair[1]), pair[0], errorMessage);
-    });
-  };
-
-  var assertInverses = function (fwd, bwd, items) {
-    items.forEach(function(item, lineno){
-      var errorMessage = 'Inverse example ' + lineno;
-      assert.equal(bwd(fwd(item)), item, errorMessage);
-    });
-  };
+  // Test Transforms
 
   //--------------------------------------------------------------------------
   // Parse
@@ -103,7 +82,7 @@ function(log,   test,   pattern)
       'QUOTE APP LAMBDA CURSOR VAR x VAR x HOLE',
       'LET VAR i LAMBDA VAR x VAR x APP VAR i VAR i',
     ];
-    assertInverses(parse, print, examples);
+    assert.inverses(parse, print, examples);
   });
 
   //--------------------------------------------------------------------------
@@ -239,8 +218,8 @@ function(log,   test,   pattern)
       [APP(COMP(x, y), COMP(y, z)), APP(APP(APP(B, x), y), APP(APP(B, y), z))],
       [QUOTE(COMP(x, y)), QUOTE(APP(APP(B, x), y))]
     ];
-    assertForward(toAppTree, examples);
-    assertBackward(fromAppTree, examples);
+    assert.forward(toAppTree, examples);
+    assert.backward(fromAppTree, examples);
   });
 
   //--------------------------------------------------------------------------
@@ -312,8 +291,8 @@ function(log,   test,   pattern)
       [RAND(x, y), stack(R, x, y, [])],
       [APP(COMP(APP(K, x), y), z), stack(B, APP(K, x), y, z, [])]
     ];
-    assertForward(toStack, examples);
-    assertBackward(fromStack, examples);
+    assert.forward(toStack, examples);
+    assert.backward(fromStack, examples);
   });
 
   //--------------------------------------------------------------------------
@@ -407,7 +386,7 @@ function(log,   test,   pattern)
       [APP(APP(APP(B, APP(K, x)), y), z), APP(x, z)],
       [APP(APP(B, APP(I, x)), APP(APP(K, y), z)), COMP(x, y)]
     ];
-    assertForward(simplify, examples);
+    assert.forward(simplify, examples);
   });
 
   //--------------------------------------------------------------------------
@@ -532,7 +511,7 @@ function(log,   test,   pattern)
       [I, LAMBDA(a, a)],
       [K, LAMBDA(a, LAMBDA(b, a))]
     ];
-    assertForward(decompile, examples);
+    assert.forward(decompile, examples);
   });
 
   //--------------------------------------------------------------------------

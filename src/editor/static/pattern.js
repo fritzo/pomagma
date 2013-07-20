@@ -74,10 +74,7 @@ function(log, test)
       [[variable('x'), variable('x')], false],
       [undefined, false]
     ];
-    examples.forEach(function(pair){
-      var thing = pair[0];
-      assert(isPattern(thing) === pair[1], 'isPattern failed on ' + thing);
-    });
+    assert.forward(isPattern, examples);
   });
 
   var unify = function (patt, struct, matched) {
@@ -163,11 +160,7 @@ function(log, test)
       [['APP', 'I', 'a'], 'a'],
       [['APP', ['APP', 'K', 'a'], 'b'], 'a']
     ];
-    examples.forEach(function(pair){
-      var actual = t(pair[0]);
-      var expected = pair[1];
-      assert.equal(actual, expected);
-    });
+    assert.forward(t, examples);
   });
 
   return pattern;

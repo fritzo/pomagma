@@ -45,6 +45,27 @@ assert.equal = function (actual, expected, message) {
     '\n    expected = ' + JSON.stringify(expected));
 };
 
+assert.forward = function (fwd, pairs) {
+  pairs.forEach(function(pair, lineno){
+    var errorMessage = 'Forward example ' + lineno;
+    assert.equal(fwd(pair[0]), pair[1], errorMessage);
+  });
+};
+
+assert.backward = function (bwd, pairs) {
+  pairs.forEach(function(pair, lineno){
+    var errorMessage = 'Backward example ' + lineno;
+    assert.equal(bwd(pair[1]), pair[0], errorMessage);
+  });
+};
+
+assert.inverses = function (fwd, bwd, items) {
+  items.forEach(function(item, lineno){
+    var errorMessage = 'Inverse example ' + lineno;
+    assert.equal(bwd(fwd(item)), item, errorMessage);
+  });
+};
+
 //----------------------------------------------------------------------------
 // web workers
 
