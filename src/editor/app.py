@@ -85,8 +85,8 @@ def delete_line(line_id):
     CORPUS.remove(id)
 
 
-def serve(port=PORT):
+def serve(port=PORT, reloader=True):
     '''
     Start editor server.
     '''
-    bottle.run(host='localhost', port=port, debug=True, reloader=True)
+    bottle.run(host='localhost', port=port, debug=True, reloader=reloader)

@@ -31,8 +31,7 @@ To install:
     git clone git@github.com:fritzo/pomagma
     cd pomagma
     ./install.sh    # If mkvirtualenv fails, run manually.  FIXME
-    make unit-test  # takes ~2 minutes
-    make test       # takes ~30 minutes
+    make test
 
 ## Configuring
 
