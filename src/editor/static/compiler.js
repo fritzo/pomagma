@@ -108,6 +108,8 @@ function(log,   test,   pattern)
     return symbol;
   };
 
+  var TOP = Symbol('TOP');
+  var BOT = Symbol('BOT');
   var I = Symbol('I');
   var K = Symbol('K');
   var B = Symbol('B');
@@ -133,19 +135,21 @@ function(log,   test,   pattern)
   var LET = Symbol('LET', 3);
 
   var STACK = Symbol('STACK', 2);
-  var stack = function (args, tail) {
-    if (tail === undefined) {
-      tail = [];
-    }
-    for (var i = args.length; i; --i) {
-      tail = STACK(args[i - 1], tail);
-    }
-    return tail;
-  };
+  var stack = (function(){
+    var pop = Array.prototype.pop;
+    var head = 'STACK';
+    return function () {
+      var tail = pop.call(arguments);
+      while (arguments.length) {
+        tail = [head, pop.call(arguments), tail];
+      }
+      return tail;
+    };
+  })();
 
   test('compiler.stack', function(){
     assert.equal(
-      stack(['x', 'y', 'z']),
+      stack('x', 'y', 'z', []),
       STACK('x', STACK('y', STACK('z', []))));
   });
 
@@ -164,7 +168,6 @@ function(log,   test,   pattern)
         return STACK(matched.x, tail)
       }
     ]);
-
     return function (appTree, tail) {
       if (tail === undefined) {
         tail = [];
@@ -178,10 +181,10 @@ function(log,   test,   pattern)
     var y = pattern.variable('y');
     var tail = pattern.variable('tail');
     var t = pattern.match([
-      stack([x, y], tail), function (matched) {
-        return t(stack([APP(matched.x, matched.y)], matched.tail));
+      stack(x, y, tail), function (matched) {
+        return t(stack(APP(matched.x, matched.y), matched.tail));
       },
-      stack([x]), function (matched) {
+      stack(x, []), function (matched) {
         return matched.x;
       }
     ]);
@@ -193,10 +196,10 @@ function(log,   test,   pattern)
     var y = VAR('y');
     var z = VAR('z');
     var examples = [
-      [I, stack([I])],
-      [APP(x, y), stack([x, y])],
-      [APP(APP(x, y), z), stack([x, y, z])],
-      [APP(APP(APP(B, APP(K, x)), y), z), stack([B, APP(K, x), y, z])]
+      [I, stack(I, [])],
+      [APP(x, y), stack(x, y, [])],
+      [APP(APP(x, y), z), stack(x, y, z, [])],
+      [APP(APP(APP(B, APP(K, x)), y), z), stack(B, APP(K, x), y, z, [])]
     ];
     examples.forEach(function(pair){
       assert.equal(toStack(pair[0]), pair[1]);
@@ -205,64 +208,86 @@ function(log,   test,   pattern)
   });
 
   //--------------------------------------------------------------------------
-  // Affine Reduce : appTree -(-> stack -> stack -)-> appTree
+  // Simplify : appTree -(-> stack -> stack -)-> appTree
 
-  var affineReduce = (function(){
-
+  var simplify = (function(){
     var x = pattern.variable('x');
     var y = pattern.variable('y');
     var z = pattern.variable('z');
     var tail = pattern.variable('tail');
 
-    var t = pattern.match([
-      stack([I, x], tail), function (matched) {
-        return t(stack([matched.x], matched.tail));
+    var simplifyStack = pattern.match([
+      stack(BOT, tail), function (matched) {
+        return stack(BOT, []);
       },
-      stack([K, x, y], tail), function (matched) {
-        return t(stack([matched.x], matched.tail));
+      stack(TOP, tail), function (matched) {
+        return stack(TOP, []);
       },
-      stack([K, x]), function (matched) {
-        var rx = affineReduce(matched.x);
-        return stack([K, rx]);
+      stack(I, x, tail), function (matched) {
+        var step = stack(matched.x, matched.tail);
+        return simplifyStack(step);
       },
-      stack([B, x, y, z], tail), function (matched) {
+      stack(K, x, y, tail), function (matched) {
+        var step = stack(matched.x, matched.tail);
+        return simplifyStack(step);
+      },
+      stack(B, x, y, z, tail), function (matched) {
         var xy = APP(matched.x, matched.y);
-        return t(toStack(xy, stack([matched.z], matched.tail)));
+        var tail = stack(matched.z, matched.tail);
+        var step = toStack(xy, tail);
+        return simplifyStack(step);
       },
-      stack([B, x, y]), function (matched) {
-        var rx = affineReduce(matched.x);
-        var ry = affineReduce(matched.y);
-        return stack([B, rx, ry]);
+      stack(C, x, y, z, tail), function (matched) {
+        var xz = APP(matched.x, matched.z);
+        var tail = stack(matched.y, matched.tail);
+        var step = toStack(xz, tail);
+        return simplifyStack(step);
       },
-      stack([B, x]), function (matched) {
-        var rx = affineReduce(matched.x);
-        return stack([B, rx]);
-      },
-      x, function (matched) {
-        return matched.x;
+      stack(x, tail), function (matched) {
+        var tail = simplifyArgs(matched.tail);
+        return stack(matched.x, tail);
       }
     ]);
 
-    return function (appTree) {
-      return fromStack(t(toStack(appTree)));
+    var simplifyArgs = pattern.match([
+      stack(x, y), function (matched) {
+        var rx = simplify(matched.x);
+        var ry = simplifyArgs(matched.y);
+        return stack(rx, ry);
+      },
+      [], function () {
+        return [];
+      }
+    ]);
+
+    var simplify = function (appTree) {
+      if (_.isString(appTree)) {
+        return appTree;
+      } else {
+        return fromStack(simplifyStack(toStack(appTree)));
+      }
     };
+
+    return simplify;
   })();
 
-  test('compiler.affineReduce', function(){
+  test('compiler.simplify', function(){
     var x = VAR('x');
     var y = VAR('y');
     var z = VAR('z');
     var examples = [
-      [APP(I, x), x],
+      [APP(BOT, x), BOT],
+      [APP(TOP, x), TOP],
       [APP(APP(K, x), y), x],
       [APP(APP(APP(B, x), y), z), APP(APP(x, y), z)],
+      [APP(APP(APP(C, x), y), z), APP(APP(x, z), y)],
       [APP(APP(APP(B, APP(K, x)), y), z),
        APP(x, z)],
       [APP(APP(B, APP(I, x)), APP(APP(K, y), z)),
        APP(APP(B, x), y)]
     ];
     examples.forEach(function(pair){
-      assert.equal(affineReduce(pair[0]), pair[1]);
+      assert.equal(simplify(pair[0]), pair[1]);
     });
   });
 

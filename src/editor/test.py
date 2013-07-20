@@ -40,4 +40,4 @@ def test_all():
     assert fail_count == 0, '{} tests failed'.format(fail_count)
     test_count = browser.evaluate_script('test.testCount()')
     assert test_count == TEST_COUNT,\
-        'expected {} tests, actual {}'.format(TEST_COUNT, test_count)
+        'ERROR expected {} tests, actual {}'.format(TEST_COUNT, test_count)
