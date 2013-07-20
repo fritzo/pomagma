@@ -313,9 +313,10 @@ function(log,   test,   pattern)
   });
 
   //--------------------------------------------------------------------------
-  // Simplify : appTree -> simple appTree
+  // Simplify :   stack -> simple stack
+  //            appTree -> simple appTree
 
-  var simplify = compiler.simplify = (function(){
+  var simplifyStack = compiler.simplifyStack = (function(){
     var x = pattern.variable('x');
     var y = pattern.variable('y');
     var z = pattern.variable('z');
@@ -379,16 +380,16 @@ function(log,   test,   pattern)
       }
     ]);
 
-    var simplify = function (appTree) {
-      if (_.isString(appTree)) {
-        return appTree;
-      } else {
-        return fromStack(simplifyStack(toStack(appTree)));
-      }
-    };
-
-    return simplify;
+    return simplifyStack;
   })();
+
+  var simplify = compiler.simplify = function (appTree) {
+    if (_.isString(appTree)) {
+      return appTree;
+    } else {
+      return fromStack(simplifyStack(toStack(appTree)));
+    }
+  };
 
   test('compiler.simplify', function(){
     var x = VAR('x');
@@ -432,114 +433,232 @@ function(log,   test,   pattern)
     var x = pattern.variable('x');
     var y = pattern.variable('y');
     var z = pattern.variable('z');
+    var tail = pattern.variable('tail');
+    var name = pattern.variable('name');
 
-    var t = pattern.match([
-      TOP, function () { 
+    var stackToLambda = pattern.match([
+      stack(TOP, []), function () { 
         return TOP;
       },
-      BOT, function () { 
+      stack(BOT, []), function () { 
         return BOT;
       },
-      I, function () {
+      stack(I, []), function () {
         var x = fresh();
         return LAMBDA(x, x);
       },
-      K, function () {
+      stack(K, []), function () {
         var x = fresh();
         var y = fresh();
         return LAMBDA(x, LAMBDA(y, x));
       },
-      APP(K, x), function (matched) {
+      stack(K, x, []), function (matched) {
         var y = fresh();
-        var tx = t(matched.x);
+        var tx = toLambda(matched.x);
         return LAMBDA(y, tx);
       },
-      B, function () {
+      stack(B, []), function () {
         var x = fresh();
         var y = fresh();
         var z = fresh();
         return LAMBDA(x, LAMBDA(y, LAMBDA(z, APP(x, APP(y, z)))));
       },
-      APP(B, x), function (matched) {
+      stack(B, x, []), function (matched) {
         var y = fresh();
         var z = fresh();
-        var tx = t(matched.x);
+        var tx = toLambda(matched.x);
         return LAMBDA(y, LAMBDA(z, APP(tx, APP(y, z))));
       },
-      APP(APP(B, x), y), function (matched) {
+      stack(B, x, y, []), function (matched) {
         var z = fresh();
-        var tx = t(matched.x);
-        var ty = t(matched.y);
+        var tx = toLambda(matched.x);
+        var ty = toLambda(matched.y);
         return LAMBDA(z, APP(tx, APP(ty, z)));
       },
-      // TODO C
-      // TODO W
-      S, function () {
+      stack(C, []), function () {
+        var x = fresh();
+        var y = fresh();
+        var z = fresh();
+        return LAMBDA(x, LAMBDA(y, LAMBDA(z, APP(APP(x, z), y))));
+      },
+      stack(C, x, []), function (matched) {
+        var y = fresh();
+        var z = fresh();
+        var tx = toLambda(matched.x);
+        return LAMBDA(y, LAMBDA(z, APP(APP(tx, z), y)));
+      },
+      stack(C, x, y, []), function (matched) {
+        var z = fresh();
+        var tx = toLambda(matched.x);
+        var ty = toLambda(matched.y);
+        return LAMBDA(z, APP(APP(tx, z), ty));
+      },
+      stack(W, []), function () {
+        var x = fresh();
+        var y = fresh();
+        return LAMBDA(x, LAMBDA(y, APP(APP(x, y), y)));
+      },
+      stack(W, x, []), function (matched) {
+        var y = fresh();
+        var tx = toLambda(matched.x);
+        return LAMBDA(y, APP(APP(tx, y), y));
+      },
+      stack(W, x, VAR(name), tail), function (matched) {
+        // FIXME is this case really a simple appTree?
+        var y = VAR(matched.name);
+        var xy = APP(matched.x, y);
+        var head = toLambda(APP(xy, y));
+        var tail = argsToLambda(matched.tail);
+        return fromStack(stack(head, tail));
+      },
+      stack(W, x, y, tail), function (matched) {
+        var y = fresh();
+        var ty = toLambda(matched.y);
+        var xy = APP(matched.x, y);
+        var head = LET(y, ty, toLambda(APP(xy, y)));
+        var tail = argsToLambda(matched.tail);
+        return fromStack(stack(head, tail));
+      },
+      stack(S, []), function () {
         var x = fresh();
         var y = fresh();
         var z = fresh();
         return LAMBDA(x, LAMBDA(y, LAMBDA(z, APP(APP(x, z), APP(y, z)))));
       },
-      APP(S, x), function (matched) {
+      stack(S, x, []), function (matched) {
         var y = fresh();
         var z = fresh();
-        var tx = t(matched.x);
+        var tx = toLambda(matched.x);
         return LAMBDA(y, LAMBDA(z, APP(APP(tx, z), APP(y, z))));
       },
-      APP(APP(S, x), y), function (matched) {
+      stack(S, x, y, []), function (matched) {
         var z = fresh();
-        var tx = t(matched.x);
-        var ty = t(matched.y);
+        var tx = toLambda(matched.x);
+        var ty = toLambda(matched.y);
         return LAMBDA(z, APP(APP(tx, z), APP(ty, z)));
       },
-      APP(APP(APP(S, x), y), z), function (matched) {
-        var x = matched.x;
-        var y = matched.y;
-        var z = fresh();
-        var tz = t(matched.z);
-        var txy = t(APP(APP(x, z), APP(y, z)));  // FIXME infinite loop
-        return LET(z, tz, txy);
+      stack(S, x, y, VAR(name), tail), function (matched) {
+        // FIXME is this case really a simple appTree?
+        var z = VAR(matched.name);
+        var xz = APP(matched.x, z);
+        var yz = APP(matched.y, z);
+        var head = toLambda(APP(xz, yz));
+        var tail = argsToLambda(matched.tail);
+        return fromStack(stack(head, tail));
       },
-      J, function () {
+      stack(S, x, y, z, tail), function (matched) {
+        var z = fresh();
+        var tz = toLambda(matched.z);
+        var xz = APP(matched.x, z);
+        var yz = APP(matched.y, z);
+        var head = LET(z, tz, toLambda(APP(xz, yz)));
+        var tail = argsToLambda(matched.tail);
+        return fromStack(stack(head, tail));
+      },
+      stack(J, []), function () {
         var x = fresh();
         var y = fresh();
         return LAMBDA(x, LAMBDA(y, JOIN(x, y)));
       },
-      APP(J, x), function (matched) {
+      stack(J, x, []), function (matched) {
         var y = fresh();
-        var tx = t(matched.x);
+        var tx = toLambda(matched.x);
         return LAMBDA(y, JOIN(tx, y));
       },
-      APP(APP(J, x), y), function (matched) {
-        var tx = t(matched.x);
-        var ty = t(matched.y);
-        return JOIN(tx, ty);
+      stack(J, x, y, tail), function (matched) {
+        var tx = toLambda(matched.x);
+        var ty = toLambda(matched.y);
+        var head = JOIN(tx, ty);
+        var tail = argsToLambda(matched.tail);
+        return fromStack(stack(head, tail));
       },
-      // TODO R
-      APP(x, y), function (matched) {
-        // FIXME is this the right reduction order?
-        var tx = t(matched.x);
-        var ty = t(matched.y);
-        return APP(tx, ty);
+      stack(R, []), function () {
+        var x = fresh();
+        var y = fresh();
+        return LAMBDA(x, LAMBDA(y, RAND(x, y)));
       },
-      QUOTE(x), function (matched) {
-        return QUOTE(t(matched.x));
+      stack(R, x, []), function (matched) {
+        var y = fresh();
+        var tx = toLambda(matched.x);
+        return LAMBDA(y, RAND(tx, y));
+      },
+      stack(R, x, y, tail), function (matched) {
+        var tx = toLambda(matched.x);
+        var ty = toLambda(matched.y);
+        var head = RAND(tx, ty);
+        var tail = argsToLambda(matched.tail);
+        return fromStack(stack(head, tail));
+      },
+      stack(QUOTE(x), tail), function (matched) {
+        var head = QUOTE(toLambda(matched.x));
+        var tail = argsToLambda(matched.tail);
+        return fromStack(stack(head, tail));
+      },
+      stack(VAR(name), tail), function (matched) {
+        var head = VAR(matched.name);
+        var tail = argsToLambda(matched.tail);
+        return fromStack(stack(head, tail));
       }
     ]);
 
-    return function (simpleAppTree) {
+    var argsToLambda = pattern.match([
+      stack(x, y), function (matched) {
+        var rx = toLambda(matched.x);
+        var ry = argsToLambda(matched.y);
+        return stack(rx, ry);
+      },
+      [], function () {
+        return [];
+      }
+    ]);
+
+    var toLambda = function (simpleAppTree) {
       fresh.reset();
-      return t(simpleAppTree);
+      return stackToLambda(toStack(simpleAppTree));
     };
+
+    return toLambda;
   })();
 
   test('compiler.toLambda', function(){
     var a = VAR('a');
     var b = VAR('b');
     var c = VAR('c');
+    var x = VAR('x');
+    var y = VAR('y');
+    var z = VAR('z');
+    var xy = APP(x, y);  // just something that is not a variable
     var examples = [
+      [TOP, TOP],
+      [BOT, BOT],
       [I, LAMBDA(a, a)],
-      [K, LAMBDA(a, LAMBDA(b, a))]
+      [K, LAMBDA(a, LAMBDA(b, a))],
+      [APP(K, x), LAMBDA(a, x)],
+      [B, LAMBDA(a, LAMBDA(b, LAMBDA(c, APP(a, APP(b, c)))))],
+      [APP(B, x), LAMBDA(a, LAMBDA(b, APP(x, APP(a, b))))],
+      [APP(APP(B, x), y), LAMBDA(a, APP(x, APP(y, a)))],
+      [C, LAMBDA(a, LAMBDA(b, LAMBDA(c, APP(APP(a, c), b))))],
+      [APP(C, x), LAMBDA(a, LAMBDA(b, APP(APP(x, b), a)))],
+      [APP(APP(C, x), y), LAMBDA(a, APP(APP(x, a), y))],
+      [S, LAMBDA(a, LAMBDA(b, LAMBDA(c, APP(APP(a, c), APP(b, c)))))],
+      [APP(S, x), LAMBDA(a, LAMBDA(b, APP(APP(x, b), APP(a, b))))],
+      [APP(APP(S, x), y), LAMBDA(a, APP(APP(x, a), APP(y, a)))],
+      [APP(APP(APP(S, x), y), z), APP(APP(x, z), APP(y, z))],
+      [APP(APP(APP(S, x), y), xy), LET(a, xy, APP(APP(x, a), APP(y, a)))],
+      [APP(APP(APP(APP(S, x), y), z), I),
+       APP(APP(APP(x, z), APP(y, z)), LAMBDA(a, a))],
+      [J, LAMBDA(a, LAMBDA(b, JOIN(a, b)))],
+      [APP(J, x), LAMBDA(a, JOIN(x, a))],
+      [APP(APP(J, x), y), JOIN(x, y)],
+      [APP(APP(APP(J, x), y), I), APP(JOIN(x, y), LAMBDA(a, a))],
+      [R, LAMBDA(a, LAMBDA(b, RAND(a, b)))],
+      [APP(R, x), LAMBDA(a, RAND(x, a))],
+      [APP(APP(R, x), y), RAND(x, y)],
+      [APP(APP(APP(R, x), y), I), APP(RAND(x, y), LAMBDA(a, a))],
+      [QUOTE(I), QUOTE(LAMBDA(a, a))],
+      [APP(QUOTE(x), I), APP(QUOTE(x), LAMBDA(a, a))],
+      [VAR(x), VAR(x)],
+      [APP(VAR(x), I), APP(VAR(x), LAMBDA(a, a))],
     ];
     assert.forward(toLambda, examples);
   });
