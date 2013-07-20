@@ -82,7 +82,7 @@ function(log, test)
 
   var unify = function (patt, struct, matched) {
     if (isVariable(patt)) {
-      //matched = _.clone(matched);  // only needed when backtracking
+      matched = _.extend({}, matched);  // copy to allow backtracking
       matched[patt.name] = struct;
       return matched;
     } else if (_.isArray(patt) && _.isArray(struct)) {

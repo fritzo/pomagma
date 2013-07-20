@@ -8,6 +8,30 @@ function(log,   test,   pattern)
   var compiler = {};
 
   //--------------------------------------------------------------------------
+  // Testing
+
+  var assertForward = function (fwd, pairs) {
+    pairs.forEach(function(pair, lineno){
+      var errorMessage = 'Forward example ' + lineno;
+      assert.equal(fwd(pair[0]), pair[1], errorMessage);
+    });
+  };
+
+  var assertBackward = function (bwd, pairs) {
+    pairs.forEach(function(pair, lineno){
+      var errorMessage = 'Backward example ' + lineno;
+      assert.equal(bwd(pair[1]), pair[0], errorMessage);
+    });
+  };
+
+  var assertInverses = function (fwd, bwd, items) {
+    items.forEach(function(item, lineno){
+      var errorMessage = 'Inverse example ' + lineno;
+      assert.equal(bwd(fwd(item)), item, errorMessage);
+    });
+  };
+
+  //--------------------------------------------------------------------------
   // Parse
 
   var parse = compiler.parse = (function(){
@@ -74,18 +98,12 @@ function(log,   test,   pattern)
   })();
 
   test('ast.parse', function(){
-    var cases = [
+    var examples = [
       'VAR x',
       'QUOTE APP LAMBDA CURSOR VAR x VAR x HOLE',
       'LET VAR i LAMBDA VAR x VAR x APP VAR i VAR i',
     ];
-    for (var i = 0; i < cases.length; ++i) {
-      var string = cases[i];
-      log('Parsing ' + string);
-      var expr = parse(string);
-      var actualString = print(expr);
-      assert.equal(string, actualString);
-    }
+    assertInverses(parse, print, examples);
   });
 
   //--------------------------------------------------------------------------
@@ -98,8 +116,9 @@ function(log,   test,   pattern)
     if (arity == 0) {
       symbol = name;
     } else {
+      var errorMessage = name + '(...) called with wrong number of arguments';
       symbol = function () {
-        assert.equal(arguments.length, arity);
+        assert.equal(arguments.length, arity, errorMessage);
         return [name].concat(_.toArray(arguments));
       };
       symbol.name = name;
@@ -151,6 +170,77 @@ function(log,   test,   pattern)
     assert.equal(
       stack('x', 'y', 'z', []),
       STACK('x', STACK('y', STACK('z', []))));
+  });
+
+  //--------------------------------------------------------------------------
+  // Conversion : code <-> appTree
+
+  var toAppTree = (function(){
+    var x = pattern.variable('x');
+    var y = pattern.variable('y');
+    var t = pattern.match([
+      APP(x, y), function (matched) {
+        return APP(t(matched.x), t(matched.y));
+      },
+      COMP(x, y), function (matched) {
+        return APP(APP(B, t(matched.x)),  t(matched.y));
+      },
+      JOIN(x, y), function (matched) {
+        return APP(APP(J, t(matched.x)),  t(matched.y));
+      },
+      RAND(x, y), function (matched) {
+        return APP(APP(R, t(matched.x)),  t(matched.y));
+      },
+      QUOTE(x), function (matched) {
+        return QUOTE(t(matched.x));
+      },
+      x, function (matched) {
+        return matched.x;
+      }
+    ]);
+    return t;
+  })();
+
+  var fromAppTree = (function(){
+    var x = pattern.variable('x');
+    var y = pattern.variable('y');
+    var t = pattern.match([
+      APP(APP(B, x), y), function (matched) {
+        return COMP(t(matched.x), t(matched.y));
+      },
+      APP(APP(J, x), y), function (matched) {
+        return JOIN(t(matched.x), t(matched.y));
+      },
+      APP(APP(R, x), y), function (matched) {
+        return RAND(t(matched.x), t(matched.y));
+      },
+      APP(x, y), function (matched) {
+        return APP(t(matched.x), t(matched.y));
+      },
+      QUOTE(x), function (matched) {
+        return QUOTE(t(matched.x));
+      },
+      x, function (matched) {
+        return matched.x;
+      }
+    ]);
+    return t;
+  })();
+
+  test('compiler.toAppTree, compiler.fromAppTree', function(){
+    var x = VAR('x');
+    var y = VAR('y');
+    var z = VAR('z');
+    var examples = [
+      [APP(x, y), APP(x, y)],
+      [COMP(x, y), APP(APP(B, x), y)],
+      [JOIN(x, y), APP(APP(J, x), y)],
+      [RAND(x, y), APP(APP(R, x), y)],
+      [APP(COMP(x, y), COMP(y, z)), APP(APP(APP(B, x), y), APP(APP(B, y), z))],
+      [QUOTE(COMP(x, y)), QUOTE(APP(APP(B, x), y))]
+    ];
+    assertForward(toAppTree, examples);
+    assertBackward(fromAppTree, examples);
   });
 
   //--------------------------------------------------------------------------
@@ -222,16 +312,14 @@ function(log,   test,   pattern)
       [RAND(x, y), stack(R, x, y, [])],
       [APP(COMP(APP(K, x), y), z), stack(B, APP(K, x), y, z, [])]
     ];
-    examples.forEach(function(pair){
-      assert.equal(toStack(pair[0]), pair[1]);
-      assert.equal(fromStack(pair[1]), pair[0]);
-    });
+    assertForward(toStack, examples);
+    assertBackward(fromStack, examples);
   });
 
   //--------------------------------------------------------------------------
   // Simplify : appTree -(-> stack -> stack -)-> appTree
 
-  var simplify = (function(){
+  var simplify = compiler.simplify = (function(){
     var x = pattern.variable('x');
     var y = pattern.variable('y');
     var z = pattern.variable('z');
@@ -319,9 +407,7 @@ function(log,   test,   pattern)
       [APP(APP(APP(B, APP(K, x)), y), z), APP(x, z)],
       [APP(APP(B, APP(I, x)), APP(APP(K, y), z)), COMP(x, y)]
     ];
-    examples.forEach(function(pair){
-      assert.equal(simplify(pair[0]), pair[1]);
-    });
+    assertForward(simplify, examples);
   });
 
   //--------------------------------------------------------------------------
@@ -446,10 +532,75 @@ function(log,   test,   pattern)
       [I, LAMBDA(a, a)],
       [K, LAMBDA(a, LAMBDA(b, a))]
     ];
-    examples.forEach(function(pair){
-      assert.equal(decompile(pair[0]), pair[1]);
-    });
+    assertForward(decompile, examples);
   });
+
+  //--------------------------------------------------------------------------
+  // Convert pretty -> appTree
+
+  var compile = compiler.compile = (function(){
+    var x = pattern.variable('x');
+    var y = pattern.variable('y');
+    var z = pattern.variable('z');
+    var name = pattern.variable('name');
+
+    var abstract = (function(){
+      var notFound = {};
+      var abstract = pattern.match([
+        VAR(name), function (matched, varName) {
+          if (name == varName) {
+            return I;
+          } else {
+            return APP(K, VAR(matched.name));
+          }
+        },
+        APP(x, y), function (matched, varName) {
+          var ax = abstract(matched.x, varName);
+          var ay = abstract(matched.y, varName);
+          if (ax === notFound) {
+            if (ay === notFound) {
+              return notFound;
+            } else {
+              return COMP(matched.x, ay);
+            }
+          } else {
+            if (ay === notFound) {
+              return APP(APP(C, ax), matched.y);
+            } else {
+              return APP(APP(S, ax), ay);
+            }
+          }
+        },
+      ]);
+      return function (term, varname) {
+        var result = abstract(term, varname);
+        if (result === notFound) {
+          return term;
+        } else {
+          return result;
+        }
+      }
+    })();
+
+    var t = pattern.match([
+      APP(x, y), function (matched) {
+        return APP(t(matched.x), t(matched.y));
+      },
+      COMP(x, y), function (matched) {
+        return COMP(t(matched.x), t(matched.y));
+      },
+      JOIN(x, y), function (matched) {
+        return JOIN(t(matched.x), t(matched.y));
+      },
+      RAND(x, y), function (matched) {
+        return RAND(t(matched.x), t(matched.y));
+      },
+      x, function (matched) {
+        return matched.x;
+      }
+    ]);
+    return t;
+  })();
 
   return compiler;
 });
