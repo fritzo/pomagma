@@ -4,8 +4,8 @@
  * appTree is the lingua franca.
  */
 
-define(['log', 'test', 'pattern', 'memoized', 'symbols'],
-function(log,   test,   pattern,   memoized,   symbols)
+define(['log', 'test', 'pattern', 'symbols'],
+function(log,   test,   pattern,   symbols)
 {
   var compiler = {};
 
@@ -657,8 +657,7 @@ function(log,   test,   pattern,   memoized,   symbols)
     var y = pattern.variable('y');
     var notFound = {};
 
-    // TODO maybe replace memoized with _.memoize?
-    var curriedLambda = memoized(function (varName) {
+    var curriedLambda = _.memoize(function (varName) {
       var t = pattern.match([
         VAR(varName), function (matched) {
           return I;

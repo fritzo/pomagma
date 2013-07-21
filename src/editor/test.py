@@ -4,7 +4,7 @@ import multiprocessing
 import splinter
 import pomagma.editor.app
 
-TEST_COUNT = 24  # this must be updated every time tests are added
+TEST_COUNT = 23  # this must be updated every time tests are added
 
 PORT = pomagma.editor.app.PORT + 1
 server = None
