@@ -8,21 +8,34 @@ body {
 }
 
 .toolbar input,
+.toolbar button,
 pre {
     font-family: Consolas,'Liberation Mono','Courier New',Courier,monospace;
-    font-size: 12pt;
+    font-size: 10pt;
 }
 
-.toolbar input {
+.toolbar button {
+    float: right;
+    margin: 0px;
+    border: solid 0.2em gray;
+    border-radius: 1em;
+    padding-left:  0.3em;
+    padding-right: 0.3em;
+}
+.toolbar span {
+    display: block;
+    overflow: hidden;
+    padding: 0;
+}
+.toolbar span input {
     background-color: white;
     color: black;
     -webkit-box-sizing: border-box;
     -moz-box-sizing: border-box;
     box-sizing: border-box;
     width: 100%;
+    border: solid 0.2em gray;
     border-radius: 1em;
-    border: solid 0.2em;
-    border-color: #888;
     margin: 0;
     padding-left: 0.3em;
     padding-right: 0.3em;
