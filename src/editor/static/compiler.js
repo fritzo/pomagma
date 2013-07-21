@@ -657,6 +657,7 @@ function(log,   test,   pattern,   memoized,   symbols)
     var y = pattern.variable('y');
     var notFound = {};
 
+    // TODO maybe replace memoized with _.memoize?
     var curriedLambda = memoized(function (varName) {
       var t = pattern.match([
         VAR(varName), function (matched) {

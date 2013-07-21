@@ -17,11 +17,7 @@ function(log, test)
   };
 
   var isVariable = function (thing) {
-    if (thing && thing.constructor === Variable) {
-      return true;
-    } else {
-      return false;
-    }
+    return !!(thing && thing.constructor === Variable);
   };
 
   test('pattern.isVariable', function(){
@@ -41,11 +37,11 @@ function(log, test)
   var isPattern = (function(){
     var isPattern = function (patt, avoid) {
       if (isVariable(patt)) {
-        if (avoid[patt.name] === undefined) {
+        if (_.has(avoid, patt.name)) {
+          return false;
+        } else {
           avoid[patt.name] = null;
           return true;
-        } else {
-          return false;
         }
       } else if (_.isString(patt)) {
         return true;

@@ -5,11 +5,7 @@ function(test)
 
   var matcher = function (re) {
     return function (token) {
-      if (_.isString(token) && token.match(re)) {
-        return true;
-      } else {
-        return false;
-      }
+      return !!(_.isString(token) && token.match(re));
     };
   };
 

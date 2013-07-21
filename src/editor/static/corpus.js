@@ -187,9 +187,15 @@ function(log,   test,   symbols)
           assert(occurrencesName[id] === null, 'missing occurrence: ' + name);
         }
       }
+      log('corpus is valid');
     };
 
-    test('corpus valid', function(){ state.ready(state.validate); });
+    test.async('corpus.validate', function(done){
+      state.ready(function(){
+        state.validate();
+        done();
+      });
+    });
 
     state.findLine = function (id) {
       var line = lines[id];
