@@ -1,31 +1,44 @@
 
 body {
-  background-color: black;
-  color: white;
-  width:  100%;
-  height: 100%;
-  margin: 0px;
+    background-color: black;
+    color: white;
+    width:  100%;
+    height: 100%;
+    margin: 0px;
 }
 
-.toolbar textarea {
-    font-family: Courier,'Courier New','Nimbus Mono L',fixed,monospace;
+.toolbar input,
+pre {
+    font-family: Consolas,'Liberation Mono','Courier New',Courier,monospace;
+    font-size: 12pt;
+}
+
+.toolbar input {
     background-color: white;
     color: black;
     -webkit-box-sizing: border-box;
     -moz-box-sizing: border-box;
     box-sizing: border-box;
     width: 100%;
-    resize: none;
-    height: 1.8em;
-    overflow: hidden;
-    border-radius: 0.8em;
-    border-width: 2px;
-    border-color: #777;
+    border-radius: 1em;
+    border: solid 0.2em;
+    border-color: #888;
+    margin: 0;
+    padding-left: 0.3em;
+    padding-right: 0.3em;
+}
+.toolbar input:focus {
+    border-color: #fc7;
+}
+
+pre {
+    margin: 0.5em;
 }
 
 span.cursor {
-  background-color: gray;
+    background-color: gray;
 }
 span.keyword {
-  color: yellow;
+    color: #ccc;
+    font-weight: bold;
 }

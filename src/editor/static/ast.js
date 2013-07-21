@@ -90,7 +90,6 @@ function(log,   test)
   // Loading from tree format
 
   var load = ast.load = function (tree) {
-    assert(_.isArray(tree), 'bad tree: ' + tree);
     //log('DEBUG ' + JSON.stringify(tree));
     var symbol = tree[0];
     var ctor = constructors[symbol];
