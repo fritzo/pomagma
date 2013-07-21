@@ -1,5 +1,5 @@
-define(['log', 'test', 'compiler', 'ast'],
-function(log,   test,   compiler,   ast)
+define(['log', 'test', 'compiler', 'ast', 'corpus'],
+function(log,   test,   compiler,   ast,   corpus)
 {
   var editor = {};
 
@@ -20,7 +20,7 @@ function(log,   test,   compiler,   ast)
     }
   };
 
-  handle_keydown = function (event) {
+  handleKeydown = function (event) {
     console.log(event.which);
     switch (event.which) {
       // see http://www.javascripter.net/faq/keycodes.htm
@@ -73,7 +73,7 @@ function(log,   test,   compiler,   ast)
 
     var $code = editor.$code = $('#code');
     $code.focus(function(){
-      $(window).off('keydown').on('keydown', handle_keydown);
+      $(window).off('keydown').on('keydown', handleKeydown);
     });
     $code.blur(function(){
       $(window).off('keydown');

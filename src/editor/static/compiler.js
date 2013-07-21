@@ -4,13 +4,10 @@
  * appTree is the lingua franca.
  */
 
-define(['log', 'test', 'pattern', 'memoized'],
-function(log,   test,   pattern,   memoized)
+define(['log', 'test', 'pattern', 'memoized', 'symbols'],
+function(log,   test,   pattern,   memoized,   symbols)
 {
   var compiler = {};
-
-  //--------------------------------------------------------------------------
-  // Test Transforms
 
   //--------------------------------------------------------------------------
   // Parse
@@ -114,8 +111,15 @@ function(log,   test,   pattern,   memoized)
   var K = Symbol('K');
   var B = Symbol('B');
   var C = Symbol('C');
+  var CI = Symbol('CI');
+  var CB = Symbol('CB');
   var W = Symbol('W');
   var S = Symbol('S');
+  var Y = Symbol('Y');
+  var U = Symbol('U');
+  var V = Symbol('V');
+  var P = Symbol('P');
+  var A = Symbol('A');
   var J = Symbol('J');
   var R = Symbol('R');
   var HOLE = Symbol('HOLE');
@@ -124,6 +128,8 @@ function(log,   test,   pattern,   memoized)
   var ASSERT = Symbol('ASSERT', 1);
   var VAR = Symbol('VAR', 1, function(tokens){
     var name = tokens.pop();
+    // this assumes only definienda are ever parsed
+    //assert(symbols.isGlobal(name), 'bad global: ' + name);
     return ['VAR', name];
   });
   var APP = Symbol('APP', 2);
@@ -236,6 +242,12 @@ function(log,   test,   pattern,   memoized)
       },
       app(R, x, y), function (matched) {
         return RAND(t(matched.x), t(matched.y));
+      },
+      app(C, I), function () {
+        return CI;
+      },
+      app(C, B), function () {
+        return CB;
       },
       app(x, y), function (matched) {
         return app(t(matched.x), t(matched.y));
