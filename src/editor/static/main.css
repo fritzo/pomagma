@@ -7,11 +7,15 @@ body {
     margin: 0px;
 }
 
+pre,
+input {
+    font-family: Consolas,'Liberation Mono','Courier New',Courier,monospace;
+    font-size: 10pt;
+}
+
 #toolbar input {
     background-color: white;
     color: black;
-    font-family: Consolas,'Liberation Mono','Courier New',Courier,monospace;
-    font-size: 10pt;
     -webkit-box-sizing: border-box;
     -moz-box-sizing: border-box;
     box-sizing: border-box;
