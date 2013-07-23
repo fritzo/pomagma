@@ -39,8 +39,8 @@ def _load_line(line):
     assert isinstance(line, basestring)
     tokens = deque(line.split())
     head = tokens.popleft()
-    assert head in ['LET', 'ASSERT'], line
-    if head == 'LET':
+    assert head in ['DEFINE', 'ASSERT'], line
+    if head == 'DEFINE':
         name = tokens.popleft()
         assert IDENTIFIER_RE.match(name), name
         assert not KEYWORD_RE.match(name), name
@@ -56,7 +56,7 @@ def _dump_line(name, code):
     if name is not None:
         assert IDENTIFIER_RE.match(name), name
         assert not KEYWORD_RE.match(name), name
-        return 'LET {} {}'.format(name, code)
+        return 'DEFINE {} {}'.format(name, code)
     else:
         return 'ASSERT {}'.format(code)
 

@@ -34,6 +34,10 @@ AssertException.prototype.toString = function () {
 
 var assert = function (condition, message) {
   if (!condition) {
+
+   //console.log('ERROR ' + message);
+   //debugger;
+
     throw new AssertException(message);
   }
 };

@@ -4,7 +4,7 @@ function(log,   views)
 
 var ui = {};
 
-var handle_keydown = function (event) {
+var handleKeydown = function (event) {
   console.log(event.which);
   switch (event.which) {
     case 13: // enter
@@ -18,7 +18,7 @@ $(function(){
 
   var $query = ui.$query = $('#query');
   $query.focus(function(){
-    $(window).off('keydown').on('keydown', handle_keydown);
+    $(window).off('keydown').on('keydown', handleKeydown);
   });
   $query.blur(function(){
     $(window).off('keydown');

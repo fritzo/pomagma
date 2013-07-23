@@ -3,22 +3,18 @@ function( test,   corpus,   editor,   analyst,   ui)
 {
 
   var main = function () {
-    // TODO
+    editor.drawAllLines();
   };
 
   if (window.location.hash && window.location.hash.substr(1) === 'test') {
-
-    document.title = 'Pomagma Editor Test';
+    var oldTitle = document.title;
+    document.title = 'Test - ' + oldTitle;
     test.runAll(function(){
-          document.title = 'Pomagma Editor';
-          window.location.hash = '';
-          main();
-        });
-
+      document.title = oldTitle;
+      window.location.hash = '';
+      $(main);
+    });
   } else {
-
-    main();
-
+    $(main);
   }
-
 });

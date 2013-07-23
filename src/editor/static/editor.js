@@ -5,11 +5,9 @@ function(log,   test,   compiler,   ast,   corpus)
 
   var cursor;
 
-  editor.draw = function () {
-    var root = ast.getRoot(cursor);
-    var text = root.lines().join('\n');
-    $('#code').html(text);
-  };
+  var $code;
+  var $query;
+  var $go;
 
   editor.move = function (direction) {
     // log('move: ' + direction);
@@ -60,25 +58,29 @@ function(log,   test,   compiler,   ast,   corpus)
     }
   };
 
+  //$code.focus(function(){
+  //  $(window).off('keydown').on('keydown', handleKeydown);
+  //});
+  //$code.blur(function(){
+  //  $(window).off('keydown');
+  //});
+
+  editor.drawAllLines = function () {
+    var code = $('#code')[0];
+    corpus.findAllLines().forEach(function(id){
+      var line = corpus.findLine(id);
+      var tree = compiler.parseLine(line);
+      var cursor = ast.load(tree);
+      var root = ast.getRoot(cursor);
+      var text = ast.lines(root).join('\n');
+      $('<pre>').html(text).attr('id', id).appendTo(code);
+    });
+  };
+
   $(function(){
-
-    var start = [
-      'DEFINE VAR example',
-      'LET VAR test APP VAR this VAR test',
-      'LAMBDA QUOTE VAR this APP VAR is APP VAR a VAR test'
-      ].join(' ');
-    var tree = compiler.parse('CURSOR ' + start);
-    cursor = ast.load(tree);
-    editor.draw();
-
-    var $code = editor.$code = $('#code');
-    $code.focus(function(){
-      $(window).off('keydown').on('keydown', handleKeydown);
-    });
-    $code.blur(function(){
-      $(window).off('keydown');
-    });
-
+    editor.$code = $('#code');
+    editor.$query = $('#query');
+    editor.$query = $('#go');
   });
 
   return editor;

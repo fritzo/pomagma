@@ -202,7 +202,7 @@ function(log,   test,   symbols)
       return {
         name: line.name,
         code: line.code,
-        free: $.clone(line.free)
+        free: _.extend({}, line.free)
       };
     };
 
@@ -255,6 +255,8 @@ function(log,   test,   symbols)
 
   //--------------------------------------------------------------------------
   // change propagation
+
+  // TODO replace this sketch with backbone.js
 
   var sync = (function(){
     var sync = {};

@@ -7,29 +7,11 @@ body {
     margin: 0px;
 }
 
-.toolbar input,
-.toolbar button,
-pre {
-    font-family: Consolas,'Liberation Mono','Courier New',Courier,monospace;
-    font-size: 10pt;
-}
-
-.toolbar button {
-    float: right;
-    margin: 0px;
-    border: solid 0.2em gray;
-    border-radius: 1em;
-    padding-left:  0.3em;
-    padding-right: 0.3em;
-}
-.toolbar span {
-    display: block;
-    overflow: hidden;
-    padding: 0;
-}
-.toolbar span input {
+#toolbar input {
     background-color: white;
     color: black;
+    font-family: Consolas,'Liberation Mono','Courier New',Courier,monospace;
+    font-size: 10pt;
     -webkit-box-sizing: border-box;
     -moz-box-sizing: border-box;
     box-sizing: border-box;
@@ -40,7 +22,7 @@ pre {
     padding-left: 0.3em;
     padding-right: 0.3em;
 }
-.toolbar input:focus {
+#toolbar input:focus {
     border-color: #fc7;
 }
 

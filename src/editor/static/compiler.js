@@ -17,13 +17,19 @@ function(log,   test,   pattern,   symbols)
     var parseSymbol = {};
 
     var symbolParser = function (name, arity) {
-      return function (parser) {
-        var parsed = [name];
-        for (var i = 0; i < arity; ++i) {
-          parsed.push(parser.parse());
-        }
-        return parsed;
-      };
+      if (arity == 0) {
+        return function (parser) {
+          return name;
+        };
+      } else {
+        return function (parser) {
+          var parsed = [name];
+          for (var i = 0; i < arity; ++i) {
+            parsed.push(parser.parse());
+          }
+          return parsed;
+        };
+      }
     };
 
     var Parser = function (tokens) {
@@ -57,15 +63,29 @@ function(log,   test,   pattern,   symbols)
 
     return parse;
   })();
+
+  var parseLine = compiler.parseLine = function (line) {
+    var name = line.name;
+    var body = parse(line.code);
+    if (name !== null) {
+      return DEFINE(name, body);
+    } else {
+      return ASSERT(body);
+    }
+  };
   
   //--------------------------------------------------------------------------
   // Serialize
 
   var print = compiler.print = (function(){
     var pushTokens = function (tokens, expr) {
-      tokens.push(expr[0]);
-      for (var i = 1; i < expr.length; ++i) {
-        pushTokens(tokens, expr[i]);
+      if (_.isString(expr)) {
+        tokens.push(expr);
+      } else {
+        tokens.push(expr[0]);
+        for (var i = 1; i < expr.length; ++i) {
+          pushTokens(tokens, expr[i]);
+        }
       }
     };
     return function (expr) {
@@ -87,6 +107,7 @@ function(log,   test,   pattern,   symbols)
   //--------------------------------------------------------------------------
   // Symbols
 
+  var symbols = compiler.symbols = {};
   var Symbol = function (name, arity, parser) {
     arity = arity || 0;
     parse.declareSymbol(name, arity, parser);
@@ -100,8 +121,9 @@ function(log,   test,   pattern,   symbols)
         return [name].concat(_.toArray(arguments));
       };
       symbol.name = name;
+      symbol.arity = arity;
     }
-    //compiler[name] = symbol;
+    compiler.symbols[name] = symbol;
     return symbol;
   };
 
@@ -122,13 +144,15 @@ function(log,   test,   pattern,   symbols)
   var A = Symbol('A');
   var J = Symbol('J');
   var R = Symbol('R');
+  var QLESS = Symbol('QLESS');
+  var QNLESS = Symbol('QNLESS');
+  var QEQUAL = Symbol('QEQUAL');
   var HOLE = Symbol('HOLE');
   var QUOTE = Symbol('QUOTE', 1);
   var CURSOR = Symbol('CURSOR', 1);
   var ASSERT = Symbol('ASSERT', 1);
   var VAR = Symbol('VAR', 1, function(tokens){
     var name = tokens.pop();
-    // this assumes only definienda are ever parsed
     //assert(symbols.isGlobal(name), 'bad global: ' + name);
     return ['VAR', name];
   });
@@ -137,9 +161,17 @@ function(log,   test,   pattern,   symbols)
   var JOIN = Symbol('JOIN', 2);
   var RAND = Symbol('RAND', 2);
   var LAMBDA = Symbol('LAMBDA', 2);
-  var DEFINE = Symbol('DEFINE', 2);
+  var DEFINE = Symbol('DEFINE', 2, function(tokens){
+    var name = tokens.pop();  // now VAR(...) wrapper
+    var body = tokens.parse();
+    assert(symbols.isGlobal(name), 'bad global: ' + name);
+    return ['DEFINE', name, body];
+  });
   var STACK = Symbol('STACK', 2);
   var LET = Symbol('LET', 3);
+  var LESS = Symbol('LESS', 2);
+  var NLESS = Symbol('NLESS', 2);
+  var EQUAL = Symbol('EQUAL', 2);
 
   var app = function (term) {
     for (var i = 1; i < arguments.length; ++i) {
@@ -147,6 +179,12 @@ function(log,   test,   pattern,   symbols)
     }
     return term;
   };
+
+  test('compiler.app', function(){
+    assert.equal(
+      app('w', 'x', 'y', 'z'),
+      APP(APP(APP('w', 'x'), 'y'), 'z'));
+  });
 
   var stack = (function(){
     var pop = Array.prototype.pop;
@@ -164,6 +202,8 @@ function(log,   test,   pattern,   symbols)
       stack('x', 'y', 'z', []),
       STACK('x', STACK('y', STACK('z', []))));
   });
+
+  compiler.DEFINE = DEFINE;
 
   //--------------------------------------------------------------------------
   // Lingua Franca
@@ -223,6 +263,15 @@ function(log,   test,   pattern,   symbols)
       QUOTE(x), function (matched) {
         return QUOTE(t(matched.x));
       },
+      LESS(x, y), function (matched) {
+        return app(QLESS, QUOTE(matched.x), QUOTE(matched.y));
+      },
+      NLESS(x, y), function (matched) {
+        return app(QNLESS, QUOTE(matched.x), QUOTE(matched.y));
+      },
+      EQUAL(x, y), function (matched) {
+        return app(QEQUAL, QUOTE(matched.x), QUOTE(matched.y));
+      },
       x, function (matched) {
         return matched.x;
       }
@@ -249,6 +298,15 @@ function(log,   test,   pattern,   symbols)
       app(C, B), function () {
         return CB;
       },
+      app(QLESS, QUOTE(x), QUOTE(y)), function (matched) {
+        return LESS(matched.x, matched.y);
+      },
+      app(QNLESS, QUOTE(x), QUOTE(y)), function (matched) {
+        return NLESS(matched.x, matched.y);
+      },
+      app(QEQUAL, QUOTE(x), QUOTE(y)), function (matched) {
+        return EQUAL(matched.x, matched.y);
+      },
       app(x, y), function (matched) {
         return app(t(matched.x), t(matched.y));
       },
@@ -271,6 +329,9 @@ function(log,   test,   pattern,   symbols)
       [COMP(x, y), app(B, x, y)],
       [JOIN(x, y), app(J, x, y)],
       [RAND(x, y), app(R, x, y)],
+      [LESS(x, y), app(QLESS, QUOTE(x), QUOTE(y))],
+      [NLESS(x, y), app(QNLESS, QUOTE(x), QUOTE(y))],
+      [EQUAL(x, y), app(QEQUAL, QUOTE(x), QUOTE(y))],
       [app(COMP(x, y), COMP(y, z)), app(B, x, y, app(B, y, z))],
       [QUOTE(COMP(x, y)), QUOTE(app(B, x, y))]
     ];

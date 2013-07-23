@@ -1,302 +1,259 @@
 /** 
- * LAMBDA syntax trees
- *
- *   expr ::= var
- *          | QUOTE expr
- *          | LET patt expr expr
- *            # allows recursion when fv(patt) appear in first expr
- *          | LAMBDA patt expr
- *          | APP expr expr
- *          | JOIN expr expr
- *          | COMP expr expr
- *          | BOX expr
- *          | HOLE
- *          | CURSOR expr
- *
- *   patt ::= var
- *          | QUOTE patt
- *          | BOX patt
- *          | TYPE patt expr
- *          | CURSOR patt
+ * abstract syntax trees with crosslinks for constant time traversal
  */
 
-define(['log', 'test'],
-function(log,   test)
+define(['log', 'test', 'compiler'],
+function(log,   test,   compiler)
 {
   var ast = {};
 
-  //--------------------------------------------------------------------------
-  // Construction
+  var loadSymbol = {};
+  var dumpSymbol = {};
 
-  var constructors = {};
-  var Constructor = function (fun) {
-    constructors[fun.name] = fun;
-    return fun;
-  };
-
-  var HOLE = Constructor(function HOLE () {
-    this.below = [];
-    this.above = null;
-  });
-
-  var VAR = Constructor(function VAR (name) {
-    this.name = name;
-    this.below = [];
-    this.above = null;
-  });
-
-  var DEFINE = Constructor(function DEFINE (patt, defn) {
-    this.below = [patt, defn];
-    this.above = null;
-    patt.above = this;
-    defn.above = this;
-  });
-
-  var LET = Constructor(function LET (patt, defn, body) {
-    this.below = [patt, defn, body];
-    this.above = null;
-    patt.above = this;
-    defn.above = this;
-    body.above = this;
-  });
-
-  var LAMBDA = Constructor(function LAMBDA (patt, body) {
-    this.below = [patt, body];
-    this.above = null;
-    patt.above = this;
-    body.above = this;
-  });
-
-  var APP = Constructor(function APP (fun, arg) {
-    this.below = [fun, arg];
-    this.above = null;
-    fun.above = this;
-    arg.above = this;
-  });
-
-  var QUOTE = Constructor(function QUOTE (body) {
-    this.below = [body];
-    this.above = null;
-    body.above = this;
-  });
-
-  var CURSOR = Constructor(function CURSOR (body) {
-    this.below = [body];
-    this.above = null;
-    body.above = this;
-  });
-
-  //--------------------------------------------------------------------------
-  // Loading from tree format
-
-  var load = ast.load = function (tree) {
-    //log('DEBUG ' + JSON.stringify(tree));
-    var symbol = tree[0];
-    var ctor = constructors[symbol];
-    assert(ctor !== undefined, 'unrecognized symbol: ' + symbol);
-    var args = [];
-    if (symbol === 'VAR') {
-      args = [tree[1]];
+  var load = ast.load = function (flat) {
+    if (_.isString(flat)) {
+      return loadSymbol[flat]();
     } else {
-      for (var i = 1; i < tree.length; ++i) {
-        args.push(load(tree[i]));
-      }
+      return loadSymbol[flat[0]](flat);
     }
-    assert(args.length <= 3, 'arity not implemented: ' + args.length);
-    return new ctor(args[0], args[1], args[2]);
   };
 
-  test('ast.load', function(){
-    var cases = [
-      ['VAR', 'x'],
-      ['QUOTE',
-        ['APP',
-          ['LAMBDA', ['CURSOR', ['VAR', 'x']], ['VAR', 'x']],
-          ['HOLE']]],
-      ['LET',
-        ['VAR', 'i'],
-        ['LAMBDA', ['VAR', 'x'], ['VAR', 'x']],
-        ['APP', ['VAR', 'i'], ['VAR', 'i']]],
-    ];
-    for (var i = 0; i < cases.length; ++i) {
-      var string = cases[i];
-      log('Loading ' + string);
-      var expr = load(string);
-      var polish = expr.dump();
-      assert.equal(string, polish);
+  var dump = ast.dump = function (indexed) {
+    return dumpSymbol[indexed.name](indexed);
+  };
+
+  _.each(compiler.symbols, function(symbol, name){
+    if (_.isString(symbol)) {
+      loadSymbol[name] = function () {
+        return {
+          name: name,
+          below: [],
+          above: null
+        };
+      };
+      dumpSymbol[name] = function (indexed) {
+        return indexed.name;
+      };
+    } else {
+      var arity = symbol.arity;
+      loadSymbol[name] = function (flat) {
+        assert(flat !== undefined);
+        assert.equal(flat.length, 1 + arity, name);
+        var indexed = {
+          name: name,
+          below: [],
+          above: null
+        };
+        for (var i = 1; i <= arity; ++i) {
+          var below = load(flat[i]);
+          indexed.below.push(below);
+          below.above = indexed;
+        }
+        return indexed;
+      };
+      dumpSymbol[name] = function (indexed) {
+        var below = indexed.below;
+        var flat = [indexed.name];
+        for (var i = 0; i < arity; ++i) {
+          flat.push(dump(below[i]));
+        }
+        return flat;
+      };
     }
   });
 
-  //--------------------------------------------------------------------------
-  // Dumping to tree format
-
-  HOLE.prototype.dump = function () {
-    return ['HOLE'];
+  // special case: VAR
+  loadSymbol['VAR'] = function (flat) {
+    return {
+      name: 'VAR',
+      varName: flat[1],
+      below: [],
+      above: null
+    };
+  };
+  dumpSymbol['VAR'] = function (indexed) {
+    return ['VAR', indexed.varName];
   };
 
-  VAR.prototype.dump = function () {
-    return ['VAR', this.name];
+  // special case: DEFINE
+  loadSymbol['DEFINE'] = function (flat) {
+    return {
+      name: 'DEFINE',
+      varName: flat[1],
+      below: [flat[2]],
+      above: null
+    };
+  };
+  dumpSymbol['DEFINE'] = function (indexed) {
+    return ['DEFINE', indexed.varName, indexed.below[0]];
   };
 
-  DEFINE.prototype.dump = function () {
-    var patt = this.below[0];
-    var defn = this.below[1];
-    return ['DEFINE', patt.dump(), defn.dump()];
-  };
+  // special case: LET
+  //
+  //loadSymbol['LET'] = function (flat) {
+  //  return {
+  //    name: 'LET',
+  //    binds: flat[0],
+  //    below: [flat[1]],
+  //    above: null
+  //  };
+  //};
+  //
+  //dumpSymbol['LET'] = function (indexed) {
+  //  return ['LET', indexed.binds, indexed.below[0]];
+  //};
 
-  LET.prototype.dump = function () {
-    var patt = this.below[0];
-    var defn = this.below[1];
-    var body = this.below[2];
-    return ['LET', patt.dump(), defn.dump(), body.dump()];
-  };
-
-  LAMBDA.prototype.dump = function () {
-    var patt = this.below[0];
-    var body = this.below[1];
-    return ['LAMBDA', patt.dump(), body.dump()];
-  };
-
-  APP.prototype.dump = function () {
-    var fun = this.below[0];
-    var arg = this.below[1];
-    return ['APP', fun.dump(), arg.dump()];
-  };
-
-  QUOTE.prototype.dump = function () {
-    var body = this.below[0];
-    return ['QUOTE', body.dump()];
-  };
-
-  CURSOR.prototype.dump = function () {
-    var body = this.below[0];
-    return ['CURSOR', body.dump()];
-  };
+  test('ast.load, ast.dmup', function(){
+    var examples = [
+      'VAR x',
+      'QUOTE APP LAMBDA CURSOR VAR x VAR x HOLE',
+      'LET VAR i LAMBDA VAR x VAR x APP VAR i VAR i'
+    ];
+    for (var i = 0; i < examples.length; ++i) {
+      var lineno = 1 + i;
+      var string = examples[i];
+      var flat = compiler.parse(string);
+      var indexed = load(flat);
+      var flat2 = dump(indexed);
+      assert.equal(flat2, flat, 'Example ' + lineno);
+    }
+  });
 
   //--------------------------------------------------------------------------
   // CURSOR movement
 
-  CURSOR.prototype.remove = function () {
-    var above = this.above;
-    this.below[0].above = above;
+  ast.cursor = {};
+
+  var remove = ast.cursor.remove = function (cursor) {
+    var above = cursor.above;
+    cursor.below[0].above = above;
     if (above) {
-      var pos = above.below.indexOf(this);
-      above.below[pos] = this.below[0];
+      var pos = above.below.indexOf(cursor);
+      above.below[pos] = cursor.below[0];
       return pos;
     }
   };
 
-  CURSOR.prototype.insertBelow = function (above, pos) {
+  var insertBelow = ast.cursor.insertBelow = function (cursor, above, pos) {
     var below = above.below[pos];
-    above.below[pos] = this;
-    this.above = above;
-    below.above = this;
-    this.below[0] = below;
+    above.below[pos] = cursor;
+    cursor.above = above;
+    below.above = cursor;
+    cursor.below[0] = below;
   };
 
-  CURSOR.prototype.insertAbove = function (below) {
-    this.below[0] = below;
+  var insertAbove = ast.cursor.insertAbove = function (cursor, below) {
+    cursor.below[0] = below;
     var above = below.above;
-    below.above = this;
-    this.above = above;
+    below.above = cursor;
+    cursor.above = above;
     if (above !== null) {
       var pos = above.below.indexOf(below);
-      above.below.below[pos] = this;
+      above.below.below[pos] = cursor;
     }
   };
 
-  CURSOR.prototype.tryMoveDown = function () {
-    var pivot = this.below[0];
+  var tryMoveDown = ast.cursor.tryMoveDown = function (cursor) {
+    var pivot = cursor.below[0];
     if (pivot.below.length === 0) {
       return false;
     } else {
-      this.remove();
-      this.insertBelow(pivot, 0);
+      ast.cursor.remove(cursor);
+      insertBelow(cursor, pivot, 0);
       return true;
     }
   };
 
-  CURSOR.prototype.tryMoveUp = function () {
-    var pivot = this.above;
+  var tryMoveUp = ast.cursor.tryMoveUp = function (cursor) {
+    var pivot = cursor.above;
     if (pivot === null) {
       return false;
     } else {
-      this.remove();
+      ast.cursor.remove(cursor);
       var above = pivot.above;
       if (above === null) {
-        this.insertAbove(pivot);
+        insertAbove(cursor, pivot);
       } else {
         var pos = above.below.indexOf(pivot);
-        this.insertBelow(above, pos);
+        insertBelow(cursor, above, pos);
       }
       return true;
     }
   };
 
-  CURSOR.prototype.tryMoveSideways = function (direction) {
-    var pivot = this.above;
+  var tryMoveSideways = ast.cursor.tryMoveSideways = function (cursor, direction) {
+    var pivot = cursor.above;
     if ((pivot === null) || (pivot.below.length === 1)) {
       return false;
     } else {
-      var pos = this.remove();
+      var pos = ast.cursor.remove(cursor);
       pos = (pos + direction + pivot.below.length) % pivot.below.length;
-      this.insertBelow(pivot, pos);
+      insertBelow(cursor, pivot, pos);
       return true;
     }
   };
 
-  CURSOR.prototype.tryMoveLeft = function () {
-    return this.tryMoveSideways(-1);
+  var tryMoveLeft = ast.cursor.tryMoveLeft = function (cursor) {
+    return tryMoveSideways(cursor, -1);
   };
 
-  CURSOR.prototype.tryMoveRight = function () {
-    return this.tryMoveSideways(+1);
+  var tryMoveRight = ast.cursor.tryMoveRight = function (cursor) {
+    return tryMoveSideways(cursor, +1);
   };
 
-  CURSOR.prototype.tryMove = function (direction) {
+  var tryMove = ast.cursor.tryMove = function (cursor, direction) {
     switch (direction) {
-      case 'U': return this.tryMoveUp();
-      case 'L': return this.tryMoveLeft(); // || this.tryMoveUp();
-      case 'D': return this.tryMoveDown(); // || this.tryMoveRight();
-      case 'R': return this.tryMoveRight(); // || this.tryMoveDown();
+      case 'U': return tryMoveUp(cursor);
+      case 'L': return tryMoveLeft(cursor); // || cursor.tryMoveUp();
+      case 'D': return tryMoveDown(cursor); // || cursor.tryMoveRight();
+      case 'R': return tryMoveRight(cursor); // || cursor.tryMoveDown();
     }
   };
 
-  test('ast.CURSOR movement', function(){
-    var tree = ['LAMBDA',
-      ['QUOTE', ['VAR', 'this']],
-      ['APP', ['VAR', 'is'], ['APP', ['VAR', 'a'], ['VAR', 'test']]]];
-    log('Traversing ' + JSON.stringify(tree))
-    var expr = load(tree);
-    var cursor = new CURSOR(expr);
+  test('ast.cursor movement', function(){
+    var string = 'CURSOR LAMBDA QUOTE VAR cursor APP VAR is APP VAR a VAR test';
+    var flat = compiler.parse(string);
+    var cursor = load(flat);
     var path =  'UDDDLRULDRDLDUUUU';
     var trace = '01100011111101110';
     for (var i = 0; i < path.length; ++i) {
-      assert.equal(cursor.tryMove(path[i]), Boolean(parseInt(trace[i])));
+      assert.equal(ast.cursor.tryMove(cursor, path[i]), !!parseInt(trace[i]));
     }
   });
 
-  ast.getRoot = function (expr) {
-    while (expr.above !== null) {
-      expr = expr.above;
+  ast.getRoot = function (indexed) {
+    while (indexed.above !== null) {
+      indexed = indexed.above;
     }
-    return expr;
+    return indexed;
   };
 
   //--------------------------------------------------------------------------
   // Pretty printing
 
-  var KEYWORDS = {
-    'let': '<span class=keyword>let</span>',
-    '=': '<span class=keyword>=</span>',
-    'in': '<span class=keyword>in</span>',
-    'fun': '<span class=keyword>fun</span>'
-  };
+  var KEYWORDS = (function(){
+    var keywords = {
+      'let': 'let',
+      '=': '=',
+      'in': 'in',
+      'fun': 'fun'
+    };
+    for (var key in keywords) {
+      keywords[key] = '<span class=keyword>' + keywords[key] + '</span>';
+    }
+    return keywords;
+  })();
 
   var indent = function (line) {
     return '    ' + line;
   };
 
+  ast.lines = function (indexed) {
+    // TODO actually pretty print
+    return [compiler.print(dump(indexed))];
+  };
+
+  /*
   HOLE.prototype.lines = function () {
     return ['?'];
   };
@@ -372,21 +329,24 @@ function(log,   test)
     bodyLines[end] = bodyLines[end] + '</span>';
     return bodyLines;
   };
+  */
 
   //--------------------------------------------------------------------------
   // Transformations
 
+  /*
   HOLE.prototype.transform = {
     VAR: function (cursor) {
       TODO();
     }
   };
-
+  
   VAR.transform = {
     HOLE: function (cursor) {
       TODO();
     }
   };
+  */
 
   return ast;
 });
