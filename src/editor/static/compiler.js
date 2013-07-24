@@ -248,6 +248,12 @@ function(log,   test,   pattern,   symbols)
     var x = pattern.variable('x');
     var y = pattern.variable('y');
     var t = pattern.match([
+      CI, function () {
+        return APP(C, I);
+      },
+      CB, function () {
+        return APP(C, I);
+      },
       APP(x, y), function (matched) {
         return APP(t(matched.x), t(matched.y));
       },
@@ -264,13 +270,13 @@ function(log,   test,   pattern,   symbols)
         return QUOTE(t(matched.x));
       },
       LESS(x, y), function (matched) {
-        return app(QLESS, QUOTE(matched.x), QUOTE(matched.y));
+        return app(QLESS, QUOTE(t(matched.x)), QUOTE(t(matched.y)));
       },
       NLESS(x, y), function (matched) {
-        return app(QNLESS, QUOTE(matched.x), QUOTE(matched.y));
+        return app(QNLESS, QUOTE(t(matched.x)), QUOTE(t(matched.y)));
       },
       EQUAL(x, y), function (matched) {
-        return app(QEQUAL, QUOTE(matched.x), QUOTE(matched.y));
+        return app(QEQUAL, QUOTE(t(matched.x)), QUOTE(t(matched.y)));
       },
       ASSERT(x), function (matched) {
         return ASSERT(t(matched.x));
@@ -925,19 +931,6 @@ function(log,   test,   pattern,   symbols)
   // Render : lambda -> html
 
   var render = compiler.render = (function(){
-    var indent = function (lines) {
-      for (var i = 0; i < lines.length; ++i) {
-        lines[i] = '    ' + lines[i];
-      }
-      return lines;
-    };
-    var bracket = function (left, lines, right) {
-      var e = lines.length - 1;
-      lines[0] = left + lines[0];
-      lines[e] = lines[e] + right;
-      return lines;
-    };
-    var push = Array.prototype.push;
 
     var x = pattern.variable('x');
     var y = pattern.variable('y');
@@ -960,115 +953,56 @@ function(log,   test,   pattern,   symbols)
 
     var render = pattern.match([
       HOLE, function () {
-        return ['?'];
+        return '?';
       },
       VAR(name), function (matched) {
-        return [matched.name];
+        return matched.name;
       },
-      //app(QEQUAL, QUOTE(x), QUOTE(y)), function (matched) {
-      //  var x = render(matched.x);
-      //  var y = render(matched.y);
-      //  if (x.length === 1 && y.length === 1) {
-      //    return '{' + x[0] + ' = ' + y[0] + '}';
-      //  } else {
-      //    var lines = x;
-      //    lines.push('=');
-      //    push.apply(lines, indent(y));
-      //    return bracket('{', lines, '}');
-      //  }
-      //},
+      app(QEQUAL, QUOTE(x), QUOTE(y)), function (matched) {
+        var x = render(matched.x);
+        var y = render(matched.y);
+        return '{' + x + ' = ' + y + '}';
+      },
       APP(x, y), function (matched) {
         var x = render(matched.x);
         var y = render(matched.y);
-        var lines;
-        if (x.length === 1) {
-          lines = x;
-        } else {
-          lines = indent(x);
-        }
-        push.apply(lines, y);
-        return lines;
+        return x + '(' + y + ')';
       },
       JOIN(x, y), function (matched) {
         var x = render(matched.x);
         var y = render(matched.y);
-        var lines = bracket('<span class=keyword>join</span> (', x, ')');
-        push.apply(lines, y);
-        return lines;
+        return '(' + x + '|' + y + ')';
       },
       LAMBDA(x, y), function (matched) {
         var x = render(matched.x);
         var y = render(matched.y);
-        var lines = bracket('<span class=keyword>fun</span> ', x, '');
-        push.apply(lines, y);
-        return lines;
+        return '&#955;' + x + '.' + y;
       },
       LET(x, y, z), function (matched) {
         var x = render(matched.x);
         var y = render(matched.y);
         var z = render(matched.z);
-        var lines = bracket('<span class=keyword>let</span> ', x, ' =');
-        if (y.length == 1) {
-          lines[0] += ' ' + y[0];
-        } else {
-          push.apply(lines, indent(y));
-        }
-        lines.push(lines.pop() + '.');
-        push.apply(lines, z);
-        return lines;
+        return x + ':=(' + y + ').' + z;
       },
       DEFINE(name, x), function (matched) {
-        var lines = ['<span class=keyword>define</span> ' + matched.name];
-        var x = render(matched.x);
-        if (x.length === 1) {
-          lines[0] += ' ' + x[0];
-        } else {
-          push.apply(lines, indent(x));
-        }
-        return lines;
+        return 'define ' + matched.name + ' ' + render(matched.x);
       },
       ASSERT(x), function (matched) {
-        var lines = ['<span class=keyword>assert</span>'];
-        var x = render(matched.x);
-        if (x.length === 1) {
-          lines[0] += ' ' + x[0];
-        } else {
-          push.apply(lines, indent(x));
-        }
-        return lines;
+        return 'assert ' + render(matched.x);
       },
       QUOTE(x), function (matched) {
-        var lines = render(matched.x);
-        var e = lines.length - 1;
-        if (e === 0) {
-          lines[0] = '{' + lines[0];
-        } else if (lines.length === 1) {
-          lines[0] = '&#9136;' + lines[0];
-          lines[1] = '&#9137;' + lines[1];
-        } else {
-          lines[0] = '&#9127;' + lines[0];
-          lines[1] = '&#9128;' + lines[1];
-          lines[e] = '&#9129;' + lines[e];
-          for (var i = 2; i < e; ++i) {
-            lines[i] = '&#9130;' + lines[i];
-          }
-        }
-        return lines;
+        return '{' + render(matched.x) + '}';
       },
       CURSOR(x), function (matched) {
         var lines = render(matched.x);
         return bracket('<span class=cursor>', lines, '</span>');
       },
       x, function (matched) {
-        var line = matched.x;
-        return [line];
+        return matched.x;
       }
     ]);
 
-    return function (term) {
-      var lines = render(term);
-      return lines.join('<br />');
-    };
+    return render;
   })();
 
   return compiler;
