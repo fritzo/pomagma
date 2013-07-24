@@ -931,6 +931,8 @@ function(log,   test,   pattern,   symbols)
 
   //--------------------------------------------------------------------------
   // Render : lambda -> html
+  //
+  // see http://www.fileformat.info/info/unicode/category/Sm/list.htm
 
   var render = compiler.render = (function(){
 
@@ -955,8 +957,20 @@ function(log,   test,   pattern,   symbols)
       HOLE, function () {
         return '?';
       },
+      TOP, function () {
+        return '&#8868';
+      },
+      BOT, function () {
+        return '&#8869';
+      },
       VAR(name), function (m) {
         return m.name;
+      },
+      app(QLESS, QUOTE(x), QUOTE(y)), function (m) {
+        return '{' + t(m.x) + ' &#8849; ' + t(m.y) + '}';
+      },
+      app(QNLESS, QUOTE(x), QUOTE(y)), function (m) {
+        return '{' + t(m.x) + ' &#8930; ' + t(m.y) + '}';
       },
       app(QEQUAL, QUOTE(x), QUOTE(y)), function (m) {
         return '{' + t(m.x) + ' = ' + t(m.y) + '}';
