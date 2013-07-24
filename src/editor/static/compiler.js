@@ -272,6 +272,12 @@ function(log,   test,   pattern,   symbols)
       EQUAL(x, y), function (matched) {
         return app(QEQUAL, QUOTE(matched.x), QUOTE(matched.y));
       },
+      ASSERT(x), function (matched) {
+        return ASSERT(t(matched.x));
+      },
+      DEFINE(x, y), function (matched) {
+        return DEFINE(matched.x, t(matched.y));
+      },
       x, function (matched) {
         return matched.x;
       }
@@ -312,6 +318,12 @@ function(log,   test,   pattern,   symbols)
       },
       QUOTE(x), function (matched) {
         return QUOTE(t(matched.x));
+      },
+      ASSERT(x), function (matched) {
+        return ASSERT(t(matched.x));
+      },
+      DEFINE(x, y), function (matched) {
+        return DEFINE(matched.x, t(matched.y));
       },
       x, function (matched) {
         return matched.x;
@@ -505,7 +517,7 @@ function(log,   test,   pattern,   symbols)
   //--------------------------------------------------------------------------
   // Convert : simple appTree -> lambda
 
-  var toLambda = compiler.decomple = (function(){
+  var toLambda = compiler.toLambda = (function(){
 
     var fresh = (function(){
       var alphabet = 'abcdefghijklmnopqrstuvwxyz';
@@ -528,6 +540,7 @@ function(log,   test,   pattern,   symbols)
     var x = pattern.variable('x');
     var y = pattern.variable('y');
     var z = pattern.variable('z');
+    var head = pattern.variable('head');
     var tail = pattern.variable('tail');
     var name = pattern.variable('name');
 
@@ -679,13 +692,32 @@ function(log,   test,   pattern,   symbols)
         var tail = argsToLambda(matched.tail);
         return fromStack(stack(head, tail));
       },
+      stack(VAR(name), tail), function (matched) {
+        var head = VAR(matched.name);
+        var tail = argsToLambda(matched.tail);
+        return fromStack(stack(head, tail));
+      },
       stack(QUOTE(x), tail), function (matched) {
         var head = QUOTE(toLambda(matched.x));
         var tail = argsToLambda(matched.tail);
         return fromStack(stack(head, tail));
       },
-      stack(VAR(name), tail), function (matched) {
-        var head = VAR(matched.name);
+      //stack(QEQUAL, QUOTE(x), QUOTE(y), tail), function (matched) {
+      //  var head = EQUAL(toLambda(matched.x), toLambda(matched.y));
+      //  var tail = argsToLambda(matched.tail);
+      //  return fromStack(stack(head, tail));
+      //},
+      stack(DEFINE(name, x), []), function (matched) {
+        var x = toLambda(matched.x);
+        return DEFINE(matched.name, x);
+      },
+      stack(ASSERT(x), []), function (matched) {
+        var x = toLambda(matched.x);
+        return ASSERT(x);
+      },
+      stack(head, tail), function (matched) {
+        var head = matched.head;
+        assert(_.isString(head), 'unmatched stack head: ' + head);
         var tail = argsToLambda(matched.tail);
         return fromStack(stack(head, tail));
       }
@@ -888,6 +920,137 @@ function(log,   test,   pattern,   symbols)
     ];
     assert.forward(fromLambda, examples);
   });
+
+  //--------------------------------------------------------------------------
+  // Render : lambda -> html
+
+  var render = compiler.render = (function(){
+    var indent = function (lines) {
+      for (var i = 0; i < lines.length; ++i) {
+        lines[i] = '    ' + lines[i];
+      }
+      return lines;
+    };
+    var bracket = function (left, lines, right) {
+      var e = lines.length - 1;
+      lines[0] = left + lines[0];
+      lines[e] = lines[e] + right;
+      return lines;
+    };
+    var push = Array.prototype.push;
+
+    var x = pattern.variable('x');
+    var y = pattern.variable('y');
+    var z = pattern.variable('z');
+    var name = pattern.variable('name');
+
+    var renderPattern = pattern.match([
+      VAR(name), function (matched) {
+        return matched.name;
+      },
+      QUOTE(x), function (matched) {
+        var line = renderPattern(matched.x);
+        return '{' + line + '}';
+      },
+      CURSOR(x), function (matched) {
+        var line = renderPattern(matched.x);
+        return '<span class=cursor>' + line + '</span>';
+      }
+    ]);
+
+    var render = pattern.match([
+      HOLE, function () {
+        return ['?'];
+      },
+      VAR(name), function (matched) {
+        return [matched.name];
+      },
+      app(QEQUAL, QUOTE(x), QUOTE(y)), function (matched) {
+        var x = render(matched.x);
+        var y = render(matched.y);
+        if (x.length === 1 && y.length === 1) {
+          return '{' + x[0] + ' = ' + y[0] + '}';
+        } else {
+          var lines = x;
+          lines.push('=');
+          push.apply(lines, indent(y));
+          return bracket('{', lines, '}');
+        }
+      },
+      APP(x, y), function (matched) {
+        var x = render(matched.x);
+        var y = render(matched.y);
+        var lines = bracket('<span class=keyword>apply</span> (', x, ')');
+        push.apply(lines, y);
+        return lines;
+      },
+      JOIN(x, y), function (matched) {
+        var x = render(matched.x);
+        var y = render(matched.y);
+        var lines = bracket('<span class=keyword>join</span> (', x, ')');
+        push.apply(lines, y);
+        return lines;
+      },
+      LAMBDA(x, y), function (matched) {
+        var x = render(matched.x);
+        var y = render(matched.y);
+        var lines = bracket('<span class=keyword>fun</span> ', x, '');
+        push.apply(lines, y);
+        return lines;
+      },
+      LET(x, y, z), function (matched) {
+        var x = render(matched.x);
+        var y = render(matched.y);
+        var z = render(matched.z);
+        var lines = bracket('<span class=keyword>let</span> ', x, ' =');
+        if (y.length == 1) {
+          lines[0] += ' ' + y[0];
+        } else {
+          push.apply(lines, indent(y));
+        }
+        lines.push(lines.pop() + '.');
+        push.apply(lines, z);
+        return lines;
+      },
+      DEFINE(name, x), function (matched) {
+        var lines = ['<span class=keyword>define</span> ' + matched.name];
+        var x = render(matched.x);
+        if (x.length === 1) {
+          lines[0] += ' ' + x[0];
+        } else {
+          push.apply(lines, indent(x));
+        }
+        return lines;
+      },
+      ASSERT(x), function (matched) {
+        var lines = ['<span class=keyword>assert</span>'];
+        var x = render(matched.x);
+        if (x.length === 1) {
+          lines[0] += ' ' + x[0];
+        } else {
+          push.apply(lines, indent(x));
+        }
+        return lines;
+      },
+      QUOTE(x), function (matched) {
+        var lines = render(matched.x);
+        return bracket('{', lines, '}');
+      },
+      CURSOR(x), function (matched) {
+        var lines = render(matched.x);
+        return bracket('<span class=cursor>', lines, '</span>');
+      },
+      x, function (matched) {
+        var line = matched.x;
+        return [line];
+      }
+    ]);
+
+    return function (term) {
+      var lines = render(term);
+      return lines.join('<br />');
+    };
+  })();
 
   return compiler;
 });

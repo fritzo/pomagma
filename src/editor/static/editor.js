@@ -66,21 +66,26 @@ function(log,   test,   compiler,   ast,   corpus)
   //});
 
   editor.drawAllLines = function () {
-    var code = $('#code')[0];
+    var div = $('#code')[0];
     corpus.findAllLines().forEach(function(id){
       var line = corpus.findLine(id);
-      var tree = compiler.parseLine(line);
-      var cursor = ast.load(tree);
-      var root = ast.getRoot(cursor);
-      var text = ast.lines(root).join('\n');
-      $('<pre>').html(text).attr('id', id).appendTo(code);
+      var code = compiler.parseLine(line);
+      var tree = compiler.fromCode(code);
+      var lambda = compiler.toLambda(tree);
+      var html = compiler.render(lambda);
+
+      // TODO load terms from ast
+      //var cursor = ast.load(tree);
+      //var root = ast.getRoot(cursor);
+      //var html = ast.lines(root).join('\n');
+
+      $('<pre>').html(html).attr('id', id).appendTo(div);
     });
   };
 
   $(function(){
     editor.$code = $('#code');
     editor.$query = $('#query');
-    editor.$query = $('#go');
   });
 
   return editor;
