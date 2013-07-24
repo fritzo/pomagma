@@ -741,11 +741,13 @@ function(log,   test,   pattern,   symbols)
     ]);
 
     var toLambda = function (simpleAppTree) {
-      fresh.reset();
       return stackToLambda(toStack(simpleAppTree));
     };
 
-    return toLambda;
+    return function (simpleAppTree) {
+      fresh.reset();
+      return toLambda(simpleAppTree);
+    }
   })();
 
   //--------------------------------------------------------------------------
@@ -937,17 +939,15 @@ function(log,   test,   pattern,   symbols)
     var z = pattern.variable('z');
     var name = pattern.variable('name');
 
-    var renderPattern = pattern.match([
+    var tBind = pattern.match([
       VAR(name), function (m) {
         return m.name;
       },
       QUOTE(x), function (m) {
-        var line = renderPattern(m.x);
-        return '{' + line + '}';
+        return '{' + tBind(m.x) + '}';
       },
       CURSOR(x), function (m) {
-        var line = renderPattern(m.x);
-        return '<span class=cursor>' + line + '</span>';
+        return '<span class=cursor>' + tBind(m.x) + '</span>';
       }
     ]);
 
@@ -968,10 +968,10 @@ function(log,   test,   pattern,   symbols)
         return '(' + t(m.x) + '|' + t(m.y) + ')';
       },
       LAMBDA(x, y), function (m) {
-        return '&lambda;' + t(m.x) + '.' + t(m.y);
+        return '&lambda;' + tBind(m.x) + '.' + t(m.y);
       },
       LET(x, y, z), function (m) {
-        return t(m.x) + ':=(' + t(m.y) + ').' + t(m.z);
+        return tBind(m.x) + ':=(' + t(m.y) + ').' + t(m.z);
       },
       DEFINE(name, x), function (m) {
         return 'define ' + m.name + ' ' + t(m.x);

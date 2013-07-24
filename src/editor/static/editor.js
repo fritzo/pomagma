@@ -70,9 +70,7 @@ function(log,   test,   compiler,   ast,   corpus)
     corpus.findAllLines().forEach(function(id){
       var line = corpus.findLine(id);
       var code = compiler.parseLine(line);
-      log('DEBUG code = ' + code);
       var tree = compiler.fromCode(code);
-      log('DEBUG tree = ' + tree);
       var lambda = compiler.toLambda(tree);
       var html = compiler.render(lambda);
 
