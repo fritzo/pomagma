@@ -120,7 +120,6 @@ function(log, test)
           return handler.apply(this, args);
         }
       }
-      debugger;
       throw 'unmatched expression:\n  ' + JSON.stringify(struct);
     };
   };
