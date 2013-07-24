@@ -212,17 +212,17 @@ function(log,   test,   pattern,   symbols)
     var x = pattern.variable('x');
     var y = pattern.variable('y');
     var t = pattern.match([
-      APP(x, y), function (matched) {
-        return t(matched.x) && t(matched.y);
+      APP(x, y), function (m) {
+        return t(m.x) && t(m.y);
       },
-      QUOTE(x), function (matched) {
-        return t(matched.x);
+      QUOTE(x), function (m) {
+        return t(m.x);
       },
-      VAR(x), function (matched) {
+      VAR(x), function (m) {
         return true;
       },
-      x, function (matched) {
-        return _.isString(matched.x);
+      x, function (m) {
+        return _.isString(m.x);
       }
     ]);
     return t;
@@ -254,38 +254,38 @@ function(log,   test,   pattern,   symbols)
       CB, function () {
         return APP(C, I);
       },
-      APP(x, y), function (matched) {
-        return APP(t(matched.x), t(matched.y));
+      APP(x, y), function (m) {
+        return APP(t(m.x), t(m.y));
       },
-      COMP(x, y), function (matched) {
-        return app(B, t(matched.x),  t(matched.y));
+      COMP(x, y), function (m) {
+        return app(B, t(m.x),  t(m.y));
       },
-      JOIN(x, y), function (matched) {
-        return app(J, t(matched.x),  t(matched.y));
+      JOIN(x, y), function (m) {
+        return app(J, t(m.x),  t(m.y));
       },
-      RAND(x, y), function (matched) {
-        return app(R, t(matched.x),  t(matched.y));
+      RAND(x, y), function (m) {
+        return app(R, t(m.x),  t(m.y));
       },
-      QUOTE(x), function (matched) {
-        return QUOTE(t(matched.x));
+      QUOTE(x), function (m) {
+        return QUOTE(t(m.x));
       },
-      LESS(x, y), function (matched) {
-        return app(QLESS, QUOTE(t(matched.x)), QUOTE(t(matched.y)));
+      LESS(x, y), function (m) {
+        return app(QLESS, QUOTE(t(m.x)), QUOTE(t(m.y)));
       },
-      NLESS(x, y), function (matched) {
-        return app(QNLESS, QUOTE(t(matched.x)), QUOTE(t(matched.y)));
+      NLESS(x, y), function (m) {
+        return app(QNLESS, QUOTE(t(m.x)), QUOTE(t(m.y)));
       },
-      EQUAL(x, y), function (matched) {
-        return app(QEQUAL, QUOTE(t(matched.x)), QUOTE(t(matched.y)));
+      EQUAL(x, y), function (m) {
+        return app(QEQUAL, QUOTE(t(m.x)), QUOTE(t(m.y)));
       },
-      ASSERT(x), function (matched) {
-        return ASSERT(t(matched.x));
+      ASSERT(x), function (m) {
+        return ASSERT(t(m.x));
       },
-      DEFINE(x, y), function (matched) {
-        return DEFINE(matched.x, t(matched.y));
+      DEFINE(x, y), function (m) {
+        return DEFINE(m.x, t(m.y));
       },
-      x, function (matched) {
-        return matched.x;
+      x, function (m) {
+        return m.x;
       }
     ]);
     return t;
@@ -295,14 +295,14 @@ function(log,   test,   pattern,   symbols)
     var x = pattern.variable('x');
     var y = pattern.variable('y');
     var t = pattern.match([
-      app(B, x, y), function (matched) {
-        return COMP(t(matched.x), t(matched.y));
+      app(B, x, y), function (m) {
+        return COMP(t(m.x), t(m.y));
       },
-      app(J, x, y), function (matched) {
-        return JOIN(t(matched.x), t(matched.y));
+      app(J, x, y), function (m) {
+        return JOIN(t(m.x), t(m.y));
       },
-      app(R, x, y), function (matched) {
-        return RAND(t(matched.x), t(matched.y));
+      app(R, x, y), function (m) {
+        return RAND(t(m.x), t(m.y));
       },
       app(C, I), function () {
         return CI;
@@ -310,29 +310,29 @@ function(log,   test,   pattern,   symbols)
       app(C, B), function () {
         return CB;
       },
-      app(QLESS, QUOTE(x), QUOTE(y)), function (matched) {
-        return LESS(matched.x, matched.y);
+      app(QLESS, QUOTE(x), QUOTE(y)), function (m) {
+        return LESS(m.x, m.y);
       },
-      app(QNLESS, QUOTE(x), QUOTE(y)), function (matched) {
-        return NLESS(matched.x, matched.y);
+      app(QNLESS, QUOTE(x), QUOTE(y)), function (m) {
+        return NLESS(m.x, m.y);
       },
-      app(QEQUAL, QUOTE(x), QUOTE(y)), function (matched) {
-        return EQUAL(matched.x, matched.y);
+      app(QEQUAL, QUOTE(x), QUOTE(y)), function (m) {
+        return EQUAL(m.x, m.y);
       },
-      app(x, y), function (matched) {
-        return app(t(matched.x), t(matched.y));
+      app(x, y), function (m) {
+        return app(t(m.x), t(m.y));
       },
-      QUOTE(x), function (matched) {
-        return QUOTE(t(matched.x));
+      QUOTE(x), function (m) {
+        return QUOTE(t(m.x));
       },
-      ASSERT(x), function (matched) {
-        return ASSERT(t(matched.x));
+      ASSERT(x), function (m) {
+        return ASSERT(t(m.x));
       },
-      DEFINE(x, y), function (matched) {
-        return DEFINE(matched.x, t(matched.y));
+      DEFINE(x, y), function (m) {
+        return DEFINE(m.x, t(m.y));
       },
-      x, function (matched) {
-        return matched.x;
+      x, function (m) {
+        return m.x;
       }
     ]);
     return t;
@@ -365,11 +365,11 @@ function(log,   test,   pattern,   symbols)
     var y = pattern.variable('y');
     var tail = pattern.variable('tail');
     var t = pattern.match([
-      app(x, y), function (matched, tail) {
-        return t(matched.x, stack(matched.y, tail));
+      app(x, y), function (m, tail) {
+        return t(m.x, stack(m.y, tail));
       },
-      x, function (matched, tail) {
-        return stack(matched.x, tail)
+      x, function (m, tail) {
+        return stack(m.x, tail)
       }
     ]);
     var pop = Array.prototype.pop;
@@ -393,11 +393,11 @@ function(log,   test,   pattern,   symbols)
     var y = pattern.variable('y');
     var tail = pattern.variable('tail');
     var t = pattern.match([
-      stack(x, y, tail), function (matched) {
-        return t(stack(app(matched.x, matched.y), matched.tail));
+      stack(x, y, tail), function (m) {
+        return t(stack(app(m.x, m.y), m.tail));
       },
-      stack(x, []), function (matched) {
-        return matched.x;
+      stack(x, []), function (m) {
+        return m.x;
       }
     ]);
     return t;
@@ -428,64 +428,64 @@ function(log,   test,   pattern,   symbols)
     var tail = pattern.variable('tail');
 
     var simplifyStack = pattern.match([
-      stack(TOP, tail), function (matched) {
+      stack(TOP, tail), function (m) {
         return stack(TOP, []);
       },
-      stack(BOT, tail), function (matched) {
+      stack(BOT, tail), function (m) {
         return stack(BOT, []);
       },
-      stack(I, x, tail), function (matched) {
-        var step = stack(matched.x, matched.tail);
+      stack(I, x, tail), function (m) {
+        var step = stack(m.x, m.tail);
         return simplifyStack(step);
       },
-      stack(K, x, y, tail), function (matched) {
-        var step = stack(matched.x, matched.tail);
+      stack(K, x, y, tail), function (m) {
+        var step = stack(m.x, m.tail);
         return simplifyStack(step);
       },
-      stack(B, x, y, z, tail), function (matched) {
-        var yz = app(matched.y, matched.z);
-        var step = toStack(matched.x, yz, matched.tail);
+      stack(B, x, y, z, tail), function (m) {
+        var yz = app(m.y, m.z);
+        var step = toStack(m.x, yz, m.tail);
         return simplifyStack(step);
       },
-      stack(C, x, y, z, tail), function (matched) {
-        var step = toStack(matched.x, matched.z, matched.y, matched.tail);
+      stack(C, x, y, z, tail), function (m) {
+        var step = toStack(m.x, m.z, m.y, m.tail);
         return simplifyStack(step);
       },
-      stack(W, x, VAR(name), tail), function (matched) {
+      stack(W, x, VAR(name), tail), function (m) {
         var y = VAR(name);
-        var step = toStack(matched.x, y, y, matched.tail);
+        var step = toStack(m.x, y, y, m.tail);
         return simplifyStack(step);
       },
-      stack(S, x, y, VAR(name), tail), function (matched) {
+      stack(S, x, y, VAR(name), tail), function (m) {
         var z = VAR(name);
-        var yz = app(matched.y, z);
-        var step = toStack(matched.x, z, yz, matched.tail);
+        var yz = app(m.y, z);
+        var step = toStack(m.x, z, yz, m.tail);
         return simplifyStack(step);
       },
-      stack(J, TOP, tail), function (matched) {
+      stack(J, TOP, tail), function (m) {
         return stack(TOP, []);
       },
-      stack(J, x, TOP, tail), function (matched) {
+      stack(J, x, TOP, tail), function (m) {
         return stack(TOP, []);
       },
-      stack(J, BOT, tail), function (matched) {
+      stack(J, BOT, tail), function (m) {
         var step = stack(I, tail);
         return simplifyStack(step);
       },
-      stack(J, x, BOT, tail), function (matched) {
+      stack(J, x, BOT, tail), function (m) {
         var step = stack(x, tail);
         return simplifyStack(step);
       },
-      stack(x, tail), function (matched) {
-        var tail = simplifyArgs(matched.tail);
-        return stack(matched.x, tail);
+      stack(x, tail), function (m) {
+        var tail = simplifyArgs(m.tail);
+        return stack(m.x, tail);
       }
     ]);
 
     var simplifyArgs = pattern.match([
-      stack(x, y), function (matched) {
-        var rx = simplify(matched.x);
-        var ry = simplifyArgs(matched.y);
+      stack(x, y), function (m) {
+        var rx = simplify(m.x);
+        var ry = simplifyArgs(m.y);
         return stack(rx, ry);
       },
       [], function () {
@@ -566,9 +566,9 @@ function(log,   test,   pattern,   symbols)
         var y = fresh();
         return LAMBDA(x, LAMBDA(y, x));
       },
-      stack(K, x, []), function (matched) {
+      stack(K, x, []), function (m) {
         var y = fresh();
-        var tx = toLambda(matched.x);
+        var tx = toLambda(m.x);
         return LAMBDA(y, tx);
       },
       // TODO simplify B, C, W, S cases with a popFresh(cb) function
@@ -578,16 +578,16 @@ function(log,   test,   pattern,   symbols)
         var z = fresh();
         return LAMBDA(x, LAMBDA(y, LAMBDA(z, app(x, app(y, z)))));
       },
-      stack(B, x, []), function (matched) {
+      stack(B, x, []), function (m) {
         var y = fresh();
         var z = fresh();
-        var tx = toLambda(matched.x);
+        var tx = toLambda(m.x);
         return LAMBDA(y, LAMBDA(z, app(tx, app(y, z))));
       },
-      stack(B, x, y, []), function (matched) {
+      stack(B, x, y, []), function (m) {
         var z = fresh();
-        var tx = toLambda(matched.x);
-        var ty = toLambda(matched.y);
+        var tx = toLambda(m.x);
+        var ty = toLambda(m.y);
         return LAMBDA(z, app(tx, app(ty, z)));
       },
       stack(C, []), function () {
@@ -596,16 +596,16 @@ function(log,   test,   pattern,   symbols)
         var z = fresh();
         return LAMBDA(x, LAMBDA(y, LAMBDA(z, app(x, z, y))));
       },
-      stack(C, x, []), function (matched) {
+      stack(C, x, []), function (m) {
         var y = fresh();
         var z = fresh();
-        var tx = toLambda(matched.x);
+        var tx = toLambda(m.x);
         return LAMBDA(y, LAMBDA(z, app(tx, z, y)));
       },
-      stack(C, x, y, []), function (matched) {
+      stack(C, x, y, []), function (m) {
         var z = fresh();
-        var tx = toLambda(matched.x);
-        var ty = toLambda(matched.y);
+        var tx = toLambda(m.x);
+        var ty = toLambda(m.y);
         return LAMBDA(z, app(tx, z, ty));
       },
       stack(W, []), function () {
@@ -613,22 +613,22 @@ function(log,   test,   pattern,   symbols)
         var y = fresh();
         return LAMBDA(x, LAMBDA(y, app(x, y, y)));
       },
-      stack(W, x, []), function (matched) {
+      stack(W, x, []), function (m) {
         var y = fresh();
-        var tx = toLambda(matched.x);
+        var tx = toLambda(m.x);
         return LAMBDA(y, app(tx, y, y));
       },
-      stack(W, x, VAR(name), tail), function (matched) {
-        var y = VAR(matched.name);
-        var head = toLambda(app(matched.x, y, y));
-        var tail = argsToLambda(matched.tail);
+      stack(W, x, VAR(name), tail), function (m) {
+        var y = VAR(m.name);
+        var head = toLambda(app(m.x, y, y));
+        var tail = argsToLambda(m.tail);
         return fromStack(stack(head, tail));
       },
-      stack(W, x, y, tail), function (matched) {
+      stack(W, x, y, tail), function (m) {
         var y = fresh();
-        var ty = toLambda(matched.y);
-        var head = LET(y, ty, toLambda(app(matched.x, y, y)));
-        var tail = argsToLambda(matched.tail);
+        var ty = toLambda(m.y);
+        var head = LET(y, ty, toLambda(app(m.x, y, y)));
+        var tail = argsToLambda(m.tail);
         return fromStack(stack(head, tail));
       },
       stack(S, []), function () {
@@ -637,31 +637,31 @@ function(log,   test,   pattern,   symbols)
         var z = fresh();
         return LAMBDA(x, LAMBDA(y, LAMBDA(z, app(x, z, app(y, z)))));
       },
-      stack(S, x, []), function (matched) {
+      stack(S, x, []), function (m) {
         var y = fresh();
         var z = fresh();
-        var tx = toLambda(matched.x);
+        var tx = toLambda(m.x);
         return LAMBDA(y, LAMBDA(z, app(tx, z, app(y, z))));
       },
-      stack(S, x, y, []), function (matched) {
+      stack(S, x, y, []), function (m) {
         var z = fresh();
-        var tx = toLambda(matched.x);
-        var ty = toLambda(matched.y);
+        var tx = toLambda(m.x);
+        var ty = toLambda(m.y);
         return LAMBDA(z, app(tx, z, app(ty, z)));
       },
-      stack(S, x, y, VAR(name), tail), function (matched) {
-        var z = VAR(matched.name);
-        var head = toLambda(app(matched.x, z, app(matched.y, z)));
-        var tail = argsToLambda(matched.tail);
+      stack(S, x, y, VAR(name), tail), function (m) {
+        var z = VAR(m.name);
+        var head = toLambda(app(m.x, z, app(m.y, z)));
+        var tail = argsToLambda(m.tail);
         return fromStack(stack(head, tail));
       },
-      stack(S, x, y, z, tail), function (matched) {
+      stack(S, x, y, z, tail), function (m) {
         var z = fresh();
-        var tz = toLambda(matched.z);
-        var xz = app(matched.x, z);
-        var yz = app(matched.y, z);
+        var tz = toLambda(m.z);
+        var xz = app(m.x, z);
+        var yz = app(m.y, z);
         var head = LET(z, tz, toLambda(app(xz, yz)));
-        var tail = argsToLambda(matched.tail);
+        var tail = argsToLambda(m.tail);
         return fromStack(stack(head, tail));
       },
       stack(J, []), function () {
@@ -669,16 +669,16 @@ function(log,   test,   pattern,   symbols)
         var y = fresh();
         return LAMBDA(x, LAMBDA(y, JOIN(x, y)));
       },
-      stack(J, x, []), function (matched) {
+      stack(J, x, []), function (m) {
         var y = fresh();
-        var tx = toLambda(matched.x);
+        var tx = toLambda(m.x);
         return LAMBDA(y, JOIN(tx, y));
       },
-      stack(J, x, y, tail), function (matched) {
-        var tx = toLambda(matched.x);
-        var ty = toLambda(matched.y);
+      stack(J, x, y, tail), function (m) {
+        var tx = toLambda(m.x);
+        var ty = toLambda(m.y);
         var head = JOIN(tx, ty);
-        var tail = argsToLambda(matched.tail);
+        var tail = argsToLambda(m.tail);
         return fromStack(stack(head, tail));
       },
       stack(R, []), function () {
@@ -686,53 +686,53 @@ function(log,   test,   pattern,   symbols)
         var y = fresh();
         return LAMBDA(x, LAMBDA(y, RAND(x, y)));
       },
-      stack(R, x, []), function (matched) {
+      stack(R, x, []), function (m) {
         var y = fresh();
-        var tx = toLambda(matched.x);
+        var tx = toLambda(m.x);
         return LAMBDA(y, RAND(tx, y));
       },
-      stack(R, x, y, tail), function (matched) {
-        var tx = toLambda(matched.x);
-        var ty = toLambda(matched.y);
+      stack(R, x, y, tail), function (m) {
+        var tx = toLambda(m.x);
+        var ty = toLambda(m.y);
         var head = RAND(tx, ty);
-        var tail = argsToLambda(matched.tail);
+        var tail = argsToLambda(m.tail);
         return fromStack(stack(head, tail));
       },
-      stack(VAR(name), tail), function (matched) {
-        var head = VAR(matched.name);
-        var tail = argsToLambda(matched.tail);
+      stack(VAR(name), tail), function (m) {
+        var head = VAR(m.name);
+        var tail = argsToLambda(m.tail);
         return fromStack(stack(head, tail));
       },
-      stack(QUOTE(x), tail), function (matched) {
-        var head = QUOTE(toLambda(matched.x));
-        var tail = argsToLambda(matched.tail);
+      stack(QUOTE(x), tail), function (m) {
+        var head = QUOTE(toLambda(m.x));
+        var tail = argsToLambda(m.tail);
         return fromStack(stack(head, tail));
       },
-      //stack(QEQUAL, QUOTE(x), QUOTE(y), tail), function (matched) {
-      //  var head = EQUAL(toLambda(matched.x), toLambda(matched.y));
-      //  var tail = argsToLambda(matched.tail);
+      //stack(QEQUAL, QUOTE(x), QUOTE(y), tail), function (m) {
+      //  var head = EQUAL(toLambda(m.x), toLambda(m.y));
+      //  var tail = argsToLambda(m.tail);
       //  return fromStack(stack(head, tail));
       //},
-      stack(DEFINE(name, x), []), function (matched) {
-        var x = toLambda(matched.x);
-        return DEFINE(matched.name, x);
+      stack(DEFINE(name, x), []), function (m) {
+        var x = toLambda(m.x);
+        return DEFINE(m.name, x);
       },
-      stack(ASSERT(x), []), function (matched) {
-        var x = toLambda(matched.x);
+      stack(ASSERT(x), []), function (m) {
+        var x = toLambda(m.x);
         return ASSERT(x);
       },
-      stack(head, tail), function (matched) {
-        var head = matched.head;
+      stack(head, tail), function (m) {
+        var head = m.head;
         assert(_.isString(head), 'unmatched stack head: ' + head);
-        var tail = argsToLambda(matched.tail);
+        var tail = argsToLambda(m.tail);
         return fromStack(stack(head, tail));
       }
     ]);
 
     var argsToLambda = pattern.match([
-      stack(x, y), function (matched) {
-        var rx = toLambda(matched.x);
-        var ry = argsToLambda(matched.y);
+      stack(x, y), function (m) {
+        var rx = toLambda(m.x);
+        var ry = argsToLambda(m.y);
         return stack(rx, ry);
       },
       [], function () {
@@ -758,32 +758,32 @@ function(log,   test,   pattern,   symbols)
 
     var curriedLambda = _.memoize(function (varName) {
       var t = pattern.match([
-        VAR(varName), function (matched) {
+        VAR(varName), function (m) {
           return I;
         },
         // TODO match J
         // TODO match R
         // TODO match QUOTE
-        app(x, VAR(varName)), function (matched) {
-          var tx = t(matched.x);
+        app(x, VAR(varName)), function (m) {
+          var tx = t(m.x);
           if (tx === notFound) {
-            return matched.x;
+            return m.x;
           } else {
             return app(W, tx);
           }
         },
-        app(x, y), function (matched) {
-          var tx = t(matched.x);
-          var ty = t(matched.y);
+        app(x, y), function (m) {
+          var tx = t(m.x);
+          var ty = t(m.y);
           if (tx === notFound) {
             if (ty === notFound) {
               return notFound;
             } else {
-              return app(B, matched.x, ty);
+              return app(B, m.x, ty);
             }
           } else {
             if (ty === notFound) {
-              return app(C, tx, matched.y);
+              return app(C, tx, m.y);
             } else {
               return app(S, tx, ty);
             }
@@ -832,26 +832,26 @@ function(log,   test,   pattern,   symbols)
     var name = pattern.variable('name');
 
     var t = pattern.match([
-      app(x, y), function (matched) {
-        return app(t(matched.x), t(matched.y));
+      app(x, y), function (m) {
+        return app(t(m.x), t(m.y));
       },
-      LAMBDA(VAR(name), x), function (matched) {
-        return lambda(matched.name, t(matched.x));
+      LAMBDA(VAR(name), x), function (m) {
+        return lambda(m.name, t(m.x));
       },
-      LET(VAR(name), x, y), function (matched) {
-        return app(lambda(matched.name, t(matched.y)), t(matched.x));
+      LET(VAR(name), x, y), function (m) {
+        return app(lambda(m.name, t(m.y)), t(m.x));
       },
-      JOIN(x, y), function (matched) {
-        return app(J, t(matched.x),  t(matched.y));
+      JOIN(x, y), function (m) {
+        return app(J, t(m.x),  t(m.y));
       },
-      RAND(x, y), function (matched) {
-        return app(R, t(matched.x),  t(matched.y));
+      RAND(x, y), function (m) {
+        return app(R, t(m.x),  t(m.y));
       },
-      QUOTE(x), function (matched) {
-        return QUOTE(t(matched.x));
+      QUOTE(x), function (m) {
+        return QUOTE(t(m.x));
       },
-      x, function (matched) {
-        return matched.x;
+      x, function (m) {
+        return m.x;
       }
     ]);
     return t;
@@ -938,15 +938,15 @@ function(log,   test,   pattern,   symbols)
     var name = pattern.variable('name');
 
     var renderPattern = pattern.match([
-      VAR(name), function (matched) {
-        return matched.name;
+      VAR(name), function (m) {
+        return m.name;
       },
-      QUOTE(x), function (matched) {
-        var line = renderPattern(matched.x);
+      QUOTE(x), function (m) {
+        var line = renderPattern(m.x);
         return '{' + line + '}';
       },
-      CURSOR(x), function (matched) {
-        var line = renderPattern(matched.x);
+      CURSOR(x), function (m) {
+        var line = renderPattern(m.x);
         return '<span class=cursor>' + line + '</span>';
       }
     ]);
@@ -955,38 +955,38 @@ function(log,   test,   pattern,   symbols)
       HOLE, function () {
         return '?';
       },
-      VAR(name), function (matched) {
-        return matched.name;
+      VAR(name), function (m) {
+        return m.name;
       },
-      app(QEQUAL, QUOTE(x), QUOTE(y)), function (matched) {
-        return '{' + t(matched.x) + ' = ' + t(matched.y) + '}';
+      app(QEQUAL, QUOTE(x), QUOTE(y)), function (m) {
+        return '{' + t(m.x) + ' = ' + t(m.y) + '}';
       },
-      APP(x, y), function (matched) {
-        return t(matched.x) + '(' + t(matched.y) + ')';
+      APP(x, y), function (m) {
+        return t(m.x) + '(' + t(m.y) + ')';
       },
-      JOIN(x, y), function (matched) {
-        return '(' + t(matched.x) + '|' + t(matched.y) + ')';
+      JOIN(x, y), function (m) {
+        return '(' + t(m.x) + '|' + t(m.y) + ')';
       },
-      LAMBDA(x, y), function (matched) {
-        return '&#955;' + t(matched.x) + '.' + t(matched.y);
+      LAMBDA(x, y), function (m) {
+        return '&lambda;' + t(m.x) + '.' + t(m.y);
       },
-      LET(x, y, z), function (matched) {
-        return t(matched.x) + ':=(' + t(matched.y) + ').' + t(matched.z);
+      LET(x, y, z), function (m) {
+        return t(m.x) + ':=(' + t(m.y) + ').' + t(m.z);
       },
-      DEFINE(name, x), function (matched) {
-        return 'define ' + matched.name + ' ' + t(matched.x);
+      DEFINE(name, x), function (m) {
+        return 'define ' + m.name + ' ' + t(m.x);
       },
-      ASSERT(x), function (matched) {
-        return 'assert ' + t(matched.x);
+      ASSERT(x), function (m) {
+        return 'assert ' + t(m.x);
       },
-      QUOTE(x), function (matched) {
-        return '{' + t(matched.x) + '}';
+      QUOTE(x), function (m) {
+        return '{' + t(m.x) + '}';
       },
-      CURSOR(x), function (matched) {
-        return '<span class=cursor>' + t(matched.x) + '</span>';
+      CURSOR(x), function (m) {
+        return '<span class=cursor>' + t(m.x) + '</span>';
       },
-      x, function (matched) {
-        return matched.x;
+      x, function (m) {
+        return m.x;
       }
     ]);
 

@@ -130,25 +130,25 @@ function(log, test)
     var z = variable('z');
 
     var t = pattern.match([
-      ['APP', 'I', x], function (matched) {
-        var tx = t(matched.x);
+      ['APP', 'I', x], function (m) {
+        var tx = t(m.x);
         return tx;
       },
-      ['APP', ['APP', 'K', x], y], function (matched) {
-        var tx = t(matched.x);
+      ['APP', ['APP', 'K', x], y], function (m) {
+        var tx = t(m.x);
         return tx;
       },
-      ['APP', ['APP', ['APP', 'B', x], y], z], function (matched) {
-        var xyz = ['APP', matched.x, ['APP', matched.y, matched.z]];
+      ['APP', ['APP', ['APP', 'B', x], y], z], function (m) {
+        var xyz = ['APP', m.x, ['APP', m.y, m.z]];
         return t(xyz);
       },
-      ['APP', x, y], function (matched) {
-        var tx = t(matched.x);
-        var ty = t(matched.y);
+      ['APP', x, y], function (m) {
+        var tx = t(m.x);
+        var ty = t(m.y);
         return ['APP', tx, ty];
       },
-      x, function (matched) {
-        return matched.x;
+      x, function (m) {
+        return m.x;
       }
     ]);
 
