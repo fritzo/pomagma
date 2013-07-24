@@ -951,7 +951,7 @@ function(log,   test,   pattern,   symbols)
       }
     ]);
 
-    var render = pattern.match([
+    var t = pattern.match([
       HOLE, function () {
         return '?';
       },
@@ -959,50 +959,38 @@ function(log,   test,   pattern,   symbols)
         return matched.name;
       },
       app(QEQUAL, QUOTE(x), QUOTE(y)), function (matched) {
-        var x = render(matched.x);
-        var y = render(matched.y);
-        return '{' + x + ' = ' + y + '}';
+        return '{' + t(matched.x) + ' = ' + t(matched.y) + '}';
       },
       APP(x, y), function (matched) {
-        var x = render(matched.x);
-        var y = render(matched.y);
-        return x + '(' + y + ')';
+        return t(matched.x) + '(' + t(matched.y) + ')';
       },
       JOIN(x, y), function (matched) {
-        var x = render(matched.x);
-        var y = render(matched.y);
-        return '(' + x + '|' + y + ')';
+        return '(' + t(matched.x) + '|' + t(matched.y) + ')';
       },
       LAMBDA(x, y), function (matched) {
-        var x = render(matched.x);
-        var y = render(matched.y);
-        return '&#955;' + x + '.' + y;
+        return '&#955;' + t(matched.x) + '.' + t(matched.y);
       },
       LET(x, y, z), function (matched) {
-        var x = render(matched.x);
-        var y = render(matched.y);
-        var z = render(matched.z);
-        return x + ':=(' + y + ').' + z;
+        return t(matched.x) + ':=(' + t(matched.y) + ').' + t(matched.z);
       },
       DEFINE(name, x), function (matched) {
-        return 'define ' + matched.name + ' ' + render(matched.x);
+        return 'define ' + matched.name + ' ' + t(matched.x);
       },
       ASSERT(x), function (matched) {
-        return 'assert ' + render(matched.x);
+        return 'assert ' + t(matched.x);
       },
       QUOTE(x), function (matched) {
-        return '{' + render(matched.x) + '}';
+        return '{' + t(matched.x) + '}';
       },
       CURSOR(x), function (matched) {
-        var lines = render(matched.x);
-        return bracket('<span class=cursor>', lines, '</span>');
+        return '<span class=cursor>' + t(matched.x) + '</span>';
       },
       x, function (matched) {
         return matched.x;
       }
     ]);
 
-    return render;
+    return t;
   })();
 
   return compiler;
