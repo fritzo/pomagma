@@ -11,6 +11,7 @@ pre,
 input {
     font-family: Consolas,'Liberation Mono','Courier New',Courier,monospace;
     font-size: 10pt;
+    line-height: 2ex;  /* HACK */
 }
 
 #toolbar input {

@@ -965,22 +965,27 @@ function(log,   test,   pattern,   symbols)
       VAR(name), function (matched) {
         return [matched.name];
       },
-      app(QEQUAL, QUOTE(x), QUOTE(y)), function (matched) {
-        var x = render(matched.x);
-        var y = render(matched.y);
-        if (x.length === 1 && y.length === 1) {
-          return '{' + x[0] + ' = ' + y[0] + '}';
-        } else {
-          var lines = x;
-          lines.push('=');
-          push.apply(lines, indent(y));
-          return bracket('{', lines, '}');
-        }
-      },
+      //app(QEQUAL, QUOTE(x), QUOTE(y)), function (matched) {
+      //  var x = render(matched.x);
+      //  var y = render(matched.y);
+      //  if (x.length === 1 && y.length === 1) {
+      //    return '{' + x[0] + ' = ' + y[0] + '}';
+      //  } else {
+      //    var lines = x;
+      //    lines.push('=');
+      //    push.apply(lines, indent(y));
+      //    return bracket('{', lines, '}');
+      //  }
+      //},
       APP(x, y), function (matched) {
         var x = render(matched.x);
         var y = render(matched.y);
-        var lines = bracket('<span class=keyword>apply</span> (', x, ')');
+        var lines;
+        if (x.length === 1) {
+          lines = x;
+        } else {
+          lines = indent(x);
+        }
         push.apply(lines, y);
         return lines;
       },
@@ -1034,7 +1039,21 @@ function(log,   test,   pattern,   symbols)
       },
       QUOTE(x), function (matched) {
         var lines = render(matched.x);
-        return bracket('{', lines, '}');
+        var e = lines.length - 1;
+        if (e === 0) {
+          lines[0] = '{' + lines[0];
+        } else if (lines.length === 1) {
+          lines[0] = '&#9136;' + lines[0];
+          lines[1] = '&#9137;' + lines[1];
+        } else {
+          lines[0] = '&#9127;' + lines[0];
+          lines[1] = '&#9128;' + lines[1];
+          lines[e] = '&#9129;' + lines[e];
+          for (var i = 2; i < e; ++i) {
+            lines[i] = '&#9130;' + lines[i];
+          }
+        }
+        return lines;
       },
       CURSOR(x), function (matched) {
         var lines = render(matched.x);
