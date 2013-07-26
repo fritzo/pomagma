@@ -99,6 +99,7 @@ function(log, test)
   };
 
   var match = pattern.match = function (pattHandlers) {
+    pattHandlers = Array.prototype.concat.apply([], arguments);
     // check statically
     assert(pattHandlers.length % 2 == 0, 'bad pattern,handler list');
     var lineCount = pattHandlers.length / 2;

@@ -708,11 +708,21 @@ function(log,   test,   pattern,   symbols)
         var tail = argsToLambda(m.tail);
         return fromStack(stack(head, tail));
       },
-      //stack(QEQUAL, QUOTE(x), QUOTE(y), tail), function (m) {
-      //  var head = EQUAL(toLambda(m.x), toLambda(m.y));
-      //  var tail = argsToLambda(m.tail);
-      //  return fromStack(stack(head, tail));
-      //},
+      stack(QLESS, QUOTE(x), QUOTE(y), tail), function (m) {
+        var head = LESS(toLambda(m.x), toLambda(m.y));
+        var tail = argsToLambda(m.tail);
+        return fromStack(stack(head, tail));
+      },
+      stack(QNLESS, QUOTE(x), QUOTE(y), tail), function (m) {
+        var head = NLESS(toLambda(m.x), toLambda(m.y));
+        var tail = argsToLambda(m.tail);
+        return fromStack(stack(head, tail));
+      },
+      stack(QEQUAL, QUOTE(x), QUOTE(y), tail), function (m) {
+        var head = EQUAL(toLambda(m.x), toLambda(m.y));
+        var tail = argsToLambda(m.tail);
+        return fromStack(stack(head, tail));
+      },
       stack(DEFINE(name, x), []), function (m) {
         var x = toLambda(m.x);
         return DEFINE(m.name, x);
@@ -852,6 +862,15 @@ function(log,   test,   pattern,   symbols)
       QUOTE(x), function (m) {
         return QUOTE(t(m.x));
       },
+      LESS(x, y), function (m) {
+        return app(QLESS, QUOTE(t(m.x)), QUOTE(t(m.y)));
+      },
+      NLESS(x, y), function (m) {
+        return app(QNLESS, QUOTE(t(m.x)), QUOTE(t(m.y)));
+      },
+      EQUAL(x, y), function (m) {
+        return app(QEQUAL, QUOTE(t(m.x)), QUOTE(t(m.y)));
+      },
       x, function (m) {
         return m.x;
       }
@@ -896,6 +915,9 @@ function(log,   test,   pattern,   symbols)
       [app(R, x, y, I), app(RAND(x, y), LAMBDA(a, a))],
       [QUOTE(I), QUOTE(LAMBDA(a, a))],
       [app(QUOTE(x), I), app(QUOTE(x), LAMBDA(a, a))],
+      [app(QLESS, QUOTE(x), QUOTE(y)), LESS(x, y)],
+      [app(QNLESS, QUOTE(x), QUOTE(y)), NLESS(x, y)],
+      [app(QEQUAL, QUOTE(x), QUOTE(y)), EQUAL(x, y)],
       [VAR(x), VAR(x)],
       [app(VAR(x), I), app(VAR(x), LAMBDA(a, a))],
     ];
@@ -941,70 +963,106 @@ function(log,   test,   pattern,   symbols)
     var z = pattern.variable('z');
     var name = pattern.variable('name');
 
-    var tBind = pattern.match([
+    var handleCursor = [
+      CURSOR(x), function (m) {
+        return '<span class=cursor>' + printExpr(m.x) + '</span>';
+      }
+    ];
+
+    var printPatt = pattern.match(handleCursor, [
       VAR(name), function (m) {
         return m.name;
       },
       QUOTE(x), function (m) {
-        return '{' + tBind(m.x) + '}';
+        return '{' + printPatt(m.x) + '}';
       },
       CURSOR(x), function (m) {
-        return '<span class=cursor>' + tBind(m.x) + '</span>';
+        return '<span class=cursor>' + printPatt(m.x) + '</span>';
       }
     ]);
 
-    var t = pattern.match([
+    var printAtom = pattern.match(handleCursor, [
       HOLE, function () {
         return '?';
+        //return '&#9723;'; // empty square
+        //return '&#9724;'; // filled square
       },
       TOP, function () {
-        return '&#8868';
+        return '&#8868'; // looks like T
       },
       BOT, function () {
-        return '&#8869';
+        return '_';
+        //return '&#8869'; // looks like _|_
       },
       VAR(name), function (m) {
         return m.name;
       },
-      app(QLESS, QUOTE(x), QUOTE(y)), function (m) {
-        return '{' + t(m.x) + ' &#8849; ' + t(m.y) + '}';
-      },
-      app(QNLESS, QUOTE(x), QUOTE(y)), function (m) {
-        return '{' + t(m.x) + ' &#8930; ' + t(m.y) + '}';
-      },
-      app(QEQUAL, QUOTE(x), QUOTE(y)), function (m) {
-        return '{' + t(m.x) + ' = ' + t(m.y) + '}';
-      },
-      APP(x, y), function (m) {
-        return t(m.x) + '(' + t(m.y) + ')';
-      },
-      JOIN(x, y), function (m) {
-        return '(' + t(m.x) + '|' + t(m.y) + ')';
-      },
-      LAMBDA(x, y), function (m) {
-        return '&lambda;' + tBind(m.x) + '.' + t(m.y);
-      },
-      LET(x, y, z), function (m) {
-        return tBind(m.x) + ':=(' + t(m.y) + ').' + t(m.z);
-      },
-      DEFINE(name, x), function (m) {
-        return 'define ' + m.name + ' ' + t(m.x);
-      },
-      ASSERT(x), function (m) {
-        return 'assert ' + t(m.x);
-      },
       QUOTE(x), function (m) {
-        return '{' + t(m.x) + '}';
+        return '{' + printExpr(m.x) + '}';
       },
-      CURSOR(x), function (m) {
-        return '<span class=cursor>' + t(m.x) + '</span>';
+      LESS(x, y), function (m) {
+        return '{' + printJoin(m.x) + ' &#8849; ' + printJoin(m.y) + '}';
+      },
+      NLESS(x, y), function (m) {
+        return '{' + printJoin(m.x) + ' &#8930; ' + printJoin(m.y) + '}';
+      },
+      EQUAL(x, y), function (m) {
+        //return '{' + printJoin(m.x) + ' &#8801; ' + printJoin(m.y) + '}';
+        return '{' + printJoin(m.x) + ' = ' + printJoin(m.y) + '}';
       },
       x, function (m) {
-        return m.x;
+        var x = m.x;
+        if (_.isString(x)) {
+          return x;
+        } else {
+          return '(' + printExpr(m.x) + ')';
+        }
       }
     ]);
 
-    return t;
+    var printApp = pattern.match(handleCursor, [
+      APP(x, y), function (m) {
+        return printApp(m.x) + ' ' + printAtom(m.y);
+      },
+      x, function (m) {
+        return printAtom(m.x);
+      }
+    ]);
+
+    var printJoin = pattern.match(handleCursor, [
+      JOIN(x, y), function (m) {
+        return printJoin(m.x) + '|' + printJoin(m.y);
+      },
+      x, function (m) {
+        return printApp(m.x);
+      }
+    ]);
+
+    var printExpr = pattern.match(handleCursor, [
+      LAMBDA(x, y), function (m) {
+        return '&lambda;' + printPatt(m.x) + '. ' + printExpr(m.y);
+      },
+      LET(x, y, z), function (m) {
+        return printPatt(m.x) + ' := ' + printJoin(m.y) + '. ' + printExpr(m.z);
+      },
+      x, function (m) {
+        return printJoin(m.x);
+      }
+    ]);
+
+    var printLine = pattern.match([
+      DEFINE(name, x), function (m) {
+        return 'define ' + m.name + ' := ' + printJoin(m.x) + '.';
+      },
+      ASSERT(x), function (m) {
+        return 'assert ' + printJoin(m.x) + '.';
+      },
+      x, function (m) {
+        return printExpr(m.x);
+      }
+    ]);
+
+    return printLine;
   })();
 
   return compiler;
