@@ -958,26 +958,28 @@ function(log,   test,   pattern,   symbols)
 
   var render = compiler.render = (function(){
 
+    var newline = '\n                                                       ';
+    var indent = function (i) {
+      return newline.slice(0, 1 + 2 * i);
+    };
+
     var x = pattern.variable('x');
     var y = pattern.variable('y');
     var z = pattern.variable('z');
     var name = pattern.variable('name');
 
     var handleCursor = [
-      CURSOR(x), function (m) {
-        return '<span class=cursor>' + printExpr(m.x) + '</span>';
+      CURSOR(x), function (m, i) {
+        return '<span class=cursor>' + printBlock(m.x, i) + '</span>';
       }
     ];
 
     var printPatt = pattern.match(handleCursor, [
       VAR(name), function (m) {
-        return m.name;
+        return '<span class=variable>' + m.name + '</span>';
       },
       QUOTE(x), function (m) {
         return '{' + printPatt(m.x) + '}';
-      },
-      CURSOR(x), function (m) {
-        return '<span class=cursor>' + printPatt(m.x) + '</span>';
       }
     ]);
 
@@ -995,74 +997,94 @@ function(log,   test,   pattern,   symbols)
         //return '&#8869'; // looks like _|_
       },
       VAR(name), function (m) {
-        return m.name;
+        return '<span class=variable>' + m.name + '</span>';
       },
-      QUOTE(x), function (m) {
-        return '{' + printExpr(m.x) + '}';
+      QUOTE(x), function (m, i) {
+        return '{' + printBlock(m.x, i) + '}';
       },
-      LESS(x, y), function (m) {
-        return '{' + printJoin(m.x) + ' &#8849; ' + printJoin(m.y) + '}';
+      LESS(x, y), function (m, i) {
+        return '{' + printJoin(m.x, i) + ' &#8849; ' + printJoin(m.y, i) + '}';
       },
-      NLESS(x, y), function (m) {
-        return '{' + printJoin(m.x) + ' &#8930; ' + printJoin(m.y) + '}';
+      NLESS(x, y), function (m, i) {
+        return '{' + printJoin(m.x, i) + ' &#8930; ' + printJoin(m.y, i) + '}';
       },
-      EQUAL(x, y), function (m) {
+      EQUAL(x, y), function (m, i) {
         //return '{' + printJoin(m.x) + ' &#8801; ' + printJoin(m.y) + '}';
-        return '{' + printJoin(m.x) + ' = ' + printJoin(m.y) + '}';
+        return '{' + printJoin(m.x, i) + ' = ' + printJoin(m.y, i) + '}';
       },
-      x, function (m) {
+      x, function (m, i) {
         var x = m.x;
         if (_.isString(x)) {
-          return x;
+          return '<span class=constant>' + x + '</span>';
         } else {
-          return '(' + printExpr(m.x) + ')';
+          return '(' + printInline(m.x, i) + ')';
         }
       }
     ]);
 
     var printApp = pattern.match(handleCursor, [
-      APP(x, y), function (m) {
-        return printApp(m.x) + ' ' + printAtom(m.y);
+      APP(x, y), function (m, i) {
+        return printApp(m.x, i) + ' ' + printAtom(m.y, i);
       },
-      x, function (m) {
-        return printAtom(m.x);
+      x, function (m, i) {
+        return printAtom(m.x, i);
       }
     ]);
 
     var printJoin = pattern.match(handleCursor, [
-      JOIN(x, y), function (m) {
-        return printJoin(m.x) + '|' + printJoin(m.y);
+      JOIN(x, y), function (m, i) {
+        return printJoin(m.x, i) + '|' + printJoin(m.y, i);
       },
-      x, function (m) {
-        return printApp(m.x);
+      x, function (m, i) {
+        return printApp(m.x, i);
       }
     ]);
 
-    var printExpr = pattern.match(handleCursor, [
-      LAMBDA(x, y), function (m) {
-        return '&lambda;' + printPatt(m.x) + '. ' + printExpr(m.y);
+    var printInline = pattern.match(handleCursor, [
+      LAMBDA(x, y), function (m, i) {
+        return '&lambda;' + printPatt(m.x) + '. ' + printInline(m.y, i);
       },
-      LET(x, y, z), function (m) {
-        return printPatt(m.x) + ' := ' + printJoin(m.y) + '. ' + printExpr(m.z);
+      LET(x, y, z), function (m, i) {
+        return (
+          indent(i) + printPatt(m.x) + ' := ' + printJoin(m.y, i + 1) + '.' +
+          indent(i) + printBlock(m.z, i)
+        );
       },
       x, function (m) {
         return printJoin(m.x);
       }
     ]);
 
-    var printLine = pattern.match([
-      DEFINE(name, x), function (m) {
-        return 'define ' + m.name + ' := ' + printJoin(m.x) + '.';
-      },
-      ASSERT(x), function (m) {
-        return 'assert ' + printJoin(m.x) + '.';
+    var printBlock = pattern.match(handleCursor, [
+      LET(x, y, z), function (m, i) {
+        return (
+          printPatt(m.x) + ' := ' + printJoin(m.y, i + 1) + '.' +
+          indent(i) + printBlock(m.z, i)
+        );
       },
       x, function (m) {
-        return printExpr(m.x);
+        return printInline(m.x);
       }
     ]);
 
-    return printLine;
+    var print = pattern.match([
+      DEFINE(name, x), function (m, i) {
+        return '<span class=keyword>define</span> ' +
+          '<span class=variable>' + m.name + '</span>' + ' := ' +
+          printJoin(m.x, i + 1) + '.';
+      },
+      ASSERT(x), function (m, i) {
+        return '<span class=keyword>assert</span> ' +
+          printJoin(m.x, i + 1) + '.';
+      },
+      x, function (m, i) {
+        return printBlock(m.x, i);
+      }
+    ]);
+
+    return function (expr) {
+      return print(expr, 0);
+    };
   })();
 
   return compiler;

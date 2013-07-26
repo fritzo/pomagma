@@ -30,14 +30,20 @@ input {
     border-color: #fc7;
 }
 
-pre {
+div#code pre {
+    color: #aaf;
     margin: 0.5em;
 }
-
 span.cursor {
     background-color: gray;
 }
 span.keyword {
-    color: #ccc;
+    color: #ffa;
+}
+span.constant {
+    color: #afa;
     font-weight: bold;
+}
+span.variable {
+    color: #fff;
 }
