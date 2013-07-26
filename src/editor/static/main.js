@@ -1,9 +1,10 @@
-require(['log', 'test', 'corpus', 'editor', 'analyst', 'ui'],
-function( log,   test,   corpus,   editor,   analyst,   ui)
+require(['log', 'test', 'corpus', 'analyst', 'editor', 'query'],
+function( log,   test,   corpus,   analyst,   editor,   query)
 {
 
   var main = function () {
-    editor.drawAllLines();
+    editor.load();
+    $('#query').focus();
   };
 
   if (window.location.hash && window.location.hash.substr(1) === 'test') {

@@ -45,10 +45,14 @@ span.variable {
     color: #fff;
 }
 span.cursor {
-    background-color: #040;
+    background-color: #440;
 }
+/*
 span.cursor:before {
     position: absolute;
-    content: '';
-    border: 0.1em solid green;
+    content: ' ';
+    color: black;
+    border: solid #fc7;
+    border-width: 0em 0em 0em 0.2em;
 }
+*/

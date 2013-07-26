@@ -980,22 +980,23 @@ function(log,   test,   pattern,   symbols)
     var z = pattern.variable('z');
     var name = pattern.variable('name');
 
-    var handleCursor = [
-      CURSOR(x), function (m, i) {
-        return '<span class=cursor>' + printBlock(m.x, i) + '</span>';
-      }
-    ];
+    var cursor = function (html) {
+      return '<span class=cursor id=cursor>' + html + '</span>';
+    };
 
-    var printPatt = pattern.match(handleCursor, [
+    var printPatt = pattern.match([
       VAR(name), function (m) {
         return '<span class=variable>' + m.name + '</span>';
       },
       QUOTE(x), function (m) {
         return '{' + printPatt(m.x) + '}';
+      },
+      CURSOR(x), function (m, i) {
+        return cursor(printPatt(m.x, i));
       }
     ]);
 
-    var printAtom = pattern.match(handleCursor, [
+    var printAtom = pattern.match([
       HOLE, function () {
         return '?';
         //return '&#9723;'; // empty square
@@ -1024,35 +1025,44 @@ function(log,   test,   pattern,   symbols)
         //return '{' + printJoin(m.x) + ' &#8801; ' + printJoin(m.y) + '}';
         return '{' + printJoin(m.x, i) + ' = ' + printJoin(m.y, i) + '}';
       },
+      CURSOR(x), function (m, i) {
+        return cursor(printAtom(m.x, i));
+      },
       x, function (m, i) {
         var x = m.x;
         if (_.isString(x)) {
           return '<span class=constant>' + x + '</span>';
         } else {
-          return '(' + printInline(m.x, i) + ')';
+          return '(' + printInline(x, i) + ')';
         }
       }
     ]);
 
-    var printApp = pattern.match(handleCursor, [
+    var printApp = pattern.match([
       APP(x, y), function (m, i) {
         return printApp(m.x, i) + ' ' + printAtom(m.y, i);
+      },
+      CURSOR(x), function (m, i) {
+        return cursor(printApp(m.x, i));
       },
       x, function (m, i) {
         return printAtom(m.x, i);
       }
     ]);
 
-    var printJoin = pattern.match(handleCursor, [
+    var printJoin = pattern.match([
       JOIN(x, y), function (m, i) {
         return printJoin(m.x, i) + '|' + printJoin(m.y, i);
+      },
+      CURSOR(x), function (m, i) {
+        return cursor(printJoin(m.x, i));
       },
       x, function (m, i) {
         return printApp(m.x, i);
       }
     ]);
 
-    var printInline = pattern.match(handleCursor, [
+    var printInline = pattern.match([
       LAMBDA(x, y), function (m, i) {
         return '&lambda;' + printPatt(m.x) + '. ' + printInline(m.y, i);
       },
@@ -1062,17 +1072,23 @@ function(log,   test,   pattern,   symbols)
           indent(i) + printBlock(m.z, i)
         );
       },
+      CURSOR(x), function (m, i) {
+        return cursor(printInline(m.x, i));
+      },
       x, function (m) {
         return printJoin(m.x);
       }
     ]);
 
-    var printBlock = pattern.match(handleCursor, [
+    var printBlock = pattern.match([
       LET(x, y, z), function (m, i) {
         return (
           printPatt(m.x) + ' := ' + printJoin(m.y, i + 1) + '.' +
           indent(i) + printBlock(m.z, i)
         );
+      },
+      CURSOR(x), function (m, i) {
+        return cursor(printBlock(m.x, i));
       },
       x, function (m) {
         return printInline(m.x);
@@ -1089,6 +1105,9 @@ function(log,   test,   pattern,   symbols)
         return '<span class=keyword>assert</span> ' +
           printJoin(m.x, i + 1) + '.';
       },
+      CURSOR(x), function (m, i) {
+        return cursor(print(m.x, i));
+      },
       x, function (m, i) {
         return printBlock(m.x, i);
       }
@@ -1098,6 +1117,8 @@ function(log,   test,   pattern,   symbols)
       return print(expr, 0);
     };
   })();
+
+  compiler.cursor = CURSOR;
 
   return compiler;
 });

@@ -88,21 +88,6 @@ function(log,   test,   compiler)
     return ['DEFINE', indexed.varName, indexed.below[0]];
   };
 
-  // special case: LET
-  //
-  //loadSymbol['LET'] = function (flat) {
-  //  return {
-  //    name: 'LET',
-  //    binds: flat[0],
-  //    below: [flat[1]],
-  //    above: null
-  //  };
-  //};
-  //
-  //dumpSymbol['LET'] = function (indexed) {
-  //  return ['LET', indexed.binds, indexed.below[0]];
-  //};
-
   test('ast.load, ast.dmup', function(){
     var examples = [
       'VAR x',
@@ -124,6 +109,14 @@ function(log,   test,   compiler)
 
   ast.cursor = {};
 
+  ast.cursor.create = function () {
+    return {
+      name: 'CURSOR',
+      below: [undefined],
+      above: null
+    };
+  };
+
   var remove = ast.cursor.remove = function (cursor) {
     var above = cursor.above;
     cursor.below[0].above = above;
@@ -132,6 +125,8 @@ function(log,   test,   compiler)
       above.below[pos] = cursor.below[0];
       return pos;
     }
+    cursor.below[0] = undefined;
+    cursor.above = null;
   };
 
   var insertBelow = ast.cursor.insertBelow = function (cursor, above, pos) {
