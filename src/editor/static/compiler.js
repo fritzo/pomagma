@@ -571,6 +571,16 @@ function(log,   test,   pattern,   symbols)
         var tx = toLambda(m.x);
         return LAMBDA(y, tx);
       },
+      stack(C, I, []), function (m) {
+        var x = fresh();
+        var y = fresh();
+        return LAMBDA(x, LAMBDA(y, app(y, x)));
+      },
+      stack(C, I, x, []), function (m) {
+        var y = fresh();
+        var tx = toLambda(m.x);
+        return LAMBDA(y, app(y, tx));
+      },
       // TODO simplify B, C, W, S cases with a popFresh(cb) function
       stack(B, []), function () {
         var x = fresh();
@@ -892,6 +902,8 @@ function(log,   test,   pattern,   symbols)
       [I, LAMBDA(a, a)],
       [K, LAMBDA(a, LAMBDA(b, a))],
       [app(K, x), LAMBDA(a, x)],
+      [app(C, I), LAMBDA(a, LAMBDA(b, app(b, a)))],
+      [app(C, I, x), LAMBDA(a, app(a, x))],
       [B, LAMBDA(a, LAMBDA(b, LAMBDA(c, app(a, app(b, c)))))],
       [app(B, x), LAMBDA(a, LAMBDA(b, app(x, app(a, b))))],
       [app(B, x, y), LAMBDA(a, app(x, app(y, a)))],

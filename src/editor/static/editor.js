@@ -71,6 +71,7 @@ function(log,   test,   compiler,   ast,   corpus)
       var line = corpus.findLine(id);
       var code = compiler.parseLine(line);
       var tree = compiler.fromCode(code);
+      tree = compiler.simplify(tree);
       var lambda = compiler.toLambda(tree);
       var html = compiler.render(lambda);
 

@@ -34,9 +34,6 @@ div#code pre {
     color: #aaf;
     margin: 0.5em;
 }
-span.cursor {
-    background-color: gray;
-}
 span.keyword {
     color: #ffa;
 }
@@ -46,4 +43,12 @@ span.constant {
 }
 span.variable {
     color: #fff;
+}
+span.cursor {
+    background-color: #040;
+}
+span.cursor:before {
+    position: absolute;
+    content: '';
+    border: 0.1em solid green;
 }
