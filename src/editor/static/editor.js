@@ -27,16 +27,10 @@ function(log,   test,   compiler,   ast,   corpus)
     return lineArray;
   };
 
-  editor.move = function (direction) {
-    // log('move: ' + direction);
-    if (cursor.tryMove(direction)) {
-      editor.draw();
-    } else {
-      TODO('visual bell');
-    }
-  };
-
   var renderLine = function (id) {
+    if (id === undefined) {
+      id = ids[cursorPos];
+    }
     var root = ast.getRoot(asts[id]);
     var lambda = ast.dump(root);
     var html = compiler.render(lambda);
@@ -62,10 +56,19 @@ function(log,   test,   compiler,   ast,   corpus)
     renderLine(id);
   };
 
+  editor.move = function (direction) {
+    // log('move: ' + direction);
+    if (ast.cursor.tryMove(cursor, direction)) {
+      renderLine();
+    } else {
+      TODO('visual bell');
+    }
+  };
+
   editor.load = function () {
 
     ids = [];
-    asts = [];
+    asts = {};
     corpus.findAllLines().forEach(function(id){
       ids.push(id);
       var line = corpus.findLine(id);
@@ -87,8 +90,15 @@ function(log,   test,   compiler,   ast,   corpus)
     moveCursor(0);
   };
 
-  editor.focus = function () {
-    $(window).off('keydown').on('keydown', handleKeydown);
+  editor.debug = function () {
+    return {
+      cursorPos: cursorPos,
+      ids: ids,
+      asts: asts,
+      $lines: $lines,
+      cursor: cursor
+    };
   };
+
   return editor;
 });

@@ -75,19 +75,6 @@ function(log,   test,   compiler)
     return ['VAR', indexed.varName];
   };
 
-  // special case: DEFINE
-  loadSymbol['DEFINE'] = function (flat) {
-    return {
-      name: 'DEFINE',
-      varName: flat[1],
-      below: [flat[2]],
-      above: null
-    };
-  };
-  dumpSymbol['DEFINE'] = function (indexed) {
-    return ['DEFINE', indexed.varName, indexed.below[0]];
-  };
-
   test('ast.load, ast.dmup', function(){
     var examples = [
       'VAR x',

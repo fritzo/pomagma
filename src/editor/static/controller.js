@@ -8,8 +8,13 @@ function(log,   test,   editor)
     switch (event.which) {
       // see http://www.javascripter.net/faq/keycodes.htm
 
-      case 9: // tab
-        editor.moveCursor(+1);
+      case 13: // enter
+        // TODO
+        event.preventDefault();
+        break;
+
+      case 27: // escape
+        // TODO
         event.preventDefault();
         break;
 
@@ -18,15 +23,26 @@ function(log,   test,   editor)
         event.preventDefault();
         break;
 
-      case 38: // up
+      case 9: // tab
         editor.moveCursor(+1);
-        //editor.move('U');
+        event.preventDefault();
+        break;
+
+      case 38: // up
+        if (event.shiftKey) {
+          editor.moveCursor(+1);
+        } else {
+          editor.move('U');
+        }
         event.preventDefault();
         break;
 
       case 40: // down
-        editor.moveCursor(-1);
-        //editor.move('D');
+        if (event.shiftKey) {
+          editor.moveCursor(-1);
+        } else {
+          editor.move('D');
+        }
         event.preventDefault();
         break;
 
@@ -39,16 +55,11 @@ function(log,   test,   editor)
         editor.move('R');
         event.preventDefault();
         break;
-
-      case 27: // escape
-        // TODO
-        event.preventDefault();
-        break;
     }
   };
 
   controller.main = function () {
-    $(window).off('keydown').on('keydown', handleKeydown);
+    $(window).on('keydown', handleKeydown);
   };
 
   return controller;

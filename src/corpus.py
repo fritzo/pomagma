@@ -41,6 +41,8 @@ def _load_line(line):
     head = tokens.popleft()
     assert head in ['DEFINE', 'ASSERT'], line
     if head == 'DEFINE':
+        var = tokens.popleft()
+        assert var == 'VAR', var
         name = tokens.popleft()
         assert IDENTIFIER_RE.match(name), name
         assert not KEYWORD_RE.match(name), name
@@ -56,7 +58,7 @@ def _dump_line(name, code):
     if name is not None:
         assert IDENTIFIER_RE.match(name), name
         assert not KEYWORD_RE.match(name), name
-        return 'DEFINE {} {}'.format(name, code)
+        return 'DEFINE VAR {} {}'.format(name, code)
     else:
         return 'ASSERT {}'.format(code)
 

@@ -68,7 +68,7 @@ function(log,   test,   pattern,   symbols)
     var name = line.name;
     var body = parse(line.code);
     if (name !== null) {
-      return DEFINE(name, body);
+      return DEFINE(VAR(name), body);
     } else {
       return ASSERT(body);
     }
@@ -733,9 +733,9 @@ function(log,   test,   pattern,   symbols)
         var tail = argsToLambda(m.tail);
         return fromStack(stack(head, tail));
       },
-      stack(DEFINE(name, x), []), function (m) {
-        var x = toLambda(m.x);
-        return DEFINE(m.name, x);
+      stack(DEFINE(x, y), []), function (m) {
+        var y = toLambda(m.y);
+        return DEFINE(m.x, y);
       },
       stack(ASSERT(x), []), function (m) {
         var x = toLambda(m.x);
@@ -1096,13 +1096,12 @@ function(log,   test,   pattern,   symbols)
     ]);
 
     var print = pattern.match([
-      DEFINE(name, x), function (m, i) {
-        return span('keyword', 'define') + ' ' +
-          span('variable', m.name) + ' = ' +
-          printJoin(m.x, i + 1) + '.';
+      DEFINE(x, y), function (m, i) {
+        return span('keyword', 'define') + ' ' + printAtom(m.x) + ' = ' +
+          printJoin(m.y, i + 1) + '.';
       },
       ASSERT(x), function (m, i) {
-        return span('keyword', 'assert') + printJoin(m.x, i + 1) + '.';
+        return span('keyword', 'assert') + ' ' + printJoin(m.x, i + 1) + '.';
       },
       CURSOR(x), function (m, i) {
         return span('cursor', print(m.x, i));
