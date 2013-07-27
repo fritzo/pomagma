@@ -7,30 +7,9 @@ body {
     margin: 0px;
 }
 
-pre,
-input {
+div#code pre {
     font-family: Consolas,'Liberation Mono','Courier New',Courier,monospace;
     font-size: 10pt;
-}
-
-#toolbar input {
-    background-color: white;
-    color: black;
-    -webkit-box-sizing: border-box;
-    -moz-box-sizing: border-box;
-    box-sizing: border-box;
-    width: 100%;
-    border: solid 0.2em gray;
-    border-radius: 1em;
-    margin: 0;
-    padding-left: 0.3em;
-    padding-right: 0.3em;
-}
-#toolbar input:focus {
-    border-color: #fc7;
-}
-
-div#code pre {
     color: #aaf;
     margin: 0.5em;
 }
@@ -48,7 +27,7 @@ span.cursor {
     background-color: #440;
 }
 /*
-span.cursor:before {
+span#cursor:before {
     position: absolute;
     content: ' ';
     color: black;

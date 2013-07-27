@@ -974,25 +974,25 @@ function(log,   test,   pattern,   symbols)
     var indent = function (i) {
       return newline.slice(0, 1 + 2 * i);
     };
+    var span = function (className, text) {
+      return '<span class=' + className + '>' + text + '</span>';
+    };
 
     var x = pattern.variable('x');
     var y = pattern.variable('y');
     var z = pattern.variable('z');
     var name = pattern.variable('name');
 
-    var cursor = function (html) {
-      return '<span class=cursor id=cursor>' + html + '</span>';
-    };
 
     var printPatt = pattern.match([
       VAR(name), function (m) {
-        return '<span class=variable>' + m.name + '</span>';
+        return span('variable', m.name);
       },
       QUOTE(x), function (m) {
         return '{' + printPatt(m.x) + '}';
       },
       CURSOR(x), function (m, i) {
-        return cursor(printPatt(m.x, i));
+        return span('cursor', printPatt(m.x, i));
       }
     ]);
 
@@ -1010,7 +1010,7 @@ function(log,   test,   pattern,   symbols)
         //return '&#8869'; // looks like _|_
       },
       VAR(name), function (m) {
-        return '<span class=variable>' + m.name + '</span>';
+        return span('variable', m.name);
       },
       QUOTE(x), function (m, i) {
         return '{' + printBlock(m.x, i) + '}';
@@ -1026,12 +1026,12 @@ function(log,   test,   pattern,   symbols)
         return '{' + printJoin(m.x, i) + ' = ' + printJoin(m.y, i) + '}';
       },
       CURSOR(x), function (m, i) {
-        return cursor(printAtom(m.x, i));
+        return span('cursor', printAtom(m.x, i));
       },
       x, function (m, i) {
         var x = m.x;
         if (_.isString(x)) {
-          return '<span class=constant>' + x + '</span>';
+          return span('constant', x);
         } else {
           return '(' + printInline(x, i) + ')';
         }
@@ -1043,7 +1043,7 @@ function(log,   test,   pattern,   symbols)
         return printApp(m.x, i) + ' ' + printAtom(m.y, i);
       },
       CURSOR(x), function (m, i) {
-        return cursor(printApp(m.x, i));
+        return span('cursor', printApp(m.x, i));
       },
       x, function (m, i) {
         return printAtom(m.x, i);
@@ -1055,7 +1055,7 @@ function(log,   test,   pattern,   symbols)
         return printJoin(m.x, i) + '|' + printJoin(m.y, i);
       },
       CURSOR(x), function (m, i) {
-        return cursor(printJoin(m.x, i));
+        return span('cursor', printJoin(m.x, i));
       },
       x, function (m, i) {
         return printApp(m.x, i);
@@ -1068,12 +1068,12 @@ function(log,   test,   pattern,   symbols)
       },
       LET(x, y, z), function (m, i) {
         return (
-          indent(i) + printPatt(m.x) + ' := ' + printJoin(m.y, i + 1) + '.' +
+          indent(i) + printPatt(m.x) + ' = ' + printJoin(m.y, i + 1) + '.' +
           indent(i) + printBlock(m.z, i)
         );
       },
       CURSOR(x), function (m, i) {
-        return cursor(printInline(m.x, i));
+        return span('cursor', printInline(m.x, i));
       },
       x, function (m) {
         return printJoin(m.x);
@@ -1083,12 +1083,12 @@ function(log,   test,   pattern,   symbols)
     var printBlock = pattern.match([
       LET(x, y, z), function (m, i) {
         return (
-          printPatt(m.x) + ' := ' + printJoin(m.y, i + 1) + '.' +
+          printPatt(m.x) + ' = ' + printJoin(m.y, i + 1) + '.' +
           indent(i) + printBlock(m.z, i)
         );
       },
       CURSOR(x), function (m, i) {
-        return cursor(printBlock(m.x, i));
+        return span('cursor', printBlock(m.x, i));
       },
       x, function (m) {
         return printInline(m.x);
@@ -1097,16 +1097,15 @@ function(log,   test,   pattern,   symbols)
 
     var print = pattern.match([
       DEFINE(name, x), function (m, i) {
-        return '<span class=keyword>define</span> ' +
-          '<span class=variable>' + m.name + '</span>' + ' := ' +
+        return span('keyword', 'define') + ' ' +
+          span('variable', m.name) + ' = ' +
           printJoin(m.x, i + 1) + '.';
       },
       ASSERT(x), function (m, i) {
-        return '<span class=keyword>assert</span> ' +
-          printJoin(m.x, i + 1) + '.';
+        return span('keyword', 'assert') + printJoin(m.x, i + 1) + '.';
       },
       CURSOR(x), function (m, i) {
-        return cursor(print(m.x, i));
+        return span('cursor', print(m.x, i));
       },
       x, function (m, i) {
         return printBlock(m.x, i);

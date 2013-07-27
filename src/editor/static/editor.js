@@ -45,20 +45,19 @@ function(log,   test,   compiler,   ast,   corpus)
 
   var removeCursor = function () {
     if (cursor !== null) {
-      log('removing cursor');
       ast.cursor.remove(cursor);
       var id = ids[cursorPos];
       renderLine(id);
-      cursor = null;
+    } else {
+      cursor = ast.cursor.create();
     }
   };
 
-  var moveCursor = function (delta) {
+  var moveCursor = editor.moveCursor = function (delta) {
     removeCursor();
     cursorPos = (cursorPos + ids.length + delta) % ids.length;
     var id = ids[cursorPos];
     log('moving cursor to id ' + id);
-    cursor = ast.cursor.create();
     ast.cursor.insertAbove(cursor, asts[id]);
     renderLine(id);
   };
@@ -88,58 +87,8 @@ function(log,   test,   compiler,   ast,   corpus)
     moveCursor(0);
   };
 
-  handleKeydown = editor.handleKeyDown = function (event) {
-    console.log(event.which);
-    switch (event.which) {
-      // see http://www.javascripter.net/faq/keycodes.htm
-
-      case 9: // tab
-        $('#query').focus();
-        event.preventDefault();
-        break;
-
-      case 32: // space
-        event.preventDefault();
-        break;
-
-      case 38: // up
-        moveCursor(+1);
-        //editor.move('U');
-        event.preventDefault();
-        break;
-
-      case 40: // down
-        moveCursor(-1);
-        //editor.move('D');
-        event.preventDefault();
-        break;
-
-      case 37: // left
-        editor.move('L');
-        event.preventDefault();
-        break;
-
-      case 39: // right
-        editor.move('R');
-        event.preventDefault();
-        break;
-
-      case 27: // escape
-        $('#query').focus();
-        event.preventDefault();
-        break;
-    }
-  };
-
   editor.focus = function () {
-    log('editor.focus');
-    $('#cursor').attr('class', 'cursor');
     $(window).off('keydown').on('keydown', handleKeydown);
   };
-
-  editor.blur = function () {
-    $('#cursor').attr('class', null);
-  };
-
   return editor;
 });
