@@ -11,7 +11,7 @@ div#code pre {
     font-family: Consolas,'Liberation Mono','Courier New',Courier,monospace;
     font-size: 10pt;
     color: #aaf;
-    margin: 0.5em;
+    margin: 0.3em;
 }
 span.keyword {
     color: #ffa;

@@ -1,39 +1,38 @@
-define(['log', 'test', 'editor'],
-function(log,   test,   editor)
+define(['log', 'test', 'editor', 'keycode'],
+function(log,   test,   editor,   keycode)
 {
   var controller = {};
 
   var handleKeydown = function (event) {
     console.log(event.which);
     switch (event.which) {
-      // see http://www.javascripter.net/faq/keycodes.htm
-      // try to use:
+      // dispatch furher on:
       //   event.shiftKey
       //   event.ctrlKey
       //   event.altKey
       //   event.metaKey
 
-      case 13: // enter
+      case keycode.enter:
         // TODO
         event.preventDefault();
         break;
 
-      case 27: // escape
+      case keycode.escape:
         // TODO
         event.preventDefault();
         break;
 
-      case 32: // space
+      case keycode.space:
         // TODO
         event.preventDefault();
         break;
 
-      case 9: // tab
+      case keycode.tab:
         editor.moveCursor(+1);
         event.preventDefault();
         break;
 
-      case 38: // up
+      case keycode.up:
         if (event.shiftKey) {
           editor.moveCursor(-1);
         } else {
@@ -42,7 +41,7 @@ function(log,   test,   editor)
         event.preventDefault();
         break;
 
-      case 40: // down
+      case keycode.down:
         if (event.shiftKey) {
           editor.moveCursor(+1);
         } else {
@@ -51,12 +50,12 @@ function(log,   test,   editor)
         event.preventDefault();
         break;
 
-      case 37: // left
+      case keycode.left:
         editor.move('L');
         event.preventDefault();
         break;
 
-      case 39: // right
+      case keycode.right:
         editor.move('R');
         event.preventDefault();
         break;
