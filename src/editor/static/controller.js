@@ -3,34 +3,18 @@ function(log,   test,   editor,   keycode)
 {
   var controller = {};
 
+  var setMode = function (handler) {
+    $(window).off('keydown').on('keydown', handler);
+  };
+
   var handleKeydown = function (event) {
     console.log(event.which);
     switch (event.which) {
-      // dispatch furher on:
+      // dispatch further on:
       //   event.shiftKey
       //   event.ctrlKey
       //   event.altKey
       //   event.metaKey
-
-      case keycode.enter:
-        // TODO
-        event.preventDefault();
-        break;
-
-      case keycode.escape:
-        // TODO
-        event.preventDefault();
-        break;
-
-      case keycode.space:
-        // TODO
-        event.preventDefault();
-        break;
-
-      case keycode.tab:
-        editor.moveCursor(+1);
-        event.preventDefault();
-        break;
 
       case keycode.up:
         if (event.shiftKey) {
@@ -38,7 +22,6 @@ function(log,   test,   editor,   keycode)
         } else {
           editor.move('U');
         }
-        event.preventDefault();
         break;
 
       case keycode.down:
@@ -47,23 +30,32 @@ function(log,   test,   editor,   keycode)
         } else {
           editor.move('D');
         }
-        event.preventDefault();
         break;
 
       case keycode.left:
         editor.move('L');
-        event.preventDefault();
         break;
 
       case keycode.right:
         editor.move('R');
-        event.preventDefault();
         break;
+
+      case keycode.enter:
+        editor.suggest(TODO());
+        break;
+
+      default:
+        return;
     }
+    event.preventDefault();
+  };
+
+  var insertHandler = function (event) {
+
   };
 
   controller.main = function () {
-    $(window).on('keydown', handleKeydown);
+    setMode(handleKeydown);
   };
 
   return controller;

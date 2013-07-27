@@ -66,7 +66,6 @@ function(log,   test,   compiler,   ast,   corpus)
   };
 
   editor.load = function () {
-
     ids = [];
     asts = {};
     corpus.findAllLines().forEach(function(id){
@@ -88,6 +87,10 @@ function(log,   test,   compiler,   ast,   corpus)
 
     cursorPos = 0;
     moveCursor(0);
+  };
+
+  editor.suggest = function () {
+    TODO();
   };
 
   editor.debug = function () {
