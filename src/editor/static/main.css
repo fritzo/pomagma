@@ -16,15 +16,15 @@ div#code pre {
 span.keyword {
     color: #ffa;
 }
-span.constant {
-    color: #afa;
-    font-weight: bold;
-}
 span.variable {
     color: #fff;
 }
 span.cursor {
     background-color: #660;
+}
+span.error {
+    color: #fff;
+    background-color: #f00;
 }
 /*
 span#cursor:before {

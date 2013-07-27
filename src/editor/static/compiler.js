@@ -161,12 +161,7 @@ function(log,   test,   pattern,   symbols)
   var JOIN = Symbol('JOIN', 2);
   var RAND = Symbol('RAND', 2);
   var LAMBDA = Symbol('LAMBDA', 2);
-  var DEFINE = Symbol('DEFINE', 2, function(tokens){
-    var name = tokens.pop();  // now VAR(...) wrapper
-    var body = tokens.parse();
-    assert(symbols.isGlobal(name), 'bad global: ' + name);
-    return ['DEFINE', name, body];
-  });
+  var DEFINE = Symbol('DEFINE', 2);
   var STACK = Symbol('STACK', 2);
   var LET = Symbol('LET', 3);
   var LESS = Symbol('LESS', 2);
@@ -184,6 +179,22 @@ function(log,   test,   pattern,   symbols)
     assert.equal(
       app('w', 'x', 'y', 'z'),
       APP(APP(APP('w', 'x'), 'y'), 'z'));
+  });
+
+  var comp = function (term) {
+    for (var i = 1; i < arguments.length; ++i) {
+      term = ['APP', ['APP', 'B', term], arguments[i]];
+    }
+    return term;
+  };
+
+  test('compiler.comp', function(){
+    assert.equal(
+      comp('x', 'y'),
+      APP(APP('B', 'x'), 'y'));
+    assert.equal(
+      comp('x', 'y', 'z'),
+      APP(APP('B', APP(APP('B', 'x'), 'y')), 'z'));
   });
 
   var stack = (function(){
@@ -244,16 +255,24 @@ function(log,   test,   pattern,   symbols)
   //--------------------------------------------------------------------------
   // Conversion : appTree <-> code
 
+  var definitions = {}
+  definitions.CI = app(C, I);
+  definitions.CB = app(C, B);
+  definitions.U = comp(Y, comp(app(S, B), app(J, app(C, B, I)), app(C, B)));
+  definitions.V = comp(definitions.U, app(J, I));
+  definitions.P = comp(app(B, definitions.V), J);
+  definitions.A = A;  // TODO define
+
   var fromCode = compiler.fromCode = (function(){
     var x = pattern.variable('x');
     var y = pattern.variable('y');
     var t = pattern.match([
-      CI, function () {
-        return APP(C, I);
-      },
-      CB, function () {
-        return APP(C, I);
-      },
+      CI, function () { return definitions.CI; },
+      CB, function () { return definitions.CB; },
+      U, function () { return definitions.U; },
+      V, function () { return definitions.V; },
+      P, function () { return definitions.P; },
+      A, function () { return definitions.A; },
       APP(x, y), function (m) {
         return APP(t(m.x), t(m.y));
       },
@@ -523,6 +542,13 @@ function(log,   test,   pattern,   symbols)
   //--------------------------------------------------------------------------
   // Convert : simple appTree -> lambda
 
+  var lambdaSymbols = compiler.lambdaSymbols = [
+    'HOLE', 'TOP', 'BOT',
+    //'I', 'K', 'B', 'C', 'W', 'S', 'Y', 'U', 'V', 'P', 'A', 'J', 'R',
+    'APP', 'LAMBDA', 'LET', 'JOIN', 'RAND',
+    'QUOTE', 'QLESS', 'QNLESS', 'QEQUAL', 'LESS', 'NLESS', 'EQUAL',
+  ];
+
   var toLambda = compiler.toLambda = (function(){
 
     var fresh = (function(){
@@ -674,6 +700,20 @@ function(log,   test,   pattern,   symbols)
         var tail = argsToLambda(m.tail);
         return fromStack(stack(head, tail));
       },
+      stack(Y, []), function (m) {
+        var x = fresh();
+        var y = fresh();
+        var z = fresh();
+        return LAMBDA(x, LET(y, LAMBDA(z, app(x, app(y, z))), y));
+      },
+      stack(Y, x, tail), function (m) {
+        var y = fresh();
+        var z = fresh();
+        var tx = toLambda(m.x);
+        var head = LET(y, LAMBDA(z, app(tx, app(y, z))), y);
+        var tail = argsToLambda(m.tail);
+        return fromStack(stack(head, tail));
+      },
       stack(J, []), function () {
         var x = fresh();
         var y = fresh();
@@ -773,7 +813,7 @@ function(log,   test,   pattern,   symbols)
   //--------------------------------------------------------------------------
   // Abstract : varName x appTree -> appTree
 
-  var lambda = compiler.lambda = (function(){
+  (function(){
     var x = pattern.variable('x');
     var y = pattern.variable('y');
     var notFound = {};
@@ -817,15 +857,33 @@ function(log,   test,   pattern,   symbols)
       ]);
       return t;
     });
-    return function (varName, term) {
-      var result = curriedLambda(varName)(term);
+
+    compiler.lambda = function (varName, body) {
+      var result = curriedLambda(varName)(body);
       if (result === notFound) {
-        return app(K, term);
+        return app(K, body);
       } else {
         return result;
       }
     };
+
+    compiler.letrec = function (varName, def, body) {
+      var lambdaVar = curriedLambda(varName);
+      var bodyResult = lambdaVar(body);
+      if (bodyResult === notFound) {
+        return body;
+      } else {
+        var defResult = lambdaVar(def);
+        if (defResult === notFound) {
+          return app(bodyResult, def);
+        } else {
+          return app(bodyResult, app(Y, defResult));
+        }
+      }
+    };
   })();
+  var lambda = compiler.lambda;
+  var letrec = compiler.letrec;
 
   test('compile.lambda', function () {
     var a = VAR('a');
@@ -839,9 +897,27 @@ function(log,   test,   pattern,   symbols)
       [app(y, app(x, a)), app(B, y, x)],
       [app(x, a, y), app(C, x, y)],
       [app(x, a, app(x, a)), app(S, x, x)],
-      [x, app(K,x)]
+      [x, app(K, x)]
     ];
     assert.forward(lambdaA, examples);
+  });
+
+  test('compile.letrec', function () {
+    var a = VAR('a');
+    var x = VAR('x');
+    var y = VAR('y');
+    var letrecA = function (pair) {
+      var def = pair[0];
+      var body = pair[1];
+      return letrec('a', def, body);
+    };
+    var examples = [
+      [['bomb', x], x],
+      [[I, app(x, a)], app(x, I)],
+      [[a, app(x, a)], app(x, app(Y, I))],
+      [[app(y, a), app(x, a)], app(x, app(Y, y))]
+    ];
+    assert.forward(letrecA, examples);
   });
 
   //--------------------------------------------------------------------------
@@ -861,7 +937,7 @@ function(log,   test,   pattern,   symbols)
         return lambda(m.name, t(m.x));
       },
       LET(VAR(name), x, y), function (m) {
-        return app(lambda(m.name, t(m.y)), t(m.x));
+        return letrec(m.name, t(m.x), t(m.y));
       },
       JOIN(x, y), function (m) {
         return app(J, t(m.x),  t(m.y));
@@ -940,6 +1016,8 @@ function(log,   test,   pattern,   symbols)
   test('compiler.toLambda', function(){
     // fromLambda would fail these because they involve pattern matching
     var a = VAR('a');
+    var b = VAR('b');
+    var c = VAR('c');
     var x = VAR('x');
     var y = VAR('y');
     var z = VAR('z');
@@ -948,7 +1026,8 @@ function(log,   test,   pattern,   symbols)
       [app(W, x, y), app(x, y, y)],
       [app(W, x, y, I), app(x, y, y, LAMBDA(a, a))],
       [app(S, x, y, z), app(x, z, app(y, z))],
-      [app(S, x, y, z, I), app(x, z, app(y, z), LAMBDA(a, a))]
+      [app(S, x, y, z, I), app(x, z, app(y, z), LAMBDA(a, a))],
+      [Y, LAMBDA(a, LET(b, LAMBDA(c, app(a, app(b, c))), b))]
     ];
     assert.forward(toLambda, examples);
   });
@@ -1028,13 +1107,12 @@ function(log,   test,   pattern,   symbols)
       CURSOR(x), function (m, i) {
         return span('cursor', printAtom(m.x, i));
       },
-      x, function (m, i) {
-        var x = m.x;
-        if (_.isString(x)) {
-          return span('constant', x);
-        } else {
-          return '(' + printInline(x, i) + ')';
+      x, function (m, i, failed) {
+        if (failed) {
+          log('failed to print: ' + JSON.stringify(m.x));
+          return span('error', 'compiler.print error: ' + m.x);
         }
+        return '(' + printInline(m.x, i, true) + ')';
       }
     ]);
 
@@ -1045,8 +1123,8 @@ function(log,   test,   pattern,   symbols)
       CURSOR(x), function (m, i) {
         return span('cursor', printApp(m.x, i));
       },
-      x, function (m, i) {
-        return printAtom(m.x, i);
+      x, function (m, i, failed) {
+        return printAtom(m.x, i, failed);
       }
     ]);
 
@@ -1057,8 +1135,8 @@ function(log,   test,   pattern,   symbols)
       CURSOR(x), function (m, i) {
         return span('cursor', printJoin(m.x, i));
       },
-      x, function (m, i) {
-        return printApp(m.x, i);
+      x, function (m, i, failed) {
+        return printApp(m.x, i, failed);
       }
     ]);
 
@@ -1075,8 +1153,8 @@ function(log,   test,   pattern,   symbols)
       CURSOR(x), function (m, i) {
         return span('cursor', printInline(m.x, i));
       },
-      x, function (m) {
-        return printJoin(m.x);
+      x, function (m, i, failed) {
+        return printJoin(m.x, i, failed);
       }
     ]);
 
@@ -1090,8 +1168,8 @@ function(log,   test,   pattern,   symbols)
       CURSOR(x), function (m, i) {
         return span('cursor', printBlock(m.x, i));
       },
-      x, function (m) {
-        return printInline(m.x);
+      x, function (m, i) {
+        return printInline(m.x, i);
       }
     ]);
 

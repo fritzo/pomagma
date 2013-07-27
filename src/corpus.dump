@@ -14,6 +14,6 @@ DEFINE VAR types.div APP VAR types.type K
 DEFINE VAR types.exp COMP COMP COMP COMP APP CB VAR types.type APP CB B CB CB VAR types.type
 DEFINE VAR types.forall A
 DEFINE VAR types.pow P
-DEFINE VAR types.semi APP V HOLE
+DEFINE VAR types.semi APP VAR types.type HOLE
 DEFINE VAR types.type V
-DEFINE VAR types.unit APP V HOLE
+DEFINE VAR types.unit APP VAR types.type HOLE
