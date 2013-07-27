@@ -90,7 +90,10 @@ function(log,   test,   compiler,   ast,   corpus)
   };
 
   editor.suggest = function () {
-    TODO();
+    var nbhd = ast.neighborhood(cursor);
+    nbhd.forEach(function(term){
+      log('DEBUG suggest ' + compiler.print(term));
+    });
   };
 
   editor.debug = function () {

@@ -1,5 +1,13 @@
 /** 
  * abstract syntax trees with crosslinks for constant time traversal
+ *
+ * example ast node:
+ *   {
+ *     name: 'VAR',
+ *     varName: flat[1],  // optional, only VAR nodes have this field
+ *     below: [],
+ *     above: null
+ *   };
  */
 
 define(['log', 'test', 'compiler'],
@@ -212,6 +220,90 @@ function(log,   test,   compiler)
 
   //--------------------------------------------------------------------------
   // Transformations
+
+  var pushPatternVars = function (patt, vars) {
+    switch (patt.name) {
+      case 'VAR':
+        vars.push(patt.varName);
+        break;
+
+      case 'QUOTE':
+        pushPatternVars(patt.below[0], vars);
+        break;
+
+      default:
+        break;
+    }
+  };
+
+  var getBoundAbove = function (term) {
+    var result = [];
+    for (var above = term; above !== null; above = above.above) {
+      if (above.name === 'LAMBDA' || above.name === 'LET') {
+        var patt = above.below[0];
+        pushPatternVars(patt, result);
+      }
+    }
+    return result;
+  };
+
+  ast.neighborhood = (function(){
+    var HOLE = compiler.symbols.HOLE;
+    var TOP = compiler.symbols.TOP;
+    var BOT = compiler.symbols.BOT;
+    var VAR = compiler.symbols.VAR;
+    var LAMBDA = compiler.symbols.LAMBDA;
+    var LET = compiler.symbols.LET;
+    var APP = compiler.symbols.APP;
+    var JOIN = compiler.symbols.JOIN;
+    var RAND = compiler.symbols.RAND;
+    var QUOTE = compiler.symbols.QUOTE;
+
+    return function (cursor) {
+      var term = cursor.below[0];
+      var result = [];
+      var name = term.name;
+      if (name === 'HOLE') {
+        result.push(
+          TOP,
+          BOT,
+          LAMBDA(HOLE, HOLE),
+          LET(HOLE, HOLE, HOLE),
+          APP(HOLE, HOLE),
+          JOIN(HOLE, HOLE),
+          RAND(HOLE, HOLE),
+          QUOTE(HOLE)
+        );
+        var bound = getBoundAbove(term);
+        bound.forEach(function(varName){
+          result.push(VAR(varName));
+        });
+      } else {
+        var dumped = dump(term);
+        var fresh = HOLE;  // TODO create fresh variable
+        result.push(
+          LAMBDA(fresh, dumped),
+          LET(fresh, dumped, HOLE),
+          LET(fresh, HOLE, dumped),
+          APP(dumped, HOLE),
+          APP(HOLE, dumped),
+          JOIN(dumped, HOLE),
+          RAND(dumped, HOLE),
+          QUOTE(dumped)
+        );
+        switch (name) {
+          case 'TOP':
+          case 'BOT':
+            result.push(HOLE);
+            break;
+
+          default:
+            break;
+        }
+      }
+      return result;
+    };
+  })();
 
   /*
   HOLE.prototype.transform = {

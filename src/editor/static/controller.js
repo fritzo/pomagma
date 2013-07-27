@@ -41,7 +41,7 @@ function(log,   test,   editor,   keycode)
         break;
 
       case keycode.enter:
-        editor.suggest(TODO());
+        editor.suggest();
         break;
 
       default:
