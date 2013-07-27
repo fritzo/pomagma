@@ -190,5 +190,14 @@ def clear():
     os.remove(STORE)
 
 
+@parsable.command
+def reload():
+    '''
+    Reload local database from dump in git working tree.
+    '''
+    clear()
+    load()
+
+
 if __name__ == '__main__':
     parsable.dispatch()

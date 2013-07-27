@@ -1,3 +1,7 @@
 # this file is managed by corpus.py
-ASSERT EQUAL VAR types.div APP V APP CI TOP
-DEFINE VAR types.div APP V K
+ASSERT EQUAL APP VAR types.type VAR types.type VAR types.type
+ASSERT EQUAL COMP VAR types.type VAR types.type VAR types.type
+ASSERT EQUAL VAR types.div APP VAR types.type APP CI TOP
+DEFINE VAR types.div APP VAR types.type K
+DEFINE VAR types.exp COMP COMP COMP COMP APP CB VAR types.type APP CB B CB CB VAR types.type
+DEFINE VAR types.type V

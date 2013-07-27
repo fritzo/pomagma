@@ -7,6 +7,11 @@ function(log,   test,   editor)
     console.log(event.which);
     switch (event.which) {
       // see http://www.javascripter.net/faq/keycodes.htm
+      // try to use:
+      //   event.shiftKey
+      //   event.ctrlKey
+      //   event.altKey
+      //   event.metaKey
 
       case 13: // enter
         // TODO
@@ -30,7 +35,7 @@ function(log,   test,   editor)
 
       case 38: // up
         if (event.shiftKey) {
-          editor.moveCursor(+1);
+          editor.moveCursor(-1);
         } else {
           editor.move('U');
         }
@@ -39,7 +44,7 @@ function(log,   test,   editor)
 
       case 40: // down
         if (event.shiftKey) {
-          editor.moveCursor(-1);
+          editor.moveCursor(+1);
         } else {
           editor.move('D');
         }

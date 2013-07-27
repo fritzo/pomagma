@@ -61,7 +61,7 @@ function(log,   test,   compiler,   ast,   corpus)
     if (ast.cursor.tryMove(cursor, direction)) {
       renderLine();
     } else {
-      TODO('visual bell');
+      //TODO('visual bell');
     }
   };
 
