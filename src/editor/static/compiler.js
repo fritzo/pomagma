@@ -219,6 +219,13 @@ function(log,   test,   pattern,   symbols)
   //--------------------------------------------------------------------------
   // Lingua Franca
 
+  var appTreeAtoms = (function(){
+    var list = [HOLE, TOP, BOT, I, K, CI, CB, B, C, W, S, J, R, Y, U, V, P, A];
+    var set = {};
+    list.forEach(function(name){ set[name] = null; });
+    return set;
+  })();
+
   var isAppTree = compiler.isAppTree = (function(){
     var x = pattern.variable('x');
     var y = pattern.variable('y');
@@ -233,7 +240,7 @@ function(log,   test,   pattern,   symbols)
         return true;
       },
       x, function (m) {
-        return _.isString(m.x);
+        return _.isString(m.x) && _.has(appTreeAtoms, m.x);
       }
     ]);
     return t;
@@ -454,11 +461,11 @@ function(log,   test,   pattern,   symbols)
         return stack(BOT, []);
       },
       stack(I, x, tail), function (m) {
-        var step = stack(m.x, m.tail);
+        var step = toStack(m.x, m.tail);
         return simplifyStack(step);
       },
       stack(K, x, y, tail), function (m) {
-        var step = stack(m.x, m.tail);
+        var step = toStack(m.x, m.tail);
         return simplifyStack(step);
       },
       stack(B, x, y, z, tail), function (m) {
@@ -471,14 +478,13 @@ function(log,   test,   pattern,   symbols)
         return simplifyStack(step);
       },
       stack(W, x, VAR(name), tail), function (m) {
-        var y = VAR(name);
+        var y = VAR(m.name);
         var step = toStack(m.x, y, y, m.tail);
         return simplifyStack(step);
       },
       stack(S, x, y, VAR(name), tail), function (m) {
-        var z = VAR(name);
-        var yz = app(m.y, z);
-        var step = toStack(m.x, z, yz, m.tail);
+        var z = VAR(m.name);
+        var step = toStack(m.x, z, app(m.y, yz), m.tail);
         return simplifyStack(step);
       },
       stack(J, TOP, tail), function (m) {
@@ -488,11 +494,21 @@ function(log,   test,   pattern,   symbols)
         return stack(TOP, []);
       },
       stack(J, BOT, tail), function (m) {
-        var step = stack(I, tail);
+        var step = stack(I, m.tail);
         return simplifyStack(step);
       },
       stack(J, x, BOT, tail), function (m) {
-        var step = stack(x, tail);
+        var step = stack(m.x, m.tail);
+        return simplifyStack(step);
+      },
+      stack(J, x, y, VAR(name), tail), function (m) {
+        var z = VAR(m.name);
+        var step = stack(J, app(m.x, z), app(m.y, z), m.tail);
+        return simplifyStack(step);
+      },
+      stack(R, x, y, VAR(name), tail), function (m) {
+        var z = VAR(m.name);
+        var step = stack(R, app(m.x, z), app(m.y, z), m.tail);
         return simplifyStack(step);
       },
       stack(x, tail), function (m) {
@@ -527,14 +543,23 @@ function(log,   test,   pattern,   symbols)
     var x = VAR('x');
     var y = VAR('y');
     var z = VAR('z');
+    var tail = HOLE;
     var examples = [
-      [app(BOT, x), BOT],
-      [app(TOP, x), TOP],
-      [app(K, x, y), x],
-      [app(B, x, y, z), app(x, app(y, z))],
+      [app(BOT, x, tail), BOT],
+      [app(TOP, x, tail), TOP],
+      [app(K, x, y, tail), app(x, tail)],
+      [app(B, x, y, z, tail), app(x, app(y, z), tail)],
       [app(C, x, y, z), app(x, z, y)],
-      [app(B, x, app(K, y), z), app(x, y)],
-      [app(B, app(I, x), app(K, y, z)), app(B, x, y)]
+      [app(B, x, app(K, y), z, tail), app(x, y, tail)],
+      [app(B, app(I, x), app(K, y, z)), app(B, x, y)],
+      [app(J, TOP, tail), TOP],
+      [app(J, x, TOP, tail), TOP],
+      [app(J, BOT, tail), tail],
+      [app(J, x, BOT, tail), app(x, tail)],
+      // FIXME why don't these work?
+      //[app(J, x, y, z, tail), app(J, app(x, z), app(y, z), tail)],
+      //[app(R, x, y, z, tail), app(R, app(x, z), app(y, z), tail)],
+      [HOLE, HOLE]
     ];
     assert.forward(simplify, examples);
   });
@@ -1049,7 +1074,8 @@ function(log,   test,   pattern,   symbols)
 
   var render = compiler.render = (function(){
 
-    var newline = '\n                                                       ';
+    var newline = '\n                                                       ' +
+    '                                                                        ';
     var indent = function (i) {
       return newline.slice(0, 1 + 2 * i);
     };
@@ -1061,7 +1087,6 @@ function(log,   test,   pattern,   symbols)
     var y = pattern.variable('y');
     var z = pattern.variable('z');
     var name = pattern.variable('name');
-
 
     var printPatt = pattern.match([
       VAR(name), function (m) {
@@ -1130,7 +1155,7 @@ function(log,   test,   pattern,   symbols)
 
     var printJoin = pattern.match([
       JOIN(x, y), function (m, i) {
-        return printJoin(m.x, i) + '|' + printJoin(m.y, i);
+        return printJoin(m.x, i) + ' | ' + printJoin(m.y, i);
       },
       CURSOR(x), function (m, i) {
         return span('cursor', printJoin(m.x, i));
