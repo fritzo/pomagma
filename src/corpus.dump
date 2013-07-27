@@ -1,7 +1,19 @@
 # this file is managed by corpus.py
-ASSERT EQUAL APP VAR types.type VAR types.type VAR types.type
+ASSERT EQUAL APP VAR types.div BOT HOLE
+ASSERT EQUAL APP VAR types.div TOP HOLE
+ASSERT EQUAL APP VAR types.semi BOT HOLE
+ASSERT EQUAL APP VAR types.semi I HOLE
+ASSERT EQUAL APP VAR types.semi TOP HOLE
+ASSERT EQUAL APP VAR types.type I I
+ASSERT EQUAL APP VAR types.type TOP TOP
+ASSERT EQUAL APP VAR types.unit I HOLE
+ASSERT EQUAL APP VAR types.unit TOP HOLE
 ASSERT EQUAL COMP VAR types.type VAR types.type VAR types.type
 ASSERT EQUAL VAR types.div APP VAR types.type APP CI TOP
 DEFINE VAR types.div APP VAR types.type K
 DEFINE VAR types.exp COMP COMP COMP COMP APP CB VAR types.type APP CB B CB CB VAR types.type
+DEFINE VAR types.forall A
+DEFINE VAR types.pow P
+DEFINE VAR types.semi APP V HOLE
 DEFINE VAR types.type V
+DEFINE VAR types.unit APP V HOLE
