@@ -22,7 +22,7 @@ LINES_SCHEMA = '''(
 
 
 def get_dump_version():
-    return subprocess.check_output(['sha1sum', DUMP]).split()[0]
+    return subprocess.check_output(['shasum', DUMP]).split()[0]
 
 
 def table_exists(conn, name):
