@@ -89,7 +89,6 @@ function(log)
       }
       catch (err) {
         log('FAILED ' + callback.title + '\n  ' + err);
-        failedTests.push(callback);
       }
     });
 
@@ -104,7 +103,6 @@ function(log)
       }
       catch (err) {
         log('FAILED ' + callback.title + '\n  ' + err);
-        failedTests.push(callback);
       }
     });
     setTimeout(function(){ doneAll(); }, delay);

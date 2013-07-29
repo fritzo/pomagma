@@ -1,19 +1,22 @@
 define(['log', 'test'],
 function(log, test)
 {
-  var pattern = {};
-
-  /** @constructor */
-  var Variable = function Variable (name) {
+  /**
+   * @constructor
+   * @param {string}
+   * @param {(function(*): boolean) | undefined}
+   */
+  var Variable = function Variable (name, constraint) {
     this.name = name;
+    this.constraint = (constraint !== undefined) ? constraint : null;
   };
   
   Variable.prototype.toString = function () {
     return 'Variable(' + this.name + ')';
   };
 
-  var variable = pattern.variable = function (name) {
-    return new Variable(name);
+  var variable = function (name, constraint) {
+    return new Variable(name, constraint);
   };
 
   var isVariable = function (thing) {
@@ -75,9 +78,11 @@ function(log, test)
 
   var unify = function (patt, struct, matched) {
     if (isVariable(patt)) {
-      matched = _.extend({}, matched);  // copy to allow backtracking
-      matched[patt.name] = struct;
-      return matched;
+      if (patt.constraint === null || patt.constraint(struct)) {
+        matched = _.extend({}, matched);  // copy to allow backtracking
+        matched[patt.name] = struct;
+        return matched;
+      }
     } else if (_.isArray(patt) && _.isArray(struct)) {
       if (patt.length === struct.length) {
         for (var i = 0; i < struct.length; ++i) {
@@ -93,32 +98,30 @@ function(log, test)
     }
   };
 
-  pattern.unify = function (patt, struct) {
-    assert(isPattern(patt), 'bad pattern: ' + patt);
-    return unify(patt, struct, {});
-  };
-
-  var match = pattern.match = function (pattHandlers) {
+  var match = function (pattHandlers) {
     pattHandlers = Array.prototype.concat.apply([], arguments);
     // check statically
     assert(pattHandlers.length % 2 == 0, 'bad pattern,handler list');
     var lineCount = pattHandlers.length / 2;
+    var patts = [];
+    var handlers = [];
     for (var line = 0; line < lineCount; ++line) {
       var patt = pattHandlers[2 * line];
       var handler = pattHandlers[2 * line + 1];
       assert(isPattern(patt), 'bad pattern at line ' + line + ':\n  ' + patt);
       assert(_.isFunction(handler), 'bad handler at line ' + line);
+      patts.push(patt);
+      handlers.push(handler);
     }
+    // TODO construct optimal decision tree
     // run optimized
     var slice = Array.prototype.slice;
     return function (struct) {
       for (var line = 0; line < lineCount; ++line) {
-        var patt = pattHandlers[2 * line];
-        var matched = unify(patt, struct, {});
+        var matched = unify(patts[line], struct, {});
         if (matched !== undefined) {
-          var handler = pattHandlers[2 * line + 1];
           var args = [matched].concat(slice.call(arguments, 1));
-          return handler.apply(this, args);
+          return handlers[line].apply(this, args);
         }
       }
       throw 'unmatched expression:\n  ' + JSON.stringify(struct);
@@ -129,8 +132,10 @@ function(log, test)
     var x = variable('x');
     var y = variable('y');
     var z = variable('z');
+    var string = variable('string', _.isString);
+    var array = variable('array', _.isArray);
 
-    var t = pattern.match([
+    var t = match([
       ['APP', 'I', x], function (m) {
         var tx = t(m.x);
         return tx;
@@ -148,17 +153,32 @@ function(log, test)
         var ty = t(m.y);
         return ['APP', tx, ty];
       },
+      ['typed:', string], function (m) {
+        return 'string';
+      },
+      ['typed:', array], function (m) {
+        return 'array';
+      },
       x, function (m) {
         return m.x;
-      }
+      },
     ]);
 
     var examples = [
       [['APP', 'I', 'a'], 'a'],
-      [['APP', ['APP', 'K', 'a'], 'b'], 'a']
+      [['APP', ['APP', 'K', 'a'], 'b'], 'a'],
+      [['typed:', 'test'], 'string'],
+      [['typed:', []], 'array']
     ];
     assert.forward(t, examples);
   });
 
-  return pattern;
+  return {
+    variable: variable,
+    unify: function (patt, struct) {
+      assert(isPattern(patt), 'bad pattern: ' + patt);
+      return unify(patt, struct, {});
+    },
+    match: match
+  };
 });
