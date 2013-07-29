@@ -92,7 +92,7 @@ function(log,   test,   compiler)
     for (var i = 0; i < examples.length; ++i) {
       var lineno = 1 + i;
       var string = examples[i];
-      var flat = compiler.parse(string);
+      var flat = compiler.load(string);
       var indexed = load(flat);
       var flat2 = dump(indexed);
       assert.equal(flat2, flat, 'Example ' + lineno);
@@ -202,7 +202,7 @@ function(log,   test,   compiler)
 
   test('ast.cursor movement', function(){
     var string = 'CURSOR LAMBDA QUOTE VAR cursor APP VAR is APP VAR a VAR test';
-    var flat = compiler.parse(string);
+    var flat = compiler.load(string);
     var cursor = load(flat);
     var path =  'UDDDLRULDRDLDUUUU';
     var trace = '01100011111101110';

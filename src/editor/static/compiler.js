@@ -1,4 +1,4 @@
-/** 
+/**
  * Syntactic Transforms.
  *
  * appTree is the lingua franca.
@@ -7,12 +7,10 @@
 define(['log', 'test', 'pattern', 'symbols'],
 function(log,   test,   pattern,   symbols)
 {
-  var compiler = {};
-
   //--------------------------------------------------------------------------
   // Parse
 
-  var parse = compiler.parse = (function(){
+  var parse = (function(){
 
     var parseSymbol = {};
 
@@ -64,7 +62,7 @@ function(log,   test,   pattern,   symbols)
     return parse;
   })();
 
-  var parseLine = compiler.parseLine = function (line) {
+  var parseLine = function (line) {
     var name = line.name;
     var body = parse(line.code);
     if (name !== null) {
@@ -73,11 +71,11 @@ function(log,   test,   pattern,   symbols)
       return ASSERT(body);
     }
   };
-  
+
   //--------------------------------------------------------------------------
   // Serialize
 
-  var print = compiler.print = (function(){
+  var print = (function(){
     var pushTokens = function (tokens, expr) {
       if (_.isString(expr)) {
         tokens.push(expr);
@@ -107,7 +105,7 @@ function(log,   test,   pattern,   symbols)
   //--------------------------------------------------------------------------
   // Symbols
 
-  var symbols = compiler.symbols = {};
+  var symbols = {};
   var Symbol = function (name, arity, parser) {
     arity = arity || 0;
     parse.declareSymbol(name, arity, parser);
@@ -123,7 +121,7 @@ function(log,   test,   pattern,   symbols)
       symbol.name = name;
       symbol.arity = arity;
     }
-    compiler.symbols[name] = symbol;
+    symbols[name] = symbol;
     return symbol;
   };
 
@@ -214,51 +212,6 @@ function(log,   test,   pattern,   symbols)
       STACK('x', STACK('y', STACK('z', []))));
   });
 
-  compiler.DEFINE = DEFINE;
-
-  //--------------------------------------------------------------------------
-  // Lingua Franca
-
-  var appTreeAtoms = (function(){
-    var list = [HOLE, TOP, BOT, I, K, CI, CB, B, C, W, S, J, R, Y, U, V, P, A];
-    var set = {};
-    list.forEach(function(name){ set[name] = null; });
-    return set;
-  })();
-
-  var isAppTree = compiler.isAppTree = (function(){
-    var x = pattern.variable('x');
-    var y = pattern.variable('y');
-    var t = pattern.match([
-      APP(x, y), function (m) {
-        return t(m.x) && t(m.y);
-      },
-      QUOTE(x), function (m) {
-        return t(m.x);
-      },
-      VAR(x), function (m) {
-        return true;
-      },
-      x, function (m) {
-        return _.isString(m.x) && _.has(appTreeAtoms, m.x);
-      }
-    ]);
-    return t;
-  })();
-
-  test('compiler.isAppTree', function () {
-    var examples = [
-      [APP(K, I), true],
-      [QUOTE(K), true],
-      [VAR('x'), true],
-      [COMP(K, I), false],
-      [LET(VAR('x'), I, I), false],
-      [APP(COMP(I, I), I), false],
-      [QUOTE(COMP(I, I)), false]
-    ];
-    assert.forward(isAppTree, examples);
-  });
-
   //--------------------------------------------------------------------------
   // Conversion : appTree <-> code
 
@@ -268,120 +221,7 @@ function(log,   test,   pattern,   symbols)
   definitions.U = comp(Y, comp(app(S, B), app(J, app(C, B, I)), app(C, B)));
   definitions.V = comp(definitions.U, app(J, I));
   definitions.P = comp(app(B, definitions.V), J);
-  definitions.A = A;  // TODO define
-
-  var fromCode = compiler.fromCode = (function(){
-    var x = pattern.variable('x');
-    var y = pattern.variable('y');
-    var t = pattern.match([
-      CI, function () { return definitions.CI; },
-      CB, function () { return definitions.CB; },
-      U, function () { return definitions.U; },
-      V, function () { return definitions.V; },
-      P, function () { return definitions.P; },
-      A, function () { return definitions.A; },
-      APP(x, y), function (m) {
-        return APP(t(m.x), t(m.y));
-      },
-      COMP(x, y), function (m) {
-        return app(B, t(m.x),  t(m.y));
-      },
-      JOIN(x, y), function (m) {
-        return app(J, t(m.x),  t(m.y));
-      },
-      RAND(x, y), function (m) {
-        return app(R, t(m.x),  t(m.y));
-      },
-      QUOTE(x), function (m) {
-        return QUOTE(t(m.x));
-      },
-      LESS(x, y), function (m) {
-        return app(QLESS, QUOTE(t(m.x)), QUOTE(t(m.y)));
-      },
-      NLESS(x, y), function (m) {
-        return app(QNLESS, QUOTE(t(m.x)), QUOTE(t(m.y)));
-      },
-      EQUAL(x, y), function (m) {
-        return app(QEQUAL, QUOTE(t(m.x)), QUOTE(t(m.y)));
-      },
-      ASSERT(x), function (m) {
-        return ASSERT(t(m.x));
-      },
-      DEFINE(x, y), function (m) {
-        return DEFINE(m.x, t(m.y));
-      },
-      x, function (m) {
-        return m.x;
-      }
-    ]);
-    return t;
-  })();
-
-  var toCode = compiler.toCode = (function(){
-    var x = pattern.variable('x');
-    var y = pattern.variable('y');
-    var t = pattern.match([
-      app(B, x, y), function (m) {
-        return COMP(t(m.x), t(m.y));
-      },
-      app(J, x, y), function (m) {
-        return JOIN(t(m.x), t(m.y));
-      },
-      app(R, x, y), function (m) {
-        return RAND(t(m.x), t(m.y));
-      },
-      app(C, I), function () {
-        return CI;
-      },
-      app(C, B), function () {
-        return CB;
-      },
-      app(QLESS, QUOTE(x), QUOTE(y)), function (m) {
-        return LESS(m.x, m.y);
-      },
-      app(QNLESS, QUOTE(x), QUOTE(y)), function (m) {
-        return NLESS(m.x, m.y);
-      },
-      app(QEQUAL, QUOTE(x), QUOTE(y)), function (m) {
-        return EQUAL(m.x, m.y);
-      },
-      app(x, y), function (m) {
-        return app(t(m.x), t(m.y));
-      },
-      QUOTE(x), function (m) {
-        return QUOTE(t(m.x));
-      },
-      ASSERT(x), function (m) {
-        return ASSERT(t(m.x));
-      },
-      DEFINE(x, y), function (m) {
-        return DEFINE(m.x, t(m.y));
-      },
-      x, function (m) {
-        return m.x;
-      }
-    ]);
-    return t;
-  })();
-
-  test('compiler.fromCode, compiler.toCode', function(){
-    var x = VAR('x');
-    var y = VAR('y');
-    var z = VAR('z');
-    var examples = [
-      [app(x, y), app(x, y)],
-      [COMP(x, y), app(B, x, y)],
-      [JOIN(x, y), app(J, x, y)],
-      [RAND(x, y), app(R, x, y)],
-      [LESS(x, y), app(QLESS, QUOTE(x), QUOTE(y))],
-      [NLESS(x, y), app(QNLESS, QUOTE(x), QUOTE(y))],
-      [EQUAL(x, y), app(QEQUAL, QUOTE(x), QUOTE(y))],
-      [app(COMP(x, y), COMP(y, z)), app(B, x, y, app(B, y, z))],
-      [QUOTE(COMP(x, y)), QUOTE(app(B, x, y))]
-    ];
-    assert.forward(fromCode, examples);
-    assert.backward(toCode, examples);
-  });
+  definitions.A = HOLE;  // TODO define
 
   //--------------------------------------------------------------------------
   // Convert : appTree <-> stack
@@ -445,9 +285,10 @@ function(log,   test,   pattern,   symbols)
 
   //--------------------------------------------------------------------------
   // Simplify :   stack -> simple stack
-  //            appTree -> simple appTree
-
-  var simplifyStack = compiler.simplifyStack = (function(){
+  //
+  // Implements affine-beta-eta reduction for lambda-let terms.
+  /* TODO
+  var simplifyStack = (function(){
     var x = pattern.variable('x');
     var y = pattern.variable('y');
     var z = pattern.variable('z');
@@ -531,7 +372,7 @@ function(log,   test,   pattern,   symbols)
     return simplifyStack;
   })();
 
-  var simplify = compiler.simplify = function (appTree) {
+  var simplify = function (appTree) {
     if (_.isString(appTree)) {
       return appTree;
     } else {
@@ -563,18 +404,27 @@ function(log,   test,   pattern,   symbols)
     ];
     assert.forward(simplify, examples);
   });
+  */
 
   //--------------------------------------------------------------------------
   // Convert : simple appTree -> lambda
 
-  var lambdaSymbols = compiler.lambdaSymbols = [
-    'HOLE', 'TOP', 'BOT',
-    //'I', 'K', 'B', 'C', 'W', 'S', 'Y', 'U', 'V', 'P', 'A', 'J', 'R',
-    'APP', 'LAMBDA', 'LET', 'JOIN', 'RAND',
-    'QUOTE', 'QLESS', 'QNLESS', 'QEQUAL', 'LESS', 'NLESS', 'EQUAL',
-  ];
+  var lambdaSymbols = (function(){
+    var subset = [
+      'HOLE', 'TOP', 'BOT',
+      //'I', 'K', 'B', 'C', 'W', 'S', 'Y', 'U', 'V', 'P', 'A', 'J', 'R',
+      'APP', 'LAMBDA', 'LET', 'JOIN', 'RAND',
+      'QUOTE', 'QLESS', 'QNLESS', 'QEQUAL', 'LESS', 'NLESS', 'EQUAL',
+      'ASSERT', 'DEFINE', 'CURSOR',
+    ];
+    var lambdaSymbols = {};
+    subset.forEach(function(name){
+      lambdaSymbols[name] = symbols[name];
+    });
+    return lambdaSymbols;
+  })();
 
-  var toLambda = compiler.toLambda = (function(){
+  var decompile = (function(){
 
     var fresh = (function(){
       var alphabet = 'abcdefghijklmnopqrstuvwxyz';
@@ -600,12 +450,22 @@ function(log,   test,   pattern,   symbols)
     var head = pattern.variable('head');
     var tail = pattern.variable('tail');
     var name = pattern.variable('name');
+    var array = pattern.variable('array', _.isArray);
+    var atom = pattern.variable('atom', function (struct) {
+      return _.isString(struct) && _.has(definitions, struct);
+    });
 
-    var stackToLambda = pattern.match([
-      stack(TOP, []), function () { 
+    var decompileStack = pattern.match([
+      stack(COMP(x, y), tail), function (m) {
+        return decompileStack(stack(B, m.x, m.y, m.tail));
+      },
+      stack(HOLE, tail), function (m) {
+        return fromStack(stack(HOLE, decompileTail(m.tail)));
+      },
+      stack(TOP, tail), function () {
         return TOP;
       },
-      stack(BOT, []), function () { 
+      stack(BOT, tail), function () {
         return BOT;
       },
       stack(I, []), function () {
@@ -619,7 +479,7 @@ function(log,   test,   pattern,   symbols)
       },
       stack(K, x, []), function (m) {
         var y = fresh();
-        var tx = toLambda(m.x);
+        var tx = decompile(m.x);
         return LAMBDA(y, tx);
       },
       stack(C, I, []), function (m) {
@@ -629,10 +489,13 @@ function(log,   test,   pattern,   symbols)
       },
       stack(C, I, x, []), function (m) {
         var y = fresh();
-        var tx = toLambda(m.x);
+        var tx = decompile(m.x);
         return LAMBDA(y, app(y, tx));
       },
       // TODO simplify B, C, W, S cases with a popFresh(cb) function
+      // Johann implements this by keeping (binder-stack, app-stack)
+      // and pushing binders onto the stack when creating fresh
+      // see johann/src/expressions.C class Decompile
       stack(B, []), function () {
         var x = fresh();
         var y = fresh();
@@ -642,13 +505,13 @@ function(log,   test,   pattern,   symbols)
       stack(B, x, []), function (m) {
         var y = fresh();
         var z = fresh();
-        var tx = toLambda(m.x);
+        var tx = decompile(m.x);
         return LAMBDA(y, LAMBDA(z, app(tx, app(y, z))));
       },
       stack(B, x, y, []), function (m) {
         var z = fresh();
-        var tx = toLambda(m.x);
-        var ty = toLambda(m.y);
+        var tx = decompile(m.x);
+        var ty = decompile(m.y);
         return LAMBDA(z, app(tx, app(ty, z)));
       },
       stack(C, []), function () {
@@ -660,13 +523,13 @@ function(log,   test,   pattern,   symbols)
       stack(C, x, []), function (m) {
         var y = fresh();
         var z = fresh();
-        var tx = toLambda(m.x);
+        var tx = decompile(m.x);
         return LAMBDA(y, LAMBDA(z, app(tx, z, y)));
       },
       stack(C, x, y, []), function (m) {
         var z = fresh();
-        var tx = toLambda(m.x);
-        var ty = toLambda(m.y);
+        var tx = decompile(m.x);
+        var ty = decompile(m.y);
         return LAMBDA(z, app(tx, z, ty));
       },
       stack(W, []), function () {
@@ -676,20 +539,20 @@ function(log,   test,   pattern,   symbols)
       },
       stack(W, x, []), function (m) {
         var y = fresh();
-        var tx = toLambda(m.x);
+        var tx = decompile(m.x);
         return LAMBDA(y, app(tx, y, y));
       },
       stack(W, x, VAR(name), tail), function (m) {
         var y = VAR(m.name);
-        var head = toLambda(app(m.x, y, y));
-        var tail = argsToLambda(m.tail);
+        var head = decompile(app(m.x, y, y));
+        var tail = decompileTail(m.tail);
         return fromStack(stack(head, tail));
       },
       stack(W, x, y, tail), function (m) {
         var y = fresh();
-        var ty = toLambda(m.y);
-        var head = LET(y, ty, toLambda(app(m.x, y, y)));
-        var tail = argsToLambda(m.tail);
+        var ty = decompile(m.y);
+        var head = LET(y, ty, decompile(app(m.x, y, y)));
+        var tail = decompileTail(m.tail);
         return fromStack(stack(head, tail));
       },
       stack(S, []), function () {
@@ -701,28 +564,28 @@ function(log,   test,   pattern,   symbols)
       stack(S, x, []), function (m) {
         var y = fresh();
         var z = fresh();
-        var tx = toLambda(m.x);
+        var tx = decompile(m.x);
         return LAMBDA(y, LAMBDA(z, app(tx, z, app(y, z))));
       },
       stack(S, x, y, []), function (m) {
         var z = fresh();
-        var tx = toLambda(m.x);
-        var ty = toLambda(m.y);
+        var tx = decompile(m.x);
+        var ty = decompile(m.y);
         return LAMBDA(z, app(tx, z, app(ty, z)));
       },
       stack(S, x, y, VAR(name), tail), function (m) {
         var z = VAR(m.name);
-        var head = toLambda(app(m.x, z, app(m.y, z)));
-        var tail = argsToLambda(m.tail);
+        var head = decompile(app(m.x, z, app(m.y, z)));
+        var tail = decompileTail(m.tail);
         return fromStack(stack(head, tail));
       },
       stack(S, x, y, z, tail), function (m) {
         var z = fresh();
-        var tz = toLambda(m.z);
+        var tz = decompile(m.z);
         var xz = app(m.x, z);
         var yz = app(m.y, z);
-        var head = LET(z, tz, toLambda(app(xz, yz)));
-        var tail = argsToLambda(m.tail);
+        var head = LET(z, tz, decompile(app(xz, yz)));
+        var tail = decompileTail(m.tail);
         return fromStack(stack(head, tail));
       },
       stack(Y, []), function (m) {
@@ -734,9 +597,9 @@ function(log,   test,   pattern,   symbols)
       stack(Y, x, tail), function (m) {
         var y = fresh();
         var z = fresh();
-        var tx = toLambda(m.x);
+        var tx = decompile(m.x);
         var head = LET(y, LAMBDA(z, app(tx, app(y, z))), y);
-        var tail = argsToLambda(m.tail);
+        var tail = decompileTail(m.tail);
         return fromStack(stack(head, tail));
       },
       stack(J, []), function () {
@@ -746,14 +609,14 @@ function(log,   test,   pattern,   symbols)
       },
       stack(J, x, []), function (m) {
         var y = fresh();
-        var tx = toLambda(m.x);
+        var tx = decompile(m.x);
         return LAMBDA(y, JOIN(tx, y));
       },
       stack(J, x, y, tail), function (m) {
-        var tx = toLambda(m.x);
-        var ty = toLambda(m.y);
+        var tx = decompile(m.x);
+        var ty = decompile(m.y);
         var head = JOIN(tx, ty);
-        var tail = argsToLambda(m.tail);
+        var tail = decompileTail(m.tail);
         return fromStack(stack(head, tail));
       },
       stack(R, []), function () {
@@ -763,158 +626,249 @@ function(log,   test,   pattern,   symbols)
       },
       stack(R, x, []), function (m) {
         var y = fresh();
-        var tx = toLambda(m.x);
+        var tx = decompile(m.x);
         return LAMBDA(y, RAND(tx, y));
       },
       stack(R, x, y, tail), function (m) {
-        var tx = toLambda(m.x);
-        var ty = toLambda(m.y);
+        var tx = decompile(m.x);
+        var ty = decompile(m.y);
         var head = RAND(tx, ty);
-        var tail = argsToLambda(m.tail);
+        var tail = decompileTail(m.tail);
+        return fromStack(stack(head, tail));
+      },
+      // TODO reimplement via ensureQuoted
+      stack(QLESS, []), function (m) {
+        var x = fresh();
+        var y = fresh();
+        return LAMBDA(QUOTE(x), LAMBDA(QUOTE(y), LESS(x, y)));
+      },
+      stack(QLESS, QUOTE(x), []), function (m) {
+        var y = fresh();
+        return LAMBDA(QUOTE(y), LESS(m.x, y));
+      },
+      stack(QLESS, x, []), function (m) {
+        var x = fresh();
+        var y = fresh();
+        return LET(QUOTE(x), m.x, LAMBDA(QUOTE(y), LESS(x, y)));
+      },
+      // ... other cases omitted: (QUOTE(x), y); (x, QUOTE(y))
+      stack(QLESS, QUOTE(x), QUOTE(y), tail), function (m) {
+        var head = LESS(m.x, m.y);
+        var tail = decompileTail(m.tail);
+        return fromStack(stack(head, tail));
+      },
+      stack(QLESS, x, y, tail), function (m) {
+        var x = fresh();
+        var y = fresh();
+        var head = LET(QUOTE(x), m.x, LET(QUOTE(y), m.y, LESS(x, y)));
+        var tail = decompileTail(m.tail);
+        return fromStack(stack(head, tail));
+      },
+      stack(QNLESS, QUOTE(x), QUOTE(y), tail), function (m) {
+        var head = NLESS(m.x, m.y);
+        var tail = decompileTail(m.tail);
+        return fromStack(stack(head, tail));
+      },
+      stack(QEQUAL, QUOTE(x), QUOTE(y), tail), function (m) {
+        var head = EQUAL(m.x, m.y);
+        var tail = decompileTail(m.tail);
         return fromStack(stack(head, tail));
       },
       stack(VAR(name), tail), function (m) {
         var head = VAR(m.name);
-        var tail = argsToLambda(m.tail);
+        var tail = decompileTail(m.tail);
         return fromStack(stack(head, tail));
       },
-      stack(QUOTE(x), tail), function (m) {
-        var head = QUOTE(toLambda(m.x));
-        var tail = argsToLambda(m.tail);
-        return fromStack(stack(head, tail));
+      stack(atom, tail), function (m) {
+        var head = definitions[m.atom];
+        return decompileStack(toStack(head, m.tail));
       },
-      stack(QLESS, QUOTE(x), QUOTE(y), tail), function (m) {
-        var head = LESS(toLambda(m.x), toLambda(m.y));
-        var tail = argsToLambda(m.tail);
-        return fromStack(stack(head, tail));
-      },
-      stack(QNLESS, QUOTE(x), QUOTE(y), tail), function (m) {
-        var head = NLESS(toLambda(m.x), toLambda(m.y));
-        var tail = argsToLambda(m.tail);
-        return fromStack(stack(head, tail));
-      },
-      stack(QEQUAL, QUOTE(x), QUOTE(y), tail), function (m) {
-        var head = EQUAL(toLambda(m.x), toLambda(m.y));
-        var tail = argsToLambda(m.tail);
-        return fromStack(stack(head, tail));
-      },
-      stack(DEFINE(x, y), []), function (m) {
-        var y = toLambda(m.y);
-        return DEFINE(m.x, y);
-      },
-      stack(ASSERT(x), []), function (m) {
-        var x = toLambda(m.x);
-        return ASSERT(x);
-      },
-      stack(head, tail), function (m) {
-        var head = m.head;
-        assert(_.isString(head), 'unmatched stack head: ' + head);
-        var tail = argsToLambda(m.tail);
+      stack(array, tail), function (m) {
+        var head = m.array;
+        assert(_.isString(head[0]));
+        head = [].concat(head);
+        for (var i = 1; i < head.length; ++i) {
+          head[i] = decompile(head[i]);
+        }
+        var tail = decompileTail(m.tail);
         return fromStack(stack(head, tail));
       }
     ]);
 
-    var argsToLambda = pattern.match([
-      stack(x, y), function (m) {
-        var rx = toLambda(m.x);
-        var ry = argsToLambda(m.y);
-        return stack(rx, ry);
-      },
+    var decompileTail = pattern.match([
       [], function () {
         return [];
+      },
+      stack(x, y), function (m) {
+        var tx = decompile(m.x);
+        var ty = decompileTail(m.y);
+        return stack(tx, ty);
       }
     ]);
 
-    var toLambda = function (simpleAppTree) {
-      return stackToLambda(toStack(simpleAppTree));
+    var decompile = function (code) {
+      return decompileStack(toStack(code));
     };
 
-    return function (simpleAppTree) {
+    return function (code) {
       fresh.reset();
-      return toLambda(simpleAppTree);
+      return decompile(code);
     }
   })();
 
   //--------------------------------------------------------------------------
-  // Abstract : varName x appTree -> appTree
+  // Abstract : varName -> simple appTree -> simple appTree
 
-  (function(){
+  var tryAbstract = (function(){
     var x = pattern.variable('x');
     var y = pattern.variable('y');
+    var name = pattern.variable('name');
     var notFound = {};
 
-    var curriedLambda = _.memoize(function (varName) {
-      var t = pattern.match([
-        VAR(varName), function (m) {
+    var t = pattern.match([
+      VAR(name), function (m, varName) {
+        if (m.name !== varName) {
+          return notFound;
+        } else {
           return I;
-        },
-        // TODO match J
-        // TODO match R
-        // TODO match QUOTE
-        app(x, VAR(varName)), function (m) {
-          var tx = t(m.x);
-          if (tx === notFound) {
+        }
+      },
+      APP(x, VAR(name)), function (m, varName) {
+        var tx = t(m.x, varName);
+        if (tx === notFound) {
+          if (m.name !== varName) {
+            return notFound;
+          } else {
             return m.x;
+          }
+        } else {
+          if (m.name !== varName) {
+            return app(C, tx, VAR(m.name));
           } else {
             return app(W, tx);
           }
-        },
-        app(x, y), function (m) {
-          var tx = t(m.x);
-          var ty = t(m.y);
-          if (tx === notFound) {
-            if (ty === notFound) {
-              return notFound;
-            } else {
-              return app(B, m.x, ty);
-            }
+        }
+      },
+      APP(x, y), function (m, varName) {
+        var tx = t(m.x, varName);
+        var ty = t(m.y, varName);
+        if (tx === notFound) {
+          if (ty === notFound) {
+            return notFound;
           } else {
-            if (ty === notFound) {
-              return app(C, tx, m.y);
-            } else {
-              return app(S, tx, ty);
-            }
+            return app(B, m.x, ty);
           }
-        },
-        x, function () {
-          return notFound;
-        }
-      ]);
-      return t;
-    });
-
-    compiler.lambda = function (varName, body) {
-      var result = curriedLambda(varName)(body);
-      if (result === notFound) {
-        return app(K, body);
-      } else {
-        return result;
-      }
-    };
-
-    compiler.letrec = function (varName, def, body) {
-      var lambdaVar = curriedLambda(varName);
-      var bodyResult = lambdaVar(body);
-      if (bodyResult === notFound) {
-        return body;
-      } else {
-        var defResult = lambdaVar(def);
-        if (defResult === notFound) {
-          return app(bodyResult, def);
         } else {
-          return app(bodyResult, app(Y, defResult));
+          if (ty === notFound) {
+            return app(C, tx, m.y);
+          } else {
+            return app(S, tx, ty);
+          }
         }
+      },
+      COMP(x, y), function (m, varName) {
+        var tx = t(m.x, varName);
+        var ty = t(m.y, varName);
+        TODO('adapt from johann/src/expressions.C Comp::abstract');
+      },
+      JOIN(x, y), function (m, varName) {
+        var tx = t(m.x, varName);
+        var ty = t(m.y, varName);
+        if (tx === notFound) {
+          if (ty === notFound) {
+            return notFound;
+          } else {
+            // this hack will be obsoleted by simplifyLambda
+            if (ty === I) {                   // HACK
+              return app(J, m.x);             // HACK
+            } else {                          // HACK
+              return comp(app(J, m.x), ty);
+            }                                 // HACK
+          }
+        } else {
+          if (ty === notFound) {
+            return comp(app(J, m.y), tx);
+          } else {
+            return JOIN(tx, ty);
+          }
+        }
+      },
+      RAND(x, y), function (m, varName) {
+        var tx = t(m.x, varName);
+        var ty = t(m.y, varName);
+        if (tx === notFound) {
+          if (ty === notFound) {
+            return notFound;
+          } else {
+            return comp(app(R, m.x), ty);
+          }
+        } else {
+          if (ty === notFound) {
+            return comp(app(R, m.y), tx);
+          } else {
+            return RAND(tx, ty);
+          }
+        }
+      },
+      QUOTE(x), function (m, varName) {
+        var tx = t(m.x, varName);
+        if (tx === notFound) {
+          return notFound;
+        } else {
+          TODO('implement quoted tryAbstraction');
+        }
+      },
+      LESS(x, y), function (m, varName) {
+        var tx = t(m.x, varName);
+        var ty = t(m.y, varName);
+        if (tx === notFound && ty === notFound) {
+          return notFound;
+        } else {
+          TODO('implement quoted tryAbstraction');
+        }
+      },
+      NLESS(x, y), function (m, varName) {
+        var tx = t(m.x, varName);
+        var ty = t(m.y, varName);
+        if (tx === notFound && ty === notFound) {
+          return notFound;
+        } else {
+          TODO('implement quoted tryAbstraction');
+        }
+      },
+      EQUAL(x, y), function (m, varName) {
+        var tx = t(m.x, varName);
+        var ty = t(m.y, varName);
+        if (tx === notFound && ty === notFound) {
+          return notFound;
+        } else {
+          TODO('implement quoted tryAbstraction');
+        }
+      },
+      x, function () {
+        return notFound;
       }
-    };
-  })();
-  var lambda = compiler.lambda;
-  var letrec = compiler.letrec;
+    ]);
 
-  test('compile.lambda', function () {
+    t.notFound = notFound;
+
+    return t;
+  })();
+
+  var compileLambda = function (varName, body) {
+    var result = tryAbstract(body, varName);
+    if (result === tryAbstract.notFound) {
+      return app(K, body);
+    } else {
+      return result;
+    }
+  };
+
+  test('compiler.compileLambda', function () {
     var a = VAR('a');
     var x = VAR('x');
     var y = VAR('y');
-    var lambdaA = _.partial(lambda, 'a');
+    var lambdaA = _.partial(compileLambda, 'a');
     var examples = [
       [a, I],
       [app(x, a), x],
@@ -927,14 +881,28 @@ function(log,   test,   pattern,   symbols)
     assert.forward(lambdaA, examples);
   });
 
-  test('compile.letrec', function () {
+  var compileLet = function (varName, def, body) {
+    var bodyResult = tryAbstract(body, varName);
+    if (bodyResult === tryAbstract.notFound) {
+      return body;
+    } else {
+      var defResult = tryAbstract(def, varName);
+      if (defResult === tryAbstract.notFound) {
+        return app(bodyResult, def);
+      } else {
+        return app(bodyResult, app(Y, defResult));
+      }
+    }
+  };
+
+  test('compiler.compileLet', function () {
     var a = VAR('a');
     var x = VAR('x');
     var y = VAR('y');
     var letrecA = function (pair) {
       var def = pair[0];
       var body = pair[1];
-      return letrec('a', def, body);
+      return compileLet('a', def, body);
     };
     var examples = [
       [['bomb', x], x],
@@ -945,51 +913,41 @@ function(log,   test,   pattern,   symbols)
     assert.forward(letrecA, examples);
   });
 
-  //--------------------------------------------------------------------------
-  // Convert : lambda -> appTree
-
-  var fromLambda = compiler.fromLambda = (function(){
+  var compile = (function(){
     var x = pattern.variable('x');
     var y = pattern.variable('y');
     var z = pattern.variable('z');
     var name = pattern.variable('name');
 
     var t = pattern.match([
-      app(x, y), function (m) {
-        return app(t(m.x), t(m.y));
+      VAR(name), function (m) {
+        return VAR(m.name);
       },
       LAMBDA(VAR(name), x), function (m) {
-        return lambda(m.name, t(m.x));
+        return compileLambda(m.name, t(m.x));
       },
       LET(VAR(name), x, y), function (m) {
-        return letrec(m.name, t(m.x), t(m.y));
-      },
-      JOIN(x, y), function (m) {
-        return app(J, t(m.x),  t(m.y));
-      },
-      RAND(x, y), function (m) {
-        return app(R, t(m.x),  t(m.y));
-      },
-      QUOTE(x), function (m) {
-        return QUOTE(t(m.x));
-      },
-      LESS(x, y), function (m) {
-        return app(QLESS, QUOTE(t(m.x)), QUOTE(t(m.y)));
-      },
-      NLESS(x, y), function (m) {
-        return app(QNLESS, QUOTE(t(m.x)), QUOTE(t(m.y)));
-      },
-      EQUAL(x, y), function (m) {
-        return app(QEQUAL, QUOTE(t(m.x)), QUOTE(t(m.y)));
+        return compileLet(m.name, t(m.x), t(m.y));
       },
       x, function (m) {
-        return m.x;
+        var x = m.x;
+        if (_.isString(x)) {
+          return x;
+        } else {
+          assert(_.isArray(x), x);
+          var result = [x[0]];
+          for (var i = 1; i < x.length; ++i) {
+            result.push(t(x[i]));
+          }
+          return result;
+        }
       }
     ]);
+
     return t;
   })();
 
-  test('compiler.toLambda, compiler.fromLambda', function(){
+  test('compiler.decompile, compiler.compile', function(){
     var a = VAR('a');
     var b = VAR('b');
     var c = VAR('c');
@@ -1020,26 +978,28 @@ function(log,   test,   pattern,   symbols)
       [app(S, x, y, xy), LET(a, xy, app(x, a, app(y, a)))],
       [J, LAMBDA(a, LAMBDA(b, JOIN(a, b)))],
       [app(J, x), LAMBDA(a, JOIN(x, a))],
-      [app(J, x, y), JOIN(x, y)],
-      [app(J, x, y, I), app(JOIN(x, y), LAMBDA(a, a))],
-      [R, LAMBDA(a, LAMBDA(b, RAND(a, b)))],
-      [app(R, x), LAMBDA(a, RAND(x, a))],
-      [app(R, x, y), RAND(x, y)],
-      [app(R, x, y, I), app(RAND(x, y), LAMBDA(a, a))],
+      // TODO add these after simplifyLambda works
+      //[app(J, x, y), JOIN(x, y)],
+      //[app(J, x, y, I), app(JOIN(x, y), LAMBDA(a, a))],
+      //[R, LAMBDA(a, LAMBDA(b, RAND(a, b)))],
+      //[app(R, x), LAMBDA(a, RAND(x, a))],
+      //[app(R, x, y), RAND(x, y)],
+      //[app(R, x, y, I), app(RAND(x, y), LAMBDA(a, a))],
       [QUOTE(I), QUOTE(LAMBDA(a, a))],
       [app(QUOTE(x), I), app(QUOTE(x), LAMBDA(a, a))],
-      [app(QLESS, QUOTE(x), QUOTE(y)), LESS(x, y)],
-      [app(QNLESS, QUOTE(x), QUOTE(y)), NLESS(x, y)],
-      [app(QEQUAL, QUOTE(x), QUOTE(y)), EQUAL(x, y)],
+      [LESS(x, y), LESS(x, y)],
+      [NLESS(x, y), NLESS(x, y)],
+      [EQUAL(x, y), EQUAL(x, y)],
       [VAR(x), VAR(x)],
       [app(VAR(x), I), app(VAR(x), LAMBDA(a, a))],
+      [HOLE, HOLE]
     ];
-    assert.forward(toLambda, examples);
-    assert.backward(fromLambda, examples);
+    assert.forward(decompile, examples);
+    assert.backward(compile, examples);
   });
 
-  test('compiler.toLambda', function(){
-    // fromLambda would fail these because they involve pattern matching
+  test('compiler.decompile', function(){
+    // compile would fail these because they involve pattern matching
     var a = VAR('a');
     var b = VAR('b');
     var c = VAR('c');
@@ -1052,19 +1012,27 @@ function(log,   test,   pattern,   symbols)
       [app(W, x, y, I), app(x, y, y, LAMBDA(a, a))],
       [app(S, x, y, z), app(x, z, app(y, z))],
       [app(S, x, y, z, I), app(x, z, app(y, z), LAMBDA(a, a))],
-      [Y, LAMBDA(a, LET(b, LAMBDA(c, app(a, app(b, c))), b))]
+      [Y, LAMBDA(a, LET(b, LAMBDA(c, app(a, app(b, c))), b))],
+      [app(QLESS, QUOTE(x), QUOTE(y)), LESS(x, y)],
+      [app(QNLESS, QUOTE(x), QUOTE(y)), NLESS(x, y)],
+      [app(QEQUAL, QUOTE(x), QUOTE(y)), EQUAL(x, y)],
+      // TODO move this back above
+      [app(J, x, y), JOIN(x, y)],
+      [app(J, x, y, I), app(JOIN(x, y), LAMBDA(a, a))],
+      [HOLE, HOLE]
     ];
-    assert.forward(toLambda, examples);
+    assert.forward(decompile, examples);
   });
 
-  test('compiler.fromLambda', function () {
-    // toLamda would fail these because input is not simple
+  test('compiler.compile', function () {
+    // decompile would fail these because input is not simple
     var a = VAR('a');
     var x = VAR('x');
     var examples = [
-      [app(LAMBDA(a, a), x), app(I, x)]
+      [app(LAMBDA(a, a), x), app(I, x)],
+      [HOLE, HOLE]
     ];
-    assert.forward(fromLambda, examples);
+    assert.forward(compile, examples);
   });
 
   //--------------------------------------------------------------------------
@@ -1072,10 +1040,8 @@ function(log,   test,   pattern,   symbols)
   //
   // see http://www.fileformat.info/info/unicode/category/Sm/list.htm
 
-  var render = compiler.render = (function(){
-
-    var newline = '\n                                                       ' +
-    '                                                                        ';
+  var render = (function(){
+    var newline = '\n                                                        ';
     var indent = function (i) {
       return newline.slice(0, 1 + 2 * i);
     };
@@ -1088,19 +1054,19 @@ function(log,   test,   pattern,   symbols)
     var z = pattern.variable('z');
     var name = pattern.variable('name');
 
-    var printPatt = pattern.match([
+    var renderPatt = pattern.match([
       VAR(name), function (m) {
         return span('variable', m.name);
       },
       QUOTE(x), function (m) {
-        return '{' + printPatt(m.x) + '}';
+        return '{' + renderPatt(m.x) + '}';
       },
       CURSOR(x), function (m, i) {
-        return span('cursor', printPatt(m.x, i));
+        return span('cursor', renderPatt(m.x, i));
       }
     ]);
 
-    var printAtom = pattern.match([
+    var renderAtom = pattern.match([
       HOLE, function () {
         return '?';
         //return '&#9723;'; // empty square
@@ -1117,109 +1083,132 @@ function(log,   test,   pattern,   symbols)
         return span('variable', m.name);
       },
       QUOTE(x), function (m, i) {
-        return '{' + printBlock(m.x, i) + '}';
+        return '{' + renderBlock(m.x, i) + '}';
       },
       LESS(x, y), function (m, i) {
-        return '{' + printJoin(m.x, i) + ' &#8849; ' + printJoin(m.y, i) + '}';
+        return '{' +
+          renderJoin(m.x, i) + ' &#8849; ' + renderJoin(m.y, i) +
+        '}';
       },
       NLESS(x, y), function (m, i) {
-        return '{' + printJoin(m.x, i) + ' &#8930; ' + printJoin(m.y, i) + '}';
+        return '{' +
+          renderJoin(m.x, i) + ' &#8930; ' + renderJoin(m.y, i) +
+        '}';
       },
       EQUAL(x, y), function (m, i) {
-        //return '{' + printJoin(m.x) + ' &#8801; ' + printJoin(m.y) + '}';
-        return '{' + printJoin(m.x, i) + ' = ' + printJoin(m.y, i) + '}';
+        //return '{' + renderJoin(m.x) + ' &#8801; ' + renderJoin(m.y) + '}';
+        return '{' + renderJoin(m.x, i) + ' = ' + renderJoin(m.y, i) + '}';
       },
       CURSOR(x), function (m, i) {
-        return span('cursor', printAtom(m.x, i));
+        return span('cursor', renderAtom(m.x, i));
       },
       x, function (m, i, failed) {
         if (failed) {
-          log('failed to print: ' + JSON.stringify(m.x));
-          return span('error', 'compiler.print error: ' + m.x);
+          log('failed to render: ' + JSON.stringify(m.x));
+          return span('error', 'compiler.render error: ' + m.x);
         }
-        return '(' + printInline(m.x, i, true) + ')';
+        return '(' + renderInline(m.x, i, true) + ')';
       }
     ]);
 
-    var printApp = pattern.match([
+    var renderApp = pattern.match([
       APP(x, y), function (m, i) {
-        return printApp(m.x, i) + ' ' + printAtom(m.y, i);
+        return renderApp(m.x, i) + ' ' + renderAtom(m.y, i);
       },
       CURSOR(x), function (m, i) {
-        return span('cursor', printApp(m.x, i));
+        return span('cursor', renderApp(m.x, i));
       },
       x, function (m, i, failed) {
-        return printAtom(m.x, i, failed);
+        return renderAtom(m.x, i, failed);
       }
     ]);
 
-    var printJoin = pattern.match([
+    var renderJoin = pattern.match([
       JOIN(x, y), function (m, i) {
-        return printJoin(m.x, i) + ' | ' + printJoin(m.y, i);
+        return renderJoin(m.x, i) + ' | ' + renderJoin(m.y, i);
       },
       CURSOR(x), function (m, i) {
-        return span('cursor', printJoin(m.x, i));
+        return span('cursor', renderJoin(m.x, i));
       },
       x, function (m, i, failed) {
-        return printApp(m.x, i, failed);
+        return renderApp(m.x, i, failed);
       }
     ]);
 
-    var printInline = pattern.match([
+    var renderInline = pattern.match([
       LAMBDA(x, y), function (m, i) {
-        return '&lambda;' + printPatt(m.x) + '. ' + printInline(m.y, i);
+        return '&lambda;' + renderPatt(m.x) + '. ' + renderInline(m.y, i);
       },
       LET(x, y, z), function (m, i) {
         return (
-          indent(i) + printPatt(m.x) + ' = ' + printJoin(m.y, i + 1) + '.' +
-          indent(i) + printBlock(m.z, i)
+          indent(i) + renderPatt(m.x) + ' = ' + renderJoin(m.y, i + 1) + '.' +
+          indent(i) + renderBlock(m.z, i)
         );
       },
       CURSOR(x), function (m, i) {
-        return span('cursor', printInline(m.x, i));
+        return span('cursor', renderInline(m.x, i));
       },
       x, function (m, i, failed) {
-        return printJoin(m.x, i, failed);
+        return renderJoin(m.x, i, failed);
       }
     ]);
 
-    var printBlock = pattern.match([
+    var renderBlock = pattern.match([
       LET(x, y, z), function (m, i) {
         return (
-          printPatt(m.x) + ' = ' + printJoin(m.y, i + 1) + '.' +
-          indent(i) + printBlock(m.z, i)
+          renderPatt(m.x) + ' = ' + renderJoin(m.y, i + 1) + '.' +
+          indent(i) + renderBlock(m.z, i)
         );
       },
       CURSOR(x), function (m, i) {
-        return span('cursor', printBlock(m.x, i));
+        return span('cursor', renderBlock(m.x, i));
       },
       x, function (m, i) {
-        return printInline(m.x, i);
+        return renderInline(m.x, i);
       }
     ]);
 
-    var print = pattern.match([
+    var render = pattern.match([
       DEFINE(x, y), function (m, i) {
-        return span('keyword', 'define') + ' ' + printAtom(m.x) + ' = ' +
-          printJoin(m.y, i + 1) + '.';
+        return span('keyword', 'define') + ' ' + renderAtom(m.x) + ' = ' +
+          renderJoin(m.y, i + 1) + '.';
       },
       ASSERT(x), function (m, i) {
-        return span('keyword', 'assert') + ' ' + printJoin(m.x, i + 1) + '.';
+        return span('keyword', 'assert') + ' ' + renderJoin(m.x, i + 1) + '.';
       },
       CURSOR(x), function (m, i) {
-        return span('cursor', print(m.x, i));
+        return span('cursor', render(m.x, i));
       },
       x, function (m, i) {
-        return printBlock(m.x, i);
+        return renderBlock(m.x, i);
       }
     ]);
 
     return function (expr) {
-      return print(expr, 0);
+      var indent = 0;
+      return render(expr, indent);
     };
   })();
 
-  compiler.cursor = CURSOR;
-
-  return compiler;
+  return {
+    symbols: lambdaSymbols,
+    load: function (string) {
+      var code = parse(string);
+      var lambda = decompile(code);
+      //lambda = simplify(lambda);  // TODO
+      return lambda;
+    },
+    loadLine: function (line) {
+      var code = parseLine(line);
+      var lambda = decompile(code);
+      //lambda = simplify(lambda);  // TODO
+      return lambda;
+    },
+    dump: function (lambda) {
+      var code = compile(lambda);
+      return print(code);
+    },
+    print: print,
+    render: render
+  };
 });

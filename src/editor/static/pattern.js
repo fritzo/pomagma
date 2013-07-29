@@ -124,7 +124,7 @@ function(log, test)
           return handlers[line].apply(this, args);
         }
       }
-      throw 'unmatched expression:\n  ' + JSON.stringify(struct);
+      throw 'Unmatched Expression:\n  ' + JSON.stringify(struct);
     };
   };
 

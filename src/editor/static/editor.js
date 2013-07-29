@@ -71,9 +71,8 @@ function(log,   test,   compiler,   ast,   corpus)
     corpus.findAllLines().forEach(function(id){
       ids.push(id);
       var line = corpus.findLine(id);
-      var code = compiler.parseLine(line);
-      var tree = compiler.fromCode(code);
-      var lambda = compiler.toLambda(tree);
+      var lambda = compiler.loadLine(line);
+      log('DEBUG ' + lambda);
       asts[id] = ast.load(lambda);
     });
     assert(ids.length > 0, 'corpus is empty');
