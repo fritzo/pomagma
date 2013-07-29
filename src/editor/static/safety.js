@@ -47,22 +47,31 @@ assert.equal = function (actual, expected, message) {
 
 assert.forward = function (fwd, pairs) {
   pairs.forEach(function(pair, lineno){
-    var errorMessage = 'Forward example ' + (1 + lineno);
-    assert.equal(fwd(pair[0]), pair[1], errorMessage);
+    try {
+      assert.equal(fwd(pair[0]), pair[1]);
+    } catch (e) {
+      throw new AssertException('forward example ' + (1 + lineno) + ', ' + e);
+    }
   });
 };
 
 assert.backward = function (bwd, pairs) {
   pairs.forEach(function(pair, lineno){
-    var errorMessage = 'Backward example ' + (1 + lineno);
-    assert.equal(bwd(pair[1]), pair[0], errorMessage);
+    try {
+      assert.equal(bwd(pair[1]), pair[0]);
+    } catch (e) {
+      throw new AssertException('backward example ' + (1 + lineno) + ', ' + e);
+    }
   });
 };
 
 assert.inverses = function (fwd, bwd, items) {
   items.forEach(function(item, lineno){
-    var errorMessage = 'Inverses example ' + (1 + lineno);
-    assert.equal(bwd(fwd(item)), item, errorMessage);
+    try {
+      assert.equal(bwd(fwd(item)), item);
+    } catch (e) {
+      throw new AssertException('inverses example ' + (1 + lineno) + ', ' + e);
+    }
   });
 };
 
