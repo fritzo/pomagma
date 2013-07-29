@@ -455,6 +455,35 @@ function(log,   test,   pattern,   symbols)
       return _.isString(struct) && _.has(definitions, struct);
     });
 
+    var ensureVar = function (v, handler) {
+      var name = v.name;
+      return function (m) {
+        var tail = m.tail;
+        if (tail.length === 0) {
+          var v = fresh();
+          m[name] = v;
+          return LAMBDA(v, handler(m));
+        } else {
+          m[name] = decompile(tail[1]);  // FIXME calls decompile incorrectly
+          m.tail = tail[2];
+          return handler(m);
+        }
+      };
+    };
+
+    var ensure = function () {
+      var pop = Array.prototype.pop;
+      var handler = pop.call(arguments);
+      while (arguments.length) {
+        handler = ensureVar(pop.call(arguments), handler);
+      }
+      return function (m) {
+        var head = handler(m);
+        var tail = decompileTail(m.tail);
+        return fromStack(stack(head, tail));
+      }
+    };
+
     var decompileStack = pattern.match([
       stack(COMP(x, y), tail), function (m) {
         return decompileStack(stack(B, m.x, m.y, m.tail));
@@ -468,70 +497,32 @@ function(log,   test,   pattern,   symbols)
       stack(BOT, tail), function () {
         return BOT;
       },
-      stack(I, []), function () {
-        var x = fresh();
-        return LAMBDA(x, x);
-      },
-      stack(K, []), function () {
-        var x = fresh();
-        var y = fresh();
-        return LAMBDA(x, LAMBDA(y, x));
-      },
-      stack(K, x, []), function (m) {
-        var y = fresh();
-        var tx = decompile(m.x);
-        return LAMBDA(y, tx);
-      },
-      stack(C, I, []), function (m) {
-        var x = fresh();
-        var y = fresh();
-        return LAMBDA(x, LAMBDA(y, app(y, x)));
-      },
-      stack(C, I, x, []), function (m) {
-        var y = fresh();
-        var tx = decompile(m.x);
-        return LAMBDA(y, app(y, tx));
-      },
-      // TODO simplify B, C, W, S cases with a popFresh(cb) function
-      // Johann implements this by keeping (binder-stack, app-stack)
-      // and pushing binders onto the stack when creating fresh
-      // see johann/src/expressions.C class Decompile
-      stack(B, []), function () {
-        var x = fresh();
-        var y = fresh();
-        var z = fresh();
-        return LAMBDA(x, LAMBDA(y, LAMBDA(z, app(x, app(y, z)))));
-      },
-      stack(B, x, []), function (m) {
-        var y = fresh();
-        var z = fresh();
-        var tx = decompile(m.x);
-        return LAMBDA(y, LAMBDA(z, app(tx, app(y, z))));
-      },
-      stack(B, x, y, []), function (m) {
-        var z = fresh();
-        var tx = decompile(m.x);
-        var ty = decompile(m.y);
-        return LAMBDA(z, app(tx, app(ty, z)));
-      },
-      stack(C, []), function () {
-        var x = fresh();
-        var y = fresh();
-        var z = fresh();
-        return LAMBDA(x, LAMBDA(y, LAMBDA(z, app(x, z, y))));
-      },
-      stack(C, x, []), function (m) {
-        var y = fresh();
-        var z = fresh();
-        var tx = decompile(m.x);
-        return LAMBDA(y, LAMBDA(z, app(tx, z, y)));
-      },
-      stack(C, x, y, []), function (m) {
-        var z = fresh();
-        var tx = decompile(m.x);
-        var ty = decompile(m.y);
-        return LAMBDA(z, app(tx, z, ty));
-      },
+      stack(I, tail), ensure(x, function (m) {
+        return m.x;
+      }),
+      stack(K, tail), ensure(x, y, function (m) {
+        return m.x;
+      }),
+      stack(C, I, tail), ensure(x, y, function (m) {
+        return app(m.y, m.x);
+      }),
+      stack(B, tail), ensure(x, y, z, function (m) {
+        return app(m.x, app(m.y, m.z));
+      }),
+      stack(C, tail), ensure(x, y, z, function (m) {
+        return app(m.x, m.z, m.y);
+      }),
+      // TODO get W working
+      //stack(W, tail), ensure(x, y, function (m) {
+      //  var x = m.x;
+      //  var y = m.y;
+      //  if (_.isArray(y) && y[0] === 'VAR') {
+      //    return LAMBDA(x, LAMBDA(y, app(x, y, y)));
+      //  } else {
+      //    var z = fresh();
+      //    return LET(z, y, app(x, z, z));
+      //  }
+      //}),
       stack(W, []), function () {
         var x = fresh();
         var y = fresh();
@@ -588,54 +579,17 @@ function(log,   test,   pattern,   symbols)
         var tail = decompileTail(m.tail);
         return fromStack(stack(head, tail));
       },
-      stack(Y, []), function (m) {
-        var x = fresh();
+      stack(Y, tail), ensure(x, function (m) {
         var y = fresh();
         var z = fresh();
-        return LAMBDA(x, LET(y, LAMBDA(z, app(x, app(y, z))), y));
-      },
-      stack(Y, x, tail), function (m) {
-        var y = fresh();
-        var z = fresh();
-        var tx = decompile(m.x);
-        var head = LET(y, LAMBDA(z, app(tx, app(y, z))), y);
-        var tail = decompileTail(m.tail);
-        return fromStack(stack(head, tail));
-      },
-      stack(J, []), function () {
-        var x = fresh();
-        var y = fresh();
-        return LAMBDA(x, LAMBDA(y, JOIN(x, y)));
-      },
-      stack(J, x, []), function (m) {
-        var y = fresh();
-        var tx = decompile(m.x);
-        return LAMBDA(y, JOIN(tx, y));
-      },
-      stack(J, x, y, tail), function (m) {
-        var tx = decompile(m.x);
-        var ty = decompile(m.y);
-        var head = JOIN(tx, ty);
-        var tail = decompileTail(m.tail);
-        return fromStack(stack(head, tail));
-      },
-      stack(R, []), function () {
-        var x = fresh();
-        var y = fresh();
-        return LAMBDA(x, LAMBDA(y, RAND(x, y)));
-      },
-      stack(R, x, []), function (m) {
-        var y = fresh();
-        var tx = decompile(m.x);
-        return LAMBDA(y, RAND(tx, y));
-      },
-      stack(R, x, y, tail), function (m) {
-        var tx = decompile(m.x);
-        var ty = decompile(m.y);
-        var head = RAND(tx, ty);
-        var tail = decompileTail(m.tail);
-        return fromStack(stack(head, tail));
-      },
+        return LET(y, LAMBDA(z, app(m.x, app(y, z))), y);
+      }),
+      stack(J, tail), ensure(x, y, function (m) {
+        return JOIN(m.x, m.y);
+      }),
+      stack(R, tail), ensure(x, y, function (m) {
+        return RAND(m.x, m.y);
+      }),
       // TODO reimplement via ensureQuoted
       stack(QLESS, []), function (m) {
         var x = fresh();

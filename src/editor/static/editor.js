@@ -72,7 +72,6 @@ function(log,   test,   compiler,   ast,   corpus)
       ids.push(id);
       var line = corpus.findLine(id);
       var lambda = compiler.loadLine(line);
-      log('DEBUG ' + lambda);
       asts[id] = ast.load(lambda);
     });
     assert(ids.length > 0, 'corpus is empty');
