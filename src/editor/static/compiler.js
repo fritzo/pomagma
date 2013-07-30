@@ -97,7 +97,7 @@ function(log,   test,   pattern,   symbols)
     var examples = [
       'VAR x',
       'QUOTE APP LAMBDA CURSOR VAR x VAR x HOLE',
-      'LET VAR i LAMBDA VAR x VAR x APP VAR i VAR i',
+      'LETREC VAR i LAMBDA VAR x VAR x APP VAR i VAR i',
     ];
     assert.inverses(parse, print, examples);
   });
@@ -161,7 +161,7 @@ function(log,   test,   pattern,   symbols)
   var LAMBDA = Symbol('LAMBDA', 2);
   var DEFINE = Symbol('DEFINE', 2);
   var STACK = Symbol('STACK', 2);
-  var LET = Symbol('LET', 3);
+  var LETREC = Symbol('LETREC', 3);
   var LESS = Symbol('LESS', 2);
   var NLESS = Symbol('NLESS', 2);
   var EQUAL = Symbol('EQUAL', 2);
@@ -406,6 +406,80 @@ function(log,   test,   pattern,   symbols)
   });
   */
 
+  var substitute = (function(){
+    var string = pattern.variable('string');
+    var array = pattern.variable('array', _.isArray);
+
+    var t = pattern.match([
+      VAR(string), function (m, varName, def) {
+        return m.string === varName ? def : VAR(m.string);
+      },
+      array, function (m, varName, def) {
+        var array = [].concat(m.array);
+        for (var i = 1; i < array.length; ++i) {
+          array[i] = t(array[i], varName, def);
+        }
+        return array;
+      },
+      string, function (m) {
+        return m.string;
+      }
+    ]);
+
+    return function (varName, def, body) {
+      return t(body, varName, def);
+    };
+  })();
+
+  test('compiler.substitute', function(){
+    var x = VAR('x');
+    var y = VAR('y');
+    var z = VAR('z');
+    var subs = function (args) {
+      return substitute.apply(null, args);
+    };
+    var examples = [
+      [['x', y, z], z],
+      [['x', y, x], y],
+      [['x', app(x, y, z), app(x, y, z)], app(app(x, y, z), y, z)]
+    ];
+    assert.forward(subs, examples);
+  });
+
+  var simplifyStack = (function(){
+    var x = pattern.variable('x');
+    var y = pattern.variable('y');
+    var z = pattern.variable('z');
+    var tail = pattern.variable('tail');
+
+    var affineBetaEta = pattern.match([
+      stack(TOP, tail), function (m) {
+        return TOP;
+      },
+      stack(BOT, tail), function (m) {
+        return BOT;
+      },
+      stack(JOIN(TOP, x), tail), function () {
+        return TOP;
+      },
+      stack(JOIN(x, TOP), tail), function () {
+        return TOP;
+      },
+      stack(JOIN(BOT, x), tail), function (m) {
+        var step = toStack(m.x, m.tail);
+        return simplifyStack(step);
+      },
+      stack(JOIN(x, BOT), tail), function (m) {
+        var step = toStack(m.x, m.tail);
+        return simplifyStack(step);
+      },
+      stack(LAMBDA(x, y), z, tail), function (m) {
+        
+      }
+    ]);
+
+  })();
+
   //--------------------------------------------------------------------------
   // Convert : simple appTree -> lambda
 
@@ -413,7 +487,7 @@ function(log,   test,   pattern,   symbols)
     var subset = [
       'HOLE', 'TOP', 'BOT',
       //'I', 'K', 'B', 'C', 'W', 'S', 'Y', 'U', 'V', 'P', 'A', 'J', 'R',
-      'APP', 'LAMBDA', 'LET', 'JOIN', 'RAND',
+      'APP', 'LAMBDA', 'LETREC', 'JOIN', 'RAND',
       'QUOTE', 'QLESS', 'QNLESS', 'QEQUAL', 'LESS', 'NLESS', 'EQUAL',
       'ASSERT', 'DEFINE', 'CURSOR',
     ];
@@ -520,7 +594,7 @@ function(log,   test,   pattern,   symbols)
       //    return LAMBDA(x, LAMBDA(y, app(x, y, y)));
       //  } else {
       //    var z = fresh();
-      //    return LET(z, y, app(x, z, z));
+      //    return LETREC(z, y, app(x, z, z));
       //  }
       //}),
       stack(W, []), function () {
@@ -542,7 +616,7 @@ function(log,   test,   pattern,   symbols)
       stack(W, x, y, tail), function (m) {
         var y = fresh();
         var ty = decompile(m.y);
-        var head = LET(y, ty, decompile(app(m.x, y, y)));
+        var head = LETREC(y, ty, decompile(app(m.x, y, y)));
         var tail = decompileTail(m.tail);
         return fromStack(stack(head, tail));
       },
@@ -575,14 +649,14 @@ function(log,   test,   pattern,   symbols)
         var tz = decompile(m.z);
         var xz = app(m.x, z);
         var yz = app(m.y, z);
-        var head = LET(z, tz, decompile(app(xz, yz)));
+        var head = LETREC(z, tz, decompile(app(xz, yz)));
         var tail = decompileTail(m.tail);
         return fromStack(stack(head, tail));
       },
       stack(Y, tail), ensure(x, function (m) {
         var y = fresh();
         var z = fresh();
-        return LET(y, LAMBDA(z, app(m.x, app(y, z))), y);
+        return LETREC(y, LAMBDA(z, app(m.x, app(y, z))), y);
       }),
       stack(J, tail), ensure(x, y, function (m) {
         return JOIN(m.x, m.y);
@@ -603,7 +677,7 @@ function(log,   test,   pattern,   symbols)
       stack(QLESS, x, []), function (m) {
         var x = fresh();
         var y = fresh();
-        return LET(QUOTE(x), m.x, LAMBDA(QUOTE(y), LESS(x, y)));
+        return LETREC(QUOTE(x), m.x, LAMBDA(QUOTE(y), LESS(x, y)));
       },
       // ... other cases omitted: (QUOTE(x), y); (x, QUOTE(y))
       stack(QLESS, QUOTE(x), QUOTE(y), tail), function (m) {
@@ -614,7 +688,7 @@ function(log,   test,   pattern,   symbols)
       stack(QLESS, x, y, tail), function (m) {
         var x = fresh();
         var y = fresh();
-        var head = LET(QUOTE(x), m.x, LET(QUOTE(y), m.y, LESS(x, y)));
+        var head = LETREC(QUOTE(x), m.x, LETREC(QUOTE(y), m.y, LESS(x, y)));
         var tail = decompileTail(m.tail);
         return fromStack(stack(head, tail));
       },
@@ -880,7 +954,7 @@ function(log,   test,   pattern,   symbols)
       LAMBDA(VAR(name), x), function (m) {
         return compileLambda(m.name, t(m.x));
       },
-      LET(VAR(name), x, y), function (m) {
+      LETREC(VAR(name), x, y), function (m) {
         return compileLet(m.name, t(m.x), t(m.y));
       },
       x, function (m) {
@@ -925,11 +999,11 @@ function(log,   test,   pattern,   symbols)
       [app(C, x, y), LAMBDA(a, app(x, a, y))],
       [W, LAMBDA(a, LAMBDA(b, app(a, b, b)))],
       [app(W, x), LAMBDA(a, app(x, a, a))],
-      [app(W, x, xy), LET(a, xy, app(x, a, a))],
+      [app(W, x, xy), LETREC(a, xy, app(x, a, a))],
       [S, LAMBDA(a, LAMBDA(b, LAMBDA(c, app(a, c, app(b, c)))))],
       [app(S, x), LAMBDA(a, LAMBDA(b, app(x, b, app(a, b))))],
       [app(S, x, y), LAMBDA(a, app(x, a, app(y, a)))],
-      [app(S, x, y, xy), LET(a, xy, app(x, a, app(y, a)))],
+      [app(S, x, y, xy), LETREC(a, xy, app(x, a, app(y, a)))],
       [J, LAMBDA(a, LAMBDA(b, JOIN(a, b)))],
       [app(J, x), LAMBDA(a, JOIN(x, a))],
       // TODO add these after simplifyLambda works
@@ -966,7 +1040,7 @@ function(log,   test,   pattern,   symbols)
       [app(W, x, y, I), app(x, y, y, LAMBDA(a, a))],
       [app(S, x, y, z), app(x, z, app(y, z))],
       [app(S, x, y, z, I), app(x, z, app(y, z), LAMBDA(a, a))],
-      [Y, LAMBDA(a, LET(b, LAMBDA(c, app(a, app(b, c))), b))],
+      [Y, LAMBDA(a, LETREC(b, LAMBDA(c, app(a, app(b, c))), b))],
       [app(QLESS, QUOTE(x), QUOTE(y)), LESS(x, y)],
       [app(QNLESS, QUOTE(x), QUOTE(y)), NLESS(x, y)],
       [app(QEQUAL, QUOTE(x), QUOTE(y)), EQUAL(x, y)],
@@ -1093,7 +1167,7 @@ function(log,   test,   pattern,   symbols)
       LAMBDA(x, y), function (m, i) {
         return '&lambda;' + renderPatt(m.x) + '. ' + renderInline(m.y, i);
       },
-      LET(x, y, z), function (m, i) {
+      LETREC(x, y, z), function (m, i) {
         return (
           indent(i) + renderPatt(m.x) + ' = ' + renderJoin(m.y, i + 1) + '.' +
           indent(i) + renderBlock(m.z, i)
@@ -1108,7 +1182,7 @@ function(log,   test,   pattern,   symbols)
     ]);
 
     var renderBlock = pattern.match([
-      LET(x, y, z), function (m, i) {
+      LETREC(x, y, z), function (m, i) {
         return (
           renderPatt(m.x) + ' = ' + renderJoin(m.y, i + 1) + '.' +
           indent(i) + renderBlock(m.z, i)

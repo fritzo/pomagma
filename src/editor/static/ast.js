@@ -87,7 +87,7 @@ function(log,   test,   compiler)
     var examples = [
       'VAR x',
       'QUOTE APP LAMBDA CURSOR VAR x VAR x HOLE',
-      'LET VAR i LAMBDA VAR x VAR x APP VAR i VAR i'
+      'LETREC VAR i LAMBDA VAR x VAR x APP VAR i VAR i'
     ];
     for (var i = 0; i < examples.length; ++i) {
       var lineno = 1 + i;
@@ -239,7 +239,7 @@ function(log,   test,   compiler)
   var getBoundAbove = function (term) {
     var result = [];
     for (var above = term; above !== null; above = above.above) {
-      if (above.name === 'LAMBDA' || above.name === 'LET') {
+      if (above.name === 'LAMBDA' || above.name === 'LETREC') {
         var patt = above.below[0];
         pushPatternVars(patt, result);
       }
@@ -248,12 +248,13 @@ function(log,   test,   compiler)
   };
 
   ast.neighborhood = (function(){
+    // TODO extract these automatically from binder annotations
     var HOLE = compiler.symbols.HOLE;
     var TOP = compiler.symbols.TOP;
     var BOT = compiler.symbols.BOT;
     var VAR = compiler.symbols.VAR;
     var LAMBDA = compiler.symbols.LAMBDA;
-    var LET = compiler.symbols.LET;
+    var LETREC = compiler.symbols.LETREC;
     var APP = compiler.symbols.APP;
     var JOIN = compiler.symbols.JOIN;
     var RAND = compiler.symbols.RAND;
@@ -268,7 +269,7 @@ function(log,   test,   compiler)
           TOP,
           BOT,
           LAMBDA(HOLE, HOLE),
-          LET(HOLE, HOLE, HOLE),
+          LETREC(HOLE, HOLE, HOLE),
           APP(HOLE, HOLE),
           JOIN(HOLE, HOLE),
           RAND(HOLE, HOLE),
@@ -283,8 +284,8 @@ function(log,   test,   compiler)
         var fresh = HOLE;  // TODO create fresh variable
         result.push(
           LAMBDA(fresh, dumped),
-          LET(fresh, dumped, HOLE),
-          LET(fresh, HOLE, dumped),
+          LETREC(fresh, dumped, HOLE),
+          LETREC(fresh, HOLE, dumped),
           APP(dumped, HOLE),
           APP(HOLE, dumped),
           JOIN(dumped, HOLE),
