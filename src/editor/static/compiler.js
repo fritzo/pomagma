@@ -286,7 +286,7 @@ function(log,   test,   pattern,   symbols)
   //--------------------------------------------------------------------------
   // Simplify :   stack -> simple stack
   //
-  // Implements affine-beta-eta reduction for lambda-let terms.
+  // Implements affine-beta-eta-alpha reduction for lambda-letrec terms.
   /* TODO
   var simplifyStack = (function(){
     var x = pattern.variable('x');
@@ -405,6 +405,100 @@ function(log,   test,   pattern,   symbols)
     assert.forward(simplify, examples);
   });
   */
+
+  var fresh = (function(){
+    var alphabet = 'abcdefghijklmnopqrstuvwxyz';
+    var count = 0;
+    var fresh = function () {
+      var name = alphabet[count % alphabet.length];
+      var number = Math.floor(count / alphabet.length);
+      if (number > 0) {
+        name += number;
+      }
+      count += 1;
+      return VAR(name);
+    };
+    fresh.reset = function () {
+      count = 0;
+    };
+    return fresh;
+  })();
+
+  var normalizeAlpha = (function(){
+    var x = pattern.variable('x');
+    var y = pattern.variable('y');
+    var z = pattern.variable('z');
+    var string = pattern.variable('string');
+    var array = pattern.variable('array', _.isArray);
+  
+    var renamePattern = pattern.match([
+      VAR(string), function (m, map) {
+        assert(!_.has(map, m.string));
+        var result = fresh();
+        map[m.string] = result[1];
+        return result;
+      },
+      array, function (m, map) {
+        var array = [].concat(m.array);
+        for (var i = 1; i < array.length; ++i) {
+          array[i] = renamePattern(array[i], map);
+        }
+        return array;
+      }
+    ]);
+  
+    var renameTerm = pattern.match([
+      VAR(string), function (m, map) {
+        return VAR(map[m.string] || m.string);
+      },
+      LAMBDA(x, y), function (m, map) {
+        map = _.extend({}, map);
+        var x = renamePattern(m.x, map);
+        var y = renameTerm(m.y, map);
+        return LAMBDA(x, y);
+      },
+      LETREC(x, y, z), function (m, map) {
+        map = _.extend({}, map);
+        var x = renamePattern(m.x, map);
+        var y = renameTerm(m.y, map);
+        var z = renameTerm(m.z, map);
+        return LETREC(x, y, z);
+      },
+      array, function (m, map) {
+        var array = [].concat(m.array);
+        for (var i = 1; i < array.length; ++i) {
+          array[i] = renameTerm(array[i], map);
+        }
+        return array;
+      },
+      string, function (m) {
+        return m.string;
+      }
+    ]);
+  
+    return function (term) {
+      fresh.reset();
+      return renameTerm(term, {});
+    };
+  })();
+
+  test('compiler.normalizeAlpha', function(){
+    var a = VAR('a');
+    var b = VAR('b');
+    var c = VAR('c');
+    var x = VAR('x');
+    var y = VAR('y');
+    var z = VAR('z');
+    var examples = [
+      [x, x],
+      [LAMBDA(x, x), LAMBDA(a, a)],
+      [LETREC(x, y, x), LETREC(a, y, a)],
+      [app(LAMBDA(x, x), LETREC(x, x, x)),
+       app(LAMBDA(a, a), LETREC(b, b, b))],
+      [app(LAMBDA(x, x), x), app(LAMBDA(a, a), x)]
+    ];
+    assert.forward(normalizeAlpha, examples);
+  });
 
   var substitute = (function(){
     var string = pattern.variable('string');
@@ -631,24 +725,6 @@ function(log,   test,   pattern,   symbols)
   })();
 
   var decompile = (function(){
-
-    var fresh = (function(){
-      var alphabet = 'abcdefghijklmnopqrstuvwxyz';
-      var count = 0;
-      var fresh = function () {
-        var name = alphabet[count % alphabet.length];
-        var number = Math.floor(count / alphabet.length);
-        if (number > 0) {
-          name += number;
-        }
-        count += 1;
-        return VAR(name);
-      };
-      fresh.reset = function () {
-        count = 0;
-      };
-      return fresh;
-    })();
 
     var x = pattern.variable('x');
     var y = pattern.variable('y');
