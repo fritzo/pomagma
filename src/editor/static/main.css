@@ -1,4 +1,18 @@
+/*
 @import url(http://fonts.googleapis.com/css?family=Signika:400,700&subset=latin-ext,latin);
+*/
+@font-face {
+  font-family: 'Signika';
+  font-style: normal;
+  font-weight: 400;
+  src: url(/static/fonts/Signika.woff) format('woff');
+}
+@font-face {
+  font-family: 'Signika';
+  font-style: normal;
+  font-weight: 700;
+  src: url(/static/fonts/Signika-Bold.woff) format('woff');
+}
 
 body {
     background-color: black;
