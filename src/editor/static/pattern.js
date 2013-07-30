@@ -79,7 +79,7 @@ function(log, test)
   var unify = function (patt, struct, matched) {
     if (isVariable(patt)) {
       if (patt.constraint === null || patt.constraint(struct)) {
-        matched = _.extend({}, matched);  // copy to allow backtracking
+        //matched = _.extend({}, matched);  // copy to allow backtracking
         matched[patt.name] = struct;
         return matched;
       }
@@ -120,8 +120,9 @@ function(log, test)
       for (var line = 0; line < lineCount; ++line) {
         var matched = unify(patts[line], struct, {});
         if (matched !== undefined) {
-          var args = [matched].concat(slice.call(arguments, 1));
-          return handlers[line].apply(this, args);
+          var args = slice.call(arguments);
+          args[0] = matched;
+          return handlers[line].apply(null, args);
         }
       }
       throw 'Unmatched Expression:\n  ' + JSON.stringify(struct);

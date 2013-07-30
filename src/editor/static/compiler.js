@@ -414,6 +414,7 @@ function(log,   test,   pattern,   symbols)
       VAR(string), function (m, varName, def) {
         return m.string === varName ? def : VAR(m.string);
       },
+      // TODO take care with binders, or ensure variables are globally unique
       array, function (m, varName, def) {
         var array = [].concat(m.array);
         for (var i = 1; i < array.length; ++i) {
@@ -435,7 +436,7 @@ function(log,   test,   pattern,   symbols)
     var x = VAR('x');
     var y = VAR('y');
     var z = VAR('z');
-    var subs = function (args) {
+    var fun = function (args) {
       return substitute.apply(null, args);
     };
     var examples = [
@@ -443,16 +444,109 @@ function(log,   test,   pattern,   symbols)
       [['x', y, x], y],
       [['x', app(x, y, z), app(x, y, z)], app(app(x, y, z), y, z)]
     ];
-    assert.forward(subs, examples);
+    assert.forward(fun, examples);
+  });
+
+  var simplifyLetrec = (function(){
+    var x = pattern.variable('x');
+    var y = pattern.variable('y');
+    var name = pattern.variable('name');
+    var array = pattern.variable('array', _.isArray);
+    var notFound = {};
+
+    var t = pattern.match([
+      VAR(name), function (m, varName, def) {
+        if (m.name !== varName) {
+          return notFound;
+        } else if (countOccurrences(varName, def) === 0) {
+          return def;
+        } else {
+          return LETREC(VAR(varName), def, VAR(varName));
+        }
+      },
+      APP(x, y), function (m, varName, def) {
+        var tx = t(m.x, varName, def);
+        var ty = t(m.y, varName, def);
+        if (tx === notFound) {
+          if (ty === notFound) {
+            // unused
+            return APP(m.x, m.y);
+          } else {
+            // narrow scope
+            return APP(m.x, ty);
+          }
+        } else {
+          if (ty === notFound) {
+            // narrow scope
+            return APP(tx, m.y);
+          } else {
+            // no-op
+            return LETREC(VAR(varName), def, APP(m.x, m.y));
+          }
+        }
+      },
+      x, function (m) {
+        TODO('handle ' + JSON.stringify(m.x));
+      }
+    ]);
+
+    return function (varName, def, body) {
+      return t(body, varName, def);
+    };
+  })();
+
+  var countOccurrences = (function(){
+    var string = pattern.variable('string');
+    var array = pattern.variable('array', _.isArray);
+
+    var t = pattern.match([
+      VAR(string), function (m, varName) {
+        return m.string === varName ? 1 : 0;
+      },
+      array, function (m, varName) {
+        var array = m.array;
+        var result = 0;
+        for (var i = 1; i < array.length; ++i) {
+          result += t(array[i], varName);
+        }
+        return result;
+      },
+      string, function () {
+        return 0;
+      }
+    ]);
+
+    return function (varName, body) {
+      return t(body, varName);
+    };
+  })();
+
+  test('compiler.countOccurrences', function(){
+    var x = VAR('x');
+    var y = VAR('y');
+    var fun = function (args) {
+      return countOccurrences.apply(null, args);
+    };
+    var examples = [
+      [['x', x], 1],
+      [['x', y], 0],
+      [['x', I], 0],
+      [['x', app(y, y)], 0],
+      [['x', app(x, y)], 1],
+      [['x', app(x, x, x, y, x)], 4]
+    ];
+    assert.forward(fun, examples);
   });
 
   var simplifyStack = (function(){
     var x = pattern.variable('x');
     var y = pattern.variable('y');
     var z = pattern.variable('z');
+    var name = pattern.variable('name');
     var tail = pattern.variable('tail');
+    var array = pattern.variable('array', _.isArray);
 
-    var affineBetaEta = pattern.match([
+    var simplifyStack = pattern.match([
       stack(TOP, tail), function (m) {
         return TOP;
       },
@@ -473,12 +567,50 @@ function(log,   test,   pattern,   symbols)
         var step = toStack(m.x, m.tail);
         return simplifyStack(step);
       },
-      stack(LAMBDA(x, y), z, tail), function (m) {
-        
+      stack(LAMBDA(VAR(name), x), y, tail), function (m) {
+        var step;
+        switch (countOccurrences(m.name, m.y)) {
+          case 0:
+            return simplify(toStack(m.y, m.tail));
+          case 1:
+            step = substitute(m.name, m.x, m.y);
+            return simplify(toStack(step, m.tail));
+          default:
+            step = LETREC(VAR(m.name), simplify(m.x), simplify(m.y));
+            return app(step, simplifyTail(m.tail));
+        }
+      },
+      stack(LETREC(VAR(name), x, y), tail), function (m) {
+        var head = simplifyLetrec(m.name. m.x, m.y);
+        var tail = simplifyTail(tail);
+        return fromStack(stack(head, tail));
       }
     ]);
 
+    return simplifyStack;
   })();
+
+  var simplifyTail = (function(){
+    var x = pattern.variable('x');
+    var y = pattern.variable('y');
+
+    var simplifyTail = pattern.match([
+      [], function () {
+        return [];
+      },
+      stack(x, y), function (m) {
+        var tx = simplify(m.x);
+        var ty = simplifyTail(m.y);
+        return stack(tx, ty);
+      }
+    ]);
+
+    return simplifyTail;
+  })();
+
+  var simplify = function (term) {
+    return simplifyStack(toStack(term));
+  };
 
   //--------------------------------------------------------------------------
   // Convert : simple appTree -> lambda
@@ -909,7 +1041,7 @@ function(log,   test,   pattern,   symbols)
     assert.forward(lambdaA, examples);
   });
 
-  var compileLet = function (varName, def, body) {
+  var compileLetrec = function (varName, def, body) {
     var bodyResult = tryAbstract(body, varName);
     if (bodyResult === tryAbstract.notFound) {
       return body;
@@ -923,14 +1055,14 @@ function(log,   test,   pattern,   symbols)
     }
   };
 
-  test('compiler.compileLet', function () {
+  test('compiler.compileLetrec', function () {
     var a = VAR('a');
     var x = VAR('x');
     var y = VAR('y');
     var letrecA = function (pair) {
       var def = pair[0];
       var body = pair[1];
-      return compileLet('a', def, body);
+      return compileLetrec('a', def, body);
     };
     var examples = [
       [['bomb', x], x],
@@ -955,7 +1087,7 @@ function(log,   test,   pattern,   symbols)
         return compileLambda(m.name, t(m.x));
       },
       LETREC(VAR(name), x, y), function (m) {
-        return compileLet(m.name, t(m.x), t(m.y));
+        return compileLetrec(m.name, t(m.x), t(m.y));
       },
       x, function (m) {
         var x = m.x;
@@ -1069,9 +1201,11 @@ function(log,   test,   pattern,   symbols)
   // see http://www.fileformat.info/info/unicode/category/Sm/list.htm
 
   var render = (function(){
-    var newline = '\n                                                        ';
+    /** @const */
+    var newline = '\n                                                        '+
+    '                                                                        ';
     var indent = function (i) {
-      return newline.slice(0, 1 + 2 * i);
+      return newline.slice(0, 1 + 4 * i);
     };
     var span = function (className, text) {
       return '<span class=' + className + '>' + text + '</span>';
@@ -1084,7 +1218,8 @@ function(log,   test,   pattern,   symbols)
 
     var renderPatt = pattern.match([
       VAR(name), function (m) {
-        return span('variable', m.name);
+        //return span('variable', m.name);
+        return span('variable', m.name.replace('.', '-'));
       },
       QUOTE(x), function (m) {
         return '{' + renderPatt(m.x) + '}';
@@ -1108,7 +1243,8 @@ function(log,   test,   pattern,   symbols)
         //return '&#8869'; // looks like _|_
       },
       VAR(name), function (m) {
-        return span('variable', m.name);
+        //return span('variable', m.name);
+        return span('variable', m.name.replace('.', '-'));
       },
       QUOTE(x), function (m, i) {
         return '{' + renderBlock(m.x, i) + '}';
@@ -1169,7 +1305,8 @@ function(log,   test,   pattern,   symbols)
       },
       LETREC(x, y, z), function (m, i) {
         return (
-          indent(i) + renderPatt(m.x) + ' = ' + renderJoin(m.y, i + 1) + '.' +
+          indent(i) + 'let ' + renderPatt(m.x) + ' = ' +
+            renderJoin(m.y, i + 1) + '.' +
           indent(i) + renderBlock(m.z, i)
         );
       },
@@ -1202,7 +1339,8 @@ function(log,   test,   pattern,   symbols)
           renderJoin(m.y, i + 1) + '.';
       },
       ASSERT(x), function (m, i) {
-        return span('keyword', 'assert') + ' ' + renderJoin(m.x, i + 1) + '.';
+        return span('keyword', 'assert') + ' ' + renderJoin(m.x, i + 1) +
+          '.';
       },
       CURSOR(x), function (m, i) {
         return span('cursor', render(m.x, i));
