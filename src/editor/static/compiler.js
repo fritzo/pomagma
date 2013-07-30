@@ -632,7 +632,7 @@ function(log,   test,   pattern,   symbols)
     assert.forward(fun, examples);
   });
 
-  var simplifyStack = (function(){
+  var normalizeAffineBetaEta = (function(){
     var x = pattern.variable('x');
     var y = pattern.variable('y');
     var z = pattern.variable('z');
@@ -640,7 +640,7 @@ function(log,   test,   pattern,   symbols)
     var tail = pattern.variable('tail');
     var array = pattern.variable('array', _.isArray);
 
-    var simplifyStack = pattern.match([
+    var normalizeStack = pattern.match([
       stack(TOP, tail), function (m) {
         return TOP;
       },
@@ -654,56 +654,71 @@ function(log,   test,   pattern,   symbols)
         return TOP;
       },
       stack(JOIN(BOT, x), tail), function (m) {
-        var step = toStack(m.x, m.tail);
-        return simplifyStack(step);
+        return normalizeStack(toStack(m.x, m.tail));
       },
       stack(JOIN(x, BOT), tail), function (m) {
-        var step = toStack(m.x, m.tail);
-        return simplifyStack(step);
+        return normalizeStack(toStack(m.x, m.tail));
       },
       stack(LAMBDA(VAR(name), x), y, tail), function (m) {
-        var step;
+        var head;
+        var tail;
         switch (countOccurrences(m.name, m.y)) {
           case 0:
-            return simplify(toStack(m.y, m.tail));
+            return normalizeStack(toStack(m.y, m.tail));
           case 1:
-            step = substitute(m.name, m.x, m.y);
-            return simplify(toStack(step, m.tail));
+            head = substitute(m.name, m.y, m.x);
+            return normalizeStack(toStack(head, m.tail));
           default:
-            step = LETREC(VAR(m.name), simplify(m.x), simplify(m.y));
-            return app(step, simplifyTail(m.tail));
+            head = LAMBDA(VAR(name), x);
+            tail = normalizeTail(stack(m.y, m.tail));
+            return fromStack(stack(head, tail));
         }
       },
-      stack(LETREC(VAR(name), x, y), tail), function (m) {
-        var head = simplifyLetrec(m.name. m.x, m.y);
-        var tail = simplifyTail(tail);
-        return fromStack(stack(head, tail));
+      // TODO implement LETREC simplification
+      //stack(LETREC(VAR(name), x, y), tail), function (m) {
+      //  var head = normalizeLetrec(m.name. m.x, m.y);
+      //  var tail = normalizeTail(tail);
+      //  return fromStack(stack(head, tail));
+      //},
+      x, function (m) {
+        return fromStack(m.x);
       }
     ]);
 
-    return simplifyStack;
-  })();
-
-  var simplifyTail = (function(){
-    var x = pattern.variable('x');
-    var y = pattern.variable('y');
-
-    var simplifyTail = pattern.match([
+    var normalizeTail = pattern.match([
       [], function () {
         return [];
       },
       stack(x, y), function (m) {
-        var tx = simplify(m.x);
-        var ty = simplifyTail(m.y);
+        var tx = normalize(m.x);
+        var ty = normalizeTail(m.y);
         return stack(tx, ty);
       }
     ]);
 
-    return simplifyTail;
+    var normalize = function (term) {
+      return normalizeStack(toStack(term));
+    };
+
+    return normalize;
   })();
 
+  test('compiler.normalizeAffineBetaEta', function(){
+    var x = VAR('x');
+    var y = VAR('y');
+    var z = VAR('z');
+    var examples = [
+      [x, x],
+      [app(LAMBDA(x, app(y, x)), z), app(y, z)],
+      [LAMBDA(x, app(y, x)), y]
+    ];
+    assert.forward(normalizeAffineBetaEta, examples);
+  });
+
   var simplify = function (term) {
-    return simplifyStack(toStack(term));
+    term = normalizeAffineBetaEta(term);
+    term = normalizeAlpha(term);
+    return term;
   };
 
   //--------------------------------------------------------------------------
