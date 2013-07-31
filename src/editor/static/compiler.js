@@ -287,121 +287,6 @@ function(log,   test,   pattern,   symbols)
   // Simplify :   stack -> simple stack
   //
   // Implements affine-beta-eta-alpha reduction for lambda-letrec terms.
-  /* TODO
-  var simplifyStack = (function(){
-    var x = pattern.variable('x');
-    var y = pattern.variable('y');
-    var z = pattern.variable('z');
-    var tail = pattern.variable('tail');
-
-    var simplifyStack = pattern.match([
-      stack(TOP, tail), function (m) {
-        return stack(TOP, []);
-      },
-      stack(BOT, tail), function (m) {
-        return stack(BOT, []);
-      },
-      stack(I, x, tail), function (m) {
-        var step = toStack(m.x, m.tail);
-        return simplifyStack(step);
-      },
-      stack(K, x, y, tail), function (m) {
-        var step = toStack(m.x, m.tail);
-        return simplifyStack(step);
-      },
-      stack(B, x, y, z, tail), function (m) {
-        var yz = app(m.y, m.z);
-        var step = toStack(m.x, yz, m.tail);
-        return simplifyStack(step);
-      },
-      stack(C, x, y, z, tail), function (m) {
-        var step = toStack(m.x, m.z, m.y, m.tail);
-        return simplifyStack(step);
-      },
-      stack(W, x, VAR(name), tail), function (m) {
-        var y = VAR(m.name);
-        var step = toStack(m.x, y, y, m.tail);
-        return simplifyStack(step);
-      },
-      stack(S, x, y, VAR(name), tail), function (m) {
-        var z = VAR(m.name);
-        var step = toStack(m.x, z, app(m.y, yz), m.tail);
-        return simplifyStack(step);
-      },
-      stack(J, TOP, tail), function (m) {
-        return stack(TOP, []);
-      },
-      stack(J, x, TOP, tail), function (m) {
-        return stack(TOP, []);
-      },
-      stack(J, BOT, tail), function (m) {
-        var step = stack(I, m.tail);
-        return simplifyStack(step);
-      },
-      stack(J, x, BOT, tail), function (m) {
-        var step = stack(m.x, m.tail);
-        return simplifyStack(step);
-      },
-      stack(J, x, y, VAR(name), tail), function (m) {
-        var z = VAR(m.name);
-        var step = stack(J, app(m.x, z), app(m.y, z), m.tail);
-        return simplifyStack(step);
-      },
-      stack(R, x, y, VAR(name), tail), function (m) {
-        var z = VAR(m.name);
-        var step = stack(R, app(m.x, z), app(m.y, z), m.tail);
-        return simplifyStack(step);
-      },
-      stack(x, tail), function (m) {
-        var tail = simplifyArgs(m.tail);
-        return stack(m.x, tail);
-      }
-    ]);
-
-    var simplifyArgs = pattern.match([
-      stack(x, y), function (m) {
-        var rx = simplify(m.x);
-        var ry = simplifyArgs(m.y);
-        return stack(rx, ry);
-      },
-      [], function () {
-        return [];
-      }
-    ]);
-
-    return simplifyStack;
-  })();
-
-  var simplify = function (appTree) {
-    if (_.isString(appTree)) {
-      return appTree;
-    } else {
-      return fromStack(simplifyStack(toStack(appTree)));
-    }
-  };
-
-  test('compiler.simplify', function(){
-    var x = VAR('x');
-    var y = VAR('y');
-    var z = VAR('z');
-    var tail = HOLE;
-    var examples = [
-      [app(BOT, x, tail), BOT],
-      [app(TOP, x, tail), TOP],
-      [app(K, x, y, tail), app(x, tail)],
-      [app(B, x, y, z, tail), app(x, app(y, z), tail)],
-      [app(C, x, y, z), app(x, z, y)],
-      [app(B, x, app(K, y), z, tail), app(x, y, tail)],
-      [app(B, app(I, x), app(K, y, z)), app(B, x, y)],
-      [app(J, TOP, tail), TOP],
-      [app(J, x, TOP, tail), TOP],
-      [app(J, BOT, tail), tail],
-      [app(J, x, BOT, tail), app(x, tail)],
-      [HOLE, HOLE]
-    ];
-    assert.forward(simplify, examples);
-  });
-  */
 
   var fresh = (function(){
     var alphabet = 'abcdefghijklmnopqrstuvwxyz';
@@ -658,13 +543,11 @@ function(log,   test,   pattern,   symbols)
       stack(JOIN(x, BOT), tail), function (m) {
         return normalizeStack(toStack(m.x, m.tail));
       },
-      // eta reduction
       stack(LAMBDA(VAR(name), app(x, VAR(name2))), tail), function (m) {
         if (m.name === m.name2 && countOccurrences(m.name, m.x) === 0) {
             return normalizeStack(stack(m.x, m.tail));
         }
       },
-      // beta reduction
       stack(LAMBDA(VAR(name), x), VAR(name2), tail), function (m) {
         var head = substitute(m.name, VAR(m.name2), m.x);
         return normalizeStack(toStack(head, m.tail));
@@ -690,8 +573,8 @@ function(log,   test,   pattern,   symbols)
       //  var tail = normalizeTail(tail);
       //  return fromStack(stack(head, tail));
       //},
-      x, function (m) {
-        return fromStack(m.x);
+      stack(x, tail), function (m) {
+          return fromStack(stack(m.x, normalizeTail(m.tail)));
       }
     ]);
 
@@ -1034,7 +917,7 @@ function(log,   test,   pattern,   symbols)
           if (ty === notFound) {
             return notFound;
           } else {
-            return app(B, m.x, ty);
+            return comp(m.x, ty);
           }
         } else {
           if (ty === notFound) {
