@@ -1242,7 +1242,7 @@ function(log,   test,   pattern,   symbols)
     });
 
     var templates = {
-      HOLE: '(<span class=hole> &bullet;&bullet;&bullet; </span>)',
+      HOLE: '<span class=hole>&#9632;</span>',
       TOP: '<span class=atom>&#x22a4;</span>',
       BOT: '<span class=atom>&#x22a5;</span>',
       //I: '<span class=atom>&#x1D540;</span>',

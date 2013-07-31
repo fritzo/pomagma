@@ -45,7 +45,7 @@ span.operator {
     padding: 0 0.25em 0 0.25em;
 }
 span.hole {
-    word-spacing: 0;
+    color: #ff8;
 }
 span.cursor {
     background-color: #040;
