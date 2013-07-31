@@ -1339,7 +1339,7 @@ function(log,   test,   pattern,   symbols)
 
     var renderPatt = pattern.match([
       VAR(name), function (m) {
-        return templates.VAR(m.name);
+        return templates.VAR(m.name.replace('.', '-'));
       },
       QUOTE(x), function (m) {
         return templates.QUOTE(renderPatt(m.x));
@@ -1360,7 +1360,7 @@ function(log,   test,   pattern,   symbols)
         return templates.BOT;
       },
       VAR(name), function (m) {
-        return templates.VAR(m.name);
+        return templates.VAR(m.name.replace('.', '-'));
       },
       QUOTE(x), function (m, i) {
         return templates.QUOTE(renderBlock(m.x, i));
