@@ -24,26 +24,27 @@ body {
 
 div#code pre {
     font-family: Signika,Consolas,'Liberation Mono','Courier New',Courier,monospace;
-    font-size: 10pt;
+    font-size: 12pt;
     word-spacing: 0.25em;
-    color: #aaf;
-    font-weight: bold;
+    color: #88f;
     margin: 0.5em;
 }
+span.atom {
+}
 span.keyword {
-    font-weight: normal;
-    color: #ffa;
+    color: #ff8;
 }
 span.variable {
-    font-weight: normal;
-    color: #fff;
+    color: #eee;
 }
 span.error {
     color: #fff;
     background-color: #f00;
 }
+span.operator {
+    padding: 0 0.25em 0 0.25em;
+}
 span.hole {
-    font-weight: normal;
     word-spacing: 0;
 }
 span.cursor {

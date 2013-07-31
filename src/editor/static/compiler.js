@@ -181,18 +181,14 @@ function(log,   test,   pattern,   symbols)
 
   var comp = function (term) {
     for (var i = 1; i < arguments.length; ++i) {
-      term = ['APP', ['APP', 'B', term], arguments[i]];
+      term = ['COMP', term, arguments[i]];
     }
     return term;
   };
 
   test('compiler.comp', function(){
-    assert.equal(
-      comp('x', 'y'),
-      APP(APP('B', 'x'), 'y'));
-    assert.equal(
-      comp('x', 'y', 'z'),
-      APP(APP('B', APP(APP('B', 'x'), 'y')), 'z'));
+    assert.equal(comp('x', 'y'), COMP('x', 'y'));
+    assert.equal(comp('x', 'y', 'z'), COMP(COMP('x', 'y'), 'z'));
   });
 
   var stack = (function(){
@@ -618,7 +614,7 @@ function(log,   test,   pattern,   symbols)
       [LAMBDA(x, app(y, x)), y],
       [LAMBDA(x, app(x, x)), LAMBDA(x, app(x, x))],
       [HOLE, HOLE],
-      [app(HOLE, x, y), app(HOLE, x, y)]
+      [app(HOLE, x, app(TOP, y)), app(HOLE, x, TOP)]
     ];
     assert.forward(normalizeAffineBetaEta, examples);
   });
@@ -635,8 +631,8 @@ function(log,   test,   pattern,   symbols)
   var lambdaSymbols = (function(){
     var subset = [
       'HOLE', 'TOP', 'BOT',
-      //'I', 'K', 'B', 'C', 'W', 'S', 'Y', 'U', 'V', 'P', 'A', 'J', 'R',
-      'APP', 'LAMBDA', 'LETREC', 'JOIN', 'RAND',
+      'I', //'K', 'B', 'C', 'W', 'S', 'Y', 'U', 'V', 'P', 'A', 'J', 'R',
+      'APP', 'COMP', 'LAMBDA', 'LETREC', 'JOIN', 'RAND',
       'QUOTE', 'QLESS', 'QNLESS', 'QEQUAL', 'LESS', 'NLESS', 'EQUAL',
       'ASSERT', 'DEFINE', 'CURSOR',
     ];
@@ -690,9 +686,9 @@ function(log,   test,   pattern,   symbols)
     };
 
     var decompileStack = pattern.match([
-      stack(COMP(x, y), tail), function (m) {
-        return decompileStack(stack(B, m.x, m.y, m.tail));
-      },
+      //stack(COMP(x, y), tail), function (m) {
+      //  return decompileStack(stack(B, m.x, m.y, m.tail));
+      //},
       stack(HOLE, tail), function (m) {
         return fromStack(stack(HOLE, decompileTail(m.tail)));
       },
@@ -702,9 +698,12 @@ function(log,   test,   pattern,   symbols)
       stack(BOT, tail), function () {
         return BOT;
       },
-      stack(I, tail), ensure(x, function (m) {
-        return m.x;
-      }),
+      stack(I, []), function (m) {
+        return I;
+      },
+      stack(I, x, tail), function (m) {
+        return decompileTail(toStack(m.x, m.tail));
+      },
       stack(K, tail), ensure(x, y, function (m) {
         return m.x;
       }),
@@ -930,7 +929,23 @@ function(log,   test,   pattern,   symbols)
       COMP(x, y), function (m, varName) {
         var tx = t(m.x, varName);
         var ty = t(m.y, varName);
-        TODO('adapt from johann/src/expressions.C Comp::abstract');
+        if (tx === notFound) {
+          if (ty === notFound) {
+            return notFound;
+          } else {
+            if (_.isEqual(m.y, VAR(varName))) {
+              return app(B, m.x);
+            } else {
+              return comp(app(B, m.x), ty);
+            }
+          }
+        } else {
+          if (ty === notFound) {
+            return comp(app(CB, m.y), tx);
+          } else {
+            return app(S, app(B, tx), ty);
+          }
+        }
       },
       JOIN(x, y), function (m, varName) {
         var tx = t(m.x, varName);
@@ -1034,7 +1049,7 @@ function(log,   test,   pattern,   symbols)
       [a, I],
       [app(x, a), x],
       [app(x, a, a), app(W, x)],
-      [app(y, app(x, a)), app(B, y, x)],
+      [app(y, app(x, a)), COMP(y, x)],
       [app(x, a, y), app(C, x, y)],
       [app(x, a, app(x, a)), app(S, x, x)],
       [x, app(K, x)]
@@ -1119,14 +1134,14 @@ function(log,   test,   pattern,   symbols)
     var examples = [
       [TOP, TOP],
       [BOT, BOT],
-      [I, LAMBDA(a, a)],
+      [I, I],
+      [COMP(x, y), COMP(x, y)],
       [K, LAMBDA(a, LAMBDA(b, a))],
       [app(K, x), LAMBDA(a, x)],
       [app(C, I), LAMBDA(a, LAMBDA(b, app(b, a)))],
       [app(C, I, x), LAMBDA(a, app(a, x))],
       [B, LAMBDA(a, LAMBDA(b, LAMBDA(c, app(a, app(b, c)))))],
       [app(B, x), LAMBDA(a, LAMBDA(b, app(x, app(a, b))))],
-      [app(B, x, y), LAMBDA(a, app(x, app(y, a)))],
       [C, LAMBDA(a, LAMBDA(b, LAMBDA(c, app(a, c, b))))],
       [app(C, x), LAMBDA(a, LAMBDA(b, app(x, b, a)))],
       [app(C, x, y), LAMBDA(a, app(x, a, y))],
@@ -1146,13 +1161,13 @@ function(log,   test,   pattern,   symbols)
       //[app(R, x), LAMBDA(a, RAND(x, a))],
       //[app(R, x, y), RAND(x, y)],
       //[app(R, x, y, I), app(RAND(x, y), LAMBDA(a, a))],
-      [QUOTE(I), QUOTE(LAMBDA(a, a))],
-      [app(QUOTE(x), I), app(QUOTE(x), LAMBDA(a, a))],
+      [QUOTE(K), QUOTE(LAMBDA(a, LAMBDA(b, a)))],
+      [app(QUOTE(x), K), app(QUOTE(x), LAMBDA(a, LAMBDA(b, a)))],
       [LESS(x, y), LESS(x, y)],
       [NLESS(x, y), NLESS(x, y)],
       [EQUAL(x, y), EQUAL(x, y)],
       [VAR(x), VAR(x)],
-      [app(VAR(x), I), app(VAR(x), LAMBDA(a, a))],
+      [app(VAR(x), K), app(VAR(x), LAMBDA(a, LAMBDA(b, a)))],
       [HOLE, HOLE]
     ];
     assert.forward(decompile, examples);
@@ -1168,18 +1183,20 @@ function(log,   test,   pattern,   symbols)
     var y = VAR('y');
     var z = VAR('z');
     var xy = app(x, y);  // just something that is not a variable
+    var k = LAMBDA(a, LAMBDA(b, a));
     var examples = [
+      [app(B, x, y), LAMBDA(a, app(x, app(y, a)))],
       [app(W, x, y), app(x, y, y)],
-      [app(W, x, y, I), app(x, y, y, LAMBDA(a, a))],
+      [app(W, x, y, K), app(x, y, y, k)],
       [app(S, x, y, z), app(x, z, app(y, z))],
-      [app(S, x, y, z, I), app(x, z, app(y, z), LAMBDA(a, a))],
+      [app(S, x, y, z, K), app(x, z, app(y, z), k)],
       [Y, LAMBDA(a, LETREC(b, LAMBDA(c, app(a, app(b, c))), b))],
       [app(QLESS, QUOTE(x), QUOTE(y)), LESS(x, y)],
       [app(QNLESS, QUOTE(x), QUOTE(y)), NLESS(x, y)],
       [app(QEQUAL, QUOTE(x), QUOTE(y)), EQUAL(x, y)],
       // TODO move this back above
       [app(J, x, y), JOIN(x, y)],
-      [app(J, x, y, I), app(JOIN(x, y), LAMBDA(a, a))],
+      [app(J, x, y, K), app(JOIN(x, y), k)],
       [HOLE, HOLE]
     ];
     assert.forward(decompile, examples);
@@ -1189,7 +1206,9 @@ function(log,   test,   pattern,   symbols)
     // decompile would fail these because input is not simple
     var a = VAR('a');
     var x = VAR('x');
+    var y = VAR('y');
     var examples = [
+      [LAMBDA(a, app(x, app(y, a))), COMP(x, y)],
       [app(LAMBDA(a, a), x), app(I, x)],
       [HOLE, HOLE]
     ];
@@ -1224,19 +1243,22 @@ function(log,   test,   pattern,   symbols)
 
     var templates = {
       HOLE: '(<span class=hole> &bullet;&bullet;&bullet; </span>)',
-      TOP: '&#8868',
-      BOT: '_',
+      TOP: '<span class=atom>&#x22a4;</span>',
+      BOT: '<span class=atom>&#x22a5;</span>',
+      //I: '<span class=atom>&#x1D540;</span>',
+      I: '<span class=atom>1</span>',
       VAR: template('<span class=variable>{0}</span>'),
       APP: template('{0} {1}'),
-      JOIN: template('{0} | {1}'),
-      LAMBDA: template('&lambda;{0}. {1}'),
+      COMP: template('{0}<span class=operator>&#8728;</span>{1}'),
+      JOIN: template('{0}<span class=operator>|</span>{1}'),
+      LAMBDA: template('&lambda;{0} {1}'),
       //LAMBDA: template('{0} &#x21a6; {1}'),
       //LAMBDA: template('{1} / {0}'),
       LETREC: template('{0}let {1} = {2}.{3}{4}'),
       QUOTE: template('{{0}}'),
-      LESS: template('{{0} &#8849; {1}}'),
-      NLESS: template('{{0} &#8930; {1}}'),
-      EQUAL: template('{{0} = {1}}'),
+      LESS: template('{{0}<span class=operator>&#8849;</span>{1}}'),
+      NLESS: template('{{0}<span class=operator>&#8930;</span>{1}}'),
+      EQUAL: template('{{0}<span class=operator>=</span>{1}}'),
       DEFINE: template('<span class=keyword>define</span> {0} = {1}.'),
       ASSERT: template('<span class=keyword>assert</span> {0}.'),
       CURSOR: template('<span class=cursor>{0}</span>'),
@@ -1271,6 +1293,9 @@ function(log,   test,   pattern,   symbols)
       BOT, function () {
         return templates.BOT;
       },
+      I, function () {
+        return templates.I;
+      },
       VAR(name), function (m) {
         return templates.VAR(m.name.replace('.', '-'));
       },
@@ -1299,6 +1324,18 @@ function(log,   test,   pattern,   symbols)
       }
     ]);
 
+    var renderComp = pattern.match([
+      COMP(x, y), function (m, i) {
+        return templates.COMP(renderComp(m.x, i), renderComp(m.y, i));
+      },
+      CURSOR(x), function (m, i) {
+        return templates.CURSOR(renderComp(m.x, i));
+      },
+      x, function (m, i, failed) {
+        return renderAtom(m.x, i, failed);
+      }
+    ]);
+
     var renderApp = pattern.match([
       APP(x, y), function (m, i) {
         return templates.APP(renderApp(m.x, i), renderAtom(m.y, i));
@@ -1307,7 +1344,7 @@ function(log,   test,   pattern,   symbols)
         return templates.CURSOR(renderApp(m.x, i));
       },
       x, function (m, i, failed) {
-        return renderAtom(m.x, i, failed);
+        return renderComp(m.x, i, failed);
       }
     ]);
 
