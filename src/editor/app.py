@@ -2,11 +2,14 @@ import os
 import bottle
 import pomagma.util
 import pomagma.corpus
+import mimetypes
 
 
 PORT = int(os.environ.get('POMAGMA_EDITOR_PORT', 34934))
 STATIC = os.path.join(pomagma.util.SRC, 'editor', 'static')
 CORPUS = pomagma.corpus.Corpus()
+
+mimetypes.add_type('application/font-woff', '.woff')
 
 
 @bottle.route('/info')
