@@ -397,9 +397,6 @@ function(log,   test,   pattern,   symbols)
       [app(J, x, TOP, tail), TOP],
       [app(J, BOT, tail), tail],
       [app(J, x, BOT, tail), app(x, tail)],
-      // FIXME why don't these work?
-      //[app(J, x, y, z, tail), app(J, app(x, z), app(y, z), tail)],
-      //[app(R, x, y, z, tail), app(R, app(x, z), app(y, z), tail)],
       [HOLE, HOLE]
     ];
     assert.forward(simplify, examples);
@@ -536,7 +533,8 @@ function(log,   test,   pattern,   symbols)
     var examples = [
       [['x', y, z], z],
       [['x', y, x], y],
-      [['x', app(x, y, z), app(x, y, z)], app(app(x, y, z), y, z)]
+      [['x', app(x, y, z), app(x, y, z)], app(app(x, y, z), y, z)],
+      [['x', z, LAMBDA(y, app(x, y))], LAMBDA(y, app(z, y))]
     ];
     assert.forward(fun, examples);
   });
@@ -637,6 +635,7 @@ function(log,   test,   pattern,   symbols)
     var y = pattern.variable('y');
     var z = pattern.variable('z');
     var name = pattern.variable('name');
+    var name2 = pattern.variable('name2');
     var tail = pattern.variable('tail');
     var array = pattern.variable('array', _.isArray);
 
@@ -659,12 +658,21 @@ function(log,   test,   pattern,   symbols)
       stack(JOIN(x, BOT), tail), function (m) {
         return normalizeStack(toStack(m.x, m.tail));
       },
+
+      // eta reduction
+      stack(LAMBDA(VAR(name), app(x, VAR(name2))), tail), function (m) {
+        if (m.name === m.name2 && countOccurrences(m.name, m.x) === 0) {
+            return normalizeStack(stack(m.x, m.tail));
+        }
+      },
+
+      // beta reduction
       stack(LAMBDA(VAR(name), x), y, tail), function (m) {
         var head;
         var tail;
-        switch (countOccurrences(m.name, m.y)) {
+        switch (countOccurrences(m.name, m.x)) {
           case 0:
-            return normalizeStack(toStack(m.y, m.tail));
+            return normalizeStack(toStack(m.x, m.tail));
           case 1:
             head = substitute(m.name, m.y, m.x);
             return normalizeStack(toStack(head, m.tail));
@@ -709,8 +717,19 @@ function(log,   test,   pattern,   symbols)
     var z = VAR('z');
     var examples = [
       [x, x],
+      [app(TOP, x, y, z), TOP],
+      [app(BOT, x, y, z), BOT],
+      [JOIN(TOP, x), TOP],
+      [JOIN(x, TOP), TOP],
+      [JOIN(BOT, x), x],
+      [JOIN(x, BOT), x],
       [app(LAMBDA(x, app(y, x)), z), app(y, z)],
-      [LAMBDA(x, app(y, x)), y]
+      [LAMBDA(x, app(y, x)), y],
+      [LAMBDA(x, app(x, x)), LAMBDA(x, app(x, x))],
+      // TODO
+      //[app(JOIN(x, y), z), JOIN(app(x, z), app(y, z))],
+      [HOLE, HOLE],
+      [app(HOLE, x, y), app(HOLE, x, y)]
     ];
     assert.forward(normalizeAffineBetaEta, examples);
   });
@@ -963,7 +982,9 @@ function(log,   test,   pattern,   symbols)
 
     return function (code) {
       fresh.reset();
-      return decompile(code);
+      var term = decompile(code);
+      term = simplify(term);
+      return term;
     }
   })();
 
@@ -1320,6 +1341,8 @@ function(log,   test,   pattern,   symbols)
       APP: template('{0} {1}'),
       JOIN: template('{0} | {1}'),
       LAMBDA: template('&lambda;{0}. {1}'),
+      //LAMBDA: template('{0} &#x21a6; {1}'),
+      //LAMBDA: template('{1} / {0}'),
       LETREC: template('{0}let {1} = {2}.{3}{4}'),
       QUOTE: template('{{0}}'),
       LESS: template('{{0} &#8849; {1}}'),
@@ -1474,13 +1497,11 @@ function(log,   test,   pattern,   symbols)
     load: function (string) {
       var code = parse(string);
       var lambda = decompile(code);
-      //lambda = simplify(lambda);  // TODO
       return lambda;
     },
     loadLine: function (line) {
       var code = parseLine(line);
       var lambda = decompile(code);
-      //lambda = simplify(lambda);  // TODO
       return lambda;
     },
     dump: function (lambda) {

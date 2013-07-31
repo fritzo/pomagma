@@ -113,7 +113,6 @@ function(log, test)
       patts.push(patt);
       handlers.push(handler);
     }
-    // TODO construct optimal decision tree
     // run optimized
     var slice = Array.prototype.slice;
     return function (struct) {
@@ -122,7 +121,10 @@ function(log, test)
         if (matched !== undefined) {
           var args = slice.call(arguments);
           args[0] = matched;
-          return handlers[line].apply(null, args);
+          var result = handlers[line].apply(null, args);
+          if (result !== undefined) {
+            return result;
+          }
         }
       }
       throw 'Unmatched Expression:\n  ' + JSON.stringify(struct);
