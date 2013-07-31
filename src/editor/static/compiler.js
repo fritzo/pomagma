@@ -658,15 +658,17 @@ function(log,   test,   pattern,   symbols)
       stack(JOIN(x, BOT), tail), function (m) {
         return normalizeStack(toStack(m.x, m.tail));
       },
-
       // eta reduction
       stack(LAMBDA(VAR(name), app(x, VAR(name2))), tail), function (m) {
         if (m.name === m.name2 && countOccurrences(m.name, m.x) === 0) {
             return normalizeStack(stack(m.x, m.tail));
         }
       },
-
       // beta reduction
+      stack(LAMBDA(VAR(name), x), VAR(name2), tail), function (m) {
+        var head = substitute(m.name, VAR(m.name2), m.x);
+        return normalizeStack(toStack(head, m.tail));
+      },
       stack(LAMBDA(VAR(name), x), y, tail), function (m) {
         var head;
         var tail;
@@ -677,7 +679,7 @@ function(log,   test,   pattern,   symbols)
             head = substitute(m.name, m.y, m.x);
             return normalizeStack(toStack(head, m.tail));
           default:
-            head = LAMBDA(VAR(name), x);
+            head = LAMBDA(VAR(m.name), m.x);
             tail = normalizeTail(stack(m.y, m.tail));
             return fromStack(stack(head, tail));
         }
@@ -715,6 +717,9 @@ function(log,   test,   pattern,   symbols)
     var x = VAR('x');
     var y = VAR('y');
     var z = VAR('z');
+    var xx = app(x, x);
+    var yy = app(y, y);
+    var yz = app(y, z);
     var examples = [
       [x, x],
       [app(TOP, x, y, z), TOP],
@@ -723,11 +728,12 @@ function(log,   test,   pattern,   symbols)
       [JOIN(x, TOP), TOP],
       [JOIN(BOT, x), x],
       [JOIN(x, BOT), x],
-      [app(LAMBDA(x, app(y, x)), z), app(y, z)],
+      [app(LAMBDA(x, app(y, x)), app(y, z)), app(y, app(y, z))],
+      [app(LAMBDA(x, app(x, x)), y), app(y, y)],
+      [app(LAMBDA(x, app(x, x)), app(y, z)),
+       app(LAMBDA(x, app(x, x)), app(y, z))],
       [LAMBDA(x, app(y, x)), y],
       [LAMBDA(x, app(x, x)), LAMBDA(x, app(x, x))],
-      // TODO
-      //[app(JOIN(x, y), z), JOIN(app(x, z), app(y, z))],
       [HOLE, HOLE],
       [app(HOLE, x, y), app(HOLE, x, y)]
     ];
