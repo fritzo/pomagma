@@ -15,8 +15,9 @@ sudo apt-get install -y \
   p7zip-full \
   rubygems \
   libzmq-dev \
-  #python-zmq \
+  firefox \
   #phantomjs \
+  #python-zmq \
   #
 
 sudo gem install foreman
