@@ -153,7 +153,8 @@ void conjecture_equal (
 void try_prove_nless (
         Structure & structure,
         const char * language_file,
-        const char * conjectures_file,
+        const char * conjectures_in_file,
+        const char * conjectures_out_file,
         const char * theorems_file,
         size_t max_count)
 {
@@ -170,7 +171,7 @@ void try_prove_nless (
         structure,
         probs,
         routes,
-        conjectures_file,
+        conjectures_in_file,
         max_count);
 
     detail::try_prove_nless(
@@ -178,7 +179,7 @@ void try_prove_nless (
         language,
         routes,
         conjectures,
-        conjectures_file,
+        conjectures_out_file,
         theorems_file);
 }
 

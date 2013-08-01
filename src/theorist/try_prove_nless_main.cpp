@@ -7,21 +7,24 @@ int main (int argc, char ** argv)
 
     const char * structure_file = nullptr;
     const char * language_file = nullptr;
-    const char * conjectures_file = nullptr;
+    const char * conjectures_in_file = nullptr;
+    const char * conjectures_out_file = nullptr;
     const char * theorems_file = nullptr;
 
-    if (argc == 5) {
+    if (argc == 6) {
         structure_file = argv[1];
         language_file = argv[2];
-        conjectures_file = argv[3];
-        theorems_file = argv[4];
+        conjectures_in_file = argv[3];
+        conjectures_out_file = argv[4];
+        theorems_file = argv[5];
     } else {
         std::cout
             << "Usage: "
                 << pomagma::get_filename(argv[0])
                 << " structure_in"
                 << " language_in"
-                << " conjectures_io"
+                << " conjectures_in"
+                << " conjectures_out"
                 << " theorems_out"
                 << "\n"
             << "Environment Variables:\n"
@@ -46,7 +49,8 @@ int main (int argc, char ** argv)
     pomagma::try_prove_nless(
         structure,
         language_file,
-        conjectures_file,
+        conjectures_in_file,
+        conjectures_out_file,
         theorems_file);
 
     return 0;

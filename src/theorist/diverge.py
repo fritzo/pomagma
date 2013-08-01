@@ -46,6 +46,7 @@ class Unknown(Exception):
 
 def converge_step(term):
     head = term[0]
+    assert isinstance(head, str), 'bad head: {}'.format(head)
     argv = term[1:]
     argc = len(argv)
     if head == TOP:
@@ -235,24 +236,26 @@ def stripped_lines(file_in):
 
 
 def try_prove_diverge(
-        conjectures_io,
+        conjectures_in,
+        conjectures_out,
         theorems_out,
         max_steps=20,
         log_file=None,
         log_level=0):
-    assert conjectures_io != theorems_out
+    assert conjectures_in != theorems_out
+    assert conjectures_out != theorems_out
 
     def log_print(message):
         if log_file:
             pomagma.util.log_print(message, log_file)
 
-    lines = list(stripped_lines(conjectures_io))
+    lines = list(stripped_lines(conjectures_in))
     log_print('Trying to prove {} conjectures'.format(len(lines)))
 
     conjecture_count = 0
     diverge_count = 0
     converge_count = 0
-    with open(conjectures_io, 'w') as conjectures:
+    with open(conjectures_out, 'w') as conjectures:
         conjectures.write('# divergence conjectures filtered by pomagma\n')
         with open(theorems_out, 'a') as theorems:
             theorems.write('# divergence theorems proved by pomagma\n')

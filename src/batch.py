@@ -48,11 +48,21 @@ def test(theory, **options):
 
         theorist.conjecture_diverge(theory, '6.h5', conjectures, **opts)
         if theory != 'h4':
-            theorist.try_prove_diverge(conjectures, theorems, **opts)
+            theorist.try_prove_diverge(
+                conjectures,
+                conjectures,
+                theorems,
+                **opts)
             theorist.assume('6.h5', '7.h5', theorems, **opts)
             cartographer.validate('7.h5', **opts)
         theorist.conjecture_equal(theory, '6.h5', conjectures, **opts)
-        theorist.try_prove_nless(theory, '6.h5', conjectures, theorems, **opts)
+        theorist.try_prove_nless(
+            theory,
+            '6.h5',
+            conjectures,
+            conjectures,
+            theorems,
+            **opts)
         if theory != 'h4':
             theorist.assume('6.h5', '7.h5', theorems, **opts)
             cartographer.validate('7.h5', **opts)
@@ -179,6 +189,7 @@ def theorize(theory, **options):
 
         world = 'world.h5'
         updated = '{}.assume.h5'.format(os.getpid())
+        temp_conjectures = '{}.conjectures.facts'.format(os.getpid())
         diverge_conjectures = 'diverge_conjectures.facts'
         diverge_theorems = 'diverge_theorems.facts'
         equal_conjectures = 'equal_conjectures.facts'
@@ -190,8 +201,10 @@ def theorize(theory, **options):
         theorist.conjecture_diverge(theory, world, diverge_conjectures, **opts)
         theorem_count = theorist.try_prove_diverge(
             diverge_conjectures,
+            temp_conjectures,
             diverge_theorems,
             **opts)
+        os.rename(temp_conjectures, diverge_conjectures)
         if theorem_count > 0:
             atlas.assume(world, updated, diverge_theorems, **opts)
 
@@ -199,8 +212,10 @@ def theorize(theory, **options):
             theory,
             world,
             equal_conjectures,
+            temp_conjectures,
             nless_theorems,
             **opts)
+        os.rename(temp_conjectures, equal_conjectures)
         if theorem_count > 0:
             atlas.assume(world, updated, nless_theorems, **opts)
 

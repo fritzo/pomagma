@@ -22,7 +22,8 @@ void conjecture_equal (
 void try_prove_nless (
         Structure & structure,
         const char * language_file,
-        const char * conjectures_file,
+        const char * conjectures_in_file,
+        const char * conjectures_out_file,
         const char * theorems_file,
         size_t max_count = DEFAULT_PROOF_COUNT);
 
