@@ -125,7 +125,7 @@ def converge_step(term):
         else:
             f = argv[0]
             g = argv[1]
-            return (V, (J, (f,), (g,),),) + argv[2:]
+            return (V, (J, f, g,),) + argv[2:]
     elif head == A:
         raise Unknown()
     else:
