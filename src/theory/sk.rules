@@ -9,6 +9,9 @@ EQUAL APP I x x   EQUAL COMP I x x   EQUAL COMP x I x
 ---------------------   ----------------------------
 EQUAL APP APP K x y x   EQUAL COMP APP K x y APP K x
 
+----------------------------------
+EQUAL COMP x APP K y APP K APP x y
+
 ----------------------------
 EQUAL APP APP CI x y APP y x
 
@@ -26,9 +29,6 @@ EQUAL APP APP APP C x y z APP APP x z y
 
 ---------------------------------------------
 EQUAL APP APP APP S x y z APP APP x z APP y z
-
-#---------------------   -----------------------
-#EQUAL APP C APP C x x   EQUAL COMP C COMP C x x
 
 # Possible B,C,S for composition abstraction:
 #
