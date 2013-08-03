@@ -5,6 +5,7 @@ add_library(pomagma_cartographer SHARED
 	signature.cpp
 	aggregate.cpp
 	trim.cpp
+	infer.cpp
 	)
 set(POMAGMA_CARTOGRAPHER_LIBS
 	pomagma_cartographer
