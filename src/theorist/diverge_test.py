@@ -113,8 +113,12 @@ def test_try_prove_diverge():
             for term in iter_terms(atoms, max_atom_count):
                 f.write('\n')
                 f.write('EQUAL BOT {}'.format(print_term(term)))
-        try_prove_diverge('source.facts', 'destin.facts', max_steps)
-        with open('destin.facts') as f:
+        try_prove_diverge(
+            'source.facts',
+            'unproven.facts',
+            'theorems.facts',
+            max_steps)
+        with open('theorems.facts') as f:
             for line in f:
                 line = line.split('#')[0].strip()
                 if line.startswith('EQUAL BOT '):

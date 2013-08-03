@@ -47,6 +47,7 @@ add_custom_command(
 		${SRC_DIR}/theory/sk.compiled
 	COMMAND python ${SRC_DIR}/compiler/run.py compile
 		${SRC_DIR}/theory/sk.rules
+		${SRC_DIR}/theory/order.rules
 		${SRC_DIR}/theory/sk.facts
 		${SRC_DIR}/theory/order.facts
 		cpp_out=${CMAKE_CURRENT_LIST_DIR}/sk.theory.cpp
@@ -60,6 +61,7 @@ add_custom_command(
 		${SRC_DIR}/compiler/cpp.py
 		${SRC_DIR}/compiler/run.py
 		${SRC_DIR}/theory/sk.rules
+		${SRC_DIR}/theory/order.rules
 		${SRC_DIR}/theory/sk.facts
 		${SRC_DIR}/theory/order.facts
 	)
@@ -78,6 +80,7 @@ add_custom_command(
 		${SRC_DIR}/theory/skj.compiled
 	COMMAND python ${SRC_DIR}/compiler/run.py compile
 		${SRC_DIR}/theory/sk.rules
+		${SRC_DIR}/theory/order.rules
 		${SRC_DIR}/theory/join.rules
 		${SRC_DIR}/theory/types.rules
 		${SRC_DIR}/theory/sk.facts
@@ -94,6 +97,7 @@ add_custom_command(
 		${SRC_DIR}/compiler/cpp.py
 		${SRC_DIR}/compiler/run.py
 		${SRC_DIR}/theory/sk.rules
+		${SRC_DIR}/theory/order.rules
 		${SRC_DIR}/theory/join.rules
 		${SRC_DIR}/theory/types.rules
 		${SRC_DIR}/theory/sk.facts
@@ -115,6 +119,7 @@ add_custom_command(
 		${SRC_DIR}/theory/skjo.compiled
 	COMMAND python ${SRC_DIR}/compiler/run.py compile
 		${SRC_DIR}/theory/sk.rules
+		${SRC_DIR}/theory/order.rules
 		${SRC_DIR}/theory/join.rules
 		${SRC_DIR}/theory/types.rules
 		${SRC_DIR}/theory/quote.rules
@@ -135,6 +140,7 @@ add_custom_command(
 		${SRC_DIR}/compiler/cpp.py
 		${SRC_DIR}/compiler/run.py
 		${SRC_DIR}/theory/sk.rules
+		${SRC_DIR}/theory/order.rules
 		${SRC_DIR}/theory/join.rules
 		${SRC_DIR}/theory/types.rules
 		${SRC_DIR}/theory/quote.rules
