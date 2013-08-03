@@ -32,3 +32,13 @@ def assume(world, updated, theorems, **opts):
         pomagma.cartographer.validate(updated, **opts)
         os.rename(updated, world)
         # TODO fork and push to s3
+
+
+def infer(world, updated, **opts):
+    assert not os.path.exists(updated)
+    with pomagma.util.mutex(world):
+        assert os.path.exists(world)
+        pomagma.cartographer.infer(world, updated, **opts)
+        pomagma.cartographer.validate(updated, **opts)
+        os.rename(updated, world)
+        # TODO fork and push to s3

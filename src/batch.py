@@ -66,6 +66,7 @@ def test(theory, **options):
         if theory != 'h4':
             theorist.assume('6.h5', '7.h5', theorems, **opts)
             cartographer.validate('7.h5', **opts)
+            cartographer.infer('7.h5', '8.h5', **opts)
 
         analyst.simplify(theory, '6.h5', conjectures, simplified, **opts)
 
@@ -117,7 +118,7 @@ def survey(theory, max_size=DEFAULT_SURVEY_SIZE, step_size=512, **options):
         survey = '{}.survey.h5'.format(os.getpid())
         aggregate = '{}.aggregate.h5'.format(os.getpid())
         assert os.path.exists(world), 'First initialize world map'
-        opts = options
+        opts = options.copy()
         opts.setdefault('log_file', 'survey.log')
 
         def log_print(message):
@@ -147,6 +148,11 @@ def survey(theory, max_size=DEFAULT_SURVEY_SIZE, step_size=512, **options):
                 **opts)
             os.remove(region)
             atlas.aggregate(world, survey, aggregate, **opts)
+            if os.fork() == 0:
+                updated = '{}.infer.h5'.format(os.getpid())
+                opts = options.copy()
+                opts.setdefault('log_file', 'infer.log')
+                atlas.infer(world, updated, **opts)
 
             world_size = pomagma.util.get_item_count(world)
             log_print('world_size = {}'.format(world_size))

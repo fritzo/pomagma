@@ -26,3 +26,5 @@ target_link_libraries(aggregate ${POMAGMA_CARTOGRAPHER_LIBS})
 add_executable(trim trim_main.cpp)
 target_link_libraries(trim ${POMAGMA_CARTOGRAPHER_LIBS})
 
+add_executable(infer infer_main.cpp)
+target_link_libraries(infer ${POMAGMA_CARTOGRAPHER_LIBS})

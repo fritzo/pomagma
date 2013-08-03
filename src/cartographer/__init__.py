@@ -51,3 +51,14 @@ def aggregate(world_in, region_in, world_out, **opts):
         smaller,
         pomagma.util.abspath(world_out),
         **opts)
+
+
+def infer(world_in, world_out, **opts):
+    '''
+    Infer simple facts.
+    '''
+    pomagma.util.log_call(
+        os.path.join(BIN, 'infer'),
+        pomagma.util.abspath(world_in),
+        pomagma.util.abspath(world_out),
+        **opts)
