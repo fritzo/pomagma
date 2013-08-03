@@ -94,7 +94,7 @@ def init(theory, **options):
         log_print('Step 0: initialize to {}'.format(world_size))
         surveyor.init(theory, survey, world_size, **opts)
 
-        atlas.insert(world, survey, **opts)
+        atlas.initialize(world, survey, **opts)
 
 
 @parsable.command
