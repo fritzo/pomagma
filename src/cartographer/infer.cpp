@@ -256,7 +256,7 @@ size_t infer_equal (Structure & structure)
         for (auto iter = y_set.iter(); iter.ok(); iter.next()) {
             Ob y = * iter;
             if (likely(y < x)) {
-                carrier.merge(y, x);
+                carrier.merge(x, y);
             } else {
                 break;
             }
