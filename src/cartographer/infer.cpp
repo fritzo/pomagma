@@ -2,12 +2,37 @@
 #include <pomagma/macrostructure/structure_impl.hpp>
 #include <pomagma/macrostructure/scheduler.hpp>
 
+#define POMAGMA_ASSERT_UNDECIDED(rel, x, y)\
+    POMAGMA_ASSERT(not rel.find(x, y),\
+        "already decided " #rel " " << x << " " << y)
 
 namespace pomagma
 {
 
 namespace
 {
+
+// All the nonconst filtering below is only an optimization.
+DenseSet get_nonconst (Structure & structure)
+{
+    const Carrier & carrier = structure.carrier();
+    const NullaryFunction & K = structure.nullary_function("K");
+    const BinaryFunction & APP = structure.binary_function("APP");
+
+    POMAGMA_ASSERT_EQ(carrier.item_dim(), carrier.item_count());
+    DenseSet nonconst(carrier.item_dim());
+
+    nonconst.complement();
+    if (Ob K_ = K.find()) {
+        for (auto iter = APP.iter_lhs(K_); iter.ok(); iter.next()) {
+            Ob x = * iter;
+            Ob APP_K_x = APP.find(K_, x);
+            nonconst.remove(APP_K_x);
+        }
+    }
+
+    return nonconst;
+}
 
 inline bool infer_less_transitive (
     const BinaryRelation & LESS,
@@ -58,10 +83,52 @@ inline bool infer_nless_transitive(
     return false;
 }
 
-inline bool infer_nless_monotone(
-    const BinaryRelation & NLESS,
+inline void infer_less_left_monotone(
+    BinaryRelation & LESS,
+    const BinaryFunction & fun,
+    Ob x,
+    Ob y,
+    DenseSet & z_set)
+{
+    /*
+         LESS x y
+    --------------------
+    LESS fun x z fun y z
+    */
+    z_set.set_insn(fun.get_Lx_set(x), fun.get_Lx_set(y));
+    for (auto iter = z_set.iter(); iter.ok(); iter.next()) {
+        Ob z = * iter;
+        Ob xz = fun.find(x, z);
+        Ob yz = fun.find(y, z);
+        LESS.insert(xz, yz);
+    }
+}
+
+inline void infer_less_right_monotone(
+    BinaryRelation & LESS,
     const BinaryFunction & fun,
     const DenseSet & nonconst,
+    Ob x,
+    Ob y,
+    DenseSet & z_set)
+{
+    /*
+         LESS x y
+    --------------------
+    LESS fun z x fun z y
+    */
+    z_set.set_insn(fun.get_Rx_set(x), fun.get_Rx_set(y), nonconst);
+    for (auto iter = z_set.iter(); iter.ok(); iter.next()) {
+        Ob z = * iter;
+        Ob zx = fun.find(z, x);
+        Ob zy = fun.find(z, y);
+        LESS.insert(zx, zy);
+    }
+}
+
+inline bool infer_nless_left_monotone(
+    const BinaryRelation & NLESS,
+    const BinaryFunction & fun,
     Ob x,
     Ob y,
     DenseSet & z_set)
@@ -81,6 +148,17 @@ inline bool infer_nless_monotone(
         }
     }
 
+    return false;
+}
+
+inline bool infer_nless_right_monotone(
+    const BinaryRelation & NLESS,
+    const BinaryFunction & fun,
+    const DenseSet & nonconst,
+    Ob x,
+    Ob y,
+    DenseSet & z_set)
+{
     /*
     NLESS fun z x fun z y
     ---------------------
@@ -107,8 +185,8 @@ size_t infer_const (Structure & structure)
 
     const Carrier & carrier = structure.carrier();
     const NullaryFunction & K = structure.nullary_function("K");
-    const BinaryFunction & APP = structure.binary_function("APP");
-    const BinaryFunction & COMP = structure.binary_function("COMP");
+    BinaryFunction & APP = structure.binary_function("APP");
+    BinaryFunction & COMP = structure.binary_function("COMP");
 
     POMAGMA_ASSERT_EQ(carrier.item_dim(), carrier.item_count());
     DenseSet y_set(carrier.item_dim());
@@ -154,25 +232,16 @@ size_t infer_nless (Structure & structure)
     const Carrier & carrier = structure.carrier();
     const BinaryRelation & LESS = structure.binary_relation("LESS");
     BinaryRelation & NLESS = structure.binary_relation("NLESS");
-    const NullaryFunction & K = structure.nullary_function("K");
     const BinaryFunction & APP = structure.binary_function("APP");
     const BinaryFunction & COMP = structure.binary_function("COMP");
+    const DenseSet nonconst = get_nonconst(structure);
 
     POMAGMA_ASSERT_EQ(carrier.item_dim(), carrier.item_count());
     DenseSet y_set(carrier.item_dim());
     DenseSet z_set(carrier.item_dim());
 
-    DenseSet nonconst(carrier.item_dim());
-    nonconst.complement();
-    if (Ob K_ = K.find()) {
-        for (auto iter = APP.iter_lhs(K_); iter.ok(); iter.next()) {
-            Ob x = * iter;
-            Ob APP_K_x = APP.find(K_, x);
-            nonconst.remove(APP_K_x);
-        }
-    }
-
     size_t decision_count = 0;
+
     for (auto iter = carrier.iter(); iter.ok(); iter.next()) {
         Ob x = * iter;
 
@@ -181,14 +250,33 @@ size_t infer_nless (Structure & structure)
         for (auto iter = y_set.iter(); iter.ok(); iter.next()) {
             Ob y = * iter;
             POMAGMA_ASSERT(carrier.contains(y), "unsupported ob: " << y);
-            POMAGMA_ASSERT(not LESS.find(x, y),
-                "already decided LESS " << x << " " << y);
-            POMAGMA_ASSERT(not NLESS.find(x, y),
-                "already decided NLESS " << x << " " << y);
+            POMAGMA_ASSERT_UNDECIDED(LESS, x, y);
+            POMAGMA_ASSERT_UNDECIDED(NLESS, x, y);
 
             if (infer_nless_transitive(LESS, NLESS, x, y, z_set) or
-                infer_nless_monotone(NLESS, APP, nonconst, x, y, z_set) or
-                infer_nless_monotone(NLESS, COMP, nonconst, x, y, z_set))
+                infer_nless_right_monotone(NLESS, APP, nonconst, x, y, z_set) or
+                infer_nless_right_monotone(NLESS, COMP, nonconst, x, y, z_set))
+            {
+                NLESS.insert(x, y);
+                ++decision_count;
+            }
+        }
+    }
+
+    for (auto iter = nonconst.iter(); iter.ok(); iter.next()) {
+        Ob x = * iter;
+
+        y_set.set_union(NLESS.get_Lx_set(x), LESS.get_Lx_set(x));
+        y_set.complement();
+        y_set *= nonconst;
+        for (auto iter = y_set.iter(); iter.ok(); iter.next()) {
+            Ob y = * iter;
+            POMAGMA_ASSERT(carrier.contains(y), "unsupported ob: " << y);
+            POMAGMA_ASSERT_UNDECIDED(LESS, x, y);
+            POMAGMA_ASSERT_UNDECIDED(NLESS, x, y);
+
+            if (infer_nless_left_monotone(NLESS, APP, x, y, z_set) or
+                infer_nless_left_monotone(NLESS, COMP, x, y, z_set))
             {
                 NLESS.insert(x, y);
                 ++decision_count;
@@ -207,12 +295,16 @@ size_t infer_less (Structure & structure)
     const Carrier & carrier = structure.carrier();
     BinaryRelation & LESS = structure.binary_relation("LESS");
     const BinaryRelation & NLESS = structure.binary_relation("NLESS");
+    const BinaryFunction & APP = structure.binary_function("APP");
+    const BinaryFunction & COMP = structure.binary_function("COMP");
+    const DenseSet nonconst = get_nonconst(structure);
 
     POMAGMA_ASSERT_EQ(carrier.item_dim(), carrier.item_count());
     DenseSet y_set(carrier.item_dim());
     DenseSet z_set(carrier.item_dim());
 
     size_t decision_count = 0;
+
     for (auto iter = carrier.iter(); iter.ok(); iter.next()) {
         Ob x = * iter;
 
@@ -221,15 +313,34 @@ size_t infer_less (Structure & structure)
         for (auto iter = y_set.iter(); iter.ok(); iter.next()) {
             Ob y = * iter;
             POMAGMA_ASSERT(carrier.contains(y), "unsupported ob: " << y);
-            POMAGMA_ASSERT(not LESS.find(x, y),
-                "already decided LESS " << x << " " << y);
-            POMAGMA_ASSERT(not NLESS.find(x, y),
-                "already decided NLESS " << x << " " << y);
+            POMAGMA_ASSERT_UNDECIDED(NLESS, x, y);
+            POMAGMA_ASSERT_UNDECIDED(LESS, x, y);
 
             if (infer_less_transitive(LESS, x, y, z_set)) {
                 LESS.insert(x, y);
                 ++decision_count;
             }
+        }
+    }
+
+    for (auto iter = carrier.iter(); iter.ok(); iter.next()) {
+        Ob x = * iter;
+        for (auto iter = LESS.iter_lhs(x); iter.ok(); iter.next()) {
+            Ob y = * iter;
+
+            infer_less_right_monotone(LESS, APP, nonconst, x, y, z_set);
+            infer_less_right_monotone(LESS, COMP, nonconst, x, y, z_set);
+        }
+    }
+
+    for (auto iter = nonconst.iter(); iter.ok(); iter.next()) {
+        Ob x = * iter;
+        y_set.set_insn(LESS.get_Lx_set(x), nonconst);
+        for (auto iter = y_set.iter(); iter.ok(); iter.next()) {
+            Ob y = * iter;
+
+            infer_less_left_monotone(LESS, APP, x, y, z_set);
+            infer_less_left_monotone(LESS, COMP, x, y, z_set);
         }
     }
 
