@@ -254,6 +254,7 @@ public:
     // entire operations (note that all are monotonic)
     void zero ();
     void complement  ();
+    void complement  (const DenseSet & other);
     bool operator == (const DenseSet & other) const;
     bool operator <= (const DenseSet & other) const;
     bool disjoint    (const DenseSet & other) const;
@@ -275,6 +276,8 @@ public:
     Iterator3 iter_insn (const DenseSet & set2, const DenseSet & set3) const;
 
 private:
+
+    void ensure_padding_bits_are_zero();
 
     bool_ref _bit (size_t i);
     bool _bit (size_t i) const;

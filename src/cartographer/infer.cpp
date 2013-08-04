@@ -101,6 +101,52 @@ inline bool infer_nless_monotone(
 
 } // anonymous namespace
 
+size_t infer_const (Structure & structure)
+{
+    POMAGMA_INFO("Inferring K");
+
+    const Carrier & carrier = structure.carrier();
+    const NullaryFunction & K = structure.nullary_function("K");
+    const BinaryFunction & APP = structure.binary_function("APP");
+    const BinaryFunction & COMP = structure.binary_function("COMP");
+
+    POMAGMA_ASSERT_EQ(carrier.item_dim(), carrier.item_count());
+    DenseSet y_set(carrier.item_dim());
+
+    size_t decision_count = 0;
+    if (Ob K_ = K.find()) {
+        for (auto iter = APP.iter_lhs(K_); iter.ok(); iter.next()) {
+            Ob x = * iter;
+            Ob APP_K_x = APP.find(K_, x);
+
+            /*
+            ---------------------
+            EQUAL APP APP K x y x
+            */
+            y_set.complement(APP.get_Lx_set(APP_K_x));
+            for (auto iter = y_set.iter(); iter.ok(); iter.next()) {
+                Ob y = * iter;
+                APP.insert(APP_K_x, y, x);
+                ++decision_count;
+            }
+
+            /*
+            ----------------------------
+            EQUAL COMP APP K x y APP K x
+            */
+            y_set.complement(COMP.get_Lx_set(APP_K_x));
+            for (auto iter = y_set.iter(); iter.ok(); iter.next()) {
+                Ob y = * iter;
+                COMP.insert(APP_K_x, y, APP_K_x);
+                ++decision_count;
+            }
+        }
+    }
+
+    POMAGMA_INFO("inferred " << decision_count << " K facts");
+    return decision_count;
+}
+
 size_t infer_nless (Structure & structure)
 {
     POMAGMA_INFO("Inferring NLESS");
@@ -226,7 +272,9 @@ size_t infer_equal (Structure & structure)
 
 size_t infer (Structure & structure)
 {
-    return infer_nless(structure) +
+    return
+        infer_const(structure) +
+        infer_nless(structure) +
         infer_less(structure) +
         infer_equal(structure);
 }

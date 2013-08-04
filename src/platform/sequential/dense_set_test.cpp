@@ -189,7 +189,10 @@ void test_operations (size_t size, rng_t & rng)
     }
     actual.complement();
     actual.validate();
-    POMAGMA_ASSERT(actual == expected, "complement is wrong");
+    POMAGMA_ASSERT(actual == expected, "complement() is wrong");
+    actual.complement(x);
+    actual.validate();
+    POMAGMA_ASSERT(actual == expected, "complement(-) is wrong");
 
     POMAGMA_INFO("testing union");
     expected.zero();
