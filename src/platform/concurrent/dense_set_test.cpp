@@ -76,10 +76,9 @@ void test_even (size_t size)
         if (j % i == 0) {
             POMAGMA_ASSERT(*evens[j] <= *evens[i],
                     "expected containment " << j << ", " << i);
-        } else {
-            // XXX FIXME this fails and I don't know why
-            //POMAGMA_ASSERT(not (*evens[j] <= *evens[i]),
-            //        "expected non-containment " << j << ", " << i);
+        } else if (size > i * j) {
+            POMAGMA_ASSERT(not (*evens[j] <= *evens[i]),
+                    "expected non-containment " << j << ", " << i);
         }
     }}
 

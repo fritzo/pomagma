@@ -58,41 +58,46 @@ void test_basic (size_t size)
 
 void test_even (size_t size)
 {
-    std::vector<DenseSet *> evens(7, nullptr);
+    const size_t max_base = 2 * 3 * 5;
+    std::vector<DenseSet *> evens(max_base + 1, nullptr);
     for (auto & e : evens) {
         e = new DenseSet(size);
     }
-
-    for (Ob i = 1; i <= 6; ++i) {
+    for (Ob i = 1; i <= max_base; ++i) {
         for (Ob j = 1; j < 1 + size; ++j) {
             if (is_even(j, i)) { evens[i]->insert(j); }
         }
     }
 
     POMAGMA_INFO("Testing set containment");
-    for (Ob i = 1; i <= 6; ++i) {
-    for (Ob j = 1; j <= 6; ++j) {
+    for (Ob i = 1; i <= max_base; ++i) {
+    for (Ob j = 1; j <= max_base; ++j) {
         POMAGMA_INFO(j << " % " << i << " = " << (j % i));
         if (j % i == 0) {
             POMAGMA_ASSERT(*evens[j] <= *evens[i],
                     "expected containment " << j << ", " << i);
-        } else {
-            // XXX FIXME this fails and I don't know why
-            //POMAGMA_ASSERT(not (*evens[j] <= *evens[i]),
-            //        "expected non-containment " << j << ", " << i);
+        } else if (size > i * j) {
+            POMAGMA_ASSERT(not (*evens[j] <= *evens[i]),
+                    "expected non-containment " << j << ", " << i);
         }
     }}
 
-    POMAGMA_INFO("Testing set intersection");
+    POMAGMA_INFO("Testing binary set intersection");
     DenseSet evens6(size);
     evens6.set_insn(*evens[2], *evens[3]);
     POMAGMA_ASSERT(evens6 == *evens[6], "expected 6 = lcm(2, 3)")
 
+    POMAGMA_INFO("Testing ternary set intersection");
+    DenseSet evens30(size);
+    evens30.set_insn(*evens[2], *evens[3], *evens[5]);
+    POMAGMA_ASSERT(evens30 == *evens[30], "expected 30 = lcm(2, 3, 5)")
+
     POMAGMA_INFO("Validating");
-    for (Ob i = 0; i <= 6; ++i) {
+    for (Ob i = 0; i <= max_base; ++i) {
         evens[i]->validate();
     }
     evens6.validate();
+    evens30.validate();
 
     for (auto e : evens) {
         delete e;

@@ -61,6 +61,7 @@ inline bool infer_nless_transitive(
 inline bool infer_nless_monotone(
     const BinaryRelation & NLESS,
     const BinaryFunction & fun,
+    const DenseSet & nonconst,
     Ob x,
     Ob y,
     DenseSet & z_set)
@@ -85,7 +86,7 @@ inline bool infer_nless_monotone(
     ---------------------
           NLESS x y
     */
-    z_set.set_insn(fun.get_Rx_set(x), fun.get_Rx_set(y));
+    z_set.set_insn(fun.get_Rx_set(x), fun.get_Rx_set(y), nonconst);
     for (auto iter = z_set.iter(); iter.ok(); iter.next()) {
         Ob z = * iter;
         Ob zx = fun.find(z, x);
@@ -107,12 +108,23 @@ size_t infer_nless (Structure & structure)
     const Carrier & carrier = structure.carrier();
     const BinaryRelation & LESS = structure.binary_relation("LESS");
     BinaryRelation & NLESS = structure.binary_relation("NLESS");
+    const NullaryFunction & K = structure.nullary_function("K");
     const BinaryFunction & APP = structure.binary_function("APP");
     const BinaryFunction & COMP = structure.binary_function("COMP");
 
     POMAGMA_ASSERT_EQ(carrier.item_dim(), carrier.item_count());
     DenseSet y_set(carrier.item_dim());
     DenseSet z_set(carrier.item_dim());
+
+    DenseSet nonconst(carrier.item_dim());
+    nonconst.complement();
+    if (Ob K_ = K.find()) {
+        for (auto iter = APP.iter_lhs(K_); iter.ok(); iter.next()) {
+            Ob x = * iter;
+            Ob APP_K_x = APP.find(K_, x);
+            nonconst.remove(APP_K_x);
+        }
+    }
 
     size_t decision_count = 0;
     for (auto iter = carrier.iter(); iter.ok(); iter.next()) {
@@ -129,8 +141,8 @@ size_t infer_nless (Structure & structure)
                 "already decided NLESS " << x << " " << y);
 
             if (infer_nless_transitive(LESS, NLESS, x, y, z_set) or
-                infer_nless_monotone(NLESS, APP, x, y, z_set) or
-                infer_nless_monotone(NLESS, COMP, x, y, z_set))
+                infer_nless_monotone(NLESS, APP, nonconst, x, y, z_set) or
+                infer_nless_monotone(NLESS, COMP, nonconst, x, y, z_set))
             {
                 NLESS.insert(x, y);
                 ++decision_count;

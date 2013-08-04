@@ -258,6 +258,25 @@ void DenseSet::set_insn (const DenseSet & lhs, const DenseSet & rhs)
     }
 }
 
+void DenseSet::set_insn (
+        const DenseSet & xs,
+        const DenseSet & ys,
+        const DenseSet & zs)
+{
+    POMAGMA_ASSERT1(item_dim() == xs.item_dim(), "xs.item_dim mismatch");
+    POMAGMA_ASSERT1(item_dim() == ys.item_dim(), "ys.item_dim mismatch");
+    POMAGMA_ASSERT1(item_dim() == zs.item_dim(), "zs.item_dim mismatch");
+
+    const Word * restrict x = assume_aligned(xs.m_words);
+    const Word * restrict y = assume_aligned(ys.m_words);
+    const Word * restrict z = assume_aligned(zs.m_words);
+    Word * restrict w = assume_aligned(m_words);
+
+    for (size_t m = 0, M = m_word_dim; m < M; ++m) {
+        w[m] = x[m] & y[m] & z[m];
+    }
+}
+
 // this += dep; dep = 0;
 void DenseSet::merge (DenseSet & dep)
 {
