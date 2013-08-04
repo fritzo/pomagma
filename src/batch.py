@@ -1,5 +1,7 @@
 import os
+import sys
 import shutil
+import subprocess
 import parsable
 parsable = parsable.Parsable()
 import pomagma.util
@@ -7,6 +9,23 @@ from pomagma import surveyor, cartographer, theorist, analyst, atlas
 
 
 DEFAULT_SURVEY_SIZE = 16384 + 512 - 1
+PYTHON = sys.executable
+
+
+class parsable_fork:
+    def __init__(self, fun, *args, **kwargs):
+        self.args = [PYTHON, '-m', 'pomagma.batch', fun.__name__]
+        self.args += map(str, args)
+        for key, val in kwargs.iteritems():
+            self.args.append('{}={}'.format(key, val))
+        self.proc = subprocess.Popen(self.args)
+
+    def wait(self):
+        self.proc.wait()
+        code = self.proc.returncode
+        assert code == 0, '\n'.join([
+            'forked command failed with exit code {}'.format(code),
+            ' '.join(self.args)])
 
 
 @parsable.command
@@ -81,82 +100,81 @@ def init(theory, **options):
     assert not os.path.exists(path), 'World map has already been initialized'
     os.makedirs(path)
     with pomagma.util.chdir(path):
-
         world = 'world.h5'
         survey = '{}.survey.h5'.format(os.getpid())
         opts = options
-        opts.setdefault('log_file', 'init.log')
-
-        def log_print(message):
-            pomagma.util.log_print(message, opts['log_file'])
-
+        log_file = opts.setdefault('log_file', 'init.log')
         world_size = pomagma.util.MIN_SIZES[theory]
-        log_print('Step 0: initialize to {}'.format(world_size))
+        pomagma.util.log_print('initialize to {}'.format(world_size), log_file)
         surveyor.init(theory, survey, world_size, **opts)
-
         atlas.initialize(world, survey, **opts)
+
+
+@parsable.command
+def infer(theory, **options):
+    '''
+    Infer simple facts in the world map.
+    Options: log_level, log_file
+    '''
+    path = os.path.join(pomagma.util.DATA, 'atlas', theory)
+    assert os.path.exists(path), 'First initialize world map'
+    with pomagma.util.chdir(path):
+        world = 'world.h5'
+        assert os.path.exists(world), 'First initialize world map'
+        updated = '{}.infer.h5'.format(os.getpid())
+        opts = options
+        opts.setdefault('log_file', 'infer.log')
+        atlas.infer(world, updated, **opts)
 
 
 @parsable.command
 def survey(theory, max_size=DEFAULT_SURVEY_SIZE, step_size=512, **options):
     '''
     Expand world map for given theory.
-    Survey until world reaches given size, then (trim; survey; aggregate)-loop
+    Survey one step in the (trim; survey; aggregate)-loop.
     Options: log_level, log_file
     '''
     assert step_size > 0
     region_size = max_size - step_size
     min_size = pomagma.util.MIN_SIZES[theory]
     assert region_size >= min_size
-
     path = os.path.join(pomagma.util.DATA, 'atlas', theory)
     assert os.path.exists(path), 'First initialize world map'
     with pomagma.util.chdir(path):
-
         world = 'world.h5'
+        assert os.path.exists(world), 'First initialize world map'
         region = '{}.trim.h5'.format(os.getpid())
         survey = '{}.survey.h5'.format(os.getpid())
         aggregate = '{}.aggregate.h5'.format(os.getpid())
-        assert os.path.exists(world), 'First initialize world map'
-        opts = options.copy()
-        opts.setdefault('log_file', 'survey.log')
+        opts = options
+        log_file = opts.setdefault('log_file', 'survey.log')
+        # TODO split this up into separate survey + aggregate actors
+        #   surveyors pull from s3 and aggregators push to s3
+        region_size = max(min_size, max_size - step_size)
+        cartographer.trim(theory, world, region, region_size, **opts)
+        region_size = pomagma.util.get_item_count(region)
+        survey_size = min(region_size + step_size, max_size)
+        surveyor.survey(theory, region, survey, survey_size, **opts)
+        os.remove(region)
+        atlas.aggregate(world, survey, aggregate, **opts)
+        world_size = pomagma.util.get_item_count(world)
+        pomagma.util.log_print('world_size = {}'.format(world_size), log_file)
 
-        def log_print(message):
-            pomagma.util.log_print(message, opts['log_file'])
 
-        step = 1
-        while True:
-            log_print('Step {}: survey'.format(step))
-
-            # TODO split this up into separate survey + aggregate actors
-            #   surveyors pull from s3 and aggregators push to s3
-
-            region_size = max(min_size, max_size - step_size)
-            cartographer.trim(
-                theory,
-                world,
-                region,
-                region_size,
-                **opts)
-            region_size = pomagma.util.get_item_count(region)
-            survey_size = min(region_size + step_size, max_size)
-            surveyor.survey(
-                theory,
-                region,
-                survey,
-                survey_size,
-                **opts)
-            os.remove(region)
-            atlas.aggregate(world, survey, aggregate, **opts)
-            if os.fork() == 0:
-                updated = '{}.infer.h5'.format(os.getpid())
-                opts = options.copy()
-                opts.setdefault('log_file', 'infer.log')
-                atlas.infer(world, updated, **opts)
-
-            world_size = pomagma.util.get_item_count(world)
-            log_print('world_size = {}'.format(world_size))
-            step += 1
+@parsable.command
+def explore(theory, max_size=DEFAULT_SURVEY_SIZE, step_size=512, **options):
+    '''
+    Continuously expand world map for given theory, inferring and surveying.
+    Survey until world reaches given size, then (trim; survey; aggregate)-loop.
+    Options: log_level, log_file
+    '''
+    while True:
+        workers = [
+            parsable_fork(infer, theory, **options),
+            parsable_fork(survey, theory, max_size, step_size, **options),
+        ]
+        for worker in workers:
+            worker.wait()
 
 
 @parsable.command
@@ -168,17 +186,12 @@ def extend(theory, **options):
     path = os.path.join(pomagma.util.DATA, 'atlas', theory)
     assert os.path.exists(path), 'First initialize world map'
     with pomagma.util.chdir(path):
-
         world = 'world.h5'
         init = '{}.init.h5'.format(os.getpid())
         aggregate = '{}.aggregate.h5'.format(os.getpid())
         assert os.path.exists(world), 'First initialize world map'
         opts = options
         opts.setdefault('log_file', 'extend.log')
-
-        def log_print(message):
-            pomagma.util.log_print(message, opts['log_file'])
-
         init_size = pomagma.util.MIN_SIZES[theory]
         surveyor.init(theory, init, init_size, **opts)
         atlas.aggregate(world, init, aggregate, **opts)
