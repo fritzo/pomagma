@@ -303,7 +303,7 @@ size_t infer_less (Structure & structure)
     DenseSet y_set(carrier.item_dim());
     DenseSet z_set(carrier.item_dim());
 
-    size_t decision_count = 0;
+    size_t start_count = LESS.count_pairs();
 
     for (auto iter = carrier.iter(); iter.ok(); iter.next()) {
         Ob x = * iter;
@@ -318,7 +318,6 @@ size_t infer_less (Structure & structure)
 
             if (infer_less_transitive(LESS, x, y, z_set)) {
                 LESS.insert(x, y);
-                ++decision_count;
             }
         }
     }
@@ -344,6 +343,7 @@ size_t infer_less (Structure & structure)
         }
     }
 
+    size_t decision_count = LESS.count_pairs() - start_count;
     POMAGMA_INFO("inferred " << decision_count << " LESS facts");
     return decision_count;
 }
