@@ -226,10 +226,10 @@ size_t infer_nless (Structure & structure)
     POMAGMA_ASSERT_EQ(carrier.item_dim(), carrier.item_count());
     const size_t item_dim = carrier.item_dim();
 
-    size_t decision_count = 0;
-    std::mutex mutex;
+    size_t start_count = NLESS.count_pairs();
 
-    #pragma omp parallel for schedule(dynamic)
+    std::mutex mutex;
+    #pragma omp parallel for schedule(dynamic, 64)
     for (Ob x = 1; x <= item_dim; ++x) {
         POMAGMA_ASSERT(carrier.contains(x), "unsupported ob: " << x);
 
@@ -253,15 +253,12 @@ size_t infer_nless (Structure & structure)
             }
         }
 
-        // WARNING this assume writes are atomic and concurrent reads are safe
+        // WARNING assumes single writer + many readers are concurrently safe
         std::unique_lock<std::mutex> lock(mutex);
-        for (auto iter = theorems.iter(); iter.ok(); iter.next()) {
-            Ob y = * iter;
-            NLESS.insert(x, y);
-            ++decision_count;
-        }
+        NLESS.insert(x, theorems);
     }
 
+    size_t decision_count = NLESS.count_pairs() - start_count;
     POMAGMA_INFO("inferred " << decision_count << " NLESS facts");
     return decision_count;
 }
