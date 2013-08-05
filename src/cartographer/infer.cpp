@@ -254,7 +254,7 @@ size_t infer_nless (Structure & structure)
         }
 
         // WARNING this assume writes are atomic and concurrent reads are safe
-        std::unique_lock<std::mutex>(mutex);
+        std::unique_lock<std::mutex> lock(mutex);
         for (auto iter = theorems.iter(); iter.ok(); iter.next()) {
             Ob y = * iter;
             NLESS.insert(x, y);
