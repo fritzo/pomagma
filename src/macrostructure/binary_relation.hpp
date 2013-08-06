@@ -22,7 +22,7 @@ public:
     ~BinaryRelation ();
     void validate () const;
     void validate_disjoint (const BinaryRelation & other) const;
-    void log_stats () const;
+    void log_stats (const std::string & prefix) const;
     size_t count_pairs () const { return m_lines.count_pairs(); }
 
     // raw operations

@@ -46,6 +46,9 @@ inline void load_data (
         Signature & signature,
         const std::string & filename);
 
+void log_stats (
+        Signature & signature);
+
 //----------------------------------------------------------------------------
 // Validation
 
@@ -929,6 +932,33 @@ inline void load_data (
 
     detail::check_signature(signature, file);
     detail::load_data(signature, file);
+}
+
+//----------------------------------------------------------------------------
+// Logging
+
+void log_stats (Signature & signature)
+{
+    POMAGMA_ASSERT(signature.carrier(), "carrier is not defined");
+    Carrier & carrier = * signature.carrier();
+
+    carrier.log_stats();
+
+    for (auto pair : signature.binary_relations()) {
+        pair.second->log_stats(pair.first);
+    }
+    for (auto pair : signature.nullary_functions()) {
+        pair.second->log_stats(pair.first);
+    }
+    for (auto pair : signature.injective_functions()) {
+        pair.second->log_stats(pair.first);
+    }
+    for (auto pair : signature.binary_functions()) {
+        pair.second->log_stats(pair.first);
+    }
+    for (auto pair : signature.symmetric_functions()) {
+        pair.second->log_stats(pair.first);
+    }
 }
 
 } // namespace pomagma

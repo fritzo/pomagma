@@ -60,9 +60,7 @@ int main (int argc, char ** argv)
         destin.validate_consistent();
     }
 
-    // TODO
-    //pomagma::log_stats();
-
+    destin.log_stats();
     destin.dump(structure_out);
 
     return 0;

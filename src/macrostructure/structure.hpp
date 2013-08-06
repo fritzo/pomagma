@@ -28,6 +28,7 @@ public:
     void load (const std::string & filename, size_t extra_item_dim = 0);
     void dump (const std::string & filename);
     void init_carrier (size_t item_dim);
+    void log_stats ();
 };
 
 inline BinaryRelation & Structure::binary_relation(

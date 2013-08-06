@@ -20,7 +20,7 @@ public:
     InjectiveFunction (const Carrier & carrier);
     ~InjectiveFunction ();
     void validate () const;
-    void log_stats () const;
+    void log_stats (const std::string & prefix) const;
 
     // raw operations
     size_t count_items () const { return m_set.count_items(); }

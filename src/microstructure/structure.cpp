@@ -37,23 +37,7 @@ void Structure::dump (const std::string & filename)
 
 void Structure::log_stats ()
 {
-    carrier().log_stats();
-
-    for (auto pair : m_signature.binary_relations()) {
-        pair.second->log_stats(pair.first);
-    }
-    for (auto pair : m_signature.nullary_functions()) {
-        pair.second->log_stats(pair.first);
-    }
-    for (auto pair : m_signature.injective_functions()) {
-        pair.second->log_stats(pair.first);
-    }
-    for (auto pair : m_signature.binary_functions()) {
-        pair.second->log_stats(pair.first);
-    }
-    for (auto pair : m_signature.symmetric_functions()) {
-        pair.second->log_stats(pair.first);
-    }
+    pomagma::log_stats(m_signature);
 }
 
 } // namespace pomagma

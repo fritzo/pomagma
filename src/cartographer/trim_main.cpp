@@ -55,11 +55,9 @@ int main (int argc, char ** argv)
             destin.validate();
         }
 
+        destin.log_stats();
         destin.dump(destin_file);
     }
-
-    // TODO
-    //pomagma::log_stats();
 
     return 0;
 }

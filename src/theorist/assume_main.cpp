@@ -41,10 +41,8 @@ int main (int argc, char ** argv)
         structure.validate();
     }
 
+    structure.log_stats();
     structure.dump(destin_file);
-
-    // TODO
-    //pomagma::log_stats();
 
     return 0;
 }

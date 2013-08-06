@@ -39,9 +39,9 @@ void SymmetricFunction::validate () const
     }
 }
 
-void SymmetricFunction::log_stats () const
+void SymmetricFunction::log_stats (const std::string & prefix) const
 {
-    m_lines.log_stats();
+    m_lines.log_stats(prefix);
 }
 
 void SymmetricFunction::clear ()

@@ -46,9 +46,7 @@ int main (int argc, char ** argv)
         structure.validate_consistent();
     }
 
-    // TODO
-    //pomagma::log_stats();
-
+    structure.log_stats();
     structure.dump(structure_out);
 
     return 0;

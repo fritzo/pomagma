@@ -41,4 +41,9 @@ void Structure::init_carrier (size_t item_dim)
     m_signature.declare(* new Carrier(item_dim));
 }
 
+void Structure::log_stats ()
+{
+    pomagma::log_stats(m_signature);
+}
+
 } // namespace pomagma

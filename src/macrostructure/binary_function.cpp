@@ -39,9 +39,9 @@ void BinaryFunction::validate () const
     }
 }
 
-void BinaryFunction::log_stats () const
+void BinaryFunction::log_stats (const std::string & prefix) const
 {
-    m_lines.log_stats();
+    m_lines.log_stats(prefix);
 }
 
 void BinaryFunction::clear ()

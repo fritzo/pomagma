@@ -66,7 +66,6 @@ int main (int argc, char ** argv)
     }
 
     pomagma::log_stats();
-
     pomagma::dump_structure(structure_out);
 
     return 0;

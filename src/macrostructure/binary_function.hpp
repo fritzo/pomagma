@@ -24,7 +24,7 @@ public:
 
     BinaryFunction (Carrier & carrier);
     void validate () const;
-    void log_stats () const;
+    void log_stats (const std::string & prefix) const;
 
     // raw operations
     static bool is_symmetric () { return false; }
