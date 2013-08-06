@@ -25,6 +25,31 @@ Pomagma began as a PhD [thesis](http://fritzo.org/thesis.pdf) and
 
 ## Installing
 
+### Front End
+
+If you don't have pip, first
+
+    easy_install pip
+
+If you use virtualenv, first
+
+    mkvirtualenv pomagma
+    workon pomagma
+
+To install,
+
+    git clone git@github.com:fritzo/pomagma
+    cd pomagma
+    pip install -r requirements.txt
+    pip install -e .
+
+Then to run editor server,
+
+    python -m pomagma.editor serve
+    chromium-browser http://localhost:34934 &
+
+### Back End
+
 The Pomagma back end currently targets Ubuntu 12.04 LTS.
 To install:
 
