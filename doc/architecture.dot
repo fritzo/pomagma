@@ -1,6 +1,6 @@
 digraph G {
     overlap=false;
-    size="4,4";
+    size="5,5";
     node [shape=box];
 
 
@@ -26,7 +26,11 @@ digraph G {
         Corpus;
     }
     Compiler;
-    Analyst;
+    {
+        rank="same";
+        Analyst;
+        EditorServer [label="Editor\nServer"];
+    }
 
     subgraph cluster_survey {
         Surveyor;
@@ -38,7 +42,7 @@ digraph G {
     }
 
     subgraph cluster_edit {
-        Editor;
+        EditorClient [label="Editor\nClient"];
         Writer [style=filled, fillcolor=pink];
 
         color = "#666666";
@@ -73,12 +77,15 @@ digraph G {
     Atlas -> Analyst;
     Languages -> Analyst;
     Corpus -> Analyst;
-    Analyst -> Editor;
-    Editor -> Writer;
+    Corpus -> EditorServer;
+    Analyst -> EditorServer;
+    EditorServer -> EditorClient;
+    EditorClient -> Writer;
     edge [dir=both arrowtail=inv arrowhead=empty]; // push
     Analyst -> Corpus;
-    Editor -> Analyst;
-    Writer -> Editor;
+    EditorServer -> Corpus;
+    EditorClient -> EditorServer;
+    Writer -> EditorClient;
 
     // Workflow: Fit Language
     edge [dir=forward arrowhead=normal]; // pull
