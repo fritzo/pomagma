@@ -139,77 +139,123 @@ function(log,   test,   compiler)
     cursor.above = above;
     if (above !== null) {
       var pos = above.below.indexOf(below);
-      above.below.below[pos] = cursor;
+      above.below[pos] = cursor;
     }
   };
 
-  var tryMoveDown = ast.cursor.tryMoveDown = function (cursor) {
-    var pivot = cursor.below[0];
-    if (pivot.below.length === 0) {
-      return false;
-    } else {
-      ast.cursor.remove(cursor);
-      insertBelow(cursor, pivot, 0);
-      return true;
-    }
-  };
+  ast.cursor.tryMove = (function(){
 
-  var tryMoveUp = ast.cursor.tryMoveUp = function (cursor) {
-    var pivot = cursor.above;
-    if (pivot === null) {
-      return false;
-    } else {
-      ast.cursor.remove(cursor);
-      var above = pivot.above;
-      if (above === null) {
-        insertAbove(cursor, pivot);
-      } else {
-        var pos = above.below.indexOf(pivot);
-        insertBelow(cursor, above, pos);
+    var traverseDownLeft = function (node) {
+      while (node.below.length) {
+        node = node.below[0];
       }
-      return true;
-    }
-  };
+      return node;
+    };
 
-  var tryMoveSideways = ast.cursor.tryMoveSideways = function (cursor, direction) {
-    var pivot = cursor.above;
-    if ((pivot === null) || (pivot.below.length === 1)) {
-      return false;
-    } else {
-      var pos = ast.cursor.remove(cursor);
-      pos = (pos + direction + pivot.below.length) % pivot.below.length;
-      insertBelow(cursor, pivot, pos);
-      return true;
-    }
-  };
+    var traverseDownRight = function (node) {
+      while (node.below.length) {
+        node = node.below[node.below.length - 1];
+      }
+      return node;
+    };
 
-  var tryMoveLeft = ast.cursor.tryMoveLeft = function (cursor) {
-    return tryMoveSideways(cursor, -1);
-  };
+    var tryTraverseLeftDown = function (node) {
+      if (node.below.length) {
+        return traverseDownRight(node);
+      } else {
+        var above = node.above;
+        while (above) {
+          var pos = _.indexOf(above.below, node);
+          assert(pos >= 0, 'node not found in node.above.below');
+          if (pos > 0) {
+            return traverseDownRight(above.below[pos - 1]);
+          }
+          node = above;
+          above = node.above;
+        }
+        return null;
+      }
+    };
 
-  var tryMoveRight = ast.cursor.tryMoveRight = function (cursor) {
-    return tryMoveSideways(cursor, +1);
-  };
+    var tryTraverseRightDown = function (node) {
+      if (node.below.length) {
+        return traverseDownLeft(node);
+      } else {
+        var above = node.above;
+        while (above) {
+          var pos = _.indexOf(above.below, node);
+          assert(pos >= 0, 'node not found in node.above.below');
+          if (pos < above.below.length - 1) {
+            return traverseDownLeft(above.below[pos + 1]);
+          }
+          node = above;
+          above = node.above;
+        }
+        return null;
+      }
+    };
 
-  var tryMove = ast.cursor.tryMove = function (cursor, direction) {
-    switch (direction) {
-      case 'U': return tryMoveUp(cursor);
-      case 'L': return tryMoveLeft(cursor); // || cursor.tryMoveUp();
-      case 'D': return tryMoveDown(cursor); // || cursor.tryMoveRight();
-      case 'R': return tryMoveRight(cursor); // || cursor.tryMoveDown();
-    }
-  };
+    var insertBelowLeft = function (cursor, start) {
+      while (start.above !== null) {
+        start = start.above;
+      }
+    };
 
-  test('ast.cursor movement', function(){
-    var string = 'CURSOR LAMBDA QUOTE VAR cursor APP VAR is APP VAR a VAR test';
-    var flat = compiler.load(string);
-    var cursor = load(flat);
-    var path =  'UDDDLRULDRDLDUUUU';
-    var trace = '01100011111101110';
-    for (var i = 0; i < path.length; ++i) {
-      assert.equal(ast.cursor.tryMove(cursor, path[i]), !!parseInt(trace[i]));
-    }
-  });
+    var tryMoveLeft = function (cursor) {
+      var node = cursor.below[0];
+      var next = tryTraverseLeftDown(node);
+      if (next !== null) {
+        ast.cursor.remove(cursor);
+        ast.cursor.insertAbove(cursor, next);
+        return true;
+      } else {
+        return false;
+      }
+    };
+
+    var tryMoveRight = function (cursor) {
+      var node = cursor.below[0];
+      var next = tryTraverseRightDown(node);
+      if (next !== null) {
+        ast.cursor.remove(cursor);
+        ast.cursor.insertAbove(cursor, next);
+        return true;
+      } else {
+        return false;
+      }
+    };
+
+    var tryMoveUp = function (cursor) {
+      if (cursor.above !== null) {
+        var pivot = cursor.above;
+        ast.cursor.remove(cursor);
+        ast.cursor.insertAbove(cursor, pivot);
+        return true;
+      } else {
+        return false;
+      }
+    };
+
+    var tryMoveDown = function (cursor) {
+      var pivot = cursor.below[0];
+      if (pivot.below.length > 0) {
+        ast.cursor.remove(cursor);
+        ast.cursor.insertBelow(cursor, pivot, 0);
+        return true;
+      } else {
+        return false;
+      }
+    };
+
+    return function (cursor, direction) {
+      switch (direction) {
+        case 'U': return tryMoveUp(cursor);
+        case 'L': return tryMoveLeft(cursor);
+        case 'D': return tryMoveDown(cursor);
+        case 'R': return tryMoveRight(cursor);
+      }
+    };
+  })();
 
   ast.getRoot = function (indexed) {
     while (indexed.above !== null) {

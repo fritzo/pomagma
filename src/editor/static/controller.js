@@ -18,26 +18,34 @@ function(log,   test,   editor,   keycode)
 
       case keycode.up:
         if (event.shiftKey) {
-          editor.moveCursor(-1);
-        } else {
           editor.move('U');
+        } else {
+          editor.moveLine(-1);
         }
         break;
 
       case keycode.down:
         if (event.shiftKey) {
-          editor.moveCursor(+1);
-        } else {
           editor.move('D');
+        } else {
+          editor.moveLine(+1);
         }
         break;
 
       case keycode.left:
-        editor.move('L');
+        if (event.shiftKey) {
+          editor.move('U');
+        } else {
+          editor.move('L');
+        }
         break;
 
       case keycode.right:
-        editor.move('R');
+        if (event.shiftKey) {
+          editor.move('U');
+        } else {
+          editor.move('R');
+        }
         break;
 
       case keycode.enter:
@@ -51,7 +59,6 @@ function(log,   test,   editor,   keycode)
   };
 
   var insertHandler = function (event) {
-
   };
 
   controller.main = function () {

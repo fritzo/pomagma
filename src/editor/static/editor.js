@@ -47,7 +47,7 @@ function(log,   test,   compiler,   ast,   corpus)
     }
   };
 
-  var moveCursor = editor.moveCursor = function (delta) {
+  var moveLine = editor.moveLine = function (delta) {
     removeCursor();
     cursorPos = (cursorPos + ids.length + delta) % ids.length;
     var id = ids[cursorPos];
@@ -84,7 +84,7 @@ function(log,   test,   compiler,   ast,   corpus)
     });
 
     cursorPos = 0;
-    moveCursor(0);
+    moveLine(0);
   };
 
   editor.suggest = function () {
