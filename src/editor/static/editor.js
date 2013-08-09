@@ -88,10 +88,26 @@ function(log,   test,   compiler,   ast,   corpus)
   };
 
   editor.suggest = function () {
-    var nbhd = ast.neighborhood(cursor);
-    nbhd.forEach(function(term){
-      log('DEBUG suggest ' + compiler.print(term));
+    var terms = ast.neighborhood(cursor);
+    return _.map(terms, function (term) {
+      return {
+        ast: term,
+        print: compiler.print(term),
+        //render: compiler.render(term)
+      };
     });
+  };
+
+  editor.remove = function () {
+    if (cursor.above == null) {
+      TODO('remove line from corpus');
+    } else {
+      TODO('replace old term with hole');
+    }
+  };
+
+  editor.replace = function (newTerm) {
+    TODO('replace old term with new');
   };
 
   editor.debug = function () {

@@ -3,66 +3,152 @@ function(log,   test,   editor,   keycode)
 {
   var controller = {};
 
-  var setMode = function (handler) {
-    $(window).off('keydown').on('keydown', handler);
+  var setMode = function (name) {
+    log('mode = ' + name);
+    var mode = modes[name];
+    $(window).off('keydown').on('keydown', mode.keydown);
   };
 
-  var handleKeydown = function (event) {
-    console.log(event.which);
-    switch (event.which) {
-      // dispatch further on:
-      //   event.shiftKey
-      //   event.ctrlKey
-      //   event.altKey
-      //   event.metaKey
+  var suggest = (function () {
+    var picklist;
+    var pos;
 
-      case keycode.up:
-        if (event.shiftKey) {
-          editor.move('U');
+    var render = function () {
+      picklist.forEach(function(term, index){
+        if (index == pos) {
+          log('SUGGEST<>' + term.print);
         } else {
-          editor.moveLine(-1);
+          log('SUGGEST  ' + term.print);
         }
-        break;
+      });
+    };
 
-      case keycode.down:
-        if (event.shiftKey) {
-          editor.move('D');
-        } else {
-          editor.moveLine(+1);
-        }
-        break;
+    var suggest = function () {
+      picklist = editor.suggest();
+      pos = 0;
+      render();
+    };
 
-      case keycode.left:
-        if (event.shiftKey) {
-          editor.move('U');
-        } else {
-          editor.move('L');
-        }
-        break;
+    suggest.prev = function () {
+      pos = (pos + picklist.length - 1) % picklist.length;
+      render();
+    };
 
-      case keycode.right:
-        if (event.shiftKey) {
-          editor.move('U');
-        } else {
-          editor.move('R');
-        }
-        break;
+    suggest.next = function () {
+      pos = (pos + 1) % picklist.length;
+      render();
+    };
 
-      case keycode.enter:
-        editor.suggest();
-        break;
+    suggest.done = function () {
+      picklist = [];
+      pos = 0;
+      render();
+    };
 
-      default:
-        return;
+    suggest.pick = function () {
+      editor.replace(picklist[pos]);
+      done();
+    };
+
+    return suggest;
+  })();
+
+  var modes = {};
+
+  modes.move = {
+    keydown: function (event) {
+      console.log(event.which);
+      switch (event.which) {
+        // dispatch further on:
+        //   event.shiftKey
+        //   event.ctrlKey
+        //   event.altKey
+        //   event.metaKey
+
+        case keycode.up:
+          if (event.shiftKey) {
+            editor.move('U');
+          } else {
+            editor.moveLine(-1);
+          }
+          break;
+
+        case keycode.down:
+          if (event.shiftKey) {
+            editor.move('D');
+          } else {
+            editor.moveLine(+1);
+          }
+          break;
+
+        case keycode.left:
+          if (event.shiftKey) {
+            editor.move('U');
+          } else {
+            editor.move('L');
+          }
+          break;
+
+        case keycode.right:
+          if (event.shiftKey) {
+            editor.move('U');
+          } else {
+            editor.move('R');
+          }
+          break;
+
+        case keycode.space:
+        case keycode.enter:
+          suggest();
+          setMode('edit');
+          break;
+
+        default:
+          return;
+      }
+      event.preventDefault();
     }
-    event.preventDefault();
   };
 
-  var insertHandler = function (event) {
+  modes.edit = {
+    keydown: function (event) {
+      console.log(event.which);
+      switch (event.which) {
+        case keycode.backspace:
+        case keycode['delete']:
+          suggest.done();
+          editor.remove();
+          setMode('move');
+          break;
+
+        case keycode.up:
+          suggest.prev();
+          break;
+
+        case keycode.down:
+          suggest.next();
+          break;
+
+        case keycode.enter:
+        case keycode.space:
+          suggest.pick();
+          setMode('move');
+          break;
+
+        case keycode['escape']:
+          suggest.done();
+          setMode('move');
+          break;
+
+        default:
+          return;
+      }
+      event.preventDefault();
+    }
   };
 
   controller.main = function () {
-    setMode(handleKeydown);
+    setMode('move');
   };
 
   return controller;
