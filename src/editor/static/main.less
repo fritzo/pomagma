@@ -1,0 +1,77 @@
+/*
+@import url(http://fonts.googleapis.com/css?family=Signika:400,700&subset=latin-ext,latin);
+*/
+@font-face {
+  font-family: 'Signika';
+  font-style: normal;
+  font-weight: 400;
+  src: url(/static/fonts/Signika.woff) format('woff');
+}
+@font-face {
+  font-family: 'Signika';
+  font-style: normal;
+  font-weight: 700;
+  src: url(/static/fonts/Signika-Bold.woff) format('woff');
+}
+
+body {
+    background-color: black;
+    color: white;
+    width:  100%;
+    height: 100%;
+    margin: 0px;
+}
+
+@foreground: #8888ff;
+@background: #000000;
+
+div#code pre {
+    font-family: Signika,Consolas,'Liberation Mono','Courier New',Courier,monospace;
+    font-size: 12pt;
+    word-spacing: 0.25em;
+    /* letter-spacing: 0.05em; */
+    margin: 0.5em;
+    color: @foreground;
+    background-color: @background;
+    font-weight: bold;
+}
+
+@cursor: #006600;
+span.cursor {
+    color: screen(@foreground, @cursor);
+    background-color: screen(@background, @cursor);
+}
+.selectable(@fg, @bg) {
+    color: @fg;
+    background-color: @bg;
+
+    span.cursor > & {
+        color: screen(@fg, @cursor);
+        background-color: screen(@bg, @cursor);
+    }
+}
+
+span.atom {
+}
+span.keyword {
+    .selectable(#ffff88, @background);
+    font-weight: normal;
+}
+span.variable {
+    .selectable(#eeeeee, @background);
+    font-weight: normal;
+}
+span.error {
+    .selectable(#ffffff, #ff0000);
+    font-weight: normal;
+}
+span.operator {
+    padding: 0 0.25em 0 0.25em;
+}
+span.hole {
+    .selectable(#000000, #8888ff);
+    padding: 0 0.4em 0 0.4em;
+    margin: 0 0.1em 0 0.1em;
+    border-radius: 0.5em;
+    font-weight: normal;
+}

@@ -1242,7 +1242,7 @@ function(log,   test,   pattern,   symbols)
     });
 
     var templates = {
-      HOLE: '<span class=hole>&#9632;</span>',
+      HOLE: '<span class=hole>?</span>',
       TOP: '<span class=atom>&#x22a4;</span>',
       BOT: '<span class=atom>&#x22a5;</span>',
       //I: '<span class=atom>&#x1D540;</span>',
@@ -1256,14 +1256,15 @@ function(log,   test,   pattern,   symbols)
       //LAMBDA: template('{1} / {0}'),
       LETREC: template('{0}let {1} = {2}.{3}{4}'),
       QUOTE: template('{{0}}'),
-      LESS: template('{{0}<span class=operator>&#8849;</span>{1}}'),
-      NLESS: template('{{0}<span class=operator>&#8930;</span>{1}}'),
-      EQUAL: template('{{0}<span class=operator>=</span>{1}}'),
+      LESS: template('{{0} &#8849; {1}}'),
+      NLESS: template('{{0} &#8930; {1}}'),
+      EQUAL: template('{{0} = {1}}'),
       DEFINE: template('<span class=keyword>define</span> {0} = {1}.'),
       ASSERT: template('<span class=keyword>assert</span> {0}.'),
       CURSOR: template('<span class=cursor>{0}</span>'),
       atom: template('({0})'),
       error: template('<span class=error>compiler.render error: {0}</span>'),
+      dot: '<b>.</b>'
     };
 
     var x = pattern.variable('x');
@@ -1273,7 +1274,7 @@ function(log,   test,   pattern,   symbols)
 
     var renderPatt = pattern.match([
       VAR(name), function (m) {
-        return templates.VAR(m.name.replace('.', '-'));
+        return templates.VAR(m.name.replace('.', templates.dot));
       },
       QUOTE(x), function (m) {
         return templates.QUOTE(renderPatt(m.x));
@@ -1297,7 +1298,7 @@ function(log,   test,   pattern,   symbols)
         return templates.I;
       },
       VAR(name), function (m) {
-        return templates.VAR(m.name.replace('.', '-'));
+        return templates.VAR(m.name.replace('.', templates.dot));
       },
       QUOTE(x), function (m, i) {
         return templates.QUOTE(renderBlock(m.x, i));
