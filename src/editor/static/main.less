@@ -34,6 +34,7 @@ div.code pre {
 @foreground: #8888ff;
 @background: #000000;
 @overlay: #666666;
+@cursor: #008000;
 
 div#code {
     margin: 0.25em;
@@ -53,11 +54,27 @@ div#suggest {
     border-radius: 0.5em;
 }
 
-@cursor: #006600;
 span.cursor {
     color: screen(@foreground, @cursor);
     background-color: screen(@background, @cursor);
 }
+span.cursor:before,
+span.cursor:after
+{
+    position: absolute;
+    content: ' ';
+    background-color: #00ff00;
+    opacity: 0.5;
+}
+span.cursor:before {
+    margin-left: -0.5em;
+    border-radius: 1em 0 0 1em;
+}
+span.cursor:after
+{
+    border-radius: 0 1em 1em 0;
+}
+
 .syntax(@fg, @bg) {
     color: @fg;
     background-color: @bg;

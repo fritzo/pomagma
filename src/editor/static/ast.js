@@ -340,7 +340,6 @@ function(log,   test,   compiler)
       var result = [];
       var name = term.name;
       var varName = ast.getFresh(term);
-      log('DEBUG ' + VAR);
       var fresh = VAR(varName);
       //var globals = corpus.findAllNames();
       if (name === 'ASSERT' || name === 'DEFINE') {
