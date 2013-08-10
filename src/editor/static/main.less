@@ -25,14 +25,18 @@ body {
 @foreground: #8888ff;
 @background: #000000;
 
+div#code {
+    margin: 0.25em;
+    color: @foreground;
+    background-color: @background;
+}
+
 div#code pre {
+    margin: 0.25em;
     font-family: Signika,Consolas,'Liberation Mono','Courier New',Courier,monospace;
     font-size: 12pt;
     word-spacing: 0.25em;
     /* letter-spacing: 0.05em; */
-    margin: 0.5em;
-    color: @foreground;
-    background-color: @background;
     font-weight: bold;
 }
 
@@ -54,7 +58,7 @@ span.cursor {
 span.atom {
 }
 span.keyword {
-    .selectable(#ffff88, @background);
+    .selectable(#dddd66, @background);
     font-weight: normal;
 }
 span.variable {
