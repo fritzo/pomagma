@@ -7,8 +7,6 @@
 define(['log', 'test', 'symbols'],
 function(log,   test,   symbols)
 {
-  var corpus = {};
-
   var getFreeVariables = function (code) {
     var free = {};
     var prevToken = null;
@@ -108,24 +106,32 @@ function(log,   test,   symbols)
       TODO('remove line');
     };
 
-    var readyQueue = [];
-    state.ready = function (cb) {
-      readyQueue.push(cb);
-    };
-    var markReady = function () {
-      state.ready = function (cb) {
-        setTimeout(cb, 0);
+    state.ready = (function(){
+      var isReady = false;
+      var readyQueue = [];
+      var ready = function (cb) {
+        if (isReady) {
+          setTimeout(cb, 0);
+        } else {
+          readyQueue.push(cb);
+        }
       };
-      readyQueue.forEach(state.ready);
-      readyQueue = [];
-    };
+      ready.set = function () {
+        log('corpus is ready');
+        isReady = true;
+        while (readyQueue.length) {
+          setTimeout(readyQueue.pop(), 0);
+        }
+      };
+      return ready;
+    }());
 
     var loadAll = function (linesToLoad) {
       lines = {};
       definitions = {};
       occurrences = {};
       linesToLoad.forEach(insertLine);
-      markReady();
+      state.ready.set();
     };
 
     var init = function () {
@@ -323,15 +329,13 @@ function(log,   test,   symbols)
   //--------------------------------------------------------------------------
   // interface
 
-  corpus.validate = function () {
-    state.validate();
+  return {
+    ready: state.ready,
+    validate: state.validate,
+    findLine: state.findLine,
+    findAllLines: state.findAllLines,
+    findAllNames: state.findAllNames,
+    findDefinition: state.findDefinition,
+    findOccurrences: state.findOccurrences,
   };
-
-  corpus.findLine = state.findLine;
-  corpus.findAllLines = state.findAllLines;
-  corpus.findAllNames = state.findAllNames;
-  corpus.findDefinition = state.findDefinition;
-  corpus.findOccurrences = state.findOccurrences;
-
-  return corpus;
 });
