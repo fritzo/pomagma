@@ -85,16 +85,6 @@ function(log,   test,   compiler,   ast,   corpus)
     moveLine(0);
   };
 
-  var suggest = function () {
-    var terms = ast.neighborhood(cursor);
-    return _.map(terms, function (term) {
-      return {
-        ast: term,
-        render: compiler.render(term, null)
-      };
-    });
-  };
-
   var remove = function () {
     if (cursor.above == null) {
       TODO('remove line from corpus');
@@ -118,6 +108,78 @@ function(log,   test,   compiler,   ast,   corpus)
   var replace = function (newTerm) {
     TODO('replace old term with new');
   };
+
+  //--------------------------------------------------------------------------
+  // Transformations
+
+  var getNeighborhood = (function(){
+    // TODO extract these automatically from binder annotations
+    var HOLE = compiler.symbols.HOLE;
+    var TOP = compiler.symbols.TOP;
+    var BOT = compiler.symbols.BOT;
+    var VAR = compiler.symbols.VAR;
+    var LAMBDA = compiler.symbols.LAMBDA;
+    var LETREC = compiler.symbols.LETREC;
+    var APP = compiler.symbols.APP;
+    var JOIN = compiler.symbols.JOIN;
+    var RAND = compiler.symbols.RAND;
+    var QUOTE = compiler.symbols.QUOTE;
+
+    return function (cursor) {
+      var term = cursor.below[0];
+      var result = [];
+      var name = term.name;
+      var varName = ast.getFresh(term);
+      var fresh = VAR(varName);
+      if (name === 'ASSERT' || name === 'DEFINE') {
+        /* no neighborhood */
+      } else if (name === 'HOLE') {
+        result.push(
+          TOP,
+          BOT,
+          LAMBDA(fresh, HOLE),
+          LETREC(fresh, HOLE, HOLE),
+          APP(HOLE, HOLE),
+          JOIN(HOLE, HOLE),
+          QUOTE(HOLE)
+        );
+        var locals = ast.getBoundAbove(term);
+        locals.forEach(function(varName){
+          result.push(VAR(varName));
+        });
+        var globals = corpus.findAllNames();
+        globals.forEach(function(varName){
+          result.push(VAR(varName));
+        });
+      } else {
+        // the move to HOLE is achieved elsewhere via DELETE/BACKSPACE
+        var dumped = ast.dump(term);
+        result.push(
+          LAMBDA(fresh, dumped),
+          LETREC(fresh, dumped, HOLE),
+          LETREC(fresh, HOLE, dumped),
+          APP(dumped, HOLE),
+          APP(HOLE, dumped),
+          JOIN(dumped, HOLE),
+          QUOTE(dumped)
+        );
+      }
+      return result;
+    };
+  })();
+
+  var suggest = function () {
+    var terms = getNeighborhood(cursor);
+    return _.map(terms, function (term) {
+      return {
+        ast: term,
+        render: compiler.render(term, null)
+      };
+    });
+  };
+
+  //--------------------------------------------------------------------------
+  // Interface
 
   var debug = function () {
     return {

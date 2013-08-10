@@ -311,7 +311,7 @@ function(log,   test,   compiler)
     }
   };
 
-  var getBoundAbove = function (term) {
+  ast.getBoundAbove = function (term) {
     var result = [];
     for (var above = term; above !== null; above = above.above) {
       if (above.name === 'LAMBDA' || above.name === 'LETREC') {
@@ -321,73 +321,6 @@ function(log,   test,   compiler)
     }
     return result;
   };
-
-  ast.neighborhood = (function(){
-    // TODO extract these automatically from binder annotations
-    var HOLE = compiler.symbols.HOLE;
-    var TOP = compiler.symbols.TOP;
-    var BOT = compiler.symbols.BOT;
-    var VAR = compiler.symbols.VAR;
-    var LAMBDA = compiler.symbols.LAMBDA;
-    var LETREC = compiler.symbols.LETREC;
-    var APP = compiler.symbols.APP;
-    var JOIN = compiler.symbols.JOIN;
-    var RAND = compiler.symbols.RAND;
-    var QUOTE = compiler.symbols.QUOTE;
-
-    return function (cursor) {
-      var term = cursor.below[0];
-      var result = [];
-      var name = term.name;
-      var varName = ast.getFresh(term);
-      var fresh = VAR(varName);
-      //var globals = corpus.findAllNames();
-      if (name === 'ASSERT' || name === 'DEFINE') {
-        /* no neighborhood */
-      } else if (name === 'HOLE') {
-        result.push(
-          TOP,
-          BOT,
-          LAMBDA(fresh, HOLE),
-          LETREC(fresh, HOLE, HOLE),
-          APP(HOLE, HOLE),
-          JOIN(HOLE, HOLE),
-          QUOTE(HOLE)
-        );
-        var locals = getBoundAbove(term);
-        locals.forEach(function(varName){
-          result.push(VAR(varName));
-        });
-      } else {
-        // the move to HOLE is achieved elsewhere via DELETE/BACKSPACE
-        var dumped = dump(term);
-        result.push(
-          LAMBDA(fresh, dumped),
-          LETREC(fresh, dumped, HOLE),
-          LETREC(fresh, HOLE, dumped),
-          APP(dumped, HOLE),
-          APP(HOLE, dumped),
-          JOIN(dumped, HOLE),
-          QUOTE(dumped)
-        );
-      }
-      return result;
-    };
-  })();
-
-  /*
-  HOLE.prototype.transform = {
-    VAR: function (cursor) {
-      TODO();
-    }
-  };
-
-  VAR.transform = {
-    HOLE: function (cursor) {
-      TODO();
-    }
-  };
-  */
 
   return ast;
 });
