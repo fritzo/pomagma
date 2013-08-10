@@ -90,8 +90,7 @@ function(log,   test,   compiler,   ast,   corpus)
     return _.map(terms, function (term) {
       return {
         ast: term,
-        print: compiler.print(term),
-        render: compiler.render(term)
+        render: compiler.render(term, null)
       };
     });
   };

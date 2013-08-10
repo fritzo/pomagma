@@ -1226,12 +1226,6 @@ function(log,   test,   pattern,   symbols)
   // see http://www.fileformat.info/info/unicode/category/Sm/list.htm
 
   var render = (function(){
-    /** @const */
-    var newline = '\n                                                        '+
-    '                                                                        ';
-    var indent = function (i) {
-      return newline.slice(0, 1 + 4 * i);
-    };
 
     var template = function (string) {
       return function () {
@@ -1259,7 +1253,7 @@ function(log,   test,   pattern,   symbols)
       LAMBDA: template('&lambda;{0} {1}'),
       //LAMBDA: template('{0} &#x21a6; {1}'),
       //LAMBDA: template('{1} / {0}'),
-      LETREC: template('{0}let {1} = {2}.{3}{4}'),
+      LETREC: template('let {0} = {1}. {2}'),
       QUOTE: template('{{0}}'),
       LESS: template('{{0} &#8849; {1}}'),
       NLESS: template('{{0} &#8930; {1}}'),
@@ -1305,123 +1299,99 @@ function(log,   test,   pattern,   symbols)
       VAR(name), function (m) {
         return templates.VAR(m.name.replace('.', templates.dot));
       },
-      QUOTE(x), function (m, i) {
-        return templates.QUOTE(renderBlock(m.x, i));
+      QUOTE(x), function (m) {
+        return templates.QUOTE(renderInline(m.x));
       },
-      LESS(x, y), function (m, i) {
-        return templates.LESS(renderJoin(m.x, i), renderJoin(m.y, i));
+      LESS(x, y), function (m) {
+        return templates.LESS(renderJoin(m.x), renderJoin(m.y));
       },
-      NLESS(x, y), function (m, i) {
-        return templates.NLESS(renderJoin(m.x, i), renderJoin(m.y, i));
+      NLESS(x, y), function (m) {
+        return templates.NLESS(renderJoin(m.x), renderJoin(m.y));
       },
-      EQUAL(x, y), function (m, i) {
-        return templates.EQUAL(renderJoin(m.x, i), renderJoin(m.y, i));
+      EQUAL(x, y), function (m) {
+        return templates.EQUAL(renderJoin(m.x), renderJoin(m.y));
       },
-      CURSOR(x), function (m, i) {
-        return templates.CURSOR(renderAtom(m.x, i));
+      CURSOR(x), function (m) {
+        return templates.CURSOR(renderAtom(m.x));
       },
-      x, function (m, i, failed) {
+      x, function (m, failed) {
         if (failed) {
           log('failed to render: ' + JSON.stringify(m.x));
           return templates.error(m.x);
         } else {
-          return templates.atom(renderInline(m.x, i, true));
+          return templates.atom(renderInline(m.x, true));
         }
       }
     );
 
     var renderComp = pattern.match(
-      COMP(x, y), function (m, i) {
-        return templates.COMP(renderComp(m.x, i), renderComp(m.y, i));
+      COMP(x, y), function (m) {
+        return templates.COMP(renderComp(m.x), renderComp(m.y));
       },
-      CURSOR(x), function (m, i) {
-        return templates.CURSOR(renderComp(m.x, i));
+      CURSOR(x), function (m) {
+        return templates.CURSOR(renderComp(m.x));
       },
-      x, function (m, i, failed) {
-        return renderAtom(m.x, i, failed);
+      x, function (m, failed) {
+        return renderAtom(m.x, failed);
       }
     );
 
     var renderApp = pattern.match(
-      APP(x, y), function (m, i) {
-        return templates.APP(renderApp(m.x, i), renderAtom(m.y, i));
+      APP(x, y), function (m) {
+        return templates.APP(renderApp(m.x), renderAtom(m.y));
       },
-      CURSOR(x), function (m, i) {
-        return templates.CURSOR(renderApp(m.x, i));
+      CURSOR(x), function (m) {
+        return templates.CURSOR(renderApp(m.x));
       },
-      x, function (m, i, failed) {
-        return renderComp(m.x, i, failed);
+      x, function (m, failed) {
+        return renderComp(m.x, failed);
       }
     );
 
     var renderJoin = pattern.match(
-      JOIN(x, y), function (m, i) {
-        return templates.JOIN(renderJoin(m.x, i), renderJoin(m.y, i));
+      JOIN(x, y), function (m) {
+        return templates.JOIN(renderJoin(m.x), renderJoin(m.y));
       },
-      CURSOR(x), function (m, i) {
-        return templates.CURSOR(renderJoin(m.x, i));
+      CURSOR(x), function (m) {
+        return templates.CURSOR(renderJoin(m.x));
       },
-      x, function (m, i, failed) {
-        return renderApp(m.x, i, failed);
+      x, function (m, failed) {
+        return renderApp(m.x, failed);
       }
     );
 
     var renderInline = pattern.match(
-      LAMBDA(x, y), function (m, i) {
-        return templates.LAMBDA(renderPatt(m.x), renderInline(m.y, i));
+      LAMBDA(x, y), function (m) {
+        return templates.LAMBDA(renderPatt(m.x), renderInline(m.y));
       },
-      LETREC(x, y, z), function (m, i) {
+      LETREC(x, y, z), function (m) {
         return templates.LETREC(
-          indent(i),
-          renderPatt(m.x, i),
-          renderJoin(m.y, i + 1),
-          indent(i),
-          renderBlock(m.z, i));
+          renderPatt(m.x),
+          renderJoin(m.y),
+          renderInline(m.z));
       },
-      CURSOR(x), function (m, i) {
-        return templates.CURSOR(renderInline(m.x, i));
+      CURSOR(x), function (m) {
+        return templates.CURSOR(renderInline(m.x));
       },
-      x, function (m, i, failed) {
-        return renderJoin(m.x, i, failed);
+      x, function (m, failed) {
+        return renderJoin(m.x, failed);
       }
     );
 
-    var renderBlock = pattern.match(
-      LETREC(x, y, z), function (m, i) {
-        return templates.LETREC(
-          '',
-          renderPatt(m.x, i),
-          renderJoin(m.y, i + 1),
-          indent(i),
-          renderBlock(m.z, i));
+    return pattern.match(
+      DEFINE(x, y), function (m) {
+        return templates.DEFINE(renderAtom(m.x), renderJoin(m.y));
       },
-      CURSOR(x), function (m, i) {
-        return templates.CURSOR(renderBlock(m.x, i));
+      ASSERT(x), function (m) {
+        return templates.ASSERT(renderJoin(m.x));
       },
-      x, function (m, i) {
-        return renderInline(m.x, i);
+      CURSOR(x), function (m) {
+        return templates.CURSOR(render(m.x));
+      },
+      x, function (m) {
+        return renderInline(m.x);
       }
     );
-
-    var render = pattern.match(
-      DEFINE(x, y), function (m, i) {
-        return templates.DEFINE(renderAtom(m.x), renderJoin(m.y, i + 1));
-      },
-      ASSERT(x), function (m, i) {
-        return templates.ASSERT(renderJoin(m.x, i + 1));
-      },
-      CURSOR(x), function (m, i) {
-        return templates.CURSOR(render(m.x, i));
-      },
-      x, function (m, i) {
-        return renderBlock(m.x, i);
-      }
-    );
-
-    return function (expr) {
-      var indentLevel = 0;
-      return render(expr, indentLevel);
-    };
   })();
 
   return {

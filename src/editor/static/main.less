@@ -21,9 +21,13 @@ body {
     height: 100%;
     margin: 0px;
 }
-
 div.code pre {
     margin: 0.25em;
+    /* FIXME this breaks cursor :before and :after
+    margin-left: 1.25em;
+    text-indent: -1em;
+     */
+    white-space: pre-wrap;
     font-family: Signika,Consolas,'Liberation Mono','Courier New',Courier,monospace;
     font-size: 12pt;
     word-spacing: 0.25em;
@@ -40,14 +44,14 @@ div#code {
     margin: 0.25em;
     color: @foreground;
     background-color: @background;
-    width: 80%;
+    width: 74%;
     float: left;
 }
 
 div#suggest {
     margin: 0.25em;
     position: fixed;
-    width: 25%;
+    width: 24%;
     right: 0;
     color: screen(@foreground, @overlay);
     background-color: screen(@background, @overlay);
