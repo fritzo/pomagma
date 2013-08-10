@@ -226,14 +226,14 @@ function(log,   test,   pattern,   symbols)
     var x = pattern.variable('x');
     var y = pattern.variable('y');
     var tail = pattern.variable('tail');
-    var t = pattern.match([
+    var t = pattern.match(
       app(x, y), function (m, tail) {
         return t(m.x, stack(m.y, tail));
       },
       x, function (m, tail) {
         return stack(m.x, tail)
       }
-    ]);
+    );
     var pop = Array.prototype.pop;
     var head = 'STACK';
     return function (appTree) {
@@ -254,14 +254,14 @@ function(log,   test,   pattern,   symbols)
     var x = pattern.variable('x');
     var y = pattern.variable('y');
     var tail = pattern.variable('tail');
-    var t = pattern.match([
+    var t = pattern.match(
       stack(x, y, tail), function (m) {
         return t(stack(app(m.x, m.y), m.tail));
       },
       stack(x, []), function (m) {
         return m.x;
       }
-    ]);
+    );
     return t;
   })();
 
@@ -314,7 +314,7 @@ function(log,   test,   pattern,   symbols)
     var string = pattern.variable('string');
     var array = pattern.variable('array', _.isArray);
   
-    var renamePattern = pattern.match([
+    var renamePattern = pattern.match(
       VAR(string), function (m, map) {
         assert(!_.has(map, m.string));
         var result = fresh();
@@ -328,9 +328,9 @@ function(log,   test,   pattern,   symbols)
         }
         return array;
       }
-    ]);
+    );
   
-    var renameTerm = pattern.match([
+    var renameTerm = pattern.match(
       VAR(string), function (m, map) {
         return VAR(map[m.string] || m.string);
       },
@@ -357,7 +357,7 @@ function(log,   test,   pattern,   symbols)
       string, function (m) {
         return m.string;
       }
-    ]);
+    );
   
     return function (term) {
       fresh.reset();
@@ -387,7 +387,7 @@ function(log,   test,   pattern,   symbols)
     var string = pattern.variable('string');
     var array = pattern.variable('array', _.isArray);
 
-    var t = pattern.match([
+    var t = pattern.match(
       VAR(string), function (m, varName, def) {
         return m.string === varName ? def : VAR(m.string);
       },
@@ -402,7 +402,7 @@ function(log,   test,   pattern,   symbols)
       string, function (m) {
         return m.string;
       }
-    ]);
+    );
 
     return function (varName, def, body) {
       return t(body, varName, def);
@@ -432,7 +432,7 @@ function(log,   test,   pattern,   symbols)
     var array = pattern.variable('array', _.isArray);
     var notFound = {};
 
-    var t = pattern.match([
+    var t = pattern.match(
       VAR(name), function (m, varName, def) {
         if (m.name !== varName) {
           return notFound;
@@ -466,7 +466,7 @@ function(log,   test,   pattern,   symbols)
       x, function (m) {
         TODO('handle ' + JSON.stringify(m.x));
       }
-    ]);
+    );
 
     return function (varName, def, body) {
       return t(body, varName, def);
@@ -477,7 +477,7 @@ function(log,   test,   pattern,   symbols)
     var string = pattern.variable('string');
     var array = pattern.variable('array', _.isArray);
 
-    var t = pattern.match([
+    var t = pattern.match(
       VAR(string), function (m, varName) {
         return m.string === varName ? 1 : 0;
       },
@@ -492,7 +492,7 @@ function(log,   test,   pattern,   symbols)
       string, function () {
         return 0;
       }
-    ]);
+    );
 
     return function (varName, body) {
       return t(body, varName);
@@ -525,7 +525,7 @@ function(log,   test,   pattern,   symbols)
     var tail = pattern.variable('tail');
     var array = pattern.variable('array', _.isArray);
 
-    var normalizeStack = pattern.match([
+    var normalizeStack = pattern.match(
       stack(TOP, tail), function (m) {
         return TOP;
       },
@@ -577,9 +577,9 @@ function(log,   test,   pattern,   symbols)
       stack(x, tail), function (m) {
           return fromStack(stack(m.x, normalizeTail(m.tail)));
       }
-    ]);
+    );
 
-    var normalizeTail = pattern.match([
+    var normalizeTail = pattern.match(
       [], function () {
         return [];
       },
@@ -588,7 +588,7 @@ function(log,   test,   pattern,   symbols)
         var ty = normalizeTail(m.y);
         return stack(tx, ty);
       }
-    ]);
+    );
 
     var normalize = function (term) {
       return normalizeStack(toStack(term));
@@ -690,7 +690,7 @@ function(log,   test,   pattern,   symbols)
       }
     };
 
-    var decompileStack = pattern.match([
+    var decompileStack = pattern.match(
       //stack(COMP(x, y), tail), function (m) {
       //  return decompileStack(stack(B, m.x, m.y, m.tail));
       //},
@@ -856,9 +856,9 @@ function(log,   test,   pattern,   symbols)
         var tail = decompileTail(m.tail);
         return fromStack(stack(head, tail));
       }
-    ]);
+    );
 
-    var decompileTail = pattern.match([
+    var decompileTail = pattern.match(
       [], function () {
         return [];
       },
@@ -867,7 +867,7 @@ function(log,   test,   pattern,   symbols)
         var ty = decompileTail(m.y);
         return stack(tx, ty);
       }
-    ]);
+    );
 
     var decompile = function (code) {
       return decompileStack(toStack(code));
@@ -890,7 +890,7 @@ function(log,   test,   pattern,   symbols)
     var name = pattern.variable('name');
     var notFound = {};
 
-    var t = pattern.match([
+    var t = pattern.match(
       VAR(name), function (m, varName) {
         if (m.name !== varName) {
           return notFound;
@@ -1029,7 +1029,7 @@ function(log,   test,   pattern,   symbols)
       x, function () {
         return notFound;
       }
-    ]);
+    );
 
     t.notFound = notFound;
 
@@ -1100,7 +1100,7 @@ function(log,   test,   pattern,   symbols)
     var z = pattern.variable('z');
     var name = pattern.variable('name');
 
-    var t = pattern.match([
+    var t = pattern.match(
       VAR(name), function (m) {
         return VAR(m.name);
       },
@@ -1123,7 +1123,7 @@ function(log,   test,   pattern,   symbols)
           return result;
         }
       }
-    ]);
+    );
 
     return t;
   })();
@@ -1277,7 +1277,7 @@ function(log,   test,   pattern,   symbols)
     var z = pattern.variable('z');
     var name = pattern.variable('name');
 
-    var renderPatt = pattern.match([
+    var renderPatt = pattern.match(
       VAR(name), function (m) {
         return templates.VAR(m.name.replace('.', templates.dot));
       },
@@ -1287,9 +1287,9 @@ function(log,   test,   pattern,   symbols)
       CURSOR(x), function (m) {
         return templates.CURSOR(renderPatt(m.x));
       }
-    ]);
+    );
 
-    var renderAtom = pattern.match([
+    var renderAtom = pattern.match(
       HOLE, function () {
         return templates.HOLE;
       },
@@ -1328,9 +1328,9 @@ function(log,   test,   pattern,   symbols)
           return templates.atom(renderInline(m.x, i, true));
         }
       }
-    ]);
+    );
 
-    var renderComp = pattern.match([
+    var renderComp = pattern.match(
       COMP(x, y), function (m, i) {
         return templates.COMP(renderComp(m.x, i), renderComp(m.y, i));
       },
@@ -1340,9 +1340,9 @@ function(log,   test,   pattern,   symbols)
       x, function (m, i, failed) {
         return renderAtom(m.x, i, failed);
       }
-    ]);
+    );
 
-    var renderApp = pattern.match([
+    var renderApp = pattern.match(
       APP(x, y), function (m, i) {
         return templates.APP(renderApp(m.x, i), renderAtom(m.y, i));
       },
@@ -1352,9 +1352,9 @@ function(log,   test,   pattern,   symbols)
       x, function (m, i, failed) {
         return renderComp(m.x, i, failed);
       }
-    ]);
+    );
 
-    var renderJoin = pattern.match([
+    var renderJoin = pattern.match(
       JOIN(x, y), function (m, i) {
         return templates.JOIN(renderJoin(m.x, i), renderJoin(m.y, i));
       },
@@ -1364,9 +1364,9 @@ function(log,   test,   pattern,   symbols)
       x, function (m, i, failed) {
         return renderApp(m.x, i, failed);
       }
-    ]);
+    );
 
-    var renderInline = pattern.match([
+    var renderInline = pattern.match(
       LAMBDA(x, y), function (m, i) {
         return templates.LAMBDA(renderPatt(m.x), renderInline(m.y, i));
       },
@@ -1384,9 +1384,9 @@ function(log,   test,   pattern,   symbols)
       x, function (m, i, failed) {
         return renderJoin(m.x, i, failed);
       }
-    ]);
+    );
 
-    var renderBlock = pattern.match([
+    var renderBlock = pattern.match(
       LETREC(x, y, z), function (m, i) {
         return templates.LETREC(
           '',
@@ -1401,9 +1401,9 @@ function(log,   test,   pattern,   symbols)
       x, function (m, i) {
         return renderInline(m.x, i);
       }
-    ]);
+    );
 
-    var render = pattern.match([
+    var render = pattern.match(
       DEFINE(x, y), function (m, i) {
         return templates.DEFINE(renderAtom(m.x), renderJoin(m.y, i + 1));
       },
@@ -1416,7 +1416,7 @@ function(log,   test,   pattern,   symbols)
       x, function (m, i) {
         return renderBlock(m.x, i);
       }
-    ]);
+    );
 
     return function (expr) {
       var indentLevel = 0;

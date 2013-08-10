@@ -98,16 +98,15 @@ function(log, test)
     }
   };
 
-  var match = function (pattHandlers) {
-    pattHandlers = Array.prototype.concat.apply([], arguments);
+  var match = function () {
     // check statically
-    assert(pattHandlers.length % 2 == 0, 'bad pattern,handler list');
-    var lineCount = pattHandlers.length / 2;
+    assert(arguments.length % 2 == 0, 'bad pattern,handler list');
+    var lineCount = arguments.length / 2;
     var patts = [];
     var handlers = [];
     for (var line = 0; line < lineCount; ++line) {
-      var patt = pattHandlers[2 * line];
-      var handler = pattHandlers[2 * line + 1];
+      var patt = arguments[2 * line];
+      var handler = arguments[2 * line + 1];
       assert(isPattern(patt), 'bad pattern at line ' + line + ':\n  ' + patt);
       assert(_.isFunction(handler), 'bad handler at line ' + line);
       patts.push(patt);
@@ -138,7 +137,7 @@ function(log, test)
     var string = variable('string', _.isString);
     var array = variable('array', _.isArray);
 
-    var t = match([
+    var t = match(
       ['APP', 'I', x], function (m) {
         var tx = t(m.x);
         return tx;
@@ -164,8 +163,8 @@ function(log, test)
       },
       x, function (m) {
         return m.x;
-      },
-    ]);
+      }
+    );
 
     var examples = [
       [['APP', 'I', 'a'], 'a'],
