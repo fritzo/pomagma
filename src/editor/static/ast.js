@@ -1,4 +1,4 @@
-/** 
+/**
  * abstract syntax trees with crosslinks for constant time traversal
  *
  * example ast node:
@@ -264,6 +264,35 @@ function(log,   test,   compiler)
     return indexed;
   };
 
+  ast.getVars = (function(){
+    var getVarsBelow = function (node, vars) {
+      if (node.name === 'VAR') {
+        vars[node.varName] = null;
+      } else {
+        var below = node.below;
+        for (var i = 0; i < below.length; ++i) {
+          getVarsBelow(below[i], vars);
+        }
+      }
+    };
+    return function (node) {
+      var vars = {};
+      var root = ast.getRoot(node);
+      getVarsBelow(root, vars);
+      return vars;
+    };
+  })();
+
+  ast.getFresh = function (node) {
+    var avoid = ast.getVars(node);
+    for (var i = 0; true; ++i) {
+      var name = compiler.enumerateFresh(i);
+      if (!_.has(avoid, name)) {
+        return name;
+      }
+    }
+  };
+
   //--------------------------------------------------------------------------
   // Transformations
 
@@ -310,24 +339,29 @@ function(log,   test,   compiler)
       var term = cursor.below[0];
       var result = [];
       var name = term.name;
-      if (name === 'HOLE') {
+      var varName = ast.getFresh(term);
+      log('DEBUG ' + VAR);
+      var fresh = VAR(varName);
+      //var globals = corpus.findAllNames();
+      if (name === 'ASSERT' || name === 'DEFINE') {
+        /* no neighborhood */
+      } else if (name === 'HOLE') {
         result.push(
           TOP,
           BOT,
-          LAMBDA(HOLE, HOLE),
-          LETREC(HOLE, HOLE, HOLE),
+          LAMBDA(fresh, HOLE),
+          LETREC(fresh, HOLE, HOLE),
           APP(HOLE, HOLE),
           JOIN(HOLE, HOLE),
-          RAND(HOLE, HOLE),
           QUOTE(HOLE)
         );
-        var bound = getBoundAbove(term);
-        bound.forEach(function(varName){
+        var locals = getBoundAbove(term);
+        locals.forEach(function(varName){
           result.push(VAR(varName));
         });
       } else {
+        // the move to HOLE is achieved elsewhere via DELETE/BACKSPACE
         var dumped = dump(term);
-        var fresh = HOLE;  // TODO create fresh variable
         result.push(
           LAMBDA(fresh, dumped),
           LETREC(fresh, dumped, HOLE),
@@ -335,18 +369,8 @@ function(log,   test,   compiler)
           APP(dumped, HOLE),
           APP(HOLE, dumped),
           JOIN(dumped, HOLE),
-          RAND(dumped, HOLE),
           QUOTE(dumped)
         );
-        switch (name) {
-          case 'TOP':
-          case 'BOT':
-            result.push(HOLE);
-            break;
-
-          default:
-            break;
-        }
       }
       return result;
     };
@@ -358,7 +382,7 @@ function(log,   test,   compiler)
       TODO();
     }
   };
-  
+
   VAR.transform = {
     HOLE: function (cursor) {
       TODO();

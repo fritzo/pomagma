@@ -287,18 +287,23 @@ function(log,   test,   pattern,   symbols)
   var fresh = (function(){
     var alphabet = 'abcdefghijklmnopqrstuvwxyz';
     var count = 0;
-    var fresh = function () {
-      var name = alphabet[count % alphabet.length];
-      var number = Math.floor(count / alphabet.length);
+    var enumerate = function (i) {
+      var name = alphabet[i % alphabet.length];
+      var number = Math.floor(i / alphabet.length);
       if (number > 0) {
         name += number;
       }
+      return name;
+    };
+    var fresh = function () {
+      var name = enumerate(count);
       count += 1;
       return VAR(name);
     };
     fresh.reset = function () {
       count = 0;
     };
+    fresh.enumerate = enumerate;
     return fresh;
   })();
 
@@ -632,7 +637,7 @@ function(log,   test,   pattern,   symbols)
     var subset = [
       'HOLE', 'TOP', 'BOT',
       'I', //'K', 'B', 'C', 'W', 'S', 'Y', 'U', 'V', 'P', 'A', 'J', 'R',
-      'APP', 'COMP', 'LAMBDA', 'LETREC', 'JOIN', 'RAND',
+      'VAR', 'APP', 'COMP', 'LAMBDA', 'LETREC', 'JOIN', 'RAND',
       'QUOTE', 'QLESS', 'QNLESS', 'QEQUAL', 'LESS', 'NLESS', 'EQUAL',
       'ASSERT', 'DEFINE', 'CURSOR',
     ];
@@ -1436,6 +1441,7 @@ function(log,   test,   pattern,   symbols)
       return print(code);
     },
     print: print,
-    render: render
+    render: render,
+    enumerateFresh: fresh.enumerate,
   };
 });

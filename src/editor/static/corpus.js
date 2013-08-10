@@ -147,6 +147,7 @@ function(log,   test,   symbols)
     };
 
     state.insert = function (line) {
+      assert(!_.has(line, id), 'unexpected .id field in inserted line');
       $.ajax({
         type: 'POST',
         url: 'corpus/line',
@@ -161,15 +162,18 @@ function(log,   test,   symbols)
     };
 
     state.update = function (newline) {
+      assert(_.has(newline, id), 'expected .id field in updated line');
       var id = newline.id;
       var line = lines[id];
+      assert(line !== undefined, 'bad id: ' + id);
       TODO('replace old object with new');
       sync.update(line);
     };
 
     state.remove = function (id) {
+      assert(_.has(newline, id), 'expected .id field in updated line');
       var line = lines[id];
-      assert(line !== undefined);
+      assert(line !== undefined, 'bad id: ' + id);
       removeLine(line);
       sync.remove(line);
     };
@@ -337,5 +341,8 @@ function(log,   test,   symbols)
     findAllNames: state.findAllNames,
     findDefinition: state.findDefinition,
     findOccurrences: state.findOccurrences,
+    insert: state.insert,
+    update: state.update,
+    remove: state.remove,
   };
 });

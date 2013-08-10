@@ -1,8 +1,6 @@
 define(['log', 'test', 'compiler', 'ast', 'corpus'],
 function(log,   test,   compiler,   ast,   corpus)
 {
-  var editor = {};
-
   var cursorPos = 0;
   var ids = [];
   var asts = {};  // id -> ast
@@ -47,7 +45,7 @@ function(log,   test,   compiler,   ast,   corpus)
     }
   };
 
-  var moveLine = editor.moveLine = function (delta) {
+  var moveLine = function (delta) {
     removeCursor();
     cursorPos = (cursorPos + ids.length + delta) % ids.length;
     var id = ids[cursorPos];
@@ -56,7 +54,7 @@ function(log,   test,   compiler,   ast,   corpus)
     renderLine(id);
   };
 
-  editor.move = function (direction) {
+  var move = function (direction) {
     // log('move: ' + direction);
     if (ast.cursor.tryMove(cursor, direction)) {
       renderLine();
@@ -65,7 +63,7 @@ function(log,   test,   compiler,   ast,   corpus)
     }
   };
 
-  editor.load = function () {
+  var load = function () {
     ids = [];
     asts = {};
     corpus.findAllLines().forEach(function(id){
@@ -87,18 +85,18 @@ function(log,   test,   compiler,   ast,   corpus)
     moveLine(0);
   };
 
-  editor.suggest = function () {
+  var suggest = function () {
     var terms = ast.neighborhood(cursor);
     return _.map(terms, function (term) {
       return {
         ast: term,
         print: compiler.print(term),
-        //render: compiler.render(term)
+        render: compiler.render(term)
       };
     });
   };
 
-  editor.remove = function () {
+  var remove = function () {
     if (cursor.above == null) {
       TODO('remove line from corpus');
     } else {
@@ -106,11 +104,23 @@ function(log,   test,   compiler,   ast,   corpus)
     }
   };
 
-  editor.replace = function (newTerm) {
+  var insertAssert = function () {
+    TODO('insert assertion below line;');
+    TODO('moveLine to assertion');
+    TODO('move to assertion HOLE');
+  };
+
+  var insertDefine = function () {
+    TODO('insert definition below line;');
+    TODO('moveLine to assertion');
+    TODO('move to assertion HOLE');
+  };
+
+  var replace = function (newTerm) {
     TODO('replace old term with new');
   };
 
-  editor.debug = function () {
+  var debug = function () {
     return {
       cursorPos: cursorPos,
       ids: ids,
@@ -120,5 +130,15 @@ function(log,   test,   compiler,   ast,   corpus)
     };
   };
 
-  return editor;
+  return {
+    load: load,
+    moveLine: moveLine,
+    move: move,
+    suggest: suggest,
+    remove: remove,
+    replace: replace,
+    insertAssert: insertAssert,
+    insertDefine: insertDefine,
+    debug: debug,
+  };
 });
