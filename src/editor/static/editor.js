@@ -1,5 +1,5 @@
-define(['log', 'test', 'compiler', 'ast', 'corpus'],
-function(log,   test,   compiler,   ast,   corpus)
+define(['log', 'test', 'compiler', 'ast', 'corpus', 'navigate'],
+function(log,   test,   compiler,   ast,   corpus,   navigate)
 {
   var cursorPos = 0;
   var ids = [];
@@ -93,6 +93,10 @@ function(log,   test,   compiler,   ast,   corpus)
     }
   };
 
+  var replace = function (newTerm) {
+    TODO('replace old term with new');
+  };
+
   var insertAssert = function () {
     TODO('insert assertion below line;');
     TODO('moveLine to assertion');
@@ -105,15 +109,21 @@ function(log,   test,   compiler,   ast,   corpus)
     TODO('move to assertion HOLE');
   };
 
-  var replace = function (newTerm) {
-    TODO('replace old term with new');
+  var removeAssert = function () {
+    TODO('remove assertion on current line');
+    TODO('move to next line');
+  };
+
+  var removeDefine = function () {
+    TODO('remove definition on current line');
+    TODO('move to next line');
   };
 
   //--------------------------------------------------------------------------
-  // Transformations
+  // Navigation
 
-  var getNeighborhood = (function(){
-    // TODO extract these automatically from binder annotations
+  var takeBearings = (function(){
+
     var HOLE = compiler.symbols.HOLE;
     var TOP = compiler.symbols.TOP;
     var BOT = compiler.symbols.BOT;
@@ -122,84 +132,120 @@ function(log,   test,   compiler,   ast,   corpus)
     var LETREC = compiler.symbols.LETREC;
     var APP = compiler.symbols.APP;
     var JOIN = compiler.symbols.JOIN;
-    var RAND = compiler.symbols.RAND;
     var QUOTE = compiler.symbols.QUOTE;
+    var ASSERT = compiler.symbols.ASSERT;
+    var DEFINE = compiler.symbols.DEFINE;
 
-    return function (cursor) {
+    var render = function (term) {
+      return $('<pre>').html(compiler.render(term));
+    };
+
+    var action = function (cb) {
+      var args = Array.prototype.slice.call(arguments, 1);
+      return function () {
+        cb.apply(null, args);
+        takeBearings();
+      };
+    };
+
+    var toggleHelp = function () {
+      $('#navigate').toggle();
+    };
+
+    var generic = [
+      ['escape', toggleHelp, 'toggle help'],
+      ['up', action(moveLine, -1), 'move up'],
+      ['down', action(moveLine, 1), 'move down'],
+      ['left', action(move, 'L'), 'move left'],
+      ['right', action(move, 'R'), 'move right'],
+      ['shift+left', action(move, 'U'), 'select'],
+      ['shift+right', action(move, 'U'), 'select'],
+      ['A', action(insertAssert), render(ASSERT(HOLE))],
+      ['D', action(insertDefine), render(DEFINE(VAR('...'), HOLE))]
+    ];
+
+    var off = function () {
+      navigate.off();
+      for (var i = 0; i < generic.length; ++i) {
+        navigate.on.apply(null, generic[i]);
+      }
+    };
+
+    var on = function (name, term) {
+      assert(arguments.length === 2);
+      var callback = function () {
+        replace(term);
+        takeBearings();
+      };
+      var description = render(term);
+      navigate.on(name, callback, description);
+    };
+
+    return function () {
       var term = cursor.below[0];
-      var result = [];
       var name = term.name;
       var varName = ast.getFresh(term);
       var fresh = VAR(varName);
-      if (name === 'ASSERT' || name === 'DEFINE') {
-        /* no neighborhood */
+
+      off();
+      log('DEBUG ' + name);
+      if (name === 'ASSERT') {
+        navigate.on('backspace', removeAssert, 'delete line');
+      } else if (name === 'DEFINE') {
+        navigate.on('backspace', removeDefine, 'delete line');
       } else if (name === 'HOLE') {
-        result.push(
-          TOP,
-          BOT,
-          LAMBDA(fresh, HOLE),
-          LETREC(fresh, HOLE, HOLE),
-          APP(HOLE, HOLE),
-          JOIN(HOLE, HOLE),
-          QUOTE(HOLE)
-        );
+        on('T', TOP);
+        on('_', BOT);
+        on('\\', LAMBDA(fresh, HOLE));
+        on('l', LETREC(fresh, HOLE, HOLE));
+        on('(', APP(HOLE, HOLE));
+        on('|', JOIN(HOLE, HOLE));
+        on('{', QUOTE(HOLE));
+
+        // TODO select variable
+        //on('v', VAR( ...chooser... ));
+
         var locals = ast.getBoundAbove(term);
         locals.forEach(function(varName){
-          result.push(VAR(varName));
+          on(varName, VAR(varName));
+          // TODO deal with >26 variables
         });
-        var globals = corpus.findAllNames();
-        globals.forEach(function(varName){
-          result.push(VAR(varName));
-        });
+        // TODO
+        //var globals = corpus.findAllNames();
+        //globals.forEach(function(varName){
+        //  on('g', VAR(varName));
+        //});
       } else {
         // the move to HOLE is achieved elsewhere via DELETE/BACKSPACE
         var dumped = ast.dump(term);
-        result.push(
-          LAMBDA(fresh, dumped),
-          LETREC(fresh, dumped, HOLE),
-          LETREC(fresh, HOLE, dumped),
-          APP(dumped, HOLE),
-          APP(HOLE, dumped),
-          JOIN(dumped, HOLE),
-          QUOTE(dumped)
-        );
+        on('backspace', HOLE);
+        on('\\', LAMBDA(fresh, dumped));
+        on('L', LETREC(fresh, dumped, HOLE));
+        on('.', LETREC(fresh, HOLE, dumped));
+        on('space', APP(dumped, HOLE));
+        on('(', APP(HOLE, dumped));
+        on('|', JOIN(dumped, HOLE));
+        on('{', QUOTE(dumped));
       }
-      return result;
     };
   })();
-
-  var suggest = function () {
-    var terms = getNeighborhood(cursor);
-    return _.map(terms, function (term) {
-      return {
-        ast: term,
-        render: compiler.render(term, null)
-      };
-    });
-  };
 
   //--------------------------------------------------------------------------
   // Interface
 
-  var debug = function () {
-    return {
-      cursorPos: cursorPos,
-      ids: ids,
-      asts: asts,
-      $lines: $lines,
-      cursor: cursor
-    };
+  var main = function () {
+    load();
+    takeBearings();
+    $(window).off('keydown').on('keydown', navigate.trigger);
   };
 
   return {
-    load: load,
-    moveLine: moveLine,
-    move: move,
-    suggest: suggest,
-    remove: remove,
-    replace: replace,
-    insertAssert: insertAssert,
-    insertDefine: insertDefine,
-    debug: debug,
+    main: main,
+    //moveLine: moveLine,
+    //move: move,
+    //remove: remove,
+    //replace: replace,
+    //insertAssert: insertAssert,
+    //insertDefine: insertDefine,
   };
 });

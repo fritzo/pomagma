@@ -1,15 +1,10 @@
-require(['log', 'test', 'corpus', 'analyst', 'editor', 'controller'],
-function( log,   test,   corpus,   analyst,   editor,   controller)
+require(['log', 'test', 'corpus', 'analyst', 'editor'],
+function( log,   test,   corpus,   analyst,   editor)
 {
   var ready = function (cb) {
     $(function(){
       corpus.ready(cb);
     });
-  };
-
-  var main = function () {
-    editor.load();
-    controller.main();
   };
 
   var testMain = function () {
@@ -18,13 +13,13 @@ function( log,   test,   corpus,   analyst,   editor,   controller)
     test.runAll(function(){
       document.title = oldTitle;
       window.location.hash = '';
-      main();
+      editor.main();
     });
   };
 
   if (window.location.hash && window.location.hash.substr(1) === 'test') {
     ready(testMain);
   } else {
-    ready(main);
+    ready(editor.main);
   }
 });

@@ -91,7 +91,7 @@ function(log,   test,   symbols)
 
     var insertLine = function (line) {
       var id = line.id;
-      log('loading line ' + id);
+      //log('loading line ' + id);
       lines[id] = line;
       if (line.name !== null) {
         insertDefinition(line.name, id);
