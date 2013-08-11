@@ -53,8 +53,8 @@ function(log,   test,   keycode){
     cases['='] = cases['equal'];
     cases['_'] = cases['shift+minus'];
     cases['.'] = cases['period'];
-    cases['('] = cases['shift+numpad9'];
-    cases[')'] = cases['shift+numpad0'];
+    cases['('] = cases['shift+9'];
+    cases[')'] = cases['shift+0'];
 
     for (var name in cases) {
       icons[name] = $('<th>').html(

@@ -112,7 +112,7 @@ function(log,   test,   compiler)
     };
   };
 
-  var remove = ast.cursor.remove = function (cursor) {
+  ast.cursor.remove = function (cursor) {
     var above = cursor.above;
     cursor.below[0].above = above;
     if (above) {
@@ -124,7 +124,7 @@ function(log,   test,   compiler)
     cursor.above = null;
   };
 
-  var insertBelow = ast.cursor.insertBelow = function (cursor, above, pos) {
+  ast.cursor.insertBelow = function (cursor, above, pos) {
     var below = above.below[pos];
     above.below[pos] = cursor;
     cursor.above = above;
@@ -132,7 +132,7 @@ function(log,   test,   compiler)
     cursor.below[0] = below;
   };
 
-  var insertAbove = ast.cursor.insertAbove = function (cursor, below) {
+  ast.cursor.insertAbove = function (cursor, below) {
     cursor.below[0] = below;
     var above = below.above;
     below.above = cursor;
@@ -142,6 +142,35 @@ function(log,   test,   compiler)
       above.below[pos] = cursor;
     }
   };
+
+  ast.cursor.replace = (function(){
+    var findCursor = function (term) {
+      if (term.name === 'CURSOR') {
+        return term;
+      } else {
+        for (var i = 1; i < term.below.length; ++i) {
+          var cursor = findCursor(term.below[i]);
+          if (cursor !== undefined) {
+            return cursor;
+          }
+        }
+      }
+    };
+    return function (oldCursor, newTerm) {
+      var newCursor = findCursor(newTerm);
+      if (newCursor === undefined) {
+        newCursor = ast.cursor.create();
+        ast.cursor.insertAbove(newCursor, newTerm);
+        newTerm = newCursor;
+      }
+      var above = oldCursor.above;
+      assert(above !== null, 'tried to replace with cursor at root');
+      var pos = ast.cursor.remove(oldCursor);
+      above.below[pos] = newTerm;
+      newTerm.above = above;
+      return newCursor;
+    };
+  })();
 
   ast.cursor.tryMove = (function(){
 
@@ -257,11 +286,40 @@ function(log,   test,   compiler)
     };
   })();
 
+  //--------------------------------------------------------------------------
+  // Transformations
+
   ast.getRoot = function (indexed) {
     while (indexed.above !== null) {
       indexed = indexed.above;
     }
     return indexed;
+  };
+
+  var pushPatternVars = function (patt, vars) {
+    switch (patt.name) {
+      case 'VAR':
+        vars.push(patt.varName);
+        break;
+
+      case 'QUOTE':
+        pushPatternVars(patt.below[0], vars);
+        break;
+
+      default:
+        break;
+    }
+  };
+
+  ast.getBoundAbove = function (term) {
+    var result = [];
+    for (var above = term; above !== null; above = above.above) {
+      if (above.name === 'LAMBDA' || above.name === 'LETREC') {
+        var patt = above.below[0];
+        pushPatternVars(patt, result);
+      }
+    }
+    return result;
   };
 
   ast.getVars = (function(){
@@ -291,35 +349,6 @@ function(log,   test,   compiler)
         return name;
       }
     }
-  };
-
-  //--------------------------------------------------------------------------
-  // Transformations
-
-  var pushPatternVars = function (patt, vars) {
-    switch (patt.name) {
-      case 'VAR':
-        vars.push(patt.varName);
-        break;
-
-      case 'QUOTE':
-        pushPatternVars(patt.below[0], vars);
-        break;
-
-      default:
-        break;
-    }
-  };
-
-  ast.getBoundAbove = function (term) {
-    var result = [];
-    for (var above = term; above !== null; above = above.above) {
-      if (above.name === 'LAMBDA' || above.name === 'LETREC') {
-        var patt = above.below[0];
-        pushPatternVars(patt, result);
-      }
-    }
-    return result;
   };
 
   return ast;

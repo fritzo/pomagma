@@ -91,32 +91,42 @@ div#navigate table {
     font-size: 12pt;
 }
 
-span.cursor {
+div#code span.cursor {
     color: screen(@foreground, @cursor);
     background-color: screen(@background, @cursor);
 }
-span.cursor:before,
-span.cursor:after
+div#navigate span.cursor {
+    color: screen(screen(@foreground, @overlay), @cursor);
+    background-color: screen(screen(@background, @overlay), @cursor);
+    border-radius: 0.5em;
+    padding-left: 0.5em;
+    padding-right: 0.5em;
+}
+div#code span.cursor:before,
+div#code span.cursor:after
 {
     position: absolute;
     content: ' ';
     background-color: #00ff00;
     opacity: 0.5;
 }
-span.cursor:before {
+div#code span.cursor:before {
     margin-left: -0.5em;
     border-radius: 1em 0 0 1em;
 }
-span.cursor:after
+div#code span.cursor:after
 {
     border-radius: 0 1em 1em 0;
 }
 
 .syntax(@fg, @bg) {
-    color: @fg;
-    background-color: @bg;
 
-    span.cursor & {
+    div#code & {
+        color: @fg;
+        background-color: @bg;
+    }
+
+    div#code span.cursor & {
         color: screen(@fg, @cursor);
         background-color: screen(@bg, @cursor);
     }
@@ -124,6 +134,11 @@ span.cursor:after
     div#navigate & {
         color: screen(@fg, @overlay);
         background-color: screen(@bg, @overlay);
+    }
+
+    div#navigate span.cursor & {
+        color: screen(screen(@fg, @overlay), @cursor);
+        background-color: screen(screen(@bg, @overlay), @cursor);
     }
 }
 
@@ -145,7 +160,7 @@ span.operator {
     padding: 0 0.25em 0 0.25em;
 }
 span.hole {
-    .syntax(#000000, #8888ff);
+    .syntax(@background, @foreground);
     padding: 0 0.4em 0 0.4em;
     margin: 0 0.1em 0 0.1em;
     border-radius: 0.5em;

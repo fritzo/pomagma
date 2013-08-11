@@ -1412,6 +1412,7 @@ function(log,   test,   pattern,   symbols)
     },
     print: print,
     render: render,
+    simplify: simplify,
     enumerateFresh: fresh.enumerate,
     substitute: substitute,
   };

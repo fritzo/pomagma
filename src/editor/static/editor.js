@@ -23,12 +23,15 @@ function(log,   test,   compiler,   ast,   corpus,   navigate)
     assert(ids.length > 0, 'corpus is empty');
   };
 
-  var replace = function (newTerm, subsForDash) {
+  var replace = function (newLambda, subsForDash) {
     if (subsForDash !== undefined) {
-      newTerm = compiler.substitute('&mdash;', subsForDash, newTerm);
+      newLambda = compiler.substitute('&mdash;', subsForDash, newLambda);
     }
-    log('DEBUG ' + compiler.print(newTerm));
-    TODO('replace old term with new');
+    log('DEBUG ' + compiler.print(newLambda));
+    var newTerm = ast.load(newLambda);
+    cursor = ast.cursor.replace(cursor, newTerm);
+    lineChanged = true;
+    renderLine();
   };
 
   var insertAssert = function () {
@@ -61,7 +64,9 @@ function(log,   test,   compiler,   ast,   corpus,   navigate)
     lambda = compiler.simplify(lambda);
     line = ast.load(lambda);
     ast.cursor.insertAbove(cursor, line);
-    renderLine();
+    var id = ids[cursorPos];
+    asts[id] = line;
+    renderLine(id);
     lineChanged = false;
   };
 
@@ -152,6 +157,7 @@ function(log,   test,   compiler,   ast,   corpus,   navigate)
     var QUOTE = compiler.symbols.QUOTE;
     var ASSERT = compiler.symbols.ASSERT;
     var DEFINE = compiler.symbols.DEFINE;
+    var CURSOR = compiler.symbols.CURSOR;
     var DASH = VAR('&mdash;');
 
     var render = function (term) {
@@ -172,14 +178,15 @@ function(log,   test,   compiler,   ast,   corpus,   navigate)
 
     var generic = [
       ['escape', toggleHelp, 'toggle help'],
+      ['enter', action(commitLine), 'commit line'],
       ['up', action(moveCursorLine, -1), 'move up'],
       ['down', action(moveCursorLine, 1), 'move down'],
       ['left', action(moveCursor, 'L'), 'move left'],
       ['right', action(moveCursor, 'R'), 'move right'],
       ['shift+left', action(moveCursor, 'U'), 'select'],
       ['shift+right', action(moveCursor, 'U'), 'select'],
-      ['A', action(insertAssert), render(ASSERT(HOLE))],
-      ['D', action(insertDefine), render(DEFINE(VAR('...'), HOLE))]
+      ['A', action(insertAssert), render(ASSERT(CURSOR(HOLE)))],
+      ['D', action(insertDefine), render(DEFINE(CURSOR(VAR('...')), HOLE))]
     ];
 
     var off = function () {
@@ -210,13 +217,15 @@ function(log,   test,   compiler,   ast,   corpus,   navigate)
       } else if (name === 'DEFINE') {
         navigate.on('backspace', removeDefine, 'delete line');
       } else if (name === 'HOLE') {
+        on('backspace', CURSOR(HOLE));
         on('T', TOP);
         on('_', BOT);
-        on('\\', LAMBDA(fresh, HOLE));
-        on('L', LETREC(fresh, HOLE, HOLE));
-        on('(', APP(HOLE, HOLE));
-        on('|', JOIN(HOLE, HOLE));
-        on('{', QUOTE(HOLE));
+        on('\\', LAMBDA(fresh, CURSOR(HOLE)));
+        on('L', LETREC(fresh, CURSOR(HOLE), HOLE));
+        on('I', LETREC(fresh, HOLE, CURSOR(HOLE)));
+        on('(', APP(CURSOR(HOLE), HOLE));
+        on('|', JOIN(CURSOR(HOLE), HOLE));
+        on('{', QUOTE(CURSOR(HOLE)));
 
         // TODO select local variable
         //on('v', VAR( ...chooser... ));
@@ -233,14 +242,14 @@ function(log,   test,   compiler,   ast,   corpus,   navigate)
         //});
       } else {
         var dumped = ast.dump(term);
-        on('backspace', HOLE);
-        on('\\', LAMBDA(fresh, DASH), dumped);
-        on('L', LETREC(fresh, DASH, HOLE), dumped);
-        on('.', LETREC(fresh, HOLE, DASH), dumped);
-        on('space', APP(DASH, HOLE), dumped);
-        on('(', APP(HOLE, DASH), dumped);
-        on('|', JOIN(DASH, HOLE), dumped);
-        on('{', QUOTE(DASH), dumped);
+        on('backspace', HOLE); // TODO define context-specific deletions
+        on('\\', LAMBDA(fresh, CURSOR(DASH)), dumped);
+        on('L', LETREC(fresh, CURSOR(HOLE), DASH), dumped);
+        on('I', LETREC(fresh, DASH, CURSOR(HOLE)), dumped);
+        on('space', APP(DASH, CURSOR(HOLE)), dumped);
+        on('(', APP(CURSOR(HOLE), DASH), dumped);
+        on('|', JOIN(DASH, CURSOR(HOLE)), dumped);
+        on('{', QUOTE(CURSOR(DASH)), dumped);
       }
     };
   })();
