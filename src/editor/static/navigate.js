@@ -51,7 +51,7 @@ function(log,   test,   keycode){
     cases['/'] = cases['slash'];
     cases['|'] = cases['shift+backslash'];
     cases['='] = cases['equal'];
-    cases['_'] = cases['shift+minus'];
+    cases['_'] = cases['shift+dash'];
     cases['.'] = cases['period'];
     cases['('] = cases['shift+9'];
     cases[')'] = cases['shift+0'];

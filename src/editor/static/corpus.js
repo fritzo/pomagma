@@ -68,7 +68,7 @@ function(log,   test,   symbols)
     var removeOccurrence = function (name, id) {
       var occurrencesName = occurrences[name];
       assert(occurrencesName !== undefined);
-      assert(occurrencesName[id] != undefined);
+      assert(occurrencesName[id] !== undefined);
       delete occurrencesName[id];
     };
 
@@ -162,12 +162,20 @@ function(log,   test,   symbols)
     };
 
     state.update = function (newline) {
-      assert(_.has(newline, id), 'expected .id field in updated line');
       var id = newline.id;
+      assert(id !== undefined, 'expected .id field in updated line');
       var line = lines[id];
       assert(line !== undefined, 'bad id: ' + id);
-      TODO('replace old object with new');
+      for (var name in line.free) {
+        removeOccurrence(name, id);
+      }
+      line.code = newline.code;
+      line.free = getFreeVariables(line.code);
+      for (var name in line.free) {
+        insertOccurrence(name, id);
+      }
       sync.update(line);
+      return line;
     };
 
     state.remove = function (id) {
@@ -289,10 +297,12 @@ function(log,   test,   symbols)
         delete changes[id];
         switch (change.type) {
           case 'update':
+            log('sending ' + JSON.stringify(change.line));
             $.ajax({
               type: 'PUT',
               url: 'corpus/line/' + id,
-              data: change.line
+              data: JSON.stringify(change.line),
+              contentType: 'application/json',
             }).fail(function(jqXHR, textStatus){
               log('putChanges PUT failed: ' + textStatus);
               setTimeout(pushChanges, delay);
@@ -305,7 +315,7 @@ function(log,   test,   symbols)
           case 'remove':
             $.ajax({
               type: 'DELETE',
-              url: 'corpus/line/' + id
+              url: 'corpus/line/' + id,
             }).fail(function(jqXHR, textStatus){
               log('putChanges DELETE failed: ' + textStatus);
               setTimeout(pushChanges, delay);

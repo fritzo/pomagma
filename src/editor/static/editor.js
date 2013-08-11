@@ -11,7 +11,7 @@ function(log,   test,   compiler,   ast,   corpus,   navigate)
   //--------------------------------------------------------------------------
   // Corpus Management
 
-  var load = function () {
+  var loadAllLines = function () {
     ids = [];
     asts = {};
     corpus.findAllLines().forEach(function(id){
@@ -27,7 +27,7 @@ function(log,   test,   compiler,   ast,   corpus,   navigate)
     if (subsForDash !== undefined) {
       newLambda = compiler.substitute('&mdash;', subsForDash, newLambda);
     }
-    log('DEBUG ' + compiler.print(newLambda));
+    //log('replacing with: ' + compiler.print(newLambda));
     var newTerm = ast.load(newLambda);
     cursor = ast.cursor.replaceBelow(cursor, newTerm);
     lineChanged = true;
@@ -63,15 +63,18 @@ function(log,   test,   compiler,   ast,   corpus,   navigate)
   };
 
   var commitLine = function () {
+    var id = ids[cursorPos];
     var below = cursor.below[0];
     ast.cursor.remove(cursor);
-    var line = ast.getRoot(below);
-    var lambda = ast.dump(line);
-    lambda = compiler.simplify(lambda);
-    line = ast.load(lambda);
-    ast.cursor.insertAbove(cursor, line);
-    var id = ids[cursorPos];
-    asts[id] = line;
+    var root = ast.getRoot(below);
+    var lambda = ast.dump(root);
+    var line = compiler.dumpLine(lambda);
+    line.id = id;
+    line = corpus.update(line);
+    lambda = compiler.loadLine(line);
+    root = ast.load(lambda);
+    ast.cursor.insertAbove(cursor, root);
+    asts[id] = root;
     renderLine(id);
     lineChanged = false;
   };
@@ -89,7 +92,7 @@ function(log,   test,   compiler,   ast,   corpus,   navigate)
     $lines[id].html(html);
   };
 
-  var renderAll = function () {
+  var renderAllLines = function () {
     $lines = {};
     var div = $('#code').empty()[0];
     corpus.findAllLines().forEach(function(id){
@@ -265,8 +268,8 @@ function(log,   test,   compiler,   ast,   corpus,   navigate)
 
   return {
     main: function () {
-      load();
-      renderAll();
+      loadAllLines();
+      renderAllLines();
       initCursor();
       takeBearings();
       $(window).off('keydown').on('keydown', navigate.trigger);

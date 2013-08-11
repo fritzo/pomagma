@@ -102,6 +102,21 @@ function(log,   test,   pattern,   symbols)
     assert.inverses(parse, print, examples);
   });
 
+  var printLine = function (term) {
+    var name = term[0];
+    if (name === 'ASSERT') {
+      return {
+        name: null,
+        code: print(term[1])
+      };
+    } else if (name === 'DEFINE') {
+      return {
+        name: term[1][1],
+        code: print(term[2])
+      };
+    }
+  };
+
   //--------------------------------------------------------------------------
   // Symbols
 
@@ -1406,13 +1421,17 @@ function(log,   test,   pattern,   symbols)
       var lambda = decompile(code);
       return lambda;
     },
+    dumpLine: function (lambda) {
+      var code = compile(lambda);
+      var line = printLine(code);
+      return line;
+    },
     dump: function (lambda) {
       var code = compile(lambda);
       return print(code);
     },
     print: print,
     render: render,
-    simplify: simplify,
     enumerateFresh: fresh.enumerate,
     substitute: substitute,
   };

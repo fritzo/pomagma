@@ -148,7 +148,7 @@ function(log,   test,   compiler)
       if (term.name === 'CURSOR') {
         return term;
       } else {
-        for (var i = 1; i < term.below.length; ++i) {
+        for (var i = 0; i < term.below.length; ++i) {
           var cursor = findCursor(term.below[i]);
           if (cursor !== undefined) {
             return cursor;
