@@ -31,33 +31,36 @@ function(log,   test,   keycode){
     }
   };
 
-  var namedEvents = (function(){
-
-    var named = {};
-
+  var cases = {};
+  var icons = {};
+  (function(){
     for (var name in keycode) {
       var which = keycode[name];
-      named[name] = new KeyEvent(which);
-      named['shift+' + name] = new KeyEvent(which, {'shift': true});
-      named['ctrl+' + name] = new KeyEvent(which, {'ctrl': true});
+      cases[name] = new KeyEvent(which);
+      cases['shift+' + name] = new KeyEvent(which, {'shift': true});
+      cases['ctrl+' + name] = new KeyEvent(which, {'ctrl': true});
     }
 
     _.forEach('ABCDEFGHIJKLMNOPQRSTUVWXYZ', function (name) {
-      named[name] = named['shift+' + name.toLowerCase()];
+      cases[name] = cases['shift+' + name.toLowerCase()];
     });
 
-    named[' '] = named['space'];
-    named['{'] = named['shift+openbracket'];
-    named['\\'] = named['backslash'];
-    named['/'] = named['slash'];
-    named['|'] = named['shift+backslash'];
-    named['='] = named['equal'];
-    named['_'] = named['shift+minus'];
-    named['.'] = named['period'];
-    named['('] = named['shift+numpad9'];
-    named[')'] = named['shift+numpad0'];
+    cases[' '] = cases['space'];
+    cases['{'] = cases['shift+openbracket'];
+    cases['\\'] = cases['backslash'];
+    cases['/'] = cases['slash'];
+    cases['|'] = cases['shift+backslash'];
+    cases['='] = cases['equal'];
+    cases['_'] = cases['shift+minus'];
+    cases['.'] = cases['period'];
+    cases['('] = cases['shift+numpad9'];
+    cases[')'] = cases['shift+numpad0'];
 
-    return named;
+    for (var name in cases) {
+      icons[name] = $('<th>').html(
+        '<span>' + name.replace(/\+/g, '</span>+<span>') + '</span>'
+      );
+    };
   })();
 
   //--------------------------------------------------------------------------
@@ -67,14 +70,11 @@ function(log,   test,   keycode){
   var callbacks = [];
 
   var on = function (name, callback, description) {
-    assert(_.has(namedEvents, name), 'bad name: ' + name);
-    events.push(namedEvents[name]);
+    assert(_.has(cases, name));
+    events.push(cases[name]);
     callbacks.push(callback);
-    var picture = '<span>' + name.replace(/\+/g,'</span>+<span>') + '</span>';
     $('#navigate table').append(
-      $('<tr>').append(
-        $('<th>').html(picture),
-        $('<td>').html(description)));
+      $('<tr>').append(icons[name], $('<td>').html(description)));
   };
 
   var off = function () {
@@ -89,11 +89,10 @@ function(log,   test,   keycode){
         console.log('matched ' + event.which);
         callbacks[i]();
         event.preventDefault();
-        return true;
+        return;
       }
     }
     console.log('unmatched ' + event.which);
-    return false;
   };
 
   //--------------------------------------------------------------------------

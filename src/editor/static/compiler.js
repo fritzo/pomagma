@@ -1413,5 +1413,6 @@ function(log,   test,   pattern,   symbols)
     print: print,
     render: render,
     enumerateFresh: fresh.enumerate,
+    substitute: substitute,
   };
 });

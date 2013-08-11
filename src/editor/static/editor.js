@@ -93,7 +93,11 @@ function(log,   test,   compiler,   ast,   corpus,   navigate)
     }
   };
 
-  var replace = function (newTerm) {
+  var replace = function (newTerm, subs) {
+    if (subs !== undefined) {
+      newTerm = compiler.substitute('&mdash;', subs, newTerm);
+    }
+    log('DEBUG ' + compiler.print(newTerm));
     TODO('replace old term with new');
   };
 
@@ -135,6 +139,7 @@ function(log,   test,   compiler,   ast,   corpus,   navigate)
     var QUOTE = compiler.symbols.QUOTE;
     var ASSERT = compiler.symbols.ASSERT;
     var DEFINE = compiler.symbols.DEFINE;
+    var DASH = VAR('&mdash;');
 
     var render = function (term) {
       return $('<pre>').html(compiler.render(term));
@@ -171,10 +176,9 @@ function(log,   test,   compiler,   ast,   corpus,   navigate)
       }
     };
 
-    var on = function (name, term) {
-      assert(arguments.length === 2);
+    var on = function (name, term, subs) {
       var callback = function () {
-        replace(term);
+        replace(term, subs);
         takeBearings();
       };
       var description = render(term);
@@ -188,7 +192,6 @@ function(log,   test,   compiler,   ast,   corpus,   navigate)
       var fresh = VAR(varName);
 
       off();
-      log('DEBUG ' + name);
       if (name === 'ASSERT') {
         navigate.on('backspace', removeAssert, 'delete line');
       } else if (name === 'DEFINE') {
@@ -197,12 +200,12 @@ function(log,   test,   compiler,   ast,   corpus,   navigate)
         on('T', TOP);
         on('_', BOT);
         on('\\', LAMBDA(fresh, HOLE));
-        on('l', LETREC(fresh, HOLE, HOLE));
+        on('L', LETREC(fresh, HOLE, HOLE));
         on('(', APP(HOLE, HOLE));
         on('|', JOIN(HOLE, HOLE));
         on('{', QUOTE(HOLE));
 
-        // TODO select variable
+        // TODO select local variable
         //on('v', VAR( ...chooser... ));
 
         var locals = ast.getBoundAbove(term);
@@ -210,22 +213,21 @@ function(log,   test,   compiler,   ast,   corpus,   navigate)
           on(varName, VAR(varName));
           // TODO deal with >26 variables
         });
-        // TODO
+        // TODO select global variable
         //var globals = corpus.findAllNames();
         //globals.forEach(function(varName){
         //  on('g', VAR(varName));
         //});
       } else {
-        // the move to HOLE is achieved elsewhere via DELETE/BACKSPACE
         var dumped = ast.dump(term);
         on('backspace', HOLE);
-        on('\\', LAMBDA(fresh, dumped));
-        on('L', LETREC(fresh, dumped, HOLE));
-        on('.', LETREC(fresh, HOLE, dumped));
-        on('space', APP(dumped, HOLE));
-        on('(', APP(HOLE, dumped));
-        on('|', JOIN(dumped, HOLE));
-        on('{', QUOTE(dumped));
+        on('\\', LAMBDA(fresh, DASH), dumped);
+        on('L', LETREC(fresh, DASH, HOLE), dumped);
+        on('.', LETREC(fresh, HOLE, DASH), dumped);
+        on('space', APP(DASH, HOLE), dumped);
+        on('(', APP(HOLE, DASH), dumped);
+        on('|', JOIN(DASH, HOLE), dumped);
+        on('{', QUOTE(DASH), dumped);
       }
     };
   })();

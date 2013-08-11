@@ -37,7 +37,8 @@ div.code pre {
 
 @foreground: #8888ff;
 @background: #000000;
-@overlay: #666666;
+@overlay: #444444;
+@help: #aaaaaa;
 @cursor: #008000;
 
 div#code {
@@ -55,9 +56,10 @@ div#navigate {
     right: 0;
     top: 0;
     bottom: 0;
-    color: screen(@foreground, @overlay);
+    color: screen(@help, @overlay);
     background-color: screen(@background, @overlay);
-    border-radius: 0.5em;
+    border-radius: 0.8em;
+    border: solid 1px darken(@overlay, 0.5);
     -webkit-box-sizing: border-box;
     -moz-box-sizing: border-box;
     box-sizing: border-box;
@@ -67,25 +69,26 @@ div#navigate tr,
 div#navigate th,
 div#navigate td {
     margin: 0;
-    font-size: small;
 }
 div#navigate th {
     text-align: right;
 }
 div#navigate th span {
     color: screen(@background, @overlay);
-    background-color: screen(@foreground, @overlay);
+    background-color: screen(@help, @overlay);
     border-radius: 0.2em;
-    padding: 0 0.25em 0 0.25em;
+    padding: 0 0.4em 0 0.4em;
 }
 div#navigate td {
-    padding: 0.2em 0 0.2em 0.5em;
+    padding-left: 0.5em;
 }
 div#navigate td pre {
     margin: 0;
+    color: screen(@foreground, @overlay);
 }
 div#navigate table {
-    font-family: 'Courier New',Courier,monospace;
+    font-family: Signika,Consolas,'Liberation Mono','Courier New',Courier,monospace;
+    font-size: 12pt;
 }
 
 span.cursor {
