@@ -143,7 +143,7 @@ function(log,   test,   compiler)
     }
   };
 
-  ast.cursor.replace = (function(){
+  ast.cursor.replaceBelow = (function(){
     var findCursor = function (term) {
       if (term.name === 'CURSOR') {
         return term;

@@ -23,15 +23,21 @@ function(log,   test,   compiler,   ast,   corpus,   navigate)
     assert(ids.length > 0, 'corpus is empty');
   };
 
-  var replace = function (newLambda, subsForDash) {
+  var replaceBelow = function (newLambda, subsForDash) {
     if (subsForDash !== undefined) {
       newLambda = compiler.substitute('&mdash;', subsForDash, newLambda);
     }
     log('DEBUG ' + compiler.print(newLambda));
     var newTerm = ast.load(newLambda);
-    cursor = ast.cursor.replace(cursor, newTerm);
+    cursor = ast.cursor.replaceBelow(cursor, newTerm);
     lineChanged = true;
     renderLine();
+  };
+
+  var replaceAbove = function (newLambda, subsForDash) {
+    var notRoot = ast.cursor.tryMove('U');
+    assert(notRoot, 'cannot replace above root');
+    replaceBelow(newLambda, subsForDash);
   };
 
   var insertAssert = function () {
@@ -198,7 +204,7 @@ function(log,   test,   compiler,   ast,   corpus,   navigate)
 
     var on = function (name, term, subsForDash) {
       var callback = function () {
-        replace(term, subsForDash);
+        replaceBelow(term, subsForDash);
         takeBearings();
       };
       var description = render(term);
@@ -217,12 +223,12 @@ function(log,   test,   compiler,   ast,   corpus,   navigate)
       } else if (name === 'DEFINE') {
         navigate.on('backspace', removeDefine, 'delete line');
       } else if (name === 'HOLE') {
-        on('backspace', CURSOR(HOLE));
+        on('backspace', HOLE); // TODO define context-specific deletions
         on('T', TOP);
         on('_', BOT);
         on('\\', LAMBDA(fresh, CURSOR(HOLE)));
-        on('L', LETREC(fresh, CURSOR(HOLE), HOLE));
-        on('I', LETREC(fresh, HOLE, CURSOR(HOLE)));
+        on('W', LETREC(fresh, CURSOR(HOLE), HOLE));
+        on('L', LETREC(fresh, HOLE, CURSOR(HOLE)));
         on('(', APP(CURSOR(HOLE), HOLE));
         on('|', JOIN(CURSOR(HOLE), HOLE));
         on('{', QUOTE(CURSOR(HOLE)));
@@ -244,8 +250,8 @@ function(log,   test,   compiler,   ast,   corpus,   navigate)
         var dumped = ast.dump(term);
         on('backspace', HOLE); // TODO define context-specific deletions
         on('\\', LAMBDA(fresh, CURSOR(DASH)), dumped);
-        on('L', LETREC(fresh, CURSOR(HOLE), DASH), dumped);
-        on('I', LETREC(fresh, DASH, CURSOR(HOLE)), dumped);
+        on('W', LETREC(fresh, CURSOR(HOLE), DASH), dumped);
+        on('L', LETREC(fresh, DASH, CURSOR(HOLE)), dumped);
         on('space', APP(DASH, CURSOR(HOLE)), dumped);
         on('(', APP(CURSOR(HOLE), DASH), dumped);
         on('|', JOIN(DASH, CURSOR(HOLE)), dumped);
