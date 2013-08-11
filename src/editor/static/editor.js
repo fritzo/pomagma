@@ -79,6 +79,18 @@ function(log,   test,   compiler,   ast,   corpus,   navigate)
     lineChanged = false;
   };
 
+  var revertLine = function () {
+    var id = ids[cursorPos];
+    var line = corpus.findLine(id);
+    var lambda = compiler.loadLine(line);
+    var root = ast.load(lambda);
+    ast.cursor.remove(cursor);
+    ast.cursor.insertAbove(cursor, root);
+    asts[id] = cursor;
+    renderLine(id);
+    lineChanged = false;
+  };
+
   //--------------------------------------------------------------------------
   // Rendering
 
@@ -186,8 +198,9 @@ function(log,   test,   compiler,   ast,   corpus,   navigate)
     };
 
     var generic = [
-      ['escape', toggleHelp, 'toggle help'],
+      ['?', toggleHelp, 'toggle help'],
       ['enter', action(commitLine), 'commit line'],
+      ['escape', action(revertLine), 'revert line'],
       ['up', action(moveCursorLine, -1), 'move up'],
       ['down', action(moveCursorLine, 1), 'move down'],
       ['left', action(moveCursor, 'L'), 'move left'],

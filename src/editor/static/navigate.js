@@ -55,6 +55,7 @@ function(log,   test,   keycode){
     cases['.'] = cases['period'];
     cases['('] = cases['shift+9'];
     cases[')'] = cases['shift+0'];
+    cases['?'] = cases['shift+slash'];
 
     for (var name in cases) {
       icons[name] = $('<th>').html(
