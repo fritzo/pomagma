@@ -188,40 +188,32 @@ function(log,   test,   compiler)
       return node;
     };
 
-    var tryTraverseLeftDown = function (node) {
-      if (node.below.length) {
-        return traverseDownRight(node);
-      } else {
-        var above = node.above;
-        while (above) {
-          var pos = _.indexOf(above.below, node);
-          assert(pos >= 0, 'node not found in node.above.below');
-          if (pos > 0) {
-            return traverseDownRight(above.below[pos - 1]);
-          }
-          node = above;
-          above = node.above;
+    var traverseLeftDown = function (node) {
+      var above = node.above;
+      while (above !== null) {
+        var pos = _.indexOf(above.below, node);
+        assert(pos >= 0, 'node not found in node.above.below');
+        if (pos > 0) {
+          return traverseDownRight(above.below[pos - 1]);
         }
-        return null;
+        node = above;
+        above = node.above;
       }
+      return traverseDownRight(node);
     };
 
-    var tryTraverseRightDown = function (node) {
-      if (node.below.length) {
-        return traverseDownLeft(node);
-      } else {
-        var above = node.above;
-        while (above) {
-          var pos = _.indexOf(above.below, node);
-          assert(pos >= 0, 'node not found in node.above.below');
-          if (pos < above.below.length - 1) {
-            return traverseDownLeft(above.below[pos + 1]);
-          }
-          node = above;
-          above = node.above;
+    var traverseRightDown = function (node) {
+      var above = node.above;
+      while (above !== null) {
+        var pos = _.indexOf(above.below, node);
+        assert(pos >= 0, 'node not found in node.above.below');
+        if (pos < above.below.length - 1) {
+          return traverseDownLeft(above.below[pos + 1]);
         }
-        return null;
+        node = above;
+        above = node.above;
       }
+      return traverseDownLeft(node);
     };
 
     var insertBelowLeft = function (cursor, start) {
@@ -232,26 +224,18 @@ function(log,   test,   compiler)
 
     var tryMoveLeft = function (cursor) {
       var node = cursor.below[0];
-      var next = tryTraverseLeftDown(node);
-      if (next !== null) {
-        ast.cursor.remove(cursor);
-        ast.cursor.insertAbove(cursor, next);
-        return true;
-      } else {
-        return false;
-      }
+      ast.cursor.remove(cursor);
+      var next = traverseLeftDown(node);
+      ast.cursor.insertAbove(cursor, next);
+      return true;
     };
 
     var tryMoveRight = function (cursor) {
       var node = cursor.below[0];
-      var next = tryTraverseRightDown(node);
-      if (next !== null) {
-        ast.cursor.remove(cursor);
-        ast.cursor.insertAbove(cursor, next);
-        return true;
-      } else {
-        return false;
-      }
+      ast.cursor.remove(cursor);
+      var next = traverseRightDown(node);
+      ast.cursor.insertAbove(cursor, next);
+      return true;
     };
 
     var tryMoveUp = function (cursor) {
