@@ -227,6 +227,17 @@ function(log,   test,   compiler,   ast,   corpus,   navigate)
       navigate.on(name, callback, description);
     };
 
+    var searchGlobals = function () {
+      var names = corpus.findAllNames();
+      var accept = function (name) {
+        assert(name !== undefined);
+        replaceBelow(VAR(name));
+        takeBearings();
+      };
+      var cancel = takeBearings;
+      navigate.search(names, accept, cancel);
+    };
+
     return function () {
       var term = cursor.below[0];
       var name = term.name;
@@ -240,31 +251,29 @@ function(log,   test,   compiler,   ast,   corpus,   navigate)
         navigate.on('backspace', removeDefine, 'delete line');
       } else if (name === 'HOLE') {
         on('backspace', HOLE); // TODO define context-specific deletions
+        navigate.on('/', searchGlobals, render(VAR('global.variable')));
         on('T', TOP);
         on('_', BOT);
         on('\\', LAMBDA(fresh, CURSOR(HOLE)));
         on('W', LETREC(fresh, CURSOR(HOLE), HOLE));
         on('L', LETREC(fresh, HOLE, CURSOR(HOLE)));
+        on('space', APP(HOLE, CURSOR(HOLE)));
         on('(', APP(CURSOR(HOLE), HOLE));
         on('|', JOIN(CURSOR(HOLE), HOLE));
         on('{', QUOTE(CURSOR(HOLE)));
-
-        // TODO select local variable
-        //on('v', VAR( ...chooser... ));
 
         var locals = ast.getBoundAbove(term);
         locals.forEach(function(varName){
           on(varName, VAR(varName));
           // TODO deal with >26 variables
         });
-        // TODO select global variable
-        //var globals = corpus.findAllNames();
-        //globals.forEach(function(varName){
-        //  on('g', VAR(varName));
-        //});
+
       } else {
         var dumped = ast.dump(term);
-        on('backspace', HOLE); // TODO define context-specific deletions
+
+        // TODO define context-specific deletions
+        on('backspace', HOLE);
+
         on('\\', LAMBDA(fresh, CURSOR(DASH)), dumped);
         on('W', LETREC(fresh, CURSOR(HOLE), DASH), dumped);
         on('L', LETREC(fresh, DASH, CURSOR(HOLE)), dumped);

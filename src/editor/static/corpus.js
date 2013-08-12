@@ -274,8 +274,6 @@ function(log,   test,   symbols)
   //--------------------------------------------------------------------------
   // change propagation
 
-  // TODO replace this sketch with backbone.js
-
   var sync = (function(){
     var sync = {};
 

@@ -1,5 +1,5 @@
-define(['log', 'test', 'keycode'],
-function(log,   test,   keycode){
+define(['log', 'test', 'keycode', 'compiler'],
+function(log,   test,   keycode,   compiler){
 
   //--------------------------------------------------------------------------
   // Events
@@ -56,6 +56,7 @@ function(log,   test,   keycode){
     cases['('] = cases['shift+9'];
     cases[')'] = cases['shift+0'];
     cases['?'] = cases['shift+slash'];
+    cases['.'] = cases['period'];
 
     for (var name in cases) {
       icons[name] = $('<th>').html(
@@ -65,7 +66,7 @@ function(log,   test,   keycode){
   })();
 
   //--------------------------------------------------------------------------
-  // Event handling
+  // Event Handling
 
   var events = [];
   var callbacks = [];
@@ -74,8 +75,10 @@ function(log,   test,   keycode){
     assert(_.has(cases, name));
     events.push(cases[name]);
     callbacks.push(callback);
-    $('#navigate table').append(
-      $('<tr>').append(icons[name], $('<td>').html(description)));
+    if (description !== undefined) {
+      $('#navigate table').append(
+        $('<tr>').append(icons[name], $('<td>').html(description)));
+    }
   };
 
   var off = function () {
@@ -87,9 +90,9 @@ function(log,   test,   keycode){
   var trigger = function (event) {
     for (var i = 0; i < events.length; ++i) {
       if (events[i].match(event)) {
+        event.preventDefault();
         console.log('matched ' + event.which);
         callbacks[i]();
-        event.preventDefault();
         return;
       }
     }
@@ -97,11 +100,63 @@ function(log,   test,   keycode){
   };
 
   //--------------------------------------------------------------------------
+  // Global Variable Search
+
+  var search = (function(){
+    var strings = [];
+    var $input = undefined;
+    var matches = [];
+    var $matches = undefined;
+
+    var VAR = compiler.symbols.VAR;
+
+    var update = function () {
+      var re = new RegExp($input.val());
+      matches = [];
+      $matches.empty();
+      strings.forEach(function (string) {
+        if (re.test(string)) {
+          matches.push(string);
+          $matches.append($('<pre>').html(compiler.render(VAR(string))));
+        }
+      });
+      log('DEBUG ' + matches);
+    };
+
+    var cancelCallback;
+    var acceptCallback;
+    var accept = function () {
+      if (matches.length) {
+        log('DEBUG accepting ' + matches[0]);
+        acceptCallback(matches[0]);
+      } else {
+        cancelCallback();
+      }
+    };
+
+    return function (rankedStrings, acceptMatch, cancel) {
+      strings = rankedStrings;
+      acceptCallback = acceptMatch;
+      cancelCallback = cancel;
+
+      off();
+      on('enter', accept, 'accept');
+      on('escape', cancel, 'cancel');
+      $input = $('<input>');
+      $matches = $('<div>');
+      $('#navigate').append($input, $matches);
+      $input.focus().on('keydown', _.debounce(update));
+      update();
+    };
+  })();
+
+  //--------------------------------------------------------------------------
   // Interface
 
   return {
     on: on,
     off: off,
+    search: search,
     trigger: trigger,
   };
 });
