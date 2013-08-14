@@ -223,6 +223,9 @@ function(log,   test,   symbols,   compiler,   ast,   corpus,   navigate)
     var APP = compiler.symbols.APP;
     var JOIN = compiler.symbols.JOIN;
     var QUOTE = compiler.symbols.QUOTE;
+    var EQUAL = compiler.symbols.EQUAL;
+    var LESS = compiler.symbols.LESS;
+    var NLESS = compiler.symbols.NLESS;
     var ASSERT = compiler.symbols.ASSERT;
     var DEFINE = compiler.symbols.DEFINE;
     var CURSOR = compiler.symbols.CURSOR;
@@ -324,6 +327,9 @@ function(log,   test,   symbols,   compiler,   ast,   corpus,   navigate)
         on('(', APP(CURSOR(HOLE), HOLE));
         on('|', JOIN(CURSOR(HOLE), HOLE));
         on('{', QUOTE(CURSOR(HOLE)));
+        on('=', EQUAL(CURSOR(HOLE), HOLE));
+        on('<', LESS(CURSOR(HOLE), HOLE));
+        on('>', NLESS(CURSOR(HOLE), HOLE));
 
         var locals = ast.getBoundAbove(term);
         locals.forEach(function(varName){
@@ -344,6 +350,9 @@ function(log,   test,   symbols,   compiler,   ast,   corpus,   navigate)
         on('(', APP(CURSOR(HOLE), DASH), dumped);
         on('|', JOIN(DASH, CURSOR(HOLE)), dumped);
         on('{', QUOTE(CURSOR(DASH)), dumped);
+        on('=', EQUAL(DASH, CURSOR(HOLE)), dumped);
+        on('<', LESS(DASH, CURSOR(HOLE)), dumped);
+        on('>', NLESS(DASH, CURSOR(HOLE)), dumped);
       }
     };
   })();
