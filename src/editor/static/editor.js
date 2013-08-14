@@ -40,7 +40,24 @@ function(log,   test,   symbols,   compiler,   ast,   corpus,   navigate)
     replaceBelow(newLambda, subsForDash);
   };
 
-  var insertLine = function (line) {
+  var insertAssert = function (done, fail) {
+    var HOLE = compiler.symbols.HOLE;
+    var ASSERT = compiler.symbols.ASSERT;
+    var lambda = ASSERT(HOLE);
+    var line = compiler.dumpLine(lambda);
+    insertLine(line, done, fail);
+  };
+
+  var insertDefine = function (varName, done, fail) {
+    var VAR = compiler.symbols.VAR;
+    var HOLE = compiler.symbols.HOLE;
+    var DEFINE = compiler.symbols.DEFINE;
+    var lambda = DEFINE(VAR(varName), HOLE);
+    var line = compiler.dumpLine(lambda);
+    insertLine(line, done, fail);
+  };
+
+  var insertLine = function (line, done, fail) {
     corpus.insert(
       line,
       function (line) {
@@ -56,38 +73,31 @@ function(log,   test,   symbols,   compiler,   ast,   corpus,   navigate)
         $prev = $lines[ids[cursorPos - 1]];
         $lines[id] = $('<pre>').attr('id', 'line' + id).insertAfter($prev);
         renderLine(id);
+        scrollToCursor();
+        done && done();
       },
       function () {
         log('failed to insert line');
+        fail && fail();
       }
     );
   };
 
-  var insertAssert = function () {
-    var HOLE = compiler.symbols.HOLE;
-    var ASSERT = compiler.symbols.ASSERT;
-    var lambda = ASSERT(HOLE);
-    var line = compiler.dumpLine(lambda);
-    insertLine(line);
-  };
-
-  var insertDefine = function (varName) {
-    var VAR = compiler.symbols.VAR;
-    var HOLE = compiler.symbols.HOLE;
-    var DEFINE = compiler.symbols.DEFINE;
-    var lambda = DEFINE(VAR(varName), HOLE);
-    var line = compiler.dumpLine(lambda);
-    insertLine(line);
-  };
-
-  var removeAssert = function () {
-    TODO('remove assertion on current line');
-    TODO('move to next line');
-  };
-
-  var removeDefine = function () {
-    TODO('remove definition on current line');
-    TODO('move to next line');
+  var removeLine = function () {
+    var id = ids[cursorPos];
+    corpus.remove(id);
+    ast.cursor.remove(cursor);
+    ids = ids.slice(0, cursorPos).concat(ids.slice(cursorPos + 1));
+    delete asts[id];
+    $lines[id].remove();
+    delete $lines[id];
+    if (cursorPos === ids.length) {
+      cursorPos -= 1;
+    }
+    id = ids[cursorPos];
+    ast.cursor.insertAbove(cursor, asts[id]);
+    renderLine(id);
+    scrollToCursor();
   };
 
   var commitLine = function () {
@@ -114,7 +124,7 @@ function(log,   test,   symbols,   compiler,   ast,   corpus,   navigate)
     var root = ast.load(lambda);
     ast.cursor.remove(cursor);
     ast.cursor.insertAbove(cursor, root);
-    asts[id] = cursor;
+    asts[id] = root;
     renderLine(id);
     lineChanged = false;
   };
@@ -181,14 +191,16 @@ function(log,   test,   symbols,   compiler,   ast,   corpus,   navigate)
     if (lineChanged) {
       commitLine();
     }
-    ast.cursor.remove(cursor);
-    renderLine();
-    cursorPos = (cursorPos + ids.length + delta) % ids.length;
-    var id = ids[cursorPos];
-    //log('moving cursor to id ' + id);
-    ast.cursor.insertAbove(cursor, asts[id]);
-    renderLine(id);
-    scrollToCursor();
+    if (0 <= cursorPos + delta && cursorPos + delta < ids.length) {
+      ast.cursor.remove(cursor);
+      renderLine();
+      cursorPos = (cursorPos + ids.length + delta) % ids.length;
+      var id = ids[cursorPos];
+      //log('moving cursor to id ' + id);
+      ast.cursor.insertAbove(cursor, asts[id]);
+      renderLine(id);
+      scrollToCursor();
+    }
   };
 
   var moveCursor = function (direction) {
@@ -248,11 +260,13 @@ function(log,   test,   symbols,   compiler,   ast,   corpus,   navigate)
         return symbols.isGlobal(name) && corpus.findDefinition(name) === null;
       };
       var accept = function (name) {
-        insertDefine(name);
-        takeBearings();
+        insertDefine(name, takeBearings);
       };
       var cancel = takeBearings;
       navigate.choose(isValid, accept, cancel);
+    };
+
+    var insertAssertAction = function () {
     };
 
     var generic = [
@@ -265,7 +279,7 @@ function(log,   test,   symbols,   compiler,   ast,   corpus,   navigate)
       ['right', action(moveCursor, 'R'), 'move right'],
       ['shift+left', action(moveCursor, 'U'), 'select'],
       ['shift+right', action(moveCursor, 'U'), 'select'],
-      ['A', action(insertAssert), render(ASSERT(CURSOR(HOLE)))],
+      ['A', _.bind(insertAssert, takeBearings), render(ASSERT(CURSOR(HOLE)))],
       ['D', chooseDefine, render(DEFINE(CURSOR(VAR('...')), HOLE))]
     ];
 
@@ -293,11 +307,13 @@ function(log,   test,   symbols,   compiler,   ast,   corpus,   navigate)
 
       off();
       if (name === 'ASSERT') {
-        navigate.on('backspace', removeAssert, 'delete line');
+        navigate.on('X', removeLine, 'delete line');
       } else if (name === 'DEFINE') {
-        navigate.on('backspace', removeDefine, 'delete line');
+        if (!corpus.hasOccurrences(term.below[0].varName)) {
+          navigate.on('X', removeLine, 'delete line');
+        }
       } else if (name === 'HOLE') {
-        on('backspace', HOLE); // TODO define context-specific deletions
+        on('X', HOLE); // TODO define context-specific deletions
         navigate.on('/', searchGlobals, render(VAR('global.variable')));
         on('T', TOP);
         on('_', BOT);
@@ -319,7 +335,7 @@ function(log,   test,   symbols,   compiler,   ast,   corpus,   navigate)
         var dumped = ast.dump(term);
 
         // TODO define context-specific deletions
-        on('backspace', HOLE);
+        on('X', HOLE);
 
         on('\\', LAMBDA(fresh, CURSOR(DASH)), dumped);
         on('W', LETREC(fresh, CURSOR(HOLE), DASH), dumped);

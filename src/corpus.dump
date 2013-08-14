@@ -13,6 +13,10 @@ ASSERT EQUAL VAR types.div APP VAR types.type APP CI TOP
 DEFINE VAR types.div APP VAR types.type K
 DEFINE VAR types.exp COMP COMP COMP COMP APP CB VAR types.type APP CB B CB CB VAR types.type
 DEFINE VAR types.forall A
+DEFINE VAR types.forall.lower APP APP C I TOP
+DEFINE VAR types.forall.pull COMP APP CB VAR types.div J
+DEFINE VAR types.forall.push APP APP C I TOP
+DEFINE VAR types.forall.raise K
 DEFINE VAR types.pow P
 DEFINE VAR types.semi APP VAR types.type APP VAR types.forall COMP APP CB B COMP CB COMP APP CB I CB
 DEFINE VAR types.type V

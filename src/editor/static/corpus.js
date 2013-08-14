@@ -59,10 +59,23 @@ function(log,   test,   symbols)
     var definitions = {};  // name -> id
     var occurrences = {};  // name -> (set id)
 
+    var insertDefinition = function (name, id) {
+      assert(definitions[name] === undefined);
+      assert(occurrences[name] === undefined);
+      definitions[name] = id;
+      occurrences[name] = {};
+    };
+
+    var updateDefinition = function (name, id) {
+      assert(definitions[name] !== undefined);
+      definitions[name] = id;
+    };
+
     var insertOccurrence = function (name, id) {
-      var occurrencesName = occurrences[name] || {};
-      occurrencesName[id] = null;
-      occurrences[name] = occurrencesName;
+      var occurrencesName = occurrences[name];
+      assert(occurrencesName !== undefined);
+      assert(occurrencesName[id] === undefined);
+      occurrences[name][id] = null;
     };
 
     var removeOccurrence = function (name, id) {
@@ -72,26 +85,17 @@ function(log,   test,   symbols)
       delete occurrencesName[id];
     };
 
-    var insertDefinition = function (name, id) {
-      assert(definitions[name] === undefined);
-      definitions[name] = id;
-    };
-
-    var updateDefinition = function (name, id) {
-      assert(definitions[name] !== undefined);
-      definitions[name] = id;
-    };
-
     var removeDefinition = function (name) {
       assert(definitions[name] !== undefined);
-      assert(!occurrences[name]);
+      assert(occurrences[name] !== undefined);
+      assert(_.isEmpty(occurrences[name]));
       delete definitions[name];
       delete occurrences[name];
     };
 
     var insertLine = function (line) {
       var id = line.id;
-      //log('loading line ' + id);
+      assert(!_.has(lines, id));
       lines[id] = line;
       if (line.name !== null) {
         insertDefinition(line.name, id);
@@ -103,7 +107,15 @@ function(log,   test,   symbols)
     };
 
     var removeLine = function (line) {
-      TODO('remove line');
+      var id = line.id;
+      assert(_.has(lines, id));
+      delete lines[id];
+      for (var name in line.free) {
+        removeOccurrence(name, id);
+      }
+      if (line.name !== null) {
+        removeDefinition(line.name);
+      }
     };
 
     state.ready = (function(){
@@ -130,7 +142,20 @@ function(log,   test,   symbols)
       lines = {};
       definitions = {};
       occurrences = {};
-      linesToLoad.forEach(insertLine);
+      linesToLoad.forEach(function(line){
+        var id = line.id;
+        lines[id] = line;
+        if (line.name !== null) {
+          insertDefinition(line.name, id);
+        }
+      });
+      linesToLoad.forEach(function(line){
+        var id = line.id;
+        line.free = getFreeVariables(line.code);
+        for (var name in line.free) {
+          insertOccurrence(name, id);
+        }
+      });
       state.ready.set();
     };
 
@@ -147,6 +172,8 @@ function(log,   test,   symbols)
     };
 
     state.insert = function (line, done, fail) {
+      // FIXME getting an id from the server like this adds latency
+      //   and prevents offline creation of lines
       assert(!_.has(line, 'id'), 'unexpected .id field in inserted line');
       $.ajax({
         type: 'POST',
@@ -182,9 +209,8 @@ function(log,   test,   symbols)
     };
 
     state.remove = function (id) {
-      assert(_.has(newline, id), 'expected .id field in updated line');
+      assert(_.has(lines, id));
       var line = lines[id];
-      assert(line !== undefined, 'bad id: ' + id);
       removeLine(line);
       sync.remove(line);
     };
@@ -228,11 +254,7 @@ function(log,   test,   symbols)
     };
 
     state.findAllLines = function () {
-      var result = [];
-      for (var id in lines) {
-        result.push(id);
-      }
-      return result;
+      return _.keys(lines);
     };
 
     state.findAllNames = function () {
@@ -256,16 +278,13 @@ function(log,   test,   symbols)
     };
 
     state.findOccurrences = function (name) {
-      var occurrencesName = occurrences[name];
-      if (occurrencesName === undefined) {
-        return [];
-      } else {
-        var occurrencesList = [];
-        for (var id in occurrencesName) {
-          occurrencesList.push(id);
-        }
-        return occurrencesList;
-      }
+      assert(_.has(definitions, name));
+      return _.keys(occurrences[name]);
+    };
+
+    state.hasOccurrences = function (name) {
+      assert(_.has(definitions, name));
+      return !_.isEmpty(occurrences[name]);
     };
 
     state.DEBUG_lines = lines;
@@ -291,6 +310,7 @@ function(log,   test,   symbols)
     };
 
     var delay = 1000;
+    var delayFail = 30000;
 
     var pushChanges = function () {
       for (id in changes) {
@@ -306,7 +326,7 @@ function(log,   test,   symbols)
               contentType: 'application/json',
             }).fail(function(jqXHR, textStatus){
               log('putChanges PUT failed: ' + textStatus);
-              setTimeout(pushChanges, delay);
+              setTimeout(pushChanges, delayFail);
             }).done(function(){
               log('putChanges PUT succeeded: ' + id);
               setTimeout(pushChanges, 0);
@@ -319,7 +339,7 @@ function(log,   test,   symbols)
               url: 'corpus/line/' + id,
             }).fail(function(jqXHR, textStatus){
               log('putChanges DELETE failed: ' + textStatus);
-              setTimeout(pushChanges, delay);
+              setTimeout(pushChanges, delayFail);
             }).done(function(){
               log('putChanges DELETE succeeded: ' + id);
               setTimeout(pushChanges, 0);
@@ -352,6 +372,7 @@ function(log,   test,   symbols)
     findAllNames: state.findAllNames,
     findDefinition: state.findDefinition,
     findOccurrences: state.findOccurrences,
+    hasOccurrences: state.hasOccurrences,
     insert: state.insert,
     update: state.update,
     remove: state.remove,
