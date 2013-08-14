@@ -62,12 +62,12 @@ def get_line(line_id):
 
 
 @bottle.route('/corpus/line', method='POST')
-def post_line(line_id):
+def post_line():
     require_auth()
     line = bottle.request.json
     name = line['name']
     code = line['code']
-    id = CORPUS.update(name, code)
+    id = CORPUS.insert(name, code)
     return {'data': id}
 
 

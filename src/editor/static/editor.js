@@ -1,5 +1,5 @@
-define(['log', 'test', 'compiler', 'ast', 'corpus', 'navigate'],
-function(log,   test,   compiler,   ast,   corpus,   navigate)
+define(['log', 'test', 'symbols', 'compiler', 'ast', 'corpus', 'navigate'],
+function(log,   test,   symbols,   compiler,   ast,   corpus,   navigate)
 {
   var ids = [];
   var asts = {};  // id -> ast
@@ -40,16 +40,44 @@ function(log,   test,   compiler,   ast,   corpus,   navigate)
     replaceBelow(newLambda, subsForDash);
   };
 
-  var insertAssert = function () {
-    TODO('insert assertion below line;');
-    TODO('moveCursorLine to assertion');
-    TODO('move to assertion HOLE');
+  var insertLine = function (line) {
+    corpus.insert(
+      line,
+      function (line) {
+        ast.cursor.remove(cursor);
+        renderLine();
+        cursorPos += 1;
+        var id = line.id;
+        ids = ids.slice(0, cursorPos).concat([id], ids.slice(cursorPos));
+        lambda = compiler.loadLine(line);
+        root = ast.load(lambda);
+        ast.cursor.insertAbove(cursor, _.last(root.below));  // HACK
+        asts[id] = root;
+        $prev = $lines[ids[cursorPos - 1]];
+        $lines[id] = $('<pre>').attr('id', 'line' + id).insertAfter($prev);
+        renderLine(id);
+      },
+      function () {
+        log('failed to insert line');
+      }
+    );
   };
 
-  var insertDefine = function () {
-    TODO('insert definition below line;');
-    TODO('moveCursorLine to assertion');
-    TODO('move to assertion HOLE');
+  var insertAssert = function () {
+    var HOLE = compiler.symbols.HOLE;
+    var ASSERT = compiler.symbols.ASSERT;
+    var lambda = ASSERT(HOLE);
+    var line = compiler.dumpLine(lambda);
+    insertLine(line);
+  };
+
+  var insertDefine = function (varName) {
+    var VAR = compiler.symbols.VAR;
+    var HOLE = compiler.symbols.HOLE;
+    var DEFINE = compiler.symbols.DEFINE;
+    var lambda = DEFINE(VAR(varName), HOLE);
+    var line = compiler.dumpLine(lambda);
+    insertLine(line);
   };
 
   var removeAssert = function () {
@@ -134,6 +162,11 @@ function(log,   test,   compiler,   ast,   corpus,   navigate)
   //--------------------------------------------------------------------------
   // Cursor Movement
 
+  var scrollToCursor = function () {
+    var pos = $('span.cursor').offset().top - $(window).height() / 2;
+    $(document.body).animate({scrollTop: pos}, 50);
+  };
+
   var initCursor = function () {
     cursor = ast.cursor.create();
     cursorPos = 0;
@@ -141,6 +174,7 @@ function(log,   test,   compiler,   ast,   corpus,   navigate)
     var id = ids[cursorPos];
     ast.cursor.insertAbove(cursor, asts[id]);
     renderLine(id);
+    scrollToCursor();
   };
 
   var moveCursorLine = function (delta) {
@@ -154,6 +188,7 @@ function(log,   test,   compiler,   ast,   corpus,   navigate)
     //log('moving cursor to id ' + id);
     ast.cursor.insertAbove(cursor, asts[id]);
     renderLine(id);
+    scrollToCursor();
   };
 
   var moveCursor = function (direction) {
@@ -197,10 +232,33 @@ function(log,   test,   compiler,   ast,   corpus,   navigate)
       $('#navigate').toggle();
     };
 
+    var searchGlobals = function () {
+      var names = corpus.findAllNames();
+      var accept = function (name) {
+        assert(name !== undefined);
+        replaceBelow(VAR(name));
+        takeBearings();
+      };
+      var cancel = takeBearings;
+      navigate.search(names, accept, cancel);
+    };
+
+    var chooseDefine = function () {
+      var isValid = function (name) {
+        return symbols.isGlobal(name) && corpus.findDefinition(name) === null;
+      };
+      var accept = function (name) {
+        insertDefine(name);
+        takeBearings();
+      };
+      var cancel = takeBearings;
+      navigate.choose(isValid, accept, cancel);
+    };
+
     var generic = [
       ['?', toggleHelp, 'toggle help'],
       ['enter', action(commitLine), 'commit line'],
-      ['escape', action(revertLine), 'revert line'],
+      ['tab', action(revertLine), 'revert line'],
       ['up', action(moveCursorLine, -1), 'move up'],
       ['down', action(moveCursorLine, 1), 'move down'],
       ['left', action(moveCursor, 'L'), 'move left'],
@@ -208,7 +266,7 @@ function(log,   test,   compiler,   ast,   corpus,   navigate)
       ['shift+left', action(moveCursor, 'U'), 'select'],
       ['shift+right', action(moveCursor, 'U'), 'select'],
       ['A', action(insertAssert), render(ASSERT(CURSOR(HOLE)))],
-      ['D', action(insertDefine), render(DEFINE(CURSOR(VAR('...')), HOLE))]
+      ['D', chooseDefine, render(DEFINE(CURSOR(VAR('...')), HOLE))]
     ];
 
     var off = function () {
@@ -225,17 +283,6 @@ function(log,   test,   compiler,   ast,   corpus,   navigate)
       };
       var description = render(term);
       navigate.on(name, callback, description);
-    };
-
-    var searchGlobals = function () {
-      var names = corpus.findAllNames();
-      var accept = function (name) {
-        assert(name !== undefined);
-        replaceBelow(VAR(name));
-        takeBearings();
-      };
-      var cancel = takeBearings;
-      navigate.search(names, accept, cancel);
     };
 
     return function () {

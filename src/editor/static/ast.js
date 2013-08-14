@@ -176,14 +176,14 @@ function(log,   test,   compiler)
 
     var traverseDownLeft = function (node) {
       while (node.below.length) {
-        node = node.below[0];
+        node = _.first(node.below);
       }
       return node;
     };
 
     var traverseDownRight = function (node) {
       while (node.below.length) {
-        node = node.below[node.below.length - 1];
+        node = _.last(node.below);
       }
       return node;
     };

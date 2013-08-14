@@ -146,18 +146,21 @@ function(log,   test,   symbols)
       });
     };
 
-    state.insert = function (line) {
-      assert(!_.has(line, id), 'unexpected .id field in inserted line');
+    state.insert = function (line, done, fail) {
+      assert(!_.has(line, 'id'), 'unexpected .id field in inserted line');
       $.ajax({
         type: 'POST',
         url: 'corpus/line',
-        data: line
+        data: JSON.stringify(line),
+        contentType: 'application/json',
       }).fail(function(jqXHR, textStatus){
         log('Request failed: ' + textStatus);
+        fail();
       }).done(function(data){
         log('created line: ' + data.id);
         line.id = data.data;
         insertLine(line);
+        done(line);
       });
     };
 

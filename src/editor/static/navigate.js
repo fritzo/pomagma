@@ -100,7 +100,7 @@ function(log,   test,   keycode,   compiler){
   };
 
   //--------------------------------------------------------------------------
-  // Global Variable Search
+  // Global Variables
 
   var search = (function(){
     var strings = [];
@@ -141,10 +141,48 @@ function(log,   test,   keycode,   compiler){
 
       off();
       on('enter', accept, 'accept');
-      on('escape', cancel, 'cancel');
+      on('tab', cancel, 'cancel');
       $input = $('<input>');
       $matches = $('<div>');
       $('#navigate').append($input, $matches);
+      $input.focus().on('keydown', _.debounce(update));
+      update();
+    };
+  })();
+
+  var choose = (function(){
+    var $input = undefined;
+    var input = undefined;
+    var isValid = undefined;
+    var valid = undefined;
+
+    var update = function () {
+      input = $input.val();
+      valid = isValid(input);
+      $input.attr({'class': valid ? 'valid' : 'invalid'});
+    };
+
+    var cancelCallback;
+    var acceptCallback;
+    var accept = function () {
+      if (valid) {
+        log('DEBUG choosing ' + input);
+        acceptCallback(input);
+      } else {
+        cancelCallback();
+      }
+    };
+
+    return function (isValidFilter, acceptName, cancel) {
+      isValid = isValidFilter;
+      acceptCallback = acceptName;
+      cancelCallback = cancel;
+
+      off();
+      on('enter', accept, 'accept');
+      on('tab', cancel, 'cancel');
+      $input = $('<input>');
+      $('#navigate').append($input);
       $input.focus().on('keydown', _.debounce(update));
       update();
     };
@@ -157,6 +195,7 @@ function(log,   test,   keycode,   compiler){
     on: on,
     off: off,
     search: search,
+    choose: choose,
     trigger: trigger,
   };
 });

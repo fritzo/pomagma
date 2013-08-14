@@ -128,7 +128,7 @@ class Corpus:
 
     def insert(self, name, code):
         cursor = self.conn.execute(
-            'INSERT INTO lines (name, code) VALUES (?, ?, ?)',
+            'INSERT INTO lines (name, code) VALUES (?, ?)',
             (name, code))
         return cursor.lastrowid
         # FIXME at this point multiple clients may go out of sync
