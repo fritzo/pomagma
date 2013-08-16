@@ -2,7 +2,7 @@
 
 ## An Experiment in Extensional Programming.
 
-Pomagma is a programming environment for developing computational behaviors.
+Pomagma is a extensional programming environment for developing computational behaviors.
 Extensionality is the idea that two programs can be considered equal
 if their input-output pairs are all equal,
 in particular ignoring resource usage, run-time complexity, and space.
@@ -57,10 +57,10 @@ inside the untyped base language.
 
 Pomagma takes an extensional approach to quoting.
 Opposite to Kleene's intensional quoting convention,
-where codes `x` were considered intensional and were evaluated `{x}`
+where codes `x` are considered intensional and were evaluated `{x}`
 to produce functions, Pomagma's language treats codes `x` as
 extensional and requires quoting `{x}` to prevent evaluation.
-Moreover, if it is provable that `x = y`, then also `{x} = {y}`.
+Moreover if it is provable that `x = y`, then also `{x} = {y}`.
 In Pomagma, quoting serves to flatten the information ordering,
 rather than prevent evaluation.
 
@@ -91,33 +91,23 @@ is treated extensionally, and stored in "compiled" form.
 
 ## Installing
 
-### Front End
+The editor front end runs a local server,
+and can be run without the theorem-prover.
 
-If you don't have pip, first
-
+    # install using pip
     easy_install pip
-
-If you use virtualenv, first
-
     mkvirtualenv pomagma
     workon pomagma
-
-To install,
-
     git clone git@github.com:fritzo/pomagma
     cd pomagma
     pip install -r requirements.txt
     pip install -e .
 
-Then to run editor server,
-
+    # run the server
     python -m pomagma.editor serve
     chromium-browser http://localhost:34934 &
 
-### Back End
-
-The Pomagma back end currently targets Ubuntu 12.04 LTS.
-To install:
+The theorem-proving back end currently targets Ubuntu 12.04 LTS.
 
     git clone git@github.com:fritzo/pomagma
     cd pomagma
@@ -126,7 +116,7 @@ To install:
 
 ## Configuring
 
-To run a full system, pomagma needs Amazon AWS credentials, an S3 bucket,
+To run a distributed system, pomagma needs Amazon AWS credentials, an S3 bucket,
 an SWF domain, and optionally an email address to receive errors.
 These are specified by environment variables
  
