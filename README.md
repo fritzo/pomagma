@@ -22,15 +22,15 @@ But a key missing concept is the use of extensionality.
 Pomagma is an experiment to see how far extensionalty can be pushed.
 
 Pomagma is founded on a simple untyped pure functional programming language,
-the non-deterministic lambda-calculus [1],
+the non-deterministic &lambda;-calculus [1],
 and a "maximally-coarse" semantics [2] where as many programs as possible
 are considered equal.
 At the core of the Pomagma system is an equation prover
 that is used for verification and search/suggestion.
 
-### Language: the lambda-join-calculus
+### Language: the &lambda;-join-calculus
 
-The lambda-join-calculus is a lambda-calculus with a join operation,
+The &lambda;-join-calculus is a &lambda;-calculus with a join operation,
 written `x|y` indicating nondeterministic or concurrent choice.
 Nondeterminism allows one to specify what doesn't matter in a program:
 symmetry, order of decoupled operations, etc.
@@ -60,9 +60,19 @@ Opposite to Kleene's intensional quoting convention,
 where codes `x` are considered intensional and were evaluated `{x}`
 to produce functions, Pomagma's language treats codes `x` as
 extensional and requires quoting `{x}` to prevent evaluation.
-Moreover if it is provable that `x = y`, then also `{x} = {y}`.
+Moreover by consistently extending the &lambda;-join-calculus,
+we can achieve the rule: if it is provable that `x = y`, then also `{x} = {y}`.
 In Pomagma, quoting serves to flatten the information ordering,
-rather than prevent evaluation.
+rather than preserve intension.
+
+### Logical strength: predicative mathematics
+
+Pomagma consistently extends &lambda;-join-calculus with
+a partial equation-deciding oracle.
+This allows equations to be interpreted back into the language as terms.
+Iterating, we can thus write equations of strength all the way up the
+hyperarithmetic hierarchy to &Delta;<sub>1</sub><sup>1</sup>,
+and provide a foundation for all of Sol Feferman's predicative mathematics. 
 
 ### Code Format: a database of definitions and assertions
 
@@ -73,10 +83,14 @@ Each line is either a definition (an explicit declaration)
 or an assertion (an implicit declaration).
 All defined variables are globally visible.
 The behavior of a line of code as a function of its referenced global variables
-is treated extensionally, and stored in "compiled" form.
+is treated extensionally.
+Lines are stored in "compiled" form and are "decompiled" on the fly while editing.
+Multi-line views of code are also generated on the fly by querying the line database.
+(Contrast this with the archaic tree-of-files-of-lines-of-code format
+that this very repo is stored in.)
 
-- [1] the lambda-join-calculus in terms of Scott's information ordering.
-- [2] the lambda-theory H-star of observational equivalence. 
+- [1] the &lambda;-join-calculus in terms of Scott's information ordering.
+- [2] the &lambda;-theory H-star of observational equivalence. 
 - [3] ["Datatypes as Lattices"](http://www.cs.ox.ac.uk/files/3287/PRG05.pdf) -Dana Scott (1976)
 - [4] Pomagma began as a PhD [thesis](http://fritzo.org/thesis.pdf) and
     [codebase](http://github.com/fritzo/Johann).
