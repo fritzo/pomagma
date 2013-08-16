@@ -1,19 +1,85 @@
 # Pomagma
 
-An Extensional Development Environment.
+## An Experiment in Extensional Programming.
 
-Pomagma is an environment for developing computational behaviors.
-Computational behaviors can be though of
-either as mathematical properties of programs (ignoring runtime complexity)
-or as computationally-founded mathematical objects.
+Pomagma is a programming environment for developing computational behaviors.
+Extensionality is the idea that two programs can be considered equal
+if their input-output pairs are all equal,
+in particular ignoring resource usage, run-time complexity, and space.
+The opposite of extensionality is intensionality, the idea that programs
+should be considered equal only if they convey the same concept intended
+by the programmer.
+Modern programming is mired in far-too intensional practices,
+where incidental artifacts of code
+(whitespace, style, line order, local variable names, arbitrary imperitives)
+frustrate many actions that would be easier with an extensional view
+(code-search, verification, optimization, automatic parallelization).
+Better programming practice might start with
+syntax-directed editors, tools for code refactoring,
+purely functional and declarative languages,
+and precise type systems.
+But a key missing concept is the use of extensionality.
+Pomagma is an experiment to see how far extensionalty can be pushed.
 
-Pomagma uses the simplest model of computation,
-combinatory algebra (a <b>p</b>artially <b>o</b>rdered <b>magma</b>),
-and reasons with an elegantly simple semantic theory
-that is strong enough to serve as a foundation for mathematics.
+Pomagma is founded on a simple untyped pure functional programming language,
+the non-deterministic lambda-calculus [1],
+and a "maximally-coarse" semantics [2] where as many programs as possible
+are considered equal.
+At the core of the Pomagma system is an equation prover
+that is used for verification and search/suggestion.
 
-Pomagma began as a PhD [thesis](http://fritzo.org/thesis.pdf) and
-[codebase](http://github.com/fritzo/Johann).
+### Language: the lambda-join-calculus
+
+The lambda-join-calculus is a lambda-calculus with a join operation,
+written `x|y` indicating nondeterministic or concurrent choice.
+Nondeterminism allows one to specify what doesn't matter in a program:
+symmetry, order of decoupled operations, etc.
+
+### Semantics: observational equivalence
+
+Naively, two programs might be considered equal if their outputs agree at all inputs.
+However, in a space where programs can be applied to programs,
+and where programs may sometimes halt,
+one needs to define this equational semantics carefully by coinduction.
+It turns out to be be enough to say that two programs `x` and `y` are equal
+iff for every program `f`, `f x` halts iff `f y` halts.
+
+### Type System: nondeterministic polymorphism
+
+Pomagma provides a rich type system by simulating types within the base system.
+The first idea, due to Dana Scott [3], is to define a term `x` to have type `t`
+iff `x` is a fixed-point of `t`, i.e., `x:t` iff `t x = x`.
+The second idea, from [4], is to use the combination of non-determinism and
+observational equivalence to define higher-order polymorhic types `t`
+inside the untyped base language.
+
+### Reflection: extensional quoting
+
+Pomagma takes an extensional approach to quoting.
+Opposite to Kleene's intensional quoting convention,
+where codes `x` were considered intensional and were evaluated `{x}`
+to produce functions, Pomagma's language treats codes `x` as
+extensional and requires quoting `{x}` to prevent evaluation.
+Moreover, if it is provable that `x = y`, then also `{x} = {y}`.
+In Pomagma, quoting serves to flatten the information ordering,
+rather than prevent evaluation.
+
+### Code Format: a database of definitions and assertions
+
+Pomagma's coding interface minimizes intensional data.
+Rather than a file of lines of code,
+Pomagma stores a database of unordered lines of code.
+Each line is either a definition (an explicit declaration)
+or an assertion (an implicit declaration).
+All defined variables are globally visible.
+The behavior of a line of code as a function of its referenced global variables
+is treated extensionally, and stored in "compiled" form.
+
+- [1] the lambda-join-calculus in terms of Scott's information ordering.
+- [2] the lambda-theory H-star of observational equivalence. 
+- [3] ["Datatypes as Lattices"](http://www.cs.ox.ac.uk/files/3287/PRG05.pdf) -Dana Scott (1976)
+- [4] Pomagma began as a PhD [thesis](http://fritzo.org/thesis.pdf) and
+    [codebase](http://github.com/fritzo/Johann).
 
 ## Organization
 
