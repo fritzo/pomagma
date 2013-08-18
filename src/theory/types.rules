@@ -3,16 +3,16 @@
 LESS x APP U x   LESS COMP APP U x APP U x APP U x
 
 LESS COMP x x x         LESS APP f x x
----------------   ---------------------------
-EQUAL x APP U x   EQUAL APP APP U f x APP f x
+---------------   --------------------------
+LESS APP U x x    LESS APP APP U f x APP f x
 
 
 --------------   --------------   ----------------------------------
 LESS I APP V x   LESS x APP V x   EQUAL COMP APP V x APP V x APP V x
 
-EQUAL x COMP x x   LESS I x      LESS APP f x x
----------------------------   ---------------------
-     EQUAL x APP V x          EQUAL APP APP V f x x
+LESS COMP x x x   LESS I x      LESS APP f x x
+--------------------------   --------------------
+      LESS x APP V x         LESS APP APP V f x x
 
 
 ----------------------------------
@@ -25,9 +25,40 @@ EQUAL APP APP P x x APP V x   EQUAL APP APP P x y APP APP P y x
 EQUAL APP APP P x APP APP P y z APP APP P APP APP P x y z
 
 
+                         LESS x I            NLESS x I
+-----------------   -----------------   -------------------
+LESS I APP UNIT x   LESS APP UNIT x I   LESS TOP APP UNIT x
+
+     LESS APP f I x
+-----------------------
+LESS f APP APP C UNIT x
+
+
        LESS COMP r s I
 -----------------------------   ------------------------------
 LESS COMP APP CI r APP CI s A   LESS APP A f APP APP f TOP TOP
+
+# The UNIT-A rule below translates from lambda calculus
+#
+#   \a,b. f a b x [= \a,b. UNIT b*a x
+#   ---------------------------------
+#           A f x [= x
+#
+# where
+#
+#   \a,b. f a b x
+#     = \a. C (f a) x
+#     = C (B C f) x
+#     = APP APP C COMP C f x
+#
+#   \a,b. UNIT (CB a b) x
+#     = \a. C (B UNIT (CB a)) x
+#     = C C*(B UNIT)*CB x
+#     = APP APP C COMP C COMP APP B UNIT CB x
+
+LESS APP APP C COMP C f x APP APP C COMP C COMP APP B UNIT CB x
+---------------------------------------------------------------
+                     LESS APP APP A f x x
 
 
 # TODO get these to compile
