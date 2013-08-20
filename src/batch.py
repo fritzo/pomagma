@@ -186,6 +186,25 @@ def explore(theory, max_size=DEFAULT_SURVEY_SIZE, step_size=512, **options):
 
 
 @parsable.command
+def tmux_explore(theory):
+    '''
+    Start explorer in tmux session.
+    '''
+    work = '; '.join([
+        'ulimit -c unlimited',
+        'python -m pomagma.batch explore {}'.format(theory),
+    ])
+    survey_log = os.path.join(pomagma.util.DATA, 'atlas', theory, 'survey.log')
+    infer_log = os.path.join(pomagma.util.DATA, 'atlas', theory, 'infer.log')
+    subprocess.check_call([
+        'tmux', 'new-session', '-d', '-s', 'pomagma', work,
+        ';', 'split-window', '-d', 'tail -f {}'.format(survey_log),
+        ';', 'split-window', '-d', 'tail -f {}'.format(infer_log),
+        ';', 'select-layout', 'even-vertical',
+    ])
+
+
+@parsable.command
 def extend(theory, **options):
     '''
     Extend language of world map (only needed when language changes).
