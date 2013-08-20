@@ -2,11 +2,15 @@
 --------------   ---------------------------------
 LESS x APP U x   LESS COMP APP U x APP U x APP U x
 
-# TODO conclude EQUIVALENTLY EQUAL ...
-LESS COMP x x x         LESS APP f x x
----------------   --------------------------
-LESS APP U x x    LESS APP APP U f x APP f x
+# TODO simplify with EQUIVALENTLY
+LESS COMP x x x   LESS COMP x x x
+---------------   ---------------
+LESS APP U x x    EQUAL APP U x x
 
+# TODO simplify with EQUIVALENTLY
+      LESS APP f x x                LESS APP f x x
+--------------------------   ---------------------------
+LESS APP APP U f x APP f x   EQUAL APP APP U f x APP f x
 
 --------------   --------------   ----------------------------------
 LESS I APP V x   LESS x APP V x   EQUAL COMP APP V x APP V x APP V x
@@ -15,10 +19,10 @@ LESS COMP x x x   LESS I x   EQUAL COMP x x x   LESS I x
 --------------------------   ---------------------------
       LESS x APP V x               EQUAL x APP V x
 
-# TODO conclude EQUIVALENTLY EQUAL ...
-   LESS APP f x x
---------------------
-LESS APP APP V f x x
+# TODO simplify with EQUIVALENTLY
+   LESS APP f x x          LESS APP f x x
+--------------------   ---------------------
+LESS APP APP V f x x   EQUAL APP APP V f x x
 
 
 ----------------------------------
@@ -44,40 +48,37 @@ LESS f APP APP C UNIT x
 -----------------------------   ------------------------------
 LESS COMP APP CI r APP CI s A   LESS APP A f APP APP f TOP TOP
 
-# The UNIT-A rule below translates from lambda calculus
+# The UNIT-A rules below translates from lambda calculus
 #
 #   \a,b. f a b x [= \a,b. UNIT b*a x
 #   ---------------------------------
 #           A f x [= x
 #
-# where
+# where we choose simple forms with free variables f,x shallow in the trees
 #
 #   \a,b. f a b x
-#     = \a. C (f a) x
-#     = C (B C f) x
-#     = APP APP C COMP C f x
+#     = (\f,x,a,b. f a b x) f x
+#     = C*(B C) f x
+#     = APP APP COMP C APP B C f x
 #
-#   \a,b. UNIT (CB a b) x
-#     = \a. C (B UNIT (CB a)) x
-#     = C C*(B UNIT)*CB x
-#     = APP APP C COMP C COMP APP B UNIT CB x
+#   \a,b. UNIT b*a x
+#     = (\u,a,b. u b*a) (\ab. UNIT ab x)
+#     = (C B(C B I)*(C B))*B(C unit x)
+#     = APP COMP APP CB COMP APP CB I CB B APP APP C UNIT x
 #
-# or alternatively
+# or slightly more simply
 #
-#   \a,b. UNIT (CB a b) x
-#     = \a,b. C UNIT x (CB a b)
-#     = \a. B (C UNIT x) (CB a)
-#     = B*(C UNIT x)*CB
-#     = COMP APP B APP APP C UNIT x CB
+#   \a,b. UNIT b*a x
+#     = (\a,b. (\ab. UNIT ab x) b*a) 
+#     = COMP APP B APP APP C UNIT x COMP APP CB I CB
 
-# FIXME this is too complex to compile
-LESS APP APP C COMP C f x COMP APP B APP APP C UNIT x CB
---------------------------------------------------------
-                 LESS APP APP A f x x
+LESS APP APP COMP C APP B C f x COMP APP B APP APP C UNIT x COMP APP CB I CB
+----------------------------------------------------------------------------
+                           LESS APP APP A f x x
 
-LESS APP APP C COMP C f x COMP APP B APP APP C UNIT x CB
---------------------------------------------------------
-	     EQUAL APP APP V APP A f x x
+LESS APP APP COMP C APP B C f x COMP APP B APP APP C UNIT x COMP APP CB I CB
+----------------------------------------------------------------------------
+                        EQUAL APP APP V APP A f x x
 
 
 # TODO get these to compile
