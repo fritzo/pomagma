@@ -75,6 +75,8 @@ def get_negated(expr):
 @inputs(Expression)
 def as_antecedents(expr, bound):
     antecedents = set()
+    if expr.name == 'OPTIONALLY':
+        expr = expr.args[0]
     if expr.arity != 'Variable':
         atom = as_atom(expr)
         if not (atom.var in bound and all(arg in bound for arg in atom.args)):
@@ -149,15 +151,16 @@ def get_contrapositives(seq):
         seq_succedent = iter(seq.succedents).next()
         result = set()
         for antecedent in seq.antecedents:
-            antecedents = set_without(seq.antecedents, antecedent)
-            succedents = get_negated(antecedent)
-            for disjunct in get_negated(seq_succedent):
-                if get_negated(disjunct) & antecedents:
-                    pass  # contradiction
-                else:
-                    result.add(Sequent(
-                        set_with(antecedents, disjunct),
-                        succedents))
+            if antecedent.name != 'OPTIONALLY':
+                antecedents = set_without(seq.antecedents, antecedent)
+                succedents = get_negated(antecedent)
+                for disjunct in get_negated(seq_succedent):
+                    if get_negated(disjunct) & antecedents:
+                        pass  # contradiction
+                    else:
+                        result.add(Sequent(
+                            set_with(antecedents, disjunct),
+                            succedents))
         return result
     elif len(seq.succedents) > 1:
         TODO('allow multiple succedents')

@@ -12,12 +12,19 @@ LESS x x   LESS BOT x   LESS x TOP        EQUAL x y             LESS x z
 --------------------   ----------------------
 LESS APP f x APP g x   LESS COMP f x COMP g x
 
-# The NLESS hypotheses below are only optimizations to avoid constant functions
-# TODO optimize NLESS hypotheses with OPTIONALLY
+# The OPTIONALLY NLESS hypotheses below are only optimizations
+# to avoid constant functions.
 
-LESS x y   NLESS APP f TOP APP f BOT   LESS x y   NLESS APP f TOP APP f BOT
-------------------------------------   ------------------------------------
-        LESS APP f x APP f y                  LESS COMP f x COMP f y
+              LESS x y
+OPTIONALLY NLESS APP f TOP APP f BOT
+------------------------------------
+        LESS APP f x APP f y
+
+              LESS x y
+OPTIONALLY NLESS APP f TOP APP f BOT
+------------------------------------
+       LESS COMP f x COMP f y
+
 
 ----------------------
 LESS APP f BOT APP Y f
