@@ -90,6 +90,9 @@ class Expression(object):
     def is_rel(self):
         return signature.is_rel(self.name)
 
+    def is_con(self):
+        return signature.is_con(self.name)
+
     def substitute(self, var, defn):
         assert isinstance(var, Expression)
         assert isinstance(defn, Expression)

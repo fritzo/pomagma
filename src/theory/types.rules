@@ -2,17 +2,27 @@
 --------------   ---------------------------------
 LESS x APP U x   LESS COMP APP U x APP U x APP U x
 
-LESS COMP x x x         LESS APP f x x
----------------   ---------------------------
-EQUAL x APP U x   EQUAL APP APP U f x APP f x
+# TODO simplify with EQUIVALENTLY
+LESS COMP x x x   LESS COMP x x x
+---------------   ---------------
+LESS APP U x x    EQUAL APP U x x
 
+# TODO simplify with EQUIVALENTLY
+      LESS APP f x x                LESS APP f x x
+--------------------------   ---------------------------
+LESS APP APP U f x APP f x   EQUAL APP APP U f x APP f x
 
 --------------   --------------   ----------------------------------
 LESS I APP V x   LESS x APP V x   EQUAL COMP APP V x APP V x APP V x
 
-EQUAL x COMP x x   LESS I x      LESS APP f x x
----------------------------   ---------------------
-     EQUAL x APP V x          EQUAL APP APP V f x x
+LESS COMP x x x   LESS I x   EQUAL COMP x x x   LESS I x
+--------------------------   ---------------------------
+      LESS x APP V x               EQUAL x APP V x
+
+# TODO simplify with EQUIVALENTLY
+   LESS APP f x x          LESS APP f x x
+--------------------   ---------------------
+LESS APP APP V f x x   EQUAL APP APP V f x x
 
 
 ----------------------------------
@@ -25,9 +35,50 @@ EQUAL APP APP P x x APP V x   EQUAL APP APP P x y APP APP P y x
 EQUAL APP APP P x APP APP P y z APP APP P APP APP P x y z
 
 
+                         LESS x I            NLESS x I
+-----------------   -----------------   -------------------
+LESS I APP UNIT x   LESS APP UNIT x I   LESS TOP APP UNIT x
+
+     LESS APP f I x
+-----------------------
+LESS f APP APP C UNIT x
+
+
        LESS COMP r s I
 -----------------------------   ------------------------------
 LESS COMP APP CI r APP CI s A   LESS APP A f APP APP f TOP TOP
+
+# The UNIT-A rules below translates from lambda calculus
+#
+#   \a,b. f a b x [= \a,b. UNIT b*a x
+#   ---------------------------------
+#           A f x [= x
+#
+# where we choose simple forms with free variables f,x shallow in the trees
+#
+#   \a,b. f a b x
+#     = (\f,x,a,b. f a b x) f x
+#     = C*(B C) f x
+#     = APP APP COMP C APP B C f x
+#
+#   \a,b. UNIT b*a x
+#     = (\u,a,b. u b*a) (\ab. UNIT ab x)
+#     = (C B(C B I)*(C B))*B(C unit x)
+#     = APP COMP APP CB COMP APP CB I CB B APP APP C UNIT x
+#
+# or slightly more simply
+#
+#   \a,b. UNIT b*a x
+#     = (\a,b. (\ab. UNIT ab x) b*a) 
+#     = COMP APP B APP APP C UNIT x COMP APP CB I CB
+
+LESS APP APP COMP C APP B C f x COMP APP B APP APP C UNIT x COMP APP CB I CB
+----------------------------------------------------------------------------
+                           LESS APP APP A f x x
+
+LESS APP APP COMP C APP B C f x COMP APP B APP APP C UNIT x COMP APP CB I CB
+----------------------------------------------------------------------------
+                        EQUAL APP APP V APP A f x x
 
 
 # TODO get these to compile

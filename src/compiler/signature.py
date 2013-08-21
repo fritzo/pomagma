@@ -9,6 +9,8 @@ NARGS_TABLE = {
     'BinaryFunction': 2,
     'SymmetricFunction': 2,
     'Variable': 0,
+    'UnaryConnective': 1,
+    'BinaryConnective': 2,
 }
 
 ARITY_TABLE = {
@@ -21,20 +23,25 @@ ARITY_TABLE = {
     'COMP': 'BinaryFunction',
     'JOIN': 'SymmetricFunction',
     'RAND': 'SymmetricFunction',
+    'OPTIONALLY': 'UnaryConnective',
+    'EQUIVALENTLY': 'BinaryConnective',
 }
-
 
 RELATION_ARITIES = frozenset([
     'Equation',
     'BinaryRelation',
 ])
 
-
 FUNCTION_ARITIES = frozenset([
     'NullaryFunction',
     'InjectiveFunction',
     'BinaryFunction',
     'SymmetricFunction',
+])
+
+CONNECTIVE_ARITIES = frozenset([
+    'UnaryConnective',
+    'BinaryConnective',
 ])
 
 
@@ -58,6 +65,10 @@ def is_fun(symbol):
 
 def is_rel(symbol):
     return get_arity(symbol) in RELATION_ARITIES
+
+
+def is_con(symbol):
+    return get_arity(symbol) in CONNECTIVE_ARITIES
 
 
 def get_arity(symbol):

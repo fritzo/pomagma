@@ -349,11 +349,14 @@ def clean(theory):
     '''
     Remove all work for given theory. DANGER
     '''
-    print 'Clearing {} Are you sure? [Y/n]'.format(theory),
+    print 'Clearing {} Are you sure? [y/N]'.format(theory),
     if raw_input().lower()[:1] == 'y':
+        print 'OK, clearing.'
         path = os.path.join(pomagma.util.DATA, 'atlas', theory)
         if os.path.exists(path):
             shutil.rmtree(path)
+    else:
+        print 'OK, not clearing.'
 
 
 if __name__ == '__main__':

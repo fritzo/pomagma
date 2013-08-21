@@ -110,6 +110,49 @@ public:
     }
 };
 
+class Intersection4
+{
+    const size_t m_word_dim;
+    const std::atomic<Word> * const m_words1;
+    const std::atomic<Word> * const m_words2;
+    const std::atomic<Word> * const m_words3;
+    const std::atomic<Word> * const m_words4;
+
+public:
+
+    Intersection4 (
+            size_t item_dim,
+            const std::atomic<Word> * words1,
+            const std::atomic<Word> * words2,
+            const std::atomic<Word> * words3,
+            const std::atomic<Word> * words4)
+        : m_word_dim(items_to_words(item_dim)),
+          m_words1(words1),
+          m_words2(words2),
+          m_words3(words3),
+          m_words4(words4)
+    {
+        POMAGMA_ASSERT4(m_words1, "constructed Intersection4 with null words1");
+        POMAGMA_ASSERT4(m_words2, "constructed Intersection4 with null words2");
+        POMAGMA_ASSERT4(m_words3, "constructed Intersection4 with null words3");
+        POMAGMA_ASSERT4(m_words4, "constructed Intersection4 with null words4");
+    }
+
+    size_t word_dim () const { return m_word_dim; }
+    bool get_bit (size_t pos) const
+    {
+        Word mask = Word(1) << (pos & WORD_POS_MASK);
+        return mask & get_word(pos >> WORD_POS_SHIFT);
+    }
+    Word get_word (size_t quot) const
+    {
+        return m_words1[quot].load(relaxed)
+             & m_words2[quot].load(relaxed)
+             & m_words3[quot].load(relaxed)
+             & m_words4[quot].load(relaxed);
+    }
+};
+
 template<class Set>
 class SetIterator
 {
@@ -276,9 +319,14 @@ public:
     struct Iterator;
     struct Iterator2;
     struct Iterator3;
+    struct Iterator4;
     Iterator iter () const;
     Iterator2 iter_insn (const DenseSet & other) const;
     Iterator3 iter_insn (const DenseSet & set2, const DenseSet & set3) const;
+    Iterator4 iter_insn (
+            const DenseSet & set2,
+            const DenseSet & set3,
+            const DenseSet & set4) const;
 
 private:
 
@@ -361,6 +409,20 @@ struct DenseSet::Iterator3 : SetIterator<Intersection3>
     }
 };
 
+struct DenseSet::Iterator4 : SetIterator<Intersection4>
+{
+    Iterator4 (
+            size_t item_dim,
+            const std::atomic<Word> * words1,
+            const std::atomic<Word> * words2,
+            const std::atomic<Word> * words3,
+            const std::atomic<Word> * words4)
+        : SetIterator<Intersection4>(
+                Intersection4(item_dim, words1, words2, words3, words4))
+    {
+    }
+};
+
 inline DenseSet::Iterator DenseSet::iter () const
 {
     return Iterator(m_item_dim, m_words);
@@ -376,6 +438,19 @@ inline DenseSet::Iterator3 DenseSet::iter_insn (
         const DenseSet & set3) const
 {
     return Iterator3(m_item_dim, m_words, set2.m_words, set3.m_words);
+}
+
+inline DenseSet::Iterator4 DenseSet::iter_insn (
+        const DenseSet & set2,
+        const DenseSet & set3,
+        const DenseSet & set4) const
+{
+    return Iterator4(
+            m_item_dim,
+            m_words,
+            set2.m_words,
+            set3.m_words,
+            set4.m_words);
 }
 
 } // namespace concurrent

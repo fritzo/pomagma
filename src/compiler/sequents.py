@@ -22,6 +22,10 @@ class Sequent(object):
     def succedents(self):
         return self._succedents
 
+    @property
+    def optional(self):
+        return all(s.name == 'OPTIONALLY' for s in self.succedents)
+
     def __hash__(self):
         return self._hash
 
@@ -33,6 +37,9 @@ class Sequent(object):
         return '{0} |- {1}'.format(
             ', '.join(map(str, self.antecedents)),
             ', '.join(map(str, self.succedents)))
+
+    def __repr__(self):
+        return 'Sequent({0})'.format(self)
 
     def ascii(self, indent=0):
         top = '   '.join(map(str, self.antecedents))
@@ -75,6 +82,8 @@ def get_negated(expr):
 @inputs(Expression)
 def as_antecedents(expr, bound):
     antecedents = set()
+    if expr.name == 'OPTIONALLY':
+        expr = expr.args[0]
     if expr.arity != 'Variable':
         atom = as_atom(expr)
         if not (atom.var in bound and all(arg in bound for arg in atom.args)):
@@ -110,10 +119,12 @@ def get_pointed(seq):
     '''
     Return a set of sequents each with a single succedent.
     '''
+    result = set()
     if len(seq.succedents) == 1:
-        return set([seq])
-    if len(seq.succedents) > 1:
-        result = set()
+        for succedent in seq.succedents:
+            if succedent.name != 'OPTIONALLY':
+                result.add(seq)
+    elif len(seq.succedents) > 1:
         for succedent in seq.succedents:
             remaining = set_without(seq.succedents, succedent)
             negated = union(map(get_negated, remaining))
@@ -122,9 +133,9 @@ def get_pointed(seq):
             if not (negated & neg_neg):
                 antecedents = seq.antecedents | negated
                 result.add(Sequent(antecedents, set([succedent])))
-        return result
     else:
         TODO('allow empty succedents')
+    return result
 
 
 @inputs(Sequent)
@@ -149,15 +160,16 @@ def get_contrapositives(seq):
         seq_succedent = iter(seq.succedents).next()
         result = set()
         for antecedent in seq.antecedents:
-            antecedents = set_without(seq.antecedents, antecedent)
-            succedents = get_negated(antecedent)
-            for disjunct in get_negated(seq_succedent):
-                if get_negated(disjunct) & antecedents:
-                    pass  # contradiction
-                else:
-                    result.add(Sequent(
-                        set_with(antecedents, disjunct),
-                        succedents))
+            if antecedent.name != 'OPTIONALLY':
+                antecedents = set_without(seq.antecedents, antecedent)
+                succedents = get_negated(antecedent)
+                for disjunct in get_negated(seq_succedent):
+                    if get_negated(disjunct) & antecedents:
+                        pass  # contradiction
+                    else:
+                        result.add(Sequent(
+                            set_with(antecedents, disjunct),
+                            succedents))
         return result
     elif len(seq.succedents) > 1:
         TODO('allow multiple succedents')
@@ -171,6 +183,8 @@ def normalize(seq, bound=set()):
     Return a set of normal sequents, closed under contrapositive.
     Atoms whose every variable is bound are excluded from antecedents.
     '''
+    if seq.optional:
+        return set()
     result = get_atomic(seq, bound)
     for contra in get_contrapositives(seq):
         result |= get_atomic(contra, bound)

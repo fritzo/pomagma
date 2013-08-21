@@ -271,6 +271,8 @@ def iter_closure_permutations(expr):
 
 @inputs(Expression)
 def iter_closures(expr):
+    if expr.name == 'OPTIONALLY':
+        expr = expr.args[0]
     try:
         assert expr.is_rel(), expr
         lhs, rhs = expr.args

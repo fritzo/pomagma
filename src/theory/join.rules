@@ -1,5 +1,15 @@
 # join
-# by implementation, EQUAL JOIN x y JOIN y x
+
+# By implementation, EQUAL JOIN x y JOIN y x, so forward-chaining inference
+# rules are unnecessary; however the Hindley-style extensional closure facts
+# are important and forward-chaining inference is cheap, so we add the rule
+# anyway.
+
+----------------------------------
+OPTIONALLY EQUAL JOIN x y JOIN y x
+
+-------------------------------------
+EQUAL JOIN JOIN x y z JOIN x JOIN y z
 
                   LESS x z   LESS y z
 ---------------   -------------------

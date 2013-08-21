@@ -303,6 +303,9 @@ class Ensure(Strategy):
 @inputs(Sequent)
 def compile_full(seq):
     results = []
+    if seq.optional:
+        logger('skipped optional rule {0}'.format(seq))
+        return results
     for part in normalize(seq):
         context = set()
         bound = set()
@@ -316,6 +319,9 @@ def compile_full(seq):
 @inputs(Sequent)
 def get_events(seq):
     events = set()
+    if seq.optional:
+        logger('skipped optional rule {0}'.format(seq))
+        return events
     free_vars = seq.vars
     for sequent in normalize(seq):
         for antecedent in sequent.antecedents:

@@ -8,13 +8,15 @@ EQUAL APP TOP x TOP   EQUAL COMP TOP x TOP
 --------   ----------   ----------   -------------------   -------------------
 LESS x x   LESS BOT x   LESS x TOP        EQUAL x y             LESS x z
 
-      LESS x y               LESS f g
---------------------   --------------------
-LESS APP f x APP f y   LESS APP f x APP g x
 
-       LESS x y                 LESS f g
+      LESS f g               LESS x y
+--------------------   --------------------
+LESS APP f x APP g x   LESS APP f x APP f y
+
+       LESS f g                 LESS x y
 ----------------------   ----------------------
-LESS COMP f x COMP f y   LESS COMP f x COMP g x
+LESS COMP f x COMP g x   LESS COMP f x COMP f y
+
 
 ----------------------
 LESS APP f BOT APP Y f
