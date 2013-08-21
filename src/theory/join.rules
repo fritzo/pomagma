@@ -5,8 +5,11 @@
 # are important and forward-chaining inference is cheap, so we add the rule
 # anyway.
 
------------------------   -------------------------------------
-EQUAL JOIN x y JOIN y x   EQUAL JOIN JOIN x y z JOIN x JOIN y z
+----------------------------------
+OPTIONALLY EQUAL JOIN x y JOIN y x
+
+-------------------------------------
+EQUAL JOIN JOIN x y z JOIN x JOIN y z
 
                   LESS x z   LESS y z
 ---------------   -------------------
