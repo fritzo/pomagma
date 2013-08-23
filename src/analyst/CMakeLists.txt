@@ -3,6 +3,7 @@ include_directories(${CMAKE_SOURCE_DIR}/)
 
 add_library(pomagma_analyst SHARED
 	simplify.cpp
+	approximate.cpp
 	)
 set(POMAGMA_THEORIST_LIBS
 	pomagma_analyst
