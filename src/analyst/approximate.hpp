@@ -34,8 +34,6 @@ struct Approximation
           lower(std::move(other.lower))
     {}
     Approximation (const Approximation &) = delete;
-
-    void validate () const;
 };
 
 class Approximator : noncopyable
@@ -54,7 +52,6 @@ public:
     }
 
     void validate (const Approximation & approx);
-    void close (Approximation & approx);
 
     Approximation find (
             const NullaryFunction & fun);
@@ -75,6 +72,8 @@ public:
     Trool is_bot (const Approximation & approx);
 
 private:
+
+    void close (Approximation & approx);
 
     const size_t m_item_dim;
     const Ob m_top;
