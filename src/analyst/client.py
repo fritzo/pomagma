@@ -16,7 +16,7 @@ class Client(object):
         simplify_request = request.simplify_request.add()
         for code in codes:
             simplify_request.add(code)
-        self.socket.send(request.toByteArray, 0)
+        self.socket.send(request.toByteArray(), 0)
         raise NotImplementedError('TODO get response')
 
     def validate(self, lines):
