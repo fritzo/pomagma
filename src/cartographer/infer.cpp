@@ -347,11 +347,12 @@ size_t infer_equal (Structure & structure)
 
 size_t infer (Structure & structure)
 {
-    return
-        infer_const(structure) +
-        infer_nless(structure) +
-        infer_less(structure) +
-        infer_equal(structure);
+    size_t decision_count = 0;
+    decision_count += infer_const(structure);
+    decision_count += infer_nless(structure);
+    decision_count += infer_less(structure);
+    decision_count += infer_equal(structure);
+    return decision_count;
 }
 
 } // namespace pomagma
