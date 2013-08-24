@@ -92,6 +92,19 @@ void Approximator::close (Approximation & approx)
         Ob rhs = * iter;
         approx.lower += m_less.get_Rx_set(rhs);
     }
+    for (auto iter = approx.lower.iter(); iter.ok(); iter.next()) {
+        Ob lhs = * iter;
+        for (auto iter = m_join.get_Lx_set(lhs).iter_insn(approx.lower);
+            iter.ok(); iter.next())
+        {
+            Ob rhs = * iter;
+            if (rhs >= lhs) {
+                break;
+            }
+            Ob val = m_join.find(lhs, rhs);
+            approx.lower.insert(val);
+        }
+    }
     approx.lower.insert(m_bot);
 }
 
@@ -142,6 +155,11 @@ Approximation Approximator::find (
 {
     if (Ob ob = lhs.ob and rhs.ob ? fun.find(lhs.ob, rhs.ob) : 0) {
         return Approximation(ob, m_less);
+    } else if (& fun == & m_join) {
+        Approximation val(m_item_dim, m_top, m_bot);
+        val.upper.set_insn(lhs.upper, rhs.upper);
+        val.lower.set_union(lhs.lower, rhs.lower);
+        return val;
     } else {
         Approximation val(m_item_dim, m_top, m_bot);
         map(fun, lhs.upper, rhs.upper, val.upper);

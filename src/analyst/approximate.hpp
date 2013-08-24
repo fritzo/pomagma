@@ -44,6 +44,7 @@ public:
         : m_item_dim(structure.carrier().item_dim()),
           m_top(structure.nullary_function("TOP").find()),
           m_bot(structure.nullary_function("BOT").find()),
+          m_join(structure.symmetric_function("JOIN")),
           m_less(structure.binary_relation("LESS")),
           m_nless(structure.binary_relation("NLESS"))
     {
@@ -78,6 +79,7 @@ private:
     const size_t m_item_dim;
     const Ob m_top;
     const Ob m_bot;
+    const SymmetricFunction & m_join;
     const BinaryRelation & m_less;
     const BinaryRelation & m_nless;
 };
