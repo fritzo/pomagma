@@ -9,7 +9,7 @@ public:
 
     Server (Structure & structure, const char * language_file);
 
-    void serve ();
+    void serve (int port);
 
 private:
 

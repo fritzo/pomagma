@@ -1,6 +1,9 @@
 #include "server.hpp"
+#include "simplify.hpp"
+#include "approximate.hpp"
 #include <pomagma/macrostructure/router.hpp>
 #include <pomagma/language/language.hpp>
+#include <zmq.hpp>
 
 namespace pomagma
 {
@@ -13,9 +16,23 @@ Server::Server (Structure & structure, const char * language_file)
     m_routes = router.find_routes();
 }
 
-void Server::serve ()
+void Server::serve (int port)
 {
-    POMAGMA_ERROR("TODO implement server");
+    zmq::context_t context(1);
+    zmq::socket_t socket(context, ZMQ_REQ);
+    std::ostringstream address;
+    address << "tcp://*:" << port;
+    socket.bind(address.str().c_str());
+
+    while (true) {
+        zmq::message_t request;
+        socket.recv(& request);
+        POMAGMA_DEBUG("receive request");
+
+        zmq::message_t reply(4);
+        memcpy((void *) reply.data(), "test", 4);
+        socket.send(reply);
+    }
 }
 
 } // namespace pomagma
