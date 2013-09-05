@@ -7,6 +7,7 @@ from pomagma.compiler.sequents import Sequent
 I = Expression('I')
 K = Expression('K')
 J = Expression('J')
+R = Expression('R')
 B = Expression('B')
 C = Expression('C')
 W = Expression('W')
@@ -16,6 +17,7 @@ TOP = Expression('TOP')
 APP = lambda x, y: Expression('APP', x, y)
 COMP = lambda x, y: Expression('COMP', x, y)
 JOIN = lambda x, y: Expression('JOIN', x, y)
+RAND = lambda x, y: Expression('RAND', x, y)
 
 
 class AbstractionFailed(Exception):
@@ -87,6 +89,22 @@ def abstract(self, var):
                     return APP(J, lhs)
                 else:
                     return COMP(APP(J, lhs), rhs.abstract(var))
+        elif name == 'RAND':
+            # K-compose-eta abstraction
+            lhs, rhs = self.args
+            if var in lhs.vars:
+                if var in rhs.vars:
+                    return RAND(lhs.abstract(var), rhs.abstract(var))
+                elif lhs == var:
+                    return APP(R, rhs)
+                else:
+                    return COMP(APP(R, rhs), lhs.abstract(var))
+            else:
+                assert var in rhs.vars
+                if rhs == var:
+                    return APP(R, lhs)
+                else:
+                    return COMP(APP(R, lhs), rhs.abstract(var))
         else:
             raise AbstractionFailed
     elif self.is_rel():
@@ -164,7 +182,7 @@ def head_normalize(expr, *args):
             return head_normalize(C, I, *args)
         elif name == 'CB':
             return head_normalize(C, B, *args)
-        elif name in ['Y', 'J', 'JOIN', 'U', 'V', 'P', 'A']:
+        elif name in ['Y', 'J', 'JOIN', 'R', 'RAND', 'U', 'V', 'P', 'A']:
             raise SkipValidation
         else:
             raise TODO('head normalize %s expressions' % name)

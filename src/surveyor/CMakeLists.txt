@@ -115,6 +115,47 @@ target_link_libraries(skj.survey
 	${POMAGMA_SURVEYOR_LIBS})
 
 add_custom_command(
+	OUTPUT ${CMAKE_CURRENT_LIST_DIR}/skrj.theory.cpp
+		${SRC_DIR}/theory/skrj.compiled
+	COMMAND python ${SRC_DIR}/compiler/run.py compile
+		${SRC_DIR}/theory/sk.rules
+		${SRC_DIR}/theory/order.rules
+		${SRC_DIR}/theory/join.rules
+		${SRC_DIR}/theory/rand.rules
+		${SRC_DIR}/theory/types.rules
+		${SRC_DIR}/theory/sk.facts
+		${SRC_DIR}/theory/order.facts
+		${SRC_DIR}/theory/types.facts
+		cpp_out=${CMAKE_CURRENT_LIST_DIR}/skrj.theory.cpp
+		theory_out=${SRC_DIR}/theory/skrj.compiled
+	DEPENDS ${SRC_DIR}/compiler/util.py
+		${SRC_DIR}/compiler/expressions.py
+		${SRC_DIR}/compiler/sequents.py
+		${SRC_DIR}/compiler/parser.py
+		${SRC_DIR}/compiler/extensional.py
+		${SRC_DIR}/compiler/compiler.py
+		${SRC_DIR}/compiler/cpp.py
+		${SRC_DIR}/compiler/run.py
+		${SRC_DIR}/theory/sk.rules
+		${SRC_DIR}/theory/order.rules
+		${SRC_DIR}/theory/join.rules
+		${SRC_DIR}/theory/rand.rules
+		${SRC_DIR}/theory/types.rules
+		${SRC_DIR}/theory/sk.facts
+		${SRC_DIR}/theory/order.facts
+		${SRC_DIR}/theory/types.facts
+	)
+add_library(pomagma_surveyor_skrj SHARED skrj.theory.cpp)
+add_executable(skrj.init init_main.cpp)
+target_link_libraries(skrj.init
+	pomagma_surveyor_skrj
+	${POMAGMA_SURVEYOR_LIBS})
+add_executable(skrj.survey survey_main.cpp)
+target_link_libraries(skrj.survey
+	pomagma_surveyor_skrj
+	${POMAGMA_SURVEYOR_LIBS})
+
+add_custom_command(
 	OUTPUT ${CMAKE_CURRENT_LIST_DIR}/skjo.theory.cpp
 		${SRC_DIR}/theory/skjo.compiled
 	COMMAND python ${SRC_DIR}/compiler/run.py compile

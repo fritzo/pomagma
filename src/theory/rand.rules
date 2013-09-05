@@ -1,11 +1,25 @@
 # random choice
-# by implementation, EQUAL RAND x y RAND y x
+
+# By implementation, EQUAL RAND x y RAND y x, so forward-chaining inference
+# rules are unnecessary; however the Hindley-style extensional closure facts
+# are important and forward-chaining inference is cheap, so we add the rule
+# anyway.
+
+----------------------------------
+OPTIONALLY EQUAL RAND x y RAND y x
 
 ----------------------------   ----------------
 EQUAL RAND x y APP APP R x y   EQUAL x RAND x x
 
 --------------------------------------------
 EQUAL RAND x RAND y z RAND RAND x y RAND x z
+
+--------------------------------------------
+EQUAL RAND x JOIN y z JOIN RAND x y RAND x z
+
+LESS x z   LESS y z   LESS x y   LESS x z
+-------------------   -------------------
+  LESS RAND x y z       LESS x RAND y z
 
 -----------------------------------------
 EQUAL APP RAND f g x RAND APP f x APP g x
@@ -15,10 +29,6 @@ EQUAL COMP RAND f g x RAND COMP f x COMP g x
 
 --------------------------------------------
 EQUAL RAND x RAND y z RAND RAND x y RAND x z
-
-LESS x z   LESS y z   LESS x y   LESS x z
--------------------   -------------------
-  LESS RAND x y z       LESS x RAND y z
 
 -----------------------------------------
 EQUAL APP K RAND x y RAND APP K x APP K y

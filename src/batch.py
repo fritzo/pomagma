@@ -267,7 +267,7 @@ def theorize(theory, **options):
 
 
 @parsable.command
-def profile(theory='skj', size_blocks=3, dsize_blocks=0, **options):
+def profile(theory, size_blocks=3, dsize_blocks=0, **options):
     '''
     Profile surveyor through callgrind on random region of world.
     Inputs: theory, region size in blocks (1 block = 512 obs)
@@ -310,7 +310,7 @@ def sparse_range(min_size, max_size):
 
 
 @parsable.command
-def trim_regions(theory='skj', **options):
+def trim_regions(theory, **options):
     '''
     Trim a set of regions for testing on small machines.
     '''

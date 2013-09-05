@@ -3,8 +3,8 @@ from pomagma.compiler import run
 from pomagma.compiler.util import find_rules
 from pomagma.compiler.extensional import (
     Expression,
-    APP, COMP, JOIN,
-    I, K, B, C, W, S, J,
+    APP, COMP, JOIN, RAND,
+    I, K, B, C, W, S, J, R,
     iter_subsets,
     iter_eta_substitutions,
     iter_closure_maps,
@@ -38,6 +38,12 @@ def test_abstraction():
     assert_equal(lam(z, JOIN(APP(x, z), y)), COMP(APP(J, y), x))
     assert_equal(lam(y, JOIN(x, y)), APP(J, x))
     assert_equal(lam(x, JOIN(x, y)), APP(J, y))
+
+    assert_equal(lam(z, RAND(APP(x, z), APP(y, z))), RAND(x, y))
+    assert_equal(lam(z, RAND(x, APP(y, z))), COMP(APP(R, x), y))
+    assert_equal(lam(z, RAND(APP(x, z), y)), COMP(APP(R, y), x))
+    assert_equal(lam(y, RAND(x, y)), APP(R, x))
+    assert_equal(lam(x, RAND(x, y)), APP(R, y))
 
 
 def test_iter_subsets():

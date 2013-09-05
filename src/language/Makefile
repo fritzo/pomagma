@@ -1,5 +1,5 @@
 
-all: language_pb2.py h4.language sk.language skj.language
+all: language_pb2.py h4.language sk.language skj.language skrj.language
 
 language_pb2.py: language.proto
 	protoc language.proto --python_out=. --cpp_out=.
@@ -9,6 +9,9 @@ sk.json: sk.py
 
 skj.json: skj.py
 	python skj.py
+
+skrj.json: skrj.py
+	python skrj.py
 
 %.language: %.json run.py language_pb2.py __init__.py
 	python run.py compile $< $@

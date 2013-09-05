@@ -23,6 +23,8 @@ sk-test: all set-ulimit FORCE
 	POMAGMA_DEBUG= python -m pomagma batch-test sk
 skj-test: all set-ulimit FORCE
 	POMAGMA_DEBUG= python -m pomagma batch-test skj
+skrj-test: all set-ulimit FORCE
+	POMAGMA_DEBUG= python -m pomagma batch-test skrj
 test: all set-ulimit FORCE
 	POMAGMA_DEBUG= python -m pomagma unit-test
 	POMAGMA_DEBUG= python -m pomagma batch-test
@@ -33,6 +35,8 @@ sk: all
 	python -m pomagma.batch make sk
 skj: all
 	python -m pomagma.batch make skj
+skrj: all
+	python -m pomagma.batch make skrj
 
 python-libs:
 	@$(MAKE) -C src/language all
