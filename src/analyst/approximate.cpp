@@ -74,8 +74,22 @@ void Approximator::validate (const Approximation & approx)
 
 void Approximator::close (Approximation & approx)
 {
+    for (size_t iter = 0;; ++iter) {
+        POMAGMA_DEBUG("close step " << iter);
+        if (try_close(approx)) {
+            return;
+        }
+    }
+}
+
+bool Approximator::try_close (Approximation & approx)
+{
     POMAGMA_ASSERT_EQ(approx.lower.item_dim(), m_item_dim);
     POMAGMA_ASSERT_EQ(approx.upper.item_dim(), m_item_dim);
+
+    Approximation start(m_item_dim, m_top, m_bot);
+    start = approx;
+    DenseSet set(m_item_dim);
 
     if (approx.ob) {
         approx.upper.insert(approx.ob);
@@ -83,29 +97,54 @@ void Approximator::close (Approximation & approx)
     }
 
     for (auto iter = approx.upper.iter(); iter.ok(); iter.next()) {
-        Ob lhs = * iter;
-        approx.upper += m_less.get_Lx_set(lhs);
+        Ob ob = * iter;
+        approx.upper += m_less.get_Lx_set(ob);
+
+        if (m_rand) {
+            set.set_insn(approx.upper, m_rand->get_Lx_set(ob));
+            for (auto iter = set.iter(); iter.ok(); iter.next()) {
+                Ob other = * iter;
+                if (other >= ob) {
+                    break;
+                }
+                Ob val = m_rand->find(ob, other);
+                approx.upper.insert(val);
+            }
+        }
     }
     approx.upper.insert(m_top);
 
     for (auto iter = approx.lower.iter(); iter.ok(); iter.next()) {
-        Ob rhs = * iter;
-        approx.lower += m_less.get_Rx_set(rhs);
-    }
-    for (auto iter = approx.lower.iter(); iter.ok(); iter.next()) {
-        Ob lhs = * iter;
-        for (auto iter = m_join.get_Lx_set(lhs).iter_insn(approx.lower);
-            iter.ok(); iter.next())
-        {
-            Ob rhs = * iter;
-            if (rhs >= lhs) {
-                break;
+        Ob ob = * iter;
+        approx.lower += m_less.get_Rx_set(ob);
+
+        if (m_join) {
+            set.set_insn(approx.lower, m_join->get_Lx_set(ob));
+            for (auto iter = set.iter(); iter.ok(); iter.next()) {
+                Ob other = * iter;
+                if (other >= ob) {
+                    break;
+                }
+                Ob val = m_join->find(ob, other);
+                approx.lower.insert(val);
             }
-            Ob val = m_join.find(lhs, rhs);
-            approx.lower.insert(val);
+        }
+
+        if (m_rand) {
+            set.set_insn(approx.lower, m_rand->get_Lx_set(ob));
+            for (auto iter = set.iter(); iter.ok(); iter.next()) {
+                Ob other = * iter;
+                if (other >= ob) {
+                    break;
+                }
+                Ob val = m_rand->find(ob, other);
+                approx.lower.insert(val);
+            }
         }
     }
     approx.lower.insert(m_bot);
+
+    return approx == start;
 }
 
 Approximation Approximator::find (
@@ -155,7 +194,7 @@ Approximation Approximator::find (
 {
     if (Ob ob = lhs.ob and rhs.ob ? fun.find(lhs.ob, rhs.ob) : 0) {
         return Approximation(ob, m_less);
-    } else if (& fun == & m_join) {
+    } else if (& fun == m_join) {
         Approximation val(m_item_dim, m_top, m_bot);
         val.upper.set_insn(lhs.upper, rhs.upper);
         val.lower.set_union(lhs.lower, rhs.lower);

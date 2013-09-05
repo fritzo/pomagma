@@ -34,6 +34,13 @@ struct Approximation
           lower(std::move(other.lower))
     {}
     Approximation (const Approximation &) = delete;
+
+    bool operator== (const Approximation & other)
+    {
+        return ob == other.ob
+            and upper == other.upper
+            and lower == other.lower;
+    }
 };
 
 class Approximator : noncopyable
@@ -44,9 +51,10 @@ public:
         : m_item_dim(structure.carrier().item_dim()),
           m_top(structure.nullary_function("TOP").find()),
           m_bot(structure.nullary_function("BOT").find()),
-          m_join(structure.symmetric_function("JOIN")),
           m_less(structure.binary_relation("LESS")),
-          m_nless(structure.binary_relation("NLESS"))
+          m_nless(structure.binary_relation("NLESS")),
+          m_join(structure.signature().symmetric_functions("JOIN")),
+          m_rand(structure.signature().symmetric_functions("RAND"))
     {
         POMAGMA_ASSERT(m_top, "TOP is not defined");
         POMAGMA_ASSERT(m_bot, "BOT is not defined");
@@ -75,13 +83,15 @@ public:
 private:
 
     void close (Approximation & approx);
+    bool try_close (Approximation & approx);
 
     const size_t m_item_dim;
     const Ob m_top;
     const Ob m_bot;
-    const SymmetricFunction & m_join;
     const BinaryRelation & m_less;
     const BinaryRelation & m_nless;
+    const SymmetricFunction * const m_join;
+    const SymmetricFunction * const m_rand;
 };
 
 

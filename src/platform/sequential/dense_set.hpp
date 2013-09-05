@@ -245,7 +245,7 @@ public:
     bool operator() (size_t i) const { return _bit(i); }
     bool contains (size_t i) const { return _bit(i); }
     void insert (size_t i);
-    //bool try_insert (size_t i); // necessary? see concurrent_dense_set
+    bool try_insert (size_t i);
     void remove (size_t i);
     void merge  (size_t i, size_t j);
     void insert_all ();
@@ -298,6 +298,11 @@ inline void DenseSet::insert (size_t i)
 {
     POMAGMA_ASSERT4(not contains(i), "double insertion: " << i);
     _bit(i).one();
+}
+
+inline bool DenseSet::try_insert (size_t i)
+{
+    return not _bit(i).fetch_one();
 }
 
 inline void DenseSet::remove (size_t i)
