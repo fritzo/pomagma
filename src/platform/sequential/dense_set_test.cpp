@@ -224,6 +224,16 @@ void test_operations (size_t size, rng_t & rng)
     actual.set_insn(x, y);
     POMAGMA_ASSERT(actual == expected, "set_insn is wrong");
 
+    POMAGMA_INFO("testing difference");
+    expected.zero();
+    actual.zero();
+    for (Ob i = 1; i <= size; ++i) {
+        if (x.contains(i) and not y.contains(i)) { expected.insert(i); }
+        if (x.contains(i)) { actual.insert(i); }
+    }
+    actual -= y;
+    POMAGMA_ASSERT(actual == expected, "operator -= is wrong");
+
     // these are shared for merge(-), merge(-,-) & ensure
     DenseSet expected_rep(size);
     DenseSet expected_dep(size);

@@ -246,6 +246,19 @@ void DenseSet::operator *= (const DenseSet & other)
     }
 }
 
+// inplace difference
+void DenseSet::operator -= (const DenseSet & other)
+{
+    POMAGMA_ASSERT1(item_dim() == other.item_dim(), "item_dim mismatch");
+
+    const Word * restrict s = assume_aligned(other.m_words);
+    Word * restrict t = assume_aligned(m_words);
+
+    for (size_t m = 0, M = m_word_dim; m < M; ++m) {
+        t[m] &= ~ s[m];
+    }
+}
+
 void DenseSet::set_union (const DenseSet & lhs, const DenseSet & rhs)
 {
     POMAGMA_ASSERT1(item_dim() == lhs.item_dim(), "lhs.item_dim mismatch");

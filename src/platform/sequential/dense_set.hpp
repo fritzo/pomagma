@@ -251,7 +251,7 @@ public:
     void insert_all ();
     size_t insert_one ();
 
-    // entire operations (note that all are monotonic)
+    // entire operations
     void zero ();
     void complement  ();
     void complement  (const DenseSet & other);
@@ -260,6 +260,7 @@ public:
     bool disjoint    (const DenseSet & other) const;
     void operator += (const DenseSet & other);
     void operator *= (const DenseSet & other);
+    void operator -= (const DenseSet & other);
     void set_union   (const DenseSet & lhs, const DenseSet & rhs);
     void set_insn    (const DenseSet & lhs, const DenseSet & rhs);
     void set_insn    (const DenseSet &, const DenseSet &, const DenseSet &);

@@ -164,6 +164,48 @@ inline bool infer_nless_monotone(
     return false;
 }
 
+inline void infer_less_subconvex(
+    BinaryRelation & less,
+    Ob x,
+    Ob y,
+    Ob xy,
+    DenseSet & z_set)
+{
+    /*
+    LESS x z   LESS y z
+    -------------------
+         LESS xy z
+    */
+
+    z_set.set_insn(less.get_Lx_set(x), less.get_Lx_set(y));
+    z_set -= less.get_Lx_set(xy);
+    for (auto iter = z_set.iter(); iter.ok(); iter.next()) {
+        Ob z = * iter;
+        less.insert(xy, z);
+    }
+}
+
+inline void infer_less_supconvex(
+    BinaryRelation & less,
+    Ob x,
+    Ob y,
+    Ob xy,
+    DenseSet & z_set)
+{
+    /*
+    LESS z x   LESS z y
+    -------------------
+         LESS z xy
+    */
+
+    z_set.set_insn(less.get_Rx_set(x), less.get_Rx_set(y));
+    z_set -= less.get_Rx_set(xy);
+    for (auto iter = z_set.iter(); iter.ok(); iter.next()) {
+        Ob z = * iter;
+        less.insert(z, xy);
+    }
+}
+
 } // anonymous namespace
 
 size_t infer_const (Structure & structure)
@@ -267,11 +309,14 @@ size_t infer_less (Structure & structure)
 {
     POMAGMA_INFO("Inferring LESS");
 
+    Signature & signature = structure.signature();
     const Carrier & carrier = structure.carrier();
     BinaryRelation & LESS = structure.binary_relation("LESS");
     const BinaryRelation & NLESS = structure.binary_relation("NLESS");
     const BinaryFunction & APP = structure.binary_function("APP");
     const BinaryFunction & COMP = structure.binary_function("COMP");
+    const SymmetricFunction * JOIN = signature.symmetric_functions("JOIN");
+    const SymmetricFunction * RAND = signature.symmetric_functions("RAND");
     const DenseSet nonconst = get_nonconst(structure);
 
     POMAGMA_ASSERT_EQ(carrier.item_dim(), carrier.item_count());
@@ -306,6 +351,39 @@ size_t infer_less (Structure & structure)
             infer_less_monotone(LESS, COMP, nonconst, x, y, z_set);
         }
     }
+
+    if (JOIN) {
+        for (auto iter = carrier.iter(); iter.ok(); iter.next()) {
+            Ob x = * iter;
+            y_set = JOIN->get_Lx_set(x);
+            y_set -= LESS.get_Lx_set(x);
+            y_set -= LESS.get_Rx_set(x);
+            for (auto iter = y_set.iter(); iter.ok(); iter.next()) {
+                Ob y = * iter;
+                if (y >= x) {
+                    break;
+                }
+                Ob xy = JOIN->find(x, y);
+                infer_less_subconvex(LESS, x, y, xy, z_set);
+            }
+        }
+    }
+
+    if (RAND) {
+        for (auto iter = carrier.iter(); iter.ok(); iter.next()) {
+            Ob x = * iter;
+            for (auto iter = RAND->iter_lhs(x); iter.ok(); iter.next()) {
+                Ob y = * iter;
+                if (y >= x) {
+                    break;
+                }
+                Ob xy = RAND->find(x, y);
+                infer_less_subconvex(LESS, x, y, xy, z_set);
+                infer_less_supconvex(LESS, x, y, xy, z_set);
+            }
+        }
+    }
+
 
     size_t decision_count = LESS.count_pairs() - start_count;
     POMAGMA_INFO("inferred " << decision_count << " LESS facts");
