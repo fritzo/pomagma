@@ -222,6 +222,7 @@ function(log,   test,   symbols,   compiler,   ast,   corpus,   navigate)
     var LETREC = compiler.symbols.LETREC;
     var APP = compiler.symbols.APP;
     var JOIN = compiler.symbols.JOIN;
+    var RAND = compiler.symbols.RAND;
     var QUOTE = compiler.symbols.QUOTE;
     var EQUAL = compiler.symbols.EQUAL;
     var LESS = compiler.symbols.LESS;
@@ -326,6 +327,7 @@ function(log,   test,   symbols,   compiler,   ast,   corpus,   navigate)
         on('space', APP(HOLE, CURSOR(HOLE)));
         on('(', APP(CURSOR(HOLE), HOLE));
         on('|', JOIN(CURSOR(HOLE), HOLE));
+        on('+', RAND(CURSOR(HOLE), HOLE));
         on('{', QUOTE(CURSOR(HOLE)));
         on('=', EQUAL(CURSOR(HOLE), HOLE));
         on('<', LESS(CURSOR(HOLE), HOLE));
@@ -349,6 +351,7 @@ function(log,   test,   symbols,   compiler,   ast,   corpus,   navigate)
         on('space', APP(DASH, CURSOR(HOLE)), dumped);
         on('(', APP(CURSOR(HOLE), DASH), dumped);
         on('|', JOIN(DASH, CURSOR(HOLE)), dumped);
+        on('+', RAND(DASH, CURSOR(HOLE)), dumped);
         on('{', QUOTE(CURSOR(DASH)), dumped);
         on('=', EQUAL(DASH, CURSOR(HOLE)), dumped);
         on('<', LESS(DASH, CURSOR(HOLE)), dumped);

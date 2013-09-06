@@ -1265,6 +1265,7 @@ function(log,   test,   pattern,   symbols)
       APP: template('{0} {1}'),
       COMP: template('{0}<span class=operator>&#8728;</span>{1}'),
       JOIN: template('{0}<span class=operator>|</span>{1}'),
+      RAND: template('({0}<span class=operator>+</span>{1})'),
       LAMBDA: template('&lambda;{0} {1}'),
       //LAMBDA: template('{0} &#x21a6; {1}'),
       //LAMBDA: template('{1} / {0}'),
@@ -1313,6 +1314,9 @@ function(log,   test,   pattern,   symbols)
       },
       VAR(name), function (m) {
         return templates.VAR(m.name.replace(/\./g, templates.dot));
+      },
+      RAND(x, y), function (m) {
+        return templates.RAND(renderInline(m.x), renderInline(m.y));
       },
       QUOTE(x), function (m) {
         return templates.QUOTE(renderInline(m.x));
