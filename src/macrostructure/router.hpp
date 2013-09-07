@@ -2,6 +2,7 @@
 
 #include "util.hpp"
 #include "structure.hpp"
+#include <pomagma/platform/sequential/dense_set.hpp>
 #include <unordered_map>
 
 namespace pomagma
@@ -15,10 +16,13 @@ public:
         Structure & structure,
         const std::unordered_map<std::string, float> & language);
 
+    DenseSet find_defined () const;
     std::vector<float> measure_probs (float reltol = 0.1) const;
     std::vector<std::string> find_routes () const;
 
 private:
+
+    bool defines (const DenseSet & defined, Ob ob) const;
 
     enum Arity { NULLARY, INJECTIVE, BINARY };
 

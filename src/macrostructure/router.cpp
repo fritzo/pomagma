@@ -102,6 +102,58 @@ Router::Router (
     }
 }
 
+inline bool Router::defines (const DenseSet & defined, Ob ob) const
+{
+    for (const Segment & segment : iter_val(ob)) {
+        const SegmentType & type = m_types[segment.type];
+        switch (type.arity) {
+            case NULLARY: {
+                return true;
+            } break;
+
+            case INJECTIVE: {
+                if (defined(segment.arg1)) {
+                    return true;
+                }
+            } break;
+
+            case BINARY: {
+                if (defined(segment.arg1) and defined(segment.arg2)) {
+                    return true;
+                }
+            } break;
+        }
+    }
+
+    return false;
+}
+
+DenseSet Router::find_defined () const
+{
+    POMAGMA_INFO("Finding defined obs");
+    DenseSet defined(m_carrier.item_dim());
+    DenseSet undefined(m_carrier.item_dim());
+    undefined = m_carrier.support();
+
+    bool changed = true;
+    while (changed) {
+        changed = false;
+
+        POMAGMA_DEBUG("accumulating route probabilities");
+
+        undefined -= defined;
+        for (auto iter = undefined.iter(); iter.ok(); iter.next()) {
+            Ob ob = * iter;
+            if (defines(defined, ob)) {
+                defined.insert(ob);
+                changed = true;
+            }
+        }
+    }
+
+    return defined;
+}
+
 std::vector<float> Router::measure_probs (float reltol) const
 {
     POMAGMA_INFO("Measuring ob probs");
