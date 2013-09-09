@@ -13,7 +13,7 @@ class Router
 public:
 
     Router (
-        Structure & structure,
+        const Signature & signature,
         const std::unordered_map<std::string, float> & language);
 
     DenseSet find_defined () const;

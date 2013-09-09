@@ -12,7 +12,7 @@ int main (int argc, char ** argv)
         std::cout
             << "Usage: "
                 << pomagma::get_filename(argv[0])
-                << " larger_in smaller_in aggregate_out"
+                << " world_in region_in aggregate_out"
                 << "\n"
             << "Environment Variables:\n"
             << "  POMAGMA_LOG_FILE = " << pomagma::DEFAULT_LOG_FILE << "\n"
@@ -37,17 +37,13 @@ int main (int argc, char ** argv)
     pomagma::Structure destin;
     size_t source_item_count = source.carrier().item_count();
     destin.load(structure_in1, source_item_count);
-    extend(destin.signature(), source.signature());
     if (POMAGMA_DEBUG_LEVEL > 1) {
         destin.validate();
     }
-    size_t destin_item_count = destin.carrier().item_count();
-    if (source_item_count > destin_item_count) {
-        POMAGMA_WARN("aggregating larger structure into smaller structure");
-    }
 
     // aggregate
-    pomagma::aggregate(destin, source);
+    pomagma::DenseSet defined = restricted(source.signature(), destin.signature());
+    pomagma::aggregate(destin, source, defined);
     if (POMAGMA_DEBUG_LEVEL > 1) {
         destin.validate();
     }

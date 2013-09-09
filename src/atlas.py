@@ -24,6 +24,18 @@ def aggregate(world, source, aggregate, **opts):
     os.remove(source)
 
 
+def translate(init, world, aggregate, **opts):
+    assert os.path.exists(init)
+    assert not os.path.exists(aggregate)
+    with pomagma.util.mutex(world):
+        assert os.path.exists(world)
+        pomagma.cartographer.aggregate(init, world, aggregate, **opts)
+        pomagma.cartographer.validate(aggregate, **opts)
+        os.rename(aggregate, world)
+        # TODO fork and push to s3
+    os.remove(init)
+
+
 def assume(world, updated, theorems, **opts):
     assert not os.path.exists(updated)
     with pomagma.util.mutex(world):

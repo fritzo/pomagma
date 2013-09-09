@@ -36,7 +36,7 @@ public:
     void declare (const std::string & name, BinaryFunction & fun);
     void declare (const std::string & name, SymmetricFunction & fun);
 
-    Carrier * carrier () { return m_carrier; }
+    Carrier * carrier () const { return m_carrier; }
 
     const std::unordered_map<std::string, BinaryRelation *> &
         binary_relations () const;

@@ -15,7 +15,8 @@ inline Router::TypeId Router::new_type (
         const std::string & name)
 {
     auto i = m_language.find(name);
-    float prob = i == m_language.end() ? 0.f : i->second;
+    POMAGMA_ASSERT(i != m_language.end(), name << " not found");
+    float prob = i->second;
     m_types.push_back(SegmentType(arity, name, prob));
     return m_types.size() - 1;
 }
@@ -28,47 +29,50 @@ inline Range<Router::Iterator> Router::iter_val (Ob val) const
 }
 
 Router::Router (
-        Structure & structure,
+        const Signature & signature,
         const std::unordered_map<std::string, float> & language)
-    : m_carrier(structure.carrier()),
+    : m_carrier(* signature.carrier()),
       m_language(language),
-      m_value_index(structure.carrier().item_count())
+      m_value_index(signature.carrier()->item_count())
 {
-    POMAGMA_ASSERT(not language.empty(), "language is empty");
-    Signature & signature = structure.signature();
-
     POMAGMA_INFO("Building router indices");
 
     for (auto pair : signature.nullary_functions()) {
         const auto & name = pair.first;
         const auto & fun = * pair.second;
-        const TypeId type = new_type(NULLARY, name);
-        if (Ob val = fun.find()) {
-            m_segments.push_back(Segment(type, val));
+        if (m_language.find(name) != m_language.end()) {
+            const TypeId type = new_type(NULLARY, name);
+            if (Ob val = fun.find()) {
+                m_segments.push_back(Segment(type, val));
+            }
         }
     }
 
     for (auto pair : signature.injective_functions()) {
         const auto & name = pair.first;
         const auto & fun = * pair.second;
-        const TypeId type = new_type(INJECTIVE, name);
-        for (auto iter = fun.iter(); iter.ok(); iter.next()) {
-            Ob arg = * iter;
-            Ob val = fun.find(arg);
-            m_segments.push_back(Segment(type, val, arg));
+        if (m_language.find(name) != m_language.end()) {
+            const TypeId type = new_type(INJECTIVE, name);
+            for (auto iter = fun.iter(); iter.ok(); iter.next()) {
+                Ob arg = * iter;
+                Ob val = fun.find(arg);
+                m_segments.push_back(Segment(type, val, arg));
+            }
         }
     }
 
     for (auto pair : signature.binary_functions()) {
         const auto & name = pair.first;
         const auto & fun = * pair.second;
-        const TypeId type = new_type(BINARY, name);
-        for (auto iter = m_carrier.iter(); iter.ok(); iter.next()) {
-            Ob lhs = * iter;
-            for (auto iter = fun.iter_lhs(lhs); iter.ok(); iter.next()) {
-                Ob rhs = * iter;
-                Ob val = fun.find(lhs, rhs);
-                m_segments.push_back(Segment(type, val, lhs, rhs));
+        if (m_language.find(name) != m_language.end()) {
+            const TypeId type = new_type(BINARY, name);
+            for (auto iter = m_carrier.iter(); iter.ok(); iter.next()) {
+                Ob lhs = * iter;
+                for (auto iter = fun.iter_lhs(lhs); iter.ok(); iter.next()) {
+                    Ob rhs = * iter;
+                    Ob val = fun.find(lhs, rhs);
+                    m_segments.push_back(Segment(type, val, lhs, rhs));
+                }
             }
         }
     }
@@ -76,13 +80,15 @@ Router::Router (
     for (auto pair : signature.symmetric_functions()) {
         const auto & name = pair.first;
         const auto & fun = * pair.second;
-        const TypeId type = new_type(BINARY, name);
-        for (auto iter = m_carrier.iter(); iter.ok(); iter.next()) {
-            Ob lhs = * iter;
-            for (auto iter = fun.iter_lhs(lhs); iter.ok(); iter.next()) {
-                Ob rhs = * iter;
-                Ob val = fun.find(lhs, rhs);
-                m_segments.push_back(Segment(type, val, lhs, rhs));
+        if (m_language.find(name) != m_language.end()) {
+            const TypeId type = new_type(BINARY, name);
+            for (auto iter = m_carrier.iter(); iter.ok(); iter.next()) {
+                Ob lhs = * iter;
+                for (auto iter = fun.iter_lhs(lhs); iter.ok(); iter.next()) {
+                    Ob rhs = * iter;
+                    Ob val = fun.find(lhs, rhs);
+                    m_segments.push_back(Segment(type, val, lhs, rhs));
+                }
             }
         }
     }
@@ -147,6 +153,7 @@ DenseSet Router::find_defined () const
             if (defines(defined, ob)) {
                 defined.insert(ob);
                 changed = true;
+                break;
             }
         }
     }

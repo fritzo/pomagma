@@ -11,13 +11,16 @@ namespace detail
 void inject_one (
         BinaryRelation & destin_rel,
         const BinaryRelation & src_rel,
-        const Carrier & src_carrier,
+        const DenseSet & src_defined,
         const std::vector<Ob> & src_to_destin)
 {
-    for (auto iter = src_carrier.iter(); iter.ok(); iter.next()) {
+    for (auto iter = src_defined.iter(); iter.ok(); iter.next()) {
         Ob src_lhs = * iter;
         Ob destin_lhs = src_to_destin[src_lhs];
-        for (auto iter = src_rel.iter_lhs(src_lhs); iter.ok(); iter.next()) {
+        for (auto iter = src_defined.iter_insn(src_rel.get_Lx_set(src_lhs));
+            iter.ok();
+            iter.next())
+        {
             Ob src_rhs = * iter;
             Ob destin_rhs = src_to_destin[src_rhs];
             destin_rel.insert(destin_lhs, destin_rhs);
@@ -28,7 +31,7 @@ void inject_one (
 void inject_one (
         NullaryFunction & destin_fun,
         const NullaryFunction & src_fun,
-        const Carrier & src_carrier __attribute__((unused)),
+        const DenseSet & src_defined __attribute__((unused)),
         const std::vector<Ob> & src_to_destin)
 {
     if (Ob src_val = src_fun.find()) {
@@ -40,10 +43,13 @@ void inject_one (
 void inject_one (
         InjectiveFunction & destin_fun,
         const InjectiveFunction & src_fun,
-        const Carrier & src_carrier __attribute__((unused)),
+        const DenseSet & src_defined,
         const std::vector<Ob> & src_to_destin)
 {
-    for (auto iter = src_fun.iter(); iter.ok(); iter.next()) {
+    for (auto iter = src_defined.iter_insn(src_fun.defined());
+        iter.ok();
+        iter.next())
+    {
         Ob src_arg = * iter;
         Ob src_val = src_fun.find(src_arg);
         Ob destin_arg = src_to_destin[src_arg];
@@ -56,13 +62,16 @@ template<class Function>
 void inject_one (
         Function & destin_fun,
         const Function & src_fun,
-        const Carrier & src_carrier,
+        const DenseSet & src_defined,
         const std::vector<Ob> & src_to_destin)
 {
-    for (auto iter = src_carrier.iter(); iter.ok(); iter.next()) {
+    for (auto iter = src_defined.iter(); iter.ok(); iter.next()) {
         Ob src_lhs = * iter;
         Ob destin_lhs = src_to_destin[src_lhs];
-        for (auto iter = src_fun.iter_lhs(src_lhs); iter.ok(); iter.next()) {
+        for (auto iter = src_defined.iter_insn(src_fun.get_Lx_set(src_lhs));
+            iter.ok();
+            iter.next())
+        {
             Ob src_rhs = * iter;
             if (Function::is_symmetric() and src_rhs < src_lhs) { continue; }
             Ob src_val = src_fun.find(src_lhs, src_rhs);
@@ -77,7 +86,7 @@ template<class T>
 void inject_all (
         const std::unordered_map<std::string, T *> & destin_map,
         const std::unordered_map<std::string, T *> & src_map,
-        const Carrier & src_carrier,
+        const DenseSet & src_defined,
         const std::vector<Ob> & src_to_destin)
 {
     // TODO parallelize, except for nullary relations
@@ -86,11 +95,11 @@ void inject_all (
         auto & destin = * pair.second;
         auto i = src_map.find(name);
         if (i == src_map.end()) {
-            POMAGMA_WARN("missing " << name);
+            POMAGMA_INFO("missing " << name);
         } else {
             POMAGMA_INFO("aggregating " << name);
             auto & src = * i->second;
-            inject_one(destin, src, src_carrier, src_to_destin);
+            inject_one(destin, src, src_defined, src_to_destin);
         }
     }
 }
@@ -100,6 +109,7 @@ void inject_all (
 void aggregate (
         Structure & destin,
         Structure & src,
+        const DenseSet & src_defined,
         bool clear_src)
 {
     POMAGMA_INFO("Aggregating structure");
@@ -119,7 +129,7 @@ void aggregate (
     detail::inject_all(\
             destin.signature().arity(),\
             src.signature().arity(),\
-            src.carrier(),\
+            src_defined,\
             src_to_destin)
 
     // TODO parallelize, except for nullary relations

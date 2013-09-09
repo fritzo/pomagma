@@ -62,7 +62,7 @@ void conjecture_diverge (
         const char * conjectures_file)
 {
     const auto language = load_language(language_file);
-    Router router(structure, language);
+    Router router(structure.signature(), language);
     const std::vector<float> probs = router.measure_probs();
     const std::vector<std::string> routes = router.find_routes();
 

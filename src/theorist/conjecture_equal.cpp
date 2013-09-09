@@ -137,7 +137,7 @@ void conjecture_equal (
     std::vector<std::string> routes;
     {
         const auto language = load_language(language_file);
-        Router router(structure, language);
+        Router router(structure.signature(), language);
         probs = router.measure_probs();
         routes = router.find_routes();
     }
@@ -162,7 +162,7 @@ void try_prove_nless (
     std::vector<std::string> routes;
     auto language = load_language(language_file);
     {
-        Router router(structure, language);
+        Router router(structure.signature(), language);
         probs = router.measure_probs();
         routes = router.find_routes();
     }

@@ -205,9 +205,9 @@ def tmux_explore(theory):
 
 
 @parsable.command
-def extend(theory, **options):
+def translate(theory, **options):
     '''
-    Extend language of world map (only needed when language changes).
+    Translate language of world map (e.g. when language changes).
     Options: log_level, log_file
     '''
     path = os.path.join(pomagma.util.DATA, 'atlas', theory)
@@ -218,10 +218,10 @@ def extend(theory, **options):
         aggregate = '{}.aggregate.h5'.format(os.getpid())
         assert os.path.exists(world), 'First initialize world map'
         opts = options
-        opts.setdefault('log_file', 'extend.log')
+        opts.setdefault('log_file', 'translate.log')
         init_size = pomagma.util.MIN_SIZES[theory]
         surveyor.init(theory, init, init_size, **opts)
-        atlas.aggregate(world, init, aggregate, **opts)
+        atlas.translate(init, world, aggregate, **opts)
 
 
 @parsable.command

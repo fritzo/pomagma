@@ -74,7 +74,7 @@ float hypothesize_entropy (
         detail::merge_if_consistent(structure, equation);
 
         POMAGMA_DEBUG("measuring entropy");
-        Router router(structure, language);
+        Router router(structure.signature(), language);
         const std::vector<float> probs = router.measure_probs(reltol);
         float entropy = get_entropy(probs);
         detail::tempfile_dump(getpid(), entropy);

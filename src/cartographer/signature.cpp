@@ -1,4 +1,5 @@
 #include <pomagma/macrostructure/structure_impl.hpp>
+#include <pomagma/macrostructure/router.hpp>
 
 namespace pomagma
 {
@@ -34,6 +35,49 @@ void extend (Signature & destin, const Signature & source)
             destin.declare(i.first, * new SymmetricFunction(carrier));
         }
     }
+}
+
+DenseSet restricted (const Signature & destin, const Signature & source)
+{
+    std::unordered_map<std::string, float> language;
+    bool dropped = false;
+
+    for (auto i : destin.nullary_functions()) {
+        if (source.nullary_functions(i.first)) {
+            language[i.first] = NAN;
+        } else {
+            dropped = true;
+        }
+    }
+    for (auto i : destin.injective_functions()) {
+        if (source.injective_functions(i.first)) {
+            language[i.first] = NAN;
+        } else {
+            dropped = true;
+        }
+    }
+    for (auto i : destin.binary_functions()) {
+        if (source.binary_functions(i.first)) {
+            language[i.first] = NAN;
+        } else {
+            dropped = true;
+        }
+    }
+    for (auto i : destin.symmetric_functions()) {
+        if (source.symmetric_functions(i.first)) {
+            language[i.first] = NAN;
+        } else {
+            dropped = true;
+        }
+    }
+
+    DenseSet defined(destin.carrier()->item_dim());
+    if (dropped) {
+        defined = Router(destin, language).find_defined();
+    } else {
+        defined = destin.carrier()->support();
+    }
+    return defined;
 }
 
 } // namespace pomagma

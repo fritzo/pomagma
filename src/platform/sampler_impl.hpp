@@ -125,6 +125,7 @@ void Sampler::set_prob (const std::string & name, float prob)
     POMAGMA_ASSERT(found, "failed to set prob of function: " << name);
     m_bounded_samplers.clear();
 }
+
 void Sampler::load (const std::string & language_file)
 {
     POMAGMA_INFO("Loading language");

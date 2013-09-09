@@ -43,7 +43,7 @@ int main (int argc, char ** argv)
     std::vector<std::string> routes;
     {
         const auto language = pomagma::load_language(language_file);
-        pomagma::Router router(structure, language);
+        pomagma::Router router(structure.signature(), language);
         routes = router.find_routes();
     }
 
