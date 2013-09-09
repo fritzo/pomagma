@@ -12,26 +12,31 @@ void extend (Signature & destin, const Signature & source)
 
     for (auto i : source.binary_relations()) {
         if (not destin.binary_relations(i.first)) {
+            POMAGMA_INFO("adding " << i.first);
             destin.declare(i.first, * new BinaryRelation(carrier));
         }
     }
     for (auto i : source.nullary_functions()) {
         if (not destin.nullary_functions(i.first)) {
+            POMAGMA_INFO("adding " << i.first);
             destin.declare(i.first, * new NullaryFunction(carrier));
         }
     }
     for (auto i : source.injective_functions()) {
         if (not destin.injective_functions(i.first)) {
+            POMAGMA_INFO("adding " << i.first);
             destin.declare(i.first, * new InjectiveFunction(carrier));
         }
     }
     for (auto i : source.binary_functions()) {
         if (not destin.binary_functions(i.first)) {
+            POMAGMA_INFO("adding " << i.first);
             destin.declare(i.first, * new BinaryFunction(carrier));
         }
     }
     for (auto i : source.symmetric_functions()) {
         if (not destin.symmetric_functions(i.first)) {
+            POMAGMA_INFO("adding " << i.first);
             destin.declare(i.first, * new SymmetricFunction(carrier));
         }
     }
@@ -46,6 +51,7 @@ DenseSet restricted (const Signature & destin, const Signature & source)
         if (source.nullary_functions(i.first)) {
             language[i.first] = NAN;
         } else {
+            POMAGMA_INFO("dropping " << i.first);
             dropped = true;
         }
     }
@@ -53,6 +59,7 @@ DenseSet restricted (const Signature & destin, const Signature & source)
         if (source.injective_functions(i.first)) {
             language[i.first] = NAN;
         } else {
+            POMAGMA_INFO("dropping " << i.first);
             dropped = true;
         }
     }
@@ -60,6 +67,7 @@ DenseSet restricted (const Signature & destin, const Signature & source)
         if (source.binary_functions(i.first)) {
             language[i.first] = NAN;
         } else {
+            POMAGMA_INFO("dropping " << i.first);
             dropped = true;
         }
     }
@@ -67,6 +75,7 @@ DenseSet restricted (const Signature & destin, const Signature & source)
         if (source.symmetric_functions(i.first)) {
             language[i.first] = NAN;
         } else {
+            POMAGMA_INFO("dropping " << i.first);
             dropped = true;
         }
     }
