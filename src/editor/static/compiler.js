@@ -242,11 +242,11 @@ function(log,   test,   pattern,   symbols)
     var y = pattern.variable('y');
     var tail = pattern.variable('tail');
     var t = pattern.match(
-      app(x, y), function (m, tail) {
-        return t(m.x, stack(m.y, tail));
+      app(x, y), function (match, tail) {
+        return t(match.x, stack(match.y, tail));
       },
-      x, function (m, tail) {
-        return stack(m.x, tail)
+      x, function (match, tail) {
+        return stack(match.x, tail)
       }
     );
     var pop = Array.prototype.pop;
@@ -270,11 +270,11 @@ function(log,   test,   pattern,   symbols)
     var y = pattern.variable('y');
     var tail = pattern.variable('tail');
     var t = pattern.match(
-      stack(x, y, tail), function (m) {
-        return t(stack(app(m.x, m.y), m.tail));
+      stack(x, y, tail), function (match) {
+        return t(stack(app(match.x, match.y), match.tail));
       },
-      stack(x, []), function (m) {
-        return m.x;
+      stack(x, []), function (match) {
+        return match.x;
       }
     );
     return t;
@@ -330,14 +330,14 @@ function(log,   test,   pattern,   symbols)
     var array = pattern.variable('array', _.isArray);
   
     var renamePattern = pattern.match(
-      VAR(string), function (m, map) {
-        assert(!_.has(map, m.string));
+      VAR(string), function (match, map) {
+        assert(!_.has(map, match.string));
         var result = fresh();
-        map[m.string] = result[1];
+        map[match.string] = result[1];
         return result;
       },
-      array, function (m, map) {
-        var array = [].concat(m.array);
+      array, function (match, map) {
+        var array = [].concat(match.array);
         for (var i = 1; i < array.length; ++i) {
           array[i] = renamePattern(array[i], map);
         }
@@ -346,31 +346,31 @@ function(log,   test,   pattern,   symbols)
     );
   
     var renameTerm = pattern.match(
-      VAR(string), function (m, map) {
-        return VAR(map[m.string] || m.string);
+      VAR(string), function (match, map) {
+        return VAR(map[match.string] || match.string);
       },
-      LAMBDA(x, y), function (m, map) {
+      LAMBDA(x, y), function (match, map) {
         map = _.extend({}, map);
-        var x = renamePattern(m.x, map);
-        var y = renameTerm(m.y, map);
+        var x = renamePattern(match.x, map);
+        var y = renameTerm(match.y, map);
         return LAMBDA(x, y);
       },
-      LETREC(x, y, z), function (m, map) {
+      LETREC(x, y, z), function (match, map) {
         map = _.extend({}, map);
-        var x = renamePattern(m.x, map);
-        var y = renameTerm(m.y, map);
-        var z = renameTerm(m.z, map);
+        var x = renamePattern(match.x, map);
+        var y = renameTerm(match.y, map);
+        var z = renameTerm(match.z, map);
         return LETREC(x, y, z);
       },
-      array, function (m, map) {
-        var array = [].concat(m.array);
+      array, function (match, map) {
+        var array = [].concat(match.array);
         for (var i = 1; i < array.length; ++i) {
           array[i] = renameTerm(array[i], map);
         }
         return array;
       },
-      string, function (m) {
-        return m.string;
+      string, function (match) {
+        return match.string;
       }
     );
   
@@ -403,19 +403,19 @@ function(log,   test,   pattern,   symbols)
     var array = pattern.variable('array', _.isArray);
 
     var t = pattern.match(
-      VAR(string), function (m, varName, def) {
-        return m.string === varName ? def : VAR(m.string);
+      VAR(string), function (match, varName, def) {
+        return match.string === varName ? def : VAR(match.string);
       },
       // TODO take care with binders, or ensure variables are globally unique
-      array, function (m, varName, def) {
-        var array = [].concat(m.array);
+      array, function (match, varName, def) {
+        var array = [].concat(match.array);
         for (var i = 1; i < array.length; ++i) {
           array[i] = t(array[i], varName, def);
         }
         return array;
       },
-      string, function (m) {
-        return m.string;
+      string, function (match) {
+        return match.string;
       }
     );
 
@@ -448,8 +448,8 @@ function(log,   test,   pattern,   symbols)
     var notFound = {};
 
     var t = pattern.match(
-      VAR(name), function (m, varName, def) {
-        if (m.name !== varName) {
+      VAR(name), function (match, varName, def) {
+        if (match.name !== varName) {
           return notFound;
         } else if (countOccurrences(varName, def) === 0) {
           return def;
@@ -457,29 +457,29 @@ function(log,   test,   pattern,   symbols)
           return LETREC(VAR(varName), def, VAR(varName));
         }
       },
-      APP(x, y), function (m, varName, def) {
-        var tx = t(m.x, varName, def);
-        var ty = t(m.y, varName, def);
+      APP(x, y), function (match, varName, def) {
+        var tx = t(match.x, varName, def);
+        var ty = t(match.y, varName, def);
         if (tx === notFound) {
           if (ty === notFound) {
             // unused
-            return APP(m.x, m.y);
+            return APP(match.x, match.y);
           } else {
             // narrow scope
-            return APP(m.x, ty);
+            return APP(match.x, ty);
           }
         } else {
           if (ty === notFound) {
             // narrow scope
-            return APP(tx, m.y);
+            return APP(tx, match.y);
           } else {
             // no-op
-            return LETREC(VAR(varName), def, APP(m.x, m.y));
+            return LETREC(VAR(varName), def, APP(match.x, match.y));
           }
         }
       },
-      x, function (m) {
-        TODO('handle ' + JSON.stringify(m.x));
+      x, function (match) {
+        TODO('handle ' + JSON.stringify(match.x));
       }
     );
 
@@ -493,11 +493,11 @@ function(log,   test,   pattern,   symbols)
     var array = pattern.variable('array', _.isArray);
 
     var t = pattern.match(
-      VAR(string), function (m, varName) {
-        return m.string === varName ? 1 : 0;
+      VAR(string), function (match, varName) {
+        return match.string === varName ? 1 : 0;
       },
-      array, function (m, varName) {
-        var array = m.array;
+      array, function (match, varName) {
+        var array = match.array;
         var result = 0;
         for (var i = 1; i < array.length; ++i) {
           result += t(array[i], varName);
@@ -541,10 +541,10 @@ function(log,   test,   pattern,   symbols)
     var array = pattern.variable('array', _.isArray);
 
     var normalizeStack = pattern.match(
-      stack(TOP, tail), function (m) {
+      stack(TOP, tail), function (match) {
         return TOP;
       },
-      stack(BOT, tail), function (m) {
+      stack(BOT, tail), function (match) {
         return BOT;
       },
       stack(JOIN(TOP, x), tail), function () {
@@ -553,44 +553,46 @@ function(log,   test,   pattern,   symbols)
       stack(JOIN(x, TOP), tail), function () {
         return TOP;
       },
-      stack(JOIN(BOT, x), tail), function (m) {
-        return normalizeStack(toStack(m.x, m.tail));
+      stack(JOIN(BOT, x), tail), function (match) {
+        return normalizeStack(toStack(match.x, match.tail));
       },
-      stack(JOIN(x, BOT), tail), function (m) {
-        return normalizeStack(toStack(m.x, m.tail));
+      stack(JOIN(x, BOT), tail), function (match) {
+        return normalizeStack(toStack(match.x, match.tail));
       },
-      stack(LAMBDA(VAR(name), app(x, VAR(name2))), tail), function (m) {
-        if (m.name === m.name2 && countOccurrences(m.name, m.x) === 0) {
-            return normalizeStack(stack(m.x, m.tail));
+      stack(LAMBDA(VAR(name), app(x, VAR(name2))), tail), function (match) {
+        if (match.name === match.name2 &&
+            countOccurrences(match.name, match.x) === 0)
+        {
+            return normalizeStack(stack(match.x, match.tail));
         }
       },
-      stack(LAMBDA(VAR(name), x), VAR(name2), tail), function (m) {
-        var head = substitute(m.name, VAR(m.name2), m.x);
-        return normalizeStack(toStack(head, m.tail));
+      stack(LAMBDA(VAR(name), x), VAR(name2), tail), function (match) {
+        var head = substitute(match.name, VAR(match.name2), match.x);
+        return normalizeStack(toStack(head, match.tail));
       },
-      stack(LAMBDA(VAR(name), x), y, tail), function (m) {
+      stack(LAMBDA(VAR(name), x), y, tail), function (match) {
         var head;
         var tail;
-        switch (countOccurrences(m.name, m.x)) {
+        switch (countOccurrences(match.name, match.x)) {
           case 0:
-            return normalizeStack(toStack(m.x, m.tail));
+            return normalizeStack(toStack(match.x, match.tail));
           case 1:
-            head = substitute(m.name, m.y, m.x);
-            return normalizeStack(toStack(head, m.tail));
+            head = substitute(match.name, match.y, match.x);
+            return normalizeStack(toStack(head, match.tail));
           default:
-            head = LAMBDA(VAR(m.name), m.x);
-            tail = normalizeTail(stack(m.y, m.tail));
+            head = LAMBDA(VAR(match.name), match.x);
+            tail = normalizeTail(stack(match.y, match.tail));
             return fromStack(stack(head, tail));
         }
       },
       // TODO implement LETREC simplification
-      //stack(LETREC(VAR(name), x, y), tail), function (m) {
-      //  var head = normalizeLetrec(m.name. m.x, m.y);
+      //stack(LETREC(VAR(name), x, y), tail), function (match) {
+      //  var head = normalizeLetrec(match.name. match.x, match.y);
       //  var tail = normalizeTail(tail);
       //  return fromStack(stack(head, tail));
       //},
-      stack(x, tail), function (m) {
-          return fromStack(stack(m.x, normalizeTail(m.tail)));
+      stack(x, tail), function (match) {
+          return fromStack(stack(match.x, normalizeTail(match.tail)));
       }
     );
 
@@ -598,9 +600,9 @@ function(log,   test,   pattern,   symbols)
       [], function () {
         return [];
       },
-      stack(x, y), function (m) {
-        var tx = normalize(m.x);
-        var ty = normalizeTail(m.y);
+      stack(x, y), function (match) {
+        var tx = normalize(match.x);
+        var ty = normalizeTail(match.y);
         return stack(tx, ty);
       }
     );
@@ -678,16 +680,16 @@ function(log,   test,   pattern,   symbols)
 
     var ensureVar = function (v, handler) {
       var name = v.name;
-      return function (m) {
-        var tail = m.tail;
+      return function (match) {
+        var tail = match.tail;
         if (tail.length === 0) {
           var v = fresh();
-          m[name] = v;
-          return LAMBDA(v, handler(m));
+          match[name] = v;
+          return LAMBDA(v, handler(match));
         } else {
-          m[name] = decompile(tail[1]);  // FIXME calls decompile incorrectly
-          m.tail = tail[2];
-          return handler(m);
+          match[name] = decompile(tail[1]);  // FIXME incorrect decompile call
+          match.tail = tail[2];
+          return handler(match);
         }
       };
     };
@@ -698,19 +700,19 @@ function(log,   test,   pattern,   symbols)
       while (arguments.length) {
         handler = ensureVar(pop.call(arguments), handler);
       }
-      return function (m) {
-        var head = handler(m);
-        var tail = decompileTail(m.tail);
+      return function (match) {
+        var head = handler(match);
+        var tail = decompileTail(match.tail);
         return fromStack(stack(head, tail));
       }
     };
 
     var decompileStack = pattern.match(
-      //stack(COMP(x, y), tail), function (m) {
-      //  return decompileStack(stack(B, m.x, m.y, m.tail));
+      //stack(COMP(x, y), tail), function (match) {
+      //  return decompileStack(stack(B, match.x, match.y, match.tail));
       //},
-      stack(HOLE, tail), function (m) {
-        return fromStack(stack(HOLE, decompileTail(m.tail)));
+      stack(HOLE, tail), function (match) {
+        return fromStack(stack(HOLE, decompileTail(match.tail)));
       },
       stack(TOP, tail), function () {
         return TOP;
@@ -718,28 +720,28 @@ function(log,   test,   pattern,   symbols)
       stack(BOT, tail), function () {
         return BOT;
       },
-      stack(I, []), function (m) {
+      stack(I, []), function (match) {
         return I;
       },
-      stack(I, x, tail), function (m) {
-        return decompileTail(toStack(m.x, m.tail));
+      stack(I, x, tail), function (match) {
+        return decompileTail(toStack(match.x, match.tail));
       },
-      stack(K, tail), ensure(x, y, function (m) {
-        return m.x;
+      stack(K, tail), ensure(x, y, function (match) {
+        return match.x;
       }),
-      stack(C, I, tail), ensure(x, y, function (m) {
-        return app(m.y, m.x);
+      stack(C, I, tail), ensure(x, y, function (match) {
+        return app(match.y, match.x);
       }),
-      stack(B, tail), ensure(x, y, z, function (m) {
-        return app(m.x, app(m.y, m.z));
+      stack(B, tail), ensure(x, y, z, function (match) {
+        return app(match.x, app(match.y, match.z));
       }),
-      stack(C, tail), ensure(x, y, z, function (m) {
-        return app(m.x, m.z, m.y);
+      stack(C, tail), ensure(x, y, z, function (match) {
+        return app(match.x, match.z, match.y);
       }),
       // TODO get W working
-      //stack(W, tail), ensure(x, y, function (m) {
-      //  var x = m.x;
-      //  var y = m.y;
+      //stack(W, tail), ensure(x, y, function (match) {
+      //  var x = match.x;
+      //  var y = match.y;
       //  if (_.isArray(y) && y[0] === 'VAR') {
       //    return LAMBDA(x, LAMBDA(y, app(x, y, y)));
       //  } else {
@@ -752,22 +754,22 @@ function(log,   test,   pattern,   symbols)
         var y = fresh();
         return LAMBDA(x, LAMBDA(y, app(x, y, y)));
       },
-      stack(W, x, []), function (m) {
+      stack(W, x, []), function (match) {
         var y = fresh();
-        var tx = decompile(m.x);
+        var tx = decompile(match.x);
         return LAMBDA(y, app(tx, y, y));
       },
-      stack(W, x, VAR(name), tail), function (m) {
-        var y = VAR(m.name);
-        var head = decompile(app(m.x, y, y));
-        var tail = decompileTail(m.tail);
+      stack(W, x, VAR(name), tail), function (match) {
+        var y = VAR(match.name);
+        var head = decompile(app(match.x, y, y));
+        var tail = decompileTail(match.tail);
         return fromStack(stack(head, tail));
       },
-      stack(W, x, y, tail), function (m) {
+      stack(W, x, y, tail), function (match) {
         var y = fresh();
-        var ty = decompile(m.y);
-        var head = LETREC(y, ty, decompile(app(m.x, y, y)));
-        var tail = decompileTail(m.tail);
+        var ty = decompile(match.y);
+        var head = LETREC(y, ty, decompile(app(match.x, y, y)));
+        var tail = decompileTail(match.tail);
         return fromStack(stack(head, tail));
       },
       stack(S, []), function () {
@@ -776,99 +778,101 @@ function(log,   test,   pattern,   symbols)
         var z = fresh();
         return LAMBDA(x, LAMBDA(y, LAMBDA(z, app(x, z, app(y, z)))));
       },
-      stack(S, x, []), function (m) {
+      stack(S, x, []), function (match) {
         var y = fresh();
         var z = fresh();
-        var tx = decompile(m.x);
+        var tx = decompile(match.x);
         return LAMBDA(y, LAMBDA(z, app(tx, z, app(y, z))));
       },
-      stack(S, x, y, []), function (m) {
+      stack(S, x, y, []), function (match) {
         var z = fresh();
-        var tx = decompile(m.x);
-        var ty = decompile(m.y);
+        var tx = decompile(match.x);
+        var ty = decompile(match.y);
         return LAMBDA(z, app(tx, z, app(ty, z)));
       },
-      stack(S, x, y, VAR(name), tail), function (m) {
-        var z = VAR(m.name);
-        var head = decompile(app(m.x, z, app(m.y, z)));
-        var tail = decompileTail(m.tail);
+      stack(S, x, y, VAR(name), tail), function (match) {
+        var z = VAR(match.name);
+        var head = decompile(app(match.x, z, app(match.y, z)));
+        var tail = decompileTail(match.tail);
         return fromStack(stack(head, tail));
       },
-      stack(S, x, y, z, tail), function (m) {
+      stack(S, x, y, z, tail), function (match) {
         var z = fresh();
-        var tz = decompile(m.z);
-        var xz = app(m.x, z);
-        var yz = app(m.y, z);
+        var tz = decompile(match.z);
+        var xz = app(match.x, z);
+        var yz = app(match.y, z);
         var head = LETREC(z, tz, decompile(app(xz, yz)));
-        var tail = decompileTail(m.tail);
+        var tail = decompileTail(match.tail);
         return fromStack(stack(head, tail));
       },
-      stack(Y, tail), ensure(x, function (m) {
+      stack(Y, tail), ensure(x, function (match) {
         var y = fresh();
         var z = fresh();
-        return LETREC(y, LAMBDA(z, app(m.x, app(y, z))), y);
+        return LETREC(y, LAMBDA(z, app(match.x, app(y, z))), y);
       }),
-      stack(J, tail), ensure(x, y, function (m) {
-        return JOIN(m.x, m.y);
+      stack(J, tail), ensure(x, y, function (match) {
+        return JOIN(match.x, match.y);
       }),
-      stack(R, tail), ensure(x, y, function (m) {
-        return RAND(m.x, m.y);
+      stack(R, tail), ensure(x, y, function (match) {
+        return RAND(match.x, match.y);
       }),
       // TODO reimplement via ensureQuoted
-      stack(QLESS, []), function (m) {
+      stack(QLESS, []), function (match) {
         var x = fresh();
         var y = fresh();
         return LAMBDA(QUOTE(x), LAMBDA(QUOTE(y), LESS(x, y)));
       },
-      stack(QLESS, QUOTE(x), []), function (m) {
+      stack(QLESS, QUOTE(x), []), function (match) {
         var y = fresh();
-        return LAMBDA(QUOTE(y), LESS(m.x, y));
+        return LAMBDA(QUOTE(y), LESS(match.x, y));
       },
-      stack(QLESS, x, []), function (m) {
+      stack(QLESS, x, []), function (match) {
         var x = fresh();
         var y = fresh();
-        return LETREC(QUOTE(x), m.x, LAMBDA(QUOTE(y), LESS(x, y)));
+        return LETREC(QUOTE(x), match.x, LAMBDA(QUOTE(y), LESS(x, y)));
       },
       // ... other cases omitted: (QUOTE(x), y); (x, QUOTE(y))
-      stack(QLESS, QUOTE(x), QUOTE(y), tail), function (m) {
-        var head = LESS(m.x, m.y);
-        var tail = decompileTail(m.tail);
+      stack(QLESS, QUOTE(x), QUOTE(y), tail), function (match) {
+        var head = LESS(match.x, match.y);
+        var tail = decompileTail(match.tail);
         return fromStack(stack(head, tail));
       },
-      stack(QLESS, x, y, tail), function (m) {
+      stack(QLESS, x, y, tail), function (match) {
         var x = fresh();
         var y = fresh();
-        var head = LETREC(QUOTE(x), m.x, LETREC(QUOTE(y), m.y, LESS(x, y)));
-        var tail = decompileTail(m.tail);
+        var head =
+          LETREC(QUOTE(x), match.x,
+          LETREC(QUOTE(y), match.y, LESS(x, y)));
+        var tail = decompileTail(match.tail);
         return fromStack(stack(head, tail));
       },
-      stack(QNLESS, QUOTE(x), QUOTE(y), tail), function (m) {
-        var head = NLESS(m.x, m.y);
-        var tail = decompileTail(m.tail);
+      stack(QNLESS, QUOTE(x), QUOTE(y), tail), function (match) {
+        var head = NLESS(match.x, match.y);
+        var tail = decompileTail(match.tail);
         return fromStack(stack(head, tail));
       },
-      stack(QEQUAL, QUOTE(x), QUOTE(y), tail), function (m) {
-        var head = EQUAL(m.x, m.y);
-        var tail = decompileTail(m.tail);
+      stack(QEQUAL, QUOTE(x), QUOTE(y), tail), function (match) {
+        var head = EQUAL(match.x, match.y);
+        var tail = decompileTail(match.tail);
         return fromStack(stack(head, tail));
       },
-      stack(VAR(name), tail), function (m) {
-        var head = VAR(m.name);
-        var tail = decompileTail(m.tail);
+      stack(VAR(name), tail), function (match) {
+        var head = VAR(match.name);
+        var tail = decompileTail(match.tail);
         return fromStack(stack(head, tail));
       },
-      stack(atom, tail), function (m) {
-        var head = definitions[m.atom];
-        return decompileStack(toStack(head, m.tail));
+      stack(atom, tail), function (match) {
+        var head = definitions[match.atom];
+        return decompileStack(toStack(head, match.tail));
       },
-      stack(array, tail), function (m) {
-        var head = m.array;
+      stack(array, tail), function (match) {
+        var head = match.array;
         assert(_.isString(head[0]));
         head = [].concat(head);
         for (var i = 1; i < head.length; ++i) {
           head[i] = decompile(head[i]);
         }
-        var tail = decompileTail(m.tail);
+        var tail = decompileTail(match.tail);
         return fromStack(stack(head, tail));
       }
     );
@@ -877,9 +881,9 @@ function(log,   test,   pattern,   symbols)
       [], function () {
         return [];
       },
-      stack(x, y), function (m) {
-        var tx = decompile(m.x);
-        var ty = decompileTail(m.y);
+      stack(x, y), function (match) {
+        var tx = decompile(match.x);
+        var ty = decompileTail(match.y);
         return stack(tx, ty);
       }
     );
@@ -906,135 +910,135 @@ function(log,   test,   pattern,   symbols)
     var notFound = {};
 
     var t = pattern.match(
-      VAR(name), function (m, varName) {
-        if (m.name !== varName) {
+      VAR(name), function (match, varName) {
+        if (match.name !== varName) {
           return notFound;
         } else {
           return I;
         }
       },
-      APP(x, VAR(name)), function (m, varName) {
-        var tx = t(m.x, varName);
+      APP(x, VAR(name)), function (match, varName) {
+        var tx = t(match.x, varName);
         if (tx === notFound) {
-          if (m.name !== varName) {
+          if (match.name !== varName) {
             return notFound;
           } else {
-            return m.x;
+            return match.x;
           }
         } else {
-          if (m.name !== varName) {
-            return app(C, tx, VAR(m.name));
+          if (match.name !== varName) {
+            return app(C, tx, VAR(match.name));
           } else {
             return app(W, tx);
           }
         }
       },
-      APP(x, y), function (m, varName) {
-        var tx = t(m.x, varName);
-        var ty = t(m.y, varName);
+      APP(x, y), function (match, varName) {
+        var tx = t(match.x, varName);
+        var ty = t(match.y, varName);
         if (tx === notFound) {
           if (ty === notFound) {
             return notFound;
           } else {
-            return comp(m.x, ty);
+            return comp(match.x, ty);
           }
         } else {
           if (ty === notFound) {
-            return app(C, tx, m.y);
+            return app(C, tx, match.y);
           } else {
             return app(S, tx, ty);
           }
         }
       },
-      COMP(x, y), function (m, varName) {
-        var tx = t(m.x, varName);
-        var ty = t(m.y, varName);
+      COMP(x, y), function (match, varName) {
+        var tx = t(match.x, varName);
+        var ty = t(match.y, varName);
         if (tx === notFound) {
           if (ty === notFound) {
             return notFound;
           } else {
-            if (_.isEqual(m.y, VAR(varName))) {
-              return app(B, m.x);
+            if (_.isEqual(match.y, VAR(varName))) {
+              return app(B, match.x);
             } else {
-              return comp(app(B, m.x), ty);
+              return comp(app(B, match.x), ty);
             }
           }
         } else {
           if (ty === notFound) {
-            return comp(app(CB, m.y), tx);
+            return comp(app(CB, match.y), tx);
           } else {
             return app(S, app(B, tx), ty);
           }
         }
       },
-      JOIN(x, y), function (m, varName) {
-        var tx = t(m.x, varName);
-        var ty = t(m.y, varName);
+      JOIN(x, y), function (match, varName) {
+        var tx = t(match.x, varName);
+        var ty = t(match.y, varName);
         if (tx === notFound) {
           if (ty === notFound) {
             return notFound;
           } else {
             // this hack will be obsoleted by simplifyLambda
             if (ty === I) {                   // HACK
-              return app(J, m.x);             // HACK
+              return app(J, match.x);             // HACK
             } else {                          // HACK
-              return comp(app(J, m.x), ty);
+              return comp(app(J, match.x), ty);
             }                                 // HACK
           }
         } else {
           if (ty === notFound) {
-            return comp(app(J, m.y), tx);
+            return comp(app(J, match.y), tx);
           } else {
             return JOIN(tx, ty);
           }
         }
       },
-      RAND(x, y), function (m, varName) {
-        var tx = t(m.x, varName);
-        var ty = t(m.y, varName);
+      RAND(x, y), function (match, varName) {
+        var tx = t(match.x, varName);
+        var ty = t(match.y, varName);
         if (tx === notFound) {
           if (ty === notFound) {
             return notFound;
           } else {
-            return comp(app(R, m.x), ty);
+            return comp(app(R, match.x), ty);
           }
         } else {
           if (ty === notFound) {
-            return comp(app(R, m.y), tx);
+            return comp(app(R, match.y), tx);
           } else {
             return RAND(tx, ty);
           }
         }
       },
-      QUOTE(x), function (m, varName) {
-        var tx = t(m.x, varName);
+      QUOTE(x), function (match, varName) {
+        var tx = t(match.x, varName);
         if (tx === notFound) {
           return notFound;
         } else {
           TODO('implement quoted tryAbstraction');
         }
       },
-      LESS(x, y), function (m, varName) {
-        var tx = t(m.x, varName);
-        var ty = t(m.y, varName);
+      LESS(x, y), function (match, varName) {
+        var tx = t(match.x, varName);
+        var ty = t(match.y, varName);
         if (tx === notFound && ty === notFound) {
           return notFound;
         } else {
           TODO('implement quoted tryAbstraction');
         }
       },
-      NLESS(x, y), function (m, varName) {
-        var tx = t(m.x, varName);
-        var ty = t(m.y, varName);
+      NLESS(x, y), function (match, varName) {
+        var tx = t(match.x, varName);
+        var ty = t(match.y, varName);
         if (tx === notFound && ty === notFound) {
           return notFound;
         } else {
           TODO('implement quoted tryAbstraction');
         }
       },
-      EQUAL(x, y), function (m, varName) {
-        var tx = t(m.x, varName);
-        var ty = t(m.y, varName);
+      EQUAL(x, y), function (match, varName) {
+        var tx = t(match.x, varName);
+        var ty = t(match.y, varName);
         if (tx === notFound && ty === notFound) {
           return notFound;
         } else {
@@ -1116,17 +1120,17 @@ function(log,   test,   pattern,   symbols)
     var name = pattern.variable('name');
 
     var t = pattern.match(
-      VAR(name), function (m) {
-        return VAR(m.name);
+      VAR(name), function (match) {
+        return VAR(match.name);
       },
-      LAMBDA(VAR(name), x), function (m) {
-        return compileLambda(m.name, t(m.x));
+      LAMBDA(VAR(name), x), function (match) {
+        return compileLambda(match.name, t(match.x));
       },
-      LETREC(VAR(name), x, y), function (m) {
-        return compileLetrec(m.name, t(m.x), t(m.y));
+      LETREC(VAR(name), x, y), function (match) {
+        return compileLetrec(match.name, t(match.x), t(match.y));
       },
-      x, function (m) {
-        var x = m.x;
+      x, function (match) {
+        var x = match.x;
         if (_.isString(x)) {
           return x;
         } else {
@@ -1288,14 +1292,14 @@ function(log,   test,   pattern,   symbols)
     var name = pattern.variable('name');
 
     var renderPatt = pattern.match(
-      VAR(name), function (m) {
-        return templates.VAR(m.name.replace(/\./g, templates.dot));
+      VAR(name), function (match) {
+        return templates.VAR(match.name.replace(/\./g, templates.dot));
       },
-      QUOTE(x), function (m) {
-        return templates.QUOTE(renderPatt(m.x));
+      QUOTE(x), function (match) {
+        return templates.QUOTE(renderPatt(match.x));
       },
-      CURSOR(x), function (m) {
-        return templates.CURSOR(renderPatt(m.x));
+      CURSOR(x), function (match) {
+        return templates.CURSOR(renderPatt(match.x));
       }
     );
 
@@ -1312,103 +1316,103 @@ function(log,   test,   pattern,   symbols)
       I, function () {
         return templates.I;
       },
-      VAR(name), function (m) {
-        return templates.VAR(m.name.replace(/\./g, templates.dot));
+      VAR(name), function (match) {
+        return templates.VAR(match.name.replace(/\./g, templates.dot));
       },
-      RAND(x, y), function (m) {
-        return templates.RAND(renderInline(m.x), renderInline(m.y));
+      RAND(x, y), function (match) {
+        return templates.RAND(renderInline(match.x), renderInline(match.y));
       },
-      QUOTE(x), function (m) {
-        return templates.QUOTE(renderInline(m.x));
+      QUOTE(x), function (match) {
+        return templates.QUOTE(renderInline(match.x));
       },
-      LESS(x, y), function (m) {
-        return templates.LESS(renderJoin(m.x), renderJoin(m.y));
+      LESS(x, y), function (match) {
+        return templates.LESS(renderJoin(match.x), renderJoin(match.y));
       },
-      NLESS(x, y), function (m) {
-        return templates.NLESS(renderJoin(m.x), renderJoin(m.y));
+      NLESS(x, y), function (match) {
+        return templates.NLESS(renderJoin(match.x), renderJoin(match.y));
       },
-      EQUAL(x, y), function (m) {
-        return templates.EQUAL(renderJoin(m.x), renderJoin(m.y));
+      EQUAL(x, y), function (match) {
+        return templates.EQUAL(renderJoin(match.x), renderJoin(match.y));
       },
-      CURSOR(x), function (m) {
-        return templates.CURSOR(renderAtom(m.x));
+      CURSOR(x), function (match) {
+        return templates.CURSOR(renderAtom(match.x));
       },
-      x, function (m, failed) {
+      x, function (match, failed) {
         if (failed) {
-          log('failed to render: ' + JSON.stringify(m.x));
-          return templates.error(m.x);
+          log('failed to render: ' + JSON.stringify(match.x));
+          return templates.error(match.x);
         } else {
-          return templates.atom(renderInline(m.x, true));
+          return templates.atom(renderInline(match.x, true));
         }
       }
     );
 
     var renderComp = pattern.match(
-      COMP(x, y), function (m) {
-        return templates.COMP(renderComp(m.x), renderComp(m.y));
+      COMP(x, y), function (match) {
+        return templates.COMP(renderComp(match.x), renderComp(match.y));
       },
-      CURSOR(x), function (m) {
-        return templates.CURSOR(renderComp(m.x));
+      CURSOR(x), function (match) {
+        return templates.CURSOR(renderComp(match.x));
       },
-      x, function (m, failed) {
-        return renderAtom(m.x, failed);
+      x, function (match, failed) {
+        return renderAtom(match.x, failed);
       }
     );
 
     var renderApp = pattern.match(
-      APP(x, y), function (m) {
-        return templates.APP(renderApp(m.x), renderAtom(m.y));
+      APP(x, y), function (match) {
+        return templates.APP(renderApp(match.x), renderAtom(match.y));
       },
-      CURSOR(x), function (m) {
-        return templates.CURSOR(renderApp(m.x));
+      CURSOR(x), function (match) {
+        return templates.CURSOR(renderApp(match.x));
       },
-      x, function (m, failed) {
-        return renderComp(m.x, failed);
+      x, function (match, failed) {
+        return renderComp(match.x, failed);
       }
     );
 
     var renderJoin = pattern.match(
-      JOIN(x, y), function (m) {
-        return templates.JOIN(renderJoin(m.x), renderJoin(m.y));
+      JOIN(x, y), function (match) {
+        return templates.JOIN(renderJoin(match.x), renderJoin(match.y));
       },
-      CURSOR(x), function (m) {
-        return templates.CURSOR(renderJoin(m.x));
+      CURSOR(x), function (match) {
+        return templates.CURSOR(renderJoin(match.x));
       },
-      x, function (m, failed) {
-        return renderApp(m.x, failed);
+      x, function (match, failed) {
+        return renderApp(match.x, failed);
       }
     );
 
     var renderInline = pattern.match(
-      LAMBDA(x, y), function (m) {
-        return templates.LAMBDA(renderPatt(m.x), renderInline(m.y));
+      LAMBDA(x, y), function (match) {
+        return templates.LAMBDA(renderPatt(match.x), renderInline(match.y));
       },
-      LETREC(x, y, z), function (m) {
+      LETREC(x, y, z), function (match) {
         return templates.LETREC(
-          renderPatt(m.x),
-          renderJoin(m.y),
-          renderInline(m.z));
+          renderPatt(match.x),
+          renderJoin(match.y),
+          renderInline(match.z));
       },
-      CURSOR(x), function (m) {
-        return templates.CURSOR(renderInline(m.x));
+      CURSOR(x), function (match) {
+        return templates.CURSOR(renderInline(match.x));
       },
-      x, function (m, failed) {
-        return renderJoin(m.x, failed);
+      x, function (match, failed) {
+        return renderJoin(match.x, failed);
       }
     );
 
     return pattern.match(
-      DEFINE(x, y), function (m) {
-        return templates.DEFINE(renderAtom(m.x), renderJoin(m.y));
+      DEFINE(x, y), function (match) {
+        return templates.DEFINE(renderAtom(match.x), renderJoin(match.y));
       },
-      ASSERT(x), function (m) {
-        return templates.ASSERT(renderJoin(m.x));
+      ASSERT(x), function (match) {
+        return templates.ASSERT(renderJoin(match.x));
       },
-      CURSOR(x), function (m) {
-        return templates.CURSOR(render(m.x));
+      CURSOR(x), function (match) {
+        return templates.CURSOR(render(match.x));
       },
-      x, function (m) {
-        return renderInline(m.x);
+      x, function (match) {
+        return renderInline(match.x);
       }
     );
   })();

@@ -138,31 +138,31 @@ function(log, test)
     var array = variable('array', _.isArray);
 
     var t = match(
-      ['APP', 'I', x], function (m) {
-        var tx = t(m.x);
+      ['APP', 'I', x], function (match) {
+        var tx = t(match.x);
         return tx;
       },
-      ['APP', ['APP', 'K', x], y], function (m) {
-        var tx = t(m.x);
+      ['APP', ['APP', 'K', x], y], function (match) {
+        var tx = t(match.x);
         return tx;
       },
-      ['APP', ['APP', ['APP', 'B', x], y], z], function (m) {
-        var xyz = ['APP', m.x, ['APP', m.y, m.z]];
+      ['APP', ['APP', ['APP', 'B', x], y], z], function (match) {
+        var xyz = ['APP', match.x, ['APP', match.y, match.z]];
         return t(xyz);
       },
-      ['APP', x, y], function (m) {
-        var tx = t(m.x);
-        var ty = t(m.y);
+      ['APP', x, y], function (match) {
+        var tx = t(match.x);
+        var ty = t(match.y);
         return ['APP', tx, ty];
       },
-      ['typed:', string], function (m) {
+      ['typed:', string], function (match) {
         return 'string';
       },
-      ['typed:', array], function (m) {
+      ['typed:', array], function (match) {
         return 'array';
       },
-      x, function (m) {
-        return m.x;
+      x, function (match) {
+        return match.x;
       }
     );
 

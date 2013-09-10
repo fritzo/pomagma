@@ -230,7 +230,9 @@ function(log,   test,   symbols)
         for (var name in free) {
           assert(symbols.isGlobal(name), 'name is not global: ' + name);
           var occurrencesName = occurrences[name];
-          assert(occurrencesName !== undefined, 'missing occurrences: ' + name);
+          assert(
+            occurrencesName !== undefined,
+            'missing occurrences: ' + name);
           assert(occurrencesName[id] === null, 'missing occurrence: ' + name);
         }
       }
