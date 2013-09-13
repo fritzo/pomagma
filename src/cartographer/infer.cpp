@@ -167,7 +167,7 @@ void infer_less_monotone (
     const BinaryFunction & fun,
     const DenseSet & nonconst)
 {
-    POMAGMA_INFO("Inferring LESS-monotone");
+    POMAGMA_INFO("Inferring binary LESS-monotone");
 
     const size_t item_dim = nonconst.item_dim();
     std::vector<Ob> f_set;
@@ -234,6 +234,20 @@ void infer_less_monotone (
             theorems.flush(mutex);
         }
     }
+}
+
+//      LESS f g               LESS x y          LESS f g    LESS x y
+// --------------------   --------------------   --------------------
+// LESS fun f x fun g x   LESS fun f x fun f y   LESS fun f x fun g y
+void infer_less_monotone (
+    BinaryRelation & LESS __attribute__((unused)),
+    const SymmetricFunction & fun __attribute__((unused)))
+{
+    POMAGMA_INFO("Inferring symmetric LESS-monotone");
+
+    //const size_t item_dim = rel.item_dim();
+
+    // TODO
 }
 
 // LESS x z   LESS y z
@@ -513,9 +527,11 @@ size_t infer_less (Structure & structure)
     infer_less_monotone(LESS, APP, nonconst);
     infer_less_monotone(LESS, COMP, nonconst);
     if (JOIN) {
+        infer_less_monotone(LESS, * JOIN);
         infer_less_convex(carrier, LESS, * JOIN);
     }
     if (RAND) {
+        infer_less_monotone(LESS, * RAND);
         infer_less_linear(carrier, LESS, * RAND);
     }
 
