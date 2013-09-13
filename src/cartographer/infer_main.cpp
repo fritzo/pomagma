@@ -33,7 +33,7 @@ int main (int argc, char ** argv)
     }
 
     // infer
-    pomagma::infer(structure);
+    pomagma::infer_eager(structure);
     if (POMAGMA_DEBUG_LEVEL > 1) {
         structure.validate();
     }

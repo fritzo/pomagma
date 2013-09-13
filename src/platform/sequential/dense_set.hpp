@@ -264,6 +264,9 @@ public:
     void set_union   (const DenseSet & lhs, const DenseSet & rhs);
     void set_insn    (const DenseSet & lhs, const DenseSet & rhs);
     void set_insn    (const DenseSet &, const DenseSet &, const DenseSet &);
+    void set_diff    (const DenseSet & pos, const DenseSet & neg);
+    void set_ppn     (const DenseSet &, const DenseSet &, const DenseSet &);
+    void set_pnn     (const DenseSet &, const DenseSet &, const DenseSet &);
     void merge       (DenseSet & dep);
     bool merge       (DenseSet & dep, DenseSet & diff);
     bool ensure      (const DenseSet & dep, DenseSet & diff);

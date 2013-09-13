@@ -306,6 +306,58 @@ void DenseSet::set_insn (
     }
 }
 
+void DenseSet::set_diff (const DenseSet & pos, const DenseSet & neg)
+{
+    POMAGMA_ASSERT1(item_dim() == pos.item_dim(), "pos.item_dim mismatch");
+    POMAGMA_ASSERT1(item_dim() == neg.item_dim(), "neg.item_dim mismatch");
+
+    const Word * restrict s = assume_aligned(pos.m_words);
+    const Word * restrict t = assume_aligned(neg.m_words);
+    Word * restrict u = assume_aligned(m_words);
+
+    for (size_t m = 0, M = m_word_dim; m < M; ++m) {
+        u[m] = s[m] & ~ t[m];
+    }
+}
+
+void DenseSet::set_ppn (
+    const DenseSet & pos1,
+    const DenseSet & pos2,
+    const DenseSet & neg)
+{
+    POMAGMA_ASSERT1(item_dim() == pos1.item_dim(), "pos1.item_dim mismatch");
+    POMAGMA_ASSERT1(item_dim() == pos2.item_dim(), "pos2.item_dim mismatch");
+    POMAGMA_ASSERT1(item_dim() == neg.item_dim(), "neg.item_dim mismatch");
+
+    const Word * restrict s = assume_aligned(pos1.m_words);
+    const Word * restrict t = assume_aligned(pos2.m_words);
+    const Word * restrict u = assume_aligned(neg.m_words);
+    Word * restrict v = assume_aligned(m_words);
+
+    for (size_t m = 0, M = m_word_dim; m < M; ++m) {
+        v[m] = s[m] & t[m] & ~ u[m];
+    }
+}
+
+void DenseSet::set_pnn (
+    const DenseSet & pos,
+    const DenseSet & neg1,
+    const DenseSet & neg2)
+{
+    POMAGMA_ASSERT1(item_dim() == pos.item_dim(), "pos.item_dim mismatch");
+    POMAGMA_ASSERT1(item_dim() == neg1.item_dim(), "neg1.item_dim mismatch");
+    POMAGMA_ASSERT1(item_dim() == neg2.item_dim(), "neg2.item_dim mismatch");
+
+    const Word * restrict s = assume_aligned(pos.m_words);
+    const Word * restrict t = assume_aligned(neg1.m_words);
+    const Word * restrict u = assume_aligned(neg2.m_words);
+    Word * restrict v = assume_aligned(m_words);
+
+    for (size_t m = 0, M = m_word_dim; m < M; ++m) {
+        v[m] = s[m] & ~ (t[m] | u[m]);
+    }
+}
+
 // this += dep; dep = 0;
 void DenseSet::merge (DenseSet & dep)
 {
