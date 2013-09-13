@@ -149,7 +149,7 @@ void infer_less_transitive (
                 POMAGMA_ASSERT_UNDECIDED(NLESS, x, y);
                 POMAGMA_ASSERT_UNDECIDED(LESS, x, y);
 
-                if (unlikely(not less_x.disjoint(LESS.get_Rx_set(y)))) {
+                if (unlikely(less_x.intersects(LESS.get_Rx_set(y)))) {
                     theorems.push(x, y);
                 }
             }
@@ -347,20 +347,10 @@ inline bool infer_nless_transitive (
     const BinaryRelation & LESS,
     const BinaryRelation & NLESS,
     Ob x,
-    Ob y,
-    DenseSet & z_set)
+    Ob y)
 {
-    z_set.set_insn(NLESS.get_Lx_set(x), LESS.get_Lx_set(y));
-    if (unlikely(not z_set.empty())) {
-        return true;
-    }
-
-    z_set.set_insn(LESS.get_Rx_set(x), NLESS.get_Rx_set(y));
-    if (unlikely(not z_set.empty())) {
-        return true;
-    }
-
-    return false;
+    return NLESS.get_Lx_set(x).intersects(LESS.get_Lx_set(y))
+        or LESS.get_Rx_set(x).intersects(NLESS.get_Rx_set(y));
 }
 
 // NLESS fun x z fun y z   NLESS fun z x fun z y
@@ -486,7 +476,7 @@ size_t infer_nless (Structure & structure)
                 POMAGMA_ASSERT_UNDECIDED(LESS, x, y);
                 POMAGMA_ASSERT_UNDECIDED(NLESS, x, y);
 
-                if (infer_nless_transitive(LESS, NLESS, x, y, z_set) or
+                if (infer_nless_transitive(LESS, NLESS, x, y) or
                     infer_nless_monotone(NLESS, APP, nonconst, x, y, z_set) or
                     infer_nless_monotone(NLESS, COMP, nonconst, x, y, z_set))
                 {
