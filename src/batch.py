@@ -85,7 +85,7 @@ def test(theory, **options):
         if theory != 'h4':
             theorist.assume('6.h5', '7.h5', theorems, **opts)
             cartographer.validate('7.h5', **opts)
-            cartographer.infer('7.h5', '8.h5', **opts)
+            cartographer.infer('7.h5', '8.h5', 2, **opts)
             cartographer.validate('8.h5', **opts)
 
         analyst.simplify(theory, '6.h5', conjectures, simplified, **opts)
@@ -112,7 +112,7 @@ def init(theory, **options):
 
 
 @parsable.command
-def infer(theory, **options):
+def infer(theory, steps, **options):
     '''
     Infer simple facts in the world map.
     Options: log_level, log_file
@@ -125,7 +125,7 @@ def infer(theory, **options):
         updated = '{}.infer.h5'.format(os.getpid())
         opts = options
         opts.setdefault('log_file', 'infer.log')
-        atlas.infer(world, updated, **opts)
+        atlas.infer(world, updated, steps, **opts)
 
 
 @parsable.command
@@ -171,7 +171,7 @@ def explore(theory, max_size=DEFAULT_SURVEY_SIZE, step_size=512, **options):
     '''
     while True:
         workers = [
-            parsable_fork(infer, theory, **options),
+            parsable_fork(infer, theory, 1, **options),
             parsable_fork(survey, theory, max_size, step_size, **options),
         ]
         for worker in workers:

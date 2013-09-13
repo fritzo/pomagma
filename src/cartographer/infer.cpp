@@ -66,9 +66,7 @@ DenseSet get_nonconst (Structure & structure)
     const NullaryFunction & K = structure.nullary_function("K");
     const BinaryFunction & APP = structure.binary_function("APP");
 
-    POMAGMA_ASSERT_EQ(carrier.item_dim(), carrier.item_count());
     DenseSet nonconst(carrier.item_dim());
-
     nonconst = carrier.support();
     if (Ob K_ = K.find()) {
         for (auto iter = APP.iter_lhs(K_); iter.ok(); iter.next()) {
@@ -377,7 +375,6 @@ size_t infer_const (Structure & structure)
     BinaryFunction & APP = structure.binary_function("APP");
     BinaryFunction & COMP = structure.binary_function("COMP");
 
-    POMAGMA_ASSERT_EQ(carrier.item_dim(), carrier.item_count());
     DenseSet y_set(carrier.item_dim());
 
     size_t theorem_count = 0;
@@ -500,7 +497,6 @@ size_t infer_equal (Structure & structure)
     Carrier & carrier = structure.carrier();
     const BinaryRelation & LESS = structure.binary_relation("LESS");
 
-    POMAGMA_ASSERT_EQ(carrier.item_dim(), carrier.item_count());
     DenseSet y_set(carrier.item_dim());
 
     carrier.set_merge_callback(schedule_merge);
