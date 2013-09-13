@@ -161,29 +161,6 @@ inline void DenseSet::ensure_padding_bits_are_zero ()
     m_words[m_word_dim - 1] &= ones >> padding;
 }
 
-void DenseSet::complement ()
-{
-    Word * restrict s = assume_aligned(m_words);
-
-    for (size_t m = 0, M = m_word_dim; m < M; ++m) {
-        s[m] = ~s[m];
-    }
-
-    ensure_padding_bits_are_zero();
-}
-
-void DenseSet::complement (const DenseSet & other)
-{
-    const Word * restrict s = assume_aligned(other.m_words);
-    Word * restrict t = assume_aligned(m_words);
-
-    for (size_t m = 0, M = m_word_dim; m < M; ++m) {
-        t[m] = ~s[m];
-    }
-
-    ensure_padding_bits_are_zero();
-}
-
 bool DenseSet::operator== (const DenseSet & other) const
 {
     POMAGMA_ASSERT1(item_dim() == other.item_dim(), "item_dim mismatch");

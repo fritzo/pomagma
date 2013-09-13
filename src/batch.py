@@ -55,13 +55,6 @@ def test(theory, **options):
 
         surveyor.init(theory, '0.h5', sizes[0], **opts)
         cartographer.validate('0.h5', **opts)
-        if theory != 'h4':
-            cartographer.infer('0.h5', '1.h5', **opts)
-            cartographer.validate('1.h5', **opts)
-            digest0 = pomagma.util.get_hash('0.h5')
-            digest1 = pomagma.util.get_hash('1.h5')
-            assert digest0 == digest1
-
         cartographer.copy('0.h5', '1.h5', **opts)
         surveyor.survey(theory, '1.h5', '2.h5', sizes[1], **opts)
         cartographer.trim(theory, '2.h5', '3.h5', sizes[0], **opts)

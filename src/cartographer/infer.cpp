@@ -69,7 +69,7 @@ DenseSet get_nonconst (Structure & structure)
     POMAGMA_ASSERT_EQ(carrier.item_dim(), carrier.item_count());
     DenseSet nonconst(carrier.item_dim());
 
-    nonconst.complement();
+    nonconst = carrier.support();
     if (Ob K_ = K.find()) {
         for (auto iter = APP.iter_lhs(K_); iter.ok(); iter.next()) {
             Ob x = * iter;
@@ -366,6 +366,8 @@ inline bool infer_nless_monotone (
 
 } // anonymous namespace
 
+// ---------------------   ----------------------------
+// EQUAL APP APP K x y x   EQUAL COMP APP K x y APP K x
 size_t infer_const (Structure & structure)
 {
     POMAGMA_INFO("Inferring K");
@@ -384,22 +386,14 @@ size_t infer_const (Structure & structure)
             Ob x = * iter;
             Ob APP_K_x = APP.find(K_, x);
 
-            /*
-            ---------------------
-            EQUAL APP APP K x y x
-            */
-            y_set.complement(APP.get_Lx_set(APP_K_x));
+            y_set.set_diff(carrier.support(), APP.get_Lx_set(APP_K_x));
             for (auto iter = y_set.iter(); iter.ok(); iter.next()) {
                 Ob y = * iter;
                 APP.insert(APP_K_x, y, x);
                 ++theorem_count;
             }
 
-            /*
-            ----------------------------
-            EQUAL COMP APP K x y APP K x
-            */
-            y_set.complement(COMP.get_Lx_set(APP_K_x));
+            y_set.set_diff(carrier.support(), COMP.get_Lx_set(APP_K_x));
             for (auto iter = y_set.iter(); iter.ok(); iter.next()) {
                 Ob y = * iter;
                 COMP.insert(APP_K_x, y, APP_K_x);

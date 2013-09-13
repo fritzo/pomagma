@@ -253,8 +253,6 @@ public:
 
     // entire operations
     void zero ();
-    void complement  ();
-    void complement  (const DenseSet & other);
     bool operator == (const DenseSet & other) const;
     bool operator <= (const DenseSet & other) const;
     bool disjoint    (const DenseSet & other) const;
