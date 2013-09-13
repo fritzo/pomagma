@@ -52,6 +52,43 @@ public:
     }
 };
 
+class LhsFixedTheoremQueue
+{
+    BinaryRelation & m_rel;
+    Ob m_lhs;
+    DenseSet m_rhs;
+
+public:
+
+    LhsFixedTheoremQueue (BinaryRelation & rel)
+        : m_rel(rel),
+          m_lhs(0),
+          m_rhs(rel.item_dim())
+    {
+    }
+
+    void push (Ob lhs, Ob rhs)
+    {
+        POMAGMA_ASSERT1(
+            m_lhs == 0 or m_lhs == lhs,
+            "mismatched lhs in LhsFixedTheoremQueue; use TheoremQueue instead");
+        m_lhs = lhs;
+        m_rhs.insert(rhs);
+    }
+
+    void flush (std::mutex & mutex)
+    {
+        if (m_lhs) {
+            {
+                std::unique_lock<std::mutex> lock(mutex);
+                m_rel.insert(m_lhs, m_rhs);
+            }
+            m_lhs = 0;
+            m_rhs.zero();
+        }
+    }
+};
+
 // All the nonconst filtering below is only an optimization.
 // Specifically, in rules like
 //
@@ -95,7 +132,7 @@ void infer_less_transitive (
     #pragma omp parallel
     {
         DenseSet y_set(item_dim);
-        TheoremQueue theorems(LESS);
+        LhsFixedTheoremQueue theorems(LESS);
 
         #pragma omp for schedule(dynamic, 1)
         for (Ob x = 1; x <= item_dim; ++x) {
@@ -432,7 +469,7 @@ size_t infer_nless (Structure & structure)
     {
         DenseSet y_set(item_dim);
         DenseSet z_set(item_dim);
-        DenseSet theorems(item_dim);
+        LhsFixedTheoremQueue theorems(NLESS);
 
         #pragma omp for schedule(dynamic, 1)
         for (Ob x = 1; x <= item_dim; ++x) {
@@ -452,15 +489,11 @@ size_t infer_nless (Structure & structure)
                     infer_nless_monotone(NLESS, APP, nonconst, x, y, z_set) or
                     infer_nless_monotone(NLESS, COMP, nonconst, x, y, z_set))
                 {
-                    theorems.insert(y);
+                    theorems.push(x, y);
                 }
             }
 
-            {
-                std::unique_lock<std::mutex> lock(mutex);
-                NLESS.insert(x, theorems);
-            }
-            theorems.zero();
+            theorems.flush(mutex);
         }
     }
 
