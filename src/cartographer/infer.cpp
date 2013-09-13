@@ -136,6 +136,7 @@ void infer_less_transitive (
 
         #pragma omp for schedule(dynamic, 1)
         for (Ob x = 1; x <= item_dim; ++x) {
+            if (not carrier.contains(x)) { continue; }
             const DenseSet less_x = LESS.get_Lx_set(x);
 
             y_set.set_pnn(
