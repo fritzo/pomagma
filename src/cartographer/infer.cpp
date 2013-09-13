@@ -87,7 +87,7 @@ void infer_less_transitive (
     BinaryRelation & LESS,
     const BinaryRelation & NLESS)
 {
-    POMAGMA_INFO("inferring LESS-transitive");
+    POMAGMA_INFO("Inferring LESS-transitive");
 
     const size_t item_dim = carrier.item_dim();
 
@@ -99,7 +99,7 @@ void infer_less_transitive (
 
         #pragma omp for schedule(dynamic, 1)
         for (Ob x = 1; x <= item_dim; ++x) {
-            const auto & less_x = LESS.get_Lx_set(x);
+            const DenseSet less_x = LESS.get_Lx_set(x);
 
             y_set.set_pnn(
                 carrier.support(),
@@ -129,7 +129,7 @@ void infer_less_monotone (
     const BinaryFunction & fun,
     const DenseSet & nonconst)
 {
-    POMAGMA_INFO("inferring LESS-monotone");
+    POMAGMA_INFO("Inferring LESS-monotone");
 
     const size_t item_dim = nonconst.item_dim();
     std::vector<Ob> f_set;
@@ -206,7 +206,7 @@ void infer_less_convex (
     BinaryRelation & LESS,
     const SymmetricFunction & JOIN)
 {
-    POMAGMA_INFO("inferring LESS-JOIN-convex");
+    POMAGMA_INFO("Inferring LESS-JOIN-convex");
 
     const size_t item_dim = carrier.item_dim();
     std::mutex mutex;
@@ -253,7 +253,7 @@ void infer_less_linear (
     BinaryRelation & LESS,
     const SymmetricFunction & RAND)
 {
-    POMAGMA_INFO("inferring LESS-RAND-linear");
+    POMAGMA_INFO("Inferring LESS-RAND-linear");
 
     const size_t item_dim = carrier.item_dim();
     std::mutex mutex;
@@ -301,7 +301,6 @@ void infer_less_linear (
         }
     }
 }
-
 
 // NLESS x z   LESS y z   LESS z x   NLESS z y
 // --------------------   --------------------
@@ -361,6 +360,17 @@ inline bool infer_nless_monotone (
 
     return false;
 }
+
+// TODO infer associativity
+//
+// ----------------------------------
+// EQUAL APP COMP x y z APP x APP y z
+//
+// -------------------------------------
+// EQUAL JOIN JOIN x y z JOIN x JOIN y z
+//
+// -------------------------------------
+// EQUAL RAND RAND x y z RAND x RAND y z
 
 } // anonymous namespace
 
