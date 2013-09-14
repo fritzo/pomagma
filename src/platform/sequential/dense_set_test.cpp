@@ -136,18 +136,24 @@ void test_operations (size_t size, rng_t & rng)
 {
     POMAGMA_INFO("Testing DenseSet operations");
 
+    DenseSet w(size);
     DenseSet x(size);
     DenseSet y(size);
+    DenseSet z(size);
     DenseSet expected(size);
     DenseSet actual(size);
 
     std::bernoulli_distribution randomly_insert(0.5);
     for (size_t i = 1; i <= size; ++i) {
+        if (randomly_insert(rng)) w.insert(i);
         if (randomly_insert(rng)) x.insert(i);
         if (randomly_insert(rng)) y.insert(i);
+        if (randomly_insert(rng)) z.insert(i);
     }
+    POMAGMA_ASSERT(bool(w.count_items()) ^ w.empty(), ".empty() is wrong");
     POMAGMA_ASSERT(bool(x.count_items()) ^ x.empty(), ".empty() is wrong");
     POMAGMA_ASSERT(bool(y.count_items()) ^ y.empty(), ".empty() is wrong");
+    POMAGMA_ASSERT(bool(z.count_items()) ^ z.empty(), ".empty() is wrong");
 
     POMAGMA_INFO("testing insert_all");
     expected.zero();
@@ -177,23 +183,6 @@ void test_operations (size_t size, rng_t & rng)
         POMAGMA_ASSERT(actual == expected, "insert_one is wrong");
     }
 
-    POMAGMA_INFO("testing complement");
-    expected.zero();
-    actual.zero();
-    for (Ob i = 1; i <= size; ++i) {
-        if (x.contains(i)) {
-            actual.insert(i);
-        } else {
-            expected.insert(i);
-        }
-    }
-    actual.complement();
-    actual.validate();
-    POMAGMA_ASSERT(actual == expected, "complement() is wrong");
-    actual.complement(x);
-    actual.validate();
-    POMAGMA_ASSERT(actual == expected, "complement(-) is wrong");
-
     POMAGMA_INFO("testing union");
     expected.zero();
     actual.zero();
@@ -209,7 +198,7 @@ void test_operations (size_t size, rng_t & rng)
     actual.set_union(x, y);
     POMAGMA_ASSERT(actual == expected, "set_union is wrong");
 
-    POMAGMA_INFO("testing intersection");
+    POMAGMA_INFO("testing binary intersection");
     expected.zero();
     actual.zero();
     for (Ob i = 1; i <= size; ++i) {
@@ -218,11 +207,21 @@ void test_operations (size_t size, rng_t & rng)
     }
     actual *= y;
     POMAGMA_ASSERT(actual == expected, "operator *= is wrong");
-    actual.set_insn(x, y);
-    POMAGMA_ASSERT(actual == expected, "set_insn is wrong");
     actual.zero();
     actual.set_insn(x, y);
-    POMAGMA_ASSERT(actual == expected, "set_insn is wrong");
+    POMAGMA_ASSERT(actual == expected, "binary set_insn is wrong");
+
+    POMAGMA_INFO("testing ternary intersection");
+    expected.zero();
+    actual.zero();
+    for (Ob i = 1; i <= size; ++i) {
+        if (x.contains(i) and y.contains(i) and z.contains(i)) {
+            expected.insert(i);
+        }
+    }
+    actual.zero();
+    actual.set_insn(x, y, z);
+    POMAGMA_ASSERT(actual == expected, "ternary set_insn is wrong");
 
     POMAGMA_INFO("testing difference");
     expected.zero();
@@ -233,6 +232,49 @@ void test_operations (size_t size, rng_t & rng)
     }
     actual -= y;
     POMAGMA_ASSERT(actual == expected, "operator -= is wrong");
+    actual.zero();
+    actual.set_diff(x, y);
+    POMAGMA_ASSERT(actual == expected, "set_diff is wrong");
+
+    POMAGMA_INFO("testing set_ppn");
+    expected.zero();
+    actual.zero();
+    for (Ob i = 1; i <= size; ++i) {
+        if (x.contains(i) and y.contains(i) and not z.contains(i)) {
+            expected.insert(i);
+        }
+    }
+    actual.zero();
+    actual.set_ppn(x, y, z);
+    POMAGMA_ASSERT(actual == expected, "set_pnn is wrong");
+
+    POMAGMA_INFO("testing set_pnn");
+    expected.zero();
+    actual.zero();
+    for (Ob i = 1; i <= size; ++i) {
+        if (x.contains(i) and not y.contains(i) and not z.contains(i)) {
+            expected.insert(i);
+        }
+    }
+    actual.zero();
+    actual.set_pnn(x, y, z);
+    POMAGMA_ASSERT(actual == expected, "set_pnn is wrong");
+
+    POMAGMA_INFO("testing set_ppnn");
+    expected.zero();
+    actual.zero();
+    for (Ob i = 1; i <= size; ++i) {
+        if (w.contains(i) and
+            x.contains(i) and
+            not y.contains(i) and
+            not z.contains(i))
+        {
+            expected.insert(i);
+        }
+    }
+    actual.zero();
+    actual.set_ppnn(w, x, y, z);
+    POMAGMA_ASSERT(actual == expected, "set_pnn is wrong");
 
     // these are shared for merge(-), merge(-,-) & ensure
     DenseSet expected_rep(size);

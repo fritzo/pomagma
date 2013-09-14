@@ -253,17 +253,21 @@ public:
 
     // entire operations
     void zero ();
-    void complement  ();
-    void complement  (const DenseSet & other);
     bool operator == (const DenseSet & other) const;
     bool operator <= (const DenseSet & other) const;
     bool disjoint    (const DenseSet & other) const;
+    bool intersects  (const DenseSet & s) const { return not disjoint(s); }
     void operator += (const DenseSet & other);
     void operator *= (const DenseSet & other);
     void operator -= (const DenseSet & other);
     void set_union   (const DenseSet & lhs, const DenseSet & rhs);
     void set_insn    (const DenseSet & lhs, const DenseSet & rhs);
     void set_insn    (const DenseSet &, const DenseSet &, const DenseSet &);
+    void set_diff    (const DenseSet & pos, const DenseSet & neg);
+    void set_ppn     (const DenseSet &, const DenseSet &, const DenseSet &);
+    void set_pnn     (const DenseSet &, const DenseSet &, const DenseSet &);
+    void set_ppnn    (const DenseSet &, const DenseSet &,
+                      const DenseSet &, const DenseSet &);
     void merge       (DenseSet & dep);
     bool merge       (DenseSet & dep, DenseSet & diff);
     bool ensure      (const DenseSet & dep, DenseSet & diff);

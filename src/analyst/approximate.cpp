@@ -82,6 +82,16 @@ void Approximator::close (Approximation & approx)
     }
 }
 
+// Inference rules, in order of appearance
+//
+//   LESS x y   LESS x z
+//   -------------------   ----------
+//     LESS x RAND y z     LESS x TOP
+//   
+//   LESS y x   LESS z x   LESS y x   LESS z x
+//   -------------------   -------------------   ----------
+//     LESS JOIN y z x       LESS RAND y z x     LESS BOT x
+//
 bool Approximator::try_close (Approximation & approx)
 {
     POMAGMA_ASSERT_EQ(approx.lower.item_dim(), m_item_dim);
