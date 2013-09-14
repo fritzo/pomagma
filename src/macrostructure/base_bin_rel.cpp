@@ -21,9 +21,9 @@ base_bin_rel_<symmetric>::base_bin_rel_ (const Carrier & carrier)
     POMAGMA_ASSERT(m_round_item_dim <= MAX_ITEM_DIM,
             "base_bin_rel_ is too large");
 
-    bzero(m_Lx_lines, sizeof(Word) * m_data_size_words);
+    zero_blocks(m_Lx_lines, m_data_size_words);
     if (not symmetric) {
-        bzero(m_Rx_lines, sizeof(Word) * m_data_size_words);
+        zero_blocks(m_Rx_lines, m_data_size_words);
     }
 }
 
@@ -45,16 +45,19 @@ base_bin_rel_<symmetric>::base_bin_rel_ (
     POMAGMA_ASSERT(m_round_item_dim <= MAX_ITEM_DIM,
             "base_bin_rel_ is too large");
 
-    bzero(m_Lx_lines, sizeof(Word) * m_data_size_words);
-    if (not symmetric) {
-        bzero(m_Rx_lines, sizeof(Word) * m_data_size_words);
+    const size_t copy_dim = std::min(item_dim(), other.item_dim());
+    zero_blocks(m_Lx_lines, m_data_size_words);
+    for (auto iter = carrier.iter(); iter.ok(); iter.next()) {
+        Ob ob = * iter;
+        DenseSet(copy_dim, Lx(ob)) = DenseSet(copy_dim, other.Lx(ob));
     }
-
-    POMAGMA_ASSERT_NE(& carrier, & other.m_carrier);
-    const size_t item_dim = m_carrier.item_dim();
-    const size_t other_item_dim = other.m_carrier.item_dim();
-    POMAGMA_ASSERT_NE(item_dim, other_item_dim);
-    TODO("resize");
+    if (not symmetric) {
+        zero_blocks(m_Rx_lines, m_data_size_words);
+        for (auto iter = carrier.iter(); iter.ok(); iter.next()) {
+            Ob ob = * iter;
+            DenseSet(copy_dim, Rx(ob)) = DenseSet(copy_dim, other.Rx(ob));
+        }
+    }
 }
 
 template<bool symmetric>

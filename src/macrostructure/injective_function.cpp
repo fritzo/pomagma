@@ -34,8 +34,12 @@ InjectiveFunction::InjectiveFunction (
     construct_blocks(m_values, 1 + item_dim(), 0);
     construct_blocks(m_inverse, 1 + item_dim(), 0);
 
-    POMAGMA_ASSERT_NE(& carrier, & other.m_carrier);
-    TODO("resize");
+    for (auto iter = other.iter(); iter.ok(); iter.next()) {
+        Ob key = * iter;
+        Ob val = other.find(key);
+        raw_insert(key, val);
+    }
+    update();
 }
 
 InjectiveFunction::~InjectiveFunction ()

@@ -300,16 +300,6 @@ void survey ()
     log_stats();
 }
 
-void load ()
-{
-    TODO("load structure");
-}
-
-void dump ()
-{
-    TODO("dump structure");
-}
-
 } // namespace Scheduler
 
 

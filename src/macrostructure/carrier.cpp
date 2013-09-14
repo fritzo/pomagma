@@ -34,7 +34,13 @@ Carrier::Carrier (
     POMAGMA_ASSERT_LE(item_dim, MAX_ITEM_DIM);
     construct_blocks(m_reps, 1 + item_dim, 0);
 
-    TODO("resize");
+    POMAGMA_ASSERT_EQ(other.item_count(), other.rep_count());
+    for (auto iter = other.iter(); iter.ok(); iter.next()) {
+        Ob ob = * iter;
+        POMAGMA_ASSERT_LE(ob, m_support.item_dim());
+        raw_insert(ob);
+    }
+    update();
 }
 
 Carrier::~Carrier ()
