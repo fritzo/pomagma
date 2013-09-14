@@ -20,6 +20,7 @@ class base_bin_rel_ : noncopyable
 public:
 
     base_bin_rel_ (const Carrier & carrier);
+    base_bin_rel_ (const Carrier & carrier, base_bin_rel_<symmetric> && other);
     ~base_bin_rel_ ();
     void validate () const;
     void log_stats (const std::string & prefix) const;

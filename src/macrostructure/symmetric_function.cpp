@@ -11,6 +11,15 @@ SymmetricFunction::SymmetricFunction (Carrier & carrier)
     POMAGMA_DEBUG("creating SymmetricFunction");
 }
 
+SymmetricFunction::SymmetricFunction (
+        Carrier & carrier,
+        SymmetricFunction && other)
+    : m_lines(carrier, std::move(other.m_lines)),
+      m_values(std::move(other.m_values))
+{
+    POMAGMA_DEBUG("resizing SymmetricFunction");
+}
+
 void SymmetricFunction::validate () const
 {
     POMAGMA_INFO("Validating SymmetricFunction");

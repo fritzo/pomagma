@@ -19,6 +19,7 @@ class BinaryRelation : noncopyable
 public:
 
     BinaryRelation (const Carrier & carrier);
+    BinaryRelation (const Carrier & carrier, BinaryRelation && other);
     ~BinaryRelation ();
     void validate () const;
     void validate_disjoint (const BinaryRelation & other) const;

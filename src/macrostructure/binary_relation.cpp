@@ -12,6 +12,15 @@ BinaryRelation::BinaryRelation (const Carrier & carrier)
             << round_word_dim() << " words");
 }
 
+BinaryRelation::BinaryRelation (
+        const Carrier & carrier,
+        BinaryRelation && other)
+    : m_lines(carrier, std::move(other.m_lines))
+{
+    POMAGMA_DEBUG("resizing BinaryRelation with "
+            << round_word_dim() << " words");
+}
+
 BinaryRelation::~BinaryRelation ()
 {
 }

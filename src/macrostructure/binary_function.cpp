@@ -11,6 +11,15 @@ BinaryFunction::BinaryFunction (Carrier & carrier)
     POMAGMA_DEBUG("creating BinaryFunction");
 }
 
+BinaryFunction::BinaryFunction (
+        Carrier & carrier,
+        BinaryFunction && other)
+    : m_lines(carrier, std::move(other.m_lines)),
+      m_values(std::move(other.m_values))
+{
+    POMAGMA_DEBUG("resizing BinaryFunction");
+}
+
 void BinaryFunction::validate () const
 {
     POMAGMA_INFO("Validating BinaryFunction");

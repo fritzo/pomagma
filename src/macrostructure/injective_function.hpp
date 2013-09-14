@@ -18,6 +18,7 @@ class InjectiveFunction : noncopyable
 public:
 
     InjectiveFunction (const Carrier & carrier);
+    InjectiveFunction (const Carrier & carrier, InjectiveFunction && other);
     ~InjectiveFunction ();
     void validate () const;
     void log_stats (const std::string & prefix) const;

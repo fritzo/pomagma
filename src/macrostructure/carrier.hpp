@@ -16,9 +16,8 @@ class Carrier : noncopyable
 
 public:
 
-    Carrier (
-        size_t item_dim,
-        void (*merge_callback) (Ob) = nullptr);
+    Carrier (size_t item_dim, void (*merge_callback) (Ob) = nullptr);
+    Carrier (size_t item_dim, const Carrier & other);
     ~Carrier ();
     void set_merge_callback (void (*cb) (Ob)) { m_merge_callback = cb; }
     void validate () const;

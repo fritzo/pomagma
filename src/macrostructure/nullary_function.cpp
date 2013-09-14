@@ -12,6 +12,18 @@ NullaryFunction::NullaryFunction (const Carrier & carrier)
     POMAGMA_DEBUG("creating NullaryFunction");
 }
 
+NullaryFunction::NullaryFunction (
+        const Carrier & carrier,
+        NullaryFunction && other)
+    : m_carrier(carrier),
+      m_value(other.m_value)
+{
+    POMAGMA_DEBUG("resizing NullaryFunction");
+    POMAGMA_ASSERT(
+        m_value <= m_carrier.item_dim(),
+        "value not supported by carrier");
+}
+
 void NullaryFunction::validate () const
 {
     POMAGMA_INFO("Validating NullaryFunction");

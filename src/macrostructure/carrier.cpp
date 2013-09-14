@@ -21,6 +21,22 @@ Carrier::Carrier (
     construct_blocks(m_reps, 1 + item_dim, 0);
 }
 
+Carrier::Carrier (
+        size_t item_dim,
+        const Carrier & other)
+    : m_support(item_dim),
+      m_item_count(0),
+      m_rep_count(0),
+      m_reps(alloc_blocks<Ob>(1 + item_dim)),
+      m_merge_callback(other.m_merge_callback)
+{
+    POMAGMA_DEBUG("resizing Carrier with " << item_dim << " items");
+    POMAGMA_ASSERT_LE(item_dim, MAX_ITEM_DIM);
+    construct_blocks(m_reps, 1 + item_dim, 0);
+
+    TODO("resize");
+}
+
 Carrier::~Carrier ()
 {
     destroy_blocks(m_reps, 1 + item_dim());

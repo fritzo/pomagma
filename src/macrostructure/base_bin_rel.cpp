@@ -28,6 +28,36 @@ base_bin_rel_<symmetric>::base_bin_rel_ (const Carrier & carrier)
 }
 
 template<bool symmetric>
+base_bin_rel_<symmetric>::base_bin_rel_ (
+        const Carrier & carrier,
+        base_bin_rel_<symmetric> && other)
+    : m_carrier(carrier),
+      m_round_item_dim(DenseSet::round_item_dim(item_dim())),
+      m_round_word_dim(DenseSet::round_word_dim(item_dim())),
+      m_data_size_words((1 + m_round_item_dim) * m_round_word_dim),
+      m_Lx_lines(pomagma::alloc_blocks<Word>(m_data_size_words)),
+      m_Rx_lines( symmetric
+                ? m_Lx_lines
+                : pomagma::alloc_blocks<Word>(m_data_size_words))
+{
+    POMAGMA_DEBUG("creating base_bin_rel_ with "
+            << m_data_size_words << " words");
+    POMAGMA_ASSERT(m_round_item_dim <= MAX_ITEM_DIM,
+            "base_bin_rel_ is too large");
+
+    bzero(m_Lx_lines, sizeof(Word) * m_data_size_words);
+    if (not symmetric) {
+        bzero(m_Rx_lines, sizeof(Word) * m_data_size_words);
+    }
+
+    POMAGMA_ASSERT_NE(& carrier, & other.m_carrier);
+    const size_t item_dim = m_carrier.item_dim();
+    const size_t other_item_dim = other.m_carrier.item_dim();
+    POMAGMA_ASSERT_NE(item_dim, other_item_dim);
+    TODO("resize");
+}
+
+template<bool symmetric>
 base_bin_rel_<symmetric>::~base_bin_rel_ ()
 {
     pomagma::free_blocks(m_Lx_lines);
@@ -175,20 +205,22 @@ void base_bin_rel_<symmetric>::copy_Lx_to_Rx ()
 //----------------------------------------------------------------------------
 // Explicit template instantiation
 
-template base_bin_rel_<true>::base_bin_rel_ (const Carrier &);
-template base_bin_rel_<true>::~base_bin_rel_ ();
-template void base_bin_rel_<true>::validate () const;
-template void base_bin_rel_<true>::log_stats (const std::string &) const;
-template size_t base_bin_rel_<true>::count_pairs () const;
-template void base_bin_rel_<true>::clear ();
-template void base_bin_rel_<true>::copy_Lx_to_Rx ();
+template base_bin_rel_<1>::base_bin_rel_ (const Carrier &);
+template base_bin_rel_<1>::base_bin_rel_ (const Carrier &, base_bin_rel_<1> &&);
+template base_bin_rel_<1>::~base_bin_rel_ ();
+template void base_bin_rel_<1>::validate () const;
+template void base_bin_rel_<1>::log_stats (const std::string &) const;
+template size_t base_bin_rel_<1>::count_pairs () const;
+template void base_bin_rel_<1>::clear ();
+template void base_bin_rel_<1>::copy_Lx_to_Rx ();
 
-template base_bin_rel_<false>::base_bin_rel_ (const Carrier &);
-template base_bin_rel_<false>::~base_bin_rel_ ();
-template void base_bin_rel_<false>::validate () const;
-template void base_bin_rel_<false>::log_stats (const std::string &) const;
-template size_t base_bin_rel_<false>::count_pairs () const;
-template void base_bin_rel_<false>::clear ();
-template void base_bin_rel_<false>::copy_Lx_to_Rx ();
+template base_bin_rel_<0>::base_bin_rel_ (const Carrier &);
+template base_bin_rel_<0>::base_bin_rel_ (const Carrier &, base_bin_rel_<0> &&);
+template base_bin_rel_<0>::~base_bin_rel_ ();
+template void base_bin_rel_<0>::validate () const;
+template void base_bin_rel_<0>::log_stats (const std::string &) const;
+template size_t base_bin_rel_<0>::count_pairs () const;
+template void base_bin_rel_<0>::clear ();
+template void base_bin_rel_<0>::copy_Lx_to_Rx ();
 
 } // namespace pomagma

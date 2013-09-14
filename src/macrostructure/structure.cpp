@@ -46,4 +46,32 @@ void Structure::log_stats ()
     pomagma::log_stats(m_signature);
 }
 
+void Structure::resize (size_t item_dim)
+{
+    Carrier * carrier = new Carrier(item_dim, * m_signature.carrier());
+
+    for (auto pair : m_signature.binary_relations()) {
+        auto * rel = new BinaryRelation(* carrier, std::move(* pair.second));
+        delete m_signature.replace(pair.first, * rel);
+    }
+    for (auto pair : m_signature.nullary_functions()) {
+        auto * fun = new NullaryFunction(* carrier, std::move(* pair.second));
+        delete m_signature.replace(pair.first, * fun);
+    }
+    for (auto pair : m_signature.injective_functions()) {
+        auto * fun = new InjectiveFunction(* carrier, std::move(* pair.second));
+        delete m_signature.replace(pair.first, * fun);
+    }
+    for (auto pair : m_signature.binary_functions()) {
+        auto * fun = new BinaryFunction(* carrier, std::move(* pair.second));
+        delete m_signature.replace(pair.first, * fun);
+    }
+    for (auto pair : m_signature.symmetric_functions()) {
+        auto * fun = new SymmetricFunction(* carrier, std::move(* pair.second));
+        delete m_signature.replace(pair.first, * fun);
+    }
+
+    delete m_signature.replace(* carrier);
+}
+
 } // namespace pomagma

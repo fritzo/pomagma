@@ -19,6 +19,25 @@ InjectiveFunction::InjectiveFunction (const Carrier & carrier)
     construct_blocks(m_inverse, 1 + item_dim(), 0);
 }
 
+InjectiveFunction::InjectiveFunction (
+        const Carrier & carrier,
+        InjectiveFunction && other)
+    : m_carrier(carrier),
+      m_set(support().item_dim()),
+      m_inverse_set(support().item_dim()),
+      m_values(alloc_blocks<Ob>(1 + item_dim())),
+      m_inverse(alloc_blocks<Ob>(1 + item_dim()))
+{
+    POMAGMA_DEBUG("resizing InjectiveFunction with "
+            << item_dim() << " values");
+
+    construct_blocks(m_values, 1 + item_dim(), 0);
+    construct_blocks(m_inverse, 1 + item_dim(), 0);
+
+    POMAGMA_ASSERT_NE(& carrier, & other.m_carrier);
+    TODO("resize");
+}
+
 InjectiveFunction::~InjectiveFunction ()
 {
     destroy_blocks(m_values, 1 + item_dim());
