@@ -1,0 +1,47 @@
+package pomagma_messaging;
+
+message CartographerRequest {
+
+  message Aggregate {
+    repeated string surveys_in = 1;
+  }
+  message Trim {
+    required uint32 size = 1;
+    repeated string regions_out = 2;
+  }
+  message Infer {
+  }
+  message Validate {
+  }
+  message Dump {
+    required string world_out = 1;
+  }
+
+  // ordered by priority
+  optional Trim trim = 1;
+  optional Aggregate aggregate = 2;
+  optional Infer infer = 3;
+  optional Validate validate = 4;
+  optional Dump dump = 5;
+}
+
+message CartographerResponse {
+
+  message Aggregate {
+  }
+  message Trim {
+  }
+  message Infer {
+    required uint64 theorem_count = 1;
+  }
+  message Validate {
+  }
+  message Dump {
+  }
+
+  optional Trim trim = 1;
+  optional Aggregate aggregate = 2;
+  optional Infer infer = 3;
+  optional Validate validate = 4;
+  optional Dump dump = 5;
+}

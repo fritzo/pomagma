@@ -42,7 +42,7 @@ def tearDown():
 
 
 @count_failures
-def test_all():
+def test_all(retries=2):
 
     browser.visit('http://localhost:{}/#test'.format(PORT))
     browser.execute_script(

@@ -5,7 +5,7 @@ add_library(pomagma_analyst SHARED
 	simplify.cpp
 	approximate.cpp
 	)
-set(POMAGMA_THEORIST_LIBS
+set(POMAGMA_ANALYST_LIBS
 	pomagma_analyst
 	pomagma_macrostructure
 	pomagma_platform_sequential
@@ -22,7 +22,7 @@ add_custom_command(
 	)
 
 add_executable(simplify simplify_main.cpp)
-target_link_libraries(simplify ${POMAGMA_THEORIST_LIBS})
+target_link_libraries(simplify ${POMAGMA_ANALYST_LIBS})
 
-add_executable(serve server_main.cpp server.cpp messages.pb.cc)
-target_link_libraries(serve ${POMAGMA_THEORIST_LIBS} zmq)
+add_executable(analyst server_main.cpp server.cpp messages.pb.cc)
+target_link_libraries(analyst ${POMAGMA_ANALYST_LIBS} zmq)

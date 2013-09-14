@@ -26,20 +26,20 @@ inline Ob Sampler::Policy::sample (Ob val)
 }
 
 inline Ob Sampler::Policy::sample (
-		const NullaryFunction & fun)
+        const NullaryFunction & fun)
 {
     return sample(fun.find());
 }
 
 inline Ob Sampler::Policy::sample (
-		const InjectiveFunction & fun,
+        const InjectiveFunction & fun,
         Ob key)
 {
     return sample(fun.find(key));
 }
 
 inline Ob Sampler::Policy::sample (
-		const BinaryFunction & fun,
+        const BinaryFunction & fun,
         Ob lhs,
         Ob rhs)
 {
@@ -47,7 +47,7 @@ inline Ob Sampler::Policy::sample (
 }
 
 inline Ob Sampler::Policy::sample (
-		const SymmetricFunction & fun,
+        const SymmetricFunction & fun,
         Ob lhs,
         Ob rhs)
 {

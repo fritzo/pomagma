@@ -1,51 +1,46 @@
 package pomagma_messaging;
 
-enum Trool {
-  MAYBE = 0;
-  FALSE = 1;
-  TRUE = 2;
-}
-
-message Validity {
-  required Trool is_top = 1 [default = MAYBE];
-  required Trool is_bot = 2 [default = MAYBE];
-}
-
-message Corpus {
-  message Line {
-    required string code = 1;
-    optional string name = 2;
-  }
-  repeated Line lines = 1;
-}
-
 
 message SimplifyRequest {
-  repeated string codes = 1;
+  repeated string code_list = 1;
 }
 
 message SimplifyResponse {
-  repeated string codes = 1;
+  repeated string code_list = 1;
 }
 
 
 message ValidateRequest {
+  message Corpus {
+    message Line {
+      required string code = 1;
+      optional string name = 2;
+    }
+    repeated Line line_list = 1;
+  }
   required Corpus corpus = 1;
 }
 
 message ValidateResponse {
-  repeated Validity validities = 1;
+  message Validity {
+    enum Trool {
+      MAYBE = 0;
+      FALSE = 1;
+      TRUE = 2;
+    }
+    required Trool is_top = 1 [default = MAYBE];
+    required Trool is_bot = 2 [default = MAYBE];
+  }
+  repeated Validity validity_list = 1;
 }
 
 
 message AnalystRequest {
-  required string request_id = 1;
-  optional SimplifyRequest simplify = 2;
-  optional ValidateRequest validate = 3;
+  optional SimplifyRequest simplify = 1;
+  optional ValidateRequest validate = 2;
 }
 
 message AnalystResponse {
-  required string request_id = 1;
-  optional SimplifyResponse simplify = 2;
-  optional ValidateResponse validate = 3;
+  optional SimplifyResponse simplify = 1;
+  optional ValidateResponse validate = 2;
 }

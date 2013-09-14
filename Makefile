@@ -2,6 +2,7 @@ all:
 	$(MAKE) static-check
 	pip install -e .
 	$(MAKE) -C src/language
+	$(MAKE) -C src/cartographer
 	$(MAKE) -C src/analyst
 	POMAGMA_DEBUG= python -m pomagma build
 	python -m pomagma build
