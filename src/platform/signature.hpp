@@ -29,12 +29,19 @@ public:
 
     void clear ();
 
-    void declare (Carrier & carrier) { m_carrier = & carrier; }
+    void declare (Carrier & carrier);
     void declare (const std::string & name, BinaryRelation & rel);
     void declare (const std::string & name, NullaryFunction & fun);
     void declare (const std::string & name, InjectiveFunction & fun);
     void declare (const std::string & name, BinaryFunction & fun);
     void declare (const std::string & name, SymmetricFunction & fun);
+
+    Carrier * replace (Carrier & carrier);
+    BinaryRelation * replace (const std::string & name, BinaryRelation &);
+    NullaryFunction * replace (const std::string & name, NullaryFunction &);
+    InjectiveFunction * replace (const std::string & name, InjectiveFunction &);
+    BinaryFunction * replace (const std::string & name, BinaryFunction &);
+    SymmetricFunction * replace (const std::string & name, SymmetricFunction &);
 
     Carrier * carrier () const { return m_carrier; }
     BinaryRelation * binary_relation (const std::string & name) const;
@@ -76,6 +83,14 @@ inline void Signature::clear ()
     m_carrier = nullptr;
 }
 
+
+inline void Signature::declare (
+        Carrier & carrier)
+{
+    POMAGMA_ASSERT(m_carrier == nullptr, "Declared carrier twice");
+    m_carrier = & carrier;
+}
+
 inline void Signature::declare (
         const std::string & name,
         BinaryRelation & rel)
@@ -109,6 +124,70 @@ inline void Signature::declare (
         SymmetricFunction & fun)
 {
     m_symmetric_functions.insert(std::make_pair(name, & fun));
+}
+
+
+namespace detail
+{
+template<class T>
+inline T * replace (T * & pointer, T * new_value)
+{
+    POMAGMA_ASSERT(pointer != nullptr, "nothing to replace");
+    T * old_value = pointer;
+    pointer = new_value;
+    return old_value;
+}
+template<class T>
+inline T * replace (
+        std::unordered_map<std::string, T *> & map,
+        const std::string & name,
+        T * new_value)
+{
+    auto i = map.find(name);
+    POMAGMA_ASSERT(i != map.end(), "nothing to replace");
+    return replace(i->second, new_value);
+}
+} // namespace detail
+
+inline Carrier * Signature::replace (
+        Carrier & carrier)
+{
+    return detail::replace(m_carrier, & carrier);
+}
+
+inline BinaryRelation * Signature::replace (
+        const std::string & name,
+        BinaryRelation & rel)
+{
+    return detail::replace(m_binary_relations, name, & rel);
+}
+
+inline NullaryFunction * Signature::replace (
+        const std::string & name,
+        NullaryFunction & fun)
+{
+    return detail::replace(m_nullary_functions, name, & fun);
+}
+
+inline InjectiveFunction * Signature::replace (
+        const std::string & name,
+        InjectiveFunction & fun)
+{
+    return detail::replace(m_injective_functions, name, & fun);
+}
+
+inline BinaryFunction * Signature::replace (
+        const std::string & name,
+        BinaryFunction & fun)
+{
+    return detail::replace(m_binary_functions, name, & fun);
+}
+
+inline SymmetricFunction * Signature::replace (
+        const std::string & name,
+        SymmetricFunction & fun)
+{
+    return detail::replace(m_symmetric_functions, name, & fun);
 }
 
 

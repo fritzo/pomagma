@@ -25,10 +25,10 @@ public:
     void validate_consistent ();
     void validate ();
     void clear ();
+    void resize (size_t item_dim);
     void load (const std::string & filename, size_t extra_item_dim = 0);
     void dump (const std::string & filename);
     void init_carrier (size_t item_dim);
-    //void resize (size_t item_dim);  // TODO
     void log_stats ();
 };
 
