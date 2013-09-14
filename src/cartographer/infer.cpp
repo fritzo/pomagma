@@ -207,8 +207,10 @@ void infer_less_monotone (
                     Ob x = * iter;
                     Ob fx = fun.find(f, x);
                     const DenseSet less_fx = LESS.get_Lx_set(fx);
-                    y_set.set_diff(fun.get_Lx_set(g), fun.get_Lx_set(f));
-                    y_set *= LESS.get_Lx_set(x);
+                    y_set.set_ppn(
+                        LESS.get_Lx_set(x),
+                        fun.get_Lx_set(g),
+                        fun.get_Lx_set(f));
                     for (auto iter = y_set.iter(); iter.ok(); iter.next()) {
                         Ob y = * iter;
                         Ob gy = fun.find(g, y);

@@ -11,9 +11,13 @@ OPTIONALLY EQUAL JOIN x y JOIN y x
 -------------------------------------
 EQUAL JOIN JOIN x y z JOIN x JOIN y z
 
-                         LESS y z          LESS x z   LESS y z
----------------   ----------------------   -------------------
-LESS x JOIN x y   LESS JOIN x y JOIN x z     LESS JOIN x y z
+                      LESS y x
+---------------   ----------------
+LESS x JOIN x y   EQUAL x JOIN x y
+
+       LESS y z          LESS x z   LESS y z
+----------------------   -------------------
+LESS JOIN x y JOIN x z     LESS JOIN x y z
 
 ------------------   --------------------
 EQUAL JOIN BOT x x   EQUAL JOIN TOP x TOP
