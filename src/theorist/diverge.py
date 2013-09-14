@@ -51,6 +51,8 @@ def converge_step(term):
     argc = len(argv)
     if head == TOP:
         raise Converged()
+    elif head == BOT:
+        raise Diverged()
     elif head == I:
         if argc == 0:
             return (TOP,)

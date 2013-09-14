@@ -26,8 +26,7 @@ std::vector<Ob> conjecture_diverge (
 
     POMAGMA_DEBUG("collecting conjectures");
     DenseSet conjecture_set(carrier.item_count());
-    conjecture_set = NLESS.get_Rx_set(BOT);
-    conjecture_set.complement();
+    conjecture_set.set_diff(carrier.support(), NLESS.get_Rx_set(BOT));
     POMAGMA_ASSERT(conjecture_set.contains(BOT), "BOT not conjectured");
     POMAGMA_ASSERT(not conjecture_set.contains(TOP), "TOP conjectured");
     conjecture_set.remove(BOT);

@@ -8,11 +8,11 @@ int main (int argc, char ** argv)
 {
     pomagma::Log::Context log_context(argc, argv);
 
-    if (argc != 3) {
+    if (argc != 4) {
         std::cout
             << "Usage: "
                 << pomagma::get_filename(argv[0])
-                << " structure_in structure_out"
+                << " structure_in structure_out steps"
                 << "\n"
             << "Environment Variables:\n"
             << "  POMAGMA_LOG_FILE = " << pomagma::DEFAULT_LOG_FILE << "\n"
@@ -24,6 +24,8 @@ int main (int argc, char ** argv)
 
     const char * structure_in = argv[1];
     const char * structure_out = argv[2];
+    const size_t steps = atoi(argv[3]);
+    POMAGMA_ASSERT(steps > 0, "nothing to do, steps = " << steps);
 
     // load
     pomagma::Structure structure;
@@ -33,7 +35,12 @@ int main (int argc, char ** argv)
     }
 
     // infer
-    pomagma::infer(structure);
+    for (size_t step = 0; step < steps; ++step) {
+        size_t theorem_count = pomagma::infer_eager(structure);
+        if (not theorem_count) {
+            break;
+        }
+    }
     if (POMAGMA_DEBUG_LEVEL > 1) {
         structure.validate();
     }
