@@ -238,18 +238,71 @@ void infer_less_monotone (
     }
 }
 
-//      LESS f g               LESS x y          LESS f g    LESS x y
-// --------------------   --------------------   --------------------
-// LESS fun f x fun g x   LESS fun f x fun f y   LESS fun f x fun g y
+//      LESS f g          LESS f g    LESS x y
+// --------------------   --------------------
+// LESS fun f x fun g x   LESS fun f x fun g y
 void infer_less_monotone (
-    BinaryRelation & LESS __attribute__((unused)),
-    const SymmetricFunction & fun __attribute__((unused)))
+    const Carrier & carrier,
+    BinaryRelation & LESS,
+    const SymmetricFunction & fun)
 {
     POMAGMA_INFO("Inferring symmetric LESS-monotone");
 
-    //const size_t item_dim = rel.item_dim();
+    const size_t item_dim = LESS.item_dim();
+    std::vector<Ob> f_set;
+    for (auto iter = carrier.iter(); iter.ok(); iter.next()) {
+        Ob f = * iter;
+        f_set.push_back(f);
+    }
+    const size_t f_count = f_set.size();
 
-    // TODO
+    std::mutex mutex;
+    #pragma omp parallel
+    {
+        DenseSet g_set(item_dim);
+        DenseSet x_set(item_dim);
+        DenseSet y_set(item_dim);
+        TheoremQueue theorems(LESS);
+
+        #pragma omp for schedule(dynamic, 1)
+        for (size_t iter = 0; iter < f_count; ++iter) {
+            Ob f = f_set[iter];
+
+            g_set = LESS.get_Lx_set(f);
+            g_set.remove(f);
+            for (auto iter = g_set.iter(); iter.ok(); iter.next()) {
+                Ob g = * iter;
+
+                x_set.set_insn(fun.get_Lx_set(f), fun.get_Lx_set(g));
+                for (auto iter = x_set.iter(); iter.ok(); iter.next()) {
+                    Ob x = * iter;
+                    Ob fx = fun.find(f, x);
+                    Ob gx = fun.find(g, x);
+                    theorems.try_push(fx, gx);
+                }
+
+                x_set.set_diff(fun.get_Lx_set(f), fun.get_Lx_set(g));
+                for (auto iter = x_set.iter(); iter.ok(); iter.next()) {
+                    Ob x = * iter;
+                    Ob fx = fun.find(f, x);
+                    const DenseSet less_fx = LESS.get_Lx_set(fx);
+                    y_set.set_ppn(
+                        LESS.get_Lx_set(x),
+                        fun.get_Lx_set(g),
+                        fun.get_Lx_set(f));
+                    for (auto iter = y_set.iter(); iter.ok(); iter.next()) {
+                        Ob y = * iter;
+                        Ob gy = fun.find(g, y);
+                        if (unlikely(not less_fx(gy))) {
+                            theorems.push(fx, gy);
+                        }
+                    }
+                }
+            }
+
+            theorems.flush(mutex);
+        }
+    }
 }
 
 // LESS x z   LESS y z
@@ -405,6 +458,29 @@ inline bool infer_nless_monotone (
     return false;
 }
 
+// NLESS fun x z fun y z
+// ---------------------
+//       NLESS x y
+inline bool infer_nless_monotone (
+    const BinaryRelation & NLESS,
+    const SymmetricFunction & fun,
+    Ob x,
+    Ob y,
+    DenseSet & z_set)
+{
+    z_set.set_insn(fun.get_Lx_set(x), fun.get_Lx_set(y));
+    for (auto iter = z_set.iter(); iter.ok(); iter.next()) {
+        Ob z = * iter;
+        Ob xz = fun.find(x, z);
+        Ob yz = fun.find(y, z);
+        if (unlikely(NLESS.find(xz, yz))) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 // TODO infer associativity
 //
 // ----------------------------------
@@ -461,11 +537,14 @@ size_t infer_nless (Structure & structure)
 {
     POMAGMA_INFO("Inferring NLESS");
 
+    Signature & signature = structure.signature();
     const Carrier & carrier = structure.carrier();
     const BinaryRelation & LESS = structure.binary_relation("LESS");
     BinaryRelation & NLESS = structure.binary_relation("NLESS");
     const BinaryFunction & APP = structure.binary_function("APP");
     const BinaryFunction & COMP = structure.binary_function("COMP");
+    const SymmetricFunction * JOIN = signature.symmetric_functions("JOIN");
+    const SymmetricFunction * RAND = signature.symmetric_functions("RAND");
     const DenseSet nonconst = get_nonconst(structure);
     const size_t item_dim = carrier.item_dim();
 
@@ -494,7 +573,11 @@ size_t infer_nless (Structure & structure)
 
                 if (infer_nless_transitive(LESS, NLESS, x, y) or
                     infer_nless_monotone(NLESS, APP, nonconst, x, y, z_set) or
-                    infer_nless_monotone(NLESS, COMP, nonconst, x, y, z_set))
+                    infer_nless_monotone(NLESS, COMP, nonconst, x, y, z_set) or
+                    (JOIN and
+                     infer_nless_monotone(NLESS, * JOIN, x, y, z_set)) or
+                    (RAND and
+                     infer_nless_monotone(NLESS, * RAND, x, y, z_set)))
                 {
                     theorems.push(x, y);
                 }
@@ -529,11 +612,11 @@ size_t infer_less (Structure & structure)
     infer_less_monotone(LESS, APP, nonconst);
     infer_less_monotone(LESS, COMP, nonconst);
     if (JOIN) {
-        infer_less_monotone(LESS, * JOIN);
+        infer_less_monotone(carrier, LESS, * JOIN);
         infer_less_convex(carrier, LESS, * JOIN);
     }
     if (RAND) {
-        infer_less_monotone(LESS, * RAND);
+        infer_less_monotone(carrier, LESS, * RAND);
         infer_less_linear(carrier, LESS, * RAND);
     }
 
