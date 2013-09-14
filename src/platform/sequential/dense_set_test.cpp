@@ -136,6 +136,7 @@ void test_operations (size_t size, rng_t & rng)
 {
     POMAGMA_INFO("Testing DenseSet operations");
 
+    DenseSet w(size);
     DenseSet x(size);
     DenseSet y(size);
     DenseSet z(size);
@@ -144,10 +145,12 @@ void test_operations (size_t size, rng_t & rng)
 
     std::bernoulli_distribution randomly_insert(0.5);
     for (size_t i = 1; i <= size; ++i) {
+        if (randomly_insert(rng)) w.insert(i);
         if (randomly_insert(rng)) x.insert(i);
         if (randomly_insert(rng)) y.insert(i);
         if (randomly_insert(rng)) z.insert(i);
     }
+    POMAGMA_ASSERT(bool(w.count_items()) ^ w.empty(), ".empty() is wrong");
     POMAGMA_ASSERT(bool(x.count_items()) ^ x.empty(), ".empty() is wrong");
     POMAGMA_ASSERT(bool(y.count_items()) ^ y.empty(), ".empty() is wrong");
     POMAGMA_ASSERT(bool(z.count_items()) ^ z.empty(), ".empty() is wrong");
@@ -245,7 +248,7 @@ void test_operations (size_t size, rng_t & rng)
     actual.set_ppn(x, y, z);
     POMAGMA_ASSERT(actual == expected, "set_pnn is wrong");
 
-    POMAGMA_INFO("testing set_ppn");
+    POMAGMA_INFO("testing set_pnn");
     expected.zero();
     actual.zero();
     for (Ob i = 1; i <= size; ++i) {
@@ -255,6 +258,22 @@ void test_operations (size_t size, rng_t & rng)
     }
     actual.zero();
     actual.set_pnn(x, y, z);
+    POMAGMA_ASSERT(actual == expected, "set_pnn is wrong");
+
+    POMAGMA_INFO("testing set_ppnn");
+    expected.zero();
+    actual.zero();
+    for (Ob i = 1; i <= size; ++i) {
+        if (w.contains(i) and
+            x.contains(i) and
+            not y.contains(i) and
+            not z.contains(i))
+        {
+            expected.insert(i);
+        }
+    }
+    actual.zero();
+    actual.set_ppnn(w, x, y, z);
     POMAGMA_ASSERT(actual == expected, "set_pnn is wrong");
 
     // these are shared for merge(-), merge(-,-) & ensure

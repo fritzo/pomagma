@@ -238,13 +238,13 @@ void infer_less_monotone (
     }
 }
 
-//      LESS f g          LESS f g    LESS x y
-// --------------------   --------------------
-// LESS fun f x fun g x   LESS fun f x fun g y
+//        LESS f g           LESS f g    LESS x y
+// ----------------------   ----------------------
+// LESS RAND f x RAND g x   LESS RAND f x RAND g y
 void infer_less_monotone (
     const Carrier & carrier,
     BinaryRelation & LESS,
-    const SymmetricFunction & fun)
+    const SymmetricFunction & RAND)
 {
     POMAGMA_INFO("Inferring symmetric LESS-monotone");
 
@@ -267,32 +267,122 @@ void infer_less_monotone (
         #pragma omp for schedule(dynamic, 1)
         for (size_t iter = 0; iter < f_count; ++iter) {
             Ob f = f_set[iter];
-
             g_set = LESS.get_Lx_set(f);
             g_set.remove(f);
             for (auto iter = g_set.iter(); iter.ok(); iter.next()) {
                 Ob g = * iter;
 
-                x_set.set_insn(fun.get_Lx_set(f), fun.get_Lx_set(g));
+                x_set.set_insn(RAND.get_Lx_set(f), RAND.get_Lx_set(g));
                 for (auto iter = x_set.iter(); iter.ok(); iter.next()) {
                     Ob x = * iter;
-                    Ob fx = fun.find(f, x);
-                    Ob gx = fun.find(g, x);
+                    Ob fx = RAND.find(f, x);
+                    Ob gx = RAND.find(g, x);
                     theorems.try_push(fx, gx);
                 }
 
-                x_set.set_diff(fun.get_Lx_set(f), fun.get_Lx_set(g));
+                x_set.set_diff(RAND.get_Lx_set(f), RAND.get_Lx_set(g));
                 for (auto iter = x_set.iter(); iter.ok(); iter.next()) {
                     Ob x = * iter;
-                    Ob fx = fun.find(f, x);
+                    Ob fx = RAND.find(f, x);
                     const DenseSet less_fx = LESS.get_Lx_set(fx);
                     y_set.set_ppn(
                         LESS.get_Lx_set(x),
-                        fun.get_Lx_set(g),
-                        fun.get_Lx_set(f));
+                        RAND.get_Lx_set(g),
+                        RAND.get_Lx_set(f));
                     for (auto iter = y_set.iter(); iter.ok(); iter.next()) {
                         Ob y = * iter;
-                        Ob gy = fun.find(g, y);
+                        Ob gy = RAND.find(g, y);
+                        if (unlikely(not less_fx(gy))) {
+                            theorems.push(fx, gy);
+                        }
+                    }
+                }
+            }
+
+            theorems.flush(mutex);
+        }
+    }
+}
+
+//        LESS f g                 LESS x y           LESS f g    LESS x y
+// ----------------------   ----------------------   ----------------------
+// LESS JOIN f x JOIN g x   LESS JOIN f x JOIN f y   LESS JOIN f x JOIN g y
+void infer_less_join_monotone (
+    const Carrier & carrier,
+    BinaryRelation & LESS,
+    const SymmetricFunction & JOIN)
+{
+    POMAGMA_INFO("Inferring LESS-JOIN-monotone");
+
+    const size_t item_dim = LESS.item_dim();
+    std::vector<Ob> f_set;
+    for (auto iter = carrier.iter(); iter.ok(); iter.next()) {
+        Ob f = * iter;
+        f_set.push_back(f);
+    }
+    const size_t f_count = f_set.size();
+
+    std::mutex mutex;
+    #pragma omp parallel
+    {
+        DenseSet x_set(item_dim);
+        DenseSet g_set(item_dim);
+        DenseSet y_set(item_dim);
+        TheoremQueue theorems(LESS);
+
+        #pragma omp for schedule(dynamic, 1)
+        for (size_t iter = 0; iter < f_count; ++iter) {
+            Ob f = f_set[iter];
+            x_set.set_pnn(
+                JOIN.get_Lx_set(f),     // if JOIN f x is defined
+                LESS.get_Lx_set(f),     // and JOIN f x != f
+                LESS.get_Rx_set(f));    // and JOIN f x != x
+            for (auto iter = x_set.iter(); iter.ok(); iter.next()) {
+                Ob x = * iter;
+                if (unlikely(x >= f)) {
+                    break;
+                }
+                Ob fx = JOIN.find(f, x);
+                const DenseSet less_fx = LESS.get_Lx_set(fx);
+
+                theorems.try_push(f, fx);
+                theorems.try_push(x, fx);
+
+                g_set.set_insn(
+                    LESS.get_Lx_set(f),     // if LESS f g
+                    JOIN.get_Lx_set(x));    // and JOIN g x is defined
+                for (auto iter = g_set.iter(); iter.ok(); iter.next()) {
+                    Ob g = * iter;
+                    Ob gx = JOIN.find(g, x);
+                    if (unlikely(not less_fx(gx))) {
+                        theorems.push(fx, gx);
+                    }
+                }
+
+                y_set.set_insn(
+                    LESS.get_Lx_set(x),     // if LESS x y
+                    JOIN.get_Lx_set(f));    // and JOIN f y is defined
+                for (auto iter = y_set.iter(); iter.ok(); iter.next()) {
+                    Ob y = * iter;
+                    Ob fy = JOIN.find(f, y);
+                    if (unlikely(not less_fx(fy))) {
+                        theorems.push(fx, fy);
+                    }
+                }
+
+                g_set.set_diff(
+                    LESS.get_Lx_set(f),     // if LESS f g
+                    JOIN.get_Lx_set(x));    // and JOIN g x is not defined
+                for (auto iter = g_set.iter(); iter.ok(); iter.next()) {
+                    Ob g = * iter;
+                    y_set.set_ppnn(
+                        LESS.get_Lx_set(x),     // if LESS x y
+                        JOIN.get_Lx_set(g),     // and JOIN g y is defined
+                        LESS.get_Lx_set(g),     // and JOIN g y != g
+                        LESS.get_Rx_set(g));    // and JOIN g y != y
+                    for (auto iter = y_set.iter(); iter.ok(); iter.next()) {
+                        Ob y = * iter;
+                        Ob gy = JOIN.find(g, y);
                         if (unlikely(not less_fx(gy))) {
                             theorems.push(fx, gy);
                         }
@@ -333,7 +423,7 @@ void infer_less_convex (
                 LESS.get_Rx_set(x));
             for (auto iter = y_set.iter(); iter.ok(); iter.next()) {
                 Ob y = * iter;
-                if (y >= x) {
+                if (unlikely(y >= x)) {
                     break;
                 }
                 Ob xy = JOIN.find(x, y);
@@ -612,7 +702,7 @@ size_t infer_less (Structure & structure)
     infer_less_monotone(LESS, APP, nonconst);
     infer_less_monotone(LESS, COMP, nonconst);
     if (JOIN) {
-        infer_less_monotone(carrier, LESS, * JOIN);
+        infer_less_join_monotone(carrier, LESS, * JOIN);
         infer_less_convex(carrier, LESS, * JOIN);
     }
     if (RAND) {
