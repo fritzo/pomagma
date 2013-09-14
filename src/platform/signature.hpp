@@ -37,6 +37,11 @@ public:
     void declare (const std::string & name, SymmetricFunction & fun);
 
     Carrier * carrier () const { return m_carrier; }
+    BinaryRelation * binary_relation (const std::string & name) const;
+    NullaryFunction * nullary_function (const std::string & name) const;
+    InjectiveFunction * injective_function (const std::string & name) const;
+    BinaryFunction * binary_function (const std::string & name) const;
+    SymmetricFunction * symmetric_function (const std::string & name) const;
 
     const std::unordered_map<std::string, BinaryRelation *> &
         binary_relations () const;
@@ -48,12 +53,6 @@ public:
         binary_functions () const;
     const std::unordered_map<std::string, SymmetricFunction *> &
         symmetric_functions () const;
-
-    BinaryRelation * binary_relations (const std::string & name) const;
-    NullaryFunction * nullary_functions (const std::string & name) const;
-    InjectiveFunction * injective_functions (const std::string & name) const;
-    BinaryFunction * binary_functions (const std::string & name) const;
-    SymmetricFunction * symmetric_functions (const std::string & name) const;
 
 private:
 
@@ -113,6 +112,37 @@ inline void Signature::declare (
 }
 
 
+inline BinaryRelation * Signature::binary_relation (
+	const std::string & name) const
+{
+    return find(m_binary_relations, name);
+}
+
+inline NullaryFunction * Signature::nullary_function (
+	const std::string & name) const
+{
+    return find(m_nullary_functions, name);
+}
+
+inline InjectiveFunction * Signature::injective_function (
+	const std::string & name) const
+{
+    return find(m_injective_functions, name);
+}
+
+inline BinaryFunction * Signature::binary_function (
+	const std::string & name) const
+{
+    return find(m_binary_functions, name);
+}
+
+inline SymmetricFunction * Signature::symmetric_function (
+	const std::string & name) const
+{
+    return find(m_symmetric_functions, name);
+}
+
+
 inline const std::unordered_map<std::string, BinaryRelation *> &
 Signature::binary_relations () const
 {
@@ -141,37 +171,6 @@ inline const std::unordered_map<std::string, SymmetricFunction *> &
 Signature::symmetric_functions () const
 {
     return m_symmetric_functions;
-}
-
-
-inline BinaryRelation * Signature::binary_relations (
-	const std::string & name) const
-{
-    return find(m_binary_relations, name);
-}
-
-inline NullaryFunction * Signature::nullary_functions (
-	const std::string & name) const
-{
-    return find(m_nullary_functions, name);
-}
-
-inline InjectiveFunction * Signature::injective_functions (
-	const std::string & name) const
-{
-    return find(m_injective_functions, name);
-}
-
-inline BinaryFunction * Signature::binary_functions (
-	const std::string & name) const
-{
-    return find(m_binary_functions, name);
-}
-
-inline SymmetricFunction * Signature::symmetric_functions (
-	const std::string & name) const
-{
-    return find(m_symmetric_functions, name);
 }
 
 } // namespace pomagma

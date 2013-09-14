@@ -53,8 +53,8 @@ public:
           m_bot(structure.nullary_function("BOT").find()),
           m_less(structure.binary_relation("LESS")),
           m_nless(structure.binary_relation("NLESS")),
-          m_join(structure.signature().symmetric_functions("JOIN")),
-          m_rand(structure.signature().symmetric_functions("RAND"))
+          m_join(structure.signature().symmetric_function("JOIN")),
+          m_rand(structure.signature().symmetric_function("RAND"))
     {
         POMAGMA_ASSERT(m_top, "TOP is not defined");
         POMAGMA_ASSERT(m_bot, "BOT is not defined");

@@ -633,8 +633,8 @@ size_t infer_nless (Structure & structure)
     BinaryRelation & NLESS = structure.binary_relation("NLESS");
     const BinaryFunction & APP = structure.binary_function("APP");
     const BinaryFunction & COMP = structure.binary_function("COMP");
-    const SymmetricFunction * JOIN = signature.symmetric_functions("JOIN");
-    const SymmetricFunction * RAND = signature.symmetric_functions("RAND");
+    const SymmetricFunction * JOIN = signature.symmetric_function("JOIN");
+    const SymmetricFunction * RAND = signature.symmetric_function("RAND");
     const DenseSet nonconst = get_nonconst(structure);
     const size_t item_dim = carrier.item_dim();
 
@@ -692,8 +692,8 @@ size_t infer_less (Structure & structure)
     const BinaryRelation & NLESS = structure.binary_relation("NLESS");
     const BinaryFunction & APP = structure.binary_function("APP");
     const BinaryFunction & COMP = structure.binary_function("COMP");
-    const SymmetricFunction * JOIN = signature.symmetric_functions("JOIN");
-    const SymmetricFunction * RAND = signature.symmetric_functions("RAND");
+    const SymmetricFunction * JOIN = signature.symmetric_function("JOIN");
+    const SymmetricFunction * RAND = signature.symmetric_function("RAND");
     const DenseSet nonconst = get_nonconst(structure);
 
     size_t start_count = LESS.count_pairs();

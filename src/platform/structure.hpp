@@ -59,7 +59,7 @@ inline void validate_consistent (Signature & signature)
     for (auto i : signature.binary_relations()) {
         auto * rel = i.second;
         std::string negated = "N" + i.first;
-        if (auto * nrel = signature.binary_relations(negated)) {
+        if (auto * nrel = signature.binary_relation(negated)) {
             nrel->validate_disjoint(*rel);
         }
     }
@@ -77,7 +77,7 @@ inline void validate (Signature & signature)
         threads.push_back(std::thread([=](){ rel->validate(); }));
 
         std::string negated = "N" + i.first;
-        if (auto * nrel = signature.binary_relations(negated)) {
+        if (auto * nrel = signature.binary_relation(negated)) {
             threads.push_back(std::thread([=](){
                 nrel->validate_disjoint(*rel);
             }));
@@ -567,7 +567,7 @@ inline void check_signature (
         if (group1.exists("binary")) {
             hdf5::Group group2(group1, "binary");
             for (auto name : group2.children()) {
-                POMAGMA_ASSERT(signature.binary_relations(name),
+                POMAGMA_ASSERT(signature.binary_relation(name),
                         "file has unknown binary relation " << name);
             }
         }
@@ -577,28 +577,28 @@ inline void check_signature (
         {
             hdf5::Group group2(group1, "nullary");
             for (auto name : group2.children()) {
-                POMAGMA_ASSERT(signature.nullary_functions(name),
+                POMAGMA_ASSERT(signature.nullary_function(name),
                         "file has unknown nullary function " << name);
             }
         }
         if (group1.exists("injective")) {
             hdf5::Group group2(group1, "injective");
             for (auto name : group2.children()) {
-                POMAGMA_ASSERT(signature.injective_functions(name),
+                POMAGMA_ASSERT(signature.injective_function(name),
                         "file has unknown injective function " << name);
             }
         }
         if (group1.exists("binary")) {
             hdf5::Group group2(group1, "binary");
             for (auto name : group2.children()) {
-                POMAGMA_ASSERT(signature.binary_functions(name),
+                POMAGMA_ASSERT(signature.binary_function(name),
                         "file has unknown binary function " << name);
             }
         }
         if (group1.exists("symmetric")) {
             hdf5::Group group2(group1, "symmetric");
             for (auto name : group2.children()) {
-                POMAGMA_ASSERT(signature.symmetric_functions(name),
+                POMAGMA_ASSERT(signature.symmetric_function(name),
                         "file has unknown symmetric function " << name);
             }
         }

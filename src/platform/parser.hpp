@@ -38,16 +38,16 @@ public:
     Term parse_term ()
     {
         std::string token = parse_token();
-        if (const auto * fun = m_signature.nullary_functions(token)) {
+        if (const auto * fun = m_signature.nullary_function(token)) {
             return m_reducer.reduce(token, fun);
-        } else if (const auto * fun = m_signature.injective_functions(token)) {
+        } else if (const auto * fun = m_signature.injective_function(token)) {
             Term key = parse_term();
             return m_reducer.reduce(token, fun, key);
-        } else if (const auto * fun = m_signature.binary_functions(token)) {
+        } else if (const auto * fun = m_signature.binary_function(token)) {
             Term lhs = parse_term();
             Term rhs = parse_term();
             return m_reducer.reduce(token, fun, lhs, rhs);
-        } else if (const auto * fun = m_signature.symmetric_functions(token)) {
+        } else if (const auto * fun = m_signature.symmetric_function(token)) {
             Term lhs = parse_term();
             Term rhs = parse_term();
             return m_reducer.reduce(token, fun, lhs, rhs);
