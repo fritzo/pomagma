@@ -133,7 +133,7 @@ messaging::CartographerResponse handle (
     messaging::CartographerResponse response;
 
     if (request.has_trim()) {
-        const size_t region_size = request.trim().size();
+        const size_t region_size = request.trim().region_size();
         std::vector<std::string> regions_out;
         for (int i = 0; i < request.trim().regions_out_size(); ++i) {
             regions_out.push_back(request.trim().regions_out(i));

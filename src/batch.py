@@ -54,13 +54,19 @@ def test(theory, **options):
         simplified = 'simplified.facts'
 
         surveyor.init(theory, '0.h5', sizes[0], **opts)
-        cartographer.validate('0.h5', **opts)
-        cartographer.copy('0.h5', '1.h5', **opts)
+        with cartographer.load(theory, '0.h5', **opts) as db:
+            db.validate()
+            db.dump('1.h5')
         surveyor.survey(theory, '1.h5', '2.h5', sizes[1], **opts)
-        cartographer.trim(theory, '2.h5', '3.h5', sizes[0], **opts)
+        with cartographer.load(theory, '2.h5', **opts) as db:
+            db.trim(sizes[0], ['3.h5'])
         surveyor.survey(theory, '3.h5', '4.h5', sizes[1], **opts)
-        cartographer.aggregate('2.h5', '4.h5', '5.h5', **opts)
-        cartographer.aggregate('5.h5', '0.h5', '6.h5', **opts)
+        with cartographer.load(theory, '2.h5', **opts) as db:
+            db.aggregate(['4.h5'])
+            db.dump('5.h5')
+        with cartographer.load(theory, '5.h5', **opts) as db:
+            db.aggregate(['0.h5'])
+            db.dump('6.h5')
         digest5 = pomagma.util.get_hash('5.h5')
         digest6 = pomagma.util.get_hash('6.h5')
         assert digest5 == digest6
@@ -73,7 +79,8 @@ def test(theory, **options):
                 theorems,
                 **opts)
             theorist.assume('6.h5', '7.h5', theorems, **opts)
-            cartographer.validate('7.h5', **opts)
+            with cartographer.load(theory, '7.h5', **opts) as db:
+                db.validate()
         theorist.conjecture_equal(theory, '6.h5', conjectures, **opts)
         theorist.try_prove_nless(
             theory,
@@ -84,9 +91,10 @@ def test(theory, **options):
             **opts)
         if theory != 'h4':
             theorist.assume('6.h5', '7.h5', theorems, **opts)
-            cartographer.validate('7.h5', **opts)
-            cartographer.infer('7.h5', '8.h5', 2, **opts)
-            cartographer.validate('8.h5', **opts)
+            with cartographer.load(theory, '7.h5', **opts) as db:
+                db.validate()
+                while db.infer():
+                    db.validate()
 
         analyst.simplify(theory, '6.h5', conjectures, simplified, **opts)
 

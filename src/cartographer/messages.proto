@@ -3,7 +3,7 @@ package pomagma_messaging;
 message CartographerRequest {
 
   message Trim {
-    required uint32 size = 1;
+    required uint32 region_size = 1;
     repeated string regions_out = 2;
   }
   message Aggregate {

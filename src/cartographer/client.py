@@ -11,6 +11,7 @@ CONTEXT = zmq.Context()
 
 class Client(object):
     def __init__(self, address):
+        assert isinstance(address, basestring), address
         self._socket = CONTEXT.socket(zmq.REQ)
         self._socket.connect(address)
 
@@ -26,54 +27,63 @@ class Client(object):
         request = Request()
         self._call(request)
 
-    def _trim(self, size, regions_out):
+    def _trim(self, region_size, regions_out):
         request = Request()
-        request.trim = Request.Trim()
-        request.trim.size = size
+        request.trim.SetInParent()
+        request.trim.region_size = region_size
         for region in regions_out:
-            request.regions_out.add(region)
+            request.trim.regions_out.append(region)
         self._call(request)
 
-    def trim(self, size, regions_out):
-        assert regions_out
+    def trim(self, region_size, regions_out):
+        assert isinstance(region_size, int), region_size
+        assert isinstance(regions_out, list), regions_out
         for region in regions_out:
+            assert isinstance(region, basestring), region
             assert os.path.exists(os.path.dirname(os.path.abspath(region)))
             assert not os.path.exists(region)
-        self._trim(self, size, regions_out)
+        self._trim(region_size, regions_out)
         for region in regions_out:
             assert os.path.exists(region)
 
     def _aggregate(self, surveys_in):
         request = Request()
-        request.aggregate = Request.Aggregate()
+        request.aggregate.SetInParent()
         for survey in surveys_in:
-            request.aggregate.surveys_in.add(survey)
+            request.aggregate.surveys_in.append(survey)
         self._call(request)
 
     def aggregate(self, surveys_in):
-        assert surveys_in
+        assert isinstance(surveys_in, list)
         for survey in surveys_in:
-            assert os.path.exists(surveys_in)
+            assert isinstance(survey, basestring), survey
+            assert os.path.exists(survey)
         self._aggregate(surveys_in)
 
     def infer(self):
         request = Request()
-        request.infer = Request.Infer()
+        request.infer.SetInParent()
         response = self._call(request)
-        return response.theorem_count
+        return response.infer.theorem_count
+
+    def crop(self):
+        request = Request()
+        request.crop.SetInParent()
+        self._call(request)
 
     def validate(self):
         request = Request()
-        request.validate = Request.Validate()
+        request.validate.SetInParent()
         self._call(request)
 
     def _dump(self, world_out):
         request = Request()
-        request.dump = Request.Dump()
+        request.dump.SetInParent()
         request.dump.world_out = world_out
         self._call(request)
 
     def dump(self, world_out):
+        assert isinstance(world_out, basestring), world_out
         assert os.path.exists(os.path.dirname(os.path.abspath(world_out)))
         assert not os.path.exists(world_out)
         self._dump(world_out)

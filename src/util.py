@@ -215,6 +215,13 @@ def get_stack_trace(binary):
     return trace
 
 
+def prepare_core_dump():
+    if os.path.exists('core'):
+        os.remove('core')
+    if subprocess.check_output('ulimit -c', shell=True).strip() == '0':
+        print 'WARNING cannot write core file; try `ulimit -c unlimited`'
+
+
 def log_call(*args, **options):
     '''
     Pass arguments to command line.
@@ -225,10 +232,7 @@ def log_call(*args, **options):
     args = options.pop('runner', '').split() + args
     extra_env = make_env(options)
     log_file = extra_env['POMAGMA_LOG_FILE']
-    if os.path.exists('core'):
-        os.remove('core')
-    if subprocess.check_output('ulimit -c', shell=True).strip() == '0':
-        print 'WARNING cannot write core file; try `ulimit -c unlimited`'
+    prepare_core_dump()
     print_command(args, extra_env)
     env = os.environ.copy()
     env.update(extra_env)
@@ -239,6 +243,22 @@ def log_call(*args, **options):
         trace = get_stack_trace(args[0])
         log_print(trace, log_file)
         sys.exit(info)
+
+
+def log_Popen(*args, **options):
+    '''
+    Pass arguments to command line.
+    Pass options into environment variables.
+    Log process.
+    '''
+    args = map(str, args)
+    args = options.pop('runner', '').split() + args
+    extra_env = make_env(options)
+    prepare_core_dump()
+    print_command(args, extra_env)
+    env = os.environ.copy()
+    env.update(extra_env)
+    return subprocess.Popen(args, env=env)
 
 
 def build():
