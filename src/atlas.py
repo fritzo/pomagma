@@ -54,3 +54,9 @@ def infer(world, updated, steps, **opts):
         pomagma.cartographer.validate(updated, **opts)
         os.rename(updated, world)
         # TODO fork and push to s3
+
+
+def load(theory, world, address=None, **opts):
+    with pomagma.util.mutex(world):
+        with pomagma.cartographer.load(theory, world, address, **opts) as db:
+            yield db

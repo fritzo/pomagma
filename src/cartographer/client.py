@@ -84,7 +84,11 @@ class Client(object):
 
     def dump(self, world_out):
         assert isinstance(world_out, basestring), world_out
-        assert os.path.exists(os.path.dirname(os.path.abspath(world_out)))
-        assert not os.path.exists(world_out)
-        self._dump(world_out)
-        assert os.path.exists(world_out)
+        dirname, filename = os.path.split(world_out)
+        if dirname and not os.path.exists(dirname):
+            os.makedirs(dirname)
+        pid = os.getpid()
+        temp_out = os.path.join(dirname, 'temp.{}.{}'.format(pid, filename))
+        self._dump(temp_out)
+        assert os.path.exists(temp_out), temp_out
+        os.rename(temp_out, world_out)
