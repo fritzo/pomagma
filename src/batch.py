@@ -93,8 +93,9 @@ def test(theory, **options):
             theorist.assume('6.h5', '7.h5', theorems, **opts)
             with cartographer.load(theory, '7.h5', **opts) as db:
                 db.validate()
-                while db.infer():
-                    db.validate()
+                for priority in [0, 1]:
+                    while db.infer(priority):
+                        db.validate()
 
         analyst.simplify(theory, '6.h5', conjectures, simplified, **opts)
 

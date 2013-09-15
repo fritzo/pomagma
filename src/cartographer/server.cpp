@@ -78,9 +78,14 @@ void Server::aggregate (const std::string & survey_in)
     }
 }
 
-size_t Server::infer ()
+size_t Server::infer (size_t priority)
 {
-    size_t theorem_count = infer_lazy(m_structure);
+    size_t theorem_count = 0;
+    switch (priority) {
+        case 0: theorem_count = infer_pos(m_structure); break;
+        case 1: theorem_count = infer_neg(m_structure); break;
+        default: POMAGMA_WARN("unknown priority: " << priority); break;
+    }
     if (POMAGMA_DEBUG_LEVEL > 1) {
         m_structure.validate();
     }
@@ -151,7 +156,8 @@ messaging::CartographerResponse handle (
     }
 
     if (request.has_infer()) {
-        const size_t theorem_count = server.infer();
+        const size_t priority = request.infer().priority();
+        const size_t theorem_count = server.infer(priority);
         response.mutable_infer()->set_theorem_count(theorem_count);
     }
 

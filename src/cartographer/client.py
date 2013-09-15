@@ -60,11 +60,17 @@ class Client(object):
             assert os.path.exists(survey)
         self._aggregate(surveys_in)
 
-    def infer(self):
+    def _infer(self, priority):
         request = Request()
         request.infer.SetInParent()
+        request.infer.priority = priority
         response = self._call(request)
         return response.infer.theorem_count
+
+    def infer(self, priority):
+        assert isinstance(priority, int), priority
+        assert priority in [0, 1], priority
+        return self._infer(priority)
 
     def crop(self):
         request = Request()
