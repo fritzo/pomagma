@@ -9,7 +9,7 @@ BIN = os.path.join(pomagma.util.BIN, 'cartographer')
 
 class Server(object):
     def __init__(self, theory, world, address=None, **opts):
-        env = pomagma.util.make_env(opts)
+        extra_env = pomagma.util.make_env(opts)
         cwd = os.path.join(pomagma.util.DATA, 'work', theory, 'cartographer')
         if address is None:
             address = 'ipc://{}'.format(os.path.join(cwd, 'socket'))
@@ -33,6 +33,9 @@ class Server(object):
             os.makedirs(cwd)
         self._theory = theory
         self._address = address
+        pomagma.util.print_command(args, extra_env)
+        env = os.environ.copy()
+        env.update(extra_env)
         self._proc = subprocess.Popen(args, env=env, cwd=cwd)
 
     @property

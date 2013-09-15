@@ -18,7 +18,8 @@ class Client(object):
         raw_request = request.SerializeToString()
         self._socket.send(raw_request, 0)
         raw_response = self._socket.recv(0)
-        response = Response.ParseFromString(raw_response)
+        response = Response()
+        response.ParseFromString(raw_response)
         return response
 
     def ping(self):

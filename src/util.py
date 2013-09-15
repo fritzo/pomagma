@@ -159,21 +159,26 @@ def make_env(options):
         os.makedirs(log_dir)
     default_log_level = LOG_LEVEL_DEBUG if debug else LOG_LEVEL_INFO
     options.setdefault('log_level', default_log_level)
-    env = os.environ.copy()
-    for key, val in options.iteritems():
-        pomagma_key = 'POMAGMA_{}'.format(key.upper())
-        sys.stderr.write('{}={} \\\n'.format(pomagma_key, val))
-        env[pomagma_key] = str(val)
+    env = {
+        'POMAGMA_{}'.format(key.upper()): str(val)
+        for key, val in options.iteritems()
+    }
     return env
 
 
-def check_call(*args):
-    message = '{}\n'.format(' \\\n'.join(args))
+def print_command(args, env={}):
+    lines = ['{}={}'.format(key, val) for key, val in env.iteritems()]
+    lines += args
+    message = '{}\n'.format(' \\\n'.join(lines))
     sys.stderr.write(message)
+
+
+def check_call(*args):
+    print_command(args)
     with log_duration():
         info = subprocess.call(args)
     if info:
-        sys.stderr.write('ERROR in {}'.format(message))
+        sys.stderr.write('ERROR in {}'.format(' '.join(args)))
         sys.exit(info)
 
 
@@ -218,13 +223,15 @@ def log_call(*args, **options):
     '''
     args = map(str, args)
     args = options.pop('runner', '').split() + args
-    env = make_env(options)
-    log_file = env['POMAGMA_LOG_FILE']
-    sys.stderr.write('{}\n'.format(' \\\n'.join(args)))
+    extra_env = make_env(options)
+    log_file = extra_env['POMAGMA_LOG_FILE']
     if os.path.exists('core'):
         os.remove('core')
     if subprocess.check_output('ulimit -c', shell=True).strip() == '0':
         print 'WARNING cannot write core file; try `ulimit -c unlimited`'
+    print_command(args, extra_env)
+    env = os.environ.copy()
+    env.update(extra_env)
     with log_duration():
         info = subprocess.call(args, env=env)
     if info:

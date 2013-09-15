@@ -28,4 +28,18 @@ void compact (Structure & structure)
     POMAGMA_ASSERT_EQ(carrier.item_count(), item_count);
 }
 
+void crop (Structure & structure)
+{
+    POMAGMA_INFO("Cropping Structure");
+
+    compact(structure);
+
+    Carrier & carrier = structure.carrier();
+    size_t item_count = carrier.item_count();
+
+    if (item_count < carrier.item_dim()) {
+        structure.resize(item_count);
+    }
+}
+
 } // namespace pomagma

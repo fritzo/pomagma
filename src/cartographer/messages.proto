@@ -2,14 +2,16 @@ package pomagma_messaging;
 
 message CartographerRequest {
 
-  message Aggregate {
-    repeated string surveys_in = 1;
-  }
   message Trim {
     required uint32 size = 1;
     repeated string regions_out = 2;
   }
+  message Aggregate {
+    repeated string surveys_in = 1;
+  }
   message Infer {
+  }
+  message Crop {
   }
   message Validate {
   }
@@ -21,27 +23,37 @@ message CartographerRequest {
   optional Trim trim = 1;
   optional Aggregate aggregate = 2;
   optional Infer infer = 3;
-  optional Validate validate = 4;
-  optional Dump dump = 5;
+  optional Crop crop = 4;
+  optional Validate validate = 5;
+  optional Dump dump = 6;
 }
 
 message CartographerResponse {
 
-  message Aggregate {
-  }
   message Trim {
+    optional string error = 1;
+  }
+  message Aggregate {
+    optional string error = 1;
   }
   message Infer {
-    required uint64 theorem_count = 1;
+    optional uint64 theorem_count = 1;
+    optional string error = 2;
+  }
+  message Crop {
+    optional string error = 1;
   }
   message Validate {
+    optional string error = 1;
   }
   message Dump {
+    optional string error = 1;
   }
 
   optional Trim trim = 1;
   optional Aggregate aggregate = 2;
   optional Infer infer = 3;
-  optional Validate validate = 4;
-  optional Dump dump = 5;
+  optional Crop crop = 4;
+  optional Validate validate = 5;
+  optional Dump dump = 6;
 }
