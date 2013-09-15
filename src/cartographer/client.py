@@ -46,19 +46,16 @@ class Client(object):
         for region in regions_out:
             assert os.path.exists(region)
 
-    def _aggregate(self, surveys_in):
+    def _aggregate(self, survey_in):
         request = Request()
         request.aggregate.SetInParent()
-        for survey in surveys_in:
-            request.aggregate.surveys_in.append(survey)
+        request.aggregate.survey_in = survey_in
         self._call(request)
 
-    def aggregate(self, surveys_in):
-        assert isinstance(surveys_in, list)
-        for survey in surveys_in:
-            assert isinstance(survey, basestring), survey
-            assert os.path.exists(survey)
-        self._aggregate(surveys_in)
+    def aggregate(self, survey_in):
+        assert isinstance(survey_in, basestring), survey_in
+        assert os.path.exists(survey_in)
+        self._aggregate(survey_in)
 
     def _infer(self, priority):
         request = Request()

@@ -148,10 +148,7 @@ messaging::CartographerResponse handle (
     }
 
     if (request.has_aggregate()) {
-        const size_t survey_count = request.aggregate().surveys_in_size();
-        for (size_t iter = 0; iter < survey_count; ++iter) {
-            server.aggregate(request.aggregate().surveys_in(iter));
-        }
+        server.aggregate(request.aggregate().survey_in());
         response.mutable_aggregate();
     }
 

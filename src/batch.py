@@ -62,10 +62,10 @@ def test(theory, **options):
             db.trim(sizes[0], ['3.h5'])
         surveyor.survey(theory, '3.h5', '4.h5', sizes[1], **opts)
         with cartographer.load(theory, '2.h5', **opts) as db:
-            db.aggregate(['4.h5'])
+            db.aggregate('4.h5')
             db.dump('5.h5')
         with cartographer.load(theory, '5.h5', **opts) as db:
-            db.aggregate(['0.h5'])
+            db.aggregate('0.h5')
             db.dump('6.h5')
         digest5 = pomagma.util.get_hash('5.h5')
         digest6 = pomagma.util.get_hash('6.h5')
@@ -96,6 +96,8 @@ def test(theory, **options):
                 for priority in [0, 1]:
                     while db.infer(priority):
                         db.validate()
+                for priority in [0, 1]:
+                    assert not db.infer(priority)
 
         analyst.simplify(theory, '6.h5', conjectures, simplified, **opts)
 
