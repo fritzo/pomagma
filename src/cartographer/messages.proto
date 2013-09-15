@@ -31,23 +31,17 @@ message CartographerRequest {
 message CartographerResponse {
 
   message Trim {
-    optional string error = 1;
   }
   message Aggregate {
-    optional string error = 1;
   }
   message Infer {
     optional uint64 theorem_count = 1;
-    optional string error = 2;
   }
   message Crop {
-    optional string error = 1;
   }
   message Validate {
-    optional string error = 1;
   }
   message Dump {
-    optional string error = 1;
   }
 
   optional Trim trim = 1;

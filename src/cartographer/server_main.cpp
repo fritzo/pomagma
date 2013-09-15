@@ -22,15 +22,7 @@ int main (int argc, char ** argv)
     const char * language_file = argv[3];
     const char * address = argv[4];
 
-    // load structure
-    pomagma::Structure structure;
-    structure.load(structure_file);
-    if (POMAGMA_DEBUG_LEVEL > 1) {
-        structure.validate();
-    }
-
-    // serve
-    pomagma::Server server(structure, theory_file, language_file);
+    pomagma::Server server(structure_file, theory_file, language_file);
     server.serve(address);
 
     return 0;

@@ -13,15 +13,18 @@ namespace pomagma
 {
 
 Server::Server (
-        Structure & structure,
+        const char * structure_file,
         const char * theory_file,
         const char * language_file)
-    : m_structure(structure),
+    : m_structure(),
       m_theory_file(theory_file),
       m_language_file(language_file)
 {
+    m_structure.load(structure_file);
+    if (POMAGMA_DEBUG_LEVEL > 1) {
+        m_structure.validate();
+    }
 }
-
 
 void Server::trim (
         size_t region_size,
@@ -41,6 +44,9 @@ void Server::trim (
             region.init_carrier(region_size);
             extend(region.signature(), m_structure.signature());
             pomagma::trim(m_structure, region, m_theory_file, m_language_file);
+            if (POMAGMA_DEBUG_LEVEL > 1) {
+                region.validate();
+            }
             region.dump(regions_out[iter]);
         }
     }
@@ -50,27 +56,49 @@ void Server::aggregate (const std::string & survey_in)
 {
     Structure survey;
     survey.load(survey_in);
-    DenseSet defined = restricted(survey.signature(), m_structure.signature());
+    if (POMAGMA_DEBUG_LEVEL > 1) {
+        survey.validate();
+    }
     compact(m_structure);
+    if (POMAGMA_DEBUG_LEVEL > 1) {
+        m_structure.validate();
+    }
+    DenseSet defined = restricted(survey.signature(), m_structure.signature());
     size_t total_dim =
         m_structure.carrier().item_count() + defined.count_items();
     if (m_structure.carrier().item_dim() < total_dim) {
         m_structure.resize(total_dim);
+        if (POMAGMA_DEBUG_LEVEL > 1) {
+            m_structure.validate();
+        }
     }
     pomagma::aggregate(m_structure, survey, defined);
+    if (POMAGMA_DEBUG_LEVEL > 1) {
+        m_structure.validate();
+    }
 }
 
 size_t Server::infer ()
 {
-    return infer_lazy(m_structure);
+    size_t theorem_count = infer_lazy(m_structure);
+    if (POMAGMA_DEBUG_LEVEL > 1) {
+        m_structure.validate();
+    }
+    return theorem_count;
 }
 
 void Server::crop ()
 {
     compact(m_structure);
+    if (POMAGMA_DEBUG_LEVEL > 1) {
+        m_structure.validate();
+    }
     size_t item_count = m_structure.carrier().item_count();
     if (item_count < m_structure.carrier().item_dim()) {
         m_structure.resize(item_count);
+        if (POMAGMA_DEBUG_LEVEL > 1) {
+            m_structure.validate();
+        }
     }
 }
 
@@ -86,6 +114,9 @@ void Server::validate ()
 void Server::dump (const std::string & world_out)
 {
     pomagma::compact(m_structure);
+    if (POMAGMA_DEBUG_LEVEL > 1) {
+        m_structure.validate();
+    }
     m_structure.log_stats();
     m_structure.dump(world_out);
 }

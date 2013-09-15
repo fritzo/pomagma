@@ -6,18 +6,16 @@ namespace pomagma
 
 class Server
 {
-    Structure & m_structure;
+    Structure m_structure;
     const char * const m_theory_file;
     const char * const m_language_file;
 
 public:
 
     Server (
-        Structure & structure,
+        const char * structure_file,
         const char * theory_file,
         const char * language_file);
-
-    void serve (const char * address);
 
     void trim (
         size_t region_size,
@@ -27,6 +25,8 @@ public:
     void crop ();
     void validate ();
     void dump (const std::string & world_out);
+
+    void serve (const char * address);
 };
 
 } // namespace pomagma
