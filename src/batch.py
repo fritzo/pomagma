@@ -13,7 +13,24 @@ from pomagma import surveyor, cartographer, theorist, analyst, atlas
 
 
 DEFAULT_SURVEY_SIZE = 16384 + 512 - 1
+MIN_SLEEP_SEC = 1
+MAX_SLEEP_SEC = 600
 PYTHON = sys.executable
+
+
+class Sleeper(object):
+    def __init__(self, name):
+        self.name = name
+        self.duration = MIN_SLEEP_SEC
+
+    def reset(self):
+        self.duration = MIN_SLEEP_SEC
+
+    def sleep(self):
+        sys.stderr.write('# {} sleeping\n'.format(self.name))
+        sys.stderr.flush()
+        time.sleep(self.duration)
+        self.duration = min(MAX_SLEEP_SEC, 2 * self.duration)
 
 
 class parsable_fork:
@@ -284,11 +301,12 @@ def cartographer_work(
             region_queue_size,
             **options)
         try:
+            sleeper = Sleeper('cartographer')
             while True:
                 if not worker.try_work():
-                    sys.stderr.write('# cartographer sleeping\n')
-                    sys.stderr.flush()
-                    time.sleep(10)
+                    sleeper.sleep()
+                else:
+                    sleeper.reset()
         finally:
             worker.stop()
 
@@ -306,12 +324,12 @@ def survey_work(theory, step_size=512, **options):
         survey = pomagma.util.temp_name('survey.h5')
         opts = options
         opts.setdefault('log_file', 'survey.log')
+        sleeper = Sleeper('surveyor')
         while True:
             if not region_queue.try_pop(region):
-                sys.stderr.write('# surveyor sleeping\n')
-                sys.stderr.flush()
-                time.sleep(10)
+                sleeper.sleep()
             else:
+                sleeper.reset()
                 region_size = pomagma.util.get_item_count(region)
                 survey_size = region_size + step_size
                 surveyor.survey(theory, region, survey, survey_size, **opts)
