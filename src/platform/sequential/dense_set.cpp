@@ -165,36 +165,45 @@ bool DenseSet::operator== (const DenseSet & other) const
 {
     POMAGMA_ASSERT1(item_dim() == other.item_dim(), "item_dim mismatch");
 
+    const Word * restrict s = assume_aligned(m_words);
+    const Word * restrict t = assume_aligned(other.m_words);
+    Word u = 0;
+
     for (size_t m = 0, M = m_word_dim; m < M; ++m) {
-        if (m_words[m] != other.m_words[m]) {
-            return false;
-        }
+        u |= s[m] ^ t[m];
     }
-    return true;
+
+    return not u;
 }
 
 bool DenseSet::operator<= (const DenseSet & other) const
 {
     POMAGMA_ASSERT1(item_dim() == other.item_dim(), "item_dim mismatch");
 
+    const Word * restrict s = assume_aligned(m_words);
+    const Word * restrict t = assume_aligned(other.m_words);
+    Word u = 0;
+
     for (size_t m = 0, M = m_word_dim; m < M; ++m) {
-        if (m_words[m] & ~other.m_words[m]) {
-            return false;
-        }
+        u |= s[m] & ~ t[m];
     }
-    return true;
+
+    return not u;
 }
 
 bool DenseSet::disjoint (const DenseSet & other) const
 {
     POMAGMA_ASSERT1(item_dim() == other.item_dim(), "item_dim mismatch");
 
+    const Word * restrict s = assume_aligned(m_words);
+    const Word * restrict t = assume_aligned(other.m_words);
+    Word u = 0;
+
     for (size_t m = 0, M = m_word_dim; m < M; ++m) {
-        if (m_words[m] & other.m_words[m]) {
-            return false;
-        }
+        u |= s[m] & t[m];
     }
-    return true;
+
+    return not u;
 }
 
 // inplace union
