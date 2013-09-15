@@ -31,7 +31,7 @@ void Server::trim (
         const std::vector<std::string> & regions_out)
 {
     size_t region_count = regions_out.size();
-    if (m_structure.carrier().item_dim() <= region_size) {
+    if (m_structure.carrier().item_count() <= region_size) {
         compact(m_structure);
         #pragma omp parallel for schedule(dynamic, 1)
         for (size_t iter = 0; iter < region_count; ++iter) {
@@ -78,9 +78,14 @@ void Server::aggregate (const std::string & survey_in)
     }
 }
 
-size_t Server::infer ()
+size_t Server::infer (size_t priority)
 {
-    size_t theorem_count = infer_lazy(m_structure);
+    size_t theorem_count = 0;
+    switch (priority) {
+        case 0: theorem_count = infer_pos(m_structure); break;
+        case 1: theorem_count = infer_neg(m_structure); break;
+        default: POMAGMA_WARN("unknown priority: " << priority); break;
+    }
     if (POMAGMA_DEBUG_LEVEL > 1) {
         m_structure.validate();
     }
@@ -133,7 +138,7 @@ messaging::CartographerResponse handle (
     messaging::CartographerResponse response;
 
     if (request.has_trim()) {
-        const size_t region_size = request.trim().size();
+        const size_t region_size = request.trim().region_size();
         std::vector<std::string> regions_out;
         for (int i = 0; i < request.trim().regions_out_size(); ++i) {
             regions_out.push_back(request.trim().regions_out(i));
@@ -143,15 +148,13 @@ messaging::CartographerResponse handle (
     }
 
     if (request.has_aggregate()) {
-        const size_t survey_count = request.aggregate().surveys_in_size();
-        for (size_t iter = 0; iter < survey_count; ++iter) {
-            server.aggregate(request.aggregate().surveys_in(iter));
-        }
+        server.aggregate(request.aggregate().survey_in());
         response.mutable_aggregate();
     }
 
     if (request.has_infer()) {
-        const size_t theorem_count = server.infer();
+        const size_t priority = request.infer().priority();
+        const size_t theorem_count = server.infer(priority);
         response.mutable_infer()->set_theorem_count(theorem_count);
     }
 

@@ -1,12 +1,16 @@
 import os
 import pomagma.util
+import pomagma.surveyor
 import pomagma.cartographer
 
 
 def test_ping():
-    theory = 'sk'
+    theory = 'h4'
     data = os.path.join(pomagma.util.DATA, 'test', 'debug', 'atlas', theory)
-    world = os.path.join(data, '0.h5')  # HACK FIXME TODO
+    world = os.path.join(data, '0.h5')
+    if not os.path.exists(world):
+        min_size = pomagma.util.MIN_SIZES[theory]
+        pomagma.surveyor.init(theory, world, min_size)
     address = 'ipc://{}'.format(os.path.join(data, 'socket'))
     print 'starting server'
     opts = {

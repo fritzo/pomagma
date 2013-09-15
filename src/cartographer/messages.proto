@@ -3,13 +3,14 @@ package pomagma_messaging;
 message CartographerRequest {
 
   message Trim {
-    required uint32 size = 1;
+    required uint32 region_size = 1;
     repeated string regions_out = 2;
   }
   message Aggregate {
-    repeated string surveys_in = 1;
+    required string survey_in = 1;
   }
   message Infer {
+    required uint32 priority = 1;
   }
   message Crop {
   }

@@ -1,5 +1,6 @@
 import os
 import zmq
+import pomagma.util
 from pomagma.cartographer import messages_pb2 as messages
 
 
@@ -11,6 +12,7 @@ CONTEXT = zmq.Context()
 
 class Client(object):
     def __init__(self, address):
+        assert isinstance(address, basestring), address
         self._socket = CONTEXT.socket(zmq.REQ)
         self._socket.connect(address)
 
@@ -26,55 +28,70 @@ class Client(object):
         request = Request()
         self._call(request)
 
-    def _trim(self, size, regions_out):
+    def _trim(self, region_size, regions_out):
         request = Request()
-        request.trim = Request.Trim()
-        request.trim.size = size
+        request.trim.SetInParent()
+        request.trim.region_size = region_size
         for region in regions_out:
-            request.regions_out.add(region)
+            request.trim.regions_out.append(region)
         self._call(request)
 
-    def trim(self, size, regions_out):
-        assert regions_out
+    def trim(self, region_size, regions_out):
+        assert isinstance(region_size, int), region_size
+        assert isinstance(regions_out, list), regions_out
         for region in regions_out:
+            assert isinstance(region, basestring), region
             assert os.path.exists(os.path.dirname(os.path.abspath(region)))
             assert not os.path.exists(region)
-        self._trim(self, size, regions_out)
-        for region in regions_out:
-            assert os.path.exists(region)
+        temps_out = [pomagma.util.temp_name(region) for region in regions_out]
+        self._trim(region_size, temps_out)
+        for region, temp in zip(regions_out, temps_out):
+            assert os.path.exists(temp)
+            os.rename(temp, region)
 
-    def _aggregate(self, surveys_in):
+    def _aggregate(self, survey_in):
         request = Request()
-        request.aggregate = Request.Aggregate()
-        for survey in surveys_in:
-            request.aggregate.surveys_in.add(survey)
+        request.aggregate.SetInParent()
+        request.aggregate.survey_in = survey_in
         self._call(request)
 
-    def aggregate(self, surveys_in):
-        assert surveys_in
-        for survey in surveys_in:
-            assert os.path.exists(surveys_in)
-        self._aggregate(surveys_in)
+    def aggregate(self, survey_in):
+        assert isinstance(survey_in, basestring), survey_in
+        assert os.path.exists(survey_in)
+        self._aggregate(survey_in)
 
-    def infer(self):
+    def _infer(self, priority):
         request = Request()
-        request.infer = Request.Infer()
+        request.infer.SetInParent()
+        request.infer.priority = priority
         response = self._call(request)
-        return response.theorem_count
+        return response.infer.theorem_count
+
+    def infer(self, priority):
+        assert isinstance(priority, int), priority
+        assert priority in [0, 1], priority
+        return self._infer(priority)
+
+    def crop(self):
+        request = Request()
+        request.crop.SetInParent()
+        self._call(request)
 
     def validate(self):
         request = Request()
-        request.validate = Request.Validate()
+        request.validate.SetInParent()
         self._call(request)
 
     def _dump(self, world_out):
         request = Request()
-        request.dump = Request.Dump()
+        request.dump.SetInParent()
         request.dump.world_out = world_out
         self._call(request)
 
     def dump(self, world_out):
+        assert isinstance(world_out, basestring), world_out
         assert os.path.exists(os.path.dirname(os.path.abspath(world_out)))
-        assert not os.path.exists(world_out)
-        self._dump(world_out)
-        assert os.path.exists(world_out)
+        temp_out = pomagma.util.temp_name(world_out)
+        self._dump(temp_out)
+        assert os.path.exists(temp_out), temp_out
+        os.rename(temp_out, world_out)

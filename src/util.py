@@ -62,6 +62,11 @@ def chdir(path):
         os.chdir(old_path)
 
 
+def temp_name(path):
+    dirname, filename = os.path.split(path)
+    return os.path.join(dirname, 'temp.{}.{}'.format(os.getpid(), filename))
+
+
 @contextlib.contextmanager
 def in_temp_dir():
     path = os.path.abspath(tempfile.mkdtemp())
@@ -176,7 +181,12 @@ def print_command(args, env={}):
 def check_call(*args):
     print_command(args)
     with log_duration():
-        info = subprocess.call(args)
+        proc = subprocess.Popen(args)
+        try:
+            info = proc.wait()
+        finally:
+            if proc.poll() is None:
+                proc.terminate()
     if info:
         sys.stderr.write('ERROR in {}'.format(' '.join(args)))
         sys.exit(info)
@@ -215,6 +225,13 @@ def get_stack_trace(binary):
     return trace
 
 
+def prepare_core_dump():
+    if os.path.exists('core'):
+        os.remove('core')
+    if subprocess.check_output('ulimit -c', shell=True).strip() == '0':
+        print 'WARNING cannot write core file; try `ulimit -c unlimited`'
+
+
 def log_call(*args, **options):
     '''
     Pass arguments to command line.
@@ -225,20 +242,38 @@ def log_call(*args, **options):
     args = options.pop('runner', '').split() + args
     extra_env = make_env(options)
     log_file = extra_env['POMAGMA_LOG_FILE']
-    if os.path.exists('core'):
-        os.remove('core')
-    if subprocess.check_output('ulimit -c', shell=True).strip() == '0':
-        print 'WARNING cannot write core file; try `ulimit -c unlimited`'
+    prepare_core_dump()
     print_command(args, extra_env)
     env = os.environ.copy()
     env.update(extra_env)
     with log_duration():
-        info = subprocess.call(args, env=env)
+        proc = subprocess.Popen(args, env=env)
+        try:
+            info = proc.wait()
+        finally:
+            if proc.poll() is None:
+                proc.terminate()
     if info:
         print_logged_error(log_file)
         trace = get_stack_trace(args[0])
         log_print(trace, log_file)
         sys.exit(info)
+
+
+def log_Popen(*args, **options):
+    '''
+    Pass arguments to command line.
+    Pass options into environment variables.
+    Log process.
+    '''
+    args = map(str, args)
+    args = options.pop('runner', '').split() + args
+    extra_env = make_env(options)
+    prepare_core_dump()
+    print_command(args, extra_env)
+    env = os.environ.copy()
+    env.update(extra_env)
+    return subprocess.Popen(args, env=env)
 
 
 def build():

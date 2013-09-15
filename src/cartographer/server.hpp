@@ -21,7 +21,7 @@ public:
         size_t region_size,
         const std::vector<std::string> & regions_out);
     void aggregate (const std::string & survey_in);
-    size_t infer ();
+    size_t infer (size_t priority);
     void crop ();
     void validate ();
     void dump (const std::string & world_out);
