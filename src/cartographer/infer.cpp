@@ -724,6 +724,7 @@ size_t infer_equal (Structure & structure)
 
     DenseSet y_set(carrier.item_dim());
 
+    size_t start_item_count = carrier.item_count();
     carrier.set_merge_callback(schedule_merge);
 
     for (auto iter = carrier.iter(); iter.ok(); iter.next()) {
@@ -742,7 +743,7 @@ size_t infer_equal (Structure & structure)
 
     process_mergers(structure.signature());
 
-    size_t theorem_count = carrier.item_dim() - carrier.item_count();
+    size_t theorem_count = start_item_count - carrier.item_count();
     POMAGMA_INFO("inferred " << theorem_count << " EQUAL facts");
     return theorem_count;
 }

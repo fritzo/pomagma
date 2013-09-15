@@ -170,8 +170,8 @@ class StructureQueue(object):
                     return
 
     def clear(self):
-        if os.path.exists(self.path):
-            shutil.rmtree(self.path)
+        for item in self:
+            os.remove(item)
 
 
 class CartographerWorker(object):
@@ -256,11 +256,11 @@ class CartographerWorker(object):
         self.db.trim(self.region_size, regions_out)
 
     def replace_region_queue(self):
-        self.region_queue.clear()
         temp_path = pomagma.util.temp_name(self.region_queue.path)
         if os.path.exists(temp_path):
             shutil.rmtree(temp_path)
         self.fill_region_queue(StructureQueue(temp_path))
+        self.region_queue.clear()
         os.rename(temp_path, self.region_queue.path)
 
 
