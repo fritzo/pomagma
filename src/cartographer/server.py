@@ -20,9 +20,9 @@ class Server(object):
             '{}.language'.format(theory))
         args = [
             os.path.join(BIN, 'cartographer'),
-            world,
-            theory_file,
-            language_file,
+            pomagma.util.abspath(world),
+            pomagma.util.abspath(theory_file),
+            pomagma.util.abspath(language_file),
             address,
         ]
         assert os.path.exists(world), world

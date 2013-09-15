@@ -1,5 +1,6 @@
 import os
 import zmq
+import pomagma.util
 from pomagma.cartographer import messages_pb2 as messages
 
 
@@ -42,9 +43,11 @@ class Client(object):
             assert isinstance(region, basestring), region
             assert os.path.exists(os.path.dirname(os.path.abspath(region)))
             assert not os.path.exists(region)
-        self._trim(region_size, regions_out)
-        for region in regions_out:
-            assert os.path.exists(region)
+        temps_out = [pomagma.util.temp_name(region) for region in regions_out]
+        self._trim(region_size, temps_out)
+        for region, temp in zip(regions_out, temps_out):
+            assert os.path.exists(temp)
+            os.rename(temp, region)
 
     def _aggregate(self, survey_in):
         request = Request()
@@ -87,11 +90,8 @@ class Client(object):
 
     def dump(self, world_out):
         assert isinstance(world_out, basestring), world_out
-        dirname, filename = os.path.split(world_out)
-        if dirname and not os.path.exists(dirname):
-            os.makedirs(dirname)
-        pid = os.getpid()
-        temp_out = os.path.join(dirname, 'temp.{}.{}'.format(pid, filename))
+        assert os.path.exists(os.path.dirname(os.path.abspath(world_out)))
+        temp_out = pomagma.util.temp_name(world_out)
         self._dump(temp_out)
         assert os.path.exists(temp_out), temp_out
         os.rename(temp_out, world_out)

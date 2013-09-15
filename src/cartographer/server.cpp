@@ -31,7 +31,7 @@ void Server::trim (
         const std::vector<std::string> & regions_out)
 {
     size_t region_count = regions_out.size();
-    if (m_structure.carrier().item_dim() <= region_size) {
+    if (m_structure.carrier().item_count() <= region_size) {
         compact(m_structure);
         #pragma omp parallel for schedule(dynamic, 1)
         for (size_t iter = 0; iter < region_count; ++iter) {
