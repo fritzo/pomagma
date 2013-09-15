@@ -37,37 +37,28 @@ messaging::CartographerResponse handle (
 
     if (request.has_trim()) {
         size_t region_count = request.trim().regions_out_size();
-        if (region_count == 0) {
-            response.mutable_trim()->set_error("zero regions to trim");
-            return response;
-        }
-
         size_t region_size = request.trim().size();
         if (carrier.item_dim() <= region_size) {
-            response.mutable_trim()->set_error(
-                "structure is too small to trim");
-            return response;
-        }
-
-        #pragma omp parallel for schedule(dynamic, 1)
-        for (size_t iter = 0; iter < region_count; ++iter) {
-            Structure region;
-            region.init_carrier(region_size);
-            extend(region.signature(), structure.signature());
-            trim(structure, region, theory_file, language_file);
-            region.dump(request.trim().regions_out(iter));
+            compact(structure);
+            #pragma omp parallel for schedule(dynamic, 1)
+            for (size_t iter = 0; iter < region_count; ++iter) {
+                structure.dump(request.trim().regions_out(iter));
+            }
+        } else {
+            #pragma omp parallel for schedule(dynamic, 1)
+            for (size_t iter = 0; iter < region_count; ++iter) {
+                Structure region;
+                region.init_carrier(region_size);
+                extend(region.signature(), structure.signature());
+                trim(structure, region, theory_file, language_file);
+                region.dump(request.trim().regions_out(iter));
+            }
         }
         response.mutable_trim();
     }
 
     if (request.has_aggregate()) {
         size_t survey_count = request.aggregate().surveys_in_size();
-        if (survey_count == 0) {
-            response.mutable_aggregate()->set_error(
-                "zero surveys to aggregate");
-            return response;
-        }
-
         for (size_t iter = 0; iter < survey_count; ++iter) {
             Structure survey;
             survey.load(request.aggregate().surveys_in(iter));
