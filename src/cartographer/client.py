@@ -15,7 +15,7 @@ class Client(object):
         self._socket.connect(address)
 
     def _call(self, request):
-        raw_request = request.toByteArray()
+        raw_request = request.SerializeToString()
         self._socket.send(raw_request, 0)
         raw_response = self._socket.recv(0)
         response = Response.ParseFromString(raw_response)

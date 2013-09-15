@@ -9,7 +9,7 @@ BIN = os.path.join(pomagma.util.BIN, 'cartographer')
 
 class Server(object):
     def __init__(self, theory, world, address=None, **opts):
-        env = pomagma.util.make_enf(**opts)
+        env = pomagma.util.make_env(opts)
         cwd = os.path.join(pomagma.util.DATA, 'work', theory, 'cartographer')
         if address is None:
             address = 'ipc://{}'.format(os.path.join(cwd, 'socket'))
@@ -26,9 +26,9 @@ class Server(object):
             language_file,
             address,
         ]
-        assert os.path.exists(world)
-        assert os.path.exists(theory_file)
-        assert os.path.exists(language_file)
+        assert os.path.exists(world), world
+        assert os.path.exists(theory_file), theory_file
+        assert os.path.exists(language_file), language_file
         if not os.path.exists(cwd):
             os.makedirs(cwd)
         self._theory = theory

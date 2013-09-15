@@ -18,6 +18,19 @@ Server::Server (
 {
 }
 
+namespace detail
+{
+
+messaging::CartographerResponse call (
+    messaging::CartographerRequest & request __attribute__((unused)))
+{
+    messaging::CartographerResponse response;
+    TODO("dispatch on request type");
+    return response;
+}
+
+} // namespace detail
+
 void Server::serve (const char * address)
 {
     POMAGMA_INFO("Starting server");
@@ -26,18 +39,25 @@ void Server::serve (const char * address)
     socket.bind(address);
 
     while (true) {
-        zmq::message_t request;
         POMAGMA_DEBUG("waiting for request");
-        socket.recv(& request);
-        POMAGMA_DEBUG("received request");
+        zmq::message_t raw_request;
+        socket.recv(& raw_request);
 
-        // TODO dispatch on request type
-        zmq::message_t response(4);
-        memcpy((void *) response.data(), "test", 4);
+        POMAGMA_DEBUG("parsing request");
+        messaging::CartographerRequest request;
+        request.ParseFromArray(raw_request.data(), raw_request.size());
+
+        messaging::CartographerResponse response = detail::call(request);
+
+        POMAGMA_DEBUG("serializing response");
+        std::string response_str;
+        response.SerializeToString(& response_str);
+        const size_t size = response_str.length();
+        zmq::message_t raw_response(size);
+        memcpy(raw_response.data(), response_str.c_str(), size);
 
         POMAGMA_DEBUG("sending response");
-        socket.send(response);
-        POMAGMA_DEBUG("sent response");
+        socket.send(raw_response);
     }
 }
 
