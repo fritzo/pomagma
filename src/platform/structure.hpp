@@ -467,9 +467,9 @@ inline void dump (
 
     bool readonly = true;
     if (readonly) {
-        int info = chmod(filename.c_str(), 444);
+        int info = chmod(filename.c_str(), S_IRUSR | S_IRGRP | S_IROTH);
         POMAGMA_ASSERT(info == 0,
-            "chmod(" << filename << " , 444) failed with code " << info );
+            "chmod(" << filename << " , readonly) failed with code " << info);
     }
 }
 
