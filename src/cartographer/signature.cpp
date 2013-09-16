@@ -12,31 +12,31 @@ void extend (Signature & destin, const Signature & source)
 
     for (auto i : source.binary_relations()) {
         if (not destin.binary_relation(i.first)) {
-            POMAGMA_INFO("adding " << i.first);
+            POMAGMA_DEBUG("adding " << i.first);
             destin.declare(i.first, * new BinaryRelation(carrier));
         }
     }
     for (auto i : source.nullary_functions()) {
         if (not destin.nullary_function(i.first)) {
-            POMAGMA_INFO("adding " << i.first);
+            POMAGMA_DEBUG("adding " << i.first);
             destin.declare(i.first, * new NullaryFunction(carrier));
         }
     }
     for (auto i : source.injective_functions()) {
         if (not destin.injective_function(i.first)) {
-            POMAGMA_INFO("adding " << i.first);
+            POMAGMA_DEBUG("adding " << i.first);
             destin.declare(i.first, * new InjectiveFunction(carrier));
         }
     }
     for (auto i : source.binary_functions()) {
         if (not destin.binary_function(i.first)) {
-            POMAGMA_INFO("adding " << i.first);
+            POMAGMA_DEBUG("adding " << i.first);
             destin.declare(i.first, * new BinaryFunction(carrier));
         }
     }
     for (auto i : source.symmetric_functions()) {
         if (not destin.symmetric_function(i.first)) {
-            POMAGMA_INFO("adding " << i.first);
+            POMAGMA_DEBUG("adding " << i.first);
             destin.declare(i.first, * new SymmetricFunction(carrier));
         }
     }

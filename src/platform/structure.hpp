@@ -251,7 +251,7 @@ inline void dump (
         const Carrier & carrier,
         hdf5::OutFile & file)
 {
-    POMAGMA_INFO("dumping carrier");
+    POMAGMA_DEBUG("dumping carrier");
 
     size_t max_ob = carrier.item_count(); // carrier is contiguous
     auto ob_type = hdf5::unsigned_type_wide_enough_for(max_ob);
@@ -278,7 +278,7 @@ inline void dump (
         hdf5::OutFile & file,
         const std::string & name)
 {
-    POMAGMA_INFO("dumping binary/relations/" << name);
+    POMAGMA_DEBUG("dumping binary/relations/" << name);
 
     auto word_type = hdf5::Bitfield<Word>::id();
 
@@ -305,7 +305,7 @@ inline void dump (
         hdf5::OutFile & file,
         const std::string & name)
 {
-    POMAGMA_INFO("dumping functions/nullary/" << name);
+    POMAGMA_DEBUG("dumping functions/nullary/" << name);
 
     size_t max_ob = carrier.item_count();
     auto ob_type = hdf5::unsigned_type_wide_enough_for(max_ob);
@@ -334,7 +334,7 @@ inline void dump (
     // format:
     // dense array with null entries
 
-    POMAGMA_INFO("dumping functions/injective/" << name);
+    POMAGMA_DEBUG("dumping functions/injective/" << name);
 
     size_t max_ob = carrier.item_count();
     auto ob_type = hdf5::unsigned_type_wide_enough_for(max_ob);
@@ -368,7 +368,7 @@ inline void dump (
     // format:
     // compressed sparse row (CSR) matrix
 
-    POMAGMA_INFO("dumping functions/" << arity << "/" << name);
+    POMAGMA_DEBUG("dumping functions/" << arity << "/" << name);
 
     size_t pair_count = fun.count_pairs();
     POMAGMA_DEBUG("dumping " << pair_count << " lhs,rhs pairs");
@@ -687,7 +687,7 @@ inline void load_data (
         const std::string & name,
         std::unordered_map<std::string, Hasher::Digest> & hash)
 {
-    POMAGMA_INFO("loading nullary function " << name);
+    POMAGMA_DEBUG("loading nullary function " << name);
 
     const size_t item_dim = carrier.item_dim();
 
@@ -710,7 +710,7 @@ inline void update_data (
         const std::string & name,
         const std::unordered_map<std::string, Hasher::Digest> & hash)
 {
-    POMAGMA_INFO("updating nullary function " << name);
+    POMAGMA_DEBUG("updating nullary function " << name);
 
     fun.update();
     auto actual = get_hash(fun);
@@ -718,7 +718,7 @@ inline void update_data (
     POMAGMA_ASSERT(actual == expected,
             "nullary function " << name << " is corrupt");
 
-    POMAGMA_INFO("done updating nullary function " << name);
+    POMAGMA_DEBUG("done updating nullary function " << name);
 }
 
 inline void load_data (

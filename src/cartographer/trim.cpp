@@ -178,7 +178,7 @@ void restrict_all (
         if (i == src_map.end()) {
             POMAGMA_WARN("missing " << name);
         } else {
-            POMAGMA_INFO("trimming " << name);
+            POMAGMA_DEBUG("trimming " << name);
             auto & src = * i->second;
             restrict_one(
                     destin,
