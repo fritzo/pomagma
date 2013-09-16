@@ -46,6 +46,78 @@ inline void map (
 } // anonymoous namespace
 
 
+template<class Function>
+size_t Approximator::validate_function (
+        const std::string & name,
+        const Function & fun)
+{
+    POMAGMA_INFO("Validating " << name << " approximation");
+
+    size_t ob_fail_count;
+    size_t upper_fail_count = 0;
+    size_t lower_fail_count = 0;
+
+    const size_t item_dim = m_item_dim;
+    #pragma omp parallel for schedule(dynamic, 1)
+    for (Ob x = 1; x <= item_dim; ++x) {
+        Approximation approx_x(x, m_less);
+        approx_x.ob = 0;
+
+        for (auto iter = fun.iter_lhs(x); iter.ok(); iter.next()) {
+            Ob y = * iter;
+            Approximation approx_y(y, m_less);
+            approx_y.ob = 0;
+
+            Ob xy = fun.find(x, y);
+            Approximation expected(xy, m_less);
+            Approximation actual = find(fun, approx_x, approx_y);
+
+            if (actual.ob != expected.ob) {
+                #pragma omp atomic
+                ob_fail_count += 1;
+            }
+            if (actual.upper != expected.upper) {
+                #pragma omp atomic
+                upper_fail_count += 1;
+            }
+            if (actual.lower != expected.lower) {
+                #pragma omp atomic
+                lower_fail_count += 1;
+            }
+        }
+    }
+
+    if (ob_fail_count) {
+        POMAGMA_WARN("failed " << ob_fail_count << " ob cases");
+    }
+    if (upper_fail_count) {
+        POMAGMA_WARN("failed " << upper_fail_count << " upper cases");
+    }
+    if (lower_fail_count) {
+        POMAGMA_WARN("failed " << lower_fail_count << " lower cases");
+    }
+
+    return ob_fail_count + upper_fail_count + lower_fail_count;
+}
+
+size_t Approximator::validate ()
+{
+    POMAGMA_INFO("Validating approximator");
+
+    size_t fail_count = 0;
+
+    for (auto pair : m_structure.signature().binary_functions()) {
+        fail_count += validate_function(pair.first, * pair.second);
+    }
+    for (auto pair : m_structure.signature().symmetric_functions()) {
+        fail_count += validate_function(pair.first, * pair.second);
+    }
+
+    POMAGMA_INFO("approximator is " << (fail_count ? "invalid" : "valid"));
+
+    return fail_count;
+}
+
 void Approximator::validate (const Approximation & approx)
 {
     POMAGMA_ASSERT_EQ(approx.lower.item_dim(), m_item_dim);
@@ -100,6 +172,14 @@ bool Approximator::try_close (Approximation & approx)
     Approximation start(m_item_dim, m_top, m_bot);
     start = approx;
     DenseSet set(m_item_dim);
+
+    if (not approx.ob) {
+        set.set_insn(approx.upper, approx.lower);
+        for (auto iter = set.iter(); iter.ok(); iter.next()) {
+            approx.ob = * iter;
+            break;
+        }
+    }
 
     if (approx.ob) {
         approx.upper.insert(approx.ob);
@@ -222,7 +302,7 @@ Approximator::Trool Approximator::is_top (const Approximation & approx)
 {
     if (approx.lower.contains(m_top)) {
         return TRUE;
-    } if (not (approx.upper.disjoint(m_nless.get_Lx_set(m_top)))) {
+    } if (approx.upper.intersects(m_nless.get_Lx_set(m_top))) {
         return FALSE;
     } else {
         return MAYBE;
@@ -233,7 +313,7 @@ Approximator::Trool Approximator::is_bot (const Approximation & approx)
 {
     if (approx.upper.contains(m_bot)) {
         return TRUE;
-    } if (not (approx.lower.disjoint(m_nless.get_Rx_set(m_bot)))) {
+    } if (approx.lower.intersects(m_nless.get_Rx_set(m_bot))) {
         return FALSE;
     } else {
         return MAYBE;

@@ -48,7 +48,8 @@ class Approximator : noncopyable
 public:
 
     Approximator (Structure & structure)
-        : m_item_dim(structure.carrier().item_dim()),
+        : m_structure(structure),
+          m_item_dim(structure.carrier().item_dim()),
           m_top(structure.nullary_function("TOP").find()),
           m_bot(structure.nullary_function("BOT").find()),
           m_less(structure.binary_relation("LESS")),
@@ -60,6 +61,7 @@ public:
         POMAGMA_ASSERT(m_bot, "BOT is not defined");
     }
 
+    size_t validate ();
     void validate (const Approximation & approx);
 
     Approximation find (
@@ -85,6 +87,12 @@ private:
     void close (Approximation & approx);
     bool try_close (Approximation & approx);
 
+    template<class Function>
+    size_t validate_function (
+            const std::string & name,
+            const Function & fun);
+
+    Structure & m_structure;
     const size_t m_item_dim;
     const Ob m_top;
     const Ob m_bot;

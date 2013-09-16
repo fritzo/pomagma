@@ -254,6 +254,7 @@ public:
     // entire operations
     void zero ();
     bool operator == (const DenseSet & other) const;
+    bool operator != (const DenseSet & s) const { return not operator==(s); }
     bool operator <= (const DenseSet & other) const;
     bool disjoint    (const DenseSet & other) const;
     bool intersects  (const DenseSet & s) const { return not disjoint(s); }

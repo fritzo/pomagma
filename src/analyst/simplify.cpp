@@ -30,4 +30,3 @@ void batch_simplify(
 }
 
 } // namespace pomagma
-
