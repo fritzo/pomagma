@@ -6,7 +6,7 @@
 namespace pomagma
 {
 
-void assume (
+size_t assume (
         Structure & structure,
         const char * theory_file);
 
