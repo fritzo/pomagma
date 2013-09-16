@@ -471,6 +471,8 @@ inline void dump (
         POMAGMA_ASSERT(info == 0,
             "chmod(" << filename << " , readonly) failed with code " << info);
     }
+
+    POMAGMA_INFO("done dumping structure");
 }
 
 //----------------------------------------------------------------------------
