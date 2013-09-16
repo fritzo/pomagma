@@ -153,7 +153,7 @@ def init(theory, **options):
         world_size = pomagma.util.MIN_SIZES[theory]
         pomagma.util.log_print('initialize to {}'.format(world_size), log_file)
         surveyor.init(theory, survey, world_size, **opts)
-        atlas.initialize(world, survey, **opts)
+        atlas.initialize(theory, world, survey, **opts)
 
 
 class StructureQueue(object):
@@ -255,7 +255,7 @@ class CartographerWorker(object):
                     'world_size = {}'.format(world_size),
                     self.log_file)
                 os.remove(survey)
-                self.replace_region_queue()
+            self.replace_region_queue()
             return True
 
     def fill_region_queue(self, queue):
@@ -385,7 +385,7 @@ def translate(theory, **options):
         opts.setdefault('log_file', 'translate.log')
         init_size = pomagma.util.MIN_SIZES[theory]
         surveyor.init(theory, init, init_size, **opts)
-        atlas.translate(init, world, aggregate, **opts)
+        atlas.translate(theory, init, world, aggregate, **opts)
 
 
 @parsable.command
@@ -413,7 +413,7 @@ def theorize(theory, **options):
             **opts)
         os.rename(temp_conjectures, diverge_conjectures)
         if theorem_count > 0:
-            atlas.assume(world, updated, diverge_theorems, **opts)
+            atlas.assume(theory, world, updated, diverge_theorems, **opts)
 
         theorem_count = theorist.try_prove_nless(
             theory,
@@ -424,7 +424,7 @@ def theorize(theory, **options):
             **opts)
         os.rename(temp_conjectures, equal_conjectures)
         if theorem_count > 0:
-            atlas.assume(world, updated, nless_theorems, **opts)
+            atlas.assume(theory, world, updated, nless_theorems, **opts)
 
 
 @parsable.command
