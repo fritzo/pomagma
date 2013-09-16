@@ -115,8 +115,8 @@ def test(theory, **options):
                 conjectures,
                 theorems,
                 **opts)
-            theorist.assume('6.h5', '7.h5', theorems, **opts)
-            with cartographer.load(theory, '7.h5', **opts) as db:
+            with cartographer.load(theory, '6.h5', **opts) as db:
+                db.assume(theorems)
                 db.validate()
         theorist.conjecture_equal(theory, '6.h5', conjectures, **opts)
         theorist.try_prove_nless(
@@ -127,8 +127,8 @@ def test(theory, **options):
             theorems,
             **opts)
         if theory != 'h4':
-            theorist.assume('6.h5', '7.h5', theorems, **opts)
-            with cartographer.load(theory, '7.h5', **opts) as db:
+            with cartographer.load(theory, '6.h5', **opts) as db:
+                db.assume(theorems)
                 db.validate()
                 for priority in [0, 1]:
                     while db.infer(priority):
@@ -361,6 +361,7 @@ def explore(
             region_queue_size,
             **options),
         parsable_fork(survey_work, theory, step_size, **options),
+        # TODO add theorist_work
     ]
     try:
         for worker in workers:

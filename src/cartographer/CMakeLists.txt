@@ -22,5 +22,8 @@ add_executable(cartographer
 	aggregate.cpp
 	trim.cpp
 	infer.cpp
-       	messages.pb.cc)
+	../theorist/assume.cpp
+	../theorist/consistency.cpp
+       	messages.pb.cc
+	)
 target_link_libraries(cartographer ${POMAGMA_CARTOGRAPHER_LIBS} zmq)

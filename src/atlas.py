@@ -35,7 +35,8 @@ def assume(theory, world, updated, theorems, **opts):
     assert not os.path.exists(updated)
     with pomagma.util.mutex(world):
         assert os.path.exists(world)
-        pomagma.theorist.assume(world, updated, theorems, **opts)
         with pomagma.cartographer.load(theory, world, **opts) as db:
+            db.assume(theorems)
             db.validate()
+            db.dump(updated)
         os.rename(updated, world)

@@ -61,12 +61,3 @@ def try_prove_diverge(conjectures_in, conjectures_out, theorems_out, **opts):
         pomagma.util.abspath(theorems_out),
         **opts)
     return theorem_count
-
-
-def assume(world_in, world_out, theory_in, **opts):
-    pomagma.util.log_call(
-        os.path.join(BIN, 'assume'),
-        pomagma.util.abspath(world_in),
-        pomagma.util.abspath(world_out),
-        pomagma.util.abspath(theory_in),
-        **opts)

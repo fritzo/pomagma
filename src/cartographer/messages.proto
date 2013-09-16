@@ -9,6 +9,9 @@ message CartographerRequest {
   message Aggregate {
     required string survey_in = 1;
   }
+  message Assume {
+    required string facts_in = 1;
+  }
   message Infer {
     required uint32 priority = 1;
   }
@@ -23,10 +26,11 @@ message CartographerRequest {
   // ordered by priority
   optional Trim trim = 1;
   optional Aggregate aggregate = 2;
-  optional Infer infer = 3;
-  optional Crop crop = 4;
-  optional Validate validate = 5;
-  optional Dump dump = 6;
+  optional Assume assume = 3;
+  optional Infer infer = 4;
+  optional Crop crop = 5;
+  optional Validate validate = 6;
+  optional Dump dump = 7;
 }
 
 message CartographerResponse {
@@ -35,8 +39,11 @@ message CartographerResponse {
   }
   message Aggregate {
   }
+  message Assume {
+    required uint64 merger_count = 1;
+  }
   message Infer {
-    optional uint64 theorem_count = 1;
+    required uint64 theorem_count = 1;
   }
   message Crop {
   }
@@ -47,8 +54,9 @@ message CartographerResponse {
 
   optional Trim trim = 1;
   optional Aggregate aggregate = 2;
-  optional Infer infer = 3;
-  optional Crop crop = 4;
-  optional Validate validate = 5;
-  optional Dump dump = 6;
+  optional Assume assume = 3;
+  optional Infer infer = 4;
+  optional Crop crop = 5;
+  optional Validate validate = 6;
+  optional Dump dump = 7;
 }

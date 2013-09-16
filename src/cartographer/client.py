@@ -60,6 +60,18 @@ class Client(object):
         assert os.path.exists(survey_in)
         self._aggregate(survey_in)
 
+    def _assume(self, facts_in):
+        request = Request()
+        request.assume.SetInParent()
+        request.assume.facts_in = facts_in
+        response = self._call(request)
+        return response.assume.merger_count
+
+    def assume(self, facts_in):
+        assert isinstance(facts_in, basestring), facts_in
+        assert os.path.exists(facts_in)
+        self._assume(facts_in)
+
     def _infer(self, priority):
         request = Request()
         request.infer.SetInParent()

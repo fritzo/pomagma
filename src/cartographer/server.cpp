@@ -3,6 +3,7 @@
 #include "aggregate.hpp"
 #include "infer.hpp"
 #include "signature.hpp"
+#include <pomagma/theorist/assume.hpp>
 #include <pomagma/macrostructure/carrier.hpp>
 #include <pomagma/macrostructure/structure.hpp>
 #include <pomagma/macrostructure/compact.hpp>
@@ -76,6 +77,15 @@ void Server::aggregate (const std::string & survey_in)
     if (POMAGMA_DEBUG_LEVEL > 1) {
         m_structure.validate();
     }
+}
+
+size_t Server::assume (const std::string & facts_in)
+{
+    size_t merger_count = pomagma::assume(m_structure, facts_in.c_str());
+    if (POMAGMA_DEBUG_LEVEL > 1) {
+        m_structure.validate();
+    }
+    return merger_count;
 }
 
 size_t Server::infer (size_t priority)
@@ -156,6 +166,12 @@ messaging::CartographerResponse handle (
         const size_t priority = request.infer().priority();
         const size_t theorem_count = server.infer(priority);
         response.mutable_infer()->set_theorem_count(theorem_count);
+    }
+
+    if (request.has_assume()) {
+        const std::string & facts_in = request.assume().facts_in();
+        const size_t merger_count = server.assume(facts_in);
+        response.mutable_assume()->set_merger_count(merger_count);
     }
 
     if (request.has_crop()) {
