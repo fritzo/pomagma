@@ -27,12 +27,13 @@ Server::Server (
 }
 
 void Server::trim (
+        bool temperature,
         size_t region_size,
         const std::vector<std::string> & regions_out)
 {
     size_t region_count = regions_out.size();
+    compact(m_structure);
     if (m_structure.carrier().item_count() <= region_size) {
-        compact(m_structure);
         #pragma omp parallel for schedule(dynamic, 1)
         for (size_t iter = 0; iter < region_count; ++iter) {
             m_structure.dump(regions_out[iter]);
@@ -43,7 +44,12 @@ void Server::trim (
             Structure region;
             region.init_carrier(region_size);
             extend(region.signature(), m_structure.signature());
-            pomagma::trim(m_structure, region, m_theory_file, m_language_file);
+            pomagma::trim(
+                m_structure,
+                region,
+                m_theory_file,
+                m_language_file,
+                temperature);
             if (POMAGMA_DEBUG_LEVEL > 1) {
                 region.validate();
             }
@@ -147,12 +153,13 @@ messaging::CartographerResponse handle (
     messaging::CartographerResponse response;
 
     if (request.has_trim()) {
+        bool temperature = request.trim().temperature();
         const size_t region_size = request.trim().region_size();
         std::vector<std::string> regions_out;
         for (int i = 0; i < request.trim().regions_out_size(); ++i) {
             regions_out.push_back(request.trim().regions_out(i));
         }
-        server.trim(region_size, regions_out);
+        server.trim(temperature, region_size, regions_out);
         response.mutable_trim();
     }
 

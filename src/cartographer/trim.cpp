@@ -1,6 +1,8 @@
 #include "trim.hpp"
 #include <pomagma/macrostructure/structure_impl.hpp>
 #include <pomagma/macrostructure/sampler.hpp>
+#include <pomagma/macrostructure/router.hpp>
+#include <pomagma/language/language.hpp>
 #include "collect_parser.hpp"
 #include <algorithm>
 
@@ -52,7 +54,7 @@ void assume_core_facts (
     }
 }
 
-void fill_random(
+void fill_random (
         Structure & structure,
         DenseSet & subset,
         size_t target_item_count,
@@ -67,6 +69,42 @@ void fill_random(
 
     while (policy.ok() and sampler.try_insert_random(rng, policy)) {
         POMAGMA_DEBUG(policy.size() << " obs after insertion");
+    }
+}
+
+void fill_optimal (
+        Structure & structure,
+        DenseSet & subset,
+        size_t target_item_count,
+        const char * language_file)
+{
+    POMAGMA_INFO("filling optimally");
+
+    const size_t start_count = subset.count_items();
+    const size_t item_count = structure.carrier().item_count();
+    POMAGMA_ASSERT_LE(start_count, target_item_count);
+    POMAGMA_ASSERT_LE(target_item_count, item_count);
+    const size_t add_count = target_item_count - start_count;
+
+    auto language = load_language(language_file);
+    Router router(structure.signature(), language);
+    std::vector<float> probs = router.measure_probs();
+    POMAGMA_ASSERT_EQ(probs.size(), 1 + item_count);
+
+    std::vector<std::pair<float, Ob>> pairs;
+    pairs.reserve(item_count);
+    for (auto iter = structure.carrier().iter(); iter.ok(); iter.next()) {
+        Ob ob = * iter;
+        POMAGMA_ASSERT(ob <= item_count, "structure is not compacted");
+        if (not subset.contains(ob)) {
+            pairs.push_back(std::make_pair(probs[ob], ob));
+        }
+    }
+    std::sort(pairs.begin(), pairs.end());
+    std::reverse(pairs.begin(), pairs.end());
+    pairs.resize(add_count);
+    for (auto pair : pairs) {
+        subset.insert(pair.second);
     }
 }
 
@@ -285,7 +323,8 @@ void trim (
         Structure & src,
         Structure & destin,
         const char * theory_file,
-        const char * language_file)
+        const char * language_file,
+        bool temperature)
 {
     POMAGMA_INFO("Trimming structure");
 
@@ -298,7 +337,11 @@ void trim (
     DenseSet src_subset(src.carrier().item_dim());
     detail::insert_nullary_functions(src, src_subset, destin_item_dim);
     detail::assume_core_facts(src, src_subset, destin_item_dim, theory_file);
-    detail::fill_random(src, src_subset, destin_item_dim, language_file);
+    if (temperature) {
+        detail::fill_random(src, src_subset, destin_item_dim, language_file);
+    } else {
+        detail::fill_optimal(src, src_subset, destin_item_dim, language_file);
+    }
     POMAGMA_ASSERT_EQ(src_subset.count_items(), destin_item_dim);
 
     // restrict structure

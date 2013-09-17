@@ -28,23 +28,25 @@ class Client(object):
         request = Request()
         self._call(request)
 
-    def _trim(self, region_size, regions_out):
+    def _trim(self, region_size, regions_out, temperature):
         request = Request()
         request.trim.SetInParent()
+        request.trim.temperature = temperature
         request.trim.region_size = region_size
         for region in regions_out:
             request.trim.regions_out.append(region)
         self._call(request)
 
-    def trim(self, region_size, regions_out):
+    def trim(self, region_size, regions_out, temperature=1):
         assert isinstance(region_size, int), region_size
         assert isinstance(regions_out, list), regions_out
+        assert isinstance(temperature, int), temperature
         for region in regions_out:
             assert isinstance(region, basestring), region
             assert os.path.exists(os.path.dirname(os.path.abspath(region)))
             assert not os.path.exists(region)
         temps_out = [pomagma.util.temp_name(region) for region in regions_out]
-        self._trim(region_size, temps_out)
+        self._trim(region_size, temps_out, temperature)
         for region, temp in zip(regions_out, temps_out):
             assert os.path.exists(temp)
             os.rename(temp, region)

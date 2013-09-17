@@ -3,8 +3,9 @@ package pomagma_messaging;
 message CartographerRequest {
 
   message Trim {
-    required uint32 region_size = 1;
-    repeated string regions_out = 2;
+    required bool temperature = 1;
+    required uint32 region_size = 2;
+    repeated string regions_out = 3;
   }
   message Aggregate {
     required string survey_in = 1;

@@ -18,6 +18,7 @@ public:
         const char * language_file);
 
     void trim (
+        bool temperature,
         size_t region_size,
         const std::vector<std::string> & regions_out);
     void aggregate (const std::string & survey_in);
