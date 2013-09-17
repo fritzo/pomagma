@@ -16,6 +16,11 @@ message CartographerRequest {
   message Infer {
     required uint32 priority = 1;
   }
+  message Conjecture {
+    required string diverge_out = 1;
+    required string equal_out = 2;
+    required uint64 max_count = 3;
+  }
   message Crop {
   }
   message Validate {
@@ -29,9 +34,10 @@ message CartographerRequest {
   optional Aggregate aggregate = 2;
   optional Assume assume = 3;
   optional Infer infer = 4;
-  optional Crop crop = 5;
-  optional Validate validate = 6;
-  optional Dump dump = 7;
+  optional Conjecture conjecture = 5;
+  optional Crop crop = 6;
+  optional Validate validate = 7;
+  optional Dump dump = 8;
 }
 
 message CartographerResponse {
@@ -46,6 +52,10 @@ message CartographerResponse {
   message Infer {
     required uint64 theorem_count = 1;
   }
+  message Conjecture {
+    required uint64 diverge_count = 1;
+    required uint64 equal_count = 2;
+  }
   message Crop {
   }
   message Validate {
@@ -57,7 +67,8 @@ message CartographerResponse {
   optional Aggregate aggregate = 2;
   optional Assume assume = 3;
   optional Infer infer = 4;
-  optional Crop crop = 5;
-  optional Validate validate = 6;
-  optional Dump dump = 7;
+  optional Conjecture conjecture = 5;
+  optional Crop crop = 6;
+  optional Validate validate = 7;
+  optional Dump dump = 8;
 }

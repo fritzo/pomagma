@@ -4,9 +4,13 @@
 #include "infer.hpp"
 #include "signature.hpp"
 #include <pomagma/theorist/assume.hpp>
+#include <pomagma/theorist/conjecture_diverge.hpp>
+#include <pomagma/theorist/conjecture_equal.hpp>
+#include <pomagma/language/language.hpp>
 #include <pomagma/macrostructure/carrier.hpp>
 #include <pomagma/macrostructure/structure.hpp>
 #include <pomagma/macrostructure/compact.hpp>
+#include <pomagma/macrostructure/router.hpp>
 #include "messages.pb.h"
 #include <zmq.hpp>
 
@@ -107,6 +111,39 @@ size_t Server::infer (size_t priority)
     return theorem_count;
 }
 
+std::map<std::string, size_t> Server::conjecture (
+    const std::string & diverge_out,
+    const std::string & equal_out,
+    size_t max_count)
+{
+    POMAGMA_ASSERT_LT(0, max_count);
+    crop();
+
+    std::vector<float> probs;
+    std::vector<std::string> routes;
+    auto language = load_language(m_language_file);
+    {
+        Router router(m_structure.signature(), language);
+        probs = router.measure_probs();
+        routes = router.find_routes();
+    }
+
+    std::map<std::string, size_t> counts;
+    counts["diverge"] = pomagma::conjecture_diverge(
+        m_structure,
+        probs,
+        routes,
+        diverge_out.c_str());
+    counts["equal"] = pomagma::conjecture_equal(
+        m_structure,
+        probs,
+        routes,
+        equal_out.c_str(),
+        max_count);
+
+    return counts;
+}
+
 void Server::crop ()
 {
     compact(m_structure);
@@ -168,16 +205,25 @@ messaging::CartographerResponse handle (
         response.mutable_aggregate();
     }
 
+    if (request.has_assume()) {
+        const std::string & facts_in = request.assume().facts_in();
+        const size_t merger_count = server.assume(facts_in);
+        response.mutable_assume()->set_merger_count(merger_count);
+    }
+
     if (request.has_infer()) {
         const size_t priority = request.infer().priority();
         const size_t theorem_count = server.infer(priority);
         response.mutable_infer()->set_theorem_count(theorem_count);
     }
 
-    if (request.has_assume()) {
-        const std::string & facts_in = request.assume().facts_in();
-        const size_t merger_count = server.assume(facts_in);
-        response.mutable_assume()->set_merger_count(merger_count);
+    if (request.has_conjecture()) {
+        const std::string & diverge_out = request.conjecture().diverge_out();
+        const std::string & equal_out = request.conjecture().equal_out();
+        const size_t max_count = request.conjecture().max_count();
+        auto counts = server.conjecture(diverge_out, equal_out, max_count);
+        response.mutable_conjecture()->set_diverge_count(counts["diverge"]);
+        response.mutable_conjecture()->set_equal_count(counts["equal"]);
     }
 
     if (request.has_crop()) {

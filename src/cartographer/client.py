@@ -44,11 +44,11 @@ class Client(object):
         for region in regions_out:
             assert isinstance(region, basestring), region
             assert os.path.exists(os.path.dirname(os.path.abspath(region)))
-            assert not os.path.exists(region)
+            assert not os.path.exists(region), region
         temps_out = [pomagma.util.temp_name(region) for region in regions_out]
         self._trim(region_size, temps_out, temperature)
         for region, temp in zip(regions_out, temps_out):
-            assert os.path.exists(temp)
+            assert os.path.exists(temp), temp
             os.rename(temp, region)
 
     def _aggregate(self, survey_in):
@@ -59,7 +59,7 @@ class Client(object):
 
     def aggregate(self, survey_in):
         assert isinstance(survey_in, basestring), survey_in
-        assert os.path.exists(survey_in)
+        assert os.path.exists(survey_in), survey_in
         self._aggregate(survey_in)
 
     def _assume(self, facts_in):
@@ -71,7 +71,7 @@ class Client(object):
 
     def assume(self, facts_in):
         assert isinstance(facts_in, basestring), facts_in
-        assert os.path.exists(facts_in)
+        assert os.path.exists(facts_in), facts_in
         self._assume(facts_in)
 
     def _infer(self, priority):
@@ -90,6 +90,28 @@ class Client(object):
         for priority in [0, 1]:
             while self.infer(priority):
                 pass
+
+    def _conjecture(self, diverge_out, equal_out, max_count):
+        request = Request()
+        request.conjecture.SetInParent()
+        request.conjecture.diverge_out = diverge_out
+        request.conjecture.equal_out = equal_out
+        request.conjecture.max_count = max_count
+        response = self._call(request)
+        return {
+            'diverge_count': response.conjecture.diverge_count,
+            'equal_count': response.conjecture.equal_count,
+        }
+
+    def conjecture(self, diverge_out, equal_out, max_count=1000):
+        assert isinstance(diverge_out, basestring), diverge_out
+        assert isinstance(equal_out, basestring), equal_out
+        assert isinstance(max_count, int)
+        assert max_count > 0
+        counts = self._conjecture(diverge_out, equal_out, max_count)
+        assert os.path.exists(diverge_out), diverge_out
+        assert os.path.exists(equal_out), equal_out
+        return counts
 
     def crop(self):
         request = Request()

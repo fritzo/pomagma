@@ -14,11 +14,5 @@ set(POMAGMA_THEORIST_LIBS
 	pomagma_language
 	${POMAGMA_SEQUENTIAL_LIBS})
 
-add_executable(conjecture_equal conjecture_equal_main.cpp)
-target_link_libraries(conjecture_equal ${POMAGMA_THEORIST_LIBS})
-
 add_executable(try_prove_nless try_prove_nless_main.cpp)
 target_link_libraries(try_prove_nless ${POMAGMA_THEORIST_LIBS})
-
-add_executable(conjecture_diverge conjecture_diverge_main.cpp)
-target_link_libraries(conjecture_diverge ${POMAGMA_THEORIST_LIBS})

@@ -18,6 +18,9 @@ add_executable(cartographer
 	infer.cpp
 	../theorist/assume.cpp
 	../theorist/consistency.cpp
+	../theorist/conjecture_diverge.cpp
+	../theorist/conjecture_equal.cpp
+	../theorist/hypothesize.cpp
        	messages.pb.cc
 	)
 target_link_libraries(cartographer

@@ -16,15 +16,6 @@ def _count_facts(filename):
     return count
 
 
-def conjecture_equal(theory, world_in, conjectures_out, **opts):
-    pomagma.util.log_call(
-        os.path.join(BIN, 'conjecture_equal'),
-        pomagma.util.abspath(world_in),
-        os.path.join(pomagma.util.LANGUAGE, '{}.language'.format(theory)),
-        pomagma.util.abspath(conjectures_out),
-        **opts)
-
-
 def try_prove_nless(
         theory,
         world_in,
@@ -43,15 +34,6 @@ def try_prove_nless(
         **opts)
     theorem_count = _count_facts(theorems_out) - prev_theorem_count
     return theorem_count
-
-
-def conjecture_diverge(theory, world_in, conjectures_out, **opts):
-    pomagma.util.log_call(
-        os.path.join(BIN, 'conjecture_diverge'),
-        pomagma.util.abspath(world_in),
-        os.path.join(pomagma.util.LANGUAGE, '{}.language'.format(theory)),
-        pomagma.util.abspath(conjectures_out),
-        **opts)
 
 
 def try_prove_diverge(conjectures_in, conjectures_out, theorems_out, **opts):

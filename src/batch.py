@@ -87,7 +87,8 @@ def test(theory, **options):
         opts = options
         opts.setdefault('log_file', 'test.log')
         theorems = 'theorems.facts'
-        conjectures = 'conjectures.facts'
+        diverge_conjectures = 'diverge_conjectures.facts'
+        equal_conjectures = 'equal_conjectures.facts'
         simplified = 'simplified.facts'
 
         surveyor.init(theory, '0.h5', sizes[0], **opts)
@@ -104,32 +105,31 @@ def test(theory, **options):
         with cartographer.load(theory, '5.h5', **opts) as db:
             db.aggregate('0.h5')
             db.dump('6.h5')
-        digest5 = pomagma.util.get_hash('5.h5')
-        digest6 = pomagma.util.get_hash('6.h5')
-        assert digest5 == digest6
+            digest5 = pomagma.util.get_hash('5.h5')
+            digest6 = pomagma.util.get_hash('6.h5')
+            assert digest5 == digest6
 
-        theorist.conjecture_diverge(theory, '6.h5', conjectures, **opts)
-        if theory != 'h4':
-            theorist.try_prove_diverge(
-                conjectures,
-                conjectures,
-                theorems,
-                **opts)
-            with cartographer.load(theory, '6.h5', **opts) as db:
+            db.conjecture(diverge_conjectures, equal_conjectures)
+            if theory != 'h4':
+                theorist.try_prove_diverge(
+                    diverge_conjectures,
+                    diverge_conjectures,
+                    theorems,
+                    **opts)
                 db.assume(theorems)
                 db.validate()
-        theorist.conjecture_equal(theory, '6.h5', conjectures, **opts)
+                db.dump('6.h5')
         theorist.try_prove_nless(
             theory,
             '6.h5',
-            conjectures,
-            conjectures,
+            equal_conjectures,
+            equal_conjectures,
             theorems,
             **opts)
 
         if theory == 'h4':
             with analyst.load(theory, '6.h5', **opts) as db:
-                db.batch_simplify(conjectures, simplified)
+                db.batch_simplify(diverge_conjectures, simplified)
         else:
             with cartographer.load(theory, '6.h5', **opts) as db:
                 db.assume(theorems)
@@ -141,7 +141,7 @@ def test(theory, **options):
                     assert not db.infer(priority)
                 db.dump('7.h5')
             with analyst.load(theory, '7.h5', **opts) as db:
-                db.batch_simplify(conjectures, simplified)
+                db.batch_simplify(diverge_conjectures, simplified)
                 fail_count = db.test()
                 assert fail_count == 0, 'analyst failed'
 

@@ -127,7 +127,7 @@ void try_prove_nless (
 
 } // namespace detail
 
-void conjecture_equal (
+size_t conjecture_equal (
         Structure & structure,
         const char * language_file,
         const char * conjectures_file,
@@ -142,12 +142,29 @@ void conjecture_equal (
         routes = router.find_routes();
     }
 
-    detail::conjecture_equal(
+    return conjecture_equal(
+            structure,
+            probs,
+            routes,
+            conjectures_file,
+            max_count);
+}
+
+size_t conjecture_equal (
+        Structure & structure,
+        const std::vector<float> & probs,
+        const std::vector<std::string> & routes,
+        const char * conjectures_file,
+        size_t max_count)
+{
+    auto conjectures = detail::conjecture_equal(
         structure,
         probs,
         routes,
         conjectures_file,
         max_count);
+
+    return conjectures.size();
 }
 
 void try_prove_nless (

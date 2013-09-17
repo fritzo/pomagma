@@ -13,9 +13,16 @@ namespace pomagma
 static const size_t DEFAULT_CONJECTURE_COUNT = 1000;
 static const size_t DEFAULT_PROOF_COUNT = 100;
 
-void conjecture_equal (
+size_t conjecture_equal (
         Structure & structure,
         const char * language_file,
+        const char * conjectures_file,
+        size_t max_count = DEFAULT_CONJECTURE_COUNT);
+
+size_t conjecture_equal (
+        Structure & structure,
+        const std::vector<float> & probs,
+        const std::vector<std::string> & routes,
         const char * conjectures_file,
         size_t max_count = DEFAULT_CONJECTURE_COUNT);
 

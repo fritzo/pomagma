@@ -55,21 +55,36 @@ std::vector<Ob> conjecture_diverge (
 
 } // namespace detail
 
-void conjecture_diverge (
+size_t conjecture_diverge (
         Structure & structure,
         const char * language_file,
         const char * conjectures_file)
 {
-    const auto language = load_language(language_file);
-    Router router(structure.signature(), language);
-    const std::vector<float> probs = router.measure_probs();
-    const std::vector<std::string> routes = router.find_routes();
+    std::vector<float> probs;
+    std::vector<std::string> routes;
+    auto language = load_language(language_file);
+    {
+        Router router(structure.signature(), language);
+        probs = router.measure_probs();
+        routes = router.find_routes();
+    }
 
-    detail::conjecture_diverge(
+    return conjecture_diverge(structure, probs, routes, conjectures_file);
+}
+
+size_t conjecture_diverge (
+        Structure & structure,
+        const std::vector<float> & probs,
+        const std::vector<std::string> & routes,
+        const char * conjectures_file)
+{
+    auto conjectures = detail::conjecture_diverge(
         structure,
         probs,
         routes,
         conjectures_file);
+
+    return conjectures.size();
 }
 
 } // namespace pomagma
