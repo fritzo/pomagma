@@ -14,6 +14,7 @@ inline void map (
 {
     POMAGMA_ASSERT_EQ(key_set.item_dim(), val_set.item_dim());
 
+    // TODO iter_insn is ~5x slower than using a temp set
     for (auto iter = fun.defined().iter_insn(key_set); iter.ok(); iter.next()) {
         Ob key = * iter;
         Ob val = fun.find(key);
@@ -33,6 +34,7 @@ inline void map (
 
     for (auto iter = lhs_set.iter(); iter.ok(); iter.next()) {
         Ob lhs = * iter;
+        // TODO iter_insn is ~5x slower than using a temp set
         for (auto iter = rhs_set.iter_insn(fun.get_Lx_set(lhs));
             iter.ok(); iter.next())
         {

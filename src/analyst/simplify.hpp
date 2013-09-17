@@ -90,13 +90,14 @@ public:
     {
     }
 
+    std::string simplify (const std::string & expression);
+
 private:
 
     SimplifyReducer m_reducer;
 };
 
-
-void batch_simplify(
+size_t batch_simplify(
         Structure & structure,
         const std::vector<std::string> & routes,
         const char * source_file,

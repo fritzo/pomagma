@@ -8,7 +8,7 @@ int main (int argc, char ** argv)
         std::cout
             << "Usage: "
                 << pomagma::get_filename(argv[0])
-                << " structure theory language" << "\n"
+                << " structure theory language address" << "\n"
             << "Environment Variables:\n"
             << "  POMAGMA_LOG_FILE = " << pomagma::DEFAULT_LOG_FILE << "\n"
             << "  POMAGMA_LOG_LEVEL = " << pomagma::DEFAULT_LOG_LEVEL << "\n"

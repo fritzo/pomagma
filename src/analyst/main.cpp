@@ -8,7 +8,7 @@ int main (int argc, char ** argv)
         std::cout
             << "Usage: "
                 << pomagma::get_filename(argv[0])
-                << " structure language port" << "\n"
+                << " structure language address" << "\n"
             << "Environment Variables:\n"
             << "  POMAGMA_LOG_FILE = " << pomagma::DEFAULT_LOG_FILE << "\n"
             << "  POMAGMA_LOG_LEVEL = " << pomagma::DEFAULT_LOG_LEVEL << "\n"
@@ -19,18 +19,10 @@ int main (int argc, char ** argv)
 
     const char * structure_file = argv[1];
     const char * language_file = argv[2];
-    const int port = atoi(argv[3]);
+    const char * address = argv[3];
 
-    // load structure
-    pomagma::Structure structure;
-    structure.load(structure_file);
-    if (POMAGMA_DEBUG_LEVEL > 1) {
-        structure.validate();
-    }
-
-    // serve
-    pomagma::Server server(structure, language_file);
-    server.serve(port);
+    pomagma::Server server(structure_file, language_file);
+    server.serve(address);
 
     return 0;
 }

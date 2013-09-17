@@ -1,28 +1,16 @@
-import os
+import contextlib
 import pomagma.util
-import client
+from pomagma.analyst import client
+from pomagma.analyst import server
 
 
-BIN = os.path.join(pomagma.util.BIN, 'analyst')
+connect = client.Client
+serve = server.Server
 
 
-def simplify(theory, world, terms_in, terms_out, **opts):
-    pomagma.util.log_call(
-        os.path.join(BIN, 'simplify'),
-        pomagma.util.abspath(world),
-        os.path.join(pomagma.util.LANGUAGE, '{}.language'.format(theory)),
-        pomagma.util.abspath(terms_in),
-        pomagma.util.abspath(terms_out),
-        **opts)
-
-
-def serve(theory, world, port, **opts):
-    pomagma.util.log_call(
-        os.path.join(BIN, 'serve'),
-        pomagma.util.abspath(world),
-        os.path.join(pomagma.util.LANGUAGE, '{}.language'.format(theory)),
-        port,
-        **opts)
-
-
-Client = client.Client
+@contextlib.contextmanager
+def load(theory, world, address=None, **opts):
+    with pomagma.util.log_duration():
+        server = serve(theory, world, address, **opts)
+        yield server.connect()
+        server.stop()

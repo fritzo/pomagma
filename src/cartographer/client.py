@@ -4,10 +4,10 @@ import pomagma.util
 from pomagma.cartographer import messages_pb2 as messages
 
 
+CONTEXT = zmq.Context()
+
 Request = messages.CartographerRequest
 Response = messages.CartographerResponse
-
-CONTEXT = zmq.Context()
 
 
 class Client(object):
@@ -83,6 +83,11 @@ class Client(object):
         assert isinstance(priority, int), priority
         assert priority in [0, 1], priority
         return self._infer(priority)
+
+    def normalize(self):
+        for priority in [0, 1]:
+            while self.infer(priority):
+                pass
 
     def crop(self):
         request = Request()

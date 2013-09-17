@@ -1,12 +1,6 @@
 
 include_directories(${CMAKE_SOURCE_DIR}/)
 
-set(POMAGMA_CARTOGRAPHER_LIBS
-	pomagma_macrostructure
-	pomagma_platform_sequential
-	pomagma_language
-	${POMAGMA_SEQUENTIAL_LIBS})
-
 add_custom_command(
 	OUTPUT ${CMAKE_CURRENT_LIST_DIR}/messages.pb.cc
 	COMMAND protoc ${CMAKE_CURRENT_LIST_DIR}/messages.proto
@@ -26,4 +20,10 @@ add_executable(cartographer
 	../theorist/consistency.cpp
        	messages.pb.cc
 	)
-target_link_libraries(cartographer ${POMAGMA_CARTOGRAPHER_LIBS} zmq)
+target_link_libraries(cartographer
+	pomagma_macrostructure
+	pomagma_platform_sequential
+	pomagma_language
+	${POMAGMA_SEQUENTIAL_LIBS}
+	zmq
+	)

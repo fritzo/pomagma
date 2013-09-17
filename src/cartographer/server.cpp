@@ -17,11 +17,10 @@ Server::Server (
         const char * structure_file,
         const char * theory_file,
         const char * language_file)
-    : m_structure(),
+    : m_structure(structure_file),
       m_theory_file(theory_file),
       m_language_file(language_file)
 {
-    m_structure.load(structure_file);
     if (POMAGMA_DEBUG_LEVEL > 1) {
         m_structure.validate();
     }

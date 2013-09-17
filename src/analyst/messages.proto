@@ -1,46 +1,59 @@
 package pomagma_messaging;
 
-
-message SimplifyRequest {
-  repeated string code_list = 1;
-}
-
-message SimplifyResponse {
-  repeated string code_list = 1;
-}
-
-
-message ValidateRequest {
-  message Corpus {
-    message Line {
-      required string code = 1;
-      optional string name = 2;
-    }
-    repeated Line line_list = 1;
-  }
-  required Corpus corpus = 1;
-}
-
-message ValidateResponse {
-  message Validity {
-    enum Trool {
-      MAYBE = 0;
-      FALSE = 1;
-      TRUE = 2;
-    }
-    required Trool is_top = 1 [default = MAYBE];
-    required Trool is_bot = 2 [default = MAYBE];
-  }
-  repeated Validity validity_list = 1;
-}
-
-
 message AnalystRequest {
-  optional SimplifyRequest simplify = 1;
-  optional ValidateRequest validate = 2;
+
+  message Test {
+  }
+  message Simplify {
+    repeated string codes = 1;
+  }
+  message BatchSimplify {
+    required string codes_in = 1;
+    required string codes_out = 2;
+  }
+  message Validate {
+    message Corpus {
+      message Line {
+        optional string name = 1;
+        required string code = 2;
+      }
+      repeated Line lines = 1;
+    }
+    required Corpus corpus = 1;
+  }
+
+  optional Test test = 1;
+  optional Simplify simplify = 2;
+  optional BatchSimplify batch_simplify = 3;
+  optional Validate validate = 4;
 }
 
 message AnalystResponse {
-  optional SimplifyResponse simplify = 1;
-  optional ValidateResponse validate = 2;
+
+  message Test {
+    required uint64 fail_count = 1;
+  }
+  message Simplify {
+    repeated string codes = 1;
+  }
+  message BatchSimplify {
+    required uint64 line_count = 1;
+  }
+  message Validate {
+    message Validity {
+      enum Trool {
+        MAYBE = 0;
+        FALSE = 1;
+        TRUE = 2;
+      }
+      required Trool is_top = 1 [default = MAYBE];
+      required Trool is_bot = 2 [default = MAYBE];
+    }
+    repeated Validity results = 1;
+  }
+
+  optional Test test = 1;
+  optional Simplify simplify = 2;
+  optional BatchSimplify batch_simplify = 3;
+  optional Validate validate = 4;
 }

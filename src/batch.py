@@ -136,7 +136,8 @@ def test(theory, **options):
                 for priority in [0, 1]:
                     assert not db.infer(priority)
 
-        analyst.simplify(theory, '6.h5', conjectures, simplified, **opts)
+        with analyst.load(theory, '6.h5', **opts) as db:
+            db.batch_simplify(conjectures, simplified)
 
 
 @parsable.command
