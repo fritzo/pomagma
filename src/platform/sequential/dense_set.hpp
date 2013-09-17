@@ -244,8 +244,10 @@ public:
     bool_ref operator() (size_t i) { return _bit(i); }
     bool operator() (size_t i) const { return _bit(i); }
     bool contains (size_t i) const { return _bit(i); }
+    void raw_insert (size_t i);
     void insert (size_t i);
     bool try_insert (size_t i);
+    void raw_remove (size_t i);
     void remove (size_t i);
     void merge  (size_t i, size_t j);
     void insert_all ();
@@ -300,6 +302,11 @@ inline bool DenseSet::_bit (size_t i) const
     return bool_ref::index(m_words, i).load();
 }
 
+inline void DenseSet::raw_insert (size_t i)
+{
+    _bit(i).one();
+}
+
 inline void DenseSet::insert (size_t i)
 {
     POMAGMA_ASSERT4(not contains(i), "double insertion: " << i);
@@ -309,6 +316,11 @@ inline void DenseSet::insert (size_t i)
 inline bool DenseSet::try_insert (size_t i)
 {
     return not _bit(i).fetch_one();
+}
+
+inline void DenseSet::raw_remove (size_t i)
+{
+    _bit(i).zero();
 }
 
 inline void DenseSet::remove (size_t i)

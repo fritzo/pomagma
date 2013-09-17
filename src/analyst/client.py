@@ -36,7 +36,7 @@ class Client(object):
         request = Request()
         request.test.SetInParent()
         response = self._call(request)
-        return response.fail_count
+        return response.test.fail_count
 
     def _simplify(self, codes):
         request = Request()

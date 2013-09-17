@@ -126,7 +126,11 @@ def test(theory, **options):
             conjectures,
             theorems,
             **opts)
-        if theory != 'h4':
+
+        if theory == 'h4':
+            with analyst.load(theory, '6.h5', **opts) as db:
+                db.batch_simplify(conjectures, simplified)
+        else:
             with cartographer.load(theory, '6.h5', **opts) as db:
                 db.assume(theorems)
                 db.validate()
@@ -135,9 +139,11 @@ def test(theory, **options):
                         db.validate()
                 for priority in [0, 1]:
                     assert not db.infer(priority)
-
-        with analyst.load(theory, '6.h5', **opts) as db:
-            db.batch_simplify(conjectures, simplified)
+                db.dump('7.h5')
+            with analyst.load(theory, '7.h5', **opts) as db:
+                db.batch_simplify(conjectures, simplified)
+                fail_count = db.test()
+                assert fail_count == 0, 'analyst failed'
 
 
 @parsable.command
