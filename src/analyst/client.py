@@ -1,4 +1,6 @@
+import os
 import zmq
+import pomagma.util
 from pomagma.analyst import messages_pb2 as messages
 
 
@@ -65,7 +67,10 @@ class Client(object):
     def batch_simplify(self, codes_in, codes_out):
         assert isinstance(codes_in, basestring), codes_in
         assert isinstance(codes_out, basestring), codes_out
-        return self._batch_simplify(codes_in, codes_out)
+        with pomagma.util.temp_copy(codes_out) as temp_codes_out:
+            line_count = self._batch_simplify(codes_in, temp_codes_out)
+        assert os.path.exists(codes_out)
+        return line_count
 
     def validate(self, corpus):
         assert isinstance(corpus, list)

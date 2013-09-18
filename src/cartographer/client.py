@@ -43,13 +43,11 @@ class Client(object):
         assert isinstance(temperature, int), temperature
         for region in regions_out:
             assert isinstance(region, basestring), region
-            assert os.path.exists(os.path.dirname(os.path.abspath(region)))
             assert not os.path.exists(region), region
-        temps_out = [pomagma.util.temp_name(region) for region in regions_out]
-        self._trim(region_size, temps_out, temperature)
-        for region, temp in zip(regions_out, temps_out):
-            assert os.path.exists(temp), temp
-            os.rename(temp, region)
+        with pomagma.util.temp_copies(regions_out) as temp_regions_out:
+            self._trim(region_size, temp_regions_out, temperature)
+        for region in regions_out:
+            assert os.path.exists(region), region
 
     def _aggregate(self, survey_in):
         request = Request()
@@ -108,7 +106,12 @@ class Client(object):
         assert isinstance(equal_out, basestring), equal_out
         assert isinstance(max_count, int)
         assert max_count > 0
-        counts = self._conjecture(diverge_out, equal_out, max_count)
+        with pomagma.util.temp_copy(diverge_out) as temp_diverge_out:
+            with pomagma.util.temp_copy(equal_out) as temp_equal_out:
+                counts = self._conjecture(
+                    temp_diverge_out,
+                    temp_equal_out,
+                    max_count)
         assert os.path.exists(diverge_out), diverge_out
         assert os.path.exists(equal_out), equal_out
         return counts
@@ -132,7 +135,6 @@ class Client(object):
     def dump(self, world_out):
         assert isinstance(world_out, basestring), world_out
         assert os.path.exists(os.path.dirname(os.path.abspath(world_out)))
-        temp_out = pomagma.util.temp_name(world_out)
-        self._dump(temp_out)
-        assert os.path.exists(temp_out), temp_out
-        os.rename(temp_out, world_out)
+        with pomagma.util.temp_copy(world_out) as temp_world_out:
+            self._dump(temp_world_out)
+        assert os.path.exists(world_out), world_out

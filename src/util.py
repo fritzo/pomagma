@@ -64,7 +64,40 @@ def chdir(path):
 
 def temp_name(path):
     dirname, filename = os.path.split(path)
+    assert not filename.startswith('temp.'), path
     return os.path.join(dirname, 'temp.{}.{}'.format(os.getpid(), filename))
+
+
+@contextlib.contextmanager
+def temp_copy(path):
+    dirname = os.path.dirname(path)
+    assert not dirname or os.path.exists(dirname), path
+    temp = temp_name(path)
+    if os.path.exists(temp):
+        shutil.rmtree(temp)
+    yield temp
+    if os.path.exists(temp):
+        os.rename(temp, path)
+    elif os.path.exists(path):
+        os.remove(path)
+
+
+@contextlib.contextmanager
+def temp_copies(paths):
+    temps = []
+    for path in paths:
+        dirname = os.path.dirname(path)
+        assert not dirname or os.path.exists(dirname), path
+        temp = temp_name(path)
+        if os.path.exists(temp):
+            shutil.rmtree(temp)
+        temps.append(temp)
+    yield temps
+    for temp, path in zip(temps, paths):
+        if os.path.exists(temp):
+            os.rename(temp, path)
+        elif os.path.exists(path):
+            os.remove(path)
 
 
 @contextlib.contextmanager

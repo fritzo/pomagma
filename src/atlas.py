@@ -10,14 +10,6 @@ def load(theory, world, address=None, **opts):
             yield db
 
 
-def initialize(theory, world, source, **opts):
-    with pomagma.util.mutex(world):
-        assert not os.path.exists(world)
-        with pomagma.cartographer.load(theory, source, **opts) as db:
-            db.validate()
-        os.rename(source, world)
-
-
 def translate(theory, init, world, aggregate, **opts):
     assert os.path.exists(init)
     assert not os.path.exists(aggregate)
