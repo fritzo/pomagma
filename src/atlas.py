@@ -1,9 +1,11 @@
 import os
+import contextlib
 import pomagma.util
 import pomagma.cartographer
 import pomagma.theorist
 
 
+@contextlib.contextmanager
 def load(theory, world, address=None, **opts):
     with pomagma.util.mutex(world):
         with pomagma.cartographer.load(theory, world, address, **opts) as db:

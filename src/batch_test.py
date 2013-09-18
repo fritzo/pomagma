@@ -5,7 +5,7 @@ import pomagma.batch
 
 def test_structure_queue():
     with pomagma.util.in_temp_dir():
-        queue = pomagma.batch.StructureQueue('test.queue')
+        queue = pomagma.batch.FileQueue('test.queue')
         assert not queue.get()
         test_file = 'test.h5'
         with open(test_file, 'w') as f:

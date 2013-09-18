@@ -174,13 +174,15 @@ def init(theory, **options):
             db.dump(world)
 
 
-class StructureQueue(object):
-    def __init__(self, path):
+class FileQueue(object):
+    def __init__(self, path, template='{}.h5'):
         self.path = path
+        self.template = template
+        self.pattern = os.path.join(self.path, template.format('[0-9]*'))
 
     def get(self):
         # specifically ignore temporary files like temp.1234.0.h5
-        return glob.glob(os.path.join(self.path, '[0-9]*.h5'))
+        return glob.glob(self.pattern)
 
     def __iter__(self):
         return iter(self.get())
@@ -199,7 +201,7 @@ class StructureQueue(object):
             os.makedirs(self.path)
         with pomagma.util.mutex(self.path):
             for i in itertools.count():
-                destin = os.path.join(self.path, '{}.h5'.format(i))
+                destin = os.path.join(self.path, self.template.format(i))
                 if not os.path.exists(destin):
                     os.rename(source, destin)
                     return
@@ -211,13 +213,17 @@ class StructureQueue(object):
 
 class CartographerWorker(object):
     def __init__(self, theory, region_size, region_queue_size, **options):
+        self.options = options
         self.log_file = options['log_file']
         self.world = 'world.h5'
         self.normal_world = 'world.normal.h5'
         self.region_size = region_size
-        self.region_queue = StructureQueue('region.queue')
-        self.survey_queue = StructureQueue('survey.queue')
+        self.region_queue = FileQueue('region.queue')
+        self.survey_queue = FileQueue('survey.queue')
         self.region_queue_size = region_queue_size
+        self.diverge_conjectures = 'diverge_conjectures.facts'
+        self.diverge_theorems = 'diverge_theorems.facts'
+        self.equal_conjectures = 'equal_conjectures.facts'
         self.server = cartographer.serve(theory, self.world, **options)
         self.db = self.server.connect()
         self.infer_state = 0
@@ -256,6 +262,7 @@ class CartographerWorker(object):
                 self.infer_state += 1
                 if self.is_normal():
                     self.db.dump(self.normal_world)
+                    self.theorize()
             return True
 
     def try_aggregate(self):
@@ -265,9 +272,9 @@ class CartographerWorker(object):
         else:
             for survey in surveys:
                 self.db.aggregate(survey)
-                self.infer_state = 0
                 self.db.validate()
                 self.db.dump(self.world)
+                self.infer_state = 0
                 world_size = pomagma.util.get_item_count(self.world)
                 pomagma.util.log_print(
                     'world_size = {}'.format(world_size),
@@ -292,8 +299,28 @@ class CartographerWorker(object):
 
     def replace_region_queue(self):
         with pomagma.util.temp_copy(self.region_queue.path) as temp_path:
-            self.fill_region_queue(StructureQueue(temp_path))
+            self.fill_region_queue(FileQueue(temp_path))
             self.region_queue.clear()
+
+    def theorize(self):
+        conjectures = self.diverge_conjectures
+        theorems = self.diverge_theorems
+        self.db.conjecture(conjectures, self.equal_conjectures)
+        with pomagma.util.temp_copy(conjectures) as temp_conjectures:
+            with pomagma.util.temp_copy(theorems) as temp_theorems:
+                theorem_count = theorist.try_prove_diverge(
+                    conjectures,
+                    temp_conjectures,
+                    temp_theorems,
+                    **self.options)
+        if theorem_count > 0:
+            pomagma.util.log_print(
+                'Proved {} theorems'.format(theorem_count),
+                self.log_file)
+            self.db.assume(theorems)
+            self.db.validate()
+            self.db.dump(self.world)
+            self.infer_state = 0
 
 
 @parsable.command
@@ -333,8 +360,8 @@ def survey_work(theory, step_size=512, **options):
     '''
     assert step_size > 0
     with in_atlas(theory):
-        region_queue = StructureQueue('region.queue')
-        survey_queue = StructureQueue('survey.queue')
+        region_queue = FileQueue('region.queue')
+        survey_queue = FileQueue('survey.queue')
         region = pomagma.util.temp_name('region.h5')
         survey = pomagma.util.temp_name('survey.h5')
         opts = options
