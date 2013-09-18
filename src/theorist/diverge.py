@@ -264,11 +264,12 @@ def try_prove_diverge(
     with open(conjectures_out, 'w') as conjectures:
         conjectures.write('# divergence conjectures filtered by pomagma\n')
         with open(theorems_out, 'a') as theorems:
-            theorems.write('# divergence theorems proved by pomagma\n')
 
             def write_theorem(theorem):
                 if log_level >= pomagma.util.LOG_LEVEL_DEBUG:
                     log_print('proved {}'.format(theorem))
+                if diverge_count + converge_count == 0:
+                    theorems.write('# divergence theorems proved by pomagma\n')
                 theorems.write(theorem)
                 theorems.write('\n')
 

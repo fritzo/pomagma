@@ -313,6 +313,8 @@ class CartographerWorker(object):
         self.db.conjecture(conjectures, self.equal_conjectures)
         with pomagma.util.temp_copy(conjectures) as temp_conjectures:
             with pomagma.util.temp_copy(theorems) as temp_theorems:
+                if os.path.exists(theorems):
+                    shutil.copyfile(theorems, temp_theorems)
                 theorem_count = theorist.try_prove_diverge(
                     conjectures,
                     temp_conjectures,
