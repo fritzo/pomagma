@@ -2,11 +2,12 @@
 
 #include <pomagma/macrostructure/util.hpp>
 #include <pomagma/macrostructure/structure.hpp>
+#include <map>
 
 namespace pomagma
 {
 
-size_t assume (
+std::map<std::string, size_t> assume (
         Structure & structure,
         const char * theory_file);
 

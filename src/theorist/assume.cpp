@@ -12,11 +12,14 @@ namespace pomagma
 namespace detail
 {
 
-void assume_facts (
+std::map<std::string, size_t> assume_facts (
         Structure & structure,
         const char * theory_file)
 {
     POMAGMA_INFO("assuming core facts");
+
+    size_t pos_count = 0;
+    size_t neg_count = 0;
 
     for (LineParser iter(theory_file); iter.ok(); iter.next()) {
         const std::string & expression = * iter;
@@ -30,17 +33,28 @@ void assume_facts (
         parser.end();
 
         if (type == "EQUAL") {
-            structure.carrier().ensure_equal(lhs, rhs);
+            if (lhs != rhs) {
+                structure.carrier().ensure_equal(lhs, rhs);
+                ++pos_count;
+            }
         } else {
             BinaryRelation & rel = structure.binary_relation(type);
-            rel.insert(lhs, rhs);
+            if (not rel.find(lhs, rhs)) {
+                rel.insert(lhs, rhs);
+                ++(type[0] == 'N' ? neg_count : pos_count);
+            }
         }
     }
+
+    std::map<std::string, size_t> counts;
+    counts["pos"] = pos_count;
+    counts["neg"] = neg_count;
+    return counts;
 }
 
 } // namespace detail
 
-size_t assume (
+std::map<std::string, size_t> assume (
         Structure & structure,
         const char * theory_file)
 {
@@ -49,7 +63,7 @@ size_t assume (
     int pre_item_count = structure.carrier().item_count();
 
     configure_scheduler_to_merge_if_consistent(structure);
-    detail::assume_facts(structure, theory_file);
+    auto counts = detail::assume_facts(structure, theory_file);
     process_mergers(structure.signature());
     compact(structure);
 
@@ -57,7 +71,8 @@ size_t assume (
     int merge_count = pre_item_count - post_item_count;
     POMAGMA_INFO("assumption merged " << merge_count << " obs");
 
-    return merge_count;
+    counts["merge"] = merge_count;
+    return counts;
 }
 
 } // namespace pomagma

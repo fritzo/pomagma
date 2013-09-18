@@ -23,7 +23,7 @@ public:
         size_t region_size,
         const std::vector<std::string> & regions_out);
     void aggregate (const std::string & survey_in);
-    size_t assume (const std::string & facts_in);
+    std::map<std::string, size_t> assume (const std::string & facts_in);
     size_t infer (size_t priority);
     std::map<std::string, size_t> conjecture (
         const std::string & diverge_out,

@@ -65,12 +65,16 @@ class Client(object):
         request.assume.SetInParent()
         request.assume.facts_in = facts_in
         response = self._call(request)
-        return response.assume.merger_count
+        return {
+            'pos': response.assume.pos_count,
+            'neg': response.assume.neg_count,
+            'merge': response.assume.merge_count,
+        }
 
     def assume(self, facts_in):
         assert isinstance(facts_in, basestring), facts_in
         assert os.path.exists(facts_in), facts_in
-        self._assume(facts_in)
+        return self._assume(facts_in)
 
     def _infer(self, priority):
         request = Request()

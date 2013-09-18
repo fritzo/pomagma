@@ -120,7 +120,8 @@ def test(theory, **options):
                     diverge_theorems,
                     **opts)
                 assert theorem_count > 0, theorem_count
-                db.assume(diverge_theorems)
+                counts = db.assume(diverge_theorems)
+                assert counts['pos'] + counts['neg'] > 0, counts
                 db.validate()
                 db.dump('6.h5')
         theorem_count = theorist.try_prove_nless(
@@ -139,6 +140,8 @@ def test(theory, **options):
         else:
             with cartographer.load(theory, '6.h5', **opts) as db:
                 db.assume(equal_theorems)
+                if theorem_count > 0:
+                    assert counts['merge'] > 0, counts
                 db.validate()
                 for priority in [0, 1]:
                     while db.infer(priority):
@@ -236,6 +239,9 @@ class CartographerWorker(object):
     def stop(self):
         self.server.stop()
 
+    def log(self, message):
+        pomagma.util.log_print(message, self.log_file)
+
     def is_normal(self):
         assert self.infer_state in [0, 1, 2]
         return self.infer_state == 2
@@ -259,6 +265,7 @@ class CartographerWorker(object):
         if self.is_normal():
             return False
         else:
+            self.log('Inferring {}'.format(['pos', 'neg'][self.infer_state]))
             if self.db.infer(self.infer_state):
                 self.db.validate()
                 self.db.dump(self.world)
@@ -266,6 +273,7 @@ class CartographerWorker(object):
             else:
                 self.infer_state += 1
                 if self.is_normal():
+                    self.log('Normalized')
                     self.db.dump(self.normal_world)
                     self.theorize()
             return True
@@ -275,20 +283,20 @@ class CartographerWorker(object):
         if not surveys:
             return False
         else:
+            self.log('Aggregating {} surveys'.format(len(surveys)))
             for survey in surveys:
                 self.db.aggregate(survey)
                 self.db.validate()
                 self.db.dump(self.world)
                 self.infer_state = 0
                 world_size = pomagma.util.get_item_count(self.world)
-                pomagma.util.log_print(
-                    'world_size = {}'.format(world_size),
-                    self.log_file)
+                self.log('world_size = {}'.format(world_size))
                 os.remove(survey)
             self.replace_region_queue()
             return True
 
     def fill_region_queue(self, queue):
+        self.log('Filling region queue')
         if not os.path.exists(queue.path):
             os.makedirs(queue.path)
         queue_size = len(queue)
@@ -303,11 +311,13 @@ class CartographerWorker(object):
         self.db.trim(self.region_size, regions_out)
 
     def replace_region_queue(self):
+        self.log('Replacing region queue')
         with pomagma.util.temp_copy(self.region_queue.path) as temp_path:
             self.fill_region_queue(FileQueue(temp_path))
             self.region_queue.clear()
 
     def theorize(self):
+        self.log('Theorizing')
         conjectures = self.diverge_conjectures
         theorems = self.diverge_theorems
         self.db.conjecture(conjectures, self.equal_conjectures)
@@ -321,14 +331,16 @@ class CartographerWorker(object):
                     temp_theorems,
                     **self.options)
         if theorem_count > 0:
-            pomagma.util.log_print(
-                'Proved {} theorems'.format(theorem_count),
-                self.log_file)
-            self.db.assume(theorems)
-            self.db.validate()
-            self.db.dump(self.world)
-            self.infer_state = 0
-            self.replace_region_queue()
+            self.log('Proved {} theorems'.format(theorem_count))
+            counts = self.db.assume(theorems)
+            if counts['pos'] + counts['neg']:
+                self.log('Assumed {} pos + {} neg facts'.format(
+                    counts['pos'],
+                    counts['neg']))
+                self.db.validate()
+                self.db.dump(self.world)
+                self.infer_state = 0 if counts['pos'] else 1
+                self.replace_region_queue()
 
 
 @parsable.command

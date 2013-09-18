@@ -88,13 +88,13 @@ void Server::aggregate (const std::string & survey_in)
     }
 }
 
-size_t Server::assume (const std::string & facts_in)
+std::map<std::string, size_t> Server::assume (const std::string & facts_in)
 {
-    size_t merger_count = pomagma::assume(m_structure, facts_in.c_str());
+    auto counts = pomagma::assume(m_structure, facts_in.c_str());
     if (POMAGMA_DEBUG_LEVEL > 1) {
         m_structure.validate();
     }
-    return merger_count;
+    return counts;
 }
 
 size_t Server::infer (size_t priority)
@@ -207,8 +207,10 @@ messaging::CartographerResponse handle (
 
     if (request.has_assume()) {
         const std::string & facts_in = request.assume().facts_in();
-        const size_t merger_count = server.assume(facts_in);
-        response.mutable_assume()->set_merger_count(merger_count);
+        auto counts = server.assume(facts_in);
+        response.mutable_assume()->set_pos_count(counts["pos"]);
+        response.mutable_assume()->set_neg_count(counts["neg"]);
+        response.mutable_assume()->set_merge_count(counts["merge"]);
     }
 
     if (request.has_infer()) {

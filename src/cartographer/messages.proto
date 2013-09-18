@@ -47,7 +47,9 @@ message CartographerResponse {
   message Aggregate {
   }
   message Assume {
-    required uint64 merger_count = 1;
+    required uint64 pos_count = 1;
+    required uint64 neg_count = 2;
+    required uint64 merge_count = 3;
   }
   message Infer {
     required uint64 theorem_count = 1;
