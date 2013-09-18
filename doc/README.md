@@ -26,8 +26,7 @@
 ### Workflows
 
 - Compile: interpret theory to create core facts and inference strategies
-- Survey: select a region; explore nearby regions; add observations to atlas
-- Theorize: make conjectures; prove some, ponder others; add theorems to atlas
+- Explore: expand atlas by surveying and inferring global facts
 - Edit: write code; respond to static analysis of code
 - Evolve Language: optimize grammar weights based on corpus; propose new words
 - Recover (after Fregean collapse): assess damage; pinpoint problem; rebuild

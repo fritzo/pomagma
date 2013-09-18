@@ -10,16 +10,20 @@ digraph G {
     //    Data [shape=ellipse];
     //}
 
-    Theorist;
-    Linguist;
     {
-        rank="same";
+        rank="min";
+        Theorist;
+        Linguist;
+    }
+    {
+        //rank="max";
         node [style=filled, fillcolor=pink];
         TheoryReviewer [label="Reviewer"];
         LanguagesReviewer [label="Reviewer"];
     }
     {
         node [shape=ellipse];
+        rank = "same";
         Languages;
         Theory;
         Atlas;
@@ -27,9 +31,10 @@ digraph G {
     }
     Compiler;
     {
-        rank="same";
+        rank = "same";
+        Cartographer;
         Analyst;
-        EditorServer [label="Editor\nServer"];
+    EditorServer [label="Editor\nServer"];
     }
 
     subgraph cluster_survey {
@@ -51,59 +56,50 @@ digraph G {
         labelloc = "b";
     }
 
-    { rank="min"; Linguist; Theorist; }
-    { rank="same"; Languages; Theory; Atlas; Corpus; }
-    { rank="same"; Cartographer; Compiler; Analyst; }
-
 
     // Workflow: Compile
     edge [dir=forward arrowhead=normal]; // pull
     Theory -> Compiler;
     Compiler -> Surveyor;
-    Compiler -> Cartographer;
+    Compiler -> Theory;
 
-    // Workflow: Survey
+    // Workflow: Explore
     edge [dir=forward arrowhead=normal]; // pull
+    Theory -> Cartographer;
     Atlas -> Cartographer;
+    Theory -> Theorist;
     Languages -> Cartographer;
     Languages -> Surveyor;
     Cartographer -> Surveyor;
     edge [dir=both arrowtail=inv arrowhead=empty]; // push
     Surveyor -> Cartographer;
     Cartographer -> Atlas;
+    Cartographer -> Theorist;
+    TheoryReviewer -> Theory;
+    Theorist -> Cartographer;
+    Theorist -> TheoryReviewer;
 
     // Workflow: Edit
     edge [dir=forward arrowhead=normal]; // pull
     Atlas -> Analyst;
     Languages -> Analyst;
-    Corpus -> Analyst;
     Corpus -> EditorServer;
     Analyst -> EditorServer;
     EditorServer -> EditorClient;
     EditorClient -> Writer;
     edge [dir=both arrowtail=inv arrowhead=empty]; // push
-    Analyst -> Corpus;
     EditorServer -> Corpus;
+    EditorServer -> Analyst;
     EditorClient -> EditorServer;
     Writer -> EditorClient;
 
     // Workflow: Fit Language
     edge [dir=forward arrowhead=normal]; // pull
-    Corpus -> Linguist;
-    Atlas -> Linguist;
+    Analyst -> Linguist;
     Languages -> Linguist;
     Linguist -> LanguagesReviewer;
     edge [dir=both arrowtail=inv arrowhead=empty]; // push
     Linguist -> Languages;
     LanguagesReviewer -> Languages;
     LanguagesReviewer -> Theory;
-
-    // Workflow: Conjecture
-    edge [dir=forward arrowhead=normal]; // pull
-    Atlas -> Theorist;
-    Languages ->  Theorist;
-    Theorist -> TheoryReviewer;
-    edge [dir=both arrowtail=inv arrowhead=empty]; // push
-    TheoryReviewer -> Theory;
-    Theorist -> Atlas;
 }
