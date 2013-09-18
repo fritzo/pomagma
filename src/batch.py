@@ -227,6 +227,11 @@ class CartographerWorker(object):
         self.server = cartographer.serve(theory, self.world, **options)
         self.db = self.server.connect()
         self.infer_state = 0
+        if os.path.exists(self.normal_world):
+            world_digest = pomagma.util.get_hash(self.world)
+            normal_world_digest = pomagma.util.get_hash(self.normal_world)
+            if world_digest == normal_world_digest:
+                self.infer_state = 2
 
     def stop(self):
         self.server.stop()

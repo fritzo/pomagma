@@ -5,6 +5,7 @@ namespace pomagma
 
 std::string SimplifyParser::simplify (const std::string & expression)
 {
+    // simplify terms like APP APP S K K
     begin(expression);
     SimplifyTerm term = parse_term();
     end();
@@ -32,6 +33,7 @@ size_t batch_simplify(
         const std::string & expression = * iter;
         POMAGMA_DEBUG("simplifying " << expression);
 
+        // simplify relations like EQUAL I APP APP S K K
         parser.begin(expression);
         std::string type = parser.parse_token();
         SimplifyTerm lhs = parser.parse_term();
