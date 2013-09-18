@@ -328,6 +328,7 @@ class CartographerWorker(object):
             self.db.validate()
             self.db.dump(self.world)
             self.infer_state = 0
+            self.replace_region_queue()
 
 
 @parsable.command
