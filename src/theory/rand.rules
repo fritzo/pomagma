@@ -17,9 +17,13 @@ EQUAL RAND x RAND y z RAND RAND x y RAND x z
 --------------------------------------------
 EQUAL RAND x JOIN y z JOIN RAND x y RAND x z
 
-       LESS y z          LESS x z   LESS y z   LESS x y   LESS x z
-----------------------   -------------------   -------------------
-LESS RAND x y RAND x z     LESS RAND x y z       LESS x RAND y z
+       LESS y z          LESS RAND x y RAND x z
+----------------------   ----------------------
+LESS RAND x y RAND x z          LESS y z
+
+LESS x z   LESS y z   LESS x y   LESS x z
+-------------------   -------------------
+  LESS RAND x y z       LESS x RAND y z
 
 -----------------------------------------
 EQUAL APP RAND f g x RAND APP f x APP g x
@@ -44,3 +48,6 @@ EQUAL APP W RAND x y RAND APP W x APP W y
 
 -----------------------------------------
 EQUAL APP S RAND x y RAND APP S x APP S y
+
+---------------------
+EQUAL x APP Y APP R x
