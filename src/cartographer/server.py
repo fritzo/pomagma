@@ -1,6 +1,8 @@
 import os
 import pomagma.util
 import pomagma.cartographer.client
+from pomagma.cartographer import messages_pb2 as messages
+Request = messages.CartographerRequest
 
 
 BIN = os.path.join(pomagma.util.BIN, 'cartographer')
@@ -48,3 +50,6 @@ class Server(object):
 
     def kill(self):
         self._proc.kill()
+
+    def wait(self):
+        self._proc.wait()

@@ -356,6 +356,7 @@ def cartographer_work(
     assert region_size >= min_size
     opts = options
     opts.setdefault('log_file', 'cartographer.log')
+    #opts = use_memcheck(opts, output='cartographer.memcheck.out')  # DEBUG
     with in_atlas(theory), pomagma.util.mutex('world.h5'):
         worker = CartographerWorker(
             theory,

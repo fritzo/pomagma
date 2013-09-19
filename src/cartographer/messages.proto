@@ -28,6 +28,8 @@ message CartographerRequest {
   message Dump {
     required string world_out = 1;
   }
+  message Stop {
+  }
 
   // ordered by priority
   optional Trim trim = 1;
@@ -38,6 +40,7 @@ message CartographerRequest {
   optional Crop crop = 6;
   optional Validate validate = 7;
   optional Dump dump = 8;
+  optional Stop stop = 9;
 }
 
 message CartographerResponse {
@@ -64,6 +67,8 @@ message CartographerResponse {
   }
   message Dump {
   }
+  message Stop {
+  }
 
   optional Trim trim = 1;
   optional Aggregate aggregate = 2;
@@ -73,4 +78,5 @@ message CartographerResponse {
   optional Crop crop = 6;
   optional Validate validate = 7;
   optional Dump dump = 8;
+  optional Stop stop = 9;
 }

@@ -309,6 +309,17 @@ def log_Popen(*args, **options):
     return subprocess.Popen(args, env=env)
 
 
+def use_memcheck(opts, output='memcheck.out'):
+    suppressions = os.path.join(SRC, 'zmq.valgrind.suppressions')
+    opts.setdefault('runner', ' '.join([
+        'valgrind',
+        '--leak-check=full',
+        '--log-file={}'.format(output),
+        '--suppressions={}'.format(suppressions),
+    ]))
+    return opts
+
+
 def build():
     buildtype = 'Debug' if debug else 'RelWithDebInfo'
     buildflag = '-DCMAKE_BUILD_TYPE={}'.format(buildtype)

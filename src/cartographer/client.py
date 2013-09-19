@@ -142,3 +142,8 @@ class Client(object):
         with pomagma.util.temp_copy(world_out) as temp_world_out:
             self._dump(temp_world_out)
         assert os.path.exists(world_out), world_out
+
+    def stop(self):
+        request = Request()
+        request.stop.SetInParent()
+        self._call(request)

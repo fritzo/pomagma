@@ -10,6 +10,7 @@ class Server
     Structure m_structure;
     const char * const m_theory_file;
     const char * const m_language_file;
+    bool m_serving;
 
 public:
 
@@ -32,6 +33,7 @@ public:
     void crop ();
     void validate ();
     void dump (const std::string & world_out);
+    void stop ();
 
     void serve (const char * address);
 };

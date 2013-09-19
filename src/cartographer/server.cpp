@@ -178,6 +178,11 @@ void Server::dump (const std::string & world_out)
     m_structure.dump(world_out);
 }
 
+void Server::stop ()
+{
+    m_serving = false;
+}
+
 
 namespace
 {
@@ -243,6 +248,11 @@ messaging::CartographerResponse handle (
         response.mutable_dump();
     }
 
+    if (request.has_stop()) {
+        server.stop();
+        response.mutable_stop();
+    }
+
     return response;
 }
 
@@ -255,7 +265,7 @@ void Server::serve (const char * address)
     zmq::socket_t socket(context, ZMQ_REP);
     socket.bind(address);
 
-    while (true) {
+    for (m_serving = true; m_serving;) {
         POMAGMA_DEBUG("waiting for request");
         zmq::message_t raw_request;
         socket.recv(& raw_request);

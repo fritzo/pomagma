@@ -12,5 +12,7 @@ serve = server.Server
 def load(theory, world, address=None, **opts):
     with pomagma.util.log_duration():
         server = serve(theory, world, address, **opts)
-        yield server.connect()
-        server.stop()
+        client = server.connect()
+        yield client
+        client.stop()
+        server.wait()
