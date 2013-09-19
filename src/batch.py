@@ -298,6 +298,7 @@ class CartographerWorker(object):
                 world_size = pomagma.util.get_item_count(self.world)
                 self.log('world_size = {}'.format(world_size))
                 os.remove(survey)
+            self.db.crop()
             self.replace_region_queue()
             return True
 
