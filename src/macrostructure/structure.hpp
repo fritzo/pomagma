@@ -14,6 +14,7 @@ public:
 
     Structure () {}
     Structure (const std::string & filename) { load(filename); }
+    ~Structure () { clear(); }
 
     Signature & signature () { return m_signature; }
     Carrier & carrier () { return * m_signature.carrier(); }
