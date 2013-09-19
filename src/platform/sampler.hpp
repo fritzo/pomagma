@@ -31,20 +31,21 @@ class Sampler : noncopyable
     enum Arity { NULLARY, INJECTIVE, BINARY, SYMMETRIC };
     class BoundedSampler
     {
-        float injective;
-        float binary;
-        float symmetric;
-        float total;
-        float compound_injective;
-        float compound_binary;
-        float compound_symmetric;
-        float compound_total;
+        const float injective;
+        const float binary;
+        const float symmetric;
+        const float total;
+        const float compound_injective;
+        const float compound_binary;
+        const float compound_symmetric;
+        const float compound_total;
 
     public:
 
-        BoundedSampler () { POMAGMA_ERROR("unused"); }
+        BoundedSampler (); // unused
         BoundedSampler (const Sampler & sampler);
         BoundedSampler (const Sampler & sampler, const BoundedSampler & prev);
+        void operator= (const BoundedSampler &) { POMAGMA_ERROR("unused"); }
 
         Arity sample_arity (rng_t & rng) const;
         Arity sample_compound_arity (rng_t & rng) const;

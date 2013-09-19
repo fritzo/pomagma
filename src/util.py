@@ -309,15 +309,23 @@ def log_Popen(*args, **options):
     return subprocess.Popen(args, env=env)
 
 
-def use_memcheck(opts, output='memcheck.out'):
+def use_memcheck(options, output='memcheck.out'):
+    '''
+    Set options to run through valgrind memcheck.
+    WARNING valgrind does not handle vector instructions well,
+    so try compiling without -march=native.
+    '''
     suppressions = os.path.join(SRC, 'zmq.valgrind.suppressions')
-    opts.setdefault('runner', ' '.join([
+    options = options.copy()
+    options['runner'] = ' '.join([
         'valgrind',
         '--leak-check=full',
+        '--show-reachable=yes',
+        '--track-origins=yes',
         '--log-file={}'.format(output),
         '--suppressions={}'.format(suppressions),
-    ]))
-    return opts
+    ])
+    return options
 
 
 def build():

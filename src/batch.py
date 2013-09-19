@@ -227,6 +227,11 @@ class CartographerWorker(object):
         self.diverge_conjectures = 'diverge_conjectures.facts'
         self.diverge_theorems = 'diverge_theorems.facts'
         self.equal_conjectures = 'equal_conjectures.facts'
+        DEBUG = False
+        if DEBUG:
+            options = pomagma.util.use_memcheck(
+                options,
+                'cartographer.memcheck.out')
         self.server = cartographer.serve(theory, self.world, **options)
         self.db = self.server.connect()
         self.infer_state = 0
@@ -237,7 +242,8 @@ class CartographerWorker(object):
                 self.infer_state = 2
 
     def stop(self):
-        self.server.stop()
+        self.db.stop()
+        #self.server.stop()
 
     def log(self, message):
         pomagma.util.log_print(message, self.log_file)
@@ -354,9 +360,7 @@ def cartographer_work(
     '''
     min_size = pomagma.util.MIN_SIZES[theory]
     assert region_size >= min_size
-    opts = options
-    opts.setdefault('log_file', 'cartographer.log')
-    #opts = use_memcheck(opts, output='cartographer.memcheck.out')  # DEBUG
+    options.setdefault('log_file', 'cartographer.log')
     with in_atlas(theory), pomagma.util.mutex('world.h5'):
         worker = CartographerWorker(
             theory,

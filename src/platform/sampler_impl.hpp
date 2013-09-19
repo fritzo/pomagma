@@ -148,6 +148,20 @@ void Sampler::load (const std::string & language_file)
 //----------------------------------------------------------------------------
 // Sampling
 
+// unused
+Sampler::BoundedSampler::BoundedSampler ()
+    : injective(0),
+      binary(0),
+      symmetric(0),
+      total(0),
+      compound_injective(0),
+      compound_binary(0),
+      compound_symmetric(0),
+      compound_total(0)
+{
+    POMAGMA_ERROR("unused");
+}
+
 // base case
 Sampler::BoundedSampler::BoundedSampler (
         const Sampler & sampler)
@@ -187,6 +201,8 @@ inline Sampler::Arity Sampler::BoundedSampler::sample_arity (rng_t & rng) const
 
     std::uniform_real_distribution<float> random_point(0, total);
     float r = random_point(rng);
+    // FIXME valgrind complains about the following lines,
+    // "Conditional jump or move depends on uninitialised value(s)"
     if (binary and (r -= binary) < 0) return BINARY;
     if (symmetric and (r -= symmetric) < 0) return SYMMETRIC;
     if (injective and (r -= injective) < 0) return INJECTIVE;
@@ -202,6 +218,8 @@ inline Sampler::Arity Sampler::BoundedSampler::sample_compound_arity (
 
     std::uniform_real_distribution<float> random_point(0, compound_total);
     float r = random_point(rng);
+    // FIXME valgrind complains about the following lines,
+    // "Conditional jump or move depends on uninitialised value(s)"
     if (symmetric and (r -= compound_symmetric) < 0) return SYMMETRIC;
     if (injective and (r -= compound_injective) < 0) return INJECTIVE;
     return BINARY;
