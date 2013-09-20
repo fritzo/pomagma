@@ -35,11 +35,15 @@ struct Approximation
     {}
     Approximation (const Approximation &) = delete;
 
-    bool operator== (const Approximation & other)
+    bool operator== (const Approximation & other) const
     {
         return ob == other.ob
             and upper == other.upper
             and lower == other.lower;
+    }
+    bool operator!= (const Approximation & other) const
+    {
+        return not operator==(other);
     }
 };
 
@@ -85,8 +89,9 @@ public:
 private:
 
     void close (Approximation & approx);
-    bool try_close (Approximation & approx);
+    bool try_close (Approximation & approx);  // returns true if closed
 
+    size_t validate_less ();
     template<class Function>
     size_t validate_function (
             const std::string & name,

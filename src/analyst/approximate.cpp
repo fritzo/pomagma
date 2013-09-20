@@ -51,6 +51,34 @@ inline void map (
 } // anonymoous namespace
 
 
+size_t Approximator::validate_less ()
+{
+    POMAGMA_INFO("Validating LESS");
+
+    size_t close_fail_count = 0;
+
+    const size_t item_dim = m_item_dim;
+    #pragma omp parallel for schedule(dynamic, 1)
+    for (Ob x = 1; x <= item_dim; ++x) {
+        Approximation expected(x, m_less);
+
+        Approximation actual(item_dim, m_top, m_bot);
+        actual = expected;
+        close(actual);
+
+        if (actual != expected) {
+            #pragma omp atomic
+            close_fail_count += 1;
+        }
+    }
+
+    if (close_fail_count) {
+        POMAGMA_WARN("close failed " << close_fail_count << " cases");
+    }
+
+    return close_fail_count;
+}
+
 template<class Function>
 size_t Approximator::validate_function (
         const std::string & name,
@@ -93,13 +121,13 @@ size_t Approximator::validate_function (
     }
 
     if (ob_fail_count) {
-        POMAGMA_WARN("failed " << ob_fail_count << " ob cases");
+        POMAGMA_WARN(name << "-ob failed " << ob_fail_count << " cases");
     }
     if (upper_fail_count) {
-        POMAGMA_WARN("failed " << upper_fail_count << " upper cases");
+        POMAGMA_WARN(name << "-upper failed " << upper_fail_count << " cases");
     }
     if (lower_fail_count) {
-        POMAGMA_WARN("failed " << lower_fail_count << " lower cases");
+        POMAGMA_WARN(name << "-lower failed " << lower_fail_count << " cases");
     }
 
     return ob_fail_count + upper_fail_count + lower_fail_count;
@@ -111,6 +139,7 @@ size_t Approximator::validate ()
 
     size_t fail_count = 0;
 
+    fail_count += validate_less();
     for (auto pair : m_structure.signature().binary_functions()) {
         fail_count += validate_function(pair.first, * pair.second);
     }
@@ -118,7 +147,11 @@ size_t Approximator::validate ()
         fail_count += validate_function(pair.first, * pair.second);
     }
 
-    POMAGMA_INFO("approximator is " << (fail_count ? "invalid" : "valid"));
+    if (fail_count) {
+        POMAGMA_WARN("approximator is invalid");
+    } else {
+        POMAGMA_INFO("approximator is valid");
+    }
 
     return fail_count;
 }
