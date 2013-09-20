@@ -53,9 +53,9 @@ inline void map (
 
 size_t Approximator::validate_less ()
 {
-    POMAGMA_INFO("Validating LESS");
+    POMAGMA_INFO("Validating LESS closure");
 
-    size_t close_fail_count = 0;
+    size_t fail_count = 0;
 
     const size_t item_dim = m_item_dim;
     #pragma omp parallel for schedule(dynamic, 1)
@@ -68,15 +68,15 @@ size_t Approximator::validate_less ()
 
         if (actual != expected) {
             #pragma omp atomic
-            close_fail_count += 1;
+            fail_count += 1;
         }
     }
 
-    if (close_fail_count) {
-        POMAGMA_WARN("close failed " << close_fail_count << " cases");
+    if (fail_count) {
+        POMAGMA_WARN("LESS failed " << fail_count << " cases");
     }
 
-    return close_fail_count;
+    return fail_count;
 }
 
 template<class Function>
@@ -320,13 +320,8 @@ Approximation Approximator::find (
         const Approximation & lhs,
         const Approximation & rhs)
 {
-    if (Ob ob = lhs.ob and rhs.ob ? fun.find(lhs.ob, rhs.ob) : 0) {
+    if (Ob ob = (lhs.ob and rhs.ob) ? fun.find(lhs.ob, rhs.ob) : 0) {
         return Approximation(ob, m_less);
-    } else if (& fun == m_join) {
-        Approximation val(m_item_dim, m_top, m_bot);
-        val.upper.set_insn(lhs.upper, rhs.upper);
-        val.lower.set_union(lhs.lower, rhs.lower);
-        return val;
     } else {
         Approximation val(m_item_dim, m_top, m_bot);
         map(fun, lhs.upper, rhs.upper, val.upper);
