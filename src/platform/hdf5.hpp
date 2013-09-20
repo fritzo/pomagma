@@ -14,12 +14,11 @@ namespace pomagma
 namespace hdf5
 {
 
-inline void init ()
+struct GlobalLock
 {
-    // permanently turn off error reporting to stderr
-    // http://www.hdfgroup.org/HDF5/doc/UG/UG_frame13ErrorHandling.html
-    H5Eset_auto(nullptr, nullptr);
-}
+    GlobalLock ();
+    ~GlobalLock ();
+};
 
 //----------------------------------------------------------------------------
 // Errors

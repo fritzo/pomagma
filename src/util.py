@@ -2,6 +2,7 @@ import os
 import sys
 import fcntl
 import errno
+import signal
 import shutil
 import subprocess
 import multiprocessing
@@ -38,6 +39,28 @@ MIN_SIZES = {
     'skj': 1535,
     'skrj': 2047,
 }
+
+
+def on_signal(sig):
+    def decorator(handler):
+        signal.signal(sig, handler)
+        return handler
+    return decorator
+
+
+# adapted from
+# http://blog.devork.be/2009/07/how-to-bring-running-python-program.html
+@on_signal(signal.SIGUSR1)
+def handle_pdb(sig, frame):
+    import pdb
+    pdb.Pdb().set_trace(frame)
+
+
+def get_rss(pid):
+    try:
+        return int(subprocess.check_output(['ps', '-o', 'rss=', str(pid)]))
+    except subprocess.CalledProcessError:
+        return 0
 
 
 def print_dot(out=sys.stdout):

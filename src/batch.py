@@ -4,11 +4,11 @@ import time
 import glob
 import shutil
 import itertools
+import contextlib
 import subprocess
 import parsable
 parsable = parsable.Parsable()
 import pomagma.util
-import contextlib
 from pomagma import surveyor, cartographer, theorist, analyst, atlas
 
 
@@ -246,6 +246,8 @@ class CartographerWorker(object):
         #self.server.stop()
 
     def log(self, message):
+        rss = pomagma.util.get_rss(self.server.pid)
+        message = 'Cartographer {}k {}'.format(rss, message)
         pomagma.util.log_print(message, self.log_file)
 
     def is_normal(self):
@@ -390,8 +392,7 @@ def survey_work(theory, step_size=512, **options):
         survey_queue = FileQueue('survey.queue')
         region = pomagma.util.temp_name('region.h5')
         survey = pomagma.util.temp_name('survey.h5')
-        opts = options
-        opts.setdefault('log_file', 'survey.log')
+        options.setdefault('log_file', 'survey.log')
         sleeper = Sleeper('surveyor')
         while True:
             if not region_queue.try_pop(region):
@@ -400,7 +401,7 @@ def survey_work(theory, step_size=512, **options):
                 sleeper.reset()
                 region_size = pomagma.util.get_item_count(region)
                 survey_size = region_size + step_size
-                surveyor.survey(theory, region, survey, survey_size, **opts)
+                surveyor.survey(theory, region, survey, survey_size, **options)
                 os.remove(region)
                 survey_queue.push(survey)
 

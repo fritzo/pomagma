@@ -192,6 +192,7 @@ messaging::CartographerResponse handle (
     messaging::CartographerRequest & request)
 {
     POMAGMA_INFO("Handling request");
+    Timer timer;
     messaging::CartographerResponse response;
 
     if (request.has_trim()) {
@@ -253,6 +254,7 @@ messaging::CartographerResponse handle (
         response.mutable_stop();
     }
 
+    POMAGMA_INFO("Handled request in " << timer.elapsed() << " sec");
     return response;
 }
 

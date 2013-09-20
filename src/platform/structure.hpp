@@ -459,8 +459,8 @@ inline void dump (
 {
     POMAGMA_INFO("Dumping structure to file " << filename);
 
-    hdf5::init();
     {
+        hdf5::GlobalLock lock;
         hdf5::OutFile file(filename);
         detail::dump(signature, file);
     }
@@ -912,7 +912,7 @@ inline void load (
 {
     POMAGMA_INFO("Loading structure from file " << filename);
 
-    hdf5::init();
+    hdf5::GlobalLock lock;
     hdf5::InFile file(filename);
 
     auto digest = hdf5::get_tree_hash(file);
@@ -926,7 +926,7 @@ inline void load_data (
         Signature & signature,
         const std::string & filename)
 {
-    hdf5::init();
+    hdf5::GlobalLock lock;
     hdf5::InFile file(filename);
 
     auto digest = hdf5::get_tree_hash(file);

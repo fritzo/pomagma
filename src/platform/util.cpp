@@ -65,7 +65,7 @@ Log::Context::~Context ()
     message
         << "rusage.ru_utime = " << usage.ru_utime << "\n"
         << "rusage.ru_stime = " << usage.ru_stime << "\n"
-        << "rusage.ru_max_rss = " << usage.ru_maxrss << "\n"
+        << "rusage.ru_maxrss = " << usage.ru_maxrss << "\n"
         ;
     s_log_stream << message.str() << std::flush;
     //std::cerr << message.str() << std::flush; // DEBUG
