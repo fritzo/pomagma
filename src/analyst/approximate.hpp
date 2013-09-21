@@ -51,19 +51,7 @@ class Approximator : noncopyable
 {
 public:
 
-    Approximator (Structure & structure)
-        : m_structure(structure),
-          m_item_dim(structure.carrier().item_dim()),
-          m_top(structure.nullary_function("TOP").find()),
-          m_bot(structure.nullary_function("BOT").find()),
-          m_less(structure.binary_relation("LESS")),
-          m_nless(structure.binary_relation("NLESS")),
-          m_join(structure.signature().symmetric_function("JOIN")),
-          m_rand(structure.signature().symmetric_function("RAND"))
-    {
-        POMAGMA_ASSERT(m_top, "TOP is not defined");
-        POMAGMA_ASSERT(m_bot, "BOT is not defined");
-    }
+    Approximator (Structure & structure);
 
     size_t validate ();
     void validate (const Approximation & approx);
@@ -88,14 +76,37 @@ public:
 
 private:
 
-    void close (Approximation & approx);
-    bool try_close (Approximation & approx);  // returns true if closed
+    // returns true if closed
+    bool try_close (
+            Approximation & approx,
+            DenseSet & temp_set);
+    void close (
+            Approximation & approx,
+            DenseSet & temp_set);
 
     size_t validate_less ();
     template<class Function>
     size_t validate_function (
             const std::string & name,
             const Function & fun);
+
+    void map (
+            const InjectiveFunction & fun,
+            const DenseSet & key_set,
+            DenseSet & val_set,
+            DenseSet & temp_set);
+    void map (
+            const BinaryFunction & fun,
+            const DenseSet & lhs_set,
+            const DenseSet & rhs_set,
+            DenseSet & val_set,
+            DenseSet & temp_set);
+    void map (
+            const SymmetricFunction & fun,
+            const DenseSet & lhs_set,
+            const DenseSet & rhs_set,
+            DenseSet & val_set,
+            DenseSet & temp_set);
 
     Structure & m_structure;
     const size_t m_item_dim;
@@ -105,6 +116,7 @@ private:
     const BinaryRelation & m_nless;
     const SymmetricFunction * const m_join;
     const SymmetricFunction * const m_rand;
+    const InjectiveFunction * const m_quote;
 };
 
 

@@ -7,49 +7,20 @@
 namespace pomagma
 {
 
-namespace
+Approximator::Approximator (Structure & structure)
+    : m_structure(structure),
+      m_item_dim(structure.carrier().item_dim()),
+      m_top(structure.nullary_function("TOP").find()),
+      m_bot(structure.nullary_function("BOT").find()),
+      m_less(structure.binary_relation("LESS")),
+      m_nless(structure.binary_relation("NLESS")),
+      m_join(structure.signature().symmetric_function("JOIN")),
+      m_rand(structure.signature().symmetric_function("RAND")),
+      m_quote(structure.signature().injective_function("QUOTE"))
 {
-
-inline void map (
-        const InjectiveFunction & fun,
-        const DenseSet & key_set,
-        DenseSet & val_set)
-{
-    POMAGMA_ASSERT_EQ(key_set.item_dim(), val_set.item_dim());
-
-    // TODO iter_insn is ~5x slower than using a temp set
-    for (auto iter = fun.defined().iter_insn(key_set); iter.ok(); iter.next()) {
-        Ob key = * iter;
-        Ob val = fun.find(key);
-        val_set.raw_insert(val);
-    }
+    POMAGMA_ASSERT(m_top, "TOP is not defined");
+    POMAGMA_ASSERT(m_bot, "BOT is not defined");
 }
-
-template<class Function>
-inline void map (
-        const Function & fun,
-        const DenseSet & lhs_set,
-        const DenseSet & rhs_set,
-        DenseSet & val_set)
-{
-    POMAGMA_ASSERT_EQ(lhs_set.item_dim(), val_set.item_dim());
-    POMAGMA_ASSERT_EQ(rhs_set.item_dim(), val_set.item_dim());
-
-    for (auto iter = lhs_set.iter(); iter.ok(); iter.next()) {
-        Ob lhs = * iter;
-        // TODO iter_insn is ~5x slower than using a temp set
-        for (auto iter = rhs_set.iter_insn(fun.get_Lx_set(lhs));
-            iter.ok(); iter.next())
-        {
-            Ob rhs = * iter;
-            Ob val = fun.find(lhs, rhs);
-            val_set.raw_insert(val);
-        }
-    }
-}
-
-} // anonymoous namespace
-
 
 size_t Approximator::validate_less ()
 {
@@ -58,17 +29,21 @@ size_t Approximator::validate_less ()
     size_t fail_count = 0;
 
     const size_t item_dim = m_item_dim;
-    #pragma omp parallel for schedule(dynamic, 1)
-    for (Ob x = 1; x <= item_dim; ++x) {
-        Approximation expected(x, m_less);
-
+    #pragma omp parallel
+    {
         Approximation actual(item_dim, m_top, m_bot);
-        actual = expected;
-        close(actual);
+        DenseSet temp_set(m_item_dim);
 
-        if (actual != expected) {
-            #pragma omp atomic
-            fail_count += 1;
+        #pragma omp for schedule(dynamic, 1)
+        for (Ob x = 1; x <= item_dim; ++x) {
+            Approximation expected(x, m_less);
+            actual = expected;
+            close(actual, temp_set);
+
+            if (actual != expected) {
+                #pragma omp atomic
+                fail_count += 1;
+            }
         }
     }
 
@@ -88,46 +63,82 @@ size_t Approximator::validate_function (
 
     size_t ob_fail_count = 0;
     size_t upper_fail_count = 0;
+    size_t upper_extra_count = 0;
+    size_t upper_missing_count = 0;
     size_t lower_fail_count = 0;
+    size_t lower_extra_count = 0;
+    size_t lower_missing_count = 0;
 
     const size_t item_dim = m_item_dim;
-    #pragma omp parallel for schedule(dynamic, 1)
-    for (Ob x = 1; x <= item_dim; ++x) {
-        Approximation approx_x(x, m_less);
-        approx_x.ob = 0;
+    #pragma omp parallel
+    {
+        DenseSet temp_set(item_dim);
 
-        for (auto iter = fun.iter_lhs(x); iter.ok(); iter.next()) {
-            Ob y = * iter;
-            Approximation approx_y(y, m_less);
-            approx_y.ob = 0;
+        #pragma omp for schedule(dynamic, 1)
+        for (Ob x = 1; x <= item_dim; ++x) {
+            Approximation approx_x(x, m_less);
+            approx_x.ob = 0;
 
-            Ob xy = fun.find(x, y);
-            Approximation expected(xy, m_less);
-            Approximation actual = find(fun, approx_x, approx_y);
+            for (auto iter = fun.iter_lhs(x); iter.ok(); iter.next()) {
+                Ob y = * iter;
+                Approximation approx_y(y, m_less);
+                approx_y.ob = 0;
 
-            if (actual.ob != expected.ob) {
-                #pragma omp atomic
-                ob_fail_count += 1;
-            }
-            if (actual.upper != expected.upper) {
-                #pragma omp atomic
-                upper_fail_count += 1;
-            }
-            if (actual.lower != expected.lower) {
-                #pragma omp atomic
-                lower_fail_count += 1;
+                Ob xy = fun.find(x, y);
+                Approximation expected(xy, m_less);
+                Approximation actual = find(fun, approx_x, approx_y);
+
+                if (actual.ob != expected.ob) {
+                    #pragma omp atomic
+                    ob_fail_count += 1;
+                }
+                if (actual.upper != expected.upper) {
+                    #pragma omp atomic
+                    upper_fail_count += 1;
+                    temp_set.set_diff(actual.upper, expected.upper);
+                    if (size_t count = temp_set.count_items()) {
+                        #pragma omp atomic
+                        upper_extra_count += count;
+                    }
+                    temp_set.set_diff(expected.upper, actual.upper);
+                    if (size_t count = temp_set.count_items()) {
+                        #pragma omp atomic
+                        upper_missing_count += count;
+                    }
+                }
+                if (actual.lower != expected.lower) {
+                    #pragma omp atomic
+                    lower_fail_count += 1;
+                    temp_set.set_diff(actual.lower, expected.lower);
+                    if (size_t count = temp_set.count_items()) {
+                        #pragma omp atomic
+                        lower_extra_count += count;
+                    }
+                    temp_set.set_diff(expected.lower, actual.lower);
+                    if (size_t count = temp_set.count_items()) {
+                        #pragma omp atomic
+                        lower_missing_count += count;
+                    }
+                }
             }
         }
     }
 
     if (ob_fail_count) {
-        POMAGMA_WARN(name << "-ob failed " << ob_fail_count << " cases");
+        POMAGMA_WARN(name << "-mapped ob failed "
+            << ob_fail_count << " cases");
     }
-    if (upper_fail_count) {
-        POMAGMA_WARN(name << "-upper failed " << upper_fail_count << " cases");
+    if (upper_missing_count or upper_extra_count) {
+        POMAGMA_WARN(name << "-mapped upper had "
+            << upper_missing_count << " missing and "
+            << upper_extra_count << " extra obs in "
+            << upper_fail_count << " cases");
     }
-    if (lower_fail_count) {
-        POMAGMA_WARN(name << "-lower failed " << lower_fail_count << " cases");
+    if (lower_missing_count or lower_extra_count) {
+        POMAGMA_WARN(name << "-mapped lower had "
+            << lower_missing_count << " missing and "
+            << lower_extra_count << " extra obs in "
+            << lower_fail_count << " cases");
     }
 
     return ob_fail_count + upper_fail_count + lower_fail_count;
@@ -176,17 +187,23 @@ void Approximator::validate (const Approximation & approx)
 
     Approximation closed(m_item_dim, m_top, m_bot);
     closed = approx;
-    close(closed);
+    {
+        DenseSet temp_set(m_item_dim);
+        close(closed, temp_set);
+    }
     POMAGMA_ASSERT_EQ(closed.ob, approx.ob);
     POMAGMA_ASSERT(closed.upper == approx.upper, "upper set is not closed");
     POMAGMA_ASSERT(closed.lower == approx.lower, "lower set is not closed");
 }
 
-void Approximator::close (Approximation & approx)
+void Approximator::close (
+        Approximation & approx,
+        DenseSet & temp_set)
 {
+    POMAGMA_ASSERT_EQ(temp_set.item_dim(), m_item_dim);
     for (size_t iter = 0;; ++iter) {
         POMAGMA_DEBUG1("close step " << iter);
-        if (try_close(approx)) {
+        if (try_close(approx, temp_set)) {
             return;
         }
     }
@@ -194,35 +211,38 @@ void Approximator::close (Approximation & approx)
 
 // Inference rules, in order of appearance
 //
-//   LESS x y   LESS x z
-//   -------------------   ----------
-//     LESS x RAND y z     LESS x TOP
+//                LESS x y   LESS x z
+//   ----------   -------------------
+//   LESS x TOP     LESS x RAND y z
 //   
-//   LESS y x   LESS z x   LESS y x   LESS z x
-//   -------------------   -------------------   ----------
-//     LESS JOIN y z x       LESS RAND y z x     LESS BOT x
+//                LESS y x   LESS z x   LESS y x   LESS z x
+//   ----------   -------------------   -------------------
+//   LESS BOT x     LESS JOIN y z x       LESS RAND y z x
 //
-bool Approximator::try_close (Approximation & approx)
+bool Approximator::try_close (
+        Approximation & approx,
+        DenseSet & temp_set)
 {
     POMAGMA_ASSERT_EQ(approx.lower.item_dim(), m_item_dim);
     POMAGMA_ASSERT_EQ(approx.upper.item_dim(), m_item_dim);
+    POMAGMA_ASSERT_EQ(temp_set.item_dim(), m_item_dim);
 
     Approximation start(m_item_dim, m_top, m_bot);
     start = approx;
-    DenseSet set(m_item_dim);
 
     if (approx.ob) {
         approx.upper.raw_insert(approx.ob);
         approx.lower.raw_insert(approx.ob);
     }
 
+    approx.upper.raw_insert(m_top);
     for (auto iter = approx.upper.iter(); iter.ok(); iter.next()) {
         Ob ob = * iter;
         approx.upper += m_less.get_Lx_set(ob);
 
         if (m_rand) {
-            set.set_insn(approx.upper, m_rand->get_Lx_set(ob));
-            for (auto iter = set.iter(); iter.ok(); iter.next()) {
+            temp_set.set_insn(approx.upper, m_rand->get_Lx_set(ob));
+            for (auto iter = temp_set.iter(); iter.ok(); iter.next()) {
                 Ob other = * iter;
                 if (other >= ob) {
                     break;
@@ -232,15 +252,15 @@ bool Approximator::try_close (Approximation & approx)
             }
         }
     }
-    approx.upper.raw_insert(m_top);
 
+    approx.lower.raw_insert(m_bot);
     for (auto iter = approx.lower.iter(); iter.ok(); iter.next()) {
         Ob ob = * iter;
         approx.lower += m_less.get_Rx_set(ob);
 
         if (m_join) {
-            set.set_insn(approx.lower, m_join->get_Lx_set(ob));
-            for (auto iter = set.iter(); iter.ok(); iter.next()) {
+            temp_set.set_insn(approx.lower, m_join->get_Lx_set(ob));
+            for (auto iter = temp_set.iter(); iter.ok(); iter.next()) {
                 Ob other = * iter;
                 if (other >= ob) {
                     break;
@@ -251,8 +271,8 @@ bool Approximator::try_close (Approximation & approx)
         }
 
         if (m_rand) {
-            set.set_insn(approx.lower, m_rand->get_Lx_set(ob));
-            for (auto iter = set.iter(); iter.ok(); iter.next()) {
+            temp_set.set_insn(approx.lower, m_rand->get_Lx_set(ob));
+            for (auto iter = temp_set.iter(); iter.ok(); iter.next()) {
                 Ob other = * iter;
                 if (other >= ob) {
                     break;
@@ -262,17 +282,93 @@ bool Approximator::try_close (Approximation & approx)
             }
         }
     }
-    approx.lower.raw_insert(m_bot);
 
     if (not approx.ob) {
-        set.set_insn(approx.upper, approx.lower);
-        for (auto iter = set.iter(); iter.ok(); iter.next()) {
+        temp_set.set_insn(approx.upper, approx.lower);
+        for (auto iter = temp_set.iter(); iter.ok(); iter.next()) {
             approx.ob = * iter;
             break;
         }
     }
 
     return approx == start;
+}
+
+
+inline void Approximator::map (
+        const InjectiveFunction & fun,
+        const DenseSet & key_set,
+        DenseSet & val_set,
+        DenseSet & temp_set)
+{
+    POMAGMA_ASSERT_EQ(key_set.item_dim(), m_item_dim);
+    POMAGMA_ASSERT_EQ(val_set.item_dim(), m_item_dim);
+    POMAGMA_ASSERT_EQ(temp_set.item_dim(), m_item_dim);
+
+    temp_set.set_insn(fun.defined(), key_set);
+    for (auto iter = temp_set.iter(); iter.ok(); iter.next()) {
+        Ob key = * iter;
+        Ob val = fun.find(key);
+        val_set.raw_insert(val);
+    }
+}
+
+inline void Approximator::map (
+        const BinaryFunction & fun,
+        const DenseSet & lhs_set,
+        const DenseSet & rhs_set,
+        DenseSet & val_set,
+        DenseSet & temp_set)
+{
+    POMAGMA_ASSERT_EQ(lhs_set.item_dim(), m_item_dim);
+    POMAGMA_ASSERT_EQ(rhs_set.item_dim(), m_item_dim);
+    POMAGMA_ASSERT_EQ(val_set.item_dim(), m_item_dim);
+    POMAGMA_ASSERT_EQ(temp_set.item_dim(), m_item_dim);
+
+    for (auto iter = lhs_set.iter(); iter.ok(); iter.next()) {
+        Ob lhs = * iter;
+
+        // optimize for special cases of APP and COMP
+        if (Ob lhs_top = fun.find(lhs, m_top)) {
+            if (Ob lhs_bot = fun.find(lhs, m_bot)) {
+                bool lhs_is_constant = (lhs_top == lhs_bot);
+                if (lhs_is_constant) {
+                    val_set.raw_insert(lhs_top);
+                    continue;
+                }
+            }
+        }
+
+        temp_set.set_insn(rhs_set, fun.get_Lx_set(lhs));
+        for (auto iter = temp_set.iter(); iter.ok(); iter.next()) {
+            Ob rhs = * iter;
+            Ob val = fun.find(lhs, rhs);
+            val_set.raw_insert(val);
+        }
+    }
+}
+
+inline void Approximator::map (
+        const SymmetricFunction & fun,
+        const DenseSet & lhs_set,
+        const DenseSet & rhs_set,
+        DenseSet & val_set,
+        DenseSet & temp_set)
+{
+    POMAGMA_ASSERT_EQ(lhs_set.item_dim(), m_item_dim);
+    POMAGMA_ASSERT_EQ(rhs_set.item_dim(), m_item_dim);
+    POMAGMA_ASSERT_EQ(val_set.item_dim(), m_item_dim);
+    POMAGMA_ASSERT_EQ(temp_set.item_dim(), m_item_dim);
+
+    for (auto iter = lhs_set.iter(); iter.ok(); iter.next()) {
+        Ob lhs = * iter;
+        temp_set.set_insn(rhs_set, fun.get_Lx_set(lhs));
+        for (auto iter = temp_set.iter(); iter.ok(); iter.next()) {
+            Ob rhs = * iter;
+            Ob val = fun.find(lhs, rhs);
+            val_set.raw_insert(val);
+        }
+    }
 }
 
 Approximation Approximator::find (
@@ -290,11 +386,15 @@ Approximation Approximator::find (
 {
     if (Ob ob = key.ob ? fun.find(key.ob) : 0) {
         return Approximation(ob, m_less);
+    } else if (& fun == m_quote) {
+        // QUOTE is not monotone
+        return Approximation(m_item_dim, m_top, m_bot);
     } else {
         Approximation val(m_item_dim, m_top, m_bot);
-        map(fun, key.upper, val.upper);
-        map(fun, key.lower, val.lower);
-        close(val);
+        DenseSet temp_set(m_item_dim);
+        map(fun, key.upper, val.upper, temp_set);
+        map(fun, key.lower, val.lower, temp_set);
+        close(val, temp_set);
         return val;
     }
 }
@@ -308,9 +408,10 @@ Approximation Approximator::find (
         return Approximation(ob, m_less);
     } else {
         Approximation val(m_item_dim, m_top, m_bot);
-        map(fun, lhs.upper, rhs.upper, val.upper);
-        map(fun, lhs.lower, rhs.lower, val.lower);
-        close(val);
+        DenseSet temp_set(m_item_dim);
+        map(fun, lhs.upper, rhs.upper, val.upper, temp_set);
+        map(fun, lhs.lower, rhs.lower, val.lower, temp_set);
+        close(val, temp_set);
         return val;
     }
 }
@@ -324,9 +425,10 @@ Approximation Approximator::find (
         return Approximation(ob, m_less);
     } else {
         Approximation val(m_item_dim, m_top, m_bot);
-        map(fun, lhs.upper, rhs.upper, val.upper);
-        map(fun, lhs.lower, rhs.lower, val.lower);
-        close(val);
+        DenseSet temp_set(m_item_dim);
+        map(fun, lhs.upper, rhs.upper, val.upper, temp_set);
+        map(fun, lhs.lower, rhs.lower, val.lower, temp_set);
+        close(val, temp_set);
         return val;
     }
 }

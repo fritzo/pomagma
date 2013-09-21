@@ -84,26 +84,25 @@ def test(theory, **options):
         min_size = pomagma.util.MIN_SIZES[theory]
         dsize = min(64, 1 + min_size)
         sizes = [min_size + i * dsize for i in range(10)]
-        opts = options
-        opts.setdefault('log_file', 'test.log')
+        options.setdefault('log_file', 'test.log')
         diverge_conjectures = 'diverge_conjectures.facts'
         diverge_theorems = 'diverge_theorems.facts'
         equal_conjectures = 'equal_conjectures.facts'
         equal_theorems = 'equal_theorems.facts'
         simplified = 'simplified.facts'
 
-        surveyor.init(theory, '0.h5', sizes[0], **opts)
-        with cartographer.load(theory, '0.h5', **opts) as db:
+        surveyor.init(theory, '0.h5', sizes[0], **options)
+        with cartographer.load(theory, '0.h5', **options) as db:
             db.validate()
             db.dump('1.h5')
-        surveyor.survey(theory, '1.h5', '2.h5', sizes[1], **opts)
-        with cartographer.load(theory, '2.h5', **opts) as db:
+        surveyor.survey(theory, '1.h5', '2.h5', sizes[1], **options)
+        with cartographer.load(theory, '2.h5', **options) as db:
             db.trim(sizes[0], ['3.h5'])
-        surveyor.survey(theory, '3.h5', '4.h5', sizes[1], **opts)
-        with cartographer.load(theory, '2.h5', **opts) as db:
+        surveyor.survey(theory, '3.h5', '4.h5', sizes[1], **options)
+        with cartographer.load(theory, '2.h5', **options) as db:
             db.aggregate('4.h5')
             db.dump('5.h5')
-        with cartographer.load(theory, '5.h5', **opts) as db:
+        with cartographer.load(theory, '5.h5', **options) as db:
             db.aggregate('0.h5')
             db.dump('6.h5')
             digest5 = pomagma.util.get_hash('5.h5')
@@ -118,7 +117,7 @@ def test(theory, **options):
                     diverge_conjectures,
                     diverge_conjectures,
                     diverge_theorems,
-                    **opts)
+                    **options)
                 assert theorem_count > 0, theorem_count
                 counts = db.assume(diverge_theorems)
                 assert counts['pos'] + counts['neg'] > 0, counts
@@ -130,15 +129,15 @@ def test(theory, **options):
             equal_conjectures,
             equal_conjectures,
             equal_theorems,
-            **opts)
+            **options)
         #assert theorem_count > 0, theorem_count
 
         if theory == 'h4':
-            with analyst.load(theory, '6.h5', **opts) as db:
+            with analyst.load(theory, '6.h5', **options) as db:
                 line_count = db.batch_simplify(equal_theorems, simplified)
                 assert line_count > 0, line_count
         else:
-            with cartographer.load(theory, '6.h5', **opts) as db:
+            with cartographer.load(theory, '6.h5', **options) as db:
                 db.assume(equal_theorems)
                 if theorem_count > 0:
                     assert counts['merge'] > 0, counts
@@ -149,11 +148,26 @@ def test(theory, **options):
                 for priority in [0, 1]:
                     assert not db.infer(priority)
                 db.dump('7.h5')
-            with analyst.load(theory, '7.h5', **opts) as db:
+            with analyst.load(theory, '7.h5', **options) as db:
                 line_count = db.batch_simplify(diverge_theorems, simplified)
                 assert line_count > 0, line_count
                 fail_count = db.test()
                 assert fail_count == 0, 'analyst failed'
+
+
+@parsable.command
+def test_analyst(theory, **options):
+    '''
+    Test analyst approximation on normalized world map.
+    '''
+    options.setdefault('log_file', 'test.log')
+    with in_atlas(theory):
+        world = 'world.normal.h5'
+        assert os.path.exists(world), 'First initialize normalized world'
+        with analyst.load(theory, world, **options) as db:
+            fail_count = db.test()
+            assert fail_count == 0, 'Failed {} cases'.format(fail_count)
+    print 'Passed analyst test'
 
 
 @parsable.command
@@ -162,16 +176,15 @@ def init(theory, **options):
     Initialize world map for given theory.
     Options: log_level, log_file
     '''
-    opts = options
-    log_file = opts.setdefault('log_file', 'init.log')
+    log_file = options.setdefault('log_file', 'init.log')
     world_size = pomagma.util.MIN_SIZES[theory]
     pomagma.util.log_print('initialize to {}'.format(world_size), log_file)
     with in_atlas(theory, init=True):
         survey = 'survey.h5'
         world = 'world.h5'
         with pomagma.util.temp_copy(survey) as temp:
-            surveyor.init(theory, temp, world_size, **opts)
-        with atlas.load(theory, survey, **opts) as db:
+            surveyor.init(theory, temp, world_size, **options)
+        with atlas.load(theory, survey, **options) as db:
             assert not os.path.exists(world), world
             db.validate()
             db.dump(world)
@@ -451,11 +464,10 @@ def translate(theory, **options):
         init = pomagma.util.temp_name('init.h5')
         aggregate = pomagma.util.temp_name('aggregate.h5')
         assert os.path.exists(world), 'First initialize world map'
-        opts = options
-        opts.setdefault('log_file', 'translate.log')
+        options.setdefault('log_file', 'translate.log')
         init_size = pomagma.util.MIN_SIZES[theory]
-        surveyor.init(theory, init, init_size, **opts)
-        atlas.translate(theory, init, world, aggregate, **opts)
+        surveyor.init(theory, init, init_size, **options)
+        atlas.translate(theory, init, world, aggregate, **options)
 
 
 @parsable.command
@@ -470,17 +482,16 @@ def theorize(theory, **options):
         equal_conjectures = 'equal_conjectures.facts'
         nless_theorems = 'nless_theorems.facts'
         assert os.path.exists(world), 'First build world map'
-        opts = options
-        opts.setdefault('log_file', 'theorize.log')
+        options.setdefault('log_file', 'theorize.log')
 
-        with atlas.load(theory, world, **opts) as db:
+        with atlas.load(theory, world, **options) as db:
             db.conjecture(diverge_conjectures, equal_conjectures)
             with pomagma.util.temp_copy(diverge_conjectures) as temp:
                 theorem_count = theorist.try_prove_diverge(
                     diverge_conjectures,
                     temp,
                     diverge_theorems,
-                    **opts)
+                    **options)
             if theorem_count > 0:
                 db.assume(diverge_theorems)
                 db.dump(world)
@@ -492,9 +503,9 @@ def theorize(theory, **options):
                 equal_conjectures,
                 temp,
                 nless_theorems,
-                **opts)
+                **options)
         if theorem_count > 0:
-            with atlas.load(theory, world, **opts) as db:
+            with atlas.load(theory, world, **options) as db:
                 db.assume(nless_theorems)
                 db.dump(world)
 
@@ -511,17 +522,16 @@ def profile(theory, size_blocks=3, dsize_blocks=0, **options):
     min_size = pomagma.util.MIN_SIZES[theory]
     assert size >= min_size
     with in_atlas(theory):
-        opts = options
-        opts.setdefault('log_file', 'profile.log')
+        options.setdefault('log_file', 'profile.log')
         region = 'region.{:d}.h5'.format(size)
         temp = pomagma.util.temp_name('profile.h5')
         world = 'world.h5'
 
         if not os.path.exists(region):
             assert os.path.exists(world), 'First initialize world map'
-            cartographer.trim(theory, world, region, size, **opts)
-        opts.setdefault('runner', 'valgrind --tool=callgrind')
-        surveyor.survey(theory, region, temp, size + dsize, **opts)
+            cartographer.trim(theory, world, region, size, **options)
+        options.setdefault('runner', 'valgrind --tool=callgrind')
+        surveyor.survey(theory, region, temp, size + dsize, **options)
         os.remove(temp)
 
 
@@ -545,8 +555,7 @@ def trim_regions(theory, **options):
     Trim a set of regions for testing on small machines.
     '''
     with in_atlas(theory):
-        opts = options
-        opts.setdefault('log_file', 'trim_regions.log')
+        options.setdefault('log_file', 'trim_regions.log')
         world = 'world.h5'
         min_size = pomagma.util.MIN_SIZES[theory]
         max_size = pomagma.util.get_item_count(world)
@@ -555,9 +564,9 @@ def trim_regions(theory, **options):
         for size in sizes:
             print 'Trimming region of size', size
             smaller = 'region.{:d}.h5'.format(size)
-            cartographer.trim(theory, larger, smaller, size, **opts)
+            cartographer.trim(theory, larger, smaller, size, **options)
             larger = smaller
-        cartographer.validate(larger, **opts)
+        cartographer.validate(larger, **options)
 
 
 @parsable.command
