@@ -166,7 +166,7 @@ def test_analyst(theory, **options):
         assert os.path.exists(world), 'First initialize normalized world'
         with analyst.load(theory, world, **options) as db:
             fail_count = db.test()
-            assert fail_count == 0, 'Failed {} cases'.format(fail_count)
+    assert fail_count == 0, 'Failed {} cases'.format(fail_count)
     print 'Passed analyst test'
 
 

@@ -113,6 +113,11 @@ DenseSet get_nonconst (Structure & structure)
         }
     }
 
+    size_t total_count = carrier.item_count();
+    size_t const_count = total_count - nonconst.count_items();
+    POMAGMA_INFO(
+        "found " << const_count << " / " << total_count << " constant obs");
+
     return nonconst;
 }
 
@@ -159,69 +164,18 @@ void infer_less_transitive (
     }
 }
 
-//      LESS f g               LESS x y          LESS f g    LESS x y
-// --------------------   --------------------   --------------------
-// LESS fun f x fun g x   LESS fun f x fun f y   LESS fun f x fun g y
-//
-// FIXME this implementation is not complete for the above rules
-void infer_less_monotone (
-    BinaryRelation & LESS,
-    const BinaryFunction & fun,
-    const DenseSet & nonconst)
+inline void infer_less_monotone_nonconst (
+        const BinaryRelation & LESS,
+        const BinaryFunction & fun,
+        const DenseSet & nonconst,
+        const Ob f,
+        DenseSet & x_set,
+        DenseSet & y_set,
+        TheoremQueue & theorems)
 {
-    POMAGMA_INFO("Inferring binary LESS-monotone");
-
-    const size_t item_dim = nonconst.item_dim();
-    std::vector<Ob> f_set;
-    for (auto iter = nonconst.iter(); iter.ok(); iter.next()) {
-        Ob f = * iter;
-        f_set.push_back(f);
-    }
-    const size_t f_count = f_set.size();
-
-    std::mutex mutex;
-    #pragma omp parallel
-    {
-        DenseSet g_set(item_dim);
-        DenseSet x_set(item_dim);
-        DenseSet y_set(item_dim);
-        TheoremQueue theorems(LESS);
-
-        #pragma omp for schedule(dynamic, 1)
-        for (size_t iter = 0; iter < f_count; ++iter) {
-            Ob f = f_set[iter];
-
-            g_set.set_insn(nonconst, LESS.get_Lx_set(f));
-            g_set.remove(f);
-            for (auto iter = g_set.iter(); iter.ok(); iter.next()) {
-                Ob g = * iter;
-
-                x_set.set_insn(fun.get_Lx_set(f), fun.get_Lx_set(g));
-                for (auto iter = x_set.iter(); iter.ok(); iter.next()) {
-                    Ob x = * iter;
-                    Ob fx = fun.find(f, x);
-                    Ob gx = fun.find(g, x);
-                    theorems.try_push(fx, gx);
-                }
-
-                x_set.set_diff(fun.get_Lx_set(f), fun.get_Lx_set(g));
-                for (auto iter = x_set.iter(); iter.ok(); iter.next()) {
-                    Ob x = * iter;
-                    Ob fx = fun.find(f, x);
-                    const DenseSet less_fx = LESS.get_Lx_set(fx);
-                    y_set.set_ppn(
-                        LESS.get_Lx_set(x),
-                        fun.get_Lx_set(g),
-                        fun.get_Lx_set(f));
-                    for (auto iter = y_set.iter(); iter.ok(); iter.next()) {
-                        Ob y = * iter;
-                        Ob gy = fun.find(g, y);
-                        if (unlikely(not less_fx(gy))) {
-                            theorems.push(fx, gy);
-                        }
-                    }
-                }
-            }
+    for (auto iter = LESS.iter_lhs(f); iter.ok(); iter.next()) {
+        Ob g = * iter;
+        if (unlikely(g == f)) {
 
             for (auto iter = fun.iter_lhs(f); iter.ok(); iter.next()) {
                 Ob x = * iter;
@@ -235,7 +189,118 @@ void infer_less_monotone (
                 }
             }
 
-            theorems.flush(mutex);
+        } else if (nonconst(g)) {
+
+            x_set.set_insn(fun.get_Lx_set(f), fun.get_Lx_set(g));
+            for (auto iter = x_set.iter(); iter.ok(); iter.next()) {
+                Ob x = * iter;
+                Ob fx = fun.find(f, x);
+                Ob gx = fun.find(g, x);
+                theorems.try_push(fx, gx);
+            }
+
+            x_set.set_diff(fun.get_Lx_set(f), fun.get_Lx_set(g));
+            for (auto iter = x_set.iter(); iter.ok(); iter.next()) {
+                Ob x = * iter;
+                Ob fx = fun.find(f, x);
+                const DenseSet less_fx = LESS.get_Lx_set(fx);
+                y_set.set_ppn(
+                    LESS.get_Lx_set(x),
+                    fun.get_Lx_set(g),
+                    fun.get_Lx_set(f));
+                for (auto iter = y_set.iter(); iter.ok(); iter.next()) {
+                    Ob y = * iter;
+                    Ob gy = fun.find(g, y);
+                    if (unlikely(not less_fx(gy))) {
+                        theorems.push(fx, gy);
+                    }
+                }
+            }
+
+        } else if (Ob g_ = fun.find(g, g)) {
+
+            for (auto iter = fun.iter_lhs(f); iter.ok(); iter.next()) {
+                Ob x = * iter;
+                Ob fx = fun.find(f, x);
+                theorems.try_push(fx, g_);
+            }
+        }
+    }
+}
+
+inline void infer_less_monotone_const (
+        const BinaryRelation & LESS,
+        const BinaryFunction & fun,
+        const DenseSet & nonconst,
+        const Ob f,
+        const Ob f_,
+        TheoremQueue & theorems)
+{
+    for (auto iter = LESS.iter_lhs(f); iter.ok(); iter.next()) {
+        Ob g = * iter;
+        if (nonconst(g)) {
+
+            for (auto iter = fun.iter_lhs(g); iter.ok(); iter.next()) {
+                Ob x = * iter;
+                Ob gx = fun.find(g, x);
+                theorems.try_push(f_, gx);
+            }
+
+        } else if (Ob g_ = fun.find(g, g)) {
+
+            theorems.try_push(f_, g_);
+        }
+    }
+}
+
+//      LESS f g               LESS x y          LESS f g    LESS x y
+// --------------------   --------------------   --------------------
+// LESS fun f x fun g x   LESS fun f x fun f y   LESS fun f x fun g y
+//
+// FIXME this implementation is not complete for the above rules
+void infer_less_monotone (
+        const Carrier & carrier,
+        BinaryRelation & LESS,
+        const BinaryFunction & fun,
+        const DenseSet & nonconst)
+{
+    POMAGMA_INFO("Inferring binary LESS-monotone");
+
+    const size_t item_dim = carrier.item_dim();
+
+    std::mutex mutex;
+    #pragma omp parallel
+    {
+        DenseSet x_set(item_dim);
+        DenseSet y_set(item_dim);
+        TheoremQueue theorems(LESS);
+
+        #pragma omp for schedule(dynamic, 1)
+        for (Ob f = 1; f <= item_dim; ++f) {
+            if (not carrier.contains(f)) { continue; }
+            if (nonconst(f)) {
+
+                infer_less_monotone_nonconst(
+                    LESS,
+                    fun,
+                    nonconst,
+                    f,
+                    x_set,
+                    y_set,
+                    theorems);
+                theorems.flush(mutex);
+
+            } else if (Ob f_ = fun.find(f, f)) {
+
+                infer_less_monotone_const(
+                    LESS,
+                    fun,
+                    nonconst,
+                    f,
+                    f_,
+                    theorems);
+                theorems.flush(mutex);
+            }
         }
     }
 }
@@ -701,8 +766,8 @@ size_t infer_less (Structure & structure)
     size_t start_count = LESS.count_pairs();
 
     infer_less_transitive(carrier, LESS, NLESS);
-    infer_less_monotone(LESS, APP, nonconst);
-    infer_less_monotone(LESS, COMP, nonconst);
+    infer_less_monotone(carrier, LESS, APP, nonconst);
+    infer_less_monotone(carrier, LESS, COMP, nonconst);
     if (JOIN) {
         infer_less_join_monotone(carrier, LESS, * JOIN);
         infer_less_convex(carrier, LESS, * JOIN);
