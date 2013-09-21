@@ -590,14 +590,41 @@ inline bool infer_nless_monotone (
     Ob y,
     DenseSet & z_set)
 {
-    if (nonconst.contains(x) or nonconst.contains(y)) {
-        z_set.set_insn(fun.get_Lx_set(x), fun.get_Lx_set(y));
-        for (auto iter = z_set.iter(); iter.ok(); iter.next()) {
-            Ob z = * iter;
-            Ob xz = fun.find(x, z);
-            Ob yz = fun.find(y, z);
-            if (unlikely(NLESS.find(xz, yz))) {
-                return true;
+    if (nonconst(x)) {
+        if (nonconst(y)) {
+
+            z_set.set_insn(fun.get_Lx_set(x), fun.get_Lx_set(y));
+            for (auto iter = z_set.iter(); iter.ok(); iter.next()) {
+                Ob z = * iter;
+                Ob xz = fun.find(x, z);
+                Ob yz = fun.find(y, z);
+                if (unlikely(NLESS.find(xz, yz))) {
+                    return true;
+                }
+            }
+
+        } else if (Ob y_ = fun.find(y, y)) {
+
+            DenseSet nless = NLESS.get_Rx_set(y_);
+            for (auto iter = fun.iter_lhs(x); iter.ok(); iter.next()) {
+                Ob z = * iter;
+                Ob xz = fun.find(x, z);
+                if (unlikely(nless.contains(xz))) {
+                    return true;
+                }
+            }
+
+        }
+    } else if (Ob x_ = fun.find(x, x)) {
+        if (nonconst(y)) {
+
+            DenseSet nless = NLESS.get_Lx_set(x_);
+            for (auto iter = fun.iter_lhs(y); iter.ok(); iter.next()) {
+                Ob z = * iter;
+                Ob yz = fun.find(y, z);
+                if (unlikely(nless.contains(yz))) {
+                    return true;
+                }
             }
         }
     }
@@ -638,6 +665,7 @@ inline bool infer_nless_monotone (
     return false;
 }
 
+
 // TODO infer associativity
 //
 // ----------------------------------
@@ -649,7 +677,9 @@ inline bool infer_nless_monotone (
 // -------------------------------------
 // EQUAL RAND RAND x y z RAND x RAND y z
 
+
 } // anonymous namespace
+
 
 // ---------------------   ----------------------------
 // EQUAL APP APP K x y x   EQUAL COMP APP K x y APP K x
@@ -828,6 +858,9 @@ size_t infer_less (Structure & structure)
     return theorem_count;
 }
 
+// LESS x y   LESS y x
+// -------------------
+//      EQUAL x y
 size_t infer_equal (Structure & structure)
 {
     POMAGMA_INFO("Inferring EQUAL");
