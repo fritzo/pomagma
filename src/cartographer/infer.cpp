@@ -100,15 +100,15 @@ public:
 DenseSet get_nonconst (Structure & structure)
 {
     const Carrier & carrier = structure.carrier();
-    const NullaryFunction & K = structure.nullary_function("K");
+    const Ob K = structure.nullary_function("K").find();
     const BinaryFunction & APP = structure.binary_function("APP");
 
     DenseSet nonconst(carrier.item_dim());
     nonconst = carrier.support();
-    if (Ob K_ = K.find()) {
-        for (auto iter = APP.iter_lhs(K_); iter.ok(); iter.next()) {
+    if (K) {
+        for (auto iter = APP.iter_lhs(K); iter.ok(); iter.next()) {
             Ob x = * iter;
-            Ob APP_K_x = APP.find(K_, x);
+            Ob APP_K_x = APP.find(K, x);
             nonconst.remove(APP_K_x);
         }
     }
@@ -653,35 +653,81 @@ inline bool infer_nless_monotone (
 
 // ---------------------   ----------------------------
 // EQUAL APP APP K x y x   EQUAL COMP APP K x y APP K x
+//
+// EQUAL APP x TOP APP x BOT   EQUAL APP x TOP APP x BOT
+// -------------------------   -------------------------
+//  EQUAL x APP K APP x TOP      EQUAL x APP K APP x y
 size_t infer_const (Structure & structure)
 {
     POMAGMA_INFO("Inferring K");
 
     const Carrier & carrier = structure.carrier();
-    const NullaryFunction & K = structure.nullary_function("K");
+    const Ob K = structure.nullary_function("K").find();
+    const Ob TOP = structure.nullary_function("TOP").find();
+    const Ob BOT = structure.nullary_function("BOT").find();
     BinaryFunction & APP = structure.binary_function("APP");
     BinaryFunction & COMP = structure.binary_function("COMP");
 
-    DenseSet y_set(carrier.item_dim());
+    DenseSet temp_set(carrier.item_dim());
+    DenseSet const_set(carrier.item_dim());
 
     size_t theorem_count = 0;
-    if (Ob K_ = K.find()) {
-        for (auto iter = APP.iter_lhs(K_); iter.ok(); iter.next()) {
+    if (K) {
+        for (auto iter = APP.iter_lhs(K); iter.ok(); iter.next()) {
             Ob x = * iter;
-            Ob APP_K_x = APP.find(K_, x);
+            Ob APP_K_x = APP.find(K, x);
+            const_set.raw_insert(APP_K_x);
 
-            y_set.set_diff(carrier.support(), APP.get_Lx_set(APP_K_x));
-            for (auto iter = y_set.iter(); iter.ok(); iter.next()) {
+            temp_set.set_diff(carrier.support(), APP.get_Lx_set(APP_K_x));
+            for (auto iter = temp_set.iter(); iter.ok(); iter.next()) {
                 Ob y = * iter;
                 APP.insert(APP_K_x, y, x);
                 ++theorem_count;
             }
 
-            y_set.set_diff(carrier.support(), COMP.get_Lx_set(APP_K_x));
-            for (auto iter = y_set.iter(); iter.ok(); iter.next()) {
+            temp_set.set_diff(carrier.support(), COMP.get_Lx_set(APP_K_x));
+            for (auto iter = temp_set.iter(); iter.ok(); iter.next()) {
                 Ob y = * iter;
                 COMP.insert(APP_K_x, y, APP_K_x);
                 ++theorem_count;
+            }
+        }
+
+        if (TOP and BOT) {
+
+            temp_set.set_ppn(
+                APP.get_Rx_set(TOP),
+                APP.get_Rx_set(BOT),
+                const_set);
+            for (auto iter = temp_set.iter(); iter.ok(); iter.next()) {
+                Ob x = * iter;
+                Ob APP_x_TOP = APP.find(x, TOP);
+                Ob APP_x_BOT = APP.find(x, BOT);
+                if (unlikely(APP_x_TOP == APP_x_BOT)) {
+                    APP.insert(K, APP_x_TOP, x);
+                    const_set.raw_insert(x);
+                    ++theorem_count;
+                }
+            }
+
+            temp_set.set_ppn(
+                COMP.get_Rx_set(TOP),
+                COMP.get_Rx_set(BOT),
+                const_set);
+            for (auto iter = temp_set.iter(); iter.ok(); iter.next()) {
+                Ob x = * iter;
+                Ob COMP_x_TOP = COMP.find(x, TOP);
+                Ob COMP_x_BOT = COMP.find(x, BOT);
+                if (unlikely(COMP_x_TOP == COMP_x_BOT)) {
+                    for (auto iter = APP.iter_lhs(x); iter.ok(); iter.next()) {
+                        Ob y = * iter;
+                        Ob APP_x_y = APP.find(x, y);
+                        APP.insert(K, APP_x_y, x);
+                        const_set.raw_insert(x);
+                        ++theorem_count;
+                        break;
+                    }
+                }
             }
         }
     }
