@@ -22,9 +22,9 @@ Approximator::Approximator (Structure & structure)
     POMAGMA_ASSERT(m_bot, "BOT is not defined");
 }
 
-size_t Approximator::validate_less ()
+size_t Approximator::test_less ()
 {
-    POMAGMA_INFO("Validating LESS closure");
+    POMAGMA_INFO("Testing LESS closure");
 
     size_t fail_count = 0;
 
@@ -55,11 +55,11 @@ size_t Approximator::validate_less ()
 }
 
 template<class Function>
-size_t Approximator::validate_function (
+size_t Approximator::test_function (
         const std::string & name,
         const Function & fun)
 {
-    POMAGMA_INFO("Validating " << name << " approximation");
+    POMAGMA_INFO("Testing " << name << " approximation");
 
     size_t ob_fail_count = 0;
     size_t upper_fail_count = 0;
@@ -125,17 +125,16 @@ size_t Approximator::validate_function (
     }
 
     if (ob_fail_count) {
-        POMAGMA_WARN(name << "-mapped ob failed "
-            << ob_fail_count << " cases");
+        POMAGMA_WARN(name << " ob failed " << ob_fail_count << " cases");
     }
     if (upper_missing_count or upper_extra_count) {
-        POMAGMA_WARN(name << "-mapped upper had "
+        POMAGMA_WARN(name << " upper has "
             << upper_missing_count << " missing and "
             << upper_extra_count << " extra obs in "
             << upper_fail_count << " cases");
     }
     if (lower_missing_count or lower_extra_count) {
-        POMAGMA_WARN(name << "-mapped lower had "
+        POMAGMA_WARN(name << " lower has "
             << lower_missing_count << " missing and "
             << lower_extra_count << " extra obs in "
             << lower_fail_count << " cases");
@@ -144,24 +143,24 @@ size_t Approximator::validate_function (
     return ob_fail_count + upper_fail_count + lower_fail_count;
 }
 
-size_t Approximator::validate ()
+size_t Approximator::test ()
 {
-    POMAGMA_INFO("Validating approximator");
+    POMAGMA_INFO("Testing approximator");
 
     size_t fail_count = 0;
 
-    fail_count += validate_less();
+    fail_count += test_less();
     for (auto pair : m_structure.signature().binary_functions()) {
-        fail_count += validate_function(pair.first, * pair.second);
+        fail_count += test_function(pair.first, * pair.second);
     }
     for (auto pair : m_structure.signature().symmetric_functions()) {
-        fail_count += validate_function(pair.first, * pair.second);
+        fail_count += test_function(pair.first, * pair.second);
     }
 
     if (fail_count) {
-        POMAGMA_WARN("approximator is invalid");
+        POMAGMA_WARN("Failed approximator test");
     } else {
-        POMAGMA_INFO("approximator is valid");
+        POMAGMA_INFO("Passed approximator test");
     }
 
     return fail_count;

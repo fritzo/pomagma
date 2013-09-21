@@ -162,6 +162,8 @@ void infer_less_transitive (
 //      LESS f g               LESS x y          LESS f g    LESS x y
 // --------------------   --------------------   --------------------
 // LESS fun f x fun g x   LESS fun f x fun f y   LESS fun f x fun g y
+//
+// FIXME this implementation is not complete for the above rules
 void infer_less_monotone (
     BinaryRelation & LESS,
     const BinaryFunction & fun,

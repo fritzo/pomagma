@@ -53,7 +53,7 @@ public:
 
     Approximator (Structure & structure);
 
-    size_t validate ();
+    size_t test ();
     void validate (const Approximation & approx);
 
     Approximation find (
@@ -84,9 +84,9 @@ private:
             Approximation & approx,
             DenseSet & temp_set);
 
-    size_t validate_less ();
+    size_t test_less ();
     template<class Function>
-    size_t validate_function (
+    size_t test_function (
             const std::string & name,
             const Function & fun);
 

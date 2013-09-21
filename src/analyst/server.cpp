@@ -28,7 +28,7 @@ Server::Server (
 
 size_t Server::test ()
 {
-    size_t fail_count = m_approximator.validate();
+    size_t fail_count = m_approximator.test();
     return fail_count;
 }
 
