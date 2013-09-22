@@ -95,9 +95,12 @@ def test(theory, **options):
         with cartographer.load(theory, '0.h5', **options) as db:
             db.validate()
             db.dump('1.h5')
+            expected_size = pomagma.util.get_item_count('1.h5')
+            actual_size = db.info()['item_count']
+            assert actual_size == expected_size
         surveyor.survey(theory, '1.h5', '2.h5', sizes[1], **options)
         with cartographer.load(theory, '2.h5', **options) as db:
-            db.trim(sizes[0], ['3.h5'])
+            db.trim([{'size': sizes[0], 'filename': '3.h5'}])
         surveyor.survey(theory, '3.h5', '4.h5', sizes[1], **options)
         with cartographer.load(theory, '2.h5', **options) as db:
             db.aggregate('4.h5')
@@ -310,7 +313,7 @@ class CartographerWorker(object):
                 self.db.validate()
                 self.db.dump(self.world)
                 self.infer_state = 0
-                world_size = pomagma.util.get_item_count(self.world)
+                world_size = self.db.info()['item_count']
                 self.log('world_size = {}'.format(world_size))
                 os.remove(survey)
             self.db.crop()
@@ -330,7 +333,7 @@ class CartographerWorker(object):
                 regions_out.append(region_out)
                 if len(regions_out) == trim_count:
                     break
-        self.db.trim(self.region_size, regions_out)
+        self.db.trim([{'size': self.region_size, 'filename': regions_out}])
 
     def replace_region_queue(self):
         self.log('Replacing region queue')
@@ -536,6 +539,7 @@ def profile(theory, size_blocks=3, dsize_blocks=0, **options):
 
 
 def sparse_range(min_size, max_size):
+    assert min_size <= max_size
     sizes = [512]
     while True:
         size = 2 * sizes[-1]
@@ -550,33 +554,46 @@ def sparse_range(min_size, max_size):
 
 
 @parsable.command
-def trim_regions(theory, **options):
+def trim(theory, parallel=True, **options):
     '''
-    Trim a set of regions for testing on small machines.
+    Trim a set of normal regions for running analyst on small machines.
     '''
     with in_atlas(theory):
-        options.setdefault('log_file', 'trim_regions.log')
-        world = 'world.h5'
-        min_size = pomagma.util.MIN_SIZES[theory]
-        max_size = pomagma.util.get_item_count(world)
-        sizes = reversed(sparse_range(min_size, max_size))
-        larger = world
-        for size in sizes:
-            print 'Trimming region of size', size
-            smaller = 'region.{:d}.h5'.format(size)
-            cartographer.trim(theory, larger, smaller, size, **options)
-            larger = smaller
-        cartographer.validate(larger, **options)
+        options.setdefault('log_file', 'trim.log')
+        with cartographer.load(theory, 'world.normal.h5', **options) as db:
+            min_size = pomagma.util.MIN_SIZES[theory]
+            max_size = db.info()['item_count']
+            sizes = sparse_range(min_size, max_size)
+            tasks = []
+            for size in sizes:
+                tasks.append({
+                    'size': size,
+                    'temperature': 0,
+                    'filename': 'region.normal.{:d}.h5'.format(size)
+                })
+            if parallel:
+                print 'Trimming {} regions of sizes {}-{}'.format(
+                    len(sizes),
+                    sizes[0],
+                    sizes[-1])
+                db.trim(tasks)
+            else:
+                for task in tasks:
+                    print 'Trimming region of size {}'.format(task['size'])
+                    db.trim([task])
 
 
 @parsable.command
-def analyze(theory, address=analyst.ADDRESS, **options):
+def analyze(theory, size=None, address=analyst.ADDRESS, **options):
     '''
     Run analyst server on normalized world map.
     '''
-    options.setdefault('log_file', 'analyst.log')
     with in_atlas(theory):
-        world = 'world.normal.h5'
+        options.setdefault('log_file', 'analyst.log')
+        if size is None:
+            world = 'world.normal.h5'
+        else:
+            world = 'region.normal.{}.h5'.format(size)
         assert os.path.exists(world), 'First initialize normalized world'
         try:
             server = analyst.serve(theory, world, **options)

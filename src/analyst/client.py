@@ -25,10 +25,10 @@ class Client(object):
     def _call(self, request):
         raw_request = request.SerializeToString()
         self._socket.send(raw_request, 0)
-        raw_response = self._socket.recv(0)
-        response = Response()
-        response.ParseFromString(raw_response)
-        return response
+        raw_reply = self._socket.recv(0)
+        reply = Response()
+        reply.ParseFromString(raw_reply)
+        return reply
 
     def ping(self):
         request = Request()
@@ -37,16 +37,16 @@ class Client(object):
     def test(self):
         request = Request()
         request.test.SetInParent()
-        response = self._call(request)
-        return response.test.fail_count
+        reply = self._call(request)
+        return reply.test.fail_count
 
     def _simplify(self, codes):
         request = Request()
         request.simplify.SetInParent()
         for code in codes:
             request.simplify.add(code)
-        response = self._call(request)
-        return list(response.simplify.codes)
+        reply = self._call(request)
+        return list(reply.simplify.codes)
 
     def simplify(self, codes):
         assert isinstance(codes, list), codes
@@ -61,8 +61,8 @@ class Client(object):
         request.batch_simplify.SetInParent()
         request.batch_simplify.codes_in = codes_in
         request.batch_simplify.codes_out = codes_out
-        response = self._call(request)
-        return response.batch_simplify.line_count
+        reply = self._call(request)
+        return reply.batch_simplify.line_count
 
     def batch_simplify(self, codes_in, codes_out):
         assert isinstance(codes_in, basestring), codes_in
@@ -86,10 +86,10 @@ class Client(object):
                 name = line['name']
                 assert isinstance(name, basestring), name
                 request_line.name = name
-        response = self._call(request)
-        assert len(response.validate.results) == len(corpus)
+        reply = self._call(request)
+        assert len(reply.validate.results) == len(corpus)
         results = []
-        for result in response.validate.results:
+        for result in reply.validate.results:
             results.append({
                 'is_top': TROOL[result.is_top],
                 'is_bot': TROOL[result.is_bot],

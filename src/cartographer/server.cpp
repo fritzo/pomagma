@@ -13,6 +13,7 @@
 #include <pomagma/macrostructure/router.hpp>
 #include "messages.pb.h"
 #include <zmq.hpp>
+#include <algorithm>
 
 namespace pomagma
 {
@@ -30,34 +31,45 @@ Server::Server (
     }
 }
 
-void Server::trim (
-        bool temperature,
-        size_t region_size,
-        const std::vector<std::string> & regions_out)
+void Server::trim (const std::vector<TrimTask> & tasks)
 {
-    size_t region_count = regions_out.size();
     compact(m_structure);
-    if (m_structure.carrier().item_count() <= region_size) {
-        #pragma omp parallel for schedule(dynamic, 1)
-        for (size_t iter = 0; iter < region_count; ++iter) {
-            m_structure.dump(regions_out[iter]);
-        }
-    } else {
-        #pragma omp parallel for schedule(dynamic, 1)
-        for (size_t iter = 0; iter < region_count; ++iter) {
+    const size_t item_count = m_structure.carrier().item_count();
+
+    std::vector<TrimTask> sorted_tasks = tasks;
+    std::sort(
+        sorted_tasks.begin(),
+        sorted_tasks.end(),
+        [](const TrimTask & lhs, const TrimTask & rhs){
+            return lhs.size > rhs.size;
+        });
+    const size_t task_count = sorted_tasks.size();
+    #pragma omp parallel for schedule(dynamic, 1)
+    for (size_t iter = 0; iter < task_count; ++iter) {
+        const TrimTask & task = sorted_tasks[iter];
+        if (task.size >= item_count) {
+
+            if (task.size > item_count) {
+                POMAGMA_WARN("trimming only " <<
+                    item_count << " of " << task.size << " obs");
+            }
+            m_structure.dump(task.filename);
+
+        } else {
+
             Structure region;
-            region.init_carrier(region_size);
+            region.init_carrier(task.size);
             extend(region.signature(), m_structure.signature());
             pomagma::trim(
                 m_structure,
                 region,
                 m_theory_file,
                 m_language_file,
-                temperature);
+                task.temperature);
             if (POMAGMA_DEBUG_LEVEL > 1) {
                 region.validate();
             }
-            region.dump(regions_out[iter]);
+            region.dump(task.filename);
         }
     }
 }
@@ -178,6 +190,13 @@ void Server::dump (const std::string & world_out)
     m_structure.dump(world_out);
 }
 
+Server::Info Server::info ()
+{
+    Info result;
+    result.item_count = m_structure.carrier().item_count();
+    return result;
+}
+
 void Server::stop ()
 {
     m_serving = false;
@@ -195,14 +214,15 @@ messaging::CartographerResponse handle (
     Timer timer;
     messaging::CartographerResponse response;
 
-    if (request.has_trim()) {
-        bool temperature = request.trim().temperature();
-        const size_t region_size = request.trim().region_size();
-        std::vector<std::string> regions_out;
-        for (int i = 0; i < request.trim().regions_out_size(); ++i) {
-            regions_out.push_back(request.trim().regions_out(i));
+    if (request.trim_size() > 0) {
+        std::vector<Server::TrimTask> tasks(request.trim_size());
+        for (int i = 0; i < request.trim_size(); ++i) {
+            const auto & task = request.trim(i);
+            tasks[i].size = task.size();
+            tasks[i].temperature = task.temperature();
+            tasks[i].filename = task.filename();
         }
-        server.trim(temperature, region_size, regions_out);
+        server.trim(tasks);
         response.mutable_trim();
     }
 
@@ -247,6 +267,11 @@ messaging::CartographerResponse handle (
     if (request.has_dump()) {
         server.dump(request.dump().world_out());
         response.mutable_dump();
+    }
+
+    if (request.has_info()) {
+        const auto info = server.info();
+        response.mutable_info()->set_item_count(info.item_count);
     }
 
     if (request.has_stop()) {

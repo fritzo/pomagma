@@ -19,35 +19,44 @@ class Client(object):
     def _call(self, request):
         raw_request = request.SerializeToString()
         self._socket.send(raw_request, 0)
-        raw_response = self._socket.recv(0)
-        response = Response()
-        response.ParseFromString(raw_response)
-        return response
+        raw_reply = self._socket.recv(0)
+        reply = Response()
+        reply.ParseFromString(raw_reply)
+        return reply
 
     def ping(self):
         request = Request()
         self._call(request)
 
-    def _trim(self, region_size, regions_out, temperature):
+    def _trim(self, tasks):
         request = Request()
-        request.trim.SetInParent()
-        request.trim.temperature = temperature
-        request.trim.region_size = region_size
-        for region in regions_out:
-            request.trim.regions_out.append(region)
+        for task in tasks:
+            request_task = request.trim.add()
+            request_task.size = task['size']
+            request_task.temperature = task['temperature']
+            request_task.filename = task['filename']
         self._call(request)
 
-    def trim(self, region_size, regions_out, temperature=1):
-        assert isinstance(region_size, int), region_size
-        assert isinstance(regions_out, list), regions_out
-        assert isinstance(temperature, int), temperature
-        for region in regions_out:
-            assert isinstance(region, basestring), region
-            assert not os.path.exists(region), region
-        with pomagma.util.temp_copies(regions_out) as temp_regions_out:
-            self._trim(region_size, temp_regions_out, temperature)
-        for region in regions_out:
-            assert os.path.exists(region), region
+    def trim(self, tasks):
+        assert isinstance(tasks, list)
+        for task in tasks:
+            assert isinstance(task, dict)
+        tasks = [task.copy() for task in tasks]
+        for task in tasks:
+            assert 'size' in task, task
+            assert isinstance(task['size'], int), task['size']
+            assert 'filename' in task, task
+            assert isinstance(task['filename'], basestring), task['filename']
+            temperature = task.setdefault('temperature', 1)
+            assert temperature in [0, 1], temperature
+        filenames = [task['filename'] for task in tasks]
+        assert len(filenames) == len(set(filenames)), 'duplicated out file'
+        with pomagma.util.temp_copies(filenames) as temp_filenames:
+            for task, filename in zip(tasks, temp_filenames):
+                task['filename'] = filename
+            self._trim(tasks)
+        for filename in filenames:
+            assert os.path.exists(filename), filename
 
     def _aggregate(self, survey_in):
         request = Request()
@@ -64,11 +73,11 @@ class Client(object):
         request = Request()
         request.assume.SetInParent()
         request.assume.facts_in = facts_in
-        response = self._call(request)
+        reply = self._call(request)
         return {
-            'pos': response.assume.pos_count,
-            'neg': response.assume.neg_count,
-            'merge': response.assume.merge_count,
+            'pos': reply.assume.pos_count,
+            'neg': reply.assume.neg_count,
+            'merge': reply.assume.merge_count,
         }
 
     def assume(self, facts_in):
@@ -80,8 +89,8 @@ class Client(object):
         request = Request()
         request.infer.SetInParent()
         request.infer.priority = priority
-        response = self._call(request)
-        return response.infer.theorem_count
+        reply = self._call(request)
+        return reply.infer.theorem_count
 
     def infer(self, priority):
         assert isinstance(priority, int), priority
@@ -99,10 +108,10 @@ class Client(object):
         request.conjecture.diverge_out = diverge_out
         request.conjecture.equal_out = equal_out
         request.conjecture.max_count = max_count
-        response = self._call(request)
+        reply = self._call(request)
         return {
-            'diverge_count': response.conjecture.diverge_count,
-            'equal_count': response.conjecture.equal_count,
+            'diverge_count': reply.conjecture.diverge_count,
+            'equal_count': reply.conjecture.equal_count,
         }
 
     def conjecture(self, diverge_out, equal_out, max_count=1000):
@@ -142,6 +151,15 @@ class Client(object):
         with pomagma.util.temp_copy(world_out) as temp_world_out:
             self._dump(temp_world_out)
         assert os.path.exists(world_out), world_out
+
+    def info(self):
+        request = Request()
+        request.info.SetInParent()
+        reply = self._call(request)
+        info = reply.info
+        return {
+            'item_count': info.item_count,
+        }
 
     def stop(self):
         request = Request()

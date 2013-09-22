@@ -3,9 +3,9 @@ package pomagma_messaging;
 message CartographerRequest {
 
   message Trim {
-    required bool temperature = 1;
-    required uint32 region_size = 2;
-    repeated string regions_out = 3;
+    required uint32 size = 1;
+    required bool temperature = 2;
+    required string filename = 3;
   }
   message Aggregate {
     required string survey_in = 1;
@@ -28,11 +28,13 @@ message CartographerRequest {
   message Dump {
     required string world_out = 1;
   }
+  message Info {
+  }
   message Stop {
   }
 
   // ordered by priority
-  optional Trim trim = 1;
+  repeated Trim trim = 1;
   optional Aggregate aggregate = 2;
   optional Assume assume = 3;
   optional Infer infer = 4;
@@ -40,7 +42,8 @@ message CartographerRequest {
   optional Crop crop = 6;
   optional Validate validate = 7;
   optional Dump dump = 8;
-  optional Stop stop = 9;
+  optional Info info = 9;
+  optional Stop stop = 10;
 }
 
 message CartographerResponse {
@@ -67,6 +70,9 @@ message CartographerResponse {
   }
   message Dump {
   }
+  message Info {
+      required uint32 item_count = 1;
+  }
   message Stop {
   }
 
@@ -78,5 +84,6 @@ message CartographerResponse {
   optional Crop crop = 6;
   optional Validate validate = 7;
   optional Dump dump = 8;
-  optional Stop stop = 9;
+  optional Info info = 9;
+  optional Stop stop = 10;
 }
