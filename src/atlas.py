@@ -6,6 +6,18 @@ import pomagma.theorist
 
 
 @contextlib.contextmanager
+def chdir(theory, init=False):
+    path = os.path.join(pomagma.util.DATA, 'atlas', theory)
+    if init:
+        assert not os.path.exists(path), 'World map is already initialized'
+        os.makedirs(path)
+    else:
+        assert os.path.exists(path), 'First initialize world map'
+    with pomagma.util.chdir(path):
+        yield
+
+
+@contextlib.contextmanager
 def load(theory, world, address=None, **opts):
     with pomagma.util.mutex(world):
         with pomagma.cartographer.load(theory, world, address, **opts) as db:
