@@ -7,11 +7,7 @@ BIN = os.path.join(pomagma.util.BIN, 'analyst')
 
 
 class Server(object):
-    def __init__(self, theory, world, address=None, **opts):
-        if address is None:
-            address = 'ipc://{}'.format(os.path.join(
-                os.path.dirname(pomagma.util.abspath(world)),
-                'analyst.socket'))
+    def __init__(self, theory, world, address, **opts):
         language_file = os.path.join(
             pomagma.util.LANGUAGE,
             '{}.language'.format(theory))
@@ -19,8 +15,9 @@ class Server(object):
             os.path.join(BIN, 'analyst'),
             pomagma.util.abspath(world),
             pomagma.util.abspath(language_file),
-            address,
+            address.replace('tcp://localhost', 'tcp://*'),
         ]
+        assert isinstance(address, basestring), address
         assert os.path.exists(world), world
         assert os.path.exists(language_file), language_file
         self._theory = theory
@@ -43,3 +40,6 @@ class Server(object):
 
     def kill(self):
         self._proc.kill()
+
+    def wait(self):
+        self._proc.wait()

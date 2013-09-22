@@ -570,6 +570,22 @@ def trim_regions(theory, **options):
 
 
 @parsable.command
+def analyze(theory, address=analyst.ADDRESS, **options):
+    '''
+    Run analyst server on normalized world map.
+    '''
+    options.setdefault('log_file', 'analyst.log')
+    with in_atlas(theory):
+        world = 'world.normal.h5'
+        assert os.path.exists(world), 'First initialize normalized world'
+        try:
+            server = analyst.serve(theory, world, **options)
+            server.wait()
+        finally:
+            server.stop()
+
+
+@parsable.command
 def make(theory, max_size=8191, step_size=512, **options):
     '''
     Initialize; explore.
