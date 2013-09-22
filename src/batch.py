@@ -101,21 +101,6 @@ def test(theory, **options):
 
 
 @parsable.command
-def test_analyst(theory, **options):
-    '''
-    Test analyst approximation on normalized world map.
-    '''
-    options.setdefault('log_file', 'test.log')
-    with atlas.chdir(theory):
-        world = 'world.normal.h5'
-        assert os.path.exists(world), 'First initialize normalized world'
-        with analyst.load(theory, world, **options) as db:
-            fail_count = db.test()
-    assert fail_count == 0, 'Failed {} cases'.format(fail_count)
-    print 'Passed analyst test'
-
-
-@parsable.command
 def init(theory, **options):
     '''
     Initialize world map for given theory.
@@ -300,6 +285,21 @@ def analyze(theory, size=None, address=analyst.ADDRESS, **options):
 
 
 @parsable.command
+def test_analyst(theory, **options):
+    '''
+    Test analyst approximation on normalized world map.
+    '''
+    options.setdefault('log_file', 'test.log')
+    with atlas.chdir(theory):
+        world = 'world.normal.h5'
+        assert os.path.exists(world), 'First initialize normalized world'
+        with analyst.load(theory, world, **options) as db:
+            fail_count = db.test()
+    assert fail_count == 0, 'Failed {} cases'.format(fail_count)
+    print 'Passed analyst test'
+
+
+@parsable.command
 def profile_surveyor(theory, size_blocks=3, dsize_blocks=0, **options):
     '''
     Profile surveyor through callgrind on random region of world.
@@ -318,7 +318,8 @@ def profile_surveyor(theory, size_blocks=3, dsize_blocks=0, **options):
 
         if not os.path.exists(region):
             assert os.path.exists(world), 'First initialize world map'
-            cartographer.trim(theory, world, region, size, **options)
+            with cartographer.load(theory, world, **options) as db:
+                db.trim({'size': size, 'filename': region})
         options.setdefault('runner', 'valgrind --tool=callgrind')
         surveyor.survey(theory, region, temp, size + dsize, **options)
         os.remove(temp)

@@ -43,7 +43,7 @@ python-libs:
 	@$(MAKE) -C src/language all
 
 profile:
-	python -m pomagma profile
+	python -m pomagma unit_profile
 	# TODO add profile for sequential & concurrent dense_set
 
 clean: FORCE

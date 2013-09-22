@@ -46,7 +46,7 @@ def batch_test(theory='all'):
 
 
 @parsable.command
-def profile():
+def unit_profile():
     '''
     Profile data structures.
     '''
