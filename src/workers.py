@@ -289,7 +289,7 @@ def cartographer_work(
 
 
 def cartographer(*args, **kwargs):
-    parsable_fork(cartographer_work, *args, **kwargs)
+    return parsable_fork(cartographer_work, *args, **kwargs)
 
 
 @parsable.command
@@ -323,7 +323,7 @@ def surveyor_work(theory, step_size=512, **options):
 
 
 def surveyor(*args, **kwargs):
-    parsable_fork(surveyor_work, *args, **kwargs)
+    return parsable_fork(surveyor_work, *args, **kwargs)
 
 
 if __name__ == '__main__':
