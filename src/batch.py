@@ -77,10 +77,20 @@ def test(theory, **options):
             **options)
         #assert theorem_count > 0, theorem_count
 
+        def test_analyst_validate(db, examples):
+            expected = examples.values()
+            actual = db.validate(examples.keys())
+            for a, e in zip(actual, expected):
+                assert a == e, 'analyst.validate, {} vs {}'.format(a, e)
+
         if theory == 'h4':
             with analyst.load(theory, '6.h5', **options) as db:
                 line_count = db.batch_simplify(equal_theorems, simplified)
                 assert line_count > 0, line_count
+                test_analyst_validate(db, {
+                    'BOT': {'is_top': False, 'is_bot': True},
+                    'TOP': {'is_top': True, 'is_bot': False},
+                })
         else:
             with cartographer.load(theory, '6.h5', **options) as db:
                 db.assume(equal_theorems)
@@ -97,7 +107,13 @@ def test(theory, **options):
                 line_count = db.batch_simplify(diverge_theorems, simplified)
                 assert line_count > 0, line_count
                 fail_count = db.test()
-                assert fail_count == 0, 'analyst failed'
+                assert fail_count == 0, 'analyst.batch_simplify failed'
+                test_analyst_validate(db, {
+                    'BOT': {'is_top': False, 'is_bot': True},
+                    'TOP': {'is_top': True, 'is_bot': False},
+                    'I': {'is_top': False, 'is_bot': False},
+                    'I I': {'is_top': False, 'is_bot': False},
+                })
 
 
 @parsable.command

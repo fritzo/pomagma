@@ -44,7 +44,7 @@ class Client(object):
         request = Request()
         request.simplify.SetInParent()
         for code in codes:
-            request.simplify.add(code)
+            request.simplify.codes.append(code)
         reply = self._call(request)
         return list(reply.simplify.codes)
 
@@ -76,7 +76,7 @@ class Client(object):
         request = Request()
         request.validate.SetInParent()
         for code in codes:
-            request.validate.add(code)
+            request.validate.codes.append(code)
         reply = self._call(request)
         results = []
         for result in reply.validate.results:
