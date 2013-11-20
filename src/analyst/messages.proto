@@ -12,14 +12,7 @@ message AnalystRequest {
     required string codes_out = 2;
   }
   message Validate {
-    message Corpus {
-      message Line {
-        optional string name = 1;
-        required string code = 2;
-      }
-      repeated Line lines = 1;
-    }
-    required Corpus corpus = 1;
+    repeated string codes = 1;
   }
 
   optional Test test = 1;

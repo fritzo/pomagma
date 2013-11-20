@@ -12,6 +12,7 @@ Server::Server (
         const char * language_file)
     : m_structure(structure_file),
       m_approximator(m_structure),
+      m_approximate_parser(m_approximator),
       m_probs(),
       m_routes(),
       m_simplifier(m_structure.signature(), m_routes)
@@ -49,6 +50,12 @@ size_t Server::batch_simplify (
     return line_count;
 }
 
+Approximator::Validity Server::is_valid (const std::string & code)
+{
+    Approximation approx = m_approximate_parser.parse(code);
+    return m_approximator.is_valid(approx);
+}
+
 
 namespace
 {
@@ -82,8 +89,15 @@ messaging::AnalystResponse handle (
     }
 
     if (request.has_validate()) {
-        TODO("validate corpus");
-        response.mutable_validate();
+        typedef messaging::AnalystResponse::Validate::Validity::Trool Trool;
+        size_t code_count = request.validate().codes_size();
+        for (size_t i = 0; i < code_count; ++i) {
+            const std::string & code = request.validate().codes(i);
+            auto validity = server.is_valid(code);
+            auto & result = * response.mutable_validate()->add_results();
+            result.set_is_top(static_cast<Trool>(validity.is_top));
+            result.set_is_bot(static_cast<Trool>(validity.is_bot));
+        }
     }
 
     return response;

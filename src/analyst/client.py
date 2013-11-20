@@ -72,26 +72,24 @@ class Client(object):
         assert os.path.exists(codes_out)
         return line_count
 
-    def validate(self, corpus):
-        assert isinstance(corpus, list)
+    def _validate(self, codes):
         request = Request()
         request.validate.SetInParent()
-        for line in corpus:
-            request_line = request.validate.corpus.add()
-            assert isinstance(line, dict)
-            code = line['code']
-            assert isinstance(code, basestring), code
-            request_line.code = code
-            if 'name' in line:
-                name = line['name']
-                assert isinstance(name, basestring), name
-                request_line.name = name
+        for code in codes:
+            request.validate.add(code)
         reply = self._call(request)
-        assert len(reply.validate.results) == len(corpus)
         results = []
         for result in reply.validate.results:
             results.append({
                 'is_top': TROOL[result.is_top],
                 'is_bot': TROOL[result.is_bot],
             })
+        return results
+
+    def validate(self, codes):
+        assert isinstance(codes, list), codes
+        for code in codes:
+            assert isinstance(code, basestring), code
+        results = self._validate(codes)
+        assert len(results) == len(codes), results
         return results

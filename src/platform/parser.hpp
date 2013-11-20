@@ -51,10 +51,15 @@ public:
             Term lhs = parse_term();
             Term rhs = parse_term();
             return m_reducer.reduce(token, fun, lhs, rhs);
+        // TODO
+        //} else if (const auto * rel = m_signature.binary_relation(token)) {
+        //    Term lhs = parse_term();
+        //    Term rhs = parse_term();
+        //    return m_reducer.reduce(token, rel, lhs, rhs);
         } else {
             POMAGMA_ERROR(
                 "unrecognized token '" << token << "' in:" << m_stream.str());
-            return Term();
+            //return Term();
         }
     }
 
@@ -63,6 +68,14 @@ public:
         std::string token;
         POMAGMA_ASSERT(not std::getline(m_stream, token, ' '),
             "unexpected token '" << token << "' in: " << m_stream.str());
+    }
+
+    Term parse (const std::string & expression)
+    {
+        begin(expression);
+        Term result = parse_term();
+        end();
+        return result;
     }
 
 private:

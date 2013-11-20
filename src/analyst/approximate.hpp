@@ -53,6 +53,8 @@ public:
 
     Approximator (Structure & structure);
 
+    Signature & signature () { return m_structure.signature(); }
+
     size_t test ();
     void validate (const Approximation & approx);
 
@@ -69,10 +71,22 @@ public:
             const SymmetricFunction & fun,
             const Approximation & lhs,
             const Approximation & rhs);
+    // TODO
+    //Approximation find (
+    //        const BinaryRelation & rel,
+    //        const Approximation & lhs,
+    //        const Approximation & rhs);
 
-    enum Trool { FALSE, MAYBE, TRUE };
+    enum Trool {
+        MAYBE = 0,
+        FALSE = 1,
+        TRUE = 2
+    };
     Trool is_top (const Approximation & approx);
     Trool is_bot (const Approximation & approx);
+
+    struct Validity { Trool is_top, is_bot; };
+    Validity is_valid (const Approximation & approx);
 
 private:
 
@@ -126,8 +140,8 @@ public:
 
     typedef Approximation Term;
 
-    ApproximateReducer (Structure & structure)
-        : m_approximator(structure)
+    ApproximateReducer (Approximator & approximator)
+        : m_approximator(approximator)
     {}
 
     Approximation reduce (
@@ -163,19 +177,28 @@ public:
         return m_approximator.find(* fun, lhs, rhs);
     }
 
+    // TODO
+    //Approximation reduce (
+    //        const std::string &,
+    //        const BinaryRelation * rel,
+    //        const Approximation & lhs,
+    //        const Approximation & rhs)
+    //{
+    //    return m_approximator.find(* rel, lhs, rhs);
+    //}
+
 private:
 
-    Approximator m_approximator;
+    Approximator & m_approximator;
 };
 
 class ApproximateParser : public Parser<ApproximateReducer>
 {
 public:
 
-    ApproximateParser (
-            Structure & structure)
-        : Parser<ApproximateReducer>(structure.signature(), m_reducer),
-          m_reducer(structure)
+    ApproximateParser (Approximator & approximator)
+        : Parser<ApproximateReducer>(approximator.signature(), m_reducer),
+          m_reducer(approximator)
     {
     }
 

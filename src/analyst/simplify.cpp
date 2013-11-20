@@ -3,15 +3,6 @@
 namespace pomagma
 {
 
-std::string SimplifyParser::simplify (const std::string & expression)
-{
-    // simplify terms like APP APP S K K
-    begin(expression);
-    SimplifyTerm term = parse_term();
-    end();
-    return term.route;
-}
-
 size_t batch_simplify(
         Structure & structure,
         const std::vector<std::string> & routes,

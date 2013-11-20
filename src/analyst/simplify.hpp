@@ -90,7 +90,10 @@ public:
     {
     }
 
-    std::string simplify (const std::string & expression);
+    std::string simplify (const std::string & expression)
+    {
+        return parse(expression).route;
+    }
 
 private:
 
