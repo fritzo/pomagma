@@ -112,7 +112,8 @@ def test(theory, **options):
                     'BOT': {'is_top': False, 'is_bot': True},
                     'TOP': {'is_top': True, 'is_bot': False},
                     'I': {'is_top': False, 'is_bot': False},
-                    'I I': {'is_top': False, 'is_bot': False},
+                    'APP I I': {'is_top': False, 'is_bot': False},
+                    'COMP I I': {'is_top': False, 'is_bot': False},
                 })
 
 
