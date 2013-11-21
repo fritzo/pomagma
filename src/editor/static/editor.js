@@ -3,6 +3,7 @@ function(log,   test,   symbols,   compiler,   ast,   corpus,   navigate)
 {
   var ids = [];
   var asts = {};  // id -> ast
+  var validities = {}; // id -> {'is_top': _, 'is_bot': _}
   var $lines = {};  // id -> dom node
   var cursor = null;
   var cursorPos = 0;
@@ -14,11 +15,13 @@ function(log,   test,   symbols,   compiler,   ast,   corpus,   navigate)
   var loadAllLines = function () {
     ids = [];
     asts = {};
+    validities = {};
     corpus.findAllLines().forEach(function(id){
       ids.push(id);
       var line = corpus.findLine(id);
       var lambda = compiler.loadLine(line);
       asts[id] = ast.load(lambda);
+      validities[id] = {'is_top': null, 'is_bot': null};
     });
     assert(ids.length > 0, 'corpus is empty');
   };
@@ -70,6 +73,7 @@ function(log,   test,   symbols,   compiler,   ast,   corpus,   navigate)
         root = ast.load(lambda);
         ast.cursor.insertAbove(cursor, _.last(root.below));  // HACK
         asts[id] = root;
+        validities[id] = {'is_top': null, 'is_bot': null};
         $prev = $lines[ids[cursorPos - 1]];
         $lines[id] = $('<pre>').attr('id', 'line' + id).insertAfter($prev);
         renderLine(id);
@@ -89,6 +93,7 @@ function(log,   test,   symbols,   compiler,   ast,   corpus,   navigate)
     ast.cursor.remove(cursor);
     ids = ids.slice(0, cursorPos).concat(ids.slice(cursorPos + 1));
     delete asts[id];
+    delete validities[id];
     $lines[id].remove();
     delete $lines[id];
     if (cursorPos === ids.length) {
@@ -113,6 +118,7 @@ function(log,   test,   symbols,   compiler,   ast,   corpus,   navigate)
     root = ast.load(lambda);
     ast.cursor.insertAbove(cursor, root);
     asts[id] = root;
+    validities[id] = {'is_top': null, 'is_bot': null};
     renderLine(id);
     lineChanged = false;
   };
@@ -132,13 +138,31 @@ function(log,   test,   symbols,   compiler,   ast,   corpus,   navigate)
   //--------------------------------------------------------------------------
   // Rendering
 
+  var renderValidity = (function(){
+    var table = {
+      'true-false': '&#9660;', // filled Nabla
+      'false-true': '&#9650;', // filled Delta
+      'false-false': '&#12288;', // space
+      'null-false': '&#9661;', // empty Nabla
+      'false-null': '&#9651;', // empty Delta
+      'null-null': '&#9633;', // empty Square
+    };
+    for (var key in table) {
+      table[key] = '<span class=validity>' + table[key] + '</span>';
+    }
+    return function (validity) {
+      return table[validity.is_top + '-' + validity.is_bot];
+    };
+  })();
+
   var renderLine = function (id) {
     if (id === undefined) {
       id = ids[cursorPos];
     }
     var root = ast.getRoot(asts[id]);
     var lambda = ast.dump(root);
-    var html = compiler.render(lambda);
+    var validity = validities[id];
+    var html = renderValidity(validity) + compiler.render(lambda);
     $lines[id].html(html);
   };
 
