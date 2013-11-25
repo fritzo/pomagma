@@ -1,5 +1,6 @@
 #include "corpus.hpp"
 #include <pomagma/platform/hash_map.hpp>
+#include <unordered_set>
 
 namespace pomagma
 {
@@ -46,6 +47,15 @@ public:
             }
         };
 
+        Term () {}
+        Term (
+                Arity a,
+                const std::string & n,
+                const Term * a0 = nullptr,
+                const Term * a1 = nullptr)
+            : arity(a), name(n), arg0(a0), arg1(a1)
+        {}
+
         Arity arity;
         std::string name;
         const Term * arg0;
@@ -53,76 +63,55 @@ public:
     };
 
     Corpus () {}
-    ~Corpus () { clear(); }
 
-    const Term & get_nullary_function (
+    const Term * get_nullary_function (
             const std::string & name)
     {
-        Term key = {Term::NULLARY_FUNCTION, name, nullptr, nullptr};
-        return get(key);
+        return get(Term(Term::NULLARY_FUNCTION, name));
     }
-    const Term & get_injective_function (
+    const Term * get_injective_function (
             const std::string & name,
-            const Term & arg)
+            const Term * arg)
     {
-        Term key = {Term::INJECTIVE_FUNCTION, name, & arg, nullptr};
-        return get(key);
+        return get(Term(Term::INJECTIVE_FUNCTION, name, arg));
     }
-    const Term & get_binary_function (
+    const Term * get_binary_function (
             const std::string & name,
-            const Term & lhs,
-            const Term & rhs)
+            const Term * lhs,
+            const Term * rhs)
     {
-        Term key = {Term::BINARY_FUNCTION, name, & lhs, & rhs};
-        return get(key);
+        return get(Term(Term::BINARY_FUNCTION, name, lhs, rhs));
     }
-    const Term & get_symmetric_function (
+    const Term * get_symmetric_function (
             const std::string & name,
-            const Term & lhs,
-            const Term & rhs)
+            const Term * lhs,
+            const Term * rhs)
     {
-        const Term * arg0 = & lhs;
-        const Term * arg1 = & rhs;
-        if (arg0 > arg1) {
-            std::swap(arg0, arg1);
+        if (lhs > rhs) {
+            std::swap(lhs, rhs);
         }
-        Term key = {Term::SYMMETRIC_FUNCTION, name, arg0, arg1};
-        return get(key);
+        return get(Term(Term::SYMMETRIC_FUNCTION, name, lhs, rhs));
     }
-    const Term & get_binary_relation (
+    const Term * get_binary_relation (
             const std::string & name,
-            const Term & lhs,
-            const Term & rhs)
+            const Term * lhs,
+            const Term * rhs)
     {
-        Term key = {Term::BINARY_RELATION, name, & lhs, & rhs};
-        return get(key);
+        return get(Term(Term::BINARY_RELATION, name, lhs, rhs));
     }
-    const Term & get_variable (
+    const Term * get_variable (
             const std::string & name)
     {
-        Term key = {Term::VARIABLE, name, nullptr, nullptr};
-        return get(key);
+        return get(Term(Term::VARIABLE, name));
     }
 
-    void clear ()
-    {
-        for (auto & pair : m_terms) {
-            delete pair.second;
-        }
-    }
+    void clear () { m_terms.clear(); }
 
 private:
 
-    const Term & get (const Term & key)
-    {
-        auto pair = m_terms.insert(std::make_pair(key, nullptr));
-        if (pair.second) {
-            pair.first->second = new Term(key);
-        }
-        return * pair.first->second;
-    }
+    const Term * get (Term && key) { return & * m_terms.insert(key).first; }
 
-    std::unordered_map<Term, Term *, Term::Hash, Term::Equal> m_terms;
+    std::unordered_set<Term, Term::Hash, Term::Equal> m_terms;
 };
 
 class CorpusApproximation::Guts
