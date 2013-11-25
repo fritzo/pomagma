@@ -64,25 +64,25 @@ public:
 
     Corpus () {}
 
-    const Term * get_nullary_function (
+    const Term * nullary_function (
             const std::string & name)
     {
         return get(Term(Term::NULLARY_FUNCTION, name));
     }
-    const Term * get_injective_function (
+    const Term * injective_function (
             const std::string & name,
             const Term * arg)
     {
         return get(Term(Term::INJECTIVE_FUNCTION, name, arg));
     }
-    const Term * get_binary_function (
+    const Term * binary_function (
             const std::string & name,
             const Term * lhs,
             const Term * rhs)
     {
         return get(Term(Term::BINARY_FUNCTION, name, lhs, rhs));
     }
-    const Term * get_symmetric_function (
+    const Term * symmetric_function (
             const std::string & name,
             const Term * lhs,
             const Term * rhs)
@@ -92,14 +92,14 @@ public:
         }
         return get(Term(Term::SYMMETRIC_FUNCTION, name, lhs, rhs));
     }
-    const Term * get_binary_relation (
+    const Term * binary_relation (
             const std::string & name,
             const Term * lhs,
             const Term * rhs)
     {
         return get(Term(Term::BINARY_RELATION, name, lhs, rhs));
     }
-    const Term * get_variable (
+    const Term * variable (
             const std::string & name)
     {
         return get(Term(Term::VARIABLE, name));
@@ -107,11 +107,88 @@ public:
 
     void clear () { m_terms.clear(); }
 
+    class Parser;
+
 private:
 
     const Term * get (Term && key) { return & * m_terms.insert(key).first; }
 
     std::unordered_set<Term, Term::Hash, Term::Equal> m_terms;
+};
+
+class Corpus::Parser
+{
+public:
+
+    Parser (Signature & signature, Corpus & corpus)
+        : m_signature(signature),
+          m_corpus(corpus)
+    {
+    }
+
+    const Term * parse (const std::string & expression)
+    {
+        begin(expression);
+        const Term * result = parse_term();
+        end();
+        return result;
+    }
+
+private:
+
+    void begin (const std::string & expression)
+    {
+        m_stream.str(expression);
+        m_stream.clear();
+    }
+
+    std::string parse_token ()
+    {
+        std::string token;
+        if (not std::getline(m_stream, token, ' ')) {
+            POMAGMA_WARN(
+                "expression terminated prematurely: " << m_stream.str());
+        }
+        return token;
+    }
+
+    const Term * parse_term ()
+    {
+        std::string name = parse_token();
+        if (m_signature.nullary_function(name)) {
+            return m_corpus.nullary_function(name);
+        } else if (m_signature.injective_function(name)) {
+            const Term * key = parse_term();
+            return m_corpus.injective_function(name, key);
+        } else if (m_signature.binary_function(name)) {
+            const Term * lhs = parse_term();
+            const Term * rhs = parse_term();
+            return m_corpus.binary_function(name, lhs, rhs);
+        } else if (m_signature.symmetric_function(name)) {
+            const Term * lhs = parse_term();
+            const Term * rhs = parse_term();
+            return m_corpus.symmetric_function(name, lhs, rhs);
+        } else if (m_signature.binary_relation(name)) {
+            const Term * lhs = parse_term();
+            const Term * rhs = parse_term();
+            return m_corpus.binary_relation(name, lhs, rhs);
+        } else {
+            return m_corpus.variable(name);
+        }
+    }
+
+    void end ()
+    {
+        std::string token;
+        if (std::getline(m_stream, token, ' ')) {
+            POMAGMA_WARN(
+                "unexpected token '" << token << "' in: " << m_stream.str());
+        }
+    }
+
+    Signature & m_signature;
+    Corpus & m_corpus;
+    std::istringstream m_stream;
 };
 
 class CorpusApproximation::Guts
