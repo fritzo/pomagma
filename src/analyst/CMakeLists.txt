@@ -14,6 +14,7 @@ add_executable(analyst
 	server.cpp
 	simplify.cpp
 	approximate.cpp
+	corpus.cpp
        	messages.pb.cc
 	)
 target_link_libraries(analyst
