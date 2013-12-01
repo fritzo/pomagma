@@ -4,14 +4,13 @@
 // http://gperftools.googlecode.com/svn/trunk/doc/tcmalloc.html
 
 #include <pomagma/platform/util.hpp>
+#include <cstring>
 
-#if __GNUC_PREREQ(4,7)
+#if GCC_VERSION > 40700
 #  define assume_aligned(POMAGMA_arg) __builtin_assume_aligned(POMAGMA_arg, 32)
-#else // __GNUC_PREREQ(4,7)
+#else // GCC_VERSION > 40700
 #  define assume_aligned(POMAGMA_arg) (POMAGMA_arg)
-#endif // __GNUC_PREREQ(4,7)
-
-extern "C" void bzero(void * data, size_t byte_count) throw ();
+#endif // GCC_VERSION > 40700
 
 namespace pomagma
 {

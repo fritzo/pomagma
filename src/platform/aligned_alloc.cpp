@@ -1,8 +1,5 @@
 
-#include <pomagma/platform/util.hpp>
 #include <pomagma/platform/aligned_alloc.hpp>
-#include <cstdlib> //for posix_memalign, free
-#include <cstring> //for memset, bzero
 
 #define POMAGMA_DEBUG1(mess)
 //#define POMAGMA_DEBUG1(mess) POMAGMA_DEBUG(message)

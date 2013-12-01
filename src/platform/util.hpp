@@ -9,6 +9,7 @@
 #include <iomanip>
 #include <chrono>
 #include <random>
+#include <unistd.h>
 
 namespace pomagma_messaging {}
 
@@ -25,6 +26,12 @@ namespace messaging { using namespace pomagma_messaging; }
 //#  warning "__STDC_VERSION__ was undefined"
 //#  define __STDC_VERSION__ 199901L
 //#endif // __STDC_VERSION__
+
+#ifdef __GNUG__
+#  define GCC_VERSION (__GNUC__ * 10000 + __GNUC_MINOR__ * 100)
+#else // __GNUG__
+#  define GCC_VERSION 0
+#endif // __GNUG__
 
 #ifndef restrict
 #  ifdef __GNUG__
