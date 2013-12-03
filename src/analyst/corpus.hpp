@@ -2,30 +2,98 @@
 
 #include <pomagma/macrostructure/util.hpp>
 #include <pomagma/analyst/approximate.hpp>
-#include <atomic>
+#include <pomagma/platform/hash_map.hpp>
 
 namespace pomagma
 {
 
-class CorpusApproximation
+class Corpus
 {
 public:
 
-    CorpusApproximation ();
-    ~CorpusApproximation ();
+    struct Term
+    {
+        // TODO allow Obs as terms (to quotient as much as possible)
+        enum Arity {
+            NULLARY_FUNCTION,
+            INJECTIVE_FUNCTION,
+            BINARY_FUNCTION,
+            SYMMETRIC_FUNCTION,
+            BINARY_RELATION,
+            VARIABLE
+        };
+
+        struct Equal
+        {
+            bool operator() (const Term & x, const Term & y) const
+            {
+                return x.arity == y.arity
+                   and x.name == y.name
+                   and x.arg0 == y.arg0
+                   and x.arg1 == y.arg1;
+            }
+        };
+
+        struct Hash
+        {
+            std::hash<std::string> hash_string;
+            std::hash<const Term *> hash_pointer;
+
+            uint64_t operator() (const Term & x) const
+            {
+                FNV_hash::HashState state;
+                state.add(x.arity);
+                state.add(hash_string(x.name));
+                state.add(hash_pointer(x.arg0));
+                state.add(hash_pointer(x.arg1));
+                return state.get();
+            }
+        };
+
+        Term () {}
+        Term (
+                Arity a,
+                const std::string & n,
+                const Term * a0 = nullptr,
+                const Term * a1 = nullptr)
+            : arity(a), name(n), arg0(a0), arg1(a1)
+        {}
+
+        Arity arity;
+        std::string name;
+        const Term * arg0;
+        const Term * arg1;
+    };
 
     struct Line
     {
         std::string maybe_name;
         std::string code;
     };
-    std::vector<Approximator::Validity> validate (
-            const std::vector<Line> & lines);
+
+    struct Diff
+    {
+        std::vector<const Term *> removed;
+        std::vector<const Term *> added;
+        std::vector<const Term *> changed;
+        std::vector<const Term *> lines;
+    };
+
+    Corpus (Signature & signature);
+    ~Corpus ();
+
+    Diff update (
+            const std::vector<Line> & lines,
+            std::vector<std::string> & error_log);
 
 private:
 
-    class Guts;
-    Guts * m_guts;
+    class Dag;
+    class Parser;
+
+    Dag & m_dag;
+    Parser & m_parser;
+    std::unordered_map<std::string, const Term *> m_definitions;
 };
 
 } // namespace pomagma

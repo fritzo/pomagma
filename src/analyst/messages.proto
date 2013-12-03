@@ -14,14 +14,31 @@ message AnalystRequest {
   message Validate {
     repeated string codes = 1;
   }
+  message ValidateCorpus {
+    message Line {
+      optional string name = 1;
+      required string code = 2;
+    }
+    repeated Line lines = 1;
+  }
 
   optional Test test = 1;
   optional Simplify simplify = 2;
   optional BatchSimplify batch_simplify = 3;
   optional Validate validate = 4;
+  optional ValidateCorpus validate_corpus = 5;
 }
 
 message AnalystResponse {
+  enum Trool {
+    MAYBE = 0;
+    FALSE = 1;
+    TRUE = 2;
+  }
+  message Validity {
+    required Trool is_top = 1 [default = MAYBE];
+    required Trool is_bot = 2 [default = MAYBE];
+  }
 
   message Test {
     required uint64 fail_count = 1;
@@ -33,15 +50,9 @@ message AnalystResponse {
     required uint64 line_count = 1;
   }
   message Validate {
-    message Validity {
-      enum Trool {
-        MAYBE = 0;
-        FALSE = 1;
-        TRUE = 2;
-      }
-      required Trool is_top = 1 [default = MAYBE];
-      required Trool is_bot = 2 [default = MAYBE];
-    }
+    repeated Validity results = 1;
+  }
+  message ValidateCorpus {
     repeated Validity results = 1;
   }
 
@@ -49,4 +60,7 @@ message AnalystResponse {
   optional Simplify simplify = 2;
   optional BatchSimplify batch_simplify = 3;
   optional Validate validate = 4;
+  optional ValidateCorpus validate_corpus = 5;
+
+  repeated string error_log = 6;
 }

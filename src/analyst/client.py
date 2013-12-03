@@ -10,10 +10,19 @@ Request = messages.AnalystRequest
 Response = messages.AnalystResponse
 
 TROOL = {
-    Response.Validate.Validity.TRUE: True,
-    Response.Validate.Validity.FALSE: False,
-    Response.Validate.Validity.MAYBE: None,
+    Response.MAYBE: None,
+    Response.TRUE: True,
+    Response.FALSE: False,
 }
+
+
+class ServerError(Exception):
+
+    def __init__(self, messages):
+        self.messages = list(messages)
+
+    def __str__(self):
+        return '\n'.join('Server Errors:' + messages)
 
 
 class Client(object):
@@ -28,6 +37,8 @@ class Client(object):
         raw_reply = self._socket.recv(0)
         reply = Response()
         reply.ParseFromString(raw_reply)
+        if reply.error_log:
+            raise ServerError(reply.error_log)
         return reply
 
     def ping(self):

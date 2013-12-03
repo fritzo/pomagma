@@ -1,68 +1,14 @@
 #include "corpus.hpp"
-#include <pomagma/platform/hash_map.hpp>
 #include <unordered_set>
 
 namespace pomagma
 {
 
-class Corpus
+class Corpus::Dag
 {
 public:
 
-    struct Term
-    {
-        enum Arity {
-            NULLARY_FUNCTION,
-            INJECTIVE_FUNCTION,
-            BINARY_FUNCTION,
-            SYMMETRIC_FUNCTION,
-            BINARY_RELATION,
-            VARIABLE
-        };
-
-        struct Equal
-        {
-            bool operator() (const Term & x, const Term & y) const
-            {
-                return x.arity == y.arity
-                   and x.name == y.name
-                   and x.arg0 == y.arg0
-                   and x.arg1 == y.arg1;
-            }
-        };
-
-        struct Hash
-        {
-            std::hash<std::string> hash_string;
-            std::hash<const Term *> hash_pointer;
-
-            uint64_t operator() (const Term & x) const
-            {
-                FNV_hash::HashState state;
-                state.add(x.arity);
-                state.add(hash_string(x.name));
-                state.add(hash_pointer(x.arg0));
-                state.add(hash_pointer(x.arg1));
-                return state.get();
-            }
-        };
-
-        Term () {}
-        Term (
-                Arity a,
-                const std::string & n,
-                const Term * a0 = nullptr,
-                const Term * a1 = nullptr)
-            : arity(a), name(n), arg0(a0), arg1(a1)
-        {}
-
-        Arity arity;
-        std::string name;
-        const Term * arg0;
-        const Term * arg1;
-    };
-
-    Corpus () {}
+    Dag () {}
 
     const Term * nullary_function (
             const std::string & name)
@@ -105,24 +51,24 @@ public:
         return get(Term(Term::VARIABLE, name));
     }
 
-    void clear () { m_terms.clear(); }
-
-    class Parser;
+    typedef std::unordered_set<Term, Term::Hash, Term::Equal> Terms;
+    const Terms & terms () const { return m_terms; }
 
 private:
 
     const Term * get (Term && key) { return & * m_terms.insert(key).first; }
 
-    std::unordered_set<Term, Term::Hash, Term::Equal> m_terms;
+    Terms m_terms;
 };
+
 
 class Corpus::Parser
 {
 public:
 
-    Parser (Signature & signature, Corpus & corpus)
+    Parser (Signature & signature, Corpus::Dag & dag)
         : m_signature(signature),
-          m_corpus(corpus)
+          m_dag(dag)
     {
     }
 
@@ -156,24 +102,24 @@ private:
     {
         std::string name = parse_token();
         if (m_signature.nullary_function(name)) {
-            return m_corpus.nullary_function(name);
+            return m_dag.nullary_function(name);
         } else if (m_signature.injective_function(name)) {
             const Term * key = parse_term();
-            return m_corpus.injective_function(name, key);
+            return m_dag.injective_function(name, key);
         } else if (m_signature.binary_function(name)) {
             const Term * lhs = parse_term();
             const Term * rhs = parse_term();
-            return m_corpus.binary_function(name, lhs, rhs);
+            return m_dag.binary_function(name, lhs, rhs);
         } else if (m_signature.symmetric_function(name)) {
             const Term * lhs = parse_term();
             const Term * rhs = parse_term();
-            return m_corpus.symmetric_function(name, lhs, rhs);
+            return m_dag.symmetric_function(name, lhs, rhs);
         } else if (m_signature.binary_relation(name)) {
             const Term * lhs = parse_term();
             const Term * rhs = parse_term();
-            return m_corpus.binary_relation(name, lhs, rhs);
+            return m_dag.binary_relation(name, lhs, rhs);
         } else {
-            return m_corpus.variable(name);
+            return m_dag.variable(name);
         }
     }
 
@@ -187,27 +133,54 @@ private:
     }
 
     Signature & m_signature;
-    Corpus & m_corpus;
+    Dag & m_dag;
     std::istringstream m_stream;
 };
 
-class CorpusApproximation::Guts
+
+Corpus::Corpus (Signature & signature)
+    : m_dag(* new Dag()),
+      m_parser(* new Parser(signature, m_dag))
 {
-public:
+}
 
-    Guts ();
-
-    typedef size_t Id;
-    std::atomic<uint_fast64_t> m_id_generator;
-    size_t new_id () { return m_id_generator++; }
-
-    std::unordered_map<Id, Approximation *> m_approximations;
-    std::unordered_map<std::string, Id> m_definitions;
-};
-
-CorpusApproximation::Guts::Guts ()
-    : m_id_generator(0)
+Corpus::~Corpus ()
 {
+    delete & m_parser;
+    delete & m_dag;
+}
+
+Corpus::Diff Corpus::update (
+        const std::vector<Corpus::Line> & lines,
+        std::vector<std::string> & error_log)
+{
+    Diff diff;
+    m_definitions.clear();
+    for (const auto & line : lines) {
+        const Term * term = m_parser.parse(line.code);
+        diff.lines.push_back(term);
+        const std::string & name = line.maybe_name;
+        if (not name.empty()) {
+            auto pair = m_definitions.insert(std::make_pair(name, term));
+            if (not pair.second) {
+                std::string message = "duplicate definition: " + name;
+                POMAGMA_WARN(message);
+                error_log.push_back(message);
+            }
+        }
+    }
+    for (const Term & term : m_dag.terms()) {
+        if (term.arity == Term::VARIABLE) {
+            const std::string & name = term.name;
+            if (m_definitions.find(name) == m_definitions.end()) {
+                std::string message = "missing definition: " + name;
+                POMAGMA_WARN(message);
+                error_log.push_back(message);
+            }
+        }
+    }
+    TODO("compute removed, added, changed");
+    return diff;
 }
 
 } // namespace pomagma

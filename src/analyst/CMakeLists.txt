@@ -15,6 +15,7 @@ add_executable(analyst
 	simplify.cpp
 	approximate.cpp
 	corpus.cpp
+	validator.cpp
        	messages.pb.cc
 	)
 target_link_libraries(analyst

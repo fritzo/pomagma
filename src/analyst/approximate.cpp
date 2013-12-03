@@ -454,10 +454,4 @@ Approximator::Trool Approximator::is_bot (const Approximation & approx)
     }
 }
 
-Approximator::Validity Approximator::is_valid (const Approximation & approx)
-{
-    Validity validity = {is_top(approx), is_bot(approx)};
-    return validity;
-}
-
 } // namespace pomagma

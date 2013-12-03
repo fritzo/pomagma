@@ -85,8 +85,19 @@ public:
     Trool is_top (const Approximation & approx);
     Trool is_bot (const Approximation & approx);
 
-    struct Validity { Trool is_top, is_bot; };
-    Validity is_valid (const Approximation & approx);
+    struct Validity
+    {
+        Trool is_top;
+        Trool is_bot;
+
+        Validity () {}
+        Validity (Trool t, Trool b) : is_top(t), is_bot(b) {}
+        static Validity unknown () { return Validity(MAYBE, MAYBE); }
+    };
+    Validity is_valid (const Approximation & approx)
+    {
+        return Validity(is_top(approx), is_bot(approx));
+    }
 
 private:
 

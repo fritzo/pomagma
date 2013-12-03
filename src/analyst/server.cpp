@@ -9,13 +9,16 @@ namespace pomagma
 
 Server::Server (
         const char * structure_file,
-        const char * language_file)
+        const char * language_file,
+        size_t thread_count)
     : m_structure(structure_file),
       m_approximator(m_structure),
       m_approximate_parser(m_approximator),
       m_probs(),
       m_routes(),
-      m_simplifier(m_structure.signature(), m_routes)
+      m_simplifier(m_structure.signature(), m_routes),
+      m_corpus(m_structure.signature()),
+      m_validator(m_approximator, thread_count)
 {
     if (POMAGMA_DEBUG_LEVEL > 1) {
         m_structure.validate();
@@ -25,6 +28,13 @@ Server::Server (
     Router router(m_structure.signature(), language);
     m_probs = router.measure_probs();
     m_routes = router.find_routes();
+}
+
+Server::~Server ()
+{
+    for (const std::string & message : m_error_log) {
+        POMAGMA_WARN(message);
+    }
 }
 
 size_t Server::test ()
@@ -56,6 +66,26 @@ Approximator::Validity Server::is_valid (const std::string & code)
     return m_approximator.is_valid(approx);
 }
 
+std::vector<Approximator::Validity> Server::validate_corpus (
+        const std::vector<Corpus::Line> & lines)
+{
+    Corpus::Diff diff = m_corpus.update(lines, m_error_log);
+    m_validator.update(diff);
+    std::vector<Approximator::Validity> result;
+    result.reserve(lines.size());
+    for (const Corpus::Term * term : diff.lines) {
+        result.push_back(m_validator.is_valid(term));
+    }
+    return result;
+}
+
+std::vector<std::string> Server::flush_errors ()
+{
+    std::vector<std::string> result;
+    m_error_log.swap(result);
+    return result;
+}
+
 
 namespace
 {
@@ -66,6 +96,7 @@ messaging::AnalystResponse handle (
 {
     POMAGMA_INFO("Handling request");
     messaging::AnalystResponse response;
+    typedef messaging::AnalystResponse::Trool Trool;
 
     if (request.has_test()) {
         size_t fail_count = server.test();
@@ -89,7 +120,6 @@ messaging::AnalystResponse handle (
     }
 
     if (request.has_validate()) {
-        typedef messaging::AnalystResponse::Validate::Validity::Trool Trool;
         size_t code_count = request.validate().codes_size();
         for (size_t i = 0; i < code_count; ++i) {
             const std::string & code = request.validate().codes(i);
@@ -98,6 +128,29 @@ messaging::AnalystResponse handle (
             result.set_is_top(static_cast<Trool>(validity.is_top));
             result.set_is_bot(static_cast<Trool>(validity.is_bot));
         }
+    }
+
+    if (request.has_validate_corpus()) {
+        size_t line_count = request.validate_corpus().lines_size();
+        std::vector<Corpus::Line> lines(line_count);
+        for (size_t i = 0; i < line_count; ++i) {
+            const auto & line = request.validate_corpus().lines(i);
+            if (line.has_name()) {
+                lines[i].maybe_name = line.name();
+            }
+            lines[i].code = line.code();
+        }
+        const auto validities = server.validate_corpus(lines);
+        auto & responses = * response.mutable_validate_corpus();
+        for (const auto & validity : validities) {
+            auto & result = * responses.add_results();
+            result.set_is_top(static_cast<Trool>(validity.is_top));
+            result.set_is_bot(static_cast<Trool>(validity.is_bot));
+        }
+    }
+
+    for (const std::string & message : server.flush_errors()) {
+        response.add_error_log(message);
     }
 
     return response;
