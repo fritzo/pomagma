@@ -28,6 +28,15 @@ struct Approximation
     {
         POMAGMA_ASSERT(ob, "ob is undefined");
     }
+    Approximation (Ob lb, Ob ub, const BinaryRelation & less)
+        : ob(0),
+          upper(less.get_Lx_set(ub)),
+          lower(less.get_Rx_set(lb))
+    {
+        POMAGMA_ASSERT(lb, "lb is undefined");
+        POMAGMA_ASSERT(ub, "ub is undefined");
+        POMAGMA_ASSERT(less.find(lb, ub), "expected LESS lb ub");
+    }
     Approximation (Approximation && other)
         : ob(other.ob),
           upper(std::move(other.upper)),
@@ -57,6 +66,8 @@ public:
 
     size_t test ();
     void validate (const Approximation & approx);
+
+    Approximation unknown () { return Approximation(m_item_dim, m_top, m_bot); }
 
     Approximation find (
             const NullaryFunction & fun);

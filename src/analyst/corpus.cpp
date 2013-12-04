@@ -179,7 +179,7 @@ Corpus::Diff Corpus::update (
             }
         }
     }
-    TODO("compute removed, added, changed");
+    TODO("compute removed, added");
     return diff;
 }
 

@@ -75,7 +75,6 @@ public:
     {
         std::vector<const Term *> removed;
         std::vector<const Term *> added;
-        std::vector<const Term *> changed;
         std::vector<const Term *> lines;
     };
 

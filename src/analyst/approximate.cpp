@@ -184,7 +184,7 @@ void Approximator::validate (const Approximation & approx)
         }
     }
 
-    Approximation closed(m_item_dim, m_top, m_bot);
+    Approximation closed = unknown();
     closed = approx;
     {
         DenseSet temp_set(m_item_dim);
@@ -226,7 +226,7 @@ bool Approximator::try_close (
     POMAGMA_ASSERT_EQ(approx.upper.item_dim(), m_item_dim);
     POMAGMA_ASSERT_EQ(temp_set.item_dim(), m_item_dim);
 
-    Approximation start(m_item_dim, m_top, m_bot);
+    Approximation start = unknown();
     start = approx;
 
     if (approx.ob) {
@@ -376,7 +376,7 @@ Approximation Approximator::find (
     if (Ob val = fun.find()) {
         return Approximation(val, m_less);
     }
-    return Approximation(m_item_dim, m_top, m_bot);
+    return unknown();
 }
 
 Approximation Approximator::find (
@@ -387,9 +387,9 @@ Approximation Approximator::find (
         return Approximation(ob, m_less);
     } else if (& fun == m_quote) {
         // QUOTE is not monotone
-        return Approximation(m_item_dim, m_top, m_bot);
+        return unknown();
     } else {
-        Approximation val(m_item_dim, m_top, m_bot);
+        Approximation val = unknown();
         DenseSet temp_set(m_item_dim);
         map(fun, key.upper, val.upper, temp_set);
         map(fun, key.lower, val.lower, temp_set);
@@ -406,7 +406,7 @@ Approximation Approximator::find (
     if (Ob ob = lhs.ob and rhs.ob ? fun.find(lhs.ob, rhs.ob) : 0) {
         return Approximation(ob, m_less);
     } else {
-        Approximation val(m_item_dim, m_top, m_bot);
+        Approximation val = unknown();
         DenseSet temp_set(m_item_dim);
         map(fun, lhs.upper, rhs.upper, val.upper, temp_set);
         map(fun, lhs.lower, rhs.lower, val.lower, temp_set);
@@ -423,7 +423,7 @@ Approximation Approximator::find (
     if (Ob ob = (lhs.ob and rhs.ob) ? fun.find(lhs.ob, rhs.ob) : 0) {
         return Approximation(ob, m_less);
     } else {
-        Approximation val(m_item_dim, m_top, m_bot);
+        Approximation val = unknown();
         DenseSet temp_set(m_item_dim);
         map(fun, lhs.upper, rhs.upper, val.upper, temp_set);
         map(fun, lhs.lower, rhs.lower, val.lower, temp_set);

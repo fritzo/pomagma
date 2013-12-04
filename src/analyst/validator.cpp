@@ -22,8 +22,9 @@ void Validator::update (const Corpus::Diff & diff)
     for (const Corpus::Term * term : diff.removed) {
         cancel(term);
     }
-    TODO("restart changed terms");
-    TODO("schedule new tasks");
+    for (const Corpus::Term * term : diff.added) {
+        schedule(term);
+    }
 }
 
 Approximator::Validity Validator::is_valid (const Corpus::Term * term)
@@ -38,12 +39,19 @@ Approximator::Validity Validator::is_valid (const Corpus::Term * term)
 
 void Validator::cancel (const Corpus::Term * term)
 {
-    m_cache.erase(term);
+    auto i = m_cache.find(term);
+    delete i->second;
+    m_cache.erase(i);
+
     TODO("cancel task");
 }
 
-void Validator::schedule (const Corpus::Term * term __attribute__((unused)))
+void Validator::schedule (const Corpus::Term * term)
 {
+    m_cache.insert(std::make_pair(
+        term,
+        new Approximation(m_approximator.unknown())));
+
     TODO("schedule task");
 }
 
