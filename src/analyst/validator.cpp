@@ -48,11 +48,17 @@ void Validator::cancel (const Corpus::Term * term)
 
 void Validator::schedule (const Corpus::Term * term)
 {
-    m_cache.insert(std::make_pair(
-        term,
-        new Approximation(m_approximator.unknown())));
+    if (term->ob) {
+        m_cache.insert(std::make_pair(
+            term,
+            new Approximation(m_approximator.known(term->ob))));
+    } else {
+        m_cache.insert(std::make_pair(
+            term,
+            new Approximation(m_approximator.unknown())));
 
-    TODO("schedule task");
+        TODO("schedule task");
+    }
 }
 
 } // namespace pomagma

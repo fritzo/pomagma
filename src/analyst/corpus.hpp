@@ -13,8 +13,8 @@ public:
 
     struct Term
     {
-        // TODO allow Obs as terms (to quotient as much as possible)
         enum Arity {
+            OB,
             NULLARY_FUNCTION,
             INJECTIVE_FUNCTION,
             BINARY_FUNCTION,
@@ -30,7 +30,8 @@ public:
                 return x.arity == y.arity
                    and x.name == y.name
                    and x.arg0 == y.arg0
-                   and x.arg1 == y.arg1;
+                   and x.arg1 == y.arg1
+                   and x.ob == y.ob;
             }
         };
 
@@ -46,23 +47,26 @@ public:
                 state.add(hash_string(x.name));
                 state.add(hash_pointer(x.arg0));
                 state.add(hash_pointer(x.arg1));
+                state.add(x.ob);
                 return state.get();
             }
         };
 
         Term () {}
+        Term (Ob o) : arity(OB), name(), arg0(nullptr), arg1(nullptr), ob(o) {}
         Term (
                 Arity a,
                 const std::string & n,
                 const Term * a0 = nullptr,
                 const Term * a1 = nullptr)
-            : arity(a), name(n), arg0(a0), arg1(a1)
+            : arity(a), name(n), arg0(a0), arg1(a1), ob(0)
         {}
 
         Arity arity;
         std::string name;
         const Term * arg0;
         const Term * arg1;
+        Ob ob;
     };
 
     struct Line

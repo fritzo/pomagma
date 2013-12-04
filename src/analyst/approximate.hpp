@@ -67,6 +67,7 @@ public:
     size_t test ();
     void validate (const Approximation & approx);
 
+    Approximation known (Ob ob) { return Approximation(ob, m_less); }
     Approximation unknown () { return Approximation(m_item_dim, m_top, m_bot); }
 
     Approximation find (

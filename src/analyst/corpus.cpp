@@ -8,17 +8,32 @@ class Corpus::Dag
 {
 public:
 
-    Dag () {}
+    Dag (Signature & signature) : m_signature(signature) {}
+
+    const Term * truthy () { return nullary_function("I"); }
+    const Term * falsey () { return nullary_function("BOT"); }
 
     const Term * nullary_function (
             const std::string & name)
     {
+        if (auto * fun = m_signature.nullary_function(name)) {
+            if (Ob ob = fun->find()) {
+                return get(Term(ob));
+            }
+        }
         return get(Term(Term::NULLARY_FUNCTION, name));
     }
     const Term * injective_function (
             const std::string & name,
             const Term * arg)
     {
+        if (arg->ob) {
+            if (auto * fun = m_signature.injective_function(name)) {
+                if (Ob ob = fun->find(arg->ob)) {
+                    return get(Term(ob));
+                }
+            }
+        }
         return get(Term(Term::INJECTIVE_FUNCTION, name, arg));
     }
     const Term * binary_function (
@@ -26,6 +41,13 @@ public:
             const Term * lhs,
             const Term * rhs)
     {
+        if (lhs->ob and rhs->ob) {
+            if (auto * fun = m_signature.binary_function(name)) {
+                if (Ob ob = fun->find(lhs->ob, rhs->ob)) {
+                    return get(Term(ob));
+                }
+            }
+        }
         return get(Term(Term::BINARY_FUNCTION, name, lhs, rhs));
     }
     const Term * symmetric_function (
@@ -33,6 +55,13 @@ public:
             const Term * lhs,
             const Term * rhs)
     {
+        if (lhs->ob and rhs->ob) {
+            if (auto * fun = m_signature.symmetric_function(name)) {
+                if (Ob ob = fun->find(lhs->ob, rhs->ob)) {
+                    return get(Term(ob));
+                }
+            }
+        }
         if (lhs > rhs) {
             std::swap(lhs, rhs);
         }
@@ -43,6 +72,21 @@ public:
             const Term * lhs,
             const Term * rhs)
     {
+        if (lhs->ob and rhs->ob) {
+            if (auto * rel = m_signature.binary_relation(name)) {
+                if (rel->find(lhs->ob, rhs->ob)) {
+                    return truthy();
+                }
+            }
+            std::string negated;
+            if (name == "LESS") negated = "NLESS"; // HACK
+            if (name == "NLESS") negated = "LESS"; // HACK
+            if (auto * rel = m_signature.binary_relation(negated)) {
+                if (rel->find(lhs->ob, rhs->ob)) {
+                    return falsey();
+                }
+            }
+        }
         return get(Term(Term::BINARY_RELATION, name, lhs, rhs));
     }
     const Term * variable (
@@ -58,6 +102,7 @@ private:
 
     const Term * get (Term && key) { return & * m_terms.insert(key).first; }
 
+    Signature & m_signature;
     Terms m_terms;
 };
 
@@ -139,7 +184,7 @@ private:
 
 
 Corpus::Corpus (Signature & signature)
-    : m_dag(* new Dag()),
+    : m_dag(* new Dag(signature)),
       m_parser(* new Parser(signature, m_dag))
 {
 }
