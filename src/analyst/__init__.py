@@ -12,8 +12,13 @@ def connect(address=ADDRESS):
     return client.Client(address)
 
 
-def serve(theory, world, address=ADDRESS, **opts):
-    return server.Server(theory, world, address, **opts)
+def serve(
+        theory,
+        world,
+        address=ADDRESS,
+        threads=pomagma.util.CPU_COUNT,
+        **opts):
+    return server.Server(theory, world, address, threads, **opts)
 
 
 @contextlib.contextmanager

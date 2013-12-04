@@ -4,7 +4,7 @@ int main (int argc, char ** argv)
 {
     pomagma::Log::Context log_context(argc, argv);
 
-    if (argc != 4) {
+    if (argc != 5) {
         std::cout
             << "Usage: "
                 << pomagma::get_filename(argv[0])

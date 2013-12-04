@@ -1,4 +1,5 @@
 import os
+import sys
 import zmq
 import pomagma.util
 from pomagma.analyst import messages_pb2 as messages
@@ -16,13 +17,18 @@ TROOL = {
 }
 
 
+def WARN(message):
+    sys.stdout.write('WARNING {}\n'.format(message))
+    sys.stdout.flush()
+
+
 class ServerError(Exception):
 
     def __init__(self, messages):
         self.messages = list(messages)
 
     def __str__(self):
-        return '\n'.join('Server Errors:' + messages)
+        return '\n'.join('Server Errors:' + self.messages)
 
 
 class Client(object):
@@ -37,6 +43,8 @@ class Client(object):
         raw_reply = self._socket.recv(0)
         reply = Response()
         reply.ParseFromString(raw_reply)
+        for message in reply.error_log:
+            WARN(message)
         if reply.error_log:
             raise ServerError(reply.error_log)
         return reply
