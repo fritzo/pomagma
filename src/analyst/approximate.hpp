@@ -21,6 +21,7 @@ struct Approximation
         upper.insert(top);
         lower.insert(bot);
     }
+    // only the ob constructor is aliased
     Approximation (Ob o, const BinaryRelation & less)
         : ob(o),
           upper(less.get_Lx_set(o)),
@@ -30,12 +31,14 @@ struct Approximation
     }
     Approximation (Ob lb, Ob ub, const BinaryRelation & less)
         : ob(0),
-          upper(less.get_Lx_set(ub)),
-          lower(less.get_Rx_set(lb))
+          upper(less.item_dim()),
+          lower(less.item_dim())
     {
         POMAGMA_ASSERT(lb, "lb is undefined");
         POMAGMA_ASSERT(ub, "ub is undefined");
         POMAGMA_ASSERT(less.find(lb, ub), "expected LESS lb ub");
+        upper = less.get_Lx_set(ub);
+        lower = less.get_Rx_set(lb);
     }
     Approximation (Approximation && other)
         : ob(other.ob),
@@ -69,6 +72,9 @@ public:
 
     Approximation known (Ob ob) { return Approximation(ob, m_less); }
     Approximation unknown () { return Approximation(m_item_dim, m_top, m_bot); }
+    Approximation truthy () { return known(m_identity); }
+    Approximation falsey () { return known(m_bot); }
+    Approximation maybe () { return Approximation(m_bot, m_identity, m_less); }
 
     Approximation find (
             const NullaryFunction & fun);
@@ -83,11 +89,21 @@ public:
             const SymmetricFunction & fun,
             const Approximation & lhs,
             const Approximation & rhs);
-    // TODO
-    //Approximation find (
-    //        const BinaryRelation & rel,
-    //        const Approximation & lhs,
-    //        const Approximation & rhs);
+    Approximation find (
+            const BinaryRelation & pos,
+            const BinaryRelation & neg,
+            const Approximation & lhs,
+            const Approximation & rhs);
+
+    Approximation find (
+            const std::string & name);
+    Approximation find (
+            const std::string & name,
+            const Approximation & arg0);
+    Approximation find (
+            const std::string & name,
+            const Approximation & arg0,
+            const Approximation & arg1);
 
     enum Trool {
         MAYBE = 0,
@@ -149,6 +165,7 @@ private:
     const size_t m_item_dim;
     const Ob m_top;
     const Ob m_bot;
+    const Ob m_identity;
     const BinaryRelation & m_less;
     const BinaryRelation & m_nless;
     const SymmetricFunction * const m_join;

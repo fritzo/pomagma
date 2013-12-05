@@ -23,17 +23,22 @@ public:
 
 private:
 
+    Approximation & get (const Corpus::Term * term);
+    bool try_set (const Corpus::Term * term, Approximation && approx);
+
     void cancel (const Corpus::Term * term);
     void schedule (const Corpus::Term * term);
 
     struct Task
     {
-        Corpus::Term * work;
+        Corpus::Term * term;
         size_t priority;
         std::set<Task *> references;
     };
 
-    Task * get_work ();
+    Approximation approximate (const Corpus::Term * term);
+    void process (Task * task);
+    bool try_work ();
 
     Approximator & m_approximator;
     std::mutex m_mutex;

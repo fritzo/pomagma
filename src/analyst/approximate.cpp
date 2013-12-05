@@ -12,6 +12,7 @@ Approximator::Approximator (Structure & structure)
       m_item_dim(structure.carrier().item_dim()),
       m_top(structure.nullary_function("TOP").find()),
       m_bot(structure.nullary_function("BOT").find()),
+      m_identity(structure.nullary_function("I").find()),
       m_less(structure.binary_relation("LESS")),
       m_nless(structure.binary_relation("NLESS")),
       m_join(structure.signature().symmetric_function("JOIN")),
@@ -20,6 +21,7 @@ Approximator::Approximator (Structure & structure)
 {
     POMAGMA_ASSERT(m_top, "TOP is not defined");
     POMAGMA_ASSERT(m_bot, "BOT is not defined");
+    POMAGMA_ASSERT(m_identity, "I is not defined");
 }
 
 size_t Approximator::test_less ()
@@ -429,6 +431,66 @@ Approximation Approximator::find (
         map(fun, lhs.lower, rhs.lower, val.lower, temp_set);
         close(val, temp_set);
         return val;
+    }
+}
+
+Approximation Approximator::find (
+        const BinaryRelation & pos,
+        const BinaryRelation & neg,
+        const Approximation & lhs,
+        const Approximation & rhs)
+{
+    if (lhs.ob and rhs.ob and pos.find(lhs.ob, rhs.ob)) {
+        return truthy();
+    } else if (lhs.ob and rhs.ob and neg.find(lhs.ob, rhs.ob)) {
+        return falsey();
+    } else {
+        return maybe();
+    }
+}
+
+Approximation Approximator::find (
+        const std::string & name)
+{
+    Signature & signature = m_structure.signature();
+    if (auto * fun = signature.nullary_function(name)) {
+        return find(* fun);
+    } else {
+        return unknown();
+    }
+}
+
+Approximation Approximator::find (
+        const std::string & name,
+        const Approximation & arg0)
+{
+    Signature & signature = m_structure.signature();
+    if (auto * fun = signature.injective_function(name)) {
+        return find(* fun, arg0);
+    } else {
+        return unknown();
+    }
+}
+
+Approximation Approximator::find (
+        const std::string & name,
+        const Approximation & arg0,
+        const Approximation & arg1)
+{
+    Signature & signature = m_structure.signature();
+    if (auto * fun = signature.binary_function(name)) {
+        return find(* fun, arg0, arg1);
+    } else if (auto * fun = signature.binary_function(name)) {
+        return find(* fun, arg0, arg1);
+    } else if (auto * pos = signature.binary_relation(name)) {
+        std::string negated = signature.negate(name);
+        if (auto * neg = signature.binary_relation(negated)) {
+            return find(* pos, * neg, arg0, arg1);
+        } else {
+            return unknown();
+        }
+    } else {
+        return unknown();
     }
 }
 

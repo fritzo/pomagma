@@ -13,6 +13,15 @@ public:
     const Term * truthy () { return nullary_function("I"); }
     const Term * falsey () { return nullary_function("BOT"); }
 
+    const Term * hole ()
+    {
+        return get(Term(Term::HOLE));
+    }
+    const Term * variable (
+            const std::string & name)
+    {
+        return get(Term(Term::VARIABLE, name));
+    }
     const Term * nullary_function (
             const std::string & name)
     {
@@ -78,9 +87,7 @@ public:
                     return truthy();
                 }
             }
-            std::string negated;
-            if (name == "LESS") negated = "NLESS"; // HACK
-            if (name == "NLESS") negated = "LESS"; // HACK
+            std::string negated = m_signature.negate(name);
             if (auto * rel = m_signature.binary_relation(negated)) {
                 if (rel->find(lhs->ob, rhs->ob)) {
                     return falsey();
@@ -88,11 +95,6 @@ public:
             }
         }
         return get(Term(Term::BINARY_RELATION, name, lhs, rhs));
-    }
-    const Term * variable (
-            const std::string & name)
-    {
-        return get(Term(Term::VARIABLE, name));
     }
 
     typedef std::unordered_set<Term, Term::Hash, Term::Equal> Terms;
@@ -163,6 +165,8 @@ private:
             const Term * lhs = parse_term();
             const Term * rhs = parse_term();
             return m_dag.binary_relation(name, lhs, rhs);
+        } else if (name == "HOLE") {
+            return m_dag.hole();
         } else {
             return m_dag.variable(name);
         }
@@ -224,6 +228,7 @@ Corpus::Diff Corpus::update (
             }
         }
     }
+    // TODO collapse definitions as obs
     TODO("compute removed, added");
     return diff;
 }

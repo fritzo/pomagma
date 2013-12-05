@@ -15,12 +15,13 @@ public:
     {
         enum Arity {
             OB,
+            HOLE,
+            VARIABLE,
             NULLARY_FUNCTION,
             INJECTIVE_FUNCTION,
             BINARY_FUNCTION,
             SYMMETRIC_FUNCTION,
-            BINARY_RELATION,
-            VARIABLE
+            BINARY_RELATION
         };
 
         struct Equal
@@ -56,7 +57,7 @@ public:
         Term (Ob o) : arity(OB), name(), arg0(nullptr), arg1(nullptr), ob(o) {}
         Term (
                 Arity a,
-                const std::string & n,
+                const std::string & n = "",
                 const Term * a0 = nullptr,
                 const Term * a1 = nullptr)
             : arity(a), name(n), arg0(a0), arg1(a1), ob(0)

@@ -61,6 +61,13 @@ public:
     const std::unordered_map<std::string, SymmetricFunction *> &
         symmetric_functions () const;
 
+    std::string negate (const std::string & name)
+    {
+        if (name == "LESS") return "NLESS";
+        if (name == "NLESS") return "LESS";
+        POMAGMA_ERROR("failed to negate name: " << name);
+    }
+
 private:
 
     template<class Function>
