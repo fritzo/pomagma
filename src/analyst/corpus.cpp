@@ -97,6 +97,53 @@ public:
         return get(Term(Term::BINARY_RELATION, name, lhs, rhs));
     }
 
+    // TODO use this to inline ob definitions in a linker pass
+    const Term * substitute (
+            const std::string & name,
+            const Term * definition,
+            const Term * source)
+    {
+        switch (source->arity) {
+
+            case Term::OB:
+            case Term::HOLE:
+            case Term::NULLARY_FUNCTION:
+                return source;
+
+            case Term::VARIABLE:
+                return source->name == name ?  definition : source;
+
+            case Term::INJECTIVE_FUNCTION:
+                return injective_function(
+                    source->name,
+                    substitute(name, definition, source->arg0));
+
+            case Term::BINARY_FUNCTION:
+                return binary_function(
+                    source->name,
+                    substitute(name, definition, source->arg0),
+                    substitute(name, definition, source->arg1));
+
+            case Term::SYMMETRIC_FUNCTION:
+                return symmetric_function(
+                    source->name,
+                    substitute(name, definition, source->arg0),
+                    substitute(name, definition, source->arg1));
+
+            case Term::BINARY_RELATION:
+                return binary_relation(
+                    source->name,
+                    substitute(name, definition, source->arg0),
+                    substitute(name, definition, source->arg1));
+        }
+    }
+    void clear_definitions () { m_definitions.clear(); }
+    void define (const std::string & name, const Term * term)
+    {
+        m_definitions[name] = term;
+        TODO("redefine all terms to use new definition");
+    }
+
     typedef std::unordered_set<Term, Term::Hash, Term::Equal> Terms;
     const Terms & terms () const { return m_terms; }
 
@@ -104,6 +151,7 @@ private:
 
     const Term * get (Term && key) { return & * m_terms.insert(key).first; }
 
+    std::unordered_map<std::string, const Term *> m_definitions;
     Signature & m_signature;
     Terms m_terms;
 };
@@ -203,6 +251,13 @@ Corpus::Diff Corpus::update (
         const std::vector<Corpus::Line> & lines,
         std::vector<std::string> & error_log)
 {
+    // TODO do two parser passes and run dag linker as follows:
+    // parse_all_terms();
+    // dag.link();
+    // parse_all_terms();
+    // compute_diff);
+    // dag.garbage_collect();
+
     Diff diff;
     m_definitions.clear();
     for (const auto & line : lines) {

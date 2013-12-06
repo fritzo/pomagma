@@ -36,6 +36,7 @@ private:
         std::set<Task *> references;
     };
 
+    // TODO implement task queue
     Approximation approximate (const Corpus::Term * term);
     void process (Task * task);
     bool try_work ();
