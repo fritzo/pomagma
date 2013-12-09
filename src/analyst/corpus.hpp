@@ -54,7 +54,9 @@ public:
         };
 
         Term () {}
-        Term (Ob o) : arity(OB), name(), arg0(nullptr), arg1(nullptr), ob(o) {}
+        Term (Ob o)
+            : arity(OB), name(), arg0(nullptr), arg1(nullptr), ob(o)
+        {}
         Term (
                 Arity a,
                 const std::string & n = "",
@@ -74,6 +76,9 @@ public:
     {
         std::string maybe_name;
         std::string code;
+
+        bool is_definition () const { return not maybe_name.empty(); }
+        bool is_assertion () const { return maybe_name.empty(); }
     };
 
     struct Diff
@@ -97,7 +102,6 @@ private:
 
     Dag & m_dag;
     Parser & m_parser;
-    std::unordered_map<std::string, const Term *> m_definitions;
 };
 
 } // namespace pomagma

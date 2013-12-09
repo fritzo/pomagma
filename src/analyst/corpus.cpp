@@ -20,7 +20,12 @@ public:
     const Term * variable (
             const std::string & name)
     {
-        return get(Term(Term::VARIABLE, name));
+        auto i = m_definitions.find(name);
+        if (i == m_definitions.end()) {
+            return get(Term(Term::VARIABLE, name));
+        } else {
+            return i->second;
+        }
     }
     const Term * nullary_function (
             const std::string & name)
@@ -97,65 +102,84 @@ public:
         return get(Term(Term::BINARY_RELATION, name, lhs, rhs));
     }
 
-    // TODO use this to inline ob definitions in a linker pass
-    const Term * substitute (
-            const std::string & name,
-            const Term * definition,
-            const Term * source)
+    class Linker
     {
-        switch (source->arity) {
-
-            case Term::OB:
-            case Term::HOLE:
-            case Term::NULLARY_FUNCTION:
-                return source;
-
-            case Term::VARIABLE:
-                return source->name == name ?  definition : source;
-
-            case Term::INJECTIVE_FUNCTION:
-                return injective_function(
-                    source->name,
-                    substitute(name, definition, source->arg0));
-
-            case Term::BINARY_FUNCTION:
-                return binary_function(
-                    source->name,
-                    substitute(name, definition, source->arg0),
-                    substitute(name, definition, source->arg1));
-
-            case Term::SYMMETRIC_FUNCTION:
-                return symmetric_function(
-                    source->name,
-                    substitute(name, definition, source->arg0),
-                    substitute(name, definition, source->arg1));
-
-            case Term::BINARY_RELATION:
-                return binary_relation(
-                    source->name,
-                    substitute(name, definition, source->arg0),
-                    substitute(name, definition, source->arg1));
+    public:
+        Linker (Dag & dag, std::vector<std::string> & error_log)
+            : m_dag(dag),
+              m_error_log(error_log)
+        {
+            m_dag.m_definitions.clear();
         }
-    }
-    void clear_definitions () { m_definitions.clear(); }
-    void define (const std::string & name, const Term * term)
+        ~Linker ();
+        void operator() (const std::string & name, const Term * term);
+    private:
+        Dag & m_dag;
+        std::vector<std::string> & m_error_log;
+        std::unordered_map<std::string, const Term *> m_definitions;
+    };
+    Linker linker (std::vector<std::string> & error_log)
     {
-        m_definitions[name] = term;
-        TODO("redefine all terms to use new definition");
+        return Linker(* this, error_log);
     }
 
-    typedef std::unordered_set<Term, Term::Hash, Term::Equal> Terms;
-    const Terms & terms () const { return m_terms; }
+    class GarbageCollector
+    {
+    public:
+        GarbageCollector (Dag & dag) : m_dag(dag) {}
+        ~GarbageCollector ();
+        void operator() (const Term * term);
+    private:
+        Dag & m_dag;
+        std::unordered_set<const Term *> m_used;
+    };
+    GarbageCollector garbage_collector () { return GarbageCollector(* this); }
 
 private:
 
     const Term * get (Term && key) { return & * m_terms.insert(key).first; }
+    std::unordered_map<std::string, size_t> get_ranks ();
 
-    std::unordered_map<std::string, const Term *> m_definitions;
     Signature & m_signature;
-    Terms m_terms;
+    std::unordered_set<Term, Term::Hash, Term::Equal> m_terms;
+    std::unordered_map<std::string, const Term *> m_definitions;
 };
 
+std::unordered_map<std::string, size_t> Corpus::Dag::get_ranks ()
+{
+    TODO("compute ranks");
+    //std::unordered_map<const Term *, DenseSet *> vars;
+    std::unordered_map<std::string, size_t> ranks;
+    return ranks;
+}
+
+void Corpus::Dag::Linker::operator() (
+        const std::string & name,
+        const Term * term)
+{
+    auto pair = m_definitions.insert(std::make_pair(name, term));
+    if (not pair.second) {
+        m_error_log.push_back("duplicate defintion: " + name);
+    }
+}
+
+Corpus::Dag::Linker::~Linker ()
+{
+    TODO("warn about missing definitions");
+    TODO("get references of defined terms");
+    TODO("compute ranks");
+    TODO("define well-founded terms in order of increasing rank");
+}
+
+void Corpus::Dag::GarbageCollector::operator() (const Term * term)
+{
+    m_used.insert(term);
+}
+
+Corpus::Dag::GarbageCollector::~GarbageCollector ()
+{
+    TODO("collect garbage");
+}
 
 class Corpus::Parser
 {
@@ -258,32 +282,29 @@ Corpus::Diff Corpus::update (
     // compute_diff);
     // dag.garbage_collect();
 
+    // first do a linker pass
+    {
+        auto define = m_dag.linker(error_log);
+        for (const auto & line : lines) {
+            if (line.is_definition()) {
+                const std::string & name = line.maybe_name;
+                const Term * term = m_parser.parse(line.code);
+                define(name, term);
+            }
+        }
+    }
+
+    // then do a maximally-linked pass
     Diff diff;
-    m_definitions.clear();
-    for (const auto & line : lines) {
-        const Term * term = m_parser.parse(line.code);
-        diff.lines.push_back(term);
-        const std::string & name = line.maybe_name;
-        if (not name.empty()) {
-            auto pair = m_definitions.insert(std::make_pair(name, term));
-            if (not pair.second) {
-                std::string message = "duplicate definition: " + name;
-                POMAGMA_WARN(message);
-                error_log.push_back(message);
-            }
+    {
+        auto mark_used = m_dag.garbage_collector();
+        for (const auto & line : lines) {
+            const Term * term = m_parser.parse(line.code);
+            diff.lines.push_back(term);
+            mark_used(term);
         }
     }
-    for (const Term & term : m_dag.terms()) {
-        if (term.arity == Term::VARIABLE) {
-            const std::string & name = term.name;
-            if (m_definitions.find(name) == m_definitions.end()) {
-                std::string message = "missing definition: " + name;
-                POMAGMA_WARN(message);
-                error_log.push_back(message);
-            }
-        }
-    }
-    // TODO collapse definitions as obs
+
     TODO("compute removed, added");
     return diff;
 }
