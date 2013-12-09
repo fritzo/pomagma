@@ -23,6 +23,13 @@ set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS} -DNDEBUG=1")
 #add_definitions(-DPOMAGMA_DEBUG_LEVEL=0)
 #add_definitions(-DNDEBUG)
 
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+	set(CMAKE_CXX_COMPILER "g++-4.7")
+	# see http://stackoverflow.com/questions/10327939
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mno-avx")
+	#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wa,-q")
+endif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin") 
+
 find_package(Boost 1.48 COMPONENTS thread REQUIRED)
 #include_directories(${Boost_INCLUDE_DIR})
 
