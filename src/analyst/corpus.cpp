@@ -1,5 +1,6 @@
 #include "corpus.hpp"
 #include <unordered_set>
+#include <map>
 
 namespace pomagma
 {
@@ -8,7 +9,10 @@ class Corpus::Dag
 {
 public:
 
-    Dag (Signature & signature) : m_signature(signature) {}
+    typedef size_t Id;
+
+    Dag (Signature & signature);
+    ~Dag ();
 
     const Term * truthy () { return nullary_function("I"); }
     const Term * falsey () { return nullary_function("BOT"); }
@@ -137,20 +141,35 @@ public:
 
 private:
 
-    const Term * get (Term && key) { return & * m_terms.insert(key).first; }
-    std::unordered_map<std::string, size_t> get_ranks ();
+    const Term * get (Term && key)
+    {
+        * m_new_term.first = key;
+        auto pair = m_terms.insert(m_new_term);
+        if (pair.second) {
+            m_new_term.first = new Term();
+            m_new_term.second += 1;
+        }
+        return pair.first->first;
+    }
 
     Signature & m_signature;
-    std::unordered_set<Term, Term::Hash, Term::Equal> m_terms;
+    std::pair<Term *, Id> m_new_term;
+    std::unordered_map<Term *, Id, Term::Hash, Term::Equal> m_terms;
     std::unordered_map<std::string, const Term *> m_definitions;
 };
 
-std::unordered_map<std::string, size_t> Corpus::Dag::get_ranks ()
+Corpus::Dag::Dag (Signature & signature)
+    : m_signature(signature),
+      m_new_term(std::make_pair(new Term(), 0))
 {
-    TODO("compute ranks");
-    //std::unordered_map<const Term *, DenseSet *> vars;
-    std::unordered_map<std::string, size_t> ranks;
-    return ranks;
+}
+
+Corpus::Dag::~Dag ()
+{
+    delete m_new_term.first;
+    for (auto pair : m_terms) {
+        delete pair.first;
+    }
 }
 
 void Corpus::Dag::Linker::operator() (
@@ -167,7 +186,13 @@ Corpus::Dag::Linker::~Linker ()
 {
     TODO("warn about missing definitions");
     TODO("get references of defined terms");
-    TODO("compute ranks");
+
+    std::map<Id, const Term *> ranked;
+    for (auto pair : m_dag.m_terms) {
+        ranked.insert(std::make_pair(pair.second, pair.first));
+    }
+    POMAGMA_ASSERT_EQ(ranked.size(), m_dag.m_terms.size());
+
     TODO("define well-founded terms in order of increasing rank");
 }
 

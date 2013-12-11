@@ -26,13 +26,13 @@ public:
 
         struct Equal
         {
-            bool operator() (const Term & x, const Term & y) const
+            bool operator() (const Term * x, const Term * y) const
             {
-                return x.arity == y.arity
-                   and x.name == y.name
-                   and x.arg0 == y.arg0
-                   and x.arg1 == y.arg1
-                   and x.ob == y.ob;
+                return x->arity == y->arity
+                   and x->name == y->name
+                   and x->arg0 == y->arg0
+                   and x->arg1 == y->arg1
+                   and x->ob == y->ob;
             }
         };
 
@@ -41,14 +41,14 @@ public:
             std::hash<std::string> hash_string;
             std::hash<const Term *> hash_pointer;
 
-            uint64_t operator() (const Term & x) const
+            uint64_t operator() (const Term * x) const
             {
                 FNV_hash::HashState state;
-                state.add(x.arity);
-                state.add(hash_string(x.name));
-                state.add(hash_pointer(x.arg0));
-                state.add(hash_pointer(x.arg1));
-                state.add(x.ob);
+                state.add(x->arity);
+                state.add(hash_string(x->name));
+                state.add(hash_pointer(x->arg0));
+                state.add(hash_pointer(x->arg1));
+                state.add(x->ob);
                 return state.get();
             }
         };
