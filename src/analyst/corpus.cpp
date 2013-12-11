@@ -109,35 +109,24 @@ public:
     class Linker
     {
     public:
-        Linker (Dag & dag, std::vector<std::string> & error_log)
-            : m_dag(dag),
-              m_error_log(error_log)
-        {
-            m_dag.m_definitions.clear();
-        }
+        Linker (Dag & dag);
         ~Linker ();
         void operator() (const std::string & name, const Term * term);
     private:
         Dag & m_dag;
-        std::vector<std::string> & m_error_log;
         std::unordered_map<std::string, const Term *> m_definitions;
     };
-    Linker linker (std::vector<std::string> & error_log)
-    {
-        return Linker(* this, error_log);
-    }
 
     class GarbageCollector
     {
     public:
-        GarbageCollector (Dag & dag) : m_dag(dag) {}
+        GarbageCollector (Dag & dag);
         ~GarbageCollector ();
         void operator() (const Term * term);
     private:
         Dag & m_dag;
         std::unordered_set<const Term *> m_used;
     };
-    GarbageCollector garbage_collector () { return GarbageCollector(* this); }
 
 private:
 
@@ -146,6 +135,8 @@ private:
         * m_new_term.first = key;
         auto pair = m_terms.insert(m_new_term);
         if (pair.second) {
+            m_ranked.insert(
+                std::make_pair(m_new_term.second, m_new_term.first));
             m_new_term.first = new Term();
             m_new_term.second += 1;
         }
@@ -155,6 +146,7 @@ private:
     Signature & m_signature;
     std::pair<Term *, Id> m_new_term;
     std::unordered_map<Term *, Id, Term::Hash, Term::Equal> m_terms;
+    std::map<Id, const Term *> m_ranked;
     std::unordered_map<std::string, const Term *> m_definitions;
 };
 
@@ -166,44 +158,107 @@ Corpus::Dag::Dag (Signature & signature)
 
 Corpus::Dag::~Dag ()
 {
+    POMAGMA_ASSERT_EQ(m_ranked.size(), m_terms.size());
     delete m_new_term.first;
     for (auto pair : m_terms) {
         delete pair.first;
     }
 }
 
-void Corpus::Dag::Linker::operator() (
+Corpus::Dag::Linker::Linker (Dag & dag)
+    : m_dag(dag)
+{
+    POMAGMA_ASSERT_EQ(m_dag.m_ranked.size(), m_dag.m_terms.size());
+    m_dag.m_definitions.clear();
+    const Term * hole = m_dag.hole();
+
+    for (auto pair : m_dag.m_terms) {
+        const Term * term = pair.first;
+        if (term->arity == Term::VARIABLE) {
+            m_definitions.insert(std::make_pair(term->name, hole));
+        }
+    }
+}
+
+inline void Corpus::Dag::Linker::operator() (
         const std::string & name,
         const Term * term)
 {
-    auto pair = m_definitions.insert(std::make_pair(name, term));
-    if (not pair.second) {
-        m_error_log.push_back("duplicate defintion: " + name);
-    }
+    m_definitions[name] = term;
 }
 
 Corpus::Dag::Linker::~Linker ()
 {
-    TODO("warn about missing definitions");
     TODO("get references of defined terms");
 
-    std::map<Id, const Term *> ranked;
-    for (auto pair : m_dag.m_terms) {
-        ranked.insert(std::make_pair(pair.second, pair.first));
+    std::vector<std::string> index_to_name;
+    std::unordered_map<std::string, size_t> name_to_index;
+    for (auto pair : m_definitions) {
+        name_to_index[pair.first] = index_to_name.size();
+        index_to_name.push_back(pair.first);
     }
-    POMAGMA_ASSERT_EQ(ranked.size(), m_dag.m_terms.size());
+
+    std::unordered_set<const Term *> closed;
+    auto is_closed = [&](const Term * term) {
+        return closed.find(term) != closed.end();
+    };
+    // this loop has worst-case time complexity m_ranked.size() * name_count
+    bool changed = true;
+    while (changed) {
+        changed = false;
+        for (auto pair : m_dag.m_ranked) {
+            const Term * term = pair.second;
+            if (not is_closed(term)) {
+                switch (term->arity) {
+                    case Term::OB:
+                    case Term::HOLE:
+                    case Term::NULLARY_FUNCTION:
+                        closed.insert(term);
+                        break;
+
+                    case Term::INJECTIVE_FUNCTION:
+                        if (is_closed(term->arg0)) {
+                            closed.insert(term);
+                        }
+                        break;
+
+                    case Term::BINARY_FUNCTION:
+                    case Term::SYMMETRIC_FUNCTION:
+                    case Term::BINARY_RELATION:
+                        if (is_closed(term->arg0) and is_closed(term->arg1)) {
+                            closed.insert(term);
+                        }
+                        break;
+
+                    case Term::VARIABLE:
+                        if (is_closed(m_definitions[term->name])) {
+                            closed.insert(term);
+                            changed = true;
+                        }
+                        break;
+                }
+            }
+        }
+    }
 
     TODO("define well-founded terms in order of increasing rank");
 }
 
-void Corpus::Dag::GarbageCollector::operator() (const Term * term)
+Corpus::Dag::GarbageCollector::GarbageCollector (Dag & dag)
+    : m_dag(dag)
+{
+}
+
+inline void Corpus::Dag::GarbageCollector::operator() (const Term * term)
 {
     m_used.insert(term);
 }
 
 Corpus::Dag::GarbageCollector::~GarbageCollector ()
 {
+    POMAGMA_ASSERT_EQ(m_dag.m_ranked.size(), m_dag.m_terms.size());
     TODO("collect garbage");
+    POMAGMA_ASSERT_EQ(m_dag.m_ranked.size(), m_dag.m_terms.size());
 }
 
 class Corpus::Parser
@@ -307,9 +362,11 @@ Corpus::Diff Corpus::update (
     // compute_diff);
     // dag.garbage_collect();
 
+    TODO("warn about missing definitions");
+
     // first do a linker pass
     {
-        auto define = m_dag.linker(error_log);
+        Dag::Linker define(m_dag);
         for (const auto & line : lines) {
             if (line.is_definition()) {
                 const std::string & name = line.maybe_name;
@@ -322,7 +379,7 @@ Corpus::Diff Corpus::update (
     // then do a maximally-linked pass
     Diff diff;
     {
-        auto mark_used = m_dag.garbage_collector();
+        Dag::GarbageCollector mark_used(m_dag);
         for (const auto & line : lines) {
             const Term * term = m_parser.parse(line.code);
             diff.lines.push_back(term);
@@ -331,6 +388,10 @@ Corpus::Diff Corpus::update (
     }
 
     TODO("compute removed, added");
+
+    if (not error_log.empty()) {
+        POMAGMA_WARN("found " << error_log.size() << " errors");
+    }
     return diff;
 }
 
