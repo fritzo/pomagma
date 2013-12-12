@@ -106,6 +106,8 @@ public:
         return get(Term(Term::BINARY_RELATION, name, lhs, rhs));
     }
 
+    const Term * link (const Term * term, size_t depth);
+
     class Linker
     {
     public:
@@ -163,6 +165,46 @@ Corpus::Dag::~Dag ()
     for (auto pair : m_terms) {
         delete pair.first;
     }
+}
+
+const Corpus::Term * Corpus::Dag::link (const Term * term, size_t depth)
+{
+    switch (term->arity) {
+        case Term::OB:
+        case Term::HOLE:
+        case Term::NULLARY_FUNCTION:
+            return term;
+
+        case Term::INJECTIVE_FUNCTION:
+            return injective_function(term->name, link(term->arg0, depth));
+
+        case Term::BINARY_FUNCTION:
+            return binary_function(
+                term->name,
+                link(term->arg0, depth),
+                link(term->arg1, depth));
+
+        case Term::SYMMETRIC_FUNCTION:
+            return symmetric_function(
+                term->name,
+                link(term->arg0, depth),
+                link(term->arg1, depth));
+
+        case Term::BINARY_RELATION:
+            return binary_relation(
+                term->name,
+                link(term->arg0, depth),
+                link(term->arg1, depth));
+
+        case Term::VARIABLE:
+            if (depth == 0) {
+                return hole();
+            } else {
+                return link(m_definitions[term->name], depth - 1);
+            }
+    }
+
+    return nullptr; // never reached
 }
 
 Corpus::Dag::Linker::Linker (Dag & dag)
