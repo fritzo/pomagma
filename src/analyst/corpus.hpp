@@ -99,6 +99,7 @@ private:
 
     class Dag;
     class Parser;
+    class Linker;
 
     Dag & m_dag;
     Parser & m_parser;
