@@ -38,18 +38,15 @@ public:
 
     CachedApproximator (Approximator & approximator)
         : m_approximator(approximator)
-    {}
-    HashedApproximation * find (
-            const std::string & name);
-    HashedApproximation * find (
-            const std::string & name,
-            const HashedApproximation & arg0);
-    HashedApproximation * find (
-            const std::string & name,
-            const HashedApproximation & arg0,
-            const HashedApproximation & arg1)
     {
-        Key key = {name, & arg0, & arg1};
+    }
+
+    HashedApproximation * find (
+            const std::string & name,
+            const HashedApproximation * arg0 = nullptr,
+            const HashedApproximation * arg1 = nullptr)
+    {
+        Key key = {name, arg0, arg1};
         return find(key);
     }
 
