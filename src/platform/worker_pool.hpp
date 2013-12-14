@@ -11,7 +11,7 @@ namespace pomagma
 template<class Task>
 class WorkerPool : noncopyable
 {
-    std::atomic<bool> m_alive;
+    std::atomic<bool> m_accepting;
     tbb::concurrent_queue<Task> m_queue;
     std::mutex m_mutex;
     std::condition_variable m_condition;
@@ -20,7 +20,7 @@ class WorkerPool : noncopyable
 public:
 
     WorkerPool (size_t thread_count)
-        : m_alive(true)
+        : m_accepting(true)
     {
         POMAGMA_DEBUG("Starting pool of " << thread_count << " workers");
         for (size_t i = 0; i < thread_count; ++i) {
@@ -29,7 +29,7 @@ public:
     }
     ~WorkerPool ()
     {
-        m_alive.store(false);
+        m_accepting.store(false);
         m_condition.notify_all();
         for (auto & worker : m_pool) {
             worker.join();
@@ -43,22 +43,21 @@ public:
         m_condition.notify_one();
     }
 
-    bool empty () const { return m_queue.empty(); }
-
 private:
 
     void do_work ()
     {
-        while (likely(m_alive.load())) {
-            Task task;
+        Task task;
+        while (likely(m_accepting.load())) {
             if (m_queue.try_pop(task)) {
                 task();
             } else {
                 std::unique_lock<std::mutex> lock(m_mutex);
-                const auto timeout = std::chrono::seconds(60);
-                m_condition.wait_for(lock, timeout);
-                //m_condition.wait(lock);
+                m_condition.wait_for(lock, std::chrono::seconds(60));
             }
+        }
+        while (m_queue.try_pop(task)) {
+            task();
         }
     }
 };

@@ -23,10 +23,6 @@ void test_threadpool (size_t thread_count, size_t max_duration)
         Task task = {std::chrono::milliseconds(duration)};
         pool.schedule(task);
     }
-
-    while (not pool.empty()) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    }
 }
 
 int main ()
