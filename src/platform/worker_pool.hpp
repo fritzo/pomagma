@@ -27,21 +27,27 @@ public:
             m_pool.push_back(std::thread([this](){ this->do_work(); }));
         }
     }
-    ~WorkerPool ()
-    {
-        m_accepting.store(false);
-        m_condition.notify_all();
-        for (auto & worker : m_pool) {
-            worker.join();
-        }
-        POMAGMA_DEBUG("Stopped pool of " << m_pool.size() << " workers");
-    }
 
     void schedule (const Task & task)
     {
+        POMAGMA_ASSERT(m_accepting.load(), "pool is not accepting work");
         m_queue.push(task);
         m_condition.notify_one();
     }
+
+    void wait ()
+    {
+        bool expected = true;
+        if (m_accepting.compare_exchange_strong(expected, false)) {
+            m_condition.notify_all();
+            for (auto & worker : m_pool) {
+                worker.join();
+            }
+            POMAGMA_DEBUG("Stopped pool of " << m_pool.size() << " workers");
+        }
+    }
+
+    ~WorkerPool () { wait(); }
 
 private:
 

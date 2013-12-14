@@ -13,7 +13,10 @@ struct Task
     }
 };
 
-void test_threadpool (size_t thread_count, size_t max_duration)
+void test_threadpool (
+    size_t thread_count,
+    size_t max_duration,
+    size_t wait_count)
 {
     POMAGMA_INFO("Testing pool of " << thread_count << " threads");
     POMAGMA_ASSERT_LT(0, thread_count);
@@ -23,12 +26,16 @@ void test_threadpool (size_t thread_count, size_t max_duration)
         Task task = {std::chrono::milliseconds(duration)};
         pool.schedule(task);
     }
+    for (size_t i = 0; i < wait_count; ++i) {
+        pool.wait();
+    }
 }
 
 int main ()
 {
-    test_threadpool(1, 20);
-    test_threadpool(10, 100);
+    test_threadpool(1, 20, 0);
+    test_threadpool(10, 100, 0);
+    test_threadpool(10, 20, 2);
 
     return 0;
 }

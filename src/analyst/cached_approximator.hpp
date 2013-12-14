@@ -77,12 +77,15 @@ class CachedApproximator : noncopyable
 
     typedef HashedApproximation * Value;
 
+    typedef tbb::concurrent_unordered_map<Key, Value, Key::Hash, Key::Equal>
+        Cache;
+
     struct Task
     {
-        Key key;
+        Cache::iterator i;
         CachedApproximator * approximator;
 
-        void operator() () { approximator->compute_and_store(key); }
+        void operator() () { approximator->compute_and_store(i); }
     };
 
 public:
@@ -93,6 +96,14 @@ public:
         : m_approximator(approximator),
           m_pool(thread_count)
     {
+    }
+
+    ~CachedApproximator ()
+    {
+        m_pool.wait();
+        for (auto i : m_cache) {
+            delete i.second;
+        }
     }
 
     HashedApproximation * find (
@@ -108,14 +119,14 @@ private:
 
     HashedApproximation * find (const Key & key)
     {
-        auto i = m_cache.find(key);
-        if (i == m_cache.end()) {
-            m_cache[key] = nullptr;
-            Task task = {key, this};
+        auto pair = m_cache.insert(std::make_pair(key, nullptr));
+        auto & i = pair.first;
+        bool inserted = pair.second;
+        if (inserted) {
+            Task task = {i, this};
             m_pool.schedule(task);
-        } else {
-            return i->second;
         }
+        return i->second;
     }
 
     Approximation compute (const Key & key)
@@ -133,13 +144,15 @@ private:
         }
     }
 
-    void compute_and_store (const Key & key)
+    void compute_and_store (Cache::iterator & i)
     {
-        m_cache[key] = new HashedApproximation(compute(key));
+        const Key & key = i->first;
+        Value & value = i->second;
+        value = new HashedApproximation(compute(key));
     }
 
     Approximator & m_approximator;
-    tbb::concurrent_unordered_map<Key, Value, Key::Hash, Key::Equal> m_cache;
+    Cache m_cache;
     WorkerPool<Task> m_pool;
 };
 
