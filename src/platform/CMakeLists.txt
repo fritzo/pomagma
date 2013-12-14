@@ -20,5 +20,12 @@ target_link_libraries(threading_profile
 	pomagma_platform_concurrent
        	${POMAGMA_CONCURRENT_LIBS})
 
+add_executable(worker_pool_test worker_pool_test.cpp)
+target_link_libraries(worker_pool_test
+	pomagma_platform_sequential
+	${POMAGMA_SEQUENTIAL_LIBS}
+	tbb)
+add_test(NAME worker_pool COMMAND worker_pool_test)
+
 add_subdirectory(concurrent)
 add_subdirectory(sequential)
