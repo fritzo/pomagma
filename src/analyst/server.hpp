@@ -34,7 +34,7 @@ public:
             const std::string & codes_out);
     Approximator::Validity is_valid (const std::string & code);
     std::vector<Approximator::Validity> validate_corpus (
-            const std::vector<Corpus::Line> & lines);
+            const std::vector<Corpus::LineOf<std::string>> & lines);
 
     std::vector<std::string> flush_errors ();
 

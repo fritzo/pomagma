@@ -1,4 +1,5 @@
 #include "corpus.hpp"
+#include <pomagma/platform/unique_set.hpp>
 #include <unordered_set>
 #include <map>
 
@@ -12,8 +13,7 @@ class Corpus::Dag
 {
 public:
 
-    Dag (Signature & signature);
-    ~Dag ();
+    Dag (Signature & signature) : m_signature(signature) {}
 
     const Term * truthy () { return nullary_function("I"); }
     const Term * falsey () { return nullary_function("BOT"); }
@@ -112,35 +112,21 @@ private:
     const Term * get (Term && key)
     {
         * m_new_term = key;
-        auto pair = m_terms.insert(m_new_term);
-        if (pair.second) {
+        const Term * new_term = m_terms.insert(m_new_term);
+        if (new_term == m_new_term) {
             if (m_new_term->arity == Term::VARIABLE) {
                 m_variables.insert(m_new_term);
             }
             m_new_term = new Term();
         }
-        return * pair.first;
+        return new_term;
     }
 
     Signature & m_signature;
     Term * m_new_term;
-    std::unordered_set<Term *, Term::Hash, Term::Equal> m_terms;
+    UniqueSet<Term, Term::Hash> m_terms;
     std::unordered_set<Term *> m_variables;
 };
-
-Corpus::Dag::Dag (Signature & signature)
-    : m_signature(signature),
-      m_new_term(new Term())
-{
-}
-
-Corpus::Dag::~Dag ()
-{
-    delete m_new_term;
-    for (Term * term : m_terms) {
-        delete term;
-    }
-}
 
 //----------------------------------------------------------------------------
 // Parser
@@ -229,20 +215,24 @@ class Corpus::Linker
 {
 public:
 
-    Linker (Dag & dag);
+    Linker (Dag & dag, std::vector<std::string> & error_log);
     void define (const std::string & name, const Term * term);
     const Term * link (const Term * term, size_t depth);
 private:
     const Term * link (const Term * term);
 
     Dag & m_dag;
+    std::vector<std::string> & m_error_log;
     std::unordered_map<std::string, const Term *> m_definitions;
     std::unordered_map<const Term *, size_t> m_temp_counts;
     size_t m_temp_depth;
 };
 
-Corpus::Linker::Linker (Dag & dag)
+Corpus::Linker::Linker (
+        Dag & dag,
+        std::vector<std::string> & error_log)
     : m_dag(dag),
+      m_error_log(error_log),
       m_definitions(),
       m_temp_counts(),
       m_temp_depth(0)
@@ -258,7 +248,10 @@ inline void Corpus::Linker::define (
         const std::string & name,
         const Term * term)
 {
-    m_definitions[name] = term;
+    auto pair = m_definitions.insert(std::make_pair(name, term));
+    if (not pair.second) {
+        m_error_log.push_back("multiple definition of: " + name);
+    }
 }
 
 inline const Corpus::Term * Corpus::Linker::link (
@@ -310,7 +303,7 @@ const Corpus::Term * Corpus::Linker::link (const Term * term)
             }
     }
 
-    return nullptr; // never reached
+    POMAGMA_ERROR("unreachable");
 }
 
 //----------------------------------------------------------------------------
@@ -328,42 +321,33 @@ Corpus::~Corpus ()
     delete & m_dag;
 }
 
-Corpus::Diff Corpus::update (
-        const std::vector<Corpus::Line> & lines,
+std::vector<Corpus::LineOf<const Corpus::Term *>> Corpus::parse (
+        const std::vector<Corpus::LineOf<std::string>> & lines,
         std::vector<std::string> & error_log)
 {
-    // TODO do two parser passes and run dag linker as follows:
-    // parse_all_terms();
-    // dag.link();
-    // parse_all_terms();
-    // compute_diff);
-    // dag.garbage_collect();
-
-    TODO("warn about missing definitions");
-
     // first do a linker pass
-    Linker linker(m_dag);
+    Linker linker(m_dag, error_log);
     for (const auto & line : lines) {
         if (line.is_definition()) {
             const std::string & name = line.maybe_name;
-            const Term * term = m_parser.parse(line.code);
+            const Term * term = m_parser.parse(line.body);
             linker.define(name, term);
         }
     }
 
     // then do a maximally-linked pass
-    Diff diff;
+    std::vector<LineOf<const Term *>> parsed;
     for (const auto & line : lines) {
-        const Term * term = m_parser.parse(line.code);
-        diff.lines.push_back(term);
+        const Term * term = m_parser.parse(line.body);
+        size_t depth = 1;  // TODO loop over this in Validator::Task
+        LineOf<const Term *> linked = {
+            line.maybe_name,
+            linker.link(term, depth)
+        };
+        parsed.push_back(std::move(linked));
     }
 
-    TODO("compute removed, added");
-
-    if (not error_log.empty()) {
-        POMAGMA_WARN("found " << error_log.size() << " errors");
-    }
-    return diff;
+    return parsed;
 }
 
 } // namespace pomagma

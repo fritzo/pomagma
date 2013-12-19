@@ -67,16 +67,10 @@ Approximator::Validity Server::is_valid (const std::string & code)
 }
 
 std::vector<Approximator::Validity> Server::validate_corpus (
-        const std::vector<Corpus::Line> & lines)
+        const std::vector<Corpus::LineOf<std::string>> & lines)
 {
-    Corpus::Diff diff = m_corpus.update(lines, m_error_log);
-    m_validator.update(diff);
-    std::vector<Approximator::Validity> result;
-    result.reserve(lines.size());
-    for (const Corpus::Term * term : diff.lines) {
-        result.push_back(m_validator.is_valid(term));
-    }
-    return result;
+    auto parsed = m_corpus.parse(lines, m_error_log);
+    return m_validator.validate(parsed);
 }
 
 std::vector<std::string> Server::flush_errors ()
@@ -132,13 +126,13 @@ messaging::AnalystResponse handle (
 
     if (request.has_validate_corpus()) {
         size_t line_count = request.validate_corpus().lines_size();
-        std::vector<Corpus::Line> lines(line_count);
+        std::vector<Corpus::LineOf<std::string>> lines(line_count);
         for (size_t i = 0; i < line_count; ++i) {
             const auto & line = request.validate_corpus().lines(i);
             if (line.has_name()) {
                 lines[i].maybe_name = line.name();
             }
-            lines[i].code = line.code();
+            lines[i].body = line.code();
         }
         const auto validities = server.validate_corpus(lines);
         auto & responses = * response.mutable_validate_corpus();

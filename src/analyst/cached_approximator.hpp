@@ -2,20 +2,24 @@
 
 #include <pomagma/analyst/approximate.hpp>
 #include <pomagma/platform/hash_map.hpp>
-#include <pomagma/platform/worker_pool.hpp>
+#include <pomagma/platform/async_map.hpp>
+#include <pomagma/platform/unique_set.hpp>
 #include <tbb/concurrent_unordered_map.h>
 
 namespace pomagma
 {
 
+// TODO profile hash conflict rate
 struct HashedApproximation
 {
-    const uint64_t hash;
+private:
+public:
     const Approximation approx;
+    const uint64_t hash;
 
     HashedApproximation (Approximation && a)
-        : hash(compute_hash(a)),
-          approx(std::move(a))
+        : approx(std::move(a)),
+          hash(compute_hash(approx))
     {
     }
     HashedApproximation (const HashedApproximation &) = delete;
@@ -24,68 +28,122 @@ struct HashedApproximation
     {
         return hash == other.hash and approx == other.approx;
     }
+    bool operator!= (const HashedApproximation & other) const
+    {
+        return not operator==(other);
+    }
+
+    struct Hash
+    {
+        uint64_t operator() (const HashedApproximation & x) const
+        {
+            return x.hash;
+        }
+    };
 
 private:
 
     static uint64_t compute_hash (const Approximation & approx);
 };
 
-
-// TODO garbage collect
-// TODO make cache persistent
-// TODO profile hash conflict rate
-
 class CachedApproximator : noncopyable
 {
+public:
 
-    struct Key
+    struct Term
     {
-        std::string name;
-        const HashedApproximation * arg0;
-        const HashedApproximation * arg1;
-
-        struct Equal
-        {
-            template<class T>
-            bool maybe (const T * x, const T * y) const
-            {
-                return x ? (y and *x == *y) : not y;
-            }
-
-            bool operator() (const Key & x, const Key & y) const
-            {
-                return x.name == y.name
-                   and maybe(x.arg0, y.arg0)
-                   and maybe(x.arg1, y.arg1);
-            }
+        enum Arity {
+            OB,
+            HOLE,
+            NULLARY_FUNCTION,
+            INJECTIVE_FUNCTION,
+            BINARY_FUNCTION,
+            SYMMETRIC_FUNCTION,
+            BINARY_RELATION
         };
 
         struct Hash
         {
             std::hash<std::string> hash_string;
+            std::hash<const HashedApproximation *> hash_pointer;
 
-            uint64_t operator() (const Key & key) const
+            uint64_t operator() (const Term & x) const
             {
                 FNV_hash::HashState state;
-                state.add(hash_string(key.name));
-                state.add(key.arg0 ? key.arg0->hash : 0);
-                state.add(key.arg1 ? key.arg1->hash : 0);
+                state.add(x.arity);
+                state.add(hash_string(x.name));
+                state.add(hash_pointer(x.arg0));
+                state.add(hash_pointer(x.arg1));
+                state.add(x.ob);
                 return state.get();
             }
         };
+
+        bool operator== (const Term & o) const
+        {
+            return arity == o.arity
+               and name == o.name
+               and arg0 == o.arg0
+               and arg1 == o.arg1
+               and ob == o.ob;
+        }
+        bool operator!= (const Term & o) const { return not operator==(o); }
+
+        Arity arity;
+        std::string name;
+        const HashedApproximation * arg0;
+        const HashedApproximation * arg1;
+        Ob ob;
     };
 
-    typedef HashedApproximation * Value;
+private:
 
-    typedef tbb::concurrent_unordered_map<Key, Value, Key::Hash, Key::Equal>
-        Cache;
+    typedef AsyncMap<const Term *, HashedApproximation> Cache;
 
     struct Task
     {
-        Cache::iterator i;
-        CachedApproximator * approximator;
+        const Term * term;
+        Cache::Callback callback;
+    };
 
-        void operator() () { approximator->compute_and_store(i); }
+    class Processor : noncopyable
+    {
+    public:
+
+        Processor (CachedApproximator * a) : m_approximator(* a) {}
+
+        void operator() (Task & task)
+        {
+            task.callback(
+                m_approximator.m_approximations.insert_or_delete(
+                    new HashedApproximation(
+                        m_approximator.compute(
+                            task.term))));
+        }
+
+    private:
+
+        CachedApproximator & m_approximator;
+    };
+
+    class AsyncFunction : noncopyable
+    {
+    public:
+
+        AsyncFunction (Processor & processor, size_t thread_count)
+            : m_pool(processor, thread_count)
+        {
+        }
+
+        void operator() (const Term * term, Cache::Callback callback)
+        {
+            Task task = {term, callback};
+            m_pool.schedule(task);
+        }
+
+    private:
+
+        WorkerPool<Task, Processor> m_pool;
     };
 
 public:
@@ -94,66 +152,57 @@ public:
             Approximator & approximator,
             size_t thread_count = 1)
         : m_approximator(approximator),
-          m_pool(thread_count)
+          m_processor(this),
+          m_function(m_processor, thread_count),
+          m_cache(std::bind(&AsyncFunction::operator(), & m_function, _1, _2))
     {
     }
 
-    ~CachedApproximator ()
+    void find_async (
+            const Term & term,
+            Cache::Callback callback)
     {
-        m_pool.wait();
-        for (auto i : m_cache) {
-            delete i.second;
-        }
-    }
-
-    HashedApproximation * find (
-            const std::string & name,
-            const HashedApproximation * arg0 = nullptr,
-            const HashedApproximation * arg1 = nullptr)
-    {
-        Key key = {name, arg0, arg1};
-        return find(key);
+        const Term * key = m_terms.insert_or_delete(new Term(term));
+        m_cache.find_async(key, callback);
     }
 
 private:
 
-    HashedApproximation * find (const Key & key)
+    Approximation compute (const Term * term)
     {
-        auto pair = m_cache.insert(std::make_pair(key, nullptr));
-        auto & i = pair.first;
-        bool inserted = pair.second;
-        if (inserted) {
-            Task task = {i, this};
-            m_pool.schedule(task);
+        const auto & name = term->name;
+        auto * arg0 = term->arg0;
+        auto * arg1 = term->arg1;
+
+        switch (term->arity) {
+            case Term::OB:
+                return m_approximator.known(term->ob);
+
+            case Term::HOLE:
+                return m_approximator.unknown();
+
+            case Term::NULLARY_FUNCTION:
+                return m_approximator.find(name);
+
+
+            case Term::INJECTIVE_FUNCTION:
+                return m_approximator.find(name, arg0->approx);
+
+            case Term::BINARY_FUNCTION:
+            case Term::SYMMETRIC_FUNCTION:
+            case Term::BINARY_RELATION:
+                return m_approximator.find(name, arg0->approx, arg1->approx);
         }
-        return i->second;
-    }
 
-    Approximation compute (const Key & key)
-    {
-        const auto & name = key.name;
-        auto * arg0 = key.arg0;
-        auto * arg1 = key.arg1;
-
-        if (key.arg1) {
-            return m_approximator.find(name, arg0->approx, arg1->approx);
-        } else if (key.arg0) {
-            return m_approximator.find(name, arg0->approx);
-        } else {
-            return m_approximator.find(name);
-        }
-    }
-
-    void compute_and_store (Cache::iterator & i)
-    {
-        const Key & key = i->first;
-        Value & value = i->second;
-        value = new HashedApproximation(compute(key));
+        POMAGMA_ERROR("unreachable");
     }
 
     Approximator & m_approximator;
+    Processor m_processor;
+    AsyncFunction m_function;
+    UniqueSet<HashedApproximation, HashedApproximation::Hash> m_approximations;
+    UniqueSet<Term, Term::Hash> m_terms;
     Cache m_cache;
-    WorkerPool<Task> m_pool;
 };
 
 } // namespace pomagma

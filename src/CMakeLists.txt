@@ -2,6 +2,7 @@
 include_directories(${CMAKE_SOURCE_DIR}/)
 
 set(POMAGMA_SEQUENTIAL_LIBS
+	tbb
        	hdf5_hl hdf5
 	crypto ssl
 	protobuf
