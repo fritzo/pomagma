@@ -26,6 +26,7 @@ public:
 
     ~AsyncMap ()
     {
+        std::lock_guard<std::mutex> lock(m_mutex);
         POMAGMA_ASSERT_EQ(m_callbacks.size(), 0);
         for (auto v : m_values) {
             delete v.second;
@@ -40,8 +41,7 @@ public:
         if (unlikely(inserted)) {
             {
                 std::lock_guard<std::mutex> lock(m_mutex);
-                auto callbacks = new std::vector<Callback>();
-                m_callbacks.insert(std::make_pair(key, callbacks));
+                callbacks_locked(key);
             }
             m_function(key, std::bind(&AsyncMap::store, this, key, _1));
         }
@@ -57,24 +57,39 @@ public:
             if (likely(value)) {
                 callback(value);
             } else {
-                std::lock_guard<std::mutex> lock(m_mutex);
-                if (likely(not value)) {
-                    m_callbacks.find(key)->second->push_back(callback);
-                } else {
+                bool called = false;
+                {
+                    std::lock_guard<std::mutex> lock(m_mutex);
+                    if (likely(not value)) {
+                        callbacks_locked(key).push_back(callback);
+                        called = true;
+                    }
+                }
+                if (not called) {
                     callback(value);
                 }
             }
         } else {
             {
                 std::lock_guard<std::mutex> lock(m_mutex);
-                auto callbacks = new std::vector<Callback>(1, callback);
-                m_callbacks.insert(std::make_pair(key, callbacks));
+                callbacks_locked(key).push_back(callback);
             }
             m_function(key, std::bind(&AsyncMap::store, this, key, _1));
         }
     }
 
 private:
+
+    std::vector<Callback> & callbacks_locked (Key key)
+    {
+        auto pair = m_callbacks.insert(std::make_pair(key, nullptr));
+        auto & callbacks = pair.first->second;
+        bool inserted = pair.second;
+        if (inserted) {
+            callbacks = new std::vector<Callback>();
+        }
+        return * callbacks;
+    }
 
     void store (Key key, const Value * value)
     {
