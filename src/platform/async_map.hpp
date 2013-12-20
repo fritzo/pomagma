@@ -57,15 +57,12 @@ public:
             if (likely(value)) {
                 callback(value);
             } else {
-                bool called = false;
-                {
-                    std::lock_guard<std::mutex> lock(m_mutex);
-                    if (likely(not value)) {
-                        callbacks_locked(key).push_back(callback);
-                        called = true;
-                    }
-                }
-                if (not called) {
+                m_mutex.lock();
+                if (likely(not value)) {
+                    callbacks_locked(key).push_back(callback);
+                    m_mutex.unlock();
+                } else {
+                    m_mutex.unlock();
                     callback(value);
                 }
             }
@@ -94,16 +91,17 @@ private:
     void store (Key key, const Value * value)
     {
         POMAGMA_ASSERT(value, "tried to store null value");
+        auto v = m_values.find(key);
+        POMAGMA_ASSERT1(v != m_values.end(), "value not found");
+        POMAGMA_ASSERT1(not v->second, "stored value twice");
+        v->second = value;
+
         std::vector<Callback> * callbacks = nullptr;
         {
             std::lock_guard<std::mutex> lock(m_mutex);
-
-            auto v = m_values.find(key);
-            POMAGMA_ASSERT1(v != m_values.end(), "value not found");
-            v->second = value;
-
             auto c = m_callbacks.find(key);
             POMAGMA_ASSERT1(c != m_callbacks.end(), "callbacks not found");
+            POMAGMA_ASSERT1(c->second, "callbacks is null");
             callbacks = c->second;
             m_callbacks.erase(c);
         }

@@ -64,23 +64,14 @@ class Validator : noncopyable
         std::atomic<int> m_state;
     };
 
-    class AsyncFunction : noncopyable
+    struct AsyncFunction
     {
-    public:
-
-        AsyncFunction (Validator * validator)
-            : m_validator(* validator)
-        {
-        }
+        Validator & validator;
 
         void operator() (const Corpus::Term * term, Cache::Callback callback)
         {
-            new Task(m_validator, term, callback);
+            new Task(validator, term, callback);
         }
-
-    private:
-
-        Validator & m_validator;
     };
 
 public:
@@ -90,7 +81,7 @@ public:
             size_t thread_count = 1)
         : m_approximator(approximator),
           m_cached_approximator(approximator),
-          m_function(this),
+          m_function({* this}),
           m_cache(std::bind(&AsyncFunction::operator(), & m_function, _1, _2))
     {
         POMAGMA_ASSERT_LT(0, thread_count);

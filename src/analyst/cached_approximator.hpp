@@ -106,44 +106,29 @@ private:
         Cache::Callback callback;
     };
 
-    class Processor : noncopyable
+    struct Processor
     {
-    public:
-
-        Processor (CachedApproximator * a) : m_approximator(* a) {}
+        CachedApproximator & approximator;
 
         void operator() (Task & task)
         {
             task.callback(
-                m_approximator.m_approximations.insert_or_delete(
+                approximator.m_approximations.insert_or_delete(
                     new HashedApproximation(
-                        m_approximator.compute(
+                        approximator.compute(
                             task.term))));
         }
-
-    private:
-
-        CachedApproximator & m_approximator;
     };
 
-    class AsyncFunction : noncopyable
+    struct AsyncFunction
     {
-    public:
-
-        AsyncFunction (Processor & processor, size_t thread_count)
-            : m_pool(processor, thread_count)
-        {
-        }
+        WorkerPool<Task, Processor> & pool;
 
         void operator() (const Term * term, Cache::Callback callback)
         {
             Task task = {term, callback};
-            m_pool.schedule(task);
+            pool.schedule(task);
         }
-
-    private:
-
-        WorkerPool<Task, Processor> m_pool;
     };
 
 public:
@@ -152,8 +137,9 @@ public:
             Approximator & approximator,
             size_t thread_count = 1)
         : m_approximator(approximator),
-          m_processor(this),
-          m_function(m_processor, thread_count),
+          m_processor({* this}),
+          m_pool(m_processor, thread_count),
+          m_function({m_pool}),
           m_cache(std::bind(&AsyncFunction::operator(), & m_function, _1, _2))
     {
     }
@@ -199,6 +185,7 @@ private:
 
     Approximator & m_approximator;
     Processor m_processor;
+    WorkerPool<Task, Processor> m_pool;
     AsyncFunction m_function;
     UniqueSet<HashedApproximation, HashedApproximation::Hash> m_approximations;
     UniqueSet<Term, Term::Hash> m_terms;
