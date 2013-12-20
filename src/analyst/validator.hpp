@@ -80,11 +80,10 @@ public:
             Approximator & approximator,
             size_t thread_count = 1)
         : m_approximator(approximator),
-          m_cached_approximator(approximator),
+          m_cached_approximator(approximator, thread_count),
           m_function({* this}),
           m_cache(std::bind(&AsyncFunction::operator(), & m_function, _1, _2))
     {
-        POMAGMA_ASSERT_LT(0, thread_count);
     }
 
     std::vector<Approximator::Validity> validate (

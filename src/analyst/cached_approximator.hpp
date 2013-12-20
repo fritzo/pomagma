@@ -135,7 +135,7 @@ public:
 
     CachedApproximator (
             Approximator & approximator,
-            size_t thread_count = 1)
+            size_t thread_count)
         : m_approximator(approximator),
           m_processor({* this}),
           m_pool(m_processor, thread_count),

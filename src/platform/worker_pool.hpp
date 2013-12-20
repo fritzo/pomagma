@@ -20,7 +20,7 @@ class WorkerPool : noncopyable
 
 public:
 
-    WorkerPool (Processor & processor, size_t thread_count = 1)
+    WorkerPool (Processor & processor, size_t thread_count)
         : m_processor(processor),
           m_accepting(true)
     {
