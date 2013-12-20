@@ -78,7 +78,7 @@ public:
 
     Validator (
             Approximator & approximator,
-            size_t thread_count = 1)
+            size_t thread_count)
         : m_approximator(approximator),
           m_cached_approximator(approximator, thread_count),
           m_function({* this}),
@@ -121,15 +121,13 @@ private:
         POMAGMA_ASSERT_ARITY(BINARY_RELATION)
 #undef POMAGMA_ASSERT_ARITY
 
-        CachedApproximator::Term hashed = {
+        return CachedApproximator::Term({
             static_cast<CachedApproximator::Term::Arity>(term->arity),
             term->name,
             m_cache.find(term->arg0),
             m_cache.find(term->arg1),
             term->ob
-        };
-
-        return hashed;
+        });
     }
 
     Approximator & m_approximator;

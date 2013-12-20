@@ -29,8 +29,7 @@ void test_threadpool (
     WorkerPool<Task, Processor> pool(processor, thread_count);
     for (size_t duration = 0; duration <= max_duration; ++duration) {
         POMAGMA_DEBUG("scheduling sleep for " << duration << "ms");
-        Task task = {std::chrono::milliseconds(duration)};
-        pool.schedule(task);
+        pool.schedule(Task({std::chrono::milliseconds(duration)}));
     }
     for (size_t i = 0; i < wait_count; ++i) {
         pool.wait();

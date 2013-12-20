@@ -340,11 +340,8 @@ std::vector<Corpus::LineOf<const Corpus::Term *>> Corpus::parse (
     for (const auto & line : lines) {
         const Term * term = m_parser.parse(line.body);
         size_t depth = 1;  // TODO loop over this in Validator::Task
-        LineOf<const Term *> linked = {
-            line.maybe_name,
-            linker.link(term, depth)
-        };
-        parsed.push_back(std::move(linked));
+        const Term * linked = linker.link(term, depth);
+        parsed.push_back(LineOf<const Term *>({line.maybe_name, linked}));
     }
 
     return parsed;

@@ -126,8 +126,7 @@ private:
 
         void operator() (const Term * term, Cache::Callback callback)
         {
-            Task task = {term, callback};
-            pool.schedule(task);
+            pool.schedule(Task({term, callback}));
         }
     };
 
