@@ -229,7 +229,6 @@ private:
     std::vector<std::string> & m_error_log;
     std::unordered_map<const Term *, const Term *> m_definitions;
     std::unordered_map<const Term *, const Term *> m_linked;
-    const Term * const m_hole;
 };
 
 Corpus::Linker::Linker (
@@ -238,8 +237,7 @@ Corpus::Linker::Linker (
     : m_dag(dag),
       m_error_log(error_log),
       m_definitions(),
-      m_linked(),
-      m_hole(dag.hole())
+      m_linked()
 {
 }
 
@@ -296,7 +294,7 @@ void Corpus::Linker::finish ()
         const Term * linked = link(m_definitions.find(var)->second);
         m_linked.insert(std::make_pair(var, linked));
         auto range = occurrences.equal_range(var);
-        for (; range.first != range.second; ++range.first) {
+        for (; range.first != range.second; occurrences.erase(range.first++)) {
             const Term * superterm = range.first->second;
             if (--free_counts[superterm] == 0) {
                 ground_terms.push(superterm);
