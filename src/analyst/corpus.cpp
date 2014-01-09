@@ -2,6 +2,7 @@
 #include <pomagma/platform/unique_set.hpp>
 #include <unordered_set>
 #include <map>
+#include <queue>
 
 namespace pomagma
 {
@@ -217,15 +218,18 @@ public:
 
     Linker (Dag & dag, std::vector<std::string> & error_log);
     void define (const std::string & name, const Term * term);
-    const Term * link (const Term * term, size_t depth);
-private:
+    void finish ();
     const Term * link (const Term * term);
+private:
+    static void accum_free (
+            const Term * term,
+            std::unordered_set<const Term *> & free);
 
     Dag & m_dag;
     std::vector<std::string> & m_error_log;
-    std::unordered_map<std::string, const Term *> m_definitions;
-    std::unordered_map<const Term *, size_t> m_temp_counts;
-    size_t m_temp_depth;
+    std::unordered_map<const Term *, const Term *> m_definitions;
+    std::unordered_map<const Term *, const Term *> m_linked;
+    const Term * const m_hole;
 };
 
 Corpus::Linker::Linker (
@@ -234,36 +238,82 @@ Corpus::Linker::Linker (
     : m_dag(dag),
       m_error_log(error_log),
       m_definitions(),
-      m_temp_counts(),
-      m_temp_depth(0)
+      m_linked(),
+      m_hole(dag.hole())
 {
-    const Term * hole = m_dag.hole();
-    for (const Term * term : m_dag.variables()) {
-        m_definitions.insert(std::make_pair(term->name, hole));
-        m_temp_counts.insert(std::make_pair(term, 0));
-    }
 }
 
 inline void Corpus::Linker::define (
         const std::string & name,
         const Term * term)
 {
-    auto pair = m_definitions.insert(std::make_pair(name, term));
+    const Term * var = m_dag.variable(name);
+    auto pair = m_definitions.insert(std::make_pair(var, term));
     if (not pair.second) {
+        POMAGMA_DEBUG("multiple definition of: " << name);
         m_error_log.push_back("multiple definition of: " + name);
     }
 }
 
-inline const Corpus::Term * Corpus::Linker::link (
+void Corpus::Linker::accum_free (
         const Term * term,
-        size_t depth)
+        std::unordered_set<const Term *> & free)
 {
-    m_temp_depth = depth;
-    return link(term);
+    if (term->arity == Term::VARIABLE) {
+        free.insert(term);
+    } else if (term->arg1) {
+        accum_free(term->arg0, free);
+        accum_free(term->arg1, free);
+    } else if (term->arg0) {
+        accum_free(term->arg0, free);
+    }
+}
+
+void Corpus::Linker::finish ()
+{
+    std::multimap<const Term *, const Term *> occurrences;
+    std::unordered_map<const Term *, size_t> free_counts;
+    std::queue<const Term *> ground_terms;
+
+    for (const auto & pair : m_definitions) {
+        const Term * var = pair.first;
+        const Term * term = pair.second;
+        std::unordered_set<const Term *> free;
+        accum_free(term, free);
+        free_counts[term] = free.size();
+        if (free.empty()) {
+            ground_terms.push(var);
+        } else {
+            for (const Term * subterm : free) {
+                occurrences.insert(std::make_pair(subterm, var));
+            }
+        }
+    }
+
+    while (not ground_terms.empty()) {
+        const Term * var = ground_terms.front();
+        ground_terms.pop();
+        const Term * linked = link(m_definitions.find(var)->second);
+        m_linked.insert(std::make_pair(var, linked));
+        auto range = occurrences.equal_range(var);
+        for (; range.first != range.second; ++range.first) {
+            const Term * superterm = range.first->second;
+            if (--free_counts[superterm] == 0) {
+                ground_terms.push(superterm);
+            }
+        }
+    }
+
+    POMAGMA_DEBUG("linked " << m_linked.size() << " / "
+                            << m_definitions.size() << "terms");
 }
 
 const Corpus::Term * Corpus::Linker::link (const Term * term)
 {
+    const std::string & name = term->name;
+    const Term * const arg0 = term->arg0;
+    const Term * const arg1 = term->arg1;
+
     switch (term->arity) {
         case Term::OB:
         case Term::HOLE:
@@ -271,35 +321,27 @@ const Corpus::Term * Corpus::Linker::link (const Term * term)
             return term;
 
         case Term::INJECTIVE_FUNCTION:
-            return m_dag.injective_function(term->name, link(term->arg0));
+            return m_dag.injective_function(name, link(arg0));
 
         case Term::BINARY_FUNCTION:
-            return m_dag.binary_function(
-                term->name,
-                link(term->arg0),
-                link(term->arg1));
+            return m_dag.binary_function(name, link(arg0), link(arg1));
 
         case Term::SYMMETRIC_FUNCTION:
-            return m_dag.symmetric_function(
-                term->name,
-                link(term->arg0),
-                link(term->arg1));
+            return m_dag.symmetric_function(name, link(arg0), link(arg1));
 
         case Term::BINARY_RELATION:
-            return m_dag.binary_relation(
-                term->name,
-                link(term->arg0),
-                link(term->arg1));
+            return m_dag.binary_relation(name, link(arg0), link(arg1));
 
         case Term::VARIABLE:
-            size_t & count = m_temp_counts[term];
-            if (count == m_temp_depth) {
-                return m_dag.hole();
+            auto i = m_linked.find(term);
+            if (i != m_linked.end()) {
+                return i->second;
             } else {
-                ++count;
-                const Term * result = link(m_definitions[term->name]);
-                --count;
-                return result;
+                if (m_definitions.find(term) != m_definitions.end()) {
+                    POMAGMA_DEBUG("missing definition of: " << name);
+                    m_error_log.push_back("missing definition of: " + name);
+                }
+                return term;
             }
     }
 
@@ -334,13 +376,13 @@ std::vector<Corpus::LineOf<const Corpus::Term *>> Corpus::parse (
             linker.define(name, term);
         }
     }
+    linker.finish();
 
     // then do a maximally-linked pass
     std::vector<LineOf<const Term *>> parsed;
     for (const auto & line : lines) {
         const Term * term = m_parser.parse(line.body);
-        size_t depth = 1;  // TODO loop over this in Validator::Task
-        const Term * linked = linker.link(term, depth);
+        const Term * linked = linker.link(term);
         parsed.push_back(LineOf<const Term *>({line.maybe_name, linked}));
     }
 

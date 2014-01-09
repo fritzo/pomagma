@@ -100,11 +100,6 @@ public:
 
 private:
 
-    const HashedApproximation * find (const Corpus::Term * term)
-    {
-        return term ? m_cache.find(term) : nullptr;
-    }
-
     CachedApproximator::Term convert (const Corpus::Term * term)
     {
 
@@ -121,13 +116,13 @@ private:
         POMAGMA_ASSERT_ARITY(BINARY_RELATION)
 #undef POMAGMA_ASSERT_ARITY
 
-        return CachedApproximator::Term({
-            static_cast<CachedApproximator::Term::Arity>(term->arity),
-            term->name,
-            m_cache.find(term->arg0),
-            m_cache.find(term->arg1),
-            term->ob
-        });
+        auto name = term->name;
+        auto arity = static_cast<CachedApproximator::Term::Arity>(term->arity);
+        auto arg0 = term->arg0 ? m_cache.find(term->arg0) : nullptr;
+        auto arg1 = term->arg1 ? m_cache.find(term->arg1) : nullptr;
+        auto ob = term->ob;
+
+        return CachedApproximator::Term({arity, name, arg0, arg1, ob});
     }
 
     Approximator & m_approximator;
