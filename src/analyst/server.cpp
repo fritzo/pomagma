@@ -69,8 +69,9 @@ Approximator::Validity Server::is_valid (const std::string & code)
 std::vector<Approximator::Validity> Server::validate_corpus (
         const std::vector<Corpus::LineOf<std::string>> & lines)
 {
-    auto parsed = m_corpus.parse(lines, m_error_log);
-    return m_validator.validate(parsed);
+    auto linker = m_corpus.linker(lines, m_error_log);
+    auto parsed = m_corpus.parse(lines, linker);
+    return m_validator.validate(parsed, linker);
 }
 
 std::vector<std::string> Server::flush_errors ()

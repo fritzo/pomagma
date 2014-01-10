@@ -3,12 +3,16 @@
 #include <pomagma/macrostructure/util.hpp>
 #include <pomagma/analyst/approximate.hpp>
 #include <pomagma/platform/hash_map.hpp>
+#include <unordered_set>
 
 namespace pomagma
 {
 
 class Corpus
 {
+    class Dag;
+    class Parser;
+
 public:
 
     struct Term
@@ -80,18 +84,42 @@ public:
         bool is_assertion () const { return maybe_name.empty(); }
     };
 
+    class Linker
+    {
+    public:
+        const Term * link (const Term * term);
+        const Term * approximate (const Term * term, size_t depth);
+    private:
+        friend class Corpus;
+        Linker (Dag & dag, std::vector<std::string> & error_log);
+        void define (const std::string & name, const Term * term);
+        void finish ();
+        const Term * approximate (const Term * term);
+        static void accum_free (
+                const Term * term,
+                std::unordered_set<const Term *> & free);
+
+        Dag & m_dag;
+        std::vector<std::string> & m_error_log;
+        std::unordered_map<const Term *, const Term *> m_definitions;
+        std::unordered_set<const Term *> m_ground_terms;
+
+        size_t m_temp_max_depth;
+        std::unordered_map<const Term *, size_t> m_temp_depths;
+    };
+
     Corpus (Signature & signature);
     ~Corpus ();
 
-    std::vector<LineOf<const Term *>> parse (
+    Linker linker (
             const std::vector<LineOf<std::string>> & lines,
             std::vector<std::string> & error_log);
 
-private:
+    std::vector<LineOf<const Term *>> parse (
+            const std::vector<LineOf<std::string>> & lines,
+            Linker & linker);
 
-    class Dag;
-    class Parser;
-    class Linker;
+private:
 
     Dag & m_dag;
     Parser & m_parser;

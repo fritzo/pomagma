@@ -1,6 +1,5 @@
 #include "corpus.hpp"
 #include <pomagma/platform/unique_set.hpp>
-#include <unordered_set>
 #include <map>
 #include <queue>
 
@@ -212,32 +211,13 @@ private:
 //----------------------------------------------------------------------------
 // Linker
 
-class Corpus::Linker
-{
-public:
-
-    Linker (Dag & dag, std::vector<std::string> & error_log);
-    void define (const std::string & name, const Term * term);
-    void finish ();
-    const Term * link (const Term * term);
-private:
-    static void accum_free (
-            const Term * term,
-            std::unordered_set<const Term *> & free);
-
-    Dag & m_dag;
-    std::vector<std::string> & m_error_log;
-    std::unordered_map<const Term *, const Term *> m_definitions;
-    std::unordered_map<const Term *, const Term *> m_linked;
-};
-
 Corpus::Linker::Linker (
         Dag & dag,
         std::vector<std::string> & error_log)
     : m_dag(dag),
       m_error_log(error_log),
       m_definitions(),
-      m_linked()
+      m_ground_terms()
 {
 }
 
@@ -292,7 +272,8 @@ void Corpus::Linker::finish ()
         const Term * var = ground_terms.front();
         ground_terms.pop();
         const Term * linked = link(m_definitions.find(var)->second);
-        m_linked.insert(std::make_pair(var, linked));
+        m_ground_terms.insert(var);
+        m_definitions[var] = linked;
         auto range = occurrences.equal_range(var);
         for (; range.first != range.second; occurrences.erase(range.first++)) {
             const Term * superterm = range.first->second;
@@ -302,7 +283,7 @@ void Corpus::Linker::finish ()
         }
     }
 
-    POMAGMA_DEBUG("linked " << m_linked.size() << " / "
+    POMAGMA_DEBUG("linked " << m_ground_terms.size() << " / "
                             << m_definitions.size() << "terms");
 }
 
@@ -331,15 +312,76 @@ const Corpus::Term * Corpus::Linker::link (const Term * term)
             return m_dag.binary_relation(name, link(arg0), link(arg1));
 
         case Term::VARIABLE:
-            auto i = m_linked.find(term);
-            if (i != m_linked.end()) {
-                return i->second;
+            if (m_ground_terms.find(term) != m_ground_terms.end()) {
+                return m_definitions.find(term)->second;
             } else {
                 if (m_definitions.find(term) != m_definitions.end()) {
                     POMAGMA_DEBUG("missing definition of: " << name);
                     m_error_log.push_back("missing definition of: " + name);
                 }
                 return term;
+            }
+    }
+
+    POMAGMA_ERROR("unreachable");
+}
+
+const Corpus::Term * Corpus::Linker::approximate (
+        const Term * term,
+        size_t depth)
+{
+    m_temp_max_depth = depth;
+    return approximate(term);
+}
+
+const Corpus::Term * Corpus::Linker::approximate (
+        const Term * term)
+{
+    const std::string & name = term->name;
+    const Term * const arg0 = term->arg0;
+    const Term * const arg1 = term->arg1;
+
+    switch (term->arity) {
+        case Term::OB:
+        case Term::HOLE:
+        case Term::NULLARY_FUNCTION:
+            return term;
+
+        case Term::INJECTIVE_FUNCTION:
+            return m_dag.injective_function(name, approximate(arg0));
+
+        case Term::BINARY_FUNCTION:
+            return m_dag.binary_function(
+                name,
+                approximate(arg0),
+                approximate(arg1));
+
+        case Term::SYMMETRIC_FUNCTION:
+            return m_dag.symmetric_function(
+                name,
+                approximate(arg0),
+                approximate(arg1));
+
+        case Term::BINARY_RELATION:
+            return m_dag.binary_relation(
+                name,
+                approximate(arg0),
+                approximate(arg1));
+
+        case Term::VARIABLE:
+            size_t & temp_depth = m_temp_depths[term];
+            if (temp_depth == m_temp_max_depth) {
+                return m_dag.hole();
+            } else {
+                auto i = m_definitions.find(term);
+                if (i == m_definitions.end()) {
+                    return m_dag.hole();
+                } else {
+                    ++temp_depth;
+                    const Term * result = approximate(i->second);
+                    --temp_depth;
+                    return result;
+                }
             }
     }
 
@@ -361,11 +403,10 @@ Corpus::~Corpus ()
     delete & m_dag;
 }
 
-std::vector<Corpus::LineOf<const Corpus::Term *>> Corpus::parse (
+Corpus::Linker Corpus::linker (
         const std::vector<Corpus::LineOf<std::string>> & lines,
         std::vector<std::string> & error_log)
 {
-    // first do a linker pass
     Linker linker(m_dag, error_log);
     for (const auto & line : lines) {
         if (line.is_definition()) {
@@ -375,15 +416,19 @@ std::vector<Corpus::LineOf<const Corpus::Term *>> Corpus::parse (
         }
     }
     linker.finish();
+    return linker;
+}
 
-    // then do a maximally-linked pass
+std::vector<Corpus::LineOf<const Corpus::Term *>> Corpus::parse (
+        const std::vector<Corpus::LineOf<std::string>> & lines,
+        Corpus::Linker & linker)
+{
     std::vector<LineOf<const Term *>> parsed;
     for (const auto & line : lines) {
         const Term * term = m_parser.parse(line.body);
         const Term * linked = linker.link(term);
         parsed.push_back(LineOf<const Term *>({line.maybe_name, linked}));
     }
-
     return parsed;
 }
 

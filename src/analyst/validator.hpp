@@ -45,14 +45,10 @@ class Validator : noncopyable
         void operator() (const HashedApproximation *)
         {
             if (--m_state == 0) {
-                if (m_term->arity == Corpus::Term::VARIABLE) {
-                    TODO("deal with variables")
-                } else {
-                    m_validator.m_cached_approximator.find_async(
-                        m_validator.convert(m_term),
-                        m_callback);
-                    delete this;
-                }
+                m_validator.m_cached_approximator.find_async(
+                    m_validator.convert(m_term),
+                    m_callback);
+                delete this;
             }
         }
 
@@ -87,7 +83,8 @@ public:
     }
 
     std::vector<Approximator::Validity> validate (
-            const std::vector<Corpus::LineOf<const Corpus::Term *>> & lines);
+            const std::vector<Corpus::LineOf<const Corpus::Term *>> & lines,
+            Corpus::Linker & linker);
 
     Approximator::Validity is_valid (const Corpus::Term * term)
     {
@@ -100,9 +97,17 @@ public:
 
 private:
 
+    static bool is_ambiguous (const Approximator::Validity & validity)
+    {
+        return validity.is_top == Approximator::MAYBE
+            or validity.is_bot == Approximator::MAYBE;
+    }
+
     CachedApproximator::Term convert (const Corpus::Term * term)
     {
-
+        POMAGMA_ASSERT1(
+            term->arity != Corpus::Term::VARIABLE,
+            "tried to convert a variable");
 #define POMAGMA_ASSERT_ARITY(arity)\
         static_assert(\
             int(Corpus::Term::arity) == int(CachedApproximator::Term::arity),\
@@ -129,8 +134,6 @@ private:
     CachedApproximator m_cached_approximator;
     AsyncFunction m_function;
     Cache m_cache;
-
-    class Linker;
 };
 
 } // namespace pomagma
