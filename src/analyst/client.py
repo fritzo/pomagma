@@ -26,7 +26,7 @@ class ServerError(Exception):
         self.messages = list(messages)
 
     def __str__(self):
-        return '\n'.join('Server Errors:' + self.messages)
+        return '\n'.join(['Server Errors:'] + self.messages)
 
 
 class Client(object):

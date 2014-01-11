@@ -13,7 +13,10 @@ class Corpus::Dag
 {
 public:
 
-    Dag (Signature & signature) : m_signature(signature) {}
+    Dag (Signature & signature)
+        : m_signature(signature),
+          m_new_term(new Term())
+    {}
 
     const Term * truthy () { return nullary_function("I"); }
     const Term * falsey () { return nullary_function("BOT"); }
@@ -284,7 +287,7 @@ void Corpus::Linker::finish ()
     }
 
     POMAGMA_DEBUG("linked " << m_ground_terms.size() << " / "
-                            << m_definitions.size() << "terms");
+                            << m_definitions.size() << " terms");
 }
 
 const Corpus::Term * Corpus::Linker::link (const Term * term)
@@ -315,7 +318,7 @@ const Corpus::Term * Corpus::Linker::link (const Term * term)
             if (m_ground_terms.find(term) != m_ground_terms.end()) {
                 return m_definitions.find(term)->second;
             } else {
-                if (m_definitions.find(term) != m_definitions.end()) {
+                if (m_definitions.find(term) == m_definitions.end()) {
                     POMAGMA_DEBUG("missing definition of: " << name);
                     m_error_log.push_back("missing definition of: " + name);
                 }

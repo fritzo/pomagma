@@ -52,12 +52,24 @@ BOT = {'is_top': False, 'is_bot': True}
 OK = {'is_top': False, 'is_bot': False}
 
 
-def assert_examples(examples, expected, actual):
+def assert_examples(examples, expected, actual, cmp=cmp):
     assert len(expected) == len(examples)
     assert len(actual) == len(examples)
     for example, e, a in izip(examples, expected, actual):
-        assert e == a,\
-            'failed {}\n  expected: {}\n  actual: {}'.format(example, a, e)
+        assert not cmp(e, a),\
+            'failed {}\n  expected: {}\n  actual: {}'.format(example, e, a)
+
+
+def cmp_trool(x, y):
+    if x is None or y is None:
+        return 0
+    else:
+        return cmp(x, y)
+
+
+def cmp_validity(x, y):
+    return (cmp_trool(x['is_top'], y['is_top']) or
+            cmp_trool(x['is_bot'], y['is_bot']))
 
 
 SIMPLIFY_EXAMPLES = [
@@ -93,22 +105,34 @@ def test_validate():
     expected, codes = transpose(VALIDATE_EXAMPLES)
     with pomagma.analyst.load(THEORY, WORLD, **OPTIONS) as db:
         actual = db.validate(codes)
-    assert_examples(codes, expected, actual)
+    assert_examples(codes, expected, actual, cmp_validity)
 
 
 CORPUS = [
     (TOP, ASSERT('TOP')),
     (BOT, ASSERT('BOT')),
     (OK, ASSERT('I')),
-    (OK, DEFINE('type', 'V')),
-    (OK, DEFINE('div', 'APP V K')),
+    (OK, DEFINE('true', 'K')),
+    (OK, DEFINE('false', 'APP K I')),
+    (OK, DEFINE('box', 'APP C I')),
+    # \x,y,f. f x y
+    # = \x,y. C (C I x) y
+    # = \x. C * (C I x)
+    # = B * C * (C I)
+    (OK, DEFINE('push', 'COMP COMP B C box')),
+    (OK, DEFINE('push_true', 'COMP C APP box true')),
+    (OK, DEFINE('push_false', 'COMP C APP box false')),
+    (OK, DEFINE('ttt', 'APP push_true ttt')),
+    (OK, DEFINE('fff', 'APP push_false fff')),
+    (OK, DEFINE('tftftf', 'APP push_true ftftft')),
+    (OK, DEFINE('ftftft', 'APP push_false tftftf')),
 ]
 
 
 def validate_corpus(lines, max_attempts=100):
     with pomagma.analyst.load(THEORY, WORLD, **OPTIONS) as db:
         for attempt in xrange(1, 1 + max_attempts):
-            print 'DEBUG validating corpus, attempt', attempt
+            print 'validating corpus, attempt', attempt
             results = db.validate_corpus(lines)
             if not any(result['pending'] for result in results):
                 for validity in results:
@@ -119,8 +143,6 @@ def validate_corpus(lines, max_attempts=100):
 
 
 def test_validate_corpus():
-    import nose
-    raise nose.SkipTest  # FIXME
     expected, lines = transpose(CORPUS)
     actual = validate_corpus(lines)
-    assert_examples(lines, expected, actual)
+    assert_examples(lines, expected, actual, cmp_validity)
