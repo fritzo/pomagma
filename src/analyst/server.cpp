@@ -37,7 +37,7 @@ Server::~Server ()
     }
 }
 
-size_t Server::test ()
+size_t Server::test_inference ()
 {
     size_t fail_count = m_approximator.test();
     return fail_count;
@@ -48,19 +48,7 @@ std::string Server::simplify (const std::string & code)
     return m_simplifier.simplify(code);
 }
 
-size_t Server::batch_simplify (
-        const std::string & codes_in,
-        const std::string & codes_out)
-{
-    size_t line_count = pomagma::batch_simplify(
-        m_structure,
-        m_routes,
-        codes_in.c_str(),
-        codes_out.c_str());
-    return line_count;
-}
-
-Approximator::Validity Server::is_valid (const std::string & code)
+Approximator::Validity Server::validate (const std::string & code)
 {
     Approximation approx = m_approximate_parser.parse(code);
     return m_approximator.is_valid(approx);
@@ -93,9 +81,9 @@ messaging::AnalystResponse handle (
     messaging::AnalystResponse response;
     typedef messaging::AnalystResponse::Trool Trool;
 
-    if (request.has_test()) {
-        size_t fail_count = server.test();
-        response.mutable_test()->set_fail_count(fail_count);
+    if (request.has_test_inference()) {
+        size_t fail_count = server.test_inference();
+        response.mutable_test_inference()->set_fail_count(fail_count);
     }
 
     if (request.has_simplify()) {
@@ -107,18 +95,11 @@ messaging::AnalystResponse handle (
         }
     }
 
-    if (request.has_batch_simplify()) {
-        std::string codes_in = request.batch_simplify().codes_in();
-        std::string codes_out = request.batch_simplify().codes_out();
-        size_t line_count = server.batch_simplify(codes_in, codes_out);
-        response.mutable_batch_simplify()->set_line_count(line_count);
-    }
-
     if (request.has_validate()) {
         size_t code_count = request.validate().codes_size();
         for (size_t i = 0; i < code_count; ++i) {
             const std::string & code = request.validate().codes(i);
-            auto validity = server.is_valid(code);
+            auto validity = server.validate(code);
             auto & result = * response.mutable_validate()->add_results();
             result.set_is_top(static_cast<Trool>(validity.is_top));
             result.set_is_bot(static_cast<Trool>(validity.is_bot));

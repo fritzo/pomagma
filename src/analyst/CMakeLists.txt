@@ -12,7 +12,6 @@ add_custom_command(
 add_executable(analyst
 	main.cpp
 	server.cpp
-	simplify.cpp
 	approximate.cpp
 	cached_approximator.cpp
 	corpus.cpp

@@ -27,12 +27,9 @@ public:
         size_t thread_count);
     ~Server ();
 
-    size_t test ();
+    size_t test_inference ();
     std::string simplify (const std::string & code);
-    size_t batch_simplify (
-            const std::string & codes_in,
-            const std::string & codes_out);
-    Approximator::Validity is_valid (const std::string & code);
+    Approximator::Validity validate (const std::string & code);
     std::vector<Validator::AsyncValidity> validate_corpus (
             const std::vector<Corpus::LineOf<std::string>> & lines);
 

@@ -100,11 +100,4 @@ private:
     SimplifyReducer m_reducer;
 };
 
-size_t batch_simplify(
-        Structure & structure,
-        const std::vector<std::string> & routes,
-        const char * source_file,
-        const char * destin_file);
-
-
 } // namespace pomagma

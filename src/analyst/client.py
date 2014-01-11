@@ -1,7 +1,5 @@
-import os
 import sys
 import zmq
-import pomagma.util
 from pomagma.analyst import messages_pb2 as messages
 
 
@@ -53,11 +51,11 @@ class Client(object):
         request = Request()
         self._call(request)
 
-    def test(self):
+    def test_inference(self):
         request = Request()
-        request.test.SetInParent()
+        request.test_inference.SetInParent()
         reply = self._call(request)
-        return reply.test.fail_count
+        return reply.test_inference.fail_count
 
     def _simplify(self, codes):
         request = Request()
@@ -74,22 +72,6 @@ class Client(object):
         results = self._simplify(codes)
         assert len(results) == len(codes), results
         return results
-
-    def _batch_simplify(self, codes_in, codes_out):
-        request = Request()
-        request.batch_simplify.SetInParent()
-        request.batch_simplify.codes_in = codes_in
-        request.batch_simplify.codes_out = codes_out
-        reply = self._call(request)
-        return reply.batch_simplify.line_count
-
-    def batch_simplify(self, codes_in, codes_out):
-        assert isinstance(codes_in, basestring), codes_in
-        assert isinstance(codes_out, basestring), codes_out
-        with pomagma.util.temp_copy(codes_out) as temp_codes_out:
-            line_count = self._batch_simplify(codes_in, temp_codes_out)
-        assert os.path.exists(codes_out)
-        return line_count
 
     def _validate(self, codes):
         request = Request()

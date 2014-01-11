@@ -1,25 +1,10 @@
 import os
 import shutil
-from itertools import izip
 import parsable
 parsable = parsable.Parsable()
 import pomagma.util
 import pomagma.workers
 from pomagma import surveyor, cartographer, theorist, analyst, atlas
-
-
-DEFINE = lambda name, code: {'name': name, 'code': code}
-ASSERT = lambda code: {'name': None, 'code': code}
-
-TOP = {'is_top': True, 'is_bot': False}
-BOT = {'is_top': False, 'is_bot': True}
-VALID = {'is_top': False, 'is_bot': False}
-
-TEST_CORPUS = [
-    (ASSERT('TOP'), TOP),
-    (ASSERT('BOT'), BOT),
-    (ASSERT('I'), VALID),
-]
 
 
 @parsable.command
@@ -46,7 +31,6 @@ def test(theory, **options):
         diverge_theorems = 'diverge_theorems.facts'
         equal_conjectures = 'equal_conjectures.facts'
         equal_theorems = 'equal_theorems.facts'
-        simplified = 'simplified.facts'
 
         surveyor.init(theory, '0.h5', sizes[0], **options)
         with cartographer.load(theory, '0.h5', **options) as db:
@@ -92,36 +76,7 @@ def test(theory, **options):
             **options)
         #assert theorem_count > 0, theorem_count
 
-        def test_analyst_validate(db, examples):
-            expected = examples.values()
-            actual = db.validate(examples.keys())
-            for a, e in izip(actual, expected):
-                assert a == e, 'analyst.validate, {} vs {}'.format(a, e)
-
-        def test_analyst_validate_corpus(db, max_attempts=100):
-            print 'DEBUG validating corpus'
-            lines = [line for line, validity in TEST_CORPUS]
-            expected = [validity for line, validity in TEST_CORPUS]
-            actual = db.validate_corpus(lines)
-            attempts = 1
-            while any(result['pending'] for result in actual):
-                actual = db.validate_corpus(lines)
-                attempts += 1
-                assert attempts <= max_attempts
-            for line, a, e in izip(lines, actual, expected):
-                del a['pending']
-                assert a == e,\
-                    'analyst.validate_corpus, {} vs {}\n{}'.format(a, e, line)
-
-        if theory == 'h4':
-            with analyst.load(theory, '6.h5', **options) as db:
-                line_count = db.batch_simplify(equal_theorems, simplified)
-                assert line_count > 0, line_count
-                test_analyst_validate(db, {
-                    'BOT': {'is_top': False, 'is_bot': True},
-                    'TOP': {'is_top': True, 'is_bot': False},
-                })
-        else:
+        if theory != 'h4':
             with cartographer.load(theory, '6.h5', **options) as db:
                 db.assume(equal_theorems)
                 if theorem_count > 0:
@@ -133,19 +88,6 @@ def test(theory, **options):
                 for priority in [0, 1]:
                     assert not db.infer(priority)
                 db.dump('7.h5')
-            with analyst.load(theory, '7.h5', **options) as db:
-                line_count = db.batch_simplify(diverge_theorems, simplified)
-                assert line_count > 0, line_count
-                fail_count = db.test()
-                assert fail_count == 0, 'analyst.batch_simplify failed'
-                test_analyst_validate(db, {
-                    'BOT': {'is_top': False, 'is_bot': True},
-                    'TOP': {'is_top': True, 'is_bot': False},
-                    'I': {'is_top': False, 'is_bot': False},
-                    'APP I I': {'is_top': False, 'is_bot': False},
-                    'COMP I I': {'is_top': False, 'is_bot': False},
-                })
-                test_analyst_validate_corpus(db)
 
 
 @parsable.command

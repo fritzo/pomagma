@@ -2,14 +2,10 @@ package pomagma_messaging;
 
 message AnalystRequest {
 
-  message Test {
+  message TestInference {
   }
   message Simplify {
     repeated string codes = 1;
-  }
-  message BatchSimplify {
-    required string codes_in = 1;
-    required string codes_out = 2;
   }
   message Validate {
     repeated string codes = 1;
@@ -22,11 +18,10 @@ message AnalystRequest {
     repeated Line lines = 1;
   }
 
-  optional Test test = 1;
+  optional TestInference test_inference = 1;
   optional Simplify simplify = 2;
-  optional BatchSimplify batch_simplify = 3;
-  optional Validate validate = 4;
-  optional ValidateCorpus validate_corpus = 5;
+  optional Validate validate = 3;
+  optional ValidateCorpus validate_corpus = 4;
 }
 
 message AnalystResponse {
@@ -41,14 +36,11 @@ message AnalystResponse {
     required bool pending = 3 [default = false];
   }
 
-  message Test {
+  message TestInference {
     required uint64 fail_count = 1;
   }
   message Simplify {
     repeated string codes = 1;
-  }
-  message BatchSimplify {
-    required uint64 line_count = 1;
   }
   message Validate {
     repeated Validity results = 1;
@@ -57,11 +49,10 @@ message AnalystResponse {
     repeated Validity results = 1;
   }
 
-  optional Test test = 1;
+  optional TestInference test_inference = 1;
   optional Simplify simplify = 2;
-  optional BatchSimplify batch_simplify = 3;
-  optional Validate validate = 4;
-  optional ValidateCorpus validate_corpus = 5;
+  optional Validate validate = 3;
+  optional ValidateCorpus validate_corpus = 4;
 
   repeated string error_log = 6;
 }
