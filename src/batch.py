@@ -88,6 +88,9 @@ def test(theory, **options):
                 for priority in [0, 1]:
                     assert not db.infer(priority)
                 db.dump('7.h5')
+            with analyst.load(theory, '7.h5', **options) as db:
+                fail_count = db.test_inference()
+                assert fail_count == 0, 'analyst.test_inference failed'
 
 
 @parsable.command
