@@ -38,6 +38,7 @@ message AnalystResponse {
   message Validity {
     required Trool is_top = 1 [default = MAYBE];
     required Trool is_bot = 2 [default = MAYBE];
+    required bool pending = 3 [default = false];
   }
 
   message Test {

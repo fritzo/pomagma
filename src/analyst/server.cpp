@@ -66,7 +66,7 @@ Approximator::Validity Server::is_valid (const std::string & code)
     return m_approximator.is_valid(approx);
 }
 
-std::vector<Approximator::Validity> Server::validate_corpus (
+std::vector<Validator::AsyncValidity> Server::validate_corpus (
         const std::vector<Corpus::LineOf<std::string>> & lines)
 {
     auto linker = m_corpus.linker(lines, m_error_log);
@@ -122,6 +122,7 @@ messaging::AnalystResponse handle (
             auto & result = * response.mutable_validate()->add_results();
             result.set_is_top(static_cast<Trool>(validity.is_top));
             result.set_is_bot(static_cast<Trool>(validity.is_bot));
+            result.set_pending(false);
         }
     }
 
@@ -137,10 +138,11 @@ messaging::AnalystResponse handle (
         }
         const auto validities = server.validate_corpus(lines);
         auto & responses = * response.mutable_validate_corpus();
-        for (const auto & validity : validities) {
+        for (const auto & pair : validities) {
             auto & result = * responses.add_results();
-            result.set_is_top(static_cast<Trool>(validity.is_top));
-            result.set_is_bot(static_cast<Trool>(validity.is_bot));
+            result.set_is_top(static_cast<Trool>(pair.validity.is_top));
+            result.set_is_bot(static_cast<Trool>(pair.validity.is_bot));
+            result.set_pending(pair.pending);
         }
     }
 

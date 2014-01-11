@@ -112,3 +112,32 @@ class Client(object):
         results = self._validate(codes)
         assert len(results) == len(codes), results
         return results
+
+    def _validate_corpus(self, lines):
+        request = Request()
+        request.validate_corpus.SetInParent()
+        for line in lines:
+            request_line = request.validate_corpus.lines.add()
+            name = line['name']
+            if name:
+                request_line.name = name
+            request_line.code = line['code']
+        reply = self._call(request)
+        results = []
+        for result in reply.validate_corpus.results:
+            results.append({
+                'is_top': TROOL[result.is_top],
+                'is_bot': TROOL[result.is_bot],
+                'pending': result.pending,
+            })
+        return results
+
+    def validate_corpus(self, lines):
+        assert isinstance(lines, list), lines
+        for line in lines:
+            assert isinstance(line, dict), line
+            assert 'name' in line
+            assert 'code' in line
+        results = self._validate_corpus(lines)
+        assert len(results) == len(lines), results
+        return results

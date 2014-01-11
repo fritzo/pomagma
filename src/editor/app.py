@@ -1,4 +1,5 @@
 import os
+from itertools import izip
 import bottle
 import pomagma.util
 import pomagma.corpus
@@ -88,6 +89,19 @@ def delete_line(line_id):
     require_auth()
     id = int(line_id)
     CORPUS.remove(id)
+
+
+@bottle.route('/corpus/validities', method='GET')
+def get_validities():
+    require_auth()
+    lines = [
+        {'id': str(id), 'name': name, 'code': code}
+        for id, name, code in CORPUS.find_all()
+    ]
+    validities = ANALYST.validate_corpus(lines)
+    for line, validity in izip(lines, validities):
+        validity['id'] = line['id']
+    return {'data': validities}
 
 
 def serve(port=PORT, reloader=True):

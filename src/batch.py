@@ -1,10 +1,25 @@
 import os
 import shutil
+from itertools import izip
 import parsable
 parsable = parsable.Parsable()
 import pomagma.util
 import pomagma.workers
 from pomagma import surveyor, cartographer, theorist, analyst, atlas
+
+
+DEFINE = lambda name, code: {'name': name, 'code': code}
+ASSERT = lambda code: {'name': None, 'code': code}
+
+TOP = {'is_top': True, 'is_bot': False}
+BOT = {'is_top': False, 'is_bot': True}
+VALID = {'is_top': False, 'is_bot': False}
+
+TEST_CORPUS = [
+    (ASSERT('TOP'), TOP),
+    (ASSERT('BOT'), BOT),
+    (ASSERT('I'), VALID),
+]
 
 
 @parsable.command
@@ -80,8 +95,23 @@ def test(theory, **options):
         def test_analyst_validate(db, examples):
             expected = examples.values()
             actual = db.validate(examples.keys())
-            for a, e in zip(actual, expected):
+            for a, e in izip(actual, expected):
                 assert a == e, 'analyst.validate, {} vs {}'.format(a, e)
+
+        def test_analyst_validate_corpus(db, max_attempts=100):
+            print 'DEBUG validating corpus'
+            lines = [line for line, validity in TEST_CORPUS]
+            expected = [validity for line, validity in TEST_CORPUS]
+            actual = db.validate_corpus(lines)
+            attempts = 1
+            while any(result['pending'] for result in actual):
+                actual = db.validate_corpus(lines)
+                attempts += 1
+                assert attempts <= max_attempts
+            for line, a, e in izip(lines, actual, expected):
+                del a['pending']
+                assert a == e,\
+                    'analyst.validate_corpus, {} vs {}\n{}'.format(a, e, line)
 
         if theory == 'h4':
             with analyst.load(theory, '6.h5', **options) as db:
@@ -115,6 +145,7 @@ def test(theory, **options):
                     'APP I I': {'is_top': False, 'is_bot': False},
                     'COMP I I': {'is_top': False, 'is_bot': False},
                 })
+                test_analyst_validate_corpus(db)
 
 
 @parsable.command

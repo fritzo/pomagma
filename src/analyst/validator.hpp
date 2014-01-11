@@ -82,16 +82,28 @@ public:
     {
     }
 
-    std::vector<Approximator::Validity> validate (
+    struct AsyncValidity
+    {
+        Approximator::Validity validity;
+        bool pending;
+    };
+
+    std::vector<AsyncValidity> validate (
             const std::vector<Corpus::LineOf<const Corpus::Term *>> & lines,
             Corpus::Linker & linker);
 
-    Approximator::Validity is_valid (const Corpus::Term * term)
+    AsyncValidity is_valid (const Corpus::Term * term)
     {
         if (auto approx = m_cache.find(term)) {
-            return m_approximator.is_valid(approx->approx);
+            return AsyncValidity({
+                m_approximator.is_valid(approx->approx),
+                false
+            });
         } else {
-            return Approximator::Validity::unknown();
+            return AsyncValidity({
+                Approximator::Validity::unknown(),
+                true
+            });
         }
     }
 
