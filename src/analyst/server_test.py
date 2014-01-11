@@ -5,9 +5,9 @@ import pomagma.surveyor
 import pomagma.cartographer
 import pomagma.analyst
 
-THEORY = 'skj'
+THEORY = os.environ.get('THEORY', 'skj')
 DATA = os.path.join(pomagma.util.DATA, 'test', 'debug', 'atlas', THEORY)
-WORLD = os.path.join(DATA, '0.normal.h5')
+WORLD = os.environ.get('WORLD', os.path.join(DATA, '0.normal.h5'))
 ADDRESS = 'ipc://{}'.format(os.path.join(DATA, 'socket'))
 OPTIONS = {
     'log_file': os.path.join(DATA, 'analyst_test.log'),
@@ -55,6 +55,10 @@ OK = {'is_top': False, 'is_bot': False}
 def assert_examples(examples, expected, actual, cmp=cmp):
     assert len(expected) == len(examples)
     assert len(actual) == len(examples)
+    for example, e, a in izip(examples, expected, actual):
+        if e != a:
+            print 'WARNING {}\n  expected: {}\n  actual: {}'.format(
+                example, e, a)
     for example, e, a in izip(examples, expected, actual):
         assert not cmp(e, a),\
             'failed {}\n  expected: {}\n  actual: {}'.format(example, e, a)
@@ -114,16 +118,24 @@ CORPUS = [
     (OK, ASSERT('I')),
     (OK, DEFINE('true', 'K')),
     (OK, DEFINE('false', 'APP K I')),
+    # \x,f. f x
+    # = \x. C I x
+    # = C I
     (OK, DEFINE('box', 'APP C I')),
+    (OK, ASSERT('APP I APP box I')),
     # \x,y,f. f x y
     # = \x,y. C (C I x) y
-    # = \x. C * (C I x)
-    # = B * C * (C I)
-    (OK, DEFINE('push', 'COMP COMP B C box')),
-    (OK, DEFINE('push_true', 'COMP C APP box true')),
-    (OK, DEFINE('push_false', 'COMP C APP box false')),
-    (OK, DEFINE('ttt', 'APP push_true ttt')),
-    (OK, DEFINE('fff', 'APP push_false fff')),
+    # = \x. C (C I x)
+    # = C * (C I)
+    (OK, DEFINE('push', 'COMP C box')),
+    # recursion
+    (OK, DEFINE('push_unit', 'APP C APP box I')),
+    (OK, ASSERT('APP push_unit BOT')),
+    (OK, ASSERT('APP push_unit TOP')),
+    (OK, DEFINE('uuu', 'APP push_unit uuu')),
+    # mutual recursion
+    (OK, DEFINE('push_true', 'APP C APP box true')),
+    (OK, DEFINE('push_false', 'APP C APP box false')),
     (OK, DEFINE('tftftf', 'APP push_true ftftft')),
     (OK, DEFINE('ftftft', 'APP push_false tftftf')),
 ]
