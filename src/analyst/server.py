@@ -35,6 +35,10 @@ class Server(object):
     def address(self):
         return self._address
 
+    @property
+    def pid(self):
+        return self._proc.pid
+
     def connect(self):
         return pomagma.analyst.client.Client(self.address)
 

@@ -25,16 +25,23 @@ def setup_module():
             db.dump(WORLD)
 
 
+def serve(address=ADDRESS):
+    setup_module()
+    return pomagma.analyst.serve(THEORY, WORLD, address, **OPTIONS)
+
+
 def test_ping():
     print 'starting server'
-    server = pomagma.analyst.serve(THEORY, WORLD, ADDRESS, **OPTIONS)
-    print 'connecting client'
-    client = server.connect()
-    for _ in xrange(10):
-        print 'pinging server'
-        client.ping()
-    print 'stoping server'
-    server.stop()
+    server = serve()
+    try:
+        print 'connecting client'
+        client = server.connect()
+        for _ in xrange(10):
+            print 'pinging server'
+            client.ping()
+    finally:
+        print 'stoping server'
+        server.stop()
 
 
 def test_inference():

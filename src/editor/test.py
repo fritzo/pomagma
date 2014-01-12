@@ -1,13 +1,18 @@
+import os
+import sys
 import functools
 import time
-import multiprocessing
+import subprocess
 import splinter
 import pomagma.editor.app
+import pomagma.analyst.test
 
 TEST_COUNT = 27  # this must be updated every time tests are added
 
+PYTHON = sys.executable
 PORT = pomagma.editor.app.PORT + 1
-server = None
+editor = None
+analyst = None
 browser = None
 failure_count = 0
 
@@ -22,21 +27,28 @@ def count_failures(fun):
     return decorated
 
 
-def setUp():
-    global server
-    server = multiprocessing.Process(
-        target=pomagma.editor.app.serve,
-        kwargs={'port': PORT, 'reloader': False})
-    print '---- starting server with pid {} ----'.format(server.pid)
-    server.start()
+def setup_module():
+    global analyst
+    analyst = pomagma.analyst.test.serve()
+    print '---- started analyst with pid {} ----'.format(analyst.pid)
+
+    global editor
+    env = os.environ.copy()
+    env['POMAGMA_ANALYST_ADDRESS'] = pomagma.analyst.test.ADDRESS
+    editor = subprocess.Popen(
+        [PYTHON, '-m', 'pomagma.editor', 'serve'] +
+        ['port={}'.format(PORT), 'reloader=False'],
+        env=env)
+    print '---- started editor with pid {} ----'.format(editor.pid)
 
     global browser
     browser = splinter.Browser()
     #browser = splinter.Browser('phantomjs')
 
 
-def tearDown():
-    server.terminate()
+def teardown_module():
+    editor.terminate()
+    analyst.stop()
     if failure_count == 0:
         browser.quit()
 

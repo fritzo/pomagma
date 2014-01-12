@@ -9,6 +9,7 @@ ADDRESS = os.environ.get('POMAGMA_ANALYST_ADDRESS', 'tcp://localhost:34936')
 
 
 def connect(address=ADDRESS):
+    print 'connecting to ', address
     return client.Client(address)
 
 

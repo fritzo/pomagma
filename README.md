@@ -130,6 +130,17 @@ The theorem-proving back end currently targets Ubuntu 12.04 LTS.
 
 ## Configuring
 
+To run in debug mode, define an environment variable
+
+    POMAGMA_DEBUG=
+
+To use specific ports or address, override these defaults
+
+    POMAGMA_EDITOR_PORT=34934
+    POMAGMA_ANALYST_ADDRESS=tcp://localhost:34936
+
+Pomagma uses even ports for production and odd ports for testing.
+
 To run a distributed system, pomagma needs Amazon AWS credentials, an S3 bucket,
 an SWF domain, and optionally an email address to receive errors.
 These are specified by environment variables
@@ -139,10 +150,6 @@ These are specified by environment variables
     POMAGMA_BUCKET=Example-Amazon-S3-bucket
     POMAGMA_DOMAIN=Example-Amazon-SWF-domain
     POMAGMA_EMAIL=example.user@example.com
-
-To run in debug mode, define an environment variable
-
-    POMAGMA_DEBUG=
 
 ## License
 
