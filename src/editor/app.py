@@ -12,6 +12,23 @@ STATIC = os.path.join(pomagma.util.SRC, 'editor', 'static')
 CORPUS = pomagma.corpus.Corpus()
 ANALYST = pomagma.analyst.connect()
 
+
+def get_lines():
+    lines = [
+        {'id': str(id), 'name': name, 'code': code}
+        for id, name, code in CORPUS.find_all()
+    ]
+    return lines
+
+
+def get_validitated_lines():
+    lines = get_lines()
+    validities = ANALYST.validate_corpus(lines)
+    for line, validity in izip(lines, validities):
+        line['validity'] = validity
+    return lines
+
+
 mimetypes.add_type('application/font-woff', '.woff')
 
 
@@ -49,10 +66,7 @@ def get_static(filepath):
 @bottle.route('/corpus/lines', method='GET')
 def get_corpus():
     require_auth()
-    lines = [
-        {'id': str(id), 'name': name, 'code': code}
-        for id, name, code in CORPUS.find_all()
-    ]
+    lines = get_lines()
     return {'data': lines}
 
 
@@ -94,10 +108,7 @@ def delete_line(line_id):
 @bottle.route('/corpus/validities', method='GET')
 def get_validities():
     require_auth()
-    lines = [
-        {'id': str(id), 'name': name, 'code': code}
-        for id, name, code in CORPUS.find_all()
-    ]
+    lines = get_lines()
     validities = ANALYST.validate_corpus(lines)
     for line, validity in izip(lines, validities):
         validity['id'] = line['id']

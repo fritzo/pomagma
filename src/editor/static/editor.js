@@ -3,11 +3,13 @@ function(log,   test,   symbols,   compiler,   ast,   corpus,   navigate)
 {
   var ids = [];
   var asts = {};  // id -> ast
-  var validities = {}; // id -> {'is_top': _, 'is_bot': _}
+  var validities = {}; // id -> {'is_top': _, 'is_bot': _, 'pending': _}
   var $lines = {};  // id -> dom node
   var cursor = null;
   var cursorPos = 0;
   var lineChanged = false;
+
+  var UNKNOWN = {'is_top': null, 'is_bot': null, 'pending': true};
 
   //--------------------------------------------------------------------------
   // Corpus Management
@@ -21,8 +23,9 @@ function(log,   test,   symbols,   compiler,   ast,   corpus,   navigate)
       var line = corpus.findLine(id);
       var lambda = compiler.loadLine(line);
       asts[id] = ast.load(lambda);
-      validities[id] = {'is_top': null, 'is_bot': null};
+      validities[id] = _.clone(UNKNOWN);
     });
+    pollValidities();
     assert(ids.length > 0, 'corpus is empty');
   };
 
@@ -73,7 +76,8 @@ function(log,   test,   symbols,   compiler,   ast,   corpus,   navigate)
         root = ast.load(lambda);
         ast.cursor.insertAbove(cursor, _.last(root.below));  // HACK
         asts[id] = root;
-        validities[id] = {'is_top': null, 'is_bot': null};
+        validities[id] = _.clone(UNKNOWN);
+        pollValidities();
         $prev = $lines[ids[cursorPos - 1]];
         $lines[id] = $('<pre>').attr('id', 'line' + id).insertAfter($prev);
         renderLine(id);
@@ -118,7 +122,15 @@ function(log,   test,   symbols,   compiler,   ast,   corpus,   navigate)
     root = ast.load(lambda);
     ast.cursor.insertAbove(cursor, root);
     asts[id] = root;
-    validities[id] = {'is_top': null, 'is_bot': null};
+    var lineIsDefinition = (line.name !== null);
+    if (lineIsDefinition) {
+       ids.forEach(function(id){
+         validities[id] = _.clone(UNKNOWN);
+       });
+    } else {
+      validities[id] = _.clone(UNKNOWN);
+    }
+    pollValidities();
     renderLine(id);
     lineChanged = false;
   };
@@ -135,6 +147,52 @@ function(log,   test,   symbols,   compiler,   ast,   corpus,   navigate)
     lineChanged = false;
   };
 
+  var pollValidities = (function(){
+
+    var delay = 500;
+    var delayFail = 15000;
+    var polling = false;
+
+    var poll = function () {
+      polling = false;
+      log('polling');
+      $.ajax({
+        type: 'GET',
+        url: 'corpus/validities',
+        cache: false
+      }).fail(function(jqXHR, textStatus){
+        log('pollValidities GET failed: ' + textStatus);
+        polling = true;
+        setTimeout(poll, delayFail);
+      }).done(function(data){
+        log('pollValidities GET succeeded');
+        data.data.forEach(function(validity){
+          var id = validity.id;
+          delete validity.id;
+          var oldValidity = validities[id];
+          if (oldValidity !== undefined && !_.isEqual(oldValidity, validity)) {
+            validities[id] = validity;
+            renderLine(id);
+          }
+        });
+        for (var id in validities) {
+          if (validities[id].pending) {
+            polling = true;
+            setTimeout(poll, delay);
+            return;
+          }
+        }
+      });
+    };
+
+    return function () {
+      if (!polling) {
+        polling = true;
+        setTimeout(poll, 0);
+      }
+    };
+  })();
+
   //--------------------------------------------------------------------------
   // Rendering
 
@@ -148,10 +206,15 @@ function(log,   test,   symbols,   compiler,   ast,   corpus,   navigate)
       'null-null': '&#9633;', // empty Square
     };
     for (var key in table) {
-      table[key] = '<span class=validity>' + table[key] + '</span>';
+      var value = table[key];
+      delete table[key];
+      table[key + '-false'] = '<span class=validity>' + value + '</span>';
+      table[key + '-true'] = '<span class=validityPending>' + value + '</span>';
     }
     return function (validity) {
-      return table[validity.is_top + '-' + validity.is_bot];
+      return table[
+        validity.is_top + '-' + validity.is_bot + '-' + validity.pending
+      ];
     };
   })();
 

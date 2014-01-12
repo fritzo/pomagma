@@ -220,7 +220,7 @@ function(log,   test,   symbols)
       for (var id in lines) {
         var line = lines[id];
         var name = line.name;
-        if (line.name !== null) {
+        if (name !== null) {
           assert(symbols.isGlobal(name), 'name is not global: ' + name);
           assert(!symbols.isKeyword(name), 'name is keyword: ' + name);
           assert(definitions[name] === line.id, 'missing definition: ' + name);
