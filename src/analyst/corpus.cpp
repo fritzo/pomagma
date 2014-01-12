@@ -104,6 +104,19 @@ public:
         }
         return get(Term(Term::BINARY_RELATION, name, lhs, rhs));
     }
+    const Term * equal (
+            const Term * lhs,
+            const Term * rhs)
+    {
+        POMAGMA_ASSERT(m_signature.binary_relation("LESS"), "missing LESS");
+        POMAGMA_ASSERT(m_signature.binary_function("APP"), "missing APP");
+        const Term * less_lhs_rhs = binary_relation("LESS", lhs, rhs);
+        const Term * less_rhs_lhs = binary_relation("LESS", rhs, lhs);
+        if (less_lhs_rhs > less_rhs_lhs) {
+            std::swap(less_lhs_rhs, less_rhs_lhs);
+        }
+        return binary_function("APP", less_lhs_rhs, less_rhs_lhs);
+    }
 
     const std::unordered_set<Term *> & variables () const
     {
@@ -138,9 +151,13 @@ class Corpus::Parser
 {
 public:
 
-    Parser (Signature & signature, Corpus::Dag & dag)
+    Parser (
+            Signature & signature,
+            Corpus::Dag & dag,
+            std::vector<std::string> & error_log)
         : m_signature(signature),
-          m_dag(dag)
+          m_dag(dag),
+          m_error_log(error_log)
     {
     }
 
@@ -154,6 +171,14 @@ public:
 
 private:
 
+#   define POMAGMA_PARSER_WARN(ARG_message)\
+    {\
+        std::ostringstream message;\
+        message << ARG_message;\
+        m_error_log.push_back(message.str());\
+        POMAGMA_WARN(message.str());\
+    }
+
     void begin (const std::string & expression)
     {
         m_stream.str(expression);
@@ -164,7 +189,7 @@ private:
     {
         std::string token;
         if (not std::getline(m_stream, token, ' ')) {
-            POMAGMA_WARN(
+            POMAGMA_PARSER_WARN(
                 "expression terminated prematurely: " << m_stream.str());
         }
         return token;
@@ -172,28 +197,37 @@ private:
 
     const Term * parse_term ()
     {
-        std::string name = parse_token();
-        if (m_signature.nullary_function(name)) {
-            return m_dag.nullary_function(name);
-        } else if (m_signature.injective_function(name)) {
+        std::string token = parse_token();
+        if (m_signature.nullary_function(token)) {
+            return m_dag.nullary_function(token);
+        } else if (m_signature.injective_function(token)) {
             const Term * key = parse_term();
-            return m_dag.injective_function(name, key);
-        } else if (m_signature.binary_function(name)) {
+            return m_dag.injective_function(token, key);
+        } else if (m_signature.binary_function(token)) {
             const Term * lhs = parse_term();
             const Term * rhs = parse_term();
-            return m_dag.binary_function(name, lhs, rhs);
-        } else if (m_signature.symmetric_function(name)) {
+            return m_dag.binary_function(token, lhs, rhs);
+        } else if (m_signature.symmetric_function(token)) {
             const Term * lhs = parse_term();
             const Term * rhs = parse_term();
-            return m_dag.symmetric_function(name, lhs, rhs);
-        } else if (m_signature.binary_relation(name)) {
+            return m_dag.symmetric_function(token, lhs, rhs);
+        } else if (m_signature.binary_relation(token)) {
             const Term * lhs = parse_term();
             const Term * rhs = parse_term();
-            return m_dag.binary_relation(name, lhs, rhs);
-        } else if (name == "HOLE") {
+            return m_dag.binary_relation(token, lhs, rhs);
+        } else if (token == "EQUAL") {
+            const Term * lhs = parse_term();
+            const Term * rhs = parse_term();
+            return m_dag.equal(lhs, rhs);
+        } else if (token == "HOLE") {
             return m_dag.hole();
-        } else {
+        } else if (token == "VAR") {
+            std::string name = parse_token();
             return m_dag.variable(name);
+        } else {
+            POMAGMA_PARSER_WARN(
+                "unrecognized token '" << token << "' in: " << m_stream.str());
+            return m_dag.hole();
         }
     }
 
@@ -201,13 +235,16 @@ private:
     {
         std::string token;
         if (std::getline(m_stream, token, ' ')) {
-            POMAGMA_WARN(
+            POMAGMA_PARSER_WARN(
                 "unexpected token '" << token << "' in: " << m_stream.str());
         }
     }
 
+#   undef POMAGMA_PARSER_WARN
+
     Signature & m_signature;
     Dag & m_dag;
+    std::vector<std::string> & m_error_log;
     std::istringstream m_stream;
 };
 
@@ -395,14 +432,13 @@ const Corpus::Term * Corpus::Linker::approximate (
 // Corpus
 
 Corpus::Corpus (Signature & signature)
-    : m_dag(* new Dag(signature)),
-      m_parser(* new Parser(signature, m_dag))
+    : m_signature(signature),
+      m_dag(* new Dag(signature))
 {
 }
 
 Corpus::~Corpus ()
 {
-    delete & m_parser;
     delete & m_dag;
 }
 
@@ -410,11 +446,12 @@ Corpus::Linker Corpus::linker (
         const std::vector<Corpus::LineOf<std::string>> & lines,
         std::vector<std::string> & error_log)
 {
+    Parser parser(m_signature, m_dag, error_log);
     Linker linker(m_dag, error_log);
     for (const auto & line : lines) {
         if (line.is_definition()) {
             const std::string & name = line.maybe_name;
-            const Term * term = m_parser.parse(line.body);
+            const Term * term = parser.parse(line.body);
             linker.define(name, term);
         }
     }
@@ -424,11 +461,13 @@ Corpus::Linker Corpus::linker (
 
 std::vector<Corpus::LineOf<const Corpus::Term *>> Corpus::parse (
         const std::vector<Corpus::LineOf<std::string>> & lines,
-        Corpus::Linker & linker)
+        Corpus::Linker & linker,
+        std::vector<std::string> & error_log)
 {
+    Parser parser(m_signature, m_dag, error_log);
     std::vector<LineOf<const Term *>> parsed;
     for (const auto & line : lines) {
-        const Term * term = m_parser.parse(line.body);
+        const Term * term = parser.parse(line.body);
         const Term * linked = linker.link(term);
         parsed.push_back(LineOf<const Term *>({line.maybe_name, linked}));
     }

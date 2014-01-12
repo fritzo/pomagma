@@ -58,7 +58,7 @@ std::vector<Validator::AsyncValidity> Server::validate_corpus (
         const std::vector<Corpus::LineOf<std::string>> & lines)
 {
     auto linker = m_corpus.linker(lines, m_error_log);
-    auto parsed = m_corpus.parse(lines, linker);
+    auto parsed = m_corpus.parse(lines, linker, m_error_log);
     return m_validator.validate(parsed, linker);
 }
 

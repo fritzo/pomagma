@@ -117,12 +117,13 @@ public:
 
     std::vector<LineOf<const Term *>> parse (
             const std::vector<LineOf<std::string>> & lines,
-            Linker & linker);
+            Linker & linker,
+            std::vector<std::string> & error_log);
 
 private:
 
+    Signature & m_signature;
     Dag & m_dag;
-    Parser & m_parser;
 };
 
 } // namespace pomagma

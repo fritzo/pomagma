@@ -122,22 +122,22 @@ CORPUS = [
     # = \x. C I x
     # = C I
     (OK, DEFINE('box', 'APP C I')),
-    (OK, ASSERT('APP I APP box I')),
+    (OK, ASSERT('APP I APP VAR box I')),
     # \x,y,f. f x y
     # = \x,y. C (C I x) y
     # = \x. C (C I x)
     # = C * (C I)
-    (OK, DEFINE('push', 'COMP C box')),
+    (OK, DEFINE('push', 'COMP C VAR box')),
     # recursion
-    (OK, DEFINE('push_unit', 'APP C APP box I')),
-    (OK, ASSERT('APP push_unit BOT')),
-    (OK, ASSERT('APP push_unit TOP')),
-    (OK, DEFINE('uuu', 'APP push_unit uuu')),
+    (OK, DEFINE('push_unit', 'APP C APP VAR box I')),
+    (OK, ASSERT('APP VAR push_unit BOT')),
+    (OK, ASSERT('APP VAR push_unit TOP')),
+    (OK, DEFINE('uuu', 'APP VAR push_unit VAR uuu')),
     # mutual recursion
-    (OK, DEFINE('push_true', 'APP C APP box true')),
-    (OK, DEFINE('push_false', 'APP C APP box false')),
-    (OK, DEFINE('tftftf', 'APP push_true ftftft')),
-    (OK, DEFINE('ftftft', 'APP push_false tftftf')),
+    (OK, DEFINE('push_true', 'APP C APP VAR box VAR true')),
+    (OK, DEFINE('push_false', 'APP C APP VAR box VAR false')),
+    (OK, DEFINE('tftftf', 'APP VAR push_true VAR ftftft')),
+    (OK, DEFINE('ftftft', 'APP VAR push_false VAR tftftf')),
 ]
 
 
