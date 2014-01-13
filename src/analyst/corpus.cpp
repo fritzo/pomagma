@@ -131,9 +131,6 @@ private:
         * m_new_term = key;
         const Term * new_term = m_terms.insert(m_new_term);
         if (new_term == m_new_term) {
-            if (m_new_term->arity == Term::VARIABLE) {
-                m_variables.insert(m_new_term);
-            }
             m_new_term = new Term();
         }
         return new_term;
@@ -142,7 +139,6 @@ private:
     Signature & m_signature;
     Term * m_new_term;
     UniqueSet<Term, Term::Hash, false> m_terms;
-    std::unordered_set<Term *> m_variables;
 };
 
 //----------------------------------------------------------------------------

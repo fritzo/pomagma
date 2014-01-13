@@ -169,7 +169,6 @@ private:
             case Term::NULLARY_FUNCTION:
                 return m_approximator.find(name);
 
-
             case Term::INJECTIVE_FUNCTION:
                 return m_approximator.find(name, arg0->approx);
 
