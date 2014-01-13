@@ -18,8 +18,15 @@ public:
           m_new_term(new Term())
     {}
 
-    const Term * truthy () { return nullary_function("I"); }
-    const Term * falsey () { return nullary_function("BOT"); }
+    const Term * semi_true () { return nullary_function("I"); }
+    const Term * semi_false () { return nullary_function("BOT"); }
+    const Term * semi_and (const Term * lhs, const Term * rhs)
+    {
+        if (lhs > rhs) {
+            std::swap(lhs, rhs);
+        }
+        return binary_function("APP", lhs, rhs);
+    }
 
     const Term * hole ()
     {
@@ -92,13 +99,13 @@ public:
         if (lhs->ob and rhs->ob) {
             if (auto * rel = m_signature.binary_relation(name)) {
                 if (rel->find(lhs->ob, rhs->ob)) {
-                    return truthy();
+                    return semi_true();
                 }
             }
             std::string negated = m_signature.negate(name);
-            if (auto * rel = m_signature.binary_relation(negated)) {
-                if (rel->find(lhs->ob, rhs->ob)) {
-                    return falsey();
+            if (auto * negated_rel = m_signature.binary_relation(negated)) {
+                if (negated_rel->find(lhs->ob, rhs->ob)) {
+                    return semi_false();
                 }
             }
         }
@@ -108,19 +115,13 @@ public:
             const Term * lhs,
             const Term * rhs)
     {
-        POMAGMA_ASSERT(m_signature.binary_relation("LESS"), "missing LESS");
-        POMAGMA_ASSERT(m_signature.binary_function("APP"), "missing APP");
-        const Term * less_lhs_rhs = binary_relation("LESS", lhs, rhs);
-        const Term * less_rhs_lhs = binary_relation("LESS", rhs, lhs);
-        if (less_lhs_rhs > less_rhs_lhs) {
-            std::swap(less_lhs_rhs, less_rhs_lhs);
+        if (lhs->ob and rhs->ob and lhs == rhs) {
+            return semi_true();
+        } else {
+            const Term * less_lhs_rhs = binary_relation("LESS", lhs, rhs);
+            const Term * less_rhs_lhs = binary_relation("LESS", rhs, lhs);
+            return semi_and(less_lhs_rhs, less_rhs_lhs);
         }
-        return binary_function("APP", less_lhs_rhs, less_rhs_lhs);
-    }
-
-    const std::unordered_set<Term *> & variables () const
-    {
-        return m_variables;
     }
 
 private:
