@@ -165,3 +165,14 @@ def test_validate_corpus():
     expected, lines = transpose(CORPUS)
     actual = validate_corpus(lines)
     assert_examples(lines, expected, actual, cmp_validity)
+
+
+def test_histogram():
+    lines = [line for _, line in CORPUS]
+    with pomagma.analyst.load(THEORY, WORLD, **OPTIONS) as db:
+        for _ in xrange(10):
+            db.validate_corpus(lines)
+        histogram = db.histogram()
+    print 'histogram:', histogram
+    assert histogram['obs']
+    assert histogram['symbols']

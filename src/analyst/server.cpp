@@ -62,6 +62,11 @@ std::vector<Validator::AsyncValidity> Server::validate_corpus (
     return m_validator.validate(parsed, linker);
 }
 
+Corpus::Histogram Server::histogram ()
+{
+    return m_corpus.histogram();
+}
+
 std::vector<std::string> Server::flush_errors ()
 {
     std::vector<std::string> result;
@@ -124,6 +129,21 @@ messaging::AnalystResponse handle (
             result.set_is_top(static_cast<Trool>(pair.validity.is_top));
             result.set_is_bot(static_cast<Trool>(pair.validity.is_bot));
             result.set_pending(pair.pending);
+        }
+    }
+
+    if (request.has_histogram()) {
+        const Corpus::Histogram histogram = server.histogram();
+        auto & response_histogram = * response.mutable_histogram();
+        for (const auto & pair : histogram.obs) {
+            auto & term = * response_histogram.add_terms();
+            term.set_ob(pair.first);
+            term.set_count(pair.second);
+        }
+        for (const auto & pair : histogram.symbols) {
+            auto & term = * response_histogram.add_terms();
+            term.set_name(pair.first);
+            term.set_count(pair.second);
         }
     }
 

@@ -124,6 +124,8 @@ public:
         }
     }
 
+    Histogram histogram () const;
+
 private:
 
     const Term * get (Term && key)
@@ -133,13 +135,45 @@ private:
         if (new_term == m_new_term) {
             m_new_term = new Term();
         }
+        ++m_counts[new_term];
         return new_term;
     }
 
     Signature & m_signature;
     Term * m_new_term;
     UniqueSet<Term, Term::Hash, false> m_terms;
+    std::unordered_map<const Term *, size_t> m_counts;
 };
+
+Corpus::Histogram Corpus::Dag::histogram () const
+{
+    Histogram result;
+
+    for (const auto & pair : m_counts) {
+        const Term * term = pair.first;
+        size_t count = pair.second;
+
+        switch (term->arity) {
+            case Term::OB:
+                result.obs[term->ob] = count;
+                break;
+
+            case Term::NULLARY_FUNCTION:
+            case Term::INJECTIVE_FUNCTION:
+            case Term::BINARY_FUNCTION:
+            case Term::SYMMETRIC_FUNCTION:
+            case Term::BINARY_RELATION:
+                result.symbols[term->name] += count;
+                break;
+
+            case Term::HOLE:
+            case Term::VARIABLE:
+                break;
+        }
+    }
+
+    return result;
+}
 
 //----------------------------------------------------------------------------
 // Parser
@@ -469,6 +503,11 @@ std::vector<Corpus::LineOf<const Corpus::Term *>> Corpus::parse (
         parsed.push_back(LineOf<const Term *>({line.maybe_name, linked}));
     }
     return parsed;
+}
+
+Corpus::Histogram Corpus::histogram ()
+{
+    return m_dag.histogram();
 }
 
 } // namespace pomagma

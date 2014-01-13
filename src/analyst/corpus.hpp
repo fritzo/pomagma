@@ -108,6 +108,12 @@ public:
         std::unordered_map<const Term *, size_t> m_temp_depths;
     };
 
+    struct Histogram
+    {
+        std::unordered_map<std::string, size_t> symbols;
+        std::unordered_map<Ob, size_t> obs;
+    };
+
     Corpus (Signature & signature);
     ~Corpus ();
 
@@ -119,6 +125,8 @@ public:
             const std::vector<LineOf<std::string>> & lines,
             Linker & linker,
             std::vector<std::string> & error_log);
+
+    Histogram histogram ();
 
 private:
 

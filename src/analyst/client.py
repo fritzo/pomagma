@@ -124,3 +124,19 @@ class Client(object):
         results = self._validate_corpus(lines)
         assert len(results) == len(lines), results
         return results
+
+    def histogram(self):
+        request = Request()
+        request.histogram.SetInParent()
+        reply = self._call(request)
+        obs = {}
+        symbols = {}
+        for term in reply.histogram.terms:
+            assert bool(term.ob) != bool(term.name), term
+            count = int(term.count)
+            if term.ob:
+                obs[int(term.ob)] = count
+            else:
+                symbols[str(term.name)] = count
+        result = {'obs': obs, 'symbols': symbols}
+        return result

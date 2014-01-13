@@ -32,6 +32,7 @@ public:
     Approximator::Validity validate (const std::string & code);
     std::vector<Validator::AsyncValidity> validate_corpus (
             const std::vector<Corpus::LineOf<std::string>> & lines);
+    Corpus::Histogram histogram ();
 
     std::vector<std::string> flush_errors ();
 
