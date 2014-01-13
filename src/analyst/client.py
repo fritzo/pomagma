@@ -33,6 +33,7 @@ class Client(object):
     def __init__(self, address):
         assert isinstance(address, basestring), address
         self._socket = CONTEXT.socket(zmq.REQ)
+        print 'connecting to analyst at', address
         self._socket.connect(address)
 
     def _call(self, request):

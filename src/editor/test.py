@@ -7,7 +7,7 @@ import splinter
 import pomagma.editor.app
 import pomagma.analyst.test
 
-TEST_COUNT = 27  # this must be updated every time tests are added
+TEST_COUNT = 28  # this must be updated every time tests are added
 
 PYTHON = sys.executable
 PORT = pomagma.editor.app.PORT + 1

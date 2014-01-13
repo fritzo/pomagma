@@ -185,6 +185,25 @@ function(log,   test,   symbols,   compiler,   ast,   corpus,   navigate)
       });
     };
 
+    var ready = function (done) {
+      var wait = function () {
+        if (validities.length === 0) {
+          setTimeout(wait, delay);
+          return;
+        }
+        for (var id in validities) {
+          if (validities[id].pending) {
+            setTimeout(wait, delay);
+            return;
+          }
+        }
+        done();
+      };
+      wait();
+    };
+
+    test.async('pollValidities.ready', ready, 1000);
+
     return function () {
       if (!polling) {
         polling = true;
