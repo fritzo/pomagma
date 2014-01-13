@@ -2,15 +2,37 @@
 
 #include <pomagma/platform/util.hpp>
 #include <pomagma/platform/hash_map.hpp>
+#include <unordered_set>
 #include <tbb/concurrent_unordered_set.h>
 
 namespace pomagma
 {
 
+namespace detail
+{
+
+template<class Value, class Hash, class Equal, bool concurrent>
+struct unordered_set;
+
+template<class Value, class Hash, class Equal>
+struct unordered_set<Value, Hash, Equal, true>
+{
+    typedef typename tbb::concurrent_unordered_set<Value, Hash, Equal> t;
+};
+
+template<class Value, class Hash, class Equal>
+struct unordered_set<Value, Hash, Equal, false>
+{
+    typedef typename std::unordered_set<Value, Hash, Equal> t;
+};
+
+} // namespace detail
+
 /// Store a set of objects so they can be hashed on location rather than value.
 template<
     class Value,
-    class Hash = std::hash<Value>>
+    class Hash = std::hash<Value>,
+    bool concurrent = true>
 class UniqueSet : noncopyable
 {
     struct EqualPtr
@@ -56,7 +78,12 @@ public:
 
 private:
 
-    tbb::concurrent_unordered_set<const Value *, HashPtr, EqualPtr> m_values;
+    typename detail::unordered_set<
+        const Value *,
+        HashPtr,
+        EqualPtr,
+        concurrent>::t
+    m_values;
 };
 
 } // namespace pomagma

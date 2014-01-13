@@ -141,7 +141,7 @@ private:
 
     Signature & m_signature;
     Term * m_new_term;
-    UniqueSet<Term, Term::Hash> m_terms;
+    UniqueSet<Term, Term::Hash, false> m_terms;
     std::unordered_set<Term *> m_variables;
 };
 
