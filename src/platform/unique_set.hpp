@@ -2,7 +2,7 @@
 
 #include <pomagma/platform/util.hpp>
 #include <pomagma/platform/hash_map.hpp>
-#include <unordered_set>
+#include <tbb/concurrent_unordered_set.h>
 
 namespace pomagma
 {
@@ -56,7 +56,7 @@ public:
 
 private:
 
-    std::unordered_set<const Value *, HashPtr, EqualPtr> m_values;
+    tbb::concurrent_unordered_set<const Value *, HashPtr, EqualPtr> m_values;
 };
 
 } // namespace pomagma
