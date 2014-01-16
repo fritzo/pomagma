@@ -124,56 +124,26 @@ public:
         }
     }
 
-    Histogram histogram () const;
+    const Histogram & histogram () const { return m_histogram; }
 
 private:
 
     const Term * get (Term && key)
     {
         * m_new_term = key;
-        const Term * new_term = m_terms.insert(m_new_term);
-        if (new_term == m_new_term) {
+        const Term * term = m_terms.insert(m_new_term);
+        m_histogram.add(term);
+        if (term == m_new_term) {
             m_new_term = new Term();
         }
-        ++m_counts[new_term];
-        return new_term;
+        return term;
     }
 
     Signature & m_signature;
     Term * m_new_term;
     UniqueSet<Term, Term::Hash, false> m_terms;
-    std::unordered_map<const Term *, size_t> m_counts;
+    Histogram m_histogram;
 };
-
-Corpus::Histogram Corpus::Dag::histogram () const
-{
-    Histogram result;
-
-    for (const auto & pair : m_counts) {
-        const Term * term = pair.first;
-        size_t count = pair.second;
-
-        switch (term->arity) {
-            case Term::OB:
-                result.obs[term->ob] = count;
-                break;
-
-            case Term::NULLARY_FUNCTION:
-            case Term::INJECTIVE_FUNCTION:
-            case Term::BINARY_FUNCTION:
-            case Term::SYMMETRIC_FUNCTION:
-            case Term::BINARY_RELATION:
-                result.symbols[term->name] += count;
-                break;
-
-            case Term::HOLE:
-            case Term::VARIABLE:
-                break;
-        }
-    }
-
-    return result;
-}
 
 //----------------------------------------------------------------------------
 // Parser
@@ -505,7 +475,7 @@ std::vector<Corpus::LineOf<const Corpus::Term *>> Corpus::parse (
     return parsed;
 }
 
-Corpus::Histogram Corpus::histogram ()
+const Corpus::Histogram & Corpus::histogram () const
 {
     return m_dag.histogram();
 }

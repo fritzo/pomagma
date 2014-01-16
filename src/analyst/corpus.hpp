@@ -112,6 +112,27 @@ public:
     {
         std::unordered_map<std::string, size_t> symbols;
         std::unordered_map<Ob, size_t> obs;
+
+        void add (const Term * term)
+        {
+            switch (term->arity) {
+                case Term::OB:
+                    ++obs[term->ob];
+                    break;
+
+                case Term::NULLARY_FUNCTION:
+                case Term::INJECTIVE_FUNCTION:
+                case Term::BINARY_FUNCTION:
+                case Term::SYMMETRIC_FUNCTION:
+                case Term::BINARY_RELATION:
+                    ++symbols[term->name];
+                    break;
+
+                case Term::HOLE:
+                case Term::VARIABLE:
+                    break;
+            }
+        }
     };
 
     Corpus (Signature & signature);
@@ -126,7 +147,7 @@ public:
             Linker & linker,
             std::vector<std::string> & error_log);
 
-    Histogram histogram ();
+    const Histogram & histogram () const;
 
 private:
 
