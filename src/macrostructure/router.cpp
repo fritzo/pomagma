@@ -134,6 +134,48 @@ inline bool Router::defines (const DenseSet & defined, Ob ob) const
     return false;
 }
 
+inline float Router::get_prob (
+        const Segment & segment,
+        const std::vector<float> & probs) const
+{
+    const SegmentType & type = m_types[segment.type];
+    switch (type.arity) {
+        case NULLARY:
+            return type.prob;
+
+        case INJECTIVE:
+            return type.prob * probs[segment.arg1];
+
+        case BINARY:
+            return type.prob * probs[segment.arg1] * probs[segment.arg2];
+    }
+
+    return 0;  // unreachable
+}
+
+inline void Router::add_weight (
+        float weight,
+        const Segment & segment,
+        std::vector<float> & symbol_weights,
+        std::vector<float> & ob_weights) const
+{
+    symbol_weights[segment.type] += weight;
+    const SegmentType & type = m_types[segment.type];
+    switch (type.arity) {
+        case NULLARY:
+            break;
+
+        case INJECTIVE:
+            ob_weights[segment.arg1] += weight;
+            break;
+
+        case BINARY:
+            ob_weights[segment.arg1] += weight;
+            ob_weights[segment.arg2] += weight;
+            break;
+    }
+}
+
 DenseSet Router::find_defined () const
 {
     POMAGMA_INFO("Finding defined obs");
@@ -182,23 +224,7 @@ std::vector<float> Router::measure_probs (float reltol) const
 
             float prob = 0;
             for (const Segment & segment : iter_val(ob)) {
-                const SegmentType & type = m_types[segment.type];
-                switch (type.arity) {
-                    case NULLARY: {
-                        prob += type.prob;
-                    } break;
-
-                    case INJECTIVE: {
-                        Ob arg = segment.arg1;
-                        prob += type.prob * probs[arg];
-                    } break;
-
-                    case BINARY: {
-                        Ob lhs = segment.arg1;
-                        Ob rhs = segment.arg2;
-                        prob += type.prob * probs[lhs] * probs[rhs];
-                    } break;
-                }
+                prob += get_prob(segment, probs);
             }
 
             if (prob > probs[ob] * max_increase) {
@@ -234,24 +260,7 @@ std::vector<std::string> Router::find_routes () const
             Segment & best_segment = best_segments[ob];
             bool best_changed = false;
             for (const Segment & segment : iter_val(ob)) {
-                const SegmentType & type = m_types[segment.type];
-                float prob = 0;
-                switch (type.arity) {
-                    case NULLARY: {
-                        prob = type.prob;
-                    } break;
-
-                    case INJECTIVE: {
-                        Ob arg = segment.arg1;
-                        prob = type.prob * best_probs[arg];
-                    } break;
-
-                    case BINARY: {
-                        Ob lhs = segment.arg1;
-                        Ob rhs = segment.arg2;
-                        prob = type.prob * best_probs[lhs] * best_probs[rhs];
-                    } break;
-                }
+                float prob = get_prob(segment, best_probs);
                 if (unlikely(prob > best_prob)) {
                     best_prob = prob; // relaxed memory order
                     best_segment = segment; // relaxed memory order
@@ -309,6 +318,69 @@ std::vector<std::string> Router::find_routes () const
     }
 
     return routes;
+}
+
+void Router::fit_language (
+        const std::unordered_map<std::string, size_t> & symbol_counts,
+        const std::unordered_map<Ob, size_t> & ob_counts,
+        float reltol)
+{
+    POMAGMA_INFO("Fitting language");
+    const size_t item_count = m_carrier.item_count();
+    std::vector<float> ob_probs(1 + item_count, 0);
+    std::vector<float> ob_weights(1 + item_count, 0);
+    std::vector<float> symbol_weights(m_types.size(), 0);
+    POMAGMA_ASSERT_EQ(m_types.size(), m_language.size());
+
+    const float max_increase = 1.0 + reltol;
+    bool changed = true;
+    while (changed) {
+        changed = false;
+
+        update_probs(ob_probs);
+
+        update_weights(
+            ob_probs,
+            symbol_counts,
+            ob_counts,
+            symbol_weights,
+            ob_weights);
+
+        POMAGMA_DEBUG("optimizing language");
+        float total_weight = 0;
+        for (float weight : symbol_weights) {
+            total_weight += weight;
+        }
+        for (size_t i = 0; i < m_types.size(); ++i) {
+            SegmentType & type = m_types[i];
+            float new_prob = symbol_weights[i] / total_weight;
+            float old_prob = type.prob;
+            type.prob = new_prob;
+            m_language[type.name] = new_prob;
+
+            if (new_prob > old_prob * max_increase) {
+                changed |= true;
+            }
+        }
+    }
+}
+
+void Router::update_probs (
+        std::vector<float> & probs __attribute__((unused)),
+        float reltol __attribute__((unused))) const
+{
+    TODO("propagate up parse trees, a warm-start version of measure_probs");
+}
+
+void Router::update_weights (
+        const std::vector<float> & probs __attribute__((unused)),
+        const std::unordered_map<std::string, size_t> & symbol_counts __attribute__((unused)),
+        const std::unordered_map<Ob, size_t> & ob_counts __attribute__((unused)),
+        std::vector<float> & symbol_weights __attribute__((unused)),
+        std::vector<float> & ob_weights __attribute__((unused)),
+        float reltol __attribute__((unused))) const
+{
+    TODO("propagate down parse trees");
 }
 
 } // namespace pomagma

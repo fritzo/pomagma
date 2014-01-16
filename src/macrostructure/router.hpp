@@ -16,11 +16,31 @@ public:
         const Signature & signature,
         const std::unordered_map<std::string, float> & language);
 
+    const std::unordered_map<std::string, float> & get_language () const
+    {
+        return m_language;
+    }
+
     DenseSet find_defined () const;
     std::vector<float> measure_probs (float reltol = 0.1) const;
     std::vector<std::string> find_routes () const;
+    void fit_language (
+            const std::unordered_map<std::string, size_t> & symbol_counts,
+            const std::unordered_map<Ob, size_t> & ob_counts,
+            float reltol = 0.1);
 
 private:
+
+    void update_probs (
+            std::vector<float> & probs,
+            float reltol = 0.1) const;
+    void update_weights (
+            const std::vector<float> & probs,
+            const std::unordered_map<std::string, size_t> & symbol_counts,
+            const std::unordered_map<Ob, size_t> & ob_counts,
+            std::vector<float> & symbol_weights,
+            std::vector<float> & ob_weights,
+            float reltol = 0.1) const;
 
     bool defines (const DenseSet & defined, Ob ob) const;
 
@@ -57,8 +77,17 @@ private:
     typedef std::vector<Segment>::const_iterator Iterator;
     Range<Iterator> iter_val (Ob val) const;
 
+    float get_prob (
+            const Segment & segment,
+            const std::vector<float> & probs) const;
+    void add_weight (
+            float weight,
+            const Segment & segment,
+            std::vector<float> & symbol_weights,
+            std::vector<float> & ob_weights) const;
+
     Carrier & m_carrier;
-    const std::unordered_map<std::string, float> m_language;
+    std::unordered_map<std::string, float> m_language;
     std::vector<SegmentType> m_types;
     std::vector<Segment> m_segments;
     std::vector<size_t> m_value_index;
