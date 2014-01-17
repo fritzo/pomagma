@@ -1,5 +1,5 @@
-import simplejson as json
 from math import exp
+from util import json_dump
 
 binary_probs = {
     'APP':  0.374992,
@@ -58,8 +58,7 @@ probs = {
 
 
 def make(outfile='skj.json'):
-    with open(outfile, 'w') as f:
-        json.dump(probs, f, indent=4, sort_keys=True)
+    json_dump(probs, outfile)
 
 
 if __name__ == '__main__':

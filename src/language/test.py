@@ -1,8 +1,7 @@
 import os
 import glob
-import simplejson as json
 from nose.tools import assert_list_equal, assert_almost_equal
-from pomagma.language import dict_to_language, language_to_dict, normalize_dict
+from util import json_load, dict_to_language, language_to_dict, normalize_dict
 
 
 SCRIPT_DIR = os.path.abspath(os.path.dirname(__file__))
@@ -38,7 +37,6 @@ def test_example():
 
 def test_convert_json():
     for filename in glob.glob(os.path.join(SCRIPT_DIR, '*.json')):
-        with open(filename) as f:
-            example = json.load(f)
+        example = json_load(filename)
         normalize_dict(example)
         yield assert_converts, example

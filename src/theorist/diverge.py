@@ -254,6 +254,8 @@ def try_prove_diverge(
     def log_print(message):
         if log_file:
             pomagma.util.log_print(message, log_file)
+        else:
+            print message
 
     lines = list(stripped_lines(conjectures_in))
     log_print('Trying to prove {} conjectures'.format(len(lines)))

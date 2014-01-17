@@ -13,5 +13,5 @@ skj.json: skj.py
 skrj.json: skrj.py
 	python skrj.py
 
-%.language: %.json run.py language_pb2.py __init__.py
-	python run.py compile $< $@
+%.language: %.json util.py language_pb2.py __init__.py
+	python util.py compile $< $@
