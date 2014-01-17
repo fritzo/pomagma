@@ -143,18 +143,19 @@ class Client(object):
         result = {'obs': obs, 'symbols': symbols}
         return result
 
-    def _fit_language(self, histogram):
+    def _fit_language(self, histogram=None):
         request = Request()
         request.fit_language.SetInParent()
-        terms = request.fit_language.histogram.terms
-        for name, count in histogram['symbols'].iteritems():
-            term = terms.add()
-            term.name = name
-            term.count = count
-        for ob, count in histogram['obs'].iteritems():
-            term = terms.add()
-            term.ob = ob
-            term.count = count
+        if histogram is not None:
+            terms = request.fit_language.histogram.terms
+            for name, count in histogram['symbols'].iteritems():
+                term = terms.add()
+                term.name = name
+                term.count = count
+            for ob, count in histogram['obs'].iteritems():
+                term = terms.add()
+                term.ob = ob
+                term.count = count
         reply = self._call(request)
         result = {}
         for symbol in reply.fit_language.symbols:
@@ -163,14 +164,15 @@ class Client(object):
             result[name] = prob
         return result
 
-    def fit_language(self, histogram):
-        assert isinstance(histogram, dict), histogram
-        keys = set(histogram.keys())
-        assert keys == set(['symbols', 'obs']), keys
-        for name, count in histogram['symbols'].iteritems():
-            assert isinstance(name, str), name
-            assert isinstance(count, int), count
-        for ob, count in histogram['obs'].iteritems():
-            assert isinstance(ob, int), ob
-            assert isinstance(count, int), count
+    def fit_language(self, histogram=None):
+        if histogram is not None:
+            assert isinstance(histogram, dict), histogram
+            keys = set(histogram.keys())
+            assert keys == set(['symbols', 'obs']), keys
+            for name, count in histogram['symbols'].iteritems():
+                assert isinstance(name, str), name
+                assert isinstance(count, int), count
+            for ob, count in histogram['obs'].iteritems():
+                assert isinstance(ob, int), ob
+                assert isinstance(count, int), count
         return self._fit_language(histogram)

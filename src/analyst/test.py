@@ -189,17 +189,30 @@ def test_get_histogram():
     assert histogram['symbols']
 
 
-def test_fit_language():
+def validate_language(language):
+    total = sum(language.itervalues())
+    assert abs(total - 1) < 1e-4, 'bad total: {}'.format(total)
+    assert isinstance(language, dict), language
+    for key, val in language.iteritems():
+        assert isinstance(key, str), key
+        assert isinstance(val, float), val
+        assert val > 0, '{} has no mass'.format(key)
+
+
+def test_fit_language_histogram():
     with load() as db:
         lines = [line for _, line in CORPUS]
         for _ in xrange(10):
             db.validate_corpus(lines)
         histogram = db.get_histogram()
         language = db.fit_language(histogram)
-        total = sum(language.itervalues())
-        assert abs(total - 1) < 1e-4, 'bad total: {}'.format(total)
-        assert isinstance(language, dict), language
-        for key, val in language.iteritems():
-            assert isinstance(key, str), key
-            assert isinstance(val, float), val
-            assert val > 0, '{} has no mass'.format(key)
+        validate_language(language)
+
+
+def test_fit_language_default():
+    with load() as db:
+        lines = [line for _, line in CORPUS]
+        for _ in xrange(10):
+            db.validate_corpus(lines)
+        language = db.fit_language()
+        validate_language(language)
