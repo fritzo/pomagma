@@ -24,6 +24,16 @@ std::unordered_map<std::string, float> load_language (const char * filename)
         result[term.name()] = term.weight();
     }
 
+    float total = 0;
+    for (auto & pair : result) {
+        total += pair.second;
+    }
+    float error = fabs(total - 1);
+    POMAGMA_ASSERT(error < 1e-4, "language not normalized, total = " << total)
+    for (auto & pair : result) {
+        pair.second /= total;
+    }
+
     return result;
 }
 

@@ -1,5 +1,4 @@
 import os
-import simplejson as json
 import pomagma.util
 import pomagma.anlyst
 import pomagma.language.util
