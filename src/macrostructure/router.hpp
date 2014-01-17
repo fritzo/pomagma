@@ -44,7 +44,7 @@ private:
 
     bool defines (const DenseSet & defined, Ob ob) const;
 
-    enum Arity { NULLARY, INJECTIVE, BINARY };
+    enum Arity { NULLARY, UNARY, BINARY };
 
     struct SegmentType
     {

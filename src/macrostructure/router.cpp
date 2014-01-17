@@ -52,7 +52,7 @@ Router::Router (
         const auto & name = pair.first;
         const auto & fun = * pair.second;
         if (m_language.find(name) != m_language.end()) {
-            const TypeId type = new_type(INJECTIVE, name);
+            const TypeId type = new_type(UNARY, name);
             for (auto iter = fun.iter(); iter.ok(); iter.next()) {
                 Ob arg = * iter;
                 Ob val = fun.find(arg);
@@ -117,7 +117,7 @@ inline bool Router::defines (const DenseSet & defined, Ob ob) const
                 return true;
             } break;
 
-            case INJECTIVE: {
+            case UNARY: {
                 if (defined(segment.arg1)) {
                     return true;
                 }
@@ -143,7 +143,7 @@ inline float Router::get_prob (
         case NULLARY:
             return type.prob;
 
-        case INJECTIVE:
+        case UNARY:
             return type.prob * probs[segment.arg1];
 
         case BINARY:
@@ -161,12 +161,12 @@ inline void Router::add_weight (
 {
     #pragma omp atomic
     symbol_weights[segment.type] += weight;
-    const SegmentType & type = m_types[segment.type];
-    switch (type.arity) {
+
+    switch (m_types[segment.type].arity) {
         case NULLARY:
             break;
 
-        case INJECTIVE:
+        case UNARY:
             #pragma omp atomic
             ob_weights[segment.arg1] += weight;
             break;
@@ -305,7 +305,7 @@ std::vector<std::string> Router::find_routes () const
                 routes[ob] = type.name;
             } break;
 
-            case INJECTIVE: {
+            case UNARY: {
                 const auto & arg = routes[segment.arg1];
                 POMAGMA_ASSERT(not arg.empty(), "unknown arg route");
                 routes[ob] = type.name + " " + arg;
