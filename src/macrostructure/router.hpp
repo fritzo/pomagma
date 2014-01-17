@@ -27,20 +27,20 @@ public:
     void fit_language (
             const std::unordered_map<std::string, size_t> & symbol_counts,
             const std::unordered_map<Ob, size_t> & ob_counts,
-            float reltol = 0.1);
+            float reltol = 0.01);
 
 private:
 
     void update_probs (
             std::vector<float> & probs,
-            float reltol = 0.1) const;
+            float reltol) const;
     void update_weights (
             const std::vector<float> & probs,
             const std::unordered_map<std::string, size_t> & symbol_counts,
             const std::unordered_map<Ob, size_t> & ob_counts,
             std::vector<float> & symbol_weights,
             std::vector<float> & ob_weights,
-            float reltol = 0.1) const;
+            float reltol) const;
 
     bool defines (const DenseSet & defined, Ob ob) const;
 

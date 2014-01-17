@@ -307,7 +307,7 @@ inline Range<Iterator> range (const Iterator & begin, const Iterator & end)
 // vector operations
 
 template<class T>
-std::ostream & operator<< (std::ostream & o, const std::vector<T> & x)
+inline std::ostream & operator<< (std::ostream & o, const std::vector<T> & x)
 {
     o << "[";
     if (not x.empty()) {
@@ -337,13 +337,27 @@ inline bool operator== (const std::vector<T> & x, const std::vector<T> & y)
 // map operations
 
 template<class Map>
-const typename Map::mapped_type & map_find (
+inline const typename Map::mapped_type & map_find (
         const Map & map,
         const typename Map::key_type & key)
 {
     auto iter = map.find(key);
     POMAGMA_ASSERT(iter != map.end(), "missing key " << key);
     return iter->second;
+}
+
+template<class Map>
+inline const typename Map::mapped_type & map_get (
+        const Map & map,
+        const typename Map::key_type & key,
+        const typename Map::mapped_type & default_value)
+{
+    auto iter = map.find(key);
+    if (iter != map.end()) {
+        return iter->second;
+    } else {
+        return default_value;
+    }
 }
 
 //----------------------------------------------------------------------------

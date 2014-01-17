@@ -159,6 +159,7 @@ inline void Router::add_weight (
         std::vector<float> & symbol_weights,
         std::vector<float> & ob_weights) const
 {
+    #pragma omp atomic
     symbol_weights[segment.type] += weight;
     const SegmentType & type = m_types[segment.type];
     switch (type.arity) {
@@ -166,11 +167,14 @@ inline void Router::add_weight (
             break;
 
         case INJECTIVE:
+            #pragma omp atomic
             ob_weights[segment.arg1] += weight;
             break;
 
         case BINARY:
+            #pragma omp atomic
             ob_weights[segment.arg1] += weight;
+            #pragma omp atomic
             ob_weights[segment.arg2] += weight;
             break;
     }
@@ -208,8 +212,8 @@ std::vector<float> Router::measure_probs (float reltol) const
     POMAGMA_INFO("Measuring ob probs");
     const size_t item_count = m_carrier.item_count();
     std::vector<float> probs(1 + item_count, 0);
-
     const float max_increase = 1.0 + reltol;
+
     bool changed = true;
     while (changed) {
         changed = false;
@@ -229,7 +233,7 @@ std::vector<float> Router::measure_probs (float reltol) const
 
             if (prob > probs[ob] * max_increase) {
                 //#pragma omp atomic
-                changed |= true;
+                changed = true;
             }
             probs[ob] = prob; // relaxed memory order
         }
@@ -270,7 +274,7 @@ std::vector<std::string> Router::find_routes () const
 
             if (best_changed) {
                 //#pragma omp atomic
-                changed |= true;
+                changed = true;
             }
         }
     }
@@ -331,20 +335,21 @@ void Router::fit_language (
     std::vector<float> ob_weights(1 + item_count, 0);
     std::vector<float> symbol_weights(m_types.size(), 0);
     POMAGMA_ASSERT_EQ(m_types.size(), m_language.size());
-
     const float max_increase = 1.0 + reltol;
+
     bool changed = true;
     while (changed) {
         changed = false;
 
-        update_probs(ob_probs);
+        update_probs(ob_probs, reltol);
 
         update_weights(
             ob_probs,
             symbol_counts,
             ob_counts,
             symbol_weights,
-            ob_weights);
+            ob_weights,
+            reltol);
 
         POMAGMA_DEBUG("optimizing language");
         float total_weight = 0;
@@ -359,28 +364,106 @@ void Router::fit_language (
             m_language[type.name] = new_prob;
 
             if (new_prob > old_prob * max_increase) {
-                changed |= true;
+                changed = true;
             }
         }
     }
 }
 
 void Router::update_probs (
-        std::vector<float> & probs __attribute__((unused)),
-        float reltol __attribute__((unused))) const
+        std::vector<float> & probs,
+        float reltol) const
 {
-    TODO("propagate up parse trees, a warm-start version of measure_probs");
+    POMAGMA_INFO("Updating ob probs");
+    const size_t item_count = m_carrier.item_count();
+    POMAGMA_ASSERT_EQ(probs.size(), 1 + item_count);
+    const float max_increase = 1.0 + reltol;
+
+    bool changed = true;
+    while (changed) {
+        changed = false;
+
+        POMAGMA_DEBUG("accumulating route probabilities");
+
+        # pragma omp parallel for schedule(dynamic, 1)
+        for (size_t i = 0; i < item_count; ++i) {
+            Ob ob = 1 + i;
+            float & prob = probs[ob];
+
+            float temp_prob = 0;
+            for (const Segment & segment : iter_val(ob)) {
+                temp_prob += get_prob(segment, probs);
+            }
+
+            if (temp_prob > prob * max_increase) {
+                changed = true;
+            }
+
+            prob = temp_prob;
+        }
+    }
 }
 
 void Router::update_weights (
-        const std::vector<float> & probs __attribute__((unused)),
-        const std::unordered_map<std::string, size_t> & symbol_counts __attribute__((unused)),
-        const std::unordered_map<Ob, size_t> & ob_counts __attribute__((unused)),
-        std::vector<float> & symbol_weights __attribute__((unused)),
-        std::vector<float> & ob_weights __attribute__((unused)),
-        float reltol __attribute__((unused))) const
+        const std::vector<float> & probs,
+        const std::unordered_map<std::string, size_t> & symbol_counts,
+        const std::unordered_map<Ob, size_t> & ob_counts,
+        std::vector<float> & symbol_weights,
+        std::vector<float> & ob_weights,
+        float reltol) const
 {
-    TODO("propagate down parse trees");
+    POMAGMA_INFO("Updating weights");
+    const size_t symbol_count = m_types.size();
+    const size_t ob_count = m_carrier.item_count();
+    POMAGMA_ASSERT_EQ(probs.size(), 1 + ob_count);
+    POMAGMA_ASSERT_EQ(symbol_weights.size(), symbol_count);
+    POMAGMA_ASSERT_EQ(ob_weights.size(), 1 + ob_count);
+    const float max_increase = 1.0 + reltol;
+
+    std::vector<float> temp_symbol_weights(symbol_weights.size());
+    std::vector<float> temp_ob_weights(ob_weights.size());
+
+    update_weights_loop: {
+
+        POMAGMA_DEBUG("accumulating route probabilities");
+
+        std::fill(temp_symbol_weights.begin(), temp_symbol_weights.end(), 0);
+        for (size_t i = 0; i < symbol_count; ++i) {
+            temp_symbol_weights[i] = map_get(symbol_counts, m_types[i].name, 0);
+        }
+
+        std::fill(temp_ob_weights.begin(), temp_ob_weights.end(), 0);
+        for (const auto & pair : ob_counts) {
+            temp_ob_weights[pair.first] = pair.second;
+        }
+
+        # pragma omp parallel for schedule(dynamic, 1)
+        for (size_t i = 0; i < ob_count; ++i) {
+            Ob ob = 1 + i;
+
+            const float weight = ob_weights[ob] / probs[ob];
+            for (const Segment & segment : iter_val(ob)) {
+                float part = weight * get_prob(segment, probs);
+                add_weight(part, segment, temp_symbol_weights, temp_ob_weights);
+            }
+        }
+
+        std::swap(symbol_weights, temp_symbol_weights);
+        std::swap(ob_weights, temp_ob_weights);
+
+        for (size_t i = 0; i < symbol_count; ++i) {
+            if (symbol_weights[i] > temp_ob_weights[i] * max_increase) {
+                goto update_weights_loop;
+            }
+        }
+
+        for (size_t i = 0; i < ob_count; ++i) {
+            Ob ob = 1 + i;
+            if (ob_weights[ob] > temp_ob_weights[ob] * max_increase) {
+                goto update_weights_loop;
+            }
+        }
+    }
 }
 
 } // namespace pomagma
