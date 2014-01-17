@@ -24,10 +24,10 @@ digraph G {
     {
         node [shape=ellipse];
         rank = "same";
-        Languages;
-        Theory;
-        Atlas;
-        Corpus;
+        Languages [label="Languages\ngit"];
+        Theory [label="Theory\ngit"];
+        Atlas [label="Atlas\nS3"];
+        Corpus [label="Corpus\ngit"];
     }
     Compiler;
     {
