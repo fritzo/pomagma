@@ -73,6 +73,13 @@ std::unordered_map<std::string, float> Server::fit_language (
     Router router(m_structure.signature(), m_language);
     router.fit_language(histogram.symbols, histogram.obs);
     m_language = router.get_language();
+
+    POMAGMA_DEBUG("Language:")
+    std::map<std::string, float> language(m_language.begin(), m_language.end());
+    for (auto pair : language) {
+        POMAGMA_DEBUG("\t" << pair.first << "\t" << pair.second);
+    }
+
     m_probs = router.measure_probs();
     m_routes = router.find_routes();
     return m_language;

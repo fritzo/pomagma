@@ -156,6 +156,13 @@ CORPUS = [
     (OK, DEFINE('close', 'V')),
     (OK, DEFINE('close.sub', 'P')),
     (OK, DEFINE('close.forall', 'A')),
+    # axioms
+    (OK, ASSERT('EQUAL I APP APP S K K')),
+    (OK, ASSERT('EQUAL B APP APP S APP K S K')),
+    (OK, ASSERT('EQUAL CB APP C B')),
+    (OK, ASSERT('EQUAL C APP APP S APP APP B B S APP K K')),
+    (OK, ASSERT('EQUAL W APP APP C S I')),
+    (OK, ASSERT('EQUAL Y APP APP APP S B CB APP W I')),
 ]
 
 

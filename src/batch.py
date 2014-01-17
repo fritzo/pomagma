@@ -232,6 +232,7 @@ def sparse_range(min_size, max_size):
 def trim(theory, parallel=True, **options):
     '''
     Trim a set of normal regions for running analyst on small machines.
+    Options: log_level, log_file
     '''
     with atlas.chdir(theory):
         options.setdefault('log_file', 'trim.log')
@@ -262,6 +263,7 @@ def trim(theory, parallel=True, **options):
 def analyze(theory, size=None, address=analyst.ADDRESS, **options):
     '''
     Run analyst server on normalized world map.
+    Options: log_level, log_file
     '''
     with atlas.chdir(theory):
         options.setdefault('log_file', 'analyst.log')
@@ -281,6 +283,7 @@ def analyze(theory, size=None, address=analyst.ADDRESS, **options):
 def fit_language(theory, address=analyst.ADDRESS, **options):
     '''
     Fit language to corpus, saving results to git working tree.
+    Options: log_level, log_file
     '''
     options.setdefault('log_file', 'linguist.log')
     linguist.fit_language(theory, address=address, **options)
@@ -290,6 +293,7 @@ def fit_language(theory, address=analyst.ADDRESS, **options):
 def test_analyst(theory, **options):
     '''
     Test analyst approximation on normalized world map.
+    Options: log_level, log_file
     '''
     options.setdefault('log_file', 'test.log')
     with atlas.chdir(theory):
