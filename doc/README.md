@@ -33,15 +33,14 @@
 
 ## Milestones 
 
-- Viable - prove concept in prototype DONE
-- Parallel - run surveyor system tests (h4, sk, skj) DONE
-- Scalable - run surveyor-cartographer loop DONE
-- Thrifty - propose new equations based on atlas DONE
-- Distributed - run survey workflow on ec2
-- Literate - populate corpus by writing code in editor
-- Tasteful - fit language parameters to corpus
-- Innovative - propose new basic terms based on corpus
-- Interactive - show static analysis layer in editor
-- Reflective - model pomagma actors in corpus
-- Social - integrate with other languages and environments
+- [x] Viable - prove concept in prototype
+- [x] Parallel - run surveyor system tests (h4, sk, skj)
+- [x] Scalable - run surveyor-cartographer loop
+- [x] Thrifty - propose new equations based on atlas
+- [x] Interactive - show static analysis layer in editor
+- [ ] Tasteful - fit language parameters to corpus
+- [ ] Literate - populate corpus by writing code in editor
+- [ ] Innovative - propose new basic terms based on corpus
+- [ ] Reflective - model pomagma actors in corpus
+- [ ] Social - integrate with other languages and environments
 
