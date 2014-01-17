@@ -9,6 +9,7 @@ namespace pomagma
 
 class Server
 {
+    std::unordered_map<std::string, float> m_language;
     Structure m_structure;
     Approximator m_approximator;
     ApproximateParser m_approximate_parser;
@@ -32,7 +33,9 @@ public:
     Approximator::Validity validate (const std::string & code);
     std::vector<Validator::AsyncValidity> validate_corpus (
             const std::vector<Corpus::LineOf<std::string>> & lines);
-    Corpus::Histogram histogram ();
+    const Corpus::Histogram & get_histogram ();
+    std::unordered_map<std::string, float> fit_language (
+            const Corpus::Histogram & histogram);
 
     std::vector<std::string> flush_errors ();
 

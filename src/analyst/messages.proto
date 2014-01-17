@@ -1,5 +1,14 @@
 package pomagma_messaging;
 
+message Histogram {
+  message Term {
+    required uint64 count = 1;
+    optional uint32 ob = 2;
+    optional string name = 3;
+  }
+  repeated Term terms = 1;
+}
+
 message AnalystRequest {
 
   message TestInference {
@@ -17,14 +26,18 @@ message AnalystRequest {
     }
     repeated Line lines = 1;
   }
-  message Histogram {
+  message GetHistogram {
+  }
+  message FitLanguage {
+    optional Histogram histogram = 1;
   }
 
   optional TestInference test_inference = 1;
   optional Simplify simplify = 2;
   optional Validate validate = 3;
   optional ValidateCorpus validate_corpus = 4;
-  optional Histogram histogram = 5;
+  optional GetHistogram get_histogram = 5;
+  optional FitLanguage fit_language = 6;
 }
 
 message AnalystResponse {
@@ -51,20 +64,23 @@ message AnalystResponse {
   message ValidateCorpus {
     repeated Validity results = 1;
   }
-  message Histogram {
-    message Term {
-      required uint64 count = 1;
-      optional uint32 ob = 2;
-      optional string name = 3;
+  message GetHistogram {
+    required Histogram histogram = 1;
+  }
+  message FitLanguage {
+    message Symbol {
+      required string name = 1;
+      required float prob = 2;
     }
-    repeated Term terms = 1;
+    repeated Symbol symbols = 1;
   }
 
   optional TestInference test_inference = 1;
   optional Simplify simplify = 2;
   optional Validate validate = 3;
   optional ValidateCorpus validate_corpus = 4;
-  optional Histogram histogram = 5;
+  optional GetHistogram get_histogram = 5;
+  optional FitLanguage fit_language = 6;
 
-  repeated string error_log = 6;
+  repeated string error_log = 7;
 }

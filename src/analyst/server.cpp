@@ -11,7 +11,8 @@ Server::Server (
         const char * structure_file,
         const char * language_file,
         size_t thread_count)
-    : m_structure(structure_file),
+    : m_language(load_language(language_file)),
+      m_structure(structure_file),
       m_approximator(m_structure),
       m_approximate_parser(m_approximator),
       m_probs(),
@@ -24,8 +25,7 @@ Server::Server (
         m_structure.validate();
     }
 
-    auto language = load_language(language_file);
-    Router router(m_structure.signature(), language);
+    Router router(m_structure.signature(), m_language);
     m_probs = router.measure_probs();
     m_routes = router.find_routes();
 }
@@ -62,9 +62,20 @@ std::vector<Validator::AsyncValidity> Server::validate_corpus (
     return m_validator.validate(parsed, linker);
 }
 
-Corpus::Histogram Server::histogram ()
+const Corpus::Histogram & Server::get_histogram ()
 {
     return m_corpus.histogram();
+}
+
+std::unordered_map<std::string, float> Server::fit_language (
+        const Corpus::Histogram & histogram)
+{
+    Router router(m_structure.signature(), m_language);
+    router.fit_language(histogram.symbols, histogram.obs);
+    m_language = router.get_language();
+    m_probs = router.measure_probs();
+    m_routes = router.find_routes();
+    return m_language;
 }
 
 std::vector<std::string> Server::flush_errors ()
@@ -132,9 +143,10 @@ messaging::AnalystResponse handle (
         }
     }
 
-    if (request.has_histogram()) {
-        const Corpus::Histogram histogram = server.histogram();
-        auto & response_histogram = * response.mutable_histogram();
+    if (request.has_get_histogram()) {
+        const Corpus::Histogram & histogram = server.get_histogram();
+        auto & response_histogram =
+            * response.mutable_get_histogram()->mutable_histogram();
         for (const auto & pair : histogram.obs) {
             auto & term = * response_histogram.add_terms();
             term.set_ob(pair.first);
@@ -144,6 +156,33 @@ messaging::AnalystResponse handle (
             auto & term = * response_histogram.add_terms();
             term.set_name(pair.first);
             term.set_count(pair.second);
+        }
+    }
+
+    if (request.has_fit_language()) {
+        std::unordered_map<std::string, float> language;
+        if (request.fit_language().has_histogram()) {
+            Corpus::Histogram histogram;
+            const auto & request_histogram =
+                request.fit_language().histogram();
+            size_t terms_size = request_histogram.terms_size();
+            for (size_t i = 0; i < terms_size; ++i) {
+                const auto & term = request_histogram.terms(i);
+                if (term.has_ob()) {
+                    histogram.obs[term.ob()] = term.count();
+                } else {
+                    histogram.symbols[term.name()] = term.count();
+                }
+            }
+            language = server.fit_language(histogram);
+        } else {
+            language = server.fit_language(server.get_histogram());
+        }
+        auto & response_fit_language = * response.mutable_fit_language();
+        for (const auto & pair : language) {
+            auto & symbol = * response_fit_language.add_symbols();
+            symbol.set_name(pair.first);
+            symbol.set_prob(pair.second);
         }
     }
 

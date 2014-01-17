@@ -44,6 +44,8 @@ class Client(object):
         reply.ParseFromString(raw_reply)
         for message in reply.error_log:
             WARN(message)
+        for key, val in request.ListFields():
+            assert reply.HasField(key.name), key.name
         if reply.error_log:
             raise ServerError(reply.error_log)
         return reply
@@ -125,13 +127,13 @@ class Client(object):
         assert len(results) == len(lines), results
         return results
 
-    def histogram(self):
+    def get_histogram(self):
         request = Request()
-        request.histogram.SetInParent()
+        request.get_histogram.SetInParent()
         reply = self._call(request)
         obs = {}
         symbols = {}
-        for term in reply.histogram.terms:
+        for term in reply.get_histogram.histogram.terms:
             assert bool(term.ob) != bool(term.name), term
             count = int(term.count)
             if term.ob:
@@ -140,3 +142,35 @@ class Client(object):
                 symbols[str(term.name)] = count
         result = {'obs': obs, 'symbols': symbols}
         return result
+
+    def _fit_language(self, histogram):
+        request = Request()
+        request.fit_language.SetInParent()
+        terms = request.fit_language.histogram.terms
+        for name, count in histogram['symbols'].iteritems():
+            term = terms.add()
+            term.name = name
+            term.count = count
+        for ob, count in histogram['obs'].iteritems():
+            term = terms.add()
+            term.ob = ob
+            term.count = count
+        reply = self._call(request)
+        result = {}
+        for symbol in reply.fit_language.symbols:
+            name = str(symbol.name)
+            prob = float(symbol.prob)
+            result[name] = prob
+        return result
+
+    def fit_language(self, histogram):
+        assert isinstance(histogram, dict), histogram
+        keys = set(histogram.keys())
+        assert keys == set(['symbols', 'obs']), keys
+        for name, count in histogram['symbols'].iteritems():
+            assert isinstance(name, str), name
+            assert isinstance(count, int), count
+        for ob, count in histogram['obs'].iteritems():
+            assert isinstance(ob, int), ob
+            assert isinstance(count, int), count
+        return self._fit_language(histogram)

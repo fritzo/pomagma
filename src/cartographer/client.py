@@ -23,6 +23,8 @@ class Client(object):
         raw_reply = self._socket.recv(0)
         reply = Response()
         reply.ParseFromString(raw_reply)
+        for key, val in request.ListFields():
+            assert reply.HasField(key.name), key.name
         return reply
 
     def ping(self):

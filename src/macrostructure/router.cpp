@@ -425,7 +425,7 @@ void Router::update_weights (
 
     update_weights_loop: {
 
-        POMAGMA_DEBUG("accumulating route probabilities");
+        POMAGMA_DEBUG("distributing route weight");
 
         std::fill(temp_symbol_weights.begin(), temp_symbol_weights.end(), 0);
         for (size_t i = 0; i < symbol_count; ++i) {
@@ -452,7 +452,7 @@ void Router::update_weights (
         std::swap(ob_weights, temp_ob_weights);
 
         for (size_t i = 0; i < symbol_count; ++i) {
-            if (symbol_weights[i] > temp_ob_weights[i] * max_increase) {
+            if (symbol_weights[i] > temp_symbol_weights[i] * max_increase) {
                 goto update_weights_loop;
             }
         }
