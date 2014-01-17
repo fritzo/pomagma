@@ -1,6 +1,6 @@
 import os
 import pomagma.util
-import pomagma.anlyst
+import pomagma.analyst
 import pomagma.language.util
 
 
