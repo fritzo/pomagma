@@ -4,7 +4,7 @@ import parsable
 parsable = parsable.Parsable()
 import pomagma.util
 import pomagma.workers
-from pomagma import surveyor, cartographer, theorist, analyst, atlas
+from pomagma import surveyor, cartographer, theorist, analyst, atlas, linguist
 
 
 @parsable.command
@@ -275,6 +275,15 @@ def analyze(theory, size=None, address=analyst.ADDRESS, **options):
             server.wait()
         finally:
             server.stop()
+
+
+@parsable.command
+def fit_language(theory, address=analyst.ADDRESS, **options):
+    '''
+    Fit language to corpus, saving results to git working tree.
+    '''
+    options.setdefault('log_file', 'linguist.log')
+    linguist.fit_language(theory, address=address, **options)
 
 
 @parsable.command
