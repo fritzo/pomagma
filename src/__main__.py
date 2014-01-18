@@ -21,7 +21,7 @@ THEORY = os.environ.get('POMAGMA_THEORY', 'skrj')
 
 
 @parsable.command
-def test(theory=THEORY, **options):
+def test(theory=THEORY, extra_size=0, **options):
     '''
     Test theory by building a world map.
     Options: log_level, log_file
@@ -34,13 +34,13 @@ def test(theory=THEORY, **options):
         os.makedirs(path)
     with pomagma.util.chdir(path), pomagma.util.mutex(block=False):
         options.setdefault('log_file', 'test.log')
-        world = 'test_theory.world.h5'
+        world = 'test.world.h5'
         diverge_conjectures = 'diverge_conjectures.facts'
         diverge_theorems = 'diverge_theorems.facts'
         equal_conjectures = 'equal_conjectures.facts'
         equal_theorems = 'equal_theorems.facts'
 
-        size = pomagma.util.MIN_SIZES[theory]
+        size = pomagma.util.MIN_SIZES[theory] + extra_size
         surveyor.init(theory, world, size, **options)
 
         with cartographer.load(theory, world, **options) as db:
