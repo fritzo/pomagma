@@ -5,7 +5,15 @@ import parsable
 parsable = parsable.Parsable()
 import pomagma.util
 import pomagma.workers
-from pomagma import surveyor, cartographer, theorist, analyst, atlas, linguist
+from pomagma import (
+    atlas,
+    surveyor,
+    cartographer,
+    theorist,
+    analyst,
+    editor,
+    linguist,
+)
 
 
 @parsable.command
@@ -261,7 +269,7 @@ def trim(theory, parallel=True, **options):
 
 
 @parsable.command
-def analyze(theory, size=None, address=analyst.ADDRESS, **options):
+def analyze(theory='skrj', size=None, address=analyst.ADDRESS, **options):
     '''
     Run analyst server on normalized world map.
     Options: log_level, log_file
@@ -278,6 +286,18 @@ def analyze(theory, size=None, address=analyst.ADDRESS, **options):
             server.wait()
         finally:
             server.stop()
+
+
+@parsable.command
+def edit(port=editor.PORT, address=analyst.ADDRESS, reloader=True):
+    '''
+    Run editor server.
+    '''
+    try:
+        server = editor.serve(port, address, reloader)
+        server.wait()
+    finally:
+        server.terminate()
 
 
 @parsable.command

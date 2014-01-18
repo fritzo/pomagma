@@ -1,15 +1,11 @@
-import os
-import sys
 import functools
 import time
-import subprocess
 import splinter
 import pomagma.editor.app
 import pomagma.analyst.test
 
 TEST_COUNT = 28  # this must be updated every time tests are added
 
-PYTHON = sys.executable
 PORT = pomagma.editor.app.PORT + 1
 editor = None
 analyst = None
@@ -33,12 +29,10 @@ def setup_module():
     print '---- started analyst with pid {} ----'.format(analyst.pid)
 
     global editor
-    env = os.environ.copy()
-    env['POMAGMA_ANALYST_ADDRESS'] = pomagma.analyst.test.ADDRESS
-    editor = subprocess.Popen(
-        [PYTHON, '-m', 'pomagma.editor', 'serve'] +
-        ['port={}'.format(PORT), 'reloader=False'],
-        env=env)
+    editor = pomagma.editor.serve(
+        port=PORT,
+        address=pomagma.analyst.test.ADDRESS,
+        reloader=False)
     print '---- started editor with pid {} ----'.format(editor.pid)
 
     global browser

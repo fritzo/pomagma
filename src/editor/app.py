@@ -1,16 +1,18 @@
 import os
 from itertools import izip
 import bottle
+import mimetypes
+import parsable
+parsable = parsable.Parsable()
 import pomagma.util
 import pomagma.corpus
 import pomagma.analyst
-import mimetypes
 
 
 PORT = int(os.environ.get('POMAGMA_EDITOR_PORT', 34934))
 STATIC = os.path.join(pomagma.util.SRC, 'editor', 'static')
-CORPUS = pomagma.corpus.Corpus()
-ANALYST = pomagma.analyst.connect()
+CORPUS = None
+ANALYST = None
 
 
 def get_lines():
@@ -115,8 +117,16 @@ def get_validities():
     return {'data': validities}
 
 
-def serve(port=PORT, reloader=True):
+@parsable.command
+def serve(port=PORT, address=pomagma.analyst.ADDRESS, reloader=True):
     '''
     Start editor server.
     '''
+    global CORPUS, ANALYST
+    CORPUS = pomagma.corpus.Corpus()
+    ANALYST = pomagma.analyst.connect(address)
     bottle.run(host='localhost', port=port, debug=True, reloader=reloader)
+
+
+if __name__ == '__main__':
+    parsable.dispatch()
