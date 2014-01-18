@@ -11,7 +11,7 @@ DATA = pomagma.util.DATA
 @parsable.command
 def conjectures(theory):
     '''
-    Write conjectures.hgmo
+    Write conjectures.html
     '''
     in_pattern = os.path.join(DATA, 'atlas', theory, '*conjectures*.facts')
     conjectures_files = list(glob.glob(in_pattern))
