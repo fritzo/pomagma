@@ -72,7 +72,7 @@ a partial equation-deciding oracle.
 This allows equations to be interpreted back into the language as terms.
 Iterating, we can thus write equations of strength all the way up the
 hyperarithmetic hierarchy to &Delta;<sub>1</sub><sup>1</sup>,
-and provide a foundation for all of Sol Feferman's predicative mathematics. 
+and provide a foundation for all of Sol Feferman's predicative mathematics.
 
 ### Code Format: a database of definitions and assertions
 
@@ -90,7 +90,7 @@ Multi-line views of code are also generated on the fly by querying the line data
 that this very repo is stored in.)
 
 - [1] the &lambda;-join-calculus in terms of Scott's information ordering.
-- [2] the &lambda;-theory H-star of observational equivalence. 
+- [2] the &lambda;-theory H-star of observational equivalence.
 - [3] ["Datatypes as Lattices"](http://www.cs.ox.ac.uk/files/3287/PRG05.pdf) -Dana Scott (1976)
 - [4] Pomagma began as a PhD [thesis](http://fritzo.org/thesis.pdf) and
     [codebase](http://github.com/fritzo/Johann).
@@ -103,10 +103,9 @@ that this very repo is stored in.)
 - [/build](build) - destination of C++ builds
 - [/pomagma](pomagma) - a symbolic link to appease `pip install -e`
 
-## Installing
+## Installation
 
-The editor front end runs a local server,
-and can be run without the theorem-prover.
+The editor front end runs a web server pointing to an analysis server.
 
     # install using pip
     easy_install pip
@@ -117,18 +116,30 @@ and can be run without the theorem-prover.
     pip install -r requirements.txt
     pip install -e .
 
-    # run the server
-    python -m pomagma.editor serve
+    # run server and browser
+    python -m pomagma edit address=ANALYST_ADDRESS &
     chromium-browser http://localhost:34934 &
 
 The theorem-proving back end currently targets Ubuntu 12.04 LTS.
 
+    # install and test
     git clone git@github.com:fritzo/pomagma
     cd pomagma
     ./install.sh    # If mkvirtualenv fails, run manually.  FIXME
     make test
 
-## Configuring
+    # build minimal atlas
+    python -m pomagma init
+
+    # run editor servers + client locally
+    python -m pomagma analyze &
+    python -m pomagma edit &
+    chromium-browser http://localhost:34934 &
+
+    # continuously enlarge atlas (for months)
+    python -m pomagma explore
+
+## Configuration
 
 To run in debug mode, define an environment variable
 
@@ -141,17 +152,14 @@ To use specific ports or addresses, override these defaults
 
 Pomagma uses even ports for production and odd ports for testing.
 
-To run a distributed system, pomagma needs Amazon AWS credentials, an S3 bucket,
-an SWF domain, and optionally an email address to receive errors.
+To store data on S3, pomagma needs Amazon AWS credentials and an S3 bucket.
 These are specified by environment variables
- 
+
     AWS_ACCESS_KEY_ID=...
     AWS_SECRET_ACCESS_KEY=...
     POMAGMA_BUCKET=Example-Amazon-S3-bucket
-    POMAGMA_DOMAIN=Example-Amazon-SWF-domain
-    POMAGMA_EMAIL=example.user@example.com
 
 ## License
 
-Copyright 2005-2013 Fritz Obermeyer.<br/>
+Copyright 2005-2014 Fritz Obermeyer.<br/>
 All code is licensed under the MIT license unless otherwise noted.
