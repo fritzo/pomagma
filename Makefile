@@ -15,20 +15,20 @@ static-check: FORCE
 	find src | grep '.py$$' | grep -v '_pb2.py' | xargs pep8
 
 unit-test: all set-ulimit FORCE
-	POMAGMA_DEBUG= python -m pomagma.make unit-test
+	POMAGMA_DEBUG= python -m pomagma.make test-units
 batch-test: all set-ulimit FORCE
-	POMAGMA_DEBUG= python -m pomagma.make batch-test
+	POMAGMA_DEBUG= python -m pomagma.make test-atlas
 h4-test: all set-ulimit FORCE
-	POMAGMA_DEBUG= python -m pomagma.make batch-test h4
+	POMAGMA_DEBUG= python -m pomagma.make test-atlas h4
 sk-test: all set-ulimit FORCE
-	POMAGMA_DEBUG= python -m pomagma.make batch-test sk
+	POMAGMA_DEBUG= python -m pomagma.make test-atlas sk
 skj-test: all set-ulimit FORCE
-	POMAGMA_DEBUG= python -m pomagma.make batch-test skj
+	POMAGMA_DEBUG= python -m pomagma.make test-atlas skj
 skrj-test: all set-ulimit FORCE
-	POMAGMA_DEBUG= python -m pomagma.make batch-test skrj
+	POMAGMA_DEBUG= python -m pomagma.make test-atlas skrj
 test: all set-ulimit FORCE
-	POMAGMA_DEBUG= python -m pomagma.make unit-test
-	POMAGMA_DEBUG= python -m pomagma.make batch-test
+	POMAGMA_DEBUG= python -m pomagma.make test-units
+	POMAGMA_DEBUG= python -m pomagma.make test-atlas
 
 h4: all
 	python -m pomagma make h4

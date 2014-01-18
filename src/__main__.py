@@ -23,9 +23,7 @@ THEORY = os.environ.get('POMAGMA_THEORY', 'skrj')
 @parsable.command
 def test(theory=THEORY, **options):
     '''
-    Test basic operations in one theory:
-        init, validate, copy, survey, aggregate,
-        conjecture_diverge, conjecture_equal
+    Test theory by building a world map.
     Options: log_level, log_file
     '''
     buildtype = 'debug' if pomagma.util.debug else 'release'
@@ -35,75 +33,51 @@ def test(theory=THEORY, **options):
     else:
         os.makedirs(path)
     with pomagma.util.chdir(path), pomagma.util.mutex(block=False):
-
-        min_size = pomagma.util.MIN_SIZES[theory]
-        dsize = min(64, 1 + min_size)
-        sizes = [min_size + i * dsize for i in range(10)]
         options.setdefault('log_file', 'test.log')
+        world = 'test_theory.world.h5'
         diverge_conjectures = 'diverge_conjectures.facts'
         diverge_theorems = 'diverge_theorems.facts'
         equal_conjectures = 'equal_conjectures.facts'
         equal_theorems = 'equal_theorems.facts'
 
-        surveyor.init(theory, '0.h5', sizes[0], **options)
-        with cartographer.load(theory, '0.h5', **options) as db:
-            db.validate()
-            db.dump('1.h5')
-            expected_size = pomagma.util.get_item_count('1.h5')
-            actual_size = db.info()['item_count']
-            assert actual_size == expected_size
-        surveyor.survey(theory, '1.h5', '2.h5', sizes[1], **options)
-        with cartographer.load(theory, '2.h5', **options) as db:
-            db.trim([{'size': sizes[0], 'filename': '3.h5'}])
-        surveyor.survey(theory, '3.h5', '4.h5', sizes[1], **options)
-        with cartographer.load(theory, '2.h5', **options) as db:
-            db.aggregate('4.h5')
-            db.dump('5.h5')
-        with cartographer.load(theory, '5.h5', **options) as db:
-            db.aggregate('0.h5')
-            db.dump('6.h5')
-            digest5 = pomagma.util.get_hash('5.h5')
-            digest6 = pomagma.util.get_hash('6.h5')
-            assert digest5 == digest6
+        size = pomagma.util.MIN_SIZES[theory]
+        surveyor.init(theory, world, size, **options)
 
-            counts = db.conjecture(diverge_conjectures, equal_conjectures)
-            assert counts['diverge_count'] > 0, counts['diverge_count']
-            assert counts['equal_count'] > 0, counts['equal_count']
-            if theory != 'h4':
-                theorem_count = theorist.try_prove_diverge(
-                    diverge_conjectures,
-                    diverge_conjectures,
-                    diverge_theorems,
-                    **options)
-                assert theorem_count > 0, theorem_count
-                counts = db.assume(diverge_theorems)
-                assert counts['pos'] + counts['neg'] > 0, counts
-                db.validate()
-                db.dump('6.h5')
-        theorem_count = theorist.try_prove_nless(
+        with cartographer.load(theory, world, **options) as db:
+            db.validate()
+            for priority in [0, 1]:
+                while db.infer(priority):
+                    db.validate()
+            db.conjecture(diverge_conjectures, equal_conjectures)
+            theorist.try_prove_diverge(
+                diverge_conjectures,
+                diverge_conjectures,
+                diverge_theorems,
+                **options)
+            db.assume(diverge_theorems)
+            db.validate()
+            db.dump(world)
+
+        theorist.try_prove_nless(
             theory,
-            '6.h5',
+            world,
             equal_conjectures,
             equal_conjectures,
             equal_theorems,
             **options)
-        #assert theorem_count > 0, theorem_count
 
-        if theory != 'h4':
-            with cartographer.load(theory, '6.h5', **options) as db:
-                db.assume(equal_theorems)
-                if theorem_count > 0:
-                    assert counts['merge'] > 0, counts
-                db.validate()
-                for priority in [0, 1]:
-                    while db.infer(priority):
-                        db.validate()
-                for priority in [0, 1]:
-                    assert not db.infer(priority)
-                db.dump('7.h5')
-            with analyst.load(theory, '7.h5', **options) as db:
-                fail_count = db.test_inference()
-                assert fail_count == 0, 'analyst.test_inference failed'
+        with cartographer.load(theory, world, **options) as db:
+            db.assume(equal_theorems)
+            db.validate()
+            for priority in [0, 1]:
+                while db.infer(priority):
+                    db.validate()
+            db.dump(world)
+
+        with analyst.load(theory, world, **options) as db:
+            fail_count = db.test_inference()
+            assert fail_count == 0, 'analyst.test_inference failed'
+    print 'Theory {} appears valid.'.format(theory)
 
 
 @parsable.command
@@ -162,6 +136,7 @@ def explore(
 def make(theory=THEORY, max_size=8191, step_size=512, **options):
     '''
     Initialize; explore.
+    Options: log_level, log_file
     '''
     path = os.path.join(pomagma.util.DATA, 'atlas', theory)
     if not os.path.exists(path):
@@ -318,48 +293,6 @@ def fit_language(theory, address=analyst.ADDRESS, **options):
     '''
     options.setdefault('log_file', 'linguist.log')
     linguist.fit_language(theory, address=address, **options)
-
-
-@parsable.command
-def test_analyst(theory, **options):
-    '''
-    Test analyst approximation on normalized world map.
-    Options: log_level, log_file
-    '''
-    options.setdefault('log_file', 'test.log')
-    with atlas.chdir(theory):
-        world = 'world.normal.h5'
-        assert os.path.exists(world), 'First initialize normalized world'
-        with analyst.load(theory, world, **options) as db:
-            fail_count = db.test()
-    assert fail_count == 0, 'Failed {} cases'.format(fail_count)
-    print 'Passed analyst test'
-
-
-@parsable.command
-def profile_surveyor(theory, size_blocks=3, dsize_blocks=0, **options):
-    '''
-    Profile surveyor through callgrind on random region of world.
-    Inputs: theory, region size in blocks (1 block = 512 obs)
-    Options: log_level, log_file
-    '''
-    size = size_blocks * 512 - 1
-    dsize = dsize_blocks * 512
-    min_size = pomagma.util.MIN_SIZES[theory]
-    assert size >= min_size
-    with atlas.chdir(theory):
-        options.setdefault('log_file', 'profile.log')
-        region = 'region.{:d}.h5'.format(size)
-        temp = pomagma.util.temp_name('profile.h5')
-        world = 'world.h5'
-
-        if not os.path.exists(region):
-            assert os.path.exists(world), 'First initialize world map'
-            with cartographer.load(theory, world, **options) as db:
-                db.trim({'size': size, 'filename': region})
-        options.setdefault('runner', 'valgrind --tool=callgrind')
-        surveyor.survey(theory, region, temp, size + dsize, **options)
-        os.remove(temp)
 
 
 @parsable.command
