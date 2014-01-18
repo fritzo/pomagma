@@ -120,7 +120,7 @@ def get_validities():
 @parsable.command
 def serve(port=PORT, address=pomagma.analyst.ADDRESS, reloader=True):
     '''
-    Start editor server.
+    Run editor server.
     '''
     global CORPUS, ANALYST
     CORPUS = pomagma.corpus.Corpus()

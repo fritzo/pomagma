@@ -11,6 +11,7 @@ from pomagma import (
     cartographer,
     theorist,
     analyst,
+    corpus,
     editor,
     linguist,
 )
@@ -287,6 +288,8 @@ def analyze(theory=THEORY, size=None, address=analyst.ADDRESS, **options):
         try:
             server = analyst.serve(theory, world, **options)
             server.wait()
+        except KeyboardInterrupt:
+            print 'stopping analyst'
         finally:
             server.stop()
 
@@ -297,10 +300,14 @@ def edit(port=editor.PORT, address=analyst.ADDRESS, reloader=True):
     Run editor server.
     '''
     try:
+        # corpus loads automatically
         server = editor.serve(port, address, reloader)
         server.wait()
+    except KeyboardInterrupt:
+        print 'stopping editor'
     finally:
         server.terminate()
+        corpus.dump()
 
 
 @parsable.command
