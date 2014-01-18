@@ -16,8 +16,11 @@ from pomagma import (
 )
 
 
+THEORY = os.environ.get('POMAGMA_THEORY', 'skrj')
+
+
 @parsable.command
-def test(theory, **options):
+def test(theory=THEORY, **options):
     '''
     Test basic operations in one theory:
         init, validate, copy, survey, aggregate,
@@ -103,7 +106,7 @@ def test(theory, **options):
 
 
 @parsable.command
-def init(theory, **options):
+def init(theory=THEORY, **options):
     '''
     Initialize world map for given theory.
     Options: log_level, log_file
@@ -124,7 +127,7 @@ def init(theory, **options):
 
 @parsable.command
 def explore(
-        theory,
+        theory=THEORY,
         max_size=pomagma.workers.DEFAULT_SURVEY_SIZE,
         step_size=512,
         region_queue_size=4,
@@ -155,7 +158,7 @@ def explore(
 
 
 @parsable.command
-def make(theory, max_size=8191, step_size=512, **options):
+def make(theory=THEORY, max_size=8191, step_size=512, **options):
     '''
     Initialize; explore.
     '''
@@ -166,7 +169,7 @@ def make(theory, max_size=8191, step_size=512, **options):
 
 
 @parsable.command
-def translate(theory, **options):
+def translate(theory=THEORY, **options):
     '''
     Translate language of world map (e.g. when language changes).
     Options: log_level, log_file
@@ -183,7 +186,7 @@ def translate(theory, **options):
 
 
 @parsable.command
-def theorize(theory, **options):
+def theorize(theory=THEORY, **options):
     '''
     Make conjectures based on atlas and update atlas based on theorems.
     '''
@@ -238,7 +241,7 @@ def sparse_range(min_size, max_size):
 
 
 @parsable.command
-def trim(theory, parallel=True, **options):
+def trim(theory=THEORY, parallel=True, **options):
     '''
     Trim a set of normal regions for running analyst on small machines.
     Options: log_level, log_file
@@ -269,7 +272,7 @@ def trim(theory, parallel=True, **options):
 
 
 @parsable.command
-def analyze(theory='skrj', size=None, address=analyst.ADDRESS, **options):
+def analyze(theory=THEORY, size=None, address=analyst.ADDRESS, **options):
     '''
     Run analyst server on normalized world map.
     Options: log_level, log_file

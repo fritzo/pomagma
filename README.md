@@ -134,7 +134,7 @@ To run in debug mode, define an environment variable
 
     POMAGMA_DEBUG=
 
-To use specific ports or address, override these defaults
+To use specific ports or addresses, override these defaults
 
     POMAGMA_EDITOR_PORT=34934
     POMAGMA_ANALYST_ADDRESS=tcp://localhost:34936
