@@ -1,6 +1,5 @@
 import os
 import sys
-import time
 import shutil
 import parsable
 parsable = parsable.Parsable()
@@ -303,6 +302,7 @@ def write(port=editor.PORT, address=analyst.ADDRESS):
             '--temp-profile',
             '--app=http://localhost:{}'.format(port))
     except KeyboardInterrupt:
+        pass
     finally:
         print 'stopping editor'
         server.terminate()
