@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 import shutil
 import parsable
 parsable = parsable.Parsable()
@@ -92,12 +93,15 @@ def init(theory=THEORY, **options):
     with atlas.chdir(theory, init=True):
         survey = 'survey.h5'
         world = 'world.h5'
+        normal = 'world.normal.h5'
         with pomagma.util.temp_copy(survey) as temp:
             surveyor.init(theory, temp, world_size, **options)
         with atlas.load(theory, survey, **options) as db:
             assert not os.path.exists(world), world
+            assert not os.path.exists(normal), normal
             db.validate()
             db.dump(world)
+            db.dump(normal)
 
 
 @parsable.command
@@ -279,8 +283,28 @@ def edit(port=editor.PORT, address=analyst.ADDRESS, reloader=True):
         server = editor.serve(port, address, reloader)
         server.wait()
     except KeyboardInterrupt:
-        print 'stopping editor'
+        pass
     finally:
+        print 'stopping editor'
+        server.terminate()
+        corpus.dump()
+
+
+@parsable.command
+def write(port=editor.PORT, address=analyst.ADDRESS):
+    '''
+    Run editor client + server.
+    '''
+    try:
+        # corpus loads automatically
+        server = editor.serve(port, address, reloader=False)
+        pomagma.util.check_call(
+            'chromium-browser',
+            '--temp-profile',
+            '--app=http://localhost:{}'.format(port))
+    except KeyboardInterrupt:
+    finally:
+        print 'stopping editor'
         server.terminate()
         corpus.dump()
 

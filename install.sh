@@ -22,7 +22,10 @@ sudo apt-get install -y \
 
 sudo gem install foreman
 
-# FIXME mkvirtualenv never automatically works; I have to do it by hand; wtf
+# FIXME mkvirtualenv never automatically works; possible solutions:
+# http://stackoverflow.com/questions/13111881
+# http://stackoverflow.com/questions/18627250
+# http://stackoverflow.com/questions/18337767
 workon pomagma || mkvirtualenv --system-site-packages pomagma
 workon pomagma && pip install -r requirements.txt && pip install -e . && make
 
