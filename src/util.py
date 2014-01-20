@@ -332,10 +332,6 @@ def log_Popen(*args, **options):
     return subprocess.Popen(args, env=env)
 
 
-def browse(address):
-    check_call(['chromium-browser', '--app={}'.format(address)])
-
-
 def use_memcheck(options, output='memcheck.out'):
     '''
     Set options to run through valgrind memcheck.

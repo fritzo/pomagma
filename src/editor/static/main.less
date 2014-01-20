@@ -23,16 +23,22 @@ body {
 }
 div.code pre {
     margin: 0.25em;
-    /* FIXME this breaks cursor :before and :after
-    margin-left: 1.25em;
+    margin-left: 1.75em;
+    /* HACK this breaks cursor :before and :after, see below
     text-indent: -1em;
-     */
+    */
     white-space: pre-wrap;
     font-family: Signika,Consolas,'Liberation Mono','Courier New',Courier,monospace;
     font-size: 12pt;
     word-spacing: 0.25em;
     /* letter-spacing: 0.05em; */
     font-weight: bold;
+}
+
+/* HACK simulate text-indent: -2 while allowing cursor :before and :after */
+div.code pre:before {
+  content: "";
+  margin-left: -2em;	
 }
 
 @foreground: #8888ff;
@@ -173,12 +179,7 @@ span.hole {
     font-weight: normal;
 }
 span.validity {
-    color: #ffaaaa;
-    background-color: #000000;
     padding: 0 0.25em 0 0;
-}
-span.validityPending {
-    color: #aaaaaa;
-    background-color: #000000;
-    padding: 0 0.25em 0 0;
+    vertical-align: middle;
+    opacity: 0.5;
 }
