@@ -76,7 +76,8 @@ def s3_lazy_get(filename):
 
 
 def s3_listdir(prefix):
-    return BUCKET.list(prefix)
+    keys = BUCKET.list(prefix)
+    return [key for key in keys if not key.name.endswith('/')]
 
 
 def s3_remove(filename):
