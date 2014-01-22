@@ -1,6 +1,8 @@
+import os
 from math import exp
 import parsable
 import util
+import pomagma.util
 
 SPECS = {}
 
@@ -112,7 +114,12 @@ SPECS['skrj'] = {
 }
 
 
+@parsable.command
 def make(theory):
+    '''
+    Bootstrap a language from Johann.
+    Inputs: theory in ['sk', 'skj', 'skrj']
+    '''
     spec = SPECS[theory]
     nullary_weights = spec.get('nullary_weights', {})
     injective_probs = spec.get('injective_probs', {})
@@ -143,32 +150,9 @@ def make(theory):
         if not group:
             del probs[arity]
 
-    util.json_dump(probs, '{}.json'.format(theory))
-    #util.compile('{}.json'.format(theory), '{}.language'.format(theory))
-
-
-@parsable.command
-def sk():
-    '''
-    Bootstrap SK theory from Johann.
-    '''
-    make('sk')
-
-
-@parsable.command
-def skj():
-    '''
-    Bootstrap SKJ theory from Johann.
-    '''
-    make('skj')
-
-
-@parsable.command
-def skrj():
-    '''
-    Bootstrap SRKJ theory from Johann.
-    '''
-    make('skrj')
+    with pomagma.util.chdir(os.path.dirname(__file__)):
+        util.json_dump(probs, '{}.json'.format(theory))
+        #util.compile('{}.json'.format(theory), '{}.language'.format(theory))
 
 
 if __name__ == '__main__':
