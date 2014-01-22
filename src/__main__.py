@@ -1,5 +1,6 @@
 import os
 import sys
+import signal
 import shutil
 import parsable
 parsable = parsable.Parsable()
@@ -18,6 +19,11 @@ from pomagma import (
 
 
 THEORY = os.environ.get('POMAGMA_THEORY', 'skrj')
+
+
+# as suggested in http://stackoverflow.com/questions/974189
+def raise_keyboard_interrupt(signum, frame):
+    raise KeyboardInterrupt()
 
 
 @parsable.command
@@ -335,5 +341,6 @@ def clean(theory):
 
 
 if __name__ == '__main__':
+    signal.signal(signal.SIGINT, raise_keyboard_interrupt)
     sys.argv[0] = 'pomagma'
     parsable.dispatch()
