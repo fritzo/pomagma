@@ -201,10 +201,10 @@ def validate(expr):
             rhs = head_normalize(rhs)
             assert len(lhs) == len(rhs),\
                 'Failed to validate\n  {0}\nbecause\n  {1} != {2}'.format(
-                expr, lhs, rhs)
+                    expr, lhs, rhs)
             assert lhs[0] == rhs[0],\
                 'Failed to validate\n  {0}\nbecause  \n{1} != {2}'.format(
-                expr, lhs[0], rhs[0])
+                    expr, lhs[0], rhs[0])
             for args in zip(lhs[1:], rhs[1:]):
                 validate(Expression(expr.name, *args))
             break

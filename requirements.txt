@@ -1,8 +1,13 @@
+#numpy
+#scipy
+#matplotlib
+#tables
+#protobuf
 nose
 mock
 pep8
 pyflakes
-tables
+simplejson
 bottle
 bottle-cork
 selenium
