@@ -33,7 +33,8 @@ function(log,   test,   symbols,   compiler,   ast,   corpus,   navigate)
     if (subsForDash !== undefined) {
       newLambda = compiler.substitute('&mdash;', subsForDash, newLambda);
     }
-    //log('replacing with: ' + compiler.print(newLambda));
+    //log('replacing ' + compiler.print(cursor.below[0]) +
+    //    'with: ' + compiler.print(newLambda));
     var newTerm = ast.load(newLambda);
     cursor = ast.cursor.replaceBelow(cursor, newTerm);
     lineChanged = true;

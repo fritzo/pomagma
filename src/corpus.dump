@@ -8,11 +8,13 @@ ASSERT EQUAL APP VAR types.type I I
 ASSERT EQUAL APP VAR types.type TOP TOP
 ASSERT EQUAL APP VAR types.unit I I
 ASSERT EQUAL APP VAR types.unit TOP TOP
+ASSERT EQUAL COMP VAR types.forall.lower VAR types.forall.raise I
+ASSERT EQUAL COMP VAR types.forall.pull VAR types.forall.push I
 ASSERT EQUAL COMP VAR types.type VAR types.type VAR types.type
 ASSERT EQUAL VAR types.div APP VAR types.type APP CI TOP
 DEFINE VAR types.div APP VAR types.type K
 DEFINE VAR types.exp COMP COMP COMP COMP APP CB VAR types.type APP CB B CB CB VAR types.type
-DEFINE VAR types.forall APP VAR types.type HOLE
+DEFINE VAR types.forall APP VAR types.type JOIN APP APP C APP APP C I VAR types.forall.raise VAR types.forall.lower JOIN APP APP C APP APP C I VAR types.forall.push VAR types.forall.pull HOLE
 DEFINE VAR types.forall.lower APP APP C I TOP
 DEFINE VAR types.forall.pull COMP APP CB VAR types.div J
 DEFINE VAR types.forall.push APP APP C I TOP
