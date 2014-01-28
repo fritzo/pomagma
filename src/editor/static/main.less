@@ -22,11 +22,6 @@ body {
     margin: 0;
 }
 div.code pre {
-    margin: 0.25em;
-    margin-left: 1.75em;
-    /* HACK this breaks cursor :before and :after, see below
-    text-indent: -1em;
-    */
     white-space: pre-wrap;
     font-family: Signika,Consolas,'Liberation Mono','Courier New',Courier,monospace;
     font-size: 12pt;
@@ -36,7 +31,14 @@ div.code pre {
 }
 
 /* HACK simulate text-indent: -2 while allowing cursor :before and :after */
-div.code pre:before {
+div#code pre {
+    margin: 0.25em;
+    margin-left: 1.75em;
+    /* HACK this breaks cursor :before and :after, see below
+    text-indent: -1em;
+    */
+}
+div#code pre:before {
   content: "";
   margin-left: -2em;	
 }
