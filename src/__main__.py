@@ -293,6 +293,7 @@ def edit(port=editor.PORT, address=analyst.ADDRESS, reloader=True):
         print 'stopping editor'
         server.terminate()
         corpus.dump()
+        corpus.clear()
 
 
 @parsable.command
@@ -313,6 +314,7 @@ def write(port=editor.PORT, address=analyst.ADDRESS):
         print 'stopping editor'
         server.terminate()
         corpus.dump()
+        corpus.clear()
 
 
 @parsable.command
