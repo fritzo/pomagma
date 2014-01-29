@@ -270,7 +270,7 @@ def analyze(theory=THEORY, size=None, address=analyst.ADDRESS, **options):
             world = 'region.normal.{}.h5'.format(size)
         assert os.path.exists(world), 'First initialize normalized world'
         try:
-            server = analyst.serve(theory, world, **options)
+            server = analyst.serve(theory, world, address=address, **options)
             server.wait()
         except KeyboardInterrupt:
             print 'stopping analyst'

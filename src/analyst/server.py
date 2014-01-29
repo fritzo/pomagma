@@ -43,7 +43,8 @@ class Server(object):
         return pomagma.analyst.client.Client(self.address)
 
     def stop(self):
-        self._proc.terminate()
+        if self._proc.poll() is None:
+            self._proc.terminate()
 
     def kill(self):
         self._proc.kill()
