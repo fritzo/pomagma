@@ -1,4 +1,6 @@
 # this file is managed by corpus.py
+ASSERT EQUAL APP APP C APP APP C VAR util.pair BOT VAR util.join I
+ASSERT EQUAL APP APP C APP VAR util.pair BOT VAR util.join I
 ASSERT EQUAL APP VAR types.div BOT BOT
 ASSERT EQUAL APP VAR types.div TOP TOP
 ASSERT EQUAL APP VAR types.semi BOT BOT
@@ -23,3 +25,5 @@ DEFINE VAR types.pow P
 DEFINE VAR types.semi APP VAR types.type APP VAR types.forall COMP APP CB B COMP CB COMP APP CB I CB
 DEFINE VAR types.type V
 DEFINE VAR types.unit APP VAR types.type JOIN APP K I VAR types.semi
+DEFINE VAR util.join J
+DEFINE VAR util.pair COMP C APP C I
