@@ -708,9 +708,9 @@ function(log,   test,   pattern,   symbols)
     };
 
     var decompileStack = pattern.match(
-      //stack(COMP(x, y), tail), function (match) {
-      //  return decompileStack(stack(B, match.x, match.y, match.tail));
-      //},
+      stack(COMP(x, y), tail), function (match) {
+        return decompileStack(stack(B, match.x, match.y, match.tail));
+      },
       stack(HOLE, tail), function (match) {
         return fromStack(stack(HOLE, decompileTail(match.tail)));
       },
@@ -720,35 +720,79 @@ function(log,   test,   pattern,   symbols)
       stack(BOT, tail), function () {
         return BOT;
       },
+      // TODO fix ensure() to simplify cases
+      //stack(K, tail), ensure(x, y, function (match) {
+      //  return match.x;
+      //}),
+      //stack(C, I, tail), ensure(x, y, function (match) {
+      //  return app(match.y, match.x);
+      //}),
+      //stack(B, tail), ensure(x, y, z, function (match) {
+      //  return app(match.x, app(match.y, match.z));
+      //}),
+      //stack(C, tail), ensure(x, y, z, function (match) {
+      //  return app(match.x, match.z, match.y);
+      //}),
       stack(I, []), function (match) {
-        return I;
+        var x = fresh();
+        return LAMBDA(x, x);
       },
       stack(I, x, tail), function (match) {
-        return decompileTail(toStack(match.x, match.tail));
+        return decompileStack(toStack(match.x, match.tail));
       },
-      stack(K, tail), ensure(x, y, function (match) {
-        return match.x;
-      }),
-      stack(C, I, tail), ensure(x, y, function (match) {
-        return app(match.y, match.x);
-      }),
-      stack(B, tail), ensure(x, y, z, function (match) {
-        return app(match.x, app(match.y, match.z));
-      }),
-      stack(C, tail), ensure(x, y, z, function (match) {
-        return app(match.x, match.z, match.y);
-      }),
-      // TODO get W working
-      //stack(W, tail), ensure(x, y, function (match) {
-      //  var x = match.x;
-      //  var y = match.y;
-      //  if (_.isArray(y) && y[0] === 'VAR') {
-      //    return LAMBDA(x, LAMBDA(y, app(x, y, y)));
-      //  } else {
-      //    var z = fresh();
-      //    return LETREC(z, y, app(x, z, z));
-      //  }
-      //}),
+      stack(K, []), function (match) {
+        var x = fresh();
+        var y = fresh();
+        return LAMBDA(x, LAMBDA(y, x));
+      },
+      stack(K, x, []), function (match) {
+        var y = fresh();
+        var tx = decompileStack(toStack(match.x));
+        return LAMBDA(y, tx);
+      },
+      stack(K, x, y, tail), function (match) {
+        return decompileStack(toStack(match.x, tail));
+      },
+      stack(B, []), function () {
+        var x = fresh();
+        var y = fresh();
+        var z = fresh();
+        return LAMBDA(x, LAMBDA(y, LAMBDA(z, app(x, app(y, z)))));
+      },
+      stack(B, x, []), function (match) {
+        var y = fresh();
+        var z = fresh();
+        var xyz = decompileStack(toStack(match.x, app(y, z), []));
+        return LAMBDA(y, LAMBDA(z, xyz));
+      },
+      stack(B, x, y, []), function (match) {
+        var z = fresh();
+        var xyz = decompileStack(toStack(match.x, app(match.y, z), []));
+        return LAMBDA(z, xyz);
+      },
+      stack(B, x, y, z, tail), function (match) {
+        return decompileStack(toStack(match.x, app(match.y, match.z), match.tail));
+      },
+      stack(C, []), function () {
+        var x = fresh();
+        var y = fresh();
+        var z = fresh();
+        return LAMBDA(x, LAMBDA(y, LAMBDA(z, app(x, z, y))));
+      },
+      stack(C, x, []), function (match) {
+        var y = fresh();
+        var z = fresh();
+        var xzy = decompileStack(toStack(match.x, z, y, []));
+        return LAMBDA(y, LAMBDA(z, xzy));
+      },
+      stack(C, x, y, []), function (match) {
+        var z = fresh();
+        var xzy = decompileStack(toStack(match.x, z, match.y, []));
+        return LAMBDA(z, xzy);
+      },
+      stack(C, x, y, z, tail), function (match) {
+        return decompileStack(toStack(match.x, match.z, match.y, match.tail));
+      },
       stack(W, []), function () {
         var x = fresh();
         var y = fresh();
@@ -1156,10 +1200,10 @@ function(log,   test,   pattern,   symbols)
     var z = VAR('z');
     var xy = app(x, y);  // just something that is not a variable
     var examples = [
+      [COMP(x, y), LAMBDA(a, app(x, app(y, a)))],
       [TOP, TOP],
       [BOT, BOT],
-      [I, I],
-      [COMP(x, y), COMP(x, y)],
+      [I, LAMBDA(a, a)],
       [K, LAMBDA(a, LAMBDA(b, a))],
       [app(K, x), LAMBDA(a, x)],
       [app(C, I), LAMBDA(a, LAMBDA(b, app(b, a)))],
@@ -1210,6 +1254,8 @@ function(log,   test,   pattern,   symbols)
     var k = LAMBDA(a, LAMBDA(b, a));
     var examples = [
       [app(B, x, y), LAMBDA(a, app(x, app(y, a)))],
+      [app(C, x, y, z), app(x, z, y)],
+      [comp(C, app(C, I)), LAMBDA(a, LAMBDA(b, LAMBDA(c, app(c, a, b))))],
       [app(W, x, y), app(x, y, y)],
       [app(W, x, y, K), app(x, y, y, k)],
       [app(S, x, y, z), app(x, z, app(y, z))],
