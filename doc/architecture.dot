@@ -34,7 +34,7 @@ digraph G {
         rank = "same";
         Cartographer;
         Analyst;
-    EditorServer [label="Editor\nServer"];
+        EditorServer [label="Editor\nServer"];
     }
 
     subgraph cluster_survey {

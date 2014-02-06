@@ -3,6 +3,7 @@
 ## Dataflow Architecture
 
 ![Architecture](architecture.png)
+![Editor Client](editor.png)
 
 ### State
 
