@@ -80,8 +80,7 @@ public:
         std::string maybe_name;
         T body;
 
-        bool is_definition () const { return not maybe_name.empty(); }
-        bool is_assertion () const { return maybe_name.empty(); }
+        bool has_name () const { return not maybe_name.empty(); }
     };
 
     class Linker

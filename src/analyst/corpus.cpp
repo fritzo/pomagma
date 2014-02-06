@@ -450,7 +450,7 @@ Corpus::Linker Corpus::linker (
     Parser parser(m_signature, m_dag, error_log);
     Linker linker(m_dag, error_log);
     for (const auto & line : lines) {
-        if (line.is_definition()) {
+        if (line.has_name()) {
             const std::string & name = line.maybe_name;
             const Term * term = parser.parse(line.body);
             linker.define(name, term);
