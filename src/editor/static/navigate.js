@@ -1,5 +1,5 @@
-define(['log', 'test', 'keycode', 'compiler'],
-function(log,   test,   keycode,   compiler){
+define(['log', 'test', 'keycode'],
+function(log,   test,   keycode){
 
   //--------------------------------------------------------------------------
   // Events
@@ -110,8 +110,7 @@ function(log,   test,   keycode,   compiler){
     var $input = undefined;
     var matches = [];
     var $matches = undefined;
-
-    var VAR = compiler.symbols.VAR;
+    var render = _.identity;
 
     var update = function () {
       var re = new RegExp($input.val());
@@ -120,9 +119,10 @@ function(log,   test,   keycode,   compiler){
       strings.forEach(function (string) {
         if (re.test(string)) {
           matches.push(string);
-          $matches.append($('<pre>').html(compiler.render(VAR(string))));
+          $matches.append($('<pre>').html(render(string)));
         }
       });
+      $matches.children().first().addClass('selected');
       log('DEBUG ' + matches);
     };
 
@@ -137,8 +137,9 @@ function(log,   test,   keycode,   compiler){
       }
     };
 
-    return function (rankedStrings, acceptMatch, cancel) {
+    return function (rankedStrings, acceptMatch, cancel, renderString) {
       strings = rankedStrings;
+      render = renderString;
       acceptCallback = acceptMatch;
       cancelCallback = cancel;
 

@@ -369,7 +369,10 @@ function(log,   test,   symbols,   compiler,   ast,   corpus,   navigate)
         takeBearings();
       };
       var cancel = takeBearings;
-      navigate.search(names, accept, cancel);
+      var render = function (name) {
+        return compiler.render(VAR(name));
+      };
+      navigate.search(names, accept, cancel, render);
     };
 
     var chooseDefine = function () {

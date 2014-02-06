@@ -75,7 +75,8 @@ div#navigate {
 div#navigate table,
 div#navigate tr,
 div#navigate th,
-div#navigate td {
+div#navigate td,
+div#navigate pre {
     margin: 0;
 }
 div#navigate th {
@@ -97,6 +98,11 @@ div#navigate td pre {
 div#navigate table {
     font-family: Signika,Consolas,'Liberation Mono','Courier New',Courier,monospace;
     font-size: 12pt;
+}
+div#navigate pre.selected span:after {
+    content: '  \2B05';
+    position: absolute;
+    color: screen(@help, @overlay);
 }
 
 input.valid {

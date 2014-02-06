@@ -306,6 +306,7 @@ def write(port=editor.PORT, address=analyst.ADDRESS):
         server = editor.serve(port, address, reloader=False)
         pomagma.util.check_call(
             'chromium-browser',
+            '--incognito',
             '--temp-profile',
             '--app=http://localhost:{}'.format(port))
     except KeyboardInterrupt:
