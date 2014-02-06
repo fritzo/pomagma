@@ -63,7 +63,7 @@ function(log,   test,   keycode){
 
     for (var name in cases) {
       icons[name] = $('<th>').html(
-        '<span>' + name.replace(/\+/g, '</span>+<span>') + '</span>'
+        '<span>' + name.replace(/\b\+\b/g, '</span>+<span>') + '</span>'
       );
     };
   })();
@@ -103,7 +103,7 @@ function(log,   test,   keycode){
   };
 
   //--------------------------------------------------------------------------
-  // Global Variables
+  // Selection via search
 
   var search = (function(){
     var strings = [];

@@ -386,9 +386,6 @@ function(log,   test,   symbols,   compiler,   ast,   corpus,   navigate)
       navigate.choose(isValid, accept, cancel);
     };
 
-    var insertAssertAction = function () {
-    };
-
     var generic = [
       ['?', toggleHelp, 'toggle help'],
       ['enter', action(commitLine), 'commit line'],
