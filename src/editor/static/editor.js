@@ -1,5 +1,5 @@
-define(['log', 'test', 'symbols', 'compiler', 'ast', 'corpus', 'navigate'],
-function(log,   test,   symbols,   compiler,   ast,   corpus,   navigate)
+define(['log', 'test', 'compiler', 'ast', 'corpus', 'navigate'],
+function(log,   test,   compiler,   ast,   corpus,   navigate)
 {
   var ids = [];
   var asts = {};  // id -> ast
@@ -376,14 +376,11 @@ function(log,   test,   symbols,   compiler,   ast,   corpus,   navigate)
     };
 
     var chooseDefine = function () {
-      var isValid = function (name) {
-        return symbols.isGlobal(name) && corpus.findDefinition(name) === null;
-      };
       var accept = function (name) {
         insertDefine(name, takeBearings);
       };
       var cancel = takeBearings;
-      navigate.choose(isValid, accept, cancel);
+      navigate.choose(corpus.canDefine, accept, cancel);
     };
 
     var generic = [

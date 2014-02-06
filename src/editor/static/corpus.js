@@ -53,13 +53,18 @@ function(log,   test,   symbols)
   var state = (function(){
     var state = {};
 
-    // FIXME these maps fail with names like 'constructor';
-    //   maybe fix by requiring a '.' in all names in corpus.
+    // These maps fail with names like 'constructor',
+    // so we require a '.' in all names in corpus.
     var lines = {};  // id -> line
     var definitions = {};  // name -> id
     var occurrences = {};  // name -> (set id)
 
+    state.canDefine = function (name) {
+      return symbols.isGlobal(name) && definitions[name] === undefined;
+    };
+
     var insertDefinition = function (name, id) {
+      assert(symbols.isGlobal(name));
       assert(definitions[name] === undefined);
       assert(occurrences[name] === undefined);
       definitions[name] = id;
@@ -373,6 +378,7 @@ function(log,   test,   symbols)
     findAllLines: state.findAllLines,
     findAllNames: state.findAllNames,
     findDefinition: state.findDefinition,
+    canDefine: state.canDefine,
     findOccurrences: state.findOccurrences,
     hasOccurrences: state.hasOccurrences,
     insert: state.insert,
