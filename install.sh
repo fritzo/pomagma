@@ -16,6 +16,7 @@ sudo apt-get install -y \
   rubygems \
   libzmq-dev \
   firefox \
+  #jsdoc-toolkit \
   #phantomjs \
   #python-zmq \
   #
@@ -27,7 +28,7 @@ sudo gem install foreman
 # http://stackoverflow.com/questions/18627250
 # http://stackoverflow.com/questions/18337767
 workon pomagma || mkvirtualenv --system-site-packages pomagma
-workon pomagma &&\
+deactivate && workon pomagma &&\
 pip install -r requirements.txt &&\
 pip install -e . &&\
 make

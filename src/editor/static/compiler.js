@@ -226,7 +226,7 @@ function(log,   test,   pattern,   symbols)
   //--------------------------------------------------------------------------
   // Conversion : appTree <-> code
 
-  var definitions = {}
+  var definitions = {};
   definitions.CI = app(C, I);
   definitions.CB = app(C, B);
   definitions.U = comp(Y, comp(app(S, B), app(J, app(C, B, I)), app(C, B)));

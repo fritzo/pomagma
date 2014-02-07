@@ -1,10 +1,10 @@
 define(['log', 'test'],
-function(log, test)
+function(log,   test)
 {
   /**
    * @constructor
    * @param {string}
-   * @param {(function(*): boolean) | undefined}
+   * @param {(function(?): boolean)=}
    */
   var Variable = function Variable (name, constraint) {
     this.name = name;
@@ -175,6 +175,7 @@ function(log, test)
     assert.forward(t, examples);
   });
 
+  /** @exports pattern */
   return {
     variable: variable,
     unify: function (patt, struct) {
