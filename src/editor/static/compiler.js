@@ -4,9 +4,13 @@
  * appTree is the lingua franca.
  */
 
-define(['log', 'test', 'pattern', 'symbols'],
-function(log,   test,   pattern,   symbols)
-{
+define(function(require){
+
+  var log = require('log');
+  var test = require('test');
+  var pattern = require('pattern');
+  var symbols = require('symbols');
+
   //--------------------------------------------------------------------------
   // Parse
 

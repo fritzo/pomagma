@@ -1,6 +1,7 @@
-define(['test'],
-function(test)
-{
+define(function(require){
+
+  var test = require('test');
+
   var symbols = {};
 
   var matcher = function (re) {

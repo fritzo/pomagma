@@ -1,6 +1,11 @@
-require(['log', 'test', 'corpus', 'analyst', 'editor'],
-function( log,   test,   corpus,   analyst,   editor)
-{
+define(function(require){
+
+  var log = require('log');
+  var test = require('test');
+  var corpus = require('corpus');
+  var analyst = require('analyst');
+  var editor = require('editor');
+
   var ready = function (cb) {
     $(function(){
       corpus.ready(cb);

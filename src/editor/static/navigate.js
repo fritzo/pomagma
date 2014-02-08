@@ -1,5 +1,8 @@
-define(['log', 'test', 'keycode'],
-function(log,   test,   keycode){
+define(function(require){
+
+  var log = require('log');
+  var test = require('test');
+  var keycode = require('keycode');
 
   //--------------------------------------------------------------------------
   // Events

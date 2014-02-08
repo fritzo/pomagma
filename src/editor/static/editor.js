@@ -1,6 +1,12 @@
-define(['log', 'test', 'compiler', 'ast', 'corpus', 'navigate'],
-function(log,   test,   compiler,   ast,   corpus,   navigate)
-{
+define(function(require){
+
+  var log = require('log');
+  var test = require('test');
+  var compiler = require('compiler');
+  var ast = require('ast');
+  var corpus = require('corpus');
+  var navigate = require('navigate');
+
   var ids = [];
   var asts = {};  // id -> ast
   var validities = {}; // id -> {'is_top': _, 'is_bot': _, 'pending': _}

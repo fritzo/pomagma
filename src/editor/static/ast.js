@@ -10,9 +10,12 @@
  *   };
  */
 
-define(['log', 'test', 'compiler'],
-function(log,   test,   compiler)
-{
+define(function(require){
+
+  var log = require('log');
+  var test = require('test');
+  var compiler = require('compiler');
+
   var ast = {};
 
   var loadSymbol = {};

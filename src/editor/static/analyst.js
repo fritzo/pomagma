@@ -1,6 +1,7 @@
-define(['log'],
-function(log)
-{
+define(function(require){
+
+  var log = require('log');
+
   var analyst = {};
 
   var worker = new Worker('static/analystworker.js');

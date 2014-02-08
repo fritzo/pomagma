@@ -2,9 +2,10 @@
  * Unit testing.
  */
 
-define(['log'],
-function(log)
-{
+define(function(require){
+
+  var log = require('log');
+
   var test = function (title, callback) {
     callback = callback || function(){ $.globalEval(title); };
     callback.title = title;

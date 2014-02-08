@@ -1,6 +1,8 @@
-define(['log', 'test'],
-function(log,   test)
-{
+define(function(require){
+
+  var log = require('log');
+  var test = require('test');
+
   /**
    * @constructor
    * @param {string}

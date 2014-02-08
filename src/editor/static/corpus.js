@@ -4,9 +4,12 @@
  * FIXME this is all concurrency-unsafe; client assumes it is the only writer.
  */
 
-define(['log', 'test', 'symbols'],
-function(log,   test,   symbols)
-{
+define(function(require){
+
+  var log = require('log');
+  var test = require('test');
+  var symbols = require('symbols');
+
   var getFreeVariables = function (code) {
     var free = {};
     var prevToken = null;
