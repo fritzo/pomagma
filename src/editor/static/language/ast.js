@@ -1,5 +1,5 @@
 /**
- * abstract syntax trees with crosslinks for constant time traversal
+ * Mutable abstract syntax trees with crosslinks for constant time traversal.
  *
  * example ast node:
  *   {
@@ -17,7 +17,7 @@ define(function(require){
   var assert = require('assert');
   var log = require('log');
   var test = require('test');
-  var compiler = require('compiler');
+  var compiler = require('language/compiler');
 
   var ast = {};
 

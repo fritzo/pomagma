@@ -9,9 +9,8 @@ define(function(require){
   var assert = require('assert');
   var log = require('log');
   var test = require('test');
-  var pattern = require('pattern');
-  var symbols = require('symbols');
   var TODO = require('TODO');
+  var pattern = require('language/pattern');
 
   //--------------------------------------------------------------------------
   // Parse
@@ -172,7 +171,6 @@ define(function(require){
   var ASSERT = Symbol('ASSERT', 1);
   var VAR = Symbol('VAR', 1, function(tokens){
     var name = tokens.pop();
-    //assert(symbols.isGlobal(name), 'bad global: ' + name);
     return ['VAR', name];
   });
   var APP = Symbol('APP', 2);

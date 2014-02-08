@@ -5,27 +5,21 @@
 <title>Pomagma Editor</title>
 <link rel="icon" type="image/x-icon" href="static/favicon.ico" />
 <link rel="stylesheet/less" type="text/css" href="static/main.less" />
-<script>'use strict';</script>
-
-<!-- Apache2 -->
+<!-- license: Apache2 -->
 <script src='static/lib/less.js'></script>
-<!-- MIT
-<script src='static/lib/underscore.js'></script>
--->
-<!-- MIT | GPL2
-<script src='static/lib/jquery.js'></script>
--->
-<!-- new BSD | MIT -->
+<!-- license: new BSD | MIT -->
 <script data-main='static/main.js' src='static/lib/require.js'></script>
 <script>
 require.config({
   shim: {
+    // license: MIT | GPL2
     'lib/jquery': {
       exports: '$'
     },
+    // license: MIT
     'lib/underscore': {
       exports: '_'
-    },
+    }
     //'lib/backbone': {
     //  deps: ['lib/underscore', 'lib/jquery'],
     //  exports: "Backbone"
@@ -33,12 +27,9 @@ require.config({
   }
 });
 </script>
-
 </head>
 <body>
-<div class=code id=code>
-</div>
-<div class=code id=navigate>
-</div>
+<div class=code id=code></div>
+<div class=code id=navigate></div>
 </body>
 </html>

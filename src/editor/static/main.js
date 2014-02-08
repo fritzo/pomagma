@@ -1,4 +1,5 @@
 define(function(require){
+  'user strict';
 
   var $ = require('lib/jquery');
   var log = require('log');
