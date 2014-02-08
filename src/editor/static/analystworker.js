@@ -1,7 +1,8 @@
 importScripts('lib/underscore.js');
 importScripts('lib/require.js');
-importScripts('safety.js');
+require(['assert'], function(assert){
 
-onmessage = function (message) {
-  postMessage(message.data);
-};
+  onmessage = function (message) {
+    postMessage(message.data);
+  };
+});

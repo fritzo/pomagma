@@ -12,6 +12,7 @@ define(function(require){
   var test = require('test');
   var pattern = require('pattern');
   var symbols = require('symbols');
+  var TODO = require('TODO');
 
   //--------------------------------------------------------------------------
   // Parse
