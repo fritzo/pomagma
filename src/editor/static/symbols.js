@@ -1,5 +1,7 @@
 define(function(require){
+  'use strict';
 
+  var assert = require('assert');
   var test = require('test');
 
   var symbols = {};
