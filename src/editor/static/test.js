@@ -10,7 +10,6 @@ define(function(require){
   var log = require('log');
 
   var test = function (title, callback) {
-    callback = callback || function(){ $.globalEval(title); };
     callback.title = title;
     syncTests.push(callback);
   };

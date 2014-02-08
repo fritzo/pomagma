@@ -1,5 +1,6 @@
 define(function(require){
 
+  var $ = require('lib/jquery');
   var log = require('log');
   var test = require('test');
   var corpus = require('corpus');

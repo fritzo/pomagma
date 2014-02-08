@@ -7,6 +7,7 @@
 define(function(require){
   'use strict';
 
+  var ajax = require('lib/jquery').ajax;
   var _ = require('lib/underscore');
   var assert = require('assert');
   var log = require('log');
@@ -171,7 +172,7 @@ define(function(require){
     };
 
     var init = function () {
-      $.ajax({
+      ajax({
         type: 'GET',
         url: 'corpus/lines',
         cache: false
@@ -186,7 +187,7 @@ define(function(require){
       // FIXME getting an id from the server like this adds latency
       //   and prevents offline creation of lines
       assert(!_.has(line, 'id'), 'unexpected .id field in inserted line');
-      $.ajax({
+      ajax({
         type: 'POST',
         url: 'corpus/line',
         data: JSON.stringify(line),
@@ -332,7 +333,7 @@ define(function(require){
         switch (change.type) {
           case 'update':
             log('sending ' + JSON.stringify(change.line));
-            $.ajax({
+            ajax({
               type: 'PUT',
               url: 'corpus/line/' + id,
               data: JSON.stringify(change.line),
@@ -347,7 +348,7 @@ define(function(require){
             return;
 
           case 'remove':
-            $.ajax({
+            ajax({
               type: 'DELETE',
               url: 'corpus/line/' + id,
             }).fail(function(jqXHR, textStatus){
