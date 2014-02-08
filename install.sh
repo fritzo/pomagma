@@ -15,13 +15,16 @@ sudo apt-get install -y \
   p7zip-full \
   rubygems \
   libzmq-dev \
-  firefox \
+  nodejs \
+  #firefox \
   #jsdoc-toolkit \
   #phantomjs \
   #python-zmq \
   #
 
 sudo gem install foreman
+
+sudo npm install -g phantomjs
 
 # FIXME mkvirtualenv never automatically works; possible solutions:
 # http://stackoverflow.com/questions/13111881

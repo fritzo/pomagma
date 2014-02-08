@@ -12,6 +12,8 @@ analyst = None
 browser = None
 failure_count = 0
 
+BROWSER = 'phantomjs'
+
 
 def count_failures(fun):
     @functools.wraps(fun)
@@ -25,25 +27,35 @@ def count_failures(fun):
 
 def setup_module():
     global analyst
-    analyst = pomagma.analyst.test.serve()
-    print '---- started analyst with pid {} ----'.format(analyst.pid)
-
     global editor
-    editor = pomagma.editor.serve(
-        port=PORT,
-        address=pomagma.analyst.test.ADDRESS,
-        reloader=False)
-    print '---- started editor with pid {} ----'.format(editor.pid)
-
     global browser
-    browser = splinter.Browser()
-    #browser = splinter.Browser('phantomjs')
+
+    try:
+        analyst = pomagma.analyst.test.serve()
+        print '---- started analyst with pid {} ----'.format(analyst.pid)
+
+        editor = pomagma.editor.serve(
+            port=PORT,
+            address=pomagma.analyst.test.ADDRESS,
+            reloader=False)
+        print '---- started editor with pid {} ----'.format(editor.pid)
+
+        browser = splinter.Browser(BROWSER)
+
+    except:
+        if analyst:
+            analyst.stop()
+        if editor:
+            editor.terminate()
+        if browser:
+            browser.quit()
+        raise
 
 
 def teardown_module():
     editor.terminate()
     analyst.stop()
-    if failure_count == 0:
+    if BROWSER == 'phantomjs' or failure_count == 0:
         browser.quit()
 
 
