@@ -34,7 +34,7 @@ digraph G {
         rank = "same";
         Cartographer;
         Analyst;
-        EditorServer [label="Editor\nServer"];
+        Editor;
     }
 
     subgraph cluster_survey {
@@ -46,9 +46,17 @@ digraph G {
         labelloc = "b";
     }
 
-    subgraph cluster_edit {
-        EditorClient [label="Editor\nClient"];
-        Writer [style=filled, fillcolor=pink];
+    subgraph cluster_write {
+        Writer;
+        Muse1 [label="Muse" style=filled, fillcolor=pink];
+
+        //subgraph cluster_muses {
+        //    Muse2 [label="Muse"];
+        //    color = "#666666";
+        //    fontcolor = "#666666";
+        //    label = "many";
+        //    labelloc = "b";
+        //}
 
         color = "#666666";
         fontcolor = "#666666";
@@ -79,19 +87,21 @@ digraph G {
     Theorist -> Cartographer;
     Theorist -> TheoryReviewer;
 
-    // Workflow: Edit
+    // Workflow: Write
     edge [dir=forward arrowhead=normal]; // pull
     Atlas -> Analyst;
     Languages -> Analyst;
-    Corpus -> EditorServer;
-    Analyst -> EditorServer;
-    EditorServer -> EditorClient;
-    EditorClient -> Writer;
+    Corpus -> Editor;
+    Analyst -> Editor;
+    Editor -> Writer;
+    Writer -> Muse1;
+    Writer -> Muse2;
     edge [dir=both arrowtail=inv arrowhead=empty]; // push
-    EditorServer -> Corpus;
-    EditorServer -> Analyst;
-    EditorClient -> EditorServer;
-    Writer -> EditorClient;
+    Editor -> Corpus;
+    Editor -> Analyst;
+    Writer -> Editor;
+    Muse1 -> Writer;
+    Muse2 -> Writer;
 
     // Workflow: Fit Language
     edge [dir=forward arrowhead=normal]; // pull
