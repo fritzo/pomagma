@@ -9,12 +9,30 @@
 
 <!-- Apache2 -->
 <script src='static/lib/less.js'></script>
-<!-- MIT -->
+<!-- MIT
 <script src='static/lib/underscore.js'></script>
-<!-- MIT | GPL2 -->
+-->
+<!-- MIT | GPL2
+-->
 <script src='static/lib/jquery.js'></script>
 <!-- new BSD | MIT -->
 <script data-main='static/main.js' src='static/lib/require.js'></script>
+<script>
+require.config({
+  shim: {
+    'lib/jquery': {
+      exports: 'jquery'
+    },
+    'lib/underscore': {
+      exports: '_'
+    },
+    //'lib/backbone': {
+    //  deps: ['lib/underscore', 'lib/jquery'],
+    //  exports: "Backbone"
+    //}
+  }
+});
+</script>
 
 </head>
 <body>

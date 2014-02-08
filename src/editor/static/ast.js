@@ -13,6 +13,7 @@
 define(function(require){
   'use strict';
 
+  var _ = require('lib/underscore');
   var assert = require('assert');
   var log = require('log');
   var test = require('test');

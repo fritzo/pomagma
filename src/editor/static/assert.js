@@ -1,6 +1,8 @@
 define(function(require){
   'use strict';
 
+  var _ = require('lib/underscore');
+
   /** @constructor */
   var AssertException = function (message) {
     this.message = message || '(unspecified)';

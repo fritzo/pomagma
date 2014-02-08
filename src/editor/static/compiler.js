@@ -1,12 +1,11 @@
 /**
  * Syntactic Transforms.
- *
- * appTree is the lingua franca.
  */
 
 define(function(require){
   'use strict';
 
+  var _ = require('lib/underscore');
   var assert = require('assert');
   var log = require('log');
   var test = require('test');
@@ -1470,6 +1469,7 @@ define(function(require){
     );
   })();
 
+  /** @exports compiler */
   return {
     symbols: lambdaSymbols,
     load: function (string) {
