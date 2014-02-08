@@ -16,7 +16,7 @@ sudo apt-get install -y \
   rubygems \
   libzmq-dev \
   nodejs \
-  #firefox \
+  firefox \
   #jsdoc-toolkit \
   #phantomjs \
   #python-zmq \

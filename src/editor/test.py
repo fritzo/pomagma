@@ -1,3 +1,4 @@
+import os
 import functools
 import time
 import splinter
@@ -7,12 +8,11 @@ import pomagma.analyst.test
 TEST_COUNT = 28  # this must be updated every time tests are added
 
 PORT = pomagma.editor.app.PORT + 1
+BROWSER = os.environ.get('BROWSER', 'phantomjs')  # firefox | phantomjs
 editor = None
 analyst = None
 browser = None
 failure_count = 0
-
-BROWSER = 'phantomjs'
 
 
 def count_failures(fun):
@@ -41,6 +41,7 @@ def setup_module():
         print '---- started editor with pid {} ----'.format(editor.pid)
 
         browser = splinter.Browser(BROWSER)
+        print '---- started {} browser ----'.format(browser)
 
     except:
         if analyst:

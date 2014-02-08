@@ -1,6 +1,5 @@
 define(function(require){
 
-  var log = require('log');
   var test = require('test');
 
   /**
