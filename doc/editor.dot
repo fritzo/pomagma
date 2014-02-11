@@ -16,7 +16,6 @@ digraph G {
         symbols [label="symbols.js"];
         keycode [label="keycode.js"];
 
-        compiler -> symbols;
         compiler -> pattern;
 
         ast -> compiler;
