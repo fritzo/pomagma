@@ -5,7 +5,6 @@ define(function(require){
   var log = require('log');
   var test = require('test');
   var corpus = require('corpus');
-  var analyst = require('analyst');
   var editor = require('editor');
 
   var ready = function (cb) {
