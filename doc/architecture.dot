@@ -95,13 +95,13 @@ digraph G {
     Analyst -> Editor;
     Editor -> Writer;
     Writer -> Muse1;
-    Writer -> Muse2;
+    //Writer -> Muse2;
     edge [dir=both arrowtail=inv arrowhead=empty]; // push
     Editor -> Corpus;
     Editor -> Analyst;
     Writer -> Editor;
     Muse1 -> Writer;
-    Muse2 -> Writer;
+    //Muse2 -> Writer;
 
     // Workflow: Fit Language
     edge [dir=forward arrowhead=normal]; // pull
