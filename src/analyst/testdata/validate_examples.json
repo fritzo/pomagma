@@ -1,0 +1,37 @@
+[
+    [
+        {
+            "is_bot": true,
+            "is_top": false
+        },
+        "BOT"
+    ],
+    [
+        {
+            "is_bot": false,
+            "is_top": true
+        },
+        "TOP"
+    ],
+    [
+        {
+            "is_bot": false,
+            "is_top": false
+        },
+        "I"
+    ],
+    [
+        {
+            "is_bot": false,
+            "is_top": false
+        },
+        "APP I I"
+    ],
+    [
+        {
+            "is_bot": false,
+            "is_top": false
+        },
+        "COMP I I"
+    ]
+]

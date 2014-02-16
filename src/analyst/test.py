@@ -4,6 +4,8 @@ import pomagma.util
 import pomagma.surveyor
 import pomagma.cartographer
 import pomagma.analyst
+import simplejson as json
+
 
 THEORY = os.environ.get('THEORY', 'skj')
 DATA = os.path.join(pomagma.util.DATA, 'test', 'debug', 'atlas', THEORY)
@@ -15,9 +17,22 @@ OPTIONS = {
 }
 
 
+def json_load(filename):
+    with open(filename) as f:
+        return json.load(f)
+
+
+SIMPLIFY_EXAMPLES = json_load('testdata/simplify_examples.json')
+VALIDATE_EXAMPLES = json_load('testdata/validate_examples.json')
+CORPUS = json_load('testdata/corpus.json')
+
+
 def setup_module():
     if not os.path.exists(WORLD):
         print 'Building test fixture', WORLD
+        dirname = os.path.dirname(WORLD)
+        if not os.path.exists(dirname):
+            os.makedirs(dirname)
         min_size = pomagma.util.MIN_SIZES[THEORY]
         pomagma.surveyor.init(THEORY, WORLD, min_size)
         with pomagma.cartographer.load(THEORY, WORLD) as db:
@@ -55,14 +70,6 @@ def test_inference():
     assert fail_count == 0, 'analyst failed with {} errors'.format(fail_count)
 
 
-DEFINE = lambda name, code: {'name': name, 'code': code}
-ASSERT = lambda code: {'name': None, 'code': code}
-
-TOP = {'is_top': True, 'is_bot': False}
-BOT = {'is_top': False, 'is_bot': True}
-OK = {'is_top': False, 'is_bot': False}
-
-
 def assert_examples(examples, expected, actual, cmp=cmp):
     assert len(expected) == len(examples)
     assert len(actual) == len(examples)
@@ -87,16 +94,6 @@ def cmp_validity(x, y):
             cmp_trool(x['is_bot'], y['is_bot']))
 
 
-SIMPLIFY_EXAMPLES = [
-    ('TOP', 'TOP'),
-    ('BOT', 'BOT'),
-    ('I', 'I'),
-    ('APP I I', 'I'),
-    ('COMP I I', 'I'),
-    ('JOIN BOT TOP', 'TOP'),
-]
-
-
 transpose = lambda lists: map(list, izip(* lists))
 
 
@@ -107,63 +104,11 @@ def test_simplify():
     assert_examples(codes, expected, actual)
 
 
-VALIDATE_EXAMPLES = [
-    (BOT, 'BOT'),
-    (TOP, 'TOP'),
-    (OK, 'I'),
-    (OK, 'APP I I'),
-    (OK, 'COMP I I'),
-]
-
-
 def test_validate():
     expected, codes = transpose(VALIDATE_EXAMPLES)
     with load() as db:
         actual = db.validate(codes)
     assert_examples(codes, expected, actual, cmp_validity)
-
-
-CORPUS = [
-    (TOP, ASSERT('TOP')),
-    (BOT, ASSERT('BOT')),
-    (OK, ASSERT('I')),
-    (OK, DEFINE('true', 'K')),
-    (OK, DEFINE('false', 'APP K I')),
-    # \x,f. f x
-    # = \x. C I x
-    # = C I
-    (OK, DEFINE('box', 'APP C I')),
-    (OK, ASSERT('APP I APP VAR box I')),
-    # \x,y,f. f x y
-    # = \x,y. C (C I x) y
-    # = \x. C (C I x)
-    # = C * (C I)
-    (OK, DEFINE('push', 'COMP C VAR box')),
-    # recursion
-    (OK, DEFINE('push_unit', 'APP C APP VAR box I')),
-    (OK, ASSERT('APP VAR push_unit BOT')),
-    (OK, ASSERT('APP VAR push_unit TOP')),
-    (OK, DEFINE('uuu', 'APP VAR push_unit VAR uuu')),
-    # mutual recursion
-    (OK, DEFINE('push_true', 'APP C APP VAR box VAR true')),
-    (OK, DEFINE('push_false', 'APP C APP VAR box VAR false')),
-    (OK, DEFINE('tftftf', 'APP VAR push_true VAR ftftft')),
-    (OK, DEFINE('ftftft', 'APP VAR push_false VAR tftftf')),
-    # join atoms
-    (OK, DEFINE('join', 'JOIN VAR true VAR false')),
-    (OK, DEFINE('fix', 'Y')),
-    (OK, DEFINE('idem', 'U')),
-    (OK, DEFINE('close', 'V')),
-    (OK, DEFINE('close.sub', 'P')),
-    (OK, DEFINE('close.forall', 'A')),
-    # axioms
-    (OK, ASSERT('EQUAL I APP APP S K K')),
-    (OK, ASSERT('EQUAL B APP APP S APP K S K')),
-    (OK, ASSERT('EQUAL CB APP C B')),
-    (OK, ASSERT('EQUAL C APP APP S APP APP B B S APP K K')),
-    (OK, ASSERT('EQUAL W APP APP C S I')),
-    (OK, ASSERT('EQUAL Y APP APP APP S B CB APP W I')),
-]
 
 
 def validate_corpus(lines, max_attempts=100):

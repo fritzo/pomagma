@@ -1,0 +1,282 @@
+[
+    [
+        {
+            "is_bot": false,
+            "is_top": true
+        },
+        {
+            "code": "TOP",
+            "name": null
+        }
+    ],
+    [
+        {
+            "is_bot": true,
+            "is_top": false
+        },
+        {
+            "code": "BOT",
+            "name": null
+        }
+    ],
+    [
+        {
+            "is_bot": false,
+            "is_top": false
+        },
+        {
+            "code": "I",
+            "name": null
+        }
+    ],
+    [
+        {
+            "is_bot": false,
+            "is_top": false
+        },
+        {
+            "code": "K",
+            "name": "true"
+        }
+    ],
+    [
+        {
+            "is_bot": false,
+            "is_top": false
+        },
+        {
+            "code": "APP K I",
+            "name": "false"
+        }
+    ],
+    [
+        {
+            "is_bot": false,
+            "is_top": false
+        },
+        {
+            "code": "APP C I",
+            "name": "box"
+        }
+    ],
+    [
+        {
+            "is_bot": false,
+            "is_top": false
+        },
+        {
+            "code": "APP I APP VAR box I",
+            "name": null
+        }
+    ],
+    [
+        {
+            "is_bot": false,
+            "is_top": false
+        },
+        {
+            "code": "COMP C VAR box",
+            "name": "push"
+        }
+    ],
+    [
+        {
+            "is_bot": false,
+            "is_top": false
+        },
+        {
+            "code": "APP C APP VAR box I",
+            "name": "push_unit"
+        }
+    ],
+    [
+        {
+            "is_bot": false,
+            "is_top": false
+        },
+        {
+            "code": "APP VAR push_unit BOT",
+            "name": null
+        }
+    ],
+    [
+        {
+            "is_bot": false,
+            "is_top": false
+        },
+        {
+            "code": "APP VAR push_unit TOP",
+            "name": null
+        }
+    ],
+    [
+        {
+            "is_bot": false,
+            "is_top": false
+        },
+        {
+            "code": "APP VAR push_unit VAR uuu",
+            "name": "uuu"
+        }
+    ],
+    [
+        {
+            "is_bot": false,
+            "is_top": false
+        },
+        {
+            "code": "APP C APP VAR box VAR true",
+            "name": "push_true"
+        }
+    ],
+    [
+        {
+            "is_bot": false,
+            "is_top": false
+        },
+        {
+            "code": "APP C APP VAR box VAR false",
+            "name": "push_false"
+        }
+    ],
+    [
+        {
+            "is_bot": false,
+            "is_top": false
+        },
+        {
+            "code": "APP VAR push_true VAR ftftft",
+            "name": "tftftf"
+        }
+    ],
+    [
+        {
+            "is_bot": false,
+            "is_top": false
+        },
+        {
+            "code": "APP VAR push_false VAR tftftf",
+            "name": "ftftft"
+        }
+    ],
+    [
+        {
+            "is_bot": false,
+            "is_top": false
+        },
+        {
+            "code": "JOIN VAR true VAR false",
+            "name": "join"
+        }
+    ],
+    [
+        {
+            "is_bot": false,
+            "is_top": false
+        },
+        {
+            "code": "Y",
+            "name": "fix"
+        }
+    ],
+    [
+        {
+            "is_bot": false,
+            "is_top": false
+        },
+        {
+            "code": "U",
+            "name": "idem"
+        }
+    ],
+    [
+        {
+            "is_bot": false,
+            "is_top": false
+        },
+        {
+            "code": "V",
+            "name": "close"
+        }
+    ],
+    [
+        {
+            "is_bot": false,
+            "is_top": false
+        },
+        {
+            "code": "P",
+            "name": "close.sub"
+        }
+    ],
+    [
+        {
+            "is_bot": false,
+            "is_top": false
+        },
+        {
+            "code": "A",
+            "name": "close.forall"
+        }
+    ],
+    [
+        {
+            "is_bot": false,
+            "is_top": false
+        },
+        {
+            "code": "EQUAL I APP APP S K K",
+            "name": null
+        }
+    ],
+    [
+        {
+            "is_bot": false,
+            "is_top": false
+        },
+        {
+            "code": "EQUAL B APP APP S APP K S K",
+            "name": null
+        }
+    ],
+    [
+        {
+            "is_bot": false,
+            "is_top": false
+        },
+        {
+            "code": "EQUAL CB APP C B",
+            "name": null
+        }
+    ],
+    [
+        {
+            "is_bot": false,
+            "is_top": false
+        },
+        {
+            "code": "EQUAL C APP APP S APP APP B B S APP K K",
+            "name": null
+        }
+    ],
+    [
+        {
+            "is_bot": false,
+            "is_top": false
+        },
+        {
+            "code": "EQUAL W APP APP C S I",
+            "name": null
+        }
+    ],
+    [
+        {
+            "is_bot": false,
+            "is_top": false
+        },
+        {
+            "code": "EQUAL Y APP APP APP S B CB APP W I",
+            "name": null
+        }
+    ]
+]
