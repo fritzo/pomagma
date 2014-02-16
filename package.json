@@ -1,0 +1,33 @@
+{
+  "name": "pomagma",
+  "version": "0.1.0",
+  "description": "Client library for pomagma inference servers",
+  "main": "src/analyst/client.js",
+  "directories": {
+    "doc": "doc"
+  },
+  "files": [
+    "src/analyst/client.js",
+    "src/analyst/test.js"
+  ],
+  "scripts": {
+    "test": "mocha src/analyst/test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/fritzo/pomagma"
+  },
+  "dependencies": {
+    "underscore": ">=1.6.0",
+    "zmq": ">=2.6.0",
+    "protobufjs": ">=0.8.7"
+  },
+  "devDependencies": {
+    "mocha": ">=1.17.1"
+  },
+  "author": "Fritz Obermeyer",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/fritzo/pomagma/issues"
+  }
+}
