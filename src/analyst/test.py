@@ -18,6 +18,7 @@ OPTIONS = {
 
 
 def json_load(filename):
+    filename = os.path.join(os.path.dirname(__file__), filename)
     with open(filename) as f:
         return json.load(f)
 

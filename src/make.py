@@ -19,6 +19,7 @@ def test_units(*noseflags):
     Run unit tests.
     '''
     pomagma.util.check_call('nosetests', pomagma.util.SRC, *noseflags)
+    pomagma.util.check_call('npm', 'test')
     pomagma.util.build()
     pomagma.util.test()
 

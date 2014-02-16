@@ -198,6 +198,14 @@ def abspath(path):
     return os.path.abspath(os.path.expanduser(path))
 
 
+def ensure_abspath(filename):
+    filename = abspath(filename)
+    dirname = os.path.dirname(filename)
+    if not os.path.exists(dirname):
+        os.makedirs(dirname)
+    return filename
+
+
 def get_log_file(options):
     log_file = os.path.join(DATA, 'default.log')
     log_file = abspath(options.get('log_file', log_file))
