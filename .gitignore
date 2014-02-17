@@ -20,4 +20,4 @@
 /build/
 /cov-int/
 *.egg-info/
-/src/editor/node_modules
+node_modules/
