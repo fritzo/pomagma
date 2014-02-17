@@ -3,10 +3,13 @@
 var fs = require('fs');
 var path = require('path');
 var _ = require('underscore');
-var client = require('./client').connect();
-var assert = require('assert');
-var suite = require('mocha').suite;
+var analyst = require('./client');
+//var assert = require('assert');
+var assert = require('chai').assert;
+var describe = require('mocha').describe;
 var test = require('mocha').test;
+var before = require('mocha').before;
+var after = require('mocha').after;
 
 var json_load = function (name) {
   return JSON.parse(fs.readFileSync(path.join(__dirname, name)));
@@ -29,9 +32,28 @@ var equalValidity = function (x, y) {
   return equalTrool(x.is_top, y.is_top) && equalTrool(x.is_bot, y.is_bot);
 };
 
-suite('analyst', function(){
+var client;
 
-  test('validateCorpus', function(){
+before(function(){
+  client = analyst.connect();
+});
+
+after(function(){
+  client.close();
+});
+
+describe('analyst', function(){
+
+  it('has an address', function(){
+    var address = client.address();
+    assert.typeOf(address, 'string');
+  });
+
+  it('responds to ping', function(done){
+    client.ping(done);
+  });
+
+  it('validates corpus', function(done){
 
     var expected = [];
     var lines = [];
@@ -41,10 +63,12 @@ suite('analyst', function(){
       lines.push(pair[1]);
     });
 
-    var actual = client.validateCorpus(lines);
-    assert.equal(actual.length, expected.length);
-    _.zip(actual, expected).forEach(function(pair){
-      assert.ok(equalValidity(pair[0], pair[1]));
+    client.validateCorpus(lines, function(actual){
+      assert.equal(actual.length, expected.length);
+      _.zip(actual, expected).forEach(function(pair){
+        assert.ok(equalValidity(pair[0], pair[1]));
+      });
+      done();
     });
   });
 

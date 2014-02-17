@@ -1,6 +1,6 @@
 {
   "name": "pomagma",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Client library for pomagma inference engine",
   "main": "src/index.js",
   "directories": {
@@ -23,7 +23,7 @@
     "LICENSE"
   ],
   "scripts": {
-    "test": "mocha src/test.js"
+    "test": "mocha --reporter spec src/test.js"
   },
   "repository": {
     "type": "git",
@@ -35,7 +35,8 @@
     "protobufjs": ">=0.8.7"
   },
   "devDependencies": {
-    "mocha": ">=1.17.1"
+    "mocha": ">=1.17.1",
+    "chai": ">=1.9.0"
   },
   "author": "Fritz Obermeyer",
   "license": "MIT",
