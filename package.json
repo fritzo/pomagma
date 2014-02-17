@@ -1,17 +1,29 @@
 {
   "name": "pomagma",
-  "version": "0.1.0",
-  "description": "Client library for pomagma inference servers",
-  "main": "src/analyst/client.js",
+  "version": "0.1.1",
+  "description": "Client library for pomagma inference engine",
+  "main": "src/index.js",
   "directories": {
+    "lib": "src",
     "doc": "doc"
   },
   "files": [
+    "README.md",
+    "doc/README.md",
+    "doc/architecture.png",
+    "doc/architecture.pdf",
+    "src/index.js",
+    "src/test.js",
     "src/analyst/client.js",
-    "src/analyst/test.js"
+    "src/analyst/test.js",
+    "src/analyst/messages.proto",
+    "src/analyst/testdata/corpus.json",
+    "src/analyst/testdata/simplify_examples.json",
+    "src/analyst/testdata/validate_examples.json",
+    "LICENSE"
   ],
   "scripts": {
-    "test": "mocha src/analyst/test.js"
+    "test": "mocha src/test.js"
   },
   "repository": {
     "type": "git",

@@ -3,8 +3,9 @@
 var fs = require('fs');
 var path = require('path');
 var _ = require('underscore');
-var client = require('./client');
+var client = require('./client').connect();
 var assert = require('assert');
+var suite = require('mocha').suite;
 var test = require('mocha').test;
 
 var json_load = function (name) {
@@ -28,20 +29,23 @@ var equalValidity = function (x, y) {
   return equalTrool(x.is_top, y.is_top) && equalTrool(x.is_bot, y.is_bot);
 };
 
-test('validateCorpus', function(){
+suite('analyst', function(){
 
-  var expected = [];
-  var lines = [];
+  test('validateCorpus', function(){
 
-  CORPUS.forEach(function(pair){
-    expected.push(pair[0]);
-    lines.push(pair[1]);
+    var expected = [];
+    var lines = [];
+
+    CORPUS.forEach(function(pair){
+      expected.push(pair[0]);
+      lines.push(pair[1]);
+    });
+
+    var actual = client.validateCorpus(lines);
+    assert.equal(actual.length, expected.length);
+    _.zip(actual, expected).forEach(function(pair){
+      assert.ok(equalValidity(pair[0], pair[1]));
+    });
   });
 
-  var actual = client.validateCorpus(lines);
-  assert.equal(actual.length, expected.length);
-  _.zip(actual, expected).forEach(function(pair){
-    assert.ok(equalValidity(pair[0], pair[1]));
-  });
 });
-
