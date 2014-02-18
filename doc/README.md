@@ -3,7 +3,6 @@
 ## Dataflow Architecture
 
 ![Architecture](architecture.png)
-![Editor Client](editor.png)
 
 ### State
 
@@ -21,8 +20,8 @@
 - Language Reviewer - ensures new language modifications are safe
 - Theorist - makes conjectures and tries to prove them using various strategies
 - Theory Reviewer - suggests new inference stragies to address open conjectures
-- Editor - provides user interface for editing algebraic code
 - Analyst - performs deeper static analysis to support editor
+- Editor - provides user interface for editing algebraic code
 
 ### Workflows
 
@@ -39,8 +38,8 @@
 - [x] Scalable - run surveyor-cartographer loop
 - [x] Thrifty - propose new equations based on atlas
 - [x] Interactive - show static analysis layer in editor
-- [ ] Tasteful - fit language parameters to corpus
 - [ ] Literate - populate corpus by writing code in editor
+- [ ] Tasteful - fit language parameters to corpus
 - [ ] Innovative - propose new basic terms based on corpus
 - [ ] Reflective - model pomagma actors in corpus
 - [ ] Social - integrate with other languages and environments
