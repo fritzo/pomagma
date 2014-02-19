@@ -17,7 +17,7 @@ TROOL[Response.Trool.TRUE] = true;
 TROOL[Response.Trool.FALSE] = false;
 
 var WARN = function (message) {
-  console.warn(message);
+  console.warn('WARNING ' + message);
 };
 
 var ServerError = function (messages) {
@@ -29,22 +29,28 @@ ServerError.prototype.toString = function () {
 
 exports.connect = function (address) {
   'use strict';
-  assert(typeof address === 'string');
+  assert(typeof address === 'string', address);
   var socket = zmq.socket('req');
   console.log('connecting to analyst at ' + address);
   socket.connect(address);
 
-  var call = function (arg, cb) {
-    socket.once('message', function(msg){
-      var res = Response.decode(msg);
-      console.log('DEBUG receive ' + JSON.stringify(res));
-      cb(res);
+  var call = function (request, done) {
+    socket.once('message', function(raw_reply){
+      var reply = Response.decode(raw_reply);
+      console.log('DEBUG receive ' + JSON.stringify(reply));
+      reply.error_log.forEach(WARN);
+      _.forEach(request, function(value, field){
+        assert(reply[field] !== null, field);
+      });
+      if (reply.error_log.length) {
+        throw new ServerError(reply.error_log);
+      }
+      done(reply);
     });
 
-    var req = new Request(arg);
-    var msg = req.toBuffer();
-    console.log('DEBUG send ' + JSON.stringify(Request.decode(msg)));
-    socket.send(msg);
+    var raw_request = new Request(request).toBuffer();
+    console.log('DEBUG send ' + JSON.stringify(Request.decode(raw_request)));
+    socket.send(raw_request);
   };
 
   var ping = function (done) {
@@ -54,14 +60,14 @@ exports.connect = function (address) {
   };
 
   var testInference = function (done) {
-    call({test_inference: {}}, function(res){
-      done(res.test_inference.fail_count.toInt());
+    call({test_inference: {}}, function(reply){
+      done(reply.test_inference.fail_count.toInt());
     });
   };
 
   var validateCorpus = function (lines, done) {
-    call({validate_corpus: {lines: lines}}, function(res){
-      var results = res.validate_corpus.results;
+    call({validate_corpus: {lines: lines}}, function(reply){
+      var results = reply.validate_corpus.results;
       results.forEach(function(line){
         line.is_top = TROOL[line.is_top];
         line.is_bot = TROOL[line.is_bot];
