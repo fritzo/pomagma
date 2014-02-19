@@ -3,13 +3,21 @@
 var fs = require('fs');
 var path = require('path');
 var _ = require('underscore');
-var analyst = require('./client');
-//var assert = require('assert');
+var pomagma = require('../index');
 var assert = require('chai').assert;
 var describe = require('mocha').describe;
-var test = require('mocha').test;
+var it = require('mocha').it;
 var before = require('mocha').before;
 var after = require('mocha').after;
+
+var THEORY = process.env.THEORY || 'skj';
+var DATA = path.join(pomagma.util.DATA, 'test', 'debug', 'atlas', THEORY);
+var WORLD = process.env.WORLD || path.join(DATA, '0.normal.h5');
+var ADDRESS = 'ipc://' + path.join(DATA, 'socket');
+var OPTIONS = {
+  'log_file': path.join(DATA, 'analyst_test.log'),
+  'log_level': pomagma.util.LOG_LEVEL_DEBUG,
+};
 
 var json_load = function (name) {
   return JSON.parse(fs.readFileSync(path.join(__dirname, name)));
@@ -35,7 +43,7 @@ var equalValidity = function (x, y) {
 var client;
 
 before(function(){
-  client = analyst.connect();
+  client = pomagma.analyst.connect(ADDRESS);
 });
 
 after(function(){

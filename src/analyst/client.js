@@ -2,21 +2,32 @@
 
 var assert = require('assert');
 var _ = require('underscore');
+var path = require('path');
 var zmq = require('zmq');
-var protobuf = require('protobufjs').loadProtoFile('messages.proto');
+var protobuf = require('protobufjs');
+
+var proto = path.join(__dirname, 'messages.proto');
+var messages = protobuf.loadProtoFile(proto).result.pomagma_messaging;
+var Request = messages.AnalystRequest;
+var Response = messages.AnalystResponse;
+
+var WARN = function (message) {
+  console.warn(message);
+};
+
+var ServerError = function (messages) {
+  this.messages = messages;
+};
+ServerError.prototype.toString = function () {
+  return 'Server Errors:\n' + this.messagess.join('\n');
+};
 
 exports.connect = function (address) {
   'use strict';
-
-  address = (
-    address ||
-    process.env.POMAGMA_ANALYST_ADDRESS ||
-    'tcp://localhost:34936'
-  );
-
+  assert(typeof address === 'string');
   var socket = zmq.socket('req');
+  console.log('connecting to analyst at ' + address);
   socket.connect(address);
-  console.log('connected to pomagma analyst at ' + address);
 
   var ping = function (done) {
     done();
