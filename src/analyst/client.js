@@ -29,19 +29,35 @@ exports.connect = function (address) {
   console.log('connecting to analyst at ' + address);
   socket.connect(address);
 
+  var call = function (arg, cb) {
+    socket.once('message', function(msg){
+      var res = Response.decode(msg);
+      console.log('DEBUG receive ' + JSON.stringify(res));
+      cb(res);
+    });
+
+    var req = new Request(arg);
+    var msg = req.encode();
+    console.log('DEBUG send ' + JSON.stringify(Request.decode(msg)));
+    socket.send(msg);
+  };
+
   var ping = function (done) {
-    done();
+    call({}, function(){
+      done();
+    });
+  };
+
+  var testInference = function (done) {
+    call({test_inference: {}}, function(res){
+      done(res.test_inference.fail_count);
+    });
   };
 
   var validateCorpus = function (lines, done) {
-    var result = _.map(lines, function(){
-      return {
-        'is_bot': null,
-        'is_top': null,
-        'pending': false
-      };
+    call({validate_corpus: {lines: lines}}, function(res){
+      done(res.validate_corpus.lines);
     });
-    done(result);
   };
 
   return {
@@ -49,6 +65,7 @@ exports.connect = function (address) {
       return address;
     },
     ping: ping,
+    testInference: testInference,
     validateCorpus: validateCorpus,
     close: function() {
       socket.close();

@@ -5,8 +5,8 @@ var path = require('path');
 var _ = require('underscore');
 var pomagma = require('../index');
 var assert = require('chai').assert;
-var describe = require('mocha').describe;
-var it = require('mocha').it;
+var suite = require('mocha').suite;
+var test = require('mocha').test;
 var before = require('mocha').before;
 var after = require('mocha').after;
 
@@ -44,24 +44,32 @@ var client;
 
 before(function(){
   client = pomagma.analyst.connect(ADDRESS);
+  // TODO start server here; for now we start by hand externally
 });
 
 after(function(){
   client.close();
 });
 
-describe('analyst', function(){
+suite('analyst', function(){
 
-  it('has an address', function(){
+  test('#address', function(){
     var address = client.address();
     assert.typeOf(address, 'string');
   });
 
-  it('responds to ping', function(done){
+  test('#ping', function(done){
     client.ping(done);
   });
 
-  it('validates corpus', function(done){
+  test('#testInference', function(done){
+    client.testInference(function(failCount){
+      assert(failCount === 0, 'failCount = ' + failCount);
+      done();
+    })
+  });
+
+  test('#validateCorpus', function(done){
 
     var expected = [];
     var lines = [];
