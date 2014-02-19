@@ -73,19 +73,28 @@ suite('analyst', function(){
     })
   });
 
+  test('#simplify', function(done){
+
+    var codes = _.pluck(SIMPLIFY_EXAMPLES, 0);
+    var expected = _.pluck(SIMPLIFY_EXAMPLES, 1);
+
+    client.simplify(codes, function(actual){
+      assert.equal(actual.length, expected.length);
+      _.zip(expected, actual).forEach(function(pair){
+        assert.deepEqual(pair[0], pair[1]);
+      });
+      done();
+    });
+  });
+
   test('#validateCorpus', function(done){
 
-    var expected = [];
-    var lines = [];
-
-    CORPUS.forEach(function(pair){
-      expected.push(pair[0]);
-      lines.push(pair[1]);
-    });
+    var expected = _.pluck(CORPUS, 0);
+    var lines = _.pluck(CORPUS, 1);
 
     client.validateCorpus(lines, function(actual){
       assert.equal(actual.length, expected.length);
-      _.zip(actual, expected).forEach(function(pair){
+      _.zip(expected, actual).forEach(function(pair){
         assert.ok(equalValidity(pair[0], pair[1]));
       });
       done();

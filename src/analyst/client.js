@@ -39,8 +39,8 @@ exports.connect = function (address) {
       var reply = Response.decode(raw_reply);
       console.log('DEBUG receive ' + JSON.stringify(reply));
       reply.error_log.forEach(WARN);
-      _.forEach(request, function(value, field){
-        assert(reply[field] !== null, field);
+      _.forEach(request, function(val, key){
+        assert(reply[key] !== null, key);
       });
       if (reply.error_log.length) {
         throw new ServerError(reply.error_log);
@@ -65,6 +65,12 @@ exports.connect = function (address) {
     });
   };
 
+  var simplify = function (codes, done) {
+    call({simplify: {codes: codes}}, function(reply){
+      done(reply.simplify.codes);
+    });
+  };
+
   var validateCorpus = function (lines, done) {
     call({validate_corpus: {lines: lines}}, function(reply){
       var results = reply.validate_corpus.results;
@@ -82,6 +88,7 @@ exports.connect = function (address) {
     },
     ping: ping,
     testInference: testInference,
+    simplify: simplify,
     validateCorpus: validateCorpus,
     close: function() {
       socket.close();
