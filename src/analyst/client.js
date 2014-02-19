@@ -11,6 +11,11 @@ var messages = protobuf.loadProtoFile(proto).result.pomagma_messaging;
 var Request = messages.AnalystRequest;
 var Response = messages.AnalystResponse;
 
+var TROOL = [];
+TROOL[Response.Trool.MAYBE] = null;
+TROOL[Response.Trool.TRUE] = true;
+TROOL[Response.Trool.FALSE] = false;
+
 var WARN = function (message) {
   console.warn(message);
 };
@@ -37,7 +42,7 @@ exports.connect = function (address) {
     });
 
     var req = new Request(arg);
-    var msg = req.encode();
+    var msg = req.toBuffer();
     console.log('DEBUG send ' + JSON.stringify(Request.decode(msg)));
     socket.send(msg);
   };
@@ -50,13 +55,18 @@ exports.connect = function (address) {
 
   var testInference = function (done) {
     call({test_inference: {}}, function(res){
-      done(res.test_inference.fail_count);
+      done(res.test_inference.fail_count.toInt());
     });
   };
 
   var validateCorpus = function (lines, done) {
     call({validate_corpus: {lines: lines}}, function(res){
-      done(res.validate_corpus.lines);
+      var results = res.validate_corpus.results;
+      results.forEach(function(line){
+        line.is_top = TROOL[line.is_top];
+        line.is_bot = TROOL[line.is_bot];
+      });
+      done(results);
     });
   };
 

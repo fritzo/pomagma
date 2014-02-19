@@ -52,6 +52,7 @@ after(function(){
 });
 
 suite('analyst', function(){
+  this.timeOut = 10000;
 
   test('#address', function(){
     var address = client.address();
@@ -63,8 +64,11 @@ suite('analyst', function(){
   });
 
   test('#testInference', function(done){
+    this.timeout(10000);
+
     client.testInference(function(failCount){
-      assert(failCount === 0, 'failCount = ' + failCount);
+      assert.typeOf(failCount, 'number');
+      assert.equal(failCount, 0);
       done();
     })
   });
