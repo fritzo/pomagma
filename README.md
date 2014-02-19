@@ -105,22 +105,7 @@ that this very repo is stored in.)
 
 ## Installation
 
-The editor front end runs a web server pointing to an analysis server.
-
-    # install using pip
-    easy_install pip
-    mkvirtualenv pomagma
-    workon pomagma
-    git clone git@github.com:fritzo/pomagma
-    cd pomagma
-    pip install -r requirements.txt
-    pip install -e .
-
-    # run server and browser
-    python -m pomagma edit address=ANALYST_ADDRESS &
-    chromium-browser http://localhost:34934 &
-
-The theorem-proving back end currently targets Ubuntu 12.04 LTS.
+The back-end inference service currently targets Ubuntu 12.04 LTS.
 
     # install and test
     git clone git@github.com:fritzo/pomagma
@@ -131,13 +116,14 @@ The theorem-proving back end currently targets Ubuntu 12.04 LTS.
     # build minimal atlas
     python -m pomagma init
 
-    # run editor servers + client locally
-    python -m pomagma analyze &
-    python -m pomagma edit &
-    chromium-browser http://localhost:34934 &
-
     # continuously enlarge atlas (for months)
     python -m pomagma explore
+
+    # run analyst servers
+    python -m pomagma analyze
+
+The canonical editor front-end is [puddle](https://github.com:fritzo/puddle),
+a node.js+browser system that connects to `POMAGMA_ANALYST_ADDRESS`.
 
 ## Configuration
 
@@ -147,7 +133,6 @@ To run in debug mode, define an environment variable
 
 To use specific ports or addresses, override these defaults
 
-    POMAGMA_EDITOR_PORT=34934
     POMAGMA_ANALYST_ADDRESS=tcp://localhost:34936
 
 Pomagma uses even ports for production and odd ports for testing.

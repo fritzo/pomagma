@@ -12,8 +12,6 @@ from pomagma import (
     cartographer,
     theorist,
     analyst,
-    corpus,
-    editor,
     linguist,
 )
 
@@ -276,46 +274,6 @@ def analyze(theory=THEORY, size=None, address=analyst.ADDRESS, **options):
             print 'stopping analyst'
         finally:
             server.stop()
-
-
-@parsable.command
-def edit(port=editor.PORT, address=analyst.ADDRESS, reloader=True):
-    '''
-    Run editor server.
-    '''
-    try:
-        # corpus loads automatically
-        server = editor.serve(port, address, reloader)
-        server.wait()
-    except KeyboardInterrupt:
-        pass
-    finally:
-        print 'stopping editor'
-        server.terminate()
-        corpus.dump()
-        corpus.clear()
-
-
-@parsable.command
-def write(port=editor.PORT, address=analyst.ADDRESS):
-    '''
-    Run editor client + server.
-    '''
-    try:
-        # corpus loads automatically
-        server = editor.serve(port, address, reloader=False)
-        pomagma.util.check_call(
-            'chromium-browser',
-            '--incognito',
-            '--temp-profile',
-            '--app=http://localhost:{}'.format(port))
-    except KeyboardInterrupt:
-        pass
-    finally:
-        print 'stopping editor'
-        server.terminate()
-        corpus.dump()
-        corpus.clear()
 
 
 @parsable.command
