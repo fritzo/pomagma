@@ -63,15 +63,6 @@ suite('analyst', function(){
     client.ping(done);
   });
 
-  test('#testInference', function(done){
-    this.timeout(10000);
-    client.testInference(function(failCount){
-      assert.typeOf(failCount, 'number');
-      assert.equal(failCount, 0);
-      done();
-    })
-  });
-
   test('#simplify', function(done){
     var codes = _.pluck(SIMPLIFY_EXAMPLES, 0);
     var expected = _.pluck(SIMPLIFY_EXAMPLES, 1);

@@ -85,12 +85,6 @@ exports.connect = function (address) {
     });
   };
 
-  var testInference = function (done) {
-    call({test_inference: {}}, function(reply){
-      done(reply.test_inference.fail_count.toInt());
-    });
-  };
-
   var simplify = function (codes, done) {
     call({simplify: {codes: codes}}, function(reply){
       done(reply.simplify.codes);
@@ -124,7 +118,6 @@ exports.connect = function (address) {
       return address;
     },
     ping: ping,
-    testInference: testInference,
     simplify: simplify,
     validate: validate,
     validateCorpus: validateCorpus,
