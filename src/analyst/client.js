@@ -59,7 +59,7 @@ var router = function (socket) {
 
 exports.connect = function (address) {
   'use strict';
-  assert(typeof address === 'string', address);
+  assert(_.isString(address), address);
   var socket = zmq.socket('req');
   console.log('connecting to analyst at ' + address);
   socket.connect(address);
@@ -86,14 +86,25 @@ exports.connect = function (address) {
   };
 
   var simplify = function (codes, done) {
+    assert(_.isArray(codes), codes);
+    codes.forEach(function(code){
+      assert(_.isString(code), code);
+    });
     call({simplify: {codes: codes}}, function(reply){
-      done(reply.simplify.codes);
+      var results = reply.simplify.codes;
+      assert(results.length == codes.length);
+      done(results);
     });
   };
 
   var validate = function (codes, done) {
+    assert(_.isArray(codes), codes);
+    codes.forEach(function(code){
+      assert(_.isString(code), code);
+    });
     call({validate: {codes: codes}}, function(reply){
       var results = reply.validate.results;
+      assert(results.length == codes.length);
       results.forEach(function(line){
         line.is_top = TROOL[line.is_top];
         line.is_bot = TROOL[line.is_bot];
@@ -103,8 +114,17 @@ exports.connect = function (address) {
   };
 
   var validateCorpus = function (lines, done) {
+    assert(_.isArray(lines), lines);
+    lines.forEach(function(line){
+      assert(_.isObject(line), line);
+      assert(_.has(line, 'name'), line);
+      assert(_.has(line, 'code'), line);
+      assert(line.name === null || _.isString(line.name), line.name);
+      assert(_.isString(line.code), line.code);
+    });
     call({validate_corpus: {lines: lines}}, function(reply){
       var results = reply.validate_corpus.results;
+      assert(results.length == lines.length);
       results.forEach(function(line){
         line.is_top = TROOL[line.is_top];
         line.is_bot = TROOL[line.is_bot];

@@ -130,6 +130,10 @@ class Client(object):
             assert isinstance(line, dict), line
             assert 'name' in line
             assert 'code' in line
+            name = line['name']
+            assert name is None or isinstance(name, basestring), name
+            code = line['code']
+            assert isinstance(code, basestring), code
         results = self._validate_corpus(lines)
         assert len(results) == len(lines), results
         return results
