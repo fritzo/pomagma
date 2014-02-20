@@ -128,8 +128,7 @@ class Client(object):
         assert isinstance(lines, list), lines
         for line in lines:
             assert isinstance(line, dict), line
-            assert 'name' in line
-            assert 'code' in line
+            assert sorted(line.keys()) == ['code', 'name']
             name = line['name']
             assert name is None or isinstance(name, basestring), name
             code = line['code']

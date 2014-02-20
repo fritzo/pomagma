@@ -117,8 +117,9 @@ exports.connect = function (address) {
     assert(_.isArray(lines), lines);
     lines.forEach(function(line){
       assert(_.isObject(line), line);
-      assert(_.has(line, 'name'), line);
-      assert(_.has(line, 'code'), line);
+      var keys = _.keys(line);
+      keys.sort();
+      assert.deepEqual(keys, ['code', 'name']);
       assert(line.name === null || _.isString(line.name), line.name);
       assert(_.isString(line.code), line.code);
     });
