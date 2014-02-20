@@ -65,7 +65,6 @@ suite('analyst', function(){
 
   test('#testInference', function(done){
     this.timeout(10000);
-
     client.testInference(function(failCount){
       assert.typeOf(failCount, 'number');
       assert.equal(failCount, 0);
@@ -74,27 +73,35 @@ suite('analyst', function(){
   });
 
   test('#simplify', function(done){
-
     var codes = _.pluck(SIMPLIFY_EXAMPLES, 0);
     var expected = _.pluck(SIMPLIFY_EXAMPLES, 1);
-
     client.simplify(codes, function(actual){
       assert.equal(actual.length, expected.length);
-      _.zip(expected, actual).forEach(function(pair){
+      _.zip(actual, expected).forEach(function(pair){
         assert.deepEqual(pair[0], pair[1]);
       });
       done();
     });
   });
 
-  test('#validateCorpus', function(done){
+  test('#validate', function(done){
+    var expected = _.pluck(VALIDATE_EXAMPLES, 0);
+    var codes = _.pluck(VALIDATE_EXAMPLES, 1);
+    client.validate(codes, function(actual){
+      assert.equal(actual.length, expected.length);
+      _.zip(actual, expected).forEach(function(pair){
+        assert.ok(equalValidity(pair[0], pair[1]));
+      });
+      done();
+    });
+  });
 
+  test('#validateCorpus', function(done){
     var expected = _.pluck(CORPUS, 0);
     var lines = _.pluck(CORPUS, 1);
-
     client.validateCorpus(lines, function(actual){
       assert.equal(actual.length, expected.length);
-      _.zip(expected, actual).forEach(function(pair){
+      _.zip(actual, expected).forEach(function(pair){
         assert.ok(equalValidity(pair[0], pair[1]));
       });
       done();

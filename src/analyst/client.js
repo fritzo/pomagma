@@ -97,6 +97,17 @@ exports.connect = function (address) {
     });
   };
 
+  var validate = function (codes, done) {
+    call({validate: {codes: codes}}, function(reply){
+      var results = reply.validate.results;
+      results.forEach(function(line){
+        line.is_top = TROOL[line.is_top];
+        line.is_bot = TROOL[line.is_bot];
+      });
+      done(results);
+    });
+  };
+
   var validateCorpus = function (lines, done) {
     call({validate_corpus: {lines: lines}}, function(reply){
       var results = reply.validate_corpus.results;
@@ -115,6 +126,7 @@ exports.connect = function (address) {
     ping: ping,
     testInference: testInference,
     simplify: simplify,
+    validate: validate,
     validateCorpus: validateCorpus,
     close: function() {
       socket.close();
