@@ -64,6 +64,13 @@ def test_ping():
         server.stop()
 
 
+def test_ping_id():
+    expected = 'test'
+    with load() as db:
+        actual = db.ping_id(expected)
+    assert actual == expected
+
+
 def test_inference():
     with load() as db:
         print 'Testing analyst inference'

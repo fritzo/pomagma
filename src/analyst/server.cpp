@@ -104,6 +104,10 @@ messaging::AnalystResponse handle (
     messaging::AnalystResponse response;
     typedef messaging::AnalystResponse::Trool Trool;
 
+    if (request.has_id()) {
+        response.set_id(request.id());
+    }
+
     if (request.has_test_inference()) {
         size_t fail_count = server.test_inference();
         response.mutable_test_inference()->set_fail_count(fail_count);

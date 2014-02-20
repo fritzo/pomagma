@@ -27,15 +27,34 @@ ServerError.prototype.toString = function () {
   return 'Server Errors:\n' + this.messagess.join('\n');
 };
 
-// FIXME This is not robust and will not work under heavy load.
-// A possible workaround would be to create a pool of zmq routers.
-// Another possible workaround is to thread routing through the analyst.
+// This works around zeromq.node's inconvenient req-rep interface.
 // see http://stackoverflow.com/questions/12544612
 var router = function (socket) {
-  return function (request, done) {
-    socket.once('message', done);
-    socket.send(request);
+  var callbacks = {};
+  var nextId = 0;
+
+  var send = function (request, done) {
+    var id = '' + nextId++;
+    callbacks[id] = done;
+    request.id = id;
+    var rawRequest = new Request(request).toBuffer();
+    console.log('SEND ' + JSON.stringify(Request.decode(rawRequest)));
+    socket.send(rawRequest);
   };
+
+  var recv = function (rawReply) {
+    var reply = Response.decode(rawReply);
+    console.log('RECV ' + JSON.stringify(reply));
+    var id = reply.id;
+    assert(id !== null);
+    delete reply.id;
+    var done = callbacks[id];
+    delete callbacks[id];
+    done(reply);
+  };
+
+  socket.on('message', recv);
+  return send;
 };
 
 exports.connect = function (address) {
@@ -45,15 +64,12 @@ exports.connect = function (address) {
   console.log('connecting to analyst at ' + address);
   socket.connect(address);
 
-  var rawCall = router(socket);
+  var callUnsafe = router(socket);
   var call = function (request, done) {
-    var rawRequest = new Request(request).toBuffer();
-    console.log('DEBUG send ' + JSON.stringify(Request.decode(rawRequest)));
-    rawCall(rawRequest, function(rawReply){
-      var reply = Response.decode(rawReply);
-      console.log('DEBUG receive ' + JSON.stringify(reply));
+    var keys = _.keys(request);
+    callUnsafe(request, function(reply){
       reply.error_log.forEach(WARN);
-      _.forEach(request, function(val, key){
+      keys.forEach(function(key){
         assert(reply[key] !== null, key);
       });
       if (reply.error_log.length) {

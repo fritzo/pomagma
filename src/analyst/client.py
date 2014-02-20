@@ -54,6 +54,13 @@ class Client(object):
         request = Request()
         self._call(request)
 
+    def ping_id(self, id):
+        assert isinstance(id, basestring), id
+        request = Request()
+        request.id = id
+        reply = self._call(request)
+        return reply.id
+
     def test_inference(self):
         request = Request()
         request.test_inference.SetInParent()

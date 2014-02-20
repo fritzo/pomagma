@@ -32,12 +32,13 @@ message AnalystRequest {
     optional Histogram histogram = 1;
   }
 
-  optional TestInference test_inference = 1;
-  optional Simplify simplify = 2;
-  optional Validate validate = 3;
-  optional ValidateCorpus validate_corpus = 4;
-  optional GetHistogram get_histogram = 5;
-  optional FitLanguage fit_language = 6;
+  optional string id = 1;
+  optional TestInference test_inference = 2;
+  optional Simplify simplify = 3;
+  optional Validate validate = 4;
+  optional ValidateCorpus validate_corpus = 5;
+  optional GetHistogram get_histogram = 6;
+  optional FitLanguage fit_language = 7;
 }
 
 message AnalystResponse {
@@ -75,12 +76,13 @@ message AnalystResponse {
     repeated Symbol symbols = 1;
   }
 
-  optional TestInference test_inference = 1;
-  optional Simplify simplify = 2;
-  optional Validate validate = 3;
-  optional ValidateCorpus validate_corpus = 4;
-  optional GetHistogram get_histogram = 5;
-  optional FitLanguage fit_language = 6;
+  optional string id = 1;
+  optional TestInference test_inference = 2;
+  optional Simplify simplify = 3;
+  optional Validate validate = 4;
+  optional ValidateCorpus validate_corpus = 5;
+  optional GetHistogram get_histogram = 6;
+  optional FitLanguage fit_language = 7;
 
-  repeated string error_log = 7;
+  repeated string error_log = 8;
 }
