@@ -27,6 +27,17 @@ ServerError.prototype.toString = function () {
   return 'Server Errors:\n' + this.messagess.join('\n');
 };
 
+// FIXME This is not robust and will not work under heavy load.
+// A possible workaround would be to create a pool of zmq routers.
+// Another possible workaround is to thread routing through the analyst.
+// see http://stackoverflow.com/questions/12544612
+var router = function (socket) {
+  return function (request, done) {
+    socket.once('message', done);
+    socket.send(request);
+  };
+};
+
 exports.connect = function (address) {
   'use strict';
   assert(typeof address === 'string', address);
@@ -34,9 +45,12 @@ exports.connect = function (address) {
   console.log('connecting to analyst at ' + address);
   socket.connect(address);
 
+  var rawCall = router(socket);
   var call = function (request, done) {
-    socket.once('message', function(raw_reply){
-      var reply = Response.decode(raw_reply);
+    var rawRequest = new Request(request).toBuffer();
+    console.log('DEBUG send ' + JSON.stringify(Request.decode(rawRequest)));
+    rawCall(rawRequest, function(rawReply){
+      var reply = Response.decode(rawReply);
       console.log('DEBUG receive ' + JSON.stringify(reply));
       reply.error_log.forEach(WARN);
       _.forEach(request, function(val, key){
@@ -47,10 +61,6 @@ exports.connect = function (address) {
       }
       done(reply);
     });
-
-    var raw_request = new Request(request).toBuffer();
-    console.log('DEBUG send ' + JSON.stringify(Request.decode(raw_request)));
-    socket.send(raw_request);
   };
 
   var ping = function (done) {
