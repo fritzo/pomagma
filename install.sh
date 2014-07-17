@@ -2,7 +2,6 @@
 
 sudo apt-get install -y \
   cmake make g++ \
-  libboost1.48-all-dev \
   libtbb-dev \
   libsparsehash-dev \
   libprotobuf-dev protobuf-compiler python-protobuf \
@@ -13,15 +12,16 @@ sudo apt-get install -y \
   graphviz \
   gdb \
   p7zip-full \
-  rubygems \
   libzmq-dev \
   nodejs \
   firefox \
+  #libboost1.48-all-dev \
   #jsdoc-toolkit \
   #phantomjs \
   #python-zmq \
   #
 
+sudo apt-get install -y rubygems
 sudo gem install foreman
 
 sudo npm install -g phantomjs

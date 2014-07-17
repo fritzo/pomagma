@@ -222,8 +222,8 @@ class CartographerWorker(object):
                 if len(regions_out) == trim_count:
                     break
         self.db.trim([
-            {'size': self.region_size, 'filename': region_out}
-            for region_out in regions_out
+            {'size': self.region_size, 'filename': r}
+            for r in regions_out
         ])
 
     def replace_region_queue(self):

@@ -12,7 +12,7 @@ set-ulimit: FORCE
 
 static-check: FORCE
 	find src | grep '.py$$' | grep -v '_pb2.py' | xargs pyflakes
-	find src | grep '.py$$' | grep -v '_pb2.py' | xargs pep8
+	find src | grep '.py$$' | grep -v '_pb2.py' | xargs pep8 --ignore=E265
 
 unit-test: all set-ulimit FORCE
 	POMAGMA_DEBUG= python -m pomagma.make test-units
