@@ -5,14 +5,14 @@ from setuptools import setup, find_packages
 # http://docs.python.org/2/distutils/sourcedist.html#the-manifest-in-template
 
 # package_dir is not compatible with 'pip install -e'
-#packages = [
+# packages = [
 #    re.sub('^src','pomagma', name)
 #    for name in find_packages()
 #    ]
-#for name in packages:
+# for name in packages:
 #    print name
 #
-#setup(
+# setup(
 #    name='pomagma',
 #    packages=packages,
 #    package_dir={'pomagma': 'src'},
@@ -21,4 +21,4 @@ from setuptools import setup, find_packages
 setup(
     name='pomagma',
     packages=find_packages(exclude='src'),
-    )
+)

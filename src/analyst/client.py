@@ -30,6 +30,7 @@ class ServerError(Exception):
 
 
 class Client(object):
+
     def __init__(self, address):
         assert isinstance(address, basestring), address
         self._socket = CONTEXT.socket(zmq.REQ)

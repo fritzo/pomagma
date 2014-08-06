@@ -7,6 +7,7 @@ BIN = os.path.join(pomagma.util.BIN, 'analyst')
 
 
 class Server(object):
+
     def __init__(self, theory, world, address, threads, **opts):
         language_file = os.path.join(
             pomagma.util.LANGUAGE,

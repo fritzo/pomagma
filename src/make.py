@@ -89,7 +89,7 @@ def _test_atlas(theory):
             equal_conjectures,
             equal_theorems,
             **opts)
-        #assert theorem_count > 0, theorem_count
+        # assert theorem_count > 0, theorem_count
 
         if theory != 'h4':
             with cartographer.load(theory, '6.h5', **opts) as db:

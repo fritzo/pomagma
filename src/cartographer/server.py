@@ -9,6 +9,7 @@ BIN = os.path.join(pomagma.util.BIN, 'cartographer')
 
 
 class Server(object):
+
     def __init__(self, theory, world, address=None, **opts):
         if address is None:
             address = 'ipc://{}'.format(os.path.join(
