@@ -10,7 +10,6 @@ set(POMAGMA_SEQUENTIAL_LIBS
 	)
 
 set(POMAGMA_CONCURRENT_LIBS
-	#boost_thread
        	tbb
 	hdf5
        	hdf5_hl

@@ -15,7 +15,6 @@ sudo apt-get install -y \
   libzmq-dev \
   nodejs \
   firefox \
-  #libboost1.48-all-dev \
   #jsdoc-toolkit \
   #phantomjs \
   #python-zmq \
