@@ -11,7 +11,7 @@ namespace pomagma
 
 int Log::init ()
 {
-    s_log_stream <<
+    s_state.log_stream <<
         "----------------------------------------"
         "----------------------------------------"
         "\n"
@@ -21,20 +21,28 @@ int Log::init ()
     return 0;
 }
 
-const char * Log::s_log_filename =
-    getenv_default("POMAGMA_LOG_FILE", DEFAULT_LOG_FILE);
-std::ofstream Log::s_log_stream(s_log_filename, std::ios_base::app);
-static int init __attribute__((unused)) = Log::init();
+Log::GlobalState::GlobalState () :
+    log_filename(getenv_default("POMAGMA_LOG_FILE", DEFAULT_LOG_FILE)),
+    log_stream(log_filename, std::ios_base::app),
+    log_level(getenv_default("POMAGMA_LOG_LEVEL", DEFAULT_LOG_LEVEL))
+{
+    Log::init();
+}
 
-const size_t Log::s_log_level(
-    getenv_default("POMAGMA_LOG_LEVEL", DEFAULT_LOG_LEVEL));
+Log::GlobalState::~GlobalState ()
+{
+    for (const auto & callback : callbacks) {
+        callback();
+    }
+}
 
+Log::GlobalState Log::s_state;
 
 Log::Context::Context (std::string name)
 {
     std::ostringstream message;
     message << name << "\n";
-    s_log_stream << message.str() << std::flush;
+    s_state.log_stream << message.str() << std::flush;
     //std::cerr << message.str() << std::flush; // DEBUG
 }
 
@@ -45,7 +53,7 @@ Log::Context::Context (int argc, char ** argv)
         message << argv[i] << ' ';
     }
     message << "\n";
-    s_log_stream << message.str() << std::flush;
+    s_state.log_stream << message.str() << std::flush;
     //std::cerr << message.str() << std::flush; // DEBUG
 }
 
@@ -67,7 +75,7 @@ Log::Context::~Context ()
         << "rusage.ru_stime = " << usage.ru_stime << "\n"
         << "rusage.ru_maxrss = " << usage.ru_maxrss << "\n"
         ;
-    s_log_stream << message.str() << std::flush;
+    s_state.log_stream << message.str() << std::flush;
     //std::cerr << message.str() << std::flush; // DEBUG
 }
 

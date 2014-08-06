@@ -15,7 +15,7 @@ static-check: FORCE
 	find src | grep '.py$$' | grep -v '_pb2.py' | xargs pep8 --ignore=E265
 
 unit-test: all set-ulimit FORCE
-	POMAGMA_DEBUG= python -m pomagma.make test-units
+	POMAGMA_DEBUG= python -m pomagma.make test-units -v
 batch-test: all set-ulimit FORCE
 	POMAGMA_DEBUG= python -m pomagma.make test-atlas
 h4-test: all set-ulimit FORCE
@@ -27,7 +27,7 @@ skj-test: all set-ulimit FORCE
 skrj-test: all set-ulimit FORCE
 	POMAGMA_DEBUG= python -m pomagma.make test-atlas skrj
 test: all set-ulimit FORCE
-	POMAGMA_DEBUG= python -m pomagma.make test-units
+	POMAGMA_DEBUG= python -m pomagma.make test-units -v
 	POMAGMA_DEBUG= python -m pomagma.make test-atlas
 
 h4: all

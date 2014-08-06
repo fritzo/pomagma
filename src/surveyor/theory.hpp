@@ -192,8 +192,7 @@ public:
         s_elapsed.resize(task_count);
     }
 
-    // FIXME HACK this depends on link order, dying if log has been destroyed
-    ~CleanupProfiler ()
+    void cleanup ()
     {
         unsigned long task_count = s_counts.size();
         POMAGMA_INFO("Task Id\tCount\tElapsed sec");

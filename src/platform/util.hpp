@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <unistd.h>
 #include <cstdlib>
 #include <iostream>
 #include <string>
@@ -9,7 +10,7 @@
 #include <iomanip>
 #include <chrono>
 #include <random>
-#include <unistd.h>
+#include <functional>
 
 namespace pomagma_messaging {}
 
@@ -164,15 +165,24 @@ const std::string g_log_level_name[4] =
 
 class Log
 {
-    static const char * s_log_filename;
-    static std::ofstream s_log_stream;
-    static const size_t s_log_level;
+    struct GlobalState
+    {
+        const char * log_filename;
+        std::ofstream log_stream;
+        const size_t log_level;
+        std::vector<std::function<void()>> callbacks;
+
+        GlobalState ();
+        ~GlobalState ();
+    };
+
+    static GlobalState s_state;
 
     std::ostringstream m_message;
 
 public:
 
-    static size_t level () { return s_log_level; }
+    static size_t level () { return s_state.log_level; }
 
     Log (size_t level)
     {
@@ -184,7 +194,7 @@ public:
     ~Log ()
     {
         m_message << std::endl;
-        s_log_stream << m_message.str() << std::flush;
+        s_state.log_stream << m_message.str() << std::flush;
         //std::cerr << m_message.str() << std::flush; // DEBUG
     }
 
@@ -202,6 +212,11 @@ public:
     };
 
     static int init ();
+
+    void on_exit (const std::function<void()> & callback)
+    {
+        s_state.callbacks.push_back(callback);
+    }
 };
 
 #define POMAGMA_WARN(message) \
