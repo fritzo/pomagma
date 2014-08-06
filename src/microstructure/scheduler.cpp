@@ -2,6 +2,7 @@
 #include <pomagma/platform/threading.hpp>
 #include <vector>
 #include <thread>
+#include <condition_variable>
 #include <chrono>
 #include <tbb/concurrent_queue.h>
 

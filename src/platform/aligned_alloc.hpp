@@ -7,9 +7,10 @@
 #include <cstring>
 
 #if GCC_VERSION > 40700
-#  define assume_aligned(POMAGMA_arg) __builtin_assume_aligned(POMAGMA_arg, 32)
+#  define assume_aligned(x) \
+    (static_cast<decltype(x)>(__builtin_assume_aligned(x, 32)))
 #else // GCC_VERSION > 40700
-#  define assume_aligned(POMAGMA_arg) (POMAGMA_arg)
+#  define assume_aligned(x) (x)
 #endif // GCC_VERSION > 40700
 
 namespace pomagma

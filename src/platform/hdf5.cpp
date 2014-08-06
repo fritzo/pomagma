@@ -17,7 +17,7 @@ GlobalLock::GlobalLock ()
 
     // permanently turn off error reporting to stderr
     // http://www.hdfgroup.org/HDF5/doc/UG/UG_frame13ErrorHandling.html
-    H5Eset_auto(nullptr, nullptr);
+    H5Eset_auto(H5P_DEFAULT, nullptr, nullptr);
 }
 
 GlobalLock::~GlobalLock ()

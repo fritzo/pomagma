@@ -67,7 +67,9 @@ Ob Carrier::try_insert () const
                 if (m_insert_callback) {
                     m_insert_callback(ob);
                 }
-                POMAGMA_DEBUG1(m_item_count.load() << " obs after insert()");
+                // The following triggers a weird gcc bug or something
+                // error: invalid memory model for ‘__atomic_load
+                //POMAGMA_DEBUG1(m_item_count.load() << " obs after insert()");
                 return ob;
             }
         }

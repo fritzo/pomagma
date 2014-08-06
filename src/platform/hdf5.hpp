@@ -3,10 +3,7 @@
 #include <pomagma/platform/util.hpp>
 #include <pomagma/platform/hasher.hpp>
 #include <algorithm>
-
-extern "C" {
 #include <hdf5.h>
-}
 
 namespace pomagma
 {
@@ -29,7 +26,7 @@ inline std::string get_error ()
     std::string buffer(4096, '\0');
     FILE * file = fmemopen(&buffer[0], buffer.size(), "w");
     POMAGMA_ASSERT(file, "failed to open error message buffer");
-    H5Eprint(file);
+    H5Eprint(H5P_DEFAULT, file);
     fclose(file);
     return buffer.substr(0, buffer.find('\0'));
 }
@@ -188,11 +185,9 @@ struct Group : noncopyable
 
 private:
 
-    static size_t size_estimate () { return 0; }
-
     static hid_t open (hid_t loc_id, const std::string & name)
     {
-        hid_t id = H5Gopen(loc_id, name.c_str());
+        hid_t id = H5Gopen(loc_id, name.c_str(), H5P_DEFAULT);
         POMAGMA_ASSERT(id >= 0,
                 "failed to open group " << name << "\n" << get_error());
         return id;
@@ -200,9 +195,14 @@ private:
 
     static hid_t open_or_create (hid_t loc_id, const std::string & name)
     {
-        hid_t id = H5Gopen(loc_id, name.c_str());
+        hid_t id = H5Gopen(loc_id, name.c_str(), H5P_DEFAULT);
         if (id < 0) {
-            id = H5Gcreate(loc_id, name.c_str(), size_estimate());
+            id = H5Gcreate(
+                loc_id,
+                name.c_str(),
+                H5P_DEFAULT,
+                H5P_DEFAULT,
+                H5P_DEFAULT);
         }
         POMAGMA_ASSERT(id >= 0,
                 "failed to create group " << name << "\n" << get_error());
@@ -361,6 +361,7 @@ struct Attribute : noncopyable
                 name.c_str(),
                 type_id,
                 dataspace.id,
+                H5P_DEFAULT,
                 H5P_DEFAULT
                 ))
     {
@@ -419,9 +420,8 @@ struct Dataset : noncopyable
     Dataset (Object & object, const std::string & name)
         : id(H5Dopen(
             object.id,
-            name.c_str()
-            //, H5P_DEFAULT
-            ))
+            name.c_str(),
+            H5P_DEFAULT))
     {
         POMAGMA_ASSERT(id >= 0,
                 "failed to open dataset " << name << "\n" << get_error());
@@ -438,10 +438,9 @@ struct Dataset : noncopyable
                 name.c_str(),
                 type_id,
                 dataspace.id,
-                H5P_DEFAULT
-                //, H5P_DEFAULT
-                //, H5P_DEFAULT
-                ))
+                H5P_DEFAULT,
+                H5P_DEFAULT,
+                H5P_DEFAULT))
     {
         POMAGMA_ASSERT(id >= 0,
                 "failed to create dataset " << name << "\n" << get_error());

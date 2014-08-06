@@ -47,6 +47,12 @@ struct Approximation
     {}
     Approximation (const Approximation &) = delete;
 
+    void operator= (const Approximation & other)
+    {
+        ob = other.ob;
+        upper = other.upper;
+        lower = other.lower;
+    }
     bool operator== (const Approximation & other) const
     {
         return ob == other.ob

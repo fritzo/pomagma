@@ -3,15 +3,17 @@ include_directories(${CMAKE_SOURCE_DIR}/)
 
 set(POMAGMA_SEQUENTIAL_LIBS
 	tbb
-       	hdf5_hl hdf5
+	hdf5
+       	hdf5_hl
 	crypto ssl
 	protobuf
 	)
 
 set(POMAGMA_CONCURRENT_LIBS
-       	boost_thread
+	#boost_thread
        	tbb
-       	hdf5_hl hdf5
+	hdf5
+       	hdf5_hl
 	crypto ssl
 	protobuf
 	)
