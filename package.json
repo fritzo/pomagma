@@ -33,7 +33,10 @@
   "dependencies": {
     "underscore": ">=1.6.0",
     "zmq": ">=2.6.0",
-    "protobufjs": ">=0.8.7"
+    "protobufjs": ">=0.8.7",
+    "phantomjs": ">=1.9.7-15",
+    "mocha": ">=1.21.4",
+    "chai": ">=1.9.1"
   },
   "devDependencies": {
     "mocha": ">=1.17.1",

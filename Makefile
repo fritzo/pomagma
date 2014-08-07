@@ -7,6 +7,10 @@ all:
 	POMAGMA_DEBUG= python -m pomagma.make build
 	python -m pomagma.make build
 
+install:
+	./install.sh
+	$(MAKE) all
+
 set-ulimit: FORCE
 	$(call ulimit -c unlimited)
 
@@ -48,6 +52,6 @@ profile:
 
 clean: FORCE
 	rm -rf build lib include
-	git clean -fdx -e pomagma.egg-info -e data
+	git clean -fdx -e pomagma.egg-info -e node_modules -e data
 
 FORCE:

@@ -45,10 +45,10 @@ var client;
 var server;
 
 var serve  = function () {
-  var python = process.env['VIRTUAL_ENV'] + '/bin/python';
+  var python = process.env.VIRTUAL_ENV + '/bin/python';
   var server = spawn(
     python,
-    ['-m', 'pomagma', 'analyze', 'skj', 'address=' + ADDRESS],
+    ['-m', 'pomagma', 'analyze', THEORY, 'address=' + ADDRESS],
     {env: process.env});
   server.stdout.on('data', function (data) {
     console.log('server: ' + data);
