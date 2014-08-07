@@ -9,6 +9,7 @@ var suite = require('mocha').suite;
 var test = require('mocha').test;
 var before = require('mocha').before;
 var after = require('mocha').after;
+var spawn = require('child_process').spawn;
 
 var THEORY = process.env.THEORY || 'skj';
 var DATA = path.join(pomagma.util.DATA, 'test', 'debug', 'atlas', THEORY);
@@ -41,14 +42,40 @@ var equalValidity = function (x, y) {
 };
 
 var client;
+var server;
+
+var serve  = function () {
+  var python = process.env['VIRTUAL_ENV'] + '/bin/python';
+  var server = spawn(
+    python,
+    ['-m', 'pomagma', 'analyze', 'skj', 'address=' + ADDRESS],
+    {env: process.env});
+  server.stdout.on('data', function (data) {
+    console.log('server: ' + data);
+  });
+  server.stderr.on('data', function (data) {
+    console.error('server: ' + data);
+  });
+  server.on('close', function (code) {
+    if (code !== 0) {
+      console.error('server exited with code ' + code);
+      process.exit(code);
+    }
+  });
+  return server;
+};
 
 before(function(){
   client = pomagma.analyst.connect(ADDRESS);
-  // TODO start server here; for now we start by hand externally
+  server = serve();
 });
 
 after(function(){
   client.close();
+  server.on('close', function(code){
+    console.log('server exited with code ' + code);
+  });
+  server.kill('SIGHUP');
 });
 
 suite('analyst', function(){

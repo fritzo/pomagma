@@ -238,7 +238,7 @@ def make_env(options):
 def print_command(args, env={}):
     lines = ['{}={}'.format(key, val) for key, val in env.iteritems()]
     lines += args
-    message = '{}\n'.format(' \\\n'.join(lines))
+    message = '{}\n'.format(' \\\n  '.join(lines))
     sys.stderr.write(message)
 
 

@@ -1,5 +1,8 @@
 #!/bin/sh
 
+sudo add-apt-repository -y ppa:chris-lea/node.js
+sudo apt-get update
+
 sudo apt-get install -y \
   cmake make g++ \
   libtbb-dev \
@@ -20,10 +23,11 @@ sudo apt-get install -y \
   #python-zmq \
   #
 
-sudo apt-get install -y rubygems
-sudo gem install foreman
-
+sudo npm install -g zmq
+#sudo npm install -g protobufjs
 sudo npm install -g phantomjs
+sudo npm install -g mocha
+sudo npm install -g chai
 
 # FIXME mkvirtualenv never automatically works; possible solutions:
 # http://stackoverflow.com/questions/13111881
