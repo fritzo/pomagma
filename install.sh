@@ -18,7 +18,12 @@ sudo apt-get install -y \
   nodejs \
   #
 
+# package libraries are installed from package.json
 npm update
+# testing libraries are installed by hand
+sudo npm install -g phantomjs
+sudo npm install -g mocha
+sudo npm install -g chai
 
 # FIXME mkvirtualenv never automatically works; possible solutions:
 # http://stackoverflow.com/questions/13111881
