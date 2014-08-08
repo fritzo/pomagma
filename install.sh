@@ -14,9 +14,12 @@ sudo apt-get install -y \
   graphviz \
   gdb \
   p7zip-full \
-  libzmq-dev \
   nodejs \
   #
+
+# support both ubuntu 12.04 and 14.04, resp:
+sudo apt-get install -y libzmq3-dev || \
+sudo apt-get install -y libzmq-dev
 
 if env | grep -q ^VIRTUAL_ENV=
 then
