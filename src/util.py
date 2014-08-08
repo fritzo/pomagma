@@ -25,7 +25,8 @@ else:
     BUILD = os.path.join(ROOT, 'build', 'release')
 COVERITY = os.path.join(ROOT, 'cov-int')
 BIN = os.path.join(BUILD, 'src')
-CPU_COUNT = multiprocessing.cpu_count()
+TRAVIS_CI = 'TRAVIS' in os.environ and 'CI' in os.environ
+CPU_COUNT = 2 if TRAVIS_CI else multiprocessing.cpu_count()
 
 LOG_LEVEL = int(os.environ.get('POMAGMA_LOG_LEVEL', 0))
 LOG_LEVEL_ERROR = 0

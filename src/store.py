@@ -11,12 +11,11 @@ import subprocess
 import multiprocessing
 import boto
 import parsable
-
-TRAVIS_CI = 'TRAVIS' in os.environ and 'CI' in os.environ
+import pomagma.util
 
 
 def try_connect_s3(bucket):
-    if TRAVIS_CI:
+    if pomagma.util.TRAVIS_CI:
         print 'WARNING avoid connecting to bucket on travis-ci'
         return None
     try:
