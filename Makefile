@@ -7,26 +7,23 @@ all:
 	POMAGMA_DEBUG=1 python -m pomagma.make build
 	python -m pomagma.make build
 
-set-ulimit: FORCE
-	$(call ulimit -c unlimited)
-
 static-check: FORCE
 	find src | grep '.py$$' | grep -v '_pb2.py' | xargs pyflakes
 	find src | grep '.py$$' | grep -v '_pb2.py' | xargs pep8
 
-unit-test: all set-ulimit FORCE
+unit-test: all FORCE
 	POMAGMA_DEBUG=1 python -m pomagma.make test-units -v
-batch-test: all set-ulimit FORCE
+batch-test: all FORCE
 	POMAGMA_DEBUG=1 python -m pomagma.make test-atlas
-h4-test: all set-ulimit FORCE
+h4-test: all FORCE
 	POMAGMA_DEBUG=1 python -m pomagma.make test-atlas h4
-sk-test: all set-ulimit FORCE
+sk-test: all FORCE
 	POMAGMA_DEBUG=1 python -m pomagma.make test-atlas sk
-skj-test: all set-ulimit FORCE
+skj-test: all FORCE
 	POMAGMA_DEBUG=1 python -m pomagma.make test-atlas skj
-skrj-test: all set-ulimit FORCE
+skrj-test: all FORCE
 	POMAGMA_DEBUG=1 python -m pomagma.make test-atlas skrj
-test: all set-ulimit FORCE
+test: all FORCE
 	POMAGMA_DEBUG=1 python -m pomagma.make test-units -v
 	POMAGMA_DEBUG=1 python -m pomagma.make test-atlas
 
@@ -43,7 +40,8 @@ python-libs:
 	@$(MAKE) -C src/language all
 
 profile:
-	python -m pomagma.make profile
+	python -m pomagma.make profile-util
+	python -m pomagma.make profile-surveyor
 	# TODO add profile for sequential & concurrent dense_set
 
 clean: FORCE

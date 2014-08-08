@@ -1,19 +1,18 @@
-
-include_directories(${CMAKE_SOURCE_DIR}/)
+include_directories(${CMAKE_SOURCE_DIR}/include)
 
 add_library(pomagma_platform_sequential SHARED
 	util.cpp
 	aligned_alloc.cpp
 	sequential/dense_set.cpp
 	hdf5.cpp
-	)
+)
 
 add_library(pomagma_platform_concurrent SHARED
 	util.cpp
 	aligned_alloc.cpp
 	concurrent/dense_set.cpp
 	hdf5.cpp
-	)
+)
 
 add_executable(threading_profile threading_profile.cpp)
 target_link_libraries(threading_profile

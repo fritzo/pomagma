@@ -1,21 +1,20 @@
-
-include_directories(${CMAKE_SOURCE_DIR}/)
+include_directories(${CMAKE_SOURCE_DIR}/include)
 
 set(POMAGMA_SEQUENTIAL_LIBS
-        tbb
-        hdf5
-        hdf5_hl
-        crypto ssl
-        protobuf
-        )
+	tbb
+	hdf5
+	hdf5_hl
+	crypto ssl
+	protobuf
+)
 
 set(POMAGMA_CONCURRENT_LIBS
-        tbb
-        hdf5
-        hdf5_hl
-        crypto ssl
-        protobuf
-        )
+	tbb
+	hdf5
+	hdf5_hl
+	crypto ssl
+	protobuf
+)
 
 add_subdirectory(platform)
 add_subdirectory(language)

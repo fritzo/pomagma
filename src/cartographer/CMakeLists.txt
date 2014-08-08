@@ -1,5 +1,4 @@
-
-include_directories(${CMAKE_SOURCE_DIR}/)
+include_directories(${CMAKE_SOURCE_DIR}/include)
 
 add_custom_command(
 	OUTPUT ${CMAKE_CURRENT_LIST_DIR}/messages.pb.cc
@@ -7,7 +6,7 @@ add_custom_command(
 		--proto_path=${CMAKE_CURRENT_LIST_DIR}
 		--cpp_out=${CMAKE_CURRENT_LIST_DIR}
 	DEPENDS ${CMAKE_CURRENT_LIST_DIR}/messages.proto
-	)
+)
 
 add_executable(cartographer
 	main.cpp
@@ -29,4 +28,4 @@ target_link_libraries(cartographer
 	pomagma_language
 	${POMAGMA_SEQUENTIAL_LIBS}
 	zmq
-	)
+)

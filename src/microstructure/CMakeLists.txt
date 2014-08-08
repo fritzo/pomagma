@@ -1,5 +1,4 @@
-
-include_directories(${CMAKE_SOURCE_DIR}/)
+include_directories(${CMAKE_SOURCE_DIR}/include)
 
 add_library(pomagma_microstructure SHARED
 	carrier.cpp
@@ -12,12 +11,13 @@ add_library(pomagma_microstructure SHARED
 	sampler.cpp
 	structure.cpp
 	scheduler.cpp
-	)
+)
 set(POMAGMA_MICROSTRUCTURE_LIBS
 	pomagma_microstructure
 	pomagma_platform_concurrent
 	pomagma_language
-	${POMAGMA_CONCURRENT_LIBS})
+	${POMAGMA_CONCURRENT_LIBS}
+)
 
 add_library(pomagma_microstructure_dummy SHARED dummy.theory.cpp)
 set(POMAGMA_MICROSTRUCTURE_TEST_LIBS
@@ -25,7 +25,8 @@ set(POMAGMA_MICROSTRUCTURE_TEST_LIBS
 	pomagma_microstructure_dummy
 	pomagma_platform_concurrent
 	pomagma_language
-	${POMAGMA_CONCURRENT_LIBS})
+	${POMAGMA_CONCURRENT_LIBS}
+)
 
 add_executable(microstructure_carrier_test carrier_test.cpp)
 target_link_libraries(microstructure_carrier_test ${POMAGMA_MICROSTRUCTURE_TEST_LIBS})
@@ -42,8 +43,6 @@ target_link_libraries(microstructure_nullary_function_test ${POMAGMA_MICROSTRUCT
 add_test(NAME microstructure_nullary_function
 	COMMAND microstructure_nullary_function_test)
 
-# TODO either omit the microstructure_ prefix on tests
-# or add a macrostructure_ prefix to macrostructure tests.
 add_executable(microstructure_injective_function_test injective_function_test.cpp)
 target_link_libraries(microstructure_injective_function_test ${POMAGMA_MICROSTRUCTURE_TEST_LIBS})
 add_test(NAME microstructure_injective_function

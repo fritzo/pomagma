@@ -102,6 +102,7 @@ that this very repo is stored in.)
 - [/data](data) - generated data, mirroring an S3 bucket
 - [/build](build) - destination of C++ builds
 - [/pomagma](pomagma) - a symbolic link to appease `pip install -e`
+- [/include/pomagma](include/pomagma) - a symbolic link to appease g++
 
 ## Installing
 
