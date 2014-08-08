@@ -27,6 +27,12 @@ unit-test: all FORCE
 	POMAGMA_DEBUG=1 \
 	  POMAGMA_LOG_FILE=$(shell pwd)/data/debug.log \
 	  $(MAKE) -C build/debug test
+	$(MAKE) node-test
+
+data/atlas/skrj/region.normal.2047.h5:
+	mkdir -p data/atlas/skrj/
+	7z e testdata/atlas/skrj/region.normal.2047.h5.7z -odata/atlas/skrj
+node-test: all data/atlas/skrj/region.normal.2047.h5 FORCE
 	POMAGMA_DEBUG=1 npm test
 
 h4-test: all FORCE
