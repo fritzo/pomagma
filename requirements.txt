@@ -1,8 +1,5 @@
-numpy
-scipy
-matplotlib
-tables
-protobuf
+#tables
+#protobuf
 nose
 mock
 pep8
