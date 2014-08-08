@@ -22,7 +22,11 @@ GlobalLock::GlobalLock ()
 
 GlobalLock::~GlobalLock ()
 {
-    H5close();
+    // In moving from 1.8.4 to 1.8.11,
+    // HDF5 starts to break when H5close is called multiple times.
+    //H5close();
+    H5garbage_collect();
+
     g_mutex.unlock();
 }
 
