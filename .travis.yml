@@ -12,7 +12,10 @@ cache:
 virtualenv:
   system_site_packages: true
 before_install:
-  - sudo apt-get install -qq libzmq3-dev
+  - # Work around https://github.com/travis-ci/travis-ci/issues/1715
+  - sudo rm /etc/apt/sources.list.d/travis_ci_zeromq3-source.list
+  - sudo apt-get update
+  - sudo apt-get install libzmq3-dev
   - export PIP_DOWNLOAD_CACHE=$HOME/.pip-cache
   - pip install -r requirements.txt
   - export MAKEFLAGS="-j 2 -S"
