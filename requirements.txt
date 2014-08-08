@@ -1,5 +1,5 @@
-#tables
-#protobuf
+tables
+protobuf
 nose
 mock
 pep8

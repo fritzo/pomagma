@@ -13,7 +13,7 @@ virtualenv:
   system_site_packages: true
 before_install:
   - export PIP_DOWNLOAD_CACHE=$HOME/.pip-cache
-  - pip install nose mock pep8 pyflakes simplejson pyzmq parsable boto
+  - pip install nose mock pep8 pyflakes simplejson pyzmq parsable boto protobuf tables
   - export MAKEFLAGS="-j 2 -S"
 install:
   - . install.sh
