@@ -8,8 +8,7 @@ all:
 	python -m pomagma.make build
 
 install:
-	./install.sh
-	$(MAKE) all
+	. ./install.sh
 
 set-ulimit: FORCE
 	$(call ulimit -c unlimited)

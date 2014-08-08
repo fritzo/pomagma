@@ -1,6 +1,6 @@
 {
   "name": "pomagma",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Client library for pomagma inference engine",
   "main": "src/index.js",
   "directories": {
@@ -23,25 +23,30 @@
     "src/analyst/testdata/validate_examples.json",
     "LICENSE"
   ],
+  "dependencies": {
+    "protobufjs": "^3.2.2",
+    "underscore": "^1.6.0",
+    "zmq": "^2.7.0"
+  },
+  "devDependencies": {
+    "chai": "^1.9.1",
+    "mocha": "^1.21.4"
+  },
   "scripts": {
     "test": "mocha --reporter spec src/test.js"
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/fritzo/pomagma"
+    "url": "https://github.com/fritzo/pomagma.git"
   },
-  "dependencies": {
-    "underscore": ">=1.6.0",
-    "zmq": ">=2.6.0",
-    "protobufjs": ">=0.8.7"
-  },
-  "devDependencies": {
-    "mocha": ">=1.17.1",
-    "chai": ">=1.9.0"
-  },
+  "keywords": [
+    "pomagma",
+    "puddle"
+  ],
   "author": "Fritz Obermeyer",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/fritzo/pomagma/issues"
-  }
+  },
+  "homepage": "https://github.com/fritzo/pomagma"
 }

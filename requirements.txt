@@ -8,10 +8,6 @@ mock
 pep8
 pyflakes
 simplejson
-bottle
-bottle-cork
-selenium
-splinter
 pyzmq
-git+ssh://git@github.com/boto/boto
-git+ssh://git@github.com/fritzo/parsable.py
+parsable
+boto

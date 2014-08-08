@@ -103,29 +103,29 @@ that this very repo is stored in.)
 - [/build](build) - destination of C++ builds
 - [/pomagma](pomagma) - a symbolic link to appease `pip install -e`
 
-## Installation
+## Installing
 
 The back-end inference service currently targets Ubuntu 12.04 LTS.
 
     # install and test
     git clone git@github.com:fritzo/pomagma
     cd pomagma
-    ./install.sh    # If mkvirtualenv fails, run manually.  FIXME
+    . install.sh
     make test
 
     # build minimal atlas
     python -m pomagma init
 
     # continuously enlarge atlas (for months)
-    python -m pomagma explore
+    python -m pomagma explore       # Ctrl-C to stop
 
     # run analyst servers
-    python -m pomagma analyze
+    python -m pomagma analyze       # Ctrl-C to stop
 
 The canonical editor front-end is [puddle](https://github.com:fritzo/puddle),
 a node.js+browser system that connects to `POMAGMA_ANALYST_ADDRESS`.
 
-## Configuration
+## Configuring
 
 To run in debug mode, define an environment variable
 
