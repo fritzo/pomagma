@@ -1,6 +1,6 @@
-# Pomagma
+# Pomagma [![Build Status](https://travis-ci.org/frito/pomagma.svg?branch=master)](https://travis-ci.org/fritzo/pomagma)
 
-## An Experiment in Extensional Programming.
+An experiment in Extensional Programming.
 
 Pomagma is a extensional programming environment for developing computational behaviors.
 Extensionality is the idea that two programs can be considered equal
