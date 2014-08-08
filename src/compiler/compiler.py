@@ -35,16 +35,19 @@ def stack_depth():
     return depth - MIN_STACK_DEPTH
 
 
+def POMAGMA_DEBUG_0(*args):
+    pass
+
+
+def POMAGMA_DEBUG_1(message, *args):
+    print 'DEBUG{}'.format(' ' * stack_depth()),
+    print message.format(*args)
+
+
 if pomagma.util.LOG_LEVEL >= pomagma.util.LOG_LEVEL_DEBUG:
-
-    def POMAGMA_DEBUG(message, *args):
-        print 'DEBUG{}'.format(' ' * stack_depth()),
-        print message.format(*args)
-
+    POMAGMA_DEBUG = POMAGMA_DEBUG_1
 else:
-
-    def POMAGMA_DEBUG(*args):
-        pass
+    POMAGMA_DEBUG = POMAGMA_DEBUG_0
 
 
 # ----------------------------------------------------------------------------

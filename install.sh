@@ -18,16 +18,18 @@ sudo apt-get install -y \
   nodejs \
   #
 
+if env | grep -q ^VIRTUAL_ENV=
+then
+	echo "Installing in $VIRTUAL_ENV"
+else
+	echo "Making new virtualenv"
+	mkvirtualenv --system-site-packages pomagma
+	deactivate
+	workon pomagma
+fi
+pip install -r requirements.txt
+pip install -e .
+
 npm update
 
-# FIXME mkvirtualenv never automatically works; possible solutions:
-# http://stackoverflow.com/questions/13111881
-# http://stackoverflow.com/questions/18627250
-# http://stackoverflow.com/questions/18337767
-workon pomagma || mkvirtualenv --system-site-packages pomagma
-deactivate
-workon pomagma &&\
-pip install -r requirements.txt &&\
-pip install -e . &&\
 make all
-
