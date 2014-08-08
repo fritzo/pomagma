@@ -147,4 +147,4 @@ These are specified by environment variables
 ## License
 
 Copyright 2005-2014 Fritz Obermeyer.<br/>
-All code is licensed under the MIT license unless otherwise noted.
+All code is licensed under the [MIT license](/LICENSE) unless otherwise noted.
