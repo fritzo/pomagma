@@ -29,6 +29,7 @@ else
 fi
 pip install -r requirements.txt
 pip install -e .
+. $VIRTUAL_ENV/bin/activate
 
 npm update
 
