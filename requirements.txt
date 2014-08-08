@@ -1,4 +1,4 @@
-tables
+tables<3.0.0a0
 protobuf
 nose
 mock
