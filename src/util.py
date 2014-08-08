@@ -17,7 +17,7 @@ ROOT = os.path.dirname(SRC)
 THEORY = os.path.join(SRC, 'theory')
 LANGUAGE = os.path.join(SRC, 'language')
 DATA = os.path.join(ROOT, 'data')
-debug = 'POMAGMA_DEBUG' in os.environ
+debug = int(os.environ.get('POMAGMA_DEBUG', 0))
 if debug:
     print 'Running in debug mode'
     BUILD = os.path.join(ROOT, 'build', 'debug')

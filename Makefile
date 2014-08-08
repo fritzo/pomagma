@@ -4,11 +4,8 @@ all:
 	$(MAKE) -C src/language
 	$(MAKE) -C src/cartographer
 	$(MAKE) -C src/analyst
-	POMAGMA_DEBUG= python -m pomagma.make build
+	POMAGMA_DEBUG=1 python -m pomagma.make build
 	python -m pomagma.make build
-
-install:
-	. ./install.sh
 
 set-ulimit: FORCE
 	$(call ulimit -c unlimited)
@@ -18,20 +15,20 @@ static-check: FORCE
 	find src | grep '.py$$' | grep -v '_pb2.py' | xargs pep8
 
 unit-test: all set-ulimit FORCE
-	POMAGMA_DEBUG= python -m pomagma.make test-units -v
+	POMAGMA_DEBUG=1 python -m pomagma.make test-units -v
 batch-test: all set-ulimit FORCE
-	POMAGMA_DEBUG= python -m pomagma.make test-atlas
+	POMAGMA_DEBUG=1 python -m pomagma.make test-atlas
 h4-test: all set-ulimit FORCE
-	POMAGMA_DEBUG= python -m pomagma.make test-atlas h4
+	POMAGMA_DEBUG=1 python -m pomagma.make test-atlas h4
 sk-test: all set-ulimit FORCE
-	POMAGMA_DEBUG= python -m pomagma.make test-atlas sk
+	POMAGMA_DEBUG=1 python -m pomagma.make test-atlas sk
 skj-test: all set-ulimit FORCE
-	POMAGMA_DEBUG= python -m pomagma.make test-atlas skj
+	POMAGMA_DEBUG=1 python -m pomagma.make test-atlas skj
 skrj-test: all set-ulimit FORCE
-	POMAGMA_DEBUG= python -m pomagma.make test-atlas skrj
+	POMAGMA_DEBUG=1 python -m pomagma.make test-atlas skrj
 test: all set-ulimit FORCE
-	POMAGMA_DEBUG= python -m pomagma.make test-units -v
-	POMAGMA_DEBUG= python -m pomagma.make test-atlas
+	POMAGMA_DEBUG=1 python -m pomagma.make test-units -v
+	POMAGMA_DEBUG=1 python -m pomagma.make test-atlas
 
 h4: all
 	python -m pomagma make h4

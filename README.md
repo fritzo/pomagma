@@ -127,9 +127,9 @@ a node.js+browser system that connects to `POMAGMA_ANALYST_ADDRESS`.
 
 ## Configuring
 
-To run in debug mode, define an environment variable
+To run in debug mode, set the environment variable
 
-    POMAGMA_DEBUG=
+    POMAGMA_DEBUG=1
 
 To use specific ports or addresses, override these defaults
 
