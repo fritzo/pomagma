@@ -12,14 +12,22 @@ import multiprocessing
 import boto
 import parsable
 
+TRAVIS_CI = 'TRAVIS' in os.environ and 'CI' in os.environ
+
 
 def try_connect_s3(bucket):
+    if TRAVIS_CI:
+        print 'WARNING avoid connecting to bucket on travis-ci'
+        return None
     try:
         connection = boto.connect_s3().get_bucket(bucket)
         print 'connected to bucket', bucket
         return connection
-    except boto.exception.NoAuthHandlerFound:
-        print 'WARNING failed to connect to s3 bucket {}\n'.format(bucket)
+    except boto.exception.NoAuthHandlerFound as e:
+        print 'WARNING failed to authenticate s3 bucket {}\n'.format(bucket), e
+        return None
+    except Exception as e:
+        print 'WARNING failed to connect to s3 bucket {}\n'.format(bucket), e
         return None
 
 
