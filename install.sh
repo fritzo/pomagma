@@ -9,6 +9,7 @@ sudo apt-get install -y \
   libprotobuf-dev protobuf-compiler python-protobuf \
   libhdf5-serial-dev \
   libssl-dev \
+  libzmq-dev \
   python-pip virtualenvwrapper \
   python-tables \
   graphviz \
@@ -16,10 +17,6 @@ sudo apt-get install -y \
   p7zip-full \
   nodejs \
   #
-
-# support both ubuntu 12.04 and 14.04, resp:
-sudo apt-get install -y libzmq3-dev || \
-sudo apt-get install -y libzmq-dev
 
 if env | grep -q ^VIRTUAL_ENV=
 then

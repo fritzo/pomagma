@@ -12,7 +12,6 @@ cache:
 virtualenv:
   system_site_packages: true
 before_install:
-  - # Work around https://github.com/travis-ci/travis-ci/issues/1715
   - sudo rm /etc/apt/sources.list.d/travis_ci_zeromq3-source.list
   - export PIP_DOWNLOAD_CACHE=$HOME/.pip-cache
   - pip install -r requirements.txt
