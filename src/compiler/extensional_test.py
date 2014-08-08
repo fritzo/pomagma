@@ -69,8 +69,7 @@ def test_iter_eta_substitutions():
         set([
             x,
             a.abstract(a),
-            APP(x, a).abstract(a),
-        ]))
+            APP(x, a).abstract(a)]))
 
 
 def test_iter_closure_maps():

@@ -9,6 +9,15 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Woverloaded-virtual -Wsign-promo -Wunde
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -funswitch-loops -fomit-frame-pointer -pipe")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DH5_NO_DEPRECATED_SYMBOLS")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DH5Acreate_vers=2")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DH5Dcreate_vers=2")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DH5Dopen_vers=2")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DH5Eprint_vers=2")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DH5Eset_auto_vers=2")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DH5Gcreate_vers=2")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DH5Gopen_vers=2")
+
 if(DEFINED ENV{POMAGMA_NO_OPENMP})
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-error=unknown-pragmas")
 else()

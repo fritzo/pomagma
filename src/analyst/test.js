@@ -11,9 +11,9 @@ var before = require('mocha').before;
 var after = require('mocha').after;
 var spawn = require('child_process').spawn;
 
-var THEORY = process.env.THEORY || 'skj';
+var THEORY = 'skrj';
+var SIZE = pomagma.MIN_SIZES[THEORY];
 var DATA = path.join(pomagma.util.DATA, 'test', 'debug', 'atlas', THEORY);
-var WORLD = process.env.WORLD || path.join(DATA, '0.normal.h5');
 var ADDRESS = 'ipc://' + path.join(DATA, 'socket');
 var OPTIONS = {
   'log_file': path.join(DATA, 'analyst_test.log'),
@@ -48,7 +48,7 @@ var serve  = function () {
   var python = process.env.VIRTUAL_ENV + '/bin/python';
   var server = spawn(
     python,
-    ['-m', 'pomagma', 'analyze', THEORY, 'address=' + ADDRESS],
+    ['-m', 'pomagma', 'analyze', THEORY, SIZE, ADDRESS],
     {env: process.env});
   server.stdout.on('data', function (data) {
     console.log('server: ' + data);
@@ -75,7 +75,7 @@ after(function(){
   server.on('close', function(code){
     console.log('server exited with code ' + code);
   });
-  server.kill('SIGHUP');
+  server.kill('SIGINT');
 });
 
 suite('analyst', function(){

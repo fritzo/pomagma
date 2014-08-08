@@ -12,4 +12,11 @@ exports.util = {
   LOG_LEVEL_DEBUG: 3
 };
 
+exports.MIN_SIZES = {
+  'h4': 127,
+  'sk': 1023,
+  'skj': 1535,
+  'skrj': 2047
+};
+
 exports.analyst = require('./analyst/index.js');

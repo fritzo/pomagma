@@ -359,26 +359,6 @@ def use_memcheck(options, output='memcheck.out'):
     return options
 
 
-def build():
-    buildtype = 'Debug' if debug else 'RelWithDebInfo'
-    buildflag = '-DCMAKE_BUILD_TYPE={}'.format(buildtype)
-    if not os.path.exists(BUILD):
-        os.makedirs(BUILD)
-    with chdir(BUILD):
-        check_call('cmake', buildflag, ROOT)
-        check_call('make', '--quiet', '--jobs=%d' % (1 + CPU_COUNT))
-
-
-def test():
-    build()
-    buildtype = 'debug' if debug else 'release'
-    opts = {
-        'log_file': os.path.join(DATA, 'test', '{}.log'.format(buildtype)),
-        'log_level': LOG_LEVEL_DEBUG,
-    }
-    log_call('make', '-C', BUILD, 'test', **opts)
-
-
 def coverity():
     '''
     See http://scan.coverity.com

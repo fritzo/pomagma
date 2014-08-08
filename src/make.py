@@ -5,25 +5,6 @@ import pomagma.util
 from pomagma import atlas, surveyor, cartographer, theorist, analyst
 
 
-@parsable.command
-def build():
-    '''
-    Build pomagma tools from source.
-    '''
-    pomagma.util.build()
-
-
-@parsable.command
-def test_units(*noseflags):
-    '''
-    Run unit tests.
-    '''
-    pomagma.util.check_call('nosetests', pomagma.util.SRC, *noseflags)
-    pomagma.util.check_call('npm', 'test')
-    pomagma.util.build()
-    pomagma.util.test()
-
-
 def _test_atlas(theory):
     '''
     Test basic operations in one theory:
@@ -119,9 +100,6 @@ def test_atlas(theory='all'):
     else:
         theories = [theory]
 
-    print '-' * 78
-    print 'Building'
-    pomagma.util.build()
     for theory in theories:
         print '-' * 78
         print 'Testing', theory
@@ -148,7 +126,6 @@ def profile_util():
     '''
     Profile data structures.
     '''
-    pomagma.util.build()
     buildtype = 'debug' if pomagma.util.debug else 'release'
     log_file = os.path.join(pomagma.util.DATA, 'profile', buildtype + '.log')
     if os.path.exists(log_file):
