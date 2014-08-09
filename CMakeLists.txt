@@ -18,6 +18,10 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DH5Eset_auto_vers=2")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DH5Gcreate_vers=2")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DH5Gopen_vers=2")
 
+# In moving from 1.8.4 to 1.8.11,
+# HDF5 starts to break when H5close is called multiple times.
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DPOMAGMA_H5_CLOSE_AND_REOPEN")
+
 if(DEFINED ENV{POMAGMA_NO_OPENMP})
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-error=unknown-pragmas")
 else()

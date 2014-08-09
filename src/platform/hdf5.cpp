@@ -13,6 +13,7 @@ std::mutex g_mutex;
 GlobalLock::GlobalLock ()
 {
     g_mutex.lock();
+
     H5open();
 
     // permanently turn off error reporting to stderr
@@ -22,10 +23,11 @@ GlobalLock::GlobalLock ()
 
 GlobalLock::~GlobalLock ()
 {
-    // In moving from 1.8.4 to 1.8.11,
-    // HDF5 starts to break when H5close is called multiple times.
-    //H5close();
     H5garbage_collect();
+
+#ifdef POMAGMA_H5_CLOSE_AND_REOPEN
+    H5close();
+#endif // POMAGMA_H5_CLOSE_AND_REOPEN
 
     g_mutex.unlock();
 }
