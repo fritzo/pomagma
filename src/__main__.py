@@ -24,6 +24,11 @@ def raise_keyboard_interrupt(signum, frame):
     raise KeyboardInterrupt()
 
 
+def already_exists(path):
+    # like os.path.exists, but ignores bootstrapped worlds
+    return os.path.exists(path) and not os.path.islink(path)
+
+
 @parsable.command
 def test(theory=THEORY, extra_size=0, **options):
     '''
@@ -100,8 +105,8 @@ def init(theory=THEORY, **options):
         with pomagma.util.temp_copy(survey) as temp:
             surveyor.init(theory, temp, world_size, **options)
         with atlas.load(theory, survey, **options) as db:
-            assert not os.path.exists(world), world
-            assert not os.path.exists(normal), normal
+            assert not already_exists(world), world
+            assert not already_exists(normal), normal
             db.validate()
             db.dump(world)
             db.dump(normal)
@@ -146,7 +151,7 @@ def make(theory=THEORY, max_size=8191, step_size=512, **options):
     Options: log_level, log_file
     '''
     path = os.path.join(pomagma.util.DATA, 'atlas', theory)
-    if not os.path.exists(path):
+    if not already_exists(path):
         init(theory, **options)
     explore(theory, max_size, step_size, **options)
 
@@ -161,7 +166,7 @@ def translate(theory=THEORY, **options):
         world = 'world.h5'
         init = pomagma.util.temp_name('init.h5')
         aggregate = pomagma.util.temp_name('aggregate.h5')
-        assert os.path.exists(world), 'First initialize world map'
+        assert already_exists(world), 'First initialize world map'
         options.setdefault('log_file', 'translate.log')
         init_size = pomagma.util.MIN_SIZES[theory]
         surveyor.init(theory, init, init_size, **options)
@@ -179,7 +184,7 @@ def theorize(theory=THEORY, **options):
         diverge_theorems = 'diverge_theorems.facts'
         equal_conjectures = 'equal_conjectures.facts'
         nless_theorems = 'nless_theorems.facts'
-        assert os.path.exists(world), 'First build world map'
+        assert already_exists(world), 'First build world map'
         options.setdefault('log_file', 'theorize.log')
 
         with atlas.load(theory, world, **options) as db:
@@ -266,7 +271,7 @@ def analyze(theory=THEORY, size=None, address=analyst.ADDRESS, **options):
             world = 'world.normal.h5'
         else:
             world = 'region.normal.{}.h5'.format(size)
-        assert os.path.exists(world), 'First initialize normalized world'
+        assert already_exists(world), 'First initialize normalized world'
         try:
             server = analyst.serve(theory, world, address=address, **options)
             server.wait()

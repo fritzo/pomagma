@@ -1,6 +1,4 @@
-DATA:=$(shell pwd)/data
-
-all:
+all: bootstrap fixture
 	$(MAKE) python
 	$(MAKE) -C src/language
 	$(MAKE) -C src/cartographer
@@ -26,13 +24,17 @@ release: FORCE
 
 unit-test: all fixture FORCE
 	POMAGMA_DEBUG=1 nosetests -v pomagma
-	POMAGMA_LOG_FILE=$(DATA)/debug.log $(MAKE) -C build/debug test
+	POMAGMA_LOG_FILE=$(shell pwd)/data/debug.log $(MAKE) -C build/debug test
 	POMAGMA_DEBUG=1 npm test
 
-fixture: data/atlas/skrj/region.normal.2047.h5
+fixture: data/atlas/skrj/region.normal.2047.h5 FORCE
 data/atlas/skrj/region.normal.2047.h5:
 	mkdir -p data/atlas/skrj/
-	7z e testdata/atlas/skrj/region.normal.2047.h5.7z -odata/atlas/skrj
+	7z e bootstrap/atlas/skrj/region.normal.2047.h5.7z -odata/atlas/skrj
+
+bootstrap: data/atlas/skrj/world.normal.h5 FORCE
+data/atlas/skrj/world.normal.h5: data/atlas/skrj/region.normal.2047.h5
+	cd data/atlas/skrj ; ln -s region.normal.2047.h5 world.normal.h5
 
 h4-test: all FORCE
 	POMAGMA_DEBUG=1 python -m pomagma.make test-atlas h4
