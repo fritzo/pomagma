@@ -20,4 +20,4 @@ install:
   - . install.sh
   - pip freeze
 script:
-  - make unit-test
+  - make small-test
