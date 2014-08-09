@@ -155,7 +155,7 @@ inline float getenv_default (const char * key, float default_val)
 const char * const DEFAULT_LOG_FILE = "pomagma.log";
 const size_t DEFAULT_LOG_LEVEL = 1;
 
-const std::string g_log_level_name[4] =
+static const char * g_log_level_name[4] =
 {
     "ERROR   ",
     "WARNING ",
@@ -188,7 +188,7 @@ public:
     {
         m_message << std::left << std::setw(8) << getpid();
         m_message << std::left << std::setw(12) << get_elapsed_time();
-        m_message << g_log_level_name[std::min<size_t>(3, level)];
+        m_message << g_log_level_name[min<size_t>(3, level)];
     }
 
     ~Log ()
