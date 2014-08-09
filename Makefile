@@ -49,6 +49,12 @@ skrj-test: all FORCE
 batch-test: all FORCE
 	POMAGMA_DEBUG=1 python -m pomagma.make test-atlas
 
+small-test: all FORCE
+	$(MAKE) unit-test
+	$(MAKE) h4-test
+	@echo '----------------'
+	@echo 'PASSED ALL TESTS'
+
 test: all FORCE
 	$(MAKE) unit-test
 	$(MAKE) batch-test
