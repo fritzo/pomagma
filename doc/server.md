@@ -1,9 +1,27 @@
-# Using Pomagma
+# Administering a Pomagma Server
 
-* [Configuring](#configuring)
-* [Client API](#client)
 * [File Organization](#files)
+* [Testing](#testing)
+* [Configuring](#configuring)
 * [Dataflow Architecture](#dataflow)
+
+## File Organization <a name="files"/>
+
+- [/src](/src) - source code (C++, python, javascript)
+- [/doc](/doc) - developer documentation
+- [/data](/data) - generated data, mirroring an S3 bucket
+- [/bootstrap](/bootstrap) - a small git-cached atlas for testing
+- [/build](/build) - destination of C++ builds
+- [/pomagma](/pomagma) - a symbolic link to appease `pip install -e`
+- [/include/pomagma](/include/pomagma) - a symbolic link to appease g++
+
+## Testing <a name="testing"/>
+
+Pomagma comes with three default levels of tests:
+
+    make small-test     # runs on travis-ci
+    make test
+    make big-test       # more expensive with larger atlas
 
 ## Configuring <a name="configuring"/>
 
@@ -23,21 +41,6 @@ These are specified by environment variables
     AWS_ACCESS_KEY_ID=...
     AWS_SECRET_ACCESS_KEY=...
     POMAGMA_BUCKET=Example-Amazon-S3-bucket
-
-## Client API <name="client"/>
-
-See [test.py](/src/analyst/test.py) for example python usage.
-See [test.js](/src/analyst/test.js) for example node.js usage.
-
-## File Organization <a name="files"/>
-
-- [/src](/src) - source code (C++, python, javascript)
-- [/doc](/doc) - developer documentation
-- [/data](/data) - generated data, mirroring an S3 bucket
-- [/bootstrap](/bootstrap) - a small git-cached atlas for testing
-- [/build](/build) - destination of C++ builds
-- [/pomagma](/pomagma) - a symbolic link to appease `pip install -e`
-- [/include/pomagma](/include/pomagma) - a symbolic link to appease g++
 
 ## Dataflow Architecture <a name="dataflow"/>
 

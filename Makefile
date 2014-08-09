@@ -1,4 +1,6 @@
-all: bootstrap fixture
+PY_FILES:=setup.py $(find src | grep '.py$$' | grep -v '_pb2.py')
+
+all: bootstrap fixture FORCE
 	$(MAKE) python
 	$(MAKE) -C src/language
 	$(MAKE) -C src/cartographer
@@ -6,8 +8,8 @@ all: bootstrap fixture
 	$(MAKE) debug release
 
 python: FORCE
-	find src | grep '.py$$' | grep -v '_pb2.py' | xargs pyflakes
-	find src | grep '.py$$' | grep -v '_pb2.py' | xargs pep8
+	pyflakes $(PY_FILES)
+	pep8 $(PY_FILES)
 	pip install -e .
 
 debug: FORCE

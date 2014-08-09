@@ -1,6 +1,6 @@
 # Pomagma: An experiment in Extensional Programming
 
-The Pomagma+[Puddle](https://github.com/fritzo/puddle) system
+The [Pomagma](https://github.com/fritzo/pomagma)+[Puddle](https://github.com/fritzo/puddle) system
 is an extensional programming environment
 for developing computational behaviors.
 
@@ -54,7 +54,7 @@ is to define a term `x` to have type `t`
 iff `x` is a fixed-point of `t`, i.e., `x:t` iff `t x = x`.
 The second idea, from <a href=4>[4]</a>,
 is to use the combination of non-determinism and
-observational equivalence to define higher-order polymorhic types `t`
+observational equivalence to define higher-order polymorphic types `t`
 inside the untyped base language.
 
 ### Reflection: extensional quoting
