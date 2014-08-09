@@ -1,3 +1,5 @@
+DATA:=$(shell pwd)/data
+
 all:
 	$(MAKE) python
 	$(MAKE) -C src/language
@@ -22,18 +24,15 @@ release: FORCE
 	  && cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo ../.. \
 	  && $(MAKE)
 
-unit-test: all FORCE
+unit-test: all fixture FORCE
 	POMAGMA_DEBUG=1 nosetests -v pomagma
-	POMAGMA_DEBUG=1 \
-	  POMAGMA_LOG_FILE=$(shell pwd)/data/debug.log \
-	  $(MAKE) -C build/debug test
-	$(MAKE) node-test
+	POMAGMA_LOG_FILE=$(DATA)/debug.log $(MAKE) -C build/debug test
+	POMAGMA_DEBUG=1 npm test
 
+fixture: data/atlas/skrj/region.normal.2047.h5
 data/atlas/skrj/region.normal.2047.h5:
 	mkdir -p data/atlas/skrj/
 	7z e testdata/atlas/skrj/region.normal.2047.h5.7z -odata/atlas/skrj
-node-test: all data/atlas/skrj/region.normal.2047.h5 FORCE
-	POMAGMA_DEBUG=1 npm test
 
 h4-test: all FORCE
 	POMAGMA_DEBUG=1 python -m pomagma.make test-atlas h4

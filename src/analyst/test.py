@@ -7,9 +7,14 @@ import pomagma.analyst
 import simplejson as json
 
 
-THEORY = os.environ.get('THEORY', 'skj')
+THEORY = os.environ.get('THEORY', 'skrj')
+SIZE = pomagma.util.MIN_SIZES[THEORY]
+WORLD = os.path.join(
+    pomagma.util.DATA,
+    'atlas',
+    THEORY,
+    'region.normal.{:d}.h5'.format(SIZE))
 DATA = os.path.join(pomagma.util.DATA, 'test', 'debug', 'atlas', THEORY)
-WORLD = os.environ.get('WORLD', os.path.join(DATA, '0.normal.h5'))
 ADDRESS = 'ipc://{}'.format(os.path.join(DATA, 'socket'))
 OPTIONS = {
     'log_file': os.path.join(DATA, 'analyst_test.log'),
