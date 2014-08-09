@@ -21,3 +21,4 @@
 /cov-int/
 *.egg-info/
 node_modules/
+/dist/
