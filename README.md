@@ -14,7 +14,7 @@ Pomagma has client libraries in python and Node.js, and powers the
 ## Documentation
 
 * [Philosophy](/doc/philosophy.md)
-* [Using a client API](/doc/client.md)
+* [Using a client library](/doc/client.md)
 * [Administering a server](/doc/server.md)
 
 ## Installing

@@ -24,6 +24,24 @@ class AbstractionFailed(Exception):
     pass
 
 
+def abstract_symmetric(self, var, atom, operation):
+    # K-compose-eta abstraction
+    lhs, rhs = self.args
+    if var in lhs.vars:
+        if var in rhs.vars:
+            return operation(lhs.abstract(var), rhs.abstract(var))
+        elif lhs == var:
+            return APP(atom, rhs)
+        else:
+            return COMP(APP(atom, rhs), lhs.abstract(var))
+    else:
+        assert var in rhs.vars
+        if rhs == var:
+            return APP(atom, lhs)
+        else:
+            return COMP(APP(atom, lhs), rhs.abstract(var))
+
+
 @methodof(Expression)
 def abstract(self, var):
     assert isinstance(var, Expression)
@@ -74,37 +92,9 @@ def abstract(self, var):
                 else:
                     return COMP(APP(B, lhs), rhs.abstract(var))
         elif name == 'JOIN':
-            # K-compose-eta abstraction
-            lhs, rhs = self.args
-            if var in lhs.vars:
-                if var in rhs.vars:
-                    return JOIN(lhs.abstract(var), rhs.abstract(var))
-                elif lhs == var:
-                    return APP(J, rhs)
-                else:
-                    return COMP(APP(J, rhs), lhs.abstract(var))
-            else:
-                assert var in rhs.vars
-                if rhs == var:
-                    return APP(J, lhs)
-                else:
-                    return COMP(APP(J, lhs), rhs.abstract(var))
+            return abstract_symmetric(self, var, J, JOIN)
         elif name == 'RAND':
-            # K-compose-eta abstraction
-            lhs, rhs = self.args
-            if var in lhs.vars:
-                if var in rhs.vars:
-                    return RAND(lhs.abstract(var), rhs.abstract(var))
-                elif lhs == var:
-                    return APP(R, rhs)
-                else:
-                    return COMP(APP(R, rhs), lhs.abstract(var))
-            else:
-                assert var in rhs.vars
-                if rhs == var:
-                    return APP(R, lhs)
-                else:
-                    return COMP(APP(R, lhs), rhs.abstract(var))
+            return abstract_symmetric(self, var, R, RAND)
         else:
             raise AbstractionFailed
     elif self.is_rel():
