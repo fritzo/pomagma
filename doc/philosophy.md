@@ -100,19 +100,19 @@ that this very repo is stored in.)
 
 <hr/>
 
-- [1] <a name=1/>
+- [1] <a name="1"/>
   the &lambda;-join-calculus in terms of Scott's information ordering.
-- [2] <a name=2/>
+- [2] <a name="2"/>
   Hyland and Wadsworth's &lambda;-theory
   <it>H</it><sup>&#42;</sup> of observational equivalence,
   the equational theory of Scott's D<sub>&#8734;</sub> model.
-- [3] <a name=3/>
+- [3] <a name="3"/>
   ["Datatypes as Lattices"](http://www.cs.ox.ac.uk/files/3287/PRG05.pdf)
   -Dana Scott (1976)
-- [4] <a name=4/>
+- [4] <a name="4"/>
   Pomagma began as a PhD [thesis](http://fritzo.org/thesis.pdf)
   and [codebase](http://github.com/fritzo/Johann).
-- [5] <a name=5/>
+- [5] <a name="5"/>
   See
   ["Predicativity"](http://math.stanford.edu/~feferman/papers/predicativity.pdf)
   or [other papers](http://math.stanford.edu/~feferman/papers.html)
