@@ -25,8 +25,8 @@ But a key missing concept is the use of extensionality.
 Pomagma is an experiment to see how far extensionalty can be pushed.
 
 Pomagma is founded on a simple untyped pure functional programming language,
-the non-deterministic &lambda;-calculus <a href="#1">[1]</a>,
-and a "maximally-coarse" semantics <a href="#2">[2]</a>
+the non-deterministic &lambda;-calculus <a href="#user-content-1">[1]</a>,
+and a "maximally-coarse" semantics <a href="#user-content-2">[2]</a>
 where as many programs as possible
 are considered equal.
 At the core of the Pomagma system is an equation prover
@@ -53,10 +53,10 @@ iff for every program `f`, `f x` halts iff `f y` halts.
 ### Type System: nondeterministic polymorphism
 
 Pomagma provides a rich type system by simulating types within the base system.
-The first idea, due to Dana Scott <a href="#3">[3]</a>,
+The first idea, due to Dana Scott <a href="#user-content-3">[3]</a>,
 is to define a term `x` to have type `t`
 iff `x` is a fixed-point of `t`, i.e., `x:t` iff `t x = x`.
-The second idea, from <a href="#4">[4]</a>,
+The second idea, from <a href="#user-content-4">[4]</a>,
 is to use the combination of non-determinism and
 observational equivalence to define higher-order polymorphic types `t`
 inside the untyped base language.
@@ -81,7 +81,7 @@ This allows equations to be interpreted back into the language as terms.
 Iterating, we can thus write equations of strength all the way up the
 hyperarithmetic hierarchy to &Delta;<sub>1</sub><sup>1</sup>,
 and provide a foundation for all of Sol Feferman's predicative mathematics
-<a href="#5">[5]</a>.
+<a href="#user-content-5">[5]</a>.
 
 ### Code Format: a database of definitions and assertions
 
