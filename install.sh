@@ -5,12 +5,14 @@ sudo apt-get update
 sudo apt-get install -y \
   cmake make g++ \
   libtbb-dev \
-  libsparsehash-dev \
-  libprotobuf-dev protobuf-compiler python-protobuf \
+  libprotobuf-dev \
+  protobuf-compiler \
+  python-protobuf \
   libhdf5-serial-dev \
   libssl-dev \
   libzmq-dev \
-  python-pip virtualenvwrapper \
+  python-pip \
+  virtualenvwrapper \
   python-tables \
   graphviz \
   gdb \

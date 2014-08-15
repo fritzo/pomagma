@@ -19,12 +19,13 @@ Pomagma has client libraries in python and Node.js, and powers the
 
 ## Installing
 
-The server targets Ubuntu 12.04 and 14.04.
+The server targets Ubuntu 12.04 and 14.04, and installs in a python virtualenv.
 
     git clone https://github.com/fritzo/pomagma
     cd pomagma
     . install.sh
-    make && make test
+    make small-test     # takes ~5 CPU minutes
+    make test           # takes ~1 CPU hour
 
 Client libraries support Python 2.7 and Node.js.
 
