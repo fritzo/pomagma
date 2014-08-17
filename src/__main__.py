@@ -266,12 +266,14 @@ def analyze(theory=THEORY, size=None, address=analyst.ADDRESS, **options):
     Options: log_level, log_file
     '''
     with atlas.chdir(theory):
+        print 'DEBUG', theory
+        print 'DEBUG', os.getcwd()
         options.setdefault('log_file', 'analyst.log')
         if size is None:
             world = 'world.normal.h5'
         else:
             world = 'region.normal.{}.h5'.format(size)
-        assert already_exists(world), 'First initialize normalized world'
+        assert os.path.exists(world), 'First initialize normalized world'
         try:
             server = analyst.serve(theory, world, address=address, **options)
             server.wait()
