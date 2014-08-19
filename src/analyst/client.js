@@ -24,7 +24,14 @@ var ServerError = function (messages) {
   this.messages = messages;
 };
 ServerError.prototype.toString = function () {
-  return 'Server Errors:\n' + this.messagess.join('\n');
+  return 'Pomagma Analyst Server Errors:\n' + this.messages.join('\n');
+};
+
+var ClientError = function (message) {
+  this.message = message;
+};
+ClientError.prototype.toString = function () {
+  return 'Pomagma Analyst Client Error: ' + this.message;
 };
 
 // This works around zeromq.node's inconvenient req-rep interface.
@@ -86,10 +93,14 @@ exports.connect = function (address) {
   };
 
   var simplify = function (codes, done) {
-    assert(_.isArray(codes), codes);
-    codes.forEach(function(code){
-      assert(_.isString(code), code);
-    });
+    try {
+      assert(_.isArray(codes), codes);
+      codes.forEach(function(code){
+        assert(_.isString(code), code);
+      });
+    } catch (e) {
+      throw new ClientError(e);
+    }
     call({simplify: {codes: codes}}, function(reply){
       var results = reply.simplify.codes;
       assert(results.length == codes.length);
@@ -98,10 +109,14 @@ exports.connect = function (address) {
   };
 
   var validate = function (codes, done) {
-    assert(_.isArray(codes), codes);
-    codes.forEach(function(code){
-      assert(_.isString(code), code);
-    });
+    try {
+      assert(_.isArray(codes), codes);
+      codes.forEach(function(code){
+        assert(_.isString(code), code);
+      });
+    } catch (e) {
+      throw new ClientError(e);
+    }
     call({validate: {codes: codes}}, function(reply){
       var results = reply.validate.results;
       assert(results.length == codes.length);
@@ -114,15 +129,21 @@ exports.connect = function (address) {
   };
 
   var validateCorpus = function (lines, done) {
-    assert(_.isArray(lines), lines);
-    lines.forEach(function(line){
-      assert(_.isObject(line), line);
-      var keys = _.keys(line);
-      keys.sort();
-      assert.deepEqual(keys, ['code', 'name']);
-      assert(line.name === null || _.isString(line.name), line.name);
-      assert(_.isString(line.code), line.code);
-    });
+    try {
+      assert(_.isArray(lines), lines);
+      lines.forEach(function(line){
+        assert(_.isObject(line), line);
+        var keys = _.keys(line);
+        keys.sort();
+        assert.deepEqual(keys, ['code', 'name']);
+        assert(
+          line.name === null || _.isString(line.name),
+          'name = ' + line.name);
+        assert(_.isString(line.code), 'code = ' + line.code);
+      });
+    } catch (e) {
+      throw new ClientError(e);
+    }
     call({validate_corpus: {lines: lines}}, function(reply){
       var results = reply.validate_corpus.results;
       assert(results.length == lines.length);
@@ -138,6 +159,8 @@ exports.connect = function (address) {
     address: function(){
       return address;
     },
+    ServerError: ServerError,
+    ClientError: ClientError,
     ping: ping,
     simplify: simplify,
     validate: validate,
@@ -145,6 +168,6 @@ exports.connect = function (address) {
     close: function() {
       socket.close();
       console.log('disconnected from pomagma analyst');
-    }
+    },
   };
 };
