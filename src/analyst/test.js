@@ -2,7 +2,7 @@
 
 var fs = require('fs');
 var path = require('path');
-var _ = require('underscore');
+var _ = require('lodash');
 var pomagma = require('../index');
 var assert = require('chai').assert;
 var suite = require('mocha').suite;

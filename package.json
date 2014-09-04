@@ -1,6 +1,6 @@
 {
   "name": "pomagma",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "description": "Client library for pomagma inference engine",
   "main": "src/index.js",
   "directories": {
@@ -24,9 +24,9 @@
     "LICENSE"
   ],
   "dependencies": {
-    "protobufjs": "^3.2.2",
-    "underscore": "^1.6.0",
-    "zmq": "^2.7.0"
+    "lodash": "^2.4.1",
+    "protobufjs": "^3.6.0",
+    "zmq": "^2.8.0"
   },
   "devDependencies": {
     "chai": "^1.9.1",

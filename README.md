@@ -1,4 +1,10 @@
-# Pomagma [![Build Status](https://travis-ci.org/fritzo/pomagma.svg?branch=master)](https://travis-ci.org/fritzo/pomagma) [![Code Quality](http://img.shields.io/scrutinizer/g/fritzo/pomagma.svg)](https://scrutinizer-ci.com/g/fritzo/pomagma) [![PyPI Version](https://badge.fury.io/py/pomagma.svg)](https://pypi.python.org/pypi/pomagma) [![NPM Version](https://badge.fury.io/js/pomagma.svg)](https://badge.fury.io/js/pomagma)
+[![Build Status](https://travis-ci.org/fritzo/pomagma.svg?branch=master)](https://travis-ci.org/fritzo/pomagma)
+[![Code Quality](http://img.shields.io/scrutinizer/g/fritzo/pomagma.svg)](https://scrutinizer-ci.com/g/fritzo/pomagma)
+[![PyPI Version](https://badge.fury.io/py/pomagma.svg)](https://pypi.python.org/pypi/pomagma)
+[![NPM Version](https://badge.fury.io/js/pomagma.svg)](https://badge.fury.io/js/pomagma)
+[![NPM Dependencies](https://david-dm.org/fritzo/pomagma.svg)](https://www.npmjs.org/package/pomagma)
+
+# Pomagma
 
 Pomagma is an inference engine for
 [extensional &lambda;-calculus](/doc/philosophy.md).

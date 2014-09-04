@@ -1,7 +1,7 @@
 'use strict';
 
 var assert = require('assert');
-var _ = require('underscore');
+var _ = require('lodash');
 var path = require('path');
 var zmq = require('zmq');
 var protobuf = require('protobufjs');
