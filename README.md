@@ -14,7 +14,7 @@ Pomagma's server provides code analysis services including:
 * validation of entire codebases
 * search / code completion / program refinement
 
-Pomagma has client libraries in python and Node.js, and powers the
+Pomagma has client libraries in python and node.js, and powers the
 [Puddle](https://github.com/fritzo/puddle) reactive coding environment.
 
 ## Documentation
@@ -61,11 +61,13 @@ or the Node.js client
     console.log(db.validate(["I"]));        // prints [{"is_bot": false, "is_top": false}]
     db.close();
 
-## Building a larger atlas to power deeper analysis
+## Build an Atlas to power analysis
 
-Pomagma reasons about large programs by comparing code fragments
-to an atlas of 10<sup>3</sup>-10<sup>5</sup> basic programs.
-The tiny default atlas starts with ~2000 basic programs.
+Pomagma reasons about large programs by approximately locating code fragments
+in an **atlas** of 10<sup>3</sup>-10<sup>5</sup> basic programs.
+The more basic programs in an atlas,
+the more accurate pomagma's analysis will be.
+Pomagma ships with a tiny default atlas of ~2000 basic programs.
 
 Start building a bigger atlas
 
@@ -77,7 +79,7 @@ Pomagma is parallelized and needs lots of memory to build a large atlas.
 |---------------|--------------|--------------|----------------------|
 | 1 000 atoms   | ~1 CPU hour  | ~10MB        | ~1MB uncompressed    |
 | 10 000 atoms  | ~1 CPU week  | ~1GB         | ~100MB uncompressed  |
-| 100 000 atoms | ~5 CPU years | ~50GB        | ~10GB uncompressed   |
+| 100 000 atoms | ~5 CPU years | ~100GB       | ~10GB uncompressed   |
 
 ## License
 
