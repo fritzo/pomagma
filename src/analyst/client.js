@@ -5,6 +5,10 @@ var _ = require('lodash');
 var path = require('path');
 var zmq = require('zmq');
 var protobuf = require('protobufjs');
+var Debug = require('debug');
+var debug = Debug('pomagma:analyst');
+var WARN = Debug('pomagma:analyst:warning');
+WARN.log = console.warn.bind(console);
 
 var proto = path.join(__dirname, 'messages.proto');
 var messages = protobuf.loadProtoFile(proto).result.pomagma_messaging;
@@ -15,10 +19,6 @@ var TROOL = [];
 TROOL[Response.Trool.MAYBE] = null;
 TROOL[Response.Trool.TRUE] = true;
 TROOL[Response.Trool.FALSE] = false;
-
-var WARN = function (message) {
-  console.warn('WARNING ' + message);
-};
 
 var ServerError = function (messages) {
   this.messages = messages;
@@ -45,13 +45,13 @@ var router = function (socket) {
     callbacks[id] = done;
     request.id = id;
     var rawRequest = new Request(request).toBuffer();
-    console.log('SEND ' + JSON.stringify(Request.decode(rawRequest)));
+    debug('SEND ', JSON.stringify(Request.decode(rawRequest)));
     socket.send(rawRequest);
   };
 
   var recv = function (rawReply) {
     var reply = Response.decode(rawReply);
-    console.log('RECV ' + JSON.stringify(reply));
+    debug('RECV ', JSON.stringify(reply));
     var id = reply.id;
     assert(id !== null);
     delete reply.id;
@@ -68,7 +68,7 @@ exports.connect = function (address) {
   'use strict';
   assert(_.isString(address), address);
   var socket = zmq.socket('req');
-  console.log('connecting to analyst at ' + address);
+  debug('connecting to analyst at ' + address);
   socket.connect(address);
 
   var callUnsafe = router(socket);
@@ -167,7 +167,7 @@ exports.connect = function (address) {
     validateCorpus: validateCorpus,
     close: function() {
       socket.close();
-      console.log('disconnected from pomagma analyst');
+      debug('disconnected from pomagma analyst');
     },
   };
 };

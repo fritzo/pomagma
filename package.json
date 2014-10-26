@@ -24,6 +24,7 @@
     "LICENSE"
   ],
   "dependencies": {
+    "debug": "^2.1.0",
     "lodash": "^2.4.1",
     "protobufjs": "^3.6.0",
     "zmq": "^2.8.0"
