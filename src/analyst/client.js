@@ -2,7 +2,6 @@
 
 var assert = require('assert');
 var _ = require('lodash');
-var fs = require('fs');
 var path = require('path');
 var zmq = require('zmq');
 var protobuf = require('protobufjs');
@@ -12,8 +11,7 @@ var WARN = Debug('pomagma:analyst:warning');
 WARN.log = console.warn.bind(console);
 
 var proto = path.join(__dirname, 'messages.proto');
-assert(fs.existsSync(proto), 'missing protobuf file: ' + proto);
-var messages = protobuf.loadProtoFile(proto).result.pomagma_messaging;
+var messages = protobuf.loadProtoFile(proto).build().pomagma_messaging;
 var Request = messages.AnalystRequest;
 var Response = messages.AnalystResponse;
 
