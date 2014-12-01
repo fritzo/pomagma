@@ -4,13 +4,14 @@ Pomagma currently has client libraries in
 [python](#python) and
 [javascript](#js),
 and it is easy to write a new client library
-in any language that supports zeromq and google protocol buffers.
+in any language that supports
+[zeromq](http://zeromq.org/bindings:_start) and
+[protocol buffers](https://developers.google.com/protocol-buffers/docs/reference/other).
 The python API includes internal database testing methods
 that are not documented here.
 
-See [analyst/test.py](/src/analyst/test.py) for example python usage.
-See [analyst/test.js](/src/analyst/test.js) for example node.js usage.
-
+See [analyst/test.py](/src/analyst/test.py) for example python usage.<br/>
+See [analyst/test.js](/src/analyst/test.js) for example node.js usage.<br/>
 See the [Puddle](https://github.com/fritzo/puddle) project for more complete
 usage, e.g. [main.js](https://github.com/fritzo/puddle/blob/master/main.js).
 
@@ -18,7 +19,8 @@ usage, e.g. [main.js](https://github.com/fritzo/puddle/blob/master/main.js).
 
     python
     from pomagma import analyst
-    with analyst.connect("tcp://pomagma.org:34936") as db:
+    ADDRESS = "tcp://pomagma.org:34936"
+    with analyst.connect(ADDRESS) as db:
 
         db.ping()
 
@@ -40,8 +42,8 @@ usage, e.g. [main.js](https://github.com/fritzo/puddle/blob/master/main.js).
 ### Node.js client <a name=js></a>
 
     node
-    var ADDRESS = process.env.POMAGMA_ADDRESS;
-    db = require("pomagma").connect("tcp://pomagma.org:34936");
+    var ADDRESS = "tcp://pomagma.org:34936";
+    db = require("pomagma").connect(ADDRESS);
 
     db.ping()
 
