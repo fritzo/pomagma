@@ -1,5 +1,9 @@
 # random choice
 
+CLOSED x   CLOSED y
+-------------------
+  CLOSED RAND x y
+
 # By implementation, EQUAL RAND x y RAND y x, so forward-chaining inference
 # rules are unnecessary; however the Hindley-style extensional closure facts
 # are important and forward-chaining inference is cheap, so we add the rule

@@ -83,9 +83,10 @@ add_custom_command(
 		${SRC_DIR}/theory/order.rules
 		${SRC_DIR}/theory/join.rules
 		${SRC_DIR}/theory/types.rules
+		${SRC_DIR}/theory/a.rules
 		${SRC_DIR}/theory/sk.facts
 		${SRC_DIR}/theory/order.facts
-		${SRC_DIR}/theory/types.facts
+		${SRC_DIR}/theory/a.facts
 		cpp_out=${CMAKE_CURRENT_LIST_DIR}/skj.theory.cpp
 		theory_out=${SRC_DIR}/theory/skj.compiled
 	DEPENDS ${SRC_DIR}/compiler/util.py
@@ -100,9 +101,11 @@ add_custom_command(
 		${SRC_DIR}/theory/order.rules
 		${SRC_DIR}/theory/join.rules
 		${SRC_DIR}/theory/types.rules
+		${SRC_DIR}/theory/a.rules
 		${SRC_DIR}/theory/sk.facts
 		${SRC_DIR}/theory/order.facts
 		${SRC_DIR}/theory/types.facts
+		${SRC_DIR}/theory/a.facts
 )
 add_library(pomagma_surveyor_skj SHARED skj.theory.cpp)
 add_executable(skj.init init_main.cpp)
@@ -123,9 +126,11 @@ add_custom_command(
 		${SRC_DIR}/theory/join.rules
 		${SRC_DIR}/theory/rand.rules
 		${SRC_DIR}/theory/types.rules
+		${SRC_DIR}/theory/a.rules
 		${SRC_DIR}/theory/sk.facts
 		${SRC_DIR}/theory/order.facts
 		${SRC_DIR}/theory/types.facts
+		${SRC_DIR}/theory/a.facts
 		cpp_out=${CMAKE_CURRENT_LIST_DIR}/skrj.theory.cpp
 		theory_out=${SRC_DIR}/theory/skrj.compiled
 	DEPENDS ${SRC_DIR}/compiler/util.py
@@ -141,9 +146,11 @@ add_custom_command(
 		${SRC_DIR}/theory/join.rules
 		${SRC_DIR}/theory/rand.rules
 		${SRC_DIR}/theory/types.rules
+		${SRC_DIR}/theory/a.rules
 		${SRC_DIR}/theory/sk.facts
 		${SRC_DIR}/theory/order.facts
 		${SRC_DIR}/theory/types.facts
+		${SRC_DIR}/theory/a.facts
 )
 add_library(pomagma_surveyor_skrj SHARED skrj.theory.cpp)
 add_executable(skrj.init init_main.cpp)
@@ -163,11 +170,13 @@ add_custom_command(
 		${SRC_DIR}/theory/order.rules
 		${SRC_DIR}/theory/join.rules
 		${SRC_DIR}/theory/types.rules
+		${SRC_DIR}/theory/a.rules
 		${SRC_DIR}/theory/quote.rules
 		${SRC_DIR}/theory/reflect.rules
 		${SRC_DIR}/theory/sk.facts
 		${SRC_DIR}/theory/order.facts
 		${SRC_DIR}/theory/types.facts
+		${SRC_DIR}/theory/a.facts
 		${SRC_DIR}/theory/quote.facts
 		${SRC_DIR}/theory/reflect.facts
 		cpp_out=${CMAKE_CURRENT_LIST_DIR}/skjo.theory.cpp
@@ -184,11 +193,13 @@ add_custom_command(
 		${SRC_DIR}/theory/order.rules
 		${SRC_DIR}/theory/join.rules
 		${SRC_DIR}/theory/types.rules
+		${SRC_DIR}/theory/a.rules
 		${SRC_DIR}/theory/quote.rules
 		${SRC_DIR}/theory/reflect.rules
 		${SRC_DIR}/theory/sk.facts
 		${SRC_DIR}/theory/order.facts
 		${SRC_DIR}/theory/types.facts
+		${SRC_DIR}/theory/a.facts
 		${SRC_DIR}/theory/quote.facts
 		${SRC_DIR}/theory/reflect.facts
 )

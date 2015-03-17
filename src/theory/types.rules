@@ -35,19 +35,6 @@ EQUAL APP APP P x x APP V x   EQUAL APP APP P x y APP APP P y x
 EQUAL APP APP P x APP APP P y z APP APP P APP APP P x y z
 
 
-       LESS COMP r s I
------------------------------   ------------------------------
-LESS COMP APP CI r APP CI s A   LESS APP A f APP APP f TOP TOP
-
-# The A rule below translates from lambda calculus
-#
-#   -------------------
-#   A \a,b. f b*a = f I
-
------------------------------------
-EQUAL APP A COMP APP B f CB APP f I
-
-
 # TODO get these to compile
 #
 #LESS APP f TOP APP g TOP

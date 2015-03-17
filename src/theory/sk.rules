@@ -1,5 +1,9 @@
 # combinators
 
+CLOSED x   CLOSED y   CLOSED x   CLOSED y
+-------------------   -------------------
+  CLOSED APP x y        CLOSED COMP x y
+
 ----------------------------------   -------------------------------------
 EQUAL APP COMP x y z APP x APP y z   EQUAL COMP x COMP y z COMP COMP x y z
 

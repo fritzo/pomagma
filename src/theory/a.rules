@@ -1,0 +1,36 @@
+# A strong characterization of the type constructor A
+
+       LESS COMP r s I
+-----------------------------   ------------------------------
+LESS COMP APP CI r APP CI s A   LESS APP A f APP APP f TOP TOP
+
+# The A rule below translates from lambda calculus
+#
+#   -------------------
+#   A \a,b. f b*a = f I
+
+-----------------------------------
+EQUAL APP A COMP APP B f CB APP f I
+
+
+# A strong characterization of the type constructor A
+# in terms of two globally free variables, SECTION and RETRACT.
+# Statements involving these free variables cannot be negated.
+
+CLOSED f
+-----------------------------------------------
+NONEGATE LESS APP APP f SECTION RETRACT APP A f
+
+CLOSED f   CLOSED x   LESS APP APP f SECTION RETRACT x
+------------------------------------------------------
+NONEGATE LESS APP A f x
+
+# and fixpoint corollaries,
+
+CLOSED f
+-----------------------------------------------------------
+NONEGATE LESS APP APP APP f SECTION RETRACT x APP APP A f x
+
+CLOSED f   CLOSED x   LESS APP APP APP f SECTION RETRACT x x
+------------------------------------------------------------
+NONEGATE LESS APP APP A f x x

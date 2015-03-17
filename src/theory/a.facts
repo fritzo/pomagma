@@ -1,0 +1,9 @@
+# The type constructor A
+
+CLOSED A
+
+# TODO define A in terms of SKJ
+
+# The single axiom regarding free variables SECTION and RETRACT:
+
+LESS COMP RETRACT SECTION I

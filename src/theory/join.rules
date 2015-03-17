@@ -5,6 +5,10 @@
 # are important and forward-chaining inference is cheap, so we add the rule
 # anyway.
 
+CLOSED x   CLOSED y
+-------------------
+  CLOSED JOIN x y
+
 ----------------------------------
 OPTIONALLY EQUAL JOIN x y JOIN y x
 
