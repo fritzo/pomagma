@@ -1,6 +1,7 @@
 language: python
 compiler:
   - gcc
+  - clang
 python:
   - "2.7"
 node_js:
@@ -19,5 +20,4 @@ before_install:
 install:
   - . install.sh
   - pip freeze
-script:
-  - make small-test
+script: ./travis_test.sh

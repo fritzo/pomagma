@@ -24,6 +24,9 @@ release: FORCE
 	  && cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo ../.. \
 	  && $(MAKE)
 
+cpp-test: all FORCE
+	POMAGMA_LOG_FILE=$(shell pwd)/data/debug.log $(MAKE) -C build/debug test
+
 unit-test: all fixture FORCE
 	POMAGMA_DEBUG=1 nosetests -v pomagma
 	POMAGMA_LOG_FILE=$(shell pwd)/data/debug.log $(MAKE) -C build/debug test
