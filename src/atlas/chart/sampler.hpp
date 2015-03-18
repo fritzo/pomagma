@@ -12,8 +12,10 @@ class InjectiveFunction;
 class BinaryFunction;
 class SymmetricFunction;
 
-struct Sampler::Policy : noncopyable
+class Sampler::Policy : noncopyable
 {
+public:
+
     Carrier & carrier;
 
     Policy (Carrier & c) : carrier(c) {}

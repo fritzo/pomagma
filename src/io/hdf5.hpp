@@ -271,8 +271,8 @@ public:
 // Dataspaces
 // http://www.hdfgroup.org/HDF5/doc/RM/RM_H5S.html
 
-class Attribute;
-class Dataset;
+struct Attribute;
+struct Dataset;
 
 struct Dataspace : noncopyable
 {

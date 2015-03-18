@@ -123,11 +123,6 @@ size_t base_bin_rel_<symmetric>::count_pairs () const
     return result;
 }
 
-namespace
-{
-inline Word mask (const Word & shift) { return Word(1) << shift; }
-}
-
 template<bool symmetric>
 void base_bin_rel_<symmetric>::clear ()
 {
