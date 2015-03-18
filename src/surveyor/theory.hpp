@@ -28,6 +28,10 @@ void schedule_merge (Ob dep) { schedule(MergeTask(dep)); }
 void schedule_exists (Ob ob) { schedule(ExistsTask(ob)); }
 void schedule_less (Ob lhs, Ob rhs) { schedule(PositiveOrderTask(lhs, rhs)); }
 void schedule_nless (Ob lhs, Ob rhs) { schedule(NegativeOrderTask(lhs, rhs)); }
+void schedule_unary_relation (const UnaryRelation * rel, Ob arg)
+{
+    schedule(UnaryRelationTask(*rel, arg));
+}
 void schedule_nullary_function (const NullaryFunction * fun)
 {
     schedule(NullaryFunctionTask(*fun));

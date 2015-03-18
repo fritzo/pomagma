@@ -3,6 +3,7 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 add_library(pomagma_macrostructure SHARED
 	carrier.cpp
 	base_bin_rel.cpp
+	unary_relation.cpp
 	binary_relation.cpp
 	nullary_function.cpp
 	injective_function.cpp
@@ -26,6 +27,11 @@ target_link_libraries(macrostructure_carrier_test
 	${POMAGMA_MACROSTRUCTURE_LIBS})
 add_test(NAME macrostructure_carrier
 	COMMAND macrostructure_carrier_test)
+
+add_executable(macrostructure_unary_relation_test unary_relation_test.cpp)
+target_link_libraries(macrostructure_unary_relation_test ${POMAGMA_MACROSTRUCTURE_LIBS})
+add_test(NAME macrostructure_unary_relation
+	COMMAND macrostructure_unary_relation_test)
 
 add_executable(macrostructure_binary_relation_test binary_relation_test.cpp)
 target_link_libraries(macrostructure_binary_relation_test ${POMAGMA_MACROSTRUCTURE_LIBS})

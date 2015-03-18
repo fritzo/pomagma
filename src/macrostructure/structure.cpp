@@ -1,4 +1,5 @@
 #include "structure.hpp"
+#include "unary_relation.hpp"
 #include "binary_relation.hpp"
 #include "nullary_function.hpp"
 #include "injective_function.hpp"
@@ -50,6 +51,10 @@ void Structure::resize (size_t item_dim)
 {
     Carrier * carrier = new Carrier(item_dim, * m_signature.carrier());
 
+    for (auto pair : m_signature.unary_relations()) {
+        auto * rel = new UnaryRelation(* carrier, std::move(* pair.second));
+        delete m_signature.replace(pair.first, * rel);
+    }
     for (auto pair : m_signature.binary_relations()) {
         auto * rel = new BinaryRelation(* carrier, std::move(* pair.second));
         delete m_signature.replace(pair.first, * rel);

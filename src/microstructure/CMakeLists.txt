@@ -3,6 +3,7 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 add_library(pomagma_microstructure SHARED
 	carrier.cpp
 	base_bin_rel.cpp
+	unary_relation.cpp
 	binary_relation.cpp
 	nullary_function.cpp
 	injective_function.cpp
@@ -32,6 +33,11 @@ add_executable(microstructure_carrier_test carrier_test.cpp)
 target_link_libraries(microstructure_carrier_test ${POMAGMA_MICROSTRUCTURE_TEST_LIBS})
 add_test(NAME microstructure_carrier
 	COMMAND microstructure_carrier_test)
+
+add_executable(microstructure_unary_relation_test unary_relation_test.cpp)
+target_link_libraries(microstructure_unary_relation_test ${POMAGMA_MICROSTRUCTURE_TEST_LIBS})
+add_test(NAME microstructure_unary_relation
+	COMMAND microstructure_unary_relation_test)
 
 add_executable(microstructure_binary_relation_test binary_relation_test.cpp)
 target_link_libraries(microstructure_binary_relation_test ${POMAGMA_MICROSTRUCTURE_TEST_LIBS})

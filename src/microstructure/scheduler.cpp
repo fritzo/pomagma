@@ -166,6 +166,7 @@ static TaskQueue<MergeTask> g_merge_tasks;
 static TaskQueue<ExistsTask> g_exists_tasks;
 static TaskQueue<PositiveOrderTask> g_positive_order_tasks;
 static TaskQueue<NegativeOrderTask> g_negative_order_tasks;
+static TaskQueue<UnaryRelationTask> g_unary_relation_tasks;
 static TaskQueue<NullaryFunctionTask> g_nullary_function_tasks;
 static TaskQueue<InjectiveFunctionTask> g_injective_function_tasks;
 static TaskQueue<BinaryFunctionTask> g_binary_function_tasks;
@@ -179,6 +180,7 @@ inline void cancel_tasks_referencing (Ob ob)
     g_injective_function_tasks.cancel_referencing(ob);
     g_binary_function_tasks.cancel_referencing(ob);
     g_symmetric_function_tasks.cancel_referencing(ob);
+    g_unary_relation_tasks.cancel_referencing(ob);
     g_positive_order_tasks.cancel_referencing(ob);
     g_negative_order_tasks.cancel_referencing(ob);
 }
@@ -190,6 +192,7 @@ inline bool enforce_tasks_try_execute (bool cleanup)
         g_injective_function_tasks.try_execute() or
         g_binary_function_tasks.try_execute() or
         g_symmetric_function_tasks.try_execute() or
+        g_unary_relation_tasks.try_execute() or
         g_positive_order_tasks.try_execute() or
         g_negative_order_tasks.try_execute())
     {
@@ -322,6 +325,11 @@ void schedule (const PositiveOrderTask & task)
 void schedule (const NegativeOrderTask & task)
 {
     Scheduler::g_negative_order_tasks.push(task);
+}
+
+void schedule (const UnaryRelationTask & task)
+{
+    Scheduler::g_unary_relation_tasks.push(task);
 }
 
 void schedule (const NullaryFunctionTask & task)

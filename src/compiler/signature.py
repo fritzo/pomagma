@@ -2,6 +2,7 @@ import re
 
 
 NARGS_TABLE = {
+    'UnaryRelation': 1,
     'Equation': 2,
     'BinaryRelation': 2,
     'NullaryFunction': 0,
@@ -28,6 +29,7 @@ ARITY_TABLE = {
 }
 
 RELATION_ARITIES = frozenset([
+    'UnaryRelation',
     'Equation',
     'BinaryRelation',
 ])

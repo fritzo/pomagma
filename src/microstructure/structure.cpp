@@ -1,4 +1,5 @@
 #include "structure.hpp"
+#include "unary_relation.hpp"
 #include "binary_relation.hpp"
 #include "nullary_function.hpp"
 #include "injective_function.hpp"

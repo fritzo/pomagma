@@ -596,16 +596,9 @@ def write_event_tasks(code, sequents):
         groupname = get_group(name)
         group_tasks.setdefault(groupname, {})[name] = tasks
 
-    # TODO sort groups
-    # event_tasks = event_tasks.items()
-    # event_tasks.sort(key=lambda (name, tasks): (len(tasks), len(name), name))
-
-    group_tasks = list(group_tasks.iteritems())
-    group_tasks.sort()
-
+    group_tasks = sorted(group_tasks.iteritems())
     for groupname, group in group_tasks:
-        group = list(group.iteritems())
-        group.sort()
+        group = sorted(group.iteritems())
 
         body = Code()
 
@@ -697,8 +690,10 @@ def write_event_tasks(code, sequents):
             body=wrapindent(body),
         ).newline()
 
-    nontrivial_arities = [groupname for groupname, _ in group_tasks]
-    for arity in signature.FUNCTION_ARITIES:
+    nontrivial_arities = set(groupname for groupname, _ in group_tasks)
+    nontrivial_arities.add('Equation')
+    nontrivial_arities.add('BinaryRelation')
+    for arity in signature.FUNCTION_ARITIES | signature.RELATION_ARITIES:
         if arity not in nontrivial_arities:
             code(
                 '''

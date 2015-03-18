@@ -7,6 +7,7 @@ namespace pomagma
 {
 
 class Carrier;
+class UnaryRelation;
 class BinaryRelation;
 class NullaryFunction;
 class InjectiveFunction;
@@ -17,6 +18,7 @@ class SymmetricFunction;
 class Signature : noncopyable
 {
     Carrier * m_carrier;
+    std::unordered_map<std::string, UnaryRelation *> m_unary_relations;
     std::unordered_map<std::string, BinaryRelation *> m_binary_relations;
     std::unordered_map<std::string, NullaryFunction *> m_nullary_functions;
     std::unordered_map<std::string, InjectiveFunction *> m_injective_functions;
@@ -30,6 +32,7 @@ public:
     void clear ();
 
     void declare (Carrier & carrier);
+    void declare (const std::string & name, UnaryRelation & rel);
     void declare (const std::string & name, BinaryRelation & rel);
     void declare (const std::string & name, NullaryFunction & fun);
     void declare (const std::string & name, InjectiveFunction & fun);
@@ -37,6 +40,7 @@ public:
     void declare (const std::string & name, SymmetricFunction & fun);
 
     Carrier * replace (Carrier & carrier);
+    UnaryRelation * replace (const std::string & name, UnaryRelation &);
     BinaryRelation * replace (const std::string & name, BinaryRelation &);
     NullaryFunction * replace (const std::string & name, NullaryFunction &);
     InjectiveFunction * replace (const std::string & name, InjectiveFunction &);
@@ -44,12 +48,15 @@ public:
     SymmetricFunction * replace (const std::string & name, SymmetricFunction &);
 
     Carrier * carrier () const { return m_carrier; }
+    UnaryRelation * unary_relation (const std::string & name) const;
     BinaryRelation * binary_relation (const std::string & name) const;
     NullaryFunction * nullary_function (const std::string & name) const;
     InjectiveFunction * injective_function (const std::string & name) const;
     BinaryFunction * binary_function (const std::string & name) const;
     SymmetricFunction * symmetric_function (const std::string & name) const;
 
+    const std::unordered_map<std::string, UnaryRelation *> &
+        unary_relations () const;
     const std::unordered_map<std::string, BinaryRelation *> &
         binary_relations () const;
     const std::unordered_map<std::string, NullaryFunction *> &
@@ -82,6 +89,7 @@ private:
 
 inline void Signature::clear ()
 {
+    m_unary_relations.clear();
     m_binary_relations.clear();
     m_nullary_functions.clear();
     m_injective_functions.clear();
@@ -96,6 +104,13 @@ inline void Signature::declare (
 {
     POMAGMA_ASSERT(m_carrier == nullptr, "Declared carrier twice");
     m_carrier = & carrier;
+}
+
+inline void Signature::declare (
+        const std::string & name,
+        UnaryRelation & rel)
+{
+    m_unary_relations.insert(std::make_pair(name, & rel));
 }
 
 inline void Signature::declare (
@@ -162,6 +177,13 @@ inline Carrier * Signature::replace (
     return detail::replace(m_carrier, & carrier);
 }
 
+inline UnaryRelation * Signature::replace (
+        const std::string & name,
+        UnaryRelation & rel)
+{
+    return detail::replace(m_unary_relations, name, & rel);
+}
+
 inline BinaryRelation * Signature::replace (
         const std::string & name,
         BinaryRelation & rel)
@@ -198,6 +220,12 @@ inline SymmetricFunction * Signature::replace (
 }
 
 
+inline UnaryRelation * Signature::unary_relation (
+	const std::string & name) const
+{
+    return find(m_unary_relations, name);
+}
+
 inline BinaryRelation * Signature::binary_relation (
 	const std::string & name) const
 {
@@ -228,6 +256,12 @@ inline SymmetricFunction * Signature::symmetric_function (
     return find(m_symmetric_functions, name);
 }
 
+
+inline const std::unordered_map<std::string, UnaryRelation *> &
+Signature::unary_relations () const
+{
+    return m_unary_relations;
+}
 
 inline const std::unordered_map<std::string, BinaryRelation *> &
 Signature::binary_relations () const

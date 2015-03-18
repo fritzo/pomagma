@@ -18,6 +18,7 @@ public:
 
     Signature & signature () { return m_signature; }
     Carrier & carrier () { return * m_signature.carrier(); }
+    UnaryRelation & unary_relation (const std::string & name);
     BinaryRelation & binary_relation (const std::string & name);
     NullaryFunction & nullary_function (const std::string & name);
     InjectiveFunction & injective_function (const std::string & name);
@@ -33,6 +34,14 @@ public:
     void init_carrier (size_t item_dim);
     void log_stats ();
 };
+
+inline UnaryRelation & Structure::unary_relation(
+        const std::string & name)
+{
+    auto * result = m_signature.unary_relation(name);
+    POMAGMA_ASSERT(result, "missing unary relation " << name);
+    return * result;
+}
 
 inline BinaryRelation & Structure::binary_relation(
         const std::string & name)

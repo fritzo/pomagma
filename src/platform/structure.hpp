@@ -4,6 +4,7 @@
 // DenseSet
 // Ob
 // Carrier
+// UnaryRelation
 // BinaryRelation
 // NullaryFunction
 // InjectiveFunction
@@ -157,6 +158,16 @@ inline Hasher::Digest get_hash (const Carrier & carrier)
     return hasher.finish();
 }
 
+inline Hasher::Digest get_hash (const UnaryRelation & rel)
+{
+    Hasher hasher;
+    for (auto i = rel.iter(); i.ok(); i.next()) {
+        uint32_t data = * i;
+        hasher.add(data);
+    }
+    return hasher.finish();
+}
+
 inline Hasher::Digest get_hash (
         const Carrier & carrier,
         const BinaryRelation & rel)
@@ -270,6 +281,35 @@ inline void dump (
 
     auto digest = get_hash(carrier);
     hdf5::dump_hash(group, digest);
+}
+
+inline void dump (
+        const Carrier & carrier,
+        const UnaryRelation & rel,
+        hdf5::OutFile & file,
+        const std::string & name)
+{
+    POMAGMA_DEBUG("dumping unary/relations/" << name);
+
+    size_t max_ob = carrier.item_count(); // carrier is contiguous
+    auto ob_type = hdf5::unsigned_type_wide_enough_for(max_ob);
+
+    size_t item_count = rel.count_items();
+    hdf5::Dataspace dataspace(item_count);
+
+    hdf5::Group group1(file, "relations", true);
+    hdf5::Group group2(group1, "unary", true);
+    hdf5::Dataset dataset(group2, name, ob_type, dataspace);
+
+    std::vector<Ob> data;
+    data.reserve(item_count);
+    for (auto iter = rel.iter(); iter.ok(); iter.next()) {
+        data.push_back(* iter);
+    }
+    dataset.write_all(data);
+
+    auto digest = get_hash(rel);
+    hdf5::dump_hash(dataset, digest);
 }
 
 inline void dump (
@@ -507,6 +547,12 @@ inline void load_signature (
     Carrier & carrier = * signature.carrier();
     {
         hdf5::Group group1(file, "relations");
+        if (group1.exists("unary")) {
+            hdf5::Group group2(group1, "unary");
+            for (auto name : group2.children()) {
+                signature.declare(name, * new UnaryRelation(carrier));
+            }
+        }
         if (group1.exists("binary")) {
             hdf5::Group group2(group1, "binary");
             for (auto name : group2.children()) {
@@ -641,6 +687,31 @@ inline void update_data (
     POMAGMA_ASSERT(actual == expected, "carrier is corrupt");
 
     POMAGMA_INFO("done updating carrier");
+}
+
+inline void load_data (
+        const Carrier &,
+        UnaryRelation & rel,
+        hdf5::InFile & file,
+        const std::string & name,
+        std::unordered_map<std::string, Hasher::Digest> & hash)
+{
+    POMAGMA_INFO("loading unary relation " << name);
+
+    hdf5::Group group1(file, "relations");
+    hdf5::Group group2(group1, "unary");
+    hdf5::Dataset dataset(group2, name);
+
+    std::vector<Ob> data;
+    dataset.read_all(data);
+    Ob max_ob = * std::max_element(data.begin(), data.end());
+    POMAGMA_ASSERT_LE(max_ob, rel.item_dim());
+    rel.clear();
+    for (Ob ob : data) {
+        rel.raw_insert(ob);
+    }
+
+    hash["relations/unary/" + name] = hdf5::load_hash(dataset);
 }
 
 inline void load_data (

@@ -14,6 +14,7 @@ namespace pomagma
 
 const size_t DEFAULT_THREAD_COUNT = 1;
 
+class UnaryRelation;
 class NullaryFunction;
 class InjectiveFunction;
 class BinaryFunction;
@@ -58,6 +59,19 @@ struct NegativeOrderTask
     NegativeOrderTask (Ob l, Ob r) : lhs(l), rhs(r) {}
 
     bool references (Ob dep) const { return lhs == dep or rhs == dep; }
+};
+
+struct UnaryRelationTask
+{
+    const UnaryRelation * rel;
+    Ob arg;
+
+    UnaryRelationTask () {}
+    UnaryRelationTask (const UnaryRelation & r, Ob a)
+        : rel(&r), arg(a)
+    {}
+
+    bool references (Ob dep) const { return arg == dep; }
 };
 
 struct NullaryFunctionTask
@@ -139,6 +153,7 @@ void schedule (const MergeTask & task);
 void schedule (const ExistsTask & task);
 void schedule (const PositiveOrderTask & task);
 void schedule (const NegativeOrderTask & task);
+void schedule (const UnaryRelationTask & task);
 void schedule (const NullaryFunctionTask & task);
 void schedule (const InjectiveFunctionTask & task);
 void schedule (const BinaryFunctionTask & task);
@@ -152,6 +167,7 @@ void execute (const MergeTask & task);
 void execute (const ExistsTask & task);
 void execute (const PositiveOrderTask & task);
 void execute (const NegativeOrderTask & task);
+void execute (const UnaryRelationTask & task);
 void execute (const NullaryFunctionTask & task);
 void execute (const InjectiveFunctionTask & task);
 void execute (const BinaryFunctionTask & task);
