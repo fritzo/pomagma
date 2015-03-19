@@ -1,5 +1,9 @@
-from pomagma.compiler.util import TODO, union, set_with, set_without, inputs
+import itertools
 from pomagma.compiler.expressions import Expression
+from pomagma.compiler.util import TODO
+from pomagma.compiler.util import inputs
+from pomagma.compiler.util import set_without
+from pomagma.compiler.util import union
 
 
 class Sequent(object):
@@ -64,6 +68,10 @@ def as_atom(expr):
     return Expression(expr.name, *args)
 
 
+class NotNegatable(Exception):
+    pass
+
+
 @inputs(Expression)
 def get_negated(expr):
     'Returns a disjunction'
@@ -76,13 +84,33 @@ def get_negated(expr):
         return set([Expression('NLESS', lhs, rhs),
                     Expression('NLESS', rhs, lhs)])
     else:
-        raise ValueError('expr cannot be negated: {}'.format(expr))
+        raise NotNegatable(expr.name)
+
+
+@inputs(Expression, Expression)
+def pairwise_consistent(p, q):
+    if p.name == 'EQUAL':
+        if q.name == 'NLESS':
+            return set(p.args) != set(q.args)
+    elif p.name == 'LESS':
+        if q.name == 'NLESS':
+            return p.args != q.args
+    elif q.name == 'NLESS':
+        if p.name == 'EQUAL':
+            return set(p.args) != set(q.args)
+        elif p.name == 'LESS':
+            return p.args != q.args
+    return True
+
+
+def all_consistent(exprs):
+    return all(pairwise_consistent(p, q) for p in exprs for q in exprs)
 
 
 @inputs(Expression)
 def as_antecedents(expr, bound):
     antecedents = set()
-    if expr.name == 'OPTIONALLY':
+    while expr.name in ['OPTIONALLY', 'NONEGATE']:
         expr = expr.args[0]
     if expr.arity != 'Variable':
         atom = as_atom(expr)
@@ -95,6 +123,8 @@ def as_antecedents(expr, bound):
 
 @inputs(Expression)
 def as_succedent(expr, bound):
+    while expr.name in ['OPTIONALLY', 'NONEGATE']:
+        expr = expr.args[0]
     antecedents = set()
     if expr.arity == 'Equation':
         args = []
@@ -127,12 +157,14 @@ def get_pointed(seq):
     elif len(seq.succedents) > 1:
         for succedent in seq.succedents:
             remaining = set_without(seq.succedents, succedent)
-            negated = union(map(get_negated, remaining))
-            # FIXME get_negated is a disjunction; do not union it
-            neg_neg = union(map(get_negated, seq.antecedents))
-            if not (negated & neg_neg):
-                antecedents = seq.antecedents | negated
-                result.add(Sequent(antecedents, set([succedent])))
+            try:
+                neg_remaining = map(get_negated, remaining)
+            except NotNegatable:
+                continue
+            for negated in itertools.product(*neg_remaining):
+                antecedents = seq.antecedents | set(negated)
+                if all_consistent(antecedents):
+                    result.add(Sequent(antecedents, set([succedent])))
     else:
         TODO('allow empty succedents')
     return result
@@ -156,20 +188,24 @@ def get_atomic(seq, bound=set()):
 
 @inputs(Sequent)
 def get_contrapositives(seq):
+    result = set()
     if len(seq.succedents) == 1:
-        seq_succedent = iter(seq.succedents).next()
-        result = set()
+        succedent = iter(seq.succedents).next()
+        try:
+            neg_succedents = get_negated(succedent)
+        except NotNegatable:
+            return result
         for antecedent in seq.antecedents:
-            if antecedent.name != 'OPTIONALLY':
-                antecedents = set_without(seq.antecedents, antecedent)
-                succedents = get_negated(antecedent)
-                for disjunct in get_negated(seq_succedent):
-                    if get_negated(disjunct) & antecedents:
-                        pass  # contradiction
-                    else:
-                        result.add(Sequent(
-                            set_with(antecedents, disjunct),
-                            succedents))
+            try:
+                neg_antecedents = get_negated(antecedent)
+            except NotNegatable:
+                continue
+            for neg_succedent in neg_succedents:
+                antecedents = set(seq.antecedents)
+                antecedents.remove(antecedent)
+                antecedents.add(neg_succedent)
+                if all_consistent(antecedents):
+                    result.add(Sequent(antecedents, neg_antecedents))
         return result
     elif len(seq.succedents) > 1:
         TODO('allow multiple succedents')

@@ -80,15 +80,23 @@ def Iter_cpp(self, code, poll=None):
     sets = []
     iter_ = 'carrier.iter()'
     for test in self.tests:
-        assert test.name in ['LESS', 'NLESS'], test.name
-        lhs, rhs = test.args
-        assert lhs != rhs, lhs
-        if self.var == lhs:
-            iter_ = '%s.iter_rhs(%s)' % (test.name, rhs)
-            sets.append('%s.get_Rx_set(%s)' % (test.name, rhs))
+        if test.arity == 'UnaryRelation':
+            (arg,) = test.args
+            iter_ = '%s.iter()' % test.name
+            sets.append('%s.get_set()' % (test.name))
+        elif test.arity == 'BinaryRelation':
+            lhs, rhs = test.args
+            assert lhs != rhs, lhs
+            if self.var == lhs:
+                iter_ = '%s.iter_rhs(%s)' % (test.name, rhs)
+                sets.append('%s.get_Rx_set(%s)' % (test.name, rhs))
+            else:
+                iter_ = '%s.iter_lhs(%s)' % (test.name, lhs)
+                sets.append('%s.get_Lx_set(%s)' % (test.name, lhs))
         else:
-            iter_ = '%s.iter_lhs(%s)' % (test.name, lhs)
-            sets.append('%s.get_Lx_set(%s)' % (test.name, lhs))
+            raise ValueError('unknown relation {} of arity {}'.format(
+                test.name,
+                test.arity))
     for expr in self.lets.itervalues():
         assert self.var in expr.args,\
             '{} not in {}'.format(self.var, expr.args)
@@ -226,7 +234,9 @@ def Test_cpp(self, code, poll=None):
     args = [arg.name for arg in self.expr.args]
     if self.expr.name == 'EQUAL':
         expr = 'carrier.equal({0}, {1})'.format(*args)
-    elif self.expr.name in ['LESS', 'NLESS']:
+    elif self.expr.arity == 'UnaryRelation':
+        expr = '{0}.find({1})'.format(self.expr.name, *args)
+    elif self.expr.arity == 'BinaryRelation':
         expr = '{0}.find({1}, {2})'.format(self.expr.name, *args)
     else:
         expr = '{0} == {1}.find({2})'.format(
@@ -245,10 +255,8 @@ def Test_cpp(self, code, poll=None):
 @methodof(compiler.Ensure, 'cpp')
 def Ensure_cpp(self, code, poll=None):
     expr = self.expr
-    assert len(expr.args) == 2, expr.args
     args = [arg if arg.args else arg.var for arg in expr.args]
-    lhs, rhs = args
-    if lhs.is_var() and rhs.is_var():
+    if all(arg.is_var() for arg in args):
         code(
             '''
         ensure_$name($args);
@@ -258,6 +266,7 @@ def Ensure_cpp(self, code, poll=None):
         )
     else:
         assert self.expr.name == 'EQUAL', self.expr.name
+        lhs, rhs = args
         if lhs.is_var():
             code(
                 '''
@@ -290,7 +299,7 @@ def Ensure_cpp(self, code, poll=None):
 
 
 @inputs(Code)
-def write_signature(code, functions):
+def write_signature(code, symbols):
 
     code(
         '''
@@ -300,8 +309,18 @@ def write_signature(code, functions):
         bar=bar,
     ).newline()
 
-    for arity, names in functions.iteritems():
-        for name in names:
+    symbols = [
+        (name, arity)
+        for arity, names in symbols.iteritems()
+        if arity in signature.FUNCTION_ARITIES
+        or arity in signature.RELATION_ARITIES
+        for name in names
+        if name != 'EQUAL'
+    ]
+    symbols.sort(key=lambda (name, arity): (signature.arity_sort(arity), name))
+
+    for name, arity in symbols:
+        if name not in ['LESS', 'NLESS']:
             code(
                 '''
                 $Arity $NAME (carrier, schedule_$arity);
@@ -310,24 +329,20 @@ def write_signature(code, functions):
                 arity=camel_to_underscore(arity),
                 NAME=name,
                 name=name.lower())
-        if names:
-            code.newline()
+    code.newline()
 
     body = Code()
     body(
         '''
         signature.declare(carrier);
-        signature.declare("LESS", LESS);
-        signature.declare("NLESS", NLESS);
         ''',
     )
-    for arity, names in functions.iteritems():
-        for name in names:
-            body(
-                '''
-                signature.declare("$NAME", $NAME);
-                ''',
-                NAME=name)
+    for name, arity in symbols:
+        body(
+            '''
+            signature.declare("$NAME", $NAME);
+            ''',
+            NAME=name)
     code(
         '''
         void declare_signature ()
@@ -340,7 +355,7 @@ def write_signature(code, functions):
 
 
 @inputs(Code)
-def write_merge_task(code, functions):
+def write_merge_task(code, symbols):
     body = Code()
     body(
         '''
@@ -349,27 +364,25 @@ def write_merge_task(code, functions):
         POMAGMA_ASSERT(dep > rep, "ill-formed merge: " << dep << ", " << rep);
         bool invalid = NLESS.find(dep, rep) or NLESS.find(rep, dep);
         POMAGMA_ASSERT(not invalid, "invalid merge: " << dep << ", " << rep);
-
         std::vector<std::thread> threads;
-        threads.push_back(std::thread(
-            &BinaryRelation::unsafe_merge,
-            &LESS,
-            dep));
-        threads.push_back(std::thread(
-            &BinaryRelation::unsafe_merge,
-            &NLESS,
-            dep));
+
         ''',
     )
 
-    functions = [
+    symbols = [
         (name, arity, signature.get_nargs(arity))
-        for arity, funs in functions.iteritems()
-        for name in funs
+        for arity, names in symbols.iteritems()
+        if arity != 'Variable'
+        for name in names
+        if name != 'EQUAL'
     ]
-    functions.sort(key=lambda (name, arity, argc): -argc)
+    symbols.sort(
+        key=lambda (name, arity, argc): (
+            -argc,
+            signature.arity_sort(arity),
+            name))
 
-    for name, arity, argc in functions:
+    for name, arity, argc in symbols:
         if argc <= 1:
             body('$name.unsafe_merge(dep);', name=name)
         else:
@@ -404,7 +417,47 @@ def write_merge_task(code, functions):
 
 
 @inputs(Code)
-def write_ensurers(code, functions):
+def write_basic_ensurers(code, symbols):
+
+    code(
+        '''
+        $bar
+        // simple ensurers
+        ''',
+        bar=bar,
+    ).newline()
+
+    symbols = [
+        (name, arity)
+        for arity, names in symbols.iteritems()
+        if arity in signature.RELATION_ARITIES
+        for name in names
+        if name not in ['EQUAL', 'LESS', 'NLESS']
+    ]
+    symbols.sort(key=lambda (name, arity): (signature.arity_sort(arity), name))
+
+    def Ob(x):
+        return 'Ob %s' % x
+
+    for name, arity in symbols:
+        argc = signature.get_nargs(arity)
+        args = ['key'] if argc == 1 else ['lhs', 'rhs']
+        code(
+            '''
+            inline void ensure_${name} ($typed_args)
+            {
+                $NAME.insert($args);
+            }
+            ''',
+            name=name.lower(),
+            NAME=name,
+            args=', '.join(args),
+            typed_args=', '.join(map(Ob, args)),
+        ).newline()
+
+
+@inputs(Code)
+def write_compound_ensurers(code, symbols):
 
     code(
         '''
@@ -414,21 +467,28 @@ def write_ensurers(code, functions):
         bar=bar,
     ).newline()
 
-    functions = [(name, signature.get_nargs(arity))
-                 for arity, funs in functions.iteritems()
-                 if signature.get_nargs(arity) > 0
-                 for name in funs]
+    symbols = [
+        (name, arity)
+        for arity, names in symbols.iteritems()
+        if arity in signature.FUNCTION_ARITIES
+        if signature.get_nargs(arity) > 0
+        for name in names
+    ]
+    symbols.sort(key=lambda (name, arity): (signature.arity_sort(arity), name))
 
     def Ob(x):
         return 'Ob %s' % x
 
-    for name1, argc1 in functions:
-        for name2, argc2 in functions:
+    for name1, arity1 in symbols:
+        for name2, arity2 in symbols:
             if name1 > name2:
                 continue
 
+            argc1 = signature.get_nargs(arity1)
+            argc2 = signature.get_nargs(arity2)
             vars1 = ['key1'] if argc1 == 1 else ['lhs1', 'rhs1']
             vars2 = ['key2'] if argc2 == 1 else ['lhs2', 'rhs2']
+
             code(
                 '''
                 inline void ensure_${name1}_${name2} (
@@ -671,10 +731,10 @@ def write_event_tasks(code, sequents):
             else:
                 body(
                     '''
-                if (task.fun == & $eventname) {
-                    $subbody
-                }
-                ''',
+                    if (task.ptr == & $eventname) {
+                        $subbody
+                    }
+                    ''',
                     eventname=eventname,
                     subbody=wrapindent(subbody),
                 ).newline()
@@ -703,22 +763,24 @@ def write_event_tasks(code, sequents):
             ).newline()
 
 
-def get_functions_used_in(sequents, exprs):
-    functions = dict((arity, []) for arity in signature.FUNCTION_ARITIES)
-    symbols = set()
+def get_symbols_used_in(sequents, exprs):
+    symbols = {}
+    tokens = set()
     for seq in sequents:
         assert isinstance(seq, Sequent), seq
         for expr in seq.antecedents | seq.succedents:
-            symbols |= set(expr.polish.split())
+            tokens |= set(expr.polish.split())
     for expr in exprs:
         assert isinstance(expr, Expression), expr
-        symbols |= set(expr.polish.split())
-    for c in symbols:
-        if signature.is_fun(c):
-            functions[signature.get_arity(c)].append(c)
-    for val in functions.itervalues():
+        tokens |= set(expr.polish.split())
+    valid_arities = signature.FUNCTION_ARITIES | signature.RELATION_ARITIES
+    for c in tokens:
+        arity = signature.get_arity(c)
+        if arity in valid_arities:
+            symbols.setdefault(signature.get_arity(c), []).append(c)
+    for val in symbols.itervalues():
         val.sort()
-    return functions
+    return symbols
 
 
 @inputs(Code)
@@ -726,7 +788,7 @@ def write_theory(code, rules=None, facts=None):
 
     sequents = set(rules) if rules else set()
     facts = set(facts) if facts else set()
-    functions = get_functions_used_in(sequents, facts)
+    symbols = get_symbols_used_in(sequents, facts)
 
     code(
         '''
@@ -737,9 +799,10 @@ def write_theory(code, rules=None, facts=None):
         ''',
     ).newline()
 
-    write_signature(code, functions)
-    write_merge_task(code, functions)
-    write_ensurers(code, functions)
+    write_signature(code, symbols)
+    write_merge_task(code, symbols)
+    write_basic_ensurers(code, symbols)
+    write_compound_ensurers(code, symbols)
     write_full_tasks(code, sequents)
     write_event_tasks(code, sequents)
 

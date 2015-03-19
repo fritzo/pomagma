@@ -63,12 +63,12 @@ struct NegativeOrderTask
 
 struct UnaryRelationTask
 {
-    const UnaryRelation * rel;
+    const UnaryRelation * ptr;
     Ob arg;
 
     UnaryRelationTask () {}
     UnaryRelationTask (const UnaryRelation & r, Ob a)
-        : rel(&r), arg(a)
+        : ptr(&r), arg(a)
     {}
 
     bool references (Ob dep) const { return arg == dep; }
@@ -76,22 +76,22 @@ struct UnaryRelationTask
 
 struct NullaryFunctionTask
 {
-    const NullaryFunction * fun;
+    const NullaryFunction * ptr;
 
     NullaryFunctionTask () {}
-    NullaryFunctionTask (const NullaryFunction & f) : fun(&f) {}
+    NullaryFunctionTask (const NullaryFunction & f) : ptr(&f) {}
 
     bool references (Ob) const { return false; }
 };
 
 struct InjectiveFunctionTask
 {
-    const InjectiveFunction * fun;
+    const InjectiveFunction * ptr;
     Ob arg;
 
     InjectiveFunctionTask () {}
     InjectiveFunctionTask (const InjectiveFunction & f, Ob a)
-        : fun(&f), arg(a)
+        : ptr(&f), arg(a)
     {}
 
     bool references (Ob dep) const { return arg == dep; }
@@ -99,13 +99,13 @@ struct InjectiveFunctionTask
 
 struct BinaryFunctionTask
 {
-    const BinaryFunction * fun;
+    const BinaryFunction * ptr;
     Ob lhs;
     Ob rhs;
 
     BinaryFunctionTask () {}
     BinaryFunctionTask (const BinaryFunction & f, Ob l, Ob r)
-        : fun(&f), lhs(l), rhs(r)
+        : ptr(&f), lhs(l), rhs(r)
     {}
 
     bool references (Ob dep) const { return lhs == dep or rhs == dep; }
@@ -113,13 +113,13 @@ struct BinaryFunctionTask
 
 struct SymmetricFunctionTask
 {
-    const SymmetricFunction * fun;
+    const SymmetricFunction * ptr;
     Ob lhs;
     Ob rhs;
 
     SymmetricFunctionTask () {}
     SymmetricFunctionTask (const SymmetricFunction & f, Ob l, Ob r)
-        : fun(&f), lhs(l), rhs(r)
+        : ptr(&f), lhs(l), rhs(r)
     {}
 
     bool references (Ob dep) const { return lhs == dep or rhs == dep; }

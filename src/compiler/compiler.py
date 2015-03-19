@@ -2,15 +2,15 @@ import math
 import inspect
 import pomagma.util
 from pomagma.compiler.expressions import Expression
-from pomagma.compiler.sequents import Sequent, normalize, assert_normal
-from pomagma.compiler.util import (
-    inputs,
-    union,
-    set_with,
-    set_without,
-    log_sum_exp,
-    logger,
-)
+from pomagma.compiler.sequents import Sequent
+from pomagma.compiler.sequents import assert_normal
+from pomagma.compiler.sequents import normalize
+from pomagma.compiler.util import inputs
+from pomagma.compiler.util import log_sum_exp
+from pomagma.compiler.util import logger
+from pomagma.compiler.util import set_with
+from pomagma.compiler.util import set_without
+from pomagma.compiler.util import union
 
 
 def assert_in(element, set_):
@@ -439,7 +439,6 @@ def get_compiled(antecedents, succedent, bound):
 
     # conditionals
     for a in antecedents:
-        # if a.name in ['LESS', 'NLESS']:
         if a.is_rel():
             if a.vars <= bound:
                 antecedents_a = set_without(antecedents, a)

@@ -279,7 +279,7 @@ def iter_closure_permutations(expr):
 
 @inputs(Expression)
 def iter_closures(expr):
-    if expr.name == 'OPTIONALLY':
+    if expr.name in ['OPTIONALLY', 'NONEGATE']:
         expr = expr.args[0]
     try:
         assert expr.is_rel(), expr

@@ -15,6 +15,7 @@ NARGS_TABLE = {
 }
 
 ARITY_TABLE = {
+    'CLOSED': 'UnaryRelation',
     'EQUAL': 'Equation',
     'LESS': 'BinaryRelation',
     'NLESS': 'BinaryRelation',
@@ -25,6 +26,7 @@ ARITY_TABLE = {
     'JOIN': 'SymmetricFunction',
     'RAND': 'SymmetricFunction',
     'OPTIONALLY': 'UnaryConnective',
+    'NONEGATE': 'UnaryConnective',
     'EQUIVALENTLY': 'BinaryConnective',
 }
 
@@ -82,6 +84,10 @@ def get_arity(symbol):
 
 def get_nargs(arity):
     return NARGS_TABLE[arity]
+
+
+def arity_sort(arity):
+    return (arity in FUNCTION_ARITIES, get_nargs(arity))
 
 
 def is_positive(symbol):

@@ -11,7 +11,7 @@ class UnaryRelation : noncopyable
 {
     const Carrier & m_carrier;
     mutable DenseSet m_set;
-    void (*m_insert_callback) (Ob);
+    void (*m_insert_callback) (const UnaryRelation *, Ob);
 
     mutable SharedMutex m_mutex;
     typedef SharedMutex::SharedLock SharedLock;
@@ -21,7 +21,7 @@ public:
 
     UnaryRelation (
         const Carrier & carrier,
-        void (*insert_callback) (Ob) = nullptr);
+        void (*insert_callback) (const UnaryRelation *, Ob) = nullptr);
     ~UnaryRelation ();
     void validate () const;
     void validate_disjoint (const UnaryRelation & other) const;
@@ -54,7 +54,7 @@ private:
 inline void UnaryRelation::insert (Ob i)
 {
     m_set.insert(i);
-    m_insert_callback(i);
+    m_insert_callback(this, i);
 }
 
 } // namespace pomagma

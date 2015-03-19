@@ -3,11 +3,11 @@
 namespace pomagma
 {
 
-static void noop_callback (Ob) {}
+static void noop_callback (const UnaryRelation *, Ob) {}
 
 UnaryRelation::UnaryRelation (
         const Carrier & carrier,
-        void (*insert_callback) (Ob))
+        void (*insert_callback) (const UnaryRelation *, Ob))
     : m_carrier(carrier),
       m_set(item_dim()),
       m_insert_callback(insert_callback ? insert_callback : noop_callback)
@@ -73,7 +73,7 @@ void UnaryRelation::unsafe_merge (Ob dep)
 
     if (m_set(dep).fetch_zero()) {
         if (not m_set(rep).fetch_one()) {
-            m_insert_callback(rep);
+            m_insert_callback(this, rep);
         }
     }
 }

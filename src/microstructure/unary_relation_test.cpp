@@ -6,7 +6,7 @@ using namespace pomagma;
 rng_t rng;
 
 size_t g_num_moved(0);
-void move_to (Ob i __attribute__((unused)))
+void move_to (const UnaryRelation *, Ob i __attribute__((unused)))
 {
     //std::cout << i << ' ' << std::flush; //DEBUG
     ++g_num_moved;
