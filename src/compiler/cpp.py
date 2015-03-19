@@ -516,6 +516,79 @@ def write_compound_ensurers(code, symbols):
 
 
 @inputs(Code)
+def write_assume_tasks(code, symbols):
+
+    code(
+        '''
+        $bar
+        // assume tasks
+        ''',
+        bar=bar,
+    ).newline()
+
+    symbols = [
+        (name, arity)
+        for arity, names in symbols.iteritems()
+        if arity in signature.RELATION_ARITIES
+        for name in names
+    ]
+    symbols.sort(key=lambda (name, arity): (signature.arity_sort(arity), name))
+
+    cases = Code()
+
+    prefix = 'if'
+    for name, arity in symbols:
+        argc = signature.get_nargs(arity)
+        if argc == 1:
+            cases(
+                '''
+                $prefix (type == "$NAME") {
+                    Ob key = parser.parse_term();
+                    parser.end();
+                    ensure_${name}(key);
+                ''',
+                name=name.lower(),
+                NAME=name,
+                prefix=prefix,
+            )
+        elif argc == 2:
+            cases(
+                '''
+                $prefix (type == "$NAME") {
+                    Ob lhs = parser.parse_term();
+                    Ob rhs = parser.parse_term();
+                    parser.end();
+                    ensure_${name}(lhs, rhs);
+                ''',
+                name=name.lower(),
+                NAME=name,
+                prefix=prefix,
+            )
+        else:
+            raise ValueError('unhandled relation: {}'.format(name))
+        prefix = '} else if'
+
+    code(
+        '''
+        void execute (const AssumeTask & task)
+        {
+            POMAGMA_DEBUG("assume " << task.expression);
+
+            InsertParser parser(signature);
+            parser.begin(task.expression);
+            std::string type = parser.parse_token();
+
+            $cases
+            } else {
+                POMAGMA_ERROR("bad relation type: " << type);
+            }
+        }
+        ''',
+        cases=wrapindent(cases),
+    ).newline()
+
+
+@inputs(Code)
 def write_full_tasks(code, sequents):
 
     full_tasks = []
@@ -803,6 +876,7 @@ def write_theory(code, rules=None, facts=None):
     write_merge_task(code, symbols)
     write_basic_ensurers(code, symbols)
     write_compound_ensurers(code, symbols)
+    write_assume_tasks(code, symbols)
     write_full_tasks(code, sequents)
     write_event_tasks(code, sequents)
 

@@ -114,28 +114,6 @@ void assume_core_facts (const char * theory_file)
     }
 }
 
-void execute (const AssumeTask & task)
-{
-    POMAGMA_DEBUG("assume " << task.expression);
-
-    InsertParser parser(signature);
-    parser.begin(task.expression);
-    std::string type = parser.parse_token();
-    Ob lhs = parser.parse_term();
-    Ob rhs = parser.parse_term();
-    parser.end();
-
-    if (type == "EQUAL") {
-        ensure_equal(lhs, rhs);
-	} else if (type == "LESS") {
-        ensure_less(lhs, rhs);
-	} else if (type == "NLESS") {
-        ensure_nless(lhs, rhs);
-	} else {
-        POMAGMA_ERROR("bad relation type: " << type);
-	}
-}
-
 //----------------------------------------------------------------------------
 // sample tasks
 
