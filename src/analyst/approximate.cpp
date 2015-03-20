@@ -435,6 +435,20 @@ Approximation Approximator::find (
 }
 
 Approximation Approximator::find (
+        const UnaryRelation & pos,
+        const UnaryRelation & neg,
+        const Approximation & arg)
+{
+    if (arg.ob and pos.find(arg.ob)) {
+        return truthy();
+    } else if (arg.ob and neg.find(arg.ob)) {
+        return falsey();
+    } else {
+        return maybe();
+    }
+}
+
+Approximation Approximator::find (
         const BinaryRelation & pos,
         const BinaryRelation & neg,
         const Approximation & lhs,
@@ -467,6 +481,13 @@ Approximation Approximator::find (
     Signature & signature = m_structure.signature();
     if (auto * fun = signature.injective_function(name)) {
         return find(* fun, arg0);
+    } else if (auto * pos = signature.unary_relation(name)) {
+        std::string negated = signature.negate(name);
+        if (auto * neg = signature.unary_relation(negated)) {
+            return find(* pos, * neg, arg0);
+        } else {
+            return unknown();
+        }
     } else {
         return unknown();
     }

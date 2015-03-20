@@ -109,6 +109,22 @@ void fill_optimal (
 }
 
 void restrict_one (
+        UnaryRelation & destin_rel,
+        const UnaryRelation & src_rel,
+        const Carrier & destin_carrier,
+        const std::vector<Ob> & src_to_destin __attribute__((unused)),
+        const std::vector<Ob> & destin_to_src)
+{
+    for (auto iter = destin_carrier.iter(); iter.ok(); iter.next()) {
+        Ob destin_arg = * iter;
+        Ob src_arg = destin_to_src[destin_arg];
+        if (src_rel.find(src_arg)) {
+            destin_rel.insert(destin_arg);
+        }
+    }
+}
+
+void restrict_one (
         BinaryRelation & destin_rel,
         const BinaryRelation & src_rel,
         const Carrier & destin_carrier,
@@ -308,6 +324,7 @@ void restrict_structure (
             destin_to_src)
 
     // TODO parallelize
+    POMAGMA_RESTRICT_ALL(unary_relations);
     POMAGMA_RESTRICT_ALL(binary_relations);
     POMAGMA_RESTRICT_ALL(nullary_functions);
     POMAGMA_RESTRICT_ALL(injective_functions);

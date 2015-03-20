@@ -24,6 +24,7 @@ public:
             INJECTIVE_FUNCTION,
             BINARY_FUNCTION,
             SYMMETRIC_FUNCTION,
+            UNARY_RELATION,
             BINARY_RELATION,
             VARIABLE  // must be last to match CachedApproximator::Term::Arity
         };
@@ -123,6 +124,7 @@ public:
                 case Term::INJECTIVE_FUNCTION:
                 case Term::BINARY_FUNCTION:
                 case Term::SYMMETRIC_FUNCTION:
+                case Term::UNARY_RELATION:
                 case Term::BINARY_RELATION:
                     ++symbols[term->name];
                     break;

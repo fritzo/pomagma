@@ -53,8 +53,9 @@ private:
 
 inline void UnaryRelation::insert (Ob i)
 {
-    m_set.insert(i);
-    m_insert_callback(this, i);
+    if (m_set.try_insert(i)) {
+        m_insert_callback(this, i);
+    }
 }
 
 } // namespace pomagma

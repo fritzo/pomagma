@@ -32,7 +32,7 @@ public:
     const DenseSet & get_set () const { return m_set; }
     bool find (Ob i) const { return m_set.contains(i); }
     DenseSet::Iterator iter () const { return m_set.iter(); }
-    void insert (Ob i) { m_set.insert(i); }
+    void insert (Ob i) { m_set.raw_insert(i); }
 
     // unsafe operations
     void unsafe_merge (Ob dep);

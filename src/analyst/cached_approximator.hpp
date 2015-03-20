@@ -59,6 +59,7 @@ public:
             INJECTIVE_FUNCTION,
             BINARY_FUNCTION,
             SYMMETRIC_FUNCTION,
+            UNARY_RELATION,
             BINARY_RELATION
         };
 
@@ -170,6 +171,7 @@ private:
                 return m_approximator.find(name);
 
             case Term::INJECTIVE_FUNCTION:
+            case Term::UNARY_RELATION:
                 return m_approximator.find(name, arg0->approx);
 
             case Term::BINARY_FUNCTION:

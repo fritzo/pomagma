@@ -10,6 +10,12 @@ void extend (Signature & destin, const Signature & source)
 
     auto & carrier = * destin.carrier();
 
+    for (auto i : source.unary_relations()) {
+        if (not destin.unary_relation(i.first)) {
+            POMAGMA_DEBUG("adding " << i.first);
+            destin.declare(i.first, * new UnaryRelation(carrier));
+        }
+    }
     for (auto i : source.binary_relations()) {
         if (not destin.binary_relation(i.first)) {
             POMAGMA_DEBUG("adding " << i.first);

@@ -1,4 +1,5 @@
 #include "scheduler.hpp"
+#include "unary_relation.hpp"
 #include "binary_relation.hpp"
 #include "nullary_function.hpp"
 #include "injective_function.hpp"
@@ -65,6 +66,7 @@ void process_mergers (Signature & signature)
         POMAGMA_MERGE(symmetric_functions);
         POMAGMA_MERGE(injective_functions);
         POMAGMA_MERGE(nullary_functions);
+        POMAGMA_MERGE(unary_relations);
         POMAGMA_MERGE(binary_relations);
 
 #undef POMAGMA_MERGE

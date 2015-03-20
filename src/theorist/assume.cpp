@@ -1,6 +1,7 @@
 #include "assume.hpp"
 #include "consistency.hpp"
 #include "find_parser.hpp"
+#include <pomagma/macrostructure/unary_relation.hpp>
 #include <pomagma/macrostructure/binary_relation.hpp>
 #include <pomagma/macrostructure/scheduler.hpp>
 #include <pomagma/macrostructure/compact.hpp>
@@ -28,21 +29,32 @@ std::map<std::string, size_t> assume_facts (
         FindParser parser(structure.signature());
         parser.begin(expression);
         std::string type = parser.parse_token();
-        Ob lhs = parser.parse_term();
-        Ob rhs = parser.parse_term();
-        parser.end();
 
         if (type == "EQUAL") {
+            Ob lhs = parser.parse_term();
+            Ob rhs = parser.parse_term();
+            parser.end();
             if (lhs != rhs) {
                 structure.carrier().ensure_equal(lhs, rhs);
                 ++pos_count;
             }
-        } else {
-            BinaryRelation & rel = structure.binary_relation(type);
-            if (not rel.find(lhs, rhs)) {
-                rel.insert(lhs, rhs);
+        } else if (auto * rel = structure.signature().unary_relation(type)) {
+            Ob arg = parser.parse_term();
+            parser.end();
+            if (not rel->find(arg)) {
+                rel->insert(arg);
                 ++(type[0] == 'N' ? neg_count : pos_count);
             }
+        } else if (auto * rel = structure.signature().binary_relation(type)) {
+            Ob lhs = parser.parse_term();
+            Ob rhs = parser.parse_term();
+            parser.end();
+            if (not rel->find(lhs, rhs)) {
+                rel->insert(lhs, rhs);
+                ++(type[0] == 'N' ? neg_count : pos_count);
+            }
+        } else {
+            POMAGMA_ERROR("unknown relation: " << type);
         }
     }
 

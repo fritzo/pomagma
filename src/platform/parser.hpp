@@ -52,6 +52,9 @@ public:
             Term rhs = parse_term();
             return m_reducer.reduce(token, fun, lhs, rhs);
         // TODO
+        //} else if (const auto * rel = m_signature.unary_relation(token)) {
+        //    Term arg = parse_term();
+        //    return m_reducer.reduce(token, rel, arg);
         //} else if (const auto * rel = m_signature.binary_relation(token)) {
         //    Term lhs = parse_term();
         //    Term rhs = parse_term();

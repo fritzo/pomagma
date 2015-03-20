@@ -96,6 +96,10 @@ public:
             const Approximation & lhs,
             const Approximation & rhs);
     Approximation find (
+            const UnaryRelation & pos,
+            const UnaryRelation & neg,
+            const Approximation & arg);
+    Approximation find (
             const BinaryRelation & pos,
             const BinaryRelation & neg,
             const Approximation & lhs,

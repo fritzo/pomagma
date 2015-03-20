@@ -91,6 +91,25 @@ public:
         }
         return get(Term(Term::SYMMETRIC_FUNCTION, name, lhs, rhs));
     }
+    const Term * unary_relation (
+            const std::string & name,
+            const Term * arg)
+    {
+        if (arg->ob) {
+            if (auto * rel = m_signature.unary_relation(name)) {
+                if (rel->find(arg->ob)) {
+                    return semi_true();
+                }
+            }
+            std::string negated = m_signature.negate(name);
+            if (auto * negated_rel = m_signature.unary_relation(negated)) {
+                if (negated_rel->find(arg->ob)) {
+                    return semi_false();
+                }
+            }
+        }
+        return get(Term(Term::UNARY_RELATION, name, arg));
+    }
     const Term * binary_relation (
             const std::string & name,
             const Term * lhs,
@@ -212,6 +231,9 @@ private:
             const Term * lhs = parse_term();
             const Term * rhs = parse_term();
             return m_dag.symmetric_function(token, lhs, rhs);
+        } else if (m_signature.unary_relation(token)) {
+            const Term * arg = parse_term();
+            return m_dag.unary_relation(token, arg);
         } else if (m_signature.binary_relation(token)) {
             const Term * lhs = parse_term();
             const Term * rhs = parse_term();
@@ -349,6 +371,9 @@ const Corpus::Term * Corpus::Linker::link (const Term * term)
         case Term::SYMMETRIC_FUNCTION:
             return m_dag.symmetric_function(name, link(arg0), link(arg1));
 
+        case Term::UNARY_RELATION:
+            return m_dag.unary_relation(name, link(arg0));
+
         case Term::BINARY_RELATION:
             return m_dag.binary_relation(name, link(arg0), link(arg1));
 
@@ -402,6 +427,11 @@ const Corpus::Term * Corpus::Linker::approximate (
                 name,
                 approximate(arg0),
                 approximate(arg1));
+
+        case Term::UNARY_RELATION:
+            return m_dag.unary_relation(
+                name,
+                approximate(arg0));
 
         case Term::BINARY_RELATION:
             return m_dag.binary_relation(

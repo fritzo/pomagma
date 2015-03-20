@@ -9,6 +9,22 @@ namespace detail
 {
 
 void inject_one (
+        UnaryRelation & destin_rel,
+        const UnaryRelation & src_rel,
+        const DenseSet & src_defined __attribute__((unused)),
+        const std::vector<Ob> & src_to_destin)
+{
+    for (auto iter = src_defined.iter_insn(src_rel.get_set());
+        iter.ok();
+        iter.next())
+    {
+        Ob src_arg = * iter;
+        Ob destin_arg = src_to_destin[src_arg];
+        destin_rel.insert(destin_arg);
+    }
+}
+
+void inject_one (
         BinaryRelation & destin_rel,
         const BinaryRelation & src_rel,
         const DenseSet & src_defined,
@@ -133,6 +149,7 @@ void aggregate (
             src_to_destin)
 
     // TODO parallelize, except for nullary relations
+    POMAGMA_INJECT_ALL(unary_relations);
     POMAGMA_INJECT_ALL(binary_relations);
     POMAGMA_INJECT_ALL(nullary_functions);
     POMAGMA_INJECT_ALL(injective_functions);
