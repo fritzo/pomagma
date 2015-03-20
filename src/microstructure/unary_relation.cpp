@@ -53,7 +53,11 @@ void UnaryRelation::validate_disjoint (const UnaryRelation & other) const
 
 void UnaryRelation::log_stats (const std::string & prefix) const
 {
-    POMAGMA_INFO(prefix << " count = " << count_items());
+    size_t count = count_items();
+    size_t capacity = item_dim();
+    float density = 1.0f * count / capacity;
+    POMAGMA_INFO(prefix << " " <<
+        count << " / " << capacity << " = " << density << " full");
 }
 
 void UnaryRelation::clear ()
