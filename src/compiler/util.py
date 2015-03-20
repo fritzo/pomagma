@@ -10,7 +10,8 @@ def TODO(message=''):
 
 
 def logger(message):
-    print '#', message
+    if pomagma.util.LOG_LEVEL >= pomagma.util.LOG_LEVEL_DEBUG:
+        print '#', message
 
 
 def union(sets):
