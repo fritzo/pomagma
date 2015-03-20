@@ -501,7 +501,7 @@ Approximation Approximator::find (
     Signature & signature = m_structure.signature();
     if (auto * fun = signature.binary_function(name)) {
         return find(* fun, arg0, arg1);
-    } else if (auto * fun = signature.binary_function(name)) {
+    } else if (auto * fun = signature.symmetric_function(name)) {
         return find(* fun, arg0, arg1);
     } else if (auto * pos = signature.binary_relation(name)) {
         std::string negated = signature.negate(name);

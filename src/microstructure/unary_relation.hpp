@@ -32,6 +32,7 @@ public:
     size_t item_dim () const { return m_carrier.item_dim(); }
     size_t word_dim () const { return m_set.word_dim(); }
     void raw_insert (Ob i) { m_set.insert(i); }
+    void update () {}
     void clear ();
 
     // relaxed operations

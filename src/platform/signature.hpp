@@ -68,11 +68,10 @@ public:
     const std::unordered_map<std::string, SymmetricFunction *> &
         symmetric_functions () const;
 
-    std::string negate (const std::string & name)
+    std::string negate (const std::string & name) const
     {
-        if (name == "LESS") return "NLESS";
-        if (name == "NLESS") return "LESS";
-        POMAGMA_ERROR("failed to negate name: " << name);
+        POMAGMA_ASSERT(not name.empty(), "cannot negate empty name");
+        return name.at(0) == 'N' ? name.substr(1) : "N" + name;
     }
 
 private:

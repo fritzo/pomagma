@@ -41,15 +41,21 @@ void assume_core_facts (
 
         parser.begin(expression);
         std::string type = parser.parse_token();
-        POMAGMA_ASSERT(
-            (type == "EQUAL") or (type == "LESS") or (type == "NLESS"),
-            "bad relation type: " << type);
-        Ob lhs = parser.parse_term();
-        Ob rhs = parser.parse_term();
-        parser.end();
-
-        if (not (lhs and rhs)) {
-            POMAGMA_WARN("failed to assume " << expression);
+        if (type == "EQUAL" or structure.signature().binary_relation(type)) {
+            Ob lhs = parser.parse_term();
+            Ob rhs = parser.parse_term();
+            parser.end();
+            if (not (lhs and rhs)) {
+                POMAGMA_WARN("failed to assume " << expression);
+            }
+        } else if (structure.signature().unary_relation(type)) {
+            Ob arg = parser.parse_term();
+            parser.end();
+            if (not arg) {
+                POMAGMA_WARN("failed to assume " << expression);
+            }
+        } else {
+            POMAGMA_ERROR("bad relation type: " << type);
         }
     }
 }
@@ -122,6 +128,7 @@ void restrict_one (
             destin_rel.insert(destin_arg);
         }
     }
+    destin_rel.update();
 }
 
 void restrict_one (

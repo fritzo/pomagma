@@ -26,6 +26,7 @@ public:
     size_t item_dim () const { return support().item_dim(); }
     size_t word_dim () const { return support().word_dim(); }
     void raw_insert (Ob i) const { m_set.raw_insert(i); }
+    void update () {}
     void clear () { m_set.zero(); }
 
     // safe operations

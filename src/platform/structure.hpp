@@ -57,11 +57,24 @@ inline void validate_consistent (Signature & signature)
 {
     POMAGMA_ASSERT(signature.carrier(), "carrier is not defined");
 
+    for (auto i : signature.unary_relations()) {
+        std::string name = i.first;
+        std::string negated = signature.negate(name);
+        if (name < negated) {
+            auto * pos = i.second;
+            if (auto * neg = signature.unary_relation(negated)) {
+                pos->validate_disjoint(*neg);
+            }
+        }
+    }
     for (auto i : signature.binary_relations()) {
-        auto * rel = i.second;
-        std::string negated = "N" + i.first;
-        if (auto * nrel = signature.binary_relation(negated)) {
-            nrel->validate_disjoint(*rel);
+        std::string name = i.first;
+        std::string negated = signature.negate(name);
+        if (name < negated) {
+            auto * pos = i.second;
+            if (auto * neg = signature.binary_relation(negated)) {
+                pos->validate_disjoint(*neg);
+            }
         }
     }
 }
@@ -74,26 +87,45 @@ inline void validate (Signature & signature)
 
     // do expensive tasks in parallel
     for (auto i : signature.binary_relations()) {
-        auto * rel = i.second;
-        threads.push_back(std::thread([=](){ rel->validate(); }));
+        auto * pos = i.second;
+        threads.push_back(std::thread([pos](){ pos->validate(); }));
 
-        std::string negated = "N" + i.first;
-        if (auto * nrel = signature.binary_relation(negated)) {
-            threads.push_back(std::thread([=](){
-                nrel->validate_disjoint(*rel);
-            }));
+        std::string name = i.first;
+        std::string negated = signature.negate(name);
+        if (name < negated) {
+            if (auto * neg = signature.binary_relation(negated)) {
+                threads.push_back(std::thread([pos, neg](){
+                    pos->validate_disjoint(*neg);
+                }));
+            }
         }
     }
     for (auto i : signature.binary_functions()) {
         auto * fun = i.second;
-        threads.push_back(std::thread([=](){ fun->validate(); }));
+        threads.push_back(std::thread([fun](){ fun->validate(); }));
     }
     for (auto i : signature.symmetric_functions()) {
         auto * fun = i.second;
-        threads.push_back(std::thread([=](){ fun->validate(); }));
+        threads.push_back(std::thread([fun](){ fun->validate(); }));
     }
 
     // do everything else in this thread
+    for (auto i : signature.unary_relations()) {
+        auto * pos = i.second;
+        pos->validate();
+
+        std::string name = i.first;
+        std::string negated = signature.negate(name);
+        if (name < negated) {
+            if (auto * neg = signature.unary_relation(negated)) {
+                pos->validate_disjoint(*neg);
+            }
+        }
+    }
+    for (auto i : signature.unary_relations()) {
+        auto * fun = i.second;
+        fun->validate();
+    }
     for (auto i : signature.injective_functions()) {
         auto * fun = i.second;
         fun->validate();
@@ -116,6 +148,7 @@ inline void clear (
     POMAGMA_INFO("Clearing signature");
 
     if (signature.carrier()) {
+        for (auto i : signature.unary_relations()) { delete i.second; }
         for (auto i : signature.binary_relations()) { delete i.second; }
         for (auto i : signature.nullary_functions()) { delete i.second; }
         for (auto i : signature.injective_functions()) { delete i.second; }
@@ -133,6 +166,7 @@ inline void clear_data (
     POMAGMA_ASSERT(signature.carrier(), "carrier is not defined");
 
     if (signature.carrier()->item_count()) {
+        for (auto i : signature.unary_relations()) { i.second->clear(); }
         for (auto i : signature.binary_relations()) { i.second->clear(); }
         for (auto i : signature.nullary_functions()) { i.second->clear(); }
         for (auto i : signature.injective_functions()) { i.second->clear(); }
@@ -471,6 +505,9 @@ inline void dump (
 
     // TODO parallelize
     detail::dump(carrier, file);
+    for (const auto & pair : signature.unary_relations()) {
+        detail::dump(carrier, * pair.second, file, pair.first);
+    }
     for (const auto & pair : signature.binary_relations()) {
         detail::dump(carrier, * pair.second, file, pair.first);
     }
@@ -612,6 +649,13 @@ inline void check_signature (
     }
     {
         hdf5::Group group1(file, "relations");
+        if (group1.exists("unary")) {
+            hdf5::Group group2(group1, "unary");
+            for (auto name : group2.children()) {
+                POMAGMA_ASSERT(signature.unary_relation(name),
+                        "file has unknown unary relation " << name);
+            }
+        }
         if (group1.exists("binary")) {
             hdf5::Group group2(group1, "binary");
             for (auto name : group2.children()) {
@@ -712,6 +756,23 @@ inline void load_data (
     }
 
     hash["relations/unary/" + name] = hdf5::load_hash(dataset);
+}
+
+inline void update_data (
+        const Carrier &,
+        UnaryRelation & rel,
+        const std::string & name,
+        const std::unordered_map<std::string, Hasher::Digest> & hash)
+{
+    POMAGMA_INFO("updating unary relation " << name);
+
+    rel.update();
+    auto actual = get_hash(rel);
+    auto expected = map_find(hash, "relations/unary/" + name);
+    POMAGMA_ASSERT(actual == expected,
+            "unary relation " << name << " is corrupt");
+
+    POMAGMA_INFO("done updating unary relation " << name);
 }
 
 inline void load_data (
@@ -928,6 +989,9 @@ inline void load_data (
     load_data(carrier, file, hash);
     update_data(carrier, hash);
 
+    for (const auto & pair : signature.unary_relations()) {
+        load_data(carrier, * pair.second, file, pair.first, hash);
+    }
     for (const auto & pair : signature.binary_relations()) {
         load_data(carrier, * pair.second, file, pair.first, hash);
     }
@@ -950,20 +1014,23 @@ inline void load_data (
     for (const auto & pair : signature.binary_relations()) {
         threads.push_back(std::thread([&](){
             update_data(carrier, * pair.second, pair.first, hash);
-            }));
+        }));
     }
     for (const auto & pair : signature.binary_functions()) {
         threads.push_back(std::thread([&](){
             update_data(carrier, * pair.second, "binary", pair.first, hash);
-            }));
+        }));
     }
     for (const auto & pair : signature.symmetric_functions()) {
         threads.push_back(std::thread([&](){
             update_data(carrier, * pair.second, "symmetric", pair.first, hash);
-            }));
+        }));
     }
 
     // do everything else in this thread
+    for (const auto & pair : signature.unary_relations()) {
+        update_data(carrier, * pair.second, pair.first, hash);
+    }
     for (const auto & pair : signature.nullary_functions()) {
         update_data(carrier, * pair.second, pair.first, hash);
     }
@@ -1017,6 +1084,9 @@ void log_stats (Signature & signature)
 
     carrier.log_stats();
 
+    for (auto pair : signature.unary_relations()) {
+        pair.second->log_stats(pair.first);
+    }
     for (auto pair : signature.binary_relations()) {
         pair.second->log_stats(pair.first);
     }
