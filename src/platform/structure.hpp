@@ -122,10 +122,6 @@ inline void validate (Signature & signature)
             }
         }
     }
-    for (auto i : signature.unary_relations()) {
-        auto * fun = i.second;
-        fun->validate();
-    }
     for (auto i : signature.injective_functions()) {
         auto * fun = i.second;
         fun->validate();
