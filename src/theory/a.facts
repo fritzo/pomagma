@@ -1,6 +1,8 @@
 # The type constructor A
 
 CLOSED A
+NCLOSED RETRACT
+NCLOSED SECTION
 
 # TODO define A in terms of SKJ
 

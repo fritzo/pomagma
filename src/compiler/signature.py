@@ -15,8 +15,9 @@ NARGS_TABLE = {
 }
 
 ARITY_TABLE = {
-    'CLOSED': 'UnaryRelation',
     'EQUAL': 'Equation',
+    'CLOSED': 'UnaryRelation',
+    'NCLOSED': 'UnaryRelation',
     'LESS': 'BinaryRelation',
     'NLESS': 'BinaryRelation',
     'CO': 'InjectiveFunction',
