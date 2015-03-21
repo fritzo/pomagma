@@ -1,70 +1,33 @@
-
---------------   ---------------------------------
-LESS x APP U x   LESS COMP APP U x APP U x APP U x
-
-# TODO simplify with EQUIVALENTLY
-LESS COMP x x x   LESS COMP x x x
----------------   ---------------
-LESS APP U x x    EQUAL APP U x x
-
-# TODO simplify with EQUIVALENTLY
-      LESS APP f x x                LESS APP f x x
---------------------------   ---------------------------
-LESS APP APP U f x APP f x   EQUAL APP APP U f x APP f x
-
---------------   --------------   ----------------------------------
-LESS I APP V x   LESS x APP V x   EQUAL COMP APP V x APP V x APP V x
-
-LESS COMP x x x   LESS I x   EQUAL COMP x x x   LESS I x
---------------------------   ---------------------------
-      LESS x APP V x               EQUAL x APP V x
-
-# TODO simplify with EQUIVALENTLY
-   LESS APP f x x          LESS APP f x x
---------------------   ---------------------
-LESS APP APP V f x x   EQUAL APP APP V f x x
-
-
-----------------------------------
-EQUAL APP APP P x y APP V JOIN x y
-
----------------------------   ---------------------------------
-EQUAL APP APP P x x APP V x   EQUAL APP APP P x y APP APP P y x
-
----------------------------------------------------------
-EQUAL APP APP P x APP APP P y z APP APP P APP APP P x y z
-
-
-# TODO get these to compile
-#
-#LESS APP f TOP APP g TOP
-#LESS APP f BOT APP g BOT     EQUAL APP DIV x x
-#--------------------------   -----------------
-#LESS COMP f DIV COMP g DIV   EQUAL BOT x
-#                             EQUAL TOP x
-#
-#LESS APP f TOP APP g TOP
-#LESS APP f I APP g I           EQUAL APP UNIT x x
-#----------------------------   ------------------
-#LESS COMP f UNIT COMP g UNIT   EQUAL I x
-#                               EQUAL TOP x
-#
 # WARNING these rules do not hold in SKRJ
 #
-#LESS APP f TOP APP g TOP
-#LESS APP f I APP g I
-#LESS APP f BOT APP g BOT       EQUAL APP SEMI x x
-#----------------------------   ------------------
-#LESS COMP f SEMI COMP g SEMI   EQUAL BOT x
-#                               EQUAL I x
-#                               EQUAL TOP x
+# TODO get these to compile
 #
-#LESS APP f TOP APP g TOP
-#LESS APP f K APP g K
-#LESS APP f APP K I APP g APP K I   SKJDEFINABLE x
-#LESS APP f BOT APP g BOT           EQUAL APP BOOL x x
-#--------------------------------   ------------------
-#LESS COMP f BOOL COMP g BOOL       EQUAL TOP x
-#                                   EQUAL K x
-#                                   EQUAL APP K I x
-#                                   EQUAL BOT x
+#                    LESS APP f TOP APP g TOP
+#EQUAL APP DIV x x   LESS APP f BOT APP g BOT
+#-----------------   --------------------------
+#EQUAL BOT x         LESS COMP f DIV COMP g DIV
+#EQUAL TOP x
+#
+#                     LESS APP f TOP APP g TOP
+#EQUAL APP UNIT x x   LESS APP f I APP g I
+#------------------   ----------------------------
+#EQUAL I x            LESS COMP f UNIT COMP g UNIT
+#EQUAL TOP x
+#
+#                     LESS APP f TOP APP g TOP
+#                     LESS APP f I APP g I
+#EQUAL APP SEMI x x   LESS APP f BOT APP g BOT
+#------------------   ----------------------------
+#EQUAL BOT x          LESS COMP f SEMI COMP g SEMI
+#EQUAL I x
+#EQUAL TOP x
+#
+#                     LESS APP f TOP APP g TOP
+#                     LESS APP f K APP g K
+#                     LESS APP f APP K I APP g APP K I
+#EQUAL APP BOOL x x   LESS APP f BOT APP g BOT
+#------------------   --------------------------------
+#EQUAL TOP x          LESS COMP f BOOL COMP g BOOL
+#EQUAL K x
+#EQUAL APP K I x
+#EQUAL BOT x
