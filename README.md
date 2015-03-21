@@ -7,7 +7,7 @@
 # Pomagma
 
 Pomagma is an inference engine for
-[extensional &lambda;-calculus](/doc/philosophy.md).
+[extensional untyped &lambda;-calculus](/doc/philosophy.md).
 Pomagma's server provides code analysis services including:
 
 * simplification of code fragments
@@ -16,6 +16,8 @@ Pomagma's server provides code analysis services including:
 
 Pomagma has client libraries in python and node.js, and powers the
 [Puddle](https://github.com/fritzo/puddle) reactive coding environment.
+The correctness of Pomagma's theory is being verified in the
+[Hstar projetct](https://github.com/fritzo/hstar).
 
 ## Documentation
 
@@ -83,5 +85,5 @@ Pomagma is parallelized and needs lots of memory to build a large atlas.
 
 ## License
 
-Copyright 2005-2014 Fritz Obermeyer.<br/>
+Copyright 2005-2015 Fritz Obermeyer.<br/>
 All code is licensed under the [MIT license](/LICENSE) unless otherwise noted.
