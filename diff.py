@@ -18,11 +18,13 @@ def clone():
     commit = subprocess.check_output(['git', 'rev-parse', '--verify', 'HEAD'])
     commit = commit.strip()
 
-    os.chdir(ROOT)
     if os.path.exists(TEMP):
         print 'using clone {}'.format(TEMP)
+        os.chdir(TEMP)
+        subprocess.check_call(['git', 'pull', REPO])
     else:
         print 'cloning to {}'.format(TEMP)
+        os.chdir(ROOT)
         subprocess.check_call(['git', 'clone', REPO, TEMP])
 
     os.chdir(TEMP)
