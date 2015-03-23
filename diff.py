@@ -21,7 +21,7 @@ def clone():
     if os.path.exists(TEMP):
         print 'using clone {}'.format(TEMP)
         os.chdir(TEMP)
-        subprocess.check_call(['git', 'pull', REPO])
+        subprocess.check_call(['git', 'fetch', '--all'])
     else:
         print 'cloning to {}'.format(TEMP)
         os.chdir(ROOT)
