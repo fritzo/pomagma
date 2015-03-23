@@ -29,7 +29,7 @@ release: FORCE
 codegen: FORCE
 	mkdir -p build/debug
 	(cd build/debug && cmake -DCMAKE_BUILD_TYPE=Debug ../..)
-	make -nC build/debug 2>/dev/null | grep compiler/run.py | /bin/sh
+	make -nC build/debug 2>/dev/null | grep pomagma.compiler | /bin/sh
 
 cpp-test: all FORCE
 	POMAGMA_LOG_FILE=$(shell pwd)/data/debug.log $(MAKE) -C build/debug test
