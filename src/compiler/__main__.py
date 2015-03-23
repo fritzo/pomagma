@@ -118,7 +118,7 @@ def test_close_rules(infile, is_extensional=True):
 
 
 def relpath(string):
-    is_path = ('.' in string and os.path.exists(string))
+    is_path = '.' in string and '/' in string  # heuristic
     if is_path:
         return os.path.relpath(string, ROOT)
     else:
