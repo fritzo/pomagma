@@ -1,14 +1,18 @@
+import os
 from pomagma.compiler import sequents
 from pomagma.compiler import parser
 from pomagma.compiler.util import find_rules
 
-RULE_SETS = map(parser.parse_rules, find_rules())
+RULE_SETS = {
+    os.path.basename(path): parser.parse_rules(path)
+    for path in find_rules()
+}
 
 
-def _test_contrapositives(rules):
+def _test_contrapositives(name):
     print '# contrapositives'
     print
-    for rule in rules:
+    for rule in RULE_SETS[name]:
         print rule.ascii()
         print
         if len(rule.succedents) != 1:
@@ -21,14 +25,14 @@ def _test_contrapositives(rules):
 
 
 def test_contrapositives():
-    for rules in RULE_SETS:
-        yield _test_contrapositives, rules
+    for name in RULE_SETS:
+        yield _test_contrapositives, name
 
 
-def _test_normalize(rules):
+def _test_normalize(name):
     print '# normalized'
     print
-    for rule in rules:
+    for rule in RULE_SETS[name]:
         print rule.ascii()
         print
         if len(rule.succedents) != 1:
@@ -42,5 +46,5 @@ def _test_normalize(rules):
 
 
 def test_normalize():
-    for rules in RULE_SETS:
-        yield _test_normalize, rules
+    for name in RULE_SETS:
+        yield _test_normalize, name
