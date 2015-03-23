@@ -1,8 +1,9 @@
 import os
 import glob
 import functools
+from math import log
+from math import exp
 import pomagma.util
-from math import log, exp
 
 
 def TODO(message=''):

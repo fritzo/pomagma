@@ -1,8 +1,11 @@
 import itertools
-from pomagma.compiler.util import TODO, logger, inputs, methodof
-from pomagma.compiler.signature import is_positive
 from pomagma.compiler.expressions import Expression
 from pomagma.compiler.sequents import Sequent
+from pomagma.compiler.signature import is_positive
+from pomagma.compiler.util import TODO
+from pomagma.compiler.util import inputs
+from pomagma.compiler.util import logger
+from pomagma.compiler.util import methodof
 
 I = Expression('I')
 K = Expression('K')

@@ -1,12 +1,10 @@
 import re
+from pomagma.compiler.compiler import add_costs
+from pomagma.compiler.compiler import compile_full
+from pomagma.compiler.compiler import compile_given
+from pomagma.compiler.compiler import get_events
 from pomagma.compiler.expressions import Expression
 from pomagma.compiler.sequents import Sequent
-from pomagma.compiler.compiler import (
-    add_costs,
-    get_events,
-    compile_full,
-    compile_given,
-)
 
 EQUAL = lambda x, y: Expression('EQUAL', x, y)
 LESS = lambda x, y: Expression('LESS', x, y)

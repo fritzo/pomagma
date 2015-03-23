@@ -1,10 +1,10 @@
 import os
-from pomagma.compiler import run
+from pomagma.compiler import __main__ as main
 from pomagma.compiler.util import find_facts, find_rules
 
 
 def _test_compile(filename):
-    run.compile(filename, cpp_out='temp.cpp', theory_out='temp.compiled')
+    main.compile(filename, cpp_out='temp.cpp', theory_out='temp.compiled')
     os.remove('temp.cpp')
     os.remove('temp.compiled')
 

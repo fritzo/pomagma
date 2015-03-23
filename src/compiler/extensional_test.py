@@ -1,14 +1,12 @@
 from nose.tools import assert_equal, assert_set_equal
-from pomagma.compiler import run
+from pomagma.compiler import __main__ as main
+from pomagma.compiler.extensional import APP, COMP, JOIN, RAND
+from pomagma.compiler.extensional import Expression
+from pomagma.compiler.extensional import I, K, B, C, W, S, J, R
+from pomagma.compiler.extensional import iter_closure_maps
+from pomagma.compiler.extensional import iter_eta_substitutions
+from pomagma.compiler.extensional import iter_subsets
 from pomagma.compiler.util import find_rules
-from pomagma.compiler.extensional import (
-    Expression,
-    APP, COMP, JOIN, RAND,
-    I, K, B, C, W, S, J, R,
-    iter_subsets,
-    iter_eta_substitutions,
-    iter_closure_maps,
-)
 
 
 def test_abstraction():
@@ -96,4 +94,4 @@ def test_close_rules():
     ]
     for filename in find_rules():
         is_extensional = filename.split('/')[-1] not in blacklist
-        yield run.test_close_rules, filename, is_extensional
+        yield main.test_close_rules, filename, is_extensional
