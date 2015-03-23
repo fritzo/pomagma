@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import os
+import contextlib
 import subprocess
 import parsable
 
@@ -9,26 +10,37 @@ ROOT = os.path.dirname(REPO)
 TEMP = os.path.join(ROOT, '{}-temp'.format(os.path.basename(REPO)))
 
 
+@contextlib.contextmanager
+def chdir(destin):
+    source = os.curdir
+    try:
+        print '# cd'.format(destin)
+        os.chdir(destin)
+        yield
+    finally:
+        print '# cd'.format(source)
+        os.chdir(source)
+
 @parsable.command
 def clone():
     '''
     Create temporary clone repo.
     '''
-    os.chdir(REPO)
-    commit = subprocess.check_output(['git', 'rev-parse', '--verify', 'HEAD'])
-    commit = commit.strip()
+    with chdir(REPO):
+        commit = subprocess.check_output(
+            ['git', 'rev-parse', '--verify', 'HEAD']).strip()
 
     if os.path.exists(TEMP):
         print 'using clone {}'.format(TEMP)
-        os.chdir(TEMP)
-        subprocess.check_call(['git', 'fetch', '--all'])
+        with chdir(TEMP):
+            subprocess.check_call(['git', 'fetch', '--all'])
     else:
         print 'cloning to {}'.format(TEMP)
-        os.chdir(ROOT)
-        subprocess.check_call(['git', 'clone', REPO, TEMP])
+        with chdir(ROOT):
+            subprocess.check_call(['git', 'clone', REPO, TEMP])
 
-    os.chdir(TEMP)
-    subprocess.check_call(['git', 'checkout', commit])
+    with chdir(TEMP):
+        subprocess.check_call(['git', 'checkout', commit])
 
 
 @parsable.command
@@ -37,14 +49,8 @@ def codegen(difftool='meld', *args):
     Diff all src/surveyor/*.theory.cpp.
     '''
     clone()
-
-    os.chdir(REPO)
-    subprocess.check_call(['make', 'codegen'])
-
-    os.chdir(TEMP)
-    subprocess.check_call(['make', 'codegen'])
-
-    os.chdir(ROOT)
+    subprocess.check_call(['make', '-C', REPO, 'codegen'])
+    subprocess.check_call(['make', '-C', TEMP, 'codegen'])
     subprocess.check_call([
         difftool] + list(args) + [
         os.path.join(REPO, 'src', 'surveyor'),

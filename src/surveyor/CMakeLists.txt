@@ -37,6 +37,7 @@ make_surveyor(h4)
 add_custom_command(
 	OUTPUT ${CMAKE_CURRENT_LIST_DIR}/h4.theory.cpp
 		${SRC_DIR}/theory/h4.compiled
+	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 	COMMAND python -m pomagma.compiler compile
 		${SRC_DIR}/theory/group.rules
 		${SRC_DIR}/theory/h4.rules
@@ -54,6 +55,7 @@ make_surveyor(sk)
 add_custom_command(
 	OUTPUT ${CMAKE_CURRENT_LIST_DIR}/sk.theory.cpp
 		${SRC_DIR}/theory/sk.compiled
+	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 	COMMAND python -m pomagma.compiler compile
 		${SRC_DIR}/theory/sk.rules
 		${SRC_DIR}/theory/order.rules
@@ -72,6 +74,7 @@ make_surveyor(skj)
 add_custom_command(
 	OUTPUT ${CMAKE_CURRENT_LIST_DIR}/skj.theory.cpp
 		${SRC_DIR}/theory/skj.compiled
+	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 	COMMAND python -m pomagma.compiler compile
 		${SRC_DIR}/theory/sk.rules
 		${SRC_DIR}/theory/order.rules
@@ -104,6 +107,7 @@ make_surveyor(skrj)
 add_custom_command(
 	OUTPUT ${CMAKE_CURRENT_LIST_DIR}/skrj.theory.cpp
 		${SRC_DIR}/theory/skrj.compiled
+	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 	COMMAND python -m pomagma.compiler compile
 		${SRC_DIR}/theory/sk.rules
 		${SRC_DIR}/theory/order.rules
@@ -134,6 +138,7 @@ make_surveyor(skjo)
 add_custom_command(
 	OUTPUT ${CMAKE_CURRENT_LIST_DIR}/skjo.theory.cpp
 		${SRC_DIR}/theory/skjo.compiled
+	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 	COMMAND python -m pomagma.compiler compile
 		${SRC_DIR}/theory/sk.rules
 		${SRC_DIR}/theory/order.rules
