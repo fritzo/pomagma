@@ -2,12 +2,14 @@ PY_FILES:=setup.py $(find src | grep '.py$$' | grep -v '_pb2.py')
 
 all: bootstrap fixture FORCE
 	$(MAKE) python
+	$(MAKE) debug release
+
+protobuf: FORCE
 	$(MAKE) -C src/language
 	$(MAKE) -C src/cartographer
 	$(MAKE) -C src/analyst
-	$(MAKE) debug release
 
-python: FORCE
+python: protobuf FORCE
 	pyflakes $(PY_FILES)
 	pep8 $(PY_FILES)
 	pip install -e .
@@ -24,8 +26,16 @@ release: FORCE
 	  && cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo ../.. \
 	  && $(MAKE)
 
+codegen: FORCE
+	mkdir -p build/debug
+	(cd build/debug && cmake -DCMAKE_BUILD_TYPE=Debug ../..)
+	make -nC build/debug 2>/dev/null | grep pomagma.compiler | /bin/sh
+
 cpp-test: all FORCE
 	POMAGMA_LOG_FILE=$(shell pwd)/data/debug.log $(MAKE) -C build/debug test
+
+py-test: python FORCE
+	POMAGMA_DEBUG=1 nosetests -v pomagma
 
 unit-test: all fixture FORCE
 	POMAGMA_DEBUG=1 nosetests -v pomagma

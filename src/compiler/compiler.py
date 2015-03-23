@@ -96,6 +96,10 @@ class Iter(Strategy):
             ' '.join([str(self.var)] + tests + lets),
             self.body)
 
+    def __lt__(self, other):
+        'Used to break ties in ranking'
+        return repr(self) < repr(other)
+
     def validate(self, bound):
         assert_not_in(self.var, bound)
         bound = set_with(bound, self.var)
