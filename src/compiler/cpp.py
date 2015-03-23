@@ -68,7 +68,7 @@ def Iter_cpp(self, code, poll=None):
         ''',
         var=self.var,
     )
-    for var, expr in self.lets.iteritems():
+    for var, expr in sorted(self.lets.iteritems()):
         body(
             '''
             Ob $var = $fun.find($args);
@@ -97,7 +97,7 @@ def Iter_cpp(self, code, poll=None):
             raise ValueError('unknown relation {} of arity {}'.format(
                 test.name,
                 test.arity))
-    for expr in self.lets.itervalues():
+    for var, expr in sorted(self.lets.iteritems()):
         assert self.var in expr.args,\
             '{} not in {}'.format(self.var, expr.args)
         if len(expr.args) == 1:

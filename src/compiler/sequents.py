@@ -16,6 +16,7 @@ class Sequent(object):
         self._antecedents = antecedents
         self._succedents = succedents
         self._hash = hash((antecedents, succedents))
+        self._str = None
         self.debuginfo = {}
 
     @property
@@ -37,10 +38,17 @@ class Sequent(object):
         return (self._antecedents == other._antecedents and
                 self._succedents == other._succedents)
 
+    def __lt__(self, other):
+        s = str(self)
+        o = str(other)
+        return (len(s), s) < (len(o), o)
+
     def __str__(self):
-        return '{0} |- {1}'.format(
-            ', '.join(map(str, self.antecedents)),
-            ', '.join(map(str, self.succedents)))
+        if self._str is None:
+            self._str = '{0} |- {1}'.format(
+                ', '.join(map(str, self.antecedents)),
+                ', '.join(map(str, self.succedents)))
+        return self._str
 
     def __repr__(self):
         return 'Sequent({0})'.format(self)

@@ -75,6 +75,11 @@ class Expression(object):
         assert isinstance(other, Expression), other
         return self._polish == other._polish
 
+    def __lt__(self, other):
+        s = self._polish
+        o = other._polish
+        return (len(s), s) < (len(o), o)
+
     def __str__(self):
         return self._polish
 

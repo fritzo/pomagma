@@ -69,12 +69,18 @@ class Strategy(object):
     def cost(self):
         return math.log(self.op_count()) / LOG_OBJECT_COUNT
 
+    def __lt__(self, other):
+        s = repr(self)
+        o = repr(other)
+        return (len(s), s) < (len(o), o)
+
 
 class Iter(Strategy):
 
     def __init__(self, var, body):
         assert var.is_var(), 'Iter var is not a Variable: {0}'.format(var)
         assert isinstance(body, Strategy), 'Iter body is not a Strategy'
+        self._repr = None
         self.var = var
         self.body = body
         self.tests = []
@@ -90,15 +96,13 @@ class Iter(Strategy):
         self.lets[let.var] = let.expr
 
     def __repr__(self):
-        tests = ['if {0}'.format(t) for t in self.tests]
-        lets = ['let {0}'.format(l) for l in self.lets.keys()]
-        return 'for {0}: {1}'.format(
-            ' '.join([str(self.var)] + tests + lets),
-            self.body)
-
-    def __lt__(self, other):
-        'Used to break ties in ranking'
-        return repr(self) < repr(other)
+        if self._repr is None:
+            tests = ['if {0}'.format(t) for t in self.tests]
+            lets = ['let {0}'.format(l) for l in sorted(self.lets.iterkeys())]
+            self._repr = 'for {0}: {1}'.format(
+                ' '.join([str(self.var)] + tests + lets),
+                self.body)
+        return self._repr
 
     def validate(self, bound):
         assert_not_in(self.var, bound)
@@ -422,7 +426,7 @@ def get_compiled(antecedents, succedent, bound):
     results = []
 
     # bind succedent constants
-    for c in succedent.consts:
+    for c in sorted(succedent.consts):
         if c.var not in bound:
             bound_c = set_with(bound, c.var)
             POMAGMA_DEBUG('bind succedent constant')
@@ -431,7 +435,7 @@ def get_compiled(antecedents, succedent, bound):
             return results  # HEURISTIC bind eagerly in arbitrary order
 
     # bind antecedent constants
-    for a in antecedents:
+    for a in sorted(antecedents):
         if not a.args and a.var not in bound:
             assert a.is_fun(), a
             antecedents_a = set_without(antecedents, a)
@@ -442,7 +446,7 @@ def get_compiled(antecedents, succedent, bound):
             return results  # HEURISTIC bind eagerly in arbitrary order
 
     # conditionals
-    for a in antecedents:
+    for a in sorted(antecedents):
         if a.is_rel():
             if a.vars <= bound:
                 antecedents_a = set_without(antecedents, a)
@@ -460,7 +464,7 @@ def get_compiled(antecedents, succedent, bound):
             return results  # HEURISTIC test eagerly in arbitrary order
 
     # find & bind variable
-    for a in antecedents:
+    for a in sorted(antecedents):
         if a.is_fun():
             if a.vars <= bound:
                 assert a.var not in bound
@@ -476,7 +480,7 @@ def get_compiled(antecedents, succedent, bound):
             return results  # HEURISTIC bind eagerly in arbitrary order
 
     # iterate forward
-    for a in antecedents:
+    for a in sorted(antecedents):
         # works for both Relation and Function antecedents
         if a.vars & bound:
             for v in a.vars - bound:
@@ -486,7 +490,7 @@ def get_compiled(antecedents, succedent, bound):
                     results.append(Iter(v, s))
 
     # iterate backward
-    for a in antecedents:
+    for a in sorted(antecedents):
         if a.is_fun() and a.var in bound:
             a_vars = a.vars
             a_free = a_vars - bound
