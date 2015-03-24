@@ -718,11 +718,10 @@ def write_event_tasks(code, sequents):
         for event in compiler.get_events(sequent):
             name = '<variable>' if event.is_var() else event.name
             tasks = event_tasks.setdefault(name, [])
-            strategies = compiler.compile_given(sequent, event)
-            strategies.sort(key=lambda (cost, _): cost)
+            strategies = sorted(compiler.compile_given(sequent, event))
             costs = [cost for cost, _ in strategies]
             cost = log_sum_exp(*costs)
-            tasks.append((event, cost, strategies, sequent))
+            tasks.append((cost, event, sequent, strategies))
 
     def get_group(name):
         special = {
@@ -757,7 +756,7 @@ def write_event_tasks(code, sequents):
                     eventname=eventname,
                     args=', '.join(args))
 
-            for event, _, strategies, sequent in tasks:
+            for _, event, sequent, strategies in tasks:
                 subsubbody = Code()
                 diagonal = (nargs == 2 and event.args[0] == event.args[1])
                 if diagonal:
