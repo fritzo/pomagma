@@ -10,6 +10,11 @@ ROOT = os.path.dirname(REPO)
 TEMP = os.path.join(ROOT, '{}-temp'.format(os.path.basename(REPO)))
 
 
+def parallel_check_call(*args):
+    for proc in map(subprocess.Popen, args):
+        proc.wait()
+
+
 @contextlib.contextmanager
 def chdir(destin):
     source = os.curdir
@@ -50,8 +55,9 @@ def cpp(difftool='meld', commit='HEAD'):
     Diff all src/surveyor/*.theory.cpp.
     '''
     clone(commit=commit)
-    subprocess.check_call(['make', '-C', REPO, 'codegen'])
-    subprocess.check_call(['make', '-C', TEMP, 'codegen'])
+    parallel_check_call(
+        ['make', '-C', REPO, 'codegen'],
+        ['make', '-C', TEMP, 'codegen'])
     subprocess.check_call([
         difftool,
         os.path.join(REPO, 'src', 'surveyor'),
@@ -65,12 +71,13 @@ def tasks(difftool='meld', commit='HEAD'):
     Diff all src/theory/*.tasks.
     '''
     clone(commit=commit)
-    subprocess.check_call(['make', '-C', REPO, 'tasks'])
-    subprocess.check_call(['make', '-C', TEMP, 'tasks'])
+    parallel_check_call(
+        ['make', '-C', REPO, 'tasks'],
+        ['make', '-C', TEMP, 'tasks'])
     subprocess.check_call([
         difftool,
-        os.path.join(REPO, 'src', 'surveyor'),
-        os.path.join(TEMP, 'src', 'surveyor'),
+        os.path.join(REPO, 'src', 'theory'),
+        os.path.join(TEMP, 'src', 'theory'),
     ])
 
 
