@@ -5,12 +5,13 @@ LESS APP DIV x x   LESS APP f TOP APP g TOP
 LESS x BOT         --------------------------
 LESS TOP x         LESS COMP f DIV COMP g DIV
 
-# TODO get these to compile
-#
-#LESS APP UNIT x x   LESS APP f TOP APP g TOP
-#-----------------   LESS APP f I APP g I
-#EQUAL x I           ----------------------------
-#LESS TOP x          LESS COMP f UNIT COMP g UNIT
+LESS APP UNIT x x   LESS APP f TOP APP g TOP
+-----------------   LESS APP f I APP g I
+EQUAL x I           ----------------------------
+LESS TOP x          LESS COMP f UNIT COMP g UNIT
+
+# FIXME These compile into garbage extra rules.
+# TODO Strengthen all_consistent() to do more deduction.
 #
 #LESS APP SEMI x x   LESS APP f TOP APP g TOP
 #-----------------   LESS APP f I APP g I
