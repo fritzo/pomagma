@@ -90,16 +90,43 @@ def test_compile(*filenames):
     Compile rules -> C++
     '''
     for stem_rules in filenames:
+        code = cpp.Code('// $filename', filename=stem_rules)
         assert stem_rules[-6:] == '.rules', stem_rules
 
         sequents = parser.parse_rules(stem_rules)
         for sequent in sequents:
-            for cost, strategy in compile_full(sequent):
-                print '\n'.join(strategy.cpp_lines())
+            for cost, seq, strategy in compile_full(sequent):
+                code.newline()
+                code(
+                    '''
+                    // using $sequent
+                    // infer $seq
+                    // cost = $cost
+                    ''',
+                    cost=cost,
+                    sequent=sequent,
+                    seq=seq,
+                )
+                strategy.cpp(code)
 
             for event in get_events(sequent):
                 for cost, seq, strategy in compile_given(sequent, event):
-                    print '\n'.join(strategy.cpp_lines())
+                    code.newline()
+                    code(
+                        '''
+                        // given $event
+                        // using $sequent
+                        // infer $seq
+                        // cost = $cost
+                        ''',
+                        event=event,
+                        cost=cost,
+                        sequent=sequent,
+                        seq=seq,
+                    )
+                    strategy.cpp(code)
+
+        print code
 
 
 @parsable.command

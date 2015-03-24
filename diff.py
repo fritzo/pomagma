@@ -21,14 +21,15 @@ def chdir(destin):
         print '# cd'.format(source)
         os.chdir(source)
 
+
 @parsable.command
-def clone():
+def clone(commit='HEAD'):
     '''
     Create temporary clone repo.
     '''
     with chdir(REPO):
         commit = subprocess.check_output(
-            ['git', 'rev-parse', '--verify', 'HEAD']).strip()
+            ['git', 'rev-parse', '--verify', commit]).strip()
 
     if os.path.exists(TEMP):
         print 'using clone {}'.format(TEMP)
@@ -44,15 +45,15 @@ def clone():
 
 
 @parsable.command
-def codegen(difftool='meld', *args):
+def cpp(difftool='meld', commit='HEAD'):
     '''
     Diff all src/surveyor/*.theory.cpp.
     '''
-    clone()
+    clone(commit=commit)
     subprocess.check_call(['make', '-C', REPO, 'codegen'])
     subprocess.check_call(['make', '-C', TEMP, 'codegen'])
     subprocess.check_call([
-        difftool] + list(args) + [
+        difftool,
         os.path.join(REPO, 'src', 'surveyor'),
         os.path.join(TEMP, 'src', 'surveyor'),
     ])

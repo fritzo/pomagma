@@ -1,4 +1,4 @@
-PY_FILES:=setup.py $(find src | grep '.py$$' | grep -v '_pb2.py')
+PY_FILES:=setup.py diff.py $(find src | grep '.py$$' | grep -v '_pb2.py')
 
 all: bootstrap fixture FORCE
 	$(MAKE) python
