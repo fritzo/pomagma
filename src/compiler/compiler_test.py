@@ -25,8 +25,9 @@ outfile = None
 
 
 def print_compiles(compiles):
-    for cost, strategy in compiles:
+    for cost, seq, strategy in compiles:
         print '# cost = {0}'.format(cost)
+        print '# infer {0}'.format(seq)
         print re.sub(': ', '\n', repr(strategy))
         print
 
@@ -37,7 +38,7 @@ def _test_sequent(*args):
     print 'Compiling full search: {0}'.format(sequent)
     compiles = compile_full(sequent)
     print_compiles(compiles)
-    full_cost = add_costs(*[cost for cost, _ in compiles])
+    full_cost = add_costs(*[cost for cost, seq, _ in compiles])
 
     incremental_cost = None
     for event in get_events(sequent):
@@ -45,7 +46,7 @@ def _test_sequent(*args):
         compiles = compile_given(sequent, event)
         print_compiles(compiles)
         if event.args:
-            cost = add_costs(*[cost for cost, _ in compiles])
+            cost = add_costs(*[cost for cost, seq, _ in compiles])
             if incremental_cost:
                 incremental_cost = add_costs(incremental_cost, cost)
             else:

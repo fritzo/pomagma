@@ -317,10 +317,10 @@ def compile_full(seq):
     if seq.optional:
         logger('skipped optional rule {0}'.format(seq))
         return results
-    for part in normalize(seq):
+    for derived_seq in normalize(seq):
         context = set()
         bound = set()
-        ranked = rank_compiled(part, context, bound)
+        ranked = rank_compiled(derived_seq, context, bound)
         results.append(min(ranked))
     assert results, 'failed to compile {0}'.format(seq)
     logger('derived {0} rules from {1}'.format(len(results), seq))
@@ -402,14 +402,14 @@ def rank_compiled(seq, context, bound):
     assert compiled, 'failed to compile {0}'.format(seq)
     # logger('optimizing {0} versions'.format(len(compiled)))
     ranked = []
-    for s in compiled:
-        s.validate(bound)
+    for strategy in compiled:
+        strategy.validate(bound)
         # print 'DEBUG', '-' * 8
-        # print 'DEBUG', s
-        s.optimize()
-        # print 'DEBUG', s
-        s.validate(bound)
-        ranked.append((s.cost(), s))
+        # print 'DEBUG', strategy
+        strategy.optimize()
+        # print 'DEBUG', strategy
+        strategy.validate(bound)
+        ranked.append((strategy.cost(), seq, strategy))
     return ranked
 
 

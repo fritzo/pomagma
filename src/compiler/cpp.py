@@ -597,25 +597,28 @@ def write_full_tasks(code, sequents):
 
     full_tasks = []
     for sequent in sequents:
-        for cost, strategy in compiler.compile_full(sequent):
-            full_tasks.append((cost, sequent, strategy))
+        for cost, seq, strategy in compiler.compile_full(sequent):
+            full_tasks.append((cost, sequent, seq, strategy))
     full_tasks.sort()
     type_count = len(full_tasks)
 
     block_size = 64
     split = 'if (*iter / {} != block) {{ continue; }}'.format(block_size)
     min_split_cost = 1.5  # above which we split the outermost for loop
-    split_count = sum(1 for cost, _, _ in full_tasks if cost >= min_split_cost)
-    unsplit_count = type_count - split_count
+    unsplit_count = sum(
+        1 for cost, _, _, _ in full_tasks
+        if cost < min_split_cost
+    )
 
     cases = Code()
-    for i, (cost, sequent, strategy) in enumerate(full_tasks):
+    for i, (cost, sequent, seq, strategy) in enumerate(full_tasks):
         case = Code()
         strategy.cpp(case, split if cost >= min_split_cost else None)
         cases(
             '''
             case $index: { // cost = $cost
-                // infer $sequent
+                // using $sequent
+                // infer $seq
                 $case
             } break;
             ''',
@@ -623,6 +626,7 @@ def write_full_tasks(code, sequents):
             cost=cost,
             case=wrapindent(case),
             sequent=sequent,
+            seq=seq,
         ).newline()
 
     code(
@@ -719,7 +723,7 @@ def write_event_tasks(code, sequents):
             name = '<variable>' if event.is_var() else event.name
             tasks = event_tasks.setdefault(name, [])
             strategies = sorted(compiler.compile_given(sequent, event))
-            costs = [cost for cost, _ in strategies]
+            costs = [cost for cost, seq, _ in strategies]
             cost = log_sum_exp(*costs)
             tasks.append((cost, event, sequent, strategies))
 
@@ -781,26 +785,31 @@ def write_event_tasks(code, sequents):
                 elif event.is_var():
                     subsubbody('const Ob $arg = task.ob;', arg=event.name)
                 subcost = 0
-                for cost, strategy in strategies:
+                for cost, seq, strategy in strategies:
                     subsubbody.newline()
+                    subsubbody('// infer $seq', seq=seq)
                     strategy.cpp(subsubbody)
                     subcost += cost
                 if diagonal:
                     subbody(
                         '''
                         if (lhs == rhs) { // cost = $cost
+                            // given $event
+                            // using $sequent
                             $subsubbody
                         }
                         ''',
                         cost=cost,
                         subsubbody=wrapindent(subsubbody),
+                        event=event,
+                        sequent=sequent,
                     )
                 else:
                     subbody(
                         '''
                         { // cost = $cost
                             // given $event
-                            // infer $sequent
+                            // using $sequent
                             $subsubbody
                         }
                         ''',
