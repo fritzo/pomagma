@@ -82,6 +82,7 @@ class Client(object):
             'pos': reply.assume.pos_count,
             'neg': reply.assume.neg_count,
             'merge': reply.assume.merge_count,
+            'ignored': reply.assume.ignored_count,
         }
 
     def assume(self, facts_in):

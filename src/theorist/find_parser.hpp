@@ -24,7 +24,7 @@ public:
 			const InjectiveFunction * fun,
 			Ob key)
     {
-        return fun->find(key);
+        return key ? fun->find(key) : 0;
     }
 
     Ob reduce (
@@ -33,7 +33,7 @@ public:
 			Ob lhs,
 			Ob rhs)
     {
-        return fun->find(lhs, rhs);
+        return lhs and rhs ? fun->find(lhs, rhs) : 0;
     }
 
     Ob reduce (
@@ -42,7 +42,7 @@ public:
 			Ob lhs,
 			Ob rhs)
     {
-        return fun->find(lhs, rhs);
+        return lhs and rhs ? fun->find(lhs, rhs) : 0;
     }
 };
 

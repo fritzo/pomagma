@@ -237,6 +237,7 @@ messaging::CartographerResponse handle (
         response.mutable_assume()->set_pos_count(counts["pos"]);
         response.mutable_assume()->set_neg_count(counts["neg"]);
         response.mutable_assume()->set_merge_count(counts["merge"]);
+        response.mutable_assume()->set_ignored_count(counts["ignored"]);
     }
 
     if (request.has_infer()) {

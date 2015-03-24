@@ -61,6 +61,7 @@ def _test_atlas(theory):
                 assert theorem_count > 0, theorem_count
                 counts = db.assume(diverge_theorems)
                 assert counts['pos'] + counts['neg'] > 0, counts
+                assert counts['ignored'] == 0, counts
                 db.validate()
                 db.dump('6.h5')
         theorem_count = theorist.try_prove_nless(

@@ -21,6 +21,7 @@ std::map<std::string, size_t> assume_facts (
 
     size_t pos_count = 0;
     size_t neg_count = 0;
+    size_t ignored_count = 0;
 
     for (LineParser iter(theory_file); iter.ok(); iter.next()) {
         const std::string & expression = * iter;
@@ -34,24 +35,36 @@ std::map<std::string, size_t> assume_facts (
             Ob lhs = parser.parse_term();
             Ob rhs = parser.parse_term();
             parser.end();
-            if (lhs != rhs) {
-                structure.carrier().ensure_equal(lhs, rhs);
-                ++pos_count;
+            if (lhs and rhs) {
+                if (lhs != rhs) {
+                    structure.carrier().ensure_equal(lhs, rhs);
+                    ++pos_count;
+                }
+            } else {
+                ++ignored_count;
             }
         } else if (auto * rel = structure.signature().unary_relation(type)) {
             Ob arg = parser.parse_term();
             parser.end();
-            if (not rel->find(arg)) {
-                rel->insert(arg);
-                ++(type[0] == 'N' ? neg_count : pos_count);
+            if (arg) {
+                if (not rel->find(arg)) {
+                    rel->insert(arg);
+                    ++(type[0] == 'N' ? neg_count : pos_count);
+                }
+            } else {
+                ++ignored_count;
             }
         } else if (auto * rel = structure.signature().binary_relation(type)) {
             Ob lhs = parser.parse_term();
             Ob rhs = parser.parse_term();
             parser.end();
-            if (not rel->find(lhs, rhs)) {
-                rel->insert(lhs, rhs);
-                ++(type[0] == 'N' ? neg_count : pos_count);
+            if (lhs and rhs) {
+                if (not rel->find(lhs, rhs)) {
+                    rel->insert(lhs, rhs);
+                    ++(type[0] == 'N' ? neg_count : pos_count);
+                }
+            } else {
+                ++ignored_count;
             }
         } else {
             POMAGMA_ERROR("unknown relation: " << type);
@@ -61,6 +74,7 @@ std::map<std::string, size_t> assume_facts (
     std::map<std::string, size_t> counts;
     counts["pos"] = pos_count;
     counts["neg"] = neg_count;
+    counts["ignored"] = ignored_count;
     return counts;
 }
 
