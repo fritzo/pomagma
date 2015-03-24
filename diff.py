@@ -10,6 +10,34 @@ ROOT = os.path.dirname(REPO)
 TEMP = os.path.join(ROOT, '{}-temp'.format(os.path.basename(REPO)))
 
 
+def meld(left, right):
+    return ['meld', left, right]
+
+
+def gvim(left, right):
+    return [
+        'gvim', '-geom', '165x80', '-c',
+        'DirDiff {} {}'.format(left, right)]
+
+
+def cdiff(left, right):
+    return ['cdiff', '-s', '-w', '0', left, right]
+
+
+DIFFTOOLS = {
+    'meld': meld,
+    'gvim': gvim,
+    'cdiff': cdiff,
+}
+
+
+def get_difftool(name, left, right):
+    if name in DIFFTOOLS:
+        return DIFFTOOLS[name](left, right)
+    else:
+        return [name, left, right]
+
+
 def parallel_check_call(*args):
     for proc in map(subprocess.Popen, args):
         proc.wait()
@@ -30,7 +58,7 @@ def chdir(destin):
 @parsable.command
 def clone(commit='HEAD'):
     '''
-    Create temporary clone repo.
+    Create temporary clone repo at a given commit.
     '''
     with chdir(REPO):
         commit = subprocess.check_output(
@@ -50,35 +78,35 @@ def clone(commit='HEAD'):
 
 
 @parsable.command
-def cpp(difftool='meld', commit='HEAD'):
+def cpp(difftool='gvim', commit='HEAD'):
     '''
-    Diff all src/surveyor/*.theory.cpp.
+    Diff all src/surveyor/*.theory.cpp. (slow)
     '''
     clone(commit=commit)
     parallel_check_call(
         ['make', '-C', REPO, 'codegen'],
         ['make', '-C', TEMP, 'codegen'])
-    subprocess.check_call([
+    subprocess.check_call(get_difftool(
         difftool,
         os.path.join(REPO, 'src', 'surveyor'),
         os.path.join(TEMP, 'src', 'surveyor'),
-    ])
+    ))
 
 
 @parsable.command
-def tasks(difftool='meld', commit='HEAD'):
+def tasks(difftool='gvim', commit='HEAD'):
     '''
-    Diff all src/theory/*.tasks.
+    Diff all src/theory/*.tasks. (fast)
     '''
     clone(commit=commit)
     parallel_check_call(
         ['make', '-C', REPO, 'tasks'],
         ['make', '-C', TEMP, 'tasks'])
-    subprocess.check_call([
+    subprocess.check_call(get_difftool(
         difftool,
         os.path.join(REPO, 'src', 'theory'),
         os.path.join(TEMP, 'src', 'theory'),
-    ])
+    ))
 
 
 if __name__ == '__main__':
