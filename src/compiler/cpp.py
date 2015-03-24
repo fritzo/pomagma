@@ -1,11 +1,15 @@
 import re
 from textwrap import dedent
 from string import Template
-from pomagma.compiler.util import inputs, methodof, log_sum_exp
-from pomagma.compiler.expressions import Expression
-from pomagma.compiler.sequents import Sequent
-from pomagma.compiler import signature
 from pomagma.compiler import compiler
+from pomagma.compiler import signature
+from pomagma.compiler.expressions import Expression
+from pomagma.compiler.sequents import NotNegatable
+from pomagma.compiler.sequents import Sequent
+from pomagma.compiler.sequents import try_negate_name
+from pomagma.compiler.util import inputs
+from pomagma.compiler.util import log_sum_exp
+from pomagma.compiler.util import methodof
 
 
 def camel_to_underscore(camel):
@@ -846,6 +850,12 @@ def get_symbols_used_in(sequents, exprs):
     for expr in exprs:
         assert isinstance(expr, Expression), expr
         tokens |= set(expr.polish.split())
+    for token in list(tokens):
+        if signature.get_arity(token) in signature.RELATION_ARITIES:
+            try:
+                tokens.add(try_negate_name(token))
+            except NotNegatable:
+                pass
     valid_arities = signature.FUNCTION_ARITIES | signature.RELATION_ARITIES
     for c in tokens:
         arity = signature.get_arity(c)

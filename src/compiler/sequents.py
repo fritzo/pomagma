@@ -4,6 +4,7 @@ from pomagma.compiler.util import TODO
 from pomagma.compiler.util import inputs
 from pomagma.compiler.util import set_without
 from pomagma.compiler.util import union
+from pomagma.compiler.signature import ARITY_TABLE
 
 
 class Sequent(object):
@@ -80,39 +81,34 @@ class NotNegatable(Exception):
     pass
 
 
+def try_negate_name(pos):
+    assert pos in ARITY_TABLE
+    neg = pos[1:] if pos.startswith('N') else 'N' + pos
+    if neg not in ARITY_TABLE or ARITY_TABLE[neg] != ARITY_TABLE[pos]:
+        raise NotNegatable
+    return neg
+
+
 @inputs(Expression)
-def get_negated(expr):
+def try_get_negated(expr):
     'Returns a disjunction'
-    if expr.name == 'LESS':
-        return set([Expression('NLESS', *expr.args)])
-    elif expr.name == 'NLESS':
-        return set([Expression('LESS', *expr.args)])
-    elif expr.name == 'EQUAL':
+    if expr.name == 'EQUAL':
         lhs, rhs = expr.args
         return set([Expression('NLESS', lhs, rhs),
                     Expression('NLESS', rhs, lhs)])
     else:
-        raise NotNegatable(expr.name)
-
-
-@inputs(Expression, Expression)
-def pairwise_consistent(p, q):
-    if p.name == 'EQUAL':
-        if q.name == 'NLESS':
-            return set(p.args) != set(q.args)
-    elif p.name == 'LESS':
-        if q.name == 'NLESS':
-            return p.args != q.args
-    elif q.name == 'NLESS':
-        if p.name == 'EQUAL':
-            return set(p.args) != set(q.args)
-        elif p.name == 'LESS':
-            return p.args != q.args
-    return True
+        neg_name = try_negate_name(expr.name)
+        return set([Expression(neg_name, *expr.args)])
 
 
 def all_consistent(exprs):
-    return all(pairwise_consistent(p, q) for p in exprs for q in exprs)
+    neg_exprs = set()
+    for p in exprs:
+        try:
+            neg_exprs.update(try_get_negated(p))
+        except NotNegatable:
+            pass
+    return neg_exprs.isdisjoint(exprs)
 
 
 @inputs(Expression)
@@ -166,7 +162,7 @@ def get_pointed(seq):
         for succedent in seq.succedents:
             remaining = set_without(seq.succedents, succedent)
             try:
-                neg_remaining = map(get_negated, remaining)
+                neg_remaining = map(try_get_negated, remaining)
             except NotNegatable:
                 continue
             for negated in itertools.product(*neg_remaining):
@@ -200,12 +196,12 @@ def get_contrapositives(seq):
     if len(seq.succedents) == 1:
         succedent = iter(seq.succedents).next()
         try:
-            neg_succedents = get_negated(succedent)
+            neg_succedents = try_get_negated(succedent)
         except NotNegatable:
             return result
         for antecedent in seq.antecedents:
             try:
-                neg_antecedents = get_negated(antecedent)
+                neg_antecedents = try_get_negated(antecedent)
             except NotNegatable:
                 continue
             for neg_succedent in neg_succedents:
