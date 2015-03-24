@@ -1,7 +1,7 @@
 # TODO define these once rules compile
 
 EQUAL DIV APP V K
-EQUAL DIV APP A K
+#EQUAL DIV APP A K  # TODO is this correct?
 
 #EQUAL APP V UNIT UNIT
 #EQUAL UNIT ???
