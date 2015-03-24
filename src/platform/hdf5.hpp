@@ -8,6 +8,13 @@
 namespace pomagma
 {
 
+template<class Iterator>
+inline auto safe_max_element (Iterator begin, Iterator end) -> decltype(*begin)
+{
+    POMAGMA_ASSERT(begin != end, "max element of empty range");
+    return * std::max_element(begin, end);
+}
+
 namespace hdf5
 {
 
@@ -498,22 +505,26 @@ struct Dataset : noncopyable
     template<class T>
     void write_all (const std::vector<T> & source)
     {
-        hid_t source_type = Unsigned<T>::id();
-        hid_t destin_type = type();
-        if (H5Tget_size(source_type) > H5Tget_size(destin_type)) {
-            size_t max_value = * std::max_element(source.begin(), source.end());
-            POMAGMA_ASSERT_LE(max_value, max_value_of_type(destin_type));
+        if (not source.empty()) {
+            hid_t source_type = Unsigned<T>::id();
+            hid_t destin_type = type();
+            if (H5Tget_size(source_type) > H5Tget_size(destin_type)) {
+                size_t max_value = safe_max_element(
+                    source.begin(),
+                    source.end());
+                POMAGMA_ASSERT_LE(max_value, max_value_of_type(destin_type));
+            }
+
+            POMAGMA_ASSERT_EQ(volume(), source.size());
+
+            POMAGMA_HDF5_OK(H5Dwrite(
+                    id,             // dataset_id
+                    source_type,    // mem_type_id
+                    H5S_ALL,        // mem_space_id
+                    H5S_ALL,        // file_space_id
+                    H5P_DEFAULT,    // xfer_plist_id
+                    & source[0]));  // buf
         }
-
-        POMAGMA_ASSERT_EQ(volume(), source.size());
-
-        POMAGMA_HDF5_OK(H5Dwrite(
-                id,             // dataset_id
-                source_type,    // mem_type_id
-                H5S_ALL,        // mem_space_id
-                H5S_ALL,        // file_space_id
-                H5P_DEFAULT,    // xfer_plist_id
-                & source[0]));  // buf
     }
 
     template<class T>
@@ -525,13 +536,15 @@ struct Dataset : noncopyable
 
         destin.resize(volume());
 
-        POMAGMA_HDF5_OK(H5Dread(
-                id,             // dataset_id
-                destin_type,    // mem_type_id
-                H5S_ALL,        // mem_space_id
-                H5S_ALL,        // file_space_id
-                H5P_DEFAULT,    // xfer_plist_id
-                & destin[0]));  // buf
+        if (not destin.empty()) {
+            POMAGMA_HDF5_OK(H5Dread(
+                    id,             // dataset_id
+                    destin_type,    // mem_type_id
+                    H5S_ALL,        // mem_space_id
+                    H5S_ALL,        // file_space_id
+                    H5P_DEFAULT,    // xfer_plist_id
+                    & destin[0]));  // buf
+        }
     }
 
     template<class DenseSet>
@@ -576,7 +589,7 @@ struct Dataset : noncopyable
         hid_t source_type = Unsigned<T>::id();
         hid_t destin_type = type();
         if (H5Tget_size(source_type) > H5Tget_size(destin_type)) {
-            size_t max_value = * std::max_element(source.begin(), source.end());
+            size_t max_value = safe_max_element(source.begin(), source.end());
             POMAGMA_ASSERT_LE(max_value, max_value_of_type(destin_type));
         }
 

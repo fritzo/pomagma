@@ -573,7 +573,7 @@ inline void load_signature (
         POMAGMA_ASSERT_EQ(dataspace.rank(), 1);
         std::vector<Ob> data;
         dataset.read_all(data);
-        size_t source_item_dim = * std::max_element(data.begin(), data.end());
+        size_t source_item_dim = safe_max_element(data.begin(), data.end());
         size_t destin_item_dim = source_item_dim + extra_item_dim;
         signature.declare(* new Carrier(destin_item_dim));
     }
@@ -639,7 +639,7 @@ inline void check_signature (
         POMAGMA_ASSERT_EQ(dataspace.rank(), 1);
         std::vector<Ob> data;
         dataset.read_all(data);
-        size_t source_item_dim = * std::max_element(data.begin(), data.end());
+        size_t source_item_dim = safe_max_element(data.begin(), data.end());
         size_t destin_item_dim = carrier.item_dim();
         POMAGMA_ASSERT_LE(source_item_dim, destin_item_dim);
     }
@@ -705,7 +705,7 @@ inline void load_data (
 
     std::vector<Ob> data;
     dataset.read_all(data);
-    Ob max_ob = * std::max_element(data.begin(), data.end());
+    Ob max_ob = safe_max_element(data.begin(), data.end());
     POMAGMA_ASSERT_LE(max_ob, carrier.item_dim());
     for (Ob ob : data) {
         carrier.raw_insert(ob);
@@ -744,11 +744,13 @@ inline void load_data (
 
     std::vector<Ob> data;
     dataset.read_all(data);
-    Ob max_ob = * std::max_element(data.begin(), data.end());
-    POMAGMA_ASSERT_LE(max_ob, rel.item_dim());
-    rel.clear();
-    for (Ob ob : data) {
-        rel.raw_insert(ob);
+    if (not data.empty()) {
+        Ob max_ob = safe_max_element(data.begin(), data.end());
+        POMAGMA_ASSERT_LE(max_ob, rel.item_dim());
+        rel.clear();
+        for (Ob ob : data) {
+            rel.raw_insert(ob);
+        }
     }
 
     hash["relations/unary/" + name] = hdf5::load_hash(dataset);
