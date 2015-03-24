@@ -1,7 +1,7 @@
 # TODO define these once rules compile
 
-#EQUAL APP V DIV DIV
-#EQUAL DIV APP A K
+EQUAL DIV APP V K
+EQUAL DIV APP A K
 
 #EQUAL APP V UNIT UNIT
 #EQUAL UNIT ???
