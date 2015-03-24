@@ -12,10 +12,11 @@
 *.pb.h
 *.pb.cc
 *_pb2.py
-*.compiled
 *.mutex
+/src/theory/*.compiled
+/src/theory/*.tasks
 /src/surveyor/*.theory.cpp
-*.language
+/src/language/*.language
 /data/
 /build/
 /cov-int/

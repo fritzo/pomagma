@@ -59,5 +59,20 @@ def cpp(difftool='meld', commit='HEAD'):
     ])
 
 
+@parsable.command
+def tasks(difftool='meld', commit='HEAD'):
+    '''
+    Diff all src/theory/*.tasks.
+    '''
+    clone(commit=commit)
+    subprocess.check_call(['make', '-C', REPO, 'tasks'])
+    subprocess.check_call(['make', '-C', TEMP, 'tasks'])
+    subprocess.check_call([
+        difftool,
+        os.path.join(REPO, 'src', 'surveyor'),
+        os.path.join(TEMP, 'src', 'surveyor'),
+    ])
+
+
 if __name__ == '__main__':
     parsable.dispatch()

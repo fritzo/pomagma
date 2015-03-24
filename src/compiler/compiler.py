@@ -358,8 +358,17 @@ def get_events(seq):
     return events
 
 
+def get_bound(atom):
+    bound = atom.vars
+    if atom.is_fun():
+        bound.add(atom.var)
+    return bound
+
+
 @inputs(Sequent, Expression)
-def normalize_given(seq, atom, bound):
+def normalize_given(seq, atom, bound=None):
+    if bound is None:
+        bound = get_bound(atom)
     for normal in normalize(seq):
         if atom in normal.antecedents or atom.is_var():
             yield normal
@@ -380,9 +389,7 @@ def normalize_given(seq, atom, bound):
 @inputs(Sequent, Expression)
 def compile_given(seq, atom):
     context = set([atom])
-    bound = atom.vars
-    if atom.is_fun():
-        bound.add(atom.var)
+    bound = get_bound(atom)
     results = []
     for normal in normalize_given(seq, atom, bound):
         # print 'DEBUG normal =', normal

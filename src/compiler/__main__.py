@@ -1,19 +1,40 @@
 import os
 import re
+import contextlib
+import multiprocessing
 import parsable
 from pomagma.compiler import cpp
 from pomagma.compiler import parser
+from pomagma.compiler import compiler
 from pomagma.compiler.compiler import add_costs
 from pomagma.compiler.compiler import compile_full
 from pomagma.compiler.compiler import compile_given
 from pomagma.compiler.compiler import get_events
 from pomagma.compiler.extensional import derive_facts
 from pomagma.compiler.extensional import validate
-from pomagma.compiler.util import TODO
 
 
 SRC = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ROOT = os.path.dirname(SRC)
+
+
+@contextlib.contextmanager
+def writer(outfile=None):
+    if outfile is None:
+
+        def write(line):
+            print line
+            print
+
+        yield write
+    else:
+        with open(outfile, 'w') as f:
+
+            def write(line):
+                f.write(line)
+                f.write('\n\n')
+
+            yield write
 
 
 def print_compiles(compiles):
@@ -65,6 +86,56 @@ def contrapositves(*filenames):
 
 
 @parsable.command
+def normalize(*filenames):
+    '''
+    Show normalized rule set derived from each rule
+    '''
+    sequents = []
+    for filename in filenames:
+        sequents += parser.parse_rules(filename)
+    for sequent in sequents:
+        print sequent.ascii()
+        print
+        for neg in sequent.contrapositives():
+            print neg.ascii(indent=4)
+            print
+
+
+@parsable.command
+def extract_tasks(infile, outfile=None):
+    '''
+    Extract tasks from rules, but do not compile to C++.
+    '''
+    with writer(outfile) as write:
+        for sequent in parser.parse_rules(infile):
+            write(sequent.ascii())
+            for normal in sorted(compiler.normalize(sequent)):
+                write(normal.ascii(indent=4))
+            for event in sorted(compiler.get_events(sequent)):
+                write('    Given: {}'.format(event))
+                for normal in sorted(compiler.normalize_given(sequent, event)):
+                    write(normal.ascii(indent=8))
+
+
+def _extract_tasks((infile, outfile)):
+    extract_tasks(infile, outfile)
+
+
+@parsable.command
+def batch_extract_tasks(*filenames):
+    '''
+    Extract tasks from infiles '*.rules', saving to '*.tasks'.
+    '''
+    pairs = []
+    for infile in filenames:
+        infile = os.path.abspath(infile)
+        assert infile.endswith('.rules'), infile
+        outfile = infile.replace('.rules', '.tasks')
+        pairs.append((infile, outfile))
+    multiprocessing.Pool().map(_extract_tasks, pairs)
+
+
+@parsable.command
 def measure(*filenames):
     '''
     Measure complexity of rules in files
@@ -74,14 +145,6 @@ def measure(*filenames):
         sequents += parser.parse_rules(filename)
     for sequent in sequents:
         measure_sequent(sequent)
-
-
-@parsable.command
-def report(*filenames):
-    '''
-    Make report.html of rule complexity in files
-    '''
-    TODO('write sequents to file, coloring by incremental complexity')
 
 
 @parsable.command

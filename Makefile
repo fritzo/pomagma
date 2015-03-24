@@ -31,6 +31,11 @@ codegen: FORCE
 	(cd build/debug && cmake -DCMAKE_BUILD_TYPE=Debug ../..)
 	make -nC build/debug 2>/dev/null | grep '\<compile\>' | /bin/sh
 
+tasks: FORCE
+	python -m pomagma.compiler batch-extract-tasks src/theory/*.rules
+
+tasks: FORCE
+
 cpp-test: all FORCE
 	POMAGMA_LOG_FILE=$(shell pwd)/data/debug.log $(MAKE) -C build/debug test
 
