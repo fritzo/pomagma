@@ -1,2 +1,4 @@
 test:
-	nosetests
+	pyflakes .
+	pep8 *.py
+	nosetests -vx

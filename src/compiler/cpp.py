@@ -597,28 +597,32 @@ def write_full_tasks(code, sequents):
 
     full_tasks = []
     for sequent in sequents:
-        full_tasks += compiler.compile_full(sequent)
-    full_tasks.sort(key=(lambda (cost, _): cost))
+        for cost, strategy in compiler.compile_full(sequent):
+            full_tasks.append((cost, sequent, strategy))
+    full_tasks.sort()
     type_count = len(full_tasks)
 
     block_size = 64
     split = 'if (*iter / {} != block) {{ continue; }}'.format(block_size)
     min_split_cost = 1.5  # above which we split the outermost for loop
-    unsplit_count = sum(1 for cost, _ in full_tasks if cost < min_split_cost)
+    split_count = sum(1 for cost, _, _ in full_tasks if cost >= min_split_cost)
+    unsplit_count = type_count - split_count
 
     cases = Code()
-    for i, (cost, strategy) in enumerate(full_tasks):
+    for i, (cost, sequent, strategy) in enumerate(full_tasks):
         case = Code()
         strategy.cpp(case, split if cost >= min_split_cost else None)
         cases(
             '''
             case $index: { // cost = $cost
+                // infer $sequent
                 $case
             } break;
             ''',
             index=i,
             cost=cost,
             case=wrapindent(case),
+            sequent=sequent,
         ).newline()
 
     code(
@@ -718,7 +722,7 @@ def write_event_tasks(code, sequents):
             strategies.sort(key=lambda (cost, _): cost)
             costs = [cost for cost, _ in strategies]
             cost = log_sum_exp(*costs)
-            tasks.append((event, cost, strategies))
+            tasks.append((event, cost, strategies, sequent))
 
     def get_group(name):
         special = {
@@ -753,7 +757,7 @@ def write_event_tasks(code, sequents):
                     eventname=eventname,
                     args=', '.join(args))
 
-            for event, _, strategies in tasks:
+            for event, _, strategies, sequent in tasks:
                 subsubbody = Code()
                 diagonal = (nargs == 2 and event.args[0] == event.args[1])
                 if diagonal:
@@ -796,11 +800,15 @@ def write_event_tasks(code, sequents):
                     subbody(
                         '''
                         { // cost = $cost
+                            // given $event
+                            // infer $sequent
                             $subsubbody
                         }
                         ''',
                         cost=cost,
                         subsubbody=wrapindent(subsubbody),
+                        event=event,
+                        sequent=sequent,
                     )
 
             if eventname in ['LESS', 'NLESS', '<variable>']:
