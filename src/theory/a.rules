@@ -15,7 +15,8 @@ EQUAL APP A COMP APP B f CB APP f I
 
 # A strong characterization of the type constructor A
 # in terms of two globally free variables, SECTION and RETRACT.
-# Statements involving these free variables cannot be negated.
+#
+# WARNING Statements involving these free variables cannot be negated.
 
 CLOSED f
 -----------------------------------------------

@@ -1,6 +1,5 @@
 import itertools
 from pomagma.compiler.expressions import Expression
-from pomagma.compiler.util import TODO
 from pomagma.compiler.util import inputs
 from pomagma.compiler.util import set_without
 from pomagma.compiler.util import union
@@ -170,7 +169,7 @@ def get_pointed(seq):
                 if all_consistent(antecedents):
                     result.add(Sequent(antecedents, set([succedent])))
     else:
-        TODO('allow empty succedents')
+        raise ValueError('get_contrapositives never returns empty succedents')
     return result
 
 
@@ -192,29 +191,46 @@ def get_atomic(seq, bound=set()):
 
 @inputs(Sequent)
 def get_contrapositives(seq):
-    result = set()
-    if len(seq.succedents) == 1:
-        succedent = iter(seq.succedents).next()
+    '''
+    Given multiple antecedents and succedents,
+    return a set of sequents with various antecedents or succedents negated
+    such that each result sequent corresponds has a succedent set corresponding
+    to exactly one of the original antecedents or succedents. For example
+
+        A, B |- C, D
+
+    yields the set
+
+        B, ~C, ~D |- ~A
+        A, ~C, ~D |- ~B
+        A, B, ~D |- C
+        A, B, ~C |- D
+    '''
+    ante_succ_pairs = []
+    for succedent in seq.succedents:
         try:
-            neg_succedents = try_get_negated(succedent)
+            antecedents = try_get_negated(succedent)
         except NotNegatable:
-            return result
-        for antecedent in seq.antecedents:
-            try:
-                neg_antecedents = try_get_negated(antecedent)
-            except NotNegatable:
-                continue
-            for neg_succedent in neg_succedents:
-                antecedents = set(seq.antecedents)
-                antecedents.remove(antecedent)
-                antecedents.add(neg_succedent)
+            antecedents = set()
+        ante_succ_pairs.append((antecedents, set([succedent])))
+    for antecedent in seq.antecedents:
+        try:
+            succedents = try_get_negated(antecedent)
+        except NotNegatable:
+            succedents = set()
+        ante_succ_pairs.append((set([antecedent]), succedents))
+    result = set()
+    for _, succedents in ante_succ_pairs:
+        if succedents:
+            antecedents_product = []
+            for other_antecedents, other_succedents in ante_succ_pairs:
+                if other_succedents != succedents:
+                    antecedents_product.append(other_antecedents)
+            for antecedents in itertools.product(*antecedents_product):
+                antecedents = set(antecedents)
                 if all_consistent(antecedents):
-                    result.add(Sequent(antecedents, neg_antecedents))
-        return result
-    elif len(seq.succedents) > 1:
-        TODO('allow multiple succedents')
-    else:
-        TODO('allow empty succedents')
+                    result.add(Sequent(antecedents, succedents))
+    return result
 
 
 @inputs(Sequent)
@@ -225,7 +241,7 @@ def normalize(seq, bound=set()):
     '''
     if seq.optional:
         return set()
-    result = get_atomic(seq, bound)
+    result = set()
     for contra in get_contrapositives(seq):
         result |= get_atomic(contra, bound)
     assert result, 'failed to normalize {0} binding {1}'.format(seq, bound)

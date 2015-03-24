@@ -29,6 +29,26 @@ def test_contrapositives():
         yield _test_contrapositives, name
 
 
+def _test_get_atomic(name):
+    print '# get_atomic'
+    print
+    for rule in RULE_SETS[name]:
+        print rule.ascii()
+        print
+        if len(rule.succedents) != 1:
+            print '    TODO'
+            print
+            continue
+        for seq in sequents.get_atomic(rule):
+            print seq.ascii(indent=4)
+            print
+
+
+def test_get_atomic():
+    for name in RULE_SETS:
+        yield _test_get_atomic, name
+
+
 def _test_normalize(name):
     print '# normalized'
     print
