@@ -3,8 +3,8 @@ from pomagma.compiler.expressions import NotNegatable
 from pomagma.compiler.expressions import try_get_negated
 from pomagma.compiler.util import function
 from pomagma.compiler.util import inputs
+from pomagma.compiler.util import set_without
 from pomagma.compiler.util import union
-
 
 BOT = Expression('BOT')
 TOP = Expression('TOP')
@@ -13,30 +13,30 @@ TOP = Expression('TOP')
 # TODO compile this from *.rules, rather than hand-coding
 @inputs(set)
 def complete_step(facts):
-    result = set()
+    result = set(facts)
     equal = set(p for p in facts if p.name == 'EQUAL')
     less = set(p for p in facts if p.name == 'LESS')
     nless = set(p for p in facts if p.name == 'NLESS')
     # |- NLESS TOP BOT
     result.add(Expression('NLESS', TOP, BOT))
-    # |- LESS x x
+    # |- EQUAL x x
     # |- LESS x TOP
     # |- LESS BOT x
-    for term in union(p.terms for p in facts):
-        result.add(Expression('LESS', term, term))
-        result.add(Expression('LESS', BOT, term))
-        result.add(Expression('LESS', term, TOP))
+    for x in union(p.terms for p in facts):
+        result.add(Expression('EQUAL', x, x))
+        result.add(Expression('LESS', BOT, x))
+        result.add(Expression('LESS', x, TOP))
     # EQUAL x y |- LESS x y
     # EQUAL x y |- LESS y x
     for p in equal:
-        lhs, rhs = p.args
-        result.add(Expression('LESS', lhs, rhs))
-        result.add(Expression('LESS', rhs, lhs))
+        x, y = p.args
+        result.add(Expression('LESS', x, y))
+        result.add(Expression('LESS', y, x))
     # LESS x y, LESS y x |- EQUAL x y
     for p in less:
-        lhs, rhs = p.args
-        if Expression('LESS', rhs, lhs) in less:
-            result.add(Expression('EQUAL', lhs, rhs))
+        x, y = p.args
+        if Expression('LESS', y, x) in less:
+            result.add(Expression('EQUAL', x, y))
     # LESS x y, LESS y z |- LESS x z
     for p in less:
         x, y = p.args
@@ -63,11 +63,12 @@ def complete_step(facts):
 
 @inputs(set, function)
 def close_under(facts, closure_op):
-    boundary = set(facts)
     closed = set()
+    boundary = facts
     while boundary:
         closed |= boundary
-        boundary = closure_op(closed) - closed
+        boundary = closure_op(closed)
+        boundary -= closed
     return closed
 
 
@@ -77,8 +78,7 @@ def complete(facts):
 
 
 @inputs(set)
-def all_consistent(facts):
-    completed = complete(facts)
+def all_consistent(completed):
     negated = set()
     for p in completed:
         try:
@@ -92,9 +92,28 @@ class Inconsistent(Exception):
     pass
 
 
+def simplify_step(completed):
+
+    def step(fact_sets):
+        result = set(fact_sets)
+        for facts in fact_sets:
+            for fact in facts:
+                if fact.is_rel():
+                    simple = set_without(facts, fact)
+                    frozen = frozenset(simple)
+                    if frozen not in result and complete(simple) == completed:
+                            result.add(frozen)
+        return result
+
+    return step
+
+
 @inputs(set)
 def try_simplify(facts):
-    if not all_consistent(facts):
+    completed = complete(facts)
+    if not all_consistent(completed):
         raise Inconsistent
-    # TODO try to eliminate redundant antecedents
+    simple = set([frozenset(facts)])
+    simple = close_under(simple, simplify_step(completed))
+    facts = set(min(simple, key=lambda s: (len(s), str(s))))
     return facts

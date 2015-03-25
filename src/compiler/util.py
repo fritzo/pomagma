@@ -47,10 +47,10 @@ def log_sum_exp(*args):
 def inputs(*types):
     def deco(fun):
         @functools.wraps(fun)
-        def typed(*args):
+        def typed(*args, **kwargs):
             for arg, typ in zip(args, types):
                 assert isinstance(arg, typ)
-            return fun(*args)
+            return fun(*args, **kwargs)
         return typed
     return deco
 
