@@ -1,9 +1,14 @@
 import re
 from pomagma.compiler import signature
+from pomagma.compiler.signature import ARITY_TABLE
+from pomagma.compiler.util import inputs
 from pomagma.compiler.util import union
 
 
 class Expression(object):
+    __slots__ = [
+        '_name', '_args', '_arity', '_polish', '_hash', '_var', '_vars',
+    ]
 
     def __init__(self, name, *args):
         assert isinstance(name, str)
@@ -25,11 +30,7 @@ class Expression(object):
         elif arity == 'NullaryFunction':
             self._var = Expression(name + '_')
             self._vars = set()
-        elif arity in [
-                'InjectiveFunction',
-                'BinaryFunction',
-                'SymmetricFunction',
-        ]:
+        elif arity in signature.FUNCTION_ARITIES:
             var = re.sub('[ _]+', '_', self.polish).rstrip('_')
             self._var = Expression(var)
             self._vars = union(arg.vars for arg in args)
@@ -117,3 +118,27 @@ class Expression(object):
             return Expression(
                 self.name,
                 *[arg.substitute(var, defn) for arg in self.args])
+
+
+class NotNegatable(Exception):
+    pass
+
+
+def try_negate_name(pos):
+    assert pos in ARITY_TABLE
+    neg = pos[1:] if pos.startswith('N') else 'N' + pos
+    if neg not in ARITY_TABLE or ARITY_TABLE[neg] != ARITY_TABLE[pos]:
+        raise NotNegatable
+    return neg
+
+
+@inputs(Expression)
+def try_get_negated(expr):
+    'Returns a disjunction'
+    if expr.name == 'EQUAL':
+        lhs, rhs = expr.args
+        return set([Expression('NLESS', lhs, rhs),
+                    Expression('NLESS', rhs, lhs)])
+    else:
+        neg_name = try_negate_name(expr.name)
+        return set([Expression(neg_name, *expr.args)])
