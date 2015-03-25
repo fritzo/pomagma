@@ -8,6 +8,7 @@ import parsable
 REPO = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(REPO)
 TEMP = os.path.join(ROOT, '{}-temp'.format(os.path.basename(REPO)))
+DIFFTOOL = os.environ.get('POMAGMA_DIFFTOOL', os.environ.get('EDITOR', 'meld'))
 
 
 def get_difftool(tool, left, right):
@@ -56,7 +57,7 @@ def chdir(destin):
 @parsable.command
 def clone(commit='HEAD'):
     '''
-    Create temporary clone repo at a given commit.
+    Create temporary clone repo in ../ positioned at the given commit.
     '''
     with chdir(REPO):
         commit = subprocess.check_output(
@@ -76,9 +77,10 @@ def clone(commit='HEAD'):
 
 
 @parsable.command
-def cpp(difftool='gvim', commit='HEAD'):
+def cpp(commit='HEAD', difftool=DIFFTOOL):
     '''
-    Diff all src/surveyor/*.theory.cpp. (slow)
+    Diff generated code src/surveyor/*.theory.cpp. (slow)
+    Supported difftools: diff, meld, cdiff, vim, gvim, mvim
     '''
     clone(commit=commit)
     parallel_check_call(
@@ -92,9 +94,10 @@ def cpp(difftool='gvim', commit='HEAD'):
 
 
 @parsable.command
-def tasks(difftool='gvim', commit='HEAD'):
+def tasks(commit='HEAD', difftool=DIFFTOOL):
     '''
-    Diff all src/theory/*.tasks. (fast)
+    Diff generated task sketches src/theory/*.tasks. (fast)
+    Supported difftools: diff, meld, cdiff, vim, gvim, mvim
     '''
     clone(commit=commit)
     parallel_check_call(
