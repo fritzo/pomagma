@@ -10,40 +10,30 @@ ROOT = os.path.dirname(REPO)
 TEMP = os.path.join(ROOT, '{}-temp'.format(os.path.basename(REPO)))
 
 
-def meld(left, right):
-    return ['meld', left, right]
-
-
-def gvim(left, right):
-    return [
-        'gvim', '-geom', '165x80',
-        '-c', 'DirDiff {} {}'.format(left, right)]
-
-
-def mvim(left, right):
-    return [
-        'mvim', '-c', 'set columns=165',
-        '-c', 'let g:DirDiffExcludes = "*.pyc"',
-        '-c', 'DirDiff {} {}'.format(left, right)]
-
-
-def cdiff(left, right):
-    return ['cdiff', '-s', '-w', '0', left, right]
-
-
-DIFFTOOLS = {
-    'meld': meld,
-    'gvim': gvim,
-    'mvim': mvim,
-    'cdiff': cdiff,
-}
-
-
-def get_difftool(name, left, right):
-    if name in DIFFTOOLS:
-        return DIFFTOOLS[name](left, right)
+def get_difftool(tool, left, right):
+    if tool == 'cdiff':
+        return [
+            'cdiff', '-s', '-w', '0', left, right,
+        ]
+    elif tool == 'vim':
+        return [
+            'vim', '-c', 'DirDiff {} {}'.format(left, right),
+        ]
+    elif tool == 'gvim':
+        return [
+            'gvim', '-geom', '165x80',
+            '-c', 'DirDiff {} {}'.format(left, right),
+        ]
+    elif tool == 'mvim':
+        return [
+            'mvim', '-c', 'set columns=165',
+            '-c', 'let g:DirDiffExcludes = "*.pyc"',
+            '-c', 'DirDiff {} {}'.format(left, right),
+        ]
     else:
-        return [name, left, right]
+        return [
+            tool, left, right,
+        ]
 
 
 def parallel_check_call(*args):
