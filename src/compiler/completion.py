@@ -1,4 +1,6 @@
 from pomagma.compiler.expressions import Expression
+from pomagma.compiler.expressions import NotNegatable
+from pomagma.compiler.expressions import try_get_negated
 from pomagma.compiler.util import function
 from pomagma.compiler.util import inputs
 from pomagma.compiler.util import union
@@ -72,3 +74,27 @@ def close_under(facts, closure_op):
 @inputs(set)
 def complete(facts):
     return close_under(facts, complete_step)
+
+
+@inputs(set)
+def all_consistent(facts):
+    completed = complete(facts)
+    negated = set()
+    for p in completed:
+        try:
+            negated.update(try_get_negated(p))
+        except NotNegatable:
+            pass
+    return negated.isdisjoint(completed)
+
+
+class Inconsistent(Exception):
+    pass
+
+
+@inputs(set)
+def try_simplify(facts):
+    if not all_consistent(facts):
+        raise Inconsistent
+    # TODO try to eliminate redundant antecedents
+    return facts

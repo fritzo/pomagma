@@ -1,13 +1,16 @@
 import itertools
-from pomagma.compiler.completion import complete
+from pomagma.compiler.completion import Inconsistent
+from pomagma.compiler.completion import try_simplify
 from pomagma.compiler.expressions import Expression
+from pomagma.compiler.expressions import NotNegatable
+from pomagma.compiler.expressions import try_get_negated
 from pomagma.compiler.util import inputs
 from pomagma.compiler.util import set_without
 from pomagma.compiler.util import union
-from pomagma.compiler.signature import ARITY_TABLE
 
 
 class Sequent(object):
+    __slots__ = ['_antecedents', '_succedents', '_hash', '_str', 'debuginfo']
 
     def __init__(self, antecedents, succedents):
         antecedents = frozenset(antecedents)
@@ -44,24 +47,24 @@ class Sequent(object):
         o = str(other)
         return (len(s), s) < (len(o), o)
 
+    def __print_set(self, items, sep=', '):
+        items = map(str, items)
+        items.sort(key=lambda s: (len(s), s))
+        return sep.join(items)
+
     def __str__(self):
         if self._str is None:
             self._str = '{0} |- {1}'.format(
-                ', '.join(map(str, self.antecedents)),
-                ', '.join(map(str, self.succedents)))
+                self.__print_set(self.antecedents),
+                self.__print_set(self.succedents))
         return self._str
 
     def __repr__(self):
         return 'Sequent({0})'.format(self)
 
-    def __ascii_set(self, items):
-        items = map(str, items)
-        items.sort(key=lambda s: (len(s), s))
-        return '   '.join(items)
-
     def ascii(self, indent=0):
-        top = self.__ascii_set(self.antecedents)
-        bot = self.__ascii_set(self.succedents)
+        top = self.__print_set(self.antecedents, sep='   ')
+        bot = self.__print_set(self.succedents, sep='   ')
         width = max(len(top), len(bot))
         top = top.center(width)
         bot = bot.center(width)
@@ -80,41 +83,6 @@ class Sequent(object):
 def as_atom(expr):
     args = [arg.var for arg in expr.args]
     return Expression(expr.name, *args)
-
-
-class NotNegatable(Exception):
-    pass
-
-
-def try_negate_name(pos):
-    assert pos in ARITY_TABLE
-    neg = pos[1:] if pos.startswith('N') else 'N' + pos
-    if neg not in ARITY_TABLE or ARITY_TABLE[neg] != ARITY_TABLE[pos]:
-        raise NotNegatable
-    return neg
-
-
-@inputs(Expression)
-def try_get_negated(expr):
-    'Returns a disjunction'
-    if expr.name == 'EQUAL':
-        lhs, rhs = expr.args
-        return set([Expression('NLESS', lhs, rhs),
-                    Expression('NLESS', rhs, lhs)])
-    else:
-        neg_name = try_negate_name(expr.name)
-        return set([Expression(neg_name, *expr.args)])
-
-
-def all_consistent(exprs):
-    completed = complete(set(exprs))
-    negated = set()
-    for p in completed:
-        try:
-            negated.update(try_get_negated(p))
-        except NotNegatable:
-            pass
-    return negated.isdisjoint(completed)
 
 
 @inputs(Expression)
@@ -172,9 +140,11 @@ def get_pointed(seq):
             except NotNegatable:
                 continue
             for negated in itertools.product(*neg_remaining):
-                antecedents = seq.antecedents | set(negated)
-                if all_consistent(antecedents):
-                    result.add(Sequent(antecedents, set([succedent])))
+                try:
+                    antecedents = try_simplify(set(negated) | seq.antecedents)
+                except Inconsistent:
+                    continue
+                result.add(Sequent(antecedents, set([succedent])))
     else:
         raise ValueError('get_contrapositives never returns empty succedents')
     return result
@@ -234,9 +204,11 @@ def get_contrapositives(seq):
                 if other_succedents != succedents:
                     antecedents_product.append(other_antecedents)
             for antecedents in itertools.product(*antecedents_product):
-                antecedents = set(antecedents)
-                if all_consistent(antecedents):
-                    result.add(Sequent(antecedents, succedents))
+                try:
+                    antecedents = try_simplify(set(antecedents))
+                except Inconsistent:
+                    continue
+                result.add(Sequent(antecedents, succedents))
     return result
 
 
