@@ -1,6 +1,7 @@
 import itertools
 from pomagma.compiler.completion import Inconsistent
-from pomagma.compiler.completion import try_simplify
+from pomagma.compiler.completion import simplify_succedent
+from pomagma.compiler.completion import try_simplify_antecedents
 from pomagma.compiler.expressions import Expression
 from pomagma.compiler.expressions import NotNegatable
 from pomagma.compiler.expressions import try_get_negated
@@ -141,7 +142,8 @@ def get_pointed(seq):
                 continue
             for negated in itertools.product(*neg_remaining):
                 try:
-                    antecedents = try_simplify(set(negated) | seq.antecedents)
+                    antecedents = try_simplify_antecedents(
+                        set(negated) | seq.antecedents)
                 except Inconsistent:
                     continue
                 result.add(Sequent(antecedents, set([succedent])))
@@ -159,6 +161,7 @@ def get_atomic(seq, bound=set()):
     result = set()
     for pointed in get_pointed(seq):
         improper_succedent = iter(pointed.succedents).next()
+        improper_succedent = simplify_succedent(improper_succedent)
         antecedents, succedent = as_succedent(improper_succedent, bound)
         for a in pointed.antecedents:
             antecedents |= as_antecedents(a, bound)
@@ -205,7 +208,7 @@ def get_contrapositives(seq):
                     antecedents_product.append(other_antecedents)
             for antecedents in itertools.product(*antecedents_product):
                 try:
-                    antecedents = try_simplify(set(antecedents))
+                    antecedents = try_simplify_antecedents(set(antecedents))
                 except Inconsistent:
                     continue
                 result.add(Sequent(antecedents, succedents))
