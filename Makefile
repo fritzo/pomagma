@@ -34,8 +34,6 @@ codegen: FORCE
 tasks: FORCE
 	python -m pomagma.compiler batch-extract-tasks src/theory/*.rules
 
-tasks: FORCE
-
 cpp-test: all FORCE
 	POMAGMA_LOG_FILE=$(shell pwd)/data/debug.log $(MAKE) -C build/debug test
 

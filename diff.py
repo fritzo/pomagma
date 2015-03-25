@@ -16,8 +16,15 @@ def meld(left, right):
 
 def gvim(left, right):
     return [
-        'gvim', '-geom', '165x80', '-c',
-        'DirDiff {} {}'.format(left, right)]
+        'gvim', '-geom', '165x80',
+        '-c', 'DirDiff {} {}'.format(left, right)]
+
+
+def mvim(left, right):
+    return [
+        'mvim', '-c', 'set columns=165',
+        '-c', 'let g:DirDiffExcludes = "*.pyc"',
+        '-c', 'DirDiff {} {}'.format(left, right)]
 
 
 def cdiff(left, right):
@@ -27,6 +34,7 @@ def cdiff(left, right):
 DIFFTOOLS = {
     'meld': meld,
     'gvim': gvim,
+    'mvim': mvim,
     'cdiff': cdiff,
 }
 
