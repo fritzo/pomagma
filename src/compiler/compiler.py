@@ -347,7 +347,7 @@ def get_events(seq):
         for arg in succedent.args:
             if not arg.is_var():
                 events.add(arg)
-        antecedent_vars = union([a.vars for a in sequent.antecedents])
+        antecedent_vars = union(a.vars for a in sequent.antecedents)
         for var in succedent.vars & free_vars - antecedent_vars:
             compound_count = sum(1 for arg in succedent.args if arg.args)
             in_count = sum(1 for arg in succedent.args if var in arg.vars)
@@ -525,7 +525,7 @@ def get_compiled(antecedents, succedent, bound):
         return results  # HEURISTIC iterate locally eagerly
 
     # iterate anything
-    free = (union([a.vars for a in antecedents]) | succedent.vars - bound)
+    free = union(a.vars for a in antecedents) | succedent.vars - bound
     for v in free:
         bound_v = set_with(bound, v)
         POMAGMA_DEBUG('iterate non-locally')

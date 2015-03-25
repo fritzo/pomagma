@@ -66,7 +66,11 @@ class Expression(object):
         if self.is_fun() and not self.args:
             return set([self])
         else:
-            return union([arg.consts for arg in self.args])
+            return union(arg.consts for arg in self.args)
+
+    @property
+    def terms(self):
+        return self.vars | self.consts
 
     def __hash__(self):
         return self._hash
@@ -97,6 +101,9 @@ class Expression(object):
 
     def is_con(self):
         return signature.is_con(self.name)
+
+    def is_term(self):
+        return self.is_var() or self.is_con()
 
     def substitute(self, var, defn):
         assert isinstance(var, Expression)

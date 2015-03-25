@@ -1,4 +1,5 @@
 import itertools
+from pomagma.compiler.completion import complete
 from pomagma.compiler.expressions import Expression
 from pomagma.compiler.util import inputs
 from pomagma.compiler.util import set_without
@@ -106,13 +107,14 @@ def try_get_negated(expr):
 
 
 def all_consistent(exprs):
-    neg_exprs = set()
-    for p in exprs:
+    completed = complete(set(exprs))
+    negated = set()
+    for p in completed:
         try:
-            neg_exprs.update(try_get_negated(p))
+            negated.update(try_get_negated(p))
         except NotNegatable:
             pass
-    return neg_exprs.isdisjoint(exprs)
+    return negated.isdisjoint(completed)
 
 
 @inputs(Expression)
