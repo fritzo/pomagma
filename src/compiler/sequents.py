@@ -53,9 +53,14 @@ class Sequent(object):
     def __repr__(self):
         return 'Sequent({0})'.format(self)
 
+    def __ascii_set(self, items):
+        items = map(str, items)
+        items.sort(key=lambda s: (len(s), s))
+        return '   '.join(items)
+
     def ascii(self, indent=0):
-        top = '   '.join(map(str, self.antecedents))
-        bot = '   '.join(map(str, self.succedents))
+        top = self.__ascii_set(self.antecedents)
+        bot = self.__ascii_set(self.succedents)
         width = max(len(top), len(bot))
         top = top.center(width)
         bot = bot.center(width)
