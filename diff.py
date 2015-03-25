@@ -18,17 +18,20 @@ def get_difftool(tool, left, right):
         ]
     elif tool == 'vim':
         return [
-            'vim', '-c', 'DirDiff {} {}'.format(left, right),
+            'vim',
+            '-c', 'let g:DirDiffExcludes = "*.facts,*.rules,*.pyc"',
+            '-c', 'DirDiff {} {}'.format(left, right),
         ]
     elif tool == 'gvim':
         return [
             'gvim', '-geom', '165x80',
+            '-c', 'let g:DirDiffExcludes = "*.facts,*.rules,*.pyc"',
             '-c', 'DirDiff {} {}'.format(left, right),
         ]
     elif tool == 'mvim':
         return [
             'mvim', '-c', 'set columns=165',
-            '-c', 'let g:DirDiffExcludes = "*.pyc"',
+            '-c', 'let g:DirDiffExcludes = "*.facts,*.rules,*.pyc"',
             '-c', 'DirDiff {} {}'.format(left, right),
         ]
     else:
