@@ -54,13 +54,13 @@ else:
 # Strategies
 
 
-OBJECT_COUNT = 1e4
-LOGIC_COST = OBJECT_COUNT / 256.0
+OBJECT_COUNT = 1e4                          # optimize for this many obs
+LOGIC_COST = OBJECT_COUNT / 256.0           # AVX operations are cheap
 LOG_OBJECT_COUNT = math.log(OBJECT_COUNT)
 
 
-def add_costs(*args):
-    return (log_sum_exp(*[LOG_OBJECT_COUNT * a for a in args])
+def add_costs(costs):
+    return (log_sum_exp(*[LOG_OBJECT_COUNT * c for c in costs])
             / LOG_OBJECT_COUNT)
 
 
