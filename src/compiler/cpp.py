@@ -724,9 +724,9 @@ def write_event_tasks(code, sequents):
     for sequent in sequents:
         for event in compiler.get_events(sequent):
             name = '<variable>' if event.is_var() else event.name
-            tasks = event_tasks.setdefault(name, [])
             strategies = sorted(compiler.compile_given(sequent, event))
             cost = add_costs(c for (c, _, _) in strategies)
+            tasks = event_tasks.setdefault(name, [])
             tasks.append((cost, event, sequent, strategies))
 
     def get_group(name):
@@ -740,7 +740,7 @@ def write_event_tasks(code, sequents):
     group_tasks = {}
     for name, tasks in event_tasks.iteritems():
         groupname = get_group(name)
-        group_tasks.setdefault(groupname, {})[name] = tasks
+        group_tasks.setdefault(groupname, {})[name] = sorted(tasks)
 
     group_tasks = sorted(group_tasks.iteritems())
     for groupname, group in group_tasks:

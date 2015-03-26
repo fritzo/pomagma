@@ -40,8 +40,11 @@ def set_without(set_, *elements):
 
 
 def log_sum_exp(*args):
-    shift = max(args)
-    return log(sum(exp(arg - shift) for arg in args)) + shift
+    if args:
+        shift = max(args)
+        return log(sum(exp(arg - shift) for arg in args)) + shift
+    else:
+        return -float('inf')
 
 
 def inputs(*types):
