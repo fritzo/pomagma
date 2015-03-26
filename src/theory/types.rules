@@ -1,33 +1,24 @@
 # WARNING these rules do not hold in SKRJ
-#
-# TODO get these to compile
-#
-#                   LESS APP f TOP APP g TOP
-#LESS APP DIV x x   LESS APP f BOT APP g BOT
-#----------------   --------------------------
-#EQUAL BOT x        LESS COMP f DIV COMP g DIV
-#EQUAL TOP x
-#
-#                    LESS APP f TOP APP g TOP
-#LESS APP UNIT x x   LESS APP f I APP g I
-#-----------------   ----------------------------
-#EQUAL I x           LESS COMP f UNIT COMP g UNIT
-#EQUAL TOP x
-#
-#                    LESS APP f TOP APP g TOP
-#                    LESS APP f I APP g I
-#LESS APP SEMI x x   LESS APP f BOT APP g BOT
-#-----------------   ----------------------------
-#EQUAL BOT x         LESS COMP f SEMI COMP g SEMI
-#EQUAL I x
-#EQUAL TOP x
-#
-#                    LESS APP f TOP APP g TOP
-#                    LESS APP f K APP g K
-#                    LESS APP f APP K I APP g APP K I
-#LESS APP BOOL x x   LESS APP f BOT APP g BOT
-#------------------  --------------------------------
-#EQUAL TOP x         LESS COMP f BOOL COMP g BOOL
-#EQUAL K x
-#EQUAL APP K I x
-#EQUAL BOT x
+
+LESS APP DIV x x   LESS APP f TOP APP g TOP
+----------------   LESS APP f BOT APP g BOT
+EQUAL x TOP        --------------------------
+EQUAL x BOT        LESS COMP f DIV COMP g DIV
+
+LESS APP UNIT x x   LESS APP f TOP APP g TOP
+-----------------   LESS APP f I APP g I
+EQUAL x TOP         ----------------------------
+EQUAL x I           LESS COMP f UNIT COMP g UNIT
+
+LESS APP SEMI x x   LESS APP f TOP APP g TOP
+-----------------   LESS APP f I APP g I
+EQUAL x TOP         LESS APP f BOT APP g BOT
+EQUAL x I           ----------------------------
+EQUAL x BOT         LESS COMP f SEMI COMP g SEMI
+
+LESS APP BOOL x x   LESS APP f TOP APP g TOP
+-----------------   LESS APP f K APP g K
+EQUAL x TOP         LESS APP f F APP g F
+EQUAL x K           LESS APP f BOT APP g BOT
+EQUAL x F           --------------------------------
+EQUAL x BOT         LESS COMP f BOOL COMP g BOOL
