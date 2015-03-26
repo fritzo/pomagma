@@ -2,23 +2,23 @@
 
 LESS APP DIV x x   LESS APP f TOP APP g TOP
 ----------------   LESS APP f BOT APP g BOT
-EQUAL x BOT        --------------------------
-EQUAL x TOP        LESS COMP f DIV COMP g DIV
+EQUAL x TOP        --------------------------
+EQUAL x BOT        LESS COMP f DIV COMP g DIV
 
 LESS APP UNIT x x   LESS APP f TOP APP g TOP
 -----------------   LESS APP f I APP g I
-EQUAL x I           ----------------------------
-EQUAL x TOP         LESS COMP f UNIT COMP g UNIT
+EQUAL x TOP         ----------------------------
+EQUAL x I           LESS COMP f UNIT COMP g UNIT
 
 LESS APP SEMI x x   LESS APP f TOP APP g TOP
 -----------------   LESS APP f I APP g I
-EQUAL x BOT         LESS APP f BOT APP g BOT
+EQUAL x TOP         LESS APP f BOT APP g BOT
 EQUAL x I           ----------------------------
-EQUAL x TOP         LESS COMP f SEMI COMP g SEMI
+EQUAL x BOT         LESS COMP f SEMI COMP g SEMI
 
-#LESS APP BOOL x x   LESS APP f TOP APP g TOP
-#-----------------   LESS APP f K APP g K
-#EQUAL x TOP         LESS APP f APP K I APP g APP K I
-#EQUAL x K           LESS APP f BOT APP g BOT
-#EQUAL x F           --------------------------------
-#EQUAL x BOT         LESS COMP f BOOL COMP g BOOL
+LESS APP BOOL x x   LESS APP f TOP APP g TOP
+-----------------   LESS APP f K APP g K
+EQUAL x TOP         LESS APP f F APP g F
+EQUAL x K           LESS APP f BOT APP g BOT
+EQUAL x F           --------------------------------
+EQUAL x BOT         LESS COMP f BOOL COMP g BOOL
