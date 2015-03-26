@@ -38,7 +38,7 @@ def _test_sequent(*args):
     print 'Compiling full search: {0}'.format(sequent)
     compiles = compile_full(sequent)
     print_compiles(compiles)
-    full_cost = add_costs(*[cost for cost, seq, _ in compiles])
+    full_cost = add_costs(c for (c, _, _) in compiles)
 
     incremental_cost = None
     for event in get_events(sequent):
@@ -46,9 +46,9 @@ def _test_sequent(*args):
         compiles = compile_given(sequent, event)
         print_compiles(compiles)
         if event.args:
-            cost = add_costs(*[cost for cost, seq, _ in compiles])
+            cost = add_costs(c for (c, _, _) in compiles)
             if incremental_cost:
-                incremental_cost = add_costs(incremental_cost, cost)
+                incremental_cost = add_costs([incremental_cost, cost])
             else:
                 incremental_cost = cost
 

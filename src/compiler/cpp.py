@@ -3,12 +3,12 @@ from textwrap import dedent
 from string import Template
 from pomagma.compiler import compiler
 from pomagma.compiler import signature
+from pomagma.compiler.compiler import add_costs
 from pomagma.compiler.expressions import Expression
 from pomagma.compiler.expressions import NotNegatable
 from pomagma.compiler.expressions import try_negate_name
 from pomagma.compiler.sequents import Sequent
 from pomagma.compiler.util import inputs
-from pomagma.compiler.util import log_sum_exp
 from pomagma.compiler.util import methodof
 
 
@@ -601,6 +601,7 @@ def write_full_tasks(code, sequents):
             full_tasks.append((cost, sequent, seq, strategy))
     full_tasks.sort()
     type_count = len(full_tasks)
+    total_cost = add_costs(c for (c, _, _, _) in full_tasks)
 
     block_size = 64
     split = 'if (*iter / {} != block) {{ continue; }}'.format(block_size)
@@ -682,6 +683,7 @@ def write_full_tasks(code, sequents):
 
         void execute (const CleanupTask & task)
         {
+            // total cost = $cost
             const unsigned long type = task.type / g_cleanup_block_count;
             const unsigned long block = task.type % g_cleanup_block_count;
             POMAGMA_DEBUG(
@@ -702,6 +704,7 @@ def write_full_tasks(code, sequents):
         type_count=type_count,
         unsplit_count=unsplit_count,
         block_size=block_size,
+        cost=total_cost,
         cases=wrapindent(cases, '        '),
     ).newline()
 
@@ -723,8 +726,7 @@ def write_event_tasks(code, sequents):
             name = '<variable>' if event.is_var() else event.name
             tasks = event_tasks.setdefault(name, [])
             strategies = sorted(compiler.compile_given(sequent, event))
-            costs = [cost for cost, seq, _ in strategies]
-            cost = log_sum_exp(*costs)
+            cost = add_costs(c for (c, _, _) in strategies)
             tasks.append((cost, event, sequent, strategies))
 
     def get_group(name):
@@ -748,6 +750,12 @@ def write_event_tasks(code, sequents):
 
         for eventname, tasks in group:
             subbody = Code()
+            subbody(
+                '''
+                // total cost = $cost
+                ''',
+                cost=add_costs(c for (c, _, _, _) in tasks),
+            )
             nargs = signature.get_nargs(signature.get_arity(group[0][0]))
             args = [[], ['arg'], ['lhs', 'rhs']][nargs]
             for arg in args:
