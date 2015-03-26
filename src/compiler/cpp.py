@@ -132,19 +132,15 @@ def Iter_cpp(self, code, poll=None):
 # TODO injective function inverse need not be iterated
 @methodof(compiler.IterInvInjective, 'cpp')
 def IterInvInjective_cpp(self, code, poll=None):
-    body = Code()
-    self.body.cpp(body, poll=poll)
     code(
         '''
-        if (Ob $var __attribute__((unused)) = $fun.inverse_find($value)) {
-            $body
-        }
+        if (Ob $var __attribute__((unused)) = $fun.inverse_find($value))
         ''',
         var=self.var,
         fun=self.fun,
         value=self.value,
-        body=wrapindent(body),
     )
+    self.body.cpp(code, poll=poll)
 
 
 @methodof(compiler.IterInvBinary, 'cpp')
@@ -216,25 +212,19 @@ def IterInvBinaryRange_cpp(self, code, poll=None):
 
 @methodof(compiler.Let, 'cpp')
 def Let_cpp(self, code, poll=None):
-    body = Code()
-    self.body.cpp(body, poll=poll)
     code(
         '''
-        if (Ob $var = $fun.find($args)) {
-            $body
-        }
+        if (Ob $var = $fun.find($args))
         ''',
         var=self.var,
         fun=self.expr.name,
         args=', '.join(map(str, self.expr.args)),
-        body=wrapindent(body),
     )
+    self.body.cpp(code, poll=poll)
 
 
 @methodof(compiler.Test, 'cpp')
 def Test_cpp(self, code, poll=None):
-    body = Code()
-    self.body.cpp(body, poll=poll)
     args = [arg.name for arg in self.expr.args]
     if self.expr.name == 'EQUAL':
         expr = 'carrier.equal({0}, {1})'.format(*args)
@@ -247,13 +237,11 @@ def Test_cpp(self, code, poll=None):
             self.expr.var.name, self.expr.name, ', '.join(args))
     code(
         '''
-        if ($expr) {
-            $body
-        }
+        if ($expr)
         ''',
         expr=expr,
-        body=wrapindent(body),
     )
+    self.body.cpp(code, poll=poll)
 
 
 @methodof(compiler.Ensure, 'cpp')
