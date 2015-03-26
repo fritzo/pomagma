@@ -9,6 +9,12 @@ REPO = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(REPO)
 TEMP = os.path.join(ROOT, '{}-temp'.format(os.path.basename(REPO)))
 DIFFTOOL = os.environ.get('POMAGMA_DIFFTOOL', os.environ.get('EDITOR', 'meld'))
+DIFFIGNORE = ','.join([
+    '*.facts',
+    '*.rules',
+    '*.compiled',
+    '*.pyc',
+])
 
 
 def get_difftool(tool, left, right):
@@ -19,19 +25,19 @@ def get_difftool(tool, left, right):
     elif tool == 'vim':
         return [
             'vim',
-            '-c', 'let g:DirDiffExcludes = "*.facts,*.rules,*.pyc"',
+            '-c', 'let g:DirDiffExcludes = "{}"'.format(DIFFIGNORE),
             '-c', 'DirDiff {} {}'.format(left, right),
         ]
     elif tool == 'gvim':
         return [
             'gvim', '-geom', '165x80',
-            '-c', 'let g:DirDiffExcludes = "*.facts,*.rules,*.pyc"',
+            '-c', 'let g:DirDiffExcludes = "{}"'.format(DIFFIGNORE),
             '-c', 'DirDiff {} {}'.format(left, right),
         ]
     elif tool == 'mvim':
         return [
             'mvim', '-c', 'set columns=165',
-            '-c', 'let g:DirDiffExcludes = "*.facts,*.rules,*.pyc"',
+            '-c', 'let g:DirDiffExcludes = "{}"'.format(DIFFIGNORE),
             '-c', 'DirDiff {} {}'.format(left, right),
         ]
     else:
