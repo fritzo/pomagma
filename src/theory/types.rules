@@ -2,26 +2,23 @@
 
 LESS APP DIV x x   LESS APP f TOP APP g TOP
 ----------------   LESS APP f BOT APP g BOT
-LESS x BOT         --------------------------
-LESS TOP x         LESS COMP f DIV COMP g DIV
+EQUAL x BOT        --------------------------
+EQUAL x TOP        LESS COMP f DIV COMP g DIV
 
 LESS APP UNIT x x   LESS APP f TOP APP g TOP
 -----------------   LESS APP f I APP g I
 EQUAL x I           ----------------------------
-LESS TOP x          LESS COMP f UNIT COMP g UNIT
+EQUAL x TOP         LESS COMP f UNIT COMP g UNIT
 
-# FIXME These compile into garbage extra rules.
-# TODO Strengthen all_consistent() to do more deduction.
-#
 #LESS APP SEMI x x   LESS APP f TOP APP g TOP
 #-----------------   LESS APP f I APP g I
-#LESS x BOT          LESS APP f BOT APP g BOT
+#EQUAL x BOT         LESS APP f BOT APP g BOT
 #EQUAL x I           ----------------------------
-#LESS TOP x          LESS COMP f SEMI COMP g SEMI
+#EQUAL x TOP         LESS COMP f SEMI COMP g SEMI
 #
-#LESS APP BOOL x x    LESS APP f TOP APP g TOP
-#------------------   LESS APP f K APP g K
-#LESS TOP x           LESS APP f APP K I APP g APP K I
-#EQUAL x K            LESS APP f BOT APP g BOT
-#EQUAL x APP K I      --------------------------------
-#LESS x BOT           LESS COMP f BOOL COMP g BOOL
+#LESS APP BOOL x x   LESS APP f TOP APP g TOP
+#-----------------   LESS APP f K APP g K
+#EQUAL x TOP         LESS APP f APP K I APP g APP K I
+#EQUAL x K           LESS APP f BOT APP g BOT
+#EQUAL x F           --------------------------------
+#EQUAL x BOT         LESS COMP f BOOL COMP g BOOL
