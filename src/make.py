@@ -4,6 +4,15 @@ import parsable
 import pomagma.util
 from pomagma import atlas, surveyor, cartographer, theorist, analyst
 
+PROFILERS = {
+    'time': '/usr/bin/time --verbose',
+    'valgrind': 'valgrind --leak-check=full --track-origins=yes',
+    'cachegrind': 'valgrind --tool=cachegrind',
+    'callgrind':
+        'valgrind --tool=callgrind --callgrind-out-file=callgrind.out',
+    'helgrind': 'valgrind --tool=helgrind --read-var-info=yes',
+}
+
 
 def _test_atlas(theory):
     '''
@@ -142,27 +151,23 @@ def profile_util():
 
 
 @parsable.command
-def profile_surveyor(theory, size_blocks=3, dsize_blocks=0):
+def profile_surveyor(theory='skj', grow_by=64, extra_size=0, tool='time'):
     '''
-    Profile surveyor through callgrind on random region of world.
-    Inputs: theory, region size in blocks (1 block = 512 obs)
+    Profile surveyor on random region of world.
+    Available tools: time, valgrind, cachegrind, callgrind, helgrind
     '''
-    size = size_blocks * 512 - 1
-    dsize = dsize_blocks * 512
-    min_size = pomagma.util.MIN_SIZES[theory]
-    assert size >= min_size
+    size = pomagma.util.MIN_SIZES[theory] + extra_size
     with atlas.chdir(theory):
         opts = {'log_file': 'profile.log', 'log_level': 2}
         region = 'region.{:d}.h5'.format(size)
         temp = pomagma.util.temp_name('profile.h5')
         world = 'world.h5'
-
         if not os.path.exists(region):
             assert os.path.exists(world), 'First initialize world map'
             with cartographer.load(theory, world, **opts) as db:
-                db.trim({'size': size, 'filename': region})
-        opts.setdefault('runner', 'valgrind --tool=callgrind')
-        surveyor.survey(theory, region, temp, size + dsize, **opts)
+                db.trim([{'size': size, 'filename': region}])
+        opts.setdefault('runner', PROFILERS.get(tool, tool))
+        surveyor.survey(theory, region, temp, size + grow_by, **opts)
         os.remove(temp)
 
 
