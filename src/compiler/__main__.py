@@ -3,6 +3,8 @@ import re
 import contextlib
 import multiprocessing
 import parsable
+import cProfile as profile
+import pstats
 from pomagma.compiler import compiler
 from pomagma.compiler import cpp
 from pomagma.compiler import extensional
@@ -207,6 +209,30 @@ def test_compile(*filenames):
 
 
 @parsable.command
+def profile_compile(*filenames, **kwargs):
+    '''
+    Profile compiler on .
+    Optional keyword arguments:
+        loadfrom = None
+        saveto = 'compiler.profile'
+    '''
+    loadfrom = kwargs.get('loadfrom')
+    saveto = kwargs.get('saveto', 'compiler.profile')
+    if loadfrom is None:
+        command = 'compile({}, cpp_out="/dev/null")'.format(
+            ', '.join(map('"{}"'.format, filenames)))
+        print 'profiling {}'.format(command)
+        profile.run(command, saveto)
+        loadfrom = saveto
+    stats = pstats.Stats(loadfrom)
+    stats.strip_dirs()
+    line_count = 50
+    for sortby in ['cumulative', 'time']:
+        stats.sort_stats(sortby)
+        stats.print_stats(line_count)
+
+
+@parsable.command
 def test_close_rules(infile, is_extensional=True):
     '''
     Compile extensionally some.rules -> some.derived.facts
@@ -247,8 +273,8 @@ def compile(*infiles, **kwargs):
     theory_out = kwargs.get(
         'theory_out',
         os.path.join(SRC, 'theory', '{0}.compiled'.format(stem)))
-    parse_bool = lambda s: {'true': True, 'false': False}[s.lower()]
-    is_extensional = parse_bool(kwargs.get('extensional', 'true'))
+    parse_bool = {'true': True, 'false': False}
+    is_extensional = parse_bool[kwargs.get('extensional', 'true').lower()]
 
     print '# writing', cpp_out
     argstring = ' '.join(

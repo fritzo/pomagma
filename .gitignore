@@ -13,6 +13,7 @@
 *.pb.cc
 *_pb2.py
 *.mutex
+*.profile
 /src/theory/*.compiled
 /src/theory/*.tasks
 /src/surveyor/*.theory.cpp
