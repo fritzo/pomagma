@@ -3,19 +3,33 @@ import re
 import contextlib
 import multiprocessing
 import parsable
-from pomagma.compiler import cpp
-from pomagma.compiler import parser
 from pomagma.compiler import compiler
+from pomagma.compiler import cpp
+from pomagma.compiler import extensional
+from pomagma.compiler import parser
 from pomagma.compiler.compiler import add_costs
 from pomagma.compiler.compiler import compile_full
 from pomagma.compiler.compiler import compile_given
 from pomagma.compiler.compiler import get_events
-from pomagma.compiler.extensional import derive_facts
-from pomagma.compiler.extensional import validate
 
 
 SRC = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ROOT = os.path.dirname(SRC)
+
+
+@parsable.command
+def abstract(*args):
+    '''
+    Abstract variables from expression.
+    Examples:
+        abstract x 'APP x y'
+        abstract x y z 'APP APP x z APP y z'
+    '''
+    args = map(parser.parse_string_to_expr, args)
+    expression, vars = args[-1], args[:-1]
+    for var in reversed(vars):
+        expression = expression.abstract(var)
+    print expression
 
 
 @contextlib.contextmanager
@@ -202,10 +216,10 @@ def test_close_rules(infile, is_extensional=True):
     for rule in rules:
         print
         print '#', rule
-        for fact in derive_facts(rule):
+        for fact in extensional.derive_facts(rule):
             print fact
             if is_extensional:
-                validate(fact)
+                extensional.validate(fact)
 
 
 def relpath(string):
@@ -234,7 +248,7 @@ def compile(*infiles, **kwargs):
         'theory_out',
         os.path.join(SRC, 'theory', '{0}.compiled'.format(stem)))
     parse_bool = lambda s: {'true': True, 'false': False}[s.lower()]
-    extensional = parse_bool(kwargs.get('extensional', 'true'))
+    is_extensional = parse_bool(kwargs.get('extensional', 'true'))
 
     print '# writing', cpp_out
     argstring = ' '.join(
@@ -254,9 +268,9 @@ def compile(*infiles, **kwargs):
             facts += parser.parse_facts(infile)
         else:
             raise TypeError('unknown file type: %s' % infile)
-    if extensional:
+    if is_extensional:
         for rule in rules:
-            facts += derive_facts(rule)
+            facts += extensional.derive_facts(rule)
 
     code = cpp.Code()
     code('''
