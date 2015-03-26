@@ -71,7 +71,10 @@ class Expression(object):
 
     @property
     def terms(self):
-        return self.vars | self.consts
+        result = union(arg.terms for arg in self.args)
+        if self.is_term():
+            result.add(self)
+        return result
 
     def __hash__(self):
         return self._hash
@@ -104,7 +107,7 @@ class Expression(object):
         return signature.is_con(self.name)
 
     def is_term(self):
-        return self.is_var() or self.is_con()
+        return self.is_var() or self.is_fun()
 
     def substitute(self, var, defn):
         assert isinstance(var, Expression)
