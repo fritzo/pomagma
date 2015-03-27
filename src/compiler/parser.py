@@ -132,13 +132,14 @@ def parse_file_to_lines(filename):
 def parse_lines_to_facts(lines, **debuginfo):
     facts = []
     for lineno, line in enumerate(lines):
+        debuginfo['lineno'] = lineno
         line = line.strip()
         if line:
             for string in RE_PADDING.split(line):
                 try:
                     facts.append(parse_string_to_expr(string))
                 except Exception as e:
-                    raise ParseError(e, lineno)
+                    raise ParseError(e, **debuginfo)
     return facts
 
 

@@ -134,6 +134,18 @@ def Sequent_delambda(self):
         set(s.delambda() for s in self.succedents))
 
 
+def delambda_theory(theory):
+    rules = [rule.delambda() for rule in theory['rules']]
+    facts = []
+    for fact in theory['facts']:
+        fact = fact.delambda()
+        if fact.vars:
+            rules.append(Sequent(set(), set([fact])))
+        else:
+            facts.append(fact)
+    return {'facts': facts, 'rules': rules}
+
+
 class RequireVariable(Exception):
     pass
 

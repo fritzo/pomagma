@@ -23,8 +23,9 @@ ROOT = os.path.dirname(SRC)
 
 def load_theory(filename):
     theory = parser.parse_theory(filename)
-    theory['facts'] = [fact.delambda() for fact in theory['facts']]
-    theory['rules'] = [rule.delambda() for rule in theory['rules']]
+    theory = extensional.delambda_theory(theory)
+    theory['rules'].sort()
+    theory['facts'].sort()
     return theory
 
 
