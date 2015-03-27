@@ -19,6 +19,7 @@ CB = Expression_0('CB')
 C = Expression_0('C')
 W = Expression_0('W')
 S = Expression_0('S')
+A = Expression_0('A')
 BOT = Expression_0('BOT')
 TOP = Expression_0('TOP')
 APP = Expression_2('APP')
@@ -114,10 +115,15 @@ def abstract(self, var):
 @methodof(Expression, 'delambda')
 def Expression_delambda(self):
     expr = get_expression(self.name, *[arg.delambda() for arg in self.args])
-    if expr.name == 'LAMBDA':
+    if expr.name == 'ABS':
         var, body = expr.args
         assert var.is_var(), var
         expr = body.abstract(var)
+    elif expr.name == 'ABIND':
+        s, r, body = expr.args
+        assert s.is_var(), s
+        assert r.is_var(), r
+        expr = APP(A, body.abstract(r).abstract(s))
     return expr
 
 

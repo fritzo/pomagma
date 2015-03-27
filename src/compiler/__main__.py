@@ -52,8 +52,8 @@ def delambda(*exprs):
     '''
     Convert lambda terms to combinators.
     Examples:
-        delambda LAMBDA x APP x y
-        delambda LAMBDA x LAMBDA y LAMBDA z APP APP x z APP y z
+        delambda ABS x APP x y
+        delambda ABS x ABS y ABS z APP APP x z APP y z
     '''
     for expr in map(parser.parse_string_to_expr, exprs):
         print expr
