@@ -13,8 +13,9 @@ NARGS_TABLE = {
     'BinaryFunction': 2,
     'SymmetricFunction': 2,
     'Variable': 0,
-    'UnaryConnective': 1,
-    'BinaryConnective': 2,
+    'UnaryMeta': 1,
+    'BinaryMeta': 2,
+    'BindingMeta': 2,
 }
 
 ARITY_TABLE = {
@@ -29,9 +30,10 @@ ARITY_TABLE = {
     'COMP': 'BinaryFunction',
     'JOIN': 'SymmetricFunction',
     'RAND': 'SymmetricFunction',
-    'OPTIONALLY': 'UnaryConnective',
-    'NONEGATE': 'UnaryConnective',
-    'EQUIVALENTLY': 'BinaryConnective',
+    'OPTIONALLY': 'UnaryMeta',
+    'NONEGATE': 'UnaryMeta',
+    'EQUIVALENTLY': 'BinaryMeta',
+    'LAMBDA': 'BindingMeta',
 }
 
 RELATION_ARITIES = frozenset([
@@ -47,9 +49,10 @@ FUNCTION_ARITIES = frozenset([
     'SymmetricFunction',
 ])
 
-CONNECTIVE_ARITIES = frozenset([
-    'UnaryConnective',
-    'BinaryConnective',
+META_ARITIES = frozenset([
+    'UnaryMeta',
+    'BinaryMeta',
+    'BindingMeta',
 ])
 
 
@@ -85,7 +88,7 @@ def is_rel(symbol):
 
 @memoize_arg
 def is_con(symbol):
-    return get_arity(symbol) in CONNECTIVE_ARITIES
+    return get_arity(symbol) in META_ARITIES
 
 
 @memoize_arg

@@ -4,14 +4,8 @@
 -----------------------------   ------------------------------
 LESS COMP APP CI r APP CI s A   LESS APP A f APP APP f TOP TOP
 
-# The A rule below translates from lambda calculus
-#
-#   -------------------
-#   A \a,b. f b*a = f I
-
------------------------------------
-EQUAL APP A COMP APP B f CB APP f I
-
+----------------------------------------------------
+EQUAL APP A LAMBDA a LAMBDA b APP f COMP b a APP f I
 
 # A strong characterization of the type constructor A
 # in terms of two globally free variables, SECTION and RETRACT.

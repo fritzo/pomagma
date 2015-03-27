@@ -21,6 +21,14 @@ SRC = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ROOT = os.path.dirname(SRC)
 
 
+def load_rules(filename):
+    return [rule.delambda() for rule in parser.parse_rules(filename)]
+
+
+def load_facts(filename):
+    return [fact.delambda() for fact in parser.parse_facts(filename)]
+
+
 def parse_bool(arg):
     return {'true': True, 'false': False}[arg.lower()]
 
@@ -38,6 +46,19 @@ def abstract(*args):
     for var in reversed(vars):
         expression = expression.abstract(var)
     print expression
+
+
+@parsable.command
+def delambda(*exprs):
+    '''
+    Convert lambda terms to combinators.
+    Examples:
+        delambda LAMBDA x APP x y
+        delambda LAMBDA x LAMBDA y LAMBDA z APP APP x z APP y z
+    '''
+    for expr in map(parser.parse_string_to_expr, exprs):
+        print expr
+        print '  =', expr.delambda()
 
 
 @parsable.command
@@ -112,7 +133,7 @@ def contrapositves(*filenames):
         filenames = find_rules()
     sequents = []
     for filename in filenames:
-        sequents += parser.parse_rules(filename)
+        sequents += load_rules(filename)
     for sequent in sequents:
         print sequent.ascii()
         print
@@ -130,7 +151,7 @@ def normalize(*filenames):
         filenames = find_rules()
     sequents = []
     for filename in filenames:
-        sequents += parser.parse_rules(filename)
+        sequents += load_rules(filename)
     for sequent in sequents:
         print sequent.ascii()
         print
@@ -145,7 +166,7 @@ def extract_tasks(infile, outfile=None):
     Extract tasks from rules, but do not compile to C++.
     '''
     with writer(outfile) as write:
-        for sequent in parser.parse_rules(infile):
+        for sequent in load_rules(infile):
             write(sequent.ascii())
             for normal in sorted(compiler.normalize(sequent)):
                 write(normal.ascii(indent=4))
@@ -186,7 +207,7 @@ def measure(*filenames):
         filenames = find_rules()
     sequents = []
     for filename in filenames:
-        sequents += parser.parse_rules(filename)
+        sequents += load_rules(filename)
     for sequent in sequents:
         measure_sequent(sequent)
 
@@ -202,7 +223,7 @@ def test_compile(*filenames):
         code = cpp.Code('// $filename', filename=stem_rules)
         assert stem_rules[-6:] == '.rules', stem_rules
 
-        sequents = parser.parse_rules(stem_rules)
+        sequents = load_rules(stem_rules)
         for sequent in sequents:
             for cost, seq, strategy in compile_full(sequent):
                 code.newline()
@@ -296,7 +317,7 @@ def test_close_rules(infile, is_extensional=True):
     Compile extensionally some.rules -> some.derived.facts
     '''
     assert infile.endswith('.rules')
-    rules = parser.parse_rules(infile)
+    rules = load_rules(infile)
     for rule in rules:
         print
         print '#', rule
@@ -321,7 +342,6 @@ def compile(*infiles, **kwargs):
     Optional keyword arguments:
         cpp_out=$POMAGMA_ROOT/src/surveyor/<STEM>.theory.cpp
         theory_out=$POMAGMA_ROOT/src/theory/<STEM>.compiled
-        theory_out=FILENAME
         extensional=true
     '''
     stem = infiles[-1].split('.')[0]
@@ -346,9 +366,9 @@ def compile(*infiles, **kwargs):
     for infile in infiles:
         suffix = infile.split('.')[-1]
         if suffix == 'rules':
-            rules += parser.parse_rules(infile)
+            rules += load_rules(infile)
         elif suffix == 'facts':
-            facts += parser.parse_facts(infile)
+            facts += load_facts(infile)
         else:
             raise TypeError('unknown file type: %s' % infile)
     if is_extensional:

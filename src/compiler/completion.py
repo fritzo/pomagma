@@ -171,7 +171,7 @@ def try_simplify_antecedents(facts):
 
 
 def strengthen_sequent(fact):
-    while fact.arity == 'UnaryConnective':
+    while fact.arity == 'UnaryMeta':
         fact = fact.args[0]
     assert fact.is_rel(), fact
     if fact.name == 'LESS':
@@ -182,7 +182,7 @@ def strengthen_sequent(fact):
 
 
 def weaken_sequent(fact):
-    if fact.arity == 'UnaryConnective':
+    if fact.arity == 'UnaryMeta':
         return get_expression(fact.name, weaken_sequent(fact.args[0]))
     else:
         assert fact.is_rel(), fact

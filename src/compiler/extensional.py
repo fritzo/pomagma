@@ -15,6 +15,7 @@ K = Expression_0('K')
 J = Expression_0('J')
 R = Expression_0('R')
 B = Expression_0('B')
+CB = Expression_0('CB')
 C = Expression_0('C')
 W = Expression_0('W')
 S = Expression_0('S')
@@ -62,7 +63,7 @@ def abstract(self, var):
         if var not in self.vars:
             return APP(K, self)
         elif name == 'APP':
-            # IKCSW-compose-eta abstraction
+            # I,K,C,SW,COMP,eta abstraction
             lhs, rhs = self.args
             if var in lhs.vars:
                 lhs_abs = lhs.abstract(var)
@@ -80,7 +81,7 @@ def abstract(self, var):
                 else:
                     return COMP(lhs, rhs.abstract(var))
         elif name == 'COMP':
-            # KBCS-compose-eta abstraction
+            # K,B,CB,C,S,COMP,eta abstraction
             lhs, rhs = self.args
             if var in lhs.vars:
                 lhs_abs = lhs.abstract(var)
@@ -88,9 +89,9 @@ def abstract(self, var):
                     return APP(APP(S, COMP(B, lhs_abs)), rhs.abstract(var))
                 else:
                     if lhs == var:
-                        return APP(APP(C, B), rhs)
+                        return APP(CB, rhs)
                     else:
-                        return COMP(APP(APP(C, B), rhs), lhs_abs)
+                        return COMP(APP(CB, rhs), lhs_abs)
             else:
                 assert var in rhs.vars
                 if rhs == var:
@@ -108,6 +109,23 @@ def abstract(self, var):
         return get_expression(self.name, *args)
     else:
         raise ValueError('bad expression: %s' % self.name)
+
+
+@methodof(Expression, 'delambda')
+def Expression_delambda(self):
+    expr = get_expression(self.name, *[arg.delambda() for arg in self.args])
+    if expr.name == 'LAMBDA':
+        var, body = expr.args
+        assert var.is_var(), var
+        expr = body.abstract(var)
+    return expr
+
+
+@methodof(Sequent, 'delambda')
+def Sequent_delambda(self):
+    return Sequent(
+        set(a.delambda() for a in self.antecedents),
+        set(s.delambda() for s in self.succedents))
 
 
 class RequireVariable(Exception):
