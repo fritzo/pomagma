@@ -1,6 +1,7 @@
 import itertools
 from pomagma.compiler.completion import Inconsistent
-from pomagma.compiler.completion import simplify_succedent
+from pomagma.compiler.completion import strengthen_sequent
+from pomagma.compiler.completion import weaken_sequent
 from pomagma.compiler.completion import try_simplify_antecedents
 from pomagma.compiler.expressions import Expression
 from pomagma.compiler.expressions import NotNegatable
@@ -162,7 +163,7 @@ def get_atomic(seq, bound=set()):
     result = set()
     for pointed in get_pointed(seq):
         improper_succedent = iter(pointed.succedents).next()
-        improper_succedent = simplify_succedent(improper_succedent)
+        improper_succedent = strengthen_sequent(improper_succedent)
         antecedents, succedent = as_succedent(improper_succedent, bound)
         for a in pointed.antecedents:
             antecedents |= as_antecedents(a, bound)
@@ -188,13 +189,13 @@ def get_contrapositives(seq):
         A, B, ~C |- D
     '''
     ante_succ_pairs = []
-    for succedent in seq.succedents:
+    for succedent in map(weaken_sequent, seq.succedents):
         try:
             antecedents = try_get_negated(succedent)
         except NotNegatable:
             antecedents = set()
         ante_succ_pairs.append((antecedents, set([succedent])))
-    for antecedent in seq.antecedents:
+    for antecedent in map(weaken_sequent, seq.antecedents):
         try:
             succedents = try_get_negated(antecedent)
         except NotNegatable:

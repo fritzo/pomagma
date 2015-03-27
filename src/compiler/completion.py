@@ -1,6 +1,7 @@
 from pomagma.compiler.expressions import Expression_0
 from pomagma.compiler.expressions import Expression_2
 from pomagma.compiler.expressions import NotNegatable
+from pomagma.compiler.expressions import get_expression
 from pomagma.compiler.expressions import try_get_negated
 from pomagma.compiler.util import function
 from pomagma.compiler.util import inputs
@@ -124,7 +125,7 @@ class Inconsistent(Exception):
     pass
 
 
-def weaken(facts, fact):
+def weaken_facts(facts, fact):
     assert fact in facts
     if fact.is_rel():
         without = set_without(facts, fact)
@@ -142,7 +143,7 @@ def simplify_step(completed):
         result = fact_sets.copy()
         for facts in fact_sets:
             for fact in facts:
-                for simple in weaken(facts, fact):
+                for simple in weaken_facts(facts, fact):
                     frozen = frozenset(simple)
                     if frozen not in result:
                         if complete(simple, terms) == completed:
@@ -169,7 +170,7 @@ def try_simplify_antecedents(facts):
     return facts
 
 
-def simplify_succedent(fact):
+def strengthen_sequent(fact):
     while fact.arity == 'UnaryConnective':
         fact = fact.args[0]
     assert fact.is_rel(), fact
@@ -178,3 +179,17 @@ def simplify_succedent(fact):
         if lhs == TOP or rhs == BOT:
             return EQUAL(lhs, rhs)
     return fact
+
+
+def weaken_sequent(fact):
+    if fact.arity == 'UnaryConnective':
+        return get_expression(fact.name, weaken_sequent(fact.args[0]))
+    else:
+        assert fact.is_rel(), fact
+        if fact.name == 'EQUAL':
+            lhs, rhs = fact.args
+            if lhs == TOP or rhs == BOT:
+                return LESS(lhs, rhs)
+            elif rhs == TOP or lhs == BOT:
+                return LESS(rhs, lhs)
+        return fact
