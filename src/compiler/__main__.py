@@ -227,7 +227,7 @@ def profile_compile(*filenames, **kwargs):
     stats = pstats.Stats(loadfrom)
     stats.strip_dirs()
     line_count = 50
-    for sortby in ['cumulative', 'time']:
+    for sortby in ['time']:
         stats.sort_stats(sortby)
         stats.print_stats(line_count)
 

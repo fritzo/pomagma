@@ -14,6 +14,7 @@ set(SRC_DIR ${PROJECT_SOURCE_DIR}/src)
 set(POMAGMA_COMPILER_FILES
 	${SRC_DIR}/compiler/util.py
 	${SRC_DIR}/compiler/expressions.py
+	${SRC_DIR}/compiler/completion.py
 	${SRC_DIR}/compiler/sequents.py
 	${SRC_DIR}/compiler/parser.py
 	${SRC_DIR}/compiler/compiler.py

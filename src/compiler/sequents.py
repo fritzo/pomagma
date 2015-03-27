@@ -4,6 +4,7 @@ from pomagma.compiler.completion import simplify_succedent
 from pomagma.compiler.completion import try_simplify_antecedents
 from pomagma.compiler.expressions import Expression
 from pomagma.compiler.expressions import NotNegatable
+from pomagma.compiler.expressions import get_expression
 from pomagma.compiler.expressions import try_get_negated
 from pomagma.compiler.util import inputs
 from pomagma.compiler.util import set_without
@@ -83,7 +84,7 @@ class Sequent(object):
 @inputs(Expression)
 def as_atom(expr):
     args = [arg.var for arg in expr.args]
-    return Expression(expr.name, *args)
+    return get_expression(expr.name, *args)
 
 
 @inputs(Expression)
@@ -114,7 +115,7 @@ def as_succedent(expr, bound):
                 args.append(as_atom(arg))
                 for argarg in arg.args:
                     antecedents |= as_antecedents(argarg, bound)
-        succedent = Expression(expr.name, *args)
+        succedent = get_expression(expr.name, *args)
     else:
         assert expr.args, expr.args
         succedent = as_atom(expr)

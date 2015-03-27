@@ -3,22 +3,26 @@ from pomagma.compiler.compiler import add_costs
 from pomagma.compiler.compiler import compile_full
 from pomagma.compiler.compiler import compile_given
 from pomagma.compiler.compiler import get_events
-from pomagma.compiler.expressions import Expression
+from pomagma.compiler.expressions import Expression_0
+from pomagma.compiler.expressions import Expression_1
+from pomagma.compiler.expressions import Expression_2
+from pomagma.compiler.expressions import get_expression
 from pomagma.compiler.sequents import Sequent
 
-EQUAL = lambda x, y: Expression('EQUAL', x, y)
-LESS = lambda x, y: Expression('LESS', x, y)
-NLESS = lambda x, y: Expression('NLESS', x, y)
-CO = lambda x: Expression('CO', x)
-QUOTE = lambda x: Expression('QUOTE', x)
-APP = lambda x, y: Expression('APP', x, y)
-COMP = lambda x, y: Expression('COMP', x, y)
-JOIN = lambda x, y: Expression('JOIN', x, y)
-f = Expression('f')
-g = Expression('g')
-x = Expression('x')
-y = Expression('y')
-z = Expression('z')
+
+EQUAL = Expression_2('EQUAL')
+LESS = Expression_2('LESS')
+NLESS = Expression_2('NLESS')
+CO = Expression_1('CO')
+QUOTE = Expression_1('QUOTE')
+APP = Expression_2('APP')
+COMP = Expression_2('COMP')
+JOIN = Expression_2('JOIN')
+f = Expression_0('f')
+g = Expression_0('g')
+x = Expression_0('x')
+y = Expression_0('y')
+z = Expression_0('z')
 
 
 outfile = None
@@ -56,35 +60,35 @@ def _test_sequent(*args):
 
 
 def test_compile_I():
-    I = Expression('I')
+    I = get_expression('I')
     _test_sequent(
         [],
         [EQUAL(APP(I, x), x)])
 
 
 def test_compile_K():
-    K = Expression('K')
+    K = get_expression('K')
     _test_sequent(
         [],
         [EQUAL(APP(APP(K, x), y), x)])
 
 
 def test_compile_W():
-    W = Expression('W')
+    W = get_expression('W')
     _test_sequent(
         [],
         [EQUAL(APP(APP(W, x), y), APP(APP(x, y), y))])
 
 
 def test_compile_B_app():
-    B = Expression('B')
+    B = get_expression('B')
     _test_sequent(
         [],
         [EQUAL(APP(APP(APP(B, x), y), z), APP(x, APP(y, z)))])
 
 
 def test_compile_B_comp():
-    B = Expression('B')
+    B = get_expression('B')
     _test_sequent(
         [],
         [EQUAL(APP(APP(B, x), y), COMP(x, y))])
@@ -103,7 +107,7 @@ def test_compile_comp_assoc():
 
 
 def test_compile_C():
-    C = Expression('C')
+    C = get_expression('C')
     _test_sequent(
         [],
         [EQUAL(APP(APP(APP(C, x), y), z), APP(APP(x, z), y))])
@@ -117,21 +121,21 @@ def test_compile_S():
     # for y if APP x y let APP_APP_S_x_y
     # for z if APP y z let APP_APP_APP_S_x_y_z
     # ensure EQUAL APP_APP_APP_S_x_y_z APP_APP_x_z_APP_y_z
-    S = Expression('S')
+    S = get_expression('S')
     _test_sequent(
         [],
         [EQUAL(APP(APP(APP(S, x), y), z), APP(APP(x, z), APP(y, z)))])
 
 
 def test_compile_Y():
-    Y = Expression('Y')
+    Y = get_expression('Y')
     _test_sequent(
         [],
         [EQUAL(APP(Y, f), APP(f, APP(Y, f)))])
 
 
 def test_compile_bot():
-    BOT = Expression('BOT')
+    BOT = get_expression('BOT')
     _test_sequent(
         [],
         [LESS(BOT, x)])
@@ -179,28 +183,28 @@ def test_compile_co():
 
 
 def test_compile_comp_x_x_x():
-    U = Expression('U')
+    U = get_expression('U')
     _test_sequent(
         [EQUAL(COMP(x, x), x)],
         [EQUAL(x, APP(U, x))])
 
 
 def test_compile_eval():
-    EVAL = Expression('EVAL')
+    EVAL = get_expression('EVAL')
     _test_sequent(
         [],
         [EQUAL(APP(EVAL, QUOTE(x)), x)])
 
 
 def test_compile_qt_quote():
-    QT = Expression('QT')
+    QT = get_expression('QT')
     _test_sequent(
         [],
         [EQUAL(APP(QT, QUOTE(x)), QUOTE(QUOTE(x)))])
 
 
 def test_compile_ap_quote():
-    AP = Expression('AP')
+    AP = get_expression('AP')
     _test_sequent(
         [],
         [EQUAL(APP(APP(AP, QUOTE(x)), QUOTE(y)), QUOTE(APP(x, y)))])

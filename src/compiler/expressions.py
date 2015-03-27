@@ -2,7 +2,11 @@ import re
 from pomagma.compiler import signature
 from pomagma.compiler.signature import ARITY_TABLE
 from pomagma.compiler.util import inputs
+from pomagma.compiler.util import memoize_args
 from pomagma.compiler.util import union
+
+re_name = re.compile('[a-zA-Z][a-zA-Z_]*$')
+re_space = re.compile('[ _]+')
 
 
 class Expression(object):
@@ -12,9 +16,7 @@ class Expression(object):
 
     def __init__(self, name, *args):
         assert isinstance(name, str)
-        assert re.match('[a-zA-Z][a-zA-Z_]*$', name),\
-            'invalid name: {0}'.format(name)
-        args = list(args)
+        assert re_name.match(name), name
         arity = signature.get_arity(name)
         assert len(args) == signature.get_nargs(arity)
         for arg in args:
@@ -28,11 +30,11 @@ class Expression(object):
             self._var = self
             self._vars = set([self])
         elif arity == 'NullaryFunction':
-            self._var = Expression(name + '_')
+            self._var = get_expression(name + '_')
             self._vars = set()
         elif arity in signature.FUNCTION_ARITIES:
-            var = re.sub('[ _]+', '_', self.polish).rstrip('_')
-            self._var = Expression(var)
+            var = re_space.sub('_', self._polish.rstrip('_'))
+            self._var = get_expression(var)
             self._vars = union(arg.vars for arg in args)
         else:
             self._var = None
@@ -118,9 +120,26 @@ class Expression(object):
         elif self.is_var():
             return defn
         else:
-            return Expression(
+            return get_expression(
                 self.name,
                 *[arg.substitute(var, defn) for arg in self.args])
+
+
+@memoize_args
+def get_expression(*args):
+    return Expression(*args)
+
+
+def Expression_0(name):
+    return get_expression(name)
+
+
+def Expression_1(name):
+    return lambda x: get_expression(name, x)
+
+
+def Expression_2(name):
+    return lambda x, y: get_expression(name, x, y)
 
 
 class NotNegatable(Exception):
@@ -140,8 +159,8 @@ def try_get_negated(expr):
     'Returns a disjunction'
     if expr.name == 'EQUAL':
         lhs, rhs = expr.args
-        return set([Expression('NLESS', lhs, rhs),
-                    Expression('NLESS', rhs, lhs)])
+        return set([get_expression('NLESS', lhs, rhs),
+                    get_expression('NLESS', rhs, lhs)])
     else:
         neg_name = try_negate_name(expr.name)
-        return set([Expression(neg_name, *expr.args)])
+        return set([get_expression(neg_name, *expr.args)])

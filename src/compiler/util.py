@@ -79,6 +79,36 @@ def find_rules():
     ]
 
 
+def memoize_arg(fun):
+    cache = {}
+
+    @functools.wraps(fun)
+    def memoized(arg):
+        try:
+            return cache[arg]
+        except KeyError:
+            result = fun(arg)
+            cache[arg] = result
+            return result
+
+    return memoized
+
+
+def memoize_args(fun):
+    cache = {}
+
+    @functools.wraps(fun)
+    def memoized(*args):
+        try:
+            return cache[args]
+        except KeyError:
+            result = fun(*args)
+            cache[args] = result
+            return result
+
+    return memoized
+
+
 def for_each(examples):
 
     def decorator(fun):

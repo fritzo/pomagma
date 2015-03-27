@@ -304,8 +304,8 @@ def write_signature(code, symbols):
     symbols = [
         (name, arity)
         for arity, names in symbols.iteritems()
-        if arity in signature.FUNCTION_ARITIES
-        or arity in signature.RELATION_ARITIES
+        if (arity in signature.FUNCTION_ARITIES or
+            arity in signature.RELATION_ARITIES)
         for name in names
         if name != 'EQUAL'
     ]

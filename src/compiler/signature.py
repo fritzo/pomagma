@@ -1,4 +1,7 @@
 import re
+from pomagma.compiler.util import memoize_arg
+
+re_var = re.compile('[A-Z]+$')
 
 
 NARGS_TABLE = {
@@ -60,8 +63,9 @@ def declare_arity(name, arity):
         ARITY_TABLE[name] = arity
 
 
+@memoize_arg
 def is_var(symbol):
-    return re.match('[A-Z]+$', symbol) is None
+    return re_var.match(symbol) is None
 
 
 def is_fun(symbol):

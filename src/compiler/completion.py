@@ -1,4 +1,5 @@
-from pomagma.compiler.expressions import Expression
+from pomagma.compiler.expressions import Expression_0
+from pomagma.compiler.expressions import Expression_2
 from pomagma.compiler.expressions import NotNegatable
 from pomagma.compiler.expressions import try_get_negated
 from pomagma.compiler.util import function
@@ -7,8 +8,11 @@ from pomagma.compiler.util import set_with
 from pomagma.compiler.util import set_without
 from pomagma.compiler.util import union
 
-BOT = Expression('BOT')
-TOP = Expression('TOP')
+BOT = Expression_0('BOT')
+TOP = Expression_0('TOP')
+EQUAL = Expression_2('EQUAL')
+LESS = Expression_2('LESS')
+NLESS = Expression_2('NLESS')
 
 
 # TODO compile this from *.rules, rather than hand-coding
@@ -19,46 +23,46 @@ def complete_step(facts):
     less = set(p for p in facts if p.name == 'LESS')
     nless = set(p for p in facts if p.name == 'NLESS')
     # |- NLESS TOP BOT
-    result.add(Expression('NLESS', TOP, BOT))
+    result.add(NLESS(TOP, BOT))
     # |- EQUAL x x
     # |- LESS x TOP
     # |- LESS BOT x
     for x in union(p.terms for p in facts):
-        result.add(Expression('EQUAL', x, x))
-        result.add(Expression('LESS', BOT, x))
-        result.add(Expression('LESS', x, TOP))
+        result.add(EQUAL(x, x))
+        result.add(LESS(BOT, x))
+        result.add(LESS(x, TOP))
     # EQUAL x y |- LESS x y
     # EQUAL x y |- LESS y x
     for p in equal:
         x, y = p.args
-        result.add(Expression('LESS', x, y))
-        result.add(Expression('LESS', y, x))
+        result.add(LESS(x, y))
+        result.add(LESS(y, x))
     # LESS x y, LESS y x |- EQUAL x y
     for p in less:
         x, y = p.args
-        if Expression('LESS', y, x) in less:
-            result.add(Expression('EQUAL', x, y))
+        if LESS(y, x) in less:
+            result.add(EQUAL(x, y))
     # LESS x y, LESS y z |- LESS x z
     for p in less:
         x, y = p.args
         for q in less:
             if q.args[0] == y:
                 y, z = q.args
-                result.add(Expression('LESS', x, z))
+                result.add(LESS(x, z))
     # LESS x y, NLESS x z |- NLESS y z
     for p in less:
         x, y = p.args
         for q in nless:
             if q.args[0] == x:
                 x, z = q.args
-                result.add(Expression('NLESS', y, z))
+                result.add(NLESS(y, z))
     # NLESS x z, LESS y z |- NLESS x y
     for p in nless:
         x, z = p.args
         for q in less:
             if q.args[1] == z:
                 y, z = q.args
-                result.add(Expression('NLESS', x, y))
+                result.add(NLESS(x, y))
     return result
 
 
@@ -100,8 +104,8 @@ def weaken(facts, fact):
         yield without
         if fact.name == 'EQUAL':
             lhs, rhs = fact.args
-            yield set_with(without, Expression('LESS', lhs, rhs))
-            yield set_with(without, Expression('LESS', rhs, lhs))
+            yield set_with(without, LESS(lhs, rhs))
+            yield set_with(without, LESS(rhs, lhs))
 
 
 def simplify_step(completed):
@@ -137,5 +141,5 @@ def simplify_succedent(fact):
     if fact.name == 'LESS':
         lhs, rhs = fact.args
         if lhs == TOP or rhs == BOT:
-            return Expression('EQUAL', lhs, rhs)
+            return EQUAL(lhs, rhs)
     return fact

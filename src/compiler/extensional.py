@@ -1,5 +1,8 @@
 import itertools
 from pomagma.compiler.expressions import Expression
+from pomagma.compiler.expressions import Expression_0
+from pomagma.compiler.expressions import Expression_2
+from pomagma.compiler.expressions import get_expression
 from pomagma.compiler.sequents import Sequent
 from pomagma.compiler.signature import is_positive
 from pomagma.compiler.util import TODO
@@ -7,20 +10,20 @@ from pomagma.compiler.util import inputs
 from pomagma.compiler.util import logger
 from pomagma.compiler.util import methodof
 
-I = Expression('I')
-K = Expression('K')
-J = Expression('J')
-R = Expression('R')
-B = Expression('B')
-C = Expression('C')
-W = Expression('W')
-S = Expression('S')
-BOT = Expression('BOT')
-TOP = Expression('TOP')
-APP = lambda x, y: Expression('APP', x, y)
-COMP = lambda x, y: Expression('COMP', x, y)
-JOIN = lambda x, y: Expression('JOIN', x, y)
-RAND = lambda x, y: Expression('RAND', x, y)
+I = Expression_0('I')
+K = Expression_0('K')
+J = Expression_0('J')
+R = Expression_0('R')
+B = Expression_0('B')
+C = Expression_0('C')
+W = Expression_0('W')
+S = Expression_0('S')
+BOT = Expression_0('BOT')
+TOP = Expression_0('TOP')
+APP = Expression_2('APP')
+COMP = Expression_2('COMP')
+JOIN = Expression_2('JOIN')
+RAND = Expression_2('RAND')
 
 
 class AbstractionFailed(Exception):
@@ -102,7 +105,7 @@ def abstract(self, var):
             raise AbstractionFailed
     elif self.is_rel():
         args = [arg.abstract(var) for arg in self.args]
-        return Expression(self.name, *args)
+        return get_expression(self.name, *args)
     else:
         raise ValueError('bad expression: %s' % self.name)
 
@@ -117,7 +120,7 @@ class SkipValidation(Exception):
 
 def get_fresh(bound):
     for name in 'abcdefghijklmnopqrstuvwxyz':
-        fresh = Expression(name)
+        fresh = get_expression(name)
         if fresh not in bound:
             return fresh
     raise NotImplementedError('Exceeded fresh variable limit')
@@ -199,14 +202,14 @@ def validate(expr):
                 'Failed to validate\n  {0}\nbecause  \n{1} != {2}'.format(
                     expr, lhs[0], rhs[0])
             for args in zip(lhs[1:], rhs[1:]):
-                validate(Expression(expr.name, *args))
+                validate(get_expression(expr.name, *args))
             break
         except RequireVariable:
             lhs, rhs = expr.args
             fresh = get_fresh(expr.vars)
             lhs = APP(lhs, fresh)
             rhs = APP(rhs, fresh)
-            expr = Expression(expr.name, lhs, rhs)
+            expr = get_expression(expr.name, lhs, rhs)
         except SkipValidation:
             print 'WARNING: not validating {0}'.format(expr)
             return

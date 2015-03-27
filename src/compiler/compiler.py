@@ -2,6 +2,7 @@ import math
 import inspect
 import pomagma.util
 from pomagma.compiler.expressions import Expression
+from pomagma.compiler.expressions import Expression_2
 from pomagma.compiler.sequents import Sequent
 from pomagma.compiler.sequents import assert_normal
 from pomagma.compiler.sequents import normalize
@@ -50,6 +51,9 @@ else:
     POMAGMA_DEBUG = POMAGMA_DEBUG_0
 
 
+EQUAL = Expression_2('EQUAL')
+
+
 # ----------------------------------------------------------------------------
 # Strategies
 
@@ -60,8 +64,8 @@ LOG_OBJECT_COUNT = math.log(OBJECT_COUNT)
 
 
 def add_costs(costs):
-    return (log_sum_exp(*[LOG_OBJECT_COUNT * c for c in costs])
-            / LOG_OBJECT_COUNT)
+    return (log_sum_exp(*[LOG_OBJECT_COUNT * c for c in costs]) /
+            LOG_OBJECT_COUNT)
 
 
 class Strategy(object):
@@ -379,11 +383,11 @@ def normalize_given(seq, atom, bound=None):
             if lhs == atom:
                 yield Sequent(
                     set_with(normal.antecedents, lhs),
-                    set([Expression('EQUAL', lhs.var, rhs)]))
+                    set([EQUAL(lhs.var, rhs)]))
             elif rhs == atom:
                 yield Sequent(
                     set_with(normal.antecedents, rhs),
-                    set([Expression('EQUAL', lhs, rhs.var)]))
+                    set([EQUAL(lhs, rhs.var)]))
 
 
 @inputs(Sequent, Expression)
