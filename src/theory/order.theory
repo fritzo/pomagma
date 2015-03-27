@@ -1,17 +1,17 @@
 CLOSED BOT
 CLOSED TOP
+
 NLESS TOP BOT
+LESS x x
+LESS BOT x
+LESS x TOP   
 
--------------------   --------------------
 EQUAL APP BOT x BOT   EQUAL COMP BOT x BOT
-
--------------------   --------------------
 EQUAL APP TOP x TOP   EQUAL COMP TOP x TOP
 
-                                     LESS x y   LESS y x   LESS x y   LESS y z
---------   ----------   ----------   -------------------   -------------------
-LESS x x   LESS BOT x   LESS x TOP        EQUAL x y             LESS x z
-
+LESS x y   LESS y x   LESS x y   LESS y z
+-------------------   -------------------
+     EQUAL x y             LESS x z
 
       LESS f g               LESS x y
 --------------------   --------------------
@@ -21,8 +21,6 @@ LESS APP f x APP g x   LESS APP f x APP f y
 ----------------------   ----------------------
 LESS COMP f x COMP g x   LESS COMP f x COMP f y
 
-
-----------------------
 LESS APP f BOT APP Y f
 
 LESS APP f x x

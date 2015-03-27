@@ -12,10 +12,10 @@ LESS COMP RETRACT SECTION I
 # A strong characterization of the type constructor A
 
        LESS COMP r s I
------------------------------   ------------------------------
-LESS COMP APP CI r APP CI s A   LESS APP A f APP APP f TOP TOP
+-----------------------------
+LESS COMP APP CI r APP CI s A
 
---------------------------------------
+LESS APP A f APP APP f TOP TOP
 EQUAL ABIND s r APP f COMP r s APP f I
 
 # A strong characterization of the type constructor A

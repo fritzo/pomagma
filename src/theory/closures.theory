@@ -11,37 +11,36 @@ LESS I V
 
 EQUAL P COMP APP B V J
 
---------------   ---------------------------------
-LESS x APP U x   LESS COMP APP U x APP U x APP U x
+LESS x APP U x
+LESS COMP APP U x APP U x APP U x
 
 # TODO simplify with EQUIVALENTLY
+
 LESS COMP x x x   LESS COMP x x x
 ---------------   ---------------
 LESS APP U x x    EQUAL APP U x x
 
 # TODO simplify with EQUIVALENTLY
+
       LESS APP f x x                LESS APP f x x
 --------------------------   ---------------------------
 LESS APP APP U f x APP f x   EQUAL APP APP U f x APP f x
 
---------------   --------------   ----------------------------------
-LESS I APP V x   LESS x APP V x   EQUAL COMP APP V x APP V x APP V x
+LESS I APP V x
+LESS x APP V x
+EQUAL COMP APP V x APP V x APP V x
 
 LESS COMP x x x   LESS I x   EQUAL COMP x x x   LESS I x
 --------------------------   ---------------------------
       LESS x APP V x               EQUAL x APP V x
 
 # TODO simplify with EQUIVALENTLY
+
    LESS APP f x x          LESS APP f x x
 --------------------   ---------------------
 LESS APP APP V f x x   EQUAL APP APP V f x x
 
-
-----------------------------------
 EQUAL APP APP P x y APP V JOIN x y
-
----------------------------   ---------------------------------
-EQUAL APP APP P x x APP V x   EQUAL APP APP P x y APP APP P y x
-
----------------------------------------------------------
+EQUAL APP APP P x x APP V x
+EQUAL APP APP P x y APP APP P y x
 EQUAL APP APP P x APP APP P y z APP APP P APP APP P x y z

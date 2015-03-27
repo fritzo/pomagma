@@ -19,7 +19,6 @@ EQUAL QNLESS APP C QNGREATER
 #--------------------------------------
 #EQUAL APP APP QNLESS QUOTE x QUOTE y I
 #
-#--------------------------------------
 #EQUAL APP APP QEQUAL QUOTE x QUOTE x I
 #
 #                NLESS x y

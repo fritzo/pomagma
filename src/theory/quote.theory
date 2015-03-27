@@ -1,23 +1,12 @@
 # extensional codes
-
-EQUAL CODE APP V CODE
-#
 # by implementation, QUOTE injects
 
------------------   -----------------
-NLESS TOP QUOTE x   NLESS QUOTE x BOT
-
-------------------------------
-EQUAL QUOTE X APP CODE QUOTE X
-
----------------------   ---------------------------------
-EQUAL APP E QUOTE x x   EQUAL APP Q QUOTE x QUOTE QUOTE x
-
-------------------------------------
+EQUAL CODE APP V CODE
+NLESS TOP QUOTE x
+NLESS QUOTE x BOT
+EQUAL QUOTE x APP CODE QUOTE x
+EQUAL APP E QUOTE x x
+EQUAL APP Q QUOTE x QUOTE QUOTE x
 EQUAL APP APP QAPP x y QUOTE APP x y
-
---------------------------------------
 EQUAL APP APP QCOMP x y QUOTE COMP x y
-
---------------------------------------
 EQUAL APP APP QJOIN x y QUOTE JOIN x y

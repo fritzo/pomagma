@@ -9,46 +9,23 @@ CLOSED x   CLOSED y
 -------------------
   CLOSED JOIN x y
 
-----------------------------------
 OPTIONALLY EQUAL JOIN x y JOIN y x
-
--------------------------------------
 EQUAL JOIN JOIN x y z JOIN x JOIN y z
+LESS x JOIN x y   
 
-                      LESS y x
----------------   ----------------
-LESS x JOIN x y   EQUAL x JOIN x y
+    LESS y x              LESS y z          LESS x z   LESS y z
+----------------   ----------------------   -------------------
+EQUAL x JOIN x y   LESS JOIN x y JOIN x z     LESS JOIN x y z
 
-       LESS y z          LESS x z   LESS y z
-----------------------   -------------------
-LESS JOIN x y JOIN x z     LESS JOIN x y z
-
-------------------   --------------------
-EQUAL JOIN BOT x x   EQUAL JOIN TOP x TOP
-
-----------------------------
+EQUAL JOIN BOT x x
+EQUAL JOIN TOP x TOP
 EQUAL APP APP J x y JOIN x y
-
-----------------   ------------------------------
-EQUAL x JOIN x x   EQUAL JOIN x JOIN x y JOIN x y
-
------------------------------------------
+EQUAL x JOIN x x
+EQUAL JOIN x JOIN x y JOIN x y
 EQUAL APP JOIN f g x JOIN APP f x APP g x
-
---------------------------------------------
 EQUAL COMP JOIN f g x JOIN COMP f x COMP g x
-
------------------------------------------
 EQUAL APP K JOIN x y JOIN APP K x APP K y
-
------------------------------------------
 EQUAL APP B JOIN x y JOIN APP B x APP B y
-
------------------------------------------
 EQUAL APP C JOIN x y JOIN APP C x APP C y
-
------------------------------------------
 EQUAL APP W JOIN x y JOIN APP W x APP W y
-
------------------------------------------
 EQUAL APP S JOIN x y JOIN APP S x APP S y

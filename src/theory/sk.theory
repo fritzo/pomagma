@@ -22,48 +22,29 @@ CLOSED x   CLOSED y   CLOSED x   CLOSED y
 -------------------   -------------------
   CLOSED APP x y        CLOSED COMP x y
 
-----------------------------------   -------------------------------------
-EQUAL APP COMP x y z APP x APP y z   EQUAL COMP x COMP y z COMP COMP x y z
+EQUAL APP COMP x y z APP x APP y z
+EQUAL COMP x COMP y z COMP COMP x y z
 
----------------   ----------------   ----------------
-EQUAL APP I x x   EQUAL COMP I x x   EQUAL COMP x I x
+EQUAL APP I x x
+EQUAL COMP I x x
+EQUAL COMP x I x
 
----------------------   ----------------------------
-EQUAL APP APP K x y x   EQUAL COMP APP K x y APP K x
-
-----------------------------------
+EQUAL APP APP K x y x
+EQUAL COMP APP K x y APP K x
 EQUAL COMP x APP K y APP K APP x y
-
-----------------------------
 EQUAL APP APP CI x y APP y x
-
-----------------------------
 EQUAL APP APP B x y COMP x y
-
------------------------------
 EQUAL APP APP CB x y COMP y x
-
----------------------------------
 EQUAL APP APP W x y APP APP x y y
-
----------------------------------------
 EQUAL APP APP APP C x y z APP APP x z y
-
----------------------------------------------
 EQUAL APP APP APP S x y z APP APP x z APP y z
 
 # Possible B,C,S for composition abstraction:
 #
-#-----------------------------------------
 #EQUAL APP APP APP BO x y z COMP x APP y z
-#
-#-----------------------------------------
 #EQUAL APP APP APP CO x y z COMP APP x z y
-#
-#-----------------------------------------------
 #EQUAL APP APP APP SO x y z COMP APP x z APP y z
 
----------------------------
 EQUAL APP Y f APP f APP Y f
 
 EQUAL y APP APP S I y
