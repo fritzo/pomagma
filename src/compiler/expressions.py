@@ -11,7 +11,8 @@ re_space = re.compile('[ _]+')
 
 class Expression(object):
     __slots__ = [
-        '_name', '_args', '_arity', '_polish', '_hash', '_var', '_vars',
+        '_name', '_args', '_arity', '_polish', '_hash', '_var',
+        '_vars', '_consts', '_terms',
     ]
 
     def __init__(self, name, *args):
@@ -39,6 +40,13 @@ class Expression(object):
         else:
             self._var = None
             self._vars = union(arg.vars for arg in args)
+        if self.is_fun() and not self.args:
+            self._consts = set([self])
+        else:
+            self._consts = union(arg.consts for arg in self.args)
+        self._terms = union(arg.terms for arg in self.args)
+        if self.is_term():
+            self._terms.add(self)
 
     @property
     def name(self):
@@ -66,17 +74,11 @@ class Expression(object):
 
     @property
     def consts(self):
-        if self.is_fun() and not self.args:
-            return set([self])
-        else:
-            return union(arg.consts for arg in self.args)
+        return self._consts.copy()
 
     @property
     def terms(self):
-        result = union(arg.terms for arg in self.args)
-        if self.is_term():
-            result.add(self)
-        return result
+        return self._terms.copy()
 
     def __hash__(self):
         return self._hash
@@ -109,7 +111,7 @@ class Expression(object):
         return signature.is_con(self.name)
 
     def is_term(self):
-        return self.is_var() or self.is_fun()
+        return signature.is_term(self.name)
 
     def substitute(self, var, defn):
         assert isinstance(var, Expression)

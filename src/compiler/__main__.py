@@ -19,6 +19,10 @@ SRC = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ROOT = os.path.dirname(SRC)
 
 
+def parse_bool(arg):
+    return {'true': True, 'false': False}[arg.lower()]
+
+
 @parsable.command
 def abstract(*args):
     '''
@@ -138,7 +142,7 @@ def _extract_tasks((infile, outfile)):
 
 
 @parsable.command
-def batch_extract_tasks(*filenames):
+def batch_extract_tasks(*filenames, **kwargs):
     '''
     Extract tasks from infiles '*.rules', saving to '*.tasks'.
     '''
@@ -148,7 +152,9 @@ def batch_extract_tasks(*filenames):
         assert infile.endswith('.rules'), infile
         outfile = infile.replace('.rules', '.tasks')
         pairs.append((infile, outfile))
-    multiprocessing.Pool().map(_extract_tasks, pairs)
+    parallel = parse_bool(kwargs.get('parallel', 'false'))
+    map_ = multiprocessing.Pool().map if parallel else map
+    map_(_extract_tasks, pairs)
 
 
 @parsable.command
@@ -209,15 +215,41 @@ def test_compile(*filenames):
 
 
 @parsable.command
-def profile_compile(*filenames, **kwargs):
+def profile_tasks(*filenames, **kwargs):
     '''
-    Profile compiler on .
+    Profile task generation (first part of compiler chain).
     Optional keyword arguments:
         loadfrom = None
-        saveto = 'compiler.profile'
+        saveto = 'tasks.pstats'
     '''
+    assert filenames, 'nothing to profile'
     loadfrom = kwargs.get('loadfrom')
-    saveto = kwargs.get('saveto', 'compiler.profile')
+    saveto = kwargs.get('saveto', 'tasks.pstats')
+    if loadfrom is None:
+        command = 'batch_extract_tasks({}, threads=1)'.format(
+            ', '.join(map('"{}"'.format, filenames)))
+        print 'profiling {}'.format(command)
+        profile.run(command, saveto)
+        loadfrom = saveto
+    stats = pstats.Stats(loadfrom)
+    stats.strip_dirs()
+    line_count = 50
+    for sortby in ['time']:
+        stats.sort_stats(sortby)
+        stats.print_stats(line_count)
+
+
+@parsable.command
+def profile_compile(*filenames, **kwargs):
+    '''
+    Profile full compiler chain (task generation + optimization).
+    Optional keyword arguments:
+        loadfrom = None
+        saveto = 'compile.pstats'
+    '''
+    assert filenames, 'nothing to profile'
+    loadfrom = kwargs.get('loadfrom')
+    saveto = kwargs.get('saveto', 'compile.pstats')
     if loadfrom is None:
         command = 'compile({}, cpp_out="/dev/null")'.format(
             ', '.join(map('"{}"'.format, filenames)))
@@ -273,8 +305,7 @@ def compile(*infiles, **kwargs):
     theory_out = kwargs.get(
         'theory_out',
         os.path.join(SRC, 'theory', '{0}.compiled'.format(stem)))
-    parse_bool = {'true': True, 'false': False}
-    is_extensional = parse_bool[kwargs.get('extensional', 'true').lower()]
+    is_extensional = parse_bool(kwargs.get('extensional', 'true'))
 
     print '# writing', cpp_out
     argstring = ' '.join(

@@ -18,17 +18,19 @@ NLESS = Expression_2('NLESS')
 # TODO compile this from *.rules, rather than hand-coding
 @inputs(set)
 def complete_step(facts):
-    result = set(facts)
-    equal = set(p for p in facts if p.name == 'EQUAL')
-    less = set(p for p in facts if p.name == 'LESS')
-    nless = set(p for p in facts if p.name == 'NLESS')
+    result = set()
+    equal = [p for p in facts if p.name == 'EQUAL']
+    less = [p for p in facts if p.name == 'LESS']
+    nless = [p for p in facts if p.name == 'NLESS']
     # |- NLESS TOP BOT
     result.add(NLESS(TOP, BOT))
     # |- EQUAL x x
+    # |- LESS x x
     # |- LESS x TOP
     # |- LESS BOT x
     for x in union(p.terms for p in facts):
         result.add(EQUAL(x, x))
+        result.add(LESS(x, x))
         result.add(LESS(BOT, x))
         result.add(LESS(x, TOP))
     # EQUAL x y |- LESS x y
@@ -40,7 +42,8 @@ def complete_step(facts):
     # LESS x y, LESS y x |- EQUAL x y
     for p in less:
         x, y = p.args
-        if LESS(y, x) in less:
+        q = LESS(y, x)
+        if q in facts:
             result.add(EQUAL(x, y))
     # LESS x y, LESS y z |- LESS x z
     for p in less:

@@ -68,18 +68,27 @@ def is_var(symbol):
     return re_var.match(symbol) is None
 
 
+@memoize_arg
 def is_fun(symbol):
     return get_arity(symbol) in FUNCTION_ARITIES
 
 
+@memoize_arg
+def is_term(symbol):
+    return is_var(symbol) or is_fun(symbol)
+
+
+@memoize_arg
 def is_rel(symbol):
     return get_arity(symbol) in RELATION_ARITIES
 
 
+@memoize_arg
 def is_con(symbol):
     return get_arity(symbol) in CONNECTIVE_ARITIES
 
 
+@memoize_arg
 def get_arity(symbol):
     if is_var(symbol):
         return 'Variable'
