@@ -14,19 +14,18 @@ from pomagma.compiler.compiler import add_costs
 from pomagma.compiler.compiler import compile_full
 from pomagma.compiler.compiler import compile_given
 from pomagma.compiler.compiler import get_events
-from pomagma.compiler.util import find_rules
+from pomagma.compiler.util import find_theories
 
 
 SRC = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ROOT = os.path.dirname(SRC)
 
 
-def load_rules(filename):
-    return [rule.delambda() for rule in parser.parse_rules(filename)]
-
-
-def load_facts(filename):
-    return [fact.delambda() for fact in parser.parse_facts(filename)]
+def load_theory(filename):
+    theory = parser.parse_theory(filename)
+    theory['facts'] = [fact.delambda() for fact in theory['facts']]
+    theory['rules'] = [rule.delambda() for rule in theory['rules']]
+    return theory
 
 
 def parse_bool(arg):
@@ -130,10 +129,10 @@ def contrapositves(*filenames):
     Close rules under contrapositve
     '''
     if not filenames:
-        filenames = find_rules()
+        filenames = find_theories()
     sequents = []
     for filename in filenames:
-        sequents += load_rules(filename)
+        sequents += load_theory(filename)['rules']
     for sequent in sequents:
         print sequent.ascii()
         print
@@ -148,10 +147,10 @@ def normalize(*filenames):
     Show normalized rule set derived from each rule
     '''
     if not filenames:
-        filenames = find_rules()
+        filenames = find_theories()
     sequents = []
     for filename in filenames:
-        sequents += load_rules(filename)
+        sequents += load_theory(filename)['rules']
     for sequent in sequents:
         print sequent.ascii()
         print
@@ -163,10 +162,16 @@ def normalize(*filenames):
 @parsable.command
 def extract_tasks(infile, outfile=None):
     '''
-    Extract tasks from rules, but do not compile to C++.
+    Extract tasks from facts and rules, but do not compile to C++.
     '''
+    theory = load_theory(infile)
     with writer(outfile) as write:
-        for sequent in load_rules(infile):
+        facts = theory['facts']
+        for sequent in theory['rules']:
+            facts += extensional.derive_facts(sequent)
+        facts.sort()
+        write('\n'.join(map(str, facts)))
+        for sequent in theory['rules']:
             write(sequent.ascii())
             for normal in sorted(compiler.normalize(sequent)):
                 write(normal.ascii(indent=4))
@@ -183,15 +188,15 @@ def _extract_tasks((infile, outfile)):
 @parsable.command
 def batch_extract_tasks(*filenames, **kwargs):
     '''
-    Extract tasks from infiles '*.rules', saving to '*.tasks'.
+    Extract tasks from infiles '*.theory', saving to '*.tasks'.
     '''
     if not filenames:
-        filenames = find_rules()
+        filenames = find_theories()
     pairs = []
     for infile in filenames:
         infile = os.path.abspath(infile)
-        assert infile.endswith('.rules'), infile
-        outfile = infile.replace('.rules', '.tasks')
+        assert infile.endswith('.theory'), infile
+        outfile = infile.replace('.theory', '.tasks')
         pairs.append((infile, outfile))
     parallel = parse_bool(kwargs.get('parallel', 'false'))
     map_ = multiprocessing.Pool().map if parallel else map
@@ -204,10 +209,10 @@ def measure(*filenames):
     Measure complexity of rules in files
     '''
     if not filenames:
-        filenames = find_rules()
+        filenames = find_theories()
     sequents = []
     for filename in filenames:
-        sequents += load_rules(filename)
+        sequents += load_theory(filename)['rules']
     for sequent in sequents:
         measure_sequent(sequent)
 
@@ -218,12 +223,12 @@ def test_compile(*filenames):
     Compile rules -> C++
     '''
     if not filenames:
-        filenames = find_rules()
+        filenames = find_theories()
     for stem_rules in filenames:
         code = cpp.Code('// $filename', filename=stem_rules)
-        assert stem_rules[-6:] == '.rules', stem_rules
+        assert stem_rules[-6:] == '.theory', stem_rules
 
-        sequents = load_rules(stem_rules)
+        sequents = load_theory(stem_rules)['rules']
         for sequent in sequents:
             for cost, seq, strategy in compile_full(sequent):
                 code.newline()
@@ -268,7 +273,7 @@ def profile_tasks(*filenames, **kwargs):
         saveto = 'tasks.pstats'
     '''
     if not filenames:
-        filenames = find_rules()
+        filenames = find_theories()
     loadfrom = kwargs.get('loadfrom')
     saveto = kwargs.get('saveto', 'tasks.pstats')
     if loadfrom is None:
@@ -294,7 +299,7 @@ def profile_compile(*filenames, **kwargs):
         saveto = 'compile.pstats'
     '''
     if not filenames:
-        filenames = find_rules()
+        filenames = find_theories()
     loadfrom = kwargs.get('loadfrom')
     saveto = kwargs.get('saveto', 'compile.pstats')
     if loadfrom is None:
@@ -314,10 +319,10 @@ def profile_compile(*filenames, **kwargs):
 @parsable.command
 def test_close_rules(infile, is_extensional=True):
     '''
-    Compile extensionally some.rules -> some.derived.facts
+    Compile extensionally some.theory -> some.derived.facts
     '''
-    assert infile.endswith('.rules')
-    rules = load_rules(infile)
+    assert infile.endswith('.theory')
+    rules = load_theory(infile)['rules']
     for rule in rules:
         print
         print '#', rule
@@ -364,13 +369,9 @@ def compile(*infiles, **kwargs):
     rules = []
     facts = []
     for infile in infiles:
-        suffix = infile.split('.')[-1]
-        if suffix == 'rules':
-            rules += load_rules(infile)
-        elif suffix == 'facts':
-            facts += load_facts(infile)
-        else:
-            raise TypeError('unknown file type: %s' % infile)
+        theory = load_theory(infile)
+        rules += theory['rules']
+        facts += theory['facts']
     if is_extensional:
         for rule in rules:
             facts += extensional.derive_facts(rule)

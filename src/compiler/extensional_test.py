@@ -3,11 +3,11 @@ from nose.tools import assert_set_equal
 from pomagma.compiler import __main__ as main
 from pomagma.compiler.expressions import get_expression
 from pomagma.compiler.extensional import APP, COMP, JOIN, RAND
-from pomagma.compiler.extensional import I, K, B, C, W, S, J, R
+from pomagma.compiler.extensional import I, K, B, CB, C, W, S, J, R
 from pomagma.compiler.extensional import iter_closure_maps
 from pomagma.compiler.extensional import iter_eta_substitutions
 from pomagma.compiler.extensional import iter_subsets
-from pomagma.compiler.util import find_rules
+from pomagma.compiler.util import find_theories
 
 
 def lam(v, e):
@@ -30,10 +30,10 @@ def test_abstraction():
     assert_equal(
         lam(z, COMP(APP(x, z), APP(y, z))),
         APP(APP(S, COMP(B, x)), y))
-    assert_equal(lam(z, COMP(APP(x, z), y)), COMP(APP(APP(C, B), y), x))
+    assert_equal(lam(z, COMP(APP(x, z), y)), COMP(APP(CB, y), x))
     assert_equal(lam(z, COMP(x, APP(y, z))), COMP(APP(B, x), y))
     assert_equal(lam(y, COMP(x, y)), APP(B, x))
-    assert_equal(lam(x, COMP(x, y)), APP(APP(C, B), y))
+    assert_equal(lam(x, COMP(x, y)), APP(CB, y))
 
     assert_equal(lam(z, JOIN(APP(x, z), APP(y, z))), JOIN(x, y))
     assert_equal(lam(z, JOIN(x, APP(y, z))), COMP(APP(J, x), y))
@@ -91,11 +91,11 @@ def test_iter_closure_maps():
 def test_close_rules():
     blacklist = [
         # not abstractable:
-        'group.rules',
-        'h4.rules',
+        'group.theory',
+        'h4.theory',
         # no validator implemented:
-        'quote.rules',
+        'quote.theory',
     ]
-    for filename in find_rules():
+    for filename in find_theories():
         is_extensional = filename.split('/')[-1] not in blacklist
         yield main.test_close_rules, filename, is_extensional

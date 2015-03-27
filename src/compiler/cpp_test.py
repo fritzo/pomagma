@@ -1,6 +1,6 @@
 import os
 from pomagma.compiler import __main__ as main
-from pomagma.compiler.util import find_facts, find_rules
+from pomagma.compiler.util import find_theories
 
 
 def _test_compile(filename):
@@ -10,10 +10,10 @@ def _test_compile(filename):
 
 
 def test_compile_rules():
-    for filename in find_rules():
+    for filename in find_theories():
         yield _test_compile, filename
 
 
 def test_compile_facts():
-    for filename in find_facts():
+    for filename in find_theories():
         yield _test_compile, filename

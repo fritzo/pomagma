@@ -1,11 +1,14 @@
 import os
 from pomagma.compiler import sequents
 from pomagma.compiler import parser
-from pomagma.compiler.util import find_rules
+from pomagma.compiler.util import find_theories
 
 RULE_SETS = {
-    os.path.basename(path): parser.parse_rules(path)
-    for path in find_rules()
+    os.path.basename(path): set(
+        rule.delambda()
+        for rule in parser.parse_theory(path)['rules']
+    )
+    for path in find_theories()
 }
 
 

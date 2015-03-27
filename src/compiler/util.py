@@ -114,18 +114,8 @@ def methodof(class_, name=None):
     return deco
 
 
-def find_facts():
-    return [
-        os.path.abspath(f)
-        for f in glob.glob(os.path.join(pomagma.util.THEORY, '*.facts'))
-    ]
-
-
-def find_rules():
-    return [
-        os.path.abspath(f)
-        for f in glob.glob(os.path.join(pomagma.util.THEORY, '*.rules'))
-    ]
+def find_theories():
+    return glob.glob(os.path.join(pomagma.util.THEORY, '*.theory'))
 
 
 def memoize_arg(fun):

@@ -12,6 +12,7 @@ DIFFTOOL = os.environ.get('POMAGMA_DIFFTOOL', os.environ.get('EDITOR', 'meld'))
 DIFFIGNORE = ','.join([
     '*.facts',
     '*.rules',
+    '*.theory',
     '*.compiled',
     '*.pyc',
 ])
