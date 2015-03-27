@@ -6,6 +6,7 @@ import parsable
 import cProfile as profile
 import pstats
 from pomagma.compiler import compiler
+from pomagma.compiler import completion
 from pomagma.compiler import cpp
 from pomagma.compiler import extensional
 from pomagma.compiler import parser
@@ -36,6 +37,18 @@ def abstract(*args):
     for var in reversed(vars):
         expression = expression.abstract(var)
     print expression
+
+
+@parsable.command
+def complete(*facts):
+    '''
+    Complete a set of facts.
+    '''
+    facts = set(map(parser.parse_string_to_expr, facts))
+    facts = completion.complete(facts)
+    facts = sorted(facts)
+    for fact in facts:
+        print fact
 
 
 @contextlib.contextmanager
