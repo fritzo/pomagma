@@ -14,6 +14,7 @@ from pomagma.compiler.compiler import add_costs
 from pomagma.compiler.compiler import compile_full
 from pomagma.compiler.compiler import compile_given
 from pomagma.compiler.compiler import get_events
+from pomagma.compiler.util import find_rules
 
 
 SRC = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -107,6 +108,8 @@ def contrapositves(*filenames):
     '''
     Close rules under contrapositve
     '''
+    if not filenames:
+        filenames = find_rules()
     sequents = []
     for filename in filenames:
         sequents += parser.parse_rules(filename)
@@ -123,6 +126,8 @@ def normalize(*filenames):
     '''
     Show normalized rule set derived from each rule
     '''
+    if not filenames:
+        filenames = find_rules()
     sequents = []
     for filename in filenames:
         sequents += parser.parse_rules(filename)
@@ -159,6 +164,8 @@ def batch_extract_tasks(*filenames, **kwargs):
     '''
     Extract tasks from infiles '*.rules', saving to '*.tasks'.
     '''
+    if not filenames:
+        filenames = find_rules()
     pairs = []
     for infile in filenames:
         infile = os.path.abspath(infile)
@@ -175,6 +182,8 @@ def measure(*filenames):
     '''
     Measure complexity of rules in files
     '''
+    if not filenames:
+        filenames = find_rules()
     sequents = []
     for filename in filenames:
         sequents += parser.parse_rules(filename)
@@ -187,6 +196,8 @@ def test_compile(*filenames):
     '''
     Compile rules -> C++
     '''
+    if not filenames:
+        filenames = find_rules()
     for stem_rules in filenames:
         code = cpp.Code('// $filename', filename=stem_rules)
         assert stem_rules[-6:] == '.rules', stem_rules
@@ -235,7 +246,8 @@ def profile_tasks(*filenames, **kwargs):
         loadfrom = None
         saveto = 'tasks.pstats'
     '''
-    assert filenames, 'nothing to profile'
+    if not filenames:
+        filenames = find_rules()
     loadfrom = kwargs.get('loadfrom')
     saveto = kwargs.get('saveto', 'tasks.pstats')
     if loadfrom is None:
@@ -260,7 +272,8 @@ def profile_compile(*filenames, **kwargs):
         loadfrom = None
         saveto = 'compile.pstats'
     '''
-    assert filenames, 'nothing to profile'
+    if not filenames:
+        filenames = find_rules()
     loadfrom = kwargs.get('loadfrom')
     saveto = kwargs.get('saveto', 'compile.pstats')
     if loadfrom is None:

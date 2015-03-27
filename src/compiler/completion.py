@@ -22,62 +22,71 @@ NLESS = Expression_2('NLESS')
 basic_facts = set([
     NLESS(TOP, BOT),
     NLESS(I, BOT), NLESS(TOP, I),
-    NLESS(K, BOT), NLESS(TOP, K), NLESS(K, F), LESS(K, J),
-    NLESS(F, BOT), NLESS(TOP, F), NLESS(F, K), LESS(F, J),
-    NLESS(J, BOT), NLESS(TOP, J), NLESS(J, K), NLESS(J, F),
+    NLESS(K, BOT), NLESS(TOP, K), NLESS(K, F),
+    NLESS(F, BOT), NLESS(TOP, F), NLESS(F, K),
+    NLESS(J, BOT), NLESS(TOP, J),
+    LESS(K, J), NLESS(J, K),
+    LESS(F, J), NLESS(J, F),
+    NLESS(I, K), NLESS(K, I),
+    NLESS(I, F), NLESS(F, I),
+    NLESS(I, J), NLESS(J, I),
 ])
 
 
 # TODO compile this from *.rules, rather than hand-coding
 @inputs(set)
-def complete_step(facts):
-    result = basic_facts | facts
-    equal = [p for p in result if p.name == 'EQUAL']
-    less = [p for p in result if p.name == 'LESS']
-    nless = [p for p in result if p.name == 'NLESS']
-    # |- EQUAL x x
-    # |- LESS x x
-    # |- LESS x TOP
-    # |- LESS BOT x
-    for x in union(p.terms for p in result):
-        result.add(EQUAL(x, x))
-        result.add(LESS(x, x))
-        result.add(LESS(BOT, x))
-        result.add(LESS(x, TOP))
-    # EQUAL x y |- LESS x y
-    # EQUAL x y |- LESS y x
-    for p in equal:
-        x, y = p.args
-        result.add(LESS(x, y))
-        result.add(LESS(y, x))
-    # LESS x y, LESS y x |- EQUAL x y
-    for p in less:
-        x, y = p.args
-        q = LESS(y, x)
-        if q in result:
-            result.add(EQUAL(x, y))
-    # LESS x y, LESS y z |- LESS x z
-    for p in less:
-        x, y = p.args
-        for q in less:
-            if q.args[0] == y:
-                y, z = q.args
-                result.add(LESS(x, z))
-    # LESS x y, NLESS x z |- NLESS y z
-    for p in less:
-        x, y = p.args
-        for q in nless:
-            if q.args[0] == x:
-                x, z = q.args
-                result.add(NLESS(y, z))
-    # NLESS x z, LESS y z |- NLESS x y
-    for p in nless:
-        x, z = p.args
-        for q in less:
-            if q.args[1] == z:
-                y, z = q.args
-                result.add(NLESS(x, y))
-    return result
+def complete_step(terms, relevant_facts):
+
+    def step(facts):
+        result = relevant_facts | facts
+        equal = [p for p in result if p.name == 'EQUAL']
+        less = [p for p in result if p.name == 'LESS']
+        nless = [p for p in result if p.name == 'NLESS']
+        # |- EQUAL x x
+        # |- LESS x x
+        # |- LESS x TOP
+        # |- LESS BOT x
+        for x in terms:
+            result.add(EQUAL(x, x))
+            result.add(LESS(x, x))
+            result.add(LESS(BOT, x))
+            result.add(LESS(x, TOP))
+        # EQUAL x y |- LESS x y
+        # EQUAL x y |- LESS y x
+        for p in equal:
+            x, y = p.args
+            result.add(LESS(x, y))
+            result.add(LESS(y, x))
+        # LESS x y, LESS y x |- EQUAL x y
+        for p in less:
+            x, y = p.args
+            q = LESS(y, x)
+            if q in result:
+                result.add(EQUAL(x, y))
+        # LESS x y, LESS y z |- LESS x z
+        for p in less:
+            x, y = p.args
+            for q in less:
+                if q.args[0] == y:
+                    y, z = q.args
+                    result.add(LESS(x, z))
+        # LESS x y, NLESS x z |- NLESS y z
+        for p in less:
+            x, y = p.args
+            for q in nless:
+                if q.args[0] == x:
+                    x, z = q.args
+                    result.add(NLESS(y, z))
+        # NLESS x z, LESS y z |- NLESS x y
+        for p in nless:
+            x, z = p.args
+            for q in less:
+                if q.args[1] == z:
+                    y, z = q.args
+                    result.add(NLESS(x, y))
+        return result
+
+    return step
 
 
 @inputs(set, function)
@@ -91,9 +100,10 @@ def close_under(facts, closure_op):
     return closed
 
 
-@inputs(set)
-def complete(facts):
-    return close_under(facts, complete_step)
+def complete(facts, terms=set()):
+    terms = terms | union(p.terms for p in facts) | set([BOT, TOP])
+    relevant_facts = set(p for p in basic_facts if p.terms <= terms)
+    return close_under(facts, complete_step(terms, relevant_facts))
 
 
 basic_facts = complete(basic_facts)
@@ -126,6 +136,7 @@ def weaken(facts, fact):
 
 
 def simplify_step(completed):
+    terms = union(p.terms for p in completed)
 
     def step(fact_sets):
         result = fact_sets.copy()
@@ -133,8 +144,9 @@ def simplify_step(completed):
             for fact in facts:
                 for simple in weaken(facts, fact):
                     frozen = frozenset(simple)
-                    if frozen not in result and complete(simple) == completed:
-                        result.add(frozen)
+                    if frozen not in result:
+                        if complete(simple, terms) == completed:
+                            result.add(frozen)
         return result
 
     return step
