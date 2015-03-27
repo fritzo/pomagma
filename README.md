@@ -17,7 +17,7 @@ Pomagma's server provides code analysis services including:
 Pomagma has client libraries in python and node.js, and powers the
 [Puddle](https://github.com/fritzo/puddle) reactive coding environment.
 The correctness of Pomagma's theory is being verified in the
-[Hstar projetct](https://github.com/fritzo/hstar).
+[Hstar project](https://github.com/fritzo/hstar).
 
 ## Documentation
 
