@@ -3,6 +3,7 @@ from pomagma.compiler import signature
 from pomagma.compiler.signature import ARITY_TABLE
 from pomagma.compiler.util import inputs
 from pomagma.compiler.util import memoize_args
+from pomagma.compiler.util import sortedset
 from pomagma.compiler.util import union
 
 re_name = re.compile('[a-zA-Z][a-zA-Z_]*$')
@@ -27,6 +28,7 @@ class Expression(object):
         self._arity = arity
         self._polish = ' '.join([name] + [arg._polish for arg in args])
         self._hash = hash(self._polish)
+
         if arity == 'Variable':
             self._var = self
             self._vars = set([self])
@@ -40,13 +42,17 @@ class Expression(object):
         else:
             self._var = None
             self._vars = union(arg.vars for arg in args)
+        self._vars = sortedset(self._vars)
+
         if self.is_fun() and not self.args:
-            self._consts = set([self])
+            self._consts = sortedset([self])
         else:
-            self._consts = union(arg.consts for arg in self.args)
+            self._consts = sortedset(union(arg.consts for arg in self.args))
+
         self._terms = union(arg.terms for arg in self.args)
         if self.is_term():
             self._terms.add(self)
+        self._terms = sortedset(self._terms)
 
     @property
     def name(self):
@@ -70,15 +76,15 @@ class Expression(object):
 
     @property
     def vars(self):
-        return self._vars.copy()
+        return self._vars
 
     @property
     def consts(self):
-        return self._consts.copy()
+        return self._consts
 
     @property
     def terms(self):
-        return self._terms.copy()
+        return self._terms
 
     def __hash__(self):
         return self._hash
@@ -127,9 +133,7 @@ class Expression(object):
                 *[arg.substitute(var, defn) for arg in self.args])
 
 
-@memoize_args
-def get_expression(*args):
-    return Expression(*args)
+get_expression = memoize_args(Expression)
 
 
 def Expression_0(name):

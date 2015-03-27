@@ -12,9 +12,58 @@ def TODO(message=''):
     raise NotImplementedError('TODO {}'.format(message))
 
 
+def DELETE(*args, **kwargs):
+    raise ValueError('deleted method')
+
+
 def logger(message):
     if pomagma.util.LOG_LEVEL >= pomagma.util.LOG_LEVEL_DEBUG:
         print '#', message
+
+
+class sortedset(set):
+    __slots__ = ['_sorted']
+
+    def __init__(self, *args, **kwargs):
+        set.__init__(self, *args, **kwargs)
+        self._sorted = sorted(set.__iter__(self))
+
+    def __iter__(self):
+        return iter(self._sorted)
+
+    def __and__(self, other):
+        result = set(self)
+        result &= other
+        return result
+
+    def __or__(self, other):
+        result = set(self)
+        result |= other
+        return result
+
+    def __sub__(self, other):
+        result = set(self)
+        result -= other
+        return result
+
+    def __xor__(self, other):
+        result = set(self)
+        result ^= other
+        return result
+
+    # weak immutability
+    update = DELETE
+    difference_update = DELETE
+    intersection_update = DELETE
+    symmetric_difference_update = DELETE
+    add = DELETE
+    remove = DELETE
+    discard = DELETE
+    pop = DELETE
+    __ior__ = DELETE
+    __iand__ = DELETE
+    __ixor__ = DELETE
+    __isub__ = DELETE
 
 
 def union(sets):
