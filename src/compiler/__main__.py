@@ -227,7 +227,7 @@ def test_compile(*filenames):
         filenames = find_theories()
     for stem_rules in filenames:
         code = cpp.Code('// $filename', filename=stem_rules)
-        assert stem_rules[-6:] == '.theory', stem_rules
+        assert stem_rules[-len('.theory'):] == '.theory', stem_rules
 
         sequents = load_theory(stem_rules)['rules']
         for sequent in sequents:
