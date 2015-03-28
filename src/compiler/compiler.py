@@ -1,3 +1,4 @@
+import sys
 import math
 import inspect
 import pomagma.util
@@ -35,6 +36,22 @@ def stack_depth():
     depth = len(inspect.stack())
     MIN_STACK_DEPTH = min(MIN_STACK_DEPTH, depth)
     return depth - MIN_STACK_DEPTH
+
+
+class DotPrinter(object):
+    def __init__(self, out=sys.stdout):
+        self.out = out
+        self.count = 0
+
+    def __call__(self, every=1000):
+        assert every > 0
+        self.count = (self.count + 1) % every
+        if self.count == 0:
+            self.out.write('.')
+            self.out.flush()
+
+
+print_dot = DotPrinter()
 
 
 def POMAGMA_DEBUG_0(*args):
@@ -422,6 +439,7 @@ def rank_compiled(seq, context, bound):
         # print 'DEBUG', strategy
         strategy.validate(bound)
         ranked.append((strategy.cost(), seq, strategy))
+        print_dot()
     return ranked
 
 
