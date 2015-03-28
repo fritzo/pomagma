@@ -519,21 +519,22 @@ def iter_compiled(antecedents, succedent, bound):
             return  # HEURISTIC bind eagerly in arbitrary order
 
     # iterate forward
+    forward_vars = set()
     for a in antecedents:
-        # works for both Relation and Function antecedents
-        if a.vars & bound:
-            for v in a.vars - bound:
-                bound_v = set_with(bound, v)
-                POMAGMA_DEBUG('iterate forward {}', v)
-                for s in iter_compiled(antecedents, succedent, bound_v):
-                    yield Iter(v, s)
-                    yielded = True
+        a_free = a.vars - bound
+        if len(a_free) == 1:
+            forward_vars |= a_free
+    for v in forward_vars:
+        bound_v = set_with(bound, v)
+        POMAGMA_DEBUG('iterate forward {}', v)
+        for s in iter_compiled(antecedents, succedent, bound_v):
+            yield Iter(v, s)
+            yielded = True
 
     # iterate backward
     for a in antecedents:
         if a.is_fun() and a.var in bound:
-            a_vars = a.vars
-            a_free = a_vars - bound
+            a_free = a.vars - bound
             assert len(a_free) in [0, 1, 2]
             nargs = len(a.args)
             assert nargs in [0, 1, 2]
@@ -546,7 +547,7 @@ def iter_compiled(antecedents, succedent, bound):
                     for s in iter_compiled(antecedents_a, succedent, bound_v):
                         yield IterInvInjective(a, s)
                         yielded = True
-                elif nargs == 2 and len(a_free) == 1 and len(a_vars) == 2:
+                elif nargs == 2 and len(a_free) == 1 and len(a.vars) == 2:
                     for s in iter_compiled(antecedents_a, succedent, bound_v):
                         (fixed,) = list(a.vars - a_free)
                         yield IterInvBinaryRange(a, fixed, s)
