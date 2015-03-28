@@ -1,3 +1,4 @@
+THEORY=skrj
 PY_FILES:=setup.py diff.py $(find src | grep '.py$$' | grep -v '_pb2.py')
 
 all: bootstrap fixture FORCE
@@ -45,14 +46,14 @@ unit-test: all fixture FORCE
 	POMAGMA_LOG_FILE=$(shell pwd)/data/debug.log $(MAKE) -C build/debug test
 	POMAGMA_DEBUG=1 npm test
 
-fixture: data/atlas/skrj/region.normal.2047.h5 FORCE
-data/atlas/skrj/region.normal.2047.h5:
-	mkdir -p data/atlas/skrj/
-	7z e bootstrap/atlas/skrj/region.normal.2047.h5.7z -odata/atlas/skrj
+fixture: data/atlas/$(THEORY)/region.normal.2047.h5 FORCE
+data/atlas/$(THEORY)/region.normal.2047.h5:
+	mkdir -p data/atlas/$(THEORY)/
+	7z e bootstrap/atlas/$(THEORY)/region.normal.2047.h5.7z -odata/atlas/$(THEORY)
 
-bootstrap: data/atlas/skrj/world.normal.h5 FORCE
-data/atlas/skrj/world.normal.h5: data/atlas/skrj/region.normal.2047.h5
-	cd data/atlas/skrj \
+bootstrap: data/atlas/$(THEORY)/world.normal.h5 FORCE
+data/atlas/$(THEORY)/world.normal.h5: data/atlas/$(THEORY)/region.normal.2047.h5
+	cd data/atlas/$(THEORY) \
 	  && test -e world.normal.h5 \
 	  || ln -s region.normal.2047.h5 world.normal.h5
 
@@ -62,6 +63,8 @@ sk-test: all FORCE
 	POMAGMA_DEBUG=1 python -m pomagma.make test-atlas sk
 skj-test: all FORCE
 	POMAGMA_DEBUG=1 python -m pomagma.make test-atlas skj
+skja-test: all FORCE
+	POMAGMA_DEBUG=1 python -m pomagma.make test-atlas skja
 skrj-test: all FORCE
 	POMAGMA_DEBUG=1 python -m pomagma.make test-atlas skrj
 batch-test: all FORCE
@@ -92,6 +95,8 @@ sk: all
 	python -m pomagma make sk
 skj: all
 	python -m pomagma make skj
+skja: all
+	python -m pomagma make skja
 skrj: all
 	python -m pomagma make skrj
 

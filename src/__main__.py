@@ -6,14 +6,12 @@ import parsable
 parsable = parsable.Parsable()
 import pomagma.util
 import pomagma.workers
-from pomagma import (
-    atlas,
-    surveyor,
-    cartographer,
-    theorist,
-    analyst,
-    linguist,
-)
+from pomagma import analyst
+from pomagma import atlas
+from pomagma import cartographer
+from pomagma import linguist
+from pomagma import surveyor
+from pomagma import theorist
 
 
 THEORY = os.environ.get('POMAGMA_THEORY', 'skrj')

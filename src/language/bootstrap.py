@@ -50,22 +50,54 @@ SPECS['skj'] = {
         'V': 2.87327,
         'BOT': 3.0,
         'TOP': 3.0,
-        # 'DIV': 3.06752,
         # 'S B': 3.5036,
         'P': 3.69204,
         # 'F': 3.72682,
         # 'S I': 4.12483,
-        # 'SEMI': 4.18665,
         'W': 4.36313,
-        # 'UNIT': 4.3634,
+        # 'W B': 4.3719,
+        # 'W I': 6.21147,
+        'U': 6.3754,
+    },
+}
+
+SPECS['skja'] = {
+    'binary_probs': {
+        'APP': 0.374992,
+        'COMP': 0.198589,
+    },
+    'symmetric_probs': {
+        'JOIN': 0.0569286,
+    },
+    'nullary_weights': {
+        'B': 1.0,
+        'C': 1.30428,
+        'CB': 1.35451,
+        'CI': 1.74145,
+        'I': 2.21841,
+        'Y': 2.2918,
+        'K': 2.6654,
+        'S': 2.69459,
+        'J': 2.81965,
+        'V': 2.87327,
+        'BOT': 3.0,
+        'TOP': 3.0,
+        'DIV': 3.06752,
+        # 'S B': 3.5036,
+        'P': 3.69204,
+        # 'F': 3.72682,
+        # 'S I': 4.12483,
+        'SEMI': 4.18665,
+        'W': 4.36313,
+        'UNIT': 4.3634,
         # 'W B': 4.3719,
         'A': 5.0,
         'SECTION': 5.0,
         'RETRACT': 5.0,
-        # 'BOOL': 5.21614,
+        'BOOL': 5.21614,
         # 'W I': 6.21147,
         'U': 6.3754,
-        # 'BOOOL': 7.0,
+        'BOOOL': 7.0,
         # 'PROD': 12.0,
         # 'SUM': 12.0,
         # 'MAYBE': 12.0,
@@ -123,7 +155,7 @@ SPECS['skrj'] = {
 def make(theory):
     '''
     Bootstrap a language from Johann.
-    Inputs: theory in ['sk', 'skj', 'skrj']
+    Inputs: theory in ['sk', 'skj', 'skja', 'skrj']
     '''
     spec = SPECS[theory]
     nullary_weights = spec.get('nullary_weights', {})

@@ -77,8 +77,6 @@ add_custom_command(
 		${SRC_DIR}/theory/order.theory
 		${SRC_DIR}/theory/join.theory
 		${SRC_DIR}/theory/closures.theory
-		${SRC_DIR}/theory/types.theory
-		${SRC_DIR}/theory/a.theory
 		cpp_out=${CMAKE_CURRENT_LIST_DIR}/skj.theory.cpp
 		theory_out=${SRC_DIR}/theory/skj.compiled
 	DEPENDS ${POMAGMA_COMPILER_FILES}
@@ -86,8 +84,29 @@ add_custom_command(
 		${SRC_DIR}/theory/order.theory
 		${SRC_DIR}/theory/join.theory
 		${SRC_DIR}/theory/closures.theory
-		${SRC_DIR}/theory/types.theory
+)
+
+make_surveyor(skja)
+add_custom_command(
+	OUTPUT ${CMAKE_CURRENT_LIST_DIR}/skja.theory.cpp
+		${SRC_DIR}/theory/skja.compiled
+	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+	COMMAND python -m pomagma.compiler compile
+		${SRC_DIR}/theory/sk.theory
+		${SRC_DIR}/theory/order.theory
+		${SRC_DIR}/theory/join.theory
+		${SRC_DIR}/theory/closures.theory
 		${SRC_DIR}/theory/a.theory
+		${SRC_DIR}/theory/types.theory
+		cpp_out=${CMAKE_CURRENT_LIST_DIR}/skja.theory.cpp
+		theory_out=${SRC_DIR}/theory/skja.compiled
+	DEPENDS ${POMAGMA_COMPILER_FILES}
+		${SRC_DIR}/theory/sk.theory
+		${SRC_DIR}/theory/order.theory
+		${SRC_DIR}/theory/join.theory
+		${SRC_DIR}/theory/closures.theory
+		${SRC_DIR}/theory/a.theory
+		${SRC_DIR}/theory/types.theory
 )
 
 make_surveyor(skrj)
@@ -101,7 +120,6 @@ add_custom_command(
 		${SRC_DIR}/theory/join.theory
 		${SRC_DIR}/theory/rand.theory
 		${SRC_DIR}/theory/closures.theory
-		${SRC_DIR}/theory/a.theory
 		cpp_out=${CMAKE_CURRENT_LIST_DIR}/skrj.theory.cpp
 		theory_out=${SRC_DIR}/theory/skrj.compiled
 	DEPENDS ${POMAGMA_COMPILER_FILES}
@@ -110,7 +128,6 @@ add_custom_command(
 		${SRC_DIR}/theory/join.theory
 		${SRC_DIR}/theory/rand.theory
 		${SRC_DIR}/theory/closures.theory
-		${SRC_DIR}/theory/a.theory
 )
 
 make_surveyor(skjo)
@@ -123,8 +140,6 @@ add_custom_command(
 		${SRC_DIR}/theory/order.theory
 		${SRC_DIR}/theory/join.theory
 		${SRC_DIR}/theory/closures.theory
-		${SRC_DIR}/theory/types.theory
-		${SRC_DIR}/theory/a.theory
 		${SRC_DIR}/theory/quote.theory
 		${SRC_DIR}/theory/reflect.theory
 		cpp_out=${CMAKE_CURRENT_LIST_DIR}/skjo.theory.cpp
@@ -134,8 +149,6 @@ add_custom_command(
 		${SRC_DIR}/theory/order.theory
 		${SRC_DIR}/theory/join.theory
 		${SRC_DIR}/theory/closures.theory
-		${SRC_DIR}/theory/types.theory
-		${SRC_DIR}/theory/a.theory
 		${SRC_DIR}/theory/quote.theory
 		${SRC_DIR}/theory/reflect.theory
 )
