@@ -14,6 +14,7 @@ from pomagma.compiler.util import set_with
 from pomagma.compiler.util import set_without
 from pomagma.compiler.util import sortedset
 from pomagma.compiler.util import union
+from pomagma.compiler.util import memoize_make
 
 
 def assert_in(element, set_):
@@ -97,6 +98,7 @@ class Strategy(object):
         return (len(s), s) < (len(o), o)
 
 
+@memoize_make
 class Iter(Strategy):
 
     def __init__(self, var, body):
@@ -108,6 +110,7 @@ class Iter(Strategy):
         self.tests = []
         self.lets = {}
         self.stack = set()
+        self.optimize()
 
     def add_test(self, test):
         assert isinstance(test, Test), 'add_test arg is not a Test'
@@ -167,10 +170,10 @@ class Iter(Strategy):
                 else:
                     self.add_let(node)
             node = node.body
-        node.optimize()
 
 
 # TODO injective function inverse need not be iterated
+@memoize_make
 class IterInvInjective(Strategy):
 
     def __init__(self, fun, body):
@@ -191,10 +194,8 @@ class IterInvInjective(Strategy):
     def op_count(self, stack=None):
         return 4.0 + 0.5 * self.body.op_count()  # amortized
 
-    def optimize(self):
-        self.body.optimize()
 
-
+@memoize_make
 class IterInvBinary(Strategy):
 
     def __init__(self, fun, body):
@@ -217,10 +218,8 @@ class IterInvBinary(Strategy):
     def op_count(self, stack=None):
         return 4.0 + 0.25 * OBJECT_COUNT * self.body.op_count()  # amortized
 
-    def optimize(self):
-        self.body.optimize()
 
-
+@memoize_make
 class IterInvBinaryRange(Strategy):
 
     def __init__(self, fun, fixed, body):
@@ -255,10 +254,8 @@ class IterInvBinaryRange(Strategy):
     def op_count(self, stack=None):
         return 4.0 + 0.5 * self.body.op_count()  # amortized
 
-    def optimize(self):
-        self.body.optimize()
 
-
+@memoize_make
 class Let(Strategy):
 
     def __init__(self, expr, body):
@@ -282,10 +279,8 @@ class Let(Strategy):
         else:
             return 1.0 + 0.5 * self.body.op_count(stack=stack)
 
-    def optimize(self):
-        self.body.optimize()
 
-
+@memoize_make
 class Test(Strategy):
 
     def __init__(self, expr, body):
@@ -307,10 +302,8 @@ class Test(Strategy):
         else:
             return 1.0 + self.body.op_count(stack=stack)
 
-    def optimize(self):
-        self.body.optimize()
 
-
+@memoize_make
 class Ensure(Strategy):
 
     def __init__(self, expr):
@@ -330,9 +323,6 @@ class Ensure(Strategy):
                 if arg.is_fun():
                     fun_count += 1
         return [1.0, 1.0 + 0.5 * 1.0, 2.0 + 0.75 * 1.0][fun_count]
-
-    def optimize(self):
-        pass
 
 
 # ----------------------------------------------------------------------------
@@ -438,8 +428,6 @@ def rank_compiled(seq, context, bound):
     POMAGMA_DEBUG('{} | {} |- {}', list(bound), list(antecedents), succedent)
     for strategy in iter_compiled(antecedents, succedent, bound):
         strategy.validate(bound)
-        strategy.optimize()
-        strategy.validate(bound)
         ranked.append((strategy.cost(), seq, strategy))
         print_dot()
     assert ranked, 'failed to compile {0}'.format(seq)
@@ -458,7 +446,7 @@ def iter_compiled(antecedents, succedent, bound):
     # ensure
     if not antecedents and succedent.vars <= bound:
         POMAGMA_DEBUG('ensure {}', succedent)
-        yield Ensure(succedent)
+        yield Ensure.make(succedent)
         yielded = True
         return
 
@@ -468,7 +456,7 @@ def iter_compiled(antecedents, succedent, bound):
             bound_c = set_with(bound, c.var)
             POMAGMA_DEBUG('bind succedent constant {}', c)
             for s in iter_compiled(antecedents, succedent, bound_c):
-                yield Let(c, s)
+                yield Let.make(c, s)
                 yielded = True
             return  # HEURISTIC bind eagerly in arbitrary order
 
@@ -480,7 +468,7 @@ def iter_compiled(antecedents, succedent, bound):
             bound_a = set_with(bound, a.var)
             POMAGMA_DEBUG('bind antecedent constant {}', a)
             for s in iter_compiled(antecedents_a, succedent, bound_a):
-                yield Let(a, s)
+                yield Let.make(a, s)
                 yielded = True
             return  # HEURISTIC bind eagerly in arbitrary order
 
@@ -491,7 +479,7 @@ def iter_compiled(antecedents, succedent, bound):
                 antecedents_a = sortedset(set_without(antecedents, a))
                 POMAGMA_DEBUG('conditional {}', a)
                 for s in iter_compiled(antecedents_a, succedent, bound):
-                    yield Test(a, s)
+                    yield Test.make(a, s)
                     yielded = True
         else:
             assert a.is_fun(), a
@@ -499,7 +487,7 @@ def iter_compiled(antecedents, succedent, bound):
                 antecedents_a = sortedset(set_without(antecedents, a))
                 POMAGMA_DEBUG('conditional {}', a)
                 for s in iter_compiled(antecedents_a, succedent, bound):
-                    yield Test(a, s)
+                    yield Test.make(a, s)
                     yielded = True
         if yielded:
             return  # HEURISTIC test eagerly in arbitrary order
@@ -513,7 +501,7 @@ def iter_compiled(antecedents, succedent, bound):
                 bound_a = set_with(bound, a.var)
                 POMAGMA_DEBUG('bind variable {}', a)
                 for s in iter_compiled(antecedents_a, succedent, bound_a):
-                    yield Let(a, s)
+                    yield Let.make(a, s)
                     yielded = True
             else:
                 # TODO find inverse if injective function
@@ -531,7 +519,7 @@ def iter_compiled(antecedents, succedent, bound):
         bound_v = set_with(bound, v)
         POMAGMA_DEBUG('iterate forward {}', v)
         for s in iter_compiled(antecedents, succedent, bound_v):
-            yield Iter(v, s)
+            yield Iter.make(v, s)
             yielded = True
 
     # iterate backward
@@ -548,16 +536,16 @@ def iter_compiled(antecedents, succedent, bound):
                 if nargs == 1 and len(a_free) == 1:
                     # TODO injective function inverse need not be iterated
                     for s in iter_compiled(antecedents_a, succedent, bound_v):
-                        yield IterInvInjective(a, s)
+                        yield IterInvInjective.make(a, s)
                         yielded = True
                 elif nargs == 2 and len(a_free) == 1 and len(a.vars) == 2:
                     for s in iter_compiled(antecedents_a, succedent, bound_v):
                         (fixed,) = list(a.vars - a_free)
-                        yield IterInvBinaryRange(a, fixed, s)
+                        yield IterInvBinaryRange.make(a, fixed, s)
                         yielded = True
                 elif nargs == 2 and len(a_free) == 2:
                     for s in iter_compiled(antecedents_a, succedent, bound_v):
-                        yield IterInvBinary(a, s)
+                        yield IterInvBinary.make(a, s)
                         yielded = True
 
     if yielded:
@@ -569,7 +557,7 @@ def iter_compiled(antecedents, succedent, bound):
         bound_v = set_with(bound, v)
         POMAGMA_DEBUG('iterate non-locally')
         for s in iter_compiled(antecedents, succedent, bound_v):
-            yield Iter(v, s)
+            yield Iter.make(v, s)
             yielded = True
 
     assert yielded
