@@ -16,9 +16,9 @@ def DELETE(*args, **kwargs):
     raise ValueError('deleted method')
 
 
-def logger(message):
+def logger(message, *args):
     if pomagma.util.LOG_LEVEL >= pomagma.util.LOG_LEVEL_DEBUG:
-        print '#', message
+        print '#', message.format(*args)
 
 
 class sortedset(set):
@@ -146,6 +146,11 @@ def memoize_args(fun):
             return result
 
     return memoized
+
+
+def memoize_make(cls):
+    cls.make = staticmethod(memoize_args(cls))
+    return cls
 
 
 def for_each(examples):

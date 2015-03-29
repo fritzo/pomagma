@@ -2,7 +2,7 @@ import re
 from pomagma.compiler import signature
 from pomagma.compiler.signature import ARITY_TABLE
 from pomagma.compiler.util import inputs
-from pomagma.compiler.util import memoize_args
+from pomagma.compiler.util import memoize_make
 from pomagma.compiler.util import sortedset
 from pomagma.compiler.util import union
 
@@ -10,6 +10,7 @@ re_name = re.compile('[a-zA-Z][a-zA-Z_]*$')
 re_space = re.compile('[ _]+')
 
 
+@memoize_make
 class Expression(object):
     __slots__ = [
         '_name', '_args', '_arity', '_polish', '_hash', '_var',
@@ -131,9 +132,6 @@ class Expression(object):
             return Expression.make(
                 self.name,
                 *[arg.substitute(var, defn) for arg in self.args])
-
-
-Expression.make = staticmethod(memoize_args(Expression))
 
 
 def Expression_0(name):

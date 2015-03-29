@@ -17,15 +17,15 @@ from pomagma.compiler.util import union
 
 
 def assert_in(element, set_):
-    assert element in set_, '{0} not in {1}'.format(element, set_)
+    assert element in set_, (element, set_)
 
 
 def assert_not_in(element, set_):
-    assert element not in set_, '{0} in {1}'.format(element, set_)
+    assert element not in set_, (element, set_)
 
 
 def assert_subset(subset, set_):
-    assert subset <= set_, '{0} not <= {1}'.format(subset, set_)
+    assert subset <= set_, (subset, set_)
 
 
 MIN_STACK_DEPTH = float('inf')
@@ -100,8 +100,8 @@ class Strategy(object):
 class Iter(Strategy):
 
     def __init__(self, var, body):
-        assert var.is_var(), 'Iter var is not a Variable: {0}'.format(var)
-        assert isinstance(body, Strategy), 'Iter body is not a Strategy'
+        assert var.is_var(),  var
+        assert isinstance(body, Strategy), body
         self._repr = None
         self.var = var
         self.body = body
@@ -308,7 +308,7 @@ class Test(Strategy):
 class Ensure(Strategy):
 
     def __init__(self, expr):
-        assert expr.args, 'expr is not compound: {0}'.format(expr)
+        assert expr.args, ('expr is not compound', expr)
         self.expr = expr
 
     def __repr__(self):
@@ -337,7 +337,7 @@ class Ensure(Strategy):
 def compile_full(seq):
     results = []
     if seq.optional:
-        logger('skipped optional rule {0}'.format(seq))
+        logger('skipped optional rule {}', seq)
         return results
     for derived_seq in normalize(seq):
         context = set()
@@ -345,7 +345,7 @@ def compile_full(seq):
         ranked = rank_compiled(derived_seq, context, bound)
         results.append(min(ranked))
     assert results, 'failed to compile {0}'.format(seq)
-    logger('derived {0} rules from {1}'.format(len(results), seq))
+    logger('derived {} rules from {}', len(results), seq)
     return results
 
 
@@ -353,7 +353,7 @@ def compile_full(seq):
 def get_events(seq):
     events = set()
     if seq.optional:
-        logger('skipped optional rule {0}'.format(seq))
+        logger('skipped optional rule {}', seq)
         return events
     free_vars = seq.vars
     for sequent in normalize(seq):
@@ -416,10 +416,10 @@ def compile_given(seq, atom):
     for normal in normalize_given(seq, atom, bound):
         # print 'DEBUG normal =', normal
         ranked = rank_compiled(normal, context, bound)
-        logger('optimizing {0} versions'.format(len(ranked)))
+        logger('optimizing {} versions', len(ranked))
         results.append(min(ranked))
     assert results, 'failed to compile {0} given {1}'.format(seq, atom)
-    logger('derived {0} rules from {1} | {2}'.format(len(results), atom, seq))
+    logger('derived {} rules from {} | {}', len(results), atom, seq)
     return results
 
 
@@ -432,10 +432,7 @@ def rank_compiled(seq, context, bound):
     POMAGMA_DEBUG('{} | {} |- {}', list(bound), list(antecedents), succedent)
     for strategy in iter_compiled(antecedents, succedent, bound):
         strategy.validate(bound)
-        # print 'DEBUG', '-' * 8
-        # print 'DEBUG', strategy
         strategy.optimize()
-        # print 'DEBUG', strategy
         strategy.validate(bound)
         ranked.append((strategy.cost(), seq, strategy))
         print_dot()
