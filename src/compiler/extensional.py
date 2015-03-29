@@ -2,7 +2,6 @@ import itertools
 from pomagma.compiler.expressions import Expression
 from pomagma.compiler.expressions import Expression_0
 from pomagma.compiler.expressions import Expression_2
-from pomagma.compiler.expressions import get_expression
 from pomagma.compiler.sequents import Sequent
 from pomagma.compiler.signature import is_positive
 from pomagma.compiler.util import TODO
@@ -107,14 +106,14 @@ def abstract(self, var):
             raise AbstractionFailed
     elif self.is_rel():
         args = [arg.abstract(var) for arg in self.args]
-        return get_expression(self.name, *args)
+        return Expression.make(self.name, *args)
     else:
         raise ValueError('bad expression: %s' % self.name)
 
 
 @methodof(Expression, 'delambda')
 def Expression_delambda(self):
-    expr = get_expression(self.name, *[arg.delambda() for arg in self.args])
+    expr = Expression.make(self.name, *[arg.delambda() for arg in self.args])
     if expr.name == 'ABS':
         var, body = expr.args
         assert var.is_var(), var
@@ -156,7 +155,7 @@ class SkipValidation(Exception):
 
 def get_fresh(bound):
     for name in 'abcdefghijklmnopqrstuvwxyz':
-        fresh = get_expression(name)
+        fresh = Expression.make(name)
         if fresh not in bound:
             return fresh
     raise NotImplementedError('Exceeded fresh variable limit')
@@ -238,14 +237,14 @@ def validate(expr):
                 'Failed to validate\n  {0}\nbecause  \n{1} != {2}'.format(
                     expr, lhs[0], rhs[0])
             for args in zip(lhs[1:], rhs[1:]):
-                validate(get_expression(expr.name, *args))
+                validate(Expression.make(expr.name, *args))
             break
         except RequireVariable:
             lhs, rhs = expr.args
             fresh = get_fresh(expr.vars)
             lhs = APP(lhs, fresh)
             rhs = APP(rhs, fresh)
-            expr = get_expression(expr.name, lhs, rhs)
+            expr = Expression.make(expr.name, lhs, rhs)
         except SkipValidation:
             print 'WARNING: not validating {0}'.format(expr)
             return

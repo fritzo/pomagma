@@ -6,7 +6,7 @@ from pomagma.compiler.compiler import get_events
 from pomagma.compiler.expressions import Expression_0
 from pomagma.compiler.expressions import Expression_1
 from pomagma.compiler.expressions import Expression_2
-from pomagma.compiler.expressions import get_expression
+from pomagma.compiler.expressions import Expression
 from pomagma.compiler.sequents import Sequent
 
 
@@ -60,35 +60,35 @@ def _test_sequent(*args):
 
 
 def test_compile_I():
-    I = get_expression('I')
+    I = Expression.make('I')
     _test_sequent(
         [],
         [EQUAL(APP(I, x), x)])
 
 
 def test_compile_K():
-    K = get_expression('K')
+    K = Expression.make('K')
     _test_sequent(
         [],
         [EQUAL(APP(APP(K, x), y), x)])
 
 
 def test_compile_W():
-    W = get_expression('W')
+    W = Expression.make('W')
     _test_sequent(
         [],
         [EQUAL(APP(APP(W, x), y), APP(APP(x, y), y))])
 
 
 def test_compile_B_app():
-    B = get_expression('B')
+    B = Expression.make('B')
     _test_sequent(
         [],
         [EQUAL(APP(APP(APP(B, x), y), z), APP(x, APP(y, z)))])
 
 
 def test_compile_B_comp():
-    B = get_expression('B')
+    B = Expression.make('B')
     _test_sequent(
         [],
         [EQUAL(APP(APP(B, x), y), COMP(x, y))])
@@ -107,7 +107,7 @@ def test_compile_comp_assoc():
 
 
 def test_compile_C():
-    C = get_expression('C')
+    C = Expression.make('C')
     _test_sequent(
         [],
         [EQUAL(APP(APP(APP(C, x), y), z), APP(APP(x, z), y))])
@@ -121,21 +121,21 @@ def test_compile_S():
     # for y if APP x y let APP_APP_S_x_y
     # for z if APP y z let APP_APP_APP_S_x_y_z
     # ensure EQUAL APP_APP_APP_S_x_y_z APP_APP_x_z_APP_y_z
-    S = get_expression('S')
+    S = Expression.make('S')
     _test_sequent(
         [],
         [EQUAL(APP(APP(APP(S, x), y), z), APP(APP(x, z), APP(y, z)))])
 
 
 def test_compile_Y():
-    Y = get_expression('Y')
+    Y = Expression.make('Y')
     _test_sequent(
         [],
         [EQUAL(APP(Y, f), APP(f, APP(Y, f)))])
 
 
 def test_compile_bot():
-    BOT = get_expression('BOT')
+    BOT = Expression.make('BOT')
     _test_sequent(
         [],
         [LESS(BOT, x)])
@@ -183,28 +183,28 @@ def test_compile_co():
 
 
 def test_compile_comp_x_x_x():
-    U = get_expression('U')
+    U = Expression.make('U')
     _test_sequent(
         [EQUAL(COMP(x, x), x)],
         [EQUAL(x, APP(U, x))])
 
 
 def test_compile_eval():
-    EVAL = get_expression('EVAL')
+    EVAL = Expression.make('EVAL')
     _test_sequent(
         [],
         [EQUAL(APP(EVAL, QUOTE(x)), x)])
 
 
 def test_compile_qt_quote():
-    QT = get_expression('QT')
+    QT = Expression.make('QT')
     _test_sequent(
         [],
         [EQUAL(APP(QT, QUOTE(x)), QUOTE(QUOTE(x)))])
 
 
 def test_compile_ap_quote():
-    AP = get_expression('AP')
+    AP = Expression.make('AP')
     _test_sequent(
         [],
         [EQUAL(APP(APP(AP, QUOTE(x)), QUOTE(y)), QUOTE(APP(x, y)))])

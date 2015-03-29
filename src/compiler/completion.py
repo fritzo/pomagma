@@ -1,7 +1,7 @@
 from pomagma.compiler.expressions import Expression_0
 from pomagma.compiler.expressions import Expression_2
 from pomagma.compiler.expressions import NotNegatable
-from pomagma.compiler.expressions import get_expression
+from pomagma.compiler.expressions import Expression
 from pomagma.compiler.expressions import try_get_negated
 from pomagma.compiler.util import function
 from pomagma.compiler.util import inputs
@@ -183,7 +183,7 @@ def strengthen_sequent(fact):
 
 def weaken_sequent(fact):
     if fact.arity == 'UnaryMeta':
-        return get_expression(fact.name, weaken_sequent(fact.args[0]))
+        return Expression.make(fact.name, weaken_sequent(fact.args[0]))
     else:
         assert fact.is_rel(), fact
         if fact.name == 'EQUAL':

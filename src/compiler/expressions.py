@@ -33,11 +33,11 @@ class Expression(object):
             self._var = self
             self._vars = set([self])
         elif arity == 'NullaryFunction':
-            self._var = get_expression(name + '_')
+            self._var = Expression.make(name + '_')
             self._vars = set()
         elif arity in signature.FUNCTION_ARITIES:
             var = re_space.sub('_', self._polish.rstrip('_'))
-            self._var = get_expression(var)
+            self._var = Expression.make(var)
             self._vars = union(arg.vars for arg in args)
         else:
             self._var = None
@@ -128,24 +128,24 @@ class Expression(object):
         elif self.is_var():
             return defn
         else:
-            return get_expression(
+            return Expression.make(
                 self.name,
                 *[arg.substitute(var, defn) for arg in self.args])
 
 
-get_expression = memoize_args(Expression)
+Expression.make = staticmethod(memoize_args(Expression))
 
 
 def Expression_0(name):
-    return get_expression(name)
+    return Expression.make(name)
 
 
 def Expression_1(name):
-    return lambda x: get_expression(name, x)
+    return lambda x: Expression.make(name, x)
 
 
 def Expression_2(name):
-    return lambda x, y: get_expression(name, x, y)
+    return lambda x, y: Expression.make(name, x, y)
 
 
 class NotNegatable(Exception):
@@ -165,8 +165,8 @@ def try_get_negated(expr):
     'Returns a disjunction'
     if expr.name == 'EQUAL':
         lhs, rhs = expr.args
-        return set([get_expression('NLESS', lhs, rhs),
-                    get_expression('NLESS', rhs, lhs)])
+        return set([Expression.make('NLESS', lhs, rhs),
+                    Expression.make('NLESS', rhs, lhs)])
     else:
         neg_name = try_negate_name(expr.name)
-        return set([get_expression(neg_name, *expr.args)])
+        return set([Expression.make(neg_name, *expr.args)])

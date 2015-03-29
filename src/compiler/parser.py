@@ -1,6 +1,6 @@
 import re
 from copy import copy
-from pomagma.compiler.expressions import get_expression
+from pomagma.compiler.expressions import Expression
 from pomagma.compiler.sequents import Sequent
 from pomagma.compiler.signature import get_arity
 from pomagma.compiler.signature import get_nargs
@@ -105,7 +105,7 @@ def parse_tokens_to_expr(tokens):
     arity = get_arity(head)
     nargs = get_nargs(arity)
     args = [parse_tokens_to_expr(tokens) for _ in xrange(nargs)]
-    return get_expression(head, *args)
+    return Expression.make(head, *args)
 
 
 def parse_string_to_expr(string):

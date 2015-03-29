@@ -1,7 +1,7 @@
 from nose.tools import assert_equal
 from nose.tools import assert_set_equal
 from pomagma.compiler import __main__ as main
-from pomagma.compiler.expressions import get_expression
+from pomagma.compiler.expressions import Expression
 from pomagma.compiler.extensional import APP, COMP, JOIN, RAND
 from pomagma.compiler.extensional import I, K, B, CB, C, W, S, J, R
 from pomagma.compiler.extensional import iter_closure_maps
@@ -15,9 +15,9 @@ def lam(v, e):
 
 
 def test_abstraction():
-    x = get_expression('x')
-    y = get_expression('y')
-    z = get_expression('z')
+    x = Expression.make('x')
+    y = Expression.make('y')
+    z = Expression.make('z')
 
     assert_equal(lam(x, x), I)
     assert_equal(lam(x, y), APP(K, y))
@@ -64,8 +64,8 @@ def test_iter_subsets():
 
 
 def test_iter_eta_substitutions():
-    a = get_expression('a')
-    x = get_expression('x')
+    a = Expression.make('a')
+    x = Expression.make('x')
     assert_set_equal(
         set(iter_eta_substitutions(x)),
         set([
@@ -75,8 +75,8 @@ def test_iter_eta_substitutions():
 
 
 def test_iter_closure_maps():
-    x = get_expression('x')
-    y = get_expression('y')
+    x = Expression.make('x')
+    y = Expression.make('y')
     assert_set_equal(
         set(iter_closure_maps(x)),
         set([I]))
