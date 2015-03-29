@@ -62,7 +62,7 @@ class Code:
 
 
 @methodof(compiler.Iter, 'cpp')
-def Iter_cpp(self, code, poll=None):
+def Iter_cpp(self, code, stack=None, poll=None):
     body = Code()
     if poll:
         body(poll)
@@ -80,7 +80,7 @@ def Iter_cpp(self, code, poll=None):
             var=var,
             fun=expr.name,
             args=', '.join(map(str, expr.args)))
-    self.body.cpp(body)
+    self.body.cpp(body, stack=self.stack)
     sets = []
     iter_ = 'carrier.iter()'
     for test in self.tests:
@@ -131,7 +131,7 @@ def Iter_cpp(self, code, poll=None):
 
 # TODO injective function inverse need not be iterated
 @methodof(compiler.IterInvInjective, 'cpp')
-def IterInvInjective_cpp(self, code, poll=None):
+def IterInvInjective_cpp(self, code, stack=None, poll=None):
     code(
         '''
         if (Ob $var __attribute__((unused)) = $fun.inverse_find($value))
@@ -144,7 +144,7 @@ def IterInvInjective_cpp(self, code, poll=None):
 
 
 @methodof(compiler.IterInvBinary, 'cpp')
-def IterInvBinary_cpp(self, code, poll=None):
+def IterInvBinary_cpp(self, code, stack=None, poll=None):
     body = Code()
     if poll:
         body(poll)
@@ -178,7 +178,7 @@ def IterInvBinary_cpp(self, code, poll=None):
 
 
 @methodof(compiler.IterInvBinaryRange, 'cpp')
-def IterInvBinaryRange_cpp(self, code, poll=None):
+def IterInvBinaryRange_cpp(self, code, stack=None, poll=None):
     body = Code()
     if poll:
         body(poll)
@@ -211,41 +211,47 @@ def IterInvBinaryRange_cpp(self, code, poll=None):
 
 
 @methodof(compiler.Let, 'cpp')
-def Let_cpp(self, code, poll=None):
-    code(
-        '''
-        if (Ob $var = $fun.find($args))
-        ''',
-        var=self.var,
-        fun=self.expr.name,
-        args=', '.join(map(str, self.expr.args)),
-    )
-    self.body.cpp(code, poll=poll)
+def Let_cpp(self, code, stack=None, poll=None):
+    if stack and self in stack:
+        self.body.cpp(code, stack=stack, poll=poll)
+    else:
+        code(
+            '''
+            if (Ob $var = $fun.find($args))
+            ''',
+            var=self.var,
+            fun=self.expr.name,
+            args=', '.join(map(str, self.expr.args)),
+        )
+        self.body.cpp(code, stack=stack, poll=poll)
 
 
 @methodof(compiler.Test, 'cpp')
-def Test_cpp(self, code, poll=None):
-    args = [arg.name for arg in self.expr.args]
-    if self.expr.name == 'EQUAL':
-        expr = 'carrier.equal({0}, {1})'.format(*args)
-    elif self.expr.arity == 'UnaryRelation':
-        expr = '{0}.find({1})'.format(self.expr.name, *args)
-    elif self.expr.arity == 'BinaryRelation':
-        expr = '{0}.find({1}, {2})'.format(self.expr.name, *args)
+def Test_cpp(self, code, stack=None, poll=None):
+    if stack and self in stack:
+        self.body.cpp(code, stack=stack, poll=poll)
     else:
-        expr = '{0} == {1}.find({2})'.format(
-            self.expr.var.name, self.expr.name, ', '.join(args))
-    code(
-        '''
-        if ($expr)
-        ''',
-        expr=expr,
-    )
-    self.body.cpp(code, poll=poll)
+        args = [arg.name for arg in self.expr.args]
+        if self.expr.name == 'EQUAL':
+            expr = 'carrier.equal({0}, {1})'.format(*args)
+        elif self.expr.arity == 'UnaryRelation':
+            expr = '{0}.find({1})'.format(self.expr.name, *args)
+        elif self.expr.arity == 'BinaryRelation':
+            expr = '{0}.find({1}, {2})'.format(self.expr.name, *args)
+        else:
+            expr = '{0} == {1}.find({2})'.format(
+                self.expr.var.name, self.expr.name, ', '.join(args))
+        code(
+            '''
+            if ($expr)
+            ''',
+            expr=expr,
+        )
+        self.body.cpp(code, stack=stack, poll=poll)
 
 
 @methodof(compiler.Ensure, 'cpp')
-def Ensure_cpp(self, code, poll=None):
+def Ensure_cpp(self, code, stack=None, poll=None):
     expr = self.expr
     args = [arg if arg.args else arg.var for arg in expr.args]
     if all(arg.is_var() for arg in args):
@@ -602,7 +608,7 @@ def write_full_tasks(code, sequents):
     cases = Code()
     for i, (cost, sequent, seq, strategy) in enumerate(full_tasks):
         case = Code()
-        strategy.cpp(case, split if cost >= min_split_cost else None)
+        strategy.cpp(case, poll=(split if cost >= min_split_cost else None))
         cases(
             '''
             case $index: { // cost = $cost

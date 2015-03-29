@@ -107,23 +107,28 @@ class Iter(Strategy):
         self.body = body
         self.tests = []
         self.lets = {}
+        self.stack = set()
 
     def add_test(self, test):
         assert isinstance(test, Test), 'add_test arg is not a Test'
         self.tests.append(test.expr)
+        self.stack.add(test)
 
     def add_let(self, let):
         assert isinstance(let, Let), 'add_let arg is not a Let'
         assert let.var not in self.lets, 'add_let var is not in Iter.lets'
         self.lets[let.var] = let.expr
+        self.stack.add(let)
 
     def __repr__(self):
         if self._repr is None:
-            tests = ['if {0}'.format(t) for t in self.tests]
-            lets = ['let {0}'.format(l) for l in sorted(self.lets.iterkeys())]
-            self._repr = 'for {0}: {1}'.format(
-                ' '.join([str(self.var)] + tests + lets),
-                self.body)
+            # Optimized:
+            # tests = ['if {}'.format(t) for t in self.tests]
+            # lets = ['let {}'.format(l) for l in sorted(self.lets.iterkeys())]
+            # self._repr = 'for {0}: {1}'.format(
+            #     ' '.join([str(self.var)] + tests + lets),
+            #     self.body)
+            self._repr = 'for {}: {}'.format(self.var, self.body)
         return self._repr
 
     def validate(self, bound):
@@ -134,40 +139,35 @@ class Iter(Strategy):
         for var, expr in self.lets.iteritems():
             assert_subset(expr.vars, bound)
             assert_not_in(var, bound)
-            bound.add(var)
         self.body.validate(bound)
 
-    def op_count(self):
+    def op_count(self, stack=None):
         test_count = len(self.tests) + len(self.lets)
         logic_cost = LOGIC_COST * test_count
         object_count = OBJECT_COUNT * 0.5 ** test_count
         let_cost = len(self.lets)
-        return logic_cost + object_count * (let_cost + self.body.op_count())
+        body_cost = self.body.op_count(stack=self.stack)
+        return logic_cost + object_count * (let_cost + body_cost)
 
     def optimize(self):
-        parent = self
-        child = self.body
+        node = self.body
         new_lets = set()
-        while isinstance(child, Test) or isinstance(child, Let):
-            if isinstance(child, Let):
-                new_lets.add(child.var)
+        while isinstance(node, Test) or isinstance(node, Let):
+            if isinstance(node, Let):
+                new_lets.add(node.var)
             optimizable = (
-                self.var in child.expr.vars and
-                child.expr.vars.isdisjoint(new_lets) and
-                sum(1 for arg in child.expr.args if self.var == arg) == 1 and
-                sum(1 for arg in child.expr.args if self.var in arg.vars) == 1
+                self.var in node.expr.vars and
+                node.expr.vars.isdisjoint(new_lets) and
+                sum(1 for arg in node.expr.args if self.var == arg) == 1 and
+                sum(1 for arg in node.expr.args if self.var in arg.vars) == 1
             )
             if optimizable:
-                if isinstance(child, Test):
-                    self.add_test(child)
+                if isinstance(node, Test):
+                    self.add_test(node)
                 else:
-                    self.add_let(child)
-                child = child.body
-                parent.body = child
-            else:
-                parent = child
-                child = child.body
-        child.optimize()
+                    self.add_let(node)
+            node = node.body
+        node.optimize()
 
 
 # TODO injective function inverse need not be iterated
@@ -188,7 +188,7 @@ class IterInvInjective(Strategy):
         assert_not_in(self.var, bound)
         self.body.validate(set_with(bound, self.var))
 
-    def op_count(self):
+    def op_count(self, stack=None):
         return 4.0 + 0.5 * self.body.op_count()  # amortized
 
     def optimize(self):
@@ -214,7 +214,7 @@ class IterInvBinary(Strategy):
         assert_not_in(self.var2, bound)
         self.body.validate(set_with(bound, self.var1, self.var2))
 
-    def op_count(self):
+    def op_count(self, stack=None):
         return 4.0 + 0.25 * OBJECT_COUNT * self.body.op_count()  # amortized
 
     def optimize(self):
@@ -252,7 +252,7 @@ class IterInvBinaryRange(Strategy):
             assert_not_in(self.var1, bound)
             self.body.validate(set_with(bound, self.var1))
 
-    def op_count(self):
+    def op_count(self, stack=None):
         return 4.0 + 0.5 * self.body.op_count()  # amortized
 
     def optimize(self):
@@ -276,8 +276,11 @@ class Let(Strategy):
         assert_not_in(self.var, bound)
         self.body.validate(set_with(bound, self.var))
 
-    def op_count(self):
-        return 1.0 + 0.5 * self.body.op_count()
+    def op_count(self, stack=None):
+        if stack and self in stack:
+            return self.body.op_count(stack=stack)
+        else:
+            return 1.0 + 0.5 * self.body.op_count(stack=stack)
 
     def optimize(self):
         self.body.optimize()
@@ -298,8 +301,11 @@ class Test(Strategy):
         assert_subset(self.expr.vars, bound)
         self.body.validate(bound)
 
-    def op_count(self):
-        return 1.0 + self.body.op_count()
+    def op_count(self, stack=None):
+        if stack and self in stack:
+            return self.body.op_count(stack=stack)
+        else:
+            return 1.0 + self.body.op_count(stack=stack)
 
     def optimize(self):
         self.body.optimize()
@@ -317,7 +323,7 @@ class Ensure(Strategy):
     def validate(self, bound):
         assert_subset(self.expr.vars, bound)
 
-    def op_count(self):
+    def op_count(self, stack=None):
         fun_count = 0
         if self.expr.name == 'EQUATION':
             for arg in self.expr.args:
