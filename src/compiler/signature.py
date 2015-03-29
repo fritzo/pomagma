@@ -15,8 +15,7 @@ NARGS_TABLE = {
     'Variable': 0,
     'UnaryMeta': 1,
     'BinaryMeta': 2,
-    'BindingMeta': 2,
-    'BindingMeta2': 3,
+    'TernaryMeta': 3,
 }
 
 ARITY_TABLE = {
@@ -34,8 +33,10 @@ ARITY_TABLE = {
     'OPTIONALLY': 'UnaryMeta',
     'NONEGATE': 'UnaryMeta',
     'EQUIVALENTLY': 'BinaryMeta',
-    'ABS': 'BindingMeta',
-    'ABIND': 'BindingMeta2',
+    'FUN': 'BinaryMeta',
+    'ABIND': 'TernaryMeta',
+    'FIX': 'BinaryMeta',
+    'FIXES': 'BinaryMeta',
 }
 
 RELATION_ARITIES = frozenset([
@@ -54,7 +55,7 @@ FUNCTION_ARITIES = frozenset([
 META_ARITIES = frozenset([
     'UnaryMeta',
     'BinaryMeta',
-    'BindingMeta',
+    'TernaryMeta',
 ])
 
 

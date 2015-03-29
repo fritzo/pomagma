@@ -14,6 +14,8 @@ from pomagma.compiler.compiler import add_costs
 from pomagma.compiler.compiler import compile_full
 from pomagma.compiler.compiler import compile_given
 from pomagma.compiler.compiler import get_events
+from pomagma.compiler.sugar import desugar_expr
+from pomagma.compiler.sugar import desugar_theory
 from pomagma.compiler.util import find_theories
 
 
@@ -23,7 +25,7 @@ ROOT = os.path.dirname(SRC)
 
 def load_theory(filename):
     theory = parser.parse_theory(filename)
-    theory = extensional.delambda_theory(theory)
+    theory = desugar_theory(theory)
     theory['rules'].sort()
     theory['facts'].sort()
     return theory
@@ -49,16 +51,16 @@ def abstract(*args):
 
 
 @parsable.command
-def delambda(*exprs):
+def desugar(*exprs):
     '''
     Convert lambda terms to combinators.
     Examples:
-        delambda ABS x APP x y
-        delambda ABS x ABS y ABS z APP APP x z APP y z
+        desugar FUN x APP x y
+        desugar FUN x FUN y FUN z APP APP x z APP y z
     '''
     for expr in map(parser.parse_string_to_expr, exprs):
         print expr
-        print '  =', expr.delambda()
+        print '  =', desugar_expr(expr)
 
 
 @parsable.command

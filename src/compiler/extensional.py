@@ -111,40 +111,6 @@ def abstract(self, var):
         raise ValueError('bad expression: %s' % self.name)
 
 
-@methodof(Expression, 'delambda')
-def Expression_delambda(self):
-    expr = Expression.make(self.name, *[arg.delambda() for arg in self.args])
-    if expr.name == 'ABS':
-        var, body = expr.args
-        assert var.is_var(), var
-        expr = body.abstract(var)
-    elif expr.name == 'ABIND':
-        s, r, body = expr.args
-        assert s.is_var(), s
-        assert r.is_var(), r
-        expr = APP(A, body.abstract(r).abstract(s))
-    return expr
-
-
-@methodof(Sequent, 'delambda')
-def Sequent_delambda(self):
-    return Sequent(
-        set(a.delambda() for a in self.antecedents),
-        set(s.delambda() for s in self.succedents))
-
-
-def delambda_theory(theory):
-    rules = [rule.delambda() for rule in theory['rules']]
-    facts = []
-    for fact in theory['facts']:
-        fact = fact.delambda()
-        if fact.vars:
-            rules.append(Sequent(set(), set([fact])))
-        else:
-            facts.append(fact)
-    return {'facts': facts, 'rules': rules}
-
-
 class RequireVariable(Exception):
     pass
 

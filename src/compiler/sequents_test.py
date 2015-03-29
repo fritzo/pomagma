@@ -2,12 +2,10 @@ import os
 from pomagma.compiler import sequents
 from pomagma.compiler import parser
 from pomagma.compiler.util import find_theories
+from pomagma.compiler.sugar import desugar_theory
 
 RULE_SETS = {
-    os.path.basename(path): set(
-        rule.delambda()
-        for rule in parser.parse_theory(path)['rules']
-    )
+    os.path.basename(path): desugar_theory(parser.parse_theory(path))['rules']
     for path in find_theories()
 }
 
