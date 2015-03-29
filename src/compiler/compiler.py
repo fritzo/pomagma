@@ -100,6 +100,7 @@ class Strategy(object):
 
 @memoize_make
 class Iter(Strategy):
+    __slots__ = ['_repr', 'var', 'body', 'tests', 'lets', 'stack']
 
     def __init__(self, var, body):
         assert var.is_var(),  var
@@ -175,6 +176,7 @@ class Iter(Strategy):
 # TODO injective function inverse need not be iterated
 @memoize_make
 class IterInvInjective(Strategy):
+    __slots__ = ['fun', 'value', 'var', 'body']
 
     def __init__(self, fun, body):
         assert fun.arity == 'InjectiveFunction'
@@ -197,6 +199,7 @@ class IterInvInjective(Strategy):
 
 @memoize_make
 class IterInvBinary(Strategy):
+    __slots__ = ['fun', 'value', 'var1', 'body']
 
     def __init__(self, fun, body):
         assert fun.arity in ['BinaryFunction', 'SymmetricFunction']
@@ -221,6 +224,7 @@ class IterInvBinary(Strategy):
 
 @memoize_make
 class IterInvBinaryRange(Strategy):
+    __slots__ = ['fun', 'value', 'var1', 'var2', 'lhs_fixed', 'body']
 
     def __init__(self, fun, fixed, body):
         assert fun.arity in ['BinaryFunction', 'SymmetricFunction']
@@ -257,6 +261,7 @@ class IterInvBinaryRange(Strategy):
 
 @memoize_make
 class Let(Strategy):
+    __slots__ = ['var', 'expr', 'body']
 
     def __init__(self, expr, body):
         assert isinstance(body, Strategy)
@@ -282,6 +287,7 @@ class Let(Strategy):
 
 @memoize_make
 class Test(Strategy):
+    __slots__ = ['expr', 'body']
 
     def __init__(self, expr, body):
         assert not expr.is_var()
@@ -305,6 +311,7 @@ class Test(Strategy):
 
 @memoize_make
 class Ensure(Strategy):
+    __slots__ = ['expr']
 
     def __init__(self, expr):
         assert expr.args, ('expr is not compound', expr)
