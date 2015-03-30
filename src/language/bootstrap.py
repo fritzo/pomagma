@@ -187,7 +187,7 @@ def make(theory):
         if not group:
             del probs[arity]
 
-    with pomagma.util.chdir(os.path.dirname(__file__)):
+    with pomagma.util.chdir(os.path.dirname(os.path.abspath(__file__))):
         util.json_dump(probs, '{}.json'.format(theory))
         # util.compile('{}.json'.format(theory), '{}.language'.format(theory))
 

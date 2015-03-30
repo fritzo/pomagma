@@ -1,5 +1,5 @@
 
-all: language_pb2.py h4.language sk.language skj.language skrj.language
+all: language_pb2.py h4.language sk.language skj.language skja.language skrj.language
 
 language_pb2.py: language.proto
 	protoc language.proto --python_out=. --cpp_out=.
