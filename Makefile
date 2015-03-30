@@ -1,8 +1,9 @@
 THEORY=skrj
-PY_FILES:=setup.py diff.py $(find src | grep '.py$$' | grep -v '_pb2.py')
+PY_FILES:=*.py $(find src | grep '.py$$' | grep -v '_pb2.py')
 
 all: bootstrap fixture FORCE
 	$(MAKE) python
+	$(MAKE) codegen
 	$(MAKE) debug release
 
 protobuf: FORCE
@@ -14,6 +15,10 @@ python: protobuf FORCE
 	pyflakes $(PY_FILES)
 	pep8 $(PY_FILES)
 	pip install -e .
+
+codegen: FORCE
+	python -m pomagma.compiler batch-extract-tasks
+	python -m pomagma.compiler batch-compile
 
 debug: FORCE
 	mkdir -p build/debug
@@ -27,19 +32,11 @@ release: FORCE
 	  && cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo ../.. \
 	  && $(MAKE)
 
-codegen: FORCE
-	mkdir -p build/debug
-	(cd build/debug && cmake -DCMAKE_BUILD_TYPE=Debug ../..)
-	make -nC build/debug 2>/dev/null | grep '\<compile\>' | /bin/sh
-
 tasks: FORCE
 	python -m pomagma.compiler batch-extract-tasks
 
 cpp-test: all FORCE
 	POMAGMA_LOG_FILE=$(shell pwd)/data/debug.log $(MAKE) -C build/debug test
-
-py-test: python FORCE
-	POMAGMA_DEBUG=1 nosetests -v pomagma
 
 unit-test: all fixture FORCE
 	POMAGMA_DEBUG=1 nosetests -v pomagma

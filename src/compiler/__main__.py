@@ -1,10 +1,12 @@
-import os
-import re
-import contextlib
-import multiprocessing
-import parsable
 import cProfile as profile
+import contextlib
+import glob
+import multiprocessing
+import os
+import parsable
 import pstats
+import re
+import simplejson as json
 from pomagma.compiler import compiler
 from pomagma.compiler import completion
 from pomagma.compiler import cpp
@@ -18,9 +20,17 @@ from pomagma.compiler.sugar import desugar_expr
 from pomagma.compiler.sugar import desugar_theory
 from pomagma.compiler.util import find_theories
 
-
 SRC = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ROOT = os.path.dirname(SRC)
+
+
+def up_to_date(infiles, outfiles):
+    if not all(os.path.exists(f) for f in infiles + outfiles):
+        return False
+    infiles = glob.glob(os.path.join(SRC, 'compiler', '*.py')) + infiles
+    intimes = map(os.path.getmtime, infiles)
+    outtimes = map(os.path.getmtime, outfiles)
+    return max(intimes) < min(outtimes)
 
 
 def load_theory(filename):
@@ -29,6 +39,11 @@ def load_theory(filename):
     theory['rules'].sort()
     theory['facts'].sort()
     return theory
+
+
+def json_load(filename):
+    with open(filename) as f:
+        return json.load(f)
 
 
 def parse_bool(arg):
@@ -200,7 +215,8 @@ def batch_extract_tasks(*filenames, **kwargs):
         infile = os.path.abspath(infile)
         assert infile.endswith('.theory'), infile
         outfile = infile.replace('.theory', '.tasks')
-        pairs.append((infile, outfile))
+        if not up_to_date([infile], [outfile]):
+            pairs.append((infile, outfile))
     parallel = parse_bool(kwargs.get('parallel', 'false'))
     map_ = multiprocessing.Pool().map if parallel else map
     map_(_extract_tasks, pairs)
@@ -361,6 +377,9 @@ def compile(*infiles, **kwargs):
         os.path.join(SRC, 'theory', '{0}.compiled'.format(stem)))
     is_extensional = parse_bool(kwargs.get('extensional', 'true'))
 
+    # if up_to_date(infiles, [cpp_out, theory_out]):
+    #     return
+
     print '# writing', cpp_out
     argstring = ' '.join(
         [relpath(path) for path in infiles] +
@@ -378,6 +397,8 @@ def compile(*infiles, **kwargs):
     if is_extensional:
         for rule in rules:
             facts += extensional.derive_facts(rule)
+    rules.sort()
+    facts.sort()
 
     code = cpp.Code()
     code('''
@@ -399,6 +420,36 @@ def compile(*infiles, **kwargs):
             assert fact.is_rel(), 'bad fact: %s' % fact
             f.write('\n')
             f.write(fact.polish)
+
+
+def _compile(param):
+    compile(*param['args'], **param['kwargs'])
+
+
+@parsable.command
+def batch_compile():
+    '''
+    Compile all theories in parallel
+    '''
+    params = []
+    theories_json = os.path.join(SRC, 'theory', 'theories.json')
+    theories = json_load(theories_json)
+    for name, spec in theories.iteritems():
+        infiles = sorted(
+            os.path.join(SRC, 'theory', '{}.theory'.format(t))
+            for t in spec['theories']
+        )
+        cpp_out = os.path.join(SRC, 'surveyor', '{}.theory.cpp'.format(name))
+        theory_out = os.path.join(SRC, 'theory', '{}.compiled'.format(name))
+        if not up_to_date(infiles + [theories_json], [cpp_out, theory_out]):
+            params.append({
+                'args': infiles,
+                'kwargs': {
+                    'cpp_out': cpp_out,
+                    'theory_out': theory_out,
+                    'extensional': str(spec.get('extensional', True)),
+                }})
+    multiprocessing.Pool().map(_compile, params)
 
 
 if __name__ == '__main__':

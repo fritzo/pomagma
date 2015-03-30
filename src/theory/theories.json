@@ -1,0 +1,21 @@
+{
+    "h4": {
+        "extensional": false,
+        "theories": ["group", "h4"]
+    },
+    "sk": {
+        "theories": ["sk", "order"]
+    },
+    "skj": {
+        "theories": ["sk", "order", "join", "closures"]
+    },
+    "skja": {
+        "theories": ["sk", "order", "join", "closures", "a", "types"]
+    },
+    "skrj": {
+        "theories": ["sk", "order", "join", "closures", "rand"]
+    },
+    "skjo": {
+        "theories": ["sk", "order", "join", "closures", "quote", "reflect"]
+    }
+}

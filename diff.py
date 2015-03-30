@@ -1,50 +1,51 @@
 #!/usr/bin/env python
 
-import os
 import contextlib
-import subprocess
+import os
 import parsable
+import subprocess
 
 REPO = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(REPO)
 TEMP = os.path.join(ROOT, '{}-temp'.format(os.path.basename(REPO)))
 DIFFTOOL = os.environ.get('POMAGMA_DIFFTOOL', os.environ.get('EDITOR', 'meld'))
-DIFFIGNORE = ','.join([
+DIFFIGNORE = [
     '*.facts',
     '*.rules',
     '*.theory',
-    '*.compiled',
+    # '*.compiled',
     '*.pyc',
-])
+]
 
 
 def get_difftool(tool, left, right):
-    if tool == 'cdiff':
-        return [
-            'cdiff', '-s', '-w', '0', left, right,
-        ]
+    if tool == 'diff':
+        return (
+            ['diff', '-r'] +
+            map('--exclude={}'.format, DIFFIGNORE) +
+            [left, right])
+    elif tool == 'cdiff':
+        return ['cdiff', '-s', '-w', '0', left, right]
     elif tool == 'vim':
         return [
             'vim',
-            '-c', 'let g:DirDiffExcludes = "{}"'.format(DIFFIGNORE),
+            '-c', 'let g:DirDiffExcludes = "{}"'.format(','.join(DIFFIGNORE)),
             '-c', 'DirDiff {} {}'.format(left, right),
         ]
     elif tool == 'gvim':
         return [
             'gvim', '-geom', '165x80',
-            '-c', 'let g:DirDiffExcludes = "{}"'.format(DIFFIGNORE),
+            '-c', 'let g:DirDiffExcludes = "{}"'.format(','.join(DIFFIGNORE)),
             '-c', 'DirDiff {} {}'.format(left, right),
         ]
     elif tool == 'mvim':
         return [
             'mvim', '-c', 'set columns=165',
-            '-c', 'let g:DirDiffExcludes = "{}"'.format(DIFFIGNORE),
+            '-c', 'let g:DirDiffExcludes = "{}"'.format(','.join(DIFFIGNORE)),
             '-c', 'DirDiff {} {}'.format(left, right),
         ]
     else:
-        return [
-            tool, left, right,
-        ]
+        return [tool, left, right]
 
 
 def parallel_check_call(*args):
