@@ -1,0 +1,137 @@
+#!/usr/bin/env python
+
+import csv
+import glob
+import hashlib
+import os
+import parsable
+import sys
+
+REPO = os.path.dirname(os.path.abspath(__file__))
+VETTED = os.path.join(REPO, 'vetted_hashes.csv')
+TO_VET = [
+    'src/surveyor/*.theory.cpp',
+    'src/theory/*.tasks',
+    'src/theory/*.compiled',
+]
+
+
+def hash_file(filename, blocksize=8192):
+    hasher = hashlib.sha1()
+    with open(filename, 'rb') as f:
+        while True:
+            data = f.read(blocksize)
+            if data:
+                hasher.update(data)
+            else:
+                break
+    return hasher.hexdigest()
+
+
+def hash_files(filenames):
+    return {
+        filename: hash_file(filename)
+        for filename in filenames
+        if os.path.exists(filename)
+    }
+
+
+def read_vetted_hashes():
+    with open(VETTED) as f:
+        reader = csv.reader(f)
+        header = reader.next()
+        assert header == ['filename', 'hexdigest'], header
+        hashes = {filename: hexdigest for filename, hexdigest in reader}
+    return hashes
+
+
+def write_vetted_hashes(hashes):
+    with open(VETTED, 'w') as f:
+        writer = csv.writer(f)
+        writer.writerow(['filename', 'hexdigest'])
+        for filename, hexdigest in sorted(hashes.iteritems()):
+            writer.writerow([filename, hexdigest])
+
+
+@parsable.command
+def vet(*filenames):
+    '''
+    Save hashes of some or all current file versions.
+    filenames beginning with '-' will be removed.
+    '''
+    hashes = read_vetted_hashes()
+    if filenames:
+        for filename in filenames:
+            if filename.startswith('-'):
+                filename = filename[1:]
+                print 'Removing', filename
+                del hashes[filename]
+            elif filename in hashes:
+                print 'Updating', filename
+                hashes[filename] = hash_file(filename)
+            else:
+                print 'Updating', filename
+                hashes[filename] = hash_file(filename)
+    else:
+        print 'Vetting all files'
+        hashes = hash_files(hashes)
+    write_vetted_hashes(hashes)
+
+
+def check_diffs(actual, expected):
+    diffs = sorted(
+        filename
+        for filename in expected
+        if filename in actual
+        if actual[filename] != expected[filename])
+    if diffs:
+        print 'Files differ from vetted versions:'
+        for filename in diffs:
+            print ' ', filename
+        print 'Use ./diff.py to see differences.'
+        print 'Use ./vet.py vet to vet the changed files.'
+        sys.exit(1)
+
+
+def check_missing(actual, expected):
+    missing = sorted(
+        filename
+        for filename in expected
+        if filename not in actual)
+    if missing:
+        print 'Files have not been generated:'
+        for filename in missing:
+            print ' ', filename
+        print 'Use make to generate files if they should still exist.'
+        print 'Use "./vet.py vet -filename" to remove files.'
+        sys.exit(1)
+
+
+def check_unknown(actual, expected):
+    unknown = sorted(
+        filename
+        for pattern in TO_VET
+        for filename in glob.glob(pattern)
+        if filename not in expected)
+    if unknown:
+        print 'Files have no vetted versions:'
+        for filename in unknown:
+            print ' ', filename
+        print 'Use "./vet.py vet filename" to add new files.'
+        sys.exit(1)
+
+
+@parsable.command
+def check():
+    '''
+    Check files against vetted hashes.
+    '''
+    expected = read_vetted_hashes()
+    actual = hash_files(expected)
+    check_diffs(actual, expected)
+    check_missing(actual, expected)
+    check_unknown(actual, expected)
+
+
+if __name__ == '__main__':
+    parsable.dispatch()
