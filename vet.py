@@ -129,8 +129,8 @@ def check():
     expected = read_vetted_hashes()
     actual = hash_files(expected)
     if (check_diffs(actual, expected) or
-        check_missing(actual, expected) or
-        check_unknown(actual, expected)):
+            check_missing(actual, expected) or
+            check_unknown(actual, expected)):
         sys.exit(1)
 
 
