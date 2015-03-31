@@ -9,7 +9,7 @@ import sys
 
 REPO = os.path.dirname(os.path.abspath(__file__))
 VETTED = os.path.join(REPO, 'vetted_hashes.csv')
-TO_VET = [
+FILES_TO_VET = [
     'src/surveyor/*.theory.cpp',
     'src/theory/*.tasks',
     'src/theory/*.compiled',
@@ -70,7 +70,7 @@ def vet(*filenames):
                 print 'Updating', filename
                 hashes[filename] = hash_file(filename)
             else:
-                print 'Updating', filename
+                print 'Adding', filename
                 hashes[filename] = hash_file(filename)
     else:
         print 'Vetting all files'
@@ -79,46 +79,46 @@ def vet(*filenames):
 
 
 def check_diffs(actual, expected):
-    diffs = sorted(
+    failures = sorted(
         filename
         for filename in expected
         if filename in actual
         if actual[filename] != expected[filename])
-    if diffs:
+    if failures:
         print 'Files differ from vetted versions:'
-        for filename in diffs:
+        for filename in failures:
             print ' ', filename
         print 'Use ./diff.py to see differences.'
         print 'Use ./vet.py vet to vet the changed files.'
-        sys.exit(1)
+    return failures
 
 
 def check_missing(actual, expected):
-    missing = sorted(
+    failures = sorted(
         filename
         for filename in expected
         if filename not in actual)
-    if missing:
+    if failures:
         print 'Files have not been generated:'
-        for filename in missing:
+        for filename in failures:
             print ' ', filename
         print 'Use make to generate files if they should still exist.'
         print 'Use "./vet.py vet -filename" to remove files.'
-        sys.exit(1)
+    return failures
 
 
 def check_unknown(actual, expected):
-    unknown = sorted(
+    failures = sorted(
         filename
-        for pattern in TO_VET
+        for pattern in FILES_TO_VET
         for filename in glob.glob(pattern)
         if filename not in expected)
-    if unknown:
+    if failures:
         print 'Files have no vetted versions:'
-        for filename in unknown:
+        for filename in failures:
             print ' ', filename
         print 'Use "./vet.py vet filename" to add new files.'
-        sys.exit(1)
+    return failures
 
 
 @parsable.command
@@ -128,9 +128,10 @@ def check():
     '''
     expected = read_vetted_hashes()
     actual = hash_files(expected)
-    check_diffs(actual, expected)
-    check_missing(actual, expected)
-    check_unknown(actual, expected)
+    if (check_diffs(actual, expected) or
+        check_missing(actual, expected) or
+        check_unknown(actual, expected)):
+        sys.exit(1)
 
 
 if __name__ == '__main__':
