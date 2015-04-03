@@ -63,7 +63,7 @@ private:
     InjectiveFunction * m_injective_functions[256];
     BinaryFunction * m_binary_functions[256];
     SymmetricFunction * m_symmetric_functions[256];
-    Carrier * m_carrier;
+    Carrier & m_carrier;
 
     uint8_t pop_arg (const uint8_t * & args)
     {
@@ -109,7 +109,7 @@ private:
         return * m_symmetric_functions[pop_arg(args)];
     }
 
-    Carrier & carrier () { return * m_carrier; }
+    Carrier & carrier () { return m_carrier; }
 } __attribute__ ((aligned (64)));
 
 } // namespace vm

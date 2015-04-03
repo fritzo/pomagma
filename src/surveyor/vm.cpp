@@ -1,9 +1,41 @@
+#include <map>
 #include "vm.hpp"
 
 namespace pomagma
 {
 namespace vm
 {
+
+template<class Table>
+static void declare (
+        const std::unordered_map<std::string, Table *> & unordered_map,
+        Table * array[])
+{
+    for (size_t i = 0; i < 256; ++i) {
+        array[i] = nullptr;
+    }
+
+    std::map<std::string, Table *> map;
+    map.insert(unordered_map.begin(), unordered_map.end());
+    for (auto pair : map) {
+        *array++ = pair.second;
+    }
+}
+
+VirtualMachine::VirtualMachine (Signature & signature)
+    : m_carrier(* signature.carrier())
+{
+    for (size_t i = 0; i < 256; ++i) {
+        m_obs[i] = 0;
+    }
+
+    declare(signature.unary_relations(), m_unary_relations);
+    declare(signature.binary_relations(), m_binary_relations);
+    declare(signature.nullary_functions(), m_nullary_functions);
+    declare(signature.injective_functions(), m_injective_functions);
+    declare(signature.binary_functions(), m_binary_functions);
+    declare(signature.symmetric_functions(), m_symmetric_functions);
+}
 
 void VirtualMachine::execute (const Operation * program)
 {
