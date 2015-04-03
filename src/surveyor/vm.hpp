@@ -74,7 +74,10 @@ private:
         return *args++;
     }
 
-    Ob & pop_ob (const uint8_t * & args) { return m_obs[pop_arg(args)]; }
+    Ob & pop_ob (const uint8_t * & args)
+    {
+        return m_obs[pop_arg(args)];
+    }
 
     UnaryRelation & pop_unary_relation (const uint8_t * & args)
     {
@@ -107,7 +110,7 @@ private:
     }
 
     Carrier & carrier () { return * m_carrier; }
-};
+} __attribute__ ((aligned (64)));
 
 } // namespace vm
 } // namespacepomagma
