@@ -8,6 +8,8 @@ set(POMAGMA_SURVEYOR_LIBS
 	${POMAGMA_CONCURRENT_LIBS}
 )
 
+add_library(pomagma_surveyor SHARED vm.cpp)
+
 function(make_surveyor arg)
 	add_library(pomagma_surveyor_${arg} SHARED ${arg}.theory.cpp)
 	add_executable(${arg}.init init_main.cpp)
