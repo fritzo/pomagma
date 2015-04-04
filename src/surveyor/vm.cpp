@@ -1,4 +1,5 @@
 #include <map>
+#include <typeinfo>
 #include "vm.hpp"
 
 namespace pomagma
@@ -11,6 +12,11 @@ static void declare (
         const std::unordered_map<std::string, Table *> & unordered_map,
         Table * array[])
 {
+    POMAGMA_ASSERT(
+        unordered_map.size() <= 256,
+        "too many " << demangle(typeid(Table).name()) << " symbols: "
+        "expected <= 256, actual = " << unordered_map.size());
+
     for (size_t i = 0; i < 256; ++i) {
         array[i] = nullptr;
     }
@@ -25,8 +31,11 @@ static void declare (
 VirtualMachine::VirtualMachine (Signature & signature)
     : m_carrier(* signature.carrier())
 {
+    POMAGMA_ASSERT(is_aligned(this, 64), "VirtualMachine is misaligned");
+
     for (size_t i = 0; i < 256; ++i) {
         m_obs[i] = 0;
+        m_sets[i] = nullptr;
     }
 
     declare(signature.unary_relations(), m_unary_relations);
@@ -39,6 +48,8 @@ VirtualMachine::VirtualMachine (Signature & signature)
 
 void VirtualMachine::execute (const Operation * program)
 {
+    POMAGMA_ASSERT5(is_aligned(program, 8), "program is misaligned");
+
     const Operation & op = program[0];
     const uint8_t * args = op.args();
     switch (op.op_code()) {

@@ -16,6 +16,12 @@
 namespace pomagma
 {
 
+template<class T>
+inline bool is_aligned (const T * ptr, size_t alignment = 32)
+{
+    return (reinterpret_cast<size_t>(ptr) & (alignment - 1)) == 0;
+}
+
 void * alloc_blocks (
         size_t block_size,
         size_t block_count,

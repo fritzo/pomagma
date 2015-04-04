@@ -1,5 +1,6 @@
 #pragma once
 
+#include <pomagma/platform/aligned_alloc.hpp>
 #include "theory.hpp"
 
 namespace pomagma
@@ -41,11 +42,11 @@ enum OpCode
 
 struct Operation
 {
-    uint8_t data[8] __attribute__ ((aligned (8)));
+    uint8_t data[8];
 
     OpCode op_code () const { return static_cast<OpCode>(data[0]); }
     const uint8_t * args () const { return data + 1; }
-};
+} __attribute__ ((aligned (8)));
 
 class VirtualMachine
 {
@@ -57,6 +58,7 @@ public:
 private:
 
     Ob m_obs[256];
+    std::atomic<Word> * m_sets[256];
     UnaryRelation * m_unary_relations[256];
     BinaryRelation * m_binary_relations[256];
     NullaryFunction * m_nullary_functions[256];
@@ -67,10 +69,7 @@ private:
 
     uint8_t pop_arg (const uint8_t * & args)
     {
-        POMAGMA_ASSERT5(
-            reinterpret_cast<const size_t &>(args) & 7,
-            "tried to pop_arg(-) past end of args");
-
+        POMAGMA_ASSERT5(not is_aligned(args, 8), "pop_arg'd past end of args");
         return *args++;
     }
 

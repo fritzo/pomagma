@@ -12,6 +12,12 @@
 #include <random>
 #include <functional>
 
+// for demangle() below
+#ifdef __GNUG__
+#  include <cxxabi.h>
+#  include <memory>
+#endif  // __GNUG__
+
 namespace pomagma_messaging {}
 
 namespace pomagma
@@ -387,5 +393,23 @@ inline std::string get_filename (const std::string & path)
         return path;
     }
 }
+
+// adapted from http://stackoverflow.com/questions/281818
+#ifdef __GNUG__
+inline std::string demangle (const char * name)
+{
+    int status = 0;
+    std::unique_ptr<char, void(*)(void*)> result {
+        abi::__cxa_demangle(name, NULL, NULL, &status),
+        std::free
+    };
+    return (status == 0) ? result.get() : name;
+}
+#else  // __GNUG__
+inline std::string demangle (const char * name)
+{
+    return name;
+}
+#endif  // __GNUG__
 
 } // namespace pomagma
