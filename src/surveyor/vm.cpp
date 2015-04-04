@@ -7,6 +7,119 @@ namespace pomagma
 namespace vm
 {
 
+//----------------------------------------------------------------------------
+// OpCode
+
+#define OP_CODES(DO) \
+    DO(IF_EQUAL) \
+    DO(IF_UNARY_RELATION) \
+    DO(IF_BINARY_RELATION) \
+    DO(SET_UNARY_RELATION) \
+    DO(SET_BINARY_RELATION_LHS) \
+    DO(SET_BINARY_RELATION_RHS) \
+    DO(SET_INJECTIVE_FUNCTION) \
+    DO(SET_INJECTIVE_FUNCTION_INVERSE) \
+    DO(SET_BINARY_FUNCTION_LHS) \
+    DO(SET_BINARY_FUNCTION_RHS) \
+    DO(SET_SYMMETRIC_FUNCTION_LHS) \
+    DO(FOR_INTERSECTION_2) \
+    DO(FOR_INTERSECTION_3) \
+    DO(FOR_INTERSECTION_4) \
+    DO(FOR_INTERSECTION_5) \
+    DO(FOR_INTERSECTION_6) \
+    DO(FOR_ALL) \
+    DO(FOR_UNARY_RELATION) \
+    DO(FOR_BINARY_RELATION_LHS) \
+    DO(FOR_BINARY_RELATION_RHS) \
+    DO(FOR_NULLARY_FUNCTION) \
+    DO(FOR_INJECTIVE_FUNCTION) \
+    DO(FOR_INJECTIVE_FUNCTION_KEY) \
+    DO(FOR_INJECTIVE_FUNCTION_VAL) \
+    DO(FOR_BINARY_FUNCTION_LHS) \
+    DO(FOR_BINARY_FUNCTION_RHS) \
+    DO(FOR_BINARY_FUNCTION_VAL) \
+    DO(FOR_BINARY_FUNCTION_LHS_VAL) \
+    DO(FOR_BINARY_FUNCTION_RHS_VAL) \
+    DO(FOR_BINARY_FUNCTION_LHS_RHS) \
+    DO(FOR_SYMMETRIC_FUNCTION_LHS) \
+    DO(FOR_SYMMETRIC_FUNCTION_VAL) \
+    DO(FOR_SYMMETRIC_FUNCTION_LHS_VAL) \
+    DO(FOR_SYMMETRIC_FUNCTION_LHS_RHS) \
+    DO(ENSURE_EQUAL) \
+    DO(ENSURE_UNARY_RELATION) \
+    DO(ENSURE_BINARY_RELATION) \
+    DO(ENSURE_INJECTIVE_FUNCTION) \
+    DO(ENSURE_BINARY_FUNCTION) \
+    DO(ENSURE_SYMMETRIC_FUNCTION) \
+    DO(ENSURE_COMPOUND)
+
+enum OpCode : uint8_t
+{
+#define DO(X) X,
+OP_CODES(DO)
+#undef DO
+};
+
+static const std::string g_op_code_names[] =
+{
+#define DO(X) #X,
+OP_CODES(DO)
+#undef DO
+};
+
+#undef OP_CODES
+
+static const size_t g_op_code_count =
+    sizeof(g_op_code_names) / sizeof(std::string);
+
+//----------------------------------------------------------------------------
+// Parser
+
+template<class Table>
+static void declare (
+        const std::unordered_map<std::string, Table *> & pointers,
+        std::unordered_map<std::string, uint8_t> & vm_pointers)
+{
+    POMAGMA_ASSERT(
+        pointers.size() <= 256,
+        "too many " << demangle(typeid(Table).name()) << " symbols: "
+        "expected <= 256, actual = " << pointers.size());
+
+    vm_pointers.clear();
+
+    std::map<std::string, Table *> sorted;
+    sorted.insert(pointers.begin(), pointers.end());
+    uint8_t vm_pointer = 0;
+    for (auto pair : sorted) {
+        vm_pointers[pair.first] = vm_pointer++;
+    }
+}
+
+Parser::Parser (Signature & signature)
+{
+    for (size_t op_code = 0; op_code < g_op_code_count; ++op_code) {
+        m_op_codes[g_op_code_names[op_code]] = static_cast<OpCode>(op_code);
+    }
+
+    declare(signature.unary_relations(), m_unary_relations);
+    declare(signature.binary_relations(), m_binary_relations);
+    declare(signature.nullary_functions(), m_nullary_functions);
+    declare(signature.injective_functions(), m_injective_functions);
+    declare(signature.binary_functions(), m_binary_functions);
+    declare(signature.symmetric_functions(), m_symmetric_functions);
+}
+
+std::vector<Operation> Parser::parse (const std::string & program) const
+{
+    POMAGMA_ASSERT(program.size(), "cannot parse empty program");
+    m_obs.clear();
+
+    TODO("parse from protobuf message");
+}
+
+//----------------------------------------------------------------------------
+// VirtualMachine
+
 template<class Table>
 static void declare (
         const std::unordered_map<std::string, Table *> & unordered_map,
@@ -21,9 +134,9 @@ static void declare (
         array[i] = nullptr;
     }
 
-    std::map<std::string, Table *> map;
-    map.insert(unordered_map.begin(), unordered_map.end());
-    for (auto pair : map) {
+    std::map<std::string, Table *> sorted;
+    sorted.insert(unordered_map.begin(), unordered_map.end());
+    for (auto pair : sorted) {
         *array++ = pair.second;
     }
 }
@@ -48,7 +161,8 @@ VirtualMachine::VirtualMachine (Signature & signature)
 
 void VirtualMachine::execute (const Operation * program)
 {
-    program->validate_alignment();
+    POMAGMA_ASSERT5(is_aligned(program, 8), "program is misaligned");
+
     const Operation & op = program[0];
     const uint8_t * args = op.args();
     switch (op.op_code()) {

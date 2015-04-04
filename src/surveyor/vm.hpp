@@ -1,5 +1,6 @@
 #pragma once
 
+#include <unordered_map>
 #include <pomagma/platform/aligned_alloc.hpp>
 #include "theory.hpp"
 
@@ -8,64 +9,9 @@ namespace pomagma
 namespace vm
 {
 
-#define OP_CODES(DO) \
-    DO(IF_EQUAL) \
-    DO(IF_UNARY_RELATION) \
-    DO(IF_BINARY_RELATION) \
-    DO(SET_UNARY_RELATION) \
-    DO(SET_BINARY_RELATION_LHS) \
-    DO(SET_BINARY_RELATION_RHS) \
-    DO(SET_INJECTIVE_FUNCTION) \
-    DO(SET_INJECTIVE_FUNCTION_INVERSE) \
-    DO(SET_BINARY_FUNCTION_LHS) \
-    DO(SET_BINARY_FUNCTION_RHS) \
-    DO(SET_SYMMETRIC_FUNCTION_LHS) \
-    DO(FOR_INTERSECTION_2) \
-    DO(FOR_INTERSECTION_3) \
-    DO(FOR_INTERSECTION_4) \
-    DO(FOR_INTERSECTION_5) \
-    DO(FOR_INTERSECTION_6) \
-    DO(FOR_ALL) \
-    DO(FOR_UNARY_RELATION) \
-    DO(FOR_BINARY_RELATION_LHS) \
-    DO(FOR_BINARY_RELATION_RHS) \
-    DO(FOR_NULLARY_FUNCTION) \
-    DO(FOR_INJECTIVE_FUNCTION) \
-    DO(FOR_INJECTIVE_FUNCTION_KEY) \
-    DO(FOR_INJECTIVE_FUNCTION_VAL) \
-    DO(FOR_BINARY_FUNCTION_LHS) \
-    DO(FOR_BINARY_FUNCTION_RHS) \
-    DO(FOR_BINARY_FUNCTION_VAL) \
-    DO(FOR_BINARY_FUNCTION_LHS_VAL) \
-    DO(FOR_BINARY_FUNCTION_RHS_VAL) \
-    DO(FOR_BINARY_FUNCTION_LHS_RHS) \
-    DO(FOR_SYMMETRIC_FUNCTION_LHS) \
-    DO(FOR_SYMMETRIC_FUNCTION_VAL) \
-    DO(FOR_SYMMETRIC_FUNCTION_LHS_VAL) \
-    DO(FOR_SYMMETRIC_FUNCTION_LHS_RHS) \
-    DO(ENSURE_EQUAL) \
-    DO(ENSURE_UNARY_RELATION) \
-    DO(ENSURE_BINARY_RELATION) \
-    DO(ENSURE_INJECTIVE_FUNCTION) \
-    DO(ENSURE_BINARY_FUNCTION) \
-    DO(ENSURE_SYMMETRIC_FUNCTION) \
-    DO(ENSURE_COMPOUND)
+struct Operation;
 
-enum OpCode
-{
-#define DO(X) X,
-OP_CODES(DO)
-#undef DO
-};
-
-const char * const OpCodeNames[] =
-{
-#define DO(X) #X,
-OP_CODES(DO)
-#undef DO
-};
-
-#undef OP_CODES
+enum OpCode : uint8_t;
 
 struct Operation
 {
@@ -73,12 +19,27 @@ struct Operation
 
     OpCode op_code () const { return static_cast<OpCode>(data[0]); }
     const uint8_t * args () const { return data + 1; }
-
-    void validate_alignment () const
-    {
-        POMAGMA_ASSERT5(is_aligned(this, 8), "program is misaligned");
-    }
 } __attribute__ ((aligned (8)));
+
+class Parser
+{
+public:
+
+    Parser (Signature & signature);
+    std::vector<Operation> parse (const std::string & program) const;
+
+private:
+
+    std::unordered_map<std::string, OpCode> m_op_codes;
+    std::unordered_map<std::string, uint8_t> m_unary_relations;
+    std::unordered_map<std::string, uint8_t> m_binary_relations;
+    std::unordered_map<std::string, uint8_t> m_nullary_functions;
+    std::unordered_map<std::string, uint8_t> m_injective_functions;
+    std::unordered_map<std::string, uint8_t> m_binary_functions;
+    std::unordered_map<std::string, uint8_t> m_symmetric_functions;
+
+    mutable std::unordered_map<std::string, uint8_t> m_obs;
+};
 
 class VirtualMachine
 {
