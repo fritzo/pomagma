@@ -207,7 +207,7 @@ public:
         m_words = const_cast<std::atomic<Word> *>(line);
     }
 
-    // using round dimensions ensures cache alignenet and autovectorizability
+    // using round dimensions ensures cache alignment and autovectorizability
     static size_t round_item_dim (size_t min_item_dim)
     {
         return (min_item_dim + BITS_PER_CACHE_LINE) / BITS_PER_CACHE_LINE

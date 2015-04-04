@@ -48,8 +48,7 @@ VirtualMachine::VirtualMachine (Signature & signature)
 
 void VirtualMachine::execute (const Operation * program)
 {
-    POMAGMA_ASSERT5(is_aligned(program, 8), "program is misaligned");
-
+    program->validate_alignment();
     const Operation & op = program[0];
     const uint8_t * args = op.args();
     switch (op.op_code()) {
@@ -75,6 +74,121 @@ void VirtualMachine::execute (const Operation * program)
             Ob & lhs = pop_ob(args);
             Ob & rhs = pop_ob(args);
             if (rel.find(lhs, rhs)) {
+                execute(program + 1);
+            }
+        } break;
+
+        case SET_UNARY_RELATION: {
+            UnaryRelation & rel = pop_unary_relation(args);
+            pop_set(args) = rel.get_set().raw_data();
+        } break;
+
+        case SET_BINARY_RELATION_LHS: {
+            BinaryRelation & rel = pop_binary_relation(args);
+            Ob lhs = pop_ob(args);
+            pop_set(args) = rel.get_Lx_set(lhs).raw_data();
+        } break;
+
+        case SET_BINARY_RELATION_RHS: {
+            BinaryRelation & rel = pop_binary_relation(args);
+            Ob rhs = pop_ob(args);
+            pop_set(args) = rel.get_Rx_set(rhs).raw_data();
+        } break;
+
+        case SET_INJECTIVE_FUNCTION: {
+            InjectiveFunction & fun = pop_injective_function(args);
+            pop_set(args) = fun.defined().raw_data();
+        } break;
+
+        case SET_INJECTIVE_FUNCTION_INVERSE: {
+            InjectiveFunction & fun = pop_injective_function(args);
+            pop_set(args) = fun.defined().raw_data();
+        } break;
+
+        case SET_BINARY_FUNCTION_LHS: {
+            BinaryFunction & fun = pop_binary_function(args);
+            Ob lhs = pop_ob(args);
+            pop_set(args) = fun.get_Lx_set(lhs).raw_data();
+        } break;
+
+        case SET_BINARY_FUNCTION_RHS: {
+            BinaryFunction & fun = pop_binary_function(args);
+            Ob rhs = pop_ob(args);
+            pop_set(args) = fun.get_Rx_set(rhs).raw_data();
+        } break;
+
+        case SET_SYMMETRIC_FUNCTION_LHS: {
+            SymmetricFunction & fun = pop_symmetric_function(args);
+            Ob lhs = pop_ob(args);
+            pop_set(args) = fun.get_Lx_set(lhs).raw_data();
+        } break;
+
+        case FOR_INTERSECTION_2: {
+            Ob & ob = pop_ob(args);
+            SetIterator<2> iter(item_dim(), {{
+                m_sets[args[0]],
+                m_sets[args[1]],
+            }});
+            for (; iter.ok(); iter.next()) {
+                ob = *iter;
+                execute(program + 1);
+            }
+        } break;
+
+        case FOR_INTERSECTION_3: {
+            Ob & ob = pop_ob(args);
+            SetIterator<3> iter(item_dim(), {{
+                m_sets[args[0]],
+                m_sets[args[1]],
+                m_sets[args[2]],
+            }});
+            for (; iter.ok(); iter.next()) {
+                ob = *iter;
+                execute(program + 1);
+            }
+        } break;
+
+        case FOR_INTERSECTION_4: {
+            Ob & ob = pop_ob(args);
+            SetIterator<4> iter(item_dim(), {{
+                m_sets[args[0]],
+                m_sets[args[1]],
+                m_sets[args[2]],
+                m_sets[args[3]],
+            }});
+            for (; iter.ok(); iter.next()) {
+                ob = *iter;
+                execute(program + 1);
+            }
+        } break;
+
+        case FOR_INTERSECTION_5: {
+            Ob & ob = pop_ob(args);
+            SetIterator<5> iter(item_dim(), {{
+                m_sets[args[0]],
+                m_sets[args[1]],
+                m_sets[args[2]],
+                m_sets[args[3]],
+                m_sets[args[4]],
+            }});
+            for (; iter.ok(); iter.next()) {
+                ob = *iter;
+                execute(program + 1);
+            }
+        } break;
+
+        case FOR_INTERSECTION_6: {
+            Ob & ob = pop_ob(args);
+            SetIterator<6> iter(item_dim(), {{
+                m_sets[args[0]],
+                m_sets[args[1]],
+                m_sets[args[2]],
+                m_sets[args[3]],
+                m_sets[args[4]],
+                m_sets[args[5]],
+            }});
+            for (; iter.ok(); iter.next()) {
+                ob = *iter;
                 execute(program + 1);
             }
         } break;
