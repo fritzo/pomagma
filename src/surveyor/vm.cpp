@@ -28,11 +28,11 @@ enum OpArgType {
     DO(IF_BINARY_RELATION, ({BINARY_RELATION, OB, OB})) \
     DO(SET_UNARY_RELATION, ({UNARY_RELATION, SET})) \
     DO(SET_BINARY_RELATION_LHS, ({BINARY_RELATION, OB, SET})) \
-    DO(SET_BINARY_RELATION_RHS, ({BINARY_RELATION, OB, SET})) \
+    DO(SET_BINARY_RELATION_RHS, ({BINARY_RELATION, SET, OB})) \
     DO(SET_INJECTIVE_FUNCTION, ({INJECTIVE_FUNCTION, SET})) \
     DO(SET_INJECTIVE_FUNCTION_INVERSE, ({INJECTIVE_FUNCTION, SET})) \
     DO(SET_BINARY_FUNCTION_LHS, ({BINARY_FUNCTION, OB, SET})) \
-    DO(SET_BINARY_FUNCTION_RHS, ({BINARY_FUNCTION, OB, SET})) \
+    DO(SET_BINARY_FUNCTION_RHS, ({BINARY_FUNCTION, SET, OB})) \
     DO(SET_SYMMETRIC_FUNCTION_LHS, ({SYMMETRIC_FUNCTION, OB, SET})) \
     DO(FOR_INTERSECTION_2, ({OB, SET, SET})) \
     DO(FOR_INTERSECTION_3, ({OB, SET, SET, SET})) \
@@ -79,7 +79,7 @@ static const std::string g_op_code_names[] =
 #undef DO
 };
 
-static std::vector<std::vector<OpArgType>> get_op_code_arities ()
+inline std::vector<std::vector<OpArgType>> get_op_code_arities ()
 {
     std::vector<std::vector<OpArgType>> result = {
 #define DO(X, Y) std::vector<OpArgType> Y,
@@ -307,13 +307,15 @@ void VirtualMachine::execute (const Operation * program)
         case SET_BINARY_RELATION_LHS: {
             BinaryRelation & rel = pop_binary_relation(args);
             Ob lhs = pop_ob(args);
-            pop_set(args) = rel.get_Lx_set(lhs).raw_data();
+            auto & rhs_set = pop_set(args);
+            rhs_set = rel.get_Lx_set(lhs).raw_data();
         } break;
 
         case SET_BINARY_RELATION_RHS: {
             BinaryRelation & rel = pop_binary_relation(args);
+            auto & lhs_set = pop_set(args);
             Ob rhs = pop_ob(args);
-            pop_set(args) = rel.get_Rx_set(rhs).raw_data();
+            lhs_set = rel.get_Rx_set(rhs).raw_data();
         } break;
 
         case SET_INJECTIVE_FUNCTION: {
@@ -329,13 +331,15 @@ void VirtualMachine::execute (const Operation * program)
         case SET_BINARY_FUNCTION_LHS: {
             BinaryFunction & fun = pop_binary_function(args);
             Ob lhs = pop_ob(args);
-            pop_set(args) = fun.get_Lx_set(lhs).raw_data();
+            auto & rhs_set = pop_set(args);
+            rhs_set = fun.get_Lx_set(lhs).raw_data();
         } break;
 
         case SET_BINARY_FUNCTION_RHS: {
             BinaryFunction & fun = pop_binary_function(args);
+            auto & lhs_set = pop_set(args);
             Ob rhs = pop_ob(args);
-            pop_set(args) = fun.get_Rx_set(rhs).raw_data();
+            lhs_set = fun.get_Rx_set(rhs).raw_data();
         } break;
 
         case SET_SYMMETRIC_FUNCTION_LHS: {
@@ -453,8 +457,9 @@ void VirtualMachine::execute (const Operation * program)
 
         case FOR_NULLARY_FUNCTION: {
             NullaryFunction & fun = pop_nullary_function(args);
-            if (Ob val = fun.find()) {
-                pop_ob(args) = val;
+            Ob & val = pop_ob(args);
+            val = fun.find();
+            if (val) {
                 execute(program + 1);
             }
         } break;
@@ -473,17 +478,19 @@ void VirtualMachine::execute (const Operation * program)
         case FOR_INJECTIVE_FUNCTION_KEY: {
             InjectiveFunction & fun = pop_injective_function(args);
             Ob & key = pop_ob(args);
-            if (Ob val = fun.find(key)) {
-                pop_ob(args) = val;
+            Ob & val = pop_ob(args);
+            val = fun.find(key);
+            if (val) {
                 execute(program + 1);
             }
         } break;
 
         case FOR_INJECTIVE_FUNCTION_VAL: {
             InjectiveFunction & fun = pop_injective_function(args);
+            Ob & key = pop_ob(args);
             Ob & val = pop_ob(args);
-            if (Ob key = fun.inverse_find(val)) {
-                pop_ob(args) = key;
+            key = fun.inverse_find(val);
+            if (key) {
                 execute(program + 1);
             }
         } break;
@@ -552,8 +559,9 @@ void VirtualMachine::execute (const Operation * program)
             BinaryFunction & fun = pop_binary_function(args);
             Ob & lhs = pop_ob(args);
             Ob & rhs = pop_ob(args);
-            if (Ob val = fun.find(lhs, rhs)) {
-                pop_ob(args) = val;
+            Ob & val = pop_ob(args);
+            val = fun.find(lhs, rhs);
+            if (val) {
                 execute(program + 1);
             }
         } break;
@@ -598,8 +606,9 @@ void VirtualMachine::execute (const Operation * program)
             SymmetricFunction & fun = pop_symmetric_function(args);
             Ob & lhs = pop_ob(args);
             Ob & rhs = pop_ob(args);
-            if (Ob val = fun.find(lhs, rhs)) {
-                pop_ob(args) = val;
+            Ob & val = pop_ob(args);
+            val = fun.find(lhs, rhs);
+            if (val) {
                 execute(program + 1);
             }
         } break;
