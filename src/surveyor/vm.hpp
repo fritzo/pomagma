@@ -19,6 +19,7 @@ struct Operation
 
     OpCode op_code () const { return static_cast<OpCode>(data[0]); }
     const uint8_t * args () const { return data + 1; }
+    uint8_t * args () { return data + 1; }
 } __attribute__ ((aligned (8)));
 
 class Parser
@@ -26,7 +27,7 @@ class Parser
 public:
 
     Parser (Signature & signature);
-    std::vector<Operation> parse (const std::string & program) const;
+    std::vector<std::vector<Operation>> parse (std::istream & infile) const;
 
 private:
 
@@ -37,6 +38,30 @@ private:
     std::unordered_map<std::string, uint8_t> m_injective_functions;
     std::unordered_map<std::string, uint8_t> m_binary_functions;
     std::unordered_map<std::string, uint8_t> m_symmetric_functions;
+
+    class SymbolTable
+    {
+        std::unordered_map<std::string, uint8_t> m_registers;
+
+    public:
+
+        void clear () { m_registers.clear(); }
+
+        uint8_t operator() (const std::string & name)
+        {
+            auto i = m_registers.find(name);
+            if (i != m_registers.end()) {
+                return i->second;
+            } else {
+                POMAGMA_ASSERT(
+                    m_registers.size() < 256,
+                    "too many variables for registers; limit = 256");
+                uint8_t index = m_registers.size();
+                m_registers.insert(std::make_pair(name, index));
+                return index;
+            }
+        }
+    };
 
     mutable std::unordered_map<std::string, uint8_t> m_obs;
 };

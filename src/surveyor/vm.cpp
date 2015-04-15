@@ -1,5 +1,6 @@
 #include <map>
 #include <typeinfo>
+#include <sstream>
 #include "vm.hpp"
 
 namespace pomagma
@@ -10,62 +11,86 @@ namespace vm
 //----------------------------------------------------------------------------
 // OpCode
 
+enum OpArgType {
+    OB,
+    SET,
+    UNARY_RELATION,
+    BINARY_RELATION,
+    NULLARY_FUNCTION,
+    INJECTIVE_FUNCTION,
+    BINARY_FUNCTION,
+    SYMMETRIC_FUNCTION,
+};
+
 #define OP_CODES(DO) \
-    DO(IF_EQUAL) \
-    DO(IF_UNARY_RELATION) \
-    DO(IF_BINARY_RELATION) \
-    DO(SET_UNARY_RELATION) \
-    DO(SET_BINARY_RELATION_LHS) \
-    DO(SET_BINARY_RELATION_RHS) \
-    DO(SET_INJECTIVE_FUNCTION) \
-    DO(SET_INJECTIVE_FUNCTION_INVERSE) \
-    DO(SET_BINARY_FUNCTION_LHS) \
-    DO(SET_BINARY_FUNCTION_RHS) \
-    DO(SET_SYMMETRIC_FUNCTION_LHS) \
-    DO(FOR_INTERSECTION_2) \
-    DO(FOR_INTERSECTION_3) \
-    DO(FOR_INTERSECTION_4) \
-    DO(FOR_INTERSECTION_5) \
-    DO(FOR_INTERSECTION_6) \
-    DO(FOR_ALL) \
-    DO(FOR_UNARY_RELATION) \
-    DO(FOR_BINARY_RELATION_LHS) \
-    DO(FOR_BINARY_RELATION_RHS) \
-    DO(FOR_NULLARY_FUNCTION) \
-    DO(FOR_INJECTIVE_FUNCTION) \
-    DO(FOR_INJECTIVE_FUNCTION_KEY) \
-    DO(FOR_INJECTIVE_FUNCTION_VAL) \
-    DO(FOR_BINARY_FUNCTION_LHS) \
-    DO(FOR_BINARY_FUNCTION_RHS) \
-    DO(FOR_BINARY_FUNCTION_VAL) \
-    DO(FOR_BINARY_FUNCTION_LHS_VAL) \
-    DO(FOR_BINARY_FUNCTION_RHS_VAL) \
-    DO(FOR_BINARY_FUNCTION_LHS_RHS) \
-    DO(FOR_SYMMETRIC_FUNCTION_LHS) \
-    DO(FOR_SYMMETRIC_FUNCTION_VAL) \
-    DO(FOR_SYMMETRIC_FUNCTION_LHS_VAL) \
-    DO(FOR_SYMMETRIC_FUNCTION_LHS_RHS) \
-    DO(ENSURE_EQUAL) \
-    DO(ENSURE_UNARY_RELATION) \
-    DO(ENSURE_BINARY_RELATION) \
-    DO(ENSURE_INJECTIVE_FUNCTION) \
-    DO(ENSURE_BINARY_FUNCTION) \
-    DO(ENSURE_SYMMETRIC_FUNCTION) \
-    DO(ENSURE_COMPOUND)
+    DO(IF_EQUAL, ({OB, OB})) \
+    DO(IF_UNARY_RELATION, ({UNARY_RELATION, OB})) \
+    DO(IF_BINARY_RELATION, ({BINARY_RELATION, OB, OB})) \
+    DO(SET_UNARY_RELATION, ({UNARY_RELATION, SET})) \
+    DO(SET_BINARY_RELATION_LHS, ({BINARY_RELATION, OB, SET})) \
+    DO(SET_BINARY_RELATION_RHS, ({BINARY_RELATION, OB, SET})) \
+    DO(SET_INJECTIVE_FUNCTION, ({INJECTIVE_FUNCTION, SET})) \
+    DO(SET_INJECTIVE_FUNCTION_INVERSE, ({INJECTIVE_FUNCTION, SET})) \
+    DO(SET_BINARY_FUNCTION_LHS, ({BINARY_FUNCTION, OB, SET})) \
+    DO(SET_BINARY_FUNCTION_RHS, ({BINARY_FUNCTION, OB, SET})) \
+    DO(SET_SYMMETRIC_FUNCTION_LHS, ({SYMMETRIC_FUNCTION, OB, SET})) \
+    DO(FOR_INTERSECTION_2, ({OB, SET, SET})) \
+    DO(FOR_INTERSECTION_3, ({OB, SET, SET, SET})) \
+    DO(FOR_INTERSECTION_4, ({OB, SET, SET, SET, SET})) \
+    DO(FOR_INTERSECTION_5, ({OB, SET, SET, SET, SET, SET})) \
+    DO(FOR_INTERSECTION_6, ({OB, SET, SET, SET, SET, SET, SET})) \
+    DO(FOR_ALL, ({OB})) \
+    DO(FOR_UNARY_RELATION, ({UNARY_RELATION, OB})) \
+    DO(FOR_BINARY_RELATION_LHS, ({BINARY_RELATION, OB, OB})) \
+    DO(FOR_BINARY_RELATION_RHS, ({BINARY_RELATION, OB, OB})) \
+    DO(FOR_NULLARY_FUNCTION, ({NULLARY_FUNCTION, OB})) \
+    DO(FOR_INJECTIVE_FUNCTION, ({INJECTIVE_FUNCTION, OB, OB})) \
+    DO(FOR_INJECTIVE_FUNCTION_KEY, ({INJECTIVE_FUNCTION, OB, OB})) \
+    DO(FOR_INJECTIVE_FUNCTION_VAL, ({INJECTIVE_FUNCTION, OB, OB})) \
+    DO(FOR_BINARY_FUNCTION_LHS, ({BINARY_FUNCTION, OB, OB, OB})) \
+    DO(FOR_BINARY_FUNCTION_RHS, ({BINARY_FUNCTION, OB, OB, OB})) \
+    DO(FOR_BINARY_FUNCTION_VAL, ({BINARY_FUNCTION, OB, OB, OB})) \
+    DO(FOR_BINARY_FUNCTION_LHS_VAL, ({BINARY_FUNCTION, OB, OB, OB})) \
+    DO(FOR_BINARY_FUNCTION_RHS_VAL, ({BINARY_FUNCTION, OB, OB, OB})) \
+    DO(FOR_BINARY_FUNCTION_LHS_RHS, ({BINARY_FUNCTION, OB, OB, OB})) \
+    DO(FOR_SYMMETRIC_FUNCTION_LHS, ({SYMMETRIC_FUNCTION, OB, OB, OB})) \
+    DO(FOR_SYMMETRIC_FUNCTION_VAL, ({SYMMETRIC_FUNCTION, OB, OB, OB})) \
+    DO(FOR_SYMMETRIC_FUNCTION_LHS_VAL, ({SYMMETRIC_FUNCTION, OB, OB, OB})) \
+    DO(FOR_SYMMETRIC_FUNCTION_LHS_RHS, ({SYMMETRIC_FUNCTION, OB, OB, OB})) \
+    DO(ENSURE_EQUAL, ({OB, OB})) \
+    DO(ENSURE_UNARY_RELATION, ({OB})) \
+    DO(ENSURE_BINARY_RELATION, ({OB, OB})) \
+    DO(ENSURE_INJECTIVE_FUNCTION, ({INJECTIVE_FUNCTION, OB, OB})) \
+    DO(ENSURE_BINARY_FUNCTION, ({BINARY_FUNCTION, OB, OB, OB})) \
+    DO(ENSURE_SYMMETRIC_FUNCTION, ({SYMMETRIC_FUNCTION, OB, OB, OB})) \
+    DO(ENSURE_COMPOUND, ({OB}))
 
 enum OpCode : uint8_t
 {
-#define DO(X) X,
-OP_CODES(DO)
+#define DO(X, Y) X,
+    OP_CODES(DO)
 #undef DO
 };
 
 static const std::string g_op_code_names[] =
 {
-#define DO(X) #X,
-OP_CODES(DO)
+#define DO(X, Y) #X,
+    OP_CODES(DO)
 #undef DO
 };
+
+static std::vector<std::vector<OpArgType>> get_op_code_arities ()
+{
+    std::vector<std::vector<OpArgType>> result = {
+#define DO(X, Y) std::vector<OpArgType> Y,
+        OP_CODES(DO)
+#undef DO
+    };
+    return result;
+}
+
+static const std::vector<std::vector<OpArgType>> g_op_code_arities =
+    get_op_code_arities();
 
 #undef OP_CODES
 
@@ -109,12 +134,94 @@ Parser::Parser (Signature & signature)
     declare(signature.symmetric_functions(), m_symmetric_functions);
 }
 
-std::vector<Operation> Parser::parse (const std::string & program) const
+std::vector<std::vector<Operation>> Parser::parse (std::istream & infile) const
 {
-    POMAGMA_ASSERT(program.size(), "cannot parse empty program");
-    m_obs.clear();
+    std::vector<std::vector<Operation>> programs;
+    std::vector<Operation> program;
+    SymbolTable obs;
+    SymbolTable sets;
+    std::string line;
+    std::string word;
 
-    TODO("parse from protobuf message");
+    for (int lineno = 0; std::getline(infile, line); ++lineno) {
+        if (line[0] == '#') {
+            continue;
+        }
+        if (line.empty()) {
+            obs.clear();
+            sets.clear();
+            if (not program.empty()) {
+                programs.push_back(program);
+                program.clear();
+            }
+            continue;
+        }
+
+        std::istringstream stream(line);
+
+        POMAGMA_ASSERT(
+            stream >> word,
+            "line " << lineno << ": no operation");
+        auto i = m_op_codes.find(word);
+        POMAGMA_ASSERT(
+            i != m_op_codes.end(),
+            "line " << lineno << ": unknown operation: " << word);
+        Operation operation = {{i->second, 0, 0, 0, 0, 0, 0, 0}};
+
+        uint8_t * args = operation.args();
+        for (auto arg_type : g_op_code_arities[operation.op_code()]) {
+
+            POMAGMA_ASSERT(
+                stream >> word,
+                "line " << lineno << ": too few arguments");
+
+            switch (arg_type) {
+                case OB: {
+                    *args++ = obs(word);
+                } break;
+
+                case SET: {
+                    *args++ = sets(word);
+                } break;
+
+                case UNARY_RELATION: {
+                    *args++ = m_unary_relations.find(word)->second;
+                } break;
+
+                case BINARY_RELATION: {
+                    *args++ = m_binary_relations.find(word)->second;
+                } break;
+
+                case NULLARY_FUNCTION: {
+                    *args++ = m_injective_functions.find(word)->second;
+                } break;
+
+                case INJECTIVE_FUNCTION: {
+                    *args++ = m_injective_functions.find(word)->second;
+                } break;
+
+                case BINARY_FUNCTION: {
+                    *args++ = m_binary_functions.find(word)->second;
+                } break;
+
+                case SYMMETRIC_FUNCTION: {
+                    *args++ = m_symmetric_functions.find(word)->second;
+                } break;
+            }
+        }
+
+        POMAGMA_ASSERT(
+            not (stream >> word),
+            "line " << lineno << ": too many arguments: " << word);
+
+        program.push_back(operation);
+    }
+
+    if (not program.empty()) {
+        programs.push_back(program);
+    }
+
+    return programs;
 }
 
 //----------------------------------------------------------------------------
