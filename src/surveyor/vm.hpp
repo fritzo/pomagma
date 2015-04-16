@@ -39,31 +39,9 @@ private:
     std::unordered_map<std::string, uint8_t> m_binary_functions;
     std::unordered_map<std::string, uint8_t> m_symmetric_functions;
 
-    class SymbolTable
-    {
-        std::unordered_map<std::string, uint8_t> m_registers;
-
-    public:
-
-        void clear () { m_registers.clear(); }
-
-        uint8_t operator() (const std::string & name)
-        {
-            auto i = m_registers.find(name);
-            if (i != m_registers.end()) {
-                return i->second;
-            } else {
-                POMAGMA_ASSERT(
-                    m_registers.size() < 256,
-                    "too many variables for registers; limit = 256");
-                uint8_t index = m_registers.size();
-                m_registers.insert(std::make_pair(name, index));
-                return index;
-            }
-        }
-    };
-
     mutable std::unordered_map<std::string, uint8_t> m_obs;
+
+    class SymbolTable;
 };
 
 class VirtualMachine
@@ -71,12 +49,33 @@ class VirtualMachine
 public:
 
     VirtualMachine (Signature & signature);
-    void execute (const Operation * program);
+
+    struct Context
+    {
+        Ob obs[256];
+        const std::atomic<Word> * sets[256];
+        size_t block;
+
+        void clear ()
+        {
+            std::fill(std::begin(obs), std::end(obs), 0);
+            std::fill(std::begin(sets), std::end(sets), nullptr);
+            block = 0;
+        }
+    };
+
+    void execute (const Operation * program, Context * context)
+    {
+        if (POMAGMA_DEBUG_LEVEL) {
+            context->clear();
+        }
+        _execute(program, context);
+    }
 
 private:
 
-    Ob m_obs[256];
-    const std::atomic<Word> * m_sets[256];
+    void _execute (const Operation * program, Context * context);
+
     UnaryRelation * m_unary_relations[256];
     BinaryRelation * m_binary_relations[256];
     NullaryFunction * m_nullary_functions[256];
@@ -85,20 +84,22 @@ private:
     SymmetricFunction * m_symmetric_functions[256];
     Carrier & m_carrier;
 
-    uint8_t pop_arg (const uint8_t * & args)
+    static uint8_t pop_arg (const uint8_t * & args)
     {
         POMAGMA_ASSERT5(not is_aligned(args, 8), "pop_arg'd past end of args");
         return *args++;
     }
 
-    Ob & pop_ob (const uint8_t * & args)
+    static Ob & pop_ob (const uint8_t * & args, Context * context)
     {
-        return m_obs[pop_arg(args)];
+        return context->obs[pop_arg(args)];
     }
 
-    const std::atomic<Word> * & pop_set (const uint8_t * & args)
+    static const std::atomic<Word> * & pop_set (
+            const uint8_t * & args,
+            Context * context)
     {
-        return m_sets[pop_arg(args)];
+        return context->sets[pop_arg(args)];
     }
 
     UnaryRelation & pop_unary_relation (const uint8_t * & args)

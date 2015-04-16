@@ -26,6 +26,7 @@ enum OpArgType {
     DO(IF_EQUAL, ({OB, OB})) \
     DO(IF_UNARY_RELATION, ({UNARY_RELATION, OB})) \
     DO(IF_BINARY_RELATION, ({BINARY_RELATION, OB, OB})) \
+    DO(IF_BLOCK, ({OB})) \
     DO(SET_UNARY_RELATION, ({UNARY_RELATION, SET})) \
     DO(SET_BINARY_RELATION_LHS, ({BINARY_RELATION, OB, SET})) \
     DO(SET_BINARY_RELATION_RHS, ({BINARY_RELATION, SET, OB})) \
@@ -99,6 +100,31 @@ static const size_t g_op_code_count =
 
 //----------------------------------------------------------------------------
 // Parser
+
+class Parser::SymbolTable
+{
+    std::unordered_map<std::string, uint8_t> m_registers;
+
+public:
+
+    void clear () { m_registers.clear(); }
+
+    uint8_t operator() (const std::string & name)
+    {
+        auto i = m_registers.find(name);
+        if (i != m_registers.end()) {
+            return i->second;
+        } else {
+            POMAGMA_ASSERT(
+                m_registers.size() < 256,
+                "too many variables for registers; limit = 256");
+            uint8_t index = m_registers.size();
+            m_registers.insert(std::make_pair(name, index));
+            return index;
+        }
+    }
+};
+
 
 template<class Table>
 static void declare (
@@ -253,11 +279,6 @@ VirtualMachine::VirtualMachine (Signature & signature)
 {
     POMAGMA_ASSERT(is_aligned(this, 64), "VirtualMachine is misaligned");
 
-    for (size_t i = 0; i < 256; ++i) {
-        m_obs[i] = 0;
-        m_sets[i] = nullptr;
-    }
-
     declare(signature.unary_relations(), m_unary_relations);
     declare(signature.binary_relations(), m_binary_relations);
     declare(signature.nullary_functions(), m_nullary_functions);
@@ -266,7 +287,7 @@ VirtualMachine::VirtualMachine (Signature & signature)
     declare(signature.symmetric_functions(), m_symmetric_functions);
 }
 
-void VirtualMachine::execute (const Operation * program)
+void VirtualMachine::_execute (const Operation * program, Context * context)
 {
     POMAGMA_ASSERT5(is_aligned(program, 8), "program is misaligned");
 
@@ -275,394 +296,401 @@ void VirtualMachine::execute (const Operation * program)
     switch (op.op_code()) {
 
         case IF_EQUAL: {
-            Ob & lhs = pop_ob(args);
-            Ob & rhs = pop_ob(args);
+            Ob & lhs = pop_ob(args, context);
+            Ob & rhs = pop_ob(args, context);
             if (lhs == rhs) {
-                execute(program + 1);
+                _execute(program + 1, context);
             }
         } break;
 
         case IF_UNARY_RELATION: {
             UnaryRelation & rel = pop_unary_relation(args);
-            Ob & key = pop_ob(args);
+            Ob & key = pop_ob(args, context);
             if (rel.find(key)) {
-                execute(program + 1);
+                _execute(program + 1, context);
             }
         } break;
 
         case IF_BINARY_RELATION: {
             BinaryRelation & rel = pop_binary_relation(args);
-            Ob & lhs = pop_ob(args);
-            Ob & rhs = pop_ob(args);
+            Ob & lhs = pop_ob(args, context);
+            Ob & rhs = pop_ob(args, context);
             if (rel.find(lhs, rhs)) {
-                execute(program + 1);
+                _execute(program + 1, context);
+            }
+        } break;
+
+        case IF_BLOCK: {
+            Ob & ob = pop_ob(args, context);
+            if (ob / 64 == context->block) {
+                _execute(program + 1, context);
             }
         } break;
 
         case SET_UNARY_RELATION: {
             UnaryRelation & rel = pop_unary_relation(args);
-            pop_set(args) = rel.get_set().raw_data();
+            pop_set(args, context) = rel.get_set().raw_data();
         } break;
 
         case SET_BINARY_RELATION_LHS: {
             BinaryRelation & rel = pop_binary_relation(args);
-            Ob lhs = pop_ob(args);
-            auto & rhs_set = pop_set(args);
+            Ob lhs = pop_ob(args, context);
+            auto & rhs_set = pop_set(args, context);
             rhs_set = rel.get_Lx_set(lhs).raw_data();
         } break;
 
         case SET_BINARY_RELATION_RHS: {
             BinaryRelation & rel = pop_binary_relation(args);
-            auto & lhs_set = pop_set(args);
-            Ob rhs = pop_ob(args);
+            auto & lhs_set = pop_set(args, context);
+            Ob rhs = pop_ob(args, context);
             lhs_set = rel.get_Rx_set(rhs).raw_data();
         } break;
 
         case SET_INJECTIVE_FUNCTION: {
             InjectiveFunction & fun = pop_injective_function(args);
-            pop_set(args) = fun.defined().raw_data();
+            pop_set(args, context) = fun.defined().raw_data();
         } break;
 
         case SET_INJECTIVE_FUNCTION_INVERSE: {
             InjectiveFunction & fun = pop_injective_function(args);
-            pop_set(args) = fun.defined().raw_data();
+            pop_set(args, context) = fun.defined().raw_data();
         } break;
 
         case SET_BINARY_FUNCTION_LHS: {
             BinaryFunction & fun = pop_binary_function(args);
-            Ob lhs = pop_ob(args);
-            auto & rhs_set = pop_set(args);
+            Ob lhs = pop_ob(args, context);
+            auto & rhs_set = pop_set(args, context);
             rhs_set = fun.get_Lx_set(lhs).raw_data();
         } break;
 
         case SET_BINARY_FUNCTION_RHS: {
             BinaryFunction & fun = pop_binary_function(args);
-            auto & lhs_set = pop_set(args);
-            Ob rhs = pop_ob(args);
+            auto & lhs_set = pop_set(args, context);
+            Ob rhs = pop_ob(args, context);
             lhs_set = fun.get_Rx_set(rhs).raw_data();
         } break;
 
         case SET_SYMMETRIC_FUNCTION_LHS: {
             SymmetricFunction & fun = pop_symmetric_function(args);
-            Ob lhs = pop_ob(args);
-            pop_set(args) = fun.get_Lx_set(lhs).raw_data();
+            Ob lhs = pop_ob(args, context);
+            pop_set(args, context) = fun.get_Lx_set(lhs).raw_data();
         } break;
 
         case FOR_INTERSECTION_2: {
-            Ob & ob = pop_ob(args);
+            Ob & ob = pop_ob(args, context);
             SetIterator<2> iter(item_dim(), {{
-                m_sets[args[0]],
-                m_sets[args[1]],
+                context->sets[args[0]],
+                context->sets[args[1]],
             }});
             for (; iter.ok(); iter.next()) {
                 ob = *iter;
-                execute(program + 1);
+                _execute(program + 1, context);
             }
         } break;
 
         case FOR_INTERSECTION_3: {
-            Ob & ob = pop_ob(args);
+            Ob & ob = pop_ob(args, context);
             SetIterator<3> iter(item_dim(), {{
-                m_sets[args[0]],
-                m_sets[args[1]],
-                m_sets[args[2]],
+                context->sets[args[0]],
+                context->sets[args[1]],
+                context->sets[args[2]],
             }});
             for (; iter.ok(); iter.next()) {
                 ob = *iter;
-                execute(program + 1);
+                _execute(program + 1, context);
             }
         } break;
 
         case FOR_INTERSECTION_4: {
-            Ob & ob = pop_ob(args);
+            Ob & ob = pop_ob(args, context);
             SetIterator<4> iter(item_dim(), {{
-                m_sets[args[0]],
-                m_sets[args[1]],
-                m_sets[args[2]],
-                m_sets[args[3]],
+                context->sets[args[0]],
+                context->sets[args[1]],
+                context->sets[args[2]],
+                context->sets[args[3]],
             }});
             for (; iter.ok(); iter.next()) {
                 ob = *iter;
-                execute(program + 1);
+                _execute(program + 1, context);
             }
         } break;
 
         case FOR_INTERSECTION_5: {
-            Ob & ob = pop_ob(args);
+            Ob & ob = pop_ob(args, context);
             SetIterator<5> iter(item_dim(), {{
-                m_sets[args[0]],
-                m_sets[args[1]],
-                m_sets[args[2]],
-                m_sets[args[3]],
-                m_sets[args[4]],
+                context->sets[args[0]],
+                context->sets[args[1]],
+                context->sets[args[2]],
+                context->sets[args[3]],
+                context->sets[args[4]],
             }});
             for (; iter.ok(); iter.next()) {
                 ob = *iter;
-                execute(program + 1);
+                _execute(program + 1, context);
             }
         } break;
 
         case FOR_INTERSECTION_6: {
-            Ob & ob = pop_ob(args);
+            Ob & ob = pop_ob(args, context);
             SetIterator<6> iter(item_dim(), {{
-                m_sets[args[0]],
-                m_sets[args[1]],
-                m_sets[args[2]],
-                m_sets[args[3]],
-                m_sets[args[4]],
-                m_sets[args[5]],
+                context->sets[args[0]],
+                context->sets[args[1]],
+                context->sets[args[2]],
+                context->sets[args[3]],
+                context->sets[args[4]],
+                context->sets[args[5]],
             }});
             for (; iter.ok(); iter.next()) {
                 ob = *iter;
-                execute(program + 1);
+                _execute(program + 1, context);
             }
         } break;
 
         case FOR_ALL: {
-            Ob & ob = pop_ob(args);
+            Ob & ob = pop_ob(args, context);
             for (auto iter = carrier().iter(); iter.ok(); iter.next()) {
                 ob = *iter;
-                execute(program + 1);
+                _execute(program + 1, context);
             }
         } break;
 
         case FOR_UNARY_RELATION: {
             UnaryRelation & rel = pop_unary_relation(args);
-            Ob & key = pop_ob(args);
+            Ob & key = pop_ob(args, context);
             for (auto iter = rel.iter(); iter.ok(); iter.next()) {
                 key = *iter;
-                execute(program + 1);
+                _execute(program + 1, context);
             }
         } break;
 
         case FOR_BINARY_RELATION_LHS: {
             BinaryRelation & rel = pop_binary_relation(args);
-            Ob & lhs = pop_ob(args);
-            Ob & rhs = pop_ob(args);
+            Ob & lhs = pop_ob(args, context);
+            Ob & rhs = pop_ob(args, context);
             for (auto iter = rel.iter_lhs(lhs); iter.ok(); iter.next()) {
                 rhs = *iter;
-                execute(program + 1);
+                _execute(program + 1, context);
             }
         } break;
 
         case FOR_BINARY_RELATION_RHS: {
             BinaryRelation & rel = pop_binary_relation(args);
-            Ob & lhs = pop_ob(args);
-            Ob & rhs = pop_ob(args);
+            Ob & lhs = pop_ob(args, context);
+            Ob & rhs = pop_ob(args, context);
             for (auto iter = rel.iter_rhs(rhs); iter.ok(); iter.next()) {
                 lhs = *iter;
-                execute(program + 1);
+                _execute(program + 1, context);
             }
         } break;
 
         case FOR_NULLARY_FUNCTION: {
             NullaryFunction & fun = pop_nullary_function(args);
-            Ob & val = pop_ob(args);
+            Ob & val = pop_ob(args, context);
             val = fun.find();
             if (val) {
-                execute(program + 1);
+                _execute(program + 1, context);
             }
         } break;
 
         case FOR_INJECTIVE_FUNCTION: {
             InjectiveFunction & fun = pop_injective_function(args);
-            Ob & key = pop_ob(args);
-            Ob & val = pop_ob(args);
+            Ob & key = pop_ob(args, context);
+            Ob & val = pop_ob(args, context);
             for (auto iter = fun.iter(); iter.ok(); iter.next()) {
                 key = *iter;
                 val = fun.find(key);
-                execute(program + 1);
+                _execute(program + 1, context);
             }
         } break;
 
         case FOR_INJECTIVE_FUNCTION_KEY: {
             InjectiveFunction & fun = pop_injective_function(args);
-            Ob & key = pop_ob(args);
-            Ob & val = pop_ob(args);
+            Ob & key = pop_ob(args, context);
+            Ob & val = pop_ob(args, context);
             val = fun.find(key);
             if (val) {
-                execute(program + 1);
+                _execute(program + 1, context);
             }
         } break;
 
         case FOR_INJECTIVE_FUNCTION_VAL: {
             InjectiveFunction & fun = pop_injective_function(args);
-            Ob & key = pop_ob(args);
-            Ob & val = pop_ob(args);
+            Ob & key = pop_ob(args, context);
+            Ob & val = pop_ob(args, context);
             key = fun.inverse_find(val);
             if (key) {
-                execute(program + 1);
+                _execute(program + 1, context);
             }
         } break;
 
         case FOR_BINARY_FUNCTION_LHS: {
             BinaryFunction & fun = pop_binary_function(args);
-            Ob & lhs = pop_ob(args);
-            Ob & rhs = pop_ob(args);
-            Ob & val = pop_ob(args);
+            Ob & lhs = pop_ob(args, context);
+            Ob & rhs = pop_ob(args, context);
+            Ob & val = pop_ob(args, context);
             for (auto iter = fun.iter_lhs(lhs); iter.ok(); iter.next()) {
                 rhs = *iter;
                 val = fun.find(lhs, rhs);
-                execute(program + 1);
+                _execute(program + 1, context);
             }
         } break;
 
         case FOR_BINARY_FUNCTION_RHS: {
             BinaryFunction & fun = pop_binary_function(args);
-            Ob & lhs = pop_ob(args);
-            Ob & rhs = pop_ob(args);
-            Ob & val = pop_ob(args);
+            Ob & lhs = pop_ob(args, context);
+            Ob & rhs = pop_ob(args, context);
+            Ob & val = pop_ob(args, context);
             for (auto iter = fun.iter_rhs(rhs); iter.ok(); iter.next()) {
                 lhs = *iter;
                 val = fun.find(lhs, rhs);
-                execute(program + 1);
+                _execute(program + 1, context);
             }
         } break;
 
         case FOR_BINARY_FUNCTION_VAL: {
             BinaryFunction & fun = pop_binary_function(args);
-            Ob & lhs = pop_ob(args);
-            Ob & rhs = pop_ob(args);
-            Ob & val = pop_ob(args);
+            Ob & lhs = pop_ob(args, context);
+            Ob & rhs = pop_ob(args, context);
+            Ob & val = pop_ob(args, context);
             for (auto iter = fun.iter_val(val); iter.ok(); iter.next()) {
                 lhs = iter.lhs();
                 rhs = iter.rhs();
-                execute(program + 1);
+                _execute(program + 1, context);
             }
         } break;
 
         case FOR_BINARY_FUNCTION_LHS_VAL: {
             BinaryFunction & fun = pop_binary_function(args);
-            Ob & lhs = pop_ob(args);
-            Ob & rhs = pop_ob(args);
-            Ob & val = pop_ob(args);
+            Ob & lhs = pop_ob(args, context);
+            Ob & rhs = pop_ob(args, context);
+            Ob & val = pop_ob(args, context);
             auto iter = fun.iter_val_lhs(val, lhs);
             for (; iter.ok(); iter.next()) {
                 rhs = *iter;
-                execute(program + 1);
+                _execute(program + 1, context);
             }
         } break;
 
         case FOR_BINARY_FUNCTION_RHS_VAL: {
             BinaryFunction & fun = pop_binary_function(args);
-            Ob & lhs = pop_ob(args);
-            Ob & rhs = pop_ob(args);
-            Ob & val = pop_ob(args);
+            Ob & lhs = pop_ob(args, context);
+            Ob & rhs = pop_ob(args, context);
+            Ob & val = pop_ob(args, context);
             auto iter = fun.iter_val_rhs(val, rhs);
             for (; iter.ok(); iter.next()) {
                 lhs = *iter;
-                execute(program + 1);
+                _execute(program + 1, context);
             }
         } break;
 
         case FOR_BINARY_FUNCTION_LHS_RHS: {
             BinaryFunction & fun = pop_binary_function(args);
-            Ob & lhs = pop_ob(args);
-            Ob & rhs = pop_ob(args);
-            Ob & val = pop_ob(args);
+            Ob & lhs = pop_ob(args, context);
+            Ob & rhs = pop_ob(args, context);
+            Ob & val = pop_ob(args, context);
             val = fun.find(lhs, rhs);
             if (val) {
-                execute(program + 1);
+                _execute(program + 1, context);
             }
         } break;
 
         case FOR_SYMMETRIC_FUNCTION_LHS: {
             SymmetricFunction & fun = pop_symmetric_function(args);
-            Ob & lhs = pop_ob(args);
-            Ob & rhs = pop_ob(args);
-            Ob & val = pop_ob(args);
+            Ob & lhs = pop_ob(args, context);
+            Ob & rhs = pop_ob(args, context);
+            Ob & val = pop_ob(args, context);
             for (auto iter = fun.iter_lhs(lhs); iter.ok(); iter.next()) {
                 rhs = *iter;
                 val = fun.find(lhs, rhs);
-                execute(program + 1);
+                _execute(program + 1, context);
             }
         } break;
 
         case FOR_SYMMETRIC_FUNCTION_VAL: {
             SymmetricFunction & fun = pop_symmetric_function(args);
-            Ob & lhs = pop_ob(args);
-            Ob & rhs = pop_ob(args);
-            Ob & val = pop_ob(args);
+            Ob & lhs = pop_ob(args, context);
+            Ob & rhs = pop_ob(args, context);
+            Ob & val = pop_ob(args, context);
             for (auto iter = fun.iter_val(val); iter.ok(); iter.next()) {
                 lhs = iter.lhs();
                 rhs = iter.rhs();
-                execute(program + 1);
+                _execute(program + 1, context);
             }
         } break;
 
         case FOR_SYMMETRIC_FUNCTION_LHS_VAL: {
             SymmetricFunction & fun = pop_symmetric_function(args);
-            Ob & lhs = pop_ob(args);
-            Ob & rhs = pop_ob(args);
-            Ob & val = pop_ob(args);
+            Ob & lhs = pop_ob(args, context);
+            Ob & rhs = pop_ob(args, context);
+            Ob & val = pop_ob(args, context);
             auto iter = fun.iter_val_lhs(val, lhs);
             for (; iter.ok(); iter.next()) {
                 rhs = *iter;
-                execute(program + 1);
+                _execute(program + 1, context);
             }
         } break;
 
         case FOR_SYMMETRIC_FUNCTION_LHS_RHS: {
             SymmetricFunction & fun = pop_symmetric_function(args);
-            Ob & lhs = pop_ob(args);
-            Ob & rhs = pop_ob(args);
-            Ob & val = pop_ob(args);
+            Ob & lhs = pop_ob(args, context);
+            Ob & rhs = pop_ob(args, context);
+            Ob & val = pop_ob(args, context);
             val = fun.find(lhs, rhs);
             if (val) {
-                execute(program + 1);
+                _execute(program + 1, context);
             }
         } break;
 
         case ENSURE_EQUAL: {
-            Ob & lhs = pop_ob(args);
-            Ob & rhs = pop_ob(args);
+            Ob & lhs = pop_ob(args, context);
+            Ob & rhs = pop_ob(args, context);
             carrier().ensure_equal(lhs, rhs);
         } break;
 
         case ENSURE_UNARY_RELATION: {
             UnaryRelation & rel = pop_unary_relation(args);
-            Ob & key = pop_ob(args);
+            Ob & key = pop_ob(args, context);
             rel.insert(key);
         } break;
 
         case ENSURE_BINARY_RELATION: {
             BinaryRelation & rel = pop_binary_relation(args);
-            Ob & lhs = pop_ob(args);
-            Ob & rhs = pop_ob(args);
+            Ob & lhs = pop_ob(args, context);
+            Ob & rhs = pop_ob(args, context);
             rel.insert(lhs, rhs);
         } break;
 
         case ENSURE_INJECTIVE_FUNCTION: {
             InjectiveFunction & fun = pop_injective_function(args);
-            Ob & key = pop_ob(args);
-            Ob & val = pop_ob(args);
+            Ob & key = pop_ob(args, context);
+            Ob & val = pop_ob(args, context);
             fun.insert(key, val);
         } break;
 
         case ENSURE_BINARY_FUNCTION: {
             BinaryFunction & fun = pop_binary_function(args);
-            Ob & lhs = pop_ob(args);
-            Ob & rhs = pop_ob(args);
-            Ob & val = pop_ob(args);
+            Ob & lhs = pop_ob(args, context);
+            Ob & rhs = pop_ob(args, context);
+            Ob & val = pop_ob(args, context);
             fun.insert(lhs, rhs, val);
         } break;
 
         case ENSURE_SYMMETRIC_FUNCTION: {
             SymmetricFunction & fun = pop_symmetric_function(args);
-            Ob & lhs = pop_ob(args);
-            Ob & rhs = pop_ob(args);
-            Ob & key = pop_ob(args);
+            Ob & lhs = pop_ob(args, context);
+            Ob & rhs = pop_ob(args, context);
+            Ob & key = pop_ob(args, context);
             fun.insert(lhs, rhs, key);
         } break;
 
         case ENSURE_COMPOUND: {
             auto for_ensure1 = program + 1;
             auto for_ensure2 = program + 3;
-            Ob & ob = pop_ob(args);
+            Ob & ob = pop_ob(args, context);
             ob = 0;
-            execute(for_ensure1);
+            _execute(for_ensure1, context);
             if (not ob) {
-                execute(for_ensure2);
+                _execute(for_ensure2, context);
             }
         } break;
     }
