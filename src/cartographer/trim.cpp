@@ -67,14 +67,15 @@ void fill_random (
         const char * language_file)
 {
     POMAGMA_INFO("filling randomly");
-    std::random_device device;
-    rng_t rng(device());
-    Sampler sampler(structure.signature());
+    Sampler sampler(structure.signature(), Sampler::random_seed());
     sampler.load(language_file);
     Sampler::Policy policy(subset, target_item_count);
 
-    while (policy.ok() and sampler.try_insert_random(rng, policy)) {
-        POMAGMA_DEBUG(policy.size() << " obs after insertion");
+    while (policy.ok() and sampler.try_insert_random(policy)) {
+        POMAGMA_DEBUG(
+            policy.size() << " obs after insertion (target = " <<
+            target_item_count << " / " <<
+            structure.signature().carrier()->item_count() << ")");
     }
 }
 

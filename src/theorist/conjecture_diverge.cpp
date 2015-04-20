@@ -1,4 +1,5 @@
 #include "conjecture_diverge.hpp"
+#include "find_parser.hpp"
 #include <pomagma/macrostructure/carrier.hpp>
 #include <pomagma/macrostructure/binary_relation.hpp>
 #include <pomagma/macrostructure/nullary_function.hpp>
@@ -41,6 +42,17 @@ std::vector<Ob> conjecture_diverge (
         conjectures.begin(),
         conjectures.end(),
         [&](const Ob & x, const Ob & y){ return probs[x] > probs[y]; });
+
+    if (POMAGMA_DEBUG_LEVEL) {
+        FindParser parser(structure.signature());
+        for (auto ob : conjectures) {
+            parser.begin(routes[ob]);
+            Ob found = parser.parse_term();
+            parser.end();
+            POMAGMA_ASSERT(found, "route missing: " << routes[ob]);
+            POMAGMA_ASSERT(found == ob, "route mismatch: " << routes[ob]);
+        }
+    }
 
     POMAGMA_DEBUG("writing conjectures to " << conjectures_file);
     std::ofstream file(conjectures_file, std::ios::out | std::ios::trunc);

@@ -9,12 +9,28 @@ namespace pomagma
 //----------------------------------------------------------------------------
 // Construction
 
-Sampler::Sampler (Signature & signature)
+size_t Sampler::random_seed ()
+{
+    static std::mutex mutex;
+    static std::mt19937_64 rng(getenv_default(
+        "POMAGMA_SEED",
+        static_cast<size_t>(
+            std::chrono::system_clock::now().time_since_epoch().count() +
+            std::random_device()())));
+
+    std::unique_lock<std::mutex> lock(mutex);
+    return rng();
+}
+
+Sampler::Sampler (Signature & signature, size_t seed)
     : m_signature(signature),
-      m_sample_count(0),
-      m_reject_count(0),
+      m_seed_count(0),
+      m_return_count(0),
+      m_retry_count(0),
+      m_abort_count(0),
       m_arity_sample_count(0),
-      m_compound_arity_sample_count(0)
+      m_compound_arity_sample_count(0),
+      m_seed(seed)
 {
 }
 
@@ -40,14 +56,16 @@ void Sampler::validate () const
 void Sampler::log_stats () const
 {
     const Sampler & sampler = * this;
-    POMAGMA_PRINT(sampler.m_sample_count.load());
-    POMAGMA_PRINT(sampler.m_reject_count.load());
+    POMAGMA_PRINT(sampler.m_seed_count.load());
+    POMAGMA_PRINT(sampler.m_return_count.load());
+    POMAGMA_PRINT(sampler.m_retry_count.load());
+    POMAGMA_PRINT(sampler.m_abort_count.load());
     POMAGMA_PRINT(sampler.m_arity_sample_count.load());
     POMAGMA_PRINT(sampler.m_compound_arity_sample_count.load());
 }
 
 template<class T>
-inline float sum (const std::unordered_map<T, float> & map)
+inline float sum (const std::map<T, float> & map)
 {
     float result = 0;
     for (auto & pair : map) {
@@ -58,7 +76,7 @@ inline float sum (const std::unordered_map<T, float> & map)
 
 template<class Key>
 inline Key sample (
-        const std::unordered_map<Key, float> & probs,
+        const std::map<Key, float> & probs,
         float total,
         rng_t & rng)
 {
@@ -250,25 +268,32 @@ inline const Sampler::BoundedSampler & Sampler::bounded_sampler (
     }
 }
 
-Ob Sampler::try_insert_random (rng_t & rng, Policy & policy) const
+Ob Sampler::try_insert_random (Policy & policy) const
 {
+    rng_t rng;
+    auto seed = m_seed.load();
     while (true) {
+        rng.seed(seed);
+
         try {
             Ob ob = insert_random_nullary(rng, policy);
-            for (size_t depth = 1; depth; ++depth) {
+            for (size_t depth = 1; depth <= max_sampler_depth; ++depth) {
                 //POMAGMA_DEBUG1("sampling at depth " << depth);
                 ob = insert_random_compound(ob, depth, rng, policy);
             }
-        } catch (ObInsertedException e) {
-            m_sample_count += 1;
-            return e.inserted;
-        } catch (ObRejectedException) {
-            m_reject_count += 1;
-            continue;
-        } catch (InsertionFailedException e) {
+        } catch (SamplerReturnException e) {
+            m_return_count += 1;
+            return e.result;
+        } catch (SamplerRetryException) {
+            m_retry_count += 1;
+        } catch (SamplerAbortException) {
+            m_abort_count += 1;
             return 0;
         }
-        POMAGMA_ERROR("unreachable");
+
+        if (m_seed.compare_exchange_strong(seed, seed + 1)) {
+            m_seed_count += 1;
+        }
     }
 
     return 0;
@@ -305,7 +330,9 @@ inline Ob Sampler::insert_random_compound (
         case BINARY: {
             Ob other = insert_random(max_depth - 1, rng, policy);
             std::bernoulli_distribution randomly_swap(0.5);
-            if (randomly_swap(rng)) std::swap(ob, other);
+            if (randomly_swap(rng)) {
+                std::swap(ob, other);
+            }
             return insert_random_binary(ob, other, rng, policy);
         } break;
 

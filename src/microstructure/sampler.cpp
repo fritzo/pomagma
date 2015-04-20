@@ -17,9 +17,9 @@ inline Ob Sampler::Policy::sample (
     }
     if (Ob val = carrier.try_insert()) {
         fun.insert(val);
-        throw ObInsertedException(val);
+        throw SamplerReturnException(val);
     }
-    throw InsertionFailedException();
+    throw SamplerAbortException();
 }
 
 inline Ob Sampler::Policy::sample (
@@ -31,9 +31,9 @@ inline Ob Sampler::Policy::sample (
     }
     if (Ob val = carrier.try_insert()) {
         fun.insert(key, val);
-        throw ObInsertedException(val);
+        throw SamplerReturnException(val);
     }
-    throw InsertionFailedException();
+    throw SamplerAbortException();
 }
 
 inline Ob Sampler::Policy::sample (
@@ -46,9 +46,9 @@ inline Ob Sampler::Policy::sample (
     }
     if (Ob val = carrier.try_insert()) {
         fun.insert(lhs, rhs, val);
-        throw ObInsertedException(val);
+        throw SamplerReturnException(val);
     }
-    throw InsertionFailedException();
+    throw SamplerAbortException();
 }
 
 inline Ob Sampler::Policy::sample (
@@ -61,9 +61,9 @@ inline Ob Sampler::Policy::sample (
     }
     if (Ob val = carrier.try_insert()) {
         fun.insert(lhs, rhs, val);
-        throw ObInsertedException(val);
+        throw SamplerReturnException(val);
     }
-    throw InsertionFailedException();
+    throw SamplerAbortException();
 }
 
 } // namespace pomagma

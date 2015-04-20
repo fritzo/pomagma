@@ -38,7 +38,7 @@ void load_language (const std::string & filename)
     POMAGMA_INFO("loading language from " << filename);
 }
 
-void execute (const SampleTask &, rng_t &)
+void execute (const SampleTask &)
 {
     POMAGMA_INFO("executing SampleTask");
 }

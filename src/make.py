@@ -1,8 +1,14 @@
 import os
 import glob
 import parsable
+from pomagma import analyst
+from pomagma import atlas
+from pomagma import cartographer
+from pomagma import surveyor
+from pomagma import theorist
+from pomagma.util import LOG_LEVEL_DEBUG
+from pomagma.util import LOG_LEVEL_INFO
 import pomagma.util
-from pomagma import atlas, surveyor, cartographer, theorist, analyst
 
 PROFILERS = {
     'time': '/usr/bin/time --verbose',
@@ -31,7 +37,7 @@ def _test_atlas(theory):
         min_size = pomagma.util.MIN_SIZES[theory]
         dsize = min(64, 1 + min_size)
         sizes = [min_size + i * dsize for i in range(10)]
-        opts = {'log_file': 'test.log', 'log_level': 2}
+        opts = {'log_file': 'test.log', 'log_level': LOG_LEVEL_DEBUG}
         diverge_conjectures = 'diverge_conjectures.facts'
         diverge_theorems = 'diverge_theorems.facts'
         equal_conjectures = 'equal_conjectures.facts'
@@ -121,7 +127,7 @@ def test_analyst(theory):
     '''
     Test analyst approximation on normalized world map.
     '''
-    opts = {'log_file': 'test.log', 'log_level': 2}
+    opts = {'log_file': 'test.log', 'log_level': LOG_LEVEL_INFO}
     with atlas.chdir(theory):
         world = 'world.normal.h5'
         assert os.path.exists(world), 'First initialize normalized world'
@@ -140,7 +146,7 @@ def profile_util():
     log_file = os.path.join(pomagma.util.DATA, 'profile', buildtype + '.log')
     if os.path.exists(log_file):
         os.remove(log_file)
-    opts = {'log_file': log_file, 'log_level': 2}
+    opts = {'log_file': log_file, 'log_level': LOG_LEVEL_INFO}
     pattern = os.path.join(pomagma.util.BIN, '*', '*_profile')
     cmds = glob.glob(pattern)
     assert cmds, 'no profiles match {}'.format(pattern)
@@ -158,7 +164,7 @@ def profile_surveyor(theory='skj', grow_by=64, extra_size=0, tool='time'):
     '''
     size = pomagma.util.MIN_SIZES[theory] + extra_size
     with atlas.chdir(theory):
-        opts = {'log_file': 'profile.log', 'log_level': 2}
+        opts = {'log_file': 'profile.log', 'log_level': LOG_LEVEL_INFO}
         region = 'region.{:d}.h5'.format(size)
         temp = pomagma.util.temp_name('profile.h5')
         world = 'world.h5'

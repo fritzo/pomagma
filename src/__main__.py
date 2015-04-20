@@ -1,5 +1,6 @@
 import os
 import sys
+import glob
 import signal
 import shutil
 import parsable
@@ -12,7 +13,6 @@ from pomagma import cartographer
 from pomagma import linguist
 from pomagma import surveyor
 from pomagma import theorist
-
 
 THEORY = os.environ.get('POMAGMA_THEORY', 'skrj')
 
@@ -85,6 +85,26 @@ def test(theory=THEORY, extra_size=0, **options):
             fail_count = db.test_inference()
             assert fail_count == 0, 'analyst.test_inference failed'
     print 'Theory {} appears valid.'.format(theory)
+
+
+def print_hash(digest):
+    nibbles = []
+    for byte in digest:
+        nibbles.append(byte / 16)
+        nibbles.append(byte % 16)
+    return ''.join(map('0123456789abcdef'.__getitem__, nibbles))
+
+
+@parsable.command
+def hashes(theory=THEORY):
+    '''
+    Print hashes of atlases.
+    '''
+    with atlas.chdir(theory):
+        for infile in sorted(glob.glob('*.h5')):
+            if os.path.exists(infile):
+                digest = pomagma.util.get_hash(infile)
+                print '{}: {}'.format(infile, print_hash(digest))
 
 
 @parsable.command
