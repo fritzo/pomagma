@@ -224,11 +224,12 @@ class IterInvBinary(Strategy):
 
 @memoize_make
 class IterInvBinaryRange(Strategy):
-    __slots__ = ['fun', 'value', 'var1', 'var2', 'lhs_fixed', 'body']
+    __slots__ = ['fun', 'arity', 'value', 'var1', 'var2', 'lhs_fixed', 'body']
 
     def __init__(self, fun, fixed, body):
         assert fun.arity in ['BinaryFunction', 'SymmetricFunction']
         self.fun = fun.name
+        self.arity = fun.arity
         self.value = fun.var
         self.var1, self.var2 = fun.args
         assert self.var1 != self.var2

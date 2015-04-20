@@ -263,6 +263,10 @@ def test_compile(*filenames):
                 )
                 strategy.cpp(code)
 
+                program = []
+                strategy.program(program)
+                code('\n'.join(map('"{}"'.format, program)))
+
             for event in get_events(sequent):
                 for cost, seq, strategy in compile_given(sequent, event):
                     code.newline()

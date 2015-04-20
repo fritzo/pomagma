@@ -73,10 +73,7 @@ private:
     SymmetricFunction * m_symmetric_functions[256];
     Carrier & m_carrier;
 
-    static uint8_t pop_arg (Program & program)
-    {
-        return *program++;
-    }
+    static uint8_t pop_arg (Program & program) { return *program++; }
 
     static OpCode pop_op_code (Program & program)
     {

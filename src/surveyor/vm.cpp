@@ -23,18 +23,20 @@ enum OpArgType {
 };
 
 #define OP_CODES(DO) \
-    DO(IF_EQUAL, ({OB, OB})) \
-    DO(IF_UNARY_RELATION, ({UNARY_RELATION, OB})) \
-    DO(IF_BINARY_RELATION, ({BINARY_RELATION, OB, OB})) \
-    DO(IF_BLOCK, ({OB})) \
-    DO(SET_UNARY_RELATION, ({UNARY_RELATION, SET})) \
-    DO(SET_BINARY_RELATION_LHS, ({BINARY_RELATION, OB, SET})) \
-    DO(SET_BINARY_RELATION_RHS, ({BINARY_RELATION, SET, OB})) \
-    DO(SET_INJECTIVE_FUNCTION, ({INJECTIVE_FUNCTION, SET})) \
-    DO(SET_INJECTIVE_FUNCTION_INVERSE, ({INJECTIVE_FUNCTION, SET})) \
-    DO(SET_BINARY_FUNCTION_LHS, ({BINARY_FUNCTION, OB, SET})) \
-    DO(SET_BINARY_FUNCTION_RHS, ({BINARY_FUNCTION, SET, OB})) \
-    DO(SET_SYMMETRIC_FUNCTION_LHS, ({SYMMETRIC_FUNCTION, OB, SET})) \
+    /* DO(GIVEN_UNARY_RELATION, ({UNARY_RELATION, OB})) */ \
+    /* DO(GIVEN_BINARY_RELATION, ({BINARY_RELATION, OB, OB})) */ \
+    /* DO(GIVEN_NULLARY_FUNCTION, ({NULLARY_FUNCTION, OB})) */ \
+    /* DO(GIVEN_INJECTIVE_FUNCTION, ({INJECTIVE_FUNCTION, OB, OB})) */ \
+    /* DO(GIVEN_BINARY_FUNCTION, ({BINARY_FUNCTION, OB, OB, OB})) */ \
+    /* DO(GIVEN_SYMMETRIC_FUNCTION, ({SYMMETRIC_FUNCTION, OB, OB, OB})) */ \
+    DO(INTERSECT_UNARY_RELATION, ({UNARY_RELATION, SET})) \
+    DO(INTERSECT_BINARY_RELATION_LHS, ({BINARY_RELATION, OB, SET})) \
+    DO(INTERSECT_BINARY_RELATION_RHS, ({BINARY_RELATION, SET, OB})) \
+    DO(INTERSECT_INJECTIVE_FUNCTION, ({INJECTIVE_FUNCTION, SET})) \
+    DO(INTERSECT_INJECTIVE_FUNCTION_INVERSE, ({INJECTIVE_FUNCTION, SET})) \
+    DO(INTERSECT_BINARY_FUNCTION_LHS, ({BINARY_FUNCTION, OB, SET})) \
+    DO(INTERSECT_BINARY_FUNCTION_RHS, ({BINARY_FUNCTION, SET, OB})) \
+    DO(INTERSECT_SYMMETRIC_FUNCTION_LHS, ({SYMMETRIC_FUNCTION, OB, SET})) \
     DO(FOR_INTERSECTION_2, ({OB, SET, SET})) \
     DO(FOR_INTERSECTION_3, ({OB, SET, SET, SET})) \
     DO(FOR_INTERSECTION_4, ({OB, SET, SET, SET, SET})) \
@@ -58,6 +60,19 @@ enum OpArgType {
     DO(FOR_SYMMETRIC_FUNCTION_VAL, ({SYMMETRIC_FUNCTION, OB, OB, OB})) \
     DO(FOR_SYMMETRIC_FUNCTION_LHS_VAL, ({SYMMETRIC_FUNCTION, OB, OB, OB})) \
     DO(FOR_SYMMETRIC_FUNCTION_LHS_RHS, ({SYMMETRIC_FUNCTION, OB, OB, OB})) \
+    DO(FOR_BLOCK, ({})) \
+    DO(IF_BLOCK, ({OB})) \
+    DO(IF_EQUAL, ({OB, OB})) \
+    DO(IF_UNARY_RELATION, ({UNARY_RELATION, OB})) \
+    DO(IF_BINARY_RELATION, ({BINARY_RELATION, OB, OB})) \
+    DO(IF_NULLARY_FUNCTION, ({NULLARY_FUNCTION, OB})) \
+    DO(IF_INJECTIVE_FUNCTION, ({INJECTIVE_FUNCTION, OB, OB})) \
+    DO(IF_BINARY_FUNCTION, ({BINARY_FUNCTION, OB, OB, OB})) \
+    DO(IF_SYMMETRIC_FUNCTION, ({SYMMETRIC_FUNCTION, OB, OB, OB})) \
+    DO(LET_NULLARY_FUNCTION, ({NULLARY_FUNCTION, OB})) \
+    DO(LET_INJECTIVE_FUNCTION, ({INJECTIVE_FUNCTION, OB, OB})) \
+    DO(LET_BINARY_FUNCTION, ({BINARY_FUNCTION, OB, OB, OB})) \
+    DO(LET_SYMMETRIC_FUNCTION, ({SYMMETRIC_FUNCTION, OB, OB, OB})) \
     DO(ENSURE_EQUAL, ({OB, OB})) \
     DO(ENSURE_UNARY_RELATION, ({OB})) \
     DO(ENSURE_BINARY_RELATION, ({OB, OB})) \
@@ -310,82 +325,50 @@ void VirtualMachine::_execute (Program program, Context * context)
 {
     switch (pop_op_code(program)) {
 
-        case IF_EQUAL: {
-            Ob & lhs = pop_ob(program, context);
-            Ob & rhs = pop_ob(program, context);
-            if (lhs == rhs) {
-                _execute(program, context);
-            }
-        } break;
-
-        case IF_UNARY_RELATION: {
-            UnaryRelation & rel = pop_unary_relation(program);
-            Ob & key = pop_ob(program, context);
-            if (rel.find(key)) {
-                _execute(program, context);
-            }
-        } break;
-
-        case IF_BINARY_RELATION: {
-            BinaryRelation & rel = pop_binary_relation(program);
-            Ob & lhs = pop_ob(program, context);
-            Ob & rhs = pop_ob(program, context);
-            if (rel.find(lhs, rhs)) {
-                _execute(program, context);
-            }
-        } break;
-
-        case IF_BLOCK: {
-            Ob & ob = pop_ob(program, context);
-            if (ob / 64 == context->block) {
-                _execute(program, context);
-            }
-        } break;
-
-        case SET_UNARY_RELATION: {
+        case INTERSECT_UNARY_RELATION: {
             UnaryRelation & rel = pop_unary_relation(program);
             pop_set(program, context) = rel.get_set().raw_data();
         } break;
 
-        case SET_BINARY_RELATION_LHS: {
+        case INTERSECT_BINARY_RELATION_LHS: {
             BinaryRelation & rel = pop_binary_relation(program);
             Ob lhs = pop_ob(program, context);
             auto & rhs_set = pop_set(program, context);
             rhs_set = rel.get_Lx_set(lhs).raw_data();
         } break;
 
-        case SET_BINARY_RELATION_RHS: {
+        case INTERSECT_BINARY_RELATION_RHS: {
             BinaryRelation & rel = pop_binary_relation(program);
             auto & lhs_set = pop_set(program, context);
             Ob rhs = pop_ob(program, context);
             lhs_set = rel.get_Rx_set(rhs).raw_data();
         } break;
 
-        case SET_INJECTIVE_FUNCTION: {
+        case INTERSECT_INJECTIVE_FUNCTION: {
             InjectiveFunction & fun = pop_injective_function(program);
             pop_set(program, context) = fun.defined().raw_data();
         } break;
 
-        case SET_INJECTIVE_FUNCTION_INVERSE: {
+        case INTERSECT_INJECTIVE_FUNCTION_INVERSE: {
             InjectiveFunction & fun = pop_injective_function(program);
             pop_set(program, context) = fun.defined().raw_data();
         } break;
 
-        case SET_BINARY_FUNCTION_LHS: {
+        case INTERSECT_BINARY_FUNCTION_LHS: {
             BinaryFunction & fun = pop_binary_function(program);
             Ob lhs = pop_ob(program, context);
             auto & rhs_set = pop_set(program, context);
             rhs_set = fun.get_Lx_set(lhs).raw_data();
         } break;
 
-        case SET_BINARY_FUNCTION_RHS: {
+        case INTERSECT_BINARY_FUNCTION_RHS: {
             BinaryFunction & fun = pop_binary_function(program);
             auto & lhs_set = pop_set(program, context);
             Ob rhs = pop_ob(program, context);
             lhs_set = fun.get_Rx_set(rhs).raw_data();
         } break;
 
-        case SET_SYMMETRIC_FUNCTION_LHS: {
+        case INTERSECT_SYMMETRIC_FUNCTION_LHS: {
             SymmetricFunction & fun = pop_symmetric_function(program);
             Ob lhs = pop_ob(program, context);
             pop_set(program, context) = fun.get_Lx_set(lhs).raw_data();
@@ -649,6 +632,116 @@ void VirtualMachine::_execute (Program program, Context * context)
                 val = found;
                 _execute(program, context);
             }
+        } break;
+
+        case FOR_BLOCK: {
+            _execute(program, context);
+        } break;
+
+        case IF_BLOCK: {
+            Ob & ob = pop_ob(program, context);
+            if (ob / 64 == context->block) {
+                _execute(program, context);
+            }
+        } break;
+
+        case IF_EQUAL: {
+            Ob & lhs = pop_ob(program, context);
+            Ob & rhs = pop_ob(program, context);
+            if (lhs == rhs) {
+                _execute(program, context);
+            }
+        } break;
+
+        case IF_UNARY_RELATION: {
+            UnaryRelation & rel = pop_unary_relation(program);
+            Ob & key = pop_ob(program, context);
+            if (rel.find(key)) {
+                _execute(program, context);
+            }
+        } break;
+
+        case IF_BINARY_RELATION: {
+            BinaryRelation & rel = pop_binary_relation(program);
+            Ob & lhs = pop_ob(program, context);
+            Ob & rhs = pop_ob(program, context);
+            if (rel.find(lhs, rhs)) {
+                _execute(program, context);
+            }
+        } break;
+
+        case IF_NULLARY_FUNCTION: {
+            NullaryFunction & fun = pop_nullary_function(program);
+            Ob & val = pop_ob(program, context);
+            if (fun.find() == val) {
+                _execute(program, context);
+            }
+        } break;
+
+        case IF_INJECTIVE_FUNCTION: {
+            InjectiveFunction & fun = pop_injective_function(program);
+            Ob & key = pop_ob(program, context);
+            Ob & val = pop_ob(program, context);
+            if (fun.find(key) == val) {
+                _execute(program, context);
+            }
+        } break;
+
+        case IF_BINARY_FUNCTION: {
+            BinaryFunction & fun = pop_binary_function(program);
+            Ob & lhs = pop_ob(program, context);
+            Ob & rhs = pop_ob(program, context);
+            Ob & val = pop_ob(program, context);
+            if (fun.find(lhs, rhs) == val) {
+                _execute(program, context);
+            }
+        } break;
+
+        case IF_SYMMETRIC_FUNCTION: {
+            SymmetricFunction & fun = pop_symmetric_function(program);
+            Ob & lhs = pop_ob(program, context);
+            Ob & rhs = pop_ob(program, context);
+            Ob & val = pop_ob(program, context);
+            if (fun.find(lhs, rhs) == val) {
+                _execute(program, context);
+            }
+        } break;
+
+        case LET_NULLARY_FUNCTION: {
+            NullaryFunction & fun = pop_nullary_function(program);
+            Ob & val = pop_ob(program, context);
+            val = fun.find();
+            POMAGMA_ASSERT1(val, "undefined");
+            _execute(program, context);
+        } break;
+
+        case LET_INJECTIVE_FUNCTION: {
+            InjectiveFunction & fun = pop_injective_function(program);
+            Ob & key = pop_ob(program, context);
+            Ob & val = pop_ob(program, context);
+            val = fun.find(key);
+            POMAGMA_ASSERT1(val, "undefined");
+            _execute(program, context);
+        } break;
+
+        case LET_BINARY_FUNCTION: {
+            BinaryFunction & fun = pop_binary_function(program);
+            Ob & lhs = pop_ob(program, context);
+            Ob & rhs = pop_ob(program, context);
+            Ob & val = pop_ob(program, context);
+            val = fun.find(lhs, rhs);
+            POMAGMA_ASSERT1(val, "undefined");
+            _execute(program, context);
+        } break;
+
+        case LET_SYMMETRIC_FUNCTION: {
+            SymmetricFunction & fun = pop_symmetric_function(program);
+            Ob & lhs = pop_ob(program, context);
+            Ob & rhs = pop_ob(program, context);
+            Ob & val = pop_ob(program, context);
+            val = fun.find(lhs, rhs);
+            POMAGMA_ASSERT1(val, "undefined");
+            _execute(program, context);
         } break;
 
         case ENSURE_EQUAL: {

@@ -129,7 +129,137 @@ def Iter_cpp(self, code, stack=None, poll=None):
     )
 
 
-# TODO injective function inverse need not be iterated
+@methodof(compiler.Iter, 'program')
+def Iter_program(self, program, stack=None, poll=None):
+    sets = []
+    for_ = 'FOR_ALL {val}'.format(val=self.var)
+
+    for test in self.tests:
+        set_var = '_'.join(
+            [test.name] + [a.var.name.rstrip('_') for a in test.args])
+        if test.arity == 'UnaryRelation':
+            (arg,) = test.args
+            for_ = 'FOR_UNARY_RELATION {rel} {val}'.format(
+                rel=test.name,
+                val=self.var)
+            intersect = 'INTERSECT_UNARY_RELATION {rel} {var}'.format(
+                rel=test.name,
+                var=set_var)
+            sets.append((set_var, intersect))
+        elif test.arity == 'BinaryRelation':
+            lhs, rhs = test.args
+            assert lhs != rhs, lhs
+            if self.var == lhs:
+                for_ = 'FOR_BINARY_RELATION_RHS {rel} {lhs} {rhs}'.format(
+                    rel=test.name,
+                    lhs=lhs,
+                    rhs=rhs)
+                intersect = 'INTERSECT_BINARY_RELATION_RHS {rhs}'.format(
+                    rhs=rhs)
+            else:
+                for_ = 'FOR_BINARY_RELATION_LHS {rel} {lhs} {rhs}'.format(
+                    rel=test.name,
+                    lhs=lhs,
+                    rhs=rhs)
+                intersect = 'INTERSECT_BINARY_RELATION_LHS {lhs}'.format(
+                    lhs=lhs)
+            sets.append((set_var, intersect))
+        else:
+            raise ValueError('invalid arity {}'.format(test.arity))
+
+    for var, expr in sorted(self.lets.iteritems()):
+        assert self.var in expr.args,\
+            '{} not in {}'.format(self.var, expr.args)
+        set_var = expr.var.name
+        if expr.arity == 'InjectiveFunction':
+            for_ = 'FOR_INJECTIVE_FUNCTION {fun} {key} {val}'.format(
+                fun=expr.name,
+                key=self.var,
+                val=var)
+            intersect = 'INTERSECT_INJECTIVE_FUNCTION {fun} {var}'.format(
+                fun=expr.name,
+                var=set_var)
+        elif expr.arity == 'BinaryFunction':
+            lhs, rhs = expr.args
+            assert lhs != rhs, lhs
+            if self.var == lhs:
+                for_ = \
+                    'FOR_BINARY_FUNCTION_RHS {fun} {lhs} {rhs} {val}'.format(
+                        fun=expr.name,
+                        lhs=lhs,
+                        rhs=rhs,
+                        val=expr.var.name)
+                intersect = \
+                    'INTERSECT_BINARY_FUNCTION_RHS {fun} {lhs} {rhs}'.format(
+                        fun=expr.name,
+                        lhs=set_var,
+                        rhs=rhs)
+            else:
+                for_ = \
+                    'FOR_BINARY_FUNCTION_LHS {fun} {lhs} {rhs} {val}'.format(
+                        fun=expr.name,
+                        lhs=lhs,
+                        rhs=rhs,
+                        val=expr.var.name)
+                intersect = \
+                    'INTERSECT_BINARY_FUNCTION_LHS {fun} {lhs} {rhs}'.format(
+                        fun=expr.name,
+                        lhs=lhs,
+                        rhs=set_var)
+        elif expr.arity == 'SymmetricFunction':
+            lhs, rhs = expr.args
+            assert lhs != rhs, lhs
+            for_ = 'FOR_SYMMETRIC_FUNCTION_RHS {fun} {lhs} {rhs} {val}'.format(
+                fun=expr.name,
+                lhs=lhs,
+                rhs=rhs,
+                val=expr.var.name)
+            intersect = \
+                'INTERSECT_SYMMETRIC_FUNCTION_RHS {fun} {lhs} {rhs}'.format(
+                    fun=expr.name,
+                    lhs=set_var,
+                    rhs=rhs)
+        else:
+            raise ValueError('invalid arity {}'.format(expr.arity))
+        sets.append((set_var, intersect))
+
+    if len(sets) > 1:
+        for_ = 'FOR_INTERSECTION_{count} {val}'.format(
+            count=len(sets),
+            val=self.var)
+        for set_var, intersect in sets:
+            program.append(intersect)
+            for_ += ' {var}'.format(var=set_var)
+
+    program.append(for_)
+    if poll:
+        program.append('IF_BLOCK {val}'.format(val=self.var))
+    for var, expr in sorted(self.lets.iteritems()):
+        arity = expr.arity
+        args = [a.name for a in expr.args]
+        if arity == 'InjectiveFunction':
+            line = 'LET_INJECTIVE_FUNCTION {fun} {key} {val}'.format(
+                fun=expr.name,
+                key=args[0],
+                val=var)
+        elif arity == 'BinaryFunction':
+            line = 'LET_BINARY_FUNCTION {fun} {lhs} {rhs} {val}'.format(
+                fun=expr.name,
+                lhs=args[0],
+                rhs=args[1],
+                val=var)
+        elif arity == 'SymmetricFunction':
+            line = 'LET_SYMMETRIC_FUNCTION {fun} {lhs} {rhs} {val}'.format(
+                fun=expr.name,
+                lhs=args[0],
+                rhs=args[1],
+                val=var)
+        else:
+            raise ValueError('invalid arity: {}'.format(arity))
+        program.append(line)
+    self.body.program(program, stack=self.stack)
+
+
 @methodof(compiler.IterInvInjective, 'cpp')
 def IterInvInjective_cpp(self, code, stack=None, poll=None):
     code(
@@ -141,6 +271,15 @@ def IterInvInjective_cpp(self, code, stack=None, poll=None):
         value=self.value,
     )
     self.body.cpp(code, poll=poll)
+
+
+@methodof(compiler.IterInvInjective, 'program')
+def IterInvInjective_program(self, program, stack=None, poll=None):
+    program.append('FOR_INJECTIVE_FUNCTION_INVERSE {fun} {key} {val}'.format(
+        fun=self.fun,
+        key=self.var,
+        val=self.value))
+    self.body.program(program, poll=poll)
 
 
 @methodof(compiler.IterInvBinary, 'cpp')
@@ -177,6 +316,19 @@ def IterInvBinary_cpp(self, code, stack=None, poll=None):
     )
 
 
+@methodof(compiler.IterInvBinary, 'program')
+def IterInvBinary_program(self, program, stack=None, poll=None):
+    program.append('FOR_BINARY_FUNCTION_VAL {fun} {lhs} {rhs} {val}'.format(
+        fun=self.fun,
+        lhs=self.var1,
+        rhs=self.var2,
+        val=self.value))
+    if poll:
+        print 'WARNING refusing to poll IterInvBinary'
+        # program.append('IF_BLOCK {val}'.format(val=self.var1))  # arbitrary
+    self.body.program(program)
+
+
 @methodof(compiler.IterInvBinaryRange, 'cpp')
 def IterInvBinaryRange_cpp(self, code, stack=None, poll=None):
     body = Code()
@@ -210,6 +362,25 @@ def IterInvBinaryRange_cpp(self, code, stack=None, poll=None):
     )
 
 
+@methodof(compiler.IterInvBinaryRange, 'program')
+def IterInvBinaryRange_program(self, program, stack=None, poll=None):
+    PARITY = ('LHS' if self.lhs_fixed else 'RHS')
+    ARITY = self.arity.replace('Function', '').upper()
+
+    line = 'FOR_{ARITY}_FUNCTION_{PARITY}_VAL {fun} {lhs} {rhs} {val}'.format(
+        ARITY=ARITY,
+        PARITY=PARITY,
+        fun=self.fun,
+        lhs=self.var1,
+        rhs=self.var2,
+        val=self.value)
+    program.append(line)
+    if poll:
+        print 'WARNING refusing to poll IterInvBinaryRange'
+        # program.append('IF_BLOCK {val}'.format(val=var))  # arbitrary
+    self.body.program(program)
+
+
 @methodof(compiler.Let, 'cpp')
 def Let_cpp(self, code, stack=None, poll=None):
     if stack and self in stack:
@@ -224,6 +395,38 @@ def Let_cpp(self, code, stack=None, poll=None):
             args=', '.join(map(str, self.expr.args)),
         )
         self.body.cpp(code, stack=stack, poll=poll)
+
+
+@methodof(compiler.Let, 'program')
+def Let_program(self, program, stack=None, poll=None):
+    if not (stack and self in stack):
+        arity = self.expr.arity
+        args = [arg.name for arg in self.expr.args]
+        if arity == 'NullaryFunction':
+            line = 'FOR_NULLARY_FUNCTION {fun} {val}'.format(
+                fun=self.expr.name,
+                val=self.var)
+        elif arity == 'InjectiveFunction':
+            line = 'FOR_INJECTIVE_FUNCTION {fun} {key} {val}'.format(
+                fun=self.expr.name,
+                key=args[0],
+                val=self.var)
+        elif arity == 'BinaryFunction':
+            line = 'FOR_BINARY_FUNCTION {fun} {lhs} {rhs} {val}'.format(
+                fun=self.expr.name,
+                lhs=args[0],
+                rhs=args[1],
+                val=self.var)
+        elif arity == 'SymmetricFunction':
+            line = 'FOR_SYMMETRIC_FUNCTION {fun} {lhs} {rhs} {val}'.format(
+                fun=self.expr.name,
+                lhs=args[0],
+                rhs=args[1],
+                val=self.var)
+        else:
+            raise ValueError('unknown arity: {}'.format(arity))
+        program.append(line)
+    self.body.program(program, stack=stack, poll=poll)
 
 
 @methodof(compiler.Test, 'cpp')
@@ -248,6 +451,51 @@ def Test_cpp(self, code, stack=None, poll=None):
             expr=expr,
         )
         self.body.cpp(code, stack=stack, poll=poll)
+
+
+@methodof(compiler.Test, 'program')
+def Test_program(self, program, stack=None, poll=None):
+    if not (stack and self in stack):
+        arity = self.expr.arity
+        args = [arg.name for arg in self.expr.args]
+        if self.expr.name == 'EQUAL':
+            line = 'IF_EQUAL {lhs} {rhs}'.format(
+                lhs=self.expr.args[0],
+                rhs=self.expr.args[1])
+        elif arity == 'UnaryRelation':
+            line = 'IF_UNARY_RELATION {rel} {key}'.format(
+                rel=self.expr.name,
+                key=args[0])
+        elif arity == 'BinaryRelation':
+            line = 'IF_BINARY_RELATION {rel} {lhs} {rhs}'.format(
+                rel=self.expr.name,
+                lhs=args[0],
+                rhs=args[1])
+        elif arity == 'NullaryFunction':
+            line = 'IF_NULLARY_FUNCTION {fun} {val}'.format(
+                fun=self.expr.name,
+                val=self.expr.var.name)
+        elif arity == 'InjectiveFunction':
+            line = 'IF_INJECTIVE_FUNCTION {fun} {key} {val}'.format(
+                run=self.expr.name,
+                key=args[0],
+                val=self.expr.var.name)
+        elif arity == 'BinaryFunction':
+            line = 'IF_BINARY_FUNCTION {fun} {lhs} {rhs} {val}'.format(
+                fun=self.expr.name,
+                lhs=args[0],
+                rhs=args[1],
+                val=self.expr.var.name)
+        elif arity == 'SymmetricFunction':
+            line = 'IF_SYMMETRIC_FUNCTION {fun} {lhs} {rhs} {val}'.format(
+                fun=self.expr.name,
+                lhs=args[0],
+                rhs=args[1],
+                val=self.expr.var.name)
+        else:
+            raise ValueError('unknown arity: {}'.format(arity))
+        program.append(line)
+    self.body.program(program, stack=stack, poll=poll)
 
 
 @methodof(compiler.Ensure, 'cpp')
@@ -294,6 +542,61 @@ def Ensure_cpp(self, code, stack=None, poll=None):
                 name2=rhs.name.lower(),
                 args=', '.join(map(str, lhs.args + rhs.args)),
             )
+
+
+@methodof(compiler.Ensure, 'program')
+def Ensure_program(self, program, stack=None, poll=None):
+    expr = self.expr
+    args = [arg if arg.args else arg.var for arg in expr.args]
+    if all(arg.is_var() for arg in args):
+
+        arity = self.expr.arity
+        if self.expr.name == 'EQUAL':
+            line = 'ENSURE_EQUAL {lhs} {rhs}'.format(
+                lhs=args[0],
+                rhs=args[1])
+        elif arity == 'UnaryRelation':
+            line = 'ENSURE_UNARY_RELATION {rel} {key}'.format(
+                rel=self.expr.name,
+                key=args[0])
+        elif arity == 'BinaryRelation':
+            line = 'ENSURE_BINARY_RELATION {rel} {lhs} {rhs}'.format(
+                rel=self.expr.name,
+                lhs=args[0],
+                rhs=args[1])
+        else:
+            raise ValueError('unknown arity: {}'.format(arity))
+
+    elif any(arg.is_var() for arg in args):
+        assert self.expr.name == 'EQUAL', self.expr.name
+
+        if args[0].is_var():
+            var, expr = args
+        else:
+            expr, var = args
+        args = [arg.var.name for arg in expr.args]
+        arity = expr.arity
+
+        op_code = 'ENSURE_{}'.format(arity.replace('Function', '').upper())
+        op_args = [self.expr.name] + args + [var.name]
+        line = ' '.join([op_code] + op_args)
+
+    else:
+        assert self.expr.name == 'EQUAL', self.expr.name
+
+        lhs, rhs = args
+        if (len(rhs.args), rhs.name) < (len(lhs.args), lhs.name):
+            lhs, rhs = rhs, lhs
+        op_code = 'ENSURE'
+        op_args = []
+        for xhs in [lhs, rhs]:
+            arity = xhs.arity
+            op_code += '_' + arity.replace('Function', '').upper()
+            op_args.append(xhs.name)
+            for arg in xhs.args:
+                op_args.append(arg.var.name)
+        line = ' '.join([op_code] + op_args)
+    program.append(line)
 
 
 @inputs(Code)
