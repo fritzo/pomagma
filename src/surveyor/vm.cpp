@@ -61,10 +61,30 @@ enum OpArgType {
     DO(ENSURE_EQUAL, ({OB, OB})) \
     DO(ENSURE_UNARY_RELATION, ({OB})) \
     DO(ENSURE_BINARY_RELATION, ({OB, OB})) \
+    DO(ENSURE_NULLARY_FUNCTION, ({NULLARY_FUNCTION, OB})) \
     DO(ENSURE_INJECTIVE_FUNCTION, ({INJECTIVE_FUNCTION, OB, OB})) \
     DO(ENSURE_BINARY_FUNCTION, ({BINARY_FUNCTION, OB, OB, OB})) \
     DO(ENSURE_SYMMETRIC_FUNCTION, ({SYMMETRIC_FUNCTION, OB, OB, OB})) \
-    DO(ENSURE_COMPOUND, ({OB}))
+    DO(ENSURE_NULLARY_NULLARY, ({\
+        NULLARY_FUNCTION, NULLARY_FUNCTION})) \
+    DO(ENSURE_NULLARY_INJECTIVE, ({\
+        NULLARY_FUNCTION, INJECTIVE_FUNCTION, OB})) \
+    DO(ENSURE_NULLARY_BINARY, ({\
+        NULLARY_FUNCTION, BINARY_FUNCTION, OB, OB})) \
+    DO(ENSURE_NULLARY_SYMMETRIC, ({\
+        NULLARY_FUNCTION, SYMMETRIC_FUNCTION, OB, OB})) \
+    DO(ENSURE_INJECTIVE_INJECTIVE, ({\
+        INJECTIVE_FUNCTION, OB, INJECTIVE_FUNCTION, OB})) \
+    DO(ENSURE_INJECTIVE_BINARY, ({\
+        INJECTIVE_FUNCTION, OB, BINARY_FUNCTION, OB, OB})) \
+    DO(ENSURE_INJECTIVE_SYMMETRIC, ({\
+        INJECTIVE_FUNCTION, OB, SYMMETRIC_FUNCTION, OB, OB})) \
+    DO(ENSURE_BINARY_BINARY, ({\
+        BINARY_FUNCTION, OB, OB, BINARY_FUNCTION, OB, OB})) \
+    DO(ENSURE_BINARY_SYMMETRIC, ({\
+        BINARY_FUNCTION, OB, OB, SYMMETRIC_FUNCTION, OB, OB})) \
+    DO(ENSURE_SYMMETRIC_SYMMETRIC, ({\
+        SYMMETRIC_FUNCTION, OB, OB, SYMMETRIC_FUNCTION, OB, OB}))
 
 enum OpCode : uint8_t
 {
@@ -486,8 +506,8 @@ void VirtualMachine::_execute (const Operation * program, Context * context)
         case FOR_NULLARY_FUNCTION: {
             NullaryFunction & fun = pop_nullary_function(args);
             Ob & val = pop_ob(args, context);
-            val = fun.find();
-            if (val) {
+            if (Ob found = fun.find()) {
+                val = found;
                 _execute(program + 1, context);
             }
         } break;
@@ -507,8 +527,8 @@ void VirtualMachine::_execute (const Operation * program, Context * context)
             InjectiveFunction & fun = pop_injective_function(args);
             Ob & key = pop_ob(args, context);
             Ob & val = pop_ob(args, context);
-            val = fun.find(key);
-            if (val) {
+            if (Ob found = fun.find(key)) {
+                val = found;
                 _execute(program + 1, context);
             }
         } break;
@@ -517,8 +537,8 @@ void VirtualMachine::_execute (const Operation * program, Context * context)
             InjectiveFunction & fun = pop_injective_function(args);
             Ob & key = pop_ob(args, context);
             Ob & val = pop_ob(args, context);
-            key = fun.inverse_find(val);
-            if (key) {
+            if (Ob found = fun.inverse_find(val)) {
+                key = found;
                 _execute(program + 1, context);
             }
         } break;
@@ -588,8 +608,8 @@ void VirtualMachine::_execute (const Operation * program, Context * context)
             Ob & lhs = pop_ob(args, context);
             Ob & rhs = pop_ob(args, context);
             Ob & val = pop_ob(args, context);
-            val = fun.find(lhs, rhs);
-            if (val) {
+            if (Ob found = fun.find(lhs, rhs)) {
+                val = found;
                 _execute(program + 1, context);
             }
         } break;
@@ -635,8 +655,8 @@ void VirtualMachine::_execute (const Operation * program, Context * context)
             Ob & lhs = pop_ob(args, context);
             Ob & rhs = pop_ob(args, context);
             Ob & val = pop_ob(args, context);
-            val = fun.find(lhs, rhs);
-            if (val) {
+            if (Ob found = fun.find(lhs, rhs)) {
+                val = found;
                 _execute(program + 1, context);
             }
         } break;
@@ -658,6 +678,12 @@ void VirtualMachine::_execute (const Operation * program, Context * context)
             Ob & lhs = pop_ob(args, context);
             Ob & rhs = pop_ob(args, context);
             rel.insert(lhs, rhs);
+        } break;
+
+        case ENSURE_NULLARY_FUNCTION: {
+            NullaryFunction & fun = pop_nullary_function(args);
+            Ob & val = pop_ob(args, context);
+            fun.insert(val);
         } break;
 
         case ENSURE_INJECTIVE_FUNCTION: {
@@ -683,14 +709,128 @@ void VirtualMachine::_execute (const Operation * program, Context * context)
             fun.insert(lhs, rhs, key);
         } break;
 
-        case ENSURE_COMPOUND: {
-            auto for_ensure1 = program + 1;
-            auto for_ensure2 = program + 3;
-            Ob & ob = pop_ob(args, context);
-            ob = 0;
-            _execute(for_ensure1, context);
-            if (not ob) {
-                _execute(for_ensure2, context);
+        case ENSURE_NULLARY_NULLARY: {
+            auto & fun1 = pop_nullary_function(args);
+            auto & fun2 = pop_nullary_function(args);
+            if (Ob val = fun1.find()) {
+                fun2.insert(val);
+            } else if (Ob val = fun2.find()) {
+                fun1.insert(val);
+            }
+        } break;
+
+        case ENSURE_NULLARY_INJECTIVE: {
+            auto & fun1 = pop_nullary_function(args);
+            auto & fun2 = pop_injective_function(args);
+            auto & key2 = pop_ob(args, context);
+            if (Ob val = fun1.find()) {
+                fun2.insert(key2, val);
+            } else if (Ob val = fun2.find(key2)) {
+                fun1.insert(val);
+            }
+        } break;
+
+        case ENSURE_NULLARY_BINARY: {
+            auto & fun1 = pop_nullary_function(args);
+            auto & fun2 = pop_binary_function(args);
+            auto & lhs2 = pop_ob(args, context);
+            auto & rhs2 = pop_ob(args, context);
+            if (Ob val = fun1.find()) {
+                fun2.insert(lhs2, rhs2, val);
+            } else if (Ob val = fun2.find(lhs2, rhs2)) {
+                fun1.insert(val);
+            }
+        } break;
+
+        case ENSURE_NULLARY_SYMMETRIC: {
+            auto & fun1 = pop_nullary_function(args);
+            auto & fun2 = pop_symmetric_function(args);
+            auto & lhs2 = pop_ob(args, context);
+            auto & rhs2 = pop_ob(args, context);
+            if (Ob val = fun1.find()) {
+                fun2.insert(lhs2, rhs2, val);
+            } else if (Ob val = fun2.find(lhs2, rhs2)) {
+                fun1.insert(val);
+            }
+        } break;
+
+        case ENSURE_INJECTIVE_INJECTIVE: {
+            auto & fun1 = pop_injective_function(args);
+            auto & key1 = pop_ob(args, context);
+            auto & fun2 = pop_injective_function(args);
+            auto & key2 = pop_ob(args, context);
+            if (Ob val = fun1.find(key1)) {
+                fun2.insert(key2, val);
+            } else if (Ob val = fun2.find(key2)) {
+                fun1.insert(key1, val);
+            }
+        } break;
+
+        case ENSURE_INJECTIVE_BINARY: {
+            auto & fun1 = pop_injective_function(args);
+            auto & key1 = pop_ob(args, context);
+            auto & fun2 = pop_binary_function(args);
+            auto & lhs2 = pop_ob(args, context);
+            auto & rhs2 = pop_ob(args, context);
+            if (Ob val = fun1.find(key1)) {
+                fun2.insert(lhs2, rhs2, val);
+            } else if (Ob val = fun2.find(lhs2, rhs2)) {
+                fun1.insert(key1, val);
+            }
+        } break;
+
+        case ENSURE_INJECTIVE_SYMMETRIC: {
+            auto & fun1 = pop_injective_function(args);
+            auto & key1 = pop_ob(args, context);
+            auto & fun2 = pop_symmetric_function(args);
+            auto & lhs2 = pop_ob(args, context);
+            auto & rhs2 = pop_ob(args, context);
+            if (Ob val = fun1.find(key1)) {
+                fun2.insert(lhs2, rhs2, val);
+            } else if (Ob val = fun2.find(lhs2, rhs2)) {
+                fun1.insert(key1, val);
+            }
+        } break;
+
+        case ENSURE_BINARY_BINARY: {
+            auto & fun1 = pop_binary_function(args);
+            auto & lhs1 = pop_ob(args, context);
+            auto & rhs1 = pop_ob(args, context);
+            auto & fun2 = pop_binary_function(args);
+            auto & lhs2 = pop_ob(args, context);
+            auto & rhs2 = pop_ob(args, context);
+            if (Ob val = fun1.find(lhs1, rhs1)) {
+                fun2.insert(lhs2, rhs2, val);
+            } else if (Ob val = fun2.find(lhs2, rhs2)) {
+                fun1.insert(lhs1, rhs1, val);
+            }
+        } break;
+
+        case ENSURE_BINARY_SYMMETRIC: {
+            auto & fun1 = pop_binary_function(args);
+            auto & lhs1 = pop_ob(args, context);
+            auto & rhs1 = pop_ob(args, context);
+            auto & fun2 = pop_symmetric_function(args);
+            auto & lhs2 = pop_ob(args, context);
+            auto & rhs2 = pop_ob(args, context);
+            if (Ob val = fun1.find(lhs1, rhs1)) {
+                fun2.insert(lhs2, rhs2, val);
+            } else if (Ob val = fun2.find(lhs2, rhs2)) {
+                fun1.insert(lhs1, rhs1, val);
+            }
+        } break;
+
+        case ENSURE_SYMMETRIC_SYMMETRIC: {
+            auto & fun1 = pop_symmetric_function(args);
+            auto & lhs1 = pop_ob(args, context);
+            auto & rhs1 = pop_ob(args, context);
+            auto & fun2 = pop_symmetric_function(args);
+            auto & lhs2 = pop_ob(args, context);
+            auto & rhs2 = pop_ob(args, context);
+            if (Ob val = fun1.find(lhs1, rhs1)) {
+                fun2.insert(lhs2, rhs2, val);
+            } else if (Ob val = fun2.find(lhs2, rhs2)) {
+                fun1.insert(lhs1, rhs1, val);
             }
         } break;
     }
