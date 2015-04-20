@@ -9,25 +9,14 @@ namespace pomagma
 namespace vm
 {
 
-struct Operation;
-
 enum OpCode : uint8_t;
-
-struct Operation
-{
-    uint8_t data[8];
-
-    OpCode op_code () const { return static_cast<OpCode>(data[0]); }
-    const uint8_t * args () const { return data + 1; }
-    uint8_t * args () { return data + 1; }
-} __attribute__ ((aligned (8)));
 
 class Parser
 {
 public:
 
     Parser (Signature & signature);
-    std::vector<std::vector<Operation>> parse (std::istream & infile) const;
+    std::vector<std::vector<uint8_t>> parse (std::istream & infile) const;
 
 private:
 
@@ -38,8 +27,6 @@ private:
     std::unordered_map<std::string, uint8_t> m_injective_functions;
     std::unordered_map<std::string, uint8_t> m_binary_functions;
     std::unordered_map<std::string, uint8_t> m_symmetric_functions;
-
-    mutable std::unordered_map<std::string, uint8_t> m_obs;
 
     class SymbolTable;
 };
@@ -64,7 +51,9 @@ public:
         }
     };
 
-    void execute (const Operation * program, Context * context)
+    typedef const uint8_t * Program;
+
+    void execute (Program program, Context * context)
     {
         if (POMAGMA_DEBUG_LEVEL) {
             context->clear();
@@ -74,7 +63,7 @@ public:
 
 private:
 
-    void _execute (const Operation * program, Context * context);
+    void _execute (Program program, Context * context);
 
     UnaryRelation * m_unary_relations[256];
     BinaryRelation * m_binary_relations[256];
@@ -84,52 +73,56 @@ private:
     SymmetricFunction * m_symmetric_functions[256];
     Carrier & m_carrier;
 
-    static uint8_t pop_arg (const uint8_t * & args)
+    static uint8_t pop_arg (Program & program)
     {
-        POMAGMA_ASSERT5(not is_aligned(args, 8), "pop_arg'd past end of args");
-        return *args++;
+        return *program++;
     }
 
-    static Ob & pop_ob (const uint8_t * & args, Context * context)
+    static OpCode pop_op_code (Program & program)
     {
-        return context->obs[pop_arg(args)];
+        return static_cast<OpCode>(pop_arg(program));
+    }
+
+    static Ob & pop_ob (Program & program, Context * context)
+    {
+        return context->obs[pop_arg(program)];
     }
 
     static const std::atomic<Word> * & pop_set (
-            const uint8_t * & args,
+            Program & program,
             Context * context)
     {
-        return context->sets[pop_arg(args)];
+        return context->sets[pop_arg(program)];
     }
 
-    UnaryRelation & pop_unary_relation (const uint8_t * & args)
+    UnaryRelation & pop_unary_relation (Program & program)
     {
-        return * m_unary_relations[pop_arg(args)];
+        return * m_unary_relations[pop_arg(program)];
     }
 
-    BinaryRelation & pop_binary_relation (const uint8_t * & args)
+    BinaryRelation & pop_binary_relation (Program & program)
     {
-        return * m_binary_relations[pop_arg(args)];
+        return * m_binary_relations[pop_arg(program)];
     }
 
-    NullaryFunction & pop_nullary_function (const uint8_t * & args)
+    NullaryFunction & pop_nullary_function (Program & program)
     {
-        return * m_nullary_functions[pop_arg(args)];
+        return * m_nullary_functions[pop_arg(program)];
     }
 
-    InjectiveFunction & pop_injective_function (const uint8_t * & args)
+    InjectiveFunction & pop_injective_function (Program & program)
     {
-        return * m_injective_functions[pop_arg(args)];
+        return * m_injective_functions[pop_arg(program)];
     }
 
-    BinaryFunction & pop_binary_function (const uint8_t * & args)
+    BinaryFunction & pop_binary_function (Program & program)
     {
-        return * m_binary_functions[pop_arg(args)];
+        return * m_binary_functions[pop_arg(program)];
     }
 
-    SymmetricFunction & pop_symmetric_function (const uint8_t * & args)
+    SymmetricFunction & pop_symmetric_function (Program & program)
     {
-        return * m_symmetric_functions[pop_arg(args)];
+        return * m_symmetric_functions[pop_arg(program)];
     }
 
     Carrier & carrier () { return m_carrier; }
