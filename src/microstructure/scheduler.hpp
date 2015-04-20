@@ -174,7 +174,7 @@ void execute (const BinaryFunctionTask & task);
 void execute (const SymmetricFunctionTask & task);
 void execute (const AssumeTask & task);
 void execute (const CleanupTask & task);
-void execute (const SampleTask & task, rng_t & rng);
+void execute (const SampleTask & task);
 
 void insert_nullary_functions ();
 void assume_core_facts (const char * theory_file);

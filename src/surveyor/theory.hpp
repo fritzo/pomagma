@@ -18,7 +18,7 @@ namespace pomagma
 
 Structure structure;
 Signature & signature = structure.signature();
-Sampler sampler(signature);
+Sampler sampler(signature, Sampler::random_seed());
 
 void load_structure (const std::string & filename) { structure.load(filename); }
 void dump_structure (const std::string & filename) { structure.dump(filename); }
@@ -137,10 +137,10 @@ bool sample_tasks_try_pop (SampleTask &)
     return carrier.item_count() < carrier.item_dim();
 }
 
-void execute (const SampleTask &, rng_t & rng)
+void execute (const SampleTask &)
 {
     Sampler::Policy policy(carrier);
-    sampler.try_insert_random(rng, policy);
+    sampler.try_insert_random(policy);
 }
 
 //----------------------------------------------------------------------------

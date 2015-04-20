@@ -41,6 +41,7 @@ std::map<std::string, size_t> assume_facts (
                     ++pos_count;
                 }
             } else {
+                POMAGMA_DEBUG("ignored " << expression);
                 ++ignored_count;
             }
         } else if (auto * rel = structure.signature().unary_relation(type)) {
@@ -52,6 +53,7 @@ std::map<std::string, size_t> assume_facts (
                     ++(type[0] == 'N' ? neg_count : pos_count);
                 }
             } else {
+                POMAGMA_DEBUG("ignored " << expression);
                 ++ignored_count;
             }
         } else if (auto * rel = structure.signature().binary_relation(type)) {
@@ -64,6 +66,7 @@ std::map<std::string, size_t> assume_facts (
                     ++(type[0] == 'N' ? neg_count : pos_count);
                 }
             } else {
+                POMAGMA_DEBUG("ignored " << expression);
                 ++ignored_count;
             }
         } else {

@@ -18,10 +18,10 @@ inline Ob Sampler::Policy::sample (Ob val)
             POMAGMA_ASSERT_LT(m_size, m_capacity);
             contained.one();
             m_size += 1;
-            throw ObInsertedException(val);
+            throw SamplerReturnException(val);
         }
     } else {
-        throw ObRejectedException();
+        throw SamplerRetryException();
     }
 }
 
