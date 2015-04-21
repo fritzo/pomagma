@@ -369,7 +369,7 @@ def compile(*infiles, **kwargs):
     Compile rules -> C++.
     Optional keyword arguments:
         cpp_out=$POMAGMA_ROOT/src/surveyor/<STEM>.theory.cpp
-        theory_out=$POMAGMA_ROOT/src/theory/<STEM>.compiled
+        theory_out=$POMAGMA_ROOT/src/theory/<STEM>.facts
         extensional=true
     '''
     stem = infiles[-1].split('.')[0]
@@ -378,7 +378,7 @@ def compile(*infiles, **kwargs):
         os.path.join(SRC, 'surveyor', '{0}.theory.cpp'.format(stem)))
     theory_out = kwargs.get(
         'theory_out',
-        os.path.join(SRC, 'theory', '{0}.compiled'.format(stem)))
+        os.path.join(SRC, 'theory', '{0}.facts'.format(stem)))
     is_extensional = parse_bool(kwargs.get('extensional', 'true'))
 
     # if up_to_date(infiles, [cpp_out, theory_out]):
@@ -444,7 +444,7 @@ def batch_compile():
             for t in spec['theories']
         )
         cpp_out = os.path.join(SRC, 'surveyor', '{}.theory.cpp'.format(name))
-        theory_out = os.path.join(SRC, 'theory', '{}.compiled'.format(name))
+        theory_out = os.path.join(SRC, 'theory', '{}.facts'.format(name))
         if not up_to_date(infiles + [theories_json], [cpp_out, theory_out]):
             params.append({
                 'args': infiles,

@@ -4,9 +4,9 @@ from pomagma.compiler.util import find_theories
 
 
 def _test_compile(filename):
-    main.compile(filename, cpp_out='temp.cpp', theory_out='temp.compiled')
+    main.compile(filename, cpp_out='temp.cpp', theory_out='temp.facts')
     os.remove('temp.cpp')
-    os.remove('temp.compiled')
+    os.remove('temp.facts')
 
 
 def test_compile_rules():

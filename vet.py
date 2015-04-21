@@ -57,18 +57,17 @@ def write_vetted_hashes(hashes):
 def vet(*filenames):
     '''
     Save hashes of some or all current file versions.
-    filenames beginning with '-' will be removed.
     '''
     hashes = read_vetted_hashes()
     if filenames:
         for filename in filenames:
-            if filename.startswith('-'):
-                filename = filename[1:]
-                print 'Removing', filename
-                del hashes[filename]
-            elif filename in hashes:
-                print 'Updating', filename
-                hashes[filename] = hash_file(filename)
+            if filename in hashes:
+                if os.path.exists(filename):
+                    print 'Updating', filename
+                    hashes[filename] = hash_file(filename)
+                else:
+                    print 'Removing', filename
+                    del hashes[filename]
             else:
                 print 'Adding', filename
                 hashes[filename] = hash_file(filename)

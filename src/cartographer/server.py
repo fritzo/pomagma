@@ -17,7 +17,7 @@ class Server(object):
                 'cartographer.socket'))
         theory_file = os.path.join(
             pomagma.util.THEORY,
-            '{}.compiled'.format(theory))
+            '{}.facts'.format(theory))
         language_file = os.path.join(
             pomagma.util.LANGUAGE,
             '{}.language'.format(theory))

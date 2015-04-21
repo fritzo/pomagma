@@ -11,7 +11,7 @@ def init(theory, chart_out, size=None, **opts):
     pomagma.util.log_call(
         os.path.join(BIN, '{}.init'.format(theory)),
         pomagma.util.ensure_abspath(chart_out),
-        os.path.join(pomagma.util.THEORY, '{}.compiled'.format(theory)),
+        os.path.join(pomagma.util.THEORY, '{}.facts'.format(theory)),
         os.path.join(pomagma.util.LANGUAGE, '{}.language'.format(theory)),
         pomagma.util.CPU_COUNT,
         size=size,
@@ -25,7 +25,7 @@ def survey(theory, chart_in, chart_out, size, **opts):
         os.path.join(BIN, '{}.survey'.format(theory)),
         pomagma.util.ensure_abspath(chart_in),
         pomagma.util.ensure_abspath(chart_out),
-        os.path.join(pomagma.util.THEORY, '{}.compiled'.format(theory)),
+        os.path.join(pomagma.util.THEORY, '{}.facts'.format(theory)),
         os.path.join(pomagma.util.LANGUAGE, '{}.language'.format(theory)),
         pomagma.util.CPU_COUNT,
         size=size,
