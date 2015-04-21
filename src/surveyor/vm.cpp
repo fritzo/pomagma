@@ -215,7 +215,7 @@ std::vector<std::vector<uint8_t>> Parser::parse (std::istream & infile) const
     std::string word;
 
     for (int lineno = 0; std::getline(infile, line); ++lineno) {
-        if (line[0] == '#') {
+        if (line.size() and line[0] == '#') {
             continue;
         }
         if (line.empty()) {
@@ -308,6 +308,54 @@ void VirtualMachine::load (Signature & signature)
     declare(signature.injective_functions(), m_injective_functions);
     declare(signature.binary_functions(), m_binary_functions);
     declare(signature.symmetric_functions(), m_symmetric_functions);
+}
+
+inline const UnaryRelation * VirtualMachine::unary_relation (
+        uint8_t index) const
+{
+    auto ptr = m_unary_relations[index];
+    POMAGMA_ASSERT(ptr, "missing unary_relation " << index);
+    return ptr;
+}
+
+inline const BinaryRelation * VirtualMachine::binary_relation (
+        uint8_t index) const
+{
+    auto ptr = m_binary_relations[index];
+    POMAGMA_ASSERT(ptr, "missing binary_relation " << index);
+    return ptr;
+}
+
+inline const NullaryFunction * VirtualMachine::nullary_function (
+        uint8_t index) const
+{
+    auto ptr = m_nullary_functions[index];
+    POMAGMA_ASSERT(ptr, "missing nullary_function " << index);
+    return ptr;
+}
+
+inline const InjectiveFunction * VirtualMachine::injective_function (
+        uint8_t index) const
+{
+    auto ptr = m_injective_functions[index];
+    POMAGMA_ASSERT(ptr, "missing injective_function " << index);
+    return ptr;
+}
+
+inline const BinaryFunction * VirtualMachine::binary_function (
+        uint8_t index) const
+{
+    auto ptr = m_binary_functions[index];
+    POMAGMA_ASSERT(ptr, "missing binary_function " << index);
+    return ptr;
+}
+
+inline const SymmetricFunction * VirtualMachine::symmetric_function (
+        uint8_t index) const
+{
+    auto ptr = m_symmetric_functions[index];
+    POMAGMA_ASSERT(ptr, "missing symmetric_function " << index);
+    return ptr;
 }
 
 void VirtualMachine::_execute (Program program, Context * context) const
@@ -672,7 +720,7 @@ void VirtualMachine::_execute (Program program, Context * context) const
 
         case IF_BLOCK: {
             Ob & ob = pop_ob(program, context);
-            if (ob / 64 == context->block) {
+            if (ob / block_size == context->block) {
                 _execute(program, context);
             }
         } break;

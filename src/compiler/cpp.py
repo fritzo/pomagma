@@ -646,10 +646,13 @@ def write_signature(code, symbols):
             NAME=name)
     code(
         '''
-        void declare_signature ()
+        void load_signature (const std::string &)
         {
             $body
         }
+
+        // use codegen instead of the virtual machine
+        void load_programs (const std::string &) {}
         ''',
         body=wrapindent(body),
     ).newline()
@@ -1341,3 +1344,19 @@ def write_programs(rules):
     write_full_programs(programs, sequents)
     write_event_programs(programs, sequents)
     return programs
+
+
+def write_symbols(rules, facts):
+    sequents = set(rules) if rules else set()
+    facts = set(facts) if facts else set()
+    symbols = get_symbols_used_in(sequents, facts)
+    symbols = [
+        (arity, name)
+        for arity, names in symbols.iteritems()
+        if (arity in signature.FUNCTION_ARITIES or
+            arity in signature.RELATION_ARITIES)
+        for name in names
+        if name != 'EQUAL'
+    ]
+    symbols.sort(key=lambda (arity, name): (signature.arity_sort(arity), name))
+    return symbols

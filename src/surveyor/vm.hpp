@@ -5,11 +5,14 @@
 #include <pomagma/platform/aligned_alloc.hpp>
 #include <pomagma/microstructure/util.hpp>
 #include <pomagma/microstructure/structure_impl.hpp>
+#include "cleanup.hpp"
 
 namespace pomagma
 {
 namespace vm
 {
+
+enum { block_size = 64 };
 
 typedef std::vector<uint8_t> Listing;
 
@@ -86,47 +89,12 @@ public:
         _execute(listing.data(), context);
     }
 
-    const UnaryRelation * unary_relation (uint8_t index) const
-    {
-        auto ptr = m_unary_relations[index];
-        POMAGMA_ASSERT(ptr, "missing unary_relation " << index);
-        return ptr;
-    }
-
-    const BinaryRelation * binary_relation (uint8_t index) const
-    {
-        auto ptr = m_binary_relations[index];
-        POMAGMA_ASSERT(ptr, "missing binary_relation " << index);
-        return ptr;
-    }
-
-    const NullaryFunction * nullary_function (uint8_t index) const
-    {
-        auto ptr = m_nullary_functions[index];
-        POMAGMA_ASSERT(ptr, "missing nullary_function " << index);
-        return ptr;
-    }
-
-    const InjectiveFunction * injective_function (uint8_t index) const
-    {
-        auto ptr = m_injective_functions[index];
-        POMAGMA_ASSERT(ptr, "missing injective_function " << index);
-        return ptr;
-    }
-
-    const BinaryFunction * binary_function (uint8_t index) const
-    {
-        auto ptr = m_binary_functions[index];
-        POMAGMA_ASSERT(ptr, "missing binary_function " << index);
-        return ptr;
-    }
-
-    const SymmetricFunction * symmetric_function (uint8_t index) const
-    {
-        auto ptr = m_symmetric_functions[index];
-        POMAGMA_ASSERT(ptr, "missing symmetric_function " << index);
-        return ptr;
-    }
+    const UnaryRelation * unary_relation (uint8_t index) const;
+    const BinaryRelation * binary_relation (uint8_t index) const;
+    const NullaryFunction * nullary_function (uint8_t index) const;
+    const InjectiveFunction * injective_function (uint8_t index) const;
+    const BinaryFunction * binary_function (uint8_t index) const;
+    const SymmetricFunction * symmetric_function (uint8_t index) const;
 
 private:
 
@@ -232,7 +200,13 @@ class Agenda
 {
 public:
 
-    void load (Signature & signature) { m_virtual_machine.load(signature); }
+    Agenda () : m_block_count(0) {}
+
+    void load (Signature & signature)
+    {
+        m_virtual_machine.load(signature);
+        m_block_count = signature.carrier()->item_dim() / block_size + 1;
+    }
 
     void add_listing (const Listing & listing);
 
@@ -303,25 +277,29 @@ public:
         }
     }
 
-    void execute_cleanup (size_t index, size_t block_count) const
+    void execute_cleanup (size_t index) const
     {
-        POMAGMA_ASSERT_LT(0, block_count);
+        POMAGMA_ASSERT_LT(0, m_block_count);
         const size_t small_count = m_cleanup_small.size();
         if (index < small_count) {
             const Listing & listing = m_cleanup_small[index];
+
+            CleanupProfiler::Block profiler_block(index);
             m_virtual_machine.execute(listing);
         } else {
             index -= small_count;
-            size_t block = index % block_count;
-            index = index / block_count;
-            const Listing & listing = m_cleanup_small[index];
+            size_t block = index % m_block_count;
+            index = index / m_block_count;
+            const Listing & listing = m_cleanup_large[index];
+
+            CleanupProfiler::Block profiler_block(small_count + index);
             m_virtual_machine.execute_block(listing, block);
         }
     }
 
-    size_t count_cleanup (size_t block_count) const
+    size_t count_cleanup () const
     {
-        return m_cleanup_small.size() + m_cleanup_large.size() * block_count;
+        return m_cleanup_small.size() + m_cleanup_large.size() * m_block_count;
     }
 
 private:
@@ -342,6 +320,7 @@ private:
 
     Listings m_cleanup_small;
     Listings m_cleanup_large;
+    size_t m_block_count;
 };
 
 } // namespace vm

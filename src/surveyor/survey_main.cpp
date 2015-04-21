@@ -4,10 +4,11 @@
 namespace pomagma
 {
 
+void load_signature (const std::string & filename);
 void load_structure (const std::string & filename);
 void dump_structure (const std::string & filename);
+void load_programs (const std::string & filename);
 void load_language (const std::string & filename);
-void declare_signature ();
 void validate_consistent ();
 void validate_all ();
 void log_stats ();
@@ -18,12 +19,13 @@ void log_stats ();
 int main (int argc, char ** argv)
 {
     pomagma::Log::Context log_context(argc, argv);
+    const char * executable = *argv++;
 
-    if (argc != 6) {
+    if (argc != 8) {
         std::cout
             << "Usage: "
-                << pomagma::get_filename(argv[0])
-                << " structure_in structure_out theory language threads" << "\n"
+                << pomagma::get_filename(executable)
+                << " structure_in structure_out facts language threads" << "\n"
             << "Environment Variables:\n"
             << "  POMAGMA_SIZE = " << pomagma::DEFAULT_ITEM_DIM << "\n"
             << "  POMAGMA_LOG_FILE = " << pomagma::DEFAULT_LOG_FILE << "\n"
@@ -33,15 +35,18 @@ int main (int argc, char ** argv)
         exit(1);
     }
 
-    const char * structure_in = argv[1];
-    const char * structure_out = argv[2];
-    const char * theory_file = argv[3];
-    const char * language_file = argv[4];
-    const size_t thread_count = atoi(argv[5]);
+    const char * structure_in = *argv++;
+    const char * structure_out = *argv++;
+    const char * signature_file = *argv++;
+    const char * facts_file = *argv++;
+    const char * programs_file = *argv++;
+    const char * language_file = *argv++;
+    const size_t thread_count = atoi(*argv++);
 
     // set params
     pomagma::Scheduler::set_thread_count(thread_count);
-    pomagma::declare_signature();
+    pomagma::load_signature(signature_file);
+    pomagma::load_programs(programs_file);
     pomagma::load_language(language_file);
     pomagma::load_structure(structure_in);
     if (POMAGMA_DEBUG_LEVEL > 1) {
@@ -50,7 +55,7 @@ int main (int argc, char ** argv)
 
     // initialize
     pomagma::cleanup_tasks_push_all();
-    pomagma::Scheduler::initialize(theory_file);
+    pomagma::Scheduler::initialize(facts_file);
     if (POMAGMA_DEBUG_LEVEL > 1) {
         pomagma::validate_all();
     } else {
