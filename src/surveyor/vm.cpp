@@ -23,12 +23,13 @@ enum OpArgType {
 };
 
 #define OP_CODES(DO) \
-    /* DO(GIVEN_UNARY_RELATION, ({UNARY_RELATION, OB})) */ \
-    /* DO(GIVEN_BINARY_RELATION, ({BINARY_RELATION, OB, OB})) */ \
-    /* DO(GIVEN_NULLARY_FUNCTION, ({NULLARY_FUNCTION, OB})) */ \
-    /* DO(GIVEN_INJECTIVE_FUNCTION, ({INJECTIVE_FUNCTION, OB, OB})) */ \
-    /* DO(GIVEN_BINARY_FUNCTION, ({BINARY_FUNCTION, OB, OB, OB})) */ \
-    /* DO(GIVEN_SYMMETRIC_FUNCTION, ({SYMMETRIC_FUNCTION, OB, OB, OB})) */ \
+    DO(GIVEN_EXISTS, ({OB})) \
+    DO(GIVEN_UNARY_RELATION, ({UNARY_RELATION, OB})) \
+    DO(GIVEN_BINARY_RELATION, ({BINARY_RELATION, OB, OB})) \
+    DO(GIVEN_NULLARY_FUNCTION, ({NULLARY_FUNCTION, OB})) \
+    DO(GIVEN_INJECTIVE_FUNCTION, ({INJECTIVE_FUNCTION, OB, OB})) \
+    DO(GIVEN_BINARY_FUNCTION, ({BINARY_FUNCTION, OB, OB, OB})) \
+    DO(GIVEN_SYMMETRIC_FUNCTION, ({SYMMETRIC_FUNCTION, OB, OB, OB})) \
     DO(INTERSECT_UNARY_RELATION, ({UNARY_RELATION, SET})) \
     DO(INTERSECT_BINARY_RELATION_LHS, ({BINARY_RELATION, OB, SET})) \
     DO(INTERSECT_BINARY_RELATION_RHS, ({BINARY_RELATION, SET, OB})) \
@@ -321,9 +322,52 @@ VirtualMachine::VirtualMachine (Signature & signature)
     declare(signature.symmetric_functions(), m_symmetric_functions);
 }
 
-void VirtualMachine::_execute (Program program, Context * context)
+void VirtualMachine::_execute (Program program, Context * context) const
 {
     switch (pop_op_code(program)) {
+
+        case GIVEN_EXISTS: {
+            pop_ob(program, context);
+            _execute(program, context);
+        } break;
+
+        case GIVEN_UNARY_RELATION: {
+            pop_unary_relation(program);
+            pop_ob(program, context);
+            _execute(program, context);
+        } break;
+
+        case GIVEN_BINARY_RELATION: {
+            pop_binary_relation(program);
+            pop_ob(program, context);
+            pop_ob(program, context);
+            _execute(program, context);
+        } break;
+
+        case GIVEN_NULLARY_FUNCTION: {
+            pop_nullary_function(program);
+            _execute(program, context);
+        } break;
+
+        case GIVEN_INJECTIVE_FUNCTION: {
+            pop_injective_function(program);
+            pop_ob(program, context);
+            _execute(program, context);
+        } break;
+
+        case GIVEN_BINARY_FUNCTION: {
+            pop_binary_function(program);
+            pop_ob(program, context);
+            pop_ob(program, context);
+            _execute(program, context);
+        } break;
+
+        case GIVEN_SYMMETRIC_FUNCTION: {
+            pop_symmetric_function(program);
+            pop_ob(program, context);
+            pop_ob(program, context);
+            _execute(program, context);
+        } break;
 
         case INTERSECT_UNARY_RELATION: {
             UnaryRelation & rel = pop_unary_relation(program);
@@ -915,6 +959,62 @@ void VirtualMachine::_execute (Program program, Context * context)
             } else if (Ob val = fun2.find(lhs2, rhs2)) {
                 fun1.insert(lhs1, rhs1, val);
             }
+        } break;
+    }
+}
+
+//----------------------------------------------------------------------------
+// Agenda
+
+void Agenda::add_listing (const Listing & listing)
+{
+    POMAGMA_ASSERT(not listing.empty(), "empty listing");
+    OpCode op_code = static_cast<OpCode>(listing[0]);
+
+    size_t skip = 1 + g_op_code_arities[op_code].size();
+    Listing truncated(listing.begin() + skip, listing.end());
+
+    switch (op_code) {
+        case GIVEN_EXISTS: {
+            m_exists.push_back(truncated);
+        } break;
+
+        case GIVEN_UNARY_RELATION: {
+            auto ptr = m_virtual_machine.unary_relation(listing[1]);
+            m_unary_relations[ptr].push_back(truncated);
+        } break;
+
+        case GIVEN_BINARY_RELATION: {
+            auto ptr = m_virtual_machine.binary_relation(listing[1]);
+            m_binary_relations[ptr].push_back(truncated);
+        } break;
+
+        case GIVEN_NULLARY_FUNCTION: {
+            auto ptr = m_virtual_machine.nullary_function(listing[1]);
+            m_nullary_functions[ptr].push_back(truncated);
+        } break;
+
+        case GIVEN_INJECTIVE_FUNCTION: {
+            auto ptr = m_virtual_machine.injective_function(listing[1]);
+            m_injective_functions[ptr].push_back(truncated);
+        } break;
+
+        case GIVEN_BINARY_FUNCTION: {
+            auto ptr = m_virtual_machine.binary_function(listing[1]);
+            m_binary_functions[ptr].push_back(truncated);
+        } break;
+
+        case GIVEN_SYMMETRIC_FUNCTION: {
+            auto ptr = m_virtual_machine.symmetric_function(listing[1]);
+            m_symmetric_functions[ptr].push_back(truncated);
+        } break;
+
+        case FOR_BLOCK: {
+            m_cleanup_large.push_back(truncated);
+        } break;
+
+        default: {
+            m_cleanup_small.push_back(listing);
         } break;
     }
 }
