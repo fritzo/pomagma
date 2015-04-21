@@ -10,10 +10,8 @@ ROOT = os.path.dirname(REPO)
 TEMP = os.path.join(ROOT, '{}-temp'.format(os.path.basename(REPO)))
 DIFFTOOL = os.environ.get('POMAGMA_DIFFTOOL', os.environ.get('EDITOR', 'meld'))
 DIFFIGNORE = [
-    '*.facts',
     '*.rules',
     '*.theory',
-    # '*.compiled',
     '*.pyc',
 ]
 

@@ -552,15 +552,15 @@ def Ensure_program(self, program, stack=None, poll=None):
 
         arity = self.expr.arity
         if self.expr.name == 'EQUAL':
-            line = 'ENSURE_EQUAL {lhs} {rhs}'.format(
+            line = 'INFER_EQUAL {lhs} {rhs}'.format(
                 lhs=args[0],
                 rhs=args[1])
         elif arity == 'UnaryRelation':
-            line = 'ENSURE_UNARY_RELATION {rel} {key}'.format(
+            line = 'INFER_UNARY_RELATION {rel} {key}'.format(
                 rel=self.expr.name,
                 key=args[0])
         elif arity == 'BinaryRelation':
-            line = 'ENSURE_BINARY_RELATION {rel} {lhs} {rhs}'.format(
+            line = 'INFER_BINARY_RELATION {rel} {lhs} {rhs}'.format(
                 rel=self.expr.name,
                 lhs=args[0],
                 rhs=args[1])
@@ -577,8 +577,8 @@ def Ensure_program(self, program, stack=None, poll=None):
         args = [arg.var.name for arg in expr.args]
         arity = expr.arity
 
-        op_code = 'ENSURE_{}'.format(arity.replace('Function', '').upper())
-        op_args = [self.expr.name] + args + [var.name]
+        op_code = 'INFER_{}'.format(arity.replace('Function', '').upper())
+        op_args = [expr.name] + args + [var.name]
         line = ' '.join([op_code] + op_args)
 
     else:
@@ -587,7 +587,7 @@ def Ensure_program(self, program, stack=None, poll=None):
         lhs, rhs = args
         if (len(rhs.args), rhs.name) < (len(lhs.args), lhs.name):
             lhs, rhs = rhs, lhs
-        op_code = 'ENSURE'
+        op_code = 'INFER'
         op_args = []
         for xhs in [lhs, rhs]:
             arity = xhs.arity
@@ -1006,6 +1006,26 @@ def write_full_tasks(code, sequents):
     ).newline()
 
 
+def write_full_programs(programs, sequents):
+    full_tasks = []
+    for sequent in sequents:
+        for cost, seq, strategy in compiler.compile_full(sequent):
+            full_tasks.append((cost, sequent, seq, strategy))
+    full_tasks.sort()
+    min_split_cost = 1.5  # above which we split the outermost for loop
+    for i, (cost, sequent, seq, strategy) in enumerate(full_tasks):
+        poll = (cost >= min_split_cost)
+        programs += [
+            '',
+            '# cost = {}'.format(cost),
+            '# using {}'.format(sequent),
+            '# infer {}'.format(seq),
+        ]
+        if poll:
+            programs.append('FOR_BLOCK')
+        strategy.program(programs, poll=poll)
+
+
 @inputs(Code)
 def write_event_tasks(code, sequents):
 
@@ -1020,7 +1040,7 @@ def write_event_tasks(code, sequents):
     event_tasks = {}
     for sequent in sequents:
         for event in compiler.get_events(sequent):
-            name = '<variable>' if event.is_var() else event.name
+            name = 'Variable' if event.is_var() else event.name
             strategies = sorted(compiler.compile_given(sequent, event))
             cost = add_costs(c for (c, _, _) in strategies)
             tasks = event_tasks.setdefault(name, [])
@@ -1030,7 +1050,7 @@ def write_event_tasks(code, sequents):
         special = {
             'LESS': 'PositiveOrder',
             'NLESS': 'NegativeOrder',
-            '<variable>': 'Exists',
+            'Variable': 'Exists',
         }
         return special.get(name, signature.get_arity(name))
 
@@ -1104,7 +1124,7 @@ def write_event_tasks(code, sequents):
                             $subsubbody
                         }
                         ''',
-                        cost=cost,
+                        cost=subcost,
                         subsubbody=wrapindent(subsubbody),
                         event=event,
                         sequent=sequent,
@@ -1118,13 +1138,13 @@ def write_event_tasks(code, sequents):
                             $subsubbody
                         }
                         ''',
-                        cost=cost,
+                        cost=subcost,
                         subsubbody=wrapindent(subsubbody),
                         event=event,
                         sequent=sequent,
                     )
 
-            if eventname in ['LESS', 'NLESS', '<variable>']:
+            if eventname in ['LESS', 'NLESS', 'Variable']:
                 body(str(subbody)).newline()
             else:
                 body(
@@ -1159,6 +1179,94 @@ def write_event_tasks(code, sequents):
                 ''',
                 arity=arity,
             ).newline()
+
+
+def write_event_programs(programs, sequents):
+
+    event_tasks = {}
+    for sequent in sequents:
+        for event in compiler.get_events(sequent):
+            name = 'Variable' if event.is_var() else event.name
+            strategies = sorted(compiler.compile_given(sequent, event))
+            cost = add_costs(c for (c, _, _) in strategies)
+            tasks = event_tasks.setdefault(name, [])
+            tasks.append((cost, event, sequent, strategies))
+
+    group_tasks = {}
+    for name, tasks in event_tasks.iteritems():
+        groupname = signature.get_arity(name)
+        group_tasks.setdefault(groupname, {})[name] = sorted(tasks)
+
+    group_tasks = sorted(group_tasks.iteritems())
+    for groupname, group in group_tasks:
+        group = sorted(group.iteritems())
+        arity = signature.get_arity(group[0][0])
+
+        for eventname, tasks in group:
+            total_cost = add_costs(c for (c, _, _, _) in tasks)
+            programs += [
+                '',
+                '# ' + '-' * 76,
+                '# given {}'.format(eventname),
+                '# total cost = {}'.format(total_cost),
+            ]
+
+            for _, event, sequent, strategies in tasks:
+                if arity == 'Variable':
+                    given = 'GIVEN_EXISTS {var}'.format(var=event.name)
+                elif arity == 'UnaryRelation':
+                    given = 'GIVEN_UNARY_RELATION {rel} {key}'.format(
+                        rel=event.name,
+                        key=event.args[0])
+                elif arity == 'BinaryRelation':
+                    given = 'GIVEN_BINARY_RELATION {rel} {lhs} {rhs}'.format(
+                        rel=event.name,
+                        lhs=event.args[0],
+                        rhs=event.args[1])
+                elif arity == 'NullaryFunction':
+                    given = 'GIVEN_NULLARY_FUNCTION {fun} {val}'\
+                        .format(
+                            fun=event.name,
+                            val=event.var.name)
+                elif arity == 'InjectiveFunction':
+                    given = 'GIVEN_INJECTIVE_FUNCTION {fun} {key} {val}'\
+                        .format(
+                            fun=event.name,
+                            key=event.args[0],
+                            val=event.var.name)
+                elif arity == 'BinaryFunction':
+                    given = 'GIVEN_BINARY_FUNCTION {fun} {lhs} {rhs} {val}'\
+                        .format(
+                            fun=event.name,
+                            lhs=event.args[0],
+                            rhs=event.args[1],
+                            val=event.var.name)
+                elif arity == 'SymmetricFunction':
+                    given = 'GIVEN_SYMMETRIC_FUNCTION {fun} {lhs} {rhs} {val}'\
+                        .format(
+                            fun=event.name,
+                            lhs=event.args[0],
+                            rhs=event.args[1],
+                            val=event.var.name)
+                else:
+                    raise ValueError('invalid arity: {}'.format(arity))
+                header = [given]
+
+                if len(event.args) == 2 and event.args[0] == event.args[1]:
+                    header.append('IF_EQUAL {lhs} {rhs}'.format(
+                        lhs=event.args[0],
+                        rhs=event.args[1]))
+
+                for cost, seq, strategy in strategies:
+                    programs += [
+                        '',
+                        '# cost = {}'.format(cost),
+                        '# given {}'.format(event),
+                        '# using {}'.format(sequent),
+                        '# infer {}'.format(seq),
+                        ]
+                    programs += header
+                    strategy.program(programs)
 
 
 def get_symbols_used_in(sequents, exprs):
@@ -1218,3 +1326,11 @@ def write_theory(code, rules=None, facts=None):
     )
 
     return code
+
+
+def write_programs(rules):
+    sequents = set(rules)
+    programs = []
+    write_full_programs(programs, sequents)
+    write_event_programs(programs, sequents)
+    return programs

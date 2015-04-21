@@ -12,7 +12,8 @@ VETTED = os.path.join(REPO, 'vetted_hashes.csv')
 FILES_TO_VET = [
     'src/surveyor/*.theory.cpp',
     'src/theory/*.tasks',
-    'src/theory/*.compiled',
+    'src/theory/*.facts',
+    'src/theory/*.programs',
 ]
 
 
@@ -56,24 +57,20 @@ def write_vetted_hashes(hashes):
 @parsable.command
 def vet(*filenames):
     '''
-    Save hashes of some or all current file versions.
+    Save hashes of current file versions.
     '''
     hashes = read_vetted_hashes()
-    if filenames:
-        for filename in filenames:
-            if filename in hashes:
-                if os.path.exists(filename):
-                    print 'Updating', filename
-                    hashes[filename] = hash_file(filename)
-                else:
-                    print 'Removing', filename
-                    del hashes[filename]
-            else:
-                print 'Adding', filename
+    for filename in filenames:
+        if filename in hashes:
+            if os.path.exists(filename):
+                print 'Updating', filename
                 hashes[filename] = hash_file(filename)
-    else:
-        print 'Vetting all files'
-        hashes = hash_files(hashes)
+            else:
+                print 'Removing', filename
+                del hashes[filename]
+        else:
+            print 'Adding', filename
+            hashes[filename] = hash_file(filename)
     write_vetted_hashes(hashes)
 
 

@@ -75,31 +75,31 @@ enum OpArgType {
     DO(LET_INJECTIVE_FUNCTION, ({INJECTIVE_FUNCTION, OB, OB})) \
     DO(LET_BINARY_FUNCTION, ({BINARY_FUNCTION, OB, OB, OB})) \
     DO(LET_SYMMETRIC_FUNCTION, ({SYMMETRIC_FUNCTION, OB, OB, OB})) \
-    DO(ENSURE_EQUAL, ({OB, OB})) \
-    DO(ENSURE_UNARY_RELATION, ({OB})) \
-    DO(ENSURE_BINARY_RELATION, ({OB, OB})) \
-    DO(ENSURE_NULLARY_FUNCTION, ({NULLARY_FUNCTION, OB})) \
-    DO(ENSURE_INJECTIVE_FUNCTION, ({INJECTIVE_FUNCTION, OB, OB})) \
-    DO(ENSURE_BINARY_FUNCTION, ({BINARY_FUNCTION, OB, OB, OB})) \
-    DO(ENSURE_SYMMETRIC_FUNCTION, ({SYMMETRIC_FUNCTION, OB, OB, OB})) \
-    DO(ENSURE_NULLARY_NULLARY, ({NULLARY_FUNCTION, NULLARY_FUNCTION})) \
-    DO(ENSURE_NULLARY_INJECTIVE, \
+    DO(INFER_EQUAL, ({OB, OB})) \
+    DO(INFER_UNARY_RELATION, ({OB})) \
+    DO(INFER_BINARY_RELATION, ({OB, OB})) \
+    DO(INFER_NULLARY_FUNCTION, ({NULLARY_FUNCTION, OB})) \
+    DO(INFER_INJECTIVE_FUNCTION, ({INJECTIVE_FUNCTION, OB, OB})) \
+    DO(INFER_BINARY_FUNCTION, ({BINARY_FUNCTION, OB, OB, OB})) \
+    DO(INFER_SYMMETRIC_FUNCTION, ({SYMMETRIC_FUNCTION, OB, OB, OB})) \
+    DO(INFER_NULLARY_NULLARY, ({NULLARY_FUNCTION, NULLARY_FUNCTION})) \
+    DO(INFER_NULLARY_INJECTIVE, \
         ({NULLARY_FUNCTION, INJECTIVE_FUNCTION, OB})) \
-    DO(ENSURE_NULLARY_BINARY, \
+    DO(INFER_NULLARY_BINARY, \
         ({NULLARY_FUNCTION, BINARY_FUNCTION, OB, OB})) \
-    DO(ENSURE_NULLARY_SYMMETRIC, \
+    DO(INFER_NULLARY_SYMMETRIC, \
         ({NULLARY_FUNCTION, SYMMETRIC_FUNCTION, OB, OB})) \
-    DO(ENSURE_INJECTIVE_INJECTIVE, \
+    DO(INFER_INJECTIVE_INJECTIVE, \
         ({INJECTIVE_FUNCTION, OB, INJECTIVE_FUNCTION, OB})) \
-    DO(ENSURE_INJECTIVE_BINARY, \
+    DO(INFER_INJECTIVE_BINARY, \
         ({INJECTIVE_FUNCTION, OB, BINARY_FUNCTION, OB, OB})) \
-    DO(ENSURE_INJECTIVE_SYMMETRIC, \
+    DO(INFER_INJECTIVE_SYMMETRIC, \
         ({INJECTIVE_FUNCTION, OB, SYMMETRIC_FUNCTION, OB, OB})) \
-    DO(ENSURE_BINARY_BINARY, \
+    DO(INFER_BINARY_BINARY, \
         ({BINARY_FUNCTION, OB, OB, BINARY_FUNCTION, OB, OB})) \
-    DO(ENSURE_BINARY_SYMMETRIC, \
+    DO(INFER_BINARY_SYMMETRIC, \
         ({BINARY_FUNCTION, OB, OB, SYMMETRIC_FUNCTION, OB, OB})) \
-    DO(ENSURE_SYMMETRIC_SYMMETRIC, \
+    DO(INFER_SYMMETRIC_SYMMETRIC, \
         ({SYMMETRIC_FUNCTION, OB, OB, SYMMETRIC_FUNCTION, OB, OB}))
 
 enum OpCode : uint8_t
@@ -796,39 +796,39 @@ void VirtualMachine::_execute (Program program, Context * context) const
             _execute(program, context);
         } break;
 
-        case ENSURE_EQUAL: {
+        case INFER_EQUAL: {
             Ob & lhs = pop_ob(program, context);
             Ob & rhs = pop_ob(program, context);
             carrier().ensure_equal(lhs, rhs);
         } break;
 
-        case ENSURE_UNARY_RELATION: {
+        case INFER_UNARY_RELATION: {
             UnaryRelation & rel = pop_unary_relation(program);
             Ob & key = pop_ob(program, context);
             rel.insert(key);
         } break;
 
-        case ENSURE_BINARY_RELATION: {
+        case INFER_BINARY_RELATION: {
             BinaryRelation & rel = pop_binary_relation(program);
             Ob & lhs = pop_ob(program, context);
             Ob & rhs = pop_ob(program, context);
             rel.insert(lhs, rhs);
         } break;
 
-        case ENSURE_NULLARY_FUNCTION: {
+        case INFER_NULLARY_FUNCTION: {
             NullaryFunction & fun = pop_nullary_function(program);
             Ob & val = pop_ob(program, context);
             fun.insert(val);
         } break;
 
-        case ENSURE_INJECTIVE_FUNCTION: {
+        case INFER_INJECTIVE_FUNCTION: {
             InjectiveFunction & fun = pop_injective_function(program);
             Ob & key = pop_ob(program, context);
             Ob & val = pop_ob(program, context);
             fun.insert(key, val);
         } break;
 
-        case ENSURE_BINARY_FUNCTION: {
+        case INFER_BINARY_FUNCTION: {
             BinaryFunction & fun = pop_binary_function(program);
             Ob & lhs = pop_ob(program, context);
             Ob & rhs = pop_ob(program, context);
@@ -836,7 +836,7 @@ void VirtualMachine::_execute (Program program, Context * context) const
             fun.insert(lhs, rhs, val);
         } break;
 
-        case ENSURE_SYMMETRIC_FUNCTION: {
+        case INFER_SYMMETRIC_FUNCTION: {
             SymmetricFunction & fun = pop_symmetric_function(program);
             Ob & lhs = pop_ob(program, context);
             Ob & rhs = pop_ob(program, context);
@@ -844,7 +844,7 @@ void VirtualMachine::_execute (Program program, Context * context) const
             fun.insert(lhs, rhs, key);
         } break;
 
-        case ENSURE_NULLARY_NULLARY: {
+        case INFER_NULLARY_NULLARY: {
             auto & fun1 = pop_nullary_function(program);
             auto & fun2 = pop_nullary_function(program);
             if (Ob val = fun1.find()) {
@@ -854,7 +854,7 @@ void VirtualMachine::_execute (Program program, Context * context) const
             }
         } break;
 
-        case ENSURE_NULLARY_INJECTIVE: {
+        case INFER_NULLARY_INJECTIVE: {
             auto & fun1 = pop_nullary_function(program);
             auto & fun2 = pop_injective_function(program);
             auto & key2 = pop_ob(program, context);
@@ -865,7 +865,7 @@ void VirtualMachine::_execute (Program program, Context * context) const
             }
         } break;
 
-        case ENSURE_NULLARY_BINARY: {
+        case INFER_NULLARY_BINARY: {
             auto & fun1 = pop_nullary_function(program);
             auto & fun2 = pop_binary_function(program);
             auto & lhs2 = pop_ob(program, context);
@@ -877,7 +877,7 @@ void VirtualMachine::_execute (Program program, Context * context) const
             }
         } break;
 
-        case ENSURE_NULLARY_SYMMETRIC: {
+        case INFER_NULLARY_SYMMETRIC: {
             auto & fun1 = pop_nullary_function(program);
             auto & fun2 = pop_symmetric_function(program);
             auto & lhs2 = pop_ob(program, context);
@@ -889,7 +889,7 @@ void VirtualMachine::_execute (Program program, Context * context) const
             }
         } break;
 
-        case ENSURE_INJECTIVE_INJECTIVE: {
+        case INFER_INJECTIVE_INJECTIVE: {
             auto & fun1 = pop_injective_function(program);
             auto & key1 = pop_ob(program, context);
             auto & fun2 = pop_injective_function(program);
@@ -901,7 +901,7 @@ void VirtualMachine::_execute (Program program, Context * context) const
             }
         } break;
 
-        case ENSURE_INJECTIVE_BINARY: {
+        case INFER_INJECTIVE_BINARY: {
             auto & fun1 = pop_injective_function(program);
             auto & key1 = pop_ob(program, context);
             auto & fun2 = pop_binary_function(program);
@@ -914,7 +914,7 @@ void VirtualMachine::_execute (Program program, Context * context) const
             }
         } break;
 
-        case ENSURE_INJECTIVE_SYMMETRIC: {
+        case INFER_INJECTIVE_SYMMETRIC: {
             auto & fun1 = pop_injective_function(program);
             auto & key1 = pop_ob(program, context);
             auto & fun2 = pop_symmetric_function(program);
@@ -927,7 +927,7 @@ void VirtualMachine::_execute (Program program, Context * context) const
             }
         } break;
 
-        case ENSURE_BINARY_BINARY: {
+        case INFER_BINARY_BINARY: {
             auto & fun1 = pop_binary_function(program);
             auto & lhs1 = pop_ob(program, context);
             auto & rhs1 = pop_ob(program, context);
@@ -941,7 +941,7 @@ void VirtualMachine::_execute (Program program, Context * context) const
             }
         } break;
 
-        case ENSURE_BINARY_SYMMETRIC: {
+        case INFER_BINARY_SYMMETRIC: {
             auto & fun1 = pop_binary_function(program);
             auto & lhs1 = pop_ob(program, context);
             auto & rhs1 = pop_ob(program, context);
@@ -955,7 +955,7 @@ void VirtualMachine::_execute (Program program, Context * context) const
             }
         } break;
 
-        case ENSURE_SYMMETRIC_SYMMETRIC: {
+        case INFER_SYMMETRIC_SYMMETRIC: {
             auto & fun1 = pop_symmetric_function(program);
             auto & lhs1 = pop_ob(program, context);
             auto & rhs1 = pop_ob(program, context);
