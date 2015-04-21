@@ -1212,6 +1212,14 @@ def write_event_programs(programs, sequents):
             ]
 
             for _, event, sequent, strategies in tasks:
+                diagonal = (
+                    len(event.args) == 2 and event.args[0] == event.args[1])
+                if diagonal:
+                    lhs = event.args[0]
+                    assert lhs.arity == 'Variable'
+                    rhs = Expression.make(lhs.name + '_')
+                    event = Expression.make(event.name, lhs, rhs)
+
                 if arity == 'Variable':
                     given = 'GIVEN_EXISTS {var}'.format(var=event.name)
                 elif arity == 'UnaryRelation':
@@ -1252,7 +1260,7 @@ def write_event_programs(programs, sequents):
                     raise ValueError('invalid arity: {}'.format(arity))
                 header = [given]
 
-                if len(event.args) == 2 and event.args[0] == event.args[1]:
+                if diagonal:
                     header.append('IF_EQUAL {lhs} {rhs}'.format(
                         lhs=event.args[0],
                         rhs=event.args[1]))
@@ -1261,7 +1269,6 @@ def write_event_programs(programs, sequents):
                     programs += [
                         '',
                         '# cost = {}'.format(cost),
-                        '# given {}'.format(event),
                         '# using {}'.format(sequent),
                         '# infer {}'.format(seq),
                         ]

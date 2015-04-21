@@ -12,7 +12,8 @@ namespace vm
 //----------------------------------------------------------------------------
 // OpCode
 
-enum OpArgType {
+enum OpArgType : uint8_t
+{
     OB,
     SET,
     UNARY_RELATION,
@@ -164,21 +165,20 @@ public:
 
 template<class Table>
 static void declare (
+        OpArgType arity,
         const std::unordered_map<std::string, Table *> & pointers,
-        std::unordered_map<std::string, uint8_t> & vm_pointers)
+        std::map<std::pair<OpArgType, std::string>, uint8_t> & symbols)
 {
     POMAGMA_ASSERT(
         pointers.size() <= 256,
         "too many " << demangle(typeid(Table).name()) << " symbols: "
         "expected <= 256, actual = " << pointers.size());
 
-    vm_pointers.clear();
-
     std::map<std::string, Table *> sorted;
     sorted.insert(pointers.begin(), pointers.end());
     uint8_t vm_pointer = 0;
     for (auto pair : sorted) {
-        vm_pointers[pair.first] = vm_pointer++;
+        symbols[std::make_pair(arity, pair.first)] = vm_pointer++;
     }
 }
 
@@ -188,12 +188,13 @@ Parser::Parser (Signature & signature)
         m_op_codes[g_op_code_names[op_code]] = static_cast<OpCode>(op_code);
     }
 
-    declare(signature.unary_relations(), m_unary_relations);
-    declare(signature.binary_relations(), m_binary_relations);
-    declare(signature.nullary_functions(), m_nullary_functions);
-    declare(signature.injective_functions(), m_injective_functions);
-    declare(signature.binary_functions(), m_binary_functions);
-    declare(signature.symmetric_functions(), m_symmetric_functions);
+    m_constants.clear();
+    declare(UNARY_RELATION, signature.unary_relations(), m_constants);
+    declare(BINARY_RELATION, signature.binary_relations(), m_constants);
+    declare(NULLARY_FUNCTION, signature.nullary_functions(), m_constants);
+    declare(INJECTIVE_FUNCTION, signature.injective_functions(), m_constants);
+    declare(BINARY_FUNCTION, signature.binary_functions(), m_constants);
+    declare(SYMMETRIC_FUNCTION, signature.symmetric_functions(), m_constants);
 }
 
 std::vector<std::vector<uint8_t>> Parser::parse_file (
@@ -247,36 +248,15 @@ std::vector<std::vector<uint8_t>> Parser::parse (std::istream & infile) const
 
             uint8_t arg = 0xff;
             switch (arg_type) {
-                case OB: {
-                    arg = obs(word);
-                } break;
+                case OB: { arg = obs(word); } break;
+                case SET: { arg = sets(word); } break;
 
-                case SET: {
-                    arg = sets(word);
-                } break;
-
-                case UNARY_RELATION: {
-                    arg = m_unary_relations.find(word)->second;
-                } break;
-
-                case BINARY_RELATION: {
-                    arg = m_binary_relations.find(word)->second;
-                } break;
-
-                case NULLARY_FUNCTION: {
-                    arg = m_injective_functions.find(word)->second;
-                } break;
-
-                case INJECTIVE_FUNCTION: {
-                    arg = m_injective_functions.find(word)->second;
-                } break;
-
-                case BINARY_FUNCTION: {
-                    arg = m_binary_functions.find(word)->second;
-                } break;
-
-                case SYMMETRIC_FUNCTION: {
-                    arg = m_symmetric_functions.find(word)->second;
+                default: {
+                    auto i = m_constants.find(std::make_pair(arg_type, word));
+                    POMAGMA_ASSERT(
+                        i != m_constants.end(),
+                        "unknown constant: " << word);
+                    arg = i->second;
                 } break;
             }
             program.push_back(arg);

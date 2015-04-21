@@ -1,5 +1,6 @@
 #pragma once
 
+#include <map>
 #include <unordered_map>
 #include <pomagma/platform/aligned_alloc.hpp>
 #include <pomagma/microstructure/util.hpp>
@@ -13,6 +14,7 @@ namespace vm
 typedef std::vector<uint8_t> Listing;
 
 enum OpCode : uint8_t;
+enum OpArgType : uint8_t;
 
 //----------------------------------------------------------------------------
 // Parser
@@ -27,13 +29,8 @@ public:
 
 private:
 
-    std::unordered_map<std::string, OpCode> m_op_codes;
-    std::unordered_map<std::string, uint8_t> m_unary_relations;
-    std::unordered_map<std::string, uint8_t> m_binary_relations;
-    std::unordered_map<std::string, uint8_t> m_nullary_functions;
-    std::unordered_map<std::string, uint8_t> m_injective_functions;
-    std::unordered_map<std::string, uint8_t> m_binary_functions;
-    std::unordered_map<std::string, uint8_t> m_symmetric_functions;
+    std::map<std::string, OpCode> m_op_codes;
+    std::map<std::pair<OpArgType, std::string>, uint8_t> m_constants;
 
     class SymbolTable;
 };
