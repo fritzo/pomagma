@@ -2,7 +2,8 @@
 
 #include <unordered_map>
 #include <pomagma/platform/aligned_alloc.hpp>
-#include "theory.hpp"
+#include <pomagma/microstructure/util.hpp>
+#include <pomagma/microstructure/structure_impl.hpp>
 
 namespace pomagma
 {
@@ -22,6 +23,7 @@ public:
 
     Parser (Signature & signature);
     std::vector<Listing> parse (std::istream & infile) const;
+    std::vector<Listing> parse_file (const std::string & filename) const;
 
 private:
 
@@ -43,7 +45,12 @@ class VirtualMachine
 {
 public:
 
-    VirtualMachine (Signature & signature);
+    VirtualMachine () : m_carrier(nullptr)
+    {
+        POMAGMA_ASSERT(is_aligned(this, 64), "VirtualMachine is misaligned");
+    }
+
+    void load (Signature & signature);
 
     void execute (const Listing & listing) const
     {
@@ -206,8 +213,8 @@ private:
         return * m_symmetric_functions[pop_arg(program)];
     }
 
-    Carrier & carrier () const { return m_carrier; }
-    const DenseSet & support () const { return m_carrier.support(); }
+    Carrier & carrier () const { return * m_carrier; }
+    const DenseSet & support () const { return m_carrier->support(); }
     size_t item_dim () const { return support().item_dim(); }
     size_t word_dim () const { return support().word_dim(); }
 
@@ -217,7 +224,7 @@ private:
     InjectiveFunction * m_injective_functions[256];
     BinaryFunction * m_binary_functions[256];
     SymmetricFunction * m_symmetric_functions[256];
-    Carrier & m_carrier;
+    Carrier * m_carrier;
 
 } __attribute__ ((aligned (64)));
 
@@ -228,7 +235,7 @@ class Agenda
 {
 public:
 
-    Agenda (Signature & signature) : m_virtual_machine(signature) {}
+    void load (Signature & signature) { m_virtual_machine.load(signature); }
 
     void add_listing (const Listing & listing);
 

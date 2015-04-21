@@ -1,14 +1,14 @@
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
+add_library(pomagma_surveyor SHARED vm.cpp)
 
 set(POMAGMA_SURVEYOR_LIBS
 	pomagma_microstructure
 	pomagma_platform_concurrent
 	pomagma_language
+	pomagma_surveyor
 	${POMAGMA_CONCURRENT_LIBS}
 )
-
-add_library(pomagma_surveyor SHARED vm.cpp)
 
 function(make_surveyor arg)
 	add_library(pomagma_surveyor_${arg} SHARED ${arg}.theory.cpp)

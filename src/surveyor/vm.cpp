@@ -1,6 +1,7 @@
 #include <map>
 #include <typeinfo>
 #include <sstream>
+#include <fstream>
 #include "vm.hpp"
 
 namespace pomagma
@@ -195,6 +196,14 @@ Parser::Parser (Signature & signature)
     declare(signature.symmetric_functions(), m_symmetric_functions);
 }
 
+std::vector<std::vector<uint8_t>> Parser::parse_file (
+        const std::string & filename) const
+{
+    std::ifstream infile(filename, std::ifstream::in | std::ifstream::binary);
+    POMAGMA_ASSERT(infile.is_open(), "failed to open file: " << filename);
+    return parse(infile);
+}
+
 std::vector<std::vector<uint8_t>> Parser::parse (std::istream & infile) const
 {
     std::vector<std::vector<uint8_t>> programs;
@@ -309,10 +318,9 @@ static void declare (
     }
 }
 
-VirtualMachine::VirtualMachine (Signature & signature)
-    : m_carrier(* signature.carrier())
+void VirtualMachine::load (Signature & signature)
 {
-    POMAGMA_ASSERT(is_aligned(this, 64), "VirtualMachine is misaligned");
+    m_carrier = signature.carrier();
 
     declare(signature.unary_relations(), m_unary_relations);
     declare(signature.binary_relations(), m_binary_relations);
