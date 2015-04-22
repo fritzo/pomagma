@@ -1,7 +1,6 @@
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
 add_library(pomagma_surveyor SHARED
-       	vm.cpp
 	cleanup.cpp)
 
 set(POMAGMA_SURVEYOR_LIBS
@@ -12,7 +11,9 @@ set(POMAGMA_SURVEYOR_LIBS
 	${POMAGMA_CONCURRENT_LIBS}
 )
 
-add_library(pomagma_surveyor_vm SHARED theory.cpp)
+add_library(pomagma_surveyor_vm SHARED
+       	vm.cpp
+       	theory.cpp)
 add_executable(init init_main.cpp)
 target_link_libraries(init
 	pomagma_surveyor_vm

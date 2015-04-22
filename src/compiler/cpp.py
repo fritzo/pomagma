@@ -215,16 +215,17 @@ def Iter_program(self, program, stack=None, poll=None):
         elif expr.arity == 'SymmetricFunction':
             lhs, rhs = expr.args
             assert lhs != rhs, lhs
-            for_ = 'FOR_SYMMETRIC_FUNCTION_RHS {fun} {lhs} {rhs} {val}'.format(
+            fixed = rhs if self.var == lhs else lhs
+            for_ = 'FOR_SYMMETRIC_FUNCTION_LHS {fun} {lhs} {rhs} {val}'.format(
                 fun=expr.name,
-                lhs=lhs,
-                rhs=rhs,
+                lhs=fixed,
+                rhs=self.var,
                 val=expr.var.name)
             intersect = \
-                'INTERSECT_SYMMETRIC_FUNCTION_RHS {fun} {lhs} {rhs}'.format(
+                'INTERSECT_SYMMETRIC_FUNCTION_LHS {fun} {lhs} {rhs}'.format(
                     fun=expr.name,
-                    lhs=set_var,
-                    rhs=rhs)
+                    lhs=fixed,
+                    rhs=set_var)
         else:
             raise ValueError('invalid arity {}'.format(expr.arity))
         sets.append((set_var, intersect))

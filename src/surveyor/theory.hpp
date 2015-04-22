@@ -6,7 +6,6 @@
 #include <pomagma/microstructure/structure_impl.hpp>
 #include <pomagma/microstructure/scheduler.hpp>
 #include "insert_parser.hpp"
-#include "vm.hpp"
 #include "cleanup.hpp"
 #include <atomic>
 #include <thread>

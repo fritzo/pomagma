@@ -277,29 +277,38 @@ public:
         }
     }
 
-    void execute_cleanup (size_t index) const
+    void execute_cleanup (unsigned long index) const
     {
         POMAGMA_ASSERT_LT(0, m_block_count);
-        const size_t small_count = m_cleanup_small.size();
+        const unsigned long small_count = m_cleanup_small.size();
         if (index < small_count) {
             const Listing & listing = m_cleanup_small[index];
 
+            POMAGMA_DEBUG("executing cleanup task " << index);
             CleanupProfiler::Block profiler_block(index);
             m_virtual_machine.execute(listing);
         } else {
             index -= small_count;
-            size_t block = index % m_block_count;
+            unsigned long block = index % m_block_count;
             index = index / m_block_count;
             const Listing & listing = m_cleanup_large[index];
 
+            POMAGMA_DEBUG(
+                "executing cleanup task " << (small_count + index) <<
+                ", block " << block << " / " << m_block_count);
             CleanupProfiler::Block profiler_block(small_count + index);
             m_virtual_machine.execute_block(listing, block);
         }
     }
 
-    size_t count_cleanup () const
+    unsigned long cleanup_task_count () const
     {
         return m_cleanup_small.size() + m_cleanup_large.size() * m_block_count;
+    }
+
+    unsigned long cleanup_type_count () const
+    {
+        return m_cleanup_small.size() + m_cleanup_large.size();
     }
 
 private:

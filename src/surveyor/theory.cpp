@@ -1,4 +1,5 @@
 #include "theory.hpp"
+#include "vm.hpp"
 
 namespace pomagma
 {
@@ -62,6 +63,7 @@ void load_programs (const std::string & filename)
     for (const auto & listing : listings) {
         agenda.add_listing(listing);
     }
+    CleanupProfiler::init(agenda.cleanup_type_count());
 }
 
 
@@ -147,27 +149,12 @@ void execute (const AssumeTask & task)
 //----------------------------------------------------------------------------
 // cleanup tasks
 
-const size_t g_cleanup_type_count = 109;
-const size_t g_cleanup_block_count =
-    carrier.item_dim() / 64 + 1;
-const size_t g_cleanup_task_count =
-    41 +
-    (109 - 41) * g_cleanup_block_count;
 std::atomic<unsigned long> g_cleanup_type(0);
 std::atomic<unsigned long> g_cleanup_remaining(0);
-CleanupProfiler g_cleanup_profiler(g_cleanup_type_count);
 
-inline unsigned long next_cleanup_type (const unsigned long & type)
+void cleanup_tasks_push_all ()
 {
-    unsigned long next = type < 41 * g_cleanup_block_count
-                              ? type + g_cleanup_block_count
-                              : type + 1;
-    return next % (g_cleanup_type_count * g_cleanup_block_count);
-}
-
-void cleanup_tasks_push_all()
-{
-    g_cleanup_remaining.store(g_cleanup_task_count);
+    g_cleanup_remaining.store(agenda.cleanup_task_count());
 }
 
 bool cleanup_tasks_try_pop (CleanupTask & task)
@@ -177,15 +164,15 @@ bool cleanup_tasks_try_pop (CleanupTask & task)
         remaining, remaining - 1))
     {
         if (remaining == 0) {
+            CleanupProfiler::cleanup();
             return false;
         }
     }
 
-    // is this absolutely correct?
-
+    const unsigned long type_count = agenda.cleanup_task_count();
     unsigned long type = 0;
     while (not g_cleanup_type.compare_exchange_weak(
-        type, next_cleanup_type(type)))
+        type, (type + 1) % type_count))
     {
     }
 
@@ -195,15 +182,7 @@ bool cleanup_tasks_try_pop (CleanupTask & task)
 
 void execute (const CleanupTask & task)
 {
-    // total cost = 3.17105001836
-    const unsigned long type = task.type / g_cleanup_block_count;
-    const unsigned long block = task.type % g_cleanup_block_count;
-    POMAGMA_DEBUG(
-        "executing cleanup task"
-        " type " << (1 + type) << "/" << g_cleanup_type_count <<
-        " block " << (1 + block) << "/" << g_cleanup_block_count);
-
-    TODO("execute cleanup tasks");
+    agenda.execute_cleanup(task.type);
 }
 
 //----------------------------------------------------------------------------

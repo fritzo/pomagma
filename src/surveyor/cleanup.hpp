@@ -31,13 +31,13 @@ public:
         }
     };
 
-    CleanupProfiler (unsigned long task_count)
+    static void init (unsigned long task_count)
     {
         s_counts.resize(task_count);
         s_elapsed.resize(task_count);
     }
 
-    void cleanup ()
+    static void cleanup ()
     {
         unsigned long task_count = s_counts.size();
         POMAGMA_INFO("Task Id\tCount\tElapsed sec");
@@ -48,6 +48,9 @@ public:
                 std::setw(16) << (s_elapsed[i].load() * 1e-6));
         }
     }
+
+    // DEPRECATED
+    CleanupProfiler (unsigned long task_count) { init(task_count); }
 };
 
 } // namespace pomagma
