@@ -58,6 +58,10 @@ namespace messaging { using namespace pomagma_messaging; }
 #  define unlikely(x) (x)
 #endif // __GNUG__
 
+#if defined(__GNUG__) && (GCC_VERSION < 40800)
+#  define thread_local __thread
+#endif //  defined(__GNUG__) && (GCC_VERSION < 40800)
+
 //----------------------------------------------------------------------------
 // debugging
 

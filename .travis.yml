@@ -16,6 +16,8 @@ before_install:
   - export MAKEFLAGS="-j 2 -S"
 install:
   - . install.sh
+  - g++ --version
+  - python --version
   - pip freeze
   - env
 script:
