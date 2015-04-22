@@ -1,5 +1,7 @@
 #pragma once
 
+#include <pomagma/microstructure/util.hpp>
+
 namespace pomagma
 {
 
@@ -10,7 +12,7 @@ void load_programs (const std::string & filename);
 void load_language (const std::string & filename);
 void validate_consistent ();
 void validate_all ();
-void log_cleanup_stats ();
+void log_profile_stats ();
 void log_stats ();
 
 } // namespace pomagma

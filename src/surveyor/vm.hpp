@@ -288,7 +288,7 @@ public:
             const Listing & listing = m_cleanup_small[index];
 
             POMAGMA_DEBUG("executing cleanup task " << index);
-            CleanupProfiler::Block profiler_block(index);
+            CleanupProfiler profiler(index);
             m_virtual_machine.execute(listing);
         } else {
             index -= small_count;
@@ -299,7 +299,7 @@ public:
             POMAGMA_DEBUG(
                 "executing cleanup task " << (small_count + index) <<
                 ", block " << block << " / " << m_block_count);
-            CleanupProfiler::Block profiler_block(small_count + index);
+            CleanupProfiler profiler(small_count + index);
             m_virtual_machine.execute_block(listing, block);
         }
     }

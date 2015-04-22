@@ -1,13 +1,10 @@
-#include <pomagma/microstructure/util.hpp>
+#include "theory.hpp"
 #include <pomagma/microstructure/sampler.hpp>
 #include <pomagma/microstructure/structure_impl.hpp>
 #include <pomagma/microstructure/scheduler.hpp>
 #include "insert_parser.hpp"
 #include "cleanup.hpp"
 #include "vm.hpp"
-#include <atomic>
-#include <thread>
-#include <vector>
 
 namespace pomagma
 {
@@ -34,29 +31,15 @@ void load_programs (const std::string & filename)
     CleanupProfiler::init(agenda.cleanup_type_count());
 }
 
-void schedule_merge (Ob dep) { schedule(MergeTask(dep)); }
-void schedule_exists (Ob ob) { schedule(ExistsTask(ob)); }
-void schedule_less (Ob lhs, Ob rhs) { schedule(PositiveOrderTask(lhs, rhs)); }
-void schedule_nless (Ob lhs, Ob rhs) { schedule(NegativeOrderTask(lhs, rhs)); }
-void schedule_unary_relation (const UnaryRelation * rel, Ob arg)
+static void schedule_merge (Ob dep) { schedule(MergeTask(dep)); }
+static void schedule_exists (Ob ob) { schedule(ExistsTask(ob)); }
+static void schedule_less (Ob lhs, Ob rhs)
 {
-    schedule(UnaryRelationTask(*rel, arg));
+    schedule(PositiveOrderTask(lhs, rhs));
 }
-void schedule_nullary_function (const NullaryFunction * fun)
+static void schedule_nless (Ob lhs, Ob rhs)
 {
-    schedule(NullaryFunctionTask(*fun));
-}
-void schedule_injective_function (const InjectiveFunction * fun, Ob arg)
-{
-    schedule(InjectiveFunctionTask(*fun, arg));
-}
-void schedule_binary_function (const BinaryFunction * fun, Ob lhs, Ob rhs)
-{
-    schedule(BinaryFunctionTask(*fun, lhs, rhs));
-}
-void schedule_symmetric_function (const SymmetricFunction * fun, Ob lhs, Ob rhs)
-{
-    schedule(SymmetricFunctionTask(*fun, lhs, rhs));
+    schedule(NegativeOrderTask(lhs, rhs));
 }
 
 static Carrier carrier(
@@ -133,9 +116,9 @@ void validate_all ()
 //----------------------------------------------------------------------------
 // logging
 
-void log_cleanup_stats ()
+void log_profile_stats ()
 {
-    pomagma::CleanupProfiler::cleanup();
+    CleanupProfiler::log_stats();
 }
 
 void log_stats ()

@@ -43,7 +43,7 @@ int main (int argc, char ** argv)
 
     // initialize
     pomagma::Scheduler::initialize(facts_file);
-    pomagma::log_cleanup_stats();
+    pomagma::log_profile_stats();
     if (POMAGMA_DEBUG_LEVEL > 1) {
         pomagma::validate_all();
     } else {
@@ -52,7 +52,7 @@ int main (int argc, char ** argv)
 
     // survey
     pomagma::Scheduler::survey();
-    pomagma::log_cleanup_stats();
+    pomagma::log_profile_stats();
     if (POMAGMA_DEBUG_LEVEL > 0) {
         pomagma::validate_all();
     } else {
