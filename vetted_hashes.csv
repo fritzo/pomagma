@@ -1,10 +1,10 @@
 filename,hexdigest
-src/surveyor/h4.theory.cpp,6f419ec054a20dfa4e16479e5df4e5f89b4b2e48
-src/surveyor/sk.theory.cpp,c54668316761ca09b2fb664e4d08536adcfbef9b
-src/surveyor/skj.theory.cpp,31229aa4c3636780c77fe77547ec59f13cceb51f
-src/surveyor/skja.theory.cpp,7e542904d9802a2eb40d6106f372442ef369ec4b
-src/surveyor/skjo.theory.cpp,3cfd24b59929431563c831171c8f5a722b4187fd
-src/surveyor/skrj.theory.cpp,4719b4f0dcaa048b2c1e3e4f225d9b7d7973c704
+src/surveyor/h4.theory.cpp,3c8e5e3f52e9d3fbe41f4b7c2d79ade3d34d7196
+src/surveyor/sk.theory.cpp,10d1e48c1e3107fadfe7d38e0c3d0b2449d851b5
+src/surveyor/skj.theory.cpp,0852ee2405df29f268ac62fe6fe1e7c02c30f38a
+src/surveyor/skja.theory.cpp,f9636a831bf6ba38c928a276feadc2e4af42c007
+src/surveyor/skjo.theory.cpp,9274412c07d8d874a129e5ca24e0c1f53f2fad0f
+src/surveyor/skrj.theory.cpp,7e1af3ead4752bb48b62fef1ab0935a01c95cc16
 src/theory/a.tasks,0c2affcaa98842e7e322471f463e4c48e9501e8c
 src/theory/closures.tasks,7db95464a9187fda6684369ae8b9b94497f76ddc
 src/theory/group.tasks,44c2a0acbc6f60adff57907f7da307cd493be3a4

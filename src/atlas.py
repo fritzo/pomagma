@@ -1,6 +1,7 @@
 import os
 import contextlib
 import pomagma.util
+import pomagma.surveyor
 import pomagma.cartographer
 import pomagma.theorist
 
@@ -24,16 +25,37 @@ def load(theory, world, address=None, **opts):
             yield db
 
 
-def translate(theory, init, world, aggregate, **opts):
+def update_theory(theory, world, updated, dry_run=False, **opts):
+    assert not os.path.exists(updated)
+    with pomagma.util.mutex(world):
+        assert os.path.exists(world)
+        size = pomagma.util.get_item_count(world)
+        old_hash = pomagma.util.get_hash(world)
+        pomagma.surveyor.survey(theory, world, updated, size, **opts)
+        new_hash = pomagma.util.get_hash(updated)
+        if new_hash == old_hash:
+            print 'theory did not change'
+            os.remove(updated)
+            return False
+        else:
+            print 'theory changed'
+            if dry_run:
+                os.remove(updated)
+            else:
+                os.rename(updated, world)
+            return True
+
+
+def update_language(theory, init, world, updated, **opts):
     assert os.path.exists(init)
-    assert not os.path.exists(aggregate)
+    assert not os.path.exists(updated)
     with pomagma.util.mutex(world):
         assert os.path.exists(world)
         with pomagma.cartographer.load(theory, init, **opts) as db:
             db.aggregate(world)
             db.validate()
-            db.dump(aggregate)
-        os.rename(aggregate, world)
+            db.dump(updated)
+        os.rename(updated, world)
     os.remove(init)
 
 

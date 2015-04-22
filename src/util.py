@@ -399,8 +399,7 @@ def get_info(infile):
 def get_item_count(infile):
     with h5_open(infile) as structure:
         item_dim, item_count = count_obs(structure)
-        info = dict(item_dim=item_dim, item_count=item_count)
-        return info['item_count']
+        return item_count
 
 
 def print_info(infile):

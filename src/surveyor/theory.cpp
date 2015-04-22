@@ -74,6 +74,7 @@ void execute (const MergeTask & task)
 {
     const Ob dep = task.dep;
     const Ob rep = carrier.find(dep);
+    POMAGMA_DEBUG("merging: " << dep << " = " << rep);
     POMAGMA_ASSERT(dep > rep, "ill-formed merge: " << dep << ", " << rep);
     bool invalid = NLESS.find(dep, rep) or NLESS.find(rep, dep);
     POMAGMA_ASSERT(not invalid, "invalid merge: " << dep << ", " << rep);

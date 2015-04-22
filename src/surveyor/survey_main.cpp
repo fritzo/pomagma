@@ -54,7 +54,6 @@ int main (int argc, char ** argv)
     }
 
     // initialize
-    pomagma::cleanup_tasks_push_all();
     pomagma::Scheduler::initialize(facts_file);
     if (POMAGMA_DEBUG_LEVEL > 1) {
         pomagma::validate_all();

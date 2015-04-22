@@ -2,7 +2,11 @@ import os
 import glob
 import parsable
 import pomagma.util
-from pomagma import atlas, surveyor, cartographer, theorist, analyst
+from pomagma import analyst
+from pomagma import atlas
+from pomagma import cartographer
+from pomagma import surveyor
+from pomagma import theorist
 
 PROFILERS = {
     'time': '/usr/bin/time --verbose',
@@ -38,6 +42,8 @@ def _test_atlas(theory):
         equal_theorems = 'equal_theorems.facts'
 
         surveyor.init(theory, '0.h5', sizes[0], **opts)
+        changed = atlas.update_theory(theory, '0.h5', '1.h5', **opts)
+        assert not changed
         with cartographer.load(theory, '0.h5', **opts) as db:
             db.validate()
             db.dump('1.h5')

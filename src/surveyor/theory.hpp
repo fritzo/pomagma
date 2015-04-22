@@ -140,6 +140,7 @@ bool sample_tasks_try_pop (SampleTask &)
 
 void execute (const SampleTask &, rng_t & rng)
 {
+    POMAGMA_DEBUG("executing sample task");
     Sampler::Policy policy(carrier);
     sampler.try_insert_random(rng, policy);
 }

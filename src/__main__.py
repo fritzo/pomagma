@@ -155,9 +155,24 @@ def make(theory=THEORY, max_size=8191, step_size=512, **options):
 
 
 @parsable.command
-def translate(theory=THEORY, **options):
+def update_theory(theory=THEORY, dry_run=False, **options):
     '''
-    Translate language of world map (e.g. when language changes).
+    Update (small) world map after theory changes, and note changes.
+    Options: log_level, log_file
+    '''
+    print dry_run
+    with atlas.chdir(theory):
+        world = 'world.h5'
+        updated = pomagma.util.temp_name('world.h5')
+        assert already_exists(world), 'First initialize world map'
+        options.setdefault('log_file', 'update_theory.log')
+        atlas.update_theory(theory, world, updated, dry_run=dry_run, **options)
+
+
+@parsable.command
+def update_language(theory=THEORY, **options):
+    '''
+    Update world map after language changes.
     Options: log_level, log_file
     '''
     with atlas.chdir(theory):
@@ -165,10 +180,10 @@ def translate(theory=THEORY, **options):
         init = pomagma.util.temp_name('init.h5')
         aggregate = pomagma.util.temp_name('aggregate.h5')
         assert already_exists(world), 'First initialize world map'
-        options.setdefault('log_file', 'translate.log')
+        options.setdefault('log_file', 'update_language.log')
         init_size = pomagma.util.MIN_SIZES[theory]
         surveyor.init(theory, init, init_size, **options)
-        atlas.translate(theory, init, world, aggregate, **options)
+        atlas.update_language(theory, init, world, aggregate, **options)
 
 
 @parsable.command
