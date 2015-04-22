@@ -165,7 +165,6 @@ bool cleanup_tasks_try_pop (CleanupTask & task)
         remaining, remaining - 1))
     {
         if (remaining == 0) {
-            CleanupProfiler::cleanup();
             return false;
         }
     }

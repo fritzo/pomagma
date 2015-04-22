@@ -105,12 +105,14 @@ private:
         Ob obs[256];
         const std::atomic<Word> * sets[256];
         size_t block;
+        size_t trace;
 
         void clear ()
         {
             std::fill(std::begin(obs), std::end(obs), 0);
             std::fill(std::begin(sets), std::end(sets), nullptr);
             block = 0;
+            trace = 0;
         }
     } __attribute__((aligned(64)));
 
@@ -120,6 +122,7 @@ private:
         static thread_local Context * context = nullptr;
         if (unlikely(context == nullptr)) {
             context = new Context;
+            context->clear();
         }
         if (POMAGMA_DEBUG_LEVEL) {
             context->clear();

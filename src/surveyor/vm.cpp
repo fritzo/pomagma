@@ -4,6 +4,8 @@
 #include <fstream>
 #include "vm.hpp"
 
+#define POMAGMA_TRACE_VM (false)
+
 namespace pomagma
 {
 namespace vm
@@ -195,9 +197,10 @@ static void declare (
 
 Parser::Parser (Signature & signature)
 {
+    POMAGMA_DEBUG("Op Codes:");
     for (size_t op_code = 0; op_code < g_op_code_count; ++op_code) {
         m_op_codes[g_op_code_names[op_code]] = static_cast<OpCode>(op_code);
-        POMAGMA_DEBUG(g_op_code_names[op_code] << ": " << op_code);
+        POMAGMA_DEBUG(g_op_code_names[op_code] << " = " << op_code);
     }
 
     m_constants.clear();
@@ -384,8 +387,23 @@ inline const SymmetricFunction * VirtualMachine::symmetric_function (
     return ptr;
 }
 
+static const char * const spaces_256 =
+"                                                                "
+"                                                                "
+"                                                                "
+"                                                                "
+;
+
 void VirtualMachine::_execute (Program program, Context * context) const
 {
+    if (POMAGMA_TRACE_VM) {
+        POMAGMA_ASSERT_LE(context->trace, 256);
+        POMAGMA_DEBUG(
+            (spaces_256 + 256 - context->trace) <<
+            g_op_code_names[program[0]]);
+        ++context->trace;
+    }
+
     switch (pop_op_code(program)) {
 
         case GIVEN_EXISTS: {
@@ -434,6 +452,7 @@ void VirtualMachine::_execute (Program program, Context * context) const
         case INTERSECT_UNARY_RELATION: {
             UnaryRelation & rel = pop_unary_relation(program);
             pop_set(program, context) = rel.get_set().raw_data();
+            _execute(program, context);
         } break;
 
         case INTERSECT_BINARY_RELATION_LHS: {
@@ -441,6 +460,7 @@ void VirtualMachine::_execute (Program program, Context * context) const
             Ob lhs = pop_ob(program, context);
             auto & rhs_set = pop_set(program, context);
             rhs_set = rel.get_Lx_set(lhs).raw_data();
+            _execute(program, context);
         } break;
 
         case INTERSECT_BINARY_RELATION_RHS: {
@@ -448,16 +468,19 @@ void VirtualMachine::_execute (Program program, Context * context) const
             auto & lhs_set = pop_set(program, context);
             Ob rhs = pop_ob(program, context);
             lhs_set = rel.get_Rx_set(rhs).raw_data();
+            _execute(program, context);
         } break;
 
         case INTERSECT_INJECTIVE_FUNCTION: {
             InjectiveFunction & fun = pop_injective_function(program);
             pop_set(program, context) = fun.defined().raw_data();
+            _execute(program, context);
         } break;
 
         case INTERSECT_INJECTIVE_FUNCTION_INVERSE: {
             InjectiveFunction & fun = pop_injective_function(program);
             pop_set(program, context) = fun.defined().raw_data();
+            _execute(program, context);
         } break;
 
         case INTERSECT_BINARY_FUNCTION_LHS: {
@@ -465,6 +488,7 @@ void VirtualMachine::_execute (Program program, Context * context) const
             Ob lhs = pop_ob(program, context);
             auto & rhs_set = pop_set(program, context);
             rhs_set = fun.get_Lx_set(lhs).raw_data();
+            _execute(program, context);
         } break;
 
         case INTERSECT_BINARY_FUNCTION_RHS: {
@@ -472,12 +496,14 @@ void VirtualMachine::_execute (Program program, Context * context) const
             auto & lhs_set = pop_set(program, context);
             Ob rhs = pop_ob(program, context);
             lhs_set = fun.get_Rx_set(rhs).raw_data();
+            _execute(program, context);
         } break;
 
         case INTERSECT_SYMMETRIC_FUNCTION_LHS: {
             SymmetricFunction & fun = pop_symmetric_function(program);
             Ob lhs = pop_ob(program, context);
             pop_set(program, context) = fun.get_Lx_set(lhs).raw_data();
+            _execute(program, context);
         } break;
 
         case FOR_INTERSECTION_2: {
@@ -1022,6 +1048,10 @@ void VirtualMachine::_execute (Program program, Context * context) const
                 fun1.insert(lhs1, rhs1, val);
             }
         } break;
+    }
+
+    if (POMAGMA_TRACE_VM) {
+        --context->trace;
     }
 }
 
