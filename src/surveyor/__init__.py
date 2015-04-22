@@ -3,7 +3,7 @@ import pomagma.util
 
 
 BIN = os.path.join(pomagma.util.BIN, 'surveyor')
-USE_VM = int(os.environ.get('POMAGMA_USE_VM', 0))
+USE_VM = int(os.environ.get('POMAGMA_USE_VM', 1))
 
 
 def init(theory, chart_out, size=None, **opts):
