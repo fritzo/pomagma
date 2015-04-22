@@ -11,6 +11,7 @@
 #include <chrono>
 #include <random>
 #include <functional>
+#include <mutex>
 
 // for demangle() below
 #ifdef __GNUG__
@@ -181,9 +182,17 @@ class Log
         std::ofstream log_stream;
         const size_t log_level;
         std::vector<std::function<void()>> callbacks;
+        std::mutex mutex;
 
         GlobalState ();
         ~GlobalState ();
+
+        void write (const std::string & message)
+        {
+            std::unique_lock<std::mutex> lock(mutex);
+            s_state.log_stream << message << std::flush;
+            //std::cerr << message << std::flush; // DEBUG
+        }
     };
 
     static GlobalState s_state;
@@ -203,9 +212,8 @@ public:
 
     ~Log ()
     {
-        m_message << std::endl;
-        s_state.log_stream << m_message.str() << std::flush;
-        //std::cerr << m_message.str() << std::flush; // DEBUG
+        m_message << '\n';
+        s_state.write(m_message.str());
     }
 
     template<class T> Log & operator<< (const T & t)

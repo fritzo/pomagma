@@ -11,13 +11,15 @@ namespace pomagma
 
 int Log::init ()
 {
-    s_state.log_stream <<
+    std::ostringstream message;
+    message <<
         "----------------------------------------"
         "----------------------------------------"
         "\n"
         << get_date()
         << "\n"
         ;
+    s_state.write(message.str());
     return 0;
 }
 
@@ -41,9 +43,8 @@ Log::GlobalState Log::s_state;
 Log::Context::Context (std::string name)
 {
     std::ostringstream message;
-    message << name << "\n";
-    s_state.log_stream << message.str() << std::flush;
-    //std::cerr << message.str() << std::flush; // DEBUG
+    message << name << '\n';
+    s_state.write(message.str());
 }
 
 Log::Context::Context (int argc, char ** argv)
@@ -52,9 +53,8 @@ Log::Context::Context (int argc, char ** argv)
     for (int i = 0; i < argc; ++i) {
         message << argv[i] << ' ';
     }
-    message << "\n";
-    s_state.log_stream << message.str() << std::flush;
-    //std::cerr << message.str() << std::flush; // DEBUG
+    message << '\n';
+    s_state.write(message.str());
 }
 
 inline std::ostream & operator<< (std::ostream & o, const timeval & t)
@@ -75,8 +75,7 @@ Log::Context::~Context ()
         << "rusage.ru_stime = " << usage.ru_stime << "\n"
         << "rusage.ru_maxrss = " << usage.ru_maxrss << "\n"
         ;
-    s_state.log_stream << message.str() << std::flush;
-    //std::cerr << message.str() << std::flush; // DEBUG
+    s_state.write(message.str());
 }
 
 //----------------------------------------------------------------------------
