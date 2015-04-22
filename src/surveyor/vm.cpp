@@ -14,7 +14,9 @@ namespace vm
 
 enum OpArgType : uint8_t
 {
+    NEW_OB,
     OB,
+    NEW_SET,
     SET,
     UNARY_RELATION,
     BINARY_RELATION,
@@ -25,44 +27,45 @@ enum OpArgType : uint8_t
 };
 
 #define OP_CODES(DO) \
-    DO(GIVEN_EXISTS, ({OB})) \
-    DO(GIVEN_UNARY_RELATION, ({UNARY_RELATION, OB})) \
-    DO(GIVEN_BINARY_RELATION, ({BINARY_RELATION, OB, OB})) \
-    DO(GIVEN_NULLARY_FUNCTION, ({NULLARY_FUNCTION, OB})) \
-    DO(GIVEN_INJECTIVE_FUNCTION, ({INJECTIVE_FUNCTION, OB, OB})) \
-    DO(GIVEN_BINARY_FUNCTION, ({BINARY_FUNCTION, OB, OB, OB})) \
-    DO(GIVEN_SYMMETRIC_FUNCTION, ({SYMMETRIC_FUNCTION, OB, OB, OB})) \
-    DO(INTERSECT_UNARY_RELATION, ({UNARY_RELATION, SET})) \
-    DO(INTERSECT_BINARY_RELATION_LHS, ({BINARY_RELATION, OB, SET})) \
-    DO(INTERSECT_BINARY_RELATION_RHS, ({BINARY_RELATION, SET, OB})) \
-    DO(INTERSECT_INJECTIVE_FUNCTION, ({INJECTIVE_FUNCTION, SET})) \
-    DO(INTERSECT_INJECTIVE_FUNCTION_INVERSE, ({INJECTIVE_FUNCTION, SET})) \
-    DO(INTERSECT_BINARY_FUNCTION_LHS, ({BINARY_FUNCTION, OB, SET})) \
-    DO(INTERSECT_BINARY_FUNCTION_RHS, ({BINARY_FUNCTION, SET, OB})) \
-    DO(INTERSECT_SYMMETRIC_FUNCTION_LHS, ({SYMMETRIC_FUNCTION, OB, SET})) \
-    DO(FOR_INTERSECTION_2, ({OB, SET, SET})) \
-    DO(FOR_INTERSECTION_3, ({OB, SET, SET, SET})) \
-    DO(FOR_INTERSECTION_4, ({OB, SET, SET, SET, SET})) \
-    DO(FOR_INTERSECTION_5, ({OB, SET, SET, SET, SET, SET})) \
-    DO(FOR_INTERSECTION_6, ({OB, SET, SET, SET, SET, SET, SET})) \
-    DO(FOR_ALL, ({OB})) \
-    DO(FOR_UNARY_RELATION, ({UNARY_RELATION, OB})) \
-    DO(FOR_BINARY_RELATION_LHS, ({BINARY_RELATION, OB, OB})) \
-    DO(FOR_BINARY_RELATION_RHS, ({BINARY_RELATION, OB, OB})) \
-    DO(FOR_NULLARY_FUNCTION, ({NULLARY_FUNCTION, OB})) \
-    DO(FOR_INJECTIVE_FUNCTION, ({INJECTIVE_FUNCTION, OB, OB})) \
-    DO(FOR_INJECTIVE_FUNCTION_KEY, ({INJECTIVE_FUNCTION, OB, OB})) \
-    DO(FOR_INJECTIVE_FUNCTION_VAL, ({INJECTIVE_FUNCTION, OB, OB})) \
-    DO(FOR_BINARY_FUNCTION_LHS, ({BINARY_FUNCTION, OB, OB, OB})) \
-    DO(FOR_BINARY_FUNCTION_RHS, ({BINARY_FUNCTION, OB, OB, OB})) \
-    DO(FOR_BINARY_FUNCTION_VAL, ({BINARY_FUNCTION, OB, OB, OB})) \
-    DO(FOR_BINARY_FUNCTION_LHS_VAL, ({BINARY_FUNCTION, OB, OB, OB})) \
-    DO(FOR_BINARY_FUNCTION_RHS_VAL, ({BINARY_FUNCTION, OB, OB, OB})) \
-    DO(FOR_BINARY_FUNCTION_LHS_RHS, ({BINARY_FUNCTION, OB, OB, OB})) \
-    DO(FOR_SYMMETRIC_FUNCTION_LHS, ({SYMMETRIC_FUNCTION, OB, OB, OB})) \
-    DO(FOR_SYMMETRIC_FUNCTION_VAL, ({SYMMETRIC_FUNCTION, OB, OB, OB})) \
-    DO(FOR_SYMMETRIC_FUNCTION_LHS_VAL, ({SYMMETRIC_FUNCTION, OB, OB, OB})) \
-    DO(FOR_SYMMETRIC_FUNCTION_LHS_RHS, ({SYMMETRIC_FUNCTION, OB, OB, OB})) \
+    DO(GIVEN_EXISTS, ({NEW_OB})) \
+    DO(GIVEN_UNARY_RELATION, ({UNARY_RELATION, NEW_OB})) \
+    DO(GIVEN_BINARY_RELATION, ({BINARY_RELATION, NEW_OB, NEW_OB})) \
+    DO(GIVEN_NULLARY_FUNCTION, ({NULLARY_FUNCTION, NEW_OB})) \
+    DO(GIVEN_INJECTIVE_FUNCTION, ({INJECTIVE_FUNCTION, NEW_OB, NEW_OB})) \
+    DO(GIVEN_BINARY_FUNCTION, ({BINARY_FUNCTION, NEW_OB, NEW_OB, NEW_OB})) \
+    DO(GIVEN_SYMMETRIC_FUNCTION, \
+        ({SYMMETRIC_FUNCTION, NEW_OB, NEW_OB, NEW_OB})) \
+    DO(INTERSECT_UNARY_RELATION, ({UNARY_RELATION, NEW_SET})) \
+    DO(INTERSECT_BINARY_RELATION_LHS, ({BINARY_RELATION, OB, NEW_SET})) \
+    DO(INTERSECT_BINARY_RELATION_RHS, ({BINARY_RELATION, NEW_SET, OB})) \
+    DO(INTERSECT_INJECTIVE_FUNCTION, ({INJECTIVE_FUNCTION, NEW_SET})) \
+    DO(INTERSECT_INJECTIVE_FUNCTION_INVERSE, ({INJECTIVE_FUNCTION, NEW_SET})) \
+    DO(INTERSECT_BINARY_FUNCTION_LHS, ({BINARY_FUNCTION, OB, NEW_SET})) \
+    DO(INTERSECT_BINARY_FUNCTION_RHS, ({BINARY_FUNCTION, NEW_SET, OB})) \
+    DO(INTERSECT_SYMMETRIC_FUNCTION_LHS, ({SYMMETRIC_FUNCTION, OB, NEW_SET})) \
+    DO(FOR_INTERSECTION_2, ({NEW_OB, SET, SET})) \
+    DO(FOR_INTERSECTION_3, ({NEW_OB, SET, SET, SET})) \
+    DO(FOR_INTERSECTION_4, ({NEW_OB, SET, SET, SET, SET})) \
+    DO(FOR_INTERSECTION_5, ({NEW_OB, SET, SET, SET, SET, SET})) \
+    DO(FOR_INTERSECTION_6, ({NEW_OB, SET, SET, SET, SET, SET, SET})) \
+    DO(FOR_ALL, ({NEW_OB})) \
+    DO(FOR_UNARY_RELATION, ({UNARY_RELATION, NEW_OB})) \
+    DO(FOR_BINARY_RELATION_LHS, ({BINARY_RELATION, OB, NEW_OB})) \
+    DO(FOR_BINARY_RELATION_RHS, ({BINARY_RELATION, NEW_OB, OB})) \
+    DO(FOR_NULLARY_FUNCTION, ({NULLARY_FUNCTION, NEW_OB})) \
+    DO(FOR_INJECTIVE_FUNCTION, ({INJECTIVE_FUNCTION, NEW_OB, NEW_OB})) \
+    DO(FOR_INJECTIVE_FUNCTION_KEY, ({INJECTIVE_FUNCTION, OB, NEW_OB})) \
+    DO(FOR_INJECTIVE_FUNCTION_VAL, ({INJECTIVE_FUNCTION, NEW_OB, OB})) \
+    DO(FOR_BINARY_FUNCTION_LHS, ({BINARY_FUNCTION, OB, NEW_OB, NEW_OB})) \
+    DO(FOR_BINARY_FUNCTION_RHS, ({BINARY_FUNCTION, NEW_OB, OB, NEW_OB})) \
+    DO(FOR_BINARY_FUNCTION_VAL, ({BINARY_FUNCTION, NEW_OB, NEW_OB, OB})) \
+    DO(FOR_BINARY_FUNCTION_LHS_VAL, ({BINARY_FUNCTION, OB, NEW_OB, OB})) \
+    DO(FOR_BINARY_FUNCTION_RHS_VAL, ({BINARY_FUNCTION, NEW_OB, OB, OB})) \
+    DO(FOR_BINARY_FUNCTION_LHS_RHS, ({BINARY_FUNCTION, OB, OB, NEW_OB})) \
+    DO(FOR_SYMMETRIC_FUNCTION_LHS, ({SYMMETRIC_FUNCTION, OB, NEW_OB, NEW_OB})) \
+    DO(FOR_SYMMETRIC_FUNCTION_VAL, ({SYMMETRIC_FUNCTION, NEW_OB, NEW_OB, OB})) \
+    DO(FOR_SYMMETRIC_FUNCTION_LHS_VAL, ({SYMMETRIC_FUNCTION, OB, NEW_OB, OB})) \
+    DO(FOR_SYMMETRIC_FUNCTION_LHS_RHS, ({SYMMETRIC_FUNCTION, OB, OB, NEW_OB})) \
     DO(FOR_BLOCK, ({})) \
     DO(IF_BLOCK, ({OB})) \
     DO(IF_EQUAL, ({OB, OB})) \
@@ -72,13 +75,13 @@ enum OpArgType : uint8_t
     DO(IF_INJECTIVE_FUNCTION, ({INJECTIVE_FUNCTION, OB, OB})) \
     DO(IF_BINARY_FUNCTION, ({BINARY_FUNCTION, OB, OB, OB})) \
     DO(IF_SYMMETRIC_FUNCTION, ({SYMMETRIC_FUNCTION, OB, OB, OB})) \
-    DO(LET_NULLARY_FUNCTION, ({NULLARY_FUNCTION, OB})) \
-    DO(LET_INJECTIVE_FUNCTION, ({INJECTIVE_FUNCTION, OB, OB})) \
-    DO(LET_BINARY_FUNCTION, ({BINARY_FUNCTION, OB, OB, OB})) \
-    DO(LET_SYMMETRIC_FUNCTION, ({SYMMETRIC_FUNCTION, OB, OB, OB})) \
+    DO(LET_NULLARY_FUNCTION, ({NULLARY_FUNCTION, NEW_OB})) \
+    DO(LET_INJECTIVE_FUNCTION, ({INJECTIVE_FUNCTION, OB, NEW_OB})) \
+    DO(LET_BINARY_FUNCTION, ({BINARY_FUNCTION, OB, OB, NEW_OB})) \
+    DO(LET_SYMMETRIC_FUNCTION, ({SYMMETRIC_FUNCTION, OB, OB, NEW_OB})) \
     DO(INFER_EQUAL, ({OB, OB})) \
-    DO(INFER_UNARY_RELATION, ({OB})) \
-    DO(INFER_BINARY_RELATION, ({OB, OB})) \
+    DO(INFER_UNARY_RELATION, ({UNARY_RELATION, OB})) \
+    DO(INFER_BINARY_RELATION, ({BINARY_RELATION, OB, OB})) \
     DO(INFER_NULLARY_FUNCTION, ({NULLARY_FUNCTION, OB})) \
     DO(INFER_INJECTIVE_FUNCTION, ({INJECTIVE_FUNCTION, OB, OB})) \
     DO(INFER_BINARY_FUNCTION, ({BINARY_FUNCTION, OB, OB, OB})) \
@@ -146,19 +149,27 @@ public:
 
     void clear () { m_registers.clear(); }
 
-    uint8_t operator() (const std::string & name)
+    uint8_t store (const std::string & name, size_t lineno)
+    {
+        POMAGMA_ASSERT(
+            m_registers.find(name) == m_registers.end(),
+            "line " << lineno << ": duplicate variable: " << name);
+        POMAGMA_ASSERT(
+            m_registers.size() < 256,
+            "line " << lineno << ": too many variables, limit = 256");
+
+        uint8_t index = m_registers.size();
+        m_registers.insert(std::make_pair(name, index));
+        return index;
+    }
+
+    uint8_t load (const std::string & name, size_t lineno) const
     {
         auto i = m_registers.find(name);
-        if (i != m_registers.end()) {
-            return i->second;
-        } else {
-            POMAGMA_ASSERT(
-                m_registers.size() < 256,
-                "too many variables for registers; limit = 256");
-            uint8_t index = m_registers.size();
-            m_registers.insert(std::make_pair(name, index));
-            return index;
-        }
+        POMAGMA_ASSERT(
+            i != m_registers.end(),
+            "line " << lineno << ": undefined variable: " << name);
+        return i->second;
     }
 };
 
@@ -186,6 +197,7 @@ Parser::Parser (Signature & signature)
 {
     for (size_t op_code = 0; op_code < g_op_code_count; ++op_code) {
         m_op_codes[g_op_code_names[op_code]] = static_cast<OpCode>(op_code);
+        POMAGMA_DEBUG(g_op_code_names[op_code] << ": " << op_code);
     }
 
     m_constants.clear();
@@ -200,6 +212,7 @@ Parser::Parser (Signature & signature)
 std::vector<std::vector<uint8_t>> Parser::parse_file (
         const std::string & filename) const
 {
+    POMAGMA_INFO("loading programs from " << filename);
     std::ifstream infile(filename, std::ifstream::in | std::ifstream::binary);
     POMAGMA_ASSERT(infile.is_open(), "failed to open file: " << filename);
     return parse(infile);
@@ -214,7 +227,7 @@ std::vector<std::vector<uint8_t>> Parser::parse (std::istream & infile) const
     std::string line;
     std::string word;
 
-    for (int lineno = 0; std::getline(infile, line); ++lineno) {
+    for (int lineno = 1; std::getline(infile, line); ++lineno) {
         if (line.size() and line[0] == '#') {
             continue;
         }
@@ -248,14 +261,27 @@ std::vector<std::vector<uint8_t>> Parser::parse (std::istream & infile) const
 
             uint8_t arg = 0xff;
             switch (arg_type) {
-                case OB: { arg = obs(word); } break;
-                case SET: { arg = sets(word); } break;
+                case NEW_OB: {
+                    arg = obs.store(word, lineno);
+                } break;
+
+                case OB: {
+                    arg = obs.load(word, lineno);
+                } break;
+
+                case NEW_SET: {
+                    arg = sets.store(word, lineno);
+                } break;
+
+                case SET: {
+                    arg = sets.load(word, lineno);
+                } break;
 
                 default: {
                     auto i = m_constants.find(std::make_pair(arg_type, word));
                     POMAGMA_ASSERT(
                         i != m_constants.end(),
-                        "unknown constant: " << word);
+                        "line " << lineno << ": unknown constant: " << word);
                     arg = i->second;
                 } break;
             }

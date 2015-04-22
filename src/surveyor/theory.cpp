@@ -203,6 +203,7 @@ void execute (const CleanupTask & task)
         " type " << (1 + type) << "/" << g_cleanup_type_count <<
         " block " << (1 + block) << "/" << g_cleanup_block_count);
 
+    TODO("execute cleanup tasks");
 }
 
 //----------------------------------------------------------------------------
