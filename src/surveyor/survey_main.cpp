@@ -1,21 +1,6 @@
 #include <pomagma/microstructure/util.hpp>
 #include <pomagma/microstructure/scheduler.hpp>
-#include "cleanup.hpp"
-
-namespace pomagma
-{
-
-void load_signature (const std::string & filename);
-void load_structure (const std::string & filename);
-void dump_structure (const std::string & filename);
-void load_programs (const std::string & filename);
-void load_language (const std::string & filename);
-void validate_consistent ();
-void validate_all ();
-void log_stats ();
-
-} // namespace pomagma
-
+#include "theory.hpp"
 
 int main (int argc, char ** argv)
 {
@@ -26,7 +11,9 @@ int main (int argc, char ** argv)
         std::cout
             << "Usage: "
                 << pomagma::get_filename(executable)
-                << " structure_in structure_out facts language threads" << "\n"
+                << " structure_in structure_out"
+                << " symbols facts programs language threads"
+                << "\n"
             << "Environment Variables:\n"
             << "  POMAGMA_SIZE = " << pomagma::DEFAULT_ITEM_DIM << "\n"
             << "  POMAGMA_LOG_FILE = " << pomagma::DEFAULT_LOG_FILE << "\n"
@@ -38,7 +25,7 @@ int main (int argc, char ** argv)
 
     const char * structure_in = *argv++;
     const char * structure_out = *argv++;
-    const char * signature_file = *argv++;
+    const char * symbols_file = *argv++;
     const char * facts_file = *argv++;
     const char * programs_file = *argv++;
     const char * language_file = *argv++;
@@ -46,7 +33,7 @@ int main (int argc, char ** argv)
 
     // set params
     pomagma::Scheduler::set_thread_count(thread_count);
-    pomagma::load_signature(signature_file);
+    pomagma::load_signature(symbols_file);
     pomagma::load_programs(programs_file);
     pomagma::load_language(language_file);
     pomagma::load_structure(structure_in);
@@ -56,7 +43,7 @@ int main (int argc, char ** argv)
 
     // initialize
     pomagma::Scheduler::initialize(facts_file);
-    pomagma::CleanupProfiler::cleanup();
+    pomagma::log_cleanup_stats();
     if (POMAGMA_DEBUG_LEVEL > 1) {
         pomagma::validate_all();
     } else {
@@ -65,7 +52,7 @@ int main (int argc, char ** argv)
 
     // survey
     pomagma::Scheduler::survey();
-    pomagma::CleanupProfiler::cleanup();
+    pomagma::log_cleanup_stats();
     if (POMAGMA_DEBUG_LEVEL > 0) {
         pomagma::validate_all();
     } else {
