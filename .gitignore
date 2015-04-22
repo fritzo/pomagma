@@ -18,7 +18,6 @@
 /src/theory/*.facts
 /src/theory/*.programs
 /src/theory/*.tasks
-/src/surveyor/*.theory.cpp
 /src/language/*.language
 /data/
 /build/

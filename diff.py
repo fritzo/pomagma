@@ -9,37 +9,32 @@ REPO = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(REPO)
 TEMP = os.path.join(ROOT, '{}-temp'.format(os.path.basename(REPO)))
 DIFFTOOL = os.environ.get('POMAGMA_DIFFTOOL', os.environ.get('EDITOR', 'meld'))
-DIFFIGNORE = [
-    '*.rules',
-    '*.theory',
-    '*.pyc',
-]
 
 
-def get_difftool(tool, left, right):
+def get_difftool(tool, left, right, diffignore):
     if tool == 'diff':
         return (
             ['diff', '-r'] +
-            map('--exclude={}'.format, DIFFIGNORE) +
+            map('--exclude={}'.format, diffignore) +
             [left, right])
     elif tool == 'cdiff':
         return ['cdiff', '-s', '-w', '0', left, right]
     elif tool == 'vim':
         return [
             'vim',
-            '-c', 'let g:DirDiffExcludes = "{}"'.format(','.join(DIFFIGNORE)),
+            '-c', 'let g:DirDiffExcludes = "{}"'.format(','.join(diffignore)),
             '-c', 'DirDiff {} {}'.format(left, right),
         ]
     elif tool == 'gvim':
         return [
             'gvim', '-geom', '165x80',
-            '-c', 'let g:DirDiffExcludes = "{}"'.format(','.join(DIFFIGNORE)),
+            '-c', 'let g:DirDiffExcludes = "{}"'.format(','.join(diffignore)),
             '-c', 'DirDiff {} {}'.format(left, right),
         ]
     elif tool == 'mvim':
         return [
             'mvim', '-c', 'set columns=165',
-            '-c', 'let g:DirDiffExcludes = "{}"'.format(','.join(DIFFIGNORE)),
+            '-c', 'let g:DirDiffExcludes = "{}"'.format(','.join(diffignore)),
             '-c', 'DirDiff {} {}'.format(left, right),
         ]
     else:
@@ -86,9 +81,9 @@ def clone(commit='HEAD'):
 
 
 @parsable.command
-def cpp(commit='HEAD', difftool=DIFFTOOL):
+def programs(commit='HEAD', difftool=DIFFTOOL):
     '''
-    Diff generated code src/surveyor/*.theory.cpp. (slow)
+    Diff generated code src/theory/*.symbols, *.programs, *.facts (slow)
     Supported difftools: diff, meld, cdiff, vim, gvim, mvim
     '''
     clone(commit=commit)
@@ -97,8 +92,14 @@ def cpp(commit='HEAD', difftool=DIFFTOOL):
         ['make', '-C', TEMP, 'codegen'])
     subprocess.check_call(get_difftool(
         difftool,
-        os.path.join(REPO, 'src', 'surveyor'),
-        os.path.join(TEMP, 'src', 'surveyor'),
+        os.path.join(REPO, 'src', 'theory'),
+        os.path.join(TEMP, 'src', 'theory'),
+        diffignore=[
+            '*.tasks',
+            '*.rules',
+            '*.theory',
+            '*.pyc',
+        ],
     ))
 
 
@@ -116,6 +117,14 @@ def tasks(commit='HEAD', difftool=DIFFTOOL):
         difftool,
         os.path.join(REPO, 'src', 'theory'),
         os.path.join(TEMP, 'src', 'theory'),
+        diffignore=[
+            '*.symbols',
+            '*.programs',
+            '*.facts',
+            '*.rules',
+            '*.theory',
+            '*.pyc',
+        ],
     ))
 
 

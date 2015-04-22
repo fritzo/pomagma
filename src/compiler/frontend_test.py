@@ -6,11 +6,9 @@ from pomagma.compiler.util import find_theories
 def _test_compile(filename):
     main.compile(
         filename,
-        cpp_out='temp.cpp',
         symbols_out='temp.symbols',
         facts_out='temp.facts',
         programs_out='temp.programs')
-    os.remove('temp.cpp')
     os.remove('temp.symbols')
     os.remove('temp.facts')
     os.remove('temp.programs')
