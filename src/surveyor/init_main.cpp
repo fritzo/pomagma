@@ -1,5 +1,6 @@
 #include <pomagma/microstructure/util.hpp>
 #include <pomagma/microstructure/scheduler.hpp>
+#include "cleanup.hpp"
 
 namespace pomagma
 {
@@ -53,6 +54,7 @@ int main (int argc, char ** argv)
 
     // initialize
     pomagma::Scheduler::initialize(facts_file);
+    pomagma::CleanupProfiler::cleanup();
     if (POMAGMA_DEBUG_LEVEL > 1) {
         pomagma::validate_all();
     } else {
@@ -61,6 +63,7 @@ int main (int argc, char ** argv)
 
     // survey
     pomagma::Scheduler::survey();
+    pomagma::CleanupProfiler::cleanup();
     if (POMAGMA_DEBUG_LEVEL > 0) {
         pomagma::validate_all();
     } else {

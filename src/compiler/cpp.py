@@ -905,7 +905,7 @@ def write_full_tasks(code, sequents):
 
     block_size = 64
     split = 'if (*iter / {} != block) {{ continue; }}'.format(block_size)
-    min_split_cost = 1.5  # above which we split the outermost for loop
+    min_split_cost = 2.0  # above which we split the outermost for loop
     unsplit_count = sum(
         1 for cost, _, _, _ in full_tasks
         if cost < min_split_cost
@@ -1015,7 +1015,7 @@ def write_full_programs(programs, sequents):
         for cost, seq, strategy in compiler.compile_full(sequent):
             full_tasks.append((cost, sequent, seq, strategy))
     full_tasks.sort()
-    min_split_cost = 1.5  # above which we split the outermost for loop
+    min_split_cost = 2.0  # above which we split the outermost for loop
     for i, (cost, sequent, seq, strategy) in enumerate(full_tasks):
         poll = (cost >= min_split_cost)
         programs += [
