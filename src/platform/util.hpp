@@ -80,11 +80,11 @@ typedef std::default_random_engine rng_t;
 
 template<size_t x> struct static_log2i
 {
-    static size_t val () { return 1 + static_log2i<x / 2>::val(); };
+    static constexpr size_t val () { return 1 + static_log2i<x / 2>::val(); };
 };
 template<> struct static_log2i<1>
 {
-    static size_t val () { return 0; };
+    static constexpr size_t val () { return 0; };
 };
 
 //----------------------------------------------------------------------------
@@ -310,11 +310,13 @@ typedef size_t Word;
 static const size_t BITS_PER_WORD = 8 * sizeof(Word);
 static const size_t WORD_POS_MASK = BITS_PER_WORD - 1;
 static const size_t WORD_POS_SHIFT = static_log2i<BITS_PER_WORD>::val();
+static_assert(WORD_POS_SHIFT > 0, "bad math");
 static const Word FULL_WORD = ~Word(0);
 static_assert(FULL_WORD + Word(1) == 0, "FULL_WORD is bad");
 
 static const size_t BYTES_PER_CACHE_LINE = 64;
 static const size_t BITS_PER_CACHE_LINE = 512;
+static_assert(BITS_PER_CACHE_LINE == 8 * BYTES_PER_CACHE_LINE, "bad math");
 
 //----------------------------------------------------------------------------
 // iteration

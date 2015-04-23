@@ -18,13 +18,13 @@ namespace Cleanup
 {
 
 // force these to lie on separate cache lines
-static std::atomic<unsigned long> g_done_count
-    __attribute__((aligned(BYTES_PER_CACHE_LINE)))
-    (0);
 static std::atomic<unsigned long> g_type
-    __attribute__((aligned(BYTES_PER_CACHE_LINE)))
+    __attribute__((aligned(BYTES_PER_CACHE_LINE + 0)))
     (0);
 static unsigned long g_type_count = 0;
+static std::atomic<unsigned long> g_done_count
+    __attribute__((aligned(BYTES_PER_CACHE_LINE + 0)))
+    (0);
 
 void init (size_t type_count)
 {
