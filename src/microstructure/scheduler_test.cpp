@@ -17,6 +17,7 @@ void test_simple (size_t max_threads = 20)
 
 int main ()
 {
+    Cleanup::init(1);
     test_simple();
 
     return 0;

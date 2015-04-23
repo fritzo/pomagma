@@ -178,10 +178,9 @@ void execute (const SampleTask & task, rng_t & rng);
 
 void insert_nullary_functions ();
 void assume_core_facts (const char * theory_file);
-void cleanup_tasks_push_all ();
-bool cleanup_tasks_try_pop (CleanupTask & task);
 bool sample_tasks_try_pop (SampleTask & task);
 
+namespace Cleanup { void init (size_t type_count); }
 
 namespace Scheduler
 {

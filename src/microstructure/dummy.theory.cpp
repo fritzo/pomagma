@@ -58,17 +58,6 @@ void assume_core_facts (const char * theory_file)
     POMAGMA_INFO("assume_core_facts(" << theory_file << ")");
 }
 
-void cleanup_tasks_push_all ()
-{
-    POMAGMA_INFO("cleanup_tasks_push_all()");
-}
-
-bool cleanup_tasks_try_pop (CleanupTask &)
-{
-    POMAGMA_INFO("cleanup_tasks_try_pop()");
-    return false;
-}
-
 bool sample_tasks_try_pop (SampleTask &)
 {
     POMAGMA_INFO("sample_tasks_try_pop()");

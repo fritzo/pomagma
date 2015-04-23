@@ -28,6 +28,7 @@ void load_programs (const std::string & filename)
     for (const auto & listing : listings) {
         agenda.add_listing(listing);
     }
+    Cleanup::init(agenda.cleanup_task_count());
     CleanupProfiler::init(agenda.cleanup_type_count());
 }
 
@@ -251,45 +252,7 @@ void execute (const AssumeTask & task)
 }
 
 //----------------------------------------------------------------------------
-// cleanup tasks
-
-std::atomic<unsigned long> g_cleanup_type(0);
-std::atomic<unsigned long> g_cleanup_remaining(0);
-
-void cleanup_tasks_push_all ()
-{
-    g_cleanup_remaining.store(agenda.cleanup_task_count());
-}
-
-bool cleanup_tasks_try_pop (CleanupTask & task)
-{
-    unsigned long remaining = 1;
-    while (not g_cleanup_remaining.compare_exchange_weak(
-        remaining, remaining - 1))
-    {
-        if (remaining == 0) {
-            return false;
-        }
-    }
-
-    const unsigned long type_count = agenda.cleanup_task_count();
-    unsigned long type = 0;
-    while (not g_cleanup_type.compare_exchange_weak(
-        type, (type + 1) % type_count))
-    {
-    }
-
-    task.type = type;
-    return true;
-}
-
-void execute (const CleanupTask & task)
-{
-    agenda.execute_cleanup(task.type);
-}
-
-//----------------------------------------------------------------------------
-// event tasks
+// cleanup & event tasks
 
 void execute (const ExistsTask & task)
 {
@@ -329,6 +292,11 @@ void execute (const PositiveOrderTask & task)
 void execute (const NegativeOrderTask & task)
 {
     agenda.execute(&NLESS, task.lhs, task.rhs);
+}
+
+void execute (const CleanupTask & task)
+{
+    agenda.execute_cleanup(task.type);
 }
 
 } // namespace pomagma

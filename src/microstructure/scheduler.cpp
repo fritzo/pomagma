@@ -14,6 +14,58 @@
 namespace pomagma
 {
 
+namespace Cleanup
+{
+
+// force these to lie on separate cache lines
+static std::atomic<unsigned long> g_done_count
+    __attribute__((aligned(BYTES_PER_CACHE_LINE)))
+    (0);
+static std::atomic<unsigned long> g_type
+    __attribute__((aligned(BYTES_PER_CACHE_LINE)))
+    (0);
+static unsigned long g_type_count = 0;
+
+void init (size_t type_count)
+{
+    POMAGMA_ASSERT_LT(0, type_count);
+    g_type_count = type_count;
+}
+
+inline void push_all ()
+{
+    g_done_count.store(0, std::memory_order_release);
+}
+
+inline bool try_pop (CleanupTask & task)
+{
+    const unsigned long type_count = g_type_count;
+    POMAGMA_ASSERT1(type_count, "Cleanup::init has not been called");
+
+    unsigned long done = 0;
+    while (not g_done_count.compare_exchange_weak(
+                done, done + 1,
+                std::memory_order_acq_rel))
+    {
+        if (done == type_count) {
+            return false;
+        }
+    }
+
+    unsigned long type = 0;
+    while (not g_type.compare_exchange_weak(
+        type, (type + 1) % type_count,
+        std::memory_order_acq_rel))
+    {
+    }
+
+    task.type = type;
+    return true;
+}
+
+} // namespace Cleanup
+
+
 namespace Scheduler
 {
 
@@ -196,8 +248,8 @@ inline bool enforce_tasks_try_execute (bool cleanup)
         g_positive_order_tasks.try_execute() or
         g_negative_order_tasks.try_execute())
     {
-        if (cleanup and g_worker_count > 1) {
-            cleanup_tasks_push_all();
+        if (cleanup and likely(g_worker_count > 1)) {
+            Cleanup::push_all();
         }
         return true;
     } else {
@@ -221,7 +273,7 @@ inline bool sample_tasks_try_execute (rng_t & rng)
 inline bool cleanup_tasks_try_execute ()
 {
     CleanupTask task;
-    if (cleanup_tasks_try_pop(task)) {
+    if (Cleanup::try_pop(task)) {
         SharedMutex::SharedLock lock(g_strict_mutex);
         execute(task);
         g_cleanup_stats.execute();
@@ -275,7 +327,7 @@ void initialize (const char * theory_file)
     if (theory_file) {
         assume_core_facts(theory_file);
     }
-    cleanup_tasks_push_all();
+    Cleanup::push_all();
     POMAGMA_INFO("starting " << g_worker_count << " initialize threads");
     reset_stats();
     std::vector<std::thread> threads;
