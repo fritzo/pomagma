@@ -143,7 +143,11 @@ def explore(
 
 
 @parsable.command
-def make(theory=THEORY, max_size=8191, step_size=512, **options):
+def make(
+        theory=THEORY,
+        max_size=pomagma.workers.DEFAULT_SURVEY_SIZE,
+        step_size=512,
+        **options):
     '''
     Initialize; explore.
     Options: log_level, log_file

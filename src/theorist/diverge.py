@@ -131,7 +131,8 @@ def converge_step(term):
     elif head in [R, A]:
         raise Unknown()
     else:
-        raise ValueError('unrecognized atom: {}'.format(head))
+        print 'WARNING unrecognized atom: {}'.format(head)
+        raise Unknown()
 
 
 def trivially_less(lhs, rhs):

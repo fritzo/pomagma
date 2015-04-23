@@ -52,8 +52,9 @@ data/atlas/$(THEORY)/region.normal.2047.h5:
 bootstrap: data/atlas/$(THEORY)/world.normal.h5 FORCE
 data/atlas/$(THEORY)/world.normal.h5: data/atlas/$(THEORY)/region.normal.2047.h5
 	cd data/atlas/$(THEORY) \
+	  && (test -e world.h5 || ln -s region.normal.2047.h5 world.h5) \
 	  && test -e world.normal.h5 \
-	  || ln -s region.normal.2047.h5 world.normal.h5
+	  || ln -s region.normal.2047.h5 world.normal.h5 \
 
 h4-test: all FORCE
 	POMAGMA_DEBUG=1 python -m pomagma.make test-atlas h4

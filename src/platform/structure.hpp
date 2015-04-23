@@ -649,14 +649,14 @@ inline void check_signature (
             hdf5::Group group2(group1, "unary");
             for (auto name : group2.children()) {
                 POMAGMA_ASSERT(signature.unary_relation(name),
-                        "file has unknown unary relation " << name);
+                    "gdf5 file has unknown unary relation " << name);
             }
         }
         if (group1.exists("binary")) {
             hdf5::Group group2(group1, "binary");
             for (auto name : group2.children()) {
                 POMAGMA_ASSERT(signature.binary_relation(name),
-                        "file has unknown binary relation " << name);
+                    "hdf5 file has unknown binary relation " << name);
             }
         }
     }
@@ -666,28 +666,28 @@ inline void check_signature (
             hdf5::Group group2(group1, "nullary");
             for (auto name : group2.children()) {
                 POMAGMA_ASSERT(signature.nullary_function(name),
-                        "file has unknown nullary function " << name);
+                    "hdf5 file has unknown nullary function " << name);
             }
         }
         if (group1.exists("injective")) {
             hdf5::Group group2(group1, "injective");
             for (auto name : group2.children()) {
                 POMAGMA_ASSERT(signature.injective_function(name),
-                        "file has unknown injective function " << name);
+                    "hdf5 file has unknown injective function " << name);
             }
         }
         if (group1.exists("binary")) {
             hdf5::Group group2(group1, "binary");
             for (auto name : group2.children()) {
                 POMAGMA_ASSERT(signature.binary_function(name),
-                        "file has unknown binary function " << name);
+                    "hdf5 file has unknown binary function " << name);
             }
         }
         if (group1.exists("symmetric")) {
             hdf5::Group group2(group1, "symmetric");
             for (auto name : group2.children()) {
                 POMAGMA_ASSERT(signature.symmetric_function(name),
-                        "file has unknown symmetric function " << name);
+                    "hdf5 file has unknown symmetric function " << name);
             }
         }
     }
