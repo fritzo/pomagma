@@ -274,28 +274,10 @@ public:
     typedef SetIterator<Intersection<1>> Iterator;
     typedef SetIterator<Intersection<2>> Iterator2;
     typedef SetIterator<Intersection<3>> Iterator3;
-    typedef SetIterator<Intersection<4>> Iterator4;
-    typedef SetIterator<Intersection<5>> Iterator5;
-    typedef SetIterator<Intersection<6>> Iterator6;
 
     Iterator iter () const;
     Iterator2 iter_insn (const DenseSet & other) const;
     Iterator3 iter_insn (const DenseSet & set2, const DenseSet & set3) const;
-    Iterator4 iter_insn (
-            const DenseSet & set2,
-            const DenseSet & set3,
-            const DenseSet & set4) const;
-    Iterator5 iter_insn (
-            const DenseSet & set2,
-            const DenseSet & set3,
-            const DenseSet & set4,
-            const DenseSet & set5) const;
-    Iterator6 iter_insn (
-            const DenseSet & set2,
-            const DenseSet & set3,
-            const DenseSet & set4,
-            const DenseSet & set5,
-            const DenseSet & set6) const;
 
 private:
 
@@ -361,51 +343,6 @@ inline DenseSet::Iterator3 DenseSet::iter_insn (
         const DenseSet & set3) const
 {
     return Iterator3(m_item_dim, {{m_words, set2.m_words, set3.m_words}});
-}
-
-inline DenseSet::Iterator4 DenseSet::iter_insn (
-        const DenseSet & set2,
-        const DenseSet & set3,
-        const DenseSet & set4) const
-{
-    return Iterator4(m_item_dim, {{
-        m_words,
-        set2.m_words,
-        set3.m_words,
-        set4.m_words
-    }});
-}
-
-inline DenseSet::Iterator5 DenseSet::iter_insn (
-        const DenseSet & set2,
-        const DenseSet & set3,
-        const DenseSet & set4,
-        const DenseSet & set5) const
-{
-    return Iterator5(m_item_dim, {{
-        m_words,
-        set2.m_words,
-        set3.m_words,
-        set4.m_words,
-        set5.m_words
-    }});
-}
-
-inline DenseSet::Iterator6 DenseSet::iter_insn (
-        const DenseSet & set2,
-        const DenseSet & set3,
-        const DenseSet & set4,
-        const DenseSet & set5,
-        const DenseSet & set6) const
-{
-    return Iterator6(m_item_dim, {{
-        m_words,
-        set2.m_words,
-        set3.m_words,
-        set4.m_words,
-        set5.m_words,
-        set6.m_words
-    }});
 }
 
 } // namespace concurrent
