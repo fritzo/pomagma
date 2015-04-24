@@ -254,7 +254,7 @@ def Test_program(self, program, stack=None, poll=None):
                 val=self.expr.var.name)
         elif arity == 'InjectiveFunction':
             line = 'IF_INJECTIVE_FUNCTION {fun} {key} {val}'.format(
-                run=self.expr.name,
+                fun=self.expr.name,
                 key=args[0],
                 val=self.expr.var.name)
         elif arity == 'BinaryFunction':

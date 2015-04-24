@@ -5,7 +5,7 @@ FIXES V DIV
 FIXES DIV BOT
 EQUAL DIV APP V K
 EQUAL DIV APP V APP CI TOP
-EQUAL DIV ABIND s r s
+#EQUAL DIV ABIND s r s
 #EQUAL DIV ABIND s r r
 
 CLOSED UNIT
@@ -47,29 +47,31 @@ FIXES BOOOL J
 #EQUAL APP PRED BOT BOT
 #EQUAL APP PRED ZERO TOP
 
-#                      LESS APP f TOP APP g TOP
-#-------------------   LESS APP f BOT APP g BOT
-#EQUAL APP DIV x TOP   --------------------------
-#EQUAL APP DIV x BOT   LESS COMP f DIV COMP g DIV
-#
-#                       LESS APP f TOP APP g TOP
-#--------------------   LESS APP f I APP g I
-#EQUAL APP UNIT x TOP   ----------------------------
-#EQUAL APP UNIT x I     LESS COMP f UNIT COMP g UNIT
-#
-#                       LESS APP f TOP APP g TOP
-#--------------------   LESS APP f I APP g I
-#EQUAL APP SEMI x TOP   LESS APP f BOT APP g BOT
-#EQUAL APP SEMI x I     ----------------------------
-#EQUAL APP SEMI x BOT   LESS COMP f SEMI COMP g SEMI
-#
+                      LESS APP f TOP APP g TOP
+-------------------   LESS APP f BOT APP g BOT
+EQUAL APP DIV x TOP   --------------------------
+EQUAL APP DIV x BOT   LESS COMP f DIV COMP g DIV
+
+                       LESS APP f TOP APP g TOP
+--------------------   LESS APP f I APP g I
+EQUAL APP UNIT x TOP   ----------------------------
+EQUAL APP UNIT x I     LESS COMP f UNIT COMP g UNIT
+
+                       LESS APP f TOP APP g TOP
+--------------------   LESS APP f I APP g I
+EQUAL APP SEMI x TOP   LESS APP f BOT APP g BOT
+EQUAL APP SEMI x I     ----------------------------
+EQUAL APP SEMI x BOT   LESS COMP f SEMI COMP g SEMI
+
+# These are very slow to compile:
+
 #                       LESS APP f TOP APP g TOP
 #--------------------   LESS APP f K APP g K
 #EQUAL APP BOOL x TOP   LESS APP f F APP g F
 #EQUAL APP BOOL x K     LESS APP f BOT APP g BOT
 #EQUAL APP BOOL x F     ----------------------------
 #EQUAL APP BOOL x BOT   LESS COMP f BOOL COMP g BOOL
-#
+
 #                        LESS APP f TOP APP g TOP
 #---------------------   LESS APP f J APP g J
 #EQUAL APP BOOOL x TOP   LESS APP f K APP g K

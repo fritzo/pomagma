@@ -169,7 +169,8 @@ class Iter(Strategy):
                 self.var in expr.vars and
                 expr.vars.isdisjoint(new_lets) and
                 sum(1 for arg in expr.args if self.var == arg) == 1 and
-                sum(1 for arg in expr.args if self.var in arg.vars) == 1
+                sum(1 for arg in expr.args if self.var in arg.vars) == 1 and
+                (isinstance(node, Let) or expr.is_rel())
             )
             if optimizable:
                 if isinstance(node, Test):
@@ -457,6 +458,29 @@ def rank_compiled(seq, context, bound):
     return ranked
 
 
+free = Expression.make('free')
+
+
+def swap(x, y, thing):
+    if isinstance(thing, Expression):
+        return thing.substitute(x, free).substitute(y, x).substitute(free, y)
+    elif isinstance(thing, tuple):
+        return tuple(swap(x, y, i) for i in thing)
+    elif isinstance(thing, sortedset):
+        return sortedset(swap(x, y, i) for i in thing)
+    else:
+        raise TypeError('unsupported type: {}'.format(type(thing)))
+
+
+def wlog(vars, context):
+    variants = set()
+    for x in sorted(vars):
+        if any(swap(x, y, context) == context for y in variants):
+            continue
+        variants.add(x)
+        yield x
+
+
 def iter_compiled(antecedents, succedent, bound):
     '''
     Iterate through the space of strategies, narrowing heuristically.
@@ -543,7 +567,7 @@ def iter_compiled(antecedents, succedent, bound):
         a_free = a.vars - bound
         if len(a_free) == 1:
             forward_vars |= a_free
-    for v in forward_vars:
+    for v in wlog(forward_vars, (antecedents, succedent)):
         bound_v = set_with(bound, v)
         POMAGMA_DEBUG('iterate forward {}', v)
         for s in iter_compiled(antecedents, succedent, bound_v):
@@ -551,37 +575,41 @@ def iter_compiled(antecedents, succedent, bound):
             yielded = True
 
     # iterate backward
-    for a in antecedents:
-        if a.is_fun() and a.var in bound:
-            a_free = a.vars - bound
-            assert len(a_free) in [0, 1, 2]
-            nargs = len(a.args)
-            assert nargs in [0, 1, 2]
-            if nargs and a_free:
-                bound_v = bound | a_free
-                antecedents_a = sortedset(set_without(antecedents, a))
-                POMAGMA_DEBUG('iterate backward {}', a)
-                if nargs == 1 and len(a_free) == 1:
-                    # TODO injective function inverse need not be iterated
-                    for s in iter_compiled(antecedents_a, succedent, bound_v):
-                        yield IterInvInjective.make(a, s)
-                        yielded = True
-                elif nargs == 2 and len(a_free) == 1 and len(a.vars) == 2:
-                    for s in iter_compiled(antecedents_a, succedent, bound_v):
-                        (fixed,) = list(a.vars - a_free)
-                        yield IterInvBinaryRange.make(a, fixed, s)
-                        yielded = True
-                elif nargs == 2 and len(a_free) == 2:
-                    for s in iter_compiled(antecedents_a, succedent, bound_v):
-                        yield IterInvBinary.make(a, s)
-                        yielded = True
+    backward_vars = set(
+        a.var for a in antecedents
+        if a.is_fun() and a.args and a.var in bound and not (a.vars <= bound))
+    for v in wlog(backward_vars, (antecedents, succedent)):
+        for a in antecedents:
+            if a.is_fun() and a.var == v:
+                break
+        nargs = len(a.args)
+        a_free = a.vars - bound
+        bound_v = bound | a_free
+        antecedents_a = sortedset(set_without(antecedents, a))
+        assert len(a_free) in [0, 1, 2]
+        assert nargs in [0, 1, 2]
+        POMAGMA_DEBUG('iterate backward {}', a)
+        if nargs == 1 and len(a_free) == 1:
+            # TODO injective function inverse need not be iterated
+            for s in iter_compiled(antecedents_a, succedent, bound_v):
+                yield IterInvInjective.make(a, s)
+                yielded = True
+        elif nargs == 2 and len(a_free) == 1 and len(a.vars) == 2:
+            for s in iter_compiled(antecedents_a, succedent, bound_v):
+                (fixed,) = list(a.vars - a_free)
+                yield IterInvBinaryRange.make(a, fixed, s)
+                yielded = True
+        elif nargs == 2 and len(a_free) == 2:
+            for s in iter_compiled(antecedents_a, succedent, bound_v):
+                yield IterInvBinary.make(a, s)
+                yielded = True
 
     if yielded:
         return  # HEURISTIC iterate locally eagerly
 
     # iterate anything
     free = union(a.vars for a in antecedents) | succedent.vars - bound
-    for v in free:
+    for v in wlog(free, (antecedents, succedent)):
         bound_v = set_with(bound, v)
         POMAGMA_DEBUG('iterate non-locally')
         for s in iter_compiled(antecedents, succedent, bound_v):
