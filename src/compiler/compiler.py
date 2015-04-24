@@ -497,34 +497,6 @@ def iter_compiled(antecedents, succedent, bound):
         yielded = True
         return
 
-    # test constant
-    for a in antecedents:
-        if a.arity == 'NullaryFunction' and a.var in bound:
-            antecedents_a = sortedset(set_without(antecedents, a))
-            POMAGMA_DEBUG('test constant {}', a)
-            for s in iter_compiled(antecedents_a, succedent, bound):
-                yield Test.make(a, s)
-                yielded = True
-            if yielded:
-                return  # HEURISTIC test eagerly in arbitrary order
-
-    # bind constant
-    consts = succedent.consts | union(a.consts for a in antecedents)
-    unbound_consts = set(c for c in consts if c.var not in bound)
-    if unbound_consts:
-        c = min(unbound_consts)
-        if c in antecedents:
-            antecedents_c = sortedset(set_without(antecedents, c))
-        else:
-            antecedents_c = antecedents
-        bound_c = set_with(bound, c.var)
-        POMAGMA_DEBUG('bind constant {}', c)
-        for s in iter_compiled(antecedents_c, succedent, bound_c):
-            yield Let.make(c, s)
-            yielded = True
-        if yielded:
-            return  # HEURISTIC bind eagerly in arbitrary order
-
     # conditionals
     for a in antecedents:
         if a.is_rel():
@@ -544,6 +516,23 @@ def iter_compiled(antecedents, succedent, bound):
                     yielded = True
         if yielded:
             return  # HEURISTIC test eagerly in arbitrary order
+
+    # bind constant
+    consts = succedent.consts | union(a.consts for a in antecedents)
+    unbound_consts = set(c for c in consts if c.var not in bound)
+    if unbound_consts:
+        c = min(unbound_consts)
+        if c in antecedents:
+            antecedents_c = sortedset(set_without(antecedents, c))
+        else:
+            antecedents_c = antecedents
+        bound_c = set_with(bound, c.var)
+        POMAGMA_DEBUG('bind constant {}', c)
+        for s in iter_compiled(antecedents_c, succedent, bound_c):
+            yield Let.make(c, s)
+            yielded = True
+        if yielded:
+            return  # HEURISTIC bind eagerly in arbitrary order
 
     # find & bind variable
     for a in antecedents:

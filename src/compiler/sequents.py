@@ -109,12 +109,16 @@ def as_succedent(expr, bound):
     if expr.arity == 'Equation':
         args = []
         for arg in expr.args:
-            if arg.var in bound:
+            if arg.is_var() or arg.var in bound:
                 args.append(arg.var)
-            else:
+            elif arg.args:
                 args.append(as_atom(arg))
                 for argarg in arg.args:
                     antecedents |= as_antecedents(argarg, bound)
+            else:
+                assert arg.arity == 'NullaryFunction', arg
+                args.append(arg.var)
+                antecedents.add(arg)
         succedent = Expression.make(expr.name, *args)
     else:
         assert expr.args, expr.args
