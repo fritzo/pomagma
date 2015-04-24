@@ -39,7 +39,7 @@ cpp-test: all FORCE
 	POMAGMA_LOG_FILE=$(shell pwd)/data/debug.log $(MAKE) -C build/debug test
 
 unit-test: all fixture FORCE
-	#python vet.py check
+	python vet.py check
 	POMAGMA_DEBUG=1 nosetests -v pomagma
 	POMAGMA_LOG_FILE=$(shell pwd)/data/debug.log $(MAKE) -C build/debug test
 	POMAGMA_DEBUG=1 npm test
