@@ -26,7 +26,6 @@ def Iter_program(self, program, stack=None, poll=None):
             modifier = 'POS'
         set_var = get_set_var(test.name, test.args)
         if modifier == 'POS' and test.arity == 'UnaryRelation':
-            (arg,) = test.args
             for_ = 'FOR_UNARY_RELATION {rel} {val}'.format(
                 rel=test.name,
                 val=self.var)
@@ -51,27 +50,22 @@ def Iter_program(self, program, stack=None, poll=None):
             pos_sets.append((set_var, pos_set))
         elif modifier == 'UNKNOWN' and test.arity == 'UnaryRelation':
             for_ = None
-            (arg,) = test.args
-            for name in sorted([test.name, try_negate_name(test.name)]):
-                set_var = get_set_var(name, test.args)
-                neg_set = 'LETS_UNARY_RELATION {rel} {var}'.format(
-                    rel=name,
-                    var=set_var)
-                neg_sets.append((set_var, neg_set))
+            neg_set = 'LETS_UNARY_RELATION {rel} {var}'.format(
+                rel=test.name,
+                var=set_var)
+            neg_sets.append((set_var, neg_set))
         elif modifier == 'UNKNOWN' and test.arity == 'BinaryRelation':
             for_ = None
             lhs, rhs = test.args
             assert lhs != rhs, lhs
             PARITY = ('LHS' if self.var == rhs else 'RHS')
-            for name in sorted([test.name, try_negate_name(test.name)]):
-                set_var = get_set_var(name, test.args)
-                neg_set = \
-                    'LETS_BINARY_RELATION_{PARITY} {rel} {lhs} {rhs}'.format(
-                        PARITY=PARITY,
-                        rel=name,
-                        lhs=set_var if self.var == lhs else lhs,
-                        rhs=set_var if self.var == rhs else rhs)
-                neg_sets.append((set_var, neg_set))
+            neg_set = \
+                'LETS_BINARY_RELATION_{PARITY} {rel} {lhs} {rhs}'.format(
+                    PARITY=PARITY,
+                    rel=test.name,
+                    lhs=set_var if self.var == lhs else lhs,
+                    rhs=set_var if self.var == rhs else rhs)
+            neg_sets.append((set_var, neg_set))
         else:
             raise ValueError(
                 'invalid modifier,arity: {},{}'.format(modifier, test.arity))
