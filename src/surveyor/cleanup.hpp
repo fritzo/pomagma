@@ -37,13 +37,29 @@ public:
     static void log_stats ()
     {
         unsigned long task_count = s_counts.size();
-        POMAGMA_INFO("Id  Count   Elapsed sec");
-        POMAGMA_INFO("----------------------------");
+
+        double total_sec = 0;
         for (unsigned long i = 0; i < task_count; ++i) {
+            double time_sec = s_elapsed[i].load() * 1e-6;
+            total_sec += time_sec;
+        }
+
+        POMAGMA_INFO("Id    Calls Percent Total sec   Per call sec");
+        POMAGMA_INFO("--------------------------------------------");
+        for (unsigned long i = 0; i < task_count; ++i) {
+            size_t count = s_counts[i].load();
+            double time_sec = s_elapsed[i].load() * 1e-6;
+            std::ostringstream percent;
+            percent <<
+                std::setw(6) <<
+                std::right << std::fixed << std::setprecision(2) <<
+                (100 * time_sec / total_sec) << "  ";
             POMAGMA_INFO(
-                std::setw(4) << i <<
-                std::setw(8) << s_counts[i].load() <<
-                std::setw(16) << (s_elapsed[i].load() * 1e-6));
+                std::setw(6) << i <<
+                std::setw(6) << count <<
+                percent.str() <<
+                std::setw(12) << time_sec <<
+                std::setw(12) << (time_sec / count));
         }
     }
 };

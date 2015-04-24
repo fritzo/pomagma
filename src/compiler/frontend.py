@@ -336,11 +336,11 @@ def write_full_programs(programs, sequents):
             full_tasks.append((cost, sequent, seq, strategy))
     full_tasks.sort()
     min_split_cost = 2.0  # above which we split the outermost for loop
-    for i, (cost, sequent, seq, strategy) in enumerate(full_tasks):
+    for plan_id, (cost, sequent, seq, strategy) in enumerate(full_tasks):
         poll = (cost >= min_split_cost)
         programs += [
             '',
-            '# cost = {}'.format(cost),
+            '# plan {}: cost = {:0.1f}'.format(plan_id, cost),
             '# using {}'.format(sequent),
             '# infer {}'.format(seq),
         ]
@@ -366,6 +366,7 @@ def write_event_programs(programs, sequents):
         group_tasks.setdefault(groupname, {})[name] = sorted(tasks)
 
     group_tasks = sorted(group_tasks.iteritems())
+    group_id = 0
     for groupname, group in group_tasks:
         group = sorted(group.iteritems())
         arity = signature.get_arity(group[0][0])
@@ -375,10 +376,13 @@ def write_event_programs(programs, sequents):
             programs += [
                 '',
                 '# ' + '-' * 76,
+                '# plans {}.*: total cost = {:0.1f}'.format(
+                    group_id,
+                    total_cost),
                 '# given {}'.format(eventname),
-                '# total cost = {}'.format(total_cost),
             ]
 
+            plan_id = 0
             for _, event, sequent, strategies in tasks:
                 diagonal = (
                     len(event.args) == 2 and event.args[0] == event.args[1])
@@ -436,12 +440,18 @@ def write_event_programs(programs, sequents):
                 for cost, seq, strategy in strategies:
                     programs += [
                         '',
-                        '# cost = {}'.format(cost),
+                        '# plan {}.{}: cost = {:0.1f}'.format(
+                            group_id,
+                            plan_id,
+                            cost),
                         '# using {}'.format(sequent),
                         '# infer {}'.format(seq),
                         ]
                     programs += header
                     strategy.program(programs)
+                    plan_id += 1
+
+            group_id += 1
 
 
 def get_symbols_used_in(sequents, exprs):
