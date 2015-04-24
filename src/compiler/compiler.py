@@ -3,6 +3,7 @@ import math
 import inspect
 import pomagma.util
 from pomagma.compiler.expressions import Expression
+from pomagma.compiler.expressions import Expression_1
 from pomagma.compiler.expressions import Expression_2
 from pomagma.compiler.sequents import Sequent
 from pomagma.compiler.sequents import assert_normal
@@ -71,6 +72,7 @@ else:
 
 
 EQUAL = Expression_2('EQUAL')
+UNKNOWN = Expression_1('UNKNOWN')
 
 
 # ----------------------------------------------------------------------------
@@ -78,7 +80,7 @@ EQUAL = Expression_2('EQUAL')
 
 
 OBJECT_COUNT = 1e4                          # optimize for this many obs
-LOGIC_COST = OBJECT_COUNT / 256.0           # AVX operations are cheap
+LOGIC_COST = OBJECT_COUNT / 64.0            # perform logic on 64-bit words
 LOG_OBJECT_COUNT = math.log(OBJECT_COUNT)
 
 
@@ -146,9 +148,10 @@ class Iter(Strategy):
         self.body.validate(bound)
 
     def op_count(self, stack=None):
-        test_count = len(self.tests) + len(self.lets)
-        logic_cost = LOGIC_COST * test_count
-        object_count = OBJECT_COUNT * 0.5 ** test_count
+        logic_cost = LOGIC_COST * (len(self.tests) + len(self.lets))
+        object_count = OBJECT_COUNT
+        for test_or_let in self.stack:
+            object_count *= test_or_let.prob()
         let_cost = len(self.lets)
         body_cost = self.body.op_count(stack=self.stack)
         return logic_cost + object_count * (let_cost + body_cost)
@@ -159,11 +162,14 @@ class Iter(Strategy):
         while isinstance(node, Test) or isinstance(node, Let):
             if isinstance(node, Let):
                 new_lets.add(node.var)
+            expr = node.expr
+            while expr.name == 'UNKNOWN':
+                expr = expr.args[0]
             optimizable = (
-                self.var in node.expr.vars and
-                node.expr.vars.isdisjoint(new_lets) and
-                sum(1 for arg in node.expr.args if self.var == arg) == 1 and
-                sum(1 for arg in node.expr.args if self.var in arg.vars) == 1
+                self.var in expr.vars and
+                expr.vars.isdisjoint(new_lets) and
+                sum(1 for arg in expr.args if self.var == arg) == 1 and
+                sum(1 for arg in expr.args if self.var in arg.vars) == 1
             )
             if optimizable:
                 if isinstance(node, Test):
@@ -278,11 +284,14 @@ class Let(Strategy):
         assert_not_in(self.var, bound)
         self.body.validate(set_with(bound, self.var))
 
+    def prob(self):
+        return 0.1
+
     def op_count(self, stack=None):
         if stack and self in stack:
             return self.body.op_count(stack=stack)
         else:
-            return 1.0 + 0.5 * self.body.op_count(stack=stack)
+            return 1.0 + self.prob() * self.body.op_count(stack=stack)
 
 
 @memoize_make
@@ -302,11 +311,16 @@ class Test(Strategy):
         assert_subset(self.expr.vars, bound)
         self.body.validate(bound)
 
+    __probs = {'LESS': 0.1, 'NLESS': 0.9, 'UNKNOWN': 0.1}
+
+    def prob(self):
+        return self.__probs.get(self.expr.name, 0.5)
+
     def op_count(self, stack=None):
         if stack and self in stack:
             return self.body.op_count(stack=stack)
         else:
-            return 1.0 + self.body.op_count(stack=stack)
+            return 1.0 + self.prob() * self.body.op_count(stack=stack)
 
 
 @memoize_make
@@ -515,6 +529,17 @@ def iter_compiled(antecedents, succedent, bound):
                 pass
         if yielded:
             return  # HEURISTIC bind eagerly in arbitrary order
+
+    # iterate unknown
+    if succedent.is_rel() and succedent.name != 'EQUAL':  # TODO handle EQUAL
+        s_free = succedent.vars - bound
+        if len(succedent.vars) == len(succedent.args) and len(s_free) == 1:
+            v = iter(s_free).next()
+            bound_v = set_with(bound, v)
+            POMAGMA_DEBUG('iterate unknown {}', v)
+            for s in iter_compiled(antecedents, succedent, bound_v):
+                yield Iter.make(v, Test.make(UNKNOWN(succedent), s))
+                yielded = True
 
     # iterate forward
     forward_vars = set()

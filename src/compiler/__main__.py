@@ -447,7 +447,8 @@ def batch_compile():
                     'programs_out': programs_out,
                     'extensional': str(spec.get('extensional', True)),
                 }})
-    multiprocessing.Pool().map(_compile, params)
+    # multiprocessing.Pool().
+    map(_compile, params)
 
 
 if __name__ == '__main__':

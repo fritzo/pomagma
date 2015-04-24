@@ -203,11 +203,14 @@ def get_contrapositives(seq):
     result = set()
     for _, succedents in ante_succ_pairs:
         if succedents:
+            succedent = iter(succedents).next()
             antecedents_product = []
             for other_antecedents, other_succedents in ante_succ_pairs:
                 if other_succedents != succedents:
                     antecedents_product.append(other_antecedents)
             for antecedents in itertools.product(*antecedents_product):
+                if succedent in antecedents:
+                    continue
                 try:
                     antecedents = try_simplify_antecedents(set(antecedents))
                 except Inconsistent:

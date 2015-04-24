@@ -20,9 +20,9 @@ inline size_t items_to_words (size_t item_dim)
 }
 
 //----------------------------------------------------------------------------
-// Iteration
+// Sets
 
-template<size_t rank>
+template<size_t rank, bool difference=false>
 class Intersection
 {
     const size_t m_word_dim;
@@ -30,9 +30,11 @@ class Intersection
 
 public:
 
-    Intersection (
-            size_t item_dim,
-            std::array<const std::atomic<Word> *, rank> words)
+    enum { is_monotone = (not difference) };
+
+    typedef std::array<const std::atomic<Word> *, rank> init_t;
+
+    Intersection (size_t item_dim, init_t words)
         : m_word_dim(items_to_words(item_dim)),
           m_words(words)
     {
@@ -55,7 +57,11 @@ public:
     {
         Word word = m_words[0][quot].load(relaxed);
         for (size_t i = 1; i < rank; ++i) {
-            word &= m_words[i][quot].load(relaxed);
+            if (difference) {
+                word &= ~ m_words[i][quot].load(relaxed);
+            } else {
+                word &= m_words[i][quot].load(relaxed);
+            }
         }
         return word;
     }
@@ -69,7 +75,11 @@ class Intersection<1>
 
 public:
 
-    Intersection (size_t item_dim, const std::atomic<Word> * words)
+    enum { is_monotone = true };
+
+    typedef const std::atomic<Word> * init_t;
+
+    Intersection (size_t item_dim, init_t words)
         : m_word_dim(items_to_words(item_dim)),
           m_words(words)
     {
@@ -81,10 +91,13 @@ public:
     Word get_word (size_t quot) const { return m_words[quot].load(relaxed); }
 };
 
-template<size_t rank>
+//----------------------------------------------------------------------------
+// Iteration
+
+template<class Set>
 class SetIterator
 {
-    Intersection<rank> m_set;
+    Set m_set;
     size_t m_i;
     size_t m_rem;
     size_t m_quot;
@@ -92,20 +105,9 @@ class SetIterator
 
 public:
 
-    SetIterator (
-            size_t item_dim,
-            std::array<const std::atomic<Word> *, rank> words)
+    SetIterator (size_t item_dim, typename Set::init_t words)
         : m_set(item_dim, words)
     {
-        _init();
-    }
-
-    SetIterator (
-            size_t item_dim,
-            const std::atomic<Word> * words)
-        : m_set(item_dim, words)
-    {
-        static_assert(rank == 1, "cannot initialize with singleton");
         _init();
     }
 
@@ -119,18 +121,21 @@ private:
     void _next_block ();
 };
 
-template<size_t rank>
-void SetIterator<rank>::_init ()
+template<class Set>
+void SetIterator<Set>::_init ()
 {
     m_quot = 0;
     --m_quot;
     _next_block();
-    POMAGMA_ASSERT5(not ok() or m_set.get_bit(m_i),
+    if (Set::is_monotone) {
+        POMAGMA_ASSERT5(
+            not ok() or m_set.get_bit(m_i),
             "begin on empty pos: " << m_i);
+    }
 }
 
-template<size_t rank>
-void SetIterator<rank>::_next_block ()
+template<class Set>
+void SetIterator<Set>::_next_block ()
 {
     // traverse to next nonempty block
     do {
@@ -144,12 +149,14 @@ void SetIterator<rank>::_next_block ()
         POMAGMA_ASSERT4(m_rem != BITS_PER_WORD, "found no bits");
     }
     m_i = m_rem + BITS_PER_WORD * m_quot;
-    POMAGMA_ASSERT5(m_set.get_bit(m_i), "landed on empty pos: " << m_i);
+    if (Set::is_monotone) {
+        POMAGMA_ASSERT5(m_set.get_bit(m_i), "landed on empty pos: " << m_i);
+    }
 }
 
 // PROFILE this is one of the slowest methods
-template<size_t rank>
-void SetIterator<rank>::next ()
+template<class Set>
+void SetIterator<Set>::next ()
 {
     POMAGMA_ASSERT_OK
     do {
@@ -159,7 +166,9 @@ void SetIterator<rank>::next ()
         else { _next_block(); return; }
     } while (!(m_word & 1));
     m_i = m_rem + BITS_PER_WORD * m_quot;
-    POMAGMA_ASSERT5(m_set.get_bit(m_i), "landed on empty pos: " << m_i);
+    if (Set::is_monotone) {
+        POMAGMA_ASSERT5(m_set.get_bit(m_i), "landed on empty pos: " << m_i);
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -260,12 +269,12 @@ public:
     bool ensure      (const DenseSet & dep, DenseSet & diff);
     // returns true if anything in rep changes
 
-    typedef SetIterator<1> Iterator;
-    typedef SetIterator<2> Iterator2;
-    typedef SetIterator<3> Iterator3;
-    typedef SetIterator<4> Iterator4;
-    typedef SetIterator<5> Iterator5;
-    typedef SetIterator<6> Iterator6;
+    typedef SetIterator<Intersection<1>> Iterator;
+    typedef SetIterator<Intersection<2>> Iterator2;
+    typedef SetIterator<Intersection<3>> Iterator3;
+    typedef SetIterator<Intersection<4>> Iterator4;
+    typedef SetIterator<Intersection<5>> Iterator5;
+    typedef SetIterator<Intersection<6>> Iterator6;
 
     Iterator iter () const;
     Iterator2 iter_insn (const DenseSet & other) const;

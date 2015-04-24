@@ -30,6 +30,7 @@ ARITY_TABLE = {
     'COMP': 'BinaryFunction',
     'JOIN': 'SymmetricFunction',
     'RAND': 'SymmetricFunction',
+    'UNKNOWN': 'UnaryMeta',
     'OPTIONALLY': 'UnaryMeta',
     'NONEGATE': 'UnaryMeta',
     'EQUIVALENTLY': 'BinaryMeta',

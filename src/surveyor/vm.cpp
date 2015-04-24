@@ -1,4 +1,5 @@
 #include <map>
+#include <unordered_set>
 #include <typeinfo>
 #include <sstream>
 #include <fstream>
@@ -50,6 +51,10 @@ enum OpArgType : uint8_t
     DO(FOR_POS_POS_POS_POS, ({NEW_OB, SET, SET, SET, SET})) \
     DO(FOR_POS_POS_POS_POS_POS, ({NEW_OB, SET, SET, SET, SET, SET})) \
     DO(FOR_POS_POS_POS_POS_POS_POS, ({NEW_OB, SET, SET, SET, SET, SET, SET})) \
+    DO(FOR_POS_NEG, ({NEW_OB, SET, SET})) \
+    DO(FOR_POS_NEG_NEG, ({NEW_OB, SET, SET, SET})) \
+    DO(FOR_NEG, ({NEW_OB, SET})) \
+    DO(FOR_NEG_NEG, ({NEW_OB, SET, SET})) \
     DO(FOR_ALL, ({NEW_OB})) \
     DO(FOR_UNARY_RELATION, ({UNARY_RELATION, NEW_OB})) \
     DO(FOR_BINARY_RELATION_LHS, ({BINARY_RELATION, OB, NEW_OB})) \
@@ -146,6 +151,7 @@ static const size_t g_op_code_count =
 class Parser::SymbolTable
 {
     std::unordered_map<std::string, uint8_t> m_registers;
+    std::unordered_set<std::string> m_loaded;
 
 public:
 
@@ -165,13 +171,24 @@ public:
         return index;
     }
 
-    uint8_t load (const std::string & name, size_t lineno) const
+    uint8_t load (const std::string & name, size_t lineno)
     {
         auto i = m_registers.find(name);
         POMAGMA_ASSERT(
             i != m_registers.end(),
             "line " << lineno << ": undefined variable: " << name);
+        m_loaded.insert(name);
         return i->second;
+    }
+
+    void check_unused (size_t lineno) const
+    {
+        for (const auto & pair : m_registers) {
+            const std::string & name = pair.first;
+            POMAGMA_ASSERT(
+                m_loaded.find(name) != m_loaded.end(),
+                "line " << lineno << ": unused variable: " << name);
+        }
     }
 };
 
@@ -235,6 +252,7 @@ std::vector<std::vector<uint8_t>> Parser::parse (std::istream & infile) const
             continue;
         }
         if (line.empty()) {
+            sets.check_unused(lineno);
             obs.clear();
             sets.clear();
             if (not program.empty()) {
@@ -479,7 +497,7 @@ void VirtualMachine::_execute (Program program, Context * context) const
 
         case LETS_INJECTIVE_FUNCTION_INVERSE: {
             InjectiveFunction & fun = pop_injective_function(program);
-            pop_set(program, context) = fun.defined().raw_data();
+            pop_set(program, context) = fun.inverse_defined().raw_data();
             _execute(program, context);
         } break;
 
@@ -510,7 +528,9 @@ void VirtualMachine::_execute (Program program, Context * context) const
             Ob & ob = pop_ob(program, context);
             auto s1 = pop_set(program, context);
             auto s2 = pop_set(program, context);
-            SetIterator<2> iter(item_dim(), {{s1, s2}});
+            SetIterator<Intersection<2>> iter(item_dim(), {{
+                s1, s2
+            }});
             for (; iter.ok(); iter.next()) {
                 ob = *iter;
                 _execute(program, context);
@@ -522,7 +542,9 @@ void VirtualMachine::_execute (Program program, Context * context) const
             auto s1 = pop_set(program, context);
             auto s2 = pop_set(program, context);
             auto s3 = pop_set(program, context);
-            SetIterator<3> iter(item_dim(), {{s1, s2, s3}});
+            SetIterator<Intersection<3>> iter(item_dim(), {{
+                s1, s2, s3
+            }});
             for (; iter.ok(); iter.next()) {
                 ob = *iter;
                 _execute(program, context);
@@ -535,7 +557,9 @@ void VirtualMachine::_execute (Program program, Context * context) const
             auto s2 = pop_set(program, context);
             auto s3 = pop_set(program, context);
             auto s4 = pop_set(program, context);
-            SetIterator<4> iter(item_dim(), {{s1, s2, s3, s4}});
+            SetIterator<Intersection<4>> iter(item_dim(), {{
+                s1, s2, s3, s4
+            }});
             for (; iter.ok(); iter.next()) {
                 ob = *iter;
                 _execute(program, context);
@@ -549,7 +573,9 @@ void VirtualMachine::_execute (Program program, Context * context) const
             auto s3 = pop_set(program, context);
             auto s4 = pop_set(program, context);
             auto s5 = pop_set(program, context);
-            SetIterator<5> iter(item_dim(), {{s1, s2, s3, s4, s5}});
+            SetIterator<Intersection<5>> iter(item_dim(), {{
+                s1, s2, s3, s4, s5
+            }});
             for (; iter.ok(); iter.next()) {
                 ob = *iter;
                 _execute(program, context);
@@ -564,7 +590,63 @@ void VirtualMachine::_execute (Program program, Context * context) const
             auto s4 = pop_set(program, context);
             auto s5 = pop_set(program, context);
             auto s6 = pop_set(program, context);
-            SetIterator<6> iter(item_dim(), {{s1, s2, s3, s4, s5, s6}});
+            SetIterator<Intersection<6>> iter(item_dim(), {{
+                s1, s2, s3, s4, s5, s6
+            }});
+            for (; iter.ok(); iter.next()) {
+                ob = *iter;
+                _execute(program, context);
+            }
+        } break;
+
+        case FOR_POS_NEG: {
+            Ob & ob = pop_ob(program, context);
+            const std::atomic<Word> * s1 = pop_set(program, context);
+            const std::atomic<Word> * s2 = pop_set(program, context);
+            SetIterator<Intersection<2, true>> iter(item_dim(), {{
+                s1, s2
+            }});
+            for (; iter.ok(); iter.next()) {
+                ob = *iter;
+                _execute(program, context);
+            }
+        } break;
+
+        case FOR_POS_NEG_NEG: {
+            Ob & ob = pop_ob(program, context);
+            const std::atomic<Word> * s1 = pop_set(program, context);
+            const std::atomic<Word> * s2 = pop_set(program, context);
+            const std::atomic<Word> * s3 = pop_set(program, context);
+            SetIterator<Intersection<3, true>> iter(item_dim(), {{
+                s1, s2, s3
+            }});
+            for (; iter.ok(); iter.next()) {
+                ob = *iter;
+                _execute(program, context);
+            }
+        } break;
+
+        case FOR_NEG: {
+            Ob & ob = pop_ob(program, context);
+            const std::atomic<Word> * s1 = support().raw_data();
+            const std::atomic<Word> * s2 = pop_set(program, context);
+            SetIterator<Intersection<2, true>> iter(item_dim(), {{
+                s1, s2
+            }});
+            for (; iter.ok(); iter.next()) {
+                ob = *iter;
+                _execute(program, context);
+            }
+        } break;
+
+        case FOR_NEG_NEG: {
+            Ob & ob = pop_ob(program, context);
+            const std::atomic<Word> * s1 = support().raw_data();
+            const std::atomic<Word> * s2 = pop_set(program, context);
+            const std::atomic<Word> * s3 = pop_set(program, context);
+            SetIterator<Intersection<3, true>> iter(item_dim(), {{
+                s1, s2, s3
+            }});
             for (; iter.ok(); iter.next()) {
                 ob = *iter;
                 _execute(program, context);

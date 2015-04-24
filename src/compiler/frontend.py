@@ -8,49 +8,73 @@ from pomagma.compiler.sequents import Sequent
 from pomagma.compiler.util import methodof
 
 
+def get_set_var(name, args):
+    return '_'.join([name] + [a.var.name.rstrip('_') for a in args])
+
+
 @methodof(compiler.Iter, 'program')
 def Iter_program(self, program, stack=None, poll=None):
-    sets = []
+    pos_sets = []
+    neg_sets = []
     for_ = 'FOR_ALL {val}'.format(val=self.var)
 
     for test in self.tests:
-        set_var = '_'.join(
-            [test.name] + [a.var.name.rstrip('_') for a in test.args])
-        if test.arity == 'UnaryRelation':
+        if test.name == 'UNKNOWN':
+            modifier = 'UNKNOWN'
+            test = test.args[0]
+        else:
+            modifier = 'POS'
+        set_var = get_set_var(test.name, test.args)
+        if modifier == 'POS' and test.arity == 'UnaryRelation':
             (arg,) = test.args
             for_ = 'FOR_UNARY_RELATION {rel} {val}'.format(
                 rel=test.name,
                 val=self.var)
-            intersect = 'LETS_UNARY_RELATION {rel} {var}'.format(
+            pos_set = 'LETS_UNARY_RELATION {rel} {var}'.format(
                 rel=test.name,
                 var=set_var)
-            sets.append((set_var, intersect))
-        elif test.arity == 'BinaryRelation':
+            pos_sets.append((set_var, pos_set))
+        elif modifier == 'POS' and test.arity == 'BinaryRelation':
             lhs, rhs = test.args
             assert lhs != rhs, lhs
-            if self.var == lhs:
-                for_ = 'FOR_BINARY_RELATION_RHS {rel} {lhs} {rhs}'.format(
-                    rel=test.name,
-                    lhs=lhs,
-                    rhs=rhs)
-                intersect = 'LETS_BINARY_RELATION_RHS {rel} {lhs} {rhs}'\
-                    .format(
-                        rel=test.name,
-                        lhs=set_var,
-                        rhs=rhs)
-            else:
-                for_ = 'FOR_BINARY_RELATION_LHS {rel} {lhs} {rhs}'.format(
-                    rel=test.name,
-                    lhs=lhs,
-                    rhs=rhs)
-                intersect = 'LETS_BINARY_RELATION_LHS {rel} {lhs} {rhs}'\
-                    .format(
-                        rel=test.name,
-                        lhs=lhs,
-                        rhs=set_var)
-            sets.append((set_var, intersect))
+            PARITY = ('LHS' if self.var == rhs else 'RHS')
+            for_ = 'FOR_BINARY_RELATION_{PARITY} {rel} {lhs} {rhs}'.format(
+                PARITY=PARITY,
+                rel=test.name,
+                lhs=lhs,
+                rhs=rhs)
+            pos_set = 'LETS_BINARY_RELATION_{PARITY} {rel} {lhs} {rhs}'.format(
+                PARITY=PARITY,
+                rel=test.name,
+                lhs=set_var if self.var == lhs else lhs,
+                rhs=set_var if self.var == rhs else rhs)
+            pos_sets.append((set_var, pos_set))
+        elif modifier == 'UNKNOWN' and test.arity == 'UnaryRelation':
+            for_ = None
+            (arg,) = test.args
+            for name in sorted([test.name, try_negate_name(test.name)]):
+                set_var = get_set_var(name, test.args)
+                neg_set = 'LETS_UNARY_RELATION {rel} {var}'.format(
+                    rel=name,
+                    var=set_var)
+                neg_sets.append((set_var, neg_set))
+        elif modifier == 'UNKNOWN' and test.arity == 'BinaryRelation':
+            for_ = None
+            lhs, rhs = test.args
+            assert lhs != rhs, lhs
+            PARITY = ('LHS' if self.var == rhs else 'RHS')
+            for name in sorted([test.name, try_negate_name(test.name)]):
+                set_var = get_set_var(name, test.args)
+                neg_set = \
+                    'LETS_BINARY_RELATION_{PARITY} {rel} {lhs} {rhs}'.format(
+                        PARITY=PARITY,
+                        rel=name,
+                        lhs=set_var if self.var == lhs else lhs,
+                        rhs=set_var if self.var == rhs else rhs)
+                neg_sets.append((set_var, neg_set))
         else:
-            raise ValueError('invalid arity {}'.format(test.arity))
+            raise ValueError(
+                'invalid modifier,arity: {},{}'.format(modifier, test.arity))
 
     for var, expr in sorted(self.lets.iteritems()):
         assert self.var in expr.args,\
@@ -61,7 +85,7 @@ def Iter_program(self, program, stack=None, poll=None):
                 fun=expr.name,
                 key=self.var,
                 val=var)
-            intersect = 'LETS_INJECTIVE_FUNCTION {fun} {var}'.format(
+            pos_set = 'LETS_INJECTIVE_FUNCTION {fun} {var}'.format(
                 fun=expr.name,
                 var=set_var)
         elif expr.arity == 'BinaryFunction':
@@ -74,11 +98,10 @@ def Iter_program(self, program, stack=None, poll=None):
                         lhs=lhs,
                         rhs=rhs,
                         val=expr.var.name)
-                intersect = \
-                    'LETS_BINARY_FUNCTION_RHS {fun} {lhs} {rhs}'.format(
-                        fun=expr.name,
-                        lhs=set_var,
-                        rhs=rhs)
+                pos_set = 'LETS_BINARY_FUNCTION_RHS {fun} {lhs} {rhs}'.format(
+                    fun=expr.name,
+                    lhs=set_var,
+                    rhs=rhs)
             else:
                 for_ = \
                     'FOR_BINARY_FUNCTION_LHS {fun} {lhs} {rhs} {val}'.format(
@@ -86,11 +109,10 @@ def Iter_program(self, program, stack=None, poll=None):
                         lhs=lhs,
                         rhs=rhs,
                         val=expr.var.name)
-                intersect = \
-                    'LETS_BINARY_FUNCTION_LHS {fun} {lhs} {rhs}'.format(
-                        fun=expr.name,
-                        lhs=lhs,
-                        rhs=set_var)
+                pos_set = 'LETS_BINARY_FUNCTION_LHS {fun} {lhs} {rhs}'.format(
+                    fun=expr.name,
+                    lhs=lhs,
+                    rhs=set_var)
         elif expr.arity == 'SymmetricFunction':
             lhs, rhs = expr.args
             assert lhs != rhs, lhs
@@ -100,27 +122,29 @@ def Iter_program(self, program, stack=None, poll=None):
                 lhs=fixed,
                 rhs=self.var,
                 val=expr.var.name)
-            intersect = \
-                'LETS_SYMMETRIC_FUNCTION_LHS {fun} {lhs} {rhs}'.format(
-                    fun=expr.name,
-                    lhs=fixed,
-                    rhs=set_var)
+            pos_set = 'LETS_SYMMETRIC_FUNCTION_LHS {fun} {lhs} {rhs}'.format(
+                fun=expr.name,
+                lhs=fixed,
+                rhs=set_var)
         else:
             raise ValueError('invalid arity {}'.format(expr.arity))
-        sets.append((set_var, intersect))
+        pos_sets.append((set_var, pos_set))
 
-    if len(sets) > 1:
-        for_ = 'FOR{pos} {val}'.format(
-            pos='_POS' * len(sets),
+    if len(pos_sets) <= 1 and len(neg_sets) == 0:
+        program.append(for_)
+        if poll:
+            program.append('IF_BLOCK {val}'.format(val=self.var))
+    else:
+        for_ = 'FOR{pos}{neg} {val}'.format(
+            pos='_POS' * len(pos_sets),
+            neg='_NEG' * len(neg_sets),
             val=self.var)
-        for set_var, intersect in sets:
-            program.append(intersect)
+        for set_var, pos_set in pos_sets + neg_sets:
+            program.append(pos_set)
             for_ += ' {var}'.format(var=set_var)
-
-    program.append(for_)
-    if poll:
-        program.append('IF_BLOCK {val}'.format(val=self.var))
-    if len(sets) > 1:
+        program.append(for_)
+        if poll:
+            program.append('IF_BLOCK {val}'.format(val=self.var))
         for var, expr in sorted(self.lets.iteritems()):
             arity = expr.arity
             ARITY = arity.replace('Function', '').upper()
