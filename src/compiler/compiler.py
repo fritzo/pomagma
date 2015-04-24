@@ -497,6 +497,17 @@ def iter_compiled(antecedents, succedent, bound):
         yielded = True
         return
 
+    # test constant
+    for a in antecedents:
+        if a.arity == 'NullaryFunction' and a.var in bound:
+            antecedents_a = sortedset(set_without(antecedents, a))
+            POMAGMA_DEBUG('test constant {}', a)
+            for s in iter_compiled(antecedents_a, succedent, bound):
+                yield Test.make(a, s)
+                yielded = True
+            if yielded:
+                return  # HEURISTIC test eagerly in arbitrary order
+
     # bind constant
     consts = succedent.consts | union(a.consts for a in antecedents)
     unbound_consts = set(c for c in consts if c.var not in bound)
@@ -511,14 +522,15 @@ def iter_compiled(antecedents, succedent, bound):
         for s in iter_compiled(antecedents_c, succedent, bound_c):
             yield Let.make(c, s)
             yielded = True
-        return  # HEURISTIC bind eagerly in arbitrary order
+        if yielded:
+            return  # HEURISTIC bind eagerly in arbitrary order
 
     # conditionals
     for a in antecedents:
         if a.is_rel():
             if a.vars <= bound:
                 antecedents_a = sortedset(set_without(antecedents, a))
-                POMAGMA_DEBUG('conditional {}', a)
+                POMAGMA_DEBUG('test relation {}', a)
                 for s in iter_compiled(antecedents_a, succedent, bound):
                     yield Test.make(a, s)
                     yielded = True
@@ -526,7 +538,7 @@ def iter_compiled(antecedents, succedent, bound):
             assert a.is_fun(), a
             if a.vars <= bound and a.var in bound:
                 antecedents_a = sortedset(set_without(antecedents, a))
-                POMAGMA_DEBUG('conditional {}', a)
+                POMAGMA_DEBUG('test function {}', a)
                 for s in iter_compiled(antecedents_a, succedent, bound):
                     yield Test.make(a, s)
                     yielded = True
@@ -540,7 +552,7 @@ def iter_compiled(antecedents, succedent, bound):
                 assert a.var not in bound
                 antecedents_a = sortedset(set_without(antecedents, a))
                 bound_a = set_with(bound, a.var)
-                POMAGMA_DEBUG('bind variable {}', a)
+                POMAGMA_DEBUG('let {}', a)
                 for s in iter_compiled(antecedents_a, succedent, bound_a):
                     yield Let.make(a, s)
                     yielded = True
