@@ -46,15 +46,17 @@ enum OpArgType : uint8_t
     DO(LETS_BINARY_FUNCTION_LHS, ({BINARY_FUNCTION, OB, NEW_SET})) \
     DO(LETS_BINARY_FUNCTION_RHS, ({BINARY_FUNCTION, NEW_SET, OB})) \
     DO(LETS_SYMMETRIC_FUNCTION_LHS, ({SYMMETRIC_FUNCTION, OB, NEW_SET})) \
+    DO(FOR_NEG, ({NEW_OB, SET})) \
+    DO(FOR_NEG_NEG, ({NEW_OB, SET, SET})) \
+    DO(FOR_POS_NEG, ({NEW_OB, SET, SET})) \
+    DO(FOR_POS_NEG_NEG, ({NEW_OB, SET, SET, SET})) \
     DO(FOR_POS_POS, ({NEW_OB, SET, SET})) \
+    DO(FOR_POS_POS_NEG, ({NEW_OB, SET, SET, SET})) \
+    DO(FOR_POS_POS_NEG_NEG, ({NEW_OB, SET, SET, SET, SET})) \
     DO(FOR_POS_POS_POS, ({NEW_OB, SET, SET, SET})) \
     DO(FOR_POS_POS_POS_POS, ({NEW_OB, SET, SET, SET, SET})) \
     DO(FOR_POS_POS_POS_POS_POS, ({NEW_OB, SET, SET, SET, SET, SET})) \
     DO(FOR_POS_POS_POS_POS_POS_POS, ({NEW_OB, SET, SET, SET, SET, SET, SET})) \
-    DO(FOR_POS_NEG, ({NEW_OB, SET, SET})) \
-    DO(FOR_POS_NEG_NEG, ({NEW_OB, SET, SET, SET})) \
-    DO(FOR_NEG, ({NEW_OB, SET})) \
-    DO(FOR_NEG_NEG, ({NEW_OB, SET, SET})) \
     DO(FOR_ALL, ({NEW_OB})) \
     DO(FOR_UNARY_RELATION, ({UNARY_RELATION, NEW_OB})) \
     DO(FOR_BINARY_RELATION_LHS, ({BINARY_RELATION, OB, NEW_OB})) \
@@ -524,12 +526,95 @@ void VirtualMachine::_execute (Program program, Context * context) const
             _execute(program, context);
         } break;
 
+        case FOR_NEG: {
+            Ob & ob = pop_ob(program, context);
+            auto s1 = support().raw_data();
+            auto s2 = pop_set(program, context);
+            SetIterator<Intersection<1, 1>> iter(item_dim(), {{
+                s1, s2
+            }});
+            for (; iter.ok(); iter.next()) {
+                ob = *iter;
+                _execute(program, context);
+            }
+        } break;
+
+        case FOR_NEG_NEG: {
+            Ob & ob = pop_ob(program, context);
+            auto s1 = support().raw_data();
+            auto s2 = pop_set(program, context);
+            auto s3 = pop_set(program, context);
+            SetIterator<Intersection<1, 2>> iter(item_dim(), {{
+                s1, s2, s3
+            }});
+            for (; iter.ok(); iter.next()) {
+                ob = *iter;
+                _execute(program, context);
+            }
+        } break;
+
+        case FOR_POS_NEG: {
+            Ob & ob = pop_ob(program, context);
+            auto s1 = pop_set(program, context);
+            auto s2 = pop_set(program, context);
+            SetIterator<Intersection<1, 1>> iter(item_dim(), {{
+                s1, s2
+            }});
+            for (; iter.ok(); iter.next()) {
+                ob = *iter;
+                _execute(program, context);
+            }
+        } break;
+
+        case FOR_POS_NEG_NEG: {
+            Ob & ob = pop_ob(program, context);
+            auto s1 = pop_set(program, context);
+            auto s2 = pop_set(program, context);
+            auto s3 = pop_set(program, context);
+            SetIterator<Intersection<1, 2>> iter(item_dim(), {{
+                s1, s2, s3
+            }});
+            for (; iter.ok(); iter.next()) {
+                ob = *iter;
+                _execute(program, context);
+            }
+        } break;
+
         case FOR_POS_POS: {
             Ob & ob = pop_ob(program, context);
             auto s1 = pop_set(program, context);
             auto s2 = pop_set(program, context);
             SetIterator<Intersection<2>> iter(item_dim(), {{
                 s1, s2
+            }});
+            for (; iter.ok(); iter.next()) {
+                ob = *iter;
+                _execute(program, context);
+            }
+        } break;
+
+        case FOR_POS_POS_NEG: {
+            Ob & ob = pop_ob(program, context);
+            auto s1 = pop_set(program, context);
+            auto s2 = pop_set(program, context);
+            auto s3 = pop_set(program, context);
+            SetIterator<Intersection<2, 1>> iter(item_dim(), {{
+                s1, s2, s3
+            }});
+            for (; iter.ok(); iter.next()) {
+                ob = *iter;
+                _execute(program, context);
+            }
+        } break;
+
+        case FOR_POS_POS_NEG_NEG: {
+            Ob & ob = pop_ob(program, context);
+            auto s1 = pop_set(program, context);
+            auto s2 = pop_set(program, context);
+            auto s3 = pop_set(program, context);
+            auto s4 = pop_set(program, context);
+            SetIterator<Intersection<2, 2>> iter(item_dim(), {{
+                s1, s2, s3, s4
             }});
             for (; iter.ok(); iter.next()) {
                 ob = *iter;
@@ -592,60 +677,6 @@ void VirtualMachine::_execute (Program program, Context * context) const
             auto s6 = pop_set(program, context);
             SetIterator<Intersection<6>> iter(item_dim(), {{
                 s1, s2, s3, s4, s5, s6
-            }});
-            for (; iter.ok(); iter.next()) {
-                ob = *iter;
-                _execute(program, context);
-            }
-        } break;
-
-        case FOR_POS_NEG: {
-            Ob & ob = pop_ob(program, context);
-            const std::atomic<Word> * s1 = pop_set(program, context);
-            const std::atomic<Word> * s2 = pop_set(program, context);
-            SetIterator<Intersection<2, true>> iter(item_dim(), {{
-                s1, s2
-            }});
-            for (; iter.ok(); iter.next()) {
-                ob = *iter;
-                _execute(program, context);
-            }
-        } break;
-
-        case FOR_POS_NEG_NEG: {
-            Ob & ob = pop_ob(program, context);
-            const std::atomic<Word> * s1 = pop_set(program, context);
-            const std::atomic<Word> * s2 = pop_set(program, context);
-            const std::atomic<Word> * s3 = pop_set(program, context);
-            SetIterator<Intersection<3, true>> iter(item_dim(), {{
-                s1, s2, s3
-            }});
-            for (; iter.ok(); iter.next()) {
-                ob = *iter;
-                _execute(program, context);
-            }
-        } break;
-
-        case FOR_NEG: {
-            Ob & ob = pop_ob(program, context);
-            const std::atomic<Word> * s1 = support().raw_data();
-            const std::atomic<Word> * s2 = pop_set(program, context);
-            SetIterator<Intersection<2, true>> iter(item_dim(), {{
-                s1, s2
-            }});
-            for (; iter.ok(); iter.next()) {
-                ob = *iter;
-                _execute(program, context);
-            }
-        } break;
-
-        case FOR_NEG_NEG: {
-            Ob & ob = pop_ob(program, context);
-            const std::atomic<Word> * s1 = support().raw_data();
-            const std::atomic<Word> * s2 = pop_set(program, context);
-            const std::atomic<Word> * s3 = pop_set(program, context);
-            SetIterator<Intersection<3, true>> iter(item_dim(), {{
-                s1, s2, s3
             }});
             for (; iter.ok(); iter.next()) {
                 ob = *iter;

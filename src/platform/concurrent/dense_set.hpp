@@ -22,15 +22,17 @@ inline size_t items_to_words (size_t item_dim)
 //----------------------------------------------------------------------------
 // Sets
 
-template<size_t rank, bool difference=false>
+template<size_t pos_rank, size_t neg_rank = 0>
 class Intersection
 {
+    enum { rank = pos_rank + neg_rank };
+
     const size_t m_word_dim;
     const std::array<const std::atomic<Word> *, rank> m_words;
 
 public:
 
-    enum { is_monotone = (not difference) };
+    enum { is_monotone = (neg_rank == 0) };
 
     typedef std::array<const std::atomic<Word> *, rank> init_t;
 
@@ -55,20 +57,20 @@ public:
     }
     Word get_word (size_t quot) const
     {
+        static_assert(pos_rank > 0, "pos_rank must be > 0");
         Word word = m_words[0][quot].load(relaxed);
-        for (size_t i = 1; i < rank; ++i) {
-            if (difference) {
-                word &= ~ m_words[i][quot].load(relaxed);
-            } else {
-                word &= m_words[i][quot].load(relaxed);
-            }
+        for (size_t i = 1; i < pos_rank; ++i) {
+            word &= m_words[i][quot].load(relaxed);
+        }
+        for (size_t i = pos_rank; i < rank; ++i) {
+            word &= ~ m_words[i][quot].load(relaxed);
         }
         return word;
     }
 };
 
 template<>
-class Intersection<1>
+class Intersection<1, 0>
 {
     const size_t m_word_dim;
     const std::atomic<Word> * const m_words;
