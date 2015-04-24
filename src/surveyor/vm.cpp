@@ -37,19 +37,19 @@ enum OpArgType : uint8_t
     DO(GIVEN_BINARY_FUNCTION, ({BINARY_FUNCTION, NEW_OB, NEW_OB, NEW_OB})) \
     DO(GIVEN_SYMMETRIC_FUNCTION, \
         ({SYMMETRIC_FUNCTION, NEW_OB, NEW_OB, NEW_OB})) \
-    DO(INTERSECT_UNARY_RELATION, ({UNARY_RELATION, NEW_SET})) \
-    DO(INTERSECT_BINARY_RELATION_LHS, ({BINARY_RELATION, OB, NEW_SET})) \
-    DO(INTERSECT_BINARY_RELATION_RHS, ({BINARY_RELATION, NEW_SET, OB})) \
-    DO(INTERSECT_INJECTIVE_FUNCTION, ({INJECTIVE_FUNCTION, NEW_SET})) \
-    DO(INTERSECT_INJECTIVE_FUNCTION_INVERSE, ({INJECTIVE_FUNCTION, NEW_SET})) \
-    DO(INTERSECT_BINARY_FUNCTION_LHS, ({BINARY_FUNCTION, OB, NEW_SET})) \
-    DO(INTERSECT_BINARY_FUNCTION_RHS, ({BINARY_FUNCTION, NEW_SET, OB})) \
-    DO(INTERSECT_SYMMETRIC_FUNCTION_LHS, ({SYMMETRIC_FUNCTION, OB, NEW_SET})) \
-    DO(FOR_INTERSECTION_2, ({NEW_OB, SET, SET})) \
-    DO(FOR_INTERSECTION_3, ({NEW_OB, SET, SET, SET})) \
-    DO(FOR_INTERSECTION_4, ({NEW_OB, SET, SET, SET, SET})) \
-    DO(FOR_INTERSECTION_5, ({NEW_OB, SET, SET, SET, SET, SET})) \
-    DO(FOR_INTERSECTION_6, ({NEW_OB, SET, SET, SET, SET, SET, SET})) \
+    DO(LETS_UNARY_RELATION, ({UNARY_RELATION, NEW_SET})) \
+    DO(LETS_BINARY_RELATION_LHS, ({BINARY_RELATION, OB, NEW_SET})) \
+    DO(LETS_BINARY_RELATION_RHS, ({BINARY_RELATION, NEW_SET, OB})) \
+    DO(LETS_INJECTIVE_FUNCTION, ({INJECTIVE_FUNCTION, NEW_SET})) \
+    DO(LETS_INJECTIVE_FUNCTION_INVERSE, ({INJECTIVE_FUNCTION, NEW_SET})) \
+    DO(LETS_BINARY_FUNCTION_LHS, ({BINARY_FUNCTION, OB, NEW_SET})) \
+    DO(LETS_BINARY_FUNCTION_RHS, ({BINARY_FUNCTION, NEW_SET, OB})) \
+    DO(LETS_SYMMETRIC_FUNCTION_LHS, ({SYMMETRIC_FUNCTION, OB, NEW_SET})) \
+    DO(FOR_POS_POS, ({NEW_OB, SET, SET})) \
+    DO(FOR_POS_POS_POS, ({NEW_OB, SET, SET, SET})) \
+    DO(FOR_POS_POS_POS_POS, ({NEW_OB, SET, SET, SET, SET})) \
+    DO(FOR_POS_POS_POS_POS_POS, ({NEW_OB, SET, SET, SET, SET, SET})) \
+    DO(FOR_POS_POS_POS_POS_POS_POS, ({NEW_OB, SET, SET, SET, SET, SET, SET})) \
     DO(FOR_ALL, ({NEW_OB})) \
     DO(FOR_UNARY_RELATION, ({UNARY_RELATION, NEW_OB})) \
     DO(FOR_BINARY_RELATION_LHS, ({BINARY_RELATION, OB, NEW_OB})) \
@@ -449,13 +449,13 @@ void VirtualMachine::_execute (Program program, Context * context) const
             _execute(program, context);
         } break;
 
-        case INTERSECT_UNARY_RELATION: {
+        case LETS_UNARY_RELATION: {
             UnaryRelation & rel = pop_unary_relation(program);
             pop_set(program, context) = rel.get_set().raw_data();
             _execute(program, context);
         } break;
 
-        case INTERSECT_BINARY_RELATION_LHS: {
+        case LETS_BINARY_RELATION_LHS: {
             BinaryRelation & rel = pop_binary_relation(program);
             Ob lhs = pop_ob(program, context);
             auto & rhs_set = pop_set(program, context);
@@ -463,7 +463,7 @@ void VirtualMachine::_execute (Program program, Context * context) const
             _execute(program, context);
         } break;
 
-        case INTERSECT_BINARY_RELATION_RHS: {
+        case LETS_BINARY_RELATION_RHS: {
             BinaryRelation & rel = pop_binary_relation(program);
             auto & lhs_set = pop_set(program, context);
             Ob rhs = pop_ob(program, context);
@@ -471,19 +471,19 @@ void VirtualMachine::_execute (Program program, Context * context) const
             _execute(program, context);
         } break;
 
-        case INTERSECT_INJECTIVE_FUNCTION: {
+        case LETS_INJECTIVE_FUNCTION: {
             InjectiveFunction & fun = pop_injective_function(program);
             pop_set(program, context) = fun.defined().raw_data();
             _execute(program, context);
         } break;
 
-        case INTERSECT_INJECTIVE_FUNCTION_INVERSE: {
+        case LETS_INJECTIVE_FUNCTION_INVERSE: {
             InjectiveFunction & fun = pop_injective_function(program);
             pop_set(program, context) = fun.defined().raw_data();
             _execute(program, context);
         } break;
 
-        case INTERSECT_BINARY_FUNCTION_LHS: {
+        case LETS_BINARY_FUNCTION_LHS: {
             BinaryFunction & fun = pop_binary_function(program);
             Ob lhs = pop_ob(program, context);
             auto & rhs_set = pop_set(program, context);
@@ -491,7 +491,7 @@ void VirtualMachine::_execute (Program program, Context * context) const
             _execute(program, context);
         } break;
 
-        case INTERSECT_BINARY_FUNCTION_RHS: {
+        case LETS_BINARY_FUNCTION_RHS: {
             BinaryFunction & fun = pop_binary_function(program);
             auto & lhs_set = pop_set(program, context);
             Ob rhs = pop_ob(program, context);
@@ -499,14 +499,14 @@ void VirtualMachine::_execute (Program program, Context * context) const
             _execute(program, context);
         } break;
 
-        case INTERSECT_SYMMETRIC_FUNCTION_LHS: {
+        case LETS_SYMMETRIC_FUNCTION_LHS: {
             SymmetricFunction & fun = pop_symmetric_function(program);
             Ob lhs = pop_ob(program, context);
             pop_set(program, context) = fun.get_Lx_set(lhs).raw_data();
             _execute(program, context);
         } break;
 
-        case FOR_INTERSECTION_2: {
+        case FOR_POS_POS: {
             Ob & ob = pop_ob(program, context);
             auto s1 = pop_set(program, context);
             auto s2 = pop_set(program, context);
@@ -517,7 +517,7 @@ void VirtualMachine::_execute (Program program, Context * context) const
             }
         } break;
 
-        case FOR_INTERSECTION_3: {
+        case FOR_POS_POS_POS: {
             Ob & ob = pop_ob(program, context);
             auto s1 = pop_set(program, context);
             auto s2 = pop_set(program, context);
@@ -529,7 +529,7 @@ void VirtualMachine::_execute (Program program, Context * context) const
             }
         } break;
 
-        case FOR_INTERSECTION_4: {
+        case FOR_POS_POS_POS_POS: {
             Ob & ob = pop_ob(program, context);
             auto s1 = pop_set(program, context);
             auto s2 = pop_set(program, context);
@@ -542,7 +542,7 @@ void VirtualMachine::_execute (Program program, Context * context) const
             }
         } break;
 
-        case FOR_INTERSECTION_5: {
+        case FOR_POS_POS_POS_POS_POS: {
             Ob & ob = pop_ob(program, context);
             auto s1 = pop_set(program, context);
             auto s2 = pop_set(program, context);
@@ -556,7 +556,7 @@ void VirtualMachine::_execute (Program program, Context * context) const
             }
         } break;
 
-        case FOR_INTERSECTION_6: {
+        case FOR_POS_POS_POS_POS_POS_POS: {
             Ob & ob = pop_ob(program, context);
             auto s1 = pop_set(program, context);
             auto s2 = pop_set(program, context);

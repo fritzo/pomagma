@@ -21,7 +21,7 @@ def Iter_program(self, program, stack=None, poll=None):
             for_ = 'FOR_UNARY_RELATION {rel} {val}'.format(
                 rel=test.name,
                 val=self.var)
-            intersect = 'INTERSECT_UNARY_RELATION {rel} {var}'.format(
+            intersect = 'LETS_UNARY_RELATION {rel} {var}'.format(
                 rel=test.name,
                 var=set_var)
             sets.append((set_var, intersect))
@@ -33,7 +33,7 @@ def Iter_program(self, program, stack=None, poll=None):
                     rel=test.name,
                     lhs=lhs,
                     rhs=rhs)
-                intersect = 'INTERSECT_BINARY_RELATION_RHS {rel} {lhs} {rhs}'\
+                intersect = 'LETS_BINARY_RELATION_RHS {rel} {lhs} {rhs}'\
                     .format(
                         rel=test.name,
                         lhs=set_var,
@@ -43,7 +43,7 @@ def Iter_program(self, program, stack=None, poll=None):
                     rel=test.name,
                     lhs=lhs,
                     rhs=rhs)
-                intersect = 'INTERSECT_BINARY_RELATION_LHS {rel} {lhs} {rhs}'\
+                intersect = 'LETS_BINARY_RELATION_LHS {rel} {lhs} {rhs}'\
                     .format(
                         rel=test.name,
                         lhs=lhs,
@@ -61,7 +61,7 @@ def Iter_program(self, program, stack=None, poll=None):
                 fun=expr.name,
                 key=self.var,
                 val=var)
-            intersect = 'INTERSECT_INJECTIVE_FUNCTION {fun} {var}'.format(
+            intersect = 'LETS_INJECTIVE_FUNCTION {fun} {var}'.format(
                 fun=expr.name,
                 var=set_var)
         elif expr.arity == 'BinaryFunction':
@@ -75,7 +75,7 @@ def Iter_program(self, program, stack=None, poll=None):
                         rhs=rhs,
                         val=expr.var.name)
                 intersect = \
-                    'INTERSECT_BINARY_FUNCTION_RHS {fun} {lhs} {rhs}'.format(
+                    'LETS_BINARY_FUNCTION_RHS {fun} {lhs} {rhs}'.format(
                         fun=expr.name,
                         lhs=set_var,
                         rhs=rhs)
@@ -87,7 +87,7 @@ def Iter_program(self, program, stack=None, poll=None):
                         rhs=rhs,
                         val=expr.var.name)
                 intersect = \
-                    'INTERSECT_BINARY_FUNCTION_LHS {fun} {lhs} {rhs}'.format(
+                    'LETS_BINARY_FUNCTION_LHS {fun} {lhs} {rhs}'.format(
                         fun=expr.name,
                         lhs=lhs,
                         rhs=set_var)
@@ -101,7 +101,7 @@ def Iter_program(self, program, stack=None, poll=None):
                 rhs=self.var,
                 val=expr.var.name)
             intersect = \
-                'INTERSECT_SYMMETRIC_FUNCTION_LHS {fun} {lhs} {rhs}'.format(
+                'LETS_SYMMETRIC_FUNCTION_LHS {fun} {lhs} {rhs}'.format(
                     fun=expr.name,
                     lhs=fixed,
                     rhs=set_var)
@@ -110,8 +110,8 @@ def Iter_program(self, program, stack=None, poll=None):
         sets.append((set_var, intersect))
 
     if len(sets) > 1:
-        for_ = 'FOR_INTERSECTION_{count} {val}'.format(
-            count=len(sets),
+        for_ = 'FOR{pos} {val}'.format(
+            pos='_POS' * len(sets),
             val=self.var)
         for set_var, intersect in sets:
             program.append(intersect)
