@@ -284,8 +284,10 @@ class Let(Strategy):
         assert_not_in(self.var, bound)
         self.body.validate(set_with(bound, self.var))
 
+    __probs = {'NullaryFunction': 0.9}
+
     def prob(self):
-        return 0.1
+        return self.__probs.get(self.expr.arity, 0.1)
 
     def op_count(self, stack=None):
         if stack and self in stack:
@@ -311,10 +313,10 @@ class Test(Strategy):
         assert_subset(self.expr.vars, bound)
         self.body.validate(bound)
 
-    __probs = {'LESS': 0.1, 'NLESS': 0.9, 'UNKNOWN': 0.1}
+    __probs = {'NLESS': 0.9}
 
     def prob(self):
-        return self.__probs.get(self.expr.name, 0.5)
+        return self.__probs.get(self.expr.name, 0.1)
 
     def op_count(self, stack=None):
         if stack and self in stack:
