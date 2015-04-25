@@ -458,12 +458,9 @@ def rank_compiled(seq, context, bound):
     return ranked
 
 
-free = Expression.make('free')
-
-
 def swap(x, y, thing):
     if isinstance(thing, Expression):
-        return thing.substitute(x, free).substitute(y, x).substitute(free, y)
+        return thing.swap(x, y)
     elif isinstance(thing, tuple):
         return tuple(swap(x, y, i) for i in thing)
     elif isinstance(thing, sortedset):

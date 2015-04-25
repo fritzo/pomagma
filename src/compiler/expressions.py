@@ -121,9 +121,8 @@ class Expression(object):
         return signature.is_term(self.name)
 
     def substitute(self, var, defn):
-        assert isinstance(var, Expression)
+        assert isinstance(var, Expression) and var.is_var()
         assert isinstance(defn, Expression)
-        assert var.is_var()
         if var not in self.vars:
             return self
         elif self.is_var():
@@ -132,6 +131,20 @@ class Expression(object):
             return Expression.make(
                 self.name,
                 *[arg.substitute(var, defn) for arg in self.args])
+
+    def swap(self, var1, var2):
+        assert isinstance(var1, Expression) and var1.is_var()
+        assert isinstance(var2, Expression) and var2.is_var()
+        if var1 not in self.vars and var2 not in self.vars:
+            return self
+        elif self == var1:
+            return var2
+        elif self == var2:
+            return var1
+        else:
+            return Expression.make(
+                self.name,
+                *[arg.swap(var1, var2) for arg in self.args])
 
 
 def Expression_0(name):
