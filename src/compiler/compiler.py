@@ -76,7 +76,7 @@ UNKNOWN = Expression_1('UNKNOWN')
 
 
 # ----------------------------------------------------------------------------
-# Strategies
+# Plans
 
 
 OBJECT_COUNT = 1e4                          # optimize for this many obs
@@ -89,7 +89,7 @@ def add_costs(costs):
             LOG_OBJECT_COUNT)
 
 
-class Strategy(object):
+class Plan(object):
 
     def cost(self):
         return math.log(self.op_count()) / LOG_OBJECT_COUNT
@@ -101,12 +101,12 @@ class Strategy(object):
 
 
 @memoize_make
-class Iter(Strategy):
+class Iter(Plan):
     __slots__ = ['_repr', 'var', 'body', 'tests', 'lets', 'stack']
 
     def __init__(self, var, body):
         assert var.is_var(),  var
-        assert isinstance(body, Strategy), body
+        assert isinstance(body, Plan), body
         self._repr = None
         self.var = var
         self.body = body
@@ -182,7 +182,7 @@ class Iter(Strategy):
 
 # TODO injective function inverse need not be iterated
 @memoize_make
-class IterInvInjective(Strategy):
+class IterInvInjective(Plan):
     __slots__ = ['fun', 'value', 'var', 'body']
 
     def __init__(self, fun, body):
@@ -205,7 +205,7 @@ class IterInvInjective(Strategy):
 
 
 @memoize_make
-class IterInvBinary(Strategy):
+class IterInvBinary(Plan):
     __slots__ = ['fun', 'value', 'var1', 'body']
 
     def __init__(self, fun, body):
@@ -230,7 +230,7 @@ class IterInvBinary(Strategy):
 
 
 @memoize_make
-class IterInvBinaryRange(Strategy):
+class IterInvBinaryRange(Plan):
     __slots__ = ['fun', 'value', 'var1', 'var2', 'lhs_fixed', 'body']
 
     def __init__(self, fun, fixed, body):
@@ -267,11 +267,11 @@ class IterInvBinaryRange(Strategy):
 
 
 @memoize_make
-class Let(Strategy):
+class Let(Plan):
     __slots__ = ['var', 'expr', 'body']
 
     def __init__(self, expr, body):
-        assert isinstance(body, Strategy)
+        assert isinstance(body, Plan)
         assert expr.is_fun()
         self.var = expr.var
         self.expr = expr
@@ -298,12 +298,12 @@ class Let(Strategy):
 
 
 @memoize_make
-class Test(Strategy):
+class Test(Plan):
     __slots__ = ['expr', 'body']
 
     def __init__(self, expr, body):
         assert not expr.is_var()
-        assert isinstance(body, Strategy)
+        assert isinstance(body, Plan)
         self.expr = expr
         self.body = body
 
@@ -327,7 +327,7 @@ class Test(Strategy):
 
 
 @memoize_make
-class Ensure(Strategy):
+class Ensure(Plan):
     __slots__ = ['expr']
 
     def __init__(self, expr):
@@ -450,9 +450,9 @@ def rank_compiled(seq, context, bound):
     (succedent,) = list(seq.succedents)
     ranked = []
     POMAGMA_DEBUG('{} | {} |- {}', list(bound), list(antecedents), succedent)
-    for strategy in iter_compiled(antecedents, succedent, bound):
-        strategy.validate(bound)
-        ranked.append((strategy.cost(), seq, strategy))
+    for plan in iter_compiled(antecedents, succedent, bound):
+        plan.validate(bound)
+        ranked.append((plan.cost(), seq, plan))
         print_dot()
     assert ranked, 'failed to compile {0}'.format(seq)
     return ranked
@@ -480,7 +480,7 @@ def wlog(vars, context):
 
 def iter_compiled(antecedents, succedent, bound):
     '''
-    Iterate through the space of strategies, narrowing heuristically.
+    Iterate through the space of plans, narrowing heuristically.
     '''
     assert isinstance(antecedents, sortedset)
     assert isinstance(succedent.consts, sortedset)

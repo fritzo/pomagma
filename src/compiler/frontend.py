@@ -332,11 +332,11 @@ def Ensure_program(self, program, stack=None, poll=None):
 def write_full_programs(programs, sequents):
     full_tasks = []
     for sequent in sequents:
-        for cost, seq, strategy in compiler.compile_full(sequent):
-            full_tasks.append((cost, sequent, seq, strategy))
+        for cost, seq, plan in compiler.compile_full(sequent):
+            full_tasks.append((cost, sequent, seq, plan))
     full_tasks.sort()
     min_split_cost = 2.0  # above which we split the outermost for loop
-    for plan_id, (cost, sequent, seq, strategy) in enumerate(full_tasks):
+    for plan_id, (cost, sequent, seq, plan) in enumerate(full_tasks):
         poll = (cost >= min_split_cost)
         programs += [
             '',
@@ -346,7 +346,7 @@ def write_full_programs(programs, sequents):
         ]
         if poll:
             programs.append('FOR_BLOCK')
-        strategy.program(programs, poll=poll)
+        plan.program(programs, poll=poll)
 
 
 def write_event_programs(programs, sequents):
@@ -355,10 +355,10 @@ def write_event_programs(programs, sequents):
     for sequent in sequents:
         for event in compiler.get_events(sequent):
             name = 'Variable' if event.is_var() else event.name
-            strategies = sorted(compiler.compile_given(sequent, event))
-            cost = add_costs(c for (c, _, _) in strategies)
+            plans = sorted(compiler.compile_given(sequent, event))
+            cost = add_costs(c for (c, _, _) in plans)
             tasks = event_tasks.setdefault(name, [])
-            tasks.append((cost, event, sequent, strategies))
+            tasks.append((cost, event, sequent, plans))
 
     group_tasks = {}
     for name, tasks in event_tasks.iteritems():
@@ -383,7 +383,7 @@ def write_event_programs(programs, sequents):
             ]
 
             plan_id = 0
-            for _, event, sequent, strategies in tasks:
+            for _, event, sequent, plans in tasks:
                 diagonal = (
                     len(event.args) == 2 and event.args[0] == event.args[1])
                 if diagonal:
@@ -437,7 +437,7 @@ def write_event_programs(programs, sequents):
                         lhs=event.args[0],
                         rhs=event.args[1]))
 
-                for cost, seq, strategy in strategies:
+                for cost, seq, plan in plans:
                     programs += [
                         '',
                         '# plan {}.{}: cost = {:0.1f}'.format(
@@ -448,7 +448,7 @@ def write_event_programs(programs, sequents):
                         '# infer {}'.format(seq),
                         ]
                     programs += header
-                    strategy.program(programs)
+                    plan.program(programs)
                     plan_id += 1
 
             group_id += 1

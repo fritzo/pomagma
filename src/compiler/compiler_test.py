@@ -29,10 +29,10 @@ outfile = None
 
 
 def print_compiles(compiles):
-    for cost, seq, strategy in compiles:
+    for cost, seq, plan in compiles:
         print '# cost = {0}'.format(cost)
         print '# infer {0}'.format(seq)
-        print re.sub(': ', '\n', repr(strategy))
+        print re.sub(': ', '\n', repr(plan))
         print
 
 

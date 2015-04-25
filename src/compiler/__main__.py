@@ -110,10 +110,10 @@ def writer(outfile=None):
 
 
 def print_compiles(compiles):
-    for cost, seq, strategy in compiles:
+    for cost, seq, plan in compiles:
         print '# cost = {0}'.format(cost)
         print '# infer {0}'.format(seq)
-        print re.sub(': ', '\n', repr(strategy))
+        print re.sub(': ', '\n', repr(plan))
         print
 
 
@@ -249,17 +249,17 @@ def test_compile(*filenames):
 
         sequents = load_theory(stem_rules)['rules']
         for sequent in sequents:
-            for cost, seq, strategy in compile_full(sequent):
+            for cost, seq, plan in compile_full(sequent):
                 programs += [
                     '',
                     '# using {}'.format(sequent),
                     '# infer '.format(seq),
                     '# cost = '.format(cost),
                 ]
-                strategy.program(programs)
+                plan.program(programs)
 
             for event in get_events(sequent):
-                for cost, seq, strategy in compile_given(sequent, event):
+                for cost, seq, plan in compile_given(sequent, event):
                     programs += [
                         '',
                         '# given {}'.format(event),
@@ -267,7 +267,7 @@ def test_compile(*filenames):
                         '# infer {}'.format(seq),
                         '# cost {}'.format(cost),
                     ]
-                    strategy.program(programs)
+                    plan.program(programs)
 
         print '\n'.join(programs)
 
