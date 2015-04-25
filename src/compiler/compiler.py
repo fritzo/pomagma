@@ -1,6 +1,9 @@
 import sys
 import inspect
+import functools
+import itertools
 import pomagma.util
+from itertools import izip
 from pomagma.compiler.expressions import Expression
 from pomagma.compiler.expressions import Expression_1
 from pomagma.compiler.expressions import Expression_2
@@ -142,19 +145,59 @@ def normalize_given(seq, atom, bound=None):
                     set([EQUAL(lhs, rhs.var)]))
 
 
+def get_consts(thing):
+    if hasattr(thing, 'consts'):
+        return thing.consts
+    else:
+        return union(get_consts(i) for i in thing)
+
+
+def permute_symbols(thing, perm):
+    if hasattr(thing, 'permute_symbols'):
+        return thing.permute_symbols(perm)
+    else:
+        return thing.__class__(permute_symbols(i, perm) for i in thing)
+
+
+def cache_modulo_permutation(fun):
+    cache = {}
+
+    @functools.wraps(fun)
+    def cached(*args):
+        args = tuple(args)
+        consts = sorted(c.name for c in get_consts(args))
+        for permuted_consts in itertools.permutations(consts):
+            perm = {i: j for i, j in izip(consts, permuted_consts) if i != j}
+            permuted_args = permute_symbols(args, perm)
+            if permuted_args in cache:
+                print 'DEBUG use cache via', perm
+                result = cache[permuted_args]
+                break
+                # return result  # TODO apply permutation to result
+        result = fun(*args)
+        cache[args] = result
+        return result
+
+    return cached
+
+
+# @cache_modulo_permutation
+def optimize_given(normal, context, bound):
+    # print 'DEBUG normal =', normal
+    ranked = rank_compiled(normal, context, bound)
+    logger('optimizing {} versions', len(ranked))
+    return min(ranked)
+
+
+@cache_modulo_permutation
 @inputs(Sequent, Expression)
 def compile_given(seq, atom):
-    context = set([atom])
-    bound = get_bound(atom)
-    results = []
-    for normal in normalize_given(seq, atom, bound):
-        # print 'DEBUG normal =', normal
-        ranked = rank_compiled(normal, context, bound)
-        logger('optimizing {} versions', len(ranked))
-        results.append(min(ranked))
-    assert results, 'failed to compile {0} given {1}'.format(seq, atom)
-    logger('derived {} rules from {} | {}', len(results), atom, seq)
-    return results
+    context = frozenset([atom])
+    bound = frozenset(get_bound(atom))
+    normals = list(normalize_given(seq, atom, bound))
+    assert normals, 'failed to compile {0} given {1}'.format(seq, atom)
+    logger('derived {} rules from {} | {}', len(normals), atom, seq)
+    return [optimize_given(n, context, bound) for n in normals]
 
 
 @inputs(Sequent)

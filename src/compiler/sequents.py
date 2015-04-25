@@ -80,6 +80,16 @@ class Sequent(object):
     def vars(self):
         return union(s.vars for s in self.antecedents | self.succedents)
 
+    @property
+    def consts(self):
+        return union(s.consts for s in self.antecedents | self.succedents)
+
+    def permute_symbols(self, perm):
+        assert isinstance(perm, dict)
+        return Sequent(
+            (e.permute_symbols(perm) for e in self.antecedents),
+            (e.permute_symbols(perm) for e in self.succedents))
+
 
 @inputs(Expression)
 def as_atom(expr):

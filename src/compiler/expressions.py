@@ -146,6 +146,12 @@ class Expression(object):
                 self.name,
                 *[arg.swap(var1, var2) for arg in self.args])
 
+    def permute_symbols(self, perm):
+        assert isinstance(perm, dict)
+        return Expression.make(
+            perm.get(self.name, self.name),
+            *[arg.permute_symbols(perm) for arg in self.args])
+
 
 def Expression_0(name):
     return Expression.make(name)
