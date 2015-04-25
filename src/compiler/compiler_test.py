@@ -1,12 +1,12 @@
 import re
-from pomagma.compiler.compiler import add_costs
 from pomagma.compiler.compiler import compile_full
 from pomagma.compiler.compiler import compile_given
 from pomagma.compiler.compiler import get_events
+from pomagma.compiler.expressions import Expression
 from pomagma.compiler.expressions import Expression_0
 from pomagma.compiler.expressions import Expression_1
 from pomagma.compiler.expressions import Expression_2
-from pomagma.compiler.expressions import Expression
+from pomagma.compiler.plans import add_costs
 from pomagma.compiler.sequents import Sequent
 
 

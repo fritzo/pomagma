@@ -9,13 +9,13 @@ import re
 import simplejson as json
 from pomagma.compiler import compiler
 from pomagma.compiler import completion
-from pomagma.compiler import frontend
 from pomagma.compiler import extensional
+from pomagma.compiler import frontend
 from pomagma.compiler import parser
-from pomagma.compiler.compiler import add_costs
 from pomagma.compiler.compiler import compile_full
 from pomagma.compiler.compiler import compile_given
 from pomagma.compiler.compiler import get_events
+from pomagma.compiler.plans import add_costs
 from pomagma.compiler.sugar import desugar_expr
 from pomagma.compiler.sugar import desugar_theory
 from pomagma.compiler.util import find_theories

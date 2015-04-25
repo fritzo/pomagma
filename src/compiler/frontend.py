@@ -1,9 +1,9 @@
 from pomagma.compiler import compiler
 from pomagma.compiler import signature
-from pomagma.compiler.compiler import add_costs
 from pomagma.compiler.expressions import Expression
 from pomagma.compiler.expressions import NotNegatable
 from pomagma.compiler.expressions import try_negate_name
+from pomagma.compiler.plans import add_costs
 from pomagma.compiler.sequents import Sequent
 from pomagma.compiler.util import methodof
 
