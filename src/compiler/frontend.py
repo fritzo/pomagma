@@ -7,6 +7,8 @@ from pomagma.compiler.plans import add_costs
 from pomagma.compiler.sequents import Sequent
 from pomagma.compiler.util import methodof
 
+MIN_SPLIT_COST = 1.5  # above which we split the outermost for loop
+
 
 def get_set_var(name, args):
     return '_'.join([name] + [a.var.name.rstrip('_') for a in args])
@@ -335,9 +337,8 @@ def write_full_programs(programs, sequents):
         for cost, seq, plan in compiler.compile_full(sequent):
             full_tasks.append((cost, sequent, seq, plan))
     full_tasks.sort()
-    min_split_cost = 2.0  # above which we split the outermost for loop
     for plan_id, (cost, sequent, seq, plan) in enumerate(full_tasks):
-        poll = (cost >= min_split_cost)
+        poll = (cost >= MIN_SPLIT_COST)
         programs += [
             '',
             '# plan {}: cost = {:0.1f}'.format(plan_id, cost),
