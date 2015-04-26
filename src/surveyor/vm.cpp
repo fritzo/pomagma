@@ -12,6 +12,22 @@ namespace pomagma
 namespace vm
 {
 
+constexpr inline size_t eval_float8 (size_t num)
+{
+    return ((num % 16u) + 16u) * (1u << (num / 16u)) - 16u;
+}
+
+static_assert(eval_float8(0) == 0, "programmer error");
+static_assert(eval_float8(1) == 1, "programmer error");
+static_assert(eval_float8(2) == 2, "programmer error");
+static_assert(eval_float8(3) == 3, "programmer error");
+static_assert(eval_float8(10) == 10, "programmer error");
+static_assert(eval_float8(45) == 100, "programmer error");
+static_assert(eval_float8(96) == 1008, "programmer error");
+static_assert(eval_float8(148) == 10224, "programmer error");
+static_assert(eval_float8(201) == 102384, "programmer error");
+static_assert(eval_float8(255) == 1015792, "programmer error");
+
 //----------------------------------------------------------------------------
 // OpCode
 
