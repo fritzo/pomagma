@@ -25,11 +25,15 @@ UNKNOWN = Expression_1('UNKNOWN')
 
 
 def add_costs(costs):
-    return (log_sum_exp(*[LOG_OBJECT_COUNT * c for c in costs]) /
+    return (log_sum_exp(*(LOG_OBJECT_COUNT * c for c in costs)) /
             LOG_OBJECT_COUNT)
 
 
 class Plan(object):
+    __slots__ = ['_args']
+
+    def __init__(self, *args):
+        self._args = args
 
     def cost(self):
         return math.log(self.op_count()) / LOG_OBJECT_COUNT
@@ -39,12 +43,19 @@ class Plan(object):
         o = repr(other)
         return (len(s), s) < (len(o), o)
 
+    def permute_symbols(self, perm):
+        return self.__class__.make(*(
+            a.permute_symbols(perm)
+            for a in self._args
+        ))
+
 
 @memoize_make
 class Iter(Plan):
     __slots__ = ['_repr', 'var', 'body', 'tests', 'lets', 'stack']
 
     def __init__(self, var, body):
+        Plan.__init__(self, var, body)
         assert var.is_var(),  var
         assert isinstance(body, Plan), body
         self._repr = None
@@ -126,6 +137,7 @@ class IterInvInjective(Plan):
     __slots__ = ['fun', 'value', 'var', 'body']
 
     def __init__(self, fun, body):
+        Plan.__init__(self, fun, body)
         assert fun.arity == 'InjectiveFunction'
         self.fun = fun.name
         self.value = fun.var
@@ -146,9 +158,10 @@ class IterInvInjective(Plan):
 
 @memoize_make
 class IterInvBinary(Plan):
-    __slots__ = ['fun', 'value', 'var1', 'body']
+    __slots__ = ['fun', 'value', 'var1', 'var2', 'body']
 
     def __init__(self, fun, body):
+        Plan.__init__(self, fun, body)
         assert fun.arity in ['BinaryFunction', 'SymmetricFunction']
         self.fun = fun.name
         self.value = fun.var
@@ -174,6 +187,7 @@ class IterInvBinaryRange(Plan):
     __slots__ = ['fun', 'value', 'var1', 'var2', 'lhs_fixed', 'body']
 
     def __init__(self, fun, fixed, body):
+        Plan.__init__(self, fun, fixed, body)
         assert fun.arity in ['BinaryFunction', 'SymmetricFunction']
         self.fun = fun.name
         self.value = fun.var
@@ -211,6 +225,7 @@ class Let(Plan):
     __slots__ = ['var', 'expr', 'body']
 
     def __init__(self, expr, body):
+        Plan.__init__(self, expr, body)
         assert isinstance(body, Plan)
         assert expr.is_fun()
         self.var = expr.var
@@ -242,6 +257,7 @@ class Test(Plan):
     __slots__ = ['expr', 'body']
 
     def __init__(self, expr, body):
+        Plan.__init__(self, expr, body)
         assert not expr.is_var()
         assert isinstance(body, Plan)
         self.expr = expr
@@ -271,6 +287,7 @@ class Ensure(Plan):
     __slots__ = ['expr']
 
     def __init__(self, expr):
+        Plan.__init__(self, expr)
         assert expr.args, ('expr is not compound', expr)
         self.expr = expr
 

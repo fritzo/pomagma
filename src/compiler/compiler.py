@@ -152,11 +152,18 @@ def get_consts(thing):
         return union(get_consts(i) for i in thing)
 
 
-def permute_symbols(thing, perm):
-    if hasattr(thing, 'permute_symbols'):
+@inputs(dict)
+def permute_symbols(perm, thing):
+    if not perm:
+        return thing
+    elif hasattr(thing, 'permute_symbols'):
         return thing.permute_symbols(perm)
+    elif hasattr(thing, '__iter__'):
+        return thing.__class__(permute_symbols(perm, i) for i in thing)
+    elif isinstance(thing, (int, float)):
+        return thing
     else:
-        return thing.__class__(permute_symbols(i, perm) for i in thing)
+        raise ValueError('cannot permute_symbols of {}'.format(thing))
 
 
 def cache_modulo_permutation(fun):
@@ -166,14 +173,16 @@ def cache_modulo_permutation(fun):
     def cached(*args):
         args = tuple(args)
         consts = sorted(c.name for c in get_consts(args))
+        result = None
         for permuted_consts in itertools.permutations(consts):
             perm = {i: j for i, j in izip(consts, permuted_consts) if i != j}
-            permuted_args = permute_symbols(args, perm)
+            permuted_args = permute_symbols(perm, args)
             if permuted_args in cache:
-                print 'DEBUG use cache via', perm
-                result = cache[permuted_args]
-                break
-                # return result  # TODO apply permutation to result
+                logger('{}: using cache via {}', fun.__name__, perm)
+                inverse = {j: i for i, j in perm.iteritems()}
+                return permute_symbols(inverse, cache[permuted_args])
+                return fun(*args)  # TODO use cache, as below
+        logger('{}: compute', fun.__name__)
         result = fun(*args)
         cache[args] = result
         return result
@@ -181,7 +190,7 @@ def cache_modulo_permutation(fun):
     return cached
 
 
-# @cache_modulo_permutation
+@cache_modulo_permutation
 def optimize_given(normal, context, bound):
     # print 'DEBUG normal =', normal
     ranked = rank_compiled(normal, context, bound)
@@ -194,7 +203,7 @@ def optimize_given(normal, context, bound):
 def compile_given(seq, atom):
     context = frozenset([atom])
     bound = frozenset(get_bound(atom))
-    normals = list(normalize_given(seq, atom, bound))
+    normals = sorted(normalize_given(seq, atom, bound))
     assert normals, 'failed to compile {0} given {1}'.format(seq, atom)
     logger('derived {} rules from {} | {}', len(normals), atom, seq)
     return [optimize_given(n, context, bound) for n in normals]

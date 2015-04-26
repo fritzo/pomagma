@@ -130,7 +130,7 @@ class Expression(object):
         else:
             return Expression.make(
                 self.name,
-                *[arg.substitute(var, defn) for arg in self.args])
+                *(arg.substitute(var, defn) for arg in self.args))
 
     def swap(self, var1, var2):
         assert isinstance(var1, Expression) and var1.is_var()
@@ -144,13 +144,13 @@ class Expression(object):
         else:
             return Expression.make(
                 self.name,
-                *[arg.swap(var1, var2) for arg in self.args])
+                *(arg.swap(var1, var2) for arg in self.args))
 
     def permute_symbols(self, perm):
         assert isinstance(perm, dict)
-        return Expression.make(
-            perm.get(self.name, self.name),
-            *[arg.permute_symbols(perm) for arg in self.args])
+        name = '_'.join(perm.get(n, n) for n in self.name.split('_'))
+        args = (arg.permute_symbols(perm) for arg in self.args)
+        return Expression.make(name, *args)
 
 
 def Expression_0(name):
