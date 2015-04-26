@@ -63,14 +63,14 @@ EQUAL APP SEMI x TOP   LESS APP f BOT APP g BOT
 EQUAL APP SEMI x I     ----------------------------
 EQUAL APP SEMI x BOT   LESS COMP f SEMI COMP g SEMI
 
-# These are very slow to compile:
+                       LESS APP f TOP APP g TOP
+--------------------   LESS APP f K APP g K
+EQUAL APP BOOL x TOP   LESS APP f F APP g F
+EQUAL APP BOOL x K     LESS APP f BOT APP g BOT
+EQUAL APP BOOL x F     ----------------------------
+EQUAL APP BOOL x BOT   LESS COMP f BOOL COMP g BOOL
 
-#                       LESS APP f TOP APP g TOP
-#--------------------   LESS APP f K APP g K
-#EQUAL APP BOOL x TOP   LESS APP f F APP g F
-#EQUAL APP BOOL x K     LESS APP f BOT APP g BOT
-#EQUAL APP BOOL x F     ----------------------------
-#EQUAL APP BOOL x BOT   LESS COMP f BOOL COMP g BOOL
+# These are very slow to compile:
 
 #                        LESS APP f TOP APP g TOP
 #---------------------   LESS APP f J APP g J
