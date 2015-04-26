@@ -1208,6 +1208,64 @@ void VirtualMachine::_execute (Program program, Context * context) const
 //----------------------------------------------------------------------------
 // Agenda
 
+template<class T>
+static void register_names (
+        std::map<std::string, const void *> & names,
+        const std::unordered_map<std::string, T *> objects)
+{
+    for (const auto & pair : objects) {
+        names[pair.first] = static_cast<const void *>(pair.second);
+    }
+}
+
+void Agenda::load (Signature & signature)
+{
+    m_virtual_machine.load(signature);
+    m_block_count = signature.carrier()->item_dim() / block_size + 1;
+
+    register_names(m_names, signature.unary_relations());
+    register_names(m_names, signature.binary_relations());
+    register_names(m_names, signature.nullary_functions());
+    register_names(m_names, signature.injective_functions());
+    register_names(m_names, signature.binary_functions());
+    register_names(m_names, signature.symmetric_functions());
+}
+
+static size_t count_bytes (const std::vector<Listing> & listings)
+{
+    size_t byte_count = 0;
+    for (const auto & listing : listings) {
+        byte_count += listing.size();
+    }
+    return byte_count;
+}
+
+void Agenda::log_stats ()
+{
+    POMAGMA_INFO("Agenda:");
+    POMAGMA_INFO("\tEvent\tCount\tTotal bytes");
+    POMAGMA_INFO("\t---------------------------");
+    POMAGMA_INFO(
+        "\tExists" <<
+        "\t" << m_exists.size() <<
+        "\t" << count_bytes(m_exists));
+    for (const auto & pair : m_names) {
+        const auto & listings = m_structures[pair.second];
+        POMAGMA_INFO(
+            "\t" << pair.first <<
+            "\t" << listings.size() <<
+            "\t" << count_bytes(listings));
+    }
+    POMAGMA_INFO(
+        "\tCleanup" <<
+        "\t" << m_cleanup_small.size() <<
+        "\t" << count_bytes(m_cleanup_small));
+    POMAGMA_INFO(
+        "\tCleanup" <<
+        "\t" << m_cleanup_large.size() <<
+        "\t" << count_bytes(m_cleanup_large));
+}
+
 void Agenda::add_listing (const Listing & listing)
 {
     POMAGMA_ASSERT(not listing.empty(), "empty listing");
@@ -1223,32 +1281,32 @@ void Agenda::add_listing (const Listing & listing)
 
         case GIVEN_UNARY_RELATION: {
             auto ptr = m_virtual_machine.unary_relation(listing[1]);
-            m_unary_relations[ptr].push_back(truncated);
+            m_structures[ptr].push_back(truncated);
         } break;
 
         case GIVEN_BINARY_RELATION: {
             auto ptr = m_virtual_machine.binary_relation(listing[1]);
-            m_binary_relations[ptr].push_back(truncated);
+            m_structures[ptr].push_back(truncated);
         } break;
 
         case GIVEN_NULLARY_FUNCTION: {
             auto ptr = m_virtual_machine.nullary_function(listing[1]);
-            m_nullary_functions[ptr].push_back(truncated);
+            m_structures[ptr].push_back(truncated);
         } break;
 
         case GIVEN_INJECTIVE_FUNCTION: {
             auto ptr = m_virtual_machine.injective_function(listing[1]);
-            m_injective_functions[ptr].push_back(truncated);
+            m_structures[ptr].push_back(truncated);
         } break;
 
         case GIVEN_BINARY_FUNCTION: {
             auto ptr = m_virtual_machine.binary_function(listing[1]);
-            m_binary_functions[ptr].push_back(truncated);
+            m_structures[ptr].push_back(truncated);
         } break;
 
         case GIVEN_SYMMETRIC_FUNCTION: {
             auto ptr = m_virtual_machine.symmetric_function(listing[1]);
-            m_symmetric_functions[ptr].push_back(truncated);
+            m_structures[ptr].push_back(truncated);
         } break;
 
         case FOR_BLOCK: {

@@ -205,11 +205,9 @@ public:
 
     Agenda () : m_block_count(0) {}
 
-    void load (Signature & signature)
-    {
-        m_virtual_machine.load(signature);
-        m_block_count = signature.carrier()->item_dim() / block_size + 1;
-    }
+    void load (Signature & signature);
+
+    void log_stats ();
 
     void add_listing (const Listing & listing);
 
@@ -222,8 +220,8 @@ public:
 
     void execute (const UnaryRelation * rel, Ob key) const
     {
-        auto i = m_unary_relations.find(rel);
-        if (i != m_unary_relations.end()) {
+        auto i = m_structures.find(rel);
+        if (i != m_structures.end()) {
             for (const auto & listing : i->second) {
                 m_virtual_machine.execute(listing, key);
             }
@@ -232,8 +230,8 @@ public:
 
     void execute (const BinaryRelation * rel, Ob lhs, Ob rhs) const
     {
-        auto i = m_binary_relations.find(rel);
-        if (i != m_binary_relations.end()) {
+        auto i = m_structures.find(rel);
+        if (i != m_structures.end()) {
             for (const Listing & listing : i->second) {
                 m_virtual_machine.execute(listing, lhs, rhs);
             }
@@ -242,8 +240,8 @@ public:
 
     void execute (const NullaryFunction * fun) const
     {
-        auto i = m_nullary_functions.find(fun);
-        if (i != m_nullary_functions.end()) {
+        auto i = m_structures.find(fun);
+        if (i != m_structures.end()) {
             for (const Listing & listing : i->second) {
                 m_virtual_machine.execute(listing);
             }
@@ -252,8 +250,8 @@ public:
 
     void execute (const InjectiveFunction * fun, Ob key) const
     {
-        auto i = m_injective_functions.find(fun);
-        if (i != m_injective_functions.end()) {
+        auto i = m_structures.find(fun);
+        if (i != m_structures.end()) {
             for (const Listing & listing : i->second) {
                 m_virtual_machine.execute(listing, key);
             }
@@ -262,8 +260,8 @@ public:
 
     void execute (const BinaryFunction * fun, Ob lhs, Ob rhs) const
     {
-        auto i = m_binary_functions.find(fun);
-        if (i != m_binary_functions.end()) {
+        auto i = m_structures.find(fun);
+        if (i != m_structures.end()) {
             for (const Listing & listing : i->second) {
                 m_virtual_machine.execute(listing, lhs, rhs);
             }
@@ -272,8 +270,8 @@ public:
 
     void execute (const SymmetricFunction * fun, Ob lhs, Ob rhs) const
     {
-        auto i = m_symmetric_functions.find(fun);
-        if (i != m_symmetric_functions.end()) {
+        auto i = m_structures.find(fun);
+        if (i != m_structures.end()) {
             for (const Listing & listing : i->second) {
                 m_virtual_machine.execute(listing, lhs, rhs);
             }
@@ -316,23 +314,15 @@ public:
 
 private:
 
-    VirtualMachine m_virtual_machine;
-
     typedef std::vector<Listing> Listings;
-    Listings m_exists;
-    std::unordered_map<const UnaryRelation *, Listings> m_unary_relations;
-    std::unordered_map<const BinaryRelation *, Listings> m_binary_relations;
-    std::unordered_map<const NullaryFunction *, Listings> m_nullary_functions;
-    std::unordered_map<const InjectiveFunction *, Listings>
-        m_injective_functions;
-    std::unordered_map<const BinaryFunction *, Listings>
-        m_binary_functions;
-    std::unordered_map<const SymmetricFunction *, Listings>
-        m_symmetric_functions;
 
+    VirtualMachine m_virtual_machine;
+    Listings m_exists;
+    std::unordered_map<const void *, Listings> m_structures;
     Listings m_cleanup_small;
     Listings m_cleanup_large;
     size_t m_block_count;
+    std::map<std::string, const void *> m_names;
 };
 
 } // namespace vm
