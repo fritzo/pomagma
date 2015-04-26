@@ -101,6 +101,16 @@ def log_sum_exp(*args):
         return -float('inf')
 
 
+def eval_float8(num):
+    '''
+    Gradually increase from 0 to about 1e6 over in puts 0...255
+    such that output is monotone increasing and has small relative increase.
+    '''
+    assert isinstance(num, int) and 0 <= num and num < 256, num
+    nibbles = (num % 16, num / 16)
+    return (nibbles[0] + 16) * 2 ** nibbles[1] - 16
+
+
 def inputs(*types):
     def deco(fun):
         @functools.wraps(fun)
