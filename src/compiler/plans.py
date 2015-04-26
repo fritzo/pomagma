@@ -30,11 +30,12 @@ def add_costs(costs):
 
 
 class Plan(object):
-    __slots__ = ['_args', '_cost']
+    __slots__ = ['_args', '_cost', '_rank']
 
     def __init__(self, *args):
         self._args = args
         self._cost = None
+        self._rank = None
 
     @property
     def cost(self):
@@ -42,10 +43,15 @@ class Plan(object):
             self._cost = math.log(self.op_count()) / LOG_OBJECT_COUNT
         return self._cost
 
+    @property
+    def rank(self):
+        if self._rank is None:
+            s = repr(self)
+            self._rank = self.cost, len(s), s
+        return self._rank
+
     def __lt__(self, other):
-        s = repr(self)
-        o = repr(other)
-        return (len(s), s) < (len(o), o)
+        return self.rank < other.rank
 
     def permute_symbols(self, perm):
         return self.__class__.make(*(

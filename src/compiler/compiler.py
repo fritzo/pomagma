@@ -77,10 +77,9 @@ def compile_full(seq):
         logger('skipped optional rule {}', seq)
         return results
     for derived_seq in normalize(seq):
-        context = set()
-        bound = set()
-        ranked = rank_compiled(derived_seq, context, bound)
-        results.append(min(ranked))
+        context = frozenset()
+        bound = frozenset()
+        results.append(optimize_given(derived_seq, context, bound))
     assert results, 'failed to compile {0}'.format(seq)
     logger('derived {} rules from {}', len(results), seq)
     return results
@@ -191,14 +190,6 @@ def cache_modulo_permutation(fun):
 
 
 @cache_modulo_permutation
-def optimize_given(normal, context, bound):
-    # print 'DEBUG normal =', normal
-    ranked = rank_compiled(normal, context, bound)
-    logger('optimizing {} versions', len(ranked))
-    return min(ranked)
-
-
-@cache_modulo_permutation
 @inputs(Sequent, Expression)
 def compile_given(seq, atom):
     context = frozenset([atom])
@@ -209,19 +200,16 @@ def compile_given(seq, atom):
     return [optimize_given(n, context, bound) for n in normals]
 
 
-@inputs(Sequent)
-def rank_compiled(seq, context, bound):
+@cache_modulo_permutation
+@inputs(Sequent, frozenset, frozenset)
+def optimize_given(seq, context, bound):
     assert_normal(seq)
     antecedents = sortedset(seq.antecedents - context)
     (succedent,) = list(seq.succedents)
-    ranked = []
     POMAGMA_DEBUG('{} | {} |- {}', list(bound), list(antecedents), succedent)
-    for plan in iter_compiled(antecedents, succedent, bound):
-        plan.validate(bound)
-        ranked.append((plan.cost, seq, plan))
-        print_dot()
-    assert ranked, 'failed to compile {0}'.format(seq)
-    return ranked
+    plan = optimize_plan(antecedents, succedent, bound)
+    plan.validate(bound)
+    return plan.cost, seq, plan
 
 
 def swap(x, y, thing):
@@ -244,7 +232,7 @@ def wlog(vars, context):
         yield x
 
 
-def iter_compiled(antecedents, succedent, bound):
+def optimize_plan(antecedents, succedent, bound):
     '''
     Iterate through the space of plans, narrowing heuristically.
     '''
@@ -254,7 +242,7 @@ def iter_compiled(antecedents, succedent, bound):
     # ensure
     if not antecedents and succedent.vars <= bound:
         POMAGMA_DEBUG('ensure {}', succedent)
-        return [Ensure.make(succedent)]
+        return Ensure.make(succedent)
 
     # conditionals
     # HEURISTIC test eagerly in arbitrary order
@@ -263,19 +251,15 @@ def iter_compiled(antecedents, succedent, bound):
             if a.vars <= bound:
                 antecedents_a = sortedset(set_without(antecedents, a))
                 POMAGMA_DEBUG('test relation {}', a)
-                return [
-                    Test.make(a, s)
-                    for s in iter_compiled(antecedents_a, succedent, bound)
-                ]
+                body = optimize_plan(antecedents_a, succedent, bound)
+                return Test.make(a, body)
         else:
             assert a.is_fun(), a
             if a.vars <= bound and a.var in bound:
                 antecedents_a = sortedset(set_without(antecedents, a))
                 POMAGMA_DEBUG('test function {}', a)
-                return [
-                    Test.make(a, s)
-                    for s in iter_compiled(antecedents_a, succedent, bound)
-                ]
+                body = optimize_plan(antecedents_a, succedent, bound)
+                return Test.make(a, body)
 
     # find & bind variable
     # HEURISTIC bind eagerly in arbitrary order
@@ -286,10 +270,8 @@ def iter_compiled(antecedents, succedent, bound):
                 antecedents_a = sortedset(set_without(antecedents, a))
                 bound_a = set_with(bound, a.var)
                 POMAGMA_DEBUG('let {}', a)
-                return [
-                    Let.make(a, s)
-                    for s in iter_compiled(antecedents_a, succedent, bound_a)
-                ]
+                body = optimize_plan(antecedents_a, succedent, bound_a)
+                return Let.make(a, body)
             else:
                 # TODO find inverse if injective function
                 pass
@@ -303,8 +285,8 @@ def iter_compiled(antecedents, succedent, bound):
             v = iter(s_free).next()
             bound_v = set_with(bound, v)
             POMAGMA_DEBUG('iterate unknown {}', v)
-            for s in iter_compiled(antecedents, succedent, bound_v):
-                results.append(Iter.make(v, Test.make(UNKNOWN(succedent), s)))
+            body = optimize_plan(antecedents, succedent, bound_v)
+            results.append(Iter.make(v, Test.make(UNKNOWN(succedent), body)))
 
     # iterate forward
     forward_vars = set()
@@ -315,8 +297,8 @@ def iter_compiled(antecedents, succedent, bound):
     for v in wlog(forward_vars, (antecedents, succedent)):
         bound_v = set_with(bound, v)
         POMAGMA_DEBUG('iterate forward {}', v)
-        for s in iter_compiled(antecedents, succedent, bound_v):
-            results.append(Iter.make(v, s))
+        body = optimize_plan(antecedents, succedent, bound_v)
+        results.append(Iter.make(v, body))
 
     # iterate backward
     backward_vars = set(
@@ -335,31 +317,26 @@ def iter_compiled(antecedents, succedent, bound):
         POMAGMA_DEBUG('iterate backward {}', a)
         if nargs == 1 and len(a_free) == 1:
             # TODO injective function inverse need not be iterated
-            for s in iter_compiled(antecedents_a, succedent, bound_v):
-                results.append(IterInvInjective.make(a, s))
+            body = optimize_plan(antecedents_a, succedent, bound_v)
+            results.append(IterInvInjective.make(a, body))
         elif nargs == 2 and len(a_free) == 1 and len(a.vars) == 2:
-            for s in iter_compiled(antecedents_a, succedent, bound_v):
-                (fixed,) = list(a.vars - a_free)
-                results.append(IterInvBinaryRange.make(a, fixed, s))
+            (fixed,) = list(a.vars - a_free)
+            body = optimize_plan(antecedents_a, succedent, bound_v)
+            results.append(IterInvBinaryRange.make(a, fixed, body))
         elif nargs == 2 and len(a_free) == 2:
-            for s in iter_compiled(antecedents_a, succedent, bound_v):
-                results.append(IterInvBinary.make(a, s))
+            body = optimize_plan(antecedents_a, succedent, bound_v)
+            results.append(IterInvBinary.make(a, body))
 
     # HEURISTIC iterate locally eagerly
     if results:
-        # HEURISTIC optimize iterators locally
-        results = [min(results, key=lambda s: s.cost)]
-        return results
+        return min(results)
 
     # iterate anything
     free = union(a.vars for a in antecedents) | succedent.vars - bound
     for v in wlog(free, (antecedents, succedent)):
         bound_v = set_with(bound, v)
         POMAGMA_DEBUG('iterate non-locally')
-        for s in iter_compiled(antecedents, succedent, bound_v):
-            results.append(Iter.make(v, s))
+        body = optimize_plan(antecedents, succedent, bound_v)
+        results.append(Iter.make(v, body))
 
-    # HEURISTIC optimize iterators locally
-    results = [min(results, key=lambda s: s.cost)]
-
-    return results
+    return min(results)
