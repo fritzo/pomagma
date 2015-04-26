@@ -33,6 +33,7 @@ static_assert(eval_float8(255) == 1015792, "programmer error");
 
 enum OpArgType : uint8_t
 {
+    UINT8,
     NEW_OB,
     OB,
     NEW_SET,
@@ -46,6 +47,8 @@ enum OpArgType : uint8_t
 };
 
 #define OP_CODES(DO) \
+    DO(PADDING, ({})) \
+    DO(SEQUENCE, ({UINT8})) \
     DO(GIVEN_EXISTS, ({NEW_OB})) \
     DO(GIVEN_UNARY_RELATION, ({UNARY_RELATION, NEW_OB})) \
     DO(GIVEN_BINARY_RELATION, ({BINARY_RELATION, NEW_OB, NEW_OB})) \
@@ -300,6 +303,14 @@ std::vector<std::vector<uint8_t>> Parser::parse (std::istream & infile) const
 
             uint8_t arg = 0xff;
             switch (arg_type) {
+                case UINT8: {
+                    int uint8 = atoi(word.c_str());
+                    POMAGMA_ASSERT(
+                        (0 < uint8) and (uint8 < 255),
+                        "line " << lineno << ": out of range: " << uint8);
+                    arg = uint8;
+                } break;
+
                 case NEW_OB: {
                     arg = obs.store(word, lineno);
                 } break;
@@ -441,6 +452,16 @@ void VirtualMachine::_execute (Program program, Context * context) const
     }
 
     switch (pop_op_code(program)) {
+
+        case PADDING: {
+            POMAGMA_ERROR("executed padding");
+        } break;
+
+        case SEQUENCE: {
+            size_t jump = eval_float8(pop_arg(program));
+            _execute(program, context);
+            _execute(program + jump, context);
+        } break;
 
         case GIVEN_EXISTS: {
             pop_ob(program, context);
