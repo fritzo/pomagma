@@ -7,6 +7,7 @@ from pomagma.compiler.util import function
 from pomagma.compiler.util import inputs
 from pomagma.compiler.util import set_with
 from pomagma.compiler.util import set_without
+from pomagma.compiler.util import sortedset
 from pomagma.compiler.util import union
 
 BOT = Expression_0('BOT')
@@ -90,7 +91,7 @@ def complete_step(terms, relevant_facts):
     return step
 
 
-@inputs(set, function)
+@inputs((set, frozenset, sortedset), function)
 def close_under(facts, closure_op):
     closed = set()
     boundary = facts

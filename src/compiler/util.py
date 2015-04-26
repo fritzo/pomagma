@@ -22,11 +22,12 @@ def logger(message, *args):
 
 
 class sortedset(set):
-    __slots__ = ['_sorted']
+    __slots__ = ['_sorted', '_hash']
 
     def __init__(self, *args, **kwargs):
         set.__init__(self, *args, **kwargs)
-        self._sorted = sorted(set.__iter__(self))
+        self._sorted = tuple(sorted(set.__iter__(self)))
+        self._hash = hash(self._sorted)
 
     def __iter__(self):
         return iter(self._sorted)
@@ -50,6 +51,9 @@ class sortedset(set):
         result = set(self)
         result ^= other
         return result
+
+    def __hash__(self):
+        return self._hash
 
     # weak immutability
     update = DELETE
@@ -77,14 +81,14 @@ def set_with(set_, *elements):
     result = set(set_)
     for e in elements:
         result.add(e)
-    return result
+    return set_.__class__(result)
 
 
 def set_without(set_, *elements):
     result = set(set_)
     for e in elements:
         result.remove(e)
-    return result
+    return set_.__class__(result)
 
 
 def log_sum_exp(*args):
@@ -100,7 +104,7 @@ def inputs(*types):
         @functools.wraps(fun)
         def typed(*args, **kwargs):
             for arg, typ in zip(args, types):
-                assert isinstance(arg, typ)
+                assert isinstance(arg, typ), arg
             return fun(*args, **kwargs)
         return typed
     return deco

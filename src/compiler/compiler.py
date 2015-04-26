@@ -19,6 +19,7 @@ from pomagma.compiler.sequents import assert_normal
 from pomagma.compiler.sequents import normalize
 from pomagma.compiler.util import inputs
 from pomagma.compiler.util import logger
+from pomagma.compiler.util import memoize_args
 from pomagma.compiler.util import set_with
 from pomagma.compiler.util import set_without
 from pomagma.compiler.util import sortedset
@@ -165,7 +166,7 @@ def permute_symbols(perm, thing):
         raise ValueError('cannot permute_symbols of {}'.format(thing))
 
 
-def cache_modulo_permutation(fun):
+def memoize_modulo_renaming_constants(fun):
     cache = {}
 
     @functools.wraps(fun)
@@ -189,7 +190,7 @@ def cache_modulo_permutation(fun):
     return cached
 
 
-@cache_modulo_permutation
+@memoize_modulo_renaming_constants  # 1.5x speedup
 @inputs(Sequent, Expression)
 def compile_given(seq, atom):
     context = frozenset([atom])
@@ -200,7 +201,6 @@ def compile_given(seq, atom):
     return [optimize_given(n, context, bound) for n in normals]
 
 
-@cache_modulo_permutation
 @inputs(Sequent, frozenset, frozenset)
 def optimize_given(seq, context, bound):
     assert_normal(seq)
@@ -232,6 +232,7 @@ def wlog(vars, context):
         yield x
 
 
+@memoize_args  # 4x speedup
 def optimize_plan(antecedents, succedent, bound):
     '''
     Iterate through the space of plans, narrowing heuristically.
