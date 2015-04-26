@@ -30,13 +30,17 @@ def add_costs(costs):
 
 
 class Plan(object):
-    __slots__ = ['_args']
+    __slots__ = ['_args', '_cost']
 
     def __init__(self, *args):
         self._args = args
+        self._cost = None
 
+    @property
     def cost(self):
-        return math.log(self.op_count()) / LOG_OBJECT_COUNT
+        if self._cost is None:
+            self._cost = math.log(self.op_count()) / LOG_OBJECT_COUNT
+        return self._cost
 
     def __lt__(self, other):
         s = repr(self)
