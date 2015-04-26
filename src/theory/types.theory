@@ -35,14 +35,13 @@ FIXES BOOL F     EQUAL APP BOOL x BOT   ----------------------------
 
 #EQUAL BOOOL ABIND s r FUN f FUN x FUN y APP r APP APP f APP s x APP s y
 
-                  # These are very expensive to compile:
-CLOSED BOOOL      #---------------------   LESS APP f TOP APP g TOP
-FIXES V BOOOL     #EQUAL APP BOOOL x TOP   LESS APP f J APP g J
-FIXES BOOOL BOT   #EQUAL APP BOOOL x J     LESS APP f K APP g K
-FIXES BOOOL K     #EQUAL APP BOOOL x K     LESS APP f F APP g F
-FIXES BOOOL F     #EQUAL APP BOOOL x F     LESS APP f BOT APP g BOT
-FIXES BOOOL J     #EQUAL APP BOOOL x BOT   ------------------------------
-                  #                        LESS COMP f BOOOL COMP g BOOOL
+CLOSED BOOOL      ---------------------   LESS APP f TOP APP g TOP
+FIXES V BOOOL     EQUAL APP BOOOL x TOP   LESS APP f J APP g J
+FIXES BOOOL BOT   EQUAL APP BOOOL x J     LESS APP f K APP g K
+FIXES BOOOL K     EQUAL APP BOOOL x K     LESS APP f F APP g F
+FIXES BOOOL F     EQUAL APP BOOOL x F     LESS APP f BOT APP g BOT
+FIXES BOOOL J     EQUAL APP BOOOL x BOT   ------------------------------
+                                          LESS COMP f BOOOL COMP g BOOOL
 
 #EQUAL MAYBE ???
 #

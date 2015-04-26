@@ -19,7 +19,7 @@ src/theory/skj.facts,4c0a1dce7dc25e402623bb00358d4e0af02b408a
 src/theory/skj.programs,f0c059e761adfb0fcb9a1c99852b894a24eed995
 src/theory/skj.symbols,17f80f94a1635f01d163dd152f6a8d160d9c679f
 src/theory/skja.facts,0a26c89f58211711ac621f5f1d43ba2d581ac5f4
-src/theory/skja.programs,a585f2273dfb5801c2c476880818f445c08d57b5
+src/theory/skja.programs,d7d49e25708e368bad81498e771410aebff94199
 src/theory/skja.symbols,bd65ac3c01a397d6262630908a383ac01b06c097
 src/theory/skjo.facts,6323990853bfed6f3120963125331ad5ecd40971
 src/theory/skjo.programs,12d6f6212d19ee25cb622d23441cfc4ebd9b0d76
@@ -27,4 +27,4 @@ src/theory/skjo.symbols,582e3b5398132c9fc42403854a0197f6aed84e21
 src/theory/skrj.facts,c549be7f7e50d8ad311b9b7d02a235274e08aee5
 src/theory/skrj.programs,fa533eefa4281993038c2aed526dfac1be8026ce
 src/theory/skrj.symbols,299fae0b807f296da3c46288ff04172bd59428d4
-src/theory/types.tasks,7d8c0202faea35023610a1513b970f553910097f
+src/theory/types.tasks,def777acbc8b14e250630ee8c4dbc3da392ee64a

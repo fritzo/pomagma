@@ -3,8 +3,7 @@ PY_FILES:=*.py $(find src | grep '.py$$' | grep -v '_pb2.py')
 
 all: bootstrap fixture FORCE
 	$(MAKE) python
-	$(MAKE) codegen
-	$(MAKE) debug release
+	$(MAKE) codegen tasks debug release
 
 protobuf: FORCE
 	$(MAKE) -C src/language
@@ -17,8 +16,10 @@ python: protobuf FORCE
 	pip install -e .
 
 codegen: FORCE
-	python -m pomagma.compiler batch-extract-tasks
 	python -m pomagma.compiler batch-compile
+
+tasks: FORCE
+	python -m pomagma.compiler batch-extract-tasks
 
 debug: FORCE
 	mkdir -p build/debug
@@ -31,9 +32,6 @@ release: FORCE
 	cd build/release \
 	  && cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo ../.. \
 	  && $(MAKE)
-
-tasks: FORCE
-	python -m pomagma.compiler batch-extract-tasks
 
 cpp-test: all FORCE
 	POMAGMA_LOG_FILE=$(shell pwd)/data/debug.log $(MAKE) -C build/debug test

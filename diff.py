@@ -83,7 +83,7 @@ def clone(commit='HEAD'):
 @parsable.command
 def programs(commit='HEAD', difftool=DIFFTOOL):
     '''
-    Diff generated code src/theory/*.symbols, *.programs, *.facts (slow)
+    Diff generated code src/theory/*.symbols, *.programs, *.facts
     Supported difftools: diff, meld, cdiff, vim, gvim, mvim
     '''
     clone(commit=commit)
@@ -106,7 +106,7 @@ def programs(commit='HEAD', difftool=DIFFTOOL):
 @parsable.command
 def tasks(commit='HEAD', difftool=DIFFTOOL):
     '''
-    Diff generated task sketches src/theory/*.tasks. (fast)
+    Diff generated task sketches src/theory/*.tasks.
     Supported difftools: diff, meld, cdiff, vim, gvim, mvim
     '''
     clone(commit=commit)
