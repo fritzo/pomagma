@@ -1,6 +1,8 @@
 import os
 import glob
 import functools
+import itertools
+from itertools import izip
 from math import log
 from math import exp
 import pomagma.util
@@ -150,6 +152,52 @@ def memoize_args(fun):
             return result
 
     return memoized
+
+
+def get_consts(thing):
+    if hasattr(thing, 'consts'):
+        return thing.consts
+    else:
+        return union(get_consts(i) for i in thing)
+
+
+@inputs(dict)
+def permute_symbols(perm, thing):
+    if not perm:
+        return thing
+    elif hasattr(thing, 'permute_symbols'):
+        return thing.permute_symbols(perm)
+    elif hasattr(thing, '__iter__'):
+        return thing.__class__(permute_symbols(perm, i) for i in thing)
+    elif isinstance(thing, (int, float)):
+        return thing
+    else:
+        raise ValueError('cannot permute_symbols of {}'.format(thing))
+
+
+def memoize_modulo_renaming_constants(fun):
+    cache = {}
+
+    @functools.wraps(fun)
+    def cached(*args):
+        consts = sorted(c.name for c in get_consts(args))
+        result = None
+        for permuted_consts in itertools.permutations(consts):
+            perm = {i: j for i, j in izip(consts, permuted_consts) if i != j}
+            permuted_args = permute_symbols(perm, args)
+            try:
+                permuted_result = cache[permuted_args]
+            except KeyError:
+                continue
+            logger('{}: using cache via {}', fun.__name__, perm)
+            inverse = {j: i for i, j in perm.iteritems()}
+            return permute_symbols(inverse, permuted_result)
+        logger('{}: compute', fun.__name__)
+        result = fun(*args)
+        cache[args] = result
+        return result
+
+    return cached
 
 
 def memoize_make(cls):

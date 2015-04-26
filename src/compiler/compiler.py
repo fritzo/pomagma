@@ -1,9 +1,6 @@
 import sys
 import inspect
-import functools
-import itertools
 import pomagma.util
-from itertools import izip
 from pomagma.compiler.expressions import Expression
 from pomagma.compiler.expressions import Expression_1
 from pomagma.compiler.expressions import Expression_2
@@ -145,52 +142,6 @@ def normalize_given(seq, atom, bound=None):
                     set([EQUAL(lhs, rhs.var)]))
 
 
-def get_consts(thing):
-    if hasattr(thing, 'consts'):
-        return thing.consts
-    else:
-        return union(get_consts(i) for i in thing)
-
-
-@inputs(dict)
-def permute_symbols(perm, thing):
-    if not perm:
-        return thing
-    elif hasattr(thing, 'permute_symbols'):
-        return thing.permute_symbols(perm)
-    elif hasattr(thing, '__iter__'):
-        return thing.__class__(permute_symbols(perm, i) for i in thing)
-    elif isinstance(thing, (int, float)):
-        return thing
-    else:
-        raise ValueError('cannot permute_symbols of {}'.format(thing))
-
-
-def memoize_modulo_renaming_constants(fun):
-    cache = {}
-
-    @functools.wraps(fun)
-    def cached(*args):
-        args = tuple(args)
-        consts = sorted(c.name for c in get_consts(args))
-        result = None
-        for permuted_consts in itertools.permutations(consts):
-            perm = {i: j for i, j in izip(consts, permuted_consts) if i != j}
-            permuted_args = permute_symbols(perm, args)
-            if permuted_args in cache:
-                logger('{}: using cache via {}', fun.__name__, perm)
-                inverse = {j: i for i, j in perm.iteritems()}
-                return permute_symbols(inverse, cache[permuted_args])
-                return fun(*args)  # TODO use cache, as below
-        logger('{}: compute', fun.__name__)
-        result = fun(*args)
-        cache[args] = result
-        return result
-
-    return cached
-
-
-@memoize_modulo_renaming_constants  # 1.5x speedup
 @inputs(Sequent, Expression)
 def compile_given(seq, atom):
     context = frozenset([atom])
@@ -212,27 +163,7 @@ def optimize_given(seq, context, bound):
     return plan.cost, seq, plan
 
 
-def swap(x, y, thing):
-    if isinstance(thing, Expression):
-        return thing.swap(x, y)
-    elif isinstance(thing, tuple):
-        return tuple(swap(x, y, i) for i in thing)
-    elif isinstance(thing, sortedset):
-        return sortedset(swap(x, y, i) for i in thing)
-    else:
-        raise TypeError('unsupported type: {}'.format(type(thing)))
-
-
-def wlog(vars, context):
-    variants = set()
-    for x in sorted(vars):
-        if any(swap(x, y, context) == context for y in variants):
-            continue
-        variants.add(x)
-        yield x
-
-
-@memoize_args  # 4x speedup
+@memoize_args
 def optimize_plan(antecedents, succedent, bound):
     '''
     Iterate through the space of plans, narrowing heuristically.
@@ -295,46 +226,40 @@ def optimize_plan(antecedents, succedent, bound):
         a_free = a.vars - bound
         if len(a_free) == 1:
             forward_vars |= a_free
-    for v in wlog(forward_vars, (antecedents, succedent)):
+    for v in forward_vars:
         bound_v = set_with(bound, v)
         POMAGMA_DEBUG('iterate forward {}', v)
         body = optimize_plan(antecedents, succedent, bound_v)
         results.append(Iter.make(v, body))
 
     # iterate backward
-    backward_vars = set(
-        a.var for a in antecedents
-        if a.is_fun() and a.args and a.var in bound and not (a.vars <= bound))
-    for v in wlog(backward_vars, (antecedents, succedent)):
-        for a in antecedents:
-            if a.is_fun() and a.var == v:
-                break
-        nargs = len(a.args)
-        a_free = a.vars - bound
-        bound_v = bound | a_free
-        antecedents_a = sortedset(set_without(antecedents, a))
-        assert len(a_free) in [0, 1, 2]
-        assert nargs in [0, 1, 2]
-        POMAGMA_DEBUG('iterate backward {}', a)
-        if nargs == 1 and len(a_free) == 1:
-            # TODO injective function inverse need not be iterated
-            body = optimize_plan(antecedents_a, succedent, bound_v)
-            results.append(IterInvInjective.make(a, body))
-        elif nargs == 2 and len(a_free) == 1 and len(a.vars) == 2:
-            (fixed,) = list(a.vars - a_free)
-            body = optimize_plan(antecedents_a, succedent, bound_v)
-            results.append(IterInvBinaryRange.make(a, fixed, body))
-        elif nargs == 2 and len(a_free) == 2:
-            body = optimize_plan(antecedents_a, succedent, bound_v)
-            results.append(IterInvBinary.make(a, body))
+    for a in antecedents:
+        if a.is_fun() and a.args and a.var in bound and not (a.vars <= bound):
+            nargs = len(a.args)
+            a_free = a.vars - bound
+            bound_v = bound | a_free
+            antecedents_a = sortedset(set_without(antecedents, a))
+            assert len(a_free) in [0, 1, 2]
+            assert nargs in [0, 1, 2]
+            POMAGMA_DEBUG('iterate backward {}', a)
+            if nargs == 1 and len(a_free) == 1:
+                # TODO injective function inverse need not be iterated
+                body = optimize_plan(antecedents_a, succedent, bound_v)
+                results.append(IterInvInjective.make(a, body))
+            elif nargs == 2 and len(a_free) == 1 and len(a.vars) == 2:
+                (fixed,) = list(a.vars - a_free)
+                body = optimize_plan(antecedents_a, succedent, bound_v)
+                results.append(IterInvBinaryRange.make(a, fixed, body))
+            elif nargs == 2 and len(a_free) == 2:
+                body = optimize_plan(antecedents_a, succedent, bound_v)
+                results.append(IterInvBinary.make(a, body))
 
     # HEURISTIC iterate locally eagerly
     if results:
         return min(results)
 
     # iterate anything
-    free = union(a.vars for a in antecedents) | succedent.vars - bound
-    for v in wlog(free, (antecedents, succedent)):
+    for v in union(a.vars for a in antecedents) | succedent.vars - bound:
         bound_v = set_with(bound, v)
         POMAGMA_DEBUG('iterate non-locally')
         body = optimize_plan(antecedents, succedent, bound_v)
