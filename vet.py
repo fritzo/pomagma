@@ -57,9 +57,12 @@ def write_vetted_hashes(hashes):
 @parsable.command
 def vet(*filenames):
     '''
-    Save hashes of current file versions.
+    Save hashes of current file versions for specified files.
+    Use 'vet all' to vet all files.
     '''
     hashes = read_vetted_hashes()
+    if list(filenames) == ['all']:
+        filenames = hashes.keys()
     for filename in filenames:
         if filename in hashes:
             if os.path.exists(filename):
