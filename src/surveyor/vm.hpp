@@ -206,10 +206,9 @@ public:
     Agenda () : m_block_count(0) {}
 
     void load (Signature & signature);
-
-    void log_stats ();
-
     void add_listing (const Listing & listing);
+    void log_stats () const;
+    void optimize_listings ();
 
     void execute (Ob ob) const
     {
@@ -315,6 +314,8 @@ public:
 private:
 
     typedef std::vector<Listing> Listings;
+
+    void optimize_listings (Listings & listings);
 
     VirtualMachine m_virtual_machine;
     Listings m_exists;

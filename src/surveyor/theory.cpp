@@ -29,6 +29,8 @@ void load_programs (const std::string & filename)
         agenda.add_listing(listing);
     }
     agenda.log_stats();
+    agenda.optimize_listings();
+    agenda.log_stats();
     Cleanup::init(agenda.cleanup_task_count());
     CleanupProfiler::init(agenda.cleanup_type_count());
 }

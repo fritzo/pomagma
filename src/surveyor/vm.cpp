@@ -3,6 +3,7 @@
 #include <typeinfo>
 #include <sstream>
 #include <fstream>
+#include <algorithm>
 #include "vm.hpp"
 
 #define POMAGMA_TRACE_VM (false)
@@ -1231,41 +1232,6 @@ void Agenda::load (Signature & signature)
     register_names(m_names, signature.symmetric_functions());
 }
 
-static size_t count_bytes (const std::vector<Listing> & listings)
-{
-    size_t byte_count = 0;
-    for (const auto & listing : listings) {
-        byte_count += listing.size();
-    }
-    return byte_count;
-}
-
-void Agenda::log_stats ()
-{
-    POMAGMA_INFO("Agenda:");
-    POMAGMA_INFO("\tEvent\tCount\tTotal bytes");
-    POMAGMA_INFO("\t---------------------------");
-    POMAGMA_INFO(
-        "\tExists" <<
-        "\t" << m_exists.size() <<
-        "\t" << count_bytes(m_exists));
-    for (const auto & pair : m_names) {
-        const auto & listings = m_structures[pair.second];
-        POMAGMA_INFO(
-            "\t" << pair.first <<
-            "\t" << listings.size() <<
-            "\t" << count_bytes(listings));
-    }
-    POMAGMA_INFO(
-        "\tCleanup" <<
-        "\t" << m_cleanup_small.size() <<
-        "\t" << count_bytes(m_cleanup_small));
-    POMAGMA_INFO(
-        "\tCleanup" <<
-        "\t" << m_cleanup_large.size() <<
-        "\t" << count_bytes(m_cleanup_large));
-}
-
 void Agenda::add_listing (const Listing & listing)
 {
     POMAGMA_ASSERT(not listing.empty(), "empty listing");
@@ -1317,6 +1283,67 @@ void Agenda::add_listing (const Listing & listing)
             m_cleanup_small.push_back(listing);
         } break;
     }
+}
+
+static size_t count_bytes (const std::vector<Listing> & listings)
+{
+    size_t byte_count = 0;
+    for (const auto & listing : listings) {
+        byte_count += listing.size();
+    }
+    return byte_count;
+}
+
+void Agenda::log_stats () const
+{
+    POMAGMA_INFO("Agenda:");
+    POMAGMA_INFO("\tEvent\tCount\tTotal bytes");
+    POMAGMA_INFO("\t---------------------------");
+    POMAGMA_INFO(
+        "\tExists" <<
+        "\t" << m_exists.size() <<
+        "\t" << count_bytes(m_exists));
+    for (const auto & pair : m_names) {
+        auto i = m_structures.find(pair.second);
+        if (i != m_structures.end()) {
+            const auto & listings = i->second;
+            POMAGMA_INFO(
+                "\t" << pair.first <<
+                "\t" << listings.size() <<
+                "\t" << count_bytes(listings));
+        }
+    }
+    POMAGMA_INFO(
+        "\tCleanup" <<
+        "\t" << m_cleanup_small.size() <<
+        "\t" << count_bytes(m_cleanup_small));
+    POMAGMA_INFO(
+        "\tCleanup" <<
+        "\t" << m_cleanup_large.size() <<
+        "\t" << count_bytes(m_cleanup_large));
+}
+
+void Agenda::optimize_listings ()
+{
+    POMAGMA_INFO("agenda optimizing listings");
+    optimize_listings(m_exists);
+    for (auto & pair : m_structures) {
+        optimize_listings(pair.second);
+    }
+}
+
+void Agenda::optimize_listings (Listings & listings)
+{
+    std::sort(
+        listings.begin(),
+        listings.end(),
+        [](const Listing & x, const Listing & y){
+            return std::lexicographical_compare(
+                x.begin(), x.end(),
+                y.begin(), y.end());
+        });
+
+    // TODO merge listings using SEQUENCE to share common work
 }
 
 } // namespace vm
