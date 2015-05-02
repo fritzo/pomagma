@@ -1,17 +1,16 @@
-import os
+import pomagma.util
 from pomagma.compiler import __main__ as main
 from pomagma.compiler.util import find_theories
 
 
 def _test_compile(filename):
-    main.compile(
-        filename,
-        symbols_out='temp.symbols',
-        facts_out='temp.facts',
-        programs_out='temp.programs')
-    os.remove('temp.symbols')
-    os.remove('temp.facts')
-    os.remove('temp.programs')
+    with pomagma.util.in_temp_dir():
+        main.compile(
+            filename,
+            symbols_out='temp.symbols',
+            facts_out='temp.facts',
+            programs_out='temp.programs',
+            optimized_out='temp.optimized.programs')
 
 
 def test_compile_rules():

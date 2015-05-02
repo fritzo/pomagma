@@ -12,6 +12,7 @@ from pomagma.compiler import completion
 from pomagma.compiler import extensional
 from pomagma.compiler import frontend
 from pomagma.compiler import parser
+from pomagma.compiler import sequencer
 from pomagma.compiler.compiler import compile_full
 from pomagma.compiler.compiler import compile_given
 from pomagma.compiler.compiler import get_events
@@ -356,6 +357,7 @@ def compile(*infiles, **kwargs):
         symbols_out=$POMAGMA_ROOT/src/theory/<STEM>.symbols
         facts_out=$POMAGMA_ROOT/src/theory/<STEM>.facts
         programs_out=$POMAGMA_ROOT/src/theory/<STEM>.programs
+        optimized_out=$POMAGMA_ROOT/src/theory/<STEM>.optimized.programs
         extensional=true
     '''
     stem = infiles[-1].split('.')[0]
@@ -368,6 +370,9 @@ def compile(*infiles, **kwargs):
     programs_out = kwargs.get(
         'programs_out',
         os.path.join(SRC, 'theory', '{0}.programs'.format(stem)))
+    optimized_out = kwargs.get(
+        'optimized_out',
+        os.path.join(SRC, 'theory', '{0}.optimized.programs'.format(stem)))
     is_extensional = parse_bool(kwargs.get('extensional', 'true'))
 
     argstring = ' '.join(
@@ -416,6 +421,15 @@ def compile(*infiles, **kwargs):
             f.write('\n')
             f.write(line)
 
+    lines = sequencer.load_lines(programs_out)
+    optimized = sequencer.optimize(lines)
+    with open(optimized_out, 'w') as f:
+        print '# writing', optimized_out
+        f.write(header)
+        for line in optimized:
+            f.write('\n')
+            f.write(line)
+
 
 def _compile(param):
     compile(*param['args'], **param['kwargs'])
@@ -437,6 +451,10 @@ def batch_compile():
         symbols_out = os.path.join(SRC, 'theory', '{}.symbols'.format(name))
         facts_out = os.path.join(SRC, 'theory', '{}.facts'.format(name))
         programs_out = os.path.join(SRC, 'theory', '{}.programs'.format(name))
+        optimized_out = os.path.join(
+            SRC,
+            'theory',
+            '{}.optimized.programs'.format(name))
         outfiles = [symbols_out, facts_out, programs_out]
         if not up_to_date(infiles + [theories_json], outfiles):
             params.append({
@@ -445,6 +463,7 @@ def batch_compile():
                     'symbols_out': symbols_out,
                     'facts_out': facts_out,
                     'programs_out': programs_out,
+                    'optimized_out': optimized_out,
                     'extensional': str(spec.get('extensional', True)),
                 }})
     # multiprocessing.Pool().
