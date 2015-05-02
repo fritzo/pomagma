@@ -5,7 +5,7 @@
 #include <pomagma/platform/aligned_alloc.hpp>
 #include <pomagma/microstructure/util.hpp>
 #include <pomagma/microstructure/structure_impl.hpp>
-#include "cleanup.hpp"
+#include "profiler.hpp"
 
 namespace pomagma
 {
