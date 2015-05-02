@@ -3,6 +3,7 @@ from itertools import izip
 from pomagma.compiler import signature
 from pomagma.compiler.util import eval_float53
 from pomagma.compiler.util import logger
+from pomagma.compiler.util import memoize_arg
 
 
 def load_lines(filename):
@@ -27,9 +28,9 @@ def load_programs(lines):
 
 def dump_programs(programs):
     lines = []
-    for program in programs:
-        if lines:
-            lines.append('')
+    for i, program in enumerate(programs):
+        lines.append('')
+        lines.append('# plan {}: {} bytes'.format(i, sizeof_program(program)))
         for line in program:
             lines.append(' '.join(line))
     return lines
@@ -55,8 +56,10 @@ def are_compatible(program1, program2):
     head2 = program2[0]
     if head1[0].startswith('GIVEN') or head2[0].startswith('GIVEN'):
         return head1 == head2
+    elif head1[0] == 'FOR_BLOCK' or head2[0] == 'FOR_BLOCK':
+        return False
     else:
-        return True
+        return head1 == head2
 
 
 def count_overlap(program1, program2):
@@ -102,10 +105,21 @@ def merge_programs(program1, program2):
     return tuple(program)
 
 
+@memoize_arg
+def program_order(program):
+    token = program[0][0]
+    return (
+        token.startswith('GIVEN'),
+        token == 'FOR_BLOCK',
+        sizeof_program(program),
+        program,
+    )
+
+
 class MergeProcessor:
     def __init__(self, programs):
         programs = map(tuple, programs)
-        programs.sort(key=lambda p: (p[0][0].startswith('GIVEN'), p))
+        programs.sort(key=program_order)
         self._programs = dict(enumerate(programs))
         self._prev = {}
         self._next = {}
@@ -166,7 +180,9 @@ class MergeProcessor:
         assert not self._tasks, self._tasks
         assert not self._prev, self._prev
         assert not self._next, self._next
-        return [map(list, p) for p in sorted(self._programs.itervalues())]
+        programs = list(self._programs.itervalues())
+        programs.sort(key=program_order)
+        return programs
 
 
 def optimize(lines):

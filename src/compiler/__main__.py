@@ -208,6 +208,7 @@ def _extract_tasks((infile, outfile)):
 def batch_extract_tasks(*filenames, **kwargs):
     '''
     Extract tasks from infiles '*.theory', saving to '*.tasks'.
+    Options: parallel=true
     '''
     if not filenames:
         filenames = find_theories()
@@ -218,7 +219,7 @@ def batch_extract_tasks(*filenames, **kwargs):
         outfile = infile.replace('.theory', '.tasks')
         if not up_to_date([infile], [outfile]):
             pairs.append((infile, outfile))
-    parallel = parse_bool(kwargs.get('parallel', 'false'))
+    parallel = parse_bool(kwargs.get('parallel', 'true'))
     map_ = multiprocessing.Pool().map if parallel else map
     map_(_extract_tasks, pairs)
 
@@ -286,7 +287,7 @@ def profile_tasks(*filenames, **kwargs):
     loadfrom = kwargs.get('loadfrom')
     saveto = kwargs.get('saveto', 'tasks.pstats')
     if loadfrom is None:
-        command = 'batch_extract_tasks({}, threads=1)'.format(
+        command = 'batch_extract_tasks({}, parallel=false)'.format(
             ', '.join(map('"{}"'.format, filenames)))
         print 'profiling {}'.format(command)
         profile.run(command, saveto)
@@ -436,9 +437,9 @@ def _compile(param):
 
 
 @parsable.command
-def batch_compile():
+def batch_compile(parallel=True):
     '''
-    Compile all theories in parallel
+    Compile all theories in parallel.
     '''
     params = []
     theories_json = os.path.join(SRC, 'theory', 'theories.json')
@@ -466,8 +467,8 @@ def batch_compile():
                     'optimized_out': optimized_out,
                     'extensional': str(spec.get('extensional', True)),
                 }})
-    # multiprocessing.Pool().
-    map(_compile, params)
+    map_ = multiprocessing.Pool().map if parallel else map
+    map_(_compile, params)
 
 
 if __name__ == '__main__':
