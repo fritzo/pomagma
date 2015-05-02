@@ -13,21 +13,37 @@ namespace pomagma
 namespace vm
 {
 
-constexpr inline size_t eval_float8 (size_t num)
+// 4 bit significand, 4 bit exponent
+constexpr inline size_t eval_float44 (size_t num)
 {
     return ((num % 16u) + 16u) * (1u << (num / 16u)) - 16u;
 }
 
-static_assert(eval_float8(0) == 0, "programmer error");
-static_assert(eval_float8(1) == 1, "programmer error");
-static_assert(eval_float8(2) == 2, "programmer error");
-static_assert(eval_float8(3) == 3, "programmer error");
-static_assert(eval_float8(10) == 10, "programmer error");
-static_assert(eval_float8(45) == 100, "programmer error");
-static_assert(eval_float8(96) == 1008, "programmer error");
-static_assert(eval_float8(148) == 10224, "programmer error");
-static_assert(eval_float8(201) == 102384, "programmer error");
-static_assert(eval_float8(255) == 1015792, "programmer error");
+static_assert(eval_float44(0) == 0, "programmer error");
+static_assert(eval_float44(1) == 1, "programmer error");
+static_assert(eval_float44(2) == 2, "programmer error");
+static_assert(eval_float44(3) == 3, "programmer error");
+static_assert(eval_float44(10) == 10, "programmer error");
+static_assert(eval_float44(45) == 100, "programmer error");
+static_assert(eval_float44(96) == 1008, "programmer error");
+static_assert(eval_float44(148) == 10224, "programmer error");
+static_assert(eval_float44(201) == 102384, "programmer error");
+static_assert(eval_float44(255) == 1015792, "programmer error");
+
+// 5 bit significand, 3 bit exponent
+constexpr inline size_t eval_float53 (size_t num)
+{
+    return ((num % 32u) + 32u) * (1u << (num / 32u)) - 32u;
+}
+
+static_assert(eval_float53(0) == 0, "programmer error");
+static_assert(eval_float53(1) == 1, "programmer error");
+static_assert(eval_float53(2) == 2, "programmer error");
+static_assert(eval_float53(3) == 3, "programmer error");
+static_assert(eval_float53(10) == 10, "programmer error");
+static_assert(eval_float53(65) == 100, "programmer error");
+static_assert(eval_float53(161) == 1024, "programmer error");
+static_assert(eval_float53(255) == 8032, "programmer error");
 
 //----------------------------------------------------------------------------
 // OpCode
@@ -459,7 +475,7 @@ void VirtualMachine::_execute (Program program, Context * context) const
         } break;
 
         case SEQUENCE: {
-            size_t jump = eval_float8(pop_arg(program));
+            size_t jump = eval_float53(pop_arg(program));
             _execute(program, context);
             _execute(program + jump, context);
         } break;

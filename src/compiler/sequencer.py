@@ -1,7 +1,7 @@
 import heapq
 from itertools import izip
 from pomagma.compiler import signature
-from pomagma.compiler.util import eval_float8
+from pomagma.compiler.util import eval_float53
 from pomagma.compiler.util import logger
 
 
@@ -74,10 +74,10 @@ def sizeof_program(program):
 
 def get_jump(jump_size):
     jump = 0
-    while eval_float8(jump) < jump_size:
+    while eval_float53(jump) < jump_size:
         jump += 1
     assert jump < 256, 'jump out of range: {}'.format(jump_size)
-    padding = eval_float8(jump) - jump_size
+    padding = eval_float53(jump) - jump_size
     return jump, padding
 
 
