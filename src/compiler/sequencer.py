@@ -108,12 +108,7 @@ def merge_programs(program1, program2):
 @memoize_arg
 def program_order(program):
     token = program[0][0]
-    return (
-        token.startswith('GIVEN'),
-        token == 'FOR_BLOCK',
-        sizeof_program(program),
-        program,
-    )
+    return token.startswith('GIVEN'), token == 'FOR_BLOCK', program
 
 
 class MergeProcessor:
