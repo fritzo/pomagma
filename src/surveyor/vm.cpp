@@ -193,8 +193,6 @@ class Parser::SymbolTable
 
 public:
 
-    void clear () { m_registers.clear(); }
-
     uint8_t store (const std::string & name, size_t lineno)
     {
         POMAGMA_ASSERT(
@@ -226,6 +224,70 @@ public:
             POMAGMA_ASSERT(
                 m_loaded.find(name) != m_loaded.end(),
                 "line " << lineno << ": unused variable: " << name);
+        }
+    }
+};
+
+class Parser::SymbolTableStack
+{
+    std::vector<SymbolTable> m_stack;
+    std::vector<size_t> m_jumps;
+    const bool m_warn_unused;
+
+public:
+
+    SymbolTableStack (bool warn_unused) : m_warn_unused(warn_unused)
+    {
+        m_stack.resize(1);
+    }
+
+    uint8_t store (const std::string & name, size_t lineno)
+    {
+        return m_stack.back().store(name, lineno);
+    }
+
+    uint8_t load (const std::string & name, size_t lineno)
+    {
+        return m_stack.back().load(name, lineno);
+    }
+
+    void clear (size_t lineno)
+    {
+        POMAGMA_ASSERT(
+            m_jumps.empty(),
+            "line " << lineno << ": unterminated SEQUENCE command"
+            ", len(jumps) = " << m_jumps.size());
+        POMAGMA_ASSERT(
+            m_stack.size() == 1,
+            "line " << lineno << ": unterminated SEQUENCE command"
+            ", len(stack) = " << m_stack.size());
+        if (m_warn_unused) {
+            m_stack.back().check_unused(lineno);
+        }
+        m_stack.clear();
+        m_stack.resize(1);
+    }
+
+    void push (uint8_t jump, size_t lineno)
+    {
+        POMAGMA_DEBUG("push vars at line " << lineno);
+        m_stack.push_back(m_stack.back());
+        m_jumps.push_back(eval_float53(jump));
+    }
+
+    void pop (size_t lineno)
+    {
+        for (auto & jump : m_jumps) {
+            POMAGMA_ASSERT(jump, "programmer error");
+            --jump;
+        }
+        if (not m_jumps.empty() and m_jumps.back() == 0) {
+            POMAGMA_DEBUG("pop vars at line " << lineno);
+            if (m_warn_unused) {
+                m_stack.back().check_unused(lineno);
+            }
+            m_stack.pop_back();
+            m_jumps.pop_back();
         }
     }
 };
@@ -280,8 +342,8 @@ std::vector<std::vector<uint8_t>> Parser::parse (std::istream & infile) const
 {
     std::vector<std::vector<uint8_t>> programs;
     std::vector<uint8_t> program;
-    SymbolTable obs;
-    SymbolTable sets;
+    SymbolTableStack obs(false);
+    SymbolTableStack sets(true);
     std::string line;
     std::string word;
 
@@ -290,9 +352,8 @@ std::vector<std::vector<uint8_t>> Parser::parse (std::istream & infile) const
             continue;
         }
         if (line.empty()) {
-            sets.check_unused(lineno);
-            obs.clear();
-            sets.clear();
+            obs.clear(lineno);
+            sets.clear(lineno);
             if (not program.empty()) {
                 programs.push_back(program);
                 program.clear();
@@ -305,6 +366,8 @@ std::vector<std::vector<uint8_t>> Parser::parse (std::istream & infile) const
         POMAGMA_ASSERT(
             stream >> word,
             "line " << lineno << ": no operation");
+        obs.pop(lineno);
+        sets.pop(lineno);
         auto i = m_op_codes.find(word);
         POMAGMA_ASSERT(
             i != m_op_codes.end(),
@@ -353,6 +416,15 @@ std::vector<std::vector<uint8_t>> Parser::parse (std::istream & infile) const
                 } break;
             }
             program.push_back(arg);
+
+            obs.pop(lineno);
+            sets.pop(lineno);
+        }
+
+        if (op_code == SEQUENCE) {
+            uint8_t jump = program.back();
+            obs.push(jump, lineno);
+            sets.push(jump, lineno);
         }
 
         POMAGMA_ASSERT(
@@ -1342,13 +1414,15 @@ void Agenda::log_stats () const
 void Agenda::optimize_listings ()
 {
     POMAGMA_INFO("agenda optimizing listings");
-    optimize_listings(m_exists);
+    sort_listings(m_exists);
     for (auto & pair : m_structures) {
-        optimize_listings(pair.second);
+        sort_listings(pair.second);
     }
+    sort_listings(m_cleanup_small);
+    sort_listings(m_cleanup_large);
 }
 
-void Agenda::optimize_listings (Listings & listings)
+void Agenda::sort_listings (Listings & listings)
 {
     std::sort(
         listings.begin(),
@@ -1358,8 +1432,6 @@ void Agenda::optimize_listings (Listings & listings)
                 x.begin(), x.end(),
                 y.begin(), y.end());
         });
-
-    // TODO merge listings using SEQUENCE to share common work
 }
 
 } // namespace vm

@@ -36,6 +36,7 @@ private:
     std::map<std::pair<OpArgType, std::string>, uint8_t> m_constants;
 
     class SymbolTable;
+    class SymbolTableStack;
 };
 
 //----------------------------------------------------------------------------
@@ -315,7 +316,7 @@ private:
 
     typedef std::vector<Listing> Listings;
 
-    void optimize_listings (Listings & listings);
+    void sort_listings (Listings & listings);
 
     VirtualMachine m_virtual_machine;
     Listings m_exists;
