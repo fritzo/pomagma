@@ -27,8 +27,9 @@ class Parser
 public:
 
     Parser (Signature & signature);
-    std::vector<Listing> parse (std::istream & infile) const;
-    std::vector<Listing> parse_file (const std::string & filename) const;
+    std::vector<std::pair<Listing, size_t>> parse (std::istream & infile) const;
+    std::vector<std::pair<Listing, size_t>> parse_file (
+            const std::string & filename) const;
 
 private:
 
@@ -56,6 +57,7 @@ public:
     void execute (const Listing & listing) const
     {
         Context * context = new_context();
+        ProgramProfiler::Block profiler(context->profiler, listing.data());
         _execute(listing.data(), context);
     }
 
@@ -63,6 +65,7 @@ public:
     {
         Context * context = new_context();
         context->obs[0] = arg;
+        ProgramProfiler::Block profiler(context->profiler, listing.data());
         _execute(listing.data(), context);
     }
 
@@ -71,6 +74,7 @@ public:
         Context * context = new_context();
         context->obs[0] = arg1;
         context->obs[1] = arg2;
+        ProgramProfiler::Block profiler(context->profiler, listing.data());
         _execute(listing.data(), context);
     }
 
@@ -80,6 +84,7 @@ public:
         context->obs[0] = arg1;
         context->obs[1] = arg2;
         context->obs[2] = arg3;
+        ProgramProfiler::Block profiler(context->profiler, listing.data());
         _execute(listing.data(), context);
     }
 
@@ -87,6 +92,7 @@ public:
     {
         Context * context = new_context();
         context->block = block;
+        ProgramProfiler::Block profiler(context->profiler, listing.data());
         _execute(listing.data(), context);
     }
 
@@ -107,6 +113,7 @@ private:
         const std::atomic<Word> * sets[256];
         size_t block;
         size_t trace;
+        ProgramProfiler profiler;
 
         void clear ()
         {
@@ -207,9 +214,10 @@ public:
     Agenda () : m_block_count(0) {}
 
     void load (Signature & signature);
-    void add_listing (const Listing & listing);
+    void add_listing (const Listing & listing, size_t lineno);
     void log_stats () const;
     void optimize_listings ();
+    const std::map<const void *, size_t> & get_linenos () { return m_linenos; }
 
     void execute (Ob ob) const
     {
@@ -286,7 +294,6 @@ public:
             const Listing & listing = m_cleanup_small[index];
 
             POMAGMA_DEBUG("executing cleanup task " << index);
-            CleanupProfiler profiler(index);
             m_virtual_machine.execute(listing);
         } else {
             index -= small_count;
@@ -297,7 +304,6 @@ public:
             POMAGMA_DEBUG(
                 "executing cleanup task " << (small_count + index) <<
                 ", block " << block << " / " << m_block_count);
-            CleanupProfiler profiler(small_count + index);
             m_virtual_machine.execute_block(listing, block);
         }
     }
@@ -316,6 +322,10 @@ private:
 
     typedef std::vector<Listing> Listings;
 
+    void add_listing_to (
+            Listings & listings,
+            const Listing & listing,
+            size_t lineno);
     void sort_listings (Listings & listings);
 
     VirtualMachine m_virtual_machine;
@@ -325,6 +335,7 @@ private:
     Listings m_cleanup_large;
     size_t m_block_count;
     std::map<std::string, const void *> m_names;
+    std::map<const void *, size_t> m_linenos;
 };
 
 } // namespace vm

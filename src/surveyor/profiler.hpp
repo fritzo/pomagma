@@ -5,63 +5,65 @@
 #include <atomic>
 #include <thread>
 #include <vector>
+#include <map>
+#include <unordered_map>
+#include <unordered_set>
 
 namespace pomagma
 {
 
-class CleanupProfiler
+class ProgramProfiler : noncopyable
 {
-    static std::vector<atomic_default<unsigned long>> s_counts;
-    static std::vector<atomic_default<unsigned long>> s_elapsed;
+    struct Stat
+    {
+        size_t count;
+        size_t time;
 
-    const unsigned long m_type;
-    Timer m_timer;
+        void report_to (Stat & manager)
+        {
+            manager.count += count;
+            manager.time += time;
+            count = 0;
+            time = 0;
+        }
+    };
 
 public:
 
-    CleanupProfiler (unsigned long type) : m_type(type) {}
-    ~CleanupProfiler ()
-    {
-        s_elapsed[m_type].fetch_add(
-            m_timer.elapsed_us(),
-            std::memory_order_acq_rel);
-        s_counts[m_type].fetch_add(1, std::memory_order_acq_rel);
-    }
+    ProgramProfiler ();
+    ~ProgramProfiler ();
 
-    static void init (unsigned long task_count)
-    {
-        s_counts.resize(task_count);
-        s_elapsed.resize(task_count);
-    }
+    static void log_stats (const std::map<const void *, size_t> & linenos);
 
-    static void log_stats ()
+    class Block : noncopyable
     {
-        unsigned long task_count = s_counts.size();
+        Stat & m_stat;
+        Timer m_timer;
 
-        double total_sec = 0;
-        for (unsigned long i = 0; i < task_count; ++i) {
-            double time_sec = s_elapsed[i].load() * 1e-6;
-            total_sec += time_sec;
+    public:
+
+        Block (ProgramProfiler & profiler, const void * program)
+            : m_stat(profiler.m_stats[program])
+        {
         }
 
-        POMAGMA_INFO("Id    Calls Percent Total sec   Per call sec");
-        POMAGMA_INFO("--------------------------------------------");
-        for (unsigned long i = 0; i < task_count; ++i) {
-            size_t count = s_counts[i].load();
-            double time_sec = s_elapsed[i].load() * 1e-6;
-            std::ostringstream percent;
-            percent <<
-                std::setw(6) <<
-                std::right << std::fixed << std::setprecision(2) <<
-                (100 * time_sec / total_sec) << "  ";
-            POMAGMA_INFO(
-                std::setw(6) << i <<
-                std::setw(6) << count <<
-                percent.str() <<
-                std::setw(12) << time_sec <<
-                std::setw(12) << (time_sec / count));
+        ~Block ()
+        {
+            m_stat.count += 1;
+            m_stat.time += m_timer.elapsed_us();
         }
-    }
+    };
+
+private:
+
+    void unsafe_report ();
+    struct LogLine;
+
+    std::unordered_map<const void *, Stat> m_stats;
+
+    static std::mutex s_mutex;
+    static std::unordered_set<ProgramProfiler *> s_instances;
+    static std::unordered_map<const void *, Stat> s_stats;
 };
 
 } // namespace pomagma

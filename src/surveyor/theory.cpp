@@ -25,13 +25,12 @@ void load_programs (const std::string & filename)
     agenda.load(signature);
     vm::Parser parser(signature);
     auto listings = parser.parse_file(filename);
-    for (const auto & listing : listings) {
-        agenda.add_listing(listing);
+    for (const auto & pair : listings) {
+        agenda.add_listing(pair.first, pair.second);
     }
     agenda.optimize_listings();
     agenda.log_stats();
     Cleanup::init(agenda.cleanup_task_count());
-    CleanupProfiler::init(agenda.cleanup_type_count());
 }
 
 static void schedule_merge (Ob dep) { schedule(MergeTask(dep)); }
@@ -121,7 +120,7 @@ void validate_all ()
 
 void log_profile_stats ()
 {
-    CleanupProfiler::log_stats();
+    ProgramProfiler::log_stats(agenda.get_linenos());
 }
 
 void log_stats ()

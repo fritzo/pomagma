@@ -329,8 +329,8 @@ Parser::Parser (Signature & signature)
     declare(SYMMETRIC_FUNCTION, signature.symmetric_functions(), m_constants);
 }
 
-std::vector<std::vector<uint8_t>> Parser::parse_file (
-        const std::string & filename) const
+std::vector<std::pair<Listing, size_t>>
+    Parser::parse_file (const std::string & filename) const
 {
     POMAGMA_INFO("loading programs from " << filename);
     std::ifstream infile(filename, std::ifstream::in | std::ifstream::binary);
@@ -338,15 +338,17 @@ std::vector<std::vector<uint8_t>> Parser::parse_file (
     return parse(infile);
 }
 
-std::vector<std::vector<uint8_t>> Parser::parse (std::istream & infile) const
+std::vector<std::pair<Listing, size_t>>
+    Parser::parse (std::istream & infile) const
 {
-    std::vector<std::vector<uint8_t>> programs;
+    std::vector<std::pair<Listing, size_t>> result;
     std::vector<uint8_t> program;
     SymbolTableStack obs(false);
     SymbolTableStack sets(true);
     std::string line;
     std::string word;
 
+    size_t start_lineno = 0;
     for (int lineno = 1; std::getline(infile, line); ++lineno) {
         if (line.size() and line[0] == '#') {
             continue;
@@ -355,10 +357,13 @@ std::vector<std::vector<uint8_t>> Parser::parse (std::istream & infile) const
             obs.clear(lineno);
             sets.clear(lineno);
             if (not program.empty()) {
-                programs.push_back(program);
+                result.push_back(std::make_pair(program, start_lineno));
                 program.clear();
             }
             continue;
+        }
+        if (program.empty()) {
+            start_lineno = lineno;
         }
 
         std::istringstream stream(line);
@@ -433,10 +438,10 @@ std::vector<std::vector<uint8_t>> Parser::parse (std::istream & infile) const
     }
 
     if (not program.empty()) {
-        programs.push_back(program);
+        result.push_back(std::make_pair(program, start_lineno));
     }
 
-    return programs;
+    return result;
 }
 
 //----------------------------------------------------------------------------
@@ -1320,7 +1325,16 @@ void Agenda::load (Signature & signature)
     register_names(m_names, signature.symmetric_functions());
 }
 
-void Agenda::add_listing (const Listing & listing)
+inline void Agenda::add_listing_to (
+        Listings & listings,
+        const Listing & listing,
+        size_t lineno)
+{
+    listings.push_back(listing);
+    m_linenos[listings.back().data()] = lineno;
+}
+
+void Agenda::add_listing (const Listing & listing, size_t lineno)
 {
     POMAGMA_ASSERT(not listing.empty(), "empty listing");
     OpCode op_code = static_cast<OpCode>(listing[0]);
@@ -1330,45 +1344,45 @@ void Agenda::add_listing (const Listing & listing)
 
     switch (op_code) {
         case GIVEN_EXISTS: {
-            m_exists.push_back(truncated);
+            add_listing_to(m_exists, truncated, lineno);
         } break;
 
         case GIVEN_UNARY_RELATION: {
             auto ptr = m_virtual_machine.unary_relation(listing[1]);
-            m_structures[ptr].push_back(truncated);
+            add_listing_to(m_structures[ptr], truncated, lineno);
         } break;
 
         case GIVEN_BINARY_RELATION: {
             auto ptr = m_virtual_machine.binary_relation(listing[1]);
-            m_structures[ptr].push_back(truncated);
+            add_listing_to(m_structures[ptr], truncated, lineno);
         } break;
 
         case GIVEN_NULLARY_FUNCTION: {
             auto ptr = m_virtual_machine.nullary_function(listing[1]);
-            m_structures[ptr].push_back(truncated);
+            add_listing_to(m_structures[ptr], truncated, lineno);
         } break;
 
         case GIVEN_INJECTIVE_FUNCTION: {
             auto ptr = m_virtual_machine.injective_function(listing[1]);
-            m_structures[ptr].push_back(truncated);
+            add_listing_to(m_structures[ptr], truncated, lineno);
         } break;
 
         case GIVEN_BINARY_FUNCTION: {
             auto ptr = m_virtual_machine.binary_function(listing[1]);
-            m_structures[ptr].push_back(truncated);
+            add_listing_to(m_structures[ptr], truncated, lineno);
         } break;
 
         case GIVEN_SYMMETRIC_FUNCTION: {
             auto ptr = m_virtual_machine.symmetric_function(listing[1]);
-            m_structures[ptr].push_back(truncated);
+            add_listing_to(m_structures[ptr], truncated, lineno);
         } break;
 
         case FOR_BLOCK: {
-            m_cleanup_large.push_back(truncated);
+            add_listing_to(m_cleanup_large, truncated, lineno);
         } break;
 
         default: {
-            m_cleanup_small.push_back(listing);
+            add_listing_to(m_cleanup_small, listing, lineno);
         } break;
     }
 }
@@ -1424,6 +1438,7 @@ void Agenda::optimize_listings ()
 
 void Agenda::sort_listings (Listings & listings)
 {
+    // m_linenos is preserved because std::sort uses move semantics
     std::sort(
         listings.begin(),
         listings.end(),
