@@ -193,9 +193,11 @@ public:
         MergeTask task;
         if (m_queue.try_pop(task)) {
             SharedMutex::UniqueLock lock(g_strict_mutex);
-            execute(task);
-            g_merge_stats.execute();
-            cancel_tasks_referencing(task.dep);
+            do {
+                execute(task);
+                g_merge_stats.execute();
+                cancel_tasks_referencing(task.dep);
+            } while (m_queue.try_pop(task));
             return true;
         } else {
             return false;
