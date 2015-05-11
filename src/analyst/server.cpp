@@ -3,6 +3,7 @@
 #include <pomagma/language/language.hpp>
 #include "messages.pb.h"
 #include <zmq.hpp>
+#include <algorithm>
 
 namespace pomagma
 {
