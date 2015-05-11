@@ -1,9 +1,9 @@
 #include "theory.hpp"
+#include <pomagma/platform/profiler.hpp>
 #include <pomagma/microstructure/sampler.hpp>
 #include <pomagma/microstructure/structure_impl.hpp>
 #include <pomagma/microstructure/scheduler.hpp>
 #include "insert_parser.hpp"
-#include "profiler.hpp"
 #include "vm.hpp"
 
 namespace pomagma

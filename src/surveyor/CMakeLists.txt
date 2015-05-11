@@ -1,7 +1,6 @@
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
 add_library(pomagma_surveyor SHARED
-	profiler.cpp
        	vm.cpp
        	theory.cpp)
 

@@ -4,6 +4,7 @@ add_library(pomagma_platform_sequential SHARED
 	util.cpp
 	aligned_alloc.cpp
 	sequential/dense_set.cpp
+	profiler.cpp
 	hdf5.cpp
 )
 
@@ -11,6 +12,7 @@ add_library(pomagma_platform_concurrent SHARED
 	util.cpp
 	aligned_alloc.cpp
 	concurrent/dense_set.cpp
+	profiler.cpp
 	hdf5.cpp
 )
 

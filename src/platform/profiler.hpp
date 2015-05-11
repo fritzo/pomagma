@@ -1,6 +1,5 @@
 #pragma once
 
-#include <pomagma/microstructure/util.hpp>
 #include <pomagma/platform/threading.hpp>
 #include <atomic>
 #include <thread>

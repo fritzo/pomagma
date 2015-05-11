@@ -3,9 +3,9 @@
 #include <map>
 #include <unordered_map>
 #include <pomagma/platform/aligned_alloc.hpp>
+#include <pomagma/platform/profiler.hpp>
 #include <pomagma/microstructure/util.hpp>
 #include <pomagma/microstructure/structure_impl.hpp>
-#include "profiler.hpp"
 
 namespace pomagma
 {
