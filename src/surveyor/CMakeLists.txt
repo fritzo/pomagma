@@ -1,8 +1,6 @@
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
-add_library(pomagma_surveyor SHARED
-       	vm.cpp
-       	theory.cpp)
+add_library(pomagma_surveyor SHARED theory.cpp)
 
 set(POMAGMA_SURVEYOR_LIBS
 	pomagma_microstructure

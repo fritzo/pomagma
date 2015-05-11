@@ -3,8 +3,8 @@
 #include <pomagma/microstructure/sampler.hpp>
 #include <pomagma/microstructure/structure_impl.hpp>
 #include <pomagma/microstructure/scheduler.hpp>
+#include <pomagma/microstructure/vm.hpp>
 #include "insert_parser.hpp"
-#include "vm.hpp"
 
 namespace pomagma
 {

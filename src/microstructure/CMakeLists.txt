@@ -12,6 +12,7 @@ add_library(pomagma_microstructure SHARED
 	sampler.cpp
 	structure.cpp
 	scheduler.cpp
+	vm.cpp
 )
 set(POMAGMA_MICROSTRUCTURE_LIBS
 	pomagma_microstructure

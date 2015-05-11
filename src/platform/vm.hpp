@@ -1,11 +1,13 @@
 #pragma once
 
+// Assumes the following are included:
+// pomagma/?structure/util.hpp
+// pomagma/?structure/structure_impl.hpp
+
 #include <map>
 #include <unordered_map>
 #include <pomagma/platform/aligned_alloc.hpp>
 #include <pomagma/platform/profiler.hpp>
-#include <pomagma/microstructure/util.hpp>
-#include <pomagma/microstructure/structure_impl.hpp>
 
 namespace pomagma
 {
