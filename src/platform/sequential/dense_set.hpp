@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <pomagma/platform/util.hpp>
 #include <pomagma/platform/sequential/bool_ref.hpp>
 
