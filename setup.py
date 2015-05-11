@@ -38,7 +38,7 @@ config = {
     'author': 'Fritz Obermeyer',
     'maintainer': 'Fritz Obermeyer',
     'maintainer_email': 'fritz.obermeyer@gmail.com',
-    'license': 'MIT',
+    'license': 'Apache 2.0',
     'packages': setuptools.find_packages(exclude='src'),
 }
 

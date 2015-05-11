@@ -45,7 +45,7 @@
     "puddle"
   ],
   "author": "Fritz Obermeyer",
-  "license": "MIT",
+  "license": "Apache 2.0",
   "bugs": {
     "url": "https://github.com/fritzo/pomagma/issues"
   },
