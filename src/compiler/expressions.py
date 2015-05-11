@@ -18,10 +18,10 @@ class Expression(object):
     ]
 
     def __init__(self, name, *args):
-        assert isinstance(name, str)
+        assert isinstance(name, str), name
         assert re_name.match(name), name
         arity = signature.get_arity(name)
-        assert len(args) == signature.get_nargs(arity)
+        assert len(args) == signature.get_nargs(arity), (args, arity)
         for arg in args:
             assert isinstance(arg, Expression), arg
         self._name = name

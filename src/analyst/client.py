@@ -1,5 +1,6 @@
 import sys
 import zmq
+from pomagma.analyst import compiler
 from pomagma.analyst import messages_pb2 as messages
 
 
@@ -83,6 +84,23 @@ class Client(object):
         results = self._simplify(codes)
         assert len(results) == len(codes), results
         return results
+
+    def solve(self, result, constraints, max_solutions=None):
+        assert isinstance(result, basestring), result
+        assert isinstance(constraints, list), constraints
+        for constraint in constraints:
+            assert isinstance(constraint, basestring), constraint
+        solutions = self._solve(result, constraints, max_solutions)
+        if max_solutions is not None:
+            assert len(solutions) < max_solutions
+        return solutions
+
+    def _solve(self, result, constraints, max_solutions):
+        request = Request()
+        program = compiler.compile_solver(result, constraints)
+        request.solve.program = program
+        reply = self._call(request)
+        return list(reply.solve.solutions)
 
     def _validate(self, codes):
         request = Request()

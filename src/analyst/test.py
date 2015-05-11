@@ -1,5 +1,6 @@
 import os
 from itertools import izip
+from nose import SkipTest
 import pomagma.util
 import pomagma.surveyor
 import pomagma.cartographer
@@ -115,6 +116,20 @@ def test_simplify():
     with load() as db:
         actual = db.simplify(codes)
     assert_examples(codes, expected, actual)
+
+
+SOLVE_EXAMPLES = [
+    (('x', ['EQUAL x I']), ['I']),
+]
+
+
+def test_solve():
+    raise SkipTest('TODO get analyst.solve(...) working')
+    args, expected = transpose(SOLVE_EXAMPLES)
+    with load() as db:
+        for arg in args:
+            actual = db.solve(*arg)
+    assert_examples(args, expected, actual)
 
 
 def test_validate():
