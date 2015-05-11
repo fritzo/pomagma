@@ -12,6 +12,7 @@ add_library(pomagma_macrostructure SHARED
 	sampler.cpp
 	structure.cpp
 	scheduler.cpp
+	vm.cpp
 	compact.cpp
 	router.cpp
 )

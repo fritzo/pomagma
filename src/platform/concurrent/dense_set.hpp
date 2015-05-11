@@ -110,7 +110,14 @@ public:
     SetIterator (size_t item_dim, typename Set::init_t words)
         : m_set(item_dim, words)
     {
-        _init();
+        m_quot = 0;
+        --m_quot;
+        _next_block();
+        if (Set::is_monotone) {
+            POMAGMA_ASSERT5(
+                not ok() or m_set.get_bit(m_i),
+                "begin on empty pos: " << m_i);
+        }
     }
 
     void next ();
@@ -119,22 +126,8 @@ public:
 
 private:
 
-    void _init ();
     void _next_block ();
 };
-
-template<class Set>
-void SetIterator<Set>::_init ()
-{
-    m_quot = 0;
-    --m_quot;
-    _next_block();
-    if (Set::is_monotone) {
-        POMAGMA_ASSERT5(
-            not ok() or m_set.get_bit(m_i),
-            "begin on empty pos: " << m_i);
-    }
-}
 
 template<class Set>
 void SetIterator<Set>::_next_block ()
@@ -236,6 +229,7 @@ public:
     size_t item_dim () const { return m_item_dim; }
     size_t word_dim () const { return m_word_dim; }
     size_t data_size_bytes () const { return sizeof(Word) * m_word_dim; }
+    typedef std::atomic<Word> RawData;
     std::atomic<Word> * raw_data () { return m_words; }
     const std::atomic<Word> * raw_data () const { return m_words; }
     void validate () const;

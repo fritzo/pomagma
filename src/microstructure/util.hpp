@@ -3,6 +3,8 @@
 #include <pomagma/platform/util.hpp>
 #include <atomic>
 
+#define POMAGMA_HAS_INVERSE_INDEX (1)
+
 namespace pomagma
 {
 

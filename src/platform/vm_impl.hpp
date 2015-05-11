@@ -537,15 +537,17 @@ static const char * const spaces_256 =
 
 void VirtualMachine::_execute (Program program, Context * context) const
 {
+    OpCode op_code = pop_op_code(program);
+
     if (POMAGMA_TRACE_VM) {
         POMAGMA_ASSERT_LE(context->trace, 256);
         POMAGMA_DEBUG(
             (spaces_256 + 256 - context->trace) <<
-            g_op_code_names[program[0]]);
+            g_op_code_names[op_code]);
         ++context->trace;
     }
 
-    switch (pop_op_code(program)) {
+    switch (op_code) {
 
         case PADDING: {
             POMAGMA_ERROR("executed padding");
@@ -916,6 +918,8 @@ void VirtualMachine::_execute (Program program, Context * context) const
             }
         } break;
 
+    #if POMAGMA_HAS_INVERSE_INDEX
+
         case FOR_BINARY_FUNCTION_VAL: {
             BinaryFunction & fun = pop_binary_function(program);
             Ob & lhs = pop_ob(program, context);
@@ -952,6 +956,8 @@ void VirtualMachine::_execute (Program program, Context * context) const
             }
         } break;
 
+    #endif // POMAGMA_HAS_INVERSE_INDEX
+
         case FOR_BINARY_FUNCTION_LHS_RHS: {
             BinaryFunction & fun = pop_binary_function(program);
             Ob & lhs = pop_ob(program, context);
@@ -974,6 +980,8 @@ void VirtualMachine::_execute (Program program, Context * context) const
                 _execute(program, context);
             }
         } break;
+
+    #if POMAGMA_HAS_INVERSE_INDEX
 
         case FOR_SYMMETRIC_FUNCTION_VAL: {
             SymmetricFunction & fun = pop_symmetric_function(program);
@@ -998,6 +1006,8 @@ void VirtualMachine::_execute (Program program, Context * context) const
                 _execute(program, context);
             }
         } break;
+
+    #endif // POMAGMA_HAS_INVERSE_INDEX
 
         case FOR_SYMMETRIC_FUNCTION_LHS_RHS: {
             SymmetricFunction & fun = pop_symmetric_function(program);
@@ -1292,6 +1302,18 @@ void VirtualMachine::_execute (Program program, Context * context) const
                 fun1.insert(lhs1, rhs1, val);
             }
         } break;
+
+    #if not POMAGMA_HAS_INVERSE_INDEX
+
+        case FOR_BINARY_FUNCTION_VAL:
+        case FOR_BINARY_FUNCTION_LHS_VAL:
+        case FOR_BINARY_FUNCTION_RHS_VAL:
+        case FOR_SYMMETRIC_FUNCTION_VAL:
+        case FOR_SYMMETRIC_FUNCTION_LHS_VAL: {
+            POMAGMA_ERROR(g_op_code_names[op_code] << " is not supported");
+        } break;
+
+    #endif // POMAGMA_HAS_INVERSE_INDEX
     }
 
     if (POMAGMA_TRACE_VM) {

@@ -112,7 +112,7 @@ private:
     struct Context
     {
         Ob obs[256];
-        const std::atomic<Word> * sets[256];
+        const DenseSet::RawData * sets[256];
         size_t block;
         size_t trace;
         ProgramProfiler profiler;
@@ -154,7 +154,7 @@ private:
         return context->obs[pop_arg(program)];
     }
 
-    static const std::atomic<Word> * & pop_set (
+    static const DenseSet::RawData * & pop_set (
             Program & program,
             Context * context)
     {

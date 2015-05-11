@@ -2,6 +2,8 @@
 
 #include <pomagma/platform/util.hpp>
 
+#define POMAGMA_HAS_INVERSE_INDEX (0)
+
 namespace pomagma
 {
 
