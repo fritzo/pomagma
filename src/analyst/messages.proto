@@ -31,14 +31,20 @@ message AnalystRequest {
   message FitLanguage {
     optional Histogram histogram = 1;
   }
+  message Solve {
+    required string program = 1;
+    optional uint64 max_solutions = 2;
+  }
 
-  optional string id = 1;
-  optional TestInference test_inference = 2;
-  optional Simplify simplify = 3;
-  optional Validate validate = 4;
-  optional ValidateCorpus validate_corpus = 5;
-  optional GetHistogram get_histogram = 6;
-  optional FitLanguage fit_language = 7;
+  repeated string error_log = 1;
+  optional string id = 2;
+  optional TestInference test_inference = 3;
+  optional Simplify simplify = 4;
+  optional Validate validate = 5;
+  optional ValidateCorpus validate_corpus = 6;
+  optional GetHistogram get_histogram = 7;
+  optional FitLanguage fit_language = 8;
+  optional Solve solve = 9;
 }
 
 message AnalystResponse {
@@ -75,14 +81,17 @@ message AnalystResponse {
     }
     repeated Symbol symbols = 1;
   }
+  message Solve {
+    repeated string solutions = 1;
+  }
 
-  optional string id = 1;
-  optional TestInference test_inference = 2;
-  optional Simplify simplify = 3;
-  optional Validate validate = 4;
-  optional ValidateCorpus validate_corpus = 5;
-  optional GetHistogram get_histogram = 6;
-  optional FitLanguage fit_language = 7;
-
-  repeated string error_log = 8;
+  repeated string error_log = 1;
+  optional string id = 2;
+  optional TestInference test_inference = 3;
+  optional Simplify simplify = 4;
+  optional Validate validate = 5;
+  optional ValidateCorpus validate_corpus = 6;
+  optional GetHistogram get_histogram = 7;
+  optional FitLanguage fit_language = 8;
+  optional Solve solve = 9;
 }

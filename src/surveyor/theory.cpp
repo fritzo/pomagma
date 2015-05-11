@@ -71,6 +71,7 @@ void load_signature (const std::string & filename)
         std::istringstream stream(line);
         stream >> arity >> name;
 
+        // These are never freed.
         if (arity == "UnaryRelation") {
             if (not signature.unary_relation(name)) {
                 signature.declare(name, * new UnaryRelation(carrier));

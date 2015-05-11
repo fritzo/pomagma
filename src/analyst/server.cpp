@@ -13,14 +13,26 @@ Server::Server (
         size_t thread_count)
     : m_language(load_language(language_file)),
       m_structure(structure_file),
+      m_solution_set(m_structure.carrier()),
       m_approximator(m_structure),
       m_approximate_parser(m_approximator),
       m_probs(),
       m_routes(),
       m_simplifier(m_structure.signature(), m_routes),
       m_corpus(m_structure.signature()),
-      m_validator(m_approximator, thread_count)
+      m_validator(m_approximator, thread_count),
+      m_parser(nullptr),
+      m_virtual_machine()
 {
+    // parser and virtual_machine must be loaded after RETURN is delclared.
+    Signature & signature = m_structure.signature();
+    POMAGMA_ASSERT(
+        not signature.unary_relation("RETURN"),
+        "reserved name RETURN is defined in loaded structure");
+    signature.declare("RETURN", m_solution_set);
+    m_parser = new vm::Parser(signature);
+    m_virtual_machine.load(signature);
+
     if (POMAGMA_DEBUG_LEVEL > 1) {
         m_structure.validate();
     }
@@ -32,6 +44,7 @@ Server::Server (
 
 Server::~Server ()
 {
+    delete m_parser;
     for (const std::string & message : m_error_log) {
         POMAGMA_WARN(message);
     }
@@ -92,6 +105,34 @@ std::vector<std::string> Server::flush_errors ()
     return result;
 }
 
+std::vector<std::string> Server::solve (
+    const std::string & program,
+    size_t max_solutions)
+{
+    std::istringstream infile(program);
+    auto listings = m_parser->parse(infile);
+    POMAGMA_ASSERT_EQ(listings.size(), 1);
+    vm::Listing listing = listings[0].first;
+
+    m_solution_set.clear();
+    m_virtual_machine.execute(listing);
+
+    std::vector<Ob> obs;
+    for (auto iter = m_solution_set.iter(); iter.ok(); iter.next()) {
+        obs.push_back(*iter);
+    }
+    std::sort(obs.begin(), obs.end(), [this](const Ob & x, const Ob & y){
+        return m_probs[x] > m_probs[y];
+    });
+    if (obs.size() > max_solutions) {
+        obs.resize(max_solutions);
+    }
+    std::vector<std::string> solutions;
+    for (auto ob : obs) {
+        solutions.push_back(m_routes[ob]);
+    }
+    return solutions;
+}
 
 namespace
 {
@@ -194,6 +235,24 @@ messaging::AnalystResponse handle (
             auto & symbol = * response_fit_language.add_symbols();
             symbol.set_name(pair.first);
             symbol.set_prob(pair.second);
+        }
+    }
+
+    if (request.has_solve()) {
+        size_t max_solutions = std::numeric_limits<size_t>::max();
+        if (request.solve().has_max_solutions()) {
+            max_solutions = request.solve().max_solutions();
+        }
+        if (max_solutions > 0) {
+            std::vector<std::string> solutions =
+                server.solve(request.solve().program(), max_solutions);
+            auto & response_solve = * response.mutable_solve();
+            for (const auto & solution : solutions) {
+                response_solve.add_solutions(solution);
+            }
+        } else {
+            response.add_error_log(
+                "expected request.solve.max_solutions > 0; actual 0");
         }
     }
 

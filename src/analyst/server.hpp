@@ -3,6 +3,7 @@
 #include "corpus.hpp"
 #include "validator.hpp"
 #include <pomagma/macrostructure/structure.hpp>
+#include <pomagma/macrostructure/vm.hpp>
 
 namespace pomagma
 {
@@ -11,6 +12,7 @@ class Server
 {
     std::unordered_map<std::string, float> m_language;
     Structure m_structure;
+    UnaryRelation m_solution_set;
     Approximator m_approximator;
     ApproximateParser m_approximate_parser;
     std::vector<float> m_probs;
@@ -18,6 +20,8 @@ class Server
     SimplifyParser m_simplifier;
     Corpus m_corpus;
     Validator m_validator;
+    vm::Parser * m_parser;
+    vm::VirtualMachine m_virtual_machine;
     std::vector<std::string> m_error_log;
 
 public:
@@ -36,6 +40,9 @@ public:
     const Corpus::Histogram & get_histogram ();
     std::unordered_map<std::string, float> fit_language (
             const Corpus::Histogram & histogram);
+    std::vector<std::string> solve (
+            const std::string & program,
+            size_t max_solutions);
 
     std::vector<std::string> flush_errors ();
 
