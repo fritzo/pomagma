@@ -8,11 +8,12 @@
 
 Pomagma is an inference engine for
 [extensional untyped &lambda;-calculus](/doc/philosophy.md).
-Pomagma's server provides code analysis services including:
+Pomagma is useful for:
 
-* simplification of code fragments
-* validation of entire codebases
-* search / code completion / program refinement
+* simplifying code fragments expressed in pure &lambda;-join calculus
+* validating entire codebases of &lambda;-terms and inequalities
+* testing and validating systems of inequalities
+* solving systems of inequalities
 
 Pomagma has client libraries in python and node.js, and powers the
 [Puddle](https://github.com/fritzo/puddle) reactive coding environment.
@@ -63,7 +64,7 @@ or the Node.js client
     console.log(db.validate(["I"]));        // prints [{"is_bot": false, "is_top": false}]
     db.close();
 
-## Build an Atlas to power analysis
+## Build an Atlas to power an analysis server
 
 Pomagma reasons about large programs by approximately locating code fragments
 in an **atlas** of 10<sup>3</sup>-10<sup>5</sup> basic programs.
