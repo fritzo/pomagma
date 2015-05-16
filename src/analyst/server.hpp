@@ -17,7 +17,7 @@ class Server
     ApproximateParser m_approximate_parser;
     std::vector<float> m_probs;
     std::vector<std::string> m_routes;
-    SimplifyParser m_simplifier;
+    Simplifier m_simplifier;
     Corpus m_corpus;
     Validator m_validator;
     vm::Parser * m_parser;

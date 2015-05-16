@@ -19,7 +19,7 @@ Server::Server (
       m_approximate_parser(m_approximator),
       m_probs(),
       m_routes(),
-      m_simplifier(m_structure.signature(), m_routes),
+      m_simplifier(m_structure.signature(), m_routes, m_error_log),
       m_corpus(m_structure.signature()),
       m_validator(m_approximator, thread_count),
       m_parser(nullptr),

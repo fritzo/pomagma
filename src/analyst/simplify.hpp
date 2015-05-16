@@ -2,102 +2,70 @@
 
 #include <pomagma/macrostructure/util.hpp>
 #include <pomagma/macrostructure/structure_impl.hpp>
-#include <pomagma/platform/parser.hpp>
 
 namespace pomagma
 {
 
-struct SimplifyTerm
-{
-    Ob ob;
-    std::string route;
-};
-
-class SimplifyReducer : noncopyable
+class Simplifier
 {
 public:
 
-    typedef SimplifyTerm Term;
+    Simplifier (
+            Signature & signature,
+            const std::vector<std::string> & routes,
+            std::vector<std::string> & error_log);
 
-    SimplifyReducer (const std::vector<std::string> & routes)
-        : m_routes(routes)
+    std::string simplify (const std::string & expression);
+
+private:
+
+    struct Term
     {
-    }
+        Ob ob;
+        std::string route;
+    };
 
-    SimplifyTerm reduce (
+    void begin (const std::string & expression);
+    std::string parse_token ();
+    Term parse_term ();
+    void end ();
+
+    Term reduce (
             const std::string & token,
-            const NullaryFunction * fun)
-    {
-        SimplifyTerm val;
-        val.ob = fun->find();
-        val.route = val.ob ? m_routes[val.ob] : token;
-        return val;
-    }
-
-    SimplifyTerm reduce (
+            const NullaryFunction * fun);
+    Term reduce (
             const std::string & token,
             const InjectiveFunction * fun,
-            SimplifyTerm key)
-    {
-        SimplifyTerm val;
-        val.ob = key.ob ? fun->find(key.ob) : 0;
-        val.route = val.ob ? m_routes[val.ob] : token + " " + key.route;
-        return val;
-    }
-
-    SimplifyTerm reduce (
+            const Term & key);
+    Term reduce (
             const std::string & token,
             const BinaryFunction * fun,
-            SimplifyTerm lhs,
-            SimplifyTerm rhs)
-    {
-        SimplifyTerm val;
-        val.ob = lhs.ob and rhs.ob ? fun->find(lhs.ob, rhs.ob) : 0;
-        val.route = val.ob
-                  ? m_routes[val.ob]
-                  : token + " " + lhs.route + " " + rhs.route;
-        return val;
-    }
-
-    SimplifyTerm reduce (
+            const Term & lhs,
+            const Term & rhs);
+    Term reduce (
             const std::string & token,
             const SymmetricFunction * fun,
-            SimplifyTerm lhs,
-            SimplifyTerm rhs)
-    {
-        SimplifyTerm val;
-        val.ob = lhs.ob and rhs.ob ? fun->find(lhs.ob, rhs.ob) : 0;
-        val.route = val.ob
-                  ? m_routes[val.ob]
-                  : token + " " + lhs.route + " " + rhs.route;
-        return val;
-    }
+            const Term & lhs,
+            const Term & rhs);
+    Term reduce (
+            const std::string & token,
+            const UnaryRelation * rel,
+            const Term & key);
+    Term reduce (
+            const std::string & token,
+            const BinaryRelation * rel,
+            const Term & lhs,
+            const Term & rhs);
+    Term reduce_equal (const Term & lhs, const Term & rhs);
 
-private:
+    Term semi_true () { return {0, "I"}; }
+    Term semi_false () { return {0, "BOT"}; }
 
+    Signature & m_signature;
+    const BinaryRelation & m_nless;
     const std::vector<std::string> & m_routes;
-};
-
-class SimplifyParser : public Parser<SimplifyReducer>
-{
-public:
-
-    SimplifyParser (
-            Signature & signature,
-            const std::vector<std::string> & routes)
-        : Parser<SimplifyReducer>(signature, m_reducer),
-          m_reducer(routes)
-    {
-    }
-
-    std::string simplify (const std::string & expression)
-    {
-        return parse(expression).route;
-    }
-
-private:
-
-    SimplifyReducer m_reducer;
+    std::vector<std::string> & m_error_log;
+    std::istringstream m_stream;
 };
 
 } // namespace pomagma
