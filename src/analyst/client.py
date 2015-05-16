@@ -90,15 +90,19 @@ class Client(object):
         assert isinstance(constraints, list), constraints
         for constraint in constraints:
             assert isinstance(constraint, basestring), constraint
+        if max_solutions is not None:
+            assert isinstance(max_solutions, (int, float)), max_solutions
         solutions = self._solve(result, constraints, max_solutions)
         if max_solutions is not None:
-            assert len(solutions) < max_solutions
+            assert len(solutions) <= max_solutions, solutions
         return solutions
 
     def _solve(self, result, constraints, max_solutions):
         request = Request()
         program = compiler.compile_solver(result, constraints)
         request.solve.program = program
+        if max_solutions is not None:
+            request.solve.max_solutions = max_solutions
         reply = self._call(request)
         return list(reply.solve.solutions)
 

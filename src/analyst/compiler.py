@@ -24,8 +24,6 @@ def compile_solver(result, constraints):
     '''
     antecedents = map(parse_string_to_expr, constraints)
     result = parse_string_to_expr(result)
-    for antecedent in antecedents:
-        assert antecedent.is_rel(), antecedent
     assert result.is_term(), result
     succedent = NONEGATE(RETURN(result))
     sequent = Sequent(antecedents, [succedent])

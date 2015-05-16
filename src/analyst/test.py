@@ -119,16 +119,26 @@ def test_simplify():
 
 
 SOLVE_EXAMPLES = [
-    (('x', ['EQUAL x I']), ['I']),
+    (('x', ['LESS x I', 'LESS I x']), ['I']),
+    (('x', ['LESS x I', 'LESS I x'], 999), ['I']),
+    (('APP x K', ['LESS x I', 'LESS I x']), ['K']),
+    (('APP K x', ['LESS x I', 'LESS I x']), ['APP C K']),
+    (('x', ['LESS TOP x']), ['TOP']),
+    (('x', ['FIXES TOP x']), ['TOP']),
+    (('x', ['EQUAL APP x x x'], 4), ['I', 'BOT', 'TOP', 'V']),
+    (('x', ['EQUAL APP x x x', 'NLESS x BOT'], 3), ['I', 'TOP', 'V']),
+    (('x', ['EQUAL APP x TOP APP x BOT', 'NLESS APP K APP x I x']), []),
+    # FIXME these cases fail
+    # (('x', ['EQUAL x I']), ['I']),
+    # (('x', ['NLESS x x']), []),
 ]
 
 
 def test_solve():
-    raise SkipTest('TODO get analyst.solve(...) working')
+    #raise SkipTest('TODO get analyst.solve(...) working')
     args, expected = transpose(SOLVE_EXAMPLES)
     with load() as db:
-        for arg in args:
-            actual = db.solve(*arg)
+        actual = [db.solve(*arg) for arg in args]
     assert_examples(args, expected, actual)
 
 
