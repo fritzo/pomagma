@@ -22,13 +22,13 @@ enum OpCode : uint8_t;
 enum OpArgType : uint8_t;
 
 //----------------------------------------------------------------------------
-// Parser
+// ProgramParser
 
-class Parser
+class ProgramParser
 {
 public:
 
-    Parser (Signature & signature);
+    ProgramParser (Signature & signature);
     std::vector<std::pair<Listing, size_t>> parse (std::istream & infile) const;
     std::vector<std::pair<Listing, size_t>> parse_file (
             const std::string & filename) const;

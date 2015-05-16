@@ -184,9 +184,9 @@ static const size_t g_op_code_count =
     sizeof(g_op_code_names) / sizeof(std::string);
 
 //----------------------------------------------------------------------------
-// Parser
+// ProgramParser
 
-class Parser::SymbolTable
+class ProgramParser::SymbolTable
 {
     std::unordered_map<std::string, uint8_t> m_registers;
     std::unordered_set<std::string> m_loaded;
@@ -228,7 +228,7 @@ public:
     }
 };
 
-class Parser::SymbolTableStack
+class ProgramParser::SymbolTableStack
 {
     std::vector<SymbolTable> m_stack;
     std::vector<size_t> m_jumps;
@@ -312,7 +312,7 @@ static void declare (
     }
 }
 
-Parser::Parser (Signature & signature)
+ProgramParser::ProgramParser (Signature & signature)
 {
     POMAGMA_DEBUG("Op Codes:");
     for (size_t op_code = 0; op_code < g_op_code_count; ++op_code) {
@@ -330,7 +330,7 @@ Parser::Parser (Signature & signature)
 }
 
 std::vector<std::pair<Listing, size_t>>
-    Parser::parse_file (const std::string & filename) const
+    ProgramParser::parse_file (const std::string & filename) const
 {
     POMAGMA_INFO("loading programs from " << filename);
     std::ifstream infile(filename, std::ifstream::in | std::ifstream::binary);
@@ -339,7 +339,7 @@ std::vector<std::pair<Listing, size_t>>
 }
 
 std::vector<std::pair<Listing, size_t>>
-    Parser::parse (std::istream & infile) const
+    ProgramParser::parse (std::istream & infile) const
 {
     std::vector<std::pair<Listing, size_t>> result;
     std::vector<uint8_t> program;

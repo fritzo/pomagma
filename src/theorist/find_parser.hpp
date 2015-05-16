@@ -46,12 +46,12 @@ public:
     }
 };
 
-class FindParser : public Parser<FindReducer>
+class FindParser : public TermParser<FindReducer>
 {
 public:
 
     FindParser (Signature & signature)
-        : Parser(signature, m_reducer)
+        : TermParser(signature, m_reducer)
     {
     }
 

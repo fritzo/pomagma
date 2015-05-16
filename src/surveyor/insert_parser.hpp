@@ -76,12 +76,12 @@ private:
     Carrier & m_carrier;
 };
 
-class InsertParser : public Parser<InsertReducer>
+class InsertParser : public TermParser<InsertReducer>
 {
 public:
 
     InsertParser (Signature & signature)
-        : Parser<InsertReducer>(signature, m_reducer),
+        : TermParser<InsertReducer>(signature, m_reducer),
           m_reducer(* signature.carrier())
     {
     }

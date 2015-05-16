@@ -242,12 +242,12 @@ private:
     Approximator & m_approximator;
 };
 
-class ApproximateParser : public Parser<ApproximateReducer>
+class ApproximateParser : public TermParser<ApproximateReducer>
 {
 public:
 
     ApproximateParser (Approximator & approximator)
-        : Parser<ApproximateReducer>(approximator.signature(), m_reducer),
+        : TermParser<ApproximateReducer>(approximator.signature(), m_reducer),
           m_reducer(approximator)
     {
     }

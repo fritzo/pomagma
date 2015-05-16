@@ -167,7 +167,90 @@ private:
 //----------------------------------------------------------------------------
 // Parser
 
-class Corpus::Parser
+class Corpus::Reducer
+{
+public:
+
+    Reducer (Dag & dag) : m_dag(dag) {}
+
+    typedef const Corpus::Term * Term;
+
+    Term reduce (
+            const std::string & token,
+			const NullaryFunction *)
+    {
+        return m_dag.nullary_function(token);
+    }
+
+    Term reduce (
+            const std::string & token,
+			const InjectiveFunction *,
+			Term key)
+    {
+        return m_dag.injective_function(token, key);
+    }
+
+    Term reduce (
+            const std::string & token,
+			const BinaryFunction *,
+			Term lhs,
+			Term rhs)
+    {
+        return m_dag.binary_function(token, lhs, rhs);
+    }
+
+    Term reduce (
+            const std::string & token,
+			const SymmetricFunction *,
+			Term lhs,
+			Term rhs)
+    {
+        return m_dag.binary_function(token, lhs, rhs);
+    }
+
+    Term reduce (
+            const std::string & token,
+			const UnaryRelation *,
+			Term key)
+    {
+        return m_dag.unary_relation(token, key);
+    }
+
+    Term reduce (
+            const std::string & token,
+			const BinaryRelation *,
+			Term lhs,
+			Term rhs)
+    {
+        return m_dag.binary_relation(token, lhs, rhs);
+    }
+
+    Term reduce_equal (Term lhs, Term rhs)
+    {
+        return m_dag.equal(lhs, rhs);
+    }
+
+    Term reduce_hole ()
+    {
+        return m_dag.hole();
+    }
+
+    Term reduce_var (const std::string & name)
+    {
+        return m_dag.variable(name);
+    }
+
+    Term reduce_error ()
+    {
+        return m_dag.hole();
+    }
+
+private:
+
+    Dag & m_dag;
+};
+
+class Corpus::Parser : public ExprParser<Corpus::Reducer>
 {
 public:
 
@@ -175,100 +258,14 @@ public:
             Signature & signature,
             Corpus::Dag & dag,
             std::vector<std::string> & error_log)
-        : m_signature(signature),
-          m_dag(dag),
-          m_error_log(error_log)
+        : ExprParser<Corpus::Reducer>(signature, m_reducer, error_log),
+          m_reducer(dag)
     {
-    }
-
-    const Term * parse (const std::string & expression)
-    {
-        begin(expression);
-        const Term * result = parse_term();
-        end();
-        return result;
     }
 
 private:
 
-#   define POMAGMA_PARSER_WARN(ARG_message)\
-    {\
-        std::ostringstream message;\
-        message << ARG_message;\
-        m_error_log.push_back(message.str());\
-        POMAGMA_WARN(message.str());\
-    }
-
-    void begin (const std::string & expression)
-    {
-        m_stream.str(expression);
-        m_stream.clear();
-    }
-
-    std::string parse_token ()
-    {
-        std::string token;
-        if (not std::getline(m_stream, token, ' ')) {
-            POMAGMA_PARSER_WARN(
-                "expression terminated prematurely: " << m_stream.str());
-        }
-        return token;
-    }
-
-    const Term * parse_term ()
-    {
-        std::string token = parse_token();
-        if (m_signature.nullary_function(token)) {
-            return m_dag.nullary_function(token);
-        } else if (m_signature.injective_function(token)) {
-            const Term * key = parse_term();
-            return m_dag.injective_function(token, key);
-        } else if (m_signature.binary_function(token)) {
-            const Term * lhs = parse_term();
-            const Term * rhs = parse_term();
-            return m_dag.binary_function(token, lhs, rhs);
-        } else if (m_signature.symmetric_function(token)) {
-            const Term * lhs = parse_term();
-            const Term * rhs = parse_term();
-            return m_dag.symmetric_function(token, lhs, rhs);
-        } else if (m_signature.unary_relation(token)) {
-            const Term * arg = parse_term();
-            return m_dag.unary_relation(token, arg);
-        } else if (m_signature.binary_relation(token)) {
-            const Term * lhs = parse_term();
-            const Term * rhs = parse_term();
-            return m_dag.binary_relation(token, lhs, rhs);
-        } else if (token == "EQUAL") {
-            const Term * lhs = parse_term();
-            const Term * rhs = parse_term();
-            return m_dag.equal(lhs, rhs);
-        } else if (token == "HOLE") {
-            return m_dag.hole();
-        } else if (token == "VAR") {
-            std::string name = parse_token();
-            return m_dag.variable(name);
-        } else {
-            POMAGMA_PARSER_WARN(
-                "unrecognized token '" << token << "' in: " << m_stream.str());
-            return m_dag.hole();
-        }
-    }
-
-    void end ()
-    {
-        std::string token;
-        if (std::getline(m_stream, token, ' ')) {
-            POMAGMA_PARSER_WARN(
-                "unexpected token '" << token << "' in: " << m_stream.str());
-        }
-    }
-
-#   undef POMAGMA_PARSER_WARN
-
-    Signature & m_signature;
-    Dag & m_dag;
-    std::vector<std::string> & m_error_log;
-    std::istringstream m_stream;
+    Reducer m_reducer;
 };
 
 //----------------------------------------------------------------------------

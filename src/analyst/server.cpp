@@ -31,7 +31,7 @@ Server::Server (
         not signature.unary_relation("RETURN"),
         "reserved name RETURN is defined in loaded structure");
     signature.declare("RETURN", m_solution_set);
-    m_parser = new vm::Parser(signature);
+    m_parser = new vm::ProgramParser(signature);
     m_virtual_machine.load(signature);
 
     if (POMAGMA_DEBUG_LEVEL > 1) {

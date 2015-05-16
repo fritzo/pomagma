@@ -73,12 +73,12 @@ private:
     const size_t m_capacity;
 };
 
-class CollectParser : public Parser<CollectReducer>
+class CollectParser : public TermParser<CollectReducer>
 {
 public:
 
     CollectParser (Signature & signature, DenseSet & set, size_t capacity)
-        : Parser<CollectReducer>(signature, m_reducer),
+        : TermParser<CollectReducer>(signature, m_reducer),
           m_reducer(set, capacity)
     {
     }

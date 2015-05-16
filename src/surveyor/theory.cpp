@@ -23,7 +23,7 @@ void load_language (const std::string & filename) { sampler.load(filename); }
 void load_programs (const std::string & filename)
 {
     agenda.load(signature);
-    vm::Parser parser(signature);
+    vm::ProgramParser parser(signature);
     auto listings = parser.parse_file(filename);
     for (const auto & pair : listings) {
         agenda.add_listing(pair.first, pair.second);

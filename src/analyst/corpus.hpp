@@ -11,6 +11,7 @@ namespace pomagma
 class Corpus
 {
     class Dag;
+    class Reducer;
     class Parser;
 
 public:
