@@ -1,11 +1,18 @@
 from pomagma.compiler.expressions import Expression_1
+from pomagma.compiler.frontend import write_full_programs
 from pomagma.compiler.parser import parse_string_to_expr
 from pomagma.compiler.sequents import Sequent
+from pomagma.compiler.sugar import desugar_expr
 from pomagma.compiler.sugar import desugar_sequent
-from pomagma.compiler.frontend import write_full_programs
 
 RETURN = Expression_1('RETURN')
 NONEGATE = Expression_1('NONEGATE')
+
+
+def desugar(string):
+    expr = parse_string_to_expr(string)
+    expr = desugar_expr(expr)
+    return str(expr)
 
 
 def compile_solver(result, constraints):

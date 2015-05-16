@@ -73,7 +73,7 @@ class Client(object):
         request = Request()
         request.simplify.SetInParent()
         for code in codes:
-            request.simplify.codes.append(code)
+            request.simplify.codes.append(compiler.desugar(code))
         reply = self._call(request)
         return list(reply.simplify.codes)
 
@@ -84,6 +84,15 @@ class Client(object):
         results = self._simplify(codes)
         assert len(results) == len(codes), results
         return results
+
+    def _solve(self, result, constraints, max_solutions):
+        request = Request()
+        program = compiler.compile_solver(result, constraints)
+        request.solve.program = program
+        if max_solutions is not None:
+            request.solve.max_solutions = max_solutions
+        reply = self._call(request)
+        return map(str, reply.solve.solutions)
 
     def solve(self, result, constraints, max_solutions=None):
         assert isinstance(result, basestring), result
@@ -96,15 +105,6 @@ class Client(object):
         if max_solutions is not None:
             assert len(solutions) <= max_solutions, solutions
         return solutions
-
-    def _solve(self, result, constraints, max_solutions):
-        request = Request()
-        program = compiler.compile_solver(result, constraints)
-        request.solve.program = program
-        if max_solutions is not None:
-            request.solve.max_solutions = max_solutions
-        reply = self._call(request)
-        return list(reply.solve.solutions)
 
     def _validate(self, codes):
         request = Request()
