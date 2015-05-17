@@ -1,17 +1,37 @@
+from pomagma.compiler.expressions import Expression
 from pomagma.compiler.expressions import Expression_1
 from pomagma.compiler.frontend import write_full_programs
 from pomagma.compiler.parser import parse_string_to_expr
 from pomagma.compiler.sequents import Sequent
 from pomagma.compiler.sugar import desugar_expr
 from pomagma.compiler.sugar import desugar_sequent
+from pomagma.compiler.util import memoize_arg
 
+VAR = Expression_1('VAR')
 RETURN = Expression_1('RETURN')
 NONEGATE = Expression_1('NONEGATE')
+
+
+@memoize_arg
+def guard_vars(expr):
+    '''
+    Whereas pomagma.compiler follows the variable naming convention defined in
+    pomagma.compiler.signature.is_var(), pomagma.analyst.validate
+    and the puddle editor require VAR guarded variables.
+    '''
+    if expr.name == 'VAR':
+        return expr
+    elif expr.is_var():
+        return VAR(expr)
+    else:
+        args = map(guard_vars, expr.args)
+        return Expression.make(expr.name, *args)
 
 
 def desugar(string):
     expr = parse_string_to_expr(string)
     expr = desugar_expr(expr)
+    expr = guard_vars(expr)
     return str(expr)
 
 

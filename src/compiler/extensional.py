@@ -53,6 +53,8 @@ def abstract_symmetric(self, var, atom, operation):
 def abstract(self, var):
     assert isinstance(var, Expression)
     assert var.is_var()
+    if self.name == 'VAR':
+        self = self.args[0]
     if self.is_var():
         if self == var:
             return I

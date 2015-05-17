@@ -31,6 +31,7 @@ ARITY_TABLE = {
     'COMP': 'BinaryFunction',
     'JOIN': 'SymmetricFunction',
     'RAND': 'SymmetricFunction',
+    'VAR': 'UnaryMeta',
     'UNKNOWN': 'UnaryMeta',
     'OPTIONALLY': 'UnaryMeta',
     'NONEGATE': 'UnaryMeta',

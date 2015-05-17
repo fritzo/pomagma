@@ -1,26 +1,15 @@
 [
-    [
-        "TOP",
-        "TOP"
-    ],
-    [
-        "BOT",
-        "BOT"
-    ],
-    [
-        "I",
-        "I"
-    ],
-    [
-        "APP I I",
-        "I"
-    ],
-    [
-        "COMP I I",
-        "I"
-    ],
-    [
-        "JOIN BOT TOP",
-        "TOP"
-    ]
+    ["TOP", "TOP"],
+    ["BOT", "BOT"],
+    ["I", "I"],
+    ["APP I I", "I"],
+    ["COMP I I", "I"],
+    ["JOIN BOT TOP", "TOP"],
+    ["LESS BOT TOP", "I"],
+    ["LESS TOP BOT", "BOT"],
+    ["NLESS TOP BOT", "I"],
+    ["EQUAL APP I I I", "I"],
+    ["EQUAL K I", "BOT"],
+    ["HOLE", "HOLE"],
+    ["VAR x", "VAR x"]
 ]

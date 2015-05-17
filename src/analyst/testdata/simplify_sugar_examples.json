@@ -1,0 +1,7 @@
+[
+    ["EQUAL FUN x x I", "I"],
+    ["FIX x APP f x", "APP Y VAR f"],
+    ["EQUAL FIX x APP f x APP Y f", "I"],
+    ["FIXES I J", "I"],
+    ["FIXES BOT I", "BOT"]
+]

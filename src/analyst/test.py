@@ -1,6 +1,5 @@
 import os
 from itertools import izip
-from nose import SkipTest
 import pomagma.util
 import pomagma.surveyor
 import pomagma.cartographer
@@ -30,6 +29,7 @@ def json_load(filename):
 
 
 SIMPLIFY_EXAMPLES = json_load('testdata/simplify_examples.json')
+SIMPLIFY_EXAMPLES += json_load('testdata/simplify_sugar_examples.json')
 VALIDATE_EXAMPLES = json_load('testdata/validate_examples.json')
 CORPUS = json_load('testdata/corpus.json')
 
@@ -88,6 +88,7 @@ def assert_examples(examples, expected, actual, cmp=cmp):
     assert len(expected) == len(examples)
     assert len(actual) == len(examples)
     for example, e, a in izip(examples, expected, actual):
+        print '{} : {}'.format(example, e)
         if e != a:
             print 'WARNING {}\n  expected: {}\n  actual: {}'.format(
                 example, e, a)
@@ -135,7 +136,6 @@ SOLVE_EXAMPLES = [
 
 
 def test_solve():
-    #raise SkipTest('TODO get analyst.solve(...) working')
     args, expected = transpose(SOLVE_EXAMPLES)
     with load() as db:
         actual = [db.solve(*arg) for arg in args]
