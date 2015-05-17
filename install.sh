@@ -3,7 +3,8 @@
 sudo add-apt-repository -y ppa:chris-lea/node.js
 sudo apt-get update
 sudo apt-get install -y \
-  cmake make g++ gdb ctags \
+  cmake make g++ gdb \
+  ctags cscope \
   libtbb-dev \
   libprotobuf-dev \
   protobuf-compiler \

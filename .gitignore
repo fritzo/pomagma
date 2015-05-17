@@ -16,6 +16,7 @@
 *.pstats
 temp.*
 /src/tags
+/src/cscope.*
 /src/theory/*.symbols
 /src/theory/*.facts
 /src/theory/*.programs

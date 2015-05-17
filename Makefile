@@ -12,6 +12,7 @@ protobuf: FORCE
 
 tags: protobuf FORCE
 	cd src ; ctags -R
+	cd src ; cscope -bcqR
 
 python: protobuf FORCE
 	pyflakes $(PY_FILES)
