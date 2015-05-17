@@ -3,7 +3,7 @@
 sudo add-apt-repository -y ppa:chris-lea/node.js
 sudo apt-get update
 sudo apt-get install -y \
-  cmake make g++ \
+  cmake make g++ gdb ctags \
   libtbb-dev \
   libprotobuf-dev \
   protobuf-compiler \
@@ -15,7 +15,6 @@ sudo apt-get install -y \
   virtualenvwrapper \
   python-tables \
   graphviz \
-  gdb \
   p7zip-full \
   nodejs \
   #

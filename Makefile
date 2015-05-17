@@ -3,12 +3,15 @@ PY_FILES:=*.py $(find src | grep '.py$$' | grep -v '_pb2.py')
 
 all: bootstrap fixture FORCE
 	$(MAKE) python
-	$(MAKE) codegen tasks debug release
+	$(MAKE) tags codegen tasks debug release
 
 protobuf: FORCE
 	$(MAKE) -C src/language
 	$(MAKE) -C src/cartographer
 	$(MAKE) -C src/analyst
+
+tags: protobuf FORCE
+	cd src ; ctags -R
 
 python: protobuf FORCE
 	pyflakes $(PY_FILES)
