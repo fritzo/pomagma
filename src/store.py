@@ -187,22 +187,26 @@ if __name__ == '__main__':
     @parsable.command
     def ls(prefix=''):
         '''List matching files on S3.'''
+        assert BUCKET
         for filename in listdir(prefix):
             print filename
 
     @parsable.command
     def pull(*filenames):
         '''Pull files from S3 into local cache.'''
+        assert BUCKET
         parallel_map(get, filter_cache(filenames))
 
     @parsable.command
     def push(*filenames):
         '''Push files to S3 from local cache.'''
+        assert BUCKET
         parallel_map(put, filter_cache(filenames))
 
     @parsable.command
     def rm(*filenames):
         '''Remove files from S3 and local cache.'''
+        assert BUCKET
         parallel_map(remove, filter_cache(filenames))
 
     parsable.dispatch()
