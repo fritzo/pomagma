@@ -168,7 +168,7 @@ private:
         } else {
             POMAGMA_PARSER_WARN(
                 "unrecognized token '" << token << "' in:" << m_stream.str());
-            return m_reducer.reduce_error();
+            return m_reducer.reduce_error(token);
         }
     }
 

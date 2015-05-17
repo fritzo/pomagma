@@ -240,7 +240,7 @@ public:
         return m_dag.variable(name);
     }
 
-    Term reduce_error ()
+    Term reduce_error (const std::string &)
     {
         return m_dag.hole();
     }
