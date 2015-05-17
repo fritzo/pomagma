@@ -3,9 +3,8 @@ import zmq
 from pomagma.analyst import compiler
 from pomagma.analyst import messages_pb2 as messages
 
-
 CONTEXT = zmq.Context()
-
+POLL_TIMEOUT_MS = 1000
 Request = messages.AnalystRequest
 Response = messages.AnalystResponse
 
@@ -32,8 +31,10 @@ class ServerError(Exception):
 
 class Client(object):
 
-    def __init__(self, address):
+    def __init__(self, address, poll_callback=None):
         assert isinstance(address, basestring), address
+        assert poll_callback is None or callable(poll_callback), poll_callback
+        self._poll_callback = poll_callback
         self._socket = CONTEXT.socket(zmq.REQ)
         print 'connecting to analyst at', address
         self._socket.connect(address)
@@ -41,6 +42,9 @@ class Client(object):
     def _call(self, request):
         raw_request = request.SerializeToString()
         self._socket.send(raw_request, 0)
+        if self._poll_callback is not None:
+            while not self._socket.poll(timeout=POLL_TIMEOUT_MS):
+                self._poll_callback()
         raw_reply = self._socket.recv(0)
         reply = Response()
         reply.ParseFromString(raw_reply)

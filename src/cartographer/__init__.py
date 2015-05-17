@@ -1,10 +1,7 @@
 import contextlib
 import pomagma.util
-from pomagma.cartographer import client
 from pomagma.cartographer import server
 
-
-connect = client.Client
 serve = server.Server
 
 

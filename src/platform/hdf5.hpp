@@ -590,6 +590,8 @@ struct Dataset : noncopyable
         hid_t destin_type = type();
         if (H5Tget_size(source_type) > H5Tget_size(destin_type)) {
             size_t max_value = safe_max_element(source.begin(), source.end());
+            // FIXME this sometimes fails
+            // see https://github.com/fritzo/pomagma/issues/24
             POMAGMA_ASSERT_LE(max_value, max_value_of_type(destin_type));
         }
 

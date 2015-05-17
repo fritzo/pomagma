@@ -13,7 +13,6 @@ from pomagma import linguist
 from pomagma import surveyor
 from pomagma import theorist
 
-
 THEORY = os.environ.get('POMAGMA_THEORY', 'skrj')
 
 
@@ -283,8 +282,6 @@ def analyze(theory=THEORY, size=None, address=analyst.ADDRESS, **options):
     Options: log_level, log_file
     '''
     with atlas.chdir(theory):
-        print 'DEBUG', theory
-        print 'DEBUG', os.getcwd()
         options.setdefault('log_file', 'analyst.log')
         if size is None:
             world = 'world.normal.h5'
