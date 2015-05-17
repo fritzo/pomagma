@@ -44,26 +44,40 @@ inline std::string get_error ()
 // Datatypes
 // http://www.hdfgroup.org/HDF5/doc/UG/11_Datatypes.html
 
+inline bool type_equal (const hid_t & lhs, const hid_t & rhs)
+{
+    auto result = H5Tequal(lhs, rhs);
+    POMAGMA_HDF5_OK(result);
+    return result;
+}
+
+inline size_t type_size (const hid_t & type)
+{
+    size_t result = H5Tget_size(type);
+    POMAGMA_ASSERT(result > 0, get_error());
+    return result;
+}
+
 template<class T>struct Unsigned;
 
 template<> struct Unsigned<uint8_t>
 {
-    static hid_t id () { return H5T_NATIVE_UCHAR; }
+    static hid_t id () { return H5T_NATIVE_UINT8; }
 };
 
 template<> struct Unsigned<uint16_t>
 {
-    static hid_t id () { return H5T_NATIVE_USHORT; }
+    static hid_t id () { return H5T_NATIVE_UINT16; }
 };
 
 template<> struct Unsigned<uint32_t>
 {
-    static hid_t id () { return H5T_NATIVE_UINT; }
+    static hid_t id () { return H5T_NATIVE_UINT32; }
 };
 
 template<> struct Unsigned<uint64_t>
 {
-    static hid_t id () { return H5T_NATIVE_ULONG; }
+    static hid_t id () { return H5T_NATIVE_UINT64; }
 };
 
 template<class T>struct Bitfield;
@@ -91,28 +105,30 @@ template<> struct Bitfield<uint64_t>
 inline hid_t unsigned_type_wide_enough_for (size_t max_value)
 {
     if (max_value <= std::numeric_limits<uint8_t>::max()) {
-        return H5T_NATIVE_UCHAR;
-    } else if (max_value <= std::numeric_limits<uint16_t>::max()) {
-        return H5T_NATIVE_USHORT;
-    } else if (max_value <= std::numeric_limits<uint32_t>::max()) {
-        return H5T_NATIVE_UINT;
+        return H5T_NATIVE_UINT8;
+    } else
+    if (max_value <= std::numeric_limits<uint16_t>::max()) {
+        return H5T_NATIVE_UINT16;
+    } else
+    if (max_value <= std::numeric_limits<uint32_t>::max()) {
+        return H5T_NATIVE_UINT32;
     } else {
-        return H5T_NATIVE_ULONG;
+        return H5T_NATIVE_UINT64;
     }
 }
 
 inline size_t max_value_of_type (hid_t type)
 {
-    if (H5Tequal(type, H5T_NATIVE_UCHAR)) {
+    if (type_equal(type, H5T_NATIVE_UINT8)) {
         return std::numeric_limits<uint8_t>::max();
     } else
-    if (H5Tequal(type, H5T_NATIVE_USHORT)) {
+    if (type_equal(type, H5T_NATIVE_UINT16)) {
         return std::numeric_limits<uint16_t>::max();
     } else
-    if (H5Tequal(type, H5T_NATIVE_UINT)) {
+    if (type_equal(type, H5T_NATIVE_UINT32)) {
         return std::numeric_limits<uint32_t>::max();
     } else
-    if (H5Tequal(type, H5T_NATIVE_ULONG)) {
+    if (type_equal(type, H5T_NATIVE_UINT64)) {
         return std::numeric_limits<uint64_t>::max();
     } else {
         POMAGMA_ERROR("unknown type");
@@ -354,7 +370,7 @@ struct Attribute : noncopyable
             ))
     {
         POMAGMA_ASSERT(id >= 0,
-                "failed to open attribute " << name << "\n" << get_error());
+            "failed to open attribute " << name << "\n" << get_error());
     }
 
     template<class Object>
@@ -373,9 +389,9 @@ struct Attribute : noncopyable
                 ))
     {
         POMAGMA_ASSERT(id >= 0,
-                "failed to create attribute " << name << "\n" << get_error());
-        POMAGMA_ASSERT(H5Tequal(type(), type_id),
-                "created attribute with wrong type");
+            "failed to create attribute " << name << "\n" << get_error());
+        POMAGMA_ASSERT(type_equal(type(), type_id),
+            "created attribute with wrong type");
     }
 
     ~Attribute ()
@@ -392,7 +408,7 @@ struct Attribute : noncopyable
     {
         hid_t source_type = Unsigned<T>::id();
         hid_t destin_type = type();
-        POMAGMA_ASSERT_EQ(H5Tget_size(source_type), H5Tget_size(destin_type));
+        POMAGMA_ASSERT_EQ(type_size(source_type), type_size(destin_type));
         POMAGMA_ASSERT_EQ(volume(), source.size());
 
         POMAGMA_HDF5_OK(H5Awrite(id, destin_type, & source[0]));
@@ -403,7 +419,7 @@ struct Attribute : noncopyable
     {
         hid_t source_type = type();
         hid_t destin_type = Unsigned<T>::id();
-        POMAGMA_ASSERT_EQ(H5Tget_size(source_type), H5Tget_size(destin_type));
+        POMAGMA_ASSERT_EQ(type_size(source_type), type_size(destin_type));
         destin.resize(volume());
 
         POMAGMA_HDF5_OK(H5Aread(id, source_type, & destin[0]));
@@ -431,7 +447,7 @@ struct Dataset : noncopyable
             H5P_DEFAULT))
     {
         POMAGMA_ASSERT(id >= 0,
-                "failed to open dataset " << name << "\n" << get_error());
+            "failed to open dataset " << name << "\n" << get_error());
     }
 
     template<class Object>
@@ -450,9 +466,9 @@ struct Dataset : noncopyable
                 H5P_DEFAULT))
     {
         POMAGMA_ASSERT(id >= 0,
-                "failed to create dataset " << name << "\n" << get_error());
-        POMAGMA_ASSERT(H5Tequal(type(), type_id),
-                "created dataset with wrong type");
+            "failed to create dataset " << name << "\n" << get_error());
+        POMAGMA_ASSERT(type_equal(type(), type_id),
+            "created dataset with wrong type");
     }
 
     ~Dataset ()
@@ -469,7 +485,7 @@ struct Dataset : noncopyable
     {
         hid_t source_type = Unsigned<T>::id();
         hid_t destin_type = type();
-        if (H5Tget_size(source_type) > H5Tget_size(destin_type)) {
+        if (type_size(source_type) > type_size(destin_type)) {
             POMAGMA_ASSERT_LE(source, max_value_of_type(destin_type));
         }
 
@@ -489,7 +505,7 @@ struct Dataset : noncopyable
     {
         hid_t source_type = type();
         hid_t destin_type = Unsigned<T>::id();
-        POMAGMA_ASSERT_LE(H5Tget_size(source_type), H5Tget_size(destin_type));
+        POMAGMA_ASSERT_LE(type_size(source_type), type_size(destin_type));
 
         POMAGMA_ASSERT_EQ(rank(), 0);
 
@@ -508,7 +524,7 @@ struct Dataset : noncopyable
         if (not source.empty()) {
             hid_t source_type = Unsigned<T>::id();
             hid_t destin_type = type();
-            if (H5Tget_size(source_type) > H5Tget_size(destin_type)) {
+            if (type_size(source_type) > type_size(destin_type)) {
                 size_t max_value = safe_max_element(
                     source.begin(),
                     source.end());
@@ -532,7 +548,7 @@ struct Dataset : noncopyable
     {
         hid_t source_type = type();
         hid_t destin_type = Unsigned<T>::id();
-        POMAGMA_ASSERT_LE(H5Tget_size(source_type), H5Tget_size(destin_type));
+        POMAGMA_ASSERT_LE(type_size(source_type), type_size(destin_type));
 
         destin.resize(volume());
 
@@ -552,7 +568,8 @@ struct Dataset : noncopyable
     {
         hid_t source_type = Bitfield<Word>::id();
         hid_t destin_type = type();
-        POMAGMA_ASSERT(H5Tequal(source_type, destin_type), "datatype mismatch");
+        POMAGMA_ASSERT(type_equal(source_type, destin_type),
+            "datatype mismatch");
 
         POMAGMA_ASSERT_EQ(volume(), source.word_dim());
 
@@ -570,7 +587,8 @@ struct Dataset : noncopyable
     {
         hid_t source_type = type();
         hid_t destin_type = Bitfield<Word>::id();
-        POMAGMA_ASSERT(H5Tequal(source_type, destin_type), "datatype mismatch");
+        POMAGMA_ASSERT(type_equal(source_type, destin_type),
+            "datatype mismatch");
 
         POMAGMA_ASSERT_LE(volume(), destin.word_dim());
 
@@ -588,7 +606,7 @@ struct Dataset : noncopyable
     {
         hid_t source_type = Unsigned<T>::id();
         hid_t destin_type = type();
-        if (H5Tget_size(source_type) > H5Tget_size(destin_type)) {
+        if (type_size(source_type) > type_size(destin_type)) {
             size_t max_value = safe_max_element(source.begin(), source.end());
             // FIXME this sometimes fails
             // see https://github.com/fritzo/pomagma/issues/24
@@ -613,7 +631,7 @@ struct Dataset : noncopyable
     {
         hid_t source_type = type();
         hid_t destin_type = Unsigned<T>::id();
-        POMAGMA_ASSERT_LE(H5Tget_size(source_type), H5Tget_size(destin_type));
+        POMAGMA_ASSERT_LE(type_size(source_type), type_size(destin_type));
 
         Dataspace destin_dataspace(destin.size());
         Dataspace source_dataspace(* this);
@@ -637,7 +655,8 @@ struct Dataset : noncopyable
         static_assert(sizeof(atomic_Word) == sizeof(Word), "bad word type");
         hid_t source_type = Bitfield<Word>::id();
         hid_t destin_type = type();
-        POMAGMA_ASSERT(H5Tequal(source_type, destin_type), "datatype mismatch");
+        POMAGMA_ASSERT(type_equal(source_type, destin_type),
+            "datatype mismatch");
 
         Dataspace destin_dataspace(* this);
         auto shape = destin_dataspace.shape();
@@ -666,7 +685,8 @@ struct Dataset : noncopyable
         static_assert(sizeof(atomic_Word) == sizeof(Word), "bad word type");
         hid_t source_type = type();
         hid_t destin_type = Bitfield<Word>::id();
-        POMAGMA_ASSERT(H5Tequal(source_type, destin_type), "datatype mismatch");
+        POMAGMA_ASSERT(type_equal(source_type, destin_type),
+            "datatype mismatch");
 
         Dataspace source_dataspace(* this);
         auto shape = source_dataspace.shape();
