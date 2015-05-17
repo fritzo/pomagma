@@ -66,7 +66,7 @@ def test_ping():
             print 'pinging server'
             client.ping()
     finally:
-        print 'stoping server'
+        print 'stopping server'
         server.stop()
 
 

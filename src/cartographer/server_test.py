@@ -23,5 +23,5 @@ def test_ping():
     for _ in xrange(10):
         print 'pinging server'
         client.ping()
-    print 'stoping server'
+    print 'stopping server'
     server.stop()
