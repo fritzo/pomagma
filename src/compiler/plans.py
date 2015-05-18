@@ -66,7 +66,7 @@ class Iter(Plan):
 
     def __init__(self, var, body):
         Plan.__init__(self, var, body)
-        assert var.is_var(),  var
+        assert var.is_var(), var
         assert isinstance(body, Plan), body
         self._repr = None
         self.var = var

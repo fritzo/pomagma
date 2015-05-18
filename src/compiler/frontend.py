@@ -447,7 +447,7 @@ def write_event_programs(programs, sequents):
                             cost),
                         '# using {}'.format(sequent),
                         '# infer {}'.format(seq),
-                        ]
+                    ]
                     programs += header
                     plan.program(programs)
                     plan_id += 1

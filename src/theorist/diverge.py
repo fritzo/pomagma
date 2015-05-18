@@ -329,7 +329,10 @@ def count_terms(max_count=8):
     '''
     atom_counts = range(1, 1 + max_count)
     max_counts = range(1, 1 + max_count)
-    count = lambda a, m: sum(1 for term in iter_terms(range(a), m))
+
+    def count(a, m):
+        return sum(1 for term in iter_terms(range(a), m))
+
     print '\t' * (max_count / 2) + '|atoms|'
     print '\t'.join(['|term|'] + [str(a) for a in atom_counts])
     print '-' * 8 * (1 + max_count)

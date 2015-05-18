@@ -8,8 +8,13 @@ def save(name, data):
         json.dump(data, f, indent=4, sort_keys=True)
 
 
-DEFINE = lambda name, code: {'name': name, 'code': code}
-ASSERT = lambda code: {'name': None, 'code': code}
+def DEFINE(name, code):
+    return {'name': name, 'code': code}
+
+
+def ASSERT(code):
+    return {'name': None, 'code': code}
+
 
 TOP = {'is_top': True, 'is_bot': False}
 BOT = {'is_top': False, 'is_bot': True}

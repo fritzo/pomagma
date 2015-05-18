@@ -16,7 +16,9 @@ def assert_converts(expected):
     actual = language_to_dict(language)
     assert_set_equal(set(expected.keys()), set(actual.keys()))
     for arity in expected.keys():
-        assert_set_equal(set(expected[arity].keys()), set(actual[arity].keys()))
+        assert_set_equal(
+            set(expected[arity].keys()),
+            set(actual[arity].keys()))
         for term, weight in expected[arity].iteritems():
             assert_almost_equal(weight, actual[arity][term])
 

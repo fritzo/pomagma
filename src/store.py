@@ -14,6 +14,8 @@ import boto
 import parsable
 import pomagma.util
 
+parsable = parsable.Parsable()
+
 
 def try_connect_s3(bucket):
     if pomagma.util.TRAVIS_CI:
@@ -169,94 +171,102 @@ def remove(filename):
     s3_remove(filename_ext)
 
 
+def parallel_map(fun, args):
+    if len(args) <= 1:
+        return map(fun, args)
+    else:
+        return multiprocessing.Pool().map(fun, args)
+
+
+def filter_cache(filenames):
+    return [
+        f
+        for f in filenames
+        if f[-len(EXT):] != EXT
+        if not os.path.exists(f) or os.path.isfile(f)
+    ]
+
+
+def find(path):
+    blacklist = re.compile('(test|core|temp|mutex|queue|socket|7z)')
+    return filter(os.path.isfile, [
+        os.path.abspath(os.path.join(root, filename))
+        for root, dirnames, filenames in os.walk(path)
+        if not blacklist.search(root)
+        for filename in filenames
+        if not blacklist.search(filename)
+    ])
+
+
+@parsable.command
+def find_s3(prefix=''):
+    '''
+    Find copyable files on S3.
+    '''
+    assert BUCKET
+    for filename in listdir(prefix):
+        print filename
+
+
+@parsable.command
+def find_local(path='.'):
+    '''
+    Find copyable files on local filesystem.
+    '''
+    for filename in find(path):
+        print filename
+
+
+@parsable.command
+def snapshot(source, destin):
+    '''
+    Create resursive snapshot of hard links for push/pull.
+    '''
+    assert os.path.isdir(source)
+    assert destin != source
+    source = os.path.abspath(source)
+    destin = os.path.abspath(destin)
+    for source_file in find(source):
+        relpath = os.path.relpath(source_file, source)
+        destin_file = os.path.join(destin, relpath)
+        destin_dir = os.path.dirname(destin_file)
+        if not os.path.exists(destin_dir):
+            os.makedirs(destin_dir)
+        if os.path.exists(destin_file):
+            os.remove(destin_file)
+        os.link(source_file, destin_file)
+
+
+@parsable.command
+def pull(*filenames):
+    '''
+    Pull files from S3 into local cache.
+    '''
+    assert BUCKET
+    if len(filenames) == 1 and filenames[0].endswith('/'):
+        filenames = listdir(filenames[0])
+    parallel_map(get, filter_cache(filenames))
+
+
+@parsable.command
+def push(*filenames):
+    '''
+    Push files to S3 from local cache.
+    '''
+    assert BUCKET
+    if len(filenames) == 1 and os.path.isdir(filenames[0]):
+        filenames = map(os.path.relpath, find(filenames[0]))
+    parallel_map(put, filter_cache(filenames))
+
+
+@parsable.command
+def rm(*filenames):
+    '''
+    Remove files from S3 and local cache.
+    '''
+    assert BUCKET
+    parallel_map(remove, filter_cache(filenames))
+
+
 if __name__ == '__main__':
-
-    def parallel_map(fun, args):
-        if len(args) <= 1:
-            return map(fun, args)
-        else:
-            return multiprocessing.Pool().map(fun, args)
-
-    def filter_cache(filenames):
-        return [
-            f
-            for f in filenames
-            if f[-len(EXT):] != EXT
-            if not os.path.exists(f) or os.path.isfile(f)
-        ]
-
-    def find(path):
-        blacklist = re.compile('(test|core|temp|mutex|queue|socket|7z)')
-        return filter(os.path.isfile, [
-            os.path.abspath(os.path.join(root, filename))
-            for root, dirnames, filenames in os.walk(path)
-            if not blacklist.search(root)
-            for filename in filenames
-            if not blacklist.search(filename)
-        ])
-
-    @parsable.command
-    def find_s3(prefix=''):
-        '''
-        Find copyable files on S3.
-        '''
-        assert BUCKET
-        for filename in listdir(prefix):
-            print filename
-
-    @parsable.command
-    def find_local(path='.'):
-        '''
-        Find copyable files on local filesystem.
-        '''
-        for filename in find(path):
-            print filename
-
-    @parsable.command
-    def snapshot(source, destin):
-        '''
-        Create resursive snapshot of hard links for push/pull.
-        '''
-        assert os.path.isdir(source)
-        assert destin != source
-        source = os.path.abspath(source)
-        destin = os.path.abspath(destin)
-        for source_file in find(source):
-            relpath = os.path.relpath(source_file, source)
-            destin_file = os.path.join(destin, relpath)
-            destin_dir = os.path.dirname(destin_file)
-            if not os.path.exists(destin_dir):
-                os.makedirs(destin_dir)
-            if os.path.exists(destin_file):
-                os.remove(destin_file)
-            os.link(source_file, destin_file)
-
-    @parsable.command
-    def pull(*filenames):
-        '''
-        Pull files from S3 into local cache.
-        '''
-        assert BUCKET
-        if len(filenames) == 1 and filenames[0].endswith('/'):
-            filenames = listdir(filenames[0])
-        parallel_map(get, filter_cache(filenames))
-
-    @parsable.command
-    def push(*filenames):
-        '''
-        Push files to S3 from local cache.
-        '''
-        assert BUCKET
-        if len(filenames) == 1 and os.path.isdir(filenames[0]):
-            filenames = map(os.path.relpath, find(filenames[0]))
-        parallel_map(put, filter_cache(filenames))
-
-    @parsable.command
-    def rm(*filenames):
-        '''
-        Remove files from S3 and local cache.
-        '''
-        assert BUCKET
-        parallel_map(remove, filter_cache(filenames))
-
     parsable.dispatch()

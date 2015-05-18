@@ -14,9 +14,11 @@ def skipped():
 
 
 if TEST_BUCKET is None:
-    requires_auth = lambda fun: skipped
+    def requires_auth(fun):
+        return skipped
 else:
-    requires_auth = lambda fun: fun
+    def requires_auth(fun):
+        return fun
 
 
 def load(filename):

@@ -109,7 +109,8 @@ def cmp_validity(x, y):
             cmp_trool(x['is_bot'], y['is_bot']))
 
 
-transpose = lambda lists: map(list, izip(* lists))
+def transpose(lists):
+    return map(list, izip(* lists))
 
 
 def test_simplify():

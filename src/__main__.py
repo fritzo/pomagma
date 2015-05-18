@@ -1,5 +1,7 @@
 import os
+import re
 import sys
+import time
 import signal
 import shutil
 import parsable
@@ -305,6 +307,54 @@ def fit_language(theory, address=analyst.ADDRESS, **options):
     '''
     options.setdefault('log_file', 'linguist.log')
     linguist.fit_language(theory, address=address, **options)
+
+
+match_atlas = re.compile(r'^atlas\.20\d\d(-\d\d)*').match
+default_tag = time.strftime('%Y-%m-%d', time.gmtime())
+
+
+def list_s3_atlases():
+    import pomagma.store
+    filenames = pomagma.store.listdir()
+    return set(m.group() for m in map(match_atlas, filenames) if m)
+
+
+@parsable.command
+def pull(tag='<most recent>'):
+    '''
+    Pull atlas from s3.
+    '''
+    import pomagma.store
+    if not os.path.exists(pomagma.util.DATA):
+        os.makedirs(pomagma.util.DATA)
+    with pomagma.util.chdir(pomagma.util.DATA):
+        destin = 'atlas'
+        assert not os.path.exists(destin), 'atlas exists; first remove atlas'
+        if tag == '<most recent>':
+            source = max(list_s3_atlases())
+        else:
+            source = 'atlas.{}'.format(tag)
+            assert match_atlas(source), 'invalid tag: {}'.format(tag)
+        print 'pulling {} -> {}'.format(source, destin)
+        pomagma.store.pull('{}/'.format(source))
+        pomagma.store.snapshot(source, destin)
+
+
+@parsable.command
+def push(tag=default_tag):
+    '''
+    Push atlas to s3.
+    '''
+    import pomagma.store
+    with pomagma.util.chdir(pomagma.util.DATA):
+        source = 'atlas'
+        assert os.path.exists(source), 'atlas does not exist'
+        destin = 'atlas.{}'.format(tag)
+        assert match_atlas(destin), 'invalid tag: {}'.format(tag)
+        assert destin not in list_s3_atlases, 'destin already exists'
+        print 'pushing {} -> {}'.format(source, destin)
+        pomagma.store.snapshot(source, destin)
+        pomagma.store.push(destin)
 
 
 @parsable.command

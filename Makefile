@@ -1,5 +1,5 @@
-THEORY=skrj
-PY_FILES:=*.py $(find src | grep '.py$$' | grep -v '_pb2.py')
+THEORY = skrj
+PY_FILES := *.py $(shell find src | grep '.py$$' | grep -v '_pb2.py')
 
 all: bootstrap fixture FORCE
 	$(MAKE) python
@@ -15,8 +15,8 @@ tags: protobuf FORCE
 	cd src ; cscope -bcqR
 
 python: protobuf FORCE
-	pyflakes $(PY_FILES)
-	pep8 $(PY_FILES)
+	@pyflakes $(PY_FILES)
+	@pep8 --ignore=E402 $(PY_FILES)
 	pip install -e .
 
 codegen: FORCE
