@@ -25,6 +25,7 @@ The correctness of Pomagma's theory is being verified in the
 * [Philosophy](/doc/philosophy.md)
 * [Using a client library](/doc/client.md)
 * [Administering a server](/doc/server.md)
+* [Getting data](/doc/data.md)
 
 ## Installing
 
