@@ -11,41 +11,58 @@ struct Approximation
     Ob ob;
     DenseSet upper;
     DenseSet lower;
-    // TODO
-    //DenseSet nupper;
-    //DenseSet nlower;
+    DenseSet nupper;
+    DenseSet nlower;
 
     Approximation (size_t item_dim, Ob top, Ob bot)
         : ob(0),
           upper(item_dim),
-          lower(item_dim)
+          lower(item_dim),
+          nupper(item_dim),
+          nlower(item_dim)
     {
         upper.insert(top);
         lower.insert(bot);
     }
     // only the ob constructor is aliased
-    Approximation (Ob o, const BinaryRelation & less)
+    Approximation (
+            Ob o,
+            const BinaryRelation & less,
+            const BinaryRelation & nless)
         : ob(o),
           upper(less.get_Lx_set(o)),
-          lower(less.get_Rx_set(o))
+          lower(less.get_Rx_set(o)),
+          nupper(nless.get_Lx_set(o)),
+          nlower(nless.get_Rx_set(o))
     {
         POMAGMA_ASSERT(ob, "ob is undefined");
     }
-    Approximation (Ob lb, Ob ub, const BinaryRelation & less)
+    Approximation (
+            Ob lb,
+            Ob ub,
+            const BinaryRelation & less,
+            const BinaryRelation & nless)
         : ob(0),
           upper(less.item_dim()),
-          lower(less.item_dim())
+          lower(less.item_dim()),
+          nupper(nless.item_dim()),
+          nlower(nless.item_dim())
     {
         POMAGMA_ASSERT(lb, "lb is undefined");
         POMAGMA_ASSERT(ub, "ub is undefined");
         POMAGMA_ASSERT(less.find(lb, ub), "expected LESS lb ub");
+        POMAGMA_ASSERT(not nless.find(lb, ub), "expected not NLESS lb ub");
         upper = less.get_Lx_set(ub);
         lower = less.get_Rx_set(lb);
+        nupper = nless.get_Lx_set(ub);  // TODO is this right?
+        nlower = nless.get_Rx_set(lb);  // TODO is this right?
     }
     Approximation (Approximation && other)
         : ob(other.ob),
           upper(std::move(other.upper)),
-          lower(std::move(other.lower))
+          lower(std::move(other.lower)),
+          nupper(std::move(other.nupper)),
+          nlower(std::move(other.nlower))
     {}
     Approximation (const Approximation &) = delete;
 
@@ -54,12 +71,16 @@ struct Approximation
         ob = other.ob;
         upper = other.upper;
         lower = other.lower;
+        nupper = other.nupper;
+        nlower = other.nlower;
     }
     bool operator== (const Approximation & other) const
     {
         return ob == other.ob
             and upper == other.upper
-            and lower == other.lower;
+            and lower == other.lower
+            and nupper == other.nupper
+            and nlower == other.nlower;
     }
     bool operator!= (const Approximation & other) const
     {
@@ -78,11 +99,14 @@ public:
     size_t test ();
     void validate (const Approximation & approx);
 
-    Approximation known (Ob ob) { return Approximation(ob, m_less); }
+    Approximation known (Ob ob) { return Approximation(ob, m_less, m_nless); }
     Approximation unknown () { return Approximation(m_item_dim, m_top, m_bot); }
     Approximation truthy () { return known(m_identity); }
     Approximation falsey () { return known(m_bot); }
-    Approximation maybe () { return Approximation(m_bot, m_identity, m_less); }
+    Approximation maybe ()
+    {
+        return Approximation(m_bot, m_identity, m_less, m_nless);
+    }
 
     Approximation find (
             const NullaryFunction & fun);

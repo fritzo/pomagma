@@ -38,7 +38,7 @@ size_t Approximator::test_less ()
 
         #pragma omp for schedule(dynamic, 1)
         for (Ob x = 1; x <= item_dim; ++x) {
-            Approximation expected(x, m_less);
+            Approximation expected(x, m_less, m_nless);
             actual = expected;
             close(actual, temp_set);
 
@@ -56,6 +56,51 @@ size_t Approximator::test_less ()
     return fail_count;
 }
 
+namespace
+{
+
+struct ErrorCounter
+{
+    size_t fail_count;
+    size_t extra_count;
+    size_t missing_count;
+
+    ErrorCounter () : fail_count(0), extra_count(0), missing_count(0) {}
+
+    void assert_eq (
+            const DenseSet & actual,
+            const DenseSet & expected,
+            DenseSet & temp_set)
+    {
+        if (actual != expected) {
+            #pragma omp atomic
+            fail_count += 1;
+            temp_set.set_diff(actual, expected);
+            if (size_t count = temp_set.count_items()) {
+                #pragma omp atomic
+                extra_count += count;
+            }
+            temp_set.set_diff(expected, actual);
+            if (size_t count = temp_set.count_items()) {
+                #pragma omp atomic
+                missing_count += count;
+            }
+        }
+    }
+
+    void print_warn (const std::string & name) const
+    {
+        if (fail_count) {
+            POMAGMA_WARN(name << " upper has "
+                << missing_count << " missing and "
+                << extra_count << " extra obs in "
+                << fail_count << " cases");
+        }
+    }
+};
+
+} // namespace
+
 template<class Function>
 size_t Approximator::test_function (
         const std::string & name,
@@ -64,12 +109,10 @@ size_t Approximator::test_function (
     POMAGMA_INFO("Testing " << name << " approximation");
 
     size_t ob_fail_count = 0;
-    size_t upper_fail_count = 0;
-    size_t upper_extra_count = 0;
-    size_t upper_missing_count = 0;
-    size_t lower_fail_count = 0;
-    size_t lower_extra_count = 0;
-    size_t lower_missing_count = 0;
+    ErrorCounter upper;
+    ErrorCounter lower;
+    ErrorCounter nupper;
+    ErrorCounter nlower;
 
     const size_t item_dim = m_item_dim;
     #pragma omp parallel
@@ -78,50 +121,26 @@ size_t Approximator::test_function (
 
         #pragma omp for schedule(dynamic, 1)
         for (Ob x = 1; x <= item_dim; ++x) {
-            Approximation approx_x(x, m_less);
+            Approximation approx_x(x, m_less, m_nless);
             approx_x.ob = 0;
 
             for (auto iter = fun.iter_lhs(x); iter.ok(); iter.next()) {
                 Ob y = * iter;
-                Approximation approx_y(y, m_less);
+                Approximation approx_y(y, m_less, m_nless);
                 approx_y.ob = 0;
 
                 Ob xy = fun.find(x, y);
-                Approximation expected(xy, m_less);
+                Approximation expected(xy, m_less, m_nless);
                 Approximation actual = find(fun, approx_x, approx_y);
 
                 if (actual.ob != expected.ob) {
                     #pragma omp atomic
                     ob_fail_count += 1;
                 }
-                if (actual.upper != expected.upper) {
-                    #pragma omp atomic
-                    upper_fail_count += 1;
-                    temp_set.set_diff(actual.upper, expected.upper);
-                    if (size_t count = temp_set.count_items()) {
-                        #pragma omp atomic
-                        upper_extra_count += count;
-                    }
-                    temp_set.set_diff(expected.upper, actual.upper);
-                    if (size_t count = temp_set.count_items()) {
-                        #pragma omp atomic
-                        upper_missing_count += count;
-                    }
-                }
-                if (actual.lower != expected.lower) {
-                    #pragma omp atomic
-                    lower_fail_count += 1;
-                    temp_set.set_diff(actual.lower, expected.lower);
-                    if (size_t count = temp_set.count_items()) {
-                        #pragma omp atomic
-                        lower_extra_count += count;
-                    }
-                    temp_set.set_diff(expected.lower, actual.lower);
-                    if (size_t count = temp_set.count_items()) {
-                        #pragma omp atomic
-                        lower_missing_count += count;
-                    }
-                }
+                upper.assert_eq(actual.upper, expected.upper, temp_set);
+                lower.assert_eq(actual.lower, expected.lower, temp_set);
+                nupper.assert_eq(actual.nupper, expected.nupper, temp_set);
+                nlower.assert_eq(actual.nlower, expected.nlower, temp_set);
             }
         }
     }
@@ -129,20 +148,13 @@ size_t Approximator::test_function (
     if (ob_fail_count) {
         POMAGMA_WARN(name << " ob failed " << ob_fail_count << " cases");
     }
-    if (upper_missing_count or upper_extra_count) {
-        POMAGMA_WARN(name << " upper has "
-            << upper_missing_count << " missing and "
-            << upper_extra_count << " extra obs in "
-            << upper_fail_count << " cases");
-    }
-    if (lower_missing_count or lower_extra_count) {
-        POMAGMA_WARN(name << " lower has "
-            << lower_missing_count << " missing and "
-            << lower_extra_count << " extra obs in "
-            << lower_fail_count << " cases");
-    }
+    upper.print_warn(name);
+    lower.print_warn(name);
+    nupper.print_warn(name);
+    nlower.print_warn(name);
 
-    return ob_fail_count + upper_fail_count + lower_fail_count;
+    return ob_fail_count + upper.fail_count + lower.fail_count
+                         + nupper.fail_count + nlower.fail_count;
 }
 
 size_t Approximator::test ()
@@ -172,6 +184,8 @@ void Approximator::validate (const Approximation & approx)
 {
     POMAGMA_ASSERT_EQ(approx.lower.item_dim(), m_item_dim);
     POMAGMA_ASSERT_EQ(approx.upper.item_dim(), m_item_dim);
+    POMAGMA_ASSERT_EQ(approx.nlower.item_dim(), m_item_dim);
+    POMAGMA_ASSERT_EQ(approx.nupper.item_dim(), m_item_dim);
 
     std::vector<Ob> set;
     for (auto iter = approx.lower.iter_insn(approx.upper);
@@ -195,12 +209,15 @@ void Approximator::validate (const Approximation & approx)
     POMAGMA_ASSERT_EQ(closed.ob, approx.ob);
     POMAGMA_ASSERT(closed.upper == approx.upper, "upper set is not closed");
     POMAGMA_ASSERT(closed.lower == approx.lower, "lower set is not closed");
+    POMAGMA_ASSERT(closed.nupper == approx.nupper, "nupper set is not closed");
+    POMAGMA_ASSERT(closed.nlower == approx.nlower, "nlower set is not closed");
 }
 
 void Approximator::close (
         Approximation & approx,
         DenseSet & temp_set)
 {
+    // TODO this could be more efficient by recording the diff and propagating
     POMAGMA_ASSERT_EQ(temp_set.item_dim(), m_item_dim);
     for (size_t iter = 0;; ++iter) {
         POMAGMA_DEBUG1("close step " << iter);
@@ -226,14 +243,18 @@ bool Approximator::try_close (
 {
     POMAGMA_ASSERT_EQ(approx.lower.item_dim(), m_item_dim);
     POMAGMA_ASSERT_EQ(approx.upper.item_dim(), m_item_dim);
+    POMAGMA_ASSERT_EQ(approx.nlower.item_dim(), m_item_dim);
+    POMAGMA_ASSERT_EQ(approx.nupper.item_dim(), m_item_dim);
     POMAGMA_ASSERT_EQ(temp_set.item_dim(), m_item_dim);
 
     Approximation start = unknown();
     start = approx;
 
     if (approx.ob) {
-        approx.upper.raw_insert(approx.ob);
-        approx.lower.raw_insert(approx.ob);
+        approx.upper += m_less.get_Lx_set(approx.ob);
+        approx.lower += m_less.get_Rx_set(approx.ob);
+        approx.nupper += m_nless.get_Lx_set(approx.ob);
+        approx.nlower += m_nless.get_Rx_set(approx.ob);
     }
 
     approx.upper.raw_insert(m_top);
@@ -409,7 +430,7 @@ Approximation Approximator::find (
         const NullaryFunction & fun)
 {
     if (Ob val = fun.find()) {
-        return Approximation(val, m_less);
+        return Approximation(val, m_less, m_nless);
     }
     return unknown();
 }
@@ -419,7 +440,7 @@ Approximation Approximator::find (
         const Approximation & key)
 {
     if (Ob ob = key.ob ? fun.find(key.ob) : 0) {
-        return Approximation(ob, m_less);
+        return Approximation(ob, m_less, m_nless);
     } else if (& fun == m_quote) {
         // QUOTE is not monotone
         return unknown();
@@ -439,7 +460,7 @@ Approximation Approximator::find (
         const Approximation & rhs)
 {
     if (Ob ob = lhs.ob and rhs.ob ? fun.find(lhs.ob, rhs.ob) : 0) {
-        return Approximation(ob, m_less);
+        return Approximation(ob, m_less, m_nless);
     } else {
         Approximation val = unknown();
         DenseSet temp_set(m_item_dim);
@@ -456,7 +477,7 @@ Approximation Approximator::find (
         const Approximation & rhs)
 {
     if (Ob ob = (lhs.ob and rhs.ob) ? fun.find(lhs.ob, rhs.ob) : 0) {
-        return Approximation(ob, m_less);
+        return Approximation(ob, m_less, m_nless);
     } else {
         Approximation val = unknown();
         DenseSet temp_set(m_item_dim);
