@@ -9,11 +9,35 @@
 namespace pomagma
 {
 
-// TODO profile hash conflict rate
+struct HashedSet
+{
+    const DenseSet set;
+    const uint64_t hash;
+
+    HashedSet (DenseSet && s) : set(std::move(s)), hash(compute_hash(set)) {}
+    HashedSet (const HashedSet &) = delete;
+
+    bool operator== (const HashedSet & other) const
+    {
+        return hash == other.hash and set == other.set;
+    }
+    bool operator!= (const HashedSet & other) const
+    {
+        return not operator==(other);
+    }
+
+    struct Hash
+    {
+        uint64_t operator() (const HashedSet & x) const { return x.hash; }
+    };
+
+private:
+
+    static uint64_t compute_hash (const DenseSet & set);
+};
+
 struct HashedApproximation
 {
-private:
-public:
     const Approximation approx;
     const uint64_t hash;
 
