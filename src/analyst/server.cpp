@@ -1,9 +1,9 @@
 #include "server.hpp"
-#include <pomagma/macrostructure/router.hpp>
-#include <pomagma/language/language.hpp>
-#include "messages.pb.h"
 #include <zmq.hpp>
 #include <algorithm>
+#include <pomagma/analyst/messages.pb.h>
+#include <pomagma/language/language.hpp>
+#include <pomagma/macrostructure/router.hpp>
 
 namespace pomagma
 {

@@ -1,8 +1,9 @@
 #pragma once
 
 #include <pomagma/macrostructure/util.hpp>
-#include <pomagma/analyst/approximate.hpp>
+#include <pomagma/macrostructure/structure_impl.hpp>
 #include <pomagma/platform/hash_map.hpp>
+#include <pomagma/platform/parser.hpp>
 #include <unordered_set>
 
 namespace pomagma
@@ -58,7 +59,7 @@ public:
         bool operator!= (const Term & o) const { return not operator==(o); }
 
         Term () {}
-        Term (Ob o)
+        explicit Term (Ob o)
             : arity(OB), name(), arg0(nullptr), arg1(nullptr), ob(o)
         {}
         Term (

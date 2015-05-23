@@ -1,7 +1,8 @@
-#include "simplify.hpp"
-#include "approximate.hpp"
-#include "corpus.hpp"
-#include "validator.hpp"
+#include <pomagma/analyst/approximate_parser.hpp>
+#include <pomagma/analyst/approximator.hpp>
+#include <pomagma/analyst/corpus.hpp>
+#include <pomagma/analyst/simplify.hpp>
+#include <pomagma/analyst/validator.hpp>
 #include <pomagma/macrostructure/structure.hpp>
 #include <pomagma/macrostructure/vm.hpp>
 

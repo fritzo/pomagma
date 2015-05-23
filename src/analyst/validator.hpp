@@ -1,13 +1,13 @@
 #pragma once
 
-#include <pomagma/analyst/approximate.hpp>
+#include <set>
+#include <thread>
+#include <mutex>
+#include <pomagma/analyst/approximator.hpp>
 #include <pomagma/analyst/cached_approximator.hpp>
 #include <pomagma/analyst/corpus.hpp>
 #include <pomagma/platform/async_map.hpp>
 #include <pomagma/platform/unique_set.hpp>
-#include <set>
-#include <thread>
-#include <mutex>
 
 namespace pomagma
 {

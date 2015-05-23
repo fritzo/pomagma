@@ -1,4 +1,4 @@
-#include "approximate.hpp"
+#include "approximator.hpp"
 #include <vector>
 
 #define POMAGMA_DEBUG1(message)
@@ -306,6 +306,7 @@ inline void Approximator::map (
     POMAGMA_ASSERT_EQ(val_set.item_dim(), m_item_dim);
     POMAGMA_ASSERT_EQ(temp_set.item_dim(), m_item_dim);
 
+    // TODO use iter_insn() instead of set_diff();iter()
     temp_set.set_insn(fun.defined(), key_set);
     for (auto iter = temp_set.iter(); iter.ok(); iter.next()) {
         Ob key = * iter;
@@ -329,7 +330,7 @@ inline void Approximator::map (
     for (auto iter = lhs_set.iter(); iter.ok(); iter.next()) {
         Ob lhs = * iter;
 
-        // optimize for special cases of APP and COMP
+        // this is an optimization for the special cases of APP and COMP
         if (Ob lhs_top = fun.find(lhs, m_top)) {
             if (Ob lhs_bot = fun.find(lhs, m_bot)) {
                 bool lhs_is_constant = (lhs_top == lhs_bot);
@@ -340,11 +341,42 @@ inline void Approximator::map (
             }
         }
 
+        // TODO use iter_diff() instead of set_diff();iter()
         temp_set.set_insn(rhs_set, fun.get_Lx_set(lhs));
         for (auto iter = temp_set.iter(); iter.ok(); iter.next()) {
             Ob rhs = * iter;
             Ob val = fun.find(lhs, rhs);
             val_set.raw_insert(val);
+        }
+    }
+}
+
+inline void Approximator::map_lhs_val (
+        const BinaryFunction & fun,
+        const DenseSet & lhs_pos_set,
+        DenseSet & rhs_neg_set,
+        const DenseSet & val_neg_set,
+        DenseSet & temp_set)
+{
+    POMAGMA_ASSERT_EQ(lhs_pos_set.item_dim(), m_item_dim);
+    POMAGMA_ASSERT_EQ(rhs_neg_set.item_dim(), m_item_dim);
+    POMAGMA_ASSERT_EQ(val_neg_set.item_dim(), m_item_dim);
+    POMAGMA_ASSERT_EQ(temp_set.item_dim(), m_item_dim);
+
+    for (auto iter = lhs_pos_set.iter(); iter.ok(); iter.next()) {
+        Ob lhs = * iter;
+
+        // TODO optimize for the special cases of APP and COMP
+
+        // TODO use iter_diff() instead of set_diff();iter()
+        temp_set.set_diff(fun.get_Lx_set(lhs), rhs_neg_set);
+        for (auto iter = temp_set.iter(); iter.ok(); iter.next()) {
+            Ob rhs = * iter;
+            Ob val = fun.find(lhs, rhs);
+            if (val_neg_set.contains(val)) {
+                rhs_neg_set.raw_insert(rhs);
+                break;
+            }
         }
     }
 }
@@ -363,6 +395,7 @@ inline void Approximator::map (
 
     for (auto iter = lhs_set.iter(); iter.ok(); iter.next()) {
         Ob lhs = * iter;
+        // TODO use iter_insn() instead of set_diff();iter()
         temp_set.set_insn(rhs_set, fun.get_Lx_set(lhs));
         for (auto iter = temp_set.iter(); iter.ok(); iter.next()) {
             Ob rhs = * iter;

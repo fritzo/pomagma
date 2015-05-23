@@ -12,7 +12,7 @@ add_executable(analyst
 	main.cpp
 	server.cpp
 	simplify.cpp
-	approximate.cpp
+	approximator.cpp
 	cached_approximator.cpp
 	corpus.cpp
 	validator.cpp

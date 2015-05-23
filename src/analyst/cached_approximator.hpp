@@ -1,10 +1,10 @@
 #pragma once
 
-#include <pomagma/analyst/approximate.hpp>
+#include <tbb/concurrent_unordered_map.h>
+#include <pomagma/analyst/approximator.hpp>
 #include <pomagma/platform/hash_map.hpp>
 #include <pomagma/platform/async_map.hpp>
 #include <pomagma/platform/unique_set.hpp>
-#include <tbb/concurrent_unordered_map.h>
 
 namespace pomagma
 {
@@ -14,7 +14,10 @@ struct HashedSet
     const DenseSet set;
     const uint64_t hash;
 
-    HashedSet (DenseSet && s) : set(std::move(s)), hash(compute_hash(set)) {}
+    explicit HashedSet (DenseSet && s)
+      : set(std::move(s)),
+      hash(compute_hash(set))
+    {}
     HashedSet (const HashedSet &) = delete;
 
     bool operator== (const HashedSet & other) const

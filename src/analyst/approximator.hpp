@@ -2,7 +2,6 @@
 
 #include <pomagma/macrostructure/util.hpp>
 #include <pomagma/macrostructure/structure_impl.hpp>
-#include <pomagma/platform/parser.hpp>
 
 namespace pomagma
 {
@@ -12,6 +11,9 @@ struct Approximation
     Ob ob;
     DenseSet upper;
     DenseSet lower;
+    // TODO
+    //DenseSet nupper;
+    //DenseSet nlower;
 
     Approximation (size_t item_dim, Ob top, Ob bot)
         : ob(0),
@@ -69,7 +71,7 @@ class Approximator : noncopyable
 {
 public:
 
-    Approximator (Structure & structure);
+    explicit Approximator (Structure & structure);
 
     Signature & signature () { return m_structure.signature(); }
 
@@ -164,6 +166,12 @@ private:
             const DenseSet & rhs_set,
             DenseSet & val_set,
             DenseSet & temp_set);
+    void map_lhs_val (
+            const BinaryFunction & fun,
+            const DenseSet & lhs_pos_set,
+            DenseSet & rhs_neg_set,
+            const DenseSet & val_neg_set,
+            DenseSet & temp_set);
     void map (
             const SymmetricFunction & fun,
             const DenseSet & lhs_set,
@@ -181,80 +189,6 @@ private:
     const SymmetricFunction * const m_join;
     const SymmetricFunction * const m_rand;
     const InjectiveFunction * const m_quote;
-};
-
-
-class ApproximateReducer : noncopyable
-{
-public:
-
-    typedef Approximation Term;
-
-    ApproximateReducer (Approximator & approximator)
-        : m_approximator(approximator)
-    {}
-
-    Approximation reduce (
-            const std::string &,
-            const NullaryFunction * fun)
-    {
-        return m_approximator.find(* fun);
-    }
-
-    Approximation reduce (
-            const std::string &,
-            const InjectiveFunction * fun,
-            const Approximation & key)
-    {
-        return m_approximator.find(* fun, key);
-    }
-
-    Approximation reduce (
-            const std::string &,
-            const BinaryFunction * fun,
-            const Approximation & lhs,
-            const Approximation & rhs)
-    {
-        return m_approximator.find(* fun, lhs, rhs);
-    }
-
-    Approximation reduce (
-            const std::string &,
-            const SymmetricFunction * fun,
-            const Approximation & lhs,
-            const Approximation & rhs)
-    {
-        return m_approximator.find(* fun, lhs, rhs);
-    }
-
-    // TODO
-    //Approximation reduce (
-    //        const std::string &,
-    //        const BinaryRelation * rel,
-    //        const Approximation & lhs,
-    //        const Approximation & rhs)
-    //{
-    //    return m_approximator.find(* rel, lhs, rhs);
-    //}
-
-private:
-
-    Approximator & m_approximator;
-};
-
-class ApproximateParser : public TermParser<ApproximateReducer>
-{
-public:
-
-    ApproximateParser (Approximator & approximator)
-        : TermParser<ApproximateReducer>(approximator.signature(), m_reducer),
-          m_reducer(approximator)
-    {
-    }
-
-private:
-
-    ApproximateReducer m_reducer;
 };
 
 } // namespace pomagma
