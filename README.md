@@ -25,7 +25,6 @@ The correctness of Pomagma's theory is being verified in the
 * [Philosophy](/doc/philosophy.md)
 * [Using a client library](/doc/client.md)
 * [Administering a server](/doc/server.md)
-* [Getting data](/doc/data.md)
 
 ## Installing
 
@@ -48,7 +47,11 @@ Start a local analysis server with the tiny default atlas
 
     python -m pomagma analyze       # starts server, Ctrl-C to quit
 
-Query the server using the python client
+Then in another terminal, start an interactive client session
+
+    python -m pomagma connect       # starts client session
+
+Alternatively, connect with using the Python client library
 
     python
     from pomagma import analyst
@@ -56,7 +59,7 @@ Query the server using the python client
         print db.simplify(["APP I I"])      # prints [I]
         print db.validate(["I"])            # prints [{"is_bot": False, "is_top": False}]
 
-or the Node.js client
+or the Node.js client library
 
     nodejs
     var analyst = require("pomagma").analyst;
@@ -65,7 +68,7 @@ or the Node.js client
     console.log(db.validate(["I"]));        // prints [{"is_bot": false, "is_top": false}]
     db.close();
 
-## Build an Atlas to power an analysis server
+## Get an Atlas to power an analysis server
 
 Pomagma reasons about large programs by approximately locating code fragments
 in an **atlas** of 10<sup>3</sup>-10<sup>5</sup> basic programs.
@@ -73,7 +76,11 @@ The more basic programs in an atlas,
 the more accurate pomagma's analysis will be.
 Pomagma ships with a tiny default atlas of ~2000 basic programs.
 
-Start building a bigger atlas
+To get a large prebuild atlas, put your AWS credentials in the environment and
+
+    python -m pomagma pull                  # downloads atlas pomagma bucket
+
+To start building a custom atlas from scratch
 
     python -m pomagma make max_size=10000   # kill and restart at any time
 
