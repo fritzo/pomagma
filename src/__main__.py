@@ -351,7 +351,7 @@ def push(tag=default_tag):
         assert os.path.exists(source), 'atlas does not exist'
         destin = 'atlas.{}'.format(tag)
         assert match_atlas(destin), 'invalid tag: {}'.format(tag)
-        assert destin not in list_s3_atlases, 'destin already exists'
+        assert destin not in list_s3_atlases(), 'destin already exists'
         print 'pushing {} -> {}'.format(source, destin)
         pomagma.store.snapshot(source, destin)
         pomagma.store.push(destin)
