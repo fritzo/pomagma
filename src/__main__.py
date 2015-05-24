@@ -277,12 +277,7 @@ def trim(theory=THEORY, parallel=True, **options):
                     db.trim([task])
 
 
-@parsable.command
-def analyze(theory=THEORY, size=None, address=analyst.ADDRESS, **options):
-    '''
-    Run analyst server on normalized world map.
-    Options: log_level, log_file
-    '''
+def _analyze(theory=THEORY, size=None, address=analyst.ADDRESS, **options):
     with atlas.chdir(theory):
         options.setdefault('log_file', 'analyst.log')
         if size is None:
@@ -290,13 +285,32 @@ def analyze(theory=THEORY, size=None, address=analyst.ADDRESS, **options):
         else:
             world = 'region.normal.{}.h5'.format(size)
         assert os.path.exists(world), 'First initialize normalized world'
-        try:
-            server = analyst.serve(theory, world, address=address, **options)
-            server.wait()
-        except KeyboardInterrupt:
-            print 'stopping analyst'
-        finally:
-            server.stop()
+        return analyst.serve(theory, world, address=address, **options)
+
+
+@parsable.command
+def analyze(theory=THEORY, size=None, address=analyst.ADDRESS, **options):
+    '''
+    Run analyst server on normalized world map.
+    Options: log_level, log_file
+    '''
+    server = _analyze(theory, size, address, **options)
+    try:
+        server.wait()
+    except KeyboardInterrupt:
+        print 'stopping analyst'
+    finally:
+        server.stop()
+
+
+@parsable.command
+def connect(address=analyst.ADDRESS):
+    '''
+    Connect to analyst and start python client.
+    '''
+    startup = os.path.join(pomagma.util.SRC, 'analyst', 'startup.py')
+    os.environ['PYTHONSTARTUP'] = startup
+    os.system('python')
 
 
 @parsable.command
