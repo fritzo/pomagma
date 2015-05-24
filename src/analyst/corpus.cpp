@@ -9,6 +9,8 @@ namespace pomagma
 //----------------------------------------------------------------------------
 // Dag
 
+// The Dag is a forest of parse trees, ignoring definitions.
+// It is never garbage collected.
 class Corpus::Dag
 {
 public:
