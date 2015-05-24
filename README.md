@@ -51,7 +51,7 @@ Then in another terminal, start an interactive client session
 
     python -m pomagma connect       # starts client session
 
-Alternatively, connect with using the Python client library
+Alternatively, connect using the Python client library
 
     python
     from pomagma import analyst
