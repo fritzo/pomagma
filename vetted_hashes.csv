@@ -21,7 +21,7 @@ src/theory/skj.facts,9f6a24cd77ebe56a9aa21bd3d6519f5a5f277e33
 src/theory/skj.optimized.programs,3acdb176bf48b9d2f6e72eefa1de5543aac2cac9
 src/theory/skj.programs,b517204e37713ac01cc295cd5d2a5e920996cbde
 src/theory/skj.symbols,9d44f283a24ee578a4f56f9de9b6de9f02b33b09
-src/theory/skja.facts,23d51af9f7b52dc62b44ee09330f6a25a1b498f9
+src/theory/skja.facts,a8b4b2b933146f5c08e1e2fbb9360b3bc7061e5b
 src/theory/skja.optimized.programs,03cb0f064b96d3caf30674bc6ea03baef55d974e
 src/theory/skja.programs,0b936e0a989d203b5ad35f499daa110cee7679a0
 src/theory/skja.symbols,656ab1c12ff04c60f598dbfdb89135376427159b
@@ -33,4 +33,4 @@ src/theory/skrj.facts,00b9f5addc4f6f6d8fb4d1cc2e20c374f3a3960b
 src/theory/skrj.optimized.programs,b1c4b4ef3c4593cba9c119414969bdf8189e0b09
 src/theory/skrj.programs,878d4fdcb4b4b20bc2a3ad4ae17a3b446238056b
 src/theory/skrj.symbols,9a31be3be61d1bdad25d4a5a15946988fd241710
-src/theory/types.tasks,def777acbc8b14e250630ee8c4dbc3da392ee64a
+src/theory/types.tasks,43ef9300c13fa3e34aaaf5072705db424fc38828

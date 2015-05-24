@@ -1,7 +1,6 @@
 # WARNING these rules do not hold in SKRJ
 
-#EQUAL DIV ABIND s r s
-#EQUAL DIV ABIND s r r
+EQUAL DIV ABIND s r r
 
 CLOSED DIV          -------------------   LESS APP f TOP APP g TOP
 FIXES V DIV         EQUAL APP DIV x TOP   LESS APP f BOT APP g BOT
