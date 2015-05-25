@@ -14,11 +14,13 @@ tags: protobuf FORCE
 	cd src ; ctags -R
 	cd src ; cscope -bcqR
 
-python: protobuf FORCE
+lint: FORCE
 	$(info pyflakes)
 	@pyflakes $(PY_FILES)
 	$(info pep8)
 	@pep8 --ignore=E402 $(PY_FILES)
+
+python: protobuf lint FORCE
 	pip install -e .
 
 codegen: FORCE
