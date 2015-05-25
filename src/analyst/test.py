@@ -106,6 +106,8 @@ def for_each_context_args(get_context, examples):
     return decorator
 
 
+# TODO replace assert_examples with for_each_context_args
+# DEPRECATED
 def assert_examples(examples, expected, actual, cmp=cmp):
     assert len(expected) == len(examples)
     assert len(actual) == len(examples)
