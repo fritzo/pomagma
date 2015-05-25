@@ -28,7 +28,7 @@ The correctness of Pomagma's theory is being verified in the
 
 ## Installing
 
-The server targets Ubuntu 12.04 and 14.04, and installs in a python virtualenv.
+The server targets Ubuntu 14.04 and 12.04, and installs in a python virtualenv.
 
     git clone https://github.com/fritzo/pomagma
     cd pomagma
@@ -78,7 +78,7 @@ Pomagma ships with a tiny default atlas of ~2000 basic programs.
 
 To get a large prebuild atlas, put your AWS credentials in the environment and
 
-    python -m pomagma pull                  # downloads atlas pomagma bucket
+    python -m pomagma pull                  # downloads atlas from S3 bucket
 
 To start building a custom atlas from scratch
 
