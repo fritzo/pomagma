@@ -14,7 +14,8 @@ Server::Server (
         size_t thread_count)
     : m_language(load_language(language_file)),
       m_structure(structure_file),
-      m_solution_set(m_structure.carrier()),
+      m_return(m_structure.carrier()),
+      m_nreturn(m_structure.carrier()),
       m_approximator(m_structure),
       m_approximate_parser(m_approximator),
       m_probs(),
@@ -30,7 +31,11 @@ Server::Server (
     POMAGMA_ASSERT(
         not signature.unary_relation("RETURN"),
         "reserved name RETURN is defined in loaded structure");
-    signature.declare("RETURN", m_solution_set);
+    POMAGMA_ASSERT(
+        not signature.unary_relation("NRETURN"),
+        "reserved name NRETURN is defined in loaded structure");
+    signature.declare("RETURN", m_return);
+    signature.declare("NRETURN", m_nreturn);
     m_parser = new vm::ProgramParser(signature);
     m_virtual_machine.load(signature);
 
@@ -106,31 +111,49 @@ std::vector<std::string> Server::flush_errors ()
     return result;
 }
 
-std::vector<std::string> Server::solve (
-    const std::string & program,
-    size_t max_solutions)
+void Server::print_ob_set (
+        const DenseSet & set,
+        std::vector<std::string> & result,
+        size_t max_count) const
 {
-    std::istringstream infile(program);
-    auto listings = m_parser->parse(infile);
-    POMAGMA_ASSERT_EQ(listings.size(), 1);
-    vm::Listing listing = listings[0].first;
-
-    m_solution_set.clear();
-    m_virtual_machine.execute(listing);
-
     std::vector<Ob> obs;
-    for (auto iter = m_solution_set.iter(); iter.ok(); iter.next()) {
+    for (auto iter = set.iter(); iter.ok(); iter.next()) {
         obs.push_back(*iter);
     }
     std::sort(obs.begin(), obs.end(), [this](const Ob & x, const Ob & y){
         return m_probs[x] > m_probs[y];
     });
-    if (obs.size() > max_solutions) {
-        obs.resize(max_solutions);
+    if (obs.size() > max_count) {
+        obs.resize(max_count);
     }
-    std::vector<std::string> solutions;
     for (auto ob : obs) {
-        solutions.push_back(m_routes[ob]);
+        result.push_back(m_routes[ob]);
+    }
+}
+
+Server::SolutionSet Server::solve (
+    const std::string & program,
+    size_t max_solutions)
+{
+    std::istringstream infile(program);
+    auto listings = m_parser->parse(infile);
+    POMAGMA_ASSERT_LE(1, listings.size());
+
+    m_return.clear();
+    m_nreturn.clear();
+    for (const auto & listing : listings) {
+        m_virtual_machine.execute(listing.first);
+    }
+
+    SolutionSet solutions;
+    print_ob_set(m_return.get_set(), solutions.necessary, max_solutions);
+    POMAGMA_ASSERT_LE(solutions.necessary.size(), max_solutions);
+    max_solutions -= solutions.necessary.size();
+    if (max_solutions > 0) {
+        // TODO only execute NRETURN programs if needed
+        DenseSet possible(m_nreturn.item_dim());
+        possible.set_diff(m_structure.carrier().support(), m_nreturn.get_set());
+        print_ob_set(possible, solutions.possible, max_solutions);
     }
     return solutions;
 }
@@ -245,11 +268,14 @@ messaging::AnalystResponse handle (
             max_solutions = request.solve().max_solutions();
         }
         if (max_solutions > 0) {
-            std::vector<std::string> solutions =
+            Server::SolutionSet solutions =
                 server.solve(request.solve().program(), max_solutions);
             auto & response_solve = * response.mutable_solve();
-            for (const auto & solution : solutions) {
-                response_solve.add_solutions(solution);
+            for (const auto & solution : solutions.necessary) {
+                response_solve.add_necessary(solution);
+            }
+            for (const auto & solution : solutions.possible) {
+                response_solve.add_possible(solution);
             }
         } else {
             response.add_error_log(

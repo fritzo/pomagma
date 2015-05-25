@@ -12,7 +12,8 @@ class Server
 {
     std::unordered_map<std::string, float> m_language;
     Structure m_structure;
-    UnaryRelation m_solution_set;
+    UnaryRelation m_return;
+    UnaryRelation m_nreturn;
     Approximator m_approximator;
     ApproximateParser m_approximate_parser;
     std::vector<float> m_probs;
@@ -32,6 +33,12 @@ public:
         size_t thread_count);
     ~Server ();
 
+    struct SolutionSet
+    {
+        std::vector<std::string> necessary;
+        std::vector<std::string> possible;
+    };
+
     size_t test_inference ();
     std::string simplify (const std::string & code);
     Approximator::Validity validate (const std::string & code);
@@ -40,13 +47,18 @@ public:
     const Corpus::Histogram & get_histogram ();
     std::unordered_map<std::string, float> fit_language (
             const Corpus::Histogram & histogram);
-    std::vector<std::string> solve (
-            const std::string & program,
-            size_t max_solutions);
+    SolutionSet solve (const std::string & program, size_t max_solutions);
+
+    void serve (const char * address);
 
     std::vector<std::string> flush_errors ();
 
-    void serve (const char * address);
+private:
+
+    void print_ob_set (
+            const DenseSet & set,
+            std::vector<std::string> & result,
+            size_t max_count) const;
 };
 
 } // namespace pomagma

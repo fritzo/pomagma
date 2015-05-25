@@ -3,12 +3,14 @@ from pomagma.compiler.expressions import Expression_1
 from pomagma.compiler.frontend import write_full_programs
 from pomagma.compiler.parser import parse_string_to_expr
 from pomagma.compiler.sequents import Sequent
+from pomagma.compiler.sequents import get_inverses
 from pomagma.compiler.sugar import desugar_expr
 from pomagma.compiler.sugar import desugar_sequent
 from pomagma.compiler.util import memoize_arg
 
 VAR = Expression_1('VAR')
 RETURN = Expression_1('RETURN')
+NRETURN = Expression_1('NRETURN')
 NONEGATE = Expression_1('NONEGATE')
 
 
@@ -37,7 +39,7 @@ def desugar(string):
 
 def compile_solver(result, constraints):
     '''
-    Produces that solves the problem as {RETURN result | constraints}.
+    Produces programs that solve the problem {RETURN result | constraints}.
     Inputs:
         result - a string representing an expression with free variables
         constraints - a list of strings representing statements to be
@@ -52,10 +54,15 @@ def compile_solver(result, constraints):
     antecedents = map(parse_string_to_expr, constraints)
     result = parse_string_to_expr(result)
     assert result.is_term(), result
-    succedent = NONEGATE(RETURN(result))
+    succedent = RETURN(result)
     sequent = Sequent(antecedents, [succedent])
     sequent = desugar_sequent(sequent)
+    sequents = [sequent] + sorted(get_inverses(sequent))
+    sequents = [
+        Sequent(s.antecedents, map(NONEGATE, s.succedents))
+        for s in sequents
+    ]
     programs = []
-    write_full_programs(programs, [sequent])
+    write_full_programs(programs, sequents)
     program = '\n'.join(programs)
     return program

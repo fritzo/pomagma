@@ -96,7 +96,11 @@ class Client(object):
         if max_solutions is not None:
             request.solve.max_solutions = max_solutions
         reply = self._call(request)
-        return map(str, reply.solve.solutions)
+        solutions = {
+            'necessary': map(str, reply.solve.necessary),
+            'possible': map(str, reply.solve.possible),
+        }
+        return solutions
 
     def solve(self, result, constraints, max_solutions=None):
         assert isinstance(result, basestring), result
@@ -107,7 +111,8 @@ class Client(object):
             assert isinstance(max_solutions, (int, float)), max_solutions
         solutions = self._solve(result, constraints, max_solutions)
         if max_solutions is not None:
-            assert len(solutions) <= max_solutions, solutions
+            count = len(solutions['necessary']) + len(solutions['possible'])
+            assert count <= max_solutions, solutions
         return solutions
 
     def _validate(self, codes):

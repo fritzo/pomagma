@@ -23,6 +23,7 @@ ARITY_TABLE = {
     'CLOSED': 'UnaryRelation',
     'NCLOSED': 'UnaryRelation',
     'RETURN': 'UnaryRelation',
+    'NRETURN': 'UnaryRelation',
     'LESS': 'BinaryRelation',
     'NLESS': 'BinaryRelation',
     'CO': 'InjectiveFunction',

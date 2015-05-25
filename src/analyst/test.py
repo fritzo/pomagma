@@ -1,5 +1,7 @@
 import os
+import functools
 from itertools import izip
+from nose.tools import assert_equal
 import pomagma.util
 import pomagma.surveyor
 import pomagma.cartographer
@@ -84,6 +86,26 @@ def test_inference():
     assert fail_count == 0, 'analyst failed with {} errors'.format(fail_count)
 
 
+def for_each_context_args(get_context, examples):
+
+    def decorator(fun):
+        state = {}
+
+        def fun_one(i):
+            fun(state['context'], *examples[i])
+
+        @functools.wraps(fun)
+        def decorated():
+            with get_context() as context:
+                state['context'] = context
+                for i in xrange(len(examples)):
+                    yield fun_one, i
+            del state['context']
+
+        return decorated
+    return decorator
+
+
 def assert_examples(examples, expected, actual, cmp=cmp):
     assert len(expected) == len(examples)
     assert len(actual) == len(examples)
@@ -136,11 +158,10 @@ SOLVE_EXAMPLES = [
 ]
 
 
-def test_solve():
-    args, expected = transpose(SOLVE_EXAMPLES)
-    with load() as db:
-        actual = [db.solve(*arg) for arg in args]
-    assert_examples(args, expected, actual)
+@for_each_context_args(load, SOLVE_EXAMPLES)
+def test_solve(db, args, expected):
+    actual = db.solve(*args)
+    assert_equal(actual['necessary'], expected)
 
 
 def test_validate():

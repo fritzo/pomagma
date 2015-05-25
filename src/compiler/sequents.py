@@ -7,6 +7,7 @@ from pomagma.compiler.expressions import Expression
 from pomagma.compiler.expressions import NotNegatable
 from pomagma.compiler.expressions import try_get_negated
 from pomagma.compiler.util import inputs
+from pomagma.compiler.util import set_with
 from pomagma.compiler.util import set_without
 from pomagma.compiler.util import union
 
@@ -230,6 +231,34 @@ def get_contrapositives(seq):
                 except Inconsistent:
                     continue
                 result.add(Sequent(antecedents, succedents))
+    return result
+
+
+@inputs(Sequent)
+def get_inverses(sequent):
+    '''
+    Given a sequent A |- B, return set of sequents ~A |- ~B,
+    dealing with multiple antecedents and succedents. For example
+
+        A, B |- C, D
+
+    yields the set
+
+        A, ~B |- ~C, ~D
+        ~A, B |- ~C, ~D
+    '''
+    result = set()
+    neg_succedents = union(try_get_negated(s) for s in sequent.succedents)
+    pos_antecedents = set(sequent.antecedents)
+    for pos_antecedent in pos_antecedents:
+        try:
+            negated = try_get_negated(pos_antecedent)
+        except NotNegatable:
+            negated = set()
+        for neg_antecedent in negated:
+            neg_antecedents = set_without(pos_antecedents, pos_antecedent)
+            neg_antecedents = set_with(neg_antecedents, neg_antecedent)
+            result.add(Sequent(neg_antecedents, neg_succedents))
     return result
 
 

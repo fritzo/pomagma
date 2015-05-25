@@ -23,6 +23,11 @@ EXAMPLES = [
              'LETS_UNARY_RELATION RETURN RETURN_x',
              'FOR_POS_NEG x LESS_x_I RETURN_x',
              'INFER_UNARY_RELATION RETURN x'),
+            ('FOR_NULLARY_FUNCTION I I_',
+             'LETS_BINARY_RELATION_RHS NLESS NLESS_x_I I_',
+             'LETS_UNARY_RELATION NRETURN NRETURN_x',
+             'FOR_POS_NEG x NLESS_x_I NRETURN_x',
+             'INFER_UNARY_RELATION NRETURN x'),
         ]),
     },
 ]

@@ -82,7 +82,8 @@ message AnalystResponse {
     repeated Symbol symbols = 1;
   }
   message Solve {
-    repeated string solutions = 1;
+    repeated string necessary = 1;
+    repeated string possible = 2;
   }
 
   repeated string error_log = 1;
