@@ -110,6 +110,7 @@ class Client(object):
         if max_solutions is not None:
             assert isinstance(max_solutions, (int, float)), max_solutions
         solutions = self._solve(result, constraints, max_solutions)
+        assert not (set(solutions['necessary']) & set(solutions['possible']))
         if max_solutions is not None:
             count = len(solutions['necessary']) + len(solutions['possible'])
             assert count <= max_solutions, solutions

@@ -37,6 +37,11 @@ def desugar(string):
     return str(expr)
 
 
+def is_invertible(succedent):
+    # TODO find better way to detect invertability
+    return succedent.arity in ['Variable', 'InjectiveFunction']
+
+
 def compile_solver(result, constraints):
     '''
     Produces programs that solve the problem {RETURN result | constraints}.
@@ -57,7 +62,9 @@ def compile_solver(result, constraints):
     succedent = RETURN(result)
     sequent = Sequent(antecedents, [succedent])
     sequent = desugar_sequent(sequent)
-    sequents = [sequent] + sorted(get_inverses(sequent))
+    sequents = [sequent]
+    if is_invertible(result):
+        sequents += sorted(get_inverses(sequent))
     sequents = [
         Sequent(s.antecedents, map(NONEGATE, s.succedents))
         for s in sequents

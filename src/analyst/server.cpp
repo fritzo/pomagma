@@ -144,6 +144,8 @@ Server::SolutionSet Server::solve (
     for (const auto & listing : listings) {
         m_virtual_machine.execute(listing.first);
     }
+    POMAGMA_ASSERT(m_return.get_set().disjoint(m_nreturn.get_set()),
+        "inconsistent query result; check programs:\n" << program);
 
     SolutionSet solutions;
     print_ob_set(m_return.get_set(), solutions.necessary, max_solutions);
@@ -151,8 +153,11 @@ Server::SolutionSet Server::solve (
     max_solutions -= solutions.necessary.size();
     if (max_solutions > 0) {
         // TODO only execute NRETURN programs if needed
-        DenseSet possible(m_nreturn.item_dim());
-        possible.set_diff(m_structure.carrier().support(), m_nreturn.get_set());
+        DenseSet possible(m_structure.carrier().item_dim());
+        possible.set_pnn(
+            m_structure.carrier().support(),
+            m_return.get_set(),
+            m_nreturn.get_set());
         print_ob_set(possible, solutions.possible, max_solutions);
     }
     return solutions;
