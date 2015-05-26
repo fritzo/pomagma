@@ -1,6 +1,6 @@
 import re
 from nose.tools import assert_set_equal
-from pomagma.compiler.util import for_each_kwargs
+from pomagma.testutil import for_each_kwargs
 from pomagma.analyst.compiler import compile_solver
 
 

@@ -1,7 +1,7 @@
 import os
-import functools
 from itertools import izip
-from nose.tools import assert_equal
+from nose.tools import assert_false
+from pomagma.testutil import for_each_context_args
 import pomagma.util
 import pomagma.surveyor
 import pomagma.cartographer
@@ -86,28 +86,14 @@ def test_inference():
     assert fail_count == 0, 'analyst failed with {} errors'.format(fail_count)
 
 
-def for_each_context_args(get_context, examples):
-
-    def decorator(fun):
-        state = {}
-
-        def fun_one(i):
-            fun(state['context'], *examples[i])
-
-        @functools.wraps(fun)
-        def decorated():
-            with get_context() as context:
-                state['context'] = context
-                for i in xrange(len(examples)):
-                    yield fun_one, i
-            del state['context']
-
-        return decorated
-    return decorator
+def assert_equal_example(expected, actual, example, cmp=cmp):
+    assert_false(cmp(expected, actual), '\n'.join([
+        'failed {}'.format(example),
+        'expected: {}'.format(expected),
+        'actual: {}'.format(actual)
+    ]))
 
 
-# TODO replace assert_examples with for_each_context_args
-# DEPRECATED
 def assert_examples(examples, expected, actual, cmp=cmp):
     assert len(expected) == len(examples)
     assert len(actual) == len(examples)
@@ -117,8 +103,7 @@ def assert_examples(examples, expected, actual, cmp=cmp):
             print 'WARNING {}\n  expected: {}\n  actual: {}'.format(
                 example, e, a)
     for example, e, a in izip(examples, expected, actual):
-        assert not cmp(e, a),\
-            'failed {}\n  expected: {}\n  actual: {}'.format(example, e, a)
+        assert_equal_example(e, a, example, cmp)
 
 
 def cmp_trool(x, y):
@@ -163,7 +148,7 @@ SOLVE_EXAMPLES = [
 @for_each_context_args(load, SOLVE_EXAMPLES)
 def test_solve(db, args, expected):
     actual = db.solve(*args)
-    assert_equal(actual['necessary'], expected)
+    assert_equal_example(expected, actual['necessary'], args)
 
 
 def test_validate():

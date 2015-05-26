@@ -1,7 +1,7 @@
 from nose.tools import assert_equal
 from nose.tools import assert_set_equal
 from pomagma.compiler.parser import parse_string_to_expr as parse
-from pomagma.compiler.util import for_each_kwargs
+from pomagma.testutil import for_each_kwargs
 
 
 EXAMPLES = [
