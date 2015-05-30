@@ -1,0 +1,84 @@
+package pomagma.protobuf;
+
+//----------------------------------------------------------------------------
+// raw data
+
+message SparseUnaryFunction {
+  repeated uint32 key = 2 [packed=true];
+  repeated uint32 val = 3 [packed=true];
+}
+
+message SparseBinaryFunction {
+  // chunked compressed sparse row (CSR) matrix
+  required uint32 lhs_begin = 1;
+  repeated uint32 lhs_ptr = 2 [packed=true];
+  repeated uint32 rhs = 3 [packed=true];
+  repeated uint32 val = 4 [packed=true];
+}
+
+message DenseSet {
+  required uint32 item_dim = 1;
+  required bytes mask = 2;
+}
+
+message DenseUnaryRelation {
+  required bytes mask = 1;
+}
+
+message DenseBinaryRelation {
+  // chunked dense row matrix
+  required uint32 lhs_begin = 1;
+  repeated bytes rhs_mask = 2;
+}
+
+//----------------------------------------------------------------------------
+// algebraic structure
+
+message NullaryFunction {
+  required string name = 1;
+  optional string hash = 2;
+  repeated string blobs = 3;
+  optional uint32 val = 4;
+}
+
+message UnaryFunction {
+  required string name = 1;
+  optional string hash = 2;
+  repeated string blobs = 3;
+  optional SparseUnaryFunction sparse = 4;
+}
+
+message BinaryFunction {
+  required string name = 1;
+  optional string hash = 2;
+  repeated string blobs = 3;
+  optional SparseBinaryFunction sparse = 4;
+}
+
+message UnaryRelation {
+  required string name = 1;
+  optional string hash = 2;
+  repeated string blobs = 3;
+  optional DenseUnaryRelation dense = 4;
+}
+
+message BinaryRelation {
+  required string name = 1;
+  optional string hash = 2;
+  repeated string blobs = 3;
+  optional DenseUnaryRelation dense = 4;
+}
+
+message Structure {
+  optional string hash = 1;
+
+  required DenseSet carrier = 10;
+
+  repeated NullaryFunction nullary_functions = 20; 
+  repeated UnaryFunction injective_functions = 21; 
+  repeated BinaryFunction binary_functions = 22; 
+  repeated BinaryFunction symmetric_functions = 23; 
+
+  repeated UnaryRelation unary_relations = 30;
+  repeated BinaryRelation binary_relations = 31;
+}

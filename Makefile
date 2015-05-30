@@ -6,6 +6,7 @@ all: bootstrap fixture FORCE
 	$(MAKE) tags codegen tasks debug release
 
 protobuf: FORCE
+	$(MAKE) -C src/platform
 	$(MAKE) -C src/language
 	$(MAKE) -C src/cartographer
 	$(MAKE) -C src/analyst
