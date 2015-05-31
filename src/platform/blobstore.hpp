@@ -16,7 +16,10 @@ inline std::string hash_file (const std::string & filename)
 }
 
 // returns path to read-only file
-std::string load_blob (const std::string & hexdigest);
+std::string find_blob (const std::string & hexdigest);
+
+// returns temp_path to write blob to
+std::string create_blob ();
 
 // returns digest to find file later; takes ownership of file
 std::string store_blob (const std::string & temp_path);

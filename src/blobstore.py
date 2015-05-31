@@ -19,14 +19,25 @@ def hash_file(filename):
     return sha.hexdigest()
 
 
-def load_blob(hexdigest):
+def find_blob(hexdigest):
     return os.path.join(BLOB_DIR, hexdigest)
+
+
+def create_blob():
+    if not hasattr(create_blob, 'counter'):
+        create_blob.counter = 0
+    count = create_blob.counter
+    create_blob.counter += 1
+    path = os.path.join(BLOB_DIR, 'temp.{}.{}'.format(os.getpid(), count))
+    if os.path.exists(path):
+        os.remove(path)
+    return path
 
 
 def store_blob(temp_path):
     assert os.path.exists(temp_path)
     hexdigest = hash_file(temp_path)
-    path = load_blob(hexdigest)
+    path = find_blob(hexdigest)
     if os.path.exists(path):
         os.remove(temp_path)
     else:
