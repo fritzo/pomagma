@@ -4,6 +4,7 @@ add_library(pomagma_platform_sequential SHARED
 	util.cpp
 	aligned_alloc.cpp
 	sequential/dense_set.cpp
+    hasher.cpp
 	profiler.cpp
 	structure.pb.cc
 	hdf5.cpp
@@ -13,6 +14,7 @@ add_library(pomagma_platform_concurrent SHARED
 	util.cpp
 	aligned_alloc.cpp
 	concurrent/dense_set.cpp
+    hasher.cpp
 	profiler.cpp
 	structure.pb.cc
 	hdf5.cpp
@@ -23,6 +25,12 @@ target_link_libraries(util_test
 	pomagma_platform_sequential
 	${POMAGMA_SEQUENTIAL_LIBS})
 add_test(NAME util COMMAND util_test)
+
+add_executable(hasher_test hasher_test.cpp)
+target_link_libraries(hasher_test
+	pomagma_platform_sequential
+	${POMAGMA_SEQUENTIAL_LIBS})
+add_test(NAME hasher COMMAND hasher_test)
 
 add_executable(threading_profile threading_profile.cpp)
 target_link_libraries(threading_profile

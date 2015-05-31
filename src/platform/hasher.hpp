@@ -85,6 +85,8 @@ public:
         }
     }
 
+    void add_file (const std::string & filename);
+
     const Digest & finish ()
     {
         POMAGMA_ASSERT1(m_state == ADDING,
@@ -133,5 +135,8 @@ private:
     State m_state;
     Digest m_data;
 };
+
+std::string print_digest (const Hasher::Digest & digest);
+Hasher::Digest parse_digest (const std::string & hex);
 
 } // namespace pomagma
