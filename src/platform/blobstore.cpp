@@ -4,14 +4,12 @@
 namespace pomagma
 {
 
-const char * BLOB_DIR = getenv_default("POMAGMA_BLOB_DIR", "TODO getcwd()");
+const char * BLOB_DIR = getenv("POMAGMA_BLOB_DIR");
 
 std::string load_blob (const std::string & hexdigest)
 {
-    POMAGMA_ASSERT(not endswith(BLOB_DIR, "/"),
-        "POMAGMA_BLOB_DIR has trailing /");
-
-    return std::string(BLOB_DIR) + "/" + hexdigest;
+    POMAGMA_ASSERT(BLOB_DIR, "POMAGMA_BLOB_DIR is not defined");
+    return rstrip(BLOB_DIR, "/") + "/" + hexdigest;
 }
 
 std::string store_blob (const std::string & temp_path)

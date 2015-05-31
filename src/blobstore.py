@@ -1,8 +1,11 @@
 import os
 import hashlib
+import stat
+import pomagma.util
 
-
-BLOB_DIR = os.environ.get('POMAGMA_BLOB_DIR', os.getcwd())
+BLOB_DIR = os.environ.get(
+    'POMAGMA_BLOB_DIR',
+    os.path.join(pomagma.util.DATA, 'blob'))
 
 
 def hash_file(filename):
@@ -28,4 +31,5 @@ def store_blob(temp_path):
         os.remove(temp_path)
     else:
         os.rename(temp_path, path)
+        os.chmod(path, stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
     return hexdigest

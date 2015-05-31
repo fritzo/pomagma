@@ -409,10 +409,20 @@ inline std::string get_filename (const std::string & path)
     }
 }
 
-inline bool endswith (std::string const & path, std::string const & suffix)
+inline bool endswith (const std::string & path, const std::string & suffix)
 {
     return suffix.size() <= path.size() and
         std::equal(suffix.rbegin(), suffix.rend(), path.rbegin());
+}
+
+inline std::string rstrip (std::string path, const std::string & suffix)
+{
+    if (size_t size = suffix.size()) {
+        while (endswith(path, suffix)) {
+            path = path.substr(0, path.size() - size);
+        }
+    }
+    return path;
 }
 
 // adapted from http://stackoverflow.com/questions/281818
