@@ -1,4 +1,4 @@
-package pomagma_messaging;
+package pomagma.messaging;
 
 message WeightedTerm {
   enum Arity {

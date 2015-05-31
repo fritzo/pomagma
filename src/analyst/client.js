@@ -11,7 +11,7 @@ var WARN = Debug('pomagma:analyst:warning');
 WARN.log = console.warn.bind(console);
 
 var proto = path.join(__dirname, 'messages.proto');
-var messages = protobuf.loadProtoFile(proto).build().pomagma_messaging;
+var messages = protobuf.loadProtoFile(proto).build().pomagma.messaging;
 var Request = messages.AnalystRequest;
 var Response = messages.AnalystResponse;
 

@@ -19,13 +19,8 @@
 #  include <memory>
 #endif  // __GNUG__
 
-namespace pomagma_messaging {}
-
 namespace pomagma
 {
-
-// rename pomagma_messaging to pomagma::messaging
-namespace messaging { using namespace pomagma_messaging; }
 
 //----------------------------------------------------------------------------
 // compiler-specific
