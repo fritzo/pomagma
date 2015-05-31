@@ -16,10 +16,16 @@ add_library(pomagma_platform_concurrent SHARED
 	hdf5.cpp
 )
 
+add_executable(util_test util_test.cpp)
+target_link_libraries(util_test
+	pomagma_platform_sequential
+	${POMAGMA_SEQUENTIAL_LIBS})
+add_test(NAME util COMMAND util_test)
+
 add_executable(threading_profile threading_profile.cpp)
 target_link_libraries(threading_profile
 	pomagma_platform_concurrent
-       	${POMAGMA_CONCURRENT_LIBS})
+	${POMAGMA_CONCURRENT_LIBS})
 
 add_executable(worker_pool_test worker_pool_test.cpp)
 target_link_libraries(worker_pool_test

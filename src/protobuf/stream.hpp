@@ -41,12 +41,6 @@ namespace pomagma
 namespace protobuf
 {
 
-inline bool endswith (const char * filename, const char * suffix)
-{
-    return strlen(filename) >= strlen(suffix) and
-        strcmp(filename + strlen(filename) - strlen(suffix), suffix) == 0;
-}
-
 class InFile : noncopyable
 {
 public:
@@ -194,7 +188,7 @@ private:
 
         file_ = new google::protobuf::io::FileInputStream(fid_);
 
-        if (endswith(filename_.c_str(), ".gz")) {
+        if (endswith(filename_, ".gz")) {
             gzip_ = new google::protobuf::io::GzipInputStream(file_);
             stream_ = gzip_;
         } else {
@@ -308,7 +302,7 @@ private:
 
         file_ = new google::protobuf::io::FileOutputStream(fid_);
 
-        if (endswith(filename_.c_str(), ".gz")) {
+        if (endswith(filename_, ".gz")) {
             gzip_ = new google::protobuf::io::GzipOutputStream(file_);
             stream_ = gzip_;
         } else {

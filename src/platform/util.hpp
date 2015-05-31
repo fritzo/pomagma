@@ -409,6 +409,12 @@ inline std::string get_filename (const std::string & path)
     }
 }
 
+inline bool endswith (std::string const & path, std::string const & suffix)
+{
+    return suffix.size() <= path.size() and
+        std::equal(suffix.rbegin(), suffix.rend(), path.rbegin());
+}
+
 // adapted from http://stackoverflow.com/questions/281818
 #ifdef __GNUG__
 inline std::string demangle (const char * name)
