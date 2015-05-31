@@ -11,6 +11,8 @@
 // BinaryFunction
 // SymmetricFunction
 #include <pomagma/platform/hdf5.hpp>
+#include <pomagma/platform/structure.pb.h>
+#include <pomagma/protobuf/stream.hpp>
 #include <array>
 #include <thread>
 #include <algorithm>
@@ -22,38 +24,28 @@ namespace pomagma
 //----------------------------------------------------------------------------
 // Interface
 
-inline void validate_consistent (
-        Signature & signature);
+void validate_consistent (Signature & signature);
+void validate (Signature & signature);
+void clear (Signature & signature);
+void clear_data (Signature & signature);
+void log_stats (Signature & signature);
 
-inline void validate (
-        Signature & signature);
+void dump (Signature & signature, const std::string & filename);
 
-inline void clear (
-        Signature & signature);
-
-inline void clear_data (
-        Signature & signature);
-
-inline void dump (
-        Signature & signature,
-        const std::string & filename);
-
-inline void load (
+void load (
         Signature & signature,
         const std::string & filename,
         size_t extra_item_dim = 0);
 
-inline void load_data (
+void load_data (
         Signature & signature,
         const std::string & filename);
 
-void log_stats (
-        Signature & signature);
 
 //----------------------------------------------------------------------------
 // Validation
 
-inline void validate_consistent (Signature & signature)
+void validate_consistent (Signature & signature)
 {
     POMAGMA_ASSERT(signature.carrier(), "carrier is not defined");
 
@@ -79,7 +71,7 @@ inline void validate_consistent (Signature & signature)
     }
 }
 
-inline void validate (Signature & signature)
+void validate (Signature & signature)
 {
     POMAGMA_ASSERT(signature.carrier(), "carrier is not defined");
 
@@ -138,8 +130,7 @@ inline void validate (Signature & signature)
 //----------------------------------------------------------------------------
 // Clearing
 
-inline void clear (
-        Signature & signature)
+void clear (Signature & signature)
 {
     POMAGMA_INFO("Clearing signature");
 
@@ -155,8 +146,7 @@ inline void clear (
     signature.clear();
 }
 
-inline void clear_data (
-        Signature & signature)
+void clear_data (Signature & signature)
 {
     POMAGMA_INFO("Clearing signature data");
     POMAGMA_ASSERT(signature.carrier(), "carrier is not defined");
@@ -526,12 +516,10 @@ inline void dump (
 
 } // namespace detail
 
-inline void dump (
+void hdf5_dump (
         Signature & signature,
         const std::string & filename)
 {
-    POMAGMA_INFO("Dumping structure to file " << filename);
-
     {
         hdf5::GlobalLock lock;
         hdf5::OutFile file(filename);
@@ -543,6 +531,37 @@ inline void dump (
         int info = chmod(filename.c_str(), S_IRUSR | S_IRGRP | S_IROTH);
         POMAGMA_ASSERT(info == 0,
             "chmod(" << filename << " , readonly) failed with code " << info);
+    }
+}
+
+void protobuf_dump (
+        Signature & signature,
+        const std::string & filename)
+{
+    protobuf::Structure structure;
+
+    TODO("add components to structure");
+
+    for (const auto & pair : signature.unary_relations()) {
+        auto & rel = * structure.add_unary_relations();
+        rel.set_name(pair.first);
+    }
+
+    protobuf_dump(structure, filename);
+}
+
+void dump (
+        Signature & signature,
+        const std::string & filename)
+{
+    POMAGMA_INFO("Dumping structure to file " << filename);
+
+    if (endswith(filename, ".h5")) {
+        hdf5_dump(signature, filename);
+    } else if (endswith(filename, ".pb") or endswith(filename, ".pb.gz")) {
+        protobuf_dump(signature, filename);
+    } else {
+        POMAGMA_ERROR("unknown file extension: " << filename);
     }
 
     POMAGMA_INFO("done dumping structure");

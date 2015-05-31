@@ -50,7 +50,7 @@ public:
         _open();
     }
 
-    InFile (const char * filename) : filename_(filename)
+    InFile (const std::string & filename) : filename_(filename)
     {
         POMAGMA_ASSERT(not filename_.empty(),
             "empty filename is not supported");
@@ -62,7 +62,7 @@ public:
         _close();
     }
 
-    const char * filename () const { return filename_.c_str(); }
+    const std::string & filename () const { return filename_; }
     bool is_file () const { return is_file_; }
 
     uint64_t position () const { return position_; }
@@ -145,7 +145,7 @@ public:
         uint32_t max_message_size;
     };
 
-    static StreamStats stream_stats (const char * filename)
+    static StreamStats stream_stats (const std::string & filename)
     {
         InFile file(filename);
 
@@ -229,7 +229,7 @@ public:
         _open();
     }
 
-    OutFile (const char * filename, int flags = 0) : filename_(filename)
+    OutFile (const std::string & filename, int flags = 0) : filename_(filename)
     {
         POMAGMA_ASSERT(not filename_.empty(),
             "empty filename is not supported");
@@ -245,7 +245,7 @@ public:
         }
     }
 
-    const char * filename () const { return filename_.c_str(); }
+    const std::string & filename () const { return filename_; }
     bool is_file () const { return is_file_; }
 
     template<class Message>
@@ -322,7 +322,7 @@ private:
 } // namespace protobuf
 
 template<class Message>
-Message protobuf_load (const char * filename)
+Message protobuf_load (const std::string & filename)
 {
     Message message;
     protobuf::InFile file(filename);
@@ -331,16 +331,16 @@ Message protobuf_load (const char * filename)
 }
 
 template<class Message>
-Message protobuf_dump (
+void protobuf_dump (
         const Message & message,
-        const char * filename)
+        const std::string & filename)
 {
     protobuf::OutFile file(filename);
     file.write(message);
 }
 
 template<class Message>
-std::vector<Message> protobuf_stream_load (const char * filename)
+std::vector<Message> protobuf_stream_load (const std::string & filename)
 {
     std::vector<Message> messages(1);
     protobuf::InFile stream(filename);
@@ -354,7 +354,7 @@ std::vector<Message> protobuf_stream_load (const char * filename)
 template<class Message>
 void protobuf_stream_dump (
         const std::vector<Message> & messages,
-        const char * filename)
+        const std::string & filename)
 {
     protobuf::OutFile stream(filename);
     for (const auto & message : messages) {
