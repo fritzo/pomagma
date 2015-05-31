@@ -1060,13 +1060,11 @@ inline void load_data (
 
 } // namespace detail
 
-inline void load (
+void hdf5_load (
         Signature & signature,
         const std::string & filename,
         size_t extra_item_dim)
 {
-    POMAGMA_INFO("Loading structure from file " << filename);
-
     hdf5::GlobalLock lock;
     hdf5::InFile file(filename);
 
@@ -1077,7 +1075,41 @@ inline void load (
     detail::load_data(signature, file);
 }
 
-inline void load_data (
+void protobuf_load (
+        Signature & signature,
+        const std::string & filename,
+        size_t extra_item_dim)
+{
+    const auto structure = protobuf_load<protobuf::Structure>(filename);
+
+    clear(signature);
+    size_t source_item_dim = structure.carrier().item_dim();
+    size_t destin_item_dim = source_item_dim + extra_item_dim;
+    signature.declare(* new Carrier(destin_item_dim));
+
+    TODO("load signature");
+    TODO("load data");
+}
+
+void load (
+        Signature & signature,
+        const std::string & filename,
+        size_t extra_item_dim)
+{
+    POMAGMA_INFO("Loading structure from file " << filename);
+
+    if (endswith(filename, ".h5")) {
+        hdf5_load(signature, filename, extra_item_dim);
+    } else if (endswith(filename, ".pb") or endswith(filename, ".pb.gz")) {
+        protobuf_load(signature, filename, extra_item_dim);
+    } else {
+        POMAGMA_ERROR("unknown file extension: " << filename);
+    }
+
+    POMAGMA_INFO("done loading structure");
+}
+
+void hdf5_load_data (
         Signature & signature,
         const std::string & filename)
 {
@@ -1089,6 +1121,40 @@ inline void load_data (
 
     detail::check_signature(signature, file);
     detail::load_data(signature, file);
+}
+
+void protobuf_load_data (
+        Signature & signature,
+        const std::string & filename)
+{
+    const auto structure = protobuf_load<protobuf::Structure>(filename);
+
+    POMAGMA_INFO("Loading structure data");
+
+    POMAGMA_ASSERT(signature.carrier(), "carrier is not defined");
+    Carrier & carrier = * signature.carrier();
+
+    size_t source_item_dim = structure.carrier().item_dim();
+    POMAGMA_ASSERT_LE(source_item_dim, carrier.item_dim());
+
+    TODO("load data");
+}
+
+void load_data (
+        Signature & signature,
+        const std::string & filename)
+{
+    POMAGMA_INFO("Loading structure from file " << filename);
+
+    if (endswith(filename, ".h5")) {
+        hdf5_load_data(signature, filename);
+    } else if (endswith(filename, ".pb") or endswith(filename, ".pb.gz")) {
+        protobuf_load_data(signature, filename);
+    } else {
+        POMAGMA_ERROR("unknown file extension: " << filename);
+    }
+
+    POMAGMA_INFO("done loading structure");
 }
 
 //----------------------------------------------------------------------------
