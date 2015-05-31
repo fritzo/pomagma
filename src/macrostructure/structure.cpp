@@ -1,5 +1,5 @@
 #include "structure_impl.hpp"
-#include <pomagma/platform/structure.hpp>
+#include <pomagma/platform/structure_impl.hpp>
 
 namespace pomagma
 {
