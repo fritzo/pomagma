@@ -7,7 +7,6 @@ add_library(pomagma_platform_sequential SHARED
 	hasher.cpp
 	blobstore.cpp
 	profiler.cpp
-	structure.pb.cc
 	hdf5.cpp
 )
 
@@ -18,7 +17,6 @@ add_library(pomagma_platform_concurrent SHARED
 	hasher.cpp
 	blobstore.cpp
 	profiler.cpp
-	structure.pb.cc
 	hdf5.cpp
 )
 

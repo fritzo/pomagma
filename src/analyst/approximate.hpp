@@ -2,7 +2,7 @@
 
 #include <pomagma/macrostructure/util.hpp>
 #include <pomagma/macrostructure/structure_impl.hpp>
-#include <pomagma/platform/parser.hpp>
+#include <pomagma/structure/parser.hpp>
 
 namespace pomagma
 {

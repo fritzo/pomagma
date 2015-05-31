@@ -19,9 +19,6 @@ add_executable(analyst
 	messages.pb.cc
 )
 target_link_libraries(analyst
-	pomagma_macrostructure
-	pomagma_platform_sequential
-	pomagma_language
-	${POMAGMA_SEQUENTIAL_LIBS}
+	${POMAGMA_MACROSTRUCTURE_LIBS}
 	zmq
 )

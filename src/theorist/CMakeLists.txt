@@ -8,10 +8,7 @@ add_library(pomagma_theorist SHARED
 )
 set(POMAGMA_THEORIST_LIBS
 	pomagma_theorist
-	pomagma_macrostructure
-	pomagma_platform_sequential
-	pomagma_language
-	${POMAGMA_SEQUENTIAL_LIBS}
+	${POMAGMA_MACROSTRUCTURE_LIBS}
 )
 
 add_executable(try_prove_nless try_prove_nless_main.cpp)

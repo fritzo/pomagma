@@ -2,16 +2,14 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 
 add_library(pomagma_surveyor SHARED theory.cpp)
 
-set(POMAGMA_SURVEYOR_LIBS
-	pomagma_microstructure
-	pomagma_platform_concurrent
-	pomagma_language
+add_executable(init init_main.cpp)
+target_link_libraries(init
 	pomagma_surveyor
-	${POMAGMA_CONCURRENT_LIBS}
+	${POMAGMA_MICROSTRUCTURE_LIBS}
 )
 
-add_executable(init init_main.cpp)
-target_link_libraries(init ${POMAGMA_SURVEYOR_LIBS})
-
 add_executable(survey survey_main.cpp)
-target_link_libraries(survey ${POMAGMA_SURVEYOR_LIBS})
+target_link_libraries(survey
+	pomagma_surveyor
+	${POMAGMA_MICROSTRUCTURE_LIBS}
+)

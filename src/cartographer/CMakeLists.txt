@@ -21,11 +21,8 @@ add_executable(cartographer
 	../theorist/conjecture_equal.cpp
 	../theorist/hypothesize.cpp
        	messages.pb.cc
-	)
+)
 target_link_libraries(cartographer
-	pomagma_macrostructure
-	pomagma_platform_sequential
-	pomagma_language
-	${POMAGMA_SEQUENTIAL_LIBS}
+	${POMAGMA_MACROSTRUCTURE_LIBS}
 	zmq
 )

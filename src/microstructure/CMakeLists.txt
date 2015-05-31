@@ -14,20 +14,11 @@ add_library(pomagma_microstructure SHARED
 	scheduler.cpp
 	vm.cpp
 )
-set(POMAGMA_MICROSTRUCTURE_LIBS
-	pomagma_microstructure
-	pomagma_platform_concurrent
-	pomagma_language
-	${POMAGMA_CONCURRENT_LIBS}
-)
 
 add_library(pomagma_microstructure_dummy SHARED dummy.theory.cpp)
 set(POMAGMA_MICROSTRUCTURE_TEST_LIBS
-	pomagma_microstructure
+	${POMAGMA_MICROSTRUCTURE_LIBS}
 	pomagma_microstructure_dummy
-	pomagma_platform_concurrent
-	pomagma_language
-	${POMAGMA_CONCURRENT_LIBS}
 )
 
 add_executable(microstructure_carrier_test carrier_test.cpp)

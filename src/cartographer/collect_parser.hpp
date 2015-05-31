@@ -1,6 +1,6 @@
 #pragma once
 
-#include <pomagma/platform/parser.hpp>
+#include <pomagma/structure/parser.hpp>
 #include <pomagma/macrostructure/structure_impl.hpp>
 
 namespace pomagma

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <pomagma/platform/util.hpp>
-#include <pomagma/platform/signature.hpp>
+#include <pomagma/structure/signature.hpp>
 
 namespace pomagma
 {

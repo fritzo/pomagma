@@ -1,5 +1,5 @@
 #include <pomagma/analyst/simplify.hpp>
-#include <pomagma/platform/parser.hpp>
+#include <pomagma/structure/parser.hpp>
 
 namespace pomagma
 {

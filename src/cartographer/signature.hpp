@@ -1,7 +1,7 @@
 #pragma once
 
 #include <pomagma/macrostructure/util.hpp>
-#include <pomagma/platform/signature.hpp>
+#include <pomagma/structure/signature.hpp>
 #include <pomagma/platform/sequential/dense_set.hpp>
 
 namespace pomagma
