@@ -95,4 +95,9 @@ Pomagma is parallelized and needs lots of memory to build a large atlas.
 ## License
 
 Copyright 2005-2015 Fritz Obermeyer.<br/>
-All code is licensed under the [Apache 2.0](/LICENSE) unless otherwise noted.
+All code is licensed under the [Apache 2.0 License](/LICENSE)
+unless otherwise noted.
+
+Code in [/src/protobuf](/src/protobuf)
+is Copyright 2014 Salesforce.com, Inc.<br/>
+and released under the [Revised BSD License](/src/protobuf/LICENSE).
