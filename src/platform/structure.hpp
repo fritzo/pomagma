@@ -279,7 +279,7 @@ inline void assert_contiguous (const Carrier & carrier)
             "dumping requires contiguous carrier; try compacting first");
 }
 
-inline void dump (
+inline void dump_h5 (
         const Carrier & carrier,
         hdf5::OutFile & file)
 {
@@ -304,7 +304,7 @@ inline void dump (
     hdf5::dump_hash(group, digest);
 }
 
-inline void dump (
+inline void dump_h5 (
         const Carrier & carrier,
         const UnaryRelation & rel,
         hdf5::OutFile & file,
@@ -333,7 +333,7 @@ inline void dump (
     hdf5::dump_hash(dataset, digest);
 }
 
-inline void dump (
+inline void dump_h5 (
         const Carrier & carrier,
         const BinaryRelation & rel,
         hdf5::OutFile & file,
@@ -360,7 +360,7 @@ inline void dump (
     hdf5::dump_hash(dataset, digest);
 }
 
-inline void dump (
+inline void dump_h5 (
         const Carrier & carrier,
         const NullaryFunction & fun,
         hdf5::OutFile & file,
@@ -386,7 +386,7 @@ inline void dump (
     hdf5::dump_hash(group3, digest);
 }
 
-inline void dump (
+inline void dump_h5 (
         const Carrier & carrier,
         const InjectiveFunction & fun,
         hdf5::OutFile & file,
@@ -419,7 +419,7 @@ inline void dump (
 }
 
 template<class Function>
-inline void dump (
+inline void dump_h5 (
         const Carrier & carrier,
         const Function & fun,
         hdf5::OutFile & file,
@@ -482,7 +482,7 @@ inline void dump (
     hdf5::dump_hash(group3, digest);
 }
 
-inline void dump (
+inline void dump_h5 (
         Signature & signature,
         hdf5::OutFile & file)
 {
@@ -491,24 +491,24 @@ inline void dump (
     detail::assert_contiguous(carrier);
 
     // TODO parallelize
-    detail::dump(carrier, file);
+    detail::dump_h5(carrier, file);
     for (const auto & pair : signature.unary_relations()) {
-        detail::dump(carrier, * pair.second, file, pair.first);
+        detail::dump_h5(carrier, * pair.second, file, pair.first);
     }
     for (const auto & pair : signature.binary_relations()) {
-        detail::dump(carrier, * pair.second, file, pair.first);
+        detail::dump_h5(carrier, * pair.second, file, pair.first);
     }
     for (const auto & pair : signature.nullary_functions()) {
-        detail::dump(carrier, * pair.second, file, pair.first);
+        detail::dump_h5(carrier, * pair.second, file, pair.first);
     }
     for (const auto & pair : signature.injective_functions()) {
-        detail::dump(carrier, * pair.second, file, pair.first);
+        detail::dump_h5(carrier, * pair.second, file, pair.first);
     }
     for (const auto & pair : signature.binary_functions()) {
-        detail::dump(carrier, * pair.second, file, "binary", pair.first);
+        detail::dump_h5(carrier, * pair.second, file, "binary", pair.first);
     }
     for (const auto & pair : signature.symmetric_functions()) {
-        detail::dump(carrier, * pair.second, file, "symmetric", pair.first);
+        detail::dump_h5(carrier, * pair.second, file, "symmetric", pair.first);
     }
 
     auto digest = hdf5::get_tree_hash(file);
@@ -517,14 +517,14 @@ inline void dump (
 
 } // namespace detail
 
-void hdf5_dump (
+void dump_h5 (
         Signature & signature,
         const std::string & filename)
 {
     {
         hdf5::GlobalLock lock;
         hdf5::OutFile file(filename);
-        detail::dump(signature, file);
+        detail::dump_h5(signature, file);
     }
 
     bool readonly = true;
@@ -535,18 +535,230 @@ void hdf5_dump (
     }
 }
 
-void protobuf_dump (
+namespace detail
+{
+
+inline void dump_pb (
+        const DenseSet & set,
+        protobuf::DenseSet & message)
+{
+    message.set_item_dim(set.item_dim());
+    message.set_mask(set.raw_data(), set.data_size_bytes());
+}
+
+inline void dump_pb (
+        const Carrier & carrier,
+        protobuf::Structure & structure)
+{
+    POMAGMA_DEBUG("dumping carrier");
+    auto & message = * structure.mutable_carrier();
+    message.set_hash(Hasher::str(get_hash(carrier)));
+    message.set_item_dim(carrier.item_dim());
+}
+
+inline void dump_pb (
+        const Carrier & carrier __attribute__((unused)),
+        const UnaryRelation & rel,
+        protobuf::Structure & structure,
+        const std::string & name)
+{
+    POMAGMA_DEBUG("dumping unary relation " << name);
+    auto & message = * structure.add_unary_relations();
+    message.set_name(name);
+    message.set_hash(Hasher::str(get_hash(rel)));
+
+    const std::string temp_path = create_blob();
+    protobuf::DenseSet chunk;
+    dump_pb(rel.get_set(), chunk);
+    protobuf_dump(chunk, temp_path);
+    message.add_blobs(store_blob(temp_path));
+}
+
+inline void dump_pb (
+        const Carrier & carrier,
+        const BinaryRelation & rel,
+        protobuf::Structure & structure,
+        const std::string & name)
+{
+    POMAGMA_DEBUG("dumping binary relation " << name);
+    auto & message = * structure.add_binary_relations();
+    message.set_name(name);
+    message.set_hash(Hasher::str(get_hash(carrier, rel)));
+
+    const std::string temp_path = create_blob();
+    {
+        protobuf::OutFile file(temp_path);
+        protobuf::BinaryRelation::Row chunk;
+        for (auto i = carrier.support().iter(); i.ok(); i.next()) {
+            Ob lhs = *i;
+            chunk.set_lhs(lhs);
+            dump_pb(rel.get_Lx_set(lhs), * chunk.mutable_rhs());
+            file.write_stream(chunk);
+        }
+    }
+    message.add_blobs(store_blob(temp_path));
+}
+
+inline void dump_pb (
+        const Carrier & carrier __attribute__((unused)),
+        const NullaryFunction & fun,
+        protobuf::Structure & structure,
+        const std::string & name)
+{
+    POMAGMA_DEBUG("dumping nullary function " << name);
+    auto & message = * structure.add_nullary_functions();
+    message.set_name(name);
+    message.set_hash(Hasher::str(get_hash(fun)));
+    if (Ob val = fun.find()) {
+        message.set_val(val);
+    }
+}
+
+inline void dump_pb (
+        const Carrier & carrier __attribute__((unused)),
+        const InjectiveFunction & fun,
+        protobuf::Structure & structure,
+        const std::string & name)
+{
+    POMAGMA_DEBUG("dumping injective function " << name);
+    auto & message = * structure.add_injective_functions();
+    message.set_name(name);
+    message.set_hash(Hasher::str(get_hash(fun)));
+
+    const std::string temp_path = create_blob();
+    protobuf::SparseMap chunk;
+    for (auto key = fun.iter(); key.ok(); key.next()) {
+        chunk.add_key(* key);
+        chunk.add_val(fun.raw_find(* key));
+    }
+    protobuf_dump(chunk, temp_path);
+    message.add_blobs(store_blob(temp_path));
+}
+
+inline void dump_pb (
+        const Carrier & carrier,
+        const BinaryFunction & fun,
+        protobuf::Structure & structure,
+        const std::string & name)
+{
+    POMAGMA_DEBUG("dumping binary function " << name);
+    auto & message = * structure.add_binary_functions();
+    message.set_name(name);
+    message.set_hash(Hasher::str(get_hash(carrier, fun)));
+
+    const std::string temp_path = create_blob();
+    {
+        protobuf::OutFile file(temp_path);
+        protobuf::BinaryFunction::Row chunk;
+        for (auto lhs = carrier.support().iter(); lhs.ok(); lhs.next()) {
+            chunk.set_lhs(* lhs);
+            auto & rhs_val = * chunk.mutable_rhs_val();
+            rhs_val.clear_key();
+            rhs_val.clear_val();
+            for (auto rhs = fun.iter_lhs(* lhs); rhs.ok(); rhs.next()) {
+                rhs_val.add_key(* rhs);
+                rhs_val.add_val(fun.raw_find(* lhs, * rhs));
+            }
+            file.write_stream(chunk);
+        }
+    }
+    message.add_blobs(store_blob(temp_path));
+}
+
+inline void dump_pb (
+        const Carrier & carrier,
+        const SymmetricFunction & fun,
+        protobuf::Structure & structure,
+        const std::string & name)
+{
+    POMAGMA_DEBUG("dumping symmetric function " << name);
+    auto & message = * structure.add_symmetric_functions();
+    message.set_name(name);
+    message.set_hash(Hasher::str(get_hash(carrier, fun)));
+
+    const std::string temp_path = create_blob();
+    {
+        protobuf::OutFile file(temp_path);
+        protobuf::BinaryFunction::Row chunk;
+        for (auto lhs = carrier.support().iter(); lhs.ok(); lhs.next()) {
+            chunk.set_lhs(* lhs);
+            auto & rhs_val = * chunk.mutable_rhs_val();
+            rhs_val.clear_key();
+            rhs_val.clear_val();
+            for (auto rhs = fun.iter_lhs(* lhs); rhs.ok(); rhs.next()) {
+                rhs_val.add_key(* rhs);
+                rhs_val.add_val(fun.raw_find(* lhs, * rhs));
+            }
+            file.write_stream(chunk);
+        }
+    }
+    message.add_blobs(store_blob(temp_path));
+}
+
+inline Hasher::Digest get_tree_hash_pb (const protobuf::Structure & structure)
+{
+    Hasher::Dict dict;
+
+    // TODO use protobuf reflection or something cleaner
+#define CASE_ARITY(arity1, arity2)                                            \
+    for (const auto & i : structure.arity2 ## _  ## arity1()) {               \
+        dict["/" #arity1 "/" #arity2 "/" + i.name()] = parse_digest(i.hash());\
+    }
+
+    CASE_ARITY(relations, unary)
+    CASE_ARITY(relations, binary)
+    CASE_ARITY(functions, nullary)
+    CASE_ARITY(functions, injective)
+    CASE_ARITY(functions, binary)
+    CASE_ARITY(functions, symmetric)
+
+#undef CASE_ARITY
+
+    return Hasher::digest(dict);
+}
+
+inline void dump_pb (
+        Signature & signature,
+        protobuf::Structure & structure)
+{
+    POMAGMA_ASSERT(signature.carrier(), "carrier is not defined");
+    const Carrier & carrier = * signature.carrier();
+    detail::assert_contiguous(carrier);
+
+    // TODO parallelize
+    detail::dump_pb(carrier, structure);
+    for (const auto & pair : signature.unary_relations()) {
+        detail::dump_pb(carrier, * pair.second, structure, pair.first);
+    }
+    for (const auto & pair : signature.binary_relations()) {
+        detail::dump_pb(carrier, * pair.second, structure, pair.first);
+    }
+    for (const auto & pair : signature.nullary_functions()) {
+        detail::dump_pb(carrier, * pair.second, structure, pair.first);
+    }
+    for (const auto & pair : signature.injective_functions()) {
+        detail::dump_pb(carrier, * pair.second, structure, pair.first);
+    }
+    for (const auto & pair : signature.binary_functions()) {
+        detail::dump_pb(carrier, * pair.second, structure, pair.first);
+    }
+    for (const auto & pair : signature.symmetric_functions()) {
+        detail::dump_pb(carrier, * pair.second, structure, pair.first);
+    }
+
+    auto digest = get_tree_hash_pb(structure);
+    structure.set_hash(Hasher::str(digest));
+}
+
+} // namespace detail
+
+void dump_pb (
         Signature & signature,
         const std::string & filename)
 {
     protobuf::Structure structure;
 
-    TODO("add components to structure");
-
-    for (const auto & pair : signature.unary_relations()) {
-        auto & rel = * structure.add_unary_relations();
-        rel.set_name(pair.first);
-    }
+    detail::dump_pb(signature, structure);
 
     protobuf_dump(structure, filename);
 }
@@ -558,9 +770,9 @@ void dump (
     POMAGMA_INFO("Dumping structure to file " << filename);
 
     if (endswith(filename, ".h5")) {
-        hdf5_dump(signature, filename);
+        dump_h5(signature, filename);
     } else if (endswith(filename, ".pb") or endswith(filename, ".pb.gz")) {
-        protobuf_dump(signature, filename);
+        dump_pb(signature, filename);
     } else {
         POMAGMA_ERROR("unknown file extension: " << filename);
     }
@@ -1061,7 +1273,7 @@ inline void load_data (
 
 } // namespace detail
 
-void hdf5_load (
+void load_h5 (
         Signature & signature,
         const std::string & filename,
         size_t extra_item_dim)
@@ -1076,7 +1288,7 @@ void hdf5_load (
     detail::load_data(signature, file);
 }
 
-void protobuf_load (
+void load_pb (
         Signature & signature,
         const std::string & filename,
         size_t extra_item_dim)
@@ -1100,9 +1312,9 @@ void load (
     POMAGMA_INFO("Loading structure from file " << filename);
 
     if (endswith(filename, ".h5")) {
-        hdf5_load(signature, filename, extra_item_dim);
+        load_h5(signature, filename, extra_item_dim);
     } else if (endswith(filename, ".pb") or endswith(filename, ".pb.gz")) {
-        protobuf_load(signature, filename, extra_item_dim);
+        load_pb(signature, filename, extra_item_dim);
     } else {
         POMAGMA_ERROR("unknown file extension: " << filename);
     }
@@ -1110,7 +1322,7 @@ void load (
     POMAGMA_INFO("done loading structure");
 }
 
-void hdf5_load_data (
+void load_data_h5 (
         Signature & signature,
         const std::string & filename)
 {
@@ -1124,7 +1336,7 @@ void hdf5_load_data (
     detail::load_data(signature, file);
 }
 
-void protobuf_load_data (
+void load_data_pb (
         Signature & signature,
         const std::string & filename)
 {
@@ -1148,9 +1360,9 @@ void load_data (
     POMAGMA_INFO("Loading structure from file " << filename);
 
     if (endswith(filename, ".h5")) {
-        hdf5_load_data(signature, filename);
+        load_data_h5(signature, filename);
     } else if (endswith(filename, ".pb") or endswith(filename, ".pb.gz")) {
-        protobuf_load_data(signature, filename);
+        load_data_pb(signature, filename);
     } else {
         POMAGMA_ERROR("unknown file extension: " << filename);
     }

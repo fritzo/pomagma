@@ -107,14 +107,17 @@ public:
         return m_data;
     }
 
-
     std::string str () const
     {
         POMAGMA_ASSERT(m_state == FINISHED,
                 "printing a Hasher when not finished");
+        return str(m_data);
+    }
 
+    static std::string str (const Digest & digest)
+    {
         std::ostringstream o;
-        for (int i : m_data) {
+        for (int i : digest) {
             o << std::setw(2) << std::hex << std::nouppercase
               << std::setfill('0') << i;
         }

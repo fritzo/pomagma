@@ -18,7 +18,7 @@ inline bool path_exists (const std::string& path)
 std::string find_blob (const std::string & hexdigest)
 {
     POMAGMA_ASSERT(BLOB_DIR, "POMAGMA_BLOB_DIR is not defined");
-    return rstrip(BLOB_DIR, "/") + "/" + hexdigest;
+    return rstrip(BLOB_DIR, "/") + "/" + hexdigest + ".gz";
 }
 
 std::string create_blob ()
@@ -26,9 +26,10 @@ std::string create_blob ()
     POMAGMA_ASSERT(BLOB_DIR, "POMAGMA_BLOB_DIR is not defined");
     POMAGMA_ASSERT(path_exists(BLOB_DIR), "POMAGMA_BLOB_DIR does not exist");
     static std::atomic<uint_fast64_t> counter;
+    size_t pid = getpid();
     size_t count = counter++;
     std::ostringstream stream;
-    stream << rstrip(BLOB_DIR, "/") << "/temp." << getpid() << "." << count;
+    stream << rstrip(BLOB_DIR, "/") << "/temp." << pid << "." << count << ".gz";
     std::string path = stream.str();
     if (path_exists(path)) {
         std::remove(path.c_str());

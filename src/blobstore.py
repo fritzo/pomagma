@@ -20,7 +20,7 @@ def hash_file(filename):
 
 
 def find_blob(hexdigest):
-    return os.path.join(BLOB_DIR, hexdigest)
+    return os.path.join(BLOB_DIR, '{}.gz'.format(hexdigest))
 
 
 def create_blob():
@@ -28,7 +28,7 @@ def create_blob():
         create_blob.counter = 0
     count = create_blob.counter
     create_blob.counter += 1
-    path = os.path.join(BLOB_DIR, 'temp.{}.{}'.format(os.getpid(), count))
+    path = os.path.join(BLOB_DIR, 'temp.{}.{}.gz'.format(os.getpid(), count))
     if os.path.exists(path):
         os.remove(path)
     return path
