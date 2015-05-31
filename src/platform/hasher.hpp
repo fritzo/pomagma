@@ -115,7 +115,8 @@ public:
 
         std::ostringstream o;
         for (int i : m_data) {
-            o << std::setw(2) << std::hex << std::setfill('0') << i;
+            o << std::setw(2) << std::hex << std::nouppercase
+              << std::setfill('0') << i;
         }
         return o.str();
     }
