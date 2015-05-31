@@ -8,7 +8,7 @@
 #include <array>
 #include <map>
 
-// one of these should be included
+// Assumes one of the following is included:
 //#include <pomagma/platform/sequential/dense_set.hpp>
 //#include <pomagma/platform/concurrent/dense_set.hpp>
 
