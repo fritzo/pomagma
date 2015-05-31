@@ -699,6 +699,8 @@ inline Hasher::Digest get_tree_hash_pb (const protobuf::Structure & structure)
 {
     Hasher::Dict dict;
 
+    dict["/carrier"] = parse_digest(structure.carrier().hash());
+
     // TODO use protobuf reflection or something cleaner
 #define CASE_ARITY(arity1, arity2)                                            \
     for (const auto & i : structure.arity2 ## _  ## arity1()) {               \
