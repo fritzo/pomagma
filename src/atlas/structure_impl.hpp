@@ -12,7 +12,7 @@
 // SymmetricFunction
 #include <pomagma/util/blobstore.hpp>
 #include <pomagma/util/hdf5.hpp>
-#include <pomagma/atlas/structure.pb.h>
+#include <pomagma/atlas/messages.pb.h>
 #include <pomagma/protobuf/stream.hpp>
 #include <array>
 #include <thread>
