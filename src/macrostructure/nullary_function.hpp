@@ -2,7 +2,7 @@
 
 #include "util.hpp"
 #include "carrier.hpp"
-#include <pomagma/platform/sequential/dense_set.hpp>
+#include <pomagma/util/sequential/dense_set.hpp>
 
 namespace pomagma
 {

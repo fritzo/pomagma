@@ -1,5 +1,5 @@
 #include "theory.hpp"
-#include <pomagma/platform/profiler.hpp>
+#include <pomagma/util/profiler.hpp>
 #include <pomagma/microstructure/sampler.hpp>
 #include <pomagma/microstructure/structure_impl.hpp>
 #include <pomagma/microstructure/scheduler.hpp>

@@ -1,5 +1,5 @@
 #include <pomagma/analyst/cached_approximator.hpp>
-#include <pomagma/platform/hash_map.hpp>
+#include <pomagma/util/hash_map.hpp>
 
 namespace pomagma
 {

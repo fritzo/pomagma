@@ -2,7 +2,7 @@
 
 #include <pomagma/macrostructure/util.hpp>
 #include <pomagma/atlas/signature.hpp>
-#include <pomagma/platform/sequential/dense_set.hpp>
+#include <pomagma/util/sequential/dense_set.hpp>
 
 namespace pomagma
 {

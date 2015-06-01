@@ -1,5 +1,5 @@
 #include "corpus.hpp"
-#include <pomagma/platform/unique_set.hpp>
+#include <pomagma/util/unique_set.hpp>
 #include <map>
 #include <queue>
 

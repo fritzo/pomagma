@@ -1,6 +1,6 @@
 #pragma once
 
-#include <pomagma/platform/util.hpp>
+#include <pomagma/util/util.hpp>
 #include <pomagma/atlas/signature.hpp>
 #include <tuple>
 

@@ -1,7 +1,7 @@
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
-set(POMAGMA_PLATFORM_LIBS
-	pomagma_platform
+set(POMAGMA_UTIL_LIBS
+	pomagma_util
 	tbb
 	hdf5 hdf5_hl
 	crypto ssl
@@ -12,17 +12,17 @@ set(POMAGMA_MACROSTRUCTURE_LIBS
 	pomagma_macrostructure
 	pomagma_structure_macro
 	pomagma_language
-	${POMAGMA_PLATFORM_LIBS}
+	${POMAGMA_UTIL_LIBS}
 )
 
 set(POMAGMA_MICROSTRUCTURE_LIBS
 	pomagma_microstructure
 	pomagma_structure_micro
 	pomagma_language
-	${POMAGMA_PLATFORM_LIBS}
+	${POMAGMA_UTIL_LIBS}
 )
 
-add_subdirectory(platform)
+add_subdirectory(util)
 add_subdirectory(language)
 add_subdirectory(atlas)
 add_subdirectory(microstructure)

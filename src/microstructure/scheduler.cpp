@@ -1,5 +1,5 @@
 #include "scheduler.hpp"
-#include <pomagma/platform/threading.hpp>
+#include <pomagma/util/threading.hpp>
 #include <vector>
 #include <thread>
 #include <condition_variable>

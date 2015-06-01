@@ -1,5 +1,5 @@
 #include "nullary_function.hpp"
-#include <pomagma/platform/aligned_alloc.hpp>
+#include <pomagma/util/aligned_alloc.hpp>
 #include <cstring>
 
 namespace pomagma

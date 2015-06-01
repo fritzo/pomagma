@@ -7,8 +7,8 @@
 // InjectiveFunction
 // BinaryFunction
 // SymmetricFunction
-#include <pomagma/platform/util.hpp>
-#include <pomagma/platform/threading.hpp>
+#include <pomagma/util/util.hpp>
+#include <pomagma/util/threading.hpp>
 #include <pomagma/atlas/signature.hpp>
 
 namespace pomagma

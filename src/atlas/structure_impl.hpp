@@ -10,8 +10,8 @@
 // InjectiveFunction
 // BinaryFunction
 // SymmetricFunction
-#include <pomagma/platform/blobstore.hpp>
-#include <pomagma/platform/hdf5.hpp>
+#include <pomagma/util/blobstore.hpp>
+#include <pomagma/util/hdf5.hpp>
 #include <pomagma/atlas/structure.pb.h>
 #include <pomagma/protobuf/stream.hpp>
 #include <array>

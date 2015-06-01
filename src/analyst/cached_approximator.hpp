@@ -1,9 +1,9 @@
 #pragma once
 
 #include <pomagma/analyst/approximate.hpp>
-#include <pomagma/platform/hash_map.hpp>
-#include <pomagma/platform/async_map.hpp>
-#include <pomagma/platform/unique_set.hpp>
+#include <pomagma/util/hash_map.hpp>
+#include <pomagma/util/async_map.hpp>
+#include <pomagma/util/unique_set.hpp>
 #include <tbb/concurrent_unordered_map.h>
 
 namespace pomagma

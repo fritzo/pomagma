@@ -2,7 +2,7 @@
 
 #include <pomagma/macrostructure/util.hpp>
 #include <pomagma/analyst/approximate.hpp>
-#include <pomagma/platform/hash_map.hpp>
+#include <pomagma/util/hash_map.hpp>
 #include <unordered_set>
 
 namespace pomagma

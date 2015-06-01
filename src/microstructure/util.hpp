@@ -1,6 +1,6 @@
 #pragma once
 
-#include <pomagma/platform/util.hpp>
+#include <pomagma/util/util.hpp>
 #include <atomic>
 
 #define POMAGMA_HAS_INVERSE_INDEX (1)

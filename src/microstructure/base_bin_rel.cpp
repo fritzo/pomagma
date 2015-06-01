@@ -1,5 +1,5 @@
 #include "base_bin_rel.hpp"
-#include <pomagma/platform/aligned_alloc.hpp>
+#include <pomagma/util/aligned_alloc.hpp>
 #include <cstring>
 
 namespace pomagma

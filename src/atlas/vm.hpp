@@ -6,8 +6,8 @@
 
 #include <map>
 #include <unordered_map>
-#include <pomagma/platform/aligned_alloc.hpp>
-#include <pomagma/platform/profiler.hpp>
+#include <pomagma/util/aligned_alloc.hpp>
+#include <pomagma/util/profiler.hpp>
 
 namespace pomagma
 {

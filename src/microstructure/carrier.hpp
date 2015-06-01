@@ -1,8 +1,8 @@
 #pragma once
 
 #include "util.hpp"
-#include <pomagma/platform/concurrent/dense_set.hpp>
-#include <pomagma/platform/threading.hpp>
+#include <pomagma/util/concurrent/dense_set.hpp>
+#include <pomagma/util/threading.hpp>
 #include <atomic>
 
 namespace pomagma

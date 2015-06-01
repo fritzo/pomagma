@@ -3,8 +3,8 @@
 #include <pomagma/analyst/approximate.hpp>
 #include <pomagma/analyst/cached_approximator.hpp>
 #include <pomagma/analyst/corpus.hpp>
-#include <pomagma/platform/async_map.hpp>
-#include <pomagma/platform/unique_set.hpp>
+#include <pomagma/util/async_map.hpp>
+#include <pomagma/util/unique_set.hpp>
 #include <set>
 #include <thread>
 #include <mutex>
