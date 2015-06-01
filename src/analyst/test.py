@@ -1,7 +1,7 @@
 import os
 from itertools import izip
 from nose.tools import assert_false
-from pomagma.testutil import for_each_context_args
+from pomagma.platform.testing import for_each_context_args
 import pomagma.util
 import pomagma.surveyor
 import pomagma.cartographer
