@@ -328,8 +328,8 @@ default_tag = time.strftime('%Y-%m-%d', time.gmtime())
 
 
 def list_s3_atlases():
-    import pomagma.store
-    filenames = pomagma.store.listdir()
+    import pomagma.util.s3
+    filenames = pomagma.util.s3.listdir()
     return set(m.group() for m in map(match_atlas, filenames) if m)
 
 
@@ -338,7 +338,7 @@ def pull(tag='<most recent>'):
     '''
     Pull atlas from s3.
     '''
-    import pomagma.store
+    import pomagma.util.s3
     if not os.path.exists(pomagma.util.DATA):
         os.makedirs(pomagma.util.DATA)
     with pomagma.util.chdir(pomagma.util.DATA):
@@ -350,8 +350,8 @@ def pull(tag='<most recent>'):
             source = 'atlas.{}'.format(tag)
             assert match_atlas(source), 'invalid tag: {}'.format(tag)
         print 'pulling {} -> {}'.format(source, destin)
-        pomagma.store.pull('{}/'.format(source))
-        pomagma.store.snapshot(source, destin)
+        pomagma.util.s3.pull('{}/'.format(source))
+        pomagma.util.s3.snapshot(source, destin)
 
 
 @parsable.command
@@ -359,7 +359,7 @@ def push(tag=default_tag):
     '''
     Push atlas to s3.
     '''
-    import pomagma.store
+    import pomagma.util.s3
     with pomagma.util.chdir(pomagma.util.DATA):
         source = 'atlas'
         assert os.path.exists(source), 'atlas does not exist'
@@ -367,8 +367,8 @@ def push(tag=default_tag):
         assert match_atlas(destin), 'invalid tag: {}'.format(tag)
         assert destin not in list_s3_atlases(), 'destin already exists'
         print 'pushing {} -> {}'.format(source, destin)
-        pomagma.store.snapshot(source, destin)
-        pomagma.store.push(destin)
+        pomagma.util.s3.snapshot(source, destin)
+        pomagma.util.s3.push(destin)
 
 
 @parsable.command
