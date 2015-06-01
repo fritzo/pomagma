@@ -1,6 +1,6 @@
 {
   "name": "pomagma",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "Client library for pomagma inference engine",
   "main": "src/index.js",
   "directories": {

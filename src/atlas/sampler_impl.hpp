@@ -130,7 +130,7 @@ void Sampler::load (const std::string & language_file)
 {
     POMAGMA_INFO("Loading language");
 
-    messaging::Language language;
+    protobuf::Language language;
 
     std::ifstream file(language_file, std::ios::in | std::ios::binary);
     POMAGMA_ASSERT(file.is_open(),

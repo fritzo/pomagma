@@ -9,7 +9,7 @@ std::unordered_map<std::string, float> load_language (const char * filename)
 {
     POMAGMA_INFO("Loading languge");
 
-    messaging::Language language;
+    protobuf::Language language;
 
     std::ifstream file(filename, std::ios::in | std::ios::binary);
     POMAGMA_ASSERT(file.is_open(),

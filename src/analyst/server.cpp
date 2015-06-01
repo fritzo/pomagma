@@ -166,13 +166,13 @@ Server::SolutionSet Server::solve (
 namespace
 {
 
-messaging::AnalystResponse handle (
+protobuf::AnalystResponse handle (
     Server & server,
-    messaging::AnalystRequest & request)
+    protobuf::AnalystRequest & request)
 {
     POMAGMA_INFO("Handling request");
-    messaging::AnalystResponse response;
-    typedef messaging::AnalystResponse::Trool Trool;
+    protobuf::AnalystResponse response;
+    typedef protobuf::AnalystResponse::Trool Trool;
 
     if (request.has_id()) {
         response.set_id(request.id());
@@ -310,10 +310,10 @@ void Server::serve (const char * address)
         socket.recv(& raw_request);
 
         POMAGMA_DEBUG("parsing request");
-        messaging::AnalystRequest request;
+        protobuf::AnalystRequest request;
         request.ParseFromArray(raw_request.data(), raw_request.size());
 
-        messaging::AnalystResponse response = handle(* this, request);
+        protobuf::AnalystResponse response = handle(* this, request);
 
         POMAGMA_DEBUG("serializing response");
         std::string response_str;

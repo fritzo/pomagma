@@ -1,4 +1,4 @@
-package pomagma.messaging;
+package pomagma.protobuf;
 
 message Histogram {
   message Term {

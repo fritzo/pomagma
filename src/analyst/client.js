@@ -4,16 +4,16 @@ var assert = require('assert');
 var _ = require('lodash');
 var path = require('path');
 var zmq = require('zmq');
-var protobuf = require('protobufjs');
+var protobufjs = require('protobufjs');
 var Debug = require('debug');
 var debug = Debug('pomagma:analyst');
 var WARN = Debug('pomagma:analyst:warning');
 WARN.log = console.warn.bind(console);
 
 var proto = path.join(__dirname, 'messages.proto');
-var messages = protobuf.loadProtoFile(proto).build().pomagma.messaging;
-var Request = messages.AnalystRequest;
-var Response = messages.AnalystResponse;
+var protobuf = protobufjs.loadProtoFile(proto).build().pomagma.protobuf;
+var Request = protobuf.AnalystRequest;
+var Response = protobuf.AnalystResponse;
 
 var TROOL = [];
 TROOL[Response.Trool.MAYBE] = null;

@@ -206,13 +206,13 @@ void Server::stop ()
 namespace
 {
 
-messaging::CartographerResponse handle (
+protobuf::CartographerResponse handle (
     Server & server,
-    messaging::CartographerRequest & request)
+    protobuf::CartographerRequest & request)
 {
     POMAGMA_INFO("Handling request");
     Timer timer;
-    messaging::CartographerResponse response;
+    protobuf::CartographerResponse response;
 
     if (request.trim_size() > 0) {
         std::vector<Server::TrimTask> tasks(request.trim_size());
@@ -299,10 +299,10 @@ void Server::serve (const char * address)
         socket.recv(& raw_request);
 
         POMAGMA_DEBUG("parsing request");
-        messaging::CartographerRequest request;
+        protobuf::CartographerRequest request;
         request.ParseFromArray(raw_request.data(), raw_request.size());
 
-        messaging::CartographerResponse response = handle(* this, request);
+        protobuf::CartographerResponse response = handle(* this, request);
 
         POMAGMA_DEBUG("serializing response");
         std::string response_str;
