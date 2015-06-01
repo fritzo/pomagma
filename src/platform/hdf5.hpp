@@ -783,7 +783,7 @@ static herr_t _tree_hash_visitor (
 }
 
 template<class Object>
-inline Hasher::Digest get_tree_hash (const Object & object)
+inline Hasher::Dict get_tree_hash (const Object & object)
 {
     Hasher::Dict dict;
     POMAGMA_HDF5_OK(H5Ovisit(
@@ -792,8 +792,7 @@ inline Hasher::Digest get_tree_hash (const Object & object)
                 H5_ITER_NATIVE,
                 _tree_hash_visitor,
                 & dict));
-    POMAGMA_ASSERT(not dict.empty(), "no hashes were found in object tree");
-    return Hasher::digest(dict);
+    return dict;
 }
 
 #undef POMAGMA_HDF5_OK

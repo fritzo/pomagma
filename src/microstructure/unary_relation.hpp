@@ -31,6 +31,7 @@ public:
     // raw operations
     size_t item_dim () const { return m_carrier.item_dim(); }
     size_t word_dim () const { return m_set.word_dim(); }
+    DenseSet & raw_set () { return m_set; }
     void raw_insert (Ob i) { m_set.insert(i); }
     void update () {}
     void clear ();

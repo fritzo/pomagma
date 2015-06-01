@@ -25,6 +25,7 @@ public:
     size_t count_items () const { return m_set.count_items(); }
     size_t item_dim () const { return support().item_dim(); }
     size_t word_dim () const { return support().word_dim(); }
+    DenseSet & raw_set () { return m_set; }
     void raw_insert (Ob i) const { m_set.raw_insert(i); }
     void update () {}
     void clear () { m_set.zero(); }

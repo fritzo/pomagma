@@ -19,6 +19,15 @@
 #include <algorithm>
 #include <sys/stat.h>  // for chmod
 
+// TODO use protobuf reflection + templates
+#define SWITCH_ARITY(DO)    \
+    DO(Relation, relation, Unary,     unary)     \
+    DO(Relation, relation, Binary,    binary)    \
+    DO(Function, function, Nullary,   nullary)   \
+    DO(Function, function, Injective, injective) \
+    DO(Function, function, Binary,    binary)    \
+    DO(Function, function, Symmetric, symmetric)
+
 namespace pomagma
 {
 
@@ -511,7 +520,7 @@ inline void dump_h5 (
         detail::dump_h5(carrier, * pair.second, file, "symmetric", pair.first);
     }
 
-    auto digest = hdf5::get_tree_hash(file);
+    auto digest = Hasher::digest(hdf5::get_tree_hash(file));
     hdf5::dump_hash(file, digest);
 }
 
@@ -557,7 +566,7 @@ inline void dump_pb (
 }
 
 inline void dump_pb (
-        const Carrier & carrier __attribute__((unused)),
+        const Carrier &,
         const UnaryRelation & rel,
         protobuf::Structure & structure,
         const std::string & name)
@@ -600,7 +609,7 @@ inline void dump_pb (
 }
 
 inline void dump_pb (
-        const Carrier & carrier __attribute__((unused)),
+        const Carrier &,
         const NullaryFunction & fun,
         protobuf::Structure & structure,
         const std::string & name)
@@ -615,7 +624,7 @@ inline void dump_pb (
 }
 
 inline void dump_pb (
-        const Carrier & carrier __attribute__((unused)),
+        const Carrier &,
         const InjectiveFunction & fun,
         protobuf::Structure & structure,
         const std::string & name)
@@ -695,28 +704,20 @@ inline void dump_pb (
     message.add_blobs(store_blob(temp_path));
 }
 
-inline Hasher::Digest get_tree_hash_pb (const protobuf::Structure & structure)
+inline Hasher::Dict get_tree_hash_pb (const protobuf::Structure & structure)
 {
     Hasher::Dict dict;
 
-    dict["/carrier"] = parse_digest(structure.carrier().hash());
+    dict["carrier"] = parse_digest(structure.carrier().hash());
 
-    // TODO use protobuf reflection or something cleaner
-#define CASE_ARITY(arity1, arity2)                                            \
-    for (const auto & i : structure.arity2 ## _  ## arity1()) {               \
-        dict["/" #arity1 "/" #arity2 "/" + i.name()] = parse_digest(i.hash());\
+#define CASE_ARITY(Kind, kind, Arity, arity)                             \
+    for (const auto & i : structure.arity ## _  ## kind ## s()) {        \
+        dict[#kind "s/" #arity "/" + i.name()] = parse_digest(i.hash()); \
     }
-
-    CASE_ARITY(relations, unary)
-    CASE_ARITY(relations, binary)
-    CASE_ARITY(functions, nullary)
-    CASE_ARITY(functions, injective)
-    CASE_ARITY(functions, binary)
-    CASE_ARITY(functions, symmetric)
-
+    SWITCH_ARITY(CASE_ARITY)
 #undef CASE_ARITY
 
-    return Hasher::digest(dict);
+    return dict;
 }
 
 inline void dump_pb (
@@ -748,7 +749,7 @@ inline void dump_pb (
         detail::dump_pb(carrier, * pair.second, structure, pair.first);
     }
 
-    auto digest = get_tree_hash_pb(structure);
+    auto digest = Hasher::digest(get_tree_hash_pb(structure));
     structure.set_hash(Hasher::str(digest));
 }
 
@@ -791,7 +792,7 @@ void dump (
 namespace detail
 {
 
-inline void load_signature (
+inline void load_signature_h5 (
         Signature & signature,
         hdf5::InFile & file,
         size_t extra_item_dim)
@@ -927,10 +928,9 @@ inline void check_signature (
     }
 }
 
-inline void load_data (
+inline void load_data_h5 (
         Carrier & carrier,
-        hdf5::InFile & file,
-        std::unordered_map<std::string, Hasher::Digest> & hash)
+        hdf5::InFile & file)
 {
     POMAGMA_INFO("loading carrier");
 
@@ -944,13 +944,11 @@ inline void load_data (
     for (Ob ob : data) {
         carrier.raw_insert(ob);
     }
-
-    hash["carrier"] = hdf5::load_hash(group);
 }
 
 inline void update_data (
         Carrier & carrier,
-        const std::unordered_map<std::string, Hasher::Digest> & hash)
+        const Hasher::Dict & hash)
 {
     POMAGMA_INFO("updating carrier");
 
@@ -963,12 +961,11 @@ inline void update_data (
     POMAGMA_INFO("done updating carrier");
 }
 
-inline void load_data (
+inline void load_data_h5 (
         const Carrier &,
         UnaryRelation & rel,
         hdf5::InFile & file,
-        const std::string & name,
-        std::unordered_map<std::string, Hasher::Digest> & hash)
+        const std::string & name)
 {
     POMAGMA_INFO("loading unary relation " << name);
 
@@ -981,20 +978,17 @@ inline void load_data (
     if (not data.empty()) {
         Ob max_ob = safe_max_element(data.begin(), data.end());
         POMAGMA_ASSERT_LE(max_ob, rel.item_dim());
-        rel.clear();
         for (Ob ob : data) {
             rel.raw_insert(ob);
         }
     }
-
-    hash["relations/unary/" + name] = hdf5::load_hash(dataset);
 }
 
 inline void update_data (
         const Carrier &,
         UnaryRelation & rel,
         const std::string & name,
-        const std::unordered_map<std::string, Hasher::Digest> & hash)
+        const Hasher::Dict & hash)
 {
     POMAGMA_INFO("updating unary relation " << name);
 
@@ -1007,12 +1001,11 @@ inline void update_data (
     POMAGMA_INFO("done updating unary relation " << name);
 }
 
-inline void load_data (
+inline void load_data_h5 (
         const Carrier &,
         BinaryRelation & rel,
         hdf5::InFile & file,
-        const std::string & name,
-        std::unordered_map<std::string, Hasher::Digest> & hash)
+        const std::string & name)
 {
     POMAGMA_INFO("loading binary relation " << name);
 
@@ -1025,15 +1018,13 @@ inline void load_data (
     hdf5::Dataset dataset(group2, name);
 
     dataset.read_rectangle(destin, destin_dim1, destin_dim2);
-
-    hash["relations/binary/" + name] = hdf5::load_hash(dataset);
 }
 
 inline void update_data (
         const Carrier & carrier,
         BinaryRelation & rel,
         const std::string & name,
-        const std::unordered_map<std::string, Hasher::Digest> & hash)
+        const Hasher::Dict & hash)
 {
     POMAGMA_INFO("updating binary relation " << name);
 
@@ -1046,12 +1037,11 @@ inline void update_data (
     POMAGMA_INFO("done updating binary relation " << name);
 }
 
-inline void load_data (
+inline void load_data_h5 (
         const Carrier & carrier,
         NullaryFunction & fun,
         hdf5::InFile & file,
-        const std::string & name,
-        std::unordered_map<std::string, Hasher::Digest> & hash)
+        const std::string & name)
 {
     POMAGMA_DEBUG("loading nullary function " << name);
 
@@ -1066,15 +1056,13 @@ inline void load_data (
     dataset.read_scalar(data);
     POMAGMA_ASSERT_LE(data, item_dim);
     fun.raw_insert(data);
-
-    hash["functions/nullary/" + name] = hdf5::load_hash(group3);
 }
 
 inline void update_data (
         const Carrier &,
         NullaryFunction & fun,
         const std::string & name,
-        const std::unordered_map<std::string, Hasher::Digest> & hash)
+        const Hasher::Dict & hash)
 {
     POMAGMA_DEBUG("updating nullary function " << name);
 
@@ -1087,12 +1075,11 @@ inline void update_data (
     POMAGMA_DEBUG("done updating nullary function " << name);
 }
 
-inline void load_data (
+inline void load_data_h5 (
         const Carrier & carrier,
         InjectiveFunction & fun,
         hdf5::InFile & file,
-        const std::string & name,
-        std::unordered_map<std::string, Hasher::Digest> & hash)
+        const std::string & name)
 {
     POMAGMA_INFO("loading injective function " << name);
 
@@ -1110,15 +1097,13 @@ inline void load_data (
             fun.raw_insert(key, value);
         }
     }
-
-    hash["functions/injective/"] = hdf5::load_hash(dataset);
 }
 
 inline void update_data (
         const Carrier &,
         InjectiveFunction & fun,
         const std::string & name,
-        const std::unordered_map<std::string, Hasher::Digest> & hash)
+        const Hasher::Dict & hash)
 {
     POMAGMA_INFO("updating injective function " << name);
 
@@ -1132,13 +1117,12 @@ inline void update_data (
 }
 
 template<class Function>
-inline void load_data (
+inline void load_data_h5 (
         const Carrier & carrier,
         Function & fun,
         hdf5::InFile & file,
         const std::string & arity,
-        const std::string & name,
-        std::unordered_map<std::string, Hasher::Digest> & hash)
+        const std::string & name)
 {
     POMAGMA_INFO("loading " << arity << " function " << name);
 
@@ -1184,8 +1168,6 @@ inline void load_data (
             }
         }
     }
-
-    hash["functions/" + arity + "/" + name] = hdf5::load_hash(group3);
 }
 
 template<class Function>
@@ -1194,7 +1176,7 @@ inline void update_data (
         Function & fun,
         const std::string & arity,
         const std::string & name,
-        const std::unordered_map<std::string, Hasher::Digest> & hash)
+        const Hasher::Dict & hash)
 {
     POMAGMA_INFO("updating " << arity << " function " << name);
 
@@ -1207,39 +1189,11 @@ inline void update_data (
     POMAGMA_INFO("done updating " << arity << " function " << name);
 }
 
-inline void load_data (
+void update_functions_and_relations (
         Signature & signature,
-        hdf5::InFile & file)
+        const Carrier & carrier,
+        const Hasher::Dict & hash)
 {
-    POMAGMA_INFO("Loading structure data");
-
-    POMAGMA_ASSERT(signature.carrier(), "carrier is not defined");
-    Carrier & carrier = * signature.carrier();
-
-    std::unordered_map<std::string, Hasher::Digest> hash;
-
-    load_data(carrier, file, hash);
-    update_data(carrier, hash);
-
-    for (const auto & pair : signature.unary_relations()) {
-        load_data(carrier, * pair.second, file, pair.first, hash);
-    }
-    for (const auto & pair : signature.binary_relations()) {
-        load_data(carrier, * pair.second, file, pair.first, hash);
-    }
-    for (const auto & pair : signature.nullary_functions()) {
-        load_data(carrier, * pair.second, file, pair.first, hash);
-    }
-    for (const auto & pair : signature.injective_functions()) {
-        load_data(carrier, * pair.second, file, pair.first, hash);
-    }
-    for (const auto & pair : signature.binary_functions()) {
-        load_data(carrier, * pair.second, file, "binary", pair.first, hash);
-    }
-    for (const auto & pair : signature.symmetric_functions()) {
-        load_data(carrier, * pair.second, file, "symmetric", pair.first, hash);
-    }
-
     std::vector<std::thread> threads;
 
     // do expensive tasks in parallel
@@ -1273,6 +1227,42 @@ inline void load_data (
     for (auto & thread : threads) { thread.join(); }
 }
 
+inline void load_data_h5 (
+        Signature & signature,
+        hdf5::InFile & file)
+{
+    POMAGMA_INFO("Loading structure data");
+
+    POMAGMA_ASSERT(signature.carrier(), "carrier is not defined");
+    Carrier & carrier = * signature.carrier();
+
+    const Hasher::Dict hash = hdf5::get_tree_hash(file);
+
+    load_data_h5(carrier, file);
+    update_data(carrier, hash);
+
+    for (const auto & pair : signature.unary_relations()) {
+        load_data_h5(carrier, * pair.second, file, pair.first);
+    }
+    for (const auto & pair : signature.binary_relations()) {
+        load_data_h5(carrier, * pair.second, file, pair.first);
+    }
+    for (const auto & pair : signature.nullary_functions()) {
+        load_data_h5(carrier, * pair.second, file, pair.first);
+    }
+    for (const auto & pair : signature.injective_functions()) {
+        load_data_h5(carrier, * pair.second, file, pair.first);
+    }
+    for (const auto & pair : signature.binary_functions()) {
+        load_data_h5(carrier, * pair.second, file, "binary", pair.first);
+    }
+    for (const auto & pair : signature.symmetric_functions()) {
+        load_data_h5(carrier, * pair.second, file, "symmetric", pair.first);
+    }
+
+    update_functions_and_relations(signature, carrier, hash);
+}
+
 } // namespace detail
 
 void load_h5 (
@@ -1283,12 +1273,215 @@ void load_h5 (
     hdf5::GlobalLock lock;
     hdf5::InFile file(filename);
 
-    auto digest = hdf5::get_tree_hash(file);
+    Hasher::Digest digest = Hasher::digest(hdf5::get_tree_hash(file));
     POMAGMA_ASSERT(digest == hdf5::load_hash(file), "file is corrupt");
 
-    detail::load_signature(signature, file, extra_item_dim);
-    detail::load_data(signature, file);
+    detail::load_signature_h5(signature, file, extra_item_dim);
+    detail::load_data_h5(signature, file);
 }
+
+void load_data_h5 (
+        Signature & signature,
+        const std::string & filename)
+{
+    hdf5::GlobalLock lock;
+    hdf5::InFile file(filename);
+
+    Hasher::Digest digest = Hasher::digest(hdf5::get_tree_hash(file));
+    POMAGMA_ASSERT(digest == hdf5::load_hash(file), "file is corrupt");
+
+    detail::check_signature(signature, file);
+    detail::load_data_h5(signature, file);
+}
+
+namespace detail
+{
+
+inline void load_data_pb (DenseSet & set, const protobuf::DenseSet & message)
+{
+    POMAGMA_ASSERT_EQ(set.item_dim(), message.item_dim());
+    POMAGMA_ASSERT_LE(message.mask().size(), set.data_size_bytes());
+    memcpy(set.raw_data(), message.mask().data(), set.data_size_bytes());
+}
+
+inline void load_signature_pb (
+        Signature & signature,
+        const protobuf::Structure & structure,
+        size_t extra_item_dim)
+{
+    POMAGMA_INFO("Loading signature");
+
+    clear(signature);
+    size_t source_item_dim = structure.carrier().item_dim();
+    size_t destin_item_dim = source_item_dim + extra_item_dim;
+    signature.declare(* new Carrier(destin_item_dim));
+    Carrier & carrier = * signature.carrier();
+
+#define CASE_ARITY(Kind, kind, Arity, arity)                       \
+    for (const auto & i : structure.arity ## _ ## kind ## s()) {   \
+        signature.declare(i.name(), * new Arity ## Kind(carrier)); \
+    }
+    SWITCH_ARITY(CASE_ARITY)
+#undef CASE_ARITY
+}
+
+// check that all structure in file is already contained in signature
+inline void check_signature (
+        Signature & signature,
+        const protobuf::Structure & structure)
+{
+    POMAGMA_INFO("Checking signature");
+
+    POMAGMA_ASSERT(signature.carrier(), "carrier is not defined");
+    const Carrier & carrier = * signature.carrier();
+    size_t source_item_dim = structure.carrier().item_dim();
+    size_t destin_item_dim = carrier.item_dim();
+    POMAGMA_ASSERT_LE(source_item_dim, destin_item_dim);
+
+#define CASE_ARITY(Kind, kind, Arity, arity)                       \
+    for (const auto & i : structure. arity ## _ ## kind ## s()) {  \
+        POMAGMA_ASSERT(signature.arity ## _ ## kind(i.name()),     \
+            "file has unknown " #arity " " #kind " " << i.name()); \
+    }
+    SWITCH_ARITY(CASE_ARITY)
+#undef CASE_ARITY
+}
+
+inline void load_data_pb (
+        Carrier & carrier,
+        const protobuf::Carrier & message)
+{
+    POMAGMA_INFO("loading carrier");
+
+    size_t item_dim = message.item_dim();
+    POMAGMA_ASSERT_LE(item_dim, carrier.item_dim());
+    for (Ob ob = 1; ob <= item_dim; ++ob) {
+        carrier.raw_insert(ob);
+    }
+}
+
+inline void load_data_pb (
+        UnaryRelation & rel,
+        const protobuf::UnaryRelation & message)
+{
+    POMAGMA_INFO("loading unary relation " << message.name());
+
+    POMAGMA_ASSERT_EQ(1, message.blobs_size());
+    const std::string path = find_blob(message.blobs(0));
+    const auto chunk = protobuf_load<protobuf::DenseSet>(path);
+    load_data_pb(rel.raw_set(), chunk);
+}
+
+inline void load_data_pb (
+        BinaryRelation & rel,
+        const protobuf::BinaryRelation & message)
+{
+    POMAGMA_INFO("loading binary relation " << message.name());
+
+    POMAGMA_ASSERT_LT(0, message.blobs_size());
+    protobuf::BinaryRelation::Row chunk;
+    for (const auto & hexdigest : message.blobs()) {
+        protobuf::InFile file(find_blob(hexdigest));
+        while (file.try_read_stream(chunk)) {
+            DenseSet rhs = rel.get_Lx_set(chunk.lhs());
+            load_data_pb(rhs, chunk.rhs());
+        }
+    }
+}
+
+inline void load_data_pb (
+        NullaryFunction & fun,
+        const protobuf::NullaryFunction & message)
+{
+    POMAGMA_DEBUG("loading nullary function " << message.name());
+
+    POMAGMA_ASSERT_EQ(0, message.blobs_size());
+    if (message.has_val()) {
+        fun.raw_insert(message.val());
+    }
+}
+
+inline void load_data_pb (
+        InjectiveFunction & fun,
+        const protobuf::UnaryFunction & message)
+{
+    POMAGMA_INFO("loading injective function " << message.name());
+
+    POMAGMA_ASSERT_EQ(1, message.blobs_size());
+    const std::string path = find_blob(message.blobs(0));
+    const auto chunk = protobuf_load<protobuf::SparseMap>(path);
+    POMAGMA_ASSERT_EQ(chunk.key_size(), chunk.val_size());
+    for (size_t i = 0, size = chunk.key_size(); i < size; ++i) {
+        fun.raw_insert(chunk.key(i), chunk.val(i));
+    }
+}
+
+inline void load_data_pb (
+        BinaryFunction & fun,
+        const protobuf::BinaryFunction & message)
+{
+    POMAGMA_INFO("loading binary function " << message.name());
+
+    POMAGMA_ASSERT_LT(0, message.blobs_size());
+    protobuf::BinaryFunction::Row chunk;
+    for (const auto & hexdigest : message.blobs()) {
+        protobuf::InFile file(find_blob(hexdigest));
+        while (file.try_read_stream(chunk)) {
+            const Ob lhs = chunk.lhs();
+            const auto & rhs_val = chunk.rhs_val();
+            POMAGMA_ASSERT_EQ(rhs_val.key_size(), rhs_val.val_size());
+            for (size_t i = 0, size = rhs_val.key_size(); i < size; ++i) {
+                fun.raw_insert(lhs, rhs_val.key(i), rhs_val.val(i));
+            }
+        }
+    }
+}
+
+inline void load_data_pb (
+        SymmetricFunction & fun,
+        const protobuf::BinaryFunction & message)
+{
+    POMAGMA_INFO("loading symmetric function " << message.name());
+
+    POMAGMA_ASSERT_LT(0, message.blobs_size());
+    protobuf::BinaryFunction::Row chunk;
+    for (const auto & hexdigest : message.blobs()) {
+        protobuf::InFile file(find_blob(hexdigest));
+        while (file.try_read_stream(chunk)) {
+            const Ob lhs = chunk.lhs();
+            const auto & rhs_val = chunk.rhs_val();
+            POMAGMA_ASSERT_EQ(rhs_val.key_size(), rhs_val.val_size());
+            for (size_t i = 0, size = rhs_val.key_size(); i < size; ++i) {
+                fun.raw_insert(lhs, rhs_val.key(i), rhs_val.val(i));
+            }
+        }
+    }
+}
+
+inline void load_data_pb (
+        Signature & signature,
+        const protobuf::Structure & structure)
+{
+    POMAGMA_INFO("Loading structure data");
+
+    const Hasher::Dict hash = get_tree_hash_pb(structure);
+
+    POMAGMA_ASSERT(signature.carrier(), "carrier is not defined");
+    Carrier & carrier = * signature.carrier();
+    load_data_pb(carrier, structure.carrier());
+    update_data(carrier, hash);
+
+#define CASE_ARITY(Kind, kind, Arity, arity)                       \
+    for (const auto & i : structure.arity ## _ ## kind ## s()) {   \
+        load_data_pb(* signature.arity ## _ ## kind(i.name()), i); \
+    }
+    SWITCH_ARITY(CASE_ARITY)
+#undef CASE_ARITY
+
+    update_functions_and_relations(signature, carrier, hash);
+}
+
+} // namespace detail
 
 void load_pb (
         Signature & signature,
@@ -1296,14 +1489,22 @@ void load_pb (
         size_t extra_item_dim)
 {
     const auto structure = protobuf_load<protobuf::Structure>(filename);
+    auto digest = Hasher::digest(detail::get_tree_hash_pb(structure));
+    POMAGMA_ASSERT(Hasher::str(digest) == structure.hash(), "file is corrupt");
 
-    clear(signature);
-    size_t source_item_dim = structure.carrier().item_dim();
-    size_t destin_item_dim = source_item_dim + extra_item_dim;
-    signature.declare(* new Carrier(destin_item_dim));
+    detail::load_signature_pb(signature, structure, extra_item_dim);
+    detail::load_data_pb(signature, structure);
+}
 
-    TODO("load signature");
-    TODO("load data");
+void load_data_pb (
+        Signature & signature,
+        const std::string & filename)
+{
+    const auto structure = protobuf_load<protobuf::Structure>(filename);
+    auto digest = Hasher::digest(detail::get_tree_hash_pb(structure));
+    POMAGMA_ASSERT(Hasher::str(digest) == structure.hash(), "file is corrupt");
+
+    detail::load_data_pb(signature, structure);
 }
 
 void load (
@@ -1322,37 +1523,6 @@ void load (
     }
 
     POMAGMA_INFO("done loading structure");
-}
-
-void load_data_h5 (
-        Signature & signature,
-        const std::string & filename)
-{
-    hdf5::GlobalLock lock;
-    hdf5::InFile file(filename);
-
-    auto digest = hdf5::get_tree_hash(file);
-    POMAGMA_ASSERT(digest == hdf5::load_hash(file), "file is corrupt");
-
-    detail::check_signature(signature, file);
-    detail::load_data(signature, file);
-}
-
-void load_data_pb (
-        Signature & signature,
-        const std::string & filename)
-{
-    const auto structure = protobuf_load<protobuf::Structure>(filename);
-
-    POMAGMA_INFO("Loading structure data");
-
-    POMAGMA_ASSERT(signature.carrier(), "carrier is not defined");
-    Carrier & carrier = * signature.carrier();
-
-    size_t source_item_dim = structure.carrier().item_dim();
-    POMAGMA_ASSERT_LE(source_item_dim, carrier.item_dim());
-
-    TODO("load data");
 }
 
 void load_data (
@@ -1401,5 +1571,7 @@ void log_stats (Signature & signature)
         pair.second->log_stats(pair.first);
     }
 }
+
+#undef SWITCH_ARITY
 
 } // namespace pomagma
