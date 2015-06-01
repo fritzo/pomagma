@@ -24,7 +24,7 @@ set(POMAGMA_MICROSTRUCTURE_LIBS
 
 add_subdirectory(platform)
 add_subdirectory(language)
-add_subdirectory(structure)
+add_subdirectory(atlas)
 add_subdirectory(microstructure)
 add_subdirectory(macrostructure)
 add_subdirectory(surveyor)

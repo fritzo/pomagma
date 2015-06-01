@@ -1,7 +1,7 @@
 #pragma once
 
 #include <pomagma/platform/util.hpp>
-#include <pomagma/structure/signature.hpp>
+#include <pomagma/atlas/signature.hpp>
 #include <tuple>
 
 namespace pomagma

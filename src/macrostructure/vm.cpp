@@ -1,2 +1,2 @@
 #include "vm.hpp"
-#include <pomagma/structure/vm_impl.hpp>
+#include <pomagma/atlas/vm_impl.hpp>

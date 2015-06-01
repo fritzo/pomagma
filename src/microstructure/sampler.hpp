@@ -1,7 +1,7 @@
 #pragma once
 
 #include "util.hpp"
-#include <pomagma/structure/sampler.hpp>
+#include <pomagma/atlas/sampler.hpp>
 
 namespace pomagma
 {

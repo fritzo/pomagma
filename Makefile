@@ -7,7 +7,7 @@ all: bootstrap fixture FORCE
 
 protobuf: FORCE
 	$(MAKE) -C src/language
-	$(MAKE) -C src/structure
+	$(MAKE) -C src/atlas
 	$(MAKE) -C src/cartographer
 	$(MAKE) -C src/analyst
 

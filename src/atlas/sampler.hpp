@@ -9,7 +9,7 @@
 // SymmetricFunction
 #include <pomagma/platform/util.hpp>
 #include <pomagma/platform/threading.hpp>
-#include <pomagma/structure/signature.hpp>
+#include <pomagma/atlas/signature.hpp>
 
 namespace pomagma
 {

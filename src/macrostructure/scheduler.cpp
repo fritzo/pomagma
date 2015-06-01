@@ -5,7 +5,7 @@
 #include "injective_function.hpp"
 #include "binary_function.hpp"
 #include "symmetric_function.hpp"
-#include <pomagma/structure/signature.hpp>
+#include <pomagma/atlas/signature.hpp>
 #include <unordered_set>
 #include <deque>
 
