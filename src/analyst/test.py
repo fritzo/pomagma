@@ -1,21 +1,16 @@
 import os
 from itertools import izip
 from nose.tools import assert_false
+from pomagma.atlas.bootstrap import THEORY
+from pomagma.atlas.bootstrap import WORLD
 from pomagma.util.testing import for_each_context_args
-import pomagma.util
-import pomagma.surveyor
-import pomagma.cartographer
 import pomagma.analyst
+import pomagma.cartographer
+import pomagma.surveyor
+import pomagma.util
 import simplejson as json
 
 
-THEORY = os.environ.get('THEORY', 'skrj')
-SIZE = pomagma.util.MIN_SIZES[THEORY]
-WORLD = os.path.join(
-    pomagma.util.DATA,
-    'atlas',
-    THEORY,
-    'region.normal.{:d}.h5'.format(SIZE))
 DATA = os.path.join(pomagma.util.DATA, 'test', 'debug', 'atlas', THEORY)
 ADDRESS = 'ipc://{}'.format(os.path.join(DATA, 'socket'))
 OPTIONS = {

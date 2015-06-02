@@ -16,6 +16,7 @@ ROOT = os.path.dirname(SRC)
 THEORY = os.path.join(SRC, 'theory')
 LANGUAGE = os.path.join(SRC, 'language')
 DATA = os.path.join(ROOT, 'data')
+BLOB_DIR = os.path.join(DATA, 'blob')
 debug = int(os.environ.get('POMAGMA_DEBUG', 0))
 if debug:
     print 'Running in debug mode'
@@ -187,14 +188,6 @@ def log_duration():
         print '# took {:0.3g} sec'.format(duration)
 
 
-@contextlib.contextmanager
-def h5_open(filename):
-    import tables
-    structure = tables.openFile(filename)
-    yield structure
-    structure.close()
-
-
 def abspath(path):
     return os.path.abspath(os.path.expanduser(path))
 
@@ -229,6 +222,7 @@ def make_env(options):
         os.makedirs(log_dir)
     default_log_level = LOG_LEVEL_DEBUG if debug else LOG_LEVEL_INFO
     options.setdefault('log_level', default_log_level)
+    options['blob_dir'] = os.path.abspath(options.get('blob_dir', BLOB_DIR))
     env = {
         'POMAGMA_{}'.format(key.upper()): str(val)
         for key, val in options.iteritems()
@@ -375,6 +369,32 @@ def coverity():
         check_call('cov-build', '--dir', COVERITY, 'make')
 
 
+def get_ext(filename):
+    parts = filename.split('.')
+    while parts[-1] in ['gz', 'bz2', '7z']:
+        parts = parts[:-1]
+    ext = parts[-1]
+    assert ext in ['h5', 'pb'], 'unsupported filetype: {}'.format(filename)
+    return ext
+
+
+@contextlib.contextmanager
+def h5_open(filename):
+    import tables
+    structure = tables.openFile(filename)
+    yield structure
+    structure.close()
+
+
+def pb_load(filename):
+    from pomagma.atlas.messages_pb2 import Structure
+    from pomagma.protobuf.stream import open_compressed
+    with open_compressed(filename) as f:
+        structure = Structure()
+        structure.ParseFromString(f.read())
+        return structure
+
+
 def count_obs(structure):
     points = structure.getNode('/carrier/points')
     item_dim = max(points)
@@ -382,29 +402,45 @@ def count_obs(structure):
     return item_dim, item_count
 
 
-def get_hash(infile):
-    with h5_open(infile) as structure:
-        digest = structure.getNodeAttr('/', 'hash').tolist()
-        return digest
+def get_hash(filename):
+    ext = get_ext(filename)
+    if ext == 'h5':
+        with h5_open(filename) as structure:
+            digest = structure.getNodeAttr('/', 'hash').tolist()
+            hexdigest = ''.join('{:02x}'.format(x) for x in digest)
+            return hexdigest
+    elif ext == 'pb':
+        return pb_load(filename).hash  # FIXME this is a string, not a list
 
 
-def get_info(infile):
-    with h5_open(infile) as structure:
-        item_dim, item_count = count_obs(structure)
-        info = dict(item_dim=item_dim, item_count=item_count)
-        return info
+def get_info(filename):
+    ext = get_ext(filename)
+    if ext == 'h5':
+        with h5_open(filename) as structure:
+            item_dim, item_count = count_obs(structure)
+    elif ext == 'pb':
+        item_dim = pb_load(filename).carrier.item_dim
+        item_count = item_dim
+    return {'item_dim': item_dim, 'item_count': item_count}
 
 
-def get_item_count(infile):
-    with h5_open(infile) as structure:
-        item_dim, item_count = count_obs(structure)
-        return item_count
+def get_item_count(filename):
+    return get_info(filename)['item_count']
 
 
-def print_info(infile):
-    with h5_open(infile) as structure:
-        item_dim, item_count = count_obs(structure)
-        print 'item_dim =', item_dim
-        print 'item_count =', item_count
-        for o in structure:
-            print o
+def print_info(filename):
+    ext = get_ext(filename)
+    if ext == 'h5':
+        with h5_open(filename) as structure:
+            item_dim, item_count = count_obs(structure)
+            print 'item_dim =', item_dim
+            print 'item_count =', item_count
+            for o in structure:
+                print o
+    elif ext == 'pb':
+        from pomagma.protobuf.stream import protobuf_to_dict
+        import simplejson as json
+        structure = pb_load(filename)
+        print 'item_dim =', structure.carrier.item_dim
+        print 'item_count =', structure.carrier.item_dim
+        print json.dump(protobuf_to_dict(structure), indent=4, sortkeys=True)

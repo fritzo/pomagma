@@ -12,6 +12,7 @@ inline std::string hash_file (const std::string & filename)
 {
     Hasher hasher;
     hasher.add_file(filename);
+    hasher.finish();
     return hasher.str();
 }
 

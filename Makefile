@@ -1,7 +1,7 @@
 THEORY = skrj
 PY_FILES := *.py $(shell find src | grep '.py$$' | grep -v '_pb2.py')
 
-all: bootstrap fixture FORCE
+all: data/blob bootstrap fixture FORCE
 	$(MAKE) python
 	$(MAKE) tags codegen tasks debug release
 
@@ -50,6 +50,9 @@ unit-test: all fixture FORCE
 	POMAGMA_DEBUG=1 nosetests -v pomagma
 	POMAGMA_LOG_FILE=$(shell pwd)/data/debug.log $(MAKE) -C build/debug test
 	POMAGMA_DEBUG=1 npm test
+
+data/blob:
+	mkdir -p data/blob
 
 fixture: data/atlas/$(THEORY)/region.normal.2047.h5 FORCE
 data/atlas/$(THEORY)/region.normal.2047.h5:

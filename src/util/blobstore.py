@@ -3,10 +3,6 @@ import hashlib
 import stat
 import pomagma.util
 
-BLOB_DIR = os.environ.get(
-    'POMAGMA_BLOB_DIR',
-    os.path.join(pomagma.util.DATA, 'blob'))
-
 
 def hash_file(filename):
     sha = hashlib.sha1()
@@ -20,7 +16,7 @@ def hash_file(filename):
 
 
 def find_blob(hexdigest):
-    return os.path.join(BLOB_DIR, '{}.gz'.format(hexdigest))
+    return os.path.join(pomagma.util.BLOB_DIR, '{}.gz'.format(hexdigest))
 
 
 def create_blob():
@@ -28,7 +24,8 @@ def create_blob():
         create_blob.counter = 0
     count = create_blob.counter
     create_blob.counter += 1
-    path = os.path.join(BLOB_DIR, 'temp.{}.{}.gz'.format(os.getpid(), count))
+    filename = 'temp.{}.{}.gz'.format(os.getpid(), count)
+    path = os.path.join(pomagma.util.BLOB_DIR, filename)
     if os.path.exists(path):
         os.remove(path)
     return path

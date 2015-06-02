@@ -10,9 +10,9 @@ const char * BLOB_DIR = getenv("POMAGMA_BLOB_DIR");
 
 inline bool path_exists (const std::string& path)
 {
-    //return std::ifstream(path).good();
-    struct stat info;
-    return stat(path.c_str(), &info) == 0;
+    return std::ifstream(path).good();
+    //struct stat info;
+    //return stat(path.c_str(), &info) == 0;
 }
 
 std::string find_blob (const std::string & hexdigest)
