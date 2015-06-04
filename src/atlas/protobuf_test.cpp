@@ -32,8 +32,8 @@ void test_compress_decompress (const SparseMap& example)
     const auto expected = make_proto(example);
     POMAGMA_INFO("Compressing " << expected.ShortDebugString());
     auto actual = expected;
-    compress_sparse_map(actual);
-    decompress_sparse_map(actual);
+    protobuf::delta_compress(actual);
+    protobuf::delta_decompress(actual);
     POMAGMA_ASSERT_EQ(actual.ShortDebugString(), expected.ShortDebugString());
 }
 
@@ -42,7 +42,7 @@ void test_decompress_on_uncompressed_data (const SparseMap& example)
     const auto expected = make_proto(example);
     POMAGMA_INFO("Preserving " << expected.ShortDebugString());
     auto actual = expected;
-    decompress_sparse_map(actual);
+    protobuf::delta_decompress(actual);
     POMAGMA_ASSERT_EQ(actual.ShortDebugString(), expected.ShortDebugString());
 }
 

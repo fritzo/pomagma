@@ -581,7 +581,7 @@ inline void dump_pb (
     protobuf::DenseSet chunk;
     dump_pb(rel.get_set(), chunk);
     protobuf_dump(chunk, temp_path);
-    message.add_blobs(store_blob(temp_path));
+    message.set_dense_blob(store_blob(temp_path));
 }
 
 inline void dump_pb (
@@ -606,7 +606,7 @@ inline void dump_pb (
             file.write_stream(chunk);
         }
     }
-    message.add_blobs(store_blob(temp_path));
+    message.add_dense_blobs(store_blob(temp_path));
 }
 
 inline void dump_pb (
@@ -641,9 +641,9 @@ inline void dump_pb (
         chunk.add_key(* key);
         chunk.add_val(fun.raw_find(* key));
     }
-    compress_sparse_map(chunk);
+    protobuf::delta_compress(chunk);
     protobuf_dump(chunk, temp_path);
-    message.add_blobs(store_blob(temp_path));
+    message.set_sparse_blob(store_blob(temp_path));
 }
 
 inline void dump_pb (
@@ -670,10 +670,11 @@ inline void dump_pb (
                 rhs_val.add_key(* rhs);
                 rhs_val.add_val(fun.raw_find(* lhs, * rhs));
             }
+            protobuf::delta_compress(rhs_val);
             file.write_stream(chunk);
         }
     }
-    message.add_blobs(store_blob(temp_path));
+    message.add_sparse_blobs(store_blob(temp_path));
 }
 
 inline void dump_pb (
@@ -700,10 +701,11 @@ inline void dump_pb (
                 rhs_val.add_key(* rhs);
                 rhs_val.add_val(fun.raw_find(* lhs, * rhs));
             }
+            protobuf::delta_compress(rhs_val);
             file.write_stream(chunk);
         }
     }
-    message.add_blobs(store_blob(temp_path));
+    message.add_sparse_blobs(store_blob(temp_path));
 }
 
 inline Hasher::Dict get_tree_hash_pb (const protobuf::Structure & structure)
@@ -1368,8 +1370,8 @@ inline void load_data_pb (
 {
     POMAGMA_INFO("loading unary relation " << message.name());
 
-    POMAGMA_ASSERT_EQ(1, message.blobs_size());
-    const std::string path = find_blob(message.blobs(0));
+    POMAGMA_ASSERT(message.has_dense_blob(), "missing data");
+    const std::string path = find_blob(message.dense_blob());
     const auto chunk = protobuf_load<protobuf::DenseSet>(path);
     load_data_pb(rel.raw_set(), chunk);
 }
@@ -1380,9 +1382,9 @@ inline void load_data_pb (
 {
     POMAGMA_INFO("loading binary relation " << message.name());
 
-    POMAGMA_ASSERT_LT(0, message.blobs_size());
+    POMAGMA_ASSERT_LT(0, message.dense_blobs_size());
     protobuf::BinaryRelation::Row chunk;
-    for (const auto & hexdigest : message.blobs()) {
+    for (const auto & hexdigest : message.dense_blobs()) {
         protobuf::InFile file(find_blob(hexdigest));
         while (file.try_read_stream(chunk)) {
             DenseSet rhs = rel.get_Lx_set(chunk.lhs());
@@ -1397,7 +1399,6 @@ inline void load_data_pb (
 {
     POMAGMA_DEBUG("loading nullary function " << message.name());
 
-    POMAGMA_ASSERT_EQ(0, message.blobs_size());
     if (message.has_val()) {
         fun.raw_insert(message.val());
     }
@@ -1409,10 +1410,10 @@ inline void load_data_pb (
 {
     POMAGMA_INFO("loading injective function " << message.name());
 
-    POMAGMA_ASSERT_EQ(1, message.blobs_size());
-    const std::string path = find_blob(message.blobs(0));
+    POMAGMA_ASSERT(message.has_sparse_blob(), "missing data");
+    const std::string path = find_blob(message.sparse_blob());
     auto chunk = protobuf_load<protobuf::SparseMap>(path);
-    decompress_sparse_map(chunk);
+    protobuf::delta_decompress(chunk);
     POMAGMA_ASSERT_EQ(chunk.key_size(), chunk.val_size());
     for (size_t i = 0, size = chunk.key_size(); i < size; ++i) {
         fun.raw_insert(chunk.key(i), chunk.val(i));
@@ -1425,13 +1426,14 @@ inline void load_data_pb (
 {
     POMAGMA_INFO("loading binary function " << message.name());
 
-    POMAGMA_ASSERT_LT(0, message.blobs_size());
+    POMAGMA_ASSERT_LT(0, message.sparse_blobs_size());
     protobuf::BinaryFunction::Row chunk;
-    for (const auto & hexdigest : message.blobs()) {
+    for (const auto & hexdigest : message.sparse_blobs()) {
         protobuf::InFile file(find_blob(hexdigest));
         while (file.try_read_stream(chunk)) {
             const Ob lhs = chunk.lhs();
-            const auto & rhs_val = chunk.rhs_val();
+            auto & rhs_val = * chunk.mutable_rhs_val();
+            protobuf::delta_decompress(rhs_val);
             POMAGMA_ASSERT_EQ(rhs_val.key_size(), rhs_val.val_size());
             for (size_t i = 0, size = rhs_val.key_size(); i < size; ++i) {
                 fun.raw_insert(lhs, rhs_val.key(i), rhs_val.val(i));
@@ -1446,13 +1448,14 @@ inline void load_data_pb (
 {
     POMAGMA_INFO("loading symmetric function " << message.name());
 
-    POMAGMA_ASSERT_LT(0, message.blobs_size());
+    POMAGMA_ASSERT_LT(0, message.sparse_blobs_size());
     protobuf::BinaryFunction::Row chunk;
-    for (const auto & hexdigest : message.blobs()) {
+    for (const auto & hexdigest : message.sparse_blobs()) {
         protobuf::InFile file(find_blob(hexdigest));
         while (file.try_read_stream(chunk)) {
             const Ob lhs = chunk.lhs();
-            const auto & rhs_val = chunk.rhs_val();
+            auto & rhs_val = * chunk.mutable_rhs_val();
+            protobuf::delta_decompress(rhs_val);
             POMAGMA_ASSERT_EQ(rhs_val.key_size(), rhs_val.val_size());
             for (size_t i = 0, size = rhs_val.key_size(); i < size; ++i) {
                 fun.raw_insert(lhs, rhs_val.key(i), rhs_val.val(i));

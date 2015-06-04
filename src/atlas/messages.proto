@@ -28,15 +28,14 @@ message Carrier {
 message NullaryFunction {
   required string name = 1;
   optional string hash = 2;
-  repeated string blobs = 3;
-  optional uint32 val = 4;
+  optional uint32 val = 3;
 }
 
 message UnaryFunction {
   required string name = 1;
   optional string hash = 2;
-  repeated string blobs = 3;
-  optional SparseMap sparse = 4;
+  optional SparseMap sparse = 3;
+  optional string sparse_blob = 4;
 }
 
 message BinaryFunction {
@@ -47,15 +46,15 @@ message BinaryFunction {
 
   required string name = 1;
   optional string hash = 2;
-  repeated string blobs = 3;
-  repeated Row sparse = 4;
+  repeated Row sparse = 3;
+  repeated string sparse_blobs = 4; // each blob may contain multiple Rows
 }
 
 message UnaryRelation {
   required string name = 1;
   optional string hash = 2;
-  repeated string blobs = 3;
-  optional DenseSet dense = 4;
+  optional DenseSet dense = 3;
+  optional string dense_blob = 4;
 }
 
 message BinaryRelation {
@@ -66,8 +65,8 @@ message BinaryRelation {
 
   required string name = 1;
   optional string hash = 2;
-  repeated string blobs = 3;
-  repeated Row dense = 4;
+  repeated Row dense = 3;
+  repeated string dense_blobs = 4; // each blob may contain multiple Rows
 }
 
 message Structure {

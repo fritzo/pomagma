@@ -3,10 +3,12 @@
 #include <pomagma/util/util.hpp>
 #include <pomagma/atlas/messages.pb.h>
 
-namespace pomagma {
+namespace pomagma
+{
+namespace protobuf
+{
 
-// simple delta encoding
-inline void compress_sparse_map (protobuf::SparseMap & chunk)
+inline void delta_compress (SparseMap & chunk)
 {
     POMAGMA_ASSERT_EQ(chunk.key_size(), chunk.val_size());
     int prev_key = 0;
@@ -24,8 +26,7 @@ inline void compress_sparse_map (protobuf::SparseMap & chunk)
     chunk.clear_val();
 }
 
-// simple delta decoding
-inline void decompress_sparse_map (protobuf::SparseMap & chunk)
+inline void delta_decompress (SparseMap & chunk)
 {
     POMAGMA_ASSERT_EQ(chunk.key_diff_minus_one_size(), chunk.val_diff_size());
     int key = 0;
@@ -38,4 +39,5 @@ inline void decompress_sparse_map (protobuf::SparseMap & chunk)
     chunk.clear_val_diff();
 }
 
+} // namespace protobuf
 } // namespace pomagma
