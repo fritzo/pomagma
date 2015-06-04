@@ -13,6 +13,7 @@
 #include <pomagma/util/blobstore.hpp>
 #include <pomagma/util/hdf5.hpp>
 #include <pomagma/atlas/messages.pb.h>
+#include <pomagma/atlas/protobuf.hpp>
 #include <pomagma/protobuf/stream.hpp>
 #include <array>
 #include <thread>
@@ -640,6 +641,7 @@ inline void dump_pb (
         chunk.add_key(* key);
         chunk.add_val(fun.raw_find(* key));
     }
+    compress_sparse_map(chunk);
     protobuf_dump(chunk, temp_path);
     message.add_blobs(store_blob(temp_path));
 }
@@ -1409,7 +1411,8 @@ inline void load_data_pb (
 
     POMAGMA_ASSERT_EQ(1, message.blobs_size());
     const std::string path = find_blob(message.blobs(0));
-    const auto chunk = protobuf_load<protobuf::SparseMap>(path);
+    auto chunk = protobuf_load<protobuf::SparseMap>(path);
+    decompress_sparse_map(chunk);
     POMAGMA_ASSERT_EQ(chunk.key_size(), chunk.val_size());
     for (size_t i = 0, size = chunk.key_size(); i < size; ++i) {
         fun.raw_insert(chunk.key(i), chunk.val(i));

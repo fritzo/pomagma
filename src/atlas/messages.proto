@@ -4,8 +4,11 @@ package pomagma.protobuf;
 // raw data
 
 message SparseMap {
+  // either key,val are both set, or key_diff_minus_one,val_diff are both set
   repeated uint32 key = 1 [packed=true];
   repeated uint32 val = 2 [packed=true];
+  repeated uint32 key_diff_minus_one = 3 [packed=true];
+  repeated int32 val_diff = 4 [packed=true];
 }
 
 message DenseSet {
