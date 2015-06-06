@@ -1,17 +1,17 @@
 #pragma once
 
-#include <stdint.h>
-#include <unistd.h>
-#include <cstdlib>
-#include <iostream>
-#include <string>
-#include <sstream>
-#include <fstream>
-#include <iomanip>
 #include <chrono>
-#include <random>
+#include <cstdlib>
+#include <fstream>
 #include <functional>
+#include <iomanip>
+#include <iostream>
 #include <mutex>
+#include <random>
+#include <sstream>
+#include <stdint.h>
+#include <string>
+#include <unistd.h>
 
 // for demangle() below
 #ifdef __GNUG__
@@ -154,6 +154,11 @@ inline float getenv_default (const char * key, float default_val)
     const char * val = getenv(key);
     return val ? atof(val) : default_val;
 }
+
+//----------------------------------------------------------------------------
+// file system
+
+void in_temp_dir (std::function<void()> body);
 
 //----------------------------------------------------------------------------
 // logging

@@ -1,10 +1,28 @@
 #include <pomagma/util/util.hpp>
-#include <sys/time.h>
+
 #include <sys/resource.h>
+#include <sys/time.h>
 #include <vector>
+#include <boost/filesystem.hpp>
 
 namespace pomagma
 {
+
+//----------------------------------------------------------------------------
+// file system
+
+void in_temp_dir (std::function<void()> body)
+{
+    const auto old_path = boost::filesystem::current_path();
+    const auto temp_path = boost::filesystem::unique_path(
+        "/tmp/pomagma.temp.%%%%-%%%%-%%%%-%%%%");
+    POMAGMA_ASSERT(boost::filesystem::create_directories(temp_path),
+        "failed to create temp directory");
+    boost::filesystem::current_path(temp_path);
+    body();
+    boost::filesystem::current_path(old_path);
+    boost::filesystem::remove_all(temp_path);
+}
 
 //----------------------------------------------------------------------------
 // logging
