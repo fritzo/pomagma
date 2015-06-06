@@ -1,0 +1,8 @@
+package pomagma.protobuf;
+
+message TestMessage {
+  optional string optional_string = 1;
+  repeated string repeated_string = 22;
+  optional TestMessage optional_message = 333;
+  repeated TestMessage repeated_message = 4444;
+}

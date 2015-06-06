@@ -6,10 +6,11 @@ all: data/blob bootstrap fixture FORCE
 	$(MAKE) tags codegen tasks debug release
 
 protobuf: FORCE
-	$(MAKE) -C src/language
+	$(MAKE) -C src/analyst
 	$(MAKE) -C src/atlas
 	$(MAKE) -C src/cartographer
-	$(MAKE) -C src/analyst
+	$(MAKE) -C src/language
+	$(MAKE) -C src/util
 
 tags: protobuf FORCE
 	cd src ; ctags -R

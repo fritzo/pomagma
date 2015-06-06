@@ -15,6 +15,10 @@ add_executable(util_test util_test.cpp)
 target_link_libraries(util_test ${POMAGMA_UTIL_LIBS})
 add_test(NAME util COMMAND util_test)
 
+add_executable(util_protobuf_test protobuf_test.cpp protobuf_test.pb.cc)
+target_link_libraries(util_protobuf_test ${POMAGMA_UTIL_LIBS})
+add_test(NAME util_protobuf COMMAND util_protobuf_test)
+
 add_executable(hasher_test hasher_test.cpp)
 target_link_libraries(hasher_test ${POMAGMA_UTIL_LIBS})
 add_test(NAME hasher COMMAND hasher_test)
