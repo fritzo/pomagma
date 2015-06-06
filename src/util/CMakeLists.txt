@@ -7,6 +7,7 @@ add_library(pomagma_util SHARED
 	concurrent/dense_set.cpp
 	hasher.cpp
 	blobstore.cpp
+	protobuf.cpp
 	profiler.cpp
 	hdf5.cpp
 )
