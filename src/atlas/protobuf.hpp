@@ -1,7 +1,9 @@
 #pragma once
 
-#include <pomagma/util/util.hpp>
 #include <pomagma/atlas/messages.pb.h>
+#include <pomagma/util/blobstore.hpp>
+#include <pomagma/util/protobuf.hpp>
+#include <pomagma/util/util.hpp>
 
 namespace pomagma
 {
@@ -38,6 +40,57 @@ inline void delta_decompress (SparseMap & chunk)
     chunk.clear_key_diff_minus_one();
     chunk.clear_val_diff();
 }
+
+class BlobWriter : noncopyable
+{
+    protobuf::OutFile & m_file;
+    std::string & m_destin;
+
+public:
+
+    explicit BlobWriter (std::string * destin)
+        : m_file(* new protobuf::OutFile(create_blob())),
+          m_destin(* destin)
+    {
+    }
+
+    ~BlobWriter ()
+    {
+        const std::string temp_path = m_file.filename();
+        delete & m_file;
+        m_destin = store_blob(temp_path);
+    }
+
+    template<class Message>
+    void write (const Message & message)
+    {
+        m_file.write(message);
+    }
+};
+
+class BlobReader : noncopyable
+{
+    protobuf::InFile m_file;
+
+public:
+
+    explicit BlobReader (const std::string & hexdigest)
+        : m_file(find_blob(hexdigest))
+    {
+    }
+
+    template<class Message>
+    void read (Message & message)
+    {
+        m_file.read(message);
+    }
+
+    template<class Message>
+    bool try_read_chunk (Message & message)
+    {
+        return m_file.try_read_chunk(message);
+    }
+};
 
 } // namespace protobuf
 } // namespace pomagma

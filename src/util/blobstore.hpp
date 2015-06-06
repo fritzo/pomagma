@@ -25,4 +25,10 @@ std::string create_blob ();
 // returns digest to find file later; takes ownership of file
 std::string store_blob (const std::string & temp_path);
 
+std::string load_blob_ref (const std::string & filename);
+
+void dump_blob_ref (
+        const std::string & hexdigest,
+        const std::string & filename);
+
 } // namespace pomagma

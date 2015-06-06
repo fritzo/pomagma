@@ -54,4 +54,23 @@ std::string store_blob (const std::string & temp_path)
     return hexdigest;
 }
 
+std::string load_blob_ref (const std::string & filename)
+{
+    std::ifstream file(filename.c_str(), std::ios::binary);
+    POMAGMA_ASSERT(file, "failed to open blob ref " << filename);
+    std::string hexdigest;
+    hexdigest.resize(40);
+    file.read(& hexdigest[0], hexdigest.size());
+    POMAGMA_ASSERT(file, "failed to load blob ref from " << filename);
+    return hexdigest;
+}
+
+void dump_blob_ref (const std::string & hexdigest, const std::string & filename)
+{
+    std::ofstream file(filename.c_str(), std::ios::binary);
+    POMAGMA_ASSERT(file, "failed to create blob ref " << filename);
+    file.write(hexdigest.data(), hexdigest.size());
+    POMAGMA_ASSERT(file, "failed to load blob ref from " << filename);
+}
+
 } // namespace pomagma

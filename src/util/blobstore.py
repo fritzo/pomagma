@@ -41,3 +41,16 @@ def store_blob(temp_path):
         os.rename(temp_path, path)
         os.chmod(path, stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
     return hexdigest
+
+
+def load_blob_ref(filename):
+    with open(filename, 'rb') as f:
+        hexdigest = f.read()
+    assert len(hexdigest) == 40, hexdigest
+    return hexdigest
+
+
+def dump_blob_ref(hexdigest, filename):
+    assert len(hexdigest) == 40, hexdigest
+    with open(filename, 'wb') as f:
+        f.write(hexdigest)

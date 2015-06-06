@@ -21,21 +21,26 @@ message DenseSet {
 
 message Carrier {
   optional string name = 1;
-  optional string hash = 2;
+  optional bytes hash = 2;
   required uint32 item_dim = 3;
+
+  repeated bytes blobs = 15;
 }
 
 message NullaryFunction {
   required string name = 1;
-  optional string hash = 2;
+  optional bytes hash = 2;
   optional uint32 val = 3;
+
+  repeated bytes blobs = 15;
 }
 
 message UnaryFunction {
   required string name = 1;
-  optional string hash = 2;
+  optional bytes hash = 2;
   optional SparseMap sparse = 3;
-  optional string sparse_blob = 4;
+
+  repeated bytes blobs = 15;
 }
 
 message BinaryFunction {
@@ -45,16 +50,18 @@ message BinaryFunction {
   }
 
   required string name = 1;
-  optional string hash = 2;
-  repeated Row sparse = 3;
-  repeated string sparse_blobs = 4; // each blob may contain multiple Rows
+  optional bytes hash = 2;
+  repeated Row rows = 3;
+
+  repeated bytes blobs = 15;
 }
 
 message UnaryRelation {
   required string name = 1;
-  optional string hash = 2;
+  optional bytes hash = 2;
   optional DenseSet dense = 3;
-  optional string dense_blob = 4;
+
+  repeated bytes blobs = 15;
 }
 
 message BinaryRelation {
@@ -64,21 +71,23 @@ message BinaryRelation {
   }
 
   required string name = 1;
-  optional string hash = 2;
-  repeated Row dense = 3;
-  repeated string dense_blobs = 4; // each blob may contain multiple Rows
+  optional bytes hash = 2;
+  repeated Row rows = 3;
+
+  repeated bytes blobs = 15;
 }
 
 message Structure {
-  optional string hash = 1;
+  optional string name = 1;
+  optional bytes hash = 2;
 
-  required Carrier carrier = 10;
+  optional Carrier carrier = 3;
 
-  repeated NullaryFunction nullary_functions = 20; 
-  repeated UnaryFunction injective_functions = 21; 
-  repeated BinaryFunction binary_functions = 22; 
-  repeated BinaryFunction symmetric_functions = 23; 
+  repeated NullaryFunction nullary_functions = 4;
+  repeated UnaryFunction injective_functions = 6;
+  repeated BinaryFunction binary_functions = 7;
+  repeated BinaryFunction symmetric_functions = 8;
 
-  repeated UnaryRelation unary_relations = 30;
-  repeated BinaryRelation binary_relations = 31;
+  repeated UnaryRelation unary_relations = 9;
+  repeated BinaryRelation binary_relations = 10;
 }
