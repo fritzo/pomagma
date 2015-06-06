@@ -6,6 +6,8 @@ set(POMAGMA_UTIL_LIBS
 	hdf5 hdf5_hl
 	crypto ssl
 	protobuf
+	${Boost_FILESYSTEM_LIBRARY}
+	${Boost_SYSTEM_LIBRARY}
 )
 
 set(POMAGMA_MACROSTRUCTURE_LIBS

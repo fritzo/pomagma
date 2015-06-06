@@ -12,6 +12,7 @@ sudo apt-get install -y \
   libhdf5-serial-dev \
   libssl-dev \
   libzmq-dev \
+  libboost-filesystem-dev \
   python-pip \
   virtualenvwrapper \
   python-tables \

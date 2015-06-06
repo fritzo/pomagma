@@ -53,6 +53,8 @@ elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
 elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 endif()
 
+find_package(Boost COMPONENTS system filesystem REQUIRED)
+
 enable_testing()
 
 add_subdirectory(src)
