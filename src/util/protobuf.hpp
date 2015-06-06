@@ -68,6 +68,7 @@ public:
         bool info =
             WireFormat::ParseAndMergeField(tag, field, & message, & stream);
         POMAGMA_ASSERT(info, "failed to parse field " << field_number);
+        return true;
     }
 };
 
