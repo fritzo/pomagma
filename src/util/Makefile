@@ -1,4 +1,4 @@
-all: protobuf_test.pb.h
+all: protobuf_test_pb2.py
 
-protobuf_test.pb.h: protobuf_test.proto
-	protoc protobuf_test.proto --cpp_out=.
+protobuf_test_pb2.py: protobuf_test.proto
+	protoc protobuf_test.proto --python_out=. --cpp_out=.

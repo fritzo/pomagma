@@ -388,10 +388,10 @@ def h5_open(filename):
 
 def pb_load(filename):
     from pomagma.atlas.messages_pb2 import Structure
-    from pomagma.protobuf.stream import open_compressed
-    with open_compressed(filename) as f:
+    from pomagma.util.protobuf import InFile
+    with InFile(filename) as f:
         structure = Structure()
-        structure.ParseFromString(f.read())
+        f.read(structure)
         return structure
 
 
@@ -438,9 +438,7 @@ def print_info(filename):
             for o in structure:
                 print o
     elif ext == 'pb':
-        from pomagma.protobuf.stream import protobuf_to_dict
-        import simplejson as json
         structure = pb_load(filename)
         print 'item_dim =', structure.carrier.item_dim
         print 'item_count =', structure.carrier.item_dim
-        print json.dump(protobuf_to_dict(structure), indent=4, sortkeys=True)
+        print structure
