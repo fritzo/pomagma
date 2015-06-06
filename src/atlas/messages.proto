@@ -22,21 +22,17 @@ message DenseSet {
 message Carrier {
   optional string name = 1;
   optional bytes hash = 2;
-  required uint32 item_dim = 3;
-
-  repeated bytes blobs = 15;
+  optional uint32 item_dim = 3;
 }
 
 message NullaryFunction {
-  required string name = 1;
+  optional string name = 1;
   optional bytes hash = 2;
   optional uint32 val = 3;
-
-  repeated bytes blobs = 15;
 }
 
 message UnaryFunction {
-  required string name = 1;
+  optional string name = 1;
   optional bytes hash = 2;
   optional SparseMap sparse = 3;
 
@@ -49,7 +45,7 @@ message BinaryFunction {
     required SparseMap rhs_val = 2;
   }
 
-  required string name = 1;
+  optional string name = 1;
   optional bytes hash = 2;
   repeated Row rows = 3;
 
@@ -57,7 +53,7 @@ message BinaryFunction {
 }
 
 message UnaryRelation {
-  required string name = 1;
+  optional string name = 1;
   optional bytes hash = 2;
   optional DenseSet dense = 3;
 
@@ -70,7 +66,7 @@ message BinaryRelation {
     required DenseSet rhs = 2;
   }
 
-  required string name = 1;
+  optional string name = 1;
   optional bytes hash = 2;
   repeated Row rows = 3;
 

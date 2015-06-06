@@ -50,7 +50,6 @@ void load_data (
         Signature & signature,
         const std::string & filename);
 
-
 //----------------------------------------------------------------------------
 // Validation
 
@@ -705,11 +704,14 @@ inline Hasher::Dict get_tree_hash_pb (const protobuf::Structure & structure)
 {
     Hasher::Dict dict;
 
+    POMAGMA_ASSERT(structure.carrier().has_hash(), "carrier is missing hash");
     dict["carrier"] = parse_digest(structure.carrier().hash());
 
-#define CASE_ARITY(Kind, kind, Arity, arity)                             \
-    for (const auto & i : structure.arity ## _  ## kind ## s()) {        \
-        dict[#kind "s/" #arity "/" + i.name()] = parse_digest(i.hash()); \
+#define CASE_ARITY(Kind, kind, Arity, arity)                                \
+    for (const auto & i : structure.arity ## _  ## kind ## s()) {           \
+        POMAGMA_ASSERT(i.has_name(), #Arity #Kind " is missing name");      \
+        POMAGMA_ASSERT(i.has_hash(), #Arity #Kind " is missing hash");      \
+        dict[#kind "s/" #arity "/" + i.name()] = parse_digest(i.hash());    \
     }
     SWITCH_ARITY(CASE_ARITY)
 #undef CASE_ARITY
@@ -727,24 +729,13 @@ inline void dump_pb (
 
     // TODO parallelize
     detail::dump_pb(carrier, structure);
-    for (const auto & pair : signature.unary_relations()) {
-        detail::dump_pb(carrier, * pair.second, structure, pair.first);
+
+#define CASE_ARITY(Kind, kind, Arity, arity)                                \
+    for (const auto & pair : signature.arity ## _ ## kind ## s()) {         \
+        detail::dump_pb(carrier, * pair.second, structure, pair.first);     \
     }
-    for (const auto & pair : signature.binary_relations()) {
-        detail::dump_pb(carrier, * pair.second, structure, pair.first);
-    }
-    for (const auto & pair : signature.nullary_functions()) {
-        detail::dump_pb(carrier, * pair.second, structure, pair.first);
-    }
-    for (const auto & pair : signature.injective_functions()) {
-        detail::dump_pb(carrier, * pair.second, structure, pair.first);
-    }
-    for (const auto & pair : signature.binary_functions()) {
-        detail::dump_pb(carrier, * pair.second, structure, pair.first);
-    }
-    for (const auto & pair : signature.symmetric_functions()) {
-        detail::dump_pb(carrier, * pair.second, structure, pair.first);
-    }
+    SWITCH_ARITY(CASE_ARITY)
+#undef CASE_ARITY
 
     auto digest = Hasher::digest(get_tree_hash_pb(structure));
     structure.set_hash(Hasher::str(digest));
@@ -1316,9 +1307,10 @@ inline void load_signature_pb (
     signature.declare(* new Carrier(destin_item_dim));
     Carrier & carrier = * signature.carrier();
 
-#define CASE_ARITY(Kind, kind, Arity, arity)                       \
-    for (const auto & i : structure.arity ## _ ## kind ## s()) {   \
-        signature.declare(i.name(), * new Arity ## Kind(carrier)); \
+#define CASE_ARITY(Kind, kind, Arity, arity)                                \
+    for (const auto & i : structure.arity ## _ ## kind ## s()) {            \
+        POMAGMA_ASSERT(i.has_name(), #Arity #Kind " is missing name");      \
+        signature.declare(i.name(), * new Arity ## Kind(carrier));          \
     }
     SWITCH_ARITY(CASE_ARITY)
 #undef CASE_ARITY
@@ -1337,10 +1329,11 @@ inline void check_signature (
     size_t destin_item_dim = carrier.item_dim();
     POMAGMA_ASSERT_LE(source_item_dim, destin_item_dim);
 
-#define CASE_ARITY(Kind, kind, Arity, arity)                       \
-    for (const auto & i : structure. arity ## _ ## kind ## s()) {  \
-        POMAGMA_ASSERT(signature.arity ## _ ## kind(i.name()),     \
-            "file has unknown " #arity " " #kind " " << i.name()); \
+#define CASE_ARITY(Kind, kind, Arity, arity)                                \
+    for (const auto & i : structure. arity ## _ ## kind ## s()) {           \
+        POMAGMA_ASSERT(i.has_name(), #Arity #Kind " is missing name");      \
+        POMAGMA_ASSERT(signature.arity ## _ ## kind(i.name()),              \
+            "file has unknown " #arity " " #kind " " << i.name());          \
     }
     SWITCH_ARITY(CASE_ARITY)
 #undef CASE_ARITY
@@ -1363,8 +1356,6 @@ inline void load_data_pb (
         UnaryRelation & rel,
         const protobuf::UnaryRelation & message)
 {
-    POMAGMA_INFO("loading unary relation " << message.name());
-
     // load data in message
     if (message.has_dense()) {
         load_data_pb(rel.raw_set(), message.dense());
@@ -1386,8 +1377,6 @@ inline void load_data_pb (
         BinaryRelation & rel,
         const protobuf::BinaryRelation & message)
 {
-    POMAGMA_INFO("loading binary relation " << message.name());
-
     // load data in message
     for (const auto & row : message.rows()) {
         DenseSet rhs = rel.get_Lx_set(row.lhs());
@@ -1409,8 +1398,6 @@ inline void load_data_pb (
         NullaryFunction & fun,
         const protobuf::NullaryFunction & message)
 {
-    POMAGMA_DEBUG("loading nullary function " << message.name());
-
     if (message.has_val()) {
         fun.raw_insert(message.val());
     }
@@ -1421,8 +1408,6 @@ inline void load_data_pb (
         InjectiveFunction & fun,
         protobuf::UnaryFunction & message)
 {
-    POMAGMA_INFO("loading injective function " << message.name());
-
     // load data in message
     if (message.has_sparse()) {
         auto & sparse = * message.mutable_sparse();
@@ -1449,8 +1434,6 @@ inline void load_data_pb (
         BinaryFunction & fun,
         protobuf::BinaryFunction & message)
 {
-    POMAGMA_INFO("loading binary function " << message.name());
-
     // load data in message
     for (auto & row : * message.mutable_rows()) {
         const Ob lhs = row.lhs();
@@ -1478,8 +1461,6 @@ inline void load_data_pb (
         SymmetricFunction & fun,
         protobuf::BinaryFunction & message)
 {
-    POMAGMA_INFO("loading symmetric function " << message.name());
-
     // load data in message
     for (auto & row : * message.mutable_rows()) {
         const Ob lhs = row.lhs();
@@ -1515,9 +1496,11 @@ inline void load_data_pb (
     load_data_pb(carrier, structure.carrier());
     update_data(carrier, hash);
 
-#define CASE_ARITY(Kind, kind, Arity, arity)                             \
-    for (auto & i : * structure.mutable_ ## arity ## _ ## kind ## s()) { \
-        load_data_pb(* signature.arity ## _ ## kind(i.name()), i);       \
+#define CASE_ARITY(Kind, kind, Arity, arity)                                \
+    for (auto & i : * structure.mutable_ ## arity ## _ ## kind ## s()) {    \
+        POMAGMA_ASSERT(i.has_name(), #Arity #Kind " is missing name");      \
+        POMAGMA_INFO("loading " #Arity #Kind " " << i.name());              \
+        load_data_pb(* signature.arity ## _ ## kind(i.name()), i);          \
     }
     SWITCH_ARITY(CASE_ARITY)
 #undef CASE_ARITY
@@ -1535,6 +1518,7 @@ void load_pb (
     protobuf::Structure structure;
     protobuf::InFile(load_blob_ref(filename)).read(structure);
 
+    POMAGMA_ASSERT(structure.has_hash(), "structure is missing hash");
     auto digest = Hasher::digest(detail::get_tree_hash_pb(structure));
     POMAGMA_ASSERT(Hasher::str(digest) == structure.hash(), "file is corrupt");
 
@@ -1549,6 +1533,7 @@ void load_data_pb (
     protobuf::Structure structure;
     protobuf::InFile(load_blob_ref(filename)).read(structure);
 
+    POMAGMA_ASSERT(structure.has_hash(), "structure is missing hash");
     auto digest = Hasher::digest(detail::get_tree_hash_pb(structure));
     POMAGMA_ASSERT(Hasher::str(digest) == structure.hash(), "file is corrupt");
 
@@ -1600,24 +1585,12 @@ void log_stats (Signature & signature)
 
     carrier.log_stats();
 
-    for (auto pair : signature.unary_relations()) {
-        pair.second->log_stats(pair.first);
+#define CASE_ARITY(Kind, kind, Arity, arity)                                \
+    for (auto pair : signature.arity ## _ ## kind ## s()) {                 \
+        pair.second->log_stats(pair.first);                                 \
     }
-    for (auto pair : signature.binary_relations()) {
-        pair.second->log_stats(pair.first);
-    }
-    for (auto pair : signature.nullary_functions()) {
-        pair.second->log_stats(pair.first);
-    }
-    for (auto pair : signature.injective_functions()) {
-        pair.second->log_stats(pair.first);
-    }
-    for (auto pair : signature.binary_functions()) {
-        pair.second->log_stats(pair.first);
-    }
-    for (auto pair : signature.symmetric_functions()) {
-        pair.second->log_stats(pair.first);
-    }
+    SWITCH_ARITY(CASE_ARITY)
+#undef CASE_ARITY
 }
 
 #undef SWITCH_ARITY
