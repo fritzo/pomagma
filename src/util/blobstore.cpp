@@ -58,7 +58,7 @@ void store_blob (const std::string & temp_path, const std::string & hexdigest)
     const fs::path path = find_blob(hexdigest);
 
     if (POMAGMA_DEBUG_LEVEL) {
-        const std::string expected = hash_file(hexdigest);
+        const std::string expected = hash_file(temp_path);
         POMAGMA_ASSERT_EQ(hexdigest, expected);
     }
 
