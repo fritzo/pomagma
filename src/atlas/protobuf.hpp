@@ -65,8 +65,7 @@ public:
         m_destin = store_blob(temp_path);
     }
 
-    template<class Message>
-    void write (const Message & message)
+    void write (const google::protobuf::Message & message)
     {
         m_file.write(message);
     }
@@ -83,14 +82,12 @@ public:
     {
     }
 
-    template<class Message>
-    void read (Message & message)
+    void read (google::protobuf::Message & message)
     {
         m_file.read(message);
     }
 
-    template<class Message>
-    bool try_read_chunk (Message & message)
+    bool try_read_chunk (google::protobuf::Message & message)
     {
         return m_file.try_read_chunk(message);
     }

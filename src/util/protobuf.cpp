@@ -39,19 +39,16 @@ bool InFile::try_read_chunk (google::protobuf::Message & message)
 {
     using google::protobuf::internal::WireFormat;
     using google::protobuf::internal::WireFormatLite;
-
     google::protobuf::io::CodedInputStream stream(m_gzip);
     const uint32_t tag = stream.ReadTag();
     if (unlikely(not tag)) return false; // EOF
     const int field_number = WireFormatLite::GetTagFieldNumber(tag);
     POMAGMA_DEBUG("parsing field " << field_number << " of type " << (tag & 7));
-
-    const auto* field =
-        message.GetDescriptor()->FindFieldByNumber(field_number);
+    const auto* descriptor = message.GetDescriptor();
+    POMAGMA_ASSERT1(descriptor, "failed to get descriptor");  // FIXME fails
+    const auto* field = descriptor->FindFieldByNumber(field_number);
     POMAGMA_ASSERT(field, "unknown field " << field_number);
-
-    bool info =
-        WireFormat::ParseAndMergeField(tag, field, & message, & stream);
+    bool info = WireFormat::ParseAndMergeField(tag, field, & message, & stream);
     POMAGMA_ASSERT(info, "failed to parse field " << field_number);
     return true;
 }
