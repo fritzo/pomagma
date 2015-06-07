@@ -35,6 +35,8 @@ void InFile::read (google::protobuf::Message & message)
 }
 
 // This tries to parse a single piece of a message. Does not clear message.
+// Replicates a single pass through loop in WireFormat::ParseAndMergePartial.
+// see https://github.com/google/protobuf/blob/master/src/google/protobuf/wire_format.cc#L389
 bool InFile::try_read_chunk (google::protobuf::Message & message)
 {
     using google::protobuf::internal::WireFormat;

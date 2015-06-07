@@ -1520,6 +1520,7 @@ void load_pb (
         size_t extra_item_dim)
 {
     protobuf::Structure structure;
+    POMAGMA_ASSERT(structure.descriptor(), "protobuf error");
     protobuf::InFile(load_blob_ref(filename)).read(structure);
 
     POMAGMA_ASSERT(structure.has_hash(), "structure is missing hash");
@@ -1535,6 +1536,7 @@ void load_data_pb (
         const std::string & filename)
 {
     protobuf::Structure structure;
+    POMAGMA_ASSERT(structure.descriptor(), "protobuf error");
     protobuf::InFile(load_blob_ref(filename)).read(structure);
 
     POMAGMA_ASSERT(structure.has_hash(), "structure is missing hash");
