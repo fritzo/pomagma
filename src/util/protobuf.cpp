@@ -44,6 +44,7 @@ bool InFile::try_read_chunk (google::protobuf::Message & message)
     const uint32_t tag = stream.ReadTag();
     if (unlikely(not tag)) return false; // EOF
     const int field_number = WireFormatLite::GetTagFieldNumber(tag);
+    POMAGMA_DEBUG("parsing field " << field_number << " of type " << (tag & 7));
 
     const auto* field =
         message.GetDescriptor()->FindFieldByNumber(field_number);

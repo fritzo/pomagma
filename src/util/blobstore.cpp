@@ -2,11 +2,6 @@
 #include <atomic>
 #include <fcntl.h>
 
-#ifndef O_BINARY
-#  define O_BINARY 0
-#  define O_TEXT 0
-#endif
-
 namespace pomagma
 {
 
@@ -65,13 +60,29 @@ std::string load_blob_ref (const std::string & filename)
 
 void dump_blob_ref (const std::string & hexdigest, const std::string & filename)
 {
+#define USE_PERMISSION_CONSIOUS_DUMP (0)
+#if USE_PERMISSION_CONSIOUS_DUMP
+
+    // FIXME why does this permissions-consious version fail?
     POMAGMA_ASSERT_EQ(hexdigest.size(), 40);
-    int fd = open(filename.c_str(), O_WRONLY | O_BINARY, 0444);
-    POMAGMA_ASSERT(fd != -1, "failed to create blob ref " << filename);
+    int fd = open(filename.c_str(), O_WRONLY, 0444);
+    POMAGMA_ASSERT(fd != -1, "failed to create blob ref " << filename << "; "
+        << strerror(errno));
     int info = write(fd, hexdigest.data(), hexdigest.size());
-    POMAGMA_ASSERT(info != -1, "failed to dump blob ref " << filename);
+    POMAGMA_ASSERT(info != -1, "failed to dump blob ref to " << filename << "; "
+        << strerror(errno));
     info = close(fd);
-    POMAGMA_ASSERT(info != -1, "failed to close blob ref " << filename);
+    POMAGMA_ASSERT(info != -1, "failed to close blob ref " << filename << "; "
+        << strerror(errno));
+
+#else // USE_PERMISSION_CONSIOUS_DUMP
+
+    std::ofstream file(filename.c_str(), std::ios::binary);
+    POMAGMA_ASSERT(file, "failed to create blob ref " << filename);
+    file.write(hexdigest.data(), hexdigest.size());
+    POMAGMA_ASSERT(file, "failed to dump blob ref to " << filename);
+
+#endif // USE_PERMISSION_CONSIOUS_DUMP
 }
 
 } // namespace pomagma

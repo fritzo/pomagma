@@ -23,6 +23,7 @@ if debug:
     BUILD = os.path.join(ROOT, 'build', 'debug')
 else:
     BUILD = os.path.join(ROOT, 'build', 'release')
+CLEANUP_ON_ERROR = int(os.environ.get('CLEANUP_ON_ERROR', 1))
 COVERITY = os.path.join(ROOT, 'cov-int')
 BIN = os.path.join(BUILD, 'src')
 TRAVIS_CI = 'TRAVIS' in os.environ and 'CI' in os.environ
@@ -79,11 +80,11 @@ def chdir(path):
     old_path = os.path.abspath(os.path.curdir)
     try:
         # os.makedirs(path)
-        print 'cd {}\n'.format(path)
+        print '# cd {}\n'.format(path)
         os.chdir(path)
         yield os.path.curdir
     finally:
-        print 'cd {}\n'.format(old_path)
+        print '# cd {}\n'.format(old_path)
         os.chdir(old_path)
 
 
@@ -128,11 +129,15 @@ def temp_copies(paths):
 @contextlib.contextmanager
 def in_temp_dir():
     path = os.path.abspath(tempfile.mkdtemp())
+    cleanup = CLEANUP_ON_ERROR
     try:
         with chdir(path):
             yield path
+        cleanup = True
     finally:
-        shutil.rmtree(path)
+        if cleanup:
+            print '# rm -rf {}\n'.format(path)
+            shutil.rmtree(path)
 
 
 class MutexLockedException(Exception):

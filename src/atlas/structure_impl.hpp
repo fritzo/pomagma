@@ -660,8 +660,7 @@ inline void dump_pb (
     protobuf::SparseMap & rhs_val = * chunk_row.mutable_rhs_val();
     for (auto lhs = carrier.support().iter(); lhs.ok(); lhs.next()) {
         chunk_row.set_lhs(* lhs);
-        rhs_val.clear_key();
-        rhs_val.clear_val();
+        rhs_val.Clear();
         for (auto rhs = fun.iter_lhs(* lhs); rhs.ok(); rhs.next()) {
             rhs_val.add_key(* rhs);
             rhs_val.add_val(fun.raw_find(* lhs, * rhs));
@@ -689,8 +688,7 @@ inline void dump_pb (
     protobuf::SparseMap & rhs_val = * chunk_row.mutable_rhs_val();
     for (auto lhs = carrier.support().iter(); lhs.ok(); lhs.next()) {
         chunk_row.set_lhs(* lhs);
-        rhs_val.clear_key();
-        rhs_val.clear_val();
+        rhs_val.Clear();
         for (auto rhs = fun.iter_lhs(* lhs); rhs.ok(); rhs.next()) {
             rhs_val.add_key(* rhs);
             rhs_val.add_val(fun.raw_find(* lhs, * rhs));
@@ -1359,6 +1357,8 @@ inline void load_data_pb (
 {
     // load data in message
     if (message.has_dense()) {
+        POMAGMA_ASSERT1(message.dense().IsInitialized(),
+            "dense is not initialized");
         load_data_pb(rel.raw_set(), message.dense());
     }
 
@@ -1366,9 +1366,9 @@ inline void load_data_pb (
     protobuf::UnaryRelation chunk;
     for (const auto & hexdigest : message.blobs()) {
         protobuf::BlobReader blob(hexdigest);
-        chunk.Clear();
         while (blob.try_read_chunk(chunk)) {
             load_data_pb(rel, chunk);
+            chunk.Clear();
         }
     }
 }
@@ -1380,6 +1380,7 @@ inline void load_data_pb (
 {
     // load data in message
     for (const auto & row : message.rows()) {
+        POMAGMA_ASSERT1(row.IsInitialized(), "row is not initialized");
         DenseSet rhs = rel.get_Lx_set(row.lhs());
         load_data_pb(rhs, row.rhs());
     }
@@ -1388,9 +1389,9 @@ inline void load_data_pb (
     protobuf::BinaryRelation chunk;
     for (const auto & hexdigest : message.blobs()) {
         protobuf::BlobReader blob(hexdigest);
-        chunk.Clear();
         while (blob.try_read_chunk(chunk)) {
             load_data_pb(rel, chunk);
+            chunk.Clear();
         }
     }
 }
@@ -1423,9 +1424,9 @@ inline void load_data_pb (
     protobuf::UnaryFunction chunk;
     for (const auto & hexdigest : message.blobs()) {
         protobuf::BlobReader blob(hexdigest);
-        chunk.Clear();
         while (blob.try_read_chunk(chunk)) {
             load_data_pb(fun, chunk);
+            chunk.Clear();
         }
     }
 }
@@ -1437,6 +1438,7 @@ inline void load_data_pb (
 {
     // load data in message
     for (auto & row : * message.mutable_rows()) {
+        POMAGMA_ASSERT1(row.IsInitialized(), "row is not initialized");
         const Ob lhs = row.lhs();
         auto & rhs_val = * row.mutable_rhs_val();
         protobuf::delta_decompress(rhs_val);
@@ -1450,9 +1452,9 @@ inline void load_data_pb (
     protobuf::BinaryFunction chunk;
     for (const auto & hexdigest : message.blobs()) {
         protobuf::BlobReader blob(hexdigest);
-        chunk.Clear();
         while (blob.try_read_chunk(chunk)) {
             load_data_pb(fun, chunk);
+            chunk.Clear();
         }
     }
 }
@@ -1464,6 +1466,7 @@ inline void load_data_pb (
 {
     // load data in message
     for (auto & row : * message.mutable_rows()) {
+        POMAGMA_ASSERT1(row.IsInitialized(), "row is not initialized");
         const Ob lhs = row.lhs();
         auto & rhs_val = * row.mutable_rhs_val();
         protobuf::delta_decompress(rhs_val);
@@ -1477,9 +1480,9 @@ inline void load_data_pb (
     protobuf::BinaryFunction chunk;
     for (const auto & hexdigest : message.blobs()) {
         protobuf::BlobReader blob(hexdigest);
-        chunk.Clear();
         while (blob.try_read_chunk(chunk)) {
             load_data_pb(fun, chunk);
+            chunk.Clear();
         }
     }
 }
