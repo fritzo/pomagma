@@ -9,7 +9,7 @@ import pomagma.cartographer
 
 def _test_formats(filename):
     with pomagma.util.in_temp_dir():
-        if filename.endswith('.pb') or filename.endswith('.pb.gz'):
+        if filename.endswith('.pbgz'):
             raise SkipTest('TODO fix protobuf io')
         opts = {'blob_dir': os.getcwd()}
         print 'dumping', filename
@@ -24,5 +24,4 @@ def _test_formats(filename):
 
 def test_formats():
     yield _test_formats, 'world.h5'
-    yield _test_formats, 'world.pb'
-    yield _test_formats, 'world.pb.gz'
+    yield _test_formats, 'world.pbgz'

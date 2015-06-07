@@ -12,6 +12,7 @@
 #include <stdint.h>
 #include <string>
 #include <unistd.h>
+#include <boost/filesystem.hpp>
 
 // for demangle() below
 #ifdef __GNUG__
@@ -21,6 +22,8 @@
 
 namespace pomagma
 {
+
+namespace fs = boost::filesystem;
 
 //----------------------------------------------------------------------------
 // compiler-specific
@@ -338,7 +341,6 @@ inline Range<Iterator> range (const Iterator & begin, const Iterator & end)
     return Range<Iterator>(begin, end);
 }
 
-
 //----------------------------------------------------------------------------
 // vector operations
 
@@ -407,22 +409,6 @@ inline std::string get_filename (const std::string & path)
     } else {
         return path;
     }
-}
-
-inline bool endswith (const std::string & path, const std::string & suffix)
-{
-    return suffix.size() <= path.size() and
-        std::equal(suffix.rbegin(), suffix.rend(), path.rbegin());
-}
-
-inline std::string rstrip (std::string path, const std::string & suffix)
-{
-    if (size_t size = suffix.size()) {
-        while (endswith(path, suffix)) {
-            path = path.substr(0, path.size() - size);
-        }
-    }
-    return path;
 }
 
 // adapted from http://stackoverflow.com/questions/281818

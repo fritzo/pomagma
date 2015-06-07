@@ -10,13 +10,13 @@
 // InjectiveFunction
 // BinaryFunction
 // SymmetricFunction
-#include <pomagma/util/hdf5.hpp>
+#include <algorithm>
+#include <array>
 #include <pomagma/atlas/messages.pb.h>
 #include <pomagma/atlas/protobuf.hpp>
-#include <array>
-#include <thread>
-#include <algorithm>
+#include <pomagma/util/hdf5.hpp>
 #include <sys/stat.h>  // for chmod
+#include <thread>
 
 // TODO use protobuf reflection + templates
 #define SWITCH_ARITY(DO)    \
@@ -762,9 +762,10 @@ void dump (
 {
     POMAGMA_INFO("Dumping structure to file " << filename);
 
-    if (endswith(filename, ".h5")) {
+    const std::string ext = fs::extension(filename);
+    if (ext == ".h5") {
         dump_h5(signature, filename);
-    } else if (endswith(filename, ".pb") or endswith(filename, ".pb.gz")) {
+    } else if (ext == ".pbgz") {
         dump_pb(signature, filename);
     } else {
         POMAGMA_ERROR("unknown file extension: " << filename);
@@ -1547,9 +1548,10 @@ void load (
 {
     POMAGMA_INFO("Loading structure from file " << filename);
 
-    if (endswith(filename, ".h5")) {
+    const std::string ext = fs::extension(filename);
+    if (ext == ".h5") {
         load_h5(signature, filename, extra_item_dim);
-    } else if (endswith(filename, ".pb") or endswith(filename, ".pb.gz")) {
+    } else if (ext == ".pbgz") {
         load_pb(signature, filename, extra_item_dim);
     } else {
         POMAGMA_ERROR("unknown file extension: " << filename);
@@ -1564,9 +1566,10 @@ void load_data (
 {
     POMAGMA_INFO("Loading structure from file " << filename);
 
-    if (endswith(filename, ".h5")) {
+    const std::string ext = fs::extension(filename);
+    if (ext == ".h5") {
         load_data_h5(signature, filename);
-    } else if (endswith(filename, ".pb") or endswith(filename, ".pb.gz")) {
+    } else if (ext == ".pbgz") {
         load_data_pb(signature, filename);
     } else {
         POMAGMA_ERROR("unknown file extension: " << filename);

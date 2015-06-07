@@ -36,7 +36,7 @@ def test_write_read(expected):
     print 'Testing read(write({}))'.format(expected)
     actual = protobuf_test_pb2.TestMessage()
     with in_temp_dir():
-        filename = 'test.pb.gz'
+        filename = 'test.pbgz'
         with OutFile(filename) as f:
             f.write(expected)
         with InFile(filename) as f:
