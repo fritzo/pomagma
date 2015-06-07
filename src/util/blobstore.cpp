@@ -1,9 +1,13 @@
 #include "blobstore.hpp"
+
 #include <atomic>
 #include <fcntl.h>
+#include <sys/time.h>
 
-namespace pomagma
-{
+#define POMAGMA_ASSERT_C(info, message) \
+    POMAGMA_ASSERT((info) != -1, message << "; " << strerror(errno))
+
+namespace pomagma {
 
 const char * BLOB_DIR = getenv("POMAGMA_BLOB_DIR");
 
@@ -33,6 +37,15 @@ std::string create_blob ()
     return path.string();
 }
 
+inline void touch (const fs::path & path)
+{
+    timeval now;
+    gettimeofday(& now, nullptr);
+    timeval times[2] = {now, now};
+    int info = utimes(path.c_str(), times);
+    POMAGMA_ASSERT_C(info, "touch(" << path << ") failed");
+}
+
 std::string store_blob (const std::string & temp_path)
 {
     const std::string hexdigest = hash_file(temp_path);
@@ -40,6 +53,7 @@ std::string store_blob (const std::string & temp_path)
 
     if (fs::exists(path)) {
         fs::remove(temp_path);
+        touch(path);
     } else {
         fs::rename(temp_path, path);
     }
@@ -66,14 +80,11 @@ void dump_blob_ref (const std::string & hexdigest, const std::string & filename)
     // FIXME why does this permissions-consious version fail?
     POMAGMA_ASSERT_EQ(hexdigest.size(), 40);
     int fd = open(filename.c_str(), O_WRONLY, 0444);
-    POMAGMA_ASSERT(fd != -1, "failed to create blob ref " << filename << "; "
-        << strerror(errno));
+    POMAGMA_ASSERT(fd, "failed to create blob ref " << filename);
     int info = write(fd, hexdigest.data(), hexdigest.size());
-    POMAGMA_ASSERT(info != -1, "failed to dump blob ref to " << filename << "; "
-        << strerror(errno));
+    POMAGMA_ASSERT(info, "failed to dump blob ref to " << filename);
     info = close(fd);
-    POMAGMA_ASSERT(info != -1, "failed to close blob ref " << filename << "; "
-        << strerror(errno));
+    POMAGMA_ASSERT(info, "failed to close blob ref " << filename);
 
 #else // USE_PERMISSION_CONSIOUS_DUMP
 

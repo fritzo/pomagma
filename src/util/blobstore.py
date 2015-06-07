@@ -39,6 +39,7 @@ def store_blob(temp_path):
     path = find_blob(hexdigest)
     if os.path.exists(path):
         os.remove(temp_path)
+        os.utime(path)  # touch
     else:
         os.rename(temp_path, path)
     return hexdigest
