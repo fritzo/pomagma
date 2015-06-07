@@ -3,10 +3,10 @@ import re
 import sys
 import time
 import signal
-import shutil
 import parsable
 parsable = parsable.Parsable()
 import pomagma.util
+import pomagma.util.blobstore
 import pomagma.workers
 from pomagma import analyst
 from pomagma import atlas
@@ -350,7 +350,9 @@ def pull(tag='<most recent>'):
             source = 'atlas.{}'.format(tag)
             assert match_atlas(source), 'invalid tag: {}'.format(tag)
         print 'pulling {} -> {}'.format(source, destin)
-        pomagma.util.s3.pull('{}/'.format(source))
+        pomagma.util.s3.pull(
+            '{}/'.format(source),
+            '{}/'.format(pomagma.util.BLOB_DIR))
         pomagma.util.s3.snapshot(source, destin)
 
 
@@ -368,22 +370,39 @@ def push(tag=default_tag):
         assert destin not in list_s3_atlases(), 'destin already exists'
         print 'pushing {} -> {}'.format(source, destin)
         pomagma.util.s3.snapshot(source, destin)
-        pomagma.util.s3.push(destin)
+        pomagma.util.s3.push(destin, pomagma.util.BLOB_DIR)
+
+
+def find(path):
+    return filter(os.path.isfile, [
+        os.path.abspath(os.path.join(root, filename))
+        for root, dirnames, filenames in os.walk(path)
+        for filename in filenames
+    ])
+
+
+def find_used_blobs():
+    pb_files = [
+        path
+        for path in find(pomagma.util.DATA)
+        if path.endswith('.pb')
+    ]
+    used_blobs = set()
+    for pb_file in pb_files:
+        used_blobs.add(pomagma.blobstore.load_blob_ref(pb_file))
+        structure = pomagma.util.pb_load(pb_file)
+        for hexdigest in structure.blobs:
+            used_blobs.add(str(hexdigest))
+    return used_blobs
 
 
 @parsable.command
-def clean(theory):
+def gc(grace_period_sec=pomagma.util.blobstore.GRACE_PERIOD_SEC):
     '''
-    Remove all work for given theory. DANGER
+    Garbage collect blobs.
     '''
-    print 'Clearing {} Are you sure? [y/N]'.format(theory),
-    if raw_input().lower()[:1] == 'y':
-        print 'OK, clearing.'
-        path = os.path.join(pomagma.util.DATA, 'atlas', theory)
-        if os.path.exists(path):
-            shutil.rmtree(path)
-    else:
-        print 'OK, not clearing.'
+    used_blobs = find_used_blobs()
+    pomagma.blobstore.garbage_collect(used=used_blobs)
 
 
 if __name__ == '__main__':

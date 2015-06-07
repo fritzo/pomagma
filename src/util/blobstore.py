@@ -1,6 +1,10 @@
-import os
 import hashlib
+import os
 import pomagma.util
+import re
+import time
+
+GRACE_PERIOD_SEC = 3600 * 24 * 7  # 1 week
 
 
 def hash_file(filename):
@@ -58,3 +62,23 @@ def dump_blob_ref(hexdigest, filename):
     assert len(hexdigest) == 40, hexdigest
     with os.open(filename, 'wb', 0444) as f:
         f.write(hexdigest)
+
+
+def garbage_collect(used_blobs, grace_period_sec=GRACE_PERIOD_SEC):
+    '''
+    Remove all files in BLOB_DIR that:
+    (1) are not reachable from refs within max_depth references; and
+    (2) have not been touched within grace_period_sec.
+    '''
+    assert grace_period_sec >= 0, grace_period_sec
+    for string in used_blobs:
+        assert re.match('[a-z0-9]{40}$', string), string
+    used_blobs = set(used_blobs)
+    deadline = time.time() - grace_period_sec
+    count = 0
+    for path in os.listdir(pomagma.util.BLOB_DIR):
+        if os.path.basename(path) not in used_blobs:
+            if os.path.getmtime(path) < deadline:
+                os.remove(path)
+                count += 1
+    print 'removed {} files from {}'.format(count, pomagma.util.BLOB_DIR)

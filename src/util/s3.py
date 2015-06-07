@@ -6,13 +6,14 @@ http://boto.readthedocs.org/en/latest/ref/s3.html
 https://github.com/boto/boto/blob/develop/boto/s3
 '''
 
-import os
-import re
-import subprocess
-import multiprocessing
 import boto
+import multiprocessing
+import os
 import parsable
 import pomagma.util
+import re
+import stat
+import subprocess
 
 parsable = parsable.Parsable()
 
@@ -37,7 +38,7 @@ def try_connect_s3(bucket):
 BUCKET = try_connect_s3(os.environ.get('POMAGMA_BUCKET', 'pomagma'))
 
 
-def s3_lazy_put(filename):
+def s3_lazy_put(filename, assume_immutable=False):
     '''
     Put file to s3 only if out of sync.
     '''
@@ -46,6 +47,9 @@ def s3_lazy_put(filename):
         key = BUCKET.new_key(filename)
         print 'uploading', filename
         key.set_contents_from_filename(filename)
+        return key
+    elif assume_immutable:
+        print 'already synchronized'
         return key
     else:
         with open(filename, 'rb') as f:
@@ -61,7 +65,7 @@ def s3_lazy_put(filename):
             return key
 
 
-def s3_lazy_get(filename):
+def s3_lazy_get(filename, assume_immutable=False):
     '''
     Get file from s3 only if out of sync.
     '''
@@ -70,13 +74,17 @@ def s3_lazy_get(filename):
         print 'missing', filename
         return key
     if os.path.exists(filename):
-        with open(filename, 'rb') as f:
-            print 'checking cached', filename
-            md5 = key.compute_md5(f)
-        key_md5_0 = key.etag.strip('"')  # WTF
-        if md5[0] == key_md5_0:
+        if assume_immutable:
             print 'already synchronized'
             return key
+        else:
+            with open(filename, 'rb') as f:
+                print 'checking cached', filename
+                md5 = key.compute_md5(f)
+            key_md5_0 = key.etag.strip('"')  # WTF
+            if md5[0] == key_md5_0:
+                print 'already synchronized'
+                return key
     dirname = os.path.dirname(filename)
     if dirname and not os.path.exists(dirname):
         os.makedirs(dirname)
@@ -143,32 +151,54 @@ EXTRACT = extract_7z
 EXT = '.7z'
 
 
+# blobs are immutable and compressed
+def is_blob(filename):
+    if re.match('[a-z0-9]{40}$', os.path.basename(filename)):
+        mode = oct(os.stat(filename)[stat.ST_MODE])[-3:]
+        assert mode == '444', 'invalid blob mode: {}'.format(mode)
+        return True
+    else:
+        return False
+
+
 def get(filename):
-    filename_ext = filename + EXT
-    s3_lazy_get(filename_ext)
-    return EXTRACT(filename_ext)
+    if is_blob(filename):
+        s3_lazy_get(filename, assume_immutable=True)
+    else:
+        filename_ext = filename + EXT
+        s3_lazy_get(filename_ext)
+        EXTRACT(filename_ext)
 
 
 def put(filename):
-    filename_ext = ARCHIVE(filename)
-    s3_lazy_put(filename_ext)
+    if is_blob(filename):
+        s3_lazy_put(filename, assume_immutable=True)
+    else:
+        filename_ext = ARCHIVE(filename)
+        s3_lazy_put(filename_ext)
 
 
 def listdir(prefix=''):
     for key in s3_listdir(prefix):
-        filename_ext = key.name
-        assert filename_ext[-len(EXT):] == EXT, filename_ext
-        filename = filename_ext[:-len(EXT)]
-        yield filename
+        if is_blob(key.name):
+            filename = key.name
+        else:
+            filename_ext = key.name
+            assert filename_ext[-len(EXT):] == EXT, filename_ext
+            filename = filename_ext[:-len(EXT)]
+            yield filename
 
 
 def remove(filename):
     if os.path.exists(filename):
         os.remove(filename)
-    filename_ext = filename + EXT
-    if os.path.exists(filename_ext):
-        os.remove(filename_ext)
-    s3_remove(filename_ext)
+    if is_blob(filename):
+        s3_remove(filename)
+    else:
+        filename_ext = filename + EXT
+        if os.path.exists(filename_ext):
+            os.remove(filename_ext)
+        s3_remove(filename_ext)
 
 
 def parallel_map(fun, args):
@@ -187,15 +217,22 @@ def filter_cache(filenames):
     ]
 
 
+BLACKLIST = re.compile('(test|core|temp|mutex|queue|socket|7z)')
+
+
 def find(path):
-    blacklist = re.compile('(test|core|temp|mutex|queue|socket|7z)')
-    return filter(os.path.isfile, [
-        os.path.abspath(os.path.join(root, filename))
-        for root, dirnames, filenames in os.walk(path)
-        if not blacklist.search(root)
-        for filename in filenames
-        if not blacklist.search(filename)
-    ])
+    if os.path.isdir(path):
+        return filter(os.path.isfile, [
+            os.path.abspath(os.path.join(root, filename))
+            for root, dirnames, filenames in os.walk(path)
+            if not BLACKLIST.search(root)
+            for filename in filenames
+            if not BLACKLIST.search(filename)
+        ])
+    elif not BLACKLIST.search(os.path.basename(path)):
+        return [os.path.abspath(path)]
+    else:
+        return []
 
 
 @parsable.command
@@ -243,8 +280,10 @@ def pull(*filenames):
     Pull files from S3 into local cache.
     '''
     assert BUCKET
-    if len(filenames) == 1 and filenames[0].endswith('/'):
-        filenames = listdir(filenames[0])
+    filenames = sum([
+        listdir(f) if f.endswith('/') else [f]
+        for f in filenames
+    ], [])
     parallel_map(get, filter_cache(filenames))
 
 
@@ -254,8 +293,8 @@ def push(*filenames):
     Push files to S3 from local cache.
     '''
     assert BUCKET
-    if len(filenames) == 1 and os.path.isdir(filenames[0]):
-        filenames = map(os.path.relpath, find(filenames[0]))
+    filenames = sum(map(find, filenames), [])
+    filenames = map(os.path.relpath, filenames)
     parallel_map(put, filter_cache(filenames))
 
 
