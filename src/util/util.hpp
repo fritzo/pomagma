@@ -401,16 +401,6 @@ inline const typename Map::mapped_type & map_get (
 //----------------------------------------------------------------------------
 // string operations
 
-inline std::string get_filename (const std::string & path)
-{
-    size_t pos = path.find_last_of("/");
-    if (pos != std::string::npos) {
-        return std::string(path.begin() + pos + 1, path.end());
-    } else {
-        return path;
-    }
-}
-
 // adapted from http://stackoverflow.com/questions/281818
 #ifdef __GNUG__
 inline std::string demangle (const char * name)

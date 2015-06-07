@@ -10,7 +10,7 @@ int main (int argc, char ** argv)
     if (argc != 8) {
         std::cout
             << "Usage: "
-                << pomagma::get_filename(executable)
+                << boost::filesystem::basename(executable)
                 << " structure_in structure_out"
                 << " symbols facts programs language threads"
                 << "\n"

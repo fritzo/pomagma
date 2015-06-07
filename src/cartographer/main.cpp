@@ -7,7 +7,7 @@ int main (int argc, char ** argv)
     if (argc != 5) {
         std::cout
             << "Usage: "
-                << pomagma::get_filename(argv[0])
+                << boost::filesystem::basename(argv[0])
                 << " structure theory language address" << "\n"
             << "Environment Variables:\n"
             << "  POMAGMA_LOG_FILE = " << pomagma::DEFAULT_LOG_FILE << "\n"

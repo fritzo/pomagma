@@ -20,7 +20,7 @@ int main (int argc, char ** argv)
     } else {
         std::cout
             << "Usage: "
-                << pomagma::get_filename(argv[0])
+                << boost::filesystem::basename(argv[0])
                 << " structure_in"
                 << " language_in"
                 << " conjectures_in"
