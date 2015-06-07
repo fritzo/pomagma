@@ -1,13 +1,14 @@
+from pomagma.util import DB
 import os
-import pomagma.util
-import pomagma.surveyor
 import pomagma.cartographer
+import pomagma.surveyor
+import pomagma.util
 
 
 def test_ping():
     theory = 'h4'
     data = os.path.join(pomagma.util.DATA, 'test', 'debug', 'atlas', theory)
-    world = os.path.join(data, '0.h5')
+    world = os.path.join(data, DB(0))
     if not os.path.exists(world):
         min_size = pomagma.util.MIN_SIZES[theory]
         pomagma.surveyor.init(theory, world, min_size)

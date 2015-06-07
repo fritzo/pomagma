@@ -1,19 +1,21 @@
-import os
-import re
-import sys
-import time
-import signal
-import parsable
-parsable = parsable.Parsable()
-import pomagma.util
-import pomagma.util.blobstore
-import pomagma.workers
 from pomagma import analyst
 from pomagma import atlas
 from pomagma import cartographer
 from pomagma import linguist
 from pomagma import surveyor
 from pomagma import theorist
+from pomagma.util import DB
+import os
+import parsable
+import pomagma.util
+import pomagma.util.blobstore
+import pomagma.workers
+import re
+import signal
+import sys
+import time
+
+parsable = parsable.Parsable()
 
 THEORY = os.environ.get('POMAGMA_THEORY', 'skrj')
 
@@ -42,7 +44,7 @@ def test(theory=THEORY, extra_size=0, **options):
         os.makedirs(path)
     with pomagma.util.chdir(path), pomagma.util.mutex(block=False):
         options.setdefault('log_file', 'test.log')
-        world = 'test.world.h5'
+        world = DB('test.world')
         diverge_conjectures = 'diverge_conjectures.facts'
         diverge_theorems = 'diverge_theorems.facts'
         equal_conjectures = 'equal_conjectures.facts'
@@ -98,9 +100,9 @@ def init(theory=THEORY, **options):
     world_size = pomagma.util.MIN_SIZES[theory]
     pomagma.util.log_print('initialize to {}'.format(world_size), log_file)
     with atlas.chdir(theory, init=True):
-        survey = 'survey.h5'
-        world = 'world.h5'
-        normal = 'world.normal.h5'
+        survey = DB('survey')
+        world = DB('world')
+        normal = DB('world.normal')
         with pomagma.util.temp_copy(survey) as temp:
             surveyor.init(theory, temp, world_size, **options)
         with atlas.load(theory, survey, **options) as db:
@@ -167,8 +169,8 @@ def update_theory(theory=THEORY, dry_run=False, **options):
     '''
     print dry_run
     with atlas.chdir(theory):
-        world = 'world.h5'
-        updated = pomagma.util.temp_name('world.h5')
+        world = DB('world')
+        updated = pomagma.util.temp_name(DB('world'))
         assert already_exists(world), 'First initialize world map'
         options.setdefault('log_file', 'update_theory.log')
         atlas.update_theory(theory, world, updated, dry_run=dry_run, **options)
@@ -181,9 +183,9 @@ def update_language(theory=THEORY, **options):
     Options: log_level, log_file
     '''
     with atlas.chdir(theory):
-        world = 'world.h5'
-        init = pomagma.util.temp_name('init.h5')
-        aggregate = pomagma.util.temp_name('aggregate.h5')
+        world = DB('world')
+        init = pomagma.util.temp_name(DB('init'))
+        aggregate = pomagma.util.temp_name(DB('aggregate'))
         assert already_exists(world), 'First initialize world map'
         options.setdefault('log_file', 'update_language.log')
         init_size = pomagma.util.MIN_SIZES[theory]
@@ -197,7 +199,7 @@ def theorize(theory=THEORY, **options):
     Make conjectures based on atlas and update atlas based on theorems.
     '''
     with atlas.chdir(theory):
-        world = 'world.h5'
+        world = DB('world')
         diverge_conjectures = 'diverge_conjectures.facts'
         diverge_theorems = 'diverge_theorems.facts'
         equal_conjectures = 'equal_conjectures.facts'
@@ -254,7 +256,7 @@ def trim(theory=THEORY, parallel=True, **options):
     '''
     with atlas.chdir(theory):
         options.setdefault('log_file', 'trim.log')
-        with cartographer.load(theory, 'world.normal.h5', **options) as db:
+        with cartographer.load(theory, DB('world.normal'), **options) as db:
             min_size = pomagma.util.MIN_SIZES[theory]
             max_size = db.info()['item_count']
             sizes = sparse_range(min_size, max_size)
@@ -263,7 +265,7 @@ def trim(theory=THEORY, parallel=True, **options):
                 tasks.append({
                     'size': size,
                     'temperature': 0,
-                    'filename': 'region.normal.{:d}.h5'.format(size)
+                    'filename': DB('region.normal.{:d}').format(size)
                 })
             if parallel:
                 print 'Trimming {} regions of sizes {}-{}'.format(
@@ -281,9 +283,9 @@ def _analyze(theory=THEORY, size=None, address=analyst.ADDRESS, **options):
     with atlas.chdir(theory):
         options.setdefault('log_file', 'analyst.log')
         if size is None:
-            world = 'world.normal.h5'
+            world = DB('world.normal')
         else:
-            world = 'region.normal.{}.h5'.format(size)
+            world = DB('region.normal.{}'.format(size))
         assert os.path.exists(world), 'First initialize normalized world'
         return analyst.serve(theory, world, address=address, **options)
 

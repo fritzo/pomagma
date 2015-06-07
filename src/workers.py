@@ -1,19 +1,20 @@
-import os
-import sys
-import time
+from pomagma.util import DB
 import glob
-import shutil
 import itertools
-import subprocess
 import multiprocessing
+import os
 import parsable
-parsable = parsable.Parsable()
-import pomagma.util
 import pomagma.atlas
 import pomagma.cartographer
 import pomagma.surveyor
 import pomagma.theorist
+import pomagma.util
+import shutil
+import subprocess
+import sys
+import time
 
+parsable = parsable.Parsable()
 
 DEFAULT_SURVEY_SIZE = 16384 + 512 - 1
 MIN_SLEEP_SEC = 1
@@ -86,10 +87,10 @@ class Sleeper(object):
 
 class FileQueue(object):
 
-    def __init__(self, path, template='{}.h5'):
+    def __init__(self, path, template='{}'):
         self.path = path
         self.template = template
-        self.pattern = os.path.join(self.path, template.format('[0-9]*'))
+        self.pattern = os.path.join(self.path, DB(template.format('[0-9]*')))
 
     def get(self):
         # specifically ignore temporary files like temp.1234.0.h5
@@ -112,7 +113,7 @@ class FileQueue(object):
             os.makedirs(self.path)
         with pomagma.util.mutex(self.path):
             for i in itertools.count():
-                destin = os.path.join(self.path, self.template.format(i))
+                destin = os.path.join(self.path, DB(self.template.format(i)))
                 if not os.path.exists(destin):
                     os.rename(source, destin)
                     return
@@ -127,8 +128,8 @@ class CartographerWorker(object):
     def __init__(self, theory, region_size, region_queue_size, **options):
         self.options = options
         self.log_file = options['log_file']
-        self.world = 'world.h5'
-        self.normal_world = 'world.normal.h5'
+        self.world = DB('world')
+        self.normal_world = DB('world.normal')
         self.region_size = region_size
         self.region_queue = FileQueue('region.queue')
         self.survey_queue = FileQueue('survey.queue')
@@ -221,7 +222,7 @@ class CartographerWorker(object):
         trim_count = max(0, self.region_queue_size - queue_size)
         regions_out = []
         for i in itertools.count():
-            region_out = os.path.join(queue.path, '{}.h5'.format(i))
+            region_out = os.path.join(queue.path, DB(i))
             if not os.path.exists(region_out):
                 regions_out.append(region_out)
                 if len(regions_out) == trim_count:
@@ -276,7 +277,7 @@ def cartographer_work(
     min_size = pomagma.util.MIN_SIZES[theory]
     assert region_size >= min_size
     options.setdefault('log_file', 'cartographer.log')
-    with pomagma.atlas.chdir(theory), pomagma.util.mutex('world.h5'):
+    with pomagma.atlas.chdir(theory), pomagma.util.mutex(DB('world')):
         worker = CartographerWorker(
             theory,
             region_size,
@@ -306,8 +307,8 @@ def surveyor_work(theory, step_size=512, **options):
     with pomagma.atlas.chdir(theory):
         region_queue = FileQueue('region.queue')
         survey_queue = FileQueue('survey.queue')
-        region = pomagma.util.temp_name('region.h5')
-        survey = pomagma.util.temp_name('survey.h5')
+        region = pomagma.util.temp_name(DB('region'))
+        survey = pomagma.util.temp_name(DB('survey'))
         options.setdefault('log_file', 'survey.log')
         sleeper = Sleeper('surveyor')
         while True:

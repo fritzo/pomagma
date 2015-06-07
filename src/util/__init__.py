@@ -1,21 +1,22 @@
-import os
-import sys
-import fcntl
-import errno
-import signal
-import shutil
-import subprocess
-import multiprocessing
 import contextlib
-import uuid
+import errno
+import fcntl
+import multiprocessing
+import os
+import shutil
+import signal
+import subprocess
+import sys
 import tempfile
 import timeit
+import uuid
 
 SRC = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ROOT = os.path.dirname(SRC)
 THEORY = os.path.join(SRC, 'theory')
 LANGUAGE = os.path.join(SRC, 'language')
 DATA = os.path.join(ROOT, 'data')
+DB = '{}.h5'.format
 BLOB_DIR = os.path.join(DATA, 'blob')
 debug = int(os.environ.get('POMAGMA_DEBUG', 0))
 if debug:

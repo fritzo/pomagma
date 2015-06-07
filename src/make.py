@@ -1,12 +1,13 @@
-import os
-import glob
-import parsable
-import pomagma.util
 from pomagma import analyst
 from pomagma import atlas
 from pomagma import cartographer
 from pomagma import surveyor
 from pomagma import theorist
+from pomagma.util import DB
+import glob
+import os
+import parsable
+import pomagma.util
 
 PROFILERS = {
     'time': '/usr/bin/time --verbose',
@@ -41,27 +42,27 @@ def _test_atlas(theory):
         equal_conjectures = 'equal_conjectures.facts'
         equal_theorems = 'equal_theorems.facts'
 
-        surveyor.init(theory, '0.h5', sizes[0], **opts)
-        changed = atlas.update_theory(theory, '0.h5', '1.h5', **opts)
+        surveyor.init(theory, DB(0), sizes[0], **opts)
+        changed = atlas.update_theory(theory, DB(0), DB(1), **opts)
         assert not changed
-        with cartographer.load(theory, '0.h5', **opts) as db:
+        with cartographer.load(theory, DB(0), **opts) as db:
             db.validate()
-            db.dump('1.h5')
-            expected_size = pomagma.util.get_item_count('1.h5')
+            db.dump(DB(1))
+            expected_size = pomagma.util.get_item_count(DB(1))
             actual_size = db.info()['item_count']
             assert actual_size == expected_size
-        surveyor.survey(theory, '1.h5', '2.h5', sizes[1], **opts)
-        with cartographer.load(theory, '2.h5', **opts) as db:
-            db.trim([{'size': sizes[0], 'filename': '3.h5'}])
-        surveyor.survey(theory, '3.h5', '4.h5', sizes[1], **opts)
-        with cartographer.load(theory, '2.h5', **opts) as db:
-            db.aggregate('4.h5')
-            db.dump('5.h5')
-        with cartographer.load(theory, '5.h5', **opts) as db:
-            db.aggregate('0.h5')
-            db.dump('6.h5')
-            digest5 = pomagma.util.get_hash('5.h5')
-            digest6 = pomagma.util.get_hash('6.h5')
+        surveyor.survey(theory, DB(1), DB(2), sizes[1], **opts)
+        with cartographer.load(theory, DB(2), **opts) as db:
+            db.trim([{'size': sizes[0], 'filename': DB(3)}])
+        surveyor.survey(theory, DB(3), DB(4), sizes[1], **opts)
+        with cartographer.load(theory, DB(2), **opts) as db:
+            db.aggregate(DB(4))
+            db.dump(DB(5))
+        with cartographer.load(theory, DB(5), **opts) as db:
+            db.aggregate(DB(0))
+            db.dump(DB(6))
+            digest5 = pomagma.util.get_hash(DB(5))
+            digest6 = pomagma.util.get_hash(DB(6))
             assert digest5 == digest6
 
             counts = db.conjecture(diverge_conjectures, equal_conjectures)
@@ -78,10 +79,10 @@ def _test_atlas(theory):
                 assert counts['pos'] + counts['neg'] > 0, counts
                 assert counts['ignored'] == 0, counts
                 db.validate()
-                db.dump('6.h5')
+                db.dump(DB(6))
         theorem_count = theorist.try_prove_nless(
             theory,
-            '6.h5',
+            DB(6),
             equal_conjectures,
             equal_conjectures,
             equal_theorems,
@@ -89,7 +90,7 @@ def _test_atlas(theory):
         # assert theorem_count > 0, theorem_count
 
         if theory != 'h4':
-            with cartographer.load(theory, '6.h5', **opts) as db:
+            with cartographer.load(theory, DB(6), **opts) as db:
                 db.assume(equal_theorems)
                 if theorem_count > 0:
                     assert counts['merge'] > 0, counts
@@ -99,8 +100,8 @@ def _test_atlas(theory):
                         db.validate()
                 for priority in [0, 1]:
                     assert not db.infer(priority)
-                db.dump('7.h5')
-            with analyst.load(theory, '7.h5', **opts) as db:
+                db.dump(DB(7))
+            with analyst.load(theory, DB(7), **opts) as db:
                 fail_count = db.test_inference()
                 assert fail_count == 0, 'analyst.test_inference failed'
 
@@ -129,7 +130,7 @@ def test_analyst(theory):
     '''
     opts = {'log_file': 'test.log', 'log_level': 2}
     with atlas.chdir(theory):
-        world = 'world.normal.h5'
+        world = DB('world.normal')
         assert os.path.exists(world), 'First initialize normalized world'
         with analyst.load(theory, world, **opts) as db:
             fail_count = db.test()
@@ -165,9 +166,9 @@ def profile_surveyor(theory='skj', grow_by=64, extra_size=0, tool='time'):
     size = pomagma.util.MIN_SIZES[theory] + extra_size
     with atlas.chdir(theory):
         opts = {'log_file': 'profile.log', 'log_level': 2}
-        region = 'region.{:d}.h5'.format(size)
-        temp = pomagma.util.temp_name('profile.h5')
-        world = 'world.h5'
+        region = DB('region.{:d}'.format(size))
+        temp = pomagma.util.temp_name(DB('profile'))
+        world = DB('world')
         if not os.path.exists(region):
             assert os.path.exists(world), 'First initialize world map'
             with cartographer.load(theory, world, **opts) as db:
