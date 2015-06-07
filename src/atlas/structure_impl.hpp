@@ -689,6 +689,7 @@ inline void dump_pb (
         chunk_row.set_lhs(* lhs);
         rhs_val.Clear();
         for (auto rhs = fun.iter_lhs(* lhs); rhs.ok(); rhs.next()) {
+            if (* rhs > * lhs) break;
             rhs_val.add_key(* rhs);
             rhs_val.add_val(fun.raw_find(* lhs, * rhs));
         }
@@ -1471,7 +1472,7 @@ inline void load_data_pb (
         protobuf::delta_decompress(rhs_val);
         POMAGMA_ASSERT_EQ(rhs_val.key_size(), rhs_val.val_size());
         for (size_t i = 0, size = rhs_val.key_size(); i < size; ++i) {
-            fun.raw_insert(lhs, rhs_val.key(i), rhs_val.val(i));
+            fun.raw_insert(rhs_val.key(i), lhs, rhs_val.val(i));
         }
     }
 
