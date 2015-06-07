@@ -49,7 +49,18 @@ inline void touch (const fs::path & path)
 std::string store_blob (const std::string & temp_path)
 {
     const std::string hexdigest = hash_file(temp_path);
+    store_blob(temp_path, hexdigest);
+    return hexdigest;
+}
+
+void store_blob (const std::string & temp_path, const std::string & hexdigest)
+{
     const fs::path path = find_blob(hexdigest);
+
+    if (POMAGMA_DEBUG_LEVEL) {
+        const std::string expected = hash_file(hexdigest);
+        POMAGMA_ASSERT_EQ(hexdigest, expected);
+    }
 
     if (fs::exists(path)) {
         fs::remove(temp_path);
@@ -57,8 +68,6 @@ std::string store_blob (const std::string & temp_path)
     } else {
         fs::rename(temp_path, path);
     }
-
-    return hexdigest;
 }
 
 std::string load_blob_ref (const std::string & filename)

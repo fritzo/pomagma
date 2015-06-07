@@ -33,7 +33,7 @@ def create_blob():
 
 
 def store_blob(temp_path):
-    '''return digest to find file later; takes ownership of file'''
+    '''return digest for future find_blob calls; removes temp file'''
     assert os.path.exists(temp_path)
     hexdigest = hash_file(temp_path)
     path = find_blob(hexdigest)

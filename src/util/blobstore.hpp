@@ -3,8 +3,7 @@
 #include <pomagma/util/util.hpp>
 #include <pomagma/util/hasher.hpp>
 
-namespace pomagma
-{
+namespace pomagma {
 
 extern const char * BLOB_DIR;
 
@@ -22,8 +21,11 @@ std::string find_blob (const std::string & hexdigest);
 // return temp_path to write blob to
 std::string create_blob ();
 
-// return digest to find file later; takes ownership of file
+// return digest for future find_blob calls; removes temp file
 std::string store_blob (const std::string & temp_path);
+
+// assume digest has already been computed; removes temp file
+void store_blob (const std::string & temp_path, const std::string & hexdigest);
 
 // return hexdigest read from file
 std::string load_blob_ref (const std::string & filename);
