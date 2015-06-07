@@ -1,14 +1,14 @@
 #pragma once
 
-#include <pomagma/atlas/messages.pb.h>
+#include <pomagma/atlas/structure.pb.h>
 #include <pomagma/util/blobstore.hpp>
 #include <pomagma/util/protobuf.hpp>
 #include <pomagma/util/util.hpp>
 
-namespace pomagma
-{
-namespace protobuf
-{
+namespace pomagma {
+namespace protobuf {
+
+using namespace atlas::protobuf;
 
 inline void delta_compress (SparseMap & map)
 {

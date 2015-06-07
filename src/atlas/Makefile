@@ -1,5 +1,5 @@
 
-all: messages_pb2.py
+all: structure_pb2.py
 
-messages_pb2.py: messages.proto
-	protoc messages.proto --python_out=. --cpp_out=.
+structure_pb2.py: structure.proto
+	protoc structure.proto --python_out=. --cpp_out=.

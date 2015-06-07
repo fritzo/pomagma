@@ -9,7 +9,7 @@ void test_write_read (const TestMessage & expected)
     POMAGMA_INFO("Testing read(write(" << expected.ShortDebugString() << "))");
     TestMessage actual;
     in_temp_dir([&](){
-        const std::string filename = "test.pbgz";
+        const std::string filename = "test.pb";
         {
             protobuf::OutFile file(filename);
             file.write(expected);
@@ -27,7 +27,7 @@ void test_write_read_chunks (const TestMessage & expected)
     POMAGMA_INFO("Testing read(write(" << expected.ShortDebugString() << "))");
     TestMessage actual;
     in_temp_dir([&](){
-        const std::string filename = "test.pbgz";
+        const std::string filename = "test.pb";
         {
             protobuf::OutFile file(filename);
             file.write(expected);

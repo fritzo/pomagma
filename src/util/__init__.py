@@ -394,7 +394,9 @@ def h5_open(filename):
 def pb_load(filename):
     from pomagma.atlas.messages_pb2 import Structure
     from pomagma.util.protobuf import InFile
-    with InFile(filename) as f:
+    from pomagma.util.blobstore import find_blob
+    from pomagma.util.blobstore import load_blob_ref
+    with InFile(find_blob(load_blob_ref(filename))) as f:
         structure = Structure()
         f.read(structure)
         return structure

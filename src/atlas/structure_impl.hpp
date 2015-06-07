@@ -12,7 +12,7 @@
 // SymmetricFunction
 #include <algorithm>
 #include <array>
-#include <pomagma/atlas/messages.pb.h>
+#include <pomagma/atlas/structure.pb.h>
 #include <pomagma/atlas/protobuf.hpp>
 #include <pomagma/util/hdf5.hpp>
 #include <sys/stat.h>  // for chmod
@@ -27,8 +27,7 @@
     DO(Function, function, Binary,    binary)    \
     DO(Function, function, Symmetric, symmetric)
 
-namespace pomagma
-{
+namespace pomagma {
 
 //----------------------------------------------------------------------------
 // Interface
@@ -763,7 +762,7 @@ void dump (
     const std::string ext = fs::extension(filename);
     if (ext == ".h5") {
         dump_h5(signature, filename);
-    } else if (ext == ".pbgz") {
+    } else if (ext == ".pb") {
         dump_pb(signature, filename);
     } else {
         POMAGMA_ERROR("unknown file extension: " << filename);
@@ -1556,7 +1555,7 @@ void load (
     const std::string ext = fs::extension(filename);
     if (ext == ".h5") {
         load_h5(signature, filename, extra_item_dim);
-    } else if (ext == ".pbgz") {
+    } else if (ext == ".pb") {
         load_pb(signature, filename, extra_item_dim);
     } else {
         POMAGMA_ERROR("unknown file extension: " << filename);
@@ -1574,7 +1573,7 @@ void load_data (
     const std::string ext = fs::extension(filename);
     if (ext == ".h5") {
         load_data_h5(signature, filename);
-    } else if (ext == ".pbgz") {
+    } else if (ext == ".pb") {
         load_data_pb(signature, filename);
     } else {
         POMAGMA_ERROR("unknown file extension: " << filename);
