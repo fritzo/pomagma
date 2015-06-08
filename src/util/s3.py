@@ -281,7 +281,7 @@ def pull(*filenames):
     '''
     assert BUCKET
     filenames = sum([
-        listdir(f) if f.endswith('/') else [f]
+        list(listdir(f)) if f.endswith('/') else [f]
         for f in filenames
     ], [])
     parallel_map(get, filter_cache(filenames))

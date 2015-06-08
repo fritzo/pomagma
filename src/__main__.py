@@ -371,31 +371,9 @@ def push(tag=default_tag):
         assert match_atlas(destin), 'invalid tag: {}'.format(tag)
         assert destin not in list_s3_atlases(), 'destin already exists'
         print 'pushing {} -> {}'.format(source, destin)
+        blobs = pomagma.atlas.find_used_blobs()
         pomagma.util.s3.snapshot(source, destin)
-        pomagma.util.s3.push(destin, pomagma.util.BLOB_DIR)
-
-
-def find(path):
-    return filter(os.path.isfile, [
-        os.path.abspath(os.path.join(root, filename))
-        for root, dirnames, filenames in os.walk(path)
-        for filename in filenames
-    ])
-
-
-def find_used_blobs():
-    pb_files = [
-        path
-        for path in find(pomagma.util.DATA)
-        if path.endswith('.pb')
-    ]
-    used_blobs = set()
-    for pb_file in pb_files:
-        used_blobs.add(pomagma.blobstore.load_blob_ref(pb_file))
-        structure = pomagma.util.pb_load(pb_file)
-        for hexdigest in structure.blobs:
-            used_blobs.add(str(hexdigest))
-    return used_blobs
+        pomagma.util.s3.push(destin, *blobs)
 
 
 @parsable.command
@@ -403,7 +381,7 @@ def gc(grace_period_sec=pomagma.util.blobstore.GRACE_PERIOD_SEC):
     '''
     Garbage collect blobs.
     '''
-    used_blobs = find_used_blobs()
+    used_blobs = pomagma.atlas.find_used_blobs()
     pomagma.blobstore.garbage_collect(used=used_blobs)
 
 

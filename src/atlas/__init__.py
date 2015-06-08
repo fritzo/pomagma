@@ -1,6 +1,7 @@
 import os
 import contextlib
 import pomagma.util
+import pomagma.util.blobstore
 import pomagma.surveyor
 import pomagma.cartographer
 import pomagma.theorist
@@ -68,3 +69,26 @@ def assume(theory, world, updated, theorems, **opts):
             db.validate()
             db.dump(updated)
         os.rename(updated, world)
+
+
+def find(path):
+    return filter(os.path.isfile, [
+        os.path.abspath(os.path.join(root, filename))
+        for root, dirnames, filenames in os.walk(path)
+        for filename in filenames
+    ])
+
+
+def find_used_blobs():
+    pb_files = [
+        path
+        for path in find(pomagma.util.DATA)
+        if path.endswith('.pb')
+    ]
+    used_blobs = set()
+    for pb_file in pb_files:
+        used_blobs.add(pomagma.blobstore.load_blob_ref(pb_file))
+        structure = pomagma.util.pb_load(pb_file)
+        for hexdigest in structure.blobs:
+            used_blobs.add(str(hexdigest))
+    return used_blobs
