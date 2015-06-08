@@ -1,10 +1,14 @@
-import os
+from pomagma.atlas.structure_pb2 import Structure
+from pomagma.util.blobstore import find_blob
+from pomagma.util.blobstore import load_blob_ref
+from pomagma.util.protobuf import InFile
 import contextlib
+import os
+import pomagma.cartographer
+import pomagma.surveyor
+import pomagma.theorist
 import pomagma.util
 import pomagma.util.blobstore
-import pomagma.surveyor
-import pomagma.cartographer
-import pomagma.theorist
 
 
 @contextlib.contextmanager
@@ -111,10 +115,6 @@ def h5_open(filename):
 
 
 def pb_load(filename):
-    from pomagma.atlas.structure_pb2 import Structure
-    from pomagma.util.protobuf import InFile
-    from pomagma.util.blobstore import find_blob
-    from pomagma.util.blobstore import load_blob_ref
     with InFile(find_blob(load_blob_ref(filename))) as f:
         structure = Structure()
         f.read(structure)
