@@ -559,7 +559,7 @@ inline void dump_pb (
     POMAGMA_DEBUG("dumping carrier");
     auto & message = * structure.mutable_carrier();
     message.set_hash(Hasher::str(get_hash(carrier)));
-    message.set_item_dim(carrier.item_dim());
+    message.set_item_count(carrier.item_count());
 }
 
 inline void dump_pb (
@@ -1288,7 +1288,7 @@ namespace detail
 
 inline void load_data_pb (DenseSet & set, const protobuf::DenseSet & message)
 {
-    POMAGMA_ASSERT_EQ(set.item_dim(), message.item_dim());
+    POMAGMA_ASSERT_LE(message.item_dim(), set.item_dim());
     POMAGMA_ASSERT_LE(message.mask().size(), set.data_size_bytes());
     memcpy(set.raw_data(), message.mask().data(), set.data_size_bytes());
 }
@@ -1301,9 +1301,8 @@ inline void load_signature_pb (
     POMAGMA_INFO("Loading signature");
 
     clear(signature);
-    size_t source_item_dim = structure.carrier().item_dim();
-    size_t destin_item_dim = source_item_dim + extra_item_dim;
-    signature.declare(* new Carrier(destin_item_dim));
+    size_t item_dim = structure.carrier().item_count() + extra_item_dim;
+    signature.declare(* new Carrier(item_dim));
     Carrier & carrier = * signature.carrier();
 
 #define CASE_ARITY(Kind, kind, Arity, arity)                                \
@@ -1324,9 +1323,9 @@ inline void check_signature (
 
     POMAGMA_ASSERT(signature.carrier(), "carrier is not defined");
     const Carrier & carrier = * signature.carrier();
-    size_t source_item_dim = structure.carrier().item_dim();
-    size_t destin_item_dim = carrier.item_dim();
-    POMAGMA_ASSERT_LE(source_item_dim, destin_item_dim);
+    size_t item_count = structure.carrier().item_count();
+    size_t item_dim = carrier.item_dim();
+    POMAGMA_ASSERT_LE(item_count, item_dim);
 
 #define CASE_ARITY(Kind, kind, Arity, arity)                                \
     for (const auto & i : structure. arity ## _ ## kind ## s()) {           \
@@ -1344,9 +1343,9 @@ inline void load_data_pb (
 {
     POMAGMA_INFO("loading carrier");
 
-    size_t item_dim = message.item_dim();
-    POMAGMA_ASSERT_LE(item_dim, carrier.item_dim());
-    for (Ob ob = 1; ob <= item_dim; ++ob) {
+    size_t item_count = message.item_count();
+    POMAGMA_ASSERT_LE(item_count, carrier.item_dim());
+    for (Ob ob = 1; ob <= item_count; ++ob) {
         carrier.raw_insert(ob);
     }
 }

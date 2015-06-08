@@ -145,8 +145,8 @@ def get_info(filename):
         with h5_open(filename) as structure:
             item_dim, item_count = count_obs(structure)
     elif ext == 'pb':
-        item_dim = pb_load(filename).carrier.item_dim
-        item_count = item_dim
+        item_count = pb_load(filename).carrier.item_count
+        item_dim = item_count
     return {'item_dim': item_dim, 'item_count': item_count}
 
 
@@ -165,6 +165,6 @@ def print_info(filename):
                 print o
     elif ext == 'pb':
         structure = pb_load(filename)
-        print 'item_dim =', structure.carrier.item_dim
-        print 'item_count =', structure.carrier.item_dim
+        print 'item_dim =', structure.carrier.item_count
+        print 'item_count =', structure.carrier.item_count
         print structure

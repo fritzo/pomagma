@@ -22,7 +22,7 @@ message DenseSet {
 message Carrier {
   optional string name = 1;
   optional bytes hash = 2;
-  optional uint32 item_dim = 3;
+  optional uint32 item_count = 3;
 }
 
 message NullaryFunction {
