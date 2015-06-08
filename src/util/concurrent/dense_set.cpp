@@ -72,6 +72,23 @@ void DenseSet::validate () const
             << m_words[m_word_dim - 1].load(relaxed));
 }
 
+size_t DenseSet::max_item () const
+{
+    size_t max_word = 0;
+    for (size_t m = 1, M = m_word_dim; m < M; ++m) {
+        if (m_words[m].load(relaxed)) {
+            max_word = m;
+        }
+    }
+
+    size_t max_bit = 0;
+    Word word = m_words[max_word].load(relaxed);
+    while (word >>= Word(1)) {
+        ++max_bit;
+    }
+
+    return BITS_PER_WORD * max_word + max_bit;
+}
 
 //----------------------------------------------------------------------------
 // Insertion

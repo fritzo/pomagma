@@ -252,6 +252,27 @@ void test_operations (size_t size, rng_t & rng)
     POMAGMA_ASSERT(actual_diff == expected_diff, "merge diff is wrong");
 }
 
+void test_max_item (size_t size, rng_t & rng)
+{
+    POMAGMA_INFO("Testing DenseSet operations");
+
+    DenseSet set(size);
+    std::vector<float> probs = {0.0, 0.0001, 0.001, 0.01, 0.1, 1.0};
+    for (float prob : probs) {
+        set.zero();
+        std::bernoulli_distribution randomly_insert(prob);
+        for (size_t i = 1; i <= size; ++i) {
+            if (randomly_insert(rng)) set.insert(i);
+        }
+        size_t expected = 0;
+        for (auto i = set.iter(); i.ok(); i.next()) {
+            expected = *i;
+        }
+        size_t actual = set.max_item();
+        POMAGMA_ASSERT_EQ(actual, expected);
+    }
+}
+
 int main ()
 {
     Log::Context log_context("Dense Set Test");
@@ -266,6 +287,7 @@ int main ()
         test_even(size);
         test_iterator(size, rng);
         test_operations(size, rng);
+        test_max_item(size, rng);
     }
 
     for (size_t exponent = 1; exponent <= 10; ++exponent) {
@@ -274,6 +296,7 @@ int main ()
         test_even(size);
         test_iterator(size, rng);
         test_operations(size, rng);
+        test_max_item(size, rng);
     }
 
     return 0;

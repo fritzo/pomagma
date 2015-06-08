@@ -229,6 +229,7 @@ public:
     size_t item_dim () const { return m_item_dim; }
     size_t word_dim () const { return m_word_dim; }
     size_t data_size_bytes () const { return sizeof(Word) * m_word_dim; }
+    size_t max_item () const;
     typedef Word RawData;
     Word * raw_data () { return m_words; }
     const Word * raw_data () const { return m_words; }
