@@ -2,7 +2,6 @@
 Boostrapped data is included in git repo, for testing.
 '''
 
-from pomagma.util import DB
 import os
 import pomagma.util
 
@@ -12,4 +11,4 @@ WORLD = os.path.join(
     pomagma.util.DATA,
     'atlas',
     THEORY,
-    DB('region.normal.{:d}'.format(SIZE)))
+    'region.normal.{:d}.h5'.format(SIZE))

@@ -10,7 +10,6 @@ import pomagma.surveyor
 import pomagma.util
 import simplejson as json
 
-
 DATA = os.path.join(pomagma.util.DATA, 'test', 'debug', 'atlas', THEORY)
 ADDRESS = 'ipc://{}'.format(os.path.join(DATA, 'socket'))
 OPTIONS = {

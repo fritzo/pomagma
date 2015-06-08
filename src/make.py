@@ -1,3 +1,4 @@
+from contextlib2 import ExitStack
 from pomagma import analyst
 from pomagma import atlas
 from pomagma import cartographer
@@ -5,6 +6,7 @@ from pomagma import surveyor
 from pomagma import theorist
 from pomagma.util import DB
 import glob
+import mock
 import os
 import parsable
 import pomagma.util
@@ -31,7 +33,11 @@ def _test_atlas(theory):
         os.system('rm -f {}/*'.format(path))
     else:
         os.makedirs(path)
-    with pomagma.util.chdir(path), pomagma.util.mutex(block=False):
+    with ExitStack() as stack:
+        with_ = stack.enter_context
+        with_(pomagma.util.chdir(path))
+        with_(mock.patch('pomagma.util.BLOB_DIR', new=path))
+        with_(pomagma.util.mutex(block=False))
 
         min_size = pomagma.util.MIN_SIZES[theory]
         dsize = min(64, 1 + min_size)
