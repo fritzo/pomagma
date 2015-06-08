@@ -54,7 +54,7 @@ def _test_atlas(theory):
         with cartographer.load(theory, DB(0), **opts) as db:
             db.validate()
             db.dump(DB(1))
-            expected_size = pomagma.util.get_item_count(DB(1))
+            expected_size = atlas.get_item_count(DB(1))
             actual_size = db.info()['item_count']
             assert actual_size == expected_size
         surveyor.survey(theory, DB(1), DB(2), sizes[1], **opts)
@@ -67,8 +67,8 @@ def _test_atlas(theory):
         with cartographer.load(theory, DB(5), **opts) as db:
             db.aggregate(DB(0))
             db.dump(DB(6))
-            digest5 = pomagma.util.get_hash(DB(5))
-            digest6 = pomagma.util.get_hash(DB(6))
+            digest5 = atlas.get_hash(DB(5))
+            digest6 = atlas.get_hash(DB(6))
             assert digest5 == digest6
 
             counts = db.conjecture(diverge_conjectures, equal_conjectures)

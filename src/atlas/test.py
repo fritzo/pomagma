@@ -1,7 +1,7 @@
 from nose.tools import assert_equal
+from pomagma.atlas import get_hash
 from pomagma.atlas.bootstrap import THEORY
 from pomagma.atlas.bootstrap import WORLD
-from pomagma.util import get_hash
 from pomagma.util.testing import for_each
 import mock
 import pomagma.cartographer

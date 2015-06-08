@@ -146,8 +146,8 @@ class CartographerWorker(object):
         self.db = self.server.connect()
         self.infer_state = 0
         if os.path.exists(self.normal_world):
-            world_digest = pomagma.util.get_hash(self.world)
-            normal_world_digest = pomagma.util.get_hash(self.normal_world)
+            world_digest = pomagma.atlas.get_hash(self.world)
+            normal_world_digest = pomagma.atlas.get_hash(self.normal_world)
             if world_digest == normal_world_digest:
                 self.infer_state = 2
 
@@ -316,7 +316,7 @@ def surveyor_work(theory, step_size=512, **options):
                 sleeper.sleep()
             else:
                 sleeper.reset()
-                region_size = pomagma.util.get_item_count(region)
+                region_size = pomagma.atlas.get_item_count(region)
                 survey_size = region_size + step_size
                 pomagma.surveyor.survey(
                     theory,
