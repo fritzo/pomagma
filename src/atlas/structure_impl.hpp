@@ -548,8 +548,10 @@ inline void dump_pb (
         const DenseSet & set,
         protobuf::DenseSet & message)
 {
-    message.set_item_dim(set.item_dim());
-    message.set_mask(set.raw_data(), set.data_size_bytes());
+    const size_t item_dim = set.max_item();
+    const size_t byte_count = (item_dim + 7) / 8;
+    message.set_item_dim(item_dim);
+    message.set_mask(set.raw_data(), byte_count);
 }
 
 inline void dump_pb (
@@ -1290,7 +1292,7 @@ inline void load_data_pb (DenseSet & set, const protobuf::DenseSet & message)
 {
     POMAGMA_ASSERT_LE(message.item_dim(), set.item_dim());
     POMAGMA_ASSERT_LE(message.mask().size(), set.data_size_bytes());
-    memcpy(set.raw_data(), message.mask().data(), set.data_size_bytes());
+    memcpy(set.raw_data(), message.mask().data(), message.mask().size());
 }
 
 inline void load_signature_pb (

@@ -9,6 +9,9 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#define POMAGMA_DEBUG1(message)
+//#define POMAGMA_DEBUG1(message) POMAGMA_DEBUG(message)
+
 namespace pomagma {
 namespace protobuf {
 
@@ -45,7 +48,7 @@ bool InFile::try_read_chunk (google::protobuf::Message & message)
     const uint32_t tag = stream.ReadTag();
     if (unlikely(not tag)) return false; // EOF
     const int field_number = WireFormatLite::GetTagFieldNumber(tag);
-    POMAGMA_DEBUG("parsing field " << field_number << " of type " << (tag & 7));
+    POMAGMA_DEBUG1("parsing field " << field_number << ", type " << (tag & 7));
     const auto* descriptor = message.GetDescriptor();
     POMAGMA_ASSERT1(descriptor, "failed to get descriptor");  // FIXME fails
     const auto* field = descriptor->FindFieldByNumber(field_number);
