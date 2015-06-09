@@ -135,11 +135,9 @@ void test_operations (size_t size, rng_t & rng)
     DenseSet expected(size);
     DenseSet actual(size);
 
-    std::bernoulli_distribution randomly_insert(0.5);
-    for (size_t i = 1; i <= size; ++i) {
-        if (randomly_insert(rng)) x.insert(i);
-        if (randomly_insert(rng)) y.insert(i);
-    }
+    x.fill_random(rng);
+    y.fill_random(rng);
+
     POMAGMA_ASSERT(bool(x.count_items()) ^ x.empty(), ".empty() is wrong");
     POMAGMA_ASSERT(bool(y.count_items()) ^ y.empty(), ".empty() is wrong");
 
@@ -259,11 +257,7 @@ void test_max_item (size_t size, rng_t & rng)
     DenseSet set(size);
     std::vector<float> probs = {0.0, 0.0001, 0.001, 0.01, 0.1, 1.0};
     for (float prob : probs) {
-        set.zero();
-        std::bernoulli_distribution randomly_insert(prob);
-        for (size_t i = 1; i <= size; ++i) {
-            if (randomly_insert(rng)) set.insert(i);
-        }
+        set.fill_random(rng, prob);
         size_t expected = 0;
         for (auto i = set.iter(); i.ok(); i.next()) {
             expected = *i;

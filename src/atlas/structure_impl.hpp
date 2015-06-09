@@ -544,9 +544,7 @@ void dump_h5 (
 namespace detail
 {
 
-inline void dump_pb (
-        const DenseSet & set,
-        protobuf::DenseSet & message)
+inline void dump_pb (const DenseSet & set, protobuf::DenseSet & message)
 {
     const size_t item_dim = set.max_item();
     const size_t byte_count = (item_dim + 7) / 8;
@@ -578,7 +576,7 @@ inline void dump_pb (
     // write blob with a single chunk
     protobuf::BlobWriter blob(message.add_blobs());
     protobuf::UnaryRelation chunk;
-    dump_pb(rel.get_set(), * chunk.mutable_dense());
+    protobuf::dump(rel.get_set(), * chunk.mutable_dense());
     blob.write(chunk);
 }
 
@@ -600,7 +598,7 @@ inline void dump_pb (
     for (auto i = carrier.support().iter(); i.ok(); i.next()) {
         Ob lhs = *i;
         chunk_row.set_lhs(lhs);
-        dump_pb(rel.get_Lx_set(lhs), * chunk_row.mutable_rhs());
+        protobuf::dump(rel.get_Lx_set(lhs), * chunk_row.mutable_rhs());
         blob.write(chunk);
     }
 }
@@ -1288,13 +1286,6 @@ void load_data_h5 (
 namespace detail
 {
 
-inline void load_data_pb (DenseSet & set, const protobuf::DenseSet & message)
-{
-    POMAGMA_ASSERT_LE(message.item_dim(), set.item_dim());
-    POMAGMA_ASSERT_LE(message.mask().size(), set.data_size_bytes());
-    memcpy(set.raw_data(), message.mask().data(), message.mask().size());
-}
-
 inline void load_signature_pb (
         Signature & signature,
         const protobuf::Structure & structure,
@@ -1360,7 +1351,7 @@ inline void load_data_pb (
     if (message.has_dense()) {
         POMAGMA_ASSERT1(message.dense().IsInitialized(),
             "dense is not initialized");
-        load_data_pb(rel.raw_set(), message.dense());
+        protobuf::load(rel.raw_set(), message.dense());
     }
 
     // recurse to blobs pointed to by message
@@ -1383,7 +1374,7 @@ inline void load_data_pb (
     for (const auto & row : message.rows()) {
         POMAGMA_ASSERT1(row.IsInitialized(), "row is not initialized");
         DenseSet rhs = rel.get_Lx_set(row.lhs());
-        load_data_pb(rhs, row.rhs());
+        protobuf::load(rhs, row.rhs());
     }
 
     // recurse to blobs pointed to by message

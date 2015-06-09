@@ -176,6 +176,7 @@ class DenseSet : noncopyable
 
 public:
 
+    // set can contain items {1,...,item_dim}
     DenseSet (size_t item_dim);
     DenseSet (size_t item_dim, Word * line)
         : m_item_dim(item_dim),
@@ -250,6 +251,7 @@ public:
 
     // entire operations
     void zero ();
+    void fill_random (rng_t & rng, float density = 0.5);
     bool operator == (const DenseSet & other) const;
     bool operator != (const DenseSet & s) const { return not operator==(s); }
     bool operator <= (const DenseSet & other) const;

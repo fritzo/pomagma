@@ -168,6 +168,19 @@ void DenseSet::zero ()
     bzero(m_words, sizeof(Word) * m_word_dim);
 }
 
+void DenseSet::fill_random (rng_t & rng, float density)
+{
+    POMAGMA_ASSERT_LE(0, density);
+    POMAGMA_ASSERT_LE(density, 1);
+    zero();
+    std::bernoulli_distribution randomly_insert(density);
+    for (size_t i = 1; i <= m_item_dim; ++i) {
+        if (randomly_insert(rng)) {
+            insert(i);
+        }
+    }
+}
+
 inline void DenseSet::ensure_padding_bits_are_zero ()
 {
     Word ones = ~ Word(0);

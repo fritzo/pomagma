@@ -45,6 +45,28 @@ inline void delta_decompress (SparseMap & map)
     map.clear_val_diff();
 }
 
+template<class InMemoryDenseSet>
+inline void dump (
+        const InMemoryDenseSet & set,
+        atlas::protobuf::DenseSet & message)
+{
+    const size_t item_dim = set.max_item();
+    const size_t byte_count = item_dim / 8 + 1;
+    message.set_item_dim(item_dim);
+    message.set_mask(set.raw_data(), byte_count);
+}
+
+template<class InMemoryDenseSet>
+inline void load (
+        InMemoryDenseSet & set,
+        const atlas::protobuf::DenseSet & message)
+{
+    POMAGMA_ASSERT_LE(message.item_dim(), set.item_dim());
+    POMAGMA_ASSERT_LE(message.mask().size(), set.data_size_bytes());
+    POMAGMA_ASSERT1(set.empty(), "DenseSet not empty before load");
+    memcpy(set.raw_data(), message.mask().data(), message.mask().size());
+}
+
 class BlobWriter : noncopyable
 {
     protobuf::OutFile & m_file;

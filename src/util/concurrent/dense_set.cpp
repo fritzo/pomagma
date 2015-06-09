@@ -134,6 +134,19 @@ void DenseSet::zero ()
     bzero(m_words, sizeof(Word) * m_word_dim);
 }
 
+void DenseSet::fill_random (rng_t & rng, float density)
+{
+    POMAGMA_ASSERT_LE(0, density);
+    POMAGMA_ASSERT_LE(density, 1);
+    zero();
+    std::bernoulli_distribution randomly_insert(density);
+    for (size_t i = 1; i <= m_item_dim; ++i) {
+        if (randomly_insert(rng)) {
+            insert(i);
+        }
+    }
+}
+
 bool DenseSet::operator== (const DenseSet & other) const
 {
     POMAGMA_ASSERT1(item_dim() == other.item_dim(), "item_dim mismatch");

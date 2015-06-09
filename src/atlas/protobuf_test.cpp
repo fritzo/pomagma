@@ -1,4 +1,5 @@
 #include <pomagma/atlas/protobuf.hpp>
+#include <pomagma/util/sequential/dense_set.hpp>
 
 using namespace pomagma;
 
@@ -46,6 +47,26 @@ void test_decompress_on_uncompressed_data (const SparseMap& example)
     POMAGMA_ASSERT_EQ(actual.ShortDebugString(), expected.ShortDebugString());
 }
 
+void test_dump_load ()
+{
+    POMAGMA_INFO("Testing DenseSet serialization");
+
+    rng_t rng;
+    pomagma::protobuf::DenseSet message;
+    const std::vector<float> probs = {0.001, 0.01, 0.1, 0.5, 0.9, 0.99, 0.999};
+    for (size_t size = 1; size < 100; ++size) {
+        pomagma::sequential::DenseSet expected(size);
+        pomagma::sequential::DenseSet actual(size);
+        for (float prob : probs) {
+            expected.fill_random(rng, prob);
+            actual.zero();
+            pomagma::protobuf::dump(expected, message);
+            pomagma::protobuf::load(actual, message);
+            POMAGMA_ASSERT(actual == expected, message.ShortDebugString());
+        }
+    }
+}
+
 int main ()
 {
     Log::Context log_context("Atlas Protobuf Test");
@@ -54,6 +75,8 @@ int main ()
         test_compress_decompress(example);
         test_decompress_on_uncompressed_data(example);
     }
+
+    test_dump_load();
 
     return 0;
 }
