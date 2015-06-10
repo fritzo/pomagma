@@ -3,7 +3,7 @@ package pomagma.atlas.protobuf;
 //----------------------------------------------------------------------------
 // raw data
 
-message SparseMap {
+message ObMap {
   // either key,val are both set, or key_diff_minus_one,val_diff are both set
   repeated uint32 key = 1 [packed=true];
   repeated uint32 val = 2 [packed=true];
@@ -11,9 +11,8 @@ message SparseMap {
   repeated int32 val_diff = 4 [packed=true];
 }
 
-message DenseSet {
-  required uint32 item_dim = 1;
-  required bytes mask = 2;
+message ObSet {
+  required bytes dense = 1;
 }
 
 //----------------------------------------------------------------------------
@@ -34,7 +33,7 @@ message NullaryFunction {
 message UnaryFunction {
   optional string name = 1;
   optional bytes hash = 2;
-  optional SparseMap sparse = 3;
+  optional ObMap map = 3;
 
   repeated bytes blobs = 15;
 }
@@ -42,7 +41,7 @@ message UnaryFunction {
 message BinaryFunction {
   message Row {
     required uint32 lhs = 1;
-    required SparseMap rhs_val = 2;
+    required ObMap rhs_val = 2;
   }
 
   optional string name = 1;
@@ -55,7 +54,7 @@ message BinaryFunction {
 message UnaryRelation {
   optional string name = 1;
   optional bytes hash = 2;
-  optional DenseSet dense = 3;
+  optional ObSet set = 3;
 
   repeated bytes blobs = 15;
 }
@@ -63,7 +62,7 @@ message UnaryRelation {
 message BinaryRelation {
   message Row {
     required uint32 lhs = 1;
-    required DenseSet rhs = 2;
+    required ObSet rhs = 2;
   }
 
   optional string name = 1;

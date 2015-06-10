@@ -10,7 +10,7 @@ namespace protobuf {
 
 using namespace atlas::protobuf;
 
-inline void delta_compress (SparseMap & map)
+inline void delta_compress (ObMap & map)
 {
     POMAGMA_ASSERT_EQ(map.key_size(), map.val_size());
     POMAGMA_ASSERT_EQ(0, map.key_diff_minus_one_size());
@@ -31,7 +31,7 @@ inline void delta_compress (SparseMap & map)
 }
 
 // this leaves uncompressed data uncompressed
-inline void delta_decompress (SparseMap & map)
+inline void delta_decompress (ObMap & map)
 {
     POMAGMA_ASSERT_EQ(map.key_diff_minus_one_size(), map.val_diff_size());
     POMAGMA_ASSERT_EQ(map.key_size(), map.val_size());
@@ -45,26 +45,19 @@ inline void delta_decompress (SparseMap & map)
     map.clear_val_diff();
 }
 
-template<class InMemoryDenseSet>
-inline void dump (
-        const InMemoryDenseSet & set,
-        atlas::protobuf::DenseSet & message)
+template<class DenseSet>
+inline void dump (const DenseSet & set, ObSet & message)
 {
-    const size_t item_dim = set.max_item();
-    const size_t byte_count = item_dim / 8 + 1;
-    message.set_item_dim(item_dim);
-    message.set_mask(set.raw_data(), byte_count);
+    const size_t byte_count = set.max_item() / 8 + 1;
+    message.set_dense(set.raw_data(), byte_count);
 }
 
-template<class InMemoryDenseSet>
-inline void load (
-        InMemoryDenseSet & set,
-        const atlas::protobuf::DenseSet & message)
+template<class DenseSet>
+inline void load (DenseSet & set, const ObSet & message)
 {
-    POMAGMA_ASSERT_LE(message.item_dim(), set.item_dim());
-    POMAGMA_ASSERT_LE(message.mask().size(), set.data_size_bytes());
+    POMAGMA_ASSERT_LE(message.dense().size(), set.data_size_bytes());
     POMAGMA_ASSERT1(set.empty(), "DenseSet not empty before load");
-    memcpy(set.raw_data(), message.mask().data(), message.mask().size());
+    memcpy(set.raw_data(), message.dense().data(), message.dense().size());
 }
 
 class BlobWriter : noncopyable

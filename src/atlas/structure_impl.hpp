@@ -544,14 +544,6 @@ void dump_h5 (
 namespace detail
 {
 
-inline void dump_pb (const DenseSet & set, protobuf::DenseSet & message)
-{
-    const size_t item_dim = set.max_item();
-    const size_t byte_count = (item_dim + 7) / 8;
-    message.set_item_dim(item_dim);
-    message.set_mask(set.raw_data(), byte_count);
-}
-
 inline void dump_pb (
         const Carrier & carrier,
         protobuf::Structure & structure)
@@ -576,7 +568,7 @@ inline void dump_pb (
     // write blob with a single chunk
     protobuf::BlobWriter blob(message.add_blobs());
     protobuf::UnaryRelation chunk;
-    protobuf::dump(rel.get_set(), * chunk.mutable_dense());
+    protobuf::dump(rel.get_set(), * chunk.mutable_set());
     blob.write(chunk);
 }
 
@@ -632,12 +624,12 @@ inline void dump_pb (
     // write blob with a single chunk
     protobuf::BlobWriter blob(message.add_blobs());
     protobuf::UnaryFunction chunk;
-    protobuf::SparseMap & chunk_sparse = * chunk.mutable_sparse();
+    protobuf::ObMap & chunk_map = * chunk.mutable_map();
     for (auto key = fun.iter(); key.ok(); key.next()) {
-        chunk_sparse.add_key(* key);
-        chunk_sparse.add_val(fun.raw_find(* key));
+        chunk_map.add_key(* key);
+        chunk_map.add_val(fun.raw_find(* key));
     }
-    protobuf::delta_compress(chunk_sparse);
+    protobuf::delta_compress(chunk_map);
     blob.write(chunk);
 }
 
@@ -656,7 +648,7 @@ inline void dump_pb (
     protobuf::BlobWriter blob(message.add_blobs());
     protobuf::BinaryFunction chunk;
     protobuf::BinaryFunction::Row & chunk_row = * chunk.add_rows();
-    protobuf::SparseMap & rhs_val = * chunk_row.mutable_rhs_val();
+    protobuf::ObMap & rhs_val = * chunk_row.mutable_rhs_val();
     for (auto lhs = carrier.support().iter(); lhs.ok(); lhs.next()) {
         chunk_row.set_lhs(* lhs);
         rhs_val.Clear();
@@ -684,7 +676,7 @@ inline void dump_pb (
     protobuf::BlobWriter blob(message.add_blobs());
     protobuf::BinaryFunction chunk;
     protobuf::BinaryFunction::Row & chunk_row = * chunk.add_rows();
-    protobuf::SparseMap & rhs_val = * chunk_row.mutable_rhs_val();
+    protobuf::ObMap & rhs_val = * chunk_row.mutable_rhs_val();
     for (auto lhs = carrier.support().iter(); lhs.ok(); lhs.next()) {
         chunk_row.set_lhs(* lhs);
         rhs_val.Clear();
@@ -1348,10 +1340,10 @@ inline void load_data_pb (
         const protobuf::UnaryRelation & message)
 {
     // load data in message
-    if (message.has_dense()) {
-        POMAGMA_ASSERT1(message.dense().IsInitialized(),
+    if (message.has_set()) {
+        POMAGMA_ASSERT1(message.set().IsInitialized(),
             "dense is not initialized");
-        protobuf::load(rel.raw_set(), message.dense());
+        protobuf::load(rel.raw_set(), message.set());
     }
 
     // recurse to blobs pointed to by message
@@ -1403,12 +1395,12 @@ inline void load_data_pb (
         protobuf::UnaryFunction & message)
 {
     // load data in message
-    if (message.has_sparse()) {
-        auto & sparse = * message.mutable_sparse();
-        protobuf::delta_decompress(sparse);
-        POMAGMA_ASSERT_EQ(sparse.key_size(), sparse.val_size());
-        for (size_t i = 0, size = sparse.key_size(); i < size; ++i) {
-            fun.raw_insert(sparse.key(i), sparse.val(i));
+    if (message.has_map()) {
+        auto & map = * message.mutable_map();
+        protobuf::delta_decompress(map);
+        POMAGMA_ASSERT_EQ(map.key_size(), map.val_size());
+        for (size_t i = 0, size = map.key_size(); i < size; ++i) {
+            fun.raw_insert(map.key(i), map.val(i));
         }
     }
 
