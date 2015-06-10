@@ -58,6 +58,9 @@ inline void load (DenseSet & set, const ObSet & message)
     POMAGMA_ASSERT_LE(message.dense().size(), set.data_size_bytes());
     POMAGMA_ASSERT1(set.empty(), "DenseSet not empty before load");
     memcpy(set.raw_data(), message.dense().data(), message.dense().size());
+    if (POMAGMA_DEBUG_LEVEL >= 3) {
+        set.validate();
+    }
 }
 
 class BlobWriter : noncopyable
