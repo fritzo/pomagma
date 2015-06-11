@@ -17,8 +17,7 @@ extern "C" {
 #include <openssl/sha.h>
 }
 
-namespace pomagma
-{
+namespace pomagma {
 
 class Hasher
 {
@@ -33,14 +32,17 @@ public:
     {
         POMAGMA_ASSERT(SHA1_Init(&m_context), "SHA1_Init failed");
     }
+    ~Hasher ()
+    {
+        POMAGMA_ASSERT1(m_state == FINISHED, "Hasher was never used");
+    }
 
     void add_raw (const void * data, size_t bytes)
     {
         POMAGMA_ASSERT1(m_state == ADDING,
-                "adding to Hasher state when finished");
-        POMAGMA_ASSERT(
-                SHA1_Update(&m_context, data, bytes),
-                "SHA1_Update failed");
+            "adding to Hasher state when finished");
+        POMAGMA_ASSERT(SHA1_Update(&m_context, data, bytes),
+            "SHA1_Update failed");
     }
 
     void add (const uint8_t & t) { add_raw(&t, 1); }
@@ -53,10 +55,7 @@ public:
     void add (const std::vector<uint32_t> & t) { add_raw(&t[0], 4 * t.size()); }
     void add (const std::vector<uint64_t> & t) { add_raw(&t[0], 8 * t.size()); }
 
-    void add (const std::string & t)
-    {
-        add_raw(t.data(), t.size());
-    }
+    void add (const std::string & t) { add_raw(t.data(), t.size()); }
 
     template<class T, size_t size>
     void add (const std::array<T, size> & t)
@@ -90,11 +89,9 @@ public:
     const Digest & finish ()
     {
         POMAGMA_ASSERT1(m_state == ADDING,
-                "finishing a Hasher state when already finished");
-
-        POMAGMA_ASSERT(
-                SHA1_Final(&m_data[0], &m_context),
-                "SHA1_Final failed");
+            "finishing a Hasher state when already finished");
+        POMAGMA_ASSERT(SHA1_Final(&m_data[0], &m_context),
+            "SHA1_Final failed");
 
         m_state = FINISHED;
         return m_data;
@@ -103,14 +100,14 @@ public:
     const Digest & data () const
     {
         POMAGMA_ASSERT1(m_state == FINISHED,
-                "reading a Hasher state when not finished");
+            "reading a Hasher state when not finished");
         return m_data;
     }
 
     std::string str () const
     {
         POMAGMA_ASSERT(m_state == FINISHED,
-                "printing a Hasher when not finished");
+            "printing a Hasher when not finished");
         return str(m_data);
     }
 
