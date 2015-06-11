@@ -3,9 +3,11 @@
 #include <fcntl.h>
 #include <google/protobuf/io/coded_stream.h>
 #include <google/protobuf/io/gzip_stream.h>
+#include <google/protobuf/io/zero_copy_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 #include <google/protobuf/wire_format.h>
 #include <google/protobuf/wire_format_lite.h>
+#include <pomagma/util/hasher.hpp>
 #include <sys/stat.h>
 #include <sys/types.h>
 
@@ -14,6 +16,58 @@
 
 namespace pomagma {
 namespace protobuf {
+
+class Sha1OutputStream : public google::protobuf::io::ZeroCopyOutputStream
+{
+public:
+
+    explicit Sha1OutputStream (int fid)
+        : m_file(fid),
+          m_buffer_data(nullptr),
+          m_buffer_size(0),
+          m_hasher()
+    {
+    }
+    virtual ~Sha1OutputStream () = default;
+
+    virtual bool Next (void ** data, int * size)
+    {
+        Flush();
+        POMAGMA_ASSERT(m_file.Next(data, size), strerror(m_file.GetErrno()));
+        m_buffer_data = * data;
+        m_buffer_size = * size;
+        return true;
+    }
+    virtual void BackUp (int count)
+    {
+        POMAGMA_ASSERT_LE(count, m_buffer_size);
+        m_buffer_size -= count;
+        m_file.BackUp(count);
+    }
+    virtual int64_t ByteCount () const { return m_file.ByteCount(); }
+
+    Hasher::Digest Digest ()
+    {
+        Flush();
+        POMAGMA_ASSERT(m_file.Close(), strerror(m_file.GetErrno()));
+        return m_hasher.finish();
+    }
+
+private:
+
+    void Flush ()
+    {
+        if (likely(m_buffer_size)) {
+            m_hasher.add_raw(m_buffer_data, m_buffer_size);
+            m_buffer_size = 0;
+        }
+    }
+
+    google::protobuf::io::FileOutputStream m_file;
+    void * m_buffer_data;
+    int m_buffer_size;
+    Hasher m_hasher;
+};
 
 InFile::InFile (const std::string & filename)
     : m_filename(filename),
