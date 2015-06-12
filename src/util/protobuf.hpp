@@ -1,5 +1,6 @@
 #pragma once
 
+#include <pomagma/util/hasher.hpp>
 #include <pomagma/util/util.hpp>
 
 namespace google {
@@ -53,12 +54,38 @@ public:
     const std::string & filename () const { return m_filename; }
 
     void write (const google::protobuf::Message & message);
+    void flush ();
 
 private:
 
     const std::string m_filename;
     const int m_fid;
     google::protobuf::io::FileOutputStream * m_file;
+    google::protobuf::io::GzipOutputStream * m_gzip;
+};
+
+class Sha1OutputStream;
+
+class Sha1OutFile : noncopyable
+{
+public:
+
+    explicit Sha1OutFile (const std::string & filename);
+    ~Sha1OutFile ();
+
+    const std::string & filename () const { return m_filename; }
+
+    void write (const google::protobuf::Message & message);
+    void flush ();
+
+    // must be called before destructor
+    Hasher::Digest digest () __attribute__((warn_unused_result));
+
+private:
+
+    const std::string m_filename;
+    const int m_fid;
+    Sha1OutputStream * m_file;
     google::protobuf::io::GzipOutputStream * m_gzip;
 };
 

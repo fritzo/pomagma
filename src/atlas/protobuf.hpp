@@ -74,6 +74,7 @@ public:
         : m_file(* new protobuf::OutFile(create_blob())),
           m_destin(* destin)
     {
+        m_destin.clear(); // just to be safe
     }
 
     ~BlobWriter ()

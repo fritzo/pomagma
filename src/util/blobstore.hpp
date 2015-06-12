@@ -22,7 +22,8 @@ std::string find_blob (const std::string & hexdigest);
 std::string create_blob ();
 
 // return digest for future find_blob calls; removes temp file
-std::string store_blob (const std::string & temp_path);
+std::string store_blob (const std::string & temp_path)
+    __attribute__((warn_unused_result));
 
 // assume digest has already been computed; removes temp file
 void store_blob (const std::string & temp_path, const std::string & hexdigest);

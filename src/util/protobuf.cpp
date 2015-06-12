@@ -7,7 +7,6 @@
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 #include <google/protobuf/wire_format.h>
 #include <google/protobuf/wire_format_lite.h>
-#include <pomagma/util/hasher.hpp>
 #include <sys/stat.h>
 #include <sys/types.h>
 
@@ -32,7 +31,7 @@ public:
 
     virtual bool Next (void ** data, int * size)
     {
-        Flush();
+        flush_hasher();
         POMAGMA_ASSERT(m_file.Next(data, size), strerror(m_file.GetErrno()));
         m_buffer_data = * data;
         m_buffer_size = * size;
@@ -46,16 +45,16 @@ public:
     }
     virtual int64_t ByteCount () const { return m_file.ByteCount(); }
 
-    Hasher::Digest Digest ()
+    Hasher::Digest Digest () __attribute__((warn_unused_result))
     {
-        Flush();
-        POMAGMA_ASSERT(m_file.Close(), strerror(m_file.GetErrno()));
+        flush_hasher();
+        POMAGMA_ASSERT(m_file.Flush(), strerror(m_file.GetErrno()));
         return m_hasher.finish();
     }
 
 private:
 
-    void Flush ()
+    void flush_hasher ()
     {
         if (likely(m_buffer_size)) {
             m_hasher.add_raw(m_buffer_data, m_buffer_size);
@@ -125,7 +124,7 @@ OutFile::~OutFile ()
 {
     delete m_gzip;
     delete m_file;
-    close(m_fid);
+    POMAGMA_ASSERT(close(m_fid) != -1, strerror(errno));
 }
 
 void OutFile::write (const google::protobuf::Message & message)
@@ -133,6 +132,41 @@ void OutFile::write (const google::protobuf::Message & message)
     POMAGMA_ASSERT1(message.IsInitialized(), "message not initialized");
     bool info = message.SerializeToZeroCopyStream(m_gzip);
     POMAGMA_ASSERT(info, "failed to write to " << m_filename);
+}
+
+void OutFile::flush ()
+{
+    POMAGMA_ASSERT(m_gzip->Flush(), "failed to flush gzip stream");
+    POMAGMA_ASSERT(m_file->Flush(), strerror(m_file->GetErrno()));
+    POMAGMA_ASSERT(fsync(m_fid) != -1, strerror(errno));
+}
+
+Sha1OutFile::Sha1OutFile (const std::string & filename)
+    : m_filename(filename),
+      m_fid(open(filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0444))
+{
+    POMAGMA_ASSERT(m_fid != -1, "failed to open file " << filename);
+    m_file = new Sha1OutputStream(m_fid);
+    m_gzip = new google::protobuf::io::GzipOutputStream(m_file);
+}
+
+Sha1OutFile::~Sha1OutFile ()
+{
+    delete m_gzip;
+    delete m_file;
+    close(m_fid);
+}
+
+void Sha1OutFile::write (const google::protobuf::Message & message)
+{
+    POMAGMA_ASSERT1(message.IsInitialized(), "message not initialized");
+    bool info = message.SerializeToZeroCopyStream(m_gzip);
+    POMAGMA_ASSERT(info, "failed to write to " << m_filename);
+}
+
+Hasher::Digest Sha1OutFile::digest ()
+{
+    return m_file->Digest();
 }
 
 } // namespace protobuf
