@@ -68,7 +68,10 @@ data/atlas/$(THEORY)/world.normal.h5: data/atlas/$(THEORY)/region.normal.2047.h5
 	  || ln -s region.normal.2047.h5 world.normal.h5 \
 
 h4-test: all FORCE
-	POMAGMA_DEBUG=1 python -m pomagma.make test-atlas h4
+	POMAGMA_DB_FORMAT=h5 POMAGMA_DEBUG=1 \
+	  python -m pomagma.make test-atlas h4
+	POMAGMA_DB_FORMAT=pb POMAGMA_DEBUG=1 \
+	  python -m pomagma.make test-atlas h4
 sk-test: all FORCE
 	POMAGMA_DEBUG=1 python -m pomagma.make test-atlas sk
 skj-test: all FORCE
