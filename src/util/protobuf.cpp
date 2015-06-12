@@ -28,7 +28,7 @@ public:
           m_hasher()
     {
     }
-    virtual ~Sha1OutputStream () = default;
+    virtual ~Sha1OutputStream () {}
 
     virtual bool Next (void ** data, int * size)
     {
