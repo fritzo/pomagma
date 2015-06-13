@@ -194,6 +194,28 @@ def update_language(theory=THEORY, **options):
 
 
 @parsable.command
+def update_format(source='h5', destin='pb', **options):
+    '''
+    Transcode world map between db formats.
+    Options: log_level, log_file
+    '''
+    assert source != destin
+    is_source = re.compile('.*\.{}$'.format(source)).match
+    is_temp = re.compile('temp').match
+    for theory in os.listdir(os.path.join(pomagma.util.DATA, 'atlas')):
+        with atlas.chdir(theory):
+            for source_name in os.listdir('.'):
+                if is_source(source_name) and not is_temp(source_name):
+                    destin_name = source_name[:-len(source)] + destin
+                    if not os.path.exists(destin_name):
+                        atlas.update_format(
+                            theory,
+                            source_name,
+                            destin_name,
+                            **options)
+
+
+@parsable.command
 def theorize(theory=THEORY, **options):
     '''
     Make conjectures based on atlas and update atlas based on theorems.
@@ -371,7 +393,10 @@ def push(tag=default_tag):
         assert match_atlas(destin), 'invalid tag: {}'.format(tag)
         assert destin not in list_s3_atlases(), 'destin already exists'
         print 'pushing {} -> {}'.format(source, destin)
-        blobs = pomagma.atlas.find_used_blobs()
+        blobs = [
+            os.path.join(pomagma.util.BLOB_DIR, blob)
+            for blob in pomagma.atlas.find_used_blobs()
+        ]
         pomagma.util.s3.snapshot(source, destin)
         pomagma.util.s3.push(destin, *blobs)
 

@@ -64,6 +64,17 @@ def update_language(theory, init, world, updated, **opts):
     os.remove(init)
 
 
+def update_format(theory, source, destin, **opts):
+    print 'converting {} {} -> {}'.format(theory, source, destin)
+    assert source != destin
+    with pomagma.util.mutex(source):
+        assert os.path.exists(source)
+        assert not os.path.exists(destin)
+        with pomagma.cartographer.load(theory, source, **opts) as db:
+            db.validate()
+            db.dump(destin)
+
+
 def assume(theory, world, updated, theorems, **opts):
     assert not os.path.exists(updated)
     with pomagma.util.mutex(world):
@@ -88,9 +99,13 @@ def find_used_blobs():
     pb_files = [path for path in find(root) if path.endswith('.pb')]
     used_blobs = set()
     for pb_file in pb_files:
-        used_blobs.add(pomagma.blobstore.load_blob_ref(pb_file))
+        used_blobs.add(pomagma.util.blobstore.load_blob_ref(pb_file))
         structure = pb_load(pb_file)
-        for hexdigest in structure.blobs:
+        blobs = sum([
+            getattr(getattr(structure, attr), 'blobs', [])
+            for attr in dir(structure)
+        ], [])
+        for hexdigest in blobs:
             blob_path = os.path.join(pomagma.util.BLOB_DIR, hexdigest)
             assert os.path.exists(blob_path), '{} missing blob'.format(pb_file)
             used_blobs.add(str(hexdigest))
