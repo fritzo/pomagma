@@ -2,9 +2,11 @@ import hashlib
 import os
 import pomagma.util
 import re
+import stat
 import time
 
 GRACE_PERIOD_SEC = 3600 * 24 * 7  # 1 week
+RE_BLOB = re.compile('^[a-z0-9]{40}$')
 
 
 def hash_file(filename):
@@ -72,7 +74,7 @@ def garbage_collect(used_blobs, grace_period_sec=GRACE_PERIOD_SEC):
     '''
     assert grace_period_sec >= 0, grace_period_sec
     for string in used_blobs:
-        assert re.match('[a-z0-9]{40}$', string), string
+        assert RE_BLOB.match(string), string
     used_blobs = set(used_blobs)
     deadline = time.time() - grace_period_sec
     count = 0
@@ -82,3 +84,21 @@ def garbage_collect(used_blobs, grace_period_sec=GRACE_PERIOD_SEC):
                 os.remove(path)
                 count += 1
     print 'removed {} files from {}'.format(count, pomagma.util.BLOB_DIR)
+
+
+def validate_blobs():
+    '''validate SHA1 and mode of all blobs; raise ValueError on error'''
+    blobs = sorted(
+        blob
+        for blob in os.listdir(pomagma.util.BLOB_DIR)
+        if RE_BLOB.match(blob)
+    )
+    print 'validating {} blobs'.format(len(blobs))
+    for blob in blobs:
+        hexdigest = hash_file(os.path.join(pomagma.util.BLOB_DIR, blob))
+        if blob != hexdigest:
+            raise ValueError('invalid blob {}'.format(blob))
+    for blob in blobs:
+        mode = oct(os.stat(blob)[stat.ST_MODE])[-3:]
+        if mode != '444':
+            raise ValueError('invalid mode {} of blob {}'.format(mode, blob))

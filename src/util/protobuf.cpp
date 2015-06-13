@@ -45,7 +45,7 @@ public:
     }
     virtual int64_t ByteCount () const { return m_file.ByteCount(); }
 
-    Hasher::Digest Digest () __attribute__((warn_unused_result))
+    const Hasher::Digest & Digest () __attribute__((warn_unused_result))
     {
         flush_hasher();
         POMAGMA_ASSERT(m_file.Flush(), strerror(m_file.GetErrno()));
@@ -164,9 +164,14 @@ void Sha1OutFile::write (const google::protobuf::Message & message)
     POMAGMA_ASSERT(info, "failed to write to " << m_filename);
 }
 
-Hasher::Digest Sha1OutFile::digest ()
+const Hasher::Digest & Sha1OutFile::digest ()
 {
     return m_file->Digest();
+}
+
+std::string Sha1OutFile::hexdigest ()
+{
+    return Hasher::str(m_file->Digest());
 }
 
 } // namespace protobuf

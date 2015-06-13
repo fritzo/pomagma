@@ -5,6 +5,7 @@ from pomagma import cartographer
 from pomagma import surveyor
 from pomagma import theorist
 from pomagma.util import DB
+from pomagma.util import blobstore
 import glob
 import mock
 import os
@@ -110,6 +111,7 @@ def _test_atlas(theory):
             with analyst.load(theory, DB(7), **opts) as db:
                 fail_count = db.test_inference()
                 assert fail_count == 0, 'analyst.test_inference failed'
+        blobstore.validate_blobs()
 
 
 @parsable.command

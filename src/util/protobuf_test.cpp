@@ -4,22 +4,23 @@
 using namespace pomagma;
 using pomagma::protobuf::TestMessage;
 
-Hasher::Digest get_digest (const std::string & filename)
+std::string get_digest (const std::string & filename)
 {
     Hasher hasher;
     hasher.add_file(filename);
-    return hasher.finish();
+    hasher.finish();
+    return hasher.str();
 }
 
-Hasher::Digest get_digest (protobuf::OutFile & file)
+std::string get_digest (protobuf::OutFile & file)
 {
     file.flush();
     return get_digest(file.filename());
 }
 
-Hasher::Digest get_digest (protobuf::Sha1OutFile & file)
+std::string get_digest (protobuf::Sha1OutFile & file)
 {
-    return file.digest();
+    return file.hexdigest();
 }
 
 template<class OutFile>
@@ -27,8 +28,8 @@ void test_write_read (const TestMessage & expected)
 {
     POMAGMA_INFO("Testing read(write(" << expected.ShortDebugString() << "))");
     TestMessage actual;
-    Hasher::Digest actual_digest;
-    Hasher::Digest expected_digest;
+    std::string actual_digest;
+    std::string expected_digest;
     in_temp_dir([&](){
         const std::string filename = "test.pb";
         {
@@ -51,8 +52,8 @@ void test_write_read_chunks (const TestMessage & expected)
 {
     POMAGMA_INFO("Testing read(write(" << expected.ShortDebugString() << "))");
     TestMessage actual;
-    Hasher::Digest actual_digest;
-    Hasher::Digest expected_digest;
+    std::string actual_digest;
+    std::string expected_digest;
     in_temp_dir([&](){
         const std::string filename = "test.pb";
         {

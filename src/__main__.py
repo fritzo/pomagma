@@ -379,10 +379,11 @@ def push(tag=default_tag):
 @parsable.command
 def gc(grace_period_sec=pomagma.util.blobstore.GRACE_PERIOD_SEC):
     '''
-    Garbage collect blobs.
+    Garbage collect blobs and validate remaining blobs.
     '''
     used_blobs = pomagma.atlas.find_used_blobs()
     pomagma.blobstore.garbage_collect(used=used_blobs)
+    pomagma.blobstore.validate_blobs()
 
 
 if __name__ == '__main__':

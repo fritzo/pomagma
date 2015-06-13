@@ -78,8 +78,9 @@ public:
     void write (const google::protobuf::Message & message);
     void flush ();
 
-    // must be called before destructor
-    Hasher::Digest digest () __attribute__((warn_unused_result));
+    // one of these must be called before destructor
+    const Hasher::Digest & digest () __attribute__((warn_unused_result));
+    std::string hexdigest () __attribute__((warn_unused_result));
 
 private:
 
