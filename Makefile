@@ -46,7 +46,8 @@ release: FORCE
 DEBUG_LOG="$(shell pwd)/data/debug.log"
 cpp-test: all FORCE
 	rm -f $(DEBUG_LOG)
-	POMAGMA_LOG_FILE=$(DEBUG_LOG) $(MAKE) -C build/debug test \
+	POMAGMA_LOG_FILE=$(DEBUG_LOG) \
+	  CTEST_OUTPUT_ON_FAILURE=1 $(MAKE) -C build/debug test \
 	  || { cat $(DEBUG_LOG); exit 1; }
 
 unit-test: all fixture FORCE

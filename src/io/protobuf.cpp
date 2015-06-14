@@ -29,6 +29,7 @@ public:
     }
     virtual ~Sha1OutputStream () {}
 
+    // implements ZeroCopyOutputStream
     virtual bool Next (void ** data, int * size)
     {
         flush_hasher();
@@ -45,6 +46,7 @@ public:
     }
     virtual int64_t ByteCount () const { return m_file.ByteCount(); }
 
+    // this must be called exactly once, just before destruction
     const Hasher::Digest & Digest () __attribute__((warn_unused_result))
     {
         flush_hasher();
@@ -72,7 +74,7 @@ InFile::InFile (const std::string & filename)
     : m_filename(filename),
       m_fid(open(filename.c_str(), O_RDONLY | O_NOATIME))
 {
-    POMAGMA_ASSERT(m_fid != -1, "failed to open file " << filename);
+    POMAGMA_ASSERT(m_fid != -1, "open " << filename << ": " << strerror(errno));
     m_file = new google::protobuf::io::FileInputStream(m_fid);
     m_gzip = new google::protobuf::io::GzipInputStream(m_file);
 }
@@ -115,7 +117,7 @@ OutFile::OutFile (const std::string & filename)
     : m_filename(filename),
       m_fid(open(filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0444))
 {
-    POMAGMA_ASSERT(m_fid != -1, "failed to open file " << filename);
+    POMAGMA_ASSERT(m_fid != -1, "open " << filename << ": " << strerror(errno));
     m_file = new google::protobuf::io::FileOutputStream(m_fid);
     m_gzip = new google::protobuf::io::GzipOutputStream(m_file);
 }
@@ -145,7 +147,7 @@ Sha1OutFile::Sha1OutFile (const std::string & filename)
     : m_filename(filename),
       m_fid(open(filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0444))
 {
-    POMAGMA_ASSERT(m_fid != -1, "failed to open file " << filename);
+    POMAGMA_ASSERT(m_fid != -1, "open " << filename << ": " << strerror(errno));
     m_file = new Sha1OutputStream(m_fid);
     m_gzip = new google::protobuf::io::GzipOutputStream(m_file);
 }
@@ -154,7 +156,7 @@ Sha1OutFile::~Sha1OutFile ()
 {
     delete m_gzip;
     delete m_file;
-    close(m_fid);
+    POMAGMA_ASSERT(close(m_fid) != -1, strerror(errno));
 }
 
 void Sha1OutFile::write (const google::protobuf::Message & message)
@@ -166,6 +168,7 @@ void Sha1OutFile::write (const google::protobuf::Message & message)
 
 const Hasher::Digest & Sha1OutFile::digest ()
 {
+    m_gzip->Flush();
     return m_file->Digest();
 }
 

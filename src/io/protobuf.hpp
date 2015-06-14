@@ -66,6 +66,7 @@ private:
 
 class Sha1OutputStream;
 
+// TODO get this working
 class Sha1OutFile : noncopyable
 {
 public:
