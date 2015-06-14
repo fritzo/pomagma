@@ -83,26 +83,26 @@ std::string load_blob_ref (const std::string & filename)
 
 void dump_blob_ref (const std::string & hexdigest, const std::string & filename)
 {
-#define USE_PERMISSION_CONSIOUS_DUMP (0)
-#if USE_PERMISSION_CONSIOUS_DUMP
+#define USE_PERMISSION_CONSCIOUS_DUMP (0)
+#if USE_PERMISSION_CONSCIOUS_DUMP
 
     // FIXME why does this permissions-consious version fail?
     POMAGMA_ASSERT_EQ(hexdigest.size(), 40);
-    int fd = open(filename.c_str(), O_WRONLY, 0444);
+    int fd = creat(filename.c_str(), 0444);
     POMAGMA_ASSERT(fd, "failed to create blob ref " << filename);
     int info = write(fd, hexdigest.data(), hexdigest.size());
     POMAGMA_ASSERT(info, "failed to dump blob ref to " << filename);
     info = close(fd);
     POMAGMA_ASSERT(info, "failed to close blob ref " << filename);
 
-#else // USE_PERMISSION_CONSIOUS_DUMP
+#else // USE_PERMISSION_CONSCIOUS_DUMP
 
     std::ofstream file(filename.c_str(), std::ios::binary);
     POMAGMA_ASSERT(file, "failed to create blob ref " << filename);
     file.write(hexdigest.data(), hexdigest.size());
     POMAGMA_ASSERT(file, "failed to dump blob ref to " << filename);
 
-#endif // USE_PERMISSION_CONSIOUS_DUMP
+#endif // USE_PERMISSION_CONSCIOUS_DUMP
 }
 
 } // namespace pomagma

@@ -1,5 +1,5 @@
+from pomagma.io import creat
 import gzip
-import os
 
 
 class InFile(object):
@@ -21,10 +21,7 @@ class InFile(object):
 
 class OutFile(object):
     def __init__(self, filename):
-        # this may be insufficient to set permissions
-        # see http://stackoverflow.com/a/15015748/1224437
-        fid = os.open(filename, os.O_WRONLY | os.O_CREAT, 0444)
-        self._file = os.fdopen(fid, 'wb')
+        self._file = creat(filename, 0444)
         self._gzip = gzip.GzipFile(mode='wb', fileobj=self._file)
 
     def __enter__(self):

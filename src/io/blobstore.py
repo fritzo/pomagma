@@ -1,3 +1,4 @@
+from pomagma.io import creat
 import hashlib
 import os
 import pomagma.util
@@ -54,7 +55,7 @@ def store_blob(temp_path):
 def load_blob_ref(filename):
     '''return hexdigest read from file'''
     with open(filename, 'rb') as f:
-        hexdigest = f.read()
+        hexdigest = iter(f).next().strip()
     assert len(hexdigest) == 40, hexdigest
     return hexdigest
 
@@ -62,7 +63,7 @@ def load_blob_ref(filename):
 def dump_blob_ref(hexdigest, filename):
     '''write hexdigest to file'''
     assert len(hexdigest) == 40, hexdigest
-    with os.open(filename, 'wb', 0444) as f:
+    with creat(filename, 0444) as f:
         f.write(hexdigest)
 
 
