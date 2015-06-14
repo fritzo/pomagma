@@ -711,7 +711,8 @@ inline Hasher::Dict get_tree_hash_pb (const protobuf::Structure & structure)
 
 inline void dump_pb (
         Signature & signature,
-        protobuf::Structure & structure)
+        protobuf::Structure & structure,
+        std::vector<std::string> & sub_hexdigests)
 {
     POMAGMA_ASSERT(signature.carrier(), "carrier is not defined");
     const Carrier & carrier = * signature.carrier();
@@ -721,8 +722,17 @@ inline void dump_pb (
     detail::dump_pb(carrier, structure);
 
 #define CASE_ARITY(Kind, kind, Arity, arity)                                \
-    for (const auto & pair : signature.arity ## _ ## kind ## s()) {         \
-        detail::dump_pb(carrier, * pair.second, structure, pair.first);     \
+    for (const auto & i : signature.arity ## _ ## kind ## s()) {            \
+        detail::dump_pb(carrier, * i.second, structure, i.first);           \
+    }
+    SWITCH_ARITY(CASE_ARITY)
+#undef CASE_ARITY
+
+#define CASE_ARITY(Kind, kind, Arity, arity)                                \
+    for (const auto & i : structure.arity ## _ ## kind ## s()) {            \
+        for (const std::string & blob : i.blobs()) {                        \
+            sub_hexdigests.push_back(blob);                                 \
+        }                                                                   \
     }
     SWITCH_ARITY(CASE_ARITY)
 #undef CASE_ARITY
@@ -739,11 +749,12 @@ void dump_pb (
 {
     protobuf::Structure structure;
 
-    detail::dump_pb(signature, structure);
+    std::vector<std::string> sub_hexdigests;
+    detail::dump_pb(signature, structure, sub_hexdigests);
 
     std::string hexdigest;
     protobuf::BlobWriter(& hexdigest).write(structure);
-    dump_blob_ref(hexdigest, filename);
+    dump_blob_ref(hexdigest, filename, sub_hexdigests);
 }
 
 void dump (

@@ -28,6 +28,8 @@ message NullaryFunction {
   optional string name = 1;
   optional bytes hash = 2;
   optional uint32 val = 3;
+
+  repeated bytes blobs = 15;
 }
 
 message UnaryFunction {

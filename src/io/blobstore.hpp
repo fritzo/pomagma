@@ -34,6 +34,8 @@ std::string load_blob_ref (const std::string & filename);
 // write hexdigest to file
 void dump_blob_ref (
         const std::string & hexdigest,
-        const std::string & filename);
+        const std::string & filename,
+        const std::vector<std::string> & sub_hexdigests =
+            std::vector<std::string>());
 
 } // namespace pomagma

@@ -95,20 +95,14 @@ def find(path):
 
 
 def find_used_blobs():
-    root = os.path.join(pomagma.util.DATA, 'atlas')
-    pb_files = [path for path in find(root) if path.endswith('.pb')]
     used_blobs = set()
-    for pb_file in pb_files:
-        used_blobs.add(pomagma.io.blobstore.load_blob_ref(pb_file))
-        structure = pb_load(pb_file)
-        blobs = sum([
-            getattr(getattr(structure, attr), 'blobs', [])
-            for attr in dir(structure)
-        ], [])
-        for hexdigest in blobs:
-            blob_path = os.path.join(pomagma.util.BLOB_DIR, hexdigest)
-            assert os.path.exists(blob_path), '{} missing blob'.format(pb_file)
-            used_blobs.add(str(hexdigest))
+    for filename in find(os.path.join(pomagma.util.DATA, 'atlas')):
+        if filename.endswith('.pb'):
+            with open(filename) as f:
+                for line in f:
+                    hexdigest = line.strip()
+                    assert len(hexdigest) == 40, hexdigest
+                    used_blobs.add(hexdigest)
     return used_blobs
 
 

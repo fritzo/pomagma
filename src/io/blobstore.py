@@ -52,19 +52,32 @@ def store_blob(temp_path):
     return hexdigest
 
 
-def load_blob_ref(filename):
-    '''return hexdigest read from file'''
+def iter_blob_refs(filename):
+    '''iterate over all hexdigests in ref file'''
     with open(filename, 'rb') as f:
-        hexdigest = iter(f).next().strip()
-    assert len(hexdigest) == 40, hexdigest
-    return hexdigest
+        for line in f:
+            hexdigest = line.strip()
+            assert len(hexdigest) == 40, hexdigest
+            yield hexdigest
 
 
-def dump_blob_ref(hexdigest, filename):
-    '''write hexdigest to file'''
-    assert len(hexdigest) == 40, hexdigest
+def load_blob_ref(filename):
+    '''return root hexdigest from ref file'''
+    for root_hexdigest in iter_blob_refs(filename):
+        return root_hexdigest
+
+
+def dump_blob_ref(root_hexdigest, filename, sub_hexdigests=[]):
+    '''write root and sub hexdigests to ref file'''
+    assert isinstance(root_hexdigest, basestring), root_hexdigest
+    assert len(root_hexdigest) == 40, root_hexdigest
     with creat(filename, 0444) as f:
-        f.write(hexdigest)
+        f.write(root_hexdigest)
+        for sub_hexdigest in sub_hexdigests:
+            assert isinstance(sub_hexdigest, basestring), sub_hexdigest
+            assert len(sub_hexdigest) == 40, sub_hexdigest
+            f.write('\n')
+            f.write(sub_hexdigest)
 
 
 def garbage_collect(used_blobs, grace_period_sec=GRACE_PERIOD_SEC):

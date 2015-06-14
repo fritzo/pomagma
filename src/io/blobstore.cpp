@@ -9,6 +9,8 @@
 
 namespace pomagma {
 
+static const size_t HEXDIGEST_SIZE = 40;
+
 const char * BLOB_DIR = getenv("POMAGMA_BLOB_DIR");
 
 std::string find_blob (const std::string & hexdigest)
@@ -75,22 +77,32 @@ std::string load_blob_ref (const std::string & filename)
     std::ifstream file(filename.c_str(), std::ios::binary);
     POMAGMA_ASSERT(file, "failed to open blob ref " << filename);
     std::string hexdigest;
-    hexdigest.resize(40);
+    hexdigest.resize(HEXDIGEST_SIZE);
     file.read(& hexdigest[0], hexdigest.size());
     POMAGMA_ASSERT(file, "failed to load blob ref from " << filename);
     return hexdigest;
 }
 
-void dump_blob_ref (const std::string & hexdigest, const std::string & filename)
+void dump_blob_ref (
+        const std::string & hexdigest,
+        const std::string & filename,
+        const std::vector<std::string> & sub_hexdigests)
 {
-    POMAGMA_ASSERT_EQ(hexdigest.size(), 40);
+    POMAGMA_ASSERT_EQ(hexdigest.size(), HEXDIGEST_SIZE);
     int fid = creat(filename.c_str(), 0444);
     POMAGMA_ASSERT(fid != -1,
-        "creating " << filename << ", " << strerror(errno));
+        "creating " << filename << ": " << strerror(errno));
     POMAGMA_ASSERT(write(fid, hexdigest.data(), hexdigest.size()) != -1,
         "writing " << filename << ": " << strerror(errno));
+    for (const auto& sub_hexdigest : sub_hexdigests) {
+        POMAGMA_ASSERT_EQ(sub_hexdigest.size(), HEXDIGEST_SIZE);
+        POMAGMA_ASSERT(write(fid, "\n", 1) != -1,
+            "writing " << filename << ": " << strerror(errno));
+        POMAGMA_ASSERT(write(fid, sub_hexdigest.data(), HEXDIGEST_SIZE) != -1,
+            "writing " << filename << ": " << strerror(errno));
+    }
     POMAGMA_ASSERT(close(fid) != -1,
-        "closing " << filename << ", " << strerror(errno));
+        "closing " << filename << ": " << strerror(errno));
 }
 
 } // namespace pomagma
