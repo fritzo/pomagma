@@ -6,15 +6,8 @@ add_library(pomagma_util SHARED
 	sequential/dense_set.cpp
 	concurrent/dense_set.cpp
 	hasher.cpp
-	blobstore.cpp
-	protobuf.cpp
 	profiler.cpp
-	hdf5.cpp
 )
-
-add_executable(util_protobuf_test protobuf_test.cpp protobuf_test.pb.cc)
-target_link_libraries(util_protobuf_test ${POMAGMA_UTIL_LIBS})
-add_test(NAME util_protobuf COMMAND util_protobuf_test)
 
 add_executable(hasher_test hasher_test.cpp)
 target_link_libraries(hasher_test ${POMAGMA_UTIL_LIBS})

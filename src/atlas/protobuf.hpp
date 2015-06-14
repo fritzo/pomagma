@@ -1,8 +1,8 @@
 #pragma once
 
 #include <pomagma/atlas/structure.pb.h>
-#include <pomagma/util/blobstore.hpp>
-#include <pomagma/util/protobuf.hpp>
+#include <pomagma/io/blobstore.hpp>
+#include <pomagma/io/protobuf.hpp>
 #include <pomagma/util/util.hpp>
 
 namespace pomagma {

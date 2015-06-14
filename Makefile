@@ -9,8 +9,8 @@ protobuf: FORCE
 	$(MAKE) -C src/analyst
 	$(MAKE) -C src/atlas
 	$(MAKE) -C src/cartographer
+	$(MAKE) -C src/io
 	$(MAKE) -C src/language
-	$(MAKE) -C src/util
 
 tags: protobuf FORCE
 	cd src ; ctags -R

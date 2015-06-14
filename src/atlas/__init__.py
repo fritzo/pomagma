@@ -1,14 +1,14 @@
 from pomagma.atlas.structure_pb2 import Structure
-from pomagma.util.blobstore import find_blob
-from pomagma.util.blobstore import load_blob_ref
-from pomagma.util.protobuf import InFile
+from pomagma.io.blobstore import find_blob
+from pomagma.io.blobstore import load_blob_ref
+from pomagma.io.protobuf import InFile
 import contextlib
 import os
 import pomagma.cartographer
 import pomagma.surveyor
 import pomagma.theorist
 import pomagma.util
-import pomagma.util.blobstore
+import pomagma.io.blobstore
 
 
 @contextlib.contextmanager
@@ -99,7 +99,7 @@ def find_used_blobs():
     pb_files = [path for path in find(root) if path.endswith('.pb')]
     used_blobs = set()
     for pb_file in pb_files:
-        used_blobs.add(pomagma.util.blobstore.load_blob_ref(pb_file))
+        used_blobs.add(pomagma.io.blobstore.load_blob_ref(pb_file))
         structure = pb_load(pb_file)
         blobs = sum([
             getattr(getattr(structure, attr), 'blobs', [])

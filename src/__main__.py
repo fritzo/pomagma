@@ -8,7 +8,7 @@ from pomagma.util import DB
 import os
 import parsable
 import pomagma.util
-import pomagma.util.blobstore
+import pomagma.io.blobstore
 import pomagma.workers
 import re
 import signal
@@ -352,8 +352,8 @@ default_tag = time.strftime('%Y-%m-%d', time.gmtime())
 
 
 def list_s3_atlases():
-    import pomagma.util.s3
-    filenames = pomagma.util.s3.listdir()
+    import pomagma.io.s3
+    filenames = pomagma.io.s3.listdir()
     return set(m.group() for m in map(match_atlas, filenames) if m)
 
 
@@ -362,7 +362,7 @@ def pull(tag='<most recent>'):
     '''
     Pull atlas from s3.
     '''
-    import pomagma.util.s3
+    import pomagma.io.s3
     if not os.path.exists(pomagma.util.DATA):
         os.makedirs(pomagma.util.DATA)
     with pomagma.util.chdir(pomagma.util.DATA):
@@ -374,10 +374,10 @@ def pull(tag='<most recent>'):
             source = 'atlas.{}'.format(tag)
             assert match_atlas(source), 'invalid tag: {}'.format(tag)
         print 'pulling {} -> {}'.format(source, destin)
-        pomagma.util.s3.pull(
+        pomagma.io.s3.pull(
             '{}/'.format(source),
             '{}/'.format(pomagma.util.BLOB_DIR))
-        pomagma.util.s3.snapshot(source, destin)
+        pomagma.io.s3.snapshot(source, destin)
 
 
 @parsable.command
@@ -385,7 +385,7 @@ def push(tag=default_tag):
     '''
     Push atlas to s3.
     '''
-    import pomagma.util.s3
+    import pomagma.io.s3
     with pomagma.util.chdir(pomagma.util.DATA):
         source = 'atlas'
         assert os.path.exists(source), 'atlas does not exist'
@@ -397,12 +397,12 @@ def push(tag=default_tag):
             os.path.join(pomagma.util.BLOB_DIR, blob)
             for blob in pomagma.atlas.find_used_blobs()
         ]
-        pomagma.util.s3.snapshot(source, destin)
-        pomagma.util.s3.push(destin, *blobs)
+        pomagma.io.s3.snapshot(source, destin)
+        pomagma.io.s3.push(destin, *blobs)
 
 
 @parsable.command
-def gc(grace_period_sec=pomagma.util.blobstore.GRACE_PERIOD_SEC):
+def gc(grace_period_sec=pomagma.io.blobstore.GRACE_PERIOD_SEC):
     '''
     Garbage collect blobs and validate remaining blobs.
     '''

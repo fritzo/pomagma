@@ -1,5 +1,5 @@
-#include <pomagma/util/protobuf.hpp>
-#include <pomagma/util/protobuf_test.pb.h>
+#include <pomagma/io/protobuf.hpp>
+#include <pomagma/io/protobuf_test.pb.h>
 
 using namespace pomagma;
 using pomagma::protobuf::TestMessage;

@@ -1,4 +1,4 @@
-#include <pomagma/util/protobuf.hpp>
+#include <pomagma/io/protobuf.hpp>
 
 #include <fcntl.h>
 #include <google/protobuf/io/coded_stream.h>

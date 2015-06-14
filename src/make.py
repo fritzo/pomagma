@@ -5,7 +5,7 @@ from pomagma import cartographer
 from pomagma import surveyor
 from pomagma import theorist
 from pomagma.util import DB
-from pomagma.util import blobstore
+from pomagma.io import blobstore
 import glob
 import mock
 import os
