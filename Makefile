@@ -43,13 +43,16 @@ release: FORCE
 	  && cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo ../.. \
 	  && $(MAKE)
 
+DEBUG_LOG="$(shell pwd)/data/debug.log"
 cpp-test: all FORCE
-	POMAGMA_LOG_FILE=$(shell pwd)/data/debug.log $(MAKE) -C build/debug test
+	rm -f $(DEBUG_LOG)
+	POMAGMA_LOG_FILE=$(DEBUG_LOG) $(MAKE) -C build/debug test \
+	  || { cat $(DEBUG_LOG); exit 1; }
 
 unit-test: all fixture FORCE
 	python vet.py check
 	POMAGMA_DEBUG=1 nosetests -v pomagma
-	POMAGMA_LOG_FILE=$(shell pwd)/data/debug.log $(MAKE) -C build/debug test
+	$(MAKE) cpp-test
 	POMAGMA_DEBUG=1 npm test
 
 data/blob:
