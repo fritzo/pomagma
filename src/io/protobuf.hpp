@@ -55,6 +55,7 @@ public:
 
     void write (const google::protobuf::Message & message);
     void flush ();
+    size_t bytes_written ();
 
 private:
 

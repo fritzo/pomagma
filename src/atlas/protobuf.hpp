@@ -65,28 +65,41 @@ inline void load (DenseSet & set, const ObSet & message)
 
 class BlobWriter : noncopyable
 {
-    protobuf::OutFile & m_file;
-    std::string & m_destin;
+    protobuf::OutFile * m_file;
+    std::string * m_destin;
 
 public:
 
     explicit BlobWriter (std::string * destin)
-        : m_file(* new protobuf::OutFile(create_blob())),
-          m_destin(* destin)
+        : m_file(new protobuf::OutFile(create_blob())),
+          m_destin(destin)
     {
-        m_destin.clear(); // just to be safe
+        m_destin->clear(); // just to be safe
+    }
+
+    bool try_split (google::protobuf::RepeatedPtrField<std::string> * blobs)
+    {
+        const bool split = (m_file->bytes_written() >= GOOD_BLOB_SIZE_BYTES);
+        if (split) {
+            const std::string temp_path = m_file->filename();
+            delete m_file;
+            * m_destin = store_blob(temp_path);
+            m_file = new protobuf::OutFile(create_blob());
+            m_destin = blobs->Add();
+        }
+        return split;
     }
 
     ~BlobWriter ()
     {
-        const std::string temp_path = m_file.filename();
-        delete & m_file;
-        m_destin = store_blob(temp_path);
+        const std::string temp_path = m_file->filename();
+        delete m_file;
+        * m_destin = store_blob(temp_path);
     }
 
     void write (const google::protobuf::Message & message)
     {
-        m_file.write(message);
+        m_file->write(message);
     }
 };
 

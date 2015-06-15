@@ -157,6 +157,12 @@ void OutFile::flush ()
         "flushing " << m_filename << ": " << strerror(errno));
 }
 
+size_t OutFile::bytes_written ()
+{
+    flush();
+    return m_file->ByteCount();
+}
+
 Sha1OutFile::Sha1OutFile (const std::string & filename)
     : m_filename(filename),
       m_fid(creat(filename.c_str(), 0444))

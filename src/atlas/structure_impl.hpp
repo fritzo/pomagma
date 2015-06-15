@@ -656,10 +656,12 @@ inline void dump_pb (
     protobuf::BlobWriter blob(message.add_blobs());
     protobuf::BinaryRelation chunk;
     protobuf::BinaryRelation::Row & chunk_row = * chunk.add_rows();
-    for (auto i = carrier.support().iter(); i.ok(); i.next()) {
-        Ob lhs = *i;
-        chunk_row.set_lhs(lhs);
-        protobuf::dump(rel.get_Lx_set(lhs), * chunk_row.mutable_rhs());
+    for (auto lhs = carrier.support().iter(); lhs.ok(); lhs.next()) {
+        if (unlikely(* lhs % 512 == 0)) {
+            blob.try_split(message.mutable_blobs());
+        }
+        chunk_row.set_lhs(* lhs);
+        protobuf::dump(rel.get_Lx_set(* lhs), * chunk_row.mutable_rhs());
         blob.write(chunk);
     }
 }
@@ -719,6 +721,9 @@ inline void dump_pb (
     protobuf::BinaryFunction::Row & chunk_row = * chunk.add_rows();
     protobuf::ObMap & rhs_val = * chunk_row.mutable_rhs_val();
     for (auto lhs = carrier.support().iter(); lhs.ok(); lhs.next()) {
+        if (unlikely(* lhs % 512 == 0)) {
+            blob.try_split(message.mutable_blobs());
+        }
         chunk_row.set_lhs(* lhs);
         rhs_val.Clear();
         for (auto rhs = fun.iter_lhs(* lhs); rhs.ok(); rhs.next()) {
@@ -747,6 +752,9 @@ inline void dump_pb (
     protobuf::BinaryFunction::Row & chunk_row = * chunk.add_rows();
     protobuf::ObMap & rhs_val = * chunk_row.mutable_rhs_val();
     for (auto lhs = carrier.support().iter(); lhs.ok(); lhs.next()) {
+        if (unlikely(* lhs % 512 == 0)) {
+            blob.try_split(message.mutable_blobs());
+        }
         chunk_row.set_lhs(* lhs);
         rhs_val.Clear();
         for (auto rhs = fun.iter_lhs(* lhs); rhs.ok(); rhs.next()) {

@@ -51,6 +51,7 @@ inline void touch (const fs::path & path)
 std::string store_blob (const std::string & temp_path)
 {
     const std::string hexdigest = hash_file(temp_path);
+    POMAGMA_DEBUG("storing blob " << hexdigest);
     store_blob(temp_path, hexdigest);
     return hexdigest;
 }
