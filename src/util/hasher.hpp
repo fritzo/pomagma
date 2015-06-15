@@ -57,6 +57,21 @@ public:
 
     void add (const std::string & t) { add_raw(t.data(), t.size()); }
 
+    template<class T>
+    void add (const std::vector<T> & t)
+    {
+        for (const auto& i : t) {
+            add(i);
+        }
+    }
+
+    template<class T1, class T2>
+    void add (const std::pair<T1, T2> & t)
+    {
+        add(t.first);
+        add(t.second);
+    }
+
     template<class T, size_t size>
     void add (const std::array<T, size> & t)
     {

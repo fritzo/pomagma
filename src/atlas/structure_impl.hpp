@@ -195,7 +195,8 @@ inline Hasher::Digest get_hash (const UnaryRelation & rel)
     return hasher.finish();
 }
 
-inline Hasher::Digest get_hash (
+// DEPRECATED
+inline Hasher::Digest get_hash_v1 (
         const Carrier & carrier,
         const BinaryRelation & rel)
 {
@@ -209,6 +210,27 @@ inline Hasher::Digest get_hash (
         }
     }
     return hasher.finish();
+}
+
+inline Hasher::Digest get_hash (
+        const Carrier & carrier,
+        const BinaryRelation & rel)
+{
+    // TODO parallelize
+    std::vector<std::pair<uint32_t, Hasher::Digest>> rows;
+    for (auto lhs = carrier.iter(); lhs.ok(); lhs.next()) {
+        bool empty = true;
+        Hasher hasher;
+        for (auto rhs = rel.iter_lhs(* lhs); rhs.ok(); rhs.next()) {
+            empty = false;
+            hasher.add(static_cast<uint32_t>(* rhs));
+        }
+        hasher.finish();
+        if (not empty) {
+            rows.push_back({* lhs, hasher.data()});
+        }
+    }
+    return Hasher::digest(rows);
 }
 
 inline Hasher::Digest get_hash (const NullaryFunction & fun)
@@ -230,7 +252,8 @@ inline Hasher::Digest get_hash (const InjectiveFunction & fun)
     return hasher.finish();
 }
 
-inline Hasher::Digest get_hash (
+// DEPRECATED
+inline Hasher::Digest get_hash_v1 (
         const Carrier & carrier,
         const BinaryFunction & fun)
 {
@@ -249,6 +272,29 @@ inline Hasher::Digest get_hash (
 
 inline Hasher::Digest get_hash (
         const Carrier & carrier,
+        const BinaryFunction & fun)
+{
+    // TODO parallelize
+    std::vector<std::pair<uint32_t, Hasher::Digest>> rows;
+    for (auto lhs = carrier.iter(); lhs.ok(); lhs.next()) {
+        bool empty = true;
+        Hasher hasher;
+        for (auto rhs = fun.iter_lhs(* lhs); rhs.ok(); rhs.next()) {
+            empty = false;
+            hasher.add(static_cast<uint32_t>(* rhs));
+            hasher.add(static_cast<uint32_t>(fun.find(* lhs, * rhs)));
+        }
+        hasher.finish();
+        if (not empty) {
+            rows.push_back({* lhs, hasher.data()});
+        }
+    }
+    return Hasher::digest(rows);
+}
+
+// DEPRECATED
+inline Hasher::Digest get_hash_v1 (
+        const Carrier & carrier,
         const SymmetricFunction & fun)
 {
     Hasher hasher;
@@ -263,6 +309,29 @@ inline Hasher::Digest get_hash (
         }
     }
     return hasher.finish();
+}
+
+inline Hasher::Digest get_hash (
+        const Carrier & carrier,
+        const SymmetricFunction & fun)
+{
+    // TODO parallelize
+    std::vector<std::pair<uint32_t, Hasher::Digest>> rows;
+    for (auto lhs = carrier.iter(); lhs.ok(); lhs.next()) {
+        bool empty = true;
+        Hasher hasher;
+        for (auto rhs = fun.iter_lhs(* lhs); rhs.ok(); rhs.next()) {
+            if (* rhs > * lhs) { break; }
+            empty = false;
+            hasher.add(static_cast<uint32_t>(* rhs));
+            hasher.add(static_cast<uint32_t>(fun.find(* lhs, * rhs)));
+        }
+        hasher.finish();
+        if (not empty) {
+            rows.push_back({* lhs, hasher.data()});
+        }
+    }
+    return Hasher::digest(rows);
 }
 
 } // namespace detail
@@ -1021,8 +1090,12 @@ inline void update_data (
     POMAGMA_INFO("updating binary relation " << name);
 
     rel.update();
-    auto actual = get_hash(carrier, rel);
     auto expected = map_find(hash, "relations/binary/" + name);
+    auto actual = get_hash(carrier, rel);
+    if (unlikely(actual != expected)) {
+        POMAGMA_WARN("falling back to get_hash_v1");
+        actual = get_hash_v1(carrier, rel);
+    }
     POMAGMA_ASSERT(actual == expected,
             "binary relation " << name << " is corrupt");
 
@@ -1175,6 +1248,10 @@ inline void update_data (
     fun.update();
     auto actual = get_hash(carrier, fun);
     auto expected = map_find(hash, "functions/" + arity + "/" + name);
+    if (unlikely(actual != expected)) {
+        POMAGMA_WARN("falling back to get_hash_v1");
+        actual = get_hash_v1(carrier, fun);
+    }
     POMAGMA_ASSERT(actual == expected,
             arity << " function " << name << " is corrupt");
 
@@ -1516,7 +1593,7 @@ void load_pb (
 {
     protobuf::Structure structure;
     POMAGMA_ASSERT(structure.descriptor(), "protobuf error");
-    protobuf::InFile(load_blob_ref(filename)).read(structure);
+    protobuf::InFile(find_blob(load_blob_ref(filename))).read(structure);
 
     POMAGMA_ASSERT(structure.has_hash(), "structure is missing hash");
     auto digest = Hasher::digest(detail::get_tree_hash_pb(structure));
@@ -1532,7 +1609,7 @@ void load_data_pb (
 {
     protobuf::Structure structure;
     POMAGMA_ASSERT(structure.descriptor(), "protobuf error");
-    protobuf::InFile(load_blob_ref(filename)).read(structure);
+    protobuf::InFile(find_blob(load_blob_ref(filename))).read(structure);
 
     POMAGMA_ASSERT(structure.has_hash(), "structure is missing hash");
     auto digest = Hasher::digest(detail::get_tree_hash_pb(structure));

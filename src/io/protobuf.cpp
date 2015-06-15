@@ -74,7 +74,8 @@ InFile::InFile (const std::string & filename)
     : m_filename(filename),
       m_fid(open(filename.c_str(), O_RDONLY | O_NOATIME))
 {
-    POMAGMA_ASSERT(m_fid != -1, "open " << filename << ": " << strerror(errno));
+    POMAGMA_ASSERT(m_fid != -1,
+        "opening " << filename << ": " << strerror(errno));
     m_file = new google::protobuf::io::FileInputStream(m_fid);
     m_gzip = new google::protobuf::io::GzipInputStream(m_file);
 }
@@ -117,7 +118,8 @@ OutFile::OutFile (const std::string & filename)
     : m_filename(filename),
       m_fid(open(filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0444))
 {
-    POMAGMA_ASSERT(m_fid != -1, "open " << filename << ": " << strerror(errno));
+    POMAGMA_ASSERT(m_fid != -1,
+        "opening " << filename << ": " << strerror(errno));
     m_file = new google::protobuf::io::FileOutputStream(m_fid);
     m_gzip = new google::protobuf::io::GzipOutputStream(m_file);
 }
@@ -126,7 +128,8 @@ OutFile::~OutFile ()
 {
     delete m_gzip;
     delete m_file;
-    POMAGMA_ASSERT(close(m_fid) != -1, strerror(errno));
+    POMAGMA_ASSERT(close(m_fid) != -1,
+        "closing " << m_filename <<  ": " << strerror(errno));
 }
 
 void OutFile::write (const google::protobuf::Message & message)
@@ -139,15 +142,18 @@ void OutFile::write (const google::protobuf::Message & message)
 void OutFile::flush ()
 {
     POMAGMA_ASSERT(m_gzip->Flush(), "failed to flush gzip stream");
-    POMAGMA_ASSERT(m_file->Flush(), strerror(m_file->GetErrno()));
-    POMAGMA_ASSERT(fsync(m_fid) != -1, strerror(errno));
+    POMAGMA_ASSERT(m_file->Flush(),
+        "flushing " << m_filename << ": " << strerror(m_file->GetErrno()));
+    POMAGMA_ASSERT(fsync(m_fid) != -1,
+        "flushing " << m_filename << ": " << strerror(errno));
 }
 
 Sha1OutFile::Sha1OutFile (const std::string & filename)
     : m_filename(filename),
       m_fid(open(filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0444))
 {
-    POMAGMA_ASSERT(m_fid != -1, "open " << filename << ": " << strerror(errno));
+    POMAGMA_ASSERT(m_fid != -1,
+        "opening " << filename << ": " << strerror(errno));
     m_file = new Sha1OutputStream(m_fid);
     m_gzip = new google::protobuf::io::GzipOutputStream(m_file);
 }
@@ -156,7 +162,8 @@ Sha1OutFile::~Sha1OutFile ()
 {
     delete m_gzip;
     delete m_file;
-    POMAGMA_ASSERT(close(m_fid) != -1, strerror(errno));
+    POMAGMA_ASSERT(close(m_fid) != -1,
+        "closing " << m_filename << ": " << strerror(errno));
 }
 
 void Sha1OutFile::write (const google::protobuf::Message & message)
