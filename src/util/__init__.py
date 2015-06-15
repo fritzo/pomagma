@@ -16,7 +16,7 @@ ROOT = os.path.dirname(SRC)
 THEORY = os.path.join(SRC, 'theory')
 LANGUAGE = os.path.join(SRC, 'language')
 DATA = os.path.join(ROOT, 'data')
-DB_FORMAT = os.environ.get('POMAGMA_DB_FORMAT', 'h5')
+DB_FORMAT = os.environ.get('POMAGMA_DB_FORMAT', 'pb')
 assert DB_FORMAT in ['h5', 'pb'], DB_FORMAT
 DB = '{{}}.{}'.format(DB_FORMAT).format
 BLOB_DIR = os.path.join(DATA, 'blob')
