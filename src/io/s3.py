@@ -12,7 +12,6 @@ import os
 import parsable
 import pomagma.util
 import re
-import stat
 import subprocess
 
 parsable = parsable.Parsable()
@@ -155,6 +154,7 @@ EXT = '.7z'
 def is_blob(filename):
     if re.match('[a-z0-9]{40}$', os.path.basename(filename)):
         # This only works on local files:
+        # import stat
         # mode = oct(os.stat(filename)[stat.ST_MODE])[-3:]
         # assert mode == '444', 'invalid blob mode: {}'.format(mode)
         return True
