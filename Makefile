@@ -61,7 +61,7 @@ data/blob:
 
 bootstrap: FORCE
 	mkdir -p data
-	cp -ru bootstrap/* data/
+	cp -rn bootstrap/* data/
 	cd data/atlas/$(THEORY) \
 	  && (test -e world.pb || ln region.normal.2047.pb world.pb) \
 	  && test -e world.normal.pb || ln region.normal.2047.pb world.normal.pb
