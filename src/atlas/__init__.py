@@ -1,5 +1,6 @@
 from pomagma.atlas.structure_pb2 import Structure
 from pomagma.io.blobstore import find_blob
+from pomagma.io.blobstore import iter_blob_refs
 from pomagma.io.blobstore import load_blob_ref
 from pomagma.io.protobuf import InFile
 import contextlib
@@ -8,7 +9,6 @@ import pomagma.cartographer
 import pomagma.surveyor
 import pomagma.theorist
 import pomagma.util
-import pomagma.io.blobstore
 
 
 @contextlib.contextmanager
@@ -163,6 +163,10 @@ def get_item_count(filename):
     return get_info(filename)['item_count']
 
 
+def get_filesize(filename):
+    return os.stat(filename).st_size
+
+
 def print_info(filename):
     ext = get_ext(filename)
     if ext == 'h5':
@@ -173,6 +177,9 @@ def print_info(filename):
             for o in structure:
                 print o
     elif ext == 'pb':
+        files = [filename] + map(find_blob, iter_blob_refs(filename))
+        print 'file_count =', len(files)
+        print 'byte_count =', sum(map(get_filesize, files))
         structure = pb_load(filename)
         print 'item_dim =', structure.carrier.item_count
         print 'item_count =', structure.carrier.item_count
