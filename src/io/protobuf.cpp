@@ -16,6 +16,15 @@
 namespace pomagma {
 namespace protobuf {
 
+static google::protobuf::io::GzipOutputStream::Options default_gzip_options ()
+{
+    google::protobuf::io::GzipOutputStream::Options options;
+    options.compression_level = Z_BEST_COMPRESSION;
+    return options;
+}
+
+static const auto g_gzip_options = default_gzip_options();
+
 class Sha1OutputStream : public google::protobuf::io::ZeroCopyOutputStream
 {
 public:
@@ -121,7 +130,7 @@ OutFile::OutFile (const std::string & filename)
     POMAGMA_ASSERT(m_fid != -1,
         "opening " << filename << ": " << strerror(errno));
     m_file = new google::protobuf::io::FileOutputStream(m_fid);
-    m_gzip = new google::protobuf::io::GzipOutputStream(m_file);
+    m_gzip = new google::protobuf::io::GzipOutputStream(m_file, g_gzip_options);
 }
 
 OutFile::~OutFile ()
@@ -155,7 +164,7 @@ Sha1OutFile::Sha1OutFile (const std::string & filename)
     POMAGMA_ASSERT(m_fid != -1,
         "opening " << filename << ": " << strerror(errno));
     m_file = new Sha1OutputStream(m_fid);
-    m_gzip = new google::protobuf::io::GzipOutputStream(m_file);
+    m_gzip = new google::protobuf::io::GzipOutputStream(m_file, g_gzip_options);
 }
 
 Sha1OutFile::~Sha1OutFile ()
