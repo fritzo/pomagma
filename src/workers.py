@@ -93,7 +93,7 @@ class FileQueue(object):
         self.pattern = os.path.join(self.path, DB(template.format('[0-9]*')))
 
     def get(self):
-        # specifically ignore temporary files like temp.1234.0.h5
+        # specifically ignore temporary files like temp.1234.0.pb
         return glob.glob(self.pattern)
 
     def __iter__(self):

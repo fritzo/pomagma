@@ -171,6 +171,7 @@ def get_filesize(filename):
 def print_info(filename):
     ext = get_ext(filename)
     if ext == 'h5':
+        print 'byte_count =', get_filesize(filename)
         with h5_open(filename) as structure:
             item_dim, item_count = count_obs(structure)
             print 'item_dim =', item_dim

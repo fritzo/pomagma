@@ -6,7 +6,7 @@ import pomagma.util
 import re
 import time
 
-GRACE_PERIOD_SEC = 3600 * 24 * 7  # 1 week
+GRACE_PERIOD_DAYS = 7.0
 RE_BLOB = re.compile('^[a-z0-9]{40}$')
 
 
@@ -82,13 +82,14 @@ def dump_blob_ref(root_hexdigest, filename, sub_hexdigests=[]):
             f.write(sub_hexdigest)
 
 
-def garbage_collect(used_blobs, grace_period_sec=GRACE_PERIOD_SEC):
+def garbage_collect(used_blobs, grace_period_days=GRACE_PERIOD_DAYS):
     '''
     Remove all files in BLOB_DIR that:
     (1) are not reachable from refs within max_depth references; and
     (2) have not been touched within grace_period_sec.
     '''
-    assert grace_period_sec >= 0, grace_period_sec
+    assert grace_period_days >= 0, grace_period_days
+    grace_period_sec = grace_period_days * 24 * 3600
     for string in used_blobs:
         assert RE_BLOB.match(string), string
     used_blobs = set(used_blobs)

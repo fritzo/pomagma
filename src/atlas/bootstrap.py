@@ -11,4 +11,4 @@ WORLD = os.path.join(
     pomagma.util.DATA,
     'atlas',
     THEORY,
-    'region.normal.{:d}.h5'.format(SIZE))
+    'region.normal.{:d}.pb'.format(SIZE))

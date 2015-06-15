@@ -408,12 +408,12 @@ def push(tag=default_tag):
 
 
 @parsable.command
-def gc(grace_period_sec=pomagma.io.blobstore.GRACE_PERIOD_SEC):
+def gc(grace_period_days=pomagma.io.blobstore.GRACE_PERIOD_DAYS):
     '''
     Garbage collect blobs and validate remaining blobs.
     '''
     used_blobs = atlas.find_used_blobs(pomagma.util.DATA)
-    pomagma.io.blobstore.garbage_collect(used=used_blobs)
+    pomagma.io.blobstore.garbage_collect(used_blobs, grace_period_days)
     pomagma.io.blobstore.validate_blobs()
 
 

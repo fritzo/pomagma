@@ -1,7 +1,7 @@
 THEORY = skrj
 PY_FILES := *.py $(shell find src | grep '.py$$' | grep -v '_pb2.py')
 
-all: data/blob bootstrap fixture FORCE
+all: data/blob bootstrap FORCE
 	$(MAKE) python
 	$(MAKE) tags codegen tasks debug release
 
@@ -50,7 +50,7 @@ cpp-test: all FORCE
 	  CTEST_OUTPUT_ON_FAILURE=1 $(MAKE) -C build/debug test \
 	  || { cat $(DEBUG_LOG); exit 1; }
 
-unit-test: all fixture FORCE
+unit-test: all bootstrap FORCE
 	python vet.py check
 	POMAGMA_DEBUG=1 nosetests -v pomagma
 	$(MAKE) cpp-test
@@ -59,17 +59,12 @@ unit-test: all fixture FORCE
 data/blob:
 	mkdir -p data/blob
 
-fixture: data/atlas/$(THEORY)/region.normal.2047.h5 FORCE
-data/atlas/$(THEORY)/region.normal.2047.h5:
-	mkdir -p data/atlas/$(THEORY)/
-	7z e bootstrap/atlas/$(THEORY)/region.normal.2047.h5.7z -odata/atlas/$(THEORY)
-
-bootstrap: data/atlas/$(THEORY)/world.normal.h5 FORCE
-data/atlas/$(THEORY)/world.normal.h5: data/atlas/$(THEORY)/region.normal.2047.h5
+bootstrap: FORCE
+	mkdir -p data
+	cp -ru bootstrap/* data/
 	cd data/atlas/$(THEORY) \
-	  && (test -e world.h5 || ln -s region.normal.2047.h5 world.h5) \
-	  && test -e world.normal.h5 \
-	  || ln -s region.normal.2047.h5 world.normal.h5 \
+	  && (test -e world.pb || ln region.normal.2047.pb world.pb) \
+	  && test -e world.normal.pb || ln region.normal.2047.pb world.normal.pb
 
 h4-test: all FORCE
 	POMAGMA_DB_FORMAT=h5 POMAGMA_DEBUG=1 \
