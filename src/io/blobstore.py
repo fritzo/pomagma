@@ -1,4 +1,5 @@
 from pomagma.io import creat
+from pomagma.io import create_directories
 import hashlib
 import os
 import pomagma.util
@@ -28,6 +29,7 @@ def find_blob(hexdigest):
 
 def create_blob():
     '''return temp_path to write blob to'''
+    create_directories(pomagma.util.BLOB_DIR)
     if not hasattr(create_blob, 'counter'):
         create_blob.counter = 0
     count = create_blob.counter
@@ -35,6 +37,7 @@ def create_blob():
     filename = 'temp.{}.{}'.format(os.getpid(), count)
     path = os.path.join(pomagma.util.BLOB_DIR, filename)
     if os.path.exists(path):
+        print "removing temp file ", path
         os.remove(path)
     return path
 

@@ -1,6 +1,15 @@
 import os
 
 
+def create_directories(path):
+    if not os.path.exists(path):
+        try:
+            os.makedirs(path)
+        except os.error as e:
+            if not os.path.exists(path):
+                raise e
+
+
 def creat(filename, mode):
     assert isinstance(mode, int), mode
     # this may be insufficient to set permissions

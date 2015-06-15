@@ -116,7 +116,7 @@ bool InFile::try_read_chunk (google::protobuf::Message & message)
 
 OutFile::OutFile (const std::string & filename)
     : m_filename(filename),
-      m_fid(open(filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0444))
+      m_fid(creat(filename.c_str(), 0444))
 {
     POMAGMA_ASSERT(m_fid != -1,
         "opening " << filename << ": " << strerror(errno));
@@ -150,7 +150,7 @@ void OutFile::flush ()
 
 Sha1OutFile::Sha1OutFile (const std::string & filename)
     : m_filename(filename),
-      m_fid(open(filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0444))
+      m_fid(creat(filename.c_str(), 0444))
 {
     POMAGMA_ASSERT(m_fid != -1,
         "opening " << filename << ": " << strerror(errno));

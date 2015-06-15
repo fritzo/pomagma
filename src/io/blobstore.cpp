@@ -24,7 +24,7 @@ std::string find_blob (const std::string & hexdigest)
 std::string create_blob ()
 {
     POMAGMA_ASSERT(BLOB_DIR, "POMAGMA_BLOB_DIR is not defined");
-    POMAGMA_ASSERT(fs::exists(BLOB_DIR), "POMAGMA_BLOB_DIR does not exist");
+    fs::create_directories(BLOB_DIR);
     static std::atomic<uint_fast64_t> counter;
     size_t pid = getpid();
     size_t count = counter++;
