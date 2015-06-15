@@ -374,9 +374,7 @@ def pull(tag='<most recent>'):
             source = 'atlas.{}'.format(tag)
             assert match_atlas(source), 'invalid tag: {}'.format(tag)
         print 'pulling {} -> {}'.format(source, destin)
-        pomagma.io.s3.pull(
-            '{}/'.format(source),
-            '{}/'.format(pomagma.util.BLOB_DIR))
+        pomagma.io.s3.pull('{}/'.format(source), 'blob/')
         pomagma.io.s3.snapshot(source, destin)
 
 

@@ -154,8 +154,9 @@ EXT = '.7z'
 # blobs are immutable and compressed
 def is_blob(filename):
     if re.match('[a-z0-9]{40}$', os.path.basename(filename)):
-        mode = oct(os.stat(filename)[stat.ST_MODE])[-3:]
-        assert mode == '444', 'invalid blob mode: {}'.format(mode)
+        # This only works on local files:
+        # mode = oct(os.stat(filename)[stat.ST_MODE])[-3:]
+        # assert mode == '444', 'invalid blob mode: {}'.format(mode)
         return True
     else:
         return False
@@ -186,7 +187,7 @@ def listdir(prefix=''):
             filename_ext = key.name
             assert filename_ext[-len(EXT):] == EXT, filename_ext
             filename = filename_ext[:-len(EXT)]
-            yield filename
+        yield filename
 
 
 def remove(filename):
