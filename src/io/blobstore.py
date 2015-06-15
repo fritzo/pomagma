@@ -4,7 +4,6 @@ import hashlib
 import os
 import pomagma.util
 import re
-import stat
 import time
 
 GRACE_PERIOD_SEC = 3600 * 24 * 7  # 1 week
@@ -116,6 +115,7 @@ def validate_blobs():
         if blob != hexdigest:
             raise ValueError('invalid blob {}'.format(blob))
     for blob in blobs:
-        mode = oct(os.stat(blob)[stat.ST_MODE])[-3:]
+        path = os.path.join(pomagma.util.BLOB_DIR, blob)
+        mode = oct(os.stat(path).st_mode)[-3:]
         if mode != '444':
             raise ValueError('invalid mode {} of blob {}'.format(mode, blob))

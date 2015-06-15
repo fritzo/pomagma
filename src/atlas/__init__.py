@@ -94,9 +94,10 @@ def find(path):
     ])
 
 
-def find_used_blobs():
+def find_used_blobs(root):
+    root = os.path.abspath(root)
     used_blobs = set()
-    for filename in find(os.path.join(pomagma.util.DATA, 'atlas')):
+    for filename in find(root):
         if filename.endswith('.pb'):
             with open(filename) as f:
                 for line in f:

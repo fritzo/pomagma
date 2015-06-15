@@ -366,16 +366,23 @@ def pull(tag='<most recent>'):
     if not os.path.exists(pomagma.util.DATA):
         os.makedirs(pomagma.util.DATA)
     with pomagma.util.chdir(pomagma.util.DATA):
-        destin = 'atlas'
-        assert not os.path.exists(destin), 'atlas exists; first remove atlas'
+        master = 'atlas'
+        assert not os.path.exists(master), 'atlas exists; first remove atlas'
         if tag == '<most recent>':
-            source = max(list_s3_atlases())
+            snapshot = max(list_s3_atlases())
         else:
-            source = 'atlas.{}'.format(tag)
-            assert match_atlas(source), 'invalid tag: {}'.format(tag)
-        print 'pulling {} -> {}'.format(source, destin)
-        pomagma.io.s3.pull('{}/'.format(source), 'blob/')
-        pomagma.io.s3.snapshot(source, destin)
+            snapshot = 'atlas.{}'.format(tag)
+            assert match_atlas(snapshot), 'invalid tag: {}'.format(tag)
+        print 'pulling {}'.format(snapshot)
+        pomagma.io.s3.pull('{}/'.format(snapshot))
+        blobs = [
+            os.path.join('blob', blob)
+            for blob in atlas.find_used_blobs(snapshot)
+        ]
+        print 'pulling {} blobs'.format(len(blobs))
+        pomagma.io.s3.pull(*blobs)
+        pomagma.io.blobstore.validate_blobs()
+        pomagma.io.s3.snapshot(snapshot, master)  # only after validation
 
 
 @parsable.command
@@ -384,19 +391,20 @@ def push(tag=default_tag):
     Push atlas to s3.
     '''
     import pomagma.io.s3
+    pomagma.io.blobstore.validate_blobs()
     with pomagma.util.chdir(pomagma.util.DATA):
-        source = 'atlas'
-        assert os.path.exists(source), 'atlas does not exist'
-        destin = 'atlas.{}'.format(tag)
-        assert match_atlas(destin), 'invalid tag: {}'.format(tag)
-        assert destin not in list_s3_atlases(), 'destin already exists'
-        print 'pushing {} -> {}'.format(source, destin)
+        master = 'atlas'
+        assert os.path.exists(master), 'atlas does not exist'
+        snapshot = 'atlas.{}'.format(tag)
+        assert match_atlas(snapshot), 'invalid tag: {}'.format(tag)
+        assert snapshot not in list_s3_atlases(), 'snapshot already exists'
+        print 'pushing {}'.format(snapshot)
+        pomagma.io.s3.snapshot(master, snapshot)
         blobs = [
-            os.path.join(pomagma.util.BLOB_DIR, blob)
-            for blob in pomagma.atlas.find_used_blobs()
+            os.path.join('blob', blob)
+            for blob in atlas.find_used_blobs(snapshot)
         ]
-        pomagma.io.s3.snapshot(source, destin)
-        pomagma.io.s3.push(destin, *blobs)
+        pomagma.io.s3.push(snapshot, *blobs)
 
 
 @parsable.command
@@ -404,9 +412,9 @@ def gc(grace_period_sec=pomagma.io.blobstore.GRACE_PERIOD_SEC):
     '''
     Garbage collect blobs and validate remaining blobs.
     '''
-    used_blobs = pomagma.atlas.find_used_blobs()
-    pomagma.blobstore.garbage_collect(used=used_blobs)
-    pomagma.blobstore.validate_blobs()
+    used_blobs = atlas.find_used_blobs(pomagma.util.DATA)
+    pomagma.io.blobstore.garbage_collect(used=used_blobs)
+    pomagma.io.blobstore.validate_blobs()
 
 
 if __name__ == '__main__':
