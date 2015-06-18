@@ -20,5 +20,8 @@ install:
   - python --version
   - pip freeze
   - env
+  - ulimit -c
+before_script:
+  - ulimit -c unlimited
 script:
   - make small-test
