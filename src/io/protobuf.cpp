@@ -159,7 +159,7 @@ void OutFile::flush ()
 
 size_t OutFile::bytes_written ()
 {
-    flush();
+    //flush(); // FIXME
     return m_file->ByteCount();
 }
 
