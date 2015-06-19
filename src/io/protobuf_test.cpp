@@ -141,7 +141,7 @@ int main ()
         for (size_t i = 0; i < 12; ++i) {
             * message.add_repeated_message() = TestMessage(message);
         }
-        // this should be a big message to test Next, Backup, and Flush
+        // this should be a big message to test Next and Backup
         POMAGMA_ASSERT_LT(65536, message.ByteSize());
     });
 

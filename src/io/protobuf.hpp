@@ -22,6 +22,8 @@ class GzipOutputStream;
 namespace pomagma {
 namespace protobuf {
 
+class Sha1OutputStream;
+
 class InFile : noncopyable
 {
 public:
@@ -64,9 +66,7 @@ private:
     google::protobuf::io::GzipOutputStream * m_gzip;
 };
 
-class Sha1OutputStream;
-
-// TODO get this working
+// This hashes a file while writing to avoid an extra read in store_blob().
 class Sha1OutFile : noncopyable
 {
 public:
