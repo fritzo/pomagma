@@ -79,7 +79,7 @@ public:
 
     bool try_split (google::protobuf::RepeatedPtrField<std::string> * blobs)
     {
-        const bool split = (m_file->bytes_written() >= GOOD_BLOB_SIZE_BYTES);
+        bool split = (m_file->approx_bytes_written() >= GOOD_BLOB_SIZE_BYTES);
         if (split) {
             const std::string temp_path = m_file->filename();
             delete m_file;

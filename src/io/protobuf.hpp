@@ -54,8 +54,7 @@ public:
     const std::string & filename () const { return m_filename; }
 
     void write (const google::protobuf::Message & message);
-    void flush ();
-    size_t bytes_written ();
+    size_t approx_bytes_written ();
 
 private:
 
@@ -78,9 +77,9 @@ public:
     const std::string & filename () const { return m_filename; }
 
     void write (const google::protobuf::Message & message);
-    void flush ();
+    size_t approx_bytes_written ();
 
-    // one of these must be called before destructor
+    // exactly one of these must be called before destructor
     const Hasher::Digest & digest () __attribute__((warn_unused_result));
     std::string hexdigest () __attribute__((warn_unused_result));
 

@@ -59,7 +59,6 @@ public:
     const Hasher::Digest & Digest () __attribute__((warn_unused_result))
     {
         flush_hasher();
-        POMAGMA_ASSERT(m_file.Flush(), strerror(m_file.GetErrno()));
         return m_hasher.finish();
     }
 
@@ -148,18 +147,8 @@ void OutFile::write (const google::protobuf::Message & message)
     POMAGMA_ASSERT(info, "failed to write to " << m_filename);
 }
 
-void OutFile::flush ()
+size_t OutFile::approx_bytes_written ()
 {
-    POMAGMA_ASSERT(m_gzip->Flush(), "failed to flush gzip stream");
-    POMAGMA_ASSERT(m_file->Flush(),
-        "flushing " << m_filename << ": " << strerror(m_file->GetErrno()));
-    POMAGMA_ASSERT(fsync(m_fid) != -1,
-        "flushing " << m_filename << ": " << strerror(errno));
-}
-
-size_t OutFile::bytes_written ()
-{
-    //flush(); // FIXME
     return m_file->ByteCount();
 }
 
@@ -175,7 +164,7 @@ Sha1OutFile::Sha1OutFile (const std::string & filename)
 
 Sha1OutFile::~Sha1OutFile ()
 {
-    delete m_gzip;
+    POMAGMA_ASSERT(m_gzip == nullptr, "digest() has not been called");
     delete m_file;
     POMAGMA_ASSERT(close(m_fid) != -1,
         "closing " << m_filename << ": " << strerror(errno));
@@ -188,14 +177,22 @@ void Sha1OutFile::write (const google::protobuf::Message & message)
     POMAGMA_ASSERT(info, "failed to write to " << m_filename);
 }
 
+size_t Sha1OutFile::approx_bytes_written ()
+{
+    return m_file->ByteCount();
+}
+
 const Hasher::Digest & Sha1OutFile::digest ()
 {
-    m_gzip->Flush();
+    delete m_gzip;
+    m_gzip = nullptr;
     return m_file->Digest();
 }
 
 std::string Sha1OutFile::hexdigest ()
 {
+    delete m_gzip;
+    m_gzip = nullptr;
     return Hasher::str(m_file->Digest());
 }
 

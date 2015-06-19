@@ -12,15 +12,18 @@ std::string get_digest (const std::string & filename)
     return hasher.str();
 }
 
-std::string get_digest (protobuf::OutFile & file)
+std::string get_digest_and_delete (protobuf::OutFile * file)
 {
-    file.flush();
-    return get_digest(file.filename());
+    std::string filename = file->filename();
+    delete file;
+    return get_digest(filename);
 }
 
-std::string get_digest (protobuf::Sha1OutFile & file)
+std::string get_digest_and_delete (protobuf::Sha1OutFile * file)
 {
-    return file.hexdigest();
+    std::string digest = file->hexdigest();
+    delete file;
+    return digest;
 }
 
 void discard_digest (protobuf::OutFile &) {}
@@ -80,9 +83,9 @@ void test_digest (const TestMessage & message)
     in_temp_dir([&](){
         const std::string filename = "test.pb";
         {
-            OutFile file(filename);
-            file.write(message);
-            actual = get_digest(file);
+            OutFile * file = new OutFile(filename);
+            file->write(message);
+            actual = get_digest_and_delete(file);
         }
         expected = get_digest(filename);
     });
@@ -97,11 +100,10 @@ void test (std::function<void(TestMessage &)> build_message)
 
     test_write_read<protobuf::OutFile>(message);
     test_write_read_chunks<protobuf::OutFile>(message);
-    // TODO fix these
-    //test_write_read<protobuf::Sha1OutFile>(message);
-    //test_write_read_chunks<protobuf::Sha1OutFile>(message);
-    //test_digest<protobuf::OutFile>(message);
-    //test_digest<protobuf::Sha1OutFile>(message);
+    test_write_read<protobuf::Sha1OutFile>(message);
+    test_write_read_chunks<protobuf::Sha1OutFile>(message);
+    test_digest<protobuf::OutFile>(message);
+    test_digest<protobuf::Sha1OutFile>(message);
 }
 
 int main ()
