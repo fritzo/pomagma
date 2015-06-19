@@ -6,6 +6,7 @@ sudo apt-get install -y \
   cmake make g++ gdb \
   ctags cscope \
   libtbb-dev \
+  libsparsehash-dev \
   libprotobuf-dev \
   protobuf-compiler \
   python-protobuf \
