@@ -14,6 +14,7 @@
 #include <array>
 #include <pomagma/atlas/structure.pb.h>
 #include <pomagma/atlas/protobuf.hpp>
+#include <pomagma/io/protoblob.hpp>
 #include <pomagma/io/hdf5.hpp>
 #include <sys/stat.h>  // for chmod
 #include <thread>
