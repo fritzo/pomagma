@@ -8,7 +8,8 @@
 
 #if GCC_VERSION > 40700
 #  define assume_aligned(x) \
-    (static_cast<decltype(x)>(__builtin_assume_aligned(x, 32)))
+    (static_cast<decltype(x)>( \
+      __builtin_assume_aligned((x), BYTES_PER_CACHE_LINE)))
 #else // GCC_VERSION > 40700
 #  define assume_aligned(x) (x)
 #endif // GCC_VERSION > 40700
@@ -17,7 +18,9 @@ namespace pomagma
 {
 
 template<class T>
-inline bool is_aligned (const T * ptr, size_t alignment = 32)
+inline bool is_aligned (
+        const T * ptr,
+        size_t alignment = BYTES_PER_CACHE_LINE)
 {
     return (reinterpret_cast<size_t>(ptr) & (alignment - 1)) == 0;
 }
@@ -25,7 +28,7 @@ inline bool is_aligned (const T * ptr, size_t alignment = 32)
 void * alloc_blocks (
         size_t block_size,
         size_t block_count,
-        size_t alignment = 32);
+        size_t alignment = BYTES_PER_CACHE_LINE);
 
 template<class T>
 inline T * alloc_blocks (size_t block_count)
