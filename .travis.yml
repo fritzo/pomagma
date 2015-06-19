@@ -22,6 +22,6 @@ install:
   - env
   - ulimit -c
 before_script:
-  - ulimit -c unlimited
+  - ulimit -c unlimited || echo 'Failed to set core file size'
 script:
   - make small-test
