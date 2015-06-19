@@ -6,7 +6,7 @@
 namespace pomagma {
 
 extern const char * BLOB_DIR;
-static const size_t GOOD_BLOB_SIZE_BYTES = (1UL << 24UL); // 16MiB
+static const size_t GOOD_BLOB_SIZE_BYTES = (1UL << 23UL); // 8MiB
 
 inline std::string hash_file (const std::string & filename)
 {
