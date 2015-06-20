@@ -122,7 +122,7 @@ def explore(
         **options):
     '''
     Continuously expand world map for given theory, inferring and surveying.
-    Options: log_level, log_file
+    Options: log_level, log_file, deadline_sec
     '''
     assert step_size > 0
     region_size = max_size - step_size
@@ -153,7 +153,7 @@ def make(
         **options):
     '''
     Initialize; explore.
-    Options: log_level, log_file
+    Options: log_level, log_file, deadline_sec
     '''
     path = os.path.join(pomagma.util.DATA, 'atlas', theory)
     if not already_exists(path):
