@@ -18,6 +18,7 @@ int main (int argc, char ** argv)
             << "  POMAGMA_SIZE = " << pomagma::DEFAULT_ITEM_DIM << "\n"
             << "  POMAGMA_LOG_FILE = " << pomagma::DEFAULT_LOG_FILE << "\n"
             << "  POMAGMA_LOG_LEVEL = " << pomagma::DEFAULT_LOG_LEVEL << "\n"
+            << "  POMAGMA_DEADLINE_SEC (not set by default)\n"
             ;
         POMAGMA_WARN("incorrect program args");
         exit(1);
@@ -41,22 +42,36 @@ int main (int argc, char ** argv)
         pomagma::validate_all();
     }
 
-    // initialize
-    pomagma::Scheduler::initialize(facts_file);
-    pomagma::log_profile_stats();
-    if (POMAGMA_DEBUG_LEVEL > 1) {
-        pomagma::validate_all();
-    } else {
-        pomagma::validate_consistent();
-    }
+    if (getenv("POMAGMA_DEADLINE_SEC")) {
 
-    // survey
-    pomagma::Scheduler::survey();
-    pomagma::log_profile_stats();
-    if (POMAGMA_DEBUG_LEVEL > 0) {
-        pomagma::validate_all();
+        // survey until deadline
+        pomagma::Scheduler::survey_until_deadline(facts_file);
+        pomagma::log_profile_stats();
+        if (POMAGMA_DEBUG_LEVEL > 0) {
+            pomagma::validate_all();
+        } else {
+            pomagma::validate_consistent();
+        }
+
     } else {
-        pomagma::validate_consistent();
+
+        // initialize
+        pomagma::Scheduler::initialize(facts_file);
+        pomagma::log_profile_stats();
+        if (POMAGMA_DEBUG_LEVEL > 1) {
+            pomagma::validate_all();
+        } else {
+            pomagma::validate_consistent();
+        }
+
+        // survey
+        pomagma::Scheduler::survey();
+        pomagma::log_profile_stats();
+        if (POMAGMA_DEBUG_LEVEL > 0) {
+            pomagma::validate_all();
+        } else {
+            pomagma::validate_consistent();
+        }
     }
 
     pomagma::log_stats();

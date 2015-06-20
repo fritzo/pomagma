@@ -275,6 +275,25 @@ inline bool cleanup_tasks_try_execute ()
     }
 }
 
+static std::atomic<bool> g_deadline_flag(true);
+
+void start_deadline ()
+{
+    const int duration_sec = getenv_default("POMAGMA_DEADLINE_SEC", 3600);
+    POMAGMA_INFO("Setting deadline of " << duration_sec << " sec");
+    POMAGMA_ASSERT_LE(1, duration_sec);
+    POMAGMA_ASSERT_LE(duration_sec, 3600 * 24 * 7);
+    std::thread([duration_sec](){
+        // check 1000x more often than duration
+        const auto sleep_interval = std::chrono::milliseconds(duration_sec);
+        while (get_elapsed_time() < duration_sec) {
+            std::this_thread::sleep_for(sleep_interval);
+        }
+        POMAGMA_INFO("Deadline reached");
+        g_deadline_flag.store(false);
+    }).detach();
+}
+
 bool try_initialize_work (rng_t &)
 {
     return g_merge_tasks.try_execute()
@@ -289,6 +308,15 @@ bool try_survey_work (rng_t & rng)
         or enforce_tasks_try_execute(true)
         or sample_tasks_try_execute(rng)
         or cleanup_tasks_try_execute();
+}
+
+bool try_deadline_work (rng_t & rng)
+{
+    return g_merge_tasks.try_execute()
+        or enforce_tasks_try_execute(true)
+        or g_assume_tasks.try_execute()
+        or sample_tasks_try_execute(rng)
+        or (g_deadline_flag and cleanup_tasks_try_execute());
 }
 
 void do_work (bool (*try_work)(rng_t &))
@@ -345,6 +373,27 @@ void survey ()
         thread.join();
     }
     POMAGMA_INFO("finished " << g_worker_count << " survey threads");
+    log_stats();
+}
+
+void survey_until_deadline (const char * theory_file)
+{
+    insert_nullary_functions();
+    if (theory_file) {
+        assume_core_facts(theory_file);
+    }
+    Cleanup::push_all();
+    POMAGMA_INFO("starting " << g_worker_count << " deadlined threads");
+    start_deadline();
+    reset_stats();
+    std::vector<std::thread> threads;
+    for (size_t i = 0; i < g_worker_count; ++i) {
+        threads.push_back(std::thread(do_work, try_deadline_work));
+    }
+    for (auto & thread : threads) {
+        thread.join();
+    }
+    POMAGMA_INFO("finished " << g_worker_count << " deadlined threads");
     log_stats();
 }
 
