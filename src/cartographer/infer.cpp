@@ -673,7 +673,7 @@ size_t infer_assoc (Structure & structure, Function & FUN1, Function & FUN2)
     const Carrier & carrier = structure.carrier();
     const size_t item_dim = carrier.item_dim();
 
-    struct Task { Ob x, y, z, xy, yz; };
+    struct Task { Ob x, z, xy, yz; };
     std::vector<Task> tasks;
     std::mutex mutex;
     #pragma omp parallel
@@ -693,7 +693,7 @@ size_t infer_assoc (Structure & structure, Function & FUN1, Function & FUN2)
                     Ob yz = FUN1.find(y, z);
 
                     if (unlikely(FUN1.find(x, yz) != FUN1.find(xy, z))) {
-                        thread_tasks.push_back({x, y, z, xy, yz});
+                        thread_tasks.push_back({x, z, xy, yz});
                     }
                 }
             }
@@ -714,6 +714,62 @@ size_t infer_assoc (Structure & structure, Function & FUN1, Function & FUN2)
 
     size_t theorem_count = tasks.size();
     POMAGMA_INFO("inferred " << theorem_count << " assoc facts");
+    return theorem_count;
+}
+
+// ---------------------------------------
+// EQUAL APP APP APP C x y z APP APP x z y
+size_t infer_transpose (
+        Structure & structure,
+        const BinaryFunction & APP,
+        const Ob C)
+{
+    const size_t item_dim = structure.carrier().item_dim();
+    const DenseSet C_set = APP.get_Lx_set(C);
+
+    struct Task { Ob y, z, Cxy, xz; };
+    std::vector<Task> tasks;
+    std::mutex mutex;
+    #pragma omp parallel
+    {
+        std::vector<Task> thread_tasks;
+
+        #pragma omp for schedule(dynamic, 1)
+        for (Ob x = 1; x <= item_dim; ++x) {
+            if (not C_set.contains(x)) { continue; }
+            Ob Cx = APP.find(C, x);
+            if (APP.find(C, Cx) == x and Cx < x) { continue; } // by symmetry
+
+            for (auto iter = APP.iter_lhs(Cx); iter.ok(); iter.next()) {
+                Ob y = * iter;
+                Ob Cxy = APP.find(Cx, y);
+
+                for (auto iter = APP.iter_lhs(x); iter.ok(); iter.next()) {
+                    Ob z = * iter;
+                    Ob xz = APP.find(x, z);
+
+                    if (unlikely(APP.find(Cxy, z) != APP.find(xz, y))) {
+                        thread_tasks.push_back({y, z, Cxy, xz});
+                    }
+                }
+            }
+        }
+
+        std::unique_lock<std::mutex> lock(mutex);
+        tasks.insert(tasks.end(), thread_tasks.begin(), thread_tasks.end());
+    }
+
+    for (const Task & task : tasks) {
+        if (Ob Cxyz = APP.find(task.Cxy, task.z)) {
+            APP.insert(task.xz, task.y, Cxyz);
+        } else if (Ob xzy = APP.find(task.xz, task.y)) {
+            APP.insert(task.Cxy, task.z, xzy);
+        }
+    }
+    process_mergers(structure.signature());
+
+    size_t theorem_count = tasks.size();
+    POMAGMA_INFO("inferred " << theorem_count << " transpose facts");
     return theorem_count;
 }
 
@@ -832,6 +888,21 @@ size_t infer_assoc (Structure & structure)
     }
 
     return theorem_count;
+}
+
+// ---------------------------------------
+// EQUAL APP APP APP C x y z APP APP x z y
+size_t infer_transpose (Structure & structure)
+{
+    Signature & signature = structure.signature();
+    const BinaryFunction & APP = structure.binary_function("APP");
+    if (signature.nullary_function("C")) {
+        if (Ob C = structure.nullary_function("C").find()) {
+            POMAGMA_INFO("Inferring C-transpose");
+            return infer_transpose(structure, APP, C);
+        }
+    }
+    return 0;
 }
 
 size_t infer_nless (Structure & structure)
@@ -967,6 +1038,7 @@ size_t infer_pos (Structure & structure)
     structure.carrier().set_merge_callback(schedule_merge);
     theorem_count += infer_const(structure);
     theorem_count += infer_assoc(structure);
+    theorem_count += infer_transpose(structure);
     theorem_count += infer_less(structure);
     theorem_count += infer_equal(structure);
     return theorem_count;
