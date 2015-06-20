@@ -75,14 +75,15 @@ inline bool BinaryFunction::defined (Ob lhs, Ob rhs) const
 
 inline std::atomic<Ob> * BinaryFunction::_tile (size_t i_, size_t j_) const
 {
-    return m_tiles[m_tile_dim * j_ + i_];
+    return m_tiles[m_tile_dim * i_ + j_];
 }
 
 inline std::atomic<Ob> & BinaryFunction::value (Ob i, Ob j) const
 {
     POMAGMA_ASSERT5(support().contains(i), "unsupported lhs: " << i);
     POMAGMA_ASSERT5(support().contains(j), "unsupported rhs: " << j);
-    std::atomic<Ob> * tile = _tile(i / ITEMS_PER_TILE, j / ITEMS_PER_TILE);
+    std::atomic<Ob> * tile =
+        _tile(i >> LOG2_ITEMS_PER_TILE, j >> LOG2_ITEMS_PER_TILE);
     return _tile2value(tile, i & TILE_POS_MASK, j & TILE_POS_MASK);
 }
 
