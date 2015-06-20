@@ -207,8 +207,10 @@ def profile_cartographer(theory='skj', extra_size=0, tool='time'):
         opts.setdefault('runner', PROFILERS.get(tool, tool))
         with cartographer.load(theory, region, **opts) as db:
             for priority in [0, 1]:
-                db.infer(priority)
+                count = db.infer(priority)
+                print 'Proved {} theorems'.format(count)
             db.dump(temp)
+        print 'Hash:', atlas.get_hash(temp)
         os.remove(temp)
 
 

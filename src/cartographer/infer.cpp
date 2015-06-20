@@ -667,11 +667,13 @@ inline bool infer_nless_monotone (
 
 // -------------------------------------
 // EQUAL FUN1 FUN2 x y z FUN1 x FUN1 y z
-template<class Function>
-size_t infer_assoc (Structure & structure, Function & FUN1, Function & FUN2)
+size_t infer_assoc (
+        Structure & structure,
+        BinaryFunction & FUN1,
+        BinaryFunction & FUN2)
 {
-    const Carrier & carrier = structure.carrier();
-    const size_t item_dim = carrier.item_dim();
+    const size_t item_dim = structure.carrier().item_dim();
+    const DenseSet nonconst = get_nonconst(structure);
 
     struct Task { Ob x, z, xy, yz; };
     std::vector<Task> tasks;
@@ -679,12 +681,14 @@ size_t infer_assoc (Structure & structure, Function & FUN1, Function & FUN2)
     #pragma omp parallel
     {
         std::vector<Task> thread_tasks;
+        DenseSet y_set(item_dim);
 
         #pragma omp for schedule(dynamic, 1)
         for (Ob x = 1; x <= item_dim; ++x) {
-            if (not carrier.contains(x)) { continue; }
+            if (not nonconst.contains(x)) { continue; }
 
-            for (auto iter = FUN2.iter_lhs(x); iter.ok(); iter.next()) {
+            y_set.set_insn(FUN2.get_Lx_set(x), nonconst);
+            for (auto iter = y_set.iter(); iter.ok(); iter.next()) {
                 Ob y = * iter;
                 Ob xy = FUN2.find(x, y);
 
@@ -708,6 +712,57 @@ size_t infer_assoc (Structure & structure, Function & FUN1, Function & FUN2)
             FUN1.insert(task.xy, task.z, x_yz);
         } else if (Ob xy_z = FUN1.find(task.xy, task.z)) {
             FUN1.insert(task.x, task.yz, xy_z);
+        }
+    }
+    process_mergers(structure.signature());
+
+    size_t theorem_count = tasks.size();
+    POMAGMA_INFO("inferred " << theorem_count << " assoc facts");
+    return theorem_count;
+}
+
+// ---------------------------------
+// EQUAL FUN FUN x y z FUN x FUN y z
+size_t infer_assoc (Structure & structure, SymmetricFunction & FUN)
+{
+    const Carrier & carrier = structure.carrier();
+    const size_t item_dim = carrier.item_dim();
+
+    struct Task { Ob x, z, xy, yz; };
+    std::vector<Task> tasks;
+    std::mutex mutex;
+    #pragma omp parallel
+    {
+        std::vector<Task> thread_tasks;
+
+        #pragma omp for schedule(dynamic, 1)
+        for (Ob x = 1; x <= item_dim; ++x) {
+            if (not carrier.contains(x)) { continue; }
+
+            for (auto iter = FUN.iter_lhs(x); iter.ok(); iter.next()) {
+                Ob y = * iter;
+                Ob xy = FUN.find(x, y);
+
+                for (auto iter = FUN.iter_lhs(y); iter.ok(); iter.next()) {
+                    Ob z = * iter;
+                    Ob yz = FUN.find(y, z);
+
+                    if (unlikely(FUN.find(x, yz) != FUN.find(xy, z))) {
+                        thread_tasks.push_back({x, z, xy, yz});
+                    }
+                }
+            }
+        }
+
+        std::unique_lock<std::mutex> lock(mutex);
+        tasks.insert(tasks.end(), thread_tasks.begin(), thread_tasks.end());
+    }
+
+    for (const Task & task : tasks) {
+        if (Ob x_yz = FUN.find(task.x, task.yz)) {
+            FUN.insert(task.xy, task.z, x_yz);
+        } else if (Ob xy_z = FUN.find(task.xy, task.z)) {
+            FUN.insert(task.x, task.yz, xy_z);
         }
     }
     process_mergers(structure.signature());
@@ -884,7 +939,7 @@ size_t infer_assoc (Structure & structure)
 
     if (JOIN) {
         POMAGMA_INFO("Inferring JOIN associativity");
-        theorem_count += infer_assoc(structure, * JOIN, * JOIN);
+        theorem_count += infer_assoc(structure, * JOIN);
     }
 
     return theorem_count;
