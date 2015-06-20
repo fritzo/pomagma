@@ -1,9 +1,11 @@
+from itertools import izip
 from pomagma.io import creat
 from pomagma.io import create_directories
 import hashlib
 import os
 import pomagma.util
 import re
+import sys
 import time
 
 GRACE_PERIOD_DAYS = 7.0
@@ -111,12 +113,27 @@ def validate_blobs():
         if RE_BLOB.match(blob)
     )
     print 'validating {} blobs'.format(len(blobs))
-    for blob in blobs:
-        hexdigest = hash_file(os.path.join(pomagma.util.BLOB_DIR, blob))
-        if blob != hexdigest:
-            raise ValueError('invalid blob {}'.format(blob))
+    hexdigests = [
+        hash_file(os.path.join(pomagma.util.BLOB_DIR, blob))
+        for blob in blobs
+    ]
+    errors = [
+        blob
+        for blob, hexdigest in izip(blobs, hexdigests)
+        if blob != hexdigest
+    ]
+    if errors:
+        corrupt = os.path.join(pomagma.util.BLOB_DIR, 'corrupt')
+        if not os.path.exists(corrupt):
+            os.makedirs(corrupt)
+        for error in errors:
+            os.rename(
+                os.path.join(pomagma.util.BLOB_DIR, error),
+                os.path.join(corrupt, error))
+        raise ValueError('corrupt blobs; moved to blob/corrupt/')
     for blob in blobs:
         path = os.path.join(pomagma.util.BLOB_DIR, blob)
         mode = oct(os.stat(path).st_mode)[-3:]
         if mode != '444':
-            raise ValueError('invalid mode {} of blob {}'.format(mode, blob))
+            sys.stderr.write('WARNING repairing mode of {}\n'.format(blob))
+            os.chmod(path, 0444)
