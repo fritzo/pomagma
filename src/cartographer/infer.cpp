@@ -665,21 +665,59 @@ inline bool infer_nless_monotone (
     return false;
 }
 
-
-// TODO infer associativity
-//
-// ----------------------------------
-// EQUAL APP COMP x y z APP x APP y z
-//
 // -------------------------------------
-// EQUAL JOIN JOIN x y z JOIN x JOIN y z
-//
-// -------------------------------------
-// EQUAL RAND RAND x y z RAND x RAND y z
+// EQUAL FUN1 FUN2 x y z FUN1 x FUN1 y z
+template<class Function>
+size_t infer_assoc (Structure & structure, Function & FUN1, Function & FUN2)
+{
+    const Carrier & carrier = structure.carrier();
+    const size_t item_dim = carrier.item_dim();
 
+    struct Task { Ob x, y, z, xy, yz; };
+    std::vector<Task> tasks;
+    std::mutex mutex;
+    #pragma omp parallel
+    {
+        std::vector<Task> thread_tasks;
+
+        #pragma omp for schedule(dynamic, 1)
+        for (Ob x = 1; x <= item_dim; ++x) {
+            if (not carrier.contains(x)) { continue; }
+
+            for (auto iter = FUN2.iter_lhs(x); iter.ok(); iter.next()) {
+                Ob y = * iter;
+                Ob xy = FUN2.find(x, y);
+
+                for (auto iter = FUN1.iter_lhs(y); iter.ok(); iter.next()) {
+                    Ob z = * iter;
+                    Ob yz = FUN1.find(y, z);
+
+                    if (unlikely(FUN1.find(x, yz) != FUN1.find(xy, z))) {
+                        thread_tasks.push_back({x, y, z, xy, yz});
+                    }
+                }
+            }
+        }
+
+        std::unique_lock<std::mutex> lock(mutex);
+        tasks.insert(tasks.end(), thread_tasks.begin(), thread_tasks.end());
+    }
+
+    for (const Task & task : tasks) {
+        if (Ob x_yz = FUN1.find(task.x, task.yz)) {
+            FUN1.insert(task.xy, task.z, x_yz);
+        } else if (Ob xy_z = FUN1.find(task.xy, task.z)) {
+            FUN1.insert(task.x, task.yz, xy_z);
+        }
+    }
+    process_mergers(structure.signature());
+
+    size_t theorem_count = tasks.size();
+    POMAGMA_INFO("inferred " << theorem_count << " assoc facts");
+    return theorem_count;
+}
 
 } // anonymous namespace
-
 
 // ---------------------   ----------------------------
 // EQUAL APP APP K x y x   EQUAL COMP APP K x y APP K x
@@ -763,6 +801,36 @@ size_t infer_const (Structure & structure)
     }
 
     POMAGMA_INFO("inferred " << theorem_count << " K facts");
+    return theorem_count;
+}
+
+// ----------------------------------
+// EQUAL APP COMP x y z APP x APP y z
+//
+// -------------------------------------
+// EQUAL COMP COMP x y z COMP x COMP y z
+//
+// -------------------------------------
+// EQUAL JOIN JOIN x y z JOIN x JOIN y z
+size_t infer_assoc (Structure & structure)
+{
+    Signature & signature = structure.signature();
+    BinaryFunction & APP = structure.binary_function("APP");
+    BinaryFunction & COMP = structure.binary_function("COMP");
+    SymmetricFunction * JOIN = signature.symmetric_function("JOIN");
+    size_t theorem_count = 0;
+
+    POMAGMA_INFO("Inferring APP-COMP associativity");
+    theorem_count += infer_assoc(structure, APP, COMP);
+
+    POMAGMA_INFO("Inferring COMP associativity");
+    theorem_count += infer_assoc(structure, COMP, COMP);
+
+    if (JOIN) {
+        POMAGMA_INFO("Inferring JOIN associativity");
+        theorem_count += infer_assoc(structure, * JOIN, * JOIN);
+    }
+
     return theorem_count;
 }
 
@@ -865,13 +933,12 @@ size_t infer_equal (Structure & structure)
 {
     POMAGMA_INFO("Inferring EQUAL");
 
-    Carrier & carrier = structure.carrier();
+    const Carrier & carrier = structure.carrier();
     const BinaryRelation & LESS = structure.binary_relation("LESS");
 
     DenseSet y_set(carrier.item_dim());
 
     size_t start_item_count = carrier.item_count();
-    carrier.set_merge_callback(schedule_merge);
 
     for (auto iter = carrier.iter(); iter.ok(); iter.next()) {
         Ob x = * iter;
@@ -897,7 +964,9 @@ size_t infer_equal (Structure & structure)
 size_t infer_pos (Structure & structure)
 {
     size_t theorem_count = 0;
+    structure.carrier().set_merge_callback(schedule_merge);
     theorem_count += infer_const(structure);
+    theorem_count += infer_assoc(structure);
     theorem_count += infer_less(structure);
     theorem_count += infer_equal(structure);
     return theorem_count;
