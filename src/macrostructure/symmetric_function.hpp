@@ -3,8 +3,6 @@
 #include "util.hpp"
 #include "base_bin_rel.hpp"
 #include <pomagma/util/sequential/dense_set.hpp>
-#include <unordered_map>
-//#include <google/sparse_hash_map>
 
 namespace pomagma
 {
@@ -12,14 +10,8 @@ namespace pomagma
 // a tight symmetric binary function
 class SymmetricFunction : noncopyable
 {
-    // TODO deprecate this
     mutable base_sym_rel m_lines;
-    mutable std::unordered_map<std::pair<Ob, Ob>, Ob, ObPairHash> m_values;
-
-    // TODO implement this
-    //typedef std::vector<google::sparse_hash_map<Ob, Ob>> Map;
-    //mutable Map m_lhs_rhs_val;
-    //mutable Map m_rhs_lhs_val;
+    mutable ObPairMap m_values;
 
 public:
 
