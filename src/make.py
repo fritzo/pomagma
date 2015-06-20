@@ -178,11 +178,37 @@ def profile_surveyor(theory='skj', grow_by=64, extra_size=0, tool='time'):
         temp = pomagma.util.temp_name(DB('profile'))
         world = DB('world')
         if not os.path.exists(region):
+            print 'Creating {} for profile'.format(region)
             assert os.path.exists(world), 'First initialize world map'
             with cartographer.load(theory, world, **opts) as db:
                 db.trim([{'size': size, 'filename': region}])
         opts.setdefault('runner', PROFILERS.get(tool, tool))
         surveyor.survey(theory, region, temp, size + grow_by, **opts)
+        os.remove(temp)
+
+
+@parsable.command
+def profile_cartographer(theory='skj', extra_size=0, tool='time'):
+    '''
+    Profile cartographer load-infer-dump on region of world.
+    Available tools: time, valgrind, cachegrind, callgrind, helgrind
+    '''
+    size = pomagma.util.MIN_SIZES[theory] + extra_size
+    with atlas.chdir(theory):
+        opts = {'log_file': 'profile.log', 'log_level': 2}
+        region = DB('region.{:d}'.format(size))
+        temp = pomagma.util.temp_name(DB('profile'))
+        world = DB('world')
+        if not os.path.exists(region):
+            print 'Creating {} for profile'.format(region)
+            assert os.path.exists(world), 'First initialize world map'
+            with cartographer.load(theory, world, **opts) as db:
+                db.trim([{'size': size, 'filename': region}])
+        opts.setdefault('runner', PROFILERS.get(tool, tool))
+        with cartographer.load(theory, region, **opts) as db:
+            for priority in [0, 1]:
+                db.infer(priority)
+            db.dump(temp)
         os.remove(temp)
 
 

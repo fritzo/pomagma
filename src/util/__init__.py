@@ -93,7 +93,7 @@ def chdir(path):
 
 def temp_name(path):
     dirname, filename = os.path.split(path)
-    assert not filename.startswith('temp.'), path
+    # assert not filename.startswith('temp.'), path
     return os.path.join(dirname, 'temp.{}.{}'.format(os.getpid(), filename))
 
 
