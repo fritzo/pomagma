@@ -2,8 +2,11 @@
 #include <vector>
 #include <map>
 
-namespace pomagma
-{
+namespace pomagma {
+
+namespace protobuf {
+class Signature;
+} // namespace protobuf
 
 class Server
 {
@@ -43,6 +46,8 @@ public:
         size_t item_count;
     };
     Info info ();
+
+    void declare (protobuf::Signature & message);
 
     void stop ();
 

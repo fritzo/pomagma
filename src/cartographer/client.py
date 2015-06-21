@@ -169,6 +169,43 @@ class Client(object):
             'item_count': info.item_count,
         }
 
+    def declare(self, signature={}):
+        '''
+        Extend db signature by given signature and return merged signature.
+        '''
+        assert isinstance(signature, dict), signature
+        request = Request()
+        request.declare.SetInParent()
+        request.declare.signature.SetInParent()
+        for arity, names in signature.iteritems():
+            assert isinstance(arity, basestring), arity
+            assert isinstance(names, list), names
+            for name in names:
+                assert isinstance(name, basestring), name
+            assert hasattr(request.declare.signature, arity), arity
+            request_names = getattr(request.declare.signature, arity)
+            request_names += names
+        reply = self._call(request)
+        return reply.declare.signature
+
+    def define(self, codes):
+        '''
+        Insert given codes into the db.
+        '''
+        assert isinstance(codes, list), codes
+        for code in codes:
+            assert isinstance(code, basestring), code
+        request = Request()
+        request.define.SetInParent()
+        request.define.codes += codes
+        self._call(request)
+
+    def execute(self, program):
+        assert isinstance(program, basestring), program
+        request = Request()
+        request.execute.program = program
+        self._call(request)
+
     def stop(self):
         request = Request()
         request.stop.SetInParent()

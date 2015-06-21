@@ -1,5 +1,16 @@
 package pomagma.protobuf;
 
+// This matches pomagma.atlas.protobuf.Structure
+message Signature {
+  repeated string nullary_functions = 4;
+  repeated string injective_functions = 6;
+  repeated string binary_functions = 7;
+  repeated string symmetric_functions = 8;
+
+  repeated string unary_relations = 9;
+  repeated string binary_relations = 10;
+}
+
 message CartographerRequest {
 
   message Trim {
@@ -30,6 +41,15 @@ message CartographerRequest {
   }
   message Info {
   }
+  message Declare {
+    required Signature signature = 1;
+  }
+  message Define {
+    repeated string codes = 1;
+  }
+  message Execute {
+    required string program = 1;
+  }
   message Stop {
   }
 
@@ -43,7 +63,10 @@ message CartographerRequest {
   optional Validate validate = 7;
   optional Dump dump = 8;
   optional Info info = 9;
-  optional Stop stop = 10;
+  optional Declare declare = 10;
+  optional Define define = 11;
+  optional Execute execute = 12;
+  optional Stop stop = 999;
 }
 
 message CartographerResponse {
@@ -72,7 +95,14 @@ message CartographerResponse {
   message Dump {
   }
   message Info {
-      required uint32 item_count = 1;
+    required uint32 item_count = 1;
+  }
+  message Declare {
+    required Signature signature = 1;
+  }
+  message Define {
+  }
+  message Execute {
   }
   message Stop {
   }
@@ -86,5 +116,8 @@ message CartographerResponse {
   optional Validate validate = 7;
   optional Dump dump = 8;
   optional Info info = 9;
-  optional Stop stop = 10;
+  optional Declare declare = 10;
+  optional Define define = 11;
+  optional Execute execute = 12;
+  optional Stop stop = 999;
 }

@@ -7,16 +7,23 @@
 #include <pomagma/theorist/conjecture_diverge.hpp>
 #include <pomagma/theorist/conjecture_equal.hpp>
 #include <pomagma/language/language.hpp>
-#include <pomagma/macrostructure/carrier.hpp>
-#include <pomagma/macrostructure/structure.hpp>
+#include <pomagma/macrostructure/structure_impl.hpp>
 #include <pomagma/macrostructure/compact.hpp>
 #include <pomagma/macrostructure/router.hpp>
 #include "messages.pb.h"
 #include <zmq.hpp>
 #include <algorithm>
 
-namespace pomagma
-{
+// TODO use protobuf reflection + templates
+#define SWITCH_ARITY(DO)    \
+    DO(Relation, relation, Unary,     unary)     \
+    DO(Relation, relation, Binary,    binary)    \
+    DO(Function, function, Nullary,   nullary)   \
+    DO(Function, function, Injective, injective) \
+    DO(Function, function, Binary,    binary)    \
+    DO(Function, function, Symmetric, symmetric)
+
+namespace pomagma {
 
 Server::Server (
         const char * structure_file,
@@ -197,14 +204,36 @@ Server::Info Server::info ()
     return result;
 }
 
+void Server::declare (protobuf::Signature & message)
+{
+    Signature & signature = m_structure.signature();
+    Carrier & carrier = m_structure.carrier();
+
+#define CASE_ARITY(Kind, kind, Arity, arity)                                \
+    for (const std::string & name : message.arity ## _ ## kind ## s()) {    \
+        if (not signature.arity ## _ ## kind(name)) {                       \
+            signature.declare(name, * new Arity ## Kind(carrier));          \
+        }                                                                   \
+    }
+    SWITCH_ARITY(CASE_ARITY)
+#undef CASE_ARITY
+
+    message.Clear();
+
+#define CASE_ARITY(Kind, kind, Arity, arity)                                \
+    for (const auto & pair : signature.arity ## _ ## kind ## s()) {         \
+        message.add_ ## arity ## _ ## kind ## s(pair.first);                \
+    }
+    SWITCH_ARITY(CASE_ARITY)
+#undef CASE_ARITY
+}
+
 void Server::stop ()
 {
     m_serving = false;
 }
 
-
-namespace
-{
+namespace {
 
 protobuf::CartographerResponse handle (
     Server & server,
@@ -273,6 +302,22 @@ protobuf::CartographerResponse handle (
     if (request.has_info()) {
         const auto info = server.info();
         response.mutable_info()->set_item_count(info.item_count);
+    }
+
+    if (request.has_declare()) {
+        auto & message = * response.mutable_declare()->mutable_signature();
+        message = request.declare().signature();
+        server.declare(message);
+    }
+
+    if (request.has_define()) {
+        TODO("Declare names in signature");
+        response.mutable_define();
+    }
+
+    if (request.has_execute()) {
+        TODO("Execute program in vm");
+        response.mutable_execute();
     }
 
     if (request.has_stop()) {
