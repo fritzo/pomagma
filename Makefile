@@ -1,3 +1,4 @@
+.SILENT:
 THEORY = skrj
 PY_FILES := *.py $(shell find src | grep '.py$$' | grep -v '_pb2.py')
 
