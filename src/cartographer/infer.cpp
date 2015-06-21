@@ -2,6 +2,7 @@
 #include <pomagma/macrostructure/structure_impl.hpp>
 #include <pomagma/macrostructure/scheduler.hpp>
 #include <mutex>
+#include <unordered_set>
 
 #define POMAGMA_ASSERT_UNDECIDED(rel, x, y)\
     POMAGMA_ASSERT(not rel.find(x, y),\
@@ -665,6 +666,69 @@ inline bool infer_nless_monotone (
     return false;
 }
 
+class BinaryTheoremQueue : noncopyable
+{
+    struct Task { Ob x1, y1, x2, y2; };
+    struct Hash
+    {
+        size_t operator() (const Task & task) const
+        {
+            return FastObHash::hash(task.x1, task.y1, task.x2, task.y2);
+        }
+    };
+    struct Eq
+    {
+        bool operator() (const Task & task1, const Task & task2) const
+        {
+            return task1.x1 == task2.x1 and task1.y1 == task2.y1
+               and task1.x2 == task2.x2 and task1.y2 == task2.y2;
+        }
+    };
+
+    std::unordered_set<Task, Hash, Eq> m_tasks;
+    std::mutex m_mutex;
+
+public:
+
+    BinaryTheoremQueue () = default;
+
+    template<class Function>
+    void infer_equal (const Function & FUN, Ob x1, Ob y1, Ob x2, Ob y2)
+    {
+        if (unlikely(FUN.find(x1, y1) != FUN.find(x2, y2))) {
+            m_tasks.insert({x1, y1, x2, y2});
+        }
+    }
+
+    void delegate_to (BinaryTheoremQueue & master)
+    {
+        std::unique_lock<std::mutex> lock(master.m_mutex);
+        master.m_tasks.insert(m_tasks.begin(), m_tasks.end());
+        m_tasks.clear();
+    }
+
+    template<class Function>
+    size_t process (Structure & structure, Function & FUN)
+    {
+        for (const Task & task : m_tasks) {
+            if (Ob xy = FUN.find(task.x1, task.y1)) {
+                FUN.insert(task.x2, task.y2, xy);
+            } else if (Ob xy = FUN.find(task.x2, task.y2)) {
+                FUN.insert(task.x1, task.y1, xy);
+            }
+        }
+        size_t theorem_count = m_tasks.size();
+        m_tasks.clear();
+        process_mergers(structure.signature());
+        return theorem_count;
+    }
+
+    ~BinaryTheoremQueue ()
+    {
+        POMAGMA_ASSERT1(m_tasks.empty(), "unprocessed tasks remain");
+    }
+};
+
 // -------------------------------------
 // EQUAL FUN1 FUN2 x y z FUN1 x FUN1 y z
 size_t infer_assoc (
@@ -675,14 +739,11 @@ size_t infer_assoc (
     const size_t item_dim = structure.carrier().item_dim();
     const DenseSet nonconst = get_nonconst(structure);
 
-    struct Task { Ob x, z, xy, yz; };
-    std::vector<Task> tasks;
-    std::mutex mutex;
+    BinaryTheoremQueue master_queue;
     #pragma omp parallel
     {
-        std::vector<Task> thread_tasks;
         DenseSet y_set(item_dim);
-
+        BinaryTheoremQueue worker_queue;
         #pragma omp for schedule(dynamic, 1)
         for (Ob x = 1; x <= item_dim; ++x) {
             if (not nonconst.contains(x)) { continue; }
@@ -696,27 +757,15 @@ size_t infer_assoc (
                     Ob z = * iter;
                     Ob yz = FUN1.find(y, z);
 
-                    if (unlikely(FUN1.find(x, yz) != FUN1.find(xy, z))) {
-                        thread_tasks.push_back({x, z, xy, yz});
-                    }
+                    worker_queue.infer_equal(FUN1, x, yz, xy, z);
                 }
             }
         }
 
-        std::unique_lock<std::mutex> lock(mutex);
-        tasks.insert(tasks.end(), thread_tasks.begin(), thread_tasks.end());
+        worker_queue.delegate_to(master_queue);
     }
 
-    for (const Task & task : tasks) {
-        if (Ob x_yz = FUN1.find(task.x, task.yz)) {
-            FUN1.insert(task.xy, task.z, x_yz);
-        } else if (Ob xy_z = FUN1.find(task.xy, task.z)) {
-            FUN1.insert(task.x, task.yz, xy_z);
-        }
-    }
-    process_mergers(structure.signature());
-
-    size_t theorem_count = tasks.size();
+    size_t theorem_count = master_queue.process(structure, FUN1);
     POMAGMA_INFO("inferred " << theorem_count << " assoc facts");
     return theorem_count;
 }
@@ -728,13 +777,10 @@ size_t infer_assoc (Structure & structure, SymmetricFunction & FUN)
     const Carrier & carrier = structure.carrier();
     const size_t item_dim = carrier.item_dim();
 
-    struct Task { Ob x, z, xy, yz; };
-    std::vector<Task> tasks;
-    std::mutex mutex;
+    BinaryTheoremQueue master_queue;
     #pragma omp parallel
     {
-        std::vector<Task> thread_tasks;
-
+        BinaryTheoremQueue worker_queue;
         #pragma omp for schedule(dynamic, 1)
         for (Ob x = 1; x <= item_dim; ++x) {
             if (not carrier.contains(x)) { continue; }
@@ -747,27 +793,15 @@ size_t infer_assoc (Structure & structure, SymmetricFunction & FUN)
                     Ob z = * iter;
                     Ob yz = FUN.find(y, z);
 
-                    if (unlikely(FUN.find(x, yz) != FUN.find(xy, z))) {
-                        thread_tasks.push_back({x, z, xy, yz});
-                    }
+                    worker_queue.infer_equal(FUN, x, yz, xy, z);
                 }
             }
         }
 
-        std::unique_lock<std::mutex> lock(mutex);
-        tasks.insert(tasks.end(), thread_tasks.begin(), thread_tasks.end());
+        worker_queue.delegate_to(master_queue);
     }
 
-    for (const Task & task : tasks) {
-        if (Ob x_yz = FUN.find(task.x, task.yz)) {
-            FUN.insert(task.xy, task.z, x_yz);
-        } else if (Ob xy_z = FUN.find(task.xy, task.z)) {
-            FUN.insert(task.x, task.yz, xy_z);
-        }
-    }
-    process_mergers(structure.signature());
-
-    size_t theorem_count = tasks.size();
+    size_t theorem_count = master_queue.process(structure, FUN);
     POMAGMA_INFO("inferred " << theorem_count << " assoc facts");
     return theorem_count;
 }
@@ -782,13 +816,10 @@ size_t infer_transpose (
     const size_t item_dim = structure.carrier().item_dim();
     const DenseSet C_set = APP.get_Lx_set(C);
 
-    struct Task { Ob y, z, Cxy, xz; };
-    std::vector<Task> tasks;
-    std::mutex mutex;
+    BinaryTheoremQueue master_queue;
     #pragma omp parallel
     {
-        std::vector<Task> thread_tasks;
-
+        BinaryTheoremQueue worker_queue;
         #pragma omp for schedule(dynamic, 1)
         for (Ob x = 1; x <= item_dim; ++x) {
             if (not C_set.contains(x)) { continue; }
@@ -803,27 +834,15 @@ size_t infer_transpose (
                     Ob z = * iter;
                     Ob xz = APP.find(x, z);
 
-                    if (unlikely(APP.find(Cxy, z) != APP.find(xz, y))) {
-                        thread_tasks.push_back({y, z, Cxy, xz});
-                    }
+                    worker_queue.infer_equal(APP, Cxy, z, xz, y);
                 }
             }
         }
 
-        std::unique_lock<std::mutex> lock(mutex);
-        tasks.insert(tasks.end(), thread_tasks.begin(), thread_tasks.end());
+        worker_queue.delegate_to(master_queue);
     }
 
-    for (const Task & task : tasks) {
-        if (Ob Cxyz = APP.find(task.Cxy, task.z)) {
-            APP.insert(task.xz, task.y, Cxyz);
-        } else if (Ob xzy = APP.find(task.xz, task.y)) {
-            APP.insert(task.Cxy, task.z, xzy);
-        }
-    }
-    process_mergers(structure.signature());
-
-    size_t theorem_count = tasks.size();
+    size_t theorem_count = master_queue.process(structure, APP);
     POMAGMA_INFO("inferred " << theorem_count << " transpose facts");
     return theorem_count;
 }

@@ -29,6 +29,35 @@ typedef uint32_t Ob;
 static const size_t MAX_ITEM_DIM = (1UL << (8UL * sizeof(Ob))) - 1UL;
 static const size_t HASH_MULTIPLIER = 11400714819323198485ULL;
 
+struct FastObHash
+{
+    static size_t hash (size_t ob1)
+    {
+        return ob1;
+    }
+
+    static size_t hash (size_t ob1, size_t ob2)
+    {
+        return (ob1 << 32) | ob2;
+    }
+
+    static size_t hash (size_t ob1, size_t ob2, size_t ob3)
+    {
+        size_t state = (ob1 << 32) | ob2;
+        state *= HASH_MULTIPLIER;
+        state += ob3;
+        return state;
+    }
+
+    static size_t hash (size_t ob1, size_t ob2, size_t ob3, size_t ob4)
+    {
+        size_t state = (ob1 << 32) | ob2;
+        state *= HASH_MULTIPLIER;
+        state += (ob3 << 32) | ob4;
+        return state;
+    }
+};
+
 struct ObPairHash
 {
     size_t operator() (const std::pair<Ob, Ob> & pair) const
@@ -48,24 +77,6 @@ struct TrivialObPairHash
         size_t x = pair.first;
         size_t y = pair.second;
         return (x << 32) | y;
-    }
-};
-
-struct Ob24
-{
-    uint8_t ob[3];
-
-    inline Ob get () const
-    {
-        static_assert(sizeof(Ob24) == 3, "Ob24 is missized");
-        return ob[2] << 16U | ob[1] << 8U | ob[0];
-    }
-
-    inline void set (const Ob & o)
-    {
-        ob[0] = o;
-        ob[1] = o >> 8;
-        ob[2] = o >> 16;
     }
 };
 
