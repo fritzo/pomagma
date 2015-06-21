@@ -3,8 +3,7 @@
 #include <pomagma/atlas/parser.hpp>
 #include <pomagma/macrostructure/structure_impl.hpp>
 
-namespace pomagma
-{
+namespace pomagma {
 
 class FindReducer : noncopyable
 {

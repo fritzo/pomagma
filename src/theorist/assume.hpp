@@ -4,8 +4,7 @@
 #include <pomagma/macrostructure/structure.hpp>
 #include <map>
 
-namespace pomagma
-{
+namespace pomagma {
 
 std::map<std::string, size_t> assume (
         Structure & structure,

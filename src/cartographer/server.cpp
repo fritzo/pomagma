@@ -15,15 +15,6 @@
 #include <zmq.hpp>
 #include <algorithm>
 
-// TODO use protobuf reflection + templates
-#define SWITCH_ARITY(DO)    \
-    DO(Relation, relation, Unary,     unary)     \
-    DO(Relation, relation, Binary,    binary)    \
-    DO(Function, function, Nullary,   nullary)   \
-    DO(Function, function, Injective, injective) \
-    DO(Function, function, Binary,    binary)    \
-    DO(Function, function, Symmetric, symmetric)
-
 namespace pomagma {
 
 Server::Server (
@@ -205,42 +196,27 @@ Server::Info Server::info ()
     return result;
 }
 
-void Server::declare (protobuf::Signature & message)
+void Server::declare (const std::vector<std::string> & names)
 {
     Signature & signature = m_structure.signature();
     Carrier & carrier = m_structure.carrier();
-
-#define CASE_ARITY(Kind, kind, Arity, arity)                                \
-    for (const std::string & name : message.arity ## _ ## kind ## s()) {    \
-        if (not signature.arity ## _ ## kind(name)) {                       \
-            signature.declare(name, * new Arity ## Kind(carrier));          \
-        }                                                                   \
+    for (const std::string & name : names) {
+        if (not signature.nullary_function(name)) {
+            signature.declare(name, * new NullaryFunction(carrier));
+        }
     }
-    SWITCH_ARITY(CASE_ARITY)
-#undef CASE_ARITY
-
-    message.Clear();
-
-#define CASE_ARITY(Kind, kind, Arity, arity)                                \
-    for (const auto & pair : signature.arity ## _ ## kind ## s()) {         \
-        message.add_ ## arity ## _ ## kind ## s(pair.first);                \
-    }
-    SWITCH_ARITY(CASE_ARITY)
-#undef CASE_ARITY
 }
 
 void Server::execute (const std::string & program)
 {
-    Signature & signature = m_structure.signature();
-
     POMAGMA_DEBUG("parsing program");
-    vm::ProgramParser parser(signature);
+    vm::ProgramParser parser(m_structure.signature());
     std::istringstream istream(program);
     const auto listings = parser.parse(istream);
 
     POMAGMA_DEBUG("executing " << listings.size() << " listings");
     vm::VirtualMachine virtual_machine;
-    virtual_machine.load(signature);
+    virtual_machine.load(m_structure.signature());
     for (const auto & listing : listings) {
         virtual_machine.execute(listing.first);
     }
@@ -261,21 +237,18 @@ protobuf::CartographerResponse handle (
     Timer timer;
     protobuf::CartographerResponse response;
 
-    if (request.trim_size() > 0) {
-        std::vector<Server::TrimTask> tasks(request.trim_size());
-        for (int i = 0; i < request.trim_size(); ++i) {
-            const auto & task = request.trim(i);
-            tasks[i].size = task.size();
-            tasks[i].temperature = task.temperature();
-            tasks[i].filename = task.filename();
-        }
-        server.trim(tasks);
-        response.mutable_trim();
+    if (request.has_crop()) {
+        server.crop();
+        response.mutable_crop();
     }
 
-    if (request.has_aggregate()) {
-        server.aggregate(request.aggregate().survey_in());
-        response.mutable_aggregate();
+    if (request.has_declare()) {
+        std::vector<std::string> names;
+        for (const auto & name : request.declare().nullary_functions()) {
+            names.push_back(name);
+        }
+        server.declare(names);
+        response.mutable_declare();
     }
 
     if (request.has_assume()) {
@@ -293,18 +266,14 @@ protobuf::CartographerResponse handle (
         response.mutable_infer()->set_theorem_count(theorem_count);
     }
 
-    if (request.has_conjecture()) {
-        const std::string & diverge_out = request.conjecture().diverge_out();
-        const std::string & equal_out = request.conjecture().equal_out();
-        const size_t max_count = request.conjecture().max_count();
-        auto counts = server.conjecture(diverge_out, equal_out, max_count);
-        response.mutable_conjecture()->set_diverge_count(counts["diverge"]);
-        response.mutable_conjecture()->set_equal_count(counts["equal"]);
+    if (request.has_execute()) {
+        server.execute(request.execute().program());
+        response.mutable_execute();
     }
 
-    if (request.has_crop()) {
-        server.crop();
-        response.mutable_crop();
+    if (request.has_aggregate()) {
+        server.aggregate(request.aggregate().survey_in());
+        response.mutable_aggregate();
     }
 
     if (request.has_validate()) {
@@ -312,30 +281,35 @@ protobuf::CartographerResponse handle (
         response.mutable_validate();
     }
 
-    if (request.has_dump()) {
-        server.dump(request.dump().world_out());
-        response.mutable_dump();
-    }
-
     if (request.has_info()) {
         const auto info = server.info();
         response.mutable_info()->set_item_count(info.item_count);
     }
 
-    if (request.has_declare()) {
-        auto & message = * response.mutable_declare()->mutable_signature();
-        message = request.declare().signature();
-        server.declare(message);
+    if (request.has_dump()) {
+        server.dump(request.dump().world_out());
+        response.mutable_dump();
     }
 
-    if (request.has_define()) {
-        TODO("Declare names in signature");
-        response.mutable_define();
+    if (request.trim_size() > 0) {
+        std::vector<Server::TrimTask> tasks(request.trim_size());
+        for (int i = 0; i < request.trim_size(); ++i) {
+            const auto & task = request.trim(i);
+            tasks[i].size = task.size();
+            tasks[i].temperature = task.temperature();
+            tasks[i].filename = task.filename();
+            response.add_trim();
+        }
+        server.trim(tasks);
     }
 
-    if (request.has_execute()) {
-        server.execute(request.execute().program());
-        response.mutable_execute();
+    if (request.has_conjecture()) {
+        const std::string & diverge_out = request.conjecture().diverge_out();
+        const std::string & equal_out = request.conjecture().equal_out();
+        const size_t max_count = request.conjecture().max_count();
+        auto counts = server.conjecture(diverge_out, equal_out, max_count);
+        response.mutable_conjecture()->set_diverge_count(counts["diverge"]);
+        response.mutable_conjecture()->set_equal_count(counts["equal"]);
     }
 
     if (request.has_stop()) {

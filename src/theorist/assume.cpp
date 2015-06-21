@@ -7,11 +7,8 @@
 #include <pomagma/macrostructure/compact.hpp>
 #include <algorithm>
 
-namespace pomagma
-{
-
-namespace detail
-{
+namespace pomagma {
+namespace detail {
 
 std::map<std::string, size_t> assume_facts (
         Structure & structure,

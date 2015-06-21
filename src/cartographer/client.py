@@ -1,7 +1,8 @@
-import os
-import zmq
-import pomagma.util
+from google.protobuf.descriptor import FieldDescriptor
 from pomagma.cartographer import messages_pb2 as messages
+import os
+import pomagma.util
+import zmq
 
 CONTEXT = zmq.Context()
 POLL_TIMEOUT_MS = 1000
@@ -27,43 +28,25 @@ class Client(object):
         raw_reply = self._socket.recv(0)
         reply = Response()
         reply.ParseFromString(raw_reply)
-        for key, val in request.ListFields():
-            assert reply.HasField(key.name), key.name
+        for field in Request.DESCRIPTOR.fields:
+            if field.label == FieldDescriptor.LABEL_OPTIONAL:
+                expected = request.HasField(field.name)
+                actual = reply.HasField(field.name)
+                assert actual == expected, field.name
+            elif field.label == FieldDescriptor.LABEL_REPEATED:
+                expected = len(getattr(request, field.name))
+                actual = len(getattr(reply, field.name))
+                assert actual == expected, field.name
         return reply
 
     def ping(self):
         request = Request()
         self._call(request)
 
-    def _trim(self, tasks):
+    def crop(self):
         request = Request()
-        for task in tasks:
-            request_task = request.trim.add()
-            request_task.size = task['size']
-            request_task.temperature = task['temperature']
-            request_task.filename = task['filename']
+        request.crop.SetInParent()
         self._call(request)
-
-    def trim(self, tasks):
-        assert isinstance(tasks, list)
-        for task in tasks:
-            assert isinstance(task, dict)
-        tasks = [task.copy() for task in tasks]
-        for task in tasks:
-            assert 'size' in task, task
-            assert isinstance(task['size'], int), task['size']
-            assert 'filename' in task, task
-            assert isinstance(task['filename'], basestring), task['filename']
-            temperature = task.setdefault('temperature', 1)
-            assert temperature in [0, 1], temperature
-        filenames = [task['filename'] for task in tasks]
-        assert len(filenames) == len(set(filenames)), 'duplicated out file'
-        with pomagma.util.temp_copies(filenames) as temp_filenames:
-            for task, filename in zip(tasks, temp_filenames):
-                task['filename'] = filename
-            self._trim(tasks)
-        for filename in filenames:
-            assert os.path.exists(filename), filename
 
     def _aggregate(self, survey_in):
         request = Request()
@@ -75,6 +58,14 @@ class Client(object):
         assert isinstance(survey_in, basestring), survey_in
         assert os.path.exists(survey_in), survey_in
         self._aggregate(survey_in)
+
+    def declare(self, *nullary_functions):
+        for name in nullary_functions:
+            assert isinstance(name, basestring), name
+        request = Request()
+        request.declare.SetInParent()
+        request.declare.nullary_functions += nullary_functions
+        self._call(request)
 
     def _assume(self, facts_in):
         request = Request()
@@ -110,6 +101,67 @@ class Client(object):
             while self.infer(priority):
                 pass
 
+    def execute(self, program):
+        assert isinstance(program, basestring), program
+        request = Request()
+        request.execute.program = program
+        self._call(request)
+
+    def validate(self):
+        request = Request()
+        request.validate.SetInParent()
+        self._call(request)
+
+    def info(self):
+        request = Request()
+        request.info.SetInParent()
+        reply = self._call(request)
+        info = reply.info
+        return {'item_count': info.item_count}
+
+    def _dump(self, world_out):
+        request = Request()
+        request.dump.SetInParent()
+        request.dump.world_out = world_out
+        self._call(request)
+
+    def dump(self, world_out):
+        assert isinstance(world_out, basestring), world_out
+        assert os.path.exists(os.path.dirname(os.path.abspath(world_out)))
+        with pomagma.util.temp_copy(world_out) as temp_world_out:
+            self._dump(temp_world_out)
+        assert os.path.exists(world_out), world_out
+
+    def _trim(self, tasks):
+        request = Request()
+        for task in tasks:
+            request_task = request.trim.add()
+            request_task.size = task['size']
+            request_task.temperature = task['temperature']
+            request_task.filename = task['filename']
+        self._call(request)
+
+    def trim(self, tasks):
+        assert isinstance(tasks, list)
+        for task in tasks:
+            assert isinstance(task, dict)
+        tasks = [task.copy() for task in tasks]
+        for task in tasks:
+            assert 'size' in task, task
+            assert isinstance(task['size'], int), task['size']
+            assert 'filename' in task, task
+            assert isinstance(task['filename'], basestring), task['filename']
+            temperature = task.setdefault('temperature', 1)
+            assert temperature in [0, 1], temperature
+        filenames = [task['filename'] for task in tasks]
+        assert len(filenames) == len(set(filenames)), 'duplicated out file'
+        with pomagma.util.temp_copies(filenames) as temp_filenames:
+            for task, filename in zip(tasks, temp_filenames):
+                task['filename'] = filename
+            self._trim(tasks)
+        for filename in filenames:
+            assert os.path.exists(filename), filename
+
     def _conjecture(self, diverge_out, equal_out, max_count):
         request = Request()
         request.conjecture.SetInParent()
@@ -136,75 +188,6 @@ class Client(object):
         assert os.path.exists(diverge_out), diverge_out
         assert os.path.exists(equal_out), equal_out
         return counts
-
-    def crop(self):
-        request = Request()
-        request.crop.SetInParent()
-        self._call(request)
-
-    def validate(self):
-        request = Request()
-        request.validate.SetInParent()
-        self._call(request)
-
-    def _dump(self, world_out):
-        request = Request()
-        request.dump.SetInParent()
-        request.dump.world_out = world_out
-        self._call(request)
-
-    def dump(self, world_out):
-        assert isinstance(world_out, basestring), world_out
-        assert os.path.exists(os.path.dirname(os.path.abspath(world_out)))
-        with pomagma.util.temp_copy(world_out) as temp_world_out:
-            self._dump(temp_world_out)
-        assert os.path.exists(world_out), world_out
-
-    def info(self):
-        request = Request()
-        request.info.SetInParent()
-        reply = self._call(request)
-        info = reply.info
-        return {
-            'item_count': info.item_count,
-        }
-
-    def declare(self, signature={}):
-        '''
-        Extend db signature by given signature and return merged signature.
-        '''
-        assert isinstance(signature, dict), signature
-        request = Request()
-        request.declare.SetInParent()
-        request.declare.signature.SetInParent()
-        for arity, names in signature.iteritems():
-            assert isinstance(arity, basestring), arity
-            assert isinstance(names, list), names
-            for name in names:
-                assert isinstance(name, basestring), name
-            assert hasattr(request.declare.signature, arity), arity
-            request_names = getattr(request.declare.signature, arity)
-            request_names += names
-        reply = self._call(request)
-        return reply.declare.signature
-
-    def define(self, codes):
-        '''
-        Insert given codes into the db.
-        '''
-        assert isinstance(codes, list), codes
-        for code in codes:
-            assert isinstance(code, basestring), code
-        request = Request()
-        request.define.SetInParent()
-        request.define.codes += codes
-        self._call(request)
-
-    def execute(self, program):
-        assert isinstance(program, basestring), program
-        request = Request()
-        request.execute.program = program
-        self._call(request)
 
     def stop(self):
         request = Request()

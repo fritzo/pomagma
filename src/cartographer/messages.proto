@@ -1,25 +1,12 @@
 package pomagma.protobuf;
 
-// This matches pomagma.atlas.protobuf.Structure
-message Signature {
-  repeated string nullary_functions = 4;
-  repeated string injective_functions = 6;
-  repeated string binary_functions = 7;
-  repeated string symmetric_functions = 8;
-
-  repeated string unary_relations = 9;
-  repeated string binary_relations = 10;
-}
-
 message CartographerRequest {
 
-  message Trim {
-    required uint32 size = 1;
-    required bool temperature = 2;
-    required string filename = 3;
+  message Crop {
+    // TODO optional uint32 headroom = 1 [default = 0];
   }
-  message Aggregate {
-    required string survey_in = 1;
+  message Declare {
+    repeated string nullary_functions = 1;
   }
   message Assume {
     required string facts_in = 1;
@@ -27,53 +14,56 @@ message CartographerRequest {
   message Infer {
     required uint32 priority = 1;
   }
+  message Execute {
+    required string program = 1;
+  }
+  message Aggregate {
+    required string survey_in = 1;
+  }
+  message Validate {
+  }
+  message Info {
+  }
+  message Dump {
+    required string world_out = 1;
+  }
+  message Trim {
+    required uint32 size = 1;
+    required bool temperature = 2;
+    required string filename = 3;
+  }
   message Conjecture {
     required string diverge_out = 1;
     required string equal_out = 2;
     required uint64 max_count = 3;
   }
-  message Crop {
-  }
-  message Validate {
-  }
-  message Dump {
-    required string world_out = 1;
-  }
-  message Info {
-  }
-  message Declare {
-    required Signature signature = 1;
-  }
-  message Define {
-    repeated string codes = 1;
-  }
-  message Execute {
-    required string program = 1;
-  }
   message Stop {
   }
 
   // ordered by priority
-  repeated Trim trim = 1;
-  optional Aggregate aggregate = 2;
-  optional Assume assume = 3;
-  optional Infer infer = 4;
-  optional Conjecture conjecture = 5;
-  optional Crop crop = 6;
-  optional Validate validate = 7;
-  optional Dump dump = 8;
-  optional Info info = 9;
-  optional Declare declare = 10;
-  optional Define define = 11;
-  optional Execute execute = 12;
-  optional Stop stop = 999;
+  optional Crop crop = 10;
+  optional Declare declare = 11;
+  optional Assume assume = 12;
+  optional Infer infer = 13;
+  optional Execute execute = 14;
+
+  optional Aggregate aggregate = 20;
+
+  optional Validate validate = 30;
+
+  optional Info info = 40;
+  optional Dump dump = 41;
+  repeated Trim trim = 42;
+  optional Conjecture conjecture = 43;
+
+  optional Stop stop = 99;
 }
 
 message CartographerResponse {
 
-  message Trim {
+  message Crop {
   }
-  message Aggregate {
+  message Declare {
   }
   message Assume {
     required uint64 pos_count = 1;
@@ -84,40 +74,40 @@ message CartographerResponse {
   message Infer {
     required uint64 theorem_count = 1;
   }
-  message Conjecture {
-    required uint64 diverge_count = 1;
-    required uint64 equal_count = 2;
+  message Execute {
   }
-  message Crop {
+  message Aggregate {
   }
   message Validate {
-  }
-  message Dump {
   }
   message Info {
     required uint32 item_count = 1;
   }
-  message Declare {
-    required Signature signature = 1;
+  message Dump {
   }
-  message Define {
+  message Trim {
   }
-  message Execute {
+  message Conjecture {
+    required uint64 diverge_count = 1;
+    required uint64 equal_count = 2;
   }
   message Stop {
   }
 
-  optional Trim trim = 1;
-  optional Aggregate aggregate = 2;
-  optional Assume assume = 3;
-  optional Infer infer = 4;
-  optional Conjecture conjecture = 5;
-  optional Crop crop = 6;
-  optional Validate validate = 7;
-  optional Dump dump = 8;
-  optional Info info = 9;
-  optional Declare declare = 10;
-  optional Define define = 11;
-  optional Execute execute = 12;
-  optional Stop stop = 999;
+  optional Crop crop = 10;
+  optional Declare declare = 11;
+  optional Assume assume = 12;
+  optional Infer infer = 13;
+  optional Execute execute = 14;
+
+  optional Aggregate aggregate = 20;
+
+  optional Validate validate = 30;
+
+  optional Info info = 40;
+  optional Dump dump = 41;
+  repeated Trim trim = 42;
+  optional Conjecture conjecture = 43;
+
+  optional Stop stop = 99;
 }

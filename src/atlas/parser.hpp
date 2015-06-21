@@ -4,8 +4,7 @@
 #include <pomagma/atlas/signature.hpp>
 #include <tuple>
 
-namespace pomagma
-{
+namespace pomagma {
 
 // TermParser parses terms but not statements
 template<class Reducer>
