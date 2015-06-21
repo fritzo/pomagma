@@ -668,20 +668,21 @@ inline bool infer_nless_monotone (
 
 class BinaryTheoremQueue : noncopyable
 {
-    struct Task { Ob x1, y1, x2, y2; };
+    struct Task { Ob lhs, rhs, val; };
     struct Hash
     {
         size_t operator() (const Task & task) const
         {
-            return FastObHash::hash(task.x1, task.y1, task.x2, task.y2);
+            return FastObHash::hash(task.lhs, task.rhs, task.val);
         }
     };
     struct Eq
     {
         bool operator() (const Task & task1, const Task & task2) const
         {
-            return task1.x1 == task2.x1 and task1.y1 == task2.y1
-               and task1.x2 == task2.x2 and task1.y2 == task2.y2;
+            return task1.lhs == task2.lhs
+               and task1.rhs == task2.rhs
+               and task1.val == task2.val;
         }
     };
 
@@ -693,10 +694,16 @@ public:
     BinaryTheoremQueue () = default;
 
     template<class Function>
-    void infer_equal (const Function & FUN, Ob x1, Ob y1, Ob x2, Ob y2)
+    void infer_equal (const Function & FUN, Ob lhs1, Ob rhs1, Ob lhs2, Ob rhs2)
     {
-        if (unlikely(FUN.find(x1, y1) != FUN.find(x2, y2))) {
-            m_tasks.insert({x1, y1, x2, y2});
+        Ob val1 = FUN.find(lhs1, rhs1);
+        Ob val2 = FUN.find(lhs2, rhs2);
+        if (unlikely(val1 != val2)) {
+            if (val2 == 0 or (val1 != 0 and val2 > val1)) {
+                m_tasks.insert({lhs2, rhs2, val1});
+            } else {
+                m_tasks.insert({lhs1, rhs1, val2});
+            }
         }
     }
 
@@ -711,11 +718,7 @@ public:
     size_t process (Structure & structure, Function & FUN)
     {
         for (const Task & task : m_tasks) {
-            if (Ob xy = FUN.find(task.x1, task.y1)) {
-                FUN.insert(task.x2, task.y2, xy);
-            } else if (Ob xy = FUN.find(task.x2, task.y2)) {
-                FUN.insert(task.x1, task.y1, xy);
-            }
+            FUN.insert(task.lhs, task.rhs, task.val);
         }
         size_t theorem_count = m_tasks.size();
         m_tasks.clear();
