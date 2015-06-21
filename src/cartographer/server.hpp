@@ -18,8 +18,8 @@ public:
         const char * theory_file,
         const char * language_file);
 
-    void crop ();
-    void declare (const std::vector<std::string> & names);
+    void crop (size_t headroom = 0);
+    void declare (const std::string & name);
     std::map<std::string, size_t> assume (const std::string & facts_in);
     size_t infer (size_t priority);
     void execute (const std::string & program);

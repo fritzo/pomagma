@@ -155,14 +155,14 @@ std::map<std::string, size_t> Server::conjecture (
     return counts;
 }
 
-void Server::crop ()
+void Server::crop (size_t headroom)
 {
     compact(m_structure);
     if (POMAGMA_DEBUG_LEVEL > 1) {
         m_structure.validate();
     }
-    size_t item_count = m_structure.carrier().item_count();
-    if (item_count < m_structure.carrier().item_dim()) {
+    size_t item_count = m_structure.carrier().item_count() + headroom;
+    if (item_count != m_structure.carrier().item_dim()) {
         m_structure.resize(item_count);
         if (POMAGMA_DEBUG_LEVEL > 1) {
             m_structure.validate();
@@ -196,14 +196,12 @@ Server::Info Server::info ()
     return result;
 }
 
-void Server::declare (const std::vector<std::string> & names)
+void Server::declare (const std::string & name)
 {
     Signature & signature = m_structure.signature();
     Carrier & carrier = m_structure.carrier();
-    for (const std::string & name : names) {
-        if (not signature.nullary_function(name)) {
-            signature.declare(name, * new NullaryFunction(carrier));
-        }
+    if (not signature.nullary_function(name)) {
+        signature.declare(name, * new NullaryFunction(carrier));
     }
 }
 
@@ -238,16 +236,14 @@ protobuf::CartographerResponse handle (
     protobuf::CartographerResponse response;
 
     if (request.has_crop()) {
-        server.crop();
+        server.crop(request.crop().headroom());
         response.mutable_crop();
     }
 
     if (request.has_declare()) {
-        std::vector<std::string> names;
         for (const auto & name : request.declare().nullary_functions()) {
-            names.push_back(name);
+            server.declare(name);
         }
-        server.declare(names);
         response.mutable_declare();
     }
 

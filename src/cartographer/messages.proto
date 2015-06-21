@@ -3,7 +3,7 @@ package pomagma.protobuf;
 message CartographerRequest {
 
   message Crop {
-    // TODO optional uint32 headroom = 1 [default = 0];
+    optional uint32 headroom = 1 [default = 0];
   }
   message Declare {
     repeated string nullary_functions = 1;

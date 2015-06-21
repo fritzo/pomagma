@@ -43,9 +43,12 @@ class Client(object):
         request = Request()
         self._call(request)
 
-    def crop(self):
+    def crop(self, headroom=0):
+        assert isinstance(headroom, (int, long)), headroom
+        assert headroom >= 0, headroom
         request = Request()
         request.crop.SetInParent()
+        request.crop.headroom = headroom
         self._call(request)
 
     def _aggregate(self, survey_in):
