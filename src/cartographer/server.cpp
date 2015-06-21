@@ -10,6 +10,7 @@
 #include <pomagma/macrostructure/structure_impl.hpp>
 #include <pomagma/macrostructure/compact.hpp>
 #include <pomagma/macrostructure/router.hpp>
+#include <pomagma/macrostructure/vm.hpp>
 #include "messages.pb.h"
 #include <zmq.hpp>
 #include <algorithm>
@@ -228,6 +229,23 @@ void Server::declare (protobuf::Signature & message)
 #undef CASE_ARITY
 }
 
+void Server::execute (const std::string & program)
+{
+    Signature & signature = m_structure.signature();
+
+    POMAGMA_DEBUG("parsing program");
+    vm::ProgramParser parser(signature);
+    std::istringstream istream(program);
+    const auto listings = parser.parse(istream);
+
+    POMAGMA_DEBUG("executing " << listings.size() << " listings");
+    vm::VirtualMachine virtual_machine;
+    virtual_machine.load(signature);
+    for (const auto & listing : listings) {
+        virtual_machine.execute(listing.first);
+    }
+}
+
 void Server::stop ()
 {
     m_serving = false;
@@ -316,7 +334,7 @@ protobuf::CartographerResponse handle (
     }
 
     if (request.has_execute()) {
-        TODO("Execute program in vm");
+        server.execute(request.execute().program());
         response.mutable_execute();
     }
 

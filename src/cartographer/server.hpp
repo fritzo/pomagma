@@ -48,6 +48,7 @@ public:
     Info info ();
 
     void declare (protobuf::Signature & message);
+    void execute (const std::string & program);
 
     void stop ();
 
