@@ -794,6 +794,7 @@ size_t infer_assoc (Structure & structure, SymmetricFunction & FUN)
 
                 for (auto iter = FUN.iter_lhs(y); iter.ok(); iter.next()) {
                     Ob z = * iter;
+                    if (z >= x) { break; } // by symmetry
                     Ob yz = FUN.find(y, z);
 
                     worker_queue.infer_equal(FUN, x, yz, xy, z);
