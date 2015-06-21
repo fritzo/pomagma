@@ -6,6 +6,7 @@ import os
 import pomagma.util
 import re
 import sys
+import multiprocessing
 import time
 
 GRACE_PERIOD_DAYS = 7.0
@@ -97,8 +98,9 @@ def garbage_collect(used_blobs, grace_period_days=GRACE_PERIOD_DAYS):
     used_blobs = set(used_blobs)
     deadline = time.time() - grace_period_sec
     count = 0
-    for path in os.listdir(pomagma.util.BLOB_DIR):
-        if os.path.basename(path) not in used_blobs:
+    for basename in os.listdir(pomagma.util.BLOB_DIR):
+        if basename not in used_blobs:
+            path = os.path.join(pomagma.util.BLOB_DIR, basename)
             if os.path.getmtime(path) < deadline:
                 os.remove(path)
                 count += 1
@@ -113,10 +115,8 @@ def validate_blobs():
         if RE_BLOB.match(blob)
     )
     print 'validating {} blobs'.format(len(blobs))
-    hexdigests = [
-        hash_file(os.path.join(pomagma.util.BLOB_DIR, blob))
-        for blob in blobs
-    ]
+    paths = [os.path.join(pomagma.util.BLOB_DIR, blob) for blob in blobs]
+    hexdigests = multiprocessing.Pool().map(hash_file, paths)
     errors = [
         blob
         for blob, hexdigest in izip(blobs, hexdigests)
