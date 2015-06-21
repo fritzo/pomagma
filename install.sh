@@ -3,7 +3,7 @@
 sudo add-apt-repository -y ppa:chris-lea/node.js
 sudo apt-get update
 sudo apt-get install -y \
-  cmake make g++ gdb \
+  cmake make g++ ccache gdb \
   ctags cscope \
   libtbb-dev \
   libsparsehash-dev \

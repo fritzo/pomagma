@@ -18,6 +18,8 @@ before_install:
 install:
   - . install.sh
   - g++ --version
+  - cmake --version
+  - ccache --version
   - python --version
   - pip freeze
   - env
