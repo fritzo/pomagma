@@ -12,3 +12,6 @@ target_link_libraries(io_protobuf_test
 	${POMAGMA_UTIL_LIBS}
 )
 add_test(NAME io_protobuf COMMAND io_protobuf_test)
+
+add_executable(broker_profile broker_profile.cpp)
+target_link_libraries(broker_profile ${POMAGMA_UTIL_LIBS})

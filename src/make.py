@@ -6,7 +6,6 @@ from pomagma import surveyor
 from pomagma import theorist
 from pomagma.util import DB
 from pomagma.io import blobstore
-import glob
 import mock
 import os
 import parsable
@@ -147,18 +146,22 @@ def test_analyst(theory):
 
 
 @parsable.command
-def profile_util():
+def profile_misc():
     '''
-    Profile data structures.
+    Profile misc libraries.
     '''
     buildtype = 'debug' if pomagma.util.debug else 'release'
     log_file = os.path.join(pomagma.util.DATA, 'profile', buildtype + '.log')
     if os.path.exists(log_file):
         os.remove(log_file)
     opts = {'log_file': log_file, 'log_level': 2}
-    pattern = os.path.join(pomagma.util.BIN, '*', '*_profile')
-    cmds = glob.glob(pattern)
-    assert cmds, 'no profiles match {}'.format(pattern)
+    cmds = [
+        os.path.abspath(os.path.join(root, filename))
+        for root, dirnames, filenames in os.walk(pomagma.util.BIN)
+        for filename in filenames
+        if filename.endswith('_profile')
+    ]
+    assert cmds, 'no profiles found in {}'.format(pomagma.util.BIN)
     for cmd in cmds:
         print 'Profiling', cmd
         pomagma.util.log_call(cmd, **opts)
