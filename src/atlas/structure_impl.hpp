@@ -616,27 +616,40 @@ namespace detail
 
 inline void dump_pb (
         const Carrier & carrier,
-        protobuf::Structure & structure)
+        protobuf::Structure & structure,
+        std::mutex & mutex)
 {
     POMAGMA_DEBUG("dumping carrier");
+    const std::string hash = Hasher::str(get_hash(carrier));
+
+    mutex.lock();
     auto & message = * structure.mutable_carrier();
-    message.set_hash(Hasher::str(get_hash(carrier)));
+    message.set_hash(hash);
     message.set_item_count(carrier.item_count());
+    mutex.unlock();
 }
 
 inline void dump_pb (
         const Carrier &,
         const UnaryRelation & rel,
         protobuf::Structure & structure,
-        const std::string & name)
+        const std::string & name,
+        std::mutex & mutex)
 {
     POMAGMA_DEBUG("dumping unary relation " << name);
+    const std::string hash = Hasher::str(get_hash(rel));
+
+    mutex.lock();
     auto & message = * structure.add_unary_relations();
     message.set_name(name);
-    message.set_hash(Hasher::str(get_hash(rel)));
+    message.set_hash(hash);
+    mutex.unlock();
 
     // write blob with a single chunk
-    protobuf::BlobWriter blob(message.add_blobs());
+    protobuf::BlobWriter blob([&](const std::string& hexdigest){
+        std::unique_lock<std::mutex> lock(mutex);
+        * message.add_blobs() = hexdigest;
+    });
     protobuf::UnaryRelation chunk;
     protobuf::dump(rel.get_set(), * chunk.mutable_set());
     blob.write(chunk);
@@ -646,20 +659,28 @@ inline void dump_pb (
         const Carrier & carrier,
         const BinaryRelation & rel,
         protobuf::Structure & structure,
-        const std::string & name)
+        const std::string & name,
+        std::mutex & mutex)
 {
     POMAGMA_DEBUG("dumping binary relation " << name);
+    const std::string hash = Hasher::str(get_hash(carrier, rel));
+
+    mutex.lock();
     auto & message = * structure.add_binary_relations();
     message.set_name(name);
-    message.set_hash(Hasher::str(get_hash(carrier, rel)));
+    message.set_hash(hash);
+    mutex.unlock();
 
     // write a single blob chunked by row
-    protobuf::BlobWriter blob(message.add_blobs());
+    protobuf::BlobWriter blob([&](const std::string& hexdigest){
+        std::unique_lock<std::mutex> lock(mutex);
+        * message.add_blobs() = hexdigest;
+    });
     protobuf::BinaryRelation chunk;
     protobuf::BinaryRelation::Row & chunk_row = * chunk.add_rows();
     for (auto lhs = carrier.support().iter(); lhs.ok(); lhs.next()) {
         if (unlikely(* lhs % 512 == 0)) {
-            blob.try_split(message.mutable_blobs());
+            blob.try_split();
         }
         chunk_row.set_lhs(* lhs);
         protobuf::dump(rel.get_Lx_set(* lhs), * chunk_row.mutable_rhs());
@@ -671,30 +692,43 @@ inline void dump_pb (
         const Carrier &,
         const NullaryFunction & fun,
         protobuf::Structure & structure,
-        const std::string & name)
+        const std::string & name,
+        std::mutex & mutex)
 {
     POMAGMA_DEBUG("dumping nullary function " << name);
+    const std::string hash = Hasher::str(get_hash(fun));
+
+    mutex.lock();
     auto & message = * structure.add_nullary_functions();
     message.set_name(name);
-    message.set_hash(Hasher::str(get_hash(fun)));
+    message.set_hash(hash);
     if (Ob val = fun.find()) {
         message.set_val(val);
     }
+    mutex.unlock();
 }
 
 inline void dump_pb (
         const Carrier &,
         const InjectiveFunction & fun,
         protobuf::Structure & structure,
-        const std::string & name)
+        const std::string & name,
+        std::mutex & mutex)
 {
     POMAGMA_DEBUG("dumping injective function " << name);
+    const std::string hash = Hasher::str(get_hash(fun));
+
+    mutex.lock();
     auto & message = * structure.add_injective_functions();
     message.set_name(name);
-    message.set_hash(Hasher::str(get_hash(fun)));
+    message.set_hash(hash);
+    mutex.unlock();
 
     // write blob with a single chunk
-    protobuf::BlobWriter blob(message.add_blobs());
+    protobuf::BlobWriter blob([&](const std::string& hexdigest){
+        std::unique_lock<std::mutex> lock(mutex);
+        * message.add_blobs() = hexdigest;
+    });
     protobuf::UnaryFunction chunk;
     protobuf::ObMap & chunk_map = * chunk.mutable_map();
     for (auto key = fun.iter(); key.ok(); key.next()) {
@@ -709,21 +743,29 @@ inline void dump_pb (
         const Carrier & carrier,
         const BinaryFunction & fun,
         protobuf::Structure & structure,
-        const std::string & name)
+        const std::string & name,
+        std::mutex & mutex)
 {
     POMAGMA_DEBUG("dumping binary function " << name);
+    const std::string hash = Hasher::str(get_hash(carrier, fun));
+
+    mutex.lock();
     auto & message = * structure.add_binary_functions();
     message.set_name(name);
-    message.set_hash(Hasher::str(get_hash(carrier, fun)));
+    message.set_hash(hash);
+    mutex.unlock();
 
     // write a single blob chunked by row
-    protobuf::BlobWriter blob(message.add_blobs());
+    protobuf::BlobWriter blob([&](const std::string& hexdigest){
+        std::unique_lock<std::mutex> lock(mutex);
+        * message.add_blobs() = hexdigest;
+    });
     protobuf::BinaryFunction chunk;
     protobuf::BinaryFunction::Row & chunk_row = * chunk.add_rows();
     protobuf::ObMap & rhs_val = * chunk_row.mutable_rhs_val();
     for (auto lhs = carrier.support().iter(); lhs.ok(); lhs.next()) {
         if (unlikely(* lhs % 512 == 0)) {
-            blob.try_split(message.mutable_blobs());
+            blob.try_split();
         }
         chunk_row.set_lhs(* lhs);
         rhs_val.Clear();
@@ -740,21 +782,29 @@ inline void dump_pb (
         const Carrier & carrier,
         const SymmetricFunction & fun,
         protobuf::Structure & structure,
-        const std::string & name)
+        const std::string & name,
+        std::mutex & mutex)
 {
     POMAGMA_DEBUG("dumping symmetric function " << name);
+    const std::string hash = Hasher::str(get_hash(carrier, fun));
+
+    mutex.lock();
     auto & message = * structure.add_symmetric_functions();
     message.set_name(name);
-    message.set_hash(Hasher::str(get_hash(carrier, fun)));
+    message.set_hash(hash);
+    mutex.unlock();
 
     // write a single blob chunked by row
-    protobuf::BlobWriter blob(message.add_blobs());
+    protobuf::BlobWriter blob([&](const std::string& hexdigest){
+        std::unique_lock<std::mutex> lock(mutex);
+        * message.add_blobs() = hexdigest;
+    });
     protobuf::BinaryFunction chunk;
     protobuf::BinaryFunction::Row & chunk_row = * chunk.add_rows();
     protobuf::ObMap & rhs_val = * chunk_row.mutable_rhs_val();
     for (auto lhs = carrier.support().iter(); lhs.ok(); lhs.next()) {
         if (unlikely(* lhs % 512 == 0)) {
-            blob.try_split(message.mutable_blobs());
+            blob.try_split();
         }
         chunk_row.set_lhs(* lhs);
         rhs_val.Clear();
@@ -796,15 +846,23 @@ inline void dump_pb (
     const Carrier & carrier = * signature.carrier();
     detail::assert_contiguous(carrier);
 
-    // TODO parallelize
-    detail::dump_pb(carrier, structure);
+    std::mutex mutex;
+    std::vector<std::thread> threads;
+
+    threads.push_back(std::thread([&]{
+        detail::dump_pb(carrier, structure, mutex);
+    }));
 
 #define CASE_ARITY(Kind, kind, Arity, arity)                                \
     for (const auto & i : signature.arity ## _ ## kind ## s()) {            \
-        detail::dump_pb(carrier, * i.second, structure, i.first);           \
+        threads.push_back(std::thread([&]{                                  \
+            detail::dump_pb(carrier, * i.second, structure, i.first, mutex);\
+        }));                                                                \
     }
     SWITCH_ARITY(CASE_ARITY)
 #undef CASE_ARITY
+
+    for (auto & thread : threads) { thread.join(); }
 
 #define CASE_ARITY(Kind, kind, Arity, arity)                                \
     for (const auto & i : structure.arity ## _ ## kind ## s()) {            \
@@ -830,9 +888,9 @@ void dump_pb (
     std::vector<std::string> sub_hexdigests;
     detail::dump_pb(signature, structure, sub_hexdigests);
 
-    std::string hexdigest;
-    protobuf::BlobWriter(& hexdigest).write(structure);
-    dump_blob_ref(hexdigest, filename, sub_hexdigests);
+    protobuf::BlobWriter([&](const std::string & hexdigest){
+        dump_blob_ref(hexdigest, filename, sub_hexdigests);
+    }).write(structure);
 }
 
 void dump (
@@ -1454,7 +1512,6 @@ inline void load_data_pb (
     }
 }
 
-// TODO this is a nice looking pattern; copy elsewhere
 inline void load_data_pb (
         BinaryRelation & rel,
         const protobuf::BinaryRelation & message)
@@ -1568,6 +1625,7 @@ inline void load_data_pb (
     }
 }
 
+// TODO parallelize
 inline void load_data_pb (
         Signature & signature,
         protobuf::Structure & structure)

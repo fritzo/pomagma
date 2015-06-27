@@ -2,6 +2,7 @@
 
 #include <pomagma/io/protobuf.hpp>
 #include <pomagma/io/blobstore.hpp>
+#include <functional>
 
 namespace pomagma {
 namespace protobuf {
@@ -9,36 +10,32 @@ namespace protobuf {
 class BlobWriter : noncopyable
 {
     protobuf::Sha1OutFile * m_file;
-    std::string * m_destin;
+    std::function<void(const std::string&)> m_add_blob;
 
-    void open (std::string * destin)
+    void open ()
     {
         POMAGMA_ASSERT1(m_file == nullptr, "open() called twice");
-        POMAGMA_ASSERT1(m_destin == nullptr, "open() called twice");
         m_file = new protobuf::Sha1OutFile(create_blob());
-        m_destin = destin;
-        m_destin->clear();
     }
 
     void close ()
     {
         POMAGMA_ASSERT1(m_file, "close() called twice");
-        POMAGMA_ASSERT1(m_destin and m_destin->empty(), "close() called twice");
         const std::string temp_path = m_file->filename();
-        * m_destin = m_file->hexdigest();
+        const std::string hexdigest = m_file->hexdigest();
         delete m_file;
-        store_blob(temp_path, * m_destin);
         m_file = nullptr;
-        m_destin = nullptr;
+        store_blob(temp_path, hexdigest);
+        m_add_blob(hexdigest);
     }
 
 public:
 
-    explicit BlobWriter (std::string * destin)
+    explicit BlobWriter (std::function<void(const std::string)> add_blob)
         : m_file(nullptr),
-          m_destin(nullptr)
+          m_add_blob(add_blob)
     {
-        open(destin);
+        open();
     }
 
     void write (const google::protobuf::Message & message)
@@ -46,11 +43,11 @@ public:
         m_file->write(message);
     }
 
-    bool try_split (google::protobuf::RepeatedPtrField<std::string> * blobs)
+    bool try_split ()
     {
         if (m_file->approx_bytes_written() >= GOOD_BLOB_SIZE_BYTES) {
             close();
-            open(blobs->Add());
+            open();
             return true;
         } else {
             return false;
