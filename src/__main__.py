@@ -412,9 +412,7 @@ def gc(grace_period_days=pomagma.io.blobstore.GRACE_PERIOD_DAYS):
     '''
     Garbage collect blobs and validate remaining blobs.
     '''
-    used_blobs = atlas.find_used_blobs(pomagma.util.DATA)
-    pomagma.io.blobstore.garbage_collect(used_blobs, grace_period_days)
-    pomagma.io.blobstore.validate_blobs()
+    atlas.garbage_collect(grace_period_days)
 
 
 if __name__ == '__main__':

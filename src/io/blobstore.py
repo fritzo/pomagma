@@ -25,12 +25,12 @@ def hash_file(filename):
 
 
 def find_blob(hexdigest):
-    '''return path to read-only file'''
+    '''Return path to read-only file.'''
     return os.path.join(pomagma.util.BLOB_DIR, hexdigest)
 
 
 def create_blob():
-    '''return temp_path to write blob to'''
+    '''Return temp_path to write blob to.'''
     create_directories(pomagma.util.BLOB_DIR)
     if not hasattr(create_blob, 'counter'):
         create_blob.counter = 0
@@ -45,7 +45,7 @@ def create_blob():
 
 
 def store_blob(temp_path):
-    '''return digest for future find_blob calls; removes temp file'''
+    '''Return digest for future find_blob calls; removes temp file.'''
     assert os.path.exists(temp_path)
     hexdigest = hash_file(temp_path)
     path = find_blob(hexdigest)
@@ -58,7 +58,7 @@ def store_blob(temp_path):
 
 
 def iter_blob_refs(filename):
-    '''iterate over all hexdigests in ref file'''
+    '''Iterate over all hexdigests in ref file.'''
     with open(filename, 'rb') as f:
         for line in f:
             hexdigest = line.strip()
@@ -67,13 +67,13 @@ def iter_blob_refs(filename):
 
 
 def load_blob_ref(filename):
-    '''return root hexdigest from ref file'''
+    '''Return root hexdigest from ref file.'''
     for root_hexdigest in iter_blob_refs(filename):
         return root_hexdigest
 
 
 def dump_blob_ref(root_hexdigest, filename, sub_hexdigests=[]):
-    '''write root and sub hexdigests to ref file'''
+    '''Write root and sub hexdigests to ref file.'''
     assert isinstance(root_hexdigest, basestring), root_hexdigest
     assert len(root_hexdigest) == 40, root_hexdigest
     with creat(filename, 0444) as f:
@@ -108,7 +108,9 @@ def garbage_collect(used_blobs, grace_period_days=GRACE_PERIOD_DAYS):
 
 
 def validate_blobs():
-    '''validate SHA1 and mode of all blobs; raise ValueError on error'''
+    '''
+    Validate SHA1 and mode of some or all blobs; raise ValueError on error.
+    '''
     blobs = sorted(
         blob
         for blob in os.listdir(pomagma.util.BLOB_DIR)

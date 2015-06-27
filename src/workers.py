@@ -164,6 +164,10 @@ class CartographerWorker(object):
         assert self.infer_state in [0, 1, 2]
         return self.infer_state == 2
 
+    def garbage_collect(self):
+        # assume surveyor.dump takes < 1.0 days
+        pomagma.atlas.garbage_collect(grace_period_days=1.0)
+
     def try_work(self):
         return (
             self.try_trim() or
@@ -187,12 +191,14 @@ class CartographerWorker(object):
             if self.db.infer(self.infer_state):
                 self.db.validate()
                 self.db.dump(self.world)
+                self.garbage_collect()
                 self.replace_region_queue()
             else:
                 self.infer_state += 1
                 if self.is_normal():
                     self.log('Normalized')
                     self.db.dump(self.normal_world)
+                    self.garbage_collect()
                     self.theorize()
             return True
 
@@ -206,6 +212,7 @@ class CartographerWorker(object):
                 self.db.aggregate(survey)
                 self.db.validate()
                 self.db.dump(self.world)
+                self.garbage_collect()
                 self.infer_state = 0
                 world_size = self.db.info()['item_count']
                 self.log('world_size = {}'.format(world_size))
@@ -237,6 +244,7 @@ class CartographerWorker(object):
         with pomagma.util.temp_copy(self.region_queue.path) as temp_path:
             self.fill_region_queue(FileQueue(temp_path))
             self.region_queue.clear()
+            self.garbage_collect()
 
     def theorize(self):
         self.log('Theorizing')
@@ -261,6 +269,7 @@ class CartographerWorker(object):
                     counts['neg']))
                 self.db.validate()
                 self.db.dump(self.world)
+                self.garbage_collect()
                 self.infer_state = 0 if counts['pos'] else 1
                 self.replace_region_queue()
 

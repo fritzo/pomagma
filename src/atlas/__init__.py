@@ -1,7 +1,5 @@
 from pomagma.atlas.structure_pb2 import Structure
-from pomagma.io.blobstore import find_blob
-from pomagma.io.blobstore import iter_blob_refs
-from pomagma.io.blobstore import load_blob_ref
+from pomagma.io import blobstore
 from pomagma.io.protobuf import InFile
 import contextlib
 import os
@@ -102,9 +100,15 @@ def find_used_blobs(root):
             with open(filename) as f:
                 for line in f:
                     hexdigest = line.strip()
-                    assert len(hexdigest) == 40, hexdigest
+                    assert blobstore.RE_BLOB.match(hexdigest), hexdigest
                     used_blobs.add(hexdigest)
     return used_blobs
+
+
+def garbage_collect(grace_period_days=blobstore.GRACE_PERIOD_DAYS):
+    used_blobs = find_used_blobs(pomagma.util.DATA)
+    blobstore.garbage_collect(used_blobs, grace_period_days)
+    blobstore.validate_blobs()
 
 
 def get_ext(filename):
@@ -125,7 +129,7 @@ def h5_open(filename):
 
 
 def pb_load(filename):
-    with InFile(find_blob(load_blob_ref(filename))) as f:
+    with InFile(blobstore.find_blob(blobstore.load_blob_ref(filename))) as f:
         structure = Structure()
         f.read(structure)
         return structure
@@ -179,7 +183,8 @@ def print_info(filename):
             for o in structure:
                 print o
     elif ext == 'pb':
-        files = [filename] + map(find_blob, iter_blob_refs(filename))
+        files = [filename]
+        files += map(blobstore.find_blob, blobstore.iter_blob_refs(filename))
         print 'file_count =', len(files)
         print 'byte_count =', sum(map(get_filesize, files))
         structure = pb_load(filename)
