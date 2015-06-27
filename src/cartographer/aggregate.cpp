@@ -1,12 +1,10 @@
 #include "aggregate.hpp"
 #include <pomagma/macrostructure/structure_impl.hpp>
 #include <pomagma/macrostructure/scheduler.hpp>
+#include <thread>
 
-namespace pomagma
-{
-
-namespace detail
-{
+namespace pomagma {
+namespace detail {
 
 void inject_one (
         UnaryRelation & destin_rel,
@@ -103,9 +101,9 @@ void inject_all (
         const std::unordered_map<std::string, T *> & destin_map,
         const std::unordered_map<std::string, T *> & src_map,
         const DenseSet & src_defined,
-        const std::vector<Ob> & src_to_destin)
+        const std::vector<Ob> & src_to_destin,
+        std::vector<std::thread> & threads)
 {
-    // TODO parallelize, except for nullary relations
     for (auto pair : destin_map) {
         auto & name = pair.first;
         auto & destin = * pair.second;
@@ -115,7 +113,9 @@ void inject_all (
         } else {
             POMAGMA_INFO("aggregating " << name);
             auto & src = * i->second;
-            inject_one(destin, src, src_defined, src_to_destin);
+            threads.push_back(std::thread([&]{
+                inject_one(destin, src, src_defined, src_to_destin);
+            }));
         }
     }
 }
@@ -141,14 +141,16 @@ void aggregate (
         src_to_destin[*iter] = destin.carrier().unsafe_insert();
     }
 
-#define POMAGMA_INJECT_ALL(arity)\
-    detail::inject_all(\
-            destin.signature().arity(),\
-            src.signature().arity(),\
-            src_defined,\
-            src_to_destin)
+    std::vector<std::thread> threads;
 
-    // TODO parallelize, except for nullary relations
+#define POMAGMA_INJECT_ALL(arity)                                           \
+    detail::inject_all(                                                     \
+            destin.signature().arity(),                                     \
+            src.signature().arity(),                                        \
+            src_defined,                                                    \
+            src_to_destin,                                                  \
+            threads)
+
     POMAGMA_INJECT_ALL(unary_relations);
     POMAGMA_INJECT_ALL(binary_relations);
     POMAGMA_INJECT_ALL(nullary_functions);
@@ -157,6 +159,8 @@ void aggregate (
     POMAGMA_INJECT_ALL(symmetric_functions);
 
 #undef POMAGMA_INJECT_ALL
+
+    for (auto & thread : threads) { thread.join(); }
 
     if (clear_src) { src.clear(); }
 

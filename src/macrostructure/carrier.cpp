@@ -108,6 +108,7 @@ Ob Carrier::merge (Ob dep, Ob rep) const
     POMAGMA_ASSERT2(m_support.contains(dep), "bad merge dep " << dep);
     POMAGMA_ASSERT2(m_support.contains(rep), "bad merge rep " << rep);
 
+    std::unique_lock<std::mutex> lock(m_merge_mutex);
     while (m_reps[dep] != dep) {
         dep = m_reps[dep];
         if (dep == rep) { return rep; }

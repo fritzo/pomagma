@@ -35,7 +35,7 @@ public:
     void raw_insert (Ob ob);
     void update ();
 
-    // safe operations
+    // safe operations: multiple concurrent reads OR multiple concurrent writes
     Ob find (Ob ob) const;
     bool equal (Ob lhs, Ob rhs) const;
     Ob merge (Ob dep, Ob rep) const;
@@ -54,6 +54,8 @@ public:
 private:
 
     Ob _find (Ob ob, Ob rep) const;
+
+    mutable std::mutex m_merge_mutex;
 };
 
 inline void Carrier::raw_insert (Ob ob)
