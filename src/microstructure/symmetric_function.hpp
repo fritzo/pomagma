@@ -38,8 +38,10 @@ public:
     static bool is_symmetric () { return true; }
     size_t count_pairs () const; // unordered
     Ob raw_find (Ob lhs, Ob rhs) const { return value(lhs, rhs).load(relaxed); }
+    void raw_lock () {}
     void raw_insert (Ob lhs, Ob rhs, Ob val);
-    void update ();
+    void raw_unlock () {}
+    void update () {}
     void clear ();
 
     // relaxed operations
@@ -132,6 +134,10 @@ inline void SymmetricFunction::raw_insert (Ob lhs, Ob rhs, Ob val)
     value(lhs, rhs).store(val, relaxed);
     m_lines.Lx(lhs, rhs).one(relaxed);
     m_lines.Rx(lhs, rhs).one(relaxed);
+    m_Vlr_table.insert(lhs, rhs, val);
+    m_Vlr_table.insert(rhs, lhs, val);
+    m_VLr_table.insert(lhs, rhs, val);
+    m_VLr_table.insert(rhs, lhs, val);
 }
 
 inline void SymmetricFunction::insert (Ob lhs, Ob rhs, Ob val) const

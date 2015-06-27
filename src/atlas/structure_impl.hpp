@@ -1433,6 +1433,17 @@ void load_data_h5 (
 namespace detail
 {
 
+inline void call_or_defer (
+        std::vector<std::function<void()>> * defer,
+        std::function<void()> fun)
+{
+    if (defer) {
+        defer->push_back(fun);
+    } else {
+        fun();
+    }
+}
+
 inline void load_signature_pb (
         Signature & signature,
         const protobuf::Structure & structure,
@@ -1492,7 +1503,8 @@ inline void load_data_pb (
 
 inline void load_data_pb (
         UnaryRelation & rel,
-        const protobuf::UnaryRelation & message)
+        const protobuf::UnaryRelation & message,
+        std::vector<std::function<void()>> * tasks = nullptr)
 {
     // load data in message
     if (message.has_set()) {
@@ -1502,19 +1514,22 @@ inline void load_data_pb (
     }
 
     // recurse to blobs pointed to by message
-    protobuf::UnaryRelation chunk;
-    for (const auto & hexdigest : message.blobs()) {
-        protobuf::BlobReader blob(hexdigest);
-        while (blob.try_read_chunk(chunk)) {
-            load_data_pb(rel, chunk);
-            chunk.Clear();
+    call_or_defer(tasks, [&]{
+        for (const auto & hexdigest : message.blobs()) {
+            protobuf::BlobReader blob(hexdigest);
+            protobuf::UnaryRelation chunk;
+            while (blob.try_read_chunk(chunk)) {
+                load_data_pb(rel, chunk);
+                chunk.Clear();
+            }
         }
-    }
+    });
 }
 
 inline void load_data_pb (
         BinaryRelation & rel,
-        const protobuf::BinaryRelation & message)
+        const protobuf::BinaryRelation & message,
+        std::vector<std::function<void()>> * tasks = nullptr)
 {
     // load data in message
     for (const auto & row : message.rows()) {
@@ -1524,19 +1539,22 @@ inline void load_data_pb (
     }
 
     // recurse to blobs pointed to by message
-    protobuf::BinaryRelation chunk;
     for (const auto & hexdigest : message.blobs()) {
-        protobuf::BlobReader blob(hexdigest);
-        while (blob.try_read_chunk(chunk)) {
-            load_data_pb(rel, chunk);
-            chunk.Clear();
-        }
+        call_or_defer(tasks, [&]{
+            protobuf::BlobReader blob(hexdigest);
+            protobuf::BinaryRelation chunk;
+            while (blob.try_read_chunk(chunk)) {
+                load_data_pb(rel, chunk);
+                chunk.Clear();
+            }
+        });
     }
 }
 
 inline void load_data_pb (
         NullaryFunction & fun,
-        const protobuf::NullaryFunction & message)
+        const protobuf::NullaryFunction & message,
+        std::vector<std::function<void()>> *)
 {
     if (message.has_val()) {
         fun.raw_insert(message.val());
@@ -1546,7 +1564,8 @@ inline void load_data_pb (
 // message is nonconst to support in-place decompression
 inline void load_data_pb (
         InjectiveFunction & fun,
-        protobuf::UnaryFunction & message)
+        protobuf::UnaryFunction & message,
+        std::vector<std::function<void()>> * tasks = nullptr)
 {
     // load data in message
     if (message.has_map()) {
@@ -1559,20 +1578,23 @@ inline void load_data_pb (
     }
 
     // recurse to blobs pointed to by message
-    protobuf::UnaryFunction chunk;
-    for (const auto & hexdigest : message.blobs()) {
-        protobuf::BlobReader blob(hexdigest);
-        while (blob.try_read_chunk(chunk)) {
-            load_data_pb(fun, chunk);
-            chunk.Clear();
+    call_or_defer(tasks, [&]{
+        for (const auto & hexdigest : message.blobs()) {
+            protobuf::BlobReader blob(hexdigest);
+            protobuf::UnaryFunction chunk;
+            while (blob.try_read_chunk(chunk)) {
+                load_data_pb(fun, chunk);
+                chunk.Clear();
+            }
         }
-    }
+    });
 }
 
 // message is nonconst to support in-place decompression
 inline void load_data_pb (
         BinaryFunction & fun,
-        protobuf::BinaryFunction & message)
+        protobuf::BinaryFunction & message,
+        std::vector<std::function<void()>> * tasks = nullptr)
 {
     // load data in message
     for (auto & row : * message.mutable_rows()) {
@@ -1581,26 +1603,32 @@ inline void load_data_pb (
         auto & rhs_val = * row.mutable_rhs_val();
         protobuf::delta_decompress(rhs_val);
         POMAGMA_ASSERT_EQ(rhs_val.key_size(), rhs_val.val_size());
+
+        fun.raw_lock();
         for (size_t i = 0, size = rhs_val.key_size(); i < size; ++i) {
             fun.raw_insert(lhs, rhs_val.key(i), rhs_val.val(i));
         }
+        fun.raw_unlock();
     }
 
     // recurse to blobs pointed to by message
-    protobuf::BinaryFunction chunk;
     for (const auto & hexdigest : message.blobs()) {
-        protobuf::BlobReader blob(hexdigest);
-        while (blob.try_read_chunk(chunk)) {
-            load_data_pb(fun, chunk);
-            chunk.Clear();
-        }
+        call_or_defer(tasks, [&]{
+            protobuf::BlobReader blob(hexdigest);
+            protobuf::BinaryFunction chunk;
+            while (blob.try_read_chunk(chunk)) {
+                load_data_pb(fun, chunk);
+                chunk.Clear();
+            }
+        });
     }
 }
 
 // message is nonconst to support in-place decompression
 inline void load_data_pb (
         SymmetricFunction & fun,
-        protobuf::BinaryFunction & message)
+        protobuf::BinaryFunction & message,
+        std::vector<std::function<void()>> * tasks = nullptr)
 {
     // load data in message
     for (auto & row : * message.mutable_rows()) {
@@ -1609,23 +1637,27 @@ inline void load_data_pb (
         auto & rhs_val = * row.mutable_rhs_val();
         protobuf::delta_decompress(rhs_val);
         POMAGMA_ASSERT_EQ(rhs_val.key_size(), rhs_val.val_size());
+
+        fun.raw_lock();
         for (size_t i = 0, size = rhs_val.key_size(); i < size; ++i) {
             fun.raw_insert(rhs_val.key(i), lhs, rhs_val.val(i));
         }
+        fun.raw_unlock();
     }
 
     // recurse to blobs pointed to by message
-    protobuf::BinaryFunction chunk;
     for (const auto & hexdigest : message.blobs()) {
-        protobuf::BlobReader blob(hexdigest);
-        while (blob.try_read_chunk(chunk)) {
-            load_data_pb(fun, chunk);
-            chunk.Clear();
-        }
+        call_or_defer(tasks, [&]{
+            protobuf::BlobReader blob(hexdigest);
+            protobuf::BinaryFunction chunk;
+            while (blob.try_read_chunk(chunk)) {
+                load_data_pb(fun, chunk);
+                chunk.Clear();
+            }
+        });
     }
 }
 
-// TODO parallelize
 inline void load_data_pb (
         Signature & signature,
         protobuf::Structure & structure)
@@ -1639,15 +1671,23 @@ inline void load_data_pb (
     load_data_pb(carrier, structure.carrier());
     update_data(carrier, hash);
 
+    std::vector<std::function<void()>> tasks;
+
 #define CASE_ARITY(Kind, kind, Arity, arity)                                \
     for (auto & i : * structure.mutable_ ## arity ## _ ## kind ## s()) {    \
         POMAGMA_ASSERT(i.has_name(), #Arity #Kind " is missing name");      \
         POMAGMA_INFO("loading " #Arity #Kind " " << i.name());              \
-        load_data_pb(* signature.arity ## _ ## kind(i.name()), i);          \
+        load_data_pb(* signature.arity ## _ ## kind(i.name()), i, &tasks);  \
     }
     SWITCH_ARITY(CASE_ARITY)
 #undef CASE_ARITY
 
+    #pragma omp parallel for schedule(dynamic, 1)
+    for (size_t i = 0; i < tasks.size(); ++i) {
+        tasks[i]();
+    }
+
+    // TODO move this work into the parallel tasks.
     update_functions_and_relations(signature, carrier, hash);
 }
 

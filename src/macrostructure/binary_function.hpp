@@ -3,6 +3,7 @@
 #include "util.hpp"
 #include "base_bin_rel.hpp"
 #include <pomagma/util/sequential/dense_set.hpp>
+#include <mutex>
 
 namespace pomagma
 {
@@ -11,6 +12,7 @@ class BinaryFunction : noncopyable
 {
     mutable base_bin_rel m_lines;
     mutable ObPairMap m_values;
+    mutable std::mutex m_raw_mutex;
 
 public:
 
@@ -22,8 +24,10 @@ public:
     // raw operations
     static bool is_symmetric () { return false; }
     size_t count_pairs () const { return m_values.size(); }
-    void raw_insert (Ob lhs, Ob rhs, Ob val);
-    void update() { m_lines.copy_Lx_to_Rx(); }
+    void raw_lock () { m_raw_mutex.lock(); }
+    void raw_insert (Ob lhs, Ob rhs, Ob val); // lock to concurrently write
+    void raw_unlock () { m_raw_mutex.unlock(); }
+    void update() {}
     void clear ();
 
     // safe operations
@@ -93,6 +97,7 @@ inline void BinaryFunction::raw_insert (Ob lhs, Ob rhs, Ob val)
 
     m_values.insert(std::make_pair(std::make_pair(lhs, rhs), val));
     m_lines.Lx(lhs, rhs).one();
+    m_lines.Rx(lhs, rhs).one();
 }
 
 inline void BinaryFunction::insert (Ob lhs, Ob rhs, Ob val) const

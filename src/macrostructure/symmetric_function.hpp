@@ -3,6 +3,7 @@
 #include "util.hpp"
 #include "base_bin_rel.hpp"
 #include <pomagma/util/sequential/dense_set.hpp>
+#include <mutex>
 
 namespace pomagma
 {
@@ -12,6 +13,7 @@ class SymmetricFunction : noncopyable
 {
     mutable base_sym_rel m_lines;
     mutable ObPairMap m_values;
+    mutable std::mutex m_raw_mutex;
 
 public:
 
@@ -23,7 +25,9 @@ public:
     // raw operations
     static bool is_symmetric () { return true; }
     size_t count_pairs () const { return m_values.size(); }
-    void raw_insert (Ob lhs, Ob rhs, Ob val);
+    void raw_lock () { m_raw_mutex.lock(); }
+    void raw_insert (Ob lhs, Ob rhs, Ob val); // lock to concurrently write
+    void raw_unlock () { m_raw_mutex.unlock(); }
     void update () {}
     void clear ();
 
