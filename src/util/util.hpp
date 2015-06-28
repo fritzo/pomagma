@@ -297,7 +297,7 @@ public:
 #define POMAGMA_ASSERT_ALIGNED_(POMAGMA_level, POMAGMA_ptr)\
     POMAGMA_ASSERT_(\
         (POMAGMA_level),\
-        (reinterpret_cast<size_t>(POMAGMA_ptr) & size_t(31)) == 0,\
+        (reinterpret_cast<size_t>(POMAGMA_ptr) % BYTES_PER_CACHE_LINE) == 0,\
         "bad alignment for variable " #POMAGMA_ptr)
 
 //----------------------------------------------------------------------------
