@@ -48,15 +48,15 @@ def s3_lazy_put(filename, assume_immutable=False):
         key.set_contents_from_filename(filename)
         return key
     elif assume_immutable:
-        print 'already synchronized'
+        # print 'already synchronized'
         return key
     else:
         with open(filename, 'rb') as f:
-            print 'checking cached', filename
+            # print 'checking cached', filename
             md5 = key.compute_md5(f)
         key_md5_0 = key.etag.strip('"')  # WTF
         if md5[0] == key_md5_0:
-            print 'already synchronized'
+            # print 'already synchronized'
             return key
         else:
             print 'uploading', filename
@@ -74,15 +74,15 @@ def s3_lazy_get(filename, assume_immutable=False):
         return key
     if os.path.exists(filename):
         if assume_immutable:
-            print 'already synchronized'
+            # print 'already synchronized'
             return key
         else:
             with open(filename, 'rb') as f:
-                print 'checking cached', filename
+                # print 'checking cached', filename
                 md5 = key.compute_md5(f)
             key_md5_0 = key.etag.strip('"')  # WTF
             if md5[0] == key_md5_0:
-                print 'already synchronized'
+                # print 'already synchronized'
                 return key
     dirname = os.path.dirname(filename)
     if dirname and not os.path.exists(dirname):

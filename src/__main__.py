@@ -7,10 +7,11 @@ from pomagma import theorist
 from pomagma.util import DB
 import os
 import parsable
-import pomagma.util
 import pomagma.io.blobstore
+import pomagma.util
 import pomagma.workers
 import re
+import shutil
 import signal
 import sys
 import time
@@ -358,7 +359,7 @@ def list_s3_atlases():
 
 
 @parsable.command
-def pull(tag='<most recent>'):
+def pull(tag='<most recent>', force=False):
     '''
     Pull atlas from s3.
     '''
@@ -367,7 +368,11 @@ def pull(tag='<most recent>'):
         os.makedirs(pomagma.util.DATA)
     with pomagma.util.chdir(pomagma.util.DATA):
         master = 'atlas'
-        assert not os.path.exists(master), 'atlas exists; first remove atlas'
+        if os.path.exists(master):
+            if force:
+                shutil.rmtree(master)
+            else:
+                raise IOError('atlas exists; first remove atlas')
         if tag == '<most recent>':
             snapshot = max(list_s3_atlases())
         else:
@@ -386,7 +391,7 @@ def pull(tag='<most recent>'):
 
 
 @parsable.command
-def push(tag=default_tag):
+def push(tag=default_tag, force=False):
     '''
     Push atlas to s3.
     '''
@@ -397,7 +402,8 @@ def push(tag=default_tag):
         assert os.path.exists(master), 'atlas does not exist'
         snapshot = 'atlas.{}'.format(tag)
         assert match_atlas(snapshot), 'invalid tag: {}'.format(tag)
-        assert snapshot not in list_s3_atlases(), 'snapshot already exists'
+        if snapshot in list_s3_atlases() and not force:
+            raise IOError('snapshot already exists: {}'.format(snapshot))
         print 'pushing {}'.format(snapshot)
         pomagma.io.s3.snapshot(master, snapshot)
         blobs = [
