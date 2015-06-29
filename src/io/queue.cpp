@@ -9,6 +9,33 @@
 namespace pomagma {
 
 //----------------------------------------------------------------------------
+// VectorQueue
+
+void VectorQueue::push (const void * message, uint8_t size)
+{
+    POMAGMA_ASSERT1(size, "empty messages are not allowed");
+    std::unique_lock<std::mutex> lock(m_mutex);
+    size_t offset = m_data.size();
+    m_data.resize(offset + 1 + size);
+    memcpy(m_data.data() + offset, & size, 1);
+    memcpy(m_data.data() + offset + 1, message, size);
+}
+
+uint8_t VectorQueue::try_pop (void * message)
+{
+    std::unique_lock<std::mutex> lock(m_mutex);
+    if (likely(m_read_offset != m_data.size())) {
+        uint8_t size;
+        memcpy(& size, m_data.data() + m_read_offset, 1);
+        memcpy(message, m_data.data() + m_read_offset + 1, size);
+        m_read_offset += 1 + size;
+        return size;
+    } else {
+        return 0;
+    }
+}
+
+//----------------------------------------------------------------------------
 // FileBackedQueue
 
 FileBackedQueue::FileBackedQueue (const std::string & path)

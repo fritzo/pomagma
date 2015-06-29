@@ -21,6 +21,24 @@ public:
     virtual uint8_t try_pop (void * data) = 0;
 };
 
+class VectorQueue : public ConcurrentQueue
+{
+public:
+
+    VectorQueue () : m_read_offset(0) { m_data.reserve(4096); }
+    virtual ~VectorQueue () {}
+
+    // these are thread safe for multiple producers and multiple consumers
+    virtual void push (const void * message, uint8_t size);
+    virtual uint8_t try_pop (void * message);
+
+private:
+
+    std::mutex m_mutex;
+    std::vector<char, tbb::cache_aligned_allocator<char>> m_data;
+    size_t m_read_offset;
+};
+
 class FileBackedQueue : public ConcurrentQueue
 {
 public:

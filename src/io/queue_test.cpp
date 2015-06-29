@@ -95,6 +95,10 @@ int main ()
     Log::Context log_context("Queue Test");
 
     {
+        pomagma::VectorQueue queue;
+        test_queue(queue);
+    }
+    {
         pomagma::FileBackedQueue queue("/tmp/pomagma_io_queue_test");
         test_queue(queue);
     }
