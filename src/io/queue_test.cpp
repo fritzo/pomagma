@@ -1,11 +1,12 @@
+#include <atomic>
 #include <pomagma/io/queue.hpp>
 #include <thread>
-#include <atomic>
+#include <typeinfo>
 
 using namespace pomagma;
 
 void writer_thread (
-        pomagma::FileBackedQueue * queue,
+        pomagma::ConcurrentQueue * queue,
         std::string message,
         size_t message_count,
         std::atomic<uint_fast64_t> * worker_count)
@@ -20,12 +21,12 @@ void writer_thread (
     --*worker_count;
 }
 
-int main ()
+template<class Queue>
+void test_queue (Queue & queue)
 {
-    Log::Context log_context("FileBackedQueue Test");
+    POMAGMA_INFO("Testing " << demangle(typeid(Queue).name()));
 
     const size_t message_count = 10000;
-    pomagma::FileBackedQueue queue("/tmp/pomagma_io_queue_test");
 
     std::vector<std::thread> threads;
     std::atomic<uint_fast64_t> worker_count(6);
@@ -73,7 +74,7 @@ int main ()
         & worker_count));
 
     size_t actual_message_count = 0;
-    char message[pomagma::FileBackedQueue::max_message_size + 1];
+    char message[Queue::max_message_size + 1];
     while (worker_count) {
         POMAGMA_INFO("receiving...");
         usleep(10);
@@ -87,6 +88,20 @@ int main ()
     POMAGMA_ASSERT_EQ(actual_message_count, 6 * message_count);
 
     for (auto & thread : threads) { thread.join(); }
+}
+
+int main ()
+{
+    Log::Context log_context("Queue Test");
+
+    {
+        pomagma::FileBackedQueue queue("/tmp/pomagma_io_queue_test");
+        test_queue(queue);
+    }
+    if (0) { // FIXME this fails
+        pomagma::PagedQueue queue;
+        test_queue(queue);
+    }
 
     return 0;
 }
