@@ -7,10 +7,10 @@
 #include <pomagma/theorist/conjecture_diverge.hpp>
 #include <pomagma/theorist/conjecture_equal.hpp>
 #include <pomagma/language/language.hpp>
-#include <pomagma/macrostructure/structure_impl.hpp>
-#include <pomagma/macrostructure/compact.hpp>
-#include <pomagma/macrostructure/router.hpp>
-#include <pomagma/macrostructure/vm.hpp>
+#include <pomagma/atlas/world/structure_impl.hpp>
+#include <pomagma/atlas/world/compact.hpp>
+#include <pomagma/atlas/world/router.hpp>
+#include <pomagma/atlas/world/vm.hpp>
 #include "messages.pb.h"
 #include <zmq.hpp>
 #include <algorithm>

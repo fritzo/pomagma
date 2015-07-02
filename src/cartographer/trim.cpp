@@ -1,7 +1,7 @@
 #include "trim.hpp"
-#include <pomagma/macrostructure/structure_impl.hpp>
-#include <pomagma/macrostructure/sampler.hpp>
-#include <pomagma/macrostructure/router.hpp>
+#include <pomagma/atlas/world/structure_impl.hpp>
+#include <pomagma/atlas/world/sampler.hpp>
+#include <pomagma/atlas/world/router.hpp>
 #include <pomagma/language/language.hpp>
 #include "collect_parser.hpp"
 #include <algorithm>

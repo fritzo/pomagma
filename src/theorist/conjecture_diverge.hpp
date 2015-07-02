@@ -1,7 +1,7 @@
 #pragma once
 
-#include <pomagma/macrostructure/util.hpp>
-#include <pomagma/macrostructure/structure.hpp>
+#include <pomagma/atlas/world/util.hpp>
+#include <pomagma/atlas/world/structure.hpp>
 #include <string>
 #include <vector>
 #include <unordered_map>

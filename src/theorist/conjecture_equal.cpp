@@ -1,8 +1,8 @@
 #include "conjecture_equal.hpp"
 #include "hypothesize.hpp"
-#include <pomagma/macrostructure/carrier.hpp>
-#include <pomagma/macrostructure/binary_relation.hpp>
-#include <pomagma/macrostructure/router.hpp>
+#include <pomagma/atlas/world/carrier.hpp>
+#include <pomagma/atlas/world/binary_relation.hpp>
+#include <pomagma/atlas/world/router.hpp>
 #include <pomagma/language/language.hpp>
 #include <algorithm>
 

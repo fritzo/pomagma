@@ -1,9 +1,9 @@
 #include "hypothesize.hpp"
 #include "consistency.hpp"
-#include <pomagma/macrostructure/binary_relation.hpp>
-#include <pomagma/macrostructure/compact.hpp>
-#include <pomagma/macrostructure/router.hpp>
-#include <pomagma/macrostructure/scheduler.hpp>
+#include <pomagma/atlas/world/binary_relation.hpp>
+#include <pomagma/atlas/world/compact.hpp>
+#include <pomagma/atlas/world/router.hpp>
+#include <pomagma/atlas/world/scheduler.hpp>
 #include <cstdlib>
 #include <unistd.h> // for fork
 #include <sys/wait.h> // for wait

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <pomagma/atlas/parser.hpp>
-#include <pomagma/microstructure/structure_impl.hpp>
+#include <pomagma/atlas/chart/structure_impl.hpp>
 
 namespace pomagma
 {

@@ -1,5 +1,5 @@
-#include <pomagma/macrostructure/structure_impl.hpp>
-#include <pomagma/macrostructure/router.hpp>
+#include <pomagma/atlas/world/structure_impl.hpp>
+#include <pomagma/atlas/world/router.hpp>
 
 namespace pomagma
 {

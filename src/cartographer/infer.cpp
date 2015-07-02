@@ -1,6 +1,6 @@
 #include "infer.hpp"
-#include <pomagma/macrostructure/structure_impl.hpp>
-#include <pomagma/macrostructure/scheduler.hpp>
+#include <pomagma/atlas/world/structure_impl.hpp>
+#include <pomagma/atlas/world/scheduler.hpp>
 #include <mutex>
 #include <unordered_set>
 

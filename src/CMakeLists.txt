@@ -14,17 +14,17 @@ set(POMAGMA_IO_LIBS
 	protobuf
 )
 
-set(POMAGMA_MACROSTRUCTURE_LIBS
-	pomagma_macrostructure
-	pomagma_structure_macro
+set(POMAGMA_WORLD_LIBS
+	pomagma_world
+	pomagma_atlas_world
 	pomagma_language
 	${POMAGMA_IO_LIBS}
 	${POMAGMA_UTIL_LIBS}
 )
 
-set(POMAGMA_MICROSTRUCTURE_LIBS
-	pomagma_microstructure
-	pomagma_structure_micro
+set(POMAGMA_CHART_LIBS
+	pomagma_chart
+	pomagma_atlas_chart
 	pomagma_language
 	${POMAGMA_IO_LIBS}
 	${POMAGMA_UTIL_LIBS}
@@ -34,8 +34,6 @@ add_subdirectory(util)
 add_subdirectory(io)
 add_subdirectory(language)
 add_subdirectory(atlas)
-add_subdirectory(microstructure)
-add_subdirectory(macrostructure)
 add_subdirectory(surveyor)
 add_subdirectory(cartographer)
 add_subdirectory(theorist)

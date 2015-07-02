@@ -1,6 +1,6 @@
 #pragma once
 
-#include <pomagma/macrostructure/util.hpp>
+#include <pomagma/atlas/world/util.hpp>
 #include <pomagma/analyst/approximate.hpp>
 #include <pomagma/util/hash_map.hpp>
 #include <unordered_set>

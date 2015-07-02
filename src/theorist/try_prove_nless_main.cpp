@@ -1,5 +1,5 @@
 #include "conjecture_equal.hpp"
-#include <pomagma/macrostructure/carrier.hpp>
+#include <pomagma/atlas/world/carrier.hpp>
 
 int main (int argc, char ** argv)
 {

@@ -1,4 +1,4 @@
-#include <pomagma/macrostructure/structure.hpp>
+#include <pomagma/atlas/world/structure.hpp>
 #include <vector>
 #include <map>
 

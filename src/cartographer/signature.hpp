@@ -1,6 +1,6 @@
 #pragma once
 
-#include <pomagma/macrostructure/util.hpp>
+#include <pomagma/atlas/world/util.hpp>
 #include <pomagma/atlas/signature.hpp>
 #include <pomagma/util/sequential/dense_set.hpp>
 
