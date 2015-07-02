@@ -8,6 +8,47 @@ namespace pomagma
 {
 
 //----------------------------------------------------------------------------
+// convenience
+
+void util_static_tests ()
+{
+    // static_log2i
+    static_assert(static_log2i<1>::val() == 0, "error");
+    static_assert(static_log2i<2>::val() == 1, "error");
+    static_assert(static_log2i<3>::val() == 1, "error");
+    static_assert(static_log2i<4>::val() == 2, "error");
+    static_assert(static_log2i<5>::val() == 2, "error");
+    static_assert(static_log2i<6>::val() == 2, "error");
+    static_assert(static_log2i<7>::val() == 2, "error");
+    static_assert(static_log2i<8>::val() == 3, "error");
+    static_assert(static_log2i<9>::val() == 3, "error");
+
+    // static_power_of_two_padding
+    static_assert(static_power_of_two_padding<1>::val() == 0, "error");
+    static_assert(static_power_of_two_padding<3>::val() == 1, "error");
+    static_assert(static_power_of_two_padding<5>::val() == 3, "error");
+    static_assert(static_power_of_two_padding<6>::val() == 2, "error");
+    static_assert(static_power_of_two_padding<7>::val() == 1, "error");
+    static_assert(static_power_of_two_padding<9>::val() == 7, "error");
+    static_assert(static_power_of_two_padding<10>::val() == 6, "error");
+    static_assert(static_power_of_two_padding<11>::val() == 5, "error");
+    static_assert(static_power_of_two_padding<12>::val() == 4, "error");
+    static_assert(static_power_of_two_padding<13>::val() == 3, "error");
+    static_assert(static_power_of_two_padding<14>::val() == 2, "error");
+    static_assert(static_power_of_two_padding<15>::val() == 1, "error");
+
+    // is_power_of_two
+    static_assert(is_power_of_two(1), "error");
+    static_assert(is_power_of_two(2), "error");
+    static_assert(is_power_of_two(4), "error");
+    static_assert(is_power_of_two(8), "error");
+    static_assert(not is_power_of_two(3), "error");
+    static_assert(not is_power_of_two(5), "error");
+    static_assert(not is_power_of_two(6), "error");
+    static_assert(not is_power_of_two(7), "error");
+}
+
+//----------------------------------------------------------------------------
 // file system
 
 void in_temp_dir (std::function<void()> body)

@@ -97,13 +97,13 @@ void PagedQueue::_validate () const
         POMAGMA_ASSERT(page.data, "data is null");
         POMAGMA_ASSERT_LE(page.size, Page::capacity());
 
-        size_t size = 0;
-        while (size < page.size) {
+        size_t offset = 0;
+        while (offset < page.size) {
             uint8_t message_size;
-            memcpy(& message_size, page.data + size, 1);
-            size += 1 + message_size;
+            memcpy(& message_size, page.data + offset, 1);
+            offset += 1UL + message_size;
         }
-        POMAGMA_ASSERT_EQ(size, page.size);
+        POMAGMA_ASSERT_EQ(offset, page.size);
     }
 }
 
@@ -168,24 +168,29 @@ uint8_t PagedQueue::try_pop (void * message)
 {
     std::unique_lock<std::mutex> lock(m_mutex);
 
+    uint8_t size = 0;
     validate();
-    size_t offset = m_read_offset;
-    if (unlikely(offset == m_write_offset)) { // queue is empty
-        return 0;
-    } else {
+    if (likely(m_read_offset != m_write_offset)) {
         const Page & page = m_pages.front();
-        uint8_t size;
-        memcpy(& size, page.data + offset, 1);
-        memcpy(message, page.data + offset + 1, size);
+        memcpy(& size, page.data + m_read_offset, 1);
+        memcpy(message, page.data + m_read_offset + 1, size);
         m_read_offset += 1UL + size;
         if (unlikely(m_read_offset == page.size)) {
-            if (m_read_offset != m_write_offset) {
+            if (m_write_offset >= Page::capacity()) {
                 pop_page();
             }
         }
-        return size;
+
+        // DEBUG
+        // if (m_read_offset == Page::capacity()) {
+        //     POMAGMA_INFO(
+        //         "m_read_offset = " << m_read_offset << ", "
+        //         "m_write_offset = " << m_write_offset << ", "
+        //         "page.size = " << page.size);
+        // }
     }
     validate();
+    return size;
 }
 
 } // namespace pomagma

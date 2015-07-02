@@ -60,4 +60,18 @@ inline void destroy_blocks (T * base, size_t count)
 
 void free_blocks (void * base);
 
+// T must be default constructible.
+template<class T>
+class Padded : public T
+{
+public:
+    Padded ()
+    {
+        static_assert(is_power_of_two(sizeof(Padded<T>)),
+            "Padded object is not aligned");
+    }
+private:
+    char m_padding[static_power_of_two_padding<sizeof(T)>::val()];
+};
+
 } // namespace pomagma

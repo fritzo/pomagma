@@ -78,12 +78,29 @@ typedef std::default_random_engine rng_t;
 
 template<size_t x> struct static_log2i
 {
-    static constexpr size_t val () { return 1 + static_log2i<x / 2>::val(); };
+    static constexpr size_t val () { return 1 + static_log2i<x / 2>::val(); }
 };
 template<> struct static_log2i<1>
 {
-    static constexpr size_t val () { return 0; };
+    static constexpr size_t val () { return 0; }
 };
+
+template<size_t x> struct static_power_of_two_padding
+{
+    static constexpr size_t val ()
+    {
+        return (1UL << (static_log2i<x - 1>::val() + 1)) - x;
+    }
+};
+template<> struct static_power_of_two_padding<1>
+{
+    static constexpr size_t val () { return 0; }
+};
+
+inline constexpr size_t is_power_of_two (size_t x)
+{
+    return x && !(x & (x - 1));
+}
 
 //----------------------------------------------------------------------------
 // time

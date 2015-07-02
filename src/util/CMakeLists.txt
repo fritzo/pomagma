@@ -13,6 +13,8 @@ add_library(pomagma_util SHARED
 add_executable(queue_test queue_test.cpp)
 target_link_libraries(queue_test ${POMAGMA_UTIL_LIBS})
 add_test(NAME queue COMMAND queue_test)
+add_executable(queue_profile queue_profile.cpp)
+target_link_libraries(queue_profile ${POMAGMA_UTIL_LIBS})
 
 add_executable(hasher_test hasher_test.cpp)
 target_link_libraries(hasher_test ${POMAGMA_UTIL_LIBS})
