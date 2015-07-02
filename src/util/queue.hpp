@@ -14,13 +14,30 @@ class SharedQueueBase : noncopyable
 {
 public:
 
-    enum { max_message_size = 256 };
+    static constexpr size_t max_message_size () { return 255UL; }
 
     virtual ~SharedQueueBase () {}
 
     // these should be thread safe for multiple producers and a single consumer
     virtual void push (const void * data, uint8_t size) = 0;
     virtual uint8_t try_pop (void * data) = 0;
+
+    void push (const std::string & message)
+    {
+        if (POMAGMA_DEBUG_LEVEL) {
+            POMAGMA_ASSERT_LT(0, message.size());
+            POMAGMA_ASSERT_LE(message.size(), max_message_size());
+        }
+        push(message.data(), message.size());
+    }
+
+    bool try_pop (std::string & message)
+    {
+        message.resize(max_message_size());
+        uint8_t size = try_pop(& message.front());
+        message.resize(size);
+        return size;
+    }
 };
 
 class VectorQueue : public SharedQueueBase

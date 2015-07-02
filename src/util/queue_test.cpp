@@ -75,7 +75,7 @@ void test_queue ()
         & worker_count));
 
     size_t actual_message_count = 0;
-    char message[Queue::max_message_size + 1];
+    char message[Queue::max_message_size() + 1];
     while (worker_count) {
         POMAGMA_INFO("receiving...");
         usleep(10);
