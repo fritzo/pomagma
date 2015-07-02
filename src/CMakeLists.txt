@@ -16,7 +16,7 @@ set(POMAGMA_IO_LIBS
 
 set(POMAGMA_WORLD_LIBS
 	pomagma_world
-	pomagma_atlas_world
+	pomagma_atlas
 	pomagma_language
 	${POMAGMA_IO_LIBS}
 	${POMAGMA_UTIL_LIBS}
@@ -24,7 +24,15 @@ set(POMAGMA_WORLD_LIBS
 
 set(POMAGMA_CHART_LIBS
 	pomagma_chart
-	pomagma_atlas_chart
+	pomagma_atlas
+	pomagma_language
+	${POMAGMA_IO_LIBS}
+	${POMAGMA_UTIL_LIBS}
+)
+
+set(POMAGMA_SHARD_LIBS
+	pomagma_shard
+	pomagma_atlas
 	pomagma_language
 	${POMAGMA_IO_LIBS}
 	${POMAGMA_UTIL_LIBS}
