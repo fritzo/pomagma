@@ -6,7 +6,7 @@
 using namespace pomagma;
 
 void writer_thread (
-        pomagma::SharedQueue * queue,
+        pomagma::SharedQueueBase * queue,
         std::string message,
         size_t message_count,
         std::atomic<uint_fast64_t> * worker_count)
@@ -22,9 +22,10 @@ void writer_thread (
 }
 
 template<class Queue>
-void test_queue (Queue & queue)
+void test_queue ()
 {
     POMAGMA_INFO("Testing " << demangle(typeid(Queue).name()));
+    Queue queue;
 
     const size_t message_count = 10000;
 
@@ -94,18 +95,8 @@ int main ()
 {
     Log::Context log_context("Queue Test");
 
-    {
-        pomagma::VectorQueue queue;
-        test_queue(queue);
-    }
-    {
-        pomagma::FileBackedQueue queue("/tmp/pomagma_io_queue_test");
-        test_queue(queue);
-    }
-    {
-        pomagma::PagedQueue queue;
-        test_queue(queue);
-    }
+    test_queue<pomagma::VectorQueue>();
+    test_queue<pomagma::FileBackedQueue>();
 
     return 0;
 }

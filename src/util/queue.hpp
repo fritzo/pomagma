@@ -10,20 +10,20 @@
 namespace pomagma {
 
 // A multi-producer single-consumer queue for variable-sized messages.
-class SharedQueue : noncopyable
+class SharedQueueBase : noncopyable
 {
 public:
 
     enum { max_message_size = 256 };
 
-    virtual ~SharedQueue () {}
+    virtual ~SharedQueueBase () {}
 
     // these should be thread safe for multiple producers and a single consumer
     virtual void push (const void * data, uint8_t size) = 0;
     virtual uint8_t try_pop (void * data) = 0;
 };
 
-class VectorQueue : public SharedQueue
+class VectorQueue : public SharedQueueBase
 {
 public:
 
@@ -41,12 +41,12 @@ private:
     size_t m_read_offset;
 };
 
-class FileBackedQueue : public SharedQueue
+class FileBackedQueue : public SharedQueueBase
 {
 public:
 
-    FileBackedQueue (const std::string & path);
-    virtual ~FileBackedQueue ();
+    FileBackedQueue ();
+    virtual ~FileBackedQueue () {}
 
     // these are thread safe for multiple producers and multiple consumers
     virtual void push (const void * message, uint8_t size);
@@ -58,40 +58,6 @@ private:
     size_t m_write_offset;
     size_t m_read_offset;
     const int m_fid;
-    const std::string m_path;
-};
-
-// FIXME this is broken
-class PagedQueue : public SharedQueue
-{
-public:
-
-    PagedQueue ();
-    virtual ~PagedQueue ();
-
-    // these are thread safe for multiple producers and multiple consumers
-    virtual void push (const void * message, uint8_t size);
-    virtual uint8_t try_pop (void * message);
-
-private:
-
-    void _validate() const;
-    void validate () const { if (POMAGMA_DEBUG_LEVEL) { _validate(); } }
-
-    void push_page ();
-    void pop_page ();
-
-    struct Page
-    {
-        static constexpr size_t capacity () { return 4096UL; }
-        char * data;
-        size_t size;
-    };
-
-    std::mutex m_mutex;
-    std::deque<Page, tbb::cache_aligned_allocator<Page>> m_pages;
-    size_t m_write_offset;
-    size_t m_read_offset;
 };
 
 template<class Queue>
@@ -106,6 +72,8 @@ public:
         : m_queues(alloc_blocks<Padded<Queue>>(queue_count)),
           m_queue_count(queue_count)
     {
+        static_assert(std::is_base_of<SharedQueueBase, Queue>::value,
+            "SharedBroker instantiated with non-SharedQueueBase");
         for (size_t i = 0; i < m_queue_count; ++i) {
             new(m_queues + i) Padded<Queue>();
         }
@@ -116,6 +84,7 @@ public:
         for (size_t i = 0; i < m_queue_count; ++i) {
             m_queues[i].~Padded<Queue>();
         }
+        free_blocks(m_queues);
     }
 
     void push (size_t queue_id, const void * message, uint8_t size)

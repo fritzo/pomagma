@@ -4,20 +4,6 @@
 
 using namespace pomagma;
 
-inline std::string random_message (
-        rng_t & rng,
-        size_t min_size,
-        size_t max_size)
-{
-    std::uniform_int_distribution<> random_size(min_size, max_size);
-    size_t size = random_size(rng);
-    std::string message(size, 0);
-    std::generate_n(message.begin(), size, [&rng](){
-        return "0123456789abcdef"[rng() % 16];
-    });
-    return message;
-}
-
 template<class Queue>
 void profile_readers_writers (
         size_t queue_count,
@@ -39,10 +25,15 @@ void profile_readers_writers (
         [queue_count, worker_count, message_count, &broker, w](){
             rng_t rng(w);
             std::uniform_int_distribution<> random_queue(0, queue_count - 1);
+            std::uniform_int_distribution<> random_size(1, 255);
+            const char * message =
+            "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+            "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+            "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+            "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
             for (size_t m = 0; m < message_count / worker_count; ++m) {
                 size_t queue_id = random_queue(rng);
-                std::string message = random_message(rng, 1, 255);
-                broker.push(queue_id, message.data(), message.size());
+                broker.push(queue_id, message, random_size(rng));
             }
         }));
     }
@@ -77,8 +68,9 @@ int main ()
 
     profile_readers_writers<VectorQueue>(40000, 8, 1000000);
 
-    // FIXME this is broken
-    // profile_readers_writers<PagedQueue>(40000, 8, 1000000);
+    // If we test with too many queues, this fails with:
+    // boost::filesystem::unique_path: Too many open files
+    profile_readers_writers<FileBackedQueue>(400, 8, 1000000);
 
     return 0;
 }
