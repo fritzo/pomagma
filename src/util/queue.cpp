@@ -84,35 +84,62 @@ uint8_t FileBackedQueue::try_pop (void * message)
 //----------------------------------------------------------------------------
 // PagedQueue
 
-inline void PagedQueue::unsafe_grow ()
+void PagedQueue::_validate () const
 {
-    if (m_blocks.size() < m_write_offset / Block::capacity + 1) {
-        void * message;
-        int info = posix_memalign(& message, Block::capacity, Block::capacity);
-        POMAGMA_ASSERT(info == 0, "out of memory");
-        m_blocks.push_back({static_cast<char *>(message), Block::capacity});
+    POMAGMA_ASSERT_LE(m_read_offset, m_write_offset);
+    POMAGMA_ASSERT_LT(m_read_offset, Page::capacity());
+    POMAGMA_ASSERT_LE(m_write_offset, Page::capacity() * m_pages.size());
+    if (size_t write_offset = m_write_offset % Page::capacity()) {
+        POMAGMA_ASSERT(not m_pages.empty(), "page missing");
+        POMAGMA_ASSERT_EQ(write_offset, m_pages.back().size);
+    }
+    for (const Page & page: m_pages) {
+        POMAGMA_ASSERT(page.data, "data is null");
+        POMAGMA_ASSERT_LE(page.size, Page::capacity());
+
+        size_t size = 0;
+        while (size < page.size) {
+            uint8_t message_size;
+            memcpy(& message_size, page.data + size, 1);
+            size += 1 + message_size;
+        }
+        POMAGMA_ASSERT_EQ(size, page.size);
     }
 }
 
-inline void PagedQueue::unsafe_clear ()
+inline void PagedQueue::push_page ()
 {
-    for (auto & block : m_blocks) {
-        block.size = 0;
-    }
+    void * data = nullptr;
+    int info = posix_memalign(& data, Page::capacity(), Page::capacity());
+    POMAGMA_ASSERT(info == 0, "out of memory");
+    m_pages.push_back({static_cast<char *>(data), 0});
+}
+
+inline void PagedQueue::pop_page ()
+{
+    POMAGMA_ASSERT1(not m_pages.empty(), "no pages to pop");
+    free(m_pages.front().data);
+    m_pages.pop_front();
+    m_write_offset -= Page::capacity();
+    m_read_offset = 0;
 }
 
 PagedQueue::PagedQueue ()
-    : m_blocks(),
+    : m_pages(),
       m_write_offset(0),
       m_read_offset(0)
 {
-    m_blocks.reserve(BYTES_PER_CACHE_LINE / sizeof(Block));
-    unsafe_grow();
+    static_assert(Page::capacity() >= 1 + sizeof(uint8_t),
+        "pages are too small");
+    validate();
 }
 
 PagedQueue::~PagedQueue ()
 {
-    for (auto & block : m_blocks) { free(block.data); }
+    validate();
+    POMAGMA_ASSERT1(m_read_offset == m_write_offset,
+        "queue not empty at destruction");
+    for (Page & page : m_pages) { free(page.data); }
 }
 
 void PagedQueue::push (const void * message, uint8_t size)
@@ -120,43 +147,45 @@ void PagedQueue::push (const void * message, uint8_t size)
     POMAGMA_ASSERT1(size, "empty messages are not allowed");
     std::unique_lock<std::mutex> lock(m_mutex);
 
-    size_t offset = m_write_offset % Block::capacity;
-    if (unlikely(offset + 1 + size > Block::capacity)) {
-        m_write_offset = next_block(m_write_offset);
-        unsafe_grow();
+    validate();
+    size_t offset = m_write_offset % Page::capacity();
+    if (unlikely(offset + 1UL + size > Page::capacity())) { // would span page
+        m_write_offset = (m_write_offset ^ offset) + Page::capacity();
         offset = 0;
     }
-    Block & block = m_blocks[m_write_offset / Block::capacity];
-    memcpy(block.data + offset, & size, 1);
-    memcpy(block.data + offset + 1, message, size);
-    block.size += 1 + size;
-    m_write_offset += 1 + size;
+    if (offset == 0) {
+        push_page();
+    }
+    Page & page = m_pages.back();
+    memcpy(page.data + offset, & size, 1);
+    memcpy(page.data + offset + 1, message, size);
+    page.size += 1UL + size;
+    m_write_offset += 1UL + size;
+    validate();
 }
 
 uint8_t PagedQueue::try_pop (void * message)
 {
     std::unique_lock<std::mutex> lock(m_mutex);
 
-    if (unlikely(m_read_offset == m_write_offset)) { // queue is empty
-        if (m_read_offset != 0) {
-            m_write_offset = 0;
-            m_read_offset = 0;
-            unsafe_clear();
-        }
+    validate();
+    size_t offset = m_read_offset;
+    if (unlikely(offset == m_write_offset)) { // queue is empty
         return 0;
-    }
-    size_t offset = m_read_offset % Block::capacity;
-    Block & block = m_blocks[m_read_offset / Block::capacity];
-    uint8_t size;
-    memcpy(& size, block.data + offset, 1);
-    memcpy(message, block.data + offset + 1, size);
-    if (likely(offset + 1 != block.size)) {
-        m_read_offset += 1 + size;
     } else {
-        m_read_offset = next_block(m_read_offset);
+        const Page & page = m_pages.front();
+        uint8_t size;
+        memcpy(& size, page.data + offset, 1);
+        memcpy(message, page.data + offset + 1, size);
+        m_read_offset += 1UL + size;
+        if (unlikely(m_read_offset == page.size)) {
+            if (m_read_offset != m_write_offset) {
+                pop_page();
+            }
+        }
+        return size;
     }
-
-    return size;
+    validate();
 }
 
 } // namespace pomagma

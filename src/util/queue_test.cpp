@@ -102,7 +102,7 @@ int main ()
         pomagma::FileBackedQueue queue("/tmp/pomagma_io_queue_test");
         test_queue(queue);
     }
-    if (0) { // FIXME this fails
+    {
         pomagma::PagedQueue queue;
         test_queue(queue);
     }

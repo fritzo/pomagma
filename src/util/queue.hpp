@@ -1,9 +1,10 @@
 #pragma once
 
+#include <deque>
+#include <mutex>
 #include <pomagma/util/util.hpp>
 #include <tbb/cache_aligned_allocator.h>
 #include <vector>
-#include <mutex>
 
 namespace pomagma {
 
@@ -73,24 +74,21 @@ public:
 
 private:
 
-    void unsafe_grow ();
-    void unsafe_clear ();
+    void _validate() const;
+    void validate () const { if (POMAGMA_DEBUG_LEVEL) { _validate(); } }
 
-    struct Block
+    void push_page ();
+    void pop_page ();
+
+    struct Page
     {
-        enum { capacity = 4096 };
+        static constexpr size_t capacity () { return 4096UL; }
         char * data;
         size_t size;
     };
 
-    static size_t next_block (size_t offset)
-    {
-        const size_t mask = ~static_cast<size_t>(Block::capacity - 1);
-        return (offset + Block::capacity) & mask;
-    }
-
     std::mutex m_mutex;
-    std::vector<Block, tbb::cache_aligned_allocator<Block>> m_blocks;
+    std::deque<Page, tbb::cache_aligned_allocator<Page>> m_pages;
     size_t m_write_offset;
     size_t m_read_offset;
 };
