@@ -1,12 +1,12 @@
 #include <atomic>
-#include <pomagma/io/queue.hpp>
+#include <pomagma/util/queue.hpp>
 #include <thread>
 #include <typeinfo>
 
 using namespace pomagma;
 
 void writer_thread (
-        pomagma::ConcurrentQueue * queue,
+        pomagma::SharedQueue * queue,
         std::string message,
         size_t message_count,
         std::atomic<uint_fast64_t> * worker_count)

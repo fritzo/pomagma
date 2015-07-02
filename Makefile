@@ -114,9 +114,9 @@ skrj: all
 	python -m pomagma make skrj
 
 profile:
-	#python -m pomagma.make profile-util
-	python -m pomagma.make profile-surveyor
-	# TODO add profile for sequential & concurrent dense_set
+	python -m pomagma.make profile-misc
+	#python -m pomagma.make profile-surveyor
+	#python -m pomagma.make profile-cartographer
 
 clean: FORCE
 	rm -rf build lib

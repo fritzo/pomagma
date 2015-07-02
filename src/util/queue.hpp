@@ -7,21 +7,21 @@
 
 namespace pomagma {
 
-// A multi-producer single-consumer variable-sized-message queue.
-class ConcurrentQueue : noncopyable
+// A multi-producer single-consumer queue for variable-sized messages.
+class SharedQueue : noncopyable
 {
 public:
 
     enum { max_message_size = 256 };
 
-    virtual ~ConcurrentQueue () {}
+    virtual ~SharedQueue () {}
 
     // these should be thread safe for multiple producers and a single consumer
     virtual void push (const void * data, uint8_t size) = 0;
     virtual uint8_t try_pop (void * data) = 0;
 };
 
-class VectorQueue : public ConcurrentQueue
+class VectorQueue : public SharedQueue
 {
 public:
 
@@ -39,7 +39,7 @@ private:
     size_t m_read_offset;
 };
 
-class FileBackedQueue : public ConcurrentQueue
+class FileBackedQueue : public SharedQueue
 {
 public:
 
@@ -60,7 +60,7 @@ private:
 };
 
 // FIXME this is broken
-class PagedQueue : public ConcurrentQueue
+class PagedQueue : public SharedQueue
 {
 public:
 
