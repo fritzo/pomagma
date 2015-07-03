@@ -141,7 +141,8 @@ Server::SolutionSet Server::solve (
     m_return.clear();
     m_nreturn.clear();
     for (const auto & listing : listings) {
-        m_virtual_machine.execute(listing.first);
+        vm::Program program = m_parser.find_program(listing);
+        m_virtual_machine.execute(program);
     }
     POMAGMA_ASSERT(m_return.get_set().disjoint(m_nreturn.get_set()),
         "inconsistent query result; check programs:\n" << program);

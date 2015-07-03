@@ -31,46 +31,46 @@ public:
 
     void load (Signature & signature);
 
-    void execute (const Listing & listing) const
+    void execute (Program program) const
     {
         Context * context = new_context();
-        ProgramProfiler::Block profiler(context->profiler, listing.data());
-        _execute(listing.data(), context);
+        ProgramProfiler::Block profiler(context->profiler, program);
+        _execute(program, context);
     }
 
-    void execute (const Listing & listing, Ob arg) const
+    void execute (Program program, Ob arg) const
     {
         Context * context = new_context();
         context->obs[0] = arg;
-        ProgramProfiler::Block profiler(context->profiler, listing.data());
-        _execute(listing.data(), context);
+        ProgramProfiler::Block profiler(context->profiler, program);
+        _execute(program, context);
     }
 
-    void execute (const Listing & listing, Ob arg1, Ob arg2) const
+    void execute (Program program, Ob arg1, Ob arg2) const
     {
         Context * context = new_context();
         context->obs[0] = arg1;
         context->obs[1] = arg2;
-        ProgramProfiler::Block profiler(context->profiler, listing.data());
-        _execute(listing.data(), context);
+        ProgramProfiler::Block profiler(context->profiler, program);
+        _execute(program, context);
     }
 
-    void execute (const Listing & listing, Ob arg1, Ob arg2, Ob arg3) const
+    void execute (Program program, Ob arg1, Ob arg2, Ob arg3) const
     {
         Context * context = new_context();
         context->obs[0] = arg1;
         context->obs[1] = arg2;
         context->obs[2] = arg3;
-        ProgramProfiler::Block profiler(context->profiler, listing.data());
-        _execute(listing.data(), context);
+        ProgramProfiler::Block profiler(context->profiler, program);
+        _execute(program, context);
     }
 
-    void execute_block (const Listing & listing, size_t block) const
+    void execute_block (Program program, size_t block) const
     {
         Context * context = new_context();
         context->block = block;
-        ProgramProfiler::Block profiler(context->profiler, listing.data());
-        _execute(listing.data(), context);
+        ProgramProfiler::Block profiler(context->profiler, program);
+        _execute(program, context);
     }
 
     const UnaryRelation * unary_relation (uint8_t index) const;
@@ -172,14 +172,14 @@ public:
     Agenda () : m_block_count(0) {}
 
     void load (Signature & signature);
-    void add_listing (const Listing & listing, size_t lineno);
+    void add_listing (const ProgramParser & parser, const Listing & listing);
     void log_stats () const;
     const std::map<const void *, size_t> & get_linenos () { return m_linenos; }
 
     void execute (Ob ob) const
     {
-        for (const auto & listing : m_exists) {
-            m_virtual_machine.execute(listing, ob);
+        for (const auto & program : m_exists) {
+            m_virtual_machine.execute(program, ob);
         }
     }
 
@@ -187,8 +187,8 @@ public:
     {
         auto i = m_structures.find(rel);
         if (i != m_structures.end()) {
-            for (const auto & listing : i->second) {
-                m_virtual_machine.execute(listing, key);
+            for (const auto & program : i->second) {
+                m_virtual_machine.execute(program, key);
             }
         }
     }
@@ -197,8 +197,8 @@ public:
     {
         auto i = m_structures.find(rel);
         if (i != m_structures.end()) {
-            for (const Listing & listing : i->second) {
-                m_virtual_machine.execute(listing, lhs, rhs);
+            for (Program program : i->second) {
+                m_virtual_machine.execute(program, lhs, rhs);
             }
         }
     }
@@ -207,8 +207,8 @@ public:
     {
         auto i = m_structures.find(fun);
         if (i != m_structures.end()) {
-            for (const Listing & listing : i->second) {
-                m_virtual_machine.execute(listing);
+            for (Program program : i->second) {
+                m_virtual_machine.execute(program);
             }
         }
     }
@@ -217,8 +217,8 @@ public:
     {
         auto i = m_structures.find(fun);
         if (i != m_structures.end()) {
-            for (const Listing & listing : i->second) {
-                m_virtual_machine.execute(listing, key);
+            for (Program program : i->second) {
+                m_virtual_machine.execute(program, key);
             }
         }
     }
@@ -227,8 +227,8 @@ public:
     {
         auto i = m_structures.find(fun);
         if (i != m_structures.end()) {
-            for (const Listing & listing : i->second) {
-                m_virtual_machine.execute(listing, lhs, rhs);
+            for (Program program : i->second) {
+                m_virtual_machine.execute(program, lhs, rhs);
             }
         }
     }
@@ -237,8 +237,8 @@ public:
     {
         auto i = m_structures.find(fun);
         if (i != m_structures.end()) {
-            for (const Listing & listing : i->second) {
-                m_virtual_machine.execute(listing, lhs, rhs);
+            for (Program program : i->second) {
+                m_virtual_machine.execute(program, lhs, rhs);
             }
         }
     }
@@ -248,20 +248,20 @@ public:
         POMAGMA_ASSERT_LT(0, m_block_count);
         const unsigned long small_count = m_cleanup_small.size();
         if (index < small_count) {
-            const Listing & listing = m_cleanup_small[index];
+            Program program = m_cleanup_small[index];
 
             POMAGMA_DEBUG("executing cleanup task " << index);
-            m_virtual_machine.execute(listing);
+            m_virtual_machine.execute(program);
         } else {
             index -= small_count;
             unsigned long block = index % m_block_count;
             index = index / m_block_count;
-            const Listing & listing = m_cleanup_large[index];
+            Program program = m_cleanup_large[index];
 
             POMAGMA_DEBUG(
                 "executing cleanup task " << (small_count + index) <<
                 ", block " << block << " / " << m_block_count);
-            m_virtual_machine.execute_block(listing, block);
+            m_virtual_machine.execute_block(program, block);
         }
     }
 
@@ -277,21 +277,24 @@ public:
 
 private:
 
-    typedef std::vector<Listing> Listings;
+    typedef std::vector<Program> Programs;
 
-    void add_listing_to (
-            Listings & listings,
-            const Listing & listing,
+    void add_program_to (
+            Programs & programs,
+            Program program,
+            size_t size,
             size_t lineno);
-    void sort_listings (Listings & listings);
+
+    size_t count_bytes (const Programs & programs) const;
 
     VirtualMachine m_virtual_machine;
-    Listings m_exists;
-    std::unordered_map<const void *, Listings> m_structures;
-    Listings m_cleanup_small;
-    Listings m_cleanup_large;
+    Programs m_exists;
+    std::unordered_map<const void *, Programs> m_structures;
+    Programs m_cleanup_small;
+    Programs m_cleanup_large;
     size_t m_block_count;
     std::map<std::string, const void *> m_names;
+    std::map<const void *, size_t> m_sizes;
     std::map<const void *, size_t> m_linenos;
 };
 

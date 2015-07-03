@@ -916,73 +916,81 @@ void Agenda::load (Signature & signature)
     register_names(m_names, signature.symmetric_functions());
 }
 
-inline void Agenda::add_listing_to (
-        Listings & listings,
-        const Listing & listing,
+inline void Agenda::add_program_to (
+        Programs & programs,
+        Program program,
+        size_t size,
         size_t lineno)
 {
-    listings.push_back(listing);
-    m_linenos[listings.back().data()] = lineno;
+    programs.push_back(program);
+    m_sizes[program] = size;
+    m_linenos[program] = lineno;
 }
 
-void Agenda::add_listing (const Listing & listing, size_t lineno)
+void Agenda::add_listing (const ProgramParser & parser, const Listing & listing)
 {
-    POMAGMA_ASSERT(not listing.empty(), "empty listing");
-    OpCode op_code = static_cast<OpCode>(listing[0]);
+    Program program = parser.find_program(listing);
+    const size_t size = listing.size;
+    const size_t lineno = listing.lineno;
 
-    size_t skip = 1 + g_op_code_arities[op_code].size();
-    Listing truncated(listing.begin() + skip, listing.end());
+    POMAGMA_ASSERT(size, "empty program");
+    OpCode op_code = static_cast<OpCode>(program[0]);
+
+    const size_t skip = 1 + g_op_code_arities[op_code].size();
+    POMAGMA_ASSERT_LT(skip, size);
+    Program truncated = program + skip;
+    const size_t trunc_size = size - skip;
 
     switch (op_code) {
         case GIVEN_EXISTS: {
-            add_listing_to(m_exists, truncated, lineno);
+            add_program_to(m_exists, truncated, trunc_size, lineno);
         } break;
 
         case GIVEN_UNARY_RELATION: {
-            auto ptr = m_virtual_machine.unary_relation(listing[1]);
-            add_listing_to(m_structures[ptr], truncated, lineno);
+            auto ptr = m_virtual_machine.unary_relation(program[1]);
+            add_program_to(m_structures[ptr], truncated, trunc_size, lineno);
         } break;
 
         case GIVEN_BINARY_RELATION: {
-            auto ptr = m_virtual_machine.binary_relation(listing[1]);
-            add_listing_to(m_structures[ptr], truncated, lineno);
+            auto ptr = m_virtual_machine.binary_relation(program[1]);
+            add_program_to(m_structures[ptr], truncated, trunc_size, lineno);
         } break;
 
         case GIVEN_NULLARY_FUNCTION: {
-            auto ptr = m_virtual_machine.nullary_function(listing[1]);
-            add_listing_to(m_structures[ptr], truncated, lineno);
+            auto ptr = m_virtual_machine.nullary_function(program[1]);
+            add_program_to(m_structures[ptr], truncated, trunc_size, lineno);
         } break;
 
         case GIVEN_INJECTIVE_FUNCTION: {
-            auto ptr = m_virtual_machine.injective_function(listing[1]);
-            add_listing_to(m_structures[ptr], truncated, lineno);
+            auto ptr = m_virtual_machine.injective_function(program[1]);
+            add_program_to(m_structures[ptr], truncated, trunc_size, lineno);
         } break;
 
         case GIVEN_BINARY_FUNCTION: {
-            auto ptr = m_virtual_machine.binary_function(listing[1]);
-            add_listing_to(m_structures[ptr], truncated, lineno);
+            auto ptr = m_virtual_machine.binary_function(program[1]);
+            add_program_to(m_structures[ptr], truncated, trunc_size, lineno);
         } break;
 
         case GIVEN_SYMMETRIC_FUNCTION: {
-            auto ptr = m_virtual_machine.symmetric_function(listing[1]);
-            add_listing_to(m_structures[ptr], truncated, lineno);
+            auto ptr = m_virtual_machine.symmetric_function(program[1]);
+            add_program_to(m_structures[ptr], truncated, trunc_size, lineno);
         } break;
 
         case FOR_BLOCK: {
-            add_listing_to(m_cleanup_large, truncated, lineno);
+            add_program_to(m_cleanup_large, truncated, trunc_size, lineno);
         } break;
 
         default: {
-            add_listing_to(m_cleanup_small, listing, lineno);
+            add_program_to(m_cleanup_small, program, size, lineno);
         } break;
     }
 }
 
-static size_t count_bytes (const std::vector<Listing> & listings)
+size_t Agenda::count_bytes (const Programs & programs) const
 {
     size_t byte_count = 0;
-    for (const auto & listing : listings) {
-        byte_count += listing.size();
+    for (Program program : programs) {
+        byte_count += map_find(m_sizes, program);
     }
     return byte_count;
 }
@@ -999,11 +1007,11 @@ void Agenda::log_stats () const
     for (const auto & pair : m_names) {
         auto i = m_structures.find(pair.second);
         if (i != m_structures.end()) {
-            const auto & listings = i->second;
+            const auto & programs = i->second;
             POMAGMA_INFO(
                 "\t" << pair.first <<
-                "\t" << listings.size() <<
-                "\t" << count_bytes(listings));
+                "\t" << programs.size() <<
+                "\t" << count_bytes(programs));
         }
     }
     POMAGMA_INFO(

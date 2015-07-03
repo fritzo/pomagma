@@ -217,7 +217,8 @@ void Server::execute (const std::string & program)
     vm::VirtualMachine virtual_machine;
     virtual_machine.load(m_structure.signature());
     for (const auto & listing : listings) {
-        virtual_machine.execute(listing.first);
+        vm::Program program = parser.find_program(listing);
+        virtual_machine.execute(program);
     }
 }
 

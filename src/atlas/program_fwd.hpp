@@ -13,27 +13,6 @@ namespace vm {
 enum OpCode : uint8_t;
 enum OpArgType : uint8_t;
 
-typedef std::vector<uint8_t> Listing;
-typedef const uint8_t * Program;
-
-class ProgramParser
-{
-public:
-
-    void load (Signature & signature); // TODO input a proto, not Signature
-    std::vector<std::pair<Listing, size_t>> parse (std::istream & infile) const;
-    std::vector<std::pair<Listing, size_t>> parse_file (
-            const std::string & filename) const;
-
-private:
-
-    std::vector<uint8_t> m_programs;
-    std::map<std::pair<OpArgType, std::string>, uint8_t> m_constants;
-
-    class SymbolTable;
-    class SymbolTableStack;
-};
-
 template<class Ob, class SetPtr>
 struct Context_
 {
@@ -51,6 +30,41 @@ struct Context_
         trace = 0;
     }
 } __attribute__((aligned(64)));
+
+typedef const uint8_t * Program;
+struct Listing
+{
+    size_t program_offset;
+    size_t size;
+    size_t lineno;
+};
+
+class ProgramParser
+{
+public:
+
+    void load (Signature & signature); // TODO input a proto, not Signature
+
+    std::vector<Listing> parse (std::istream & infile);
+    std::vector<Listing> parse_file (const std::string & filename);
+
+    // WARNING Calling parse() or parse_file() invalidates the returned Program.
+    Program find_program (const Listing & listing) const
+    {
+        POMAGMA_ASSERT_LE(
+            listing.program_offset + listing.size,
+            m_program_data.size());
+        return m_program_data.data() + listing.program_offset;
+    }
+
+private:
+
+    std::vector<uint8_t> m_program_data; // all programs in contiguous memory
+    std::map<std::pair<OpArgType, std::string>, uint8_t> m_constants;
+
+    class SymbolTable;
+    class SymbolTableStack;
+};
 
 /*
 template<class Ob, class SetPtr>

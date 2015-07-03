@@ -26,8 +26,8 @@ void load_programs (const std::string & filename)
     program_parser.load(signature);
     auto listings = program_parser.parse_file(filename);
     agenda.load(signature);
-    for (const auto & pair : listings) {
-        agenda.add_listing(pair.first, pair.second);
+    for (const auto & listing : listings) {
+        agenda.add_listing(program_parser, listing);
     }
     agenda.log_stats();
     Cleanup::init(agenda.cleanup_task_count());

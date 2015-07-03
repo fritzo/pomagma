@@ -167,7 +167,7 @@ static void declare (
 
 void ProgramParser::load (Signature & signature)
 {
-    m_programs.clear();
+    m_program_data.clear();
     m_constants.clear();
     declare(UNARY_RELATION, signature.unary_relations(), m_constants);
     declare(BINARY_RELATION, signature.binary_relations(), m_constants);
@@ -177,8 +177,8 @@ void ProgramParser::load (Signature & signature)
     declare(SYMMETRIC_FUNCTION, signature.symmetric_functions(), m_constants);
 }
 
-std::vector<std::pair<Listing, size_t>>
-    ProgramParser::parse_file (const std::string & filename) const
+std::vector<Listing>
+    ProgramParser::parse_file (const std::string & filename)
 {
     POMAGMA_INFO("loading programs from " << filename);
     std::ifstream infile(filename, std::ifstream::in | std::ifstream::binary);
@@ -186,15 +186,27 @@ std::vector<std::pair<Listing, size_t>>
     return parse(infile);
 }
 
-std::vector<std::pair<Listing, size_t>>
-    ProgramParser::parse (std::istream & infile) const
+std::vector<Listing> ProgramParser::parse (std::istream & infile)
 {
-    std::vector<std::pair<Listing, size_t>> result;
+    std::vector<Listing> result;
     std::vector<uint8_t> program;
     SymbolTableStack obs(false);
     SymbolTableStack sets(true);
     std::string line;
     std::string word;
+
+    auto add_program = [&](size_t lineno){
+        Listing listing;
+        listing.program_offset = m_program_data.size();
+        listing.size = program.size();
+        listing.lineno = lineno;
+        result.push_back(listing);
+        m_program_data.insert(
+            m_program_data.end(),
+            program.begin(),
+            program.end());
+        program.clear();
+    };
 
     size_t start_lineno = 0;
     for (int lineno = 1; std::getline(infile, line); ++lineno) {
@@ -205,8 +217,7 @@ std::vector<std::pair<Listing, size_t>>
             obs.clear(lineno);
             sets.clear(lineno);
             if (not program.empty()) {
-                result.push_back(std::make_pair(program, start_lineno));
-                program.clear();
+                add_program(start_lineno);
             }
             continue;
         }
@@ -244,21 +255,10 @@ std::vector<std::pair<Listing, size_t>>
                     arg = uint8;
                 } break;
 
-                case NEW_OB: {
-                    arg = obs.store(word, lineno);
-                } break;
-
-                case OB: {
-                    arg = obs.load(word, lineno);
-                } break;
-
-                case NEW_SET: {
-                    arg = sets.store(word, lineno);
-                } break;
-
-                case SET: {
-                    arg = sets.load(word, lineno);
-                } break;
+                case NEW_OB: { arg = obs.store(word, lineno); } break;
+                case OB: { arg = obs.load(word, lineno); } break;
+                case NEW_SET: { arg = sets.store(word, lineno); } break;
+                case SET: { arg = sets.load(word, lineno); } break;
 
                 default: {
                     auto i = m_constants.find(std::make_pair(arg_type, word));
@@ -286,7 +286,7 @@ std::vector<std::pair<Listing, size_t>>
     }
 
     if (not program.empty()) {
-        result.push_back(std::make_pair(program, start_lineno));
+        add_program(start_lineno);
     }
 
     return result;
