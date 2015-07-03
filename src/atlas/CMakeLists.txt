@@ -1,6 +1,9 @@
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
-add_library(pomagma_atlas SHARED structure.pb.cc)
+add_library(pomagma_atlas SHARED
+	structure.pb.cc
+	program.cpp
+)
 
 add_executable(atlas_protobuf_test protobuf_test.cpp)
 target_link_libraries(atlas_protobuf_test

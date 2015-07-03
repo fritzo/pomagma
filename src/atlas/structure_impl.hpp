@@ -19,15 +19,6 @@
 #include <sys/stat.h>  // for chmod
 #include <thread>
 
-// TODO use protobuf reflection + templates
-#define SWITCH_ARITY(DO)    \
-    DO(Relation, relation, Unary,     unary)     \
-    DO(Relation, relation, Binary,    binary)    \
-    DO(Function, function, Nullary,   nullary)   \
-    DO(Function, function, Injective, injective) \
-    DO(Function, function, Binary,    binary)    \
-    DO(Function, function, Symmetric, symmetric)
-
 namespace pomagma {
 
 //----------------------------------------------------------------------------
@@ -831,7 +822,7 @@ inline Hasher::Dict get_tree_hash_pb (const protobuf::Structure & structure)
         POMAGMA_ASSERT(i.has_hash(), #Arity #Kind " is missing hash");      \
         dict[#kind "s/" #arity "/" + i.name()] = parse_digest(i.hash());    \
     }
-    SWITCH_ARITY(CASE_ARITY)
+    POMAGMA_SWITCH_ARITY(CASE_ARITY)
 #undef CASE_ARITY
 
     return dict;
@@ -859,7 +850,7 @@ inline void dump_pb (
             detail::dump_pb(carrier, * i.second, structure, i.first, mutex);\
         }));                                                                \
     }
-    SWITCH_ARITY(CASE_ARITY)
+    POMAGMA_SWITCH_ARITY(CASE_ARITY)
 #undef CASE_ARITY
 
     for (auto & thread : threads) { thread.join(); }
@@ -870,7 +861,7 @@ inline void dump_pb (
             sub_hexdigests.push_back(blob);                                 \
         }                                                                   \
     }
-    SWITCH_ARITY(CASE_ARITY)
+    POMAGMA_SWITCH_ARITY(CASE_ARITY)
 #undef CASE_ARITY
 
     auto digest = Hasher::digest(get_tree_hash_pb(structure));
@@ -1461,7 +1452,7 @@ inline void load_signature_pb (
         POMAGMA_ASSERT(i.has_name(), #Arity #Kind " is missing name");      \
         signature.declare(i.name(), * new Arity ## Kind(carrier));          \
     }
-    SWITCH_ARITY(CASE_ARITY)
+    POMAGMA_SWITCH_ARITY(CASE_ARITY)
 #undef CASE_ARITY
 }
 
@@ -1484,7 +1475,7 @@ inline void check_signature (
         POMAGMA_ASSERT(signature.arity ## _ ## kind(i.name()),              \
             "file has unknown " #arity " " #kind " " << i.name());          \
     }
-    SWITCH_ARITY(CASE_ARITY)
+    POMAGMA_SWITCH_ARITY(CASE_ARITY)
 #undef CASE_ARITY
 }
 
@@ -1679,7 +1670,7 @@ inline void load_data_pb (
         POMAGMA_INFO("loading " #Arity #Kind " " << i.name());              \
         load_data_pb(* signature.arity ## _ ## kind(i.name()), i, &tasks);  \
     }
-    SWITCH_ARITY(CASE_ARITY)
+    POMAGMA_SWITCH_ARITY(CASE_ARITY)
 #undef CASE_ARITY
 
     #pragma omp parallel for schedule(dynamic, 1)
@@ -1776,10 +1767,8 @@ void log_stats (Signature & signature)
     for (auto pair : signature.arity ## _ ## kind ## s()) {                 \
         pair.second->log_stats(pair.first);                                 \
     }
-    SWITCH_ARITY(CASE_ARITY)
+    POMAGMA_SWITCH_ARITY(CASE_ARITY)
 #undef CASE_ARITY
 }
-
-#undef SWITCH_ARITY
 
 } // namespace pomagma

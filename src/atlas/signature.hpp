@@ -3,6 +3,14 @@
 #include <pomagma/util/util.hpp>
 #include <unordered_map>
 
+#define POMAGMA_SWITCH_ARITY(DO)                 \
+    DO(Relation, relation, Unary,     unary)     \
+    DO(Relation, relation, Binary,    binary)    \
+    DO(Function, function, Nullary,   nullary)   \
+    DO(Function, function, Injective, injective) \
+    DO(Function, function, Binary,    binary)    \
+    DO(Function, function, Symmetric, symmetric)
+
 namespace pomagma
 {
 

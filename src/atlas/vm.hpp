@@ -7,40 +7,13 @@
 #include <map>
 #include <unordered_map>
 #include <pomagma/util/aligned_alloc.hpp>
+#include <pomagma/atlas/program_fwd.hpp>
 #include <pomagma/util/profiler.hpp>
 
-namespace pomagma
-{
-namespace vm
-{
+namespace pomagma {
+namespace vm {
 
-enum { block_size = 64 };
-
-typedef std::vector<uint8_t> Listing;
-
-enum OpCode : uint8_t;
-enum OpArgType : uint8_t;
-
-//----------------------------------------------------------------------------
-// ProgramParser
-
-class ProgramParser
-{
-public:
-
-    ProgramParser (Signature & signature);
-    std::vector<std::pair<Listing, size_t>> parse (std::istream & infile) const;
-    std::vector<std::pair<Listing, size_t>> parse_file (
-            const std::string & filename) const;
-
-private:
-
-    std::map<std::string, OpCode> m_op_codes;
-    std::map<std::pair<OpArgType, std::string>, uint8_t> m_constants;
-
-    class SymbolTable;
-    class SymbolTableStack;
-};
+typedef Context_<Ob, DenseSet::RawData> Context;
 
 //----------------------------------------------------------------------------
 // VirtualMachine
@@ -48,6 +21,8 @@ private:
 class VirtualMachine
 {
 public:
+
+    enum { block_size = 64 }; // granularity of FOR_BLOCK/IF_BLOCK parallelism
 
     VirtualMachine () : m_carrier(nullptr)
     {
@@ -106,25 +81,6 @@ public:
     const SymmetricFunction * symmetric_function (uint8_t index) const;
 
 private:
-
-    typedef const uint8_t * Program;
-
-    struct Context
-    {
-        Ob obs[256];
-        const DenseSet::RawData * sets[256];
-        size_t block;
-        size_t trace;
-        ProgramProfiler profiler;
-
-        void clear ()
-        {
-            std::fill(std::begin(obs), std::end(obs), 0);
-            std::fill(std::begin(sets), std::end(sets), nullptr);
-            block = 0;
-            trace = 0;
-        }
-    } __attribute__((aligned(64)));
 
     static Context * new_context ()
     {
