@@ -34,9 +34,9 @@ struct Context_
 typedef const uint8_t * Program;
 struct Listing
 {
-    size_t program_offset;
-    size_t size;
-    size_t lineno;
+    uint32_t program_offset;
+    uint32_t size;
+    uint32_t lineno;
 };
 
 class ProgramParser
@@ -48,7 +48,7 @@ public:
     std::vector<Listing> parse (std::istream & infile);
     std::vector<Listing> parse_file (const std::string & filename);
 
-    // WARNING Calling parse() or parse_file() invalidates the returned Program.
+    // Calling parse() or parse_file() invalidates the returned Program.
     Program find_program (const Listing & listing) const
     {
         POMAGMA_ASSERT_LE(
@@ -57,7 +57,26 @@ public:
         return m_program_data.data() + listing.program_offset;
     }
 
+    template<class Ob, class SetPtr>
+    void dump_continuation (
+            Program program,
+            const Context_<Ob, SetPtr> * context,
+            std::string & message);
+
+    template<class Ob, class SetPtr>
+    Program load_continuation (
+            Context_<Ob, SetPtr> * context,
+            const std::string & message);
+
 private:
+
+    const std::vector<uint8_t> & find_obs_used_by (size_t program_offset)
+    {
+        if (POMAGMA_DEBUG_LEVEL) {
+            POMAGMA_ASSERT_LT(program_offset, m_program_data.size());
+        }
+        TODO("find which obs are used by a program");
+    }
 
     std::vector<uint8_t> m_program_data; // all programs in contiguous memory
     std::map<std::pair<OpArgType, std::string>, uint8_t> m_constants;
@@ -65,20 +84,6 @@ private:
     class SymbolTable;
     class SymbolTableStack;
 };
-
-/*
-template<class Ob, class SetPtr>
-void dump_continuation (Program, const Context * context, std::string & message)
-{
-    message.clear();
-
-}
-
-template<class Ob, class SetPtr>
-Program load_continuation (Context * context, const std::string & message)
-{
-}
-*/
 
 } // namespace vm
 } // namespacepomagma

@@ -1,14 +1,18 @@
 #pragma once
 
-#include <map>
-#include <unordered_set>
-#include <typeinfo>
-#include <sstream>
-#include <fstream>
 #include "program_fwd.hpp"
+#include <fstream>
+#include <google/protobuf/io/coded_stream.h>
+#include <map>
+#include <sstream>
+#include <typeinfo>
+#include <unordered_set>
 
 namespace pomagma {
 namespace vm {
+
+//----------------------------------------------------------------------------
+// 8-bit floating points
 
 // 4 bit significand, 4 bit exponent
 constexpr inline size_t eval_float44 (size_t num)
@@ -163,6 +167,67 @@ static const size_t g_op_code_count = 0
     POMAGMA_OP_CODES(DO)
 #undef DO
 ;
+
+//----------------------------------------------------------------------------
+// Continuations.
+//
+// The serialized format is a sequence of protobuf-encoded Varint32 values:
+//   [program_offset, context->obs[obs_used[0]], ..., context->obs[obs_used[n]]]
+// where find_obs_used_by determines which obs are used by the program fragment
+// at program_offset.
+
+template<class Ob, class SetPtr>
+inline void ProgramParser::dump_continuation (
+        Program program,
+        const Context_<Ob, SetPtr> * context,
+        std::string & message)
+{
+    ptrdiff_t program_offset = program - m_program_data.data();
+    if (POMAGMA_DEBUG_LEVEL) {
+        POMAGMA_ASSERT_LE(0, program_offset);
+        POMAGMA_ASSERT_LT(program_offset, m_program_data.size());
+    }
+    const std::vector<uint8_t> & obs_used = find_obs_used_by(program_offset);
+
+    const size_t max_varint32_size = 5;
+    const size_t max_size = max_varint32_size * (1 + obs_used.size());
+    message.resize(max_size);
+    uint8_t * begin = static_cast<uint8_t *>(message.front());
+    uint8_t * pos = begin;
+
+    typedef google::protobuf::io::CodedOutputStream Stream;
+    pos = Stream::WriteVarint32ToArray(program_offset, pos);
+    for (auto index : obs_used) {
+        uint32_t ob = context->obs[index];
+        pos = Stream::WriteVarint32ToArray(ob, pos);
+    }
+    size_t size = pos - begin;
+    POMAGMA_ASSERT_LE(size, message.size());
+    message.resize(size);
+}
+
+template<class Ob, class SetPtr>
+inline Program ProgramParser::load_continuation (
+        Context_<Ob, SetPtr> * context,
+        const std::string & message)
+{
+    if (POMAGMA_DEBUG_LEVEL) { context->clear(); }
+
+    typedef google::protobuf::io::CodedInputStream Stream;
+    Stream stream(message.data(), message.size());
+
+    uint32_t program_offset = 0;
+    stream.ReadVarint32(& program_offset);
+
+    uint32_t ob = 0;
+    for (uint8_t index : find_obs_used_by(program_offset)) {
+        stream.ReadVarint32(& ob);
+        context->obs[index] = ob;
+    }
+
+    POMAGMA_ASSERT_LT(program_offset, m_program_data.size());
+    return m_program_data.data() + program_offset;
+}
 
 } // namespace vm
 } // namespace pomagma
