@@ -23,7 +23,7 @@ Server::Server (
       m_simplifier(m_structure.signature(), m_routes, m_error_log),
       m_corpus(m_structure.signature()),
       m_validator(m_approximator, thread_count),
-      m_parser(nullptr),
+      m_parser(),
       m_virtual_machine()
 {
     // parser and virtual_machine must be loaded after RETURN is delclared.
@@ -36,7 +36,7 @@ Server::Server (
         "reserved name NRETURN is defined in loaded structure");
     signature.declare("RETURN", m_return);
     signature.declare("NRETURN", m_nreturn);
-    m_parser = new vm::ProgramParser(signature);
+    m_parser.load(signature);
     m_virtual_machine.load(signature);
 
     if (POMAGMA_DEBUG_LEVEL > 1) {
@@ -50,7 +50,6 @@ Server::Server (
 
 Server::~Server ()
 {
-    delete m_parser;
     for (const std::string & message : m_error_log) {
         POMAGMA_WARN(message);
     }
@@ -136,7 +135,7 @@ Server::SolutionSet Server::solve (
     size_t max_solutions)
 {
     std::istringstream infile(program);
-    auto listings = m_parser->parse(infile);
+    auto listings = m_parser.parse(infile);
     POMAGMA_ASSERT_LE(1, listings.size());
 
     m_return.clear();

@@ -165,13 +165,9 @@ static void declare (
     }
 }
 
-ProgramParser::ProgramParser (Signature & signature)
+void ProgramParser::load (Signature & signature)
 {
-    POMAGMA_DEBUG("Op Codes:");
-    for (size_t op_code = 0; op_code < g_op_code_count; ++op_code) {
-        POMAGMA_DEBUG(g_op_code_names[op_code] << " = " << op_code);
-    }
-
+    m_programs.clear();
     m_constants.clear();
     declare(UNARY_RELATION, signature.unary_relations(), m_constants);
     declare(BINARY_RELATION, signature.binary_relations(), m_constants);

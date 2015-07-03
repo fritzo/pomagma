@@ -10,23 +10,24 @@ namespace pomagma {
 class Signature;
 namespace vm {
 
-typedef std::vector<uint8_t> Listing;
-typedef const uint8_t * Program;
-
 enum OpCode : uint8_t;
 enum OpArgType : uint8_t;
+
+typedef std::vector<uint8_t> Listing;
+typedef const uint8_t * Program;
 
 class ProgramParser
 {
 public:
 
-    ProgramParser (Signature & signature); // TODO input a proto, not Signature
+    void load (Signature & signature); // TODO input a proto, not Signature
     std::vector<std::pair<Listing, size_t>> parse (std::istream & infile) const;
     std::vector<std::pair<Listing, size_t>> parse_file (
             const std::string & filename) const;
 
 private:
 
+    std::vector<uint8_t> m_programs;
     std::map<std::pair<OpArgType, std::string>, uint8_t> m_constants;
 
     class SymbolTable;
@@ -50,6 +51,20 @@ struct Context_
         trace = 0;
     }
 } __attribute__((aligned(64)));
+
+/*
+template<class Ob, class SetPtr>
+void dump_continuation (Program, const Context * context, std::string & message)
+{
+    message.clear();
+
+}
+
+template<class Ob, class SetPtr>
+Program load_continuation (Context * context, const std::string & message)
+{
+}
+*/
 
 } // namespace vm
 } // namespacepomagma

@@ -174,7 +174,6 @@ public:
     void load (Signature & signature);
     void add_listing (const Listing & listing, size_t lineno);
     void log_stats () const;
-    void optimize_listings ();
     const std::map<const void *, size_t> & get_linenos () { return m_linenos; }
 
     void execute (Ob ob) const

@@ -1016,29 +1016,5 @@ void Agenda::log_stats () const
         "\t" << count_bytes(m_cleanup_large));
 }
 
-void Agenda::optimize_listings ()
-{
-    POMAGMA_INFO("agenda optimizing listings");
-    sort_listings(m_exists);
-    for (auto & pair : m_structures) {
-        sort_listings(pair.second);
-    }
-    sort_listings(m_cleanup_small);
-    sort_listings(m_cleanup_large);
-}
-
-void Agenda::sort_listings (Listings & listings)
-{
-    // m_linenos is preserved because std::sort uses move semantics
-    std::sort(
-        listings.begin(),
-        listings.end(),
-        [](const Listing & x, const Listing & y){
-            return std::lexicographical_compare(
-                x.begin(), x.end(),
-                y.begin(), y.end());
-        });
-}
-
 } // namespace vm
 } // namespace pomagma

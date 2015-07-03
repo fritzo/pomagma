@@ -15,6 +15,7 @@ namespace pomagma
 static Structure structure;
 static Signature & signature = structure.signature();
 static Sampler sampler(signature);
+static vm::ProgramParser program_parser;
 static vm::Agenda agenda;
 
 void load_structure (const std::string & filename) { structure.load(filename); }
@@ -22,13 +23,12 @@ void dump_structure (const std::string & filename) { structure.dump(filename); }
 void load_language (const std::string & filename) { sampler.load(filename); }
 void load_programs (const std::string & filename)
 {
+    program_parser.load(signature);
+    auto listings = program_parser.parse_file(filename);
     agenda.load(signature);
-    vm::ProgramParser parser(signature);
-    auto listings = parser.parse_file(filename);
     for (const auto & pair : listings) {
         agenda.add_listing(pair.first, pair.second);
     }
-    agenda.optimize_listings();
     agenda.log_stats();
     Cleanup::init(agenda.cleanup_task_count());
 }

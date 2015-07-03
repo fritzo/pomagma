@@ -208,7 +208,8 @@ void Server::declare (const std::string & name)
 void Server::execute (const std::string & program)
 {
     POMAGMA_DEBUG("parsing program");
-    vm::ProgramParser parser(m_structure.signature());
+    vm::ProgramParser parser;
+    parser.load(m_structure.signature());
     std::istringstream istream(program);
     const auto listings = parser.parse(istream);
 
