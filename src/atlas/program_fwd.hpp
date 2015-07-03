@@ -27,7 +27,6 @@ public:
 
 private:
 
-    std::map<std::string, OpCode> m_op_codes;
     std::map<std::pair<OpArgType, std::string>, uint8_t> m_constants;
 
     class SymbolTable;

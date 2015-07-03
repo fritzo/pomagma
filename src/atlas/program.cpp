@@ -17,6 +17,13 @@ const std::string g_op_code_names[] =
 #undef DO
 };
 
+const std::map<std::string, OpCode> g_op_codes =
+{
+#define DO(X, Y) { #X , X },
+    POMAGMA_OP_CODES(DO)
+#undef DO
+};
+
 inline std::vector<std::vector<OpArgType>> get_op_code_arities ()
 {
     std::vector<std::vector<OpArgType>> result = {
@@ -162,7 +169,6 @@ ProgramParser::ProgramParser (Signature & signature)
 {
     POMAGMA_DEBUG("Op Codes:");
     for (size_t op_code = 0; op_code < g_op_code_count; ++op_code) {
-        m_op_codes[g_op_code_names[op_code]] = static_cast<OpCode>(op_code);
         POMAGMA_DEBUG(g_op_code_names[op_code] << " = " << op_code);
     }
 
@@ -219,9 +225,9 @@ std::vector<std::pair<Listing, size_t>>
             "line " << lineno << ": no operation");
         obs.pop(lineno);
         sets.pop(lineno);
-        auto i = m_op_codes.find(word);
+        auto i = g_op_codes.find(word);
         POMAGMA_ASSERT(
-            i != m_op_codes.end(),
+            i != g_op_codes.end(),
             "line " << lineno << ": unknown operation: " << word);
         OpCode op_code = i->second;
         program.push_back(op_code);
