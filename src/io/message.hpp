@@ -21,6 +21,11 @@ public:
     {
         m_message.clear();
     }
+    Int32Writer (std::string & message, size_t int_count) : m_message(message)
+    {
+        m_message.clear();
+        m_message.reserve(int_count * 4);
+    }
     void write (uint32_t value)
     {
         m_message.resize(m_message.size() + 4);
@@ -82,6 +87,12 @@ public:
     {
         m_message.clear();
     }
+    Varint32Writer (std::string & message, size_t int_count)
+        : m_message(message)
+    {
+        m_message.clear();
+        m_message.reserve(int_count * 5);
+    }
     void write (uint32_t value)
     {
         size_t offset = m_message.size();
@@ -129,9 +140,9 @@ public:
         : m_message(message)
     {
 #if POMAGMA_DEBUG_LEVEL
-         m_count = int_count;
+        m_count = int_count;
 #endif // POMAGMA_DEBUG_LEVEL
-        m_message.resize(5 * int_count);
+        m_message.resize(int_count * 5);
         m_pos = begin();
     }
     void write (uint32_t value)

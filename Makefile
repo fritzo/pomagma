@@ -56,6 +56,7 @@ unit-test: all bootstrap FORCE
 	POMAGMA_DEBUG=1 nosetests -v pomagma
 	$(MAKE) cpp-test
 	POMAGMA_DEBUG=1 npm test
+	POMAGMA_DEBUG=1 python -m pomagma.make profile-misc
 	python -m pomagma.make profile-misc
 
 data/blob:

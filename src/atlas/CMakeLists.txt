@@ -13,14 +13,6 @@ target_link_libraries(atlas_protobuf_test
 )
 add_test(NAME atlas_protobuf COMMAND atlas_protobuf_test)
 
-add_executable(atlas_message_test message_test.cpp)
-target_link_libraries(atlas_message_test
-	pomagma_atlas
-	${POMAGMA_IO_LIBS}
-	${POMAGMA_UTIL_LIBS}
-)
-add_test(NAME atlas_message COMMAND atlas_message_test)
-
 add_subdirectory(chart)
 add_subdirectory(world)
 add_subdirectory(shard)

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "program_fwd.hpp"
-#include "message.hpp"
+#include <pomagma/io/message.hpp>
 #include <fstream>
 #include <map>
 #include <sstream>

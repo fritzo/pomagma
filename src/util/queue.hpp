@@ -22,7 +22,7 @@ public:
     virtual void push (const void * data, uint8_t size) = 0;
     virtual uint8_t try_pop (void * data) = 0;
 
-    void push (const std::string & message)
+    void push_str (const std::string & message)
     {
         if (POMAGMA_DEBUG_LEVEL) {
             POMAGMA_ASSERT_LT(0, message.size());
@@ -31,7 +31,7 @@ public:
         push(message.data(), message.size());
     }
 
-    bool try_pop (std::string & message)
+    bool try_pop_str (std::string & message)
     {
         message.resize(max_message_size());
         uint8_t size = try_pop(& message.front());
