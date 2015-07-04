@@ -1,8 +1,8 @@
 #pragma once
 
 #include "program_fwd.hpp"
+#include "message.hpp"
 #include <fstream>
-#include <google/protobuf/io/coded_stream.h>
 #include <map>
 #include <sstream>
 #include <typeinfo>
@@ -189,21 +189,11 @@ inline void ProgramParser::dump_continuation (
     }
     const std::vector<uint8_t> & obs_used = find_obs_used_by(program_offset);
 
-    const size_t max_varint32_size = 5;
-    const size_t max_size = max_varint32_size * (1 + obs_used.size());
-    message.resize(max_size);
-    uint8_t * begin = static_cast<uint8_t *>(message.front());
-    uint8_t * pos = begin;
-
-    typedef google::protobuf::io::CodedOutputStream Stream;
-    pos = Stream::WriteVarint32ToArray(program_offset, pos);
+    io::Varint32Writer writer(message, 1 + obs_used.size());
+    writer.write(program_offset);
     for (auto index : obs_used) {
-        uint32_t ob = context->obs[index];
-        pos = Stream::WriteVarint32ToArray(ob, pos);
+        writer.write(context->obs[index]);
     }
-    size_t size = pos - begin;
-    POMAGMA_ASSERT_LE(size, message.size());
-    message.resize(size);
 }
 
 template<class Ob, class SetPtr>
@@ -213,19 +203,15 @@ inline Program ProgramParser::load_continuation (
 {
     if (POMAGMA_DEBUG_LEVEL) { context->clear(); }
 
-    typedef google::protobuf::io::CodedInputStream Stream;
-    Stream stream(message.data(), message.size());
-
-    uint32_t program_offset = 0;
-    stream.ReadVarint32(& program_offset);
-
-    uint32_t ob = 0;
+    io::Varint32Reader reader(message);
+    size_t program_offset = reader.read();
+    if (POMAGMA_DEBUG_LEVEL) {
+        POMAGMA_ASSERT_LT(program_offset, m_program_data.size());
+    }
     for (uint8_t index : find_obs_used_by(program_offset)) {
-        stream.ReadVarint32(& ob);
-        context->obs[index] = ob;
+        context->obs[index] = reader.read();
     }
 
-    POMAGMA_ASSERT_LT(program_offset, m_program_data.size());
     return m_program_data.data() + program_offset;
 }
 
