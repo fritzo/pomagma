@@ -31,12 +31,14 @@ void test_write_read (const std::vector<uint32_t> & example, Args... args)
 
     std::string message;
     {
+        POMAGMA_DEBUG("writing");
         Writer writer(message, args...);
         for (auto value : example) {
             writer.write(value);
         }
     }
     Reader reader(message);
+    POMAGMA_DEBUG("reading");
     for (auto expected : example) {
         uint32_t actual = reader.read();
         POMAGMA_ASSERT_EQ(actual, expected);
@@ -50,8 +52,7 @@ int main ()
     for (const auto example : examples) {
         POMAGMA_INFO("Example: " << example);
         test_write_read<Int32Writer, Int32Reader>(example);
-        // FIXME
-        //test_write_read<Varint32Writer, Varint32Reader>(example);
+        test_write_read<Varint32Writer, Varint32Reader>(example);
         test_write_read<ProtobufVarint32Writer, ProtobufVarint32Reader>(
             example,
             example.size());

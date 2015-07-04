@@ -50,22 +50,21 @@ public:
 // http://techoverflow.net/blog/2013/01/25/efficiently-encoding-variable-length-integers-in-cc
 template<typename int_t>
 uint8_t * dump_varint (int_t value, uint8_t * buffer) {
-    * buffer = value & 127;
+    *buffer = value & 127;
     while ((value >>= 7)) {
-        * buffer |= 128;
-        ++buffer;
-        * buffer = value & 127;
+        *buffer++ |= 128;
+        *buffer = value & 127;
     }
     return buffer + 1;
 }
 
 template<typename int_t>
 const uint8_t * load_varint (int_t & value, const uint8_t * buffer) {
-    value = * buffer & 127;
-    for (size_t shift = 7; * buffer & 128; ++buffer, shift += 7) {
-        value |= static_cast<int_t>(* buffer & 127) << shift;
+    value = *buffer & 127;
+    for (size_t shift = 7; *buffer++ & 128; shift += 7) {
+        value |= static_cast<int_t>(*buffer & 127) << shift;
     }
-    return buffer + 1;
+    return buffer;
 }
 
 class Varint32Writer
@@ -81,7 +80,6 @@ public:
 
     Varint32Writer (std::string & message) : m_message(message)
     {
-        TODO("FIXME this is broken");
         m_message.clear();
     }
     void write (uint32_t value)
@@ -89,7 +87,7 @@ public:
         size_t offset = m_message.size();
         m_message.resize(offset + 5);
         uint8_t * end = dump_varint<uint32_t>(value, begin() + offset);
-        m_message.resize(begin() - end);
+        m_message.resize(end - begin());
     }
 };
 
@@ -100,10 +98,7 @@ class Varint32Reader
 public:
 
     Varint32Reader (const std::string & message)
-        : m_pos(reinterpret_cast<const uint8_t *>(message.data()))
-    {
-        TODO("FIXME this is broken");
-    }
+        : m_pos(reinterpret_cast<const uint8_t *>(message.data())) {}
 
     uint32_t read ()
     {
