@@ -104,16 +104,16 @@ public:
         free_blocks(m_queues);
     }
 
-    void push (size_t queue_id, const void * message, uint8_t size)
+    void push (size_t topic, const void * message, uint8_t size)
     {
-        POMAGMA_ASSERT1(queue_id < m_queue_count, "bad queue_id: " << queue_id);
-        m_queues[queue_id].push(message, size);
+        POMAGMA_ASSERT1(topic < m_queue_count, "bad topic: " << topic);
+        m_queues[topic].push(message, size);
     }
 
-    uint8_t try_pop (size_t queue_id, void * message)
+    uint8_t try_pop (size_t topic, void * message)
     {
-        POMAGMA_ASSERT1(queue_id < m_queue_count, "bad queue_id: " << queue_id);
-        return m_queues[queue_id].try_pop(message);
+        POMAGMA_ASSERT1(topic < m_queue_count, "bad topic: " << topic);
+        return m_queues[topic].try_pop(message);
     }
 };
 

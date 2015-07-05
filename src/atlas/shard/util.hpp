@@ -11,6 +11,8 @@ namespace sequential {}
 namespace shard {
 using namespace ::pomagma::sequential;
 
+typedef uint32_t topic_t;
+
 //----------------------------------------------------------------------------
 // Obs
 

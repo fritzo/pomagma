@@ -908,6 +908,7 @@ void Agenda::load (Signature & signature)
     m_block_count =
         signature.carrier()->item_dim() / VirtualMachine::block_size + 1;
 
+    m_names.clear();
     register_names(m_names, signature.unary_relations());
     register_names(m_names, signature.binary_relations());
     register_names(m_names, signature.nullary_functions());

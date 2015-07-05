@@ -1,6 +1,7 @@
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
 add_library(pomagma_shard SHARED
+	index.cpp
 	carrier.cpp
 	#base_bin_rel.cpp
 	#unary_relation.cpp
