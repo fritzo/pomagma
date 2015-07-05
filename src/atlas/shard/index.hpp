@@ -18,15 +18,22 @@ public:
     typedef vm::Program Program;
     typedef vm::Context_<Ob, DenseSet::RawData> Context;
 
-    // these are set once at initialization
-    void register_unary_relation (uint8_t name, topic_t topic);
-    void register_unary_function (uint8_t name, topic_t topic);
+    Index () : m_frozen(false) {}
+    void freeze () { m_frozen = true; }
 
-    // these may be reset during inference as cells split
-    void register_binary_relation (uint8_t name, topic_t topic, Ob min_lhs);
-    void register_binary_function (uint8_t name, topic_t topic, Ob min_lhs);
-    void register_symmetric_function (uint8_t name, topic_t topic, Ob min_lhs);
+    // these are set once before freezing
+    void insert_unary_relation (uint8_t name, topic_t topic);
+    void insert_injective_function (uint8_t name, topic_t topic);
+    void insert_binary_relation (uint8_t name, topic_t topic);
+    void insert_binary_function (uint8_t name, topic_t topic);
+    void insert_symmetric_function (uint8_t name, topic_t topic);
 
+    // these may be reset before or after freezing
+    void insert_binary_relation (uint8_t name, topic_t topic, Ob min_lhs);
+    void insert_binary_function (uint8_t name, topic_t topic, Ob min_lhs);
+    void insert_symmetric_function (uint8_t name, topic_t topic, Ob min_lhs);
+
+    // this may only be called after freezing
     topic_t try_find_cell_to_execute (Program program, Context * context) const;
 
 private:
@@ -48,11 +55,11 @@ private:
     public:
 
         // a shared topic for broadcasting
-        void register_all (topic_t topic) { m_all = topic; }
+        void insert_all (topic_t topic) { m_all = topic; }
         topic_t find_all () const { return m_all; }
 
         // topics for each range of lhs
-        void register_lhs (topic_t topic, Ob min_lhs);
+        void insert_lhs (topic_t topic, Ob min_lhs);
         topic_t find_lhs (Ob lhs) const;
 
     private:
@@ -67,6 +74,7 @@ private:
     std::vector<ShardedRange> m_binary_functions;
     std::vector<ShardedRange> m_symmetric_functions;
     mutable SharedMutex m_mutex;
+    bool m_frozen;
 };
 
 } // namespace shard
