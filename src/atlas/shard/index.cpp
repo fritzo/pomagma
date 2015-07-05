@@ -1,50 +1,82 @@
+#include "index.hpp"
+#include <algorithm>
 #include <pomagma/atlas/program.hpp>
-#include <pomagma/atlas/shard/index.hpp>
 
 namespace pomagma {
 namespace shard {
 
-inline topic_t Index::find_unary_relation (uint8_t name) const
+inline void Index::ShardedRange::register_lhs (topic_t topic, Ob min_lhs)
 {
-    TODO("add to index: " << name);
+    std::pair<Ob, topic_t> pair(min_lhs, 0);
+    auto i = std::lower_bound(m_min_lhs.begin(), m_min_lhs.end(), pair);
+    m_min_lhs.insert(i, std::make_pair(min_lhs, topic));
 }
 
-inline topic_t Index::find_binary_relation_lhs (uint8_t name, Ob ob) const
+inline topic_t Index::ShardedRange::find_lhs (Ob lhs) const
 {
+    std::pair<Ob, topic_t> pair(lhs, 0);
+    auto i = std::lower_bound(m_min_lhs.begin(), m_min_lhs.end(), pair);
+    POMAGMA_ASSERT1(i != m_min_lhs.end(), "missing lhs: " << lhs);
+    return i->second;
+}
+
+inline topic_t Index::find_unary_relation (uint8_t name) const
+{
+    POMAGMA_ASSERT1(name < m_unary_relations.size(),
+        "unknown unary_relation: " << name);
+    return m_unary_relations[name];
+}
+
+inline topic_t Index::find_binary_relation_lhs (uint8_t name, Ob lhs) const
+{
+    POMAGMA_ASSERT1(name < m_binary_relations.size(),
+        "unknown binary_relation: " << name);
     SharedMutex::SharedLock lock(m_mutex);
-    TODO("add to index: " << name << ", " << ob);
+    return m_binary_relations[name].find_lhs(lhs);
 }
 
 inline topic_t Index::find_binary_relation_all (uint8_t name) const
 {
-    TODO("add to index: " << name);
+    POMAGMA_ASSERT1(name < m_binary_relations.size(),
+        "unknown binary_relation: " << name);
+    return m_binary_relations[name].find_all();
 }
 
 inline topic_t Index::find_injective_function (uint8_t name) const
 {
-    TODO("add to index: " << name);
+    POMAGMA_ASSERT1(name < m_injective_functions.size(),
+        "unknown injective_function: " << name);
+    return m_injective_functions[name];
 }
 
-inline topic_t Index::find_binary_function_lhs (uint8_t name, Ob ob) const
+inline topic_t Index::find_binary_function_lhs (uint8_t name, Ob lhs) const
 {
+    POMAGMA_ASSERT1(name < m_binary_functions.size(),
+        "unknown binary_relation: " << name);
     SharedMutex::SharedLock lock(m_mutex);
-    TODO("add to index: " << name << ", " << ob);
+    return m_binary_functions[name].find_lhs(lhs);
 }
 
 inline topic_t Index::find_binary_function_all (uint8_t name) const
 {
-    TODO("add to index: " << name);
+    POMAGMA_ASSERT1(name < m_binary_functions.size(),
+        "unknown binary_function: " << name);
+    return m_binary_functions[name].find_all();
 }
 
-inline topic_t Index::find_symmetric_function_lhs (uint8_t name, Ob ob) const
+inline topic_t Index::find_symmetric_function_lhs (uint8_t name, Ob lhs) const
 {
+    POMAGMA_ASSERT1(name < m_symmetric_functions.size(),
+        "unknown symmetric_relation: " << name);
     SharedMutex::SharedLock lock(m_mutex);
-    TODO("add to index: " << name << ", " << ob);
+    return m_symmetric_functions[name].find_lhs(lhs);
 }
 
 inline topic_t Index::find_symmetric_function_all (uint8_t name) const
 {
-    TODO("add to index: " << name);
+    POMAGMA_ASSERT1(name < m_symmetric_functions.size(),
+        "unknown symmetric_function: " << name);
+    return m_symmetric_functions[name].find_all();
 }
 
 topic_t Index::try_find_cell_to_execute (
