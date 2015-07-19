@@ -32,16 +32,24 @@ codegen: FORCE
 tasks: FORCE
 	python -m pomagma.compiler batch-extract-tasks
 
+CMAKE = cmake
+ifdef CC
+	CMAKE += -DCMAKE_C_COMPILER=$(CC)
+endif
+ifdef CXX
+	CMAKE += -DCMAKE_CXX_COMPILER=$(CXX)
+endif
+
 debug: FORCE
 	mkdir -p build/debug
 	cd build/debug \
-	  && cmake -DCMAKE_BUILD_TYPE=Debug ../.. \
+	  && $(CMAKE) -DCMAKE_BUILD_TYPE=Debug ../.. \
 	  && $(MAKE)
 
 release: FORCE
 	mkdir -p build/release
 	cd build/release \
-	  && cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo ../.. \
+	  && $(CMAKE) -DCMAKE_BUILD_TYPE=RelWithDebInfo ../.. \
 	  && $(MAKE)
 
 DEBUG_LOG="$(shell pwd)/data/debug.log"

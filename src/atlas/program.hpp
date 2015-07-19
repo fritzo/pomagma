@@ -185,7 +185,8 @@ inline void ProgramParser::dump_continuation (
     ptrdiff_t program_offset = program - m_program_data.data();
     if (POMAGMA_DEBUG_LEVEL) {
         POMAGMA_ASSERT_LE(0, program_offset);
-        POMAGMA_ASSERT_LT(program_offset, m_program_data.size());
+        POMAGMA_ASSERT_LT(
+            static_cast<size_t>(program_offset), m_program_data.size());
     }
     const std::vector<uint8_t> & obs_used = find_obs_used_by(program_offset);
 
