@@ -44,11 +44,11 @@ Client libraries support Python 2.7 and Node.js.
 
 Start a local analysis server with the tiny default atlas
 
-    python -m pomagma analyze       # starts server, Ctrl-C to quit
+    pomagma analyze       # starts server, Ctrl-C to quit
 
 Then in another terminal, start an interactive client session
 
-    python -m pomagma connect       # starts client session
+    pomagma connect       # starts client session
 
 Alternatively, connect using the Python client library
 
@@ -77,11 +77,11 @@ Pomagma ships with a tiny default atlas of ~2000 basic programs.
 
 To get a large prebuild atlas, put your AWS credentials in the environment and
 
-    python -m pomagma pull                  # downloads atlas from S3 bucket
+    pomagma pull                  # downloads atlas from S3 bucket
 
 To start building a custom atlas from scratch
 
-    python -m pomagma make max_size=10000   # kill and restart at any time
+    pomagma make max_size=10000   # kill and restart at any time
 
 Pomagma is parallelized and needs lots of memory to build a large atlas.
 

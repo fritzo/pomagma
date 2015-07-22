@@ -64,8 +64,8 @@ unit-test: all bootstrap FORCE
 	POMAGMA_DEBUG=1 nosetests -v pomagma
 	$(MAKE) cpp-test
 	POMAGMA_DEBUG=1 npm test
-	POMAGMA_DEBUG=1 python -m pomagma.make profile-misc
-	python -m pomagma.make profile-misc
+	POMAGMA_DEBUG=1 pomagma.make profile-misc
+	pomagma.make profile-misc
 
 data/blob:
 	mkdir -p data/blob
@@ -79,19 +79,19 @@ bootstrap: FORCE
 
 h4-test: all FORCE
 	POMAGMA_DB_FORMAT=h5 POMAGMA_DEBUG=1 \
-	  python -m pomagma.make test-atlas h4
+	  pomagma.make test-atlas h4
 	POMAGMA_DB_FORMAT=pb POMAGMA_DEBUG=1 \
-	  python -m pomagma.make test-atlas h4
+	  pomagma.make test-atlas h4
 sk-test: all FORCE
-	POMAGMA_DEBUG=1 python -m pomagma.make test-atlas sk
+	POMAGMA_DEBUG=1 pomagma.make test-atlas sk
 skj-test: all FORCE
-	POMAGMA_DEBUG=1 python -m pomagma.make test-atlas skj
+	POMAGMA_DEBUG=1 pomagma.make test-atlas skj
 skja-test: all FORCE
-	POMAGMA_DEBUG=1 python -m pomagma.make test-atlas skja
+	POMAGMA_DEBUG=1 pomagma.make test-atlas skja
 skrj-test: all FORCE
-	POMAGMA_DEBUG=1 python -m pomagma.make test-atlas skrj
+	POMAGMA_DEBUG=1 pomagma.make test-atlas skrj
 batch-test: all FORCE
-	POMAGMA_DEBUG=1 python -m pomagma.make test-atlas
+	POMAGMA_DEBUG=1 pomagma.make test-atlas
 
 small-test: all FORCE
 	$(MAKE) unit-test
@@ -108,25 +108,25 @@ test: all FORCE
 big-test: test FORCE
 	$(MAKE) unit-test
 	$(MAKE) batch-test
-	POMAGMA_DEBUG=1 python -m pomagma.make test-analyst
+	POMAGMA_DEBUG=1 pomagma.make test-analyst
 	@echo '----------------'
 	@echo 'PASSED ALL TESTS'
 
 h4: all
-	python -m pomagma make h4
+	pomagma make h4
 sk: all
-	python -m pomagma make sk
+	pomagma make sk
 skj: all
-	python -m pomagma make skj
+	pomagma make skj
 skja: all
-	python -m pomagma make skja
+	pomagma make skja
 skrj: all
-	python -m pomagma make skrj
+	pomagma make skrj
 
 profile:
-	python -m pomagma.make profile-misc
-	#python -m pomagma.make profile-surveyor
-	#python -m pomagma.make profile-cartographer
+	pomagma.make profile-misc
+	#pomagma.make profile-surveyor
+	#pomagma.make profile-cartographer
 
 clean: FORCE
 	rm -rf build lib
