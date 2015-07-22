@@ -1,7 +1,9 @@
 #tables
 boto
 contextlib2
+logic
 mock
+multipledispatch
 nose
 parsable
 pep8
@@ -9,3 +11,4 @@ protobuf
 pyflakes
 pyzmq
 simplejson
+toolz
