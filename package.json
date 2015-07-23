@@ -24,14 +24,14 @@
     "LICENSE"
   ],
   "dependencies": {
-    "debug": "^2.1.0",
+    "debug": "^2.2.0",
     "lodash": "^2.4.2",
     "protobufjs": "^3.8.2",
     "zmq": "^2.12.0"
   },
   "devDependencies": {
-    "chai": "^1.9.1",
-    "mocha": "^1.21.4"
+    "chai": "^1.10.0",
+    "mocha": "^1.21.5"
   },
   "scripts": {
     "test": "mocha --reporter spec src/test.js"
