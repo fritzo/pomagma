@@ -1,5 +1,6 @@
 import os
 import re
+import parsable
 import setuptools
 
 # TODO add MANIFEST.in as described in
@@ -18,24 +19,6 @@ import setuptools
 #     packages=packages,
 #     package_dir={'pomagma': 'src'},
 # )
-
-
-def find_entry_points():
-    points = []
-    src = os.path.join(os.path.dirname(__file__), 'pomagma')
-    for root, dirnames, filenames in os.walk(src, followlinks=True):
-        for filename in filenames:
-            if filename.endswith('.py'):
-                path = os.path.join(root, filename)
-                path = os.path.relpath(path, os.path.dirname(src))
-                with open(path) as f:
-                    for line in f:
-                        if re.search('^import parsable', line):
-                            module = path[:-3].replace('/', '.')
-                            name = module.replace('.__main__', '')
-                            points.append('{} = {}'.format(name, module))
-                            break
-    return map('{}:parsable.dispatch'.format, points)
 
 
 version = None
@@ -59,7 +42,7 @@ config = {
     'maintainer_email': 'fritz.obermeyer@gmail.com',
     'license': 'Apache 2.0',
     'packages': setuptools.find_packages(exclude='src'),
-    'entry_points': {'console_scripts': find_entry_points()},
+    'entry_points': parsable.find_entry_points('pomagma'),
 }
 
 setuptools.setup(**config)
