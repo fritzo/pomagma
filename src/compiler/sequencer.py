@@ -98,7 +98,7 @@ def merge_programs(program1, program2):
     program2 = program2[i:]
     assert program1 and program2
     jump, padding = get_jump(sizeof_program(program1))
-    program.append(('SEQUENCE', str(jump)))
+    program.append(('LOGICAL_CONJOIN', str(jump)))
     program += list(program1)
     program += [('PADDING',)] * padding
     program += list(program2)

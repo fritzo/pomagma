@@ -136,10 +136,21 @@ bool VirtualMachine::_execute (Program program, Context * context) const
             POMAGMA_ERROR("executed padding");
         } break;
 
-        case SEQUENCE: {
+        // unix-style return codes: true = success, false = failure.
+        case LOGICAL_FAIL: {
+            return true;
+        } break;
+
+        case LOGICAL_CONJOIN: {
             size_t jump = eval_float53(pop_arg(program));
             return _execute(program, context)
                 or _execute(program + jump, context);
+        } break;
+
+        case LOGICAL_DISJOIN: {
+            size_t jump = eval_float53(pop_arg(program));
+            return _execute(program, context)
+                and _execute(program + jump, context);
         } break;
 
         case GIVEN_EXISTS: {

@@ -106,11 +106,11 @@ public:
     {
         POMAGMA_ASSERT(
             m_jumps.empty(),
-            "line " << lineno << ": unterminated SEQUENCE command"
+            "line " << lineno << ": unterminated compound command"
             ", len(jumps) = " << m_jumps.size());
         POMAGMA_ASSERT(
             m_stack.size() == 1,
-            "line " << lineno << ": unterminated SEQUENCE command"
+            "line " << lineno << ": unterminated compound command"
             ", len(stack) = " << m_stack.size());
         if (m_warn_unused) {
             m_stack.back().check_unused(lineno);
@@ -274,7 +274,7 @@ std::vector<Listing> ProgramParser::parse (std::istream & infile)
             sets.pop(lineno);
         }
 
-        if (op_code == SEQUENCE) {
+        if (op_code == LOGICAL_CONJOIN or op_code == LOGICAL_DISJOIN) {
             uint8_t jump = program.back();
             obs.push(jump, lineno);
             sets.push(jump, lineno);

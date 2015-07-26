@@ -66,7 +66,9 @@ enum OpArgType : uint8_t
 
 #define POMAGMA_OP_CODES(DO) \
     DO(PADDING, ({})) \
-    DO(SEQUENCE, ({UINT8})) \
+    DO(LOGICAL_FAIL, ({})) \
+    DO(LOGICAL_CONJOIN, ({UINT8})) \
+    DO(LOGICAL_DISJOIN, ({UINT8})) \
     DO(GIVEN_EXISTS, ({NEW_OB})) \
     DO(GIVEN_UNARY_RELATION, ({UNARY_RELATION, NEW_OB})) \
     DO(GIVEN_BINARY_RELATION, ({BINARY_RELATION, NEW_OB, NEW_OB})) \
@@ -167,6 +169,7 @@ static const size_t g_op_code_count = 0
     POMAGMA_OP_CODES(DO)
 #undef DO
 ;
+static_assert(g_op_code_count <= 256, "too many op codes");
 
 //----------------------------------------------------------------------------
 // Continuations.

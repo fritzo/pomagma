@@ -180,7 +180,9 @@ topic_t Index::try_find_cell_to_execute (
 
         // These can execute in any cell.
         case PADDING:
-        case SEQUENCE:
+        case LOGICAL_FAIL:
+        case LOGICAL_CONJOIN:
+        case LOGICAL_DISJOIN:
         case GIVEN_EXISTS:
         case GIVEN_UNARY_RELATION:
         case GIVEN_BINARY_RELATION:
