@@ -3,7 +3,7 @@ from itertools import izip
 from nose.tools import assert_false
 from pomagma.atlas.bootstrap import THEORY
 from pomagma.atlas.bootstrap import WORLD
-from pomagma.util.testing import for_each_context_args
+from pomagma.util.testing import for_each_context
 import pomagma.analyst
 import pomagma.cartographer
 import pomagma.surveyor
@@ -124,25 +124,60 @@ def test_simplify():
 
 
 SOLVE_EXAMPLES = [
-    (('x', ['LESS x I', 'LESS I x']), ['I']),
-    (('x', ['LESS x I', 'LESS I x'], 999), ['I']),
-    (('APP x K', ['LESS x I', 'LESS I x']), ['K']),
-    (('APP K x', ['LESS x I', 'LESS I x']), ['APP C K']),
-    (('x', ['LESS TOP x']), ['TOP']),
-    (('x', ['FIXES TOP x']), ['TOP']),
-    (('x', ['EQUAL APP x x x'], 4), ['I', 'BOT', 'TOP', 'V']),
-    (('x', ['EQUAL APP x x x', 'NLESS x BOT'], 3), ['I', 'TOP', 'V']),
-    (('x', ['EQUAL APP x TOP APP x BOT', 'NLESS APP K APP x I x']), []),
+    {
+        'args': ('x', ['LESS x I', 'LESS I x']),
+        'necessary': ['I'],
+    },
+    {
+        'args': ('x', ['LESS x I', 'LESS I x'], 999),
+        'necessary': ['I'],
+    },
+    {
+        'args': ('x', ['LESS TOP x']),
+        'necessary': ['TOP'],
+    },
+    {
+        'args': ('x', ['FIXES TOP x']),
+        'necessary': ['TOP'],
+    },
+    {
+        'args': ('x', ['EQUAL APP x x x'], 4),
+        'necessary': ['I', 'BOT', 'TOP', 'V'],
+    },
+    {
+        'args': ('x', ['EQUAL APP x x x', 'NLESS x BOT'], 3),
+        'necessary': ['I', 'TOP', 'V'],
+    },
+    {
+        'args': ('x', ['EQUAL APP x TOP APP x BOT', 'NLESS APP K APP x I x']),
+        'necessary': [],
+    },
+    {
+        'args': ('APP x K', ['LESS x I', 'LESS I x']),
+        'necessary': ['K'],
+    },
+    {
+        'args': ('APP K x', ['LESS x I', 'LESS I x']),
+        'necessary': ['APP C K'],
+    },
     # FIXME these cases fail
-    # (('x', ['EQUAL x I']), ['I']),
-    # (('x', ['NLESS x x']), []),
+    # {
+    #     'args': ('x', ['EQUAL x I']),
+    #     'necessary': ['I'],
+    # },
+    # {
+    #     'args': ('x', ['NLESS x x']),
+    #     'necessary': [],
+    # },
 ]
 
 
-@for_each_context_args(load, SOLVE_EXAMPLES)
-def test_solve(db, args, expected):
-    actual = db.solve(*args)
-    assert_equal_example(expected, actual['necessary'], args)
+@for_each_context(load, SOLVE_EXAMPLES)
+def test_solve(db, example):
+    actual = db.solve(*example['args'])
+    for key in ['necessary', 'possible']:
+        if key in example:
+            assert_equal_example(example[key], actual[key], (example, key))
 
 
 def test_validate():

@@ -33,13 +33,13 @@ def for_each_kwargs(examples):
     return decorator
 
 
-def for_each_context_args(get_context, examples):
+def for_each_context(get_context, examples):
 
     def decorator(fun):
         state = {}
 
         def fun_one(i):
-            fun(state['context'], *examples[i])
+            fun(state['context'], examples[i])
 
         @functools.wraps(fun)
         def decorated():
