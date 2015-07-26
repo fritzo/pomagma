@@ -255,7 +255,9 @@ public:
     bool operator == (const DenseSet & other) const;
     bool operator != (const DenseSet & s) const { return not operator==(s); }
     bool operator <= (const DenseSet & other) const;
-    bool disjoint    (const DenseSet & other) const;
+    bool likely_disjoint (const DenseSet & other) const;
+    bool unlikely_disjoint (const DenseSet & other) const;
+    bool disjoint    (const DenseSet & s) const { return likely_disjoint(s); }
     bool intersects  (const DenseSet & s) const { return not disjoint(s); }
     void operator += (const DenseSet & other);
     void operator *= (const DenseSet & other);

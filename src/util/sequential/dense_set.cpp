@@ -221,7 +221,20 @@ bool DenseSet::operator<= (const DenseSet & other) const
     return not u;
 }
 
-bool DenseSet::disjoint (const DenseSet & other) const
+bool DenseSet::unlikely_disjoint (const DenseSet & other) const
+{
+    POMAGMA_ASSERT1(item_dim() == other.item_dim(), "item_dim mismatch");
+
+    const Word * restrict s = assume_aligned(m_words);
+    const Word * restrict t = assume_aligned(other.m_words);
+
+    for (size_t m = 0, M = m_word_dim; m < M; ++m) {
+        if (s[m] & t[m]) return false;
+    }
+    return true;
+}
+
+bool DenseSet::likely_disjoint (const DenseSet & other) const
 {
     POMAGMA_ASSERT1(item_dim() == other.item_dim(), "item_dim mismatch");
 

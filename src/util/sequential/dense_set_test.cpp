@@ -132,7 +132,7 @@ void test_iterator (size_t size, rng_t & rng)
     POMAGMA_ASSERT_EQ(count, true_count);
 }
 
-void test_operations (size_t size, rng_t & rng)
+void test_operations (size_t size, float prob, rng_t & rng)
 {
     POMAGMA_INFO("Testing DenseSet operations");
 
@@ -143,10 +143,10 @@ void test_operations (size_t size, rng_t & rng)
     DenseSet expected(size);
     DenseSet actual(size);
 
-    w.fill_random(rng);
-    x.fill_random(rng);
-    y.fill_random(rng);
-    z.fill_random(rng);
+    w.fill_random(rng, prob);
+    x.fill_random(rng, prob);
+    y.fill_random(rng, prob);
+    z.fill_random(rng, prob);
 
     POMAGMA_ASSERT(bool(w.count_items()) ^ w.empty(), ".empty() is wrong");
     POMAGMA_ASSERT(bool(x.count_items()) ^ x.empty(), ".empty() is wrong");
@@ -319,28 +319,44 @@ void test_operations (size_t size, rng_t & rng)
     actual_rep.ensure(y, actual_diff);
     POMAGMA_ASSERT(actual_rep == expected_rep, "merge rep is wrong");
     POMAGMA_ASSERT(actual_diff == expected_diff, "merge diff is wrong");
+
+    POMAGMA_INFO("testing disjoint");
+    {
+        bool xy = true;
+        for (Ob i = 1; i <= size; ++i) {
+            if (x.contains(i) and y.contains(i)) {
+                xy = false;
+            }
+        }
+        POMAGMA_ASSERT_EQ(xy, x.likely_disjoint(y));
+        POMAGMA_ASSERT_EQ(xy, x.unlikely_disjoint(y));
+        actual.insert_all();
+        actual_diff.set_diff(actual, x);
+        POMAGMA_ASSERT_EQ(true, x.likely_disjoint(actual_diff));
+        POMAGMA_ASSERT_EQ(true, x.unlikely_disjoint(actual_diff));
+    }
 }
 
-void test_max_item (size_t size, rng_t & rng)
+void test_max_item (size_t size, float prob, rng_t & rng)
 {
     POMAGMA_INFO("Testing DenseSet operations");
 
     DenseSet set(size);
-    std::vector<float> probs = {0.0, 0.0001, 0.001, 0.01, 0.1, 1.0};
-    for (float prob : probs) {
-        set.fill_random(rng, prob);
-        size_t expected = 0;
-        for (auto i = set.iter(); i.ok(); i.next()) {
-            expected = *i;
-        }
-        size_t actual = set.max_item();
-        POMAGMA_ASSERT_EQ(actual, expected);
+    set.fill_random(rng, prob);
+    size_t expected = 0;
+    for (auto i = set.iter(); i.ok(); i.next()) {
+        expected = *i;
     }
+    size_t actual = set.max_item();
+    POMAGMA_ASSERT_EQ(actual, expected);
 }
 
 int main ()
 {
     Log::Context log_context("Dense Set Test");
+
+    const std::vector<float> probs =
+        {0.0, 0.0001, 0.001, 0.01, 0.1, 0.5, 0.9, 0.99, 0.999, 0.9999, 1.0};
 
     test_sizes();
 
@@ -351,8 +367,10 @@ int main ()
     for (size_t size = 0; size < 100; ++size) {
         test_even(size);
         test_iterator(size, rng);
-        test_operations(size, rng);
-        test_max_item(size, rng);
+        for (float prob : probs) {
+            test_operations(size, prob, rng);
+            test_max_item(size, prob, rng);
+        }
     }
 
     for (size_t exponent = 1; exponent <= 10; ++exponent) {
@@ -360,8 +378,10 @@ int main ()
         test_basic(size);
         test_even(size);
         test_iterator(size, rng);
-        test_operations(size, rng);
-        test_max_item(size, rng);
+        for (float prob : probs) {
+            test_operations(size, prob, rng);
+            test_max_item(size, prob, rng);
+        }
     }
 
     return 0;
