@@ -96,6 +96,8 @@ inline const SymmetricFunction * VirtualMachine::symmetric_function (
     return ptr;
 }
 
+namespace {
+
 static const char * const spaces_256 =
 "                                                                "
 "                                                                "
@@ -103,17 +105,30 @@ static const char * const spaces_256 =
 "                                                                "
 ;
 
-void VirtualMachine::_execute (Program program, Context * context) const
+class ContextTrace
 {
-    OpCode op_code = pop_op_code(program);
-
-    if (POMAGMA_TRACE_VM) {
+    Context & m_context;
+public:
+    explicit ContextTrace (Context * context, OpCode op_code)
+        : m_context(*context)
+    {
         POMAGMA_ASSERT_LE(context->trace, 256);
         POMAGMA_DEBUG(
             (spaces_256 + 256 - context->trace) <<
             g_op_code_names[op_code]);
-        ++context->trace;
+        ++m_context.trace;
     }
+    ~ContextTrace () { --m_context.trace; }
+};
+} // namespace
+
+bool VirtualMachine::_execute (Program program, Context * context) const
+{
+    OpCode op_code = pop_op_code(program);
+
+#ifdef POMAGMA_TRACE_VM
+    ContextTrace(context, op_code);
+#endif // POMAGMA_TRACE_VM
 
     switch (op_code) {
 
@@ -123,57 +138,57 @@ void VirtualMachine::_execute (Program program, Context * context) const
 
         case SEQUENCE: {
             size_t jump = eval_float53(pop_arg(program));
-            _execute(program, context);
-            _execute(program + jump, context);
+            return _execute(program, context)
+                or _execute(program + jump, context);
         } break;
 
         case GIVEN_EXISTS: {
             pop_ob(program, context);
-            _execute(program, context);
+            return _execute(program, context);
         } break;
 
         case GIVEN_UNARY_RELATION: {
             pop_unary_relation(program);
             pop_ob(program, context);
-            _execute(program, context);
+            return _execute(program, context);
         } break;
 
         case GIVEN_BINARY_RELATION: {
             pop_binary_relation(program);
             pop_ob(program, context);
             pop_ob(program, context);
-            _execute(program, context);
+            return _execute(program, context);
         } break;
 
         case GIVEN_NULLARY_FUNCTION: {
             pop_nullary_function(program);
-            _execute(program, context);
+            return _execute(program, context);
         } break;
 
         case GIVEN_INJECTIVE_FUNCTION: {
             pop_injective_function(program);
             pop_ob(program, context);
-            _execute(program, context);
+            return _execute(program, context);
         } break;
 
         case GIVEN_BINARY_FUNCTION: {
             pop_binary_function(program);
             pop_ob(program, context);
             pop_ob(program, context);
-            _execute(program, context);
+            return _execute(program, context);
         } break;
 
         case GIVEN_SYMMETRIC_FUNCTION: {
             pop_symmetric_function(program);
             pop_ob(program, context);
             pop_ob(program, context);
-            _execute(program, context);
+            return _execute(program, context);
         } break;
 
         case LETS_UNARY_RELATION: {
             UnaryRelation & rel = pop_unary_relation(program);
             pop_set(program, context) = rel.get_set().raw_data();
-            _execute(program, context);
+            return _execute(program, context);
         } break;
 
         case LETS_BINARY_RELATION_LHS: {
@@ -181,7 +196,7 @@ void VirtualMachine::_execute (Program program, Context * context) const
             Ob lhs = pop_ob(program, context);
             auto & rhs_set = pop_set(program, context);
             rhs_set = rel.get_Lx_set(lhs).raw_data();
-            _execute(program, context);
+            return _execute(program, context);
         } break;
 
         case LETS_BINARY_RELATION_RHS: {
@@ -189,19 +204,19 @@ void VirtualMachine::_execute (Program program, Context * context) const
             auto & lhs_set = pop_set(program, context);
             Ob rhs = pop_ob(program, context);
             lhs_set = rel.get_Rx_set(rhs).raw_data();
-            _execute(program, context);
+            return _execute(program, context);
         } break;
 
         case LETS_INJECTIVE_FUNCTION: {
             InjectiveFunction & fun = pop_injective_function(program);
             pop_set(program, context) = fun.defined().raw_data();
-            _execute(program, context);
+            return _execute(program, context);
         } break;
 
         case LETS_INJECTIVE_FUNCTION_INVERSE: {
             InjectiveFunction & fun = pop_injective_function(program);
             pop_set(program, context) = fun.inverse_defined().raw_data();
-            _execute(program, context);
+            return _execute(program, context);
         } break;
 
         case LETS_BINARY_FUNCTION_LHS: {
@@ -209,7 +224,7 @@ void VirtualMachine::_execute (Program program, Context * context) const
             Ob lhs = pop_ob(program, context);
             auto & rhs_set = pop_set(program, context);
             rhs_set = fun.get_Lx_set(lhs).raw_data();
-            _execute(program, context);
+            return _execute(program, context);
         } break;
 
         case LETS_BINARY_FUNCTION_RHS: {
@@ -217,14 +232,14 @@ void VirtualMachine::_execute (Program program, Context * context) const
             auto & lhs_set = pop_set(program, context);
             Ob rhs = pop_ob(program, context);
             lhs_set = fun.get_Rx_set(rhs).raw_data();
-            _execute(program, context);
+            return _execute(program, context);
         } break;
 
         case LETS_SYMMETRIC_FUNCTION_LHS: {
             SymmetricFunction & fun = pop_symmetric_function(program);
             Ob lhs = pop_ob(program, context);
             pop_set(program, context) = fun.get_Lx_set(lhs).raw_data();
-            _execute(program, context);
+            return _execute(program, context);
         } break;
 
         case FOR_NEG: {
@@ -236,7 +251,7 @@ void VirtualMachine::_execute (Program program, Context * context) const
             }});
             for (; iter.ok(); iter.next()) {
                 ob = *iter;
-                _execute(program, context);
+                if (unlikely(_execute(program, context))) return true;
             }
         } break;
 
@@ -250,7 +265,7 @@ void VirtualMachine::_execute (Program program, Context * context) const
             }});
             for (; iter.ok(); iter.next()) {
                 ob = *iter;
-                _execute(program, context);
+                if (unlikely(_execute(program, context))) return true;
             }
         } break;
 
@@ -263,7 +278,7 @@ void VirtualMachine::_execute (Program program, Context * context) const
             }});
             for (; iter.ok(); iter.next()) {
                 ob = *iter;
-                _execute(program, context);
+                if (unlikely(_execute(program, context))) return true;
             }
         } break;
 
@@ -277,7 +292,7 @@ void VirtualMachine::_execute (Program program, Context * context) const
             }});
             for (; iter.ok(); iter.next()) {
                 ob = *iter;
-                _execute(program, context);
+                if (unlikely(_execute(program, context))) return true;
             }
         } break;
 
@@ -290,7 +305,7 @@ void VirtualMachine::_execute (Program program, Context * context) const
             }});
             for (; iter.ok(); iter.next()) {
                 ob = *iter;
-                _execute(program, context);
+                if (unlikely(_execute(program, context))) return true;
             }
         } break;
 
@@ -304,7 +319,7 @@ void VirtualMachine::_execute (Program program, Context * context) const
             }});
             for (; iter.ok(); iter.next()) {
                 ob = *iter;
-                _execute(program, context);
+                if (unlikely(_execute(program, context))) return true;
             }
         } break;
 
@@ -319,7 +334,7 @@ void VirtualMachine::_execute (Program program, Context * context) const
             }});
             for (; iter.ok(); iter.next()) {
                 ob = *iter;
-                _execute(program, context);
+                if (unlikely(_execute(program, context))) return true;
             }
         } break;
 
@@ -333,7 +348,7 @@ void VirtualMachine::_execute (Program program, Context * context) const
             }});
             for (; iter.ok(); iter.next()) {
                 ob = *iter;
-                _execute(program, context);
+                if (unlikely(_execute(program, context))) return true;
             }
         } break;
 
@@ -348,7 +363,7 @@ void VirtualMachine::_execute (Program program, Context * context) const
             }});
             for (; iter.ok(); iter.next()) {
                 ob = *iter;
-                _execute(program, context);
+                if (unlikely(_execute(program, context))) return true;
             }
         } break;
 
@@ -364,7 +379,7 @@ void VirtualMachine::_execute (Program program, Context * context) const
             }});
             for (; iter.ok(); iter.next()) {
                 ob = *iter;
-                _execute(program, context);
+                if (unlikely(_execute(program, context))) return true;
             }
         } break;
 
@@ -381,7 +396,7 @@ void VirtualMachine::_execute (Program program, Context * context) const
             }});
             for (; iter.ok(); iter.next()) {
                 ob = *iter;
-                _execute(program, context);
+                if (unlikely(_execute(program, context))) return true;
             }
         } break;
 
@@ -389,7 +404,7 @@ void VirtualMachine::_execute (Program program, Context * context) const
             Ob & ob = pop_ob(program, context);
             for (auto iter = carrier().iter(); iter.ok(); iter.next()) {
                 ob = *iter;
-                _execute(program, context);
+                if (unlikely(_execute(program, context))) return true;
             }
         } break;
 
@@ -398,7 +413,7 @@ void VirtualMachine::_execute (Program program, Context * context) const
             Ob & key = pop_ob(program, context);
             for (auto iter = rel.iter(); iter.ok(); iter.next()) {
                 key = *iter;
-                _execute(program, context);
+                if (unlikely(_execute(program, context))) return true;
             }
         } break;
 
@@ -408,7 +423,7 @@ void VirtualMachine::_execute (Program program, Context * context) const
             Ob & rhs = pop_ob(program, context);
             for (auto iter = rel.iter_lhs(lhs); iter.ok(); iter.next()) {
                 rhs = *iter;
-                _execute(program, context);
+                if (unlikely(_execute(program, context))) return true;
             }
         } break;
 
@@ -418,7 +433,7 @@ void VirtualMachine::_execute (Program program, Context * context) const
             Ob & rhs = pop_ob(program, context);
             for (auto iter = rel.iter_rhs(rhs); iter.ok(); iter.next()) {
                 lhs = *iter;
-                _execute(program, context);
+                if (unlikely(_execute(program, context))) return true;
             }
         } break;
 
@@ -427,7 +442,7 @@ void VirtualMachine::_execute (Program program, Context * context) const
             Ob & val = pop_ob(program, context);
             if (Ob found = fun.find()) {
                 val = found;
-                _execute(program, context);
+                if (unlikely(_execute(program, context))) return true;
             }
         } break;
 
@@ -438,7 +453,7 @@ void VirtualMachine::_execute (Program program, Context * context) const
             for (auto iter = fun.iter(); iter.ok(); iter.next()) {
                 key = *iter;
                 val = fun.find(key);
-                _execute(program, context);
+                if (unlikely(_execute(program, context))) return true;
             }
         } break;
 
@@ -448,7 +463,7 @@ void VirtualMachine::_execute (Program program, Context * context) const
             Ob & val = pop_ob(program, context);
             if (Ob found = fun.find(key)) {
                 val = found;
-                _execute(program, context);
+                if (unlikely(_execute(program, context))) return true;
             }
         } break;
 
@@ -458,7 +473,7 @@ void VirtualMachine::_execute (Program program, Context * context) const
             Ob & val = pop_ob(program, context);
             if (Ob found = fun.inverse_find(val)) {
                 key = found;
-                _execute(program, context);
+                if (unlikely(_execute(program, context))) return true;
             }
         } break;
 
@@ -470,7 +485,7 @@ void VirtualMachine::_execute (Program program, Context * context) const
             for (auto iter = fun.iter_lhs(lhs); iter.ok(); iter.next()) {
                 rhs = *iter;
                 val = fun.find(lhs, rhs);
-                _execute(program, context);
+                if (unlikely(_execute(program, context))) return true;
             }
         } break;
 
@@ -482,7 +497,7 @@ void VirtualMachine::_execute (Program program, Context * context) const
             for (auto iter = fun.iter_rhs(rhs); iter.ok(); iter.next()) {
                 lhs = *iter;
                 val = fun.find(lhs, rhs);
-                _execute(program, context);
+                if (unlikely(_execute(program, context))) return true;
             }
         } break;
 
@@ -496,7 +511,7 @@ void VirtualMachine::_execute (Program program, Context * context) const
             for (auto iter = fun.iter_val(val); iter.ok(); iter.next()) {
                 lhs = iter.lhs();
                 rhs = iter.rhs();
-                _execute(program, context);
+                if (unlikely(_execute(program, context))) return true;
             }
         } break;
 
@@ -508,7 +523,7 @@ void VirtualMachine::_execute (Program program, Context * context) const
             auto iter = fun.iter_val_lhs(val, lhs);
             for (; iter.ok(); iter.next()) {
                 rhs = *iter;
-                _execute(program, context);
+                if (unlikely(_execute(program, context))) return true;
             }
         } break;
 
@@ -520,7 +535,7 @@ void VirtualMachine::_execute (Program program, Context * context) const
             auto iter = fun.iter_val_rhs(val, rhs);
             for (; iter.ok(); iter.next()) {
                 lhs = *iter;
-                _execute(program, context);
+                if (unlikely(_execute(program, context))) return true;
             }
         } break;
 
@@ -533,7 +548,7 @@ void VirtualMachine::_execute (Program program, Context * context) const
             Ob & val = pop_ob(program, context);
             if (Ob found = fun.find(lhs, rhs)) {
                 val = found;
-                _execute(program, context);
+                if (unlikely(_execute(program, context))) return true;
             }
         } break;
 
@@ -545,7 +560,7 @@ void VirtualMachine::_execute (Program program, Context * context) const
             for (auto iter = fun.iter_lhs(lhs); iter.ok(); iter.next()) {
                 rhs = *iter;
                 val = fun.find(lhs, rhs);
-                _execute(program, context);
+                if (unlikely(_execute(program, context))) return true;
             }
         } break;
 
@@ -559,7 +574,7 @@ void VirtualMachine::_execute (Program program, Context * context) const
             for (auto iter = fun.iter_val(val); iter.ok(); iter.next()) {
                 lhs = iter.lhs();
                 rhs = iter.rhs();
-                _execute(program, context);
+                if (unlikely(_execute(program, context))) return true;
             }
         } break;
 
@@ -571,7 +586,7 @@ void VirtualMachine::_execute (Program program, Context * context) const
             auto iter = fun.iter_val_lhs(val, lhs);
             for (; iter.ok(); iter.next()) {
                 rhs = *iter;
-                _execute(program, context);
+                if (unlikely(_execute(program, context))) return true;
             }
         } break;
 
@@ -584,18 +599,18 @@ void VirtualMachine::_execute (Program program, Context * context) const
             Ob & val = pop_ob(program, context);
             if (Ob found = fun.find(lhs, rhs)) {
                 val = found;
-                _execute(program, context);
+                if (unlikely(_execute(program, context))) return true;
             }
         } break;
 
         case FOR_BLOCK: {
-            _execute(program, context);
+            return _execute(program, context);
         } break;
 
         case IF_BLOCK: {
             Ob & ob = pop_ob(program, context);
             if (ob / block_size == context->block) {
-                _execute(program, context);
+                if (unlikely(_execute(program, context))) return true;
             }
         } break;
 
@@ -603,7 +618,7 @@ void VirtualMachine::_execute (Program program, Context * context) const
             Ob & lhs = pop_ob(program, context);
             Ob & rhs = pop_ob(program, context);
             if (lhs == rhs) {
-                _execute(program, context);
+                if (unlikely(_execute(program, context))) return true;
             }
         } break;
 
@@ -611,7 +626,7 @@ void VirtualMachine::_execute (Program program, Context * context) const
             UnaryRelation & rel = pop_unary_relation(program);
             Ob & key = pop_ob(program, context);
             if (rel.find(key)) {
-                _execute(program, context);
+                if (unlikely(_execute(program, context))) return true;
             }
         } break;
 
@@ -620,7 +635,7 @@ void VirtualMachine::_execute (Program program, Context * context) const
             Ob & lhs = pop_ob(program, context);
             Ob & rhs = pop_ob(program, context);
             if (rel.find(lhs, rhs)) {
-                _execute(program, context);
+                if (unlikely(_execute(program, context))) return true;
             }
         } break;
 
@@ -628,7 +643,7 @@ void VirtualMachine::_execute (Program program, Context * context) const
             NullaryFunction & fun = pop_nullary_function(program);
             Ob & val = pop_ob(program, context);
             if (fun.find() == val) {
-                _execute(program, context);
+                if (unlikely(_execute(program, context))) return true;
             }
         } break;
 
@@ -637,7 +652,7 @@ void VirtualMachine::_execute (Program program, Context * context) const
             Ob & key = pop_ob(program, context);
             Ob & val = pop_ob(program, context);
             if (fun.find(key) == val) {
-                _execute(program, context);
+                if (unlikely(_execute(program, context))) return true;
             }
         } break;
 
@@ -647,7 +662,7 @@ void VirtualMachine::_execute (Program program, Context * context) const
             Ob & rhs = pop_ob(program, context);
             Ob & val = pop_ob(program, context);
             if (fun.find(lhs, rhs) == val) {
-                _execute(program, context);
+                if (unlikely(_execute(program, context))) return true;
             }
         } break;
 
@@ -657,7 +672,7 @@ void VirtualMachine::_execute (Program program, Context * context) const
             Ob & rhs = pop_ob(program, context);
             Ob & val = pop_ob(program, context);
             if (fun.find(lhs, rhs) == val) {
-                _execute(program, context);
+                if (unlikely(_execute(program, context))) return true;
             }
         } break;
 
@@ -666,7 +681,7 @@ void VirtualMachine::_execute (Program program, Context * context) const
             Ob & val = pop_ob(program, context);
             val = fun.find();
             POMAGMA_ASSERT1(val, "undefined");
-            _execute(program, context);
+            return _execute(program, context);
         } break;
 
         case LET_INJECTIVE_FUNCTION: {
@@ -675,7 +690,7 @@ void VirtualMachine::_execute (Program program, Context * context) const
             Ob & val = pop_ob(program, context);
             val = fun.find(key);
             POMAGMA_ASSERT1(val, "undefined");
-            _execute(program, context);
+            return _execute(program, context);
         } break;
 
         case LET_BINARY_FUNCTION: {
@@ -685,7 +700,7 @@ void VirtualMachine::_execute (Program program, Context * context) const
             Ob & val = pop_ob(program, context);
             val = fun.find(lhs, rhs);
             POMAGMA_ASSERT1(val, "undefined");
-            _execute(program, context);
+            return _execute(program, context);
         } break;
 
         case LET_SYMMETRIC_FUNCTION: {
@@ -695,7 +710,7 @@ void VirtualMachine::_execute (Program program, Context * context) const
             Ob & val = pop_ob(program, context);
             val = fun.find(lhs, rhs);
             POMAGMA_ASSERT1(val, "undefined");
-            _execute(program, context);
+            return _execute(program, context);
         } break;
 
         case INFER_EQUAL: {
@@ -884,9 +899,7 @@ void VirtualMachine::_execute (Program program, Context * context) const
     #endif // POMAGMA_HAS_INVERSE_INDEX
     }
 
-    if (POMAGMA_TRACE_VM) {
-        --context->trace;
-    }
+    return false;
 }
 
 //----------------------------------------------------------------------------

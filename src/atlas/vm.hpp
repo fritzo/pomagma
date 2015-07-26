@@ -31,46 +31,46 @@ public:
 
     void load (Signature & signature);
 
-    void execute (Program program) const
+    bool execute (Program program) const
     {
         Context * context = new_context();
         ProgramProfiler::Block profiler(context->profiler, program);
-        _execute(program, context);
+        return _execute(program, context);
     }
 
-    void execute (Program program, Ob arg) const
+    bool execute (Program program, Ob arg) const
     {
         Context * context = new_context();
         context->obs[0] = arg;
         ProgramProfiler::Block profiler(context->profiler, program);
-        _execute(program, context);
+        return _execute(program, context);
     }
 
-    void execute (Program program, Ob arg1, Ob arg2) const
+    bool execute (Program program, Ob arg1, Ob arg2) const
     {
         Context * context = new_context();
         context->obs[0] = arg1;
         context->obs[1] = arg2;
         ProgramProfiler::Block profiler(context->profiler, program);
-        _execute(program, context);
+        return _execute(program, context);
     }
 
-    void execute (Program program, Ob arg1, Ob arg2, Ob arg3) const
+    bool execute (Program program, Ob arg1, Ob arg2, Ob arg3) const
     {
         Context * context = new_context();
         context->obs[0] = arg1;
         context->obs[1] = arg2;
         context->obs[2] = arg3;
         ProgramProfiler::Block profiler(context->profiler, program);
-        _execute(program, context);
+        return _execute(program, context);
     }
 
-    void execute_block (Program program, size_t block) const
+    bool execute_block (Program program, size_t block) const
     {
         Context * context = new_context();
         context->block = block;
         ProgramProfiler::Block profiler(context->profiler, program);
-        _execute(program, context);
+        return _execute(program, context);
     }
 
     const UnaryRelation * unary_relation (uint8_t index) const;
@@ -96,7 +96,9 @@ private:
         return context;
     }
 
-    void _execute (Program program, Context * context) const;
+    // returns true to exit early
+    bool _execute (Program program, Context * context) const
+        __attribute__((warn_unused_result));
 
     static uint8_t pop_arg (Program & program) { return *program++; }
 

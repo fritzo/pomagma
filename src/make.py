@@ -169,7 +169,12 @@ def profile_misc():
 
 
 @parsable.command
-def profile_surveyor(theory='skj', grow_by=64, extra_size=0, tool='time'):
+def profile_surveyor(
+        theory='skj',
+        grow_by=64,
+        extra_size=0,
+        runs=1,
+        tool='time'):
     '''
     Profile surveyor on random region of world.
     Available tools: time, valgrind, cachegrind, callgrind, helgrind
@@ -186,8 +191,9 @@ def profile_surveyor(theory='skj', grow_by=64, extra_size=0, tool='time'):
             with cartographer.load(theory, world, **opts) as db:
                 db.trim([{'size': size, 'filename': region}])
         opts.setdefault('runner', PROFILERS.get(tool, tool))
-        surveyor.survey(theory, region, temp, size + grow_by, **opts)
-        os.remove(temp)
+        for i in range(runs):
+            surveyor.survey(theory, region, temp, size + grow_by, **opts)
+            os.remove(temp)
 
 
 @parsable.command
