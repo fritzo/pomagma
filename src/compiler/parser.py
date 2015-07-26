@@ -120,11 +120,10 @@ def parse_string_to_expr(string):
     return expr
 
 
-def parse_file_to_lines(filename):
+def remove_comments_and_add_padding(lines_with_comments):
     lines = ['']
-    with open(filename) as f:
-        for line in f:
-            lines.append(RE_COMMENT.sub('', line.rstrip()))
+    for line in lines_with_comments:
+        lines.append(RE_COMMENT.sub('', line).rstrip())
     lines.append('')
     return lines
 
@@ -143,14 +142,18 @@ def parse_lines_to_facts(lines, **debuginfo):
     return facts
 
 
-def parse_facts(filename):
-    lines = parse_file_to_lines(filename)
-    return parse_lines_to_facts(lines, file=filename)
-
-
-def parse_theory(filename):
-    lines = parse_file_to_lines(filename)
-    rules = parse_lines_to_rules(lines, file=filename)
-    lines = erase_rules_from_lines(rules, lines, file=filename)
-    facts = parse_lines_to_facts(lines, file=filename)
+def parse_theory(lines, **debuginfo):
+    lines = remove_comments_and_add_padding(lines)
+    rules = parse_lines_to_rules(lines, **debuginfo)
+    lines = erase_rules_from_lines(rules, lines, **debuginfo)
+    facts = parse_lines_to_facts(lines, **debuginfo)
     return {'facts': facts, 'rules': rules}
+
+
+def parse_theory_file(filename):
+    with open(filename) as f:
+        return parse_theory(f, file=filename)
+
+
+def parse_theory_string(string):
+    return parse_theory(string.splitlines())

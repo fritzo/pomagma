@@ -35,7 +35,7 @@ def up_to_date(infiles, outfiles):
 
 
 def load_theory(filename):
-    theory = parser.parse_theory(filename)
+    theory = parser.parse_theory_file(filename)
     theory = desugar_theory(theory)
     theory['rules'].sort()
     theory['facts'].sort()
