@@ -180,6 +180,70 @@ def test_solve(db, example):
             assert_equal_example(example[key], actual[key], (example, key))
 
 
+COSOLVE_EXAMPLES = [
+    {
+        'var': 's',
+        'theory': 'LESS APP V s s',
+        'possible': ['I', 'TOP', 'V', 'W', 'APP B B'],
+    },
+    {
+        'var': 's',
+        'theory': 'LESS APP s BOT BOT',
+        'possible': ['B', 'C', 'I', 'BOT', 'Y'],
+    },
+    {
+        'var': 's',
+        'theory': 'EQUAL APP s I I',
+        'possible': ['B', 'CB', 'I', 'V', 'COMP B B'],
+    },
+    {
+        'var': 's',
+        'theory': 'LESS TOP APP s TOP',
+        'possible': ['B', 'C', 'I', 'Y', 'TOP'],
+    },
+    {
+        'var': 's',
+        'theory': '''
+            NLESS x BOT
+            --------------
+            LESS I APP s x
+            ''',
+        'necessary': [],
+        'possible': ['B', 'C', 'CB', 'CI', 'TOP'],
+    },
+    {
+        'var': 's',
+        'theory': '''
+            NLESS x I
+            ----------------
+            LESS TOP APP s x
+            ''',
+        'necessary': [],
+        'possible': ['B', 'C', 'CB', 'CI', 'TOP'],
+    },
+    {
+        'var': 's',
+        'theory': '''
+            # The entire theory of SEMI:
+            LESS APP V s s       NLESS x BOT      NLESS x I
+            LESS APP s BOT BOT   --------------   ----------------
+            EQUAL APP s I I      LESS I APP s x   LESS TOP APP s x
+            LESS TOP APP s TOP
+            ''',
+        'necessary': [],
+        'possible': ['COMP B B', 'COMP CB CI', 'APP C Y', 'APP V B', 'U'],
+    },
+]
+
+
+@for_each_context(load, COSOLVE_EXAMPLES)
+def test_cosolve(db, example):
+    actual = db.cosolve(example['var'], example['theory'], 5)
+    for key in ['necessary', 'possible']:
+        if key in example:
+            assert_equal_example(example[key], actual[key], (example, key))
+
+
 def test_validate():
     expected, codes = transpose(VALIDATE_EXAMPLES)
     with load() as db:
