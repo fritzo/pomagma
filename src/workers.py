@@ -1,4 +1,5 @@
 from pomagma.util import DB
+from pomagma.util import suggest_region_sizes
 import glob
 import itertools
 import multiprocessing
@@ -130,6 +131,8 @@ class CartographerWorker(object):
         self.log_file = options['log_file']
         self.world = DB('world')
         self.normal_world = DB('world.normal')
+        self.normal_region = DB('region.normal.{:d}')
+        self.min_size = pomagma.util.MIN_SIZES[theory]
         self.region_size = region_size
         self.region_queue = FileQueue('region.queue')
         self.survey_queue = FileQueue('survey.queue')
@@ -170,12 +173,12 @@ class CartographerWorker(object):
 
     def try_work(self):
         return (
-            self.try_trim() or
+            self.try_produce_regions() or
             self.try_normalize() or
-            self.try_aggregate()
+            self.try_consume_surveys()
         )
 
-    def try_trim(self):
+    def try_produce_regions(self):
         queue_size = len(self.region_queue)
         if queue_size >= self.region_queue_size:
             return False
@@ -198,11 +201,12 @@ class CartographerWorker(object):
                 if self.is_normal():
                     self.log('Normalized')
                     self.db.dump(self.normal_world)
+                    self.trim_normal_regions()
                     self.garbage_collect()
                     self.theorize()
             return True
 
-    def try_aggregate(self):
+    def try_consume_surveys(self):
         surveys = self.survey_queue.get()
         if not surveys:
             return False
@@ -234,6 +238,7 @@ class CartographerWorker(object):
                 regions_out.append(region_out)
                 if len(regions_out) == trim_count:
                     break
+        # trim in parallel because these are small
         self.db.trim([
             {'size': self.region_size, 'filename': r}
             for r in regions_out
@@ -245,6 +250,15 @@ class CartographerWorker(object):
             self.fill_region_queue(FileQueue(temp_path))
             self.region_queue.clear()
             self.garbage_collect()
+
+    def trim_normal_regions(self):
+        self.log('Trimming normal regions')
+        assert self.is_normal()
+        max_size = self.db.info()['item_count']
+        # trim sequentially because these are large
+        for size in suggest_region_sizes(self.min_size, max_size):
+            filename = self.normal_region.format(size)
+            self.db.trim([{'size': size, 'filename': filename}])
 
     def theorize(self):
         self.log('Theorizing')
