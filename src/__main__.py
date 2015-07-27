@@ -5,6 +5,7 @@ from pomagma import linguist
 from pomagma import surveyor
 from pomagma import theorist
 from pomagma.util import DB
+from pomagma.util import suggest_region_sizes
 import os
 import parsable
 import pomagma.io.blobstore
@@ -256,21 +257,6 @@ def theorize(theory=THEORY, **options):
                 db.dump(world)
 
 
-def sparse_range(min_size, max_size):
-    assert min_size <= max_size
-    sizes = [512]
-    while True:
-        size = 2 * sizes[-1]
-        if size <= max_size:
-            sizes.append(size)
-        else:
-            break
-    sizes += [3 * s for s in sizes if 3 * s < max_size]
-    sizes = [s - 1 for s in sizes if s > min_size]
-    sizes.sort()
-    return sizes
-
-
 @parsable.command
 def trim(theory=THEORY, parallel=True, **options):
     '''
@@ -282,7 +268,7 @@ def trim(theory=THEORY, parallel=True, **options):
         with cartographer.load(theory, DB('world.normal'), **options) as db:
             min_size = pomagma.util.MIN_SIZES[theory]
             max_size = db.info()['item_count']
-            sizes = sparse_range(min_size, max_size)
+            sizes = suggest_region_sizes(min_size, max_size)
             tasks = []
             for size in sizes:
                 tasks.append({

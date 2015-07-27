@@ -1,6 +1,7 @@
 import contextlib
 import errno
 import fcntl
+import itertools
 import multiprocessing
 import os
 import shutil
@@ -45,6 +46,24 @@ MIN_SIZES = {
     'skja': 2047,
     'skrj': 2047,
 }
+
+
+def optimal_db_sizes():
+    '''Indefinitely iterate through optimal db sizes'''
+    yield 512 - 1
+    for i in itertools.count():
+        yield 2 * 2 ** i * 512 - 1
+        yield 3 * 2 ** i * 512 - 1
+
+
+def suggest_region_sizes(min_size, max_size):
+    '''Return set of optimal db sizes in [min_size, max_size]'''
+    sizes = []
+    for size in optimal_db_sizes():
+        if size > max_size:
+            return sizes
+        if size >= min_size:
+            sizes.append(size)
 
 
 def on_signal(sig):

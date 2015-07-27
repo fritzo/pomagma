@@ -36,3 +36,28 @@ def test_nonblocking_mutex():
         args = [(_id, curdir) for _id in xrange(THREADS)]
         runs = pool.map(_nonblocking_mutex, args)
     assert_equal(sum(runs), 1)
+
+
+def test_optimal_db_sizes():
+    sizes = pomagma.util.optimal_db_sizes()
+    assert_equal(sizes.next(), 1 * 512 - 1)
+    assert_equal(sizes.next(), 2 * 512 - 1)
+    assert_equal(sizes.next(), 3 * 512 - 1)
+    assert_equal(sizes.next(), 4 * 512 - 1)
+    assert_equal(sizes.next(), 6 * 512 - 1)
+    assert_equal(sizes.next(), 8 * 512 - 1)
+    assert_equal(sizes.next(), 12 * 512 - 1)
+    assert_equal(sizes.next(), 16 * 512 - 1)
+
+
+def test_suggest_region_sizes():
+    sizes = pomagma.util.suggest_region_sizes(1023, 8888)
+    assert_equal(sizes, [
+        2 * 512 - 1,
+        3 * 512 - 1,
+        4 * 512 - 1,
+        6 * 512 - 1,
+        8 * 512 - 1,
+        12 * 512 - 1,
+        16 * 512 - 1,
+    ])
