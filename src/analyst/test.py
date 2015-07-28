@@ -1,5 +1,6 @@
 import os
 from itertools import izip
+from nose import SkipTest
 from nose.tools import assert_false
 from pomagma.atlas.bootstrap import THEORY
 from pomagma.atlas.bootstrap import WORLD
@@ -125,81 +126,66 @@ def test_simplify():
 
 SOLVE_EXAMPLES = [
     {
-        'args': ('x', ['LESS x I', 'LESS I x']),
+        'var': 'x',
+        'theory': 'LESS x I   LESS I x',
         'necessary': ['I'],
     },
     {
-        'args': ('x', ['LESS x I', 'LESS I x'], 999),
+        'var': 'x',
+        'theory': 'LESS x I   LESS I x',
+        'max_solutions': 999,
         'necessary': ['I'],
     },
     {
-        'args': ('x', ['LESS TOP x']),
+        'var': 'x',
+        'theory': 'LESS TOP x',
         'necessary': ['TOP'],
     },
     {
-        'args': ('x', ['FIXES TOP x']),
+        'var': 'x',
+        'theory': 'FIXES TOP x',
         'necessary': ['TOP'],
     },
     {
-        'args': ('x', ['EQUAL APP x x x'], 4),
+        'var': 'x',
+        'theory': 'EQUAL APP x x x',
+        'max_solutions': 4,
         'necessary': ['I', 'BOT', 'TOP', 'V'],
     },
     {
-        'args': ('x', ['EQUAL APP x x x', 'NLESS x BOT'], 3),
+        'var': 'x',
+        'theory': 'EQUAL APP x x x   NLESS x BOT',
+        'max_solutions': 3,
         'necessary': ['I', 'TOP', 'V'],
     },
     {
-        'args': ('x', ['EQUAL APP x TOP APP x BOT', 'NLESS APP K APP x I x']),
+        'var': 'x',
+        'theory': 'EQUAL APP x TOP APP x BOT   NLESS APP K APP x I x',
         'necessary': [],
     },
     {
-        'args': ('APP x K', ['LESS x I', 'LESS I x']),
-        'necessary': ['K'],
-    },
-    {
-        'args': ('APP K x', ['LESS x I', 'LESS I x']),
-        'necessary': ['APP C K'],
-    },
-    # FIXME these cases fail
-    # {
-    #     'args': ('x', ['EQUAL x I']),
-    #     'necessary': ['I'],
-    # },
-    # {
-    #     'args': ('x', ['NLESS x x']),
-    #     'necessary': [],
-    # },
-]
-
-
-@for_each_context(load, SOLVE_EXAMPLES)
-def test_solve(db, example):
-    actual = db.solve(*example['args'])
-    for key in ['necessary', 'possible']:
-        if key in example:
-            assert_equal_example(example[key], actual[key], (example, key))
-
-
-COSOLVE_EXAMPLES = [
-    {
         'var': 's',
         'theory': 'LESS APP V s s',
-        'possible': ['I', 'TOP', 'V', 'W', 'APP B B'],
+        'necessary': ['I', 'TOP', 'V', 'APP CB TOP', 'APP V C'],
+        'possible': [],
     },
     {
         'var': 's',
         'theory': 'LESS APP s BOT BOT',
-        'possible': ['B', 'C', 'I', 'BOT', 'Y'],
+        'necessary': ['B', 'C', 'I', 'BOT', 'Y'],
+        'possible': [],
     },
     {
         'var': 's',
         'theory': 'EQUAL APP s I I',
-        'possible': ['B', 'CB', 'I', 'V', 'COMP B B'],
+        'necessary': ['B', 'CB', 'I', 'V', 'COMP B B'],
+        'possible': [],
     },
     {
         'var': 's',
         'theory': 'LESS TOP APP s TOP',
-        'possible': ['B', 'C', 'I', 'Y', 'TOP'],
+        'necessary': ['B', 'C', 'I', 'Y', 'TOP'],
+        'possible': [],
     },
     {
         'var': 's',
@@ -233,12 +219,28 @@ COSOLVE_EXAMPLES = [
         'necessary': [],
         'possible': ['COMP B B', 'COMP CB CI', 'APP C Y', 'APP V B', 'U'],
     },
+    {
+        'skip': 'compiler fails',  # FIXME
+        'var': 'x',
+        'theory': 'EQUAL x I',
+        'necessary': ['I'],
+    },
+    {
+        'skip': 'compiler fails',  # FIXME
+        'var': 'x',
+        'theory': 'NLESS x x',
+        'necessary': [],
+        'possible': [],
+    },
 ]
 
 
-@for_each_context(load, COSOLVE_EXAMPLES)
-def test_cosolve(db, example):
-    actual = db.cosolve(example['var'], example['theory'], 5)
+@for_each_context(load, SOLVE_EXAMPLES)
+def test_solve(db, example):
+    if 'skip' in example:
+        raise SkipTest(example['skip'])
+    max_solutions = example.get('max_solutions', 5)
+    actual = db.solve(example['var'], example['theory'], max_solutions)
     for key in ['necessary', 'possible']:
         if key in example:
             assert_equal_example(example[key], actual[key], (example, key))

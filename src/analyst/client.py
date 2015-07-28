@@ -89,37 +89,28 @@ class Client(object):
         assert len(results) == len(codes), results
         return results
 
-    def _solve(self, program, max_solutions):
-        if max_solutions is not None:
-            assert isinstance(max_solutions, (int, float)), max_solutions
+    def _solve(self, var, theory, max_solutions):
         request = Request()
-        request.solve.program = program
+        request.solve.program = compiler.compile_solver(var, theory)
         if max_solutions is not None:
             request.solve.max_solutions = max_solutions
         reply = self._call(request)
-        solutions = {
+        return {
             'necessary': map(str, reply.solve.necessary),
             'possible': map(str, reply.solve.possible),
         }
+
+    def solve(self, var, theory, max_solutions=None):
+        assert isinstance(var, basestring), var
+        assert isinstance(theory, basestring), theory
+        if max_solutions is not None:
+            assert isinstance(max_solutions, (int, float)), max_solutions
+        solutions = self._solve(var, theory, max_solutions)
         assert not (set(solutions['necessary']) & set(solutions['possible']))
         if max_solutions is not None:
             count = len(solutions['necessary']) + len(solutions['possible'])
             assert count <= max_solutions, solutions
         return solutions
-
-    def solve(self, result, constraints, max_solutions=None):
-        assert isinstance(result, basestring), result
-        assert isinstance(constraints, list), constraints
-        for constraint in constraints:
-            assert isinstance(constraint, basestring), constraint
-        program = compiler.compile_solver(result, constraints)
-        return self._solve(program, max_solutions)
-
-    def cosolve(self, var, theory, max_solutions=None):
-        assert isinstance(var, basestring), var
-        assert isinstance(theory, basestring), theory
-        program = compiler.compile_cosolver(var, theory)
-        return self._solve(program, max_solutions)
 
     def _validate(self, codes):
         request = Request()
