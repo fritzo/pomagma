@@ -4,6 +4,7 @@
 #include <atomic>
 
 #define POMAGMA_HAS_INVERSE_INDEX (1)
+#define POMAGMA_CAN_PARALLELIZE (1)
 
 namespace pomagma
 {

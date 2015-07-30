@@ -72,6 +72,7 @@ public:
         _execute(program, context);
     }
 
+#if POMAGMA_CAN_PARALLELIZE
     void execute_block (Program program, size_t block) const
     {
         // FIXME this should ERROR if run on world (cartographer, analyst)
@@ -81,6 +82,7 @@ public:
         ProgramProfiler::Block profiler(context->profiler, program);
         _execute(program, context);
     }
+#endif // POMAGMA_CAN_PARALLELIZE
 
     const UnaryRelation * unary_relation (uint8_t index) const;
     const BinaryRelation * binary_relation (uint8_t index) const;

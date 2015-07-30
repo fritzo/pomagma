@@ -591,6 +591,8 @@ void VirtualMachine::_execute (Program program, Context * context) const
             }
         } break;
 
+    #if POMAGMA_CAN_PARALLELIZE
+
         case FOR_BLOCK: {
             _execute(program, context);
         } break;
@@ -601,6 +603,15 @@ void VirtualMachine::_execute (Program program, Context * context) const
                 _execute(program, context);
             }
         } break;
+
+    #else // POMAGMA_CAN_PARALLELIZE
+
+        case IF_BLOCK:
+        case FOR_BLOCK: {
+            POMAGMA_ERROR(g_op_code_names[op_code] << " is not supported");
+        } break;
+
+    #endif // POMAGMA_CAN_PARALLELIZE
 
         case IF_EQUAL: {
             Ob & lhs = pop_ob(program, context);

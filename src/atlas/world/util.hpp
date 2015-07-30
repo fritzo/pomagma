@@ -12,8 +12,8 @@
 #  include <unordered_map>
 #endif // POMAGMA_USE_SPARSE_HASH
 
-
 #define POMAGMA_HAS_INVERSE_INDEX (0)
+#define POMAGMA_CAN_PARALLELIZE (0)
 
 namespace pomagma
 {
