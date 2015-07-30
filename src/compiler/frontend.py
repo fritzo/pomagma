@@ -331,14 +331,14 @@ def Ensure_program(self, program, stack=None, poll=None):
     program.append(line)
 
 
-def write_full_programs(programs, sequents):
+def write_full_programs(programs, sequents, can_parallelize=True):
     full_tasks = []
     for sequent in sequents:
         for cost, seq, plan in compiler.compile_full(sequent):
             full_tasks.append((cost, sequent, seq, plan))
     full_tasks.sort()
     for plan_id, (cost, sequent, seq, plan) in enumerate(full_tasks):
-        poll = (cost >= MIN_SPLIT_COST)
+        poll = can_parallelize and (cost >= MIN_SPLIT_COST)
         programs += [
             '',
             '# plan {}: cost = {:0.1f}'.format(plan_id, cost),

@@ -100,12 +100,10 @@ SOLVE_EXAMPLES = [
             LESS I APP s x
             ''',
         'expected_programs': set([
-            ('FOR_BLOCK',
-             'FOR_NULLARY_FUNCTION I I_',
+            ('FOR_NULLARY_FUNCTION I I_',
              'FOR_NULLARY_FUNCTION BOT BOT_',
              'LETS_UNARY_RELATION NRETURN NRETURN_s',
              'FOR_NEG s NRETURN_s',
-             'IF_BLOCK s',
              'LETS_BINARY_RELATION_RHS NLESS NLESS_x_BOT BOT_',
              'LETS_BINARY_FUNCTION_LHS APP s APP_s_x',
              'FOR_POS_POS x NLESS_x_BOT APP_s_x',
@@ -122,12 +120,10 @@ SOLVE_EXAMPLES = [
             LESS TOP APP s x
             ''',
         'expected_programs': set([
-            ('FOR_BLOCK',
-             'FOR_NULLARY_FUNCTION I I_',
+            ('FOR_NULLARY_FUNCTION I I_',
              'FOR_NULLARY_FUNCTION TOP TOP_',
              'LETS_UNARY_RELATION NRETURN NRETURN_s',
              'FOR_NEG s NRETURN_s',
-             'IF_BLOCK s',
              'LETS_BINARY_RELATION_RHS NLESS NLESS_x_I I_',
              'LETS_BINARY_FUNCTION_LHS APP s APP_s_x',
              'FOR_POS_POS x NLESS_x_I APP_s_x',

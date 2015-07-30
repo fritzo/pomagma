@@ -1,8 +1,10 @@
-from google.protobuf.descriptor import FieldDescriptor
-from pomagma.cartographer import messages_pb2 as messages
 import os
 import pomagma.util
+import re
 import zmq
+from google.protobuf.descriptor import FieldDescriptor
+from pomagma.cartographer import messages_pb2 as messages
+
 
 CONTEXT = zmq.Context()
 POLL_TIMEOUT_MS = 1000
@@ -106,6 +108,7 @@ class Client(object):
 
     def execute(self, program):
         assert isinstance(program, basestring), program
+        assert not re.search('FOR_BLOCK', program), 'cannot parallelize'
         request = Request()
         request.execute.program = program
         self._call(request)

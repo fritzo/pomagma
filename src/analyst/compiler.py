@@ -1,3 +1,4 @@
+import re
 from pomagma.compiler.expressions import Expression
 from pomagma.compiler.expressions import Expression_1
 from pomagma.compiler.frontend import write_full_programs
@@ -72,6 +73,7 @@ def compile_solver(var, theory):
     if not rules and all(f.vars <= set([var]) for f in facts):
         sequents.append(Sequent(facts, [NONEGATE(RETURN(var))]))
     programs = []
-    write_full_programs(programs, sequents)
+    write_full_programs(programs, sequents, can_parallelize=False)
     program = '\n'.join(programs)
+    assert not re.search('FOR_BLOCK', program), 'cannot parallelize'
     return program
