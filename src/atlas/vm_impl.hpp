@@ -15,6 +15,9 @@ namespace vm {
 //----------------------------------------------------------------------------
 // VirtualMachine
 
+static_assert(VirtualMachine::for_block_op_code == FOR_BLOCK,
+    "for_block_op_code does not match FOR_BLOCK");
+
 template<class Table>
 static void declare (
         const std::unordered_map<std::string, Table *> & unordered_map,
@@ -978,7 +981,7 @@ void Agenda::add_listing (const ProgramParser & parser, const Listing & listing)
         } break;
 
         case FOR_BLOCK: {
-            add_program_to(m_cleanup_large, truncated, trunc_size, lineno);
+            add_program_to(m_cleanup_large, program, trunc_size, lineno);
         } break;
 
         default: {

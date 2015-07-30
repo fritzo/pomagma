@@ -22,7 +22,10 @@ class VirtualMachine
 {
 public:
 
-    enum { block_size = 64 }; // granularity of FOR_BLOCK/IF_BLOCK parallelism
+    enum {
+        block_size = 64 // granularity of FOR_BLOCK/IF_BLOCK parallelism
+        for_block_op_code = 47
+    };
 
     VirtualMachine () : m_carrier(nullptr)
     {
@@ -33,6 +36,7 @@ public:
 
     void execute (Program program) const
     {
+        POMAGMA_ASSERT1(not is_parallel(program), "program is parallel");
         Context * context = new_context();
         ProgramProfiler::Block profiler(context->profiler, program);
         _execute(program, context);
@@ -40,6 +44,7 @@ public:
 
     void execute (Program program, Ob arg) const
     {
+        POMAGMA_ASSERT1(not is_parallel(program), "program is parallel");
         Context * context = new_context();
         context->obs[0] = arg;
         ProgramProfiler::Block profiler(context->profiler, program);
@@ -48,6 +53,7 @@ public:
 
     void execute (Program program, Ob arg1, Ob arg2) const
     {
+        POMAGMA_ASSERT1(not is_parallel(program), "program is parallel");
         Context * context = new_context();
         context->obs[0] = arg1;
         context->obs[1] = arg2;
@@ -57,6 +63,7 @@ public:
 
     void execute (Program program, Ob arg1, Ob arg2, Ob arg3) const
     {
+        POMAGMA_ASSERT1(not is_parallel(program), "program is parallel");
         Context * context = new_context();
         context->obs[0] = arg1;
         context->obs[1] = arg2;
@@ -67,6 +74,8 @@ public:
 
     void execute_block (Program program, size_t block) const
     {
+        // FIXME this should ERROR if run on world (cartographer, analyst)
+        POMAGMA_ASSERT1(is_parallel(program), "program is not parallel");
         Context * context = new_context();
         context->block = block;
         ProgramProfiler::Block profiler(context->profiler, program);
@@ -81,6 +90,11 @@ public:
     const SymmetricFunction * symmetric_function (uint8_t index) const;
 
 private:
+
+    static bool is_parallel (Program program)
+    {
+        return program[0] == for_block_op_code;
+    }
 
     static Context * new_context ()
     {
