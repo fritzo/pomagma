@@ -195,7 +195,7 @@ SOLVE_EXAMPLES = [
             LESS I APP s x
             ''',
         'necessary': [],
-        'possible': ['B', 'C', 'CB', 'CI', 'TOP'],
+        'possible': ['TOP', 'J', 'V', 'P', 'APP C K'],
     },
     {
         'var': 's',
@@ -205,7 +205,7 @@ SOLVE_EXAMPLES = [
             LESS TOP APP s x
             ''',
         'necessary': [],
-        'possible': ['B', 'C', 'CB', 'CI', 'TOP'],
+        'possible': ['TOP', 'JOIN CB B', 'APP C Y', 'JOIN CI B', 'RAND CI B'],
     },
     {
         'var': 's',
@@ -217,7 +217,13 @@ SOLVE_EXAMPLES = [
             LESS TOP APP s TOP
             ''',
         'necessary': [],
-        'possible': ['COMP B B', 'COMP CB CI', 'APP C Y', 'APP V B', 'U'],
+        'possible': [
+            'APP C Y',
+            'RAND CI B',
+            'JOIN CI CB',
+            'RAND CI CB',
+            'RAND C CI',
+        ],
     },
     {
         'skip': 'compiler fails',  # FIXME
