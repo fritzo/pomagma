@@ -53,7 +53,7 @@ def solve(var, theory, max_solutions, address=pomagma.analyst.ADDRESS):
     assert isinstance(theory, basestring), theory
     assert isinstance(max_solutions, (int, float)), max_solutions
     with pomagma.analyst.connect(address) as db:
-        solutions = db.solve(var, theory)
+        solutions = db.solve(var, theory, max_solutions)
     print 'Necessary:'
     for term in solutions['necessary']:
         print '  {}'.format(term)
