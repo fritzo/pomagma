@@ -93,13 +93,7 @@ Router::Router (
         }
     }
 
-    std::sort(
-        m_segments.begin(),
-        m_segments.end(),
-        [&](const Segment & x, const Segment & y){
-            return std::tie(x.val, x.type, x.arg1, x.arg2)
-                 < std::tie(y.val, y.type, y.arg1, y.arg2);
-        });
+    std::sort(m_segments.begin(), m_segments.end());
 
     // assume all values are reached by at least one segment
     m_value_index.resize(1 + m_carrier.item_count(), 0);
@@ -265,7 +259,8 @@ std::vector<std::string> Router::find_routes () const
             bool best_changed = false;
             for (const Segment & segment : iter_val(ob)) {
                 float prob = get_prob(segment, best_probs);
-                if (unlikely(prob > best_prob)) {
+                if (unlikely(std::make_pair(-prob, segment)
+                           < std::make_pair(-best_prob, best_segment))) {
                     best_prob = prob; // relaxed memory order
                     best_segment = segment; // relaxed memory order
                     best_changed = true;

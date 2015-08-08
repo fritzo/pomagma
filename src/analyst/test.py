@@ -1,10 +1,10 @@
-import os
 from itertools import izip
 from nose import SkipTest
 from nose.tools import assert_false
 from pomagma.atlas.bootstrap import THEORY
 from pomagma.atlas.bootstrap import WORLD
 from pomagma.util.testing import for_each_context
+import os
 import pomagma.analyst
 import pomagma.cartographer
 import pomagma.surveyor
@@ -58,10 +58,10 @@ def test_ping():
     server = serve()
     try:
         print 'connecting client'
-        client = server.connect()
-        for _ in xrange(10):
-            print 'pinging server'
-            client.ping()
+        with server.connect() as client:
+            for _ in xrange(10):
+                print 'pinging server'
+                client.ping()
     finally:
         print 'stopping server'
         server.stop()
@@ -205,7 +205,7 @@ SOLVE_EXAMPLES = [
             LESS TOP APP s x
             ''',
         'necessary': [],
-        'possible': ['TOP', 'JOIN CB B', 'APP C Y', 'JOIN CI B', 'RAND CI B'],
+        'possible': ['TOP', 'JOIN B CB', 'APP C Y', 'JOIN CI B', 'RAND CI B'],
     },
     {
         'var': 's',

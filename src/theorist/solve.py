@@ -1,0 +1,80 @@
+import parsable
+import pomagma.analyst
+
+theories = {
+    'unit': '''
+        CLOSED t         -----------------   LESS APP f TOP APP g TOP
+        FIXES V t        EQUAL APP t x TOP   LESS APP f I APP g I
+        FIXES t I        EQUAL APP t x I     ------------------------
+        LESS APP J I t                       LESS COMP f t COMP g t
+        ''',
+    'semi': '''
+        CLOSED t      -----------------   LESS APP f TOP APP g TOP
+        FIXES V t     EQUAL APP t x TOP   LESS APP f I APP g I
+        FIXES t BOT   EQUAL APP t x I     LESS APP f BOT APP g BOT
+        FIXES t I     EQUAL APP t x BOT   ------------------------
+                                          LESS COMP f t COMP g t
+        ''',
+    'bool': '''
+        CLOSED t      -----------------   LESS APP f TOP APP g TOP
+        FIXES V t     EQUAL APP t x TOP   LESS APP f K APP g K
+        FIXES t BOT   EQUAL APP t x K     LESS APP f F APP g F
+        FIXES t K     EQUAL APP t x F     LESS APP f BOT APP g BOT
+        FIXES t F     EQUAL APP t x BOT   ------------------------
+                                          LESS COMP f t COMP g t
+        ''',
+    'boool': '''
+        CLOSED t      -----------------   LESS APP f TOP APP g TOP
+        FIXES V t     EQUAL APP t x TOP   LESS APP f J APP g J
+        FIXES t BOT   EQUAL APP t x J     LESS APP f K APP g K
+        FIXES t K     EQUAL APP t x K     LESS APP f F APP g F
+        FIXES t F     EQUAL APP t x F     LESS APP f BOT APP g BOT
+        FIXES t J     EQUAL APP t x BOT   ------------------------
+                                          LESS COMP f t COMP g t
+        ''',
+    'unit_test': '''
+                         -----------------   LESS APP f TOP APP g TOP
+        FIXES V t        EQUAL APP t x TOP   LESS APP f I APP g I
+        FIXES t I        EQUAL APP t x I     ------------------------
+        LESS APP J I t                       LESS COMP f t COMP g t
+        ''',
+    'semi_test': '''
+                      -----------------   LESS APP f TOP APP g TOP
+        FIXES V t     EQUAL APP t x TOP   LESS APP f I APP g I
+        FIXES t BOT   EQUAL APP t x I     LESS APP f BOT APP g BOT
+        FIXES t I     EQUAL APP t x BOT   ------------------------
+                                          LESS COMP f t COMP g t
+        ''',
+}
+
+
+def solve(var, theory, max_solutions, address=pomagma.analyst.ADDRESS):
+    assert isinstance(var, basestring), var
+    assert isinstance(theory, basestring), theory
+    assert isinstance(max_solutions, (int, float)), max_solutions
+    with pomagma.analyst.connect(address) as db:
+        solutions = db.solve(var, theory)
+    print 'Necessary:'
+    for term in solutions['necessary']:
+        print '  {}'.format(term)
+    print 'Possible:'
+    for term in solutions['possible']:
+        print '  {}'.format(term)
+    return solutions
+
+
+@parsable.command
+def define(name, max_solutions=32, address=pomagma.analyst.ADDRESS):
+    '''
+    Conjecture definitions of a type.
+    Available types: unit, semi, bool boool
+    '''
+    assert name in theories, '\n'.join([
+        'unknown theory, try one of:',
+        ' '.join(theories.keys()),
+    ])
+    return solve('t', theories[name], max_solutions, address=address)
+
+
+if __name__ == '__main__':
+    parsable.dispatch()

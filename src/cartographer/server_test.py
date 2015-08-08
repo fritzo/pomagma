@@ -17,10 +17,10 @@ def test_ping():
     server = pomagma.cartographer.serve(THEORY, WORLD, ADDRESS, **OPTIONS)
     try:
         print 'connecting client'
-        client = server.connect()
-        for _ in xrange(10):
-            print 'pinging server'
-            client.ping()
+        with server.connect() as client:
+            for _ in xrange(10):
+                print 'pinging server'
+                client.ping()
     finally:
         print 'stopping server'
         server.stop()

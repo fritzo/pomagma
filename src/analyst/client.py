@@ -1,7 +1,7 @@
-import sys
-import zmq
 from pomagma.analyst import compiler
 from pomagma.analyst import messages_pb2 as messages
+import sys
+import zmq
 
 CONTEXT = zmq.Context()
 POLL_TIMEOUT_MS = 1000
@@ -38,6 +38,12 @@ class Client(object):
         self._socket = CONTEXT.socket(zmq.REQ)
         print 'connecting to analyst at', address
         self._socket.connect(address)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, traceback):
+        self._socket.close()
 
     def _call(self, request):
         raw_request = request.SerializeToString()

@@ -22,6 +22,12 @@ class Client(object):
         print 'connecting to cartographer at', address
         self._socket.connect(address)
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, traceback):
+        self._socket.close()
+
     def _call(self, request):
         raw_request = request.SerializeToString()
         self._socket.send(raw_request, 0)

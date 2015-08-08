@@ -1,8 +1,7 @@
 import os
-import pomagma.util
 import pomagma.analyst
 import pomagma.language.util
-
+import pomagma.util
 
 JSON = os.path.join(pomagma.util.LANGUAGE, '{}.json')
 PROTO = os.path.join(pomagma.util.LANGUAGE, '{}.language')
@@ -25,8 +24,8 @@ def fit_language(
                 print message
 
     log_print('fitting language', pomagma.util.LOG_LEVEL_INFO)
-    db = pomagma.analyst.connect(address)
-    new_weights = db.fit_language()
+    with pomagma.analyst.connect(address) as db:
+        new_weights = db.fit_language()
 
     log_print('converting language', pomagma.util.LOG_LEVEL_DEBUG)
     language = pomagma.language.util.json_load(language_json)

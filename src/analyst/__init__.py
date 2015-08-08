@@ -28,5 +28,6 @@ def load(theory, world, **opts):
         'analyst.socket'))
     with pomagma.util.log_duration():
         server = serve(theory, world, address, **opts)
-        yield server.connect()
+        with server.connect() as client:
+            yield client
         server.stop()

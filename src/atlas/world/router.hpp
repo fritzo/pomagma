@@ -73,6 +73,7 @@ private:
             : type(t), val(v), arg1(a1), arg2(a2)
         {}
     };
+    friend bool operator< (const Segment &, const Segment &);
 
     typedef std::vector<Segment>::const_iterator Iterator;
     Range<Iterator> iter_val (Ob val) const;
@@ -92,6 +93,12 @@ private:
     std::vector<Segment> m_segments;
     std::vector<size_t> m_value_index;
 };
+
+inline bool operator< (const Router::Segment & x, const Router::Segment & y)
+{
+    return std::tie(x.val, x.type, x.arg1, x.arg2)
+         < std::tie(y.val, y.type, y.arg1, y.arg2);
+}
 
 inline float get_entropy (const std::vector<float> & probs)
 {
