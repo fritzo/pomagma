@@ -197,7 +197,8 @@ SOLVE_EXAMPLES = [
         'necessary': [],
         'possible': ['TOP', 'J', 'V', 'P', 'APP C K'],
     },
-    {
+    {  # FIXME
+        'skip': 'spurriously fails with either JOIN B CB or JOIN CB B',
         'var': 's',
         'theory': '''
             NLESS x I
@@ -205,7 +206,13 @@ SOLVE_EXAMPLES = [
             LESS TOP APP s x
             ''',
         'necessary': [],
-        'possible': ['TOP', 'JOIN B CB', 'APP C Y', 'JOIN CI B', 'RAND CI B'],
+        'possible': [
+            'TOP',
+            'JOIN B CB',
+            'APP C Y',
+            'JOIN CI B',
+            'RAND CI B',
+        ],
     },
     {
         'var': 's',
