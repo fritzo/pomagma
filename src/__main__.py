@@ -7,7 +7,7 @@ from pomagma import theorist
 from pomagma.util import DB
 from pomagma.util import suggest_region_sizes
 import os
-import parsable
+from parsable import parsable
 import pomagma.io.blobstore
 import pomagma.util
 import pomagma.workers
@@ -32,7 +32,7 @@ def already_exists(path):
     return os.path.exists(path) and not os.path.islink(path)
 
 
-@parsable.command
+@parsable
 def test(theory=THEORY, extra_size=0, **options):
     '''
     Test theory by building a world map.
@@ -92,7 +92,7 @@ def test(theory=THEORY, extra_size=0, **options):
     print 'Theory {} appears valid.'.format(theory)
 
 
-@parsable.command
+@parsable
 def init(theory=THEORY, **options):
     '''
     Initialize world map for given theory.
@@ -115,7 +115,7 @@ def init(theory=THEORY, **options):
             db.dump(normal)
 
 
-@parsable.command
+@parsable
 def explore(
         theory=THEORY,
         max_size=pomagma.workers.DEFAULT_SURVEY_SIZE,
@@ -147,7 +147,7 @@ def explore(
             worker.terminate()
 
 
-@parsable.command
+@parsable
 def make(
         theory=THEORY,
         max_size=pomagma.workers.DEFAULT_SURVEY_SIZE,
@@ -163,7 +163,7 @@ def make(
     explore(theory, max_size, step_size, **options)
 
 
-@parsable.command
+@parsable
 def update_theory(theory=THEORY, dry_run=False, **options):
     '''
     Update (small) world map after theory changes, and note changes.
@@ -178,7 +178,7 @@ def update_theory(theory=THEORY, dry_run=False, **options):
         atlas.update_theory(theory, world, updated, dry_run=dry_run, **options)
 
 
-@parsable.command
+@parsable
 def update_language(theory=THEORY, **options):
     '''
     Update world map after language changes.
@@ -195,7 +195,7 @@ def update_language(theory=THEORY, **options):
         atlas.update_language(theory, init, world, aggregate, **options)
 
 
-@parsable.command
+@parsable
 def update_format(source='h5', destin='pb', **options):
     '''
     Transcode world map between db formats.
@@ -217,7 +217,7 @@ def update_format(source='h5', destin='pb', **options):
                             **options)
 
 
-@parsable.command
+@parsable
 def theorize(theory=THEORY, **options):
     '''
     Make conjectures based on atlas and update atlas based on theorems.
@@ -257,7 +257,7 @@ def theorize(theory=THEORY, **options):
                 db.dump(world)
 
 
-@parsable.command
+@parsable
 def trim(theory=THEORY, parallel=True, **options):
     '''
     Trim a set of normal regions for running analyst on small machines.
@@ -299,7 +299,7 @@ def _analyze(theory=THEORY, size=None, address=analyst.ADDRESS, **options):
         return analyst.serve(theory, world, address=address, **options)
 
 
-@parsable.command
+@parsable
 def analyze(theory=THEORY, size=None, address=analyst.ADDRESS, **options):
     '''
     Run analyst server on normalized world map.
@@ -314,7 +314,7 @@ def analyze(theory=THEORY, size=None, address=analyst.ADDRESS, **options):
         server.stop()
 
 
-@parsable.command
+@parsable
 def connect(address=analyst.ADDRESS):
     '''
     Connect to analyst and start python client.
@@ -324,7 +324,7 @@ def connect(address=analyst.ADDRESS):
     os.system('python')
 
 
-@parsable.command
+@parsable
 def fit_language(theory, address=analyst.ADDRESS, **options):
     '''
     Fit language to corpus, saving results to git working tree.
@@ -344,7 +344,7 @@ def list_s3_atlases():
     return set(m.group() for m in map(match_atlas, filenames) if m)
 
 
-@parsable.command
+@parsable
 def pull(tag='<most recent>', force=False):
     '''
     Pull atlas from s3.
@@ -376,7 +376,7 @@ def pull(tag='<most recent>', force=False):
         pomagma.io.s3.snapshot(snapshot, master)  # only after validation
 
 
-@parsable.command
+@parsable
 def push(tag=default_tag, force=False):
     '''
     Push atlas to s3.
@@ -399,7 +399,7 @@ def push(tag=default_tag, force=False):
         pomagma.io.s3.push(snapshot, *blobs)
 
 
-@parsable.command
+@parsable
 def gc(grace_period_days=pomagma.io.blobstore.GRACE_PERIOD_DAYS):
     '''
     Garbage collect blobs and validate remaining blobs.
@@ -410,4 +410,4 @@ def gc(grace_period_days=pomagma.io.blobstore.GRACE_PERIOD_DAYS):
 if __name__ == '__main__':
     signal.signal(signal.SIGINT, raise_keyboard_interrupt)
     sys.argv[0] = 'pomagma'
-    parsable.dispatch()
+    parsable()

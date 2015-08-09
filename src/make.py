@@ -8,7 +8,7 @@ from pomagma.util import DB
 from pomagma.io import blobstore
 import mock
 import os
-import parsable
+from parsable import parsable
 import pomagma.util
 
 PROFILERS = {
@@ -113,7 +113,7 @@ def _test_atlas(theory):
         blobstore.validate_blobs()
 
 
-@parsable.command
+@parsable
 def test_atlas(theory='all'):
     '''
     Test atlas exploration and analysis operations.
@@ -130,7 +130,7 @@ def test_atlas(theory='all'):
         _test_atlas(theory)
 
 
-@parsable.command
+@parsable
 def test_analyst(theory):
     '''
     Test analyst approximation on normalized world map.
@@ -145,7 +145,7 @@ def test_analyst(theory):
     print 'Passed analyst test'
 
 
-@parsable.command
+@parsable
 def profile_misc():
     '''
     Profile misc libraries.
@@ -168,7 +168,7 @@ def profile_misc():
     pomagma.util.check_call('cat', log_file)
 
 
-@parsable.command
+@parsable
 def profile_surveyor(theory='skj', grow_by=64, extra_size=0, tool='time'):
     '''
     Profile surveyor on random region of world.
@@ -190,7 +190,7 @@ def profile_surveyor(theory='skj', grow_by=64, extra_size=0, tool='time'):
         os.remove(temp)
 
 
-@parsable.command
+@parsable
 def profile_cartographer(theory='skj', extra_size=0, tool='time', infer=True):
     '''
     Profile cartographer load-infer-dump on region of world.
@@ -222,7 +222,7 @@ def profile_cartographer(theory='skj', extra_size=0, tool='time', infer=True):
         os.remove(temp)
 
 
-@parsable.command
+@parsable
 def coverity():
     '''
     Check pomagma build with coverity. (see http://coverity.com)
@@ -231,4 +231,4 @@ def coverity():
 
 
 if __name__ == '__main__':
-    parsable.dispatch()
+    parsable()

@@ -9,7 +9,7 @@ https://github.com/boto/boto/blob/develop/boto/s3
 import boto
 import multiprocessing
 import os
-import parsable
+from parsable import parsable
 import pomagma.util
 import re
 import subprocess
@@ -236,7 +236,7 @@ def find(path):
         return []
 
 
-@parsable.command
+@parsable
 def find_s3(prefix=''):
     '''
     Find copyable files on S3.
@@ -246,7 +246,7 @@ def find_s3(prefix=''):
         print filename
 
 
-@parsable.command
+@parsable
 def find_local(path='.'):
     '''
     Find copyable files on local filesystem.
@@ -255,7 +255,7 @@ def find_local(path='.'):
         print filename
 
 
-@parsable.command
+@parsable
 def snapshot(source, destin):
     '''
     Create resursive snapshot of hard links for push/pull.
@@ -275,7 +275,7 @@ def snapshot(source, destin):
         os.link(source_file, destin_file)
 
 
-@parsable.command
+@parsable
 def pull(*filenames):
     '''
     Pull files from S3 into local cache.
@@ -288,7 +288,7 @@ def pull(*filenames):
     parallel_map(get, filter_cache(filenames))
 
 
-@parsable.command
+@parsable
 def push(*filenames):
     '''
     Push files to S3 from local cache.
@@ -299,7 +299,7 @@ def push(*filenames):
     parallel_map(put, filter_cache(filenames))
 
 
-@parsable.command
+@parsable
 def rm(*filenames):
     '''
     Remove files from S3 and local cache.
@@ -309,4 +309,4 @@ def rm(*filenames):
 
 
 if __name__ == '__main__':
-    parsable.dispatch()
+    parsable()

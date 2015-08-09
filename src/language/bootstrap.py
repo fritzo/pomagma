@@ -1,6 +1,6 @@
 import os
 from math import exp
-import parsable
+from parsable import parsable
 import util
 import pomagma.util
 
@@ -151,7 +151,7 @@ SPECS['skrj'] = {
 }
 
 
-@parsable.command
+@parsable
 def make(theory):
     '''
     Bootstrap a language from Johann.
@@ -193,4 +193,4 @@ def make(theory):
 
 
 if __name__ == '__main__':
-    parsable.dispatch()
+    parsable()

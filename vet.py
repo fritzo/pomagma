@@ -4,7 +4,7 @@ import csv
 import glob
 import hashlib
 import os
-import parsable
+from parsable import parsable
 import sys
 
 REPO = os.path.dirname(os.path.abspath(__file__))
@@ -54,7 +54,7 @@ def write_vetted_hashes(hashes):
             writer.writerow([filename, hexdigest])
 
 
-@parsable.command
+@parsable
 def vet(*filenames):
     '''
     Save hashes of current file versions for specified files.
@@ -120,7 +120,7 @@ def check_unknown(actual, expected):
     return failures
 
 
-@parsable.command
+@parsable
 def check():
     '''
     Check files against vetted hashes.
@@ -134,4 +134,4 @@ def check():
 
 
 if __name__ == '__main__':
-    parsable.dispatch()
+    parsable()

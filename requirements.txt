@@ -3,7 +3,7 @@ boto
 contextlib2
 mock
 nose
-parsable
+parsable>=0.2.0
 pep8
 protobuf
 pyflakes

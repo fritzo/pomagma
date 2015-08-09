@@ -1,6 +1,6 @@
 import os
 import glob
-import parsable
+from parsable import parsable
 parsable = parsable.Parsable()
 import pomagma.util
 
@@ -8,7 +8,7 @@ import pomagma.util
 DATA = pomagma.util.DATA
 
 
-@parsable.command
+@parsable
 def conjectures(theory):
     '''
     Write conjectures.html
@@ -44,4 +44,4 @@ def conjectures(theory):
 
 
 if __name__ == '__main__':
-    parsable.dispatch()
+    parsable()

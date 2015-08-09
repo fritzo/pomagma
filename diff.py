@@ -2,7 +2,7 @@
 
 import contextlib
 import os
-import parsable
+from parsable import parsable
 import subprocess
 
 REPO = os.path.dirname(os.path.abspath(__file__))
@@ -58,7 +58,7 @@ def chdir(destin):
         os.chdir(source)
 
 
-@parsable.command
+@parsable
 def clone(commit='HEAD'):
     '''
     Create temporary clone repo in ../ positioned at the given commit.
@@ -80,7 +80,7 @@ def clone(commit='HEAD'):
         subprocess.check_call(['git', 'checkout', commit])
 
 
-@parsable.command
+@parsable
 def programs(commit='HEAD', difftool=DIFFTOOL):
     '''
     Diff generated code src/theory/*.symbols, *.programs, *.facts
@@ -103,7 +103,7 @@ def programs(commit='HEAD', difftool=DIFFTOOL):
     ))
 
 
-@parsable.command
+@parsable
 def tasks(commit='HEAD', difftool=DIFFTOOL):
     '''
     Diff generated task sketches src/theory/*.tasks.
@@ -129,4 +129,4 @@ def tasks(commit='HEAD', difftool=DIFFTOOL):
 
 
 if __name__ == '__main__':
-    parsable.dispatch()
+    parsable()

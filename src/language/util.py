@@ -1,5 +1,5 @@
 import simplejson as json
-import parsable
+from parsable import parsable
 parsable = parsable.Parsable()
 from pomagma.language.language_pb2 import Language, WeightedTerm
 
@@ -87,7 +87,7 @@ def language_to_dict(language):
     return grouped
 
 
-@parsable.command
+@parsable
 def compile(json_in, language_out):
     '''
     Convert language from json to protobuf format.
@@ -100,4 +100,4 @@ def compile(json_in, language_out):
 
 
 if __name__ == '__main__':
-    parsable.dispatch()
+    parsable()

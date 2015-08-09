@@ -4,7 +4,7 @@ import glob
 import itertools
 import multiprocessing
 import os
-import parsable
+from parsable import parsable
 import pomagma.atlas
 import pomagma.cartographer
 import pomagma.surveyor
@@ -288,7 +288,7 @@ class CartographerWorker(object):
                 self.replace_region_queue()
 
 
-@parsable.command
+@parsable
 def cartographer_work(
         theory,
         region_size=(DEFAULT_SURVEY_SIZE - 512),
@@ -321,7 +321,7 @@ def cartographer(*args, **kwargs):
     return parsable_fork(cartographer_work, *args, **kwargs)
 
 
-@parsable.command
+@parsable
 def surveyor_work(theory, step_size=512, **options):
     '''
     Start surveyor worker.
@@ -356,4 +356,4 @@ def surveyor(*args, **kwargs):
 
 
 if __name__ == '__main__':
-    parsable.dispatch()
+    parsable()

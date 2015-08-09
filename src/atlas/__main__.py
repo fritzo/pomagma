@@ -1,10 +1,10 @@
 import os
-import parsable
+from parsable import parsable
 import pomagma.atlas
 import pomagma.util
 
 
-@parsable.command
+@parsable
 def info(filename):
     '''
     Print info about a structure file.
@@ -12,7 +12,7 @@ def info(filename):
     pomagma.atlas.print_info(filename)
 
 
-@parsable.command
+@parsable
 def cp(theory, source, destin):
     '''
     Copy and recompress structure file.
@@ -25,4 +25,4 @@ def cp(theory, source, destin):
             db.dump(destin)
 
 
-parsable.dispatch()
+parsable()

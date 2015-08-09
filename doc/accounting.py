@@ -12,7 +12,7 @@ product-specifications/ssd-dc-p3700-spec.pdf
 http://www.storagereview.com/samsung_ssd_850_evo_ssd_review
 '''
 
-import parsable
+from parsable import parsable
 
 KiB = 2.0 ** 10
 MiB = 2.0 ** 20
@@ -133,7 +133,7 @@ MACHINES = {
 }
 
 
-@parsable.command
+@parsable
 def infer_cost():
     '''
     Calculate cost of inference for various machines.
@@ -144,4 +144,4 @@ def infer_cost():
 
 
 if __name__ == '__main__':
-    parsable.dispatch()
+    parsable()

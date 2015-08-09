@@ -3,7 +3,7 @@ import contextlib
 import glob
 import multiprocessing
 import os
-import parsable
+from parsable import parsable
 import pstats
 import re
 import simplejson as json
@@ -51,7 +51,7 @@ def parse_bool(arg):
     return {'true': True, 'false': False}[arg.lower()]
 
 
-@parsable.command
+@parsable
 def abstract(*args):
     '''
     Abstract variables from expression.
@@ -66,7 +66,7 @@ def abstract(*args):
     print expression
 
 
-@parsable.command
+@parsable
 def desugar(*exprs):
     '''
     Convert lambda terms to combinators.
@@ -79,7 +79,7 @@ def desugar(*exprs):
         print '  =', desugar_expr(expr)
 
 
-@parsable.command
+@parsable
 def complete(*facts):
     '''
     Complete a set of facts.
@@ -142,7 +142,7 @@ def measure_sequent(sequent):
     print '# full cost =', full_cost, 'incremental cost =', incremental_cost
 
 
-@parsable.command
+@parsable
 def contrapositves(*filenames):
     '''
     Close rules under contrapositve
@@ -160,7 +160,7 @@ def contrapositves(*filenames):
             print
 
 
-@parsable.command
+@parsable
 def normalize(*filenames):
     '''
     Show normalized rule set derived from each rule
@@ -178,7 +178,7 @@ def normalize(*filenames):
             print
 
 
-@parsable.command
+@parsable
 def extract_tasks(infile, outfile=None):
     '''
     Extract tasks from facts and rules, but do not compile to C++.
@@ -204,7 +204,7 @@ def _extract_tasks((infile, outfile)):
     extract_tasks(infile, outfile)
 
 
-@parsable.command
+@parsable
 def batch_extract_tasks(*filenames, **kwargs):
     '''
     Extract tasks from infiles '*.theory', saving to '*.tasks'.
@@ -224,7 +224,7 @@ def batch_extract_tasks(*filenames, **kwargs):
     map_(_extract_tasks, pairs)
 
 
-@parsable.command
+@parsable
 def measure(*filenames):
     '''
     Measure complexity of rules in files
@@ -238,7 +238,7 @@ def measure(*filenames):
         measure_sequent(sequent)
 
 
-@parsable.command
+@parsable
 def test_compile(*filenames):
     '''
     Compile rules -> C++
@@ -274,7 +274,7 @@ def test_compile(*filenames):
         print '\n'.join(programs)
 
 
-@parsable.command
+@parsable
 def profile_tasks(*filenames, **kwargs):
     '''
     Profile task generation (first part of compiler chain).
@@ -300,7 +300,7 @@ def profile_tasks(*filenames, **kwargs):
         stats.print_stats(line_count)
 
 
-@parsable.command
+@parsable
 def profile_compile(*filenames, **kwargs):
     '''
     Profile full compiler chain (task generation + optimization).
@@ -326,7 +326,7 @@ def profile_compile(*filenames, **kwargs):
         stats.print_stats(line_count)
 
 
-@parsable.command
+@parsable
 def test_close_rules(infile, is_extensional=True):
     '''
     Compile extensionally some.theory -> some.derived.facts
@@ -350,7 +350,7 @@ def relpath(string):
         return string
 
 
-@parsable.command
+@parsable
 def compile(*infiles, **kwargs):
     '''
     Compile rules -> C++.
@@ -436,7 +436,7 @@ def _compile(param):
     compile(*param['args'], **param['kwargs'])
 
 
-@parsable.command
+@parsable
 def batch_compile(parallel=True):
     '''
     Compile all theories in parallel.
@@ -472,4 +472,4 @@ def batch_compile(parallel=True):
 
 
 if __name__ == '__main__':
-    parsable.dispatch()
+    parsable()

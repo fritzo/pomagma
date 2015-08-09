@@ -1,5 +1,5 @@
 from itertools import izip
-import parsable
+from parsable import parsable
 parsable = parsable.Parsable()
 import pomagma.util
 
@@ -312,7 +312,7 @@ def try_prove_diverge(
 # Commands
 
 
-@parsable.command
+@parsable
 def print_terms(atoms='x,y', max_atom_count=3):
     '''
     Print all terms up to some max atom count.
@@ -323,7 +323,7 @@ def print_terms(atoms='x,y', max_atom_count=3):
         print print_term(term)
 
 
-@parsable.command
+@parsable
 def count_terms(max_count=8):
     '''
     Count all terms up to some max atom count.
@@ -342,7 +342,7 @@ def count_terms(max_count=8):
         print '\t'.join(map(str, [m] + counts))
 
 
-@parsable.command
+@parsable
 def may_diverge(atoms='I,K,B,C,W,S,Y', max_atom_count=4, max_steps=20):
     '''
     Print terms that have not been proven to converge.
@@ -358,7 +358,7 @@ def may_diverge(atoms='I,K,B,C,W,S,Y', max_atom_count=4, max_steps=20):
             pass
 
 
-@parsable.command
+@parsable
 def must_diverge(atoms='I,K,B,C,W,S,Y', max_atom_count=4, max_steps=20):
     '''
     Print terms that have been proven to diverge.
@@ -374,4 +374,4 @@ def must_diverge(atoms='I,K,B,C,W,S,Y', max_atom_count=4, max_steps=20):
 
 
 if __name__ == '__main__':
-    parsable.dispatch()
+    parsable()

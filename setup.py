@@ -1,6 +1,6 @@
 import os
 import re
-import parsable
+from parsable import parsable
 import setuptools
 
 # TODO add MANIFEST.in as described in
