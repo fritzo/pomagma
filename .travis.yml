@@ -1,9 +1,7 @@
+sudo: false
 language: python
 python:
   - "2.7"
-node_js:
-  - "0.10"
-sudo: false
 addons:
   apt:
     sources:
@@ -50,7 +48,7 @@ install:
   - pip freeze
   - env
   - ulimit -c
-  - make
+  - make install
 before_script:
   - ulimit -c unlimited || echo 'Failed to set core file size'
 script:
