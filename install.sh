@@ -1,29 +1,31 @@
 #!/bin/bash
 
-sudo add-apt-repository -y ppa:chris-lea/node.js
-sudo apt-get update
-sudo apt-get install -y \
-  cmake make g++ ccache gdb \
-  ctags cscope \
-  libtbb-dev \
-  libprotobuf-dev \
-  protobuf-compiler \
-  python-protobuf \
-  libhdf5-serial-dev \
-  libssl-dev \
-  libzmq-dev \
-  libboost-filesystem-dev \
-  python-pip \
-  virtualenvwrapper \
-  python-tables \
-  graphviz \
-  p7zip-full \
-  nodejs \
-  #libstxxl-dev \
-  #libsparsehash-dev \
-  #libleveldb-dev \
-  #libsnappy-dev \
-  #
+if [ -n "$TRAVIS" ]; then
+	sudo add-apt-repository -y ppa:chris-lea/node.js
+	sudo apt-get update
+	sudo apt-get install -y \
+	  cmake make g++ ccache gdb \
+	  ctags cscope \
+	  libtbb-dev \
+	  libprotobuf-dev \
+	  protobuf-compiler \
+	  python-protobuf \
+	  libhdf5-serial-dev \
+	  libssl-dev \
+	  libzmq-dev \
+	  libboost-filesystem-dev \
+	  python-pip \
+	  virtualenvwrapper \
+	  python-tables \
+	  graphviz \
+	  p7zip-full \
+	  nodejs \
+	  #libstxxl-dev \
+	  #libsparsehash-dev \
+	  #libleveldb-dev \
+	  #libsnappy-dev \
+	  #
+fi
 
 if env | grep -q ^VIRTUAL_ENV=
 then
