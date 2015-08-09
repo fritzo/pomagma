@@ -48,7 +48,8 @@ install:
   - pip freeze
   - env
   - ulimit -c
-  - make install
+  - make protobuf
+  - pip install -e .
 before_script:
   - ulimit -c unlimited || echo 'Failed to set core file size'
 script:
