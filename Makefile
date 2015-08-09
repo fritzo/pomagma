@@ -11,7 +11,7 @@ protobuf: FORCE
 	$(MAKE) -C src/atlas
 	$(MAKE) -C src/cartographer
 	$(MAKE) -C src/io
-	$(MAKE) -C src/language
+	$(MAKE) -C src/language language_pb2.py
 
 tags: protobuf FORCE
 	cd src ; ctags -R
