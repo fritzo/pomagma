@@ -13,13 +13,19 @@ OPTIONS = {
     'log_level': pomagma.util.LOG_LEVEL_DEBUG,
 }
 
+SKJA = os.path.join(
+    pomagma.util.DATA,
+    'atlas',
+    'skja',
+    'region.normal.{:d}.pb'.format(pomagma.util.MIN_SIZES['skja']))
+
 
 @contextlib.contextmanager
-def serve(address=ADDRESS):
-    if not os.path.exists(WORLD):
+def serve(world, address=ADDRESS):
+    if not os.path.exists(world):
         raise SkipTest('fixture not found')
     print 'starting server'
-    server = pomagma.analyst.serve(THEORY, WORLD, address, **OPTIONS)
+    server = pomagma.analyst.serve(THEORY, world, address, **OPTIONS)
     yield server
     print 'stopping server'
     server.stop()
@@ -30,7 +36,15 @@ def _test_define(name):
 
 
 def test_define():
-    with serve():
+    with serve(WORLD):
         for name in pomagma.theorist.solve.theories:
             if name.endswith('_test'):
                 yield _test_define, name
+    with serve(SKJA):
+        for name in pomagma.theorist.solve.theories:
+            yield _test_define, name
+
+
+def test_sr_pairs():
+    with serve(SKJA):
+        pomagma.theorist.solve.sr_pairs(address=ADDRESS)

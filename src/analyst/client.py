@@ -93,7 +93,7 @@ class Client(object):
             assert isinstance(code, basestring), code
         results = self._simplify(codes)
         assert len(results) == len(codes), results
-        return results
+        return map(str, results)
 
     def _solve(self, var, theory, max_solutions):
         request = Request()

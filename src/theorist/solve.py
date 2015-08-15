@@ -50,19 +50,13 @@ theories = {
 }
 
 
-def solve(var, theory, max_solutions, address=pomagma.analyst.ADDRESS):
-    assert isinstance(var, basestring), var
-    assert isinstance(theory, basestring), theory
-    assert isinstance(max_solutions, (int, float)), max_solutions
-    with pomagma.analyst.connect(address) as db:
-        solutions = db.solve(var, theory, max_solutions)
+def print_solutions(solutions):
     print 'Necessary:'
     for term in solutions['necessary']:
         print '  {}'.format(term)
     print 'Possible:'
     for term in solutions['possible']:
         print '  {}'.format(term)
-    return solutions
 
 
 @parsable
@@ -86,7 +80,37 @@ def define(name=None, max_solutions=32, address=pomagma.analyst.ADDRESS):
     if name not in theories:
         print 'Try one of: {}'.format(' '.join(sorted(theories)))
         sys.exit(1)
-    return solve('t', theories[name], max_solutions, address=address)
+    with pomagma.analyst.connect(address) as db:
+        solutions = db.solve('t', theories[name], max_solutions)
+    print_solutions(solutions)
+    return solutions
+
+
+@parsable
+def sr_pairs(max_solutions=32, address=pomagma.analyst.ADDRESS):
+    '''
+    Find section,retract pairs (i.e. pairs below A).
+    '''
+    theory = '''
+        LESS a FUN f APP APP f TOP TOP      # a is a pair (s, r)
+        LESS a A                            # a is is below A
+        NLESS APP a K BOT                   # s is nontrivial
+        NLESS APP a F BOT                   # r is nontrivial
+        '''
+    with pomagma.analyst.connect(address) as db:
+        solutions = db.solve('a', theory, max_solutions)
+        pairs = (
+            [(x, True) for x in solutions['necessary']] +
+            [(x, False) for x in solutions['possible']])
+        sections = db.simplify(['APP {} K'.format(x) for x, _ in pairs])
+        retracts = db.simplify(['APP {} F'.format(x) for x, _ in pairs])
+    parts = zip(pairs, sections, retracts)
+    solutions = {
+        'necessary': [(sr, s, r) for (sr, n), s, r in parts if n],
+        'possible': [(sr, s, r) for (sr, n), s, r in parts if not n],
+    }
+    print_solutions(solutions)
+    return solutions
 
 
 if __name__ == '__main__':
