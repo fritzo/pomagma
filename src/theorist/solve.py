@@ -92,10 +92,10 @@ def sr_pairs(max_solutions=32, address=pomagma.analyst.ADDRESS):
     Find section,retract pairs (i.e. pairs below A).
     '''
     theory = '''
-        LESS a FUN f APP APP f TOP TOP      # a is a pair (s, r)
-        LESS a A                            # a is is below A
-        NLESS APP a K BOT                   # s is nontrivial
-        NLESS APP a F BOT                   # r is nontrivial
+        LESS a FUN f APP APP f TOP TOP          # a is a pair (s, r)
+        CLOSED a         LESS a A               # a is closed and below A
+        CLOSED APP a K   NLESS APP a K BOT      # s is closed and nontrivial
+        CLOSED APP a F   NLESS APP a F BOT      # r is closed and nontrivial
         '''
     with pomagma.analyst.connect(address) as db:
         solutions = db.solve('a', theory, max_solutions)
