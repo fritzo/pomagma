@@ -85,11 +85,11 @@ To start building a custom atlas from scratch
 
 Pomagma is parallelized and needs lots of memory to build a large atlas.
 
-| Atlas Size    | Compute Time | Memory Space | Storage Space        |
-|---------------|--------------|--------------|----------------------|
-| 1 000 atoms   | ~1 CPU hour  | ~10MB        | ~1MB uncompressed    |
-| 10 000 atoms  | ~1 CPU week  | ~1GB         | ~100MB uncompressed  |
-| 100 000 atoms | ~5 CPU years | ~100GB       | ~10GB uncompressed   |
+| Atlas Size    | Compute Time | Memory Space | Storage Space |
+|---------------|--------------|--------------|---------------|
+| 1 000 atoms   | ~1 CPU hour  | ~10MB        | ~1MB          |
+| 10 000 atoms  | ~1 CPU week  | ~1GB         | ~100MB        |
+| 100 000 atoms | ~1 CPU year  | ~100GB       | ~10GB         |
 
 ## License
 
