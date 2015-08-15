@@ -9,7 +9,7 @@ import pomagma.util
 
 
 BOT, TOP = 'BOT', 'TOP'
-I, K, B, C, W, S, Y = 'I', 'K', 'B', 'C', 'W', 'S', 'Y'
+I, K, F, B, C, W, S, Y = 'I', 'K', 'F', 'B', 'C', 'W', 'S', 'Y'
 J, R, U, V, P = 'J', 'R', 'U', 'V', 'P'
 UNKNOWNS = [
     'A', 'SECTION', 'RETRACT',
@@ -67,6 +67,11 @@ def converge_step(term):
             return (TOP,)
         else:
             return argv[0] + argv[2:]
+    elif head == F:
+        if argc == 0:
+            return (TOP,)
+        else:
+            return argv[1:]
     elif head == B:
         if argc == 0:
             return (TOP,)
@@ -359,7 +364,7 @@ def may_diverge(atoms='I,K,B,C,W,S,Y', max_atom_count=4, max_steps=20):
 
 
 @parsable
-def must_diverge(atoms='I,K,B,C,W,S,Y', max_atom_count=4, max_steps=20):
+def must_diverge(atoms='I,K,F,B,C,W,S,Y', max_atom_count=4, max_steps=20):
     '''
     Print terms that have been proven to diverge.
     '''

@@ -11,6 +11,7 @@ from pomagma.compiler.util import methodof
 
 I = Expression_0('I')
 K = Expression_0('K')
+F = Expression_0('F')
 J = Expression_0('J')
 R = Expression_0('R')
 B = Expression_0('B')
@@ -158,6 +159,9 @@ def head_normalize(expr, *args):
             arg0, args = pop_arg(args)
             arg1, args = pop_arg(args)
             return head_normalize(arg0, *args)
+        elif name == 'F':
+            arg0, args = pop_arg(args)
+            return head_normalize(*args)
         elif name == 'B':
             arg0, args = pop_arg(args)
             arg1, args = pop_arg(args)
