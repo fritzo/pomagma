@@ -1,23 +1,16 @@
 from nose.tools import assert_equal, assert_raises
 import pomagma.util
-from pomagma.theorist.diverge import (
-    I,
-    K,
-    B,
-    C,
-    W,
-    S,
-    Y,
-    TOP,
-    converge_step,
-    try_converge,
-    Converged,
-    Diverged,
-    iter_terms,
-    parse_term,
-    print_term,
-    try_prove_diverge,
-)
+from pomagma.theorist.diverge import Converged
+from pomagma.theorist.diverge import Diverged
+from pomagma.theorist.diverge import I, K, F, B, C, W, S, Y, TOP
+from pomagma.theorist.diverge import converge_step
+from pomagma.theorist.diverge import iter_terms
+from pomagma.theorist.diverge import parse_term
+from pomagma.theorist.diverge import print_term
+from pomagma.theorist.diverge import try_converge
+from pomagma.theorist.diverge import try_prove_diverge
+from pomagma.theorist.diverge import may_diverge
+from pomagma.theorist.diverge import must_diverge
 
 
 a, b, c = ('a',), ('b',), ('c',)  # argument lists
@@ -129,3 +122,11 @@ def test_try_prove_diverge():
                     assert_raises(Converged, try_converge, term, max_steps)
                 elif line:
                     raise ValueError('Bad line:\n{}'.format(line))
+
+
+def test_may_diverge():
+    may_diverge
+
+
+def test_must_diverge():
+    must_diverge

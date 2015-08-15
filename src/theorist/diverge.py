@@ -70,8 +70,10 @@ def converge_step(term):
     elif head == F:
         if argc == 0:
             return (TOP,)
+        elif argc == 1:
+            return (TOP,)
         else:
-            return argv[1:]
+            return argv[1] + argv[2:]
     elif head == B:
         if argc == 0:
             return (TOP,)
@@ -348,7 +350,7 @@ def count_terms(max_count=8):
 
 
 @parsable
-def may_diverge(atoms='I,K,B,C,W,S,Y', max_atom_count=4, max_steps=20):
+def may_diverge(atoms='I,K,F,B,C,W,S,Y', max_atom_count=4, max_steps=20):
     '''
     Print terms that have not been proven to converge.
     '''
