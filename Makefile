@@ -4,7 +4,7 @@ PY_FILES := *.py $(shell find src | grep '.py$$' | grep -v '_pb2.py')
 
 all: data/blob bootstrap FORCE
 	$(MAKE) python
-	$(MAKE) tags codegen tasks debug release
+	$(MAKE) tags codegen codegen-summary debug release
 
 protobuf: FORCE
 	$(MAKE) -C src/analyst
@@ -29,7 +29,7 @@ python: protobuf lint FORCE
 codegen: FORCE
 	python -m pomagma.compiler batch-compile
 
-tasks: FORCE
+codegen-summary: FORCE
 	python -m pomagma.compiler batch-extract-tasks
 
 CMAKE = cmake
@@ -60,7 +60,7 @@ cpp-test: all FORCE
 	  || { cat $(DEBUG_LOG); exit 1; }
 
 unit-test: all bootstrap FORCE
-	python vet.py check
+	./vet.py check || { ./diff.py codegen; exit 1; }
 	POMAGMA_DEBUG=1 nosetests -v pomagma
 	$(MAKE) cpp-test
 	POMAGMA_DEBUG=1 npm test

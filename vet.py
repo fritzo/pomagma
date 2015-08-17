@@ -10,10 +10,10 @@ import sys
 REPO = os.path.dirname(os.path.abspath(__file__))
 VETTED = os.path.join(REPO, 'vetted_hashes.csv')
 FILES_TO_VET = [
-    'src/surveyor/*.theory.cpp',
-    'src/theory/*.tasks',
     'src/theory/*.facts',
     'src/theory/*.programs',
+    'src/theory/*.symbols',
+    'src/theory/*.tasks',
 ]
 
 
@@ -58,7 +58,7 @@ def write_vetted_hashes(hashes):
 def vet(*filenames):
     '''
     Save hashes of current file versions for specified files.
-    Use 'vet all' to vet all files.
+    Use "vet all" to vet all files.
     '''
     hashes = read_vetted_hashes()
     if list(filenames) == ['all']:
@@ -87,8 +87,8 @@ def check_diffs(actual, expected):
         print 'Files differ from vetted versions:'
         for filename in failures:
             print ' ', filename
-        print 'Use ./diff.py to see differences.'
-        print 'Use ./vet.py vet to vet the changed files.'
+        print 'Use "./diff.py codegen" to see differences.'
+        print 'Use "./vet.py vet" to vet the changed files.'
     return failures
 
 
@@ -101,7 +101,7 @@ def check_missing(actual, expected):
         print 'Files have not been generated:'
         for filename in failures:
             print ' ', filename
-        print 'Use make to generate files if they should still exist.'
+        print 'Use "make" to generate files if they should still exist.'
         print 'Use "./vet.py vet -filename" to remove files.'
     return failures
 

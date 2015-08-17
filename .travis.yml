@@ -26,5 +26,7 @@ install:
   - ulimit -c
 before_script:
   - ulimit -c unlimited || echo 'Failed to set core file size'
+env:
+  - POMAGMA_DIFFTOOL=diff
 script:
   - make small-test

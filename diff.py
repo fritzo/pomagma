@@ -81,7 +81,7 @@ def clone(commit='HEAD'):
 
 
 @parsable
-def programs(commit='HEAD', difftool=DIFFTOOL):
+def codegen(commit='HEAD', difftool=DIFFTOOL):
     '''
     Diff generated code src/theory/*.symbols, *.programs, *.facts
     Supported difftools: diff, meld, cdiff, vim, gvim, mvim
@@ -104,15 +104,15 @@ def programs(commit='HEAD', difftool=DIFFTOOL):
 
 
 @parsable
-def tasks(commit='HEAD', difftool=DIFFTOOL):
+def codegen_summary(commit='HEAD', difftool=DIFFTOOL):
     '''
-    Diff generated task sketches src/theory/*.tasks.
+    Diff generated code sommary in src/theory/*.tasks.
     Supported difftools: diff, meld, cdiff, vim, gvim, mvim
     '''
     clone(commit=commit)
     parallel_check_call(
-        ['make', '-C', REPO, 'tasks'],
-        ['make', '-C', TEMP, 'tasks'])
+        ['make', '-C', REPO, 'codegen-summary'],
+        ['make', '-C', TEMP, 'codegen-summary'])
     subprocess.check_call(get_difftool(
         difftool,
         os.path.join(REPO, 'src', 'theory'),
