@@ -17,6 +17,12 @@ tags: protobuf FORCE
 	cd src ; ctags -R
 	cd src ; cscope -bcqR
 
+clang-ctags:
+	mkdir -p build/tags
+	cd build/tags && cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=1 ../..
+	clang-ctags --output src/tags \
+	  --compile-commands build/tags build/tags/compile_commands.json
+
 lint: FORCE
 	$(info pyflakes)
 	@pyflakes $(PY_FILES)
