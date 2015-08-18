@@ -19,10 +19,9 @@ static std::condition_variable g_work_condition;
 
 void schedule (size_t i)
 {
+    std::unique_lock<std::mutex> lock(g_work_mutex);
     g_work_queue.push(i);
     g_work_condition.notify_one();
-
-    std::unique_lock<std::mutex> lock(g_work_mutex);
     while (not g_work_queue.empty()) {
         g_work_condition.wait(lock);
     }
@@ -69,6 +68,8 @@ void print_rate (std::string name, Function function)
 int main ()
 {
     Log::Context log_context("Threading profile");
+
+    POMAGMA_INFO(std::setw(12) << "Method" << std::setw(12) << "Rate (Hz)");
 
     print_rate("call", [&](size_t i){
         task(i);

@@ -123,7 +123,7 @@ skja: all
 skrj: all
 	pomagma make skrj
 
-profile:
+profile: release
 	pomagma.make profile-misc
 	#pomagma.make profile-surveyor
 	#pomagma.make profile-cartographer
