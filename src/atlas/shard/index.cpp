@@ -3,10 +3,10 @@
 #include <pomagma/atlas/program.hpp>
 
 #define POMAGMA_ASSERT_UNFROZEN \
-    POMAGMA_ASSERT1(not m_frozen, "called Index.add_* after freezing");
+    POMAGMA_ASSERT1(not m_frozen, "called Index.insert_* after freezing");
 
 #define POMAGMA_ASSERT_FROZEN \
-    POMAGMA_ASSERT1(m_frozen, "called Index.find_* before frezing");
+    POMAGMA_ASSERT1(m_frozen, "called Index.find_* before freezing");
 
 namespace pomagma {
 namespace shard {
@@ -273,7 +273,7 @@ topic_t Index::try_find_cell_to_execute (
         case INFER_INJECTIVE_BINARY:
         case INFER_INJECTIVE_SYMMETRIC:
         case INFER_BINARY_SYMMETRIC:
-            POMAGMA_ERROR("cannot join across cells");
+            POMAGMA_ERROR("compound inference is not supported across cells");
     }
 
     POMAGMA_ERROR("unreachable");
