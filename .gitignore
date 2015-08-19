@@ -28,3 +28,7 @@ temp.*
 *.egg-info/
 node_modules/
 /dist/
+
+# eclipse
+/.cproject
+/.project
