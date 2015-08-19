@@ -1,5 +1,5 @@
-#include <pomagma/atlas/chart/util.hpp>
-#include <pomagma/atlas/chart/scheduler.hpp>
+#include <pomagma/atlas/micro/util.hpp>
+#include <pomagma/atlas/micro/scheduler.hpp>
 #include "theory.hpp"
 
 int main (int argc, char ** argv)

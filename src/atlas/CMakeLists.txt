@@ -13,6 +13,6 @@ target_link_libraries(atlas_protobuf_test
 )
 add_test(NAME atlas_protobuf COMMAND atlas_protobuf_test)
 
-add_subdirectory(chart)
-add_subdirectory(world)
+add_subdirectory(micro)
+add_subdirectory(macro)
 add_subdirectory(shard)

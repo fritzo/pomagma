@@ -2,8 +2,8 @@
 #include "approximate.hpp"
 #include "corpus.hpp"
 #include "validator.hpp"
-#include <pomagma/atlas/world/structure.hpp>
-#include <pomagma/atlas/world/vm.hpp>
+#include <pomagma/atlas/macro/structure.hpp>
+#include <pomagma/atlas/macro/vm.hpp>
 
 namespace pomagma
 {

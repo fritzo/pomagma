@@ -1,8 +1,8 @@
 
 #pragma once
 
-#include <pomagma/atlas/world/util.hpp>
-#include <pomagma/atlas/world/structure.hpp>
+#include <pomagma/atlas/macro/util.hpp>
+#include <pomagma/atlas/macro/structure.hpp>
 
 namespace pomagma
 {

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <pomagma/atlas/chart/util.hpp>
+#include <pomagma/atlas/micro/util.hpp>
 
 namespace pomagma
 {

@@ -1,7 +1,7 @@
 #include "consistency.hpp"
-#include <pomagma/atlas/world/scheduler.hpp>
-#include <pomagma/atlas/world/carrier.hpp>
-#include <pomagma/atlas/world/binary_relation.hpp>
+#include <pomagma/atlas/macro/scheduler.hpp>
+#include <pomagma/atlas/macro/carrier.hpp>
+#include <pomagma/atlas/macro/binary_relation.hpp>
 #include <unistd.h> // for _exit
 
 namespace pomagma

@@ -1,10 +1,10 @@
 #include "assume.hpp"
 #include "consistency.hpp"
 #include "find_parser.hpp"
-#include <pomagma/atlas/world/unary_relation.hpp>
-#include <pomagma/atlas/world/binary_relation.hpp>
-#include <pomagma/atlas/world/scheduler.hpp>
-#include <pomagma/atlas/world/compact.hpp>
+#include <pomagma/atlas/macro/unary_relation.hpp>
+#include <pomagma/atlas/macro/binary_relation.hpp>
+#include <pomagma/atlas/macro/scheduler.hpp>
+#include <pomagma/atlas/macro/compact.hpp>
 #include <algorithm>
 
 namespace pomagma {

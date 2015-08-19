@@ -1,5 +1,5 @@
 #include "server.hpp"
-#include <pomagma/atlas/world/router.hpp>
+#include <pomagma/atlas/macro/router.hpp>
 #include <pomagma/language/language.hpp>
 #include "messages.pb.h"
 #include <zmq.hpp>
