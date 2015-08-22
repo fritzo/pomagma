@@ -6,7 +6,7 @@ from pomagma.util.testing import for_each_kwargs
 
 SOLVE_EXAMPLES = [
     {
-        'var': 's',
+        'expr': 's',
         'theory': 'LESS APP V s s',
         'expected_programs': set([
             ('FOR_NULLARY_FUNCTION V V_',
@@ -26,7 +26,7 @@ SOLVE_EXAMPLES = [
         ]),
     },
     {
-        'var': 's',
+        'expr': 's',
         'theory': 'LESS APP s BOT BOT',
         'expected_programs': set([
             ('FOR_NULLARY_FUNCTION BOT BOT_',
@@ -46,7 +46,7 @@ SOLVE_EXAMPLES = [
         ]),
     },
     {
-        'var': 's',
+        'expr': 's',
         'theory': 'EQUAL APP s I I',
         'expected_programs': set([
             ('FOR_NULLARY_FUNCTION I I_',
@@ -73,7 +73,7 @@ SOLVE_EXAMPLES = [
         ]),
     },
     {
-        'var': 's',
+        'expr': 's',
         'theory': 'LESS TOP APP s TOP',
         'expected_programs': set([
             ('FOR_NULLARY_FUNCTION TOP TOP_',
@@ -93,7 +93,7 @@ SOLVE_EXAMPLES = [
         ]),
     },
     {
-        'var': 's',
+        'expr': 's',
         'theory': '''
             NLESS x BOT
             --------------
@@ -113,7 +113,7 @@ SOLVE_EXAMPLES = [
         ]),
     },
     {
-        'var': 's',
+        'expr': 's',
         'theory': '''
             NLESS x I
             ----------------
@@ -133,7 +133,7 @@ SOLVE_EXAMPLES = [
         ]),
     },
     {
-        'var': 's',
+        'expr': 's',
         'theory': '''
             # The entire theory of SEMI:
             LESS APP V s s       NLESS x BOT      NLESS x I
@@ -144,7 +144,7 @@ SOLVE_EXAMPLES = [
         'expected_programs': set([]),  # defined below
     },
     {
-        'var': 'x',
+        'expr': 'x',
         'theory': '',
         'expected_programs': set([
             ('LETS_UNARY_RELATION RETURN RETURN_x',
@@ -153,7 +153,7 @@ SOLVE_EXAMPLES = [
         ]),
     },
     {
-        'var': 'x',
+        'expr': 'x',
         'theory': 'LESS x I',
         'expected_programs': set([
             ('FOR_NULLARY_FUNCTION I I_',
@@ -166,6 +166,37 @@ SOLVE_EXAMPLES = [
              'LETS_UNARY_RELATION NRETURN NRETURN_x',
              'FOR_POS_NEG x NLESS_x_I NRETURN_x',
              'INFER_UNARY_RELATION NRETURN x'),
+        ]),
+    },
+    {
+        'expr': 'FUN f APP APP f s r',
+        'theory': '''
+            NLESS s BOT
+            NLESS r BOT
+            LESS COMP r s I
+            ''',
+        'expected_programs': set([
+            ('FOR_NULLARY_FUNCTION C C_',
+             'FOR_NULLARY_FUNCTION I I_',
+             'FOR_NULLARY_FUNCTION BOT BOT_',
+             'FOR_BINARY_FUNCTION_LHS_RHS APP C_ I_ APP_C_I',
+             'LETS_BINARY_RELATION_RHS NLESS NLESS_s_BOT BOT_',
+             'LETS_BINARY_FUNCTION_LHS APP APP_C_I APP_APP_C_I_s',
+             'FOR_POS_POS s NLESS_s_BOT APP_APP_C_I_s',
+             'LET_BINARY_FUNCTION APP APP_C_I s APP_APP_C_I_s',
+             'FOR_BINARY_FUNCTION_LHS_RHS APP C_ APP_APP_C_I_s '
+                'APP_C_APP_APP_C_I_s',
+             'LETS_BINARY_RELATION_RHS NLESS NLESS_r_BOT BOT_',
+             'LETS_BINARY_FUNCTION_RHS COMP COMP_r_s s',
+             'LETS_BINARY_FUNCTION_LHS APP APP_C_APP_APP_C_I_s '
+                'APP_APP_C_APP_APP_C_I_s_r',
+             'FOR_POS_POS_POS r NLESS_r_BOT COMP_r_s '
+                'APP_APP_C_APP_APP_C_I_s_r',
+             'LET_BINARY_FUNCTION COMP r s COMP_r_s',
+             'LET_BINARY_FUNCTION APP APP_C_APP_APP_C_I_s r '
+                'APP_APP_C_APP_APP_C_I_s_r',
+             'IF_BINARY_RELATION LESS COMP_r_s I_',
+             'INFER_UNARY_RELATION RETURN APP_APP_C_APP_APP_C_I_s_r')
         ]),
     },
 ]
@@ -185,7 +216,7 @@ def parse_programs(script):
 
 
 @for_each_kwargs(SOLVE_EXAMPLES)
-def test_compile_solver(var, theory, expected_programs):
-    script = compile_solver(var, theory)
+def test_compile_solver(expr, theory, expected_programs):
+    script = compile_solver(expr, theory)
     actual_programs = parse_programs(script)
     assert_set_equal(expected_programs, actual_programs)

@@ -39,17 +39,17 @@ def desugar(string):
     return str(expr)
 
 
-def compile_solver(var, theory):
+def compile_solver(expr, theory):
     '''
-    Produces a set of programs that finds values of var satisfying a theory.
+    Produces a set of programs that finds values of term satisfying a theory.
     Inputs:
-        var - string, the name of the free variable
+        expr - string, an expression with free variables
         theory - string representing a theory (in .theory format)
     Outputs:
         a program to be consumed by the virtual machine
     Example:
-        var = 's'
-        constraints = """
+        expr = 's'
+        theory = """
             # 6 constraints = 4 facts + 2 rules
             LESS APP V s s       NLESS x BOT      NLESS x I
             LESS APP s BOT BOT   --------------   ----------------
@@ -57,21 +57,26 @@ def compile_solver(var, theory):
             LESS TOP APP s TOP
             """
     '''
-    assert isinstance(var, basestring), var
+    assert isinstance(expr, basestring), expr
     assert isinstance(theory, basestring), theory
-    var = Expression.make(var)
-    assert var.is_var, var
+    expr = desugar_expr(parse_string_to_expr(expr))
+    assert expr.vars, expr
     theory = parse_theory_string(theory)
     facts = map(desugar_expr, theory['facts'])
     rules = map(desugar_sequent, theory['rules'])
-    fail = NONEGATE(NRETURN(var))
-    sequents = [Sequent([], [f, fail]) for f in facts]
-    sequents += [
-        Sequent(r.antecedents, set_with(r.succedents, fail))
-        for r in rules
-    ]
-    if not rules and all(f.vars <= set([var]) for f in facts):
-        sequents.append(Sequent(facts, [NONEGATE(RETURN(var))]))
+    sequents = []
+    can_infer_necessary = not rules and all(f.vars <= expr.vars for f in facts)
+    can_infer_possible = expr.is_var()  # TODO generalize to injective exprs
+    if can_infer_necessary:
+        sequents.append(Sequent(facts, [NONEGATE(RETURN(expr))]))
+    if can_infer_possible:
+        fail = NONEGATE(NRETURN(expr))
+        sequents += [Sequent([], [f, fail]) for f in facts]
+        sequents += [
+            Sequent(r.antecedents, set_with(r.succedents, fail))
+            for r in rules
+        ]
+    assert sequents, 'Cannot infer anything'
     programs = []
     write_full_programs(programs, sequents, can_parallelize=False)
     program = '\n'.join(programs)
