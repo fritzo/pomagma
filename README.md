@@ -1,7 +1,5 @@
 [![Build Status](https://travis-ci.org/fritzo/pomagma.svg?branch=master)](https://travis-ci.org/fritzo/pomagma)
 [![PyPI Version](https://badge.fury.io/py/pomagma.svg)](https://pypi.python.org/pypi/pomagma)
-[![NPM Version](https://badge.fury.io/js/pomagma.svg)](https://badge.fury.io/js/pomagma)
-[![NPM Dependencies](https://david-dm.org/fritzo/pomagma.svg)](https://www.npmjs.org/package/pomagma)
 
 # Pomagma
 
@@ -14,15 +12,15 @@ Pomagma is useful for:
 * testing and validating systems of inequalities
 * solving systems of inequalities
 
-Pomagma has client libraries in python and node.js, and powers the
-[Puddle](https://github.com/fritzo/puddle) reactive coding environment.
+Pomagma follows a client-server database architecture
+with a Python client library backed by a C++ database server.
 The correctness of Pomagma's theory is being verified in the
 [Hstar project](https://github.com/fritzo/hstar).
 
 ## Documentation
 
 * [Philosophy](/doc/philosophy.md)
-* [Using a client library](/doc/client.md)
+* [Using the client library](/doc/client.md)
 * [Administering a server](/doc/server.md)
 
 ## Installing
@@ -35,37 +33,34 @@ The server targets Ubuntu 14.04 and 12.04, and installs in a python virtualenv.
     make small-test     # takes ~5 CPU minutes
     make test           # takes ~1 CPU hour
 
-Client libraries support Python 2.7 and Node.js.
+The client library supports Python 2.7.
 
     pip install pomagma
-    npm install pomagma
 
 ## Quick Start
 
 Start a local analysis server with the tiny default atlas
 
-    pomagma analyze       # starts server, Ctrl-C to quit
+    pomagma analyze             # starts server, Ctrl-C to quit
 
-Then in another terminal, start an interactive client session
+Then in another terminal, start an interactive python client session
 
-    pomagma connect       # starts client session
+    $ pomagma connect           # starts a client session, Ctrl-D to quit
+    >>> simplify(['APP I I'])
+    [I]
+    >>> validate(['I'])
+    [{'is_bot': False, 'is_top': False}]
+    >>> solve('x', 'EQUAL x APP x x', max_solutions=4)
+    ['I', 'BOT', 'TOP', 'V'],
 
 Alternatively, connect using the Python client library
 
     python
     from pomagma import analyst
     with analyst.connect() as db:
-        print db.simplify(["APP I I"])      # prints [I]
-        print db.validate(["I"])            # prints [{"is_bot": False, "is_top": False}]
-
-or the Node.js client library
-
-    nodejs
-    var analyst = require("pomagma").analyst;
-    var db = analyst.connect();
-    console.log(db.simplify(["APP I I"]));  // prints [I]
-    console.log(db.validate(["I"]));        // prints [{"is_bot": false, "is_top": false}]
-    db.close();
+        print db.simplify(["APP I I"])
+        print db.validate(["I"])
+        print db.solve('x', 'EQUAL x APP x x', max_solutions=4)
 
 ## Get an Atlas to power an analysis server
 
