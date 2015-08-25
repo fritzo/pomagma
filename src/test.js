@@ -1,1 +1,0 @@
-require('./analyst/test.js');

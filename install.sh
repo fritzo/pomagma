@@ -1,6 +1,5 @@
 #!/bin/bash
 
-sudo add-apt-repository -y ppa:chris-lea/node.js
 sudo apt-get update
 sudo apt-get install -y \
   cmake make g++ ccache gdb \
@@ -18,7 +17,6 @@ sudo apt-get install -y \
   python-tables \
   graphviz \
   p7zip-full \
-  nodejs \
   #libstxxl-dev \
   #libsparsehash-dev \
   #libleveldb-dev \
@@ -37,7 +35,5 @@ fi
 pip install -r requirements.txt
 pip install -e .
 . $VIRTUAL_ENV/bin/activate
-
-npm install
 
 make all
