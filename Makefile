@@ -4,14 +4,11 @@ PY_FILES := *.py $(shell find src | grep '.py$$' | grep -v '_pb2.py')
 
 all: data/blob bootstrap FORCE
 	$(MAKE) python
+	$(MAKE) -C src/language
 	$(MAKE) tags codegen codegen-summary debug release
 
 protobuf: FORCE
-	$(MAKE) -C src/analyst
-	$(MAKE) -C src/atlas
-	$(MAKE) -C src/cartographer
-	$(MAKE) -C src/io
-	$(MAKE) -C src/language
+	$(MAKE) -C src protobuf
 
 tags: protobuf FORCE
 	cd src ; ctags -R
@@ -46,13 +43,13 @@ ifdef CXX
 	CMAKE += -DCMAKE_CXX_COMPILER=$(CXX)
 endif
 
-debug: FORCE
+debug: protobuf FORCE
 	mkdir -p build/debug
 	cd build/debug \
 	  && $(CMAKE) -DCMAKE_BUILD_TYPE=Debug ../.. \
 	  && $(MAKE)
 
-release: FORCE
+release: protobuf FORCE
 	mkdir -p build/release
 	cd build/release \
 	  && $(CMAKE) -DCMAKE_BUILD_TYPE=RelWithDebInfo ../.. \

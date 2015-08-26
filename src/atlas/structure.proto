@@ -4,7 +4,7 @@ package pomagma.atlas.protobuf;
 // raw data
 
 message ObMap {
-  // either key,val are both set, or key_diff_minus_one,val_diff are both set
+  // Either key,val are both set, or key_diff_minus_one,val_diff are both set.
   repeated uint32 key = 1 [packed=true];
   repeated uint32 val = 2 [packed=true];
   repeated uint32 key_diff_minus_one = 3 [packed=true];
@@ -81,10 +81,39 @@ message Structure {
   optional Carrier carrier = 3;
 
   repeated NullaryFunction nullary_functions = 4;
+  // reserved 5;  // For unary_functions.
   repeated UnaryFunction injective_functions = 6;
   repeated BinaryFunction binary_functions = 7;
   repeated BinaryFunction symmetric_functions = 8;
-
   repeated UnaryRelation unary_relations = 9;
   repeated BinaryRelation binary_relations = 10;
+}
+
+//----------------------------------------------------------------------------
+// chart
+
+// Charts are small so that many can fit in an Atlas.
+message Chart {
+  // Presentation blobs refer to pomagma.compiler.protobuf.Presentation protos.
+  // The min_presentation contains only those terms which are present in the
+  // structure, and a theory wrt which the structure has been saturated.
+  // The max_presentation.signature contains at least all terms that are
+  // present, and max_presentation.theory contains at least all facts that have
+  // ever been applied, or a theory entailing such.
+  // Lemma: min_presentation.signature is a subset of
+  //   max_presentation.signature.
+  // Lemma: min_presentation.theory is entailed by max_presentation.theory.
+  required bytes min_presentation_blob = 1;
+  required bytes max_presentation_blob = 2;
+  required bytes structure_blob = 3;
+  repeated bytes subsumed_structure_blobs = 4;
+}
+
+//----------------------------------------------------------------------------
+// atlas
+
+message Atlas {
+  // This represents a map from the .max_presentation_blob field to Charts;
+  // elements should be sorted.
+  repeated Chart charts = 1;
 }
