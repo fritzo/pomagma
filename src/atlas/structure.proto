@@ -81,10 +81,84 @@ message Structure {
   optional Carrier carrier = 3;
 
   repeated NullaryFunction nullary_functions = 4;
+  // reserved 5;
   repeated UnaryFunction injective_functions = 6;
   repeated BinaryFunction binary_functions = 7;
   repeated BinaryFunction symmetric_functions = 8;
 
   repeated UnaryRelation unary_relations = 9;
   repeated BinaryRelation binary_relations = 10;
+}
+
+//----------------------------------------------------------------------------
+// presentation
+
+message Language {
+  message MapEntry {
+    required string symbol = 1;
+    required float complexity = 2;
+  }
+
+  optional string name = 1;
+  optional bytes hash = 2;
+
+  repeated MapEntry nullary_functions = 4;
+  // reserved 5;
+  repeated MapEntry injective_functions = 6;
+  repeated MapEntry binary_functions = 7;
+  repeated MapEntry symmetric_functions = 8;
+  // reserved 9, 10;
+}
+
+message Expression {
+  required string polish = 1;
+}
+
+message Rewrite {
+  required Expression head = 1;
+  required Expression tail = 2;
+}
+
+message Sequent {
+  repeated Expression antecedents = 1;
+  repeated Expression succedents = 2;
+}
+
+message Theory {
+  optional string name = 1;
+  optional bytes hash = 2;
+
+  repeated Rewrite rewrites = 3;
+  repeated Expression facts = 4;
+  repeated Sequent rules = 5;
+}
+
+message Presentation {
+  optional string name = 1;
+  optional bytes hash = 2;
+
+  optional Language language = 3;
+  optional Theory theory = 4;
+}
+
+//----------------------------------------------------------------------------
+// chart
+
+message Chart {
+  optional string name = 1;
+  optional bytes hash = 2;
+
+  required bytes min_presentation_blob = 3;
+  required bytes max_presentation_blob = 4;
+  required bytes structure_blob = 5;
+}
+
+//----------------------------------------------------------------------------
+// atlas
+
+message Atlas {
+  optional string name = 1;
+  optional bytes hash = 2;
+
+  repeated Chart charts = 3;
 }
