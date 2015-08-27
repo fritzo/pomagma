@@ -4,7 +4,7 @@ package pomagma.atlas.protobuf;
 // raw data
 
 message ObMap {
-  // either key,val are both set, or key_diff_minus_one,val_diff are both set
+  // Either key,val are both set, or key_diff_minus_one,val_diff are both set.
   repeated uint32 key = 1 [packed=true];
   repeated uint32 val = 2 [packed=true];
   repeated uint32 key_diff_minus_one = 3 [packed=true];
@@ -85,80 +85,69 @@ message Structure {
   repeated UnaryFunction injective_functions = 6;
   repeated BinaryFunction binary_functions = 7;
   repeated BinaryFunction symmetric_functions = 8;
-
   repeated UnaryRelation unary_relations = 9;
   repeated BinaryRelation binary_relations = 10;
 }
 
 //----------------------------------------------------------------------------
-// presentation
+// presentation: a syntactic specification
 
-message Language {
-  message MapEntry {
-    required string symbol = 1;
-    required float complexity = 2;
-  }
-
-  optional string name = 1;
-  optional bytes hash = 2;
-
-  repeated MapEntry nullary_functions = 4;
+message Signature {
+  // These represent sets; elements should be sorted and unique.
+  repeated string nullary_functions = 4;
   // reserved 5;
-  repeated MapEntry injective_functions = 6;
-  repeated MapEntry binary_functions = 7;
-  repeated MapEntry symmetric_functions = 8;
-  // reserved 9, 10;
+  repeated string injective_functions = 6;
+  repeated string binary_functions = 7;
+  repeated string symmetric_functions = 8;
+  repeated string unary_relations = 9;
+  repeated string binary_relations = 10;
 }
 
 message Expression {
+  // Space-delimited polish notation. Requires a signature for parsing.
   required string polish = 1;
 }
 
-message Rewrite {
-  required Expression head = 1;
-  required Expression tail = 2;
-}
-
 message Sequent {
+  // These represent sets; elements should be sorted and unique.
   repeated Expression antecedents = 1;
   repeated Expression succedents = 2;
 }
 
 message Theory {
-  optional string name = 1;
-  optional bytes hash = 2;
-
-  repeated Rewrite rewrites = 3;
-  repeated Expression facts = 4;
-  repeated Sequent rules = 5;
+  // These represent sets; elements should be sorted and unique.
+  repeated Expression facts = 1;  // Should have no free variables.
+  repeated Sequent rules = 2;  // Should each have at least one free variable.
 }
 
 message Presentation {
-  optional string name = 1;
-  optional bytes hash = 2;
-
-  optional Language language = 3;
-  optional Theory theory = 4;
+  optional Signature signature = 1;
+  optional Theory theory = 2;
 }
 
 //----------------------------------------------------------------------------
 // chart
 
+// Charts are small so that many can fit in an Atlas.
 message Chart {
-  optional string name = 1;
-  optional bytes hash = 2;
-
-  required bytes min_presentation_blob = 3;
-  required bytes max_presentation_blob = 4;
-  required bytes structure_blob = 5;
+  // The min_presentation contains only those terms which are present in the
+  // structure, and a theory wrt which the structure has been saturated.
+  // The max_presentation.signature contains at least all terms that are
+  // present, and max_presentation.theory contains at least all facts that have
+  // ever been applied, or a theory entailing such.
+  // Lemma: min_presentation.signature is a subset of
+  //   max_presentation.signature.
+  // Lemma: min_presentation.theory is entailed by max_presentation.theory.
+  required bytes min_presentation_blob = 1;
+  required bytes max_presentation_blob = 2;
+  required bytes structure_blob = 3;
 }
 
 //----------------------------------------------------------------------------
 // atlas
 
 message Atlas {
-  optional string name = 1;
-  optional bytes hash = 2;
-
-  repeated Chart charts = 3;
+  // This represents a map from the .max_presentation_blob field to Charts;
+  // elements should be sorted.
+  repeated Chart charts = 1;
 }
