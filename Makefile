@@ -7,11 +7,7 @@ all: data/blob bootstrap FORCE
 	$(MAKE) tags codegen codegen-summary debug release
 
 protobuf: FORCE
-	$(MAKE) -C src/analyst
-	$(MAKE) -C src/atlas
-	$(MAKE) -C src/cartographer
-	$(MAKE) -C src/io
-	$(MAKE) -C src/language
+	$(MAKE) -C src protobuf
 
 tags: protobuf FORCE
 	cd src ; ctags -R

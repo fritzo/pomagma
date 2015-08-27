@@ -1,0 +1,34 @@
+package pomagma.compiler.protobuf;
+
+message Signature {
+  // These represent sets; elements should be sorted and unique.
+  repeated string nullary_functions = 4;
+  // reserved 5;
+  repeated string injective_functions = 6;
+  repeated string binary_functions = 7;
+  repeated string symmetric_functions = 8;
+  repeated string unary_relations = 9;
+  repeated string binary_relations = 10;
+}
+
+message Expression {
+  // Space-delimited polish notation. Requires a signature for parsing.
+  required string polish = 1;
+}
+
+message Sequent {
+  // These represent sets; elements should be sorted and unique.
+  repeated Expression antecedents = 1;
+  repeated Expression succedents = 2;
+}
+
+message Theory {
+  // These represent sets; elements should be sorted and unique.
+  repeated Expression facts = 1;  // Should have no free variables.
+  repeated Sequent rules = 2;  // Should each have at least one free variable.
+}
+
+message Presentation {
+  optional Signature signature = 1;
+  optional Theory theory = 2;
+}
