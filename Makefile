@@ -42,13 +42,13 @@ ifdef CXX
 	CMAKE += -DCMAKE_CXX_COMPILER=$(CXX)
 endif
 
-debug: FORCE
+debug: protobuf FORCE
 	mkdir -p build/debug
 	cd build/debug \
 	  && $(CMAKE) -DCMAKE_BUILD_TYPE=Debug ../.. \
 	  && $(MAKE)
 
-release: FORCE
+release: protobuf FORCE
 	mkdir -p build/release
 	cd build/release \
 	  && $(CMAKE) -DCMAKE_BUILD_TYPE=RelWithDebInfo ../.. \

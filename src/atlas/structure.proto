@@ -106,6 +106,7 @@ message Chart {
   required bytes min_presentation_blob = 1;
   required bytes max_presentation_blob = 2;
   required bytes structure_blob = 3;
+  repeated bytes subsumed_structure_blobs = 4;
 }
 
 //----------------------------------------------------------------------------
