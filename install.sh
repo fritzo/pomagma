@@ -8,13 +8,11 @@ sudo apt-get install -y \
   libprotobuf-dev \
   protobuf-compiler \
   python-protobuf \
-  libhdf5-serial-dev \
   libssl-dev \
   libzmq-dev \
   libboost-filesystem-dev \
   python-pip \
   virtualenvwrapper \
-  python-tables \
   graphviz \
   p7zip-full \
   #libstxxl-dev \

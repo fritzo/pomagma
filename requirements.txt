@@ -1,4 +1,3 @@
-#tables
 boto
 contextlib2
 mock

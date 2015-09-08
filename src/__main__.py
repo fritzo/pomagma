@@ -196,28 +196,6 @@ def update_language(theory=THEORY, **options):
 
 
 @parsable
-def update_format(source='h5', destin='pb', **options):
-    '''
-    Transcode world map between db formats.
-    Options: log_level, log_file
-    '''
-    assert source != destin
-    is_source = re.compile('.*\.{}$'.format(source)).match
-    is_temp = re.compile('temp').match
-    for theory in os.listdir(os.path.join(pomagma.util.DATA, 'atlas')):
-        with atlas.chdir(theory):
-            for source_name in os.listdir('.'):
-                if is_source(source_name) and not is_temp(source_name):
-                    destin_name = source_name[:-len(source)] + destin
-                    if not os.path.exists(destin_name):
-                        atlas.update_format(
-                            theory,
-                            source_name,
-                            destin_name,
-                            **options)
-
-
-@parsable
 def theorize(theory=THEORY, **options):
     '''
     Make conjectures based on atlas and update atlas based on theorems.
