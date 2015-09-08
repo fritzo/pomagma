@@ -80,10 +80,7 @@ bootstrap: FORCE
 	  && test -e world.normal.pb || ln region.normal.2047.pb world.normal.pb
 
 h4-test: all FORCE
-	POMAGMA_DB_FORMAT=h5 POMAGMA_DEBUG=1 \
-	  pomagma.make test-atlas h4
-	POMAGMA_DB_FORMAT=pb POMAGMA_DEBUG=1 \
-	  pomagma.make test-atlas h4
+	POMAGMA_DEBUG=1 pomagma.make test-atlas h4
 sk-test: all FORCE
 	POMAGMA_DEBUG=1 pomagma.make test-atlas sk
 skj-test: all FORCE
