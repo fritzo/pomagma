@@ -66,7 +66,6 @@ unit-test: all bootstrap FORCE
 	./vet.py check || { ./diff.py codegen; exit 1; }
 	POMAGMA_DEBUG=1 nosetests -v pomagma
 	$(MAKE) cpp-test
-	POMAGMA_DEBUG=1 npm test
 	POMAGMA_DEBUG=1 pomagma.make profile-misc
 	pomagma.make profile-misc
 
