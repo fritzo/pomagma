@@ -2,23 +2,23 @@
 
 sudo apt-get update
 sudo apt-get install -y \
-  cmake make g++ ccache gdb \
-  ctags cscope \
-  libtbb-dev \
-  libprotobuf-dev \
-  protobuf-compiler \
-  python-protobuf \
-  libssl-dev \
-  libzmq-dev \
+  ccache \
+  cmake \
+  cscope \
+  ctags \
+  g++ \
+  gdb \
+  graphviz \
   libboost-filesystem-dev \
+  libprotobuf-dev \
+  libssl-dev \
+  libtbb-dev \
+  libzmq-dev \
+  make \
+  p7zip-full \
+  protobuf-compiler \
   python-pip \
   virtualenvwrapper \
-  graphviz \
-  p7zip-full \
-  #libstxxl-dev \
-  #libsparsehash-dev \
-  #libleveldb-dev \
-  #libsnappy-dev \
   #
 
 if env | grep -q ^VIRTUAL_ENV=

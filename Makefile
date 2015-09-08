@@ -5,14 +5,14 @@ PY_FILES := *.py $(shell find src | grep '.py$$' | grep -v '_pb2.py')
 all: data/blob bootstrap FORCE
 	$(MAKE) python
 	$(MAKE) -C src/language
-	$(MAKE) tags codegen codegen-summary debug release
-
-protobuf: FORCE
-	$(MAKE) -C src protobuf
+	$(MAKE) codegen codegen-summary debug release
 
 tags: protobuf FORCE
 	cd src ; ctags -R
 	cd src ; cscope -bcqR
+
+protobuf: FORCE
+	$(MAKE) -C src protobuf
 
 clang-ctags:
 	mkdir -p build/tags

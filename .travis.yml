@@ -4,22 +4,42 @@ python:
 cache:
   apt: true
   directories:
-  - $HOME/.pip-cache
   - $HOME/.ccache
 virtualenv:
   system_site_packages: true
+addons:
+  apt:
+    packages:
+      - ccache
+      - cmake
+      # - cscope  # disallowed on travis
+      # - ctags  # disallowed on travis
+      - g++
+      - gdb
+      - graphviz
+      - libboost-filesystem-dev
+      - libprotobuf-dev
+      - libssl-dev
+      - libtbb-dev
+      - libzmq-dev
+      - make
+      - p7zip-full
+      - protobuf-compiler
+      - python-pip
+      # - virtualenvwrapper  # disallowed on travis
 before_install:
+  # This issue prevents pomagma from using travis' container infrastructure:
+  # https://github.com/travis-ci/travis-ci/issues/982
   - sudo rm /etc/apt/sources.list.d/travis_ci_zeromq3-source.list
-  - export PIP_DOWNLOAD_CACHE=$HOME/.pip-cache
-  - pip install -r requirements.txt
+  - sudo apt-get install -y libzmq3-dev
   - export MAKEFLAGS="-j 2 -S"
 install:
-  - . install.sh
+  - pip install -r requirements.txt
+  - pip freeze
   - g++ --version
   - cmake --version
   - ccache --version
   - python --version
-  - pip freeze
   - env
   - ulimit -c
 before_script:
