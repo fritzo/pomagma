@@ -10,7 +10,6 @@ set(POMAGMA_UTIL_LIBS
 
 set(POMAGMA_IO_LIBS
 	pomagma_io
-	hdf5 hdf5_hl
 	protobuf
 )
 

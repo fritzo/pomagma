@@ -8,7 +8,6 @@ sudo apt-get install -y \
   libprotobuf-dev \
   protobuf-compiler \
   python-protobuf \
-  libhdf5-serial-dev \
   libssl-dev \
   libzmq-dev \
   libboost-filesystem-dev \

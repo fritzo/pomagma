@@ -9,19 +9,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Woverloaded-virtual -Wsign-promo -Wunde
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -fomit-frame-pointer -pipe")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DH5_NO_DEPRECATED_SYMBOLS")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DH5Acreate_vers=2")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DH5Dcreate_vers=2")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DH5Dopen_vers=2")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DH5Eprint_vers=2")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DH5Eset_auto_vers=2")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DH5Gcreate_vers=2")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DH5Gopen_vers=2")
-
-# In moving from 1.8.4 to 1.8.11,
-# HDF5 starts to break when H5close is called multiple times.
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DPOMAGMA_H5_CLOSE_AND_REOPEN")
-
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DPOMAGMA_ASSUME_X86")
 
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} -DPOMAGMA_DEBUG_LEVEL=9")

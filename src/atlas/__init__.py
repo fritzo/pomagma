@@ -116,16 +116,8 @@ def get_ext(filename):
     while parts[-1] in ['gz', 'bz2', '7z']:
         parts = parts[:-1]
     ext = parts[-1]
-    assert ext in ['h5', 'pb'], 'unsupported filetype: {}'.format(filename)
+    assert ext in ['pb'], 'unsupported filetype: {}'.format(filename)
     return ext
-
-
-@contextlib.contextmanager
-def h5_open(filename):
-    import tables
-    structure = tables.openFile(filename)
-    yield structure
-    structure.close()
 
 
 def pb_load(filename):
@@ -143,24 +135,14 @@ def count_obs(structure):
 
 
 def get_hash(filename):
-    ext = get_ext(filename)
-    if ext == 'h5':
-        with h5_open(filename) as structure:
-            digest = structure.getNodeAttr('/', 'hash').tolist()
-            hexdigest = ''.join('{:02x}'.format(x) for x in digest)
-            return hexdigest
-    elif ext == 'pb':
-        return pb_load(filename).hash  # FIXME this is a string, not a list
+    assert get_ext(filename) == 'pb'
+    return pb_load(filename).hash  # FIXME this is a string, not a list
 
 
 def get_info(filename):
-    ext = get_ext(filename)
-    if ext == 'h5':
-        with h5_open(filename) as structure:
-            item_dim, item_count = count_obs(structure)
-    elif ext == 'pb':
-        item_count = pb_load(filename).carrier.item_count
-        item_dim = item_count
+    assert get_ext(filename) == 'pb'
+    item_count = pb_load(filename).carrier.item_count
+    item_dim = item_count
     return {'item_dim': item_dim, 'item_count': item_count}
 
 
@@ -173,21 +155,12 @@ def get_filesize(filename):
 
 
 def print_info(filename):
-    ext = get_ext(filename)
-    if ext == 'h5':
-        print 'byte_count =', get_filesize(filename)
-        with h5_open(filename) as structure:
-            item_dim, item_count = count_obs(structure)
-            print 'item_dim =', item_dim
-            print 'item_count =', item_count
-            for o in structure:
-                print o
-    elif ext == 'pb':
-        files = [filename]
-        files += map(blobstore.find_blob, blobstore.iter_blob_refs(filename))
-        print 'file_count =', len(files)
-        print 'byte_count =', sum(map(get_filesize, files))
-        structure = pb_load(filename)
-        print 'item_dim =', structure.carrier.item_count
-        print 'item_count =', structure.carrier.item_count
-        print structure
+    assert get_ext(filename) == 'pb'
+    files = [filename]
+    files += map(blobstore.find_blob, blobstore.iter_blob_refs(filename))
+    print 'file_count =', len(files)
+    print 'byte_count =', sum(map(get_filesize, files))
+    structure = pb_load(filename)
+    print 'item_dim =', structure.carrier.item_count
+    print 'item_count =', structure.carrier.item_count
+    print structure

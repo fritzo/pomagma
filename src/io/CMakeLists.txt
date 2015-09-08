@@ -3,7 +3,6 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 add_library(pomagma_io SHARED
 	blobstore.cpp
 	protobuf.cpp
-	hdf5.cpp
 )
 
 add_executable(io_protobuf_test protobuf_test.cpp protobuf_test.pb.cc)
