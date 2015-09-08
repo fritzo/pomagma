@@ -345,7 +345,7 @@ inline void assert_contiguous (const Carrier & carrier)
             "dumping requires contiguous carrier; try compacting first");
 }
 
-inline void dump_pb (
+inline void dump (
         const Carrier & carrier,
         protobuf::Structure & structure,
         std::mutex & mutex)
@@ -360,7 +360,7 @@ inline void dump_pb (
     mutex.unlock();
 }
 
-inline void dump_pb (
+inline void dump (
         const Carrier &,
         const UnaryRelation & rel,
         protobuf::Structure & structure,
@@ -386,7 +386,7 @@ inline void dump_pb (
     blob.write(chunk);
 }
 
-inline void dump_pb (
+inline void dump (
         const Carrier & carrier,
         const BinaryRelation & rel,
         protobuf::Structure & structure,
@@ -419,7 +419,7 @@ inline void dump_pb (
     }
 }
 
-inline void dump_pb (
+inline void dump (
         const Carrier &,
         const NullaryFunction & fun,
         protobuf::Structure & structure,
@@ -439,7 +439,7 @@ inline void dump_pb (
     mutex.unlock();
 }
 
-inline void dump_pb (
+inline void dump (
         const Carrier &,
         const InjectiveFunction & fun,
         protobuf::Structure & structure,
@@ -470,7 +470,7 @@ inline void dump_pb (
     blob.write(chunk);
 }
 
-inline void dump_pb (
+inline void dump (
         const Carrier & carrier,
         const BinaryFunction & fun,
         protobuf::Structure & structure,
@@ -509,7 +509,7 @@ inline void dump_pb (
     }
 }
 
-inline void dump_pb (
+inline void dump (
         const Carrier & carrier,
         const SymmetricFunction & fun,
         protobuf::Structure & structure,
@@ -549,7 +549,7 @@ inline void dump_pb (
     }
 }
 
-inline Hasher::Dict get_tree_hash_pb (const protobuf::Structure & structure)
+inline Hasher::Dict get_tree_hash (const protobuf::Structure & structure)
 {
     Hasher::Dict dict;
 
@@ -568,7 +568,7 @@ inline Hasher::Dict get_tree_hash_pb (const protobuf::Structure & structure)
     return dict;
 }
 
-inline void dump_pb (
+inline void dump (
         Signature & signature,
         protobuf::Structure & structure,
         std::vector<std::string> & sub_hexdigests)
@@ -581,13 +581,13 @@ inline void dump_pb (
     std::vector<std::thread> threads;
 
     threads.push_back(std::thread([&]{
-        detail::dump_pb(carrier, structure, mutex);
+        detail::dump(carrier, structure, mutex);
     }));
 
 #define CASE_ARITY(Kind, kind, Arity, arity)                                \
     for (const auto & i : signature.arity ## _ ## kind ## s()) {            \
         threads.push_back(std::thread([&]{                                  \
-            detail::dump_pb(carrier, * i.second, structure, i.first, mutex);\
+            detail::dump(carrier, * i.second, structure, i.first, mutex);\
         }));                                                                \
     }
     POMAGMA_SWITCH_ARITY(CASE_ARITY)
@@ -604,38 +604,27 @@ inline void dump_pb (
     POMAGMA_SWITCH_ARITY(CASE_ARITY)
 #undef CASE_ARITY
 
-    auto digest = Hasher::digest(get_tree_hash_pb(structure));
+    auto digest = Hasher::digest(get_tree_hash(structure));
     structure.set_hash(Hasher::str(digest));
 }
 
 } // namespace detail
-
-void dump_pb (
-        Signature & signature,
-        const std::string & filename)
-{
-    protobuf::Structure structure;
-
-    std::vector<std::string> sub_hexdigests;
-    detail::dump_pb(signature, structure, sub_hexdigests);
-
-    protobuf::BlobWriter([&](const std::string & hexdigest){
-        dump_blob_ref(hexdigest, filename, sub_hexdigests);
-    }).write(structure);
-}
 
 void dump (
         Signature & signature,
         const std::string & filename)
 {
     POMAGMA_INFO("Dumping structure to file " << filename);
+    POMAGMA_ASSERT_EQ(fs::extension(filename), ".pb");
 
-    const std::string ext = fs::extension(filename);
-    if (ext == ".pb") {
-        dump_pb(signature, filename);
-    } else {
-        POMAGMA_ERROR("unknown file extension: " << filename);
-    }
+    protobuf::Structure structure;
+
+    std::vector<std::string> sub_hexdigests;
+    detail::dump(signature, structure, sub_hexdigests);
+
+    protobuf::BlobWriter([&](const std::string & hexdigest){
+        dump_blob_ref(hexdigest, filename, sub_hexdigests);
+    }).write(structure);
 
     POMAGMA_INFO("done dumping structure");
 }
@@ -805,7 +794,7 @@ inline void call_or_defer (
     }
 }
 
-inline void load_signature_pb (
+inline void load_signature (
         Signature & signature,
         const protobuf::Structure & structure,
         size_t extra_item_dim)
@@ -849,7 +838,7 @@ inline void check_signature (
 #undef CASE_ARITY
 }
 
-inline void load_data_pb (
+inline void load_data (
         Carrier & carrier,
         const protobuf::Carrier & message)
 {
@@ -862,7 +851,7 @@ inline void load_data_pb (
     }
 }
 
-inline void load_data_pb (
+inline void load_data (
         UnaryRelation & rel,
         const protobuf::UnaryRelation & message,
         std::vector<std::function<void()>> * tasks = nullptr)
@@ -880,14 +869,14 @@ inline void load_data_pb (
             protobuf::BlobReader blob(hexdigest);
             protobuf::UnaryRelation chunk;
             while (blob.try_read_chunk(chunk)) {
-                load_data_pb(rel, chunk);
+                load_data(rel, chunk);
                 chunk.Clear();
             }
         }
     });
 }
 
-inline void load_data_pb (
+inline void load_data (
         BinaryRelation & rel,
         const protobuf::BinaryRelation & message,
         std::vector<std::function<void()>> * tasks = nullptr)
@@ -905,14 +894,14 @@ inline void load_data_pb (
             protobuf::BlobReader blob(hexdigest);
             protobuf::BinaryRelation chunk;
             while (blob.try_read_chunk(chunk)) {
-                load_data_pb(rel, chunk);
+                load_data(rel, chunk);
                 chunk.Clear();
             }
         });
     }
 }
 
-inline void load_data_pb (
+inline void load_data (
         NullaryFunction & fun,
         const protobuf::NullaryFunction & message,
         std::vector<std::function<void()>> *)
@@ -923,7 +912,7 @@ inline void load_data_pb (
 }
 
 // message is nonconst to support in-place decompression
-inline void load_data_pb (
+inline void load_data (
         InjectiveFunction & fun,
         protobuf::UnaryFunction & message,
         std::vector<std::function<void()>> * tasks = nullptr)
@@ -944,7 +933,7 @@ inline void load_data_pb (
             protobuf::BlobReader blob(hexdigest);
             protobuf::UnaryFunction chunk;
             while (blob.try_read_chunk(chunk)) {
-                load_data_pb(fun, chunk);
+                load_data(fun, chunk);
                 chunk.Clear();
             }
         }
@@ -952,7 +941,7 @@ inline void load_data_pb (
 }
 
 // message is nonconst to support in-place decompression
-inline void load_data_pb (
+inline void load_data (
         BinaryFunction & fun,
         protobuf::BinaryFunction & message,
         std::vector<std::function<void()>> * tasks = nullptr)
@@ -978,7 +967,7 @@ inline void load_data_pb (
             protobuf::BlobReader blob(hexdigest);
             protobuf::BinaryFunction chunk;
             while (blob.try_read_chunk(chunk)) {
-                load_data_pb(fun, chunk);
+                load_data(fun, chunk);
                 chunk.Clear();
             }
         });
@@ -986,7 +975,7 @@ inline void load_data_pb (
 }
 
 // message is nonconst to support in-place decompression
-inline void load_data_pb (
+inline void load_data (
         SymmetricFunction & fun,
         protobuf::BinaryFunction & message,
         std::vector<std::function<void()>> * tasks = nullptr)
@@ -1012,24 +1001,24 @@ inline void load_data_pb (
             protobuf::BlobReader blob(hexdigest);
             protobuf::BinaryFunction chunk;
             while (blob.try_read_chunk(chunk)) {
-                load_data_pb(fun, chunk);
+                load_data(fun, chunk);
                 chunk.Clear();
             }
         });
     }
 }
 
-inline void load_data_pb (
+inline void load_data (
         Signature & signature,
         protobuf::Structure & structure)
 {
     POMAGMA_INFO("Loading structure data");
 
-    const Hasher::Dict hash = get_tree_hash_pb(structure);
+    const Hasher::Dict hash = get_tree_hash(structure);
 
     POMAGMA_ASSERT(signature.carrier(), "carrier is not defined");
     Carrier & carrier = * signature.carrier();
-    load_data_pb(carrier, structure.carrier());
+    load_data(carrier, structure.carrier());
     update_data(carrier, hash);
 
     std::vector<std::function<void()>> tasks;
@@ -1038,7 +1027,7 @@ inline void load_data_pb (
     for (auto & i : * structure.mutable_ ## arity ## _ ## kind ## s()) {    \
         POMAGMA_ASSERT(i.has_name(), #Arity #Kind " is missing name");      \
         POMAGMA_INFO("loading " #Arity #Kind " " << i.name());              \
-        load_data_pb(* signature.arity ## _ ## kind(i.name()), i, &tasks);  \
+        load_data(* signature.arity ## _ ## kind(i.name()), i, &tasks);  \
     }
     POMAGMA_SWITCH_ARITY(CASE_ARITY)
 #undef CASE_ARITY
@@ -1054,51 +1043,24 @@ inline void load_data_pb (
 
 } // namespace detail
 
-void load_pb (
-        Signature & signature,
-        const std::string & filename,
-        size_t extra_item_dim)
-{
-    protobuf::Structure structure;
-    POMAGMA_ASSERT(structure.descriptor(), "protobuf error");
-    protobuf::InFile(find_blob(load_blob_ref(filename))).read(structure);
-
-    POMAGMA_ASSERT(structure.has_hash(), "structure is missing hash");
-    auto digest = Hasher::digest(detail::get_tree_hash_pb(structure));
-    POMAGMA_ASSERT(Hasher::str(digest) == structure.hash(), "file is corrupt");
-
-    detail::load_signature_pb(signature, structure, extra_item_dim);
-    detail::load_data_pb(signature, structure);
-}
-
-void load_data_pb (
-        Signature & signature,
-        const std::string & filename)
-{
-    protobuf::Structure structure;
-    POMAGMA_ASSERT(structure.descriptor(), "protobuf error");
-    protobuf::InFile(find_blob(load_blob_ref(filename))).read(structure);
-
-    POMAGMA_ASSERT(structure.has_hash(), "structure is missing hash");
-    auto digest = Hasher::digest(detail::get_tree_hash_pb(structure));
-    POMAGMA_ASSERT(Hasher::str(digest) == structure.hash(), "file is corrupt");
-
-    detail::load_data_pb(signature, structure);
-}
-
 void load (
         Signature & signature,
         const std::string & filename,
         size_t extra_item_dim)
 {
     POMAGMA_INFO("Loading structure from file " << filename);
+    POMAGMA_ASSERT_EQ(fs::extension(filename), ".pb");
 
-    const std::string ext = fs::extension(filename);
-    if (ext == ".pb") {
-        load_pb(signature, filename, extra_item_dim);
-    } else {
-        POMAGMA_ERROR("unknown file extension: " << filename);
-    }
+    protobuf::Structure structure;
+    POMAGMA_ASSERT(structure.descriptor(), "protobuf error");
+    protobuf::InFile(find_blob(load_blob_ref(filename))).read(structure);
+
+    POMAGMA_ASSERT(structure.has_hash(), "structure is missing hash");
+    auto digest = Hasher::digest(detail::get_tree_hash(structure));
+    POMAGMA_ASSERT(Hasher::str(digest) == structure.hash(), "file is corrupt");
+
+    detail::load_signature(signature, structure, extra_item_dim);
+    detail::load_data(signature, structure);
 
     POMAGMA_INFO("done loading structure");
 }
@@ -1108,13 +1070,17 @@ void load_data (
         const std::string & filename)
 {
     POMAGMA_INFO("Loading structure from file " << filename);
+    POMAGMA_ASSERT_EQ(fs::extension(filename), ".pb");
 
-    const std::string ext = fs::extension(filename);
-    if (ext == ".pb") {
-        load_data_pb(signature, filename);
-    } else {
-        POMAGMA_ERROR("unknown file extension: " << filename);
-    }
+    protobuf::Structure structure;
+    POMAGMA_ASSERT(structure.descriptor(), "protobuf error");
+    protobuf::InFile(find_blob(load_blob_ref(filename))).read(structure);
+
+    POMAGMA_ASSERT(structure.has_hash(), "structure is missing hash");
+    auto digest = Hasher::digest(detail::get_tree_hash(structure));
+    POMAGMA_ASSERT(Hasher::str(digest) == structure.hash(), "file is corrupt");
+
+    detail::load_data(signature, structure);
 
     POMAGMA_INFO("done loading structure");
 }
