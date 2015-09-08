@@ -78,6 +78,33 @@ private:
     Hasher m_hasher;
 };
 
+namespace detail {
+
+struct MagicNumber
+{
+    uint8_t bytes[4];
+    uint32_t size;
+
+    bool matches (const MagicNumber& other) const
+    {
+        return memcmp(bytes, other.bytes, other.size) == 0;
+    }
+};
+
+inline MagicNumber read_magic_number (const int fid)
+{
+    MagicNumber magic_number = {{0, 0, 0, 0}, 4};
+    size_t read_count = pread(fid, &magic_number.bytes, magic_number.size, 0);
+    POMAGMA_ASSERT(read_count == magic_number.size,
+        "failed to read magic number");
+    return magic_number;
+}
+
+static const MagicNumber g_gzip_magic_number = {{0x1f, 0x8b, 0, 0}, 2};
+static const MagicNumber g_lz4_magic_number = {{0x18, 0x4D, 0x22, 0x04}, 4};
+
+} // namespace detail
+
 InFile::InFile (const std::string & filename)
     : m_filename(filename),
       m_fid(open(filename.c_str(), O_RDONLY | O_NOATIME))
@@ -85,7 +112,15 @@ InFile::InFile (const std::string & filename)
     POMAGMA_ASSERT(m_fid != -1,
         "opening " << filename << ": " << strerror(errno));
     m_file = new google::protobuf::io::FileInputStream(m_fid);
-    m_gzip = new google::protobuf::io::GzipInputStream(m_file);
+    const auto magic_number = detail::read_magic_number(m_fid);
+    if (magic_number.matches(detail::g_gzip_magic_number)) {
+        m_gzip = new google::protobuf::io::GzipInputStream(m_file);
+    } else if (magic_number.matches(detail::g_lz4_magic_number)) {
+        TODO("implement LZ4 compression");
+    } else {
+        POMAGMA_ERROR("Unknown magic number: " <<
+            std::hex << magic_number.bytes);
+    }
 }
 
 InFile::~InFile ()
