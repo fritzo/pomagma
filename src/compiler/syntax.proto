@@ -3,7 +3,7 @@ package pomagma.compiler.protobuf;
 message Signature {
   // These represent sets; elements should be sorted and unique.
   repeated string nullary_functions = 4;
-  // reserved 5;
+  // reserved 5;  // For unary_functions.
   repeated string injective_functions = 6;
   repeated string binary_functions = 7;
   repeated string symmetric_functions = 8;

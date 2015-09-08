@@ -81,7 +81,7 @@ message Structure {
   optional Carrier carrier = 3;
 
   repeated NullaryFunction nullary_functions = 4;
-  // reserved 5;
+  // reserved 5;  // For unary_functions.
   repeated UnaryFunction injective_functions = 6;
   repeated BinaryFunction binary_functions = 7;
   repeated BinaryFunction symmetric_functions = 8;

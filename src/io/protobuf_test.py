@@ -1,34 +1,46 @@
+from google.protobuf import text_format
 from nose.tools import assert_equal
-from pomagma.util.testing import for_each
-from pomagma.util import in_temp_dir
+from pomagma.io import protobuf_test_pb2
 from pomagma.io.protobuf import InFile
 from pomagma.io.protobuf import OutFile
-from pomagma.io import protobuf_test_pb2
+from pomagma.util import in_temp_dir
+from pomagma.util.testing import for_each
 
-EXAMPLES = []
 
-message = protobuf_test_pb2.TestMessage()
-EXAMPLES.append(message)
+def parse(text, Message=protobuf_test_pb2.TestMessage):
+    message = Message()
+    text_format.Merge(text, message)
+    return message
 
-message = protobuf_test_pb2.TestMessage()
-message.optional_string = 'test'
-EXAMPLES.append(message)
 
-message = protobuf_test_pb2.TestMessage()
-message.repeated_string.append('test1')
-message.repeated_string.append('test2')
-EXAMPLES.append(message)
-
-message = protobuf_test_pb2.TestMessage()
-message.optional_string = 'test'
-message.repeated_string.append('test1')
-message.repeated_string.append('test2')
-sub_message = message.optional_message
-sub_message.repeated_message.add().optional_string = 'sub sub 1'
-sub_message.repeated_message.add().repeated_string.append('sub sub 2')
-message.repeated_message.add().optional_string = 'sub 1'
-message.repeated_message.add().repeated_string.append('sub 2')
-EXAMPLES.append(message)
+EXAMPLES = [
+    parse(''),
+    parse('''
+        optional_string: 'test'
+    '''),
+    parse('''
+        repeated_string: 'test1'
+        repeated_string: 'test2'
+    '''),
+    parse('''
+        optional_string: 'test'
+        repeated_string: 'test1'
+        repeated_string: 'test2'
+        optional_message: {
+            repeated_message: {}
+            repeated_message: {
+                optional_string: 'sub sub 1'
+                repeated_string: 'sub'
+            }
+            repeated_message: {
+                optional_string: 'sub 1'
+            }
+            repeated_message: {
+                repeated_string: 'sub 2'
+            }
+        }
+    '''),
+]
 
 
 @for_each(EXAMPLES)

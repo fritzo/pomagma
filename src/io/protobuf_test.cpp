@@ -1,8 +1,71 @@
+#include <google/protobuf/text_format.h>
 #include <pomagma/io/protobuf.hpp>
 #include <pomagma/io/protobuf_test.pb.h>
+#include <string>
+#include <vector>
 
+using google::protobuf::TextFormat;
 using namespace pomagma;
 using pomagma::protobuf::TestMessage;
+
+TestMessage parse (const std::string & text)
+{
+    TestMessage message;
+    POMAGMA_ASSERT(TextFormat::ParseFromString(text, &message), "parse error");
+    return message;
+}
+
+TestMessage make_big_message (size_t depth = 12)
+{
+    TestMessage message = parse(R"(
+        optional_string: 'test'
+        repeated_string: 'test1'
+        repeated_string: 'test2'
+        repeated_message: {
+            repeated_string: 'sub 2'
+        }
+    )");
+    *message.mutable_optional_message() = TestMessage(message);
+    for (size_t i = 0; i < depth; ++i) {
+        * message.add_repeated_message() = TestMessage(message);
+    }
+    // this should be a big message to test Next and Backup
+    POMAGMA_ASSERT_LT(65536, message.ByteSize());
+    return message;
+}
+
+const std::vector<TestMessage> g_examples = {
+    // The empty message may actually fail for gzip streams, which need at
+    // least 6 bytes. see google/protobuf/io/gzip_stream.h:171 about
+    // GzipOutputStream::Flush
+    parse(""),
+    parse(R"(
+        optional_string: 'test'
+    )"),
+    parse(R"(
+        repeated_string: 'test1'
+        repeated_string: 'test2'
+    )"),
+    parse(R"(
+        optional_string: 'test'
+        repeated_string: 'test1'
+        repeated_string: 'test2'
+        optional_message: {
+            repeated_message: {}
+            repeated_message: {
+                optional_string: 'sub sub 1'
+                repeated_string: 'sub'
+            }
+            repeated_message: {
+                optional_string: 'sub 1'
+            }
+            repeated_message: {
+                repeated_string: 'sub 2'
+            }
+        }
+    )"),
+    make_big_message()
+};
 
 std::string get_digest (const std::string & filename)
 {
@@ -92,58 +155,20 @@ void test_digest (const TestMessage & message)
     POMAGMA_ASSERT_EQ(actual, expected);
 }
 
-void test (std::function<void(TestMessage &)> build_message)
-{
-    TestMessage message;
-    build_message(message);
-    POMAGMA_INFO("Testing with " << message.ShortDebugString().substr(0, 256));
-
-    test_write_read<protobuf::OutFile>(message);
-    test_write_read_chunks<protobuf::OutFile>(message);
-    test_write_read<protobuf::Sha1OutFile>(message);
-    test_write_read_chunks<protobuf::Sha1OutFile>(message);
-    test_digest<protobuf::OutFile>(message);
-    test_digest<protobuf::Sha1OutFile>(message);
-}
-
 int main ()
 {
     Log::Context log_context("Util Protobuf Test");
 
-    test([](TestMessage & message){
-        // This may actually fail for gzip streams, which need at least 6 bytes.
-        // see google/protobuf/io/gzip_stream.h:171 about
-        // GzipOutputStream::Flush
-        message.Clear();
-    });
-    test([](TestMessage & message){
-        message.set_optional_string("test");
-    });
-    test([](TestMessage & message){
-        message.add_repeated_string("test1");
-        message.add_repeated_string("test2");
-    });
-    test([](TestMessage & message){
-        message.set_optional_string("test");
-        message.add_repeated_string("test1");
-        message.add_repeated_string("test2");
-        auto & sub_message = * message.mutable_optional_message();
-        sub_message.add_repeated_message()->set_optional_string("sub sub 1");
-        sub_message.add_repeated_message()->add_repeated_string("sub sub 2");
-        message.add_repeated_message()->set_optional_string("sub 1");
-        message.add_repeated_message()->add_repeated_string("sub 2");
-    });
-    test([](TestMessage & message){
-        message.set_optional_string("test");
-        message.add_repeated_string("test1");
-        message.add_repeated_string("test2");
-        * message.mutable_optional_message() = TestMessage(message);
-        for (size_t i = 0; i < 12; ++i) {
-            * message.add_repeated_message() = TestMessage(message);
-        }
-        // this should be a big message to test Next and Backup
-        POMAGMA_ASSERT_LT(65536, message.ByteSize());
-    });
+    for (const auto& message : g_examples) {
+        POMAGMA_INFO("Testing with " <<
+            message.ShortDebugString().substr(0, 256));
+        test_write_read<protobuf::OutFile>(message);
+        test_write_read_chunks<protobuf::OutFile>(message);
+        test_write_read<protobuf::Sha1OutFile>(message);
+        test_write_read_chunks<protobuf::Sha1OutFile>(message);
+        test_digest<protobuf::OutFile>(message);
+        test_digest<protobuf::Sha1OutFile>(message);
+    }
 
     return 0;
 }
