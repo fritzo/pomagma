@@ -26,7 +26,6 @@ temp.*
 /build/
 /cov-int/
 *.egg-info/
-node_modules/
 /dist/
 
 # eclipse
