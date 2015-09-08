@@ -4,6 +4,7 @@ PY_FILES := *.py $(shell find src | grep '.py$$' | grep -v '_pb2.py')
 
 all: data/blob bootstrap FORCE
 	$(MAKE) python
+	$(MAKE) -C src/language
 	$(MAKE) tags codegen codegen-summary debug release
 
 protobuf: FORCE
