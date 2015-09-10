@@ -10,10 +10,6 @@ import pomagma.util
 function = type(lambda x: x)
 
 
-def TODO(message=''):
-    raise NotImplementedError('TODO {}'.format(message))
-
-
 def DELETE(*args, **kwargs):
     raise ValueError('deleted method')
 

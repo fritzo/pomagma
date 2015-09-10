@@ -4,10 +4,10 @@ from pomagma.compiler.expressions import Expression_0
 from pomagma.compiler.expressions import Expression_2
 from pomagma.compiler.sequents import Sequent
 from pomagma.compiler.signature import is_positive
-from pomagma.compiler.util import TODO
 from pomagma.compiler.util import inputs
 from pomagma.compiler.util import logger
 from pomagma.compiler.util import methodof
+from pomagma.util import TODO
 
 I = Expression_0('I')
 K = Expression_0('K')

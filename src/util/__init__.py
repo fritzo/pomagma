@@ -66,6 +66,10 @@ def suggest_region_sizes(min_size, max_size):
             sizes.append(size)
 
 
+def TODO(message=''):
+    raise NotImplementedError('TODO {}'.format(message))
+
+
 def on_signal(sig):
     def decorator(handler):
         signal.signal(sig, handler)
