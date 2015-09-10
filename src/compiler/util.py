@@ -99,7 +99,7 @@ def log_sum_exp(*args):
 
 def eval_float44(num):
     '''
-    8 bit nonnegative floating point = 5 bit significand + 3 bit exponent.
+    8 bit nonnegative floating point = 4 bit significand + 4 bit exponent.
     Gradually increase from 0 to about 1e6 over inputs 0...255
     such that output is monotone increasing and has small relative increase.
     '''
