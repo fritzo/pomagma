@@ -39,17 +39,20 @@ class Corpus(object):
         else:
             self._defs[var] = expr
 
+    def __iter__(self):
+        return self._defs.iteritems()
+
     def insert(self, key, value='HOLE'):
         var = Expression.make(key)
         expr = Expression.make(value)
         self[var] = expr
 
 
-@inputs(Corpus, basestring)
-def refine(corpus, name):
-    TODO('propose candidate hole-fillings of a partially-defined term')
+@inputs(Corpus)
+def assess(corpus):
+    TODO('report belief of validity of corpus')
 
 
 @inputs(Corpus)
-def verify(corpus):
-    TODO('report belief of validity of corpus')
+def refine(corpus, result_count=2**5, search_count=2**15):
+    TODO('propose candidate joint hole-filling refinements of a corpus')
