@@ -1,55 +1,48 @@
 from pomagma.compiler.expressions import Expression
 from pomagma.compiler.util import inputs
+from pomagma.compiler.parser import parse_corpus
 from pomagma.util import TODO
-import re
 
 HOLE = Expression.make('HOLE')
 
 
 class Corpus(object):
     '''
-    Corpus is a general-recursive set of definitions.
+    Corpus is a general-recursive set of definitions with holes.
     '''
     def __init__(self):
         self._defs = {}
 
-    def clear(self):
-        self._defs = {}
-
     def load(self, filename):
-        self.clear()
         with open(filename) as f:
-            for line in f:
-                line = re.sub('#.*', '', line).strip()
-                if line:
-                    assert line.startswith('EQUAL '), line
-                    _, name, value = line.split(' ', 2)
-                    self._defs[name] = Expression.make(value)
+            self._defs = parse_corpus(f, filename=filename)
 
     def dump(self, filename):
         with open(filename, 'w') as f:
-            f.write('# Corpus written by {}\n'.format(__file__))
-            for name, expr in sorted(self._defs.iteritems()):
-                assert isinstance(name, basestring), name
+            f.write('# Corpus written by {}'.format(__file__))
+            for var, expr in sorted(self._defs.iteritems()):
+                assert isinstance(var, basestring), var
                 assert isinstance(expr, Expression), expr
-                f.write('EQUAL {} {}\n'.format(name, expr.polish))
+                f.write('\nEQUAL {} {}'.format(var, expr))
 
-    def __getitem__(self, name):
-        return self._defs.getitem(name, HOLE)
+    def __getitem__(self, var):
+        assert isinstance(var, Expression), var
+        assert var.is_var(), var
+        return self._defs.getitem(var, HOLE)
 
-    def __setitem__(self, name, value):
-        expr = Expression.make(value)
+    def __setitem__(self, var, expr):
+        assert isinstance(var, Expression), var
+        assert isinstance(expr, Expression), expr
+        assert var.is_var(), var
         if expr is HOLE:
-            self._defs.pop(name, None)
+            self._defs.pop(var, None)
         else:
-            self._defs[name] = value
+            self._defs[var] = expr
 
-
-@inputs(Corpus, basestring, basestring)
-def define(corpus, name, value='HOLE'):
-    expr = Expression.make(value)
-    assert not expr.is_var(), 'Invalid non-strict definition'
-    corpus[name] = expr
+    def insert(self, key, value='HOLE'):
+        var = Expression.make(key)
+        expr = Expression.make(value)
+        self[var] = expr
 
 
 @inputs(Corpus, basestring)

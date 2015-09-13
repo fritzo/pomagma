@@ -157,3 +157,15 @@ def parse_theory_file(filename):
 
 def parse_theory_string(string):
     return parse_theory(string.splitlines())
+
+
+def parse_corpus(lines, **debuginfo):
+    lines = remove_comments_and_add_padding(lines)
+    facts = parse_lines_to_facts(lines, **debuginfo)
+    defs = {}
+    for fact in facts:
+        assert fact.name == 'EQUAL', fact
+        var, expr = fact.args
+        assert var.is_var(), var
+        defs[var] = expr
+    return defs
