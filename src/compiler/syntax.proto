@@ -32,3 +32,13 @@ message Presentation {
   optional Signature signature = 1;
   optional Theory theory = 2;
 }
+
+message Corpus {
+  message Definition {
+    required string name = 1;  // Must be nonempty and whitespace-free.
+    required Expression value = 2;
+  }
+
+  // This represents a map; enties should be sorted and unique by key.
+  repeated Definition definitions = 1;
+}
