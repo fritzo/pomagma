@@ -1,20 +1,51 @@
 # The Pomagma System
 
 - [File Organization](#files)
+- [Configuring](#configuring)
 - [Testing](#testing)
 - [Benchmarking](#benchmarking)
-- [Configuring](#configuring)
 - [Dataflow Architecture](#dataflow)
 
 ## File Organization <a name="files"/>
 
-- [/src](/src) - source code (C++, python)
 - [/doc](/doc) - developer documentation
 - [/data](/data) - generated data, mirroring an S3 bucket
+- [/src](/src) - source code (C++, python)
+  - [/src/theory](/src/theory) - theories of combinatory algebras
+  - [/src/language](/src/language) - probabilistic grammars
+  - [/src/corpus](/src/corpus) - literate code expressed in combinatory algebra
+  - [/src/atlas](/src/atlas) - code to manage the atlas
+  - [/src/surveyor](/src/surveyor) - the main forward-chaining engine
+  - [/src/cartographer](/src/cartographer) - a scalable weaker inference engine
+  - [/src/analyst](/src/analyst) - the query server
+  - [/src/compiler](/src/compiler) - syntactic algorithms
+  - [/src/linguist](/src/linguist) - machine learning for tuning languages
+  - [/src/theorist](/src/theorist) - machine learning for conjecturing theories
+  - [/src/util](/src/util) - core utilities
+  - [/src/io](/src/io) - serialization utilities
 - [/bootstrap](/bootstrap) - a small git-cached atlas for testing
 - [/build](/build) - destination of C++ builds
 - [/pomagma](/pomagma) - a symbolic link to appease `pip install -e`
 - [/include/pomagma](/include/pomagma) - a symbolic link to appease g++
+
+## Configuring <a name="configuring"/>
+
+To run in debug mode, set the environment variable
+
+    POMAGMA_DEBUG=1
+
+To use specific ports or addresses, override these defaults
+
+    POMAGMA_ANALYST_ADDRESS=tcp://localhost:34936
+
+Pomagma uses even ports for production and odd ports for testing.
+
+To store data on S3, pomagma needs Amazon AWS credentials and an S3 bucket.
+These are specified by environment variables
+
+    AWS_ACCESS_KEY_ID=...
+    AWS_SECRET_ACCESS_KEY=...
+    POMAGMA_BUCKET=Example-Amazon-S3-bucket
 
 ## Testing <a name="testing"/>
 
@@ -39,25 +70,6 @@ as well as larger benchmarks for inference
 
     pomagma.make profile-surveyor
     pomagma.make profile-cartographer
-
-## Configuring <a name="configuring"/>
-
-To run in debug mode, set the environment variable
-
-    POMAGMA_DEBUG=1
-
-To use specific ports or addresses, override these defaults
-
-    POMAGMA_ANALYST_ADDRESS=tcp://localhost:34936
-
-Pomagma uses even ports for production and odd ports for testing.
-
-To store data on S3, pomagma needs Amazon AWS credentials and an S3 bucket.
-These are specified by environment variables
-
-    AWS_ACCESS_KEY_ID=...
-    AWS_SECRET_ACCESS_KEY=...
-    POMAGMA_BUCKET=Example-Amazon-S3-bucket
 
 ## Dataflow Architecture <a name="dataflow"/>
 

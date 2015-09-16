@@ -17,18 +17,19 @@ with a Python client library backed by a C++ database server.
 The correctness of Pomagma's theory is being verified in the
 [Hstar project](https://github.com/fritzo/hstar).
 
-## Documentation
-
-- [Philosophy](/doc/philosophy.md)
-- [The Pomagma System](/doc/README.md)
+- [Installing](#installing)
+- [Quick Start](#quick-start)
+- [Get An Atlas](#get-an-atlas)
+- [Using The Client Library](/doc/client.md)
+- [Developing](/doc/README.md)
   - [File Organization](/doc/README.md#files)
+  - [Configuring](/doc/README.md#configuring)
   - [Testing](/doc/README.md#testing)
   - [Benchmarking](/doc/README.md#benchmarking)
-  - [Configuring](/doc/README.md#configuring)
   - [Dataflow Architecture](/doc/README.md#dataflow)
-- [The Analyst Client Library](/doc/client.md)
+- [Philosophy](/doc/philosophy.md)
 
-## Installing
+## Installing <a name="installing"/>
 
 The server targets Ubuntu 14.04 and 12.04, and installs in a python virtualenv.
 
@@ -42,7 +43,7 @@ The client library supports Python 2.7.
 
     pip install pomagma
 
-## Quick Start
+## Quick Start <a name="quick-start"/>
 
 Start a local analysis server with the tiny default atlas
 
@@ -67,7 +68,7 @@ Alternatively, connect using the Python client library
         print db.validate(["I"])
         print db.solve('x', 'EQUAL x APP x x', max_solutions=4)
 
-## Get an Atlas to power an analysis server
+## Get an Atlas to power an analysis server <a name="get-an-atlas"/>
 
 Pomagma reasons about large programs by approximately locating code fragments
 in an **atlas** of 10<sup>3</sup>-10<sup>5</sup> basic programs.
@@ -91,7 +92,7 @@ Pomagma is parallelized and needs lots of memory to build a large atlas.
 | 10 000 atoms  | ~1 CPU week  | ~1GB         | ~100MB        |
 | 100 000 atoms | ~1 CPU year  | ~100GB       | ~10GB         |
 
-## License
+## License <a name="license"/>
 
 Copyright 2005-2015 Fritz Obermeyer.<br/>
 All code is licensed under the [Apache 2.0 License](/LICENSE).
