@@ -14,7 +14,7 @@ should be considered equal only if they convey the same concept intended
 by the programmer.
 Modern programming is mired in far-too intensional practices,
 where incidental artifacts of code
-(whitespace, style, line order, local variable names, arbitrary imperitives)
+(whitespace, style, line order, local variable names, arbitrary imperatives)
 frustrate many actions that would be easier with an extensional view
 (code-search, verification, optimization, automatic parallelization).
 Better programming practice might start with
@@ -22,7 +22,7 @@ syntax-directed editors, tools for code refactoring,
 purely functional and declarative languages,
 and precise type systems.
 But a key missing concept is the use of extensionality.
-Pomagma is an experiment to see how far extensionalty can be pushed.
+Pomagma is an experiment to see how far extensionality can be pushed.
 
 Pomagma is founded on a simple untyped pure functional programming language,
 the non-deterministic &lambda;-calculus <a href="#user-content-1">[1]</a>,
