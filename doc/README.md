@@ -107,7 +107,7 @@ as well as larger benchmarks for forward-chaining inference
 
 Pomagma includes a vetting system to manage changes in generated code.
 To commit changes to [pomagma.compiler](/src/compiler)
-or [thepry/*.theory](/src/theory), you first need to vet the changes using
+or [src/theory/*.theory](/src/theory), you first need to vet the changes using
 [vet.py](/vet.py) which updates [vetted_hashes.csv](/vetted_hashes.csv).
 
     vi src/theory/types.theory
