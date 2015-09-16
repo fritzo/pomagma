@@ -1,6 +1,9 @@
 digraph G {
     overlap=false;
-    size="4,4";
+    graph [fontname = "helvetica"];
+    node [fontname = "helvetica"];
+    edge [fontname = "helvetica"];
+    size="4,3";
     node [shape=box];
 
     {
