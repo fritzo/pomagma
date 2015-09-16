@@ -1,11 +1,11 @@
 # The Pomagma System
 
-- [Dataflow Architecture](#dataflow)
-- [File Organization](#files)
+- [Dataflow Architecture](#dataflow-architecture)
+- [File Organization](#file-organization)
 - [Configuring](#configuring)
 - [Testing](#testing)
 - [Benchmarking](#benchmarking)
-- [Vetting changes to generated code](#vetting)
+- [Vetting changes](#vetting-changes)
 
 ## Dataflow Architecture <a name="dataflow"/>
 
@@ -38,7 +38,7 @@
 - Edit: write code; respond to static analysis of code
 - Fit Language: fit grammar weights to corpus; propose new words
 
-## File Organization <a name="files"/>
+## File Organization
 
 - [/doc](/doc) - developer documentation
 - [/data](/data) - generated data, mirroring an S3 bucket
@@ -60,7 +60,7 @@
 - [/pomagma](/pomagma) - a symbolic link to appease `pip install -e`
 - [/include/pomagma](/include/pomagma) - a symbolic link to appease g++
 
-## Configuring <a name="configuring"/>
+## Configuring
 
 To run in debug mode, set the environment variable
 
@@ -79,7 +79,7 @@ These are specified by environment variables
     AWS_SECRET_ACCESS_KEY=...
     POMAGMA_BUCKET=Example-Amazon-S3-bucket
 
-## Testing <a name="testing"/>
+## Testing
 
 Pomagma comes with three default levels of tests:
 
@@ -92,7 +92,7 @@ More expensive tests are available via
     pomagma.make test-atlas
     pomagma.make test-analyst
 
-## Benchmarking <a name="benchmarking"/>
+## Benchmarking
 
 Pomagma has microbenchmarks available via
 
@@ -103,7 +103,7 @@ as well as larger benchmarks for forward-chaining inference
     pomagma.make profile-surveyor
     pomagma.make profile-cartographer
 
-## Vetting changes to generated code <a name="vetting"/>
+## Vetting Changes
 
 Pomagma includes a vetting system to manage changes in generated code.
 To commit changes to [pomagma.compiler](/src/compiler)
