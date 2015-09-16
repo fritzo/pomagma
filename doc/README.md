@@ -1,10 +1,41 @@
 # The Pomagma System
 
+- [Dataflow Architecture](#dataflow)
 - [File Organization](#files)
 - [Configuring](#configuring)
 - [Testing](#testing)
 - [Benchmarking](#benchmarking)
-- [Dataflow Architecture](#dataflow)
+
+## Dataflow Architecture <a name="dataflow"/>
+
+![Architecture](/doc/architecture.png)
+
+### State
+
+- Language - finite generating grammars of combinatory algebras
+- Theory - finite relational theories of combinatory algebras
+- Corpus - a body of writing expressed in combinatory algebras
+- Atlas - a mechanically generated database of facts with short proofs
+
+### Actors
+
+- Surveyor - explores a region of a combinatory algebra via forward chaining
+- Cartographer - directs surveyors and incorporates surveys into the atlas
+- Linguist - fits languages to analyst workload and proposes new basic terms
+- Language Reviewer - ensures new language modifications are safe
+- Theorist - makes conjectures and tries to prove them using various strategies
+- Theory Reviewer - suggests new inference rules to address open conjectures
+- Analyst - services static analysis queries using a read-only atlas
+- Editor - interactively annotates the corpus with static analysis results
+- Writer - captures and formalizes domain problems in the corpus
+
+### Workflows
+
+- Explore: grow atlas by forward-chaining inference; generate conjectures
+- Extend Theory: review cartographer's conjectures; propose new inference rules
+- Recover (after inconsistency): scrap atlas; fix error in theory; rebuild
+- Edit: write code; respond to static analysis of code
+- Fit Language: fit grammar weights to corpus; propose new words
 
 ## File Organization <a name="files"/>
 
@@ -71,32 +102,3 @@ as well as larger benchmarks for inference
     pomagma.make profile-surveyor
     pomagma.make profile-cartographer
 
-## Dataflow Architecture <a name="dataflow"/>
-
-![Architecture](/doc/architecture.png)
-
-### State
-
-- Language - finite generating grammars of combinatory algebras
-- Theory - finite relational theories of combinatory algebras
-- Corpus - a body of writing expressed in combinatory algebras
-- Atlas - a mechanically generated database of facts with short proofs
-
-### Actors
-
-- Surveyor - explores a region of a combinatory algebra via forward chaining
-- Cartographer - directs surveyors and incorporates surveys into the atlas
-- Linguist - fits languages to analyst workload and proposes new basic terms
-- Language Reviewer - ensures new language modifications are safe
-- Theorist - makes conjectures and tries to prove them using various strategies
-- Theory Reviewer - suggests new inference rules to address open conjectures
-- Analyst - services static analysis queries using a read-only atlas
-- Editor - interactively annotates the corpus with static analysis results
-- Writer - captures and formalizes domain problems in the corpus
-
-### Workflows
-
-- Explore: grow atlas by forward-chaining inference; generate conjectures
-- Edit: write code; respond to static analysis of code
-- Fit Language: fit grammar weights to corpus; propose new words
-- Recover (after Fregean collapse): assess damage; pinpoint problem; rebuild

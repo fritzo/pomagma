@@ -22,11 +22,11 @@ The correctness of Pomagma's theory is being verified in the
 - [Get An Atlas](#get-an-atlas)
 - [Using The Client Library](/doc/client.md)
 - [Developing](/doc/README.md)
+  - [Dataflow Architecture](/doc/README.md#dataflow)
   - [File Organization](/doc/README.md#files)
   - [Configuring](/doc/README.md#configuring)
   - [Testing](/doc/README.md#testing)
   - [Benchmarking](/doc/README.md#benchmarking)
-  - [Dataflow Architecture](/doc/README.md#dataflow)
 - [Philosophy](/doc/philosophy.md)
 
 ## Installing <a name="installing"/>
@@ -76,9 +76,9 @@ The more basic programs in an atlas,
 the more accurate pomagma's analysis will be.
 Pomagma ships with a tiny default atlas of ~2000 basic programs.
 
-To get a large prebuild atlas, put your AWS credentials in the environment and
+To get a large prebuilt atlas, put your AWS credentials in the environment and
 
-    pomagma pull                  # downloads atlas from S3 bucket
+    pomagma pull                  # downloads latest atlas from S3 bucket
 
 To start building a custom atlas from scratch
 
