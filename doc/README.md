@@ -110,13 +110,12 @@ To commit changes to [pomagma.compiler](/src/compiler)
 or [src/theory/*.theory](/src/theory), you first need to vet the changes using
 [vet.py](/vet.py) which updates [vetted_hashes.csv](/vetted_hashes.csv).
 
-    vi src/theory/types.theory
-    # ...make some changes...
-    ./vet.py check || echo changed          # checks whether anything changed
-    ./diff.py codegen                       # shows changes to generated code
-    # ...review changes...
-    ./vet.py vet all                        # updates vetted_hashes.csv
-    git commit -am 'Updated types.theory'
+    vi src/theory/types.theory      # ...make some changes...
+    make codegen                    # rebuilds generated code
+    ./vet.py check                  # checks whether anything changed
+    ./diff.py codegen               # ...review changes to generated code...
+    ./vet.py vet all                # updates vetted_hashes.csv
+    git add .                       # commits changes + vetted hashes
 
 Note that `vet.py check` is run automatically during unit tests,
 so tests will fail until you vet all changes to generated code.
