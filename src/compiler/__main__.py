@@ -145,7 +145,7 @@ def measure_sequent(sequent):
 @parsable
 def contrapositves(*filenames):
     '''
-    Close rules under contrapositve
+    Close rules under contrapositve.
     '''
     if not filenames:
         filenames = find_theories()
@@ -163,7 +163,7 @@ def contrapositves(*filenames):
 @parsable
 def normalize(*filenames):
     '''
-    Show normalized rule set derived from each rule
+    Show normalized rule set derived from each rule.
     '''
     if not filenames:
         filenames = find_theories()
@@ -181,7 +181,7 @@ def normalize(*filenames):
 @parsable
 def extract_tasks(infile, outfile=None):
     '''
-    Extract tasks from facts and rules, but do not compile to C++.
+    Extract tasks from facts and rules, but do not compile to programs.
     '''
     theory = load_theory(infile)
     with writer(outfile) as write:
@@ -227,7 +227,7 @@ def batch_extract_tasks(*filenames, **kwargs):
 @parsable
 def measure(*filenames):
     '''
-    Measure complexity of rules in files
+    Measure complexity of rules in files.
     '''
     if not filenames:
         filenames = find_theories()
@@ -241,7 +241,7 @@ def measure(*filenames):
 @parsable
 def test_compile(*filenames):
     '''
-    Compile rules -> C++
+    Compile rules -> programs for the virtual machine.
     '''
     if not filenames:
         filenames = find_theories()
@@ -329,7 +329,7 @@ def profile_compile(*filenames, **kwargs):
 @parsable
 def test_close_rules(infile, is_extensional=True):
     '''
-    Compile extensionally some.theory -> some.derived.facts
+    Compile extensionally some.theory -> some.derived.facts.
     '''
     assert infile.endswith('.theory')
     rules = load_theory(infile)['rules']
@@ -353,7 +353,7 @@ def relpath(string):
 @parsable
 def compile(*infiles, **kwargs):
     '''
-    Compile rules -> C++.
+    Compile rules -> programs for the virtual machine.
     Optional keyword arguments:
         symbols_out=$POMAGMA_ROOT/src/theory/<STEM>.symbols
         facts_out=$POMAGMA_ROOT/src/theory/<STEM>.facts
