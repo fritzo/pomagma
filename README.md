@@ -7,10 +7,10 @@ Pomagma is an inference engine for
 [extensional untyped &lambda;-calculus](/doc/philosophy.md).
 Pomagma is useful for:
 
-* simplifying code fragments expressed in pure &lambda;-join calculus
-* validating entire codebases of &lambda;-terms and inequalities
-* testing and validating systems of inequalities
-* solving systems of inequalities
+- simplifying code fragments expressed in pure &lambda;-join calculus
+- validating entire codebases of &lambda;-terms and inequalities
+- testing and validating systems of inequalities
+- solving systems of inequalities
 
 Pomagma follows a client-server database architecture
 with a Python client library backed by a C++ database server.
@@ -19,9 +19,14 @@ The correctness of Pomagma's theory is being verified in the
 
 ## Documentation
 
-* [Philosophy](/doc/philosophy.md)
-* [Using the client library](/doc/client.md)
-* [Administering a server](/doc/server.md)
+- [Philosophy](/doc/philosophy.md)
+- [The Pomagma System](/doc/README.md)
+  - [File Organization](/doc/README.md#files)
+  - [Testing](/doc/README.md#testing)
+  - [Benchmarking](/doc/README.md#benchmarking)
+  - [Configuring](/doc/README.md#configuring)
+  - [Dataflow Architecture](/doc/README.md#dataflow)
+- [The Analyst Client Library](/doc/client.md)
 
 ## Installing
 

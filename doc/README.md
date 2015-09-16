@@ -1,13 +1,14 @@
-# Administering a Pomagma Server
+# The Pomagma System
 
-* [File Organization](#files)
-* [Testing](#testing)
-* [Configuring](#configuring)
-* [Dataflow Architecture](#dataflow)
+- [File Organization](#files)
+- [Testing](#testing)
+- [Benchmarking](#benchmarking)
+- [Configuring](#configuring)
+- [Dataflow Architecture](#dataflow)
 
 ## File Organization <a name="files"/>
 
-- [/src](/src) - source code (C++, python, javascript)
+- [/src](/src) - source code (C++, python)
 - [/doc](/doc) - developer documentation
 - [/data](/data) - generated data, mirroring an S3 bucket
 - [/bootstrap](/bootstrap) - a small git-cached atlas for testing
@@ -22,6 +23,22 @@ Pomagma comes with three default levels of tests:
     make small-test     # runs on travis-ci
     make test
     make big-test       # more expensive with larger atlas
+
+More expensive tests are available via
+
+    pomagma.make test-atlas
+    pomagma.make test-analyst
+
+## Benchmarking <a name="benchmarking"/>
+
+Pomagma has microbenchmarks available via
+
+    pomagma.make profile-misc
+
+as well as larger benchmarks for inference
+
+    pomagma.make profile-surveyor
+    pomagma.make profile-cartographer
 
 ## Configuring <a name="configuring"/>
 
