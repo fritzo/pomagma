@@ -185,23 +185,6 @@ inline Hasher::Digest get_hash (const UnaryRelation & rel)
     return hasher.finish();
 }
 
-// DEPRECATED
-inline Hasher::Digest get_hash_v1 (
-        const Carrier & carrier,
-        const BinaryRelation & rel)
-{
-    Hasher hasher;
-    std::array<uint32_t, 2> tuple;
-    for (auto lhs = carrier.iter(); lhs.ok(); lhs.next()) {
-        tuple[0] = * lhs;
-        for (auto rhs = rel.iter_lhs(* lhs); rhs.ok(); rhs.next()) {
-            tuple[1] = * rhs;
-            hasher.add(tuple);
-        }
-    }
-    return hasher.finish();
-}
-
 inline Hasher::Digest get_hash (
         const Carrier & carrier,
         const BinaryRelation & rel)
@@ -242,24 +225,6 @@ inline Hasher::Digest get_hash (const InjectiveFunction & fun)
     return hasher.finish();
 }
 
-// DEPRECATED
-inline Hasher::Digest get_hash_v1 (
-        const Carrier & carrier,
-        const BinaryFunction & fun)
-{
-    Hasher hasher;
-    std::array<uint32_t, 3> tuple;
-    for (auto lhs = carrier.iter(); lhs.ok(); lhs.next()) {
-        tuple[0] = * lhs;
-        for (auto rhs = fun.iter_lhs(* lhs); rhs.ok(); rhs.next()) {
-            tuple[1] = * rhs;
-            tuple[2] = fun.find(* lhs, * rhs);
-            hasher.add(tuple);
-        }
-    }
-    return hasher.finish();
-}
-
 inline Hasher::Digest get_hash (
         const Carrier & carrier,
         const BinaryFunction & fun)
@@ -280,25 +245,6 @@ inline Hasher::Digest get_hash (
         }
     }
     return Hasher::digest(rows);
-}
-
-// DEPRECATED
-inline Hasher::Digest get_hash_v1 (
-        const Carrier & carrier,
-        const SymmetricFunction & fun)
-{
-    Hasher hasher;
-    std::array<uint32_t, 3> tuple;
-    for (auto lhs = carrier.iter(); lhs.ok(); lhs.next()) {
-        tuple[0] = * lhs;
-        for (auto rhs = fun.iter_lhs(* lhs); rhs.ok(); rhs.next()) {
-            if (* rhs > * lhs) { break; }
-            tuple[1] = * rhs;
-            tuple[2] = fun.find(* lhs, * rhs);
-            hasher.add(tuple);
-        }
-    }
-    return hasher.finish();
 }
 
 inline Hasher::Digest get_hash (
@@ -677,10 +623,6 @@ inline void update_data (
     rel.update();
     auto expected = map_find(hash, "relations/binary/" + name);
     auto actual = get_hash(carrier, rel);
-    if (unlikely(actual != expected)) {
-        POMAGMA_WARN("falling back to get_hash_v1");
-        actual = get_hash_v1(carrier, rel);
-    }
     POMAGMA_ASSERT(actual == expected,
             "binary relation " << name << " is corrupt");
 
@@ -734,10 +676,6 @@ inline void update_data (
     fun.update();
     auto actual = get_hash(carrier, fun);
     auto expected = map_find(hash, "functions/" + arity + "/" + name);
-    if (unlikely(actual != expected)) {
-        POMAGMA_WARN("falling back to get_hash_v1");
-        actual = get_hash_v1(carrier, fun);
-    }
     POMAGMA_ASSERT(actual == expected,
             arity << " function " << name << " is corrupt");
 
