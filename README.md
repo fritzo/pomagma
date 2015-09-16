@@ -27,6 +27,7 @@ The correctness of Pomagma's theory is being verified in the
   - [Configuring](/doc/README.md#configuring)
   - [Testing](/doc/README.md#testing)
   - [Benchmarking](/doc/README.md#benchmarking)
+  - [Vetting changes to generated code](/doc/README.md#vetting)
 - [Philosophy](/doc/philosophy.md)
 
 ## Installing <a name="installing"/>
