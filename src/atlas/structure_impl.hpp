@@ -15,7 +15,6 @@
 #include <pomagma/atlas/structure.pb.h>
 #include <pomagma/atlas/protobuf.hpp>
 #include <pomagma/io/protoblob.hpp>
-#include <sys/stat.h>  // for chmod
 #include <thread>
 
 namespace pomagma {
