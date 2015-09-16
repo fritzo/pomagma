@@ -4,61 +4,45 @@ digraph G {
     node [shape=box];
 
     {
-        rank="min";
+        rank = "same";
+        node [style=filled, fillcolor=pink];
+        TheoryReviewer [label="Reviewer"];
+        LangaugeReviewer [label="Reviewer"];
+        Writer;
+    }
+    {
+        rank = "min";
         Theorist;
         Linguist;
     }
     {
-        //rank="max";
-        node [style=filled, fillcolor=pink];
-        TheoryReviewer [label="Reviewer"];
-        LanguagesReviewer [label="Reviewer"];
-    }
-    {
         node [shape=ellipse];
         rank = "same";
-        Languages [label="Languages\ngit"];
+        Language [label="Language\ngit"];
         Theory [label="Theory\ngit"];
+        Corpus [label="Corpus\ngit"];
         Atlas [label="Atlas\nS3"];
     }
     {
         rank = "same";
-        Compiler;
         Cartographer;
         Analyst;
+        Editor;
     }
-
-    subgraph cluster_survey {
+    //subgraph cluster_survey {
         Surveyor;
-
-        color = "#666666";
-        fontcolor = "#666666";
-        label = "many";
-        labelloc = "b";
-    }
-
-    subgraph cluster_client {
-        Client [style=filled, fillcolor=gray];
-
-        color = "#666666";
-        fontcolor = "#666666";
-        label = "many";
-        labelloc = "b";
-    }
-
-    // Workflow: Compile
-    edge [dir=forward arrowhead=normal]; // pull
-    Theory -> Compiler;
-    Compiler -> Surveyor;
-    Compiler -> Theory;
+    //    color = "#666666";
+    //    fontcolor = "#666666";
+    //    label = "many";
+    //    labelloc = "b";
+    //}
 
     // Workflow: Explore
     edge [dir=forward arrowhead=normal]; // pull
     Theory -> Cartographer;
     Atlas -> Cartographer;
     Theory -> Theorist;
-    Languages -> Cartographer;
-    Languages -> Surveyor;
+    Language -> Cartographer;
     Cartographer -> Surveyor;
     edge [dir=both arrowtail=inv arrowhead=empty]; // push
     Surveyor -> Cartographer;
@@ -68,21 +52,26 @@ digraph G {
     Theorist -> Cartographer;
     Theorist -> TheoryReviewer;
 
-    // Workflow: Analyze
+    // Workflow: Edit
     edge [dir=forward arrowhead=normal]; // pull
+    Theory -> Analyst;
     Atlas -> Analyst;
-    Languages -> Analyst;
-    Analyst -> Client;
+    Language -> Analyst;
+    Analyst -> Editor;
+    Corpus -> Editor;
+    Corpus -> Writer;
     edge [dir=both arrowtail=inv arrowhead=empty]; // push
-    Client -> Analyst;
+    Editor -> Analyst;
+    Writer -> Corpus;
+    Editor -> Corpus;
 
     // Workflow: Fit Language
     edge [dir=forward arrowhead=normal]; // pull
     Analyst -> Linguist;
-    Languages -> Linguist;
-    Linguist -> LanguagesReviewer;
+    Language -> Linguist;
+    Linguist -> LangaugeReviewer;
     edge [dir=both arrowtail=inv arrowhead=empty]; // push
-    Linguist -> Languages;
-    LanguagesReviewer -> Languages;
-    LanguagesReviewer -> Theory;
+    Linguist -> Language;
+    LangaugeReviewer -> Language;
+    LangaugeReviewer -> Theory;
 }
