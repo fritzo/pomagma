@@ -94,7 +94,7 @@ def assert_examples(examples, expected, actual, cmp=cmp):
     assert len(actual) == len(examples)
     for example, e, a in izip(examples, expected, actual):
         print '{} : {}'.format(example, e)
-        if e != a:
+        if cmp(e, a):
             print 'WARNING {}\n  expected: {}\n  actual: {}'.format(
                 example, e, a)
     for example, e, a in izip(examples, expected, actual):

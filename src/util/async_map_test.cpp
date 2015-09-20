@@ -12,41 +12,19 @@ typedef int Value;
 
 typedef AsyncMap<Key, Value> Cache;
 
-struct Task
-{
-    Key key;
-    Cache::Callback callback;
-};
-
-struct Processor
-{
-    void operator() (Task & task)
-    {
-        Value * value = new Value(task.key->first + task.key->second);
-        std::this_thread::sleep_for(std::chrono::milliseconds(* value));
-        task.callback(value);
-    }
-};
-
-struct AsyncFunction
-{
-    WorkerPool<Task, Processor> & pool;
-
-    void operator() (Key key, Cache::Callback callback)
-    {
-        pool.schedule(Task({key, callback}));
-    }
-};
-
 void async_map_test (
     size_t thread_count,
     size_t eval_count,
     size_t max_wait = 100)
 {
-    Processor processor;
-    WorkerPool<Task, Processor> pool(processor, thread_count);
-    AsyncFunction function({pool});
-    Cache cache(function);
+    WorkerPool pool(thread_count);
+    Cache cache([&pool](Key key, Cache::Callback callback){
+        pool.schedule([key, callback]{
+            Value * value = new Value(key->first + key->second);
+            std::this_thread::sleep_for(std::chrono::milliseconds(*value));
+            callback(value);
+        });
+    });
 
     std::random_device device;
     rng_t rng(device());

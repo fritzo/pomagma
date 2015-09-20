@@ -1,7 +1,6 @@
 #pragma once
 
 #include <pomagma/util/util.hpp>
-#include <pomagma/util/worker_pool.hpp>
 #include <tbb/concurrent_unordered_map.h>
 #include <unordered_map>
 #include <mutex>

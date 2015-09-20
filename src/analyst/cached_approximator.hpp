@@ -1,9 +1,10 @@
 #pragma once
 
 #include <pomagma/analyst/approximate.hpp>
-#include <pomagma/util/hash_map.hpp>
 #include <pomagma/util/async_map.hpp>
+#include <pomagma/util/hash_map.hpp>
 #include <pomagma/util/unique_set.hpp>
+#include <pomagma/util/worker_pool.hpp>
 #include <tbb/concurrent_unordered_map.h>
 
 namespace pomagma
@@ -101,46 +102,20 @@ private:
 
     typedef AsyncMap<const Term *, HashedApproximation> Cache;
 
-    struct Task
-    {
-        const Term * term;
-        Cache::Callback callback;
-    };
-
-    struct Processor
-    {
-        CachedApproximator & approximator;
-
-        void operator() (Task & task)
-        {
-            task.callback(
-                approximator.m_approximations.insert_or_delete(
-                    new HashedApproximation(
-                        approximator.compute(
-                            task.term))));
-        }
-    };
-
-    struct AsyncFunction
-    {
-        WorkerPool<Task, Processor> & pool;
-
-        void operator() (const Term * term, Cache::Callback callback)
-        {
-            pool.schedule(Task({term, callback}));
-        }
-    };
-
 public:
 
     CachedApproximator (
             Approximator & approximator,
-            size_t thread_count)
-        : m_approximator(approximator),
-          m_processor({* this}),
-          m_pool(m_processor, thread_count),
-          m_function({m_pool}),
-          m_cache(std::bind(&AsyncFunction::operator(), & m_function, _1, _2))
+            size_t thread_count) :
+        m_approximator(approximator),
+        m_pool(thread_count),
+        m_cache([this](const Term * term, Cache::Callback callback){
+            m_pool.schedule([this, term, callback]{
+                callback(
+                    m_approximations.insert_or_delete(
+                        new HashedApproximation(compute(term))));
+            });
+        })
     {
     }
 
@@ -184,9 +159,7 @@ private:
     }
 
     Approximator & m_approximator;
-    Processor m_processor;
-    WorkerPool<Task, Processor> m_pool;
-    AsyncFunction m_function;
+    WorkerPool m_pool;
     UniqueSet<HashedApproximation, HashedApproximation::Hash> m_approximations;
     UniqueSet<Term, Term::Hash> m_terms;
     Cache m_cache;
