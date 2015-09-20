@@ -28,7 +28,7 @@ target_link_libraries(worker_pool_test ${POMAGMA_UTIL_LIBS})
 add_test(NAME worker_pool COMMAND worker_pool_test)
 
 add_executable(async_map_test async_map_test.cpp)
-target_link_libraries(async_map_test ${POMAGMA_UTIL_LIBS})
+target_link_libraries(async_map_test ${POMAGMA_UTIL_LIBS} gtest_main)
 add_test(NAME async_map COMMAND async_map_test)
 
 add_subdirectory(concurrent)

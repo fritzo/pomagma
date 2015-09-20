@@ -1,6 +1,7 @@
 #include <pomagma/util/util.hpp>
 #include <pomagma/util/async_map.hpp>
 #include <pomagma/util/worker_pool.hpp>
+#include <gtest/gtest.h>
 
 using namespace pomagma;
 
@@ -76,9 +77,7 @@ void async_map_test (
 
 } // namespace test
 
-int main ()
+TEST(AsyncMapTest, Test)
 {
     test::async_map_test(10, 100);
-
-    return 0;
 }
