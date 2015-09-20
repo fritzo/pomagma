@@ -36,5 +36,9 @@ add_executable(async_map_test async_map_test.cpp)
 target_link_libraries(async_map_test ${POMAGMA_UTIL_LIBS})
 add_test(NAME async_map COMMAND async_map_test)
 
+add_executable(lazy_map_test lazy_map_test.cpp)
+target_link_libraries(lazy_map_test ${POMAGMA_UTIL_LIBS})
+add_test(NAME lazy_map COMMAND lazy_map_test)
+
 add_subdirectory(concurrent)
 add_subdirectory(sequential)

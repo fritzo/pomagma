@@ -1,6 +1,7 @@
 #pragma once
 
 #include <condition_variable>
+#include <functional>
 #include <mutex>
 #include <pomagma/util/threading.hpp>
 #include <queue>

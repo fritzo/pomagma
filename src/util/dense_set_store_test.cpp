@@ -26,7 +26,7 @@ void test_store_load (size_t item_dim, size_t element_count)
     for (size_t i = 0; i < element_count; ++i) {
         DenseSet set(item_dim);
         set.fill_random(rng);
-        POMAGMA_WARN("insert " << print_set(set));
+        POMAGMA_DEBUG("insert " << print_set(set));
         set.validate();
 
         SetId id;
