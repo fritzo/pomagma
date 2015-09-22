@@ -150,13 +150,7 @@ void DenseSet::fill_random (rng_t & rng, float density)
 bool DenseSet::operator== (const DenseSet & other) const
 {
     POMAGMA_ASSERT1(item_dim() == other.item_dim(), "item_dim mismatch");
-
-    for (size_t m = 0, M = m_word_dim; m < M; ++m) {
-        if (m_words[m].load(relaxed) != other.m_words[m].load(relaxed)) {
-            return false;
-        }
-    }
-    return true;
+    return not memcmp(m_words, other.m_words, sizeof(Word) * m_word_dim);
 }
 
 bool DenseSet::operator<= (const DenseSet & other) const

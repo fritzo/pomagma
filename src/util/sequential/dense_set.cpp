@@ -194,16 +194,7 @@ inline void DenseSet::ensure_padding_bits_are_zero ()
 bool DenseSet::operator== (const DenseSet & other) const
 {
     POMAGMA_ASSERT1(item_dim() == other.item_dim(), "item_dim mismatch");
-
-    const Word * restrict s = assume_aligned(m_words);
-    const Word * restrict t = assume_aligned(other.m_words);
-    Word u = 0;
-
-    for (size_t m = 0, M = m_word_dim; m < M; ++m) {
-        u |= s[m] ^ t[m];
-    }
-
-    return not u;
+    return not memcmp(m_words, other.m_words, sizeof(Word) * m_word_dim);
 }
 
 bool DenseSet::operator<= (const DenseSet & other) const

@@ -28,24 +28,29 @@ void test_basic (size_t size)
 
     DenseSet set(size);
     POMAGMA_ASSERT_EQ(set.count_items(), 0);
+    POMAGMA_ASSERT(set == set, "set does not equal self");
 
     POMAGMA_INFO("testing position insertion");
     for (Ob i = 1; i <= size; ++i) {
         set.insert(i);
     }
     POMAGMA_ASSERT_EQ(set.count_items(), size);
+    POMAGMA_ASSERT(set == set, "set does not equal self");
 
     POMAGMA_INFO("testing position removal");
     for (Ob i = 1; i <= size; ++i) {
         set.remove(i);
     }
     POMAGMA_ASSERT_EQ(set.count_items(), 0);
+    POMAGMA_ASSERT(set == set, "set does not equal self");
 
     POMAGMA_INFO("testing iteration");
     for (Ob i = 1; i <= size / 2; ++i) {
         set.insert(i);
     }
     POMAGMA_ASSERT_EQ(set.count_items(), size / 2);
+    POMAGMA_ASSERT(set == set, "set does not equal self");
+
     unsigned item_count = 0;
     for (auto iter = set.iter(); iter.ok(); iter.next()) {
         POMAGMA_ASSERT(set.contains(*iter), "iterated over uncontained item");
@@ -140,6 +145,9 @@ void test_operations (size_t size, rng_t & rng)
 
     POMAGMA_ASSERT(bool(x.count_items()) ^ x.empty(), ".empty() is wrong");
     POMAGMA_ASSERT(bool(y.count_items()) ^ y.empty(), ".empty() is wrong");
+
+    POMAGMA_INFO("testing comparison");
+    POMAGMA_ASSERT_EQ(x == y, x <= y and y <= x);
 
     POMAGMA_INFO("testing insert_all");
     expected.zero();
