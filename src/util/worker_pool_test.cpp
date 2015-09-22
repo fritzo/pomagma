@@ -26,8 +26,7 @@ void test_threadpool (
             });
         }
     }
-    // FIXME why does this assertion fail?
-    //POMAGMA_ASSERT_EQ(counter, 1 + max_duration);
+    POMAGMA_ASSERT_EQ(counter, 1 + max_duration);
 }
 
 int main ()

@@ -31,13 +31,14 @@ public:
                     {
                         std::unique_lock<std::mutex> lock(m_mutex);
                         m_condition.wait(lock, [this]{
-                            return not m_accepting or not m_queue.empty();
+                            return not m_queue.empty() or not m_accepting;
                         });
-                        if (unlikely(not m_accepting)) {
+                        if (likely(not m_queue.empty())) {
+                            task = std::move(m_queue.front());
+                            m_queue.pop();
+                        } else {
                             return;
                         }
-                        task = std::move(m_queue.front());
-                        m_queue.pop();
                     }
                     task();
                 }
