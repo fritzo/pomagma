@@ -5,18 +5,19 @@
 
 namespace pomagma {
 
-class DenseSetStore
+typedef uint64_t SetId;
+
+class DenseSetStore : noncopyable
 {
 public:
 
-    typedef uint64_t id_t;
     typedef sequential::DenseSet DenseSet;
 
     DenseSetStore (size_t item_dim);
     ~DenseSetStore ();
 
-    id_t store (DenseSet && set); // set is consumed, memory is never freed
-    DenseSet load (id_t id) const
+    SetId store (DenseSet && set); // memory is never freed
+    DenseSet load (SetId id) const
     {
         auto i = m_index.find(id);
         POMAGMA_ASSERT1(i != m_index.end(), "missing id " << id);
@@ -25,8 +26,8 @@ public:
 
 private:
 
-    struct HashId { id_t operator() (const id_t & id) const { return id; } };
-    std::unordered_map<id_t, Word *, HashId> m_index;
+    struct HashId { SetId operator() (const SetId & id) const { return id; } };
+    std::unordered_map<SetId, Word *, HashId> m_index;
     const size_t m_item_dim;
     const size_t m_byte_dim;
 };

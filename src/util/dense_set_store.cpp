@@ -3,7 +3,7 @@
 
 namespace pomagma {
 
-inline DenseSetStore::id_t fingerprint (const Word * words, size_t byte_dim)
+inline SetId fingerprint (const Word * words, size_t byte_dim)
 {
     return util::Fingerprint64(reinterpret_cast<const char *>(words), byte_dim);
 }
@@ -26,11 +26,11 @@ DenseSetStore::~DenseSetStore ()
     }
 }
 
-DenseSetStore::id_t DenseSetStore::store (DenseSet && set)
+SetId DenseSetStore::store (DenseSet && set)
 {
     POMAGMA_ASSERT1(set.item_dim() == m_item_dim, "size mismatch");
     Word * data = set.move_data();
-    id_t id = fingerprint(data, m_byte_dim);
+    SetId id = fingerprint(data, m_byte_dim);
     auto inserted = m_index.emplace(id, data);
     if (not inserted.second) {
         POMAGMA_ASSERT1(

@@ -28,6 +28,10 @@ add_executable(worker_pool_test worker_pool_test.cpp)
 target_link_libraries(worker_pool_test ${POMAGMA_UTIL_LIBS})
 add_test(NAME worker_pool COMMAND worker_pool_test)
 
+add_executable(dense_set_store_test dense_set_store_test.cpp)
+target_link_libraries(dense_set_store_test ${POMAGMA_UTIL_LIBS})
+add_test(NAME dense_set_store COMMAND dense_set_store_test)
+
 add_executable(async_map_test async_map_test.cpp)
 target_link_libraries(async_map_test ${POMAGMA_UTIL_LIBS})
 add_test(NAME async_map COMMAND async_map_test)
