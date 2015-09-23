@@ -234,6 +234,12 @@ public:
     typedef Word RawData;
     Word * raw_data () { return m_words; }
     const Word * raw_data () const { return m_words; }
+    Word * move_data ()
+    {
+        Word * data = m_words;
+        m_words = nullptr;
+        return data;
+    }
     void validate () const;
 
     // element operations

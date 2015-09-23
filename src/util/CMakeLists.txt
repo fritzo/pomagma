@@ -5,6 +5,7 @@ add_library(pomagma_util SHARED
 	aligned_alloc.cpp
 	sequential/dense_set.cpp
 	concurrent/dense_set.cpp
+	dense_set_store.cpp
 	queue.cpp
 	hasher.cpp
 	profiler.cpp
