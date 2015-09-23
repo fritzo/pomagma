@@ -2,6 +2,7 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 
 set(POMAGMA_UTIL_LIBS
 	pomagma_util
+	pomagma_farmhash
 	tbb
 	crypto ssl
 	${Boost_FILESYSTEM_LIBRARY}
@@ -45,3 +46,4 @@ add_subdirectory(surveyor)
 add_subdirectory(cartographer)
 add_subdirectory(theorist)
 add_subdirectory(analyst)
+add_subdirectory(vendor)
