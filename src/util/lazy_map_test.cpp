@@ -10,17 +10,14 @@ typedef const std::pair<int, int> * Key;
 typedef int Value;
 
 void async_map_test (
-    size_t thread_count,
     size_t eval_count,
-    size_t max_wait = 100)
+    size_t max_wait)
 {
-    LazyMap<Key, Value> lazy_map(
-        thread_count,
-        [](const Key & key){
-            Value value = 1 + key->first + key->second;
-            std::this_thread::sleep_for(std::chrono::milliseconds(value));
-            return value;
-        });
+    LazyMap<Key, Value> lazy_map([](const Key & key){
+        Value value = 1 + key->first + key->second;
+        std::this_thread::sleep_for(std::chrono::milliseconds(value));
+        return value;
+    });
 
     rng_t rng;
     std::uniform_int_distribution<> random_int(0, max_wait);
@@ -53,7 +50,7 @@ int main ()
 {
     Log::Context log_context("LazyMap Test");
 
-    test::async_map_test(10, 100);
+    test::async_map_test(100, 100);
 
     return 0;
 }

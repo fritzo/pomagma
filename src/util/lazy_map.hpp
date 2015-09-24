@@ -11,16 +11,17 @@ namespace pomagma {
 // Value must be default constructible, equality comparable,
 // and have an identified null_value.
 // Function must never return null_value.
-template<class Key, class Value, Value null_value = 0>
+template<
+    class Key,
+    class Value,
+    Value null_value = 0,
+    class Hash = std::hash<Key>>
 class LazyMap : noncopyable
 {
 public:
 
-    LazyMap (
-            size_t thread_count,
-            std::function<Value (const Key &)> && function) :
-        m_function(function),
-        m_worker_pool(thread_count)
+    LazyMap (std::function<Value (const Key &)> && function) :
+        m_function(function)
     {}
 
     // Immediately returns function(key) if ready or null_value if pending.
@@ -46,22 +47,10 @@ public:
         return null_value;
     }
 
-    // Use this to load precomputed function values.
-    void insert (const Key & key, const Value & value)
-    {
-        POMAGMA_ASSERT(value != null_value, "inserted null_value");
-        POMAGMA_ASSERT5(m_function(key) == value, "inserted miscomputed value");
-        std::unique_lock<std::mutex> lock(m_mutex);
-        auto inserted = m_cache.insert({key, value});
-        if (not inserted.second and inserted.first->second != null_value) {
-            POMAGMA_ASSERT(value == inserted.first->second, "value conflict");
-        }
-    }
-
 private:
 
     std::mutex m_mutex;
-    std::unordered_map<Key, Value> m_cache;
+    std::unordered_map<Key, Value, Hash> m_cache;
     std::function<Value (const Key &)> m_function;
     mutable WorkerPool m_worker_pool;
 };
