@@ -23,8 +23,9 @@
 //#define acquire_barrier() std::atomic_thread_fence(std::memory_order_acquire)
 //#define release_barrier() std::atomic_thread_fence(std::memory_order_release)
 
-namespace pomagma
-{
+namespace pomagma {
+
+size_t get_cpu_count ();
 
 // add default constructor for use in std::vector
 struct atomic_flag : std::atomic_flag

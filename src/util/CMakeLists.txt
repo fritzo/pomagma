@@ -2,6 +2,7 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 
 add_library(pomagma_util SHARED
 	util.cpp
+	threading.cpp
 	aligned_alloc.cpp
 	sequential/dense_set.cpp
 	concurrent/dense_set.cpp

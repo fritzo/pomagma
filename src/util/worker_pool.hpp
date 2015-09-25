@@ -24,7 +24,7 @@ public:
     explicit WorkerPool (size_t thread_count = 0) : m_accepting(true)
     {
         if (thread_count == 0) {
-            thread_count = std::thread::hardware_concurrency();
+            thread_count = get_cpu_count();
         }
         POMAGMA_ASSERT_LT(0, thread_count);
         POMAGMA_DEBUG("Starting pool of " << thread_count << " workers");
