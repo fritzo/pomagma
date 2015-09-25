@@ -113,6 +113,9 @@ static TaskStats g_cleanup_stats;
 
 void set_thread_count (size_t worker_count)
 {
+    if (worker_count == 0) {
+        worker_count = get_cpu_count();
+    }
     POMAGMA_ASSERT_LE(1, worker_count);
     g_worker_count = worker_count;
 }

@@ -185,7 +185,7 @@ namespace Cleanup { void init (size_t type_count); }
 namespace Scheduler
 {
 
-void set_thread_count (size_t worker_count);
+void set_thread_count (size_t worker_count = 0);
 
 // blocking api, requires access from single thread
 void initialize (const char * theory_file = nullptr);

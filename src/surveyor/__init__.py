@@ -16,7 +16,6 @@ def init(theory, chart_out, size=None, **opts):
             pomagma.util.THEORY,
             '{}.optimized.programs'.format(theory)),
         os.path.join(pomagma.util.LANGUAGE, '{}.language'.format(theory)),
-        pomagma.util.CPU_COUNT,
         size=size,
         **opts)
 
@@ -34,6 +33,5 @@ def survey(theory, chart_in, chart_out, size, **opts):
             pomagma.util.THEORY,
             '{}.optimized.programs'.format(theory)),
         os.path.join(pomagma.util.LANGUAGE, '{}.language'.format(theory)),
-        pomagma.util.CPU_COUNT,
         size=size,
         **opts)

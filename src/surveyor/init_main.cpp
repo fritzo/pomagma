@@ -7,11 +7,11 @@ int main (int argc, char ** argv)
     pomagma::Log::Context log_context(argc, argv);
     const char * executable = *argv++;
 
-    if (argc != 7) {
+    if (argc != 6) {
         std::cout
             << "Usage: "
                 << boost::filesystem::basename(executable)
-                << "structure_out symbols facts programs language threads"
+                << "structure_out symbols facts programs language"
                 << "\n"
             << "Environment Variables:\n"
             << "  POMAGMA_SIZE = " << pomagma::DEFAULT_ITEM_DIM << "\n"
@@ -27,10 +27,9 @@ int main (int argc, char ** argv)
     const char * facts_file = *argv++;
     const char * programs_file = *argv++;
     const char * language_file = *argv++;
-    const size_t thread_count = atoi(*argv++);
 
     // set params
-    pomagma::Scheduler::set_thread_count(thread_count);
+    pomagma::Scheduler::set_thread_count();
     pomagma::load_signature(symbols_file);
     pomagma::load_programs(programs_file);
     pomagma::load_language(language_file);
