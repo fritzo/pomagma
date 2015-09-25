@@ -72,11 +72,9 @@ class Validator : noncopyable
 
 public:
 
-    Validator (
-            Approximator & approximator,
-            size_t thread_count)
+    Validator (Approximator & approximator)
         : m_approximator(approximator),
-          m_cached_approximator(approximator, thread_count),
+          m_cached_approximator(approximator),
           m_function({* this}),
           m_cache(std::bind(&AsyncFunction::operator(), & m_function, _1, _2))
     {

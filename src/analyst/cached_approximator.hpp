@@ -104,11 +104,8 @@ private:
 
 public:
 
-    CachedApproximator (
-            Approximator & approximator,
-            size_t thread_count) :
+    CachedApproximator (Approximator & approximator) :
         m_approximator(approximator),
-        m_pool(thread_count),
         m_cache([this](const Term * term, Cache::Callback callback){
             m_pool.schedule([this, term, callback]{
                 callback(

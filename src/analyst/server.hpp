@@ -29,8 +29,7 @@ public:
 
     Server (
         const char * structure_file,
-        const char * language_file,
-        size_t thread_count);
+        const char * language_file);
     ~Server ();
 
     struct SolutionSet

@@ -10,8 +10,7 @@ namespace pomagma
 
 Server::Server (
         const char * structure_file,
-        const char * language_file,
-        size_t thread_count)
+        const char * language_file)
     : m_language(load_language(language_file)),
       m_structure(structure_file),
       m_return(m_structure.carrier()),
@@ -22,7 +21,7 @@ Server::Server (
       m_routes(),
       m_simplifier(m_structure.signature(), m_routes, m_error_log),
       m_corpus(m_structure.signature()),
-      m_validator(m_approximator, thread_count),
+      m_validator(m_approximator),
       m_parser(),
       m_virtual_machine()
 {
