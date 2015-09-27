@@ -41,8 +41,11 @@ public:
 
     size_t test ();
     void validate (const Approximation & approx);
+
+    bool is_valid (const Approximation & approx);
     bool refines (const Approximation & lhs, const Approximation & rhs) const;
 
+    Approximation pending () const { return {0, 0, 0, 0}; }
     Approximation known (Ob ob) const;
     Approximation interval (Ob lb, Ob ub) const;
     Approximation unknown () const { return interval(m_bot, m_top); }
@@ -50,35 +53,39 @@ public:
     Approximation falsey () const { return known(m_bot); }
     Approximation maybe () const { return interval(m_bot, m_identity); }
 
-    SetId lazy_union (const Approximation & lhs, SetId rhs);
-    SetId lazy_nullary_function (const std::string & name, Parity parity);
-    SetId lazy_unary_function_key (
+    Approximation lazy_fuse (std::vector<Approximation> & messages);
+    Approximation lazy_nullary_function (const std::string & name);
+    Approximation lazy_injective_function_key (
         const std::string & name,
-        Parity parity,
-        SetId key);
-    SetId lazy_unary_function_val (
+        const Approximation & key);
+    Approximation lazy_injective_function_val (
         const std::string & name,
-        Parity parity,
-        SetId val);
-    SetId lazy_binary_function_lhs_rhs (
+        const Approximation & val);
+    Approximation lazy_binary_function_lhs_rhs (
         const std::string & name,
-        Parity parity,
-        SetId lhs,
-        SetId rhs);
-    SetId lazy_binary_function_lhs_val (
+        const Approximation & lhs,
+        const Approximation & rhs);
+    Approximation lazy_binary_function_lhs_val (
         const std::string & name,
-        Parity parity,
-        SetId rhs,
-        SetId val);
-    SetId lazy_binary_function_rhs_val (
+        const Approximation & lhs,
+        const Approximation & val);
+    Approximation lazy_binary_function_rhs_val (
         const std::string &,
-        Parity parity,
-        SetId rhs,
-        SetId val);
+        const Approximation & rhs,
+        const Approximation & val);
+    Approximation lazy_symmetric_function_lhs_rhs (
+        const std::string & name,
+        const Approximation & lhs,
+        const Approximation & rhs);
+    Approximation lazy_symmetric_function_lhs_val (
+        const std::string & name,
+        const Approximation & lhs,
+        const Approximation & val);
 
 private:
 
     static uint64_t hash_name (const string & name);
+
     SetId lazy_find (const std::string & name, Parity parity);
     SetId lazy_find (
         const std::string & name,
@@ -106,11 +113,22 @@ private:
 
     // DenseSet fingerprinting.
     DenseSetStore & m_sets;
+    const SetId m_empty_set;
     std::vector<SetId> m_known[4];
 
     // LazyMap caches.
+    struct VectorSetIdHash
+    {
+        uint64_t operator() (const std::vector<SetId> & x) const
+        {
+            return util::Fingerprint64(
+                reinterpret_cast<const char *>(x.data()),
+                x.size() * sizeof(SetId));
+        }
+    };
+    LazyMap<std::vector<SetId>, SetId, 0, VectorSetIdHash> m_union_cache;
     typedef std::tuple<uint64_t, Parity, Direction> CacheKey;
-    std::unordered_map<CacheKey, SetId> m_nullary_cache;
+    std::unordered_map<uint64_t, Approximation> m_nullary_cache;
     std::unordered_map<CacheKey, std::unique_ptr<LazyMap<SetId, SetId>>>
         m_unary_cache;
     std::unordered_map<
@@ -138,62 +156,6 @@ inline Approximation Approximator::interval (Ob lb, Ob ub) const
         m_known[NBELOW][ub],
         m_known[NABOVE][lb]
     };
-}
-
-inline SetId Approximator::lazy_union (SetId lhs, SetId rhs)
-{
-    if (lhs == rhs) { return lhs; }
-    if (lhs > rhs) { std::swap(lhs, rhs); }
-    return m_union_cache.try_find({lhs, rhs});
-}
-
-inline uint64_t Approximator::hash_name (const string & name)
-{
-    return util::Fingerprint64(name.data(), name.size());
-}
-
-inline SetId Approximator::lazy_find (const std::string & name, Parity parity)
-{
-    auto i = m_nullary_cache.find({hash_name(name), parity, direction});
-    POMAGMA_ASSERT1(i != m_nullary_cache.end(), "programmer error");
-    return i->second;
-}
-
-inline SetId Approximator::lazy_find (
-    const std::string & name,
-    Parity parity,
-    Direction direction,
-    SetId arg)
-{
-    auto i = m_unary_cache.find({hash_name(hash), parity, direction});
-    POMAGMA_ASSERT1(i != m_unary_cache.end(), "programmer error");
-    return i->second->try_find(arg);
-}
-
-inline SetId Approximator::lazy_find (
-    const std::string & name,
-    Parity parity,
-    Direction direction,
-    SetId arg0,
-    SetId arg1)
-{
-    auto i = m_binary_cache.find({hash_name(hash), parity, direction});
-    POMAGMA_ASSERT1(i != m_binary_cache.end(), "programmer error");
-    return i->second->try_find({arg0, arg1});
-}
-
-SetId Approximator::lazy_nullary_function (const std::string & name, Parity parity)
-{
-    return try_find(name, parity);
-}
-
-SetId Approximator::lazy_binary_function_lhs_rhs (
-    const std::string & name,
-    Parity parity,
-    SetId lhs,
-    SetId rhs)
-{
-    return try_find(name, parity, LHS_RHS, lhs, rhs);
 }
 
 } // namespace intervals

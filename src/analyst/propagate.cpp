@@ -15,79 +15,60 @@ static void insert_term (
 
 Problem formulate (std::unique_ptr<Corpus> corpus)
 {
-    std::unordered_set<const Term *> terms;
+    std::unordered_set<const Term *> constraints;
     for (const auto & ptr : corpus.lines) {
         const Term * term = ptr.get();
-        insert_term(terms, term);
+        insert_term(constraints, term);
     }
-
-    std::unordered_map<const Term *, std::vector<Constraint>> constraints;
-    for (const Term * term : terms) {
-        switch (term.arity) {
-            case NULLARY_FUNCTION:
-                constraints[term].push_back({term, VOID});
-                break;
-
-            case INJECTIVE_FUNCTION:
-                constraints[term].push_back({term, KEY});
-                constraints[term.args[0].get()].push_back({term, VAL});
-                break;
-
-            case BINARY_FUNCTION:
-                constraints[term].push_back({term, LHS_RHS});
-                constraints[term.args[0].get()].push_back({term, RHS_VAL});
-                constraints[term.args[1].get()].push_back({term, LHS_VAL});
-                break;
-
-            case SYMMETRIC_FUNCTION:
-                constraints[term].push_back({term, LHS_RHS});
-                constraints[term.args[0].get()].push_back({term, RHS_VAL});
-                if (term.args[0].get() != term.args[1].get()) {
-                    constraints[term.args[1].get()].push_back({term, LHS_VAL});
-                }
-                break;
-
-            default:
-                TODO("handle relations");
-        }
-    }
-
     return {corpus, std::move(constraints)};
 };
 
-inline State propagate_constraint (
-    const Constraint & constraint,
-    const std::unordered_map<State> & prev_states,
+inline void propagate_constraint (
+    const const Term * constraint,
+    const std::unordered_map<const Term *, State> & states,
+    std::unordered_map<const Term *, ste::vector<State> & message_queues,
     intervals::Approximator & approximator)
 {
-    State state;
+    const string & name = constraint->name;
     TODO("deal with obs for known states");
-    const Term & term = * constraint.term;
-    switch (term.arity) {
+    switch (term->arity) {
         case NULLARY_FUNCTION: {
-            POMAGMA_ASSERT_EQ(constraint.direction, VOID);
-            for (Parity p : {BELOW, ABOVE, NBELOW, NABOVE}) {
-                state[p] = approximator.lazy_nullary_function(term.name, p);
-            }
+            const Term * val = constraint;
+            message_queues[val].push_back(
+                approximator.lazy_nullary_function(name));
         } break;
 
         case INJECTIVE_FUNCTION: {
-            switch (constraint.direction) {
-                case KEY: {
-                    for (Parity p : {BELOW, ABOVE, NBELOW, NABOVE}) {
-                        state[p] = TODO
-                } break;
+            const Term * key = constraint->args[0];
+            const Term * val = constraint;
+            message_queues[val].push_back(
+                approximator.lazy_injective_function_key(name, key));
+            message_queues[key].push_back(
+                approximator.lazy_injective_function_val(name, val));
+        } break;
 
-                case VAL: {
-                } break;
+        case BINARY_FUNCTION: {
+            const Term * lhs = constraint->args[0];
+            const Term * rhs = constraint->args[1];
+            const Term * val = constraint;
+            message_queues[val].push_back(
+                approximator.lazy_binary_function_lhs_rhs(name, lhs, rhs));
+            message_queues[rhs].push_back(
+                approximator.lazy_binary_function_lhs_val(name, lhs, val));
+            message_queues[lhs].push_back(
+                approximator.lazy_binary_function_rhs_val(name, rhs, val));
+        } break;
 
-                default:
-                    POMAGMA_ERROR("bad direction: " << constraint.direction);
-            }
-            POMAGMA_ASSERT_EQ(constraint.direction, VOID);
-            for (Parity p : {BELOW, ABOVE, NBELOW, NABOVE}) {
-                state[p] = approximator.lazy_nullary_function(term.name, p);
-            }
+        case SYMMETRIC_FUNCTION: {
+            const Term * lhs = constraint->args[0];
+            const Term * rhs = constraint->args[1];
+            const Term * val = constraint;
+            message_queues[val].push_back(
+                approximator.lazy_symmetric_function_lhs_rhs(name, lhs, rhs));
+            message_queues[rhs].push_back(
+                approximator.lazy_symmetric_function_lhs_val(name, lhs, val));
+            message_queues[lhs].push_back(
+                approximator.lazy_symmetric_function_rhs_val(name, rhs, val));
         } break;
 
         default: TODO("switch(arity): for each parity: propagate ");
@@ -95,77 +76,48 @@ inline State propagate_constraint (
     return state;
 }
 
-inline State fuse_states(
-    const std::vector<State> & states,
-    intervals::Approximator & approximator)
-{
-    State result;
-    auto i = states.begin();
-    if (i == states.end()) {
-        return approximator.unknown();
-    }
-    result = states[0];
-    while (++i != states.end()) {
-        const auto & state = *i;
-        for (Parity p : {ABOVE, BELOW, NABOVE, NBELOW}) {
-            result[p] = (result[p] && state[p])
-                      ? approximator.try_union(result[p], state[p])
-                      : 0;
-        }
-    }
-    return result;
-}
-
-inline State propagate_variable (
-    const std::vector<Constraint> & constraints,
-    const std::unordered_map<State> & states,
-    intervals::Approximator & approximator)
-{
-    std::vector<State> components;
-    components.reserve(constraints.size());
-    for (const auto & constraint : constraints) {
-        components.push_back(
-            propagate_constraint(constraint, states, approximator));
-    }
-    return fuse_states(components);
-}
-
 // Returns number of variables that have changed.
 // This is guaranteed to have time complexity O(#constraints).
 inline size_t propagate_step (
-    std::unordered_map<const Term *, State> & curr_states,
-    const std::unordered_map<const Term *, State> & prev_states,
+    const std::unordered_map<const Term *, State> & states,
+    std::unordered_map<const Term *, std::vector<State>> & message_queues,
     const Problem & problem,
     intervals::Approximator & approximator)
 {
-    size_t change_count = 0;
-    for (auto & i : curr_states) {
-        const Term * term = i.first;
-        State & curr_state = i.second;
-        const State & prev_state = prev_states.find(term)->second;
-        const auto & constraints = problem.constraints.find(term)->second;
-
-        curr_state = propagate_variable(constraints, prev_states, approximator);
-        if (curr_state != prev_state) {
-            ++change_count;
-            POMAGMA_ASSERT1(approximator.refines(curr_state, prev_state);
-        }
+    for (const Term * constraint : problem.constraints) {
+        propagate_constraint(constraint, states, message_queues, approximator);
     }
+
+    size_t change_count = 0;
+    for (auto & i : states) {
+        const Term * term = i.first;
+        State & state = i.second;
+        std::vector<State> & messages = message_queues.find(term)->second;
+        const State updated_state = approximator.lazy_fuse(messages);
+        messages.clear();
+        if (updated_state != state) {
+            POMAGMA_ASSERT1(approximator.refines(updated_state, state),
+                "propagation was not monotone");
+        }
+        state = updated_state;
+        ++change_count;
+    }
+
     POMAGMA_DEBUG("propagation found " << change_count << " changes");
     return change_count;
 }
 
 Solution solve (const Problem & problem, intervals::Approximator & approximator)
 {
-    const size_t size = problem.constraints.size();
-    POMAGMA_DEBUG("Propagating problem with " << size << " variables");
-    std::unordered_map<const Term *, State> curr_states();
-    std::unordered_map<const Term *, State>
-        prev_states(size, approximator.unknown());
+    POMAGMA_DEBUG("Propagating " << problem.constraints.size() << " variables");
 
-    while (propagate_step(curr_states, prev_states, problem, approximator)) {
-        std::swap(curr_states, prev_states);
+    std::unordered_map<const Term *, State> states;
+    for (const Term * term : problem.constraints) {
+        state.insert({term, approximator.unknown()});
     }
+
+    std::unordered_map<const Term *, std::vector<State>> message_queues;
+    while (propagate_step(states, message_queues, problem, approximator)) {}
 
     return {std::move(curr_states)};
 }

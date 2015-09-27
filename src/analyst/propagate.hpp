@@ -1,14 +1,15 @@
 #pragma once
 
 #include <pomagma/analyst/intervals.hpp>
-#include <memory>
+#include <unordered_map>
+#include <unordered_set>
 #include <vector>
+#include <memory>
 
 namespace pomagma {
 namespace propagate {
 
 using intervals::Parity;
-using intervals::Direction;
 
 enum Arity
 {
@@ -37,16 +38,10 @@ struct Corpus
 
 // TODO define parse : ... -> Corpus, which creates cons-hashed terms
 
-struct Constraint
-{
-    const Term * term;
-    Direction direction;
-};
-
 struct Problem
 {
     const std::unique_ptr<Corpus> corpus;
-    const std::unordered_map<const Term *, std::vector<Constraint>> constraints;
+    const std::unordered_set<const Term *> constraints;
 };
 
 Problem formulate (std::unique_ptr<Corpus> corpus);
