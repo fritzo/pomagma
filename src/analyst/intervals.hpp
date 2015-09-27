@@ -23,9 +23,12 @@ enum Arity {
 
 struct Approximation
 {
-    SetId sets[4];
-    SetId & operator[] (Parity p) { return sets[p]; }
-    SetId operator[] (Parity p) const { return sets[p]; }
+    SetId bounds[4];
+    // Ob ob; // TODO
+    // bool satisfiable; // TODO
+
+    SetId & operator[] (Parity p) { return bounds[p]; }
+    SetId operator[] (Parity p) const { return bounds[p]; }
 };
 
 class Approximator
@@ -37,8 +40,6 @@ public:
             DenseSetStore & sets,
             WorkerPool & worker_pool);
 
-    Signature & signature () { return m_structure.signature(); }
-
     size_t test ();
     void validate (const Approximation & approx);
 
@@ -48,13 +49,24 @@ public:
     Approximation pending () const { return {0, 0, 0, 0}; }
     Approximation known (Ob ob) const;
     Approximation interval (Ob lb, Ob ub) const;
-    Approximation unknown () const { return interval(m_bot, m_top); }
+    Approximation unknown () const { return m_unknown; }
     Approximation truthy () const { return known(m_identity); }
     Approximation falsey () const { return known(m_bot); }
     Approximation maybe () const { return interval(m_bot, m_identity); }
+    Approximation nullary_function (const std::string & name);
+    Approximation less_lhs (const Approximation & lhs);
+    Approximation less_rhs (const Approximation & rhs);
+    Approximation nless_lhs (const Approximation & lhs);
+    Approximation nless_rhs (const Approximation & rhs);
+    Approximation unary_relation (
+        const std::string & name,
+        const Approximation & key);
+    Approximation binary_relation (
+        const std::string & name,
+        const Approximation & lhs,
+        const Approximation & rhs);
 
     Approximation lazy_fuse (std::vector<Approximation> & messages);
-    Approximation lazy_nullary_function (const std::string & name);
     Approximation lazy_injective_function_key (
         const std::string & name,
         const Approximation & key);
@@ -84,8 +96,12 @@ public:
 
 private:
 
+    Signature & signature () { return m_structure.signature(); }
     static uint64_t hash_name (const string & name);
 
+    SetId lazy_fuse (
+        const std::vector<Approximation> & messages,
+        Parity parity);
     SetId lazy_find (const std::string & name, Parity parity);
     SetId lazy_find (
         const std::string & name,
@@ -113,8 +129,8 @@ private:
 
     // DenseSet fingerprinting.
     DenseSetStore & m_sets;
-    const SetId m_empty_set;
     std::vector<SetId> m_known[4];
+    Approximation m_unknown;
 
     // LazyMap caches.
     struct VectorSetIdHash
@@ -126,7 +142,7 @@ private:
                 x.size() * sizeof(SetId));
         }
     };
-    LazyMap<std::vector<SetId>, SetId, 0, VectorSetIdHash> m_union_cache;
+    LazyMap<std::vector<SetId>, SetId, 0, VectorSetIdHash> m_fuse_cache;
     typedef std::tuple<uint64_t, Parity, Direction> CacheKey;
     std::unordered_map<uint64_t, Approximation> m_nullary_cache;
     std::unordered_map<CacheKey, std::unique_ptr<LazyMap<SetId, SetId>>>
@@ -156,6 +172,84 @@ inline Approximation Approximator::interval (Ob lb, Ob ub) const
         m_known[NBELOW][ub],
         m_known[NABOVE][lb]
     };
+}
+
+inline Approximation Approximator::nullary_function (const std::string & name)
+{
+    auto i = m_nullary_cache.find(hash_name(name));
+    POMAGMA_ASSERT(i != m_nullary_cache.end(), "programmer error");
+    return i->second;
+}
+
+inline Approximation Approximator::unary_relation (
+    const std::string & name,
+    const Approximation & key)
+{
+#if 0 // TODO add a .ob field to Approximation
+    if (key.ob) {
+        if (m_structure.unary_relation(name).find(key.ob)) {
+            return truthy();
+        }
+        const string negated = signature.negate(name);
+        if (const auto * rel = signature.unary_relation(name)) {
+            if (rel->find(key.ob)) {
+                return falsey();
+            }
+        }
+    }
+#endif // TODO
+    return maybe();
+}
+
+inline Approximation Approximator::binary_relation (
+    const std::string & name,
+    const Approximation & lhs,
+    const Approximation & rhs)
+{
+#if 0 // TODO add a .ob field to Approximation
+    if (lhs.ob and rhs.ob) {
+        if (m_structure.binary_relation(name).find(lhs.ob, rhs.ob)) {
+            return truthy();
+        }
+        const string negated = signature.negate(name);
+        if (const auto * rel = signature.binary_relation(name)) {
+            if (rel->find(lhs.ob, rhs.ob)) {
+                return falsey();
+            }
+        }
+    }
+#endif // TODO
+    return maybe();
+}
+
+inline Approximation Approximator::less_lhs (const Approximation & lhs)
+{
+    Approximation rhs = unknown();
+    rhs[BELOW] = lhs[BELOW];
+    rhs[NABOVE] = lhs[NABOVE];
+    return rhs;
+}
+
+inline Approximation Approximator::less_rhs (const Approximation & rhs)
+{
+    Approximation lhs = unknown();
+    lhs[ABOVE] = rhs[ABOVE];
+    lhs[NBELOW] = rhs[NBELOW];
+    return rhs;
+}
+
+inline Approximation Approximator::nless_lhs (const Approximation & lhs)
+{
+    Approximation rhs = unknown();
+    rhs[NBELOW] = lhs[ABOVE];
+    return rhs;
+}
+
+inline Approximation Approximator::nless_rhs (const Approximation & rhs)
+{
+    Approximation lhs = unknown();
+    lhs[NABOVE] = rhs[BELOW];
+    return rhs;
 }
 
 } // namespace intervals

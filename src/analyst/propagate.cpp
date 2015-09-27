@@ -23,6 +23,8 @@ Problem formulate (std::unique_ptr<Corpus> corpus)
     return {corpus, std::move(constraints)};
 };
 
+namespace {
+
 inline void propagate_constraint (
     const const Term * constraint,
     const std::unordered_map<const Term *, State> & states,
@@ -30,15 +32,14 @@ inline void propagate_constraint (
     intervals::Approximator & approximator)
 {
     const string & name = constraint->name;
-    TODO("deal with obs for known states");
-    switch (term->arity) {
+    switch (constraint->arity) {
         case NULLARY_FUNCTION: {
             const Term * val = constraint;
-            message_queues[val].push_back(
-                approximator.lazy_nullary_function(name));
+            message_queues[val].push_back(approximator.nullary_function(name));
         } break;
 
         case INJECTIVE_FUNCTION: {
+            if (name == "QUOTE") break; // QUOTE is not monotone
             const Term * key = constraint->args[0];
             const Term * val = constraint;
             message_queues[val].push_back(
@@ -68,12 +69,37 @@ inline void propagate_constraint (
             message_queues[rhs].push_back(
                 approximator.lazy_symmetric_function_lhs_val(name, lhs, val));
             message_queues[lhs].push_back(
-                approximator.lazy_symmetric_function_rhs_val(name, rhs, val));
+                approximator.lazy_symmetric_function_lhs_val(name, rhs, val));
         } break;
 
-        default: TODO("switch(arity): for each parity: propagate ");
+        case UNARY_RELATION: {
+            const Term * key = constraint->args[0];
+            const Term * val = constraint;
+            // propagate truth value up to val as if it were quoted
+            message_queues[val].push_back(
+                approximator.unary_relation(name, key));
+        } break;
+
+        case BINARY_RELATION: {
+            const Term * lhs = constraint->args[0];
+            const Term * rhs = constraint->args[1];
+            const Term * val = constraint;
+            // propagate truth value up to val as if it were quoted
+            message_queues[val].push_back(
+                approximator.binary_relation(name, lhs, rhs));
+            // propagate constraints down to lhs, rhs
+            if (name == "LESS") {
+                message_queues[lhs].push_back(approximator.less_rhs(rhs));
+                message_queues[rhs].push_back(approximator.less_lhs(lhs));
+            } else if (name == "NLESS") {
+                message_queues[lhs].push_back(approximator.nless_rhs(rhs));
+                message_queues[rhs].push_back(approximator.nless_lhs(lhs));
+            }
+        } break;
+
+        case VARIABLE: break; // no information
+        case HOLE: break; // no information
     }
-    return state;
 }
 
 // Returns number of variables that have changed.
@@ -106,6 +132,8 @@ inline size_t propagate_step (
     POMAGMA_DEBUG("propagation found " << change_count << " changes");
     return change_count;
 }
+
+} // namespace
 
 Solution solve (const Problem & problem, intervals::Approximator & approximator)
 {
