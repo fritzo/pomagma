@@ -73,27 +73,25 @@ inline void propagate_constraint (
         } break;
 
         case UNARY_RELATION: {
-            const Term * key = constraint->args[0];
-            const Term * val = constraint;
-            // propagate truth value up to val as if it were quoted
-            message_queues[val].push_back(
-                approximator.unary_relation(name, key));
+            TODO("implement approximation of unary_relation " << name);
         } break;
 
         case BINARY_RELATION: {
             const Term * lhs = constraint->args[0];
             const Term * rhs = constraint->args[1];
             const Term * val = constraint;
-            // propagate truth value up to val as if it were quoted
-            message_queues[val].push_back(
-                approximator.binary_relation(name, lhs, rhs));
-            // propagate constraints down to lhs, rhs
             if (name == "LESS") {
                 message_queues[lhs].push_back(approximator.less_rhs(rhs));
                 message_queues[rhs].push_back(approximator.less_lhs(lhs));
+                message_queues[val].push_back(
+                    approximator.lazy_less_lhs_rhs(lhs, rhs));
             } else if (name == "NLESS") {
                 message_queues[lhs].push_back(approximator.nless_rhs(rhs));
                 message_queues[rhs].push_back(approximator.nless_lhs(lhs));
+                message_queues[val].push_back(
+                    approximator.lazy_nless_lhs_rhs(lhs, rhs));
+            } else {
+                TODO("implement approximation of binary_relation " << name);
             }
         } break;
 
@@ -102,8 +100,7 @@ inline void propagate_constraint (
     }
 }
 
-// Returns number of variables that have changed.
-// This is guaranteed to have time complexity O(#constraints).
+// this should have time complexity O(#constraints)
 inline size_t propagate_step (
     const std::unordered_map<const Term *, State> & states,
     std::unordered_map<const Term *, std::vector<State>> & message_queues,
@@ -120,6 +117,7 @@ inline size_t propagate_step (
         State & state = i.second;
         std::vector<State> & messages = message_queues.find(term)->second;
         const State updated_state = approximator.lazy_fuse(messages);
+        // TODO how to handle unsatisfiabilty / inconsistency?
         messages.clear();
         if (updated_state != state) {
             POMAGMA_ASSERT1(approximator.refines(updated_state, state),

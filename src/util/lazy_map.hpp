@@ -54,7 +54,7 @@ private:
     std::mutex m_mutex;
     std::unordered_map<Key, Value, Hash> m_cache;
     std::function<Value (const Key &)> m_function;
-    mutable WorkerPool & m_worker_pool;
+    WorkerPool & m_worker_pool;
 };
 
 } // namespace pomagma

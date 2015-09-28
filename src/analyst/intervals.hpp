@@ -4,7 +4,11 @@
 #include <pomagma/atlas/macro/util.hpp>
 #include <pomagma/util/dense_set_store.hpp>
 #include <pomagma/util/lazy_map.hpp>
+#include <string>
 #include <tuple>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 
 // declared in pomagma/vendor/farmhash/farmhash.h
 namespace util { uint64_t Fingerprint64(const char * s, size_t len); }
@@ -12,18 +16,41 @@ namespace util { uint64_t Fingerprint64(const char * s, size_t len); }
 namespace pomagma {
 namespace intervals {
 
+template<class T>
+struct PodHash
+{
+    uint64_t operator() (const T & x) const
+    {
+        return util::Fingerprint64(
+            reinterpret_cast<const char *>(& x),
+            sizeof(T));
+    }
+};
+
+template<class T>
+struct VectorPodHash
+{
+    uint64_t operator() (const std::vector<T> & x) const
+    {
+        return util::Fingerprint64(
+            reinterpret_cast<const char *>(x.data()),
+            x.size() * sizeof(T));
+    }
+};
+
 enum Parity {ABOVE, BELOW, NABOVE, NBELOW};
 enum Direction {VOID, KEY, VAL, LHS, RHS, LHS_RHS, LHS_VAL, RHS_VAL};
 enum Arity {
     NULLARY_FUNCTION,
     INJECTIVE_FUNCTION,
     BINARY_FUNCTION,
-    SYMMETRIC_FUNCTION
+    SYMMETRIC_FUNCTION,
+    BINARY_RELATION
 };
 
 struct Approximation
 {
-    SetId bounds[4];
+    SetId bounds[4]; // one for each Parity
     // Ob ob; // TODO
     // bool satisfiable; // TODO
 
@@ -47,24 +74,17 @@ public:
     bool refines (const Approximation & lhs, const Approximation & rhs) const;
 
     Approximation pending () const { return {0, 0, 0, 0}; }
-    Approximation known (Ob ob) const;
-    Approximation interval (Ob lb, Ob ub) const;
+    Approximation known (Ob ob) const { return m_known[ob]; }
     Approximation unknown () const { return m_unknown; }
-    Approximation truthy () const { return known(m_identity); }
-    Approximation falsey () const { return known(m_bot); }
-    Approximation maybe () const { return interval(m_bot, m_identity); }
+    Approximation interval (Ob lb, Ob ub) const;
+    Approximation maybe () const { return m_maybe; }
+    Approximation truthy () const { return m_truthy; }
+    Approximation falsey () const { return m_falsey; }
     Approximation nullary_function (const std::string & name);
     Approximation less_lhs (const Approximation & lhs);
     Approximation less_rhs (const Approximation & rhs);
     Approximation nless_lhs (const Approximation & lhs);
     Approximation nless_rhs (const Approximation & rhs);
-    Approximation unary_relation (
-        const std::string & name,
-        const Approximation & key);
-    Approximation binary_relation (
-        const std::string & name,
-        const Approximation & lhs,
-        const Approximation & rhs);
 
     Approximation lazy_fuse (std::vector<Approximation> & messages);
     Approximation lazy_injective_function_key (
@@ -97,8 +117,11 @@ public:
 private:
 
     Signature & signature () { return m_structure.signature(); }
-    static uint64_t hash_name (const string & name);
+    static uint64_t hash_name (const std::string & name);
+    Ob and_trool (Ob lhs, Ob rhs) const;
+    void and_trool_test () const;
 
+    SetId lazy_disjoint (SetId lhs, SetId rhs);
     SetId lazy_fuse (
         const std::vector<Approximation> & messages,
         Parity parity);
@@ -115,6 +138,8 @@ private:
         SetId arg0,
         SetId arg1);
 
+    void lazy_close (Approximation & approx);
+
     // Structure parts.
     Structure & m_structure;
     const size_t m_item_dim;
@@ -129,48 +154,37 @@ private:
 
     // DenseSet fingerprinting.
     DenseSetStore & m_sets;
-    std::vector<SetId> m_known[4];
+    std::vector<Approximation> m_known;
+    Approximation m_maybe;
+    Approximation m_truthy;
+    Approximation m_falsey;
     Approximation m_unknown;
 
     // LazyMap caches.
-    struct VectorSetIdHash
-    {
-        uint64_t operator() (const std::vector<SetId> & x) const
-        {
-            return util::Fingerprint64(
-                reinterpret_cast<const char *>(x.data()),
-                x.size() * sizeof(SetId));
-        }
-    };
-    LazyMap<std::vector<SetId>, SetId, 0, VectorSetIdHash> m_fuse_cache;
+    LazyMap<std::pair<SetId, SetId>, Ob, 0, PodHash<std::pair<SetId, SetId>>>
+        m_disjoint_cache;
+    LazyMap<std::vector<SetId>, SetId, 0, VectorPodHash<SetId>> m_union_cache;
+    // LazyMap<std::pair<SetId, SetId>, SetId> m_insn_cache; // TODO
     typedef std::tuple<uint64_t, Parity, Direction> CacheKey;
     std::unordered_map<uint64_t, Approximation> m_nullary_cache;
-    std::unordered_map<CacheKey, std::unique_ptr<LazyMap<SetId, SetId>>>
-        m_unary_cache;
     std::unordered_map<
         CacheKey,
-        std::unique_ptr<LazyMap<std::pair<SetId, SetId>, SetId>>>
-        m_binary_cache;
+        std::unique_ptr<LazyMap<SetId, SetId>>,
+        PodHash<CacheKey>> m_unary_cache;
+    std::unordered_map<
+        CacheKey,
+        std::unique_ptr<LazyMap<std::pair<SetId, SetId>, SetId>>,
+        PodHash<CacheKey>> m_binary_cache;
 };
-
-inline Approximation Approximator::known (Ob ob) const
-{
-    return {
-        m_known[BELOW][ob],
-        m_known[ABOVE][ob],
-        m_known[NBELOW][ob],
-        m_known[NABOVE][ob]
-    };
-}
 
 inline Approximation Approximator::interval (Ob lb, Ob ub) const
 {
     POMAGMA_ASSERT1(not m_nless.find(lb, ub), "invalid interval");
     return {
-        m_known[BELOW][lb],
-        m_known[ABOVE][ub],
-        m_known[NBELOW][ub],
-        m_known[NABOVE][lb]
+        m_known[lb][BELOW],
+        m_known[ub][ABOVE],
+        m_known[ub][NBELOW],
+        m_known[lb][NABOVE]
     };
 }
 
@@ -179,47 +193,6 @@ inline Approximation Approximator::nullary_function (const std::string & name)
     auto i = m_nullary_cache.find(hash_name(name));
     POMAGMA_ASSERT(i != m_nullary_cache.end(), "programmer error");
     return i->second;
-}
-
-inline Approximation Approximator::unary_relation (
-    const std::string & name,
-    const Approximation & key)
-{
-#if 0 // TODO add a .ob field to Approximation
-    if (key.ob) {
-        if (m_structure.unary_relation(name).find(key.ob)) {
-            return truthy();
-        }
-        const string negated = signature.negate(name);
-        if (const auto * rel = signature.unary_relation(name)) {
-            if (rel->find(key.ob)) {
-                return falsey();
-            }
-        }
-    }
-#endif // TODO
-    return maybe();
-}
-
-inline Approximation Approximator::binary_relation (
-    const std::string & name,
-    const Approximation & lhs,
-    const Approximation & rhs)
-{
-#if 0 // TODO add a .ob field to Approximation
-    if (lhs.ob and rhs.ob) {
-        if (m_structure.binary_relation(name).find(lhs.ob, rhs.ob)) {
-            return truthy();
-        }
-        const string negated = signature.negate(name);
-        if (const auto * rel = signature.binary_relation(name)) {
-            if (rel->find(lhs.ob, rhs.ob)) {
-                return falsey();
-            }
-        }
-    }
-#endif // TODO
-    return maybe();
 }
 
 inline Approximation Approximator::less_lhs (const Approximation & lhs)
