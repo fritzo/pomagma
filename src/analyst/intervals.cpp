@@ -43,19 +43,25 @@ Approximator::Approximator (
     m_quote(structure.signature().injective_function("QUOTE")),
     // dense set stores
     m_sets(sets),
+    m_empty_set(sets.store(std::move(DenseSet(m_item_dim)))),
     m_known(1 + m_item_dim, pending()),
     m_disjoint_cache(
         worker_pool,
         [this](const std::pair<SetId, SetId> & pair){
             return m_sets.load(pair.first).disjoint(m_sets.load(pair.second))
-                ? m_identity // truthy
-                : m_bot; // falsey
+                ? Trool::TRUE
+                : Trool::FALSE;
         }),
     m_union_cache(
         worker_pool,
-        [this](const std::pair<SetId, SetId> & pair){
+        [this](const std::vector<SetId> & sets){
+            const size_t count = sets.size();
+            POMAGMA_ASSERT1(2 < count, "too few sets: " << count);
             DenseSet val(m_item_dim);
-            val.set_insn(m_sets.load(pair.first), m_sets.load(pair.second));
+            val.set_union(sets[0], sets[1]);
+            for (size_t i = 2; i < count; ++i) {
+                val += sets[i];
+            }
             return m_sets.store(std::move(val));
         })
 {
@@ -82,89 +88,44 @@ Approximator::Approximator (
         Ob ob = i.second->find();
         Approximation approx = ob ? known(ob) : unknown();
         for (Parity p : {ABOVE, BELOW, NABOVE, NBELOW}) {
-            m_nullary_cache.insert(
-                {{hash, p, NULLARY_FUNCTION, VOID}, approx[p]});
+            safe_insert(m_nullary_cache, hash, approx[p]);
         }
     }
 
-    TODO("Initialize injective_function cache");
-
     POMAGMA_INFO("Initializing binary_function cache");
     for (const auto & i : signature().binary_functions()) {
-        const auto & fun = *i->second;
+        const auto & fun = * i.second;
         const uint64_t hash = hash_name(i.first);
-        safe_insert(
-            m_binary_cache
-            {hash, BELOW, BINARY_FUNCTION, KEY},
-            new LazyMap<SetId, SetId>(
+        typedef LazyMap<std::pair<SetId, SetId>, SetId> Map;
+        for (Parity p : {ABOVE, BELOW}) {
+            safe_insert(m_binary_cache, {hash, LHS_RHS, p}, new Map(
                 worker_pool,
-                [this](SetId key){
-                    return above_binary_function(fun, key);
+                [this, &fun, p](const std::pair<SetId, SetId> & x){
+                    return binary_function_lhs_rhs(fun, x.first, x.second, p);
                 }));
-        safe_insert(
-            m_binary_cache,
-            {hash, ABOVE, BINARY_FUNCTION, KEY},
-            new LazyMap<SetId, SetId>(
+        }
+        for (Parity p : {NABOVE, NBELOW}) {
+            safe_insert(m_binary_cache, {hash, LHS_VAL, p}, new Map(
                 worker_pool,
-                [this](SetId key){
-                    return below_binary_function(fun, key);
+                [this, &fun, p](const std::pair<SetId, SetId> & x){
+                    return binary_function_lhs_val(fun, x.first, x.second, p);
                 }));
-        safe_insert(
-            m_binary_cache.insert,
-            {hash, NBELOW, BINARY_FUNCTION, KEY},
-            new LazyMap<SetId, SetId>(
+            safe_insert(m_binary_cache, {hash, RHS_VAL, p}, new Map(
                 worker_pool,
-                [this](SetId key){
-                    return nabove_binary_function(fun, key);
+                [this, &fun, p](const std::pair<SetId, SetId> & x){
+                    return binary_function_rhs_val(fun, x.first, x.second, p);
                 }));
-        safe_insert(
-            m_binary_cache,
-            {hash, NABOVE, BINARY_FUNCTION, KEY},
-            new LazyMap<SetId, SetId>(
-                worker_pool,
-                [this](SetId key){
-                    return nbelow_binary_function(fun, key);
-                }));
-        POMAGMA_ASSERT(inserted, "hash conflict");
+        }
     }
 
     TODO("Initialize symmetric_function cache");
-
-    POMAGMA_INFO("Initializing less cache");
-    {
-        const uint64_t hash = hash_name("LESS");
-        safe_insert(
-            m_binary_cache,
-            {hash, BELOW, BINARY_RELATION, LHS_RHS},
-            new LazyMap<SetId, std::pair<SetId, SetId>>(
-                worker_pool,
-                [this](const std::pair<SetId, SetId> & lhs_rhs){
-                    DenseSet lhs = m_sets.load(lhs_rhs.first);
-                    DenseSet rhs = m_sets.load(lhs_rhs.second);
-                    return (lhs.disjoint(rhs) ? m_maybe : m_falsey)[BELOW];
-                }));
-        safe_insert(
-            m_binary_cache,
-            {hash, BELOW, BINARY_RELATION, LHS_RHS},
-            new LazyMap<SetId, std::pair<SetId, SetId>>(
-                worker_pool,
-                [this](const std::pair<SetId, SetId> & lhs_rhs){
-                    DenseSet lhs = m_sets.load(lhs_rhs.first);
-                    DenseSet rhs = m_sets.load(lhs_rhs.second);
-                    return (lhs.disjoint(rhs) ? m_maybe : m_falsey)[BELOW];
-                }));
-    }
 }
 
-size_t Approximator::test ()
+Trool Approximator::lazy_is_valid (const Approximation & approx)
 {
-    and_trool_test();
-}
-
-bool Approximator::is_valid (const Approximation & a)
-{
-    return m_sets.load(a[BELOW]).likely_disjoint(m_sets.load(a[NBELOW])
-       and m_sets.load(a[ABOVE]).likely_disjoint(m_sets.load(a[NABOVE]);
+    return and_trool(
+        lazy_disjoint(approx[BELOW], approx[NBELOW]),
+        lazy_disjoint(approx[ABOVE], approx[NABOVE]));
 }
 
 bool Approixmator::refines (
@@ -179,11 +140,18 @@ bool Approixmator::refines (
     return true;
 }
 
-inline Ob Approximator::lazy_disjoint (SetId lhs, SetId rhs)
+inline Trool Approximator::lazy_disjoint (SetId lhs, SetId rhs)
 {
-    Ob trool = m_disjoint_cache.try_find({lhs, rhs});
-    POMAGMA_ASSERT1_TROOL(trool);
-    return trool;
+    if (not lhs or not rhs) {
+        return Trool::MAYBE;
+    }
+    if (unlikely(lhs == rhs)) {
+        return (lhs == m_empty_set) ? Trool::TRUE : Trool::FALSE;
+    }
+    if (lhs > rhs) {
+        std::swap(lhs, rhs);
+    }
+    return m_disjoint_cache.try_find({lhs, rhs});
 }
 
 // this has space complexity O(#constraints * #iterations) cache entries
@@ -199,7 +167,7 @@ inline SetId Approximator::lazy_fuse (
         count += sets.insert(message[parity]).second; // ignore duplicates
     }
     if (count == 0) return m_unknown[parity];
-    if (count == 1) return *sets.begin();
+    if (count == 1) return * sets.begin();
     return m_union_cache.try_find(std::vector<SetId>(sets.begin(), sets.end()));
 }
 
@@ -281,56 +249,21 @@ Approximation Approximator::lazy_binary_function_lhs_val (
     return rhs;
 }
 
-inline Ob Approximator::and_trool (Ob lhs, Ob rhs) const
-{
-    POMAGMA_ASSERT1_TROOL(lhs);
-    POMAGMA_ASSERT1_TROOL(rhs);
-    if (lhs == m_identity or rhs == m_identity) return m_identity;
-    if (lhs == 0 or rhs == 0) return 0;
-    return m_bot;
-}
-
-void Approximator::and_trool_test () const
-{
-    const Ob I = m_identity;
-    const Ob BOT = m_bot;
-    const std::vector<std::tuple<Ob, Ob, Ob>> examples = {
-        {0, 0, 0},
-        {0, BOT, 0},
-        {0, I, I},
-        {BOT, 0, 0},
-        {BOT, BOT, BOT},
-        {BOT, I, I},
-        {I, 0, I},
-        {I, BOT, I},
-        {I, I, I}
-    };
-    Ob lhs, rhs, expected;
-    for (std::tie<lhs, rhs, expected> : examples) {
-        Ob actual = and_trool(lhs, rhs);
-        POMAGMA_ASSERT1_TROOL(actual);
-        POMAGMA_ASSERT(
-            actual == expected,
-            "expected and_trool(" << lhs << ", " << rhs << ") == " << expected
-            << ", actual " << actual);
-    }
-}
-
 Approximation Approximator::lazy_less_lhs_rhs (
     const std::string & name,
     const Approximation & lhs,
     const Approximation & rhs)
 {
     Approximation val = pending();
-    if (Ob trool = lazy_disjoint(lhs[ABOVE], rhs[BELOW])) {
-        POMAGMA_ASSERT1_TROOL(trool);
+    Trool less = lazy_disjoint(lhs[ABOVE], rhs[BELOW]);
+    if (Ob ob = case_trool<Ob>(less, 0, m_bot, m_identity)) {
         val[BELOW] = m_known[trool][BELOW];
         val[NABOVE] = m_known[trool][NABOVE];
     }
-    Ob trool1 = lazy_disjoint(lhs[BELOW], rhs[NBELOW]);
-    Ob trool2 = lazy_disjoint(lhs[NABOVE], rhs[ABOVE]);
-    if (Ob trool = and_trool(trool1, trool2)) {
-        POMAGMA_ASSERT1_TROOL(trool);
+    Trool nless = and_trool(
+        lazy_disjoint(lhs[BELOW], rhs[NBELOW]),
+        lazy_disjoint(lhs[NABOVE], rhs[ABOVE]));
+    if (Ob ob = case_trool<Ob>(nless, 0, m_bot, m_identity)) {
         val[ABOVE] = m_known[trool][ABOVE];
         val[NBELOW] = m_known[trool][NBELOW];
     }
@@ -343,19 +276,104 @@ Approximation Approximator::lazy_nless_lhs_rhs (
     const Approximation & rhs)
 {
     Approximation val = pending();
-    if (Ob trool = lazy_disjoint(lhs[ABOVE], rhs[BELOW])) {
-        POMAGMA_ASSERT1_TROOL(trool);
-        val[ABOVE] = m_known[trool][ABOVE];
-        val[NBELOW] = m_known[trool][NBELOW];
+    Trool less = lazy_disjoint(lhs[ABOVE], rhs[BELOW]);
+    if (Ob ob = case_trool<Ob>(less, 0, m_bot, m_identity)) {
+        val[ABOVE] = m_known[ob][ABOVE];
+        val[NBELOW] = m_known[ob][NBELOW];
     }
-    Ob trool1 = lazy_disjoint(lhs[BELOW], rhs[NBELOW]);
-    Ob trool2 = lazy_disjoint(lhs[NABOVE], rhs[ABOVE]);
-    if (Ob trool = and_trool(trool1, trool2)) {
-        POMAGMA_ASSERT1_TROOL(trool);
-        val[BELOW] = m_known[trool][BELOW];
-        val[NABOVE] = m_known[trool][NABOVE];
+    Trool nless = and_trool(
+        lazy_disjoint(lhs[BELOW], rhs[NBELOW]),
+        lazy_disjoint(lhs[NABOVE], rhs[ABOVE]));
+    if (Ob ob = case_trool<Ob>(nless, 0, m_bot, m_identity)) {
+        val[BELOW] = m_known[ob][BELOW];
+        val[NABOVE] = m_known[ob][NABOVE];
     }
     return val; // if both conditions fire, val is inconsistent
+}
+
+// LESS f g    LESS x y 
+// --------------------
+// LESS APP f x APP g y
+// 
+SetId Approximator::binary_function_lhs_rhs (
+    const BinaryFunction & fun,
+    SetId lhs,
+    SetId rhs,
+    Parity parity) const
+{
+    const DenseSet lhs_set = m_sets.load(lhs); // positive
+    const DenseSet rhs_set = m_sets.load(rhs); // positive
+    const DenseSet val_set(m_item_dim); // positive
+    const DenseSet temp_set(m_item_dim);
+
+    for (auto iter = lhs_set.iter(); iter.ok(); iter.next()) {
+        Ob lhs = * iter;
+
+        // optimize for special cases of APP and COMP
+        if (Ob lhs_top = fun.find(lhs, m_top)) {
+            if (Ob lhs_bot = fun.find(lhs, m_bot)) {
+                bool lhs_is_constant = (lhs_top == lhs_bot);
+                if (lhs_is_constant) {
+                    val_set.raw_insert(lhs_top);
+                    continue;
+                }
+            }
+        }
+
+        temp_set.set_insn(rhs_set, fun.get_Lx_set(lhs));
+        for (auto iter = temp_set.iter(); iter.ok(); iter.next()) {
+            Ob rhs = * iter;
+            Ob val = fun.find(lhs, rhs);
+            val_set.raw_insert(val);
+        }
+    }
+
+    return m_sets.store(std::move(val_set));
+}
+
+SetId Approximator::binary_function_lhs_val (
+    const BinaryFunction & fun,
+    SetId lhs,
+    SetId val,
+    Parity parity) const
+{
+    const DenseSet lhs_set = m_sets.load(lhs); // positive
+    const DenseSet val_set = m_sets.load(val); // negative
+    const DenseSet rhs_set(m_item_dim);
+    const DenseSet temp_set(m_item_dim);
+
+    for (auto iter = lhs_set.iter(); iter.ok(); iter.next()) {
+        Ob lhs = * iter;
+
+        // optimize for special cases of APP and COMP
+        if (Ob lhs_top = fun.find(lhs, m_top)) {
+            if (Ob lhs_bot = fun.find(lhs, m_bot)) {
+                bool lhs_is_constant = (lhs_top == lhs_bot);
+                if (lhs_is_constant) {
+                    val_set.raw_insert(lhs_top);
+                    continue;
+                }
+            }
+        }
+
+        temp_set.set_insn(rhs_set, fun.get_Lx_set(lhs));
+        for (auto iter = temp_set.iter(); iter.ok(); iter.next()) {
+            Ob rhs = * iter;
+            Ob val = fun.find(lhs, rhs);
+            val_set.raw_insert(val);
+        }
+    }
+
+    return m_sets.store(std::move(val_set));
+}
+
+SetId Approximator::binary_function_rhs_val (
+    const BinaryFunction & fun,
+    SetId rhs,
+    SetId val,
+    Parity parity) const
+{
+    TODO("similar to binary_function_lhs_val");
 }
 
 } // namespace intervals

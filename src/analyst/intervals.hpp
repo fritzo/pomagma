@@ -4,6 +4,7 @@
 #include <pomagma/atlas/macro/util.hpp>
 #include <pomagma/util/dense_set_store.hpp>
 #include <pomagma/util/lazy_map.hpp>
+#include <pomagma/util/trool.hpp>
 #include <string>
 #include <tuple>
 #include <unordered_map>
@@ -38,22 +39,20 @@ struct VectorPodHash
     }
 };
 
-enum Parity {ABOVE, BELOW, NABOVE, NBELOW};
-enum Direction {VOID, KEY, VAL, LHS, RHS, LHS_RHS, LHS_VAL, RHS_VAL};
+enum Parity { ABOVE, BELOW, NABOVE, NBELOW };
+enum Direction { VOID, KEY, VAL, LHS, RHS, LHS_RHS, LHS_VAL, RHS_VAL };
 enum Arity {
     NULLARY_FUNCTION,
     INJECTIVE_FUNCTION,
     BINARY_FUNCTION,
     SYMMETRIC_FUNCTION,
+    // no UNARY_RELATION
     BINARY_RELATION
 };
 
 struct Approximation
 {
     SetId bounds[4]; // one for each Parity
-    // Ob ob; // TODO
-    // bool satisfiable; // TODO
-
     SetId & operator[] (Parity p) { return bounds[p]; }
     SetId operator[] (Parity p) const { return bounds[p]; }
 };
@@ -67,10 +66,9 @@ public:
             DenseSetStore & sets,
             WorkerPool & worker_pool);
 
-    size_t test ();
+    size_t test () {} // TODO
     void validate (const Approximation & approx);
-
-    bool is_valid (const Approximation & approx);
+    Trool lazy_is_valid (const Approximation & approx);
     bool refines (const Approximation & lhs, const Approximation & rhs) const;
 
     Approximation pending () const { return {0, 0, 0, 0}; }
@@ -118,10 +116,8 @@ private:
 
     Signature & signature () { return m_structure.signature(); }
     static uint64_t hash_name (const std::string & name);
-    Ob and_trool (Ob lhs, Ob rhs) const;
-    void and_trool_test () const;
 
-    SetId lazy_disjoint (SetId lhs, SetId rhs);
+    Trool lazy_disjoint (SetId lhs, SetId rhs);
     SetId lazy_fuse (
         const std::vector<Approximation> & messages,
         Parity parity);
@@ -140,6 +136,22 @@ private:
 
     void lazy_close (Approximation & approx);
 
+    SetId binary_function_lhs_rhs (
+        const BinaryFunction & fun,
+        SetId lhs,
+        SetId rhs,
+        Parity parity) const;
+    SetId binary_function_lhs_val (
+        const BinaryFunction & fun,
+        SetId lhs,
+        SetId val,
+        Parity parity) const;
+    SetId binary_function_rhs_val (
+        const BinaryFunction & fun,
+        SetId rhs,
+        SetId val,
+        Parity parity) const;
+
     // Structure parts.
     Structure & m_structure;
     const size_t m_item_dim;
@@ -154,6 +166,7 @@ private:
 
     // DenseSet fingerprinting.
     DenseSetStore & m_sets;
+    const SetId m_empty_set;
     std::vector<Approximation> m_known;
     Approximation m_maybe;
     Approximation m_truthy;
@@ -161,11 +174,12 @@ private:
     Approximation m_unknown;
 
     // LazyMap caches.
-    LazyMap<std::pair<SetId, SetId>, Ob, 0, PodHash<std::pair<SetId, SetId>>>
+    LazyMap<std::pair<SetId, SetId>, Trool, Trool::MAYBE,
+            PodHash<std::pair<SetId, SetId>>>
         m_disjoint_cache;
     LazyMap<std::vector<SetId>, SetId, 0, VectorPodHash<SetId>> m_union_cache;
     // LazyMap<std::pair<SetId, SetId>, SetId> m_insn_cache; // TODO
-    typedef std::tuple<uint64_t, Parity, Direction> CacheKey;
+    typedef std::tuple<uint64_t, Direction, Parity> CacheKey;
     std::unordered_map<uint64_t, Approximation> m_nullary_cache;
     std::unordered_map<
         CacheKey,
@@ -191,7 +205,8 @@ inline Approximation Approximator::interval (Ob lb, Ob ub) const
 inline Approximation Approximator::nullary_function (const std::string & name)
 {
     auto i = m_nullary_cache.find(hash_name(name));
-    POMAGMA_ASSERT(i != m_nullary_cache.end(), "programmer error");
+    POMAGMA_ASSERT(i != m_nullary_cache.end(),
+        "unknown nullary function: " << name);
     return i->second;
 }
 
