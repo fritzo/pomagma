@@ -20,8 +20,10 @@ class LazyMap : noncopyable
 {
 public:
 
-    LazyMap (std::function<Value (const Key &)> && function) :
-        m_function(function)
+    LazyMap (WorkerPool & worker_pool,
+             std::function<Value (const Key &)> && function) :
+        m_function(function),
+        m_worker_pool(worker_pool)
     {}
 
     // Immediately returns function(key) if ready or null_value if pending.
@@ -52,7 +54,7 @@ private:
     std::mutex m_mutex;
     std::unordered_map<Key, Value, Hash> m_cache;
     std::function<Value (const Key &)> m_function;
-    mutable WorkerPool m_worker_pool;
+    WorkerPool & m_worker_pool;
 };
 
 } // namespace pomagma

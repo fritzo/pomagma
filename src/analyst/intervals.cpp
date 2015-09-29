@@ -7,7 +7,10 @@
 namespace pomagma {
 namespace intervals {
 
-Approximator::Approximator (Structure & structure, DenseSetStore & sets) :
+Approximator::Approximator (
+        Structure & structure,
+        DenseSetStore & sets,
+        WorkerPool & worker_pool) :
     m_structure(structure),
     m_item_dim(structure.carrier().item_dim()),
     m_top(structure.nullary_function("TOP").find()),
@@ -23,7 +26,7 @@ Approximator::Approximator (Structure & structure, DenseSetStore & sets) :
     m_above(1 + m_item_dim),
     m_nbelow(1 + m_item_dim),
     m_nabove(1 + m_item_dim),
-    m_cache([this](const Term & term){ return compute(term); })
+    m_cache(worker_pool, [this](const Term & term){ return compute(term); })
 {
     POMAGMA_ASSERT(m_top, "TOP is not defined");
     POMAGMA_ASSERT(m_bot, "BOT is not defined");

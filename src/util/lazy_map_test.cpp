@@ -13,7 +13,8 @@ void async_map_test (
     size_t eval_count,
     size_t max_wait)
 {
-    LazyMap<Key, Value> lazy_map([](const Key & key){
+    WorkerPool worker_pool;
+    LazyMap<Key, Value> lazy_map(worker_pool, [](const Key & key){
         Value value = 1 + key->first + key->second;
         std::this_thread::sleep_for(std::chrono::milliseconds(value));
         return value;

@@ -60,7 +60,10 @@ public:
         SetId args[2];
     };
 
-    Approximator (Structure & structure, DenseSetStore & sets);
+    Approximator (
+        Structure & structure,
+        DenseSetStore & sets,
+        WorkerPool & worker_pool);
 
     Signature & signature () { return m_structure.signature(); }
 
