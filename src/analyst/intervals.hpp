@@ -6,7 +6,6 @@
 #include <pomagma/util/lazy_map.hpp>
 #include <pomagma/util/trool.hpp>
 #include <string>
-#include <tuple>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -29,6 +28,15 @@ struct PodHash
 };
 
 template<class T>
+struct PodEqual
+{
+    bool operator() (const T & x, const T & y) const
+    {
+        return not memcmp(& x, & y, sizeof(T));
+    }
+};
+
+template<class T>
 struct VectorPodHash
 {
     uint64_t operator() (const std::vector<T> & x) const
@@ -36,6 +44,18 @@ struct VectorPodHash
         return util::Fingerprint64(
             reinterpret_cast<const char *>(x.data()),
             x.size() * sizeof(T));
+    }
+};
+
+template<class T>
+struct VectorPodEqual
+{
+    bool operator() (
+        const std::vector<T> & x,
+        const std::vector<T> & y) const
+    {
+        return x.size() == y.size()
+            and not memcmp(x.data(), y.data(), x.size() * sizeof(T));
     }
 };
 
@@ -66,7 +86,6 @@ public:
             DenseSetStore & sets,
             WorkerPool & worker_pool);
 
-    size_t test () {} // TODO
     void validate (const Approximation & approx);
     Trool lazy_is_valid (const Approximation & approx);
     bool refines (const Approximation & lhs, const Approximation & rhs) const;
@@ -84,7 +103,7 @@ public:
     Approximation nless_lhs (const Approximation & lhs);
     Approximation nless_rhs (const Approximation & rhs);
 
-    Approximation lazy_fuse (std::vector<Approximation> & messages);
+    Approximation lazy_fuse (const std::vector<Approximation> & messages);
     Approximation lazy_injective_function_key (
         const std::string & name,
         const Approximation & key);
@@ -111,6 +130,12 @@ public:
         const std::string & name,
         const Approximation & lhs,
         const Approximation & val);
+    Approximation lazy_less_lhs_rhs (
+        const Approximation & lhs,
+        const Approximation & val);
+    Approximation lazy_nless_lhs_rhs (
+        const Approximation & lhs,
+        const Approximation & val);
 
 private:
 
@@ -121,15 +146,12 @@ private:
     SetId lazy_fuse (
         const std::vector<Approximation> & messages,
         Parity parity);
-    SetId lazy_find (const std::string & name, Parity parity);
     SetId lazy_find (
         const std::string & name,
-        Parity parity,
         Direction direction,
         SetId arg);
     SetId lazy_find (
         const std::string & name,
-        Parity parity,
         Direction direction,
         SetId arg0,
         SetId arg1);
@@ -139,18 +161,15 @@ private:
     SetId binary_function_lhs_rhs (
         const BinaryFunction & fun,
         SetId lhs,
-        SetId rhs,
-        Parity parity) const;
+        SetId rhs) const;
     SetId binary_function_lhs_val (
         const BinaryFunction & fun,
         SetId lhs,
-        SetId val,
-        Parity parity) const;
+        SetId val) const;
     SetId binary_function_rhs_val (
         const BinaryFunction & fun,
         SetId rhs,
-        SetId val,
-        Parity parity) const;
+        SetId val) const;
 
     // Structure parts.
     Structure & m_structure;
@@ -174,12 +193,26 @@ private:
     Approximation m_unknown;
 
     // LazyMap caches.
-    LazyMap<std::pair<SetId, SetId>, Trool, Trool::MAYBE,
-            PodHash<std::pair<SetId, SetId>>>
-        m_disjoint_cache;
-    LazyMap<std::vector<SetId>, SetId, 0, VectorPodHash<SetId>> m_union_cache;
-    // LazyMap<std::pair<SetId, SetId>, SetId> m_insn_cache; // TODO
-    typedef std::tuple<uint64_t, Direction, Parity> CacheKey;
+    typedef std::pair<uint64_t, Direction> CacheKey;
+    typedef LazyMap<
+        std::pair<SetId, SetId>,
+        Trool,
+        Trool::MAYBE,
+        PodHash<std::pair<SetId, SetId>>> SetPairToTroolCache;
+    typedef LazyMap<
+        std::vector<SetId>,
+        SetId,
+        0,
+        VectorPodHash<SetId>,
+        VectorPodEqual<SetId>> SetVectorToSetCache;
+    typedef LazyMap<
+        std::pair<SetId, SetId>,
+        SetId,
+        0,
+        PodHash<std::pair<SetId, SetId>>> SetPairToSetCache;
+
+    SetPairToTroolCache m_disjoint_cache;
+    SetVectorToSetCache m_union_cache;
     std::unordered_map<uint64_t, Approximation> m_nullary_cache;
     std::unordered_map<
         CacheKey,
@@ -187,7 +220,7 @@ private:
         PodHash<CacheKey>> m_unary_cache;
     std::unordered_map<
         CacheKey,
-        std::unique_ptr<LazyMap<std::pair<SetId, SetId>, SetId>>,
+        std::unique_ptr<SetPairToSetCache>,
         PodHash<CacheKey>> m_binary_cache;
 };
 

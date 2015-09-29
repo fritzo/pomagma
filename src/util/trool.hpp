@@ -27,11 +27,10 @@ static_assert(and_trool(Trool::TRUE, Trool::TRUE) == Trool::TRUE, "error");
 template<class T>
 inline constexpr T case_trool (Trool trool, T if_maybe, T if_false, T if_true)
 {
-    switch (trool) {
-        case Trool::MAYBE: return if_maybe;
-        case Trool::FALSE: return if_false;
-        case Trool::TRUE: return if_true;
-    }
+    return
+        (trool == Trool::MAYBE) ? if_maybe :
+        (trool == Trool::FALSE) ? if_false :
+        if_true;
 }
 
 } // namespace pomagma
