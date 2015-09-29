@@ -15,6 +15,7 @@ add_executable(analyst
 	approximate.cpp
 	cached_approximator.cpp
 	intervals.cpp
+	propagate.cpp
 	corpus.cpp
 	validator.cpp
 	messages.pb.cc
