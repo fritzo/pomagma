@@ -99,7 +99,7 @@ public:
     Trool lazy_is_valid (const Approximation & approx);
     bool refines (const Approximation & lhs, const Approximation & rhs) const;
 
-    Approximation pending () const { return {0, 0, 0, 0}; }
+    Approximation pending () const { return {{0, 0, 0, 0}}; }
     Approximation known (Ob ob) const { return m_known[ob]; }
     Approximation unknown () const { return m_unknown; }
     Approximation interval (Ob lb, Ob ub) const;
@@ -213,12 +213,12 @@ private:
 inline Approximation Approximator::interval (Ob lb, Ob ub) const
 {
     POMAGMA_ASSERT1(not m_nless.find(lb, ub), "invalid interval");
-    return {
+    return {{
         m_known[lb][BELOW],
         m_known[ub][ABOVE],
         m_known[ub][NBELOW],
         m_known[lb][NABOVE]
-    };
+    }};
 }
 
 inline Approximation Approximator::nullary_function (const std::string & name)
