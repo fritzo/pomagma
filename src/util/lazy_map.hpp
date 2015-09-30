@@ -15,7 +15,8 @@ template<
     class Key,
     class Value,
     Value null_value = 0,
-    class Hash = std::hash<Key>>
+    class Hash = std::hash<Key>,
+    class Equal = std::equal_to<Key>>
 class LazyMap : noncopyable
 {
 public:
@@ -52,7 +53,7 @@ public:
 private:
 
     std::mutex m_mutex;
-    std::unordered_map<Key, Value, Hash> m_cache;
+    std::unordered_map<Key, Value, Hash, Equal> m_cache;
     std::function<Value (const Key &)> m_function;
     WorkerPool & m_worker_pool;
 };
