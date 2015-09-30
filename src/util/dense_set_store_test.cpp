@@ -16,6 +16,26 @@ std::string print_set (const DenseSet & set)
     return result;
 }
 
+void test_aliased_store (size_t item_dim)
+{
+    POMAGMA_INFO("Testing store of aliased data of size " << item_dim);
+
+    DenseSet unaliased_set(item_dim);
+    DenseSetStore sets(item_dim);
+
+    {
+        DenseSet alias(item_dim, unaliased_set.raw_data());
+        sets.store(std::move(alias));
+        POMAGMA_ASSERT(alias.raw_data() == nullptr, "data not freed");
+    }
+    // this will segfault with double free if unaliased_set is freed
+    {
+        DenseSet alias(item_dim, unaliased_set.raw_data());
+        sets.store(std::move(alias));
+        POMAGMA_ASSERT(alias.raw_data() != nullptr, "data not freed");
+    }
+}
+
 void test_store_load (size_t item_dim, size_t element_count)
 {
     POMAGMA_INFO("Testing store and load with size " << item_dim);
@@ -37,10 +57,14 @@ void test_store_load (size_t item_dim, size_t element_count)
             POMAGMA_ASSERT(copy == set, "programmer error");
             const Word * data = copy.raw_data();
             id = sets.store(std::move(copy));
-            POMAGMA_ASSERT(copy.raw_data() == nullptr, "data not freed");
             if (known_ids.insert(id).second) {
+                POMAGMA_ASSERT(copy.raw_data() == nullptr,
+                    "set inserted but data not freed");
                 POMAGMA_ASSERT(sets.load(id).raw_data() == data,
                     "data was not moved");
+            } else {
+                POMAGMA_ASSERT(copy.raw_data() != nullptr,
+                    "data freed but set not inserted");
             }
         }
         {
@@ -49,14 +73,14 @@ void test_store_load (size_t item_dim, size_t element_count)
             loaded1.validate();
             POMAGMA_ASSERT(loaded1.raw_data() == loaded2.raw_data(),
                 "two loads disagree");
-#if 0  // FIXME
+#ifdef DENSE_SET_STORE_BUG_IS_FIXED
             if (loaded1 != set) {
                 POMAGMA_WARN("expected: " << print_set(set));
                 POMAGMA_WARN("actual: " << print_set(loaded1));
                 POMAGMA_WARN("id: " << id);
                 POMAGMA_ERROR("loaded does not match stored");
             }
-#endif  // FIXME
+#endif // DENSE_SET_STORE_BUG_IS_FIXED
         }
         POMAGMA_ASSERT(id == sets.store(std::move(set)), "two stores disagree");
     }
@@ -67,6 +91,7 @@ int main ()
     Log::Context log_context("DenseSetStore Test");
 
     for (size_t item_dim = 1; item_dim < 128; ++item_dim) {
+        test_aliased_store(item_dim);
         test_store_load(item_dim, 1000);
     }
 

@@ -1,12 +1,11 @@
-#include "server.hpp"
+#include <algorithm>
+#include <pomagma/analyst/messages.pb.h>
+#include <pomagma/analyst/server.hpp>
 #include <pomagma/atlas/macro/router.hpp>
 #include <pomagma/language/language.hpp>
-#include "messages.pb.h"
 #include <zmq.hpp>
-#include <algorithm>
 
-namespace pomagma
-{
+namespace pomagma {
 
 Server::Server (
         const char * structure_file,
@@ -15,6 +14,9 @@ Server::Server (
       m_structure(structure_file),
       m_return(m_structure.carrier()),
       m_nreturn(m_structure.carrier()),
+      m_sets(m_structure.carrier().item_dim()),
+      m_worker_pool(),
+      m_intervals_approximator(m_structure, m_sets, m_worker_pool),
       m_approximator(m_structure),
       m_approximate_parser(m_approximator),
       m_probs(),

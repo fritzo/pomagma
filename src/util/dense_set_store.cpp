@@ -29,14 +29,15 @@ DenseSetStore::~DenseSetStore ()
 SetId DenseSetStore::store (DenseSet && set)
 {
     POMAGMA_ASSERT1(set.item_dim() == m_item_dim, "size mismatch");
-    Word * data = set.move_data();
+    Word * data = set.raw_data();
     SetId id = fingerprint(data, m_byte_dim);
     auto inserted = m_index.insert({id, data});
-    if (not inserted.second) {
+    if (inserted.second) {
+        set.move_data();
+    } else {
         POMAGMA_ASSERT1(
             not memcmp(data, inserted.first->second, m_byte_dim),
             "hash conflict")
-        delete data;
     }
     return id;
 }

@@ -1,12 +1,16 @@
-#include "simplify.hpp"
-#include "approximate.hpp"
-#include "corpus.hpp"
-#include "validator.hpp"
+#pragma once
+
+#include <pomagma/analyst/approximate.hpp>
+#include <pomagma/analyst/corpus.hpp>
+#include <pomagma/analyst/intervals.hpp>
+#include <pomagma/analyst/simplify.hpp>
+#include <pomagma/analyst/validator.hpp>
 #include <pomagma/atlas/macro/structure.hpp>
 #include <pomagma/atlas/macro/vm.hpp>
+#include <pomagma/util/dense_set_store.hpp>
+#include <pomagma/util/worker_pool.hpp>
 
-namespace pomagma
-{
+namespace pomagma {
 
 class Server
 {
@@ -14,6 +18,9 @@ class Server
     Structure m_structure;
     UnaryRelation m_return;
     UnaryRelation m_nreturn;
+    DenseSetStore m_sets;
+    WorkerPool m_worker_pool;
+    intervals::Approximator m_intervals_approximator;
     Approximator m_approximator;
     ApproximateParser m_approximate_parser;
     std::vector<float> m_probs;
