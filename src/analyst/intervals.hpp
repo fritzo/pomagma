@@ -137,6 +137,8 @@ private:
     Signature & signature () { return m_structure.signature(); }
     static uint64_t hash_name (const std::string & name);
 
+    Approximation lazy_close (const Approximation & approx);
+
     Trool lazy_disjoint (SetId lhs, SetId rhs);
     SetId lazy_fuse (
         const std::vector<Approximation> & messages,
@@ -147,7 +149,8 @@ private:
         SetId arg0,
         SetId arg1);
 
-    void lazy_close (Approximation & approx);
+    SetId close_upward (SetId set) const;
+    SetId close_downward (SetId set) const;
 
     template<class Function>
     SetId function_lhs_rhs (const Function & fun, SetId lhs, SetId rhs) const;
@@ -197,6 +200,8 @@ private:
 
     SetPairToTroolCache m_disjoint_cache;
     SetVectorToSetCache m_union_cache;
+    LazyMap<SetId, SetId> m_close_upward_cache;
+    LazyMap<SetId, SetId> m_close_downward_cache;
     std::unordered_map<std::string, Approximation> m_nullary_cache;
     std::unordered_map<
         CacheKey,

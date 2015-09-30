@@ -11,14 +11,12 @@
 namespace pomagma {
 namespace intervals {
 
+using std::placeholders::_1;
+
 inline uint64_t Approximator::hash_name (const std::string & name)
 {
     return util::Fingerprint64(name.data(), name.size());
 }
-
-namespace {
-
-} // namespace
 
 Approximator::Approximator (
         Structure & structure,
@@ -56,7 +54,13 @@ Approximator::Approximator (
                 val += sets[i];
             }
             return m_sets.store(std::move(val));
-        })
+        }),
+    m_close_upward_cache(
+        worker_pool,
+        std::bind(&Approximator::close_upward, this, _1)),
+    m_close_downward_cache(
+        worker_pool,
+        std::bind(&Approximator::close_downward, this, _1))
 {
     POMAGMA_ASSERT(m_top, "TOP is not defined");
     POMAGMA_ASSERT(m_bot, "BOT is not defined");
@@ -207,19 +211,54 @@ inline SetId Approximator::lazy_find (
     return i->second->try_find({arg0, arg1});
 }
 
-// Inference rules, in order of appearance
-//
-//                LESS x y   LESS x z
+//                LESS x y   LESS y z
 //   ----------   -------------------
-//   LESS x TOP     LESS x RAND y z
-//   
-//                LESS y x   LESS z x   LESS y x   LESS z x
-//   ----------   -------------------   -------------------
-//   LESS BOT x     LESS JOIN y z x       LESS RAND y z x
-//
-void Approximator::lazy_close (Approximation &)
+//   LESS x TOP         LESS x z
+SetId Approximator::close_upward (SetId set) const
 {
-    TODO("close under inference rules");
+    const DenseSet original = m_sets.load(set);
+    DenseSet result(m_item_dim);
+
+    result.raw_insert(m_top);
+    for (auto iter = original.iter(); iter.ok(); iter.next()) {
+        Ob ob = * iter;
+        if (not result.contains(ob)) {
+            result += m_less.get_Lx_set(ob);
+        }
+    }
+
+    return m_sets.store(std::move(result));
+}
+
+//                LESS x y   LESS y z
+//   ----------   -------------------
+//   LESS BOT x         LESS x z
+SetId Approximator::close_downward (SetId set) const
+{
+    const DenseSet original = m_sets.load(set);
+    DenseSet result(m_item_dim);
+
+    result.raw_insert(m_bot);
+    for (auto iter = original.iter(); iter.ok(); iter.next()) {
+        Ob ob = * iter;
+        if (not result.contains(ob)) {
+            result += m_less.get_Rx_set(ob);
+        }
+    }
+
+    return m_sets.store(std::move(result));
+}
+
+Approximation Approximator::lazy_close (const Approximation & approx)
+{
+    Approximation result = pending();
+    for (Parity p : {BELOW, NABOVE}) {
+        result[p] = m_close_downward_cache.try_find(approx[p]);
+    }
+    for (Parity p : {ABOVE, NBELOW}) {
+        result[p] = m_close_upward_cache.try_find(approx[p]);
+    }
+    return result;
 }
 
 Approximation Approximator::lazy_fuse (
@@ -229,8 +268,7 @@ Approximation Approximator::lazy_fuse (
     for (Parity p : {ABOVE, BELOW, NABOVE, NBELOW}) {
         result[p] = lazy_fuse(messages, p);
     }
-    lazy_close(result);
-    return result;
+    return lazy_close(result);
 }
 
 Approximation Approximator::lazy_binary_function_lhs_rhs (
