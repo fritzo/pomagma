@@ -94,7 +94,7 @@ Approximator::Approximator (
             new Cache(
                 worker_pool,
                 [this, &fun](const std::pair<SetId, SetId> & x){
-                    return binary_function_lhs_rhs(fun, x.first, x.second);
+                    return function_lhs_rhs(fun, x.first, x.second);
                 }));
         POMAGMA_INSERT(
             m_binary_cache,
@@ -102,7 +102,7 @@ Approximator::Approximator (
             new Cache(
                 worker_pool,
                 [this, &fun](const std::pair<SetId, SetId> & x){
-                    return binary_function_lhs_val(fun, x.first, x.second);
+                    return function_lhs_val(fun, x.first, x.second);
                 }));
         POMAGMA_INSERT(
             m_binary_cache,
@@ -110,7 +110,38 @@ Approximator::Approximator (
             new Cache(
                 worker_pool,
                 [this, &fun](const std::pair<SetId, SetId> & x){
-                    return binary_function_rhs_val(fun, x.first, x.second);
+                    return function_rhs_val(fun, x.first, x.second);
+                }));
+    }
+
+    POMAGMA_INFO("Initializing symmetric_function cache");
+    for (const auto & i : signature().symmetric_functions()) {
+        const auto & fun = * i.second;
+        const uint64_t hash = hash_name(i.first);
+        typedef SetPairToSetCache Cache;
+        POMAGMA_INSERT(
+            m_binary_cache,
+            CacheKey(hash, LHS_RHS),
+            new Cache(
+                worker_pool,
+                [this, &fun](const std::pair<SetId, SetId> & x){
+                    return function_lhs_rhs(fun, x.first, x.second);
+                }));
+        POMAGMA_INSERT(
+            m_binary_cache,
+            CacheKey(hash, LHS_VAL),
+            new Cache(
+                worker_pool,
+                [this, &fun](const std::pair<SetId, SetId> & x){
+                    return function_lhs_val(fun, x.first, x.second);
+                }));
+        POMAGMA_INSERT(
+            m_binary_cache,
+            CacheKey(hash, RHS_VAL),
+            new Cache(
+                worker_pool,
+                [this, &fun](const std::pair<SetId, SetId> & x){
+                    return function_rhs_val(fun, x.first, x.second);
                 }));
     }
 }
@@ -289,8 +320,9 @@ Approximation Approximator::lazy_nless_lhs_rhs (
 // LESS f g    LESS x y 
 // --------------------
 // LESS APP f x APP g y
-SetId Approximator::binary_function_lhs_rhs (
-    const BinaryFunction & fun,
+template<class Function>
+SetId Approximator::function_lhs_rhs (
+    const Function & fun,
     SetId lhs,
     SetId rhs) const
 {
@@ -327,8 +359,9 @@ SetId Approximator::binary_function_lhs_rhs (
 // LESS f g   NLESS APP f x APP g y
 // --------------------------------
 //            NLESS x y 
-SetId Approximator::binary_function_lhs_val (
-    const BinaryFunction & fun,
+template<class Function>
+SetId Approximator::function_lhs_val (
+    const Function & fun,
     SetId lhs,
     SetId val) const
 {
@@ -354,8 +387,9 @@ SetId Approximator::binary_function_lhs_val (
 // NLESS APP f x APP g y   LESS x y
 // --------------------------------
 //             NLESS f g
-SetId Approximator::binary_function_rhs_val (
-    const BinaryFunction & fun,
+template<class Function>
+SetId Approximator::function_rhs_val (
+    const Function & fun,
     SetId rhs,
     SetId val) const
 {

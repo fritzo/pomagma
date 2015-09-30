@@ -149,18 +149,12 @@ private:
 
     void lazy_close (Approximation & approx);
 
-    SetId binary_function_lhs_rhs (
-        const BinaryFunction & fun,
-        SetId lhs,
-        SetId rhs) const;
-    SetId binary_function_lhs_val (
-        const BinaryFunction & fun,
-        SetId lhs,
-        SetId val) const;
-    SetId binary_function_rhs_val (
-        const BinaryFunction & fun,
-        SetId rhs,
-        SetId val) const;
+    template<class Function>
+    SetId function_lhs_rhs (const Function & fun, SetId lhs, SetId rhs) const;
+    template<class Function>
+    SetId function_lhs_val (const Function & fun, SetId lhs, SetId val) const;
+    template<class Function>
+    SetId function_rhs_val (const Function & fun, SetId rhs, SetId val) const;
 
     // Structure parts.
     Structure & m_structure;
