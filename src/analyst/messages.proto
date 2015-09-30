@@ -35,6 +35,9 @@ message AnalystRequest {
     required string program = 1;
     optional uint64 max_solutions = 2;
   }
+  message ValidateFacts {
+    repeated string facts = 1;
+  }
 
   repeated string error_log = 1;
   optional string id = 2;
@@ -45,6 +48,7 @@ message AnalystRequest {
   optional GetHistogram get_histogram = 7;
   optional FitLanguage fit_language = 8;
   optional Solve solve = 9;
+  optional ValidateFacts validate_facts = 10;
 }
 
 message AnalystResponse {
@@ -85,6 +89,9 @@ message AnalystResponse {
     repeated string necessary = 1;
     repeated string possible = 2;
   }
+  message ValidateFacts {
+    required Trool result = 1;
+  }
 
   repeated string error_log = 1;
   optional string id = 2;
@@ -95,4 +102,5 @@ message AnalystResponse {
   optional GetHistogram get_histogram = 7;
   optional FitLanguage fit_language = 8;
   optional Solve solve = 9;
+  optional ValidateFacts validate_facts = 10;
 }

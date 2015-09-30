@@ -18,7 +18,7 @@ class Server
     Structure m_structure;
     UnaryRelation m_return;
     UnaryRelation m_nreturn;
-    DenseSetStore m_sets;
+    DenseSetStore m_dense_set_store;
     WorkerPool m_worker_pool;
     intervals::Approximator m_intervals_approximator;
     Approximator m_approximator;

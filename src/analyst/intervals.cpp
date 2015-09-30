@@ -212,7 +212,7 @@ inline SetId Approximator::lazy_find (
 }
 
 //                LESS x y   LESS y z
-//   ----------   -------------------
+//   ----------   -------------------   TODO close under RAND
 //   LESS x TOP         LESS x z
 SetId Approximator::close_upward (SetId set) const
 {
@@ -231,7 +231,7 @@ SetId Approximator::close_upward (SetId set) const
 }
 
 //                LESS x y   LESS y z
-//   ----------   -------------------
+//   ----------   -------------------   TODO close under JOIN, RAND
 //   LESS BOT x         LESS x z
 SetId Approximator::close_downward (SetId set) const
 {

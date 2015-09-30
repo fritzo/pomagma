@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <pomagma/analyst/messages.pb.h>
+#include <pomagma/analyst/propagate.hpp>
 #include <pomagma/analyst/server.hpp>
 #include <pomagma/atlas/macro/router.hpp>
 #include <pomagma/language/language.hpp>
@@ -14,9 +15,9 @@ Server::Server (
       m_structure(structure_file),
       m_return(m_structure.carrier()),
       m_nreturn(m_structure.carrier()),
-      m_sets(m_structure.carrier().item_dim()),
+      m_dense_set_store(m_structure.carrier().item_dim()),
       m_worker_pool(),
-      m_intervals_approximator(m_structure, m_sets, m_worker_pool),
+      m_intervals_approximator(m_structure, m_dense_set_store, m_worker_pool),
       m_approximator(m_structure),
       m_approximate_parser(m_approximator),
       m_probs(),
@@ -286,6 +287,17 @@ protobuf::AnalystResponse handle (
         } else {
             response.add_error_log(
                 "expected request.solve.max_solutions > 0; actual 0");
+        }
+    }
+
+    if (request.has_validate_facts()) {
+        // TODO propagate constraints to determine validity
+        if (request.validate_facts().facts_size()) {
+            response.mutable_validate_facts()->set_result(
+                protobuf::AnalystResponse::MAYBE);
+        } else {
+            response.mutable_validate_facts()->set_result(
+                protobuf::AnalystResponse::TRUE);
         }
     }
 

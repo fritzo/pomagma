@@ -285,6 +285,23 @@ def test_validate_corpus():
     assert_examples(lines, expected, actual, cmp_validity)
 
 
+VALIDATE_FACTS_EXAMPLES = [
+    ([], True),
+    (['LESS BOT TOP'], True),
+    (['LESS TOP BOT'], False),
+    (['EQUAL x x'], True),
+    (['EQUAL x TOP', 'LESS BOT x'], True),
+    (['EQUAL x TOP', 'LESS x TOP'], False),
+]
+
+
+def test_validate_facts():
+    with load() as db:
+        facts, expected = transpose(VALIDATE_FACTS_EXAMPLES)
+        actual = map(db.validate_facts, facts)
+    assert_examples(facts, expected, actual, cmp_trool)
+
+
 def test_get_histogram():
     lines = [line for _, line in CORPUS]
     with load() as db:

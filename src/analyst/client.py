@@ -172,6 +172,16 @@ class Client(object):
         assert len(results) == len(lines), results
         return results
 
+    def validate_facts(self, facts):
+        assert isinstance(facts, list), facts
+        for fact in facts:
+            assert isinstance(fact, basestring), fact
+        request = Request()
+        request.validate_facts.SetInParent()
+        request.validate_facts.facts.extend(facts)
+        reply = self._call(request)
+        return TROOL[reply.validate_facts.result]
+
     def get_histogram(self):
         request = Request()
         request.get_histogram.SetInParent()
