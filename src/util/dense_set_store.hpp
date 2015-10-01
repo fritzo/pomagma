@@ -7,6 +7,7 @@ namespace pomagma {
 
 typedef uint64_t SetId;
 
+// not thread safe
 class DenseSetStore : noncopyable
 {
 public:

@@ -172,7 +172,7 @@ class DenseSet : noncopyable
     const size_t m_item_dim;
     const size_t m_word_dim;
     Word mutable * m_words;
-    const bool m_alias;
+    bool m_alias;
 
 public:
 
@@ -193,7 +193,9 @@ public:
           m_words(other.m_words),
           m_alias(other.m_alias)
     {
-        other.m_words = nullptr;
+        // other remains valid; only ownership is moved
+        m_alias = other.m_alias;
+        other.m_alias = true;
     }
     ~DenseSet () { if (not m_alias and m_words) free_blocks(m_words); }
     void operator= (const DenseSet & other);
@@ -234,7 +236,7 @@ public:
     typedef Word RawData;
     Word * raw_data () { return m_words; }
     const Word * raw_data () const { return m_words; }
-    void move_data () { m_words = nullptr; }
+    bool is_alias () const { return m_alias; }
     void validate () const;
 
     // element operations

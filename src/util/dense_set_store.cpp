@@ -33,7 +33,7 @@ SetId DenseSetStore::store (DenseSet && set)
     SetId id = fingerprint(data, m_byte_dim);
     auto inserted = m_index.insert({id, data});
     if (inserted.second) {
-        set.move_data();
+        DenseSet destructor(std::move(set));
     } else {
         POMAGMA_ASSERT1(
             not memcmp(data, inserted.first->second, m_byte_dim),
