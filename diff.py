@@ -48,13 +48,13 @@ def parallel_check_call(*args):
 
 @contextlib.contextmanager
 def chdir(destin):
-    source = os.curdir
+    source = os.path.abspath(os.curdir)
     try:
-        print '# cd'.format(destin)
+        print '# cd {}'.format(destin)
         os.chdir(destin)
         yield
     finally:
-        print '# cd'.format(source)
+        print '# cd {}'.format(source)
         os.chdir(source)
 
 
@@ -83,19 +83,19 @@ def clone(commit='HEAD'):
 @parsable
 def codegen(commit='HEAD', difftool=DIFFTOOL):
     '''
-    Diff generated code src/theory/*.symbols, *.programs, *.facts
+    Diff generated code src/theory/*.symbols, *.programs, *.facts, *.tasks
     Supported difftools: diff, meld, cdiff, vim, gvim, mvim
     '''
     clone(commit=commit)
     parallel_check_call(
-        ['make', '-C', REPO, 'codegen'],
-        ['make', '-C', TEMP, 'codegen'])
+        ['make', '-C', REPO, 'codegen', 'codegen-summary'],
+        ['make', '-C', TEMP, 'codegen', 'codegen-summary'])
     subprocess.check_call(get_difftool(
         difftool,
         os.path.join(REPO, 'src', 'theory'),
         os.path.join(TEMP, 'src', 'theory'),
         diffignore=[
-            '*.tasks',
+            # '*.tasks',
             '*.rules',
             '*.theory',
             '*.pyc',
