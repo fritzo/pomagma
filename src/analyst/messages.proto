@@ -52,6 +52,7 @@ message AnalystRequest {
 }
 
 message AnalystResponse {
+  // this matches enum class Trool in src/util/trool.h
   enum Trool {
     MAYBE = 0;
     FALSE = 1;

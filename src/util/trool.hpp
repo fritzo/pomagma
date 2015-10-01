@@ -4,7 +4,12 @@
 
 namespace pomagma {
 
-enum class Trool { MAYBE, FALSE, TRUE };
+enum class Trool
+{
+    MAYBE = 0,
+    FALSE = 1,
+    TRUE = 2
+};
 
 inline constexpr Trool and_trool (Trool lhs, Trool rhs)
 {

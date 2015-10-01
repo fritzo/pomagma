@@ -27,7 +27,6 @@ Approximator::Approximator (
     m_item_dim(structure.carrier().item_dim()),
     m_top(structure.nullary_function("TOP").find()),
     m_bot(structure.nullary_function("BOT").find()),
-    m_identity(structure.nullary_function("I").find()),
     m_less(structure.binary_relation("LESS")),
     m_nless(structure.binary_relation("NLESS")),
     m_join(structure.signature().symmetric_function("JOIN")),
@@ -35,7 +34,7 @@ Approximator::Approximator (
     // dense set stores
     m_sets(sets),
     m_empty_set(sets.store(std::move(DenseSet(m_item_dim)))),
-    m_known(1 + m_item_dim, pending()),
+    m_known(1 + m_item_dim),
     m_disjoint_cache(
         worker_pool,
         [this](const std::pair<SetId, SetId> & pair){
@@ -64,7 +63,6 @@ Approximator::Approximator (
 {
     POMAGMA_ASSERT(m_top, "TOP is not defined");
     POMAGMA_ASSERT(m_bot, "BOT is not defined");
-    POMAGMA_ASSERT(m_identity, "I is not defined");
 
     POMAGMA_INFO("Inserting LESS and NLESS in DenseSetStore");
     for (auto iter = m_structure.carrier().iter(); iter.ok(); iter.next()) {
@@ -75,9 +73,6 @@ Approximator::Approximator (
         m_known[ob][NABOVE] = m_sets.store(m_nless.get_Lx_set(ob));
     }
     m_unknown = interval(m_bot, m_top);
-    m_maybe = interval(m_bot, m_identity);
-    m_truthy = known(m_identity);
-    m_falsey = known(m_bot);
 
     POMAGMA_INFO("Initializing nullary_function cache");
     for (const auto & i : signature().nullary_functions()) {
@@ -251,7 +246,7 @@ SetId Approximator::close_downward (SetId set) const
 
 Approximation Approximator::lazy_close (const Approximation & approx)
 {
-    Approximation result = pending();
+    Approximation result;
     for (Parity p : {BELOW, NABOVE}) {
         result[p] = m_close_downward_cache.try_find(approx[p]);
     }
@@ -313,46 +308,6 @@ Approximation Approximator::lazy_binary_function_rhs_val (
                 ? lazy_find(name, RHS_VAL, rhs[ABOVE], val[NABOVE])
                 : 0;
     return rhs;
-}
-
-Approximation Approximator::lazy_less_lhs_rhs (
-    const Approximation & lhs,
-    const Approximation & rhs)
-{
-    Approximation val = pending();
-    Trool less = lazy_disjoint(lhs[ABOVE], rhs[BELOW]);
-    if (Ob ob = case_trool<Ob>(less, 0, m_bot, m_identity)) {
-        val[BELOW] = m_known[ob][BELOW];
-        val[NABOVE] = m_known[ob][NABOVE];
-    }
-    Trool nless = and_trool(
-        lazy_disjoint(lhs[BELOW], rhs[NBELOW]),
-        lazy_disjoint(lhs[NABOVE], rhs[ABOVE]));
-    if (Ob ob = case_trool<Ob>(nless, 0, m_bot, m_identity)) {
-        val[ABOVE] = m_known[ob][ABOVE];
-        val[NBELOW] = m_known[ob][NBELOW];
-    }
-    return val; // if both conditions fire, val is inconsistent
-}
-
-Approximation Approximator::lazy_nless_lhs_rhs (
-    const Approximation & lhs,
-    const Approximation & rhs)
-{
-    Approximation val = pending();
-    Trool less = lazy_disjoint(lhs[ABOVE], rhs[BELOW]);
-    if (Ob ob = case_trool<Ob>(less, 0, m_bot, m_identity)) {
-        val[ABOVE] = m_known[ob][ABOVE];
-        val[NBELOW] = m_known[ob][NBELOW];
-    }
-    Trool nless = and_trool(
-        lazy_disjoint(lhs[BELOW], rhs[NBELOW]),
-        lazy_disjoint(lhs[NABOVE], rhs[ABOVE]));
-    if (Ob ob = case_trool<Ob>(nless, 0, m_bot, m_identity)) {
-        val[BELOW] = m_known[ob][BELOW];
-        val[NABOVE] = m_known[ob][NABOVE];
-    }
-    return val; // if both conditions fire, val is inconsistent
 }
 
 // LESS f g    LESS x y 

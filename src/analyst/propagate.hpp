@@ -1,7 +1,7 @@
 #pragma once
 
 #include <pomagma/analyst/intervals.hpp>
-#include <unordered_map>
+#include <pomagma/util/trool.hpp>
 #include <unordered_set>
 #include <vector>
 #include <memory>
@@ -9,8 +9,9 @@
 namespace pomagma {
 namespace propagate {
 
-using intervals::Parity;
+using ::pomagma::intervals::Approximator;
 
+// These correspond to ExprParser cases
 enum Arity
 {
     NULLARY_FUNCTION,
@@ -19,11 +20,11 @@ enum Arity
     SYMMETRIC_FUNCTION,
     UNARY_RELATION,
     BINARY_RELATION,
-    VARIABLE,
-    HOLE
+    EQUAL,
+    HOLE,
+    VAR
 };
 
-// These are cons-hashed to ensure uniqueness.
 struct Term
 {
     const Arity arity;
@@ -31,36 +32,19 @@ struct Term
     const std::shared_ptr<Term> args[2];
 };
 
-struct Corpus
+struct Theory
 {
-    const std::vector<std::shared_ptr<Term>> lines;
+    const std::vector<std::shared_ptr<Term>> facts;
+    const std::unordered_set<const Term *> terms; // a flattened copy of facts
 };
 
-// TODO define parse : ... -> Corpus, which creates cons-hashed terms
-
-struct Problem
-{
-    const std::shared_ptr<Corpus> corpus;
-    const std::unordered_set<const Term *> constraints;
-};
-
-Problem formulate (std::shared_ptr<Corpus> corpus);
-
-typedef intervals::Approximation State;
-
-struct Solution
-{
-    const std::shared_ptr<Corpus> corpus;
-    const std::unordered_map<const Term *, State> states;
-};
+Theory parse_theory (
+    const std::vector<std::string> & polish_facts,
+    std::vector<std::string> & error_log);
 
 // This fast best-effort solver immediately returns a partial solution, and
 // guarantees to eventually return a complete solution upon repeated calls.
-Solution solve (
-    const Problem & problem,
-    intervals::Approximator & approximator);
-
-bool is_pending (const Solution & solution);
+Trool lazy_validate (const Theory & theory, Approximator & approximator);
 
 } // namespace propagate
 } // namespace pomagma 

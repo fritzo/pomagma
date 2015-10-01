@@ -73,6 +73,7 @@ enum Arity {
 struct Approximation
 {
     SetId bounds[4]; // one for each Parity
+
     SetId & operator[] (Parity p) { return bounds[p]; }
     SetId operator[] (Parity p) const { return bounds[p]; }
 
@@ -95,17 +96,12 @@ public:
             DenseSetStore & sets,
             WorkerPool & worker_pool);
 
-    void validate (const Approximation & approx);
     Trool lazy_is_valid (const Approximation & approx);
     bool refines (const Approximation & lhs, const Approximation & rhs) const;
 
-    Approximation pending () const { return {{0, 0, 0, 0}}; }
     Approximation known (Ob ob) const { return m_known[ob]; }
     Approximation unknown () const { return m_unknown; }
     Approximation interval (Ob lb, Ob ub) const;
-    Approximation maybe () const { return m_maybe; }
-    Approximation truthy () const { return m_truthy; }
-    Approximation falsey () const { return m_falsey; }
     Approximation nullary_function (const std::string & name);
     Approximation less_lhs (const Approximation & lhs);
     Approximation less_rhs (const Approximation & rhs);
@@ -124,12 +120,6 @@ public:
     Approximation lazy_binary_function_rhs_val (
         const std::string &,
         const Approximation & rhs,
-        const Approximation & val);
-    Approximation lazy_less_lhs_rhs (
-        const Approximation & lhs,
-        const Approximation & val);
-    Approximation lazy_nless_lhs_rhs (
-        const Approximation & lhs,
         const Approximation & val);
 
 private:
@@ -164,7 +154,6 @@ private:
     const size_t m_item_dim;
     const Ob m_top;
     const Ob m_bot;
-    const Ob m_identity;
     const BinaryRelation & m_less;
     const BinaryRelation & m_nless;
     const SymmetricFunction * const m_join;

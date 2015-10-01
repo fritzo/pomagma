@@ -165,6 +165,22 @@ Server::SolutionSet Server::solve (
     return solutions;
 }
 
+pomagma::Trool Server::validate_facts (
+    const std::vector<std::string> & polish_facts)
+{
+    size_t initial_error_count = m_error_log.size();
+    const auto theory = propagate::parse_theory(polish_facts, m_error_log);
+    if (m_error_log.size() > initial_error_count) {
+        return pomagma::Trool::FALSE;
+    }
+    // TODO
+#ifdef PROPAGATE_PARSER_IS_READY
+    return propagate::lazy_validate(theory, m_intervals_approximator);
+#else // PROPAGATE_PARSER_IS_READY
+    return pomagma::Trool::MAYBE;
+#endif // PROPAGATE_PARSER_IS_READY
+}
+
 namespace
 {
 
@@ -291,14 +307,11 @@ protobuf::AnalystResponse handle (
     }
 
     if (request.has_validate_facts()) {
-        // TODO propagate constraints to determine validity
-        if (request.validate_facts().facts_size()) {
-            response.mutable_validate_facts()->set_result(
-                protobuf::AnalystResponse::MAYBE);
-        } else {
-            response.mutable_validate_facts()->set_result(
-                protobuf::AnalystResponse::TRUE);
-        }
+        const auto & facts = request.validate_facts().facts();
+        const std::vector<std::string> polish_facts(facts.begin(), facts.end());
+        const auto result = server.validate_facts(polish_facts);
+        response.mutable_validate_facts()->set_result(
+            static_cast<Trool>(result));
     }
 
     for (const std::string & message : server.flush_errors()) {
