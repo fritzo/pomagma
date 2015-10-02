@@ -33,6 +33,8 @@ void test_store_load (size_t item_dim, size_t element_count)
         SetId id = sets.store(std::move(set));
         if (known_ids.insert(id).second) {
             POMAGMA_ASSERT(set.is_alias(), "data was not moved");
+            POMAGMA_ASSERT(sets.load(id).raw_data() == set.raw_data(),
+                "inserted pointer does not match source");
         } else {
             POMAGMA_ASSERT(not set.is_alias(),
                 "data freed but set not inserted");
@@ -40,8 +42,7 @@ void test_store_load (size_t item_dim, size_t element_count)
 
         const DenseSet loaded1 = sets.load(id);
         POMAGMA_ASSERT(loaded1.is_alias(), "loaded set is not alias");
-#ifdef DENSE_SET_STORE_BUG_IS_FIXED
-        loaded1.validate(); // FIXME segfault
+        loaded1.validate();
         const DenseSet loaded2 = sets.load(id);
         POMAGMA_ASSERT(loaded1.raw_data() == loaded2.raw_data(),
             "two loads disagree");
@@ -53,7 +54,6 @@ void test_store_load (size_t item_dim, size_t element_count)
         }
 
         POMAGMA_ASSERT(id == sets.store(std::move(set)), "two stores disagree");
-#endif // DENSE_SET_STORE_BUG_IS_FIXED
     }
 }
 

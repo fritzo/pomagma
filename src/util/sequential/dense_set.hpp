@@ -4,13 +4,11 @@
 #include <pomagma/util/util.hpp>
 #include <pomagma/util/sequential/bool_ref.hpp>
 
-namespace pomagma
-{
+namespace pomagma {
 
 void free_blocks (void *);
 
-namespace sequential
-{
+namespace sequential {
 
 // position 0 is unused, so count from item 1
 inline size_t items_to_words (size_t item_dim)
@@ -35,9 +33,9 @@ public:
 
     typedef std::array<const Word *, rank> init_t;
 
-    Intersection (size_t item_dim, init_t words)
-        : m_word_dim(items_to_words(item_dim)),
-          m_words(words)
+    Intersection (size_t item_dim, init_t words) :
+        m_word_dim(items_to_words(item_dim)),
+        m_words(words)
     {
         static_assert(rank >= 2, "rank must be at least 2");
         POMAGMA_ASSERT3(words.size() == rank,
@@ -80,9 +78,9 @@ public:
 
     typedef const Word * init_t;
 
-    Intersection (size_t item_dim, init_t words)
-        : m_word_dim(items_to_words(item_dim)),
-          m_words(words)
+    Intersection (size_t item_dim, init_t words) :
+        m_word_dim(items_to_words(item_dim)),
+        m_words(words)
     {
         POMAGMA_ASSERT4(m_words, "constructed SimpleSet with null words");
     }
@@ -106,8 +104,8 @@ class SetIterator
 
 public:
 
-    SetIterator (size_t item_dim, typename Set::init_t words)
-        : m_set(item_dim, words)
+    SetIterator (size_t item_dim, typename Set::init_t words) :
+        m_set(item_dim, words)
     {
         m_quot = 0;
         --m_quot;
@@ -178,26 +176,24 @@ public:
 
     // set can contain items {1,...,item_dim}
     DenseSet (size_t item_dim);
-    DenseSet (size_t item_dim, Word * line)
-        : m_item_dim(item_dim),
-          m_word_dim(items_to_words(item_dim)),
-          m_words(line),
-          m_alias(true)
+    DenseSet (size_t item_dim, Word * line) :
+        m_item_dim(item_dim),
+        m_word_dim(items_to_words(item_dim)),
+        m_words(line),
+        m_alias(true)
     {
         POMAGMA_ASSERT_ALIGNED_(1, line);
     }
     DenseSet (const DenseSet & other) = delete;
-    DenseSet (DenseSet && other)
-        : m_item_dim(other.m_item_dim),
-          m_word_dim(other.m_word_dim),
-          m_words(other.m_words),
-          m_alias(other.m_alias)
+    DenseSet (DenseSet && other) :
+        m_item_dim(other.m_item_dim),
+        m_word_dim(other.m_word_dim),
+        m_words(other.m_words),
+        m_alias(other.move_ownership()) // other remains valid
     {
-        // other remains valid; only ownership is moved
-        m_alias = other.m_alias;
-        other.m_alias = true;
     }
     ~DenseSet () { if (not m_alias and m_words) free_blocks(m_words); }
+    bool move_ownership () { bool a = m_alias; m_alias = true; return a; }
     void operator= (const DenseSet & other);
     template<class Ob>
     void copy_from (const DenseSet & other, const Ob * new2old);

@@ -10,7 +10,7 @@ inline SetId fingerprint (const Word * words, size_t byte_dim)
 
 DenseSetStore::DenseSetStore (size_t item_dim) :
     m_item_dim(item_dim),
-    m_byte_dim((1 + item_dim) / 8)
+    m_byte_dim(1 + item_dim / 8)
 {
 }
 
@@ -33,7 +33,7 @@ SetId DenseSetStore::store (DenseSet && set)
     SetId id = fingerprint(data, m_byte_dim);
     auto inserted = m_index.insert({id, data});
     if (inserted.second) {
-        DenseSet destructor(std::move(set));
+        set.move_ownership();
     } else {
         POMAGMA_ASSERT1(
             not memcmp(data, inserted.first->second, m_byte_dim),
