@@ -137,6 +137,52 @@ void test_iterator (size_t size, rng_t & rng)
     POMAGMA_ASSERT_EQ(count, true_count);
 }
 
+void test_iterators (size_t size, rng_t & rng)
+{
+    POMAGMA_INFO("Testing DenseSet joint iterators");
+
+    DenseSet x(size);
+    DenseSet y(size);
+    DenseSet z(size);
+
+    x.fill_random(rng);
+    y.fill_random(rng);
+    z.fill_random(rng);
+
+    DenseSet expected(size);
+    size_t actual_count;
+
+    POMAGMA_INFO("testing DenseSet::iter_insn(-)");
+    expected.set_insn(x, y);
+    actual_count = 0;
+    for (auto iter = x.iter_insn(y); iter.ok(); iter.next()) {
+        Ob ob = * iter;
+        POMAGMA_ASSERT(expected.contains(ob), "missing element " << ob);
+        ++actual_count;
+    }
+    POMAGMA_ASSERT_EQ(actual_count, expected.count_items());
+
+    POMAGMA_INFO("testing DenseSet::iter_insn(-,-)");
+    expected.set_insn(x, y, z);
+    actual_count = 0;
+    for (auto iter = x.iter_insn(y, z); iter.ok(); iter.next()) {
+        Ob ob = * iter;
+        POMAGMA_ASSERT(expected.contains(ob), "missing element " << ob);
+        ++actual_count;
+    }
+    POMAGMA_ASSERT_EQ(actual_count, expected.count_items());
+
+    POMAGMA_INFO("testing DenseSet::iter_diff(-)");
+    expected.set_diff(x, y);
+    actual_count = 0;
+    for (auto iter = x.iter_diff(y); iter.ok(); iter.next()) {
+        Ob ob = * iter;
+        POMAGMA_ASSERT(expected.contains(ob), "missing element " << ob);
+        ++actual_count;
+    }
+    POMAGMA_ASSERT_EQ(actual_count, expected.count_items());
+}
+
 void test_operations (size_t size, float prob, rng_t & rng)
 {
     POMAGMA_INFO("Testing DenseSet operations");
@@ -380,6 +426,7 @@ int main ()
     for (size_t size = 0; size < 100; ++size) {
         test_even(size);
         test_iterator(size, rng);
+        test_iterators(size, rng);
         for (float prob : probs) {
             test_operations(size, prob, rng);
             test_max_item(size, prob, rng);
@@ -391,6 +438,7 @@ int main ()
         test_basic(size);
         test_even(size);
         test_iterator(size, rng);
+        test_iterators(size, rng);
         for (float prob : probs) {
             test_operations(size, prob, rng);
             test_max_item(size, prob, rng);

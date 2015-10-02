@@ -277,10 +277,12 @@ public:
     typedef SetIterator<Intersection<1>> Iterator;
     typedef SetIterator<Intersection<2>> Iterator2;
     typedef SetIterator<Intersection<3>> Iterator3;
+    typedef SetIterator<Intersection<1, 1>> Iterator11;
 
     Iterator iter () const;
     Iterator2 iter_insn (const DenseSet & other) const;
     Iterator3 iter_insn (const DenseSet & set2, const DenseSet & set3) const;
+    Iterator11 iter_diff (const DenseSet & other) const;
 
 private:
 
@@ -357,6 +359,11 @@ inline DenseSet::Iterator3 DenseSet::iter_insn (
         const DenseSet & set3) const
 {
     return Iterator3(m_item_dim, {{m_words, set2.m_words, set3.m_words}});
+}
+
+inline DenseSet::Iterator11 DenseSet::iter_diff (const DenseSet & other) const
+{
+    return Iterator11(m_item_dim, {{m_words, other.m_words}});
 }
 
 } // namespace sequential
