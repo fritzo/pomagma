@@ -27,12 +27,12 @@ Approximator::Approximator (
     m_bot(structure.nullary_function("BOT").find()),
     m_less(structure.binary_relation("LESS")),
     m_nless(structure.binary_relation("NLESS")),
-    m_join(structure.signature().symmetric_function("JOIN")),
-    m_rand(structure.signature().symmetric_function("RAND")),
     // dense set stores
     m_sets(sets),
     m_empty_set(sets.store(std::move(DenseSet(m_item_dim)))),
     m_known(1 + m_item_dim),
+    m_unknown(),
+    // lazy map caches
     m_disjoint_cache(
         worker_pool,
         [this](const std::pair<SetId, SetId> & pair){
@@ -51,7 +51,9 @@ Approximator::Approximator (
                 val += sets[i];
             }
             return m_sets.store(std::move(val));
-        })
+        }),
+    m_nullary_cache(),
+    m_binary_cache()
 {
     POMAGMA_ASSERT(m_top, "TOP is not defined");
     POMAGMA_ASSERT(m_bot, "BOT is not defined");
@@ -64,7 +66,10 @@ Approximator::Approximator (
         m_known[ob][NBELOW] = m_sets.store(m_nless.get_Rx_set(ob));
         m_known[ob][NABOVE] = m_sets.store(m_nless.get_Lx_set(ob));
     }
-    m_unknown = interval(m_bot, m_top);
+    m_unknown[BELOW] = m_known[m_bot][BELOW];
+    m_unknown[ABOVE] = m_known[m_bot][ABOVE];
+    m_unknown[NBELOW] = m_empty_set;
+    m_unknown[NABOVE] = m_empty_set;
 
     POMAGMA_INFO("Initializing nullary_function cache");
     for (const auto & i : signature().nullary_functions()) {
@@ -145,14 +150,7 @@ Approximator::Approximator (
     }
 }
 
-Trool Approximator::lazy_is_valid (const Approximation & approx)
-{
-    return and_trool(
-        lazy_disjoint(approx[BELOW], approx[NBELOW]),
-        lazy_disjoint(approx[ABOVE], approx[NABOVE]));
-}
-
-bool Approximator::refines (
+bool Approximator::expensive_refines (
         const Approximation & lhs,
         const Approximation & rhs) const
 {
@@ -162,6 +160,13 @@ bool Approximator::refines (
         }
     }
     return true;
+}
+
+Trool Approximator::lazy_is_valid (const Approximation & approx)
+{
+    return and_trool(
+        lazy_disjoint(approx[BELOW], approx[NBELOW]),
+        lazy_disjoint(approx[ABOVE], approx[NABOVE]));
 }
 
 inline Trool Approximator::lazy_disjoint (SetId lhs, SetId rhs)
@@ -333,13 +338,12 @@ SetId Approximator::function_lhs_val (
 {
     POMAGMA_ASSERT1(parity == NBELOW or parity == NABOVE, "invalid parity");
     const bool downward = (parity == NABOVE);
+    const DenseSet & support = m_structure.carrier().support();
     const DenseSet lhs_set = m_sets.load(lhs); // positive
     const DenseSet val_set = m_sets.load(val); // negative
     DenseSet rhs_set(m_item_dim); // negative
 
-    for (auto iter = m_structure.carrier().support().iter_diff(rhs_set);
-        iter.ok(); iter.next())
-    {
+    for (auto iter = support.iter_diff(rhs_set); iter.ok(); iter.next()) {
         Ob rhs = * iter;
         if (unlikely(rhs_set.contains(rhs))) continue; // iterator latency
         for (auto iter = fun.get_Rx_set(rhs).iter_insn(lhs_set);
@@ -373,13 +377,12 @@ SetId Approximator::function_rhs_val (
 {
     POMAGMA_ASSERT1(parity == NBELOW or parity == NABOVE, "invalid parity");
     const bool downward = (parity == NABOVE);
+    const DenseSet & support = m_structure.carrier().support();
     const DenseSet rhs_set = m_sets.load(rhs); // positive
     const DenseSet val_set = m_sets.load(val); // negative
     DenseSet lhs_set(m_item_dim); // negative
 
-    for (auto iter = m_structure.carrier().support().iter_diff(lhs_set);
-        iter.ok(); iter.next())
-    {
+    for (auto iter = support.iter_diff(lhs_set); iter.ok(); iter.next()) {
         Ob lhs = * iter;
         if (unlikely(lhs_set.contains(lhs))) continue; // iterator latency
         for (auto iter = fun.get_Lx_set(lhs).iter_insn(rhs_set);

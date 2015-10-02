@@ -114,7 +114,8 @@ inline size_t propagate_step (
         const State updated_state = approximator.lazy_fuse(messages);
         messages.clear();
         if (updated_state != state) {
-            POMAGMA_ASSERT1(approximator.refines(updated_state, state),
+            POMAGMA_ASSERT1(
+                approximator.expensive_refines(updated_state, state),
                 "propagation was not monotone");
             state = updated_state;
             ++change_count;

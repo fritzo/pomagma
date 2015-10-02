@@ -17,6 +17,26 @@ namespace util { uint64_t Fingerprint64(const char * s, size_t len); }
 namespace pomagma {
 namespace intervals {
 
+enum Parity { ABOVE, BELOW, NABOVE, NBELOW };
+enum Direction { LHS_RHS, LHS_VAL, RHS_VAL };
+
+struct Approximation
+{
+    SetId bounds[4]; // one for each Parity
+
+    SetId & operator[] (Parity p) { return bounds[p]; }
+    SetId operator[] (Parity p) const { return bounds[p]; }
+
+    bool operator== (const Approximation & other) const
+    {
+        return not memcmp(this, & other, sizeof(Approximation));
+    }
+    bool operator!= (const Approximation & other) const
+    {
+        return memcmp(this, & other, sizeof(Approximation));
+    }
+};
+
 template<class T>
 struct PodHash
 {
@@ -25,15 +45,6 @@ struct PodHash
         return util::Fingerprint64(
             reinterpret_cast<const char *>(& x),
             sizeof(T));
-    }
-};
-
-template<class T>
-struct PodEqual
-{
-    bool operator() (const T & x, const T & y) const
-    {
-        return not memcmp(& x, & y, sizeof(T));
     }
 };
 
@@ -60,55 +71,32 @@ struct VectorPodEqual
     }
 };
 
-enum Parity { ABOVE, BELOW, NABOVE, NBELOW };
-enum Direction { LHS_RHS, LHS_VAL, RHS_VAL };
-enum Arity {
-    NULLARY_FUNCTION,
-    INJECTIVE_FUNCTION,
-    BINARY_FUNCTION,
-    SYMMETRIC_FUNCTION,
-    // no UNARY_RELATION
-    BINARY_RELATION
-};
-
-struct Approximation
-{
-    SetId bounds[4]; // one for each Parity
-
-    SetId & operator[] (Parity p) { return bounds[p]; }
-    SetId operator[] (Parity p) const { return bounds[p]; }
-
-    bool operator== (const Approximation & other) const
-    {
-        return not memcmp(this, & other, sizeof(Approximation));
-    }
-    bool operator!= (const Approximation & other) const
-    {
-        return memcmp(this, & other, sizeof(Approximation));
-    }
-};
-
 class Approximator
 {
 public:
 
     Approximator (
-            Structure & structure,
-            DenseSetStore & sets,
-            WorkerPool & worker_pool);
+        Structure & structure,
+        DenseSetStore & sets,
+        WorkerPool & worker_pool);
 
-    Trool lazy_is_valid (const Approximation & approx);
-    bool refines (const Approximation & lhs, const Approximation & rhs) const;
+    // This expensive operation is for testing.
+    bool expensive_refines (
+        const Approximation & lhs,
+        const Approximation & rhs) const;
 
+    // These cheap O(1) operations return immediately with complete results.
     Approximation known (Ob ob) const { return m_known[ob]; }
     Approximation unknown () const { return m_unknown; }
-    Approximation interval (Ob lb, Ob ub) const;
     Approximation nullary_function (const std::string & name);
     Approximation less_lhs (const Approximation & lhs);
     Approximation less_rhs (const Approximation & rhs);
     Approximation nless_lhs (const Approximation & lhs);
     Approximation nless_rhs (const Approximation & rhs);
 
+    // These expensive operations immediately return partial cached results and
+    // kick off any needed expensive computation for future calls.
+    Trool lazy_is_valid (const Approximation & approx);
     Approximation lazy_fuse (const std::vector<Approximation> & messages);
     Approximation lazy_binary_function_lhs_rhs (
         const std::string & name,
@@ -144,7 +132,7 @@ private:
         const Function & fun,
         SetId lhs,
         SetId rhs,
-        Parity parity) const;
+        Parity) const;
     template<class Function>
     SetId function_lhs_val (
         const Function & fun,
@@ -167,16 +155,11 @@ private:
     const Ob m_bot;
     const BinaryRelation & m_less;
     const BinaryRelation & m_nless;
-    const SymmetricFunction * const m_join;
-    const SymmetricFunction * const m_rand;
 
     // DenseSet fingerprinting.
     DenseSetStore & m_sets;
     const SetId m_empty_set;
     std::vector<Approximation> m_known;
-    Approximation m_maybe;
-    Approximation m_truthy;
-    Approximation m_falsey;
     Approximation m_unknown;
 
     // LazyMap caches.
@@ -204,17 +187,6 @@ private:
     std::unordered_map<CacheKey, SetPairToSetCache *, PodHash<CacheKey>>
         m_binary_cache;
 };
-
-inline Approximation Approximator::interval (Ob lb, Ob ub) const
-{
-    POMAGMA_ASSERT1(not m_nless.find(lb, ub), "invalid interval");
-    return {{
-        m_known[lb][BELOW],
-        m_known[ub][ABOVE],
-        m_known[ub][NBELOW],
-        m_known[lb][NABOVE]
-    }};
-}
 
 inline Approximation Approximator::nullary_function (const std::string & name)
 {
