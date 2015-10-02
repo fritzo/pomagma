@@ -2,7 +2,6 @@
 
 #include <pomagma/analyst/intervals.hpp>
 #include <pomagma/util/trool.hpp>
-#include <unordered_set>
 #include <vector>
 #include <memory>
 
@@ -35,10 +34,11 @@ struct Term
 struct Theory
 {
     const std::vector<std::shared_ptr<Term>> facts;
-    const std::unordered_set<const Term *> terms; // a flattened copy of facts
+    const std::vector<const Term *> terms; // a flattened copy of facts
 };
 
 Theory parse_theory (
+    Signature & signature,
     const std::vector<std::string> & polish_facts,
     std::vector<std::string> & error_log);
 

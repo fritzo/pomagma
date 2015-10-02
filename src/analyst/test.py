@@ -289,9 +289,9 @@ VALIDATE_FACTS_EXAMPLES = [
     ([], True),
     (['LESS BOT TOP'], True),
     (['LESS TOP BOT'], False),
-    (['EQUAL x x'], True),
-    (['EQUAL x TOP', 'LESS BOT x'], True),
-    (['EQUAL x TOP', 'LESS x TOP'], False),
+    (['EQUAL VAR x VAR x'], True),
+    (['EQUAL VAR x TOP', 'LESS BOT VAR x'], True),
+    (['EQUAL VAR x TOP', 'LESS VAR x TOP'], False),
 ]
 
 

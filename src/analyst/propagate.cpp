@@ -1,5 +1,12 @@
 #include <pomagma/analyst/propagate.hpp>
+#include <pomagma/atlas/macro/structure_impl.hpp>
+#include <pomagma/atlas/parser.hpp>
 #include <unordered_map>
+#include <unordered_set>
+#include <tuple>
+
+// defined in pomagma/vendor/farmhash/farmhash.h
+namespace util { size_t Hash (const char* s, size_t len); }
 
 namespace pomagma {
 namespace propagate {
@@ -7,12 +14,185 @@ namespace propagate {
 //----------------------------------------------------------------------------
 // parsing
 
-Theory parse_theory (
-    const std::vector<std::string> & polish_facts __attribute__((unused)),
-    std::vector<std::string> & error_log __attribute__((unused)))
+inline size_t hash_data (const void * data, size_t size)
 {
-    // TODO define a parser as in src/analyst/simplify.cpp Simplify::Reducer
-    return Theory();
+    return util::Hash(reinterpret_cast<const char *>(data), size);
+}
+
+struct HashTermPtr
+{
+    size_t operator() (const std::shared_ptr<Term> & term) const
+    {
+        POMAGMA_ASSERT1(term.get(), "term is null");
+        std::tuple<Arity, size_t, const Term *, const Term *> data
+        {
+            term->arity,
+            hash_data(term->name.data(), term->name.size()),
+            term->args[0].get(),
+            term->args[1].get()
+        };
+        return hash_data(& data, sizeof(data));
+    }
+};
+
+struct EqTermPtr
+{
+    bool operator() (
+        const std::shared_ptr<Term> & lhs,
+        const std::shared_ptr<Term> & rhs) const
+    {
+        POMAGMA_ASSERT1(lhs.get(), "lhs is null");
+        POMAGMA_ASSERT1(rhs.get(), "rhs is null");
+        return lhs->arity == rhs->arity
+           and lhs->name == rhs->name
+           and lhs->args[0].get() == rhs->args[0].get()
+           and lhs->args[1].get() == rhs->args[1].get();
+    }
+};
+
+typedef std::unordered_set<std::shared_ptr<Term>, HashTermPtr, EqTermPtr>
+    TermSet;
+
+class Reducer
+{
+public:
+
+    Reducer (TermSet & deduped) : m_deduped(deduped) {}
+
+    typedef std::shared_ptr<::pomagma::propagate::Term> Term;
+
+    Term reduce (
+            const std::string & token,
+            const NullaryFunction *)
+    {
+        return new_term(token, NULLARY_FUNCTION);
+    }
+
+    Term reduce (
+            const std::string & token,
+            const InjectiveFunction *,
+            const Term & key)
+    {
+        return new_term(token, INJECTIVE_FUNCTION, key);
+    }
+
+    Term reduce (
+            const std::string & token,
+            const BinaryFunction *,
+            const Term & lhs,
+            const Term & rhs)
+    {
+        return new_term(token, BINARY_FUNCTION, lhs, rhs);
+    }
+
+    Term reduce (
+            const std::string & token,
+            const SymmetricFunction *,
+            const Term & lhs,
+            const Term & rhs)
+    {
+        return new_term(token, SYMMETRIC_FUNCTION, lhs, rhs);
+    }
+
+    Term reduce (
+            const std::string & token,
+            const UnaryRelation *,
+            const Term & key)
+    {
+        return new_term(token, UNARY_RELATION, key);
+    }
+
+    Term reduce (
+            const std::string & token,
+            const BinaryRelation *,
+            const Term & lhs,
+            const Term & rhs)
+    {
+        return new_term(token, BINARY_RELATION, lhs, rhs);
+    }
+
+    Term reduce_equal (
+            const Term & lhs,
+            const Term & rhs)
+    {
+        return new_term("", EQUAL, lhs, rhs);
+    }
+
+    Term reduce_hole ()
+    {
+        return new_term("", HOLE);
+    }
+
+    Term reduce_var (const std::string & name)
+    {
+        return new_term(name, VAR);
+    }
+
+    Term reduce_error (const std::string &)
+    {
+        return Term();
+    }
+
+private:
+
+    Term new_term (
+            const std::string & name,
+            Arity arity,
+            Term arg0 = Term(),
+            Term arg1 = Term())
+    {
+        Term result(new ::pomagma::propagate::Term{arity, name, {arg0, arg1}});
+        return * m_deduped.insert(result).first;
+    }
+
+    TermSet & m_deduped;
+};
+
+class Parser : public ExprParser<Reducer>
+{
+public:
+
+    Parser (Signature & signature,
+            TermSet & deduped,
+            std::vector<std::string> & error_log) :
+        ExprParser<Reducer>(signature, m_reducer, error_log),
+        m_reducer(deduped)
+    {
+    }
+
+private:
+
+    Reducer m_reducer;
+};
+
+Theory parse_theory (
+    Signature & signature,
+    const std::vector<std::string> & polish_facts,
+    std::vector<std::string> & error_log)
+{
+    std::vector<std::shared_ptr<Term>> facts;
+
+    TermSet deduped;
+    bool error = false;
+    {
+        Parser parser(signature, deduped, error_log);
+        for (const auto & polish_fact : polish_facts) {
+            auto fact = parser.parse(polish_fact);
+            if (likely(fact.get())) {
+                facts.push_back(fact);
+            } else {
+                error = true;
+            }
+        }
+    }
+    if (error) return Theory();
+
+    std::vector<const Term *> terms;
+    for (auto term_ptr : deduped) {
+        terms.push_back(term_ptr.get());
+    }
+
+    return {std::move(facts), std::move(terms)};
 }
 
 //----------------------------------------------------------------------------
