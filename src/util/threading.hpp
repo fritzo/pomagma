@@ -61,20 +61,23 @@ const order_t acquire = std::memory_order_acquire;
 const order_t release = std::memory_order_release;
 
 template<class Mutex>
-struct unique_lock
+class unique_lock
 {
     Mutex & m_mutex;
 public:
-    unique_lock (Mutex & mutex) : m_mutex(mutex) { mutex.lock(); }
+    explicit unique_lock (Mutex & mutex) : m_mutex(mutex) { m_mutex.lock(); }
     ~unique_lock () { m_mutex.unlock(); }
 };
 
 template<class Mutex>
-struct shared_lock
+class shared_lock
 {
-    Mutex & m_mutex;
+    const Mutex & m_mutex;
 public:
-    shared_lock (Mutex & mutex) : m_mutex(mutex) { m_mutex.lock_shared(); }
+    explicit shared_lock (const Mutex & mutex) : m_mutex(mutex)
+    {
+        m_mutex.lock_shared();
+    }
     ~shared_lock () { m_mutex.unlock_shared(); }
 };
 
@@ -139,13 +142,13 @@ public:
 
 
 
-// this wraps pthread_wrlock, which is smaller & faster than boost::shared_mutex.
-//
+// this wraps pthread_rwlock, which is smaller & faster than
+// boost::shared_mutex.
 // adapted from:
 // http://boost.2283326.n4.nabble.com/boost-shared-mutex-performance-td2659061.html
 class SharedMutex
 {
-    pthread_rwlock_t m_rwlock;
+    mutable pthread_rwlock_t m_rwlock;
 
 public:
 
@@ -167,23 +170,20 @@ public:
         POMAGMA_ASSERT1(status == 0, "pthread_rwlock_wrlock failed");
     }
 
-    // glibc seems to be buggy; don't unlock more often than it has been locked
-    // see http://sourceware.org/bugzilla/show_bug.cgi?id=4825
-    void unlock ()
-    {
-        int status = pthread_rwlock_unlock(&m_rwlock);
-        POMAGMA_ASSERT1(status == 0, "pthread_rwlock_unlock failed");
-    }
+    void unlock () { unlock_shared(); }
 
-    void lock_shared ()
+    void lock_shared () const
     {
         int status = pthread_rwlock_rdlock(&m_rwlock);
         POMAGMA_ASSERT1(status == 0, "pthread_rwlock_rdlock failed");
     }
 
-    void unlock_shared ()
+    // glibc seems to be buggy; don't unlock more often than it has been locked
+    // see http://sourceware.org/bugzilla/show_bug.cgi?id=4825
+    void unlock_shared () const
     {
-        unlock();
+        int status = pthread_rwlock_unlock(&m_rwlock);
+        POMAGMA_ASSERT1(status == 0, "pthread_rwlock_unlock failed");
     }
 
     typedef unique_lock<SharedMutex> UniqueLock;
@@ -198,12 +198,12 @@ struct AssertSharedMutex
 {
     struct UniqueLock
     {
-        UniqueLock (AssertSharedMutex &) { load_barrier(); }
+        explicit UniqueLock (AssertSharedMutex &) { load_barrier(); }
         ~UniqueLock () { store_barrier(); }
     };
     struct SharedLock
     {
-        SharedLock (AssertSharedMutex &) { load_barrier(); }
+        explicit SharedLock (const AssertSharedMutex &) { load_barrier(); }
         ~SharedLock () { store_barrier(); }
     };
 };
@@ -212,7 +212,7 @@ struct AssertSharedMutex
 
 class AssertSharedMutex
 {
-    std::atomic<int_fast64_t> m_count; // unique < 0, shared > 0
+    mutable std::atomic<int_fast64_t> m_count; // unique < 0, shared > 0
 
 public:
 
@@ -230,13 +230,13 @@ public:
         store_barrier();
     }
 
-    void lock_shared ()
+    void lock_shared () const
     {
         load_barrier();
         POMAGMA_ASSERT(++m_count > 0, "lock_shared contention");
     }
 
-    void unlock_shared ()
+    void unlock_shared () const
     {
         --m_count;
         store_barrier();

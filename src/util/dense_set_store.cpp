@@ -31,6 +31,7 @@ SetId DenseSetStore::store (DenseSet && set)
     POMAGMA_ASSERT1(set.item_dim() == m_item_dim, "size mismatch");
     Word * data = set.raw_data();
     SetId id = fingerprint(data, m_byte_dim);
+    SharedMutex::UniqueLock lock(m_mutex);
     auto inserted = m_index.insert({id, data});
     if (inserted.second) {
         set.move_ownership();

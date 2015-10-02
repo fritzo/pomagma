@@ -73,7 +73,7 @@ private:
     std::vector<ShardedRange> m_binary_relations;
     std::vector<ShardedRange> m_binary_functions;
     std::vector<ShardedRange> m_symmetric_functions;
-    mutable SharedMutex m_mutex;
+    SharedMutex m_mutex;
     bool m_frozen;
 };
 
