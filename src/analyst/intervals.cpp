@@ -11,8 +11,6 @@
 namespace pomagma {
 namespace intervals {
 
-using std::placeholders::_1;
-
 inline uint64_t Approximator::hash_name (const std::string & name)
 {
     return util::Fingerprint64(name.data(), name.size());
@@ -53,13 +51,7 @@ Approximator::Approximator (
                 val += sets[i];
             }
             return m_sets.store(std::move(val));
-        }),
-    m_close_upward_cache(
-        worker_pool,
-        std::bind(&Approximator::close_upward, this, _1)),
-    m_close_downward_cache(
-        worker_pool,
-        std::bind(&Approximator::close_downward, this, _1))
+        })
 {
     POMAGMA_ASSERT(m_top, "TOP is not defined");
     POMAGMA_ASSERT(m_bot, "BOT is not defined");
@@ -87,30 +79,34 @@ Approximator::Approximator (
         const auto & fun = * i.second;
         const uint64_t hash = hash_name(i.first);
         typedef SetPairToSetCache Cache;
-        POMAGMA_INSERT(
-            m_binary_cache,
-            CacheKey(hash, LHS_RHS),
-            new Cache(
-                worker_pool,
-                [this, &fun](const std::pair<SetId, SetId> & x){
-                    return function_lhs_rhs(fun, x.first, x.second);
-                }));
-        POMAGMA_INSERT(
-            m_binary_cache,
-            CacheKey(hash, LHS_VAL),
-            new Cache(
-                worker_pool,
-                [this, &fun](const std::pair<SetId, SetId> & x){
-                    return function_lhs_val(fun, x.first, x.second);
-                }));
-        POMAGMA_INSERT(
-            m_binary_cache,
-            CacheKey(hash, RHS_VAL),
-            new Cache(
-                worker_pool,
-                [this, &fun](const std::pair<SetId, SetId> & x){
-                    return function_rhs_val(fun, x.first, x.second);
-                }));
+        for (Parity p : {BELOW, ABOVE}) {
+            POMAGMA_INSERT(
+                m_binary_cache,
+                CacheKey(hash, LHS_RHS, p),
+                new Cache(
+                    worker_pool,
+                    [this, &fun, p](const std::pair<SetId, SetId> & x){
+                        return function_lhs_rhs(fun, x.first, x.second, p);
+                    }));
+        }
+        for (Parity p : {NBELOW, NABOVE}) {
+            POMAGMA_INSERT(
+                m_binary_cache,
+                CacheKey(hash, LHS_VAL, p),
+                new Cache(
+                    worker_pool,
+                    [this, &fun, p](const std::pair<SetId, SetId> & x){
+                        return function_lhs_val(fun, x.first, x.second, p);
+                    }));
+            POMAGMA_INSERT(
+                m_binary_cache,
+                CacheKey(hash, RHS_VAL, p),
+                new Cache(
+                    worker_pool,
+                    [this, &fun, p](const std::pair<SetId, SetId> & x){
+                        return function_rhs_val(fun, x.first, x.second, p);
+                    }));
+        }
     }
 
     POMAGMA_INFO("Initializing symmetric_function cache");
@@ -118,30 +114,34 @@ Approximator::Approximator (
         const auto & fun = * i.second;
         const uint64_t hash = hash_name(i.first);
         typedef SetPairToSetCache Cache;
-        POMAGMA_INSERT(
-            m_binary_cache,
-            CacheKey(hash, LHS_RHS),
-            new Cache(
-                worker_pool,
-                [this, &fun](const std::pair<SetId, SetId> & x){
-                    return function_lhs_rhs(fun, x.first, x.second);
-                }));
-        POMAGMA_INSERT(
-            m_binary_cache,
-            CacheKey(hash, LHS_VAL),
-            new Cache(
-                worker_pool,
-                [this, &fun](const std::pair<SetId, SetId> & x){
-                    return function_lhs_val(fun, x.first, x.second);
-                }));
-        POMAGMA_INSERT(
-            m_binary_cache,
-            CacheKey(hash, RHS_VAL),
-            new Cache(
-                worker_pool,
-                [this, &fun](const std::pair<SetId, SetId> & x){
-                    return function_rhs_val(fun, x.first, x.second);
-                }));
+        for (Parity p : {BELOW, ABOVE}) {
+            POMAGMA_INSERT(
+                m_binary_cache,
+                CacheKey(hash, LHS_RHS, p),
+                new Cache(
+                    worker_pool,
+                    [this, &fun, p](const std::pair<SetId, SetId> & x){
+                        return function_lhs_rhs(fun, x.first, x.second, p);
+                    }));
+        }
+        for (Parity p : {NBELOW, NABOVE}) {
+            POMAGMA_INSERT(
+                m_binary_cache,
+                CacheKey(hash, LHS_VAL, p),
+                new Cache(
+                    worker_pool,
+                    [this, &fun, p](const std::pair<SetId, SetId> & x){
+                        return function_lhs_val(fun, x.first, x.second, p);
+                    }));
+            POMAGMA_INSERT(
+                m_binary_cache,
+                CacheKey(hash, RHS_VAL, p),
+                new Cache(
+                    worker_pool,
+                    [this, &fun, p](const std::pair<SetId, SetId> & x){
+                        return function_rhs_val(fun, x.first, x.second, p);
+                    }));
+        }
     }
 }
 
@@ -195,75 +195,26 @@ inline SetId Approximator::lazy_fuse (
     return m_union_cache.try_find(std::vector<SetId>(sets.begin(), sets.end()));
 }
 
-inline SetId Approximator::lazy_find (
-    const std::string & name,
-    Direction direction,
-    SetId arg0,
-    SetId arg1)
-{
-    auto i = m_binary_cache.find(CacheKey{hash_name(name), direction});
-    POMAGMA_ASSERT1(i != m_binary_cache.end(), "programmer error");
-    return i->second->try_find({arg0, arg1});
-}
-
-//                LESS x y   LESS y z
-//   ----------   -------------------   TODO close under RAND
-//   LESS x TOP         LESS x z
-SetId Approximator::close_upward (SetId set) const
-{
-    const DenseSet original = m_sets.load(set);
-    DenseSet result(m_item_dim);
-
-    result.raw_insert(m_top);
-    for (auto iter = original.iter(); iter.ok(); iter.next()) {
-        Ob ob = * iter;
-        if (not result.contains(ob)) {
-            result += m_less.get_Lx_set(ob);
-        }
-    }
-
-    return m_sets.store(std::move(result));
-}
-
-//                LESS x y   LESS y z
-//   ----------   -------------------   TODO close under JOIN, RAND
-//   LESS BOT x         LESS x z
-SetId Approximator::close_downward (SetId set) const
-{
-    const DenseSet original = m_sets.load(set);
-    DenseSet result(m_item_dim);
-
-    result.raw_insert(m_bot);
-    for (auto iter = original.iter(); iter.ok(); iter.next()) {
-        Ob ob = * iter;
-        if (not result.contains(ob)) {
-            result += m_less.get_Rx_set(ob);
-        }
-    }
-
-    return m_sets.store(std::move(result));
-}
-
-Approximation Approximator::lazy_close (const Approximation & approx)
+Approximation Approximator::lazy_fuse (
+    const std::vector<Approximation> & messages)
 {
     Approximation result;
-    for (Parity p : {BELOW, NABOVE}) {
-        result[p] = m_close_downward_cache.try_find(approx[p]);
-    }
-    for (Parity p : {ABOVE, NBELOW}) {
-        result[p] = m_close_upward_cache.try_find(approx[p]);
+    for (Parity p : {ABOVE, BELOW, NABOVE, NBELOW}) {
+        result[p] = lazy_fuse(messages, p);
     }
     return result;
 }
 
-Approximation Approximator::lazy_fuse (
-    const std::vector<Approximation> & messages)
+inline SetId Approximator::lazy_find (
+    const std::string & name,
+    Direction direction,
+    SetId arg0,
+    SetId arg1,
+    Parity parity)
 {
-    Approximation result = unknown();
-    for (Parity p : {ABOVE, BELOW, NABOVE, NBELOW}) {
-        result[p] = lazy_fuse(messages, p);
-    }
-    return lazy_close(result);
+    auto i = m_binary_cache.find(CacheKey{hash_name(name), direction, parity});
+    POMAGMA_ASSERT1(i != m_binary_cache.end(), "programmer error");
+    return i->second->try_find({arg0, arg1});
 }
 
 Approximation Approximator::lazy_binary_function_lhs_rhs (
@@ -274,7 +225,7 @@ Approximation Approximator::lazy_binary_function_lhs_rhs (
     Approximation val = unknown();
     for (Parity p : {ABOVE, BELOW}) {
         val[p] = (lhs[p] and rhs[p])
-               ? lazy_find(name, LHS_RHS, lhs[p], rhs[p])
+               ? lazy_find(name, LHS_RHS, lhs[p], rhs[p], p)
                : 0;
     }
     return val;
@@ -287,10 +238,10 @@ Approximation Approximator::lazy_binary_function_lhs_val (
 {
     Approximation rhs = unknown();
     rhs[NBELOW] = (lhs[BELOW] and val[NBELOW])
-                ? lazy_find(name, LHS_VAL, lhs[BELOW], val[NBELOW])
+                ? lazy_find(name, LHS_VAL, lhs[BELOW], val[NBELOW], NBELOW)
                 : 0;
     rhs[NABOVE] = (lhs[ABOVE] and val[NABOVE])
-                ? lazy_find(name, LHS_VAL, lhs[ABOVE], val[NABOVE])
+                ? lazy_find(name, LHS_VAL, lhs[ABOVE], val[NABOVE], NABOVE)
                 : 0;
     return rhs;
 }
@@ -302,37 +253,54 @@ Approximation Approximator::lazy_binary_function_rhs_val (
 {
     Approximation lhs = unknown();
     lhs[NBELOW] = (rhs[BELOW] and val[NBELOW])
-                ? lazy_find(name, RHS_VAL, rhs[BELOW], val[NBELOW])
+                ? lazy_find(name, RHS_VAL, rhs[BELOW], val[NBELOW], NBELOW)
                 : 0;
     lhs[NABOVE] = (rhs[ABOVE] and val[NABOVE])
-                ? lazy_find(name, RHS_VAL, rhs[ABOVE], val[NABOVE])
+                ? lazy_find(name, RHS_VAL, rhs[ABOVE], val[NABOVE], NABOVE)
                 : 0;
     return rhs;
 }
 
-// LESS f g    LESS x y 
-// --------------------
-// LESS APP f x APP g y
+inline void Approximator::convex_insert (
+    DenseSet & set,
+    Ob ob,
+    bool downward) const
+{
+    if (not set.contains(ob)) {
+        set += downward ? m_less.get_Rx_set(ob) : m_less.get_Lx_set(ob);
+    }
+}
+
+// LESS f g    LESS x y                             LESS x y    LESS y z
+// --------------------   ----------   ----------   --------------------
+// LESS APP f x APP g y   LESS BOT x   LESS x TOP         LESS x z
 template<class Function>
 SetId Approximator::function_lhs_rhs (
     const Function & fun,
     SetId lhs,
-    SetId rhs) const
+    SetId rhs,
+    Parity parity) const
 {
+    POMAGMA_ASSERT1(parity == BELOW or parity == ABOVE, "invalid parity");
+    const bool downward = (parity == BELOW);
     const DenseSet lhs_set = m_sets.load(lhs); // positive
     const DenseSet rhs_set = m_sets.load(rhs); // positive
     DenseSet val_set(m_item_dim); // positive
-    DenseSet temp_set(m_item_dim);
 
+    const Ob optimum = downward ? m_bot : m_top;
+    POMAGMA_ASSERT1(lhs_set.contains(optimum), "invalid lhs set");
+    POMAGMA_ASSERT1(rhs_set.contains(optimum), "invalid rhs set");
+    val_set.insert(optimum);
+
+    DenseSet temp_set(m_item_dim);
     for (auto iter = lhs_set.iter(); iter.ok(); iter.next()) {
         Ob lhs = * iter;
 
-        // optimize for special cases of APP and COMP
+        // optimize for constant functions
         if (Ob lhs_top = fun.find(lhs, m_top)) {
             if (Ob lhs_bot = fun.find(lhs, m_bot)) {
-                bool lhs_is_constant = (lhs_top == lhs_bot);
-                if (lhs_is_constant) {
-                    val_set.raw_insert(lhs_top);
+                if (lhs_top == lhs_bot) {
+                    convex_insert(val_set, lhs_top, downward);
                     continue;
                 }
             }
@@ -342,7 +310,7 @@ SetId Approximator::function_lhs_rhs (
         for (auto iter = temp_set.iter(); iter.ok(); iter.next()) {
             Ob rhs = * iter;
             Ob val = fun.find(lhs, rhs);
-            val_set.raw_insert(val);
+            convex_insert(val_set, val, downward);
         }
     }
 
@@ -351,25 +319,37 @@ SetId Approximator::function_lhs_rhs (
 
 // LESS f g   NLESS APP f x APP g y
 // --------------------------------
-//            NLESS x y 
+//            NLESS x y
+//
+// NLESS x z    LESS y z    LESS x y    NLESS x z
+// ---------------------    ---------------------
+//       NLESS x y                NLESS y z
 template<class Function>
 SetId Approximator::function_lhs_val (
     const Function & fun,
     SetId lhs,
-    SetId val) const
+    SetId val,
+    Parity parity) const
 {
+    POMAGMA_ASSERT1(parity == NBELOW or parity == NABOVE, "invalid parity");
+    const bool downward = (parity == NABOVE);
     const DenseSet lhs_set = m_sets.load(lhs); // positive
     const DenseSet val_set = m_sets.load(val); // negative
     DenseSet rhs_set(m_item_dim); // negative
 
-    // slow naive implementation
-    for (auto iter = lhs_set.iter(); iter.ok(); iter.next()) {
-        Ob lhs = * iter;
-        for (auto iter = fun.iter_lhs(lhs); iter.ok(); iter.next()) {
-            Ob rhs = * iter;
+    for (auto iter = m_structure.carrier().support().iter_diff(rhs_set);
+        iter.ok(); iter.next())
+    {
+        Ob rhs = * iter;
+        if (unlikely(rhs_set.contains(rhs))) continue; // iterator latency
+        for (auto iter = fun.get_Rx_set(rhs).iter_insn(lhs_set);
+            iter.ok(); iter.next())
+        {
+            Ob lhs = * iter;
             Ob val = fun.find(lhs, rhs);
             if (val_set.contains(val)) {
-                rhs_set.raw_insert(rhs);
+                convex_insert(rhs_set, rhs, downward);
+                break;
             }
         }
     }
@@ -380,24 +360,36 @@ SetId Approximator::function_lhs_val (
 // NLESS APP f x APP g y   LESS x y
 // --------------------------------
 //             NLESS f g
+//
+// NLESS x z    LESS y z    LESS x y    NLESS x z
+// ---------------------    ---------------------
+//       NLESS x y                NLESS y z
 template<class Function>
 SetId Approximator::function_rhs_val (
     const Function & fun,
     SetId rhs,
-    SetId val) const
+    SetId val,
+    Parity parity) const
 {
+    POMAGMA_ASSERT1(parity == NBELOW or parity == NABOVE, "invalid parity");
+    const bool downward = (parity == NABOVE);
     const DenseSet rhs_set = m_sets.load(rhs); // positive
     const DenseSet val_set = m_sets.load(val); // negative
     DenseSet lhs_set(m_item_dim); // negative
 
-    // slow naive implementation
-    for (auto iter = rhs_set.iter(); iter.ok(); iter.next()) {
-        Ob rhs = * iter;
-        for (auto iter = fun.iter_rhs(rhs); iter.ok(); iter.next()) {
-            Ob lhs = * iter;
+    for (auto iter = m_structure.carrier().support().iter_diff(lhs_set);
+        iter.ok(); iter.next())
+    {
+        Ob lhs = * iter;
+        if (unlikely(lhs_set.contains(lhs))) continue; // iterator latency
+        for (auto iter = fun.get_Lx_set(lhs).iter_insn(rhs_set);
+            iter.ok(); iter.next())
+        {
+            Ob rhs = * iter;
             Ob val = fun.find(lhs, rhs);
             if (val_set.contains(val)) {
-                lhs_set.raw_insert(lhs);
+                convex_insert(lhs_set, lhs, downward);
+                break;
             }
         }
     }

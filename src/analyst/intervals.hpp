@@ -8,6 +8,7 @@
 #include <string>
 #include <unordered_map>
 #include <utility>
+#include <tuple>
 #include <vector>
 
 // declared in pomagma/vendor/farmhash/farmhash.h
@@ -127,8 +128,6 @@ private:
     Signature & signature () { return m_structure.signature(); }
     static uint64_t hash_name (const std::string & name);
 
-    Approximation lazy_close (const Approximation & approx);
-
     Trool lazy_disjoint (SetId lhs, SetId rhs);
     SetId lazy_fuse (
         const std::vector<Approximation> & messages,
@@ -137,17 +136,29 @@ private:
         const std::string & name,
         Direction direction,
         SetId arg0,
-        SetId arg1);
-
-    SetId close_upward (SetId set) const;
-    SetId close_downward (SetId set) const;
+        SetId arg1,
+        Parity parity);
 
     template<class Function>
-    SetId function_lhs_rhs (const Function & fun, SetId lhs, SetId rhs) const;
+    SetId function_lhs_rhs (
+        const Function & fun,
+        SetId lhs,
+        SetId rhs,
+        Parity parity) const;
     template<class Function>
-    SetId function_lhs_val (const Function & fun, SetId lhs, SetId val) const;
+    SetId function_lhs_val (
+        const Function & fun,
+        SetId lhs,
+        SetId val,
+        Parity parity) const;
     template<class Function>
-    SetId function_rhs_val (const Function & fun, SetId rhs, SetId val) const;
+    SetId function_rhs_val (
+        const Function & fun,
+        SetId rhs,
+        SetId val,
+        Parity parity) const;
+
+    void convex_insert (DenseSet & set, Ob ob, bool downward) const;
 
     // Structure parts.
     Structure & m_structure;
@@ -169,7 +180,7 @@ private:
     Approximation m_unknown;
 
     // LazyMap caches.
-    typedef std::pair<uint64_t, Direction> CacheKey;
+    typedef std::tuple<uint64_t, Direction, Parity> CacheKey;
     typedef LazyMap<
         std::pair<SetId, SetId>,
         Trool,
@@ -189,13 +200,9 @@ private:
 
     SetPairToTroolCache m_disjoint_cache;
     SetVectorToSetCache m_union_cache;
-    LazyMap<SetId, SetId> m_close_upward_cache;
-    LazyMap<SetId, SetId> m_close_downward_cache;
     std::unordered_map<std::string, Approximation> m_nullary_cache;
-    std::unordered_map<
-        CacheKey,
-        SetPairToSetCache *,
-        PodHash<CacheKey>> m_binary_cache;
+    std::unordered_map<CacheKey, SetPairToSetCache *, PodHash<CacheKey>>
+        m_binary_cache;
 };
 
 inline Approximation Approximator::interval (Ob lb, Ob ub) const
