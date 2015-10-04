@@ -18,15 +18,18 @@ public:
     ~DenseSetStore ();
 
     SetId store (DenseSet && set); // memory is never freed
-    DenseSet load (SetId id) const
+    DenseSet load (SetId id) const { return DenseSet(m_item_dim, find(id)); }
+
+private:
+
+    Word * insert (SetId id, Word * data);
+    Word * find (SetId id) const
     {
         SharedMutex::SharedLock lock(m_mutex);
         auto i = m_index.find(id);
         POMAGMA_ASSERT1(i != m_index.end(), "missing id " << id);
-        return DenseSet(m_item_dim, i->second);
+        return i->second;
     }
-
-private:
 
     struct HashId { SetId operator() (const SetId & id) const { return id; } };
 
