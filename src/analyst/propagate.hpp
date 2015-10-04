@@ -24,17 +24,17 @@ enum Arity
     VAR
 };
 
-struct Term
+struct Expr
 {
     const Arity arity;
     const std::string name;
-    const std::shared_ptr<Term> args[2];
+    const std::shared_ptr<Expr> args[2];
 };
 
 struct Theory
 {
-    const std::vector<std::shared_ptr<Term>> facts;
-    const std::vector<const Term *> terms; // a flattened copy of facts
+    const std::vector<std::shared_ptr<Expr>> facts;
+    const std::vector<const Expr *> exprs; // a flattened copy of facts
 };
 
 Theory parse_theory (

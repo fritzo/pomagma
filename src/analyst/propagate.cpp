@@ -19,27 +19,27 @@ inline size_t hash_data (const void * data, size_t size)
     return util::Hash(reinterpret_cast<const char *>(data), size);
 }
 
-struct HashTermPtr
+struct HashExprPtr
 {
-    size_t operator() (const std::shared_ptr<Term> & term) const
+    size_t operator() (const std::shared_ptr<Expr> & expr) const
     {
-        POMAGMA_ASSERT1(term.get(), "term is null");
-        std::tuple<Arity, size_t, const Term *, const Term *> data
+        POMAGMA_ASSERT1(expr.get(), "expr is null");
+        std::tuple<Arity, size_t, const Expr *, const Expr *> data
         {
-            term->arity,
-            hash_data(term->name.data(), term->name.size()),
-            term->args[0].get(),
-            term->args[1].get()
+            expr->arity,
+            hash_data(expr->name.data(), expr->name.size()),
+            expr->args[0].get(),
+            expr->args[1].get()
         };
         return hash_data(& data, sizeof(data));
     }
 };
 
-struct EqTermPtr
+struct EqExprPtr
 {
     bool operator() (
-        const std::shared_ptr<Term> & lhs,
-        const std::shared_ptr<Term> & rhs) const
+        const std::shared_ptr<Expr> & lhs,
+        const std::shared_ptr<Expr> & rhs) const
     {
         POMAGMA_ASSERT1(lhs.get(), "lhs is null");
         POMAGMA_ASSERT1(rhs.get(), "rhs is null");
@@ -50,16 +50,16 @@ struct EqTermPtr
     }
 };
 
-typedef std::unordered_set<std::shared_ptr<Term>, HashTermPtr, EqTermPtr>
-    TermSet;
+typedef std::unordered_set<std::shared_ptr<Expr>, HashExprPtr, EqExprPtr>
+    ExprSet;
 
 class Reducer
 {
 public:
 
-    Reducer (TermSet & deduped) : m_deduped(deduped) {}
+    Reducer (ExprSet & deduped) : m_deduped(deduped) {}
 
-    typedef std::shared_ptr<::pomagma::propagate::Term> Term;
+    typedef std::shared_ptr<Expr> Term;
 
     Term reduce (
             const std::string & token,
@@ -141,11 +141,11 @@ private:
             Term arg0 = Term(),
             Term arg1 = Term())
     {
-        Term result(new ::pomagma::propagate::Term{arity, name, {arg0, arg1}});
+        Term result(new Expr{arity, name, {arg0, arg1}});
         return * m_deduped.insert(result).first;
     }
 
-    TermSet & m_deduped;
+    ExprSet & m_deduped;
 };
 
 class Parser : public ExprParser<Reducer>
@@ -153,7 +153,7 @@ class Parser : public ExprParser<Reducer>
 public:
 
     Parser (Signature & signature,
-            TermSet & deduped,
+            ExprSet & deduped,
             std::vector<std::string> & error_log) :
         ExprParser<Reducer>(signature, m_reducer, error_log),
         m_reducer(deduped)
@@ -170,9 +170,9 @@ Theory parse_theory (
     const std::vector<std::string> & polish_facts,
     std::vector<std::string> & error_log)
 {
-    std::vector<std::shared_ptr<Term>> facts;
+    std::vector<std::shared_ptr<Expr>> facts;
 
-    TermSet deduped;
+    ExprSet deduped;
     bool error = false;
     {
         Parser parser(signature, deduped, error_log);
@@ -187,12 +187,12 @@ Theory parse_theory (
     }
     if (error) return Theory();
 
-    std::vector<const Term *> terms;
-    for (auto term_ptr : deduped) {
-        terms.push_back(term_ptr.get());
+    std::vector<const Expr *> exprs;
+    for (auto expr_ptr : deduped) {
+        exprs.push_back(expr_ptr.get());
     }
 
-    return {std::move(facts), std::move(terms)};
+    return {std::move(facts), std::move(exprs)};
 }
 
 //----------------------------------------------------------------------------
@@ -208,15 +208,15 @@ typedef intervals::Approximation State;
 namespace {
 
 inline void propagate_constraint (
-    const Term * term,
-    const std::unordered_map<const Term *, State> & states,
-    std::unordered_map<const Term *, std::vector<State>> & message_queues,
+    const Expr * expr,
+    const std::unordered_map<const Expr *, State> & states,
+    std::unordered_map<const Expr *, std::vector<State>> & message_queues,
     Approximator & approximator)
 {
-    const std::string & name = term->name;
-    switch (term->arity) {
+    const std::string & name = expr->name;
+    switch (expr->arity) {
         case NULLARY_FUNCTION: {
-            const Term * val = term;
+            const Expr * val = expr;
             message_queues[val].push_back(approximator.nullary_function(name));
         } break;
 
@@ -227,9 +227,9 @@ inline void propagate_constraint (
 
         case BINARY_FUNCTION:
         case SYMMETRIC_FUNCTION: {
-            const Term * lhs = term->args[0].get();
-            const Term * rhs = term->args[1].get();
-            const Term * val = term;
+            const Expr * lhs = expr->args[0].get();
+            const Expr * rhs = expr->args[1].get();
+            const Expr * val = expr;
             message_queues[val].push_back(
                 approximator.lazy_binary_function_lhs_rhs(
                     name, map_find(states, lhs), map_find(states, rhs)));
@@ -246,8 +246,8 @@ inline void propagate_constraint (
         } break;
 
         case BINARY_RELATION: {
-            const Term * lhs = term->args[0].get();
-            const Term * rhs = term->args[1].get();
+            const Expr * lhs = expr->args[0].get();
+            const Expr * rhs = expr->args[1].get();
             if (name == "LESS") {
                 message_queues[lhs].push_back(
                     approximator.less_rhs(map_find(states, rhs)));
@@ -264,8 +264,8 @@ inline void propagate_constraint (
         } break;
 
         case EQUAL: {
-            const Term * lhs = term->args[0].get();
-            const Term * rhs = term->args[1].get();
+            const Expr * lhs = expr->args[0].get();
+            const Expr * rhs = expr->args[1].get();
             message_queues[lhs].push_back(map_find(states, rhs));
             message_queues[rhs].push_back(map_find(states, lhs));
         } break;
@@ -277,20 +277,20 @@ inline void propagate_constraint (
 
 // this should have time complexity O(#constraints)
 inline size_t propagate_step (
-    std::unordered_map<const Term *, State> & states,
-    std::unordered_map<const Term *, std::vector<State>> & message_queues,
+    std::unordered_map<const Expr *, State> & states,
+    std::unordered_map<const Expr *, std::vector<State>> & message_queues,
     const Theory & theory,
     Approximator & approximator)
 {
-    for (const Term * term : theory.terms) {
-        propagate_constraint(term, states, message_queues, approximator);
+    for (const Expr * expr : theory.exprs) {
+        propagate_constraint(expr, states, message_queues, approximator);
     }
 
     size_t change_count = 0;
     for (auto & i : states) {
-        const Term * term = i.first;
+        const Expr * expr = i.first;
         State & state = i.second;
-        std::vector<State> & messages = message_queues.find(term)->second;
+        std::vector<State> & messages = message_queues.find(expr)->second;
         const State updated_state = approximator.lazy_fuse(messages);
         messages.clear();
         if (updated_state != state) {
@@ -314,14 +314,14 @@ inline size_t propagate_step (
 
 Trool lazy_validate (const Theory & theory, Approximator & approximator)
 {
-    POMAGMA_DEBUG("Propagating " << theory.terms.size() << " variables");
+    POMAGMA_DEBUG("Propagating " << theory.exprs.size() << " variables");
 
-    std::unordered_map<const Term *, State> states;
-    for (const Term * term : theory.terms) {
-        states.insert({term, approximator.unknown()});
+    std::unordered_map<const Expr *, State> states;
+    for (const Expr * expr : theory.exprs) {
+        states.insert({expr, approximator.unknown()});
     }
 
-    std::unordered_map<const Term *, std::vector<State>> message_queues;
+    std::unordered_map<const Expr *, std::vector<State>> message_queues;
     while (propagate_step(states, message_queues, theory, approximator)) {}
 
     Trool is_valid = Trool::TRUE;
