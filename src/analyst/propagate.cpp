@@ -167,27 +167,51 @@ private:
     Reducer m_reducer;
 };
 
+inline bool is_fact (const Expr & expr)
+{
+    switch (expr.arity) {
+        case UNARY_RELATION:
+        case BINARY_RELATION:
+        case EQUAL:
+            return true;
+
+        default:
+            return false;
+    }
+}
+
 Theory parse_theory (
     Signature & signature,
     const std::vector<std::string> & polish_facts,
     std::vector<std::string> & error_log)
 {
     std::vector<std::shared_ptr<Expr>> facts;
-
     ExprSet deduped;
-    bool error = false;
     {
         Parser parser(signature, deduped, error_log);
-        for (const auto & polish_fact : polish_facts) {
-            auto fact = parser.parse(polish_fact);
-            if (likely(fact.get())) {
-                facts.push_back(fact);
-            } else {
+        bool error;
+        for (size_t i = 0; i < polish_facts.size(); ++i) {
+            auto fact = parser.parse(polish_facts[i]);
+            if (unlikely(fact.get() == nullptr)) {
+                std::ostringstream message;
+                message << "Error parsing fact " << i << " of "
+                    << polish_facts.size();
+                error_log.push_back(message.str());
                 error = true;
+                continue;
             }
+            if (unlikely(not is_fact(* fact))) {
+                std::ostringstream message;
+                message << "Error: fact " << i << " of " << polish_facts.size()
+                    << " is not a relation";
+                error_log.push_back(message.str());
+                error = true;
+                continue;
+            }
+            facts.push_back(fact);
         }
+        if (error) return Theory();
     }
-    if (error) return Theory();
 
     std::vector<const Expr *> exprs;
     for (auto expr_ptr : deduped) {
