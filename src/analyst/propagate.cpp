@@ -141,7 +141,9 @@ private:
             Term arg0 = Term(),
             Term arg1 = Term())
     {
-        Term result(new Expr{arity, name, {arg0, arg1}});
+        // kludge to deal with old gcc syntax
+        Expr expr = {arity, name, {arg0, arg1}};
+        Term result(new Expr(std::move(expr)));
         return * m_deduped.insert(result).first;
     }
 
