@@ -17,7 +17,7 @@ class SymmetricFunction : noncopyable
 
 public:
 
-    SymmetricFunction (Carrier & carrier);
+    explicit SymmetricFunction (Carrier & carrier);
     SymmetricFunction (Carrier & carrier, SymmetricFunction && other);
     void validate () const;
     void log_stats (const std::string & prefix) const;

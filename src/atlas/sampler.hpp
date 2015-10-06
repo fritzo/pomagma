@@ -61,7 +61,7 @@ class Sampler : noncopyable
 
 public:
 
-    Sampler (Signature & signature);
+    explicit Sampler (Signature & signature);
 
     void validate () const;
     void log_stats () const;

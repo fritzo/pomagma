@@ -57,7 +57,7 @@ class Reducer
 {
 public:
 
-    Reducer (ExprSet & deduped) : m_deduped(deduped) {}
+    explicit Reducer (ExprSet & deduped) : m_deduped(deduped) {}
 
     typedef std::shared_ptr<Expr> Term;
 

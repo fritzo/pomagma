@@ -21,7 +21,7 @@ class TheoremQueue
 
 public:
 
-    TheoremQueue (BinaryRelation & rel) : m_rel(rel) {}
+    explicit TheoremQueue (BinaryRelation & rel) : m_rel(rel) {}
     ~TheoremQueue ()
     {
         POMAGMA_ASSERT(m_queue.empty(), "theorems have not been flushed");
@@ -61,7 +61,7 @@ class LhsFixedTheoremQueue
 
 public:
 
-    LhsFixedTheoremQueue (BinaryRelation & rel)
+    explicit LhsFixedTheoremQueue (BinaryRelation & rel)
         : m_rel(rel),
           m_lhs(0),
           m_rhs(rel.item_dim())

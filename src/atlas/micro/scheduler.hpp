@@ -26,7 +26,7 @@ struct MergeTask
     Ob dep;
 
     MergeTask () {}
-    MergeTask (Ob d) : dep(d) {}
+    explicit MergeTask (Ob d) : dep(d) {}
 };
 
 struct ExistsTask
@@ -34,7 +34,7 @@ struct ExistsTask
     Ob ob;
 
     ExistsTask () {}
-    ExistsTask (Ob o) : ob(o) {}
+    explicit ExistsTask (Ob o) : ob(o) {}
 
     bool references (Ob dep) const { return ob == dep; }
 };
@@ -79,7 +79,7 @@ struct NullaryFunctionTask
     const NullaryFunction * ptr;
 
     NullaryFunctionTask () {}
-    NullaryFunctionTask (const NullaryFunction & f) : ptr(&f) {}
+    explicit NullaryFunctionTask (const NullaryFunction & f) : ptr(&f) {}
 
     bool references (Ob) const { return false; }
 };
@@ -130,7 +130,7 @@ struct AssumeTask
     std::string expression;
 
     AssumeTask () {}
-    AssumeTask (const std::string & e) : expression(e) {}
+    explicit AssumeTask (const std::string & e) : expression(e) {}
 
     bool references (Ob) = delete;
 };
@@ -140,7 +140,7 @@ struct CleanupTask
     unsigned long type;
 
     CleanupTask () {}
-    CleanupTask (unsigned long t) : type(t) {}
+    explicit CleanupTask (unsigned long t) : type(t) {}
 };
 
 struct SampleTask

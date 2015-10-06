@@ -13,7 +13,7 @@ class Corpus::Dag
 {
 public:
 
-    Dag (Signature & signature)
+    explicit Dag (Signature & signature)
         : m_signature(signature),
           m_new_term(new Term())
     {}
@@ -171,7 +171,7 @@ class Corpus::Reducer
 {
 public:
 
-    Reducer (Dag & dag) : m_dag(dag) {}
+    explicit Reducer (Dag & dag) : m_dag(dag) {}
 
     typedef const Corpus::Term * Term;
 

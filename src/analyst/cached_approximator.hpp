@@ -18,7 +18,7 @@ public:
     const Approximation approx;
     const uint64_t hash;
 
-    HashedApproximation (Approximation && a)
+    explicit HashedApproximation (Approximation && a)
         : approx(std::move(a)),
           hash(compute_hash(approx))
     {
@@ -104,7 +104,7 @@ private:
 
 public:
 
-    CachedApproximator (Approximator & approximator) :
+    explicit CachedApproximator (Approximator & approximator) :
         m_approximator(approximator),
         m_cache([this](const Term * term, Cache::Callback callback){
             m_pool.schedule([this, term, callback]{

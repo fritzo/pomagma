@@ -16,7 +16,7 @@ class BinaryFunction : noncopyable
 
 public:
 
-    BinaryFunction (Carrier & carrier);
+    explicit BinaryFunction (Carrier & carrier);
     BinaryFunction (Carrier & carrier, BinaryFunction && other);
     void validate () const;
     void log_stats (const std::string & prefix) const;

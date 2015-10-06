@@ -87,7 +87,7 @@ class ProgramParser::SymbolTableStack
 
 public:
 
-    SymbolTableStack (bool warn_unused) : m_warn_unused(warn_unused)
+    explicit SymbolTableStack (bool warn_unused) : m_warn_unused(warn_unused)
     {
         m_stack.resize(1);
     }

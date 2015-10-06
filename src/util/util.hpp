@@ -135,7 +135,10 @@ class Stopwatch
     typedef std::chrono::time_point<Clock> Time;
     Time m_stop;
 public:
-    Stopwatch (std::chrono::milliseconds dt) : m_stop(Clock::now() + dt) {}
+    explicit Stopwatch (std::chrono::milliseconds dt) :
+        m_stop(Clock::now() + dt)
+    {
+    }
     bool done () const { return Clock::now() >= m_stop; }
     bool ok () const { return Clock::now() < m_stop; }
 };
@@ -223,7 +226,7 @@ public:
 
     static size_t level () { return s_state.log_level; }
 
-    Log (size_t level)
+    explicit Log (size_t level)
     {
         m_message << std::left << std::setw(8) << getpid();
         m_message << std::left << std::setw(12) << get_elapsed_time();

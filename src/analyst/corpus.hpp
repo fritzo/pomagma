@@ -137,7 +137,7 @@ public:
         }
     };
 
-    Corpus (Signature & signature);
+    explicit Corpus (Signature & signature);
     ~Corpus ();
 
     Linker linker (

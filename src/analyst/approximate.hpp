@@ -69,7 +69,7 @@ class Approximator : noncopyable
 {
 public:
 
-    Approximator (Structure & structure);
+    explicit Approximator (Structure & structure);
 
     Signature & signature () { return m_structure.signature(); }
 
@@ -190,7 +190,7 @@ public:
 
     typedef Approximation Term;
 
-    ApproximateReducer (Approximator & approximator)
+    explicit ApproximateReducer (Approximator & approximator)
         : m_approximator(approximator)
     {}
 
@@ -246,9 +246,9 @@ class ApproximateParser : public TermParser<ApproximateReducer>
 {
 public:
 
-    ApproximateParser (Approximator & approximator)
-        : TermParser<ApproximateReducer>(approximator.signature(), m_reducer),
-          m_reducer(approximator)
+    explicit ApproximateParser (Approximator & approximator) :
+        TermParser<ApproximateReducer>(approximator.signature(), m_reducer),
+        m_reducer(approximator)
     {
     }
 

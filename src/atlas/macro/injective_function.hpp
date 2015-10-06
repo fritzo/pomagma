@@ -17,7 +17,7 @@ class InjectiveFunction : noncopyable
 
 public:
 
-    InjectiveFunction (const Carrier & carrier);
+    explicit InjectiveFunction (const Carrier & carrier);
     InjectiveFunction (const Carrier & carrier, InjectiveFunction && other);
     ~InjectiveFunction ();
     void validate () const;

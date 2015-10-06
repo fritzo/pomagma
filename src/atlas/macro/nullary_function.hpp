@@ -14,7 +14,7 @@ class NullaryFunction : noncopyable
 
 public:
 
-    NullaryFunction (const Carrier & carrier);
+    explicit NullaryFunction (const Carrier & carrier);
     NullaryFunction (const Carrier & carrier, NullaryFunction && other);
     void validate () const;
     void log_stats (const std::string & prefix) const;

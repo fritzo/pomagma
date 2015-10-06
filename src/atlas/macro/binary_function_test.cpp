@@ -15,7 +15,7 @@ struct Example
 {
     BinaryFunction fun;
 
-    Example (Carrier & carrier) : fun(carrier)
+    explicit Example (Carrier & carrier) : fun(carrier)
     {
         const DenseSet & support = carrier.support();
 

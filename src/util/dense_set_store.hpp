@@ -14,7 +14,7 @@ public:
 
     typedef sequential::DenseSet DenseSet;
 
-    DenseSetStore (size_t item_dim);
+    explicit DenseSetStore (size_t item_dim);
     ~DenseSetStore ();
 
     SetId store (DenseSet && set); // memory is never freed

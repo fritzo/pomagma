@@ -192,8 +192,7 @@ class LineParser
 {
 public:
 
-    LineParser (const char * filename)
-        : m_file(filename)
+    explicit LineParser (const char * filename) : m_file(filename)
     {
         POMAGMA_ASSERT(m_file, "failed to open " << filename);
         next();

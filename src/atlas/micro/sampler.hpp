@@ -18,7 +18,7 @@ public:
 
     Carrier & carrier;
 
-    Policy (Carrier & c) : carrier(c) {}
+    explicit Policy (Carrier & c) : carrier(c) {}
 
     Ob sample (const NullaryFunction & fun);
     Ob sample (const InjectiveFunction & fun, Ob key);

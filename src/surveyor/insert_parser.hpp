@@ -80,9 +80,9 @@ class InsertParser : public TermParser<InsertReducer>
 {
 public:
 
-    InsertParser (Signature & signature)
-        : TermParser<InsertReducer>(signature, m_reducer),
-          m_reducer(* signature.carrier())
+    explicit InsertParser (Signature & signature) :
+        TermParser<InsertReducer>(signature, m_reducer),
+        m_reducer(* signature.carrier())
     {
     }
 

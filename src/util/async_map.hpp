@@ -18,10 +18,7 @@ public:
     typedef std::function<void(const Value *)> Callback;
     typedef std::function<void(Key, Callback)> AsyncFunction;
 
-    AsyncMap (AsyncFunction function)
-        : m_function(function)
-    {
-    }
+    explicit AsyncMap (AsyncFunction function) : m_function(function) {}
 
     ~AsyncMap ()
     {

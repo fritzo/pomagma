@@ -72,7 +72,7 @@ class Validator : noncopyable
 
 public:
 
-    Validator (Approximator & approximator)
+    explicit Validator (Approximator & approximator)
         : m_approximator(approximator),
           m_cached_approximator(approximator),
           m_function({* this}),

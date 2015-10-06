@@ -49,8 +49,8 @@ class FindParser : public TermParser<FindReducer>
 {
 public:
 
-    FindParser (Signature & signature)
-        : TermParser(signature, m_reducer)
+    explicit FindParser (Signature & signature) :
+        TermParser(signature, m_reducer)
     {
     }
 

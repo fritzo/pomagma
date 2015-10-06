@@ -14,7 +14,7 @@ class UnaryRelation : noncopyable
 
 public:
 
-    UnaryRelation (const Carrier & carrier);
+    explicit UnaryRelation (const Carrier & carrier);
     UnaryRelation (const Carrier & carrier, UnaryRelation && other);
     ~UnaryRelation ();
     void validate () const;
