@@ -67,7 +67,7 @@ Approximator::Approximator (
         m_known[ob][NABOVE] = m_sets.store(m_nless.get_Lx_set(ob));
     }
     m_unknown[BELOW] = m_known[m_bot][BELOW];
-    m_unknown[ABOVE] = m_known[m_bot][ABOVE];
+    m_unknown[ABOVE] = m_known[m_top][ABOVE];
     m_unknown[NBELOW] = m_empty_set;
     m_unknown[NABOVE] = m_empty_set;
 
@@ -189,14 +189,13 @@ inline SetId Approximator::lazy_fuse (
     Parity parity)
 {
     std::set<SetId> sets;
-    size_t count = 0;
     for (const auto & message : messages) {
         if (message[parity] == 0) return 0; // wait for pending computations
         if (message[parity] == m_unknown[parity]) continue; // ignore unknowns
-        count += sets.insert(message[parity]).second; // ignore duplicates
+        sets.insert(message[parity]).second;
     }
-    if (count == 0) return m_unknown[parity];
-    if (count == 1) return * sets.begin();
+    if (sets.size() == 0) return m_unknown[parity];
+    if (sets.size() == 1) return * sets.begin();
     return m_union_cache.try_find(std::vector<SetId>(sets.begin(), sets.end()));
 }
 

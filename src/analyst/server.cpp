@@ -168,19 +168,11 @@ Server::SolutionSet Server::solve (
 pomagma::Trool Server::validate_facts (
     const std::vector<std::string> & polish_facts)
 {
-    size_t initial_error_count = m_error_log.size();
     const auto theory = propagate::parse_theory(
         m_structure.signature(),
         polish_facts,
         m_error_log);
-    if (m_error_log.size() > initial_error_count) {
-        return pomagma::Trool::FALSE;
-    }
-#ifdef PROPAGATE_PARSER_IS_READY
     return propagate::lazy_validate(theory, m_intervals_approximator);
-#else // PROPAGATE_PARSER_IS_READY
-    return pomagma::Trool::MAYBE;
-#endif // PROPAGATE_PARSER_IS_READY
 }
 
 namespace

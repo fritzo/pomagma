@@ -23,7 +23,7 @@ struct HashExprPtr
 {
     size_t operator() (const std::shared_ptr<Expr> & expr) const
     {
-        POMAGMA_ASSERT1(expr.get(), "expr is null");
+        POMAGMA_ASSERT1(expr, "expr is null");
         std::tuple<Arity, size_t, const Expr *, const Expr *> data
         {
             expr->arity,
@@ -41,8 +41,8 @@ struct EqExprPtr
         const std::shared_ptr<Expr> & lhs,
         const std::shared_ptr<Expr> & rhs) const
     {
-        POMAGMA_ASSERT1(lhs.get(), "lhs is null");
-        POMAGMA_ASSERT1(rhs.get(), "rhs is null");
+        POMAGMA_ASSERT1(lhs, "lhs is null");
+        POMAGMA_ASSERT1(rhs, "rhs is null");
         return lhs->arity == rhs->arity
            and lhs->name == rhs->name
            and lhs->args[0].get() == rhs->args[0].get()
@@ -65,7 +65,7 @@ public:
             const std::string & token,
             const NullaryFunction *)
     {
-        return new_term(token, NULLARY_FUNCTION);
+        return new_term(NULLARY_FUNCTION, token);
     }
 
     Term reduce (
@@ -73,7 +73,7 @@ public:
             const InjectiveFunction *,
             const Term & key)
     {
-        return new_term(token, INJECTIVE_FUNCTION, key);
+        return key ? new_term(INJECTIVE_FUNCTION, token, key) : Term();
     }
 
     Term reduce (
@@ -82,7 +82,9 @@ public:
             const Term & lhs,
             const Term & rhs)
     {
-        return new_term(token, BINARY_FUNCTION, lhs, rhs);
+        return lhs and rhs
+            ? new_term(BINARY_FUNCTION, token, lhs, rhs)
+            : Term();
     }
 
     Term reduce (
@@ -91,7 +93,9 @@ public:
             const Term & lhs,
             const Term & rhs)
     {
-        return new_term(token, SYMMETRIC_FUNCTION, lhs, rhs);
+        return lhs and rhs
+            ? new_term(SYMMETRIC_FUNCTION, token, lhs, rhs)
+            : Term();
     }
 
     Term reduce (
@@ -99,7 +103,7 @@ public:
             const UnaryRelation *,
             const Term & key)
     {
-        return new_term(token, UNARY_RELATION, key);
+        return key ? new_term(UNARY_RELATION, token, key) : Term();
     }
 
     Term reduce (
@@ -108,24 +112,26 @@ public:
             const Term & lhs,
             const Term & rhs)
     {
-        return new_term(token, BINARY_RELATION, lhs, rhs);
+        return lhs and rhs
+            ? new_term(BINARY_RELATION, token, lhs, rhs)
+            : Term();
     }
 
     Term reduce_equal (
             const Term & lhs,
             const Term & rhs)
     {
-        return new_term("", EQUAL, lhs, rhs);
+        return lhs and rhs ? new_term(EQUAL, "", lhs, rhs) : Term();
     }
 
     Term reduce_hole ()
     {
-        return new_term("", HOLE);
+        return new_term(HOLE, "");
     }
 
     Term reduce_var (const std::string & name)
     {
-        return new_term(name, VAR);
+        return new_term(VAR, name);
     }
 
     Term reduce_error (const std::string &)
@@ -136,8 +142,8 @@ public:
 private:
 
     Term new_term (
-            const std::string & name,
             Arity arity,
+            const std::string & name,
             Term arg0 = Term(),
             Term arg1 = Term())
     {
@@ -189,32 +195,35 @@ Theory parse_theory (
     ExprSet deduped;
     {
         Parser parser(signature, deduped, error_log);
-        bool error;
+        bool error = false;
         for (size_t i = 0; i < polish_facts.size(); ++i) {
+            POMAGMA_DEBUG("parsing " << polish_facts[i]);
             auto fact = parser.parse(polish_facts[i]);
-            if (unlikely(fact.get() == nullptr)) {
+            if (unlikely(not fact)) {
                 std::ostringstream message;
                 message << "Error parsing fact " << i << " of "
                     << polish_facts.size();
                 error_log.push_back(message.str());
                 error = true;
-                continue;
-            }
-            if (unlikely(not is_fact(* fact))) {
+            } else if (unlikely(not is_fact(* fact))) {
                 std::ostringstream message;
                 message << "Error: fact " << i << " of " << polish_facts.size()
                     << " is not a relation";
                 error_log.push_back(message.str());
                 error = true;
-                continue;
+            } else {
+                facts.push_back(fact);
             }
-            facts.push_back(fact);
         }
-        if (error) return Theory();
+        if (error) {
+            POMAGMA_WARN("error parsing facts");
+            return Theory();
+        }
     }
 
     std::vector<const Expr *> exprs;
     for (auto expr_ptr : deduped) {
+        POMAGMA_ASSERT1(expr_ptr, "programmer error");
         exprs.push_back(expr_ptr.get());
     }
 
@@ -256,6 +265,8 @@ inline void propagate_constraint (
             const Expr * lhs = expr->args[0].get();
             const Expr * rhs = expr->args[1].get();
             const Expr * val = expr;
+            POMAGMA_ASSERT1(lhs, "missing lhs");
+            POMAGMA_ASSERT1(rhs, "missing rhs");
             message_queues[val].push_back(
                 approximator.lazy_binary_function_lhs_rhs(
                     name, map_find(states, lhs), map_find(states, rhs)));
@@ -274,6 +285,8 @@ inline void propagate_constraint (
         case BINARY_RELATION: {
             const Expr * lhs = expr->args[0].get();
             const Expr * rhs = expr->args[1].get();
+            POMAGMA_ASSERT1(lhs, "missing lhs");
+            POMAGMA_ASSERT1(rhs, "missing rhs");
             if (name == "LESS") {
                 message_queues[lhs].push_back(
                     approximator.less_rhs(map_find(states, rhs)));
@@ -292,6 +305,8 @@ inline void propagate_constraint (
         case EQUAL: {
             const Expr * lhs = expr->args[0].get();
             const Expr * rhs = expr->args[1].get();
+            POMAGMA_ASSERT1(lhs, "missing lhs");
+            POMAGMA_ASSERT1(rhs, "missing rhs");
             message_queues[lhs].push_back(map_find(states, rhs));
             message_queues[rhs].push_back(map_find(states, lhs));
         } break;
@@ -316,7 +331,7 @@ inline size_t propagate_step (
     for (auto & i : states) {
         const Expr * expr = i.first;
         State & state = i.second;
-        std::vector<State> & messages = message_queues.find(expr)->second;
+        std::vector<State> & messages = message_queues[expr];
         const State updated_state = approximator.lazy_fuse(messages);
         messages.clear();
         if (updated_state != state) {
