@@ -293,8 +293,6 @@ VALIDATE_FACTS_EXAMPLES = [
     (['NLESS BOT BOT'], False),
     (['NLESS TOP TOP'], False),
     (['NLESS I I'], False),
-    (['LESS BOT I'], True),
-    (['LESS I TOP'], True),
     (['LESS TOP BOT'], False),
     (['EQUAL x x'], True),
     (['EQUAL x TOP', 'LESS TOP x'], True),
@@ -309,23 +307,39 @@ VALIDATE_FACTS_EXAMPLES = [
     (['LESS I f', 'LESS APP f f BOT'], False),
     (['LESS I f', 'LESS COMP f f BOT'], False),
     (['LESS I f', 'LESS JOIN f f BOT'], False),
+    (['LESS I x', 'LESS APP x x y', 'LESS I COMP y y'], True),
+    (['LESS I x', 'LESS APP x x y', 'NLESS I COMP y y'], False),
+    (['LESS I x', 'NLESS y I', 'LESS APP x y z', 'LESS z I'], False),
     # TODO these demonstrate weakness in the solver
     (['NLESS x x'], True),
     (['LESS x y', 'NLESS y x'], True),
     (['LESS x y', 'LESS y z', 'NLESS z x'], True),
     # FIXME these fail and should pass
+    (['LESS BOT I'], True),
+    (['LESS I TOP'], True),
     (['NLESS TOP BOT'], True),
     (['NLESS I BOT'], True),
     (['NLESS TOP I'], True),
     (['LESS BOT TOP'], True),
     (['EQUAL x TOP', 'LESS BOT x'], True),
+    (['LESS I x', 'NLESS y I', 'LESS APP x y z', 'NLESS z I'], True),
 ]
+
+
+def validate_facts(db, facts, max_attempts=100):
+    for attempt in xrange(1, 1 + max_attempts):
+        print 'validating facts, attempt', attempt
+        validity = db.validate_facts(facts)
+        if validity is not None:
+            return validity
+    raise ValueError(
+        'validate_facts did not complete in {} attempts'.format(max_attempts))
 
 
 def test_validate_facts():
     with load() as db:
         facts, expected = transpose(VALIDATE_FACTS_EXAMPLES)
-        actual = map(db.validate_facts, facts)
+        actual = [validate_facts(db, f) for f in facts]
     try:
         assert_examples(facts, expected, actual, cmp_trool)
     except AssertionError as e:
