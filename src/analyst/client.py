@@ -174,11 +174,11 @@ class Client(object):
 
     def validate_facts(self, facts):
         assert isinstance(facts, list), facts
-        for fact in facts:
-            assert isinstance(fact, basestring), fact
         request = Request()
         request.validate_facts.SetInParent()
-        request.validate_facts.facts.extend(facts)
+        for fact in facts:
+            assert isinstance(fact, basestring), fact
+            request.validate_facts.facts.append(compiler.desugar(fact))
         reply = self._call(request)
         return TROOL[reply.validate_facts.result]
 
