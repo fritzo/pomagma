@@ -146,7 +146,7 @@ private:
         SetId val,
         Parity parity) const;
 
-    void convex_insert (DenseSet & set, Ob ob, bool downward) const;
+    void convex_insert (DenseSet & set, Ob ob, bool upward) const;
 
     // Structure parts.
     Structure & m_structure;

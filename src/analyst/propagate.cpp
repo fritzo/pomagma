@@ -233,11 +233,6 @@ Theory parse_theory (
 //----------------------------------------------------------------------------
 // propagation
 
-using ::pomagma::intervals::BELOW;
-using ::pomagma::intervals::ABOVE;
-using ::pomagma::intervals::NBELOW;
-using ::pomagma::intervals::NABOVE;
-
 typedef intervals::Approximation State;
 
 namespace {
