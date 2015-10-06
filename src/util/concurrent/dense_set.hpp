@@ -179,7 +179,7 @@ class DenseSet : noncopyable
 public:
 
     // set can contain items {1,...,item_dim}
-    DenseSet (size_t item_dim);
+    explicit DenseSet (size_t item_dim);
     DenseSet (size_t item_dim, std::atomic<Word> * line)
         : m_item_dim(item_dim),
           m_word_dim(items_to_words(item_dim)),

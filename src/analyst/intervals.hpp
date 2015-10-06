@@ -71,7 +71,7 @@ struct VectorPodEqual
     }
 };
 
-class Approximator
+class Approximator : noncopyable
 {
 public:
 

@@ -46,9 +46,9 @@ Approximator::Approximator (
             const size_t count = sets.size();
             POMAGMA_ASSERT1(2 < count, "too few sets: " << count);
             DenseSet val(m_item_dim);
-            val.set_union(sets[0], sets[1]);
+            val.set_union(m_sets.load(sets[0]), m_sets.load(sets[1]));
             for (size_t i = 2; i < count; ++i) {
-                val += sets[i];
+                val += m_sets.load(sets[i]);
             }
             return m_sets.store(std::move(val));
         }),
