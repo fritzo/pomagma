@@ -326,20 +326,10 @@ VALIDATE_FACTS_EXAMPLES = [
 ]
 
 
-def validate_facts(db, facts, max_attempts=100):
-    for attempt in xrange(1, 1 + max_attempts):
-        print 'validating facts, attempt', attempt
-        validity = db.validate_facts(facts)
-        if validity is not None:
-            return validity
-    raise ValueError(
-        'validate_facts did not complete in {} attempts'.format(max_attempts))
-
-
 def test_validate_facts():
     with load() as db:
         facts, expected = transpose(VALIDATE_FACTS_EXAMPLES)
-        actual = [validate_facts(db, f) for f in facts]
+        actual = [db.validate_facts(f) for f in facts]
     try:
         assert_examples(facts, expected, actual, cmp_trool)
     except AssertionError as e:

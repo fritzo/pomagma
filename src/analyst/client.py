@@ -1,5 +1,6 @@
 from pomagma.analyst import compiler
 from pomagma.analyst import messages_pb2 as messages
+import time
 import sys
 import zmq
 
@@ -172,7 +173,7 @@ class Client(object):
         assert len(results) == len(lines), results
         return results
 
-    def validate_facts(self, facts):
+    def validate_facts(self, facts, block=True):
         assert isinstance(facts, list), facts
         request = Request()
         request.validate_facts.SetInParent()
@@ -180,6 +181,9 @@ class Client(object):
             assert isinstance(fact, basestring), fact
             request.validate_facts.facts.append(compiler.desugar(fact))
         reply = self._call(request)
+        while block and reply.validate_facts.result == Response.MAYBE:
+            time.sleep(0.1)
+            reply = self._call(request)
         return TROOL[reply.validate_facts.result]
 
     def get_histogram(self):
