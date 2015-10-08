@@ -333,7 +333,6 @@ def test_validate_facts():
     try:
         assert_examples(facts, expected, actual, cmp_trool)
     except AssertionError as e:
-        raise
         raise SkipTest(e)
 
 
