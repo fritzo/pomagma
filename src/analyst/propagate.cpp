@@ -311,6 +311,24 @@ inline void propagate_constraint (
     }
 }
 
+inline void log_change_count (
+    std::unordered_map<const Expr *, State> & states,
+    size_t change_count)
+{
+    if (states.size() > 10) {
+        POMAGMA_DEBUG("propagation found " << change_count << " changes");
+    } else {
+        std::string message = "[ ";
+        for (const auto & pair : states) {
+            for (int p = 0; p < 4; ++p) {
+                message.push_back(pair.second.bounds[p] ? '-' : '?');
+            }
+            message.push_back(' ');
+        }
+        POMAGMA_DEBUG(message << "] " << change_count << " changes ");
+    }
+}
+
 // this should have time complexity O(#constraints)
 inline size_t propagate_step (
     std::unordered_map<const Expr *, State> & states,
@@ -329,20 +347,24 @@ inline size_t propagate_step (
         std::vector<State> & messages = message_queues[expr];
         const State updated_state = approximator.lazy_fuse(messages);
         messages.clear();
-        if (updated_state != state) {
-            POMAGMA_ASSERT1(
-                approximator.expensive_refines(updated_state, state),
-                "propagation was not monotone");
-            state = updated_state;
+        if (updated_state == state) continue;
+        POMAGMA_ASSERT1(
+            approximator.expensive_refines(updated_state, state),
+            "propagation was not monotone");
+        if (approximator.observably_differ(state, updated_state)) {
             ++change_count;
         }
+        state = updated_state;
         if (approximator.lazy_is_valid(state) == Trool::FALSE) {
             POMAGMA_DEBUG("solution is invalid");
             return 0;
         }
     }
 
-    POMAGMA_DEBUG("propagation found " << change_count << " changes");
+    if (pomagma::Log::level() >= 3) {
+        log_change_count(states, change_count);
+    }
+
     return change_count;
 }
 
@@ -358,7 +380,13 @@ Trool lazy_validate (const Theory & theory, Approximator & approximator)
     }
 
     std::unordered_map<const Expr *, std::vector<State>> message_queues;
-    while (propagate_step(states, message_queues, theory, approximator)) {}
+    const size_t max_steps = 1000;
+    size_t step = 0;
+    while (propagate_step(states, message_queues, theory, approximator)) {
+        ++step;
+        POMAGMA_ASSERT(step < max_steps,
+            "propagation failed to converge in " << max_steps << " steps");
+    }
 
     Trool is_valid = Trool::TRUE;
     for (const auto & i : states) {

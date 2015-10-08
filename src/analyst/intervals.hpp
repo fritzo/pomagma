@@ -86,6 +86,9 @@ public:
         const Approximation & rhs) const;
 
     // These cheap O(1) operations return immediately with complete results.
+    bool observably_differ (
+        const Approximation & lhs,
+        const Approximation & rhs) const;
     Approximation known (Ob ob) const { return m_known[ob]; }
     Approximation unknown () const { return m_unknown; }
     Approximation nullary_function (const std::string & name);
@@ -187,6 +190,16 @@ private:
     std::unordered_map<CacheKey, SetPairToSetCache *, PodHash<CacheKey>>
         m_binary_cache;
 };
+
+inline bool Approximator::observably_differ (
+        const Approximation & lhs,
+        const Approximation & rhs) const
+{
+    for (Parity p : {ABOVE, BELOW, NABOVE, NBELOW}) {
+        if (lhs[p] and rhs[p] and lhs[p] != rhs[p]) return true;
+    }
+    return false;
+}
 
 inline Approximation Approximator::nullary_function (const std::string & name)
 {

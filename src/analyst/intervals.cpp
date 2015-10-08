@@ -276,13 +276,15 @@ SetId Approximator::function_lhs_rhs (
     SetId rhs,
     Parity parity) const
 {
+    POMAGMA_ASSERT1(lhs, "lhs is undefined");
+    POMAGMA_ASSERT1(rhs, "rhs is undefined");
     POMAGMA_ASSERT1(parity == ABOVE or parity == BELOW, "invalid parity");
     const bool upward = (parity == ABOVE);
     const DenseSet lhs_set = m_sets.load(lhs); // positive
     const DenseSet rhs_set = m_sets.load(rhs); // positive
     DenseSet val_set(m_item_dim); // positive
 
-    const Ob optimum = upward ? m_bot : m_top;
+    const Ob optimum = upward ? m_top : m_bot;
     POMAGMA_ASSERT1(lhs_set.contains(optimum), "invalid lhs set");
     POMAGMA_ASSERT1(rhs_set.contains(optimum), "invalid rhs set");
     val_set.insert(optimum);
@@ -326,6 +328,8 @@ SetId Approximator::function_lhs_val (
     SetId val,
     Parity parity) const
 {
+    POMAGMA_ASSERT1(lhs, "lhs is undefined");
+    POMAGMA_ASSERT1(val, "val is undefined");
     POMAGMA_ASSERT1(parity == NABOVE or parity == NBELOW, "invalid parity");
     const bool upward = (parity == NBELOW);
     const DenseSet & support = m_structure.carrier().support();
@@ -365,6 +369,8 @@ SetId Approximator::function_rhs_val (
     SetId val,
     Parity parity) const
 {
+    POMAGMA_ASSERT1(rhs, "rhs is undefined");
+    POMAGMA_ASSERT1(val, "val is undefined");
     POMAGMA_ASSERT1(parity == NABOVE or parity == NBELOW, "invalid parity");
     const bool upward = (parity == NBELOW);
     const DenseSet & support = m_structure.carrier().support();

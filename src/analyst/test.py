@@ -286,43 +286,63 @@ def test_validate_corpus():
 
 
 VALIDATE_FACTS_EXAMPLES = [
+    (['EQUAL BOT APP BOT BOT'], True),
+    (['EQUAL BOT BOT'], True),
+    (['EQUAL I I'], True),
+    (['EQUAL TOP APP TOP TOP'], True),
+    (['EQUAL TOP TOP'], True),
     (['EQUAL x TOP', 'LESS BOT x'], True),
     (['EQUAL x TOP', 'LESS TOP x'], True),
     (['EQUAL x TOP', 'LESS x BOT'], False),
     (['EQUAL x x'], True),
+    (['LESS APP BOT BOT BOT'], True),
+    (['LESS APP I I I'], True),
+    (['LESS APP TOP TOP TOP'], True),
+    (['LESS BOT APP BOT BOT'], True),
     (['LESS BOT BOT'], True),
     (['LESS BOT I'], True),
     (['LESS BOT TOP'], True),
+    (['LESS I COMP I I'], True),
     (['LESS I I'], True),
+    (['LESS I JOIN I I'], True),
     (['LESS I TOP'], True),
     (['LESS I f', 'LESS APP f f BOT'], False),
     (['LESS I f', 'LESS COMP f f BOT'], False),
+    (['LESS I f', 'LESS I APP f f'], True),
+    (['LESS I f', 'LESS I COMP f f'], True),
+    (['LESS I f', 'LESS I JOIN f f'], True),
     (['LESS I f', 'LESS JOIN f f BOT'], False),
+    (['LESS I x', 'LESS APP x x y', 'LESS I COMP y y'], True),
     (['LESS I x', 'LESS APP x x y', 'NLESS I COMP y y'], False),
-    (['LESS I x', 'NLESS y I', 'LESS APP x y z', 'LESS z I'], False),
+    (['LESS I x', 'NLESS y I', 'LESS APP x y z', 'LESS z I'], True),  # weak
     (['LESS I x', 'NLESS y I', 'LESS APP x y z', 'NLESS z I'], True),
+    (['LESS TOP APP TOP TOP'], True),
     (['LESS TOP BOT'], False),
     (['LESS TOP TOP'], True),
     (['LESS TOP w', 'LESS w x', 'LESS x y', 'LESS y z', 'LESS z BOT'], False),
     (['LESS TOP x', 'LESS x BOT'], False),
     (['LESS TOP x', 'LESS x y', 'LESS y BOT'], False),
     (['LESS TOP x', 'LESS x y', 'LESS y z', 'LESS z BOT'], False),
+    (['LESS x y', 'LESS y z', 'NLESS z x'], True),  # weak
+    (['LESS x y', 'NLESS y x'], True),  # weak
+    (['LESS y I', 'LESS I x', 'LESS x y'], True),
+    (['LESS y I', 'LESS I x', 'LESS y x'], True),
+    (['LESS y I', 'LESS I x', 'NLESS x y'], True),
+    (['LESS y I', 'LESS I x', 'NLESS y x'], False),
+    (['NLESS APP BOT BOT BOT'], False),
+    (['NLESS APP I I I'], False),
+    (['NLESS APP TOP TOP TOP'], False),
+    (['NLESS BOT APP BOT BOT'], False),
     (['NLESS BOT BOT'], False),
+    (['NLESS I APP I I'], False),
     (['NLESS I BOT'], True),
     (['NLESS I I'], False),
+    (['NLESS TOP APP TOP TOP'], False),
     (['NLESS TOP BOT'], True),
     (['NLESS TOP I'], True),
     (['NLESS TOP TOP'], False),
+    (['NLESS x x'], True),  # weak
     ([], True),
-    # TODO these demonstrate weakness in the solver
-    (['NLESS x x'], True),
-    (['LESS x y', 'NLESS y x'], True),
-    (['LESS x y', 'LESS y z', 'NLESS z x'], True),
-    # FIXME these fail and should pass
-    (['LESS I f', 'LESS I APP f f'], True),
-    (['LESS I f', 'LESS I COMP f f'], True),
-    (['LESS I f', 'LESS I JOIN f f'], True),
-    (['LESS I x', 'LESS APP x x y', 'LESS I COMP y y'], True),
 ]
 
 
@@ -330,10 +350,7 @@ def test_validate_facts():
     with load() as db:
         facts, expected = transpose(VALIDATE_FACTS_EXAMPLES)
         actual = [db.validate_facts(f) for f in facts]
-    try:
         assert_examples(facts, expected, actual, cmp_trool)
-    except AssertionError as e:
-        raise SkipTest(e)
 
 
 def test_get_histogram():
