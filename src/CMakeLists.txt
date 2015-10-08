@@ -7,6 +7,7 @@ set(POMAGMA_UTIL_LIBS
 	crypto ssl
 	${Boost_FILESYSTEM_LIBRARY}
 	${Boost_SYSTEM_LIBRARY}
+	tcmalloc
 )
 
 set(POMAGMA_IO_LIBS
