@@ -177,7 +177,7 @@ def profile_surveyor(theory='skj', grow_by=64, extra_size=0, tool='time'):
     size = pomagma.util.MIN_SIZES[theory] + extra_size
     with atlas.chdir(theory):
         opts = {'log_file': 'profile.log', 'log_level': 2}
-        region = DB('region.{:d}'.format(size))
+        region = DB('region.normal.{:d}'.format(size))
         temp = pomagma.util.temp_name(DB('profile'))
         world = DB('world')
         if not os.path.exists(region):
@@ -199,7 +199,7 @@ def profile_cartographer(theory='skj', extra_size=0, tool='time', infer=True):
     size = pomagma.util.MIN_SIZES[theory] + extra_size
     with atlas.chdir(theory):
         opts = {'log_file': 'profile.log', 'log_level': 2}
-        region = DB('region.{:d}'.format(size))
+        region = DB('region.normal.{:d}'.format(size))
         temp = pomagma.util.temp_name(DB('profile'))
         world = DB('world')
         world_size = atlas.get_item_count(world)
