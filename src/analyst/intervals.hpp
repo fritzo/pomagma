@@ -18,7 +18,7 @@ namespace pomagma {
 namespace intervals {
 
 enum Parity { ABOVE, BELOW, NABOVE, NBELOW };
-enum Direction { LHS_RHS, LHS_VAL, RHS_VAL };
+enum Target { LHS, RHS, VAL };
 
 struct Approximation
 {
@@ -122,10 +122,10 @@ private:
         Parity parity);
     SetId lazy_find (
         const std::string & name,
-        Direction direction,
+        Target target,
+        Parity parity,
         SetId arg0,
-        SetId arg1,
-        Parity parity);
+        SetId arg1);
 
     template<class Function>
     SetId function_lhs_rhs (
@@ -163,7 +163,7 @@ private:
     Approximation m_unknown;
 
     // LazyMap caches.
-    typedef std::tuple<uint64_t, Direction, Parity> CacheKey;
+    typedef std::tuple<uint64_t, Target, Parity> CacheKey;
     typedef LazyMap<
         std::pair<SetId, SetId>,
         Trool,
@@ -209,7 +209,7 @@ inline Approximation Approximator::less_rhs (const Approximation & rhs)
     Approximation lhs = unknown();
     lhs[ABOVE] = rhs[ABOVE];
     lhs[NBELOW] = rhs[NBELOW];
-    return rhs;
+    return lhs;
 }
 
 inline Approximation Approximator::nless_lhs (const Approximation & lhs)
@@ -223,7 +223,7 @@ inline Approximation Approximator::nless_rhs (const Approximation & rhs)
 {
     Approximation lhs = unknown();
     lhs[NABOVE] = rhs[BELOW];
-    return rhs;
+    return lhs;
 }
 
 } // namespace intervals

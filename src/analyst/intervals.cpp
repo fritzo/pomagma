@@ -44,7 +44,7 @@ Approximator::Approximator (
         worker_pool,
         [this](const std::vector<SetId> & sets){
             const size_t count = sets.size();
-            POMAGMA_ASSERT1(2 < count, "too few sets: " << count);
+            POMAGMA_ASSERT1(count >= 2, "too few sets: " << count);
             DenseSet val(m_item_dim);
             val.set_union(m_sets.load(sets[0]), m_sets.load(sets[1]));
             for (size_t i = 2; i < count; ++i) {
@@ -87,7 +87,7 @@ Approximator::Approximator (
         for (Parity p : {ABOVE, BELOW}) {
             POMAGMA_INSERT(
                 m_binary_cache,
-                CacheKey(hash, LHS_RHS, p),
+                CacheKey(hash, VAL, p),
                 new Cache(
                     worker_pool,
                     [this, &fun, p](const std::pair<SetId, SetId> & x){
@@ -97,7 +97,7 @@ Approximator::Approximator (
         for (Parity p : {NABOVE, NBELOW}) {
             POMAGMA_INSERT(
                 m_binary_cache,
-                CacheKey(hash, LHS_VAL, p),
+                CacheKey(hash, RHS, p),
                 new Cache(
                     worker_pool,
                     [this, &fun, p](const std::pair<SetId, SetId> & x){
@@ -105,7 +105,7 @@ Approximator::Approximator (
                     }));
             POMAGMA_INSERT(
                 m_binary_cache,
-                CacheKey(hash, RHS_VAL, p),
+                CacheKey(hash, LHS, p),
                 new Cache(
                     worker_pool,
                     [this, &fun, p](const std::pair<SetId, SetId> & x){
@@ -122,7 +122,7 @@ Approximator::Approximator (
         for (Parity p : {ABOVE, BELOW}) {
             POMAGMA_INSERT(
                 m_binary_cache,
-                CacheKey(hash, LHS_RHS, p),
+                CacheKey(hash, VAL, p),
                 new Cache(
                     worker_pool,
                     [this, &fun, p](const std::pair<SetId, SetId> & x){
@@ -135,8 +135,8 @@ Approximator::Approximator (
                 [this, &fun, p](const std::pair<SetId, SetId> & x){
                     return function_lhs_val(fun, x.first, x.second, p);
                 });
-            POMAGMA_INSERT(m_binary_cache, CacheKey(hash, LHS_VAL, p), cache);
-            POMAGMA_INSERT(m_binary_cache, CacheKey(hash, RHS_VAL, p), cache);
+            POMAGMA_INSERT(m_binary_cache, CacheKey(hash, RHS, p), cache);
+            POMAGMA_INSERT(m_binary_cache, CacheKey(hash, LHS, p), cache);
         }
     }
 }
@@ -202,12 +202,12 @@ Approximation Approximator::lazy_fuse (
 
 inline SetId Approximator::lazy_find (
     const std::string & name,
-    Direction direction,
+    Target target,
+    Parity parity,
     SetId arg0,
-    SetId arg1,
-    Parity parity)
+    SetId arg1)
 {
-    auto i = m_binary_cache.find(CacheKey{hash_name(name), direction, parity});
+    auto i = m_binary_cache.find(CacheKey{hash_name(name), target, parity});
     POMAGMA_ASSERT1(i != m_binary_cache.end(), "programmer error");
     return i->second->try_find({arg0, arg1});
 }
@@ -220,7 +220,7 @@ Approximation Approximator::lazy_binary_function_lhs_rhs (
     Approximation val = unknown();
     for (Parity p : {ABOVE, BELOW}) {
         val[p] = (lhs[p] and rhs[p])
-               ? lazy_find(name, LHS_RHS, lhs[p], rhs[p], p)
+               ? lazy_find(name, VAL, p, lhs[p], rhs[p])
                : 0;
     }
     return val;
@@ -233,10 +233,10 @@ Approximation Approximator::lazy_binary_function_lhs_val (
 {
     Approximation rhs = unknown();
     rhs[NABOVE] = (lhs[ABOVE] and val[NABOVE])
-                ? lazy_find(name, LHS_VAL, lhs[ABOVE], val[NABOVE], NABOVE)
+                ? lazy_find(name, RHS, NABOVE, lhs[ABOVE], val[NABOVE])
                 : 0;
     rhs[NBELOW] = (lhs[BELOW] and val[NBELOW])
-                ? lazy_find(name, LHS_VAL, lhs[BELOW], val[NBELOW], NBELOW)
+                ? lazy_find(name, RHS, NBELOW, lhs[BELOW], val[NBELOW])
                 : 0;
     return rhs;
 }
@@ -248,12 +248,12 @@ Approximation Approximator::lazy_binary_function_rhs_val (
 {
     Approximation lhs = unknown();
     lhs[NABOVE] = (rhs[ABOVE] and val[NABOVE])
-                ? lazy_find(name, RHS_VAL, rhs[ABOVE], val[NABOVE], NABOVE)
+                ? lazy_find(name, LHS, NABOVE, rhs[ABOVE], val[NABOVE])
                 : 0;
     lhs[NBELOW] = (rhs[BELOW] and val[NBELOW])
-                ? lazy_find(name, RHS_VAL, rhs[BELOW], val[NBELOW], NBELOW)
+                ? lazy_find(name, LHS, NBELOW, rhs[BELOW], val[NBELOW])
                 : 0;
-    return rhs;
+    return lhs;
 }
 
 inline void Approximator::convex_insert (
