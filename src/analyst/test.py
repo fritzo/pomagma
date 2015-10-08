@@ -286,43 +286,43 @@ def test_validate_corpus():
 
 
 VALIDATE_FACTS_EXAMPLES = [
-    ([], True),
-    (['LESS BOT BOT'], True),
-    (['LESS TOP TOP'], True),
-    (['LESS I I'], True),
-    (['NLESS BOT BOT'], False),
-    (['NLESS TOP TOP'], False),
-    (['NLESS I I'], False),
-    (['LESS TOP BOT'], False),
-    (['EQUAL x x'], True),
+    (['EQUAL x TOP', 'LESS BOT x'], True),
     (['EQUAL x TOP', 'LESS TOP x'], True),
     (['EQUAL x TOP', 'LESS x BOT'], False),
-    (['LESS TOP x', 'LESS x BOT'], False),
-    (['LESS TOP x', 'LESS x y', 'LESS y BOT'], False),
-    (['LESS TOP x', 'LESS x y', 'LESS y z', 'LESS z BOT'], False),
-    (['LESS TOP w', 'LESS w x', 'LESS x y', 'LESS y z', 'LESS z BOT'], False),
-    (['LESS I f', 'LESS I APP f f'], True),
-    (['LESS I f', 'LESS I COMP f f'], True),
-    (['LESS I f', 'LESS I JOIN f f'], True),
+    (['EQUAL x x'], True),
+    (['LESS BOT BOT'], True),
+    (['LESS BOT I'], True),
+    (['LESS BOT TOP'], True),
+    (['LESS I I'], True),
+    (['LESS I TOP'], True),
     (['LESS I f', 'LESS APP f f BOT'], False),
     (['LESS I f', 'LESS COMP f f BOT'], False),
     (['LESS I f', 'LESS JOIN f f BOT'], False),
-    (['LESS I x', 'LESS APP x x y', 'LESS I COMP y y'], True),
     (['LESS I x', 'LESS APP x x y', 'NLESS I COMP y y'], False),
     (['LESS I x', 'NLESS y I', 'LESS APP x y z', 'LESS z I'], False),
+    (['LESS I x', 'NLESS y I', 'LESS APP x y z', 'NLESS z I'], True),
+    (['LESS TOP BOT'], False),
+    (['LESS TOP TOP'], True),
+    (['LESS TOP w', 'LESS w x', 'LESS x y', 'LESS y z', 'LESS z BOT'], False),
+    (['LESS TOP x', 'LESS x BOT'], False),
+    (['LESS TOP x', 'LESS x y', 'LESS y BOT'], False),
+    (['LESS TOP x', 'LESS x y', 'LESS y z', 'LESS z BOT'], False),
+    (['NLESS BOT BOT'], False),
+    (['NLESS I BOT'], True),
+    (['NLESS I I'], False),
+    (['NLESS TOP BOT'], True),
+    (['NLESS TOP I'], True),
+    (['NLESS TOP TOP'], False),
+    ([], True),
     # TODO these demonstrate weakness in the solver
     (['NLESS x x'], True),
     (['LESS x y', 'NLESS y x'], True),
     (['LESS x y', 'LESS y z', 'NLESS z x'], True),
     # FIXME these fail and should pass
-    (['LESS BOT I'], True),
-    (['LESS I TOP'], True),
-    (['NLESS TOP BOT'], True),
-    (['NLESS I BOT'], True),
-    (['NLESS TOP I'], True),
-    (['LESS BOT TOP'], True),
-    (['EQUAL x TOP', 'LESS BOT x'], True),
-    (['LESS I x', 'NLESS y I', 'LESS APP x y z', 'NLESS z I'], True),
+    (['LESS I f', 'LESS I APP f f'], True),
+    (['LESS I f', 'LESS I COMP f f'], True),
+    (['LESS I f', 'LESS I JOIN f f'], True),
+    (['LESS I x', 'LESS APP x x y', 'LESS I COMP y y'], True),
 ]
 
 
@@ -333,7 +333,7 @@ def test_validate_facts():
     try:
         assert_examples(facts, expected, actual, cmp_trool)
     except AssertionError as e:
-        # raise
+        raise
         raise SkipTest(e)
 
 

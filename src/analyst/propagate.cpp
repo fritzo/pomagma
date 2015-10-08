@@ -264,13 +264,13 @@ inline void propagate_constraint (
             POMAGMA_ASSERT1(rhs, "missing rhs");
             message_queues[val].push_back(
                 approximator.lazy_binary_function_lhs_rhs(
-                    name, map_find(states, lhs), map_find(states, rhs)));
+                    name, states.at(lhs), states.at(rhs)));
             message_queues[rhs].push_back(
                 approximator.lazy_binary_function_lhs_val(
-                    name, map_find(states, lhs), map_find(states, val)));
+                    name, states.at(lhs), states.at(val)));
             message_queues[lhs].push_back(
                 approximator.lazy_binary_function_rhs_val(
-                    name, map_find(states, rhs), map_find(states, val)));
+                    name, states.at(rhs), states.at(val)));
         } break;
 
         case UNARY_RELATION: {
@@ -284,14 +284,14 @@ inline void propagate_constraint (
             POMAGMA_ASSERT1(rhs, "missing rhs");
             if (name == "LESS") {
                 message_queues[lhs].push_back(
-                    approximator.less_rhs(map_find(states, rhs)));
+                    approximator.less_rhs(states.at(rhs)));
                 message_queues[rhs].push_back(
-                    approximator.less_lhs(map_find(states, lhs)));
+                    approximator.less_lhs(states.at(lhs)));
             } else if (name == "NLESS") {
                 message_queues[lhs].push_back(
-                    approximator.nless_rhs(map_find(states, rhs)));
+                    approximator.nless_rhs(states.at(rhs)));
                 message_queues[rhs].push_back(
-                    approximator.nless_lhs(map_find(states, lhs)));
+                    approximator.nless_lhs(states.at(lhs)));
             } else {
                 TODO("propagate binary_relation " << name);
             }
@@ -302,8 +302,8 @@ inline void propagate_constraint (
             const Expr * rhs = expr->args[1].get();
             POMAGMA_ASSERT1(lhs, "missing lhs");
             POMAGMA_ASSERT1(rhs, "missing rhs");
-            message_queues[lhs].push_back(map_find(states, rhs));
-            message_queues[rhs].push_back(map_find(states, lhs));
+            message_queues[lhs].push_back(states.at(rhs));
+            message_queues[rhs].push_back(states.at(lhs));
         } break;
 
         case HOLE: break; // no information
