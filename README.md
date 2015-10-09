@@ -1,14 +1,14 @@
+# Pomagma
+
 [![Build Status](https://travis-ci.org/fritzo/pomagma.svg?branch=master)](https://travis-ci.org/fritzo/pomagma)
 [![PyPI Version](https://badge.fury.io/py/pomagma.svg)](https://pypi.python.org/pypi/pomagma)
 
-# Pomagma
-
 Pomagma is an inference engine for
 [extensional untyped &lambda;-join-calculus](/doc/philosophy.md),
-an simple model of computation in which nondeterminism gives rise to
-an elegant and powerful gradual type system.
+a simple model of computation in which nondeterminism gives rise to
+an elegant gradual type system.
 
-Pomagma can be used to:
+Pomagma can:
 
 - simplify code fragments expressed in &lambda;-join-calculus
 - solve systems of inequalities and horn clauses
@@ -27,8 +27,8 @@ and a shared C++ database server performs low-level inference work.
 - [Get An Atlas](#get-an-atlas)
 - [Using The Client Library](/doc/client.md)
 - [Developing](/doc/README.md)
-  - [Dataflow Architecture](/doc/README.md#dataflow-architecture)
-  - [File Organization](/doc/README.md#file-organization)
+  - [Architecture](/doc/README.md#dataflow-architecture)
+  - [Organization](/doc/README.md#file-organization)
   - [Configuring](/doc/README.md#configuring)
   - [Testing](/doc/README.md#testing)
   - [Benchmarking](/doc/README.md#benchmarking)
