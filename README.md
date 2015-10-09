@@ -4,18 +4,23 @@
 # Pomagma
 
 Pomagma is an inference engine for
-[extensional untyped &lambda;-calculus](/doc/philosophy.md).
-Pomagma is useful for:
+[extensional untyped &lambda;-join-calculus](/doc/philosophy.md),
+an simple model of computation in which nondeterminism gives rise to
+an elegant and powerful gradual type system.
 
-- simplifying code fragments expressed in pure &lambda;-join calculus
-- validating entire codebases of &lambda;-terms and inequalities
-- testing and validating systems of inequalities
-- solving systems of inequalities
+Pomagma can be used to:
 
-Pomagma follows a client-server database architecture
-with a Python client library backed by a C++ database server.
-The correctness of Pomagma's theory is being verified in the
+- simplify code fragments expressed in &lambda;-join-calculus
+- solve systems of inequalities and horn clauses
+- validate codebases of programs and assertions
+- refine programs-with-holes subject to inequality constraints
+
+Pomagma's base theory is being formally verified in the
 [Hstar project](https://github.com/fritzo/hstar).
+
+Pomagma's architecture follows a client-server model,
+where a Python client library performs high-level syntactic tasks,
+and a shared C++ database server performs low-level inference work.
 
 - [Installing](#installing)
 - [Quick Start](#quick-start)
@@ -46,7 +51,7 @@ The client library supports Python 2.7.
 
 ## Quick Start
 
-Start a local analysis server with the tiny default atlas
+Start a local analysis server with the tiny pre-built atlas
 
     pomagma analyze             # starts server, Ctrl-C to quit
 
@@ -58,7 +63,9 @@ Then in another terminal, start an interactive python client session
     >>> validate(['I'])
     [{'is_bot': False, 'is_top': False}]
     >>> solve('x', 'EQUAL x APP x x', max_solutions=4)
-    ['I', 'BOT', 'TOP', 'V'],
+    ['I', 'BOT', 'TOP', 'V']
+    >>> validate_facts(['EQUAL x TOP', 'LESS x BOT'])
+    False
 
 Alternatively, connect using the Python client library
 
@@ -68,6 +75,7 @@ Alternatively, connect using the Python client library
         print db.simplify(["APP I I"])
         print db.validate(["I"])
         print db.solve('x', 'EQUAL x APP x x', max_solutions=4)
+        print db.validate_facts(['EQUAL x TOP', 'LESS x BOT'])
 
 ## Get an Atlas
 
@@ -75,9 +83,9 @@ Pomagma reasons about large programs by approximately locating code fragments
 in an **atlas** of 10<sup>3</sup>-10<sup>5</sup> basic programs.
 The more basic programs in an atlas,
 the more accurate pomagma's analysis will be.
-Pomagma ships with a tiny default atlas of ~2000 basic programs.
+Pomagma ships with a tiny pre-built atlas of ~2000 basic programs.
 
-To get a large prebuilt atlas, put your AWS credentials in the environment and
+To get a large pre-built atlas, put your AWS credentials in the environment and
 
     pomagma pull                  # downloads latest atlas from S3 bucket
 
@@ -95,5 +103,8 @@ Pomagma is parallelized and needs lots of memory to build a large atlas.
 
 ## License
 
-Copyright 2005-2015 Fritz Obermeyer.<br/>
-All code is licensed under the [Apache 2.0 License](/LICENSE).
+Copyright (c) 2005-2015 Fritz Obermeyer.<br/>
+Pomagma is licensed under the [Apache 2.0 License](/LICENSE).
+
+Pomagma ships with the [Google Farmhash](https://github.com/google/farmhash)
+library, licensed under the [MIT](/src/vendor/farmhash/COPYING) license.

@@ -2,7 +2,7 @@
 
 ## An experiment in Extensional Programming
 
-The [Pomagma](https://github.com/fritzo/pomagma)+[Puddle](https://github.com/fritzo/puddle) system
+The [Pomagma](https://github.com/fritzo/pomagma)
 is an extensional programming environment
 for developing computational behaviors.
 
@@ -29,7 +29,7 @@ the non-deterministic &lambda;-calculus <a href="#user-content-1">[1]</a>,
 and a "maximally-coarse" semantics <a href="#user-content-2">[2]</a>
 where as many programs as possible
 are considered equal.
-At the core of the Pomagma system is an equation prover
+At the core of the Pomagma system is an inference engine
 that is used for verification and search/suggestion.
 
 ### Language: the &lambda;-join-calculus
@@ -48,7 +48,9 @@ However, in a space where programs can be applied to programs,
 and where programs may sometimes halt,
 one needs to define this equational semantics carefully by coinduction.
 It turns out to be be enough to say that two programs `x` and `y` are equal
-iff for every program `f`, `f x` halts iff `f y` halts.
+iff for every program `f`, `f x` halts iff `f y` halts
+(or when modeling probabilistic programs,
+that `f x` halts exactly as often as `f y` halts).
 
 ### Type System: nondeterministic polymorphism
 
