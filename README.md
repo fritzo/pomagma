@@ -11,9 +11,9 @@ an elegant gradual type system.
 Pomagma can:
 
 - simplify code fragments expressed in &lambda;-join-calculus
-- solve systems of inequalities and horn clauses
 - validate codebases of programs and assertions
-- refine programs-with-holes subject to inequality constraints
+- solve systems of inequalities and horn clauses
+- synthesize code from sketches and inequality constraints
 
 Pomagma's base theory is being formally verified in the
 [Hstar project](https://github.com/fritzo/hstar).
