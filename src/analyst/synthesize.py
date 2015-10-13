@@ -1,6 +1,6 @@
 import heapq
 
-PATIENCE_LIMIT = 10000
+PATIENCE = 10000
 
 
 class UniquePriorityQueue(object):
@@ -46,14 +46,15 @@ def iter_sketches(priority, start, get_next):
 
 def lazy_iter_valid_sketches(context, validate, sketches):
     '''
-    This yields a mixture of (term, sketch) pairs and Nones;
-    consumers should filter out Nones.
+    Yield (term, sketch) pairs and Nones; consumers should filter out Nones.
     Since satisfiability is undecidable, consumers must decide when to give up.
 
     context : term -> term, substitutes sketches into holes and simplifies
     validate : term -> bool, must be sound, may be incomplete
     sketches : stream(term)
     '''
+    assert callable(context), context
+    assert callable(validate), validate
     invalid_sketches = set()
     invalid_terms = set()
     valid_terms = set()
@@ -62,8 +63,6 @@ def lazy_iter_valid_sketches(context, validate, sketches):
             invalid_sketches.update(steps)  # propagate
             yield
             continue
-
-        # filter out previously-seen terms
         term = context(sketch)
         if term in valid_terms:
             yield
@@ -78,15 +77,15 @@ def lazy_iter_valid_sketches(context, validate, sketches):
         yield term, sketch
 
 
-def impatient_iterator(lazy_iterator, patience_limit=PATIENCE_LIMIT):
-    patience = patience_limit
+def impatient_iterator(lazy_iterator, patience=PATIENCE):
+    patience_remaining = patience
     for value_or_none in lazy_iterator:
         if value_or_none is not None:
-            patience = patience_limit
+            patience_remaining = patience
             yield value_or_none
         else:
-            patience -= 1
-            if patience == 0:
+            patience_remaining -= 1
+            if patience_remaining == 0:
                 raise StopIteration
 
 
@@ -96,7 +95,7 @@ def iter_valid_sketches(
         complexity,
         sketch_start,
         sketch_next,
-        patience_limit=PATIENCE_LIMIT):
+        patience=PATIENCE):
     sketches = iter_sketches(complexity, sketch_start, sketch_next)
     lazy_valid_sketches = lazy_iter_valid_sketches(context, validate, sketches)
-    return impatient_iterator(lazy_valid_sketches, patience_limit)
+    return impatient_iterator(lazy_valid_sketches, patience)
