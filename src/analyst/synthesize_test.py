@@ -60,3 +60,11 @@ def hole_filler_test(example):
     expected = map(parse_string_to_expr, example[1])
     actual = list(fill_holes(term))
     assert_list_equal(actual, expected)
+
+
+@for_each(HOLE_FILLER_EXAMPLES)
+def hole_filler_increases_complexity_test(example):
+    term = parse_string_to_expr(example[0])
+    fillings = list(fill_holes(term))
+    for f in fillings:
+        assert_less(evaluate_complexity(term), evaluate_complexity(f))

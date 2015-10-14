@@ -19,10 +19,12 @@ class ComplexityEvaluator(object):
 
     def __call__(self, term):
         assert isinstance(term, Expression)
-        if term.is_var():
+        if term == HOLE:
+            return 0.0
+        elif term.is_var():
             return self._var_cost
         else:
-            result = self._signature[term.name]
+            result = self._signature.get(term.name, 0.0)  # ignore unknowns
             for arg in term.args:
                 result += self(arg)
             return result
@@ -86,20 +88,18 @@ class UniquePriorityQueue(object):
         return heapq.heappop(self._to_pop)[1]
 
 
-def iter_sketches(priority, start, get_next):
+def iter_sketches(priority, fill_holes):
     '''
     priority : term -> float
-    start : term, e.g., HOLE
-    get_next : term -> list(term), must increase priority, decrease validity
+    fill_holes : term -> list(term), must increase priority, decrease validity
     '''
     assert callable(priority), priority
-    assert callable(get_next), get_next
+    assert callable(fill_holes), fill_holes
     queue = UniquePriorityQueue(priority)
-    queue.push(start)
+    queue.push(HOLE)
     while True:
         sketch = queue.pop()
-        steps = get_next(sketch)
-        assert isinstance(steps, list), steps
+        steps = list(fill_holes(sketch))
         for step in steps:
             queue.push(step)
         yield sketch, steps
@@ -160,6 +160,7 @@ def iter_valid_sketches(context, validate, language, patience=PATIENCE):
     var_names = sorted(v.name for v in context(HOLE).vars)
     complexity = ComplexityEvaluator(language, var_names)
     fill_holes = NaiveHoleFiller(language, var_names)
-    sketches = iter_sketches(complexity, start=HOLE, get_next=fill_holes)
+    sketches = iter_sketches(complexity, fill_holes)
     lazy_valid_sketches = lazy_iter_valid_sketches(context, validate, sketches)
-    return impatient_iterator(lazy_valid_sketches, patience)
+    for term, sketch in impatient_iterator(lazy_valid_sketches, patience):
+        yield complexity(term), term, sketch  # suitable for sort()
