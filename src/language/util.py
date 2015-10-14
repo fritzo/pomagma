@@ -1,7 +1,9 @@
 import simplejson as json
 from parsable import parsable
+from pomagma.language.language_pb2 import Language
+from pomagma.language.language_pb2 import WeightedTerm
+
 parsable = parsable.Parsable()
-from pomagma.language.language_pb2 import Language, WeightedTerm
 
 
 def json_load(filename):
@@ -54,14 +56,14 @@ def dict_to_language(grouped):
                 'I': 2.21841,
                 'K': 2.6654,
                 'S': 2.69459,
-                },
+            },
             'BINARY': {
                 'APP': 0.4,
                 'COMP': 0.2,
-                },
+            },
             #'INJECTIVE': {},  # empty, may be omitted
             #'SYMMETRIC': {},  # empty, may be omitted
-            }
+        }
     '''
     grouped = grouped.copy()
     normalize_dict(grouped)
