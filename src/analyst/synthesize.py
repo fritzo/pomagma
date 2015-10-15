@@ -1,5 +1,6 @@
 import heapq
 import math
+import signal
 from pomagma.compiler.expressions import Expression
 from pomagma.compiler.expressions import Expression_1
 from pomagma.language.util import Language
@@ -138,17 +139,43 @@ def lazy_iter_valid_sketches(context, validate, sketches):
         yield term, sketch
 
 
+class Interruptable(object):
+    def __enter__(self):
+        self._interrupted = False
+        self._old_handler = signal.signal(signal.SIGINT, self)
+        return self
+
+    def __exit__(self, type, value, traceback):
+        if self._old_handler is not None:
+            signal.signal(signal.SIGINT, self._old_handler)
+
+    def __call__(self, sig, frame):
+        signal.signal(signal.SIGINT, self._old_handler)
+        self._old_handler = None
+        self._interrupted = True
+
+    def poll(self):
+        if self._interrupted:
+            raise StopIteration
+
+
 def impatient_iterator(lazy_iterator, patience=PATIENCE):
+    '''
+    Filter results of a lazy_iterator until either patience runs out or SIGINT.
+    Patience is measured in nebulous "progress steps".
+    '''
     assert patience > 0, patience
     patience_remaining = patience
-    for value_or_none in lazy_iterator:
-        if value_or_none is not None:
-            patience_remaining = patience
-            yield value_or_none
-        else:
-            patience_remaining -= 1
-            if patience_remaining == 0:
-                raise StopIteration
+    with Interruptable() as interrupted:
+        for value_or_none in lazy_iterator:
+            if value_or_none is not None:
+                patience_remaining = patience
+                yield value_or_none
+            else:
+                interrupted.poll()
+                patience_remaining -= 1
+                if patience_remaining == 0:
+                    raise StopIteration
 
 
 # this ties everything together
