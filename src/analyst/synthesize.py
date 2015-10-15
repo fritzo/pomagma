@@ -168,11 +168,11 @@ def impatient_iterator(lazy_iterator, patience=PATIENCE):
     patience_remaining = patience
     with Interruptable() as interrupted:
         for value_or_none in lazy_iterator:
+            interrupted.poll()
             if value_or_none is not None:
                 patience_remaining = patience
                 yield value_or_none
             else:
-                interrupted.poll()
                 patience_remaining -= 1
                 if patience_remaining == 0:
                     raise StopIteration
