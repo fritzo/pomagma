@@ -6,7 +6,7 @@ from pomagma.compiler.util import memoize_make
 from pomagma.compiler.util import sortedset
 from pomagma.compiler.util import union
 
-re_name = re.compile('[a-zA-Z][a-zA-Z_]*$')
+re_name = re.compile('[a-zA-Z][a-zA-Z0-9_]*$')
 re_space = re.compile('[ _]+')
 
 

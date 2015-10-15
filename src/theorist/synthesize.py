@@ -1,10 +1,16 @@
+import os
 import pomagma.analyst
 from itertools import islice
 from parsable import parsable
-from pomagma.compiler.simplify import simplify
-from pomagma.analyst.synthesize import iter_valid_sketches
 from pomagma.analyst.compiler import unguard_vars
+from pomagma.analyst.synthesize import iter_valid_sketches
 from pomagma.compiler.parser import parse_string_to_expr
+from pomagma.compiler.simplify import simplify
+from pomagma.language.util import dict_to_language
+from pomagma.language.util import json_load
+from pomagma.util import SRC
+
+SKJ = dict_to_language(json_load(os.path.join(SRC, 'language/skj.json')))
 
 
 def pair(x, y):
@@ -18,7 +24,7 @@ def conj(s, r):
 def join(*args):
     if not args:
         return 'BOT'
-    args = reversed(args)
+    args = list(reversed(args))
     result = args[0]
     for arg in args[1:]:
         result = 'JOIN {} {}'.format(arg, result)
@@ -27,13 +33,16 @@ def join(*args):
 
 class Context(object):
     def __init__(self, db, term, var):
+        self._db = db
         self._term = parse_string_to_expr(term)
         self._var = parse_string_to_expr(var)
 
     def __call__(self, filling):
         term = self._term.substitute(self._var, filling)
         term = simplify(term)
-        term = self._db.simplify([term])[0]
+        string = term.polish
+        string = self._db.simplify([string])[0]
+        term = parse_string_to_expr(string)
         term = unguard_vars(term)
         return term
 
@@ -90,7 +99,7 @@ def define_a(
     with pomagma.analyst.connect(address) as db:
         context = Context(db, a_def, 'hole')
         validate = Validator(db, facts, 'a_def')
-        valid_sketches = iter_valid_sketches(context, validate, patience)
+        valid_sketches = iter_valid_sketches(context, validate, SKJ, patience)
         results = sorted(islice(valid_sketches, 0, max_solutions))
     print 'Possible Fillings'
     for complexity, term, filling in results:
