@@ -2,13 +2,11 @@ import heapq
 import math
 import signal
 from pomagma.compiler.expressions import Expression
-from pomagma.compiler.expressions import Expression_1
 from pomagma.language.util import Language
 from pomagma.language.util import language_to_dict
 
 PATIENCE = 10000
 HOLE = Expression.make('HOLE')
-VAR = Expression_1('VAR')
 
 
 class ComplexityEvaluator(object):

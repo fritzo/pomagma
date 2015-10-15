@@ -32,6 +32,17 @@ def guard_vars(expr):
         return Expression.make(expr.name, *args)
 
 
+@memoize_arg
+def unguard_vars(expr):
+    if expr.name == 'VAR':
+        return expr.args[0]
+    elif expr.is_var():
+        return expr
+    else:
+        args = map(unguard_vars, expr.args)
+        return Expression.make(expr.name, *args)
+
+
 def desugar(string):
     expr = parse_string_to_expr(string)
     expr = desugar_expr(expr)

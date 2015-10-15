@@ -1,8 +1,10 @@
-from parsable import parsable
-from itertools import islice
-from pomagma.analyst.synthesize import iter_valid_sketches
-from pomagma.compiler.parser import parse_string_to_expr
 import pomagma.analyst
+from itertools import islice
+from parsable import parsable
+from pomagma.compiler.simplify import simplify
+from pomagma.analyst.synthesize import iter_valid_sketches
+from pomagma.analyst.compiler import unguard_vars
+from pomagma.compiler.parser import parse_string_to_expr
 
 
 def pair(x, y):
@@ -25,14 +27,14 @@ def join(*args):
 
 class Context(object):
     def __init__(self, db, term, var):
-        self._simplify = db.simplify
         self._term = parse_string_to_expr(term)
         self._var = parse_string_to_expr(var)
 
     def __call__(self, filling):
         term = self._term.substitute(self._var, filling)
-        # TODO normalize here
-        term = self._simplify([term])[0]
+        term = simplify(term)
+        term = self._db.simplify([term])[0]
+        term = unguard_vars(term)
         return term
 
 
