@@ -38,11 +38,13 @@ class Context(object):
         self._var = parse_string_to_expr(var)
 
     def __call__(self, filling):
+        print 'Filling:', filling
         term = self._term.substitute(self._var, filling)
         term = simplify(term)
         string = term.polish
         string = self._db.simplify([string])[0]
         term = parse_string_to_expr(string)
+        print ' ', term
         term = unguard_vars(term)
         return term
 
@@ -69,6 +71,7 @@ def define_a(
     assert max_solutions > 0, max_solutions
     assert patience > 0, patience
     a_def = 'APP Y FUN a {}'.format(join(
+        'APP hole a',
         pair('I', 'I'),
         pair('raise', 'lower'),
         pair('pull', 'push'),
@@ -78,14 +81,12 @@ def define_a(
         'APP a FUN s1 FUN r1 '
         'APP a FUN s2 FUN r2 {}'.format(
             pair(conj('r1', 's2'), conj('s1', 'r2'))),
-        'APP hole a',
     ))
     facts = [
         'EQUAL raise FUN x FUN y x',
         'EQUAL lower FUN x APP x TOP',
         'EQUAL pull FUN x FUN y JOIN x APP DIV y',
         'EQUAL push FUN x APP x BOT',
-        'EQUAL A {}'.format(a_def),
         'LESS {} A'.format(pair('I', 'I')),
         'LESS {} A'.format(pair('raise', 'lower')),
         'LESS {} A'.format(pair('pull', 'push')),
@@ -95,10 +96,11 @@ def define_a(
         'LESS {} A'.format(
             'ABIND s1 r1 ABIND s2 r2 {}'.format(
                 pair('COMP s1 s2', 'COMP r2 r1'))),
+        'EQUAL A a_def',
     ]
     with pomagma.analyst.connect(address) as db:
-        context = Context(db, a_def, 'hole')
-        validate = Validator(db, facts, 'a_def')
+        context = Context(db, a_def, 'hole')  # fills 'hole' in a_def
+        validate = Validator(db, facts, 'a_def')  # adds EQUAL a_def context
         valid_sketches = iter_valid_sketches(context, validate, SKJ, patience)
         results = sorted(islice(valid_sketches, 0, max_solutions))
     print 'Possible Fillings'
