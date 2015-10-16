@@ -1,3 +1,4 @@
+from parsable import parsable
 from pomagma import analyst
 from pomagma import atlas
 from pomagma import cartographer
@@ -6,8 +7,8 @@ from pomagma import surveyor
 from pomagma import theorist
 from pomagma.util import DB
 from pomagma.util import suggest_region_sizes
+import glob
 import os
-from parsable import parsable
 import pomagma.io.blobstore
 import pomagma.util
 import pomagma.workers
@@ -281,8 +282,15 @@ def _analyze(theory=THEORY, size=None, address=analyst.ADDRESS, **options):
 def analyze(theory=THEORY, size=None, address=analyst.ADDRESS, **options):
     '''
     Run analyst server on normalized world map.
+    Set size=? to list available sizes.
     Options: log_level, log_file
     '''
+    if size == '?':
+        with atlas.chdir(theory):
+            files = glob.glob(DB('region.normal.*'))
+            sizes = sorted(int(re.search('\d+', f).group()) for f in files)
+        print 'Try one of: {}'.format(' '.join(str(s) for s in sizes))
+        sys.exit(1)
     server = _analyze(theory, size, address, **options)
     try:
         server.wait()
