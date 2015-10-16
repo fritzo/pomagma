@@ -43,6 +43,7 @@
 - [/doc](/doc) - developer documentation
 - [/data](/data) - generated data, mirroring an S3 bucket
 - [/src](/src) - source code (C++, python)
+  - [/src/examples](/src/examples) - example applications using the analyst
   - [/src/theory](/src/theory) - theories of combinatory algebras
   - [/src/language](/src/language) - probabilistic grammars
   - [/src/corpus](/src/corpus) - literate code expressed in combinatory algebra
