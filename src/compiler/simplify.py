@@ -14,18 +14,19 @@ C = Expression_0('C')
 J = Expression_0('J')
 CB = Expression_0('CB')
 CI = Expression_0('CI')
+HOLE = Expression_0('HOLE')
 APP = Expression_2('APP')
 COMP = Expression_2('COMP')
 JOIN = Expression_2('JOIN')
+
+is_terminal = (TOP, BOT, HOLE).__contains__
 
 
 @memoize_args
 def simplify_stack(head, *args):
     nargs = len(args)
-    if head == TOP:
-        return [TOP]
-    elif head == BOT:
-        return [BOT]
+    if is_terminal(head):
+        return [head]
     elif head == I:
         if nargs >= 1:
             return simplify_stack(*args)
@@ -33,12 +34,18 @@ def simplify_stack(head, *args):
         if nargs >= 1:
             return simplify_stack(I, *args[1:])
     elif head == K:
+        if nargs >= 1 and is_terminal(args[0]):
+            return [args[0]]
         if nargs >= 2:
             return simplify_stack(args[0], *args[2:])
     elif head == B:
+        if nargs >= 1 and is_terminal(args[0]):
+            return [args[0]]
         if nargs >= 3:
             return simplify_stack(args[0], APP(args[1], args[2]), *args[3:])
     elif head == C:
+        if nargs >= 1 and is_terminal(args[0]):
+            return [args[0]]
         if nargs >= 3:
             return simplify_stack(args[0], args[2], args[1], *args[3:])
     elif head == J:
@@ -52,11 +59,13 @@ def simplify_stack(head, *args):
         lhs, rhs = head.args
         return simplify_stack(lhs, rhs, *args)
     elif head.name == 'COMP':
+        lhs, rhs = head.args
+        if is_terminal(lhs):
+            return [lhs]
         if nargs >= 1:
-            lhs, rhs = head.args
             return simplify_stack(lhs, APP(rhs, args[0]), *args[1:])
     elif head.name == 'JOIN':
-        lhs, rhs = map(simplify, head.args)
+        lhs, rhs = map(simplify_term, head.args)
         if lhs == TOP or rhs == TOP:
             return [TOP]
         elif lhs == BOT:
@@ -69,17 +78,26 @@ def simplify_stack(head, *args):
         else:
             # commutativity
             lhs, rhs = sorted((lhs, rhs))
-            return [JOIN(lhs, rhs)] + map(simplify, args)
+            return [JOIN(lhs, rhs)] + map(simplify_term, args)
         # TODO simplify wrt associativity
 
-    head = Expression.make(head.name, *map(simplify, head.args))
-    return [head] + map(simplify, args)
+    head = Expression.make(head.name, *map(simplify_term, head.args))
+    return [head] + map(simplify_term, args)
 
 
 @memoize_arg
-def simplify(term):
+def simplify_term(term):
     stack = simplify_stack(term)
     term = stack[0]
     for arg in stack[1:]:
         term = APP(term, arg)
     return term
+
+
+@memoize_arg
+def simplify_expr(expr):
+    if expr.is_rel():
+        args = map(simplify_term, expr.args)
+        return Expression.make(expr.name, *args)
+    else:
+        return simplify_term(expr)

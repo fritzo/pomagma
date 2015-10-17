@@ -1,6 +1,6 @@
 from nose.tools import assert_equal
 from pomagma.compiler.parser import parse_string_to_expr
-from pomagma.compiler.simplify import simplify
+from pomagma.compiler.simplify import simplify_term
 from pomagma.util.testing import for_each
 
 NORMAL_EXAMPLES = [
@@ -32,13 +32,18 @@ NONNORMAL_EXAMPLES = [
     ('APP APP J x y', 'JOIN x y'),
     ('APP APP K x y', 'x'),
     ('APP APP TOP x y', 'TOP'),
+    ('APP B HOLE', 'HOLE'),
     ('APP BOT x', 'BOT'),
+    ('APP C HOLE', 'HOLE'),
     ('APP COMP x y z', 'APP x APP y z'),
     ('APP F x', 'I'),
+    ('APP HOLE x', 'HOLE'),
     ('APP I x', 'x'),
+    ('APP K HOLE', 'HOLE'),
     ('APP TOP x', 'TOP'),
     ('CB', 'APP C B'),
     ('CI', 'APP C I'),
+    ('COMP HOLE x', 'HOLE'),
     ('JOIN BOT x', 'x'),
     ('JOIN TOP x', 'TOP'),
     ('JOIN x BOT', 'x'),
@@ -48,14 +53,16 @@ NONNORMAL_EXAMPLES = [
 
 
 @for_each(NORMAL_EXAMPLES)
-def normal_test(example):
+def normal_term_test(example):
+    print example
     expected = parse_string_to_expr(example)
-    actual = simplify(expected)
+    actual = simplify_term(expected)
     assert_equal(actual, expected)
 
 
 @for_each(NONNORMAL_EXAMPLES)
-def simplify_test(example):
+def simplify_term_test(example):
+    print example
     term, expected = map(parse_string_to_expr, example)
-    actual = simplify(term)
+    actual = simplify_term(term)
     assert_equal(actual, expected)

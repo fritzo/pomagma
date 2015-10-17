@@ -1,20 +1,28 @@
 import heapq
 import math
 import signal
+from pomagma.analyst.compiler import unguard_vars
 from pomagma.compiler.expressions import Expression
+from pomagma.compiler.parser import parse_string_to_expr
+from pomagma.compiler.simplify import simplify_expr
+from pomagma.compiler.util import union
 from pomagma.language.util import Language
 from pomagma.language.util import language_to_dict
 
 PATIENCE = 10000
 HOLE = Expression.make('HOLE')
+BOT = Expression.make('BOT')
+I = Expression.make('I')
 
 
 class ComplexityEvaluator(object):
-    def __init__(self, language, var_names=[]):
+    def __init__(self, language, free_vars=[]):
         assert isinstance(language, Language), language
-        self._signature = {t.name: t.weight for t in language.terms}
-        var_count = len(var_names)
-        self._var_cost = math.log(var_count) if var_count else float('inf')
+        assert isinstance(free_vars, list), free_vars
+        self._signature = {t.name: -math.log(t.weight) for t in language.terms}
+        if free_vars:
+            var_count = len(free_vars)
+            self._var_cost = math.log(var_count) + self._signature['APP']
 
     def __call__(self, term):
         assert isinstance(term, Expression)
@@ -31,8 +39,10 @@ class ComplexityEvaluator(object):
 
 class NaiveHoleFiller(object):
     'A more intelligent hole filler would only enumerate normal forms'
-    def __init__(self, language, var_names):
+    def __init__(self, language, free_vars):
         assert isinstance(language, Language), language
+        assert isinstance(free_vars, list), free_vars
+        assert all(isinstance(v, Expression) for v in free_vars), free_vars
         fillings = []
         grouped = language_to_dict(language)
         for name in sorted(grouped.get('NULLARY', [])):
@@ -43,8 +53,8 @@ class NaiveHoleFiller(object):
             fillings.append(Expression.make(name, HOLE, HOLE))
         for name in sorted(grouped.get('SYMMETRIC', [])):
             fillings.append(Expression.make(name, HOLE, HOLE))
-        for name in sorted(var_names):
-            fillings.append(Expression.make(name))
+        for var in sorted(free_vars):
+            fillings.append(var)
         self._fillings = fillings
 
     def __call__(self, term):
@@ -104,37 +114,37 @@ def iter_sketches(priority, fill_holes):
         yield sketch, steps
 
 
-def lazy_iter_valid_sketches(context, validate, sketches):
+def lazy_iter_valid_sketches(fill, validate, sketches):
     '''
-    Yield (term, sketch) pairs and Nones; consumers should filter out Nones.
+    Yield (state, term) pairs and Nones; consumers should filter out Nones.
     Since satisfiability is undecidable, consumers must decide when to give up.
 
-    context : term -> term, substitutes sketches into holes and simplifies
-    validate : term -> bool, must be sound, may be incomplete
+    fill : term -> state, substitutes sketches into holes and simplifies
+    validate : state -> bool, must be sound, may be incomplete
     sketches : stream(term)
     '''
-    assert callable(context), context
+    assert callable(fill), fill
     assert callable(validate), validate
     invalid_sketches = set()
-    invalid_terms = set()
-    valid_terms = set()
+    invalid_states = set()
+    valid_states = set()
     for sketch, steps in sketches:
         if sketch in invalid_sketches:
             invalid_sketches.update(steps)  # propagate
             yield
             continue
-        term = context(sketch)
-        if term in valid_terms:
+        state = fill(sketch)
+        if state in valid_states:
             yield
             continue
-        if term in invalid_terms or not validate(term):
-            invalid_terms.add(term)
+        if state in invalid_states or not validate(state):
+            invalid_states.add(state)
             invalid_sketches.update(steps)  # propagate
             yield
             continue
 
-        valid_terms.add(term)
-        yield term, sketch
+        valid_states.add(state)
+        yield state, sketch
 
 
 class Interruptable(object):
@@ -177,15 +187,86 @@ def impatient_iterator(lazy_iterator, patience=PATIENCE):
 
 
 # this ties everything together
-def iter_valid_sketches(context, validate, language, patience=PATIENCE):
-    assert callable(context), context
+def iter_valid_sketches(
+        fill,
+        validate,
+        language,
+        free_vars=[],
+        patience=PATIENCE):
+    '''
+    Yield (complexity, term, sketch) tuples until patience runs out or Ctrl-C.
+
+    fill : term -> state, substitutes sketches into holes and simplifies
+    validate : state -> bool, must be sound, may be incomplete
+    language : Language proto
+    free_vars : list(Expression)
+    '''
+    assert callable(fill), fill
     assert callable(validate), validate
     assert isinstance(language, Language), language
     assert patience > 0, patience
-    var_names = sorted(v.name for v in context(HOLE).vars)
-    complexity = ComplexityEvaluator(language, var_names)
-    fill_holes = NaiveHoleFiller(language, var_names)
+    free_vars = sorted(set(free_vars))
+    complexity = ComplexityEvaluator(language, free_vars)
+    fill_holes = NaiveHoleFiller(language, free_vars)
     sketches = iter_sketches(complexity, fill_holes)
-    lazy_valid_sketches = lazy_iter_valid_sketches(context, validate, sketches)
+    lazy_valid_sketches = lazy_iter_valid_sketches(fill, validate, sketches)
     for term, sketch in impatient_iterator(lazy_valid_sketches, patience):
         yield complexity(term), term, sketch  # suitable for sort()
+
+
+def simplify_filling(db, term):
+    assert isinstance(term, Expression), term
+    term = simplify_expr(term)
+    string = db.simplify([term.polish])[0]
+    term = parse_string_to_expr(string)
+    term = unguard_vars(term)
+    return term
+
+
+def simplify_facts(db, facts):
+    assert isinstance(facts, list), facts
+    assert all(isinstance(f, Expression) for f in facts), facts
+    # TODO substitute all facts 'EQUAL var body' where body is variable-free
+    facts = set(simplify_expr(f) for f in facts)
+    strings = db.simplify([f.polish for f in facts])
+    facts = set(parse_string_to_expr(s) for s in strings)
+    facts = map(unguard_vars, facts)
+    return facts
+
+
+class FactsValidator(object):
+    def __init__(self, db, facts, var, verbose=False):
+        assert isinstance(facts, list), facts
+        assert all(isinstance(f, Expression) for f in facts), facts
+        assert isinstance(var, Expression), var
+        assert var.is_var(), var
+        self._db = db
+        self._facts = simplify_facts(db, facts)
+        self._var = var
+        self._verbose = verbose
+        self._free_vars = sorted(union(f.vars for f in self._facts))
+        assert var in self._free_vars, 'facts do not depend on {}'.format(var)
+
+    def free_vars(self):
+        return self._free_vars[:]
+
+    def fill(self, filling):
+        return simplify_filling(self._db, filling)
+
+    def validate(self, filling):
+        if self._verbose:
+            print 'Filling:', filling
+        facts = [f.substitute(self._var, filling) for f in self._facts]
+        facts = simplify_facts(self._db, facts)
+        truthy = I  # facts proven true
+        falsey = BOT  # facts proven false
+        unknown_facts = []
+        for fact in facts:
+            if fact == falsey:
+                return False
+            if fact == truthy:
+                continue
+            unknown_facts.append(fact)
+        facts = unknown_facts
+        strings = [f.polish for f in facts]
+        return self._db.validate_facts(strings)
