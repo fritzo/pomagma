@@ -85,7 +85,7 @@ def language_to_dict(language):
     grouped = {}
     for term in language.terms:
         arity = ARITY_FROM_PB2[term.arity]
-        grouped.setdefault(arity, {})[term.name] = term.weight
+        grouped.setdefault(arity, {})[str(term.name)] = term.weight
     return grouped
 
 
