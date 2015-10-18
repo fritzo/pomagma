@@ -36,6 +36,8 @@ NONNORMAL_EXAMPLES = [
     ('APP BOT x', 'BOT'),
     ('APP C HOLE', 'HOLE'),
     ('APP COMP x y z', 'APP x APP y z'),
+    ('APP COMP HOLE x y', 'HOLE'),
+    ('COMP APP HOLE x y', 'HOLE'),
     ('APP F x', 'I'),
     ('APP HOLE x', 'HOLE'),
     ('APP I x', 'x'),

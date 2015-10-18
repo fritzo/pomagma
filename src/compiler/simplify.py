@@ -59,7 +59,7 @@ def simplify_stack(head, *args):
         lhs, rhs = head.args
         return simplify_stack(lhs, rhs, *args)
     elif head.name == 'COMP':
-        lhs, rhs = head.args
+        lhs, rhs = map(simplify_term, head.args)
         if is_terminal(lhs):
             return [lhs]
         if nargs >= 1:

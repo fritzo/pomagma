@@ -5,6 +5,7 @@ from pomagma.analyst.compiler import unguard_vars
 from pomagma.compiler.expressions import Expression
 from pomagma.compiler.parser import parse_string_to_expr
 from pomagma.compiler.simplify import simplify_expr
+from pomagma.compiler.util import memoize_args
 from pomagma.compiler.util import union
 from pomagma.language.util import Language
 from pomagma.language.util import language_to_dict
@@ -214,12 +215,18 @@ def iter_valid_sketches(
         yield complexity(term), term, sketch  # suitable for sort()
 
 
+@memoize_args
+def _db_simplify_expr(db, expr):
+    string = db.simplify([expr.polish])[0]
+    expr = parse_string_to_expr(string)
+    expr = unguard_vars(expr)
+    return expr
+
+
 def simplify_filling(db, term):
     assert isinstance(term, Expression), term
     term = simplify_expr(term)
-    string = db.simplify([term.polish])[0]
-    term = parse_string_to_expr(string)
-    term = unguard_vars(term)
+    term = _db_simplify_expr(db, term)
     return term
 
 
@@ -244,8 +251,9 @@ class FactsValidator(object):
         self._facts = simplify_facts(db, facts)
         self._var = var
         self._verbose = verbose
-        self._free_vars = sorted(union(f.vars for f in self._facts))
-        assert var in self._free_vars, 'facts do not depend on {}'.format(var)
+        free_vars = union(f.vars for f in self._facts)
+        assert var in free_vars, 'facts do not depend on {}'.format(var)
+        self._free_vars = sorted(free_vars - set([var]))
 
     def free_vars(self):
         return self._free_vars[:]
