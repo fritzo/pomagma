@@ -316,7 +316,7 @@ def profile_compile(*filenames, **kwargs):
         command = 'compile({}, frontend_out="/dev/null")'.format(
             ', '.join(map('"{}"'.format, filenames)))
         print 'profiling {}'.format(command)
-        profile.run(command, saveto)
+        profile.runctx(command, {'compile': compile}, None, saveto)
         loadfrom = saveto
     stats = pstats.Stats(loadfrom)
     stats.strip_dirs()
