@@ -3,6 +3,7 @@ import pomagma.analyst
 from itertools import islice
 from parsable import parsable
 from pomagma.analyst.synthesize import FactsValidator
+from pomagma.analyst.synthesize import is_complete
 from pomagma.analyst.synthesize import iter_valid_sketches
 from pomagma.compiler.expressions import Expression
 from pomagma.compiler.parser import parse_theory_string
@@ -42,6 +43,7 @@ def define_a(
         max_solutions=32,
         patience=pomagma.analyst.synthesize.PATIENCE,
         verbose=True,
+        complete=False,
         address=pomagma.analyst.ADDRESS):
     '''
     Search for definition of A = Join {<s, r> | r o s [= I}.
@@ -65,6 +67,8 @@ def define_a(
             free_vars=validator.free_vars(),
             language=SKJ,
             patience=patience)
+        if complete:
+            valid_sketches = (r for r in valid_sketches if is_complete(r[-1]))
         results = sorted(islice(valid_sketches, 0, max_solutions))
     print 'Possible Fillings'
     for complexity, term, filling in results:

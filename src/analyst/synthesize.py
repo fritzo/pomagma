@@ -332,3 +332,8 @@ class FactsValidator(object):
         facts = unknown_facts
         strings = [f.polish for f in facts]
         return self._db.validate_facts(strings)
+
+
+@inputs(Expression)
+def is_complete(expr):
+    return expr is not HOLE and all(is_complete(arg) for arg in expr.args)

@@ -62,6 +62,10 @@ def simplify_stack(head, *args):
         lhs, rhs = map(simplify_term, head.args)
         if is_terminal(lhs):
             return [lhs]
+        if lhs == I:
+            return simplify_stack(rhs, *args)
+        if rhs == I:
+            return simplify_stack(lhs, *args)
         if nargs >= 1:
             return simplify_stack(lhs, APP(rhs, args[0]), *args[1:])
     elif head.name == 'JOIN':
