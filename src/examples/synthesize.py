@@ -1,5 +1,7 @@
+import cProfile
 import os
 import pomagma.analyst
+import pstats
 from itertools import islice
 from parsable import parsable
 from pomagma.analyst.synthesize import FactsValidator
@@ -67,6 +69,30 @@ def define_a(
     for complexity, term, filling in results:
         print filling
     return results
+
+
+@parsable
+def profile_a(
+        saveto='profile_a.pstats',
+        loadfrom=None,
+        max_solutions=32,
+        patience=pomagma.analyst.synthesize.PATIENCE,
+        address=pomagma.analyst.ADDRESS,):
+    '''
+    Profile synthesis algorithm via define_a command.
+    '''
+    if loadfrom is None:
+        command = 'define_a({}, {}, False, "{}")'.format(
+            max_solutions,
+            patience,
+            address)
+        print 'profiling {}'.format(command)
+        cProfile.runctx(command, {'define_a': define_a}, None, saveto)
+        loadfrom = saveto
+    stats = pstats.Stats(loadfrom)
+    stats.strip_dirs()
+    stats.sort_stats('time')
+    stats.print_stats(50)
 
 
 if __name__ == '__main__':
