@@ -1,11 +1,13 @@
-import os
-import glob
+import atexit
 import functools
+import glob
 import itertools
-from itertools import izip
-from math import log
-from math import exp
+import os
 import pomagma.util
+import sys
+from itertools import izip
+from math import exp
+from math import log
 
 function = type(lambda x: x)
 
@@ -142,6 +144,9 @@ def find_theories():
     return glob.glob(os.path.join(pomagma.util.THEORY, '*.theory'))
 
 
+MEMOIZED_CACHES = {}
+
+
 def memoize_arg(fun):
     cache = {}
 
@@ -154,6 +159,7 @@ def memoize_arg(fun):
             cache[arg] = result
             return result
 
+    MEMOIZED_CACHES[memoized] = cache
     return memoized
 
 
@@ -169,7 +175,23 @@ def memoize_args(fun):
             cache[args] = result
             return result
 
+    MEMOIZED_CACHES[memoized] = cache
     return memoized
+
+
+def profile_memoized():
+    sizes = [(len(cache), fun) for (fun, cache) in MEMOIZED_CACHES.iteritems()]
+    sizes.sort(reverse=True)
+    sys.stderr.write('{: >10} {}\n'.format('# entries', 'memoized function'))
+    sys.stderr.write('-' * 32 + '\n')
+    for size, fun in sizes:
+        if size > 0:
+            sys.stderr.write(
+                '{: >10} {}.{}\n'.format(size, fun.__module__, fun.__name__))
+
+
+if int(os.environ.get('POMAGMA_PROFILE_MEMOIZED', 0)):
+    atexit.register(profile_memoized)
 
 
 def get_consts(thing):
@@ -197,7 +219,7 @@ def memoize_modulo_renaming_constants(fun):
     cache = {}
 
     @functools.wraps(fun)
-    def cached(*args):
+    def memoized(*args):
         consts = sorted(c.name for c in get_consts(args))
         result = None
         for permuted_consts in itertools.permutations(consts):
@@ -215,7 +237,8 @@ def memoize_modulo_renaming_constants(fun):
         cache[args] = result
         return result
 
-    return cached
+    MEMOIZED_CACHES[memoized] = cache
+    return memoized
 
 
 def memoize_make(cls):

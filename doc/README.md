@@ -104,6 +104,11 @@ as well as larger benchmarks for forward-chaining inference
     pomagma.make profile-surveyor
     pomagma.make profile-cartographer
 
+To profile the footprint of memoized functions in the compiler,
+define the environment variable
+
+    POMAGMA_PROFILE_MEMOIZED=1
+
 ## Vetting Changes
 
 Pomagma includes a vetting system to manage changes in generated code.
