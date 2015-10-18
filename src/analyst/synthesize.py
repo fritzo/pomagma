@@ -1,4 +1,5 @@
 import heapq
+import itertools
 import math
 import signal
 from pomagma.analyst.compiler import unguard_vars
@@ -57,24 +58,25 @@ class NaiveHoleFiller(object):
             fillings.append(Expression.make(name, HOLE, HOLE))
         for var in sorted(free_vars):
             fillings.append(var)
-        self._fillings = fillings
+        self._fillings = tuple(fillings)
 
+    @memoize_args
     def __call__(self, term):
         if term == HOLE:
-            for f in self._fillings:
-                yield f
+            return self._fillings
         elif len(term.args) == 1:
             name = term.name
             key, = term.args
-            for f in self(key):
-                yield Expression.make(name, f)
+            return tuple(Expression.make(name, f) for f in self(key))
         elif len(term.args) == 2:
             name = term.name
             lhs, rhs = term.args
-            for f in self(lhs):
-                yield Expression.make(name, f, rhs)
-            for f in self(rhs):
-                yield Expression.make(name, lhs, f)
+            return tuple(itertools.chain(
+                (Expression.make(name, f, rhs) for f in self(lhs)),
+                (Expression.make(name, lhs, f) for f in self(rhs)),
+            ))
+        else:
+            return ()
 
 
 class UniquePriorityQueue(object):
@@ -110,7 +112,7 @@ def iter_sketches(priority, fill_holes):
     queue.push(HOLE)
     while True:
         sketch = queue.pop()
-        steps = list(fill_holes(sketch))
+        steps = fill_holes(sketch)
         for step in steps:
             queue.push(step)
         yield sketch, steps
