@@ -3,8 +3,11 @@ import math
 import signal
 from pomagma.analyst.compiler import unguard_vars
 from pomagma.compiler.expressions import Expression
+from pomagma.compiler.expressions import Expression_2
 from pomagma.compiler.parser import parse_string_to_expr
 from pomagma.compiler.simplify import simplify_expr
+from pomagma.compiler.sugar import desugar_expr
+from pomagma.compiler.util import inputs
 from pomagma.compiler.util import memoize_args
 from pomagma.compiler.util import union
 from pomagma.language.util import Language
@@ -14,6 +17,7 @@ PATIENCE = 10000
 HOLE = Expression.make('HOLE')
 BOT = Expression.make('BOT')
 I = Expression.make('I')
+EQUAL = Expression_2('EQUAL')
 
 
 class ComplexityEvaluator(object):
@@ -223,18 +227,67 @@ def _db_simplify_expr(db, expr):
     return expr
 
 
+@inputs(object, Expression)
 def simplify_filling(db, term):
-    assert isinstance(term, Expression), term
     term = simplify_expr(term)
     term = _db_simplify_expr(db, term)
     return term
 
 
+def is_def(fact):
+    return fact.name == 'EQUAL' and fact.args[0].is_var()
+
+
+@inputs(set, dict)
+def extract_defs_from_facts(facts, defs):
+    for fact in list(facts):
+        if is_def(fact):
+            facts.remove(fact)
+            var, body = fact.args
+            defs.setdefault(var, set()).add(body)
+
+
+@inputs(set, Expression, set)
+def substitute_bodies(terms, var, bodies):
+    for term in list(terms):
+        if var in term.vars:
+            terms.remove(term)
+            for body in bodies:
+                terms.add(simplify_expr(term.substitute(var, body)))
+
+
+def simplify_defs(facts):
+    '''
+    Substitute all facts of form 'EQUAL var closed_term' into remaining facts.
+    In case of multiple equivalent definitions,
+    all combinations of substitutions will be added.
+    This generally reduces the number of free variables.
+    '''
+    facts = set(desugar_expr(f) for f in facts)
+    defs = {}
+    extract_defs_from_facts(facts, defs)
+    changed = True
+    while changed:
+        changed = False
+        for var, bodies in defs.items():
+            if any(v in defs for b in bodies for v in b.vars):
+                continue  # avoid cycles
+            del defs[var]
+            substitute_bodies(facts, var, bodies)
+            for var2, bodies2 in defs.iteritems():
+                substitute_bodies(bodies2, var, bodies)
+            extract_defs_from_facts(facts, defs)
+            changed = True
+    for var, bodies in defs.iteritems():
+        facts.add(EQUAL(var, b) for b in bodies)
+    return facts
+
+
 def simplify_facts(db, facts):
     assert isinstance(facts, list), facts
     assert all(isinstance(f, Expression) for f in facts), facts
-    # TODO substitute all facts 'EQUAL var body' where body is variable-free
     facts = set(simplify_expr(f) for f in facts)
+    facts = simplify_defs(facts)
     strings = db.simplify([f.polish for f in facts])
     facts = set(parse_string_to_expr(s) for s in strings)
     facts = map(unguard_vars, facts)
@@ -247,11 +300,12 @@ class FactsValidator(object):
         assert all(isinstance(f, Expression) for f in facts), facts
         assert isinstance(var, Expression), var
         assert var.is_var(), var
+        facts = simplify_facts(db, facts)
         self._db = db
-        self._facts = simplify_facts(db, facts)
+        self._facts = facts
         self._var = var
         self._verbose = verbose
-        free_vars = union(f.vars for f in self._facts)
+        free_vars = union(f.vars for f in facts)
         assert var in free_vars, 'facts do not depend on {}'.format(var)
         self._free_vars = sorted(free_vars - set([var]))
 
