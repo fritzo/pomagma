@@ -27,19 +27,14 @@ class ComplexityEvaluator(object):
         self._signature = {t.name: -math.log(t.weight) for t in language.terms}
         if free_vars:
             var_count = len(free_vars)
-            self._var_cost = math.log(var_count) + self._signature['APP']
+            var_cost = math.log(var_count) + self._signature['APP']
+            for var in free_vars:
+                self._signature[var.name] = var_cost
+        self._signature['HOLE'] = 0.0
 
     def __call__(self, term):
         assert isinstance(term, Expression)
-        if term == HOLE:
-            return 0.0
-        elif term.is_var():
-            return self._var_cost
-        else:
-            result = self._signature.get(term.name, 0.0)  # ignore unknowns
-            for arg in term.args:
-                result += self(arg)
-            return result
+        return sum(self._signature[n] for n in term.polish.split())
 
 
 class NaiveHoleFiller(object):
@@ -119,21 +114,33 @@ def iter_sketches(priority, fill_holes):
         yield sketch, steps
 
 
-def lazy_iter_valid_sketches(fill, validate, sketches):
+def filter_normal_sketches(sketches):
+    '''
+    Filter out sketches whose normal forms have already been seen.
+    '''
+    normal_forms = set()
+    for sketch, steps in sketches:
+        normal = simplify_expr(sketch)
+        if normal not in normal_forms:
+            normal_forms.add(normal)
+            yield sketch, steps
+
+
+def lazy_iter_valid_sketches(fill, validate, normal_sketches):
     '''
     Yield (state, term) pairs and Nones; consumers should filter out Nones.
     Since satisfiability is undecidable, consumers must decide when to give up.
 
     fill : term -> state, substitutes sketches into holes and simplifies
     validate : state -> bool, must be sound, may be incomplete
-    sketches : stream(term)
+    sketches : stream(sketch:term, steps:list(term))
     '''
     assert callable(fill), fill
     assert callable(validate), validate
     invalid_sketches = set()
     invalid_states = set()
     valid_states = set()
-    for sketch, steps in sketches:
+    for sketch, steps in normal_sketches:
         if sketch in invalid_sketches:
             invalid_sketches.update(steps)  # propagate
             yield
@@ -214,6 +221,7 @@ def iter_valid_sketches(
     complexity = ComplexityEvaluator(language, free_vars)
     fill_holes = NaiveHoleFiller(language, free_vars)
     sketches = iter_sketches(complexity, fill_holes)
+    sketches = filter_normal_sketches(sketches)
     lazy_valid_sketches = lazy_iter_valid_sketches(fill, validate, sketches)
     for term, sketch in impatient_iterator(lazy_valid_sketches, patience):
         yield complexity(term), term, sketch  # suitable for sort()

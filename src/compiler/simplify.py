@@ -24,6 +24,7 @@ is_terminal = (TOP, BOT, HOLE).__contains__
 
 @memoize_args
 def simplify_stack(head, *args):
+    args = map(simplify_term, args)
     nargs = len(args)
     if is_terminal(head):
         return [head]
@@ -82,11 +83,11 @@ def simplify_stack(head, *args):
         else:
             # commutativity
             lhs, rhs = sorted((lhs, rhs))
-            return [JOIN(lhs, rhs)] + map(simplify_term, args)
+            return [JOIN(lhs, rhs)] + args
         # TODO simplify wrt associativity
 
     head = Expression.make(head.name, *map(simplify_term, head.args))
-    return [head] + map(simplify_term, args)
+    return [head] + args
 
 
 @memoize_arg
