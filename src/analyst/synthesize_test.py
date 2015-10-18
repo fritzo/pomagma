@@ -9,12 +9,11 @@ from pomagma.language.util import json_load
 from pomagma.util import SRC
 from pomagma.util.testing import for_each
 
-
-VAR_NAMES = ['x', 'y', 'z']
+FREE_VARS = map(parse_string_to_expr, ['x', 'y', 'z'])
 LANGUAGE = dict_to_language(json_load(os.path.join(SRC, 'language/skj.json')))
 
-evaluate_complexity = ComplexityEvaluator(LANGUAGE, VAR_NAMES)
-fill_holes = NaiveHoleFiller(LANGUAGE, VAR_NAMES)
+evaluate_complexity = ComplexityEvaluator(LANGUAGE, FREE_VARS)
+fill_holes = NaiveHoleFiller(LANGUAGE, FREE_VARS)
 
 COMPLEXITY_EVALUATOR_EXAMPLES = [
     'B',
