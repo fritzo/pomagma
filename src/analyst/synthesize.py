@@ -29,7 +29,7 @@ class ComplexityEvaluator(object):
         signature = {t.name: -math.log(t.weight) for t in language.terms}
         if free_vars:
             var_count = len(free_vars)
-            var_cost = math.log(var_count) + self._signature['APP']
+            var_cost = math.log(var_count) + signature['APP']
             for var in free_vars:
                 signature[var.name] = var_cost
         signature['HOLE'] = 0.0
