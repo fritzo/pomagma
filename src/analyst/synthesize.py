@@ -8,6 +8,7 @@ from pomagma.compiler.parser import parse_string_to_expr
 from pomagma.compiler.simplify import simplify_expr
 from pomagma.compiler.sugar import desugar_expr
 from pomagma.compiler.util import inputs
+from pomagma.compiler.util import intern_keys
 from pomagma.compiler.util import memoize_args
 from pomagma.compiler.util import union
 from pomagma.language.util import Language
@@ -24,13 +25,14 @@ class ComplexityEvaluator(object):
     def __init__(self, language, free_vars=[]):
         assert isinstance(language, Language), language
         assert isinstance(free_vars, list), free_vars
-        self._signature = {t.name: -math.log(t.weight) for t in language.terms}
+        signature = {t.name: -math.log(t.weight) for t in language.terms}
         if free_vars:
             var_count = len(free_vars)
             var_cost = math.log(var_count) + self._signature['APP']
             for var in free_vars:
-                self._signature[var.name] = var_cost
-        self._signature['HOLE'] = 0.0
+                signature[var.name] = var_cost
+        signature['HOLE'] = 0.0
+        self._signature = intern_keys(signature)
 
     def __call__(self, term):
         assert isinstance(term, Expression)

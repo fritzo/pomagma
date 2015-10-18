@@ -17,10 +17,10 @@ def json_dump(data, filename):
 
 
 ARITY_TO_PB2 = {
-    'NULLARY': WeightedTerm.NULLARY,
-    'INJECTIVE': WeightedTerm.INJECTIVE,
-    'BINARY': WeightedTerm.BINARY,
-    'SYMMETRIC': WeightedTerm.SYMMETRIC,
+    intern('NULLARY'): WeightedTerm.NULLARY,
+    intern('INJECTIVE'): WeightedTerm.INJECTIVE,
+    intern('BINARY'): WeightedTerm.BINARY,
+    intern('SYMMETRIC'): WeightedTerm.SYMMETRIC,
 }
 
 ARITY_FROM_PB2 = {val: key for key, val in ARITY_TO_PB2.iteritems()}
@@ -85,7 +85,8 @@ def language_to_dict(language):
     grouped = {}
     for term in language.terms:
         arity = ARITY_FROM_PB2[term.arity]
-        grouped.setdefault(arity, {})[str(term.name)] = term.weight
+        name = intern(str(term.name))
+        grouped.setdefault(arity, {})[name] = term.weight
     return grouped
 
 

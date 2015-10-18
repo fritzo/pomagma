@@ -12,6 +12,10 @@ from math import log
 function = type(lambda x: x)
 
 
+def intern_keys(string_dict):
+    return {intern(str(key)): val for key, val in string_dict.iteritems()}
+
+
 def DELETE(*args, **kwargs):
     raise ValueError('deleted method')
 

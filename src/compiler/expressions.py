@@ -24,10 +24,10 @@ class Expression(object):
         assert len(args) == signature.get_nargs(arity), (args, arity)
         for arg in args:
             assert isinstance(arg, Expression), arg
-        self._name = name
+        self._name = intern(name)
         self._args = args
         self._arity = arity
-        self._polish = ' '.join([name] + [arg._polish for arg in args])
+        self._polish = intern(' '.join([name] + [arg._polish for arg in args]))
         self._hash = hash(self._polish)
 
         if arity == 'Variable':

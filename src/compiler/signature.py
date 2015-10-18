@@ -1,10 +1,11 @@
 import re
+from pomagma.compiler.util import intern_keys
 from pomagma.compiler.util import memoize_arg
 
 re_const = re.compile('[A-Z]+$')
 
 
-NARGS_TABLE = {
+NARGS_TABLE = intern_keys({
     'UnaryRelation': 1,
     'Equation': 2,
     'BinaryRelation': 2,
@@ -16,9 +17,9 @@ NARGS_TABLE = {
     'UnaryMeta': 1,
     'BinaryMeta': 2,
     'TernaryMeta': 3,
-}
+})
 
-ARITY_TABLE = {
+ARITY_TABLE = intern_keys({
     'EQUAL': 'Equation',
     'CLOSED': 'UnaryRelation',
     'NCLOSED': 'UnaryRelation',
@@ -41,26 +42,26 @@ ARITY_TABLE = {
     'ABIND': 'TernaryMeta',
     'FIX': 'BinaryMeta',
     'FIXES': 'BinaryMeta',
-}
+})
 
-RELATION_ARITIES = frozenset([
+RELATION_ARITIES = frozenset(map(intern, [
     'UnaryRelation',
     'Equation',
     'BinaryRelation',
-])
+]))
 
-FUNCTION_ARITIES = frozenset([
+FUNCTION_ARITIES = frozenset(map(intern, [
     'NullaryFunction',
     'InjectiveFunction',
     'BinaryFunction',
     'SymmetricFunction',
-])
+]))
 
-META_ARITIES = frozenset([
+META_ARITIES = frozenset(map(intern, [
     'UnaryMeta',
     'BinaryMeta',
     'TernaryMeta',
-])
+]))
 
 
 def declare_arity(name, arity):
@@ -70,7 +71,7 @@ def declare_arity(name, arity):
     if name in ARITY_TABLE:
         assert ARITY_TABLE[name] == arity, 'Cannot change arity'
     else:
-        ARITY_TABLE[name] = arity
+        ARITY_TABLE[intern(name)] = arity
 
 
 @memoize_arg
