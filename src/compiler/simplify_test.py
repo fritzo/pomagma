@@ -41,7 +41,7 @@ NONNORMAL_EXAMPLES = [
     ('APP F x', 'I'),
     ('APP HOLE x', 'HOLE'),
     ('APP I x', 'x'),
-    ('APP K COMP HOLE HOLE', 'APP K HOLE'),
+    ('APP K COMP HOLE HOLE', 'HOLE'),
     ('APP K HOLE', 'HOLE'),
     ('APP TOP x', 'TOP'),
     ('CB', 'APP C B'),
