@@ -87,11 +87,13 @@ Pomagma ships with a tiny pre-built atlas of ~2000 basic programs.
 
 To get a large pre-built atlas, put your AWS credentials in the environment and
 
-    pomagma pull                  # downloads latest atlas from S3 bucket
+    export AWS_ACCESS_KEY_ID=...        # put your id here
+    export AWS_SECRET_ACCESS_KEY=...    # put your hey here
+    pomagma pull                        # downloads latest atlas from S3
 
 To start building a custom atlas from scratch
 
-    pomagma make max_size=10000   # kill and restart at any time
+    pomagma make max_size=10000         # kill and restart at any time
 
 Pomagma is parallelized and needs lots of memory to build a large atlas.
 

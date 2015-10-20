@@ -1,3 +1,30 @@
+'''
+Program synthesis by sketching for untyped combinatory algebra.
+
+This implements an algorithm to solve general recursive sets of inequalities
+involving partial terms (i.e. terms with holes, sketches) by filling in holes.
+The inputs are:
+- a set of inequality constraints,
+- a sketch with holes to fill, and
+- a probabilistic language to generate hole fillings.
+The output is an any-time stream of possibly-valid terms.
+The algorithm is complete but not sound, in that every valid solution will
+eventually be yielded, but some yielded solutions may be invalid.
+
+The algorithm is structured as a multi-stage pipeline.
+At each stage, solutions are filtered out and quotiented down (deduplicated),
+and many computations are cached (memoized).
+
+The pipeline stages are:
+1. Generate a stream of hole-fillings, filtered to remove duplicates.
+2. Quotient out by normalizing the fillings, and dedulicate.
+3. Filter out strict narrowings of previously invalidated fillings.
+4. Substitute the filling into a context; quotient by simplifying; and dedup.
+5. Filter out contexts by client-side validation, which is heavily memoized.
+6. Filter out contexts by server-side constraint propagation, also memoized.
+7. Optionally filter out fillings with holes, i.e., restrict to ground terms.
+'''
+
 import heapq
 import itertools
 import math
