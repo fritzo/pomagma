@@ -13,7 +13,7 @@ re_space = re.compile('[ _]+')
 @memoize_make
 class Expression(object):
     __slots__ = [
-        '_name', '_args', '_arity', '_polish', '_hash', '_var',
+        '_name', '_args', '_arity', '_polish', '_hash', '_sort', '_var',
         '_vars', '_consts', '_terms',
     ]
 
@@ -29,6 +29,7 @@ class Expression(object):
         self._arity = arity
         self._polish = intern(' '.join([name] + [arg._polish for arg in args]))
         self._hash = hash(self._polish)
+        self._sort = (len(self._polish), self._polish)
 
         if arity == 'Variable':
             self._var = self
@@ -95,9 +96,7 @@ class Expression(object):
         return self._polish == other._polish
 
     def __lt__(self, other):
-        s = self._polish
-        o = other._polish
-        return (len(s), s) < (len(o), o)
+        return self._sort < other._sort
 
     def __str__(self):
         return self._polish
