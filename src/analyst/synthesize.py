@@ -27,20 +27,18 @@ The pipeline stages are:
 
 import heapq
 import itertools
-import math
 import signal
 from pomagma.analyst.compiler import unguard_vars
 from pomagma.compiler.expressions import Expression
 from pomagma.compiler.expressions import Expression_2
 from pomagma.compiler.parser import parse_string_to_expr
+from pomagma.compiler.signature import get_arity
+from pomagma.compiler.signature import get_nargs
 from pomagma.compiler.simplify import simplify_expr
 from pomagma.compiler.sugar import desugar_expr
 from pomagma.compiler.util import inputs
 from pomagma.compiler.util import intern_keys
 from pomagma.compiler.util import memoize_args
-from pomagma.compiler.util import union
-from pomagma.language.util import Language
-from pomagma.language.util import language_to_dict
 
 PATIENCE = 10000
 HOLE = Expression.make('HOLE')
@@ -50,42 +48,33 @@ EQUAL = Expression_2('EQUAL')
 
 
 class ComplexityEvaluator(object):
-    def __init__(self, language, free_vars=[]):
-        assert isinstance(language, Language), language
-        assert isinstance(free_vars, list), free_vars
-        signature = {t.name: -math.log(t.weight) for t in language.terms}
-        if free_vars:
-            var_count = len(free_vars)
-            var_cost = math.log(var_count) + signature['APP']
-            for var in free_vars:
-                signature[var.name] = var_cost
-        signature['HOLE'] = 0.0
-        self._signature = intern_keys(signature)
+    def __init__(self, language):
+        assert isinstance(language, dict), language
+        for name, cost in language.iteritems():
+            assert isinstance(name, str), name
+            assert isinstance(cost, float), cost
+            assert cost > 0, cost
+        language = language.copy()
+        language['HOLE'] = 0.0
+        self._language = intern_keys(language)
 
     def __call__(self, term):
         assert isinstance(term, Expression)
-        return sum(self._signature[n] for n in term.polish.split())
+        return sum(self._language[n] for n in term.polish.split())
+
+
+def make_template(name):
+    assert isinstance(name, str), name
+    holes = [HOLE] * get_nargs(get_arity(name))
+    return Expression.make(name, *holes)
 
 
 class NaiveHoleFiller(object):
     'A more intelligent hole filler would only enumerate normal forms'
-    def __init__(self, language, free_vars):
-        assert isinstance(language, Language), language
-        assert isinstance(free_vars, list), free_vars
-        assert all(isinstance(v, Expression) for v in free_vars), free_vars
-        fillings = []
-        grouped = language_to_dict(language)
-        for name in sorted(grouped.get('NULLARY', [])):
-            fillings.append(Expression.make(name))
-        for name in sorted(grouped.get('INJECTIVE', [])):
-            fillings.append(Expression.make(name, HOLE))
-        for name in sorted(grouped.get('BINARY', [])):
-            fillings.append(Expression.make(name, HOLE, HOLE))
-        for name in sorted(grouped.get('SYMMETRIC', [])):
-            fillings.append(Expression.make(name, HOLE, HOLE))
-        for var in sorted(free_vars):
-            fillings.append(var)
-        self._fillings = tuple(fillings)
+    def __init__(self, language):
+        assert isinstance(language, dict), language
+        assert all(isinstance(n, str) for n in language), language
+        self._fillings = tuple(make_template(n) for n in sorted(language))
 
     @memoize_args
     def __call__(self, term):
@@ -230,32 +219,25 @@ def impatient_iterator(lazy_iterator, patience=PATIENCE):
 
 
 # this ties everything together
-def iter_valid_sketches(
-        fill,
-        validate,
-        language,
-        free_vars=[],
-        patience=PATIENCE):
+def iter_valid_sketches(fill, validate, language, patience=PATIENCE):
     '''
     Yield (complexity, term, sketch) tuples until patience runs out or Ctrl-C.
 
     fill : term -> state, substitutes sketches into holes and simplifies
     validate : state -> bool, must be sound, may be incomplete
-    language : Language proto
-    free_vars : list(Expression)
+    language : dict(name:str -> cost:float), costs must be positive
     '''
     assert callable(fill), fill
     assert callable(validate), validate
-    assert isinstance(language, Language), language
+    assert isinstance(language, dict), language
     assert patience > 0, patience
-    free_vars = sorted(set(free_vars))
-    complexity = ComplexityEvaluator(language, free_vars)
-    fill_holes = NaiveHoleFiller(language, free_vars)
+    complexity = ComplexityEvaluator(language)
+    fill_holes = NaiveHoleFiller(language)
     sketches = iter_sketches(complexity, fill_holes)
     sketches = filter_normal_sketches(sketches)
     lazy_valid_sketches = lazy_iter_valid_sketches(fill, validate, sketches)
     for term, sketch in impatient_iterator(lazy_valid_sketches, patience):
-        yield complexity(term), term, sketch  # suitable for sort()
+        yield complexity(sketch), term, sketch  # suitable for sort()
 
 
 @memoize_args
@@ -344,12 +326,6 @@ class FactsValidator(object):
         self._facts = facts
         self._var = var
         self._verbose = verbose
-        free_vars = union(f.vars for f in facts)
-        assert var in free_vars, 'facts do not depend on {}'.format(var)
-        self._free_vars = sorted(free_vars - set([var]))
-
-    def free_vars(self):
-        return self._free_vars[:]
 
     def fill(self, filling):
         return simplify_filling(self._db, filling)

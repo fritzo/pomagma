@@ -1,4 +1,3 @@
-import os
 from nose.tools import assert_equal
 from nose.tools import assert_less
 from nose.tools import assert_list_equal
@@ -6,17 +5,28 @@ from pomagma.analyst.synthesize import ComplexityEvaluator
 from pomagma.analyst.synthesize import NaiveHoleFiller
 from pomagma.analyst.synthesize import simplify_defs
 from pomagma.compiler.parser import parse_string_to_expr
-from pomagma.language.util import dict_to_language
-from pomagma.language.util import json_load
-from pomagma.util import SRC
 from pomagma.util.testing import for_each
 from pomagma.util.testing import for_each_kwargs
 
 FREE_VARS = map(parse_string_to_expr, ['x', 'y', 'z'])
-LANGUAGE = dict_to_language(json_load(os.path.join(SRC, 'language/skj.json')))
+LANGUAGE = {
+    'APP': 1.0,
+    'COMP': 1.6,
+    'JOIN': 3.0,
+    'B': 1.0,
+    'C': 1.3,
+    'I': 2.2,
+    'K': 2.6,
+    'S': 2.7,
+    'BOT': 3.0,
+    'TOP': 3.0,
+    'x': 4.0,
+    'y': 4.0,
+    'z': 4.0,
+}
 
-evaluate_complexity = ComplexityEvaluator(LANGUAGE, FREE_VARS)
-fill_holes = NaiveHoleFiller(LANGUAGE, FREE_VARS)
+evaluate_complexity = ComplexityEvaluator(LANGUAGE)
+fill_holes = NaiveHoleFiller(LANGUAGE)
 
 COMPLEXITY_EVALUATOR_EXAMPLES = [
     'B',
@@ -37,13 +47,10 @@ def complexity_evaluator_test(example):
     assert_less(0, evaluate_complexity(term))
 
 
-FILLINGS = sorted([
-    'BOT', 'TOP',
-    'I', 'K', 'CB', 'CI', 'J', 'B', 'C', 'W', 'S', 'Y', 'P', 'U', 'V',
-])
-FILLINGS += sorted(['APP HOLE HOLE', 'COMP HOLE HOLE'])
-FILLINGS += sorted(['JOIN HOLE HOLE'])
-FILLINGS += sorted(['x', 'y', 'z'])
+FILLINGS = sorted(
+    ['BOT', 'TOP', 'I', 'K', 'B', 'C', 'S'] +
+    ['APP HOLE HOLE', 'COMP HOLE HOLE', 'JOIN HOLE HOLE'] +
+    ['x', 'y', 'z'])
 
 HOLE_FILLER_EXAMPLES = [
     ('I', []),

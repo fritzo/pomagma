@@ -1,4 +1,3 @@
-import os
 import pomagma.analyst
 from itertools import islice
 from parsable import parsable
@@ -8,11 +7,20 @@ from pomagma.analyst.synthesize import iter_valid_sketches
 from pomagma.compiler.expressions import Expression
 from pomagma.compiler.parser import parse_theory_string
 from pomagma.compiler.sugar import desugar_expr
-from pomagma.language.util import dict_to_language
-from pomagma.language.util import json_load
-from pomagma.util import SRC
 
-SKJ = dict_to_language(json_load(os.path.join(SRC, 'language/skj.json')))
+A_LANGUAGE = {
+    'APP': 1.0,
+    # 'COMP': 1.6,
+    'JOIN': 3.0,
+    'B': 1.0,
+    'C': 1.3,
+    'BOT': 2.0,
+    'TOP': 2.0,
+    'I': 2.2,
+    'K': 2.6,
+    'S': 2.7,
+    'DIV': 3.0,
+}
 
 A_THEORY = (
     '''
@@ -64,8 +72,7 @@ def define_a(
         valid_sketches = iter_valid_sketches(
             fill=validator.fill,
             validate=validator.validate,
-            free_vars=validator.free_vars(),
-            language=SKJ,
+            language=A_LANGUAGE,
             patience=patience)
         if complete:
             valid_sketches = (r for r in valid_sketches if is_complete(r[-1]))
