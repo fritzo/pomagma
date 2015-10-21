@@ -30,31 +30,11 @@ class Expression(object):
         self._polish = intern(' '.join([name] + [arg._polish for arg in args]))
         self._hash = hash(self._polish)
         self._sort = (len(self._polish), self._polish)
-
-        if arity == 'Variable':
-            self._var = self
-            self._vars = set([self])
-        elif arity == 'NullaryFunction':
-            self._var = Expression.make(name + '_')
-            self._vars = set()
-        elif arity in signature.FUNCTION_ARITIES:
-            var = re_space.sub('_', self._polish.rstrip('_'))
-            self._var = Expression.make(var)
-            self._vars = union(arg.vars for arg in args)
-        else:
-            self._var = None
-            self._vars = union(arg.vars for arg in args)
-        self._vars = sortedset(self._vars)
-
-        if self.is_fun() and not self.args:
-            self._consts = sortedset([self])
-        else:
-            self._consts = sortedset(union(arg.consts for arg in self.args))
-
-        self._terms = union(arg.terms for arg in self.args)
-        if self.is_term():
-            self._terms.add(self)
-        self._terms = sortedset(self._terms)
+        # all other fields are lazily initialized
+        self._var = None
+        self._vars = None
+        self._consts = None
+        self._terms = None
 
     @property
     def name(self):
@@ -74,18 +54,46 @@ class Expression(object):
 
     @property
     def var(self):
+        if self._var is None:
+            if self._arity == 'Variable':
+                self._var = self
+            elif self._arity == 'NullaryFunction':
+                self._var = Expression.make(self._name + '_')
+            elif self._arity in signature.FUNCTION_ARITIES:
+                var = re_space.sub('_', self._polish.rstrip('_'))
+                self._var = Expression.make(var)
         return self._var
 
     @property
     def vars(self):
+        if self._vars is None:
+            if self._arity == 'Variable':
+                self._vars = set([self])
+            elif self._arity == 'NullaryFunction':
+                self._vars = set()
+            elif self._arity in signature.FUNCTION_ARITIES:
+                self._vars = union(a.vars for a in self._args)
+            else:
+                self._vars = union(a.vars for a in self._args)
+            self._vars = sortedset(self._vars)
         return self._vars
 
     @property
     def consts(self):
+        if self._consts is None:
+            if self.is_fun() and not self._args:
+                self._consts = sortedset([self])
+            else:
+                self._consts = sortedset(union(a.consts for a in self._args))
         return self._consts
 
     @property
     def terms(self):
+        if self._terms is None:
+            self._terms = union(a.terms for a in self._args)
+            if self.is_term():
+                self._terms.add(self)
+            self._terms = sortedset(self._terms)
         return self._terms
 
     def __hash__(self):
@@ -129,7 +137,7 @@ class Expression(object):
         else:
             return Expression.make(
                 self.name,
-                *(arg.substitute(var, defn) for arg in self.args))
+                *(arg.substitute(var, defn) for arg in self._args))
 
     def swap(self, var1, var2):
         assert isinstance(var1, Expression) and var1.is_var()
@@ -143,12 +151,12 @@ class Expression(object):
         else:
             return Expression.make(
                 self.name,
-                *(arg.swap(var1, var2) for arg in self.args))
+                *(arg.swap(var1, var2) for arg in self._args))
 
     def permute_symbols(self, perm):
         assert isinstance(perm, dict)
         name = '_'.join(perm.get(n, n) for n in self.name.split('_'))
-        args = (arg.permute_symbols(perm) for arg in self.args)
+        args = (a.permute_symbols(perm) for a in self._args)
         return Expression.make(name, *args)
 
 
