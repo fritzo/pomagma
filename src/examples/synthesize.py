@@ -14,6 +14,7 @@ A_LANGUAGE = {
     # 'JOIN': 3.0,
     'B': 1.0,
     'C': 1.3,
+    'A': 2.0,
     'BOT': 2.0,
     'TOP': 2.0,
     'I': 2.2,
@@ -34,22 +35,26 @@ A_THEORY = (
     EQUAL pull FUN x FUN y JOIN x APP DIV y
     EQUAL push FUN x APP x BOT
 
-    # the existing A rules
-    LESS APP APP pair I I A
-    LESS APP APP pair pull push A
-    LESS APP APP pair raise lower A
-    LESS ABIND s1 r1 ABIND s2 r2 APP APP pair COMP s1 s2 COMP r2 r1 A
-    LESS ABIND s1 r1 ABIND s2 r2'''
-    ''' APP APP pair APP APP conj r1 s2 APP APP conj s1 r2 A
+    # the existing A moves
+    EQUAL move1 APP APP pair I I
+    EQUAL move2 APP APP pair pull push
+    EQUAL move3 APP APP pair raise lower
+    EQUAL move4 ABIND s1 r1 ABIND s2 r2 APP APP pair COMP s1 s2 COMP r2 r1
+    EQUAL move5 ABIND s1 r1 ABIND s2 r2'''
+    ''' APP APP pair APP APP conj r1 s2 APP APP conj s1 r2
+    LESS move1 A
+    LESS move2 A
+    LESS move3 A
+    LESS move4 A
+    LESS move5 A
 
-    # we search for an additional fixed point operation
-    LESS APP hole A A
-
-    # and require that hole provide something new
-    NLESS hole I
-    NLESS hole APP K APP APP pair I I
-    NLESS hole APP K APP APP pair pull push
-    NLESS hole APP K APP APP pair raise lower
+    # we search for an additional move that provides something new
+    LESS hole A
+    NLESS hole move1
+    NLESS hole move2
+    NLESS hole move3
+    NLESS hole move4
+    NLESS hole move5
     '''
 )
 
