@@ -11,14 +11,16 @@ from pomagma.compiler.sugar import desugar_expr
 A_LANGUAGE = {
     'APP': 1.0,
     # 'COMP': 1.6,
-    'JOIN': 3.0,
+    # 'JOIN': 3.0,
     'B': 1.0,
     'C': 1.3,
     'BOT': 2.0,
     'TOP': 2.0,
     'I': 2.2,
+    # 'Y': 2.3,
     'K': 2.6,
     'S': 2.7,
+    'J': 2.8,
     'DIV': 3.0,
 }
 
@@ -42,16 +44,22 @@ A_THEORY = (
 
     # we search for an additional fixed point operation
     LESS APP hole A A
+
+    # and require that hole provide something new
+    NLESS hole I
+    NLESS hole APP K APP APP pair I I
+    NLESS hole APP K APP APP pair pull push
+    NLESS hole APP K APP APP pair raise lower
     '''
 )
 
 
 @parsable
 def define_a(
-        max_solutions=32,
+        max_solutions=15,
         patience=pomagma.analyst.synthesize.PATIENCE,
-        verbose=True,
-        complete=False,
+        complete=True,
+        verbose=False,
         address=pomagma.analyst.ADDRESS):
     '''
     Search for definition of A = Join {<s, r> | r o s [= I}.
