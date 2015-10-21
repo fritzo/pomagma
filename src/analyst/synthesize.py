@@ -78,21 +78,20 @@ class NaiveHoleFiller(object):
 
     @memoize_args
     def __call__(self, term):
-        if term == HOLE:
-            return self._fillings
-        elif len(term.args) == 1:
+        nargs = len(term.args)
+        if nargs == 0:
+            return self._fillings if term is HOLE else ()
+        elif nargs == 1:
             name = term.name
             key, = term.args
             return tuple(Expression.make(name, f) for f in self(key))
-        elif len(term.args) == 2:
+        elif nargs == 2:
             name = term.name
             lhs, rhs = term.args
             return tuple(itertools.chain(
                 (Expression.make(name, f, rhs) for f in self(lhs)),
                 (Expression.make(name, lhs, f) for f in self(rhs)),
             ))
-        else:
-            return ()
 
 
 class UniquePriorityQueue(object):
@@ -109,8 +108,7 @@ class UniquePriorityQueue(object):
     def push(self, item):
         if item not in self._pushed:
             self._pushed.add(item)
-            priority = self._priority(item)
-            heapq.heappush(self._to_pop, (priority, item))
+            heapq.heappush(self._to_pop, (self._priority(item), item))
 
     def pop(self):
         assert self._to_pop, 'cannot pop from empty queue'
@@ -339,9 +337,9 @@ class FactsValidator(object):
         falsey = BOT  # facts proven false
         unknown_facts = []
         for fact in facts:
-            if fact == falsey:
+            if fact is falsey:
                 return False
-            if fact == truthy:
+            if fact is truthy:
                 continue
             unknown_facts.append(fact)
         facts = unknown_facts
