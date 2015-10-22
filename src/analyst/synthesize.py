@@ -27,6 +27,7 @@ The pipeline stages are:
 
 import heapq
 import itertools
+import psutil
 import signal
 from pomagma.analyst.compiler import unguard_vars
 from pomagma.compiler.expressions import Expression
@@ -40,7 +41,7 @@ from pomagma.compiler.util import inputs
 from pomagma.compiler.util import intern_keys
 from pomagma.compiler.util import memoize_args
 
-PATIENCE = 10000
+MAX_MEMORY = 0.95
 HOLE = Expression.make('HOLE')
 BOT = Expression.make('BOT')
 I = Expression.make('I')
@@ -198,23 +199,20 @@ class Interruptable(object):
             raise StopIteration
 
 
-def impatient_iterator(lazy_iterator, patience=PATIENCE):
+def polling_iterator(lazy_iterator, max_memory):
     '''
-    Filter results of a lazy_iterator until either patience runs out or SIGINT.
+    Filter results of a lazy_iterator until either memory runs out or SIGINT.
     Patience is measured in nebulous "progress steps".
     '''
-    assert patience > 0, patience
-    patience_remaining = patience
+    assert isinstance(max_memory, float), max_memory
+    assert 0 < max_memory and max_memory < 1, max_memory
     with Interruptable() as interrupted:
         for value_or_none in lazy_iterator:
             interrupted.poll()
+            if psutil.virtual_memory().percent > max_memory * 100:
+                raise StopIteration
             if value_or_none is not None:
-                patience_remaining = patience
                 yield value_or_none
-            else:
-                patience_remaining -= 1
-                if patience_remaining == 0:
-                    raise StopIteration
 
 
 # this ties everything together
@@ -223,28 +221,29 @@ def iter_valid_sketches(
         validate,
         language,
         initial_sketch=HOLE,
-        patience=PATIENCE):
+        max_memory=MAX_MEMORY):
     '''
-    Yield (complexity, term, sketch) tuples until patience runs out or Ctrl-C.
+    Yield (complexity, term, sketch) tuples until memory runs out or Ctrl-C.
 
     fill : term -> state, substitutes sketches into holes and simplifies
     validate : state -> bool, must be sound, may be incomplete
     language : dict(name:str -> cost:float), costs must be positive
     initial_sketch : term, must have at least one hole
-    patience : int > 0
+    max_memory : float, max portion of memory, in [0,1]
     '''
     assert callable(fill), fill
     assert callable(validate), validate
     assert isinstance(language, dict), language
     assert all(isinstance(n, str) for n in language), language
     assert isinstance(initial_sketch, Expression), initial_sketch
-    assert patience > 0, patience
+    assert isinstance(max_memory, float), max_memory
+    assert 0 < max_memory and max_memory < 1, max_memory
     complexity = ComplexityEvaluator(language)
     fill_holes = NaiveHoleFiller(language)
     sketches = iter_sketches(complexity, fill_holes, initial_sketch)
     sketches = filter_normal_sketches(sketches)
     lazy_valid_sketches = lazy_iter_valid_sketches(fill, validate, sketches)
-    for term, sketch in impatient_iterator(lazy_valid_sketches, patience):
+    for term, sketch in polling_iterator(lazy_valid_sketches, max_memory):
         yield complexity(sketch), term, sketch  # suitable for sort()
 
 

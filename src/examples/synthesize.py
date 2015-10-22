@@ -69,7 +69,7 @@ A_INITIAL_SKETCH = desugar_expr(parse_string_to_expr(
 @parsable
 def define_a(
         max_solutions=15,
-        patience=pomagma.analyst.synthesize.PATIENCE,
+        max_memory=pomagma.analyst.synthesize.MAX_MEMORY,
         verbose=False,
         address=pomagma.analyst.ADDRESS):
     '''
@@ -79,7 +79,7 @@ def define_a(
     $ snakeviz define_a.pstats
     '''
     assert max_solutions > 0, max_solutions
-    assert patience > 0, patience
+    assert 0 < max_memory and max_memory < 1, max_memory
     facts = parse_theory_string(A_THEORY)['facts']
     facts = map(desugar_expr, facts)
     for fact in facts:
@@ -98,7 +98,7 @@ def define_a(
             validate=validator.validate,
             language=A_LANGUAGE,
             initial_sketch=A_INITIAL_SKETCH,
-            patience=patience)
+            max_memory=max_memory)
         valid_sketches = (r for r in valid_sketches if is_complete(r[-1]))
         results = sorted(islice(valid_sketches, 0, max_solutions))
     print 'Possible Fillings:'
