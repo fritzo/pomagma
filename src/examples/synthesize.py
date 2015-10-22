@@ -5,16 +5,19 @@ from pomagma.analyst.synthesize import FactsValidator
 from pomagma.analyst.synthesize import is_complete
 from pomagma.analyst.synthesize import iter_valid_sketches
 from pomagma.compiler.expressions import Expression
+from pomagma.compiler.expressions import Expression_2
+from pomagma.compiler.parser import parse_string_to_expr
 from pomagma.compiler.parser import parse_theory_string
+from pomagma.compiler.simplify import simplify_expr
 from pomagma.compiler.sugar import desugar_expr
 
 A_LANGUAGE = {
     'APP': 1.0,
     # 'COMP': 1.6,
-    # 'JOIN': 3.0,
+    'JOIN': 3.0,
     'B': 1.0,
     'C': 1.3,
-    'A': 2.0,
+    # 'A': 2.0,
     'BOT': 2.0,
     'TOP': 2.0,
     'I': 2.2,
@@ -58,12 +61,15 @@ A_THEORY = (
     '''
 )
 
+A_INITIAL_SKETCH = desugar_expr(parse_string_to_expr(
+    'FUN f APP APP f HOLE HOLE'
+))
+
 
 @parsable
 def define_a(
         max_solutions=15,
         patience=pomagma.analyst.synthesize.PATIENCE,
-        complete=True,
         verbose=False,
         address=pomagma.analyst.ADDRESS):
     '''
@@ -81,18 +87,25 @@ def define_a(
             assert len(var.name) > 2, 'unbound variable: {}'.format(var)
     hole = Expression('hole')
     with pomagma.analyst.connect(address) as db:
-        validator = FactsValidator(db, facts, hole, verbose=verbose)
+        validator = FactsValidator(
+            db=db,
+            facts=facts,
+            var=hole,
+            initial_sketch=A_INITIAL_SKETCH,
+            verbose=verbose)
         valid_sketches = iter_valid_sketches(
             fill=validator.fill,
             validate=validator.validate,
             language=A_LANGUAGE,
+            initial_sketch=A_INITIAL_SKETCH,
             patience=patience)
-        if complete:
-            valid_sketches = (r for r in valid_sketches if is_complete(r[-1]))
+        valid_sketches = (r for r in valid_sketches if is_complete(r[-1]))
         results = sorted(islice(valid_sketches, 0, max_solutions))
-    print 'Possible Fillings'
+    print 'Possible Fillings:'
+    APP = Expression_2('APP')
+    f = Expression.make('f')
     for complexity, term, filling in results:
-        print filling
+        print simplify_expr(APP(filling, f))
     return results
 
 

@@ -115,15 +115,16 @@ class UniquePriorityQueue(object):
         return heapq.heappop(self._to_pop)[1]
 
 
-def iter_sketches(priority, fill_holes):
+def iter_sketches(priority, fill_holes, initial_sketch=HOLE):
     '''
     priority : term -> float
     fill_holes : term -> list(term), must increase priority, decrease validity
     '''
     assert callable(priority), priority
     assert callable(fill_holes), fill_holes
+    assert isinstance(initial_sketch, Expression), initial_sketch
     queue = UniquePriorityQueue(priority)
-    queue.push(HOLE)
+    queue.push(initial_sketch)
     while True:
         sketch = queue.pop()
         steps = fill_holes(sketch)
@@ -217,21 +218,30 @@ def impatient_iterator(lazy_iterator, patience=PATIENCE):
 
 
 # this ties everything together
-def iter_valid_sketches(fill, validate, language, patience=PATIENCE):
+def iter_valid_sketches(
+        fill,
+        validate,
+        language,
+        initial_sketch=HOLE,
+        patience=PATIENCE):
     '''
     Yield (complexity, term, sketch) tuples until patience runs out or Ctrl-C.
 
     fill : term -> state, substitutes sketches into holes and simplifies
     validate : state -> bool, must be sound, may be incomplete
     language : dict(name:str -> cost:float), costs must be positive
+    initial_sketch : term, must have at least one hole
+    patience : int > 0
     '''
     assert callable(fill), fill
     assert callable(validate), validate
     assert isinstance(language, dict), language
+    assert all(isinstance(n, str) for n in language), language
+    assert isinstance(initial_sketch, Expression), initial_sketch
     assert patience > 0, patience
     complexity = ComplexityEvaluator(language)
     fill_holes = NaiveHoleFiller(language)
-    sketches = iter_sketches(complexity, fill_holes)
+    sketches = iter_sketches(complexity, fill_holes, initial_sketch)
     sketches = filter_normal_sketches(sketches)
     lazy_valid_sketches = lazy_iter_valid_sketches(fill, validate, sketches)
     for term, sketch in impatient_iterator(lazy_valid_sketches, patience):
@@ -275,7 +285,7 @@ def substitute_bodies(terms, var, bodies):
                 terms.add(simplify_expr(term.substitute(var, body)))
 
 
-def simplify_defs(facts):
+def simplify_defs(facts, vars_to_keep=set()):
     '''
     Substitute all facts of form 'EQUAL var closed_term' into remaining facts.
     In case of multiple equivalent definitions,
@@ -290,23 +300,30 @@ def simplify_defs(facts):
         changed = False
         for var, bodies in defs.items():
             if any(v in defs for b in bodies for v in b.vars):
-                continue  # avoid cycles
-            del defs[var]
+                continue  # avoid substitution cycles
+            if not any(var in b.vars for bs in defs.itervalues() for b in bs):
+                if not any(var in f.vars for f in facts):
+                    continue
+            if var not in vars_to_keep:
+                del defs[var]
             substitute_bodies(facts, var, bodies)
             for var2, bodies2 in defs.iteritems():
                 substitute_bodies(bodies2, var, bodies)
             extract_defs_from_facts(facts, defs)
             changed = True
     for var, bodies in defs.iteritems():
-        facts.add(EQUAL(var, b) for b in bodies)
+        facts.update(EQUAL(var, b) for b in bodies)
     return facts
 
 
-def simplify_facts(db, facts):
+def simplify_facts(db, facts, vars_to_keep):
     assert isinstance(facts, list), facts
     assert all(isinstance(f, Expression) for f in facts), facts
+    assert isinstance(vars_to_keep, set), vars_to_keep
+    assert all(isinstance(v, Expression) for v in vars_to_keep), vars_to_keep
+    assert all(v.is_var() for v in vars_to_keep), vars_to_keep
     facts = set(simplify_expr(f) for f in facts)
-    facts = simplify_defs(facts)
+    facts = simplify_defs(facts, vars_to_keep)
     strings = db.simplify([f.polish for f in facts])
     facts = set(parse_string_to_expr(s) for s in strings)
     facts = map(unguard_vars, facts)
@@ -314,12 +331,12 @@ def simplify_facts(db, facts):
 
 
 class FactsValidator(object):
-    def __init__(self, db, facts, var, verbose=False):
+    def __init__(self, db, facts, var, initial_sketch=HOLE, verbose=False):
         assert isinstance(facts, list), facts
         assert all(isinstance(f, Expression) for f in facts), facts
         assert isinstance(var, Expression), var
         assert var.is_var(), var
-        facts = simplify_facts(db, facts)
+        facts = simplify_facts(db, facts, initial_sketch.vars)
         self._db = db
         self._facts = facts
         self._var = var
@@ -332,7 +349,7 @@ class FactsValidator(object):
         if self._verbose:
             print 'Filling:', filling
         facts = [f.substitute(self._var, filling) for f in self._facts]
-        facts = simplify_facts(self._db, facts)
+        facts = simplify_facts(self._db, facts, set())
         truthy = I  # facts proven true
         falsey = BOT  # facts proven false
         unknown_facts = []

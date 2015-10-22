@@ -100,12 +100,18 @@ SIMPLIFY_DEFS_EXAMPLES = [
         'facts': ['EQUAL x F', 'EQUAL x APP K I', 'NLESS x I'],
         'expected': ['NLESS F I', 'NLESS APP K I I'],
     },
+    {
+        'facts': ['EQUAL a b', 'EQUAL b c', 'EQUAL c I', 'LESS I a'],
+        'vars_to_keep': ['a'],
+        'expected': ['EQUAL a I', 'LESS I I'],
+    },
 ]
 
 
 @for_each_kwargs(SIMPLIFY_DEFS_EXAMPLES)
-def simplify_defs_test(facts, expected):
+def simplify_defs_test(facts, expected, vars_to_keep=[]):
     facts = set(map(parse_string_to_expr, facts))
     expected = set(map(parse_string_to_expr, expected))
-    actual = simplify_defs(facts)
+    vars_to_keep = set(map(parse_string_to_expr, vars_to_keep))
+    actual = simplify_defs(facts, vars_to_keep)
     assert_equal(actual, expected)
