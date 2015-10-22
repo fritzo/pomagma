@@ -95,7 +95,7 @@ def define_a(
             verbose=verbose)
         valid_sketches = iter_valid_sketches(
             fill=validator.fill,
-            validate=validator.validate,
+            lazy_validate=validator.lazy_validate,
             language=A_LANGUAGE,
             initial_sketch=A_INITIAL_SKETCH,
             max_memory=max_memory)

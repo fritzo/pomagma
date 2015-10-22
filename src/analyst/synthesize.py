@@ -29,6 +29,8 @@ import heapq
 import itertools
 import psutil
 import signal
+import time
+from pomagma.analyst.client import VALIDATE_POLL_SEC
 from pomagma.analyst.compiler import unguard_vars
 from pomagma.compiler.expressions import Expression
 from pomagma.compiler.expressions import Expression_2
@@ -146,17 +148,17 @@ def filter_normal_sketches(sketches):
             yield sketch, steps
 
 
-def lazy_iter_valid_sketches(fill, validate, normal_sketches):
+def lazy_iter_valid_sketches(fill, lazy_validate, normal_sketches):
     '''
     Yield (state, term) pairs and Nones; consumers should filter out Nones.
     Since satisfiability is undecidable, consumers must decide when to give up.
 
     fill : term -> state, substitutes sketches into holes and simplifies
-    validate : state -> bool, must be sound, may be incomplete
+    lazy_validate : state -> bool or None, must be sound, may be incomplete
     sketches : stream(sketch:term, steps:list(term))
     '''
     assert callable(fill), fill
-    assert callable(validate), validate
+    assert callable(lazy_validate), lazy_validate
     invalid_sketches = set()
     invalid_states = set()
     valid_states = set()
@@ -169,7 +171,12 @@ def lazy_iter_valid_sketches(fill, validate, normal_sketches):
         if state in valid_states:
             yield
             continue
-        if state in invalid_states or not validate(state):
+        valid = False if state in invalid_states else lazy_validate(state)
+        while valid is None:
+            yield
+            time.sleep(VALIDATE_POLL_SEC)
+            valid = lazy_validate(state)
+        if not valid:
             invalid_states.add(state)
             invalid_sketches.update(steps)  # propagate
             yield
@@ -218,7 +225,7 @@ def polling_iterator(lazy_iterator, max_memory):
 # this ties everything together
 def iter_valid_sketches(
         fill,
-        validate,
+        lazy_validate,
         language,
         initial_sketch=HOLE,
         max_memory=MAX_MEMORY):
@@ -226,13 +233,13 @@ def iter_valid_sketches(
     Yield (complexity, term, sketch) tuples until memory runs out or Ctrl-C.
 
     fill : term -> state, substitutes sketches into holes and simplifies
-    validate : state -> bool, must be sound, may be incomplete
+    lazy_validate : state -> bool or None, must be sound, may be incomplete
     language : dict(name:str -> cost:float), costs must be positive
     initial_sketch : term, must have at least one hole
     max_memory : float, max portion of memory, in [0,1]
     '''
     assert callable(fill), fill
-    assert callable(validate), validate
+    assert callable(lazy_validate), lazy_validate
     assert isinstance(language, dict), language
     assert all(isinstance(n, str) for n in language), language
     assert isinstance(initial_sketch, Expression), initial_sketch
@@ -242,7 +249,10 @@ def iter_valid_sketches(
     fill_holes = NaiveHoleFiller(language)
     sketches = iter_sketches(complexity, fill_holes, initial_sketch)
     sketches = filter_normal_sketches(sketches)
-    lazy_valid_sketches = lazy_iter_valid_sketches(fill, validate, sketches)
+    lazy_valid_sketches = lazy_iter_valid_sketches(
+        fill,
+        lazy_validate,
+        sketches)
     for term, sketch in polling_iterator(lazy_valid_sketches, max_memory):
         yield complexity(sketch), term, sketch  # suitable for sort()
 
@@ -344,7 +354,7 @@ class FactsValidator(object):
     def fill(self, filling):
         return simplify_filling(self._db, filling)
 
-    def validate(self, filling):
+    def lazy_validate(self, filling):
         if self._verbose:
             print 'Filling:', filling
         facts = [f.substitute(self._var, filling) for f in self._facts]
@@ -360,7 +370,7 @@ class FactsValidator(object):
             unknown_facts.append(fact)
         facts = unknown_facts
         strings = [f.polish for f in facts]
-        return self._db.validate_facts(strings)
+        return self._db.validate_facts(strings, block=False)
 
 
 @inputs(Expression)

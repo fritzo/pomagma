@@ -6,6 +6,7 @@ import zmq
 
 CONTEXT = zmq.Context()
 POLL_TIMEOUT_MS = 1000
+VALIDATE_POLL_SEC = 0.1
 Request = messages.AnalystRequest
 Response = messages.AnalystResponse
 
@@ -182,7 +183,7 @@ class Client(object):
             request.validate_facts.facts.append(compiler.desugar(fact))
         reply = self._call(request)
         while block and reply.validate_facts.result == Response.MAYBE:
-            time.sleep(0.1)
+            time.sleep(VALIDATE_POLL_SEC)
             reply = self._call(request)
         return TROOL[reply.validate_facts.result]
 
