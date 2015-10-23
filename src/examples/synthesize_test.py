@@ -4,6 +4,15 @@ from pomagma.examples.testing import SKJA
 from pomagma.examples.testing import serve
 
 
-def test_define():
+def test_define_a():
     with serve(SKJA):
-        pomagma.examples.synthesize.define_a(address=ADDRESS)
+        pomagma.examples.synthesize.define_a(
+            max_solutions=2,
+            address=ADDRESS)
+
+
+def test_define_a_pair():
+    with serve(SKJA):
+        pomagma.examples.synthesize.define_a_pair(
+            max_solutions=2,
+            address=ADDRESS)

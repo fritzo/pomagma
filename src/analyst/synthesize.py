@@ -29,6 +29,7 @@ import heapq
 import itertools
 import psutil
 import signal
+import sys
 import time
 from pomagma.analyst.client import VALIDATE_POLL_SEC
 from pomagma.analyst.compiler import unguard_vars
@@ -44,11 +45,18 @@ from pomagma.compiler.util import intern_keys
 from pomagma.compiler.util import memoize_args
 
 MAX_MEMORY = 0.95
+MAX_SOLUTIONS = 10
 HOLE = Expression.make('HOLE')
 BOT = Expression.make('BOT')
 I = Expression.make('I')
 EQUAL = Expression_2('EQUAL')
 
+format_maybe = '\033[33mMaybe: %s\033[0m'.__mod__
+format_valid = '\033[32;1mValid: %s\033[0m'.__mod__
+
+
+# ----------------------------------------------------------------------------
+# streams of sketches
 
 class ComplexityEvaluator(object):
     def __init__(self, language):
@@ -203,6 +211,8 @@ class Interruptable(object):
 
     def poll(self):
         if self._interrupted:
+            sys.stderr.write('\nReceived SIGINT\n')
+            sys.stderr.flush()
             raise StopIteration
 
 
@@ -217,6 +227,8 @@ def polling_iterator(lazy_iterator, max_memory):
         for value_or_none in lazy_iterator:
             interrupted.poll()
             if psutil.virtual_memory().percent > max_memory * 100:
+                sys.stderr.write('Reached memory limit\n')
+                sys.stderr.flush()
                 raise StopIteration
             if value_or_none is not None:
                 yield value_or_none
@@ -228,7 +240,8 @@ def iter_valid_sketches(
         lazy_validate,
         language,
         initial_sketch=HOLE,
-        max_memory=MAX_MEMORY):
+        max_memory=MAX_MEMORY,
+        verbose=False):
     '''
     Yield (complexity, term, sketch) tuples until memory runs out or Ctrl-C.
 
@@ -254,8 +267,13 @@ def iter_valid_sketches(
         lazy_validate,
         sketches)
     for term, sketch in polling_iterator(lazy_valid_sketches, max_memory):
+        if verbose:
+            print format_valid(sketch)
         yield complexity(sketch), term, sketch  # suitable for sort()
 
+
+# ----------------------------------------------------------------------------
+# fillers and validators
 
 @memoize_args
 def _db_simplify_expr(db, expr):
@@ -356,7 +374,7 @@ class FactsValidator(object):
 
     def lazy_validate(self, filling):
         if self._verbose:
-            print 'Filling:', filling
+            print format_maybe(filling)
         facts = [f.substitute(self._var, filling) for f in self._facts]
         facts = simplify_facts(self._db, facts, set())
         truthy = I  # facts proven true
@@ -376,3 +394,45 @@ class FactsValidator(object):
 @inputs(Expression)
 def is_complete(expr):
     return expr is not HOLE and all(is_complete(arg) for arg in expr.args)
+
+
+# this ties everything together
+def synthesize_from_facts(
+        db,
+        facts,
+        var,
+        language,
+        initial_sketch,
+        max_solutions=MAX_SOLUTIONS,
+        max_memory=MAX_MEMORY,
+        verbose=False):
+    '''
+    Synthesize a list of sketches which replace `var` in `facts` by filling in
+    HOLEs in an `initial_sketch` with terms generated from a `langauge`.
+    '''
+    assert isinstance(facts, list), facts
+    assert all(isinstance(f, Expression) for f in facts), facts
+    assert isinstance(var, Expression), var
+    assert isinstance(language, dict), language
+    assert isinstance(initial_sketch, Expression), initial_sketch
+    assert isinstance(max_solutions, int), max_solutions
+    assert max_solutions > 0
+    assert isinstance(max_memory, float), max_memory
+    assert 0 < max_memory and max_memory < 1, max_memory
+    validator = FactsValidator(
+        db=db,
+        facts=facts,
+        var=var,
+        initial_sketch=initial_sketch,
+        verbose=verbose)
+    valid_sketches = iter_valid_sketches(
+        fill=validator.fill,
+        lazy_validate=validator.lazy_validate,
+        language=language,
+        initial_sketch=initial_sketch,
+        max_memory=max_memory,
+        verbose=verbose)
+    valid_sketches = (r for r in valid_sketches if is_complete(r[-1]))
+    results = list(itertools.islice(valid_sketches, 0, max_solutions))
+    results.sort()
+    return results
