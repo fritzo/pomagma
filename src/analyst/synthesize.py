@@ -51,12 +51,18 @@ BOT = Expression.make('BOT')
 I = Expression.make('I')
 EQUAL = Expression_2('EQUAL')
 
-format_maybe = '\033[33mMaybe: %s\033[0m'.__mod__
-format_valid = '\033[32;1mValid: %s\033[0m'.__mod__
+format_invalid = '\033[31mInvalid:\033[0m %s'.__mod__
+format_partial = '\033[33mPartial:\033[0m %s'.__mod__
+format_complete = '\033[32;1mComplete:\033[0m %s'.__mod__
 
 
 # ----------------------------------------------------------------------------
 # streams of sketches
+
+@inputs(Expression)
+def is_complete(expr):
+    return expr is not HOLE and all(is_complete(arg) for arg in expr.args)
+
 
 class ComplexityEvaluator(object):
     def __init__(self, language):
@@ -156,7 +162,11 @@ def filter_normal_sketches(sketches):
             yield sketch, steps
 
 
-def lazy_iter_valid_sketches(fill, lazy_validate, normal_sketches):
+def lazy_iter_valid_sketches(
+        fill,
+        lazy_validate,
+        normal_sketches,
+        verbose=0):
     '''
     Yield (state, term) pairs and Nones; consumers should filter out Nones.
     Since satisfiability is undecidable, consumers must decide when to give up.
@@ -187,10 +197,17 @@ def lazy_iter_valid_sketches(fill, lazy_validate, normal_sketches):
         if not valid:
             invalid_states.add(state)
             invalid_sketches.update(steps)  # propagate
+            if verbose >= 3:
+                print format_invalid(sketch)
             yield
             continue
 
         valid_states.add(state)
+        if verbose >= 1:
+            if is_complete(sketch):
+                print format_complete(sketch)
+            elif verbose >= 2:
+                print format_partial(sketch)
         yield state, sketch
 
 
@@ -241,7 +258,7 @@ def iter_valid_sketches(
         language,
         initial_sketch=HOLE,
         max_memory=MAX_MEMORY,
-        verbose=False):
+        verbose=0):
     '''
     Yield (complexity, term, sketch) tuples until memory runs out or Ctrl-C.
 
@@ -265,10 +282,9 @@ def iter_valid_sketches(
     lazy_valid_sketches = lazy_iter_valid_sketches(
         fill,
         lazy_validate,
-        sketches)
+        sketches,
+        verbose=verbose)
     for term, sketch in polling_iterator(lazy_valid_sketches, max_memory):
-        if verbose:
-            print format_valid(sketch)
         yield complexity(sketch), term, sketch  # suitable for sort()
 
 
@@ -358,7 +374,7 @@ def simplify_facts(db, facts, vars_to_keep):
 
 
 class FactsValidator(object):
-    def __init__(self, db, facts, var, initial_sketch=HOLE, verbose=False):
+    def __init__(self, db, facts, var, initial_sketch=HOLE):
         assert isinstance(facts, list), facts
         assert all(isinstance(f, Expression) for f in facts), facts
         assert isinstance(var, Expression), var
@@ -367,14 +383,11 @@ class FactsValidator(object):
         self._db = db
         self._facts = facts
         self._var = var
-        self._verbose = verbose
 
     def fill(self, filling):
         return simplify_filling(self._db, filling)
 
     def lazy_validate(self, filling):
-        if self._verbose:
-            print format_maybe(filling)
         facts = [f.substitute(self._var, filling) for f in self._facts]
         facts = simplify_facts(self._db, facts, set())
         truthy = I  # facts proven true
@@ -391,11 +404,6 @@ class FactsValidator(object):
         return self._db.validate_facts(strings, block=False)
 
 
-@inputs(Expression)
-def is_complete(expr):
-    return expr is not HOLE and all(is_complete(arg) for arg in expr.args)
-
-
 # this ties everything together
 def synthesize_from_facts(
         db,
@@ -405,7 +413,7 @@ def synthesize_from_facts(
         initial_sketch,
         max_solutions=MAX_SOLUTIONS,
         max_memory=MAX_MEMORY,
-        verbose=False):
+        verbose=0):
     '''
     Synthesize a list of sketches which replace `var` in `facts` by filling in
     HOLEs in an `initial_sketch` with terms generated from a `langauge`.
@@ -423,8 +431,7 @@ def synthesize_from_facts(
         db=db,
         facts=facts,
         var=var,
-        initial_sketch=initial_sketch,
-        verbose=verbose)
+        initial_sketch=initial_sketch)
     valid_sketches = iter_valid_sketches(
         fill=validator.fill,
         lazy_validate=validator.lazy_validate,

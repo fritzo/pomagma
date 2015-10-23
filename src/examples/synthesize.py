@@ -67,7 +67,7 @@ A_THEORY = (
 def define_a(
         max_solutions=15,
         max_memory=pomagma.analyst.synthesize.MAX_MEMORY,
-        verbose=False,
+        verbose=1,
         address=pomagma.analyst.ADDRESS):
     '''
     Search for definition of A = Join {<s, r> | r o s [= I}.
@@ -118,7 +118,7 @@ def define_a(
 def define_a_pair(
         max_solutions=15,
         max_memory=pomagma.analyst.synthesize.MAX_MEMORY,
-        verbose=False,
+        verbose=1,
         address=pomagma.analyst.ADDRESS):
     '''
     Search for definition of A = Join {<s, r> | r o s [= I}.
