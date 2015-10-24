@@ -28,7 +28,6 @@ def parse_facts(string):
 
 A_THEORY = (
     '''
-    EQUAL pair FUN x FUN y FUN f APP APP f x y
     EQUAL conj FUN s FUN r FUN f COMP r COMP f s
     EQUAL conj FUN s FUN r FUN f COMP COMP r f s
     EQUAL raise FUN x FUN y x
@@ -37,12 +36,12 @@ A_THEORY = (
     EQUAL push FUN x APP x BOT
 
     # the existing A moves
-    EQUAL move1 APP APP pair I I
-    EQUAL move2 APP APP pair pull push
-    EQUAL move3 APP APP pair raise lower
-    EQUAL move4 ABIND s1 r1 ABIND s2 r2 APP APP pair COMP s1 s2 COMP r2 r1
-    EQUAL move5 ABIND s1 r1 ABIND s2 r2'''
-    ''' APP APP pair APP APP conj r1 s2 APP APP conj s1 r2
+    EQUAL move1 PAIR I I
+    EQUAL move2 PAIR push pull
+    EQUAL move3 PAIR lower raise
+    EQUAL move4 ABIND r1 s1 ABIND r2 s2 PAIR COMP r2 r1 COMP s1 s2
+    EQUAL move5 ABIND r1 s1 ABIND r2 s2'''
+    ''' PAIR APP APP conj s1 r2 APP APP conj r1 s2
     LESS move1 A
     LESS move2 A
     LESS move3 A
@@ -51,9 +50,9 @@ A_THEORY = (
 
     # we search for an additional move that provides something new
     LESS hole A
-    LESS APP hole CB I   # this is too weak
-    EQUAL APP hole CB I  # this may be too strong
-    NLESS APP hole B I
+    LESS APP hole B I   # this is too weak
+    EQUAL APP hole B I  # this may be too strong
+    NLESS APP hole CB I
     NLESS hole move1
     NLESS hole move2
     NLESS hole move3
@@ -70,7 +69,7 @@ def define_a(
         verbose=1,
         address=pomagma.analyst.ADDRESS):
     '''
-    Search for definition of A = Join {<s, r> | r o s [= I}.
+    Search for definition of A = Join {<r, s> | r o s [= I}.
     Tip: use pyprofile and snakeviz to profile this function:
     $ pyprofile -o define_a.pstats -s time src/examples/synthesize.py define_a
     $ snakeviz define_a.pstats
@@ -121,7 +120,7 @@ def define_a_pair(
         verbose=1,
         address=pomagma.analyst.ADDRESS):
     '''
-    Search for definition of A = Join {<s, r> | r o s [= I}.
+    Search for definition of A = Join {<r, s> | r o s [= I}.
     Tip: use pyprofile and snakeviz to profile this function:
     $ pyprofile -o define_a.pstats -s time src/examples/synthesize.py define_a
     $ snakeviz define_a.pstats
@@ -130,7 +129,7 @@ def define_a_pair(
     assert 0 < max_memory and max_memory < 1, max_memory
     facts = parse_facts(A_THEORY)
     hole = Expression.make('hole')
-    initial_sketch = parse_expr('FUN f APP APP f HOLE HOLE')
+    initial_sketch = parse_expr('PAIR HOLE HOLE')
     language = {
         'APP': 1.0,
         # 'COMP': 1.6,

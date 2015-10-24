@@ -3,7 +3,7 @@
 NCLOSED RETRACT
 NCLOSED SECTION
 
-# The single axiom regarding free variables SECTION and RETRACT:
+# The single axiom regarding free variables RETRACT and SECTION:
 
 LESS COMP RETRACT SECTION I
 
@@ -14,9 +14,9 @@ LESS COMP RETRACT SECTION I
 
 CLOSED f
 -----------------------------------------------
-NONEGATE LESS APP APP f SECTION RETRACT APP A f
+NONEGATE LESS APP APP f RETRACT SECTION APP A f
 
-CLOSED f   CLOSED x   LESS APP APP f SECTION RETRACT x
+CLOSED f   CLOSED x   LESS APP APP f RETRACT SECTION x
 ------------------------------------------------------
 NONEGATE LESS APP A f x
 
@@ -24,8 +24,8 @@ NONEGATE LESS APP A f x
 
 CLOSED f
 -----------------------------------------------------------
-NONEGATE LESS APP APP APP f SECTION RETRACT x APP APP A f x
+NONEGATE LESS APP APP APP f RETRACT SECTION x APP APP A f x
 
-CLOSED f   CLOSED x   LESS APP APP APP f SECTION RETRACT x x
+CLOSED f   CLOSED x   LESS APP APP APP f RETRACT SECTION x x
 ------------------------------------------------------------
 NONEGATE LESS APP APP A f x x

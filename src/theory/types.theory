@@ -1,6 +1,6 @@
 # WARNING these rules do not hold in SKRJ
 
-EQUAL DIV ABIND s r r
+EQUAL DIV ABIND r s r
 
 CLOSED DIV          -------------------   LESS APP f TOP APP g TOP
 FIXES V DIV         EQUAL APP DIV x TOP   LESS APP f BOT APP g BOT
@@ -15,7 +15,7 @@ FIXES V UNIT        EQUAL APP UNIT x TOP   LESS APP f I APP g I
 FIXES UNIT I        EQUAL APP UNIT x I     ----------------------------
 LESS APP J I UNIT                          LESS COMP f UNIT COMP g UNIT
 
-#EQUAL SEMI ABIND s r FUN f COMP r COMP f s
+#EQUAL SEMI ABIND r s FUN f COMP r COMP f s
 
 CLOSED SEMI      --------------------   LESS APP f TOP APP g TOP
 FIXES V SEMI     EQUAL APP SEMI x TOP   LESS APP f I APP g I
@@ -32,7 +32,7 @@ FIXES BOOL K     EQUAL APP BOOL x F     LESS APP f BOT APP g BOT
 FIXES BOOL F     EQUAL APP BOOL x BOT   ----------------------------
                                         LESS COMP f BOOL COMP g BOOL
 
-#EQUAL BOOOL ABIND s r FUN f FUN x FUN y APP r APP APP f APP s x APP s y
+#EQUAL BOOOL ABIND r s FUN f FUN x FUN y APP r APP APP f APP s x APP s y
 
 CLOSED BOOOL      ---------------------   LESS APP f TOP APP g TOP
 FIXES V BOOOL     EQUAL APP BOOOL x TOP   LESS APP f J APP g J

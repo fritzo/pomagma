@@ -4,11 +4,11 @@ CLOSED A
 
 # A strong characterization of the type constructor A
 
-       LESS COMP r s I
------------------------------
-LESS COMP APP CI r APP CI s A
+LESS COMP r s I
+---------------
+LESS PAIR r s A
 
 LESS APP A f APP APP f TOP TOP
-EQUAL ABIND s r APP f COMP r s APP f I
+EQUAL ABIND r s APP f COMP r s APP f I
 
 # TODO define A in terms of SKJ

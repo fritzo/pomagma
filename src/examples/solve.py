@@ -87,27 +87,27 @@ def define(name=None, max_solutions=32, address=pomagma.analyst.ADDRESS):
 
 
 @parsable
-def sr_pairs(max_solutions=32, address=pomagma.analyst.ADDRESS):
+def rs_pairs(max_solutions=32, address=pomagma.analyst.ADDRESS):
     '''
-    Find section,retract pairs (i.e. pairs below A).
+    Find retract,section pairs (i.e. pairs below A).
     '''
-    expr = 'FUN f APP APP f s r'    # coding of the pair (s, r)
+    expr = 'PAIR r s'
     theory = '''
-        CLOSED s   NLESS s BOT      # s is closed and nontrivial
         CLOSED r   NLESS r BOT      # r is closed and nontrivial
-        LESS COMP r s I             # (s, r) is a section-retract pair
+        CLOSED s   NLESS s BOT      # s is closed and nontrivial
+        LESS COMP r s I             # (r, s) is a section-retract pair
         '''
     with pomagma.analyst.connect(address) as db:
         solutions = db.solve(expr, theory, max_solutions)
         pairs = (
-            [(sr, True) for sr in solutions['necessary']] +
-            [(sr, False) for sr in solutions['possible']])
-        sections = db.simplify(['APP {} K'.format(sr) for sr, _ in pairs])
-        retracts = db.simplify(['APP {} F'.format(sr) for sr, _ in pairs])
-    parts = zip(pairs, sections, retracts)
+            [(rs, True) for rs in solutions['necessary']] +
+            [(rs, False) for rs in solutions['possible']])
+        retracts = db.simplify(['APP {} K'.format(rs) for rs, _ in pairs])
+        sections = db.simplify(['APP {} F'.format(rs) for rs, _ in pairs])
+    parts = zip(pairs, retracts, sections)
     solutions = {
-        'necessary': [(sr, s, r) for (sr, n), s, r in parts if n],
-        'possible': [(sr, s, r) for (sr, n), s, r in parts if not n],
+        'necessary': [(rs, r, s) for (rs, n), r, s in parts if n],
+        'possible': [(rs, r, s) for (rs, n), r, s in parts if not n],
     }
     print_solutions(solutions)
     return solutions

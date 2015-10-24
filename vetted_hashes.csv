@@ -1,5 +1,5 @@
 filename,hexdigest
-src/theory/a.tasks,6ac5db3a289b812414d88792a00fa0506dc30333
+src/theory/a.tasks,b4e507c2b87678e0bd5d35fbd71497395e74a975
 src/theory/closures.tasks,7db95464a9187fda6684369ae8b9b94497f76ddc
 src/theory/group.tasks,44c2a0acbc6f60adff57907f7da307cd493be3a4
 src/theory/h4.facts,b94803e0c7e389b60f64c9a9b4678852cb10c29c
@@ -12,7 +12,7 @@ src/theory/order.tasks,dc1be98108ac25e79293dd259f4006ea29c6e705
 src/theory/quote.tasks,907efb4be20927ed01b0a4332ccc7c36af50804e
 src/theory/rand.tasks,3bb0a3190228bf2cae53dbdd8c3a1a3a0643a8c5
 src/theory/reflect.tasks,2a78c35eb7d37ca7b799fb3c84705fc1994b885b
-src/theory/rs.tasks,835e1ffc606bedd7a29229f4fecbc5938cb8b7ef
+src/theory/rs.tasks,24d948c8c6b8758e1aeb228defdd95f9e686abec
 src/theory/sk.facts,2356b164ad1de54aaa92b396e1faab9fd160123f
 src/theory/sk.optimized.programs,9cf99afcf5afc6a5631f8e522a998d6f1666e0e2
 src/theory/sk.programs,3dcb44819eb96bfc57227b442b9e4ed5ab50cb49
@@ -22,9 +22,9 @@ src/theory/skj.facts,630912df02c6ccb7611a8c15f601811c1db313d7
 src/theory/skj.optimized.programs,3acdb176bf48b9d2f6e72eefa1de5543aac2cac9
 src/theory/skj.programs,b517204e37713ac01cc295cd5d2a5e920996cbde
 src/theory/skj.symbols,9d44f283a24ee578a4f56f9de9b6de9f02b33b09
-src/theory/skja.facts,211167fb3305679f64eb1d792fb5a68da4f0fb10
-src/theory/skja.optimized.programs,3a12f1440f4af5e497da3d85002da9d9b9e76c82
-src/theory/skja.programs,20d1583695145dbab9bf6808b04dc06826506fb6
+src/theory/skja.facts,6360d5e304e7dcd36296b67a8fa2f4ac02c98fc5
+src/theory/skja.optimized.programs,e53106901f3a6bd0039e8986b75c2a9ef1541caa
+src/theory/skja.programs,ee3cd3a3d1b247faa08691e6c674ad941b8858e3
 src/theory/skja.symbols,4f3db53f828cdc69428fe5953c6df6cc168c8b1d
 src/theory/skjo.facts,885a0a2d9723053eaf0f0f5f88bbeb9167bb4142
 src/theory/skjo.optimized.programs,2e51a6f6354378e754f0c529818566737cad7d82
@@ -34,4 +34,4 @@ src/theory/skrj.facts,927b630ce861c53228de0ca95ddf4d19e58c30ba
 src/theory/skrj.optimized.programs,b1c4b4ef3c4593cba9c119414969bdf8189e0b09
 src/theory/skrj.programs,878d4fdcb4b4b20bc2a3ad4ae17a3b446238056b
 src/theory/skrj.symbols,9a31be3be61d1bdad25d4a5a15946988fd241710
-src/theory/types.tasks,43ef9300c13fa3e34aaaf5072705db424fc38828
+src/theory/types.tasks,b8548e8c720631683d8ab5c53e191967fb6e58c9

@@ -31,10 +31,10 @@ def desugar_expr(self):
         x, y = expr.args
         expr = COMP(APP(CI, y), APP(CI, x))
     elif expr.name == 'ABIND':
-        s, r, body = expr.args
-        assert s.is_var(), s
+        r, s, body = expr.args
         assert r.is_var(), r
-        expr = APP(A, body.abstract(r).abstract(s))
+        assert s.is_var(), s
+        expr = APP(A, body.abstract(s).abstract(r))
     elif expr.name == 'FIXES':
         typ, inhab = expr.args
         expr = EQUAL(APP(typ, inhab), inhab)
