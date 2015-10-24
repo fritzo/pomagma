@@ -22,10 +22,10 @@ src/theory/skj.facts,630912df02c6ccb7611a8c15f601811c1db313d7
 src/theory/skj.optimized.programs,3acdb176bf48b9d2f6e72eefa1de5543aac2cac9
 src/theory/skj.programs,b517204e37713ac01cc295cd5d2a5e920996cbde
 src/theory/skj.symbols,9d44f283a24ee578a4f56f9de9b6de9f02b33b09
-src/theory/skja.facts,6360d5e304e7dcd36296b67a8fa2f4ac02c98fc5
-src/theory/skja.optimized.programs,e53106901f3a6bd0039e8986b75c2a9ef1541caa
-src/theory/skja.programs,ee3cd3a3d1b247faa08691e6c674ad941b8858e3
-src/theory/skja.symbols,4f3db53f828cdc69428fe5953c6df6cc168c8b1d
+src/theory/skja.facts,8c3ac073301891fcefe4b4c2a5083db514045fe0
+src/theory/skja.optimized.programs,63b0c27d132822751f064d16d724c49735602171
+src/theory/skja.programs,3f5829980144fe7a8dfbe3d7dc07b9ec64bb2d1e
+src/theory/skja.symbols,33016d36e8cd1f2cca759ddec555b147ef9f2ae8
 src/theory/skjo.facts,885a0a2d9723053eaf0f0f5f88bbeb9167bb4142
 src/theory/skjo.optimized.programs,2e51a6f6354378e754f0c529818566737cad7d82
 src/theory/skjo.programs,77ad017c795865d72d224e193cc0fefb032b29b4
