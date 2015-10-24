@@ -19,6 +19,6 @@ def test_define():
             yield _test_define, name
 
 
-def test_sr_pairs():
+def test_rs_pairs():
     with serve(SKJA):
-        pomagma.examples.solve.sr_pairs(address=ADDRESS)
+        pomagma.examples.solve.rs_pairs(address=ADDRESS)
