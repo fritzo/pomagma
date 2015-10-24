@@ -1,0 +1,31 @@
+# Variables for retracts and sections
+
+NCLOSED RETRACT
+NCLOSED SECTION
+
+# The single axiom regarding free variables SECTION and RETRACT:
+
+LESS COMP RETRACT SECTION I
+
+# A strong characterization of the type constructor A
+# in terms of two globally free variables, SECTION and RETRACT.
+#
+# WARNING Statements involving these free variables cannot be negated.
+
+CLOSED f
+-----------------------------------------------
+NONEGATE LESS APP APP f SECTION RETRACT APP A f
+
+CLOSED f   CLOSED x   LESS APP APP f SECTION RETRACT x
+------------------------------------------------------
+NONEGATE LESS APP A f x
+
+# and fixpoint corollaries,
+
+CLOSED f
+-----------------------------------------------------------
+NONEGATE LESS APP APP APP f SECTION RETRACT x APP APP A f x
+
+CLOSED f   CLOSED x   LESS APP APP APP f SECTION RETRACT x x
+------------------------------------------------------------
+NONEGATE LESS APP APP A f x x
