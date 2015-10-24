@@ -9,6 +9,7 @@ EXAMPLES = [map(parse_string_to_expr, e) for e in [
     ('FUN x x', 'I'),
     ('FUN x APP f x', 'f'),
     ('FIX x APP f x', 'APP Y f'),
+    ('PAIR x y', 'COMP APP CI y APP CI x'),
     ('ABIND s r COMP r s', 'APP A CB'),
     ('FIXES BOOL I', 'EQUAL APP BOOL I I'),
 ]]

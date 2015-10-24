@@ -54,5 +54,5 @@ def assess(corpus):
 
 
 @inputs(Corpus)
-def refine(corpus, result_count=2**5, search_count=2**15):
+def refine(corpus, result_count=(2 ** 5), search_count=(2 ** 15)):
     TODO('propose candidate joint hole-filling refinements of a corpus')

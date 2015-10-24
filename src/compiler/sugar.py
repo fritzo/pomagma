@@ -10,7 +10,9 @@ assert extensional  # pacify pyflakes
 
 A = Expression_0('A')
 Y = Expression_0('Y')
+CI = Expression_0('CI')
 APP = Expression_2('APP')
+COMP = Expression_2('COMP')
 EQUAL = Expression_2('EQUAL')
 
 
@@ -25,6 +27,9 @@ def desugar_expr(self):
         var, body = expr.args
         assert var.is_var(), var
         expr = APP(Y, body.abstract(var))
+    elif expr.name == 'PAIR':
+        x, y = expr.args
+        expr = COMP(APP(CI, y), APP(CI, x))
     elif expr.name == 'ABIND':
         s, r, body = expr.args
         assert s.is_var(), s

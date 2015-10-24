@@ -39,6 +39,7 @@ ARITY_TABLE = intern_keys({
     'NONEGATE': 'UnaryMeta',
     'EQUIVALENTLY': 'BinaryMeta',
     'FUN': 'BinaryMeta',
+    'PAIR': 'BinaryMeta',
     'ABIND': 'TernaryMeta',
     'FIX': 'BinaryMeta',
     'FIXES': 'BinaryMeta',
