@@ -21,6 +21,6 @@ add_executable(analyst
 	messages.pb.cc
 )
 target_link_libraries(analyst
-	${POMAGMA_WORLD_LIBS}
 	zmq
+	${POMAGMA_WORLD_LIBS}
 )
