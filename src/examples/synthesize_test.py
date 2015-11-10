@@ -18,3 +18,11 @@ def test_define_a_pair():
             max_solutions=2,
             verbose=3,
             address=ADDRESS)
+
+
+def test_define_semi():
+    with serve(SKJA):
+        pomagma.examples.synthesize.define_semi(
+            max_solutions=2,
+            verbose=3,
+            address=ADDRESS)

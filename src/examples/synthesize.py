@@ -18,7 +18,9 @@ def parse_expr(string):
 
 
 def parse_facts(string):
-    facts = parse_theory_string(string)['facts']
+    theory = parse_theory_string(string)
+    assert not theory['rules'], theory
+    facts = theory['facts']
     facts = map(desugar_expr, facts)
     for fact in facts:
         for var in fact.vars:
@@ -161,6 +163,62 @@ def define_a_pair(
         print '<{},\t{}>'.format(
             simplify_expr(APP(filling, K)),
             simplify_expr(APP(filling, F)))
+    return results
+
+
+SEMI_THEORY = '''
+    EQUAL SEMI semi
+    FIXES V semi
+    FIXES semi BOT
+    FIXES semi I
+    FIXES semi TOP
+    '''
+
+
+@parsable
+def define_semi(
+        max_solutions=15,
+        max_memory=pomagma.analyst.synthesize.MAX_MEMORY,
+        verbose=1,
+        address=pomagma.analyst.ADDRESS):
+    '''
+    Search for definitions of SEMI with inhabitants {BOT, I, TOP}.
+    '''
+    assert max_solutions > 0, max_solutions
+    assert 0 < max_memory and max_memory < 1, max_memory
+    facts = parse_facts(SEMI_THEORY)
+    hole = Expression.make('hole')
+    initial_sketch = parse_expr('APP V APP A HOLE')
+    language = {
+        'APP': 1.0,
+        # 'COMP': 1.6,
+        'JOIN': 3.0,
+        'B': 1.0,
+        'C': 1.3,
+        'BOT': 2.0,
+        'TOP': 2.0,
+        'I': 2.2,
+        # 'Y': 2.3,
+        'K': 2.6,
+        'S': 2.7,
+        'J': 2.8,
+        'DIV': 3.0,
+        'V': 3.0,
+        'A': 3.0,
+    }
+    with pomagma.analyst.connect(address) as db:
+        results = synthesize_from_facts(
+            db=db,
+            facts=facts,
+            var=hole,
+            initial_sketch=initial_sketch,
+            language=language,
+            max_solutions=max_solutions,
+            max_memory=max_memory,
+            verbose=verbose)
+    print 'Possible Fillings:'
+    for complexity, term, filling in results:
+        print filling
     return results
 
 
