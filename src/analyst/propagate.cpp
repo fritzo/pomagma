@@ -5,7 +5,7 @@
 #include <unordered_set>
 #include <tuple>
 
-// defined in pomagma/vendor/farmhash/farmhash.h
+// defined in pomagma/third_party/farmhash/farmhash.h
 namespace util { size_t Hash (const char* s, size_t len); }
 
 namespace pomagma {

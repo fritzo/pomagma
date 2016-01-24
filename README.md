@@ -109,4 +109,4 @@ Copyright (c) 2005-2015 Fritz Obermeyer.<br/>
 Pomagma is licensed under the [Apache 2.0 License](/LICENSE).
 
 Pomagma ships with the [Google Farmhash](https://github.com/google/farmhash)
-library, licensed under the [MIT](/src/vendor/farmhash/COPYING) license.
+library, licensed under the [MIT](/src/third_party/farmhash/COPYING) license.

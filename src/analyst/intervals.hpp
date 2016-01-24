@@ -11,7 +11,7 @@
 #include <tuple>
 #include <vector>
 
-// declared in pomagma/vendor/farmhash/farmhash.h
+// declared in pomagma/third_party/farmhash/farmhash.h
 namespace util { uint64_t Fingerprint64(const char * s, size_t len); }
 
 namespace pomagma {
