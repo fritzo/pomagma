@@ -39,12 +39,12 @@ set(POMAGMA_SHARD_LIBS
 	${POMAGMA_UTIL_LIBS}
 )
 
-add_subdirectory(util)
+add_subdirectory(analyst)
+add_subdirectory(atlas)
+add_subdirectory(cartographer)
 add_subdirectory(io)
 add_subdirectory(language)
-add_subdirectory(atlas)
 add_subdirectory(surveyor)
-add_subdirectory(cartographer)
 add_subdirectory(theorist)
-add_subdirectory(analyst)
 add_subdirectory(third_party)
+add_subdirectory(util)
