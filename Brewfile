@@ -1,0 +1,8 @@
+brew "boost"
+brew "cscope"
+brew "ctags"
+brew "graphviz"
+brew "p7zip"
+brew "protobuf"
+brew "tbb"
+brew "zmqpp"
