@@ -105,6 +105,11 @@ static const MagicNumber g_lz4_magic_number = {{0x18, 0x4D, 0x22, 0x04}, 4};
 
 } // namespace detail
 
+// O_NOATIME is defined on linux but not OS X
+#ifndef O_NOATIME
+#define O_NOATIME 0
+#endif // O_NOATIME
+
 InFile::InFile (const std::string & filename)
     : m_filename(filename),
       m_fid(open(filename.c_str(), O_RDONLY | O_NOATIME))
