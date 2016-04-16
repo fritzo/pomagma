@@ -183,7 +183,7 @@ inline SetId Approximator::lazy_fuse (
     for (const auto & message : messages) {
         if (message[parity] == 0) return 0; // wait for pending computations
         if (message[parity] == m_unknown[parity]) continue; // ignore unknowns
-        sets.insert(message[parity]).second;
+        sets.insert(message[parity]);
     }
     if (sets.size() == 0) return m_unknown[parity];
     if (sets.size() == 1) return * sets.begin();

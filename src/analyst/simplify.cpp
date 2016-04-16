@@ -15,7 +15,8 @@ public:
           m_nless(* signature.binary_relation("NLESS")),
           m_routes(routes)
     {
-        POMAGMA_ASSERT(&m_nless != nullptr, "NLESS is not defined");
+        POMAGMA_ASSERT(signature.binary_relation("NLESS") != nullptr,
+            "NLESS is not defined");
     }
 
     struct Term

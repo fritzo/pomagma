@@ -12,6 +12,8 @@
 #include <stdint.h>
 #include <string>
 #include <unistd.h>
+#include <vector>
+
 #include <boost/filesystem.hpp>
 
 // for demangle() below
@@ -20,8 +22,40 @@
 #  include <memory>
 #endif  // __GNUG__
 
-namespace pomagma
+//----------------------------------------------------------------------------
+// vector operations
+
+template<class T>
+inline std::ostream & operator<< (std::ostream & o, const std::vector<T> & x)
 {
+    o << "[";
+    if (not x.empty()) {
+        o << x[0];
+        for (size_t i = 1; i < x.size(); ++i) {
+            o << ", " << x[i];
+        }
+    }
+    return o << "]";
+}
+
+template<class T>
+inline bool operator== (const std::vector<T> & x, const std::vector<T> & y)
+{
+    if (x.size() != y.size()) {
+        return false;
+    }
+    for (size_t i = 0, I = x.size(); i != I; ++i) {
+        if (x[i] != y[i]) {
+            return false;
+        }
+    }
+    return true;
+}
+
+//----------------------------------------------------------------------------
+// namespaces
+
+namespace pomagma {
 
 namespace fs = boost::filesystem;
 
@@ -359,36 +393,6 @@ template<class Iterator>
 inline Range<Iterator> range (const Iterator & begin, const Iterator & end)
 {
     return Range<Iterator>(begin, end);
-}
-
-//----------------------------------------------------------------------------
-// vector operations
-
-template<class T>
-inline std::ostream & operator<< (std::ostream & o, const std::vector<T> & x)
-{
-    o << "[";
-    if (not x.empty()) {
-        o << x[0];
-        for (size_t i = 1; i < x.size(); ++i) {
-            o << ", " << x[i];
-        }
-    }
-    return o << "]";
-}
-
-template<class T>
-inline bool operator== (const std::vector<T> & x, const std::vector<T> & y)
-{
-    if (x.size() != y.size()) {
-        return false;
-    }
-    for (size_t i = 0, I = x.size(); i != I; ++i) {
-        if (x[i] != y[i]) {
-            return false;
-        }
-    }
-    return true;
 }
 
 //----------------------------------------------------------------------------
