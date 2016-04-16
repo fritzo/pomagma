@@ -11,6 +11,13 @@ add_library(pomagma_util SHARED
 	hasher.cpp
 	profiler.cpp
 )
+target_link_libraries(pomagma_util
+	pomagma_farmhash
+	tbb
+	crypto ssl
+	${Boost_FILESYSTEM_LIBRARY}
+	${Boost_SYSTEM_LIBRARY}
+)
 
 add_executable(queue_test queue_test.cpp)
 target_link_libraries(queue_test ${POMAGMA_UTIL_LIBS})

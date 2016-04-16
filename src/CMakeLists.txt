@@ -12,7 +12,7 @@ set(POMAGMA_UTIL_LIBS
 
 set(POMAGMA_IO_LIBS
 	pomagma_io
-	protobuf
+	${PROTOBUF_LIBRARIES}
 )
 
 set(POMAGMA_WORLD_LIBS

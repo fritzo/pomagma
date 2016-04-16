@@ -14,8 +14,20 @@ add_library(pomagma_chart SHARED
 	scheduler.cpp
 	vm.cpp
 )
+target_link_libraries(pomagma_chart 
+	pomagma_atlas
+	pomagma_language
+	${POMAGMA_IO_LIBS}
+	${POMAGMA_UTIL_LIBS}
+)
 
 add_library(pomagma_chart_dummy SHARED dummy.theory.cpp)
+target_link_libraries(pomagma_chart_dummy
+	pomagma_atlas
+	pomagma_language
+	${POMAGMA_IO_LIBS}
+	${POMAGMA_UTIL_LIBS}
+)
 set(POMAGMA_CHART_TEST_LIBS ${POMAGMA_CHART_LIBS} pomagma_chart_dummy)
 
 add_executable(chart_carrier_test carrier_test.cpp)

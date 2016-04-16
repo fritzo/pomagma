@@ -59,7 +59,7 @@ double test_equal (
         if (randomly_insert(rng)) set.insert(i);
     }
 
-    size_t count;
+    size_t count = 0;
     Timer timer;
     for (size_t i = 0; i < iters; ++i) {
         // operator== is usually called with actually equal sets
@@ -85,7 +85,7 @@ double test_likely_disjoint (
     // likely_disjoint is usually called with actually disjoint sets
     set2 -= set1;
 
-    size_t count;
+    size_t count = 0;
     Timer timer;
     for (size_t i = 0; i < iters; ++i) {
         count += set1.likely_disjoint(set2);
@@ -107,7 +107,7 @@ double test_unlikely_disjoint (
         if (randomly_insert(rng)) set2.insert(i);
     }
 
-    size_t count;
+    size_t count = 0;
     Timer timer;
     for (size_t i = 0; i < iters; ++i) {
         count += set1.unlikely_disjoint(set2);

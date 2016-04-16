@@ -4,6 +4,10 @@ add_library(pomagma_language SHARED
 	language.cpp
 	language.pb.cc
 )
+target_link_libraries(pomagma_language
+	${POMAGMA_UTIL_LIBS}
+	${PROTOBUF_LIBRARIES}
+)
 
 add_custom_command(
 	OUTPUT ${CMAKE_CURRENT_LIST_DIR}/language.pb.cc

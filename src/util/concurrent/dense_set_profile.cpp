@@ -59,7 +59,7 @@ double test_equal (
         if (randomly_insert(rng)) set.insert(i);
     }
 
-    size_t count;
+    size_t count = 0;
     Timer timer;
     for (size_t i = 0; i < iters; ++i) {
         // operator== is usually called with actually equal sets

@@ -67,6 +67,9 @@ endif()
 find_package(Boost COMPONENTS system filesystem REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
 
+find_package(Protobuf REQUIRED)
+include_directories(${ProtobufIncludePath})
+
 find_program(CCACHE_FOUND ccache)
 if(CCACHE_FOUND)
   message(STATUS "CMake using ccache")

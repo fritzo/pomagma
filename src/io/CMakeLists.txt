@@ -4,6 +4,10 @@ add_library(pomagma_io SHARED
 	blobstore.cpp
 	protobuf.cpp
 )
+target_link_libraries(pomagma_io
+	${PROTOBUF_LIBRARIES}
+	${POMAGMA_UTIL_LIBS}
+)
 
 add_executable(io_protobuf_test protobuf_test.cpp protobuf_test.pb.cc)
 target_link_libraries(io_protobuf_test

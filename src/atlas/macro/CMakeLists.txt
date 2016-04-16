@@ -16,6 +16,12 @@ add_library(pomagma_world SHARED
 	compact.cpp
 	router.cpp
 )
+target_link_libraries(pomagma_world 
+	pomagma_atlas
+	pomagma_language
+	${POMAGMA_IO_LIBS}
+	${POMAGMA_UTIL_LIBS}
+)
 
 add_executable(world_carrier_test carrier_test.cpp)
 target_link_libraries(world_carrier_test ${POMAGMA_WORLD_LIBS})
