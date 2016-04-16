@@ -14,7 +14,14 @@
 
 // http://www.openssl.org/docs/crypto/sha.html
 extern "C" {
-#include <openssl/sha.h>
+// http://permalink.gmane.org/gmane.comp.security.openwall.john.devel/2737 
+#if defined(__APPLE__) && defined(__MACH__)
+  #define COMMON_DIGEST_FOR_OPENSSL
+  #include <CommonCrypto/CommonDigest.h>
+  #define SHA1 CC_SHA1
+#else
+  #include <openssl/sha.h>
+#endif
 }
 
 namespace pomagma {
