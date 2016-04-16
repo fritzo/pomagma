@@ -1,4 +1,6 @@
 .SILENT:
+.PHONY: all protobuf tags lint python codegen debug release cpp-test unit-test bootstrap h4-test sk-test skj-test skja-test skrj-test batch-test small-test test big-test sk skj skja skrj profile clean FORCE
+
 THEORY = skrj
 PY_FILES := *.py $(shell find src | grep '.py$$' | grep -v '_pb2.py')
 
@@ -74,7 +76,8 @@ data/blob:
 
 bootstrap: FORCE
 	mkdir -p data
-	cp -rn bootstrap/* data/
+	cp -Rn bootstrap/* data/ \
+	  || test -e data/atlas/$(THEORY)/region.normal.2047.pb
 	cd data/atlas/$(THEORY) \
 	  && (test -e world.pb || ln region.normal.2047.pb world.pb) \
 	  && test -e world.normal.pb || ln region.normal.2047.pb world.normal.pb
