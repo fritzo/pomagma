@@ -17,6 +17,12 @@ add_library(pomagma_shard SHARED
 	#compact.cpp
 	#router.cpp
 )
+target_link_libraries(pomagma_shard 
+	pomagma_atlas
+	pomagma_language
+	${POMAGMA_IO_LIBS}
+	${POMAGMA_UTIL_LIBS}
+)
 
 add_executable(shard_carrier_test carrier_test.cpp)
 target_link_libraries(shard_carrier_test ${POMAGMA_SHARD_LIBS})
