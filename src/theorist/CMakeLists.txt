@@ -6,6 +6,9 @@ add_library(pomagma_theorist SHARED
 	conjecture_equal.cpp
 	conjecture_diverge.cpp
 )
+target_link_libraries(pomagma_theorist
+	${POMAGMA_WORLD_LIBS}
+)
 set(POMAGMA_THEORIST_LIBS
 	pomagma_theorist
 	${POMAGMA_WORLD_LIBS}
