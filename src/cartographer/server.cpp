@@ -12,7 +12,7 @@
 #include <pomagma/atlas/macro/router.hpp>
 #include <pomagma/atlas/macro/vm.hpp>
 #include "messages.pb.h"
-#include <zmq.hpp>
+#include <zmq.h>
 #include <algorithm>
 
 namespace pomagma {
@@ -321,34 +321,49 @@ protobuf::CartographerResponse handle (
 
 } // anonymous namespace
 
+#define POMAGMA_ASSERT_C(cond) \
+    POMAGMA_ASSERT((cond), "Failed (" #cond "): " << strerror(errno))
+
 void Server::serve (const char * address)
 {
+    void * context;
+    void * socket;
+    zmq_msg_t message;
+
     POMAGMA_INFO("Starting server");
-    zmq::context_t context(1);
-    zmq::socket_t socket(context, ZMQ_REP);
-    socket.bind(address);
+    POMAGMA_ASSERT_C((context = zmq_ctx_new()));
+    POMAGMA_ASSERT_C((socket = zmq_socket(context, ZMQ_REP)));
+    POMAGMA_ASSERT_C(0 == zmq_bind(socket, address));
 
     for (m_serving = true; m_serving;) {
         POMAGMA_DEBUG("waiting for request");
-        zmq::message_t raw_request;
-        socket.recv(& raw_request);
+        POMAGMA_ASSERT_C(0 == zmq_msg_init(&message));
+        POMAGMA_ASSERT_C(-1 != zmq_msg_recv(&message, socket, 0));
 
         POMAGMA_DEBUG("parsing request");
         protobuf::CartographerRequest request;
-        request.ParseFromArray(raw_request.data(), raw_request.size());
+        bool parsed = request.ParseFromArray(
+            zmq_msg_data(&message),
+            zmq_msg_size(&message));
+        POMAGMA_ASSERT(parsed, "Failed to parse request");
+        POMAGMA_ASSERT_C(0 == zmq_msg_close(&message));
 
         protobuf::CartographerResponse response = handle(* this, request);
 
         POMAGMA_DEBUG("serializing response");
         std::string response_str;
         response.SerializeToString(& response_str);
-        const size_t size = response_str.length();
-        zmq::message_t raw_response(size);
-        memcpy(raw_response.data(), response_str.c_str(), size);
+        const int size = response_str.length();
+        POMAGMA_ASSERT_C(0 == zmq_msg_init(&message));
+        POMAGMA_ASSERT_C(0 == zmq_msg_init_size(&message, size));
+        memcpy(zmq_msg_data(&message), response_str.c_str(), size);
 
         POMAGMA_DEBUG("sending response");
-        socket.send(raw_response);
+        POMAGMA_ASSERT_C(size == zmq_msg_send(&message, socket, 0));
+        POMAGMA_ASSERT_C(0 == zmq_msg_close(&message));
     }
+
+    exit(0);  // zmq resources are not cleaned up.
 }
 
 } // namespace pomagma

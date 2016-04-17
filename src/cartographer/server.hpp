@@ -46,7 +46,7 @@ public:
 
     void stop ();
 
-    void serve (const char * address);
+    void serve (const char * address) __attribute__((noreturn));
 };
 
 } // namespace pomagma
