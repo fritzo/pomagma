@@ -1,20 +1,41 @@
 language: python
 python:
   - "2.7"
+sudo: false
 cache:
   apt: true
   directories:
   - $HOME/.pip-cache
   - $HOME/.ccache
+addons:
+  apt:
+    packages:
+    - ccache
+    - cmake
+    - cscope
+    - ctags
+    - g++
+    - gdb
+    - graphviz
+    - libboost-filesystem-dev
+    - libgoogle-perftools-dev
+    - libprotobuf-dev
+    - libssl-dev
+    - libtbb-dev
+    - libzmq3-dev
+    - make
+    - p7zip-full
+    - protobuf-compiler
+    - python-pip
+    - python-protobuf
+    - virtualenvwrapper
 virtualenv:
   system_site_packages: true
-before_install:
-  - sudo rm /etc/apt/sources.list.d/travis_ci_zeromq3-source.list
-  - export PIP_DOWNLOAD_CACHE=$HOME/.pip-cache
-  - pip install -r requirements.txt
-  - export MAKEFLAGS="-j 2 -S"
 install:
-  - . install.sh
+  - pip install -r requirements.txt
+before_script:
+  - export MAKEFLAGS="-j 2 -S"
+  - export POMAGMA_DIFFTOOL=diff
   - g++ --version
   - cmake --version
   - ccache --version
@@ -22,9 +43,6 @@ install:
   - pip freeze
   - env
   - ulimit -c
-before_script:
   - ulimit -c unlimited || echo 'Failed to set core file size'
-env:
-  - POMAGMA_DIFFTOOL=diff
 script:
   - make small-test

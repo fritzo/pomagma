@@ -7,8 +7,6 @@ case "`uname`" in
     sudo apt-get install -y \
       ccache \
       cmake \
-      cscope \
-      ctags \
       g++ \
       gdb \
       graphviz \
@@ -17,13 +15,12 @@ case "`uname`" in
       libprotobuf-dev \
       libssl-dev \
       libtbb-dev \
-      libzmq-dev \
+      libzmq3-dev \
       make \
       p7zip-full \
       protobuf-compiler \
       python-pip \
       python-protobuf \
-      virtualenvwrapper \
       #
     ;;
   'Darwin')
