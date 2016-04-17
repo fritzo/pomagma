@@ -363,7 +363,7 @@ void Server::serve (const char * address)
         POMAGMA_ASSERT_C(0 == zmq_msg_close(&message));
     }
 
-    exit(0);  // zmq resources are not cleaned up.
+    // FIXME zmq resources are not cleaned up.
 }
 
 } // namespace pomagma
