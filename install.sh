@@ -17,7 +17,7 @@ case "`uname`" in
       libprotobuf-dev \
       libssl-dev \
       libtbb-dev \
-      libzmq-dev \
+      libzmq3-dev \
       make \
       p7zip-full \
       protobuf-compiler \
