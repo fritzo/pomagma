@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 2.6)
 project(pomagma)
+set(CMAKE_MACOSX_RPATH 1)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
@@ -33,13 +34,11 @@ set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS} -DFARMHASH_DEBUG=1")
 # tcmalloc appears to leak, so we avoid it
 #SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-builtin-malloc -fno-builtin-calloc -fno-builtin-realloc -fno-builtin-free")
 
-# Force gcc on apple
-#if(APPLE)
-#	set(CMAKE_CXX_COMPILER "g++-4.7")
-#	# see http://stackoverflow.com/questions/10327939
-#	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mno-avx")
-#	#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wa,-q")
-#endif()
+if(APPLE)
+  # TODO Decide which shared linker options:
+  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-undefined,dynamic_lookup")
+  # set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-undefined,warning,-flat_namespace")
+endif()
 
 message(STATUS "CMake using ${CMAKE_CXX_COMPILER_ID} C++ compiler")
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
