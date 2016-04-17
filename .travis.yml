@@ -31,12 +31,11 @@ addons:
     - virtualenvwrapper
 virtualenv:
   system_site_packages: true
-before_install:
-  - pip install -r requirements.txt
-  - export MAKEFLAGS="-j 2 -S"
 install:
-  - pip install -e .
-  - . $VIRTUAL_ENV/bin/activate
+  - pip install -r requirements.txt
+before_script:
+  - export MAKEFLAGS="-j 2 -S"
+  - export POMAGMA_DIFFTOOL=diff
   - g++ --version
   - cmake --version
   - ccache --version
@@ -44,9 +43,6 @@ install:
   - pip freeze
   - env
   - ulimit -c
-before_script:
   - ulimit -c unlimited || echo 'Failed to set core file size'
-env:
-  - POMAGMA_DIFFTOOL=diff
 script:
   - make small-test
