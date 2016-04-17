@@ -7,8 +7,6 @@ case "`uname`" in
     sudo apt-get install -y \
       ccache \
       cmake \
-      cscope \
-      ctags \
       g++ \
       gdb \
       graphviz \
@@ -23,7 +21,6 @@ case "`uname`" in
       protobuf-compiler \
       python-pip \
       python-protobuf \
-      virtualenvwrapper \
       #
     ;;
   'Darwin')
