@@ -32,12 +32,9 @@ addons:
 virtualenv:
   system_site_packages: true
 before_install:
-  - export PIP_DOWNLOAD_CACHE=$HOME/.pip-cache
   - pip install -r requirements.txt
   - export MAKEFLAGS="-j 2 -S"
 install:
-  - #. install.sh
-  - pip install -r requirements.txt
   - pip install -e .
   - . $VIRTUAL_ENV/bin/activate
   - g++ --version
