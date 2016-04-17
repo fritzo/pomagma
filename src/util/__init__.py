@@ -293,7 +293,7 @@ def print_logged_error(log_file):
         '--max-count=1',
         'error'
     ])
-    revgrep = 'tac {} | {} | tac'.format(log_file, grep)
+    revgrep = 'tail -r {} | {} | tail -r'.format(log_file, grep)
     subprocess.call(revgrep, shell=True)
 
 
