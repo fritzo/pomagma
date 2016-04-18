@@ -105,7 +105,7 @@ Pomagma is parallelized and needs lots of memory to build a large atlas.
 
 ## License
 
-Copyright (c) 2005-2015 Fritz Obermeyer.<br/>
+Copyright (c) 2005-2016 Fritz Obermeyer.<br/>
 Pomagma is licensed under the [Apache 2.0 License](/LICENSE).
 
 Pomagma ships with the [Google Farmhash](https://github.com/google/farmhash)
