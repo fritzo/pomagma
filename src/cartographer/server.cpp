@@ -363,7 +363,12 @@ void Server::serve (const char * address)
         POMAGMA_ASSERT_C(0 == zmq_msg_close(&message));
     }
 
-    // FIXME zmq resources are not cleaned up.
+    POMAGMA_INFO("stopping server");
+    int linger_ms = 0;
+    POMAGMA_ASSERT_C(
+        0 == zmq_setsockopt(socket, ZMQ_LINGER, &linger_ms, sizeof(linger_ms)));
+    POMAGMA_ASSERT_C(0 == zmq_close(socket));
+    POMAGMA_ASSERT_C(0 == zmq_ctx_destroy(context));
 }
 
 } // namespace pomagma
