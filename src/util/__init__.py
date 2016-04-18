@@ -316,17 +316,27 @@ def print_logged_error(log_file):
     subprocess.call(revgrep, shell=True)
 
 
-def get_stack_trace(binary):
+def get_stack_trace(binary, pid):
     trace = '==== STACK TRACE ====\n'
     try:
-        trace += subprocess.check_output([
-            'gdb',
-            binary,
-            'core',
-            '--batch',
-            '-ex',
-            'thread apply all bt',
-        ])
+        if sys.platform == 'darwin':
+            trace += subprocess.check_output([
+                'lldb',
+                '-c', '/cores/core.{}'.format(pid),
+                binary,
+                '--batch',
+                '-o', 'thread backtrace all',
+                '-o', 'quit',
+            ])
+        else:
+            trace += subprocess.check_output([
+                'gdb',
+                binary,
+                'core',
+                '--batch',
+                '-ex', 'thread apply all bt',
+                '-ex', 'quit',
+            ])
     except subprocess.CalledProcessError:
         trace += 'ERROR stack trace failed'
     return trace
@@ -355,6 +365,7 @@ def log_call(*args, **options):
     env.update(extra_env)
     with log_duration():
         proc = subprocess.Popen(args, env=env)
+        pid = proc.pid
         try:
             info = proc.wait()
         finally:
@@ -362,7 +373,7 @@ def log_call(*args, **options):
                 proc.terminate()
     if info:
         print_logged_error(log_file)
-        trace = get_stack_trace(args[0])
+        trace = get_stack_trace(args[0], pid)
         log_print(trace, log_file)
         sys.exit(info)
 
