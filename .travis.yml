@@ -12,8 +12,6 @@ addons:
     packages:
     - ccache
     - cmake
-    - cscope
-    - ctags
     - g++
     - gdb
     - graphviz
@@ -28,7 +26,6 @@ addons:
     - protobuf-compiler
     - python-pip
     - python-protobuf
-    - virtualenvwrapper
 virtualenv:
   system_site_packages: true
 install:
