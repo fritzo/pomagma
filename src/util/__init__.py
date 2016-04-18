@@ -68,6 +68,21 @@ def TODO(message=''):
     raise NotImplementedError('TODO {}'.format(message))
 
 
+def unicode_to_str(data):
+    '''
+    Convert all unicode leaves of a json-like object to strings, in-place.
+    '''
+    if isinstance(data, unicode):
+        data = str(data)
+    elif isinstance(data, dict):
+        for key, value in data.iteritems():
+            data[key] = unicode_to_str(value)
+    elif isinstance(data, (list, tuple)):
+        for key, value in enumerate(data):
+            data[key] = unicode_to_str(value)
+    return data
+
+
 def on_signal(sig):
     def decorator(handler):
         signal.signal(sig, handler)

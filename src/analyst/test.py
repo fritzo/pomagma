@@ -3,8 +3,9 @@ from nose import SkipTest
 from nose.tools import assert_false
 from pomagma.atlas.bootstrap import THEORY
 from pomagma.atlas.bootstrap import WORLD
-from pomagma.util.testing import for_each_context
 from pomagma.util import TRAVIS_CI
+from pomagma.util import unicode_to_str
+from pomagma.util.testing import for_each_context
 import os
 import pomagma.analyst
 import pomagma.cartographer
@@ -23,7 +24,8 @@ OPTIONS = {
 def json_load(filename):
     filename = os.path.join(os.path.dirname(__file__), filename)
     with open(filename) as f:
-        return json.load(f)
+        obj = json.load(f)
+    return unicode_to_str(obj)
 
 
 SIMPLIFY_EXAMPLES = json_load('testdata/simplify_examples.json')
