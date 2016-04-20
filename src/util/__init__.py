@@ -1,10 +1,12 @@
 import contextlib
+import email
 import errno
 import fcntl
 import itertools
 import os
 import shutil
 import signal
+import smtplib
 import subprocess
 import sys
 import tempfile
@@ -16,9 +18,7 @@ ROOT = os.path.dirname(SRC)
 THEORY = os.path.join(SRC, 'theory')
 LANGUAGE = os.path.join(SRC, 'language')
 DATA = os.path.join(ROOT, 'data')
-DB_FORMAT = os.environ.get('POMAGMA_DB_FORMAT', 'pb')
-assert DB_FORMAT in ['pb'], DB_FORMAT
-DB = '{{}}.{}'.format(DB_FORMAT).format
+DB = '{}.pb'.format
 BLOB_DIR = os.path.join(DATA, 'blob')
 debug = int(os.environ.get('POMAGMA_DEBUG', 0))
 if debug:
@@ -26,9 +26,10 @@ if debug:
     BUILD = os.path.join(ROOT, 'build', 'debug')
 else:
     BUILD = os.path.join(ROOT, 'build', 'release')
+BIN = os.path.join(BUILD, 'src')
+NOTIFY_EMAIL = os.environ.get('POMAGMA_NOTIFY_EMAIL')
 CLEANUP_ON_ERROR = int(os.environ.get('CLEANUP_ON_ERROR', 1))
 COVERITY = os.path.join(ROOT, 'cov-int')
-BIN = os.path.join(BUILD, 'src')
 TRAVIS_CI = 'TRAVIS' in os.environ and 'CI' in os.environ
 
 LOG_LEVEL = int(os.environ.get('POMAGMA_LOG_LEVEL', 0))
@@ -426,3 +427,21 @@ def coverity():
     with chdir(BUILD):
         check_call('cmake', buildflag, ROOT)
         check_call('cov-build', '--dir', COVERITY, 'make')
+
+
+def notify(subject, content):
+    '''
+    Send notification email to POMAGMA_NOTIFY_EMAIL or write to stderr.
+    '''
+    if not NOTIFY_EMAIL:
+        sys.stderr.write('POMAGMA_NOTIFY_EMAIL not set\n')
+        sys.stderr.write('Subject: {}\n'.format(subject))
+        sys.stderr.write('Message:\n{}\n'.format(content))
+        sys.stderr.flush()
+    message = email.mime.text.MIMEText(content)
+    message['Subject'] = '[POMAGMA] {}'.format(subject)
+    message['From'] = 'noreply@pomagma.org'
+    message['To'] = NOTIFY_EMAIL
+    s = smtplib.SMTP('localhost')
+    s.sendmail(message['From'], [message['To']], message.as_string())
+    s.quit()
