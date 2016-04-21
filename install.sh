@@ -39,6 +39,13 @@ then
 else
   echo "Making new virtualenv"
   mkvirtualenv --system-site-packages pomagma
+  if [ "`uname`" -eq 'Darwin' ]; then
+    echo "Using clang-omp compiler"
+    echo 'export CC=/usr/local/bin/clang-omp' >> \
+      "$VIRTUAL_ENV/bin/postactivate"
+    echo 'export CXX=/usr/local/bin/clang-omp++' >> \
+      "$VIRTUAL_ENV/bin/postactivate"
+  fi
   deactivate
   workon pomagma
 fi
