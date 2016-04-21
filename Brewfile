@@ -1,4 +1,5 @@
 brew "boost"
+brew "ccache"
 brew "clang-omp"
 brew "cscope"
 brew "ctags"
