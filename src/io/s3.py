@@ -160,7 +160,7 @@ def is_blob(filename):
 def get(filename):
     if is_blob(filename):
         s3_lazy_get(filename, assume_immutable=True)
-        os.chmod(filename, 0444)
+        os.chmod(filename, 0o444)
     else:
         filename_ext = filename + EXT
         s3_lazy_get(filename_ext)

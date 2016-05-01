@@ -28,7 +28,7 @@ lint: FORCE
 
 format: FORCE
 	$(info pyformat)
-	pyformat --jobs 0 --in-place $(PY_FILES)
+	pyformat --jobs 0 --aggressive --in-place $(PY_FILES)
 
 python: protobuf lint FORCE
 	pip install -e .

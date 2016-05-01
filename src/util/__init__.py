@@ -213,7 +213,7 @@ def mutex(filename=None, block=True):
                 fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
                 fd.write('{}\n'.format(os.getpid()))
                 fd.flush()
-            except IOError, e:
+            except IOError as e:
                 assert e.errno in [errno.EACCES, errno.EAGAIN]
                 raise MutexLockedException(mutex_filename)
             else:

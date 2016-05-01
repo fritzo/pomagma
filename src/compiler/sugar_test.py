@@ -16,6 +16,7 @@ EXAMPLES = [map(parse_string_to_expr, e) for e in [
 
 
 @for_each(EXAMPLES)
-def test_desugar((expr, expected)):
+def test_desugar(args):
+    (expr, expected) = args
     actual = desugar_expr(expr)
     assert_equal(actual, expected)

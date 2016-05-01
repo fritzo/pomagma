@@ -234,7 +234,7 @@ def iter_eta_substitutions(expr):
         result = expr
         for var, case in zip(varlist, cases):
             if case == 0:
-                """do nothing."""
+                pass  # do nothing
             elif case == 1:
                 result = result.substitute(var, fresh)
             elif case == 2:

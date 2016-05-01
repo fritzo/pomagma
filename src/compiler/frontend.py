@@ -501,5 +501,9 @@ def write_symbols(rules, facts):
         for name in names
         if name != 'EQUAL'
     ]
-    symbols.sort(key=lambda (arity, name): (signature.arity_sort(arity), name))
+    symbols.sort(
+        key=lambda arity_name: (
+            signature.arity_sort(
+                arity_name[0]),
+            arity_name[1]))
     return symbols

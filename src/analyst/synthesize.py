@@ -46,6 +46,7 @@ from pomagma.compiler.util import memoize_args
 
 MAX_MEMORY = 0.95
 MAX_SOLUTIONS = 10
+INFINITY = float('inf')
 HOLE = Expression.make('HOLE')
 BOT = Expression.make('BOT')
 I = Expression.make('I')
@@ -78,7 +79,8 @@ class ComplexityEvaluator(object):
 
     def __call__(self, term):
         assert isinstance(term, Expression)
-        return sum(self._language[n] for n in term.polish.split())
+        return sum(self._language.get(n, INFINITY)
+                   for n in term.polish.split())
 
 
 def make_template(name):
@@ -446,6 +448,5 @@ def synthesize_from_facts(
         max_memory=max_memory,
         verbose=verbose)
     valid_sketches = (r for r in valid_sketches if is_complete(r[-1]))
-    results = list(itertools.islice(valid_sketches, 0, max_solutions))
-    results.sort()
+    results = sorted(itertools.islice(valid_sketches, 0, max_solutions))
     return results

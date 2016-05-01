@@ -194,7 +194,8 @@ def extract_tasks(infile, outfile=None):
                     write(normal.ascii(indent=8))
 
 
-def _extract_tasks((infile, outfile)):
+def _extract_tasks(args):
+    (infile, outfile) = args
     extract_tasks(infile, outfile)
 
 

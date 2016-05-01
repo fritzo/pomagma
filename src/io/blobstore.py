@@ -76,7 +76,7 @@ def dump_blob_ref(root_hexdigest, filename, sub_hexdigests=[]):
     """Write root and sub hexdigests to ref file."""
     assert isinstance(root_hexdigest, basestring), root_hexdigest
     assert len(root_hexdigest) == 40, root_hexdigest
-    with creat(filename, 0444) as f:
+    with creat(filename, 0o444) as f:
         f.write(root_hexdigest)
         for sub_hexdigest in sub_hexdigests:
             assert isinstance(sub_hexdigest, basestring), sub_hexdigest
@@ -137,4 +137,4 @@ def validate_blobs():
         mode = oct(os.stat(path).st_mode)[-3:]
         if mode != '444':
             sys.stderr.write('WARNING repairing mode of {}\n'.format(blob))
-            os.chmod(path, 0444)
+            os.chmod(path, 0o444)

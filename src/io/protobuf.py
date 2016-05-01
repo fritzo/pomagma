@@ -23,7 +23,7 @@ class InFile(object):
 class OutFile(object):
 
     def __init__(self, filename):
-        self._file = creat(filename, 0444)
+        self._file = creat(filename, 0o444)
         self._gzip = gzip.GzipFile(mode='wb', fileobj=self._file)
 
     def __enter__(self):
