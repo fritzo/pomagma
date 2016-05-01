@@ -23,10 +23,8 @@ clang-ctags:
 	  --compile-commands build/tags build/tags/compile_commands.json
 
 lint: FORCE
-	$(info pyflakes)
-	@pyflakes $(PY_FILES)
-	$(info pep8)
-	@pep8 --ignore=E402 $(PY_FILES)
+	$(info flake8)
+	@flake8 --ignore=E402 $(PY_FILES)
 
 python: protobuf lint FORCE
 	pip install -e .
