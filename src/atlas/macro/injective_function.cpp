@@ -2,56 +2,50 @@
 #include <pomagma/util/aligned_alloc.hpp>
 #include <cstring>
 
-namespace pomagma
-{
+namespace pomagma {
 
-InjectiveFunction::InjectiveFunction (const Carrier & carrier)
+InjectiveFunction::InjectiveFunction(const Carrier& carrier)
     : m_carrier(carrier),
       m_set(support().item_dim()),
       m_inverse_set(support().item_dim()),
       m_values(alloc_blocks<Ob>(1 + item_dim())),
-      m_inverse(alloc_blocks<Ob>(1 + item_dim()))
-{
-    POMAGMA_DEBUG("creating InjectiveFunction with "
-            << item_dim() << " values");
+      m_inverse(alloc_blocks<Ob>(1 + item_dim())) {
+    POMAGMA_DEBUG("creating InjectiveFunction with " << item_dim()
+                                                     << " values");
 
     construct_blocks(m_values, 1 + item_dim(), 0);
     construct_blocks(m_inverse, 1 + item_dim(), 0);
 }
 
-InjectiveFunction::InjectiveFunction (
-        const Carrier & carrier,
-        InjectiveFunction && other)
+InjectiveFunction::InjectiveFunction(const Carrier& carrier,
+                                     InjectiveFunction&& other)
     : m_carrier(carrier),
       m_set(support().item_dim()),
       m_inverse_set(support().item_dim()),
       m_values(alloc_blocks<Ob>(1 + item_dim())),
-      m_inverse(alloc_blocks<Ob>(1 + item_dim()))
-{
-    POMAGMA_DEBUG("resizing InjectiveFunction with "
-            << item_dim() << " values");
+      m_inverse(alloc_blocks<Ob>(1 + item_dim())) {
+    POMAGMA_DEBUG("resizing InjectiveFunction with " << item_dim()
+                                                     << " values");
 
     construct_blocks(m_values, 1 + item_dim(), 0);
     construct_blocks(m_inverse, 1 + item_dim(), 0);
 
     for (auto iter = other.iter(); iter.ok(); iter.next()) {
-        Ob key = * iter;
+        Ob key = *iter;
         Ob val = other.find(key);
         raw_insert(key, val);
     }
     update();
 }
 
-InjectiveFunction::~InjectiveFunction ()
-{
+InjectiveFunction::~InjectiveFunction() {
     destroy_blocks(m_values, 1 + item_dim());
     free_blocks(m_values);
     destroy_blocks(m_inverse, 1 + item_dim());
     free_blocks(m_inverse);
 }
 
-void InjectiveFunction::validate () const
-{
+void InjectiveFunction::validate() const {
     POMAGMA_INFO("Validating InjectiveFunction");
 
     m_set.validate();
@@ -70,8 +64,9 @@ void InjectiveFunction::validate () const
         } else {
             POMAGMA_ASSERT(bit, "found unsupported value at " << key);
             POMAGMA_ASSERT(m_carrier.equal(m_inverse[val], key),
-                    "value, inverse mismatch: " <<
-                    key << " -> " << val << " <- " << m_inverse[val]);
+                           "value, inverse mismatch: " << key << " -> " << val
+                                                       << " <- "
+                                                       << m_inverse[val]);
         }
     }
 
@@ -87,36 +82,34 @@ void InjectiveFunction::validate () const
         } else {
             POMAGMA_ASSERT(bit, "found unsupported value at " << val);
             POMAGMA_ASSERT(m_carrier.equal(m_values[key], val),
-                    "inverse, value mismatch: " <<
-                    val << " <- " << key << " -> " << m_values[key]);
+                           "inverse, value mismatch: " << val << " <- " << key
+                                                       << " -> "
+                                                       << m_values[key]);
         }
     }
 }
 
-void InjectiveFunction::log_stats (const std::string & prefix) const
-{
+void InjectiveFunction::log_stats(const std::string& prefix) const {
     POMAGMA_INFO(prefix << " "
-        "count = " << m_set.count_items() << ", "
-        "inverse_count = " << m_inverse_set.count_items());
+                           "count = " << m_set.count_items()
+                        << ", "
+                           "inverse_count = " << m_inverse_set.count_items());
 }
 
-void InjectiveFunction::clear ()
-{
+void InjectiveFunction::clear() {
     zero_blocks(m_values, 1 + item_dim());
     zero_blocks(m_inverse, 1 + item_dim());
     m_set.zero();
     m_inverse_set.zero();
 }
 
-inline void replace (Ob patt, Ob repl, Ob & destin)
-{
+inline void replace(Ob patt, Ob repl, Ob& destin) {
     if (destin == patt) {
         destin = repl;
     }
 }
 
-void InjectiveFunction::unsafe_merge (Ob dep)
-{
+void InjectiveFunction::unsafe_merge(Ob dep) {
     POMAGMA_ASSERT_RANGE_(4, dep, item_dim());
     Ob rep = m_carrier.find(dep);
     POMAGMA_ASSERT_RANGE_(4, rep, item_dim());
@@ -125,8 +118,8 @@ void InjectiveFunction::unsafe_merge (Ob dep)
     if (m_set(dep).fetch_zero()) {
         m_set(rep).one();
 
-        Ob & dep_val = m_values[dep];
-        Ob & rep_val = m_values[rep];
+        Ob& dep_val = m_values[dep];
+        Ob& rep_val = m_values[rep];
         m_carrier.set_and_merge(rep_val, dep_val);
         dep_val = 0;
     }
@@ -138,9 +131,9 @@ void InjectiveFunction::unsafe_merge (Ob dep)
     if (m_inverse_set(dep).fetch_zero()) {
         m_inverse_set(rep).one();
 
-        Ob & dep_val = m_inverse[dep];
-        Ob & rep_val = m_inverse[rep];
-        m_carrier.set_and_merge(rep_val, dep_val); // XXX is this safe?
+        Ob& dep_val = m_inverse[dep];
+        Ob& rep_val = m_inverse[rep];
+        m_carrier.set_and_merge(rep_val, dep_val);  // XXX is this safe?
         dep_val = 0;
     }
     for (auto iter = inverse_iter(); iter.ok(); iter.next()) {
@@ -148,4 +141,4 @@ void InjectiveFunction::unsafe_merge (Ob dep)
     }
 }
 
-} // namespace pomagma
+}  // namespace pomagma

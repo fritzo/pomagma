@@ -2,23 +2,19 @@
 #include <pomagma/util/aligned_alloc.hpp>
 #include <cstring>
 
-namespace pomagma
-{
+namespace pomagma {
 
-static void noop_callback (const NullaryFunction *) {}
+static void noop_callback(const NullaryFunction *) {}
 
-NullaryFunction::NullaryFunction (
-        const Carrier & carrier,
-        void (*insert_callback) (const NullaryFunction *))
+NullaryFunction::NullaryFunction(
+    const Carrier &carrier, void (*insert_callback)(const NullaryFunction *))
     : m_carrier(carrier),
       m_value(0),
-      m_insert_callback(insert_callback ? insert_callback : noop_callback)
-{
+      m_insert_callback(insert_callback ? insert_callback : noop_callback) {
     POMAGMA_DEBUG("creating NullaryFunction");
 }
 
-void NullaryFunction::validate () const
-{
+void NullaryFunction::validate() const {
     SharedLock lock(m_mutex);
 
     POMAGMA_INFO("Validating NullaryFunction");
@@ -26,19 +22,17 @@ void NullaryFunction::validate () const
     Ob value = m_value;
     if (value) {
         POMAGMA_ASSERT(support().contains(value),
-                "unsupported value: " << value);
+                       "unsupported value: " << value);
     }
 }
 
-void NullaryFunction::log_stats (const std::string & prefix) const
-{
+void NullaryFunction::log_stats(const std::string &prefix) const {
     if (not m_value.load()) {
         POMAGMA_INFO(prefix << " undefined");
     }
 }
 
-void NullaryFunction::unsafe_merge (Ob dep)
-{
+void NullaryFunction::unsafe_merge(Ob dep) {
     UniqueLock lock(m_mutex);
 
     Ob rep = m_carrier.find(dep);
@@ -51,4 +45,4 @@ void NullaryFunction::unsafe_merge (Ob dep)
     }
 }
 
-} // namespace pomagma
+}  // namespace pomagma

@@ -9,26 +9,21 @@
 #include <unordered_set>
 #include <deque>
 
-namespace pomagma
-{
+namespace pomagma {
 
-class UniqueFifoQueue
-{
+class UniqueFifoQueue {
     std::unordered_set<Ob> m_set;
     std::deque<Ob> m_queue;
 
-public:
-
-    void push (const Ob & ob)
-    {
+   public:
+    void push(const Ob& ob) {
         bool inserted = m_set.insert(ob).second;
         if (inserted) {
             m_queue.push_back(ob);
         }
     }
 
-    Ob pop ()
-    {
+    Ob pop() {
         if (m_queue.empty()) {
             return 0;
         } else {
@@ -42,15 +37,11 @@ public:
 
 static UniqueFifoQueue g_merge_queue;
 
-void schedule_merge (Ob dep)
-{
-    g_merge_queue.push(dep);
-}
+void schedule_merge(Ob dep) { g_merge_queue.push(dep); }
 
-void process_mergers (Signature & signature)
-{
+void process_mergers(Signature& signature) {
     POMAGMA_INFO("Processing mergers");
-    Carrier & carrier = * signature.carrier();
+    Carrier& carrier = *signature.carrier();
 
     std::vector<Ob> remove_queue;
     while (Ob dep = g_merge_queue.pop()) {
@@ -58,8 +49,10 @@ void process_mergers (Signature & signature)
         const Ob rep = carrier.find(dep);
         POMAGMA_ASSERT(dep > rep, "ill-formed merge: " << dep << ", " << rep);
 
-#define POMAGMA_MERGE(arity)\
-        for (auto i : signature.arity()) { i.second->unsafe_merge(dep); }
+#define POMAGMA_MERGE(arity)           \
+    for (auto i : signature.arity()) { \
+        i.second->unsafe_merge(dep);   \
+    }
 
         // order by most-likely-to-merge
         POMAGMA_MERGE(binary_functions);
@@ -76,8 +69,10 @@ void process_mergers (Signature & signature)
     POMAGMA_INFO("processed " << remove_queue.size() << " mergers");
 
     POMAGMA_INFO("updating values");
-#define POMAGMA_UPDATE(arity)\
-    for (auto i : signature.arity()) { i.second->update_values(); }
+#define POMAGMA_UPDATE(arity)          \
+    for (auto i : signature.arity()) { \
+        i.second->update_values();     \
+    }
 
     POMAGMA_UPDATE(binary_functions);
     POMAGMA_UPDATE(symmetric_functions);
@@ -93,4 +88,4 @@ void process_mergers (Signature & signature)
     remove_queue.clear();
 }
 
-} // namespace pomagma
+}  // namespace pomagma

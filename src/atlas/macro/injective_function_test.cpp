@@ -6,8 +6,7 @@ using namespace pomagma;
 
 rng_t rng;
 
-inline Ob example_fun (Ob i)
-{
+inline Ob example_fun(Ob i) {
     const size_t big_prime = (1ul << 31ul) - 1;
     Ob result = big_prime % (i + 1);
     if (result > 1) {
@@ -17,13 +16,11 @@ inline Ob example_fun (Ob i)
     }
 }
 
-struct Example
-{
+struct Example {
     InjectiveFunction fun;
 
-    explicit Example (Carrier & carrier) : fun(carrier)
-    {
-        const DenseSet & support = carrier.support();
+    explicit Example(Carrier& carrier) : fun(carrier) {
+        const DenseSet& support = carrier.support();
 
         POMAGMA_INFO("Defining function");
         InjectiveFunction fun(carrier);
@@ -44,8 +41,8 @@ struct Example
                 POMAGMA_ASSERT(fun.defined(*i), "missing value at " << *i);
                 POMAGMA_ASSERT(fun.find(*i) == val, "bad value at " << *i);
             } else {
-                POMAGMA_ASSERT(not fun.defined(*i),
-                        "unexpected value at " << *i);
+                POMAGMA_ASSERT(not fun.defined(*i), "unexpected value at "
+                                                        << *i);
             }
         }
         fun.validate();
@@ -56,8 +53,7 @@ struct Example
     }
 };
 
-int main ()
-{
+int main() {
     Log::Context log_context("InjectiveFunction Test");
     test_function<Example>(rng);
 

@@ -6,21 +6,17 @@
 #include <pomagma/language/language.hpp>
 #include <algorithm>
 
-namespace pomagma
-{
+namespace pomagma {
 
-namespace detail
-{
+namespace detail {
 
-std::vector<Ob> conjecture_diverge (
-        Structure & structure,
-        const std::vector<float> & probs,
-        const std::vector<std::string> & routes,
-        const char * conjectures_file)
-{
+std::vector<Ob> conjecture_diverge(Structure& structure,
+                                   const std::vector<float>& probs,
+                                   const std::vector<std::string>& routes,
+                                   const char* conjectures_file) {
     POMAGMA_INFO("Conjecturing divergent terms");
-    const Carrier & carrier = structure.carrier();
-    const BinaryRelation & NLESS = structure.binary_relation("NLESS");
+    const Carrier& carrier = structure.carrier();
+    const BinaryRelation& NLESS = structure.binary_relation("NLESS");
     const Ob BOT = structure.nullary_function("BOT").find();
     const Ob TOP = structure.nullary_function("TOP").find();
 
@@ -32,15 +28,13 @@ std::vector<Ob> conjecture_diverge (
     conjecture_set.remove(BOT);
     std::vector<Ob> conjectures;
     for (auto iter = conjecture_set.iter(); iter.ok(); iter.next()) {
-        Ob ob = * iter;
+        Ob ob = *iter;
         conjectures.push_back(ob);
     }
 
     POMAGMA_DEBUG("sorting " << conjectures.size() << " conjectures");
-    std::sort(
-        conjectures.begin(),
-        conjectures.end(),
-        [&](const Ob & x, const Ob & y){ return probs[x] > probs[y]; });
+    std::sort(conjectures.begin(), conjectures.end(),
+              [&](const Ob& x, const Ob& y) { return probs[x] > probs[y]; });
 
     POMAGMA_DEBUG("writing conjectures to " << conjectures_file);
     std::ofstream file(conjectures_file, std::ios::out | std::ios::trunc);
@@ -53,13 +47,10 @@ std::vector<Ob> conjecture_diverge (
     return conjectures;
 }
 
-} // namespace detail
+}  // namespace detail
 
-size_t conjecture_diverge (
-        Structure & structure,
-        const char * language_file,
-        const char * conjectures_file)
-{
+size_t conjecture_diverge(Structure& structure, const char* language_file,
+                          const char* conjectures_file) {
     std::vector<float> probs;
     std::vector<std::string> routes;
     auto language = load_language(language_file);
@@ -72,19 +63,13 @@ size_t conjecture_diverge (
     return conjecture_diverge(structure, probs, routes, conjectures_file);
 }
 
-size_t conjecture_diverge (
-        Structure & structure,
-        const std::vector<float> & probs,
-        const std::vector<std::string> & routes,
-        const char * conjectures_file)
-{
-    auto conjectures = detail::conjecture_diverge(
-        structure,
-        probs,
-        routes,
-        conjectures_file);
+size_t conjecture_diverge(Structure& structure, const std::vector<float>& probs,
+                          const std::vector<std::string>& routes,
+                          const char* conjectures_file) {
+    auto conjectures =
+        detail::conjecture_diverge(structure, probs, routes, conjectures_file);
 
     return conjectures.size();
 }
 
-} // namespace pomagma
+}  // namespace pomagma

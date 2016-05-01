@@ -5,11 +5,9 @@
 #include "symmetric_function.hpp"
 #include <pomagma/atlas/sampler_impl.hpp>
 
-namespace pomagma
-{
+namespace pomagma {
 
-inline Ob Sampler::Policy::sample (Ob val)
-{
+inline Ob Sampler::Policy::sample(Ob val) {
     if (val) {
         bool_ref contained = m_set(val);
         if (likely(contained.load())) {
@@ -25,33 +23,21 @@ inline Ob Sampler::Policy::sample (Ob val)
     }
 }
 
-inline Ob Sampler::Policy::sample (
-        const NullaryFunction & fun)
-{
+inline Ob Sampler::Policy::sample(const NullaryFunction& fun) {
     return sample(fun.find());
 }
 
-inline Ob Sampler::Policy::sample (
-        const InjectiveFunction & fun,
-        Ob key)
-{
+inline Ob Sampler::Policy::sample(const InjectiveFunction& fun, Ob key) {
     return sample(fun.find(key));
 }
 
-inline Ob Sampler::Policy::sample (
-        const BinaryFunction & fun,
-        Ob lhs,
-        Ob rhs)
-{
+inline Ob Sampler::Policy::sample(const BinaryFunction& fun, Ob lhs, Ob rhs) {
     return sample(fun.find(lhs, rhs));
 }
 
-inline Ob Sampler::Policy::sample (
-        const SymmetricFunction & fun,
-        Ob lhs,
-        Ob rhs)
-{
+inline Ob Sampler::Policy::sample(const SymmetricFunction& fun, Ob lhs,
+                                  Ob rhs) {
     return sample(fun.find(lhs, rhs));
 }
 
-} // namespace pomagma
+}  // namespace pomagma

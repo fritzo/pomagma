@@ -2,38 +2,34 @@
 #include <pomagma/util/aligned_alloc.hpp>
 #include <cstring>
 
-namespace pomagma
-{
+namespace pomagma {
 
-static void noop_callback (const BinaryFunction *, Ob, Ob) {}
+static void noop_callback(const BinaryFunction *, Ob, Ob) {}
 
-BinaryFunction::BinaryFunction (
-        const Carrier & carrier,
-        void (*insert_callback) (const BinaryFunction *, Ob, Ob))
+BinaryFunction::BinaryFunction(const Carrier &carrier,
+                               void (*insert_callback)(const BinaryFunction *,
+                                                       Ob, Ob))
     : m_lines(carrier),
       m_tile_dim((item_dim() + ITEMS_PER_TILE) / ITEMS_PER_TILE),
       m_tiles(alloc_blocks<Tile>(m_tile_dim * m_tile_dim)),
       m_Vlr_table(1 + item_dim()),
-      m_insert_callback(insert_callback ? insert_callback : noop_callback)
-{
-    POMAGMA_DEBUG("creating BinaryFunction with "
-            << (m_tile_dim * m_tile_dim) << " tiles");
+      m_insert_callback(insert_callback ? insert_callback : noop_callback) {
+    POMAGMA_DEBUG("creating BinaryFunction with " << (m_tile_dim * m_tile_dim)
+                                                  << " tiles");
 
-    std::atomic<Ob> * obs = & m_tiles[0][0];
+    std::atomic<Ob> *obs = &m_tiles[0][0];
     size_t ob_dim = m_tile_dim * ITEMS_PER_TILE;
     construct_blocks(obs, ob_dim * ob_dim, 0);
 }
 
-BinaryFunction::~BinaryFunction ()
-{
-    std::atomic<Ob> * obs = &m_tiles[0][0];
+BinaryFunction::~BinaryFunction() {
+    std::atomic<Ob> *obs = &m_tiles[0][0];
     size_t ob_dim = m_tile_dim * ITEMS_PER_TILE;
     destroy_blocks(obs, ob_dim * ob_dim);
     free_blocks(m_tiles);
 }
 
-void BinaryFunction::validate () const
-{
+void BinaryFunction::validate() const {
     SharedLock lock(m_mutex);
 
     POMAGMA_INFO("Validating BinaryFunction");
@@ -42,29 +38,31 @@ void BinaryFunction::validate () const
 
     POMAGMA_DEBUG("validating line-tile consistency");
     for (size_t i_ = 0; i_ < m_tile_dim; ++i_)
-    for (size_t j_ = 0; j_ < m_tile_dim; ++j_) {
-        const std::atomic<Ob> * tile = _tile(i_, j_);
+        for (size_t j_ = 0; j_ < m_tile_dim; ++j_) {
+            const std::atomic<Ob> *tile = _tile(i_, j_);
 
-        for (size_t _i = 0; _i < ITEMS_PER_TILE; ++_i)
-        for (size_t _j = 0; _j < ITEMS_PER_TILE; ++_j) {
-            size_t i = i_ * ITEMS_PER_TILE + _i;
-            size_t j = j_ * ITEMS_PER_TILE + _j;
-            if (i == 0 or item_dim() < i) continue;
-            if (j == 0 or item_dim() < j) continue;
-            Ob val = _tile2value(tile, _i, _j);
+            for (size_t _i = 0; _i < ITEMS_PER_TILE; ++_i)
+                for (size_t _j = 0; _j < ITEMS_PER_TILE; ++_j) {
+                    size_t i = i_ * ITEMS_PER_TILE + _i;
+                    size_t j = j_ * ITEMS_PER_TILE + _j;
+                    if (i == 0 or item_dim() < i) continue;
+                    if (j == 0 or item_dim() < j) continue;
+                    Ob val = _tile2value(tile, _i, _j);
 
-            if (not (support().contains(i) and support().contains(j))) {
-                POMAGMA_ASSERT(not val,
-                        "found unsupported val: " << i << ',' << j);
-            } else if (val) {
-                POMAGMA_ASSERT(defined(i, j),
-                        "found unsupported value: " << i << ',' << j);
-            } else {
-                POMAGMA_ASSERT(not defined(i, j),
-                        "found supported null value: " << i << ',' << j);
-            }
+                    if (not(support().contains(i) and support().contains(j))) {
+                        POMAGMA_ASSERT(not val, "found unsupported val: "
+                                                    << i << ',' << j);
+                    } else if (val) {
+                        POMAGMA_ASSERT(defined(i, j),
+                                       "found unsupported value: " << i << ','
+                                                                   << j);
+                    } else {
+                        POMAGMA_ASSERT(
+                            not defined(i, j),
+                            "found supported null value: " << i << ',' << j);
+                    }
+                }
         }
-    }
 
     POMAGMA_DEBUG("validating inverse contains function");
     for (auto lhs_iter = support().iter(); lhs_iter.ok(); lhs_iter.next()) {
@@ -85,13 +83,11 @@ void BinaryFunction::validate () const
     m_VRl_table.validate(this);
 }
 
-void BinaryFunction::log_stats (const std::string & prefix) const
-{
+void BinaryFunction::log_stats(const std::string &prefix) const {
     m_lines.log_stats(prefix);
 }
 
-void BinaryFunction::clear ()
-{
+void BinaryFunction::clear() {
     memory_barrier();
     m_lines.clear();
     zero_blocks(m_tiles, m_tile_dim * m_tile_dim);
@@ -101,8 +97,7 @@ void BinaryFunction::clear ()
     memory_barrier();
 }
 
-void BinaryFunction::unsafe_merge (const Ob dep)
-{
+void BinaryFunction::unsafe_merge(const Ob dep) {
     UniqueLock lock(m_mutex);
 
     POMAGMA_ASSERT5(support().contains(dep), "unsupported dep: " << dep);
@@ -116,8 +111,8 @@ void BinaryFunction::unsafe_merge (const Ob dep)
     // dep as rhs
     for (auto iter = iter_rhs(dep); iter.ok(); iter.next()) {
         Ob lhs = *iter;
-        std::atomic<Ob> & dep_val = value(lhs, dep);
-        std::atomic<Ob> & rep_val = value(lhs, rep);
+        std::atomic<Ob> &dep_val = value(lhs, dep);
+        std::atomic<Ob> &rep_val = value(lhs, rep);
         Ob val = dep_val.load(std::memory_order_relaxed);
         dep_val.store(0, std::memory_order_relaxed);
         m_lines.Lx(lhs, dep).zero();
@@ -142,8 +137,8 @@ void BinaryFunction::unsafe_merge (const Ob dep)
     rep = carrier().find(rep);
     for (auto iter = iter_lhs(dep); iter.ok(); iter.next()) {
         Ob rhs = *iter;
-        std::atomic<Ob> & dep_val = value(dep, rhs);
-        std::atomic<Ob> & rep_val = value(rep, rhs);
+        std::atomic<Ob> &dep_val = value(dep, rhs);
+        std::atomic<Ob> &rep_val = value(rep, rhs);
         Ob val = dep_val.load(std::memory_order_relaxed);
         dep_val.store(0, std::memory_order_relaxed);
         m_lines.Rx(dep, rhs).zero();
@@ -177,4 +172,4 @@ void BinaryFunction::unsafe_merge (const Ob dep)
     m_Vlr_table.unsafe_remove(dep);
 }
 
-} // namespace pomagma
+}  // namespace pomagma

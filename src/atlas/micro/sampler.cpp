@@ -6,12 +6,9 @@
 #include "symmetric_function.hpp"
 #include <pomagma/atlas/sampler_impl.hpp>
 
-namespace pomagma
-{
+namespace pomagma {
 
-inline Ob Sampler::Policy::sample (
-        const NullaryFunction & fun)
-{
+inline Ob Sampler::Policy::sample(const NullaryFunction& fun) {
     if (Ob val = fun.find()) {
         return carrier.find(val);
     }
@@ -22,10 +19,7 @@ inline Ob Sampler::Policy::sample (
     throw InsertionFailedException();
 }
 
-inline Ob Sampler::Policy::sample (
-        const InjectiveFunction & fun,
-        Ob key)
-{
+inline Ob Sampler::Policy::sample(const InjectiveFunction& fun, Ob key) {
     if (Ob val = fun.find(key)) {
         return carrier.find(val);
     }
@@ -36,11 +30,7 @@ inline Ob Sampler::Policy::sample (
     throw InsertionFailedException();
 }
 
-inline Ob Sampler::Policy::sample (
-        const BinaryFunction & fun,
-        Ob lhs,
-        Ob rhs)
-{
+inline Ob Sampler::Policy::sample(const BinaryFunction& fun, Ob lhs, Ob rhs) {
     if (Ob val = fun.find(lhs, rhs)) {
         return carrier.find(val);
     }
@@ -51,11 +41,8 @@ inline Ob Sampler::Policy::sample (
     throw InsertionFailedException();
 }
 
-inline Ob Sampler::Policy::sample (
-        const SymmetricFunction & fun,
-        Ob lhs,
-        Ob rhs)
-{
+inline Ob Sampler::Policy::sample(const SymmetricFunction& fun, Ob lhs,
+                                  Ob rhs) {
     if (Ob val = fun.find(lhs, rhs)) {
         return carrier.find(val);
     }
@@ -66,4 +53,4 @@ inline Ob Sampler::Policy::sample (
     throw InsertionFailedException();
 }
 
-} // namespace pomagma
+}  // namespace pomagma

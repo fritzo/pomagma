@@ -8,10 +8,9 @@ typedef size_t Ob;
 
 rng_t rng;
 
-bool is_even (Ob i, Ob modulus = 2) { return i % modulus == 0; }
+bool is_even(Ob i, Ob modulus = 2) { return i % modulus == 0; }
 
-void test_sizes ()
-{
+void test_sizes() {
     POMAGMA_INFO("Testing DenseSet sizes");
 
     for (size_t i = 0; i <= 511; ++i) {
@@ -22,8 +21,7 @@ void test_sizes ()
     }
 }
 
-void test_basic (size_t size)
-{
+void test_basic(size_t size) {
     POMAGMA_INFO("Testing DenseSet");
 
     DenseSet set(size);
@@ -61,31 +59,33 @@ void test_basic (size_t size)
     POMAGMA_ASSERT_EQ(item_count, size / 2);
 }
 
-void test_even (size_t size)
-{
+void test_even(size_t size) {
     std::vector<DenseSet *> evens(7, nullptr);
-    for (auto & e : evens) {
+    for (auto &e : evens) {
         e = new DenseSet(size);
     }
 
     for (Ob i = 1; i <= 6; ++i) {
         for (Ob j = 1; j < 1 + size; ++j) {
-            if (is_even(j, i)) { evens[i]->insert(j); }
+            if (is_even(j, i)) {
+                evens[i]->insert(j);
+            }
         }
     }
 
     POMAGMA_INFO("Testing set containment");
     for (Ob i = 1; i <= 6; ++i) {
-    for (Ob j = 1; j <= 6; ++j) {
-        POMAGMA_INFO(j << " % " << i << " = " << (j % i));
-        if (j % i == 0) {
-            POMAGMA_ASSERT(*evens[j] <= *evens[i],
-                    "expected containment " << j << ", " << i);
-        } else if (size > i * j) {
-            POMAGMA_ASSERT(not (*evens[j] <= *evens[i]),
-                    "expected non-containment " << j << ", " << i);
+        for (Ob j = 1; j <= 6; ++j) {
+            POMAGMA_INFO(j << " % " << i << " = " << (j % i));
+            if (j % i == 0) {
+                POMAGMA_ASSERT(*evens[j] <= *evens[i], "expected containment "
+                                                           << j << ", " << i);
+            } else if (size > i * j) {
+                POMAGMA_ASSERT(not(*evens[j] <= *evens[i]),
+                               "expected non-containment " << j << ", " << i);
+            }
         }
-    }}
+    }
 
     POMAGMA_INFO("Testing set intersection");
     DenseSet evens6(size);
@@ -103,8 +103,7 @@ void test_even (size_t size)
     }
 }
 
-void test_iterator (size_t size, rng_t & rng)
-{
+void test_iterator(size_t size, rng_t &rng) {
     POMAGMA_INFO("Testing DenseSet::Iterator");
     DenseSet set(size);
     std::vector<bool> vect(size, false);
@@ -114,13 +113,13 @@ void test_iterator (size_t size, rng_t & rng)
     for (Ob i = 1; i <= size; ++i) {
         if (randomly_insert(rng)) {
             set.insert(i);
-            vect[i-1] = true;
+            vect[i - 1] = true;
             ++true_count;
         }
     }
 
     for (Ob i = 1; i <= size; ++i) {
-        POMAGMA_ASSERT_EQ(set.contains(i), vect[i-1]);
+        POMAGMA_ASSERT_EQ(set.contains(i), vect[i - 1]);
     }
 
     size_t count = 0;
@@ -131,8 +130,7 @@ void test_iterator (size_t size, rng_t & rng)
     POMAGMA_ASSERT_EQ(count, true_count);
 }
 
-void test_operations (size_t size, rng_t & rng)
-{
+void test_operations(size_t size, rng_t &rng) {
     POMAGMA_INFO("Testing DenseSet operations");
 
     DenseSet x(size);
@@ -185,8 +183,12 @@ void test_operations (size_t size, rng_t & rng)
     expected.zero();
     actual.zero();
     for (Ob i = 1; i <= size; ++i) {
-        if (x.contains(i) or y.contains(i)) { expected.insert(i); }
-        if (x.contains(i)) { actual.insert(i); }
+        if (x.contains(i) or y.contains(i)) {
+            expected.insert(i);
+        }
+        if (x.contains(i)) {
+            actual.insert(i);
+        }
     }
     actual += y;
     POMAGMA_ASSERT(actual == expected, "operator += is wrong");
@@ -200,8 +202,12 @@ void test_operations (size_t size, rng_t & rng)
     expected.zero();
     actual.zero();
     for (Ob i = 1; i <= size; ++i) {
-        if (x.contains(i) and y.contains(i)) { expected.insert(i); }
-        if (x.contains(i)) { actual.insert(i); }
+        if (x.contains(i) and y.contains(i)) {
+            expected.insert(i);
+        }
+        if (x.contains(i)) {
+            actual.insert(i);
+        }
     }
     actual *= y;
     POMAGMA_ASSERT(actual == expected, "operator *= is wrong");
@@ -220,15 +226,21 @@ void test_operations (size_t size, rng_t & rng)
     DenseSet actual_diff(size);
     expected_rep.set_union(x, y);
     for (Ob i = 1; i <= size; ++i) {
-        if (y.contains(i) and not x.contains(i)) { expected_diff.insert(i); }
+        if (y.contains(i) and not x.contains(i)) {
+            expected_diff.insert(i);
+        }
     }
 
     POMAGMA_INFO("testing merge(DenseSet)");
     actual_rep.zero();
     actual_dep.zero();
     for (Ob i = 1; i <= size; ++i) {
-        if (x.contains(i)) { actual_rep.insert(i); }
-        if (y.contains(i)) { actual_dep.insert(i); }
+        if (x.contains(i)) {
+            actual_rep.insert(i);
+        }
+        if (y.contains(i)) {
+            actual_dep.insert(i);
+        }
     }
     actual_rep.merge(actual_dep);
     POMAGMA_ASSERT(actual_rep == expected_rep, "merge rep is wrong");
@@ -239,8 +251,12 @@ void test_operations (size_t size, rng_t & rng)
     actual_rep.zero();
     actual_dep.zero();
     for (Ob i = 1; i <= size; ++i) {
-        if (x.contains(i)) { actual_rep.insert(i); }
-        if (y.contains(i)) { actual_dep.insert(i); }
+        if (x.contains(i)) {
+            actual_rep.insert(i);
+        }
+        if (y.contains(i)) {
+            actual_dep.insert(i);
+        }
     }
     actual_rep.merge(actual_dep, actual_diff);
     POMAGMA_ASSERT(actual_rep == expected_rep, "merge rep is wrong");
@@ -251,15 +267,16 @@ void test_operations (size_t size, rng_t & rng)
     actual_diff.zero();
     actual_rep.zero();
     for (Ob i = 1; i <= size; ++i) {
-        if (x.contains(i)) { actual_rep.insert(i); }
+        if (x.contains(i)) {
+            actual_rep.insert(i);
+        }
     }
     actual_rep.ensure(y, actual_diff);
     POMAGMA_ASSERT(actual_rep == expected_rep, "merge rep is wrong");
     POMAGMA_ASSERT(actual_diff == expected_diff, "merge diff is wrong");
 }
 
-void test_max_item (size_t size, rng_t & rng)
-{
+void test_max_item(size_t size, rng_t &rng) {
     POMAGMA_INFO("Testing DenseSet operations");
 
     DenseSet set(size);
@@ -275,8 +292,7 @@ void test_max_item (size_t size, rng_t & rng)
     }
 }
 
-int main ()
-{
+int main() {
     Log::Context log_context("Dense Set Test");
 
     test_sizes();

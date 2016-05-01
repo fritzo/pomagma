@@ -11,22 +11,20 @@ namespace pomagma {
 //----------------------------------------------------------------------------
 // VectorQueue
 
-void VectorQueue::push (const void * message, uint8_t size)
-{
+void VectorQueue::push(const void* message, uint8_t size) {
     POMAGMA_ASSERT1(size, "empty messages are not allowed");
     std::unique_lock<std::mutex> lock(m_mutex);
     size_t offset = m_data.size();
     m_data.resize(offset + 1 + size);
-    memcpy(m_data.data() + offset, & size, 1);
+    memcpy(m_data.data() + offset, &size, 1);
     memcpy(m_data.data() + offset + 1, message, size);
 }
 
-uint8_t VectorQueue::try_pop (void * message)
-{
+uint8_t VectorQueue::try_pop(void* message) {
     std::unique_lock<std::mutex> lock(m_mutex);
     uint8_t size = 0;
     if (likely(m_read_offset != m_data.size())) {
-        memcpy(& size, m_data.data() + m_read_offset, 1);
+        memcpy(&size, m_data.data() + m_read_offset, 1);
         memcpy(message, m_data.data() + m_read_offset + 1, size);
         m_read_offset += 1 + size;
         return size;
@@ -40,24 +38,21 @@ uint8_t VectorQueue::try_pop (void * message)
 //----------------------------------------------------------------------------
 // FileBackedQueue
 
-inline int create_inaccessible_temp_file ()
-{
+inline int create_inaccessible_temp_file() {
     auto path = fs::unique_path("/tmp/pomagma.queue.%%%%%%%%%%%%%%%%%%%%");
     int fid = open(path.c_str(), O_CREAT | O_TRUNC | O_RDWR, S_IRUSR | S_IWUSR);
     unlink(path.c_str());
     return fid;
 }
 
-FileBackedQueue::FileBackedQueue ()
+FileBackedQueue::FileBackedQueue()
     : m_write_offset(0),
       m_read_offset(0),
-      m_fid(create_inaccessible_temp_file())
-{
+      m_fid(create_inaccessible_temp_file()) {
     POMAGMA_ASSERT_C(m_fid);
 }
 
-void FileBackedQueue::push (const void * message, uint8_t size)
-{
+void FileBackedQueue::push(const void* message, uint8_t size) {
     POMAGMA_ASSERT1(size, "empty messages are not allowed");
     std::unique_lock<std::mutex> lock(m_mutex);
     POMAGMA_ASSERT_C(pwrite(m_fid, &size, 1, m_write_offset));
@@ -66,8 +61,7 @@ void FileBackedQueue::push (const void * message, uint8_t size)
     m_write_offset += size;
 }
 
-uint8_t FileBackedQueue::try_pop (void * message)
-{
+uint8_t FileBackedQueue::try_pop(void* message) {
     std::unique_lock<std::mutex> lock(m_mutex);
     uint8_t size = 0;
     if (likely(m_read_offset != m_write_offset)) {
@@ -83,4 +77,4 @@ uint8_t FileBackedQueue::try_pop (void * message)
     return size;
 }
 
-} // namespace pomagma
+}  // namespace pomagma

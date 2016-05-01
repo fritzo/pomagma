@@ -2,18 +2,16 @@
 
 #include <pomagma/atlas/micro/util.hpp>
 
-namespace pomagma
-{
+namespace pomagma {
 
-void load_signature (const std::string & filename);
-void load_structure (const std::string & filename);
-void dump_structure (const std::string & filename);
-void load_programs (const std::string & filename);
-void load_language (const std::string & filename);
-void validate_consistent ();
-void validate_all ();
-void log_profile_stats ();
-void log_stats ();
+void load_signature(const std::string& filename);
+void load_structure(const std::string& filename);
+void dump_structure(const std::string& filename);
+void load_programs(const std::string& filename);
+void load_language(const std::string& filename);
+void validate_consistent();
+void validate_all();
+void log_profile_stats();
+void log_stats();
 
-} // namespace pomagma
-
+}  // namespace pomagma

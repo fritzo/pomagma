@@ -1,18 +1,16 @@
 #include "validator.hpp"
 
-namespace pomagma
-{
+namespace pomagma {
 
-std::vector<Validator::AsyncValidity> Validator::validate (
-        const std::vector<Corpus::LineOf<const Corpus::Term *>> & lines,
-        Corpus::Linker & linker)
-{
+std::vector<Validator::AsyncValidity> Validator::validate(
+    const std::vector<Corpus::LineOf<const Corpus::Term *>> &lines,
+    Corpus::Linker &linker) {
     std::vector<AsyncValidity> result;
-    for (const auto & line : lines) {
+    for (const auto &line : lines) {
         AsyncValidity pair = {Approximator::Validity::unknown(), false};
-        const HashedApproximation * approx = nullptr;
+        const HashedApproximation *approx = nullptr;
         for (size_t depth = 0; depth < 10; ++depth) {
-            const Corpus::Term * term = linker.approximate(line.body, depth);
+            const Corpus::Term *term = linker.approximate(line.body, depth);
             auto old_approx = approx;
             approx = m_cache.find(term);
             if (not approx) {
@@ -32,4 +30,4 @@ std::vector<Validator::AsyncValidity> Validator::validate (
     return result;
 }
 
-} // namespace pomagma
+}  // namespace pomagma

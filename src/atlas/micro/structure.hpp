@@ -3,26 +3,23 @@
 #include <pomagma/util/util.hpp>
 #include <pomagma/atlas/signature.hpp>
 
-namespace pomagma
-{
+namespace pomagma {
 
-class Structure : noncopyable
-{
+class Structure : noncopyable {
     Signature m_signature;
 
-public:
+   public:
+    Structure() {}
 
-    Structure () {}
+    Signature& signature() { return m_signature; }
+    Carrier& carrier() { return *m_signature.carrier(); }
 
-    Signature & signature () { return m_signature; }
-    Carrier & carrier () { return * m_signature.carrier(); }
-
-    void validate_consistent ();
-    void validate ();
-    void clear ();
-    void load (const std::string & filename);
-    void dump (const std::string & filename);
-    void log_stats ();
+    void validate_consistent();
+    void validate();
+    void clear();
+    void load(const std::string& filename);
+    void dump(const std::string& filename);
+    void log_stats();
 };
 
-} // namespace pomagma
+}  // namespace pomagma

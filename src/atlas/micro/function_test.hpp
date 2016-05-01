@@ -1,26 +1,22 @@
-#pragma once 
+#pragma once
 
 #include "carrier.hpp"
 
-namespace pomagma
-{
+namespace pomagma {
 
 size_t g_insert_count = 0;
-void insert_callback (Ob i)
-{
+void insert_callback(Ob i) {
     POMAGMA_DEBUG("inserting " << i);
     ++g_insert_count;
 }
 
 size_t g_merge_count = 0;
-void merge_callback (Ob i)
-{
+void merge_callback(Ob i) {
     POMAGMA_DEBUG("merging " << i);
     ++g_merge_count;
 }
 
-inline void random_init (Carrier & carrier, rng_t & rng)
-{
+inline void random_init(Carrier& carrier, rng_t& rng) {
     POMAGMA_ASSERT_EQ(carrier.item_count(), 0);
     const size_t size = carrier.item_dim();
     g_insert_count = 0;
@@ -36,11 +32,10 @@ inline void random_init (Carrier & carrier, rng_t & rng)
     }
 }
 
-template<class Function>
-void remove_deps (Carrier & carrier, Function & fun)
-{
+template <class Function>
+void remove_deps(Carrier& carrier, Function& fun) {
     POMAGMA_INFO("Merging deps");
-    const DenseSet & support = carrier.support();
+    const DenseSet& support = carrier.support();
     bool merged;
     do {
         merged = false;
@@ -57,29 +52,27 @@ void remove_deps (Carrier & carrier, Function & fun)
     fun.validate();
 }
 
-void test_merge (Carrier & carrier, rng_t & rng)
-{
+void test_merge(Carrier& carrier, rng_t& rng) {
     POMAGMA_INFO("Checking unsafe_merge");
-    const DenseSet & support = carrier.support();
+    const DenseSet& support = carrier.support();
     size_t merge_count = 0;
     g_merge_count = 0;
     std::bernoulli_distribution randomly_merge(0.1);
     for (auto rep_iter = support.iter(); rep_iter.ok(); rep_iter.next())
-    for (auto dep_iter = support.iter(); dep_iter.ok(); dep_iter.next()) {
-        Ob dep = carrier.find(*dep_iter);
-        Ob rep = carrier.find(*rep_iter);
-        if ((rep < dep) and randomly_merge(rng)) {
-            carrier.merge(dep, rep);
-            ++merge_count;
-            break;
+        for (auto dep_iter = support.iter(); dep_iter.ok(); dep_iter.next()) {
+            Ob dep = carrier.find(*dep_iter);
+            Ob rep = carrier.find(*rep_iter);
+            if ((rep < dep)and randomly_merge(rng)) {
+                carrier.merge(dep, rep);
+                ++merge_count;
+                break;
+            }
         }
-    }
     POMAGMA_ASSERT_EQ(merge_count, g_merge_count);
 }
 
-template<class Example>
-void test_function (size_t size, rng_t & rng)
-{
+template <class Example>
+void test_function(size_t size, rng_t& rng) {
     Carrier carrier(size, insert_callback, merge_callback);
     random_init(carrier, rng);
     Example example(carrier);
@@ -88,9 +81,8 @@ void test_function (size_t size, rng_t & rng)
     remove_deps(carrier, example.fun);
 }
 
-template<class Example>
-void test_function (rng_t & rng)
-{
+template <class Example>
+void test_function(rng_t& rng) {
     for (size_t exponent = 0; exponent < 10; ++exponent) {
         test_function<Example>((1 << exponent) - 1, rng);
     }
@@ -100,4 +92,4 @@ void test_function (rng_t & rng)
     }
 }
 
-} // namespace pomagma
+}  // namespace pomagma

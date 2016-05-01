@@ -5,20 +5,14 @@
 
 using namespace pomagma;
 
-
-void task (size_t)
-{
-    memory_barrier();
-}
-
+void task(size_t) { memory_barrier(); }
 
 std::atomic<bool> g_alive(false);
 tbb::concurrent_queue<size_t> g_work_queue;
 static std::mutex g_work_mutex;
 static std::condition_variable g_work_condition;
 
-void schedule (size_t i)
-{
+void schedule(size_t i) {
     std::unique_lock<std::mutex> lock(g_work_mutex);
     g_work_queue.push(i);
     g_work_condition.notify_one();
@@ -27,8 +21,7 @@ void schedule (size_t i)
     }
 }
 
-void do_work ()
-{
+void do_work() {
     while (g_alive) {
         size_t i;
         std::unique_lock<std::mutex> lock(g_work_mutex);
@@ -41,10 +34,8 @@ void do_work ()
     }
 }
 
-
-template<class Function>
-void print_rate (std::string name, Function function)
-{
+template <class Function>
+void print_rate(std::string name, Function function) {
     size_t iters = 0;
     size_t block = 1000;
     float duration = 0.5;
@@ -65,29 +56,22 @@ void print_rate (std::string name, Function function)
     POMAGMA_INFO(std::setw(12) << name << std::setw(12) << rate);
 }
 
-int main ()
-{
+int main() {
     Log::Context log_context("Threading profile");
 
     POMAGMA_INFO(std::setw(12) << "Method" << std::setw(12) << "Rate (Hz)");
 
-    print_rate("call", [&](size_t i){
-        task(i);
-    });
+    print_rate("call", [&](size_t i) { task(i); });
 
-    print_rate("spawn", [&](size_t i){
-        std::thread(task, i).join();
-    });
+    print_rate("spawn", [&](size_t i) { std::thread(task, i).join(); });
 
-    print_rate("async", [&](size_t i){
+    print_rate("async", [&](size_t i) {
         std::async(std::launch::async, task, i).wait();
     });
 
     g_alive = true;
     std::thread worker(do_work);
-    print_rate("pool", [&](size_t i){
-        schedule(i);
-    });
+    print_rate("pool", [&](size_t i) { schedule(i); });
     g_alive = false;
     g_work_condition.notify_one();
     worker.join();

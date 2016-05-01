@@ -3,21 +3,15 @@
 #include <pomagma/atlas/parser.hpp>
 #include <pomagma/atlas/micro/structure_impl.hpp>
 
-namespace pomagma
-{
+namespace pomagma {
 
-class InsertReducer : noncopyable
-{
-public:
-
+class InsertReducer : noncopyable {
+   public:
     typedef Ob Term;
 
-    InsertReducer(Carrier & carrier) : m_carrier(carrier) {}
+    InsertReducer(Carrier &carrier) : m_carrier(carrier) {}
 
-    Ob reduce (
-            const std::string &,
-            const NullaryFunction * fun)
-    {
+    Ob reduce(const std::string &, const NullaryFunction *fun) {
         Ob val = fun->find();
         if (not val) {
             val = m_carrier.try_insert();
@@ -27,11 +21,7 @@ public:
         return val;
     }
 
-    Ob reduce (
-            const std::string &,
-            const InjectiveFunction * fun,
-            Ob key)
-    {
+    Ob reduce(const std::string &, const InjectiveFunction *fun, Ob key) {
         Ob val = fun->find(key);
         if (not val) {
             val = m_carrier.try_insert();
@@ -41,12 +31,7 @@ public:
         return val;
     }
 
-    Ob reduce (
-            const std::string &,
-            const BinaryFunction * fun,
-            Ob lhs,
-            Ob rhs)
-    {
+    Ob reduce(const std::string &, const BinaryFunction *fun, Ob lhs, Ob rhs) {
         Ob val = fun->find(lhs, rhs);
         if (not val) {
             val = m_carrier.try_insert();
@@ -56,12 +41,8 @@ public:
         return val;
     }
 
-    Ob reduce (
-            const std::string &,
-            const SymmetricFunction * fun,
-            Ob lhs,
-            Ob rhs)
-    {
+    Ob reduce(const std::string &, const SymmetricFunction *fun, Ob lhs,
+              Ob rhs) {
         Ob val = fun->find(lhs, rhs);
         if (not val) {
             val = m_carrier.try_insert();
@@ -71,24 +52,18 @@ public:
         return val;
     }
 
-private:
-
-    Carrier & m_carrier;
+   private:
+    Carrier &m_carrier;
 };
 
-class InsertParser : public TermParser<InsertReducer>
-{
-public:
+class InsertParser : public TermParser<InsertReducer> {
+   public:
+    explicit InsertParser(Signature &signature)
+        : TermParser<InsertReducer>(signature, m_reducer),
+          m_reducer(*signature.carrier()) {}
 
-    explicit InsertParser (Signature & signature) :
-        TermParser<InsertReducer>(signature, m_reducer),
-        m_reducer(* signature.carrier())
-    {
-    }
-
-private:
-
+   private:
     InsertReducer m_reducer;
 };
 
-} // namespace pomagma
+}  // namespace pomagma

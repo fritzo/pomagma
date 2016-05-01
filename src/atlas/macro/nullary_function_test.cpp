@@ -5,8 +5,7 @@ using namespace pomagma;
 
 rng_t rng;
 
-void test_basic (size_t size)
-{
+void test_basic(size_t size) {
     POMAGMA_INFO("Defining function");
     Carrier carrier(size);
     for (Ob i = 1; i <= size; ++i) {
@@ -37,8 +36,7 @@ void test_basic (size_t size)
     POMAGMA_ASSERT(not fun.defined(), "nullary function was not cleared");
 }
 
-int main ()
-{
+int main() {
     Log::Context log_context("Dense Nullary Function Test");
 
     for (size_t i = 0; i < 4; ++i) {

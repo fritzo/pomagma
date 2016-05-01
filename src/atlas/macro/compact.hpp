@@ -2,9 +2,8 @@
 
 #include "structure.hpp"
 
-namespace pomagma
-{
+namespace pomagma {
 
-void compact (Structure & structure);
+void compact(Structure& structure);
 
-} // namespace pomagma
+}  // namespace pomagma

@@ -5,26 +5,20 @@
 namespace pomagma {
 namespace shard {
 
-BinaryFunction::BinaryFunction (Carrier & carrier)
-    : m_carrier(carrier)
-{
+BinaryFunction::BinaryFunction(Carrier& carrier) : m_carrier(carrier) {
     POMAGMA_DEBUG("creating BinaryFunction");
 }
 
-BinaryFunction::BinaryFunction (
-        Carrier & carrier,
-        BinaryFunction && other)
+BinaryFunction::BinaryFunction(Carrier& carrier, BinaryFunction&& other)
     : m_lhs_rhs(std::move(other.m_lhs_rhs)),
       m_rhs_lhs(std::move(other.m_rhs_lhs)),
       m_val_lhs(std::move(other.m_val_lhs)),
       m_val_rhs(std::move(other.m_val_rhs)),
-      m_carrier(carrier)
-{
+      m_carrier(carrier) {
     POMAGMA_DEBUG("resizing BinaryFunction");
 }
 
-void BinaryFunction::validate () const
-{
+void BinaryFunction::validate() const {
     POMAGMA_INFO("Validating BinaryFunction");
 
     for (auto r = m_rhs_lhs.begin(); r != m_rhs_lhs.end(); ++r) {
@@ -60,16 +54,14 @@ void BinaryFunction::validate () const
     }
 }
 
-void BinaryFunction::clear ()
-{
+void BinaryFunction::clear() {
     m_lhs_rhs.clear();
     m_rhs_lhs.clear();
     m_val_lhs.clear();
     m_val_rhs.clear();
 }
 
-void BinaryFunction::merge (const Ob dep)
-{
+void BinaryFunction::merge(const Ob dep) {
     POMAGMA_ASSERT5(support().contains(dep), "unsupported dep: " << dep);
     Ob rep = carrier().find(dep);
     POMAGMA_ASSERT5(support().contains(rep), "unsupported rep: " << rep);
@@ -78,5 +70,5 @@ void BinaryFunction::merge (const Ob dep)
     TODO("implement");
 }
 
-} // namespace shard
-} // namespace pomagma
+}  // namespace shard
+}  // namespace pomagma

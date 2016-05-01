@@ -8,18 +8,14 @@
 #include <unordered_map>
 #include <unordered_set>
 
-namespace pomagma
-{
+namespace pomagma {
 
-class ProgramProfiler : noncopyable
-{
-    struct Stat
-    {
+class ProgramProfiler : noncopyable {
+    struct Stat {
         size_t count;
         size_t time;
 
-        void report_to (Stat & manager)
-        {
+        void report_to(Stat &manager) {
             manager.count += count;
             manager.time += time;
             count = 0;
@@ -27,35 +23,28 @@ class ProgramProfiler : noncopyable
         }
     };
 
-public:
+   public:
+    ProgramProfiler();
+    ~ProgramProfiler();
 
-    ProgramProfiler ();
-    ~ProgramProfiler ();
+    static void log_stats(const std::map<const void *, size_t> &linenos);
 
-    static void log_stats (const std::map<const void *, size_t> & linenos);
-
-    class Block : noncopyable
-    {
-        Stat & m_stat;
+    class Block : noncopyable {
+        Stat &m_stat;
         Timer m_timer;
 
-    public:
+       public:
+        Block(ProgramProfiler &profiler, const void *program)
+            : m_stat(profiler.m_stats[program]) {}
 
-        Block (ProgramProfiler & profiler, const void * program)
-            : m_stat(profiler.m_stats[program])
-        {
-        }
-
-        ~Block ()
-        {
+        ~Block() {
             m_stat.count += 1;
             m_stat.time += m_timer.elapsed_us();
         }
     };
 
-private:
-
-    void unsafe_report ();
+   private:
+    void unsafe_report();
     struct LogLine;
 
     std::unordered_map<const void *, Stat> m_stats;
@@ -65,4 +54,4 @@ private:
     static std::unordered_map<const void *, Stat> s_stats;
 };
 
-} // namespace pomagma
+}  // namespace pomagma

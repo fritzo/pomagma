@@ -6,54 +6,47 @@
 #include <pomagma/atlas/micro/vm.hpp>
 #include "insert_parser.hpp"
 
-namespace pomagma
-{
+namespace pomagma {
 
 //----------------------------------------------------------------------------
 // signature
 
 static Structure structure;
-static Signature & signature = structure.signature();
+static Signature &signature = structure.signature();
 static Sampler sampler(signature);
 static vm::ProgramParser program_parser;
 static vm::Agenda agenda;
 
-void load_structure (const std::string & filename) { structure.load(filename); }
-void dump_structure (const std::string & filename) { structure.dump(filename); }
-void load_language (const std::string & filename) { sampler.load(filename); }
-void load_programs (const std::string & filename)
-{
+void load_structure(const std::string &filename) { structure.load(filename); }
+void dump_structure(const std::string &filename) { structure.dump(filename); }
+void load_language(const std::string &filename) { sampler.load(filename); }
+void load_programs(const std::string &filename) {
     program_parser.load(signature);
     auto listings = program_parser.parse_file(filename);
     agenda.load(signature);
-    for (const auto & listing : listings) {
+    for (const auto &listing : listings) {
         agenda.add_listing(program_parser, listing);
     }
     agenda.log_stats();
     Cleanup::init(agenda.cleanup_task_count());
 }
 
-static void schedule_merge (Ob dep) { schedule(MergeTask(dep)); }
-static void schedule_exists (Ob ob) { schedule(ExistsTask(ob)); }
-static void schedule_less (Ob lhs, Ob rhs)
-{
+static void schedule_merge(Ob dep) { schedule(MergeTask(dep)); }
+static void schedule_exists(Ob ob) { schedule(ExistsTask(ob)); }
+static void schedule_less(Ob lhs, Ob rhs) {
     schedule(PositiveOrderTask(lhs, rhs));
 }
-static void schedule_nless (Ob lhs, Ob rhs)
-{
+static void schedule_nless(Ob lhs, Ob rhs) {
     schedule(NegativeOrderTask(lhs, rhs));
 }
 
-static Carrier carrier(
-    getenv_default("POMAGMA_SIZE", DEFAULT_ITEM_DIM),
-    schedule_exists,
-    schedule_merge);
+static Carrier carrier(getenv_default("POMAGMA_SIZE", DEFAULT_ITEM_DIM),
+                       schedule_exists, schedule_merge);
 
 static BinaryRelation LESS(carrier, schedule_less);
 static BinaryRelation NLESS(carrier, schedule_nless);
 
-void load_signature (const std::string & filename)
-{
+void load_signature(const std::string &filename) {
     signature.declare(carrier);
     signature.declare("LESS", LESS);
     signature.declare("NLESS", NLESS);
@@ -74,27 +67,27 @@ void load_signature (const std::string & filename)
         // These are never freed.
         if (arity == "UnaryRelation") {
             if (not signature.unary_relation(name)) {
-                signature.declare(name, * new UnaryRelation(carrier));
+                signature.declare(name, *new UnaryRelation(carrier));
             }
         } else if (arity == "BinaryRelation") {
             if (not signature.binary_relation(name)) {
-                signature.declare(name, * new BinaryRelation(carrier));
+                signature.declare(name, *new BinaryRelation(carrier));
             }
         } else if (arity == "NullaryFunction") {
             if (not signature.nullary_function(name)) {
-                signature.declare(name, * new NullaryFunction(carrier));
+                signature.declare(name, *new NullaryFunction(carrier));
             }
         } else if (arity == "InjectiveFunction") {
             if (not signature.injective_function(name)) {
-                signature.declare(name, * new InjectiveFunction(carrier));
+                signature.declare(name, *new InjectiveFunction(carrier));
             }
         } else if (arity == "BinaryFunction") {
             if (not signature.binary_function(name)) {
-                signature.declare(name, * new BinaryFunction(carrier));
+                signature.declare(name, *new BinaryFunction(carrier));
             }
         } else if (arity == "SymmetricFunction") {
             if (not signature.symmetric_function(name)) {
-                signature.declare(name, * new SymmetricFunction(carrier));
+                signature.declare(name, *new SymmetricFunction(carrier));
             }
         } else {
             POMAGMA_ERROR("unknown arity: " << arity);
@@ -105,13 +98,9 @@ void load_signature (const std::string & filename)
 //----------------------------------------------------------------------------
 // validation
 
-void validate_consistent ()
-{
-    structure.validate_consistent();
-}
+void validate_consistent() { structure.validate_consistent(); }
 
-void validate_all ()
-{
+void validate_all() {
     structure.validate();
     sampler.validate();
 }
@@ -119,13 +108,9 @@ void validate_all ()
 //----------------------------------------------------------------------------
 // logging
 
-void log_profile_stats ()
-{
-    ProgramProfiler::log_stats(agenda.get_linenos());
-}
+void log_profile_stats() { ProgramProfiler::log_stats(agenda.get_linenos()); }
 
-void log_stats ()
-{
+void log_stats() {
     structure.log_stats();
     sampler.log_stats();
 }
@@ -133,13 +118,12 @@ void log_stats ()
 //----------------------------------------------------------------------------
 // sample tasks
 
-void insert_nullary_functions ()
-{
-    const auto & functions = signature.nullary_functions();
+void insert_nullary_functions() {
+    const auto &functions = signature.nullary_functions();
     POMAGMA_INFO("Inserting " << functions.size() << " nullary functions");
 
     for (auto pair : functions) {
-        NullaryFunction * fun = pair.second;
+        NullaryFunction *fun = pair.second;
         if (not fun->find()) {
             Ob val = carrier.try_insert();
             POMAGMA_ASSERT(val, "no space to insert nullary functions");
@@ -148,13 +132,11 @@ void insert_nullary_functions ()
     }
 }
 
-bool sample_tasks_try_pop (SampleTask &)
-{
+bool sample_tasks_try_pop(SampleTask &) {
     return carrier.item_count() < carrier.item_dim();
 }
 
-void execute (const SampleTask &, rng_t & rng)
-{
+void execute(const SampleTask &, rng_t &rng) {
     POMAGMA_DEBUG("executing sample task");
     Sampler::Policy policy(carrier);
     sampler.try_insert_random(rng, policy);
@@ -163,8 +145,7 @@ void execute (const SampleTask &, rng_t & rng)
 //----------------------------------------------------------------------------
 // merge tasks
 
-void execute (const MergeTask & task)
-{
+void execute(const MergeTask &task) {
     const Ob dep = task.dep;
     const Ob rep = carrier.find(dep);
     POMAGMA_DEBUG("merging: " << dep << " = " << rep);
@@ -174,37 +155,31 @@ void execute (const MergeTask & task)
     std::vector<std::thread> threads;
 
     // expensive merges in other threads
-    for (const auto & pair : signature.binary_relations()) {
-        threads.push_back(std::thread(
-            &BinaryRelation::unsafe_merge,
-            pair.second,
-            dep));
+    for (const auto &pair : signature.binary_relations()) {
+        threads.push_back(
+            std::thread(&BinaryRelation::unsafe_merge, pair.second, dep));
     }
-    for (const auto & pair : signature.binary_functions()) {
-        threads.push_back(std::thread(
-            &BinaryFunction::unsafe_merge,
-            pair.second,
-            dep));
+    for (const auto &pair : signature.binary_functions()) {
+        threads.push_back(
+            std::thread(&BinaryFunction::unsafe_merge, pair.second, dep));
     }
-    for (const auto & pair : signature.symmetric_functions()) {
-        threads.push_back(std::thread(
-            &SymmetricFunction::unsafe_merge,
-            pair.second,
-            dep));
+    for (const auto &pair : signature.symmetric_functions()) {
+        threads.push_back(
+            std::thread(&SymmetricFunction::unsafe_merge, pair.second, dep));
     }
 
     // cheap merges in this thread
-    for (const auto & pair : signature.unary_relations()) {
+    for (const auto &pair : signature.unary_relations()) {
         pair.second->unsafe_merge(dep);
     }
-    for (const auto & pair : signature.nullary_functions()) {
+    for (const auto &pair : signature.nullary_functions()) {
         pair.second->unsafe_merge(dep);
     }
-    for (const auto & pair : signature.injective_functions()) {
+    for (const auto &pair : signature.injective_functions()) {
         pair.second->unsafe_merge(dep);
     }
 
-    for (auto & thread : threads) {
+    for (auto &thread : threads) {
         thread.join();
     }
     carrier.unsafe_remove(dep);
@@ -213,8 +188,7 @@ void execute (const MergeTask & task)
 //----------------------------------------------------------------------------
 // assume tasks
 
-void assume_core_facts (const char * theory_file)
-{
+void assume_core_facts(const char *theory_file) {
     std::ifstream file(theory_file);
     POMAGMA_ASSERT(file, "failed to open " << theory_file);
 
@@ -226,8 +200,7 @@ void assume_core_facts (const char * theory_file)
     }
 }
 
-void execute (const AssumeTask & task)
-{
+void execute(const AssumeTask &task) {
     POMAGMA_DEBUG("assume " << task.expression);
 
     InsertParser parser(signature);
@@ -239,11 +212,11 @@ void execute (const AssumeTask & task)
         Ob rhs = parser.parse_term();
         parser.end();
         carrier.ensure_equal(lhs, rhs);
-    } else if (auto * rel = signature.unary_relation(type)) {
+    } else if (auto *rel = signature.unary_relation(type)) {
         Ob key = parser.parse_term();
         parser.end();
         rel->insert(key);
-    } else if (auto * rel = signature.binary_relation(type)) {
+    } else if (auto *rel = signature.binary_relation(type)) {
         Ob lhs = parser.parse_term();
         Ob rhs = parser.parse_term();
         parser.end();
@@ -256,49 +229,34 @@ void execute (const AssumeTask & task)
 //----------------------------------------------------------------------------
 // cleanup & event tasks
 
-void execute (const ExistsTask & task)
-{
-    agenda.execute(task.ob);
-}
+void execute(const ExistsTask &task) { agenda.execute(task.ob); }
 
-void execute (const NullaryFunctionTask & task)
-{
-    agenda.execute(task.ptr);
-}
+void execute(const NullaryFunctionTask &task) { agenda.execute(task.ptr); }
 
-void execute (const InjectiveFunctionTask & task)
-{
+void execute(const InjectiveFunctionTask &task) {
     agenda.execute(task.ptr, task.arg);
 }
 
-void execute (const BinaryFunctionTask & task)
-{
+void execute(const BinaryFunctionTask &task) {
     agenda.execute(task.ptr, task.lhs, task.rhs);
 }
 
-void execute (const SymmetricFunctionTask & task)
-{
+void execute(const SymmetricFunctionTask &task) {
     agenda.execute(task.ptr, task.lhs, task.rhs);
 }
 
-void execute (const UnaryRelationTask & task)
-{
+void execute(const UnaryRelationTask &task) {
     agenda.execute(task.ptr, task.arg);
 }
 
-void execute (const PositiveOrderTask & task)
-{
+void execute(const PositiveOrderTask &task) {
     agenda.execute(&LESS, task.lhs, task.rhs);
 }
 
-void execute (const NegativeOrderTask & task)
-{
+void execute(const NegativeOrderTask &task) {
     agenda.execute(&NLESS, task.lhs, task.rhs);
 }
 
-void execute (const CleanupTask & task)
-{
-    agenda.execute_cleanup(task.type);
-}
+void execute(const CleanupTask &task) { agenda.execute_cleanup(task.type); }
 
-} // namespace pomagma
+}  // namespace pomagma

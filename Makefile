@@ -2,7 +2,11 @@
 .PHONY: all protobuf tags lint python codegen debug release cpp-test unit-test bootstrap h4-test sk-test skj-test skja-test skrj-test batch-test small-test test big-test sk skj skja skrj profile clean FORCE
 
 THEORY = skrj
-PY_FILES := *.py $(shell find src | grep '.py$$' | grep -v '_pb2.py')
+PY_FILES := *.py $(shell find src | grep '\.py$$' | grep -v '_pb2\.py')
+PROTO_FILES := $(shell find src | grep -v '\.proto$$' | grep -v '\.pb\.')
+CPP_FILES := $(shell find src | grep -v vendor \
+                              | grep '\.[ch]pp$$' \
+			      | grep -v '\.pb\.')
 
 all: data/blob bootstrap FORCE
 	$(MAKE) python
@@ -23,14 +27,20 @@ clang-ctags:
 	  --compile-commands build/tags build/tags/compile_commands.json
 
 lint: FORCE
+	# TODO Use clang-tidy
 	$(info flake8)
 	@flake8 --jobs auto --ignore=E402 $(PY_FILES)
-	# TODO Use clang-tidy
 
-format: FORCE
+format-cpp: FORCE
+	$(info clang-format)
+	@clang-format -i --style="{BasedOnStyle: Google, IndentWidth: 4}" \
+	  $(CPP_FILES)
+
+format-py: FORCE
 	$(info pyformat)
-	pyformat --jobs 0 --aggressive --in-place $(PY_FILES)
-	# TODO Use clang-format
+	@pyformat --jobs 0 --aggressive --in-place $(PY_FILES)
+
+format: format-cpp format-py FORCE
 
 python: protobuf lint FORCE
 	pip install -e .

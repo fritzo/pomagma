@@ -5,8 +5,7 @@ using namespace pomagma;
 
 typedef uint32_t Ob;
 
-struct ObMap
-{
+struct ObMap {
     std::vector<Ob> key;
     std::vector<Ob> val;
 };
@@ -15,21 +14,22 @@ const std::vector<ObMap> g_examples = {
     {{}, {}},
     {{1}, {9999}},
     {{1, 2, 3, 4}, {83, 212, 12345, 1}},
-    {{1,99,999,9999, 99999}, {2, 22222, 22, 2222, 222}}
-};
+    {{1, 99, 999, 9999, 99999}, {2, 22222, 22, 2222, 222}}};
 
-protobuf::ObMap make_proto (const ObMap& example)
-{
+protobuf::ObMap make_proto(const ObMap& example) {
     POMAGMA_ASSERT(example.key.size() == example.val.size(),
-        "error in test data");
+                   "error in test data");
     protobuf::ObMap message;
-    for (auto key : example.key) { message.add_key(key); }
-    for (auto val : example.val) { message.add_val(val); }
+    for (auto key : example.key) {
+        message.add_key(key);
+    }
+    for (auto val : example.val) {
+        message.add_val(val);
+    }
     return message;
 }
 
-void test_compress_decompress (const ObMap& example)
-{
+void test_compress_decompress(const ObMap& example) {
     const auto expected = make_proto(example);
     POMAGMA_INFO("Compressing " << expected.ShortDebugString());
     auto actual = expected;
@@ -38,8 +38,7 @@ void test_compress_decompress (const ObMap& example)
     POMAGMA_ASSERT_EQ(actual.ShortDebugString(), expected.ShortDebugString());
 }
 
-void test_decompress_on_uncompressed_data (const ObMap& example)
-{
+void test_decompress_on_uncompressed_data(const ObMap& example) {
     const auto expected = make_proto(example);
     POMAGMA_INFO("Preserving " << expected.ShortDebugString());
     auto actual = expected;
@@ -47,8 +46,7 @@ void test_decompress_on_uncompressed_data (const ObMap& example)
     POMAGMA_ASSERT_EQ(actual.ShortDebugString(), expected.ShortDebugString());
 }
 
-void test_dump_load ()
-{
+void test_dump_load() {
     POMAGMA_INFO("Testing DenseSet serialization");
 
     rng_t rng;
@@ -67,8 +65,7 @@ void test_dump_load ()
     }
 }
 
-int main ()
-{
+int main() {
     Log::Context log_context("Atlas Protobuf Test");
 
     for (const auto& example : g_examples) {

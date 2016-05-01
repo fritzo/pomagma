@@ -5,8 +5,7 @@ using namespace pomagma::shard;
 
 rng_t rng;
 
-void test_random (size_t size)
-{
+void test_random(size_t size) {
     Carrier carrier(size);
     carrier.validate();
 
@@ -44,8 +43,7 @@ void test_random (size_t size)
     POMAGMA_ASSERT_EQ(carrier.item_count(), 0);
 }
 
-int main ()
-{
+int main() {
     Log::Context log_context("Carrier Test");
 
     POMAGMA_INFO("Testing random carrier");

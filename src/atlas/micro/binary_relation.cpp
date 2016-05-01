@@ -2,27 +2,21 @@
 #include <pomagma/util/aligned_alloc.hpp>
 #include <cstring>
 
-namespace pomagma
-{
+namespace pomagma {
 
-static void noop_callback (Ob, Ob) {}
+static void noop_callback(Ob, Ob) {}
 
-BinaryRelation::BinaryRelation (
-        const Carrier & carrier,
-        void (*insert_callback) (Ob, Ob))
+BinaryRelation::BinaryRelation(const Carrier& carrier,
+                               void (*insert_callback)(Ob, Ob))
     : m_lines(carrier),
-      m_insert_callback(insert_callback ? insert_callback : noop_callback)
-{
-    POMAGMA_DEBUG("creating BinaryRelation with "
-            << round_word_dim() << " words");
+      m_insert_callback(insert_callback ? insert_callback : noop_callback) {
+    POMAGMA_DEBUG("creating BinaryRelation with " << round_word_dim()
+                                                  << " words");
 }
 
-BinaryRelation::~BinaryRelation ()
-{
-}
+BinaryRelation::~BinaryRelation() {}
 
-void BinaryRelation::validate () const
-{
+void BinaryRelation::validate() const {
     UniqueLock lock(m_mutex);
 
     POMAGMA_INFO("Validating BinaryRelation");
@@ -45,37 +39,34 @@ void BinaryRelation::validate () const
             bool Rx_ij = Rx.contains(i);
             num_pairs += Rx_ij;
 
-            POMAGMA_ASSERT(Lx_ij == Rx_ij,
-                    "Lx,Rx disagree at " << i << "," << j
-                    << ", Lx is " << Lx_ij << ", Rx is " << Rx_ij  );
+            POMAGMA_ASSERT(Lx_ij == Rx_ij, "Lx,Rx disagree at "
+                                               << i << "," << j << ", Lx is "
+                                               << Lx_ij << ", Rx is " << Rx_ij);
 
-            POMAGMA_ASSERT(sup_ij or not Lx_ij,
-                    "Lx unsupported at " << i << "," << j );
+            POMAGMA_ASSERT(sup_ij or not Lx_ij, "Lx unsupported at " << i << ","
+                                                                     << j);
 
-            POMAGMA_ASSERT(sup_ij or not Rx_ij,
-                    "Rx unsupported at " << i << "," << j );
+            POMAGMA_ASSERT(sup_ij or not Rx_ij, "Rx unsupported at " << i << ","
+                                                                     << j);
         }
     }
 
     size_t true_size = count_pairs();
     POMAGMA_ASSERT(num_pairs == true_size,
-            "incorrect number of pairs: "
-            << num_pairs << " should be " << true_size);
+                   "incorrect number of pairs: " << num_pairs << " should be "
+                                                 << true_size);
 }
 
-void BinaryRelation::validate_disjoint (const BinaryRelation & other) const
-{
+void BinaryRelation::validate_disjoint(const BinaryRelation& other) const {
     UniqueLock lock(m_mutex);
 
     POMAGMA_INFO("Validating disjoint pair of BinaryRelations");
 
     // validate supports agree
     POMAGMA_ASSERT_EQ(support().item_dim(), other.support().item_dim());
-    POMAGMA_ASSERT_EQ(
-            support().count_items(),
-            other.support().count_items());
+    POMAGMA_ASSERT_EQ(support().count_items(), other.support().count_items());
     POMAGMA_ASSERT(support() == other.support(),
-            "BinaryRelation supports differ");
+                   "BinaryRelation supports differ");
 
     // validate disjointness
     DenseSet this_set(item_dim(), nullptr);
@@ -84,31 +75,27 @@ void BinaryRelation::validate_disjoint (const BinaryRelation & other) const
         this_set.init(m_lines.Lx(*i));
         other_set.init(other.m_lines.Lx(*i));
         POMAGMA_ASSERT(this_set.disjoint(other_set),
-                "BinaryRelations intersect at row " << *i);
+                       "BinaryRelations intersect at row " << *i);
     }
 }
 
-void BinaryRelation::log_stats (const std::string & prefix) const
-{
+void BinaryRelation::log_stats(const std::string& prefix) const {
     m_lines.log_stats(prefix);
 }
 
-void BinaryRelation::update ()
-{
+void BinaryRelation::update() {
     memory_barrier();
     m_lines.copy_Lx_to_Rx();
     memory_barrier();
 }
 
-void BinaryRelation::clear ()
-{
+void BinaryRelation::clear() {
     memory_barrier();
     m_lines.clear();
     memory_barrier();
 }
 
-void BinaryRelation::insert (Ob i, const DenseSet & js)
-{
+void BinaryRelation::insert(Ob i, const DenseSet& js) {
     DenseSet diff(item_dim());
     DenseSet dest(item_dim(), m_lines.Lx(i));
     if (dest.ensure(js, diff)) {
@@ -119,8 +106,7 @@ void BinaryRelation::insert (Ob i, const DenseSet & js)
     }
 }
 
-void BinaryRelation::insert (const DenseSet & is, Ob j)
-{
+void BinaryRelation::insert(const DenseSet& is, Ob j) {
     DenseSet diff(item_dim());
     DenseSet dest(item_dim(), m_lines.Rx(j));
     if (dest.ensure(is, diff)) {
@@ -131,41 +117,38 @@ void BinaryRelation::insert (const DenseSet & is, Ob j)
     }
 }
 
-void BinaryRelation::_remove_Lx (const DenseSet & is, Ob j)
-{
+void BinaryRelation::_remove_Lx(const DenseSet& is, Ob j) {
     // slower version
-    //for (auto i = is.iter(); i.ok(); i.next()) {
+    // for (auto i = is.iter(); i.ok(); i.next()) {
     //    _remove_Lx(*i, j);
     //}
 
     // faster version
     Word mask = ~(Word(1) << (j % BITS_PER_WORD));
     size_t offset = j / BITS_PER_WORD;
-    std::atomic<Word> * lines = m_lines.Lx() + offset;
+    std::atomic<Word>* lines = m_lines.Lx() + offset;
     for (auto i = is.iter(); i.ok(); i.next()) {
-         lines[*i * round_word_dim()].fetch_and(mask, relaxed);
+        lines[*i * round_word_dim()].fetch_and(mask, relaxed);
     }
 }
 
-void BinaryRelation::_remove_Rx (Ob i, const DenseSet& js)
-{
+void BinaryRelation::_remove_Rx(Ob i, const DenseSet& js) {
     // slower version
-    //for (auto j = js.iter(); j.ok(); j.next()) {
+    // for (auto j = js.iter(); j.ok(); j.next()) {
     //    _remove_Rx(i, *j);
     //}
 
     // faster version
     Word mask = ~(Word(1) << (i % BITS_PER_WORD));
     size_t offset = i / BITS_PER_WORD;
-    std::atomic<Word> * lines = m_lines.Rx() + offset;
+    std::atomic<Word>* lines = m_lines.Rx() + offset;
     for (auto j = js.iter(); j.ok(); j.next()) {
-         lines[*j * round_word_dim()].fetch_and(mask, relaxed);
+        lines[*j * round_word_dim()].fetch_and(mask, relaxed);
     }
 }
 
 // policy: callback whenever i~k but not j~k
-void BinaryRelation::unsafe_merge (Ob i)
-{
+void BinaryRelation::unsafe_merge(Ob i) {
     UniqueLock lock(m_mutex);
 
     Ob j = carrier().find(i);
@@ -198,4 +181,4 @@ void BinaryRelation::unsafe_merge (Ob i)
     }
 }
 
-} // namespace pomagma
+}  // namespace pomagma

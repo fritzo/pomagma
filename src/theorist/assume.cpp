@@ -10,10 +10,8 @@
 namespace pomagma {
 namespace detail {
 
-std::map<std::string, size_t> assume_facts (
-        Structure & structure,
-        const char * theory_file)
-{
+std::map<std::string, size_t> assume_facts(Structure& structure,
+                                           const char* theory_file) {
     POMAGMA_INFO("assuming core facts");
 
     size_t pos_count = 0;
@@ -21,7 +19,7 @@ std::map<std::string, size_t> assume_facts (
     size_t ignored_count = 0;
 
     for (LineParser iter(theory_file); iter.ok(); iter.next()) {
-        const std::string & expression = * iter;
+        const std::string& expression = *iter;
         POMAGMA_DEBUG("assume " << expression);
 
         FindParser parser(structure.signature());
@@ -40,7 +38,7 @@ std::map<std::string, size_t> assume_facts (
             } else {
                 ++ignored_count;
             }
-        } else if (auto * rel = structure.signature().unary_relation(type)) {
+        } else if (auto* rel = structure.signature().unary_relation(type)) {
             Ob arg = parser.parse_term();
             parser.end();
             if (arg) {
@@ -51,7 +49,7 @@ std::map<std::string, size_t> assume_facts (
             } else {
                 ++ignored_count;
             }
-        } else if (auto * rel = structure.signature().binary_relation(type)) {
+        } else if (auto* rel = structure.signature().binary_relation(type)) {
             Ob lhs = parser.parse_term();
             Ob rhs = parser.parse_term();
             parser.end();
@@ -75,12 +73,10 @@ std::map<std::string, size_t> assume_facts (
     return counts;
 }
 
-} // namespace detail
+}  // namespace detail
 
-std::map<std::string, size_t> assume (
-        Structure & structure,
-        const char * theory_file)
-{
+std::map<std::string, size_t> assume(Structure& structure,
+                                     const char* theory_file) {
     POMAGMA_INFO("Assuming statements");
 
     int pre_item_count = structure.carrier().item_count();
@@ -98,4 +94,4 @@ std::map<std::string, size_t> assume (
     return counts;
 }
 
-} // namespace pomagma
+}  // namespace pomagma

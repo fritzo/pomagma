@@ -10,20 +10,17 @@
 namespace pomagma {
 
 // A multi-producer single-consumer queue for variable-sized messages.
-class SharedQueueBase : noncopyable
-{
-public:
+class SharedQueueBase : noncopyable {
+   public:
+    static constexpr size_t max_message_size() { return 255UL; }
 
-    static constexpr size_t max_message_size () { return 255UL; }
-
-    virtual ~SharedQueueBase () {}
+    virtual ~SharedQueueBase() {}
 
     // these should be thread safe for multiple producers and a single consumer
-    virtual void push (const void * data, uint8_t size) = 0;
-    virtual uint8_t try_pop (void * data) = 0;
+    virtual void push(const void* data, uint8_t size) = 0;
+    virtual uint8_t try_pop(void* data) = 0;
 
-    void push_str (const std::string & message)
-    {
+    void push_str(const std::string& message) {
         if (POMAGMA_DEBUG_LEVEL) {
             POMAGMA_ASSERT_LT(0, message.size());
             POMAGMA_ASSERT_LE(message.size(), max_message_size());
@@ -31,90 +28,77 @@ public:
         push(message.data(), message.size());
     }
 
-    bool try_pop_str (std::string & message)
-    {
+    bool try_pop_str(std::string& message) {
         message.resize(max_message_size());
-        uint8_t size = try_pop(& message.front());
+        uint8_t size = try_pop(&message.front());
         message.resize(size);
         return size;
     }
 };
 
-class VectorQueue : public SharedQueueBase
-{
-public:
-
-    VectorQueue () : m_read_offset(0) { m_data.reserve(4096); }
-    virtual ~VectorQueue () {}
+class VectorQueue : public SharedQueueBase {
+   public:
+    VectorQueue() : m_read_offset(0) { m_data.reserve(4096); }
+    virtual ~VectorQueue() {}
 
     // these are thread safe for multiple producers and multiple consumers
-    virtual void push (const void * message, uint8_t size);
-    virtual uint8_t try_pop (void * message);
+    virtual void push(const void* message, uint8_t size);
+    virtual uint8_t try_pop(void* message);
 
-private:
-
+   private:
     std::mutex m_mutex;
     std::vector<char, tbb::cache_aligned_allocator<char>> m_data;
     size_t m_read_offset;
 };
 
-class FileBackedQueue : public SharedQueueBase
-{
-public:
-
-    FileBackedQueue ();
-    virtual ~FileBackedQueue () {}
+class FileBackedQueue : public SharedQueueBase {
+   public:
+    FileBackedQueue();
+    virtual ~FileBackedQueue() {}
 
     // these are thread safe for multiple producers and multiple consumers
-    virtual void push (const void * message, uint8_t size);
-    virtual uint8_t try_pop (void * message);
+    virtual void push(const void* message, uint8_t size);
+    virtual uint8_t try_pop(void* message);
 
-private:
-
+   private:
     std::mutex m_mutex;
     size_t m_write_offset;
     size_t m_read_offset;
     const int m_fid;
 };
 
-template<class Queue>
-class SharedBroker
-{
-    Padded<Queue> * const m_queues;
+template <class Queue>
+class SharedBroker {
+    Padded<Queue>* const m_queues;
     const size_t m_queue_count;
 
-public:
-
-    explicit SharedBroker (size_t queue_count)
+   public:
+    explicit SharedBroker(size_t queue_count)
         : m_queues(alloc_blocks<Padded<Queue>>(queue_count)),
-          m_queue_count(queue_count)
-    {
+          m_queue_count(queue_count) {
         static_assert(std::is_base_of<SharedQueueBase, Queue>::value,
-            "SharedBroker instantiated with non-SharedQueueBase");
+                      "SharedBroker instantiated with non-SharedQueueBase");
         for (size_t i = 0; i < m_queue_count; ++i) {
-            new(m_queues + i) Padded<Queue>();
+            new (m_queues + i) Padded<Queue>();
         }
     }
 
-    ~SharedBroker ()
-    {
+    ~SharedBroker() {
         for (size_t i = 0; i < m_queue_count; ++i) {
             m_queues[i].~Padded<Queue>();
         }
         free_blocks(m_queues);
     }
 
-    void push (size_t topic, const void * message, uint8_t size)
-    {
+    void push(size_t topic, const void* message, uint8_t size) {
         POMAGMA_ASSERT1(topic < m_queue_count, "bad topic: " << topic);
         m_queues[topic].push(message, size);
     }
 
-    uint8_t try_pop (size_t topic, void * message)
-    {
+    uint8_t try_pop(size_t topic, void* message) {
         POMAGMA_ASSERT1(topic < m_queue_count, "bad topic: " << topic);
         return m_queues[topic].try_pop(message);
     }
 };
 
-} // namespace pomagma
+}  // namespace pomagma

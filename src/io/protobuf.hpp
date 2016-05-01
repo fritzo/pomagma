@@ -15,81 +15,72 @@ class FileOutputStream;
 class GzipInputStream;
 class GzipOutputStream;
 
-} // namespace io
-} // namespace protobuf
-} // namespace google
+}  // namespace io
+}  // namespace protobuf
+}  // namespace google
 
 namespace pomagma {
 namespace protobuf {
 
 class Sha1OutputStream;
 
-class InFile : noncopyable
-{
-public:
+class InFile : noncopyable {
+   public:
+    explicit InFile(const std::string& filename);
+    ~InFile();
 
-    explicit InFile (const std::string & filename);
-    ~InFile ();
+    const std::string& filename() const { return m_filename; }
 
-    const std::string & filename () const { return m_filename; }
-
-    void read (google::protobuf::Message & message);
+    void read(google::protobuf::Message& message);
 
     // This tries to parse a single piece of a message. Does not clear message.
-    bool try_read_chunk (google::protobuf::Message & message);
+    bool try_read_chunk(google::protobuf::Message& message);
 
-private:
-
+   private:
     const std::string m_filename;
     const int m_fid;
-    google::protobuf::io::FileInputStream * m_file;
-    google::protobuf::io::GzipInputStream * m_gzip;
+    google::protobuf::io::FileInputStream* m_file;
+    google::protobuf::io::GzipInputStream* m_gzip;
 };
 
-class OutFile : noncopyable
-{
-public:
+class OutFile : noncopyable {
+   public:
+    explicit OutFile(const std::string& filename);
+    ~OutFile();
 
-    explicit OutFile (const std::string & filename);
-    ~OutFile ();
+    const std::string& filename() const { return m_filename; }
 
-    const std::string & filename () const { return m_filename; }
+    void write(const google::protobuf::Message& message);
+    size_t approx_bytes_written();
 
-    void write (const google::protobuf::Message & message);
-    size_t approx_bytes_written ();
-
-private:
-
+   private:
     const std::string m_filename;
     const int m_fid;
-    google::protobuf::io::FileOutputStream * m_file;
-    google::protobuf::io::GzipOutputStream * m_gzip;
+    google::protobuf::io::FileOutputStream* m_file;
+    google::protobuf::io::GzipOutputStream* m_gzip;
 };
 
 // This hashes a file while writing to avoid an extra read in store_blob().
-class Sha1OutFile : noncopyable
-{
-public:
+class Sha1OutFile : noncopyable {
+   public:
+    explicit Sha1OutFile(const std::string& filename);
+    ~Sha1OutFile();
 
-    explicit Sha1OutFile (const std::string & filename);
-    ~Sha1OutFile ();
+    const std::string& filename() const { return m_filename; }
 
-    const std::string & filename () const { return m_filename; }
-
-    void write (const google::protobuf::Message & message);
-    size_t approx_bytes_written ();
+    void write(const google::protobuf::Message& message);
+    size_t approx_bytes_written();
 
     // exactly one of these must be called before destructor
-    const Hasher::Digest & digest () __attribute__((warn_unused_result));
-    std::string hexdigest () __attribute__((warn_unused_result));
+    const Hasher::Digest& digest() __attribute__((warn_unused_result));
+    std::string hexdigest() __attribute__((warn_unused_result));
 
-private:
-
+   private:
     const std::string m_filename;
     const int m_fid;
-    Sha1OutputStream * m_file;
-    google::protobuf::io::GzipOutputStream * m_gzip;
+    Sha1OutputStream* m_file;
+    google::protobuf::io::GzipOutputStream* m_gzip;
 };
 
-} // namespace protobuf
-} // namespace pomagma
+}  // namespace protobuf
+}  // namespace pomagma

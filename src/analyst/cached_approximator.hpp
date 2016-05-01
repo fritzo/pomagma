@@ -7,52 +7,39 @@
 #include <pomagma/util/worker_pool.hpp>
 #include <tbb/concurrent_unordered_map.h>
 
-namespace pomagma
-{
+namespace pomagma {
 
 // TODO profile hash conflict rate
-struct HashedApproximation
-{
-private:
-public:
+struct HashedApproximation {
+   private:
+   public:
     const Approximation approx;
     const uint64_t hash;
 
-    explicit HashedApproximation (Approximation && a)
-        : approx(std::move(a)),
-          hash(compute_hash(approx))
-    {
-    }
-    HashedApproximation (const HashedApproximation &) = delete;
+    explicit HashedApproximation(Approximation &&a)
+        : approx(std::move(a)), hash(compute_hash(approx)) {}
+    HashedApproximation(const HashedApproximation &) = delete;
 
-    bool operator== (const HashedApproximation & other) const
-    {
+    bool operator==(const HashedApproximation &other) const {
         return hash == other.hash and approx == other.approx;
     }
-    bool operator!= (const HashedApproximation & other) const
-    {
+    bool operator!=(const HashedApproximation &other) const {
         return not operator==(other);
     }
 
-    struct Hash
-    {
-        uint64_t operator() (const HashedApproximation & x) const
-        {
+    struct Hash {
+        uint64_t operator()(const HashedApproximation &x) const {
             return x.hash;
         }
     };
 
-private:
-
-    static uint64_t compute_hash (const Approximation & approx);
+   private:
+    static uint64_t compute_hash(const Approximation &approx);
 };
 
-class CachedApproximator : noncopyable
-{
-public:
-
-    struct Term
-    {
+class CachedApproximator : noncopyable {
+   public:
+    struct Term {
         enum Arity {
             OB,
             HOLE,
@@ -64,13 +51,11 @@ public:
             BINARY_RELATION
         };
 
-        struct Hash
-        {
+        struct Hash {
             std::hash<std::string> hash_string;
             std::hash<const HashedApproximation *> hash_pointer;
 
-            uint64_t operator() (const Term & x) const
-            {
+            uint64_t operator()(const Term &x) const {
                 FNV_hash::HashState state;
                 state.add(x.arity);
                 state.add(hash_string(x.name));
@@ -81,56 +66,42 @@ public:
             }
         };
 
-        bool operator== (const Term & o) const
-        {
-            return arity == o.arity
-               and name == o.name
-               and arg0 == o.arg0
-               and arg1 == o.arg1
-               and ob == o.ob;
+        bool operator==(const Term &o) const {
+            return arity == o.arity and name == o.name and arg0 ==
+                   o.arg0 and arg1 == o.arg1 and ob == o.ob;
         }
-        bool operator!= (const Term & o) const { return not operator==(o); }
+        bool operator!=(const Term &o) const { return not operator==(o); }
 
         Arity arity;
         std::string name;
-        const HashedApproximation * arg0;
-        const HashedApproximation * arg1;
+        const HashedApproximation *arg0;
+        const HashedApproximation *arg1;
         Ob ob;
     };
 
-private:
-
+   private:
     typedef AsyncMap<const Term *, HashedApproximation> Cache;
 
-public:
+   public:
+    explicit CachedApproximator(Approximator &approximator)
+        : m_approximator(approximator),
+          m_cache([this](const Term *term, Cache::Callback callback) {
+              m_pool.schedule([this, term, callback] {
+                  callback(m_approximations.insert_or_delete(
+                      new HashedApproximation(compute(term))));
+              });
+          }) {}
 
-    explicit CachedApproximator (Approximator & approximator) :
-        m_approximator(approximator),
-        m_cache([this](const Term * term, Cache::Callback callback){
-            m_pool.schedule([this, term, callback]{
-                callback(
-                    m_approximations.insert_or_delete(
-                        new HashedApproximation(compute(term))));
-            });
-        })
-    {
-    }
-
-    void find_async (
-            const Term & term,
-            Cache::Callback callback)
-    {
-        const Term * key = m_terms.insert_or_delete(new Term(term));
+    void find_async(const Term &term, Cache::Callback callback) {
+        const Term *key = m_terms.insert_or_delete(new Term(term));
         m_cache.find_async(key, callback);
     }
 
-private:
-
-    Approximation compute (const Term * term)
-    {
-        const auto & name = term->name;
-        auto * arg0 = term->arg0;
-        auto * arg1 = term->arg1;
+   private:
+    Approximation compute(const Term *term) {
+        const auto &name = term->name;
+        auto *arg0 = term->arg0;
+        auto *arg1 = term->arg1;
 
         switch (term->arity) {
             case Term::OB:
@@ -155,11 +126,11 @@ private:
         POMAGMA_ERROR("unreachable");
     }
 
-    Approximator & m_approximator;
+    Approximator &m_approximator;
     WorkerPool m_pool;
     UniqueSet<HashedApproximation, HashedApproximation::Hash> m_approximations;
     UniqueSet<Term, Term::Hash> m_terms;
     Cache m_cache;
 };
 
-} // namespace pomagma
+}  // namespace pomagma

@@ -5,34 +5,29 @@
 #include <pomagma/atlas/macro/router.hpp>
 #include <pomagma/atlas/macro/scheduler.hpp>
 #include <cstdlib>
-#include <unistd.h> // for fork
-#include <sys/wait.h> // for wait
+#include <unistd.h>    // for fork
+#include <sys/wait.h>  // for wait
 
-namespace pomagma
-{
+namespace pomagma {
 
-namespace detail
-{
+namespace detail {
 
-inline std::string tempfile_name (pid_t pid)
-{
+inline std::string tempfile_name(pid_t pid) {
     std::ostringstream filename;
     filename << "/tmp/pomagma.hypothesize." << pid;
     return filename.str();
 }
 
-template<class T>
-inline void tempfile_dump (pid_t pid, const T & t)
-{
+template <class T>
+inline void tempfile_dump(pid_t pid, const T& t) {
     std::string filename = tempfile_name(pid);
     std::ofstream file(filename.c_str(), std::ios::out | std::ios::trunc);
     POMAGMA_ASSERT(file, "failed to open tempfile " << filename);
     file << t << std::endl;
 }
 
-template<class T>
-inline void tempfile_load (pid_t pid, T & t)
-{
+template <class T>
+inline void tempfile_load(pid_t pid, T& t) {
     std::string filename = tempfile_name(pid);
     {
         std::ifstream file(filename.c_str(), std::ios::in);
@@ -42,12 +37,10 @@ inline void tempfile_load (pid_t pid, T & t)
     remove(filename.c_str());
 }
 
-void merge_if_consistent (
-        Structure & structure,
-        const std::pair<Ob, Ob> & equation)
-{
+void merge_if_consistent(Structure& structure,
+                         const std::pair<Ob, Ob>& equation) {
     // TODO omit binary relation LESS
-    //structure.signature().binary_relations().erase("LESS");
+    // structure.signature().binary_relations().erase("LESS");
 
     configure_scheduler_to_merge_if_consistent(structure);
     structure.carrier().ensure_equal(equation.first, equation.second);
@@ -55,14 +48,12 @@ void merge_if_consistent (
     compact(structure);
 }
 
-} // namespace detail
+}  // namespace detail
 
-float hypothesize_entropy (
-        Structure & structure,
-        const std::unordered_map<std::string, float> & language,
-        const std::pair<Ob, Ob> & equation,
-        float reltol)
-{
+float hypothesize_entropy(
+    Structure& structure,
+    const std::unordered_map<std::string, float>& language,
+    const std::pair<Ob, Ob>& equation, float reltol) {
     POMAGMA_ASSERT_LT(0, reltol);
     POMAGMA_ASSERT_LT(reltol, 1);
 
@@ -85,8 +76,8 @@ float hypothesize_entropy (
         int status;
         POMAGMA_DEBUG("Waiting for child process " << child);
         waitpid(child, &status, 0);
-        POMAGMA_ASSERT(WIFEXITED(status),
-            "child process failed with status " << status);
+        POMAGMA_ASSERT(WIFEXITED(status), "child process failed with status "
+                                              << status);
         int info = WEXITSTATUS(status);
 
         float entropy = NAN;
@@ -107,4 +98,4 @@ float hypothesize_entropy (
     }
 }
 
-} // namespace pomagma
+}  // namespace pomagma

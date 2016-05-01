@@ -4,14 +4,9 @@
 #include <pomagma/atlas/macro/util.hpp>
 #include <pomagma/atlas/macro/structure.hpp>
 
-namespace pomagma
-{
+namespace pomagma {
 
-void trim (
-        Structure & src,
-        Structure & destin,
-        const char * theory_file,
-        const char * language_file,
-        bool temperature = 1);
+void trim(Structure& src, Structure& destin, const char* theory_file,
+          const char* language_file, bool temperature = 1);
 
-} // namespace pomagma
+}  // namespace pomagma

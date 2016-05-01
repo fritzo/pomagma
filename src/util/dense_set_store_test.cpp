@@ -7,8 +7,7 @@ using namespace sequential;
 
 rng_t rng;
 
-std::string print_set (const DenseSet & set)
-{
+std::string print_set(const DenseSet& set) {
     std::string result;
     for (size_t i = 1; i <= set.item_dim(); ++i) {
         result.push_back(set.contains(i) ? '+' : '-');
@@ -16,8 +15,7 @@ std::string print_set (const DenseSet & set)
     return result;
 }
 
-void test_store_load (size_t item_dim, size_t element_count)
-{
+void test_store_load(size_t item_dim, size_t element_count) {
     POMAGMA_INFO("Testing store and load with size " << item_dim);
 
     DenseSetStore sets(item_dim);
@@ -34,10 +32,10 @@ void test_store_load (size_t item_dim, size_t element_count)
         if (known_ids.insert(id).second) {
             POMAGMA_ASSERT(set.is_alias(), "data was not moved");
             POMAGMA_ASSERT(sets.load(id).raw_data() == set.raw_data(),
-                "inserted pointer does not match source");
+                           "inserted pointer does not match source");
         } else {
             POMAGMA_ASSERT(not set.is_alias(),
-                "data freed but set not inserted");
+                           "data freed but set not inserted");
         }
 
         const DenseSet loaded1 = sets.load(id);
@@ -45,7 +43,7 @@ void test_store_load (size_t item_dim, size_t element_count)
         loaded1.validate();
         const DenseSet loaded2 = sets.load(id);
         POMAGMA_ASSERT(loaded1.raw_data() == loaded2.raw_data(),
-            "two loads disagree");
+                       "two loads disagree");
         if (loaded1 != set) {
             POMAGMA_WARN("expected: " << print_set(set));
             POMAGMA_WARN("actual: " << print_set(loaded1));
@@ -57,8 +55,7 @@ void test_store_load (size_t item_dim, size_t element_count)
     }
 }
 
-int main ()
-{
+int main() {
     Log::Context log_context("DenseSetStore Test");
 
     for (size_t item_dim = 1; item_dim < 128; ++item_dim) {

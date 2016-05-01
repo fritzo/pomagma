@@ -6,8 +6,7 @@
 
 namespace pomagma {
 
-std::map<std::string, size_t> assume (
-        Structure & structure,
-        const char * theory_file);
+std::map<std::string, size_t> assume(Structure& structure,
+                                     const char* theory_file);
 
-} // namespace pomagma
+}  // namespace pomagma

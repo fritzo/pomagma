@@ -3,8 +3,7 @@
 #include "util.hpp"
 #include <pomagma/atlas/sampler.hpp>
 
-namespace pomagma
-{
+namespace pomagma {
 
 class Carrier;
 class NullaryFunction;
@@ -12,18 +11,16 @@ class InjectiveFunction;
 class BinaryFunction;
 class SymmetricFunction;
 
-class Sampler::Policy : noncopyable
-{
-public:
+class Sampler::Policy : noncopyable {
+   public:
+    Carrier& carrier;
 
-    Carrier & carrier;
+    explicit Policy(Carrier& c) : carrier(c) {}
 
-    explicit Policy (Carrier & c) : carrier(c) {}
-
-    Ob sample (const NullaryFunction & fun);
-    Ob sample (const InjectiveFunction & fun, Ob key);
-    Ob sample (const BinaryFunction & fun, Ob lhs, Ob rhs);
-    Ob sample (const SymmetricFunction & fun, Ob lhs, Ob rhs);
+    Ob sample(const NullaryFunction& fun);
+    Ob sample(const InjectiveFunction& fun, Ob key);
+    Ob sample(const BinaryFunction& fun, Ob lhs, Ob rhs);
+    Ob sample(const SymmetricFunction& fun, Ob lhs, Ob rhs);
 };
 
-} // namespace pomagma
+}  // namespace pomagma

@@ -7,74 +7,61 @@
 namespace pomagma {
 namespace shard {
 
-Carrier::Carrier (
-        size_t item_dim,
-        void (*merge_callback) (Ob))
+Carrier::Carrier(size_t item_dim, void (*merge_callback)(Ob))
     : m_support(item_dim),
       m_item_count(0),
       m_rep_count(0),
       m_reps(alloc_blocks<Ob>(1 + item_dim)),
-      m_merge_callback(merge_callback)
-{
+      m_merge_callback(merge_callback) {
     POMAGMA_DEBUG("creating Carrier with " << item_dim << " items");
     POMAGMA_ASSERT_LE(item_dim, MAX_ITEM_DIM);
     construct_blocks(m_reps, 1 + item_dim, 0);
 }
 
-Carrier::Carrier (
-        size_t item_dim,
-        const Carrier & other)
+Carrier::Carrier(size_t item_dim, const Carrier& other)
     : m_support(item_dim),
       m_item_count(0),
       m_rep_count(0),
       m_reps(alloc_blocks<Ob>(1 + item_dim)),
-      m_merge_callback(other.m_merge_callback)
-{
+      m_merge_callback(other.m_merge_callback) {
     POMAGMA_DEBUG("resizing Carrier with " << item_dim << " items");
     POMAGMA_ASSERT_LE(item_dim, MAX_ITEM_DIM);
     construct_blocks(m_reps, 1 + item_dim, 0);
 
     POMAGMA_ASSERT_EQ(other.item_count(), other.rep_count());
     for (auto iter = other.iter(); iter.ok(); iter.next()) {
-        Ob ob = * iter;
+        Ob ob = *iter;
         POMAGMA_ASSERT_LE(ob, m_support.item_dim());
         raw_insert(ob);
     }
     update();
 }
 
-Carrier::~Carrier ()
-{
+Carrier::~Carrier() {
     destroy_blocks(m_reps, 1 + item_dim());
     free_blocks(m_reps);
 }
 
-void Carrier::clear ()
-{
+void Carrier::clear() {
     m_support.zero();
     zero_blocks(m_reps, 1 + item_dim());
     m_rep_count = 0;
     m_item_count = 0;
 }
 
-void Carrier::update ()
-{
-    m_rep_count = m_item_count = m_support.count_items();
-}
+void Carrier::update() { m_rep_count = m_item_count = m_support.count_items(); }
 
-Ob Carrier::unsafe_insert ()
-{
+Ob Carrier::unsafe_insert() {
     POMAGMA_ASSERT_LT(item_count(), item_dim());
     Ob ob = m_support.insert_one();
     m_reps[ob] = ob;
     ++m_item_count;
     ++m_rep_count;
-    //POMAGMA_DEBUG1(m_item_count << " obs after inserting " << ob);
+    // POMAGMA_DEBUG1(m_item_count << " obs after inserting " << ob);
     return ob;
 }
 
-void Carrier::unsafe_remove (const Ob ob)
-{
+void Carrier::unsafe_remove(const Ob ob) {
     POMAGMA_ASSERT2(m_support.contains(ob), "double removal: " << ob);
     Ob rep = ob;
     while (m_reps[rep] != rep) {
@@ -84,7 +71,7 @@ void Carrier::unsafe_remove (const Ob ob)
     if (rep == ob) {
         for (Ob other = ob + 1, end = item_dim(); other <= end; ++other) {
             POMAGMA_ASSERT2(m_reps[other] != ob,
-                    "removed rep " << ob << " before dep " << other);
+                            "removed rep " << ob << " before dep " << other);
         }
         --m_rep_count;
     } else {
@@ -101,18 +88,20 @@ void Carrier::unsafe_remove (const Ob ob)
     POMAGMA_DEBUG1(m_item_count << " obs after removing " << ob);
 }
 
-Ob Carrier::merge (Ob dep, Ob rep) const
-{
-    POMAGMA_ASSERT2(dep > rep,
-            "out of order merge: " << dep << "," << rep);
+Ob Carrier::merge(Ob dep, Ob rep) const {
+    POMAGMA_ASSERT2(dep > rep, "out of order merge: " << dep << "," << rep);
     POMAGMA_ASSERT2(m_support.contains(dep), "bad merge dep " << dep);
     POMAGMA_ASSERT2(m_support.contains(rep), "bad merge rep " << rep);
 
     std::unique_lock<std::mutex> lock(m_merge_mutex);
     while (m_reps[dep] != dep) {
         dep = m_reps[dep];
-        if (dep == rep) { return rep; }
-        if (dep < rep) { std::swap(dep, rep); }
+        if (dep == rep) {
+            return rep;
+        }
+        if (dep < rep) {
+            std::swap(dep, rep);
+        }
     }
     m_reps[dep] = rep;
     if (m_merge_callback) {
@@ -123,8 +112,7 @@ Ob Carrier::merge (Ob dep, Ob rep) const
     return rep;
 }
 
-Ob Carrier::_find (Ob ob, Ob rep) const
-{
+Ob Carrier::_find(Ob ob, Ob rep) const {
     Ob rep_rep = find(rep);
     if (m_reps[ob] == rep_rep) {
         return rep_rep;
@@ -133,8 +121,7 @@ Ob Carrier::_find (Ob ob, Ob rep) const
     }
 }
 
-void Carrier::validate () const
-{
+void Carrier::validate() const {
     POMAGMA_INFO("Validating Carrier");
 
     m_support.validate();
@@ -158,13 +145,12 @@ void Carrier::validate () const
     POMAGMA_ASSERT_EQ(rep_count(), actual_rep_count);
 }
 
-void Carrier::log_stats () const
-{
-    const Carrier & carrier = * this;
+void Carrier::log_stats() const {
+    const Carrier& carrier = *this;
     POMAGMA_PRINT(carrier.item_dim());
     POMAGMA_PRINT(carrier.item_count());
     POMAGMA_PRINT(carrier.rep_count());
 }
 
-} // namespace shard
-} // namespace pomagma
+}  // namespace shard
+}  // namespace pomagma

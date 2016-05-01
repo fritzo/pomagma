@@ -2,19 +2,16 @@
 #include <pomagma/atlas/macro/scheduler.hpp>
 #include <pomagma/atlas/macro/carrier.hpp>
 #include <pomagma/atlas/macro/binary_relation.hpp>
-#include <unistd.h> // for _exit
+#include <unistd.h>  // for _exit
 
-namespace pomagma
-{
+namespace pomagma {
 
-namespace
-{
+namespace {
 
-Carrier * g_checker_carrier = nullptr;
-BinaryRelation * g_checker_nless = nullptr;
+Carrier* g_checker_carrier = nullptr;
+BinaryRelation* g_checker_nless = nullptr;
 
-void schedule_merge_if_consistent (Ob dep)
-{
+void schedule_merge_if_consistent(Ob dep) {
     Ob rep = g_checker_carrier->find(dep);
     POMAGMA_ASSERT_LT(rep, dep);
     if (g_checker_nless->find(dep, rep) or g_checker_nless->find(rep, dep)) {
@@ -25,14 +22,12 @@ void schedule_merge_if_consistent (Ob dep)
     }
 }
 
-} // anonymous namespace
+}  // anonymous namespace
 
-void configure_scheduler_to_merge_if_consistent (
-        Structure & structure)
-{
-    g_checker_carrier = & structure.carrier();
-    g_checker_nless = & structure.binary_relation("NLESS");
+void configure_scheduler_to_merge_if_consistent(Structure& structure) {
+    g_checker_carrier = &structure.carrier();
+    g_checker_nless = &structure.binary_relation("NLESS");
     g_checker_carrier->set_merge_callback(schedule_merge_if_consistent);
 }
 
-} // namespace pomagma
+}  // namespace pomagma

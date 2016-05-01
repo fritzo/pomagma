@@ -6,29 +6,24 @@ using namespace pomagma;
 rng_t rng;
 
 size_t g_num_moved(0);
-void move_to (const UnaryRelation *, Ob i __attribute__((unused)))
-{
-    //std::cout << i << ' ' << std::flush; //DEBUG
+void move_to(const UnaryRelation *, Ob i __attribute__((unused))) {
+    // std::cout << i << ' ' << std::flush; //DEBUG
     ++g_num_moved;
 }
 
-bool test_fun1 (Ob i) { return i and i % 3u; }
-bool test_fun2 (Ob i) { return i and i % 61u; }
+bool test_fun1(Ob i) { return i and i % 3u; }
+bool test_fun2(Ob i) { return i and i % 61u; }
 
-void test_UnaryRelation (
-        size_t size,
-        bool (*test_fun) (Ob))
-{
+void test_UnaryRelation(size_t size, bool (*test_fun)(Ob)) {
     POMAGMA_INFO("Testing UnaryRelation");
 
     POMAGMA_INFO("creating UnaryRelation of size " << size);
     Carrier carrier(size);
-    const DenseSet & support = carrier.support();
-
+    const DenseSet &support = carrier.support();
 
     POMAGMA_INFO("testing position insertion");
     for (Ob i = 1; i <= size; ++i) {
-         POMAGMA_ASSERT(carrier.try_insert(), "insertion failed");
+        POMAGMA_ASSERT(carrier.try_insert(), "insertion failed");
     }
     size_t item_count = size;
     std::bernoulli_distribution randomly_remove(0.5);
@@ -92,8 +87,7 @@ void test_UnaryRelation (
     POMAGMA_ASSERT_EQ(rel.count_items(), 0);
 }
 
-int main ()
-{
+int main() {
     Log::Context log_context("Running Unary Relation Test");
 
     for (size_t i = 0; i < 4; ++i) {

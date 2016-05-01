@@ -7,19 +7,16 @@
 namespace pomagma {
 namespace protobuf {
 
-class BlobWriter : noncopyable
-{
-    protobuf::Sha1OutFile * m_file;
+class BlobWriter : noncopyable {
+    protobuf::Sha1OutFile* m_file;
     std::function<void(const std::string&)> m_add_blob;
 
-    void open ()
-    {
+    void open() {
         POMAGMA_ASSERT1(m_file == nullptr, "open() called twice");
         m_file = new protobuf::Sha1OutFile(create_blob());
     }
 
-    void close ()
-    {
+    void close() {
         POMAGMA_ASSERT1(m_file, "close() called twice");
         const std::string temp_path = m_file->filename();
         const std::string hexdigest = m_file->hexdigest();
@@ -29,22 +26,17 @@ class BlobWriter : noncopyable
         m_add_blob(hexdigest);
     }
 
-public:
-
-    explicit BlobWriter (std::function<void(const std::string)> add_blob)
-        : m_file(nullptr),
-          m_add_blob(add_blob)
-    {
+   public:
+    explicit BlobWriter(std::function<void(const std::string)> add_blob)
+        : m_file(nullptr), m_add_blob(add_blob) {
         open();
     }
 
-    void write (const google::protobuf::Message & message)
-    {
+    void write(const google::protobuf::Message& message) {
         m_file->write(message);
     }
 
-    bool try_split ()
-    {
+    bool try_split() {
         if (m_file->approx_bytes_written() >= GOOD_BLOB_SIZE_BYTES) {
             close();
             open();
@@ -54,33 +46,22 @@ public:
         }
     }
 
-    ~BlobWriter ()
-    {
-        close();
-    }
+    ~BlobWriter() { close(); }
 };
 
-class BlobReader : noncopyable
-{
+class BlobReader : noncopyable {
     protobuf::InFile m_file;
 
-public:
+   public:
+    explicit BlobReader(const std::string& hexdigest)
+        : m_file(find_blob(hexdigest)) {}
 
-    explicit BlobReader (const std::string & hexdigest)
-        : m_file(find_blob(hexdigest))
-    {
-    }
+    void read(google::protobuf::Message& message) { m_file.read(message); }
 
-    void read (google::protobuf::Message & message)
-    {
-        m_file.read(message);
-    }
-
-    bool try_read_chunk (google::protobuf::Message & message)
-    {
+    bool try_read_chunk(google::protobuf::Message& message) {
         return m_file.try_read_chunk(message);
     }
 };
 
-} // namespace protobuf
-} // namespace pomagma
+}  // namespace protobuf
+}  // namespace pomagma

@@ -8,33 +8,29 @@
 #include <thread>
 #include <vector>
 
-namespace pomagma
-{
+namespace pomagma {
 
-class WorkerPool : noncopyable
-{
+class WorkerPool : noncopyable {
     std::mutex m_mutex;
     std::condition_variable m_condition;
     std::queue<std::function<void()>> m_queue;
     std::vector<std::thread> m_threads;
     bool m_accepting;
 
-public:
-
-    explicit WorkerPool (size_t thread_count = 0) : m_accepting(true)
-    {
+   public:
+    explicit WorkerPool(size_t thread_count = 0) : m_accepting(true) {
         if (thread_count == 0) {
             thread_count = get_cpu_count();
         }
         POMAGMA_ASSERT_LT(0, thread_count);
         POMAGMA_DEBUG("Starting pool of " << thread_count << " workers");
         for (size_t i = 0; i < thread_count; ++i) {
-            m_threads.emplace_back([this]{
+            m_threads.emplace_back([this] {
                 while (true) {
                     std::function<void()> task;
                     {
                         std::unique_lock<std::mutex> lock(m_mutex);
-                        m_condition.wait(lock, [this]{
+                        m_condition.wait(lock, [this] {
                             return not m_queue.empty() or not m_accepting;
                         });
                         if (likely(not m_queue.empty())) {
@@ -50,20 +46,18 @@ public:
         }
     }
 
-    ~WorkerPool ()
-    {
+    ~WorkerPool() {
         {
             std::unique_lock<std::mutex> lock(m_mutex);
             m_accepting = false;
         }
         m_condition.notify_all();
-        for (auto & thread : m_threads) {
+        for (auto& thread : m_threads) {
             thread.join();
         }
     }
 
-    void schedule (std::function<void()> && task)
-    {
+    void schedule(std::function<void()>&& task) {
         {
             std::unique_lock<std::mutex> lock(m_mutex);
             POMAGMA_ASSERT(m_accepting, "pool is not accepting tasks");
@@ -73,4 +67,4 @@ public:
     }
 };
 
-} // namespace pomagma
+}  // namespace pomagma

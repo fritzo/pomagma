@@ -4,33 +4,27 @@
 
 #define POMAGMA_DEBUG1(message) POMAGMA_DEBUG(message)
 
-namespace pomagma
-{
+namespace pomagma {
 
-Carrier::Carrier (
-        size_t item_dim,
-        void (*insert_callback) (Ob),
-        void (*merge_callback) (Ob))
+Carrier::Carrier(size_t item_dim, void (*insert_callback)(Ob),
+                 void (*merge_callback)(Ob))
     : m_support(item_dim),
       m_item_count(0),
       m_rep_count(0),
       m_reps(alloc_blocks<Rep>(1 + item_dim)),
       m_insert_callback(insert_callback),
-      m_merge_callback(merge_callback)
-{
+      m_merge_callback(merge_callback) {
     POMAGMA_DEBUG("creating Carrier with " << item_dim << " items");
     POMAGMA_ASSERT_LE(item_dim, MAX_ITEM_DIM);
     construct_blocks(m_reps, 1 + item_dim, 0);
 }
 
-Carrier::~Carrier ()
-{
+Carrier::~Carrier() {
     destroy_blocks(m_reps, 1 + item_dim());
     free_blocks(m_reps);
 }
 
-void Carrier::clear ()
-{
+void Carrier::clear() {
     memory_barrier();
     m_support.zero();
     zero_blocks(m_reps, 1 + item_dim());
@@ -39,15 +33,13 @@ void Carrier::clear ()
     memory_barrier();
 }
 
-void Carrier::update ()
-{
+void Carrier::update() {
     memory_barrier();
     m_rep_count = m_item_count = m_support.count_items();
     memory_barrier();
 }
 
-Ob Carrier::try_insert () const
-{
+Ob Carrier::try_insert() const {
     SharedLock lock(m_mutex);
 
     while (item_count() < item_dim()) {
@@ -56,10 +48,7 @@ Ob Carrier::try_insert () const
             // This could be optimized using m_support iteration.
             // See DenseSet::try_insert for example low-level code.
             bool inserted = m_reps[ob].compare_exchange_strong(
-                    zero,
-                    ob,
-                    std::memory_order_acq_rel,
-                    std::memory_order_acquire);
+                zero, ob, std::memory_order_acq_rel, std::memory_order_acquire);
             if (unlikely(inserted)) {
                 m_support.insert(ob, std::memory_order_release);
                 ++m_item_count;
@@ -69,7 +58,7 @@ Ob Carrier::try_insert () const
                 }
                 // The following triggers a weird gcc bug or something
                 // error: invalid memory model for ‘__atomic_load
-                //POMAGMA_DEBUG1(m_item_count.load() << " obs after insert()");
+                // POMAGMA_DEBUG1(m_item_count.load() << " obs after insert()");
                 return ob;
             }
         }
@@ -78,18 +67,18 @@ Ob Carrier::try_insert () const
     return 0;
 }
 
-void Carrier::unsafe_remove (const Ob ob)
-{
+void Carrier::unsafe_remove(const Ob ob) {
     UniqueLock lock(m_mutex);
 
     POMAGMA_ASSERT2(m_support.contains(ob), "double removal: " << ob);
     Ob rep = ob;
-    while (not m_reps[rep].compare_exchange_strong(rep, rep)) {}
+    while (not m_reps[rep].compare_exchange_strong(rep, rep)) {
+    }
     POMAGMA_ASSERT2(rep, "double removal: " << ob);
     if (rep == ob) {
         for (Ob other = ob + 1, end = item_dim(); other <= end; ++other) {
             POMAGMA_ASSERT2(m_reps[other].load() != ob,
-                    "removed rep " << ob << " before dep " << other);
+                            "removed rep " << ob << " before dep " << other);
         }
         --m_rep_count;
     } else {
@@ -105,21 +94,15 @@ void Carrier::unsafe_remove (const Ob ob)
     POMAGMA_DEBUG1(m_item_count.load() << " obs after remove()");
 }
 
-Ob Carrier::merge (Ob dep, Ob rep) const
-{
+Ob Carrier::merge(Ob dep, Ob rep) const {
     SharedLock lock(m_mutex);
 
-    POMAGMA_ASSERT2(dep > rep,
-            "out of order merge: " << dep << "," << rep);
+    POMAGMA_ASSERT2(dep > rep, "out of order merge: " << dep << "," << rep);
     POMAGMA_ASSERT2(m_support.contains(dep), "bad merge dep " << dep);
     POMAGMA_ASSERT2(m_support.contains(rep), "bad merge rep " << rep);
 
     while (not m_reps[dep].compare_exchange_weak(
-                dep,
-                rep,
-                std::memory_order_acq_rel,
-                std::memory_order_acquire))
-    {
+        dep, rep, std::memory_order_acq_rel, std::memory_order_acquire)) {
         rep = m_reps[rep].load(std::memory_order_acquire);
         if (dep == rep) return rep;
         if (dep < rep) std::swap(dep, rep);
@@ -131,23 +114,18 @@ Ob Carrier::merge (Ob dep, Ob rep) const
     return rep;
 }
 
-Ob Carrier::_find (Ob ob, Ob rep) const
-{
+Ob Carrier::_find(Ob ob, Ob rep) const {
     Ob rep_rep = find(rep);
-    if (m_reps[ob].compare_exchange_weak(
-                rep,
-                rep_rep,
-                std::memory_order_acq_rel,
-                std::memory_order_acquire))
-    {
+    if (m_reps[ob].compare_exchange_weak(rep, rep_rep,
+                                         std::memory_order_acq_rel,
+                                         std::memory_order_acquire)) {
         return rep_rep;
     } else {
         return rep < rep_rep ? rep : rep_rep;
     }
 }
 
-void Carrier::validate () const
-{
+void Carrier::validate() const {
     UniqueLock lock(m_mutex);
 
     POMAGMA_INFO("Validating Carrier");
@@ -173,12 +151,11 @@ void Carrier::validate () const
     POMAGMA_ASSERT_EQ(rep_count(), actual_rep_count);
 }
 
-void Carrier::log_stats () const
-{
-    const Carrier & carrier = * this;
+void Carrier::log_stats() const {
+    const Carrier& carrier = *this;
     POMAGMA_PRINT(carrier.item_dim());
     POMAGMA_PRINT(carrier.item_count());
     POMAGMA_PRINT(carrier.rep_count());
 }
 
-} // namespace pomagma
+}  // namespace pomagma

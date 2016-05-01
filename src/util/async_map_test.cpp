@@ -4,23 +4,19 @@
 
 using namespace pomagma;
 
-namespace test
-{
+namespace test {
 
-typedef const std::pair<int, int> * Key;
+typedef const std::pair<int, int>* Key;
 typedef int Value;
 
 typedef AsyncMap<Key, Value> Cache;
 
-void async_map_test (
-    size_t thread_count,
-    size_t eval_count,
-    size_t max_wait = 100)
-{
+void async_map_test(size_t thread_count, size_t eval_count,
+                    size_t max_wait = 100) {
     WorkerPool pool(thread_count);
-    Cache cache([&pool](Key key, Cache::Callback callback){
-        pool.schedule([key, callback]{
-            Value * value = new Value(key->first + key->second);
+    Cache cache([&pool](Key key, Cache::Callback callback) {
+        pool.schedule([key, callback] {
+            Value* value = new Value(key->first + key->second);
             std::this_thread::sleep_for(std::chrono::milliseconds(*value));
             callback(value);
         });
@@ -36,9 +32,9 @@ void async_map_test (
         POMAGMA_INFO("starting task " << i);
         Key key = new std::pair<int, int>(random_int(rng), random_int(rng));
         auto delay = std::chrono::milliseconds(random_int(rng));
-        new std::thread([delay, &cache, key, &pending_count, i]{
+        new std::thread([delay, &cache, key, &pending_count, i] {
             std::this_thread::sleep_for(delay);
-            cache.find_async(key, [&pending_count, i](const Value *){
+            cache.find_async(key, [&pending_count, i](const Value*) {
                 --pending_count;
                 POMAGMA_INFO("finished task " << i);
             });
@@ -52,10 +48,9 @@ void async_map_test (
     }
 }
 
-} // namespace test
+}  // namespace test
 
-int main ()
-{
+int main() {
     Log::Context log_context("AsyncMap Test");
 
     test::async_map_test(10, 100);

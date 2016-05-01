@@ -12,8 +12,7 @@
 
 namespace pomagma {
 
-class Server
-{
+class Server {
     std::unordered_map<std::string, float> m_language;
     Structure m_structure;
     UnaryRelation m_return;
@@ -32,40 +31,33 @@ class Server
     vm::VirtualMachine m_virtual_machine;
     std::vector<std::string> m_error_log;
 
-public:
+   public:
+    Server(const char* structure_file, const char* language_file);
+    ~Server();
 
-    Server (
-        const char * structure_file,
-        const char * language_file);
-    ~Server ();
-
-    struct SolutionSet
-    {
+    struct SolutionSet {
         std::vector<std::string> necessary;
         std::vector<std::string> possible;
     };
 
-    size_t test_inference ();
-    std::string simplify (const std::string & code);
-    Approximator::Validity validate (const std::string & code);
-    std::vector<Validator::AsyncValidity> validate_corpus (
-            const std::vector<Corpus::LineOf<std::string>> & lines);
-    const Corpus::Histogram & get_histogram ();
-    std::unordered_map<std::string, float> fit_language (
-            const Corpus::Histogram & histogram);
-    SolutionSet solve (const std::string & program, size_t max_solutions);
-    Trool validate_facts (const std::vector<std::string> & polish_facts);
+    size_t test_inference();
+    std::string simplify(const std::string& code);
+    Approximator::Validity validate(const std::string& code);
+    std::vector<Validator::AsyncValidity> validate_corpus(
+        const std::vector<Corpus::LineOf<std::string>>& lines);
+    const Corpus::Histogram& get_histogram();
+    std::unordered_map<std::string, float> fit_language(
+        const Corpus::Histogram& histogram);
+    SolutionSet solve(const std::string& program, size_t max_solutions);
+    Trool validate_facts(const std::vector<std::string>& polish_facts);
 
-    void serve (const char * address) __attribute__((noreturn));
+    void serve(const char* address) __attribute__((noreturn));
 
-    std::vector<std::string> flush_errors ();
+    std::vector<std::string> flush_errors();
 
-private:
-
-    void print_ob_set (
-            const DenseSet & set,
-            std::vector<std::string> & result,
-            size_t max_count) const;
+   private:
+    void print_ob_set(const DenseSet& set, std::vector<std::string>& result,
+                      size_t max_count) const;
 };
 
-} // namespace pomagma
+}  // namespace pomagma

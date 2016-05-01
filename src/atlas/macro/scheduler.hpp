@@ -2,12 +2,11 @@
 
 #include "util.hpp"
 
-namespace pomagma
-{
+namespace pomagma {
 
 class Signature;
 
-void schedule_merge (Ob dep);
-void process_mergers (Signature & signature);
+void schedule_merge(Ob dep);
+void process_mergers(Signature& signature);
 
-} // namespace pomagma
+}  // namespace pomagma

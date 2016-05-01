@@ -2,31 +2,29 @@
 #include <pomagma/atlas/micro/scheduler.hpp>
 #include "theory.hpp"
 
-int main (int argc, char ** argv)
-{
+int main(int argc, char** argv) {
     pomagma::Log::Context log_context(argc, argv);
-    const char * executable = *argv++;
+    const char* executable = *argv++;
 
     if (argc != 6) {
-        std::cout
-            << "Usage: "
-                << boost::filesystem::basename(executable)
-                << "structure_out symbols facts programs language"
-                << "\n"
-            << "Environment Variables:\n"
-            << "  POMAGMA_SIZE = " << pomagma::DEFAULT_ITEM_DIM << "\n"
-            << "  POMAGMA_LOG_FILE = " << pomagma::DEFAULT_LOG_FILE << "\n"
-            << "  POMAGMA_LOG_LEVEL = " << pomagma::DEFAULT_LOG_LEVEL << "\n"
-            ;
+        std::cout << "Usage: " << boost::filesystem::basename(executable)
+                  << "structure_out symbols facts programs language"
+                  << "\n"
+                  << "Environment Variables:\n"
+                  << "  POMAGMA_SIZE = " << pomagma::DEFAULT_ITEM_DIM << "\n"
+                  << "  POMAGMA_LOG_FILE = " << pomagma::DEFAULT_LOG_FILE
+                  << "\n"
+                  << "  POMAGMA_LOG_LEVEL = " << pomagma::DEFAULT_LOG_LEVEL
+                  << "\n";
         POMAGMA_WARN("incorrect program args");
         exit(1);
     }
 
-    const char * structure_out = *argv++;
-    const char * symbols_file = *argv++;
-    const char * facts_file = *argv++;
-    const char * programs_file = *argv++;
-    const char * language_file = *argv++;
+    const char* structure_out = *argv++;
+    const char* symbols_file = *argv++;
+    const char* facts_file = *argv++;
+    const char* programs_file = *argv++;
+    const char* language_file = *argv++;
 
     // set params
     pomagma::Scheduler::set_thread_count();

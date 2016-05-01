@@ -5,23 +5,19 @@ using namespace pomagma;
 
 rng_t rng;
 
-bool test_fun1 (Ob i, Ob j) { return i and j and i % 61u <= j % 31u; }
-bool test_fun2 (Ob i, Ob j) { return i and j and i % 61u == j % 31u; }
+bool test_fun1(Ob i, Ob j) { return i and j and i % 61u <= j % 31u; }
+bool test_fun2(Ob i, Ob j) { return i and j and i % 61u == j % 31u; }
 
-void test_BinaryRelation (
-        size_t size,
-        bool (*test_fun) (Ob, Ob))
-{
+void test_BinaryRelation(size_t size, bool (*test_fun)(Ob, Ob)) {
     POMAGMA_INFO("Testing BinaryRelation");
 
     POMAGMA_INFO("creating BinaryRelation of size " << size);
     Carrier carrier(size);
-    const DenseSet & support = carrier.support();
-
+    const DenseSet& support = carrier.support();
 
     POMAGMA_INFO("testing position insertion");
     for (Ob i = 1; i <= size; ++i) {
-         POMAGMA_ASSERT(carrier.unsafe_insert(), "insertion failed");
+        POMAGMA_ASSERT(carrier.unsafe_insert(), "insertion failed");
     }
     size_t item_count = size;
     std::bernoulli_distribution randomly_remove(0.5);
@@ -38,12 +34,13 @@ void test_BinaryRelation (
     rel.validate();
     size_t num_pairs = 0;
     for (auto i = support.iter(); i.ok(); i.next()) {
-    for (auto j = support.iter(); j.ok(); j.next()) {
-        if (test_fun(*i, *j)) {
-            rel.insert(*i, *j);
-            ++num_pairs;
+        for (auto j = support.iter(); j.ok(); j.next()) {
+            if (test_fun(*i, *j)) {
+                rel.insert(*i, *j);
+                ++num_pairs;
+            }
         }
-    } }
+    }
     POMAGMA_INFO("  " << num_pairs << " pairs inserted");
     rel.validate();
     POMAGMA_ASSERT_EQ(num_pairs, rel.count_pairs());
@@ -51,20 +48,21 @@ void test_BinaryRelation (
     POMAGMA_INFO("testing pair containment");
     num_pairs = 0;
     for (auto i = support.iter(); i.ok(); i.next()) {
-    for (auto j = support.iter(); j.ok(); j.next()) {
-        if (test_fun(*i, *j)) {
-            POMAGMA_ASSERT(rel.find_Lx(*i, *j),
-                    "Lx relation missing " << *i << ',' << *j);
-            POMAGMA_ASSERT(rel.find_Rx(*i, *j),
-                    "Rx relation missing " << *i << ',' << *j);
-            ++num_pairs;
-        } else {
-            POMAGMA_ASSERT(not rel.find_Lx(*i, *j),
-                    "Lx relation has extra " << *i << ',' << *j);
-            POMAGMA_ASSERT(not rel.find_Rx(*i, *j),
-                    "Rx relation has extra " << *i << ',' << *j);
+        for (auto j = support.iter(); j.ok(); j.next()) {
+            if (test_fun(*i, *j)) {
+                POMAGMA_ASSERT(rel.find_Lx(*i, *j), "Lx relation missing "
+                                                        << *i << ',' << *j);
+                POMAGMA_ASSERT(rel.find_Rx(*i, *j), "Rx relation missing "
+                                                        << *i << ',' << *j);
+                ++num_pairs;
+            } else {
+                POMAGMA_ASSERT(not rel.find_Lx(*i, *j), "Lx relation has extra "
+                                                            << *i << ',' << *j);
+                POMAGMA_ASSERT(not rel.find_Rx(*i, *j), "Rx relation has extra "
+                                                            << *i << ',' << *j);
+            }
         }
-    } }
+    }
     POMAGMA_INFO("  " << num_pairs << " pairs found");
     rel.validate();
     POMAGMA_ASSERT_EQ(num_pairs, rel.count_pairs());
@@ -90,10 +88,7 @@ void test_BinaryRelation (
     num_pairs = 0;
     size_t seen_item_count = 0;
     item_count = support.count_items();
-    for (auto lhs_iter = support.iter();
-        lhs_iter.ok();
-        lhs_iter.next())
-    {
+    for (auto lhs_iter = support.iter(); lhs_iter.ok(); lhs_iter.next()) {
         ++seen_item_count;
         DenseSet set = rel.get_Lx_set(*lhs_iter);
         for (auto rhs_iter = set.iter(); rhs_iter.ok(); rhs_iter.next()) {
@@ -110,10 +105,7 @@ void test_BinaryRelation (
     POMAGMA_INFO("testing line iterator (rhs fixed)");
     num_pairs = 0;
     seen_item_count = 0;
-    for (auto rhs_iter = support.iter();
-        rhs_iter.ok();
-        rhs_iter.next())
-    {
+    for (auto rhs_iter = support.iter(); rhs_iter.ok(); rhs_iter.next()) {
         ++seen_item_count;
         DenseSet set = rel.get_Rx_set(*rhs_iter);
         for (auto lhs_iter = set.iter(); lhs_iter.ok(); lhs_iter.next()) {
@@ -136,8 +128,7 @@ void test_BinaryRelation (
     POMAGMA_ASSERT_EQ(rel.count_pairs(), 0);
 }
 
-int main ()
-{
+int main() {
     Log::Context log_context("Running Binary Relation Test");
 
     for (size_t i = 0; i < 4; ++i) {

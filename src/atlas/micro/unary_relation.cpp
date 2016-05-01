@@ -1,26 +1,20 @@
 #include "unary_relation.hpp"
 
-namespace pomagma
-{
+namespace pomagma {
 
-static void noop_callback (const UnaryRelation *, Ob) {}
+static void noop_callback(const UnaryRelation *, Ob) {}
 
-UnaryRelation::UnaryRelation (
-        const Carrier & carrier,
-        void (*insert_callback) (const UnaryRelation *, Ob))
+UnaryRelation::UnaryRelation(const Carrier &carrier,
+                             void (*insert_callback)(const UnaryRelation *, Ob))
     : m_carrier(carrier),
       m_set(item_dim()),
-      m_insert_callback(insert_callback ? insert_callback : noop_callback)
-{
+      m_insert_callback(insert_callback ? insert_callback : noop_callback) {
     POMAGMA_DEBUG("creating UnaryRelation with " << word_dim() << " words");
 }
 
-UnaryRelation::~UnaryRelation ()
-{
-}
+UnaryRelation::~UnaryRelation() {}
 
-void UnaryRelation::validate () const
-{
+void UnaryRelation::validate() const {
     UniqueLock lock(m_mutex);
 
     POMAGMA_INFO("Validating UnaryRelation");
@@ -33,43 +27,37 @@ void UnaryRelation::validate () const
     }
 }
 
-void UnaryRelation::validate_disjoint (const UnaryRelation & other) const
-{
+void UnaryRelation::validate_disjoint(const UnaryRelation &other) const {
     UniqueLock lock(m_mutex);
 
     POMAGMA_INFO("Validating disjoint pair of UnaryRelations");
 
     // validate supports agree
     POMAGMA_ASSERT_EQ(support().item_dim(), other.support().item_dim());
-    POMAGMA_ASSERT_EQ(
-            support().count_items(),
-            other.support().count_items());
+    POMAGMA_ASSERT_EQ(support().count_items(), other.support().count_items());
     POMAGMA_ASSERT(support() == other.support(),
-            "UnaryRelation supports differ");
+                   "UnaryRelation supports differ");
 
     // validate disjointness
     POMAGMA_ASSERT(m_set.disjoint(other.m_set), "UnaryRelations intersect");
 }
 
-void UnaryRelation::log_stats (const std::string & prefix) const
-{
+void UnaryRelation::log_stats(const std::string &prefix) const {
     size_t count = count_items();
     size_t capacity = item_dim();
     float density = 1.0f * count / capacity;
-    POMAGMA_INFO(prefix << " " <<
-        count << " / " << capacity << " = " << density << " full");
+    POMAGMA_INFO(prefix << " " << count << " / " << capacity << " = " << density
+                        << " full");
 }
 
-void UnaryRelation::clear ()
-{
+void UnaryRelation::clear() {
     memory_barrier();
     m_set.zero();
     memory_barrier();
 }
 
 // policy: callback whenever rel(dep) but not rel(rep)
-void UnaryRelation::unsafe_merge (Ob dep)
-{
+void UnaryRelation::unsafe_merge(Ob dep) {
     UniqueLock lock(m_mutex);
 
     Ob rep = m_carrier.find(dep);
@@ -82,4 +70,4 @@ void UnaryRelation::unsafe_merge (Ob dep)
     }
 }
 
-} // namespace pomagma
+}  // namespace pomagma

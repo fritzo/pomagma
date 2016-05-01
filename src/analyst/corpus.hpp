@@ -5,19 +5,15 @@
 #include <pomagma/util/hash_map.hpp>
 #include <unordered_set>
 
-namespace pomagma
-{
+namespace pomagma {
 
-class Corpus
-{
+class Corpus {
     class Dag;
     class Reducer;
     class Parser;
 
-public:
-
-    struct Term
-    {
+   public:
+    struct Term {
         enum Arity {
             OB,
             HOLE,
@@ -30,13 +26,11 @@ public:
             VARIABLE  // must be last to match CachedApproximator::Term::Arity
         };
 
-        struct Hash
-        {
+        struct Hash {
             std::hash<std::string> hash_string;
             std::hash<const Term *> hash_pointer;
 
-            uint64_t operator() (const Term & x) const
-            {
+            uint64_t operator()(const Term &x) const {
                 FNV_hash::HashState state;
                 state.add(x.arity);
                 state.add(hash_string(x.name));
@@ -47,61 +41,49 @@ public:
             }
         };
 
-        bool operator== (const Term & o) const
-        {
-            return arity == o.arity
-               and name == o.name
-               and arg0 == o.arg0
-               and arg1 == o.arg1
-               and ob == o.ob;
+        bool operator==(const Term &o) const {
+            return arity == o.arity and name == o.name and arg0 ==
+                   o.arg0 and arg1 == o.arg1 and ob == o.ob;
         }
-        bool operator!= (const Term & o) const { return not operator==(o); }
+        bool operator!=(const Term &o) const { return not operator==(o); }
 
-        Term () {}
-        Term (Ob o)
-            : arity(OB), name(), arg0(nullptr), arg1(nullptr), ob(o)
-        {}
-        Term (
-                Arity a,
-                const std::string & n = "",
-                const Term * a0 = nullptr,
-                const Term * a1 = nullptr)
-            : arity(a), name(n), arg0(a0), arg1(a1), ob(0)
-        {}
+        Term() {}
+        Term(Ob o) : arity(OB), name(), arg0(nullptr), arg1(nullptr), ob(o) {}
+        Term(Arity a, const std::string &n = "", const Term *a0 = nullptr,
+             const Term *a1 = nullptr)
+            : arity(a), name(n), arg0(a0), arg1(a1), ob(0) {}
 
         Arity arity;
         std::string name;
-        const Term * arg0;
-        const Term * arg1;
+        const Term *arg0;
+        const Term *arg1;
         Ob ob;
     };
 
-    template<class T>
-    struct LineOf
-    {
+    template <class T>
+    struct LineOf {
         std::string maybe_name;
         T body;
 
-        bool has_name () const { return not maybe_name.empty(); }
+        bool has_name() const { return not maybe_name.empty(); }
     };
 
-    class Linker
-    {
-    public:
-        const Term * link (const Term * term);
-        const Term * approximate (const Term * term, size_t depth);
-    private:
-        friend class Corpus;
-        Linker (Dag & dag, std::vector<std::string> & error_log);
-        void define (const std::string & name, const Term * term);
-        void finish ();
-        const Term * approximate (const Term * term);
-        static void accum_free (
-                const Term * term,
-                std::unordered_set<const Term *> & free);
+    class Linker {
+       public:
+        const Term *link(const Term *term);
+        const Term *approximate(const Term *term, size_t depth);
 
-        Dag & m_dag;
-        std::vector<std::string> & m_error_log;
+       private:
+        friend class Corpus;
+        Linker(Dag &dag, std::vector<std::string> &error_log);
+        void define(const std::string &name, const Term *term);
+        void finish();
+        const Term *approximate(const Term *term);
+        static void accum_free(const Term *term,
+                               std::unordered_set<const Term *> &free);
+
+        Dag &m_dag;
+        std::vector<std::string> &m_error_log;
         std::unordered_map<const Term *, const Term *> m_definitions;
         std::unordered_set<const Term *> m_ground_terms;
 
@@ -109,13 +91,11 @@ public:
         std::unordered_map<const Term *, size_t> m_temp_depths;
     };
 
-    struct Histogram
-    {
+    struct Histogram {
         std::unordered_map<std::string, size_t> symbols;
         std::unordered_map<Ob, size_t> obs;
 
-        void add (const Term * term)
-        {
+        void add(const Term *term) {
             switch (term->arity) {
                 case Term::OB:
                     ++obs[term->ob];
@@ -137,24 +117,21 @@ public:
         }
     };
 
-    explicit Corpus (Signature & signature);
-    ~Corpus ();
+    explicit Corpus(Signature &signature);
+    ~Corpus();
 
-    Linker linker (
-            const std::vector<LineOf<std::string>> & lines,
-            std::vector<std::string> & error_log);
+    Linker linker(const std::vector<LineOf<std::string>> &lines,
+                  std::vector<std::string> &error_log);
 
-    std::vector<LineOf<const Term *>> parse (
-            const std::vector<LineOf<std::string>> & lines,
-            Linker & linker,
-            std::vector<std::string> & error_log);
+    std::vector<LineOf<const Term *>> parse(
+        const std::vector<LineOf<std::string>> &lines, Linker &linker,
+        std::vector<std::string> &error_log);
 
-    const Histogram & histogram () const;
+    const Histogram &histogram() const;
 
-private:
-
-    Signature & m_signature;
-    Dag & m_dag;
+   private:
+    Signature &m_signature;
+    Dag &m_dag;
 };
 
-} // namespace pomagma
+}  // namespace pomagma

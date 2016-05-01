@@ -1,15 +1,14 @@
 #include "conjecture_equal.hpp"
 #include <pomagma/atlas/macro/carrier.hpp>
 
-int main (int argc, char ** argv)
-{
+int main(int argc, char** argv) {
     pomagma::Log::Context log_context(argc, argv);
 
-    const char * structure_file = nullptr;
-    const char * language_file = nullptr;
-    const char * conjectures_in_file = nullptr;
-    const char * conjectures_out_file = nullptr;
-    const char * theorems_file = nullptr;
+    const char* structure_file = nullptr;
+    const char* language_file = nullptr;
+    const char* conjectures_in_file = nullptr;
+    const char* conjectures_out_file = nullptr;
+    const char* theorems_file = nullptr;
 
     if (argc == 6) {
         structure_file = argv[1];
@@ -18,19 +17,18 @@ int main (int argc, char ** argv)
         conjectures_out_file = argv[4];
         theorems_file = argv[5];
     } else {
-        std::cout
-            << "Usage: "
-                << boost::filesystem::basename(argv[0])
-                << " structure_in"
-                << " language_in"
-                << " conjectures_in"
-                << " conjectures_out"
-                << " theorems_out"
-                << "\n"
-            << "Environment Variables:\n"
-            << "  POMAGMA_LOG_FILE = " << pomagma::DEFAULT_LOG_FILE << "\n"
-            << "  POMAGMA_LOG_LEVEL = " << pomagma::DEFAULT_LOG_LEVEL << "\n"
-            ;
+        std::cout << "Usage: " << boost::filesystem::basename(argv[0])
+                  << " structure_in"
+                  << " language_in"
+                  << " conjectures_in"
+                  << " conjectures_out"
+                  << " theorems_out"
+                  << "\n"
+                  << "Environment Variables:\n"
+                  << "  POMAGMA_LOG_FILE = " << pomagma::DEFAULT_LOG_FILE
+                  << "\n"
+                  << "  POMAGMA_LOG_LEVEL = " << pomagma::DEFAULT_LOG_LEVEL
+                  << "\n";
         POMAGMA_WARN("incorrect program args");
         exit(1);
     }
@@ -41,17 +39,12 @@ int main (int argc, char ** argv)
     if (POMAGMA_DEBUG_LEVEL > 1) {
         structure.validate();
     }
-    POMAGMA_ASSERT_EQ(
-        structure.carrier().item_dim(),
-        structure.carrier().item_count());
+    POMAGMA_ASSERT_EQ(structure.carrier().item_dim(),
+                      structure.carrier().item_count());
 
     // conjecture
-    pomagma::try_prove_nless(
-        structure,
-        language_file,
-        conjectures_in_file,
-        conjectures_out_file,
-        theorems_file);
+    pomagma::try_prove_nless(structure, language_file, conjectures_in_file,
+                             conjectures_out_file, theorems_file);
 
     return 0;
 }

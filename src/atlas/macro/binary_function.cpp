@@ -2,67 +2,57 @@
 #include <pomagma/util/aligned_alloc.hpp>
 #include <cstring>
 
-namespace pomagma
-{
+namespace pomagma {
 
-BinaryFunction::BinaryFunction (Carrier & carrier)
-    : m_lines(carrier)
-{
+BinaryFunction::BinaryFunction(Carrier& carrier) : m_lines(carrier) {
     POMAGMA_DEBUG("creating BinaryFunction");
 }
 
-BinaryFunction::BinaryFunction (
-        Carrier & carrier,
-        BinaryFunction && other)
+BinaryFunction::BinaryFunction(Carrier& carrier, BinaryFunction&& other)
     : m_lines(carrier, std::move(other.m_lines)),
-      m_values(std::move(other.m_values))
-{
+      m_values(std::move(other.m_values)) {
     POMAGMA_DEBUG("resizing BinaryFunction");
 }
 
-void BinaryFunction::validate () const
-{
+void BinaryFunction::validate() const {
     POMAGMA_INFO("Validating BinaryFunction");
 
     m_lines.validate();
 
     POMAGMA_DEBUG("validating line-value consistency");
     for (size_t i = 1; i <= item_dim(); ++i)
-    for (size_t j = 1; j <= item_dim(); ++j) {
-        auto val_iter = m_values.find(std::make_pair(i, j));
+        for (size_t j = 1; j <= item_dim(); ++j) {
+            auto val_iter = m_values.find(std::make_pair(i, j));
 
-        if (not (support().contains(i) and support().contains(j))) {
-            POMAGMA_ASSERT(val_iter == m_values.end(),
-                    "found unsupported lhs, rhs: " << i << ',' << j);
-        } else if (val_iter != m_values.end()) {
-            POMAGMA_ASSERT(defined(i, j),
-                    "found undefined value: " << i << ',' << j);
-            Ob val = val_iter->second;
-            POMAGMA_ASSERT(val, "found zero value: " << i << ',' << j);
-            POMAGMA_ASSERT(support().contains(val),
-                    "found unsupported value: " << i << ',' << j);
-        } else {
-            POMAGMA_ASSERT(not defined(i, j),
-                    "found defined null value: " << i << ',' << j);
+            if (not(support().contains(i) and support().contains(j))) {
+                POMAGMA_ASSERT(val_iter == m_values.end(),
+                               "found unsupported lhs, rhs: " << i << ',' << j);
+            } else if (val_iter != m_values.end()) {
+                POMAGMA_ASSERT(defined(i, j),
+                               "found undefined value: " << i << ',' << j);
+                Ob val = val_iter->second;
+                POMAGMA_ASSERT(val, "found zero value: " << i << ',' << j);
+                POMAGMA_ASSERT(support().contains(val),
+                               "found unsupported value: " << i << ',' << j);
+            } else {
+                POMAGMA_ASSERT(not defined(i, j),
+                               "found defined null value: " << i << ',' << j);
+            }
         }
-    }
 }
 
-void BinaryFunction::log_stats (const std::string & prefix) const
-{
+void BinaryFunction::log_stats(const std::string& prefix) const {
     m_lines.log_stats(prefix);
 }
 
-void BinaryFunction::clear ()
-{
+void BinaryFunction::clear() {
     m_lines.clear();
     m_values.clear();
 }
 
-void BinaryFunction::update_values () const
-{
-    for (auto & pair : m_values) {
-        Ob & dep = pair.second;
+void BinaryFunction::update_values() const {
+    for (auto& pair : m_values) {
+        Ob& dep = pair.second;
         Ob rep = carrier().find(dep);
         if (rep != dep) {
             dep = rep;
@@ -70,8 +60,7 @@ void BinaryFunction::update_values () const
     }
 }
 
-void BinaryFunction::unsafe_merge (const Ob dep)
-{
+void BinaryFunction::unsafe_merge(const Ob dep) {
     POMAGMA_ASSERT5(support().contains(dep), "unsupported dep: " << dep);
     Ob rep = carrier().find(dep);
     POMAGMA_ASSERT5(support().contains(rep), "unsupported rep: " << rep);
@@ -87,7 +76,7 @@ void BinaryFunction::unsafe_merge (const Ob dep)
         Ob dep_val = dep_iter->second;
         m_values.erase(dep_iter);
         m_lines.Lx(lhs, dep).zero();
-        Ob & rep_val = m_values[std::make_pair(lhs, rep)];
+        Ob& rep_val = m_values[std::make_pair(lhs, rep)];
         if (carrier().set_or_merge(rep_val, dep_val)) {
             m_lines.Lx(lhs, rep).one();
         }
@@ -106,7 +95,7 @@ void BinaryFunction::unsafe_merge (const Ob dep)
         Ob dep_val = dep_iter->second;
         m_values.erase(dep_iter);
         m_lines.Rx(dep, rhs).zero();
-        Ob & rep_val = m_values[std::make_pair(rep, rhs)];
+        Ob& rep_val = m_values[std::make_pair(rep, rhs)];
         if (carrier().set_or_merge(rep_val, dep_val)) {
             m_lines.Rx(rep, rhs).one();
         }
@@ -120,4 +109,4 @@ void BinaryFunction::unsafe_merge (const Ob dep)
     // values must be updated in batch by update_values
 }
 
-} // namespace pomagma
+}  // namespace pomagma

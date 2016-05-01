@@ -5,23 +5,19 @@
 #include <unordered_map>
 #include <mutex>
 
-namespace pomagma
-{
+namespace pomagma {
 
 using namespace std::placeholders;
 
-template<class Key, class Value>
-class AsyncMap : noncopyable
-{
-public:
-
+template <class Key, class Value>
+class AsyncMap : noncopyable {
+   public:
     typedef std::function<void(const Value *)> Callback;
     typedef std::function<void(Key, Callback)> AsyncFunction;
 
-    explicit AsyncMap (AsyncFunction function) : m_function(function) {}
+    explicit AsyncMap(AsyncFunction function) : m_function(function) {}
 
-    ~AsyncMap ()
-    {
+    ~AsyncMap() {
         std::lock_guard<std::mutex> lock(m_mutex);
         POMAGMA_ASSERT_EQ(m_callbacks.size(), 0);
         for (auto v : m_values) {
@@ -29,10 +25,9 @@ public:
         }
     }
 
-    const Value * find (const Key & key)
-    {
+    const Value *find(const Key &key) {
         auto pair = m_values.insert(std::make_pair(key, nullptr));
-        auto & value = pair.first->second;
+        auto &value = pair.first->second;
         bool inserted = pair.second;
         if (unlikely(inserted)) {
             {
@@ -44,10 +39,9 @@ public:
         return value;
     }
 
-    void find_async (const Key & key, Callback callback)
-    {
+    void find_async(const Key &key, Callback callback) {
         auto pair = m_values.insert(std::make_pair(key, nullptr));
-        auto & value = pair.first->second;
+        auto &value = pair.first->second;
         bool inserted = pair.second;
         if (likely(not inserted)) {
             if (likely(value)) {
@@ -71,28 +65,25 @@ public:
         }
     }
 
-private:
-
-    std::vector<Callback> & callbacks_locked (Key key)
-    {
+   private:
+    std::vector<Callback> &callbacks_locked(Key key) {
         auto pair = m_callbacks.insert(std::make_pair(key, nullptr));
-        auto & callbacks = pair.first->second;
+        auto &callbacks = pair.first->second;
         bool inserted = pair.second;
         if (inserted) {
             callbacks = new std::vector<Callback>();
         }
-        return * callbacks;
+        return *callbacks;
     }
 
-    void store (Key key, const Value * value)
-    {
+    void store(Key key, const Value *value) {
         POMAGMA_ASSERT(value, "tried to store null value");
         auto v = m_values.find(key);
         POMAGMA_ASSERT1(v != m_values.end(), "value not found");
         POMAGMA_ASSERT1(not v->second, "stored value twice");
         v->second = value;
 
-        std::vector<Callback> * callbacks = nullptr;
+        std::vector<Callback> *callbacks = nullptr;
         {
             std::lock_guard<std::mutex> lock(m_mutex);
             auto c = m_callbacks.find(key);
@@ -101,7 +92,7 @@ private:
             callbacks = c->second;
             m_callbacks.erase(c);
         }
-        for (auto callback : * callbacks) {
+        for (auto callback : *callbacks) {
             callback(value);
         }
         delete callbacks;
@@ -113,4 +104,4 @@ private:
     std::mutex m_mutex;
 };
 
-} // namespace pomagma
+}  // namespace pomagma
