@@ -170,10 +170,8 @@ def converge_less(lhs, rhs):
 
 
 def try_converge(term, steps):
-    '''
-    If a term 'DIV x' head reduces to a term less than or equal to itself,
-    then it diverges.
-    '''
+    """If a term 'DIV x' head reduces to a term less than or equal to itself,
+    then it diverges."""
     seen = set([term])
     for _ in xrange(steps):
         try:
@@ -321,10 +319,11 @@ def try_prove_diverge(
 
 @parsable
 def print_terms(atoms='x,y', max_atom_count=3):
-    '''
-    Print all terms up to some max atom count.
+    """Print all terms up to some max atom count.
+
     atoms is a comma-delimited list of atoms.
-    '''
+
+    """
     atoms = atoms.split(',')
     for term in iter_terms(atoms, max_atom_count):
         print print_term(term)
@@ -332,9 +331,7 @@ def print_terms(atoms='x,y', max_atom_count=3):
 
 @parsable
 def count_terms(max_count=8):
-    '''
-    Count all terms up to some max atom count.
-    '''
+    """Count all terms up to some max atom count."""
     atom_counts = range(1, 1 + max_count)
     max_counts = range(1, 1 + max_count)
 
@@ -351,9 +348,7 @@ def count_terms(max_count=8):
 
 @parsable
 def may_diverge(atoms='I,K,F,B,C,W,S,Y', max_atom_count=4, max_steps=20):
-    '''
-    Print terms that have not been proven to converge.
-    '''
+    """Print terms that have not been proven to converge."""
     atoms = atoms.split(',')
     for term in iter_terms(atoms, max_atom_count):
         try:
@@ -367,9 +362,7 @@ def may_diverge(atoms='I,K,F,B,C,W,S,Y', max_atom_count=4, max_steps=20):
 
 @parsable
 def must_diverge(atoms='I,K,F,B,C,W,S,Y', max_atom_count=4, max_steps=20):
-    '''
-    Print terms that have been proven to diverge.
-    '''
+    """Print terms that have been proven to diverge."""
     atoms = atoms.split(',')
     for term in iter_terms(atoms, max_atom_count):
         try:

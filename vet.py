@@ -56,10 +56,11 @@ def write_vetted_hashes(hashes):
 
 @parsable
 def vet(*filenames):
-    '''
-    Save hashes of current file versions for specified files.
+    """Save hashes of current file versions for specified files.
+
     Use "vet all" to vet all files.
-    '''
+
+    """
     hashes = read_vetted_hashes()
     if list(filenames) == ['all']:
         filenames = hashes.keys()
@@ -122,9 +123,7 @@ def check_unknown(actual, expected):
 
 @parsable
 def check():
-    '''
-    Check files against vetted hashes.
-    '''
+    """Check files against vetted hashes."""
     expected = read_vetted_hashes()
     actual = hash_files(expected)
     if (check_diffs(actual, expected) or

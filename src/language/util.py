@@ -35,7 +35,7 @@ def normalize_dict(grouped):
         for group in grouped.itervalues()
         for weight in group.itervalues()
     )
-    assert total > 0, "total weight is zero"
+    assert total > 0, 'total weight is zero'
     scale = 1.0 / total
 
     for group in grouped.itervalues():
@@ -44,8 +44,7 @@ def normalize_dict(grouped):
 
 
 def dict_to_language(grouped):
-    '''
-    Convert from grouped dict to protobuf format.
+    """Convert from grouped dict to protobuf format.
 
     Example Input:
 
@@ -64,7 +63,8 @@ def dict_to_language(grouped):
             #'INJECTIVE': {},  # empty, may be omitted
             #'SYMMETRIC': {},  # empty, may be omitted
         }
-    '''
+
+    """
     grouped = grouped.copy()
     normalize_dict(grouped)
     language = Language()
@@ -79,9 +79,7 @@ def dict_to_language(grouped):
 
 
 def language_to_dict(language):
-    '''
-    Convert from protobuf format to grouped dict.
-    '''
+    """Convert from protobuf format to grouped dict."""
     grouped = {}
     for term in language.terms:
         arity = ARITY_FROM_PB2[term.arity]
@@ -92,9 +90,7 @@ def language_to_dict(language):
 
 @parsable
 def compile(json_in, language_out):
-    '''
-    Convert language from json to protobuf format.
-    '''
+    """Convert language from json to protobuf format."""
     with open(json_in) as f:
         grouped = json.load(f)
     language = dict_to_language(grouped)

@@ -234,7 +234,7 @@ def iter_eta_substitutions(expr):
         result = expr
         for var, case in zip(varlist, cases):
             if case == 0:
-                'do nothing'
+                """do nothing."""
             elif case == 1:
                 result = result.substitute(var, fresh)
             elif case == 2:
@@ -257,9 +257,8 @@ def iter_subsets(set_):
 
 @inputs(Expression)
 def iter_closure_maps(expr):
-    '''
-    Iterate over all closing abstractions, including variable coincidence
-    '''
+    """Iterate over all closing abstractions, including variable
+    coincidence."""
     if not expr.vars:
         yield expr
     else:
@@ -277,9 +276,7 @@ def iter_closure_maps(expr):
 
 @inputs(Expression)
 def iter_closure_permutations(expr):
-    '''
-    Iterate over all closing permutations
-    '''
+    """Iterate over all closing permutations."""
     if not expr.vars:
         yield expr
     else:

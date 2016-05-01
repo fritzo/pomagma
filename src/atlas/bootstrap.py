@@ -1,6 +1,4 @@
-'''
-Boostrapped data is included in git repo, for testing.
-'''
+"""Boostrapped data is included in git repo, for testing."""
 
 import os
 import pomagma.util

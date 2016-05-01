@@ -294,9 +294,7 @@ def cartographer_work(
         region_size=(DEFAULT_SURVEY_SIZE - 512),
         region_queue_size=4,
         **options):
-    '''
-    Start cartographer worker.
-    '''
+    """Start cartographer worker."""
     min_size = pomagma.util.MIN_SIZES[theory]
     assert region_size >= min_size
     options.setdefault('log_file', 'cartographer.log')
@@ -323,9 +321,7 @@ def cartographer(*args, **kwargs):
 
 @parsable
 def surveyor_work(theory, step_size=512, **options):
-    '''
-    Start surveyor worker.
-    '''
+    """Start surveyor worker."""
     assert step_size > 0
     with pomagma.atlas.chdir(theory):
         region_queue = FileQueue('region.queue')

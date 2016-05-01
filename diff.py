@@ -60,9 +60,7 @@ def chdir(destin):
 
 @parsable
 def clone(commit='HEAD'):
-    '''
-    Create temporary clone repo in ../ positioned at the given commit.
-    '''
+    """Create temporary clone repo in ../ positioned at the given commit."""
     with chdir(REPO):
         commit = subprocess.check_output(
             ['git', 'rev-parse', '--verify', commit]).strip()

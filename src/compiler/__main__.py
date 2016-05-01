@@ -53,12 +53,13 @@ def parse_bool(arg):
 
 @parsable
 def abstract(*args):
-    '''
-    Abstract variables from expression.
+    """Abstract variables from expression.
+
     Examples:
         abstract x 'APP x y'
         abstract x y z 'APP APP x z APP y z'
-    '''
+
+    """
     args = map(parser.parse_string_to_expr, args)
     expression, vars = args[-1], args[:-1]
     for var in reversed(vars):
@@ -68,12 +69,13 @@ def abstract(*args):
 
 @parsable
 def desugar(*exprs):
-    '''
-    Convert lambda terms to combinators.
+    """Convert lambda terms to combinators.
+
     Examples:
         desugar FUN x APP x y
         desugar FUN x FUN y FUN z APP APP x z APP y z
-    '''
+
+    """
     for expr in map(parser.parse_string_to_expr, exprs):
         print expr
         print '  =', desugar_expr(expr)
@@ -81,9 +83,7 @@ def desugar(*exprs):
 
 @parsable
 def complete(*facts):
-    '''
-    Complete a set of facts.
-    '''
+    """Complete a set of facts."""
     facts = set(map(parser.parse_string_to_expr, facts))
     facts = completion.complete(facts)
     facts = sorted(facts)
@@ -144,9 +144,7 @@ def measure_sequent(sequent):
 
 @parsable
 def contrapositves(*filenames):
-    '''
-    Close rules under contrapositve.
-    '''
+    """Close rules under contrapositve."""
     if not filenames:
         filenames = find_theories()
     sequents = []
@@ -162,9 +160,7 @@ def contrapositves(*filenames):
 
 @parsable
 def normalize(*filenames):
-    '''
-    Show normalized rule set derived from each rule.
-    '''
+    """Show normalized rule set derived from each rule."""
     if not filenames:
         filenames = find_theories()
     sequents = []
@@ -180,9 +176,7 @@ def normalize(*filenames):
 
 @parsable
 def extract_tasks(infile, outfile=None):
-    '''
-    Extract tasks from facts and rules, but do not compile to programs.
-    '''
+    """Extract tasks from facts and rules, but do not compile to programs."""
     theory = load_theory(infile)
     with writer(outfile) as write:
         facts = theory['facts']
@@ -226,9 +220,7 @@ def batch_extract_tasks(*filenames, **kwargs):
 
 @parsable
 def measure(*filenames):
-    '''
-    Measure complexity of rules in files.
-    '''
+    """Measure complexity of rules in files."""
     if not filenames:
         filenames = find_theories()
     sequents = []
@@ -276,12 +268,13 @@ def test_compile(*filenames):
 
 @parsable
 def profile_tasks(*filenames, **kwargs):
-    '''
-    Profile task generation (first part of compiler chain).
+    """Profile task generation (first part of compiler chain).
+
     Optional keyword arguments:
         loadfrom = None
         saveto = 'tasks.pstats'
-    '''
+
+    """
     if not filenames:
         filenames = find_theories()
     loadfrom = kwargs.get('loadfrom')
@@ -302,12 +295,13 @@ def profile_tasks(*filenames, **kwargs):
 
 @parsable
 def profile_compile(*filenames, **kwargs):
-    '''
-    Profile full compiler chain (task generation + optimization).
+    """Profile full compiler chain (task generation + optimization).
+
     Optional keyword arguments:
         loadfrom = None
         saveto = 'compile.pstats'
-    '''
+
+    """
     if not filenames:
         filenames = find_theories()
     loadfrom = kwargs.get('loadfrom')
@@ -438,9 +432,7 @@ def _compile(param):
 
 @parsable
 def batch_compile(parallel=True):
-    '''
-    Compile all theories in parallel.
-    '''
+    """Compile all theories in parallel."""
     params = []
     theories_json = os.path.join(SRC, 'theory', 'theories.json')
     theories = json_load(theories_json)

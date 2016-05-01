@@ -17,9 +17,7 @@ def reformat(*files):
 
 @parsable
 def extract(filename):
-    '''
-    Extract code from markdown file.
-    '''
+    """Extract code from markdown file."""
     TODO()
 
 
@@ -41,9 +39,7 @@ def suggest(filename):
 
 @parsable
 def precommit():
-    '''
-    Reformat and annotate all code before a git commit.
-    '''
+    """Reformat and annotate all code before a git commit."""
     reformat(CORPUS)
 
 

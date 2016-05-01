@@ -115,9 +115,7 @@ def _test_atlas(theory):
 
 @parsable
 def test_atlas(theory='all'):
-    '''
-    Test atlas exploration and analysis operations.
-    '''
+    """Test atlas exploration and analysis operations."""
     if theory == 'all':
         theories = pomagma.util.MIN_SIZES.keys()
         theories.sort(key=pomagma.util.MIN_SIZES.__getitem__)
@@ -132,9 +130,7 @@ def test_atlas(theory='all'):
 
 @parsable
 def test_analyst(theory):
-    '''
-    Test analyst approximation on normalized world map.
-    '''
+    """Test analyst approximation on normalized world map."""
     opts = {'log_file': 'test.log', 'log_level': 2}
     with atlas.chdir(theory):
         world = DB('world.normal')
@@ -147,9 +143,7 @@ def test_analyst(theory):
 
 @parsable
 def profile_misc():
-    '''
-    Profile misc libraries.
-    '''
+    """Profile misc libraries."""
     buildtype = 'debug' if pomagma.util.debug else 'release'
     log_file = os.path.join(pomagma.util.DATA, 'profile', buildtype + '.log')
     if os.path.exists(log_file):
@@ -170,10 +164,11 @@ def profile_misc():
 
 @parsable
 def profile_surveyor(theory='skj', grow_by=64, extra_size=0, tool='time'):
-    '''
-    Profile surveyor on random region of world.
+    """Profile surveyor on random region of world.
+
     Available tools: time, valgrind, cachegrind, callgrind, helgrind
-    '''
+
+    """
     size = pomagma.util.MIN_SIZES[theory] + extra_size
     with atlas.chdir(theory):
         opts = {'log_file': 'profile.log', 'log_level': 2}
@@ -224,9 +219,11 @@ def profile_cartographer(theory='skj', extra_size=0, tool='time', infer=True):
 
 @parsable
 def coverity():
-    '''
-    Check pomagma build with coverity. (see http://coverity.com)
-    '''
+    """Check pomagma build with coverity.
+
+    (see http://coverity.com)
+
+    """
     pomagma.util.coverity()
 
 

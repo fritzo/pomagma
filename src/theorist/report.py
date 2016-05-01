@@ -10,9 +10,7 @@ DATA = pomagma.util.DATA
 
 @parsable
 def conjectures(theory):
-    '''
-    Write conjectures.html
-    '''
+    """Write conjectures.html."""
     in_pattern = os.path.join(DATA, 'atlas', theory, '*conjectures*.facts')
     conjectures_files = list(glob.glob(in_pattern))
     assert conjectures_files, 'found no conjectures to report'

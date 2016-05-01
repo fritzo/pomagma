@@ -30,7 +30,7 @@ def find_blob(hexdigest):
 
 
 def create_blob():
-    '''Return temp_path to write blob to.'''
+    """Return temp_path to write blob to."""
     create_directories(pomagma.util.BLOB_DIR)
     if not hasattr(create_blob, 'counter'):
         create_blob.counter = 0
@@ -39,13 +39,13 @@ def create_blob():
     filename = 'temp.{}.{}'.format(os.getpid(), count)
     path = os.path.join(pomagma.util.BLOB_DIR, filename)
     if os.path.exists(path):
-        print "removing temp file ", path
+        print 'removing temp file ', path
         os.remove(path)
     return path
 
 
 def store_blob(temp_path):
-    '''Return digest for future find_blob calls; removes temp file.'''
+    """Return digest for future find_blob calls; removes temp file."""
     assert os.path.exists(temp_path)
     hexdigest = hash_file(temp_path)
     path = find_blob(hexdigest)
@@ -58,7 +58,7 @@ def store_blob(temp_path):
 
 
 def iter_blob_refs(filename):
-    '''Iterate over all hexdigests in ref file.'''
+    """Iterate over all hexdigests in ref file."""
     with open(filename, 'rb') as f:
         for line in f:
             hexdigest = line.strip()
@@ -67,13 +67,13 @@ def iter_blob_refs(filename):
 
 
 def load_blob_ref(filename):
-    '''Return root hexdigest from ref file.'''
+    """Return root hexdigest from ref file."""
     for root_hexdigest in iter_blob_refs(filename):
         return root_hexdigest
 
 
 def dump_blob_ref(root_hexdigest, filename, sub_hexdigests=[]):
-    '''Write root and sub hexdigests to ref file.'''
+    """Write root and sub hexdigests to ref file."""
     assert isinstance(root_hexdigest, basestring), root_hexdigest
     assert len(root_hexdigest) == 40, root_hexdigest
     with creat(filename, 0444) as f:
@@ -108,9 +108,8 @@ def garbage_collect(used_blobs, grace_period_days=GRACE_PERIOD_DAYS):
 
 
 def validate_blobs():
-    '''
-    Validate SHA1 and mode of some or all blobs; raise ValueError on error.
-    '''
+    """Validate SHA1 and mode of some or all blobs; raise ValueError on
+    error."""
     blobs = sorted(
         blob
         for blob in os.listdir(pomagma.util.BLOB_DIR)

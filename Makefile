@@ -24,7 +24,11 @@ clang-ctags:
 
 lint: FORCE
 	$(info flake8)
-	@flake8 --ignore=E402 $(PY_FILES)
+	@flake8 --jobs auto --ignore=E402 $(PY_FILES)
+
+format: FORCE
+	$(info pyformat)
+	pyformat --jobs 0 --in-place $(PY_FILES)
 
 python: protobuf lint FORCE
 	pip install -e .

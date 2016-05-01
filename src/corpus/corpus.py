@@ -10,6 +10,7 @@ class Corpus(object):
     '''
     Corpus is a general-recursive set of definitions with holes.
     '''
+
     def __init__(self):
         self._defs = {}
 

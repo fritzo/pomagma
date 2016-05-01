@@ -48,7 +48,7 @@ MIN_SIZES = {
 
 
 def optimal_db_sizes():
-    '''Indefinitely iterate through optimal db sizes'''
+    """Indefinitely iterate through optimal db sizes."""
     yield 512 - 1
     for i in itertools.count():
         yield 2 * 2 ** i * 512 - 1
@@ -56,7 +56,7 @@ def optimal_db_sizes():
 
 
 def suggest_region_sizes(min_size, max_size):
-    '''Return set of optimal db sizes in [min_size, max_size]'''
+    """Return set of optimal db sizes in [min_size, max_size]"""
     sizes = []
     for size in optimal_db_sizes():
         if size > max_size:
@@ -351,11 +351,12 @@ def prepare_core_dump():
 
 
 def log_call(*args, **options):
-    '''
-    Pass arguments to command line.
-    Pass options into environment variables.
-    Log process; if it crashes, dump stack trace to log file.
-    '''
+    """Pass arguments to command line.
+
+    Pass options into environment variables. Log process; if it crashes,
+    dump stack trace to log file.
+
+    """
     args = map(str, args)
     args = options.pop('runner', '').split() + args
     extra_env = make_env(options)
@@ -380,11 +381,11 @@ def log_call(*args, **options):
 
 
 def log_Popen(*args, **options):
-    '''
-    Pass arguments to command line.
-    Pass options into environment variables.
-    Log process.
-    '''
+    """Pass arguments to command line.
+
+    Pass options into environment variables. Log process.
+
+    """
     args = map(str, args)
     args = options.pop('runner', '').split() + args
     extra_env = make_env(options)
@@ -396,11 +397,12 @@ def log_Popen(*args, **options):
 
 
 def use_memcheck(options, output='memcheck.out'):
-    '''
-    Set options to run through valgrind memcheck.
+    """Set options to run through valgrind memcheck.
+
     WARNING valgrind does not handle vector instructions well,
     so try compiling without -march=native.
-    '''
+
+    """
     suppressions = os.path.join(SRC, 'zmq.valgrind.suppressions')
     options = options.copy()
     options['runner'] = ' '.join([
@@ -430,9 +432,7 @@ def coverity():
 
 
 def notify(subject, content):
-    '''
-    Send notification email to POMAGMA_NOTIFY_EMAIL or write to stderr.
-    '''
+    """Send notification email to POMAGMA_NOTIFY_EMAIL or write to stderr."""
     if not NOTIFY_EMAIL:
         sys.stderr.write('POMAGMA_NOTIFY_EMAIL not set\n')
         sys.stderr.write('Subject: {}\n'.format(subject))

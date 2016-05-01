@@ -186,7 +186,7 @@ def try_negate_name(pos):
 
 @inputs(Expression)
 def try_get_negated(expr):
-    'Returns a disjunction'
+    """Returns a disjunction."""
     if expr.name == 'EQUAL':
         lhs, rhs = expr.args
         return set([Expression.make('NLESS', lhs, rhs),

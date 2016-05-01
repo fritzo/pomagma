@@ -153,10 +153,11 @@ SPECS['skrj'] = {
 
 @parsable
 def make(theory):
-    '''
-    Bootstrap a language from Johann.
+    """Bootstrap a language from Johann.
+
     Inputs: theory in ['sk', 'skj', 'skja', 'skrj']
-    '''
+
+    """
     spec = SPECS[theory]
     nullary_weights = spec.get('nullary_weights', {})
     injective_probs = spec.get('injective_probs', {})

@@ -18,11 +18,9 @@ NONEGATE = Expression_1('NONEGATE')
 
 @memoize_arg
 def guard_vars(expr):
-    '''
-    Whereas pomagma.compiler follows the variable naming convention defined in
-    pomagma.compiler.signature.is_var(), pomagma.analyst.validate
-    and the puddle editor require VAR guarded variables.
-    '''
+    """Whereas pomagma.compiler follows the variable naming convention defined
+    in pomagma.compiler.signature.is_var(), pomagma.analyst.validate and the
+    puddle editor require VAR guarded variables."""
     if expr.name == 'VAR':
         return expr
     elif expr.is_var():

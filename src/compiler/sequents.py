@@ -141,9 +141,7 @@ def as_succedent(expr, bound):
 
 @inputs(Sequent)
 def get_pointed(seq):
-    '''
-    Return a set of sequents each with a single succedent.
-    '''
+    """Return a set of sequents each with a single succedent."""
     result = set()
     if len(seq.succedents) == 1:
         for succedent in seq.succedents:
@@ -170,10 +168,11 @@ def get_pointed(seq):
 
 @inputs(Sequent)
 def get_atomic(seq, bound=set()):
-    '''
-    Return a set of normal sequents.
+    """Return a set of normal sequents.
+
     Atoms whose every variable is bound are excluded from antecedents.
-    '''
+
+    """
     result = set()
     for pointed in get_pointed(seq):
         improper_succedent = iter(pointed.succedents).next()
@@ -187,11 +186,10 @@ def get_atomic(seq, bound=set()):
 
 @inputs(Sequent)
 def get_contrapositives(seq):
-    '''
-    Given multiple antecedents and succedents,
-    return a set of sequents with various antecedents or succedents negated
-    such that each result sequent corresponds has a succedent set corresponding
-    to exactly one of the original antecedents or succedents. For example
+    """Given multiple antecedents and succedents, return a set of sequents with
+    various antecedents or succedents negated such that each result sequent
+    corresponds has a succedent set corresponding to exactly one of the
+    original antecedents or succedents. For example.
 
         A, B |- C, D
 
@@ -201,7 +199,8 @@ def get_contrapositives(seq):
         A, ~C, ~D |- ~B
         A, B, ~D |- C
         A, B, ~C |- D
-    '''
+
+    """
     ante_succ_pairs = []
     for succedent in map(weaken_sequent, seq.succedents):
         try:
@@ -264,10 +263,11 @@ def get_inverses(sequent):
 
 @inputs(Sequent)
 def normalize(seq, bound=set()):
-    '''
-    Return a set of normal sequents, closed under contrapositive.
+    """Return a set of normal sequents, closed under contrapositive.
+
     Atoms whose every variable is bound are excluded from antecedents.
-    '''
+
+    """
     if seq.optional:
         return set()
     result = set()

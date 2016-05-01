@@ -1,10 +1,10 @@
-'''
-Wrapper for Amazon S3 and compression.
+"""Wrapper for Amazon S3 and compression.
 
 References:
 http://boto.readthedocs.org/en/latest/ref/s3.html
 https://github.com/boto/boto/blob/develop/boto/s3
-'''
+
+"""
 
 import boto
 import multiprocessing
@@ -38,9 +38,7 @@ BUCKET = try_connect_s3(os.environ.get('POMAGMA_BUCKET', 'pomagma'))
 
 
 def s3_lazy_put(filename, assume_immutable=False):
-    '''
-    Put file to s3 only if out of sync.
-    '''
+    """Put file to s3 only if out of sync."""
     key = BUCKET.get_key(filename)
     if key is None:
         key = BUCKET.new_key(filename)
@@ -65,9 +63,7 @@ def s3_lazy_put(filename, assume_immutable=False):
 
 
 def s3_lazy_get(filename, assume_immutable=False):
-    '''
-    Get file from s3 only if out of sync.
-    '''
+    """Get file from s3 only if out of sync."""
     key = BUCKET.get_key(filename)
     if key is None:
         print 'missing', filename
@@ -248,18 +244,14 @@ def find_s3(prefix=''):
 
 @parsable
 def find_local(path='.'):
-    '''
-    Find copyable files on local filesystem.
-    '''
+    """Find copyable files on local filesystem."""
     for filename in find(path):
         print filename
 
 
 @parsable
 def snapshot(source, destin):
-    '''
-    Create resursive snapshot of hard links for push/pull.
-    '''
+    """Create resursive snapshot of hard links for push/pull."""
     assert os.path.isdir(source)
     assert destin != source
     source = os.path.abspath(source)
@@ -277,9 +269,7 @@ def snapshot(source, destin):
 
 @parsable
 def pull(*filenames):
-    '''
-    Pull files from S3 into local cache.
-    '''
+    """Pull files from S3 into local cache."""
     assert BUCKET
     filenames = sum([
         list(listdir(f)) if f.endswith('/') else [f]
@@ -290,9 +280,7 @@ def pull(*filenames):
 
 @parsable
 def push(*filenames):
-    '''
-    Push files to S3 from local cache.
-    '''
+    """Push files to S3 from local cache."""
     assert BUCKET
     filenames = sum(map(find, filenames), [])
     filenames = map(os.path.relpath, filenames)
@@ -301,9 +289,7 @@ def push(*filenames):
 
 @parsable
 def rm(*filenames):
-    '''
-    Remove files from S3 and local cache.
-    '''
+    """Remove files from S3 and local cache."""
     assert BUCKET
     parallel_map(remove, filter_cache(filenames))
 

@@ -34,6 +34,7 @@ def stack_depth():
 
 
 class DotPrinter(object):
+
     def __init__(self, out=sys.stdout):
         self.out = out
         self.count = 0
@@ -165,9 +166,7 @@ def optimize_given(seq, context, bound):
 
 @memoize_args
 def optimize_plan(antecedents, succedent, bound):
-    '''
-    Iterate through the space of plans, narrowing heuristically.
-    '''
+    """Iterate through the space of plans, narrowing heuristically."""
     assert isinstance(antecedents, sortedset)
     assert isinstance(succedent.consts, sortedset)
 

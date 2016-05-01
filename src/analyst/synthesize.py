@@ -1,5 +1,4 @@
-'''
-Program synthesis by sketching for untyped combinatory algebra.
+"""Program synthesis by sketching for untyped combinatory algebra.
 
 This implements an algorithm to solve general recursive sets of inequalities
 involving partial terms (i.e. terms with holes, sketches) by filling in holes.
@@ -23,7 +22,8 @@ The pipeline stages are:
 5. Filter out contexts by client-side validation, which is heavily memoized.
 6. Filter out contexts by server-side constraint propagation, also memoized.
 7. Optionally filter out fillings with holes, i.e., restrict to ground terms.
-'''
+
+"""
 
 import heapq
 import itertools
@@ -65,6 +65,7 @@ def is_complete(expr):
 
 
 class ComplexityEvaluator(object):
+
     def __init__(self, language):
         assert isinstance(language, dict), language
         for name, cost in language.iteritems():
@@ -87,7 +88,8 @@ def make_template(name):
 
 
 class NaiveHoleFiller(object):
-    'A more intelligent hole filler would only enumerate normal forms'
+    """A more intelligent hole filler would only enumerate normal forms."""
+
     def __init__(self, language):
         assert isinstance(language, dict), language
         assert all(isinstance(n, str) for n in language), language
@@ -112,10 +114,12 @@ class NaiveHoleFiller(object):
 
 
 class UniquePriorityQueue(object):
-    '''
-    Duplicates may be pushed, but will only be poppoed once.
+    """Duplicates may be pushed, but will only be poppoed once.
+
     The least-priority item is popped.
-    '''
+
+    """
+
     def __init__(self, priority):
         assert callable(priority), priority
         self._priority = priority
@@ -151,9 +155,7 @@ def iter_sketches(priority, fill_holes, initial_sketch=HOLE):
 
 
 def filter_normal_sketches(sketches):
-    '''
-    Filter out sketches whose normal forms have already been seen.
-    '''
+    """Filter out sketches whose normal forms have already been seen."""
     normal_forms = set()
     for sketch, steps in sketches:
         normal = simplify_expr(sketch)
@@ -167,14 +169,14 @@ def lazy_iter_valid_sketches(
         lazy_validate,
         normal_sketches,
         verbose=0):
-    '''
-    Yield (state, term) pairs and Nones; consumers should filter out Nones.
+    """Yield (state, term) pairs and Nones; consumers should filter out Nones.
     Since satisfiability is undecidable, consumers must decide when to give up.
 
     fill : term -> state, substitutes sketches into holes and simplifies
     lazy_validate : state -> bool or None, must be sound, may be incomplete
     sketches : stream(sketch:term, steps:list(term))
-    '''
+
+    """
     assert callable(fill), fill
     assert callable(lazy_validate), lazy_validate
     invalid_sketches = set()
@@ -212,6 +214,7 @@ def lazy_iter_valid_sketches(
 
 
 class Interruptable(object):
+
     def __enter__(self):
         self._interrupted = False
         self._old_handler = signal.signal(signal.SIGINT, self)
@@ -234,10 +237,12 @@ class Interruptable(object):
 
 
 def polling_iterator(lazy_iterator, max_memory):
-    '''
-    Filter results of a lazy_iterator until either memory runs out or SIGINT.
+    """Filter results of a lazy_iterator until either memory runs out or
+    SIGINT.
+
     Patience is measured in nebulous "progress steps".
-    '''
+
+    """
     assert isinstance(max_memory, float), max_memory
     assert 0 < max_memory and max_memory < 1, max_memory
     with Interruptable() as interrupted:
@@ -329,12 +334,14 @@ def substitute_bodies(terms, var, bodies):
 
 
 def simplify_defs(facts, vars_to_keep=set()):
-    '''
-    Substitute all facts of form 'EQUAL var closed_term' into remaining facts.
-    In case of multiple equivalent definitions,
-    all combinations of substitutions will be added.
-    This generally reduces the number of free variables.
-    '''
+    """Substitute all facts of form 'EQUAL var closed_term' into remaining
+    facts.
+
+    In case of multiple equivalent definitions, all combinations of
+    substitutions will be added. This generally reduces the number of
+    free variables.
+
+    """
     facts = set(desugar_expr(f) for f in facts)
     defs = {}
     extract_defs_from_facts(facts, defs)
@@ -374,6 +381,7 @@ def simplify_facts(db, facts, vars_to_keep):
 
 
 class FactsValidator(object):
+
     def __init__(self, db, facts, var, initial_sketch=HOLE):
         assert isinstance(facts, list), facts
         assert all(isinstance(f, Expression) for f in facts), facts
@@ -414,10 +422,8 @@ def synthesize_from_facts(
         max_solutions=MAX_SOLUTIONS,
         max_memory=MAX_MEMORY,
         verbose=0):
-    '''
-    Synthesize a list of sketches which replace `var` in `facts` by filling in
-    HOLEs in an `initial_sketch` with terms generated from a `langauge`.
-    '''
+    """Synthesize a list of sketches which replace `var` in `facts` by filling
+    in HOLEs in an `initial_sketch` with terms generated from a `langauge`."""
     assert isinstance(facts, list), facts
     assert all(isinstance(f, Expression) for f in facts), facts
     assert isinstance(var, Expression), var

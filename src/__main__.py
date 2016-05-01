@@ -35,10 +35,11 @@ def already_exists(path):
 
 @parsable
 def test(theory=THEORY, extra_size=0, **options):
-    '''
-    Test theory by building a world map.
+    """Test theory by building a world map.
+
     Options: log_level, log_file
-    '''
+
+    """
     buildtype = 'debug' if pomagma.util.debug else 'release'
     path = os.path.join(pomagma.util.DATA, 'test', buildtype, 'atlas', theory)
     if os.path.exists(path):
@@ -95,10 +96,11 @@ def test(theory=THEORY, extra_size=0, **options):
 
 @parsable
 def init(theory=THEORY, **options):
-    '''
-    Initialize world map for given theory.
+    """Initialize world map for given theory.
+
     Options: log_level, log_file
-    '''
+
+    """
     log_file = options.setdefault('log_file', 'init.log')
     world_size = pomagma.util.MIN_SIZES[theory]
     pomagma.util.log_print('initialize to {}'.format(world_size), log_file)
@@ -123,10 +125,11 @@ def explore(
         step_size=512,
         region_queue_size=4,
         **options):
-    '''
-    Continuously expand world map for given theory, inferring and surveying.
+    """Continuously expand world map for given theory, inferring and surveying.
+
     Options: log_level, log_file, deadline_sec
-    '''
+
+    """
     assert step_size > 0
     region_size = max_size - step_size
     min_size = pomagma.util.MIN_SIZES[theory]
@@ -154,10 +157,11 @@ def make(
         max_size=pomagma.workers.DEFAULT_SURVEY_SIZE,
         step_size=512,
         **options):
-    '''
-    Initialize; explore.
+    """Initialize; explore.
+
     Options: log_level, log_file, deadline_sec
-    '''
+
+    """
     path = os.path.join(pomagma.util.DATA, 'atlas', theory)
     if not already_exists(path):
         init(theory, **options)
@@ -166,10 +170,11 @@ def make(
 
 @parsable
 def update_theory(theory=THEORY, dry_run=False, **options):
-    '''
-    Update (small) world map after theory changes, and note changes.
+    """Update (small) world map after theory changes, and note changes.
+
     Options: log_level, log_file
-    '''
+
+    """
     print dry_run
     with atlas.chdir(theory):
         world = DB('world')
@@ -181,10 +186,11 @@ def update_theory(theory=THEORY, dry_run=False, **options):
 
 @parsable
 def update_language(theory=THEORY, **options):
-    '''
-    Update world map after language changes.
+    """Update world map after language changes.
+
     Options: log_level, log_file
-    '''
+
+    """
     with atlas.chdir(theory):
         world = DB('world')
         init = pomagma.util.temp_name(DB('init'))
@@ -198,9 +204,7 @@ def update_language(theory=THEORY, **options):
 
 @parsable
 def theorize(theory=THEORY, **options):
-    '''
-    Make conjectures based on atlas and update atlas based on theorems.
-    '''
+    """Make conjectures based on atlas and update atlas based on theorems."""
     with atlas.chdir(theory):
         world = DB('world')
         diverge_conjectures = 'diverge_conjectures.facts'
@@ -238,10 +242,11 @@ def theorize(theory=THEORY, **options):
 
 @parsable
 def trim(theory=THEORY, parallel=True, **options):
-    '''
-    Trim a set of normal regions for running analyst on small machines.
+    """Trim a set of normal regions for running analyst on small machines.
+
     Options: log_level, log_file
-    '''
+
+    """
     with atlas.chdir(theory):
         options.setdefault('log_file', 'trim.log')
         with cartographer.load(theory, DB('world.normal'), **options) as db:
@@ -280,11 +285,12 @@ def _analyze(theory=THEORY, size=None, address=analyst.ADDRESS, **options):
 
 @parsable
 def analyze(theory=THEORY, size=None, address=analyst.ADDRESS, **options):
-    '''
-    Run analyst server on normalized world map.
+    """Run analyst server on normalized world map.
+
     Set size=? to list available sizes.
     Options: log_level, log_file
-    '''
+
+    """
     if size == '?':
         with atlas.chdir(theory):
             files = glob.glob(DB('region.normal.*'))
@@ -302,9 +308,7 @@ def analyze(theory=THEORY, size=None, address=analyst.ADDRESS, **options):
 
 @parsable
 def connect(address=analyst.ADDRESS):
-    '''
-    Connect to analyst and start python client.
-    '''
+    """Connect to analyst and start python client."""
     startup = os.path.join(pomagma.util.SRC, 'analyst', 'startup.py')
     os.environ['PYTHONSTARTUP'] = startup
     os.system('python')
@@ -312,10 +316,11 @@ def connect(address=analyst.ADDRESS):
 
 @parsable
 def fit_language(theory, address=analyst.ADDRESS, **options):
-    '''
-    Fit language to corpus, saving results to git working tree.
+    """Fit language to corpus, saving results to git working tree.
+
     Options: log_level, log_file
-    '''
+
+    """
     options.setdefault('log_file', 'linguist.log')
     linguist.fit_language(theory, address=address, **options)
 
@@ -387,9 +392,7 @@ def push(tag=default_tag, force=False):
 
 @parsable
 def gc(grace_period_days=pomagma.io.blobstore.GRACE_PERIOD_DAYS):
-    '''
-    Garbage collect blobs and validate remaining blobs.
-    '''
+    """Garbage collect blobs and validate remaining blobs."""
     atlas.garbage_collect(grace_period_days)
 
 
