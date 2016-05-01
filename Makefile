@@ -25,10 +25,12 @@ clang-ctags:
 lint: FORCE
 	$(info flake8)
 	@flake8 --jobs auto --ignore=E402 $(PY_FILES)
+	# TODO Use clang-tidy
 
 format: FORCE
 	$(info pyformat)
 	pyformat --jobs 0 --aggressive --in-place $(PY_FILES)
+	# TODO Use clang-format
 
 python: protobuf lint FORCE
 	pip install -e .
@@ -68,6 +70,7 @@ cpp-test: all FORCE
 
 unit-test: all bootstrap FORCE
 	./vet.py check || { ./diff.py codegen; exit 1; }
+	# TODO switch from nosetests to py.test
 	POMAGMA_DEBUG=1 nosetests -v pomagma
 	$(MAKE) cpp-test
 	POMAGMA_DEBUG=1 pomagma.make profile-misc
