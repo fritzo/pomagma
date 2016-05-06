@@ -60,7 +60,6 @@ float hypothesize_entropy(
     pid_t child = fork();
     POMAGMA_ASSERT(child != -1, "fork failed");
     if (child == 0) {
-
         POMAGMA_DEBUG("assuming equation");
         detail::merge_if_consistent(structure, equation);
 
@@ -72,7 +71,6 @@ float hypothesize_entropy(
         _exit(EXIT_CONSISTENT);
 
     } else {
-
         int status;
         POMAGMA_DEBUG("Waiting for child process " << child);
         waitpid(child, &status, 0);

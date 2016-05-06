@@ -342,9 +342,9 @@ class Log {
                    #POMAGMA_set " is missing " #POMAGMA_x ", " #POMAGMA_y      \
                                 ", " #POMAGMA_z)
 
-#define POMAGMA_ASSERT_RANGE_(POMAGMA_level, POMAGMA_i, POMAGMA_dim) \
-    POMAGMA_ASSERT_(POMAGMA_level,                                   \
-                    1 <= (POMAGMA_i)and(POMAGMA_i) <= (POMAGMA_dim), \
+#define POMAGMA_ASSERT_RANGE_(POMAGMA_level, POMAGMA_i, POMAGMA_dim)   \
+    POMAGMA_ASSERT_(POMAGMA_level,                                     \
+                    1 <= (POMAGMA_i) and (POMAGMA_i) <= (POMAGMA_dim), \
                     "out of range: " #POMAGMA_i " = " << (POMAGMA_i))
 
 #define POMAGMA_ASSERT_ALIGNED_(POMAGMA_level, POMAGMA_ptr)                   \

@@ -83,8 +83,8 @@ class Validator : noncopyable {
 
    private:
     static bool is_ambiguous(const Approximator::Validity &validity) {
-        return validity.is_top == Approximator::MAYBE or validity.is_bot ==
-               Approximator::MAYBE;
+        return validity.is_top == Approximator::MAYBE or
+               validity.is_bot == Approximator::MAYBE;
     }
 
     CachedApproximator::Term convert(const Corpus::Term *term) {

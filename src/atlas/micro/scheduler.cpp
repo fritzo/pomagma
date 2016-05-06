@@ -194,13 +194,14 @@ inline void cancel_tasks_referencing(Ob ob) {
 }
 
 inline bool enforce_tasks_try_execute(bool cleanup) {
-    if (g_exists_tasks.try_execute() or g_nullary_function_tasks.try_execute()
-        or g_injective_function_tasks.try_execute()
-        or g_binary_function_tasks.try_execute()
-        or g_symmetric_function_tasks.try_execute()
-        or g_unary_relation_tasks.try_execute()
-        or g_positive_order_tasks.try_execute()
-        or g_negative_order_tasks.try_execute()) {
+    if (g_exists_tasks.try_execute() or
+        g_nullary_function_tasks.try_execute() or
+        g_injective_function_tasks.try_execute() or
+        g_binary_function_tasks.try_execute() or
+        g_symmetric_function_tasks.try_execute() or
+        g_unary_relation_tasks.try_execute() or
+        g_positive_order_tasks.try_execute() or
+        g_negative_order_tasks.try_execute()) {
         if (cleanup and likely(g_worker_count > 1)) {
             Cleanup::push_all();
         }
@@ -254,19 +255,19 @@ void start_deadline() {
 }
 
 bool try_initialize_work(rng_t &) {
-    return g_merge_tasks.try_execute() or enforce_tasks_try_execute(false)
-        or g_assume_tasks.try_execute() or cleanup_tasks_try_execute();
+    return g_merge_tasks.try_execute() or enforce_tasks_try_execute(false) or
+           g_assume_tasks.try_execute() or cleanup_tasks_try_execute();
 }
 
 bool try_survey_work(rng_t &rng) {
-    return g_merge_tasks.try_execute() or enforce_tasks_try_execute(true)
-        or sample_tasks_try_execute(rng) or cleanup_tasks_try_execute();
+    return g_merge_tasks.try_execute() or enforce_tasks_try_execute(true) or
+           sample_tasks_try_execute(rng) or cleanup_tasks_try_execute();
 }
 
 bool try_deadline_work(rng_t &rng) {
-    return g_merge_tasks.try_execute() or enforce_tasks_try_execute(true)
-        or g_assume_tasks.try_execute() or sample_tasks_try_execute(rng)
-        or(g_deadline_flag and cleanup_tasks_try_execute());
+    return g_merge_tasks.try_execute() or enforce_tasks_try_execute(true) or
+           g_assume_tasks.try_execute() or sample_tasks_try_execute(rng) or
+           (g_deadline_flag and cleanup_tasks_try_execute());
 }
 
 void do_work(bool (*try_work)(rng_t &)) {

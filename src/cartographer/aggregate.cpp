@@ -90,9 +90,8 @@ void inject_all(const std::unordered_map<std::string, T *> &destin_map,
         } else {
             POMAGMA_INFO("aggregating " << name);
             auto &src = *i->second;
-            threads.push_back(std::thread([&] {
-                inject_one(destin, src, src_defined, src_to_destin);
-            }));
+            threads.push_back(std::thread(
+                [&] { inject_one(destin, src, src_defined, src_to_destin); }));
         }
     }
 }

@@ -40,7 +40,6 @@ void Server::trim(const std::vector<TrimTask>& tasks) {
     for (size_t iter = 0; iter < task_count; ++iter) {
         const TrimTask& task = sorted_tasks[iter];
         if (task.size >= item_count) {
-
             if (task.size > item_count) {
                 POMAGMA_WARN("trimming only " << item_count << " of "
                                               << task.size << " obs");
@@ -48,7 +47,6 @@ void Server::trim(const std::vector<TrimTask>& tasks) {
             m_structure.dump(task.filename);
 
         } else {
-
             Structure region;
             region.init_carrier(task.size);
             extend(region.signature(), m_structure.signature());

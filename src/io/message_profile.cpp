@@ -6,14 +6,16 @@ using namespace pomagma;
 using namespace pomagma::io;
 
 typedef std::vector<uint32_t> Example;
-std::vector<Example> examples = {{0},
-                                 {0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
-                                 {1234, 567890, 1234567890, 12345678},
-                                 {0, 0xFU, 0xFFU, 0xFFFU, 0xFFFFU},
-                                 {0xFU, 0xFFU, 0xFFFU, 0xFFFFU, 0xFFFFFU},
-                                 {0xFFFFFU, 0xFFFFFFU, 0xFFFFFFFU, 0xFFFFFFFFU},
-                                 {0xFFFFFFU, 0xFFFFFFFU, 0xFFFFFFFFU},
-                                 {0xFFFFFFFFU, 0xFFFFFFFFU, 0xFFFFFFFFU}, };
+std::vector<Example> examples = {
+    {0},
+    {0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
+    {1234, 567890, 1234567890, 12345678},
+    {0, 0xFU, 0xFFU, 0xFFFU, 0xFFFFU},
+    {0xFU, 0xFFU, 0xFFFU, 0xFFFFU, 0xFFFFFU},
+    {0xFFFFFU, 0xFFFFFFU, 0xFFFFFFFU, 0xFFFFFFFFU},
+    {0xFFFFFFU, 0xFFFFFFFU, 0xFFFFFFFFU},
+    {0xFFFFFFFFU, 0xFFFFFFFFU, 0xFFFFFFFFU},
+};
 
 template <class Writer, class Reader, class... Args>
 void write_read(const Example& example, std::string& message, Args... args) {

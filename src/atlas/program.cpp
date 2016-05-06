@@ -211,7 +211,6 @@ std::vector<Listing> ProgramParser::parse(std::istream &infile) {
         program.push_back(op_code);
 
         for (auto arg_type : g_op_code_arities[op_code]) {
-
             POMAGMA_ASSERT(stream >> word, "line " << lineno
                                                    << ": too few arguments");
 
@@ -219,7 +218,7 @@ std::vector<Listing> ProgramParser::parse(std::istream &infile) {
             switch (arg_type) {
                 case UINT8: {
                     int uint8 = atoi(word.c_str());
-                    POMAGMA_ASSERT((0 < uint8)and(uint8 < 255),
+                    POMAGMA_ASSERT((0 < uint8) and (uint8 < 255),
                                    "line " << lineno
                                            << ": out of range: " << uint8);
                     arg = uint8;

@@ -40,7 +40,6 @@ int main(int argc, char** argv) {
     }
 
     if (getenv("POMAGMA_DEADLINE_SEC")) {
-
         // survey until deadline
         pomagma::Scheduler::survey_until_deadline(facts_file);
         pomagma::log_profile_stats();
@@ -51,7 +50,6 @@ int main(int argc, char** argv) {
         }
 
     } else {
-
         // initialize
         pomagma::Scheduler::initialize(facts_file);
         pomagma::log_profile_stats();

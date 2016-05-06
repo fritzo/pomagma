@@ -19,7 +19,8 @@ std::vector<std::vector<uint32_t>> examples = {
     {0xFFFFFFFFU, 0xFFFFFFFFU, 0xFFFFFFFFU},
     {0, 0xFU, 0xFFU, 0xFFFU, 0xFFFFU, 0xFFFFFU, 0xFFFFFFU, 0xFFFFFFFU,
      0xFFFFFFFFU},
-    {1234, 567890, 1234567890, 12345678}, };
+    {1234, 567890, 1234567890, 12345678},
+};
 
 template <class Writer, class Reader, class... Args>
 void test_write_read(const std::vector<uint32_t>& example, Args... args) {

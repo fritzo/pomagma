@@ -98,10 +98,10 @@ inline bool Sampler::try_set_prob_(
 }
 
 void Sampler::set_prob(const std::string &name, float prob) {
-    bool found = try_set_prob_(m_signature.nullary_functions(), name, prob)
-        or try_set_prob_(m_signature.injective_functions(), name, prob)
-        or try_set_prob_(m_signature.binary_functions(), name, prob)
-        or try_set_prob_(m_signature.symmetric_functions(), name, prob);
+    bool found = try_set_prob_(m_signature.nullary_functions(), name, prob) or
+                 try_set_prob_(m_signature.injective_functions(), name, prob) or
+                 try_set_prob_(m_signature.binary_functions(), name, prob) or
+                 try_set_prob_(m_signature.symmetric_functions(), name, prob);
     POMAGMA_ASSERT(found, "failed to set prob of function: " << name);
     m_bounded_samplers.clear();
 }
@@ -173,9 +173,9 @@ inline Sampler::Arity Sampler::BoundedSampler::sample_arity(rng_t &rng) const {
     float r = random_point(rng);
     // FIXME valgrind complains about the following lines,
     // "Conditional jump or move depends on uninitialised value(s)"
-    if (binary and(r -= binary) < 0) return BINARY;
-    if (symmetric and(r -= symmetric) < 0) return SYMMETRIC;
-    if (injective and(r -= injective) < 0) return INJECTIVE;
+    if (binary and (r -= binary) < 0) return BINARY;
+    if (symmetric and (r -= symmetric) < 0) return SYMMETRIC;
+    if (injective and (r -= injective) < 0) return INJECTIVE;
     return NULLARY;
 }
 
@@ -189,8 +189,8 @@ inline Sampler::Arity Sampler::BoundedSampler::sample_compound_arity(
     float r = random_point(rng);
     // FIXME valgrind complains about the following lines,
     // "Conditional jump or move depends on uninitialised value(s)"
-    if (symmetric and(r -= compound_symmetric) < 0) return SYMMETRIC;
-    if (injective and(r -= compound_injective) < 0) return INJECTIVE;
+    if (symmetric and (r -= compound_symmetric) < 0) return SYMMETRIC;
+    if (injective and (r -= compound_injective) < 0) return INJECTIVE;
     return BINARY;
 }
 
@@ -226,16 +226,13 @@ Ob Sampler::try_insert_random(rng_t &rng, Policy &policy) const {
                 // POMAGMA_DEBUG1("sampling at depth " << depth);
                 ob = insert_random_compound(ob, depth, rng, policy);
             }
-        }
-        catch (ObInsertedException e) {
+        } catch (ObInsertedException e) {
             m_sample_count += 1;
             return e.inserted;
-        }
-        catch (ObRejectedException) {
+        } catch (ObRejectedException) {
             m_reject_count += 1;
             continue;
-        }
-        catch (InsertionFailedException e) {
+        } catch (InsertionFailedException e) {
             return 0;
         }
         POMAGMA_ERROR("unreachable");

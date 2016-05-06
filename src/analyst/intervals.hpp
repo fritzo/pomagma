@@ -55,8 +55,8 @@ struct VectorPodHash {
 template <class T>
 struct VectorPodEqual {
     bool operator()(const std::vector<T> &x, const std::vector<T> &y) const {
-        return x.size() == y.size() and not
-                               memcmp(x.data(), y.data(), x.size() * sizeof(T));
+        return x.size() == y.size() and
+               not memcmp(x.data(), y.data(), x.size() * sizeof(T));
     }
 };
 

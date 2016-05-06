@@ -77,9 +77,8 @@ void validate(Signature &signature) {
         std::string negated = signature.negate(name);
         if (name < negated) {
             if (auto *neg = signature.binary_relation(negated)) {
-                threads.push_back(std::thread([pos, neg]() {
-                    pos->validate_disjoint(*neg);
-                }));
+                threads.push_back(std::thread(
+                    [pos, neg]() { pos->validate_disjoint(*neg); }));
             }
         }
     }
@@ -639,9 +638,8 @@ void update_functions_and_relations(Signature &signature,
 
     // do expensive tasks in parallel
     for (const auto &pair : signature.binary_relations()) {
-        threads.push_back(std::thread([&]() {
-            update_data(carrier, *pair.second, pair.first, hash);
-        }));
+        threads.push_back(std::thread(
+            [&]() { update_data(carrier, *pair.second, pair.first, hash); }));
     }
     for (const auto &pair : signature.binary_functions()) {
         threads.push_back(std::thread([&]() {

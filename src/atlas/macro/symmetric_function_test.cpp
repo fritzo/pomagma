@@ -20,7 +20,7 @@ struct Example {
         for (auto i = support.iter(); i.ok(); i.next())
             for (auto j = support.iter(); j.ok(); j.next()) {
                 Ob k = gcd(*i, *j);
-                if ((k > 1)and carrier.contains(k)) {
+                if ((k > 1) and carrier.contains(k)) {
                     fun.insert(*i, *j, k);
                 }
             }
@@ -30,7 +30,7 @@ struct Example {
         for (auto i = support.iter(); i.ok(); i.next())
             for (auto j = support.iter(); j.ok(); j.next()) {
                 Ob k = gcd(*i, *j);
-                if ((k > 1)and carrier.contains(k)) {
+                if ((k > 1) and carrier.contains(k)) {
                     POMAGMA_ASSERT(fun.defined(*i, *j), "missing pair "
                                                             << *i << ',' << *j);
                     POMAGMA_ASSERT(fun.find(*i, *j) == k,

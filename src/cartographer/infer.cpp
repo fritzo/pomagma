@@ -151,7 +151,6 @@ inline void infer_less_monotone_nonconst(const BinaryRelation& LESS,
     for (auto iter = LESS.iter_lhs(f); iter.ok(); iter.next()) {
         Ob g = *iter;
         if (unlikely(g == f)) {
-
             for (auto iter = fun.iter_lhs(f); iter.ok(); iter.next()) {
                 Ob x = *iter;
                 Ob fx = fun.find(f, x);
@@ -165,7 +164,6 @@ inline void infer_less_monotone_nonconst(const BinaryRelation& LESS,
             }
 
         } else if (nonconst(g)) {
-
             x_set.set_insn(fun.get_Lx_set(f), fun.get_Lx_set(g));
             for (auto iter = x_set.iter(); iter.ok(); iter.next()) {
                 Ob x = *iter;
@@ -191,7 +189,6 @@ inline void infer_less_monotone_nonconst(const BinaryRelation& LESS,
             }
 
         } else if (Ob g_ = fun.find(g, g)) {
-
             for (auto iter = fun.iter_lhs(f); iter.ok(); iter.next()) {
                 Ob x = *iter;
                 Ob fx = fun.find(f, x);
@@ -208,7 +205,6 @@ inline void infer_less_monotone_const(const BinaryRelation& LESS,
     for (auto iter = LESS.iter_lhs(f); iter.ok(); iter.next()) {
         Ob g = *iter;
         if (nonconst(g)) {
-
             for (auto iter = fun.iter_lhs(g); iter.ok(); iter.next()) {
                 Ob x = *iter;
                 Ob gx = fun.find(g, x);
@@ -216,7 +212,6 @@ inline void infer_less_monotone_const(const BinaryRelation& LESS,
             }
 
         } else if (Ob g_ = fun.find(g, g)) {
-
             theorems.try_push(f_, g_);
         }
     }
@@ -246,13 +241,11 @@ void infer_less_monotone(const Carrier& carrier, BinaryRelation& LESS,
                 continue;
             }
             if (nonconst(f)) {
-
                 infer_less_monotone_nonconst(LESS, fun, nonconst, f, x_set,
                                              y_set, theorems);
                 theorems.flush(mutex);
 
             } else if (Ob f_ = fun.find(f, f)) {
-
                 infer_less_monotone_const(LESS, fun, nonconst, f, f_, theorems);
                 theorems.flush(mutex);
             }
@@ -503,9 +496,8 @@ void infer_less_linear(const Carrier& carrier, BinaryRelation& LESS,
 //      NLESS x y               NLESS x y
 inline bool infer_nless_transitive(const BinaryRelation& LESS,
                                    const BinaryRelation& NLESS, Ob x, Ob y) {
-    return NLESS.get_Lx_set(x)
-        .intersects(LESS.get_Lx_set(y)) or LESS.get_Rx_set(x)
-        .intersects(NLESS.get_Rx_set(y));
+    return NLESS.get_Lx_set(x).intersects(LESS.get_Lx_set(y)) or
+           LESS.get_Rx_set(x).intersects(NLESS.get_Rx_set(y));
 }
 
 // NLESS fun x z fun y z   NLESS fun z x fun z y
@@ -517,7 +509,6 @@ inline bool infer_nless_monotone(const BinaryRelation& NLESS,
                                  DenseSet& z_set) {
     if (nonconst(x)) {
         if (nonconst(y)) {
-
             z_set.set_insn(fun.get_Lx_set(x), fun.get_Lx_set(y));
             for (auto iter = z_set.iter(); iter.ok(); iter.next()) {
                 Ob z = *iter;
@@ -529,7 +520,6 @@ inline bool infer_nless_monotone(const BinaryRelation& NLESS,
             }
 
         } else if (Ob y_ = fun.find(y, y)) {
-
             DenseSet nless = NLESS.get_Rx_set(y_);
             for (auto iter = fun.iter_lhs(x); iter.ok(); iter.next()) {
                 Ob z = *iter;
@@ -541,7 +531,6 @@ inline bool infer_nless_monotone(const BinaryRelation& NLESS,
         }
     } else if (Ob x_ = fun.find(x, x)) {
         if (nonconst(y)) {
-
             DenseSet nless = NLESS.get_Lx_set(x_);
             for (auto iter = fun.iter_lhs(y); iter.ok(); iter.next()) {
                 Ob z = *iter;
@@ -596,8 +585,8 @@ class BinaryTheoremQueue : noncopyable {
     };
     struct Eq {
         bool operator()(const Task& task1, const Task& task2) const {
-            return task1.lhs == task2.lhs and task1.rhs ==
-                   task2.rhs and task1.val == task2.val;
+            return task1.lhs == task2.lhs and task1.rhs == task2.rhs and
+                   task1.val == task2.val;
         }
     };
 
@@ -612,7 +601,7 @@ class BinaryTheoremQueue : noncopyable {
         Ob val1 = FUN.find(lhs1, rhs1);
         Ob val2 = FUN.find(lhs2, rhs2);
         if (unlikely(val1 != val2)) {
-            if (val2 == 0 or(val1 != 0 and val2 > val1)) {
+            if (val2 == 0 or (val1 != 0 and val2 > val1)) {
                 m_tasks.insert({lhs2, rhs2, val1});
             } else {
                 m_tasks.insert({lhs1, rhs1, val2});
@@ -808,7 +797,6 @@ size_t infer_const(Structure& structure) {
         }
 
         if (TOP and BOT) {
-
             temp_set.set_ppn(APP.get_Rx_set(TOP), APP.get_Rx_set(BOT),
                              const_set);
             for (auto iter = temp_set.iter(); iter.ok(); iter.next()) {
@@ -926,12 +914,13 @@ size_t infer_nless(Structure& structure) {
                 POMAGMA_ASSERT_UNDECIDED(LESS, x, y);
                 POMAGMA_ASSERT_UNDECIDED(NLESS, x, y);
 
-                if (infer_nless_transitive(LESS, NLESS, x, y)
-                    or infer_nless_monotone(NLESS, APP, nonconst, x, y, z_set)
-                    or infer_nless_monotone(NLESS, COMP, nonconst, x, y, z_set)
-                    or(JOIN and infer_nless_monotone(NLESS, *JOIN, x, y, z_set))
-                    or(RAND and
-                           infer_nless_monotone(NLESS, *RAND, x, y, z_set))) {
+                if (infer_nless_transitive(LESS, NLESS, x, y) or
+                    infer_nless_monotone(NLESS, APP, nonconst, x, y, z_set) or
+                    infer_nless_monotone(NLESS, COMP, nonconst, x, y, z_set) or
+                    (JOIN and
+                     infer_nless_monotone(NLESS, *JOIN, x, y, z_set)) or
+                    (RAND and
+                     infer_nless_monotone(NLESS, *RAND, x, y, z_set))) {
                     theorems.push(x, y);
                 }
             }

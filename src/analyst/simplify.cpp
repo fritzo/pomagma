@@ -98,25 +98,15 @@ class Simplifier::Reducer {
         return {0, "EQUAL " + lhs.route + " " + rhs.route};
     }
 
-    Term reduce_hole() {
-        return {0, "HOLE"};
-    }
+    Term reduce_hole() { return {0, "HOLE"}; }
 
-    Term reduce_var(const std::string& name) {
-        return {0, "VAR " + name};
-    }
+    Term reduce_var(const std::string& name) { return {0, "VAR " + name}; }
 
-    Term reduce_error(const std::string& token) {
-        return {0, token};
-    }
+    Term reduce_error(const std::string& token) { return {0, token}; }
 
    private:
-    Term semi_true() {
-        return {0, "I"};
-    }
-    Term semi_false() {
-        return {0, "BOT"};
-    }
+    Term semi_true() { return {0, "I"}; }
+    Term semi_false() { return {0, "BOT"}; }
 
     Signature& m_signature;
     const BinaryRelation& m_nless;

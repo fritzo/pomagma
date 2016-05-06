@@ -39,8 +39,8 @@ std::vector<std::pair<Ob, Ob>> conjecture_equal(
 
     POMAGMA_DEBUG("sorting conjectures");
     max_count = std::min(max_count, conjectures.size());
-    auto sort_by_prob = [&](const std::pair<Ob, Ob>& x,
-                            const std::pair<Ob, Ob>& y) {
+    auto sort_by_prob =
+        [&](const std::pair<Ob, Ob>& x, const std::pair<Ob, Ob>& y) {
         return probs[x.first] * probs[x.second] >
                probs[y.first] * probs[y.second];
     };

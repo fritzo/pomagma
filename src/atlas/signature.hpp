@@ -65,13 +65,13 @@ class Signature : noncopyable {
     const std::unordered_map<std::string, BinaryRelation *> &binary_relations()
         const;
     const std::unordered_map<std::string, NullaryFunction *> &
-        nullary_functions() const;
+    nullary_functions() const;
     const std::unordered_map<std::string, InjectiveFunction *> &
-        injective_functions() const;
+    injective_functions() const;
     const std::unordered_map<std::string, BinaryFunction *> &binary_functions()
         const;
     const std::unordered_map<std::string, SymmetricFunction *> &
-        symmetric_functions() const;
+    symmetric_functions() const;
 
     std::string negate(const std::string &name) const {
         POMAGMA_ASSERT(not name.empty(), "cannot negate empty name");

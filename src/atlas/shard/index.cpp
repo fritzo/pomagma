@@ -156,7 +156,6 @@ topic_t Index::try_find_cell_to_execute(Program program,
     const uint8_t* args = program + 2;
 
     switch (op_code) {
-
         // These can execute in any cell.
         case PADDING:
         case SEQUENCE:

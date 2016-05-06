@@ -62,7 +62,7 @@ void test_merge(Carrier& carrier, rng_t& rng) {
         for (auto dep_iter = support.iter(); dep_iter.ok(); dep_iter.next()) {
             Ob dep = carrier.find(*dep_iter);
             Ob rep = carrier.find(*rep_iter);
-            if ((rep < dep)and randomly_merge(rng)) {
+            if ((rep < dep) and randomly_merge(rng)) {
                 carrier.merge(dep, rep);
                 ++merge_count;
                 break;

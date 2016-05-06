@@ -106,7 +106,6 @@ void VirtualMachine::_execute(Program program, Context *context) const {
     }
 
     switch (op_code) {
-
         case PADDING: {
             POMAGMA_ERROR("executed padding");
         } break;

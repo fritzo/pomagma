@@ -35,9 +35,9 @@ struct EqExprPtr {
                     const std::shared_ptr<Expr> &rhs) const {
         POMAGMA_ASSERT1(lhs, "lhs is null");
         POMAGMA_ASSERT1(rhs, "rhs is null");
-        return lhs->arity == rhs->arity and lhs->name ==
-               rhs->name and lhs->args[0].get() ==
-               rhs->args[0].get() and lhs->args[1].get() == rhs->args[1].get();
+        return lhs->arity == rhs->arity and lhs->name == rhs->name and
+               lhs->args[0].get() == rhs->args[0].get() and
+               lhs->args[1].get() == rhs->args[1].get();
     }
 };
 

@@ -42,8 +42,8 @@ class Corpus {
         };
 
         bool operator==(const Term &o) const {
-            return arity == o.arity and name == o.name and arg0 ==
-                   o.arg0 and arg1 == o.arg1 and ob == o.ob;
+            return arity == o.arity and name == o.name and arg0 == o.arg0 and
+                   arg1 == o.arg1 and ob == o.ob;
         }
         bool operator!=(const Term &o) const { return not operator==(o); }
 

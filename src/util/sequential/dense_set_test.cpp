@@ -330,8 +330,8 @@ void test_operations(size_t size, float prob, rng_t &rng) {
     expected.zero();
     actual.zero();
     for (Ob i = 1; i <= size; ++i) {
-        if (w.contains(i) and x.contains(i) and not y.contains(i)
-            and not z.contains(i)) {
+        if (w.contains(i) and x.contains(i) and not y.contains(i) and
+            not z.contains(i)) {
             expected.insert(i);
         }
     }

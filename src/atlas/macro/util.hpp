@@ -68,9 +68,7 @@ struct TrivialObPairHash {
 #if POMAGMA_USE_SPARSE_HASH == 1
 
 struct ObPairMap : google::sparse_hash_map<std::pair<Ob, Ob>, Ob, ObPairHash> {
-    ObPairMap() {
-        set_deleted_key({0, 0});
-    }
+    ObPairMap() { set_deleted_key({0, 0}); }
 };
 
 #elif POMAGMA_USE_SPARSE_HASH == 2

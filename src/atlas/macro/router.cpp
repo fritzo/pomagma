@@ -274,7 +274,6 @@ std::vector<std::string> Router::find_routes() const {
     POMAGMA_DEBUG("building full routes");
     std::vector<std::string> routes(1 + item_count);
     for (Ob ob : schedule) {
-
         const Segment& segment = best_segments[ob];
         const SegmentType& type = m_types[segment.type];
         switch (type.arity) {
@@ -389,7 +388,6 @@ void Router::update_weights(
     std::vector<float> temp_ob_weights(ob_weights.size());
 
 update_weights_loop : {
-
     POMAGMA_DEBUG("distributing route weight");
 
     std::fill(temp_symbol_weights.begin(), temp_symbol_weights.end(), 0);

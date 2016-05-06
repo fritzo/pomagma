@@ -38,7 +38,6 @@ void base_bin_rel_<symmetric>::validate() const {
     support().validate();
 
     if (symmetric) {
-
         // check emptiness outside of support
         const DenseSet set(item_dim(), nullptr);
         const DenseSet round_set(m_round_item_dim, nullptr);
@@ -66,7 +65,6 @@ void base_bin_rel_<symmetric>::validate() const {
         }
 
     } else {
-
         // check emptiness outside of support
         DenseSet set(item_dim(), nullptr);
         DenseSet round_set(m_round_item_dim, nullptr);
