@@ -1,0 +1,37 @@
+package pomagma.protobuf;
+
+message ReducerRequest {
+  message Stop {
+  }
+  message Validate {
+  }
+  message Reduce {
+    required string code = 1;
+    optional uint64 budget = 2 [default = 0];
+  }
+
+  repeated string error_log = 1;
+  optional string id = 2;
+  optional Stop stop = 3;
+  optional Validate validate = 4;
+  optional Reduce reduce = 5;
+}
+
+message ReducerResponse {
+  message Stop {
+  }
+  message Validate {
+    required bool valid = 1;
+    repeated string errors = 2;
+  }
+  message Reduce {
+    optional string code = 1;
+    optional uint64 budget = 2;
+  }
+
+  repeated string error_log = 1;
+  optional string id = 2;
+  optional Stop stop = 3;
+  optional Validate validate = 4;
+  optional Reduce reduce = 5;
+}
