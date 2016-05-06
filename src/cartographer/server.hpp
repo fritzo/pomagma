@@ -40,7 +40,7 @@ class Server {
                                              const std::string& equal_out,
                                              size_t max_count);
 
-    void stop();
+    void stop() { m_serving = false; }
 
     void serve(const char* address);
 };

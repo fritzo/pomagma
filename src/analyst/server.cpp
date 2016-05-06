@@ -152,10 +152,8 @@ pomagma::Trool Server::validate_facts(
     return propagate::lazy_validate(theory, m_intervals_approximator);
 }
 
-namespace {
-
-protobuf::AnalystResponse handle(Server& server,
-                                 protobuf::AnalystRequest& request) {
+static protobuf::AnalystResponse handle(Server& server,
+                                        protobuf::AnalystRequest& request) {
     POMAGMA_INFO("Handling request");
     protobuf::AnalystResponse response;
     typedef protobuf::AnalystResponse::Trool Trool;
@@ -287,8 +285,6 @@ protobuf::AnalystResponse handle(Server& server,
 
     return response;
 }
-
-}  // anonymous namespace
 
 #define POMAGMA_ASSERT_C(cond) \
     POMAGMA_ASSERT((cond), "Failed (" #cond "): " << strerror(errno))
