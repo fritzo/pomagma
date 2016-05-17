@@ -753,7 +753,7 @@ size_t infer_transpose(Structure& structure, const BinaryFunction& APP,
     return theorem_count;
 }
 
-}  // anonymous namespace
+}  // namespace
 
 // ---------------------   ----------------------------
 // EQUAL APP APP K x y x   EQUAL COMP APP K x y APP K x

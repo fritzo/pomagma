@@ -5,23 +5,27 @@
 #include <pomagma/util/util.hpp>
 
 namespace pomagma {
+namespace reducer {
 
 class Server {
-    reducer::Engine m_engine;
-    reducer::EngineIO m_io;
-    std::vector<std::string> m_error_log;
-
    public:
     Server();
     ~Server();
 
-    bool validate();
+    bool validate(std::vector<std::string>& errors);
     std::string reduce(const std::string& code, size_t budget);
-    void stop();
+    void stop() { serving_ = false; }
 
     void serve(const char* address);
 
     std::vector<std::string> flush_errors();
+
+   private:
+    reducer::Engine engine_;
+    reducer::EngineIO io_;
+    std::vector<std::string> error_log_;
+    bool serving_;
 };
 
+}  // namespace reducer
 }  // namespace pomagma

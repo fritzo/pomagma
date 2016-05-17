@@ -18,7 +18,7 @@ int main(int argc, char** argv) {
 
     const char* address = argv[3];
 
-    pomagma::Server().serve(address);
+    pomagma::reducer::Server().serve(address);
 
     return 0;
 }

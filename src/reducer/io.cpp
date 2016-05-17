@@ -41,12 +41,12 @@ Ob EngineIO::parse(const std::string& str, std::vector<std::string>& errors) {
 Ob EngineIO::parse(std::stringstream& stream, std::string& token,
                    std::vector<std::string>& errors) {
     if (not std::getline(stream, token, ' ')) {
-        POMAGMA_LOG_TO(error, "parse error: early termination");
+        POMAGMA_LOG_TO(errors, "parse error: early termination");
         return 0;
     }
     if (token == "APP") {
-        Ob lhs = parse(stream, token);
-        Ob rhs = parse(stream, token);
+        Ob lhs = parse(stream, token, errors);
+        Ob rhs = parse(stream, token, errors);
         if (not(lhs and rhs)) {
             return 0;
         }

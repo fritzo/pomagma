@@ -1,13 +1,10 @@
 #pragma once
 
 #include <cstdint>
+#include <pomagma/third_party/farmhash/farmhash.h>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
-
-namespace util {
-uint64_t Fingerprint(uint64_t key);
-}
 
 namespace pomagma {
 namespace reducer {

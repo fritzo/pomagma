@@ -22,7 +22,7 @@ void schedule_merge_if_consistent(Ob dep) {
     }
 }
 
-}  // anonymous namespace
+}  // namespace
 
 void configure_scheduler_to_merge_if_consistent(Structure& structure) {
     g_checker_carrier = &structure.carrier();

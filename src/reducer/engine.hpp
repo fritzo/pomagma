@@ -78,6 +78,7 @@ class Engine {
 
     // TODO Allow nondeterminstic SKJ execution as in combinator.py.
     Ob reduce(Ob term, size_t& budget, Ob begin_var = -1);
+    Ob memoized_reduce(Ob ob, size_t budget, Ob begin_var);
 
     // TODO
     // void clear();

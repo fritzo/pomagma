@@ -197,12 +197,8 @@ void Server::execute(const std::string& program) {
     }
 }
 
-void Server::stop() { m_serving = false; }
-
-namespace {
-
-protobuf::CartographerResponse handle(Server& server,
-                                      protobuf::CartographerRequest& request) {
+static protobuf::CartographerResponse handle(
+    Server& server, protobuf::CartographerRequest& request) {
     POMAGMA_INFO("Handling request");
     Timer timer;
     protobuf::CartographerResponse response;
@@ -288,8 +284,6 @@ protobuf::CartographerResponse handle(Server& server,
     POMAGMA_INFO("Handled request in " << timer.elapsed() << " sec");
     return response;
 }
-
-}  // anonymous namespace
 
 #define POMAGMA_ASSERT_C(cond) \
     POMAGMA_ASSERT((cond), "Failed (" #cond "): " << strerror(errno))

@@ -2,34 +2,44 @@
 #include <pomagma/reducer/server.hpp>
 #include <zmq.h>
 
+using pomagma::reducer::Ob;
+
 namespace pomagma {
+namespace reducer {
 
-Server::Server() : m_engine(), m_io(m_engine) {
+Server::Server() : engine_(), io_(engine_), error_log_(), serving_(false) {
     if (POMAGMA_DEBUG_LEVEL > 1) {
-        m_engine.validate();
+        engine_.validate(error_log_);
     }
-
-    Router router(m_structure.signature(), m_language);
-    m_probs = router.measure_probs();
-    m_routes = router.find_routes();
 }
 
 Server::~Server() {
-    for (const std::string& message : m_error_log) {
+    for (const std::string& message : error_log_) {
         POMAGMA_WARN(message);
     }
 }
 
-std::vector<std::string> Server::flush_errors() {
-    std::vector<std::string> result;
-    m_error_log.swap(result);
+bool Server::validate(std::vector<std::string>& errors) {
+    return engine_.validate(errors);
+}
+
+std::string Server::reduce(const std::string& code, size_t budget) {
+    std::string result;
+    if (Ob ob = io_.parse(code, error_log_)) {
+        Ob red = engine_.reduce(ob, budget);
+        result = io_.print(red);
+    }
     return result;
 }
 
-namespace {
+std::vector<std::string> Server::flush_errors() {
+    std::vector<std::string> result;
+    error_log_.swap(result);
+    return result;
+}
 
-protobuf::ReducerResponse handle(Server& server,
-                                 protobuf::ReducerRequest& request) {
+static protobuf::ReducerResponse handle(Server& server,
+                                        protobuf::ReducerRequest& request) {
     POMAGMA_INFO("Handling request");
     protobuf::ReducerResponse response;
 
@@ -40,20 +50,17 @@ protobuf::ReducerResponse handle(Server& server,
     if (request.has_reduce()) {
         size_t budget = request.reduce().budget();
         std::string code = request.reduce().code();
-        if (Ob ob = m_io.parse(code, m_error_log)) {
-            Ob red = m_engine.reduce(ob, budget);
-            code = m_io.print(red);
-        }
+        code = server.reduce(code, budget);
         response.mutable_reduce()->set_code(code);
         response.mutable_reduce()->set_budget(budget);
     }
 
     if (request.has_validate()) {
         std::vector<std::string> errors;
-        const bool valid = m_engine.validate(errors);
-        request.mutable_validate()->set_valid(valid);
+        const bool valid = server.validate(errors);
+        response.mutable_validate()->set_valid(valid);
         for (const std::string& error : errors) {
-            request.mutalbe_validate()->add_errors(error);
+            response.mutable_validate()->add_errors(error);
         }
     }
 
@@ -63,8 +70,6 @@ protobuf::ReducerResponse handle(Server& server,
 
     return response;
 }
-
-}  // anonymous namespace
 
 #define POMAGMA_ASSERT_C(cond) \
     POMAGMA_ASSERT((cond), "Failed (" #cond "): " << strerror(errno))
@@ -79,7 +84,7 @@ void Server::serve(const char* address) {
     POMAGMA_ASSERT_C((socket = zmq_socket(context, ZMQ_REP)));
     POMAGMA_ASSERT_C(0 == zmq_bind(socket, address));
 
-    while (true) {
+    for (serving_ = true; serving_;) {
         POMAGMA_DEBUG("waiting for request");
         POMAGMA_ASSERT_C(0 == zmq_msg_init(&message));
         POMAGMA_ASSERT_C(-1 != zmq_msg_recv(&message, socket, 0));
@@ -107,4 +112,5 @@ void Server::serve(const char* address) {
     }
 }
 
+}  // namespace reducer
 }  // namespace pomagma

@@ -39,7 +39,7 @@ Ob Engine::app(Ob lhs, Ob rhs) {
     }
 
     // Linearly normalize.
-    bool normalized = true;
+    bool normalized __attribute__((unused)) = true;
     while (true) {  // tail call optimized.
         if (not is_app(lhs)) {
             if (lhs == atom_I) {
@@ -69,7 +69,7 @@ Ob Engine::app(Ob lhs, Ob rhs) {
             }
             if (lhs_lhs_lhs == atom_C) {
                 Ob x = get_rhs(lhs_lhs);
-                Ob y = get_rhs(lhs);
+                get_rhs(lhs);
                 Ob z = rhs;
                 lhs = app(x, z);  // Recurse.
                 rhs = z;
@@ -105,6 +105,7 @@ Ob Engine::app(Ob lhs, Ob rhs) {
         Vlr_table_.resize(rep_.size());
         Vlr_table_[val].insert({lhs, rhs});
 
+#if 0
         // -------- BEGIN --------
         // Is the rep-chain actually needed outside of merging?
         if (normalized and is_normal(lhs) and is_normal(rhs)) {
@@ -113,6 +114,7 @@ Ob Engine::app(Ob lhs, Ob rhs) {
     } else if (Ob red_val = rep_[val].red) {
         val = red_val;
         // -------- END --------
+#endif  // 0
     }
 
     assert_weak_red(val);
@@ -209,7 +211,7 @@ Ob Engine::reduce(Ob ob, size_t& budget, Ob begin_var) {
             } break;
             case atom_B: {
                 POMAGMA_ASSERT1(stack.size() < 3, "not in linear normal form");
-                ob x = pop(stack, end_var);
+                Ob x = pop(stack, end_var);
                 Ob y = pop(stack, end_var);
                 Ob z = pop(stack, end_var);
                 ob = app(x, app(y, z));
@@ -237,13 +239,13 @@ Ob Engine::reduce(Ob ob, size_t& budget, Ob begin_var) {
                 budget -= 1;
                 POMAGMA_ASSERT1(stack.size() < 3 or is_app(stack[2]),
                                 "not in linear normal form");
-                ob x = pop(stack, end_var);
+                Ob x = pop(stack, end_var);
                 Ob y = pop(stack, end_var);
                 Ob z = pop(stack, end_var);
                 ob = app(app(x, z), app(y, z));
             } break;
             default:
-                POMAGMA_ASSERT1(is_var(ob));
+                POMAGMA_ASSERT1(is_var(ob), "not a variable");
         }
     }
 
@@ -282,7 +284,8 @@ void Engine::merge(Ob dep) {
     POMAGMA_ASSERT1(merge_queue_.empty(), "programmer error");
     merge_queue_.insert(dep);
     do {
-        auto i = merge_queue_.begin() Ob ob = *i;
+        auto i = merge_queue_.begin();
+        dep = *i;
         merge_queue_.erase(i);
         Ob rep = rep_[dep].red;
         POMAGMA_ASSERT_NE(dep, rep);
@@ -306,8 +309,8 @@ void Engine::merge(Ob dep) {
             Lrv_table_[pair.first].erase({dep, pair.second});
             Lrv_table_[pair.first].insert({rep, pair.second});
 
-            RLv_table_.erase({dep, pair.first});
-            auto inserted = LRv_table_.insert({{rep, pair.first}, pair.second});
+            LRv_table_.erase({pair.first, dep});
+            auto inserted = LRv_table_.insert({{pair.first, rep}, pair.second});
             if (not inserted.second and inserted.first->second != pair.second) {
                 TODO("merge inserted.first->second with pair.second");
             }
