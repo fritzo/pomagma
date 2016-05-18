@@ -7,14 +7,15 @@
 namespace pomagma {
 namespace reducer {
 
-class Server {
+class Server : noncopyable {
    public:
     Server();
     ~Server();
 
-    bool validate(std::vector<std::string>& errors);
-    std::string reduce(const std::string& code, size_t budget);
     void stop() { serving_ = false; }
+    bool validate(std::vector<std::string>& errors);
+    void reset();
+    std::string reduce(const std::string& code, size_t budget);
 
     void serve(const char* address);
 

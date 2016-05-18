@@ -3,18 +3,7 @@
 namespace pomagma {
 namespace reducer {
 
-Engine::Engine() {
-    const size_t dim = 1 + atom_count;  // null + atoms
-    rep_.resize(dim);
-    Lrv_table_.resize(dim);
-    Rlv_table_.resize(dim);
-    Vlr_table_.resize(dim);
-
-    // Atoms are themselves reduced.
-    for (size_t i = 1; i <= atom_count; ++i) {
-        rep_[i].red = i;
-    }
-}
+Engine::Engine() { reset(); }
 
 Engine::~Engine() {
     POMAGMA_INFO("Engine ob count = " << (rep_.size() - 1));
@@ -24,6 +13,41 @@ Engine::~Engine() {
 bool Engine::validate(std::vector<std::string>& errors) const {
     errors.push_back("TODO Validate all terms are linear normal forms.");
     return true;
+}
+
+void Engine::assert_valid() const {
+    std::vector<std::string> errors;
+    if (validate(errors)) return;
+    for (const std::string& error : errors) {
+        POMAGMA_WARN(error);
+    }
+    POMAGMA_ERROR("Engine is invalid");
+}
+
+void Engine::reset() {
+    // Clear data.
+    POMAGMA_ASSERT(merge_queue_.empty(), "tried to reset() while merging");
+    LRv_table_.clear();
+    Lrv_table_.clear();
+    Rlv_table_.clear();
+    Vlr_table_.clear();
+    rep_.clear();
+
+    // Initialize to default state.
+    const size_t dim = 1 + atom_count;  // null + atoms
+    Lrv_table_.resize(dim);
+    Rlv_table_.resize(dim);
+    Vlr_table_.resize(dim);
+    rep_.resize(dim);
+
+    // Initialize atoms to be reduced.
+    for (size_t i = 1; i <= atom_count; ++i) {
+        rep_[i].red = i;
+    }
+
+    if (POMAGMA_DEBUG_LEVEL) {
+        assert_valid();
+    }
 }
 
 Ob Engine::app(Ob lhs, Ob rhs) {

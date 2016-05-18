@@ -5,6 +5,8 @@ message ReducerRequest {
   }
   message Validate {
   }
+  message Reset {
+  }
   message Reduce {
     required string code = 1;
     optional uint64 budget = 2 [default = 0];
@@ -14,7 +16,8 @@ message ReducerRequest {
   optional string id = 2;
   optional Stop stop = 3;
   optional Validate validate = 4;
-  optional Reduce reduce = 5;
+  optional Reset reset = 5;
+  optional Reduce reduce = 6;
 }
 
 message ReducerResponse {
@@ -23,6 +26,8 @@ message ReducerResponse {
   message Validate {
     required bool valid = 1;
     repeated string errors = 2;
+  }
+  message Reset {
   }
   message Reduce {
     optional string code = 1;
@@ -33,5 +38,6 @@ message ReducerResponse {
   optional string id = 2;
   optional Stop stop = 3;
   optional Validate validate = 4;
-  optional Reduce reduce = 5;
+  optional Reset reset = 5;
+  optional Reduce reduce = 6;
 }

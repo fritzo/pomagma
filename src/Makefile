@@ -1,5 +1,5 @@
 
-protobuf: compiler/syntax_pb2.py language/language_pb2.py atlas/structure_pb2.py cartographer/messages_pb2.py analyst/messages_pb2.py io/protobuf_test_pb2.py
+protobuf: compiler/syntax_pb2.py language/language_pb2.py atlas/structure_pb2.py cartographer/messages_pb2.py analyst/messages_pb2.py reducer/messages_pb2.py io/protobuf_test_pb2.py
 
 compiler/syntax_pb2.py: compiler/syntax.proto
 	cd compiler ; protoc syntax.proto --python_out=. --cpp_out=.
@@ -15,6 +15,9 @@ cartographer/messages_pb2.py: cartographer/messages.proto
 
 analyst/messages_pb2.py: analyst/messages.proto
 	cd analyst ; protoc messages.proto --python_out=. --cpp_out=.
+
+reducer/messages_pb2.py: reducer/messages.proto
+	cd reducer ; protoc messages.proto --python_out=. --cpp_out=.
 
 io/protobuf_test_pb2.py: io/protobuf_test.proto
 	cd io ; protoc protobuf_test.proto --python_out=. --cpp_out=.

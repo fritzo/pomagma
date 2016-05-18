@@ -20,8 +20,17 @@ EngineIO::EngineIO(Engine& engine)
           {"B", Engine::atom_B},
           {"C", Engine::atom_C},
           {"S", Engine::atom_S},
+          {"BOT", Engine::atom_BOT},
+          {"TOP", Engine::atom_TOP},
       }),
-      atom_to_name_({"", "I", "K", "B", "C", "S"}) {}
+      atom_to_name_({"", "I", "K", "B", "C", "S", "BOT", "TOP"}) {
+    // Check that name_to_atom_ and atom_to_name_ agree.
+    if (POMAGMA_DEBUG_LEVEL) {
+        for (Ob ob = 1; ob < Engine::atom_count; ++ob) {
+            POMAGMA_ASSERT_EQ(ob, map_find(name_to_atom_, atom_to_name_[ob]));
+        }
+    }
+}
 
 Ob EngineIO::parse(const std::string& str, std::vector<std::string>& errors) {
     std::stringstream stream(str);
@@ -61,6 +70,7 @@ Ob EngineIO::parse(std::stringstream& stream, std::string& token,
 }
 
 std::string EngineIO::print(Ob ob) const {
+    POMAGMA_ASSERT_LT(0, ob);
     std::string result;
     append(ob, result);
     return result;
@@ -69,7 +79,7 @@ std::string EngineIO::print(Ob ob) const {
 void EngineIO::append(Ob ob, std::string& append_str) const {
     static const std::string atoms[] = {"", "I", "K", "B", "C", "S"};
     if (engine_.is_atom(ob)) {
-        append_str.append(atoms[ob]);
+        append_str.append(atom_to_name_[ob]);
     } else {
         append_str.append("APP ");
         append(engine_.get_lhs(ob), append_str);

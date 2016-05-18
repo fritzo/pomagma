@@ -23,6 +23,8 @@ bool Server::validate(std::vector<std::string>& errors) {
     return engine_.validate(errors);
 }
 
+void Server::reset() { engine_.reset(); }
+
 std::string Server::reduce(const std::string& code, size_t budget) {
     std::string result;
     if (Ob ob = io_.parse(code, error_log_)) {
@@ -47,14 +49,6 @@ static protobuf::ReducerResponse handle(Server& server,
         response.set_id(request.id());
     }
 
-    if (request.has_reduce()) {
-        size_t budget = request.reduce().budget();
-        std::string code = request.reduce().code();
-        code = server.reduce(code, budget);
-        response.mutable_reduce()->set_code(code);
-        response.mutable_reduce()->set_budget(budget);
-    }
-
     if (request.has_validate()) {
         std::vector<std::string> errors;
         const bool valid = server.validate(errors);
@@ -62,6 +56,19 @@ static protobuf::ReducerResponse handle(Server& server,
         for (const std::string& error : errors) {
             response.mutable_validate()->add_errors(error);
         }
+    }
+
+    if (request.has_reset()) {
+        server.reset();
+        response.mutable_reset();
+    }
+
+    if (request.has_reduce()) {
+        size_t budget = request.reduce().budget();
+        std::string code = request.reduce().code();
+        code = server.reduce(code, budget);
+        response.mutable_reduce()->set_code(code);
+        response.mutable_reduce()->set_budget(budget);
     }
 
     for (const std::string& message : server.flush_errors()) {

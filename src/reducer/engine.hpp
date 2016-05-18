@@ -49,7 +49,7 @@
 namespace pomagma {
 namespace reducer {
 
-class Engine {
+class Engine : noncopyable {
    public:
     enum : Ob {
         atom_I = 1,
@@ -66,11 +66,13 @@ class Engine {
     ~Engine();
 
     bool validate(std::vector<std::string>& errors) const;
+    void reset();
 
+    // Every ob is zero, a variable, an atom, or an app.
     static bool is_var(Ob ob) { return ob < 0; }
     static bool is_atom(Ob ob) { return 0 < ob and ob <= atom_count; }
     static bool is_app(Ob ob) { return atom_count < ob; }
-
+    // If an ob is an app, then it can be decomposed into lhs and rhs.
     Ob get_lhs(Ob ob) const;
     Ob get_rhs(Ob ob) const;
 
@@ -81,23 +83,21 @@ class Engine {
     Ob memoized_reduce(Ob ob, size_t budget, Ob begin_var);
 
     // TODO
-    // void clear();
     // void compact();
     // void dump(const string& filename) const;
     // void load(const string& filename);
     // void aggregate_from(const Engine& other);
 
    private:
+    void assert_valid() const;
     void assert_pos(Ob ob) const {
         POMAGMA_ASSERT_LT(0, ob);
         POMAGMA_ASSERT_LT(ob, static_cast<Ob>(rep_.size()));
     }
-
     void assert_red(Ob ob) const {
         assert_pos(ob);
         POMAGMA_ASSERT_EQ(rep_[ob].red, ob);
     }
-
     void assert_weak_red(Ob ob) const {
         assert_pos(ob);
         Ob red_pos = rep_[ob].red;
@@ -111,14 +111,7 @@ class Engine {
 
     void merge(Ob dep);  // Forward-chaining inference.
 
-    struct Term {
-        // lhs and rhs are used for pattern matching and read-back.
-        Ob lhs;
-        Ob rhs;
-        Ob red;
-    };
-
-    // Algebraic structure.
+    // Algebraic structure of the APP binary relation.
     // These are adapted from:
     // atlas/micro/binary_function.hpp
     // atlas/micro/inverse_bin_fun.hpp
@@ -128,6 +121,12 @@ class Engine {
     std::vector<ObPairSet> Vlr_table_;
 
     // Directed structure.
+    // lhs and rhs are used for pattern matching and read-back.
+    struct Term {
+        Ob lhs;
+        Ob rhs;
+        Ob red;
+    };
     std::vector<Term> rep_;
 
     // Forward-chaining inference state.
