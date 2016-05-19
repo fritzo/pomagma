@@ -77,7 +77,6 @@ std::string EngineIO::print(Ob ob) const {
 }
 
 void EngineIO::append(Ob ob, std::string& append_str) const {
-    static const std::string atoms[] = {"", "I", "K", "B", "C", "S"};
     if (engine_.is_atom(ob)) {
         append_str.append(atom_to_name_[ob]);
     } else {
