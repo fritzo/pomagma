@@ -6,7 +6,7 @@ namespace reducer {
 Engine::Engine() { reset(); }
 
 Engine::~Engine() {
-    POMAGMA_INFO("Engine ob count = " << (rep_.size() - 1));
+    POMAGMA_INFO("Engine ob count = " << (rep_table_.size() - 1));
     POMAGMA_INFO("Engine app count = " << LRv_table_.size());
 }
 
@@ -31,18 +31,11 @@ void Engine::reset() {
     Lrv_table_.clear();
     Rlv_table_.clear();
     Vlr_table_.clear();
-    rep_.clear();
-
-    // Initialize to default state.
-    const size_t dim = 1 + atom_count;  // null + atoms
-    Lrv_table_.resize(dim);
-    Rlv_table_.resize(dim);
-    Vlr_table_.resize(dim);
-    rep_.resize(dim);
+    rep_table_.clear();
 
     // Initialize atoms to be reduced.
-    for (size_t i = 1; i <= atom_count; ++i) {
-        rep_[i].red = i;
+    for (Ob i = 1; i <= atom_count; ++i) {
+        rep_table_.insert({i, {0, 0, i}});
     }
 
     if (POMAGMA_DEBUG_LEVEL) {
@@ -50,142 +43,105 @@ void Engine::reset() {
     }
 }
 
-Ob Engine::app(Ob lhs, Ob rhs) {
+// Aka update_term (python).
+inline void Engine::rep_normalize(Ob& ob) const {
+    while (Ob rep = map_find(rep_table_, ob).red) {
+        if (rep == ob) return;
+        ob = rep;
+    }
+}
+
+inline const std::unordered_map<Ob, Ob>& Engine::abstract(Ob body) const {
+    auto i = abstract_table_.find(body);
+    return (i == abstract_table_.end()) ? closed_table_ : i->second;
+}
+
+Ob Engine::abstract(Ob var, Ob body) {
+    // Rules BOT, TOP.
+    if (body == atom_TOP or body == atom_BOT) {
+        return body;
+    }
+    auto i = abstract_table_.find(body);
+    if (i != abstract_table_.end()) {
+        auto j = i->second.find(var);
+        if (j != i->second.end()) {
+            return j->second;
+        }
+    }
+    return get_app(atom_K, body);  // Rule K.
+}
+
+Ob Engine::create_app(Ob lhs, Ob rhs) {
     assert_pos(lhs);
     assert_pos(rhs);
+    rep_normalize(lhs);
+    rep_normalize(rhs);
 
-    // Check cache first.
+    // Precompute abstractions.
+    std::unordered_map<Ob, Ob> abs_term;
+    const std::unordered_map<Ob, Ob> abs_lhs = abstract(lhs);
+    const std::unordered_map<Ob, Ob> abs_rhs = abstract(rhs);
+    std::unordered_set<Ob> vars;
+    for (const auto& i : abs_lhs) {
+        vars.insert(i.first);
+    }
+    for (const auto& i : abs_rhs) {
+        vars.insert(i.first);
+    }
+    for (const Ob var : vars) {
+        const Ob abs_lhs_var = map_get(abs_lhs, var, 0);
+        const Ob abs_rhs_var = map_get(abs_rhs, var, 0);
+        if (abs_lhs_var) {
+            if (abs_rhs_var) {
+                // Rule S.
+                abs_term[var] =
+                    get_app(get_app(atom_S, abs_lhs_var), abs_rhs_var);
+            } else {
+                // Rule C.
+                abs_term[var] = get_app(get_app(atom_C, abs_lhs_var), rhs);
+            }
+        } else {
+            if (abs_rhs_var == atom_I) {
+                abs_term[var] = lhs;  // Rule eta.
+            } else {
+                // Rule B.
+                abs_term[var] = get_app(get_app(atom_B, lhs), abs_rhs_var);
+            }
+        }
+    }
+
+    // Create a new term.
+    const Ob val = 1 + rep_table_.size();
+    rep_table_.insert({val, {lhs, rhs, 0}});
+    LRv_table_.insert({{lhs, rhs}, val});
+    Lrv_table_[lhs].insert({rhs, val});
+    Lrv_table_[rhs].insert({lhs, val});
+    Vlr_table_[val].insert({lhs, rhs});
+    if (!abs_term.empty()) {
+        abstract_table_[val] = std::move(abs_term);
+    }
+
+    return val;
+}
+
+inline Ob Engine::get_app(Ob lhs, Ob rhs) {
+    assert_pos(lhs);
+    assert_pos(rhs);
+    rep_normalize(lhs);
+    rep_normalize(rhs);
+
+    // First check cache.
     {
-        auto i = LRv_table_.find(std::make_pair(lhs, rhs));
+        auto i = LRv_table_.find({lhs, rhs});
         if (i != LRv_table_.end()) {
             return i->second;
         }
     }
 
-    // Linearly normalize.
-    bool normalized __attribute__((unused)) = true;
-    while (true) {  // tail call optimized.
-        if (not is_app(lhs)) {
-            if (lhs == atom_I) {
-                return rhs;
-            }
-            if (lhs == atom_BOT or lhs == atom_TOP) {
-                return lhs;
-            }
-            break;
-        }
-        const Ob lhs_lhs = get_lhs(lhs);
-        if (not is_app(lhs_lhs)) {
-            if (lhs_lhs == atom_K) {
-                return get_rhs(lhs);
-            }
-            break;
-        }
-        const Ob lhs_lhs_lhs = get_lhs(lhs_lhs);
-        if (not is_app(lhs_lhs_lhs)) {
-            if (lhs_lhs_lhs == atom_B) {
-                Ob x = get_rhs(lhs_lhs);
-                Ob y = get_rhs(lhs);
-                Ob z = rhs;
-                lhs = x;
-                rhs = app(y, z);  // Recurse.
-                continue;
-            }
-            if (lhs_lhs_lhs == atom_C) {
-                Ob x = get_rhs(lhs_lhs);
-                get_rhs(lhs);
-                Ob z = rhs;
-                lhs = app(x, z);  // Recurse.
-                rhs = z;
-                continue;
-            }
-            if (lhs_lhs_lhs == atom_S) {
-                if (is_app(rhs)) {  // nonlinear
-                    normalized = false;
-                    break;
-                }
-                Ob x = get_rhs(lhs_lhs);
-                Ob y = get_rhs(lhs);
-                Ob z = rhs;
-                lhs = app(x, z);  // Recurse.
-                rhs = app(y, z);  // Recurse.
-                continue;
-            }
-            break;
-        }
-        break;
-    }
-
-    // Create.
-    Ob& val = LRv_table_[std::make_pair(lhs, rhs)];
-    if (not val) {
-        val = rep_.size();
-        rep_.push_back({lhs, rhs, 0});  // TODO get from free-list?
-        LRv_table_.insert({{lhs, rhs}, val});
-        Lrv_table_.resize(rep_.size());
-        Lrv_table_[lhs].insert({rhs, val});
-        Rlv_table_.resize(rep_.size());
-        Rlv_table_[rhs].insert({lhs, val});
-        Vlr_table_.resize(rep_.size());
-        Vlr_table_[val].insert({lhs, rhs});
-
-#if 0
-        // -------- BEGIN --------
-        // Is the rep-chain actually needed outside of merging?
-        if (normalized and is_normal(lhs) and is_normal(rhs)) {
-            rep_[val].red = val;
-        }
-    } else if (Ob red_val = rep_[val].red) {
-        val = red_val;
-        // -------- END --------
-#endif  // 0
-    }
-
-    assert_weak_red(val);
-    return val;
+    return create_app(lhs, rhs);
 }
 
-bool Engine::occurs(Ob var, Ob body) {
-    // TODO memoize
-    POMAGMA_ASSERT1(is_var(var), "occurs() called on non-variable");
-    return (var == body) or (is_app(body) and (occurs(var, get_lhs(body)) or
-                                               occurs(var, get_rhs(body))));
-}
-
-Ob Engine::abstract(Ob var, Ob body) {
-    // TODO memoize
-    POMAGMA_ASSERT1(is_var(var), "abstract() called on non-variable");
-    if (body == var) {
-        return atom_I;
-    } else if (body == atom_BOT or body == atom_TOP) {
-        return body;
-    } else if (not occurs(var, body)) {
-        return app(atom_K, body);
-    }
-
-    // Otherwise the ob must be an application.
-    POMAGMA_ASSERT1(is_app(body), "programmer error");
-    const Ob lhs = get_lhs(body);
-    const Ob rhs = get_rhs(body);
-    if (occurs(var, lhs)) {
-        if (occurs(var, rhs)) {
-            return app(app(atom_S, abstract(var, lhs)), abstract(var, rhs));
-        } else {
-            return app(app(atom_C, abstract(var, lhs)), rhs);
-        }
-    } else {
-        POMAGMA_ASSERT1(occurs(var, rhs), "programmer error");
-        if (rhs == var) {
-            return lhs;  // eta
-        } else {
-            return app(app(atom_B, lhs), abstract(var, rhs));
-        }
-    }
-}
-
-namespace {
-
-inline Ob pop(std::vector<Ob>& stack, Ob& end_var) {
+static inline Ob pop(std::vector<Ob>& stack, Ob& end_var) {
     if (stack.empty()) {
         Ob ob = stack.back();
         stack.pop_back();
@@ -195,29 +151,34 @@ inline Ob pop(std::vector<Ob>& stack, Ob& end_var) {
     }
 }
 
-}  // namespace
+Ob Engine::app(Ob lhs, Ob rhs, size_t& budget, Ob begin_var) {
+    assert_pos(lhs);
+    assert_pos(rhs);
+    rep_normalize(lhs);
+    rep_normalize(rhs);
 
-Ob Engine::reduce(Ob ob, size_t& budget, Ob begin_var) {
-    assert_pos(ob);
-    POMAGMA_ASSERT1(budget, "Do not call reduce() with zero budget");
-
-    // Check cache first.
-    if (Ob ob_red = rep_[ob].red) {
-        return ob_red;
+    // First check the cache.
+    {
+        auto i = LRv_table_.find({lhs, rhs});
+        if (i != LRv_table_.end()) {
+            return i->second;
+        }
     }
 
+    // Eagerly linear-beta-eta head reduce; beta reduce within budget.
+    Ob head = lhs;
     Ob end_var = begin_var;
     std::vector<Ob> stack;
-
-    // Head reduce, applying fresh variables as needed.
-    // TODO check cache to exit early if reduced form is found?
-    // TODO for union-find algorithm, also merge all intermediate terms.
-    while (not is_var(ob)) {
-        while (is_app(ob)) {
-            stack.push_back(get_rhs(ob));
-            ob = get_lhs(ob);
+    bool normalized __attribute__((unused)) = true;  // = not pending (python).
+    while (true) {                                   // tail call optimized.
+        while (is_app(head)) {
+            Ob arg = get_rhs(head);
+            head = get_lhs(head);
+            rep_normalize(head);
+            rep_normalize(arg);
+            stack.push_back(arg);
         }
-        switch (ob) {
+        switch (head) {
             case atom_BOT: {
                 POMAGMA_ASSERT1(stack.size() < 1, "not in linear normal form");
             } break;
@@ -226,26 +187,28 @@ Ob Engine::reduce(Ob ob, size_t& budget, Ob begin_var) {
             } break;
             case atom_I: {
                 POMAGMA_ASSERT1(stack.size() < 1, "not in linear normal form");
-                ob = pop(stack, end_var);
+                head = pop(stack, end_var);
             } break;
             case atom_K: {
                 POMAGMA_ASSERT1(stack.size() < 2, "not in linear normal form");
-                ob = pop(stack, end_var);
+                head = pop(stack, end_var);
                 pop(stack, end_var);
             } break;
             case atom_B: {
                 POMAGMA_ASSERT1(stack.size() < 3, "not in linear normal form");
-                Ob x = pop(stack, end_var);
-                Ob y = pop(stack, end_var);
-                Ob z = pop(stack, end_var);
-                ob = app(x, app(y, z));
+                const Ob x = pop(stack, end_var);
+                const Ob y = pop(stack, end_var);
+                const Ob z = pop(stack, end_var);
+                const Ob yz = app(y, z, budget, end_var);
+                head = app(x, yz, budget, end_var);
             } break;
             case atom_C: {
                 POMAGMA_ASSERT1(stack.size() < 3, "not in linear normal form");
-                Ob x = pop(stack, end_var);
-                Ob y = pop(stack, end_var);
-                Ob z = pop(stack, end_var);
-                ob = app(app(x, z), y);
+                const Ob x = pop(stack, end_var);
+                const Ob y = pop(stack, end_var);
+                const Ob z = pop(stack, end_var);
+                const Ob xz = app(x, z, budget, end_var);
+                head = app(xz, y, budget, end_var);
             } break;
             case atom_S: {
                 if (budget == 0 and stack.size() >= 3) {
@@ -263,13 +226,15 @@ Ob Engine::reduce(Ob ob, size_t& budget, Ob begin_var) {
                 budget -= 1;
                 POMAGMA_ASSERT1(stack.size() < 3 or is_app(stack[2]),
                                 "not in linear normal form");
-                Ob x = pop(stack, end_var);
-                Ob y = pop(stack, end_var);
-                Ob z = pop(stack, end_var);
-                ob = app(app(x, z), app(y, z));
+                const Ob x = pop(stack, end_var);
+                const Ob y = pop(stack, end_var);
+                const Ob z = pop(stack, end_var);
+                const Ob xz = app(x, z, budget, end_var);
+                const Ob yz = app(y, z, budget, end_var);
+                head = app(xz, yz, budget, end_var);
             } break;
             default:
-                POMAGMA_ASSERT1(is_var(ob), "not a variable");
+                POMAGMA_ASSERT1(is_var(head), "not a variable");
         }
     }
 
@@ -280,28 +245,26 @@ Ob Engine::reduce(Ob ob, size_t& budget, Ob begin_var) {
         if (budget and is_app(arg)) {
             arg = reduce(arg, budget, end_var);  // May induce merges.
         }
-        ob = app(ob, arg);
+        head = get_app(head, arg);
     }
 
     // Abstract out variables.
     for (Ob var = end_var; var != begin_var; ++var) {
-        ob = abstract(var, ob);
+        head = abstract(var, head);
     }
 
-    return ob;
+    assert_weak_red(head);
+    return head;
 }
 
-Ob Engine::memoized_reduce(Ob ob, size_t budget, Ob begin_var) {
+Ob Engine::reduce(Ob ob, size_t& budget, Ob begin_var) {
+    POMAGMA_ASSERT1(budget, "Do not call reduce() with zero budget");
     assert_pos(ob);
+    rep_normalize(ob);
+    if (is_normal(ob)) return ob;
 
-    Ob& ob_red = rep_[ob].red;
-    if (not ob_red) {
-        ob_red = reduce(ob, budget, begin_var);
-    }
-    if (ob_red != ob) {
-        merge(ob);
-    }
-    return ob_red;
+    POMAGMA_ASSERT(is_app(ob), "programmer error");
+    return app(get_lhs(ob), get_rhs(ob), budget, begin_var);
 }
 
 void Engine::merge(Ob dep) {
@@ -311,7 +274,7 @@ void Engine::merge(Ob dep) {
         auto i = merge_queue_.begin();
         dep = *i;
         merge_queue_.erase(i);
-        Ob rep = rep_[dep].red;
+        Ob rep = rep_table_[dep].red;
         POMAGMA_ASSERT_NE(dep, rep);
 
         for (const auto& pair : Lrv_table_[dep]) {

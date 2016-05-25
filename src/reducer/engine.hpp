@@ -40,6 +40,7 @@
 #include <cstdlib>
 #include <pomagma/reducer/obs.hpp>
 #include <pomagma/util/util.hpp>
+#include <set>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -76,11 +77,17 @@ class Engine : noncopyable {
     Ob get_lhs(Ob ob) const;
     Ob get_rhs(Ob ob) const;
 
-    Ob app(Ob lhs, Ob rhs);  // Linearly reduces.
+    // Application, eagerly linear-beta-eta reducing.
+    // TODO FIXME fix begin_var and end_var, following notes/code/vms/eta.py.
+    Ob app(Ob lhs, Ob rhs, size_t& budget, Ob begin_var = -1);
+    Ob app(Ob lhs, Ob rhs) {
+        size_t budget = 0;
+        return app(lhs, rhs, budget);
+    }
 
     // TODO Allow nondeterminstic SKJ execution as in combinator.py.
     Ob reduce(Ob term, size_t& budget, Ob begin_var = -1);
-    Ob memoized_reduce(Ob ob, size_t budget, Ob begin_var);
+    bool is_normal(Ob ob) const { return map_find(rep_table_, ob).red == ob; }
 
     // TODO
     // void compact();
@@ -92,33 +99,44 @@ class Engine : noncopyable {
     void assert_valid() const;
     void assert_pos(Ob ob) const {
         POMAGMA_ASSERT_LT(0, ob);
-        POMAGMA_ASSERT_LT(ob, static_cast<Ob>(rep_.size()));
+        POMAGMA_ASSERT_LT(ob, static_cast<Ob>(rep_table_.size()));
     }
     void assert_red(Ob ob) const {
         assert_pos(ob);
-        POMAGMA_ASSERT_EQ(rep_[ob].red, ob);
+        POMAGMA_ASSERT_EQ(map_find(rep_table_, ob).red, ob);
     }
     void assert_weak_red(Ob ob) const {
         assert_pos(ob);
-        Ob red_pos = rep_[ob].red;
+        Ob red_pos = map_find(rep_table_, ob).red;
         POMAGMA_ASSERT(red_pos == 0 or red_pos == ob,
                        "ob is defined but not normal");
     }
 
-    // Eta-abstraction.
-    bool occurs(Ob var, Ob body);
-    Ob abstract(Ob var, Ob body);
+    // Term constructors.
+    Ob create_app(Ob lhs, Ob rhs);
+    Ob get_app(Ob lhs, Ob rhs);  // Create if not found.
 
-    void merge(Ob dep);  // Forward-chaining inference.
+    // Eta-abstraction.
+    // Eqn: abstract(var, body) == map_find(abstract(body), var).
+    Ob abstract(Ob var, Ob body);
+    const std::unordered_map<Ob, Ob>& abstract(Ob body) const;  // Curried.
+
+    // Forward-chaining inference.
+    void rep_normalize(Ob& ob) const;
+    void merge(Ob dep);
 
     // Algebraic structure of the APP binary relation.
     // These are adapted from:
     // atlas/micro/binary_function.hpp
     // atlas/micro/inverse_bin_fun.hpp
     std::unordered_map<ObPair, Ob, ObPairHash> LRv_table_;
-    std::vector<ObPairSet> Lrv_table_;
-    std::vector<ObPairSet> Rlv_table_;
-    std::vector<ObPairSet> Vlr_table_;
+    std::unordered_map<Ob, ObPairSet> Lrv_table_;
+    std::unordered_map<Ob, ObPairSet> Rlv_table_;
+    std::unordered_map<Ob, ObPairSet> Vlr_table_;
+
+    // Abstraction table : body -> var -> abstraction.
+    std::unordered_map<Ob, std::unordered_map<Ob, Ob>> abstract_table_;
+    const std::unordered_map<Ob, Ob> closed_table_;  // Just a default value.
 
     // Directed structure.
     // lhs and rhs are used for pattern matching and read-back.
@@ -127,22 +145,22 @@ class Engine : noncopyable {
         Ob rhs;
         Ob red;
     };
-    std::vector<Term> rep_;
+    std::unordered_map<Ob, Term> rep_table_;
 
     // Forward-chaining inference state.
-    std::unordered_set<Ob> merge_queue_;
+    std::set<Ob> merge_queue_;
 };
 
 inline Ob Engine::get_lhs(Ob ob) const {
     assert_pos(ob);
     POMAGMA_ASSERT1(is_app(ob), "tried to read lhs of non-app");
-    return rep_[ob].lhs;
+    return map_find(rep_table_, ob).lhs;
 }
 
 inline Ob Engine::get_rhs(Ob ob) const {
     assert_pos(ob);
     POMAGMA_ASSERT1(is_app(ob), "tried to read rhs of non-app");
-    return rep_[ob].rhs;
+    return map_find(rep_table_, ob).rhs;
 }
 
 }  // namespace reducer
