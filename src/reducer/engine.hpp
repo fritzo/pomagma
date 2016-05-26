@@ -122,6 +122,7 @@ class Engine : noncopyable {
     const std::unordered_map<Ob, Ob>& abstract(Ob body) const;  // Curried.
 
     // Forward-chaining inference.
+    // TODO How long to rep chains persist? How to deal with references?
     void rep_normalize(Ob& ob) const;
     void merge(Ob dep);
 
@@ -136,14 +137,14 @@ class Engine : noncopyable {
 
     // Abstraction table : body -> var -> abstraction.
     std::unordered_map<Ob, std::unordered_map<Ob, Ob>> abstract_table_;
-    const std::unordered_map<Ob, Ob> closed_table_;  // Just a default value.
 
     // Directed structure.
     // lhs and rhs are used for pattern matching and read-back.
+    // TODO Can we really use this for both reduction and merging?
     struct Term {
         Ob lhs;
         Ob rhs;
-        Ob red;
+        Ob red;  // Also used for merging.
     };
     std::unordered_map<Ob, Term> rep_table_;
 

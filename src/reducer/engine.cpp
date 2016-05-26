@@ -52,8 +52,9 @@ inline void Engine::rep_normalize(Ob& ob) const {
 }
 
 inline const std::unordered_map<Ob, Ob>& Engine::abstract(Ob body) const {
+    static const std::unordered_map<Ob, Ob> empty;  // Just a default value.
     auto i = abstract_table_.find(body);
-    return (i == abstract_table_.end()) ? closed_table_ : i->second;
+    return (i == abstract_table_.end()) ? empty : i->second;
 }
 
 Ob Engine::abstract(Ob var, Ob body) {
@@ -169,14 +170,15 @@ Ob Engine::app(Ob lhs, Ob rhs, size_t& budget, Ob begin_var) {
     Ob head = lhs;
     Ob end_var = begin_var;
     std::vector<Ob> stack;
-    bool normalized __attribute__((unused)) = true;  // = not pending (python).
-    while (true) {                                   // tail call optimized.
-        while (is_app(head)) {
+    bool normalized = true;     // = not pending (python).
+    while (not is_var(head)) {  // tail call optimized.
+        if (is_app(head)) {
             Ob arg = get_rhs(head);
             head = get_lhs(head);
             rep_normalize(head);
             rep_normalize(arg);
             stack.push_back(arg);
+            continue;
         }
         switch (head) {
             case atom_BOT: {
@@ -188,27 +190,31 @@ Ob Engine::app(Ob lhs, Ob rhs, size_t& budget, Ob begin_var) {
             case atom_I: {
                 POMAGMA_ASSERT1(stack.size() < 1, "not in linear normal form");
                 head = pop(stack, end_var);
+                continue;
             } break;
             case atom_K: {
                 POMAGMA_ASSERT1(stack.size() < 2, "not in linear normal form");
                 head = pop(stack, end_var);
                 pop(stack, end_var);
+                continue;
             } break;
             case atom_B: {
                 POMAGMA_ASSERT1(stack.size() < 3, "not in linear normal form");
                 const Ob x = pop(stack, end_var);
                 const Ob y = pop(stack, end_var);
                 const Ob z = pop(stack, end_var);
-                const Ob yz = app(y, z, budget, end_var);
-                head = app(x, yz, budget, end_var);
+                const Ob yz = app(y, z, budget, end_var);  // May merge.
+                head = app(x, yz, budget, end_var);        // May merge.
+                continue;
             } break;
             case atom_C: {
                 POMAGMA_ASSERT1(stack.size() < 3, "not in linear normal form");
                 const Ob x = pop(stack, end_var);
                 const Ob y = pop(stack, end_var);
                 const Ob z = pop(stack, end_var);
-                const Ob xz = app(x, z, budget, end_var);
-                head = app(xz, y, budget, end_var);
+                const Ob xz = app(x, z, budget, end_var);  // May merge.
+                head = app(xz, y, budget, end_var);        // May merge.
+                continue;
             } break;
             case atom_S: {
                 if (budget == 0 and stack.size() >= 3) {
@@ -220,6 +226,7 @@ Ob Engine::app(Ob lhs, Ob rhs, size_t& budget, Ob begin_var) {
                         // to an any-time result stream; then continue computing
                         // with until next budget cycle. And only memoize
                         // total values. But how?
+                        normalized = false;
                         break;
                     }
                 }
@@ -229,13 +236,15 @@ Ob Engine::app(Ob lhs, Ob rhs, size_t& budget, Ob begin_var) {
                 const Ob x = pop(stack, end_var);
                 const Ob y = pop(stack, end_var);
                 const Ob z = pop(stack, end_var);
-                const Ob xz = app(x, z, budget, end_var);
-                const Ob yz = app(y, z, budget, end_var);
-                head = app(xz, yz, budget, end_var);
+                const Ob xz = app(x, z, budget, end_var);  // May merge.
+                const Ob yz = app(y, z, budget, end_var);  // May merge.
+                head = app(xz, yz, budget, end_var);       // May merge.
+                continue;
             } break;
             default:
-                POMAGMA_ASSERT1(is_var(head), "not a variable");
+                POMAGMA_ERROR("unreachable");
         }
+        break;
     }
 
     // Reduce arguments.
@@ -243,7 +252,7 @@ Ob Engine::app(Ob lhs, Ob rhs, size_t& budget, Ob begin_var) {
         Ob arg = stack.back();
         stack.pop_back();
         if (budget and is_app(arg)) {
-            arg = reduce(arg, budget, end_var);  // May induce merges.
+            arg = reduce(arg, budget, end_var);  // May merge.
         }
         head = get_app(head, arg);
     }
@@ -251,6 +260,25 @@ Ob Engine::app(Ob lhs, Ob rhs, size_t& budget, Ob begin_var) {
     // Abstract out variables.
     for (Ob var = end_var; var != begin_var; ++var) {
         head = abstract(var, head);
+    }
+
+    // Update database with result.
+    {
+        auto inserted = LRv_table_.insert({{lhs, rhs}, head});
+        if (likely(inserted.second)) {
+            if (normalized) {
+                rep_table_.find(head)->second.red = head;
+            }
+        } else {
+            const Ob old = inserted.first->second;
+            if (unlikely(old != head)) {
+                // TODO This is surely incorrect:
+                Ob& old_rep = rep_table_.find(head)->second.red;
+                POMAGMA_ASSERT(not old_rep, "programmer error");
+                old_rep = head;
+                merge(old_rep);
+            }
+        }
     }
 
     assert_weak_red(head);
@@ -314,6 +342,10 @@ void Engine::merge(Ob dep) {
             Rlv_table_[pair.second].insert({pair.first, rep});
         }
         Vlr_table_[dep].clear();
+
+        // Merge occurrences of dep in abstract_table_
+        // TODO is this necessary?
+
     } while (not merge_queue_.empty());
 }
 

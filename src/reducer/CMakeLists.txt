@@ -8,12 +8,16 @@ add_custom_command(
 	DEPENDS ${CMAKE_CURRENT_LIST_DIR}/messages.proto
 )
 
+add_library(pomagma_reducer SHARED engine.cpp io.cpp)
+target_link_libraries(pomagma_reducer
+	${POMAGMA_CHART_LIBS}
+)
+
 add_executable(cli
 	cli.cpp
-	engine.cpp
-	io.cpp
 )
 target_link_libraries(cli
+	pomagma_reducer
 	${POMAGMA_IO_LIBS}
 	${POMAGMA_UTIL_LIBS}
 )
@@ -21,12 +25,11 @@ target_link_libraries(cli
 add_executable(reducer
 	main.cpp
 	server.cpp
-	io.cpp
-	engine.cpp
 	messages.pb.cc
 )
 target_link_libraries(reducer
 	zmq
+	pomagma_reducer
 	${POMAGMA_IO_LIBS}
 	${POMAGMA_UTIL_LIBS}
 )
