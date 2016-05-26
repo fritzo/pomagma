@@ -174,8 +174,8 @@ Ob Engine::create_app(Ob lhs, Ob rhs) {
 
     // Precompute abstractions.
     std::unordered_map<Ob, Ob> abs_term;
-    const std::unordered_map<Ob, Ob> abs_lhs = abstract(lhs);
-    const std::unordered_map<Ob, Ob> abs_rhs = abstract(rhs);
+    const std::unordered_map<Ob, Ob>& abs_lhs = abstract(lhs);
+    const std::unordered_map<Ob, Ob>& abs_rhs = abstract(rhs);
     std::unordered_set<Ob> vars;
     for (const auto& i : abs_lhs) {
         vars.insert(i.first);

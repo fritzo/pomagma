@@ -148,6 +148,9 @@ class Engine : noncopyable {
     // .red is either self (for new terms), another term (for non-normal forms)
     // or zero (for normalized terms).
     // TODO Can we really use this for both reduction and merging?
+    //   Note that no two normal forms can ever be merged, but it is unclear
+    //   how to orient non-normalized mergers.
+    //   See operational_semantics.text (2016:01:29-02:28) (H2)
     struct Term {
         Ob lhs;
         Ob rhs;
