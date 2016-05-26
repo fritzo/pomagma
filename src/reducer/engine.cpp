@@ -1,4 +1,5 @@
 #include <pomagma/reducer/engine.hpp>
+#include <pomagma/reducer/util.hpp>
 
 namespace pomagma {
 namespace reducer {
@@ -10,9 +11,102 @@ Engine::~Engine() {
     POMAGMA_INFO("Engine app count = " << LRv_table_.size());
 }
 
+#define POMAGMA_VALIDATE_EQ(x, y)                                       \
+    {                                                                   \
+        if (unlikely((x) != (y))) {                                     \
+            valid = false;                                              \
+            POMAGMA_LOG_TO(errors, "Expected " #x " == " #y ", actual " \
+                                       << (x) << " vs " << (y));        \
+        }                                                               \
+    }
+
 bool Engine::validate(std::vector<std::string>& errors) const {
     errors.push_back("TODO Validate all terms are linear normal forms.");
-    return true;
+    bool valid = true;
+    const size_t LRv_count = LRv_table_.size();
+
+    // Validate that Lrv_table_ matches LRv_table_.
+    size_t Lrv_count = 0;
+    for (const auto& Lrv : Lrv_table_) {
+        const Ob lhs = Lrv.first;
+        for (const auto& rv : Lrv.second) {
+            const Ob rhs = rv.first;
+            const Ob val = rv.second;
+            auto i = LRv_table_.find({lhs, rhs});
+            if (unlikely(i == LRv_table_.end())) {
+                valid = false;
+                POMAGMA_LOG_TO(errors,
+                               "(" << lhs << "," << rhs << "," << val
+                                   << ") in Lrv_table_ but not LRv_table_");
+                continue;
+            }
+            ++Lrv_count;
+            if (unlikely(i->second != val)) {
+                valid = false;
+                POMAGMA_LOG_TO(errors, "(" << lhs << "," << rhs << "," << val
+                                           << ") in Lrv_table_ but (" << lhs
+                                           << "," << rhs << "," << i->second
+                                           << ") in LRv_table_");
+            }
+        }
+    }
+    POMAGMA_VALIDATE_EQ(Lrv_count, LRv_count);
+
+    // Validate that Rlv_table_ matches LRv_table_.
+    size_t Rlv_count = 0;
+    for (const auto& Rlv : Rlv_table_) {
+        const Ob rhs = Rlv.first;
+        for (const auto& lv : Rlv.second) {
+            const Ob lhs = lv.first;
+            const Ob val = lv.second;
+            auto i = LRv_table_.find({lhs, rhs});
+            if (unlikely(i == LRv_table_.end())) {
+                valid = false;
+                POMAGMA_LOG_TO(errors,
+                               "(" << lhs << "," << rhs << "," << val
+                                   << ") in Rlv_table_ but not LRv_table_");
+                continue;
+            }
+            ++Rlv_count;
+            if (unlikely(i->second != val)) {
+                valid = false;
+                POMAGMA_LOG_TO(errors, "(" << lhs << "," << rhs << "," << val
+                                           << ") in Rlv_table_ but (" << lhs
+                                           << "," << rhs << "," << i->second
+                                           << ") in LRv_table_");
+            }
+        }
+    }
+    POMAGMA_VALIDATE_EQ(Rlv_count, LRv_count);
+
+    // Validate that Vlr_table_ matches LRv_table_.
+    size_t Vlr_count = 0;
+    for (const auto& Vlr : Vlr_table_) {
+        const Ob val = Vlr.first;
+        for (const auto& lr : Vlr.second) {
+            const Ob lhs = lr.first;
+            const Ob rhs = lr.second;
+            auto i = LRv_table_.find({lhs, rhs});
+            if (unlikely(i == LRv_table_.end())) {
+                valid = false;
+                POMAGMA_LOG_TO(errors,
+                               "(" << lhs << "," << rhs << "," << val
+                                   << ") in Vlr_table_ but not LRv_table_");
+                continue;
+            }
+            ++Vlr_count;
+            if (unlikely(i->second != val)) {
+                valid = false;
+                POMAGMA_LOG_TO(errors, "(" << lhs << "," << rhs << "," << val
+                                           << ") in Vlr_table_ but (" << lhs
+                                           << "," << rhs << "," << i->second
+                                           << ") in LRv_table_");
+            }
+        }
+    }
+    POMAGMA_VALIDATE_EQ(Vlr_count, LRv_count);
+
+    return valid;
 }
 
 void Engine::assert_valid() const {
@@ -35,7 +129,7 @@ void Engine::reset() {
 
     // Initialize atoms to be reduced.
     for (Ob i = 1; i <= atom_count; ++i) {
-        rep_table_.insert({i, {0, 0, i}});
+        rep_table_.insert({i, {0, 0, 0}});
     }
 
     if (POMAGMA_DEBUG_LEVEL) {
@@ -113,12 +207,12 @@ Ob Engine::create_app(Ob lhs, Ob rhs) {
 
     // Create a new term.
     const Ob val = 1 + rep_table_.size();
-    rep_table_.insert({val, {lhs, rhs, 0}});
+    rep_table_.insert({val, {lhs, rhs, val}});
     LRv_table_.insert({{lhs, rhs}, val});
     Lrv_table_[lhs].insert({rhs, val});
     Lrv_table_[rhs].insert({lhs, val});
     Vlr_table_[val].insert({lhs, rhs});
-    if (!abs_term.empty()) {
+    if (not abs_term.empty()) {
         abstract_table_[val] = std::move(abs_term);
     }
 
@@ -173,11 +267,11 @@ Ob Engine::app(Ob lhs, Ob rhs, size_t& budget, Ob begin_var) {
     bool normalized = true;     // = not pending (python).
     while (not is_var(head)) {  // tail call optimized.
         if (is_app(head)) {
-            Ob arg = get_rhs(head);
-            head = get_lhs(head);
+            const Term& term = map_find(rep_table_, head);
+            head = term.lhs;
+            stack.push_back(term.rhs);
             rep_normalize(head);
-            rep_normalize(arg);
-            stack.push_back(arg);
+            rep_normalize(stack.back());
             continue;
         }
         switch (head) {
@@ -267,16 +361,23 @@ Ob Engine::app(Ob lhs, Ob rhs, size_t& budget, Ob begin_var) {
         auto inserted = LRv_table_.insert({{lhs, rhs}, head});
         if (likely(inserted.second)) {
             if (normalized) {
-                rep_table_.find(head)->second.red = head;
+                rep_table_.find(head)->second.red = 0;
             }
         } else {
             const Ob old = inserted.first->second;
             if (unlikely(old != head)) {
-                // TODO This is surely incorrect:
-                Ob& old_rep = rep_table_.find(head)->second.red;
-                POMAGMA_ASSERT(not old_rep, "programmer error");
-                old_rep = head;
-                merge(old_rep);
+                Ob& old_rep = rep_table_.find(old)->second.red;
+                Ob& head_rep = rep_table_.find(head)->second.red;
+                POMAGMA_ASSERT((old_rep == 0) xor (head_rep == 0),
+                               "TODO what to do?");
+                if (old_rep == 0) {
+                    head_rep = old;
+                    merge(head);
+                } else {
+                    old_rep = head;
+                    merge(old);
+                }
+                rep_normalize(head);
             }
         }
     }

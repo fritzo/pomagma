@@ -1,13 +1,7 @@
 #include <pomagma/reducer/io.hpp>
 
 #include <pomagma/reducer/engine.hpp>
-
-#define POMAGMA_LOG_TO(log, message) \
-    {                                \
-        std::ostringstream o;        \
-        o << message;                \
-        (log).push_back(o.str());    \
-    }
+#include <pomagma/reducer/util.hpp>
 
 namespace pomagma {
 namespace reducer {

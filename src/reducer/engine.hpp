@@ -15,6 +15,7 @@
 // - Verify reduce() and print() behavior on rational normal forms.
 // - Add binary operation JOIN.
 //   - Maybe use first 2 bits to dispatch among {atom, var, app, join}.
+//   - Or split into {var, app, join, rand} and reserve some vars for atoms.
 // - Support untyped nondeterminism.
 // - Support a few basic types-as-closures.
 // - Support typed nondeterminism.
@@ -87,7 +88,7 @@ class Engine : noncopyable {
 
     // TODO Allow nondeterminstic SKJ execution as in combinator.py.
     Ob reduce(Ob term, size_t& budget, Ob begin_var = -1);
-    bool is_normal(Ob ob) const { return map_find(rep_table_, ob).red == ob; }
+    bool is_normal(Ob ob) const { return not map_find(rep_table_, ob).red; }
 
     // TODO
     // void compact();
@@ -103,13 +104,16 @@ class Engine : noncopyable {
     }
     void assert_red(Ob ob) const {
         assert_pos(ob);
-        POMAGMA_ASSERT_EQ(map_find(rep_table_, ob).red, ob);
+        POMAGMA_ASSERT_EQ(map_find(rep_table_, ob).red, 0);
     }
     void assert_weak_red(Ob ob) const {
         assert_pos(ob);
-        Ob red_pos = map_find(rep_table_, ob).red;
-        POMAGMA_ASSERT(red_pos == 0 or red_pos == ob,
-                       "ob is defined but not normal");
+        Ob ob_red = map_find(rep_table_, ob).red;
+        if (ob_red) {
+            Ob ob_red_red = map_find(rep_table_, ob_red).red;
+            POMAGMA_ASSERT(ob_red_red == 0 or ob_red_red == ob_red,
+                           "ob rep chain is not normalized");
+        }
     }
 
     // Term constructors.
@@ -127,6 +131,7 @@ class Engine : noncopyable {
     void merge(Ob dep);
 
     // Algebraic structure of the APP binary relation.
+    // These all contain the same tuples, but with different indexing.
     // These are adapted from:
     // atlas/micro/binary_function.hpp
     // atlas/micro/inverse_bin_fun.hpp
@@ -139,7 +144,9 @@ class Engine : noncopyable {
     std::unordered_map<Ob, std::unordered_map<Ob, Ob>> abstract_table_;
 
     // Directed structure.
-    // lhs and rhs are used for pattern matching and read-back.
+    // .lhs and .rhs are used for pattern matching and read-back.
+    // .red is either self (for new terms), another term (for non-normal forms)
+    // or zero (for normalized terms).
     // TODO Can we really use this for both reduction and merging?
     struct Term {
         Ob lhs;
