@@ -7,9 +7,9 @@ EXAMPLES = [
     ('B', 0),
     ('C', 0),
     ('S', 0),
-    pytest.mark.xfail(('APP I I', 0)),
+    ('APP I I', 0),
     ('APP I', 1),
-    pytest.mark.xfail(('APP I I I', 1)),
+    ('APP I I I', 1),
 ]
 
 

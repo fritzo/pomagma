@@ -1,4 +1,3 @@
-from pomagma.util.testing import for_each_kwargs
 import os
 import pomagma.reducer
 import pomagma.util
@@ -33,31 +32,58 @@ EXAMPLES = [
         'budget': 0,
         'expected_code': 'I',
         'expected_budget': 0,
-        'xfail': 'TODO',
+    },
+    {
+        'code': 'K',
+        'budget': 0,
+        'expected_code': 'K',
+        'expected_budget': 0,
+    },
+    {
+        'code': 'B',
+        'budget': 0,
+        'expected_code': 'B',
+        'expected_budget': 0,
+    },
+    {
+        'code': 'C',
+        'budget': 0,
+        'expected_code': 'C',
+        'expected_budget': 0,
+    },
+    {
+        'code': 'S',
+        'budget': 0,
+        'expected_code': 'S',
+        'expected_budget': 0,
     },
     {
         'code': 'I',
         'budget': 1,
         'expected_code': 'I',
         'expected_budget': 1,
-        'xfail': 'TODO',
     },
     {
         'code': 'APP I I',
         'budget': 0,
         'expected_code': 'I',
         'expected_budget': 0,
-        'xfail': 'TODO',
+    },
+    {
+        'code': 'APP I I',
+        'budget': 1,
+        'expected_code': 'I',
+        'expected_budget': 1,
     },
 ]
 
 
-@for_each_kwargs(EXAMPLES)
-def test_reduce(code, budget, expected_code, expected_budget, xfail=None):
-    if xfail:
-        pytest.xfail(xfail)
+@pytest.mark.parametrize('example', EXAMPLES)
+def test_reduce(example):
+    if 'xfail' in example:
+        pytest.xfail(example['xfail'])
     with SERVER.connect() as client:
         client.reset()
-        actual = client.reduce(code, budget)
-        assert actual['code'] == expected_code
-        assert actual['budget'] == expected_budget
+        actual = client.reduce(example['code'], example['budget'])
+        assert actual['code'] == example['expected_code']
+        assert actual['budget'] == example['expected_budget']

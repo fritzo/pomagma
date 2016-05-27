@@ -71,44 +71,42 @@ class Engine : noncopyable {
     void reset();
 
     // Every ob is zero, a variable, an atom, or an app.
-    static bool is_var(Ob ob) { return ob < 0; }
+    // Only atoms and apps are public.
     static bool is_atom(Ob ob) { return 0 < ob and ob <= atom_count; }
     static bool is_app(Ob ob) { return atom_count < ob; }
 
     // If an ob is an app, then it can be decomposed into lhs and rhs.
-    Ob get_lhs(Ob ob) const;
-    Ob get_rhs(Ob ob) const;
+    Ob get_lhs(Ob val) const;
+    Ob get_rhs(Ob val) const;
 
     // Application, eagerly linear-beta-eta reducing.
-    // TODO FIXME fix begin_var and end_var, following notes/code/vms/eta.py.
-    Ob app(Ob lhs, Ob rhs, size_t& budget, Ob begin_var = -1);
-    Ob app(Ob lhs, Ob rhs) {
-        size_t budget = 0;
-        return app(lhs, rhs, budget);
-    }
+    Ob app(Ob lhs, Ob rhs);
 
-    // TODO Allow nondeterminstic SKJ execution as in combinator.py.
-    Ob reduce(Ob term, size_t& budget, Ob begin_var = -1);
-    bool is_normal(Ob ob) const { return not map_find(rep_table_, ob).red; }
-
-    // TODO
-    // void compact();
-    // void dump(const string& filename) const;
-    // void load(const string& filename);
-    // void aggregate_from(const Engine& other);
+    // Result of reduce() will be normal unless budget runs out.
+    Ob reduce(Ob ob, size_t& budget);
+    bool is_normal(Ob ob) const;
 
    private:
+    // Variables are only for internal use.
+    static bool is_var(Ob ob) { return ob < 0; }
+    bool is_closed(Ob ob) const {
+        if (is_var(ob)) return false;
+        return abstract_table_.find(ob) == abstract_table_.end();
+    }
+    Ob app(Ob lhs, Ob rhs, size_t& budget, Ob begin_var);
+    Ob reduce(Ob term, size_t& budget, Ob begin_var);
+
     void assert_valid() const;
-    void assert_pos(Ob ob) const {
-        POMAGMA_ASSERT_LT(0, ob);
-        POMAGMA_ASSERT_LT(ob, static_cast<Ob>(rep_table_.size()));
+    void assert_ob(Ob ob) const {
+        POMAGMA_ASSERT(is_var(ob) or rep_table_.find(ob) != rep_table_.end(),
+                       "Ob not found: " << ob);
     }
     void assert_red(Ob ob) const {
-        assert_pos(ob);
+        assert_ob(ob);
         POMAGMA_ASSERT_EQ(map_find(rep_table_, ob).red, 0);
     }
     void assert_weak_red(Ob ob) const {
-        assert_pos(ob);
+        assert_ob(ob);
         Ob ob_red = map_find(rep_table_, ob).red;
         if (ob_red) {
             Ob ob_red_red = map_find(rep_table_, ob_red).red;
@@ -118,6 +116,7 @@ class Engine : noncopyable {
     }
 
     // Term constructors.
+    // Variables do not need to be constructed.
     Ob create_app(Ob lhs, Ob rhs);
     Ob get_app(Ob lhs, Ob rhs);  // Create if not found.
 
@@ -142,6 +141,11 @@ class Engine : noncopyable {
     std::unordered_map<Ob, ObPairSet> Vlr_table_;
 
     // Abstraction table : body -> var -> abstraction.
+    // This table omits a few cheap-to-compute abstractions:
+    // - abstract(x, TOP) = TOP
+    // - abstract(x, BOT) = BOT
+    // - abstract(x, x) = I
+    // - abstract(x, y) = APP K y, if x does not occur in y.
     std::unordered_map<Ob, std::unordered_map<Ob, Ob>> abstract_table_;
 
     // Directed structure.
@@ -163,16 +167,37 @@ class Engine : noncopyable {
     std::set<Ob> merge_queue_;
 };
 
-inline Ob Engine::get_lhs(Ob ob) const {
-    assert_pos(ob);
-    POMAGMA_ASSERT1(is_app(ob), "tried to read lhs of non-app");
-    return map_find(rep_table_, ob).lhs;
+inline Ob Engine::get_lhs(Ob val) const {
+    assert_ob(val);
+    POMAGMA_ASSERT1(is_app(val), "tried to read lhs of non-app");
+    return map_find(rep_table_, val).lhs;
 }
 
-inline Ob Engine::get_rhs(Ob ob) const {
-    assert_pos(ob);
-    POMAGMA_ASSERT1(is_app(ob), "tried to read rhs of non-app");
-    return map_find(rep_table_, ob).rhs;
+inline Ob Engine::get_rhs(Ob val) const {
+    assert_ob(val);
+    POMAGMA_ASSERT1(is_app(val), "tried to read rhs of non-app");
+    return map_find(rep_table_, val).rhs;
+}
+
+inline Ob Engine::app(Ob lhs, Ob rhs) {
+    size_t budget = 0;
+    Ob begin_var = -1;
+    return app(lhs, rhs, budget, begin_var);
+}
+
+inline Ob Engine::reduce(Ob ob, size_t& budget) {
+    POMAGMA_ASSERT1(is_closed(ob), "ob is not closed: " << ob);
+    if (not budget) return ob;
+    Ob begin_var = -1;
+    ob = reduce(ob, budget, begin_var);
+    POMAGMA_ASSERT1(is_closed(ob), "reduced ob is not closed: " << ob);
+    return ob;
+}
+
+inline bool Engine::is_normal(Ob ob) const {
+    // TODO Are atoms like DIV and A normal? If so, how do we guarantee
+    // confluence in the presence of equations like DIV = (I | DIV) * <TOP>?
+    return is_var(ob) or not map_find(rep_table_, ob).red;
 }
 
 }  // namespace reducer

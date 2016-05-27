@@ -73,11 +73,13 @@ std::string EngineIO::print(Ob ob) const {
 void EngineIO::append(Ob ob, std::string& append_str) const {
     if (engine_.is_atom(ob)) {
         append_str.append(atom_to_name_[ob]);
-    } else {
+    } else if (engine_.is_app(ob)) {
         append_str.append("APP ");
         append(engine_.get_lhs(ob), append_str);
         append_str.append(" ");
         append(engine_.get_rhs(ob), append_str);
+    } else {
+        POMAGMA_ERROR("ob is not closed: " << ob);
     }
 }
 

@@ -299,6 +299,7 @@ def check_call(*args):
 def print_logged_error(log_file):
     print
     print '==== LOG FILE ===='
+    print 'file://{}'.format(log_file)
     grep = ' '.join([
         'grep',
         '--before-context=40',

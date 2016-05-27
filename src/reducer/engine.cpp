@@ -142,8 +142,10 @@ void Engine::reset() {
 
 // Aka update_term (python).
 inline void Engine::rep_normalize(Ob& ob) const {
-    while (Ob rep = map_find(rep_table_, ob).red) {
-        if (rep == ob) return;
+    while (is_app(ob)) {
+        Ob rep = map_find(rep_table_, ob).red;
+        if (not rep) return;    // ob is normal.
+        if (rep == ob) return;  // ob is maximally reduced.
         ob = rep;
     }
 }
@@ -155,10 +157,13 @@ inline const std::unordered_map<Ob, Ob>& Engine::abstract(Ob body) const {
 }
 
 Ob Engine::abstract(Ob var, Ob body) {
-    // Rules BOT, TOP.
-    if (body == atom_TOP or body == atom_BOT) {
-        return body;
-    }
+    assert_ob(var);
+    assert_ob(body);
+    POMAGMA_ASSERT(is_var(var), "abstract() called with non-variable: " << var);
+
+    if (body == atom_BOT) return atom_BOT;  // Rule BOT.
+    if (body == atom_TOP) return atom_TOP;  // Rule TOP.
+    if (body == var) return atom_I;         // Rule I.
     auto i = abstract_table_.find(body);
     if (i != abstract_table_.end()) {
         auto j = i->second.find(var);
@@ -170,8 +175,8 @@ Ob Engine::abstract(Ob var, Ob body) {
 }
 
 Ob Engine::create_app(Ob lhs, Ob rhs) {
-    assert_pos(lhs);
-    assert_pos(rhs);
+    assert_ob(lhs);
+    assert_ob(rhs);
     rep_normalize(lhs);
     rep_normalize(rhs);
     POMAGMA_ASSERT1(lhs != atom_BOT, "called create_app(BOT, -)");
@@ -211,7 +216,7 @@ Ob Engine::create_app(Ob lhs, Ob rhs) {
     }
 
     // Create a new term.
-    const Ob val = 1 + rep_table_.size();
+    const Ob val = 1 + rep_table_.size();  // FIXME this ignores vars, < 0.
     rep_table_.insert({val, {lhs, rhs, val}});
     LRv_table_.insert({{lhs, rhs}, val});
     Lrv_table_[lhs].insert({rhs, val});
@@ -224,11 +229,14 @@ Ob Engine::create_app(Ob lhs, Ob rhs) {
     return val;
 }
 
+// The result should not be a redex.
 inline Ob Engine::get_app(Ob lhs, Ob rhs) {
-    assert_pos(lhs);
-    assert_pos(rhs);
+    assert_ob(lhs);
+    assert_ob(rhs);
     rep_normalize(lhs);
     rep_normalize(rhs);
+    POMAGMA_ASSERT1(lhs != atom_BOT, "tried to create APP BOT x");
+    POMAGMA_ASSERT1(lhs != atom_TOP, "tried to create APP TOP x");
 
     // First check cache.
     {
@@ -241,19 +249,21 @@ inline Ob Engine::get_app(Ob lhs, Ob rhs) {
     return create_app(lhs, rhs);
 }
 
+// Variables are arranged on the stack as [begin_var = -1, -2, ..., end_var].
 static inline Ob pop(std::vector<Ob>& stack, Ob& end_var) {
     if (stack.empty()) {
-        Ob ob = stack.back();
+        return end_var--;
+    } else {
+        const Ob ob = stack.back();
         stack.pop_back();
         return ob;
-    } else {
-        return end_var--;
     }
 }
 
+// TODO Allow nondeterminstic SKJ execution as in combinator.py.
 Ob Engine::app(Ob lhs, Ob rhs, size_t& budget, Ob begin_var) {
-    assert_pos(lhs);
-    assert_pos(rhs);
+    assert_ob(lhs);
+    assert_ob(rhs);
     rep_normalize(lhs);
     rep_normalize(rhs);
 
@@ -267,10 +277,10 @@ Ob Engine::app(Ob lhs, Ob rhs, size_t& budget, Ob begin_var) {
 
     // Eagerly linear-beta-eta head reduce; beta reduce within budget.
     Ob head = lhs;
-    Ob end_var = begin_var;
-    std::vector<Ob> stack;
-    bool normalized = true;     // = not pending (python).
-    while (not is_var(head)) {  // tail call optimized.
+    Ob end_var = begin_var;  // Init to no extra variables.
+    std::vector<Ob> stack;   // Init to empty stack.
+    bool normalized = true;  // aka not pending (python).
+    while (not is_var(head)) {
         if (is_app(head)) {
             const Term& term = map_find(rep_table_, head);
             head = term.lhs;
@@ -356,8 +366,8 @@ Ob Engine::app(Ob lhs, Ob rhs, size_t& budget, Ob begin_var) {
         head = get_app(head, arg);
     }
 
-    // Abstract out variables.
-    for (Ob var = end_var; var != begin_var; ++var) {
+    // Abstract out variables in reverse order.
+    for (Ob var = end_var + 1; var <= begin_var; ++var) {
         head = abstract(var, head);
     }
 
@@ -393,7 +403,7 @@ Ob Engine::app(Ob lhs, Ob rhs, size_t& budget, Ob begin_var) {
 
 Ob Engine::reduce(Ob ob, size_t& budget, Ob begin_var) {
     POMAGMA_ASSERT1(budget, "Do not call reduce() with zero budget");
-    assert_pos(ob);
+    assert_ob(ob);
     rep_normalize(ob);
     if (is_normal(ob)) return ob;
 
