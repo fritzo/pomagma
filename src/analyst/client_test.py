@@ -3,7 +3,7 @@ from pomagma.atlas.bootstrap import THEORY
 from pomagma.atlas.bootstrap import WORLD
 from pomagma.util import TRAVIS_CI
 from pomagma.util import unicode_to_str
-from pomagma.util.testing import for_each_context
+from pomagma.util.testing import for_each
 import os
 import pomagma.analyst
 import pomagma.cartographer
@@ -251,17 +251,18 @@ SOLVE_EXAMPLES = [
 ]
 
 
-@for_each_context(load, SOLVE_EXAMPLES)
-def test_solve(db, example):
+@for_each(SOLVE_EXAMPLES)
+def test_solve(example):
     if 'skip' in example:
         pytest.xfail(example['skip'])
-    max_solutions = example.get('max_solutions', 5)
-    actual = db.solve(example['var'], example['theory'], max_solutions)
-    if 'skip_compare' in example:
-        pytest.xfail(example['skip_compare'])
-    for key in ['necessary', 'possible']:
-        if key in example:
-            assert_equal_example(example[key], actual[key], (example, key))
+    with load() as db:
+        max_solutions = example.get('max_solutions', 5)
+        actual = db.solve(example['var'], example['theory'], max_solutions)
+        if 'skip_compare' in example:
+            pytest.xfail(example['skip_compare'])
+        for key in ['necessary', 'possible']:
+            if key in example:
+                assert_equal_example(example[key], actual[key], (example, key))
 
 
 def test_validate():
