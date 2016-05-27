@@ -11,6 +11,7 @@ case "`uname`" in
       gdb \
       graphviz \
       libboost-filesystem-dev \
+      libgoogle-glog-dev \
       libgoogle-perftools-dev \
       libprotobuf-dev \
       libssl-dev \

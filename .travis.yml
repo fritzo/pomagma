@@ -9,6 +9,8 @@ cache:
   - $HOME/.ccache
 addons:
   apt:
+    sources:
+    - ubuntu-toolchain-r-test
     packages:
     - ccache
     - cmake
@@ -16,6 +18,7 @@ addons:
     - gdb
     - graphviz
     - libboost-filesystem-dev
+    - libgoogle-glog-dev
     - libgoogle-perftools-dev
     - libprotobuf-dev
     - libssl-dev

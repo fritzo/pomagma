@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <fstream>
 #include <functional>
+#include <glog/logging.h>
 #include <iomanip>
 #include <iostream>
 #include <mutex>
