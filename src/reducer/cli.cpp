@@ -15,6 +15,7 @@ int main(int argc, char** argv) {
     Engine engine;
     EngineIO io(engine);
 
+    int returncode = 0;
     for (int i = 1; i < argc; ++i) {
         std::cout << "In: " << argv[i] << std::endl;
         std::vector<std::string> errors;
@@ -26,7 +27,8 @@ int main(int argc, char** argv) {
         for (const std::string& error : errors) {
             std::cout << "Error: " << error << std::endl;
         }
+        returncode += errors.size();
     }
 
-    return 0;
+    return returncode;
 }
