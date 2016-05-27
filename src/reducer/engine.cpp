@@ -7,8 +7,11 @@ namespace reducer {
 Engine::Engine() { reset(); }
 
 Engine::~Engine() {
-    POMAGMA_INFO("Engine ob count = " << (rep_table_.size() - 1));
+    POMAGMA_INFO("Engine ob count = " << rep_table_.size());
     POMAGMA_INFO("Engine app count = " << LRv_table_.size());
+    if (POMAGMA_DEBUG_LEVEL) {
+        assert_valid();
+    }
 }
 
 #define POMAGMA_VALIDATE_EQ(x, y)                                       \
@@ -171,6 +174,8 @@ Ob Engine::create_app(Ob lhs, Ob rhs) {
     assert_pos(rhs);
     rep_normalize(lhs);
     rep_normalize(rhs);
+    POMAGMA_ASSERT1(lhs != atom_BOT, "called create_app(BOT, -)");
+    POMAGMA_ASSERT1(lhs != atom_TOP, "called create_app(TOP, -)");
 
     // Precompute abstractions.
     std::unordered_map<Ob, Ob> abs_term;
@@ -406,6 +411,7 @@ void Engine::merge(Ob dep) {
         Ob rep = rep_table_[dep].red;
         POMAGMA_ASSERT_NE(dep, rep);
 
+        // Merge occurrences of dep as lhs.
         for (const auto& pair : Lrv_table_[dep]) {
             Rlv_table_[pair.first].erase({dep, pair.second});
             Rlv_table_[pair.first].insert({rep, pair.second});
@@ -421,6 +427,7 @@ void Engine::merge(Ob dep) {
         }
         Lrv_table_[dep].clear();
 
+        // Merge occurrences of dep as rhs.
         for (const auto& pair : Rlv_table_[dep]) {
             Lrv_table_[pair.first].erase({dep, pair.second});
             Lrv_table_[pair.first].insert({rep, pair.second});
@@ -435,6 +442,7 @@ void Engine::merge(Ob dep) {
         }
         Rlv_table_[dep].clear();
 
+        // Merge occurrences of dep as val.
         for (const auto& pair : Vlr_table_[dep]) {
             LRv_table_[pair] = rep;
             Lrv_table_[pair.first].erase({pair.second, dep});
@@ -444,7 +452,7 @@ void Engine::merge(Ob dep) {
         }
         Vlr_table_[dep].clear();
 
-        // Merge occurrences of dep in abstract_table_
+        // Merge occurrences of dep as body in abstract_table_.
         // TODO is this necessary?
 
     } while (not merge_queue_.empty());
