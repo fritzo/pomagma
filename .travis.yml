@@ -18,6 +18,7 @@ addons:
     - gdb
     - graphviz
     - libboost-filesystem-dev
+    - libgoogle-gflags-dev
     - libgoogle-glog-dev
     - libgoogle-perftools-dev
     - libprotobuf-dev
