@@ -1,7 +1,6 @@
-import re
-from nose.tools import assert_set_equal
 from pomagma.analyst.compiler import compile_solver
 from pomagma.util.testing import for_each_kwargs
+import re
 
 
 SOLVE_EXAMPLES = [
@@ -219,4 +218,4 @@ def parse_programs(script):
 def test_compile_solver(expr, theory, expected_programs):
     script = compile_solver(expr, theory)
     actual_programs = parse_programs(script)
-    assert_set_equal(expected_programs, actual_programs)
+    assert set(expected_programs) == set(actual_programs)

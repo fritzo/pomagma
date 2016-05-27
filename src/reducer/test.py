@@ -1,9 +1,8 @@
-from nose import SkipTest
-from nose.tools import assert_equal
 from pomagma.util.testing import for_each_kwargs
 import os
 import pomagma.reducer
 import pomagma.util
+import pytest
 
 DATA = os.path.join(pomagma.util.DATA, 'test', 'debug')
 ADDRESS = 'ipc://{}'.format(os.path.join(DATA, 'reducer.socket'))
@@ -34,31 +33,31 @@ EXAMPLES = [
         'budget': 0,
         'expected_code': 'I',
         'expected_budget': 0,
-        'skip': 'TODO',
+        'xfail': 'TODO',
     },
     {
         'code': 'I',
         'budget': 1,
         'expected_code': 'I',
         'expected_budget': 1,
-        'skip': 'TODO',
+        'xfail': 'TODO',
     },
     {
         'code': 'APP I I',
         'budget': 0,
         'expected_code': 'I',
         'expected_budget': 0,
-        'skip': 'TODO',
+        'xfail': 'TODO',
     },
 ]
 
 
 @for_each_kwargs(EXAMPLES)
-def test_reduce(code, budget, expected_code, expected_budget, skip=None):
-    if skip:
-        raise SkipTest(skip)
+def test_reduce(code, budget, expected_code, expected_budget, xfail=None):
+    if xfail:
+        pytest.xfail(xfail)
     with SERVER.connect() as client:
         client.reset()
         actual = client.reduce(code, budget)
-        assert_equal(actual['code'], expected_code)
-        assert_equal(actual['budget'], expected_budget)
+        assert actual['code'] == expected_code
+        assert actual['budget'] == expected_budget

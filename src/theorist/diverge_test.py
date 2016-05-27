@@ -1,16 +1,16 @@
-from nose.tools import assert_equal, assert_raises
-import pomagma.util
 from pomagma.theorist.diverge import Converged
 from pomagma.theorist.diverge import Diverged
 from pomagma.theorist.diverge import I, K, F, B, C, W, S, Y, TOP
 from pomagma.theorist.diverge import converge_step
 from pomagma.theorist.diverge import iter_terms
+from pomagma.theorist.diverge import may_diverge
+from pomagma.theorist.diverge import must_diverge
 from pomagma.theorist.diverge import parse_term
 from pomagma.theorist.diverge import print_term
 from pomagma.theorist.diverge import try_converge
 from pomagma.theorist.diverge import try_prove_diverge
-from pomagma.theorist.diverge import may_diverge
-from pomagma.theorist.diverge import must_diverge
+import pomagma.util
+import pytest
 
 
 a, b, c = ('a',), ('b',), ('c',)  # argument lists
@@ -63,7 +63,7 @@ STEPS = [
 
 def _test_converge_step(term, expected):
     actual = converge_step(term)
-    assert_equal(expected, actual)
+    assert expected == actual
 
 
 def test_converge_step():
@@ -72,19 +72,22 @@ def test_converge_step():
 
 
 def test_converge():
-    assert_raises(Converged, converge_step, (TOP,))
+    with pytest.raises(Converged):
+        converge_step((TOP, ))
 
 
 def test_www_diverges():
     WWW = (W, (W,), (W,),)
-    assert_equal(converge_step(WWW), WWW)
-    assert_raises(Diverged, try_converge, WWW, 1)
+    assert converge_step(WWW) == WWW
+    with pytest.raises(Diverged):
+        try_converge(WWW, 1)
 
 
 def assert_diverges(string):
     steps = 10
     term = parse_term(string)
-    assert_raises(Diverged, try_converge, term, steps)
+    with pytest.raises(Diverged):
+        try_converge(term, steps)
 
 
 def test_diverges():
@@ -121,17 +124,21 @@ def test_try_prove_diverge():
                 line = line.split('#')[0].strip()
                 if line.startswith('EQUAL BOT '):
                     term = parse_term(line[len('EQUAL BOT '):])
-                    assert_raises(Diverged, try_converge, term, max_steps)
+                    with pytest.raises(Diverged):
+                        try_converge(term, max_steps)
                 elif line.startswith('NLESS ') and line.endswith(' BOT'):
                     term = parse_term(line[len('NLESS '): 1 - len(' BOT')])
-                    assert_raises(Converged, try_converge, term, max_steps)
+                    with pytest.raises(Converged):
+                        try_converge(term, max_steps)
                 elif line:
                     raise ValueError('Bad line:\n{}'.format(line))
 
 
 def test_may_diverge():
-    may_diverge
+    assert may_diverge
+    raise pytest.xfail('TODO test may_diverge')
 
 
 def test_must_diverge():
     must_diverge
+    raise pytest.xfail('TODO test must_diverge')

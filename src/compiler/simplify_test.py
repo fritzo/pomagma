@@ -1,4 +1,3 @@
-from nose.tools import assert_equal
 from pomagma.compiler.parser import parse_string_to_expr
 from pomagma.compiler.simplify import simplify_term
 from pomagma.util.testing import for_each
@@ -58,16 +57,16 @@ NONNORMAL_EXAMPLES = [
 
 
 @for_each(NORMAL_EXAMPLES)
-def normal_term_test(example):
+def test_normal_term(example):
     print example
     expected = parse_string_to_expr(example)
     actual = simplify_term(expected)
-    assert_equal(actual, expected)
+    assert actual == expected
 
 
 @for_each(NONNORMAL_EXAMPLES)
-def simplify_term_test(example):
+def test_simplify_term(example):
     print example
     term, expected = map(parse_string_to_expr, example)
     actual = simplify_term(term)
-    assert_equal(actual, expected)
+    assert actual == expected

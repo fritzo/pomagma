@@ -1,12 +1,9 @@
-import os
-import glob
-from nose.tools import assert_almost_equal
-from nose.tools import assert_set_equal
 from .util import dict_to_language
 from .util import json_load
 from .util import language_to_dict
 from .util import normalize_dict
-
+import glob
+import os
 
 SCRIPT_DIR = os.path.abspath(os.path.dirname(__file__))
 
@@ -14,13 +11,11 @@ SCRIPT_DIR = os.path.abspath(os.path.dirname(__file__))
 def assert_converts(expected):
     language = dict_to_language(expected)
     actual = language_to_dict(language)
-    assert_set_equal(set(expected.keys()), set(actual.keys()))
+    assert set(expected.keys()) == set(actual.keys())
     for arity in expected.keys():
-        assert_set_equal(
-            set(expected[arity].keys()),
-            set(actual[arity].keys()))
+        assert set(expected[arity].keys()) == set(actual[arity].keys())
         for term, weight in expected[arity].iteritems():
-            assert_almost_equal(weight, actual[arity][term])
+            assert abs(weight - actual[arity][term]) < 1e-8
 
 
 def test_example():

@@ -1,14 +1,14 @@
-from nose import SkipTest
 from pomagma.atlas.bootstrap import THEORY
 from pomagma.atlas.bootstrap import WORLD
 import contextlib
 import os
 import pomagma.util
+import pytest
 
 assert WORLD  # pacify pyflakes
 
 DATA = os.path.join(pomagma.util.DATA, 'test', 'debug', 'atlas', THEORY)
-ADDRESS = 'ipc://{}'.format(os.path.join(DATA, 'socket'))
+ADDRESS = 'ipc://{}'.format(os.path.join(DATA, 'analyst.socket'))
 OPTIONS = {
     'log_file': os.path.join(DATA, 'theorist_test.log'),
     'log_level': pomagma.util.LOG_LEVEL_DEBUG,
@@ -24,7 +24,7 @@ SKJA = os.path.join(
 @contextlib.contextmanager
 def serve(world, address=ADDRESS):
     if not os.path.exists(world):
-        raise SkipTest('fixture not found')
+        pytest.skip('fixture not found')
     print 'starting server'
     server = pomagma.analyst.serve(THEORY, world, address, **OPTIONS)
     yield server

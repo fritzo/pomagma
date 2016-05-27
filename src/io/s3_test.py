@@ -1,16 +1,15 @@
-import os
-from nose import SkipTest
-from nose.tools import assert_equal, assert_true, assert_false
-import mock
-import pomagma.io.s3
 from pomagma.util import random_uuid, in_temp_dir
+import mock
+import os
+import pomagma.io.s3
+import pytest
 
 
 TEST_BUCKET = pomagma.io.s3.try_connect_s3('pomagma-test')
 
 
 def skipped():
-    raise SkipTest()
+    pytest.skip('Cannot connect to test bucket')
 
 
 if TEST_BUCKET is None:
@@ -52,17 +51,17 @@ def test_s3():
                 print 'putting to s3...',
                 pomagma.io.s3.s3_lazy_put(filename)
                 print 'done'
-            assert_true(pomagma.io.s3.s3_exists(filename))
+            assert pomagma.io.s3.s3_exists(filename)
             with in_temp_dir():
                 print 'getting from s3...',
                 pomagma.io.s3.s3_lazy_get(filename)
                 print 'done'
-                assert_true(os.path.exists(filename))
-                assert_equal(load(filename), text)
+                assert os.path.exists(filename)
+                assert load(filename) == text
             print 'removing from s3...',
             pomagma.io.s3.s3_remove(filename)
             print 'done'
-            assert_false(pomagma.io.s3.s3_exists(filename))
+            assert not pomagma.io.s3.s3_exists(filename)
 
 
 def test_bzip2():
@@ -71,11 +70,11 @@ def test_bzip2():
         with in_temp_dir():
             dump(text, filename)
             filename_ext = pomagma.io.s3.bzip2(filename)
-            assert_true(os.path.exists(filename_ext))
+            assert os.path.exists(filename_ext)
             os.remove(filename)
             pomagma.io.s3.bunzip2(filename_ext)
-            assert_true(os.path.exists(filename))
-            assert_equal(load(filename), text)
+            assert os.path.exists(filename)
+            assert load(filename) == text
 
 
 def test_7z():
@@ -84,11 +83,11 @@ def test_7z():
         with in_temp_dir():
             dump(text, filename)
             filename_ext = pomagma.io.s3.archive_7z(filename)
-            assert_true(os.path.exists(filename_ext))
+            assert os.path.exists(filename_ext)
             os.remove(filename)
             pomagma.io.s3.extract_7z(filename_ext)
-            assert_true(os.path.exists(filename))
-            assert_equal(load(filename), text)
+            assert os.path.exists(filename)
+            assert load(filename) == text
 
 
 @requires_auth
@@ -101,8 +100,8 @@ def test_no_cache():
                 pomagma.io.s3.put(filename)
             with in_temp_dir():
                 pomagma.io.s3.get(filename)
-                assert_true(os.path.exists(filename))
-                assert_equal(load(filename), text)
+                assert os.path.exists(filename)
+                assert load(filename) == text
                 pomagma.io.s3.remove(filename)
 
 
@@ -116,8 +115,8 @@ def test_cache():
                 pomagma.io.s3.put(filename)
                 os.remove(filename)
                 pomagma.io.s3.get(filename)
-                assert_true(os.path.exists(filename))
-                assert_equal(load(filename), text)
+                assert os.path.exists(filename)
+                assert load(filename) == text
                 pomagma.io.s3.remove(filename)
 
 
@@ -133,6 +132,6 @@ def test_stale_cache():
                 dump(stale_text, filename)
                 pomagma.io.s3.bzip2(filename)
                 pomagma.io.s3.get(filename)
-                assert_true(os.path.exists(filename))
-                assert_equal(load(filename), text)
+                assert os.path.exists(filename)
+                assert load(filename) == text
                 pomagma.io.s3.remove(filename)

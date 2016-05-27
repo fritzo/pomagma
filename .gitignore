@@ -27,6 +27,7 @@ temp.*
 /cov-int/
 *.egg-info/
 /dist/
+.cache/
 
 # eclipse
 /.cproject

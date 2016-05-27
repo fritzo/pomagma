@@ -1,4 +1,3 @@
-from nose.tools import assert_equal
 from pomagma.atlas import get_hash
 from pomagma.atlas.bootstrap import THEORY
 from pomagma.atlas.bootstrap import WORLD
@@ -15,4 +14,4 @@ def test_formats():
         print 'loading', filename
         with pomagma.cartographer.load(THEORY, filename) as db:
             db.validate()
-        assert_equal(get_hash(filename), get_hash(WORLD))
+        assert get_hash(filename) == get_hash(WORLD)

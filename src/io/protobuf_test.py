@@ -1,5 +1,4 @@
 from google.protobuf import text_format
-from nose.tools import assert_equal
 from pomagma.io import protobuf_test_pb2
 from pomagma.io.protobuf import InFile
 from pomagma.io.protobuf import OutFile
@@ -53,4 +52,4 @@ def test_write_read(expected):
             f.write(expected)
         with InFile(filename) as f:
             f.read(actual)
-    assert_equal(actual, expected)
+    assert actual == expected

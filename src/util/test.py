@@ -1,7 +1,6 @@
-import time
 import multiprocessing
-from nose.tools import assert_equal
 import pomagma.util
+import time
 
 
 def _blocking_mutex(args):
@@ -37,24 +36,24 @@ def test_nonblocking_mutex():
     with pomagma.util.in_temp_dir() as curdir:
         args = [(_id, curdir) for _id in xrange(THREADS)]
         runs = pool.map(_nonblocking_mutex, args)
-    assert_equal(sum(runs), 1)
+    assert sum(runs) == 1
 
 
 def test_optimal_db_sizes():
     sizes = pomagma.util.optimal_db_sizes()
-    assert_equal(sizes.next(), 1 * 512 - 1)
-    assert_equal(sizes.next(), 2 * 512 - 1)
-    assert_equal(sizes.next(), 3 * 512 - 1)
-    assert_equal(sizes.next(), 4 * 512 - 1)
-    assert_equal(sizes.next(), 6 * 512 - 1)
-    assert_equal(sizes.next(), 8 * 512 - 1)
-    assert_equal(sizes.next(), 12 * 512 - 1)
-    assert_equal(sizes.next(), 16 * 512 - 1)
+    assert sizes.next() == 1 * 512 - 1
+    assert sizes.next() == 2 * 512 - 1
+    assert sizes.next() == 3 * 512 - 1
+    assert sizes.next() == 4 * 512 - 1
+    assert sizes.next() == 6 * 512 - 1
+    assert sizes.next() == 8 * 512 - 1
+    assert sizes.next() == 12 * 512 - 1
+    assert sizes.next() == 16 * 512 - 1
 
 
 def test_suggest_region_sizes():
     sizes = pomagma.util.suggest_region_sizes(1023, 8888)
-    assert_equal(sizes, [
+    assert sizes == [
         2 * 512 - 1,
         3 * 512 - 1,
         4 * 512 - 1,
@@ -62,4 +61,4 @@ def test_suggest_region_sizes():
         8 * 512 - 1,
         12 * 512 - 1,
         16 * 512 - 1,
-    ])
+    ]

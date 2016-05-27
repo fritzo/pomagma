@@ -2,9 +2,9 @@ boto
 contextlib2
 flake8
 mock
-nose
 parsable>=0.2.0
 protobuf
 psutil
+pytest
 pyzmq
 simplejson

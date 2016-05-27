@@ -1,6 +1,3 @@
-from nose.tools import assert_equal
-from nose.tools import assert_less
-from nose.tools import assert_list_equal
 from pomagma.analyst.synthesize import ComplexityEvaluator
 from pomagma.analyst.synthesize import NaiveHoleFiller
 from pomagma.analyst.synthesize import simplify_defs
@@ -42,9 +39,9 @@ COMPLEXITY_EVALUATOR_EXAMPLES = [
 
 
 @for_each(COMPLEXITY_EVALUATOR_EXAMPLES)
-def complexity_evaluator_test(example):
+def test_complexity_evaluator(example):
     term = parse_string_to_expr(example)
-    assert_less(0, evaluate_complexity(term))
+    assert 0 < evaluate_complexity(term)
 
 
 FILLINGS = sorted(
@@ -64,19 +61,19 @@ HOLE_FILLER_EXAMPLES = [
 
 
 @for_each(HOLE_FILLER_EXAMPLES)
-def hole_filler_test(example):
+def test_hole_filler(example):
     term = parse_string_to_expr(example[0])
     expected = map(parse_string_to_expr, example[1])
     actual = list(fill_holes(term))
-    assert_list_equal(actual, expected)
+    assert actual == expected
 
 
 @for_each(HOLE_FILLER_EXAMPLES)
-def hole_filler_increases_complexity_test(example):
+def test_hole_filler_increases_complexity(example):
     term = parse_string_to_expr(example[0])
     fillings = list(fill_holes(term))
     for f in fillings:
-        assert_less(evaluate_complexity(term), evaluate_complexity(f))
+        assert evaluate_complexity(term) < evaluate_complexity(f)
 
 
 SIMPLIFY_DEFS_EXAMPLES = [
@@ -109,9 +106,9 @@ SIMPLIFY_DEFS_EXAMPLES = [
 
 
 @for_each_kwargs(SIMPLIFY_DEFS_EXAMPLES)
-def simplify_defs_test(facts, expected, vars_to_keep=[]):
+def test_simplify_defs(facts, expected, vars_to_keep=[]):
     facts = set(map(parse_string_to_expr, facts))
     expected = set(map(parse_string_to_expr, expected))
     vars_to_keep = set(map(parse_string_to_expr, vars_to_keep))
     actual = simplify_defs(facts, vars_to_keep)
-    assert_equal(actual, expected)
+    assert actual == expected

@@ -1,6 +1,4 @@
 from itertools import izip
-from nose import SkipTest
-from nose.tools import assert_false
 from pomagma.atlas.bootstrap import THEORY
 from pomagma.atlas.bootstrap import WORLD
 from pomagma.util import TRAVIS_CI
@@ -11,6 +9,7 @@ import pomagma.analyst
 import pomagma.cartographer
 import pomagma.surveyor
 import pomagma.util
+import pytest
 import simplejson as json
 
 DATA = os.path.join(pomagma.util.DATA, 'test', 'debug', 'atlas', THEORY)
@@ -85,11 +84,11 @@ def test_inference():
 
 
 def assert_equal_example(expected, actual, example, cmp=cmp):
-    assert_false(cmp(expected, actual), '\n'.join([
+    assert not cmp(expected, actual), '\n'.join([
         'failed {}'.format(example),
         'expected: {}'.format(expected),
         'actual: {}'.format(actual)
-    ]))
+    ])
 
 
 def assert_examples(examples, expected, actual, cmp=cmp):
@@ -255,11 +254,11 @@ SOLVE_EXAMPLES = [
 @for_each_context(load, SOLVE_EXAMPLES)
 def test_solve(db, example):
     if 'skip' in example:
-        raise SkipTest(example['skip'])
+        pytest.xfail(example['skip'])
     max_solutions = example.get('max_solutions', 5)
     actual = db.solve(example['var'], example['theory'], max_solutions)
     if 'skip_compare' in example:
-        raise SkipTest(example['skip_compare'])
+        pytest.xfail(example['skip_compare'])
     for key in ['necessary', 'possible']:
         if key in example:
             assert_equal_example(example[key], actual[key], (example, key))
@@ -363,7 +362,7 @@ VALIDATE_FACTS_EXAMPLES = [
 
 def test_validate_facts():
     if TRAVIS_CI:
-        raise SkipTest('this test is flaky on travis')
+        pytest.skip('this test is flaky on travis')
     with load() as db:
         facts, expected = transpose(VALIDATE_FACTS_EXAMPLES)
         actual = [db.validate_facts(f) for f in facts]

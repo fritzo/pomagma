@@ -1,4 +1,3 @@
-from nose.tools import assert_equal
 from pomagma.compiler.parser import parse_string_to_expr
 from pomagma.compiler.sugar import desugar_expr
 from pomagma.util.testing import for_each
@@ -19,4 +18,4 @@ EXAMPLES = [map(parse_string_to_expr, e) for e in [
 def test_desugar(args):
     (expr, expected) = args
     actual = desugar_expr(expr)
-    assert_equal(actual, expected)
+    actual == expected
