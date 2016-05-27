@@ -60,6 +60,6 @@ class Server(object):
     def log_error(self):
         pomagma.util.print_logged_error(self._log_file)
         with pomagma.util.chdir(self._dir):
-            trace = pomagma.util.get_stack_trace(BINARY)
+            trace = pomagma.util.get_stack_trace(BINARY, self.pid)
         pomagma.util.log_print(trace, self._log_file)
         raise CalledProcessError(self._proc.poll(), BINARY)

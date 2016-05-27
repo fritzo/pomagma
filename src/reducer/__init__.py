@@ -18,8 +18,9 @@ def serve(address=ADDRESS, **opts):
 
 @contextlib.contextmanager
 def load(**opts):
-    address = 'ipc://{}'.format(
-        os.path.join(pomagma.util.DATA), 'analyst.socket')
+    address = opts.pop(
+        'address',
+        'ipc://{}'.format(os.path.join(pomagma.util.DATA, 'reducer.socket')))
     with pomagma.util.log_duration():
         server = serve(address, **opts)
         with server.connect() as client:

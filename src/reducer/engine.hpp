@@ -74,6 +74,7 @@ class Engine : noncopyable {
     static bool is_var(Ob ob) { return ob < 0; }
     static bool is_atom(Ob ob) { return 0 < ob and ob <= atom_count; }
     static bool is_app(Ob ob) { return atom_count < ob; }
+
     // If an ob is an app, then it can be decomposed into lhs and rhs.
     Ob get_lhs(Ob ob) const;
     Ob get_rhs(Ob ob) const;

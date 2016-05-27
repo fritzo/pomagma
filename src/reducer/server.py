@@ -1,7 +1,7 @@
-import os
+from pomagma.reducer.client import Client
 from subprocess import CalledProcessError
+import os
 import pomagma.util
-from pomagma.cartographer.client import Client
 
 BINARY = os.path.join(pomagma.util.BIN, 'reducer', 'reducer')
 
@@ -47,6 +47,6 @@ class Server(object):
     def log_error(self):
         pomagma.util.print_logged_error(self._log_file)
         with pomagma.util.chdir(self._dir):
-            trace = pomagma.util.get_stack_trace(BINARY)
+            trace = pomagma.util.get_stack_trace(BINARY, self.pid)
         pomagma.util.log_print(trace, self._log_file)
         raise CalledProcessError(self._proc.poll(), BINARY)

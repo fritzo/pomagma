@@ -16,7 +16,7 @@ class Client(object):
         assert callable(poll_callback), poll_callback
         self._poll_callback = poll_callback
         self._socket = CONTEXT.socket(zmq.REQ)
-        print 'connecting to cartographer at', address
+        print 'connecting to reducer at', address
         self._socket.connect(address)
 
     def __enter__(self):
@@ -70,9 +70,12 @@ class Client(object):
         request.reduce.code = code
         request.reduce.budget = budget
         reply = self._call(request)
-        if not reply.code:
+        if not reply.reduce.code:
             raise ValueError('Invalid code: {}'.format(code))
-        return {'code': str(reply.code), 'budget': int(reply.budget)}
+        return {
+            'code': str(reply.reduce.code),
+            'budget': int(reply.reduce.budget),
+        }
 
     def stop(self):
         request = Request()

@@ -14,7 +14,7 @@ import pomagma.util
 import simplejson as json
 
 DATA = os.path.join(pomagma.util.DATA, 'test', 'debug', 'atlas', THEORY)
-ADDRESS = 'ipc://{}'.format(os.path.join(DATA, 'socket'))
+ADDRESS = 'ipc://{}'.format(os.path.join(DATA, 'analyst.socket'))
 OPTIONS = {
     'log_file': os.path.join(DATA, 'analyst_test.log'),
     'log_level': pomagma.util.LOG_LEVEL_DEBUG,
