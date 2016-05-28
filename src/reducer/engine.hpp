@@ -90,22 +90,9 @@ class Engine : noncopyable {
 
    private:
     void assert_valid() const;
-    void assert_ob(Ob ob) const {
-        POMAGMA_ASSERT(is_var(ob) or rep_table_.find(ob) != rep_table_.end(),
-                       "Ob not found: " << ob);
-    }
-    void assert_closed(Ob ob) const {
-        assert_ob(ob);
-        POMAGMA_ASSERT(is_closed(ob), "ob is not closed: " << print(ob));
-    }
-    void assert_weak_red(Ob ob) const {
-        assert_ob(ob);
-        if (Ob ob_red = map_find(rep_table_, ob).red) {
-            Ob ob_red_red = map_find(rep_table_, ob_red).red;
-            POMAGMA_ASSERT(ob_red_red == 0 or ob_red_red == ob_red,
-                           "ob rep chain is not normalized: " << print(ob));
-        }
-    }
+    void assert_ob(Ob ob) const;
+    void assert_closed(Ob ob) const;
+    void assert_weak_red(Ob ob) const;
 
     // Debug printing.
     void append(Ob ob, std::ostream& os) const;
@@ -211,6 +198,25 @@ inline bool Engine::is_normal(Ob ob) const {
     // TODO Are atoms like DIV and A normal? If so, how do we guarantee
     // confluence in the presence of equations like DIV = (I | DIV) * <TOP>?
     return not map_find(rep_table_, ob).red;
+}
+
+inline void Engine::assert_ob(Ob ob) const {
+    POMAGMA_ASSERT(is_var(ob) or rep_table_.find(ob) != rep_table_.end(),
+                   "Ob not found: " << ob);
+}
+
+inline void Engine::assert_closed(Ob ob) const {
+    assert_ob(ob);
+    POMAGMA_ASSERT(is_closed(ob), "ob is not closed: " << print(ob));
+}
+
+inline void Engine::assert_weak_red(Ob ob) const {
+    assert_ob(ob);
+    if (Ob ob_red = map_find(rep_table_, ob).red) {
+        Ob ob_red_red = map_find(rep_table_, ob_red).red;
+        POMAGMA_ASSERT(ob_red_red == 0 or ob_red_red == ob_red,
+                       "ob rep chain is not normalized: " << print(ob));
+    }
 }
 
 }  // namespace reducer
