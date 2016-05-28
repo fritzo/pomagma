@@ -4,6 +4,34 @@
 namespace pomagma {
 namespace reducer {
 
+class Trace : noncopyable {
+   public:
+    Trace() { ++stack_depth_; }
+    ~Trace() { --stack_depth_; }
+    static const char* spaces() {
+        POMAGMA_ASSERT_LE(stack_depth_, 255);
+        return spaces_ + 255 - stack_depth_;
+    }
+
+   private:
+    static int stack_depth_;
+    static const char spaces_[256];
+};
+
+int Trace::stack_depth_ = 0;
+const char Trace::spaces_[256] =
+    "                                                                "
+    "                                                                "
+    "                                                                "
+    "                                                               ";
+
+#define POMAGMA_TRACE(message)                \
+    POMAGMA_DEBUG(Trace::spaces() << message) \
+    Trace internal_trace_;
+
+#define POMAGMA_TRACE_PRINT(x) \
+    POMAGMA_DEBUG(Trace::spaces() << #x " = " << print(x));
+
 Engine::Engine() { reset(); }
 
 Engine::~Engine() {
@@ -140,30 +168,76 @@ void Engine::reset() {
     }
 }
 
+inline std::string Engine::print(Ob ob) const {
+    std::ostringstream os;
+    append(ob, os);
+    return os.str();
+}
+
+inline std::string Engine::print(const std::vector<Ob>& obs) const {
+    if (obs.empty()) return "[]";
+    std::ostringstream os;
+    os << "[";
+    append(obs[0], os);
+    for (size_t i = 1; i < obs.size(); ++i) {
+        os << ", ";
+        append(obs[i], os);
+    }
+    os << "]";
+    return os.str();
+}
+
+void Engine::append(Ob ob, std::ostream& os) const {
+    static const std::unordered_map<Ob, std::string> atom_to_string = {
+        {atom_I, "I"},
+        {atom_K, "K"},
+        {atom_B, "B"},
+        {atom_C, "C"},
+        {atom_S, "S"},
+        {atom_BOT, "BOT"},
+        {atom_TOP, "TOP"},
+    };
+
+    if (is_atom(ob)) {
+        os << map_find(atom_to_string, ob);
+    } else if (is_var(ob)) {
+        os << "v" << (-1 - ob);  // Outputs v0, v1, ...
+    } else if (is_app(ob)) {
+        const Term& term = map_find(rep_table_, ob);
+        os << "APP ";
+        append(term.lhs, os);
+        os << " ";
+        append(term.rhs, os);
+    }
+}
+
 // Aka update_term (python).
 inline void Engine::rep_normalize(Ob& ob) const {
+    // POMAGMA_TRACE("rep_normalize(" << print(ob) << ")");
     while (is_app(ob)) {
         Ob rep = map_find(rep_table_, ob).red;
         if (not rep) return;    // ob is normal.
         if (rep == ob) return;  // ob is maximally reduced.
+        POMAGMA_TRACE_PRINT(rep);
         ob = rep;
     }
 }
 
 inline const std::unordered_map<Ob, Ob>& Engine::abstract(Ob body) const {
+    POMAGMA_TRACE("abstract(" << print(body) << ")");
     static const std::unordered_map<Ob, Ob> empty;  // Just a default value.
     auto i = abstract_table_.find(body);
     return (i == abstract_table_.end()) ? empty : i->second;
 }
 
 Ob Engine::abstract(Ob var, Ob body) {
+    POMAGMA_TRACE("abstract(" << print(var) << ", " << print(body) << ")");
     assert_ob(var);
     assert_ob(body);
     POMAGMA_ASSERT(is_var(var), "abstract() called with non-variable: " << var);
 
     if (body == atom_BOT) return atom_BOT;  // Rule BOT.
     if (body == atom_TOP) return atom_TOP;  // Rule TOP.
-    if (body == var) return atom_I;         // Rule I.
     auto i = abstract_table_.find(body);
     if (i != abstract_table_.end()) {
         auto j = i->second.find(var);
@@ -174,7 +248,26 @@ Ob Engine::abstract(Ob var, Ob body) {
     return get_app(atom_K, body);  // Rule K.
 }
 
+Ob Engine::create_var(Ob var) {
+    POMAGMA_TRACE("create_var(" << print(var) << ")");
+    assert_ob(var);
+
+    // Precompute abstractions.
+    abstract_table_[var][var] = atom_I;  // Rule I.
+
+    return var;
+}
+
+inline Ob Engine::get_var(Ob var) {
+    POMAGMA_TRACE("get_var(" << print(var) << ")");
+    if (unlikely(abstract_table_.find(var) == abstract_table_.end())) {
+        create_var(var);
+    }
+    return var;
+}
+
 Ob Engine::create_app(Ob lhs, Ob rhs) {
+    POMAGMA_TRACE("create_app(" << print(lhs) << ", " << print(rhs) << ")");
     assert_ob(lhs);
     assert_ob(rhs);
     rep_normalize(lhs);
@@ -231,6 +324,7 @@ Ob Engine::create_app(Ob lhs, Ob rhs) {
 
 // The result should not be a redex.
 inline Ob Engine::get_app(Ob lhs, Ob rhs) {
+    POMAGMA_TRACE("get_app(" << print(lhs) << ", " << print(rhs) << ")");
     assert_ob(lhs);
     assert_ob(rhs);
     rep_normalize(lhs);
@@ -250,9 +344,10 @@ inline Ob Engine::get_app(Ob lhs, Ob rhs) {
 }
 
 // Variables are arranged on the stack as [begin_var = -1, -2, ..., end_var].
-static inline Ob pop(std::vector<Ob>& stack, Ob& end_var) {
+inline Ob Engine::pop(std::vector<Ob>& stack, Ob& end_var) {
+    POMAGMA_TRACE("pop(" << print(stack) << ", " << print(end_var) << ")");
     if (stack.empty()) {
-        return end_var--;
+        return get_var(end_var--);
     } else {
         const Ob ob = stack.back();
         stack.pop_back();
@@ -262,6 +357,8 @@ static inline Ob pop(std::vector<Ob>& stack, Ob& end_var) {
 
 // TODO Allow nondeterminstic SKJ execution as in combinator.py.
 Ob Engine::app(Ob lhs, Ob rhs, size_t& budget, Ob begin_var) {
+    POMAGMA_TRACE("app(" << print(lhs) << ", " << print(rhs) << ", " << budget
+                         << ", " << print(begin_var) << ")");
     assert_ob(lhs);
     assert_ob(rhs);
     rep_normalize(lhs);
@@ -277,10 +374,12 @@ Ob Engine::app(Ob lhs, Ob rhs, size_t& budget, Ob begin_var) {
 
     // Eagerly linear-beta-eta head reduce; beta reduce within budget.
     Ob head = lhs;
+    std::vector<Ob> stack = {rhs};
     Ob end_var = begin_var;  // Init to no extra variables.
-    std::vector<Ob> stack;   // Init to empty stack.
     bool normalized = true;  // aka not pending (python).
     while (not is_var(head)) {
+        POMAGMA_TRACE_PRINT(head);
+        POMAGMA_TRACE_PRINT(stack);
         if (is_app(head)) {
             const Term& term = map_find(rep_table_, head);
             head = term.lhs;
@@ -355,6 +454,8 @@ Ob Engine::app(Ob lhs, Ob rhs, size_t& budget, Ob begin_var) {
         }
         break;
     }
+    POMAGMA_TRACE_PRINT(head);
+    POMAGMA_TRACE_PRINT(stack);
 
     // Reduce arguments.
     while (not stack.empty()) {
@@ -364,11 +465,13 @@ Ob Engine::app(Ob lhs, Ob rhs, size_t& budget, Ob begin_var) {
             arg = reduce(arg, budget, end_var);  // May merge.
         }
         head = get_app(head, arg);
+        POMAGMA_TRACE_PRINT(head);
     }
 
     // Abstract out variables in reverse order.
     for (Ob var = end_var + 1; var <= begin_var; ++var) {
         head = abstract(var, head);
+        POMAGMA_TRACE_PRINT(head);
     }
 
     // Update database with result.
@@ -402,16 +505,19 @@ Ob Engine::app(Ob lhs, Ob rhs, size_t& budget, Ob begin_var) {
 }
 
 Ob Engine::reduce(Ob ob, size_t& budget, Ob begin_var) {
+    POMAGMA_TRACE("reduce(" << print(ob) << ", " << budget << ", "
+                            << print(begin_var) << ")");
     POMAGMA_ASSERT1(budget, "Do not call reduce() with zero budget");
     assert_ob(ob);
     rep_normalize(ob);
-    if (is_normal(ob)) return ob;
+    if (is_var(ob) or is_normal(ob)) return ob;
 
     POMAGMA_ASSERT(is_app(ob), "programmer error");
     return app(get_lhs(ob), get_rhs(ob), budget, begin_var);
 }
 
 void Engine::merge(Ob dep) {
+    POMAGMA_TRACE("merge(" << print(dep) << ")");
     POMAGMA_ASSERT1(merge_queue_.empty(), "programmer error");
     merge_queue_.insert(dep);
     do {

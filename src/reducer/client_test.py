@@ -75,6 +75,18 @@ EXAMPLES = [
         'expected_code': 'I',
         'expected_budget': 1,
     },
+    {
+        'code': 'APP K BOT',
+        'budget': 0,
+        'expected_code': 'BOT',
+        'expected_budget': 0,
+    },
+    {
+        'code': 'APP B I',
+        'budget': 0,
+        'expected_code': 'I',
+        'expected_budget': 0,
+    },
 ]
 
 

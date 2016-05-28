@@ -51,6 +51,8 @@
 namespace pomagma {
 namespace reducer {
 
+// Public methods of the Engine are restricted to closed obs:
+// inputs must be closed and return values will be closed.
 class Engine : noncopyable {
    public:
     enum : Ob {
@@ -87,36 +89,41 @@ class Engine : noncopyable {
     bool is_normal(Ob ob) const;
 
    private:
-    // Variables are only for internal use.
-    static bool is_var(Ob ob) { return ob < 0; }
-    bool is_closed(Ob ob) const {
-        if (is_var(ob)) return false;
-        return abstract_table_.find(ob) == abstract_table_.end();
-    }
-    Ob app(Ob lhs, Ob rhs, size_t& budget, Ob begin_var);
-    Ob reduce(Ob term, size_t& budget, Ob begin_var);
-
     void assert_valid() const;
     void assert_ob(Ob ob) const {
         POMAGMA_ASSERT(is_var(ob) or rep_table_.find(ob) != rep_table_.end(),
                        "Ob not found: " << ob);
     }
-    void assert_red(Ob ob) const {
+    void assert_closed(Ob ob) const {
         assert_ob(ob);
-        POMAGMA_ASSERT_EQ(map_find(rep_table_, ob).red, 0);
+        POMAGMA_ASSERT(is_closed(ob), "ob is not closed: " << print(ob));
     }
     void assert_weak_red(Ob ob) const {
         assert_ob(ob);
-        Ob ob_red = map_find(rep_table_, ob).red;
-        if (ob_red) {
+        if (Ob ob_red = map_find(rep_table_, ob).red) {
             Ob ob_red_red = map_find(rep_table_, ob_red).red;
             POMAGMA_ASSERT(ob_red_red == 0 or ob_red_red == ob_red,
-                           "ob rep chain is not normalized");
+                           "ob rep chain is not normalized: " << print(ob));
         }
     }
 
+    // Debug printing.
+    void append(Ob ob, std::ostream& os) const;
+    std::string print(Ob ob) const;
+    std::string print(const std::vector<Ob>& obs) const;
+
+    // Variables are only for internal use.
+    static bool is_var(Ob ob) { return ob < 0; }
+    bool is_closed(Ob ob) const {
+        return abstract_table_.find(ob) == abstract_table_.end();
+    }
+    Ob app(Ob lhs, Ob rhs, size_t& budget, Ob begin_var);
+    Ob reduce(Ob term, size_t& budget, Ob begin_var);
+    Ob pop(std::vector<Ob>& stack, Ob& end_var);
+
     // Term constructors.
-    // Variables do not need to be constructed.
+    Ob create_var(Ob var);
+    Ob get_var(Ob var);  // Create if not found.
     Ob create_app(Ob lhs, Ob rhs);
     Ob get_app(Ob lhs, Ob rhs);  // Create if not found.
 
@@ -168,36 +175,43 @@ class Engine : noncopyable {
 };
 
 inline Ob Engine::get_lhs(Ob val) const {
-    assert_ob(val);
-    POMAGMA_ASSERT1(is_app(val), "tried to read lhs of non-app");
-    return map_find(rep_table_, val).lhs;
+    assert_closed(val);
+    POMAGMA_ASSERT1(is_app(val), "tried to get_lhs of non-app: " << print(val));
+    Ob lhs = map_find(rep_table_, val).lhs;
+    assert_closed(lhs);
+    return lhs;
 }
 
 inline Ob Engine::get_rhs(Ob val) const {
-    assert_ob(val);
-    POMAGMA_ASSERT1(is_app(val), "tried to read rhs of non-app");
-    return map_find(rep_table_, val).rhs;
+    assert_closed(val);
+    POMAGMA_ASSERT1(is_app(val), "tried to get_rhs of non-app: " << print(val));
+    Ob rhs = map_find(rep_table_, val).rhs;
+    assert_closed(rhs);
+    return rhs;
 }
 
 inline Ob Engine::app(Ob lhs, Ob rhs) {
+    assert_closed(lhs);
+    assert_closed(rhs);
     size_t budget = 0;
     Ob begin_var = -1;
     return app(lhs, rhs, budget, begin_var);
 }
 
 inline Ob Engine::reduce(Ob ob, size_t& budget) {
-    POMAGMA_ASSERT1(is_closed(ob), "ob is not closed: " << ob);
+    assert_closed(ob);
     if (not budget) return ob;
     Ob begin_var = -1;
     ob = reduce(ob, budget, begin_var);
-    POMAGMA_ASSERT1(is_closed(ob), "reduced ob is not closed: " << ob);
+    assert_closed(ob);
     return ob;
 }
 
 inline bool Engine::is_normal(Ob ob) const {
+    assert_closed(ob);
     // TODO Are atoms like DIV and A normal? If so, how do we guarantee
     // confluence in the presence of equations like DIV = (I | DIV) * <TOP>?
-    return is_var(ob) or not map_find(rep_table_, ob).red;
+    return not map_find(rep_table_, ob).red;
 }
 
 }  // namespace reducer
