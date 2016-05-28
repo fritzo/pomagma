@@ -5,6 +5,7 @@ mock
 parsable>=0.2.0
 protobuf
 psutil
+pyformat
 pytest
 pyzmq
 simplejson
