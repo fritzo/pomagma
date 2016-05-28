@@ -135,6 +135,88 @@ def decode_maybe(decode_item):
 
 
 # ----------------------------------------------------------------------------
+# Products
+
+def pair(x, y):
+    return APP(APP(C, APP(CI, x)), y)
+
+
+@memoize_args
+def encode_prod(encode_fst, encode_snd):
+
+    def encode(value):
+        if not (isinstance(value, tuple) and len(value) == 2):
+            raise TypeError(value)
+        code_fst = encode_fst(value[0])
+        code_snd = encode_snd(value[1])
+        return pair(code_fst, code_snd)
+
+    return encode
+
+
+@memoize_args
+def decode_prod(decode_fst, decode_snd):
+    x = unification.var('x')
+    y = unification.var('y')
+    pair_pattern = pair(x, y)
+
+    def decode(code):
+        match = unification.unify(pair_pattern, code)
+        if not match:
+            raise TypeError(code)
+        x_value = decode_fst(match[x])
+        y_value = decode_snd(match[y])
+        return (x_value, y_value)
+
+    return decode
+
+
+
+# ----------------------------------------------------------------------------
+# Sums
+
+def inl(x):
+    return COMP(K, APP(CI, x))
+
+
+def inr(y):
+    return APP(K, APP(CI, y))
+
+
+@memoize_args
+def encode_sum(encode_inl, encode_inr):
+
+    def encode(value):
+        if not (isinstance(value, tuple) and len(value) == 2 and
+                isinstance(value[0], bool)):
+            raise TypeError(value)
+        if value[0]:
+            return inl(encode_inl(value[1]))
+        else:
+            return inr(encode_inr(value[1]))
+
+    return encode
+
+
+@memoize_args
+def decode_sum(decode_inl, decode_inr):
+    x = unification.var('x')
+    inl_pattern = inl(x)
+    inr_pattern = inr(x)
+
+    def decode(code):
+        match = unification.unify(inl_pattern, code)
+        if match:
+            return (True, decode_inl(match[x]))
+        match = unification.unify(inr_pattern, code)
+        if match:
+            return (False, decode_inr(match[x]))
+        raise TypeError(code)
+
+    return decode
+
+
+# ----------------------------------------------------------------------------
 # Numerals as Y Maybe
 
 zero = K
@@ -192,9 +274,9 @@ def encode_list(encode_item):
 
 @memoize_arg
 def decode_list(decode_item):
-    head_var = unification.var('head')
-    tail_var = unification.var('tail')
-    cons_pattern = cons(head_var, tail_var)
+    head = unification.var('head')
+    tail = unification.var('tail')
+    cons_pattern = cons(head, tail)
 
     def decode(code):
         result = []
@@ -202,8 +284,8 @@ def decode_list(decode_item):
             match = unification.unify(cons_pattern, code)
             if not match:
                 raise TypeError(code)
-            result.append(match[head_var])
-            code = match[tail_var]
+            result.append(decode_item(match[head]))
+            code = match[tail]
         return result
 
     return decode
@@ -213,30 +295,42 @@ def decode_list(decode_item):
 # Generic
 
 def decoder(tp):
-    if tp == 'unit':
-        return decode_unit
-    elif tp == 'bool':
-        return decode_bool
-    elif tp == 'num':
-        return decode_num
-    elif isinstance(tp, tuple) and len(tp) == 2 and tp[0] == 'maybe':
-        return decode_maybe(decoder(tp[1]))
-    elif isinstance(tp, tuple) and len(tp) == 2 and tp[0] == 'list':
-        return decode_list(decoder(tp[1]))
-    else:
-        raise ValueError(tp)
+    if not isinstance(tp, tuple):
+        if tp == 'unit':
+            return decode_unit
+        if tp == 'bool':
+            return decode_bool
+        if tp == 'num':
+            return decode_num
+    elif len(tp) == 2:
+        if tp[0] == 'maybe':
+            return decode_maybe(decoder(tp[1]))
+        if tp[0] == 'list':
+            return decode_list(decoder(tp[1]))
+    elif len(tp) == 3:
+        if tp[0] == 'prod':
+            return decode_prod(decoder(tp[1]), decoder(tp[2]))
+        if tp[0] == 'sum':
+            return decode_sum(decoder(tp[1]), decoder(tp[2]))
+    raise ValueError(tp)
 
 
 def encoder(tp):
-    if tp == 'unit':
-        return encode_unit
-    elif tp == 'bool':
-        return encode_bool
-    elif tp == 'num':
-        return encode_num
-    elif isinstance(tp, tuple) and len(tp) == 2 and tp[0] == 'maybe':
-        return encode_maybe(encoder(tp[1]))
-    elif isinstance(tp, tuple) and len(tp) == 2 and tp[0] == 'list':
-        return encode_list(encoder(tp[1]))
-    else:
-        raise ValueError(tp)
+    if not isinstance(tp, tuple):
+        if tp == 'unit':
+            return encode_unit
+        if tp == 'bool':
+            return encode_bool
+        if tp == 'num':
+            return encode_num
+    elif len(tp) == 2:
+        if tp[0] == 'maybe':
+            return encode_maybe(encoder(tp[1]))
+        if tp[0] == 'list':
+            return encode_list(encoder(tp[1]))
+    elif len(tp) == 3:
+        if tp[0] == 'prod':
+            return encode_prod(encoder(tp[1]), encoder(tp[2]))
+        if tp[0] == 'sum':
+            return encode_sum(encoder(tp[1]), encoder(tp[2]))
+    raise ValueError(tp)

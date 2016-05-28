@@ -17,18 +17,35 @@ EXAMPLES_BY_TYPE = {
         'ok': [(K, 0)],
         'encode_error': [None, False, True, [0], [True]],
     },
+    ('prod', 'bool', 'num'): {
+        'ok': [
+            (io.pair(K, io.zero), (True, 0)),
+            (io.pair(KI, io.succ(io.succ(io.zero))), (False, 2)),
+        ],
+        'encode_error': [None, (), (True,), [True, 0], True, 0, 'asdf']
+    },
+    ('sum', 'bool', 'num'): {
+        'ok': [
+            (io.inl(K), (True, True)),
+            (io.inl(KI), (True, False)),
+            (io.inr(io.zero), (False, 0)),
+            (io.inr(io.succ(io.succ(io.zero))), (False, 2)),
+        ],
+        'encode_error': [None, (), (True,), [True, 0], True, 0, 'asdf']
+    },
     ('maybe', 'bool'): {
         'ok': [
-            (K, None),
-            (APP(K, APP(CI, K)), (True,)),
-            (APP(K, APP(CI, KI)), (False,)),
+            (io.none, None),
+            (io.some(K), (True,)),
+            (io.some(KI), (False,)),
         ],
         'encode_error': [True, False, 0, 1, 2, (), 'asdf'],
         'decode_error': [I],
     },
     ('list', 'bool'): {
         'ok': [
-            (K, []),
+            (io.nil, []),
+            (io.cons(K, io.cons(KI, io.nil)), [True, False]),
         ],
         'encode_error': [None, True, False, 0, 1, 2, (), 'asdf'],
         'decode_error': [I],
