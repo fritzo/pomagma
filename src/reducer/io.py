@@ -171,7 +171,6 @@ def decode_prod(decode_fst, decode_snd):
     return decode
 
 
-
 # ----------------------------------------------------------------------------
 # Sums
 

@@ -1,4 +1,4 @@
-from pomagma.reducer.io import I, K, B, C, APP, KI, CI
+from pomagma.reducer.io import I, K, B, C, APP, KI
 import pomagma.reducer.io as io
 import pytest
 
@@ -14,7 +14,12 @@ EXAMPLES_BY_TYPE = {
         'decode_error': [I, B, C, APP(C, B)],
     },
     'num': {
-        'ok': [(K, 0)],
+        'ok': [
+            (io.zero, 0),
+            (io.succ(io.zero), 1),
+            (io.succ(io.succ(io.zero)), 2),
+            (io.succ(io.succ(io.succ(io.zero))), 3),
+        ],
         'encode_error': [None, False, True, [0], [True]],
     },
     ('prod', 'bool', 'num'): {
@@ -47,9 +52,17 @@ EXAMPLES_BY_TYPE = {
             (io.nil, []),
             (io.cons(K, io.cons(KI, io.nil)), [True, False]),
         ],
-        'encode_error': [None, True, False, 0, 1, 2, (), 'asdf'],
+        'encode_error': [None, True, False, 0, 1, 2, (), 'asdf', [[True]]],
         'decode_error': [I],
     },
+    ('list', ('list', 'num')): {
+        'ok': [
+            (io.nil, []),
+            (io.cons(io.nil, io.nil), [[]]),
+            (io.cons(io.cons(io.zero, io.nil), io.nil), [[0]]),
+        ],
+        'encode_error': [0, [1], [[2], 3], [[[]]]],
+    }
 }
 
 EXAMPLES = {
