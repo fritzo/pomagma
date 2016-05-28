@@ -1,7 +1,12 @@
 from pomagma.reducer import io
 from pomagma.reducer.code import I, K, B, C, APP
+import hypothesis
+import hypothesis.strategies
 import pomagma.reducer.code
 import pytest
+
+# ----------------------------------------------------------------------------
+# Parametrized tests
 
 EXAMPLES_BY_TYPE = {
     'unit': {
@@ -118,4 +123,71 @@ def test_serialize_parse(tp, code, value):
     string = pomagma.reducer.code.serialize(code)
     assert isinstance(string, str)
     actual_code = pomagma.reducer.code.parse(string)
+    assert actual_code == code
+
+
+# ----------------------------------------------------------------------------
+# Property based tests
+
+s = hypothesis.strategies
+
+types_base = s.one_of(s.just('unit'), s.just('bool'), s.just('num'))
+
+
+def types_extend(types_):
+    return s.one_of(
+        s.tuples(s.just('maybe'), types_),
+        s.tuples(s.just('list'), types_),
+        s.tuples(s.just('prod'), types_, types_),
+        s.tuples(s.just('sum'), types_, types_),
+    )
+
+
+types = s.recursive(types_base, types_extend, max_leaves=10)
+
+
+def code_of_type(tp):
+    if not isinstance(tp, tuple):
+        if tp == 'unit':
+            return s.just(io.void)
+        if tp == 'bool':
+            return s.sampled_from([io.true, io.false])
+        if tp == 'num':
+            return s.recursive(s.just(io.zero), lambda n: s.builds(io.succ, n))
+    elif len(tp) == 2:
+        if tp[0] == 'maybe':
+            return s.one_of(
+                s.just(io.none),
+                s.builds(io.some, code_of_type(tp[1])),
+            )
+        if tp[0] == 'list':
+            return s.recursive(
+                s.just(io.nil),
+                lambda tail: s.builds(io.cons, code_of_type(tp[1]), tail),
+            )
+    elif len(tp) == 3:
+        if tp[0] == 'prod':
+            return s.builds(io.pair, code_of_type(tp[1]), code_of_type(tp[2]))
+        if tp[0] == 'sum':
+            return s.one_of(
+                s.builds(io.inl, code_of_type(tp[1])),
+                s.builds(io.inr, code_of_type(tp[2])),
+            )
+    raise ValueError(tp)
+
+
+@hypothesis.strategies.composite
+def type_and_data(draw):
+    tp = draw(types)
+    code = draw(code_of_type(tp))
+    return (tp, code)
+
+
+@hypothesis.given(type_and_data())
+def test_decode_encode(tp_code):
+    tp, code = tp_code
+    encode = io.encoder(tp)
+    decode = io.decoder(tp)
+    value = decode(code)
+    actual_code = encode(value)
     assert actual_code == code

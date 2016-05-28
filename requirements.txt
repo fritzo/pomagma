@@ -1,6 +1,7 @@
 boto
 contextlib2
 flake8
+hypothesis
 mock
 parsable>=0.2.0
 protobuf
