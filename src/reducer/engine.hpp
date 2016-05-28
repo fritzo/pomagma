@@ -151,7 +151,6 @@ class Engine : noncopyable {
     // This table omits a few cheap-to-compute abstractions:
     // - abstract(x, TOP) = TOP
     // - abstract(x, BOT) = BOT
-    // - abstract(x, x) = I
     // - abstract(x, y) = APP K y, if x does not occur in y.
     std::unordered_map<Ob, std::unordered_map<Ob, Ob>> abstract_table_;
 

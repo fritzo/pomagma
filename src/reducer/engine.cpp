@@ -224,7 +224,7 @@ inline void Engine::rep_normalize(Ob& ob) const {
 }
 
 inline const std::unordered_map<Ob, Ob>& Engine::abstract(Ob body) const {
-    POMAGMA_TRACE("abstract(" << print(body) << ")");
+    // POMAGMA_TRACE("abstract(" << print(body) << ")");
     static const std::unordered_map<Ob, Ob> empty;  // Just a default value.
     auto i = abstract_table_.find(body);
     return (i == abstract_table_.end()) ? empty : i->second;

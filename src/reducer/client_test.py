@@ -87,6 +87,13 @@ EXAMPLES = [
         'expected_code': 'I',
         'expected_budget': 0,
     },
+    {
+        'code': 'APP APP C B I',
+        'budget': 0,
+        'expected_code': 'I',
+        'expected_budget': 0,
+        'xfail': 'TODO',
+    },
 ]
 
 
