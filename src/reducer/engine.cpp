@@ -168,13 +168,13 @@ void Engine::reset() {
     }
 }
 
-inline std::string Engine::print(Ob ob) const {
+std::string Engine::print(Ob ob) const {
     std::ostringstream os;
     append(ob, os);
     return os.str();
 }
 
-inline std::string Engine::print(const std::vector<Ob>& obs) const {
+std::string Engine::print(const std::vector<Ob>& obs) const {
     if (obs.empty()) return "[]";
     std::ostringstream os;
     os << "[";
