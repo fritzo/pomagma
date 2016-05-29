@@ -61,15 +61,18 @@ def _parse_tokens(tokens):
 # ----------------------------------------------------------------------------
 # Unit
 
+void = I
+
+
 def encode_unit(value):
     if value is not None:
         raise TypeError(value)
-    return I
+    return void
 
 
 def decode_unit(code):
     """Decode unit to None, or raise an exception."""
-    if code is I:
+    if code is void:
         return None
     else:
         raise TypeError(code)
@@ -78,17 +81,21 @@ def decode_unit(code):
 # ----------------------------------------------------------------------------
 # Bool
 
+true = K
+false = KI
+
+
 def encode_bool(value):
     if not isinstance(value, bool):
         raise TypeError(value)
-    return K if value else KI
+    return true if value else false
 
 
 def decode_bool(code):
     """Decode bool to {True, False} or raise an exception."""
-    if code is K:
+    if code is true:
         return True
-    elif code is KI:
+    elif code is false:
         return False
     else:
         raise TypeError(code)

@@ -1,15 +1,15 @@
-from pomagma.reducer.io import I, K, B, C, APP, KI
+from pomagma.reducer.io import I, K, B, C, APP
 import pomagma.reducer.io as io
 import pytest
 
 EXAMPLES_BY_TYPE = {
     'unit': {
-        'ok': [(I, None)],
+        'ok': [(io.void, None)],
         'encode_error': [True, False, 0, 1, 2, [None], [True]],
         'decode_error': [K, B, C, APP(C, B)],
     },
     'bool': {
-        'ok': [(K, True), (KI, False)],
+        'ok': [(io.true, True), (io.false, False)],
         'encode_error': [None, 0, 1, 2, [None], [True]],
         'decode_error': [I, B, C, APP(C, B)],
     },
@@ -24,15 +24,15 @@ EXAMPLES_BY_TYPE = {
     },
     ('prod', 'bool', 'num'): {
         'ok': [
-            (io.pair(K, io.zero), (True, 0)),
-            (io.pair(KI, io.succ(io.succ(io.zero))), (False, 2)),
+            (io.pair(io.true, io.zero), (True, 0)),
+            (io.pair(io.false, io.succ(io.succ(io.zero))), (False, 2)),
         ],
         'encode_error': [None, (), (True,), [True, 0], True, 0, 'asdf']
     },
     ('sum', 'bool', 'num'): {
         'ok': [
-            (io.inl(K), (True, True)),
-            (io.inl(KI), (True, False)),
+            (io.inl(io.true), (True, True)),
+            (io.inl(io.false), (True, False)),
             (io.inr(io.zero), (False, 0)),
             (io.inr(io.succ(io.succ(io.zero))), (False, 2)),
         ],
@@ -41,8 +41,8 @@ EXAMPLES_BY_TYPE = {
     ('maybe', 'bool'): {
         'ok': [
             (io.none, None),
-            (io.some(K), (True,)),
-            (io.some(KI), (False,)),
+            (io.some(io.true), (True,)),
+            (io.some(io.false), (False,)),
         ],
         'encode_error': [True, False, 0, 1, 2, (), 'asdf'],
         'decode_error': [I],
@@ -50,7 +50,7 @@ EXAMPLES_BY_TYPE = {
     ('list', 'bool'): {
         'ok': [
             (io.nil, []),
-            (io.cons(K, io.cons(KI, io.nil)), [True, False]),
+            (io.cons(io.true, io.cons(io.false, io.nil)), [True, False]),
         ],
         'encode_error': [None, True, False, 0, 1, 2, (), 'asdf', [[True]]],
         'decode_error': [I],
