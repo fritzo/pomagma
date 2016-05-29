@@ -1,5 +1,5 @@
-from pomagma.reducer.code import I, K, B, C, S, VAR
-from pomagma.reducer.sugar import app, join, abstract
+from pomagma.reducer.code import I, K, B, C, S, VAR, APP
+from pomagma.reducer.sugar import abstract, as_code, app, join
 import pytest
 
 x = VAR('x')
@@ -25,3 +25,24 @@ ABSTRACT_EXAMPLES = [
 def test_abstract(var, body, expected_abs):
     actual_abs = abstract(var, body)
     assert actual_abs == expected_abs
+
+
+AS_CODE_EXAMPLES = [
+    (I, I),
+    (K, K),
+    (app(S, I, I), app(S, I, I)),
+    (lambda x: x, I),
+    (lambda x, y: x, K),
+    (lambda x, y: y, APP(K, I)),
+    (lambda x: lambda y: x, K),
+    (lambda x: lambda x: x, APP(K, I)),
+    (lambda x, y, z: app(x, z, y), C),
+    (lambda x, y, z: app(x, app(y, z)), B),
+    (lambda x, y, z: app(x, z, app(y, z)), S),
+]
+
+
+@pytest.mark.parametrize('arg,expected_code', AS_CODE_EXAMPLES)
+def test_as_code(arg, expected_code):
+    actual_code = as_code(arg)
+    assert actual_code == expected_code

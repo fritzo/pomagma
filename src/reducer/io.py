@@ -3,6 +3,7 @@
 from pomagma.compiler.util import memoize_arg
 from pomagma.compiler.util import memoize_args
 from pomagma.reducer.code import I, K, B, C, APP
+from pomagma.reducer.sugar import untyped
 import unification
 
 CI = APP(C, I)
@@ -61,6 +62,7 @@ def decode_bool(code):
 none = K
 
 
+@untyped
 def some(arg):
     return APP(K, APP(APP(C, I), arg))
 
@@ -98,6 +100,7 @@ def decode_maybe(decode_item):
 # ----------------------------------------------------------------------------
 # Products
 
+@untyped
 def pair(x, y):
     return APP(APP(C, APP(CI, x)), y)
 
@@ -135,10 +138,12 @@ def decode_prod(decode_fst, decode_snd):
 # ----------------------------------------------------------------------------
 # Sums
 
+@untyped
 def inl(x):
     return COMP(K, APP(CI, x))
 
 
+@untyped
 def inr(y):
     return APP(K, APP(CI, y))
 
@@ -179,7 +184,7 @@ def decode_sum(decode_inl, decode_inr):
 # ----------------------------------------------------------------------------
 # Numerals as Y Maybe
 
-zero = K
+zero = none
 succ = some
 
 
@@ -214,8 +219,9 @@ def decode_num(code):
 nil = K
 
 
+@untyped
 def cons(head, tail):
-    return APP(K, COMP(APP(CI, head), APP(CI, tail)))
+    return APP(K, APP(APP(C, APP(CI, head)), tail))
 
 
 @memoize_arg
