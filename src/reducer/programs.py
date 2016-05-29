@@ -1,71 +1,77 @@
 """Wrapping code to use SKJ programs from python."""
 
+from itertools import izip
 from pomagma.reducer import io
-from pomagma.reducer.code import BOT, VAR
 from pomagma.reducer.code import parse
 from pomagma.reducer.code import serialize
-from pomagma.reducer.sugar import fun
-from pomagma.util import TODO
+from pomagma.reducer.sugar import untyped
+from pomagma.reducer.sugar import app
 import contextlib
 import functools
 
-DEFAULT_BUDGET = 10000
 ENGINE = None  # Must have a method .reduce(code, budget=0) -> code.
+BUDGET = 10000
 
 
 @contextlib.contextmanager
-def using_engine(engine):
+def using_engine(engine, budget=None):
     global ENGINE
-    old_value = ENGINE
+    global BUDGET
+    old_engine = ENGINE
     ENGINE = engine
+    if budget is not None:
+        old_budget = BUDGET
+        BUDGET = budget
     yield
     assert ENGINE == engine
-    ENGINE = old_value
+    ENGINE = old_engine
+    if budget is not None:
+        assert BUDGET == budget
+        BUDGET = old_budget
+
+
+def execute(code_in):
+    if ENGINE is None:
+        raise RuntimeError('No engine specified')
+    polish_in = serialize(code_in)
+    polish_out = ENGINE.reduce(polish_in, budget=BUDGET)['code']
+    code_out = parse(polish_out)
+    return code_out
 
 
 class Program(object):
 
-    def __init__(self, tp_in, tp_out, impl):
-        self._encode = io.encoder(tp_in)
-        self._decode = io.decoder(tp_out)
-        self._impl = impl
+    def __init__(self, encoders, decoder, fun):
+        functools.update_wrapper(self, fun)
+        self._encoders = encoders
+        self._decoder = decoder
+        self._untyped = untyped(fun)
 
     @property
-    def impl(self):
-        # TODO add type checks.
-        return self._impl
+    def untyped(self):
+        return self._untyped
 
-    def __call__(self, data_in, engine=None, budget=DEFAULT_BUDGET):
-        if engine is None:
-            engine = ENGINE
-        if engine is None:
-            raise RuntimeError('No engine specified')
-        code_in = self._encode(data_in)
-        polish_in = serialize(code_in)
-        polish_out = engine.reduce(polish_in)['code']
-        code_out = parse(polish_out)
+    def __call__(self, *args):
+        if len(args) != len(self._encoders):
+            raise TypeError('{} takes {} arguments ({} given)'.format(
+                self.__name__, len(self._encoders), len(args)))
+        code_args = [encode(arg) for encode, arg in izip(self._encoders, args)]
+        code_in = app(self.untyped.code, *code_args)
+        code_out = execute(code_in)
         data_out = self._decode(code_out)
         return data_out
 
 
-_arg = VAR('_arg')
-
-
 def program(*types):
-    """Program decorator specifying types."""
-    if len(types) < 2:
-        raise SyntaxError('Too few types: program{}'.format(types))
-    if len(types) > 2:
-        TODO('automatically curry')
-    tp_in, tp_out = types
+    """Program decorator specifying types.
 
-    def decorator(py_fun):
-        try:
-            value = py_fun(_arg)
-        except NotImplementedError:
-            value = BOT
-        impl = fun(_arg, value)
-        program = Program(tp_in, tp_out, impl)
-        return functools.wraps(py_fun)(program)
+    All but the last type are inputs; the last type is the output type.
 
-    return decorator
+    """
+    if not types:
+        raise SyntaxError('No output type: program{}'.format(types))
+    tps_in = types[:-1]
+    tp_out = types[-1]
+    encoders = map(io.encoder, tps_in)
+    decoder = io.decoder(tp_out)
+    return lambda fun: Program(encoders, decoder, fun)

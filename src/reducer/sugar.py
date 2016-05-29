@@ -70,7 +70,11 @@ def _compile(fun):
         source = inspect.getsource(fun)
         raise SyntaxError('Unsupported signature: {}'.format(source))
     symbolic_args = map(VAR, args)
-    code = as_code(fun(*symbolic_args))
+    try:
+        symbolic_result = fun(*symbolic_args)
+    except NotImplementedError:
+        symbolic_result = BOT
+    code = as_code(symbolic_result)
     for var in reversed(symbolic_args):
         code = abstract(var, code)
     return code
@@ -92,7 +96,9 @@ class Untyped(object):
 
 
 def untyped(arg):
-    return Untyped(arg) if callable(arg) else arg
+    if callable(arg) and not isinstance(arg, Untyped):
+        return Untyped(arg)
+    return arg
 
 
 def as_code(arg):
@@ -122,11 +128,11 @@ def join(*args):
     return result
 
 
-def fun(*args):
-    args = map(as_code, args)
-    if len(args) < 1:
-        raise SyntaxError('Too few arguments: fun{}'.format(args))
-    result = args[-1]
-    for arg in reversed(args[:-1]):
-        result = abstract(arg, result)
-    return result
+Y = _compile(
+    lambda f: app(
+        lambda x: app(f, app(x, x)),
+        lambda x: app(f, app(x, x))))
+
+
+def rec(fun):
+    return app(Y, fun)
