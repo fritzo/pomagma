@@ -184,6 +184,7 @@ def type_and_data(draw):
 
 
 @hypothesis.given(type_and_data())
+@hypothesis.settings(max_examples=1000)
 def test_decode_encode(tp_code):
     tp, code = tp_code
     encode = io.encoder(tp)
