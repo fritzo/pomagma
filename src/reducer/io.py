@@ -2,11 +2,7 @@
 
 from pomagma.compiler.util import memoize_arg
 from pomagma.compiler.util import memoize_args
-from pomagma.reducer.code import APP
-from pomagma.reducer.code import B
-from pomagma.reducer.code import C
-from pomagma.reducer.code import I
-from pomagma.reducer.code import K
+from pomagma.reducer.code import I, K, B, C, APP
 import unification
 
 CI = APP(C, I)

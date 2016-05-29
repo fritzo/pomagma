@@ -1,29 +1,27 @@
-from pomagma.reducer import io
-from pomagma.reducer.sugar import VAR, app, fun, program
-from pomagma.util import TODO
+from pomagma.reducer.code import I, K, B, C, S, VAR
+from pomagma.reducer.sugar import app, join, abstract
+import pytest
 
 x = VAR('x')
 y = VAR('y')
 z = VAR('z')
 
-
-@program('num', 'num')
-def succ(n):
-    return io.succ(n)
-
-
-@program(('prod', 'num', 'num'), 'num')
-def add(xy):
-    add = VAR('add')  # FIXME recurse
-    return app(xy,
-               fun(x, y, app(x, y, fun(z, io.succ(app(add, io.pair(z, y)))))))
-
-
-@program(('prod', 'num', 'num'), 'bool')
-def num_less(xy):
-    TODO('return app(xy, fun(m, n, app(n, , ...)))')
+ABSTRACT_EXAMPLES = [
+    (x, x, I),
+    (x, y, app(K, y)),
+    (x, I, app(K, I)),
+    (x, app(x, x), app(S, I, I)),
+    (x, app(x, y), app(C, I, y)),
+    (x, app(y, x), y),
+    (x, app(y, app(z, x)), app(B, y, z)),
+    (x, join(x, x), join(I, I)),
+    (x, join(x, y), join(I, app(K, y))),
+    (x, join(y, x), join(app(K, y), I)),
+    (x, join(y, z), app(K, join(y, z))),
+]
 
 
-@program(('list', 'num'), ('list', 'num'))
-def list_num_sort(xs):
-    TODO('implicit sort')
+@pytest.mark.parametrize('var,body,expected_abs', ABSTRACT_EXAMPLES)
+def test_abstract(var, body, expected_abs):
+    actual_abs = abstract(var, body)
+    assert actual_abs == expected_abs
