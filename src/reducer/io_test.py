@@ -1,5 +1,6 @@
-from pomagma.reducer.io import I, K, B, C, APP
-import pomagma.reducer.io as io
+from pomagma.reducer import io
+from pomagma.reducer.code import I, K, B, C, APP
+import pomagma.reducer.code
 import pytest
 
 EXAMPLES_BY_TYPE = {
@@ -110,3 +111,11 @@ def test_decode_error(tp, code):
     decode = io.decoder(tp)
     with pytest.raises(TypeError):
         decode(code)
+
+
+@pytest.mark.parametrize('tp,code,value', EXAMPLES['ok'])
+def test_serialize_parse(tp, code, value):
+    string = pomagma.reducer.code.serialize(code)
+    assert isinstance(string, str)
+    actual_code = pomagma.reducer.code.parse(string)
+    assert actual_code == code

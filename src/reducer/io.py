@@ -2,60 +2,18 @@
 
 from pomagma.compiler.util import memoize_arg
 from pomagma.compiler.util import memoize_args
+from pomagma.reducer.code import APP
+from pomagma.reducer.code import B
+from pomagma.reducer.code import C
+from pomagma.reducer.code import I
+from pomagma.reducer.code import K
 import unification
 
-
-# ----------------------------------------------------------------------------
-# Code
-
-_APP = intern('APP')
-I = intern('I')
-K = intern('K')
-B = intern('B')
-C = intern('C')
-
-
-@memoize_args
-def APP(lhs, rhs):
-    return (_APP, lhs, rhs)
+CI = APP(C, I)
 
 
 def COMP(lhs, rhs):
     return APP(APP(B, lhs), rhs)
-
-
-KI = APP(K, I)
-CI = APP(C, I)
-
-
-def get_lhs(val):
-    assert isinstance(val, tuple) and len(val) == 3 and val[0] == _APP, val
-    return val[1]
-
-
-def get_rhs(val):
-    assert isinstance(val, tuple) and len(val) == 3 and val[0] == _APP, val
-    return val[2]
-
-
-# ----------------------------------------------------------------------------
-# Parsing
-
-def parse(string):
-    assert isinstance(string, str), type(string)
-    tokens = map(intern, string.split())
-    tokens.reverse()
-    return _parse_tokens(tokens)
-
-
-def _parse_tokens(tokens):
-    token = tokens.pop()
-    if token is _APP:
-        lhs = _parse_tokens(tokens)
-        rhs = _parse_tokens(tokens)
-        return APP(lhs, rhs)
-    else:
-        return token
 
 
 # ----------------------------------------------------------------------------
@@ -82,7 +40,7 @@ def decode_unit(code):
 # Bool
 
 true = K
-false = KI
+false = APP(K, I)
 
 
 def encode_bool(value):
