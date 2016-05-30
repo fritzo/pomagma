@@ -1,7 +1,7 @@
 from pomagma.reducer import engine
 from pomagma.reducer import io
 from pomagma.reducer.code import I, K, B, C, S, BOT, TOP, VAR
-from pomagma.reducer.sugar import app, rec
+from pomagma.reducer.sugar import app
 import pytest
 import sys
 
@@ -13,10 +13,8 @@ y = VAR('y')
 z = VAR('z')
 
 
-def map_(f):
-    return lambda f: rec(lambda m, xs:
-                         app(xs, io.nil, lambda h, t:
-                             io.cons(app(f, h), app(m, t))))
+def map_(f, xs):
+    return app(xs, io.nil, lambda h, t: io.cons(app(f, h), app(map_, f, t)))
 
 
 EXAMPLES = [
@@ -51,7 +49,8 @@ EXAMPLES = [
     (app(S, x, y), app(S, x, y)),
     (app(S, x, y, z), app(x, z, app(y, z))),
     (app(S, x, y, z, w), app(x, z, app(y, z), w)),
-    pytest.mark.xfail((app(map_, I, io.nil), io.nil)),
+    (map_(I, io.nil), io.nil),
+    (map_(I, io.cons(x, io.nil)), io.cons(x, io.nil)),
 ]
 
 

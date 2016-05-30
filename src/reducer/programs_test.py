@@ -28,11 +28,11 @@ def partial_pred(x):
     return app(x, BOT, lambda px: px)
 
 
-@program('num', 'num', 'num')
 def add(x, y):
-    add = rec(lambda add, x:
-              app(x, lambda y: y, lambda px, y: io.succ(app(add, px, y))))
-    return app(add, x, y)
+    return app(x, y, lambda px: io.succ(app(add, px, y)))
+
+
+add = program('num', 'num', 'num')(add)
 
 
 @program('num', 'num', 'bool')
@@ -66,22 +66,22 @@ EXAMPLES = [
     (partial_pred, (0,), NotImplementedError),
     (partial_pred, (1,), 0),
     (partial_pred, (2,), 1),
-    pytest.mark.xfail((add, (0, 0), 0)),
-    pytest.mark.xfail((add, (0, 1), 1)),
-    pytest.mark.xfail((add, (0, 2), 2)),
+    (add, (0, 0), 0),
+    (add, (0, 1), 1),
+    (add, (0, 2), 2),
     pytest.mark.xfail((add, (1, 0), 1)),
     pytest.mark.xfail((add, (1, 1), 2)),
     pytest.mark.xfail((add, (1, 2), 3)),
     pytest.mark.xfail((add, (2, 0), 2)),
     pytest.mark.xfail((add, (2, 1), 3)),
     pytest.mark.xfail((add, (2, 2), 4)),
-    pytest.mark.xfail((num_less, (0, 0), False)),
-    pytest.mark.xfail((num_less, (0, 1), True)),
-    pytest.mark.xfail((num_less, (0, 2), True)),
-    pytest.mark.xfail((num_less, (1, 0), False)),
+    (num_less, (0, 0), False),
+    (num_less, (0, 1), True),
+    (num_less, (0, 2), True),
+    (num_less, (1, 0), False),
     pytest.mark.xfail((num_less, (1, 1), False)),
     pytest.mark.xfail((num_less, (1, 2), True)),
-    pytest.mark.xfail((num_less, (2, 0), False)),
+    (num_less, (2, 0), False),
     pytest.mark.xfail((num_less, (2, 1), False)),
     pytest.mark.xfail((num_less, (2, 2), False)),
 ]

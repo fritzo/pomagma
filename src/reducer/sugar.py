@@ -62,9 +62,18 @@ def abstract(var, body):
 # ----------------------------------------------------------------------------
 # Function decorator
 
-def _compile(fun):
-    if not callable(fun):
-        return fun
+_COMPILING = {}
+
+
+def _compile(fun, compiling):
+    assert callable(fun)
+
+    # Avoid reentrance.
+    try:
+        return compiling[fun]
+    except KeyError:
+        compiling[fun] = VAR('_fun{}'.format(id(fun)))
+
     args, vargs, kwargs, defaults = inspect.getargspec(fun)
     if vargs or kwargs or defaults:
         source = inspect.getsource(fun)
@@ -77,6 +86,13 @@ def _compile(fun):
     code = as_code(symbolic_result)
     for var in reversed(symbolic_args):
         code = abstract(var, code)
+
+    # Check for recursion.
+    rec_code = try_abstract(compiling[fun], code)
+    if rec_code is not None:
+        code = rec(rec_code)
+
+    del compiling[fun]
     return code
 
 
@@ -85,13 +101,18 @@ class Untyped(object):
     def __init__(self, fun):
         functools.update_wrapper(self, fun)
         self._fun = fun
-        self._code = _compile(fun)
+        self._code = _compile(self._fun, _COMPILING)
 
     def __call__(self, *args):
         return self._fun(*args)
 
+    def __repr__(self):
+        return self.__name__
+
     @property
     def code(self):
+        if self._code is None:
+            self._code = _compile(self._fun, _COMPILING)
         return self._code
 
 
@@ -102,7 +123,12 @@ def untyped(arg):
 
 
 def as_code(arg):
-    return arg.code if isinstance(arg, Untyped) else _compile(arg)
+    if isinstance(arg, Untyped):
+        return arg.code
+    elif callable(arg):
+        return _compile(arg, _COMPILING)
+    else:
+        return arg
 
 
 # ----------------------------------------------------------------------------
@@ -128,11 +154,9 @@ def join(*args):
     return result
 
 
-Y = _compile(
-    lambda f: app(
-        lambda x: app(f, app(x, x)),
-        lambda x: app(f, app(x, x))))
-
-
 def rec(fun):
-    return app(Y, fun)
+
+    def fxx(x):
+        return app(fun, app(x, x))
+
+    return app(fxx, fxx)

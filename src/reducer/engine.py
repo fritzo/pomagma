@@ -85,7 +85,7 @@ def pop(avoid, stack, bound, count):
 
 
 @memoize_args
-def _app(lhs, rhs):
+def _app(lhs, rhs, nonlinear):
     avoid = free_vars(lhs) | free_vars(rhs)
 
     # Head reduce.
@@ -109,7 +109,7 @@ def _app(lhs, rhs):
         elif head is B:
             x, y, z = pop(avoid, stack, bound, 3)
             head = x
-            stack.append(_app(y, z))
+            stack.append(_app(y, z, False))
         elif head is C:
             x, y, z = pop(avoid, stack, bound, 3)
             head = x
@@ -117,9 +117,12 @@ def _app(lhs, rhs):
             stack.append(z)
         elif head is S:
             x, y, z = pop(avoid, stack, bound, 3)
-            head = x
-            stack.append(_app(y, z))
-            stack.append(z)
+            if nonlinear or is_var(z):
+                head = x
+                stack.append(_app(y, z, False))
+                stack.append(z)
+            else:
+                break
         else:
             raise ValueError(head)
 
@@ -142,7 +145,7 @@ def _app(lhs, rhs):
 
 @memoize_arg
 def _red(code):
-    return _app(code[1], code[2]) if is_app(code) else code
+    return _app(code[1], code[2], True) if is_app(code) else code
 
 
 def reduce(code, budget=0):

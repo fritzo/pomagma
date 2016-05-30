@@ -36,6 +36,9 @@ class Program(object):
         self._decoder = decoder
         self._untyped = untyped(fun)
 
+    def __repr__(self):
+        return self.__name__
+
     @property
     def untyped(self):
         return self._untyped
