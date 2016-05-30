@@ -10,6 +10,8 @@ y = VAR('y')
 
 error = lib.error
 undefined = lib.undefined
+true = lib.true
+false = lib.false
 
 INTRO_FORM_EXAMPLES = [
     ('void', lambda x: x),
@@ -39,22 +41,20 @@ def test_unit():
 
 
 def test_bool():
-    t = lib.true
-    f = lib.false
-    assert simplify(lib.bool_test(t, x)) == x
-    assert simplify(lib.bool_test(f, x)) == x
-    assert simplify(lib.bool_test(error, x)) == error
-    assert simplify(lib.bool_test(undefined, x)) == undefined
-    assert simplify(lib.bool_not(t)) == f
-    assert simplify(lib.bool_not(f)) == t
-    assert simplify(lib.bool_and(t, t)) == t
-    assert simplify(lib.bool_and(t, f)) == f
-    assert simplify(lib.bool_and(f, t)) == f
-    assert simplify(lib.bool_and(f, f)) == f
-    assert simplify(lib.bool_or(t, t)) == t
-    assert simplify(lib.bool_or(t, f)) == t
-    assert simplify(lib.bool_or(f, t)) == t
-    assert simplify(lib.bool_or(f, f)) == f
+    assert simplify(lib.bool_test(true, f)) == f
+    assert simplify(lib.bool_test(false, f)) == f
+    assert simplify(lib.bool_test(error, f)) == error
+    assert simplify(lib.bool_test(undefined, f)) == undefined
+    assert simplify(lib.bool_not(true)) == false
+    assert simplify(lib.bool_not(false)) == true
+    assert simplify(lib.bool_and(true, true)) == true
+    assert simplify(lib.bool_and(true, false)) == false
+    assert simplify(lib.bool_and(false, true)) == false
+    assert simplify(lib.bool_and(false, false)) == false
+    assert simplify(lib.bool_or(true, true)) == true
+    assert simplify(lib.bool_or(true, false)) == true
+    assert simplify(lib.bool_or(false, true)) == true
+    assert simplify(lib.bool_or(false, false)) == false
 
 
 def test_maybe():
@@ -102,6 +102,14 @@ def test_num():
     assert simplify(lib.num_add(one, zero)) == one
     assert simplify(lib.num_add(two, zero)) == two
     assert simplify(lib.num_add(three, zero)) == three
+    assert simplify(lib.num_less(zero, zero)) == false
+    assert simplify(lib.num_less(zero, one)) == true
+    assert simplify(lib.num_less(zero, two)) == true
+    assert simplify(lib.num_less(one, zero)) == false
+    assert simplify(lib.num_less(one, one)) == false
+    assert simplify(lib.num_less(one, two)) == true
+    assert simplify(lib.num_less(two, zero)) == false
+    assert simplify(lib.num_less(two, one)) == false
 
 
 @pytest.mark.xfail
@@ -119,3 +127,4 @@ def test_num_xfail():
     assert simplify(lib.num_add(one, one)) == two
     assert simplify(lib.num_add(one, two)) == three
     assert simplify(lib.num_add(two, one)) == three
+    assert simplify(lib.num_less(two, two)) == false

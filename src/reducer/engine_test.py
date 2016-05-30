@@ -1,7 +1,7 @@
 from pomagma.reducer import engine
 from pomagma.reducer import lib
 from pomagma.reducer.code import I, K, B, C, S, BOT, TOP, VAR
-from pomagma.reducer.sugar import app
+from pomagma.reducer.sugar import app, untyped
 import pytest
 import sys
 
@@ -13,8 +13,9 @@ y = VAR('y')
 z = VAR('z')
 
 
+@untyped
 def map_(f, xs):
-    return app(xs, lib.nil, lambda h, t: lib.cons(app(f, h), app(map_, f, t)))
+    return app(xs, lib.nil, lambda h, t: lib.cons(app(f, h), map_(f, t)))
 
 
 EXAMPLES = [

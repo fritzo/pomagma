@@ -59,40 +59,30 @@ def abstract(var, body):
     return APP(K, body) if result is None else result
 
 
+def occurs(var, body):
+    return abstract(var, body) is not None
+
+
 # ----------------------------------------------------------------------------
-# Function decorator
+# Compiler
 
-_COMPILING = {}
-
-
-def _compile(fun, compiling):
-    assert callable(fun)
-
-    # Avoid reentrance.
-    try:
-        return compiling[fun]
-    except KeyError:
-        compiling[fun] = VAR('_fun{}'.format(id(fun)))
-
-    args, vargs, kwargs, defaults = inspect.getargspec(fun)
+def _compile(fun, actual_fun=None):
+    if actual_fun is None:
+        actual_fun = fun
+    args, vargs, kwargs, defaults = inspect.getargspec(actual_fun)
     if vargs or kwargs or defaults:
-        source = inspect.getsource(fun)
+        source = inspect.getsource(actual_fun)
         raise SyntaxError('Unsupported signature: {}'.format(source))
     symbolic_args = map(VAR, args)
     try:
         symbolic_result = fun(*symbolic_args)
     except NotImplementedError:
         symbolic_result = BOT
+    print('DEBUG {}{} = {}'.format(
+        fun, tuple(symbolic_args), symbolic_result))
     code = as_code(symbolic_result)
     for var in reversed(symbolic_args):
         code = abstract(var, code)
-
-    # Check for recursion.
-    rec_code = try_abstract(compiling[fun], code)
-    if rec_code is not None:
-        code = rec(rec_code)
-
-    del compiling[fun]
     return code
 
 
@@ -101,26 +91,47 @@ class Untyped(object):
     def __init__(self, fun):
         functools.update_wrapper(self, fun)
         self._fun = fun
-        self._code = _compile(self._fun, _COMPILING)
-
-    def __call__(self, *args):
-        return self._fun(*args)
+        self._calling = False
 
     def __repr__(self):
         return self.__name__
 
+    def __call__(self, *args):
+        code = self.code  # Compile at first call.
+        if self._calling:  # Disallow reentrance.
+            return app(code, *args)
+        else:
+            self._calling = True
+            result = self._fun(*args)
+            self._calling = False
+            return result
+
     @property
     def code(self):
-        if self._code is None:
-            self._code = _compile(self._fun, _COMPILING)
-        return self._code
+        try:
+            return self._code
+        except AttributeError:
+            self._compile()
+            return self._code
+
+    def _compile(self):
+        assert not hasattr(self, '_code')
+        var = VAR('_fun{}'.format(id(self)))
+        self._code = var
+
+        code = _compile(self, actual_fun=self._fun)
+        rec_code = try_abstract(var, code)
+        if rec_code is not None:
+            code = rec(rec_code)
+
+        self._code = code
 
 
 def untyped(arg):
+    if isinstance(arg, Untyped):
+        return arg
     if not callable(arg):
         raise SyntaxError('Cannot apply @untyped to {}'.format(arg))
-    if isinstance(arg, Untyped):
-        raise SyntaxError('Cannot apply @untyped repeatedly')
     return Untyped(arg)
 
 
@@ -128,7 +139,7 @@ def as_code(arg):
     if isinstance(arg, Untyped):
         return arg.code
     elif callable(arg):
-        return _compile(arg, _COMPILING)
+        return _compile(arg)
     else:
         return arg
 

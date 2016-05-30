@@ -1,80 +1,52 @@
 from pomagma.reducer import engine
 from pomagma.reducer import lib
-from pomagma.reducer.code import TOP, BOT
 from pomagma.reducer.programs import program
 from pomagma.reducer.programs import using_engine
-from pomagma.reducer.sugar import app, rec
-from pomagma.util import TODO
+from pomagma.reducer.sugar import app
 import pytest
 
 
-@program('bool', 'bool')
-def neg(x):
-    return app(x, lib.false, lib.true)
-
-
-@program('num', 'num')
-def succ(n):
-    return lib.succ(n)
-
-
-@program('num', 'num')
-def pred(n):
-    return app(n, TOP, lambda px: px)
+bool_not = program('bool', 'bool')(lib.bool_not)
+succ = program('num', 'num')(lib.succ)
+num_pred = program('num', 'num')(lib.num_pred)
 
 
 @program('num', 'num')
 def partial_pred(x):
-    return app(x, BOT, lambda px: px)
+    return app(x, lib.undefined, lambda px: px)
 
 
-def add(x, y):
-    return app(x, y, lambda px: lib.succ(app(add, px, y)))
-
-
-add = program('num', 'num', 'num')(add)
-
-
-@program('num', 'num', 'bool')
-def num_less(x, y):
-    less = rec(lambda less, x, y:
-               app(y, lib.false, lambda py:
-                   app(x, lib.true, lambda px: app(less, px, py))))
-    return app(less, x, y)
-
-
-@program(('list', 'num'), ('list', 'num'))
-def list_num_sort(xs):
-    TODO('implicit sort')
+num_add = program('num', 'num', 'num')(lib.num_add)
+num_less = program('num', 'num', 'bool')(lib.num_less)
 
 
 EXAMPLES = [
-    (neg, (True,), False),
-    (neg, (False,), True),
-    (neg, (0,), TypeError),
-    (neg, ([],), TypeError),
+    (bool_not, (True,), False),
+    (bool_not, (False,), True),
+    (bool_not, (0,), TypeError),
+    (bool_not, ([],), TypeError),
     (succ, (0,), 1),
     (succ, (1,), 2),
     (succ, (2,), 3),
     (succ, (False,), TypeError),
     (succ, ([],), TypeError),
-    (pred, (0,), RuntimeError),
-    (pred, (1,), 0),
-    (pred, (2,), 1),
-    (pred, (True,), TypeError),
-    (pred, ([],), TypeError),
+    (num_pred, (0,), RuntimeError),
+    (num_pred, (1,), 0),
+    (num_pred, (2,), 1),
+    (num_pred, (True,), TypeError),
+    (num_pred, ([],), TypeError),
     (partial_pred, (0,), NotImplementedError),
     (partial_pred, (1,), 0),
     (partial_pred, (2,), 1),
-    (add, (0, 0), 0),
-    (add, (0, 1), 1),
-    (add, (0, 2), 2),
-    pytest.mark.xfail((add, (1, 0), 1)),
-    pytest.mark.xfail((add, (1, 1), 2)),
-    pytest.mark.xfail((add, (1, 2), 3)),
-    pytest.mark.xfail((add, (2, 0), 2)),
-    pytest.mark.xfail((add, (2, 1), 3)),
-    pytest.mark.xfail((add, (2, 2), 4)),
+    (num_add, (0, 0), 0),
+    pytest.mark.xfail((num_add, (0, 1), 1)),
+    pytest.mark.xfail((num_add, (0, 2), 2)),
+    (num_add, (1, 0), 1),
+    pytest.mark.xfail((num_add, (1, 1), 2)),
+    pytest.mark.xfail((num_add, (1, 2), 3)),
+    (num_add, (2, 0), 2),
+    pytest.mark.xfail((num_add, (2, 1), 3)),
+    pytest.mark.xfail((num_add, (2, 2), 4)),
     (num_less, (0, 0), False),
     (num_less, (0, 1), True),
     (num_less, (0, 2), True),

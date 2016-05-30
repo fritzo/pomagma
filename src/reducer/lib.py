@@ -124,11 +124,9 @@ zero = none
 succ = some
 
 
+@untyped
 def num_test(x, f):
-    return app(x, f, lambda px: app(num_test, px, f))
-
-
-num_test = untyped(num_test)
+    return app(x, f, lambda px: num_test(px, f))
 
 
 @untyped
@@ -141,12 +139,15 @@ def num_pred(x):
     return app(x, error, lambda px: px)
 
 
+@untyped
 @symmetric
 def num_add(x, y):
-    return app(y, x, lambda py: succ(app(num_add, x, py)))
+    return app(y, x, lambda py: succ(num_add(x, py)))
 
 
-num_add = untyped(num_add)
+@untyped
+def num_less(x, y):
+    return app(y, false, lambda py: app(x, true, lambda px: num_less(px, py)))
 
 
 # ----------------------------------------------------------------------------
