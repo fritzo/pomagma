@@ -5,6 +5,12 @@ from pomagma.compiler.util import memoize_args
 from pomagma.reducer.code import I, K, B, C, S, BOT, TOP, APP, VAR
 from pomagma.reducer.sugar import abstract
 import itertools
+import logging
+import os
+
+# TODO use the common POMAGMA_LOG_LEVEL
+LOG = logging.getLogger(__name__)
+LOG.setLevel(int(os.environ.get('POMAGMA_ENGINE_LOG_LEVEL', logging.DEBUG)))
 
 
 def is_var(code):
@@ -60,7 +66,7 @@ def _app(lhs, rhs):
     stack = [rhs]
     bound = []
     while not is_var(head):
-        print('DEBUG head = {}'.format(head))
+        LOG.debug('head = {}'.format(head))
         if is_app(head):
             stack.append(head[2])
             head = head[1]
@@ -92,21 +98,22 @@ def _app(lhs, rhs):
 
     # Reduce args.
     while stack:
-        print('DEBUG head = {}'.format(head))
+        LOG.debug('head = {}'.format(head))
         arg = stack.pop()
         arg = _red(arg)
         head = APP(head, arg)
 
     # Abstract free variables.
     while bound:
-        print('DEBUG head = {}'.format(head))
+        LOG.debug('head = {}'.format(head))
         var = bound.pop()
         head = abstract(var, head)
 
-    print('DEBUG head = {}'.format(head))
+    LOG.debug('head = {}'.format(head))
     return head
 
 
+@memoize_arg
 def _red(code):
     return _app(code[1], code[2]) if is_app(code) else code
 

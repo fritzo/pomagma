@@ -2,8 +2,6 @@
 
 from itertools import izip
 from pomagma.reducer import io
-from pomagma.reducer.code import parse
-from pomagma.reducer.code import serialize
 from pomagma.reducer.sugar import untyped
 from pomagma.reducer.sugar import app
 import contextlib
@@ -30,15 +28,6 @@ def using_engine(engine, budget=None):
         BUDGET = old_budget
 
 
-def execute(code_in):
-    if ENGINE is None:
-        raise RuntimeError('No engine specified')
-    polish_in = serialize(code_in)
-    polish_out = ENGINE.reduce(polish_in, budget=BUDGET)['code']
-    code_out = parse(polish_out)
-    return code_out
-
-
 class Program(object):
 
     def __init__(self, encoders, decoder, fun):
@@ -55,10 +44,13 @@ class Program(object):
         if len(args) != len(self._encoders):
             raise TypeError('{} takes {} arguments ({} given)'.format(
                 self.__name__, len(self._encoders), len(args)))
+        if ENGINE is None:
+            raise RuntimeError('No engine specified')
         code_args = [encode(arg) for encode, arg in izip(self._encoders, args)]
         code_in = app(self.untyped.code, *code_args)
-        code_out = execute(code_in)
-        data_out = self._decode(code_out)
+        code_out = ENGINE.reduce(code_in)
+        io.check_for_errors(code_out)
+        data_out = self._decoder(code_out)
         return data_out
 
 

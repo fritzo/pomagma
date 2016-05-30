@@ -2,7 +2,7 @@
 
 from pomagma.compiler.util import memoize_arg
 from pomagma.compiler.util import memoize_args
-from pomagma.reducer.code import I, K, B, C, APP
+from pomagma.reducer.code import I, K, B, C, TOP, BOT, APP
 from pomagma.reducer.sugar import untyped
 import unification
 
@@ -11,6 +11,25 @@ CI = APP(C, I)
 
 def COMP(lhs, rhs):
     return APP(APP(B, lhs), rhs)
+
+
+# ----------------------------------------------------------------------------
+# Error checking
+
+def _contains(code, atom):
+    if code is atom:
+        return True
+    elif isinstance(code, tuple):
+        return any(_contains(arg, atom) for arg in code[1:])
+    else:
+        return False
+
+
+def check_for_errors(code):
+    if _contains(code, TOP):
+        raise RuntimeError(code)
+    if _contains(code, BOT):
+        raise NotImplementedError(code)
 
 
 # ----------------------------------------------------------------------------

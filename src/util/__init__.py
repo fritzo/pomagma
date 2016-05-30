@@ -32,6 +32,7 @@ CLEANUP_ON_ERROR = int(os.environ.get('CLEANUP_ON_ERROR', 1))
 COVERITY = os.path.join(ROOT, 'cov-int')
 TRAVIS_CI = 'TRAVIS' in os.environ and 'CI' in os.environ
 
+# TODO use standard levels from the logging module
 LOG_LEVEL = int(os.environ.get('POMAGMA_LOG_LEVEL', 0))
 LOG_LEVEL_ERROR = 0
 LOG_LEVEL_WARNING = 1
