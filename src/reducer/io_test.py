@@ -1,33 +1,10 @@
 from pomagma.reducer import io
-from pomagma.reducer.sugar import as_code, app
+from pomagma.reducer import lib
 from pomagma.reducer.code import I, K, B, C, APP
 import hypothesis
 import hypothesis.strategies
 import pomagma.reducer.code
 import pytest
-
-# ----------------------------------------------------------------------------
-# Tests for intro forms
-
-INTRO_FORM_EXAMPLES = [
-    ('void', lambda x: x),
-    ('true', lambda x, y: x),
-    ('false', lambda x, y: y),
-    ('none', lambda f, g: f),
-    ('some', lambda x, f, g: app(g, x)),
-    ('pair', lambda x, y, f: app(f, x, y)),
-    ('inl', lambda x, f, g: app(f, x)),
-    ('inr', lambda y, f, g: app(g, y)),
-    ('zero', lambda z, s: z),
-    ('succ', lambda n, z, s: app(s, n)),
-    ('nil', lambda n, c: n),
-    ('cons', lambda head, tail, n, c: app(c, head, tail)),
-]
-
-
-@pytest.mark.parametrize('name,native', INTRO_FORM_EXAMPLES)
-def test_intro_forms(name, native):
-    assert as_code(getattr(io, name)) == as_code(native)
 
 
 # ----------------------------------------------------------------------------
@@ -35,62 +12,62 @@ def test_intro_forms(name, native):
 
 EXAMPLES_BY_TYPE = {
     'unit': {
-        'ok': [(io.void, None)],
+        'ok': [(lib.void, None)],
         'encode_error': [True, False, 0, 1, 2, [None], [True]],
         'decode_error': [K, B, C, APP(C, B)],
     },
     'bool': {
-        'ok': [(io.true, True), (io.false, False)],
+        'ok': [(lib.true, True), (lib.false, False)],
         'encode_error': [None, 0, 1, 2, [None], [True]],
         'decode_error': [I, B, C, APP(C, B)],
     },
     'num': {
         'ok': [
-            (io.zero, 0),
-            (io.succ(io.zero), 1),
-            (io.succ(io.succ(io.zero)), 2),
-            (io.succ(io.succ(io.succ(io.zero))), 3),
+            (lib.zero, 0),
+            (lib.succ(lib.zero), 1),
+            (lib.succ(lib.succ(lib.zero)), 2),
+            (lib.succ(lib.succ(lib.succ(lib.zero))), 3),
         ],
         'encode_error': [None, False, True, [0], [True]],
     },
     ('prod', 'bool', 'num'): {
         'ok': [
-            (io.pair(io.true, io.zero), (True, 0)),
-            (io.pair(io.false, io.succ(io.succ(io.zero))), (False, 2)),
+            (lib.pair(lib.true, lib.zero), (True, 0)),
+            (lib.pair(lib.false, lib.succ(lib.succ(lib.zero))), (False, 2)),
         ],
         'encode_error': [None, (), (True,), [True, 0], True, 0, 'asdf']
     },
     ('sum', 'bool', 'num'): {
         'ok': [
-            (io.inl(io.true), (True, True)),
-            (io.inl(io.false), (True, False)),
-            (io.inr(io.zero), (False, 0)),
-            (io.inr(io.succ(io.succ(io.zero))), (False, 2)),
+            (lib.inl(lib.true), (True, True)),
+            (lib.inl(lib.false), (True, False)),
+            (lib.inr(lib.zero), (False, 0)),
+            (lib.inr(lib.succ(lib.succ(lib.zero))), (False, 2)),
         ],
         'encode_error': [None, (), (True,), [True, 0], True, 0, 'asdf']
     },
     ('maybe', 'bool'): {
         'ok': [
-            (io.none, None),
-            (io.some(io.true), (True,)),
-            (io.some(io.false), (False,)),
+            (lib.none, None),
+            (lib.some(lib.true), (True,)),
+            (lib.some(lib.false), (False,)),
         ],
         'encode_error': [True, False, 0, 1, 2, (), 'asdf'],
         'decode_error': [I],
     },
     ('list', 'bool'): {
         'ok': [
-            (io.nil, []),
-            (io.cons(io.true, io.cons(io.false, io.nil)), [True, False]),
+            (lib.nil, []),
+            (lib.cons(lib.true, lib.cons(lib.false, lib.nil)), [True, False]),
         ],
         'encode_error': [None, True, False, 0, 1, 2, (), 'asdf', [[True]]],
         'decode_error': [I],
     },
     ('list', ('list', 'num')): {
         'ok': [
-            (io.nil, []),
-            (io.cons(io.nil, io.nil), [[]]),
-            (io.cons(io.cons(io.zero, io.nil), io.nil), [[0]]),
+            (lib.nil, []),
+            (lib.cons(lib.nil, lib.nil), [[]]),
+            (lib.cons(lib.cons(lib.zero, lib.nil), lib.nil), [[0]]),
         ],
         'encode_error': [0, [1], [[2], 3], [[[]]]],
     }
@@ -174,29 +151,32 @@ types = s.recursive(types_base, types_extend, max_leaves=10)
 def code_of_type(tp):
     if not isinstance(tp, tuple):
         if tp == 'unit':
-            return s.just(io.void)
+            return s.just(lib.void)
         if tp == 'bool':
-            return s.sampled_from([io.true, io.false])
+            return s.sampled_from([lib.true, lib.false])
         if tp == 'num':
-            return s.recursive(s.just(io.zero), lambda n: s.builds(io.succ, n))
+            return s.recursive(
+                s.just(lib.zero),
+                lambda n: s.builds(lib.succ, n),
+            )
     elif len(tp) == 2:
         if tp[0] == 'maybe':
             return s.one_of(
-                s.just(io.none),
-                s.builds(io.some, code_of_type(tp[1])),
+                s.just(lib.none),
+                s.builds(lib.some, code_of_type(tp[1])),
             )
         if tp[0] == 'list':
             return s.recursive(
-                s.just(io.nil),
-                lambda tail: s.builds(io.cons, code_of_type(tp[1]), tail),
+                s.just(lib.nil),
+                lambda tail: s.builds(lib.cons, code_of_type(tp[1]), tail),
             )
     elif len(tp) == 3:
         if tp[0] == 'prod':
-            return s.builds(io.pair, code_of_type(tp[1]), code_of_type(tp[2]))
+            return s.builds(lib.pair, code_of_type(tp[1]), code_of_type(tp[2]))
         if tp[0] == 'sum':
             return s.one_of(
-                s.builds(io.inl, code_of_type(tp[1])),
-                s.builds(io.inr, code_of_type(tp[2])),
+                s.builds(lib.inl, code_of_type(tp[1])),
+                s.builds(lib.inr, code_of_type(tp[2])),
             )
     raise ValueError(tp)
 

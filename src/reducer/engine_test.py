@@ -1,5 +1,5 @@
 from pomagma.reducer import engine
-from pomagma.reducer import io
+from pomagma.reducer import lib
 from pomagma.reducer.code import I, K, B, C, S, BOT, TOP, VAR
 from pomagma.reducer.sugar import app
 import pytest
@@ -14,7 +14,7 @@ z = VAR('z')
 
 
 def map_(f, xs):
-    return app(xs, io.nil, lambda h, t: io.cons(app(f, h), app(map_, f, t)))
+    return app(xs, lib.nil, lambda h, t: lib.cons(app(f, h), app(map_, f, t)))
 
 
 EXAMPLES = [
@@ -49,8 +49,8 @@ EXAMPLES = [
     (app(S, x, y), app(S, x, y)),
     (app(S, x, y, z), app(x, z, app(y, z))),
     (app(S, x, y, z, w), app(x, z, app(y, z), w)),
-    (map_(I, io.nil), io.nil),
-    (map_(I, io.cons(x, io.nil)), io.cons(x, io.nil)),
+    (map_(I, lib.nil), lib.nil),
+    (map_(I, lib.cons(x, lib.nil)), lib.cons(x, lib.nil)),
 ]
 
 
@@ -63,4 +63,4 @@ def test_reduce(code, expected_result):
 # Debugging.
 if __name__ == '__main__':
     sys.setrecursionlimit(100)
-    engine.reduce(app(map_, I, io.nil))
+    engine.reduce(app(map_, I, lib.nil))

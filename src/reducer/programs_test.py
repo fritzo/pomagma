@@ -1,5 +1,5 @@
 from pomagma.reducer import engine
-from pomagma.reducer import io
+from pomagma.reducer import lib
 from pomagma.reducer.code import TOP, BOT
 from pomagma.reducer.programs import program
 from pomagma.reducer.programs import using_engine
@@ -10,12 +10,12 @@ import pytest
 
 @program('bool', 'bool')
 def neg(x):
-    return app(x, io.false, io.true)
+    return app(x, lib.false, lib.true)
 
 
 @program('num', 'num')
 def succ(n):
-    return io.succ(n)
+    return lib.succ(n)
 
 
 @program('num', 'num')
@@ -29,7 +29,7 @@ def partial_pred(x):
 
 
 def add(x, y):
-    return app(x, y, lambda px: io.succ(app(add, px, y)))
+    return app(x, y, lambda px: lib.succ(app(add, px, y)))
 
 
 add = program('num', 'num', 'num')(add)
@@ -38,8 +38,8 @@ add = program('num', 'num', 'num')(add)
 @program('num', 'num', 'bool')
 def num_less(x, y):
     less = rec(lambda less, x, y:
-               app(y, io.false, lambda py:
-                   app(x, io.true, lambda px: app(less, px, py))))
+               app(y, lib.false, lambda py:
+                   app(x, lib.true, lambda px: app(less, px, py))))
     return app(less, x, y)
 
 
