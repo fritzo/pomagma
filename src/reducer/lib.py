@@ -150,6 +150,11 @@ def num_less(x, y):
     return app(y, false, lambda py: app(x, true, lambda px: num_less(px, py)))
 
 
+@untyped
+def num_rec(z, s, x):
+    return app(x, z, lambda px: app(s, num_rec(z, s, px)))
+
+
 # ----------------------------------------------------------------------------
 # Finite homogeneous lists
 
@@ -162,5 +167,25 @@ def cons(head, tail):
 
 
 @untyped
-def list_is_empty(xs):
+def list_test(xs, f):
+    return app(xs, f, lambda h, t: list_test(t, f))
+
+
+@untyped
+def list_empty(xs):
     return app(xs, true, lambda h, t: false)
+
+
+@untyped
+def list_all(xs):
+    return app(xs, true, lambda h, t: bool_and(h, list_all(t)))
+
+
+@untyped
+def list_map(f, xs):
+    return app(xs, nil, lambda h, t: cons(f(h), list_map(f, t)))
+
+
+@untyped
+def list_rec(n, c, xs):
+    return app(xs, n, lambda h, t: app(c, h, list_rec(n, c, t)))

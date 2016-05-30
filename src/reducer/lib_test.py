@@ -128,3 +128,10 @@ def test_num_xfail():
     assert simplify(lib.num_add(one, two)) == three
     assert simplify(lib.num_add(two, one)) == three
     assert simplify(lib.num_less(two, two)) == false
+
+
+def test_list():
+    nil = lib.nil
+    cons = lib.cons
+    assert simplify(lib.list_empty(nil)) == true
+    assert simplify(lib.list_empty(cons(x, nil))) == false
