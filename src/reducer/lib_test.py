@@ -36,16 +36,16 @@ def test_intro_forms(name, native):
 
 
 def test_unit():
-    assert simplify(lib.unit_test(ok, f)) == f
-    assert simplify(lib.unit_test(error, f)) == error
-    assert simplify(lib.unit_test(undefined, f)) == undefined
+    assert simplify(lib.unit_test(ok)) == ok
+    assert simplify(lib.unit_test(error)) == error
+    assert simplify(lib.unit_test(undefined)) == undefined
 
 
 def test_bool():
-    assert simplify(lib.bool_test(true, f)) == f
-    assert simplify(lib.bool_test(false, f)) == f
-    assert simplify(lib.bool_test(error, f)) == error
-    assert simplify(lib.bool_test(undefined, f)) == undefined
+    assert simplify(lib.bool_test(true)) == ok
+    assert simplify(lib.bool_test(false)) == ok
+    assert simplify(lib.bool_test(error)) == error
+    assert simplify(lib.bool_test(undefined)) == undefined
     assert simplify(lib.bool_not(true)) == false
     assert simplify(lib.bool_not(false)) == true
     assert simplify(lib.bool_and(true, true)) == true
@@ -59,26 +59,26 @@ def test_bool():
 
 
 def test_maybe():
-    assert simplify(lib.maybe_test(lib.none, f)) == f
-    assert simplify(lib.maybe_test(lib.some(x), f)) == f
-    assert simplify(lib.maybe_test(error, f)) == error
-    assert simplify(lib.maybe_test(undefined, f)) == undefined
+    assert simplify(lib.maybe_test(lib.none)) == ok
+    assert simplify(lib.maybe_test(lib.some(x))) == ok
+    assert simplify(lib.maybe_test(error)) == error
+    assert simplify(lib.maybe_test(undefined)) == undefined
 
 
 def test_prod():
     xy = lib.pair(x, y)
-    assert simplify(lib.prod_test(xy, f)) == f
-    assert simplify(lib.prod_test(error, f)) == error
-    assert simplify(lib.prod_test(undefined, f)) == undefined
+    assert simplify(lib.prod_test(xy)) == ok
+    assert simplify(lib.prod_test(error)) == error
+    assert simplify(lib.prod_test(undefined)) == undefined
     assert simplify(lib.prod_fst(xy)) == x
     assert simplify(lib.prod_snd(xy)) == y
 
 
 def test_sum():
-    assert simplify(lib.sum_test(lib.inl(x), f)) == f
-    assert simplify(lib.sum_test(lib.inr(y), f)) == f
-    assert simplify(lib.sum_test(error, f)) == error
-    assert simplify(lib.sum_test(undefined, f)) == undefined
+    assert simplify(lib.sum_test(lib.inl(x))) == ok
+    assert simplify(lib.sum_test(lib.inr(y))) == ok
+    assert simplify(lib.sum_test(error)) == error
+    assert simplify(lib.sum_test(undefined)) == undefined
 
 
 def test_num():
@@ -87,14 +87,14 @@ def test_num():
     one = succ(zero)
     two = succ(one)
     three = succ(two)
-    assert simplify(lib.num_test(zero, f)) == f
-    assert simplify(lib.num_test(one, f)) == f
-    assert simplify(lib.num_test(error, f)) == error
-    assert simplify(lib.num_test(succ(error), f)) == error
-    assert simplify(lib.num_test(succ(succ(error)), f)) == error
-    assert simplify(lib.num_test(undefined, f)) == undefined
-    assert simplify(lib.num_test(succ(undefined), f)) == undefined
-    assert simplify(lib.num_test(succ(succ(undefined)), f)) == undefined
+    assert simplify(lib.num_test(zero)) == ok
+    assert simplify(lib.num_test(one)) == ok
+    assert simplify(lib.num_test(error)) == error
+    assert simplify(lib.num_test(succ(error))) == error
+    assert simplify(lib.num_test(succ(succ(error)))) == error
+    assert simplify(lib.num_test(undefined)) == undefined
+    assert simplify(lib.num_test(succ(undefined))) == undefined
+    assert simplify(lib.num_test(succ(succ(undefined)))) == undefined
     assert simplify(lib.num_pred(zero)) == error
     assert simplify(lib.num_pred(one)) == zero
     assert simplify(lib.num_pred(two)) == one
@@ -120,8 +120,8 @@ def test_num_xfail():
     one = succ(zero)
     two = succ(one)
     three = succ(two)
-    assert simplify(lib.num_test(two, f)) == f
-    assert simplify(lib.num_test(three, f)) == f
+    assert simplify(lib.num_test(two)) == ok
+    assert simplify(lib.num_test(three)) == ok
     assert simplify(lib.num_add(zero, two)) == two
     assert simplify(lib.num_add(zero, three)) == three
     assert simplify(lib.num_add(zero, one)) == one
@@ -134,5 +134,11 @@ def test_num_xfail():
 def test_list():
     nil = lib.nil
     cons = lib.cons
+    assert simplify(lib.list_test(nil)) == ok
+    assert simplify(lib.list_test(cons(x, nil))) == ok
+    assert simplify(lib.list_test(error)) == error
+    assert simplify(lib.list_test(undefined)) == undefined
+    assert simplify(lib.list_test(cons(x, error))) == error
+    assert simplify(lib.list_test(cons(x, undefined))) == undefined
     assert simplify(lib.list_empty(nil)) == true
     assert simplify(lib.list_empty(cons(x, nil))) == false

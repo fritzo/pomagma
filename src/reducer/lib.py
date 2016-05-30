@@ -28,8 +28,8 @@ ok = I
 
 
 @untyped
-def unit_test(x, f):
-    return app(x, f)
+def unit_test(x):
+    return app(x, ok)
 
 
 # ----------------------------------------------------------------------------
@@ -40,8 +40,8 @@ false = APP(K, I)
 
 
 @untyped
-def bool_test(x, f):
-    return app(x, f, f)
+def bool_test(x):
+    return app(x, ok, ok)
 
 
 @untyped
@@ -72,8 +72,8 @@ def some(arg):
 
 
 @untyped
-def maybe_test(x, f):
-    return app(x, f, lambda y: f)
+def maybe_test(x):
+    return app(x, ok, lambda y: ok)
 
 
 # ----------------------------------------------------------------------------
@@ -85,8 +85,8 @@ def pair(x, y):
 
 
 @untyped
-def prod_test(xy, f):
-    return app(xy, lambda x, y: f)
+def prod_test(xy):
+    return app(xy, lambda x, y: ok)
 
 
 @untyped
@@ -113,8 +113,8 @@ def inr(y):
 
 
 @untyped
-def sum_test(xy, f):
-    return app(xy, lambda x: f, lambda y: f)
+def sum_test(xy):
+    return app(xy, lambda x: ok, lambda y: ok)
 
 
 # ----------------------------------------------------------------------------
@@ -125,8 +125,8 @@ succ = some
 
 
 @untyped
-def num_test(x, f):
-    return app(x, f, lambda px: num_test(px, f))
+def num_test(x):
+    return app(x, ok, num_test)
 
 
 @untyped
@@ -167,8 +167,8 @@ def cons(head, tail):
 
 
 @untyped
-def list_test(xs, f):
-    return app(xs, f, lambda h, t: list_test(t, f))
+def list_test(xs):
+    return app(xs, ok, lambda h, t: list_test(t))
 
 
 @untyped
