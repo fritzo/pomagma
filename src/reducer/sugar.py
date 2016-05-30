@@ -160,3 +160,13 @@ def rec(fun):
         return app(fun, app(x, x))
 
     return app(fxx, fxx)
+
+
+def symmetric(fun):
+
+    # TODO
+    # @functools.wraps(fun)
+    # def symmetric_fun(x, y):
+    #     return join(fun(x, y), fun(y, x))
+
+    return fun

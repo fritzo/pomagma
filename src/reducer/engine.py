@@ -130,7 +130,7 @@ def _app(lhs, rhs, nonlinear):
     while stack:
         LOG.debug('head = {}'.format(pretty(head)))
         arg = stack.pop()
-        arg = _red(arg)
+        arg = _red(arg, nonlinear)
         head = APP(head, arg)
 
     # Abstract free variables.
@@ -143,13 +143,17 @@ def _app(lhs, rhs, nonlinear):
     return head
 
 
-@memoize_arg
-def _red(code):
-    return _app(code[1], code[2], True) if is_app(code) else code
+@memoize_args
+def _red(code, nonlinear):
+    return _app(code[1], code[2], nonlinear) if is_app(code) else code
 
 
 def reduce(code, budget=0):
     '''Beta-eta reduce code, ignoring budget.'''
     assert isinstance(budget, int) and budget >= 0, budget
     LOG.info('reduce({})'.format(pretty(code)))
-    return _red(code)
+    return _red(code, True)
+
+
+def simplify(code):
+    return _red(code, False)
