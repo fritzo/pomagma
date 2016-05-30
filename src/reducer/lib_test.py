@@ -8,13 +8,14 @@ f = VAR('f')
 x = VAR('x')
 y = VAR('y')
 
+ok = lib.ok
 error = lib.error
 undefined = lib.undefined
 true = lib.true
 false = lib.false
 
 INTRO_FORM_EXAMPLES = [
-    ('void', lambda x: x),
+    ('ok', lambda x: x),
     ('true', lambda x, y: x),
     ('false', lambda x, y: y),
     ('none', lambda f, g: f),
@@ -35,7 +36,7 @@ def test_intro_forms(name, native):
 
 
 def test_unit():
-    assert simplify(lib.unit_test(lib.void, f)) == f
+    assert simplify(lib.unit_test(ok, f)) == f
     assert simplify(lib.unit_test(error, f)) == error
     assert simplify(lib.unit_test(undefined, f)) == undefined
 

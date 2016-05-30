@@ -31,12 +31,12 @@ def check_for_errors(code):
 def encode_unit(value):
     if value is not None:
         raise TypeError(value)
-    return lib.void
+    return lib.ok
 
 
 def decode_unit(code):
     """Decode unit to None, or raise an exception."""
-    if code is lib.void:
+    if code is lib.ok:
         return None
     else:
         raise TypeError(code)

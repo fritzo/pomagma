@@ -12,7 +12,7 @@ import pytest
 
 EXAMPLES_BY_TYPE = {
     'unit': {
-        'ok': [(lib.void, None)],
+        'ok': [(lib.ok, None)],
         'encode_error': [True, False, 0, 1, 2, [None], [True]],
         'decode_error': [K, B, C, APP(C, B)],
     },
@@ -151,7 +151,7 @@ types = s.recursive(types_base, types_extend, max_leaves=10)
 def code_of_type(tp):
     if not isinstance(tp, tuple):
         if tp == 'unit':
-            return s.just(lib.void)
+            return s.just(lib.ok)
         if tp == 'bool':
             return s.sampled_from([lib.true, lib.false])
         if tp == 'num':
