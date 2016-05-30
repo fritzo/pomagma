@@ -1,3 +1,4 @@
+from pomagma.reducer.code import I, K, B, C, S, BOT, TOP, APP
 import os
 import pomagma.reducer
 import pomagma.util
@@ -28,67 +29,73 @@ def teardown_module():
 
 EXAMPLES = [
     {
-        'code': 'I',
+        'code': I,
         'budget': 0,
-        'expected_code': 'I',
+        'expected_code': I,
         'expected_budget': 0,
     },
     {
-        'code': 'K',
+        'code': K,
         'budget': 0,
-        'expected_code': 'K',
+        'expected_code': K,
         'expected_budget': 0,
     },
     {
-        'code': 'B',
+        'code': B,
         'budget': 0,
-        'expected_code': 'B',
+        'expected_code': B,
         'expected_budget': 0,
     },
     {
-        'code': 'C',
+        'code': C,
         'budget': 0,
-        'expected_code': 'C',
+        'expected_code': C,
         'expected_budget': 0,
     },
     {
-        'code': 'S',
+        'code': S,
         'budget': 0,
-        'expected_code': 'S',
+        'expected_code': S,
         'expected_budget': 0,
     },
     {
-        'code': 'I',
+        'code': I,
         'budget': 1,
-        'expected_code': 'I',
+        'expected_code': I,
         'expected_budget': 1,
     },
     {
-        'code': 'APP I I',
+        'code': APP(I, I),
         'budget': 0,
-        'expected_code': 'I',
+        'expected_code': I,
         'expected_budget': 0,
     },
     {
-        'code': 'APP I I',
+        'code': APP(I, I),
         'budget': 1,
-        'expected_code': 'I',
+        'expected_code': I,
         'expected_budget': 1,
     },
     {
-        'code': 'APP K BOT',
+        'code': APP(K, TOP),
         'budget': 0,
-        'expected_code': 'BOT',
+        'expected_code': TOP,
         'expected_budget': 0,
     },
     {
-        'code': 'APP B I',
+        'code': APP(K, BOT),
         'budget': 0,
-        'expected_code': 'I',
+        'expected_code': BOT,
         'expected_budget': 0,
     },
     {
-        'code': 'APP APP C B I',
+        'code': APP(B, I),
+        'budget': 0,
+        'expected_code': I,
+        'expected_budget': 0,
+    },
+    {
+        'code': APP(APP(C, B), I),
         'budget': 0,
         'expected_code': 'I',
         'expected_budget': 0,

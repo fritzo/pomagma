@@ -1,6 +1,8 @@
-import zmq
 from google.protobuf.descriptor import FieldDescriptor
 from pomagma.reducer import messages_pb2 as messages
+from pomagma.reducer.code import parse
+from pomagma.reducer.code import serialize
+import zmq
 
 
 CONTEXT = zmq.Context()
@@ -63,17 +65,16 @@ class Client(object):
         self._call(request)
 
     def reduce(self, code, budget=0):
-        assert isinstance(code, basestring), code
         assert isinstance(budget, int), budget
         assert budget >= 0, budget
         request = Request()
-        request.reduce.code = code
+        request.reduce.code = serialize(code)
         request.reduce.budget = budget
         reply = self._call(request)
         if not reply.reduce.code:
             raise ValueError('Invalid code: {}'.format(code))
         return {
-            'code': str(reply.reduce.code),
+            'code': parse(str(reply.reduce.code)),
             'budget': int(reply.reduce.budget),
         }
 
