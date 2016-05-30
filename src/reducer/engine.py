@@ -6,12 +6,39 @@ from pomagma.reducer.code import I, K, B, C, S, BOT, TOP, APP, VAR
 from pomagma.reducer.sugar import abstract
 import itertools
 import logging
-import os
+import pomagma.util
 
-# TODO use the common POMAGMA_LOG_LEVEL
+# ----------------------------------------------------------------------------
+# Logging
+
+LOG_LEVELS = {
+    pomagma.util.LOG_LEVEL_ERROR: logging.ERROR,
+    pomagma.util.LOG_LEVEL_WARNING: logging.WARNING,
+    pomagma.util.LOG_LEVEL_INFO: logging.INFO,
+    pomagma.util.LOG_LEVEL_DEBUG: logging.DEBUG,
+}
+
 LOG = logging.getLogger(__name__)
-LOG.setLevel(int(os.environ.get('POMAGMA_ENGINE_LOG_LEVEL', logging.DEBUG)))
+LOG.setLevel(LOG_LEVELS[pomagma.util.LOG_LEVEL])
+LOG.addHandler(logging.StreamHandler())
 
+
+@memoize_args
+def pretty(code, add_parens=False):
+    if isinstance(code, str):
+        return code
+    elif code[0] == 'APP':
+        lhs = pretty(code[1])
+        rhs = pretty(code[2], True)
+        return ('({} {})' if add_parens else '{} {}').format(lhs, rhs)
+    elif code[0] == 'VAR':
+        return code[1]
+    else:
+        raise NotImplementedError(code)
+
+
+# ----------------------------------------------------------------------------
+# Reduction
 
 def is_var(code):
     return isinstance(code, tuple) and code[0] == 'VAR'
@@ -66,7 +93,7 @@ def _app(lhs, rhs):
     stack = [rhs]
     bound = []
     while not is_var(head):
-        LOG.debug('head = {}'.format(head))
+        LOG.debug('head = {}'.format(pretty(head)))
         if is_app(head):
             stack.append(head[2])
             head = head[1]
@@ -98,18 +125,18 @@ def _app(lhs, rhs):
 
     # Reduce args.
     while stack:
-        LOG.debug('head = {}'.format(head))
+        LOG.debug('head = {}'.format(pretty(head)))
         arg = stack.pop()
         arg = _red(arg)
         head = APP(head, arg)
 
     # Abstract free variables.
     while bound:
-        LOG.debug('head = {}'.format(head))
+        LOG.debug('head = {}'.format(pretty(head)))
         var = bound.pop()
         head = abstract(var, head)
 
-    LOG.debug('head = {}'.format(head))
+    LOG.debug('head = {}'.format(pretty(head)))
     return head
 
 
@@ -121,4 +148,5 @@ def _red(code):
 def reduce(code, budget=0):
     '''Beta-eta reduce code, ignoring budget.'''
     assert isinstance(budget, int) and budget >= 0, budget
+    LOG.info('reduce({})'.format(pretty(code)))
     return _red(code)

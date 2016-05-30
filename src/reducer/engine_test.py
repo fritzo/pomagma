@@ -1,13 +1,23 @@
 from pomagma.reducer import engine
+from pomagma.reducer import io
 from pomagma.reducer.code import I, K, B, C, S, BOT, TOP, VAR
-from pomagma.reducer.sugar import app
+from pomagma.reducer.sugar import app, rec
 import pytest
+import sys
 
 BUDGET = 10000
 
+w = VAR('w')
 x = VAR('x')
 y = VAR('y')
 z = VAR('z')
+
+
+def map_(f):
+    return lambda f: rec(lambda m, xs:
+                         app(xs, io.nil, lambda h, t:
+                             io.cons(app(f, h), app(m, t))))
+
 
 EXAMPLES = [
     (x, x),
@@ -25,18 +35,23 @@ EXAMPLES = [
     (K, K),
     (app(K, x), app(K, x)),
     (app(K, x, y), x),
+    (app(K, x, y, z), app(x, z)),
     (B, B),
     (app(B, x), app(B, x)),
     (app(B, x, y), app(B, x, y)),
     (app(B, x, y, z), app(x, app(y, z))),
+    (app(B, x, y, z, w), app(x, app(y, z), w)),
     (C, C),
     (app(C, x), app(C, x)),
     (app(C, x, y), app(C, x, y)),
     (app(C, x, y, z), app(x, z, y)),
+    (app(C, x, y, z, w), app(x, z, y, w)),
     (S, S),
     (app(S, x), app(S, x)),
     (app(S, x, y), app(S, x, y)),
     (app(S, x, y, z), app(x, z, app(y, z))),
+    (app(S, x, y, z, w), app(x, z, app(y, z), w)),
+    pytest.mark.xfail((app(map_, I, io.nil), io.nil)),
 ]
 
 
@@ -44,3 +59,9 @@ EXAMPLES = [
 def test_reduce(code, expected_result):
     actual_result = engine.reduce(code, BUDGET)
     assert actual_result == expected_result
+
+
+# Debugging.
+if __name__ == '__main__':
+    sys.setrecursionlimit(100)
+    engine.reduce(app(map_, I, io.nil))
