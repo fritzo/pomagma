@@ -2,6 +2,7 @@ from pomagma.reducer.code import I, K, B, C, S, VAR, APP
 from pomagma.reducer.sugar import abstract, as_code, app, join
 import pytest
 
+f = VAR('f')
 x = VAR('x')
 y = VAR('y')
 z = VAR('z')
@@ -27,6 +28,13 @@ def test_abstract(var, body, expected_abs):
     assert actual_abs == expected_abs
 
 
+Yf = app((lambda x: app(f, app(x, x))), (lambda x: app(f, app(x, x))))
+
+
+def fix_f(x):
+    return app(f, app(fix_f, x))
+
+
 AS_CODE_EXAMPLES = [
     (I, I),
     (K, K),
@@ -39,6 +47,7 @@ AS_CODE_EXAMPLES = [
     (lambda x, y, z: app(x, z, y), C),
     (lambda x, y, z: app(x, app(y, z)), B),
     (lambda x, y, z: app(x, z, app(y, z)), S),
+    pytest.mark.xfail((fix_f, Yf)),
 ]
 
 
