@@ -117,9 +117,11 @@ class Untyped(object):
 
 
 def untyped(arg):
-    if callable(arg) and not isinstance(arg, Untyped):
-        return Untyped(arg)
-    return arg
+    if not callable(arg):
+        raise SyntaxError('Cannot apply @untyped to {}'.format(arg))
+    if isinstance(arg, Untyped):
+        raise SyntaxError('Cannot apply @untyped repeatedly')
+    return Untyped(arg)
 
 
 def as_code(arg):
