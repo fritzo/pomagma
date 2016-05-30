@@ -157,6 +157,13 @@ def num_add(x, y):
 
 
 @untyped
+@symmetric
+def num_eq(x, y):
+    return app(x, app(y, true, lambda py: false), lambda px:
+               app(y, false, lambda py: num_eq(px, py)))
+
+
+@untyped
 def num_less(x, y):
     return app(y, false, lambda py: app(x, true, lambda px: num_less(px, py)))
 
@@ -190,6 +197,11 @@ def list_empty(xs):
 @untyped
 def list_all(xs):
     return app(xs, true, lambda h, t: bool_and(h, list_all(t)))
+
+
+@untyped
+def list_any(xs):
+    return app(xs, false, lambda h, t: bool_or(h, list_any(t)))
 
 
 @untyped
