@@ -5,7 +5,7 @@ Intro forms are hand-optimized; see lib_test.py for lambda versions.
 """
 
 from pomagma.reducer.code import I, K, B, C, TOP, BOT, APP
-from pomagma.reducer.sugar import app, untyped, symmetric
+from pomagma.reducer.sugar import app, join, untyped, symmetric
 
 CI = APP(C, I)
 
@@ -30,6 +30,17 @@ ok = I
 @untyped
 def unit_test(x):
     return app(x, ok)
+
+
+@untyped
+@symmetric
+def unit_and(x, y):
+    return app(x, y)
+
+
+@untyped
+def unit_or(x, y):
+    return join(x, y)
 
 
 # ----------------------------------------------------------------------------

@@ -2,7 +2,7 @@
 
 from pomagma.compiler.util import memoize_arg
 from pomagma.compiler.util import memoize_args
-from pomagma.reducer.code import I, K, B, C, S, BOT, TOP, APP, VAR
+from pomagma.reducer.code import I, K, B, C, S, BOT, TOP, APP, JOIN, VAR
 from pomagma.reducer.sugar import abstract
 import itertools
 import logging
@@ -48,6 +48,10 @@ def is_app(code):
     return isinstance(code, tuple) and code[0] == 'APP'
 
 
+def is_join(code):
+    return isinstance(code, tuple) and code[0] == 'JOIN'
+
+
 @memoize_arg
 def make_var(n):
     return VAR('v{}'.format(n))
@@ -57,7 +61,7 @@ def make_var(n):
 def free_vars(code):
     if is_var(code):
         return set([code])
-    elif is_app(code):
+    elif is_app(code) or is_join(code):
         return free_vars(code[1]) | free_vars(code[2])
     else:
         return set()
@@ -97,6 +101,8 @@ def _app(lhs, rhs, nonlinear):
         if is_app(head):
             stack.append(head[2])
             head = head[1]
+        elif is_join(head):
+            raise NotImplementedError('TODO implement sampling')
         elif head is TOP:
             return TOP
         elif head is BOT:
@@ -143,9 +149,45 @@ def _app(lhs, rhs, nonlinear):
     return head
 
 
+def add_samples(code, sample_set):
+    if code is TOP:
+        sample_set.clear()
+        sample_set.add(TOP)
+    elif code is BOT:
+        return
+    elif is_join(code):
+        add_samples(code[1], sample_set)
+        add_samples(code[2], sample_set)
+    else:
+        sample_set.add(code)
+
+
+@memoize_args
+def _join(lhs, rhs, nonlinear):
+    lhs = _red(lhs, nonlinear)
+    rhs = _red(rhs, nonlinear)
+    sample_set = set()
+    add_samples(lhs, sample_set)
+    add_samples(rhs, sample_set)
+    if not sample_set:
+        return BOT
+    if TOP in sample_set:
+        return TOP
+    samples = sorted(sample_set)
+    result = samples[0]
+    for part in samples[1:]:
+        result = JOIN(result, part)
+    return result
+
+
 @memoize_args
 def _red(code, nonlinear):
-    return _app(code[1], code[2], nonlinear) if is_app(code) else code
+    if is_app(code):
+        return _app(code[1], code[2], nonlinear)
+    elif is_join(code):
+        return _join(code[1], code[2], nonlinear)
+    else:
+        return code
 
 
 def reduce(code, budget=0):

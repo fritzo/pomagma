@@ -39,6 +39,14 @@ def test_unit():
     assert simplify(lib.unit_test(ok)) == ok
     assert simplify(lib.unit_test(error)) == error
     assert simplify(lib.unit_test(undefined)) == undefined
+    assert simplify(lib.unit_and(ok, ok)) == ok
+    assert simplify(lib.unit_and(ok, undefined)) == undefined
+    assert simplify(lib.unit_and(undefined, ok)) == undefined
+    assert simplify(lib.unit_and(undefined, undefined)) == undefined
+    assert simplify(lib.unit_or(ok, ok)) == ok
+    assert simplify(lib.unit_or(ok, undefined)) == ok
+    assert simplify(lib.unit_or(undefined, ok)) == ok
+    assert simplify(lib.unit_or(undefined, undefined)) == undefined
 
 
 def test_bool():
