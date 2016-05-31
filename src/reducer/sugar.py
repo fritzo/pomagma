@@ -60,10 +60,6 @@ def abstract(var, body):
     return APP(K, body) if result is None else result
 
 
-def occurs(var, body):
-    return abstract(var, body) is not None
-
-
 # ----------------------------------------------------------------------------
 # Compiler
 
@@ -117,7 +113,7 @@ class Untyped(object):
 
     def _compile(self):
         assert not hasattr(self, '_code')
-        var = VAR('_fun{}'.format(id(self)))
+        var = VAR(self.__name__)
         self._code = var
 
         code = _compile(self, actual_fun=self._fun)
@@ -169,10 +165,7 @@ def join(*args):
 
 
 def rec(fun):
-
-    def fxx(x):
-        return app(fun, app(x, x))
-
+    fxx = untyped(lambda x: app(fun, app(x, x)))
     return app(fxx, fxx)
 
 
