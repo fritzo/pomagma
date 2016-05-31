@@ -28,89 +28,23 @@ def teardown_module():
     SERVER = None
 
 
-EXAMPLES = [
-    {
-        'code': I,
-        'budget': 0,
-        'expected_code': I,
-        'expected_budget': 0,
-    },
-    {
-        'code': K,
-        'budget': 0,
-        'expected_code': K,
-        'expected_budget': 0,
-    },
-    {
-        'code': B,
-        'budget': 0,
-        'expected_code': B,
-        'expected_budget': 0,
-    },
-    {
-        'code': C,
-        'budget': 0,
-        'expected_code': C,
-        'expected_budget': 0,
-    },
-    {
-        'code': S,
-        'budget': 0,
-        'expected_code': S,
-        'expected_budget': 0,
-    },
-    {
-        'code': I,
-        'budget': 1,
-        'expected_code': I,
-        'expected_budget': 1,
-    },
-    {
-        'code': APP(I, I),
-        'budget': 0,
-        'expected_code': I,
-        'expected_budget': 0,
-    },
-    {
-        'code': APP(I, I),
-        'budget': 1,
-        'expected_code': I,
-        'expected_budget': 1,
-    },
-    {
-        'code': APP(K, TOP),
-        'budget': 0,
-        'expected_code': TOP,
-        'expected_budget': 0,
-    },
-    {
-        'code': APP(K, BOT),
-        'budget': 0,
-        'expected_code': BOT,
-        'expected_budget': 0,
-    },
-    {
-        'code': APP(B, I),
-        'budget': 0,
-        'expected_code': I,
-        'expected_budget': 0,
-    },
-    {
-        'code': APP(APP(C, B), I),
-        'budget': 0,
-        'expected_code': 'I',
-        'expected_budget': 0,
-        'xfail': 'TODO',
-    },
-]
-
-
-@for_each(EXAMPLES)
-def test_reduce(example):
-    if 'xfail' in example:
-        pytest.xfail(example['xfail'])
+@for_each([
+    (I, 0, I, 0),
+    (K, 0, K, 0),
+    (B, 0, B, 0),
+    (C, 0, C, 0),
+    (S, 0, S, 0),
+    (I, 1, I, 1),
+    (APP(I, I), 0, I, 0),
+    (APP(I, I), 1, I, 1),
+    (APP(K, TOP), 0, TOP, 0),
+    (APP(K, BOT), 0, BOT, 0),
+    (APP(B, I), 0, I, 0),
+    pytest.mark.xfail((APP(APP(C, B), I), 0, I, 0)),
+])
+def test_reduce(code, budget, expected_code, expected_budget):
     with SERVER.connect() as client:
         client.reset()
-        actual = client.reduce(example['code'], example['budget'])
-        assert actual['code'] == example['expected_code']
-        assert actual['budget'] == example['expected_budget']
+        actual = client.reduce(code, budget)
+        assert actual['code'] == expected_code
+        assert actual['budget'] == expected_budget

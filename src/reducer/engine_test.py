@@ -18,7 +18,7 @@ def map_(f, xs):
     return app(xs, lib.nil, lambda h, t: lib.cons(app(f, h), map_(f, t)))
 
 
-EXAMPLES = [
+@for_each([
     (x, x),
     (app(x, y), app(x, y)),
     (app(x, I), app(x, I)),
@@ -52,10 +52,7 @@ EXAMPLES = [
     (app(S, x, y, z, w), app(x, z, app(y, z), w)),
     (map_(I, lib.nil), lib.nil),
     (map_(I, lib.cons(x, lib.nil)), lib.cons(x, lib.nil)),
-]
-
-
-@for_each(EXAMPLES)
+])
 def test_reduce(code, expected_result):
     actual_result = engine.reduce(code, BUDGET)
     assert actual_result == expected_result

@@ -8,7 +8,8 @@ x = VAR('x')
 y = VAR('y')
 z = VAR('z')
 
-ABSTRACT_EXAMPLES = [
+
+@for_each([
     (x, x, I),
     (x, y, app(K, y)),
     (x, I, app(K, I)),
@@ -20,10 +21,7 @@ ABSTRACT_EXAMPLES = [
     (x, join(x, y), join(I, app(K, y))),
     (x, join(y, x), join(app(K, y), I)),
     (x, join(y, z), app(K, join(y, z))),
-]
-
-
-@for_each(ABSTRACT_EXAMPLES)
+])
 def test_abstract(var, body, expected_abs):
     actual_abs = abstract(var, body)
     assert actual_abs == expected_abs
@@ -36,7 +34,7 @@ def fix_f(x):
     return app(f, app(fix_f, x))
 
 
-AS_CODE_EXAMPLES = [
+@for_each([
     (I, I),
     (K, K),
     (app(S, I, I), app(S, I, I)),
@@ -51,10 +49,7 @@ AS_CODE_EXAMPLES = [
     (lambda x: app(x, x), app(S, I, I)),
     (lambda x: app(f, app(x, x)), app(B, f, app(S, I, I))),
     pytest.mark.xfail((fix_f, Yf)),
-]
-
-
-@for_each(AS_CODE_EXAMPLES)
+])
 def test_as_code(arg, expected_code):
     actual_code = as_code(arg)
     assert actual_code == expected_code

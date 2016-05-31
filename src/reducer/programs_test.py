@@ -21,7 +21,7 @@ num_add = program('num', 'num', 'num')(lib.num_add)
 num_less = program('num', 'num', 'bool')(lib.num_less)
 
 
-EXAMPLES = [
+@for_each([
     (bool_not, (True,), False),
     (bool_not, (False,), True),
     (bool_not, (0,), TypeError),
@@ -57,10 +57,7 @@ EXAMPLES = [
     (num_less, (2, 0), False),
     pytest.mark.xfail((num_less, (2, 1), False)),
     pytest.mark.xfail((num_less, (2, 2), False)),
-]
-
-
-@for_each(EXAMPLES)
+])
 def test_call(fun, args, expected):
     with using_engine(engine):
         if isinstance(expected, type) and issubclass(expected, Exception):
