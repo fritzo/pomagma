@@ -2,6 +2,7 @@
 
 from pomagma.compiler.util import memoize_args
 from pomagma.reducer.code import I, K, B, C, S, BOT, APP, JOIN, VAR
+from pomagma.reducer.code import free_vars
 from pomagma.reducer.util import LOG
 import functools
 import inspect
@@ -83,7 +84,7 @@ def _compile(fun, actual_fun=None):
     return code
 
 
-class Untyped(object):
+class Combinator(object):
 
     def __init__(self, fun):
         functools.update_wrapper(self, fun)
@@ -121,19 +122,23 @@ class Untyped(object):
         if rec_code is not None:
             code = rec(rec_code)
 
+        free = free_vars(code)
+        if free:
+            raise SyntaxError('Unbound variables: {}'.format(' '.join(free)))
+
         self._code = code
 
 
-def untyped(arg):
-    if isinstance(arg, Untyped):
+def combinator(arg):
+    if isinstance(arg, Combinator):
         return arg
     if not callable(arg):
-        raise SyntaxError('Cannot apply @untyped to {}'.format(arg))
-    return Untyped(arg)
+        raise SyntaxError('Cannot apply @combinator to {}'.format(arg))
+    return Combinator(arg)
 
 
 def as_code(arg):
-    if isinstance(arg, Untyped):
+    if isinstance(arg, Combinator):
         return arg.code
     elif callable(arg):
         return _compile(arg)
@@ -165,7 +170,7 @@ def join(*args):
 
 
 def rec(fun):
-    fxx = untyped(lambda x: app(fun, app(x, x)))
+    fxx = combinator(lambda x: app(fun, app(x, x)))
     return app(fxx, fxx)
 
 

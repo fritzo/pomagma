@@ -3,37 +3,16 @@
 from pomagma.compiler.util import memoize_arg
 from pomagma.compiler.util import memoize_args
 from pomagma.reducer.code import I, K, B, C, S, BOT, TOP, APP, JOIN, VAR
+from pomagma.reducer.code import is_var, is_app, is_join, free_vars
 from pomagma.reducer.sugar import abstract
 from pomagma.reducer.util import LOG
 from pomagma.reducer.util import pretty
 import itertools
 
 
-def is_var(code):
-    return isinstance(code, tuple) and code[0] == 'VAR'
-
-
-def is_app(code):
-    return isinstance(code, tuple) and code[0] == 'APP'
-
-
-def is_join(code):
-    return isinstance(code, tuple) and code[0] == 'JOIN'
-
-
 @memoize_arg
 def make_var(n):
     return VAR('v{}'.format(n))
-
-
-@memoize_arg
-def free_vars(code):
-    if is_var(code):
-        return set([code])
-    elif is_app(code) or is_join(code):
-        return free_vars(code[1]) | free_vars(code[2])
-    else:
-        return set()
 
 
 def fresh(avoid):

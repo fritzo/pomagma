@@ -31,6 +31,28 @@ def VAR(name):
     return (_VAR, intern(name))
 
 
+def is_var(code):
+    return isinstance(code, tuple) and code[0] == 'VAR'
+
+
+def is_app(code):
+    return isinstance(code, tuple) and code[0] == 'APP'
+
+
+def is_join(code):
+    return isinstance(code, tuple) and code[0] == 'JOIN'
+
+
+@memoize_arg
+def free_vars(code):
+    if is_var(code):
+        return set([code])
+    elif is_app(code) or is_join(code):
+        return free_vars(code[1]) | free_vars(code[2])
+    else:
+        return set()
+
+
 # ----------------------------------------------------------------------------
 # Parsing and seralization
 

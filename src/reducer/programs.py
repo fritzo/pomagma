@@ -2,7 +2,7 @@
 
 from itertools import izip
 from pomagma.reducer import io
-from pomagma.reducer.sugar import untyped
+from pomagma.reducer.sugar import combinator
 from pomagma.reducer.sugar import app
 import contextlib
 import functools
@@ -34,13 +34,13 @@ class Program(object):
         functools.update_wrapper(self, fun)
         self._encoders = encoders
         self._decoder = decoder
-        self._untyped = untyped(fun)
+        self._untyped = combinator(fun)
 
     def __repr__(self):
         return self.__name__
 
     @property
-    def untyped(self):
+    def combinator(self):
         return self._untyped
 
     def __call__(self, *args):
@@ -50,7 +50,7 @@ class Program(object):
         if ENGINE is None:
             raise RuntimeError('No engine specified')
         code_args = [encode(arg) for encode, arg in izip(self._encoders, args)]
-        code_in = app(self.untyped.code, *code_args)
+        code_in = app(self.combinator.code, *code_args)
         code_out = ENGINE.reduce(code_in)
         io.check_for_errors(code_out)
         data_out = self._decoder(code_out)

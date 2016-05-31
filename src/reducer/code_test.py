@@ -1,4 +1,5 @@
-from pomagma.reducer.code import I, K, B, C, S, BOT, TOP, APP, JOIN
+from pomagma.reducer.code import I, K, B, C, S, BOT, TOP, APP, JOIN, VAR
+from pomagma.reducer.code import free_vars
 from pomagma.reducer.code import parse
 from pomagma.reducer.code import serialize
 from pomagma.util.testing import for_each
@@ -27,3 +28,20 @@ def test_parse(string, code):
 def test_serialize(string, code):
     actual_code = parse(string)
     assert actual_code == code
+
+
+x = VAR('x')
+y = VAR('y')
+z = VAR('z')
+
+
+@for_each([
+    (I, []),
+    (x, [x]),
+    (APP(I, x), [x]),
+    (APP(x, x), [x]),
+    (APP(x, y), [x, y]),
+    (APP(x, JOIN(y, APP(K, z))), [x, y, z]),
+])
+def test_free_vars(code, free):
+    assert free_vars(code) == set(free)

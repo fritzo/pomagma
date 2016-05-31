@@ -5,7 +5,7 @@ Intro forms are hand-optimized; see lib_test.py for lambda versions.
 """
 
 from pomagma.reducer.code import I, K, B, C, TOP, BOT, APP
-from pomagma.reducer.sugar import app, join, untyped, symmetric
+from pomagma.reducer.sugar import app, join, combinator, symmetric
 
 CI = APP(C, I)
 
@@ -27,18 +27,18 @@ undefined = BOT
 ok = I
 
 
-@untyped
+@combinator
 def unit_test(x):
     return app(x, ok)
 
 
-@untyped
+@combinator
 @symmetric
 def unit_and(x, y):
     return app(x, y)
 
 
-@untyped
+@combinator
 def unit_or(x, y):
     return join(x, y)
 
@@ -50,22 +50,22 @@ true = K
 false = APP(K, I)
 
 
-@untyped
+@combinator
 def bool_test(x):
     return app(x, ok, ok)
 
 
-@untyped
+@combinator
 def bool_not(x):
     return app(x, false, true)
 
 
-@untyped
+@combinator
 def bool_and(x, y):
     return app(x, y, false)
 
 
-@untyped
+@combinator
 @symmetric
 def bool_or(x, y):
     return app(x, true, y)
@@ -77,12 +77,12 @@ def bool_or(x, y):
 none = K
 
 
-@untyped
+@combinator
 def some(arg):
     return APP(K, APP(CI, arg))
 
 
-@untyped
+@combinator
 def maybe_test(x):
     return app(x, ok, lambda y: ok)
 
@@ -90,22 +90,22 @@ def maybe_test(x):
 # ----------------------------------------------------------------------------
 # Products
 
-@untyped
+@combinator
 def pair(x, y):
     return APP(APP(C, APP(CI, x)), y)
 
 
-@untyped
+@combinator
 def prod_test(xy):
     return app(xy, lambda x, y: ok)
 
 
-@untyped
+@combinator
 def prod_fst(xy):
     return app(xy, lambda x, y: x)
 
 
-@untyped
+@combinator
 def prod_snd(xy):
     return app(xy, lambda x, y: y)
 
@@ -113,17 +113,17 @@ def prod_snd(xy):
 # ----------------------------------------------------------------------------
 # Sums
 
-@untyped
+@combinator
 def inl(x):
     return COMP(K, APP(CI, x))
 
 
-@untyped
+@combinator
 def inr(y):
     return APP(K, APP(CI, y))
 
 
-@untyped
+@combinator
 def sum_test(xy):
     return app(xy, lambda x: ok, lambda y: ok)
 
@@ -135,40 +135,40 @@ zero = none
 succ = some
 
 
-@untyped
+@combinator
 def num_test(x):
     return app(x, ok, num_test)
 
 
-@untyped
+@combinator
 def num_is_zero(x):
     return app(x, true, lambda px: false)
 
 
-@untyped
+@combinator
 def num_pred(x):
     return app(x, error, lambda px: px)
 
 
-@untyped
+@combinator
 @symmetric
 def num_add(x, y):
     return app(y, x, lambda py: succ(num_add(x, py)))
 
 
-@untyped
+@combinator
 @symmetric
 def num_eq(x, y):
     return app(x, app(y, true, lambda py: false), lambda px:
                app(y, false, lambda py: num_eq(px, py)))
 
 
-@untyped
+@combinator
 def num_less(x, y):
     return app(y, false, lambda py: app(x, true, lambda px: num_less(px, py)))
 
 
-@untyped
+@combinator
 def num_rec(z, s, x):
     return app(x, z, lambda px: app(s, num_rec(z, s, px)))
 
@@ -179,36 +179,36 @@ def num_rec(z, s, x):
 nil = K
 
 
-@untyped
+@combinator
 def cons(head, tail):
     return APP(K, APP(APP(C, APP(CI, head)), tail))
 
 
-@untyped
+@combinator
 def list_test(xs):
     return app(xs, ok, lambda h, t: list_test(t))
 
 
-@untyped
+@combinator
 def list_empty(xs):
     return app(xs, true, lambda h, t: false)
 
 
-@untyped
+@combinator
 def list_all(xs):
     return app(xs, true, lambda h, t: bool_and(h, list_all(t)))
 
 
-@untyped
+@combinator
 def list_any(xs):
     return app(xs, false, lambda h, t: bool_or(h, list_any(t)))
 
 
-@untyped
+@combinator
 def list_map(f, xs):
     return app(xs, nil, lambda h, t: cons(app(f, h), list_map(f, t)))
 
 
-@untyped
+@combinator
 def list_rec(n, c, xs):
     return app(xs, n, lambda h, t: app(c, h, list_rec(n, c, t)))

@@ -1,7 +1,7 @@
 from parsable import parsable
 from pomagma.reducer import lib
 from pomagma.reducer.programs import program
-from pomagma.reducer.sugar import app, untyped
+from pomagma.reducer.sugar import app, combinator
 from pomagma.util import TODO
 import numpy.random
 
@@ -53,7 +53,7 @@ def is_valid(grid):
     return all(all_different(s) for s in rows + cols + diags)
 
 
-@untyped
+@combinator
 def un_all_different(xs):
     return app(xs, lib.true, lambda h, t:
                lib.bool_and(
@@ -61,7 +61,7 @@ def un_all_different(xs):
                    all_different(t)))
 
 
-@untyped
+@combinator
 def un_is_valid(grid):
     TODO()
 
