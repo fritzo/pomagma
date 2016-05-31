@@ -123,14 +123,23 @@ def test_maybe_test(x, expected):
 # ----------------------------------------------------------------------------
 # Products
 
-def test_prod():
-    xy = lib.pair(x, y)
-    assert simplify(lib.prod_test(xy)) == ok
-    assert simplify(lib.prod_test(error)) == error
-    assert simplify(lib.prod_test(undefined)) == undefined
+xy = lib.pair(x, y)
 
+
+@for_each([
+    (xy, ok),
+    (error, error),
+    (undefined, undefined),
+])
+def test_prod_test(x, expected):
+    assert simplify(lib.prod_test(x)) == expected
+
+
+def test_prod_fst():
     assert simplify(lib.prod_fst(xy)) == x
 
+
+def test_prod_snd():
     assert simplify(lib.prod_snd(xy)) == y
 
 
@@ -237,13 +246,6 @@ def test_num_eq(x, y, expected):
 def test_num_less(x, y, expected):
     assert simplify(lib.num_less(x, y)) == expected
 
-
-'''
-@for_each([
-])
-def test_(, expected):
-    assert simplify(lib.()) == expected
-'''
 
 # ----------------------------------------------------------------------------
 # Finite homogeneous lists
