@@ -1,6 +1,7 @@
 from pomagma.reducer import io
 from pomagma.reducer import lib
 from pomagma.reducer.code import I, K, B, C, APP
+from pomagma.util.testing import for_each
 import hypothesis
 import hypothesis.strategies
 import pomagma.reducer.code
@@ -92,35 +93,35 @@ EXAMPLES = {
 }
 
 
-@pytest.mark.parametrize('tp,code,value', EXAMPLES['ok'])
+@for_each(EXAMPLES['ok'])
 def test_encode(tp, code, value):
     encode = io.encoder(tp)
     actual_code = encode(value)
     assert actual_code == code
 
 
-@pytest.mark.parametrize('tp,code,value', EXAMPLES['ok'])
+@for_each(EXAMPLES['ok'])
 def test_decode(tp, code, value):
     decode = io.decoder(tp)
     actual_value = decode(code)
     assert actual_value == value
 
 
-@pytest.mark.parametrize('tp,value', EXAMPLES['encode_error'])
+@for_each(EXAMPLES['encode_error'])
 def test_encode_error(tp, value):
     encode = io.encoder(tp)
     with pytest.raises(TypeError):
         encode(value)
 
 
-@pytest.mark.parametrize('tp,code', EXAMPLES['decode_error'])
+@for_each(EXAMPLES['decode_error'])
 def test_decode_error(tp, code):
     decode = io.decoder(tp)
     with pytest.raises(TypeError):
         decode(code)
 
 
-@pytest.mark.parametrize('tp,code,value', EXAMPLES['ok'])
+@for_each(EXAMPLES['ok'])
 def test_serialize_parse(tp, code, value):
     string = pomagma.reducer.code.serialize(code)
     assert isinstance(string, str)

@@ -1,6 +1,7 @@
 from pomagma.examples import sudoku
 from pomagma.reducer import engine
 from pomagma.reducer.programs import using_engine
+from pomagma.util.testing import for_each
 import pytest
 
 ALL_DIFFERENT_EXAMPLES = [
@@ -23,13 +24,13 @@ ALL_DIFFERENT_EXAMPLES = [
 ]
 
 
-@pytest.mark.parametrize('expected,xs', ALL_DIFFERENT_EXAMPLES)
+@for_each(ALL_DIFFERENT_EXAMPLES)
 def test_all_different(expected, xs):
     assert sudoku.all_different(xs) == expected
 
 
 @pytest.mark.xfail
-@pytest.mark.parametrize('expected,xs', ALL_DIFFERENT_EXAMPLES)
+@for_each(ALL_DIFFERENT_EXAMPLES)
 def test_py_all_different(expected, xs):
     with using_engine(engine):
         actual = sudoku.py_all_different(xs)

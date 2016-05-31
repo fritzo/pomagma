@@ -3,6 +3,7 @@ from pomagma.reducer import lib
 from pomagma.reducer.programs import program
 from pomagma.reducer.programs import using_engine
 from pomagma.reducer.sugar import app
+from pomagma.util.testing import for_each
 import pytest
 
 
@@ -59,7 +60,7 @@ EXAMPLES = [
 ]
 
 
-@pytest.mark.parametrize('fun,args,expected', EXAMPLES)
+@for_each(EXAMPLES)
 def test_call(fun, args, expected):
     with using_engine(engine):
         if isinstance(expected, type) and issubclass(expected, Exception):

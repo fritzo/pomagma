@@ -1,7 +1,7 @@
 from pomagma.reducer.code import I, K, B, C, S, BOT, TOP, APP, JOIN
 from pomagma.reducer.code import parse
 from pomagma.reducer.code import serialize
-import pytest
+from pomagma.util.testing import for_each
 
 EXAMPLES = [
     ('I', I),
@@ -17,13 +17,13 @@ EXAMPLES = [
 ]
 
 
-@pytest.mark.parametrize('string, code', EXAMPLES)
+@for_each(EXAMPLES)
 def test_parse(string, code):
     actual_string = serialize(code)
     assert actual_string == string
 
 
-@pytest.mark.parametrize('string, code', EXAMPLES)
+@for_each(EXAMPLES)
 def test_serialize(string, code):
     actual_code = parse(string)
     assert actual_code == code

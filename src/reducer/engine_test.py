@@ -2,7 +2,7 @@ from pomagma.reducer import engine
 from pomagma.reducer import lib
 from pomagma.reducer.code import I, K, B, C, S, BOT, TOP, VAR
 from pomagma.reducer.sugar import app, untyped
-import pytest
+from pomagma.util.testing import for_each
 import sys
 
 BUDGET = 10000
@@ -55,7 +55,7 @@ EXAMPLES = [
 ]
 
 
-@pytest.mark.parametrize('code,expected_result', EXAMPLES)
+@for_each(EXAMPLES)
 def test_reduce(code, expected_result):
     actual_result = engine.reduce(code, BUDGET)
     assert actual_result == expected_result

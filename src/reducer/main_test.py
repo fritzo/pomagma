@@ -1,5 +1,5 @@
 from pomagma.reducer import __main__ as main
-import pytest
+from pomagma.util.testing import for_each
 
 EXAMPLES = [
     ('I', 0),
@@ -13,6 +13,6 @@ EXAMPLES = [
 ]
 
 
-@pytest.mark.parametrize('code,error_count', EXAMPLES)
+@for_each(EXAMPLES)
 def test_reduce_does_not_crash(code, error_count):
     assert main.reduce(code) == error_count

@@ -1,4 +1,5 @@
 from pomagma.reducer.code import I, K, B, C, S, BOT, TOP, APP
+from pomagma.util.testing import for_each
 import os
 import pomagma.reducer
 import pomagma.util
@@ -104,7 +105,7 @@ EXAMPLES = [
 ]
 
 
-@pytest.mark.parametrize('example', EXAMPLES)
+@for_each(EXAMPLES)
 def test_reduce(example):
     if 'xfail' in example:
         pytest.xfail(example['xfail'])
