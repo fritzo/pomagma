@@ -206,7 +206,7 @@ def list_any(xs):
 
 @untyped
 def list_map(f, xs):
-    return app(xs, nil, lambda h, t: cons(f(h), list_map(f, t)))
+    return app(xs, nil, lambda h, t: cons(app(f, h), list_map(f, t)))
 
 
 @untyped
