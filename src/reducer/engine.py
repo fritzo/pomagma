@@ -4,41 +4,10 @@ from pomagma.compiler.util import memoize_arg
 from pomagma.compiler.util import memoize_args
 from pomagma.reducer.code import I, K, B, C, S, BOT, TOP, APP, JOIN, VAR
 from pomagma.reducer.sugar import abstract
+from pomagma.reducer.util import LOG
+from pomagma.reducer.util import pretty
 import itertools
-import logging
-import pomagma.util
 
-# ----------------------------------------------------------------------------
-# Logging
-
-LOG_LEVELS = {
-    pomagma.util.LOG_LEVEL_ERROR: logging.ERROR,
-    pomagma.util.LOG_LEVEL_WARNING: logging.WARNING,
-    pomagma.util.LOG_LEVEL_INFO: logging.INFO,
-    pomagma.util.LOG_LEVEL_DEBUG: logging.DEBUG,
-}
-
-LOG = logging.getLogger(__name__)
-LOG.setLevel(LOG_LEVELS[pomagma.util.LOG_LEVEL])
-LOG.addHandler(logging.StreamHandler())
-
-
-@memoize_args
-def pretty(code, add_parens=False):
-    if isinstance(code, str):
-        return code
-    elif code[0] == 'APP':
-        lhs = pretty(code[1])
-        rhs = pretty(code[2], True)
-        return ('({} {})' if add_parens else '{} {}').format(lhs, rhs)
-    elif code[0] == 'VAR':
-        return code[1]
-    else:
-        raise NotImplementedError(code)
-
-
-# ----------------------------------------------------------------------------
-# Reduction
 
 def is_var(code):
     return isinstance(code, tuple) and code[0] == 'VAR'

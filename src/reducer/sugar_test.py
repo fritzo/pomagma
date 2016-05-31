@@ -47,6 +47,8 @@ AS_CODE_EXAMPLES = [
     (lambda x, y, z: app(x, z, y), C),
     (lambda x, y, z: app(x, app(y, z)), B),
     (lambda x, y, z: app(x, z, app(y, z)), S),
+    (lambda x: app(x, x), app(S, I, I)),
+    (lambda x: app(f, app(x, x)), app(B, f, app(S, I, I))),
     pytest.mark.xfail((fix_f, Yf)),
 ]
 

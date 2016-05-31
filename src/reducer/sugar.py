@@ -2,6 +2,7 @@
 
 from pomagma.compiler.util import memoize_args
 from pomagma.reducer.code import I, K, B, C, S, BOT, APP, JOIN, VAR
+from pomagma.reducer.util import LOG
 import functools
 import inspect
 import unification
@@ -78,7 +79,7 @@ def _compile(fun, actual_fun=None):
         symbolic_result = fun(*symbolic_args)
     except NotImplementedError:
         symbolic_result = BOT
-    print('DEBUG {}{} = {}'.format(
+    LOG.debug('compiling {}{} = {}'.format(
         fun, tuple(symbolic_args), symbolic_result))
     code = as_code(symbolic_result)
     for var in reversed(symbolic_args):
