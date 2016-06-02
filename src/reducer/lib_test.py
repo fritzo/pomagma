@@ -361,6 +361,13 @@ def test_list_any(x, expected):
     (undefined, nil, nil),
     (error, nil, nil),
     (lambda x: x, cons(x, nil), cons(x, nil)),
+    (lib.bool_not, cons(false, nil), cons(true, nil)),
+    (lib.bool_not, cons(true, nil), cons(false, nil)),
+    pytest.mark.xfail((
+        lib.bool_not,
+        cons(true, cons(false, nil)),
+        cons(false, cons(true, nil)),
+    )),
 ])
 def test_list_map(f, x, expected):
     assert simplify(lib.list_map(f, x)) == expected
