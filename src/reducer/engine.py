@@ -6,6 +6,7 @@ from pomagma.reducer.code import I, K, B, C, S, BOT, TOP, APP, JOIN, VAR
 from pomagma.reducer.code import is_var, is_app, is_join, free_vars
 from pomagma.reducer.sugar import abstract
 from pomagma.reducer.util import LOG
+from pomagma.reducer.util import logged
 from pomagma.reducer.util import pretty
 import itertools
 
@@ -36,6 +37,7 @@ def pop(avoid, stack, bound, count):
     return result
 
 
+@logged(pretty, pretty, returns=pretty)
 @memoize_args
 def _app(lhs, rhs, nonlinear):
     avoid = free_vars(lhs) | free_vars(rhs)
@@ -93,7 +95,7 @@ def _app(lhs, rhs, nonlinear):
         var = bound.pop()
         head = abstract(var, head)
 
-    LOG.debug('head = {}'.format(pretty(head)))
+    # LOG.debug('head = {}'.format(pretty(head)))
     return head
 
 
@@ -110,6 +112,7 @@ def add_samples(code, sample_set):
         sample_set.add(code)
 
 
+@logged(pretty, pretty, returns=pretty)
 @memoize_args
 def _join(lhs, rhs, nonlinear):
     lhs = _red(lhs, nonlinear)
@@ -128,6 +131,7 @@ def _join(lhs, rhs, nonlinear):
     return result
 
 
+@logged(pretty, returns=pretty)
 @memoize_args
 def _red(code, nonlinear):
     if is_app(code):
