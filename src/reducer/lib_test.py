@@ -1,6 +1,6 @@
 from pomagma.reducer import lib
 from pomagma.reducer.code import VAR
-from pomagma.reducer.engine import simplify
+from pomagma.reducer.engine import reduce, simplify
 from pomagma.reducer.sugar import as_code, app
 from pomagma.util import TRAVIS_CI
 from pomagma.util.testing import for_each
@@ -9,6 +9,7 @@ import pytest
 f = VAR('f')
 x = VAR('x')
 y = VAR('y')
+z = VAR('z')
 
 ok = lib.ok
 error = lib.error
@@ -104,7 +105,7 @@ def test_bool_not(x, expected):
     pytest.mark.xfail((x, error, error)),
 ])
 def test_bool_and(x, y, expected):
-    assert simplify(lib.bool_and(x, y)) == expected
+    assert reduce(lib.bool_and(x, y)) == expected
 
 
 @for_each([
@@ -120,7 +121,7 @@ def test_bool_and(x, y, expected):
     pytest.mark.xfail((x, error, error)),
 ])
 def test_bool_or(x, y, expected):
-    assert simplify(lib.bool_or(x, y)) == expected
+    assert reduce(lib.bool_or(x, y)) == expected
 
 
 # ----------------------------------------------------------------------------
@@ -207,7 +208,7 @@ three = succ(two)
     pytest.mark.xfail((succ(succ(succ(undefined))), undefined)),
 ])
 def test_num_test(x, expected):
-    assert simplify(lib.num_test(x)) == expected
+    assert reduce(lib.num_test(x)) == expected
 
 
 @for_each([
@@ -253,7 +254,7 @@ def test_num_pred(x, expected):
     (x, error, error),
 ])
 def test_num_add(x, y, expected):
-    assert simplify(lib.num_add(x, y)) == expected
+    assert reduce(lib.num_add(x, y)) == expected
 
 
 @for_each([
@@ -268,7 +269,7 @@ def test_num_add(x, y, expected):
     pytest.mark.xfail((two, two, true)),
 ])
 def test_num_eq(x, y, expected):
-    assert simplify(lib.num_eq(x, y)) == expected
+    assert reduce(lib.num_eq(x, y)) == expected
 
 
 @for_each([
@@ -283,7 +284,7 @@ def test_num_eq(x, y, expected):
     pytest.mark.xfail((two, two, false)),
 ])
 def test_num_less(x, y, expected):
-    assert simplify(lib.num_less(x, y)) == expected
+    assert reduce(lib.num_less(x, y)) == expected
 
 
 @for_each([
@@ -308,7 +309,7 @@ def test_num_less(x, y, expected):
     (y, ok, error, error),
 ])
 def test_num_rec(z, s, x, expected):
-    assert simplify(lib.num_rec(z, s, x)) == expected
+    assert reduce(lib.num_rec(z, s, x)) == expected
 
 
 # ----------------------------------------------------------------------------
@@ -321,20 +322,30 @@ cons = lib.cons
 @for_each([
     (nil, ok),
     (cons(x, nil), ok),
+    pytest.mark.xfail((cons(x, cons(y, nil)), ok)),
+    pytest.mark.xfail((cons(x, cons(y, cons(z, nil))), ok)),
     (error, error),
-    (undefined, undefined),
     (cons(x, error), error),
+    (cons(x, cons(y, error)), error),
+    pytest.mark.xfail((cons(x, cons(y, cons(z, error))), error)),
+    (undefined, undefined),
     (cons(x, undefined), undefined),
+    (cons(x, cons(y, undefined)), undefined),
+    pytest.mark.xfail((cons(x, cons(y, cons(z, undefined))), undefined)),
 ])
 def test_list_test(x, expected):
-    assert simplify(lib.list_test(x)) == expected
+    assert reduce(lib.list_test(x)) == expected
 
 
 @for_each([
     (nil, true),
     (cons(x, nil), false),
-    (undefined, undefined),
+    (cons(x, cons(y, nil)), false),
+    (cons(x, cons(y, cons(z, nil))), false),
+    (cons(x, error), false),
+    (cons(x, undefined), false),
     (error, error),
+    (undefined, undefined),
 ])
 def test_list_empty(x, expected):
     assert simplify(lib.list_empty(x)) == expected
@@ -351,7 +362,7 @@ def test_list_empty(x, expected):
     (cons(false, cons(false, nil)), false),
 ])
 def test_list_all(x, expected):
-    assert simplify(lib.list_all(x)) == expected
+    assert reduce(lib.list_all(x)) == expected
 
 
 @for_each([
@@ -364,7 +375,7 @@ def test_list_all(x, expected):
     (cons(false, cons(false, nil)), false),
 ])
 def test_list_any(x, expected):
-    assert simplify(lib.list_any(x)) == expected
+    assert reduce(lib.list_any(x)) == expected
 
 
 @for_each([
@@ -381,7 +392,7 @@ def test_list_any(x, expected):
     )),
 ])
 def test_list_map(f, x, expected):
-    assert simplify(lib.list_map(f, x)) == expected
+    assert reduce(lib.list_map(f, x)) == expected
 
 
 @for_each([
@@ -393,4 +404,4 @@ def test_list_map(f, x, expected):
     pytest.mark.xfail((nil, cons, cons(x, error), cons(x, error))),
 ])
 def test_list_rec(n, c, x, expected):
-    assert simplify(lib.list_rec(n, c, x)) == expected
+    assert reduce(lib.list_rec(n, c, x)) == expected
