@@ -200,9 +200,11 @@ three = succ(two)
     (error, error),
     (succ(error), error),
     (succ(succ(error)), error),
+    pytest.mark.xfail((succ(succ(succ(error))), error)),
     (undefined, undefined),
     (succ(undefined), undefined),
     (succ(succ(undefined)), undefined),
+    pytest.mark.xfail((succ(succ(succ(undefined))), undefined)),
 ])
 def test_num_test(x, expected):
     assert simplify(lib.num_test(x)) == expected
@@ -212,6 +214,7 @@ def test_num_test(x, expected):
     (zero, true),
     (one, false),
     (two, false),
+    (three, false),
     (undefined, undefined),
     (error, error),
 ])
@@ -225,7 +228,9 @@ def test_num_is_zero(x, expected):
     (two, one),
     (three, two),
     (undefined, undefined),
+    (succ(undefined), undefined),
     (error, error),
+    (succ(error), error),
 ])
 def test_num_pred(x, expected):
     assert simplify(lib.num_pred(x)) == expected
@@ -295,6 +300,12 @@ def test_num_less(x, y, expected):
     (true, lambda x: false, zero, true),
     (true, lambda x: false, one, false),
     (true, lambda x: false, two, false),
+    (y, ok, zero, y),
+    (y, ok, one, y),
+    pytest.mark.xfail((y, ok, two, y)),
+    pytest.mark.xfail((y, ok, three, y)),
+    (y, ok, undefined, undefined),
+    (y, ok, error, error),
 ])
 def test_num_rec(z, s, x, expected):
     assert simplify(lib.num_rec(z, s, x)) == expected
