@@ -32,15 +32,15 @@ def VAR(name):
 
 
 def is_var(code):
-    return isinstance(code, tuple) and code[0] == 'VAR'
+    return isinstance(code, tuple) and code[0] is _VAR
 
 
 def is_app(code):
-    return isinstance(code, tuple) and code[0] == 'APP'
+    return isinstance(code, tuple) and code[0] is _APP
 
 
 def is_join(code):
-    return isinstance(code, tuple) and code[0] == 'JOIN'
+    return isinstance(code, tuple) and code[0] is _JOIN
 
 
 @memoize_arg

@@ -84,7 +84,13 @@ def _compile(fun, actual_fun=None):
     return code
 
 
-class Combinator(object):
+class _Combinator(object):
+    '''
+    Class for results of the @combinator decorator.
+
+    WARNING recursive combinators must use this via the @combinator decorator,
+    so that a recursion guard can be inserted prior to compilation.
+    '''
 
     def __init__(self, fun):
         functools.update_wrapper(self, fun)
@@ -124,21 +130,22 @@ class Combinator(object):
 
         free = free_vars(code)
         if free:
-            raise SyntaxError('Unbound variables: {}'.format(' '.join(free)))
+            raise SyntaxError('Unbound variables: {}'.format(
+                ' '.join(v[1] for v in free)))
 
         self._code = code
 
 
 def combinator(arg):
-    if isinstance(arg, Combinator):
+    if isinstance(arg, _Combinator):
         return arg
     if not callable(arg):
         raise SyntaxError('Cannot apply @combinator to {}'.format(arg))
-    return Combinator(arg)
+    return _Combinator(arg)
 
 
 def as_code(arg):
-    if isinstance(arg, Combinator):
+    if isinstance(arg, _Combinator):
         return arg.code
     elif callable(arg):
         return _compile(arg)
@@ -170,7 +177,7 @@ def join(*args):
 
 
 def rec(fun):
-    fxx = combinator(lambda x: app(fun, app(x, x)))
+    fxx = _compile(lambda x: app(fun, app(x, x)))
     return app(fxx, fxx)
 
 
