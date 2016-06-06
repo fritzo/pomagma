@@ -196,16 +196,16 @@ three = succ(two)
 @for_each([
     (zero, ok),
     (one, ok),
-    pytest.mark.xfail((two, ok)),
-    pytest.mark.xfail((three, ok)),
+    (two, ok),
+    (three, ok),
     (error, error),
     (succ(error), error),
     (succ(succ(error)), error),
-    pytest.mark.xfail((succ(succ(succ(error))), error)),
+    (succ(succ(succ(error))), error),
     (undefined, undefined),
     (succ(undefined), undefined),
     (succ(succ(undefined)), undefined),
-    pytest.mark.xfail((succ(succ(succ(undefined))), undefined)),
+    (succ(succ(succ(undefined))), undefined),
 ])
 def test_num_test(x, expected):
     assert reduce(lib.num_test(x)) == expected
@@ -239,14 +239,14 @@ def test_num_pred(x, expected):
 
 @for_each([
     (zero, zero, zero),
-    pytest.mark.xfail((zero, two, two)),
-    pytest.mark.xfail((zero, three, three)),
-    pytest.mark.xfail((zero, one, one)),
+    (zero, two, two),
+    (zero, three, three),
+    (zero, one, one),
     (one, zero, one),
-    pytest.mark.xfail((one, one, two)),
-    pytest.mark.xfail((one, two, three)),
+    (one, one, two),
+    (one, two, three),
     (two, zero, two),
-    pytest.mark.xfail((two, one, three)),
+    (two, one, three),
     (three, zero, three),
     (undefined, zero, undefined),
     (zero, undefined, undefined),
@@ -261,12 +261,19 @@ def test_num_add(x, y, expected):
     (zero, zero, true),
     (zero, one, false),
     (zero, two, false),
+    (zero, three, false),
     (one, zero, false),
     (one, one, true),
     (one, two, false),
+    (one, three, false),
     (two, zero, false),
     (two, one, false),
-    pytest.mark.xfail((two, two, true)),
+    (two, two, true),
+    (two, three, false),
+    (three, zero, false),
+    (three, one, false),
+    (three, two, false),
+    (three, three, true),
 ])
 def test_num_eq(x, y, expected):
     assert reduce(lib.num_eq(x, y)) == expected
@@ -276,12 +283,19 @@ def test_num_eq(x, y, expected):
     (zero, zero, false),
     (zero, one, true),
     (zero, two, true),
+    (zero, three, true),
     (one, zero, false),
     (one, one, false),
     (one, two, true),
+    (one, three, true),
     (two, zero, false),
     (two, one, false),
-    pytest.mark.xfail((two, two, false)),
+    (two, two, false),
+    (two, three, true),
+    (three, zero, false),
+    (three, one, false),
+    (three, two, false),
+    (three, three, false),
 ])
 def test_num_less(x, y, expected):
     assert reduce(lib.num_less(x, y)) == expected
@@ -289,12 +303,12 @@ def test_num_less(x, y, expected):
 
 @for_each([
     (zero, succ, zero, zero),
-    pytest.mark.xfail((zero, succ, one, one)),
-    pytest.mark.xfail((zero, succ, two, two)),
-    pytest.mark.xfail((zero, succ, three, three)),
+    (zero, succ, one, one),
+    (zero, succ, two, two),
+    (zero, succ, three, three),
     (one, succ, zero, one),
-    pytest.mark.xfail((one, succ, one, two)),
-    pytest.mark.xfail((one, succ, two, three)),
+    (one, succ, one, two),
+    (one, succ, two, three),
     pytest.mark.xfail((zero, lambda x: succ(succ(x)), zero, two)),
     pytest.mark.xfail((one, lambda x: succ(succ(x)), zero, three)),
     pytest.mark.xfail((one, lambda x: succ(succ(x)), zero, three)),
@@ -303,8 +317,8 @@ def test_num_less(x, y, expected):
     (true, lambda x: false, two, false),
     (y, ok, zero, y),
     (y, ok, one, y),
-    pytest.mark.xfail((y, ok, two, y)),
-    pytest.mark.xfail((y, ok, three, y)),
+    (y, ok, two, y),
+    (y, ok, three, y),
     (y, ok, undefined, undefined),
     (y, ok, error, error),
 ])
@@ -322,16 +336,16 @@ cons = lib.cons
 @for_each([
     (nil, ok),
     (cons(x, nil), ok),
-    pytest.mark.xfail((cons(x, cons(y, nil)), ok)),
-    pytest.mark.xfail((cons(x, cons(y, cons(z, nil))), ok)),
+    (cons(x, cons(y, nil)), ok),
+    (cons(x, cons(y, cons(z, nil))), ok),
     (error, error),
     (cons(x, error), error),
     (cons(x, cons(y, error)), error),
-    pytest.mark.xfail((cons(x, cons(y, cons(z, error))), error)),
+    (cons(x, cons(y, cons(z, error))), error),
     (undefined, undefined),
     (cons(x, undefined), undefined),
     (cons(x, cons(y, undefined)), undefined),
-    pytest.mark.xfail((cons(x, cons(y, cons(z, undefined))), undefined)),
+    (cons(x, cons(y, cons(z, undefined))), undefined),
 ])
 def test_list_test(x, expected):
     assert reduce(lib.list_test(x)) == expected
@@ -355,7 +369,8 @@ def test_list_empty(x, expected):
     (nil, true),
     pytest.mark.skipif(TRAVIS_CI, reason='wtf')((cons(true, nil), true)),
     (cons(false, nil), false),
-    pytest.mark.xfail((cons(true, cons(true, nil)), true)),
+    pytest.mark.skipif(TRAVIS_CI, reason='wtf')(
+        (cons(true, cons(true, nil)), true)),
     pytest.mark.skipif(TRAVIS_CI, reason='wtf')(
         (cons(true, cons(false, nil)), false)),
     (cons(false, cons(true, nil)), false),
@@ -385,11 +400,16 @@ def test_list_any(x, expected):
     (lambda x: x, cons(x, nil), cons(x, nil)),
     (lib.bool_not, cons(false, nil), cons(true, nil)),
     (lib.bool_not, cons(true, nil), cons(false, nil)),
-    pytest.mark.xfail((
+    (
         lib.bool_not,
         cons(true, cons(false, nil)),
         cons(false, cons(true, nil)),
-    )),
+    ),
+    (
+        lib.bool_not,
+        cons(true, cons(true, cons(false, nil))),
+        cons(false, cons(false, cons(true, nil))),
+    ),
 ])
 def test_list_map(f, x, expected):
     assert reduce(lib.list_map(f, x)) == expected
@@ -399,9 +419,9 @@ def test_list_map(f, x, expected):
     (nil, cons, nil, nil),
     (nil, undefined, nil, nil),
     (nil, error, nil, nil),
-    pytest.mark.xfail((nil, cons, cons(x, nil), cons(x, nil))),
-    pytest.mark.xfail((nil, cons, cons(x, undefined), cons(x, undefined))),
-    pytest.mark.xfail((nil, cons, cons(x, error), cons(x, error))),
+    (nil, cons, cons(x, nil), cons(x, nil)),
+    (nil, cons, cons(x, undefined), cons(x, undefined)),
+    (nil, cons, cons(x, error), cons(x, error)),
 ])
 def test_list_rec(n, c, x, expected):
     assert reduce(lib.list_rec(n, c, x)) == expected
