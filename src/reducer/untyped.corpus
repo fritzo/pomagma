@@ -1,0 +1,85 @@
+
+# ----------------------------------------------------------------------------
+# Errors
+
+DEFINE error TOP
+DEFINE undefined BOT
+
+ASSERT NLESS error undefined
+
+# ----------------------------------------------------------------------------
+# Unit
+
+DEFINE ok I
+ASSERT NLESS error ok
+ASSERT NLESS ok undefined
+
+DEFINE unit_test Fun x APP x ok
+ASSERT EQUAL APP unit_test ok ok
+ASSERT EQUAL APP unit_test error error
+ASSERT EQUAL APP unit_test undefined undefined
+
+DEFINE unit_and FUN x FUN y JOIN APP x y APP y x
+ASSERT EQUAL APP APP unit_and ok ok ok
+ASSERT EQUAL APP APP unit_and ok error error
+ASSERT EQUAL APP APP unit_and ok undefined undefined
+ASSERT EQUAL APP APP unit_and undefined ok undefined
+ASSERT EQUAL APP APP unit_and undefined error error
+ASSERT EQUAL APP APP unit_and undefined undefined undefined
+ASSERT EQUAL APP APP unit_and error ok error
+ASSERT EQUAL APP APP unit_and error error error
+ASSERT EQUAL APP APP unit_and error undefined error
+
+DEFINE unit_or FUN x FUN y JOIN x y
+ASSERT EQUAL APP APP unit_or ok ok ok
+ASSERT EQUAL APP APP unit_or ok error error
+ASSERT EQUAL APP APP unit_or ok undefined ok
+ASSERT EQUAL APP APP unit_or undefined ok ok
+ASSERT EQUAL APP APP unit_or undefined error error
+ASSERT EQUAL APP APP unit_or undefined undefined undefined
+ASSERT EQUAL APP APP unit_or error ok error
+ASSERT EQUAL APP APP unit_or error error error
+ASSERT EQUAL APP APP unit_or error undefined error
+
+# ----------------------------------------------------------------------------
+# Bool
+
+DEFINE true K
+DEFINE false APP K I
+
+DEFINE bool_test FUN x APP APP x ok ok
+ASSERT EQUAL APP bool_test true ok
+ASSERT EQUAL APP bool_test false ok
+ASSERT EQUAL APP bool_test error error
+ASSERT EQUAL APP bool_test undefined undefined
+
+DEFINE bool_not FUN x APP APP x false true
+ASSERT EQUAL APP bool_not true false
+ASSERT EQUAL APP bool_not false true
+ASSERT EQUAL APP bool_not undefined undefined
+ASSERT EQUAL APP bool_not error error
+
+DEFINE bool_and FUN x FUN y APP APP x y false
+ASSERT EQUAL APP APP bool_and true true true
+ASSERT EQUAL APP APP bool_and true false false
+ASSERT EQUAL APP APP bool_and true undefined undefined
+ASSERT EQUAL APP APP bool_and false true false
+ASSERT EQUAL APP APP bool_and false false false
+ASSERT EQUAL APP APP bool_and false undefined false
+ASSERT EQUAL APP APP bool_and undefined true undefined
+ASSERT EQUAL APP APP bool_and undefined undefined undefined
+ASSERT EQUAL APP APP bool_and undefined false false
+ASSERT EQUAL APP APP bool_and error x error
+ASSERT EQUAL APP APP bool_and x error error
+
+DEFINE bool_or FUN x FUN y APP APP x true y
+ASSERT EQUAL APP APP bool_or true true true
+ASSERT EQUAL APP APP bool_or true false true
+ASSERT EQUAL APP APP bool_or true undefined true
+ASSERT EQUAL APP APP bool_or false true true
+ASSERT EQUAL APP APP bool_or false false false
+ASSERT EQUAL APP APP bool_or false undefined undefined
+ASSERT EQUAL APP APP bool_or undefined false undefined
+ASSERT EQUAL APP APP bool_or undefined undefined undefined
+ASSERT EQUAL APP APP bool_or error x error
+ASSERT EQUAL APP APP bool_or x error error
