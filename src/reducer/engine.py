@@ -72,13 +72,12 @@ def _app(lhs, rhs, nonlinear):
             stack.append(y)
             stack.append(z)
         elif head is S:
-            if nonlinear or len(stack) < 3 or is_var(stack[-3]):
-                x, y, z = pop(avoid, stack, bound, 3)
-                head = x
-                stack.append(_app(y, z, False))
-                stack.append(z)
-            else:
+            if not nonlinear and len(stack) >= 3 and not is_var(stack[-3]):
                 break
+            x, y, z = pop(avoid, stack, bound, 3)
+            head = x
+            stack.append(_app(y, z, False))
+            stack.append(z)
         else:
             raise ValueError(head)
 
