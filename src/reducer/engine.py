@@ -9,7 +9,11 @@ from pomagma.reducer.util import LOG
 from pomagma.reducer.util import logged
 from pomagma.reducer.util import pretty
 import itertools
+from collections import namedtuple
 
+
+# ----------------------------------------------------------------------------
+# Immutable shared contexts
 
 @memoize_arg
 def make_var(n):
@@ -24,32 +28,50 @@ def fresh(avoid):
             return var
 
 
-def pop(avoid, stack, bound, count):
-    result = []
-    for _ in xrange(count):
-        try:
-            result.append(stack.pop())
-        except IndexError:
-            var = fresh(avoid)
-            avoid.add(var)
-            bound.append(var)
-            result.append(var)
-    return result
+Context = namedtuple('Context', ['stack', 'bound', 'avoid'])
 
+
+def context_make(avoid):
+    return Context(None, None, frozenset(avoid))
+
+
+def context_pop(context):
+    if context.stack:
+        arg, stack = context.stack
+        return arg, Context(stack, context.bound, context.avoid)
+    else:
+        arg = fresh(context.avoid)
+        avoid = context.avoid | frozenset([arg])
+        bound = arg, context.bound
+        return arg, Context(context.stack, bound, avoid)
+
+
+def context_push(context, arg):
+    stack = arg, context.stack
+    return Context(stack, context.bound, context.avoid)
+
+
+def iter_shared_list(shared_list):
+    while shared_list is not None:
+        arg, shared_list = shared_list
+        yield arg
+
+
+# ----------------------------------------------------------------------------
+# Reduction
 
 @logged(pretty, pretty, returns=pretty)
 @memoize_args
 def _app(lhs, rhs, nonlinear):
-    avoid = free_vars(lhs) | free_vars(rhs)
+    context = context_make(free_vars(lhs) | free_vars(rhs))
 
     # Head reduce.
     head = lhs
-    stack = [rhs]
-    bound = []
+    context = context_push(context, rhs)
     while not is_var(head):
         LOG.debug('head = {}'.format(pretty(head)))
         if is_app(head):
-            stack.append(head[2])
+            context = context_push(context, head[2])
             head = head[1]
         elif is_join(head):
             raise NotImplementedError('TODO implement sampling')
@@ -58,40 +80,48 @@ def _app(lhs, rhs, nonlinear):
         elif head is BOT:
             return BOT
         elif head is I:
-            head, = pop(avoid, stack, bound, 1)
+            head, context = context_pop(context)
         elif head is K:
-            x, y = pop(avoid, stack, bound, 2)
+            x, context = context_pop(context)
+            y, context = context_pop(context)
             head = x
         elif head is B:
-            x, y, z = pop(avoid, stack, bound, 3)
+            x, context = context_pop(context)
+            y, context = context_pop(context)
+            z, context = context_pop(context)
             head = x
-            stack.append(_app(y, z, False))
+            context = context_push(context, _app(y, z, False))
         elif head is C:
-            x, y, z = pop(avoid, stack, bound, 3)
+            x, context = context_pop(context)
+            y, context = context_pop(context)
+            z, context = context_pop(context)
             head = x
-            stack.append(y)
-            stack.append(z)
+            context = context_push(context, y)
+            context = context_push(context, z)
         elif head is S:
-            if not nonlinear and len(stack) >= 3 and not is_var(stack[-3]):
+            old_context = context
+            x, context = context_pop(context)
+            y, context = context_pop(context)
+            z, context = context_pop(context)
+            if nonlinear or is_var(z):
+                head = x
+                context = context_push(context, _app(y, z, False))
+                context = context_push(context, z)
+            else:
+                context = old_context
                 break
-            x, y, z = pop(avoid, stack, bound, 3)
-            head = x
-            stack.append(_app(y, z, False))
-            stack.append(z)
         else:
             raise ValueError(head)
 
     # Reduce args.
-    while stack:
+    for arg in iter_shared_list(context.stack):
         LOG.debug('head = {}'.format(pretty(head)))
-        arg = stack.pop()
         arg = _red(arg, nonlinear)
         head = APP(head, arg)
 
     # Abstract free variables.
-    while bound:
+    for var in iter_shared_list(context.bound):
         LOG.debug('head = {}'.format(pretty(head)))
-        var = bound.pop()
         head = abstract(var, head)
 
     # LOG.debug('head = {}'.format(pretty(head)))
