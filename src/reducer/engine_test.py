@@ -1,7 +1,7 @@
 from pomagma.reducer import engine
 from pomagma.reducer import lib
 from pomagma.reducer.code import I, K, B, C, S, BOT, TOP, VAR
-from pomagma.reducer.sugar import app, combinator
+from pomagma.reducer.sugar import app, join, combinator
 from pomagma.util.testing import for_each
 import sys
 
@@ -50,6 +50,13 @@ def map_(f, xs):
     (app(S, x, y), app(S, x, y)),
     (app(S, x, y, z), app(x, z, app(y, z))),
     (app(S, x, y, z, w), app(x, z, app(y, z), w)),
+    (join(x, y), join(x, y)),
+    (join(x, x), x),
+    (join(BOT, x), x),
+    (join(TOP, x), TOP),
+    (app(join(x, y), z), join(app(x, z), app(y, z))),
+    (app(join(I, app(K, I)), I), I),
+    (app(join(I, app(K, I)), K), join(I, K)),
     (map_(I, lib.nil), lib.nil),
     (map_(I, lib.cons(x, lib.nil)), lib.cons(x, lib.nil)),
 ])

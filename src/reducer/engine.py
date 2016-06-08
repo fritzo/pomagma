@@ -1,5 +1,7 @@
 '''Python reference implementation of beta-eta reduction engine.'''
 
+__all__ = ['reduce', 'simplify', 'sample']
+
 from pomagma.compiler.util import memoize_arg
 from pomagma.compiler.util import memoize_args
 from pomagma.reducer.code import I, K, B, C, S, BOT, TOP, APP, JOIN, VAR
@@ -60,25 +62,42 @@ def iter_shared_list(shared_list):
 # ----------------------------------------------------------------------------
 # Reduction
 
-@logged(pretty, pretty, returns=pretty)
-@memoize_args
-def _app(lhs, rhs, nonlinear):
-    context = context_make(free_vars(lhs) | free_vars(rhs))
+def _close(head, context, nonlinear):
+    # Reduce args.
+    for arg in iter_shared_list(context.stack):
+        LOG.debug('head = {}'.format(pretty(head)))
+        arg = _red(arg, nonlinear)
+        head = APP(head, arg)
 
+    # Abstract free variables.
+    for var in iter_shared_list(context.bound):
+        LOG.debug('head = {}'.format(pretty(head)))
+        head = abstract(var, head)
+
+    return head
+
+
+def _sample(head, context, nonlinear):
     # Head reduce.
-    head = lhs
-    context = context_push(context, rhs)
-    while not is_var(head):
+    while True:
         LOG.debug('head = {}'.format(pretty(head)))
         if is_app(head):
             context = context_push(context, head[2])
             head = head[1]
+        elif is_var(head):
+            yield _close(head, context, nonlinear)
+            return
         elif is_join(head):
-            raise NotImplementedError('TODO implement sampling')
+            x = head[1]
+            y = head[2]
+            for head in (x, y):
+                for term in _sample(head, context, nonlinear):
+                    yield term
         elif head is TOP:
-            return TOP
+            yield TOP
+            return
         elif head is BOT:
-            return BOT
+            return
         elif head is I:
             head, context = context_pop(context)
         elif head is K:
@@ -108,56 +127,44 @@ def _app(lhs, rhs, nonlinear):
                 context = context_push(context, _app(y, z, False))
                 context = context_push(context, z)
             else:
-                context = old_context
-                break
+                yield _close(head, old_context, nonlinear)
+                return
         else:
             raise ValueError(head)
 
-    # Reduce args.
-    for arg in iter_shared_list(context.stack):
-        LOG.debug('head = {}'.format(pretty(head)))
-        arg = _red(arg, nonlinear)
-        head = APP(head, arg)
 
-    # Abstract free variables.
-    for var in iter_shared_list(context.bound):
-        LOG.debug('head = {}'.format(pretty(head)))
-        head = abstract(var, head)
+def _collect(samples):
+    terms = set()
+    for sample in samples:
+        if sample is TOP:
+            return TOP
+        terms.add(sample)
+    if not terms:
+        return BOT
+    if len(terms) == 1:
+        return terms.pop()
+    terms = sorted(terms)
+    result = terms[0]
+    for term in terms[1:]:
+        result = JOIN(result, term)
+    return result
 
-    # LOG.debug('head = {}'.format(pretty(head)))
-    return head
 
-
-def add_samples(code, sample_set):
-    if code is TOP:
-        sample_set.clear()
-        sample_set.add(TOP)
-    elif code is BOT:
-        return
-    elif is_join(code):
-        add_samples(code[1], sample_set)
-        add_samples(code[2], sample_set)
-    else:
-        sample_set.add(code)
+@logged(pretty, pretty, returns=pretty)
+@memoize_args
+def _app(lhs, rhs, nonlinear):
+    context = context_make(free_vars(lhs) | free_vars(rhs))
+    head = lhs
+    context = context_push(context, rhs)
+    return _collect(_sample(head, context, nonlinear))
 
 
 @logged(pretty, pretty, returns=pretty)
 @memoize_args
 def _join(lhs, rhs, nonlinear):
-    lhs = _red(lhs, nonlinear)
-    rhs = _red(rhs, nonlinear)
-    sample_set = set()
-    add_samples(lhs, sample_set)
-    add_samples(rhs, sample_set)
-    if not sample_set:
-        return BOT
-    if TOP in sample_set:
-        return TOP
-    samples = sorted(sample_set)
-    result = samples[0]
-    for part in samples[1:]:
-        result = JOIN(result, part)
-    return result
+    lhs_samples = _sample(lhs, context_make(free_vars(lhs)), nonlinear)
+    rhs_samples = _sample(rhs, context_make(free_vars(rhs)), nonlinear)
+    return _collect(itertools.chain(lhs_samples, rhs_samples))
 
 
 @logged(pretty, returns=pretty)
@@ -179,4 +186,12 @@ def reduce(code, budget=0):
 
 
 def simplify(code):
+    '''Linearly beta-eta reduce.'''
     return _red(code, False)
+
+
+def sample(code, budget=0):
+    assert isinstance(budget, int) and budget >= 0, budget
+    '''Beta-eta sample code, ignoring budget.'''
+    context = context_make(free_vars(code))
+    return _sample(code, context, True)

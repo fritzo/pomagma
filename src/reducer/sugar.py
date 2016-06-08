@@ -183,9 +183,8 @@ def rec(fun):
 
 def symmetric(fun):
 
-    # TODO
-    # @functools.wraps(fun)
-    # def symmetric_fun(x, y):
-    #     return join(fun(x, y), fun(y, x))
+    @functools.wraps(fun)
+    def symmetric_fun(x, y):
+        return join(fun(x, y), fun(y, x))
 
-    return fun
+    return symmetric_fun

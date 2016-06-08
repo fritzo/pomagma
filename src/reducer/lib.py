@@ -61,6 +61,7 @@ def bool_not(x):
 
 
 @combinator
+@symmetric
 def bool_and(x, y):
     return app(x, y, false)
 

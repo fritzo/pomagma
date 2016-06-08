@@ -100,9 +100,9 @@ def test_bool_not(x, expected):
     (false, undefined, false),
     (undefined, true, undefined),
     (undefined, undefined, undefined),
-    pytest.mark.xfail((undefined, false, false)),
+    (undefined, false, false),
     (error, x, error),
-    pytest.mark.xfail((x, error, error)),
+    (x, error, error),
 ])
 def test_bool_and(x, y, expected):
     assert reduce(lib.bool_and(x, y)) == expected
@@ -118,7 +118,7 @@ def test_bool_and(x, y, expected):
     (undefined, false, undefined),
     (undefined, undefined, undefined),
     (error, x, error),
-    pytest.mark.xfail((x, error, error)),
+    (x, error, error),
 ])
 def test_bool_or(x, y, expected):
     assert reduce(lib.bool_or(x, y)) == expected
@@ -250,7 +250,7 @@ def test_num_pred(x, expected):
     (three, zero, three),
     (undefined, zero, undefined),
     (zero, undefined, undefined),
-    pytest.mark.xfail((error, x, error)),
+    (error, x, error),
     (x, error, error),
 ])
 def test_num_add(x, y, expected):
