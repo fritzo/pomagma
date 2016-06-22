@@ -1,6 +1,5 @@
-from pomagma.reducer.code import TOP, BOT, I, K, B, C, S, APP, JOIN
+from pomagma.reducer.code import TOP, BOT, I, K, B, C, S, _JOIN, APP, JOIN
 from pomagma.reducer.code import is_app, is_join
-from pomagma.util import TODO
 
 __all__ = ['dump', 'load']
 
@@ -68,10 +67,8 @@ def unpack_head_argc(source):
 # ----------------------------------------------------------------------------
 # Coding of atoms.
 
-J = intern('J')  # Simulates JOIN.
-
-INT_TO_ATOM = [TOP, BOT, I, K, B, C, S, J]
-ATOM_TO_INT = {k: v for v, k in enumerate(INT_TO_ATOM)}
+INT_TO_SYMB = [TOP, BOT, I, K, B, C, S, _JOIN]
+SYMB_TO_INT = {k: v for v, k in enumerate(INT_TO_SYMB)}
 
 
 # ----------------------------------------------------------------------------
@@ -86,9 +83,9 @@ def dump(code, f):
     if is_join(head):
         args.append(head[2])
         args.append(head[1])
-        head = J
+        head = _JOIN
     try:
-        head = ATOM_TO_INT[head]
+        head = SYMB_TO_INT[head]
     except KeyError:
         raise ValueError('Failed to serialize code: {}'.format(code))
     argc = len(args)
@@ -110,12 +107,12 @@ def _iter_bytes(f, buffsize=8192):
 def _load_from(bytes_):
     head, argc = unpack_head_argc(bytes_)
     try:
-        head = INT_TO_ATOM[head]
+        head = INT_TO_SYMB[head]
     except IndexError:
         raise ValueError('Unrecognized symbol: {}'.format(head))
-    if head is J:
+    if head is _JOIN:
         if argc < 2:
-            TODO('support J with fewer than 2 args')
+            raise ValueError('JOIN requires at least two args')
         argc -= 2
         x = _load_from(bytes_)
         y = _load_from(bytes_)
