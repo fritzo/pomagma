@@ -2,40 +2,66 @@ from pomagma.reducer.code import TOP, BOT, I, K, B, C, S, APP, JOIN
 from pomagma.reducer.code import is_app, is_join
 from pomagma.util import TODO
 
-PROTOCOL_VERSION = '0.0.1'  # Subject to backwards-incompatible change.
+__all__ = ['dump', 'load']
+
+PROTOCOL_VERSION = '0.0.2'  # Subject to backwards-incompatible change.
 
 
 # ----------------------------------------------------------------------------
 # Packed varints.
+# These use an LZ4-style packing for the first few bits and protobuf-style
+# packing for all additional bytes.
 
-ARGC_BITS = 3  # Up to 3 args and 16 atoms before varint overflow.
+ARGC_BITS = 3  # Up to 6 args and 31 atoms before varint overflow.
 HEAD_BITS = 8 - ARGC_BITS
+VARINT_BITS = 7
 
-HEAD_MASK = 0xff >> ARGC_BITS
-ARGC_MASK = 0xff ^ HEAD_MASK
-
-# HEAD and ARGC are varint coded, after the initial bits.
-HEAD_OVERFLOW = 1 << (HEAD_BITS - 1)
-ARGC_OVERFLOW = 1 << (ARGC_BITS - 1)
-BYTE_OVERFLOW = 1 << (8 - 1)
+HEAD_MASK = 0xff >> (8 - HEAD_BITS)
+ARGC_MASK = 0xff >> (8 - ARGC_BITS)
+VARINT_MASK = 0xff >> (8 - VARINT_BITS)
+OVERFLOW_MASK = 0xff ^ VARINT_MASK
 
 
-def _pack_bytes(head, argc):
-    if head >= HEAD_OVERFLOW:
-        TODO('support varint encoding of head')
-    if argc >= ARGC_OVERFLOW:
-        TODO('support varint encoding of argc')
-    yield chr(head | (argc << HEAD_BITS))
+def pack_varint(count):
+    byte = count & VARINT_MASK
+    count >>= VARINT_BITS
+    while count:
+        byte ^= OVERFLOW_MASK
+        yield chr(byte)
+        byte = count & VARINT_MASK
+        count >>= VARINT_BITS
+    yield chr(byte)
 
 
-def _unpack_bytes(source):
+def unpack_varint(source):
+    offset = 0
+    byte = ord(next(source))
+    result = byte & VARINT_MASK
+    while byte & OVERFLOW_MASK:
+        offset += VARINT_BITS
+        byte = ord(next(source))
+        result ^= (byte & VARINT_MASK) << offset
+    return result
+
+
+def pack_head_argc(head, argc):
+    yield chr(min(head, HEAD_MASK) ^ (min(argc, ARGC_MASK) << HEAD_BITS))
+    if head >= HEAD_MASK:
+        for c in pack_varint(head - HEAD_MASK):
+            yield c
+    if argc >= ARGC_MASK:
+        for c in pack_varint(argc - ARGC_MASK):
+            yield c
+
+
+def unpack_head_argc(source):
     byte = ord(next(source))
     head = byte & HEAD_MASK
-    argc = (byte & ARGC_MASK) >> HEAD_BITS
-    if head >= HEAD_OVERFLOW:
-        raise TODO('support varint decoding of head')
-    if argc >= ARGC_OVERFLOW:
-        raise TODO('support varint decoding of argc')
+    argc = byte >> HEAD_BITS
+    if head == HEAD_MASK:
+        head += unpack_varint(source)
+    if argc == ARGC_MASK:
+        argc += unpack_varint(source)
     return head, argc
 
 
@@ -66,7 +92,7 @@ def dump(code, f):
     except KeyError:
         raise ValueError('Failed to serialize code: {}'.format(code))
     argc = len(args)
-    for byte in _pack_bytes(head, argc):
+    for byte in pack_head_argc(head, argc):
         f.write(byte)
     for arg in reversed(args):
         dump(arg, f)
@@ -82,7 +108,7 @@ def _iter_bytes(f, buffsize=8192):
 
 
 def _load_from(bytes_):
-    head, argc = _unpack_bytes(bytes_)
+    head, argc = unpack_head_argc(bytes_)
     try:
         head = INT_TO_ATOM[head]
     except IndexError:
