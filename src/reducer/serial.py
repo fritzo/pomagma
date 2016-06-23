@@ -1,9 +1,10 @@
-from pomagma.reducer.code import TOP, BOT, I, K, B, C, S, _JOIN, APP, JOIN
+from pomagma.reducer.code import HOLE, TOP, BOT, I, K, B, C, S
+from pomagma.reducer.code import _JOIN, APP, JOIN
 from pomagma.reducer.code import is_app, is_join
 
 __all__ = ['dump', 'load']
 
-PROTOCOL_VERSION = '0.0.2'  # Subject to backwards-incompatible change.
+PROTOCOL_VERSION = '0.0.3'  # Subject to backwards-incompatible change.
 
 
 # ----------------------------------------------------------------------------
@@ -67,7 +68,7 @@ def unpack_head_argc(source):
 # ----------------------------------------------------------------------------
 # Coding of atoms.
 
-INT_TO_SYMB = [TOP, BOT, I, K, B, C, S, _JOIN]
+INT_TO_SYMB = [HOLE, TOP, BOT, I, K, B, C, S, _JOIN]
 SYMB_TO_INT = {k: v for v, k in enumerate(INT_TO_SYMB)}
 
 

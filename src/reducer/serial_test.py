@@ -1,5 +1,5 @@
 from StringIO import StringIO
-from pomagma.reducer.code import TOP, BOT, I, K, B, C, S, APP, JOIN
+from pomagma.reducer.code import HOLE, TOP, BOT, I, K, B, C, S, APP, JOIN
 from pomagma.reducer.serial import dump, load
 from pomagma.reducer.serial import pack_head_argc, unpack_head_argc
 from pomagma.reducer.serial import pack_varint, unpack_varint
@@ -36,6 +36,7 @@ def test_pack_unpack_head_argc(head, argc):
 
 
 @for_each([
+    HOLE,
     TOP,
     BOT,
     I,
@@ -65,6 +66,7 @@ def test_serialize_deserialize_parametrized(code):
 
 
 terms_base = s.one_of(
+    s.just(HOLE),
     s.just(TOP),
     s.just(BOT),
     s.just(I),

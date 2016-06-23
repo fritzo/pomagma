@@ -7,6 +7,8 @@ from pomagma.compiler.util import memoize_args
 _VAR = intern('VAR')
 _APP = intern('APP')
 _JOIN = intern('JOIN')
+
+HOLE = intern('HOLE')
 TOP = intern('TOP')
 BOT = intern('BOT')
 I = intern('I')

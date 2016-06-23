@@ -4,7 +4,7 @@ __all__ = ['reduce', 'simplify', 'sample']
 
 from pomagma.compiler.util import memoize_arg
 from pomagma.compiler.util import memoize_args
-from pomagma.reducer.code import I, K, B, C, S, BOT, TOP, APP, JOIN, VAR
+from pomagma.reducer.code import HOLE, TOP, BOT, I, K, B, C, S, APP, JOIN, VAR
 from pomagma.reducer.code import is_var, is_app, is_join, free_vars
 from pomagma.reducer.sugar import abstract
 from pomagma.reducer.util import LOG
@@ -95,6 +95,9 @@ def _sample(head, context, nonlinear):
                     yield term
         elif head is TOP:
             yield TOP
+            return
+        elif head is HOLE:
+            yield HOLE
             return
         elif head is BOT:
             return

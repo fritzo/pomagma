@@ -1,17 +1,18 @@
-from pomagma.reducer.code import I, K, B, C, S, BOT, TOP, APP, JOIN, VAR
+from pomagma.reducer.code import HOLE, TOP, BOT, I, K, B, C, S, APP, JOIN, VAR
 from pomagma.reducer.code import free_vars
 from pomagma.reducer.code import parse
 from pomagma.reducer.code import serialize
 from pomagma.util.testing import for_each
 
 EXAMPLES = [
+    ('HOLE', HOLE),
+    ('TOP', TOP),
+    ('BOT', BOT),
     ('I', I),
     ('K', K),
     ('B', B),
     ('C', C),
     ('S', S),
-    ('TOP', TOP),
-    ('BOT', BOT),
     ('APP I K', APP(I, K)),
     ('JOIN K APP K I', JOIN(K, APP(K, I))),
     ('APP APP I K JOIN B C', APP(APP(I, K), JOIN(B, C))),
