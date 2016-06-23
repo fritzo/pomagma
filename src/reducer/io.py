@@ -3,6 +3,9 @@
 from pomagma.compiler.util import memoize_arg
 from pomagma.compiler.util import memoize_args
 from pomagma.reducer import lib
+from pomagma.reducer.engine import reduce
+from pomagma.reducer.sugar import app
+from pomagma.util import TODO
 import unification
 
 
@@ -229,6 +232,35 @@ def decode_list(decode_item):
 
 
 # ----------------------------------------------------------------------------
+# Functions
+
+@memoize_arg
+def encode_fun(decode_args, encode_result):
+
+    def encode(py_fun):
+        TODO('encode python function as a combinator')
+
+    return encode
+
+
+@memoize_arg
+def decode_fun(encode_args, decode_result):
+
+    def decode(un_fun):
+
+        def py_fun(*py_args):
+            assert len(py_args) == len(encode_args)
+            un_args = tuple(e(a) for (e, a) in zip(encode_args, py_args))
+            un_result = reduce(app(un_fun, *un_args))
+            py_result = decode_result(un_result)
+            return py_result
+
+        return py_fun
+
+    return decode
+
+
+# ----------------------------------------------------------------------------
 # Generic
 
 def decoder(tp):
@@ -244,6 +276,10 @@ def decoder(tp):
             return decode_maybe(decoder(tp[1]))
         if tp[0] == 'list':
             return decode_list(decoder(tp[1]))
+        if tp[0] == 'fun':
+            encode_args = map(encoder, tp[1])
+            decode_result = decoder(tp[2])
+            return decode_fun(encode_args, decode_result)
     elif len(tp) == 3:
         if tp[0] == 'prod':
             return decode_prod(decoder(tp[1]), decoder(tp[2]))
@@ -265,6 +301,10 @@ def encoder(tp):
             return encode_maybe(encoder(tp[1]))
         if tp[0] == 'list':
             return encode_list(encoder(tp[1]))
+        if tp[0] == 'fun':
+            decode_args = map(decoder, tp[1])
+            encode_result = encoder(tp[2])
+            return encode_fun(decode_args, encode_result)
     elif len(tp) == 3:
         if tp[0] == 'prod':
             return encode_prod(encoder(tp[1]), encoder(tp[2]))
