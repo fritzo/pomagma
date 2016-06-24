@@ -1,32 +1,19 @@
 '''DSL translating from lambda-let notation to SKJ.'''
 
 from pomagma.compiler.util import memoize_args
+from pomagma.reducer import pattern
 from pomagma.reducer.code import I, K, B, C, S, BOT, APP, JOIN, VAR
 from pomagma.reducer.code import free_vars
 from pomagma.reducer.util import LOG
 import functools
 import inspect
-import unification
-
-
-def matches(pattern, expr, match):
-    '''
-    If expr matches pattern, returns True and sets match dict in-place.
-    '''
-    _match = unification.unify(expr, pattern)
-    if _match is False:
-        return False
-    assert isinstance(match, dict)
-    match.clear()
-    match.update(_match)
-    return True
 
 
 # ----------------------------------------------------------------------------
 # Abstraction
 
-_lhs = unification.var('lhs')
-_rhs = unification.var('rhs')
+_lhs = pattern.variable('lhs')
+_rhs = pattern.variable('rhs')
 _app_pattern = APP(_lhs, _rhs)
 _join_pattern = JOIN(_lhs, _rhs)
 
@@ -37,7 +24,7 @@ def try_abstract(var, body):
     if body is var:
         return I  # Rule I.
     match = {}
-    if matches(_app_pattern, body, match):
+    if pattern.matches(_app_pattern, body, match):
         lhs_abs = try_abstract(var, match[_lhs])
         rhs_abs = try_abstract(var, match[_rhs])
         if lhs_abs is None:
@@ -52,7 +39,7 @@ def try_abstract(var, body):
                 return APP(APP(C, lhs_abs), match[_rhs])  # Rule C.
             else:
                 return APP(APP(S, lhs_abs), rhs_abs)  # Rule S.
-    if matches(_join_pattern, body, match):
+    if pattern.matches(_join_pattern, body, match):
         lhs_abs = try_abstract(var, match[_lhs])
         rhs_abs = try_abstract(var, match[_rhs])
         if lhs_abs is None:
