@@ -9,6 +9,19 @@ import inspect
 import unification
 
 
+def matches(pattern, expr, match):
+    '''
+    If expr matches pattern, returns True and sets match dict in-place.
+    '''
+    _match = unification.unify(expr, pattern)
+    if _match is False:
+        return False
+    assert isinstance(match, dict)
+    match.clear()
+    match.update(_match)
+    return True
+
+
 # ----------------------------------------------------------------------------
 # Abstraction
 
@@ -23,8 +36,8 @@ def try_abstract(var, body):
     """Returns \\var.body if var occurs in body, else None."""
     if body is var:
         return I  # Rule I.
-    match = unification.unify(_app_pattern, body)
-    if match:
+    match = {}
+    if matches(_app_pattern, body, match):
         lhs_abs = try_abstract(var, match[_lhs])
         rhs_abs = try_abstract(var, match[_rhs])
         if lhs_abs is None:
@@ -39,8 +52,7 @@ def try_abstract(var, body):
                 return APP(APP(C, lhs_abs), match[_rhs])  # Rule C.
             else:
                 return APP(APP(S, lhs_abs), rhs_abs)  # Rule S.
-    match = unification.unify(_join_pattern, body)
-    if match:
+    if matches(_join_pattern, body, match):
         lhs_abs = try_abstract(var, match[_lhs])
         rhs_abs = try_abstract(var, match[_rhs])
         if lhs_abs is None:
