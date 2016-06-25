@@ -6,7 +6,7 @@ from pomagma.compiler.util import memoize_args
 from pomagma.reducer import pattern
 from pomagma.reducer.code import HOLE, TOP, BOT, I, K, B, C, S
 from pomagma.reducer.code import VAR, APP, JOIN, FUN, LET
-from pomagma.reducer.code import is_var, is_app, is_join
+from pomagma.reducer.code import is_var, is_app, is_join, is_fun, is_let
 
 
 # ----------------------------------------------------------------------------
@@ -61,8 +61,36 @@ def abstract(var, body):
 
 
 # ----------------------------------------------------------------------------
-# Symbolic decompiler
-# Adapted from pomagma/puddle-syntax/lib/compiler.js _decompile()
+# Symbolic compiler : FUN,LET -> I,K,B,C,S
+
+def compile_(code):
+    if isinstance(code, str):
+        return code
+    elif is_var(code):
+        return code
+    elif is_app(code):
+        x = compile_(code[1])
+        y = compile_(code[2])
+        return APP(x, y)
+    elif is_join(code):
+        x = compile_(code[1])
+        y = compile_(code[2])
+        return JOIN(x, y)
+    elif is_fun(code):
+        var = code[1]
+        body = compile_(code[2])
+        return abstract(var, body)
+    elif is_let(code):
+        var = code[1]
+        defn = compile_(code[2])
+        body = compile_(code[3])
+        return APP(abstract(var, body), defn)
+    else:
+        raise ValueError('Cannot compile_: {}'.format(code))
+
+
+# ----------------------------------------------------------------------------
+# Symbolic decompiler : I,K,B,C,S -> FUN,LET
 
 FRESH_ID = 0
 FRESH_VARS = map(VAR, 'abcdefghijklmnopqrstuvwxyz')
