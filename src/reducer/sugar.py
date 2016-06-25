@@ -1,63 +1,10 @@
 '''DSL translating from lambda-let notation to SKJ.'''
 
-from pomagma.compiler.util import memoize_args
-from pomagma.reducer import pattern
-from pomagma.reducer.code import I, K, B, C, S, BOT, APP, JOIN, VAR
-from pomagma.reducer.code import free_vars
+from pomagma.reducer.code import HOLE, BOT, VAR, APP, JOIN, free_vars
+from pomagma.reducer.transforms import try_abstract, abstract
 from pomagma.reducer.util import LOG
 import functools
 import inspect
-
-
-# ----------------------------------------------------------------------------
-# Abstraction
-
-_lhs = pattern.variable('lhs')
-_rhs = pattern.variable('rhs')
-_app_pattern = APP(_lhs, _rhs)
-_join_pattern = JOIN(_lhs, _rhs)
-
-
-@memoize_args
-def try_abstract(var, body):
-    """Returns \\var.body if var occurs in body, else None."""
-    if body is var:
-        return I  # Rule I.
-    match = {}
-    if pattern.matches(_app_pattern, body, match):
-        lhs_abs = try_abstract(var, match[_lhs])
-        rhs_abs = try_abstract(var, match[_rhs])
-        if lhs_abs is None:
-            if rhs_abs is None:
-                return None  # Rule K.
-            elif rhs_abs is I:
-                return match[_lhs]  # Rule eta.
-            else:
-                return APP(APP(B, match[_lhs]), rhs_abs)  # Rule B.
-        else:
-            if rhs_abs is None:
-                return APP(APP(C, lhs_abs), match[_rhs])  # Rule C.
-            else:
-                return APP(APP(S, lhs_abs), rhs_abs)  # Rule S.
-    if pattern.matches(_join_pattern, body, match):
-        lhs_abs = try_abstract(var, match[_lhs])
-        rhs_abs = try_abstract(var, match[_rhs])
-        if lhs_abs is None:
-            if rhs_abs is None:
-                return None  # Rule K.
-            else:
-                return JOIN(APP(K, match[_lhs]), rhs_abs)  # Rule JOIN.
-        else:
-            if rhs_abs is None:
-                return JOIN(lhs_abs, APP(K, match[_rhs]))  # Rule JOIN.
-            else:
-                return JOIN(lhs_abs, rhs_abs)  # Rule JOIN.
-    return None  # Rule K.
-
-
-def abstract(var, body):
-    result = try_abstract(var, body)
-    return APP(K, body) if result is None else result
 
 
 # ----------------------------------------------------------------------------
@@ -74,7 +21,7 @@ def _compile(fun, actual_fun=None):
     try:
         symbolic_result = fun(*symbolic_args)
     except NotImplementedError:
-        symbolic_result = BOT
+        symbolic_result = HOLE
     LOG.debug('compiling {}{} = {}'.format(
         fun, tuple(symbolic_args), symbolic_result))
     code = as_code(symbolic_result)

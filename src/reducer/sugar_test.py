@@ -1,6 +1,6 @@
 from pomagma.reducer.code import I, K, B, C, S, TOP, VAR, APP
 from pomagma.reducer.sugar import _compile
-from pomagma.reducer.sugar import abstract, combinator, as_code, app, join
+from pomagma.reducer.sugar import combinator, as_code, app, join
 from pomagma.util.testing import for_each
 import pytest
 
@@ -8,24 +8,6 @@ f = VAR('f')
 x = VAR('x')
 y = VAR('y')
 z = VAR('z')
-
-
-@for_each([
-    (x, x, I),
-    (x, y, app(K, y)),
-    (x, I, app(K, I)),
-    (x, app(x, x), app(S, I, I)),
-    (x, app(x, y), app(C, I, y)),
-    (x, app(y, x), y),
-    (x, app(y, app(z, x)), app(B, y, z)),
-    (x, join(x, x), join(I, I)),
-    (x, join(x, y), join(I, app(K, y))),
-    (x, join(y, x), join(app(K, y), I)),
-    (x, join(y, z), app(K, join(y, z))),
-])
-def test_abstract(var, body, expected_abs):
-    actual_abs = abstract(var, body)
-    assert actual_abs == expected_abs
 
 
 CODE_EXAMPLES = [

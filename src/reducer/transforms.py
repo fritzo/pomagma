@@ -1,9 +1,62 @@
+'''Code-to-code transforms'''
+
+from pomagma.compiler.util import memoize_args
 from pomagma.reducer import pattern
 from pomagma.reducer.code import HOLE, TOP, BOT, I, K, B, C, S
-from pomagma.reducer.code import VAR, FUN, LET
+from pomagma.reducer.code import VAR, APP, JOIN, FUN, LET
 from pomagma.reducer.code import is_app
-from pomagma.reducer.sugar import app
 from pomagma.util import TODO
+
+
+# ----------------------------------------------------------------------------
+# Abstraction
+
+_lhs = pattern.variable('lhs')
+_rhs = pattern.variable('rhs')
+_app_pattern = APP(_lhs, _rhs)
+_join_pattern = JOIN(_lhs, _rhs)
+
+
+@memoize_args
+def try_abstract(var, body):
+    """Returns \\var.body if var occurs in body, else None."""
+    if body is var:
+        return I  # Rule I.
+    match = {}
+    if pattern.matches(_app_pattern, body, match):
+        lhs_abs = try_abstract(var, match[_lhs])
+        rhs_abs = try_abstract(var, match[_rhs])
+        if lhs_abs is None:
+            if rhs_abs is None:
+                return None  # Rule K.
+            elif rhs_abs is I:
+                return match[_lhs]  # Rule eta.
+            else:
+                return APP(APP(B, match[_lhs]), rhs_abs)  # Rule B.
+        else:
+            if rhs_abs is None:
+                return APP(APP(C, lhs_abs), match[_rhs])  # Rule C.
+            else:
+                return APP(APP(S, lhs_abs), rhs_abs)  # Rule S.
+    if pattern.matches(_join_pattern, body, match):
+        lhs_abs = try_abstract(var, match[_lhs])
+        rhs_abs = try_abstract(var, match[_rhs])
+        if lhs_abs is None:
+            if rhs_abs is None:
+                return None  # Rule K.
+            else:
+                return JOIN(APP(K, match[_lhs]), rhs_abs)  # Rule JOIN.
+        else:
+            if rhs_abs is None:
+                return JOIN(lhs_abs, APP(K, match[_rhs]))  # Rule JOIN.
+            else:
+                return JOIN(lhs_abs, rhs_abs)  # Rule JOIN.
+    return None  # Rule K.
+
+
+def abstract(var, body):
+    result = try_abstract(var, body)
+    return APP(K, body) if result is None else result
 
 
 # ----------------------------------------------------------------------------
@@ -28,7 +81,7 @@ def _from_stack(stack):
     head, args = stack
     while args is not None:
         arg, args = args
-        head = app(head, arg)
+        head = APP(head, arg)
     return head
 
 
@@ -80,25 +133,25 @@ def _decompile_stack_untyped(stack):
         x = fresh()
         y = fresh()
         z = fresh()
-        return FUN(x, FUN(y, FUN(z, app(x, app(y, z)))))
+        return FUN(x, FUN(y, FUN(z, APP(x, APP(y, z)))))
     if pattern.match((B, (_x, None)), stack, match):
         y = fresh()
         z = fresh()
-        xyz = _decompile_stack_untyped(_to_stack(match[_x], app(y, z), None))
+        xyz = _decompile_stack_untyped(_to_stack(match[_x], APP(y, z), None))
         return FUN(y, FUN(z, xyz))
     if pattern.match((B, (_x, (_y, None))), stack, match):
         z = fresh()
         xyz = _decompile_stack_untyped(
-            _to_stack(match[_x], app(match[_y], z), None))
+            _to_stack(match[_x], APP(match[_y], z), None))
         return FUN(z, xyz)
     if pattern.match((B, (_x, (_y, (_z, _args)))), stack, match):
         return _decompile_stack_untyped(
-            _to_stack(match[_x], app(match[_y], match[_z]), match[_args]))
+            _to_stack(match[_x], APP(match[_y], match[_z]), match[_args]))
     if pattern.match(C, None, stack, match):
         x = fresh()
         y = fresh()
         z = fresh()
-        return FUN(x, FUN(y, FUN(z, app(x, z, y))))
+        return FUN(x, FUN(y, FUN(z, APP(APP(x, z), y))))
     if pattern.match((C, (_x, None)), stack, match):
         y = fresh()
         z = fresh()
@@ -116,28 +169,28 @@ def _decompile_stack_untyped(stack):
         x = fresh()
         y = fresh()
         z = fresh()
-        return FUN(x, FUN(y, FUN(z, app(x, z, app(y, z)))))
+        return FUN(x, FUN(y, FUN(z, APP(APP(x, z), APP(y, z)))))
     if pattern.match((S, (_x, None)), stack, match):
         y = fresh()
         z = fresh()
         tx = decompile_untyped(match[_x])
-        return FUN(y, FUN(z, app(tx, z, app(y, z))))
+        return FUN(y, FUN(z, APP(APP(tx, z), APP(y, z))))
     if pattern.match((S, (_x, (_y, None))), stack, match):
         z = fresh()
         tx = decompile_untyped(match[_x])
         ty = decompile_untyped(match[_y])
-        return FUN(z, app(tx, z, app(ty, z)))
+        return FUN(z, APP(APP(tx, z), APP(ty, z)))
     if pattern.match((S, (_x, (_y, (VAR(_name), _args)))), stack, match):
         z = VAR(match[_name])
-        head = decompile_untyped(app(match[_x], z, app(match[_y], z)))
+        head = decompile_untyped(APP(APP(match[_x], z), APP(match[_y], z)))
         args = _decompile_args_untyped(match[_args])
         return _from_stack(stack(head, args))
     if pattern.match((S, (_x, (_y, (_z, _args)))), stack, match):
         z = fresh()
         tz = decompile_untyped(match[_z])
-        xz = app(match[_x], z)
-        yz = app(match[_y], z)
-        head = LET(z, tz, decompile(app(xz, yz)))
+        xz = APP(match[_x], z)
+        yz = APP(match[_y], z)
+        head = LET(z, tz, decompile(APP(xz, yz)))
         args = _decompile_args_untyped(match[_args])
         return _from_stack(stack(head, args))
     TODO('match other cases')

@@ -54,8 +54,10 @@ def test_free_vars(code, free):
 
 
 alphabet = '_abcdefghijklmnopqrstuvwxyz'
-s_vars = s.builds(VAR,
-    s.builds(str, s.text(alphabet=alphabet, min_size=1, average_size=5)))
+s_vars = s.builds(
+    VAR,
+    s.builds(str, s.text(alphabet=alphabet, min_size=1, average_size=5)),
+)
 s_atoms = s.one_of(
     s.one_of(s_vars),
     s.just(HOLE),
