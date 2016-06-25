@@ -1,11 +1,12 @@
-'''Code-to-code transforms'''
+'''Code-to-code transforms.'''
+
+__all__ = ['try_abstract', 'abstract', 'decompile']
 
 from pomagma.compiler.util import memoize_args
 from pomagma.reducer import pattern
 from pomagma.reducer.code import HOLE, TOP, BOT, I, K, B, C, S
 from pomagma.reducer.code import VAR, APP, JOIN, FUN, LET
-from pomagma.reducer.code import is_app
-from pomagma.util import TODO
+from pomagma.reducer.code import is_var, is_app, is_join
 
 
 # ----------------------------------------------------------------------------
@@ -61,19 +62,27 @@ def abstract(var, body):
 
 # ----------------------------------------------------------------------------
 # Symbolic decompiler
-# Adapted from pomagma/puddle-syntax/lib/compiler.js decompile()
+# Adapted from pomagma/puddle-syntax/lib/compiler.js _decompile()
 
-def fresh():
-    TODO('find a fresh variable')
-    return VAR('x')
+FRESH_ID = 0
+FRESH_VARS = map(VAR, 'abcdefghijklmnopqrstuvwxyz')
+fresh_var = FRESH_VARS.__getitem__
 
 
-def _to_stack(code):
-    head = code
-    args = None
-    while is_app(code):
-        args = (code[2], args)
-        head = code[1]
+def _fresh():
+    global FRESH_ID
+    result = fresh_var(FRESH_ID)
+    FRESH_ID += 1
+    return result
+
+
+def _to_stack(head, *args_tuple):
+    args = args_tuple[-1]
+    for arg in reversed(args_tuple[:-1]):
+        args = (arg, args)
+    while is_app(head):
+        args = (head[2], args)
+        head = head[1]
     return head, args
 
 
@@ -85,12 +94,12 @@ def _from_stack(stack):
     return head
 
 
-def _decompile_args_untyped(args):
+def _decompile_args(args):
     if args is None:
         return None
     arg, args = args
-    arg = decompile_untyped(arg)
-    args = _decompile_args_untyped(args)
+    arg = _decompile(arg)
+    args = _decompile_args(args)
     return (arg, args)
 
 
@@ -101,108 +110,117 @@ _args = pattern.variable('args')
 _name = pattern.variable('name')
 
 
-def _decompile_stack_untyped(stack):
-    match = {}
+def _decompile_stack(stack):
     if stack is None:
         return None
-    if pattern.matches((HOLE, _args), stack, match):
-        stack = (HOLE, _decompile_args_untyped(match[_args]))
-        return _from_stack(stack)
-    if pattern.matches((TOP, _args), stack, match):
+    head, args = stack
+    if is_var(head) or head is HOLE:
+        args = _decompile_args(args)
+        return _from_stack((head, args))
+    elif is_join(head):
+        x = _decompile(head[1])
+        y = _decompile(head[2])
+        args = _decompile_args(args)
+        return _from_stack((JOIN(x, y), args))
+    elif head is TOP:
         return TOP
-    if pattern.matches((BOT, _args), stack, match):
+    elif head is BOT:
         return BOT
-    if pattern.matches((I, None), stack):
-        x = fresh()
-        return FUN(x, x)
-    if pattern.matches((I, _args), stack, match):
-        return _decompile_stack_untyped(match[_args])
-    if pattern.matches((K, None), stack, match):
-        x = fresh()
-        y = fresh()
-        return FUN(x, FUN(y, x))
-    if pattern.matches((K, (_x, _args)), stack, match):
-        x = match[_x]
-        y = fresh()
-        return FUN(y, x)
-    if pattern.matches((K, (_x, (_y, _args))), stack, match):
-        x = match[_x]
-        args = match[_args]
-        return _decompile_stack_untyped((x, args))
-    if pattern.match((B, None), stack, match):
-        x = fresh()
-        y = fresh()
-        z = fresh()
-        return FUN(x, FUN(y, FUN(z, APP(x, APP(y, z)))))
-    if pattern.match((B, (_x, None)), stack, match):
-        y = fresh()
-        z = fresh()
-        xyz = _decompile_stack_untyped(_to_stack(match[_x], APP(y, z), None))
-        return FUN(y, FUN(z, xyz))
-    if pattern.match((B, (_x, (_y, None))), stack, match):
-        z = fresh()
-        xyz = _decompile_stack_untyped(
-            _to_stack(match[_x], APP(match[_y], z), None))
-        return FUN(z, xyz)
-    if pattern.match((B, (_x, (_y, (_z, _args)))), stack, match):
-        return _decompile_stack_untyped(
-            _to_stack(match[_x], APP(match[_y], match[_z]), match[_args]))
-    if pattern.match(C, None, stack, match):
-        x = fresh()
-        y = fresh()
-        z = fresh()
-        return FUN(x, FUN(y, FUN(z, APP(APP(x, z), y))))
-    if pattern.match((C, (_x, None)), stack, match):
-        y = fresh()
-        z = fresh()
-        xzy = _decompile_stack_untyped(_to_stack(match[_x], z, y, None))
-        return FUN(y, FUN(z, xzy))
-    if pattern.match((C, (_x, (_y, None))), stack, match):
-        z = fresh()
-        xzy = _decompile_stack_untyped(
-            _to_stack(match[_x], z, match[_y], None))
-        return FUN(z, xzy)
-    if pattern.match((C, (_x, (_y, (_z, _args)))), stack, match):
-        return _decompile_stack_untyped(
-            _to_stack(match[_x], match[_z], match[_y], match[_args]))
-    if pattern.match((S, None), stack, match):
-        x = fresh()
-        y = fresh()
-        z = fresh()
-        return FUN(x, FUN(y, FUN(z, APP(APP(x, z), APP(y, z)))))
-    if pattern.match((S, (_x, None)), stack, match):
-        y = fresh()
-        z = fresh()
-        tx = decompile_untyped(match[_x])
-        return FUN(y, FUN(z, APP(APP(tx, z), APP(y, z))))
-    if pattern.match((S, (_x, (_y, None))), stack, match):
-        z = fresh()
-        tx = decompile_untyped(match[_x])
-        ty = decompile_untyped(match[_y])
-        return FUN(z, APP(APP(tx, z), APP(ty, z)))
-    if pattern.match((S, (_x, (_y, (VAR(_name), _args)))), stack, match):
-        z = VAR(match[_name])
-        head = decompile_untyped(APP(APP(match[_x], z), APP(match[_y], z)))
-        args = _decompile_args_untyped(match[_args])
-        return _from_stack(stack(head, args))
-    if pattern.match((S, (_x, (_y, (_z, _args)))), stack, match):
-        z = fresh()
-        tz = decompile_untyped(match[_z])
-        xz = APP(match[_x], z)
-        yz = APP(match[_y], z)
-        head = LET(z, tz, decompile(APP(xz, yz)))
-        args = _decompile_args_untyped(match[_args])
-        return _from_stack(stack(head, args))
-    TODO('match other cases')
-
-
-def decompile_untyped(code):
-    stack = _to_stack(code)
-    return _decompile_stack_untyped(stack)
-
-
-def decompile(code, schema=None):
-    if schema is None:
-        return decompile_untyped(code)
+    elif head is I:
+        if args is None:
+            x = _fresh()
+            return FUN(x, x)
+        else:
+            return _decompile_stack(args)
+    elif head is K:
+        if args is None:
+            x = _fresh()
+            y = _fresh()
+            return FUN(x, FUN(y, x))
+        x, args = args
+        if args is None:
+            y = _fresh()
+            return FUN(y, x)
+        y, args = args
+        return _decompile_stack((x, args))
+    elif head is B:
+        if args is None:
+            x = _fresh()
+            y = _fresh()
+            z = _fresh()
+            return FUN(x, FUN(y, FUN(z, APP(x, APP(y, z)))))
+        x, args = args
+        if args is None:
+            y = _fresh()
+            z = _fresh()
+            xyz = _decompile_stack(_to_stack(x, APP(y, z), None))
+            return FUN(y, FUN(z, xyz))
+        y, args = args
+        if args is None:
+            z = _fresh()
+            xyz = _decompile_stack(_to_stack(x, APP(y, z), None))
+            return FUN(z, xyz)
+        z, args = args
+        return _decompile_stack(_to_stack(x, APP(y, z), args))
+    elif head is C:
+        if args is None:
+            x = _fresh()
+            y = _fresh()
+            z = _fresh()
+            return FUN(x, FUN(y, FUN(z, APP(APP(x, z), y))))
+        x, args = args
+        if args is None:
+            y = _fresh()
+            z = _fresh()
+            xzy = _decompile_stack(_to_stack(x, z, y, None))
+            return FUN(y, FUN(z, xzy))
+        y, args = args
+        if args is None:
+            z = _fresh()
+            xzy = _decompile_stack(_to_stack(x, z, y, None))
+            return FUN(z, xzy)
+        z, args = args
+        return _decompile_stack(_to_stack(x, z, y, args))
+    elif head is S:
+        if args is None:
+            x = _fresh()
+            y = _fresh()
+            z = _fresh()
+            return FUN(x, FUN(y, FUN(z, APP(APP(x, z), APP(y, z)))))
+        x, args = args
+        if args is None:
+            y = _fresh()
+            z = _fresh()
+            tx = _decompile(x)
+            return FUN(y, FUN(z, APP(APP(tx, z), APP(y, z))))
+        y, args = args
+        if args is None:
+            z = _fresh()
+            tx = _decompile(x)
+            ty = _decompile(y)
+            return FUN(z, APP(APP(tx, z), APP(ty, z)))
+        z, args = args
+        if is_var(z):
+            head = _decompile(APP(APP(x, z), APP(y, z)))
+            args = _decompile_args(args)
+            return _from_stack((head, args))
+        v = _fresh()
+        z = _decompile(z)
+        xv = APP(x, v)
+        yv = APP(y, v)
+        head = LET(v, z, _decompile(APP(xv, yv)))
+        args = _decompile_args(args)
+        return _from_stack((head, args))
     else:
-        TODO('implement schema-annotated decompilation')
+        raise ValueError('Cannot decompile: {}'.format(head))
+
+
+def _decompile(code):
+    stack = _to_stack(code, None)
+    return _decompile_stack(stack)
+
+
+def decompile(code):
+    global FRESH_ID
+    FRESH_ID = 0
+    return _decompile(code)
