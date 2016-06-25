@@ -7,6 +7,8 @@ from pomagma.compiler.util import memoize_args
 _VAR = intern('VAR')
 _APP = intern('APP')
 _JOIN = intern('JOIN')
+_FUN = intern('FUN')
+_LET = intern('LET')
 
 HOLE = intern('HOLE')
 TOP = intern('TOP')
@@ -19,18 +21,28 @@ S = intern('S')
 
 
 @memoize_args
+def _term(*args):
+    return args
+
+
 def APP(lhs, rhs):
-    return (_APP, lhs, rhs)
+    return _term(_APP, lhs, rhs)
 
 
-@memoize_args
 def JOIN(lhs, rhs):
-    return (_JOIN, lhs, rhs)
+    return _term(_JOIN, lhs, rhs)
 
 
-@memoize_arg
 def VAR(name):
-    return (_VAR, intern(name))
+    return _term(_VAR, intern(name))
+
+
+def FUN(var, body):
+    return _term(_FUN, var, body)
+
+
+def LET(var, defn, body):
+    return _term(_LET, var, defn, body)
 
 
 def is_var(code):
@@ -43,6 +55,14 @@ def is_app(code):
 
 def is_join(code):
     return isinstance(code, tuple) and code[0] is _JOIN
+
+
+def is_fun(code):
+    return isinstance(code, tuple) and code[0] is _FUN
+
+
+def is_let(code):
+    return isinstance(code, tuple) and code[0] is _LET
 
 
 @memoize_arg
@@ -65,18 +85,27 @@ def parse(string):
     return _parse_tokens(tokens)
 
 
+def _pop_token(tokens):
+    return tokens.pop()
+
+
 def _parse_tokens(tokens):
     token = tokens.pop()
-    if token is _APP:
-        lhs = _parse_tokens(tokens)
-        rhs = _parse_tokens(tokens)
-        return APP(lhs, rhs)
-    elif token is _JOIN:
-        lhs = _parse_tokens(tokens)
-        rhs = _parse_tokens(tokens)
-        return JOIN(lhs, rhs)
-    else:
-        return token
+    try:
+        parsers = _PARSERS[token]
+    except KeyError:
+        return token  # atom
+    args = tuple(p(tokens) for p in parsers)
+    return _term(token, *args)
+
+
+_PARSERS = {
+    _VAR: (_pop_token,),
+    _APP: (_parse_tokens, _parse_tokens),
+    _JOIN: (_parse_tokens, _parse_tokens),
+    _FUN: (_parse_tokens, _parse_tokens),
+    _LET: (_parse_tokens, _parse_tokens, _parse_tokens),
+}
 
 
 def serialize(code):

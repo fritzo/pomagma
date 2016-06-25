@@ -1,25 +1,9 @@
-from pomagma.compiler.util import memoize_args
 from pomagma.reducer import pattern
-from pomagma.reducer.code import HOLE, TOP, BOT, I, K, B, C, S, VAR
+from pomagma.reducer.code import HOLE, TOP, BOT, I, K, B, C, S
+from pomagma.reducer.code import VAR, FUN, LET
 from pomagma.reducer.code import is_app
 from pomagma.reducer.sugar import app
 from pomagma.util import TODO
-
-# ----------------------------------------------------------------------------
-# Signature
-
-_FUN = intern('FUN')
-_LET = intern('LET')
-
-
-@memoize_args
-def FUN(var, body):
-    return (_FUN, var, body)
-
-
-@memoize_args
-def LET(var, defn, body):
-    return (_LET, var, defn, body)
 
 
 # ----------------------------------------------------------------------------
