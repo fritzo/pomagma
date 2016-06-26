@@ -1,4 +1,5 @@
 from parsable import parsable
+from pomagma.reducer import engine
 from pomagma.reducer import transforms
 from pomagma.reducer.code import polish_parse, polish_print
 from pomagma.reducer.code import sexpr_parse, sexpr_print
@@ -66,6 +67,33 @@ def decompile(string, fmt='auto'):
     result = transforms.decompile(code)
     print('In: {}'.format(string))
     print('Out: {}'.format(print_(result)))
+
+
+@parsable
+def repl(fmt='sexpr'):
+    """Read eval print loop."""
+    parse, print_ = FORMATS[fmt]
+    while True:
+        sys.stdout.write('> ')
+        sys.stdout.flush()
+        try:
+            string = raw_input()
+        except KeyboardInterrupt:
+            sys.stderr.write('Bye!\n')
+            sys.stderr.flush()
+            return
+        try:
+            code = parse(string)
+            result = engine.reduce(code)
+            result_string = print_(result)
+            sys.stdout.write(result_string)
+            sys.stdout.write('\n')
+            sys.stdout.flush()
+        except Exception as e:
+            sys.stderr.write(str(e))
+            sys.stderr.write('\n')
+            sys.stderr.flush()
+            continue
 
 
 if __name__ == '__main__':
