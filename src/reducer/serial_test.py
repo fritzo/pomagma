@@ -1,5 +1,7 @@
-from StringIO import StringIO
-from pomagma.reducer.code import HOLE, TOP, BOT, I, K, B, C, S, APP, JOIN
+from cStringIO import StringIO
+from pomagma.reducer.code import HOLE, TOP, BOT, I, K, B, C, S
+from pomagma.reducer.code import VAR, APP, JOIN, FUN, LET
+from pomagma.reducer.code_test import s_terms
 from pomagma.reducer.serial import dump, load
 from pomagma.reducer.serial import pack_head_argc, unpack_head_argc
 from pomagma.reducer.serial import pack_varint, unpack_varint
@@ -35,7 +37,15 @@ def test_pack_unpack_head_argc(head, argc):
         next(iter_chars)
 
 
+x = VAR('x')
+
+
 @for_each([
+    x,
+    VAR('the_quick_brown_fox_jumped_over_the_lazy_dog'),
+    VAR('take_one_down_and_pass_it_around_and_' * 9),
+    VAR('take_one_down_and_pass_it_around_and_' * 99),
+    VAR('take_one_down_and_pass_it_around_and_' * 999),
     HOLE,
     TOP,
     BOT,
@@ -50,6 +60,9 @@ def test_pack_unpack_head_argc(head, argc):
     JOIN(I, K),
     JOIN(APP(K, I), K),
     APP(JOIN(APP(K, I), K), I),
+    FUN(x, APP(S, APP(x, x))),
+    APP(FUN(x, x), I),
+    LET(x, I, APP(APP(S, x), x)),
 ])
 def test_serialize_deserialize_parametrized(code):
     f_out = StringIO()
@@ -65,29 +78,7 @@ def test_serialize_deserialize_parametrized(code):
     assert actual == code
 
 
-terms_base = s.one_of(
-    s.just(HOLE),
-    s.just(TOP),
-    s.just(BOT),
-    s.just(I),
-    s.just(K),
-    s.just(B),
-    s.just(C),
-    s.just(S),
-)
-
-
-def terms_extend(terms):
-    return s.one_of(
-        s.builds(APP, terms, terms),
-        s.builds(JOIN, terms, terms),
-    )
-
-
-terms = s.recursive(terms_base, terms_extend, max_leaves=100)
-
-
-@hypothesis.given(terms)
+@hypothesis.given(s_terms)
 @hypothesis.settings(max_examples=1000)
 def test_serialize_deserialize_property_based(code):
     f_out = StringIO()
