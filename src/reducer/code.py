@@ -76,7 +76,7 @@ def free_vars(code):
 
 
 # ----------------------------------------------------------------------------
-# Parsing and seralization
+# Polish notation
 
 def polish_parse(string):
     assert isinstance(string, str), type(string)
@@ -121,3 +121,112 @@ def _polish_print_tokens(code, tokens):
         tokens.append(code[0])
         for arg in code[1:]:
             _polish_print_tokens(arg, tokens)
+
+
+# ----------------------------------------------------------------------------
+# S-Expression notation
+
+@memoize_arg
+def to_sexpr(code):
+    if isinstance(code, str):
+        return code
+    head = code
+    args = []
+    while is_app(head):
+        args.append(head[2])
+        head = head[1]
+    if is_var(head):
+        args.append(head[1])
+        head = _VAR
+    elif is_join(head):
+        args.append(head[2])
+        args.append(head[1])
+        head = _JOIN
+    elif is_fun(head):
+        args.append(head[2])
+        args.append(head[1])
+        head = _FUN
+    elif is_let(head):
+        args.append(head[3])
+        args.append(head[2])
+        args.append(head[1])
+        head = _LET
+    args = map(to_sexpr, reversed(args))
+    return tuple([head] + args)
+
+
+def from_sexpr(sexpr):
+    if isinstance(sexpr, str):
+        return sexpr
+    head = sexpr[0]
+    if head is _VAR:
+        head = VAR(sexpr[1])
+        args = sexpr[2:]
+    elif head is _JOIN:
+        x = from_sexpr(sexpr[1])
+        y = from_sexpr(sexpr[2])
+        head = JOIN(x, y)
+        args = sexpr[3:]
+    elif head is _FUN:
+        var = from_sexpr(sexpr[1])
+        body = from_sexpr(sexpr[2])
+        head = FUN(var, body)
+        args = sexpr[3:]
+    elif head is _LET:
+        var = from_sexpr(sexpr[1])
+        defn = from_sexpr(sexpr[2])
+        body = from_sexpr(sexpr[3])
+        head = LET(var, defn, body)
+        args = sexpr[4:]
+    else:
+        args = sexpr[1:]
+    args = map(from_sexpr, args)
+    for arg in args:
+        head = APP(head, arg)
+    return head
+
+
+def sexpr_print_sexpr(sexpr):
+    if isinstance(sexpr, str):
+        return sexpr
+    parts = map(sexpr_print_sexpr, sexpr)
+    return '({})'.format(' '.join(parts))
+
+
+@memoize_arg
+def sexpr_print(code):
+    sexpr = to_sexpr(code)
+    return sexpr_print_sexpr(sexpr)
+
+
+_LPAREN = intern('(')
+_RPAREN = intern(')')
+
+
+def _sexpr_parse_tokens(tokens):
+    for token in tokens:
+        if token is _LPAREN:
+            yield tuple(_sexpr_parse_tokens(tokens))
+        elif token is _RPAREN:
+            raise StopIteration
+        else:
+            yield token
+
+
+def sexpr_parse_sexpr(string):
+    tokens = string.replace('(', ' ( ').replace(')', ' ) ').split()
+    tokens = iter(map(intern, tokens))
+    sexpr = next(_sexpr_parse_tokens(tokens))
+    try:
+        extra = next(tokens)
+    except StopIteration:
+        pass
+    else:
+        raise ValueError('Extra tokens at end of sexpr: {}'.format(extra))
+    return sexpr
+
+
+def sexpr_parse(string):
+    sexpr = sexpr_parse_sexpr(string)
+    code = from_sexpr(sexpr)
+    return code

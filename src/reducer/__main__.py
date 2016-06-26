@@ -1,7 +1,7 @@
 from parsable import parsable
 from pomagma.reducer import transforms
-from pomagma.reducer.code import polish_parse
-from pomagma.reducer.code import polish_print
+from pomagma.reducer.code import polish_parse, polish_print
+from pomagma.reducer.code import sexpr_parse, sexpr_print
 import os
 import pomagma.util
 import subprocess
@@ -21,22 +21,43 @@ def reduce(*args):
     return proc.returncode  # Returns number of errors.
 
 
+FORMS = {
+    'polish': (polish_parse, polish_print),
+    'sexpr': (sexpr_parse, sexpr_print),
+}
+
+
+def guess_form(string):
+    if '(' in string or ')' in string:
+        return 'sexpr'
+    else:
+        return 'polish'
+
+
 @parsable
-def compile(string):
+def compile(string, form='auto'):
     """Compile code from I,K,B,C,S to FUN,LET form."""
-    code = polish_parse(string)
+    if form == 'auto':
+        form = guess_form(string)
+    print('Form: {}'.format(form))
+    parse, print_ = FORMS[form]
+    code = parse(string)
     result = transforms.compile_(code)
     print('In: {}'.format(string))
-    print('Out: {}'.format(polish_print(result)))
+    print('Out: {}'.format(print_(result)))
 
 
 @parsable
-def decompile(string):
+def decompile(string, form='auto'):
     """Deompile code from FUN,LET to I,K,B,C,S form."""
-    code = polish_parse(string)
-    result = transforms.deresult(code)
+    if form == 'auto':
+        form = guess_form(string)
+    print('Form: {}'.format(form))
+    parse, print_ = FORMS[form]
+    code = parse(string)
+    result = transforms.decompile(code)
     print('In: {}'.format(string))
-    print('Out: {}'.format(polish_print(result)))
+    print('Out: {}'.format(print_(result)))
 
 
 if __name__ == '__main__':

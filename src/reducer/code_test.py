@@ -1,8 +1,10 @@
 from pomagma.reducer.code import HOLE, TOP, BOT, I, K, B, C, S
 from pomagma.reducer.code import VAR, APP, JOIN, FUN, LET
 from pomagma.reducer.code import free_vars
-from pomagma.reducer.code import polish_parse
-from pomagma.reducer.code import polish_print
+from pomagma.reducer.code import polish_parse, polish_print
+from pomagma.reducer.code import sexpr_parse, sexpr_print
+from pomagma.reducer.code import sexpr_parse_sexpr, sexpr_print_sexpr
+from pomagma.reducer.code import to_sexpr, from_sexpr
 from pomagma.util.testing import for_each
 import hypothesis
 import hypothesis.strategies as s
@@ -81,6 +83,7 @@ def s_terms_extend(terms):
 
 
 s_terms = s.recursive(s_atoms, s_terms_extend, max_leaves=100)
+s_sexprs = s.builds(to_sexpr, s_terms)
 
 
 @hypothesis.given(s_terms)
@@ -89,4 +92,30 @@ def test_polish_print_parse(code):
     string = polish_print(code)
     assert isinstance(string, str)
     actual_code = polish_parse(string)
+    assert actual_code == code
+
+
+@hypothesis.given(s_terms)
+@hypothesis.settings(max_examples=1000)
+def test_to_sexpr_from_sexpr(code):
+    sexpr = to_sexpr(code)
+    actual_code = from_sexpr(sexpr)
+    assert actual_code == code
+
+
+@hypothesis.given(s_sexprs)
+@hypothesis.settings(max_examples=1000)
+def test_sexpr_print_parse_sexpr(sexpr):
+    string = sexpr_print_sexpr(sexpr)
+    assert isinstance(string, str)
+    actual_sexpr = sexpr_parse_sexpr(string)
+    assert actual_sexpr == sexpr
+
+
+@hypothesis.given(s_terms)
+@hypothesis.settings(max_examples=1000)
+def test_sexpr_print_parse(code):
+    string = sexpr_print(code)
+    assert isinstance(string, str)
+    actual_code = sexpr_parse(string)
     assert actual_code == code
