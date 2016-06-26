@@ -21,13 +21,13 @@ def reduce(*args):
     return proc.returncode  # Returns number of errors.
 
 
-FORMS = {
+FORMATS = {
     'polish': (polish_parse, polish_print),
     'sexpr': (sexpr_parse, sexpr_print),
 }
 
 
-def guess_form(string):
+def guess_format(string):
     if '(' in string or ')' in string:
         return 'sexpr'
     else:
@@ -35,12 +35,16 @@ def guess_form(string):
 
 
 @parsable
-def compile(string, form='auto'):
-    """Compile code from I,K,B,C,S to FUN,LET form."""
-    if form == 'auto':
-        form = guess_form(string)
-    print('Form: {}'.format(form))
-    parse, print_ = FORMS[form]
+def compile(string, fmt='auto'):
+    """Compile code from I,K,B,C,S to FUN,LET form.
+
+    Available foramts: polish, sexpr
+
+    """
+    if fmt == 'auto':
+        fmt = guess_format(string)
+    print('Format: {}'.format(fmt))
+    parse, print_ = FORMATS[fmt]
     code = parse(string)
     result = transforms.compile_(code)
     print('In: {}'.format(string))
@@ -48,12 +52,16 @@ def compile(string, form='auto'):
 
 
 @parsable
-def decompile(string, form='auto'):
-    """Deompile code from FUN,LET to I,K,B,C,S form."""
-    if form == 'auto':
-        form = guess_form(string)
-    print('Form: {}'.format(form))
-    parse, print_ = FORMS[form]
+def decompile(string, fmt='auto'):
+    """Deompile code from FUN,LET to I,K,B,C,S form.
+
+    Available foramts: polish, sexpr
+
+    """
+    if fmt == 'auto':
+        fmt = guess_format(string)
+    print('Format: {}'.format(fmt))
+    parse, print_ = FORMATS[fmt]
     code = parse(string)
     result = transforms.decompile(code)
     print('In: {}'.format(string))

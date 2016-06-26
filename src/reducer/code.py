@@ -25,16 +25,16 @@ def _term(*args):
     return args
 
 
+def VAR(name):
+    return _term(_VAR, intern(name))
+
+
 def APP(lhs, rhs):
     return _term(_APP, lhs, rhs)
 
 
 def JOIN(lhs, rhs):
     return _term(_JOIN, lhs, rhs)
-
-
-def VAR(name):
-    return _term(_VAR, intern(name))
 
 
 def FUN(var, body):
