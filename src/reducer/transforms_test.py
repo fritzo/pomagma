@@ -1,6 +1,6 @@
 from pomagma.reducer.code import HOLE, TOP, BOT, I, K, B, C, S
 from pomagma.reducer.code import VAR, APP, JOIN, FUN, LET
-from pomagma.reducer.code import serialize
+from pomagma.reducer.code import polish_print
 from pomagma.reducer.transforms import abstract, compile_, decompile, fresh_var
 from pomagma.util.testing import for_each
 
@@ -62,8 +62,8 @@ c = fresh_var(2)
     ),
 ])
 def test_decompile(code, expected):
-    actual_str = serialize(decompile(code))
-    expected_str = serialize(expected)
+    actual_str = polish_print(decompile(code))
+    expected_str = polish_print(expected)
     assert expected_str == actual_str
 
 
@@ -83,8 +83,8 @@ def test_decompile(code, expected):
     JOIN(K, APP(K, I)),
 ])
 def test_decompile_compile(code):
-    expected_str = serialize(code)
+    expected_str = polish_print(code)
     decompiled = decompile(code)
     actual = compile_(decompiled)
-    actual_str = serialize(actual)
+    actual_str = polish_print(actual)
     assert actual_str == expected_str

@@ -1,7 +1,7 @@
 from parsable import parsable
 from pomagma.reducer import transforms
-from pomagma.reducer.code import parse
-from pomagma.reducer.code import serialize
+from pomagma.reducer.code import polish_parse
+from pomagma.reducer.code import polish_print
 import os
 import pomagma.util
 import subprocess
@@ -23,24 +23,20 @@ def reduce(*args):
 
 @parsable
 def compile(string):
-    '''
-    Compile code from I,K,B,C,S to FUN,LET form.
-    '''
-    code = parse(string)
+    """Compile code from I,K,B,C,S to FUN,LET form."""
+    code = polish_parse(string)
     result = transforms.compile_(code)
     print('In: {}'.format(string))
-    print('Out: {}'.format(serialize(result)))
+    print('Out: {}'.format(polish_print(result)))
 
 
 @parsable
 def decompile(string):
-    '''
-    Deompile code from FUN,LET to I,K,B,C,S form.
-    '''
-    code = parse(string)
+    """Deompile code from FUN,LET to I,K,B,C,S form."""
+    code = polish_parse(string)
     result = transforms.deresult(code)
     print('In: {}'.format(string))
-    print('Out: {}'.format(serialize(result)))
+    print('Out: {}'.format(polish_print(result)))
 
 
 if __name__ == '__main__':

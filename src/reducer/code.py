@@ -78,46 +78,46 @@ def free_vars(code):
 # ----------------------------------------------------------------------------
 # Parsing and seralization
 
-def parse(string):
+def polish_parse(string):
     assert isinstance(string, str), type(string)
     tokens = map(intern, string.split())
     tokens.reverse()
-    return _parse_tokens(tokens)
+    return _polish_parse_tokens(tokens)
 
 
 def _pop_token(tokens):
     return tokens.pop()
 
 
-def _parse_tokens(tokens):
+def _polish_parse_tokens(tokens):
     token = tokens.pop()
     try:
-        parsers = _PARSERS[token]
+        polish_parsers = _PARSERS[token]
     except KeyError:
         return token  # atom
-    args = tuple(p(tokens) for p in parsers)
+    args = tuple(p(tokens) for p in polish_parsers)
     return _term(token, *args)
 
 
 _PARSERS = {
     _VAR: (_pop_token,),
-    _APP: (_parse_tokens, _parse_tokens),
-    _JOIN: (_parse_tokens, _parse_tokens),
-    _FUN: (_parse_tokens, _parse_tokens),
-    _LET: (_parse_tokens, _parse_tokens, _parse_tokens),
+    _APP: (_polish_parse_tokens, _polish_parse_tokens),
+    _JOIN: (_polish_parse_tokens, _polish_parse_tokens),
+    _FUN: (_polish_parse_tokens, _polish_parse_tokens),
+    _LET: (_polish_parse_tokens, _polish_parse_tokens, _polish_parse_tokens),
 }
 
 
-def serialize(code):
+def polish_print(code):
     tokens = []
-    _serialize_tokens(code, tokens)
+    _polish_print_tokens(code, tokens)
     return ' '.join(tokens)
 
 
-def _serialize_tokens(code, tokens):
+def _polish_print_tokens(code, tokens):
     if isinstance(code, str):
         tokens.append(code)
     elif isinstance(code, tuple):
         tokens.append(code[0])
         for arg in code[1:]:
-            _serialize_tokens(arg, tokens)
+            _polish_print_tokens(arg, tokens)

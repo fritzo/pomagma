@@ -1,10 +1,11 @@
 from pomagma.reducer import io
 from pomagma.reducer import lib
 from pomagma.reducer.code import I, K, B, C, APP
+from pomagma.reducer.code import polish_parse
+from pomagma.reducer.code import polish_print
 from pomagma.util.testing import for_each
 import hypothesis
 import hypothesis.strategies
-import pomagma.reducer.code
 import pytest
 
 
@@ -122,10 +123,10 @@ def test_decode_error(tp, code):
 
 
 @for_each(EXAMPLES['ok'])
-def test_serialize_parse(tp, code, value):
-    string = pomagma.reducer.code.serialize(code)
+def test_polish_serialize_parse(tp, code, value):
+    string = polish_print(code)
     assert isinstance(string, str)
-    actual_code = pomagma.reducer.code.parse(string)
+    actual_code = polish_parse(string)
     assert actual_code == code
 
 

@@ -1,8 +1,8 @@
 from pomagma.reducer.code import HOLE, TOP, BOT, I, K, B, C, S
 from pomagma.reducer.code import VAR, APP, JOIN, FUN, LET
 from pomagma.reducer.code import free_vars
-from pomagma.reducer.code import parse
-from pomagma.reducer.code import serialize
+from pomagma.reducer.code import polish_parse
+from pomagma.reducer.code import polish_print
 from pomagma.util.testing import for_each
 import hypothesis
 import hypothesis.strategies as s
@@ -30,14 +30,14 @@ EXAMPLES = [
 
 
 @for_each(EXAMPLES)
-def test_parse(string, code):
-    actual_string = serialize(code)
+def test_polish_parse(string, code):
+    actual_string = polish_print(code)
     assert actual_string == string
 
 
 @for_each(EXAMPLES)
-def test_serialize(string, code):
-    actual_code = parse(string)
+def test_polish_print(string, code):
+    actual_code = polish_parse(string)
     assert actual_code == code
 
 
@@ -85,8 +85,8 @@ s_terms = s.recursive(s_atoms, s_terms_extend, max_leaves=100)
 
 @hypothesis.given(s_terms)
 @hypothesis.settings(max_examples=1000)
-def test_serialize_parse(code):
-    string = serialize(code)
+def test_polish_print_parse(code):
+    string = polish_print(code)
     assert isinstance(string, str)
-    actual_code = parse(string)
+    actual_code = polish_parse(string)
     assert actual_code == code
