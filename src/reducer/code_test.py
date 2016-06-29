@@ -14,33 +14,61 @@ y = VAR('y')
 z = VAR('z')
 
 EXAMPLES = [
-    ('HOLE', HOLE),
-    ('TOP', TOP),
-    ('BOT', BOT),
-    ('I', I),
-    ('K', K),
-    ('B', B),
-    ('C', C),
-    ('S', S),
-    ('VAR x', x),
-    ('APP I K', APP(I, K)),
-    ('JOIN K APP K I', JOIN(K, APP(K, I))),
-    ('APP APP I K JOIN B C', APP(APP(I, K), JOIN(B, C))),
-    ('FUN VAR x APP VAR x VAR x', FUN(x, APP(x, x))),
-    ('LET VAR x I APP I I', LET(x, I, APP(I, I))),
+    {'code': HOLE, 'polish': 'HOLE', 'sexpr': 'HOLE'},
+    {'code': TOP, 'polish': 'TOP', 'sexpr': 'TOP'},
+    {'code': BOT, 'polish': 'BOT', 'sexpr': 'BOT'},
+    {'code': I, 'polish': 'I', 'sexpr': 'I'},
+    {'code': K, 'polish': 'K', 'sexpr': 'K'},
+    {'code': B, 'polish': 'B', 'sexpr': 'B'},
+    {'code': C, 'polish': 'C', 'sexpr': 'C'},
+    {'code': S, 'polish': 'S', 'sexpr': 'S'},
+    {'code': x, 'polish': 'VAR x', 'sexpr': '(VAR x)'},
+    {'code': APP(K, I), 'polish': 'APP K I', 'sexpr': '(K I)'},
+    {
+        'code': JOIN(K, APP(K, I)),
+        'polish': 'JOIN K APP K I',
+        'sexpr': '(JOIN K (K I))'
+    },
+    {
+        'code': APP(APP(I, K), JOIN(B, C)),
+        'polish': 'APP APP I K JOIN B C',
+        'sexpr': '(I K (JOIN B C))',
+    },
+    {
+        'code': FUN(x, APP(x, x)),
+        'polish': 'FUN VAR x APP VAR x VAR x',
+        'sexpr': '(FUN (VAR x) (VAR x (VAR x)))',
+    },
+    {
+        'code': LET(x, I, APP(I, I)),
+        'polish': 'LET VAR x I APP I I',
+        'sexpr': '(LET (VAR x) I (I I))',
+    },
 ]
 
 
 @for_each(EXAMPLES)
-def test_polish_parse(string, code):
-    actual_string = polish_print(code)
-    assert actual_string == string
+def test_polish_parse(example):
+    actual = polish_print(example['code'])
+    assert actual == example['polish']
 
 
 @for_each(EXAMPLES)
-def test_polish_print(string, code):
-    actual_code = polish_parse(string)
-    assert actual_code == code
+def test_polish_print(example):
+    actual = polish_parse(example['polish'])
+    assert actual == example['code']
+
+
+@for_each(EXAMPLES)
+def test_sexpr_parse(example):
+    actual = sexpr_print(example['code'])
+    assert actual == example['sexpr']
+
+
+@for_each(EXAMPLES)
+def test_sexpr_print(example):
+    actual = sexpr_parse(example['sexpr'])
+    assert actual == example['code']
 
 
 @for_each([
