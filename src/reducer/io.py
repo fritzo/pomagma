@@ -65,6 +65,31 @@ def decode_bool(code):
 
 
 # ----------------------------------------------------------------------------
+# Byte
+
+_encode_byte = {chr(k): v for k, v in lib.byte_table.iteritems()}
+_decode_byte = {v: chr(k) for k, v in lib.byte_table.iteritems()}
+
+
+@memoize_arg
+def encode_byte(byte):
+    if not isinstance(byte, bytes) or len(byte) != 1:
+        raise TypeError(byte)
+    try:
+        return _encode_byte[byte]
+    except KeyError:
+        raise TypeError(byte)
+
+
+@memoize_arg
+def decode_byte(code):
+    try:
+        return _decode_byte[code]
+    except KeyError:
+        raise TypeError(code)
+
+
+# ----------------------------------------------------------------------------
 # Maybe
 
 
@@ -269,6 +294,8 @@ def decoder(tp):
             return decode_unit
         if tp == 'bool':
             return decode_bool
+        if tp == 'byte':
+            return decode_byte
         if tp == 'num':
             return decode_num
     elif len(tp) == 2:
@@ -294,6 +321,8 @@ def encoder(tp):
             return encode_unit
         if tp == 'bool':
             return encode_bool
+        if tp == 'byte':
+            return encode_byte
         if tp == 'num':
             return encode_num
     elif len(tp) == 2:

@@ -23,6 +23,15 @@ EXAMPLES_BY_TYPE = {
         'encode_error': [None, 0, 1, 2, [None], [True]],
         'decode_error': [I, B, C, APP(C, B)],
     },
+    'byte': {
+        'ok': [
+            (lib.byte_table[ord(b'a')], b'a'),
+            (lib.byte_table[0x00], b'\x00'),
+            (lib.byte_table[0xff], b'\xff'),
+        ],
+        'encode_error': [0, ['a'], 'asdf'],
+        'decode_error': [I, K, B, C, APP(C, B)],
+    },
     'num': {
         'ok': [
             (lib.zero, 0),
@@ -135,7 +144,12 @@ def test_polish_serialize_parse(tp, code, value):
 
 s = hypothesis.strategies
 
-types_base = s.one_of(s.just('unit'), s.just('bool'), s.just('num'))
+types_base = s.one_of(
+    s.just('unit'),
+    s.just('bool'),
+    s.just('byte'),
+    s.just('num'),
+)
 
 
 def types_extend(types_):
@@ -156,6 +170,8 @@ def code_of_type(tp):
             return s.just(lib.ok)
         if tp == 'bool':
             return s.sampled_from([lib.true, lib.false])
+        if tp == 'byte':
+            return s.sampled_from(lib.byte_table.values())
         if tp == 'num':
             return s.recursive(
                 s.just(lib.zero),
