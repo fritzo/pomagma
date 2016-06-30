@@ -257,6 +257,21 @@ def decode_list(decode_item):
 
 
 # ----------------------------------------------------------------------------
+# Bytes
+
+def encode_bytes(value):
+    if not isinstance(value, bytes):
+        raise TypeError(value)
+    byte_list = list(value)
+    return encode_list(encode_byte)(byte_list)
+
+
+def decode_bytes(code):
+    byte_list = decode_list(decode_byte)(code)
+    return b''.join(byte_list)
+
+
+# ----------------------------------------------------------------------------
 # Functions
 
 @memoize_arg
@@ -298,6 +313,8 @@ def decoder(tp):
             return decode_byte
         if tp == 'num':
             return decode_num
+        if tp == 'bytes':
+            return decode_bytes
     elif len(tp) == 2:
         if tp[0] == 'maybe':
             return decode_maybe(decoder(tp[1]))
@@ -325,6 +342,8 @@ def encoder(tp):
             return encode_byte
         if tp == 'num':
             return encode_num
+        if tp == 'bytes':
+            return encode_bytes
     elif len(tp) == 2:
         if tp[0] == 'maybe':
             return encode_maybe(encoder(tp[1]))

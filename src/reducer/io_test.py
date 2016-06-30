@@ -81,7 +81,12 @@ EXAMPLES_BY_TYPE = {
             (lib.cons(lib.cons(lib.zero, lib.nil), lib.nil), [[0]]),
         ],
         'encode_error': [0, [1], [[2], 3], [[[]]]],
-    }
+    },
+    ('bytes'): {
+        'ok': [(lib.nil, b'')],
+        'encode_error': [None, True, False, 0, 1, 2, (), [[True]]],
+        'decode_error': [I],
+    },
 }
 
 EXAMPLES = {
@@ -149,6 +154,7 @@ types_base = s.one_of(
     s.just('bool'),
     s.just('byte'),
     s.just('num'),
+    s.just('bytes'),
 )
 
 
@@ -177,6 +183,8 @@ def code_of_type(tp):
                 s.just(lib.zero),
                 lambda n: s.builds(lib.succ, n),
             )
+        if tp == 'bytes':
+            return code_of_type(('list', 'byte'))
     elif len(tp) == 2:
         if tp[0] == 'maybe':
             return s.one_of(
