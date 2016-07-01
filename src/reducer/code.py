@@ -7,6 +7,7 @@ from pomagma.compiler.util import memoize_args
 _VAR = intern('VAR')
 _APP = intern('APP')
 _JOIN = intern('JOIN')
+_QUOTE = intern('QUOTE')
 _FUN = intern('FUN')
 _LET = intern('LET')
 
@@ -18,6 +19,10 @@ K = intern('K')
 B = intern('B')
 C = intern('C')
 S = intern('S')
+EVAL = intern('EVAL')
+QAPP = intern('QAPP')
+QJOIN = intern('QJOIN')
+QQUOTE = intern('QQUOTE')
 
 
 @memoize_args
@@ -35,6 +40,10 @@ def APP(lhs, rhs):
 
 def JOIN(lhs, rhs):
     return _term(_JOIN, lhs, rhs)
+
+
+def QUOTE(code):
+    return _term(_QUOTE, code)
 
 
 def FUN(var, body):
@@ -57,6 +66,10 @@ def is_join(code):
     return isinstance(code, tuple) and code[0] is _JOIN
 
 
+def is_quote(code):
+    return isinstance(code, tuple) and code[0] is _QUOTE
+
+
 def is_fun(code):
     return isinstance(code, tuple) and code[0] is _FUN
 
@@ -71,6 +84,8 @@ def free_vars(code):
         return set([code])
     elif is_app(code) or is_join(code):
         return free_vars(code[1]) | free_vars(code[2])
+    elif is_quote(code):
+        return free_vars(code[1])
     else:
         return set()
 
@@ -103,6 +118,7 @@ _PARSERS = {
     _VAR: (_pop_token,),
     _APP: (_polish_parse_tokens, _polish_parse_tokens),
     _JOIN: (_polish_parse_tokens, _polish_parse_tokens),
+    _QUOTE: (_polish_parse_tokens,),
     _FUN: (_polish_parse_tokens, _polish_parse_tokens),
     _LET: (_polish_parse_tokens, _polish_parse_tokens, _polish_parse_tokens),
 }
@@ -142,6 +158,9 @@ def to_sexpr(code):
         args.append(head[2])
         args.append(head[1])
         head = _JOIN
+    elif is_quote(head):
+        args.append(head[1])
+        head = _QUOTE
     elif is_fun(head):
         args.append(head[2])
         args.append(head[1])
@@ -167,6 +186,10 @@ def from_sexpr(sexpr):
         y = from_sexpr(sexpr[2])
         head = JOIN(x, y)
         args = sexpr[3:]
+    elif head is _QUOTE:
+        code = from_sexpr(sexpr[1])
+        head = QUOTE(code)
+        args = sexpr[2:]
     elif head is _FUN:
         var = from_sexpr(sexpr[1])
         body = from_sexpr(sexpr[2])

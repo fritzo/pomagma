@@ -1,4 +1,5 @@
 from pomagma.reducer.code import HOLE, TOP, BOT, I, K, B, C, S
+from pomagma.reducer.code import QUOTE, EVAL, QAPP, QJOIN, QQUOTE
 from pomagma.reducer.code import VAR, APP, JOIN, FUN, LET
 from pomagma.reducer.code import free_vars
 from pomagma.reducer.code import polish_parse, polish_print
@@ -22,6 +23,10 @@ EXAMPLES = [
     {'code': B, 'polish': 'B', 'sexpr': 'B'},
     {'code': C, 'polish': 'C', 'sexpr': 'C'},
     {'code': S, 'polish': 'S', 'sexpr': 'S'},
+    {'code': EVAL, 'polish': 'EVAL', 'sexpr': 'EVAL'},
+    {'code': QAPP, 'polish': 'QAPP', 'sexpr': 'QAPP'},
+    {'code': QJOIN, 'polish': 'QJOIN', 'sexpr': 'QJOIN'},
+    {'code': QQUOTE, 'polish': 'QQUOTE', 'sexpr': 'QQUOTE'},
     {'code': x, 'polish': 'VAR x', 'sexpr': '(VAR x)'},
     {'code': APP(K, I), 'polish': 'APP K I', 'sexpr': '(K I)'},
     {
@@ -33,6 +38,11 @@ EXAMPLES = [
         'code': APP(APP(I, K), JOIN(B, C)),
         'polish': 'APP APP I K JOIN B C',
         'sexpr': '(I K (JOIN B C))',
+    },
+    {
+        'code': QUOTE(APP(I, K)),
+        'polish': 'QUOTE APP I K',
+        'sexpr': '(QUOTE (I K))',
     },
     {
         'code': FUN(x, APP(x, x)),
@@ -78,6 +88,8 @@ def test_sexpr_print(example):
     (APP(x, x), [x]),
     (APP(x, y), [x, y]),
     (APP(x, JOIN(y, APP(K, z))), [x, y, z]),
+    (QUOTE(x), [x]),
+    (APP(x, QUOTE(y)), [x, y]),
 ])
 def test_free_vars(code, free):
     assert free_vars(code) == set(free)
@@ -98,6 +110,10 @@ s_atoms = s.one_of(
     s.just(B),
     s.just(C),
     s.just(S),
+    s.just(EVAL),
+    s.just(QAPP),
+    s.just(QJOIN),
+    s.just(QQUOTE),
 )
 
 
@@ -105,6 +121,7 @@ def s_terms_extend(terms):
     return s.one_of(
         s.builds(APP, terms, terms),
         s.builds(JOIN, terms, terms),
+        s.builds(QUOTE, terms),
         s.builds(FUN, s_vars, terms),
         s.builds(LET, s_vars, terms, terms),
     )
