@@ -1,6 +1,7 @@
 from cStringIO import StringIO
+from pomagma.reducer.code import EVAL, QAPP, QJOIN, QQUOTE, EQUAL, LESS, NLESS
 from pomagma.reducer.code import HOLE, TOP, BOT, I, K, B, C, S
-from pomagma.reducer.code import VAR, APP, JOIN, FUN, LET
+from pomagma.reducer.code import VAR, APP, JOIN, QUOTE, FUN, LET
 from pomagma.reducer.code_test import s_terms
 from pomagma.reducer.serial import dump, load
 from pomagma.reducer.serial import pack_head_argc, unpack_head_argc
@@ -54,12 +55,21 @@ x = VAR('x')
     B,
     C,
     S,
+    EVAL,
+    QAPP,
+    QJOIN,
+    QQUOTE,
+    EQUAL,
+    LESS,
+    NLESS,
     APP(K, I),
     APP(APP(B, C), S),
     APP(APP(APP(S, K), I), B),
     JOIN(I, K),
     JOIN(APP(K, I), K),
     APP(JOIN(APP(K, I), K), I),
+    QUOTE(K),
+    APP(QUOTE(K), C),
     FUN(x, APP(S, APP(x, x))),
     APP(FUN(x, x), I),
     LET(x, I, APP(APP(S, x), x)),

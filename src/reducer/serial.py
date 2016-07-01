@@ -53,12 +53,14 @@ Varint format in bytes:
 __all__ = ['dump', 'load', 'PROTOCOL_VERSION']
 
 from cStringIO import StringIO
+from pomagma.reducer.code import EVAL, QAPP, QJOIN, QQUOTE, EQUAL, LESS, NLESS
 from pomagma.reducer.code import HOLE, TOP, BOT, I, K, B, C, S
-from pomagma.reducer.code import VAR, APP, JOIN, FUN, LET
-from pomagma.reducer.code import _VAR, _JOIN, _FUN, _LET
-from pomagma.reducer.code import is_var, is_app, is_join, is_fun, is_let
+from pomagma.reducer.code import VAR, APP, JOIN, QUOTE, FUN, LET
+from pomagma.reducer.code import _VAR, _JOIN, _QUOTE, _FUN, _LET
+from pomagma.reducer.code import is_var, is_app, is_join, is_quote
+from pomagma.reducer.code import is_fun, is_let
 
-PROTOCOL_VERSION = '0.0.4'  # Semver compliant.
+PROTOCOL_VERSION = '0.0.5'  # Semver compliant.
 
 # ----------------------------------------------------------------------------
 # Packed varints.
@@ -131,7 +133,8 @@ RAW_BYTES = object()
 INT_TO_SYMB = [
     RAW_BYTES,
     HOLE, TOP, BOT, I, K, B, C, S,
-    _VAR, _JOIN, _FUN, _LET,
+    EVAL, QAPP, QJOIN, QQUOTE, EQUAL, LESS, NLESS,
+    _VAR, _JOIN, _QUOTE, _FUN, _LET,
 ]
 SYMB_TO_INT = {k: v for v, k in enumerate(INT_TO_SYMB) if k is not RAW_BYTES}
 
@@ -170,6 +173,9 @@ def dump(code, f):
         args.append(head[2])
         args.append(head[1])
         _dump_head_argc(SYMB_TO_INT[_JOIN], len(args), f)
+    elif is_quote(head):
+        args.append(head[1])
+        _dump_head_argc(SYMB_TO_INT[_QUOTE], len(args), f)
     elif is_fun(head):
         args.append(head[2])
         args.append(head[1])
@@ -219,6 +225,12 @@ def _load_from(bytes_):
         x = _load_from(bytes_)
         y = _load_from(bytes_)
         head = JOIN(x, y)
+    elif head is _QUOTE:
+        if argc < 1:
+            raise ValueError('QUOTE requires at least one arg')
+        argc -= 1
+        code = _load_from(bytes_)
+        head = QUOTE(code)
     elif head is _FUN:
         if argc < 2:
             raise ValueError('FUN requires at least two args')

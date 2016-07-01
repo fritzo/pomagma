@@ -23,6 +23,9 @@ EVAL = intern('EVAL')
 QAPP = intern('QAPP')
 QJOIN = intern('QJOIN')
 QQUOTE = intern('QQUOTE')
+EQUAL = intern('EQUAL')
+LESS = intern('LESS')
+NLESS = intern('NLESS')
 
 
 @memoize_args
