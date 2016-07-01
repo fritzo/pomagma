@@ -4,8 +4,8 @@ Intro forms are hand-optimized; see lib_test.py for lambda versions.
 
 """
 
-from pomagma.reducer.code import I, K, B, C, TOP, BOT, APP
-from pomagma.reducer.sugar import app, join, combinator, symmetric
+from pomagma.reducer.code import I, K, B, C, TOP, BOT, APP, QUOTE
+from pomagma.reducer.sugar import app, join, quote, qapp, combinator, symmetric
 
 CI = APP(C, I)
 
@@ -43,6 +43,11 @@ def unit_or(x, y):
     return join(x, y)
 
 
+@combinator
+def unit_quote(x):
+    return app(x, QUOTE(ok))
+
+
 # ----------------------------------------------------------------------------
 # Bool
 
@@ -70,6 +75,11 @@ def bool_and(x, y):
 @symmetric
 def bool_or(x, y):
     return app(x, true, y)
+
+
+@combinator
+def bool_quote(x):
+    return app(x, QUOTE(true), QUOTE(false))
 
 
 # ----------------------------------------------------------------------------
@@ -138,6 +148,15 @@ def maybe_test(x):
     return app(x, ok, lambda y: ok)
 
 
+@combinator
+def maybe_quote(quote_some, x):
+    return app(
+        x,
+        QUOTE(none),
+        lambda y: qapp(quote(some), app(quote_some, y)),
+    )
+
+
 # ----------------------------------------------------------------------------
 # Products
 
@@ -161,6 +180,14 @@ def prod_snd(xy):
     return app(xy, lambda x, y: y)
 
 
+@combinator
+def prod_quote(quote_fst, quote_snd, xy):
+    return app(
+        xy,
+        lambda x, y: qapp(quote(pair), app(quote_fst, x), app(quote_snd, y)),
+    )
+
+
 # ----------------------------------------------------------------------------
 # Sums
 
@@ -177,6 +204,15 @@ def inr(y):
 @combinator
 def sum_test(xy):
     return app(xy, lambda x: ok, lambda y: ok)
+
+
+@combinator
+def sum_quote(quote_inl, quote_inr, xy):
+    return app(
+        xy,
+        lambda x: qapp(quote(inl), app(quote_inl, x)),
+        lambda y: qapp(quote(inr), app(quote_inr, y)),
+    )
 
 
 # ----------------------------------------------------------------------------
@@ -224,6 +260,11 @@ def num_rec(z, s, x):
     return app(x, z, lambda px: app(s, num_rec(z, s, px)))
 
 
+@combinator
+def num_quote(x):
+    return app(x, QUOTE(zero), lambda px: qapp(quote(succ), num_quote(px)))
+
+
 # ----------------------------------------------------------------------------
 # Finite homogeneous lists
 
@@ -263,6 +304,15 @@ def list_map(f, xs):
 @combinator
 def list_rec(n, c, xs):
     return app(xs, n, lambda h, t: app(c, h, list_rec(n, c, t)))
+
+
+@combinator
+def list_quote(quote_item, xs):
+    return app(
+        xs,
+        QUOTE(nil),
+        lambda h, t: qapp(quote(cons), app(quote_item, h), list_quote(t)),
+    )
 
 
 # ----------------------------------------------------------------------------

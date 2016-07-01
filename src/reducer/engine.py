@@ -4,7 +4,7 @@ __all__ = ['reduce', 'simplify', 'sample']
 
 from pomagma.compiler.util import memoize_arg
 from pomagma.compiler.util import memoize_args
-from pomagma.reducer.code import HOLE, TOP, BOT, I, K, B, C, S, EVAL
+from pomagma.reducer.code import HOLE, TOP, BOT, I, K, B, C, S, EVAL, QAPP
 from pomagma.reducer.code import VAR, APP, JOIN, QUOTE
 from pomagma.reducer.code import is_var, is_app, is_quote, is_join, free_vars
 from pomagma.reducer.sugar import abstract
@@ -96,7 +96,7 @@ def _sample(head, context, nonlinear):
                     yield term
         elif is_quote(head):
             x = head[1]
-            x = _red(head, nonlinear)
+            x = _red(x, nonlinear)
             head = QUOTE(x)
             yield _close(head, context, nonlinear)
             return
@@ -145,7 +145,18 @@ def _sample(head, context, nonlinear):
             if is_quote(x):
                 head = x[1]
             else:
-                head = EVAL(x)
+                head = APP(EVAL, x)
+                yield _close(head, context, nonlinear)
+                return
+        elif head is QAPP:
+            x, context = context_pop(context)
+            y, context = context_pop(context)
+            x = _red(x, nonlinear)
+            y = _red(y, nonlinear)
+            if is_quote(x) and is_quote(y):
+                head = QUOTE(APP(x[1], y[1]))
+            else:
+                head = APP(APP(QAPP, x), y)
                 yield _close(head, context, nonlinear)
                 return
         else:

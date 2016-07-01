@@ -1,7 +1,7 @@
 from pomagma.reducer import lib
 from pomagma.reducer.code import VAR
 from pomagma.reducer.engine import reduce, simplify
-from pomagma.reducer.sugar import as_code, app
+from pomagma.reducer.sugar import as_code, app, quote
 from pomagma.util import TRAVIS_CI
 from pomagma.util.testing import for_each
 import pytest
@@ -68,6 +68,15 @@ def test_unit_or(x, y, expected):
     assert simplify(lib.unit_or(x, y)) == expected
 
 
+@for_each([
+    (ok, quote(ok)),
+    (undefined, undefined),
+    (error, error),
+])
+def test_unit_quote(x, expected):
+    assert simplify(lib.unit_quote(x)) == expected
+
+
 # ----------------------------------------------------------------------------
 # Bool
 
@@ -122,6 +131,16 @@ def test_bool_and(x, y, expected):
 ])
 def test_bool_or(x, y, expected):
     assert reduce(lib.bool_or(x, y)) == expected
+
+
+@for_each([
+    (true, quote(true)),
+    (false, quote(false)),
+    (undefined, undefined),
+    (error, error),
+])
+def test_bool_quote(x, expected):
+    assert simplify(lib.bool_quote(x)) == expected
 
 
 # ----------------------------------------------------------------------------
@@ -185,6 +204,17 @@ def test_maybe_test(x, expected):
     assert simplify(lib.maybe_test(x)) == expected
 
 
+@for_each([
+    (lib.none, quote(lib.none)),
+    (lib.some(true), quote(lib.some(true))),
+    (undefined, undefined),
+    (error, error),
+])
+def test_maybe_quote(x, expected):
+    quote_some = lib.bool_quote
+    assert simplify(lib.maybe_quote(quote_some, x)) == expected
+
+
 # ----------------------------------------------------------------------------
 # Products
 
@@ -218,6 +248,17 @@ def test_prod_snd(x, expected):
     assert simplify(lib.prod_snd(x)) == expected
 
 
+@for_each([
+    (lib.pair(ok, false), quote(lib.pair(ok, false))),
+    (undefined, undefined),
+    (error, error),
+])
+def test_prod_quote(x, expected):
+    quote_fst = lib.unit_quote
+    quote_snd = lib.bool_quote
+    assert simplify(lib.prod_quote(quote_fst, quote_snd, x)) == expected
+
+
 # ----------------------------------------------------------------------------
 # Sums
 
@@ -229,6 +270,19 @@ def test_prod_snd(x, expected):
 ])
 def test_sum_test(x, expected):
     assert simplify(lib.sum_test(x)) == expected
+
+
+@for_each([
+    (lib.inl(ok), quote(lib.inl(ok))),
+    (lib.inr(true), quote(lib.inr(true))),
+    (lib.inr(false), quote(lib.inr(false))),
+    (undefined, undefined),
+    (error, error),
+])
+def test_sum_quote(x, expected):
+    quote_inl = lib.unit_quote
+    quote_inr = lib.bool_quote
+    assert simplify(lib.sum_quote(quote_inl, quote_inr, x)) == expected
 
 
 # ----------------------------------------------------------------------------
@@ -375,6 +429,18 @@ def test_num_rec(z, s, x, expected):
     assert reduce(lib.num_rec(z, s, x)) == expected
 
 
+@for_each([
+    (zero, quote(zero)),
+    (one, quote(one)),
+    (two, quote(two)),
+    (three, quote(three)),
+    (undefined, undefined),
+    (error, error),
+])
+def test_num_quote(x, expected):
+    assert reduce(lib.num_quote(x)) == expected
+
+
 # ----------------------------------------------------------------------------
 # Finite homogeneous lists
 
@@ -474,3 +540,19 @@ def test_list_map(f, x, expected):
 ])
 def test_list_rec(n, c, x, expected):
     assert reduce(lib.list_rec(n, c, x)) == expected
+
+
+@for_each([
+    (nil, quote(nil)),
+    pytest.mark.xfail((cons(zero, nil), quote(cons(zero, nil)))),
+    pytest.mark.xfail((cons(one, nil), quote(cons(one, nil)))),
+    pytest.mark.xfail((cons(two, nil), quote(cons(two, nil)))),
+    pytest.mark.xfail((cons(three, nil), quote(cons(three, nil)))),
+    pytest.mark.xfail(
+        (cons(two, cons(zero, nil)), quote(cons(two, cons(zero, nil))))),
+    (undefined, undefined),
+    (error, error),
+])
+def test_list_quote(x, expected):
+    quote_item = lib.num_quote
+    assert reduce(lib.list_quote(quote_item, x)) == expected

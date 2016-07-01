@@ -1,6 +1,7 @@
 '''DSL translating from lambda-let notation to SKJ.'''
 
-from pomagma.reducer.code import HOLE, BOT, VAR, APP, JOIN, QUOTE, free_vars
+from pomagma.reducer.code import HOLE, BOT, QAPP, VAR, APP, JOIN, QUOTE
+from pomagma.reducer.code import free_vars
 from pomagma.reducer.transforms import try_abstract, abstract
 from pomagma.reducer.util import LOG
 import functools
@@ -124,6 +125,16 @@ def join(*args):
 
 def quote(arg):
     return QUOTE(as_code(arg))
+
+
+def qapp(*args):
+    args = map(as_code, args)
+    if len(args) < 2:
+        raise SyntaxError('Too few arguments: qapp{}'.format(args))
+    result = args[0]
+    for arg in args[1:]:
+        result = APP(APP(QAPP, result), arg)
+    return result
 
 
 def rec(fun):
