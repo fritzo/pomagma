@@ -4,8 +4,9 @@ __all__ = ['reduce', 'simplify', 'sample']
 
 from pomagma.compiler.util import memoize_arg
 from pomagma.compiler.util import memoize_args
-from pomagma.reducer.code import HOLE, TOP, BOT, I, K, B, C, S, APP, JOIN, VAR
-from pomagma.reducer.code import is_var, is_app, is_join, free_vars
+from pomagma.reducer.code import HOLE, TOP, BOT, I, K, B, C, S, EVAL
+from pomagma.reducer.code import VAR, APP, JOIN, QUOTE
+from pomagma.reducer.code import is_var, is_app, is_quote, is_join, free_vars
 from pomagma.reducer.sugar import abstract
 from pomagma.reducer.util import LOG
 from pomagma.reducer.util import logged
@@ -93,6 +94,12 @@ def _sample(head, context, nonlinear):
             for head in (x, y):
                 for term in _sample(head, context, nonlinear):
                     yield term
+        elif is_quote(head):
+            x = head[1]
+            x = _red(head, nonlinear)
+            head = QUOTE(x)
+            yield _close(head, context, nonlinear)
+            return
         elif head is TOP:
             yield TOP
             return
@@ -131,6 +138,15 @@ def _sample(head, context, nonlinear):
                 context = context_push(context, z)
             else:
                 yield _close(head, old_context, nonlinear)
+                return
+        elif head is EVAL:
+            x, context = context_pop(context)
+            x = _red(x, nonlinear)
+            if is_quote(x):
+                head = x[1]
+            else:
+                head = EVAL(x)
+                yield _close(head, context, nonlinear)
                 return
         else:
             raise ValueError(head)
@@ -177,6 +193,8 @@ def _red(code, nonlinear):
         return _app(code[1], code[2], nonlinear)
     elif is_join(code):
         return _join(code[1], code[2], nonlinear)
+    elif is_quote(code):
+        return QUOTE(_red(code[1], nonlinear))
     else:
         return code
 

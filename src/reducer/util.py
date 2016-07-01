@@ -80,5 +80,8 @@ def pretty(code, add_parens=False):
         lhs = pretty(code[1], True)
         rhs = pretty(code[2], True)
         return ('({}|{})' if add_parens else '{}|{}').format(lhs, rhs)
+    elif code[0] == 'QUOTE':
+        arg = pretty(code[1])
+        return '{{{}}}'.format(arg)
     else:
         raise NotImplementedError(code)
