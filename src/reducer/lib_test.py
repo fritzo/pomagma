@@ -648,7 +648,7 @@ def test_less_antisymmetric(x, y):
     if less_xy is true and less_yx is true:
         assert equal_xy is true
     if equal_xy is false:
-        assert less_xy is false or less_yx is false
+        assert less_xy is not true or less_yx is not true
 
 
 @hypothesis.given(s_quoted, s_quoted, s_quoted)
