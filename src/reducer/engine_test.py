@@ -1,12 +1,13 @@
 from pomagma.reducer import engine
 from pomagma.reducer import lib
 from pomagma.reducer.code import HOLE, TOP, BOT, I, K, B, C, S
-from pomagma.reducer.code import EVAL, EQUAL, LESS
-from pomagma.reducer.code import VAR
+from pomagma.reducer.code import EVAL, QQUOTE, QAPP, EQUAL, LESS
+from pomagma.reducer.code import VAR, APP, JOIN, QUOTE
 from pomagma.reducer.sugar import app, join, quote, qapp, combinator
 from pomagma.util.testing import for_each
+import hypothesis
+import hypothesis.strategies as s
 import pytest
-import sys
 
 BUDGET = 10000
 
@@ -73,6 +74,10 @@ def map_(f, xs):
     (app(EVAL, quote(I), x), x),
     (quote(app(EVAL, quote(app(K, I, I)))), quote(I)),
     (app(S, K, K, quote(app(EVAL, quote(app(K, I, I))))), quote(I)),
+    (app(QQUOTE, x), app(QQUOTE, x)),
+    (app(QQUOTE, quote(x)), quote(quote(x))),
+    (app(QQUOTE, TOP), TOP),
+    (app(QQUOTE, BOT), BOT),
     (qapp(x, y), qapp(x, y)),
     (qapp(quote(x), y), qapp(quote(x), y)),
     (qapp(x, quote(y)), qapp(x, quote(y))),
@@ -113,7 +118,46 @@ def test_reduce(code, expected_result):
     assert actual_result == expected_result
 
 
-# Debugging.
-if __name__ == '__main__':
-    sys.setrecursionlimit(100)
-    engine.reduce(app(map_, I, lib.nil))
+alphabet = '_abcdefghijklmnopqrstuvwxyz'
+s_vars = s.builds(
+    VAR,
+    s.builds(str, s.text(alphabet=alphabet, min_size=1, average_size=5)),
+)
+s_atoms = s.one_of(
+    s.one_of(s_vars),
+    s.just(HOLE),
+    s.just(TOP),
+    s.just(BOT),
+    s.just(I),
+    s.just(K),
+    s.just(B),
+    s.just(C),
+    s.just(S),
+    s.just(EVAL),
+    s.just(QAPP),
+    s.just(QQUOTE),
+    s.just(EQUAL),
+    s.just(LESS),
+)
+
+
+def s_codes_extend(codes):
+    return s.one_of(
+        s.builds(APP, codes, codes),
+        s.builds(JOIN, codes, codes),
+        s.builds(QUOTE, codes),
+    )
+
+
+s_codes = s.recursive(s_atoms, s_codes_extend, max_leaves=100)
+s_quoted = s.builds(quote, s_codes)
+
+
+@hypothesis.given(s_codes)
+def test_simplify_runs(code):
+    engine.simplify(code)
+
+
+@hypothesis.given(s_quoted)
+def test_simplify_runs_quoted(quoted):
+    engine.simplify(quoted)

@@ -19,7 +19,7 @@ from collections import namedtuple
 from pomagma.compiler.util import memoize_arg
 from pomagma.compiler.util import memoize_args
 from pomagma.reducer import oracle
-from pomagma.reducer.code import EVAL, QAPP, EQUAL, LESS
+from pomagma.reducer.code import EVAL, QQUOTE, QAPP, EQUAL, LESS
 from pomagma.reducer.code import HOLE, TOP, BOT, I, K, B, C, S
 from pomagma.reducer.code import VAR, APP, JOIN, QUOTE
 from pomagma.reducer.code import is_var, is_app, is_quote, is_join, free_vars
@@ -175,6 +175,20 @@ def _sample(head, context, nonlinear):
                 head = APP(EVAL, x)
                 yield _close(head, context, nonlinear)
                 return
+        elif head is QQUOTE:
+            x, context = context_pop(context)
+            x = _red(x, nonlinear)
+            if x is TOP:
+                yield TOP
+                return
+            elif x is BOT:
+                return
+            elif is_quote(x):
+                head = QUOTE(x)
+            else:
+                head = APP(QQUOTE, x)
+                yield _close(head, context, nonlinear)
+                return
         elif head is QAPP:
             x, context = context_pop(context)
             y, context = context_pop(context)
@@ -195,8 +209,7 @@ def _sample(head, context, nonlinear):
             if x is TOP or y is TOP:
                 yield TOP
                 return
-            if (x is BOT and is_quote(y)) or (is_quote(x) and y is BOT):
-                yield BOT
+            elif (x is BOT and is_quote(y)) or (is_quote(x) and y is BOT):
                 return
             answer = oracle.try_decide_equal(try_unquote(x), try_unquote(y))
             if answer is True:

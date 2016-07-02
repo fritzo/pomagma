@@ -53,7 +53,7 @@ Varint format in bytes:
 __all__ = ['dump', 'load', 'PROTOCOL_VERSION']
 
 from cStringIO import StringIO
-from pomagma.reducer.code import EVAL, QAPP, QJOIN, QQUOTE, EQUAL, LESS
+from pomagma.reducer.code import EVAL, QAPP, QQUOTE, EQUAL, LESS
 from pomagma.reducer.code import HOLE, TOP, BOT, I, K, B, C, S
 from pomagma.reducer.code import VAR, APP, JOIN, QUOTE, FUN, LET
 from pomagma.reducer.code import _VAR, _JOIN, _QUOTE, _FUN, _LET
@@ -133,7 +133,7 @@ RAW_BYTES = object()
 INT_TO_SYMB = [
     RAW_BYTES,
     HOLE, TOP, BOT, I, K, B, C, S,
-    EVAL, QAPP, QJOIN, QQUOTE, EQUAL, LESS,
+    EVAL, QAPP, QQUOTE, EQUAL, LESS,
     _VAR, _JOIN, _QUOTE, _FUN, _LET,
 ]
 SYMB_TO_INT = {k: v for v, k in enumerate(INT_TO_SYMB) if k is not RAW_BYTES}

@@ -1,9 +1,11 @@
 from pomagma.reducer import lib
 from pomagma.reducer.code import VAR
 from pomagma.reducer.engine import reduce, simplify
+from pomagma.reducer.engine_test import s_quoted
 from pomagma.reducer.sugar import as_code, app, quote
 from pomagma.util import TRAVIS_CI
 from pomagma.util.testing import for_each
+import hypothesis
 import pytest
 
 f = VAR('f')
@@ -561,6 +563,9 @@ def test_list_quote(x, expected):
 # ----------------------------------------------------------------------------
 # Scott ordering
 
+bool_values = (error, undefined, true, false)
+
+
 @for_each([
     (x, y, lib.equal(x, y)),
     (quote(x), quote(x), true),
@@ -575,6 +580,37 @@ def test_list_quote(x, expected):
 ])
 def test_equal(x, y, expected):
     assert simplify(lib.equal(x, y)) == expected
+
+
+@hypothesis.given(s_quoted)
+def test_equal_reflexive(x):
+    equal_xx = simplify(lib.equal(x, x))
+    assert equal_xx == true
+
+
+@hypothesis.given(s_quoted, s_quoted)
+def test_equal_symmetric(x, y):
+    hypothesis.assume(x is not y)
+    equal_xy = simplify(lib.equal(x, y))
+    equal_yx = simplify(lib.equal(y, x))
+    hypothesis.assume(equal_xy in bool_values)
+    hypothesis.assume(equal_yx in bool_values)
+    assert equal_xy is equal_yx
+
+
+@hypothesis.given(s_quoted, s_quoted, s_quoted)
+def test_equal_transitive(x, y, z):
+    hypothesis.assume(x is not y and x is not z and y is not z)
+    equal_xy = simplify(lib.equal(x, y))
+    hypothesis.assume(equal_xy in bool_values)
+    equal_yz = simplify(lib.equal(y, z))
+    hypothesis.assume(equal_yz in bool_values)
+    equal_xz = simplify(lib.equal(x, z))
+    hypothesis.assume(equal_xz in bool_values)
+    if equal_xy is true and equal_yz is true:
+        assert equal_xz is true
+    if equal_xz is false:
+        assert equal_xy is false or equal_yz is false
 
 
 @for_each([
@@ -593,3 +629,38 @@ def test_equal(x, y, expected):
 ])
 def test_less(x, y, expected):
     assert simplify(lib.less(x, y)) == expected
+
+
+@hypothesis.given(s_quoted)
+def test_less_reflexive(x):
+    less_xx = simplify(lib.less(x, x))
+    assert less_xx == true
+
+
+@hypothesis.given(s_quoted, s_quoted)
+def test_less_antisymmetric(x, y):
+    hypothesis.assume(x is not y)
+    less_xy = simplify(lib.less(x, y))
+    less_yx = simplify(lib.less(y, x))
+    equal_xy = simplify(lib.equal(x, y))
+    hypothesis.assume(less_xy in bool_values)
+    hypothesis.assume(less_yx in bool_values)
+    if less_xy is true and less_yx is true:
+        assert equal_xy is true
+    if equal_xy is false:
+        assert less_xy is false or less_yx is false
+
+
+@hypothesis.given(s_quoted, s_quoted, s_quoted)
+def test_less_transitive(x, y, z):
+    hypothesis.assume(x is not y and x is not z and y is not z)
+    less_xy = simplify(lib.less(x, y))
+    hypothesis.assume(less_xy in bool_values)
+    less_yz = simplify(lib.less(y, z))
+    hypothesis.assume(less_yz in bool_values)
+    less_xz = simplify(lib.less(x, z))
+    hypothesis.assume(less_xz in bool_values)
+    if less_xy is true and less_yz is true:
+        assert less_xz is true
+    if less_xz is false:
+        assert less_xy is not true or less_yz is not true
