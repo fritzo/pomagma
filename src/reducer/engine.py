@@ -2,7 +2,6 @@
 
 __all__ = ['reduce', 'simplify', 'sample']
 
-from collections import defaultdict
 from collections import namedtuple
 from pomagma.compiler.util import memoize_arg
 from pomagma.compiler.util import memoize_args
@@ -11,31 +10,10 @@ from pomagma.reducer.code import VAR, APP, JOIN, QUOTE
 from pomagma.reducer.code import is_var, is_app, is_quote, is_join, free_vars
 from pomagma.reducer.sugar import abstract
 from pomagma.reducer.util import LOG
+from pomagma.reducer.util import PROFILE_COUNTERS
 from pomagma.reducer.util import logged
 from pomagma.reducer.util import pretty
-import atexit
 import itertools
-import os
-import sys
-
-# (fun, arg) -> count
-PROFILE_COUNTERS = defaultdict(lambda: 0)
-
-
-def profile_engine():
-    counts = [
-        (count, fun.__name__, arg)
-        for ((fun, arg), count) in PROFILE_COUNTERS.iteritems()
-    ]
-    counts.sort(reverse=True)
-    sys.stderr.write('{: >10} {: >10} {}\n'.format('count', 'fun', 'arg'))
-    sys.stderr.write('-' * 32 + '\n')
-    for count, fun, arg in counts:
-        sys.stderr.write('{: >10} {: >10} {}\n'.format(count, fun, arg))
-
-
-if int(os.environ.get('POMAGMA_PROFILE_ENGINE', 0)):
-    atexit.register(profile_engine)
 
 
 # ----------------------------------------------------------------------------

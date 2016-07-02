@@ -1,8 +1,12 @@
+from collections import defaultdict
 from pomagma.compiler.util import memoize_args
+import atexit
 import functools
 import inspect
 import logging
+import os
 import pomagma.util
+import sys
 
 # ----------------------------------------------------------------------------
 # Logging
@@ -92,3 +96,26 @@ def pretty(code, add_parens=False):
         return '{{{}}}'.format(arg)
     else:
         raise NotImplementedError(code)
+
+
+# ----------------------------------------------------------------------------
+# Profiling
+
+# (fun, arg) -> count
+PROFILE_COUNTERS = defaultdict(lambda: 0)
+
+
+def profile_engine():
+    counts = [
+        (count, fun.__name__, arg)
+        for ((fun, arg), count) in PROFILE_COUNTERS.iteritems()
+    ]
+    counts.sort(reverse=True)
+    sys.stderr.write('{: >10} {: >10} {}\n'.format('count', 'fun', 'arg'))
+    sys.stderr.write('-' * 32 + '\n')
+    for count, fun, arg in counts:
+        sys.stderr.write('{: >10} {: >10} {}\n'.format(count, fun, arg))
+
+
+if int(os.environ.get('POMAGMA_PROFILE_ENGINE', 0)):
+    atexit.register(profile_engine)
