@@ -38,7 +38,7 @@ handler.setFormatter(IndentingFormatter())
 LOG.addHandler(handler)
 
 
-def logged(*format_args, **format_kwargs):
+def _logged(*format_args, **format_kwargs):
     formatters = dict(format_kwargs)
     for i, fmt in enumerate(format_args):
         formatters[i] = fmt
@@ -63,6 +63,13 @@ def logged(*format_args, **format_kwargs):
         return decorated
 
     return decorator
+
+
+def _not_logged(*args, **kwargs):
+    return lambda fun: fun
+
+
+logged = _logged if LOG.isEnabledFor(logging.DEBUG) else _not_logged
 
 
 @memoize_args
