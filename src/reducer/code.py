@@ -25,7 +25,6 @@ QJOIN = intern('QJOIN')
 QQUOTE = intern('QQUOTE')
 EQUAL = intern('EQUAL')
 LESS = intern('LESS')
-NLESS = intern('NLESS')
 
 
 @memoize_args
@@ -55,6 +54,10 @@ def FUN(var, body):
 
 def LET(var, defn, body):
     return _term(_LET, var, defn, body)
+
+
+def is_atom(code):
+    return isinstance(code, str)
 
 
 def is_var(code):

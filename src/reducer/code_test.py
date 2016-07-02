@@ -1,4 +1,4 @@
-from pomagma.reducer.code import EVAL, QAPP, QJOIN, QQUOTE, EQUAL, LESS, NLESS
+from pomagma.reducer.code import EVAL, QAPP, QJOIN, QQUOTE, EQUAL, LESS
 from pomagma.reducer.code import HOLE, TOP, BOT, I, K, B, C, S
 from pomagma.reducer.code import VAR, APP, JOIN, QUOTE, FUN, LET
 from pomagma.reducer.code import free_vars
@@ -29,7 +29,6 @@ EXAMPLES = [
     {'code': QQUOTE, 'polish': 'QQUOTE', 'sexpr': 'QQUOTE'},
     {'code': EQUAL, 'polish': 'EQUAL', 'sexpr': 'EQUAL'},
     {'code': LESS, 'polish': 'LESS', 'sexpr': 'LESS'},
-    {'code': NLESS, 'polish': 'NLESS', 'sexpr': 'NLESS'},
     {'code': x, 'polish': 'VAR x', 'sexpr': '(VAR x)'},
     {'code': APP(K, I), 'polish': 'APP K I', 'sexpr': '(K I)'},
     {
@@ -119,7 +118,6 @@ s_atoms = s.one_of(
     s.just(QQUOTE),
     s.just(EQUAL),
     s.just(LESS),
-    s.just(NLESS),
 )
 
 

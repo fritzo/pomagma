@@ -18,7 +18,9 @@ __all__ = ['reduce', 'simplify', 'sample']
 from collections import namedtuple
 from pomagma.compiler.util import memoize_arg
 from pomagma.compiler.util import memoize_args
-from pomagma.reducer.code import HOLE, TOP, BOT, I, K, B, C, S, EVAL, QAPP
+from pomagma.reducer import oracle
+from pomagma.reducer.code import EVAL, QAPP, EQUAL, LESS
+from pomagma.reducer.code import HOLE, TOP, BOT, I, K, B, C, S
 from pomagma.reducer.code import VAR, APP, JOIN, QUOTE
 from pomagma.reducer.code import is_var, is_app, is_quote, is_join, free_vars
 from pomagma.reducer.sugar import abstract
@@ -27,6 +29,9 @@ from pomagma.reducer.util import PROFILE_COUNTERS
 from pomagma.reducer.util import logged
 from pomagma.reducer.util import pretty
 import itertools
+
+true = K
+false = APP(K, I)
 
 
 # ----------------------------------------------------------------------------
@@ -92,6 +97,10 @@ def _close(head, context, nonlinear):
         head = abstract(var, head)
 
     return head
+
+
+def try_unquote(code):
+    return code[1] if is_quote(code) else None
 
 
 def _sample(head, context, nonlinear):
@@ -176,6 +185,45 @@ def _sample(head, context, nonlinear):
                 head = QUOTE(_app(x[1], y[1], nonlinear))
             else:
                 head = APP(APP(QAPP, x), y)
+                yield _close(head, context, nonlinear)
+                return
+        elif head is EQUAL:
+            x, context = context_pop(context)
+            y, context = context_pop(context)
+            x = _red(x, nonlinear)
+            y = _red(y, nonlinear)
+            if x is TOP or y is TOP:
+                yield TOP
+                return
+            if (x is BOT and is_quote(y)) or (is_quote(x) and y is BOT):
+                yield BOT
+                return
+            answer = oracle.try_decide_equal(try_unquote(x), try_unquote(y))
+            if answer is True:
+                head = true
+            elif answer is False:
+                head = false
+            else:
+                assert answer is None
+                head = APP(APP(EQUAL, x), y)
+                yield _close(head, context, nonlinear)
+                return
+        elif head is LESS:
+            x, context = context_pop(context)
+            y, context = context_pop(context)
+            x = _red(x, nonlinear)
+            y = _red(y, nonlinear)
+            if x is TOP or y is TOP:
+                yield TOP
+                return
+            answer = oracle.try_decide_less(try_unquote(x), try_unquote(y))
+            if answer is True:
+                head = true
+            elif answer is False:
+                head = false
+            else:
+                assert answer is None
+                head = APP(APP(LESS, x), y)
                 yield _close(head, context, nonlinear)
                 return
         else:

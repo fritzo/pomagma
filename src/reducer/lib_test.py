@@ -556,3 +556,40 @@ def test_list_rec(n, c, x, expected):
 def test_list_quote(x, expected):
     quote_item = lib.num_quote
     assert reduce(lib.list_quote(quote_item, x)) == expected
+
+
+# ----------------------------------------------------------------------------
+# Scott ordering
+
+@for_each([
+    (x, y, lib.equal(x, y)),
+    (quote(x), quote(x), true),
+    (quote(undefined), quote(error), false),
+    (quote(error), quote(undefined), false),
+    (error, x, error),
+    (x, error, error),
+    (undefined, x, lib.equal(undefined, x)),
+    (x, undefined, lib.equal(x, undefined)),
+    (undefined, quote(x), undefined),
+    (quote(x), undefined, undefined),
+])
+def test_equal(x, y, expected):
+    assert simplify(lib.equal(x, y)) == expected
+
+
+@for_each([
+    (x, y, lib.less(x, y)),
+    (quote(x), quote(x), true),
+    (quote(undefined), quote(error), true),
+    (quote(error), quote(undefined), false),
+    (error, x, error),
+    (x, error, error),
+    (undefined, x, lib.less(undefined, x)),
+    (x, undefined, lib.less(x, undefined)),
+    (undefined, quote(x), lib.less(undefined, quote(x))),
+    (quote(x), undefined, lib.less(quote(x), undefined)),
+    (undefined, quote(error), true),
+    (quote(undefined), undefined, true),
+])
+def test_less(x, y, expected):
+    assert simplify(lib.less(x, y)) == expected

@@ -4,7 +4,7 @@ Intro forms are hand-optimized; see lib_test.py for lambda versions.
 
 """
 
-from pomagma.reducer.code import I, K, B, C, TOP, BOT, APP, QUOTE
+from pomagma.reducer.code import TOP, BOT, I, K, B, C, APP, QUOTE, EQUAL, LESS
 from pomagma.reducer.sugar import app, join, quote, qapp, combinator, symmetric
 
 CI = APP(C, I)
@@ -321,3 +321,16 @@ def list_quote(quote_item, xs):
 @combinator
 def bytes_test(xs):
     return app(xs, ok, lambda h, t: unit_and(byte_test(h), bytes_test(t)))
+
+
+# ----------------------------------------------------------------------------
+# Scott ordering
+
+@combinator
+def equal(x, y):
+    return app(EQUAL, x, y)
+
+
+@combinator
+def less(x, y):
+    return app(LESS, x, y)
