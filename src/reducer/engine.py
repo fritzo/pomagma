@@ -2,6 +2,8 @@
 
 __all__ = ['reduce', 'simplify', 'sample']
 
+from collections import defaultdict
+from collections import namedtuple
 from pomagma.compiler.util import memoize_arg
 from pomagma.compiler.util import memoize_args
 from pomagma.reducer.code import HOLE, TOP, BOT, I, K, B, C, S, EVAL, QAPP
@@ -11,8 +13,29 @@ from pomagma.reducer.sugar import abstract
 from pomagma.reducer.util import LOG
 from pomagma.reducer.util import logged
 from pomagma.reducer.util import pretty
+import atexit
 import itertools
-from collections import namedtuple
+import os
+import sys
+
+# (fun, arg) -> count
+PROFILE_COUNTERS = defaultdict(lambda: 0)
+
+
+def profile_engine():
+    counts = [
+        (count, fun.__name__, arg)
+        for ((fun, arg), count) in PROFILE_COUNTERS.iteritems()
+    ]
+    counts.sort(reverse=True)
+    sys.stderr.write('{: >10} {: >10} {}\n'.format('count', 'fun', 'arg'))
+    sys.stderr.write('-' * 32 + '\n')
+    for count, fun, arg in counts:
+        sys.stderr.write('{: >10} {: >10} {}\n'.format(count, fun, arg))
+
+
+if int(os.environ.get('POMAGMA_PROFILE_ENGINE', 0)):
+    atexit.register(profile_engine)
 
 
 # ----------------------------------------------------------------------------
@@ -25,6 +48,7 @@ def make_var(n):
 
 def fresh(avoid):
     """Return the smallest variable not in avoid."""
+    PROFILE_COUNTERS[fresh, len(avoid)] += 1
     var = 0
     for var in itertools.imap(make_var, itertools.count()):
         if var not in avoid:
@@ -64,6 +88,7 @@ def iter_shared_list(shared_list):
 # Reduction
 
 def _close(head, context, nonlinear):
+    PROFILE_COUNTERS[_close, head[0] if isinstance(head, tuple) else head] += 1
     # Reduce args.
     for arg in iter_shared_list(context.stack):
         LOG.debug('head = {}'.format(pretty(head)))
@@ -82,6 +107,8 @@ def _sample(head, context, nonlinear):
     # Head reduce.
     while True:
         LOG.debug('head = {}'.format(pretty(head)))
+        PROFILE_COUNTERS[
+            _sample, head[0] if isinstance(head, tuple) else head] += 1
         if is_app(head):
             context = context_push(context, head[2])
             head = head[1]
@@ -100,11 +127,11 @@ def _sample(head, context, nonlinear):
             head = QUOTE(x)
             yield _close(head, context, nonlinear)
             return
-        elif head is TOP:
-            yield TOP
-            return
         elif head is HOLE:
             yield HOLE
+            return
+        elif head is TOP:
+            yield TOP
             return
         elif head is BOT:
             return
@@ -164,6 +191,7 @@ def _sample(head, context, nonlinear):
 
 
 def _collect(samples):
+    PROFILE_COUNTERS[_collect, '...'] += 1
     terms = set()
     for sample in samples:
         if sample is TOP:
