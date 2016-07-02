@@ -1,4 +1,17 @@
-'''Python reference implementation of beta-eta reduction engine.'''
+'''Python reference implementation of beta-eta reduction engine.
+
+Environment Variables:
+    POMAGMA_PROFILE_ENGINE
+
+Known Bugs:
+(B1) Evaluation is too eager wrt quoting. Eg the engine should not reduce
+    lib.list_map eagerly unless it has an argument, but
+    qapp(quote(list_map), quote(I), quote(nil)) will evaluate list_map too
+    soon.
+    OK: reduce(app(list_map, I, nil))
+    DIV: reduce(app(list_map, I))
+    DIV: reduce(qapp(quote(list_map), quote(I), quote(nil)))
+'''
 
 __all__ = ['reduce', 'simplify', 'sample']
 
@@ -159,7 +172,8 @@ def _sample(head, context, nonlinear):
             x = _red(x, nonlinear)
             y = _red(y, nonlinear)
             if is_quote(x) and is_quote(y):
-                head = QUOTE(APP(x[1], y[1]))
+                # FIXME This is too eager; see (B1).
+                head = QUOTE(_app(x[1], y[1], nonlinear))
             else:
                 head = APP(APP(QAPP, x), y)
                 yield _close(head, context, nonlinear)

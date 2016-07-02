@@ -3,6 +3,7 @@ from pomagma.reducer import lib
 from pomagma.reducer.code import HOLE, TOP, BOT, I, K, B, C, S, EVAL, VAR
 from pomagma.reducer.sugar import app, join, quote, qapp, combinator
 from pomagma.util.testing import for_each
+import pytest
 import sys
 
 BUDGET = 10000
@@ -71,6 +72,9 @@ def map_(f, xs):
     (qapp(quote(x), y), qapp(quote(x), y)),
     (qapp(x, quote(y)), qapp(x, quote(y))),
     (qapp(quote(x), quote(y)), quote(app(x, y))),
+    (app(lib.list_map, I, lib.nil), lib.nil),
+    pytest.mark.xfail(
+        (qapp(quote(lib.list_map), quote(I), quote(lib.nil)), quote(lib.nil))),
     (map_(I, lib.nil), lib.nil),
     (map_(I, lib.cons(x, lib.nil)), lib.cons(x, lib.nil)),
 ])

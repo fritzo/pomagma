@@ -1,5 +1,6 @@
 from parsable import parsable
 from pomagma.reducer import engine
+from pomagma.reducer import lib
 from pomagma.reducer import transforms
 from pomagma.reducer.code import polish_parse, polish_print
 from pomagma.reducer.code import sexpr_parse, sexpr_print
@@ -94,6 +95,17 @@ def repl(fmt='sexpr'):
             sys.stderr.write('\n')
             sys.stderr.flush()
             continue
+
+
+@parsable
+def profile(count=256):
+    """Run a reduce(lib.gyte_test(lib.byte_table[n])) for the first count
+    bytes."""
+    examples = sorted(lib.byte_table.items())
+    for n, byte in examples[:count]:
+        engine.reduce(lib.byte_test(byte))
+        sys.stdout.write('.')
+        sys.stdout.flush()
 
 
 if __name__ == '__main__':
