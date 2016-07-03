@@ -75,7 +75,6 @@ def test_try_decide_equal(x, y, less_xy, less_yx):
     (TOP, TOP),
     (BOT, BOT),
     (I, I),
-    (BOT, BOT),
     (K, TOP),
     (F, TOP),
     (J, TOP),
@@ -91,9 +90,34 @@ def test_try_cast_unit(x, expected):
     (BOT, BOT),
     (K, K),
     (F, F),
-    (BOT, BOT),
     (I, TOP),
     (J, TOP),
 ])
 def test_try_cast_bool(x, expected):
     assert oracle.try_cast_bool(x) == expected
+
+
+none = K
+
+
+def some(x):
+    return app(K, app(C, I, x))
+
+
+@for_each([
+    (TOP, TOP),
+    (BOT, BOT),
+    (none, none),
+    (some(TOP), some(TOP)),
+    (some(BOT), some(BOT)),
+    (some(I), some(I)),
+    (some(K), some(K)),
+    (some(F), some(F)),
+    pytest.mark.xfail((app(J, some(K), some(F)), some(J))),
+    (app(J, none, some(BOT)), TOP),
+    (I, TOP),
+    (F, TOP),
+    (J, TOP),
+])
+def test_try_cast_maybe(x, expected):
+    assert oracle.try_cast_maybe(x) == expected

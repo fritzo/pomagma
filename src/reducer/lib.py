@@ -5,7 +5,7 @@ Intro forms are hand-optimized; see lib_test.py for lambda versions.
 """
 
 from pomagma.reducer.code import TOP, BOT, I, K, B, C, APP, QUOTE, EQUAL, LESS
-from pomagma.reducer.code import UNIT, BOOL
+from pomagma.reducer.code import UNIT, BOOL, MAYBE
 from pomagma.reducer.sugar import app, join, quote, qapp, combinator, symmetric
 
 CI = APP(C, I)
@@ -106,56 +106,6 @@ def bool_quote(x):
 
 
 # ----------------------------------------------------------------------------
-# Byte as an 8-tuple of bits
-
-def _make_bits_table(n):
-    table = {0: I}
-    for i in xrange(n):
-        prev = table
-        table = {}
-        for k, v in prev.iteritems():
-            table[k] = APP(APP(C, v), false)
-            table[k | (1 << i)] = APP(APP(C, v), true)
-    return table
-
-
-byte_table = _make_bits_table(8)
-assert len(byte_table) == 256
-
-
-# FIXME this is very slow
-def _bits_test(b0, b1, b2, b3, b4, b5, b6, b7):
-    bits = [b0, b1, b2, b3, b4, b5, b6, b7]
-    tests = map(bool_test, bits)
-    return app(join(*tests), *tests)
-
-
-@combinator
-def byte_test(x):
-    return unit_type(app(x, _bits_test))
-
-
-@combinator
-def byte_make(b0, b1, b2, b3, b4, b5, b6, b7):
-    result = I
-    for b in (b0, b1, b2, b3, b4, b5, b6, b7):
-        result = app(C, result, b)
-    return result
-
-
-byte_get_bit = [
-    combinator(lambda x: app(x, lambda b0, b1, b2, b3, b4, b5, b6, b7: b0)),
-    combinator(lambda x: app(x, lambda b0, b1, b2, b3, b4, b5, b6, b7: b1)),
-    combinator(lambda x: app(x, lambda b0, b1, b2, b3, b4, b5, b6, b7: b2)),
-    combinator(lambda x: app(x, lambda b0, b1, b2, b3, b4, b5, b6, b7: b3)),
-    combinator(lambda x: app(x, lambda b0, b1, b2, b3, b4, b5, b6, b7: b4)),
-    combinator(lambda x: app(x, lambda b0, b1, b2, b3, b4, b5, b6, b7: b5)),
-    combinator(lambda x: app(x, lambda b0, b1, b2, b3, b4, b5, b6, b7: b6)),
-    combinator(lambda x: app(x, lambda b0, b1, b2, b3, b4, b5, b6, b7: b7)),
-]
-
-
-# ----------------------------------------------------------------------------
 # Maybe
 
 none = K
@@ -167,12 +117,19 @@ def some(arg):
 
 
 @combinator
+def maybe_type(x):
+    return app(MAYBE, x)
+
+
+@combinator
 def maybe_test(x):
+    x = maybe_type(x)
     return unit_type(app(x, ok, lambda y: ok))
 
 
 @combinator
 def maybe_quote(quote_some, x):
+    x = maybe_type(x)
     return app(
         x,
         QUOTE(none),
@@ -339,15 +296,6 @@ def list_quote(quote_item, xs):
 
 
 # ----------------------------------------------------------------------------
-# Bytes, as a homogeneous list of Byte
-
-@combinator
-def bytes_test(xs):
-    return unit_type(
-        app(xs, ok, lambda h, t: unit_and(byte_test(h), bytes_test(t))))
-
-
-# ----------------------------------------------------------------------------
 # Scott ordering
 
 @combinator
@@ -358,3 +306,62 @@ def equal(x, y):
 @combinator
 def less(x, y):
     return bool_type(app(LESS, x, y))
+
+
+# ----------------------------------------------------------------------------
+# Byte as an 8-tuple of bits
+
+def _make_bits_table(n):
+    table = {0: I}
+    for i in xrange(n):
+        prev = table
+        table = {}
+        for k, v in prev.iteritems():
+            table[k] = APP(APP(C, v), false)
+            table[k | (1 << i)] = APP(APP(C, v), true)
+    return table
+
+
+byte_table = _make_bits_table(8)
+assert len(byte_table) == 256
+
+
+# FIXME this is very slow
+def _bits_test(b0, b1, b2, b3, b4, b5, b6, b7):
+    bits = [b0, b1, b2, b3, b4, b5, b6, b7]
+    tests = map(bool_test, bits)
+    return app(join(*tests), *tests)
+
+
+@combinator
+def byte_test(x):
+    return unit_type(app(x, _bits_test))
+
+
+@combinator
+def byte_make(b0, b1, b2, b3, b4, b5, b6, b7):
+    result = I
+    for b in (b0, b1, b2, b3, b4, b5, b6, b7):
+        result = app(C, result, b)
+    return result
+
+
+byte_get_bit = [
+    combinator(lambda x: app(x, lambda b0, b1, b2, b3, b4, b5, b6, b7: b0)),
+    combinator(lambda x: app(x, lambda b0, b1, b2, b3, b4, b5, b6, b7: b1)),
+    combinator(lambda x: app(x, lambda b0, b1, b2, b3, b4, b5, b6, b7: b2)),
+    combinator(lambda x: app(x, lambda b0, b1, b2, b3, b4, b5, b6, b7: b3)),
+    combinator(lambda x: app(x, lambda b0, b1, b2, b3, b4, b5, b6, b7: b4)),
+    combinator(lambda x: app(x, lambda b0, b1, b2, b3, b4, b5, b6, b7: b5)),
+    combinator(lambda x: app(x, lambda b0, b1, b2, b3, b4, b5, b6, b7: b6)),
+    combinator(lambda x: app(x, lambda b0, b1, b2, b3, b4, b5, b6, b7: b7)),
+]
+
+
+# ----------------------------------------------------------------------------
+# Bytes, as a homogeneous list of Byte
+
+@combinator
+def bytes_test(xs):
+    return unit_type(
+        app(xs, ok, lambda h, t: unit_and(byte_test(h), bytes_test(t))))

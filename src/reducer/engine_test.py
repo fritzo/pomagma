@@ -2,7 +2,7 @@ from pomagma.reducer import engine
 from pomagma.reducer import lib
 from pomagma.reducer.code import HOLE, TOP, BOT, I, K, B, C, S, J
 from pomagma.reducer.code import EVAL, QQUOTE, QAPP, EQUAL, LESS
-from pomagma.reducer.code import UNIT, BOOL
+from pomagma.reducer.code import UNIT, BOOL, MAYBE
 from pomagma.reducer.code import VAR, APP, QUOTE
 from pomagma.reducer.sugar import app, join, quote, qapp, combinator
 from pomagma.util.testing import for_each
@@ -145,6 +145,19 @@ REDUCE_EXAMPLES = [
     (app(BOOL, C), TOP),
     (app(BOOL, S), TOP),
     (app(BOOL, J), TOP),
+    (app(MAYBE, x), app(MAYBE, x)),
+    (app(MAYBE, app(MAYBE, x)), app(MAYBE, x)),
+    (app(MAYBE, TOP), TOP),
+    (app(MAYBE, BOT), BOT),
+    (app(MAYBE, K), K),
+    (app(MAYBE, app(K, app(C, I, TOP))), app(K, app(C, I, TOP))),
+    (app(MAYBE, app(K, app(C, I, BOT))), app(K, app(C, I, BOT))),
+    (app(MAYBE, app(K, app(C, I, I))), app(K, app(C, I, I))),
+    (app(MAYBE, I), TOP),
+    (app(MAYBE, B), TOP),
+    (app(MAYBE, C), TOP),
+    (app(MAYBE, S), TOP),
+    (app(MAYBE, J), TOP),
 ]
 
 
@@ -177,6 +190,7 @@ s_atoms = s.one_of(
     s.just(LESS),
     s.just(UNIT),
     s.just(BOOL),
+    s.just(MAYBE),
 )
 
 

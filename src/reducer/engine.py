@@ -21,7 +21,7 @@ from pomagma.compiler.util import memoize_args
 from pomagma.reducer import oracle
 from pomagma.reducer.code import EVAL, QQUOTE, QAPP, EQUAL, LESS
 from pomagma.reducer.code import HOLE, TOP, BOT, I, K, B, C, S, J
-from pomagma.reducer.code import UNIT, BOOL
+from pomagma.reducer.code import UNIT, BOOL, MAYBE
 from pomagma.reducer.code import VAR, APP, QUOTE
 from pomagma.reducer.code import is_var, is_app, is_quote, free_vars
 from pomagma.reducer.sugar import abstract
@@ -102,6 +102,13 @@ def _close(head, context, nonlinear):
 
 def try_unquote(code):
     return code[1] if is_quote(code) else None
+
+
+TRY_CAST = {
+    BOOL: oracle.try_cast_bool,
+    UNIT: oracle.try_cast_unit,
+    MAYBE: oracle.try_cast_maybe,
+}
 
 
 def _sample(head, context, nonlinear):
@@ -240,24 +247,15 @@ def _sample(head, context, nonlinear):
                 head = APP(APP(LESS, x), y)
                 yield _close(head, context, nonlinear)
                 return
-        elif head is UNIT:
+        elif head in TRY_CAST:
+            type_ = head
             x, context = context_pop(context)
-            x = _red(x, nonlinear)  # Can we set nonlinear=True?
-            while is_app(x) and x[1] is UNIT:
+            x = _red(x, nonlinear)
+            while is_app(x) and x[1] is type_:
                 x = x[2]
-            head = oracle.try_cast_unit(x)
+            head = TRY_CAST[type_](x)
             if head is None:
-                head = APP(UNIT, x)
-                yield _close(head, context, nonlinear)
-                return
-        elif head is BOOL:
-            x, context = context_pop(context)
-            x = _red(x, nonlinear)  # Can we set nonlinear=True?
-            while is_app(x) and x[1] is BOOL:
-                x = x[2]
-            head = oracle.try_cast_bool(x)
-            if head is None:
-                head = APP(BOOL, x)
+                head = APP(type_, x)
                 yield _close(head, context, nonlinear)
                 return
         else:

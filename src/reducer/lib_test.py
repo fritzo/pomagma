@@ -206,55 +206,25 @@ def test_bool_quote(x, expected):
 
 
 # ----------------------------------------------------------------------------
-# Byte
-
-BYTE_EXAMPLES = sorted(lib.byte_table.items())
-
+# Maybe
 
 @for_each([
-    (ok, 8 * [true]),
-    (ok, 8 * [false]),
-    (ok, 7 * [true] + [false]),
-    (ok, 7 * [false] + [true]),
-    (ok, [true] + 7 * [false]),
-    (ok, [false] + 7 * [true]),
-    (undefined, 8 * [undefined]),
-    (undefined, [undefined] + 7 * [true]),
-    (undefined, [undefined] + 7 * [false]),
-    (undefined, 7 * [true] + [undefined]),
-    (undefined, 7 * [false] + [undefined]),
-    (error, [error] + 7 * [true]),
-    (error, [error] + 7 * [false]),
-    (error, [error] + 7 * [undefined]),
-    (error, 7 * [true] + [error]),
-    (error, 7 * [false] + [error]),
-    (error, 7 * [undefined] + [error]),
+    (lib.none, lib.none),
+    (lib.some(undefined), lib.some(undefined)),
+    (lib.some(error), lib.some(error)),
+    (lib.some(ok), lib.some(ok)),
+    (lib.some(true), lib.some(true)),
+    (lib.some(false), lib.some(false)),
+    (error, error),
+    (undefined, undefined),
+    (ok, error),
+    (J, error),
+    (app(J, lib.none, lib.some(undefined)), error),
+    pytest.mark.xfail((app(J, lib.some(true), lib.some(false)), lib.some(J))),
 ])
-def test_byte_test(expected, bits):
-    byte = lib.byte_make(*bits)
-    assert reduce(lib.byte_test(byte)) == expected
+def test_maybe_type(x, expected):
+    assert simplify(lib.maybe_type(x)) == expected
 
-
-@for_each(BYTE_EXAMPLES)
-def test_byte_test_ok(n, byte):
-    assert reduce(lib.byte_test(byte)) == ok
-
-
-@for_each(BYTE_EXAMPLES)
-def test_byte_make(n, expected):
-    bits = [true if (n & (1 << i)) else false for i in xrange(8)]
-    assert lib.byte_make(*bits) == expected
-
-
-@for_each(BYTE_EXAMPLES)
-def test_byte_get_bit(n, byte):
-    for i in xrange(8):
-        expected = true if (n & (1 << i)) else false
-        assert simplify(lib.byte_get_bit[i](byte)) == expected
-
-
-# ----------------------------------------------------------------------------
-# Maybe
 
 @for_each([
     (lib.none, ok),
@@ -781,3 +751,51 @@ def test_less_transitive(x, y, z):
         assert less_xz is true
     if less_xz is false:
         assert less_xy is not true or less_yz is not true
+
+
+# ----------------------------------------------------------------------------
+# Byte
+
+BYTE_EXAMPLES = sorted(lib.byte_table.items())
+
+
+@for_each([
+    (ok, 8 * [true]),
+    (ok, 8 * [false]),
+    (ok, 7 * [true] + [false]),
+    (ok, 7 * [false] + [true]),
+    (ok, [true] + 7 * [false]),
+    (ok, [false] + 7 * [true]),
+    (undefined, 8 * [undefined]),
+    (undefined, [undefined] + 7 * [true]),
+    (undefined, [undefined] + 7 * [false]),
+    (undefined, 7 * [true] + [undefined]),
+    (undefined, 7 * [false] + [undefined]),
+    (error, [error] + 7 * [true]),
+    (error, [error] + 7 * [false]),
+    (error, [error] + 7 * [undefined]),
+    (error, 7 * [true] + [error]),
+    (error, 7 * [false] + [error]),
+    (error, 7 * [undefined] + [error]),
+])
+def test_byte_test(expected, bits):
+    byte = lib.byte_make(*bits)
+    assert reduce(lib.byte_test(byte)) == expected
+
+
+@for_each(BYTE_EXAMPLES)
+def test_byte_test_ok(n, byte):
+    assert reduce(lib.byte_test(byte)) == ok
+
+
+@for_each(BYTE_EXAMPLES)
+def test_byte_make(n, expected):
+    bits = [true if (n & (1 << i)) else false for i in xrange(8)]
+    assert lib.byte_make(*bits) == expected
+
+
+@for_each(BYTE_EXAMPLES)
+def test_byte_get_bit(n, byte):
+    for i in xrange(8):
+        expected = true if (n & (1 << i)) else false
+        assert simplify(lib.byte_get_bit[i](byte)) == expected

@@ -5,6 +5,7 @@ __all__ = [
     'try_decide_less',
     'try_cast_unit',
     'try_cast_bool',
+    'try_cast_maybe',
 ]
 
 from pomagma.compiler.util import memoize_arg
@@ -168,10 +169,41 @@ def try_cast_bool(x):
     less_x_F = try_decide_less(x, F)
     if less_x_K is False and less_x_F is False:
         return TOP
-    equal_x_BOT = try_decide_equal(x, BOT)
-    if equal_x_BOT is False:
+    if try_decide_equal(x, BOT) is False:
         if less_x_K is True:
             return K
         if less_x_F is True:
             return F
+    return None
+
+
+CI = APP(C, I)
+none = K
+some_TOP = APP(K, APP(CI, TOP))
+
+
+def try_cast_maybe(x):
+    """Weak oracle closing x to type maybe.
+
+    Inputs:
+        x : code in linear normal form
+    Returns:
+        TOP, BOT, K, APP(K, APP(APP(C, I), ...)), or None
+
+    """
+    assert x is not None
+    if x in (TOP, BOT, K):
+        return x
+    if is_app(x) and x[1] is K and is_app(x[2]) and x[2][1] is CI:
+        return x
+    less_x_none = try_decide_less(x, none)
+    less_x_some_TOP = try_decide_less(x, some_TOP)
+    if less_x_none is False and less_x_some_TOP is False:
+        return TOP
+    if try_decide_equal(x, BOT) is False:
+        if less_x_none is True:
+            return none
+        if less_x_some_TOP is True:
+            value = APP(APP(x, TOP), I)
+            return APP(K, APP(CI, value))
     return None
