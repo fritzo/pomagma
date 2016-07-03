@@ -245,19 +245,25 @@ def _sample(head, context, nonlinear):
 
 def _collect(samples):
     PROFILE_COUNTERS[_collect, '...'] += 1
-    terms = set()
+    unique_samples = set()
     for sample in samples:
         if sample is TOP:
             return TOP
-        terms.add(sample)
-    if not terms:
+        unique_samples.add(sample)
+    if not unique_samples:
         return BOT
-    if len(terms) == 1:
-        return terms.pop()
-    terms = sorted(terms)
-    result = terms[0]
-    for term in terms[1:]:
-        result = APP(APP(J, result), term)
+    if len(unique_samples) == 1:
+        return unique_samples.pop()
+    filtered_samples = sorted([
+        sample
+        for sample in unique_samples
+        if not any(oracle.try_decide_less(sample, other)
+                   for other in unique_samples
+                   if other is not sample)
+    ])
+    result = filtered_samples[0]
+    for sample in filtered_samples[1:]:
+        result = APP(APP(J, result), sample)
     return result
 
 

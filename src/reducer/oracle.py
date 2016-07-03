@@ -5,8 +5,8 @@ __all__ = ['try_decide_equal', 'try_decide_less']
 from pomagma.compiler.util import memoize_arg
 from pomagma.reducer.code import TOP, BOT, I, K, B, C, S, J, is_app
 
-# TODO Add J reduction rules that would allow J to be added to this list.
-_linear_atoms = set([TOP, BOT, I, K, B, C])
+# TODO Add J abstraction rules that would allow J to be added to this list.
+_linear_atoms = set([TOP, BOT, I, K, B, C, J])
 
 
 @memoize_arg
