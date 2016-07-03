@@ -243,6 +243,8 @@ def _sample(head, context, nonlinear):
         elif head is UNIT:
             x, context = context_pop(context)
             x = _red(x, nonlinear)  # Can we set nonlinear=True?
+            while is_app(x) and x[1] is UNIT:
+                x = x[2]
             head = oracle.try_cast_unit(x)
             if head is None:
                 head = APP(UNIT, x)
@@ -251,6 +253,8 @@ def _sample(head, context, nonlinear):
         elif head is BOOL:
             x, context = context_pop(context)
             x = _red(x, nonlinear)  # Can we set nonlinear=True?
+            while is_app(x) and x[1] is BOOL:
+                x = x[2]
             head = oracle.try_cast_bool(x)
             if head is None:
                 head = APP(BOOL, x)

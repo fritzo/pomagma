@@ -35,8 +35,7 @@ def unit_type(x):
 
 @combinator
 def unit_test(x):
-    x = unit_type(x)
-    return app(x, ok)
+    return unit_type(x)
 
 
 @combinator
@@ -44,14 +43,14 @@ def unit_test(x):
 def unit_and(x, y):
     x = unit_type(x)
     y = unit_type(y)
-    return app(x, y)
+    return unit_type(app(x, y))
 
 
 @combinator
 def unit_or(x, y):
     x = unit_type(x)
     y = unit_type(y)
-    return join(x, y)
+    return unit_type(join(x, y))
 
 
 @combinator
@@ -75,13 +74,13 @@ def bool_type(x):
 @combinator
 def bool_test(x):
     x = bool_type(x)
-    return app(x, ok, ok)
+    return unit_type(app(x, ok, ok))
 
 
 @combinator
 def bool_not(x):
     x = bool_type(x)
-    return app(x, false, true)
+    return bool_type(app(x, false, true))
 
 
 @combinator
@@ -89,7 +88,7 @@ def bool_not(x):
 def bool_and(x, y):
     x = bool_type(x)
     y = bool_type(y)
-    return app(x, y, false)
+    return bool_type(app(x, y, false))
 
 
 @combinator
@@ -97,7 +96,7 @@ def bool_and(x, y):
 def bool_or(x, y):
     x = bool_type(x)
     y = bool_type(y)
-    return app(x, true, y)
+    return bool_type(app(x, true, y))
 
 
 @combinator
@@ -133,7 +132,7 @@ def _bits_test(b0, b1, b2, b3, b4, b5, b6, b7):
 
 @combinator
 def byte_test(x):
-    return app(x, _bits_test)
+    return unit_type(app(x, _bits_test))
 
 
 @combinator
@@ -169,7 +168,7 @@ def some(arg):
 
 @combinator
 def maybe_test(x):
-    return app(x, ok, lambda y: ok)
+    return unit_type(app(x, ok, lambda y: ok))
 
 
 @combinator
@@ -191,7 +190,7 @@ def pair(x, y):
 
 @combinator
 def prod_test(xy):
-    return app(xy, lambda x, y: ok)
+    return unit_type(app(xy, lambda x, y: ok))
 
 
 @combinator
@@ -227,7 +226,7 @@ def inr(y):
 
 @combinator
 def sum_test(xy):
-    return app(xy, lambda x: ok, lambda y: ok)
+    return unit_type(app(xy, lambda x: ok, lambda y: ok))
 
 
 @combinator
@@ -248,7 +247,7 @@ succ = some
 
 @combinator
 def num_test(x):
-    return app(x, ok, num_test)
+    return unit_type(app(x, ok, num_test))
 
 
 @combinator
@@ -302,7 +301,7 @@ def cons(head, tail):
 
 @combinator
 def list_test(xs):
-    return app(xs, ok, lambda h, t: list_test(t))
+    return unit_type(app(xs, ok, lambda h, t: list_test(t)))
 
 
 @combinator
@@ -344,7 +343,8 @@ def list_quote(quote_item, xs):
 
 @combinator
 def bytes_test(xs):
-    return app(xs, ok, lambda h, t: unit_and(byte_test(h), bytes_test(t)))
+    return unit_type(
+        app(xs, ok, lambda h, t: unit_and(byte_test(h), bytes_test(t))))
 
 
 # ----------------------------------------------------------------------------
@@ -352,9 +352,9 @@ def bytes_test(xs):
 
 @combinator
 def equal(x, y):
-    return app(EQUAL, x, y)
+    return bool_type(app(EQUAL, x, y))
 
 
 @combinator
 def less(x, y):
-    return app(LESS, x, y)
+    return bool_type(app(LESS, x, y))

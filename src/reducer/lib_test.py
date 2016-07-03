@@ -1,5 +1,5 @@
 from pomagma.reducer import lib
-from pomagma.reducer.code import VAR, J
+from pomagma.reducer.code import VAR, J, UNIT
 from pomagma.reducer.engine import reduce, simplify
 from pomagma.reducer.engine_test import s_quoted
 from pomagma.reducer.sugar import as_code, app, quote
@@ -48,6 +48,7 @@ def test_intro_forms(name, native):
     (true, error),
     (false, error),
     (J, error),
+    (x, app(UNIT, x)),
 ])
 def test_unit_type(x, expected):
     assert simplify(lib.unit_type(x)) == expected
@@ -59,6 +60,7 @@ def test_unit_type(x, expected):
     (undefined, undefined),
     (true, error),
     (false, error),
+    (x, app(UNIT, x)),
 ])
 def test_unit_test(x, expected):
     assert simplify(lib.unit_test(x)) == expected
