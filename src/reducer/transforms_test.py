@@ -18,10 +18,18 @@ z = VAR('z')
     (x, APP(x, y), APP(APP(C, I), y)),
     (x, APP(y, x), y),
     (x, APP(y, APP(z, x)), APP(APP(B, y), z)),
-    (x, APP(APP(J, x), x), APP(APP(S, J), I)),
-    (x, APP(APP(J, x), y), APP(APP(C, J), y)),  # Should be APP(J, y).
-    (x, APP(APP(J, y), x), APP(J, y)),
+    (x, J, APP(K, J)),
+    (x, APP(J, y), APP(K, APP(J, y))),
     (x, APP(APP(J, y), z), APP(K, APP(APP(J, y), z))),
+    (x, APP(J, x), J),
+    (x, APP(APP(J, x), y), APP(J, y)),
+    (x, APP(APP(J, y), x), APP(J, y)),
+    (x, APP(APP(J, APP(w, x)), y), APP(APP(B, APP(J, y)), w)),
+    (x, APP(APP(J, y), APP(w, x)), APP(APP(B, APP(J, y)), w)),
+    (x, APP(APP(J, x), x), APP(APP(J, I), I)),
+    (x, APP(APP(J, x), APP(z, x)), APP(APP(J, I), z)),
+    (x, APP(APP(J, APP(y, x)), x), APP(APP(J, y), I)),
+    (x, APP(APP(J, APP(y, x)), APP(z, x)), APP(APP(J, y), z)),
 ])
 def test_abstract(var, body, expected_abs):
     actual_abs = abstract(var, body)

@@ -22,7 +22,7 @@ def map_(f, xs):
     return app(xs, lib.nil, lambda h, t: lib.cons(app(f, h), map_(f, t)))
 
 
-@for_each([
+REDUCE_EXAMPLES = [
     (x, x),
     (app(x, y), app(x, y)),
     (app(x, I), app(x, I)),
@@ -57,11 +57,21 @@ def map_(f, xs):
     (app(S, x, y), app(S, x, y)),
     (app(S, x, y, z), app(x, z, app(y, z))),
     (app(S, x, y, z, w), app(x, z, app(y, z), w)),
+    (J, J),
+    pytest.mark.xfail((app(J, x), app(J, x))),
     (join(x, y), join(x, y)),
     (join(x, x), x),
     (join(BOT, x), x),
     (join(TOP, x), TOP),
     (join(HOLE, x), join(HOLE, x)),
+    pytest.mark.xfail((join(K, APP(K, I)), J)),
+    pytest.mark.xfail((join(APP(K, I), K), J)),
+    pytest.mark.xfail((join(J, K), J)),
+    pytest.mark.xfail((join(K, J), J)),
+    pytest.mark.xfail((join(J, APP(K, I)), J)),
+    pytest.mark.xfail((join(APP(K, I), J), J)),
+    pytest.mark.xfail((app(C, J), J)),
+    (app(S, J, I), I),
     (app(join(x, y), z), join(app(x, z), app(y, z))),
     (app(join(I, app(K, I)), I), I),
     (app(join(I, app(K, I)), K), join(I, K)),
@@ -112,7 +122,10 @@ def map_(f, xs):
     (app(LESS, quote(x), BOT), app(LESS, quote(x), BOT)),
     (app(LESS, BOT, quote(TOP)), lib.true),
     (app(LESS, quote(BOT), BOT), lib.true),
-])
+]
+
+
+@for_each(REDUCE_EXAMPLES)
 def test_reduce(code, expected_result):
     actual_result = engine.reduce(code, BUDGET)
     assert actual_result == expected_result

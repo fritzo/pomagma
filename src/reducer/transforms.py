@@ -6,7 +6,7 @@ from pomagma.compiler.util import memoize_args
 from pomagma.reducer import pattern
 from pomagma.reducer.code import HOLE, TOP, BOT, I, K, B, C, S, J
 from pomagma.reducer.code import VAR, APP, FUN, LET
-from pomagma.reducer.code import is_var, is_app, is_fun, is_let
+from pomagma.reducer.code import is_atom, is_var, is_app, is_fun, is_let
 
 
 # ----------------------------------------------------------------------------
@@ -16,27 +16,49 @@ from pomagma.reducer.code import is_var, is_app, is_fun, is_let
 def try_abstract(var, body):
     """Returns \\var.body if var occurs in body, else None."""
     if not is_var(var):
-        raise NotImplemented('Only variables can be abstracted')
+        raise NotImplementedError('Only variables can be abstracted')
     if body is var:
-        return I  # Rule I.
-    if is_app(body):
-        lhs = body[1]
-        rhs = body[2]
-        lhs_abs = try_abstract(var, lhs)
-        rhs_abs = try_abstract(var, rhs)
-        if lhs_abs is None:
-            if rhs_abs is None:
-                return None  # Rule K.
-            elif rhs_abs is I:
-                return lhs  # Rule eta.
+        return I  # Rule I
+    elif is_app(body):
+        if is_app(body[1]) and body[1][1] is J:
+            lhs = body[1][2]
+            rhs = body[2]
+            lhs_abs = try_abstract(var, lhs)
+            rhs_abs = try_abstract(var, rhs)
+            if lhs_abs is None:
+                if rhs_abs is None:
+                    return None  # Rule K
+                elif rhs_abs is I:
+                    return APP(J, lhs)  # Rule J-eta
+                else:
+                    return APP(APP(B, APP(J, lhs)), rhs_abs)  # Rule J-B
             else:
-                return APP(APP(B, lhs), rhs_abs)  # Rule B.
+                if rhs_abs is None:
+                    if lhs_abs is I:
+                        return APP(J, rhs)  # Rule J-eta
+                    else:
+                        return APP(APP(B, APP(J, rhs)), lhs_abs)  # Rule J-B
+                else:
+                    return APP(APP(J, lhs_abs), rhs_abs)  # Rule J
         else:
-            if rhs_abs is None:
-                return APP(APP(C, lhs_abs), rhs)  # Rule C.
+            lhs = body[1]
+            rhs = body[2]
+            lhs_abs = try_abstract(var, lhs)
+            rhs_abs = try_abstract(var, rhs)
+            if lhs_abs is None:
+                if rhs_abs is None:
+                    return None  # Rule K
+                elif rhs_abs is I:
+                    return lhs  # Rule eta
+                else:
+                    return APP(APP(B, lhs), rhs_abs)  # Rule B
             else:
-                return APP(APP(S, lhs_abs), rhs_abs)  # Rule S.
-    return None  # Rule K.
+                if rhs_abs is None:
+                    return APP(APP(C, lhs_abs), rhs)  # Rule C
+                else:
+                    return APP(APP(S, lhs_abs), rhs_abs)  # Rule S
+    else:
+        return None  # Rule K
 
 
 def abstract(var, body):
