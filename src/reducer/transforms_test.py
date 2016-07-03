@@ -1,5 +1,5 @@
-from pomagma.reducer.code import HOLE, TOP, BOT, I, K, B, C, S
-from pomagma.reducer.code import VAR, APP, JOIN, FUN, LET
+from pomagma.reducer.code import HOLE, TOP, BOT, I, K, B, C, S, J
+from pomagma.reducer.code import VAR, APP, FUN, LET
 from pomagma.reducer.code import polish_print
 from pomagma.reducer.transforms import abstract, compile_, decompile, fresh_var
 from pomagma.util.testing import for_each
@@ -18,10 +18,10 @@ z = VAR('z')
     (x, APP(x, y), APP(APP(C, I), y)),
     (x, APP(y, x), y),
     (x, APP(y, APP(z, x)), APP(APP(B, y), z)),
-    (x, JOIN(x, x), JOIN(I, I)),
-    (x, JOIN(x, y), JOIN(I, APP(K, y))),
-    (x, JOIN(y, x), JOIN(APP(K, y), I)),
-    (x, JOIN(y, z), APP(K, JOIN(y, z))),
+    (x, APP(APP(J, x), x), APP(APP(S, J), I)),
+    (x, APP(APP(J, x), y), APP(APP(C, J), y)),  # Should be APP(J, y).
+    (x, APP(APP(J, y), x), APP(J, y)),
+    (x, APP(APP(J, y), z), APP(K, APP(APP(J, y), z))),
 ])
 def test_abstract(var, body, expected_abs):
     actual_abs = abstract(var, body)
@@ -34,6 +34,12 @@ c = fresh_var(2)
 
 
 @for_each([
+    (HOLE, HOLE),
+    (APP(HOLE, x), APP(HOLE, x)),
+    (TOP, TOP),
+    (APP(TOP, x), TOP),
+    (BOT, BOT),
+    (APP(BOT, x), BOT),
     (I, FUN(a, a)),
     (APP(I, x), x),
     (APP(APP(I, x), y), APP(x, y)),
@@ -60,6 +66,9 @@ c = fresh_var(2)
         APP(APP(APP(APP(S, x), y), I), w),
         APP(LET(a, FUN(b, b), APP(APP(x, a), APP(y, a))), w),
     ),
+    (J, J),
+    (APP(J, x), APP(J, x)),
+
 ])
 def test_decompile(code, expected):
     actual_str = polish_print(decompile(code))
@@ -76,11 +85,11 @@ def test_decompile(code, expected):
     B,
     C,
     S,
+    J,
     APP(K, I),
     APP(C, I),
     APP(APP(C, I), I),
     APP(APP(S, I), I),
-    JOIN(K, APP(K, I)),
 ])
 def test_decompile_compile(code):
     expected_str = polish_print(code)

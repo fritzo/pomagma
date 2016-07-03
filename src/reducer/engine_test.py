@@ -1,8 +1,8 @@
 from pomagma.reducer import engine
 from pomagma.reducer import lib
-from pomagma.reducer.code import HOLE, TOP, BOT, I, K, B, C, S
+from pomagma.reducer.code import HOLE, TOP, BOT, I, K, B, C, S, J
 from pomagma.reducer.code import EVAL, QQUOTE, QAPP, EQUAL, LESS
-from pomagma.reducer.code import VAR, APP, JOIN, QUOTE
+from pomagma.reducer.code import VAR, APP, QUOTE
 from pomagma.reducer.sugar import app, join, quote, qapp, combinator
 from pomagma.util.testing import for_each
 import hypothesis
@@ -133,6 +133,7 @@ s_atoms = s.one_of(
     s.just(B),
     s.just(C),
     s.just(S),
+    s.just(J),
     s.just(EVAL),
     s.just(QAPP),
     s.just(QQUOTE),
@@ -144,7 +145,6 @@ s_atoms = s.one_of(
 def s_codes_extend(codes):
     return s.one_of(
         s.builds(APP, codes, codes),
-        s.builds(JOIN, codes, codes),
         s.builds(QUOTE, codes),
     )
 

@@ -1,6 +1,6 @@
 from pomagma.reducer.code import EVAL, QAPP, QQUOTE, EQUAL, LESS
-from pomagma.reducer.code import HOLE, TOP, BOT, I, K, B, C, S
-from pomagma.reducer.code import VAR, APP, JOIN, QUOTE, FUN, LET
+from pomagma.reducer.code import HOLE, TOP, BOT, I, K, B, C, S, J
+from pomagma.reducer.code import VAR, APP, QUOTE, FUN, LET
 from pomagma.reducer.code import free_vars
 from pomagma.reducer.code import polish_parse, polish_print
 from pomagma.reducer.code import sexpr_parse, sexpr_print
@@ -23,6 +23,7 @@ EXAMPLES = [
     {'code': B, 'polish': 'B', 'sexpr': 'B'},
     {'code': C, 'polish': 'C', 'sexpr': 'C'},
     {'code': S, 'polish': 'S', 'sexpr': 'S'},
+    {'code': J, 'polish': 'J', 'sexpr': 'J'},
     {'code': EVAL, 'polish': 'EVAL', 'sexpr': 'EVAL'},
     {'code': QAPP, 'polish': 'QAPP', 'sexpr': 'QAPP'},
     {'code': QQUOTE, 'polish': 'QQUOTE', 'sexpr': 'QQUOTE'},
@@ -30,16 +31,6 @@ EXAMPLES = [
     {'code': LESS, 'polish': 'LESS', 'sexpr': 'LESS'},
     {'code': x, 'polish': 'VAR x', 'sexpr': '(VAR x)'},
     {'code': APP(K, I), 'polish': 'APP K I', 'sexpr': '(K I)'},
-    {
-        'code': JOIN(K, APP(K, I)),
-        'polish': 'JOIN K APP K I',
-        'sexpr': '(JOIN K (K I))'
-    },
-    {
-        'code': APP(APP(I, K), JOIN(B, C)),
-        'polish': 'APP APP I K JOIN B C',
-        'sexpr': '(I K (JOIN B C))',
-    },
     {
         'code': QUOTE(APP(I, K)),
         'polish': 'QUOTE APP I K',
@@ -88,7 +79,7 @@ def test_sexpr_print(example):
     (APP(I, x), [x]),
     (APP(x, x), [x]),
     (APP(x, y), [x, y]),
-    (APP(x, JOIN(y, APP(K, z))), [x, y, z]),
+    (APP(x, APP(APP(J, y), APP(K, z))), [x, y, z]),
     (QUOTE(x), [x]),
     (APP(x, QUOTE(y)), [x, y]),
 ])
@@ -111,6 +102,7 @@ s_atoms = s.one_of(
     s.just(B),
     s.just(C),
     s.just(S),
+    s.just(J),
     s.just(EVAL),
     s.just(QAPP),
     s.just(QQUOTE),
@@ -122,7 +114,6 @@ s_atoms = s.one_of(
 def s_terms_extend(terms):
     return s.one_of(
         s.builds(APP, terms, terms),
-        s.builds(JOIN, terms, terms),
         s.builds(QUOTE, terms),
         s.builds(FUN, s_vars, terms),
         s.builds(LET, s_vars, terms, terms),

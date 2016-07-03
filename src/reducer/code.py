@@ -6,7 +6,6 @@ from pomagma.compiler.util import memoize_args
 
 _VAR = intern('VAR')
 _APP = intern('APP')
-_JOIN = intern('JOIN')
 _QUOTE = intern('QUOTE')
 _FUN = intern('FUN')
 _LET = intern('LET')
@@ -19,6 +18,7 @@ K = intern('K')
 B = intern('B')
 C = intern('C')
 S = intern('S')
+J = intern('J')
 EVAL = intern('EVAL')
 QAPP = intern('QAPP')
 QQUOTE = intern('QQUOTE')
@@ -37,10 +37,6 @@ def VAR(name):
 
 def APP(lhs, rhs):
     return _term(_APP, lhs, rhs)
-
-
-def JOIN(lhs, rhs):
-    return _term(_JOIN, lhs, rhs)
 
 
 def QUOTE(code):
@@ -67,10 +63,6 @@ def is_app(code):
     return isinstance(code, tuple) and code[0] is _APP
 
 
-def is_join(code):
-    return isinstance(code, tuple) and code[0] is _JOIN
-
-
 def is_quote(code):
     return isinstance(code, tuple) and code[0] is _QUOTE
 
@@ -87,7 +79,7 @@ def is_let(code):
 def free_vars(code):
     if is_var(code):
         return set([code])
-    elif is_app(code) or is_join(code):
+    elif is_app(code):
         return free_vars(code[1]) | free_vars(code[2])
     elif is_quote(code):
         return free_vars(code[1])
@@ -122,7 +114,6 @@ def _polish_parse_tokens(tokens):
 _PARSERS = {
     _VAR: (_pop_token,),
     _APP: (_polish_parse_tokens, _polish_parse_tokens),
-    _JOIN: (_polish_parse_tokens, _polish_parse_tokens),
     _QUOTE: (_polish_parse_tokens,),
     _FUN: (_polish_parse_tokens, _polish_parse_tokens),
     _LET: (_polish_parse_tokens, _polish_parse_tokens, _polish_parse_tokens),
@@ -159,10 +150,6 @@ def to_sexpr(code):
     if is_var(head):
         args.append(head[1])
         head = _VAR
-    elif is_join(head):
-        args.append(head[2])
-        args.append(head[1])
-        head = _JOIN
     elif is_quote(head):
         args.append(head[1])
         head = _QUOTE
@@ -186,11 +173,6 @@ def from_sexpr(sexpr):
     if head is _VAR:
         head = VAR(sexpr[1])
         args = sexpr[2:]
-    elif head is _JOIN:
-        x = from_sexpr(sexpr[1])
-        y = from_sexpr(sexpr[2])
-        head = JOIN(x, y)
-        args = sexpr[3:]
     elif head is _QUOTE:
         code = from_sexpr(sexpr[1])
         head = QUOTE(code)

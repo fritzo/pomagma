@@ -20,9 +20,9 @@ from pomagma.compiler.util import memoize_arg
 from pomagma.compiler.util import memoize_args
 from pomagma.reducer import oracle
 from pomagma.reducer.code import EVAL, QQUOTE, QAPP, EQUAL, LESS
-from pomagma.reducer.code import HOLE, TOP, BOT, I, K, B, C, S
-from pomagma.reducer.code import VAR, APP, JOIN, QUOTE
-from pomagma.reducer.code import is_var, is_app, is_quote, is_join, free_vars
+from pomagma.reducer.code import HOLE, TOP, BOT, I, K, B, C, S, J
+from pomagma.reducer.code import VAR, APP, QUOTE
+from pomagma.reducer.code import is_var, is_app, is_quote, free_vars
 from pomagma.reducer.sugar import abstract
 from pomagma.reducer.util import LOG
 from pomagma.reducer.util import PROFILE_COUNTERS
@@ -115,12 +115,6 @@ def _sample(head, context, nonlinear):
         elif is_var(head):
             yield _close(head, context, nonlinear)
             return
-        elif is_join(head):
-            x = head[1]
-            y = head[2]
-            for head in (x, y):
-                for term in _sample(head, context, nonlinear):
-                    yield term
         elif is_quote(head):
             x = head[1]
             x = _red(x, nonlinear)
@@ -166,6 +160,12 @@ def _sample(head, context, nonlinear):
             else:
                 yield _close(head, old_context, nonlinear)
                 return
+        elif head is J:
+            x, context = context_pop(context)
+            y, context = context_pop(context)
+            for head in (x, y):
+                for term in _sample(head, context, nonlinear):
+                    yield term
         elif head is EVAL:
             x, context = context_pop(context)
             x = _red(x, nonlinear)
@@ -257,7 +257,7 @@ def _collect(samples):
     terms = sorted(terms)
     result = terms[0]
     for term in terms[1:]:
-        result = JOIN(result, term)
+        result = APP(APP(J, result), term)
     return result
 
 
@@ -270,21 +270,11 @@ def _app(lhs, rhs, nonlinear):
     return _collect(_sample(head, context, nonlinear))
 
 
-@logged(pretty, pretty, returns=pretty)
-@memoize_args
-def _join(lhs, rhs, nonlinear):
-    lhs_samples = _sample(lhs, context_make(free_vars(lhs)), nonlinear)
-    rhs_samples = _sample(rhs, context_make(free_vars(rhs)), nonlinear)
-    return _collect(itertools.chain(lhs_samples, rhs_samples))
-
-
 @logged(pretty, returns=pretty)
 @memoize_args
 def _red(code, nonlinear):
     if is_app(code):
         return _app(code[1], code[2], nonlinear)
-    elif is_join(code):
-        return _join(code[1], code[2], nonlinear)
     elif is_quote(code):
         return QUOTE(_red(code[1], nonlinear))
     else:

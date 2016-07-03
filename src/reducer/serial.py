@@ -54,13 +54,12 @@ __all__ = ['dump', 'load', 'PROTOCOL_VERSION']
 
 from cStringIO import StringIO
 from pomagma.reducer.code import EVAL, QAPP, QQUOTE, EQUAL, LESS
-from pomagma.reducer.code import HOLE, TOP, BOT, I, K, B, C, S
-from pomagma.reducer.code import VAR, APP, JOIN, QUOTE, FUN, LET
-from pomagma.reducer.code import _VAR, _JOIN, _QUOTE, _FUN, _LET
-from pomagma.reducer.code import is_var, is_app, is_join, is_quote
-from pomagma.reducer.code import is_fun, is_let
+from pomagma.reducer.code import HOLE, TOP, BOT, I, K, B, C, S, J
+from pomagma.reducer.code import VAR, APP, QUOTE, FUN, LET
+from pomagma.reducer.code import _VAR, _QUOTE, _FUN, _LET
+from pomagma.reducer.code import is_var, is_app, is_quote, is_fun, is_let
 
-PROTOCOL_VERSION = '0.0.5'  # Semver compliant.
+PROTOCOL_VERSION = '0.0.6'  # Semver compliant.
 
 # ----------------------------------------------------------------------------
 # Packed varints.
@@ -132,9 +131,9 @@ RAW_BYTES = object()
 
 INT_TO_SYMB = [
     RAW_BYTES,
-    HOLE, TOP, BOT, I, K, B, C, S,
+    HOLE, TOP, BOT, I, K, B, C, S, J,
     EVAL, QAPP, QQUOTE, EQUAL, LESS,
-    _VAR, _JOIN, _QUOTE, _FUN, _LET,
+    _VAR, _QUOTE, _FUN, _LET,
 ]
 SYMB_TO_INT = {k: v for v, k in enumerate(INT_TO_SYMB) if k is not RAW_BYTES}
 
@@ -169,10 +168,6 @@ def dump(code, f):
     if is_var(head):
         _dump_head_argc(SYMB_TO_INT[_VAR], 1 + len(args), f)
         _dump_raw_bytes(head[1], f)
-    elif is_join(head):
-        args.append(head[2])
-        args.append(head[1])
-        _dump_head_argc(SYMB_TO_INT[_JOIN], len(args), f)
     elif is_quote(head):
         args.append(head[1])
         _dump_head_argc(SYMB_TO_INT[_QUOTE], len(args), f)
@@ -218,13 +213,6 @@ def _load_from(bytes_):
         argc -= 1
         name = _load_from(bytes_)
         head = VAR(name)
-    elif head is _JOIN:
-        if argc < 2:
-            raise ValueError('JOIN requires at least two args')
-        argc -= 2
-        x = _load_from(bytes_)
-        y = _load_from(bytes_)
-        head = JOIN(x, y)
     elif head is _QUOTE:
         if argc < 1:
             raise ValueError('QUOTE requires at least one arg')

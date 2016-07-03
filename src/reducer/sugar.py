@@ -1,6 +1,6 @@
 '''DSL translating from lambda-let notation to SKJ.'''
 
-from pomagma.reducer.code import HOLE, BOT, QAPP, VAR, APP, JOIN, QUOTE
+from pomagma.reducer.code import HOLE, BOT, J, QAPP, VAR, APP, QUOTE
 from pomagma.reducer.code import free_vars
 from pomagma.reducer.transforms import try_abstract, abstract
 from pomagma.reducer.util import LOG
@@ -119,7 +119,7 @@ def join(*args):
         return BOT
     result = args[0]
     for arg in args[1:]:
-        result = JOIN(result, arg)
+        result = APP(APP(J, result), arg)
     return result
 
 

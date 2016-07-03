@@ -4,54 +4,38 @@ __all__ = ['try_abstract', 'abstract', 'decompile']
 
 from pomagma.compiler.util import memoize_args
 from pomagma.reducer import pattern
-from pomagma.reducer.code import HOLE, TOP, BOT, I, K, B, C, S
-from pomagma.reducer.code import VAR, APP, JOIN, FUN, LET
-from pomagma.reducer.code import is_var, is_app, is_join, is_fun, is_let
+from pomagma.reducer.code import HOLE, TOP, BOT, I, K, B, C, S, J
+from pomagma.reducer.code import VAR, APP, FUN, LET
+from pomagma.reducer.code import is_var, is_app, is_fun, is_let
 
 
 # ----------------------------------------------------------------------------
 # Abstraction
 
-_lhs = pattern.variable('lhs')
-_rhs = pattern.variable('rhs')
-_app_pattern = APP(_lhs, _rhs)
-_join_pattern = JOIN(_lhs, _rhs)
-
-
 @memoize_args
 def try_abstract(var, body):
     """Returns \\var.body if var occurs in body, else None."""
+    if not is_var(var):
+        raise NotImplemented('Only variables can be abstracted')
     if body is var:
         return I  # Rule I.
-    match = {}
-    if pattern.matches(_app_pattern, body, match):
-        lhs_abs = try_abstract(var, match[_lhs])
-        rhs_abs = try_abstract(var, match[_rhs])
+    if is_app(body):
+        lhs = body[1]
+        rhs = body[2]
+        lhs_abs = try_abstract(var, lhs)
+        rhs_abs = try_abstract(var, rhs)
         if lhs_abs is None:
             if rhs_abs is None:
                 return None  # Rule K.
             elif rhs_abs is I:
-                return match[_lhs]  # Rule eta.
+                return lhs  # Rule eta.
             else:
-                return APP(APP(B, match[_lhs]), rhs_abs)  # Rule B.
+                return APP(APP(B, lhs), rhs_abs)  # Rule B.
         else:
             if rhs_abs is None:
-                return APP(APP(C, lhs_abs), match[_rhs])  # Rule C.
+                return APP(APP(C, lhs_abs), rhs)  # Rule C.
             else:
                 return APP(APP(S, lhs_abs), rhs_abs)  # Rule S.
-    if pattern.matches(_join_pattern, body, match):
-        lhs_abs = try_abstract(var, match[_lhs])
-        rhs_abs = try_abstract(var, match[_rhs])
-        if lhs_abs is None:
-            if rhs_abs is None:
-                return None  # Rule K.
-            else:
-                return JOIN(APP(K, match[_lhs]), rhs_abs)  # Rule JOIN.
-        else:
-            if rhs_abs is None:
-                return JOIN(lhs_abs, APP(K, match[_rhs]))  # Rule JOIN.
-            else:
-                return JOIN(lhs_abs, rhs_abs)  # Rule JOIN.
     return None  # Rule K.
 
 
@@ -72,10 +56,6 @@ def compile_(code):
         x = compile_(code[1])
         y = compile_(code[2])
         return APP(x, y)
-    elif is_join(code):
-        x = compile_(code[1])
-        y = compile_(code[2])
-        return JOIN(x, y)
     elif is_fun(code):
         var = code[1]
         body = compile_(code[2])
@@ -142,14 +122,9 @@ def _decompile_stack(stack):
     if stack is None:
         return None
     head, args = stack
-    if is_var(head) or head is HOLE:
+    if is_var(head) or head is HOLE or head is J:
         args = _decompile_args(args)
         return _from_stack((head, args))
-    elif is_join(head):
-        x = _decompile(head[1])
-        y = _decompile(head[2])
-        args = _decompile_args(args)
-        return _from_stack((JOIN(x, y), args))
     elif head is TOP:
         return TOP
     elif head is BOT:

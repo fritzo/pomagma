@@ -32,7 +32,9 @@ def try_decide_less(x, y):
     """
     if x is BOT or y is TOP:
         return True
-    if x is TOP and y is BOT:
+    if x is TOP and is_atom(y):
+        return False
+    if y is BOT and is_atom(x):
         return False
     if x is not None and x is y:
         return True
