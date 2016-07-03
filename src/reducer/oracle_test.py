@@ -2,7 +2,6 @@ from pomagma.reducer import oracle
 from pomagma.reducer.code import TOP, BOT, I, K, C, J
 from pomagma.reducer.sugar import app
 from pomagma.util.testing import for_each
-import pytest
 
 F = app(K, I)
 
@@ -11,81 +10,59 @@ def box(x):
     return app(C, I, x)
 
 
-@for_each([
-    (TOP, TOP, True),
-    (TOP, BOT, False),
-    (TOP, K, False),
-    (TOP, F, False),
-    (TOP, J, False),
-    (BOT, TOP, False),
-    (BOT, BOT, True),
-    (BOT, K, False),
-    (BOT, F, False),
-    (BOT, J, False),
-    (K, TOP, False),
-    (K, BOT, False),
-    (K, K, True),
-    (K, F, False),
-    (K, J, False),
-    (F, TOP, False),
-    (F, BOT, False),
-    (F, K, False),
-    (F, F, True),
-    (F, J, False),
-    (J, TOP, False),
-    (J, BOT, False),
-    (J, K, False),
-    (J, F, False),
-    (J, J, True),
-    (box(TOP), box(TOP), True),
-    (box(TOP), box(BOT), False),
-    (box(TOP), box(I), False),
-    (box(BOT), box(TOP), False),
-    (box(BOT), box(BOT), True),
-    (box(BOT), box(I), False),
-    (box(I), box(TOP), False),
-    (box(I), box(BOT), False),
-    (box(I), box(I), True),
-])
-def test_try_decide_equal(x, y, expected):
-    assert oracle.try_decide_equal(x, y) == expected
+ORDER_EXAMPLES = [
+    (TOP, TOP, True, True),
+    (TOP, BOT, False, True),
+    (TOP, I, False, True),
+    (TOP, K, False, True),
+    (TOP, F, False, True),
+    (TOP, J, False, True),
+    (BOT, BOT, True, True),
+    (BOT, I, True, False),
+    (BOT, K, True, False),
+    (BOT, F, True, False),
+    (BOT, J, True, False),
+    (I, I, True, True),
+    (I, K, False, False),
+    (I, F, False, False),
+    (I, J, False, False),
+    (K, K, True, True),
+    (K, F, False, False),
+    (K, J, True, False),
+    (F, F, True, True),
+    (F, J, True, False),
+    (J, J, True, True),
+    (box(TOP), box(TOP), True, True),
+    (box(TOP), box(BOT), False, True),
+    (box(TOP), box(I), False, True),
+    (box(TOP), box(K), False, True),
+    (box(TOP), box(F), False, True),
+    (box(TOP), box(J), False, True),
+    (box(BOT), box(BOT), True, True),
+    (box(BOT), box(I), True, False),
+    (box(BOT), box(K), True, False),
+    (box(BOT), box(F), True, False),
+    (box(BOT), box(J), True, False),
+    (box(I), box(I), True, True),
+    (box(I), box(K), False, False),
+    (box(I), box(F), False, False),
+    (box(I), box(J), False, False),
+    (box(K), box(K), True, True),
+    (box(K), box(F), False, False),
+    (box(K), box(J), True, False),
+    (box(F), box(F), True, True),
+    (box(F), box(J), True, False),
+    (box(J), box(J), True, True),
+]
 
 
-@for_each([
-    (TOP, TOP, True),
-    (TOP, BOT, False),
-    (TOP, K, False),
-    (TOP, F, False),
-    (TOP, J, False),
-    (BOT, TOP, True),
-    (BOT, BOT, True),
-    (BOT, K, True),
-    (BOT, F, True),
-    (BOT, J, True),
-    (K, TOP, True),
-    (K, BOT, False),
-    (K, K, True),
-    (K, F, False),
-    pytest.mark.xfail((K, J, True)),
-    (F, TOP, True),
-    (F, BOT, False),
-    (F, K, False),
-    (F, F, True),
-    pytest.mark.xfail((F, J, True)),
-    (J, TOP, True),
-    (J, BOT, False),
-    (J, K, False),
-    (J, F, False),
-    (J, J, True),
-    (box(TOP), box(TOP), True),
-    (box(TOP), box(BOT), False),
-    (box(TOP), box(I), False),
-    (box(BOT), box(TOP), True),
-    (box(BOT), box(BOT), True),
-    (box(BOT), box(I), True),
-    (box(I), box(TOP), True),
-    (box(I), box(BOT), False),
-    (box(I), box(I), True),
-])
-def test_try_decide_less(x, y, expected):
-    assert oracle.try_decide_less(x, y) == expected
+@for_each(ORDER_EXAMPLES)
+def test_try_decide_less(x, y, less_xy, less_yx):
+    assert oracle.try_decide_less(x, y) == less_xy
+    assert oracle.try_decide_less(y, x) == less_yx
+
+
+@for_each(ORDER_EXAMPLES)
+def test_try_decide_equal(x, y, less_xy, less_yx):
+    assert oracle.try_decide_equal(x, y) == (less_xy and less_yx)
+    assert oracle.try_decide_equal(y, x) == (less_xy and less_yx)

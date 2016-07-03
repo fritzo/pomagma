@@ -6,7 +6,7 @@ from pomagma.compiler.util import memoize_args
 from pomagma.reducer import pattern
 from pomagma.reducer.code import HOLE, TOP, BOT, I, K, B, C, S, J
 from pomagma.reducer.code import VAR, APP, FUN, LET
-from pomagma.reducer.code import is_atom, is_var, is_app, is_fun, is_let
+from pomagma.reducer.code import is_var, is_app, is_fun, is_let
 
 
 # ----------------------------------------------------------------------------
