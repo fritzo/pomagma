@@ -1,6 +1,7 @@
 from cStringIO import StringIO
 from pomagma.reducer.code import EVAL, QAPP, QQUOTE, EQUAL, LESS
 from pomagma.reducer.code import HOLE, TOP, BOT, I, K, B, C, S, J
+from pomagma.reducer.code import V, A, UNIT, BOOL, MAYBE, PROD, SUM, NUM
 from pomagma.reducer.code import VAR, APP, QUOTE, FUN, LET
 from pomagma.reducer.code_test import s_terms
 from pomagma.reducer.serial import dump, load
@@ -61,6 +62,14 @@ x = VAR('x')
     QQUOTE,
     EQUAL,
     LESS,
+    V,
+    A,
+    UNIT,
+    BOOL,
+    MAYBE,
+    PROD,
+    SUM,
+    NUM,
     APP(K, I),
     APP(APP(B, C), S),
     APP(APP(APP(S, K), I), B),

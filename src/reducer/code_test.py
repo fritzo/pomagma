@@ -1,5 +1,6 @@
 from pomagma.reducer.code import EVAL, QAPP, QQUOTE, EQUAL, LESS
 from pomagma.reducer.code import HOLE, TOP, BOT, I, K, B, C, S, J
+from pomagma.reducer.code import V, A, UNIT, BOOL, MAYBE, PROD, SUM, NUM
 from pomagma.reducer.code import VAR, APP, QUOTE, FUN, LET
 from pomagma.reducer.code import free_vars
 from pomagma.reducer.code import polish_parse, polish_print
@@ -29,6 +30,14 @@ EXAMPLES = [
     {'code': QQUOTE, 'polish': 'QQUOTE', 'sexpr': 'QQUOTE'},
     {'code': EQUAL, 'polish': 'EQUAL', 'sexpr': 'EQUAL'},
     {'code': LESS, 'polish': 'LESS', 'sexpr': 'LESS'},
+    {'code': V, 'polish': 'V', 'sexpr': 'V'},
+    {'code': A, 'polish': 'A', 'sexpr': 'A'},
+    {'code': UNIT, 'polish': 'UNIT', 'sexpr': 'UNIT'},
+    {'code': BOOL, 'polish': 'BOOL', 'sexpr': 'BOOL'},
+    {'code': MAYBE, 'polish': 'MAYBE', 'sexpr': 'MAYBE'},
+    {'code': PROD, 'polish': 'PROD', 'sexpr': 'PROD'},
+    {'code': SUM, 'polish': 'SUM', 'sexpr': 'SUM'},
+    {'code': NUM, 'polish': 'NUM', 'sexpr': 'NUM'},
     {'code': x, 'polish': 'VAR x', 'sexpr': '(VAR x)'},
     {'code': APP(K, I), 'polish': 'APP K I', 'sexpr': '(K I)'},
     {
@@ -108,6 +117,14 @@ s_atoms = s.one_of(
     s.just(QQUOTE),
     s.just(EQUAL),
     s.just(LESS),
+    s.just(V),
+    s.just(A),
+    s.just(UNIT),
+    s.just(BOOL),
+    s.just(MAYBE),
+    s.just(PROD),
+    s.just(SUM),
+    s.just(NUM),
 )
 
 

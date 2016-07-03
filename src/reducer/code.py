@@ -19,11 +19,21 @@ B = intern('B')
 C = intern('C')
 S = intern('S')
 J = intern('J')
+
 EVAL = intern('EVAL')
 QAPP = intern('QAPP')
 QQUOTE = intern('QQUOTE')
 EQUAL = intern('EQUAL')
 LESS = intern('LESS')
+
+V = intern('V')
+A = intern('A')
+UNIT = intern('UNIT')
+BOOL = intern('BOOL')
+MAYBE = intern('MAYBE')
+PROD = intern('PROD')
+SUM = intern('SUM')
+NUM = intern('NUM')
 
 
 @memoize_args
