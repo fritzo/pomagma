@@ -2,6 +2,7 @@ from pomagma.reducer import engine
 from pomagma.reducer import lib
 from pomagma.reducer.code import HOLE, TOP, BOT, I, K, B, C, S, J
 from pomagma.reducer.code import EVAL, QQUOTE, QAPP, EQUAL, LESS
+from pomagma.reducer.code import UNIT, BOOL
 from pomagma.reducer.code import VAR, APP, QUOTE
 from pomagma.reducer.sugar import app, join, quote, qapp, combinator
 from pomagma.util.testing import for_each
@@ -122,6 +123,26 @@ REDUCE_EXAMPLES = [
     (app(LESS, quote(x), BOT), app(LESS, quote(x), BOT)),
     (app(LESS, BOT, quote(TOP)), lib.true),
     (app(LESS, quote(BOT), BOT), lib.true),
+    (UNIT, UNIT),
+    (app(UNIT, x), app(UNIT, x)),
+    (app(UNIT, TOP), TOP),
+    (app(UNIT, BOT), BOT),
+    (app(UNIT, I), I),
+    (app(UNIT, K), TOP),
+    (app(UNIT, B), TOP),
+    (app(UNIT, C), TOP),
+    (app(UNIT, S), TOP),
+    (app(UNIT, J), TOP),
+    (app(BOOL, x), app(BOOL, x)),
+    (app(BOOL, TOP), TOP),
+    (app(BOOL, BOT), BOT),
+    (app(BOOL, K), K),
+    (app(BOOL, APP(K, I)), APP(K, I)),
+    (app(BOOL, I), TOP),
+    (app(BOOL, B), TOP),
+    (app(BOOL, C), TOP),
+    (app(BOOL, S), TOP),
+    (app(BOOL, J), TOP),
 ]
 
 
@@ -152,6 +173,8 @@ s_atoms = s.one_of(
     s.just(QQUOTE),
     s.just(EQUAL),
     s.just(LESS),
+    s.just(UNIT),
+    s.just(BOOL),
 )
 
 

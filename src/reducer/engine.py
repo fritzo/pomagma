@@ -21,6 +21,7 @@ from pomagma.compiler.util import memoize_args
 from pomagma.reducer import oracle
 from pomagma.reducer.code import EVAL, QQUOTE, QAPP, EQUAL, LESS
 from pomagma.reducer.code import HOLE, TOP, BOT, I, K, B, C, S, J
+from pomagma.reducer.code import UNIT, BOOL
 from pomagma.reducer.code import VAR, APP, QUOTE
 from pomagma.reducer.code import is_var, is_app, is_quote, free_vars
 from pomagma.reducer.sugar import abstract
@@ -237,6 +238,22 @@ def _sample(head, context, nonlinear):
             else:
                 assert answer is None
                 head = APP(APP(LESS, x), y)
+                yield _close(head, context, nonlinear)
+                return
+        elif head is UNIT:
+            x, context = context_pop(context)
+            x = _red(x, nonlinear)
+            head = oracle.try_cast_unit(x)
+            if head is None:
+                head = APP(UNIT, x)
+                yield _close(head, context, nonlinear)
+                return
+        elif head is BOOL:
+            x, context = context_pop(context)
+            x = _red(x, nonlinear)
+            head = oracle.try_cast_bool(x)
+            if head is None:
+                head = APP(BOOL, x)
                 yield _close(head, context, nonlinear)
                 return
         else:
