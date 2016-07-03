@@ -54,6 +54,8 @@ ORDER_EXAMPLES = [
     (box(F), box(F), True, True),
     (box(F), box(J), True, False),
     (box(J), box(J), True, True),
+    pytest.mark.xfail((I, app(B, K, app(C, I, TOP)), True, False)),
+    pytest.mark.xfail((I, app(B, K, app(C, I, BOT)), False, True)),
 ]
 
 
