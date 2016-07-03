@@ -621,7 +621,7 @@ def test_equal_symmetric(x, y):
 
 @hypothesis.given(s_quoted, s_quoted, s_quoted)
 def test_equal_transitive(x, y, z):
-    hypothesis.assume(x is not y and x is not z and y is not z)
+    # hypothesis.assume(x is not y and x is not z and y is not z)
     equal_xy = simplify(lib.equal(x, y))
     hypothesis.assume(equal_xy in bool_values)
     equal_yz = simplify(lib.equal(y, z))
@@ -710,7 +710,7 @@ def test_less_antisymmetric(x, y):
 
 @hypothesis.given(s_quoted, s_quoted, s_quoted)
 def test_less_transitive(x, y, z):
-    hypothesis.assume(x is not y and x is not z and y is not z)
+    # hypothesis.assume(x is not y and x is not z and y is not z)
     less_xy = simplify(lib.less(x, y))
     hypothesis.assume(less_xy in bool_values)
     less_yz = simplify(lib.less(y, z))
