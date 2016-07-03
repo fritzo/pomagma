@@ -5,6 +5,7 @@ Intro forms are hand-optimized; see lib_test.py for lambda versions.
 """
 
 from pomagma.reducer.code import TOP, BOT, I, K, B, C, APP, QUOTE, EQUAL, LESS
+from pomagma.reducer.code import UNIT, BOOL
 from pomagma.reducer.sugar import app, join, quote, qapp, combinator, symmetric
 
 CI = APP(C, I)
@@ -28,23 +29,34 @@ ok = I
 
 
 @combinator
+def unit_type(x):
+    return app(UNIT, x)
+
+
+@combinator
 def unit_test(x):
+    x = unit_type(x)
     return app(x, ok)
 
 
 @combinator
 @symmetric
 def unit_and(x, y):
+    x = unit_type(x)
+    y = unit_type(y)
     return app(x, y)
 
 
 @combinator
 def unit_or(x, y):
+    x = unit_type(x)
+    y = unit_type(y)
     return join(x, y)
 
 
 @combinator
 def unit_quote(x):
+    x = unit_type(x)
     return app(x, QUOTE(ok))
 
 
@@ -56,29 +68,41 @@ false = APP(K, I)
 
 
 @combinator
+def bool_type(x):
+    return app(BOOL, x)
+
+
+@combinator
 def bool_test(x):
+    x = bool_type(x)
     return app(x, ok, ok)
 
 
 @combinator
 def bool_not(x):
+    x = bool_type(x)
     return app(x, false, true)
 
 
 @combinator
 @symmetric
 def bool_and(x, y):
+    x = bool_type(x)
+    y = bool_type(y)
     return app(x, y, false)
 
 
 @combinator
 @symmetric
 def bool_or(x, y):
+    x = bool_type(x)
+    y = bool_type(y)
     return app(x, true, y)
 
 
 @combinator
 def bool_quote(x):
+    x = bool_type(x)
     return app(x, QUOTE(true), QUOTE(false))
 
 

@@ -1,5 +1,5 @@
 from pomagma.reducer import lib
-from pomagma.reducer.code import VAR
+from pomagma.reducer.code import VAR, J
 from pomagma.reducer.engine import reduce, simplify
 from pomagma.reducer.engine_test import s_quoted
 from pomagma.reducer.sugar import as_code, app, quote
@@ -45,6 +45,20 @@ def test_intro_forms(name, native):
     (ok, ok),
     (error, error),
     (undefined, undefined),
+    (true, error),
+    (false, error),
+    (J, error),
+])
+def test_unit_type(x, expected):
+    assert simplify(lib.unit_type(x)) == expected
+
+
+@for_each([
+    (ok, ok),
+    (error, error),
+    (undefined, undefined),
+    (true, error),
+    (false, error),
 ])
 def test_unit_test(x, expected):
     assert simplify(lib.unit_test(x)) == expected
@@ -55,6 +69,10 @@ def test_unit_test(x, expected):
     (ok, undefined, undefined),
     (undefined, ok, undefined),
     (undefined, undefined, undefined),
+    (ok, true, error),
+    (ok, false, error),
+    (true, ok, error),
+    (false, ok, error),
 ])
 def test_unit_and(x, y, expected):
     assert simplify(lib.unit_and(x, y)) == expected
@@ -65,6 +83,10 @@ def test_unit_and(x, y, expected):
     (ok, undefined, ok),
     (undefined, ok, ok),
     (undefined, undefined, undefined),
+    (ok, true, error),
+    (ok, false, error),
+    (true, ok, error),
+    (false, ok, error),
 ])
 def test_unit_or(x, y, expected):
     assert simplify(lib.unit_or(x, y)) == expected
@@ -74,6 +96,8 @@ def test_unit_or(x, y, expected):
     (ok, quote(ok)),
     (undefined, undefined),
     (error, error),
+    (true, error),
+    (false, error),
 ])
 def test_unit_quote(x, expected):
     assert simplify(lib.unit_quote(x)) == expected
@@ -83,10 +107,24 @@ def test_unit_quote(x, expected):
 # Bool
 
 @for_each([
+    (true, true),
+    (false, false),
+    (error, error),
+    (undefined, undefined),
+    (ok, error),
+    (J, error),
+])
+def test_bool_type(x, expected):
+    assert simplify(lib.bool_type(x)) == expected
+
+
+@for_each([
     (true, ok),
     (false, ok),
     (error, error),
     (undefined, undefined),
+    (ok, error),
+    (J, error),
 ])
 def test_bool_test(x, expected):
     assert simplify(lib.bool_test(x)) == expected
@@ -97,6 +135,8 @@ def test_bool_test(x, expected):
     (false, true),
     (undefined, undefined),
     (error, error),
+    (ok, error),
+    (J, error),
 ])
 def test_bool_not(x, expected):
     assert simplify(lib.bool_not(x)) == expected
@@ -114,6 +154,14 @@ def test_bool_not(x, expected):
     (undefined, false, false),
     (error, x, error),
     (x, error, error),
+    (ok, true, error),
+    (ok, false, error),
+    (true, ok, error),
+    (false, ok, error),
+    (J, true, error),
+    (J, false, error),
+    (true, J, error),
+    (false, J, error),
 ])
 def test_bool_and(x, y, expected):
     assert reduce(lib.bool_and(x, y)) == expected
@@ -130,6 +178,14 @@ def test_bool_and(x, y, expected):
     (undefined, undefined, undefined),
     (error, x, error),
     (x, error, error),
+    (ok, true, error),
+    (ok, false, error),
+    (true, ok, error),
+    (false, ok, error),
+    (J, true, error),
+    (J, false, error),
+    (true, J, error),
+    (false, J, error),
 ])
 def test_bool_or(x, y, expected):
     assert reduce(lib.bool_or(x, y)) == expected
@@ -140,6 +196,8 @@ def test_bool_or(x, y, expected):
     (false, quote(false)),
     (undefined, undefined),
     (error, error),
+    (ok, error),
+    (J, error),
 ])
 def test_bool_quote(x, expected):
     assert simplify(lib.bool_quote(x)) == expected
