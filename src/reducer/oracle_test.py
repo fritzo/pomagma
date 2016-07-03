@@ -1,7 +1,8 @@
 from pomagma.reducer import oracle
-from pomagma.reducer.code import TOP, BOT, I, K, C, J
+from pomagma.reducer.code import TOP, BOT, I, K, B, C, J
 from pomagma.reducer.sugar import app
 from pomagma.util.testing import for_each
+import pytest
 
 F = app(K, I)
 
@@ -66,3 +67,31 @@ def test_try_decide_less(x, y, less_xy, less_yx):
 def test_try_decide_equal(x, y, less_xy, less_yx):
     assert oracle.try_decide_equal(x, y) == (less_xy and less_yx)
     assert oracle.try_decide_equal(y, x) == (less_xy and less_yx)
+
+
+@for_each([
+    (TOP, TOP),
+    (BOT, BOT),
+    (I, I),
+    (BOT, BOT),
+    (K, TOP),
+    (F, TOP),
+    (J, TOP),
+    (app(B, K, app(C, I, TOP)), TOP),
+    pytest.mark.xfail((app(B, K, app(C, I, BOT)), I)),
+])
+def test_try_cast_unit(x, expected):
+    assert oracle.try_cast_unit(x) == expected
+
+
+@for_each([
+    (TOP, TOP),
+    (BOT, BOT),
+    (K, K),
+    (F, F),
+    (BOT, BOT),
+    (I, TOP),
+    (J, TOP),
+])
+def test_try_cast_bool(x, expected):
+    assert oracle.try_cast_bool(x) == expected

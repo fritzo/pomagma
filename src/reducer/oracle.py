@@ -1,10 +1,17 @@
 '''Evaluation of non-computational queries.'''
 
-__all__ = ['try_decide_equal', 'try_decide_less']
+__all__ = [
+    'try_decide_equal',
+    'try_decide_less',
+    'try_cast_unit',
+    'try_cast_bool',
+]
 
 from pomagma.compiler.util import memoize_arg
 from pomagma.reducer.code import TOP, BOT, I, K, B, C, S, J, APP
 from pomagma.reducer.code import is_app
+
+F = APP(K, I)
 
 TROOL_AND = {
     (True, True): True,
@@ -122,4 +129,49 @@ def try_decide_less(x, y):
         return True
     if try_decide_normal(x) and try_decide_normal(y):
         return decide_less_normal(x, y)
+    return None
+
+
+def try_cast_unit(x):
+    """Weak oracle closing x to type unit.
+
+    Inputs:
+        x : code in linear normal form
+    Returns:
+        TOP, BOT, I, or None
+
+    """
+    assert x is not None
+    if x in (TOP, BOT, I):
+        return x
+    less_x_I = try_decide_less(x, I)
+    if less_x_I is False:
+        return TOP
+    elif less_x_I is True and try_decide_equal(x, BOT) is False:
+        return I
+    return None
+
+
+def try_cast_bool(x):
+    """Weak oracle closing x to type bool.
+
+    Inputs:
+        x : code in linear normal form
+    Returns:
+        TOP, BOT, K, APP(K, I), or None
+
+    """
+    assert x is not None
+    if x in (TOP, BOT, K, F):
+        return x
+    less_x_K = try_decide_less(x, K)
+    less_x_F = try_decide_less(x, F)
+    if less_x_K is False and less_x_F is False:
+        return TOP
+    equal_x_BOT = try_decide_equal(x, BOT)
+    if equal_x_BOT is False:
+        if less_x_K is True:
+            return K
+        if less_x_F is True:
+            return F
     return None
