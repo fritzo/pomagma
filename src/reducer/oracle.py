@@ -5,8 +5,23 @@ __all__ = ['try_decide_equal', 'try_decide_less']
 from pomagma.compiler.util import memoize_arg
 from pomagma.reducer.code import TOP, BOT, I, K, B, C, S, J, is_app
 
+
+TROOL_AND = {
+    (True, True): True,
+    (True, False): False,
+    (True, None): None,
+    (False, True): False,
+    (False, False): False,
+    (False, None): False,
+    (None, True): None,
+    (None, False): False,
+    (None, None): None,
+}
+
+
 # TODO Add J abstraction rules that would allow J to be added to this list.
-_linear_atoms = set([TOP, BOT, I, K, B, C, J])
+# Eg app(J, app(K, I), K) should reduce to J.
+_linear_atoms = set([TOP, BOT, I, K, B, C])
 
 
 @memoize_arg
@@ -18,7 +33,7 @@ def is_linear(code):
 
 # A short list of some common normal forms.
 # TODO initialize this list with, say, 1000 terms proven to be normal.
-_normal_forms = set([S, J])
+_normal_forms = set([TOP, BOT, S, J])
 
 
 def is_normal(code):
@@ -55,6 +70,18 @@ def try_decide_equal(x, y):
     return None
 
 
+def decide_less_normal(x, y):
+    if x is BOT or y is TOP or x is y:
+        return True
+    if x is TOP or y is BOT:
+        return False
+    if is_app(x) and is_app(y):
+        return TROOL_AND[
+            decide_less_normal(x[1], y[1]),
+            decide_less_normal(x[2], y[2])]
+    return False
+
+
 def try_decide_less(x, y):
     """Weak oracle approximating Scott ordering.
 
@@ -71,5 +98,5 @@ def try_decide_less(x, y):
     if x is y:
         return True
     if is_normal(x) and is_normal(y):
-        return False
+        return decide_less_normal(x, y)
     return None
