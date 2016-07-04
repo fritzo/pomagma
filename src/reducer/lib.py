@@ -296,6 +296,14 @@ def list_quote(quote_item, xs):
 
 
 # ----------------------------------------------------------------------------
+# Functions
+
+@combinator
+def fun_type(domain_type, codomain_type):
+    return lambda f, x: app(codomain_type, app(f, app(domain_type, x)))
+
+
+# ----------------------------------------------------------------------------
 # Scott ordering
 
 @combinator
