@@ -137,6 +137,7 @@ INT_TO_SYMB = [
     V, A, UNIT, BOOL, MAYBE, PROD, SUM, NUM,
     _VAR, _QUOTE, _FUN, _LET,
 ]
+assert len(INT_TO_SYMB) == 28  # Symbols beyond pos 30 require an extra byte.
 SYMB_TO_INT = {k: v for v, k in enumerate(INT_TO_SYMB) if k is not RAW_BYTES}
 
 
