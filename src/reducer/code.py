@@ -20,6 +20,7 @@ C = intern('C')
 S = intern('S')
 J = intern('J')
 
+CODE = intern('CODE')
 EVAL = intern('EVAL')
 QAPP = intern('QAPP')
 QQUOTE = intern('QQUOTE')

@@ -19,7 +19,7 @@ from collections import namedtuple
 from pomagma.compiler.util import memoize_arg
 from pomagma.compiler.util import memoize_args
 from pomagma.reducer import oracle
-from pomagma.reducer.code import EVAL, QQUOTE, QAPP, EQUAL, LESS
+from pomagma.reducer.code import CODE, EVAL, QQUOTE, QAPP, EQUAL, LESS
 from pomagma.reducer.code import HOLE, TOP, BOT, I, K, B, C, S, J
 from pomagma.reducer.code import UNIT, BOOL, MAYBE
 from pomagma.reducer.code import VAR, APP, QUOTE
@@ -108,6 +108,7 @@ TRY_CAST = {
     BOOL: oracle.try_cast_bool,
     UNIT: oracle.try_cast_unit,
     MAYBE: oracle.try_cast_maybe,
+    CODE: oracle.try_cast_code,
 }
 
 

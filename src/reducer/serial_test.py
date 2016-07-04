@@ -1,5 +1,5 @@
 from cStringIO import StringIO
-from pomagma.reducer.code import EVAL, QAPP, QQUOTE, EQUAL, LESS
+from pomagma.reducer.code import CODE, EVAL, QAPP, QQUOTE, EQUAL, LESS
 from pomagma.reducer.code import HOLE, TOP, BOT, I, K, B, C, S, J
 from pomagma.reducer.code import V, A, UNIT, BOOL, MAYBE, PROD, SUM, NUM
 from pomagma.reducer.code import VAR, APP, QUOTE, FUN, LET
@@ -57,6 +57,7 @@ x = VAR('x')
     C,
     S,
     J,
+    CODE,
     EVAL,
     QAPP,
     QQUOTE,

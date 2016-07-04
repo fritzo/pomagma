@@ -53,14 +53,14 @@ Varint format in bytes:
 __all__ = ['dump', 'load', 'PROTOCOL_VERSION']
 
 from cStringIO import StringIO
-from pomagma.reducer.code import EVAL, QAPP, QQUOTE, EQUAL, LESS
+from pomagma.reducer.code import CODE, EVAL, QAPP, QQUOTE, EQUAL, LESS
 from pomagma.reducer.code import HOLE, TOP, BOT, I, K, B, C, S, J
 from pomagma.reducer.code import V, A, UNIT, BOOL, MAYBE, PROD, SUM, NUM
 from pomagma.reducer.code import VAR, APP, QUOTE, FUN, LET
 from pomagma.reducer.code import _VAR, _QUOTE, _FUN, _LET
 from pomagma.reducer.code import is_var, is_app, is_quote, is_fun, is_let
 
-PROTOCOL_VERSION = '0.0.7'  # Semver compliant.
+PROTOCOL_VERSION = '0.0.8'  # Semver compliant.
 
 # ----------------------------------------------------------------------------
 # Packed varints.
@@ -133,7 +133,7 @@ RAW_BYTES = object()
 INT_TO_SYMB = [
     RAW_BYTES,
     HOLE, TOP, BOT, I, K, B, C, S, J,
-    EVAL, QAPP, QQUOTE, EQUAL, LESS,
+    CODE, EVAL, QAPP, QQUOTE, EQUAL, LESS,
     V, A, UNIT, BOOL, MAYBE, PROD, SUM, NUM,
     _VAR, _QUOTE, _FUN, _LET,
 ]

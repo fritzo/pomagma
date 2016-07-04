@@ -1,7 +1,7 @@
 from pomagma.reducer import engine
 from pomagma.reducer import lib
 from pomagma.reducer.code import HOLE, TOP, BOT, I, K, B, C, S, J
-from pomagma.reducer.code import EVAL, QQUOTE, QAPP, EQUAL, LESS
+from pomagma.reducer.code import CODE, EVAL, QQUOTE, QAPP, EQUAL, LESS
 from pomagma.reducer.code import UNIT, BOOL, MAYBE
 from pomagma.reducer.code import VAR, APP, QUOTE
 from pomagma.reducer.sugar import app, join, quote, qapp, combinator
@@ -158,6 +158,17 @@ REDUCE_EXAMPLES = [
     (app(MAYBE, C), TOP),
     (app(MAYBE, S), TOP),
     (app(MAYBE, J), TOP),
+    (app(CODE, x), app(CODE, x)),
+    (app(CODE, app(CODE, x)), app(CODE, x)),
+    (app(CODE, TOP), TOP),
+    (app(CODE, BOT), BOT),
+    (app(CODE, QUOTE(x)), QUOTE(x)),
+    (app(CODE, QUOTE(TOP)), QUOTE(TOP)),
+    (app(CODE, QUOTE(BOT)), QUOTE(BOT)),
+    (app(CODE, QUOTE(I)), QUOTE(I)),
+    (app(CODE, QUOTE(QUOTE(x))), QUOTE(QUOTE(x))),
+    (app(CODE, app(QQUOTE, x)), app(QQUOTE, x)),
+    (app(CODE, qapp(x, y)), qapp(x, y)),
 ]
 
 
@@ -183,14 +194,19 @@ s_atoms = s.one_of(
     s.just(C),
     s.just(S),
     s.just(J),
-    s.just(EVAL),
-    s.just(QAPP),
-    s.just(QQUOTE),
-    s.just(EQUAL),
-    s.just(LESS),
-    s.just(UNIT),
-    s.just(BOOL),
-    s.just(MAYBE),
+    s.one_of(
+        s.just(CODE),
+        s.just(EVAL),
+        s.just(QAPP),
+        s.just(QQUOTE),
+        s.just(EQUAL),
+        s.just(LESS),
+    ),
+    s.one_of(
+        s.just(UNIT),
+        s.just(BOOL),
+        s.just(MAYBE),
+    ),
 )
 
 

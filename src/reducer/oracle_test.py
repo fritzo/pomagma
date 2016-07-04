@@ -1,10 +1,13 @@
 from pomagma.reducer import oracle
-from pomagma.reducer.code import TOP, BOT, I, K, B, C, J
+from pomagma.reducer.code import QUOTE, QQUOTE, QAPP
+from pomagma.reducer.code import TOP, BOT, I, K, B, C, J, VAR
 from pomagma.reducer.sugar import app
 from pomagma.util.testing import for_each
 import pytest
 
 F = app(K, I)
+x = VAR('x')
+y = VAR('y')
 
 
 def box(x):
@@ -80,6 +83,7 @@ def test_try_decide_equal(x, y, less_xy, less_yx):
     (J, TOP),
     (app(B, K, app(C, I, TOP)), TOP),
     pytest.mark.xfail((app(B, K, app(C, I, BOT)), I)),
+    (x, None),
 ])
 def test_try_cast_unit(x, expected):
     assert oracle.try_cast_unit(x) == expected
@@ -92,6 +96,7 @@ def test_try_cast_unit(x, expected):
     (F, F),
     (I, TOP),
     (J, TOP),
+    (x, None),
 ])
 def test_try_cast_bool(x, expected):
     assert oracle.try_cast_bool(x) == expected
@@ -118,6 +123,19 @@ def some(x):
     (I, TOP),
     (F, TOP),
     (J, TOP),
+    (x, None),
 ])
 def test_try_cast_maybe(x, expected):
     assert oracle.try_cast_maybe(x) == expected
+
+
+@for_each([
+    (TOP, TOP),
+    (BOT, BOT),
+    (QUOTE(x), QUOTE(x)),
+    (app(QQUOTE, x), app(QQUOTE, x)),
+    (app(QAPP, x, y), app(QAPP, x, y)),
+    (x, None),
+])
+def test_try_cast_code(x, expected):
+    assert oracle.try_cast_code(x) == expected

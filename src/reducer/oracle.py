@@ -9,8 +9,8 @@ __all__ = [
 ]
 
 from pomagma.compiler.util import memoize_arg
-from pomagma.reducer.code import TOP, BOT, I, K, B, C, S, J, APP
-from pomagma.reducer.code import is_app
+from pomagma.reducer.code import TOP, BOT, I, K, B, C, S, J, APP, QQUOTE, QAPP
+from pomagma.reducer.code import is_app, is_quote
 
 F = APP(K, I)
 
@@ -134,7 +134,7 @@ def try_decide_less(x, y):
 
 
 def try_cast_unit(x):
-    """Weak oracle closing x to type unit.
+    """Weak oracle closing x to type UNIT.
 
     Inputs:
         x : code in linear normal form
@@ -154,7 +154,7 @@ def try_cast_unit(x):
 
 
 def try_cast_bool(x):
-    """Weak oracle closing x to type bool.
+    """Weak oracle closing x to type BOOL.
 
     Inputs:
         x : code in linear normal form
@@ -183,7 +183,7 @@ some_TOP = APP(K, APP(CI, TOP))
 
 
 def try_cast_maybe(x):
-    """Weak oracle closing x to type maybe.
+    """Weak oracle closing x to type MAYBE.
 
     Inputs:
         x : code in linear normal form
@@ -206,4 +206,25 @@ def try_cast_maybe(x):
         if less_x_some_TOP is True:
             value = APP(APP(x, TOP), I)
             return APP(K, APP(CI, value))
+    return None
+
+
+def try_cast_code(x):
+    """Weak oracle closing x to type CODE.
+
+    Inputs:
+        x : code in linear normal form
+    Returns:
+        TOP, BOT, QUOTE(...), APP(QQUOTE, ...), APP(APP(QAPP, ...), ...),
+        or None
+
+    """
+    assert x is not None
+    if x is TOP or x is BOT or is_quote(x):
+        return x
+    if is_app(x):
+        if x[1] is QQUOTE:
+            return x
+        if is_app(x[1]) and x[1][1] is QAPP:
+            return x
     return None
