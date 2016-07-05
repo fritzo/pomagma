@@ -140,7 +140,7 @@ def _sample(head, context, nonlinear):
             return
         elif is_quote(head):
             x = head[1]
-            x = _red(x, nonlinear)
+            x = _reduce(x, nonlinear)
             head = QUOTE(x)
             yield head, context
             return
@@ -188,7 +188,7 @@ def _sample(head, context, nonlinear):
                     yield continuation
         elif head is EVAL:
             x, context = context_pop(context)
-            x = _red(x, nonlinear)
+            x = _reduce(x, nonlinear)
             if is_quote(x):
                 head = x[1]
             else:
@@ -197,7 +197,7 @@ def _sample(head, context, nonlinear):
                 return
         elif head is QQUOTE:
             x, context = context_pop(context)
-            x = _red(x, nonlinear)
+            x = _reduce(x, nonlinear)
             if x is TOP:
                 yield TOP, EMPTY_CONTEXT
                 return
@@ -212,8 +212,8 @@ def _sample(head, context, nonlinear):
         elif head is QAPP:
             x, context = context_pop(context)
             y, context = context_pop(context)
-            x = _red(x, nonlinear)
-            y = _red(y, nonlinear)
+            x = _reduce(x, nonlinear)
+            y = _reduce(y, nonlinear)
             if is_quote(x) and is_quote(y):
                 # FIXME This is too eager; see (B1).
                 head = QUOTE(_app(x[1], y[1], nonlinear))
@@ -225,8 +225,8 @@ def _sample(head, context, nonlinear):
             pred = head
             x, context = context_pop(context)
             y, context = context_pop(context)
-            x = _red(x, nonlinear)
-            y = _red(y, nonlinear)
+            x = _reduce(x, nonlinear)
+            y = _reduce(y, nonlinear)
             if x is TOP or y is TOP:
                 yield TOP, EMPTY_CONTEXT
                 return
@@ -235,6 +235,7 @@ def _sample(head, context, nonlinear):
             if pred is EQUAL:
                 if (x is BOT and is_quote(y)) or (is_quote(x) and y is BOT):
                     return
+            # FIXME This fails to err when it is unknown whether x or y errs.
             answer = TRY_DECIDE[pred](try_unquote(x), try_unquote(y))
             head = TROOL_TO_CODE[answer]
             if head is None:
@@ -244,7 +245,7 @@ def _sample(head, context, nonlinear):
         elif head in TRY_CAST:
             type_ = head
             x, context = context_pop(context)
-            x = _red(x, nonlinear)
+            x = _reduce(x, nonlinear)
             while is_app(x) and x[1] is type_:
                 x = x[2]
             head = TRY_CAST[type_](x)
@@ -257,13 +258,14 @@ def _sample(head, context, nonlinear):
 
 
 def _close(continuation, nonlinear):
+    """Close a continuation in linear-beta-eta normal form."""
     head, context = continuation
     PROFILE_COUNTERS[_close, head[0] if isinstance(head, tuple) else head] += 1
 
     # Reduce args.
     for arg in iter_shared_list(context.stack):
         LOG.debug('head = {}'.format(pretty(head)))
-        arg = _red(arg, nonlinear)
+        arg = _reduce(arg, nonlinear)
         head = APP(head, arg)
 
     # Abstract free variables.
@@ -315,11 +317,11 @@ def _app(lhs, rhs, nonlinear):
 
 @logged(pretty, returns=pretty)
 @memoize_args
-def _red(code, nonlinear):
+def _reduce(code, nonlinear):
     if is_app(code):
         return _app(code[1], code[2], nonlinear)
     elif is_quote(code):
-        return QUOTE(_red(code[1], nonlinear))
+        return QUOTE(_reduce(code[1], nonlinear))
     elif is_atom(code) or is_var(code):
         return code
     else:
@@ -330,12 +332,12 @@ def reduce(code, budget=0):
     '''Beta-eta reduce code, ignoring budget.'''
     assert isinstance(budget, int) and budget >= 0, budget
     LOG.info('reduce({})'.format(pretty(code)))
-    return _red(code, True)
+    return _reduce(code, True)
 
 
 def simplify(code):
     '''Linearly beta-eta reduce.'''
-    return _red(code, False)
+    return _reduce(code, False)
 
 
 def sample(code, budget=0):
