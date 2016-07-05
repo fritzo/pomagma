@@ -11,6 +11,13 @@ Known Bugs:
     OK: reduce(app(list_map, I, nil))
     DIV: reduce(app(list_map, I))
     DIV: reduce(qapp(quote(list_map), quote(I), quote(nil)))
+(B2) The fair scheduler in _sample_nonlinear does not work yet.
+    Eg (x (S I I I)) never reduces to (x I).
+    To fix, we need to generalize context objects to handle full continuations.
+    Better continuations are also needed to persist program traces.
+(B3) Relations can fail to err when one argument is TOP but the oracle doesn't
+    know it.  Eg in (LESS x (QUOTE TOP)), if x is a subtle error the oracle
+    will optimistically return K, when the true answer is TOP
 '''
 
 __all__ = ['reduce', 'simplify', 'sample']
@@ -30,6 +37,7 @@ from pomagma.reducer.util import LOG
 from pomagma.reducer.util import PROFILE_COUNTERS
 from pomagma.reducer.util import logged
 from pomagma.reducer.util import pretty
+import heapq
 import itertools
 
 true = K
@@ -101,6 +109,41 @@ def continuation_complexity(continuation):
 
 
 # ----------------------------------------------------------------------------
+# Priority queue for concurrent continuations
+
+class ContinuationQueue(object):
+    """Complexity-prioritized uniqueness-filtered continuation scheduler.
+
+    The lowest-complexity continuation is executed first.
+    Duplicates may be scheduled, but will only be executed once.
+    Uniqueness filtering has the nice effect of detecting some loops.
+    """
+    __slots__ = ['_to_pop', '_pushed']
+
+    def __init__(self):
+        self._to_pop = []
+        self._pushed = set()
+
+    def schedule(self, continuation):
+        if continuation not in self._pushed:
+            self._pushed.add(continuation)
+            priority = continuation_complexity(continuation)
+            heapq.heappush(self._to_pop, (priority, continuation))
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        try:
+            priority_task = heapq.heappop(self._to_pop)
+        except IndexError:
+            raise StopIteration
+        return priority_task[1]
+
+    next = __next__  # next() for python 2, __next__ for python 3.
+
+
+# ----------------------------------------------------------------------------
 # Reduction
 
 def try_unquote(code):
@@ -127,6 +170,7 @@ TRY_CAST = {
 
 
 def _sample(head, context, nonlinear):
+    """FIFO-scheduled sampler."""
     # Head reduce.
     while True:
         LOG.debug('head = {}'.format(pretty(head)))
@@ -235,7 +279,7 @@ def _sample(head, context, nonlinear):
             if pred is EQUAL:
                 if (x is BOT and is_quote(y)) or (is_quote(x) and y is BOT):
                     return
-            # FIXME This fails to err when it is unknown whether x or y errs.
+            # FIXME This sometimes fails to err when it should; see (B3).
             answer = TRY_DECIDE[pred](try_unquote(x), try_unquote(y))
             head = TROOL_TO_CODE[answer]
             if head is None:
@@ -255,6 +299,29 @@ def _sample(head, context, nonlinear):
                 return
         else:
             raise ValueError(head)
+
+
+def _schedule(head, context, queue):
+    for continuation in _sample(head, context, False):
+        queue.schedule(continuation)
+
+
+def _sample_nonlinear(head, context):
+    """Fair priority-scheduled nonlinear sampler."""
+    queue = ContinuationQueue()
+    _schedule(head, context, queue)
+    for head, context in queue:
+        if head is S:
+            x, context = context_pop(context)
+            y, context = context_pop(context)
+            z, context = context_pop(context)
+            assert not is_var(z), 'missed optimization'
+            head = x
+            context = context_push(context, _app(y, z, False))
+            context = context_push(context, z)
+            _schedule(head, context, queue)
+        else:
+            yield head, context
 
 
 def _close(continuation, nonlinear):
@@ -306,13 +373,21 @@ def _join(continuations, nonlinear):
     return result
 
 
+# FIXME The fair scheduler in _sample_nonlinear does not work yet; see (B2).
+USE_FAIR_SCHEDULER = False
+
+
 @logged(pretty, pretty, returns=pretty)
 @memoize_args
 def _app(lhs, rhs, nonlinear):
     head = lhs
     context = context_make(free_vars(lhs) | free_vars(rhs))
     context = context_push(context, rhs)
-    return _join(_sample(head, context, nonlinear), nonlinear)
+    if nonlinear and USE_FAIR_SCHEDULER:
+        samples = _sample_nonlinear(head, context)
+    else:
+        samples = _sample(head, context, nonlinear)
+    return _join(samples, nonlinear)
 
 
 @logged(pretty, returns=pretty)
@@ -345,5 +420,5 @@ def sample(code, budget=0):
     '''Beta-eta sample code, ignoring budget.'''
     head = code
     context = context_make(free_vars(code))
-    for continuation in _sample(head, context, nonlinear=True):
+    for continuation in _sample_nonlinear(head, context):
         yield _close(continuation, nonlinear=True)
