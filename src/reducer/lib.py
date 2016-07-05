@@ -305,7 +305,7 @@ def fun_type(domain_type, codomain_type):
 
 @combinator
 def fix(f):
-    '''The Y combinator.'''
+    """The Y combinator."""
     return app(f, fix(f))
 
 
