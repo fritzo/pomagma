@@ -23,7 +23,8 @@ from pomagma.reducer.code import CODE, EVAL, QQUOTE, QAPP, EQUAL, LESS
 from pomagma.reducer.code import TOP, BOT, I, K, B, C, S, J
 from pomagma.reducer.code import UNIT, BOOL, MAYBE
 from pomagma.reducer.code import VAR, APP, QUOTE
-from pomagma.reducer.code import is_var, is_app, is_quote, free_vars
+from pomagma.reducer.code import free_vars, complexity
+from pomagma.reducer.code import is_var, is_atom, is_app, is_quote
 from pomagma.reducer.sugar import abstract
 from pomagma.reducer.util import LOG
 from pomagma.reducer.util import PROFILE_COUNTERS
@@ -46,8 +47,8 @@ def make_var(n):
 def fresh(avoid):
     """Return the smallest variable not in avoid."""
     PROFILE_COUNTERS[fresh, len(avoid)] += 1
-    var = 0
-    for var in itertools.imap(make_var, itertools.count()):
+    for i in itertools.count():
+        var = make_var(i)
         if var not in avoid:
             return var
 
@@ -56,11 +57,15 @@ Context = namedtuple('Context', ['stack', 'bound', 'avoid'])
 
 
 def context_make(avoid):
-    return Context(None, None, frozenset(avoid))
+    assert isinstance(avoid, frozenset)
+    return Context(None, None, avoid)
+
+
+EMPTY_CONTEXT = context_make(frozenset())
 
 
 def context_pop(context):
-    if context.stack:
+    if context.stack is not None:
         arg, stack = context.stack
         return arg, Context(stack, context.bound, context.avoid)
     else:
@@ -81,24 +86,22 @@ def iter_shared_list(shared_list):
         yield arg
 
 
+def context_complexity(context):
+    result = 0
+    for arg in iter_shared_list(context.stack):
+        result += 1 + complexity(arg)  # APP(-, arg)
+    for var in iter_shared_list(context.bound):
+        result += 1 + complexity(var)  # FUN(var, -)
+    return result
+
+
+def continuation_complexity(continuation):
+    head, context = continuation
+    return complexity(head) + context_complexity(context)
+
+
 # ----------------------------------------------------------------------------
 # Reduction
-
-def _close(head, context, nonlinear):
-    PROFILE_COUNTERS[_close, head[0] if isinstance(head, tuple) else head] += 1
-    # Reduce args.
-    for arg in iter_shared_list(context.stack):
-        LOG.debug('head = {}'.format(pretty(head)))
-        arg = _red(arg, nonlinear)
-        head = APP(head, arg)
-
-    # Abstract free variables.
-    for var in iter_shared_list(context.bound):
-        LOG.debug('head = {}'.format(pretty(head)))
-        head = abstract(var, head)
-
-    return head
-
 
 def try_unquote(code):
     return code[1] if is_quote(code) else None
@@ -133,16 +136,16 @@ def _sample(head, context, nonlinear):
             context = context_push(context, head[2])
             head = head[1]
         elif is_var(head):
-            yield _close(head, context, nonlinear)
+            yield head, context
             return
         elif is_quote(head):
             x = head[1]
             x = _red(x, nonlinear)
             head = QUOTE(x)
-            yield _close(head, context, nonlinear)
+            yield head, context
             return
         elif head is TOP:
-            yield TOP
+            yield TOP, EMPTY_CONTEXT
             return
         elif head is BOT:
             return
@@ -175,14 +178,14 @@ def _sample(head, context, nonlinear):
                 context = context_push(context, _app(y, z, False))
                 context = context_push(context, z)
             else:
-                yield _close(head, old_context, nonlinear)
+                yield head, old_context
                 return
         elif head is J:
             x, context = context_pop(context)
             y, context = context_pop(context)
             for head in (x, y):
-                for term in _sample(head, context, nonlinear):
-                    yield term
+                for continuation in _sample(head, context, nonlinear):
+                    yield continuation
         elif head is EVAL:
             x, context = context_pop(context)
             x = _red(x, nonlinear)
@@ -190,13 +193,13 @@ def _sample(head, context, nonlinear):
                 head = x[1]
             else:
                 head = APP(EVAL, x)
-                yield _close(head, context, nonlinear)
+                yield head, context
                 return
         elif head is QQUOTE:
             x, context = context_pop(context)
             x = _red(x, nonlinear)
             if x is TOP:
-                yield TOP
+                yield TOP, EMPTY_CONTEXT
                 return
             elif x is BOT:
                 return
@@ -204,7 +207,7 @@ def _sample(head, context, nonlinear):
                 head = QUOTE(x)
             else:
                 head = APP(QQUOTE, x)
-                yield _close(head, context, nonlinear)
+                yield head, context
                 return
         elif head is QAPP:
             x, context = context_pop(context)
@@ -216,7 +219,7 @@ def _sample(head, context, nonlinear):
                 head = QUOTE(_app(x[1], y[1], nonlinear))
             else:
                 head = APP(APP(QAPP, x), y)
-                yield _close(head, context, nonlinear)
+                yield head, context
                 return
         elif head in TRY_DECIDE:
             pred = head
@@ -225,7 +228,7 @@ def _sample(head, context, nonlinear):
             x = _red(x, nonlinear)
             y = _red(y, nonlinear)
             if x is TOP or y is TOP:
-                yield TOP
+                yield TOP, EMPTY_CONTEXT
                 return
             if x is BOT and y is BOT:
                 return
@@ -236,7 +239,7 @@ def _sample(head, context, nonlinear):
             head = TROOL_TO_CODE[answer]
             if head is None:
                 head = APP(APP(pred, x), y)
-                yield _close(head, context, nonlinear)
+                yield head, context
                 return
         elif head in TRY_CAST:
             type_ = head
@@ -247,30 +250,54 @@ def _sample(head, context, nonlinear):
             head = TRY_CAST[type_](x)
             if head is None:
                 head = APP(type_, x)
-                yield _close(head, context, nonlinear)
+                yield head, context
                 return
         else:
             raise ValueError(head)
 
 
-def _collect(samples):
-    PROFILE_COUNTERS[_collect, '...'] += 1
-    unique_samples = set()
-    for sample in samples:
+def _close(continuation, nonlinear):
+    head, context = continuation
+    PROFILE_COUNTERS[_close, head[0] if isinstance(head, tuple) else head] += 1
+
+    # Reduce args.
+    for arg in iter_shared_list(context.stack):
+        LOG.debug('head = {}'.format(pretty(head)))
+        arg = _red(arg, nonlinear)
+        head = APP(head, arg)
+
+    # Abstract free variables.
+    for var in iter_shared_list(context.bound):
+        LOG.debug('head = {}'.format(pretty(head)))
+        head = abstract(var, head)
+
+    return head
+
+
+def _join(continuations, nonlinear):
+    PROFILE_COUNTERS[_join, '...'] += 1
+
+    # Collect unique samples.
+    samples = set()
+    for continuation in continuations:
+        sample = _close(continuation, nonlinear)
         if sample is TOP:
             return TOP
-        unique_samples.add(sample)
-    if not unique_samples:
+        samples.add(sample)
+    if not samples:
         return BOT
-    if len(unique_samples) == 1:
-        return unique_samples.pop()
-    filtered_samples = sorted([
-        sample
-        for sample in unique_samples
+
+    # Filter out dominated samples.
+    # FIXME If x [= y and y [= x, this filters out both.
+    filtered_samples = []
+    for sample in samples:
         if not any(oracle.try_decide_less(sample, other)
-                   for other in unique_samples
-                   if other is not sample)
-    ])
+                   for other in samples
+                   if other is not sample):
+            filtered_samples.append(sample)
+    filtered_samples.sort(key=lambda code: (complexity(code), code))
+
+    # Construct a join term.
     result = filtered_samples[0]
     for sample in filtered_samples[1:]:
         result = APP(APP(J, result), sample)
@@ -280,10 +307,10 @@ def _collect(samples):
 @logged(pretty, pretty, returns=pretty)
 @memoize_args
 def _app(lhs, rhs, nonlinear):
-    context = context_make(free_vars(lhs) | free_vars(rhs))
     head = lhs
+    context = context_make(free_vars(lhs) | free_vars(rhs))
     context = context_push(context, rhs)
-    return _collect(_sample(head, context, nonlinear))
+    return _join(_sample(head, context, nonlinear), nonlinear)
 
 
 @logged(pretty, returns=pretty)
@@ -293,8 +320,10 @@ def _red(code, nonlinear):
         return _app(code[1], code[2], nonlinear)
     elif is_quote(code):
         return QUOTE(_red(code[1], nonlinear))
-    else:
+    elif is_atom(code) or is_var(code):
         return code
+    else:
+        raise ValueError(code)
 
 
 def reduce(code, budget=0):
@@ -312,5 +341,7 @@ def simplify(code):
 def sample(code, budget=0):
     assert isinstance(budget, int) and budget >= 0, budget
     '''Beta-eta sample code, ignoring budget.'''
+    head = code
     context = context_make(free_vars(code))
-    return _sample(code, context, True)
+    for continuation in _sample(head, context, nonlinear=True):
+        yield _close(continuation, nonlinear=True)

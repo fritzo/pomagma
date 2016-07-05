@@ -88,13 +88,13 @@ def is_let(code):
 @memoize_arg
 def free_vars(code):
     if is_var(code):
-        return set([code])
+        return frozenset([code])
     elif is_app(code):
         return free_vars(code[1]) | free_vars(code[2])
     elif is_quote(code):
         return free_vars(code[1])
     else:
-        return set()
+        return frozenset()
 
 
 @memoize_arg

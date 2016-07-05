@@ -18,6 +18,26 @@ y = VAR('y')
 z = VAR('z')
 
 
+@for_each([
+    (None, None, frozenset([]), 0),
+    (None, None, frozenset([x]), 0),
+    (None, (x, None), frozenset([]), 3),
+    (None, (y, (x, None)), frozenset([]), 6),
+    ((I, None), None, frozenset([]), 2),
+    ((I, None), (x, None), frozenset([]), 2 + 3),
+    ((I, None), (y, (x, None)), frozenset([]), 2 + 6),
+    ((x, None), None, frozenset([]), 3),
+    ((x, None), (x, None), frozenset([]), 3 + 3),
+    ((x, None), (y, (x, None)), frozenset([]), 3 + 6),
+    ((x, (I, None)), None, frozenset([]), 5),
+    ((x, (I, None)), (x, None), frozenset([]), 5 + 3),
+    ((x, (I, None)), (y, (x, None)), frozenset([]), 5 + 6),
+])
+def test_context_complexity(stack, bound, avoid, expected):
+    context = engine.Context(stack=stack, bound=bound, avoid=avoid)
+    assert engine.context_complexity(context) == expected
+
+
 @combinator
 def map_(f, xs):
     return app(xs, lib.nil, lambda h, t: lib.cons(app(f, h), map_(f, t)))

@@ -31,7 +31,7 @@ z = VAR('z')
     (APP(x, QUOTE(y)), [x, y]),
 ])
 def test_free_vars(code, free):
-    assert free_vars(code) == set(free)
+    assert free_vars(code) == frozenset(free)
 
 
 @for_each([
