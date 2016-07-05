@@ -97,6 +97,14 @@ def free_vars(code):
         return set()
 
 
+@memoize_arg
+def complexity(code):
+    if isinstance(code, tuple):
+        return 1 + sum(complexity(arg) for arg in code[1:])
+    else:
+        return 1
+
+
 # ----------------------------------------------------------------------------
 # Polish notation
 

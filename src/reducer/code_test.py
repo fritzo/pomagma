@@ -2,7 +2,7 @@ from pomagma.reducer.code import CODE, EVAL, QAPP, QQUOTE, EQUAL, LESS
 from pomagma.reducer.code import TOP, BOT, I, K, B, C, S, J
 from pomagma.reducer.code import V, A, UNIT, BOOL, MAYBE, PROD, SUM, NUM
 from pomagma.reducer.code import VAR, APP, QUOTE, FUN, LET
-from pomagma.reducer.code import free_vars
+from pomagma.reducer.code import free_vars, complexity
 from pomagma.reducer.code import polish_parse, polish_print
 from pomagma.reducer.code import sexpr_parse, sexpr_print
 from pomagma.reducer.code import sexpr_parse_sexpr, sexpr_print_sexpr
@@ -11,9 +11,43 @@ from pomagma.util.testing import for_each
 import hypothesis
 import hypothesis.strategies as s
 
+
+# ----------------------------------------------------------------------------
+# Parameterized tests
+
 x = VAR('x')
 y = VAR('y')
 z = VAR('z')
+
+
+@for_each([
+    (I, []),
+    (x, [x]),
+    (APP(I, x), [x]),
+    (APP(x, x), [x]),
+    (APP(x, y), [x, y]),
+    (APP(x, APP(APP(J, y), APP(K, z))), [x, y, z]),
+    (QUOTE(x), [x]),
+    (APP(x, QUOTE(y)), [x, y]),
+])
+def test_free_vars(code, free):
+    assert free_vars(code) == set(free)
+
+
+@for_each([
+    (I, 1),
+    (K, 1),
+    (x, 2),
+    (APP(K, I), 3),
+    (APP(I, x), 4),
+    (QUOTE(I), 2),
+    (FUN(x, I), 4),
+    (LET(x, I, x), 6),
+    (APP(APP(S, I), I), 5),
+])
+def test_complexity(code, expected):
+    assert complexity(code) == expected
+
 
 EXAMPLES = [
     {'code': TOP, 'polish': 'TOP', 'sexpr': 'TOP'},
@@ -82,19 +116,8 @@ def test_sexpr_print(example):
     assert actual == example['code']
 
 
-@for_each([
-    (I, []),
-    (x, [x]),
-    (APP(I, x), [x]),
-    (APP(x, x), [x]),
-    (APP(x, y), [x, y]),
-    (APP(x, APP(APP(J, y), APP(K, z))), [x, y, z]),
-    (QUOTE(x), [x]),
-    (APP(x, QUOTE(y)), [x, y]),
-])
-def test_free_vars(code, free):
-    assert free_vars(code) == set(free)
-
+# ----------------------------------------------------------------------------
+# Property-based tests
 
 alphabet = '_abcdefghijklmnopqrstuvwxyz'
 s_vars = s.builds(
@@ -143,6 +166,16 @@ def s_terms_extend(terms):
 
 s_terms = s.recursive(s_atoms, s_terms_extend, max_leaves=100)
 s_sexprs = s.builds(to_sexpr, s_terms)
+
+
+@hypothesis.given(s_terms)
+def test_free_vars_runs(code):
+    free_vars(code)
+
+
+@hypothesis.given(s_terms)
+def test_complexity_runs(code):
+    complexity(code)
 
 
 @hypothesis.given(s_terms)
