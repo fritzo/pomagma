@@ -755,6 +755,7 @@ def test_less_reflexive(x):
 
 @pytest.mark.xfail(reason='{J} != {I J}')
 @hypothesis.given(s_quoted, s_quoted)
+@hypothesis.example(quote(J), quote(app(I, J)))
 def test_less_antisymmetric(x, y):
     hypothesis.assume(x is not y)
     less_xy = simplify(lib.less(x, y))
