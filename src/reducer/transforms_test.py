@@ -1,4 +1,4 @@
-from pomagma.reducer.code import HOLE, TOP, BOT, I, K, B, C, S, J
+from pomagma.reducer.code import TOP, BOT, I, K, B, C, S, J
 from pomagma.reducer.code import VAR, APP, FUN, LET
 from pomagma.reducer.code import polish_print
 from pomagma.reducer.transforms import abstract, compile_, decompile, fresh_var
@@ -42,8 +42,6 @@ c = fresh_var(2)
 
 
 @for_each([
-    (HOLE, HOLE),
-    (APP(HOLE, x), APP(HOLE, x)),
     (TOP, TOP),
     (APP(TOP, x), TOP),
     (BOT, BOT),
@@ -85,7 +83,6 @@ def test_decompile(code, expected):
 
 
 @for_each([
-    HOLE,
     TOP,
     BOT,
     I,

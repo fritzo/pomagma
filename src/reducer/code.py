@@ -10,7 +10,6 @@ _QUOTE = intern('QUOTE')
 _FUN = intern('FUN')
 _LET = intern('LET')
 
-HOLE = intern('HOLE')
 TOP = intern('TOP')
 BOT = intern('BOT')
 I = intern('I')

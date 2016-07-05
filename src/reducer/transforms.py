@@ -4,7 +4,7 @@ __all__ = ['try_abstract', 'abstract', 'decompile']
 
 from pomagma.compiler.util import memoize_args
 from pomagma.reducer import pattern
-from pomagma.reducer.code import HOLE, TOP, BOT, I, K, B, C, S, J
+from pomagma.reducer.code import TOP, BOT, I, K, B, C, S, J
 from pomagma.reducer.code import VAR, APP, FUN, LET
 from pomagma.reducer.code import is_var, is_app, is_fun, is_let
 
@@ -144,7 +144,7 @@ def _decompile_stack(stack):
     if stack is None:
         return None
     head, args = stack
-    if is_var(head) or head is HOLE or head is J:
+    if is_var(head) or head is J:
         args = _decompile_args(args)
         return _from_stack((head, args))
     elif head is TOP:

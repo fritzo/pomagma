@@ -1,6 +1,6 @@
 from pomagma.reducer import engine
 from pomagma.reducer import lib
-from pomagma.reducer.code import HOLE, TOP, BOT, I, K, B, C, S, J
+from pomagma.reducer.code import TOP, BOT, I, K, B, C, S, J
 from pomagma.reducer.code import CODE, EVAL, QQUOTE, QAPP, EQUAL, LESS
 from pomagma.reducer.code import UNIT, BOOL, MAYBE
 from pomagma.reducer.code import VAR, APP, QUOTE
@@ -27,9 +27,6 @@ REDUCE_EXAMPLES = [
     (x, x),
     (app(x, y), app(x, y)),
     (app(x, I), app(x, I)),
-    (HOLE, HOLE),
-    (app(HOLE, x), HOLE),
-    (app(HOLE, x, y), HOLE),
     (TOP, TOP),
     (app(TOP, x), TOP),
     (app(TOP, x, y), TOP),
@@ -64,7 +61,6 @@ REDUCE_EXAMPLES = [
     (join(x, x), x),
     (join(BOT, x), x),
     (join(TOP, x), TOP),
-    (join(HOLE, x), join(HOLE, x)),
     pytest.mark.xfail((join(K, APP(K, I)), J)),
     pytest.mark.xfail((join(APP(K, I), K), J)),
     pytest.mark.xfail((join(J, K), J)),
@@ -185,7 +181,6 @@ s_vars = s.builds(
 )
 s_atoms = s.one_of(
     s.one_of(s_vars),
-    s.just(HOLE),
     s.just(TOP),
     s.just(BOT),
     s.just(I),

@@ -1,5 +1,5 @@
 from pomagma.reducer.code import CODE, EVAL, QAPP, QQUOTE, EQUAL, LESS
-from pomagma.reducer.code import HOLE, TOP, BOT, I, K, B, C, S, J
+from pomagma.reducer.code import TOP, BOT, I, K, B, C, S, J
 from pomagma.reducer.code import V, A, UNIT, BOOL, MAYBE, PROD, SUM, NUM
 from pomagma.reducer.code import VAR, APP, QUOTE, FUN, LET
 from pomagma.reducer.code import free_vars
@@ -16,7 +16,6 @@ y = VAR('y')
 z = VAR('z')
 
 EXAMPLES = [
-    {'code': HOLE, 'polish': 'HOLE', 'sexpr': 'HOLE'},
     {'code': TOP, 'polish': 'TOP', 'sexpr': 'TOP'},
     {'code': BOT, 'polish': 'BOT', 'sexpr': 'BOT'},
     {'code': I, 'polish': 'I', 'sexpr': 'I'},
@@ -104,7 +103,6 @@ s_vars = s.builds(
 )
 s_atoms = s.one_of(
     s.one_of(s_vars),
-    s.just(HOLE),
     s.just(TOP),
     s.just(BOT),
     s.just(I),

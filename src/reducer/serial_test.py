@@ -1,6 +1,6 @@
 from cStringIO import StringIO
 from pomagma.reducer.code import CODE, EVAL, QAPP, QQUOTE, EQUAL, LESS
-from pomagma.reducer.code import HOLE, TOP, BOT, I, K, B, C, S, J
+from pomagma.reducer.code import TOP, BOT, I, K, B, C, S, J
 from pomagma.reducer.code import V, A, UNIT, BOOL, MAYBE, PROD, SUM, NUM
 from pomagma.reducer.code import VAR, APP, QUOTE, FUN, LET
 from pomagma.reducer.code_test import s_terms
@@ -48,7 +48,6 @@ x = VAR('x')
     VAR('take_one_down_and_pass_it_around_and_' * 9),
     VAR('take_one_down_and_pass_it_around_and_' * 99),
     VAR('take_one_down_and_pass_it_around_and_' * 999),
-    HOLE,
     TOP,
     BOT,
     I,

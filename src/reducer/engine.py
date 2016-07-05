@@ -20,7 +20,7 @@ from pomagma.compiler.util import memoize_arg
 from pomagma.compiler.util import memoize_args
 from pomagma.reducer import oracle
 from pomagma.reducer.code import CODE, EVAL, QQUOTE, QAPP, EQUAL, LESS
-from pomagma.reducer.code import HOLE, TOP, BOT, I, K, B, C, S, J
+from pomagma.reducer.code import TOP, BOT, I, K, B, C, S, J
 from pomagma.reducer.code import UNIT, BOOL, MAYBE
 from pomagma.reducer.code import VAR, APP, QUOTE
 from pomagma.reducer.code import is_var, is_app, is_quote, free_vars
@@ -140,9 +140,6 @@ def _sample(head, context, nonlinear):
             x = _red(x, nonlinear)
             head = QUOTE(x)
             yield _close(head, context, nonlinear)
-            return
-        elif head is HOLE:
-            yield HOLE
             return
         elif head is TOP:
             yield TOP

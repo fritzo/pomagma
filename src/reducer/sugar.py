@@ -1,6 +1,6 @@
 '''DSL translating from lambda-let notation to SKJ.'''
 
-from pomagma.reducer.code import HOLE, BOT, J, QAPP, VAR, APP, QUOTE
+from pomagma.reducer.code import BOT, J, QAPP, VAR, APP, QUOTE
 from pomagma.reducer.code import free_vars
 from pomagma.reducer.transforms import try_abstract, abstract
 from pomagma.reducer.util import LOG
@@ -19,10 +19,7 @@ def _compile(fun, actual_fun=None):
         source = inspect.getsource(actual_fun)
         raise SyntaxError('Unsupported signature: {}'.format(source))
     symbolic_args = map(VAR, args)
-    try:
-        symbolic_result = fun(*symbolic_args)
-    except NotImplementedError:
-        symbolic_result = HOLE
+    symbolic_result = fun(*symbolic_args)
     LOG.debug('compiling {}{} = {}'.format(
         fun, tuple(symbolic_args), symbolic_result))
     code = as_code(symbolic_result)
