@@ -303,6 +303,12 @@ def fun_type(domain_type, codomain_type):
     return lambda f, x: app(codomain_type, app(f, app(domain_type, x)))
 
 
+@combinator
+def fix(f):
+    '''The Y combinator.'''
+    return app(f, fix(f))
+
+
 # ----------------------------------------------------------------------------
 # Scott ordering
 

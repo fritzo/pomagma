@@ -616,6 +616,20 @@ def test_fun_type_fixes(value, type_):
     assert reduce(app(type_, value)) == reduce(as_code(value))
 
 
+succ_fix = lib.fix(lambda f, x: app(x, one, lambda px: succ(app(f, px))))
+
+
+@for_each([
+    (app(succ_fix, error), error),
+    (app(succ_fix, undefined), undefined),
+    (app(succ_fix, zero), one),
+    (app(succ_fix, one), two),
+    (app(succ_fix, two), three),
+])
+def test_fix(value, expected):
+    assert reduce(value) == expected
+
+
 # ----------------------------------------------------------------------------
 # Scott ordering
 
