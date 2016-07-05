@@ -104,6 +104,17 @@ def try_unquote(code):
     return code[1] if is_quote(code) else None
 
 
+TROOL_TO_CODE = {
+    True: true,
+    False: false,
+    None: None,
+}
+
+TRY_DECIDE = {
+    EQUAL: oracle.try_decide_equal,
+    LESS: oracle.try_decide_less,
+}
+
 TRY_CAST = {
     BOOL: oracle.try_cast_bool,
     UNIT: oracle.try_cast_unit,
@@ -210,7 +221,8 @@ def _sample(head, context, nonlinear):
                 head = APP(APP(QAPP, x), y)
                 yield _close(head, context, nonlinear)
                 return
-        elif head is EQUAL:
+        elif head in TRY_DECIDE:
+            pred = head
             x, context = context_pop(context)
             y, context = context_pop(context)
             x = _red(x, nonlinear)
@@ -218,34 +230,15 @@ def _sample(head, context, nonlinear):
             if x is TOP or y is TOP:
                 yield TOP
                 return
-            elif (x is BOT and is_quote(y)) or (is_quote(x) and y is BOT):
+            if x is BOT and y is BOT:
                 return
-            answer = oracle.try_decide_equal(try_unquote(x), try_unquote(y))
-            if answer is True:
-                head = true
-            elif answer is False:
-                head = false
-            else:
-                assert answer is None
-                head = APP(APP(EQUAL, x), y)
-                yield _close(head, context, nonlinear)
-                return
-        elif head is LESS:
-            x, context = context_pop(context)
-            y, context = context_pop(context)
-            x = _red(x, nonlinear)
-            y = _red(y, nonlinear)
-            if x is TOP or y is TOP:
-                yield TOP
-                return
-            answer = oracle.try_decide_less(try_unquote(x), try_unquote(y))
-            if answer is True:
-                head = true
-            elif answer is False:
-                head = false
-            else:
-                assert answer is None
-                head = APP(APP(LESS, x), y)
+            if pred is EQUAL:
+                if (x is BOT and is_quote(y)) or (is_quote(x) and y is BOT):
+                    return
+            answer = TRY_DECIDE[pred](try_unquote(x), try_unquote(y))
+            head = TROOL_TO_CODE[answer]
+            if head is None:
+                head = APP(APP(pred, x), y)
                 yield _close(head, context, nonlinear)
                 return
         elif head in TRY_CAST:

@@ -1,5 +1,5 @@
 from pomagma.reducer import lib
-from pomagma.reducer.code import VAR, J, UNIT
+from pomagma.reducer.code import VAR, I, J, UNIT
 from pomagma.reducer.engine import reduce, simplify
 from pomagma.reducer.engine_test import s_quoted
 from pomagma.reducer.sugar import as_code, app, quote
@@ -654,6 +654,9 @@ bool_values = (error, undefined, true, false)
     (quote(one), quote(two), false),
     (quote(one), quote(three), false),
     (quote(two), quote(three), false),
+    (quote(true), quote(app(I, true)), true),
+    (quote(false), quote(app(I, false)), true),
+    pytest.mark.xfail((quote(J), quote(app(I, J)), true)),
 ])
 def test_equal(x, y, expected):
     assert simplify(lib.equal(x, y)) == expected
@@ -750,6 +753,7 @@ def test_less_reflexive(x):
     assert less_xx == true
 
 
+@pytest.mark.xfail(reason='{J} != {I J}')
 @hypothesis.given(s_quoted, s_quoted)
 def test_less_antisymmetric(x, y):
     hypothesis.assume(x is not y)
