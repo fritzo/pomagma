@@ -173,7 +173,7 @@ def _sample(head, context, nonlinear):
     """FIFO-scheduled sampler."""
     # Head reduce.
     while True:
-        LOG.debug('head = {}'.format(pretty(head)))
+        # LOG.debug('head = {}'.format(pretty(head)))
         PROFILE_COUNTERS[
             _sample, head[0] if isinstance(head, tuple) else head] += 1
         if is_app(head):
@@ -331,13 +331,13 @@ def _close(continuation, nonlinear):
 
     # Reduce args.
     for arg in iter_shared_list(context.stack):
-        LOG.debug('head = {}'.format(pretty(head)))
+        # LOG.debug('head = {}'.format(pretty(head)))
         arg = _reduce(arg, nonlinear)
         head = APP(head, arg)
 
     # Abstract free variables.
     for var in iter_shared_list(context.bound):
-        LOG.debug('head = {}'.format(pretty(head)))
+        # LOG.debug('head = {}'.format(pretty(head)))
         head = abstract(var, head)
 
     return head
@@ -412,12 +412,14 @@ def reduce(code, budget=0):
 
 def simplify(code):
     '''Linearly beta-eta reduce.'''
+    LOG.info('simplify({})'.format(pretty(code)))
     return _reduce(code, False)
 
 
 def sample(code, budget=0):
-    assert isinstance(budget, int) and budget >= 0, budget
     '''Beta-eta sample code, ignoring budget.'''
+    assert isinstance(budget, int) and budget >= 0, budget
+    LOG.info('sample({})'.format(pretty(code)))
     head = code
     context = context_make(free_vars(code))
     for continuation in _sample_nonlinear(head, context):
