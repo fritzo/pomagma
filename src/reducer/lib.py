@@ -105,6 +105,18 @@ def bool_quote(x):
     return app(x, QUOTE(true), QUOTE(false))
 
 
+@combinator
+def bool_if_true(x):
+    x = bool_type(x)
+    return unit_type(app(x, ok, undefined))
+
+
+@combinator
+def bool_if_false(x):
+    x = bool_type(x)
+    return unit_type(app(x, undefined, ok))
+
+
 # ----------------------------------------------------------------------------
 # Maybe
 
@@ -277,6 +289,11 @@ def list_any(xs):
 
 
 @combinator
+def list_cat(xs, ys):
+    return app(ys, xs, lambda h, t: cons(h, list_cat(xs, t)))
+
+
+@combinator
 def list_map(f, xs):
     return app(xs, nil, lambda h, t: cons(app(f, h), list_map(f, t)))
 
@@ -284,6 +301,12 @@ def list_map(f, xs):
 @combinator
 def list_rec(n, c, xs):
     return app(xs, n, lambda h, t: app(c, h, list_rec(n, c, t)))
+
+
+@combinator
+def list_filter(p, xs):
+    p = compose(bool_type, p)
+    return list_rec(nil, lambda h, t: app(p, h, app(cons, h), I, t), xs)
 
 
 @combinator
@@ -296,7 +319,51 @@ def list_quote(quote_item, xs):
 
 
 # ----------------------------------------------------------------------------
+# Enumerable sets
+
+@combinator
+def box(item):
+    return app(CI, item)
+
+
+@combinator
+def enum_test(xs):
+    return unit_type(app(xs, lambda x: ok))
+
+
+@combinator
+def enum_union(xs, ys):
+    return join(xs, ys)
+
+
+@combinator
+def enum_any(xs):
+    return unit_type(app(xs, unit_type))
+
+
+@combinator
+def enum_filter(p, xs):
+    p = compose(unit_type, p)
+    return app(xs, lambda x: app(p, x, box(x)))
+
+
+@combinator
+def enum_map(f, xs):
+    return app(xs, lambda x: box(app(f, x)))
+
+
+@combinator
+def enum_flatten(xs):
+    return app(xs, lambda x: x)
+
+
+# ----------------------------------------------------------------------------
 # Functions
+
+@combinator
+def compose(f, g):
+    return lambda x: app(f, app(g, x))
+
 
 @combinator
 def fun_type(domain_type, codomain_type):

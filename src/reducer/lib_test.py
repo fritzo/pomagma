@@ -2,13 +2,14 @@ from pomagma.reducer import lib
 from pomagma.reducer.code import VAR, I, J, UNIT
 from pomagma.reducer.engine import reduce, simplify
 from pomagma.reducer.engine_test import s_quoted
-from pomagma.reducer.sugar import as_code, app, quote
+from pomagma.reducer.sugar import as_code, app, join, quote
 from pomagma.util import TRAVIS_CI
 from pomagma.util.testing import for_each
 import hypothesis
 import pytest
 
 f = VAR('f')
+w = VAR('w')
 x = VAR('x')
 y = VAR('y')
 z = VAR('z')
@@ -203,6 +204,28 @@ def test_bool_or(x, y, expected):
 ])
 def test_bool_quote(x, expected):
     assert simplify(lib.bool_quote(x)) == expected
+
+
+@for_each([
+    (error, error),
+    (undefined, undefined),
+    (true, ok),
+    (false, undefined),
+    (ok, error),
+])
+def test_bool_if_true(x, expected):
+    assert simplify(lib.bool_if_true(x)) == expected
+
+
+@for_each([
+    (error, error),
+    (undefined, undefined),
+    (true, undefined),
+    (false, ok),
+    (ok, error),
+])
+def test_bool_if_false(x, expected):
+    assert simplify(lib.bool_if_false(x)) == expected
 
 
 # ----------------------------------------------------------------------------
@@ -541,6 +564,21 @@ def test_list_any(x, expected):
 
 
 @for_each([
+    (nil, nil, nil),
+    (cons(x, nil), nil, cons(x, nil)),
+    (nil, cons(y, nil), cons(y, nil)),
+    (cons(x, nil), cons(y, nil), cons(y, cons(x, nil))),
+    (
+        cons(x, cons(w, nil)),
+        cons(z, cons(y, nil)),
+        cons(z, cons(y, cons(x, cons(w, nil)))),
+    ),
+])
+def test_list_cat(xs, ys, expected):
+    assert reduce(lib.list_cat(xs, ys)) == expected
+
+
+@for_each([
     (lambda x: x, nil, nil),
     (undefined, nil, nil),
     (error, nil, nil),
@@ -575,6 +613,23 @@ def test_list_rec(n, c, x, expected):
 
 
 @for_each([
+    (lib.bool_type, nil, nil),
+    (lib.bool_type, cons(true, nil), cons(true, nil)),
+    (lib.bool_type, cons(true, cons(false, nil)), cons(true, nil)),
+    (lib.bool_type, cons(false, cons(true, nil)), cons(true, nil)),
+    (lib.bool_type, cons(true, cons(true, nil)), cons(true, cons(true, nil))),
+    (lib.bool_not, nil, nil),
+    (lib.bool_not, cons(true, nil), nil),
+    (lib.bool_not, cons(true, cons(false, nil)), cons(false, nil)),
+    (lib.bool_not, cons(false, cons(true, nil)), cons(false, nil)),
+    (lib.bool_not, cons(true, cons(true, nil)), nil),
+    (lib.num_is_zero, cons(two, cons(zero, cons(one, nil))), cons(zero, nil)),
+])
+def test_list_filter(p, xs, expected):
+    assert reduce(lib.list_filter(p, xs)) == expected
+
+
+@for_each([
     (nil, quote(nil)),
     pytest.mark.xfail((cons(zero, nil), quote(cons(zero, nil)))),
     pytest.mark.xfail((cons(one, nil), quote(cons(one, nil)))),
@@ -588,6 +643,102 @@ def test_list_rec(n, c, x, expected):
 def test_list_quote(x, expected):
     quote_item = lib.num_quote
     assert reduce(lib.list_quote(quote_item, x)) == expected
+
+
+# ----------------------------------------------------------------------------
+# Enumerable sets
+
+box = lib.box
+
+
+@for_each([
+    (error, error),
+    (undefined, undefined),
+    (box(undefined), ok),
+    (box(error), ok),
+    (join(box(true), box(false)), ok),
+])
+def test_enum_test(xs, expected):
+    assert reduce(lib.enum_test(xs)) == expected
+
+
+@for_each([
+    (undefined, undefined, undefined),
+    (undefined, error, error),
+    (error, undefined, error),
+    (box(x), undefined, box(x)),
+    (undefined, box(x), box(x)),
+    (box(x), box(x), box(x)),
+    (box(x), box(y), join(box(x), box(y))),
+])
+def test_enum_union(xs, ys, expected):
+    assert reduce(lib.enum_union(xs, ys)) == expected
+
+
+@for_each([
+    (undefined, undefined),
+    (error, error),
+    (box(undefined), undefined),
+    (box(error), error),
+    (box(ok), ok),
+    (box(true), error),
+    (box(false), error),
+])
+def test_enum_any(xs, expected):
+    assert reduce(lib.enum_any(xs)) == expected
+
+
+@for_each([
+    (lib.unit_type, undefined, undefined),
+    (lib.unit_type, error, error),
+    (lib.unit_type, box(undefined), undefined),
+    (lib.unit_type, box(ok), box(ok)),
+    (lib.bool_if_true, undefined, undefined),
+    (lib.bool_if_true, box(true), box(true)),
+    (lib.bool_if_true, box(false), undefined),
+    (lib.bool_if_true, join(box(false), box(true)), box(true)),
+    (lib.bool_if_false, undefined, undefined),
+    (lib.bool_if_false, box(true), undefined),
+    (lib.bool_if_false, box(false), box(false)),
+    (lib.bool_if_false, join(box(false), box(true)), box(false)),
+])
+def test_enum_filter(p, xs, expected):
+    assert reduce(lib.enum_filter(p, xs)) == expected
+
+
+@for_each([
+    (lib.unit_type, undefined, undefined),
+    (lib.unit_type, error, error),
+    (lib.unit_type, box(undefined), box(undefined)),
+    (lib.unit_type, box(error), box(error)),
+    (lib.unit_type, box(ok), box(ok)),
+    (lib.unit_type, box(true), box(error)),
+    (lib.unit_type, box(false), box(error)),
+    (lib.bool_not, box(true), box(false)),
+    (lib.bool_not, box(false), box(true)),
+    (succ, undefined, undefined),
+    (succ, box(undefined), box(succ(undefined))),
+    (succ, box(zero), box(one)),
+    (succ, box(one), box(two)),
+    (succ, box(two), box(three)),
+    (succ, join(box(zero), box(two)), join(box(one), box(three))),
+])
+def test_enum_map(f, xs, expected):
+    assert reduce(lib.enum_map(f, xs)) == expected
+
+
+@for_each([
+    (undefined, undefined),
+    (error, error),
+    (box(undefined), undefined),
+    (box(error), error),
+    (box(box(undefined)), box(undefined)),
+    (box(box(ok)), box(ok)),
+    (box(box(true)), box(true)),
+    (join(box(box(true)), box(box(false))), join(box(true), box(false))),
+])
+def test_enum_flatten(xs, expected):
+    assert reduce(lib.enum_flatten(xs)) == expected
 
 
 # ----------------------------------------------------------------------------
@@ -628,6 +779,16 @@ succ_fix = lib.fix(lambda f, x: app(x, one, lambda px: succ(app(f, px))))
 ])
 def test_fix(value, expected):
     assert reduce(value) == expected
+
+
+@for_each([
+    (lib.unit_type, lib.unit_type, lib.unit_type),
+    (lib.bool_type, lib.bool_type, lib.bool_type),
+    (lib.maybe_type, lib.maybe_type, lib.maybe_type),
+    pytest.mark.xfail((lib.bool_not, lib.bool_not, lib.bool_type)),
+])
+def test_compose(f, g, expected):
+    assert reduce(as_code(lib.compose(f, g))) == simplify(as_code(expected))
 
 
 # ----------------------------------------------------------------------------
