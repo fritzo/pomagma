@@ -61,46 +61,50 @@ def fresh(avoid):
             return var
 
 
-Context = namedtuple('Context', ['stack', 'bound', 'avoid'])
-
-
-def context_make(avoid):
-    assert isinstance(avoid, frozenset)
-    return Context(None, None, avoid)
-
-
-EMPTY_CONTEXT = context_make(frozenset())
-
-
-def context_pop(context):
-    if context.stack is not None:
-        arg, stack = context.stack
-        return arg, Context(stack, context.bound, context.avoid)
-    else:
-        arg = fresh(context.avoid)
-        avoid = context.avoid | frozenset([arg])
-        bound = arg, context.bound
-        return arg, Context(context.stack, bound, avoid)
-
-
-def context_push(context, arg):
-    stack = arg, context.stack
-    return Context(stack, context.bound, context.avoid)
-
-
 def iter_shared_list(shared_list):
     while shared_list is not None:
         arg, shared_list = shared_list
         yield arg
 
 
+Context = namedtuple('Context', ['stack', 'avoid'])
+
+# Context operations
+STACK_APP_0 = intern('STACK_APP_0')
+STACK_APP_1 = intern('STACK_APP_1')
+STACK_FUN_0 = intern('STACK_FUN_0')
+STACK_QUOTE = intern('STACK_QUOTE')
+
+
+def context_make(avoid):
+    assert isinstance(avoid, frozenset)
+    return Context(None, avoid)
+
+
+EMPTY_CONTEXT = context_make(frozenset())
+
+
+def context_pop(context):
+    if context.stack is not None and context.stack[0][0] is STACK_APP_1:
+        (op, arg), stack = context.stack
+        avoid = context.avoid
+    else:
+        arg = fresh(context.avoid)
+        stack = (STACK_FUN_0, arg), context.stack
+        avoid = context.avoid | frozenset([arg])
+    return arg, Context(stack, avoid)
+
+
+def context_push(context, arg):
+    stack = (STACK_APP_1, arg), context.stack
+    return Context(stack, context.avoid)
+
+
 def context_complexity(context):
-    result = 0
-    for arg in iter_shared_list(context.stack):
-        result += 1 + complexity(arg)  # APP(-, arg)
-    for var in iter_shared_list(context.bound):
-        result += 1 + complexity(var)  # FUN(var, -)
-    return result
+    return sum(
+        1 + complexity(arg)
+        for op, arg in iter_shared_list(context.stack)
+    )
 
 
 def continuation_complexity(continuation):
@@ -328,6 +332,20 @@ def _close(continuation, nonlinear):
     """Close a continuation in linear-beta-eta normal form."""
     head, context = continuation
     PROFILE_COUNTERS[_close, head[0] if isinstance(head, tuple) else head] += 1
+
+    # NEW
+    for op, arg in iter_shared_list(context.stack):
+        LOG.debug('head = {}'.format(pretty(head)))
+        if op is STACK_APP_1:
+            head = APP(head, arg)
+        elif op is STACK_APP_0:
+            head = APP(arg, head)
+        elif op is STACK_FUN_0:
+            head = abstract(var, head)
+        elif op is STACK_QUOTE:
+            head = QUOTE(head)
+        else:
+            raise ValueError(op)
 
     # Reduce args.
     for arg in iter_shared_list(context.stack):
