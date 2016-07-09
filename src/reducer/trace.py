@@ -8,7 +8,6 @@ from pomagma.reducer.code import TOP, BOT, I, K, B, C, S, J, VAR, APP, QUOTE
 from pomagma.reducer.code import is_var, is_app, is_quote, free_vars
 from pomagma.reducer.code import sexpr_parse, sexpr_print
 from pomagma.reducer.transforms import abstract
-from pomagma.util import TODO
 import re
 
 parsable = parsable.Parsable()
@@ -182,7 +181,7 @@ def schedule_push(schedule, task):
 
 
 def trace_nondeterministic(code):
-    TODO('this confuses the stack and schedule, and fails to recurse joins')
+    # FIXME This confuses the stack and schedule, and fails to recurse joins.
     init_fresh(code)
     state = REDUCE_HEAD
     stack = None
