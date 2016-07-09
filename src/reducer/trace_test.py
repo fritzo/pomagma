@@ -1,6 +1,7 @@
 from pomagma.compiler.util import memoize_arg
 from pomagma.reducer import engine
-from pomagma.reducer.code import TOP, BOT, I, K, B, C, S, J, VAR, APP, is_app
+from pomagma.reducer.code import TOP, BOT, I, K, B, C, S, J, VAR, APP
+from pomagma.reducer.code import is_app, sexpr_print
 from pomagma.reducer.trace import trace_deterministic
 from pomagma.reducer.trace import trace_nondeterministic
 import hypothesis
@@ -8,11 +9,7 @@ import hypothesis.strategies as s
 import pytest
 
 
-alphabet = '_abcdefghijklmnopqrstuvwxyz'
-s_vars = s.builds(
-    VAR,
-    s.builds(str, s.text(alphabet=alphabet, min_size=1, average_size=5)),
-)
+s_vars = s.builds(VAR, s.sampled_from('abcdefghijklmnopqrstuvwxyz'))
 s_sk_atoms = s.one_of(
     s.one_of(s_vars),
     s.just(TOP),
@@ -55,9 +52,10 @@ def count_S_occurrences(code):
 
 
 @hypothesis.given(s_sk_terms)
-@hypothesis.settings(max_examples=1000)
+@hypothesis.settings(max_examples=1000, max_iterations=10000)
 def test_trace_deterministic(code):
     hypothesis.assume(count_S_occurrences(code) <= 1)
+    print(sexpr_print(code))
     expected = engine.reduce(code)
     trace = trace_deterministic(code)
     actual = trace[-1][1]
@@ -66,9 +64,10 @@ def test_trace_deterministic(code):
 
 @pytest.mark.xfail
 @hypothesis.given(s_sk_terms)
-@hypothesis.settings(max_examples=1000)
+@hypothesis.settings(max_examples=1000, max_iterations=10000)
 def test_trace_nondeterministic(code):
     hypothesis.assume(count_S_occurrences(code) <= 1)
+    print(sexpr_print(code))
     expected = engine.reduce(code)
     trace = trace_nondeterministic(code)
     actual = trace[-1][1]
