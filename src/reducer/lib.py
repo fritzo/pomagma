@@ -237,6 +237,12 @@ def num_add(x, y):
 
 @combinator
 @symmetric
+def num_mul(x, y):
+    return app(y, zero, lambda py: num_add(x, num_mul(x, py)))
+
+
+@combinator
+@symmetric
 def num_eq(x, y):
     return app(x, app(y, true, lambda py: false), lambda px:
                app(y, false, lambda py: num_eq(px, py)))

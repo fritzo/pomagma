@@ -345,16 +345,21 @@ def test_sum_quote(x, expected):
 
 succ = lib.succ
 zero = lib.zero
-one = succ(zero)
-two = succ(one)
-three = succ(two)
+
+
+def num(n):
+    assert isinstance(n, int) and n >= 0
+    result = zero
+    for _ in xrange(n):
+        result = succ(result)
+    return result
 
 
 @for_each([
-    (zero, ok),
-    (one, ok),
-    (two, ok),
-    (three, ok),
+    (num(0), ok),
+    (num(1), ok),
+    (num(2), ok),
+    (num(3), ok),
     (error, error),
     (succ(error), error),
     (succ(succ(error)), error),
@@ -369,10 +374,10 @@ def test_num_test(x, expected):
 
 
 @for_each([
-    (zero, true),
-    (one, false),
-    (two, false),
-    (three, false),
+    (num(0), true),
+    (num(1), false),
+    (num(2), false),
+    (num(3), false),
     (undefined, undefined),
     (error, error),
 ])
@@ -381,10 +386,10 @@ def test_num_is_zero(x, expected):
 
 
 @for_each([
-    (zero, error),
-    (one, zero),
-    (two, one),
-    (three, two),
+    (num(0), error),
+    (num(1), num(0)),
+    (num(2), num(1)),
+    (num(3), num(2)),
     (undefined, undefined),
     (succ(undefined), undefined),
     (error, error),
@@ -395,18 +400,18 @@ def test_num_pred(x, expected):
 
 
 @for_each([
-    (zero, zero, zero),
-    (zero, two, two),
-    (zero, three, three),
-    (zero, one, one),
-    (one, zero, one),
-    (one, one, two),
-    (one, two, three),
-    (two, zero, two),
-    (two, one, three),
-    (three, zero, three),
-    (undefined, zero, undefined),
-    (zero, undefined, undefined),
+    (num(0), num(0), num(0 + 0)),
+    (num(0), num(1), num(0 + 1)),
+    (num(0), num(2), num(0 + 2)),
+    (num(0), num(3), num(0 + 3)),
+    (num(1), num(1), num(1 + 1)),
+    (num(1), num(2), num(1 + 2)),
+    (num(1), num(3), num(1 + 3)),
+    (num(2), num(2), num(2 + 2)),
+    (num(2), num(3), num(2 + 3)),
+    (num(3), num(3), num(3 + 3)),
+    (undefined, num(0), undefined),
+    (num(0), undefined, undefined),
     (error, x, error),
     (x, error, error),
 ])
@@ -415,68 +420,88 @@ def test_num_add(x, y, expected):
 
 
 @for_each([
-    (zero, zero, true),
-    (zero, one, false),
-    (zero, two, false),
-    (zero, three, false),
-    (one, zero, false),
-    (one, one, true),
-    (one, two, false),
-    (one, three, false),
-    (two, zero, false),
-    (two, one, false),
-    (two, two, true),
-    (two, three, false),
-    (three, zero, false),
-    (three, one, false),
-    (three, two, false),
-    (three, three, true),
+    (num(0), num(0), num(0 * 0)),
+    (num(0), num(1), num(0 * 1)),
+    (num(0), num(2), num(0 * 2)),
+    (num(0), num(3), num(0 * 3)),
+    (num(1), num(1), num(1 * 1)),
+    pytest.mark.xfail((num(1), num(2), num(1 * 2)), run=False),
+    pytest.mark.xfail((num(1), num(3), num(1 * 3)), run=False),
+    pytest.mark.xfail((num(2), num(2), num(2 * 2)), run=False),
+    pytest.mark.xfail((num(2), num(3), num(2 * 3)), run=False),
+    pytest.mark.xfail((num(3), num(3), num(3 * 3)), run=False),
+    pytest.mark.xfail((undefined, num(0), undefined), run=False),
+    pytest.mark.xfail((num(0), undefined, undefined), run=False),
+    pytest.mark.xfail((error, x, error), run=False),
+    (x, error, error),
+])
+def test_num_mul(x, y, expected):
+    assert reduce(lib.num_mul(x, y)) == expected
+
+
+@for_each([
+    (num(0), num(0), true),
+    (num(0), num(1), false),
+    (num(0), num(2), false),
+    (num(0), num(3), false),
+    (num(1), num(0), false),
+    (num(1), num(1), true),
+    (num(1), num(2), false),
+    (num(1), num(3), false),
+    (num(2), num(0), false),
+    (num(2), num(1), false),
+    (num(2), num(2), true),
+    (num(2), num(3), false),
+    (num(3), num(0), false),
+    (num(3), num(1), false),
+    (num(3), num(2), false),
+    (num(3), num(3), true),
 ])
 def test_num_eq(x, y, expected):
     assert reduce(lib.num_eq(x, y)) == expected
 
 
 @for_each([
-    (zero, zero, false),
-    (zero, one, true),
-    (zero, two, true),
-    (zero, three, true),
-    (one, zero, false),
-    (one, one, false),
-    (one, two, true),
-    (one, three, true),
-    (two, zero, false),
-    (two, one, false),
-    (two, two, false),
-    (two, three, true),
-    (three, zero, false),
-    (three, one, false),
-    (three, two, false),
-    (three, three, false),
+    (num(0), num(0), false),
+    (num(0), num(1), true),
+    (num(0), num(2), true),
+    (num(0), num(3), true),
+    (num(1), num(0), false),
+    (num(1), num(1), false),
+    (num(1), num(2), true),
+    (num(1), num(3), true),
+    (num(2), num(0), false),
+    (num(2), num(1), false),
+    (num(2), num(2), false),
+    (num(2), num(3), true),
+    (num(3), num(0), false),
+    (num(3), num(1), false),
+    (num(3), num(2), false),
+    (num(3), num(3), false),
 ])
 def test_num_less(x, y, expected):
     assert reduce(lib.num_less(x, y)) == expected
 
 
 @for_each([
-    (zero, succ, zero, zero),
-    (zero, succ, one, one),
-    (zero, succ, two, two),
-    (zero, succ, three, three),
-    (one, succ, zero, one),
-    (one, succ, one, two),
-    (one, succ, two, three),
-    (zero, lambda x: succ(succ(x)), zero, zero),
-    (zero, lambda x: succ(succ(x)), one, two),
-    (one, lambda x: succ(succ(x)), zero, one),
-    (one, lambda x: succ(succ(x)), one, three),
-    (true, lambda x: false, zero, true),
-    (true, lambda x: false, one, false),
-    (true, lambda x: false, two, false),
-    (y, ok, zero, y),
-    (y, ok, one, y),
-    (y, ok, two, y),
-    (y, ok, three, y),
+    (num(0), succ, num(0), num(0)),
+    (num(0), succ, num(1), num(1)),
+    (num(0), succ, num(2), num(2)),
+    (num(0), succ, num(3), num(3)),
+    (num(1), succ, num(0), num(1)),
+    (num(1), succ, num(1), num(2)),
+    (num(1), succ, num(2), num(3)),
+    (num(0), lambda x: succ(succ(x)), num(0), num(0)),
+    (num(0), lambda x: succ(succ(x)), num(1), num(2)),
+    (num(1), lambda x: succ(succ(x)), num(0), num(1)),
+    (num(1), lambda x: succ(succ(x)), num(1), num(3)),
+    (true, lambda x: false, num(0), true),
+    (true, lambda x: false, num(1), false),
+    (true, lambda x: false, num(2), false),
+    (y, ok, num(0), y),
+    (y, ok, num(1), y),
+    (y, ok, num(2), y),
+    (y, ok, num(3), y),
     (y, ok, undefined, undefined),
     (y, ok, error, error),
 ])
@@ -485,10 +510,10 @@ def test_num_rec(z, s, x, expected):
 
 
 @for_each([
-    (zero, quote(zero)),
-    (one, quote(one)),
-    (two, quote(two)),
-    (three, quote(three)),
+    (num(0), quote(num(0))),
+    (num(1), quote(num(1))),
+    (num(2), quote(num(2))),
+    (num(3), quote(num(3))),
     (undefined, undefined),
     (error, error),
 ])
@@ -623,7 +648,10 @@ def test_list_rec(n, c, x, expected):
     (lib.bool_not, cons(true, cons(false, nil)), cons(false, nil)),
     (lib.bool_not, cons(false, cons(true, nil)), cons(false, nil)),
     (lib.bool_not, cons(true, cons(true, nil)), nil),
-    (lib.num_is_zero, cons(two, cons(zero, cons(one, nil))), cons(zero, nil)),
+    (
+        lib.num_is_zero,
+        cons(num(2), cons(num(0), cons(num(1), nil))), cons(num(0), nil),
+    ),
 ])
 def test_list_filter(p, xs, expected):
     assert reduce(lib.list_filter(p, xs)) == expected
@@ -632,16 +660,16 @@ def test_list_filter(p, xs, expected):
 @for_each([
     (error, error),
     (undefined, undefined),
-    (nil, zero),
-    (cons(x, nil), one),
-    (cons(error, nil), one),
-    (cons(undefined, nil), one),
-    (cons(x, cons(y, nil)), two),
-    (cons(error, cons(undefined, nil)), two),
-    (cons(undefined, cons(error, nil)), two),
-    (cons(x, cons(y, cons(z, nil))), three),
-    (cons(error, cons(undefined, cons(error, nil))), three),
-    (cons(undefined, cons(error, cons(undefined, nil))), three),
+    (nil, num(0)),
+    (cons(x, nil), num(1)),
+    (cons(error, nil), num(1)),
+    (cons(undefined, nil), num(1)),
+    (cons(x, cons(y, nil)), num(2)),
+    (cons(error, cons(undefined, nil)), num(2)),
+    (cons(undefined, cons(error, nil)), num(2)),
+    (cons(x, cons(y, cons(z, nil))), num(3)),
+    (cons(error, cons(undefined, cons(error, nil))), num(3)),
+    (cons(undefined, cons(error, cons(undefined, nil))), num(3)),
     (cons(error, undefined), succ(undefined)),
     (cons(error, cons(error, undefined)), succ(succ(undefined))),
 ])
@@ -651,12 +679,14 @@ def test_list_size(xs, expected):
 
 @for_each([
     (nil, quote(nil)),
-    pytest.mark.xfail((cons(zero, nil), quote(cons(zero, nil)))),
-    pytest.mark.xfail((cons(one, nil), quote(cons(one, nil)))),
-    pytest.mark.xfail((cons(two, nil), quote(cons(two, nil)))),
-    pytest.mark.xfail((cons(three, nil), quote(cons(three, nil)))),
-    pytest.mark.xfail(
-        (cons(two, cons(zero, nil)), quote(cons(two, cons(zero, nil))))),
+    pytest.mark.xfail((cons(num(0), nil), quote(cons(num(0), nil)))),
+    pytest.mark.xfail((cons(num(1), nil), quote(cons(num(1), nil)))),
+    pytest.mark.xfail((cons(num(2), nil), quote(cons(num(2), nil)))),
+    pytest.mark.xfail((cons(num(3), nil), quote(cons(num(3), nil)))),
+    pytest.mark.xfail((
+        cons(num(2), cons(num(0), nil)),
+        quote(cons(num(2), cons(num(0), nil))),
+    )),
     (undefined, undefined),
     (error, error),
 ])
@@ -738,10 +768,10 @@ def test_enum_filter(p, xs, expected):
     (lib.bool_not, box(false), box(true)),
     (succ, undefined, undefined),
     (succ, box(undefined), box(succ(undefined))),
-    (succ, box(zero), box(one)),
-    (succ, box(one), box(two)),
-    (succ, box(two), box(three)),
-    (succ, join(box(zero), box(two)), join(box(one), box(three))),
+    (succ, box(num(0)), box(num(1))),
+    (succ, box(num(1)), box(num(2))),
+    (succ, box(num(2)), box(num(3))),
+    (succ, join(box(num(0)), box(num(2))), join(box(num(1)), box(num(3)))),
 ])
 def test_enum_map(f, xs, expected):
     assert reduce(lib.enum_map(f, xs)) == expected
@@ -787,15 +817,15 @@ def test_fun_type_fixes(value, type_):
     assert reduce(app(type_, value)) == reduce(as_code(value))
 
 
-succ_fix = lib.fix(lambda f, x: app(x, one, lambda px: succ(app(f, px))))
+succ_fix = lib.fix(lambda f, x: app(x, num(1), lambda px: succ(app(f, px))))
 
 
 @for_each([
     (app(succ_fix, error), error),
     (app(succ_fix, undefined), undefined),
-    (app(succ_fix, zero), one),
-    (app(succ_fix, one), two),
-    (app(succ_fix, two), three),
+    (app(succ_fix, num(0)), num(1)),
+    (app(succ_fix, num(1)), num(2)),
+    (app(succ_fix, num(2)), num(3)),
 ])
 def test_fix(value, expected):
     assert reduce(value) == expected
@@ -830,25 +860,25 @@ bool_values = (error, undefined, true, false)
     (quote(x), undefined, undefined),
     (quote(error), quote(error), true),
     (quote(undefined), quote(undefined), true),
-    (quote(zero), quote(zero), true),
-    (quote(one), quote(one), true),
-    (quote(two), quote(two), true),
-    (quote(three), quote(three), true),
+    (quote(num(0)), quote(num(0)), true),
+    (quote(num(1)), quote(num(1)), true),
+    (quote(num(2)), quote(num(2)), true),
+    (quote(num(3)), quote(num(3)), true),
     (quote(error), quote(undefined), false),
-    (quote(error), quote(zero), false),
-    (quote(error), quote(one), false),
-    (quote(error), quote(two), false),
-    (quote(error), quote(three), false),
-    (quote(undefined), quote(zero), false),
-    (quote(undefined), quote(one), false),
-    (quote(undefined), quote(two), false),
-    (quote(undefined), quote(three), false),
-    (quote(zero), quote(one), false),
-    (quote(zero), quote(two), false),
-    (quote(zero), quote(three), false),
-    (quote(one), quote(two), false),
-    (quote(one), quote(three), false),
-    (quote(two), quote(three), false),
+    (quote(error), quote(num(0)), false),
+    (quote(error), quote(num(1)), false),
+    (quote(error), quote(num(2)), false),
+    (quote(error), quote(num(3)), false),
+    (quote(undefined), quote(num(0)), false),
+    (quote(undefined), quote(num(1)), false),
+    (quote(undefined), quote(num(2)), false),
+    (quote(undefined), quote(num(3)), false),
+    (quote(num(0)), quote(num(1)), false),
+    (quote(num(0)), quote(num(2)), false),
+    (quote(num(0)), quote(num(3)), false),
+    (quote(num(1)), quote(num(2)), false),
+    (quote(num(1)), quote(num(3)), false),
+    (quote(num(2)), quote(num(3)), false),
     (quote(true), quote(app(I, true)), true),
     (quote(false), quote(app(I, false)), true),
     pytest.mark.xfail((quote(J), quote(app(I, J)), true)),
@@ -903,40 +933,40 @@ def test_equal_transitive(x, y, z):
     (quote(undefined), undefined, true),
     (quote(error), quote(error), true),
     (quote(error), quote(undefined), false),
-    (quote(error), quote(zero), false),
-    (quote(error), quote(one), false),
-    (quote(error), quote(two), false),
-    (quote(error), quote(three), false),
+    (quote(error), quote(num(0)), false),
+    (quote(error), quote(num(1)), false),
+    (quote(error), quote(num(2)), false),
+    (quote(error), quote(num(3)), false),
     (quote(undefined), quote(error), true),
     (quote(undefined), quote(undefined), true),
-    (quote(undefined), quote(zero), true),
-    (quote(undefined), quote(one), true),
-    (quote(undefined), quote(two), true),
-    (quote(undefined), quote(three), true),
-    (quote(zero), quote(error), true),
-    (quote(zero), quote(undefined), false),
-    (quote(zero), quote(zero), true),
-    (quote(zero), quote(one), false),
-    (quote(zero), quote(two), false),
-    (quote(zero), quote(three), false),
-    (quote(one), quote(error), true),
-    (quote(one), quote(undefined), false),
-    (quote(one), quote(zero), false),
-    (quote(one), quote(one), true),
-    (quote(one), quote(two), false),
-    (quote(one), quote(three), false),
-    (quote(two), quote(error), true),
-    (quote(two), quote(undefined), false),
-    (quote(two), quote(zero), false),
-    (quote(two), quote(one), false),
-    (quote(two), quote(two), true),
-    (quote(two), quote(three), false),
-    (quote(three), quote(error), true),
-    (quote(three), quote(undefined), false),
-    (quote(three), quote(zero), false),
-    (quote(three), quote(one), false),
-    (quote(three), quote(two), false),
-    (quote(three), quote(three), true),
+    (quote(undefined), quote(num(0)), true),
+    (quote(undefined), quote(num(1)), true),
+    (quote(undefined), quote(num(2)), true),
+    (quote(undefined), quote(num(3)), true),
+    (quote(num(0)), quote(error), true),
+    (quote(num(0)), quote(undefined), false),
+    (quote(num(0)), quote(num(0)), true),
+    (quote(num(0)), quote(num(1)), false),
+    (quote(num(0)), quote(num(2)), false),
+    (quote(num(0)), quote(num(3)), false),
+    (quote(num(1)), quote(error), true),
+    (quote(num(1)), quote(undefined), false),
+    (quote(num(1)), quote(num(0)), false),
+    (quote(num(1)), quote(num(1)), true),
+    (quote(num(1)), quote(num(2)), false),
+    (quote(num(1)), quote(num(3)), false),
+    (quote(num(2)), quote(error), true),
+    (quote(num(2)), quote(undefined), false),
+    (quote(num(2)), quote(num(0)), false),
+    (quote(num(2)), quote(num(1)), false),
+    (quote(num(2)), quote(num(2)), true),
+    (quote(num(2)), quote(num(3)), false),
+    (quote(num(3)), quote(error), true),
+    (quote(num(3)), quote(undefined), false),
+    (quote(num(3)), quote(num(0)), false),
+    (quote(num(3)), quote(num(1)), false),
+    (quote(num(3)), quote(num(2)), false),
+    (quote(num(3)), quote(num(3)), true),
 ])
 def test_less(x, y, expected):
     assert simplify(lib.less(x, y)) == expected
