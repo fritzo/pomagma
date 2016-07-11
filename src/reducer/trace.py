@@ -28,7 +28,6 @@ assert re_var.match('v1')
 assert re_var.match('v234')
 assert not re_var.match('x')
 
-
 FRESH_ID = [None]
 
 
@@ -120,6 +119,23 @@ def trace_deterministic(code):
             else:
                 raise ValueError(op)
     return trace
+
+
+def frame_eval(frame):
+    state, code, stack = frame
+    while stack is not None:
+        op, arg, stack = stack
+        if op is ABS_VAR:
+            code = abstract(arg, code)
+        elif op is APP_ARG:
+            code = APP(code, arg)
+        elif op is APP_FUN:
+            code = APP(arg, code)
+        elif op is QUOTE_ARG:
+            code = QUOTE(code)
+        else:
+            raise ValueError(op)
+    return code
 
 
 # ----------------------------------------------------------------------------
@@ -258,18 +274,27 @@ def trace_nondeterministic(code):
 
 
 @parsable
-def trace_codes(sexpr, deterministic=True):
+def trace_frames(sexpr, deterministic=True):
     """Print (state,code) pairs of a trace of reduction sequence."""
     code = sexpr_parse(sexpr)
     if deterministic:
         for state, code, stack in trace_deterministic(code):
-            print '{} {}'.format(state, sexpr_print(code))
+            print('{} {}'.format(state, sexpr_print(code)))
     else:
         for schedule in trace_nondeterministic(code):
             for i, task in schedule_iter(schedule):
                 state, code, stack = task
                 prefix = '--' if i == 0 else '  '
-                print '{} {} {}'.format(prefix, state, sexpr_print(code))
+                print('{} {} {}'.format(prefix, state, sexpr_print(code)))
+
+
+@parsable
+def trace_codes(sexpr):
+    """Print evaluated code for each frame of a trace of reduction sequence."""
+    code = sexpr_parse(sexpr)
+    for frame in trace_deterministic(code):
+        code = frame_eval(frame)
+        print(sexpr_print(code))
 
 
 if __name__ == '__main__':
