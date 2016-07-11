@@ -1,7 +1,8 @@
 from pomagma.reducer.code import TOP, BOT, I, K, B, C, S, J
-from pomagma.reducer.code import VAR, APP, FUN, LET
+from pomagma.reducer.code import VAR, APP, QUOTE, FUN, LET
 from pomagma.reducer.code import polish_print
-from pomagma.reducer.transforms import abstract, compile_, decompile, fresh_var
+from pomagma.reducer.transforms import abstract, define, compile_, decompile
+from pomagma.reducer.transforms import fresh_var
 from pomagma.util.testing import for_each
 
 w = VAR('w')
@@ -31,9 +32,25 @@ z = VAR('z')
     (x, APP(APP(J, APP(y, x)), x), APP(APP(J, y), I)),
     (x, APP(APP(J, APP(y, x)), APP(z, x)), APP(APP(J, y), z)),
 ])
-def test_abstract(var, body, expected_abs):
-    actual_abs = abstract(var, body)
-    assert actual_abs == expected_abs
+def test_abstract(var, body, expected):
+    actual = abstract(var, body)
+    assert actual == expected
+
+
+@for_each([
+    (x, y, z, z),
+    (x, y, y, y),
+    (x, y, x, y),
+    (x, y, I, I),
+    (x, y, APP(x, z), APP(y, z)),
+    (x, y, APP(z, x), APP(z, y)),
+    (x, y, APP(x, x), APP(APP(APP(S, I), I), y)),
+    (x, y, QUOTE(y), QUOTE(y)),
+    (x, y, QUOTE(x), QUOTE(y)),
+])
+def test_define(var, defn, body, expected):
+    actual = define(var, defn, body)
+    assert actual == expected
 
 
 a = fresh_var(0)
@@ -95,6 +112,8 @@ def test_decompile(code, expected):
     APP(C, I),
     APP(APP(C, I), I),
     APP(APP(S, I), I),
+    QUOTE(TOP),
+    QUOTE(APP(C, I)),
 ])
 def test_decompile_compile(code):
     expected_str = polish_print(code)

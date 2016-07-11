@@ -5,8 +5,9 @@ __all__ = ['try_abstract', 'abstract', 'decompile']
 from pomagma.compiler.util import memoize_args
 from pomagma.reducer import pattern
 from pomagma.reducer.code import TOP, BOT, I, K, B, C, S, J
-from pomagma.reducer.code import VAR, APP, FUN, LET
-from pomagma.reducer.code import is_var, is_app, is_fun, is_let
+from pomagma.reducer.code import VAR, APP, QUOTE, FUN, LET
+from pomagma.reducer.code import is_atom, is_var, is_app, is_quote
+from pomagma.reducer.code import is_fun, is_let
 
 
 # ----------------------------------------------------------------------------
@@ -67,10 +68,45 @@ def abstract(var, body):
 
 
 # ----------------------------------------------------------------------------
+# Definition as ABS-APP pair
+
+def define(var, defn, body):
+    if not is_var(var):
+        raise NotImplementedError('Only variables can be abstracted')
+    if is_atom(body):
+        return body
+    elif is_var(body):
+        if body is var:
+            return defn
+        else:
+            return body
+    elif is_app(body):
+        lhs = body[1]
+        rhs = body[2]
+        lhs_abs = try_abstract(var, lhs)
+        rhs_abs = try_abstract(var, rhs)
+        if lhs_abs is None:
+            if rhs_abs is None:
+                return body
+            else:
+                return APP(lhs, define(var, defn, rhs))
+        else:
+            if rhs_abs is None:
+                return APP(define(var, defn, lhs), rhs)
+            else:
+                return APP(APP(APP(S, lhs_abs), rhs_abs), defn)
+    elif is_quote(body):
+        arg = body[1]
+        return QUOTE(define(var, defn, arg))
+    else:
+        raise ValueError(body)
+
+
+# ----------------------------------------------------------------------------
 # Symbolic compiler : FUN,LET -> I,K,B,C,S
 
 def compile_(code):
-    if isinstance(code, str):
+    if is_atom(code):
         return code
     elif is_var(code):
         return code
@@ -78,6 +114,9 @@ def compile_(code):
         x = compile_(code[1])
         y = compile_(code[2])
         return APP(x, y)
+    elif is_quote(code):
+        arg = compile_(code[1])
+        return QUOTE(arg)
     elif is_fun(code):
         var = code[1]
         body = compile_(code[2])
@@ -147,6 +186,10 @@ def _decompile_stack(stack):
     if is_var(head) or head is J:
         args = _decompile_args(args)
         return _from_stack((head, args))
+    elif is_quote(head):
+        arg = _decompile(head[1])
+        args = _decompile_args(args)
+        return _from_stack((QUOTE(arg), args))
     elif head is TOP:
         return TOP
     elif head is BOT:
