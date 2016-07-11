@@ -7,6 +7,7 @@ from parsable import parsable
 from pomagma.reducer.code import TOP, BOT, I, K, B, C, S, J, VAR, APP, QUOTE
 from pomagma.reducer.code import is_var, is_app, is_quote, free_vars
 from pomagma.reducer.code import sexpr_parse, sexpr_print
+from pomagma.reducer.linker import link
 from pomagma.reducer.transforms import abstract
 import re
 
@@ -277,6 +278,7 @@ def trace_nondeterministic(code):
 def trace_frames(sexpr, deterministic=True):
     """Print (state,code) pairs of a trace of reduction sequence."""
     code = sexpr_parse(sexpr)
+    code = link(code)
     if deterministic:
         for state, code, stack in trace_deterministic(code):
             print('{} {}'.format(state, sexpr_print(code)))
@@ -292,6 +294,7 @@ def trace_frames(sexpr, deterministic=True):
 def trace_codes(sexpr):
     """Print evaluated code for each frame of a trace of reduction sequence."""
     code = sexpr_parse(sexpr)
+    code = link(code)
     for frame in trace_deterministic(code):
         code = frame_eval(frame)
         print(sexpr_print(code))
