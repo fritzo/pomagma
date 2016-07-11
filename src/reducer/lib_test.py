@@ -630,6 +630,26 @@ def test_list_filter(p, xs, expected):
 
 
 @for_each([
+    (error, error),
+    (undefined, undefined),
+    (nil, zero),
+    (cons(x, nil), one),
+    (cons(error, nil), one),
+    (cons(undefined, nil), one),
+    (cons(x, cons(y, nil)), two),
+    (cons(error, cons(undefined, nil)), two),
+    (cons(undefined, cons(error, nil)), two),
+    (cons(x, cons(y, cons(z, nil))), three),
+    (cons(error, cons(undefined, cons(error, nil))), three),
+    (cons(undefined, cons(error, cons(undefined, nil))), three),
+    (cons(error, undefined), succ(undefined)),
+    (cons(error, cons(error, undefined)), succ(succ(undefined))),
+])
+def test_list_size(xs, expected):
+    assert reduce(lib.list_size(xs)) == expected
+
+
+@for_each([
     (nil, quote(nil)),
     pytest.mark.xfail((cons(zero, nil), quote(cons(zero, nil)))),
     pytest.mark.xfail((cons(one, nil), quote(cons(one, nil)))),

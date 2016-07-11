@@ -310,6 +310,11 @@ def list_filter(p, xs):
 
 
 @combinator
+def list_size(xs):
+    return app(xs, zero, lambda h, t: succ(list_size(t)))
+
+
+@combinator
 def list_quote(quote_item, xs):
     return app(
         xs,
