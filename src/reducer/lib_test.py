@@ -243,7 +243,7 @@ def test_bool_if_false(x, expected):
     (ok, error),
     (J, error),
     (app(J, lib.none, lib.some(undefined)), error),
-    pytest.mark.xfail((app(J, lib.some(true), lib.some(false)), lib.some(J))),
+    (app(J, lib.some(true), lib.some(false)), lib.some(J)),
 ])
 def test_maybe_type(x, expected):
     assert simplify(lib.maybe_type(x)) == expected
@@ -881,7 +881,7 @@ bool_values = (error, undefined, true, false)
     (quote(num(2)), quote(num(3)), false),
     (quote(true), quote(app(I, true)), true),
     (quote(false), quote(app(I, false)), true),
-    pytest.mark.xfail((quote(J), quote(app(I, J)), true)),
+    (quote(J), quote(app(I, J)), true),
 ])
 def test_equal(x, y, expected):
     assert simplify(lib.equal(x, y)) == expected
@@ -978,7 +978,6 @@ def test_less_reflexive(x):
     assert less_xx == true
 
 
-@pytest.mark.xfail(reason='{J} != {I J}')
 @hypothesis.given(s_quoted, s_quoted)
 @hypothesis.example(quote(J), quote(app(I, J)))
 def test_less_antisymmetric(x, y):

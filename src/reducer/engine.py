@@ -355,6 +355,8 @@ def _join(continuations, nonlinear):
         samples.add(sample)
     if not samples:
         return BOT
+    if true in samples and false in samples:
+        samples.add(J)
 
     # Filter out dominated samples.
     # FIXME If x [= y and y [= x, this filters out both.
