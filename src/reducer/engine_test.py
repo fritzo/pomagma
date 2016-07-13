@@ -76,7 +76,7 @@ REDUCE_EXAMPLES = [
     (app(S, x, y, z), app(x, z, app(y, z))),
     (app(S, x, y, z, w), app(x, z, app(y, z), w)),
     (J, J),
-    pytest.mark.xfail((app(J, x), app(J, x))),
+    (app(J, x), app(J, x)),
     (join(x, y), join(x, y)),
     (join(x, x), x),
     (join(BOT, x), x),

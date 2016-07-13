@@ -40,8 +40,9 @@ from pomagma.reducer.util import pretty
 import heapq
 import itertools
 
+F = APP(K, I)
 true = K
-false = APP(K, I)
+false = F
 
 
 # ----------------------------------------------------------------------------
@@ -355,8 +356,19 @@ def _join(continuations, nonlinear):
         samples.add(sample)
     if not samples:
         return BOT
-    if true in samples and false in samples:
+
+    # Apply J-eta rules to recognize J and APP(J, x).
+    # This should really be combined with _close.
+    if K in samples and F in samples:
+        samples.remove(K)
+        samples.remove(F)
         samples.add(J)
+    if I in samples:
+        for kx in tuple(samples):
+            if is_app(kx) and kx[1] is K:
+                samples.discard(I)
+                samples.remove(kx)
+                samples.add(APP(J, kx[2]))
 
     # Filter out dominated samples.
     # FIXME If x [= y and y [= x, this filters out both.
