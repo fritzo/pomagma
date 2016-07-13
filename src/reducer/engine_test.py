@@ -109,8 +109,12 @@ REDUCE_EXAMPLES = [
     (qapp(quote(x), y), qapp(quote(x), y)),
     (qapp(x, quote(y)), qapp(x, quote(y))),
     (qapp(quote(x), quote(y)), quote(app(x, y))),
+    (qapp(quote(S), quote(K), quote(K)), quote(I)),
+    (qapp(quote(S), app(I, quote(K)), app(EVAL, quote(quote(K)))), quote(I)),
     pytest.mark.xfail(
-        (qapp(quote(lib.list_map), quote(I), quote(lib.nil)), quote(lib.nil))),
+        (qapp(quote(lib.list_map), quote(I), quote(lib.nil)), quote(lib.nil)),
+        reason='quote(lib.list_map) evaluates too eagerly',
+    ),
     (app(EQUAL, x, y), app(EQUAL, x, y)),
     (app(EQUAL, x, quote(y)), app(EQUAL, x, quote(y))),
     (app(EQUAL, quote(x), y), app(EQUAL, quote(x), y)),
