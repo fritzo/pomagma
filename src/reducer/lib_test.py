@@ -392,8 +392,10 @@ def test_num_is_zero(x, expected):
     (num(3), num(2)),
     (undefined, undefined),
     (succ(undefined), undefined),
+    (succ(succ(undefined)), succ(undefined)),
     (error, error),
     (succ(error), error),
+    (succ(succ(error)), succ(error)),
 ])
 def test_num_pred(x, expected):
     assert simplify(lib.num_pred(x)) == expected
@@ -425,14 +427,14 @@ def test_num_add(x, y, expected):
     (num(0), num(2), num(0 * 2)),
     (num(0), num(3), num(0 * 3)),
     (num(1), num(1), num(1 * 1)),
-    pytest.mark.xfail((num(1), num(2), num(1 * 2)), run=False),
-    pytest.mark.xfail((num(1), num(3), num(1 * 3)), run=False),
-    pytest.mark.xfail((num(2), num(2), num(2 * 2)), run=False),
-    pytest.mark.xfail((num(2), num(3), num(2 * 3)), run=False),
-    pytest.mark.xfail((num(3), num(3), num(3 * 3)), run=False),
-    pytest.mark.xfail((undefined, num(0), undefined), run=False),
-    pytest.mark.xfail((num(0), undefined, undefined), run=False),
-    pytest.mark.xfail((error, x, error), run=False),
+    (num(1), num(2), num(1 * 2)),
+    (num(1), num(3), num(1 * 3)),
+    (num(2), num(2), num(2 * 2)),
+    (num(2), num(3), num(2 * 3)),
+    (num(3), num(3), num(3 * 3)),
+    (undefined, num(0), num(0)),
+    (num(0), undefined, num(0)),
+    (error, x, error),
     (x, error, error),
 ])
 def test_num_mul(x, y, expected):

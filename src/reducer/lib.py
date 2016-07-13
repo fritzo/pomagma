@@ -238,7 +238,7 @@ def num_add(x, y):
 @combinator
 @symmetric
 def num_mul(x, y):
-    return app(y, zero, lambda py: num_add(x, num_mul(x, py)))
+    return num_rec(zero, lambda py: app(num_add, x, py), y)
 
 
 @combinator
