@@ -68,7 +68,7 @@ def abstract(var, body):
 
 
 # ----------------------------------------------------------------------------
-# Definition as ABS-APP pair
+# Definition as lazy substitution
 
 def define(var, defn, body):
     if not is_var(var):
@@ -125,7 +125,7 @@ def compile_(code):
         var = code[1]
         defn = compile_(code[2])
         body = compile_(code[3])
-        return APP(abstract(var, body), defn)
+        return define(var, defn, body)
     else:
         raise ValueError('Cannot compile_: {}'.format(code))
 
