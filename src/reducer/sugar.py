@@ -139,6 +139,43 @@ def rec(fun):
     return app(fxx, fxx)
 
 
+def typed(*types):
+    '''Type annotation. The final type is the output type.'''
+    if len(types) < 1:
+        raise SyntaxError('Too few arguments: typed{}'.format(types))
+    result_type = types[-1]
+    arg_types = types[:-1]
+
+    def decorator_0(fun):
+
+        @functools.wraps(fun)
+        def typed_fun():
+            return app(result_type, fun())
+
+        return typed_fun
+
+    def decorator_1(fun):
+
+        @functools.wraps(fun)
+        def typed_fun(arg):
+            arg = app(arg_types[0], arg)
+            return app(result_type, fun(arg))
+
+        return typed_fun
+
+    def decorator_2(fun):
+
+        @functools.wraps(fun)
+        def typed_fun(arg0, arg1):
+            arg0 = app(arg_types[0], arg0)
+            arg1 = app(arg_types[1], arg1)
+            return app(result_type, fun(arg0, arg1))
+
+        return typed_fun
+
+    return [decorator_0, decorator_1, decorator_2][len(arg_types)]
+
+
 def symmetric(fun):
 
     @functools.wraps(fun)

@@ -6,7 +6,8 @@ Intro forms are hand-optimized; see lib_test.py for lambda versions.
 
 from pomagma.reducer.code import TOP, BOT, I, K, B, C, APP, QUOTE, EQUAL, LESS
 from pomagma.reducer.code import UNIT, BOOL, MAYBE
-from pomagma.reducer.sugar import app, join, quote, qapp, combinator, symmetric
+from pomagma.reducer.sugar import app, join, quote, qapp
+from pomagma.reducer.sugar import combinator, typed, symmetric
 
 CI = APP(C, I)
 
@@ -39,18 +40,16 @@ def unit_test(x):
 
 
 @combinator
+@typed(unit_type, unit_type, unit_type)
 @symmetric
 def unit_and(x, y):
-    x = unit_type(x)
-    y = unit_type(y)
-    return unit_type(app(x, y))
+    return app(x, y)
 
 
 @combinator
+@typed(unit_type, unit_type, unit_type)
 def unit_or(x, y):
-    x = unit_type(x)
-    y = unit_type(y)
-    return unit_type(join(x, y))
+    return join(x, y)
 
 
 @combinator
@@ -72,31 +71,29 @@ def bool_type(x):
 
 
 @combinator
+@typed(bool_type, unit_type)
 def bool_test(x):
-    x = bool_type(x)
-    return unit_type(app(x, ok, ok))
+    return app(x, ok, ok)
 
 
 @combinator
+@typed(bool_type, bool_type)
 def bool_not(x):
-    x = bool_type(x)
-    return bool_type(app(x, false, true))
+    return app(x, false, true)
 
 
 @combinator
+@typed(bool_type, bool_type, bool_type)
 @symmetric
 def bool_and(x, y):
-    x = bool_type(x)
-    y = bool_type(y)
-    return bool_type(app(x, y, false))
+    return app(x, y, false)
 
 
 @combinator
+@typed(bool_type, bool_type, bool_type)
 @symmetric
 def bool_or(x, y):
-    x = bool_type(x)
-    y = bool_type(y)
-    return bool_type(app(x, true, y))
+    return app(x, true, y)
 
 
 @combinator

@@ -805,15 +805,18 @@ maybe_t = lib.maybe_type
 @for_each([
     (unit_t, fun_t(unit_t, unit_t)),
     (lib.unit_test, fun_t(unit_t, unit_t)),
-    pytest.mark.xfail((lib.unit_and, fun_t(unit_t, fun_t(unit_t, unit_t)))),
+    (lib.unit_and, fun_t(unit_t, fun_t(unit_t, unit_t))),
     (lib.unit_or, fun_t(unit_t, fun_t(unit_t, unit_t))),
+    (lib.unit_quote, fun_t(unit_t, I)),
     (bool_t, fun_t(bool_t, bool_t)),
     (lib.bool_test, fun_t(bool_t, unit_t)),
     (lib.bool_not, fun_t(bool_t, bool_t)),
-    pytest.mark.xfail((lib.bool_and, fun_t(bool_t, fun_t(bool_t, bool_t)))),
-    pytest.mark.xfail((lib.bool_or, fun_t(bool_t, fun_t(bool_t, bool_t)))),
+    (lib.bool_and, fun_t(bool_t, fun_t(bool_t, bool_t))),
+    (lib.bool_or, fun_t(bool_t, fun_t(bool_t, bool_t))),
+    (lib.bool_quote, fun_t(bool_t, I)),
     (maybe_t, fun_t(maybe_t, maybe_t)),
     (lib.maybe_test, fun_t(maybe_t, unit_t)),
+    (lib.maybe_quote, fun_t(I, fun_t(maybe_t, I))),
 ])
 def test_fun_type_fixes(value, type_):
     assert reduce(app(type_, value)) == reduce(as_code(value))
