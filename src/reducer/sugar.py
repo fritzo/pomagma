@@ -140,7 +140,11 @@ def rec(fun):
 
 
 def typed(*types):
-    '''Type annotation. The final type is the output type.'''
+    """Type annotation.
+
+    The final type is the output type.
+
+    """
     if len(types) < 1:
         raise SyntaxError('Too few arguments: typed{}'.format(types))
     result_type = types[-1]

@@ -106,6 +106,18 @@ def test_unit_quote(x, expected):
     assert simplify(lib.unit_quote(x)) == expected
 
 
+@for_each([
+    (ok, true),
+    (undefined, true),
+    (error, false),
+    (true, false),
+    (false, false),
+])
+def test_enum_unit(y, expected):
+    qxs = quote(lib.enum_unit)
+    assert simplify(lib.enum_contains(qxs, quote(y))) == expected
+
+
 # ----------------------------------------------------------------------------
 # Bool
 
@@ -228,6 +240,19 @@ def test_bool_if_false(x, expected):
     assert simplify(lib.bool_if_false(x)) == expected
 
 
+@for_each([
+    (true, true),
+    (false, true),
+    (J, false),
+    (undefined, true),
+    (error, false),
+    (ok, false),
+])
+def test_enum_bool(y, expected):
+    qxs = quote(lib.enum_bool)
+    assert simplify(lib.enum_contains(qxs, quote(y))) == expected
+
+
 # ----------------------------------------------------------------------------
 # Maybe
 
@@ -268,6 +293,19 @@ def test_maybe_test(x, expected):
 def test_maybe_quote(x, expected):
     quote_some = lib.bool_quote
     assert simplify(lib.maybe_quote(quote_some, x)) == expected
+
+
+@for_each([
+    (lib.enum_unit, lib.none, true),
+    (lib.enum_unit, undefined, true),
+    (lib.enum_unit, error, false),
+    (lib.enum_unit, lib.some(ok), true),
+    (lib.enum_unit, lib.some(undefined), true),
+    (lib.enum_unit, lib.some(error), false),
+])
+def test_enum_maybe(enum_item, y, expected):
+    qxs = quote(lib.enum_maybe(enum_item))
+    assert simplify(lib.enum_contains(qxs, quote(y))) == expected
 
 
 # ----------------------------------------------------------------------------
@@ -314,6 +352,23 @@ def test_prod_quote(x, expected):
     assert simplify(lib.prod_quote(quote_fst, quote_snd, x)) == expected
 
 
+@for_each([
+    (lib.enum_unit, lib.enum_bool, undefined, true),
+    (lib.enum_unit, lib.enum_bool, error, false),
+    (lib.enum_unit, lib.enum_bool, lib.pair(undefined, undefined), true),
+    (lib.enum_unit, lib.enum_bool, lib.pair(ok, undefined), true),
+    (lib.enum_unit, lib.enum_bool, lib.pair(undefined, true), true),
+    (lib.enum_unit, lib.enum_bool, lib.pair(undefined, false), true),
+    (lib.enum_unit, lib.enum_bool, lib.pair(ok, true), true),
+    (lib.enum_unit, lib.enum_bool, lib.pair(ok, false), true),
+    (lib.enum_unit, lib.enum_bool, lib.pair(undefined, error), false),
+    (lib.enum_unit, lib.enum_bool, lib.pair(error, undefined), false),
+])
+def test_enum_prod(enum_fst, enum_snd, y, expected):
+    qxs = quote(lib.enum_prod(enum_fst, enum_snd))
+    assert simplify(lib.enum_contains(qxs, quote(y))) == expected
+
+
 # ----------------------------------------------------------------------------
 # Sums
 
@@ -338,6 +393,25 @@ def test_sum_quote(x, expected):
     quote_inl = lib.unit_quote
     quote_inr = lib.bool_quote
     assert simplify(lib.sum_quote(quote_inl, quote_inr, x)) == expected
+
+
+@for_each([
+    (lib.enum_unit, lib.enum_bool, undefined, true),
+    (lib.enum_unit, lib.enum_bool, error, false),
+    (lib.enum_unit, lib.enum_bool, lib.inl(undefined), true),
+    (lib.enum_unit, lib.enum_bool, lib.inl(ok), true),
+    (lib.enum_unit, lib.enum_bool, lib.inl(error), false),
+    (lib.enum_unit, lib.enum_bool, lib.inl(true), false),
+    (lib.enum_unit, lib.enum_bool, lib.inl(false), false),
+    (lib.enum_unit, lib.enum_bool, lib.inr(undefined), true),
+    (lib.enum_unit, lib.enum_bool, lib.inr(true), true),
+    (lib.enum_unit, lib.enum_bool, lib.inr(false), true),
+    (lib.enum_unit, lib.enum_bool, lib.inr(ok), false),
+    (lib.enum_unit, lib.enum_bool, lib.inr(error), false),
+])
+def test_enum_sum(enum_inl, enum_inr, y, expected):
+    qxs = quote(lib.enum_sum(enum_inl, enum_inr))
+    assert simplify(lib.enum_contains(qxs, quote(y))) == expected
 
 
 # ----------------------------------------------------------------------------
@@ -523,6 +597,25 @@ def test_num_quote(x, expected):
     assert reduce(lib.num_quote(x)) == expected
 
 
+@pytest.mark.xfail(reason='enum_num has no normal form')
+@for_each([
+    (undefined, true),
+    (error, false),
+    (zero, true),
+    (succ(undefined), true),
+    (succ(zero), true),
+    (succ(error), false),
+    (succ(succ(undefined)), true),
+    (succ(succ(zero)), true),
+    (succ(succ(error)), false),
+    (num(3), true),
+    (num(4), true),
+])
+def test_enum_num(y, expected):
+    qxs = quote(lib.enum_num)
+    assert simplify(lib.enum_contains(qxs, quote(y))) == expected
+
+
 # ----------------------------------------------------------------------------
 # Finite homogeneous lists
 
@@ -697,10 +790,44 @@ def test_list_quote(x, expected):
     assert reduce(lib.list_quote(quote_item, x)) == expected
 
 
+@pytest.mark.xfail(reason='enum_list has no normal form')
+@for_each([
+    (lib.enum_bool, undefined, true),
+    (lib.enum_bool, error, false),
+    (lib.enum_bool, nil, true),
+    (lib.enum_bool, cons(undefined, undefined), true),
+    (lib.enum_bool, cons(true, undefined), true),
+    (lib.enum_bool, cons(false, undefined), true),
+    (lib.enum_bool, cons(true, nil), true),
+    (lib.enum_bool, cons(true, nil), true),
+    (lib.enum_bool, cons(undefined, error), false),
+    (lib.enum_bool, cons(error, undefined), false),
+    (lib.enum_unit, cons(ok, cons(ok, nil)), true),
+    (lib.enum_unit, cons(ok, cons(ok, undefined)), true),
+    (lib.enum_unit, cons(ok, cons(ok, error)), false),
+])
+def test_enum_list(enum_item, y, expected):
+    qxs = quote(lib.enum_list(enum_item))
+    assert simplify(lib.enum_contains(qxs, quote(y))) == expected
+
+
 # ----------------------------------------------------------------------------
 # Enumerable sets
 
 box = lib.box
+enum = lib.enum
+
+
+@for_each([
+    (enum([]), undefined),
+    (enum([error]), box(error)),
+    (enum([undefined]), box(undefined)),
+    (enum([x]), box(x)),
+    (enum([x, y]), join(box(x), box(y))),
+    (enum([x, y, z]), join(box(x), box(y), box(z))),
+])
+def test_enum(actual, expected):
+    assert actual == expected
 
 
 @for_each([
@@ -1011,6 +1138,25 @@ def test_less_transitive(x, y, z):
         assert less_xz is true
     if less_xz is false:
         assert less_xy is not true or less_yz is not true
+
+
+@for_each([
+    ([], undefined, false),
+    ([], error, false),
+    pytest.mark.xfail(([], x, false)),
+    ([error], error, true),
+    ([undefined], undefined, true),
+    ([x], x, true),
+    pytest.mark.xfail(([x], undefined, true)),
+    pytest.mark.xfail(([error], x, true)),
+    pytest.mark.xfail(([ok, x], undefined, true)),
+    pytest.mark.xfail(([ok, x], ok, true)),
+    pytest.mark.xfail(([ok, x], x, true)),
+])
+def test_enum_contains(xs, y, expected):
+    qxs = quote(enum(xs))
+    qy = quote(y)
+    assert reduce(lib.enum_contains(qxs, qy)) == expected
 
 
 # ----------------------------------------------------------------------------

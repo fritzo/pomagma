@@ -58,6 +58,9 @@ def unit_quote(x):
     return app(x, QUOTE(ok))
 
 
+enum_unit = APP(CI, ok)
+
+
 # ----------------------------------------------------------------------------
 # Bool
 
@@ -114,6 +117,9 @@ def bool_if_false(x):
     return unit_type(app(x, undefined, ok))
 
 
+enum_bool = join(APP(CI, true), APP(CI, false))
+
+
 # ----------------------------------------------------------------------------
 # Maybe
 
@@ -144,6 +150,11 @@ def maybe_quote(quote_some, x):
         QUOTE(none),
         lambda y: qapp(quote(some), app(quote_some, y)),
     )
+
+
+@combinator
+def enum_maybe(enum_item):
+    return join(box(none), enum_map(some, enum_item))
 
 
 # ----------------------------------------------------------------------------
@@ -177,6 +188,11 @@ def prod_quote(quote_fst, quote_snd, xy):
     )
 
 
+@combinator
+def enum_prod(enum_fst, enum_snd):
+    return app(enum_fst, lambda x: app(enum_snd, lambda y: box(pair(x, y))))
+
+
 # ----------------------------------------------------------------------------
 # Sums
 
@@ -202,6 +218,11 @@ def sum_quote(quote_inl, quote_inr, xy):
         lambda x: qapp(quote(inl), app(quote_inl, x)),
         lambda y: qapp(quote(inr), app(quote_inr, y)),
     )
+
+
+@combinator
+def enum_sum(enum_inl, enum_inr):
+    return join(enum_map(inl, enum_inl), enum_map(inr, enum_inr))
 
 
 # ----------------------------------------------------------------------------
@@ -258,6 +279,11 @@ def num_rec(z, s, x):
 @combinator
 def num_quote(x):
     return app(x, QUOTE(zero), lambda px: qapp(quote(succ), num_quote(px)))
+
+
+@combinator
+def enum_num():
+    return join(box(zero), app(enum_map, succ, enum_num))
 
 
 # ----------------------------------------------------------------------------
@@ -326,12 +352,26 @@ def list_quote(quote_item, xs):
     )
 
 
+@combinator
+def enum_list(enum_item):
+    return join(
+        box(nil),
+        app(enum_list(enum_item), lambda t:
+            app(enum_item, lambda h: box(cons(h, t)))),
+    )
+
+
 # ----------------------------------------------------------------------------
 # Enumerable sets
 
 @combinator
 def box(item):
     return app(CI, item)
+
+
+def enum(items):
+    assert isinstance(items, (list, set, frozenset)), items
+    return join(*map(box, items))
 
 
 @combinator
@@ -395,6 +435,11 @@ def equal(x, y):
 @combinator
 def less(x, y):
     return bool_type(app(LESS, x, y))
+
+
+@combinator
+def enum_contains(qxs, qy):
+    return app(LESS, qapp(quote(box), qy), qxs)
 
 
 # ----------------------------------------------------------------------------
