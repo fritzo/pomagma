@@ -2,7 +2,7 @@ from pomagma.reducer import lib
 from pomagma.reducer.code import VAR, I, J, UNIT
 from pomagma.reducer.engine import reduce, simplify
 from pomagma.reducer.engine_test import s_quoted
-from pomagma.reducer.sugar import as_code, app, join, quote
+from pomagma.reducer.sugar import as_code, app, join, quote, combinator
 from pomagma.util import TRAVIS_CI
 from pomagma.util.testing import for_each
 import hypothesis
@@ -19,6 +19,7 @@ error = lib.error
 undefined = lib.undefined
 true = lib.true
 false = lib.false
+compose = lib.compose
 
 
 @for_each([
@@ -920,6 +921,31 @@ def test_enum_flatten(xs, expected):
     assert reduce(lib.enum_flatten(xs)) == expected
 
 
+@combinator
+def num_try_pred(n):
+    return app(n, undefined, lambda px: px)
+
+
+@pytest.mark.xfail(run=False, reason='does not terminate')
+@for_each([
+    (undefined, enum([ok]), enum([ok])),
+    (box, enum([ok]), enum([ok])),
+    (error, enum([ok]), error),
+    (lambda x: box(lib.bool_not), enum([undefined]), enum([undefined])),
+    (lambda x: box(lib.bool_not), enum([true]), enum([true, false])),
+    (lambda x: box(lib.bool_not), enum([false]), enum([true, false])),
+    (lambda x: box(lib.bool_not), enum([ok]), enum([error])),
+    (compose(box, num_try_pred), enum([undefined]), enum([undefined])),
+    (compose(box, num_try_pred), enum([num(0)]), enum([num(0)])),
+    (compose(box, num_try_pred), enum([num(1)]), enum([num(0), num(1)])),
+    (compose(box, num_try_pred), enum([num(2)]), enum(map(num, range(3)))),
+    (compose(box, num_try_pred), enum([num(3)]), enum(map(num, range(4)))),
+    (compose(box, num_try_pred), enum([num(4)]), enum(map(num, range(5)))),
+])
+def test_enum_close(f, xs, expected):
+    assert reduce(lib.enum_close(f, xs)) == simplify(expected)
+
+
 # ----------------------------------------------------------------------------
 # Functions
 
@@ -927,6 +953,16 @@ fun_t = lib.fun_type
 unit_t = lib.unit_type
 bool_t = lib.bool_type
 maybe_t = lib.maybe_type
+
+
+@for_each([
+    (unit_t, unit_t, unit_t),
+    (bool_t, bool_t, bool_t),
+    (maybe_t, maybe_t, maybe_t),
+    pytest.mark.xfail((lib.bool_not, lib.bool_not, bool_t)),
+])
+def test_compose(f, g, expected):
+    assert reduce(as_code(compose(f, g))) == simplify(as_code(expected))
 
 
 @for_each([
@@ -963,14 +999,25 @@ def test_fix(value, expected):
     assert reduce(value) == expected
 
 
+@pytest.mark.xfail(run=False, reason='does not terminate')
 @for_each([
-    (lib.unit_type, lib.unit_type, lib.unit_type),
-    (lib.bool_type, lib.bool_type, lib.bool_type),
-    (lib.maybe_type, lib.maybe_type, lib.maybe_type),
-    pytest.mark.xfail((lib.bool_not, lib.bool_not, lib.bool_type)),
+    (lambda x: x, x, x),
+    (undefined, x, x),
+    (error, x, error),
+    (lambda x: join(x, y), x, join(x, y)),
+    (lib.bool_not, undefined, undefined),
+    (lib.bool_not, true, error),
+    (lib.bool_not, false, error),
+    (app(lib.enum_map, lib.bool_not), undefined, undefined),
+    (app(lib.enum_map, lib.bool_not), enum([undefined]), enum([undefined])),
+    (app(lib.enum_map, lib.bool_not), enum([true]), enum([true, false])),
+    (app(lib.enum_map, lib.bool_not), enum([false]), enum([true, false])),
+    (app(lib.enum_map, lib.bool_not), enum([J]), enum([error])),
+    (app(lib.enum_map, lib.bool_not), enum([ok]), enum([error])),
+    (app(lib.enum_map, lib.bool_not), error, error),
 ])
-def test_compose(f, g, expected):
-    assert reduce(as_code(lib.compose(f, g))) == simplify(as_code(expected))
+def test_close(f, x, expected):
+    assert reduce(app(lib.close(f), x)) == expected
 
 
 # ----------------------------------------------------------------------------

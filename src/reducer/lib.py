@@ -405,6 +405,13 @@ def enum_flatten(xs):
     return app(xs, lambda x: x)
 
 
+@combinator
+def enum_close(f, xs):
+    """forall a, (a -> enum a) -> enum a -> enum a"""
+    # return app(close, lambda ys: app(ys, f), xs)
+    return enum_union(xs, app(enum_close, f, xs, f))
+
+
 # ----------------------------------------------------------------------------
 # Functions
 
@@ -422,6 +429,12 @@ def fun_type(domain_type, codomain_type):
 def fix(f):
     """The Y combinator."""
     return app(f, fix(f))
+
+
+@combinator
+def close(f):
+    """Scott's universal closure operator V."""
+    return lambda x: join(x, app(f, close(x)))
 
 
 # ----------------------------------------------------------------------------
