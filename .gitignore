@@ -28,6 +28,7 @@ temp.*
 *.egg-info/
 /dist/
 .cache/
+.hypothesis/
 prof
 
 # eclipse
