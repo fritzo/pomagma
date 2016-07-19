@@ -16,6 +16,7 @@ w = VAR('w')
 x = VAR('x')
 y = VAR('y')
 z = VAR('z')
+F = app(K, I)
 
 
 @for_each([
@@ -41,6 +42,14 @@ def test_context_complexity(stack, bound, avoid, expected):
 @combinator
 def map_(f, xs):
     return app(xs, lib.nil, lambda h, t: lib.cons(app(f, h), map_(f, t)))
+
+
+def box(item):
+    return app(C, I, item)
+
+
+def enum(items):
+    return join(*map(box, items))
 
 
 REDUCE_EXAMPLES = [
@@ -92,6 +101,18 @@ REDUCE_EXAMPLES = [
     (app(join(x, y), z), join(app(x, z), app(y, z))),
     (app(join(I, app(K, I)), I), I),
     (app(join(I, app(K, I)), K), join(I, K)),
+    (enum([I]), enum([I])),
+    (enum([I, I]), enum([I])),
+    (enum([I, BOT]), enum([I])),
+    (enum([I, TOP]), enum([TOP])),
+    (enum([BOT, I, TOP]), enum([TOP])),
+    (enum([K, F]), enum([K, F])),
+    (enum([BOT, K, F]), enum([K, F])),
+    (enum([K, F, J]), enum([J])),
+    (enum([K, F, TOP]), enum([TOP])),
+    (enum([BOT, box(BOT)]), enum([box(BOT)])),
+    (enum([BOT, box(BOT), box(box(BOT))]), enum([box(box(BOT))])),
+    (enum([BOT, box(BOT), box(box(BOT)), box(TOP)]), enum([box(TOP)])),
     (app(lib.list_map, I, lib.nil), lib.nil),
     (map_(I, lib.nil), lib.nil),
     (map_(I, lib.cons(x, lib.nil)), lib.cons(x, lib.nil)),
