@@ -4,13 +4,6 @@ Environment Variables:
     POMAGMA_PROFILE_ENGINE
 
 Known Bugs:
-(B1) Evaluation is too eager wrt quoting. Eg the engine should not reduce
-    lib.list_map eagerly unless it has an argument, but
-    qapp(quote(list_map), quote(I), quote(nil)) will evaluate list_map too
-    soon.
-    OK: reduce(app(list_map, I, nil))
-    DIV: reduce(app(list_map, I))
-    DIV: reduce(qapp(quote(list_map), quote(I), quote(nil)))
 (B2) The fair scheduler in _sample_nonlinear does not work yet.
     Eg (x (S I I I)) never reduces to (x I).
     To fix, we need to generalize context objects to handle full continuations.
@@ -18,6 +11,7 @@ Known Bugs:
 (B3) Relations can fail to err when one argument is TOP but the oracle doesn't
     know it.  Eg in (LESS x (QUOTE TOP)), if x is a subtle error the oracle
     will optimistically return K, when the true answer is TOP
+(B4) The oracle is very weak, and does not reduce inside quoted terms.
 '''
 
 __all__ = ['reduce', 'simplify', 'sample']
@@ -185,7 +179,7 @@ def _sample(head, context, nonlinear):
             return
         elif is_quote(head):
             x = head[1]
-            x = _reduce(x, nonlinear)
+            x = _reduce(x, False)
             head = QUOTE(x)
             yield head, context
             return
@@ -260,8 +254,7 @@ def _sample(head, context, nonlinear):
             x = _reduce(x, nonlinear)
             y = _reduce(y, nonlinear)
             if is_quote(x) and is_quote(y):
-                # FIXME This is too eager; see (B1).
-                head = QUOTE(_app(x[1], y[1], nonlinear))
+                head = QUOTE(_app(x[1], y[1], False))
             else:
                 head = APP(APP(QAPP, x), y)
                 yield head, context
@@ -281,6 +274,8 @@ def _sample(head, context, nonlinear):
                 if (x is BOT and is_quote(y)) or (is_quote(x) and y is BOT):
                     return
             # FIXME This sometimes fails to err when it should; see (B3).
+            # FIXME This could be stronger by nonlinearly reducing the
+            #   arguments inside QUOTE(-) of the quoted terms; see (B4).
             answer = TRY_DECIDE[pred](try_unquote(x), try_unquote(y))
             head = TROOL_TO_CODE[answer]
             if head is None:
@@ -410,7 +405,7 @@ def _reduce(code, nonlinear):
     if is_app(code):
         return _app(code[1], code[2], nonlinear)
     elif is_quote(code):
-        return QUOTE(_reduce(code[1], nonlinear))
+        return QUOTE(_reduce(code[1], False))
     elif is_atom(code) or is_var(code):
         return code
     else:

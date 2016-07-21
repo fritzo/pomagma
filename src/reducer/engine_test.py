@@ -132,10 +132,7 @@ REDUCE_EXAMPLES = [
     (qapp(quote(x), quote(y)), quote(app(x, y))),
     (qapp(quote(S), quote(K), quote(K)), quote(I)),
     (qapp(quote(S), app(I, quote(K)), app(EVAL, quote(quote(K)))), quote(I)),
-    pytest.mark.xfail(
-        (qapp(quote(lib.list_map), quote(I), quote(lib.nil)), quote(lib.nil)),
-        reason='quote(lib.list_map) evaluates too eagerly',
-    ),
+    (qapp(quote(lib.list_map), quote(I), quote(lib.nil)), quote(lib.nil)),
     (app(EQUAL, x, y), app(EQUAL, x, y)),
     (app(EQUAL, x, quote(y)), app(EQUAL, x, quote(y))),
     (app(EQUAL, quote(x), y), app(EQUAL, quote(x), y)),
@@ -164,6 +161,18 @@ REDUCE_EXAMPLES = [
     (app(LESS, quote(x), BOT), app(LESS, quote(x), BOT)),
     (app(LESS, BOT, quote(TOP)), lib.true),
     (app(LESS, quote(BOT), BOT), lib.true),
+    pytest.mark.xfail(
+        (app(LESS, quote(TOP), quote(app(S, K, I, TOP))), lib.true),
+        reason='oracle is too weak',
+    ),
+    pytest.mark.xfail(
+        (app(LESS, quote(app(S, K, I, BOT)), quote(BOT)), lib.true),
+        reason='oracle is too weak',
+    ),
+    pytest.mark.xfail(
+        (app(LESS, quote(app(S, I, I, app(S, I, I))), quote(BOT)), lib.true),
+        reason='oracle is too weak',
+    ),
     (UNIT, UNIT),
     (app(UNIT, x), app(UNIT, x)),
     (app(UNIT, app(UNIT, x)), app(UNIT, x)),
