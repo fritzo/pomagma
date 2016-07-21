@@ -4,7 +4,8 @@ __all__ = [
 ]
 
 from parsable import parsable
-from pomagma.reducer.code import TOP, BOT, I, K, B, C, S, J, VAR, APP, QUOTE
+from pomagma.reducer.code import TOP, BOT, I, K, B, C, S, J
+from pomagma.reducer.code import VAR, APP, QUOTE, FUN
 from pomagma.reducer.code import is_var, is_app, is_quote, free_vars
 from pomagma.reducer.code import sexpr_parse, sexpr_print
 from pomagma.reducer.linker import link
@@ -127,7 +128,7 @@ def frame_eval(frame):
     while stack is not None:
         op, arg, stack = stack
         if op is ABS_VAR:
-            code = abstract(arg, code)
+            code = FUN(arg, code)
         elif op is APP_ARG:
             code = APP(code, arg)
         elif op is APP_FUN:
