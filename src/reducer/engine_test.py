@@ -20,22 +20,22 @@ F = app(K, I)
 
 
 @for_each([
-    (None, None, frozenset([]), 0),
-    (None, None, frozenset([x]), 0),
-    (None, (x, None), frozenset([]), 3),
-    (None, (y, (x, None)), frozenset([]), 6),
-    ((I, None), None, frozenset([]), 2),
-    ((I, None), (x, None), frozenset([]), 2 + 3),
-    ((I, None), (y, (x, None)), frozenset([]), 2 + 6),
-    ((x, None), None, frozenset([]), 3),
-    ((x, None), (x, None), frozenset([]), 3 + 3),
-    ((x, None), (y, (x, None)), frozenset([]), 3 + 6),
-    ((x, (I, None)), None, frozenset([]), 5),
-    ((x, (I, None)), (x, None), frozenset([]), 5 + 3),
-    ((x, (I, None)), (y, (x, None)), frozenset([]), 5 + 6),
+    (None, None, 0),
+    (None, None, 0),
+    (None, (x, None), 3),
+    (None, (y, (x, None)), 6),
+    ((I, None), None, 2),
+    ((I, None), (x, None), 2 + 3),
+    ((I, None), (y, (x, None)), 2 + 6),
+    ((x, None), None, 3),
+    ((x, None), (x, None), 3 + 3),
+    ((x, None), (y, (x, None)), 3 + 6),
+    ((x, (I, None)), None, 5),
+    ((x, (I, None)), (x, None), 5 + 3),
+    ((x, (I, None)), (y, (x, None)), 5 + 6),
 ])
-def test_context_complexity(stack, bound, avoid, expected):
-    context = engine.Context(stack=stack, bound=bound, avoid=avoid)
+def test_context_complexity(stack, bound, expected):
+    context = engine.Context(stack=stack, bound=bound)
     assert engine.context_complexity(context) == expected
 
 

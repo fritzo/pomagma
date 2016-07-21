@@ -56,31 +56,26 @@ def fresh(avoid):
             return var
 
 
-Context = namedtuple('Context', ['stack', 'bound', 'avoid'])
+Context = namedtuple('Context', ['stack', 'bound'])
+EMPTY_CONTEXT = Context(None, None)
 
 
-def context_make(avoid):
-    assert isinstance(avoid, frozenset)
-    return Context(None, None, avoid)
-
-
-EMPTY_CONTEXT = context_make(frozenset())
-
-
-def context_pop(context):
+def context_pop(context, *terms):
     if context.stack is not None:
         arg, stack = context.stack
-        return arg, Context(stack, context.bound, context.avoid)
+        return arg, Context(stack, context.bound)
     else:
-        arg = fresh(context.avoid)
-        avoid = context.avoid | frozenset([arg])
+        avoid = frozenset()
+        for term in terms:
+            avoid |= free_vars(term)
+        arg = fresh(avoid)
         bound = arg, context.bound
-        return arg, Context(context.stack, bound, avoid)
+        return arg, Context(context.stack, bound)
 
 
 def context_push(context, arg):
     stack = arg, context.stack
-    return Context(stack, context.bound, context.avoid)
+    return Context(stack, context.bound)
 
 
 def iter_shared_list(shared_list):
@@ -192,26 +187,26 @@ def _sample(head, context, nonlinear):
             head, context = context_pop(context)
         elif head is K:
             x, context = context_pop(context)
-            y, context = context_pop(context)
+            y, context = context_pop(context, x)
             head = x
         elif head is B:
             x, context = context_pop(context)
-            y, context = context_pop(context)
-            z, context = context_pop(context)
+            y, context = context_pop(context, x)
+            z, context = context_pop(context, x, y)
             head = x
             context = context_push(context, _app(y, z, False))
         elif head is C:
             x, context = context_pop(context)
-            y, context = context_pop(context)
-            z, context = context_pop(context)
+            y, context = context_pop(context, x)
+            z, context = context_pop(context, x, y)
             head = x
             context = context_push(context, y)
             context = context_push(context, z)
         elif head is S:
             old_context = context
             x, context = context_pop(context)
-            y, context = context_pop(context)
-            z, context = context_pop(context)
+            y, context = context_pop(context, x)
+            z, context = context_pop(context, x, y)
             if nonlinear or is_var(z):
                 head = x
                 context = context_push(context, _app(y, z, False))
@@ -221,7 +216,7 @@ def _sample(head, context, nonlinear):
                 return
         elif head is J:
             x, context = context_pop(context)
-            y, context = context_pop(context)
+            y, context = context_pop(context, x)
             for head in (x, y):
                 for continuation in _sample(head, context, nonlinear):
                     yield continuation
@@ -250,7 +245,7 @@ def _sample(head, context, nonlinear):
                 return
         elif head is QAPP:
             x, context = context_pop(context)
-            y, context = context_pop(context)
+            y, context = context_pop(context, x)
             x = _reduce(x, nonlinear)
             y = _reduce(y, nonlinear)
             if is_quote(x) and is_quote(y):
@@ -262,7 +257,7 @@ def _sample(head, context, nonlinear):
         elif head in TRY_DECIDE:
             pred = head
             x, context = context_pop(context)
-            y, context = context_pop(context)
+            y, context = context_pop(context, x)
             x = _reduce(x, nonlinear)
             y = _reduce(y, nonlinear)
             if x is TOP or y is TOP:
@@ -390,7 +385,7 @@ USE_FAIR_SCHEDULER = False
 @memoize_args
 def _app(lhs, rhs, nonlinear):
     head = lhs
-    context = context_make(free_vars(lhs) | free_vars(rhs))
+    context = EMPTY_CONTEXT
     context = context_push(context, rhs)
     if nonlinear and USE_FAIR_SCHEDULER:
         samples = _sample_nonlinear(head, context)
@@ -430,6 +425,6 @@ def sample(code, budget=0):
     assert isinstance(budget, int) and budget >= 0, budget
     LOG.info('sample({})'.format(pretty(code)))
     head = code
-    context = context_make(free_vars(code))
+    context = EMPTY_CONTEXT
     for continuation in _sample_nonlinear(head, context):
         yield _close(continuation, nonlinear=True)
