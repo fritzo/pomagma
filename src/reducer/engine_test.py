@@ -1,10 +1,11 @@
 from pomagma.reducer import engine
 from pomagma.reducer import lib
-from pomagma.reducer.code import TOP, BOT, I, K, B, C, S, J
 from pomagma.reducer.code import CODE, EVAL, QQUOTE, QAPP, EQUAL, LESS
+from pomagma.reducer.code import TOP, BOT, I, K, B, C, S, J
 from pomagma.reducer.code import UNIT, BOOL, MAYBE
 from pomagma.reducer.code import VAR, APP, QUOTE
 from pomagma.reducer.sugar import app, join, quote, qapp, combinator
+from pomagma.reducer.testing import iter_equations
 from pomagma.util.testing import for_each
 import hypothesis
 import hypothesis.strategies as s
@@ -228,6 +229,20 @@ REDUCE_EXAMPLES = [
 def test_reduce(code, expected_result):
     actual_result = engine.reduce(code, BUDGET)
     assert actual_result == expected_result
+
+
+@for_each(iter_equations('sk'))
+def test_trace_reduce_sk(lhs, rhs):
+    lhs = engine.reduce(lhs)
+    rhs = engine.reduce(rhs)
+    assert lhs == rhs
+
+
+@for_each(iter_equations('quote'))
+def test_trace_reduce_quote(lhs, rhs):
+    lhs = engine.reduce(lhs)
+    rhs = engine.reduce(rhs)
+    assert lhs == rhs
 
 
 alphabet = '_abcdefghijklmnopqrstuvwxyz'

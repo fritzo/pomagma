@@ -5,6 +5,7 @@ __all__ = [
 
 from parsable import parsable
 from pomagma.reducer.code import TOP, BOT, I, K, B, C, S, J
+from pomagma.reducer.code import EVAL, QQUOTE, QAPP
 from pomagma.reducer.code import VAR, APP, QUOTE, FUN
 from pomagma.reducer.code import is_var, is_app, is_quote, free_vars
 from pomagma.reducer.code import sexpr_parse, sexpr_print
@@ -23,6 +24,10 @@ APP_FUN = intern('APP_FUN')
 APP_ARG = intern('APP_ARG')
 ABS_VAR = intern('ABS_VAR')
 QUOTE_ARG = intern('QUOTE_ARG')
+EVAL_ARG = intern('EVAL_ARG')
+QQUOTE_ARG = intern('QQUOTE_ARG')
+QAPP_FUN = intern('QAPP_FUN')
+QAPP_ARG = intern('QAPP_ARG')
 
 re_var = re.compile(r'^v\d+$')
 assert re_var.match('v0')
@@ -106,6 +111,19 @@ def trace_deterministic(code):
                 stack = APP_ARG, APP(y, z), stack
                 stack = APP_ARG, z, stack
                 code = x
+            elif code is EVAL:
+                x, stack = pop_arg(stack)
+                stack = EVAL_ARG, None, stack
+                code = x
+            elif code is QQUOTE:
+                x, stack = pop_arg(stack)
+                stack = QQUOTE_ARG, None, stack
+                code = x
+            elif code is QAPP:
+                x, stack = pop_arg(stack)
+                y, stack = pop_arg(stack)
+                stack = QAPP_ARG, y, stack
+                code = x
             else:
                 raise ValueError(code)
         elif state is REDUCE_ARGS:
@@ -123,6 +141,39 @@ def trace_deterministic(code):
                 code = APP(arg, code)
             elif op is QUOTE_ARG:
                 code = QUOTE(code)
+            elif op is EVAL_ARG:
+                if is_quote(code):
+                    code = code[1]
+                    state = REDUCE_HEAD
+                elif code is TOP or code is BOT:
+                    state = REDUCE_HEAD
+                else:
+                    code = APP(EVAL, code)
+            elif op is QQUOTE_ARG:
+                if is_quote(code):
+                    code = QUOTE(code)
+                elif code is TOP or code is BOT:
+                    state = REDUCE_HEAD
+                else:
+                    code = APP(QQUOTE, code)
+            elif op is QAPP_ARG:
+                stack = QAPP_FUN, code, stack
+                code = arg
+                state = REDUCE_HEAD
+            elif op is QAPP_FUN:
+                lhs = arg
+                rhs = code
+                if lhs is TOP or rhs is TOP:
+                    code = TOP
+                    state = REDUCE_HEAD
+                elif lhs is BOT or rhs is BOT:
+                    code = BOT
+                    state = REDUCE_HEAD
+                elif is_quote(lhs) and is_quote(rhs):
+                    code = QUOTE(APP(lhs[1], rhs[1]))
+                    state = REDUCE_HEAD
+                else:
+                    code = APP(APP(QAPP, lhs), rhs)
             else:
                 raise ValueError(op)
     return {'result': code, 'trace': trace}
