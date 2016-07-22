@@ -225,6 +225,11 @@ def _sample(head, context, nonlinear):
             x = _reduce(x, nonlinear)
             if is_quote(x):
                 head = x[1]
+            elif x is TOP:
+                yield TOP, EMPTY_CONTEXT
+                return
+            elif x is BOT:
+                return
             else:
                 head = APP(EVAL, x)
                 yield head, context

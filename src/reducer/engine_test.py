@@ -119,6 +119,8 @@ REDUCE_EXAMPLES = [
     (quote(x), quote(x)),
     (quote(app(I, x)), quote(x)),
     (app(EVAL, x), app(EVAL, x)),
+    (app(EVAL, TOP), TOP),
+    (app(EVAL, BOT), BOT),
     (app(EVAL, quote(I), x), x),
     (quote(app(EVAL, quote(app(K, I, I)))), quote(I)),
     (app(S, K, K, quote(app(EVAL, quote(app(K, I, I))))), quote(I)),
