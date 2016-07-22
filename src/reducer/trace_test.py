@@ -57,7 +57,7 @@ def test_trace_deterministic(code):
     hypothesis.assume(count_S_occurrences(code) <= 1)
     print(sexpr_print(code))
     expected = engine.reduce(code)
-    trace = trace_deterministic(code)
+    trace = trace_deterministic(code)['trace']
     actual = trace[-1][1]
     assert actual == expected
 
@@ -69,6 +69,6 @@ def test_trace_nondeterministic(code):
     hypothesis.assume(count_S_occurrences(code) <= 1)
     print(sexpr_print(code))
     expected = engine.reduce(code)
-    trace = trace_nondeterministic(code)
+    trace = trace_nondeterministic(code)['trace']
     actual = trace[-1][1]
     assert actual == expected

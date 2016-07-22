@@ -90,17 +90,22 @@ def trace_deterministic(code):
                 x, stack = pop_arg(stack)
                 y, stack = pop_arg(stack)
                 z, stack = pop_arg(stack)
-                code = APP(x, APP(y, z))
+                stack = APP_ARG, APP(y, z), stack
+                code = x
             elif code is C:
                 x, stack = pop_arg(stack)
                 y, stack = pop_arg(stack)
                 z, stack = pop_arg(stack)
-                code = APP(APP(x, z), y)
+                stack = APP_ARG, y, stack
+                stack = APP_ARG, z, stack
+                code = x
             elif code is S:
                 x, stack = pop_arg(stack)
                 y, stack = pop_arg(stack)
                 z, stack = pop_arg(stack)
-                code = APP(APP(x, z), APP(y, z))
+                stack = APP_ARG, APP(y, z), stack
+                stack = APP_ARG, z, stack
+                code = x
             else:
                 raise ValueError(code)
         elif state is REDUCE_ARGS:
@@ -120,7 +125,7 @@ def trace_deterministic(code):
                 code = QUOTE(code)
             else:
                 raise ValueError(op)
-    return trace
+    return {'result': code, 'trace': trace}
 
 
 def frame_eval(frame):
@@ -207,6 +212,7 @@ def trace_nondeterministic(code):
     schedule = schedule_init()
     schedule = schedule_push(schedule, task)
     trace = []
+    result = set()
     while not schedule_is_empty(schedule):
         trace.append(schedule)
         schedule, task = schedule_pop(schedule)
@@ -234,17 +240,22 @@ def trace_nondeterministic(code):
                 x, stack = pop_arg(stack)
                 y, stack = pop_arg(stack)
                 z, stack = pop_arg(stack)
-                code = APP(x, APP(y, z))
+                stack = APP_ARG, APP(y, z), stack
+                code = x
             elif code is C:
                 x, stack = pop_arg(stack)
                 y, stack = pop_arg(stack)
                 z, stack = pop_arg(stack)
-                code = APP(APP(x, z), y)
+                stack = APP_ARG, y, stack
+                stack = APP_ARG, z, stack
+                code = x
             elif code is S:
                 x, stack = pop_arg(stack)
                 y, stack = pop_arg(stack)
                 z, stack = pop_arg(stack)
-                code = APP(APP(x, z), APP(y, z))
+                stack = APP_ARG, APP(y, z), stack
+                stack = APP_ARG, z, stack
+                code = x
             elif code is J:
                 x, stack = pop_arg(stack)
                 y, stack = pop_arg(stack)
@@ -255,7 +266,8 @@ def trace_nondeterministic(code):
                 raise ValueError(code)
         elif state is REDUCE_ARGS:
             if stack is None:
-                break
+                result.add(code)
+                continue
             op, arg, stack = stack
             if op is ABS_VAR:
                 code = abstract(arg, code)
@@ -272,7 +284,7 @@ def trace_nondeterministic(code):
                 raise ValueError(op)
         task = state, code, stack
         schedule = schedule_push(schedule, task)
-    return trace
+    return {'result': result, 'trace': trace}
 
 
 @parsable
@@ -281,10 +293,10 @@ def trace_frames(sexpr, deterministic=True):
     code = sexpr_parse(sexpr)
     code = link(code)
     if deterministic:
-        for state, code, stack in trace_deterministic(code):
+        for state, code, stack in trace_deterministic(code)['trace']:
             print('{} {}'.format(state, sexpr_print(code)))
     else:
-        for schedule in trace_nondeterministic(code):
+        for schedule in trace_nondeterministic(code)['trace']:
             for i, task in schedule_iter(schedule):
                 state, code, stack = task
                 prefix = '--' if i == 0 else '  '
@@ -296,7 +308,7 @@ def trace_codes(sexpr):
     """Print evaluated code for each frame of a trace of reduction sequence."""
     code = sexpr_parse(sexpr)
     code = link(code)
-    for frame in trace_deterministic(code):
+    for frame in trace_deterministic(code)['trace']:
         code = frame_eval(frame)
         print(sexpr_print(code))
 
