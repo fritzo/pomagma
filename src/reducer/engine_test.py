@@ -231,15 +231,8 @@ def test_reduce(code, expected_result):
     assert actual_result == expected_result
 
 
-@for_each(iter_equations('sk'))
-def test_trace_reduce_sk(lhs, rhs):
-    lhs = engine.reduce(lhs)
-    rhs = engine.reduce(rhs)
-    assert lhs == rhs
-
-
-@for_each(iter_equations('quote'))
-def test_trace_reduce_quote(lhs, rhs):
+@for_each(iter_equations('sk', 'quote'))
+def test_trace_reduce_equations(lhs, rhs):
     lhs = engine.reduce(lhs)
     rhs = engine.reduce(rhs)
     assert lhs == rhs

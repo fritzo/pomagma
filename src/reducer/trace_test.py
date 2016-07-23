@@ -14,16 +14,8 @@ import pytest
 # ----------------------------------------------------------------------------
 # Parameterized tests
 
-@for_each(iter_equations('sk'))
+@for_each(iter_equations('sk', 'quote'))
 def test_trace_deterministic_sk(lhs, rhs):
-    print('{} = {}'.format(sexpr_print(lhs), sexpr_print(rhs)))
-    lhs = trace_deterministic(lhs)['result']
-    rhs = trace_deterministic(rhs)['result']
-    assert lhs == rhs
-
-
-@for_each(iter_equations('quote'))
-def test_trace_deterministic_quote(lhs, rhs):
     print('{} = {}'.format(sexpr_print(lhs), sexpr_print(rhs)))
     lhs = trace_deterministic(lhs)['result']
     rhs = trace_deterministic(rhs)['result']
