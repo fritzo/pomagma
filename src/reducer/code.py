@@ -129,13 +129,13 @@ def _polish_parse_tokens(tokens):
     try:
         polish_parsers = _PARSERS[token]
     except KeyError:
-        return token  # atom
+        return token if re_const.match(token) else VAR(token)  # atom
     args = tuple(p(tokens) for p in polish_parsers)
     return _term(token, *args)
 
 
 _PARSERS = {
-    _VAR: (_pop_token,),
+    # _VAR: (_pop_token,),
     _APP: (_polish_parse_tokens, _polish_parse_tokens),
     _QUOTE: (_polish_parse_tokens,),
     _FUN: (_polish_parse_tokens, _polish_parse_tokens),
@@ -153,7 +153,8 @@ def _polish_print_tokens(code, tokens):
     if isinstance(code, str):
         tokens.append(code)
     elif isinstance(code, tuple):
-        tokens.append(code[0])
+        if code[0] is not _VAR:
+            tokens.append(code[0])
         for arg in code[1:]:
             _polish_print_tokens(arg, tokens)
 

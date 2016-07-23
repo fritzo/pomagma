@@ -72,7 +72,7 @@ EXAMPLES = [
     {'code': PROD, 'polish': 'PROD', 'sexpr': 'PROD'},
     {'code': SUM, 'polish': 'SUM', 'sexpr': 'SUM'},
     {'code': NUM, 'polish': 'NUM', 'sexpr': 'NUM'},
-    {'code': x, 'polish': 'VAR x', 'sexpr': 'x'},
+    {'code': x, 'polish': 'x', 'sexpr': 'x'},
     {'code': APP(K, I), 'polish': 'APP K I', 'sexpr': '(K I)'},
     {
         'code': QUOTE(APP(I, K)),
@@ -81,12 +81,12 @@ EXAMPLES = [
     },
     {
         'code': FUN(x, APP(x, x)),
-        'polish': 'FUN VAR x APP VAR x VAR x',
+        'polish': 'FUN x APP x x',
         'sexpr': '(FUN x (x x))',
     },
     {
         'code': LET(x, I, APP(I, I)),
-        'polish': 'LET VAR x I APP I I',
+        'polish': 'LET x I APP I I',
         'sexpr': '(LET x I (I I))',
     },
 ]
