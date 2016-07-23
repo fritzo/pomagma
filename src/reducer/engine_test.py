@@ -231,7 +231,7 @@ def test_reduce(code, expected_result):
     assert actual_result == expected_result
 
 
-@for_each(iter_equations(['sk', 'quote'], test_id='engine'))
+@for_each(iter_equations(['sk', 'join', 'quote'], test_id='engine'))
 def test_trace_reduce_equations(code, expected):
     actual = engine.reduce(code)
     assert actual == expected
