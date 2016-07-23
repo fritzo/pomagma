@@ -1,9 +1,10 @@
 from pomagma.reducer.code import TOP, BOT, I, K, B, C, S, J
 from pomagma.reducer.code import VAR, APP, QUOTE, FUN, LET
 from pomagma.reducer.code import polish_print
-from pomagma.reducer.transforms import abstract, define, compile_, decompile
-from pomagma.reducer.transforms import fresh_var
+from pomagma.reducer.transforms import compile_, decompile
+from pomagma.reducer.transforms import fresh_var, abstract, define, substitute
 from pomagma.util.testing import for_each
+import pytest
 
 w = VAR('w')
 x = VAR('x')
@@ -46,10 +47,33 @@ def test_abstract(var, body, expected):
     (x, y, APP(z, x), APP(z, y)),
     (x, y, APP(x, x), APP(APP(APP(S, I), I), y)),
     (x, y, QUOTE(y), QUOTE(y)),
+    (x, y, QUOTE(z), QUOTE(z)),
     (x, y, QUOTE(x), QUOTE(y)),
+    pytest.mark.xfail(
+        (x, y, APP(x, QUOTE(x)), APP(y, QUOTE(y))),
+        reason='too lazy around QUOTE',
+    ),
 ])
 def test_define(var, defn, body, expected):
     actual = define(var, defn, body)
+    assert actual == expected
+
+
+@for_each([
+    (x, y, z, z),
+    (x, y, y, y),
+    (x, y, x, y),
+    (x, y, I, I),
+    (x, y, APP(x, z), APP(y, z)),
+    (x, y, APP(z, x), APP(z, y)),
+    (x, y, APP(x, x), APP(y, y)),
+    (x, y, QUOTE(y), QUOTE(y)),
+    (x, y, QUOTE(z), QUOTE(z)),
+    (x, y, QUOTE(x), QUOTE(y)),
+    (x, y, APP(x, QUOTE(x)), APP(y, QUOTE(y))),
+])
+def test_substitute(var, defn, body, expected):
+    actual = substitute(var, defn, body)
     assert actual == expected
 
 

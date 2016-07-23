@@ -16,10 +16,10 @@ import pytest
 # Parameterized tests
 
 @for_each(iter_equations(['sk', 'quote'], test_id='trace'))
-def test_trace_deterministic_sk(code, expected):
+def test_trace_deterministic_sk(code, expected, message):
     result = trace_deterministic(code)
     actual = result['code']
-    assert actual == expected, lazy_print_trace(result['trace'])
+    assert actual == expected, lazy_print_trace(result['trace'], message)
 
 
 # ----------------------------------------------------------------------------

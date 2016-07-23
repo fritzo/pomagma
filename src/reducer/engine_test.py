@@ -4,7 +4,7 @@ from pomagma.reducer.code import CODE, EVAL, QQUOTE, QAPP, EQUAL, LESS
 from pomagma.reducer.code import TOP, BOT, I, K, B, C, S, J
 from pomagma.reducer.code import UNIT, BOOL, MAYBE
 from pomagma.reducer.code import VAR, APP, QUOTE
-from pomagma.reducer.sugar import app, join, quote, qapp, combinator
+from pomagma.reducer.sugar import app, join, quote, qapp
 from pomagma.reducer.testing import iter_equations
 from pomagma.util.testing import for_each
 import hypothesis
@@ -38,11 +38,6 @@ F = app(K, I)
 def test_context_complexity(stack, bound, expected):
     context = engine.Context(stack=stack, bound=bound)
     assert engine.context_complexity(context) == expected
-
-
-@combinator
-def map_(f, xs):
-    return app(xs, lib.nil, lambda h, t: lib.cons(app(f, h), map_(f, t)))
 
 
 def box(item):
@@ -115,8 +110,8 @@ REDUCE_EXAMPLES = [
     (enum([BOT, box(BOT), box(box(BOT))]), enum([box(box(BOT))])),
     (enum([BOT, box(BOT), box(box(BOT)), box(TOP)]), enum([box(TOP)])),
     (app(lib.list_map, I, lib.nil), lib.nil),
-    (map_(I, lib.nil), lib.nil),
-    (map_(I, lib.cons(x, lib.nil)), lib.cons(x, lib.nil)),
+    (lib.list_map(I, lib.nil), lib.nil),
+    (lib.list_map(I, lib.cons(x, lib.nil)), lib.cons(x, lib.nil)),
     (quote(x), quote(x)),
     (quote(app(I, x)), quote(x)),
     (app(EVAL, x), app(EVAL, x)),
@@ -232,9 +227,10 @@ def test_reduce(code, expected_result):
 
 
 @for_each(iter_equations(['sk', 'join', 'quote'], test_id='engine'))
-def test_trace_reduce_equations(code, expected):
-    actual = engine.reduce(code)
-    assert actual == expected
+def test_trace_reduce_equations(lhs, rhs, message):
+    lhs = engine.reduce(lhs)
+    rhs = engine.reduce(rhs)
+    assert lhs == rhs, message
 
 
 alphabet = '_abcdefghijklmnopqrstuvwxyz'

@@ -197,13 +197,14 @@ def frame_eval(frame):
 
 
 class lazy_print_trace(object):
-    __slots__ = ('_trace',)
+    __slots__ = ('_trace', '_message')
 
-    def __init__(self, trace):
+    def __init__(self, trace, message='Trace:'):
         self._trace = trace
+        self._message = message
 
     def __str__(self):
-        return 'Trace:\n{}'.format('\n'.join(
+        return '{}\n{}'.format(self._message, '\n'.join(
             '{} {}'.format(state, sexpr_print(code))
             for state, code, stack in self._trace
         ))

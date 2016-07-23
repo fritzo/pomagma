@@ -5,38 +5,48 @@ import re
 # ----------------------------------------------------------------------------
 # Signature
 
-re_const = re.compile('[A-Z]+$')
+re_keyword = re.compile('[A-Z]+$')
+_keywords = set()
 
-_VAR = intern('VAR')
-_APP = intern('APP')
-_QUOTE = intern('QUOTE')
-_FUN = intern('FUN')
-_LET = intern('LET')
 
-TOP = intern('TOP')
-BOT = intern('BOT')
-I = intern('I')
-K = intern('K')
-B = intern('B')
-C = intern('C')
-S = intern('S')
-J = intern('J')
+def make_keyword(name):
+    assert re_keyword.match(name)
+    assert name not in _keywords
+    name = intern(name)
+    _keywords.add(name)
+    return name
 
-CODE = intern('CODE')
-EVAL = intern('EVAL')
-QAPP = intern('QAPP')
-QQUOTE = intern('QQUOTE')
-EQUAL = intern('EQUAL')
-LESS = intern('LESS')
 
-V = intern('V')
-A = intern('A')
-UNIT = intern('UNIT')
-BOOL = intern('BOOL')
-MAYBE = intern('MAYBE')
-PROD = intern('PROD')
-SUM = intern('SUM')
-NUM = intern('NUM')
+_VAR = make_keyword('VAR')
+_APP = make_keyword('APP')
+_QUOTE = make_keyword('QUOTE')
+_FUN = make_keyword('FUN')
+_LET = make_keyword('LET')
+
+TOP = make_keyword('TOP')
+BOT = make_keyword('BOT')
+I = make_keyword('I')
+K = make_keyword('K')
+B = make_keyword('B')
+C = make_keyword('C')
+S = make_keyword('S')
+J = make_keyword('J')
+
+CODE = make_keyword('CODE')
+EVAL = make_keyword('EVAL')
+QAPP = make_keyword('QAPP')
+QQUOTE = make_keyword('QQUOTE')
+EQUAL = make_keyword('EQUAL')
+LESS = make_keyword('LESS')
+
+V = make_keyword('V')
+A = make_keyword('A')
+UNIT = make_keyword('UNIT')
+BOOL = make_keyword('BOOL')
+MAYBE = make_keyword('MAYBE')
+PROD = make_keyword('PROD')
+SUM = make_keyword('SUM')
+NUM = make_keyword('NUM')
 
 
 @memoize_args
@@ -45,8 +55,8 @@ def _term(*args):
 
 
 def VAR(name):
-    if re_const.match(name):
-        raise ValueError('variable names cannot match [A-Z]+')
+    if re_keyword.match(name):
+        raise ValueError('Variable names cannot match [A-Z]+')
     return _term(_VAR, intern(name))
 
 
@@ -129,7 +139,7 @@ def _polish_parse_tokens(tokens):
     try:
         polish_parsers = _PARSERS[token]
     except KeyError:
-        return token if re_const.match(token) else VAR(token)  # atom
+        return token if re_keyword.match(token) else VAR(token)  # atom
     args = tuple(p(tokens) for p in polish_parsers)
     return _term(token, *args)
 
@@ -193,31 +203,36 @@ def to_sexpr(code):
 
 def from_sexpr(sexpr):
     if isinstance(sexpr, str):
-        if re_const.match(sexpr):
+        if sexpr in _keywords:
             return sexpr
         else:
+            if re_keyword.match(sexpr):
+                raise ValueError('Unrecognized keyword: {}'.format(sexpr))
             return VAR(sexpr)
     head = sexpr[0]
     assert isinstance(head, str)
-    if not re_const.match(head):
-        head = VAR(head)
-        args = sexpr[1:]
-    elif head is _QUOTE:
-        code = from_sexpr(sexpr[1])
-        head = QUOTE(code)
-        args = sexpr[2:]
-    elif head is _FUN:
-        var = from_sexpr(sexpr[1])
-        body = from_sexpr(sexpr[2])
-        head = FUN(var, body)
-        args = sexpr[3:]
-    elif head is _LET:
-        var = from_sexpr(sexpr[1])
-        defn = from_sexpr(sexpr[2])
-        body = from_sexpr(sexpr[3])
-        head = LET(var, defn, body)
-        args = sexpr[4:]
+    if head in _keywords:
+        if head is _QUOTE:
+            code = from_sexpr(sexpr[1])
+            head = QUOTE(code)
+            args = sexpr[2:]
+        elif head is _FUN:
+            var = from_sexpr(sexpr[1])
+            body = from_sexpr(sexpr[2])
+            head = FUN(var, body)
+            args = sexpr[3:]
+        elif head is _LET:
+            var = from_sexpr(sexpr[1])
+            defn = from_sexpr(sexpr[2])
+            body = from_sexpr(sexpr[3])
+            head = LET(var, defn, body)
+            args = sexpr[4:]
+        else:
+            args = sexpr[1:]
     else:
+        if re_keyword.match(head):
+            raise ValueError('Unrecognized keyword: {}'.format(head))
+        head = VAR(head)
         args = sexpr[1:]
     args = map(from_sexpr, args)
     for arg in args:
