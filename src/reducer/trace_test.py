@@ -15,7 +15,7 @@ import pytest
 # ----------------------------------------------------------------------------
 # Parameterized tests
 
-@for_each(iter_equations('sk', 'quote'))
+@for_each(iter_equations(['sk', 'quote'], test_id='trace'))
 def test_trace_deterministic_sk(code, expected):
     result = trace_deterministic(code)
     actual = result['code']

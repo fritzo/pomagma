@@ -1,25 +1,42 @@
 from pomagma.reducer.code import EQUAL, is_app, is_quote, sexpr_parse
 import os
+import pytest
 
 DIR = os.path.dirname(os.path.abspath(__file__))
 TESTDATA = os.path.join(DIR, 'testdata')
 
 
-def iter_test_cases(*stems):
-    for stem in stems:
-        filename = '{}/{}.sexpr'.format(TESTDATA, stem)
+def iter_test_cases(suites, test_id=None):
+    print('test_id = {}'.format(test_id))
+    for suite in suites:
+        filename = '{}/{}.sexpr'.format(TESTDATA, suite)
         print('reading {}'.format(filename))
         with open(filename) as f:
             for line in f:
-                line = line.split('#', 1)[0].strip()
-                if line:
-                    yield sexpr_parse(line)
+                parts = line.split('#', 1)
+                sexpr = parts[0].strip()
+                if sexpr:
+                    code = sexpr_parse(sexpr)
+                    comment = None if len(parts) < 2 else parts[1].strip()
+                    yield code, comment
 
 
-def iter_equations(*stems):
-    for code in iter_test_cases(*stems):
+def parse_xfail(comment, test_id):
+    if comment.startswith('xfail'):
+        if test_id is None:
+            return True
+        if test_id in comment[len('xfail'):].strip().split(', '):
+            return True
+    return False
+
+
+def iter_equations(suites, test_id=None):
+    for code, comment in iter_test_cases(suites, test_id=test_id):
         if is_app(code) and is_app(code[1]) and code[1][1] is EQUAL:
             lhs = code[1][2]
             rhs = code[2]
             if is_quote(lhs) and is_quote(rhs):
-                yield lhs[1], rhs[1]
+                example = lhs[1], rhs[1]
+                if comment and parse_xfail(comment, test_id):
+                    example = pytest.mark.xfail(example)
+                yield example
