@@ -1,8 +1,11 @@
 from pomagma.compiler.util import memoize_arg
 from pomagma.compiler.util import memoize_args
+import re
 
 # ----------------------------------------------------------------------------
 # Signature
+
+re_const = re.compile('[A-Z]+$')
 
 _VAR = intern('VAR')
 _APP = intern('APP')
@@ -42,6 +45,8 @@ def _term(*args):
 
 
 def VAR(name):
+    if re_const.match(name):
+        raise ValueError('variable names cannot match [A-Z]+')
     return _term(_VAR, intern(name))
 
 
@@ -160,14 +165,15 @@ def _polish_print_tokens(code, tokens):
 def to_sexpr(code):
     if isinstance(code, str):
         return code
+    elif is_var(code):
+        return code[1]
     head = code
     args = []
     while is_app(head):
         args.append(head[2])
         head = head[1]
     if is_var(head):
-        args.append(head[1])
-        head = _VAR
+        head = head[1]
     elif is_quote(head):
         args.append(head[1])
         head = _QUOTE
@@ -186,11 +192,15 @@ def to_sexpr(code):
 
 def from_sexpr(sexpr):
     if isinstance(sexpr, str):
-        return sexpr
+        if re_const.match(sexpr):
+            return sexpr
+        else:
+            return VAR(sexpr)
     head = sexpr[0]
-    if head is _VAR:
-        head = VAR(sexpr[1])
-        args = sexpr[2:]
+    assert isinstance(head, str)
+    if not re_const.match(head):
+        head = VAR(head)
+        args = sexpr[1:]
     elif head is _QUOTE:
         code = from_sexpr(sexpr[1])
         head = QUOTE(code)

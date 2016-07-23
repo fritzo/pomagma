@@ -72,7 +72,7 @@ EXAMPLES = [
     {'code': PROD, 'polish': 'PROD', 'sexpr': 'PROD'},
     {'code': SUM, 'polish': 'SUM', 'sexpr': 'SUM'},
     {'code': NUM, 'polish': 'NUM', 'sexpr': 'NUM'},
-    {'code': x, 'polish': 'VAR x', 'sexpr': '(VAR x)'},
+    {'code': x, 'polish': 'VAR x', 'sexpr': 'x'},
     {'code': APP(K, I), 'polish': 'APP K I', 'sexpr': '(K I)'},
     {
         'code': QUOTE(APP(I, K)),
@@ -82,36 +82,36 @@ EXAMPLES = [
     {
         'code': FUN(x, APP(x, x)),
         'polish': 'FUN VAR x APP VAR x VAR x',
-        'sexpr': '(FUN (VAR x) (VAR x (VAR x)))',
+        'sexpr': '(FUN x (x x))',
     },
     {
         'code': LET(x, I, APP(I, I)),
         'polish': 'LET VAR x I APP I I',
-        'sexpr': '(LET (VAR x) I (I I))',
+        'sexpr': '(LET x I (I I))',
     },
 ]
 
 
 @for_each(EXAMPLES)
-def test_polish_parse(example):
+def test_polish_print(example):
     actual = polish_print(example['code'])
     assert actual == example['polish']
 
 
 @for_each(EXAMPLES)
-def test_polish_print(example):
+def test_polish_parse(example):
     actual = polish_parse(example['polish'])
     assert actual == example['code']
 
 
 @for_each(EXAMPLES)
-def test_sexpr_parse(example):
+def test_sexpr_print(example):
     actual = sexpr_print(example['code'])
     assert actual == example['sexpr']
 
 
 @for_each(EXAMPLES)
-def test_sexpr_print(example):
+def test_sexpr_parse(example):
     actual = sexpr_parse(example['sexpr'])
     assert actual == example['code']
 

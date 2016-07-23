@@ -64,7 +64,7 @@ class _Combinator(object):
 
     def _compile(self):
         assert not hasattr(self, '_code')
-        var = VAR(self.__name__)
+        var = VAR('_{}'.format(self.__name__))
         self._code = var
 
         code = _compile(self, actual_fun=self._fun)
