@@ -232,10 +232,9 @@ def test_reduce(code, expected_result):
 
 
 @for_each(iter_equations('sk', 'quote'))
-def test_trace_reduce_equations(lhs, rhs):
-    lhs = engine.reduce(lhs)
-    rhs = engine.reduce(rhs)
-    assert lhs == rhs
+def test_trace_reduce_equations(code, expected):
+    actual = engine.reduce(code)
+    assert actual == expected
 
 
 alphabet = '_abcdefghijklmnopqrstuvwxyz'

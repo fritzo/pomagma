@@ -176,7 +176,7 @@ def trace_deterministic(code):
                     code = APP(APP(QAPP, lhs), rhs)
             else:
                 raise ValueError(op)
-    return {'result': code, 'trace': trace}
+    return {'code': code, 'trace': trace}
 
 
 def frame_eval(frame):
@@ -194,6 +194,22 @@ def frame_eval(frame):
         else:
             raise ValueError(op)
     return code
+
+
+class lazy_print_trace(object):
+    __slots__ = ('_trace',)
+
+    def __init__(self, trace):
+        self._trace = trace
+
+    def __str__(self):
+        return 'Trace:\n{}'.format('\n'.join(
+            '{} {}'.format(state, sexpr_print(code))
+            for state, code, stack in self._trace
+        ))
+
+    def __repr__(self):
+        return str(self)
 
 
 # ----------------------------------------------------------------------------
@@ -335,7 +351,7 @@ def trace_nondeterministic(code):
                 raise ValueError(op)
         task = state, code, stack
         schedule = schedule_push(schedule, task)
-    return {'result': result, 'trace': trace}
+    return {'code': result, 'trace': trace}
 
 
 @parsable

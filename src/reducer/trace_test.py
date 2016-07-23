@@ -3,6 +3,7 @@ from pomagma.reducer import engine
 from pomagma.reducer.code import TOP, BOT, I, K, B, C, S, J, VAR, APP
 from pomagma.reducer.code import is_app, sexpr_print
 from pomagma.reducer.testing import iter_equations
+from pomagma.reducer.trace import lazy_print_trace
 from pomagma.reducer.trace import trace_deterministic
 from pomagma.reducer.trace import trace_nondeterministic
 from pomagma.util.testing import for_each
@@ -15,11 +16,10 @@ import pytest
 # Parameterized tests
 
 @for_each(iter_equations('sk', 'quote'))
-def test_trace_deterministic_sk(lhs, rhs):
-    print('{} = {}'.format(sexpr_print(lhs), sexpr_print(rhs)))
-    lhs = trace_deterministic(lhs)['result']
-    rhs = trace_deterministic(rhs)['result']
-    assert lhs == rhs
+def test_trace_deterministic_sk(code, expected):
+    result = trace_deterministic(code)
+    actual = result['code']
+    assert actual == expected, lazy_print_trace(result['trace'])
 
 
 # ----------------------------------------------------------------------------
