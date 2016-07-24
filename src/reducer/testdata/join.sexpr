@@ -17,7 +17,7 @@
 (EQUAL (QUOTE (J I (K I) I)) (QUOTE I))
 (EQUAL (QUOTE (J I (K I) K)) (QUOTE (J I K)))
 
-# Using pomagma.reducer.lib
+;; Using pomagma.reducer.lib
 (EQUAL (QUOTE (lib.box I)) (QUOTE (lib.box I)))
 (EQUAL (QUOTE (J (lib.box I) (lib.box I))) (QUOTE (lib.box I)))
 (EQUAL (QUOTE (J (lib.box I) (lib.box BOT))) (QUOTE (lib.box I)))

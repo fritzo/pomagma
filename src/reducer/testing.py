@@ -14,7 +14,7 @@ def iter_test_cases(suites, test_id=None):
         print('reading {}'.format(filename))
         with open(filename) as f:
             for i, line in enumerate(f):
-                parts = line.split('#', 1)
+                parts = line.split(';', 1)
                 sexpr = parts[0].strip()
                 if sexpr:
                     code = sexpr_parse(sexpr)
