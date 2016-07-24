@@ -1,6 +1,7 @@
 __all__ = [
     'trace_deterministic',
     'trace_nondeterministic',
+    'lazy_print_trace',
 ]
 
 from parsable import parsable
