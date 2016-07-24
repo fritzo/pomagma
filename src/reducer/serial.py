@@ -56,11 +56,12 @@ from cStringIO import StringIO
 from pomagma.reducer.code import CODE, EVAL, QAPP, QQUOTE, EQUAL, LESS
 from pomagma.reducer.code import TOP, BOT, I, K, B, C, S, J
 from pomagma.reducer.code import V, A, UNIT, BOOL, MAYBE, PROD, SUM, NUM
-from pomagma.reducer.code import VAR, APP, QUOTE, FUN, LET
-from pomagma.reducer.code import _VAR, _QUOTE, _FUN, _LET
+from pomagma.reducer.code import VAR, APP, QUOTE, FUN, LET, ABIND, RVAR, SVAR
+from pomagma.reducer.code import _VAR, _QUOTE, _FUN, _LET, _ABIND, _RVAR, _SVAR
 from pomagma.reducer.code import is_var, is_app, is_quote, is_fun, is_let
+from pomagma.reducer.code import is_abind, is_rvar, is_svar
 
-PROTOCOL_VERSION = '0.0.9'  # Semver compliant.
+PROTOCOL_VERSION = '0.0.10'  # Semver compliant.
 
 # ----------------------------------------------------------------------------
 # Packed varints.
@@ -135,9 +136,9 @@ INT_TO_SYMB = [
     TOP, BOT, I, K, B, C, S, J,
     CODE, EVAL, QAPP, QQUOTE, EQUAL, LESS,
     V, A, UNIT, BOOL, MAYBE, PROD, SUM, NUM,
-    _VAR, _QUOTE, _FUN, _LET,
+    _VAR, _QUOTE, _FUN, _LET, _ABIND, _RVAR, _SVAR,
 ]
-assert len(INT_TO_SYMB) == 27  # Symbols beyond pos 30 require an extra byte.
+assert len(INT_TO_SYMB) == 30  # Symbols beyond pos 30 require an extra byte.
 SYMB_TO_INT = {k: v for v, k in enumerate(INT_TO_SYMB) if k is not RAW_BYTES}
 
 
@@ -183,6 +184,16 @@ def dump(code, f):
         args.append(head[2])
         args.append(head[1])
         _dump_head_argc(SYMB_TO_INT[_LET], len(args), f)
+    elif is_abind(head):
+        args.append(head[2])
+        _dump_head_argc(SYMB_TO_INT[_ABIND], 1 + len(args), f)
+        _dump_raw_bytes(head[1], f)
+    elif is_rvar(head):
+        _dump_head_argc(SYMB_TO_INT[_RVAR], 1 + len(args), f)
+        _dump_raw_bytes(head[1], f)
+    elif is_svar(head):
+        _dump_head_argc(SYMB_TO_INT[_SVAR], 1 + len(args), f)
+        _dump_raw_bytes(head[1], f)
     else:
         try:
             head = SYMB_TO_INT[head]
@@ -237,6 +248,25 @@ def _load_from(bytes_):
         defn = _load_from(bytes_)
         body = _load_from(bytes_)
         head = LET(var, defn, body)
+    elif head is _ABIND:
+        if argc < 2:
+            raise ValueError('ABIND requires at least two args')
+        argc -= 2
+        name = _load_from(bytes_)
+        body = _load_from(bytes_)
+        head = ABIND(name, body)
+    elif head is _RVAR:
+        if argc < 1:
+            raise ValueError('RVAR requires at least one arg')
+        argc -= 1
+        name = _load_from(bytes_)
+        head = RVAR(name)
+    elif head is _SVAR:
+        if argc < 1:
+            raise ValueError('SVAR requires at least one arg')
+        argc -= 1
+        name = _load_from(bytes_)
+        head = SVAR(name)
     for _ in xrange(argc):
         arg = _load_from(bytes_)
         head = APP(head, arg)

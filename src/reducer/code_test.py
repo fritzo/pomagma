@@ -1,7 +1,7 @@
 from pomagma.reducer.code import CODE, EVAL, QAPP, QQUOTE, EQUAL, LESS
 from pomagma.reducer.code import TOP, BOT, I, K, B, C, S, J
 from pomagma.reducer.code import V, A, UNIT, BOOL, MAYBE, PROD, SUM, NUM
-from pomagma.reducer.code import VAR, APP, QUOTE, FUN, LET
+from pomagma.reducer.code import VAR, APP, QUOTE, FUN, LET, ABIND, RVAR, SVAR
 from pomagma.reducer.code import free_vars, complexity
 from pomagma.reducer.code import polish_parse, polish_print
 from pomagma.reducer.code import sexpr_parse, sexpr_print
@@ -22,11 +22,21 @@ z = VAR('z')
 
 @for_each([
     (I, []),
+    (K, []),
+    (B, []),
+    (C, []),
+    (S, []),
+    (J, []),
+    (A, []),
+    (ABIND('a', x), [x]),
+    (RVAR('a'), []),
+    (SVAR('a'), []),
     (x, [x]),
     (APP(I, x), [x]),
     (APP(x, x), [x]),
     (APP(x, y), [x, y]),
     (APP(x, APP(APP(J, y), APP(K, z))), [x, y, z]),
+    (QUOTE(x), [x]),
     (QUOTE(x), [x]),
     (APP(x, QUOTE(y)), [x, y]),
 ])
@@ -89,6 +99,11 @@ EXAMPLES = [
         'polish': 'LET x I APP I I',
         'sexpr': '(LET x I (I I))',
     },
+    {
+        'code': ABIND('a', APP(APP(B, RVAR('a')), SVAR('a'))),
+        'polish': 'ABIND a APP APP B RVAR a SVAR a',
+        'sexpr': '(ABIND a (B (RVAR a) (SVAR a)))',
+    },
 ]
 
 
@@ -120,10 +135,13 @@ def test_sexpr_parse(example):
 # Property-based tests
 
 alphabet = '_abcdefghijklmnopqrstuvwxyz'
-s_vars = s.builds(
-    VAR,
-    s.builds(str, s.text(alphabet=alphabet, min_size=1, average_size=5)),
+s_varnames = s.builds(
+    str,
+    s.text(alphabet=alphabet, min_size=1, average_size=5),
 )
+s_vars = s.builds(VAR, s_varnames)
+s_rvars = s.builds(RVAR, s_varnames)
+s_svars = s.builds(SVAR, s_varnames)
 s_atoms = s.one_of(
     s.one_of(s_vars),
     s.just(TOP),
@@ -151,6 +169,8 @@ s_atoms = s.one_of(
         s.just(PROD),
         s.just(SUM),
         s.just(NUM),
+        s_rvars,
+        s_svars,
     ),
 )
 
@@ -161,6 +181,7 @@ def s_terms_extend(terms):
         s.builds(QUOTE, terms),
         s.builds(FUN, s_vars, terms),
         s.builds(LET, s_vars, terms, terms),
+        s.builds(ABIND, s_varnames, terms),
     )
 
 

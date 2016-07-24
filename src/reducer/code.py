@@ -22,6 +22,9 @@ _APP = make_keyword('APP')
 _QUOTE = make_keyword('QUOTE')
 _FUN = make_keyword('FUN')
 _LET = make_keyword('LET')
+_ABIND = make_keyword('ABIND')
+_RVAR = make_keyword('RVAR')
+_SVAR = make_keyword('SVAR')
 
 TOP = make_keyword('TOP')
 BOT = make_keyword('BOT')
@@ -76,6 +79,18 @@ def LET(var, defn, body):
     return _term(_LET, var, defn, body)
 
 
+def ABIND(name, body):
+    return _term(_ABIND, intern(name), body)
+
+
+def RVAR(name):
+    return _term(_RVAR, intern(name))
+
+
+def SVAR(name):
+    return _term(_SVAR, intern(name))
+
+
 def is_atom(code):
     return isinstance(code, str)
 
@@ -100,6 +115,18 @@ def is_let(code):
     return isinstance(code, tuple) and code[0] is _LET
 
 
+def is_abind(code):
+    return isinstance(code, tuple) and code[0] is _ABIND
+
+
+def is_rvar(code):
+    return isinstance(code, tuple) and code[0] is _RVAR
+
+
+def is_svar(code):
+    return isinstance(code, tuple) and code[0] is _SVAR
+
+
 @memoize_arg
 def free_vars(code):
     if is_var(code):
@@ -108,6 +135,14 @@ def free_vars(code):
         return free_vars(code[1]) | free_vars(code[2])
     elif is_quote(code):
         return free_vars(code[1])
+    elif is_fun(code):
+        assert is_var(code[1])
+        return free_vars(code[2]) - frozenset([code[1]])
+    elif is_fun(code):
+        assert is_var(code[1])
+        return free_vars(code[3]) - frozenset([code[1]]) | free_vars(code[2])
+    elif is_abind(code):
+        return free_vars(code[2])
     else:
         return frozenset()
 
@@ -145,11 +180,13 @@ def _polish_parse_tokens(tokens):
 
 
 _PARSERS = {
-    # _VAR: (_pop_token,),
     _APP: (_polish_parse_tokens, _polish_parse_tokens),
     _QUOTE: (_polish_parse_tokens,),
     _FUN: (_polish_parse_tokens, _polish_parse_tokens),
     _LET: (_polish_parse_tokens, _polish_parse_tokens, _polish_parse_tokens),
+    _ABIND: (_pop_token, _polish_parse_tokens),
+    _RVAR: (_pop_token,),
+    _SVAR: (_pop_token,),
 }
 
 
@@ -197,6 +234,16 @@ def to_sexpr(code):
         args.append(head[2])
         args.append(head[1])
         head = _LET
+    elif is_abind(head):
+        args.append(head[2])
+        args.append(head[1])
+        head = _ABIND
+    elif is_rvar(head):
+        args.append(head[1])
+        head = _RVAR
+    elif is_svar(head):
+        args.append(head[1])
+        head = _SVAR
     args = map(to_sexpr, reversed(args))
     return tuple([head] + args)
 
@@ -227,6 +274,16 @@ def from_sexpr(sexpr):
             body = from_sexpr(sexpr[3])
             head = LET(var, defn, body)
             args = sexpr[4:]
+        elif head is _ABIND:
+            body = from_sexpr(sexpr[2])
+            head = ABIND(sexpr[1], body)
+            args = sexpr[3:]
+        elif head is _RVAR:
+            head = RVAR(sexpr[1])
+            args = sexpr[2:]
+        elif head is _SVAR:
+            head = SVAR(sexpr[1])
+            args = sexpr[2:]
         else:
             args = sexpr[1:]
     else:
