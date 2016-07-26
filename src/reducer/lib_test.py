@@ -1,5 +1,5 @@
 from pomagma.reducer import lib
-from pomagma.reducer.code import VAR, I, J, UNIT
+from pomagma.reducer.code import VAR, I, J, UNIT, sexpr_print
 from pomagma.reducer.engine import reduce, simplify
 from pomagma.reducer.engine_test import s_quoted
 from pomagma.reducer.sugar import as_code, app, join, quote, combinator
@@ -7,6 +7,20 @@ from pomagma.util import TRAVIS_CI
 from pomagma.util.testing import for_each
 import hypothesis
 import pytest
+
+
+class lazy_actual_vs_expected(object):
+    def __init__(self, actual, expected):
+        self.actual = actual
+        self.expected = expected
+
+    def __str__(self):
+        actual = sexpr_print(self.actual)
+        expected = sexpr_print(self.expected)
+        return '\nActual: {}\nExpected: {}'.format(actual, expected)
+
+    __repr__ = __str__
+
 
 f = VAR('f')
 w = VAR('w')
@@ -539,6 +553,28 @@ def test_num_eq(x, y, expected):
 
 
 @for_each([
+    (num(0), num(0), true),
+    (num(0), num(1), true),
+    (num(0), num(2), true),
+    (num(0), num(3), true),
+    (num(1), num(0), false),
+    (num(1), num(1), true),
+    (num(1), num(2), true),
+    (num(1), num(3), true),
+    (num(2), num(0), false),
+    (num(2), num(1), false),
+    (num(2), num(2), true),
+    (num(2), num(3), true),
+    (num(3), num(0), false),
+    (num(3), num(1), false),
+    (num(3), num(2), false),
+    (num(3), num(3), true),
+])
+def test_num_le(x, y, expected):
+    assert reduce(lib.num_le(x, y)) == expected
+
+
+@for_each([
     (num(0), num(0), false),
     (num(0), num(1), true),
     (num(0), num(2), true),
@@ -556,8 +592,8 @@ def test_num_eq(x, y, expected):
     (num(3), num(2), false),
     (num(3), num(3), false),
 ])
-def test_num_less(x, y, expected):
-    assert reduce(lib.num_less(x, y)) == expected
+def test_num_lt(x, y, expected):
+    assert reduce(lib.num_lt(x, y)) == expected
 
 
 @for_each([
@@ -688,11 +724,21 @@ def test_list_any(x, expected):
     (nil, nil, nil),
     (cons(x, nil), nil, cons(x, nil)),
     (nil, cons(y, nil), cons(y, nil)),
-    (cons(x, nil), cons(y, nil), cons(y, cons(x, nil))),
+    (cons(x, nil), cons(y, nil), cons(x, cons(y, nil))),
     (
-        cons(x, cons(w, nil)),
-        cons(z, cons(y, nil)),
-        cons(z, cons(y, cons(x, cons(w, nil)))),
+        cons(w, nil),
+        cons(x, cons(y, cons(z, nil))),
+        cons(w, cons(x, cons(y, cons(z, nil)))),
+    ),
+    (
+        cons(w, cons(x, nil)),
+        cons(y, cons(z, nil)),
+        cons(w, cons(x, cons(y, cons(z, nil)))),
+    ),
+    (
+        cons(w, cons(x, cons(y, nil))),
+        cons(z, nil),
+        cons(w, cons(x, cons(y, cons(z, nil)))),
     ),
 ])
 def test_list_cat(xs, ys, expected):
@@ -751,6 +797,59 @@ def test_list_rec(n, c, x, expected):
 ])
 def test_list_filter(p, xs, expected):
     assert reduce(lib.list_filter(p, xs)) == expected
+
+
+def num_list(xs):
+    result = nil
+    for x in reversed(xs):
+        result = cons(num(x), result)
+    return result
+
+
+SORT_EXAMPLES = [
+    [],
+    [0],
+    [1],
+    [0, 0],
+    pytest.mark.xfail([0, 1]),
+    pytest.mark.xfail([1, 0]),
+    [1, 1],
+    [0, 0, 0],
+    pytest.mark.xfail([0, 0, 1]),
+    pytest.mark.xfail([0, 1, 0]),
+    pytest.mark.xfail([1, 0, 0]),
+    pytest.mark.xfail([0, 1, 1]),
+    pytest.mark.xfail([1, 0, 1]),
+    pytest.mark.xfail([1, 1, 0]),
+    pytest.mark.xfail([0, 1, 2]),
+    pytest.mark.xfail([0, 2, 1]),
+    pytest.mark.xfail([1, 0, 2]),
+    pytest.mark.xfail([1, 2, 0]),
+    pytest.mark.xfail([2, 0, 1]),
+    pytest.mark.xfail([2, 1, 0]),
+    pytest.mark.xfail([0, 0, 0, 1]),
+    pytest.mark.xfail([0, 0, 1, 0]),
+    pytest.mark.xfail([0, 1, 0, 0]),
+    pytest.mark.xfail([1, 0, 0, 0]),
+    pytest.mark.xfail([0, 0, 1, 1]),
+    pytest.mark.xfail([0, 1, 0, 1]),
+    pytest.mark.xfail([0, 1, 1, 0]),
+    pytest.mark.xfail([1, 0, 0, 1]),
+    pytest.mark.xfail([1, 0, 1, 0]),
+    pytest.mark.xfail([1, 1, 0, 0]),
+    pytest.mark.xfail([0, 1, 2, 3]),
+    pytest.mark.xfail([1, 2, 3, 0]),
+    pytest.mark.xfail([2, 3, 0, 1]),
+    pytest.mark.xfail([3, 0, 1, 2]),
+]
+
+
+@for_each(SORT_EXAMPLES)
+def test_list_sort(list_):
+    xs = num_list(list_)
+    expected = num_list(sorted(list_))
+    actual = reduce(lib.list_sort(lib.num_lt, xs))
+    assert actual == expected, lazy_actual_vs_expected(actual, expected)
 
 
 @for_each([

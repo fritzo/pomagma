@@ -6,7 +6,7 @@ Intro forms are hand-optimized; see lib_test.py for lambda versions.
 
 from pomagma.reducer.code import TOP, BOT, I, K, B, C, APP, QUOTE, EQUAL, LESS
 from pomagma.reducer.code import UNIT, BOOL, MAYBE
-from pomagma.reducer.sugar import app, join, quote, qapp
+from pomagma.reducer.sugar import app, join, quote, qapp, let
 from pomagma.reducer.sugar import combinator, typed, symmetric
 
 CI = APP(C, I)
@@ -267,8 +267,13 @@ def num_eq(x, y):
 
 
 @combinator
-def num_less(x, y):
-    return app(y, false, lambda py: app(x, true, lambda px: num_less(px, py)))
+def num_le(x, y):
+    return app(x, true, lambda px: app(y, false, lambda py: num_le(px, py)))
+
+
+@combinator
+def num_lt(x, y):
+    return app(y, false, lambda py: app(x, true, lambda px: num_lt(px, py)))
 
 
 @combinator
@@ -319,7 +324,7 @@ def list_any(xs):
 
 @combinator
 def list_cat(xs, ys):
-    return app(ys, xs, lambda h, t: cons(h, list_cat(xs, t)))
+    return app(xs, ys, lambda h, t: cons(h, list_cat(t, ys)))
 
 
 @combinator
@@ -341,6 +346,19 @@ def list_filter(p, xs):
 @combinator
 def list_size(xs):
     return app(xs, zero, lambda h, t: succ(list_size(t)))
+
+
+@combinator
+def list_sort(lt, xs):
+    return let(
+        app(list_sort, lt), lambda sort:
+        app(xs, nil, lambda h, t:
+            let(app(lt, h), lambda lt_h:
+                app(list_cat,
+                    app(sort, app(list_filter, lt_h, t)),
+                    cons(h,
+                         app(sort,
+                             app(list_filter, compose(bool_not, lt_h), t)))))))
 
 
 @combinator

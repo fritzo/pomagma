@@ -18,7 +18,7 @@ def partial_pred(x):
 
 
 num_add = program('num', 'num', 'num')(lib.num_add)
-num_less = program('num', 'num', 'bool')(lib.num_less)
+num_lt = program('num', 'num', 'bool')(lib.num_lt)
 
 
 @for_each([
@@ -48,15 +48,15 @@ num_less = program('num', 'num', 'bool')(lib.num_less)
     (num_add, (2, 0), 2),
     (num_add, (2, 1), 3),
     (num_add, (2, 2), 4),
-    (num_less, (0, 0), False),
-    (num_less, (0, 1), True),
-    (num_less, (0, 2), True),
-    (num_less, (1, 0), False),
-    (num_less, (1, 1), False),
-    (num_less, (1, 2), True),
-    (num_less, (2, 0), False),
-    (num_less, (2, 1), False),
-    (num_less, (2, 2), False),
+    (num_lt, (0, 0), False),
+    (num_lt, (0, 1), True),
+    (num_lt, (0, 2), True),
+    (num_lt, (1, 0), False),
+    (num_lt, (1, 1), False),
+    (num_lt, (1, 2), True),
+    (num_lt, (2, 0), False),
+    (num_lt, (2, 1), False),
+    (num_lt, (2, 2), False),
 ])
 def test_call(fun, args, expected):
     with using_engine(engine):

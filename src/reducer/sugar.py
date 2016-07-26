@@ -187,3 +187,8 @@ def symmetric(fun):
         return join(fun(x, y), fun(y, x))
 
     return symmetric_fun
+
+
+# TODO use define directly instead of abstract
+def let(defn, var_body):
+    return app(var_body, defn)
