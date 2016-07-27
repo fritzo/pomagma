@@ -10,6 +10,7 @@ import pytest
 
 
 class lazy_actual_vs_expected(object):
+
     def __init__(self, actual, expected):
         self.actual = actual
         self.expected = expected
