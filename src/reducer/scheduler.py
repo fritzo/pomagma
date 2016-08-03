@@ -10,14 +10,13 @@ DEFAULT_STRATEGY = {
 
 class Scheduler(object):
 
-    def __init__(self, start_task, strategy=None):
+    def __init__(self, strategy=None):
         self._strategy = DEFAULT_STRATEGY if strategy is None else strategy
         self._seen = set()
         self._pending = set()
         self._reduced = None
-        self._schedule(start_task)
 
-    def _schedule(self, task):
+    def schedule(self, task):
         if task in self._seen:
             return
         self._seen.add(task)
@@ -35,7 +34,7 @@ class Scheduler(object):
         task = min(self._pending, key=self._strategy['priority'])
         self._pending.remove(task)
         for t in self._strategy['get_next'](task):
-            self._schedule(t)
+            self.schedule(t)
         return True
 
     @property
@@ -59,8 +58,15 @@ class Scheduler(object):
         return self._reduced
 
 
-def execute(task, strategy=None):
-    scheduler = Scheduler(task)
+def schedule(task_set, strategy=None):
+    scheduler = Scheduler(strategy)
+    for task in task_set:
+        scheduler.schedule(task)
+    return scheduler
+
+
+def execute(task_set, strategy=None):
+    scheduler = schedule(task_set, strategy=strategy)
     while scheduler.try_work():
         pass
     return scheduler.result
