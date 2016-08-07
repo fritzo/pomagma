@@ -175,7 +175,7 @@ s_atoms = s.one_of(
 )
 
 
-def s_terms_extend(terms):
+def s_codes_extend(terms):
     return s.one_of(
         s.builds(APP, terms, terms),
         s.builds(QUOTE, terms),
@@ -185,21 +185,21 @@ def s_terms_extend(terms):
     )
 
 
-s_terms = s.recursive(s_atoms, s_terms_extend, max_leaves=100)
-s_sexprs = s.builds(to_sexpr, s_terms)
+s_codes = s.recursive(s_atoms, s_codes_extend, max_leaves=100)
+s_sexprs = s.builds(to_sexpr, s_codes)
 
 
-@hypothesis.given(s_terms)
+@hypothesis.given(s_codes)
 def test_free_vars_runs(code):
     free_vars(code)
 
 
-@hypothesis.given(s_terms)
+@hypothesis.given(s_codes)
 def test_complexity_runs(code):
     complexity(code)
 
 
-@hypothesis.given(s_terms)
+@hypothesis.given(s_codes)
 @hypothesis.settings(max_examples=1000)
 def test_polish_print_parse(code):
     string = polish_print(code)
@@ -208,7 +208,7 @@ def test_polish_print_parse(code):
     assert actual_code == code
 
 
-@hypothesis.given(s_terms)
+@hypothesis.given(s_codes)
 @hypothesis.settings(max_examples=1000)
 def test_to_sexpr_from_sexpr(code):
     sexpr = to_sexpr(code)
@@ -225,7 +225,7 @@ def test_sexpr_print_parse_sexpr(sexpr):
     assert actual_sexpr == sexpr
 
 
-@hypothesis.given(s_terms)
+@hypothesis.given(s_codes)
 @hypothesis.settings(max_examples=1000)
 def test_sexpr_print_parse(code):
     string = sexpr_print(code)

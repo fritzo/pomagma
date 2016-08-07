@@ -1,15 +1,13 @@
 from pomagma.reducer import continuation
 from pomagma.reducer import lib
-from pomagma.reducer.code import CODE, EVAL, QQUOTE, QAPP, EQUAL, LESS
+from pomagma.reducer.code import CODE, EVAL, QQUOTE, EQUAL, LESS
 from pomagma.reducer.code import TOP, BOT, I, K, B, C, S, J
 from pomagma.reducer.code import UNIT, BOOL, MAYBE
 from pomagma.reducer.code import VAR, APP, QUOTE
 from pomagma.reducer.sugar import app, join, quote, qapp
-from pomagma.reducer.testing import iter_equations
-from pomagma.util.testing import for_each
-from pomagma.util.testing import xfail_if_not_implemented
+from pomagma.reducer.testing import iter_equations, s_codes, s_quoted
+from pomagma.util.testing import for_each, xfail_if_not_implemented
 import hypothesis
-import hypothesis.strategies as s
 import pytest
 
 BUDGET = 10000
@@ -49,6 +47,7 @@ def enum(items):
     return join(*map(box, items))
 
 
+# TODO migrate these to testdata/*.sexpr
 REDUCE_EXAMPLES = [
     (x, x),
     (app(x, y), app(x, y)),
@@ -236,48 +235,6 @@ def test_reduce_equations(lhs, rhs, message):
         lhs = continuation.reduce(lhs)
         rhs = continuation.reduce(rhs)
     assert lhs == rhs, message
-
-
-alphabet = '_abcdefghijklmnopqrstuvwxyz'
-s_vars = s.builds(
-    VAR,
-    s.builds(str, s.text(alphabet=alphabet, min_size=1, average_size=5)),
-)
-s_atoms = s.one_of(
-    s.one_of(s_vars),
-    s.just(TOP),
-    s.just(BOT),
-    s.just(I),
-    s.just(K),
-    s.just(B),
-    s.just(C),
-    s.just(S),
-    s.just(J),
-    s.one_of(
-        s.just(CODE),
-        s.just(EVAL),
-        s.just(QAPP),
-        s.just(QQUOTE),
-        s.just(EQUAL),
-        s.just(LESS),
-    ),
-    s.one_of(
-        s.just(UNIT),
-        s.just(BOOL),
-        s.just(MAYBE),
-    ),
-)
-
-
-def s_codes_extend(codes):
-    return s.one_of(
-        s.builds(APP, codes, codes),
-        s.builds(QUOTE, codes),
-    )
-
-
-s_codes = s.recursive(s_atoms, s_codes_extend, max_leaves=100)
-s_quoted = s.builds(quote, s_codes)
 
 
 @hypothesis.given(s_codes)

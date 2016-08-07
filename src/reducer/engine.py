@@ -14,8 +14,6 @@ Known Bugs:
 (B4) The oracle is very weak, and does not reduce inside quoted terms.
 '''
 
-__all__ = ['reduce', 'simplify', 'sample']
-
 from collections import namedtuple
 from pomagma.compiler.util import memoize_arg
 from pomagma.compiler.util import memoize_args
@@ -33,6 +31,8 @@ from pomagma.reducer.util import logged
 from pomagma.reducer.util import pretty
 import heapq
 import itertools
+
+__all__ = ['reduce', 'simplify', 'sample']
 
 F = APP(K, I)
 true = K
@@ -294,7 +294,7 @@ def _sample(head, context, nonlinear):
                 yield head, context
                 return
         else:
-            raise ValueError(head)
+            raise NotImplementedError(head)
 
 
 def _schedule(head, context, queue):
@@ -409,7 +409,7 @@ def _reduce(code, nonlinear):
     elif is_atom(code) or is_var(code):
         return code
     else:
-        raise ValueError(code)
+        raise NotImplementedError(code)
 
 
 def reduce(code, budget=0):

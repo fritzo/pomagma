@@ -1,11 +1,21 @@
-from pomagma.reducer.code import EQUAL, is_app, is_quote, sexpr_parse
+"""Tools for testing implementations of reduce() and simplify()."""
+
+from pomagma.reducer.code import CODE, EVAL, QQUOTE, QAPP, EQUAL, LESS
+from pomagma.reducer.code import is_app, is_quote, sexpr_parse
+from pomagma.reducer.code import TOP, BOT, I, K, B, C, S, J
+from pomagma.reducer.code import UNIT, BOOL, MAYBE
+from pomagma.reducer.code import VAR, APP, QUOTE
 from pomagma.reducer.linker import link
+import hypothesis.strategies as s
 import os
 import pytest
 
 DIR = os.path.dirname(os.path.abspath(__file__))
 TESTDATA = os.path.join(DIR, 'testdata')
 
+
+# ----------------------------------------------------------------------------
+# parameterized testing
 
 def iter_test_cases(suites, test_id=None):
     print('test_id = {}'.format(test_id))
@@ -44,3 +54,48 @@ def iter_equations(suites, test_id=None):
                 if comment and parse_xfail(comment, test_id):
                     example = pytest.mark.xfail(example)
                 yield example
+
+
+# ----------------------------------------------------------------------------
+# property-based testing
+
+alphabet = '_abcdefghijklmnopqrstuvwxyz'
+s_vars = s.builds(
+    VAR,
+    s.builds(str, s.text(alphabet=alphabet, min_size=1, average_size=5)),
+)
+s_atoms = s.one_of(
+    s.one_of(s_vars),
+    s.just(TOP),
+    s.just(BOT),
+    s.just(I),
+    s.just(K),
+    s.just(B),
+    s.just(C),
+    s.just(S),
+    s.just(J),
+    s.one_of(
+        s.just(CODE),
+        s.just(EVAL),
+        s.just(QAPP),
+        s.just(QQUOTE),
+        s.just(EQUAL),
+        s.just(LESS),
+    ),
+    s.one_of(
+        s.just(UNIT),
+        s.just(BOOL),
+        s.just(MAYBE),
+    ),
+)
+
+
+def s_codes_extend(codes):
+    return s.one_of(
+        s.builds(APP, codes, codes),
+        s.builds(QUOTE, codes),
+    )
+
+
+s_codes = s.recursive(s_atoms, s_codes_extend, max_leaves=100)
+s_quoted = s.builds(QUOTE, s_codes)
