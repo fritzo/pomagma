@@ -86,12 +86,11 @@ def cont_set_eval(cont_set):
     """Returns code in linear normal form."""
     assert isinstance(cont_set, frozenset)
     assert all(isinstance(c, Continuation) for c in cont_set)
-    # TODO infer J from {K,F}, J x from {K x, I}, etc.
     codes = set(map(cont_eval, cont_set))
     return join_codes(codes)
 
 
-def pop_var(stack, bound, *terms):
+def pop_arg(stack, bound, *terms):
     if stack is not None:
         cont_set, stack = stack
         return cont_set, stack, bound
@@ -150,32 +149,32 @@ def cont_set_from_codes(codes, stack=None, bound=None):
         elif head is BOT:
             continue
         elif head is I:
-            x, stack, bound = pop_var(stack, bound)
+            x, stack, bound = pop_arg(stack, bound)
             head_cont = x
         elif head is K:
-            x, stack, bound = pop_var(stack, bound)
-            y, stack, bound = pop_var(stack, bound, x)
+            x, stack, bound = pop_arg(stack, bound)
+            y, stack, bound = pop_arg(stack, bound, x)
             head_cont = x
         elif head is B:
-            x, stack, bound = pop_var(stack, bound)
-            y, stack, bound = pop_var(stack, bound, x)
-            z, stack, bound = pop_var(stack, bound, x, y)
+            x, stack, bound = pop_arg(stack, bound)
+            y, stack, bound = pop_arg(stack, bound, x)
+            z, stack, bound = pop_arg(stack, bound, x, y)
             yz = cont_app(y, z)
             stack = yz, stack
             head_cont = x
         elif head is C:
-            x, stack, bound = pop_var(stack, bound)
-            y, stack, bound = pop_var(stack, bound, x)
-            z, stack, bound = pop_var(stack, bound, x, y)
+            x, stack, bound = pop_arg(stack, bound)
+            y, stack, bound = pop_arg(stack, bound, x)
+            z, stack, bound = pop_arg(stack, bound, x, y)
             stack = y, stack
             stack = z, stack
             head_cont = x
         elif head is S:
             old_stack = stack
             old_bound = bound
-            x, stack, bound = pop_var(stack, bound)
-            y, stack, bound = pop_var(stack, bound, x)
-            z, stack, bound = pop_var(stack, bound, x, y)
+            x, stack, bound = pop_arg(stack, bound)
+            y, stack, bound = pop_arg(stack, bound, x)
+            z, stack, bound = pop_arg(stack, bound, x, y)
             if is_cheap_to_copy(z):
                 yz = cont_app(y, z)
                 stack = yz, stack
@@ -185,8 +184,8 @@ def cont_set_from_codes(codes, stack=None, bound=None):
                 result.append(make_cont(S, old_stack, old_bound))
                 continue
         elif head is J:
-            x, stack, bound = pop_var(stack, bound)
-            y, stack, bound = pop_var(stack, bound, x)
+            x, stack, bound = pop_arg(stack, bound)
+            y, stack, bound = pop_arg(stack, bound, x)
             head_cont = x | y
 
         for cont in head_cont:
@@ -213,9 +212,9 @@ def cont_try_compute_step(cont):
     assert isinstance(cont, Continuation)
     head, stack, bound = cont
     if head is S:
-        x, stack, bound = pop_var(stack, bound)
-        y, stack, bound = pop_var(stack, bound, x)
-        z, stack, bound = pop_var(stack, bound, x, y)
+        x, stack, bound = pop_arg(stack, bound)
+        y, stack, bound = pop_arg(stack, bound, x)
+        z, stack, bound = pop_arg(stack, bound, x, y)
         yz = cont_app(y, z)
         stack = yz, stack
         stack = z, stack
