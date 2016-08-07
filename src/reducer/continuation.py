@@ -23,9 +23,6 @@ true = K
 false = F
 
 
-# ----------------------------------------------------------------------------
-# Immutable shared contexts
-
 @memoize_arg
 def make_var(n):
     return VAR('v{}'.format(n))
@@ -39,6 +36,242 @@ def fresh(avoid):
         if var not in avoid:
             return var
 
+
+# ----------------------------------------------------------------------------
+# Continuations
+
+# head : code
+# stack : stack (frozenset continuation)
+# bound : stack var
+Continuation = namedtuple('Continuation', ['head', 'stack', 'bound'])
+
+
+@memoize_args
+def make_cont(head, stack, bound):
+    assert is_var(head) or head in (TOP, BOT, S), head
+    if head in (TOP, BOT):
+        assert stack is None and bound is None
+    return Continuation(head, stack, bound)
+
+
+@memoize_arg
+def make_cont_set(conts):
+    # TODO filter out dominated continuations
+    assert isinstance(conts, frozenset), conts
+    assert all(isinstance(c, Continuation) for c in conts)
+    return conts
+
+
+CONT_TOP = make_cont(TOP, None, None)
+CONT_SET_TOP = make_cont_set(frozenset([CONT_TOP]))
+
+
+@memoize_arg
+def cont_eval(cont):
+    """Returns code in linear normal form."""
+    head, stack, bound = cont
+    while stack is not None:
+        arg, stack = stack
+        arg = cont_eval(arg)
+        head = APP(head, arg)
+    while bound is not None:
+        var, bound = bound
+        head = abstract(var, head)
+    return head
+
+
+def pop_var(stack, bound, *terms):
+    if stack is not None:
+        arg, stack = stack
+        return arg, stack, bound
+    else:
+        avoid = frozenset()
+        for term in terms:
+            avoid |= free_vars(term)
+        arg = fresh(avoid)
+        bound = arg, bound
+        return arg, stack, bound
+
+
+def cont_app(funs, args):
+    assert isinstance(funs, frozenset)
+    assert isinstance(args, frozenset)
+    assert all(isinstance(f, Continuation) for f in funs)
+    assert all(isinstance(a, Continuation) for a in args)
+    codes = tuple(map(cont_eval, funs))
+    stack = args, None
+    return cont_set_from_codes(codes, stack)
+
+
+def is_cheap_to_copy(cont_set):
+    assert isinstance(cont_set, frozenset)
+    assert all(isinstance(c, Continuation) for c in cont_set)
+    if len(cont_set) > 1:
+        return False
+    for cont in cont_set:
+        # TODO this could instead check is_linear(cont)
+        if cont.stack or cont.bound:
+            return False
+        head = cont.head
+        if not (is_var(head) or head is TOP or head is BOT):
+            return False
+    return True
+
+
+@memoize_args
+def cont_set_from_codes(codes, stack=None, bound=None):
+    pending = [(code, stack, bound) for code in codes]
+    result = []
+    while pending:
+        head, stack, bound = pending.pop()
+        while is_app(head):
+            arg_cont = cont_set_from_codes((head[2],))
+            stack = arg_cont, stack
+            head = head[1]
+
+        if is_var(head):
+            result.append(make_cont(head, stack, bound))
+            continue
+        elif head is TOP:
+            return CONT_SET_TOP
+        elif head is BOT:
+            continue
+        elif head is I:
+            x, stack, bound = pop_var(stack, bound)
+            head_cont = x
+        elif head is K:
+            x, stack, bound = pop_var(stack, bound)
+            y, stack, bound = pop_var(stack, bound, x)
+            head_cont = x
+        elif head is B:
+            x, stack, bound = pop_var(stack, bound)
+            y, stack, bound = pop_var(stack, bound, x)
+            z, stack, bound = pop_var(stack, bound, x, y)
+            yz = cont_app(y, z)
+            stack = yz, stack
+            head_cont = x
+        elif head is C:
+            x, stack, bound = pop_var(stack, bound)
+            y, stack, bound = pop_var(stack, bound, x)
+            z, stack, bound = pop_var(stack, bound, x, y)
+            stack = y, stack
+            stack = z, stack
+            head_cont = x
+        elif head is S:
+            old_stack = stack
+            old_bound = bound
+            x, stack, bound = pop_var(stack, bound)
+            y, stack, bound = pop_var(stack, bound, x)
+            z, stack, bound = pop_var(stack, bound, x, y)
+            if is_cheap_to_copy(z):
+                yz = cont_app(y, z)
+                stack = yz, stack
+                stack = z, stack
+                head_cont = x
+            else:
+                result.append(make_cont(S, old_stack, old_bound))
+                continue
+        elif head is J:
+            x, stack, bound = pop_var(stack, bound)
+            y, stack, bound = pop_var(stack, bound, x)
+            head_cont = x | y
+
+        for cont in head_cont:
+            pending.append((cont_eval(cont), stack, bound))
+
+    return make_cont_set(frozenset(result))
+
+
+@memoize_arg
+def stack_try_compute_step(stack):
+    if stack is None:
+        return False, None
+    cont_set, stack = stack
+    success, cont_set = cont_set_try_compute_step(cont_set)
+    if success:
+        return True, cont_set
+    success, stack = stack_try_compute_step(stack)
+    stack = cont_set, stack
+    return success, stack
+
+
+@memoize_arg
+def cont_try_compute_step(cont):
+    assert isinstance(cont, Continuation)
+    head, stack, bound = cont
+    if head is S:
+        x, stack, bound = pop_var(stack, bound)
+        y, stack, bound = pop_var(stack, bound, x)
+        z, stack, bound = pop_var(stack, bound, x, y)
+        yz = cont_app(y, z)
+        stack = yz, stack
+        stack = z, stack
+        codes = tuple(map(cont_eval, x))
+        cont_set = cont_set_from_codes(codes, stack, bound)
+        success = True
+    else:
+        success, stack = stack_try_compute_step(stack)
+        if success:
+            cont = make_cont(head, stack, bound)
+        cont_set = make_cont_set(frozenset([cont]))
+    return success, cont_set
+
+
+@memoize_arg
+def cont_set_try_compute_step(cont_set):
+    assert isinstance(cont_set, frozenset)
+    assert all(isinstance(c, Continuation) for c in cont_set)
+    for cont in sorted(cont_set, key=cont_complexity):
+        success, new_cont_set = cont_set_try_compute_step
+        if success and not new_cont_set <= cont_set:
+            return True, make_cont_set(cont_set | new_cont_set)
+    return False, cont_set
+
+
+def cont_is_normal(cont):
+    assert isinstance(cont, Continuation)
+    success, cont_set = cont_try_compute_step(cont)
+    return not success
+
+
+def eval_cont_set(cont_set):
+    assert isinstance(cont_set, frozenset)
+    assert all(isinstance(c, Continuation) for c in cont_set)
+    # TODO infer J from {K,F}, J x from {K x, I}, etc.
+    codes = set(map(cont_eval, cont_set))
+    if not codes:
+        return BOT
+    codes = sorted(codes, key=complexity)
+    code = codes[0]
+    for arg in codes[1:]:
+        code = APP(APP(J, code), arg)
+    return code
+
+
+@memoize_arg
+def compute(code):
+    cont_set = cont_set_from_codes((code,))
+    working = True
+    while working:
+        working, cont_set = cont_set_try_compute_step(cont_set)
+    cont_set = make_cont_set(frozenset(
+        c for c in cont_set if cont_is_normal(c)
+    ))
+    return eval_cont_set(cont_set)
+
+
+def cont_complexity(cont):
+    assert isinstance(cont, Continuation)
+    result = complexity(cont.head)
+    for arg in iter_shared_list(cont.stack):
+        result += 1 + complexity(arg)  # APP(-, arg)
+    for var in iter_shared_list(cont.bound):
+        result += 1 + complexity(var)  # FUN(var, -)
+    return result
+
+
+# ----------------------------------------------------------------------------
+# Immutable shared contexts
 
 Context = namedtuple('Context', ['stack', 'bound'])
 EMPTY_CONTEXT = Context(None, None)
