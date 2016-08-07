@@ -71,6 +71,7 @@ def cont_eval(cont):
     """Returns code in linear normal form."""
     assert isinstance(cont, Continuation)
     head, stack, bound = cont
+    print 'DEBUG in:', head, stack, bound
     while stack is not None:
         arg_cont_set, stack = stack
         arg_code = cont_set_eval(arg_cont_set)
@@ -78,6 +79,7 @@ def cont_eval(cont):
     while bound is not None:
         var, bound = bound
         head = abstract(var, head)
+    print 'DEBUG out:', head
     return head
 
 
@@ -187,6 +189,22 @@ def cont_set_from_codes(codes, stack=None, bound=None):
             x, stack, bound = pop_arg(stack, bound)
             y, stack, bound = pop_arg(stack, bound, x)
             head_cont = x | y
+        # elif head is EVAL:
+        #     x, stack, bound = pop_arg(stack, bound)
+        #     x = _reduce(x, nonlinear)
+        #     if is_quote(x):
+        #         head = x[1]
+        #     elif x is TOP:
+        #         yield TOP, EMPTY_CONTEXT
+        #         return
+        #     elif x is BOT:
+        #         return
+        #     else:
+        #         head = APP(EVAL, x)
+        #         yield head, context
+        #         return
+        else:
+            raise NotImplementedError(head)
 
         for cont in head_cont:
             pending.append((cont_eval(cont), stack, bound))
@@ -229,6 +247,16 @@ def cont_try_compute_step(cont):
     return success, cont_set
 
 
+def cont_complexity(cont):
+    assert isinstance(cont, Continuation)
+    result = complexity(cont.head)
+    for arg in iter_shared_list(cont.stack):
+        result += 1 + complexity(arg)  # APP(-, arg)
+    for var in iter_shared_list(cont.bound):
+        result += 1 + complexity(var)  # FUN(var, -)
+    return result
+
+
 @memoize_arg
 def cont_set_try_compute_step(cont_set):
     assert isinstance(cont_set, frozenset)
@@ -258,14 +286,18 @@ def compute(code):
     return cont_set_eval(cont_set)
 
 
-def cont_complexity(cont):
-    assert isinstance(cont, Continuation)
-    result = complexity(cont.head)
-    for arg in iter_shared_list(cont.stack):
-        result += 1 + complexity(arg)  # APP(-, arg)
-    for var in iter_shared_list(cont.bound):
-        result += 1 + complexity(var)  # FUN(var, -)
-    return result
+def reduce(code, budget=0):
+    '''Beta-eta reduce code, ignoring budget.'''
+    assert isinstance(budget, int) and budget >= 0, budget
+    LOG.info('reduce({})'.format(pretty(code)))
+    return compute(code)
+
+
+def simplify(code):
+    '''Linearly beta-eta reduce.'''
+    LOG.info('simplify({})'.format(pretty(code)))
+    cont_set = cont_set_from_codes((code,))
+    return cont_set_eval(cont_set)
 
 
 # ----------------------------------------------------------------------------
@@ -631,16 +663,3 @@ def _reduce(code, nonlinear):
         return code
     else:
         raise ValueError(code)
-
-
-def reduce(code, budget=0):
-    '''Beta-eta reduce code, ignoring budget.'''
-    assert isinstance(budget, int) and budget >= 0, budget
-    LOG.info('reduce({})'.format(pretty(code)))
-    return _reduce(code, True)
-
-
-def simplify(code):
-    '''Linearly beta-eta reduce.'''
-    LOG.info('simplify({})'.format(pretty(code)))
-    return _reduce(code, False)

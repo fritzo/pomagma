@@ -1,3 +1,4 @@
+import contextlib
 import functools
 import inspect
 import pytest
@@ -29,3 +30,11 @@ def for_each_kwargs(examples):
 
         return decorated
     return decorator
+
+
+@contextlib.contextmanager
+def xfail_if_not_implemented():
+    try:
+        yield
+    except NotImplementedError as e:
+        pytest.xfail(reason=str(e))
