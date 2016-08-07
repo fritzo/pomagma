@@ -227,9 +227,16 @@ def test_reduce(code, expected_result):
 
 
 @for_each(iter_equations(['sk', 'join', 'quote'], test_id='continuation'))
-def test_trace_reduce_equations(lhs, rhs, message):
+def test_reduce_equations(lhs, rhs, message):
     lhs = continuation.reduce(lhs)
     rhs = continuation.reduce(rhs)
+    assert lhs == rhs, message
+
+
+@for_each(iter_equations(['sk', 'join'], test_id='continuation'))
+def test_compute_equations(lhs, rhs, message):
+    lhs = continuation.compute(lhs)
+    rhs = continuation.compute(rhs)
     assert lhs == rhs, message
 
 

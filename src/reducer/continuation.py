@@ -55,11 +55,11 @@ def make_cont(head, stack, bound):
 
 
 @memoize_arg
-def make_cont_set(conts):
+def make_cont_set(cont_set):
     # TODO filter out dominated continuations
-    assert isinstance(conts, frozenset), conts
-    assert all(isinstance(c, Continuation) for c in conts)
-    return conts
+    assert isinstance(cont_set, frozenset), cont_set
+    assert all(isinstance(c, Continuation) for c in cont_set)
+    return cont_set
 
 
 CONT_TOP = make_cont(TOP, None, None)
@@ -69,28 +69,41 @@ CONT_SET_TOP = make_cont_set(frozenset([CONT_TOP]))
 @memoize_arg
 def cont_eval(cont):
     """Returns code in linear normal form."""
+    assert isinstance(cont, Continuation)
     head, stack, bound = cont
     while stack is not None:
-        arg, stack = stack
-        arg = cont_eval(arg)
-        head = APP(head, arg)
+        arg_cont_set, stack = stack
+        arg_code = cont_set_eval(arg_cont_set)
+        head = APP(head, arg_code)
     while bound is not None:
         var, bound = bound
         head = abstract(var, head)
     return head
 
 
+@memoize_arg
+def cont_set_eval(cont_set):
+    """Returns code in linear normal form."""
+    assert isinstance(cont_set, frozenset)
+    assert all(isinstance(c, Continuation) for c in cont_set)
+    # TODO infer J from {K,F}, J x from {K x, I}, etc.
+    codes = set(map(cont_eval, cont_set))
+    return join_codes(codes)
+
+
 def pop_var(stack, bound, *terms):
     if stack is not None:
-        arg, stack = stack
-        return arg, stack, bound
+        cont_set, stack = stack
+        return cont_set, stack, bound
     else:
         avoid = frozenset()
         for term in terms:
             avoid |= free_vars(term)
-        arg = fresh(avoid)
-        bound = arg, bound
-        return arg, stack, bound
+        var = fresh(avoid)
+        bound = var, bound
+        cont = make_cont(var, None, None)
+        cont_set = make_cont_set(frozenset([cont]))
+        return cont_set, stack, bound
 
 
 def cont_app(funs, args):
@@ -222,7 +235,7 @@ def cont_set_try_compute_step(cont_set):
     assert isinstance(cont_set, frozenset)
     assert all(isinstance(c, Continuation) for c in cont_set)
     for cont in sorted(cont_set, key=cont_complexity):
-        success, new_cont_set = cont_set_try_compute_step
+        success, new_cont_set = cont_try_compute_step(cont)
         if success and not new_cont_set <= cont_set:
             return True, make_cont_set(cont_set | new_cont_set)
     return False, cont_set
@@ -234,20 +247,6 @@ def cont_is_normal(cont):
     return not success
 
 
-def eval_cont_set(cont_set):
-    assert isinstance(cont_set, frozenset)
-    assert all(isinstance(c, Continuation) for c in cont_set)
-    # TODO infer J from {K,F}, J x from {K x, I}, etc.
-    codes = set(map(cont_eval, cont_set))
-    if not codes:
-        return BOT
-    codes = sorted(codes, key=complexity)
-    code = codes[0]
-    for arg in codes[1:]:
-        code = APP(APP(J, code), arg)
-    return code
-
-
 @memoize_arg
 def compute(code):
     cont_set = cont_set_from_codes((code,))
@@ -257,7 +256,7 @@ def compute(code):
     cont_set = make_cont_set(frozenset(
         c for c in cont_set if cont_is_normal(c)
     ))
-    return eval_cont_set(cont_set)
+    return cont_set_eval(cont_set)
 
 
 def cont_complexity(cont):
@@ -566,6 +565,12 @@ def _join(continuations, nonlinear):
         if sample is TOP:
             return TOP
         samples.add(sample)
+    return join_codes(samples)
+
+
+def join_codes(samples):
+    """Joins a set of codes into a single code, simplifying via heuristics."""
+    assert isinstance(samples, set)
     if not samples:
         return BOT
 
