@@ -16,6 +16,7 @@ import pytest
 # Parameterized tests
 
 @for_each(iter_equations(['sk', 'quote'], test_id='trace'))
+@pytest.mark.timeout(1)
 def test_trace_deterministic_equations(code, expected, message):
     with xfail_if_not_implemented():
         result = trace_deterministic(code)
