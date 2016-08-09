@@ -12,5 +12,5 @@ from pomagma.util.testing import for_each
     ('APP I', 1),
     ('APP I I I', 1),
 ])
-def test_reduce_does_not_crash(code, error_count):
-    assert main.reduce(code) == error_count
+def test_reduce_cpp_does_not_crash(code, error_count):
+    assert main.reduce_cpp(code) == error_count
