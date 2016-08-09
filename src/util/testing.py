@@ -38,3 +38,11 @@ def xfail_if_not_implemented():
         yield
     except NotImplementedError as e:
         pytest.xfail(reason=str(e))
+
+
+@contextlib.contextmanager
+def skip_if_not_implemented():
+    try:
+        yield
+    except NotImplementedError as e:
+        pytest.skip(reason=str(e))

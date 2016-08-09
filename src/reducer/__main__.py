@@ -120,7 +120,9 @@ def reduce(string, fmt='auto'):
     code = parse(string)
     code = link(code, lazy=False)
     result = engine.reduce(code)
-    print('Out: {}'.format(print_(result)))
+    result_string = print_(result)
+    print('Out: {}'.format(result_string))
+    return result_string
 
 
 if __name__ == '__main__':
