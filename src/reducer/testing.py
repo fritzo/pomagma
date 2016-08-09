@@ -27,9 +27,12 @@ def iter_test_cases(suites, test_id=None):
                 parts = line.split(';', 1)
                 sexpr = parts[0].strip()
                 if sexpr:
-                    code = sexpr_parse(sexpr)
-                    comment = None if len(parts) < 2 else parts[1].strip()
                     message = 'In {}:{}\n{}'.format(filename, 1 + i, line)
+                    try:
+                        code = sexpr_parse(sexpr)
+                    except ValueError as e:
+                        raise ValueError('{} {}'.format(message, e))
+                    comment = None if len(parts) < 2 else parts[1].strip()
                     yield code, comment, message
 
 

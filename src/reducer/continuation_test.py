@@ -1,9 +1,7 @@
 from pomagma.reducer import continuation
 from pomagma.reducer import lib
-from pomagma.reducer.code import CODE, EVAL, QQUOTE, EQUAL, LESS
-from pomagma.reducer.code import TOP, BOT, I, K, B, C, S, J
-from pomagma.reducer.code import UNIT, BOOL, MAYBE
-from pomagma.reducer.code import VAR, APP, QUOTE
+from pomagma.reducer.code import APP, VAR, TOP, BOT, I, K, B, C, S, J
+from pomagma.reducer.code import EVAL, QQUOTE, EQUAL, LESS
 from pomagma.reducer.sugar import app, join, quote, qapp
 from pomagma.reducer.testing import iter_equations, s_codes, s_quoted
 from pomagma.util.testing import for_each, xfail_if_not_implemented
@@ -173,52 +171,6 @@ REDUCE_EXAMPLES = [
         (app(LESS, quote(app(S, I, I, app(S, I, I))), quote(BOT)), lib.true),
         reason='oracle is too weak',
     ),
-    (UNIT, UNIT),
-    (app(UNIT, x), app(UNIT, x)),
-    (app(UNIT, app(UNIT, x)), app(UNIT, x)),
-    (app(UNIT, TOP), TOP),
-    (app(UNIT, BOT), BOT),
-    (app(UNIT, I), I),
-    (app(UNIT, K), TOP),
-    (app(UNIT, B), TOP),
-    (app(UNIT, C), TOP),
-    (app(UNIT, S), TOP),
-    (app(UNIT, J), TOP),
-    (app(BOOL, x), app(BOOL, x)),
-    (app(BOOL, app(BOOL, x)), app(BOOL, x)),
-    (app(BOOL, TOP), TOP),
-    (app(BOOL, BOT), BOT),
-    (app(BOOL, K), K),
-    (app(BOOL, APP(K, I)), APP(K, I)),
-    (app(BOOL, I), TOP),
-    (app(BOOL, B), TOP),
-    (app(BOOL, C), TOP),
-    (app(BOOL, S), TOP),
-    (app(BOOL, J), TOP),
-    (app(MAYBE, x), app(MAYBE, x)),
-    (app(MAYBE, app(MAYBE, x)), app(MAYBE, x)),
-    (app(MAYBE, TOP), TOP),
-    (app(MAYBE, BOT), BOT),
-    (app(MAYBE, K), K),
-    (app(MAYBE, app(K, app(C, I, TOP))), app(K, app(C, I, TOP))),
-    (app(MAYBE, app(K, app(C, I, BOT))), app(K, app(C, I, BOT))),
-    (app(MAYBE, app(K, app(C, I, I))), app(K, app(C, I, I))),
-    (app(MAYBE, I), TOP),
-    (app(MAYBE, B), TOP),
-    (app(MAYBE, C), TOP),
-    (app(MAYBE, S), TOP),
-    (app(MAYBE, J), TOP),
-    (app(CODE, x), app(CODE, x)),
-    (app(CODE, app(CODE, x)), app(CODE, x)),
-    (app(CODE, TOP), TOP),
-    (app(CODE, BOT), BOT),
-    (app(CODE, QUOTE(x)), QUOTE(x)),
-    (app(CODE, QUOTE(TOP)), QUOTE(TOP)),
-    (app(CODE, QUOTE(BOT)), QUOTE(BOT)),
-    (app(CODE, QUOTE(I)), QUOTE(I)),
-    (app(CODE, QUOTE(QUOTE(x))), QUOTE(QUOTE(x))),
-    (app(CODE, app(QQUOTE, x)), app(QQUOTE, x)),
-    (app(CODE, qapp(x, y)), qapp(x, y)),
 ]
 
 
@@ -229,7 +181,7 @@ def test_reduce(code, expected_result):
     assert actual_result == expected_result
 
 
-@for_each(iter_equations(['sk', 'join', 'quote'], test_id='continuation'))
+@for_each(iter_equations(['sk', 'join'], test_id='continuation'))
 def test_reduce_equations(code, expected, message):
     with xfail_if_not_implemented():
         actual = continuation.reduce(code)
