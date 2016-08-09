@@ -1,6 +1,7 @@
 from pomagma.reducer import continuation
 from pomagma.reducer.code import VAR, I, S
-from pomagma.reducer.testing import iter_equations, s_codes, s_quoted
+from pomagma.reducer.testing import iter_equations
+from pomagma.reducer.testing import s_codes, s_quoted, s_sk_codes, s_skj_codes
 from pomagma.util.testing import for_each, xfail_if_not_implemented
 import hypothesis
 
@@ -34,6 +35,18 @@ def test_reduce_equations(code, expected, message):
     with xfail_if_not_implemented():
         actual = continuation.reduce(code)
     assert actual == expected, message
+
+
+@hypothesis.given(s_sk_codes)
+def test_simplify_runs_sk(code):
+    with xfail_if_not_implemented():
+        continuation.simplify(code)
+
+
+@hypothesis.given(s_skj_codes)
+def test_simplify_runs_skj(code):
+    with xfail_if_not_implemented():
+        continuation.simplify(code)
 
 
 @hypothesis.given(s_codes)
