@@ -67,6 +67,7 @@ s_vars = s.builds(
     VAR,
     s.builds(str, s.text(alphabet=alphabet, min_size=1, average_size=5)),
 )
+
 s_atoms = s.one_of(
     s.one_of(s_vars),
     s.just(TOP),
@@ -91,6 +92,27 @@ s_atoms = s.one_of(
         s.just(MAYBE),
     ),
 )
+s_sk_atoms = s.one_of(
+    s.one_of(s_vars),
+    s.just(TOP),
+    s.just(BOT),
+    s.just(I),
+    s.just(K),
+    s.just(B),
+    s.just(C),
+    s.just(S),
+)
+s_skj_atoms = s.one_of(
+    s.one_of(s_vars),
+    s.just(TOP),
+    s.just(BOT),
+    s.just(I),
+    s.just(K),
+    s.just(B),
+    s.just(C),
+    s.just(S),
+    s.just(J),
+)
 
 
 def s_codes_extend(codes):
@@ -101,4 +123,13 @@ def s_codes_extend(codes):
 
 
 s_codes = s.recursive(s_atoms, s_codes_extend, max_leaves=100)
+
 s_quoted = s.builds(QUOTE, s_codes)
+
+
+def s_app_extend(terms):
+    return s.builds(APP, terms, terms)
+
+
+s_sk_codes = s.recursive(s_sk_atoms, s_app_extend, max_leaves=100)
+s_skj_codes = s.recursive(s_skj_atoms, s_app_extend, max_leaves=100)
