@@ -6,6 +6,7 @@ from pomagma.reducer.code import VAR, APP, TOP, BOT, I, K, B, C, S, J
 from pomagma.reducer.code import free_vars, complexity
 from pomagma.reducer.code import is_var, is_app
 from pomagma.reducer.sugar import abstract
+from pomagma.reducer.util import logged
 from pomagma.reducer.util import LOG
 from pomagma.reducer.util import PROFILE_COUNTERS
 from pomagma.reducer.util import pretty
@@ -16,6 +17,12 @@ __all__ = ['reduce', 'simplify']
 F = APP(K, I)
 true = K
 false = F
+
+
+def iter_shared_list(shared_list):
+    while shared_list is not None:
+        arg, shared_list = shared_list
+        yield arg
 
 
 @memoize_arg
@@ -97,12 +104,12 @@ CONT_TOP = make_cont(TOP, None, None)
 CONT_SET_TOP = make_cont_set(frozenset([CONT_TOP]))
 
 
+@logged()
 @memoize_arg
 def cont_eval(cont):
     """Returns code in linear normal form."""
     assert isinstance(cont, Continuation)
     head, stack, bound = cont
-    print 'DEBUG in:', head, stack, bound
     while stack is not None:
         arg_cont_set, stack = stack
         arg_code = cont_set_eval(arg_cont_set)
@@ -110,10 +117,10 @@ def cont_eval(cont):
     while bound is not None:
         var, bound = bound
         head = abstract(var, head)
-    print 'DEBUG out:', head
     return head
 
 
+@logged()
 @memoize_arg
 def cont_set_eval(cont_set):
     """Returns code in linear normal form."""
@@ -123,14 +130,16 @@ def cont_set_eval(cont_set):
     return join_codes(codes)
 
 
-def pop_arg(stack, bound, *terms):
+@logged()
+def pop_arg(stack, bound, *cont_sets):
     if stack is not None:
         cont_set, stack = stack
         return cont_set, stack, bound
     else:
         avoid = frozenset()
-        for term in terms:
-            avoid |= free_vars(term)
+        for cont_set in cont_sets:
+            for cont in cont_set:
+                avoid |= free_vars(cont.head)
         var = fresh(avoid)
         bound = var, bound
         cont = make_cont(var, None, None)
@@ -163,6 +172,7 @@ def is_cheap_to_copy(cont_set):
     return True
 
 
+@logged()
 @memoize_args
 def cont_set_from_codes(codes, stack=None, bound=None):
     pending = [(code, stack, bound) for code in codes]
@@ -243,6 +253,7 @@ def cont_set_from_codes(codes, stack=None, bound=None):
     return make_cont_set(frozenset(result))
 
 
+@logged()
 @memoize_arg
 def stack_try_compute_step(stack):
     if stack is None:
@@ -256,6 +267,7 @@ def stack_try_compute_step(stack):
     return success, stack
 
 
+@logged()
 @memoize_arg
 def cont_try_compute_step(cont):
     assert isinstance(cont, Continuation)
@@ -288,6 +300,7 @@ def cont_complexity(cont):
     return result
 
 
+@logged()
 @memoize_arg
 def cont_set_try_compute_step(cont_set):
     assert isinstance(cont_set, frozenset)
@@ -305,6 +318,7 @@ def cont_is_normal(cont):
     return not success
 
 
+@logged()
 @memoize_arg
 def compute(code):
     cont_set = cont_set_from_codes((code,))
@@ -329,48 +343,3 @@ def simplify(code):
     LOG.info('simplify({})'.format(pretty(code)))
     cont_set = cont_set_from_codes((code,))
     return cont_set_eval(cont_set)
-
-
-# ----------------------------------------------------------------------------
-# Immutable shared contexts
-
-Context = namedtuple('Context', ['stack', 'bound'])
-EMPTY_CONTEXT = Context(None, None)
-
-
-def context_pop(context, *terms):
-    if context.stack is not None:
-        arg, stack = context.stack
-        return arg, Context(stack, context.bound)
-    else:
-        avoid = frozenset()
-        for term in terms:
-            avoid |= free_vars(term)
-        arg = fresh(avoid)
-        bound = arg, context.bound
-        return arg, Context(context.stack, bound)
-
-
-def context_push(context, arg):
-    stack = arg, context.stack
-    return Context(stack, context.bound)
-
-
-def iter_shared_list(shared_list):
-    while shared_list is not None:
-        arg, shared_list = shared_list
-        yield arg
-
-
-def context_complexity(context):
-    result = 0
-    for arg in iter_shared_list(context.stack):
-        result += 1 + complexity(arg)  # APP(-, arg)
-    for var in iter_shared_list(context.bound):
-        result += 1 + complexity(var)  # FUN(var, -)
-    return result
-
-
-def continuation_complexity(continuation):
-    head, context = continuation
-    return complexity(head) + context_complexity(context)

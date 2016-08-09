@@ -1,21 +1,21 @@
-(EQUAL (QUOTE J) (QUOTE J))  ; xfail continuation
+(EQUAL (QUOTE J) (QUOTE J))
 (EQUAL (QUOTE (J x)) (QUOTE (J x)))
 (EQUAL (QUOTE (J x y)) (QUOTE (J x y)))
 (EQUAL (QUOTE (J x x)) (QUOTE x))
 (EQUAL (QUOTE (J BOT x)) (QUOTE x))
 (EQUAL (QUOTE (J x BOT)) (QUOTE x))
 (EQUAL (QUOTE (J TOP x) (QUOTE TOP))
-(EQUAL (QUOTE (J K (K I))) (QUOTE J))  ; xfail continuation
-(EQUAL (QUOTE (J (K I) K)) (QUOTE J))  ; xfail continuation
-(EQUAL (QUOTE (J J K)) (QUOTE J))  ; xfail continuation
-(EQUAL (QUOTE (J K J)) (QUOTE J))  ; xfail continuation
-(EQUAL (QUOTE (J J (K I))) (QUOTE J))  ; xfail continuation
-(EQUAL (QUOTE (J (K I) J)) (QUOTE J))  ; xfail continuation
-(EQUAL (QUOTE (C J)) (QUOTE J))  ; xfail continuation
+(EQUAL (QUOTE (J K (K I))) (QUOTE J))
+(EQUAL (QUOTE (J (K I) K)) (QUOTE J))
+(EQUAL (QUOTE (J J K)) (QUOTE J))
+(EQUAL (QUOTE (J K J)) (QUOTE J))
+(EQUAL (QUOTE (J J (K I))) (QUOTE J))
+(EQUAL (QUOTE (J (K I) J)) (QUOTE J))
+(EQUAL (QUOTE (C J)) (QUOTE J))
 (EQUAL (QUOTE (S J I)) (QUOTE I))
 (EQUAL (QUOTE (J x y z)) (QUOTE (J (x z) (y z))))
 (EQUAL (QUOTE (J I (K I) I)) (QUOTE I))
-(EQUAL (QUOTE (J I (K I) K)) (QUOTE (J I K)))  ; xfail continuation
+(EQUAL (QUOTE (J I (K I) K)) (QUOTE (J I K)))
 
 ;; Test of enumeration operations from pomagma.reducer.lib.box
 (EQUAL (QUOTE (lib.box I)) (QUOTE (lib.box I)))
@@ -23,17 +23,17 @@
 (EQUAL (QUOTE (J (lib.box I) (lib.box BOT))) (QUOTE (lib.box I)))
 (EQUAL (QUOTE (J (lib.box I) (lib.box TOP))) (QUOTE (lib.box TOP)))
 (EQUAL (QUOTE (J (J (lib.box BOT) (lib.box I)) (lib.box TOP))) (QUOTE (lib.box TOP)))
-(EQUAL (QUOTE (J (lib.box K) (lib.box (K I)))) (QUOTE (J (lib.box K) (lib.box (K I)))))  ; xfail continuation
-(EQUAL (QUOTE (J (J (lib.box BOT) (lib.box K)) (lib.box (K I)))) (QUOTE (J (lib.box K) (lib.box (K I)))))  ; xfail continuation
-(EQUAL (QUOTE (J (lib.box K) (lib.box J))) (QUOTE (lib.box J)))  ; xfail continuation
-(EQUAL (QUOTE (J (lib.box (K I)) (lib.box J))) (QUOTE (lib.box J)))  ; xfail continuation
-(EQUAL (QUOTE (J (J (lib.box K) (lib.box (K I))) (lib.box J))) (QUOTE (lib.box J)))  ; xfail continuation
+(EQUAL (QUOTE (J (lib.box K) (lib.box (K I)))) (QUOTE (J (lib.box K) (lib.box (K I)))))
+(EQUAL (QUOTE (J (J (lib.box BOT) (lib.box K)) (lib.box (K I)))) (QUOTE (J (lib.box K) (lib.box (K I)))))
+(EQUAL (QUOTE (J (lib.box K) (lib.box J))) (QUOTE (lib.box J)))
+(EQUAL (QUOTE (J (lib.box (K I)) (lib.box J))) (QUOTE (lib.box J)))
+(EQUAL (QUOTE (J (J (lib.box K) (lib.box (K I))) (lib.box J))) (QUOTE (lib.box J)))
 (EQUAL (QUOTE (J (J (lib.box K) (lib.box (K I))) (lib.box TOP))) (QUOTE (lib.box TOP)))
 (EQUAL (QUOTE (J (lib.box BOT) (lib.box (lib.box BOT)))) (QUOTE (lib.box (lib.box BOT))))
 (EQUAL (QUOTE (J (J (lib.box BOT) (lib.box (lib.box BOT))) (lib.box (lib.box (lib.box BOT))))) (QUOTE (lib.box (lib.box (lib.box BOT)))))
 (EQUAL (QUOTE (J (J (J (lib.box BOT) (lib.box (lib.box BOT))) (lib.box (lib.box (lib.box BOT)))) (lib.box (lib.box TOP)))) (QUOTE (lib.box (lib.box TOP))))
 
 ;; Tests of list operations from pomagma.reducer.lib
-(EQUAL (QUOTE (lib.list_map I lib.nil)) (QUOTE lib.nil))  ; xfail continuation
+(EQUAL (QUOTE (lib.list_map I lib.nil)) (QUOTE lib.nil))
 (EQUAL (QUOTE (lib.cons x y)) (K (C (C I x) y)))
 (EQUAL (QUOTE (lib.list_map I (lib.cons x lib.nil))) (K (C (C I x) lib.nil)))

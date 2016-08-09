@@ -61,7 +61,7 @@ def _logged(*format_args, **format_kwargs):
             LOG.debug(r'{}({})'.format(fun.__name__, ', '.join(akwargs)))
             result = fun(*args, **kwargs)
             returns = formatters.get('returns', repr)(result)
-            LOG.debug('return {}'.format(returns))
+            LOG.debug(' return {}'.format(returns))
             return result
 
         return decorated
