@@ -221,18 +221,17 @@ REDUCE_EXAMPLES = [
 
 
 @for_each(REDUCE_EXAMPLES)
-def test_reduce(code, expected_result):
+def test_reduce(code, expected):
     with xfail_if_not_implemented():
-        actual_result = engine.reduce(code, BUDGET)
-    assert actual_result == expected_result
+        actual = engine.reduce(code, BUDGET)
+    assert actual == expected
 
 
 @for_each(iter_equations(['sk', 'join', 'quote'], test_id='engine'))
-def test_trace_reduce_equations(lhs, rhs, message):
+def test_trace_reduce_equations(code, expected, message):
     with xfail_if_not_implemented():
-        lhs = engine.reduce(lhs)
-        rhs = engine.reduce(rhs)
-    assert lhs == rhs, message
+        actual = engine.reduce(code, BUDGET)
+    assert actual == expected, message
 
 
 @hypothesis.given(s_codes)

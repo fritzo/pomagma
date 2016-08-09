@@ -126,7 +126,7 @@ def trace_deterministic(code):
                 stack = QAPP_ARG, y, stack
                 code = x
             else:
-                raise ValueError(code)
+                raise NotImplementedError(code)
         elif state is REDUCE_ARGS:
             if stack is None:
                 break
@@ -332,7 +332,7 @@ def trace_nondeterministic(code):
                 schedule = schedule_push(schedule, task)
                 code = x
             else:
-                raise ValueError(code)
+                raise NotImplementedError(code)
         elif state is REDUCE_ARGS:
             if stack is None:
                 result.add(code)

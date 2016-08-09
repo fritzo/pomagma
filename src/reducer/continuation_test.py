@@ -230,11 +230,10 @@ def test_reduce(code, expected_result):
 
 
 @for_each(iter_equations(['sk', 'join', 'quote'], test_id='continuation'))
-def test_reduce_equations(lhs, rhs, message):
+def test_reduce_equations(code, expected, message):
     with xfail_if_not_implemented():
-        lhs = continuation.reduce(lhs)
-        rhs = continuation.reduce(rhs)
-    assert lhs == rhs, message
+        actual = continuation.reduce(code)
+    assert actual == expected, message
 
 
 @hypothesis.given(s_codes)

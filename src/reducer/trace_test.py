@@ -6,7 +6,7 @@ from pomagma.reducer.testing import iter_equations
 from pomagma.reducer.trace import lazy_print_trace
 from pomagma.reducer.trace import trace_deterministic
 from pomagma.reducer.trace import trace_nondeterministic
-from pomagma.util.testing import for_each
+from pomagma.util.testing import for_each, xfail_if_not_implemented
 import hypothesis
 import hypothesis.strategies as s
 import pytest
@@ -16,8 +16,9 @@ import pytest
 # Parameterized tests
 
 @for_each(iter_equations(['sk', 'quote'], test_id='trace'))
-def test_trace_deterministic_sk(code, expected, message):
-    result = trace_deterministic(code)
+def test_trace_deterministic_equations(code, expected, message):
+    with xfail_if_not_implemented():
+        result = trace_deterministic(code)
     actual = result['code']
     assert actual == expected, lazy_print_trace(result['trace'], message)
 
