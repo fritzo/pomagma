@@ -36,7 +36,7 @@ def test_reduce_engine_sexpr_equations(code, expected_code, message):
     assert actual_string == expected_string, message
 
 
-@for_each(iter_equations(['sk', 'join'], test_id='continuation'))
+@for_each(iter_equations(['sk', 'join', 'quote'], test_id='continuation'))
 def test_reduce_continuatin_polish_equations(code, expected_code, message):
     string = polish_print(code)
     with skip_if_not_implemented():
@@ -45,7 +45,7 @@ def test_reduce_continuatin_polish_equations(code, expected_code, message):
     assert actual_string == expected_string, message
 
 
-@for_each(iter_equations(['sk', 'join'], test_id='continuation'))
+@for_each(iter_equations(['sk', 'join', 'quote'], test_id='continuation'))
 def test_reduce_continuatin_sexpr_equations(code, expected_code, message):
     string = sexpr_print(code)
     with skip_if_not_implemented():

@@ -30,7 +30,7 @@ def test_cont_complexity(code, stack, bound, expected):
     assert continuation.cont_complexity(cont) == expected
 
 
-@for_each(iter_equations(['sk', 'join'], test_id='continuation'))
+@for_each(iter_equations(['sk', 'join', 'quote'], test_id='continuation'))
 def test_reduce_equations(code, expected, message):
     with xfail_if_not_implemented():
         actual = continuation.reduce(code)

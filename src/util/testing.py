@@ -45,4 +45,4 @@ def skip_if_not_implemented():
     try:
         yield
     except NotImplementedError as e:
-        pytest.skip(reason=str(e))
+        pytest.skip(str(e))

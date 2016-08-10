@@ -2,9 +2,9 @@ from collections import namedtuple
 from pomagma.compiler.util import memoize_arg
 from pomagma.compiler.util import memoize_args
 from pomagma.reducer import oracle
-from pomagma.reducer.code import VAR, APP, TOP, BOT, I, K, B, C, S, J
+from pomagma.reducer.code import VAR, APP, TOP, BOT, I, K, B, C, S, J, EVAL
 from pomagma.reducer.code import free_vars, complexity
-from pomagma.reducer.code import is_var, is_app
+from pomagma.reducer.code import is_var, is_app, is_quote
 from pomagma.reducer.code import sexpr_print as print_code
 from pomagma.reducer.sugar import abstract
 from pomagma.reducer.util import logged
@@ -124,9 +124,16 @@ Continuation = namedtuple('Continuation', ['head', 'stack', 'bound'])
 
 @memoize_args
 def make_cont(head, stack, bound):
-    assert is_var(head) or head in (TOP, BOT, S), head
+    """Continuations are linear-beta-eta normal forms."""
+    assert is_var(head) or head in (TOP, BOT, S, EVAL), head
     if head in (TOP, BOT):
         assert stack is None and bound is None
+    elif head is S:
+        assert not (
+            stack and stack[1] and stack[1][1] and
+            is_cheap_to_copy(stack[1][1][0]))
+    elif head is EVAL:
+        assert not (stack and is_quote(stack[0]))
     return Continuation(head, stack, bound)
 
 
@@ -285,6 +292,20 @@ def cont_set_from_codes(codes, stack=None, bound=None):
             x, stack, bound = pop_arg(stack, bound)
             y, stack, bound = pop_arg(stack, bound, x)
             head_cont = x | y
+        elif head is EVAL:
+            old_stack = stack
+            old_bound = bound
+            x, stack, bound = pop_arg(stack, bound)
+            x = cont_set_eval(x)
+            if is_quote(x):
+                head = x[1]
+            elif x is TOP:
+                return CONT_SET_TOP
+            elif x is BOT:
+                continue
+            else:
+                result.append(make_cont(EVAL, old_stack, old_bound))
+                continue
         else:
             raise NotImplementedError(head)
 
@@ -317,6 +338,7 @@ def cont_try_compute_step(cont):
         x, stack, bound = pop_arg(stack, bound)
         y, stack, bound = pop_arg(stack, bound, x)
         z, stack, bound = pop_arg(stack, bound, x, y)
+        assert not is_cheap_to_copy(z), z
         yz = cont_app(y, z)
         stack = yz, stack
         stack = z, stack
@@ -324,6 +346,7 @@ def cont_try_compute_step(cont):
         cont_set = cont_set_from_codes(codes, stack, bound)
         success = True
     else:
+        assert is_var(head) or head in (TOP, BOT, EVAL), head
         success, stack = stack_try_compute_step(stack)
         if success:
             cont = make_cont(head, stack, bound)
@@ -346,6 +369,7 @@ def cont_complexity(cont):
 def cont_set_try_compute_step(cont_set):
     assert isinstance(cont_set, frozenset)
     assert all(isinstance(c, Continuation) for c in cont_set)
+    # TODO Separate cont_set into seen and pending.
     for cont in sorted(cont_set, key=cont_complexity):
         success, new_cont_set = cont_try_compute_step(cont)
         if success and not new_cont_set <= cont_set:
