@@ -285,20 +285,6 @@ def cont_set_from_codes(codes, stack=None, bound=None):
             x, stack, bound = pop_arg(stack, bound)
             y, stack, bound = pop_arg(stack, bound, x)
             head_cont = x | y
-        # elif head is EVAL:
-        #     x, stack, bound = pop_arg(stack, bound)
-        #     x = _reduce(x, nonlinear)
-        #     if is_quote(x):
-        #         head = x[1]
-        #     elif x is TOP:
-        #         yield TOP, EMPTY_CONTEXT
-        #         return
-        #     elif x is BOT:
-        #         return
-        #     else:
-        #         head = APP(EVAL, x)
-        #         yield head, context
-        #         return
         else:
             raise NotImplementedError(head)
 
