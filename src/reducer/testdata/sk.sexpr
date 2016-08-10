@@ -17,6 +17,7 @@
 (EQUAL (QUOTE I) (QUOTE I))
 (EQUAL (QUOTE (I x)) (QUOTE x))
 (EQUAL (QUOTE (I K)) (QUOTE K))
+(EQUAL (QUOTE (I (B B B))) (QUOTE (B B B)))  ; xfail continuation
 
 ;; K
 (EQUAL (QUOTE K) (QUOTE K))
@@ -30,6 +31,8 @@
 (EQUAL (QUOTE (B x y)) (QUOTE (B x y)))
 (EQUAL (QUOTE (B x y z)) (QUOTE (x (y z))))
 (EQUAL (QUOTE (B x y z w)) (QUOTE (x (y z) w)))
+(EQUAL (QUOTE (B B)) (QUOTE (B B)))  ; xfail continuation
+(EQUAL (QUOTE (B B B)) (QUOTE (B B B)))  ; xfail continuation
 
 ;; C
 (EQUAL (QUOTE C) (QUOTE C))

@@ -5,6 +5,7 @@ from pomagma.reducer import oracle
 from pomagma.reducer.code import VAR, APP, TOP, BOT, I, K, B, C, S, J
 from pomagma.reducer.code import free_vars, complexity
 from pomagma.reducer.code import is_var, is_app
+from pomagma.reducer.code import sexpr_print as print_code
 from pomagma.reducer.sugar import abstract
 from pomagma.reducer.util import logged
 from pomagma.reducer.util import LOG
@@ -76,6 +77,43 @@ def join_codes(codes):
 
 
 # ----------------------------------------------------------------------------
+# Tracing
+
+def print_stack(stack):
+    return '[{}]'.format(
+        ', '.join(print_cont_set(v) for v in iter_shared_list(stack)))
+
+
+def print_bound(bound):
+    return '[{}]'.format(', '.join(v[1] for v in iter_shared_list(bound)))
+
+
+def print_cont(cont):
+    return '{} {} {}'.format(
+        print_code(cont.head),
+        print_stack(cont.stack),
+        print_bound(cont.bound),
+    )
+
+
+def print_cont_set(cont_set):
+    return '{{{}}}'.format(', '.join(print_cont(c) for c in cont_set))
+
+
+def print_code_set(code_set):
+    return '{{{}}}'.format(', '.join(print_code(c) for c in code_set))
+
+
+def print_tuple(*printers):
+
+    def printer(args):
+        assert len(args) <= len(printers), args
+        return ', '.join(p(a) for a, p in itertools.izip(args, printers))
+
+    return printer
+
+
+# ----------------------------------------------------------------------------
 # Continuations
 
 # head : code
@@ -104,7 +142,7 @@ CONT_TOP = make_cont(TOP, None, None)
 CONT_SET_TOP = make_cont_set(frozenset([CONT_TOP]))
 
 
-@logged()
+@logged(print_cont, returns=print_code)
 @memoize_arg
 def cont_eval(cont):
     """Returns code in linear normal form."""
@@ -120,7 +158,7 @@ def cont_eval(cont):
     return head
 
 
-@logged()
+@logged(print_cont_set, returns=print_code)
 @memoize_arg
 def cont_set_eval(cont_set):
     """Returns code in linear normal form."""
@@ -130,7 +168,9 @@ def cont_set_eval(cont_set):
     return join_codes(codes)
 
 
-@logged()
+@logged(print_stack, print_bound,
+        print_cont_set, print_cont_set, print_cont_set,
+        returns=print_tuple(print_cont_set, print_stack, print_bound))
 def pop_arg(stack, bound, *cont_sets):
     if stack is not None:
         cont_set, stack = stack
@@ -172,7 +212,7 @@ def is_cheap_to_copy(cont_set):
     return True
 
 
-@logged()
+@logged(print_code_set, print_stack, print_bound, returns=print_cont_set)
 @memoize_args
 def cont_set_from_codes(codes, stack=None, bound=None):
     pending = [(code, stack, bound) for code in codes]
@@ -253,7 +293,7 @@ def cont_set_from_codes(codes, stack=None, bound=None):
     return make_cont_set(frozenset(result))
 
 
-@logged()
+@logged(print_stack, returns=print_tuple(str, print_stack))
 @memoize_arg
 def stack_try_compute_step(stack):
     if stack is None:
@@ -267,7 +307,7 @@ def stack_try_compute_step(stack):
     return success, stack
 
 
-@logged()
+@logged(print_cont, returns=print_tuple(str, print_cont_set))
 @memoize_arg
 def cont_try_compute_step(cont):
     assert isinstance(cont, Continuation)
@@ -300,7 +340,7 @@ def cont_complexity(cont):
     return result
 
 
-@logged()
+@logged(print_cont_set, returns=print_tuple(str, print_cont_set))
 @memoize_arg
 def cont_set_try_compute_step(cont_set):
     assert isinstance(cont_set, frozenset)
@@ -318,7 +358,7 @@ def cont_is_normal(cont):
     return not success
 
 
-@logged()
+@logged(print_code, returns=print_code)
 @memoize_arg
 def compute(code):
     cont_set = cont_set_from_codes((code,))
