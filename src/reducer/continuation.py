@@ -168,6 +168,21 @@ def cont_set_eval(cont_set):
     return join_codes(codes)
 
 
+def cont_free_vars(cont):
+    all_vars = free_vars(cont.head)
+    for cont_set in iter_shared_list(cont.stack):
+        all_vars |= cont_set_free_vars(cont_set)
+    bound_vars = frozenset(iter_shared_list(cont.bound))
+    return all_vars - bound_vars
+
+
+def cont_set_free_vars(cont_set):
+    free = frozenset()
+    for cont in cont_set:
+        free |= cont_free_vars(cont)
+    return free
+
+
 @logged(print_stack, print_bound,
         print_cont_set, print_cont_set, print_cont_set,
         returns=print_tuple(print_cont_set, print_stack, print_bound))
@@ -178,8 +193,7 @@ def pop_arg(stack, bound, *cont_sets):
     else:
         avoid = frozenset()
         for cont_set in cont_sets:
-            for cont in cont_set:
-                avoid |= free_vars(cont.head)
+            avoid |= cont_set_free_vars(cont_set)
         var = fresh(avoid)
         bound = var, bound
         cont = make_cont(var, None, None)
@@ -187,6 +201,7 @@ def pop_arg(stack, bound, *cont_sets):
         return cont_set, stack, bound
 
 
+@logged(print_cont_set, print_cont_set, returns=print_cont_set)
 def cont_app(funs, args):
     assert isinstance(funs, frozenset)
     assert isinstance(args, frozenset)
