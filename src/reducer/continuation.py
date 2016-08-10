@@ -2,14 +2,15 @@ from collections import namedtuple
 from pomagma.compiler.util import memoize_arg
 from pomagma.compiler.util import memoize_args
 from pomagma.reducer import oracle
-from pomagma.reducer.code import VAR, APP, TOP, BOT, I, K, B, C, S, J, EVAL
+from pomagma.reducer.code import APP, VAR, TOP, BOT, I, K, B, C, S, J
+from pomagma.reducer.code import QUOTE, EVAL, QQUOTE, QAPP
 from pomagma.reducer.code import free_vars, complexity
 from pomagma.reducer.code import is_var, is_app, is_quote
 from pomagma.reducer.code import sexpr_print as print_code
 from pomagma.reducer.sugar import abstract
-from pomagma.reducer.util import logged
 from pomagma.reducer.util import LOG
 from pomagma.reducer.util import PROFILE_COUNTERS
+from pomagma.reducer.util import logged
 from pomagma.reducer.util import pretty
 import itertools
 
@@ -121,19 +122,21 @@ def print_tuple(*printers):
 # bound : stack var
 Continuation = namedtuple('Continuation', ['head', 'stack', 'bound'])
 
+INERT_ATOMS = frozenset([TOP, BOT, S, EVAL, QQUOTE, QAPP])
+
 
 @memoize_args
 def make_cont(head, stack, bound):
     """Continuations are linear-beta-eta normal forms."""
-    assert is_var(head) or head in (TOP, BOT, S, EVAL), head
+    assert is_var(head) or is_quote(head) or head in INERT_ATOMS, head
     if head in (TOP, BOT):
         assert stack is None and bound is None
     elif head is S:
         assert not (
             stack and stack[1] and stack[1][1] and
             is_cheap_to_copy(stack[1][1][0]))
-    elif head is EVAL:
-        assert not (stack and is_quote(stack[0]))
+    elif head in (EVAL, QQUOTE):
+        assert not stack or not (is_quote(stack[0]) or stack[0] in (TOP, BOT))
     return Continuation(head, stack, bound)
 
 
@@ -249,31 +252,37 @@ def cont_set_from_codes(codes, stack=None, bound=None):
         if is_var(head):
             result.append(make_cont(head, stack, bound))
             continue
+        elif is_quote(head):
+            x = head[1]
+            x = simplify(x)
+            head = QUOTE(x)
+            result.append(make_cont(head, stack, bound))
+            continue
         elif head is TOP:
             return CONT_SET_TOP
         elif head is BOT:
             continue
         elif head is I:
             x, stack, bound = pop_arg(stack, bound)
-            head_cont = x
+            head_cont_set = x
         elif head is K:
             x, stack, bound = pop_arg(stack, bound)
             y, stack, bound = pop_arg(stack, bound, x)
-            head_cont = x
+            head_cont_set = x
         elif head is B:
             x, stack, bound = pop_arg(stack, bound)
             y, stack, bound = pop_arg(stack, bound, x)
             z, stack, bound = pop_arg(stack, bound, x, y)
             yz = cont_app(y, z)
             stack = yz, stack
-            head_cont = x
+            head_cont_set = x
         elif head is C:
             x, stack, bound = pop_arg(stack, bound)
             y, stack, bound = pop_arg(stack, bound, x)
             z, stack, bound = pop_arg(stack, bound, x, y)
             stack = y, stack
             stack = z, stack
-            head_cont = x
+            head_cont_set = x
         elif head is S:
             old_stack = stack
             old_bound = bound
@@ -284,21 +293,21 @@ def cont_set_from_codes(codes, stack=None, bound=None):
                 yz = cont_app(y, z)
                 stack = yz, stack
                 stack = z, stack
-                head_cont = x
+                head_cont_set = x
             else:
                 result.append(make_cont(S, old_stack, old_bound))
                 continue
         elif head is J:
             x, stack, bound = pop_arg(stack, bound)
             y, stack, bound = pop_arg(stack, bound, x)
-            head_cont = x | y
+            head_cont_set = x | y
         elif head is EVAL:
             old_stack = stack
             old_bound = bound
             x, stack, bound = pop_arg(stack, bound)
             x = cont_set_eval(x)
             if is_quote(x):
-                head = x[1]
+                head_cont_set = cont_set_from_codes((x[1],))
             elif x is TOP:
                 return CONT_SET_TOP
             elif x is BOT:
@@ -306,10 +315,37 @@ def cont_set_from_codes(codes, stack=None, bound=None):
             else:
                 result.append(make_cont(EVAL, old_stack, old_bound))
                 continue
+        elif head is QQUOTE:
+            old_stack = stack
+            old_bound = bound
+            x, stack, bound = pop_arg(stack, bound)
+            x = cont_set_eval(x)
+            if is_quote(x):
+                head_cont_set = cont_set_from_codes((QUOTE(x),))
+            elif x is TOP:
+                return CONT_SET_TOP
+            elif x is BOT:
+                continue
+            else:
+                result.append(make_cont(QQUOTE, old_stack, old_bound))
+                continue
+        elif head is QAPP:
+            old_stack = stack
+            old_bound = bound
+            x, stack, bound = pop_arg(stack, bound)
+            y, stack, bound = pop_arg(stack, bound, x)
+            x = cont_set_eval(x)
+            y = cont_set_eval(y)
+            if is_quote(x) and is_quote(y):
+                xy = simplify(APP(x[1], y[1]))
+                head_cont_set = cont_set_from_codes((QUOTE(xy),))
+            else:
+                result.append(make_cont(QAPP, old_stack, old_bound))
+                continue
         else:
             raise NotImplementedError(head)
 
-        for cont in head_cont:
+        for cont in head_cont_set:
             pending.append((cont_eval(cont), stack, bound))
 
     return make_cont_set(frozenset(result))
@@ -346,7 +382,6 @@ def cont_try_compute_step(cont):
         cont_set = cont_set_from_codes(codes, stack, bound)
         success = True
     else:
-        assert is_var(head) or head in (TOP, BOT, EVAL), head
         success, stack = stack_try_compute_step(stack)
         if success:
             cont = make_cont(head, stack, bound)
