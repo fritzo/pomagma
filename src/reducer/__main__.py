@@ -1,4 +1,5 @@
 from parsable import parsable
+from pomagma.reducer import continuation
 from pomagma.reducer import engine
 from pomagma.reducer import lib
 from pomagma.reducer import transforms
@@ -109,17 +110,34 @@ def reduce_cpp(*args):
     return proc.returncode  # Returns number of errors.
 
 
+ENGINES = {
+    'engine': engine,
+    'continuation': continuation,
+}
+
+
 @parsable
-def reduce(string, fmt='auto'):
-    """Reduce code."""
+def reduce(string, engine='engine', fmt='auto'):
+    """Reduce code.
+
+    Args:
+        string: code to reduce, in some parsable format specified by fmt
+        engine: 'engine' or 'continuation'
+        fmt: one of 'auto', 'polish', or 'sexpr'
+
+    """
     if fmt == 'auto':
         fmt = guess_format(string)
+    if engine not in ENGINES:
+        raise ValueError('Unknown engine {}, try one of: {}'.format(
+            engine, ', '.join(ENGINES.keys())))
     print('Format: {}'.format(fmt))
+    print('Engine: {}'.format(engine))
     print('In: {}'.format(string))
     parse, print_ = FORMATS[fmt]
     code = parse(string)
     code = link(code, lazy=False)
-    result = engine.reduce(code)
+    result = ENGINES[engine].reduce(code)
     result_string = print_(result)
     print('Out: {}'.format(result_string))
     return result_string
