@@ -1,3 +1,15 @@
+"""Continuation-based implementation of reduce() and simplify().
+
+This is the third implementation of reduce() and simplify(), after engine.py
+and trace.py. The basic objects of this implementation are
+- nondeterministic linear-Bohm trees (continuations or 'cont'),
+- sets of continuations representing joins ('cont_set').
+
+(Q1) Would de Bruijn indices make it easier to implement cont_try_decide_less?
+(Q2) Is there a principled way to infer J-eta rules in join_codes(-)?
+
+"""
+
 from collections import namedtuple
 from pomagma.compiler.util import memoize_arg
 from pomagma.compiler.util import memoize_args
@@ -142,14 +154,40 @@ def make_cont(head, stack, bound):
 
 @memoize_arg
 def make_cont_set(cont_set):
-    # TODO filter out dominated continuations
     assert isinstance(cont_set, frozenset), cont_set
     assert all(isinstance(c, Continuation) for c in cont_set)
+
+    # Filter out dominated continuations.
+    cont_set = frozenset(
+        cont
+        for cont in cont_set
+        if cont.head is not BOT
+        if not any(cont_try_decide_less(cont, c)
+                   for c in cont_set if c is not cont)
+    )
+
     return cont_set
 
 
 CONT_TOP = make_cont(TOP, None, None)
 CONT_SET_TOP = make_cont_set(frozenset([CONT_TOP]))
+
+
+def cont_try_decide_less(lhs, rhs):
+    """Returns True, False, or None."""
+    if lhs.head is BOT or rhs.head is TOP or lhs is rhs:
+        return True
+    # TODO Try harder.
+    return None
+
+
+def cont_set_try_decide_less(lhs_cont_set, rhs_cont_set):
+    """Returns True, False, or None."""
+    return all(
+        any(cont_try_decide_less(lhs_cont, rhs_cont)
+            for rhs_cont in rhs_cont_set)
+        for lhs_cont in lhs_cont_set
+    )
 
 
 @logged(print_cont, returns=print_code)
@@ -407,8 +445,10 @@ def cont_set_try_compute_step(cont_set):
     # TODO Separate cont_set into seen and pending.
     for cont in sorted(cont_set, key=cont_complexity):
         success, new_cont_set = cont_try_compute_step(cont)
-        if success and not new_cont_set <= cont_set:
-            return True, make_cont_set(cont_set | new_cont_set)
+        if success:
+            new_cont_set = make_cont_set(cont_set | new_cont_set)
+            if new_cont_set != cont_set:
+                return True, new_cont_set
     return False, cont_set
 
 
