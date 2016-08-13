@@ -81,6 +81,7 @@ def apply_stack(head, args):
 
 
 def code_to_bohm_tree(code):
+    """Linear normalizes code into a Bohm tree."""
     terms = []
     pending = [code]
     while pending:
@@ -90,8 +91,7 @@ def code_to_bohm_tree(code):
             args = head[2], args
             head = head[1]
         if head is I:
-            head = ABS(IVAR(0))
-            terms.append(apply_stack(head, args))
+            TODO()
             continue
         elif head is K:
             TODO()
@@ -105,6 +105,7 @@ def code_to_bohm_tree(code):
             TODO()
         else:
             raise ValueError(head)
+        TODO('process args and abs and add to terms')
     return make_join(terms)
 
 
@@ -115,7 +116,7 @@ def bohm_tree_to_code(bt):
     codes.sort(reverse=True)
     code = codes.pop()
     while codes:
-        code = JOIN(code, codes.pop())
+        code = APP(J, code, codes.pop())
     return code
 
 
@@ -146,17 +147,34 @@ def term_to_code(term):
 
 
 @memoize_args
-def try_abstract(body, rank=0):
-    if body is IVAR(0):
-        return I
+def try_abstract(body):
+    """Returns (whether var was found, abstracted result)."""
     if is_ivar(body):
-        return None
-    TODO()
+        rank = body[1]
+        if rank == 0:
+            return True, I
+        else:
+            return False, IVAR(rank - 1)
+    elif is_app(body):
+        lhs_found, lhs_result = try_abstract(body[1])
+        rhs_found, rhs_result = try_abstract(body[2])
+        if lhs_found:
+            if rhs_found:
+                return True, APP(APP(S, lhs_result), rhs_result)
+            else:
+                return True, APP(APP(C, lhs_result), rhs_result)
+        else:
+            if rhs_found:
+                return True, APP(APP(B, lhs_result), rhs_result)
+            else:
+                return False, APP(lhs_result, rhs_result)
+    else:
+        raise ValueError(body)
 
 
 def abstract(body):
-    result = try_abstract(body)
-    return APP(K, body) if result is None else result
+    found, result = try_abstract(body)
+    return result if found else APP(K, result)
 
 
 # ----------------------------------------------------------------------------
