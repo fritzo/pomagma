@@ -163,11 +163,11 @@ def try_abstract(body):
             else:
                 if not rhs_found:
                     if lhs is I:
-                        return APP(J, rhs)  # Rule J-eta
+                        return True, APP(J, rhs)  # Rule J-eta
                     else:
-                        return APP(APP(B, APP(J, rhs)), lhs)  # Rule J-B
+                        return True, APP(APP(B, APP(J, rhs)), lhs)  # Rule J-B
                 else:
-                    return APP(APP(J, lhs), rhs)  # Rule J
+                    return True, APP(APP(J, lhs), rhs)  # Rule J
         else:
             lhs_found, lhs = try_abstract(body[1])
             rhs_found, rhs = try_abstract(body[2])
@@ -419,8 +419,8 @@ def try_decide_less_cont(lhs, rhs):
         lhs = cont_pop_app(lhs)
     while is_app(rhs[0]):
         rhs = cont_pop_app(rhs)
-    assert is_ivar(lhs[0]) or lhs[0] is S, lhs[0]
-    assert is_ivar(rhs[0]) or rhs[0] is S, rhs[0]
+    assert is_ivar(lhs[0]) or lhs[0] in (TOP, BOT, S), lhs[0]
+    assert is_ivar(rhs[0]) or rhs[0] in (TOP, BOT, S), rhs[0]
     TODO('deal with mismatches in bound_count')
     if is_ivar(lhs[0]) and is_ivar(rhs[0]):
         return try_decide_less_stack(lhs[1], rhs[1])
@@ -466,7 +466,7 @@ S_LINEAR_UPPER_BOUNDS = [
     # S [= \x,y,z. x TOP(y z)
     APP(APP(B, B), APP(APP(C, I), TOP)),
     # S [=\x,y,z. x z(y TOP)
-    APP(APP(C, APP(APP(B, B), C), APP(APP(C, I), TOP)))
+    APP(APP(C, APP(APP(B, B), C)), APP(APP(C, I), TOP))
 ]
 
 S_LINEAR_LOWER_BOUNDS = [
