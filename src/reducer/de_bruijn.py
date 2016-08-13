@@ -241,25 +241,25 @@ def code_to_term(code, stack=None, bound_count=0):
             continue
         elif head is I:
             x, stack, bound_count = pop_arg(stack, bound_count)
-            head = x
+            head_term = x
         elif head is K:
             x, stack, bound_count = pop_arg(stack, bound_count)
             y, stack, bound_count = pop_arg(stack, bound_count)
-            head = x
+            head_term = x
         elif head is B:
             x, stack, bound_count = pop_arg(stack, bound_count)
             y, stack, bound_count = pop_arg(stack, bound_count)
             z, stack, bound_count = pop_arg(stack, bound_count)
             yz = term_app(y, z)
             stack = yz, stack
-            head = x
+            head_term = x
         elif head is C:
             x, stack, bound_count = pop_arg(stack, bound_count)
             y, stack, bound_count = pop_arg(stack, bound_count)
             z, stack, bound_count = pop_arg(stack, bound_count)
             stack = y, stack
             stack = z, stack
-            head = x
+            head_term = x
         elif head is S:
             old_stack = stack
             old_bound_count = bound_count
@@ -270,19 +270,20 @@ def code_to_term(code, stack=None, bound_count=0):
                 yz = term_app(y, z)
                 stack = yz, stack
                 stack = z, stack
-                head = x
+                head_term = x
             else:
                 continuations.append((head, old_stack, old_bound_count))
                 continue
         elif head is J:
             x, stack, bound_count = pop_arg(stack, bound_count)
             y, stack, bound_count = pop_arg(stack, bound_count)
-            head = join_points([x, y])
+            head_term = join_points([x, y])
         else:
             raise ValueError(head)
 
-        for point in iter_points(head):
-            pending.append((point, stack, bound_count))
+        for point in iter_points(head_term):
+            head = term_to_code(point)
+            pending.append((head, stack, bound_count))
 
     points = []
     for point, stack, bound_count in continuations:
@@ -412,6 +413,8 @@ def cont_pop_app(cont):
 
 @memoize_args
 def try_decide_less_cont(lhs, rhs):
+    if lhs[0] is BOT or rhs[0] is TOP or lhs is rhs:
+        return True
     while is_abs(lhs[0]) or is_abs(rhs[0]):
         lhs = cont_pop_abs(lhs)
         rhs = cont_pop_abs(rhs)
@@ -423,6 +426,8 @@ def try_decide_less_cont(lhs, rhs):
     assert is_ivar(rhs[0]) or rhs[0] in (TOP, BOT, S), rhs[0]
     TODO('deal with mismatches in bound_count')
     if is_ivar(lhs[0]) and is_ivar(rhs[0]):
+        if lhs[0] is not rhs[0]:
+            return False
         return try_decide_less_stack(lhs[1], rhs[1])
     assert lhs[0] is S or rhs[0] is S
     if lhs[0] is S and rhs[0] is S:

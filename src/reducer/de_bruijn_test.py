@@ -7,6 +7,7 @@ from pomagma.reducer.de_bruijn import trool_all, trool_any
 from pomagma.reducer.de_bruijn import try_decide_less
 from pomagma.reducer.transforms import compile_
 from pomagma.util.testing import for_each, xfail_if_not_implemented
+import pytest
 
 
 @for_each([
@@ -112,6 +113,9 @@ TRY_DECIDE_LESS_EXAMPLES = [
     (False, TOP, x),
     (False, x, BOT),
     (False, TOP, BOT),
+    (False, x, y),
+    (False, y, z),
+    (False, z, x),
 ]
 
 
@@ -120,6 +124,34 @@ def test_try_decide_less(expected, lhs, rhs):
     with xfail_if_not_implemented():
         actual = try_decide_less(lhs, rhs)
     assert actual == expected
+
+
+INCOMPARABLES = [
+    x, y, z,
+    I, K, B, C, S,
+    APP(K, I), APP(C, I), APP(C, B),
+    APP(K, x), APP(B, x), APP(C, x), APP(S, x),
+    APP(K, y), APP(B, y), APP(C, y), APP(S, y),
+    APP(APP(B, x), y), APP(APP(C, x), y), APP(APP(S, x), y),
+    APP(APP(B, y), z), APP(APP(C, y), z), APP(APP(S, y), z),
+    APP(APP(B, z), x), APP(APP(C, z), x), APP(APP(S, z), x),
+]
+
+INCOMPARABLE_PAIRS = [
+    (lhs is rhs, lhs, rhs)
+    for lhs in INCOMPARABLES
+    for rhs in INCOMPARABLES
+]
+
+
+@for_each(INCOMPARABLE_PAIRS)
+def test_try_decide_less_incomparable(expected, lhs, rhs):
+    with xfail_if_not_implemented():
+        actual = try_decide_less(lhs, rhs)
+    try:
+        assert actual == expected
+    except AssertionError as e:
+        pytest.xfail(reason=str(e))
 
 
 # ----------------------------------------------------------------------------
