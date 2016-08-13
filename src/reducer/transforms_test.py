@@ -15,6 +15,8 @@ z = VAR('z')
 @for_each([
     (x, x, I),
     (x, y, APP(K, y)),
+    (x, TOP, TOP),
+    (x, BOT, BOT),
     (x, I, APP(K, I)),
     (x, APP(x, x), APP(APP(S, I), I)),
     (x, APP(x, y), APP(APP(C, I), y)),

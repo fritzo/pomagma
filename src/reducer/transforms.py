@@ -64,7 +64,12 @@ def try_abstract(var, body):
 
 def abstract(var, body):
     result = try_abstract(var, body)
-    return APP(K, body) if result is None else result
+    if result is not None:
+        return result
+    elif body in (TOP, BOT):
+        return body  # Rules TOP, BOT
+    else:
+        return APP(K, body)  # Rule K
 
 
 # ----------------------------------------------------------------------------
