@@ -63,6 +63,7 @@ def try_abstract(var, body):
 
 
 def abstract(var, body):
+    """TOP,BOT,I,K,B,C,S,J,eta-abstraction algorithm."""
     result = try_abstract(var, body)
     if result is not None:
         return result
