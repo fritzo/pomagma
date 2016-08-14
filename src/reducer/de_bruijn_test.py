@@ -9,6 +9,18 @@ from pomagma.reducer.transforms import compile_
 from pomagma.util.testing import for_each, xfail_if_not_implemented
 import pytest
 
+x = IVAR(0)
+y = IVAR(1)
+z = IVAR(2)
+
+F = APP(K, I)
+CI = APP(C, I)
+
+
+def sexpr_compile(string):
+    assert isinstance(string, str), string
+    return compile_(sexpr_parse(string))
+
 
 @for_each([
     (True, []),
@@ -51,10 +63,6 @@ def test_trool_any(expected, values):
 # ----------------------------------------------------------------------------
 # Abstraction
 
-x = IVAR(0)
-y = IVAR(1)
-z = IVAR(2)
-
 # Note the lhs and rhs variable names are shifted by 1:
 # lhs | rhs
 # -------------------------
@@ -96,26 +104,72 @@ def test_abstract(body, expected):
 # ----------------------------------------------------------------------------
 # Decision procedures
 
+def box(x):
+    return APP(CI, x)
+
+
+_double = sexpr_compile('(FUN f (FUN x (f x x)))')
+
+
+def double(x):
+    return APP(_double, x)
+
+
 TRY_DECIDE_LESS_EXAMPLES = [
-    (True, x, x),
-    (True, y, y),
-    (True, z, z),
-    (True, TOP, TOP),
-    (True, BOT, BOT),
-    (True, I, I),
-    (True, K, K),
-    (True, B, B),
-    (True, C, C),
-    (True, S, S),
     (True, BOT, TOP),
     (True, BOT, x),
     (True, x, TOP),
-    (False, TOP, x),
-    (False, x, BOT),
+    (True, BOT, I),
+    (True, I, TOP),
+    (True, BOT, K),
+    (True, BOT, F),
+    (True, K, J),
+    (True, F, J),
+    (True, J, TOP),
     (False, TOP, BOT),
-    (False, x, y),
-    (False, y, z),
-    (False, z, x),
+    (False, I, BOT),
+    (False, TOP, I),
+    (False, K, BOT),
+    (False, F, BOT),
+    (False, J, K),
+    (False, J, F),
+    (False, TOP, J),
+    (True, box(BOT), box(TOP)),
+    (True, box(BOT), box(x)),
+    (True, box(x), box(TOP)),
+    (True, box(BOT), box(I)),
+    (True, box(I), box(TOP)),
+    (True, box(BOT), box(K)),
+    (True, box(BOT), box(F)),
+    (True, box(K), box(J)),
+    (True, box(F), box(J)),
+    (True, box(J), box(TOP)),
+    (False, box(TOP), box(BOT)),
+    (False, box(I), box(BOT)),
+    (False, box(TOP), box(I)),
+    (False, box(K), box(BOT)),
+    (False, box(F), box(BOT)),
+    (False, box(J), box(K)),
+    (False, box(J), box(F)),
+    (False, box(TOP), box(J)),
+    pytest.mark.xfail((True, double(BOT), double(TOP)), run=False),
+    pytest.mark.xfail((True, double(BOT), double(x)), run=False),
+    pytest.mark.xfail((True, double(x), double(TOP)), run=False),
+    pytest.mark.xfail((True, double(BOT), double(I)), run=False),
+    pytest.mark.xfail((True, double(I), double(TOP)), run=False),
+    pytest.mark.xfail((True, double(BOT), double(K)), run=False),
+    pytest.mark.xfail((True, double(BOT), double(F)), run=False),
+    pytest.mark.xfail((True, double(K), double(J)), run=False),
+    pytest.mark.xfail((True, double(F), double(J)), run=False),
+    pytest.mark.xfail((True, double(J), double(TOP)), run=False),
+    pytest.mark.xfail((False, double(TOP), double(BOT)), run=False),
+    pytest.mark.xfail((False, double(I), double(BOT)), run=False),
+    pytest.mark.xfail((False, double(TOP), double(I)), run=False),
+    pytest.mark.xfail((False, double(K), double(BOT)), run=False),
+    pytest.mark.xfail((False, double(F), double(BOT)), run=False),
+    pytest.mark.xfail((False, double(J), double(K)), run=False),
+    pytest.mark.xfail((False, double(J), double(F)), run=False),
+    pytest.mark.xfail((False, double(TOP), double(J)), run=False),
 ]
 
 
@@ -166,5 +220,5 @@ def test_try_decide_less_incomparable(expected, lhs, rhs):
     ),
 ])
 def test_s_linear_bounds(actual, expected_sexpr):
-    expected = compile_(sexpr_parse(expected_sexpr))
+    expected = sexpr_compile(expected_sexpr)
     assert actual == expected

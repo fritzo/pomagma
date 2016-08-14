@@ -203,6 +203,20 @@ def abstract(body):
         return APP(K, result)  # Rule K
 
 
+@memoize_arg
+def increment_ivars(body):
+    if is_ivar(body):
+        return IVAR(body[1] + 1)
+    elif is_atom(body):
+        return body
+    elif is_app(body):
+        return APP(increment_ivars(body[1]), increment_ivars(body[2]))
+    elif is_join(body):
+        return JOIN(frozenset(increment_ivars(arg) for arg in body[1]))
+    else:
+        raise ValueError(body)
+
+
 # ----------------------------------------------------------------------------
 # Conversion code -> term
 
@@ -241,25 +255,25 @@ def code_to_term(code, stack=None, bound_count=0):
             continue
         elif head is I:
             x, stack, bound_count = pop_arg(stack, bound_count)
-            head_term = x
+            points = iter_points(x)
         elif head is K:
             x, stack, bound_count = pop_arg(stack, bound_count)
             y, stack, bound_count = pop_arg(stack, bound_count)
-            head_term = x
+            points = iter_points(x)
         elif head is B:
             x, stack, bound_count = pop_arg(stack, bound_count)
             y, stack, bound_count = pop_arg(stack, bound_count)
             z, stack, bound_count = pop_arg(stack, bound_count)
             yz = term_app(y, z)
             stack = yz, stack
-            head_term = x
+            points = iter_points(x)
         elif head is C:
             x, stack, bound_count = pop_arg(stack, bound_count)
             y, stack, bound_count = pop_arg(stack, bound_count)
             z, stack, bound_count = pop_arg(stack, bound_count)
             stack = y, stack
             stack = z, stack
-            head_term = x
+            points = iter_points(x)
         elif head is S:
             old_stack = stack
             old_bound_count = bound_count
@@ -270,23 +284,26 @@ def code_to_term(code, stack=None, bound_count=0):
                 yz = term_app(y, z)
                 stack = yz, stack
                 stack = z, stack
-                head_term = x
+                points = iter_points(x)
             else:
-                continuations.append((head, old_stack, old_bound_count))
+                continuations.append((S, old_stack, old_bound_count))
                 continue
         elif head is J:
             x, stack, bound_count = pop_arg(stack, bound_count)
             y, stack, bound_count = pop_arg(stack, bound_count)
-            head_term = join_points([x, y])
+            points = itertools.chain(iter_points(x), iter_points(y))
         else:
             raise ValueError(head)
 
-        for point in iter_points(head_term):
+        for point in points:
             head = term_to_code(point)
             pending.append((head, stack, bound_count))
 
+    TODO('FIXME this function should return a cont set')
+
     points = []
     for point, stack, bound_count in continuations:
+        assert not is_abs(point), point
         while stack is not None:
             arg, stack = stack
             point = APP(point, arg)
@@ -394,9 +411,7 @@ def cont_pop_abs(cont):
     if is_abs(head):
         head = head[1]
     else:
-        # eta expand
-        stack = IVAR(bound_count), stack
-        bound_count += 1
+        head = increment_ivars(head)  # FIXME is this right?
     return head, stack, bound_count
 
 
@@ -413,6 +428,8 @@ def cont_pop_app(cont):
 
 @memoize_args
 def try_decide_less_cont(lhs, rhs):
+    assert isinstance(lhs, tuple) and len(lhs) == 3, lhs
+    assert isinstance(rhs, tuple) and len(rhs) == 3, rhs
     if lhs[0] is BOT or rhs[0] is TOP or lhs is rhs:
         return True
     while is_abs(lhs[0]) or is_abs(rhs[0]):
@@ -424,7 +441,8 @@ def try_decide_less_cont(lhs, rhs):
         rhs = cont_pop_app(rhs)
     assert is_ivar(lhs[0]) or lhs[0] in (TOP, BOT, S), lhs[0]
     assert is_ivar(rhs[0]) or rhs[0] in (TOP, BOT, S), rhs[0]
-    TODO('deal with mismatches in bound_count')
+    if lhs[2] != rhs[2]:
+        TODO('deal with mismatches in bound_count')
     if is_ivar(lhs[0]) and is_ivar(rhs[0]):
         if lhs[0] is not rhs[0]:
             return False
