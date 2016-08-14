@@ -5,15 +5,17 @@ procedure try_decide_less(-,-).
 
 """
 
+from collections import namedtuple
 from pomagma.compiler.util import memoize_arg
 from pomagma.compiler.util import memoize_args
-from pomagma.reducer.code import APP, TOP, BOT, I, K, B, C, S, J
-from pomagma.reducer.code import is_app, is_atom
-from pomagma.reducer.code import make_keyword, _term
-from pomagma.util import TODO
+from pomagma.reducer.code import APP, IVAR, TOP, BOT, I, K, B, C, S, J
+from pomagma.reducer.code import complexity
+from pomagma.reducer.code import is_app, is_ivar, is_atom
+from pomagma.reducer.util import LOG
+from pomagma.reducer.util import pretty
 import itertools
 
-__all__ = ['try_decide_less']
+__all__ = ['reduce', 'simplify', 'try_decide_less']
 
 
 def trool_all(args):
@@ -44,90 +46,23 @@ def stack_to_list(stack):
     return result
 
 
-# ----------------------------------------------------------------------------
-# Terms
-
-_IVAR = make_keyword('IVAR')
-_ABS = make_keyword('ABS')
-_JOIN = make_keyword('JOIN')
-
-
-def IVAR(rank):
-    assert isinstance(rank, int) and rank >= 0, rank
-    return _term(_IVAR, rank)
-
-
-def ABS(term):
-    return _term(_ABS, term)
-
-
-def JOIN(args):
-    assert isinstance(args, frozenset), args
-    return _term(_JOIN, args)
-
-
-def is_ivar(term):
-    return isinstance(term, tuple) and term[0] is _IVAR
-
-
-def is_abs(term):
-    return isinstance(term, tuple) and term[0] is _ABS
-
-
-def is_join(term):
-    return isinstance(term, tuple) and term[0] is _JOIN
-
-
-def is_point(term):
-    return not is_join(term)
-
-
-def is_normal(term):
-    """Returns whether term is in linear-beta-eta normal form."""
-    TODO()
-
-
-def join_points(terms):
-    """Joins a set of points into a single term, simplifying via heuristics."""
-    assert all(not is_join(term) for term in terms)
-    terms = set(terms)
-    terms = frozenset(
-        term
-        for term in terms
-        if term is not BOT and not any(
-            try_decide_less_term(term, other)
-            for other in terms if other is not term
-        )
-    )
-    if not terms:
-        return BOT
-    elif len(terms) == 1:
-        return next(iter(terms))
-    else:
-        return JOIN(terms)
-
-
-def iter_points(term):
-    if is_join(term):
-        for subterm in iter_points(term[1]):
-            yield subterm
-    elif term is not BOT:
-        yield term
+def iter_shared_list(shared_list):
+    while shared_list is not None:
+        arg, shared_list = shared_list
+        yield arg
 
 
 # ----------------------------------------------------------------------------
 # Abstraction
 
 @memoize_arg
-def max_free_var(term):
+def max_free_ivar(term):
     if is_atom(term):
         return -1
     elif is_ivar(term):
         return term[1]
     elif is_app(term):
-        return max(max_free_var(term[1]), max_free_var(term[2]))
-    elif is_join(term):
-        return max(max_free_var(arg) for arg in term[1])
+        return max(max_free_ivar(term[1]), max_free_ivar(term[2]))
     else:
         raise ValueError(term)
 
@@ -203,163 +138,281 @@ def abstract(body):
         return APP(K, result)  # Rule K
 
 
-@memoize_arg
-def increment_ivars(body):
+@memoize_args
+def code_increment_ivars(body, min_rank):
     if is_ivar(body):
-        return IVAR(body[1] + 1)
+        rank = body[1]
+        if rank >= min_rank:
+            rank += 1
+        return IVAR(rank)
     elif is_atom(body):
         return body
     elif is_app(body):
-        return APP(increment_ivars(body[1]), increment_ivars(body[2]))
-    elif is_join(body):
-        return JOIN(frozenset(increment_ivars(arg) for arg in body[1]))
+        lhs = code_increment_ivars(body[1], min_rank)
+        rhs = code_increment_ivars(body[2], min_rank)
+        return APP(lhs, rhs)
     else:
         raise ValueError(body)
 
 
-# ----------------------------------------------------------------------------
-# Conversion code -> term
-
-def is_cheap_to_copy(term):
-    return is_ivar(term) or term is TOP or term is BOT
-
-
-def pop_arg(stack, bound_count):
+@memoize_args
+def stack_increment_ivars(stack, min_rank):
     if stack is None:
-        arg = IVAR(bound_count)
-        bound_count += 1
-        return arg, stack, bound_count
+        return None
     else:
         arg, stack = stack
-        return arg, stack, bound_count
+        arg = cont_set_increment_ivars(arg, min_rank)
+        stack = stack_increment_ivars(stack, min_rank)
+        return arg, stack
 
 
 @memoize_args
-def code_to_term(code, stack=None, bound_count=0):
-    """Linear-beta-eta normalize code into a Bohm tree."""
-    pending = [(code, stack, bound_count)]
-    continuations = []
-    while pending:
-        head, stack, bound_count = pending.pop()
-        while is_app(head):
-            arg = code_to_term(head[2])
-            stack = arg, stack
-            head = head[1]
-
-        if is_ivar(head):
-            continuations.append((head, stack, bound_count))
-            continue
-        elif head is TOP:
-            return TOP
-        elif head is BOT:
-            continue
-        elif head is I:
-            x, stack, bound_count = pop_arg(stack, bound_count)
-            points = iter_points(x)
-        elif head is K:
-            x, stack, bound_count = pop_arg(stack, bound_count)
-            y, stack, bound_count = pop_arg(stack, bound_count)
-            points = iter_points(x)
-        elif head is B:
-            x, stack, bound_count = pop_arg(stack, bound_count)
-            y, stack, bound_count = pop_arg(stack, bound_count)
-            z, stack, bound_count = pop_arg(stack, bound_count)
-            yz = term_app(y, z)
-            stack = yz, stack
-            points = iter_points(x)
-        elif head is C:
-            x, stack, bound_count = pop_arg(stack, bound_count)
-            y, stack, bound_count = pop_arg(stack, bound_count)
-            z, stack, bound_count = pop_arg(stack, bound_count)
-            stack = y, stack
-            stack = z, stack
-            points = iter_points(x)
-        elif head is S:
-            old_stack = stack
-            old_bound_count = bound_count
-            x, stack, bound_count = pop_arg(stack, bound_count)
-            y, stack, bound_count = pop_arg(stack, bound_count)
-            z, stack, bound_count = pop_arg(stack, bound_count)
-            if is_cheap_to_copy(z):
-                yz = term_app(y, z)
-                stack = yz, stack
-                stack = z, stack
-                points = iter_points(x)
-            else:
-                continuations.append((S, old_stack, old_bound_count))
-                continue
-        elif head is J:
-            x, stack, bound_count = pop_arg(stack, bound_count)
-            y, stack, bound_count = pop_arg(stack, bound_count)
-            points = itertools.chain(iter_points(x), iter_points(y))
-        else:
-            raise ValueError(head)
-
-        for point in points:
-            head = term_to_code(point)
-            pending.append((head, stack, bound_count))
-
-    TODO('FIXME this function should return a cont set')
-
-    points = []
-    for point, stack, bound_count in continuations:
-        assert not is_abs(point), point
-        while stack is not None:
-            arg, stack = stack
-            point = APP(point, arg)
-        for _ in xrange(bound_count):
-            point = ABS(point)
-        points.append(point)
-
-    return join_points(points)
+def cont_set_increment_ivars(cont_set, min_rank):
+    assert is_cont_set(cont_set), cont_set
+    return make_cont_set(frozenset(
+        cont_increment_ivars(c, min_rank) for c in cont_set
+    ))
 
 
-def term_app(lhs, rhs):
-    code = term_to_code(lhs)
-    stack = rhs, None
-    return code_to_term(code, stack)
+@memoize_args
+def cont_increment_ivars(cont, min_rank):
+    # FIXME is this right? Should we only increment vars below bound?
+    assert is_cont(cont), cont
+    head, stack, bound = cont
+    head = code_increment_ivars(head, min_rank + bound)
+    stack = stack_increment_ivars(stack, min_rank + bound)
+    return make_cont(head, stack, bound)
 
 
 # ----------------------------------------------------------------------------
-# Conversion term -> code
+# Continuations and sets of continuations
+
+# Immutable shared continuations, in linear-beta-eta normal form.
+# head : code
+# stack : stack (frozenset continuation)
+# bound : stack var
+Continuation = namedtuple('Continuation', ['head', 'stack', 'bound'])
+
+INERT_ATOMS = frozenset([TOP, BOT, S])
+
+
+def is_cont(arg):
+    return isinstance(arg, Continuation)
+
+
+def is_cont_set(arg):
+    return isinstance(arg, frozenset) and all(is_cont(c) for c in arg)
+
+
+def is_stack(stack):
+    while stack is not None:
+        if not isinstance(stack, tuple) or len(stack) != 2:
+            return False
+        arg, stack = stack
+        if not is_cont_set(arg):
+            return False
+    return True
+
+
+@memoize_args
+def make_cont(head, stack, bound):
+    """Continuations are linear-beta-eta normal forms."""
+    assert is_ivar(head) or head in INERT_ATOMS, head
+    if head in (TOP, BOT):
+        assert stack is None and bound == 0
+    elif head is S:
+        assert not (
+            stack and stack[1] and stack[1][1] and
+            is_cheap_to_copy(stack[1][1][0]))
+    assert is_stack(stack), stack
+    assert isinstance(bound, int) and bound >= 0, bound
+    return Continuation(head, stack, bound)
+
 
 @memoize_arg
-def term_to_code(term):
-    points = set(iter_points(term))
-    if not points:
-        return BOT
-    codes = map(term_to_code_pointwise, points)
+def make_cont_set(cont_set):
+    assert is_cont_set(cont_set), cont_set
+
+    # Filter out dominated continuations.
+    cont_set = frozenset(
+        cont
+        for cont in cont_set
+        if cont.head is not BOT
+        if not any(cont_dominates(c, cont) for c in cont_set if c is not cont)
+    )
+
+    return cont_set
+
+
+CONT_TOP = make_cont(TOP, None, 0)
+CONT_SET_TOP = make_cont_set(frozenset([CONT_TOP]))
+
+CONT_IVAR_0 = make_cont(IVAR(0), None, 0)
+CONT_SET_IVAR_0 = make_cont_set(frozenset([CONT_IVAR_0]))
+
+
+# ----------------------------------------------------------------------------
+# Conversion : code -> continuation
+
+def is_cheap_to_copy(cont_set):
+    assert is_cont_set(cont_set), cont_set
+    if not cont_set:
+        return True
+    if len(cont_set) > 1:
+        return False
+    cont = next(iter(cont_set))
+    # TODO this could instead check is_linear(cont)
+    if cont.stack or cont.bound:
+        return False
+    head = cont.head
+    return is_ivar(head) or head is TOP or head is BOT
+
+
+class PreContinuation(object):
+    """Mutable temporary continuations, not in normal form."""
+
+    __slots__ = 'head', 'stack', 'bound'
+
+    def __init__(self, head, stack, bound):
+        assert is_stack(stack), stack
+        assert isinstance(bound, int) and bound >= 0
+        self.head = head
+        self.stack = stack
+        self.bound = bound
+
+    def seek_head(self):
+        while is_app(self.head):
+            arg = cont_set_from_codes((self.head[2],))
+            self.stack = arg, self.stack
+            self.head = self.head[1]
+        return self.head
+
+    def peek_at_arg(self, pos):
+        assert isinstance(pos, int) and pos >= 0
+        stack = self.stack
+        for _ in xrange(pos):
+            if stack is None:
+                return CONT_SET_IVAR_0
+            else:
+                arg, stack = stack
+        return arg
+
+    def pop_args(self, count):
+        assert isinstance(count, int) and count > 0
+        args = []
+        for _ in xrange(count):
+            if self.stack is not None:
+                arg, self.stack = self.stack
+                args.append(arg)
+            else:
+                # eta expand
+                min_rank = 0
+                self.head = code_increment_ivars(self.head, min_rank)
+                self.stack = stack_increment_ivars(self.stack, min_rank)
+                args = [cont_set_increment_ivars(arg, 0) for arg in args]
+                args.append(CONT_SET_IVAR_0)
+                self.bound += 1
+        return args
+
+    def push_arg(self, arg):
+        assert is_cont_set(arg), arg
+        self.stack = arg, self.stack
+
+    def freeze(self):
+        return make_cont(self.head, self.stack, self.bound)
+
+
+@memoize_args
+def cont_set_from_codes(codes, stack=None, bound=0):
+    pending = [PreContinuation(code, stack, bound) for code in codes]
+    result = []
+    while pending:
+        precont = pending.pop()
+        head = precont.seek_head()
+
+        if is_ivar(head):
+            result.append(precont.freeze())
+            continue
+        elif head is TOP:
+            return CONT_SET_TOP
+        elif head is BOT:
+            continue
+        elif head is I:
+            x, = precont.pop_args(1)
+            head_cont_set = x
+        elif head is K:
+            x, y = precont.pop_args(2)
+            head_cont_set = x
+        elif head is B:
+            x, y, z = precont.pop_args(3)
+            yz = cont_set_app(y, z)
+            precont.push_arg(yz)
+            head_cont_set = x
+        elif head is C:
+            x, y, z = precont.pop_args(3)
+            stack = y, stack
+            stack = z, stack
+            head_cont_set = x
+        elif head is S:
+            z = precont.peek_at_arg(3)
+            if not is_cheap_to_copy(z):
+                result.append(precont.freeze())
+                continue
+            x, y, z = precont.pop_args(3)
+            yz = cont_set_app(y, z)
+            precont.push_arg(yz)
+            precont.push_arg(z)
+            head_cont_set = x
+        elif head is J:
+            x, y = precont.pop_args(2)
+            head_cont_set = x | y
+        else:
+            raise ValueError(head)
+
+        stack = precont.stack
+        bound = precont.bound
+        for cont in head_cont_set:
+            head = cont_eval(cont)
+            pending.append(PreContinuation(head, stack, bound))
+
+    return make_cont_set(frozenset(result))
+
+
+def cont_set_app(funs, args):
+    assert is_cont_set(funs), funs
+    assert is_cont_set(args), args
+    codes = tuple(sorted(map(cont_eval, funs)))
+    stack = args, None
+    return cont_set_from_codes(codes, stack)
+
+
+# ----------------------------------------------------------------------------
+# Conversion : continuation -> code
+
+@memoize_arg
+def cont_eval(cont):
+    """Returns code in linear normal form."""
+    assert is_cont(cont), cont
+    head, stack, bound = cont
+    while stack is not None:
+        arg_cont_set, stack = stack
+        arg_code = cont_set_eval(arg_cont_set)
+        head = APP(head, arg_code)
+    for _ in xrange(bound):
+        head = abstract(head)
+    return head
+
+
+@memoize_arg
+def cont_set_eval(cont_set):
+    """Returns code in linear normal form."""
+    assert is_cont_set(cont_set), cont_set
+    codes = map(cont_eval, cont_set)
     # TODO Be smarter: return continuation.join_codes(codes)
     codes.sort(reverse=True)
     code = codes.pop()
     while codes:
         code = APP(J, code, codes.pop())
-    return code
-
-
-@memoize_arg
-def term_to_code_pointwise(term):
-    bound_count = 0
-    while is_abs(term):
-        bound_count += 1
-        term = term[1]
-
-    args = None
-    while is_app(term):
-        args = term[2], args
-        term = term[1]
-
-    assert is_ivar(term) or term in (TOP, BOT, S), term
-    code = term
-
-    while args is not None:
-        arg_term, args = args
-        arg_code = term_to_code(arg_term)
-        code = APP(code, arg_code)
-
-    for _ in xrange(bound_count):
-        code = abstract(code)
-
     return code
 
 
@@ -373,141 +426,225 @@ def try_decide_less(lhs, rhs):
     Returns: True, False, or None.
 
     """
-    lhs_term = code_to_term(lhs)
-    rhs_term = code_to_term(rhs)
-    return try_decide_less_term(lhs_term, rhs_term)
+    lhs_term = cont_set_from_codes((lhs,))
+    rhs_term = cont_set_from_codes((rhs,))
+    return cont_set_try_decide_less(lhs_term, rhs_term)
 
 
 @memoize_args
-def try_decide_less_term(lhs, rhs):
-    """Sound incomplete decision procedure for Scott ordering between terms.
-
-    Args: lhs, rhs must be bohm trees.
-    Returns: True, False, or None.
-
-    """
+def cont_set_try_decide_less(lhs, rhs):
+    assert is_cont_set(lhs), lhs
+    assert is_cont_set(rhs), rhs
     return trool_all(
         trool_any(
-            try_decide_less_pointwise(lhs_point, rhs_point)
-            for rhs_point in iter_points(rhs)
+            cont_try_decide_less(lhs_cont, rhs_cont)
+            for rhs_cont in rhs
         )
-        for lhs_point in iter_points(lhs)
+        for lhs_cont in lhs
     )
 
 
 @memoize_args
-def try_decide_less_pointwise(lhs, rhs):
-    assert is_point(lhs), lhs
-    assert is_point(rhs), rhs
-    if lhs is BOT or lhs is rhs or rhs is TOP:
+def cont_try_decide_less(lhs, rhs):
+    assert is_cont(lhs), lhs
+    assert is_cont(rhs), rhs
+    if lhs.head is BOT or rhs.head is TOP or lhs is rhs:
         return True
-    lhs_cont = lhs, None, 0
-    rhs_cont = rhs, None, 0
-    return try_decide_less_cont(lhs_cont, rhs_cont)
+    if lhs.head is TOP and rhs.head is BOT:
+        return False
+    if lhs.head is TOP and is_ivar(rhs.head):
+        return False
+    if is_ivar(lhs.head) and rhs.head is BOT:
+        return False
 
+    # Eta expand until binder counts agree.
+    lhs_head, lhs_stack, lhs_bound = lhs
+    rhs_head, rhs_stack, rhs_bound = rhs
+    for _ in xrange(rhs_bound - lhs_bound):
+        lhs_head = code_increment_ivars(lhs_head, 0)
+        lhs_stack = stack_increment_ivars(lhs_stack, 0)
+    for _ in xrange(lhs_bound - rhs_bound):
+        rhs_head = code_increment_ivars(rhs_head, 0)
+        rhs_stack = stack_increment_ivars(rhs_stack, 0)
 
-def cont_pop_abs(cont):
-    head, stack, bound_count = cont
-    if is_abs(head):
-        head = head[1]
-    else:
-        head = increment_ivars(head)  # FIXME is this right?
-    return head, stack, bound_count
-
-
-def cont_pop_app(cont):
-    head, stack, bound_count = cont
-    if is_app(head):
-        stack = head[2], stack
-        head = head[1]
-    else:
-        stack = IVAR(bound_count), stack
-        bound_count += 1
-    return head, stack, bound_count
-
-
-@memoize_args
-def try_decide_less_cont(lhs, rhs):
-    assert isinstance(lhs, tuple) and len(lhs) == 3, lhs
-    assert isinstance(rhs, tuple) and len(rhs) == 3, rhs
-    if lhs[0] is BOT or rhs[0] is TOP or lhs is rhs:
-        return True
-    while is_abs(lhs[0]) or is_abs(rhs[0]):
-        lhs = cont_pop_abs(lhs)
-        rhs = cont_pop_abs(rhs)
-    while is_app(lhs[0]):
-        lhs = cont_pop_app(lhs)
-    while is_app(rhs[0]):
-        rhs = cont_pop_app(rhs)
-    assert is_ivar(lhs[0]) or lhs[0] in (TOP, BOT, S), lhs[0]
-    assert is_ivar(rhs[0]) or rhs[0] in (TOP, BOT, S), rhs[0]
-    if lhs[2] != rhs[2]:
-        TODO('deal with mismatches in bound_count')
-    if is_ivar(lhs[0]) and is_ivar(rhs[0]):
-        if lhs[0] is not rhs[0]:
+    assert is_ivar(lhs_head) or lhs_head in INERT_ATOMS, lhs_head
+    assert is_ivar(rhs_head) or rhs_head in INERT_ATOMS, rhs_head
+    if is_ivar(lhs_head) and is_ivar(rhs_head):
+        if lhs_head is not rhs_head:
             return False
-        return try_decide_less_stack(lhs[1], rhs[1])
-    assert lhs[0] is S or rhs[0] is S
-    if lhs[0] is S and rhs[0] is S:
+        return stack_try_decide_less(lhs_stack, rhs_stack)
+    assert lhs_head is S or rhs_head is S
+    if lhs_head is S and rhs_head is S:
         # Try to compare assuming lhs and rhs align.
-        if try_decide_less_stack(lhs[1], rhs[1]) is True:
+        if stack_try_decide_less(lhs_stack, rhs_stack) is True:
             return True
-    if lhs[0] is S:
+    if lhs_head is S:
         # Try to approximate lhs.
         for lhs_ub in iter_upper_bounds(lhs):
-            if try_decide_less_cont(lhs_ub, rhs) is True:
+            if cont_try_decide_less(lhs_ub, rhs) is True:
                 return True
         for lhs_lb in iter_lower_bounds(lhs):
-            if try_decide_less_cont(lhs_lb, rhs) is False:
+            if cont_try_decide_less(lhs_lb, rhs) is False:
                 return False
-    if rhs[0] is S:
+    if rhs_head is S:
         # Try to approximate rhs.
         for rhs_lb in iter_lower_bounds(rhs):
-            if try_decide_less_cont(lhs, rhs_lb) is True:
+            if cont_try_decide_less(lhs, rhs_lb) is True:
                 return True
         for rhs_ub in iter_upper_bounds(rhs):
-            if try_decide_less_cont(lhs, rhs_ub) is False:
+            if cont_try_decide_less(lhs, rhs_ub) is False:
                 return False
     return None
 
 
-def try_decide_less_stack(lhs_stack, rhs_stack):
+def stack_try_decide_less(lhs_stack, rhs_stack):
     lhs_args = stack_to_list(lhs_stack)
     rhs_args = stack_to_list(rhs_stack)
     if len(lhs_args) != len(rhs_args):
         return False
     return trool_all(
-        try_decide_less_term(lhs_arg, rhs_arg)
+        cont_set_try_decide_less(lhs_arg, rhs_arg)
         for lhs_arg, rhs_arg in itertools.izip(lhs_args, rhs_args)
     )
+
+
+def cont_dominates(lhs, rhs):
+    lhs_rhs = cont_try_decide_less(lhs, rhs)
+    rhs_lhs = cont_try_decide_less(rhs, lhs)
+    return lhs_rhs is True and rhs_lhs is False
 
 
 # ----------------------------------------------------------------------------
 # Linear approximations of S
 
-S_LINEAR_UPPER_BOUNDS = [
+S_LINEAR_UPPER_BOUNDS = (
     # S [= \x,y,z. x TOP(y z)
     APP(APP(B, B), APP(APP(C, I), TOP)),
     # S [=\x,y,z. x z(y TOP)
-    APP(APP(C, APP(APP(B, B), C)), APP(APP(C, I), TOP))
-]
+    APP(APP(C, APP(APP(B, B), C)), APP(APP(C, I), TOP)),
+)
 
-S_LINEAR_LOWER_BOUNDS = [
-    # S =] \x,y,z. (x BOT(y z) | x z(y BOT))
-    APP(APP(J, APP(APP(B, B), APP(APP(C, I), BOT))),
-        APP(APP(C, APP(APP(B, B), C)), APP(APP(C, I), BOT)))
-]
+S_LINEAR_LOWER_BOUNDS = (
+    # S =] \x,y,z. x BOT(y z)
+    APP(APP(B, B), APP(APP(C, I), BOT)),
+    # S =] \x,y,z. x z(y BOT)
+    APP(APP(C, APP(APP(B, B), C)), APP(APP(C, I), BOT)),
+)
 
 
 def iter_upper_bounds(cont):
-    head, stack, bound_count = cont
-    assert head is S, head
+    assert is_cont(cont), cont
+    head, stack, bound = cont
+    assert head is S, cont
     for head in S_LINEAR_UPPER_BOUNDS:
-        yield code_to_term(head, stack, bound_count)
+        yield cont_set_from_codes((head,), stack, bound)
 
 
 def iter_lower_bounds(cont):
-    head, stack, bound_count = cont
-    assert head is S, head
-    for head in S_LINEAR_LOWER_BOUNDS:
-        yield code_to_term(head, stack, bound_count)
+    assert is_cont(cont), cont
+    head, stack, bound = cont
+    assert head is S, cont
+    return cont_set_from_codes(S_LINEAR_LOWER_BOUNDS, stack, bound)
+
+
+# ----------------------------------------------------------------------------
+# Reduction
+
+@memoize_arg
+def stack_try_compute_step(stack):
+    if stack is None:
+        return False, None
+    cont_set, stack = stack
+    success, cont_set = cont_set_try_compute_step(cont_set)
+    if success:
+        return True, cont_set
+    success, stack = stack_try_compute_step(stack)
+    stack = cont_set, stack
+    return success, stack
+
+
+@memoize_arg
+def cont_try_compute_step(cont):
+    assert is_cont(cont), cont
+    precont = PreContinuation(cont.head, cont.stack, cont.bound)
+    head = precont.seek_head()
+    if head is S:
+        x, y, z = precont.pop_args(3)
+        assert not is_cheap_to_copy(z), z
+        yz = cont_set_app(y, z)
+        precont.push_arg(yz)
+        precont.push_arg(z)
+        codes = tuple(sorted(map(cont_eval, x)))
+        cont_set = cont_set_from_codes(codes, precont.stack, precont.bound)
+        success = True
+    else:
+        success, precont.stack = stack_try_compute_step(precont.stack)
+        if success:
+            cont = precont.freeze()
+        cont_set = make_cont_set(frozenset([cont]))
+    return success, cont_set
+
+
+def cont_complexity(cont):
+    assert is_cont(cont), cont
+    result = complexity(cont.head)
+    for arg in iter_shared_list(cont.stack):
+        result += 1 + cont_set_complexity(arg)  # APP(-, arg)
+    result += 3 * cont.bound  # FUN(var, -)
+    return result
+
+
+def cont_set_complexity(cont_set):
+    assert is_cont_set(cont_set), cont_set
+    if not cont_set:
+        return 1  # BOT
+    return sum(cont_complexity(cont) for cont in cont_set) + len(cont_set) - 1
+
+
+@memoize_arg
+def cont_set_try_compute_step(cont_set):
+    assert is_cont_set(cont_set), cont_set
+    # TODO Separate cont_set into seen and pending.
+    for cont in sorted(cont_set, key=cont_complexity):
+        success, new_cont_set = cont_try_compute_step(cont)
+        if success:
+            new_cont_set = make_cont_set(cont_set | new_cont_set)
+            if new_cont_set != cont_set:
+                return True, new_cont_set
+    return False, cont_set
+
+
+def cont_is_normal(cont):
+    assert is_cont(cont), cont
+    success, cont_set = cont_try_compute_step(cont)
+    return not success
+
+
+@memoize_arg
+def compute(code):
+    cont_set = cont_set_from_codes((code,))
+    working = True
+    while working:
+        working, cont_set = cont_set_try_compute_step(cont_set)
+    cont_set = make_cont_set(frozenset(
+        c for c in cont_set if cont_is_normal(c)
+    ))
+    return cont_set_eval(cont_set)
+
+
+def reduce(code, budget=0):
+    '''Beta-eta reduce code, ignoring budget.'''
+    assert isinstance(budget, int) and budget >= 0, budget
+    LOG.info('reduce({})'.format(pretty(code)))
+    code = compute(code)
+    assert max_free_ivar(code) < 0, code
+    return code
+
+
+def simplify(code):
+    '''Linearly beta-eta reduce.'''
+    LOG.info('simplify({})'.format(pretty(code)))
+    cont_set = cont_set_from_codes((code,))
+    code = cont_set_eval(cont_set)
+    assert max_free_ivar(code) < 0, code
+    return code

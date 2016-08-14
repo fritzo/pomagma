@@ -53,42 +53,6 @@ def fresh(avoid):
             return var
 
 
-def join_codes(codes):
-    """Joins a set of codes into a single code, simplifying via heuristics."""
-    assert isinstance(codes, set)
-    if not codes:
-        return BOT
-
-    # Apply J-eta rules to recognize J and APP(J, x).
-    # This should really be combined with _close.
-    if K in codes and F in codes:
-        codes.remove(K)
-        codes.remove(F)
-        codes.add(J)
-    if I in codes:
-        for kx in tuple(codes):
-            if is_app(kx) and kx[1] is K:
-                codes.discard(I)
-                codes.remove(kx)
-                codes.add(APP(J, kx[2]))
-
-    # Filter out dominated codes.
-    # FIXME If x [= y and y [= x, this filters out both.
-    filtered_codes = []
-    for code in codes:
-        if not any(oracle.try_decide_less(code, other)
-                   for other in codes
-                   if other is not code):
-            filtered_codes.append(code)
-    filtered_codes.sort(key=lambda code: (complexity(code), code))
-
-    # Construct a join term.
-    result = filtered_codes[0]
-    for code in filtered_codes[1:]:
-        result = APP(APP(J, result), code)
-    return result
-
-
 # ----------------------------------------------------------------------------
 # Tracing
 
@@ -127,14 +91,23 @@ def print_tuple(*printers):
 
 
 # ----------------------------------------------------------------------------
-# Continuations
+# Continuations and sets of continuations
 
+# Immutable shared continuations, in linear-beta-eta normal form.
 # head : code
 # stack : stack (frozenset continuation)
 # bound : stack var
 Continuation = namedtuple('Continuation', ['head', 'stack', 'bound'])
 
 INERT_ATOMS = frozenset([TOP, BOT, S, EVAL, QQUOTE, QAPP])
+
+
+def is_cont(arg):
+    return isinstance(arg, Continuation)
+
+
+def is_cont_set(arg):
+    return isinstance(arg, frozenset) and all(is_cont(c) for c in arg)
 
 
 @memoize_args
@@ -154,8 +127,7 @@ def make_cont(head, stack, bound):
 
 @memoize_arg
 def make_cont_set(cont_set):
-    assert isinstance(cont_set, frozenset), cont_set
-    assert all(isinstance(c, Continuation) for c in cont_set)
+    assert is_cont_set(cont_set), cont_set
 
     # Filter out dominated continuations.
     cont_set = frozenset(
@@ -190,33 +162,8 @@ def cont_set_try_decide_less(lhs_cont_set, rhs_cont_set):
     )
 
 
-@logged(print_cont, returns=print_code)
-@memoize_arg
-def cont_eval(cont):
-    """Returns code in linear normal form."""
-    assert isinstance(cont, Continuation)
-    head, stack, bound = cont
-    while stack is not None:
-        arg_cont_set, stack = stack
-        arg_code = cont_set_eval(arg_cont_set)
-        head = APP(head, arg_code)
-    while bound is not None:
-        var, bound = bound
-        head = abstract(var, head)
-    return head
-
-
-@logged(print_cont_set, returns=print_code)
-@memoize_arg
-def cont_set_eval(cont_set):
-    """Returns code in linear normal form."""
-    assert isinstance(cont_set, frozenset)
-    assert all(isinstance(c, Continuation) for c in cont_set)
-    codes = set(map(cont_eval, cont_set))
-    return join_codes(codes)
-
-
 def cont_free_vars(cont):
+    assert is_cont(cont), cont
     all_vars = free_vars(cont.head)
     for cont_set in iter_shared_list(cont.stack):
         all_vars |= cont_set_free_vars(cont_set)
@@ -225,6 +172,7 @@ def cont_free_vars(cont):
 
 
 def cont_set_free_vars(cont_set):
+    assert is_cont_set(cont_set), cont_set
     free = frozenset()
     for cont in cont_set:
         free |= cont_free_vars(cont)
@@ -249,30 +197,21 @@ def pop_arg(stack, bound, *cont_sets):
         return cont_set, stack, bound
 
 
-@logged(print_cont_set, print_cont_set, returns=print_cont_set)
-def cont_app(funs, args):
-    assert isinstance(funs, frozenset)
-    assert isinstance(args, frozenset)
-    assert all(isinstance(f, Continuation) for f in funs)
-    assert all(isinstance(a, Continuation) for a in args)
-    codes = tuple(map(cont_eval, funs))
-    stack = args, None
-    return cont_set_from_codes(codes, stack)
-
+# ----------------------------------------------------------------------------
+# Conversion : code -> continuation
 
 def is_cheap_to_copy(cont_set):
-    assert isinstance(cont_set, frozenset)
-    assert all(isinstance(c, Continuation) for c in cont_set)
+    assert is_cont_set(cont_set), cont_set
+    if not cont_set:
+        return True
     if len(cont_set) > 1:
         return False
-    for cont in cont_set:
-        # TODO this could instead check is_linear(cont)
-        if cont.stack or cont.bound:
-            return False
-        head = cont.head
-        if not (is_var(head) or head is TOP or head is BOT):
-            return False
-    return True
+    cont = next(iter(cont_set))
+    # TODO this could instead check is_linear(cont)
+    if cont.stack or cont.bound:
+        return False
+    head = cont.head
+    return is_var(head) or head is TOP or head is BOT
 
 
 @logged(print_code_set, print_stack, print_bound, returns=print_cont_set)
@@ -311,7 +250,7 @@ def cont_set_from_codes(codes, stack=None, bound=None):
             x, stack, bound = pop_arg(stack, bound)
             y, stack, bound = pop_arg(stack, bound, x)
             z, stack, bound = pop_arg(stack, bound, x, y)
-            yz = cont_app(y, z)
+            yz = cont_set_app(y, z)
             stack = yz, stack
             head_cont_set = x
         elif head is C:
@@ -328,7 +267,7 @@ def cont_set_from_codes(codes, stack=None, bound=None):
             y, stack, bound = pop_arg(stack, bound, x)
             z, stack, bound = pop_arg(stack, bound, x, y)
             if is_cheap_to_copy(z):
-                yz = cont_app(y, z)
+                yz = cont_set_app(y, z)
                 stack = yz, stack
                 stack = z, stack
                 head_cont_set = x
@@ -384,10 +323,87 @@ def cont_set_from_codes(codes, stack=None, bound=None):
             raise NotImplementedError(head)
 
         for cont in head_cont_set:
-            pending.append((cont_eval(cont), stack, bound))
+            head = cont_eval(cont)
+            pending.append((head, stack, bound))
 
     return make_cont_set(frozenset(result))
 
+
+@logged(print_cont_set, print_cont_set, returns=print_cont_set)
+def cont_set_app(funs, args):
+    assert is_cont_set(funs), funs
+    assert is_cont_set(args), args
+    codes = tuple(sorted(map(cont_eval, funs)))
+    stack = args, None
+    return cont_set_from_codes(codes, stack)
+
+
+# ----------------------------------------------------------------------------
+# Conversion : continuation -> code
+
+def join_codes(codes):
+    """Joins a set of codes into a single code, simplifying via heuristics."""
+    assert isinstance(codes, set)
+    if not codes:
+        return BOT
+
+    # Apply J-eta rules to recognize J and APP(J, x).
+    # This should really be combined with _close.
+    if K in codes and F in codes:
+        codes.remove(K)
+        codes.remove(F)
+        codes.add(J)
+    if I in codes:
+        for kx in tuple(codes):
+            if is_app(kx) and kx[1] is K:
+                codes.discard(I)
+                codes.remove(kx)
+                codes.add(APP(J, kx[2]))
+
+    # Filter out dominated codes.
+    # FIXME If x [= y and y [= x, this filters out both.
+    filtered_codes = []
+    for code in codes:
+        if not any(oracle.try_decide_less(code, other)
+                   for other in codes
+                   if other is not code):
+            filtered_codes.append(code)
+    filtered_codes.sort(key=lambda code: (complexity(code), code))
+
+    # Construct a join term.
+    result = filtered_codes[0]
+    for code in filtered_codes[1:]:
+        result = APP(APP(J, result), code)
+    return result
+
+
+@logged(print_cont, returns=print_code)
+@memoize_arg
+def cont_eval(cont):
+    """Returns code in linear normal form."""
+    assert is_cont(cont), cont
+    head, stack, bound = cont
+    while stack is not None:
+        arg_cont_set, stack = stack
+        arg_code = cont_set_eval(arg_cont_set)
+        head = APP(head, arg_code)
+    while bound is not None:
+        var, bound = bound
+        head = abstract(var, head)
+    return head
+
+
+@logged(print_cont_set, returns=print_code)
+@memoize_arg
+def cont_set_eval(cont_set):
+    """Returns code in linear normal form."""
+    assert is_cont_set(cont_set), cont_set
+    codes = set(map(cont_eval, cont_set))
+    return join_codes(codes)
+
+
+# ----------------------------------------------------------------------------
+# Reduction
 
 @logged(print_stack, returns=print_tuple(str, print_stack))
 @memoize_arg
@@ -406,17 +422,17 @@ def stack_try_compute_step(stack):
 @logged(print_cont, returns=print_tuple(str, print_cont_set))
 @memoize_arg
 def cont_try_compute_step(cont):
-    assert isinstance(cont, Continuation)
+    assert is_cont(cont), cont
     head, stack, bound = cont
     if head is S:
         x, stack, bound = pop_arg(stack, bound)
         y, stack, bound = pop_arg(stack, bound, x)
         z, stack, bound = pop_arg(stack, bound, x, y)
         assert not is_cheap_to_copy(z), z
-        yz = cont_app(y, z)
+        yz = cont_set_app(y, z)
         stack = yz, stack
         stack = z, stack
-        codes = tuple(map(cont_eval, x))
+        codes = tuple(sorted(map(cont_eval, x)))
         cont_set = cont_set_from_codes(codes, stack, bound)
         success = True
     else:
@@ -428,20 +444,26 @@ def cont_try_compute_step(cont):
 
 
 def cont_complexity(cont):
-    assert isinstance(cont, Continuation)
+    assert is_cont(cont), cont
     result = complexity(cont.head)
     for arg in iter_shared_list(cont.stack):
-        result += 1 + complexity(arg)  # APP(-, arg)
+        result += 1 + cont_set_complexity(arg)  # APP(-, arg)
     for var in iter_shared_list(cont.bound):
         result += 1 + complexity(var)  # FUN(var, -)
     return result
 
 
+def cont_set_complexity(cont_set):
+    assert is_cont_set(cont_set), cont_set
+    if not cont_set:
+        return 1  # BOT
+    return sum(cont_complexity(cont) for cont in cont_set) + len(cont_set) - 1
+
+
 @logged(print_cont_set, returns=print_tuple(str, print_cont_set))
 @memoize_arg
 def cont_set_try_compute_step(cont_set):
-    assert isinstance(cont_set, frozenset)
-    assert all(isinstance(c, Continuation) for c in cont_set)
+    assert is_cont_set(cont_set), cont_set
     # TODO Separate cont_set into seen and pending.
     for cont in sorted(cont_set, key=cont_complexity):
         success, new_cont_set = cont_try_compute_step(cont)
@@ -453,7 +475,7 @@ def cont_set_try_compute_step(cont_set):
 
 
 def cont_is_normal(cont):
-    assert isinstance(cont, Continuation)
+    assert is_cont(cont), cont
     success, cont_set = cont_try_compute_step(cont)
     return not success
 

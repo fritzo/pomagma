@@ -17,7 +17,8 @@ def make_keyword(name):
     return name
 
 
-_VAR = make_keyword('VAR')
+_VAR = make_keyword('VAR')  # Nonimal variable.
+_IVAR = make_keyword('IVAR')  # de Bruijn variable.
 _APP = make_keyword('APP')
 _QUOTE = make_keyword('QUOTE')
 _FUN = make_keyword('FUN')
@@ -59,8 +60,15 @@ def _term(*args):
 
 def VAR(name):
     if re_keyword.match(name):
-        raise ValueError('Variable names cannot match [A-Z]+')
+        raise ValueError('Variable names cannot match [A-Z]+: {}'.format(name))
     return _term(_VAR, intern(name))
+
+
+def IVAR(rank):
+    if not isinstance(rank, int) and rank >= 0:
+        raise ValueError(
+            'Variable index must be a natural number {}'.format(rank))
+    return _term(_IVAR, rank)
 
 
 def APP(lhs, rhs):
@@ -97,6 +105,10 @@ def is_atom(code):
 
 def is_var(code):
     return isinstance(code, tuple) and code[0] is _VAR
+
+
+def is_ivar(term):
+    return isinstance(term, tuple) and term[0] is _IVAR
 
 
 def is_app(code):
@@ -169,6 +181,10 @@ def _pop_token(tokens):
     return tokens.pop()
 
 
+def _pop_int(tokens):
+    return int(tokens.pop())
+
+
 def _polish_parse_tokens(tokens):
     token = tokens.pop()
     try:
@@ -185,6 +201,7 @@ _PARSERS = {
     _FUN: (_polish_parse_tokens, _polish_parse_tokens),
     _LET: (_polish_parse_tokens, _polish_parse_tokens, _polish_parse_tokens),
     _ABIND: (_pop_token, _polish_parse_tokens),
+    _IVAR: (_pop_int,),
     _RVAR: (_pop_token,),
     _SVAR: (_pop_token,),
 }
@@ -204,6 +221,10 @@ def _polish_print_tokens(code, tokens):
             tokens.append(code[0])
         for arg in code[1:]:
             _polish_print_tokens(arg, tokens)
+    elif isinstance(code, int):
+        tokens.append(str(code))
+    else:
+        raise ValueError(code)
 
 
 # ----------------------------------------------------------------------------
@@ -238,6 +259,9 @@ def to_sexpr(code):
         args.append(head[2])
         args.append(head[1])
         head = _ABIND
+    elif is_ivar(head):
+        args.append(str(head[1]))
+        head = _IVAR
     elif is_rvar(head):
         args.append(head[1])
         head = _RVAR
@@ -278,6 +302,9 @@ def from_sexpr(sexpr):
             body = from_sexpr(sexpr[2])
             head = ABIND(sexpr[1], body)
             args = sexpr[3:]
+        elif head is _IVAR:
+            head = IVAR(int(sexpr[1]))
+            args = sexpr[2:]
         elif head is _RVAR:
             head = RVAR(sexpr[1])
             args = sexpr[2:]

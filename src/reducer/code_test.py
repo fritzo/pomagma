@@ -1,7 +1,7 @@
-from pomagma.reducer.code import CODE, EVAL, QAPP, QQUOTE, EQUAL, LESS
+from pomagma.reducer.code import QUOTE, CODE, EVAL, QAPP, QQUOTE, EQUAL, LESS
 from pomagma.reducer.code import TOP, BOT, I, K, B, C, S, J
 from pomagma.reducer.code import V, A, UNIT, BOOL, MAYBE, PROD, SUM, NUM
-from pomagma.reducer.code import VAR, APP, QUOTE, FUN, LET, ABIND, RVAR, SVAR
+from pomagma.reducer.code import VAR, IVAR, APP, FUN, LET, ABIND, RVAR, SVAR
 from pomagma.reducer.code import free_vars, complexity
 from pomagma.reducer.code import polish_parse, polish_print
 from pomagma.reducer.code import sexpr_parse, sexpr_print
@@ -31,6 +31,8 @@ z = VAR('z')
     (ABIND('a', x), [x]),
     (RVAR('a'), []),
     (SVAR('a'), []),
+    (IVAR(0), []),
+    (IVAR(1), []),
     (x, [x]),
     (APP(I, x), [x]),
     (APP(x, x), [x]),
@@ -140,10 +142,12 @@ s_varnames = s.builds(
     s.text(alphabet=alphabet, min_size=1, average_size=5),
 )
 s_vars = s.builds(VAR, s_varnames)
+s_ivars = s.builds(IVAR, s.integers(min_value=0, max_value=99))
 s_rvars = s.builds(RVAR, s_varnames)
 s_svars = s.builds(SVAR, s_varnames)
 s_atoms = s.one_of(
-    s.one_of(s_vars),
+    s_vars,
+    s_ivars,
     s.just(TOP),
     s.just(BOT),
     s.just(I),
