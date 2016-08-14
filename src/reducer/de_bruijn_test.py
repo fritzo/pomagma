@@ -1,13 +1,18 @@
+from pomagma.reducer import de_bruijn
 from pomagma.reducer.code import APP, TOP, BOT, I, K, B, C, S, J
 from pomagma.reducer.code import sexpr_parse
+from pomagma.reducer.de_bruijn import CONT_SET_TOP, make_cont, make_cont_set
 from pomagma.reducer.de_bruijn import IVAR, abstract
 from pomagma.reducer.de_bruijn import S_LINEAR_LOWER_BOUNDS
 from pomagma.reducer.de_bruijn import S_LINEAR_UPPER_BOUNDS
 from pomagma.reducer.de_bruijn import trool_all, trool_any
 from pomagma.reducer.de_bruijn import try_decide_less
+from pomagma.reducer.testing import iter_equations
+from pomagma.reducer.testing import s_codes, s_quoted, s_sk_codes, s_skj_codes
 from pomagma.reducer.transforms import compile_
 from pomagma.util.testing import for_each, xfail_if_not_implemented
 import pytest
+import hypothesis
 
 x = IVAR(0)
 y = IVAR(1)
@@ -144,14 +149,14 @@ TRY_DECIDE_LESS_EXAMPLES = [
     (True, box(K), box(J)),
     (True, box(F), box(J)),
     (True, box(J), box(TOP)),
-    pytest.mark.xfail((False, box(TOP), box(BOT))),
-    pytest.mark.xfail((False, box(I), box(BOT))),
-    pytest.mark.xfail((False, box(TOP), box(I))),
-    pytest.mark.xfail((False, box(K), box(BOT))),
-    pytest.mark.xfail((False, box(F), box(BOT))),
-    pytest.mark.xfail((False, box(J), box(K))),
-    pytest.mark.xfail((False, box(J), box(F))),
-    pytest.mark.xfail((False, box(TOP), box(J))),
+    (False, box(TOP), box(BOT)),
+    (False, box(I), box(BOT)),
+    (False, box(TOP), box(I)),
+    (False, box(K), box(BOT)),
+    (False, box(F), box(BOT)),
+    (False, box(J), box(K)),
+    (False, box(J), box(F)),
+    (False, box(TOP), box(J)),
     (True, double(BOT), double(TOP)),
     (True, double(BOT), double(x)),
     (True, double(x), double(TOP)),
@@ -162,14 +167,14 @@ TRY_DECIDE_LESS_EXAMPLES = [
     (True, double(K), double(J)),
     (True, double(F), double(J)),
     (True, double(J), double(TOP)),
-    pytest.mark.xfail((False, double(TOP), double(BOT))),
-    pytest.mark.xfail((False, double(I), double(BOT))),
-    pytest.mark.xfail((False, double(TOP), double(I))),
-    pytest.mark.xfail((False, double(K), double(BOT))),
-    pytest.mark.xfail((False, double(F), double(BOT))),
+    (False, double(TOP), double(BOT)),
+    (False, double(I), double(BOT)),
+    (False, double(TOP), double(I)),
+    (False, double(K), double(BOT)),
+    (False, double(F), double(BOT)),
     pytest.mark.xfail((False, double(J), double(K))),
     pytest.mark.xfail((False, double(J), double(F))),
-    pytest.mark.xfail((False, double(TOP), double(J))),
+    (False, double(TOP), double(J)),
 ]
 
 
@@ -220,3 +225,61 @@ def test_try_decide_less_incomparable(expected, lhs, rhs):
 def test_s_linear_bounds(actual, expected_sexpr):
     expected = sexpr_compile(expected_sexpr)
     assert actual == expected
+
+
+# ----------------------------------------------------------------------------
+# Reduction
+
+CONT_X = make_cont(x, None, 0)
+CONT_SET_X = make_cont_set(frozenset([CONT_X]))
+
+
+@for_each([
+    (S, None, 0, 1 + 0 + 0),
+    (x, None, 0, 2 + 0 + 0),
+    (S, None, 1, 1 + 0 + 3),
+    (S, None, 2, 1 + 0 + 6),
+    (S, (CONT_SET_TOP, None), 0, 1 + 2 + 0),
+    (S, (CONT_SET_TOP, None), 1, 1 + 2 + 3),
+    (S, (CONT_SET_TOP, None), 2, 1 + 2 + 6),
+    (S, (CONT_SET_X, None), 0, 1 + 3 + 0),
+    (S, (CONT_SET_X, None), 1, 1 + 3 + 3),
+    (S, (CONT_SET_X, None), 2, 1 + 3 + 6),
+    (S, (CONT_SET_X, (CONT_SET_TOP, None)), 0, 1 + 5 + 0),
+    (S, (CONT_SET_X, (CONT_SET_TOP, None)), 1, 1 + 5 + 3),
+    (S, (CONT_SET_X, (CONT_SET_TOP, None)), 2, 1 + 5 + 6),
+])
+def test_cont_complexity(code, stack, bound, expected):
+    cont = de_bruijn.make_cont(code, stack, bound)
+    assert de_bruijn.cont_complexity(cont) == expected
+
+
+@for_each(iter_equations(['sk', 'join', ], test_id='de_bruijn'))
+def test_reduce_equations(code, expected, message):
+    with xfail_if_not_implemented():
+        actual = de_bruijn.reduce(code)
+    assert actual == expected, message
+
+
+@hypothesis.given(s_sk_codes)
+def test_simplify_runs_sk(code):
+    with xfail_if_not_implemented():
+        de_bruijn.simplify(code)
+
+
+@hypothesis.given(s_skj_codes)
+def test_simplify_runs_skj(code):
+    with xfail_if_not_implemented():
+        de_bruijn.simplify(code)
+
+
+@hypothesis.given(s_codes)
+def test_simplify_runs(code):
+    with xfail_if_not_implemented():
+        de_bruijn.simplify(code)
+
+
+@hypothesis.given(s_quoted)
+def test_simplify_runs_quoted(quoted):
+    with xfail_if_not_implemented():
+        de_bruijn.simplify(quoted)

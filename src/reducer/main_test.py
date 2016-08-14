@@ -52,3 +52,21 @@ def test_reduce_continuatin_sexpr_equations(code, expected_code, message):
         actual_string = main.reduce(string, engine='continuation')
     expected_string = sexpr_print(expected_code)
     assert actual_string == expected_string, message
+
+
+@for_each(iter_equations(['sk', 'join'], test_id='de_bruijn'))
+def test_reduce_de_bruijn_polish_equations(code, expected_code, message):
+    string = polish_print(code)
+    with skip_if_not_implemented():
+        actual_string = main.reduce(string, engine='de_bruijn')
+    expected_string = polish_print(expected_code)
+    assert actual_string == expected_string, message
+
+
+@for_each(iter_equations(['sk', 'join'], test_id='de_bruijn'))
+def test_reduce_de_bruijn_sexpr_equations(code, expected_code, message):
+    string = sexpr_print(code)
+    with skip_if_not_implemented():
+        actual_string = main.reduce(string, engine='de_bruijn')
+    expected_string = sexpr_print(expected_code)
+    assert actual_string == expected_string, message

@@ -1,5 +1,6 @@
 from parsable import parsable
 from pomagma.reducer import continuation
+from pomagma.reducer import de_bruijn
 from pomagma.reducer import engine
 from pomagma.reducer import lib
 from pomagma.reducer import transforms
@@ -113,6 +114,7 @@ def reduce_cpp(*args):
 ENGINES = {
     'engine': engine,
     'continuation': continuation,
+    'de_bruijn': de_bruijn,
 }
 
 
@@ -122,7 +124,7 @@ def reduce(string, engine='engine', fmt='auto'):
 
     Args:
         string: code to reduce, in some parsable format specified by fmt
-        engine: 'engine' or 'continuation'
+        engine: 'engine', 'continuation', or 'de_bruijn'
         fmt: one of 'auto', 'polish', or 'sexpr'
 
     """

@@ -10,7 +10,8 @@ from pomagma.compiler.util import memoize_arg
 from pomagma.compiler.util import memoize_args
 from pomagma.reducer.code import APP, IVAR, TOP, BOT, I, K, B, C, S, J
 from pomagma.reducer.code import complexity
-from pomagma.reducer.code import is_app, is_ivar, is_atom
+from pomagma.reducer.code import is_app, is_var, is_ivar, is_atom
+from pomagma.reducer.continuation import join_codes
 from pomagma.reducer.util import LOG
 from pomagma.reducer.util import pretty
 import itertools
@@ -57,14 +58,14 @@ def iter_shared_list(shared_list):
 
 @memoize_arg
 def max_free_ivar(term):
-    if is_atom(term):
+    if is_atom(term) or is_var(term):
         return -1
     elif is_ivar(term):
         return term[1]
     elif is_app(term):
         return max(max_free_ivar(term[1]), max_free_ivar(term[2]))
     else:
-        raise ValueError(term)
+        raise NotImplementedError(term)
 
 
 @memoize_args
@@ -76,7 +77,7 @@ def try_abstract(body):
         (False, unabstracted result) if var does not occur in body.
 
     """
-    if is_atom(body):
+    if is_atom(body) or is_var(body):
         return False, body  # Rule K
     elif is_ivar(body):
         rank = body[1]
@@ -119,7 +120,7 @@ def try_abstract(body):
                 else:
                     return True, APP(APP(S, lhs), rhs)  # Rule S
     else:
-        raise ValueError(body)
+        raise NotImplementedError(body)
 
 
 def abstract(body):
@@ -145,14 +146,14 @@ def code_increment_ivars(body, min_rank):
         if rank >= min_rank:
             rank += 1
         return IVAR(rank)
-    elif is_atom(body):
+    elif is_atom(body) or is_var(body):
         return body
     elif is_app(body):
         lhs = code_increment_ivars(body[1], min_rank)
         rhs = code_increment_ivars(body[2], min_rank)
         return APP(lhs, rhs)
     else:
-        raise ValueError(body)
+        raise NotImplementedError(body)
 
 
 @memoize_args
@@ -217,7 +218,7 @@ def is_stack(stack):
 @memoize_args
 def make_cont(head, stack, bound):
     """Continuations are linear-beta-eta normal forms."""
-    assert is_ivar(head) or head in INERT_ATOMS, head
+    assert is_ivar(head) or is_var(head) or head in INERT_ATOMS, head
     if head in (TOP, BOT):
         assert stack is None and bound == 0
     elif head is S:
@@ -265,7 +266,7 @@ def is_cheap_to_copy(cont_set):
     if cont.stack or cont.bound:
         return False
     head = cont.head
-    return is_ivar(head) or head is TOP or head is BOT
+    return is_ivar(head) or is_var(head) or head is TOP or head is BOT
 
 
 class PreContinuation(object):
@@ -330,7 +331,7 @@ def cont_set_from_codes(codes, stack=None, bound=0):
         precont = pending.pop()
         head = precont.seek_head()
 
-        if is_ivar(head):
+        if is_ivar(head) or is_var(head):
             result.append(precont.freeze())
             continue
         elif head is TOP:
@@ -350,8 +351,8 @@ def cont_set_from_codes(codes, stack=None, bound=0):
             head_cont_set = x
         elif head is C:
             x, y, z = precont.pop_args(3)
-            stack = y, stack
-            stack = z, stack
+            precont.push_arg(y)
+            precont.push_arg(z)
             head_cont_set = x
         elif head is S:
             z = precont.peek_at_arg(3)
@@ -367,7 +368,7 @@ def cont_set_from_codes(codes, stack=None, bound=0):
             x, y = precont.pop_args(2)
             head_cont_set = x | y
         else:
-            raise ValueError(head)
+            raise NotImplementedError(head)
 
         stack = precont.stack
         bound = precont.bound
@@ -407,13 +408,8 @@ def cont_eval(cont):
 def cont_set_eval(cont_set):
     """Returns code in linear normal form."""
     assert is_cont_set(cont_set), cont_set
-    codes = map(cont_eval, cont_set)
-    # TODO Be smarter: return continuation.join_codes(codes)
-    codes.sort(reverse=True)
-    code = codes.pop()
-    while codes:
-        code = APP(J, code, codes.pop())
-    return code
+    codes = set(map(cont_eval, cont_set))
+    return join_codes(codes)
 
 
 # ----------------------------------------------------------------------------
@@ -446,15 +442,32 @@ def cont_set_try_decide_less(lhs, rhs):
 
 @memoize_args
 def cont_try_decide_less(lhs, rhs):
+    """Weak decision oracle for Scott ordering.
+
+         | TOP   BOT    IVAR   VAR    S
+    -----+----------------------------------
+     TOP | True  False  False  False  approx
+     BOT | True  True   True   True   True
+    IVAR | True  False  delta  False  approx
+     VAR | True  False  False  delta  approx
+       S | True  approx approx approx approx
+
+    """
     assert is_cont(lhs), lhs
     assert is_cont(rhs), rhs
+
+    # Try simple cases.
     if lhs.head is BOT or rhs.head is TOP or lhs is rhs:
         return True
-    if lhs.head is TOP and rhs.head is BOT:
+    if lhs.head is TOP:
+        if rhs.head is BOT or is_ivar(rhs.head) or is_var(rhs.head):
+            return False
+    if rhs.head is BOT:
+        if lhs.head is TOP or is_ivar(lhs.head) or is_var(lhs.head):
+            return False
+    if is_ivar(lhs.head) and is_var(rhs.head):
         return False
-    if lhs.head is TOP and is_ivar(rhs.head):
-        return False
-    if is_ivar(lhs.head) and rhs.head is BOT:
+    if is_var(lhs.head) and is_ivar(rhs.head):
         return False
 
     # Eta expand until binder counts agree.
@@ -467,12 +480,21 @@ def cont_try_decide_less(lhs, rhs):
         rhs_head = code_increment_ivars(rhs_head, 0)
         rhs_stack = stack_increment_ivars(rhs_stack, 0)
 
-    assert is_ivar(lhs_head) or lhs_head in INERT_ATOMS, lhs_head
-    assert is_ivar(rhs_head) or rhs_head in INERT_ATOMS, rhs_head
+    # Try comparing stacks.
+    assert (is_ivar(lhs_head) or is_var(lhs_head) or
+            lhs_head in INERT_ATOMS), lhs_head
+    assert (is_ivar(rhs_head) or is_var(rhs_head) or
+            rhs_head in INERT_ATOMS), rhs_head
     if is_ivar(lhs_head) and is_ivar(rhs_head):
         if lhs_head is not rhs_head:
             return False
         return stack_try_decide_less(lhs_stack, rhs_stack)
+    if is_var(lhs_head) and is_var(rhs_head):
+        if lhs_head is not rhs_head:
+            return False
+        return stack_try_decide_less(lhs_stack, rhs_stack)
+
+    # Try approximating S.
     assert lhs_head is S or rhs_head is S
     if lhs_head is S and rhs_head is S:
         # Try to compare assuming lhs and rhs align.
