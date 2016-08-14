@@ -18,7 +18,7 @@ def test_reduce_cpp_does_not_crash(code, error_count):
     assert main.reduce_cpp(code) == error_count
 
 
-@for_each(iter_equations(['sk', 'join', 'quote'], test_id='engine'))
+@for_each(iter_equations('engine'))
 def test_reduce_engine_polish_equations(code, expected_code, message):
     string = polish_print(code)
     with skip_if_not_implemented():
@@ -27,7 +27,7 @@ def test_reduce_engine_polish_equations(code, expected_code, message):
     assert actual_string == expected_string, message
 
 
-@for_each(iter_equations(['sk', 'join', 'quote'], test_id='engine'))
+@for_each(iter_equations('engine'))
 def test_reduce_engine_sexpr_equations(code, expected_code, message):
     string = sexpr_print(code)
     with skip_if_not_implemented():
@@ -36,7 +36,7 @@ def test_reduce_engine_sexpr_equations(code, expected_code, message):
     assert actual_string == expected_string, message
 
 
-@for_each(iter_equations(['sk', 'join', 'quote'], test_id='continuation'))
+@for_each(iter_equations('continuation'))
 def test_reduce_continuatin_polish_equations(code, expected_code, message):
     string = polish_print(code)
     with skip_if_not_implemented():
@@ -45,7 +45,7 @@ def test_reduce_continuatin_polish_equations(code, expected_code, message):
     assert actual_string == expected_string, message
 
 
-@for_each(iter_equations(['sk', 'join', 'quote'], test_id='continuation'))
+@for_each(iter_equations('continuation'))
 def test_reduce_continuatin_sexpr_equations(code, expected_code, message):
     string = sexpr_print(code)
     with skip_if_not_implemented():
@@ -54,7 +54,7 @@ def test_reduce_continuatin_sexpr_equations(code, expected_code, message):
     assert actual_string == expected_string, message
 
 
-@for_each(iter_equations(['sk', 'join'], test_id='de_bruijn'))
+@for_each(iter_equations(test_id='de_bruijn'))
 def test_reduce_de_bruijn_polish_equations(code, expected_code, message):
     string = polish_print(code)
     with skip_if_not_implemented():
@@ -63,7 +63,7 @@ def test_reduce_de_bruijn_polish_equations(code, expected_code, message):
     assert actual_string == expected_string, message
 
 
-@for_each(iter_equations(['sk', 'join'], test_id='de_bruijn'))
+@for_each(iter_equations(test_id='de_bruijn'))
 def test_reduce_de_bruijn_sexpr_equations(code, expected_code, message):
     string = sexpr_print(code)
     with skip_if_not_implemented():

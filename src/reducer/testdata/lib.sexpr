@@ -1,0 +1,13 @@
+;; intro forms
+(EQUAL (QUOTE lib.ok) (QUOTE (FUN x x)))
+(EQUAL (QUOTE lib.true) (QUOTE (FUN x (FUN y x))))
+(EQUAL (QUOTE lib.false) (QUOTE (FUN x (FUN y y))))
+(EQUAL (QUOTE lib.none) (QUOTE (FUN f (FUN g f))))
+(EQUAL (QUOTE lib.some) (QUOTE (FUN x (FUN f (FUN g (g x))))))
+(EQUAL (QUOTE lib.pair) (QUOTE (FUN x (FUN y (FUN f (f x y))))))
+(EQUAL (QUOTE lib.inl) (QUOTE (FUN x (FUN f (FUN g (f x))))))
+(EQUAL (QUOTE lib.inr) (QUOTE (FUN y (FUN f (FUN g (g y))))))
+(EQUAL (QUOTE lib.zero) (QUOTE (FUN z (FUN s z))))
+(EQUAL (QUOTE lib.succ) (QUOTE (FUN n (FUN z (FUN s (s n))))))
+(EQUAL (QUOTE lib.nil) (QUOTE (FUN n (FUN c n))))
+(EQUAL (QUOTE lib.cons) (QUOTE (FUN head (FUN tail (FUN n (FUN c (c head tail)))))))

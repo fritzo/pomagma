@@ -31,16 +31,16 @@ lint: FORCE
 	$(info flake8)
 	@flake8 --jobs auto --ignore=E402 $(PY_FILES)
 
-format-cpp: FORCE
+clang-format: FORCE
 	$(info clang-format)
 	@clang-format -i --style="{BasedOnStyle: Google, IndentWidth: 4}" \
 	  $(CPP_FILES)
 
-format-py: FORCE
+pyformat: FORCE
 	$(info pyformat)
 	@pyformat --jobs 0 --aggressive --in-place $(PY_FILES)
 
-format: format-cpp format-py FORCE
+format: clang-format pyformat FORCE
 
 python: protobuf lint FORCE
 	pip install -e .

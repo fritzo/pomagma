@@ -16,6 +16,8 @@ import re
 
 parsable = parsable.Parsable()
 
+SUPPORTED_TESTDATA = ['sk', 'quote', 'lib']
+
 # Tracer states.
 REDUCE_HEAD = intern('REDUCE_HEAD')
 REDUCE_ARGS = intern('REDUCE_ARGS')

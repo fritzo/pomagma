@@ -28,6 +28,8 @@ import itertools
 
 __all__ = ['reduce', 'simplify']
 
+SUPPORTED_TESTDATA = ['sk', 'join', 'quote', 'lib']
+
 F = APP(K, I)
 true = K
 false = F

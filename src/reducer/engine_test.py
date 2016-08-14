@@ -31,7 +31,7 @@ def test_context_complexity(stack, bound, expected):
     assert engine.context_complexity(context) == expected
 
 
-@for_each(iter_equations(['sk', 'join', 'quote', 'types'], test_id='engine'))
+@for_each(iter_equations('engine'))
 def test_trace_reduce_equations(code, expected, message):
     with xfail_if_not_implemented():
         actual = engine.reduce(code, BUDGET)

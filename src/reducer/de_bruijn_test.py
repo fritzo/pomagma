@@ -254,7 +254,7 @@ def test_cont_complexity(code, stack, bound, expected):
     assert de_bruijn.cont_complexity(cont) == expected
 
 
-@for_each(iter_equations(['sk', 'join', ], test_id='de_bruijn'))
+@for_each(iter_equations('de_bruijn'))
 def test_reduce_equations(code, expected, message):
     with xfail_if_not_implemented():
         actual = de_bruijn.reduce(code)

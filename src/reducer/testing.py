@@ -1,11 +1,13 @@
 """Tools for testing implementations of reduce() and simplify()."""
 
+from importlib import import_module
 from pomagma.reducer.code import CODE, EVAL, QQUOTE, QAPP, EQUAL, LESS
-from pomagma.reducer.code import is_app, is_quote, sexpr_parse
 from pomagma.reducer.code import TOP, BOT, I, K, B, C, S, J
 from pomagma.reducer.code import UNIT, BOOL, MAYBE
 from pomagma.reducer.code import VAR, APP, QUOTE
+from pomagma.reducer.code import is_app, is_quote, sexpr_parse
 from pomagma.reducer.linker import link
+from pomagma.reducer.transforms import compile_
 import hypothesis.strategies as s
 import os
 import pytest
@@ -17,8 +19,12 @@ TESTDATA = os.path.join(DIR, 'testdata')
 # ----------------------------------------------------------------------------
 # parameterized testing
 
-def iter_test_cases(suites, test_id=None):
+def iter_test_cases(test_id, suites=None):
+    assert isinstance(test_id, str), test_id
     print('test_id = {}'.format(test_id))
+    if suites is None:
+        module = import_module('pomagma.reducer.{}'.format(test_id))
+        suites = module.SUPPORTED_TESTDATA
     for suite in suites:
         filename = '{}/{}.sexpr'.format(TESTDATA, suite)
         print('reading {}'.format(filename))
@@ -45,14 +51,15 @@ def parse_xfail(comment, test_id):
     return False
 
 
-def iter_equations(suites, test_id=None):
-    for code, comment, message in iter_test_cases(suites, test_id=test_id):
+def iter_equations(test_id, suites=None):
+    assert isinstance(test_id, str), test_id
+    for code, comment, message in iter_test_cases(test_id, suites):
         if is_app(code) and is_app(code[1]) and code[1][1] is EQUAL:
             lhs = code[1][2]
             rhs = code[2]
             if is_quote(lhs) and is_quote(rhs):
-                lhs = link(lhs[1], lazy=False)
-                rhs = link(rhs[1], lazy=False)
+                lhs = link(compile_(lhs[1]), lazy=False)
+                rhs = link(compile_(rhs[1]), lazy=False)
                 example = lhs, rhs, message
                 if comment and parse_xfail(comment, test_id):
                     example = pytest.mark.xfail(example)

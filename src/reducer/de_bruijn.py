@@ -18,6 +18,8 @@ import itertools
 
 __all__ = ['reduce', 'simplify', 'try_decide_less']
 
+SUPPORTED_TESTDATA = ['sk', 'join', 'lib']
+
 
 def trool_all(args):
     result = True
