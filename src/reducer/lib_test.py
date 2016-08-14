@@ -77,6 +77,7 @@ def test_unit_type(x, expected):
     (undefined, undefined),
     (true, error),
     (false, error),
+    (J, error),
     (x, app(UNIT, x)),
 ])
 def test_unit_test(x, expected):

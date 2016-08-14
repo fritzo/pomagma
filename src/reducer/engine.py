@@ -34,7 +34,7 @@ import itertools
 
 __all__ = ['reduce', 'simplify', 'sample']
 
-SUPPORTED_TESTDATA = ['sk', 'join', 'quote', 'types', 'lib']
+SUPPORTED_TESTDATA = ['sk', 'join', 'quote', 'types', 'lib', 'unit']
 
 F = APP(K, I)
 true = K
