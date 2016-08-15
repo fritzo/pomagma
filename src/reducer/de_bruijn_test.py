@@ -27,7 +27,12 @@ CONT_SET_x = cont_set_from_codes((x,))
 CONT_SET_y = cont_set_from_codes((y,))
 CONT_SET_z = cont_set_from_codes((z,))
 CONT_SET_zz = cont_set_from_codes((APP(z, z),))
+CONT_SET_I = cont_set_from_codes((I,))
+CONT_SET_K = cont_set_from_codes((K,))
+CONT_SET_B = cont_set_from_codes((B,))
+CONT_SET_C = cont_set_from_codes((C,))
 CONT_SET_S = cont_set_from_codes((S,))
+CONT_SET_J = cont_set_from_codes((J,))
 CONT_SET_BOT = frozenset()
 
 
@@ -125,6 +130,11 @@ def test_abstract(body, expected):
     (True, y, []),
     (True, x, [CONT_SET_TOP]),
     (True, x, [CONT_SET_BOT]),
+    (True, x, [CONT_SET_I]),
+    (True, x, [CONT_SET_K]),
+    (True, x, [CONT_SET_B]),
+    (True, x, [CONT_SET_C]),
+    (True, x, [CONT_SET_J]),
     (True, x, [CONT_SET_y]),
     (False, x, [CONT_SET_S]),
     (False, x, [CONT_SET_x]),

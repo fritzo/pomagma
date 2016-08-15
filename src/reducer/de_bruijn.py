@@ -297,6 +297,11 @@ def _cont_is_linear(cont):
     ivars = set().union(*ivars_list)
     if len(ivars) != sum(map(len, ivars_list)):
         return None, False  # Since a variable was copied.
+    ivars = set(
+        IVAR(rank - cont.bound)
+        for _, rank in ivars
+        if rank >= cont.bound
+    )
     return ivars, True
 
 
