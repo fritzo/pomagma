@@ -49,6 +49,14 @@ def stack_to_list(stack):
     return result
 
 
+def list_to_stack(args):
+    assert isinstance(args, list), args
+    stack = None
+    for arg in reversed(args):
+        stack = arg, stack
+    return stack
+
+
 def iter_shared_list(shared_list):
     while shared_list is not None:
         arg, shared_list = shared_list
@@ -86,7 +94,7 @@ def try_abstract(body):
         if rank == 0:
             return True, I  # Rule I
         else:
-            return False, IVAR(rank - 1)  # Rule K
+            return False, IVAR(rank - 1)  # Rule K-IVAR
     elif is_app(body):
         if is_app(body[1]) and body[1][1] is J:
             lhs_found, lhs = try_abstract(body[1][2])
@@ -224,9 +232,10 @@ def make_cont(head, stack, bound):
     if head in (TOP, BOT):
         assert stack is None and bound == 0
     elif head is S:
-        assert not (
-            stack and stack[1] and stack[1][1] and
-            is_cheap_to_copy(stack[1][1][0]))
+        assert stack is not None
+        assert stack[1] is not None
+        assert stack[1][1] is not None
+        assert not is_cheap_to_copy(stack[1][1][0])
     assert is_stack(stack), stack
     assert isinstance(bound, int) and bound >= 0, bound
     return Continuation(head, stack, bound)
@@ -255,9 +264,44 @@ CONT_SET_IVAR_0 = make_cont_set(frozenset([CONT_IVAR_0]))
 
 
 # ----------------------------------------------------------------------------
-# Conversion : code -> continuation
+# Termination testing
 
-def is_cheap_to_copy(cont_set):
+@memoize_arg
+def cont_set_is_linear(cont_set):
+    assert is_cont_set(cont_set), cont_set
+    return all(cont_is_linear(cont) for cont in cont_set)
+
+
+def cont_is_linear(cont):
+    assert is_cont(cont), cont
+    _, is_linear = _cont_is_linear(cont)
+    return is_linear
+
+
+@memoize_arg
+def _cont_is_linear(cont):
+    assert is_cont(cont), cont
+    if cont.head is S:
+        return None, False
+    ivars_list = []
+    for arg_cont_set in iter_shared_list(cont.stack):
+        arg_ivars = set()
+        for arg_cont in arg_cont_set:
+            arg_cont_ivars, is_linear = _cont_is_linear(arg_cont)
+            if not is_linear:
+                return None, False
+            arg_ivars.update(arg_cont_ivars)
+        ivars_list.append(arg_ivars)
+    if is_ivar(cont.head):
+        ivars_list.append(set([cont.head]))
+    ivars = set().union(*ivars_list)
+    if len(ivars) != sum(map(len, ivars_list)):
+        return None, False  # Since a variable was copied.
+    return ivars, True
+
+
+@memoize_arg
+def cont_set_is_trivial(cont_set):
     assert is_cont_set(cont_set), cont_set
     if not cont_set:
         return True
@@ -270,6 +314,18 @@ def is_cheap_to_copy(cont_set):
     head = cont.head
     return is_ivar(head) or is_var(head) or head is TOP or head is BOT
 
+
+# The is_cheap_to_copy() predicate determines whether an S redex should yield
+# to the next concurrent computation. To avoid thrashing, is_cheap_to_copy()
+# should be as optimistic as possible, while still guaranteeing termination.
+if True:
+    is_cheap_to_copy = cont_set_is_trivial  # Pessimistic, shorter steps.
+else:
+    is_cheap_to_copy = cont_set_is_linear  # Optimistic, longer steps.
+
+
+# ----------------------------------------------------------------------------
+# Conversion : code -> continuation
 
 class PreContinuation(object):
     """Mutable temporary continuations, not in normal form."""
@@ -309,9 +365,8 @@ class PreContinuation(object):
                 args.append(arg)
             else:
                 # eta expand
-                min_rank = 0
-                self.head = code_increment_ivars(self.head, min_rank)
-                self.stack = stack_increment_ivars(self.stack, min_rank)
+                self.head = code_increment_ivars(self.head, 0)
+                self.stack = stack_increment_ivars(self.stack, 0)
                 args = [cont_set_increment_ivars(arg, 0) for arg in args]
                 args.append(CONT_SET_IVAR_0)
                 self.bound += 1
