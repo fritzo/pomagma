@@ -644,11 +644,15 @@ def cont_set_complexity(cont_set):
     return max(cont_complexity(cont) for cont in cont_set)
 
 
+def priority(cont):
+    return cont_complexity(cont), cont  # Deterministically break ties.
+
+
 @memoize_arg
 def cont_set_try_compute_step(cont_set):
     assert is_cont_set(cont_set), cont_set
     # TODO Separate cont_set into seen and pending.
-    for cont in sorted(cont_set, key=cont_complexity):
+    for cont in sorted(cont_set, key=priority):
         success, new_cont_set = cont_try_compute_step(cont)
         if success:
             new_cont_set = make_cont_set(cont_set | new_cont_set)
