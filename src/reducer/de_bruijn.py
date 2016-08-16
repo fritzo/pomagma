@@ -3,6 +3,15 @@
 This data structure intends to make it easy to implement the weak decision
 procedure try_decide_less(-,-).
 
+(Q1) Is reduction correct?
+  Is cycle detection correct?
+  Is domination filtering correct?
+(Q2) Where should magic be inserted?
+  In cont_try_decide_less(-,-)?
+  In make_cont_set(-)?
+(Q3) Is this reduction strategy compatible with quotients?
+  How can it be extended with Todd-Coxeter forward-chaining?
+
 """
 
 from collections import namedtuple
@@ -84,7 +93,7 @@ def try_abstract(body):
 
     Returns:
         (True, abstracted result) if var occurs in body, or
-        (False, unabstracted result) if var does not occur in body.
+        (False, unabstracted ivar-incremented result) otherwise.
 
     """
     if is_atom(body) or is_var(body):
@@ -378,6 +387,7 @@ def cont_set_from_codes(codes, stack=None, bound=0):
         elif head is S:
             z = precont.peek_at_arg(3)
             if not is_cheap_to_copy(z):
+                # TODO simplify S x y, to see if it is linear.
                 result.append(precont.freeze())
                 continue
             x, y, z = precont.pop_args(3)
@@ -427,7 +437,12 @@ def cont_eval(cont):
 
 @memoize_arg
 def cont_set_eval(cont_set):
-    """Returns code in linear normal form."""
+    """Returns code in linear normal form.
+
+    Desired Theorem: For any cont_set,
+      cont_set_from_codes((cont_set_eval(cont_set),)) == cont_set
+
+    """
     assert is_cont_set(cont_set), cont_set
     codes = set(map(cont_eval, cont_set))
     return join_codes(codes)
@@ -472,6 +487,20 @@ def cont_try_decide_less(lhs, rhs):
     IVAR | True  False  delta  False  approx
      VAR | True  False  False  delta  approx
        S | True  approx approx approx approx
+
+    Theorem: (soundness)
+      - If cont_try_decide_less(lhs, rhs) = True, then lhs [= rhs.
+      - If cont_try_decide_less(lhs, rhs) = False, then lhs [!= rhs.
+    Theorem: (linear completeness)
+      - If lhs [= rhs and both are linear,
+        then cont_try_decide_less(lhs, rhs) = True.
+      - If lhs [!= rhs and both are linear,
+        then cont_try_decide_less(lhs, rhs) = False.
+    Desired Theorem: (strong linear completeness)
+      - If lhs [= u [= v [= rhs for some linear u, v,
+        then cont_try_decide_less(lhs, rhs) = True.
+      - If rhs [= u [!= v [= lhs for some linear u, v,
+        then cont_try_decide_less(lhs, rhs) = False.
 
     """
     assert is_cont(lhs), lhs
@@ -552,6 +581,12 @@ def stack_try_decide_less(lhs_stack, rhs_stack):
 
 
 def cont_dominates(lhs, rhs):
+    """Strict domination relation for continuations.
+
+    Desired Theorem: if lhs dominates rhs, then all normal form continuations
+      reachable from rhs are also reachable from lhs.
+
+    """
     lhs_rhs = cont_try_decide_less(lhs, rhs)
     rhs_lhs = cont_try_decide_less(rhs, lhs)
     return lhs_rhs is True and rhs_lhs is False
