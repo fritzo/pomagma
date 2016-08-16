@@ -1,3 +1,4 @@
+from collections import defaultdict
 from pomagma.compiler.util import memoize_arg
 from pomagma.compiler.util import memoize_args
 import re
@@ -159,12 +160,45 @@ def free_vars(code):
         return frozenset()
 
 
+# Atom complexity is the count of number of variable occurrences, with either
+# positive or negative valence. The complexity of a join is the max of 1 and
+# the max complexity of each part of the join.
+ATOM_COMPLEXITY = defaultdict(lambda: 99, {
+    BOT: 1,
+    TOP: 1,
+    I: 2,  # \x.x
+    K: 3,  # \x,y. x
+    B: 6,  # \x,y,z. x (y z)
+    C: 6,  # \x,y,z. x z y
+    S: 7,  # \x,y,z. x z (y z)
+    J: 3,  # (\x,y. x) | (\x,y. y)
+    # V: TODO(),
+    # A: TODO(),
+})
+
+
 @memoize_arg
 def complexity(code):
-    if isinstance(code, tuple):
-        return 1 + sum(complexity(arg) for arg in code[1:])
-    else:
+    """Complexity norm on code.
+
+    Theorem: Modulo alpha conversion,
+      there are finitely many codes with any fixed complexity.
+    Theorem: There are finitely many closed de Bruijn terms at any given
+      complexity.
+
+    """
+    if is_atom(code):
+        return ATOM_COMPLEXITY[code]
+    elif is_var(code) or is_ivar(code) or is_rvar(code) or is_svar(code):
         return 1
+    elif isinstance(code, tuple):
+        if len(code) > 2:
+            return sum(complexity(arg) for arg in code[1:])
+        else:
+            assert len(code) == 2, code
+            return 1 + complexity(code[1])
+    else:
+        raise ValueError(code)
 
 
 # ----------------------------------------------------------------------------

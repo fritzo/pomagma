@@ -89,9 +89,9 @@ def iter_shared_list(shared_list):
 def context_complexity(context):
     result = 0
     for arg in iter_shared_list(context.stack):
-        result += 1 + complexity(arg)  # APP(-, arg)
+        result += complexity(arg)
     for var in iter_shared_list(context.bound):
-        result += 1 + complexity(var)  # FUN(var, -)
+        result += complexity(var)
     return result
 
 

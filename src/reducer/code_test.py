@@ -47,15 +47,26 @@ def test_free_vars(code, free):
 
 
 @for_each([
-    (I, 1),
-    (K, 1),
-    (x, 2),
-    (APP(K, I), 3),
-    (APP(I, x), 4),
-    (QUOTE(I), 2),
-    (FUN(x, I), 4),
-    (LET(x, I, x), 6),
-    (APP(APP(S, I), I), 5),
+    (x, 1),
+    (y, 1),
+    (I, 2),
+    (K, 3),
+    (B, 6),
+    (C, 6),
+    (S, 7),
+    (J, 3),
+    (APP(K, I), 3 + 2),
+    (APP(I, x), 2 + 1),
+    (QUOTE(I), 1 + 2),
+    (FUN(x, x), 1 + 1),
+    (FUN(x, I), 1 + 2),
+    (FUN(x, K), 1 + 3),
+    (LET(x, x, x), 1 + 1 + 1),
+    (LET(x, I, x), 1 + 2 + 1),
+    (LET(x, K, x), 1 + 3 + 1),
+    (APP(APP(S, x), x), 7 + 1 + 1),
+    (APP(APP(S, I), x), 7 + 2 + 1),
+    (APP(APP(S, I), I), 7 + 2 + 2),
 ])
 def test_complexity(code, expected):
     assert complexity(code) == expected

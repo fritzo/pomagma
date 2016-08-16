@@ -14,17 +14,17 @@ z = VAR('z')
 @for_each([
     (None, None, 0),
     (None, None, 0),
-    (None, (x, None), 3),
-    (None, (y, (x, None)), 6),
+    (None, (x, None), 1),
+    (None, (y, (x, None)), 1 + 1),
     ((I, None), None, 2),
-    ((I, None), (x, None), 2 + 3),
-    ((I, None), (y, (x, None)), 2 + 6),
-    ((x, None), None, 3),
-    ((x, None), (x, None), 3 + 3),
-    ((x, None), (y, (x, None)), 3 + 6),
-    ((x, (I, None)), None, 5),
-    ((x, (I, None)), (x, None), 5 + 3),
-    ((x, (I, None)), (y, (x, None)), 5 + 6),
+    ((I, None), (x, None), 2 + 1),
+    ((I, None), (y, (x, None)), 2 + 1 + 1),
+    ((x, None), None, 1),
+    ((x, None), (x, None), 1 + 1),
+    ((x, None), (y, (x, None)), 1 + 1 + 1),
+    ((x, (I, None)), None, 1 + 2),
+    ((x, (I, None)), (x, None), 1 + 2 + 1),
+    ((x, (I, None)), (y, (x, None)), 1 + 2 + 1 + 1),
 ])
 def test_context_complexity(stack, bound, expected):
     context = engine.Context(stack=stack, bound=bound)

@@ -264,73 +264,32 @@ CONT_SET_IVAR_0 = make_cont_set(frozenset([CONT_IVAR_0]))
 
 
 # ----------------------------------------------------------------------------
-# Termination testing
-
-@memoize_arg
-def cont_set_is_linear(cont_set):
-    assert is_cont_set(cont_set), cont_set
-    return all(cont_is_linear(cont) for cont in cont_set)
-
-
-def cont_is_linear(cont):
-    assert is_cont(cont), cont
-    _, is_linear = _cont_is_linear(cont)
-    return is_linear
-
-
-@memoize_arg
-def _cont_is_linear(cont):
-    assert is_cont(cont), cont
-    if cont.head is S:
-        return None, False
-    ivars_list = []
-    for arg_cont_set in iter_shared_list(cont.stack):
-        arg_ivars = set()
-        for arg_cont in arg_cont_set:
-            arg_cont_ivars, is_linear = _cont_is_linear(arg_cont)
-            if not is_linear:
-                return None, False
-            arg_ivars.update(arg_cont_ivars)
-        ivars_list.append(arg_ivars)
-    if is_ivar(cont.head):
-        ivars_list.append(set([cont.head]))
-    ivars = set().union(*ivars_list)
-    if len(ivars) != sum(map(len, ivars_list)):
-        return None, False  # Since a variable was copied.
-    ivars = set(
-        IVAR(rank - cont.bound)
-        for _, rank in ivars
-        if rank >= cont.bound
-    )
-    return ivars, True
-
-
-@memoize_arg
-def cont_set_is_trivial(cont_set):
-    assert is_cont_set(cont_set), cont_set
-    if not cont_set:
-        return True
-    if len(cont_set) > 1:
-        return False
-    cont = next(iter(cont_set))
-    # TODO this could instead check is_linear(cont)
-    if cont.stack or cont.bound:
-        return False
-    head = cont.head
-    return is_ivar(head) or is_var(head) or head is TOP or head is BOT
-
-
-# The is_cheap_to_copy() predicate determines whether an S redex should yield
-# to the next concurrent computation. To avoid thrashing, is_cheap_to_copy()
-# should be as optimistic as possible, while still guaranteeing termination.
-if True:
-    is_cheap_to_copy = cont_set_is_trivial  # Pessimistic, shorter steps.
-else:
-    is_cheap_to_copy = cont_set_is_linear  # Optimistic, longer steps.
-
-
-# ----------------------------------------------------------------------------
 # Conversion : code -> continuation
+
+def is_cheap_to_copy(cont_set):
+    """Termination predicate.
+
+    This predicate determines whether an S redex should yield to the next
+    concurrent computation. To avoid thrashing, this wants to be as optimistic
+    as possible, while still guaranteeing termination. This guarantees
+    termination by ensuring that complexity will decrease during reduction.
+
+    Theorem: The following is a fair (i.e. complete) scheduling strategy:
+      - schedule any minimal-complexity task first;
+      - yield whenever an S redex fails the is_cheap_to_copy predicate;
+      - on resuming a task, immedately perform the S-step that yielded;
+      - detect and terminate cycles.
+    Proof: We need to show that every reduction sequence either terminates or
+      yields. There are only finitely many states below any given complexity.
+      Each TOP,BOT,I,K,B,C,J strictly reduces complexity. Moreover an S-redex
+      gated by is_cheap_to_copy does not increase complexity. Hence any
+      sequence of steps that do not increase complexity must eventually either
+      terminate or cycle. Since cycles are detected, the computation must
+      terminate. []
+
+    """
+    return cont_set_complexity(cont_set) <= complexity(S)
+
 
 class PreContinuation(object):
     """Mutable temporary continuations, not in normal form."""
@@ -673,8 +632,8 @@ def cont_complexity(cont):
     assert is_cont(cont), cont
     result = complexity(cont.head)
     for arg in iter_shared_list(cont.stack):
-        result += 1 + cont_set_complexity(arg)  # APP(-, arg)
-    result += 3 * cont.bound  # FUN(var, -)
+        result += cont_set_complexity(arg)
+    result += cont.bound
     return result
 
 
@@ -682,7 +641,7 @@ def cont_set_complexity(cont_set):
     assert is_cont_set(cont_set), cont_set
     if not cont_set:
         return 1  # BOT
-    return sum(cont_complexity(cont) for cont in cont_set) + len(cont_set) - 1
+    return max(cont_complexity(cont) for cont in cont_set)
 
 
 @memoize_arg

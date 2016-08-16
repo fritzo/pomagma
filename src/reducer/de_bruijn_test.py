@@ -1,6 +1,6 @@
 from pomagma.reducer import de_bruijn
 from pomagma.reducer.code import APP, TOP, BOT, I, K, B, C, S, J
-from pomagma.reducer.code import sexpr_parse
+from pomagma.reducer.code import complexity, sexpr_parse
 from pomagma.reducer.de_bruijn import CONT_SET_TOP, make_cont
 from pomagma.reducer.de_bruijn import IVAR, abstract
 from pomagma.reducer.de_bruijn import S_LINEAR_LOWER_BOUNDS
@@ -23,6 +23,7 @@ z = IVAR(2)
 F = APP(K, I)
 CI = APP(C, I)
 
+CONT_SET_BOT = frozenset()
 CONT_SET_x = cont_set_from_codes((x,))
 CONT_SET_y = cont_set_from_codes((y,))
 CONT_SET_z = cont_set_from_codes((z,))
@@ -33,7 +34,7 @@ CONT_SET_B = cont_set_from_codes((B,))
 CONT_SET_C = cont_set_from_codes((C,))
 CONT_SET_S = cont_set_from_codes((S,))
 CONT_SET_J = cont_set_from_codes((J,))
-CONT_SET_BOT = frozenset()
+CONT_SET_KS = cont_set_from_codes((APP(K, S),))
 
 
 def sexpr_compile(string):
@@ -118,40 +119,6 @@ ABSTRACT_EXAMPLES = [
 @for_each(ABSTRACT_EXAMPLES)
 def test_abstract(body, expected):
     assert abstract(body) == expected
-
-
-# ----------------------------------------------------------------------------
-# Termination testing
-
-@for_each([
-    (True, TOP, []),
-    (True, BOT, []),
-    (True, x, []),
-    (True, y, []),
-    (True, x, [CONT_SET_TOP]),
-    (True, x, [CONT_SET_BOT]),
-    (True, x, [CONT_SET_I]),
-    (True, x, [CONT_SET_K]),
-    (True, x, [CONT_SET_B]),
-    (True, x, [CONT_SET_C]),
-    (True, x, [CONT_SET_J]),
-    (True, x, [CONT_SET_y]),
-    (False, x, [CONT_SET_S]),
-    (False, x, [CONT_SET_x]),
-    (False, x, [CONT_SET_zz]),
-    (True, x, [CONT_SET_y | CONT_SET_z]),  # Concurrent copying is ok.
-    (True, x, [CONT_SET_z, CONT_SET_y]),
-    (False, x, [CONT_SET_x, CONT_SET_y]),
-    (False, x, [CONT_SET_y, CONT_SET_x]),
-    (False, x, [CONT_SET_y, CONT_SET_y]),
-    (False, S, [CONT_SET_x, CONT_SET_y, CONT_SET_S]),
-    (False, S, [CONT_SET_x, CONT_SET_y, CONT_SET_zz]),
-])
-def test_cont_is_linear(expected, head, args):
-    stack = list_to_stack(args)
-    bound = 0
-    cont = make_cont(head, stack, bound)
-    assert de_bruijn.cont_is_linear(cont) == expected
 
 
 # ----------------------------------------------------------------------------
@@ -278,28 +245,37 @@ def test_s_linear_bounds(actual, expected_sexpr):
 # ----------------------------------------------------------------------------
 # Reduction
 
+@for_each([x, y, TOP, BOT, I, K, B, C, S, J])
+def test_cont_complexity_eq_code_complexity(code):
+    cont_set = de_bruijn.cont_set_from_codes((code,))
+    assert de_bruijn.cont_set_complexity(cont_set) == complexity(code)
+
 
 @for_each([
-    (TOP, [], 0, 1 + 0 + 0),
-    (BOT, [], 0, 1 + 0 + 0),
-    (x, [], 0, 2 + 0 + 0),
-    (x, [], 0, 2 + 0 + 0),
-    (x, [], 1, 2 + 0 + 3),
-    (x, [], 2, 2 + 0 + 6),
-    (x, [CONT_SET_TOP], 0, 2 + 2 + 0),
-    (x, [CONT_SET_TOP], 1, 2 + 2 + 3),
-    (x, [CONT_SET_TOP], 2, 2 + 2 + 6),
-    (x, [CONT_SET_x], 0, 2 + 3 + 0),
-    (x, [CONT_SET_x], 1, 2 + 3 + 3),
-    (x, [CONT_SET_x], 2, 2 + 3 + 6),
-    (x, [CONT_SET_x, CONT_SET_TOP], 0, 2 + 5 + 0),
-    (x, [CONT_SET_x, CONT_SET_TOP], 1, 2 + 5 + 3),
-    (x, [CONT_SET_x, CONT_SET_TOP, CONT_SET_S], 0, 2 + 26 + 0),
-    (S, [CONT_SET_x, CONT_SET_TOP, CONT_SET_S], 0, 1 + 26 + 0),
+    (TOP, [], 0, 1),
+    (BOT, [], 0, 1),
+    (x, [], 0, 1),
+    (x, [], 1, 1 + 1),
+    (x, [], 2, 1 + 2),
+    (x, [CONT_SET_TOP], 0, 1 + 1),
+    (x, [CONT_SET_TOP], 1, 1 + 1 + 1),
+    (x, [CONT_SET_TOP], 2, 1 + 1 + 2),
+    (x, [CONT_SET_BOT], 0, 1 + 1),
+    (x, [CONT_SET_BOT], 1, 1 + 1 + 1),
+    (x, [CONT_SET_BOT], 2, 1 + 1 + 2),
+    (x, [CONT_SET_x], 0, 1 + 1),
+    (x, [CONT_SET_x], 1, 1 + 1 + 1),
+    (x, [CONT_SET_S], 0, 1 + 7),
+    (x, [CONT_SET_x, CONT_SET_TOP], 0, 1 + 1 + 1),
+    (x, [CONT_SET_x, CONT_SET_TOP], 1, 1 + 1 + 1 + 1),
+    (x, [CONT_SET_x, CONT_SET_TOP, CONT_SET_KS], 0, 1 + 1 + 1 + 8),
+    (S, [CONT_SET_x, CONT_SET_TOP, CONT_SET_KS], 0, 7 + 1 + 1 + 8),
+    (x, [CONT_SET_x | CONT_SET_y], 0, 1 + 1),
+    (x, [CONT_SET_x | CONT_SET_S], 0, 1 + 7),
 ])
 def test_cont_complexity(code, args, bound, expected):
     stack = list_to_stack(args)
-    cont = de_bruijn.make_cont(code, stack, bound)
+    cont = make_cont(code, stack, bound)
     assert de_bruijn.cont_complexity(cont) == expected
 
 

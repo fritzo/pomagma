@@ -446,12 +446,18 @@ def cont_try_compute_step(cont):
 
 
 def cont_complexity(cont):
+    """Continuation complexity.
+
+    Theorem: Modulo alpha conversion,
+      there are finitely many continuations with any fixed complexity.
+
+    """
     assert is_cont(cont), cont
     result = complexity(cont.head)
     for arg in iter_shared_list(cont.stack):
-        result += 1 + cont_set_complexity(arg)  # APP(-, arg)
+        result += cont_set_complexity(arg)
     for var in iter_shared_list(cont.bound):
-        result += 1 + complexity(var)  # FUN(var, -)
+        result += complexity(var)
     return result
 
 
@@ -459,7 +465,7 @@ def cont_set_complexity(cont_set):
     assert is_cont_set(cont_set), cont_set
     if not cont_set:
         return 1  # BOT
-    return sum(cont_complexity(cont) for cont in cont_set) + len(cont_set) - 1
+    return max(cont_complexity(cont) for cont in cont_set)
 
 
 @logged(print_cont_set, returns=print_tuple(str, print_cont_set))
