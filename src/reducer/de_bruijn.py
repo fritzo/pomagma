@@ -23,6 +23,7 @@ from pomagma.reducer.code import is_app, is_var, is_ivar, is_atom
 from pomagma.reducer.continuation import join_codes
 from pomagma.reducer.util import LOG
 from pomagma.reducer.util import pretty
+from pomagma.util import TODO
 import itertools
 
 __all__ = ['reduce', 'simplify', 'try_decide_less']
@@ -552,18 +553,18 @@ def cont_try_decide_less(lhs, rhs):
             return True
     if lhs_head is S:
         # Try to approximate lhs.
-        for lhs_ub in iter_upper_bounds(lhs):
+        for lhs_ub in iter_head_upper_bounds(lhs):
             if cont_try_decide_less(lhs_ub, rhs) is True:
                 return True
-        for lhs_lb in iter_lower_bounds(lhs):
+        for lhs_lb in iter_head_lower_bounds(lhs):
             if cont_try_decide_less(lhs_lb, rhs) is False:
                 return False
     if rhs_head is S:
         # Try to approximate rhs.
-        for rhs_lb in iter_lower_bounds(rhs):
+        for rhs_lb in iter_head_lower_bounds(rhs):
             if cont_try_decide_less(lhs, rhs_lb) is True:
                 return True
-        for rhs_ub in iter_upper_bounds(rhs):
+        for rhs_ub in iter_head_upper_bounds(rhs):
             if cont_try_decide_less(lhs, rhs_ub) is False:
                 return False
     return None
@@ -593,7 +594,7 @@ def cont_dominates(lhs, rhs):
 
 
 # ----------------------------------------------------------------------------
-# Linear approximations of S
+# Linear approximation
 
 S_LINEAR_UPPER_BOUNDS = (
     # S [= \x,y,z. x TOP(y z)
@@ -610,19 +611,38 @@ S_LINEAR_LOWER_BOUNDS = (
 )
 
 
-def iter_upper_bounds(cont):
+def iter_head_upper_bounds(cont):
     assert is_cont(cont), cont
     head, stack, bound = cont
     assert head is S, cont
     for head in S_LINEAR_UPPER_BOUNDS:
-        yield cont_set_from_codes((head,), stack, bound)
+        for cont_ub in cont_set_from_codes((head,), stack, bound):
+            yield cont_ub
 
 
-def iter_lower_bounds(cont):
+def iter_head_lower_bounds(cont):
     assert is_cont(cont), cont
     head, stack, bound = cont
     assert head is S, cont
     return cont_set_from_codes(S_LINEAR_LOWER_BOUNDS, stack, bound)
+
+
+def iter_lower_bounds(cont):
+    TODO()
+
+
+@memoize_arg
+def close_under_lower_bounds(cont_set):
+    assert is_cont_set(cont_set), cont_set
+    pending = set(cont_set)
+    result = set(cont_set)
+    while pending:
+        cont = pending.pop()
+        for cont_lb in iter_lower_bounds(cont):
+            if cont_lb not in result:
+                pending.add(cont_lb)
+                result.add(cont_lb)
+    return result
 
 
 # ----------------------------------------------------------------------------
