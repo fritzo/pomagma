@@ -81,7 +81,7 @@ x = VAR('x')
     FUN(x, APP(S, APP(x, x))),
     APP(FUN(x, x), I),
     LET(x, I, APP(APP(S, x), x)),
-    ABIND('a', APP(APP(B, RVAR('a')), SVAR('a'))),
+    ABIND(APP(APP(B, RVAR(0)), SVAR(0))),
 ])
 def test_serialize_deserialize_parametrized(code):
     f_out = StringIO()

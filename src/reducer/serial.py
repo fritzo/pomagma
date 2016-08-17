@@ -63,7 +63,7 @@ from pomagma.reducer.code import (
     is_var, is_ivar, is_app, is_quote, is_fun, is_let,
 )
 
-PROTOCOL_VERSION = '0.0.11'  # Semver compliant.
+PROTOCOL_VERSION = '0.0.12'  # Semver compliant.
 
 # ----------------------------------------------------------------------------
 # Packed varints.
@@ -192,15 +192,14 @@ def dump(code, f):
         args.append(head[1])
         _dump_head_argc(SYMB_TO_INT[_LET], len(args), f)
     elif is_abind(head):
-        args.append(head[2])
-        _dump_head_argc(SYMB_TO_INT[_ABIND], 1 + len(args), f)
-        _dump_raw_bytes(head[1], f)
+        args.append(head[1])
+        _dump_head_argc(SYMB_TO_INT[_ABIND], len(args), f)
     elif is_rvar(head):
         _dump_head_argc(SYMB_TO_INT[_RVAR], 1 + len(args), f)
-        _dump_raw_bytes(head[1], f)
+        _dump_raw_bytes(str(head[1]), f)
     elif is_svar(head):
         _dump_head_argc(SYMB_TO_INT[_SVAR], 1 + len(args), f)
-        _dump_raw_bytes(head[1], f)
+        _dump_raw_bytes(str(head[1]), f)
     else:
         try:
             head = SYMB_TO_INT[head]
@@ -262,24 +261,23 @@ def _load_from(bytes_):
         body = _load_from(bytes_)
         head = LET(var, defn, body)
     elif head is _ABIND:
-        if argc < 2:
+        if argc < 1:
             raise ValueError('ABIND requires at least two args')
-        argc -= 2
-        name = _load_from(bytes_)
+        argc -= 1
         body = _load_from(bytes_)
-        head = ABIND(name, body)
+        head = ABIND(body)
     elif head is _RVAR:
         if argc < 1:
             raise ValueError('RVAR requires at least one arg')
         argc -= 1
-        name = _load_from(bytes_)
-        head = RVAR(name)
+        rank = _load_from(bytes_)
+        head = RVAR(int(rank))
     elif head is _SVAR:
         if argc < 1:
             raise ValueError('SVAR requires at least one arg')
         argc -= 1
-        name = _load_from(bytes_)
-        head = SVAR(name)
+        rank = _load_from(bytes_)
+        head = SVAR(int(rank))
     for _ in xrange(argc):
         arg = _load_from(bytes_)
         head = APP(head, arg)

@@ -25,8 +25,8 @@ _QUOTE = make_keyword('QUOTE')
 _FUN = make_keyword('FUN')
 _LET = make_keyword('LET')
 _ABIND = make_keyword('ABIND')
-_RVAR = make_keyword('RVAR')
-_SVAR = make_keyword('SVAR')
+_RVAR = make_keyword('RVAR')  # de Bruijn variable.
+_SVAR = make_keyword('SVAR')  # de Bruijn variable.
 
 TOP = make_keyword('TOP')
 BOT = make_keyword('BOT')
@@ -88,16 +88,22 @@ def LET(var, defn, body):
     return _term(_LET, var, defn, body)
 
 
-def ABIND(name, body):
-    return _term(_ABIND, intern(name), body)
+def ABIND(body):
+    return _term(_ABIND, body)
 
 
-def RVAR(name):
-    return _term(_RVAR, intern(name))
+def RVAR(rank):
+    if not isinstance(rank, int) and rank >= 0:
+        raise ValueError(
+            'Variable index must be a natural number {}'.format(rank))
+    return _term(_RVAR, rank)
 
 
-def SVAR(name):
-    return _term(_SVAR, intern(name))
+def SVAR(rank):
+    if not isinstance(rank, int) and rank >= 0:
+        raise ValueError(
+            'Variable index must be a natural number {}'.format(rank))
+    return _term(_SVAR, rank)
 
 
 def is_atom(code):
@@ -155,7 +161,7 @@ def free_vars(code):
         assert is_var(code[1])
         return free_vars(code[3]) - frozenset([code[1]]) | free_vars(code[2])
     elif is_abind(code):
-        return free_vars(code[2])
+        return free_vars(code[1])
     else:
         return frozenset()
 
@@ -234,10 +240,10 @@ _PARSERS = {
     _QUOTE: (_polish_parse_tokens,),
     _FUN: (_polish_parse_tokens, _polish_parse_tokens),
     _LET: (_polish_parse_tokens, _polish_parse_tokens, _polish_parse_tokens),
-    _ABIND: (_pop_token, _polish_parse_tokens),
+    _ABIND: (_polish_parse_tokens,),
     _IVAR: (_pop_int,),
-    _RVAR: (_pop_token,),
-    _SVAR: (_pop_token,),
+    _RVAR: (_pop_int,),
+    _SVAR: (_pop_int,),
 }
 
 
@@ -290,17 +296,16 @@ def to_sexpr(code):
         args.append(head[1])
         head = _LET
     elif is_abind(head):
-        args.append(head[2])
         args.append(head[1])
         head = _ABIND
     elif is_ivar(head):
         args.append(str(head[1]))
         head = _IVAR
     elif is_rvar(head):
-        args.append(head[1])
+        args.append(str(head[1]))
         head = _RVAR
     elif is_svar(head):
-        args.append(head[1])
+        args.append(str(head[1]))
         head = _SVAR
     args = map(to_sexpr, reversed(args))
     return tuple([head] + args)
@@ -333,17 +338,17 @@ def from_sexpr(sexpr):
             head = LET(var, defn, body)
             args = sexpr[4:]
         elif head is _ABIND:
-            body = from_sexpr(sexpr[2])
-            head = ABIND(sexpr[1], body)
-            args = sexpr[3:]
+            body = from_sexpr(sexpr[1])
+            head = ABIND(body)
+            args = sexpr[2:]
         elif head is _IVAR:
             head = IVAR(int(sexpr[1]))
             args = sexpr[2:]
         elif head is _RVAR:
-            head = RVAR(sexpr[1])
+            head = RVAR(int(sexpr[1]))
             args = sexpr[2:]
         elif head is _SVAR:
-            head = SVAR(sexpr[1])
+            head = SVAR(int(sexpr[1]))
             args = sexpr[2:]
         else:
             args = sexpr[1:]

@@ -28,9 +28,9 @@ z = VAR('z')
     (S, []),
     (J, []),
     (A, []),
-    (ABIND('a', x), [x]),
-    (RVAR('a'), []),
-    (SVAR('a'), []),
+    (ABIND(x), [x]),
+    (RVAR(0), []),
+    (SVAR(0), []),
     (IVAR(0), []),
     (IVAR(1), []),
     (x, [x]),
@@ -113,9 +113,9 @@ EXAMPLES = [
         'sexpr': '(LET x I (I I))',
     },
     {
-        'code': ABIND('a', APP(APP(B, RVAR('a')), SVAR('a'))),
-        'polish': 'ABIND a APP APP B RVAR a SVAR a',
-        'sexpr': '(ABIND a (B (RVAR a) (SVAR a)))',
+        'code': ABIND(APP(APP(B, RVAR(0)), SVAR(0))),
+        'polish': 'ABIND APP APP B RVAR 0 SVAR 0',
+        'sexpr': '(ABIND (B (RVAR 0) (SVAR 0)))',
     },
 ]
 
@@ -152,10 +152,11 @@ s_varnames = s.builds(
     str,
     s.text(alphabet=alphabet, min_size=1, average_size=5),
 )
+s_ranks = s.integers(min_value=0, max_value=99)
 s_vars = s.builds(VAR, s_varnames)
-s_ivars = s.builds(IVAR, s.integers(min_value=0, max_value=99))
-s_rvars = s.builds(RVAR, s_varnames)
-s_svars = s.builds(SVAR, s_varnames)
+s_ivars = s.builds(IVAR, s_ranks)
+s_rvars = s.builds(RVAR, s_ranks)
+s_svars = s.builds(SVAR, s_ranks)
 s_atoms = s.one_of(
     s_vars,
     s_ivars,
@@ -196,7 +197,7 @@ def s_codes_extend(terms):
         s.builds(QUOTE, terms),
         s.builds(FUN, s_vars, terms),
         s.builds(LET, s_vars, terms, terms),
-        s.builds(ABIND, s_varnames, terms),
+        s.builds(ABIND, terms),
     )
 
 
