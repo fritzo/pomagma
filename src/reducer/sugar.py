@@ -1,6 +1,6 @@
 '''DSL translating from lambda-let notation to SKJ.'''
 
-from pomagma.reducer.code import BOT, J, QAPP, VAR, APP, QUOTE
+from pomagma.reducer.code import BOT, J, QAPP, NVAR, APP, QUOTE
 from pomagma.reducer.code import free_vars
 from pomagma.reducer.transforms import try_abstract, abstract
 from pomagma.reducer.util import LOG
@@ -18,7 +18,7 @@ def _compile(fun, actual_fun=None):
     if vargs or kwargs or defaults:
         source = inspect.getsource(actual_fun)
         raise SyntaxError('Unsupported signature: {}'.format(source))
-    symbolic_args = map(VAR, args)
+    symbolic_args = map(NVAR, args)
     symbolic_result = fun(*symbolic_args)
     LOG.debug('compiling {}{} = {}'.format(
         fun, tuple(symbolic_args), symbolic_result))
@@ -64,7 +64,7 @@ class _Combinator(object):
 
     def _compile(self):
         assert not hasattr(self, '_code')
-        var = VAR('_{}'.format(self.__name__))
+        var = NVAR('_{}'.format(self.__name__))
         self._code = var
 
         code = _compile(self, actual_fun=self._fun)

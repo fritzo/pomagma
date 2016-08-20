@@ -21,9 +21,9 @@ from pomagma.reducer import oracle
 from pomagma.reducer.code import CODE, EVAL, QQUOTE, QAPP, EQUAL, LESS
 from pomagma.reducer.code import TOP, BOT, I, K, B, C, S, J
 from pomagma.reducer.code import UNIT, BOOL, MAYBE
-from pomagma.reducer.code import VAR, APP, QUOTE
+from pomagma.reducer.code import NVAR, APP, QUOTE
 from pomagma.reducer.code import free_vars, complexity
-from pomagma.reducer.code import is_var, is_atom, is_app, is_quote
+from pomagma.reducer.code import is_nvar, is_atom, is_app, is_quote
 from pomagma.reducer.sugar import abstract
 from pomagma.reducer.util import LOG
 from pomagma.reducer.util import PROFILE_COUNTERS
@@ -46,7 +46,7 @@ false = F
 
 @memoize_arg
 def make_var(n):
-    return VAR('v{}'.format(n))
+    return NVAR('v{}'.format(n))
 
 
 def fresh(avoid):
@@ -171,7 +171,7 @@ def _sample(head, context, nonlinear):
         if is_app(head):
             context = context_push(context, head[2])
             head = head[1]
-        elif is_var(head):
+        elif is_nvar(head):
             yield head, context
             return
         elif is_quote(head):
@@ -209,7 +209,7 @@ def _sample(head, context, nonlinear):
             x, context = context_pop(context)
             y, context = context_pop(context, x)
             z, context = context_pop(context, x, y)
-            if nonlinear or is_var(z):
+            if nonlinear or is_nvar(z):
                 head = x
                 context = context_push(context, _app(y, z, False))
                 context = context_push(context, z)
@@ -313,7 +313,7 @@ def _sample_nonlinear(head, context):
             x, context = context_pop(context)
             y, context = context_pop(context)
             z, context = context_pop(context)
-            assert not is_var(z), 'missed optimization'
+            assert not is_nvar(z), 'missed optimization'
             head = x
             context = context_push(context, _app(y, z, False))
             context = context_push(context, z)
@@ -408,7 +408,7 @@ def _reduce(code, nonlinear):
         return _app(code[1], code[2], nonlinear)
     elif is_quote(code):
         return QUOTE(_reduce(code[1], False))
-    elif is_atom(code) or is_var(code):
+    elif is_atom(code) or is_nvar(code):
         return code
     else:
         raise NotImplementedError(code)

@@ -1,15 +1,15 @@
 from pomagma.reducer.code import TOP, BOT, I, K, B, C, S, J
-from pomagma.reducer.code import VAR, APP, QUOTE, FUN, LET
+from pomagma.reducer.code import NVAR, APP, QUOTE, FUN, LET
 from pomagma.reducer.code import polish_print
 from pomagma.reducer.transforms import compile_, decompile
 from pomagma.reducer.transforms import fresh_var, abstract, define, substitute
 from pomagma.util.testing import for_each
 import pytest
 
-w = VAR('w')
-x = VAR('x')
-y = VAR('y')
-z = VAR('z')
+w = NVAR('w')
+x = NVAR('x')
+y = NVAR('y')
+z = NVAR('z')
 
 
 @for_each([

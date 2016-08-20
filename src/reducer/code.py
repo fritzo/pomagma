@@ -18,7 +18,7 @@ def make_keyword(name):
     return name
 
 
-_VAR = make_keyword('VAR')  # Nonimal variable.
+_NVAR = make_keyword('NVAR')  # Nonimal variable.
 _IVAR = make_keyword('IVAR')  # de Bruijn variable.
 _APP = make_keyword('APP')
 _QUOTE = make_keyword('QUOTE')
@@ -59,10 +59,10 @@ def _term(*args):
     return args
 
 
-def VAR(name):
+def NVAR(name):
     if re_keyword.match(name):
         raise ValueError('Variable names cannot match [A-Z]+: {}'.format(name))
-    return _term(_VAR, intern(name))
+    return _term(_NVAR, intern(name))
 
 
 def IVAR(rank):
@@ -110,8 +110,8 @@ def is_atom(code):
     return isinstance(code, str)
 
 
-def is_var(code):
-    return isinstance(code, tuple) and code[0] is _VAR
+def is_nvar(code):
+    return isinstance(code, tuple) and code[0] is _NVAR
 
 
 def is_ivar(term):
@@ -148,17 +148,17 @@ def is_svar(code):
 
 @memoize_arg
 def free_vars(code):
-    if is_var(code):
+    if is_nvar(code):
         return frozenset([code])
     elif is_app(code):
         return free_vars(code[1]) | free_vars(code[2])
     elif is_quote(code):
         return free_vars(code[1])
     elif is_fun(code):
-        assert is_var(code[1])
+        assert is_nvar(code[1])
         return free_vars(code[2]) - frozenset([code[1]])
     elif is_fun(code):
-        assert is_var(code[1])
+        assert is_nvar(code[1])
         return free_vars(code[3]) - frozenset([code[1]]) | free_vars(code[2])
     elif is_abind(code):
         return free_vars(code[1])
@@ -195,7 +195,7 @@ def complexity(code):
     """
     if is_atom(code):
         return ATOM_COMPLEXITY[code]
-    elif is_var(code) or is_ivar(code) or is_rvar(code) or is_svar(code):
+    elif is_nvar(code) or is_ivar(code) or is_rvar(code) or is_svar(code):
         return 1
     elif isinstance(code, tuple):
         if len(code) > 2:
@@ -230,7 +230,7 @@ def _polish_parse_tokens(tokens):
     try:
         polish_parsers = _PARSERS[token]
     except KeyError:
-        return token if re_keyword.match(token) else VAR(token)  # atom
+        return token if re_keyword.match(token) else NVAR(token)  # atom
     args = tuple(p(tokens) for p in polish_parsers)
     return _term(token, *args)
 
@@ -257,7 +257,7 @@ def _polish_print_tokens(code, tokens):
     if isinstance(code, str):
         tokens.append(code)
     elif isinstance(code, tuple):
-        if code[0] is not _VAR:
+        if code[0] is not _NVAR:
             tokens.append(code[0])
         for arg in code[1:]:
             _polish_print_tokens(arg, tokens)
@@ -274,14 +274,14 @@ def _polish_print_tokens(code, tokens):
 def to_sexpr(code):
     if isinstance(code, str):
         return code
-    elif is_var(code):
+    elif is_nvar(code):
         return code[1]
     head = code
     args = []
     while is_app(head):
         args.append(head[2])
         head = head[1]
-    if is_var(head):
+    if is_nvar(head):
         head = head[1]
     elif is_quote(head):
         args.append(head[1])
@@ -318,7 +318,7 @@ def from_sexpr(sexpr):
         else:
             if re_keyword.match(sexpr):
                 raise ValueError('Unrecognized keyword: {}'.format(sexpr))
-            return VAR(sexpr)
+            return NVAR(sexpr)
     head = sexpr[0]
     assert isinstance(head, str)
     if head in _keywords:
@@ -355,7 +355,7 @@ def from_sexpr(sexpr):
     else:
         if re_keyword.match(head):
             raise ValueError('Unrecognized keyword: {}'.format(head))
-        head = VAR(head)
+        head = NVAR(head)
         args = sexpr[1:]
     args = map(from_sexpr, args)
     for arg in args:

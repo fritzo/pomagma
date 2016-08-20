@@ -5,8 +5,8 @@ __all__ = ['try_abstract', 'abstract', 'decompile']
 from pomagma.compiler.util import memoize_args
 from pomagma.reducer import pattern
 from pomagma.reducer.code import TOP, BOT, I, K, B, C, S, J
-from pomagma.reducer.code import VAR, APP, QUOTE, FUN, LET
-from pomagma.reducer.code import is_atom, is_var, is_app, is_quote
+from pomagma.reducer.code import NVAR, APP, QUOTE, FUN, LET
+from pomagma.reducer.code import is_atom, is_nvar, is_app, is_quote
 from pomagma.reducer.code import is_fun, is_let
 
 
@@ -16,7 +16,7 @@ from pomagma.reducer.code import is_fun, is_let
 @memoize_args
 def try_abstract(var, body):
     """Returns \\var.body if var occurs in body, else None."""
-    if not is_var(var):
+    if not is_nvar(var):
         raise NotImplementedError('Only variables can be abstracted')
     if body is var:
         return I  # Rule I
@@ -77,11 +77,11 @@ def abstract(var, body):
 # Definition as lazy substitution
 
 def define(var, defn, body):
-    if not is_var(var):
+    if not is_nvar(var):
         raise NotImplementedError('Only variables can be abstracted')
     if is_atom(body):
         return body
-    elif is_var(body):
+    elif is_nvar(body):
         if body is var:
             return defn
         else:
@@ -112,11 +112,11 @@ def define(var, defn, body):
 # Eager substitution
 
 def substitute(var, defn, body):
-    if not is_var(var):
+    if not is_nvar(var):
         raise NotImplementedError('Only variables can be abstracted')
     if is_atom(body):
         return body
-    elif is_var(body):
+    elif is_nvar(body):
         if body is var:
             return defn
         else:
@@ -138,7 +138,7 @@ def substitute(var, defn, body):
 def compile_(code):
     if is_atom(code):
         return code
-    elif is_var(code):
+    elif is_nvar(code):
         return code
     elif is_app(code):
         x = compile_(code[1])
@@ -164,7 +164,7 @@ def compile_(code):
 # Symbolic decompiler : I,K,B,C,S -> FUN,LET
 
 FRESH_ID = 0
-FRESH_VARS = map(VAR, 'abcdefghijklmnopqrstuvwxyz')
+FRESH_VARS = map(NVAR, 'abcdefghijklmnopqrstuvwxyz')
 fresh_var = FRESH_VARS.__getitem__
 
 
@@ -213,7 +213,7 @@ def _decompile_stack(stack):
     if stack is None:
         return None
     head, args = stack
-    if is_var(head) or head is J:
+    if is_nvar(head) or head is J:
         args = _decompile_args(args)
         return _from_stack((head, args))
     elif is_quote(head):
@@ -298,7 +298,7 @@ def _decompile_stack(stack):
             ty = _decompile(y)
             return FUN(z, APP(APP(tx, z), APP(ty, z)))
         z, args = args
-        if is_var(z):
+        if is_nvar(z):
             head = _decompile(APP(APP(x, z), APP(y, z)))
             args = _decompile_args(args)
             return _from_stack((head, args))

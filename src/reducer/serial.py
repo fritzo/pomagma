@@ -38,7 +38,7 @@ Varint format in bytes:
     additional messages are read off the stream and added to the APP tree.
 5.  Each 'head' symbol may override the semantics of the first few args, so
     e.g. whereas normally [S K I] -> APP(APP(S, K), I), because S is normal,
-    [VAR x I] -> APP(VAR(x), I), since VAR overrides one argument
+    [NVAR x I] -> APP(NVAR(x), I), since NVAR overrides one argument
 6.  Varints are coded as: 7 lower bits denoting part of a number in 0,1,2,...,
     followed by 1 bit that is 1 iff more bytes are needed (a la protobuf).
     The end result of a varint is all of the 7-bit pieces concatenated
@@ -57,10 +57,10 @@ from pomagma.reducer.code import (
     CODE, EVAL, QAPP, QQUOTE, EQUAL, LESS,
     TOP, BOT, I, K, B, C, S, J,
     V, A, UNIT, BOOL, MAYBE, PROD, SUM, NUM,
-    VAR, IVAR, QUOTE, APP, FUN, LET, ABIND, RVAR, SVAR,
-    _VAR, _IVAR, _QUOTE, _FUN, _LET, _ABIND, _RVAR, _SVAR,
+    NVAR, IVAR, QUOTE, APP, FUN, LET, ABIND, RVAR, SVAR,
+    _NVAR, _IVAR, _QUOTE, _FUN, _LET, _ABIND, _RVAR, _SVAR,
     is_abind, is_rvar, is_svar,
-    is_var, is_ivar, is_app, is_quote, is_fun, is_let,
+    is_nvar, is_ivar, is_app, is_quote, is_fun, is_let,
 )
 
 PROTOCOL_VERSION = '0.0.12'  # Semver compliant.
@@ -138,7 +138,7 @@ INT_TO_SYMB = [
     TOP, BOT, I, K, B, C, S, J,
     CODE, EVAL, QAPP, QQUOTE, EQUAL, LESS,
     V, A, UNIT, BOOL, MAYBE, PROD, SUM, NUM,
-    _VAR, _IVAR, _QUOTE, _FUN, _LET, _RVAR, _SVAR,
+    _NVAR, _IVAR, _QUOTE, _FUN, _LET, _RVAR, _SVAR,
     # Symbols beyond pos 30 require an extra byte.
     _ABIND,
 ]
@@ -173,8 +173,8 @@ def dump(code, f):
     while is_app(head):
         args.append(head[2])
         head = head[1]
-    if is_var(head):
-        _dump_head_argc(SYMB_TO_INT[_VAR], 1 + len(args), f)
+    if is_nvar(head):
+        _dump_head_argc(SYMB_TO_INT[_NVAR], 1 + len(args), f)
         _dump_raw_bytes(head[1], f)
     elif is_ivar(head):
         _dump_head_argc(SYMB_TO_INT[_IVAR], 1 + len(args), f)
@@ -227,12 +227,12 @@ def _load_from(bytes_):
         raise ValueError('Unrecognized symbol: {}'.format(head))
     if head is RAW_BYTES:
         return _load_raw_bytes(argc, bytes_)
-    if head is _VAR:
+    if head is _NVAR:
         if argc < 1:
-            raise ValueError('VAR requires at least one arg')
+            raise ValueError('NVAR requires at least one arg')
         argc -= 1
         name = _load_from(bytes_)
-        head = VAR(name)
+        head = NVAR(name)
     elif head is _IVAR:
         if argc < 1:
             raise ValueError('IVAR requires at least one arg')

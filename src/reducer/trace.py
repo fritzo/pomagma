@@ -7,8 +7,8 @@ __all__ = [
 from parsable import parsable
 from pomagma.reducer.code import TOP, BOT, I, K, B, C, S, J
 from pomagma.reducer.code import EVAL, QQUOTE, QAPP
-from pomagma.reducer.code import VAR, APP, QUOTE, FUN
-from pomagma.reducer.code import is_var, is_app, is_quote, free_vars
+from pomagma.reducer.code import NVAR, APP, QUOTE, FUN
+from pomagma.reducer.code import is_nvar, is_app, is_quote, free_vars
 from pomagma.reducer.code import sexpr_parse, sexpr_print
 from pomagma.reducer.linker import link
 from pomagma.reducer.transforms import abstract
@@ -49,7 +49,7 @@ def init_fresh(code):
 def fresh():
     next_id = FRESH_ID[0]
     FRESH_ID[0] += 1
-    return VAR('v{}'.format(next_id))
+    return NVAR('v{}'.format(next_id))
 
 
 def pop_arg(stack):
@@ -82,7 +82,7 @@ def trace_deterministic(code):
             elif is_quote(code):
                 stack = QUOTE_ARG, None, stack
                 code = code[1]
-            elif is_var(code):
+            elif is_nvar(code):
                 state = REDUCE_ARGS
             elif code is TOP or code is BOT:
                 stack = drop_args(stack)
@@ -295,7 +295,7 @@ def trace_nondeterministic(code):
             elif is_quote(code):
                 stack = QUOTE_ARG, None, stack
                 code = code[1]
-            elif is_var(code):
+            elif is_nvar(code):
                 state = REDUCE_ARGS
             elif code is TOP or code is BOT:
                 stack = drop_args(stack)

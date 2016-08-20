@@ -2,7 +2,7 @@ from cStringIO import StringIO
 from pomagma.reducer.code import CODE, EVAL, QAPP, QQUOTE, EQUAL, LESS
 from pomagma.reducer.code import TOP, BOT, I, K, B, C, S, J
 from pomagma.reducer.code import V, A, UNIT, BOOL, MAYBE, PROD, SUM, NUM
-from pomagma.reducer.code import VAR, APP, QUOTE, FUN, LET, ABIND, RVAR, SVAR
+from pomagma.reducer.code import NVAR, APP, QUOTE, FUN, LET, ABIND, RVAR, SVAR
 from pomagma.reducer.code_test import s_codes
 from pomagma.reducer.serial import dump, load
 from pomagma.reducer.serial import pack_head_argc, unpack_head_argc
@@ -39,15 +39,15 @@ def test_pack_unpack_head_argc(head, argc):
         next(iter_chars)
 
 
-x = VAR('x')
+x = NVAR('x')
 
 
 @for_each([
     x,
-    VAR('the_quick_brown_fox_jumped_over_the_lazy_dog'),
-    VAR('take_one_down_and_pass_it_around_and_' * 9),
-    VAR('take_one_down_and_pass_it_around_and_' * 99),
-    VAR('take_one_down_and_pass_it_around_and_' * 999),
+    NVAR('the_quick_brown_fox_jumped_over_the_lazy_dog'),
+    NVAR('take_one_down_and_pass_it_around_and_' * 9),
+    NVAR('take_one_down_and_pass_it_around_and_' * 99),
+    NVAR('take_one_down_and_pass_it_around_and_' * 999),
     TOP,
     BOT,
     I,

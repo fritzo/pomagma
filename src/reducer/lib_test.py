@@ -1,5 +1,5 @@
 from pomagma.reducer import lib
-from pomagma.reducer.code import VAR, I, J, UNIT, sexpr_print
+from pomagma.reducer.code import NVAR, I, J, UNIT, sexpr_print
 from pomagma.reducer.engine import reduce, simplify
 from pomagma.reducer.engine_test import s_quoted
 from pomagma.reducer.sugar import as_code, app, join, quote, combinator
@@ -23,11 +23,11 @@ class lazy_actual_vs_expected(object):
     __repr__ = __str__
 
 
-f = VAR('f')
-w = VAR('w')
-x = VAR('x')
-y = VAR('y')
-z = VAR('z')
+f = NVAR('f')
+w = NVAR('w')
+x = NVAR('x')
+y = NVAR('y')
+z = NVAR('z')
 
 ok = lib.ok
 error = lib.error

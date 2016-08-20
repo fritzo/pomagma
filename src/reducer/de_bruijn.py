@@ -19,7 +19,7 @@ from pomagma.compiler.util import memoize_arg
 from pomagma.compiler.util import memoize_args
 from pomagma.reducer.code import APP, IVAR, TOP, BOT, I, K, B, C, S, J
 from pomagma.reducer.code import complexity
-from pomagma.reducer.code import is_app, is_var, is_ivar, is_atom
+from pomagma.reducer.code import is_app, is_nvar, is_ivar, is_atom
 from pomagma.reducer.continuation import join_codes
 from pomagma.reducer.util import LOG
 from pomagma.reducer.util import pretty
@@ -78,7 +78,7 @@ def iter_shared_list(shared_list):
 
 @memoize_arg
 def max_free_ivar(term):
-    if is_atom(term) or is_var(term):
+    if is_atom(term) or is_nvar(term):
         return -1
     elif is_ivar(term):
         return term[1]
@@ -97,7 +97,7 @@ def try_abstract(body):
         (False, unabstracted ivar-incremented result) otherwise.
 
     """
-    if is_atom(body) or is_var(body):
+    if is_atom(body) or is_nvar(body):
         return False, body  # Rule K
     elif is_ivar(body):
         rank = body[1]
@@ -166,7 +166,7 @@ def code_increment_ivars(body, min_rank):
         if rank >= min_rank:
             rank += 1
         return IVAR(rank)
-    elif is_atom(body) or is_var(body):
+    elif is_atom(body) or is_nvar(body):
         return body
     elif is_app(body):
         lhs = code_increment_ivars(body[1], min_rank)
@@ -238,7 +238,7 @@ def is_stack(stack):
 @memoize_args
 def make_cont(head, stack, bound):
     """Continuations are linear-beta-eta normal forms."""
-    assert is_ivar(head) or is_var(head) or head in INERT_ATOMS, head
+    assert is_ivar(head) or is_nvar(head) or head in INERT_ATOMS, head
     if head in (TOP, BOT):
         assert stack is None and bound == 0
     elif head is S:
@@ -362,7 +362,7 @@ def cont_set_from_codes(codes, stack=None, bound=0):
         precont = pending.pop()
         head = precont.seek_head()
 
-        if is_ivar(head) or is_var(head):
+        if is_ivar(head) or is_nvar(head):
             result.append(precont.freeze())
             continue
         elif head is TOP:
@@ -481,12 +481,12 @@ def cont_set_try_decide_less(lhs, rhs):
 def cont_try_decide_less(lhs, rhs):
     """Weak decision oracle for Scott ordering.
 
-         | TOP   BOT    IVAR   VAR    S
+         | TOP   BOT    IVAR   NVAR    S
     -----+----------------------------------
      TOP | True  False  False  False  approx
      BOT | True  True   True   True   True
     IVAR | True  False  delta  False  approx
-     VAR | True  False  False  delta  approx
+     NVAR | True  False  False  delta  approx
        S | True  approx approx approx approx
 
     Theorem: (soundness)
@@ -511,14 +511,14 @@ def cont_try_decide_less(lhs, rhs):
     if lhs.head is BOT or rhs.head is TOP or lhs is rhs:
         return True
     if lhs.head is TOP:
-        if rhs.head is BOT or is_ivar(rhs.head) or is_var(rhs.head):
+        if rhs.head is BOT or is_ivar(rhs.head) or is_nvar(rhs.head):
             return False
     if rhs.head is BOT:
-        if lhs.head is TOP or is_ivar(lhs.head) or is_var(lhs.head):
+        if lhs.head is TOP or is_ivar(lhs.head) or is_nvar(lhs.head):
             return False
-    if is_ivar(lhs.head) and is_var(rhs.head):
+    if is_ivar(lhs.head) and is_nvar(rhs.head):
         return False
-    if is_var(lhs.head) and is_ivar(rhs.head):
+    if is_nvar(lhs.head) and is_ivar(rhs.head):
         return False
 
     # Eta expand until binder counts agree.
@@ -532,15 +532,15 @@ def cont_try_decide_less(lhs, rhs):
         rhs_stack = stack_increment_ivars(rhs_stack, 0)
 
     # Try comparing stacks.
-    assert (is_ivar(lhs_head) or is_var(lhs_head) or
+    assert (is_ivar(lhs_head) or is_nvar(lhs_head) or
             lhs_head in INERT_ATOMS), lhs_head
-    assert (is_ivar(rhs_head) or is_var(rhs_head) or
+    assert (is_ivar(rhs_head) or is_nvar(rhs_head) or
             rhs_head in INERT_ATOMS), rhs_head
     if is_ivar(lhs_head) and is_ivar(rhs_head):
         if lhs_head is not rhs_head:
             return False
         return stack_try_decide_less(lhs_stack, rhs_stack)
-    if is_var(lhs_head) and is_var(rhs_head):
+    if is_nvar(lhs_head) and is_nvar(rhs_head):
         if lhs_head is not rhs_head:
             return False
         return stack_try_decide_less(lhs_stack, rhs_stack)

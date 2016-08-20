@@ -1,13 +1,13 @@
-from pomagma.reducer.code import I, K, B, C, S, TOP, VAR, APP
+from pomagma.reducer.code import I, K, B, C, S, TOP, NVAR, APP
 from pomagma.reducer.sugar import _compile
 from pomagma.reducer.sugar import combinator, as_code, app, join
 from pomagma.util.testing import for_each
 import pytest
 
-f = VAR('f')
-x = VAR('x')
-y = VAR('y')
-z = VAR('z')
+f = NVAR('f')
+x = NVAR('x')
+y = NVAR('y')
+z = NVAR('z')
 
 
 CODE_EXAMPLES = [

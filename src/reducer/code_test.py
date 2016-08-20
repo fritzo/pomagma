@@ -1,7 +1,7 @@
 from pomagma.reducer.code import QUOTE, CODE, EVAL, QAPP, QQUOTE, EQUAL, LESS
 from pomagma.reducer.code import TOP, BOT, I, K, B, C, S, J
 from pomagma.reducer.code import V, A, UNIT, BOOL, MAYBE, PROD, SUM, NUM
-from pomagma.reducer.code import VAR, IVAR, APP, FUN, LET, ABIND, RVAR, SVAR
+from pomagma.reducer.code import NVAR, IVAR, APP, FUN, LET, ABIND, RVAR, SVAR
 from pomagma.reducer.code import free_vars, complexity
 from pomagma.reducer.code import polish_parse, polish_print
 from pomagma.reducer.code import sexpr_parse, sexpr_print
@@ -15,9 +15,9 @@ import hypothesis.strategies as s
 # ----------------------------------------------------------------------------
 # Parameterized tests
 
-x = VAR('x')
-y = VAR('y')
-z = VAR('z')
+x = NVAR('x')
+y = NVAR('y')
+z = NVAR('z')
 
 
 @for_each([
@@ -153,7 +153,7 @@ s_varnames = s.builds(
     s.text(alphabet=alphabet, min_size=1, average_size=5),
 )
 s_ranks = s.integers(min_value=0, max_value=99)
-s_vars = s.builds(VAR, s_varnames)
+s_vars = s.builds(NVAR, s_varnames)
 s_ivars = s.builds(IVAR, s_ranks)
 s_rvars = s.builds(RVAR, s_ranks)
 s_svars = s.builds(SVAR, s_ranks)

@@ -1,13 +1,13 @@
 from pomagma.reducer import oracle
 from pomagma.reducer.code import QUOTE, QQUOTE, QAPP
-from pomagma.reducer.code import TOP, BOT, I, K, B, C, J, VAR
+from pomagma.reducer.code import TOP, BOT, I, K, B, C, J, NVAR
 from pomagma.reducer.sugar import app
 from pomagma.util.testing import for_each
 import pytest
 
 F = app(K, I)
-x = VAR('x')
-y = VAR('y')
+x = NVAR('x')
+y = NVAR('y')
 
 
 def box(x):

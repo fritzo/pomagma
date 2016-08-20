@@ -14,10 +14,10 @@ from collections import namedtuple
 from pomagma.compiler.util import memoize_arg
 from pomagma.compiler.util import memoize_args
 from pomagma.reducer import oracle
-from pomagma.reducer.code import APP, VAR, TOP, BOT, I, K, B, C, S, J
+from pomagma.reducer.code import APP, NVAR, TOP, BOT, I, K, B, C, S, J
 from pomagma.reducer.code import QUOTE, EVAL, QQUOTE, QAPP
 from pomagma.reducer.code import free_vars, complexity
-from pomagma.reducer.code import is_var, is_app, is_quote
+from pomagma.reducer.code import is_nvar, is_app, is_quote
 from pomagma.reducer.code import sexpr_print as print_code
 from pomagma.reducer.sugar import abstract
 from pomagma.reducer.util import LOG
@@ -43,7 +43,7 @@ def iter_shared_list(shared_list):
 
 @memoize_arg
 def make_var(n):
-    return VAR('v{}'.format(n))
+    return NVAR('v{}'.format(n))
 
 
 def fresh(avoid):
@@ -115,7 +115,7 @@ def is_cont_set(arg):
 @memoize_args
 def make_cont(head, stack, bound):
     """Continuations are linear-beta-eta normal forms."""
-    assert is_var(head) or is_quote(head) or head in INERT_ATOMS, head
+    assert is_nvar(head) or is_quote(head) or head in INERT_ATOMS, head
     if head in (TOP, BOT):
         assert stack is None and bound is None
     elif head is S:
@@ -213,7 +213,7 @@ def is_cheap_to_copy(cont_set):
     if cont.stack or cont.bound:
         return False
     head = cont.head
-    return is_var(head) or head is TOP or head is BOT
+    return is_nvar(head) or head is TOP or head is BOT
 
 
 @logged(print_code_set, print_stack, print_bound, returns=print_cont_set)
@@ -228,7 +228,7 @@ def cont_set_from_codes(codes, stack=None, bound=None):
             stack = arg_cont, stack
             head = head[1]
 
-        if is_var(head):
+        if is_nvar(head):
             result.append(make_cont(head, stack, bound))
             continue
         elif is_quote(head):

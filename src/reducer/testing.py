@@ -4,7 +4,7 @@ from importlib import import_module
 from pomagma.reducer.code import CODE, EVAL, QQUOTE, QAPP, EQUAL, LESS
 from pomagma.reducer.code import TOP, BOT, I, K, B, C, S, J
 from pomagma.reducer.code import UNIT, BOOL, MAYBE
-from pomagma.reducer.code import VAR, APP, QUOTE
+from pomagma.reducer.code import NVAR, APP, QUOTE
 from pomagma.reducer.code import is_app, is_quote, sexpr_parse
 from pomagma.reducer.linker import link
 from pomagma.reducer.transforms import compile_
@@ -71,7 +71,7 @@ def iter_equations(test_id, suites=None):
 
 alphabet = '_abcdefghijklmnopqrstuvwxyz'
 s_vars = s.builds(
-    VAR,
+    NVAR,
     s.builds(str, s.text(alphabet=alphabet, min_size=1, average_size=5)),
 )
 

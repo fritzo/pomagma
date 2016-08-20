@@ -1,14 +1,14 @@
 from pomagma.reducer import engine
-from pomagma.reducer.code import VAR, I
+from pomagma.reducer.code import NVAR, I
 from pomagma.reducer.testing import iter_equations, s_codes, s_quoted
 from pomagma.util.testing import for_each, xfail_if_not_implemented
 import hypothesis
 
 BUDGET = 10000
 
-x = VAR('x')
-y = VAR('y')
-z = VAR('z')
+x = NVAR('x')
+y = NVAR('y')
+z = NVAR('z')
 
 
 @for_each([

@@ -80,7 +80,7 @@ logged = _logged if LOG.isEnabledFor(logging.DEBUG) else _not_logged
 def pretty(code, add_parens=False):
     if isinstance(code, str):
         return code
-    elif code[0] == 'VAR':
+    elif code[0] == 'NVAR':
         return code[1]
     elif code[0] == 'APP':
         lhs = pretty(code[1])
