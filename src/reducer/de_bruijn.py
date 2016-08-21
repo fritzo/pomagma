@@ -713,12 +713,12 @@ def stack_try_compute_step(stack):
     if stack is None:
         return False, None
     cont_set, stack = stack
-    success, cont_set = cont_set_try_compute_step(cont_set)
-    if success:
+    progress, cont_set = cont_set_try_compute_step(cont_set)
+    if progress:
         return True, cont_set
-    success, stack = stack_try_compute_step(stack)
+    progress, stack = stack_try_compute_step(stack)
     stack = cont_set, stack
-    return success, stack
+    return progress, stack
 
 
 @memoize_arg
@@ -735,13 +735,13 @@ def cont_try_compute_step(cont):
             precont.push_arg(z)
             codes = tuple(sorted(map(cont_to_code, x)))
             cont_set = cont_set_from_codes(codes, precont.stack, precont.bound)
-            success = True
+            progress = True
         else:
-            success, precont.stack = stack_try_compute_step(precont.stack)
-            if success:
+            progress, precont.stack = stack_try_compute_step(precont.stack)
+            if progress:
                 cont = precont.freeze()
             cont_set = make_cont_set(frozenset([cont]))
-        return success, cont_set
+        return progress, cont_set
     elif cont.type is CONT_TYPE_TOP:
         return False, CONT_SET_TOP
     else:
@@ -779,8 +779,8 @@ def cont_set_try_compute_step(cont_set):
     assert is_cont_set(cont_set), cont_set
     # TODO Separate cont_set into seen and pending.
     for cont in sorted(cont_set, key=priority):
-        success, new_cont_set = cont_try_compute_step(cont)
-        if success:
+        progress, new_cont_set = cont_try_compute_step(cont)
+        if progress:
             new_cont_set = make_cont_set(cont_set | new_cont_set)
             if new_cont_set != cont_set:
                 return True, new_cont_set
@@ -789,8 +789,8 @@ def cont_set_try_compute_step(cont_set):
 
 def cont_is_normal(cont):
     assert is_cont(cont), cont
-    success, cont_set = cont_try_compute_step(cont)
-    return not success
+    progress, cont_set = cont_try_compute_step(cont)
+    return not progress
 
 
 @memoize_arg
