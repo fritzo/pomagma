@@ -1,0 +1,32 @@
+package pomagma.reducer;
+
+message Code {
+  enum Type {
+    APP = 0;  // .args_size() == 2
+    JOIN = 1;  // .args_size() >= 0
+    QUOTE = 2;  // .args_size() == 1
+
+    IVAR = 3;  // .has_rank()
+    ABS = 4;  // .args_size() == 1
+
+    NVAR = 5;  // .has_name()
+    FUN = 6;  // .args_size() == 1, .has_name()
+    LET = 7;  // .args_size() == 2, .has_name()
+
+    ATOM_TOP = 10;
+    ATOM_I = 11;
+    ATOM_K = 12;
+    ATOM_B = 13;
+    ATOM_C = 14;
+    ATOM_S = 15;
+
+    ATOM_EVAL = 20;
+    ATOM_QAPP = 21;
+    ATOM_QQUOTE = 22;
+  }
+
+  required Type type = 1;
+  repeated Code args = 2;
+  optional uint32 rank = 3;
+  optional string name = 4;
+}

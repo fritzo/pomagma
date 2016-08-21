@@ -7,6 +7,13 @@ add_custom_command(
 		--cpp_out=${CMAKE_CURRENT_LIST_DIR}
 	DEPENDS ${CMAKE_CURRENT_LIST_DIR}/messages.proto
 )
+add_custom_command(
+	OUTPUT ${CMAKE_CURRENT_LIST_DIR}/code.pb.cc
+	COMMAND protoc ${CMAKE_CURRENT_LIST_DIR}/code.proto
+		--proto_path=${CMAKE_CURRENT_LIST_DIR}
+		--cpp_out=${CMAKE_CURRENT_LIST_DIR}
+	DEPENDS ${CMAKE_CURRENT_LIST_DIR}/code.proto
+)
 
 add_library(pomagma_reducer SHARED engine.cpp io.cpp)
 target_link_libraries(pomagma_reducer
