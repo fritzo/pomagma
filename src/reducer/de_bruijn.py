@@ -199,8 +199,8 @@ def stack_increment_ivars(stack, min_rank):
 Cont = namedtuple('Cont', ['type', 'args'])
 
 # head : code
-# stack : stack (frozenset continuation)
-# bound : stack var
+# stack : stack cont_set
+# bound : int
 ContApp = namedtuple('ContApp', ['head', 'stack', 'bound'])
 
 CONT_TYPE_TOP = intern('CONT_TOP')
@@ -236,13 +236,13 @@ def make_cont(type_, args):
         assert isinstance(args, ContApp), args
         head, stack, bound = args
         assert is_ivar(head) or is_nvar(head) or head in INERT_ATOMS, head
-        if head is TOP:
-            assert stack is None and bound == 0
-        elif head is S:
+        if head is S:
             assert stack is not None
             assert stack[1] is not None
             assert stack[1][1] is not None
             assert not is_cheap_to_copy(stack[1][1][0])
+        else:
+            assert is_ivar(head) or is_nvar(head)
         assert is_stack(stack), stack
         assert isinstance(bound, int) and bound >= 0, bound
     elif type_ is CONT_TYPE_TOP:
@@ -328,6 +328,7 @@ def is_cheap_to_copy(cont_set):
       terminate. []
 
     """
+    assert is_cont_set(cont_set), cont_set
     return cont_set_complexity(cont_set) <= complexity(S)
 
 
@@ -351,7 +352,7 @@ class PreContinuation(object):
         return self.head
 
     def peek_at_arg(self, pos):
-        assert isinstance(pos, int) and pos >= 0
+        assert isinstance(pos, int) and pos > 0
         stack = self.stack
         for _ in xrange(pos):
             if stack is None:
@@ -384,6 +385,7 @@ class PreContinuation(object):
         if self.head is TOP:
             return CONT_TOP
         else:
+            # TODO eta contract, compensating for expansion in .pop_args().
             return make_cont_app(self.head, self.stack, self.bound)
 
 
@@ -446,6 +448,7 @@ def cont_set_from_codes(codes, stack=None, bound=0):
 
 
 def cont_set_app(funs, args):
+    """Returns a cont_set."""
     assert is_cont_set(funs), funs
     assert is_cont_set(args), args
     codes = tuple(sorted(map(cont_to_code, funs)))
@@ -485,6 +488,8 @@ def cont_set_to_code(cont_set):
     """
     assert is_cont_set(cont_set), cont_set
     codes = set(map(cont_to_code, cont_set))
+    # TODO rearrange binary join operator in order of compute_step priority,
+    #  so as to minimize list thrashing.
     return join_codes(codes)
 
 
@@ -735,12 +740,13 @@ def cont_try_compute_step(cont):
             precont.push_arg(z)
             codes = tuple(sorted(map(cont_to_code, x)))
             cont_set = cont_set_from_codes(codes, precont.stack, precont.bound)
-            progress = True
+            return True, cont_set
         else:
-            progress, precont.stack = stack_try_compute_step(precont.stack)
-            if progress:
-                cont = precont.freeze()
-            cont_set = make_cont_set(frozenset([cont]))
+            assert is_ivar(head) or is_nvar(head), head
+        progress, precont.stack = stack_try_compute_step(precont.stack)
+        if progress:
+            cont = precont.freeze()
+        cont_set = make_cont_set(frozenset([cont]))
         return progress, cont_set
     elif cont.type is CONT_TYPE_TOP:
         return False, CONT_SET_TOP
