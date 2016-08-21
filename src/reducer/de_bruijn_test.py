@@ -253,7 +253,6 @@ def test_cont_complexity_eq_code_complexity(code):
 
 @for_each([
     (TOP, [], 0, 1),
-    (BOT, [], 0, 1),
     (x, [], 0, 1),
     (x, [], 1, 1 + 1),
     (x, [], 2, 1 + 2),

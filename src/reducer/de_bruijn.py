@@ -214,7 +214,7 @@ def cont_increment_ivars(cont, min_rank):
 # bound : stack var
 Continuation = namedtuple('Continuation', ['head', 'stack', 'bound'])
 
-INERT_ATOMS = frozenset([TOP, BOT, S])
+INERT_ATOMS = frozenset([TOP, S])
 
 
 def is_cont(arg):
@@ -239,7 +239,7 @@ def is_stack(stack):
 def make_cont(head, stack, bound):
     """Continuations are linear-beta-eta normal forms."""
     assert is_ivar(head) or is_nvar(head) or head in INERT_ATOMS, head
-    if head in (TOP, BOT):
+    if head is TOP:
         assert stack is None and bound == 0
     elif head is S:
         assert stack is not None
