@@ -31,6 +31,10 @@ __all__ = ['reduce', 'simplify', 'try_decide_less']
 SUPPORTED_TESTDATA = ['sk', 'join', 'lib']
 
 
+def is_code(code):
+    return isinstance(code, (tuple, str))
+
+
 def trool_all(args):
     result = True
     for arg in args:
@@ -187,38 +191,27 @@ def stack_increment_ivars(stack, min_rank):
         return arg, stack
 
 
-@memoize_args
-def cont_set_increment_ivars(cont_set, min_rank):
-    assert is_cont_set(cont_set), cont_set
-    return make_cont_set(frozenset(
-        cont_increment_ivars(c, min_rank) for c in cont_set
-    ))
-
-
-@memoize_args
-def cont_increment_ivars(cont, min_rank):
-    # FIXME is this right? Should we only increment vars below bound?
-    assert is_cont(cont), cont
-    head, stack, bound = cont
-    head = code_increment_ivars(head, min_rank + bound)
-    stack = stack_increment_ivars(stack, min_rank + bound)
-    return make_cont(head, stack, bound)
-
-
 # ----------------------------------------------------------------------------
 # Continuations and sets of continuations
 
-# Immutable shared continuations, in linear-beta-eta normal form.
+# Immutable shared cons-hashed continuations, in linear-beta-eta normal form.
+Cont = namedtuple('Cont', ['type', 'args'])
+
 # head : code
 # stack : stack (frozenset continuation)
 # bound : stack var
-Continuation = namedtuple('Continuation', ['head', 'stack', 'bound'])
+ContApp = namedtuple('ContApp', ['head', 'stack', 'bound'])
 
-INERT_ATOMS = frozenset([TOP, S])
+CONT_TYPE_TOP = intern('CONT_TOP')
+CONT_TYPE_APP = intern('CONT_APP')
+# TODO CONT_TYPE_JOIN = intern('CONT_JOIN')  # instead of cont_set
+# TODO CONT_TYPE_QUOTE = intern('CONT_QUOTE')
+
+INERT_ATOMS = frozenset([S])
 
 
 def is_cont(arg):
-    return isinstance(arg, Continuation)
+    return isinstance(arg, Cont)
 
 
 def is_cont_set(arg):
@@ -236,19 +229,33 @@ def is_stack(stack):
 
 
 @memoize_args
-def make_cont(head, stack, bound):
+def make_cont(type_, args):
     """Continuations are linear-beta-eta normal forms."""
-    assert is_ivar(head) or is_nvar(head) or head in INERT_ATOMS, head
-    if head is TOP:
-        assert stack is None and bound == 0
-    elif head is S:
-        assert stack is not None
-        assert stack[1] is not None
-        assert stack[1][1] is not None
-        assert not is_cheap_to_copy(stack[1][1][0])
+    if type_ is CONT_TYPE_APP:
+        assert isinstance(args, ContApp), args
+        head, stack, bound = args
+        assert is_ivar(head) or is_nvar(head) or head in INERT_ATOMS, head
+        if head is TOP:
+            assert stack is None and bound == 0
+        elif head is S:
+            assert stack is not None
+            assert stack[1] is not None
+            assert stack[1][1] is not None
+            assert not is_cheap_to_copy(stack[1][1][0])
+        assert is_stack(stack), stack
+        assert isinstance(bound, int) and bound >= 0, bound
+    elif type_ is CONT_TYPE_TOP:
+        assert args is None
+    else:
+        raise ValueError(type_)
+    return Cont(type_, args)
+
+
+def make_cont_app(head, stack, bound):
+    assert is_code(head), head
     assert is_stack(stack), stack
     assert isinstance(bound, int) and bound >= 0, bound
-    return Continuation(head, stack, bound)
+    return make_cont(CONT_TYPE_APP, ContApp(head, stack, bound))
 
 
 @memoize_arg
@@ -259,18 +266,40 @@ def make_cont_set(cont_set):
     cont_set = frozenset(
         cont
         for cont in cont_set
-        if cont.head is not BOT
         if not any(cont_dominates(c, cont) for c in cont_set if c is not cont)
     )
 
     return cont_set
 
 
-CONT_TOP = make_cont(TOP, None, 0)
+CONT_TOP = make_cont(CONT_TYPE_TOP, None)
 CONT_SET_TOP = make_cont_set(frozenset([CONT_TOP]))
 
-CONT_IVAR_0 = make_cont(IVAR(0), None, 0)
+CONT_IVAR_0 = make_cont_app(IVAR(0), None, 0)
 CONT_SET_IVAR_0 = make_cont_set(frozenset([CONT_IVAR_0]))
+
+
+@memoize_args
+def cont_increment_ivars(cont, min_rank):
+    # FIXME is this right? Should we only increment vars below bound?
+    assert is_cont(cont), cont
+    if cont.type is CONT_TYPE_APP:
+        head, stack, bound = cont.args
+        head = code_increment_ivars(head, min_rank + bound)
+        stack = stack_increment_ivars(stack, min_rank + bound)
+        return make_cont_app(head, stack, bound)
+    elif cont.type is CONT_TYPE_TOP:
+        return cont
+    else:
+        raise ValueError(cont)
+
+
+@memoize_args
+def cont_set_increment_ivars(cont_set, min_rank):
+    assert is_cont_set(cont_set), cont_set
+    return make_cont_set(frozenset(
+        cont_increment_ivars(c, min_rank) for c in cont_set
+    ))
 
 
 # ----------------------------------------------------------------------------
@@ -351,11 +380,15 @@ class PreContinuation(object):
         self.stack = arg, self.stack
 
     def freeze(self):
-        return make_cont(self.head, self.stack, self.bound)
+        if self.head is TOP:
+            return CONT_TOP
+        else:
+            return make_cont_app(self.head, self.stack, self.bound)
 
 
 @memoize_args
 def cont_set_from_codes(codes, stack=None, bound=0):
+    assert all(map(is_code, codes)), codes
     pending = [PreContinuation(code, stack, bound) for code in codes]
     result = []
     while pending:
@@ -426,14 +459,19 @@ def cont_set_app(funs, args):
 def cont_eval(cont):
     """Returns code in linear normal form."""
     assert is_cont(cont), cont
-    head, stack, bound = cont
-    while stack is not None:
-        arg_cont_set, stack = stack
-        arg_code = cont_set_eval(arg_cont_set)
-        head = APP(head, arg_code)
-    for _ in xrange(bound):
-        head = abstract(head)
-    return head
+    if cont.type is CONT_TYPE_APP:
+        head, stack, bound = cont.args
+        while stack is not None:
+            arg_cont_set, stack = stack
+            arg_code = cont_set_eval(arg_cont_set)
+            head = APP(head, arg_code)
+        for _ in xrange(bound):
+            head = abstract(head)
+        return head
+    elif cont.type is CONT_TYPE_TOP:
+        return TOP
+    else:
+        raise ValueError(cont)
 
 
 @memoize_arg
@@ -481,13 +519,12 @@ def cont_set_try_decide_less(lhs, rhs):
 def cont_try_decide_less(lhs, rhs):
     """Weak decision oracle for Scott ordering.
 
-         | TOP   BOT    IVAR   NVAR    S
-    -----+----------------------------------
-     TOP | True  False  False  False  approx
-     BOT | True  True   True   True   True
-    IVAR | True  False  delta  False  approx
-     NVAR | True  False  False  delta  approx
-       S | True  approx approx approx approx
+         | TOP   IVAR   NVAR   S
+    -----+---------------------------
+     TOP | True  False  False  approx
+    IVAR | True  delta  False  approx
+    NVAR | True  False  delta  approx
+       S | True  approx approx approx
 
     Theorem: (soundness)
       - If cont_try_decide_less(lhs, rhs) = True, then lhs [= rhs.
@@ -508,22 +545,33 @@ def cont_try_decide_less(lhs, rhs):
     assert is_cont(rhs), rhs
 
     # Try simple cases.
-    if lhs.head is BOT or rhs.head is TOP or lhs is rhs:
+    if rhs is CONT_TOP or lhs is rhs:
         return True
-    if lhs.head is TOP:
-        if rhs.head is BOT or is_ivar(rhs.head) or is_nvar(rhs.head):
+
+    # Destructure lhs.
+    if lhs.type is CONT_TYPE_APP:
+        lhs_head, lhs_stack, lhs_bound = lhs.args
+    elif lhs.type is CONT_TYPE_TOP:
+        lhs_head, lhs_stack, lhs_bound = TOP, None, 0
+    else:
+        raise ValueError(lhs)
+
+    # Destructure rhs.
+    if rhs.type is CONT_TYPE_APP:
+        rhs_head, rhs_stack, rhs_bound = rhs.args
+    else:
+        raise ValueError(lhs)
+
+    # Try incompatible cases.
+    if lhs_head is TOP:
+        if is_ivar(rhs_head) or is_nvar(rhs_head):
             return False
-    if rhs.head is BOT:
-        if lhs.head is TOP or is_ivar(lhs.head) or is_nvar(lhs.head):
-            return False
-    if is_ivar(lhs.head) and is_nvar(rhs.head):
+    if is_ivar(lhs_head) and is_nvar(rhs_head):
         return False
-    if is_nvar(lhs.head) and is_ivar(rhs.head):
+    if is_nvar(lhs_head) and is_ivar(rhs_head):
         return False
 
     # Eta expand until binder counts agree.
-    lhs_head, lhs_stack, lhs_bound = lhs
-    rhs_head, rhs_stack, rhs_bound = rhs
     for _ in xrange(rhs_bound - lhs_bound):
         lhs_head = code_increment_ivars(lhs_head, 0)
         lhs_stack = stack_increment_ivars(lhs_stack, 0)
@@ -613,18 +661,29 @@ S_LINEAR_LOWER_BOUNDS = (
 
 def iter_head_upper_bounds(cont):
     assert is_cont(cont), cont
-    head, stack, bound = cont
-    assert head is S, cont
-    for head in S_LINEAR_UPPER_BOUNDS:
-        for cont_ub in cont_set_from_codes((head,), stack, bound):
-            yield cont_ub
+    if cont.type is CONT_TYPE_APP:
+        head, stack, bound = cont.args
+        assert head is S, cont
+        for head in S_LINEAR_UPPER_BOUNDS:
+            for cont_ub in cont_set_from_codes((head,), stack, bound):
+                yield cont_ub
+    elif cont.type is CONT_TYPE_TOP:
+        yield CONT_TOP
+    else:
+        raise ValueError(cont)
 
 
 def iter_head_lower_bounds(cont):
     assert is_cont(cont), cont
-    head, stack, bound = cont
-    assert head is S, cont
-    return cont_set_from_codes(S_LINEAR_LOWER_BOUNDS, stack, bound)
+    if cont.type is CONT_TYPE_APP:
+        head, stack, bound = cont.args
+        assert head is S, cont
+        for lb in cont_set_from_codes(S_LINEAR_LOWER_BOUNDS, stack, bound):
+            yield lb
+    elif cont.type is CONT_TYPE_TOP:
+        yield CONT_TOP
+    else:
+        raise ValueError(cont)
 
 
 def iter_lower_bounds(cont):
@@ -664,32 +723,43 @@ def stack_try_compute_step(stack):
 @memoize_arg
 def cont_try_compute_step(cont):
     assert is_cont(cont), cont
-    precont = PreContinuation(cont.head, cont.stack, cont.bound)
-    head = precont.seek_head()
-    if head is S:
-        x, y, z = precont.pop_args(3)
-        assert not is_cheap_to_copy(z), z
-        yz = cont_set_app(y, z)
-        precont.push_arg(yz)
-        precont.push_arg(z)
-        codes = tuple(sorted(map(cont_eval, x)))
-        cont_set = cont_set_from_codes(codes, precont.stack, precont.bound)
-        success = True
+    if cont.type is CONT_TYPE_APP:
+        precont = PreContinuation(*cont.args)
+        head = precont.seek_head()
+        if head is S:
+            x, y, z = precont.pop_args(3)
+            assert not is_cheap_to_copy(z), z
+            yz = cont_set_app(y, z)
+            precont.push_arg(yz)
+            precont.push_arg(z)
+            codes = tuple(sorted(map(cont_eval, x)))
+            cont_set = cont_set_from_codes(codes, precont.stack, precont.bound)
+            success = True
+        else:
+            success, precont.stack = stack_try_compute_step(precont.stack)
+            if success:
+                cont = precont.freeze()
+            cont_set = make_cont_set(frozenset([cont]))
+        return success, cont_set
+    elif cont.type is CONT_TYPE_TOP:
+        return False, CONT_SET_TOP
     else:
-        success, precont.stack = stack_try_compute_step(precont.stack)
-        if success:
-            cont = precont.freeze()
-        cont_set = make_cont_set(frozenset([cont]))
-    return success, cont_set
+        raise ValueError(cont)
 
 
 def cont_complexity(cont):
     assert is_cont(cont), cont
-    result = complexity(cont.head)
-    for arg in iter_shared_list(cont.stack):
-        result += cont_set_complexity(arg)
-    result += cont.bound
-    return result
+    if cont.type is CONT_TYPE_APP:
+        head, stack, bound = cont.args
+        result = complexity(head)
+        for arg in iter_shared_list(stack):
+            result += cont_set_complexity(arg)
+        result += bound
+        return result
+    elif cont.type is CONT_TYPE_TOP:
+        return 1
+    else:
+        raise ValueError(cont)
 
 
 def cont_set_complexity(cont_set):
@@ -724,6 +794,7 @@ def cont_is_normal(cont):
 
 @memoize_arg
 def compute(code):
+    assert is_code(code), code
     cont_set = cont_set_from_codes((code,))
     working = True
     while working:
@@ -736,6 +807,7 @@ def compute(code):
 
 def reduce(code, budget=0):
     '''Beta-eta reduce code, ignoring budget.'''
+    assert is_code(code), code
     assert isinstance(budget, int) and budget >= 0, budget
     LOG.info('reduce({})'.format(pretty(code)))
     code = compute(code)
@@ -745,6 +817,7 @@ def reduce(code, budget=0):
 
 def simplify(code):
     '''Linearly beta-eta reduce.'''
+    assert is_code(code), code
     LOG.info('simplify({})'.format(pretty(code)))
     cont_set = cont_set_from_codes((code,))
     code = cont_set_eval(cont_set)

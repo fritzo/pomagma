@@ -1,7 +1,7 @@
 from pomagma.reducer import de_bruijn
 from pomagma.reducer.code import APP, TOP, BOT, I, K, B, C, S, J
 from pomagma.reducer.code import complexity, sexpr_parse
-from pomagma.reducer.de_bruijn import CONT_SET_TOP, make_cont
+from pomagma.reducer.de_bruijn import CONT_TOP, CONT_SET_TOP, make_cont_app
 from pomagma.reducer.de_bruijn import IVAR, abstract
 from pomagma.reducer.de_bruijn import S_LINEAR_LOWER_BOUNDS
 from pomagma.reducer.de_bruijn import S_LINEAR_UPPER_BOUNDS
@@ -274,7 +274,7 @@ def test_cont_complexity_eq_code_complexity(code):
 ])
 def test_cont_complexity(code, args, bound, expected):
     stack = list_to_stack(args)
-    cont = make_cont(code, stack, bound)
+    cont = CONT_TOP if code is TOP else make_cont_app(code, stack, bound)
     assert de_bruijn.cont_complexity(cont) == expected
 
 
