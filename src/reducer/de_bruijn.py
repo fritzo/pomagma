@@ -81,15 +81,16 @@ def iter_shared_list(shared_list):
 # Abstraction
 
 @memoize_arg
-def max_free_ivar(term):
-    if is_atom(term) or is_nvar(term):
+def max_free_ivar(code):
+    assert is_code(code), code
+    if is_atom(code) or is_nvar(code):
         return -1
-    elif is_ivar(term):
-        return term[1]
-    elif is_app(term):
-        return max(max_free_ivar(term[1]), max_free_ivar(term[2]))
+    elif is_ivar(code):
+        return code[1]
+    elif is_app(code):
+        return max(max_free_ivar(code[1]), max_free_ivar(code[2]))
     else:
-        raise NotImplementedError(term)
+        raise NotImplementedError(code)
 
 
 @memoize_args
@@ -438,7 +439,7 @@ def cont_set_from_codes(codes, stack=None, bound=0):
         stack = precont.stack
         bound = precont.bound
         for cont in head_cont_set:
-            head = cont_eval(cont)
+            head = cont_to_code(cont)
             pending.append(PreContinuation(head, stack, bound))
 
     return make_cont_set(frozenset(result))
@@ -447,7 +448,7 @@ def cont_set_from_codes(codes, stack=None, bound=0):
 def cont_set_app(funs, args):
     assert is_cont_set(funs), funs
     assert is_cont_set(args), args
-    codes = tuple(sorted(map(cont_eval, funs)))
+    codes = tuple(sorted(map(cont_to_code, funs)))
     stack = args, None
     return cont_set_from_codes(codes, stack)
 
@@ -456,14 +457,14 @@ def cont_set_app(funs, args):
 # Conversion : continuation -> code
 
 @memoize_arg
-def cont_eval(cont):
+def cont_to_code(cont):
     """Returns code in linear normal form."""
     assert is_cont(cont), cont
     if cont.type is CONT_TYPE_APP:
         head, stack, bound = cont.args
         while stack is not None:
             arg_cont_set, stack = stack
-            arg_code = cont_set_eval(arg_cont_set)
+            arg_code = cont_set_to_code(arg_cont_set)
             head = APP(head, arg_code)
         for _ in xrange(bound):
             head = abstract(head)
@@ -475,15 +476,15 @@ def cont_eval(cont):
 
 
 @memoize_arg
-def cont_set_eval(cont_set):
+def cont_set_to_code(cont_set):
     """Returns code in linear normal form.
 
     Desired Theorem: For any cont_set,
-      cont_set_from_codes((cont_set_eval(cont_set),)) == cont_set
+      cont_set_from_codes((cont_set_to_code(cont_set),)) == cont_set
 
     """
     assert is_cont_set(cont_set), cont_set
-    codes = set(map(cont_eval, cont_set))
+    codes = set(map(cont_to_code, cont_set))
     return join_codes(codes)
 
 
@@ -732,7 +733,7 @@ def cont_try_compute_step(cont):
             yz = cont_set_app(y, z)
             precont.push_arg(yz)
             precont.push_arg(z)
-            codes = tuple(sorted(map(cont_eval, x)))
+            codes = tuple(sorted(map(cont_to_code, x)))
             cont_set = cont_set_from_codes(codes, precont.stack, precont.bound)
             success = True
         else:
@@ -802,7 +803,7 @@ def compute(code):
     cont_set = make_cont_set(frozenset(
         c for c in cont_set if cont_is_normal(c)
     ))
-    return cont_set_eval(cont_set)
+    return cont_set_to_code(cont_set)
 
 
 def reduce(code, budget=0):
@@ -820,6 +821,6 @@ def simplify(code):
     assert is_code(code), code
     LOG.info('simplify({})'.format(pretty(code)))
     cont_set = cont_set_from_codes((code,))
-    code = cont_set_eval(cont_set)
+    code = cont_set_to_code(cont_set)
     assert max_free_ivar(code) < 0, code
     return code
