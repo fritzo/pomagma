@@ -278,6 +278,7 @@ def test_cont_complexity(code, args, bound, expected):
     assert de_bruijn.cont_complexity(cont) == expected
 
 
+@pytest.mark.timeout(1)
 @for_each(iter_equations('de_bruijn'))
 def test_reduce_equations(code, expected, message):
     with xfail_if_not_implemented():

@@ -35,7 +35,7 @@ true = K
 false = F
 
 
-def iter_shared_list(shared_list):
+def iter_stack(shared_list):
     while shared_list is not None:
         arg, shared_list = shared_list
         yield arg
@@ -60,11 +60,11 @@ def fresh(avoid):
 
 def print_stack(stack):
     return '[{}]'.format(
-        ', '.join(print_cont_set(v) for v in iter_shared_list(stack)))
+        ', '.join(print_cont_set(v) for v in iter_stack(stack)))
 
 
 def print_bound(bound):
-    return '[{}]'.format(', '.join(v[1] for v in iter_shared_list(bound)))
+    return '[{}]'.format(', '.join(v[1] for v in iter_stack(bound)))
 
 
 def print_cont(cont):
@@ -167,9 +167,9 @@ def cont_set_try_decide_less(lhs_cont_set, rhs_cont_set):
 def cont_free_vars(cont):
     assert is_cont(cont), cont
     all_vars = free_vars(cont.head)
-    for cont_set in iter_shared_list(cont.stack):
+    for cont_set in iter_stack(cont.stack):
         all_vars |= cont_set_free_vars(cont_set)
-    bound_vars = frozenset(iter_shared_list(cont.bound))
+    bound_vars = frozenset(iter_stack(cont.bound))
     return all_vars - bound_vars
 
 
@@ -454,9 +454,9 @@ def cont_complexity(cont):
     """
     assert is_cont(cont), cont
     result = complexity(cont.head)
-    for arg in iter_shared_list(cont.stack):
+    for arg in iter_stack(cont.stack):
         result += cont_set_complexity(arg)
-    for var in iter_shared_list(cont.bound):
+    for var in iter_stack(cont.bound):
         result += complexity(var)
     return result
 

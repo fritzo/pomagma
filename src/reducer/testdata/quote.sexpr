@@ -3,7 +3,7 @@
 (EQUAL (QUOTE (QUOTE (I x))) (QUOTE (QUOTE x)))
 (EQUAL (QUOTE (QUOTE (B K I I))) (QUOTE (QUOTE (K I))))
 (EQUAL (QUOTE (QUOTE (C K I I))) (QUOTE (QUOTE I)))
-(EQUAL (QUOTE (QUOTE (S K I I))) (QUOTE (QUOTE (S K I I))))  ; xfail trace
+(EQUAL (QUOTE (QUOTE (S K I I))) (QUOTE (QUOTE I)))  ; xfail engine continuation
 
 ;; EVAL
 (EQUAL (QUOTE (EVAL x)) (QUOTE (EVAL x)))
@@ -63,9 +63,9 @@
 (EQUAL (QUOTE (LESS BOT x)) (QUOTE (LESS BOT x)))
 (EQUAL (QUOTE (LESS x BOT)) (QUOTE (LESS x BOT)))
 (EQUAL (QUOTE (LESS BOT (QUOTE x))) (QUOTE (LESS BOT (QUOTE x))))
-(EQUAL (QUOTE (LESS (QUOTE x) BOT)) (QUOTE (LESS (QUOTE x) BOT)))
+(EQUAL (QUOTE (LESS (QUOTE x) BOT)) (QUOTE (LESS (QUOTE x) BOT)))  ; xfail de_bruijn
 (EQUAL (QUOTE (LESS BOT (QUOTE TOP))) (QUOTE lib.true))
-(EQUAL (QUOTE (LESS (QUOTE BOT) BOT)) (QUOTE lib.true))
+(EQUAL (QUOTE (LESS (QUOTE BOT) BOT)) (QUOTE lib.true))  ; xfail de_bruijn
 (EQUAL (QUOTE (LESS (QUOTE TOP) (QUOTE (S K I TOP)))) (QUOTE lib.true))  ; xfail engine
 (EQUAL (QUOTE (LESS (QUOTE (S K I BOT)) (QUOTE BOT))) (QUOTE lib.true))  ; xfail engine
-(EQUAL (QUOTE (LESS (QUOTE (S I I (S I I))) (QUOTE BOT))) (QUOTE lib.true))  ; xfail engine
+(EQUAL (QUOTE (LESS (QUOTE (S I I (S I I))) (QUOTE BOT))) (QUOTE lib.true))  ; xfail engine de_bruijn

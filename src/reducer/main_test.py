@@ -2,6 +2,7 @@ from pomagma.reducer import __main__ as main
 from pomagma.reducer.code import polish_print, sexpr_print
 from pomagma.reducer.testing import iter_equations
 from pomagma.util.testing import for_each, skip_if_not_implemented
+import pytest
 
 
 @for_each([
@@ -54,6 +55,7 @@ def test_reduce_continuatin_sexpr_equations(code, expected_code, message):
     assert actual_string == expected_string, message
 
 
+@pytest.mark.timeout(1)
 @for_each(iter_equations(test_id='de_bruijn'))
 def test_reduce_de_bruijn_polish_equations(code, expected_code, message):
     string = polish_print(code)
@@ -63,6 +65,7 @@ def test_reduce_de_bruijn_polish_equations(code, expected_code, message):
     assert actual_string == expected_string, message
 
 
+@pytest.mark.timeout(1)
 @for_each(iter_equations(test_id='de_bruijn'))
 def test_reduce_de_bruijn_sexpr_equations(code, expected_code, message):
     string = sexpr_print(code)

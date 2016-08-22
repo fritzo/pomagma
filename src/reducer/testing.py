@@ -46,7 +46,7 @@ def parse_xfail(comment, test_id):
     if comment.startswith('xfail'):
         if test_id is None:
             return True
-        if test_id in comment[len('xfail'):].strip().split(', '):
+        if test_id in comment[len('xfail'):].strip().split(' '):
             return True
     return False
 
