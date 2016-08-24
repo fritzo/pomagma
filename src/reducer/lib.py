@@ -456,6 +456,66 @@ def close(f):
 
 
 # ----------------------------------------------------------------------------
+# Type constructor
+
+@combinator
+def a_preconj(f):
+    return app(f, lambda r, s: pair(app(B, r), app(B, s)))
+
+
+@combinator
+def a_postconj(f):
+    return app(f, lambda r, s: pair(app(C, B, s), app(C, B, r)))
+
+
+@combinator
+def a_compose(f1, f2):
+    return app(f1, lambda r1, s1: app(f2, lambda r2, s2: app(
+        pair, compose(r1, r2), compose(s2, s1)),
+    ))
+
+
+@combinator
+def div(f):
+    return join(f, app(div, f, TOP))
+
+
+@combinator
+def a_copy(f, x):
+    return app(f, x, x)
+
+
+@combinator
+def a_join(f, x, y):
+    return app(f, join(x, y))
+
+
+@combinator
+def a_construct():
+    return join(
+        app(pair, I, I),
+        app(pair, BOT, TOP),
+        app(pair, div, BOT),
+        app(pair, a_copy, a_join),
+        app(pair, C, C),
+        app(a_preconj, a_construct),
+        app(a_postconj, a_construct),
+        app(a_compose, a_construct, a_construct),
+    )
+
+
+@combinator
+def construct(f):
+    """The simple type constructor, aka AAA."""
+    return app(a_construct, f)
+
+
+@construct
+def a_arrow(a, b):
+    return lambda f, x: app(b, app(f, app(a, x)))
+
+
+# ----------------------------------------------------------------------------
 # Scott ordering
 
 @combinator

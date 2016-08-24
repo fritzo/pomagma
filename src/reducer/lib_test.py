@@ -1,5 +1,6 @@
 from pomagma.reducer import lib
-from pomagma.reducer.code import NVAR, I, J, UNIT, sexpr_print
+from pomagma.reducer.code import NVAR, TOP, BOT, I, K, B, C, S, J, UNIT
+from pomagma.reducer.code import sexpr_print
 from pomagma.reducer.engine import reduce, simplify
 from pomagma.reducer.engine_test import s_quoted
 from pomagma.reducer.sugar import as_code, app, join, quote, combinator
@@ -1086,6 +1087,7 @@ def test_fun_type_fixes(value, type_):
     assert reduce(app(type_, value)) == reduce(as_code(value))
 
 
+# succ implemented using fix.
 succ_fix = lib.fix(lambda f, x: app(x, num(1), lambda px: succ(app(f, px))))
 
 
@@ -1119,6 +1121,87 @@ def test_fix(value, expected):
 ])
 def test_close(f, x, expected):
     assert reduce(app(lib.close(f), x)) == expected
+
+
+# ----------------------------------------------------------------------------
+# Type constructor
+
+a_div = app(lib.construct, lambda a: a)
+a_unit = app(lib.construct, lambda a: app(lib.a_arrow, a, a))
+a_boool = app(
+    lib.construct,
+    lambda a: app(lib.a_arrow, a, app(lib.a_arrow, a, a)),
+)
+
+
+@pytest.mark.timeout(1)
+@for_each([
+    pytest.mark.xfail((BOT, BOT)),
+    (TOP, TOP),
+    (I, TOP),
+    (K, TOP),
+    (B, TOP),
+    (C, TOP),
+    (S, TOP),
+    (J, TOP),
+    (app(K, I), TOP),
+    (app(C, B), TOP),
+    (app(C, I), TOP),
+    (app(S, I), TOP),
+])
+def test_div(x, expected):
+    assert reduce(lib.div(x)) == expected
+
+
+@pytest.mark.timeout(1)
+@for_each([
+    pytest.mark.xfail((BOT, BOT), run=False),
+    (TOP, TOP),
+    (I, TOP),
+    (K, TOP),
+    (B, TOP),
+    (C, TOP),
+    (S, TOP),
+    (J, TOP),
+    (app(K, I), TOP),
+    (app(C, B), TOP),
+    (app(C, I), TOP),
+    (app(S, I), TOP),
+])
+def test_div_constructed(x, expected):
+    assert reduce(app(a_div, x)) == expected
+
+
+@pytest.mark.xfail
+@pytest.mark.timeout(1)
+@for_each([
+    (ok, ok),
+    (error, error),
+    (undefined, undefined),
+    (true, error),
+    (false, error),
+    (J, error),
+    (x, app(UNIT, x)),
+])
+def test_unit_constructed(x, expected):
+    assert simplify(app(a_unit, x)) == expected
+
+
+@pytest.mark.xfail
+@pytest.mark.timeout(1)
+@for_each([
+    (true, true),
+    (false, false),
+    (error, error),
+    (undefined, undefined),
+    (J, J),
+    (I, error),
+    (B, error),
+    (C, error),
+    (S, error),
+])
+def test_boool_constructed(x, expected):
+    assert simplify(app(a_boool, x)) == expected
 
 
 # ----------------------------------------------------------------------------
