@@ -6,7 +6,6 @@ and trace.py. The basic objects of this implementation are
 - sets of continuations representing joins ('cont_set').
 
 (Q1) Would de Bruijn indices make it easier to implement cont_try_decide_less?
-(Q2) Is there a principled way to infer J-eta rules in join_codes(-)?
 
 """
 
@@ -14,10 +13,10 @@ from collections import namedtuple
 from pomagma.compiler.util import memoize_arg
 from pomagma.compiler.util import memoize_args
 from pomagma.reducer import oracle
-from pomagma.reducer.code import APP, NVAR, TOP, BOT, I, K, B, C, S, J
+from pomagma.reducer.code import APP, JOIN, NVAR, TOP, BOT, I, K, B, C, S
 from pomagma.reducer.code import QUOTE, EVAL, QQUOTE, QAPP
 from pomagma.reducer.code import free_vars, complexity
-from pomagma.reducer.code import is_nvar, is_app, is_quote
+from pomagma.reducer.code import is_nvar, is_app, is_join, is_quote
 from pomagma.reducer.code import sexpr_print as print_code
 from pomagma.reducer.sugar import abstract
 from pomagma.reducer.util import LOG
@@ -231,6 +230,10 @@ def cont_set_from_codes(codes, stack=None, bound=None):
         if is_nvar(head):
             result.append(make_cont(head, stack, bound))
             continue
+        elif is_join(head):
+            x = cont_set_from_codes((head[1],))
+            y = cont_set_from_codes((head[2],))
+            head_cont_set = x | y
         elif is_quote(head):
             x = head[1]
             x = simplify(x)
@@ -276,10 +279,6 @@ def cont_set_from_codes(codes, stack=None, bound=None):
             else:
                 result.append(make_cont(S, old_stack, old_bound))
                 continue
-        elif head is J:
-            x, stack, bound = pop_arg(stack, bound)
-            y, stack, bound = pop_arg(stack, bound, x)
-            head_cont_set = x | y
         elif head is EVAL:
             old_stack = stack
             old_bound = bound
@@ -349,19 +348,6 @@ def join_codes(codes):
     if not codes:
         return BOT
 
-    # Apply J-eta rules to recognize J and APP(J, x).
-    # This should really be combined with _close.
-    if K in codes and F in codes:
-        codes.remove(K)
-        codes.remove(F)
-        codes.add(J)
-    if I in codes:
-        for kx in tuple(codes):
-            if is_app(kx) and kx[1] is K:
-                codes.discard(I)
-                codes.remove(kx)
-                codes.add(APP(J, kx[2]))
-
     # Filter out dominated codes.
     # FIXME If x [= y and y [= x, this filters out both.
     filtered_codes = []
@@ -375,7 +361,7 @@ def join_codes(codes):
     # Construct a join term.
     result = filtered_codes[0]
     for code in filtered_codes[1:]:
-        result = APP(APP(J, result), code)
+        result = JOIN(result, code)
     return result
 
 

@@ -1,6 +1,6 @@
 from pomagma.reducer.code import I, K, B, C, S, TOP, NVAR, APP
 from pomagma.reducer.sugar import _compile
-from pomagma.reducer.sugar import combinator, as_code, app, join
+from pomagma.reducer.sugar import combinator, as_code, app, join_
 from pomagma.util.testing import for_each
 import pytest
 
@@ -61,17 +61,17 @@ def Y(f):
     return app(lambda x: app(f, app(x, x)), lambda x: app(f, app(x, x)))
 
 
-div_Y = Y(lambda f, x: join(x, app(f, app(x, TOP))))
+div_Y = Y(lambda f, x: join_(x, app(f, app(x, TOP))))
 
 
 @combinator
 def div_rec_call(x):
-    return join(x, div_rec_call(app(x, TOP)))
+    return join_(x, div_rec_call(app(x, TOP)))
 
 
 @combinator
 def div_rec_app(x):
-    return join(x, app(div_rec_app, app(x, TOP)))
+    return join_(x, app(div_rec_app, app(x, TOP)))
 
 
 @for_each([

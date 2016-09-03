@@ -55,7 +55,7 @@ __all__ = ['dump', 'load', 'PROTOCOL_VERSION']
 from cStringIO import StringIO
 from pomagma.reducer.code import (
     CODE, EVAL, QAPP, QQUOTE, EQUAL, LESS,
-    TOP, BOT, I, K, B, C, S, J,
+    TOP, BOT, I, K, B, C, S,
     V, A, UNIT, BOOL, MAYBE, PROD, SUM, NUM,
     NVAR, IVAR, QUOTE, APP, JOIN, FUN, LET, ABIND, RVAR, SVAR,
     _NVAR, _IVAR, _JOIN, _QUOTE, _FUN, _LET, _ABIND, _RVAR, _SVAR,
@@ -63,7 +63,7 @@ from pomagma.reducer.code import (
     is_nvar, is_ivar, is_app, is_join, is_quote, is_fun, is_let,
 )
 
-PROTOCOL_VERSION = '0.0.13'  # Semver compliant.
+PROTOCOL_VERSION = '0.0.14'  # Semver compliant.
 
 # ----------------------------------------------------------------------------
 # Packed varints.
@@ -135,14 +135,14 @@ RAW_BYTES = object()
 
 INT_TO_SYMB = [
     RAW_BYTES,
-    TOP, BOT, I, K, B, C, S, J,
+    TOP, BOT, I, K, B, C, S,
     CODE, EVAL, QAPP, QQUOTE, EQUAL, LESS,
     V, A, UNIT, BOOL, MAYBE, PROD, SUM, NUM,
-    _NVAR, _IVAR, _JOIN, _QUOTE, _FUN, _LET, _RVAR,
+    _NVAR, _IVAR, _JOIN, _QUOTE, _FUN, _LET, _RVAR, _SVAR,
     # Symbols beyond pos 30 require an extra byte.
-    _SVAR, _ABIND,
+    _ABIND,
 ]
-assert len(INT_TO_SYMB) == 32
+assert len(INT_TO_SYMB) == 31
 SYMB_TO_INT = {k: v for v, k in enumerate(INT_TO_SYMB) if k is not RAW_BYTES}
 
 

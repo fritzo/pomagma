@@ -19,11 +19,11 @@ from pomagma.compiler.util import memoize_arg
 from pomagma.compiler.util import memoize_args
 from pomagma.reducer import oracle
 from pomagma.reducer.code import CODE, EVAL, QQUOTE, QAPP, EQUAL, LESS
-from pomagma.reducer.code import TOP, BOT, I, K, B, C, S, J
+from pomagma.reducer.code import TOP, BOT, I, K, B, C, S
 from pomagma.reducer.code import UNIT, BOOL, MAYBE
-from pomagma.reducer.code import NVAR, APP, QUOTE
+from pomagma.reducer.code import NVAR, APP, JOIN, QUOTE
 from pomagma.reducer.code import free_vars, complexity
-from pomagma.reducer.code import is_nvar, is_atom, is_app, is_quote
+from pomagma.reducer.code import is_nvar, is_atom, is_app, is_join, is_quote
 from pomagma.reducer.sugar import abstract
 from pomagma.reducer.util import LOG
 from pomagma.reducer.util import PROFILE_COUNTERS
@@ -174,6 +174,10 @@ def _sample(head, context, nonlinear):
         elif is_nvar(head):
             yield head, context
             return
+        elif is_join(head):
+            for head in head[1:]:
+                for continuation in _sample(head, context, nonlinear):
+                    yield continuation
         elif is_quote(head):
             x = head[1]
             x = _reduce(x, False)
@@ -216,12 +220,6 @@ def _sample(head, context, nonlinear):
             else:
                 yield head, old_context
                 return
-        elif head is J:
-            x, context = context_pop(context)
-            y, context = context_pop(context, x)
-            for head in (x, y):
-                for continuation in _sample(head, context, nonlinear):
-                    yield continuation
         elif head is EVAL:
             x, context = context_pop(context)
             x = _reduce(x, nonlinear)
@@ -341,8 +339,8 @@ def _close(continuation, nonlinear):
     return head
 
 
-def _join(continuations, nonlinear):
-    PROFILE_COUNTERS[_join, '...'] += 1
+def _collect(continuations, nonlinear):
+    PROFILE_COUNTERS[_collect, '...'] += 1
 
     # Collect unique samples.
     samples = set()
@@ -353,19 +351,6 @@ def _join(continuations, nonlinear):
         samples.add(sample)
     if not samples:
         return BOT
-
-    # Apply J-eta rules to recognize J and APP(J, x).
-    # This should really be combined with _close.
-    if K in samples and F in samples:
-        samples.remove(K)
-        samples.remove(F)
-        samples.add(J)
-    if I in samples:
-        for kx in tuple(samples):
-            if is_app(kx) and kx[1] is K:
-                samples.discard(I)
-                samples.remove(kx)
-                samples.add(APP(J, kx[2]))
 
     # Filter out dominated samples.
     # FIXME If x [= y and y [= x, this filters out both.
@@ -380,7 +365,7 @@ def _join(continuations, nonlinear):
     # Construct a join term.
     result = filtered_samples[0]
     for sample in filtered_samples[1:]:
-        result = APP(APP(J, result), sample)
+        result = JOIN(result, sample)
     return result
 
 
@@ -398,7 +383,24 @@ def _app(lhs, rhs, nonlinear):
         samples = _sample_nonlinear(head, context)
     else:
         samples = _sample(head, context, nonlinear)
-    return _join(samples, nonlinear)
+    return _collect(samples, nonlinear)
+
+
+@logged(pretty, pretty, returns=pretty)
+@memoize_args
+def _join(lhs, rhs, nonlinear):
+    context = EMPTY_CONTEXT
+    if nonlinear and USE_FAIR_SCHEDULER:
+        samples = itertools.chain(
+            _sample_nonlinear(lhs, context),
+            _sample_nonlinear(rhs, context),
+        )
+    else:
+        samples = itertools.chain(
+            _sample(lhs, context, nonlinear),
+            _sample(rhs, context, nonlinear),
+        )
+    return _collect(samples, nonlinear)
 
 
 @logged(pretty, returns=pretty)
@@ -406,6 +408,8 @@ def _app(lhs, rhs, nonlinear):
 def _reduce(code, nonlinear):
     if is_app(code):
         return _app(code[1], code[2], nonlinear)
+    elif is_join(code):
+        return _join(code[1], code[2], nonlinear)
     elif is_quote(code):
         return QUOTE(_reduce(code[1], False))
     elif is_atom(code) or is_nvar(code):

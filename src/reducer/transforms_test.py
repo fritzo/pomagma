@@ -1,5 +1,5 @@
-from pomagma.reducer.code import TOP, BOT, I, K, B, C, S, J
-from pomagma.reducer.code import NVAR, APP, QUOTE, FUN, LET
+from pomagma.reducer.code import TOP, BOT, I, K, B, C, S
+from pomagma.reducer.code import NVAR, APP, JOIN, QUOTE, FUN, LET
 from pomagma.reducer.code import polish_print
 from pomagma.reducer.transforms import compile_, decompile
 from pomagma.reducer.transforms import fresh_var, abstract, define, substitute
@@ -22,18 +22,11 @@ z = NVAR('z')
     (x, APP(x, y), APP(APP(C, I), y)),
     (x, APP(y, x), y),
     (x, APP(y, APP(z, x)), APP(APP(B, y), z)),
-    (x, J, APP(K, J)),
-    (x, APP(J, y), APP(K, APP(J, y))),
-    (x, APP(APP(J, y), z), APP(K, APP(APP(J, y), z))),
-    (x, APP(J, x), J),
-    (x, APP(APP(J, x), y), APP(J, y)),
-    (x, APP(APP(J, y), x), APP(J, y)),
-    (x, APP(APP(J, APP(w, x)), y), APP(APP(B, APP(J, y)), w)),
-    (x, APP(APP(J, y), APP(w, x)), APP(APP(B, APP(J, y)), w)),
-    (x, APP(APP(J, x), x), APP(APP(J, I), I)),
-    (x, APP(APP(J, x), APP(z, x)), APP(APP(J, I), z)),
-    (x, APP(APP(J, APP(y, x)), x), APP(APP(J, y), I)),
-    (x, APP(APP(J, APP(y, x)), APP(z, x)), APP(APP(J, y), z)),
+    (x, JOIN(x, x), JOIN(I, I)),
+    (x, JOIN(x, y), JOIN(I, APP(K, y))),
+    (x, JOIN(y, x), JOIN(APP(K, y), I)),
+    (x, JOIN(y, z), APP(K, JOIN(y, z))),
+    (x, JOIN(APP(y, x), APP(z, x)), JOIN(y, z)),
 ])
 def test_abstract(var, body, expected):
     actual = abstract(var, body)
@@ -45,9 +38,14 @@ def test_abstract(var, body, expected):
     (x, y, y, y),
     (x, y, x, y),
     (x, y, I, I),
+    (x, y, APP(y, z), APP(y, z)),
     (x, y, APP(x, z), APP(y, z)),
     (x, y, APP(z, x), APP(z, y)),
     (x, y, APP(x, x), APP(APP(APP(S, I), I), y)),
+    (x, y, JOIN(y, z), JOIN(y, z)),
+    (x, y, JOIN(x, z), JOIN(y, z)),
+    (x, y, JOIN(z, x), JOIN(z, y)),
+    (x, y, JOIN(x, x), APP(JOIN(I, I), y)),
     (x, y, QUOTE(y), QUOTE(y)),
     (x, y, QUOTE(z), QUOTE(z)),
     (x, y, QUOTE(x), QUOTE(y)),
@@ -69,6 +67,9 @@ def test_define(var, defn, body, expected):
     (x, y, APP(x, z), APP(y, z)),
     (x, y, APP(z, x), APP(z, y)),
     (x, y, APP(x, x), APP(y, y)),
+    (x, y, JOIN(x, z), JOIN(y, z)),
+    (x, y, JOIN(z, x), JOIN(z, y)),
+    (x, y, JOIN(x, x), JOIN(y, y)),
     (x, y, QUOTE(y), QUOTE(y)),
     (x, y, QUOTE(z), QUOTE(z)),
     (x, y, QUOTE(x), QUOTE(y)),
@@ -115,9 +116,7 @@ c = fresh_var(2)
         APP(APP(APP(APP(S, x), y), I), w),
         APP(LET(a, FUN(b, b), APP(APP(x, a), APP(y, a))), w),
     ),
-    (J, J),
-    (APP(J, x), APP(J, x)),
-
+    (JOIN(x, y), JOIN(x, y)),
 ])
 def test_decompile(code, expected):
     actual_str = polish_print(decompile(code))
@@ -133,11 +132,11 @@ def test_decompile(code, expected):
     B,
     C,
     S,
-    J,
     APP(K, I),
     APP(C, I),
     APP(APP(C, I), I),
     APP(APP(S, I), I),
+    JOIN(K, APP(K, I)),
     QUOTE(TOP),
     QUOTE(APP(C, I)),
 ])

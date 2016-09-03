@@ -1,13 +1,12 @@
-from pomagma.reducer.code import ABIND, RVAR, SVAR
-from pomagma.reducer.code import NVAR, IVAR, APP, JOIN, FUN, LET
-from pomagma.reducer.code import QUOTE, CODE, EVAL, QAPP, QQUOTE, EQUAL, LESS
-from pomagma.reducer.code import TOP, BOT, I, K, B, C, S, J
-from pomagma.reducer.code import V, A, UNIT, BOOL, MAYBE, PROD, SUM, NUM
-from pomagma.reducer.code import free_vars, complexity
-from pomagma.reducer.code import polish_parse, polish_print
-from pomagma.reducer.code import sexpr_parse, sexpr_print
-from pomagma.reducer.code import sexpr_parse_sexpr, sexpr_print_sexpr
-from pomagma.reducer.code import to_sexpr, from_sexpr
+from pomagma.reducer.code import (
+    APP, JOIN, NVAR, IVAR, FUN, LET, ABIND, RVAR, SVAR,
+    QUOTE, CODE, EVAL, QAPP, QQUOTE, EQUAL, LESS,
+    TOP, BOT, I, K, B, C, S, V, A, UNIT, BOOL, MAYBE, PROD, SUM, NUM,
+    free_vars, complexity, polish_parse, polish_print,
+    sexpr_parse, sexpr_print, sexpr_parse_sexpr, sexpr_print_sexpr,
+    to_sexpr, from_sexpr,
+)
+
 from pomagma.util.testing import for_each
 import hypothesis
 import hypothesis.strategies as s
@@ -27,7 +26,6 @@ z = NVAR('z')
     (B, []),
     (C, []),
     (S, []),
-    (J, []),
     (A, []),
     (ABIND(x), [x]),
     (RVAR(0), []),
@@ -38,7 +36,7 @@ z = NVAR('z')
     (APP(I, x), [x]),
     (APP(x, x), [x]),
     (APP(x, y), [x, y]),
-    (APP(x, APP(APP(J, y), APP(K, z))), [x, y, z]),
+    (APP(x, APP(APP(K, y), APP(K, z))), [x, y, z]),
     (JOIN(I, x), [x]),
     (JOIN(x, x), [x]),
     (JOIN(x, y), [x, y]),
@@ -60,7 +58,6 @@ def test_free_vars(code, free):
     (B, 3 + 3),
     (C, 3 + 3),
     (S, 3 + 3),
-    (J, max(2 + 1, 2 + 1)),
     (APP(K, I), 1 + max(3, 2)),
     (APP(I, x), 1 + max(2, 1)),
     (JOIN(K, I), max(3, 2)),
@@ -88,7 +85,6 @@ EXAMPLES = [
     {'code': B, 'polish': 'B', 'sexpr': 'B'},
     {'code': C, 'polish': 'C', 'sexpr': 'C'},
     {'code': S, 'polish': 'S', 'sexpr': 'S'},
-    {'code': J, 'polish': 'J', 'sexpr': 'J'},
     {'code': CODE, 'polish': 'CODE', 'sexpr': 'CODE'},
     {'code': EVAL, 'polish': 'EVAL', 'sexpr': 'EVAL'},
     {'code': QAPP, 'polish': 'QAPP', 'sexpr': 'QAPP'},
@@ -105,6 +101,7 @@ EXAMPLES = [
     {'code': NUM, 'polish': 'NUM', 'sexpr': 'NUM'},
     {'code': x, 'polish': 'x', 'sexpr': 'x'},
     {'code': APP(K, I), 'polish': 'APP K I', 'sexpr': '(K I)'},
+    {'code': JOIN(I, K), 'polish': 'JOIN I K', 'sexpr': '(JOIN I K)'},
     {
         'code': QUOTE(APP(I, K)),
         'polish': 'QUOTE APP I K',
@@ -175,7 +172,6 @@ s_atoms = s.one_of(
     s.just(B),
     s.just(C),
     s.just(S),
-    s.just(J),
     s.one_of(
         s.just(CODE),
         s.just(EVAL),

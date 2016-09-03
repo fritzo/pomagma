@@ -9,8 +9,9 @@ __all__ = [
 ]
 
 from pomagma.compiler.util import memoize_arg
-from pomagma.reducer.code import TOP, BOT, I, K, B, C, S, J, APP, QQUOTE, QAPP
-from pomagma.reducer.code import is_app, is_quote
+from pomagma.reducer.code import APP, TOP, BOT, I, K, B, C, S
+from pomagma.reducer.code import QQUOTE, QAPP
+from pomagma.reducer.code import is_app, is_join, is_quote
 
 F = APP(K, I)
 
@@ -38,26 +39,15 @@ TROOL_OR = {
     (None, None): None,
 }
 
-LINEAR_ATOMS = set([TOP, BOT, I, K, B, C, J])  # TODO would variables be ok?
+LINEAR_ATOMS = set([TOP, BOT, I, K, B, C])  # TODO would variables be ok?
 NORMAL_FORMS = set([S])  # TODO initialize with ~1000 codes.
 
 
 @memoize_arg
 def is_linear(code):
-    if is_app(code):
+    if is_app(code) or is_join(code):
         return is_linear(code[1]) and is_linear(code[2])
     return code in LINEAR_ATOMS
-
-
-def try_match_join(code):
-    if code is J:
-        return K, APP(K, I)
-    if is_app(code):
-        if code[1] is J:
-            return APP(K, code[2]), I
-        elif is_app(code[1]) and code[1][1] is J:
-            return code[1][2], code[2]
-    return None
 
 
 def try_decide_normal(code):
@@ -97,14 +87,12 @@ def decide_less_normal(x, y):
     """
     if x is BOT or y is TOP or x is y:
         return True
-    match = try_match_join(x)
-    if match is not None:
-        return TROOL_AND[decide_less_normal(match[0], y),
-                         decide_less_normal(match[1], y)]
-    match = try_match_join(y)
-    if match is not None:
-        return TROOL_OR[decide_less_normal(x, match[0]),
-                        decide_less_normal(x, match[1])]
+    if is_join(x):
+        return TROOL_AND[decide_less_normal(x[1], y),
+                         decide_less_normal(x[2], y)]
+    if is_join(y):
+        return TROOL_OR[decide_less_normal(x, y[1]),
+                        decide_less_normal(x, y[2])]
     if x is TOP or y is BOT:
         return False
     if is_app(x) and is_app(y):

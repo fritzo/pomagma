@@ -1,11 +1,12 @@
 from pomagma.reducer import oracle
 from pomagma.reducer.code import QUOTE, QQUOTE, QAPP
-from pomagma.reducer.code import TOP, BOT, I, K, B, C, J, NVAR
-from pomagma.reducer.sugar import app
+from pomagma.reducer.code import TOP, BOT, I, K, B, C, NVAR
+from pomagma.reducer.sugar import app, join_
 from pomagma.util.testing import for_each
 import pytest
 
 F = app(K, I)
+J = join_(K, F)
 x = NVAR('x')
 y = NVAR('y')
 
@@ -118,7 +119,7 @@ def some(x):
     (some(I), some(I)),
     (some(K), some(K)),
     (some(F), some(F)),
-    pytest.mark.xfail((app(J, some(K), some(F)), some(J))),
+    pytest.mark.xfail((join_(some(K), some(F)), some(J))),
     (app(J, none, some(BOT)), TOP),
     (I, TOP),
     (F, TOP),

@@ -17,12 +17,11 @@ procedure try_decide_less(-,-).
 from collections import namedtuple
 from pomagma.compiler.util import memoize_arg
 from pomagma.compiler.util import memoize_args
-from pomagma.reducer.code import APP, IVAR, TOP, BOT, I, K, B, C, S, J
+from pomagma.reducer.code import APP, JOIN, IVAR, TOP, BOT, I, K, B, C, S
 from pomagma.reducer.code import QUOTE, EVAL, LESS
-from pomagma.reducer.code import complexity
-from pomagma.reducer.code import is_app, is_nvar, is_ivar, is_atom, is_quote
+from pomagma.reducer.code import complexity, is_nvar, is_ivar
+from pomagma.reducer.code import is_atom, is_app, is_join, is_quote
 from pomagma.reducer.code import sexpr_print as print_code
-from pomagma.reducer.continuation import join_codes
 from pomagma.reducer.util import LOG
 from pomagma.reducer.util import logged
 from pomagma.reducer.util import pretty
@@ -130,7 +129,7 @@ def max_free_ivar(code):
 
 @memoize_args
 def try_abstract(body):
-    """IKBCSJ-eta abstraction algorithm for de Bruijn variables.
+    """APP,JOIN,I,K,B,C,S,eta abstraction algorithm for de Bruijn variables.
 
     Returns:
         (True, abstracted result) if var occurs in body, or
@@ -146,45 +145,41 @@ def try_abstract(body):
         else:
             return False, IVAR(rank - 1)  # Rule K-IVAR
     elif is_app(body):
-        if is_app(body[1]) and body[1][1] is J:
-            lhs_found, lhs = try_abstract(body[1][2])
-            rhs_found, rhs = try_abstract(body[2])
-            if not lhs_found:
-                if not rhs_found:
-                    return False, APP(APP(J, lhs), rhs)  # Rule K
-                elif rhs is I:
-                    return True, APP(J, lhs)  # Rule J-eta
-                else:
-                    return True, APP(APP(B, APP(J, lhs)), rhs)  # Rule J-B
+        lhs_found, lhs = try_abstract(body[1])
+        rhs_found, rhs = try_abstract(body[2])
+        if not lhs_found:
+            if not rhs_found:
+                return False, APP(lhs, rhs)  # Rule K
+            elif rhs is I:
+                return True, lhs  # Rule eta
             else:
-                if not rhs_found:
-                    if lhs is I:
-                        return True, APP(J, rhs)  # Rule J-eta
-                    else:
-                        return True, APP(APP(B, APP(J, rhs)), lhs)  # Rule J-B
-                else:
-                    return True, APP(APP(J, lhs), rhs)  # Rule J
+                return True, APP(APP(B, lhs), rhs)  # Rule B
         else:
-            lhs_found, lhs = try_abstract(body[1])
-            rhs_found, rhs = try_abstract(body[2])
-            if not lhs_found:
-                if not rhs_found:
-                    return False, APP(lhs, rhs)  # Rule K
-                elif rhs is I:
-                    return True, lhs  # Rule eta
-                else:
-                    return True, APP(APP(B, lhs), rhs)  # Rule B
+            if not rhs_found:
+                return True, APP(APP(C, lhs), rhs)  # Rule C
             else:
-                if not rhs_found:
-                    return True, APP(APP(C, lhs), rhs)  # Rule C
-                else:
-                    return True, APP(APP(S, lhs), rhs)  # Rule S
+                return True, APP(APP(S, lhs), rhs)  # Rule S
+    elif is_join(body):
+        lhs_found, lhs = try_abstract(body[1])
+        rhs_found, rhs = try_abstract(body[2])
+        if not lhs_found:
+            if not rhs_found:
+                return False, JOIN(lhs, rhs)  # Rule K
+            else:
+                assert lhs not in (BOT, TOP), body
+                return True, JOIN(APP(K, lhs), rhs)  # Rule JOIN-K
+        else:
+            if not rhs_found:
+                assert rhs not in (BOT, TOP), body
+                return True, JOIN(lhs, APP(K, rhs))  # Rule JOIN-K
+            else:
+                return True, JOIN(lhs, rhs)  # Rule JOIN
     else:
         raise NotImplementedError(body)
 
 
 def abstract(body):
-    """TOP,BOT,I,K,B,C,S,J,eta-abstraction algorithm.
+    """APP,JOIN,TOP,BOT,I,K,B,C,S,eta-abstraction algorithm.
 
     Arg: a code with de Bruijn variables
     Returns: a code with de Bruijn variables
@@ -212,6 +207,10 @@ def code_increment_ivars(body, min_rank):
         lhs = code_increment_ivars(body[1], min_rank)
         rhs = code_increment_ivars(body[2], min_rank)
         return APP(lhs, rhs)
+    elif is_join(body):
+        lhs = code_increment_ivars(body[1], min_rank)
+        rhs = code_increment_ivars(body[2], min_rank)
+        return JOIN(lhs, rhs)
     else:
         raise NotImplementedError(body)
 
@@ -389,7 +388,7 @@ def is_cheap_to_copy(cont_set):
       - detect and terminate cycles.
     Proof: We need to show that every reduction sequence either terminates or
       yields. There are only finitely many states below any given complexity.
-      Each TOP,BOT,I,K,B,C,J strictly reduces complexity. Moreover an S-redex
+      Each TOP,BOT,I,K,B,C strictly reduces complexity. Moreover an S-redex
       gated by is_cheap_to_copy does not increase complexity. Hence any
       sequence of steps that do not increase complexity must eventually either
       terminate or cycle. Since cycles are detected, the computation must
@@ -517,9 +516,10 @@ def cont_set_from_codes(codes, stack=None, bound=0):
             precont.push_arg(yz)
             precont.push_arg(z)
             head_cont_set = x
-        elif head is J:
-            x, y = precont.pop_args(2)
-            head_cont_set = x | y
+        elif is_join(head):
+            lhs = cont_set_from_codes((head[1],))
+            rhs = cont_set_from_codes((head[2],))
+            head_cont_set = lhs | rhs
         elif is_quote(head):
             body = cont_set_from_codes((head[1],))
             if stack is not None or bound != 0:
@@ -556,6 +556,13 @@ def cont_set_app(funs, args):
     codes = tuple(sorted(map(cont_to_code, funs)))
     stack = args, None
     return cont_set_from_codes(codes, stack)
+
+
+def cont_set_join(lhs, rhs):
+    """Returns a cont_set."""
+    assert is_cont_set(lhs), lhs
+    assert is_cont_set(rhs), rhs
+    return make_cont_set(lhs | rhs)
 
 
 def cont_set_is_quote(cont_set):
@@ -693,9 +700,32 @@ def cont_set_to_code(cont_set):
     """
     assert is_cont_set(cont_set), cont_set
     codes = set(map(cont_to_code, cont_set))
+    return join_codes(codes)
+
+
+def join_codes(codes):
+    """Joins a set of codes into a single code, simplifying via heuristics."""
+    assert isinstance(codes, set)
+    if not codes:
+        return BOT
+
+    # Filter out dominated codes.
+    filtered_codes = []
+    for code in codes:
+        if not any(try_decide_less(code, other)
+                   for other in codes
+                   if other is not code and not try_decide_less(other, code)):
+            filtered_codes.append(code)
+
     # TODO rearrange binary join operator in order of compute_step priority,
     #  so as to minimize list thrashing.
-    return join_codes(codes)
+    filtered_codes.sort(key=lambda code: (complexity(code), code))
+
+    # Construct a join term.
+    result = filtered_codes[0]
+    for code in filtered_codes[1:]:
+        result = JOIN(result, code)
+    return result
 
 
 # ----------------------------------------------------------------------------

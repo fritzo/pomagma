@@ -87,6 +87,10 @@ def pretty(code, add_parens=False):
         rhs = pretty(code[2], True)
         mid = '' if lhs.endswith(')') or rhs.startswith('(') else ' '
         return ('({}{}{})' if add_parens else '{}{}{}').format(lhs, mid, rhs)
+    elif code[0] == 'JOIN':
+        lhs = pretty(code[1])
+        rhs = pretty(code[2])
+        return ('({}|{})' if add_parens else '{}|{}').format(lhs, rhs)
     elif code[0] == 'QUOTE':
         arg = pretty(code[1])
         return '{{{}}}'.format(arg)

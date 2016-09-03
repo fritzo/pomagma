@@ -1,8 +1,8 @@
 from cStringIO import StringIO
+from pomagma.reducer.code import APP, JOIN, QUOTE, TOP, BOT, I, K, B, C, S
 from pomagma.reducer.code import CODE, EVAL, QAPP, QQUOTE, EQUAL, LESS
-from pomagma.reducer.code import TOP, BOT, I, K, B, C, S, J
+from pomagma.reducer.code import NVAR, FUN, LET, ABIND, RVAR, SVAR
 from pomagma.reducer.code import V, A, UNIT, BOOL, MAYBE, PROD, SUM, NUM
-from pomagma.reducer.code import NVAR, APP, QUOTE, FUN, LET, ABIND, RVAR, SVAR
 from pomagma.reducer.code_test import s_codes
 from pomagma.reducer.serial import dump, load
 from pomagma.reducer.serial import pack_head_argc, unpack_head_argc
@@ -55,7 +55,6 @@ x = NVAR('x')
     B,
     C,
     S,
-    J,
     CODE,
     EVAL,
     QAPP,
@@ -73,9 +72,9 @@ x = NVAR('x')
     APP(K, I),
     APP(APP(B, C), S),
     APP(APP(APP(S, K), I), B),
-    APP(APP(J, I), K),
-    APP(APP(J, APP(K, I)), K),
-    APP(APP(APP(J, APP(K, I)), K), I),
+    JOIN(I, K),
+    JOIN(APP(K, I), K),
+    APP(JOIN(APP(K, I), K), I),
     QUOTE(K),
     APP(QUOTE(K), C),
     FUN(x, APP(S, APP(x, x))),

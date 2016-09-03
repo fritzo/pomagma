@@ -1,11 +1,11 @@
 from pomagma.reducer import de_bruijn
-from pomagma.reducer.code import APP, TOP, BOT, I, K, B, C, S, J
+from pomagma.reducer.code import APP, JOIN, TOP, BOT, I, K, B, C, S
 from pomagma.reducer.code import complexity, sexpr_parse
 from pomagma.reducer.de_bruijn import CONT_TOP, CONT_SET_TOP, make_cont_app
 from pomagma.reducer.de_bruijn import IVAR, abstract
 from pomagma.reducer.de_bruijn import S_LINEAR_LOWER_BOUNDS
 from pomagma.reducer.de_bruijn import S_LINEAR_UPPER_BOUNDS
-from pomagma.reducer.de_bruijn import cont_set_from_codes
+from pomagma.reducer.de_bruijn import cont_set_from_codes, cont_set_join
 from pomagma.reducer.de_bruijn import list_to_stack
 from pomagma.reducer.de_bruijn import trool_all, trool_any
 from pomagma.reducer.de_bruijn import try_decide_less
@@ -21,6 +21,7 @@ y = IVAR(1)
 z = IVAR(2)
 
 F = APP(K, I)
+J = JOIN(K, F)
 CI = APP(C, I)
 
 CONT_SET_BOT = frozenset()
@@ -30,6 +31,7 @@ CONT_SET_z = cont_set_from_codes((z,))
 CONT_SET_zz = cont_set_from_codes((APP(z, z),))
 CONT_SET_I = cont_set_from_codes((I,))
 CONT_SET_K = cont_set_from_codes((K,))
+CONT_SET_F = cont_set_from_codes((F,))
 CONT_SET_B = cont_set_from_codes((B,))
 CONT_SET_C = cont_set_from_codes((C,))
 CONT_SET_S = cont_set_from_codes((S,))
@@ -101,18 +103,11 @@ ABSTRACT_EXAMPLES = [
     (APP(y, x), x),
     (APP(z, x), y),
     (APP(y, APP(z, x)), APP(APP(B, x), y)),
-    (J, APP(K, J)),
-    (APP(J, y), APP(K, APP(J, x))),
-    (APP(APP(J, y), z), APP(K, APP(APP(J, x), y))),
-    (APP(J, x), J),
-    (APP(APP(J, x), y), APP(J, x)),
-    (APP(APP(J, y), x), APP(J, x)),
-    (APP(APP(J, APP(z, x)), y), APP(APP(B, APP(J, x)), y)),
-    (APP(APP(J, y), APP(z, x)), APP(APP(B, APP(J, x)), y)),
-    (APP(APP(J, x), x), APP(APP(J, I), I)),
-    (APP(APP(J, x), APP(z, x)), APP(APP(J, I), y)),
-    (APP(APP(J, APP(y, x)), x), APP(APP(J, x), I)),
-    (APP(APP(J, APP(y, x)), APP(z, x)), APP(APP(J, x), y)),
+    (JOIN(x, x), JOIN(I, I)),
+    (JOIN(x, y), JOIN(I, APP(K, x))),
+    (JOIN(y, x), JOIN(APP(K, x), I)),
+    (JOIN(y, z), APP(K, JOIN(x, y))),
+    (JOIN(APP(y, x), APP(z, x)), JOIN(x, y)),
 ]
 
 
@@ -245,7 +240,7 @@ def test_s_linear_bounds(actual, expected_sexpr):
 # ----------------------------------------------------------------------------
 # Reduction
 
-@for_each([x, y, TOP, BOT, I, K, B, C, S, J])
+@for_each([x, y, TOP, BOT, I, K, B, C, S])
 def test_cont_complexity_eq_code_complexity(code):
     cont_set = de_bruijn.cont_set_from_codes((code,))
     assert de_bruijn.cont_set_complexity(cont_set) == complexity(code)
@@ -269,8 +264,8 @@ def test_cont_complexity_eq_code_complexity(code):
     (x, [CONT_SET_x, CONT_SET_TOP], 1, 1 + max(1 + max(1, 0), 1) + 1),
     (x, [CONT_SET_x, CONT_SET_TOP, CONT_SET_KS], 0, 8),
     (S, [CONT_SET_x, CONT_SET_TOP, CONT_SET_KS], 0, 9),
-    (x, [CONT_SET_x | CONT_SET_y], 0, 1 + max(1, 1)),
-    (x, [CONT_SET_x | CONT_SET_S], 0, 1 + max(1, 6)),
+    (x, [cont_set_join(CONT_SET_x, CONT_SET_y)], 0, 1 + max(1, 1)),
+    (x, [cont_set_join(CONT_SET_x, CONT_SET_S)], 0, 1 + max(1, 6)),
 ])
 def test_cont_complexity(code, args, bound, expected):
     stack = list_to_stack(args)

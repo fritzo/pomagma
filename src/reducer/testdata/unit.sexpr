@@ -8,7 +8,7 @@
 (EQUAL (QUOTE (lib.unit_type lib.undefined)) (QUOTE lib.undefined))
 (EQUAL (QUOTE (lib.unit_type lib.true)) (QUOTE lib.error))
 (EQUAL (QUOTE (lib.unit_type lib.false)) (QUOTE lib.error))
-(EQUAL (QUOTE (lib.unit_type J)) (QUOTE lib.error))
+(EQUAL (QUOTE (lib.unit_type lib.join)) (QUOTE lib.error))
 (EQUAL (QUOTE (lib.unit_type x)) (QUOTE (UNIT x)))
 
 ;; unit_test
@@ -17,7 +17,7 @@
 (EQUAL (QUOTE (lib.unit_test lib.undefined)) (QUOTE lib.undefined))
 (EQUAL (QUOTE (lib.unit_test lib.true)) (QUOTE lib.error))
 (EQUAL (QUOTE (lib.unit_test lib.false)) (QUOTE lib.error))
-(EQUAL (QUOTE (lib.unit_test J)) (QUOTE lib.error))
+(EQUAL (QUOTE (lib.unit_test lib.join)) (QUOTE lib.error))
 (EQUAL (QUOTE (lib.unit_test x)) (QUOTE (UNIT x)))
 
 ;; unit_and

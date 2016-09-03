@@ -1,5 +1,5 @@
 from pomagma.reducer import continuation
-from pomagma.reducer.code import NVAR, TOP, BOT, I, K, B, C, S, J
+from pomagma.reducer.code import NVAR, TOP, BOT, I, K, B, C, S
 from pomagma.reducer.code import complexity
 from pomagma.reducer.continuation import CONT_SET_TOP, make_cont
 from pomagma.reducer.continuation import cont_set_from_codes
@@ -17,7 +17,7 @@ CONT_SET_y = cont_set_from_codes((y,))
 CONT_SET_S = cont_set_from_codes((S,))
 
 
-@for_each([x, y, TOP, BOT, I, K, B, C, S, J])
+@for_each([x, y, TOP, BOT, I, K, B, C, S])
 def test_cont_complexity_eq_code_complexity(code):
     cont_set = continuation.cont_set_from_codes((code,))
     assert continuation.cont_set_complexity(cont_set) == complexity(code)

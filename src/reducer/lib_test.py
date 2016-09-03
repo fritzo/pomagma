@@ -1,9 +1,9 @@
 from pomagma.reducer import lib
-from pomagma.reducer.code import NVAR, TOP, BOT, I, K, B, C, S, J, UNIT
+from pomagma.reducer.code import NVAR, TOP, BOT, I, K, B, C, S, UNIT
 from pomagma.reducer.code import sexpr_print
 from pomagma.reducer.engine import reduce, simplify
 from pomagma.reducer.engine_test import s_quoted
-from pomagma.reducer.sugar import as_code, app, join, quote, combinator
+from pomagma.reducer.sugar import as_code, app, join_, quote, combinator
 from pomagma.util import TRAVIS_CI
 from pomagma.util.testing import for_each
 import hypothesis
@@ -35,6 +35,7 @@ error = lib.error
 undefined = lib.undefined
 true = lib.true
 false = lib.false
+join = lib.join
 compose = lib.compose
 
 
@@ -65,7 +66,7 @@ def test_intro_forms(name, native):
     (undefined, undefined),
     (true, error),
     (false, error),
-    (J, error),
+    (join, error),
     (x, app(UNIT, x)),
 ])
 def test_unit_type(x, expected):
@@ -78,7 +79,7 @@ def test_unit_type(x, expected):
     (undefined, undefined),
     (true, error),
     (false, error),
-    (J, error),
+    (join, error),
     (x, app(UNIT, x)),
 ])
 def test_unit_test(x, expected):
@@ -145,7 +146,7 @@ def test_enum_unit(y, expected):
     (error, error),
     (undefined, undefined),
     (ok, error),
-    (J, error),
+    (join, error),
 ])
 def test_bool_type(x, expected):
     assert simplify(lib.bool_type(x)) == expected
@@ -157,7 +158,7 @@ def test_bool_type(x, expected):
     (error, error),
     (undefined, undefined),
     (ok, error),
-    (J, error),
+    (join, error),
 ])
 def test_bool_test(x, expected):
     assert simplify(lib.bool_test(x)) == expected
@@ -169,7 +170,7 @@ def test_bool_test(x, expected):
     (undefined, undefined),
     (error, error),
     (ok, error),
-    (J, error),
+    (join, error),
 ])
 def test_bool_not(x, expected):
     assert simplify(lib.bool_not(x)) == expected
@@ -191,10 +192,10 @@ def test_bool_not(x, expected):
     (ok, false, error),
     (true, ok, error),
     (false, ok, error),
-    (J, true, error),
-    (J, false, error),
-    (true, J, error),
-    (false, J, error),
+    (join, true, error),
+    (join, false, error),
+    (true, join, error),
+    (false, join, error),
 ])
 def test_bool_and(x, y, expected):
     assert reduce(lib.bool_and(x, y)) == expected
@@ -215,10 +216,10 @@ def test_bool_and(x, y, expected):
     (ok, false, error),
     (true, ok, error),
     (false, ok, error),
-    (J, true, error),
-    (J, false, error),
-    (true, J, error),
-    (false, J, error),
+    (join, true, error),
+    (join, false, error),
+    (true, join, error),
+    (false, join, error),
 ])
 def test_bool_or(x, y, expected):
     assert reduce(lib.bool_or(x, y)) == expected
@@ -230,7 +231,7 @@ def test_bool_or(x, y, expected):
     (undefined, undefined),
     (error, error),
     (ok, error),
-    (J, error),
+    (join, error),
 ])
 def test_bool_quote(x, expected):
     assert simplify(lib.bool_quote(x)) == expected
@@ -261,7 +262,7 @@ def test_bool_if_false(x, expected):
 @for_each([
     (true, true),
     (false, true),
-    (J, false),
+    (join, false),
     (undefined, true),
     (error, false),
     (ok, false),
@@ -284,9 +285,9 @@ def test_enum_bool(y, expected):
     (error, error),
     (undefined, undefined),
     (ok, error),
-    (J, error),
-    (app(J, lib.none, lib.some(undefined)), error),
-    (app(J, lib.some(true), lib.some(false)), lib.some(J)),
+    (join, error),
+    (join_(lib.none, lib.some(undefined)), error),
+    (join_(lib.some(true), lib.some(false)), lib.some(join)),
 ])
 def test_maybe_type(x, expected):
     assert simplify(lib.maybe_type(x)) == expected
@@ -926,8 +927,8 @@ enum = lib.enum
     (enum([error]), box(error)),
     (enum([undefined]), box(undefined)),
     (enum([x]), box(x)),
-    (enum([x, y]), join(box(x), box(y))),
-    (enum([x, y, z]), join(box(x), box(y), box(z))),
+    (enum([x, y]), join_(box(x), box(y))),
+    (enum([x, y, z]), join_(box(x), box(y), box(z))),
 ])
 def test_enum(actual, expected):
     assert actual == expected
@@ -938,7 +939,7 @@ def test_enum(actual, expected):
     (undefined, undefined),
     (box(undefined), ok),
     (box(error), ok),
-    (join(box(true), box(false)), ok),
+    (join_(box(true), box(false)), ok),
 ])
 def test_enum_test(xs, expected):
     assert reduce(lib.enum_test(xs)) == expected
@@ -951,7 +952,7 @@ def test_enum_test(xs, expected):
     (box(x), undefined, box(x)),
     (undefined, box(x), box(x)),
     (box(x), box(x), box(x)),
-    (box(x), box(y), join(box(x), box(y))),
+    (box(x), box(y), join_(box(x), box(y))),
 ])
 def test_enum_union(xs, ys, expected):
     assert reduce(lib.enum_union(xs, ys)) == expected
@@ -978,11 +979,11 @@ def test_enum_any(xs, expected):
     (lib.bool_if_true, undefined, undefined),
     (lib.bool_if_true, box(true), box(true)),
     (lib.bool_if_true, box(false), undefined),
-    (lib.bool_if_true, join(box(false), box(true)), box(true)),
+    (lib.bool_if_true, join_(box(false), box(true)), box(true)),
     (lib.bool_if_false, undefined, undefined),
     (lib.bool_if_false, box(true), undefined),
     (lib.bool_if_false, box(false), box(false)),
-    (lib.bool_if_false, join(box(false), box(true)), box(false)),
+    (lib.bool_if_false, join_(box(false), box(true)), box(false)),
 ])
 def test_enum_filter(p, xs, expected):
     assert reduce(lib.enum_filter(p, xs)) == expected
@@ -1003,7 +1004,7 @@ def test_enum_filter(p, xs, expected):
     (succ, box(num(0)), box(num(1))),
     (succ, box(num(1)), box(num(2))),
     (succ, box(num(2)), box(num(3))),
-    (succ, join(box(num(0)), box(num(2))), join(box(num(1)), box(num(3)))),
+    (succ, join_(box(num(0)), box(num(2))), join_(box(num(1)), box(num(3)))),
 ])
 def test_enum_map(f, xs, expected):
     assert reduce(lib.enum_map(f, xs)) == expected
@@ -1017,7 +1018,7 @@ def test_enum_map(f, xs, expected):
     (box(box(undefined)), box(undefined)),
     (box(box(ok)), box(ok)),
     (box(box(true)), box(true)),
-    (join(box(box(true)), box(box(false))), join(box(true), box(false))),
+    (join_(box(box(true)), box(box(false))), join_(box(true), box(false))),
 ])
 def test_enum_flatten(xs, expected):
     assert reduce(lib.enum_flatten(xs)) == expected
@@ -1107,7 +1108,7 @@ def test_fix(value, expected):
     (lambda x: x, x, x),
     (undefined, x, x),
     (error, x, error),
-    (lambda x: join(x, y), x, join(x, y)),
+    (lambda x: join_(x, y), x, join_(x, y)),
     (lib.bool_not, undefined, undefined),
     (lib.bool_not, true, error),
     (lib.bool_not, false, error),
@@ -1115,7 +1116,7 @@ def test_fix(value, expected):
     (app(lib.enum_map, lib.bool_not), enum([undefined]), enum([undefined])),
     (app(lib.enum_map, lib.bool_not), enum([true]), enum([true, false])),
     (app(lib.enum_map, lib.bool_not), enum([false]), enum([true, false])),
-    (app(lib.enum_map, lib.bool_not), enum([J]), enum([error])),
+    (app(lib.enum_map, lib.bool_not), enum([join]), enum([error])),
     (app(lib.enum_map, lib.bool_not), enum([ok]), enum([error])),
     (app(lib.enum_map, lib.bool_not), error, error),
 ])
@@ -1142,7 +1143,7 @@ a_boool = app(
     (B, TOP),
     (C, TOP),
     (S, TOP),
-    (J, TOP),
+    (join, TOP),
     (app(K, I), TOP),
     (app(C, B), TOP),
     (app(C, I), TOP),
@@ -1161,7 +1162,7 @@ def test_div(x, expected):
     pytest.mark.xfail((B, TOP), run=False),
     pytest.mark.xfail((C, TOP), run=False),
     pytest.mark.xfail((S, TOP), run=False),
-    pytest.mark.xfail((J, TOP), run=False),
+    pytest.mark.xfail((join, TOP), run=False),
     pytest.mark.xfail((app(K, I), TOP), run=False),
     pytest.mark.xfail((app(C, B), TOP), run=False),
     pytest.mark.xfail((app(C, I), TOP), run=False),
@@ -1179,7 +1180,7 @@ def test_div_constructed(x, expected):
     (undefined, undefined),
     (true, error),
     (false, error),
-    (J, error),
+    (join, error),
     (x, app(UNIT, x)),
 ])
 def test_unit_constructed(x, expected):
@@ -1193,7 +1194,7 @@ def test_unit_constructed(x, expected):
     (false, false),
     (error, error),
     (undefined, undefined),
-    (J, J),
+    (join, join),
     (I, error),
     (B, error),
     (C, error),
@@ -1243,7 +1244,7 @@ bool_values = (error, undefined, true, false)
     (quote(num(2)), quote(num(3)), false),
     (quote(true), quote(app(I, true)), true),
     (quote(false), quote(app(I, false)), true),
-    (quote(J), quote(app(I, J)), true),
+    (quote(join), quote(app(I, join)), true),
 ])
 def test_equal(x, y, expected):
     assert simplify(lib.equal(x, y)) == expected
@@ -1341,7 +1342,7 @@ def test_less_reflexive(x):
 
 
 @hypothesis.given(s_quoted, s_quoted)
-@hypothesis.example(quote(J), quote(app(I, J)))
+@hypothesis.example(quote(join), quote(app(I, join)))
 def test_less_antisymmetric(x, y):
     hypothesis.assume(x is not y)
     less_xy = simplify(lib.less(x, y))

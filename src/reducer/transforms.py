@@ -4,9 +4,9 @@ __all__ = ['try_abstract', 'abstract', 'decompile']
 
 from pomagma.compiler.util import memoize_args
 from pomagma.reducer import pattern
-from pomagma.reducer.code import TOP, BOT, I, K, B, C, S, J
-from pomagma.reducer.code import NVAR, APP, QUOTE, FUN, LET
-from pomagma.reducer.code import is_atom, is_nvar, is_app, is_quote
+from pomagma.reducer.code import TOP, BOT, I, K, B, C, S
+from pomagma.reducer.code import NVAR, APP, JOIN, QUOTE, FUN, LET
+from pomagma.reducer.code import is_atom, is_nvar, is_app, is_join, is_quote
 from pomagma.reducer.code import is_fun, is_let
 
 
@@ -21,49 +21,43 @@ def try_abstract(var, body):
     if body is var:
         return I  # Rule I
     elif is_app(body):
-        if is_app(body[1]) and body[1][1] is J:
-            lhs = body[1][2]
-            rhs = body[2]
-            lhs_abs = try_abstract(var, lhs)
-            rhs_abs = try_abstract(var, rhs)
-            if lhs_abs is None:
-                if rhs_abs is None:
-                    return None  # Rule K
-                elif rhs_abs is I:
-                    return APP(J, lhs)  # Rule J-eta
-                else:
-                    return APP(APP(B, APP(J, lhs)), rhs_abs)  # Rule J-B
+        lhs = body[1]
+        rhs = body[2]
+        lhs_abs = try_abstract(var, lhs)
+        rhs_abs = try_abstract(var, rhs)
+        if lhs_abs is None:
+            if rhs_abs is None:
+                return None  # Rule K
+            elif rhs_abs is I:
+                return lhs  # Rule eta
             else:
-                if rhs_abs is None:
-                    if lhs_abs is I:
-                        return APP(J, rhs)  # Rule J-eta
-                    else:
-                        return APP(APP(B, APP(J, rhs)), lhs_abs)  # Rule J-B
-                else:
-                    return APP(APP(J, lhs_abs), rhs_abs)  # Rule J
+                return APP(APP(B, lhs), rhs_abs)  # Rule B
         else:
-            lhs = body[1]
-            rhs = body[2]
-            lhs_abs = try_abstract(var, lhs)
-            rhs_abs = try_abstract(var, rhs)
-            if lhs_abs is None:
-                if rhs_abs is None:
-                    return None  # Rule K
-                elif rhs_abs is I:
-                    return lhs  # Rule eta
-                else:
-                    return APP(APP(B, lhs), rhs_abs)  # Rule B
+            if rhs_abs is None:
+                return APP(APP(C, lhs_abs), rhs)  # Rule C
             else:
-                if rhs_abs is None:
-                    return APP(APP(C, lhs_abs), rhs)  # Rule C
-                else:
-                    return APP(APP(S, lhs_abs), rhs_abs)  # Rule S
+                return APP(APP(S, lhs_abs), rhs_abs)  # Rule S
+    elif is_join(body):
+        lhs = body[1]
+        rhs = body[2]
+        lhs_abs = try_abstract(var, lhs)
+        rhs_abs = try_abstract(var, rhs)
+        if lhs_abs is None:
+            if rhs_abs is None:
+                return None  # Rule K
+            else:
+                return JOIN(APP(K, lhs), rhs_abs)  # Rule JOIN-K
+        else:
+            if rhs_abs is None:
+                return JOIN(lhs_abs, APP(K, rhs))  # Rule JOIN-K
+            else:
+                return JOIN(lhs_abs, rhs_abs)  # Rule JOIN
     else:
         return None  # Rule K
 
 
 def abstract(var, body):
-    """TOP,BOT,I,K,B,C,S,J,eta-abstraction algorithm."""
+    """APP,JOIN,TOP,BOT,I,K,B,C,S,eta-abstraction algorithm."""
     result = try_abstract(var, body)
     if result is not None:
         return result
@@ -101,6 +95,21 @@ def define(var, defn, body):
                 return APP(define(var, defn, lhs), rhs)
             else:
                 return APP(APP(APP(S, lhs_abs), rhs_abs), defn)
+    elif is_join(body):
+        lhs = body[1]
+        rhs = body[2]
+        lhs_abs = try_abstract(var, lhs)
+        rhs_abs = try_abstract(var, rhs)
+        if lhs_abs is None:
+            if rhs_abs is None:
+                return body
+            else:
+                return JOIN(lhs, define(var, defn, rhs))
+        else:
+            if rhs_abs is None:
+                return JOIN(define(var, defn, lhs), rhs)
+            else:
+                return APP(JOIN(lhs_abs, rhs_abs), defn)
     elif is_quote(body):
         arg = body[1]
         return QUOTE(define(var, defn, arg))
@@ -125,6 +134,10 @@ def substitute(var, defn, body):
         lhs = substitute(var, defn, body[1])
         rhs = substitute(var, defn, body[2])
         return APP(lhs, rhs)
+    elif is_join(body):
+        lhs = substitute(var, defn, body[1])
+        rhs = substitute(var, defn, body[2])
+        return JOIN(lhs, rhs)
     elif is_quote(body):
         arg = body[1]
         return QUOTE(substitute(var, defn, arg))
@@ -144,6 +157,10 @@ def compile_(code):
         x = compile_(code[1])
         y = compile_(code[2])
         return APP(x, y)
+    elif is_join(code):
+        x = compile_(code[1])
+        y = compile_(code[2])
+        return JOIN(x, y)
     elif is_quote(code):
         arg = compile_(code[1])
         return QUOTE(arg)
@@ -213,9 +230,14 @@ def _decompile_stack(stack):
     if stack is None:
         return None
     head, args = stack
-    if is_nvar(head) or head is J:
+    if is_nvar(head):
         args = _decompile_args(args)
         return _from_stack((head, args))
+    elif is_join(head):
+        lhs = _decompile(head[1])
+        rhs = _decompile(head[2])
+        args = _decompile_args(args)
+        return _from_stack((JOIN(lhs, rhs), args))
     elif is_quote(head):
         arg = _decompile(head[1])
         args = _decompile_args(args)

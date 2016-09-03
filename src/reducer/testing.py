@@ -2,9 +2,9 @@
 
 from importlib import import_module
 from pomagma.reducer.code import CODE, EVAL, QQUOTE, QAPP, EQUAL, LESS
-from pomagma.reducer.code import TOP, BOT, I, K, B, C, S, J
+from pomagma.reducer.code import TOP, BOT, I, K, B, C, S
 from pomagma.reducer.code import UNIT, BOOL, MAYBE
-from pomagma.reducer.code import NVAR, APP, QUOTE
+from pomagma.reducer.code import NVAR, APP, JOIN, QUOTE
 from pomagma.reducer.code import is_app, is_quote, sexpr_parse
 from pomagma.reducer.linker import link
 from pomagma.reducer.transforms import compile_
@@ -84,7 +84,6 @@ s_atoms = s.one_of(
     s.just(B),
     s.just(C),
     s.just(S),
-    s.just(J),
     s.one_of(
         s.just(CODE),
         s.just(EVAL),
@@ -109,34 +108,28 @@ s_sk_atoms = s.one_of(
     s.just(C),
     s.just(S),
 )
-s_skj_atoms = s.one_of(
-    s.one_of(s_vars),
-    s.just(TOP),
-    s.just(BOT),
-    s.just(I),
-    s.just(K),
-    s.just(B),
-    s.just(C),
-    s.just(S),
-    s.just(J),
-)
+
+
+def s_sk_extend(codes):
+    return s.builds(APP, codes, codes)
+
+
+def s_skj_extend(codes):
+    return s.one_of(
+        s.builds(APP, codes, codes),
+        s.builds(JOIN, codes, codes),
+    )
 
 
 def s_codes_extend(codes):
     return s.one_of(
         s.builds(APP, codes, codes),
+        s.builds(JOIN, codes, codes),
         s.builds(QUOTE, codes),
     )
 
 
+s_sk_codes = s.recursive(s_sk_atoms, s_sk_extend, max_leaves=100)
+s_skj_codes = s.recursive(s_sk_atoms, s_skj_extend, max_leaves=100)
 s_codes = s.recursive(s_atoms, s_codes_extend, max_leaves=100)
-
 s_quoted = s.builds(QUOTE, s_codes)
-
-
-def s_app_extend(terms):
-    return s.builds(APP, terms, terms)
-
-
-s_sk_codes = s.recursive(s_sk_atoms, s_app_extend, max_leaves=100)
-s_skj_codes = s.recursive(s_skj_atoms, s_app_extend, max_leaves=100)

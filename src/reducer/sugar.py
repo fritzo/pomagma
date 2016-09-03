@@ -1,6 +1,6 @@
 '''DSL translating from lambda-let notation to SKJ.'''
 
-from pomagma.reducer.code import BOT, J, QAPP, NVAR, APP, QUOTE
+from pomagma.reducer.code import BOT, JOIN, QAPP, NVAR, APP, QUOTE
 from pomagma.reducer.code import free_vars
 from pomagma.reducer.transforms import try_abstract, abstract
 from pomagma.reducer.util import LOG
@@ -110,13 +110,13 @@ def app(*args):
     return result
 
 
-def join(*args):
+def join_(*args):
     args = map(as_code, args)
     if not args:
         return BOT
     result = args[0]
     for arg in args[1:]:
-        result = APP(APP(J, result), arg)
+        result = JOIN(result, arg)
     return result
 
 
@@ -184,7 +184,7 @@ def symmetric(fun):
 
     @functools.wraps(fun)
     def symmetric_fun(x, y):
-        return join(fun(x, y), fun(y, x))
+        return join_(fun(x, y), fun(y, x))
 
     return symmetric_fun
 

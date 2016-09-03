@@ -5,10 +5,10 @@ __all__ = [
 ]
 
 from parsable import parsable
-from pomagma.reducer.code import TOP, BOT, I, K, B, C, S, J
+from pomagma.reducer.code import TOP, BOT, I, K, B, C, S
 from pomagma.reducer.code import EVAL, QQUOTE, QAPP
 from pomagma.reducer.code import NVAR, APP, QUOTE, FUN
-from pomagma.reducer.code import is_nvar, is_app, is_quote, free_vars
+from pomagma.reducer.code import is_nvar, is_app, is_join, is_quote, free_vars
 from pomagma.reducer.code import sexpr_parse, sexpr_print
 from pomagma.reducer.linker import link
 from pomagma.reducer.transforms import abstract
@@ -292,6 +292,10 @@ def trace_nondeterministic(code):
             if is_app(code):
                 stack = APP_ARG, code[2], stack
                 code = code[1]
+            elif is_join(code):
+                task = state, code[2], stack
+                schedule = schedule_push(schedule, task)
+                code = code[1]
             elif is_quote(code):
                 stack = QUOTE_ARG, None, stack
                 code = code[1]
@@ -326,12 +330,6 @@ def trace_nondeterministic(code):
                 z, stack = pop_arg(stack)
                 stack = APP_ARG, APP(y, z), stack
                 stack = APP_ARG, z, stack
-                code = x
-            elif code is J:
-                x, stack = pop_arg(stack)
-                y, stack = pop_arg(stack)
-                task = state, y, stack
-                schedule = schedule_push(schedule, task)
                 code = x
             else:
                 raise NotImplementedError(code)

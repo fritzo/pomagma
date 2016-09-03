@@ -36,7 +36,6 @@ K = make_keyword('K')
 B = make_keyword('B')
 C = make_keyword('C')
 S = make_keyword('S')
-J = make_keyword('J')
 
 CODE = make_keyword('CODE')
 EVAL = make_keyword('EVAL')
@@ -186,7 +185,6 @@ ATOM_COMPLEXITY = defaultdict(lambda: 10, {
     B: 6,  # \x,y,z. x (y z)
     C: 6,  # \x,y,z. x z y
     S: 6,  # \x,y,z. x z (y z)
-    J: 3,  # (\x,y. x) | (\x,y. y)
     # V: TODO(),
     # A: TODO(),
 })

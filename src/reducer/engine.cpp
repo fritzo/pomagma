@@ -189,13 +189,8 @@ std::string Engine::print(const std::vector<Ob>& obs) const {
 
 void Engine::append(Ob ob, std::ostream& os) const {
     static const std::unordered_map<Ob, std::string> atom_to_string = {
-        {atom_I, "I"},
-        {atom_K, "K"},
-        {atom_B, "B"},
-        {atom_C, "C"},
-        {atom_S, "S"},
-        {atom_BOT, "BOT"},
-        {atom_TOP, "TOP"},
+        {atom_I, "I"}, {atom_K, "K"},     {atom_B, "B"},     {atom_C, "C"},
+        {atom_S, "S"}, {atom_BOT, "BOT"}, {atom_TOP, "TOP"},
     };
 
     if (is_atom(ob)) {

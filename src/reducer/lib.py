@@ -4,9 +4,9 @@ Intro forms are hand-optimized; see lib_test.py for lambda versions.
 
 """
 
-from pomagma.reducer.code import TOP, BOT, I, K, B, C, APP, QUOTE, EQUAL, LESS
-from pomagma.reducer.code import UNIT, BOOL, MAYBE
-from pomagma.reducer.sugar import app, join, quote, qapp, let
+from pomagma.reducer.code import APP, JOIN, TOP, BOT, I, K, B, C
+from pomagma.reducer.code import QUOTE, EQUAL, LESS, UNIT, BOOL, MAYBE
+from pomagma.reducer.sugar import app, join_, quote, qapp, let
 from pomagma.reducer.sugar import combinator, typed, symmetric
 
 CI = APP(C, I)
@@ -14,6 +14,12 @@ CI = APP(C, I)
 
 def COMP(lhs, rhs):
     return APP(APP(B, lhs), rhs)
+
+
+# ----------------------------------------------------------------------------
+# Nondeterminism
+
+join = JOIN(K, APP(K, I))
 
 
 # ----------------------------------------------------------------------------
@@ -49,7 +55,7 @@ def unit_and(x, y):
 @combinator
 @typed(unit_type, unit_type, unit_type)
 def unit_or(x, y):
-    return join(x, y)
+    return join_(x, y)
 
 
 @combinator
@@ -117,7 +123,7 @@ def bool_if_false(x):
     return unit_type(app(x, undefined, ok))
 
 
-enum_bool = join(APP(CI, true), APP(CI, false))
+enum_bool = join_(APP(CI, true), APP(CI, false))
 
 
 # ----------------------------------------------------------------------------
@@ -154,7 +160,7 @@ def maybe_quote(quote_some, x):
 
 @combinator
 def enum_maybe(enum_item):
-    return join(box(none), enum_map(some, enum_item))
+    return join_(box(none), enum_map(some, enum_item))
 
 
 # ----------------------------------------------------------------------------
@@ -222,7 +228,7 @@ def sum_quote(quote_inl, quote_inr, xy):
 
 @combinator
 def enum_sum(enum_inl, enum_inr):
-    return join(enum_map(inl, enum_inl), enum_map(inr, enum_inr))
+    return join_(enum_map(inl, enum_inl), enum_map(inr, enum_inr))
 
 
 # ----------------------------------------------------------------------------
@@ -288,7 +294,7 @@ def num_quote(x):
 
 @combinator
 def enum_num():
-    return join(box(zero), app(enum_map, succ, enum_num))
+    return join_(box(zero), app(enum_map, succ, enum_num))
 
 
 # ----------------------------------------------------------------------------
@@ -372,7 +378,7 @@ def list_quote(quote_item, xs):
 
 @combinator
 def enum_list(enum_item):
-    return join(
+    return join_(
         box(nil),
         app(enum_list(enum_item), lambda t:
             app(enum_item, lambda h: box(cons(h, t)))),
@@ -389,7 +395,7 @@ def box(item):
 
 def enum(items):
     assert isinstance(items, (list, set, frozenset)), items
-    return join(*map(box, items))
+    return join_(*map(box, items))
 
 
 @combinator
@@ -399,7 +405,7 @@ def enum_test(xs):
 
 @combinator
 def enum_union(xs, ys):
-    return join(xs, ys)
+    return join_(xs, ys)
 
 
 @combinator
@@ -452,7 +458,7 @@ def fix(f):
 @combinator
 def close(f):
     """Scott's universal closure operator V."""
-    return lambda x: join(x, app(f, close(x)))
+    return lambda x: join_(x, app(f, close(x)))
 
 
 # ----------------------------------------------------------------------------
@@ -477,7 +483,7 @@ def a_compose(f1, f2):
 
 @combinator
 def div(f):
-    return join(f, app(div, f, TOP))
+    return join_(f, app(div, f, TOP))
 
 
 @combinator
@@ -487,12 +493,12 @@ def a_copy(f, x):
 
 @combinator
 def a_join(f, x, y):
-    return app(f, join(x, y))
+    return app(f, join_(x, y))
 
 
 @combinator
 def a_construct():
-    return join(
+    return join_(
         app(pair, I, I),
         app(pair, BOT, TOP),
         app(pair, div, BOT),
@@ -555,7 +561,7 @@ assert len(byte_table) == 256
 def _bits_test(b0, b1, b2, b3, b4, b5, b6, b7):
     bits = [b0, b1, b2, b3, b4, b5, b6, b7]
     tests = map(bool_test, bits)
-    return app(join(*tests), *tests)
+    return app(join_(*tests), *tests)
 
 
 @combinator
