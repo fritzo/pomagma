@@ -1,7 +1,8 @@
+from pomagma.reducer.code import ABIND, RVAR, SVAR
+from pomagma.reducer.code import NVAR, IVAR, APP, JOIN, FUN, LET
 from pomagma.reducer.code import QUOTE, CODE, EVAL, QAPP, QQUOTE, EQUAL, LESS
 from pomagma.reducer.code import TOP, BOT, I, K, B, C, S, J
 from pomagma.reducer.code import V, A, UNIT, BOOL, MAYBE, PROD, SUM, NUM
-from pomagma.reducer.code import NVAR, IVAR, APP, FUN, LET, ABIND, RVAR, SVAR
 from pomagma.reducer.code import free_vars, complexity
 from pomagma.reducer.code import polish_parse, polish_print
 from pomagma.reducer.code import sexpr_parse, sexpr_print
@@ -38,6 +39,9 @@ z = NVAR('z')
     (APP(x, x), [x]),
     (APP(x, y), [x, y]),
     (APP(x, APP(APP(J, y), APP(K, z))), [x, y, z]),
+    (JOIN(I, x), [x]),
+    (JOIN(x, x), [x]),
+    (JOIN(x, y), [x, y]),
     (QUOTE(x), [x]),
     (QUOTE(x), [x]),
     (APP(x, QUOTE(y)), [x, y]),
@@ -47,26 +51,30 @@ def test_free_vars(code, free):
 
 
 @for_each([
+    (TOP, 0),
+    (BOT, 0),
     (x, 1),
     (y, 1),
-    (I, 2),
-    (K, 3),
-    (B, 6),
-    (C, 6),
-    (S, 7),
-    (J, 3),
-    (APP(K, I), 3 + 2),
-    (APP(I, x), 2 + 1),
+    (I, 1 + 1),
+    (K, 2 + 1),
+    (B, 3 + 3),
+    (C, 3 + 3),
+    (S, 3 + 3),
+    (J, max(2 + 1, 2 + 1)),
+    (APP(K, I), 1 + max(3, 2)),
+    (APP(I, x), 1 + max(2, 1)),
+    (JOIN(K, I), max(3, 2)),
+    (JOIN(I, x), max(2, 1)),
     (QUOTE(I), 1 + 2),
-    (FUN(x, x), 1 + 1),
-    (FUN(x, I), 1 + 2),
-    (FUN(x, K), 1 + 3),
-    (LET(x, x, x), 1 + 1 + 1),
-    (LET(x, I, x), 1 + 2 + 1),
-    (LET(x, K, x), 1 + 3 + 1),
-    (APP(APP(S, x), x), 7 + 1 + 1),
-    (APP(APP(S, I), x), 7 + 2 + 1),
-    (APP(APP(S, I), I), 7 + 2 + 2),
+    (FUN(x, x), 1 + max(1, 1)),
+    (FUN(x, I), 1 + max(1, 2)),
+    (FUN(x, K), 1 + max(1, 3)),
+    (LET(x, x, x), 1 + max(1, 1, 1)),
+    (LET(x, I, x), 1 + max(1, 2, 1)),
+    (LET(x, K, x), 1 + max(1, 3, 1)),
+    (APP(APP(S, x), x), 1 + max(1 + max(6, 1), 1)),
+    (APP(APP(S, I), x), 1 + max(1 + max(6, 2), 1)),
+    (APP(APP(S, I), I), 1 + max(1 + max(6, 2), 2)),
 ])
 def test_complexity(code, expected):
     assert complexity(code) == expected
@@ -194,6 +202,7 @@ s_atoms = s.one_of(
 def s_codes_extend(terms):
     return s.one_of(
         s.builds(APP, terms, terms),
+        s.builds(JOIN, terms, terms),
         s.builds(QUOTE, terms),
         s.builds(FUN, s_vars, terms),
         s.builds(LET, s_vars, terms, terms),

@@ -57,13 +57,13 @@ from pomagma.reducer.code import (
     CODE, EVAL, QAPP, QQUOTE, EQUAL, LESS,
     TOP, BOT, I, K, B, C, S, J,
     V, A, UNIT, BOOL, MAYBE, PROD, SUM, NUM,
-    NVAR, IVAR, QUOTE, APP, FUN, LET, ABIND, RVAR, SVAR,
-    _NVAR, _IVAR, _QUOTE, _FUN, _LET, _ABIND, _RVAR, _SVAR,
+    NVAR, IVAR, QUOTE, APP, JOIN, FUN, LET, ABIND, RVAR, SVAR,
+    _NVAR, _IVAR, _JOIN, _QUOTE, _FUN, _LET, _ABIND, _RVAR, _SVAR,
     is_abind, is_rvar, is_svar,
-    is_nvar, is_ivar, is_app, is_quote, is_fun, is_let,
+    is_nvar, is_ivar, is_app, is_join, is_quote, is_fun, is_let,
 )
 
-PROTOCOL_VERSION = '0.0.12'  # Semver compliant.
+PROTOCOL_VERSION = '0.0.13'  # Semver compliant.
 
 # ----------------------------------------------------------------------------
 # Packed varints.
@@ -138,11 +138,11 @@ INT_TO_SYMB = [
     TOP, BOT, I, K, B, C, S, J,
     CODE, EVAL, QAPP, QQUOTE, EQUAL, LESS,
     V, A, UNIT, BOOL, MAYBE, PROD, SUM, NUM,
-    _NVAR, _IVAR, _QUOTE, _FUN, _LET, _RVAR, _SVAR,
+    _NVAR, _IVAR, _JOIN, _QUOTE, _FUN, _LET, _RVAR,
     # Symbols beyond pos 30 require an extra byte.
-    _ABIND,
+    _SVAR, _ABIND,
 ]
-assert len(INT_TO_SYMB) == 31
+assert len(INT_TO_SYMB) == 32
 SYMB_TO_INT = {k: v for v, k in enumerate(INT_TO_SYMB) if k is not RAW_BYTES}
 
 
@@ -179,6 +179,10 @@ def dump(code, f):
     elif is_ivar(head):
         _dump_head_argc(SYMB_TO_INT[_IVAR], 1 + len(args), f)
         _dump_raw_bytes(str(head[1]), f)
+    elif is_join(head):
+        args.append(head[2])
+        args.append(head[1])
+        _dump_head_argc(SYMB_TO_INT[_JOIN], len(args), f)
     elif is_quote(head):
         args.append(head[1])
         _dump_head_argc(SYMB_TO_INT[_QUOTE], len(args), f)
@@ -239,6 +243,13 @@ def _load_from(bytes_):
         argc -= 1
         rank = int(_load_from(bytes_))
         head = IVAR(rank)
+    elif head is _JOIN:
+        if argc < 2:
+            raise ValueError('JOIN requires at least two args')
+        argc -= 2
+        lhs = _load_from(bytes_)
+        rhs = _load_from(bytes_)
+        head = JOIN(lhs, rhs)
     elif head is _QUOTE:
         if argc < 1:
             raise ValueError('QUOTE requires at least one arg')

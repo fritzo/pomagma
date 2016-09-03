@@ -21,6 +21,7 @@ def make_keyword(name):
 _NVAR = make_keyword('NVAR')  # Nonimal variable.
 _IVAR = make_keyword('IVAR')  # de Bruijn variable.
 _APP = make_keyword('APP')
+_JOIN = make_keyword('JOIN')
 _QUOTE = make_keyword('QUOTE')
 _FUN = make_keyword('FUN')
 _LET = make_keyword('LET')
@@ -76,6 +77,10 @@ def APP(lhs, rhs):
     return _term(_APP, lhs, rhs)
 
 
+def JOIN(lhs, rhs):
+    return _term(_JOIN, lhs, rhs)
+
+
 def QUOTE(code):
     return _term(_QUOTE, code)
 
@@ -122,6 +127,10 @@ def is_app(code):
     return isinstance(code, tuple) and code[0] is _APP
 
 
+def is_join(code):
+    return isinstance(code, tuple) and code[0] is _JOIN
+
+
 def is_quote(code):
     return isinstance(code, tuple) and code[0] is _QUOTE
 
@@ -150,7 +159,7 @@ def is_svar(code):
 def free_vars(code):
     if is_nvar(code):
         return frozenset([code])
-    elif is_app(code):
+    elif is_app(code) or is_join(code):
         return free_vars(code[1]) | free_vars(code[2])
     elif is_quote(code):
         return free_vars(code[1])
@@ -166,17 +175,17 @@ def free_vars(code):
         return frozenset()
 
 
-# Atom complexity is the count of number of variable occurrences, with either
-# positive or negative valence. The complexity of a join is the max of 1 and
-# the max complexity of each part of the join.
-ATOM_COMPLEXITY = defaultdict(lambda: 99, {
-    BOT: 1,
-    TOP: 1,
+# Term complexity is roughly the depth of a term, with special cases for atoms,
+# variables, and joins. The complexity of a join is the max complexity of each
+# part of the join.
+ATOM_COMPLEXITY = defaultdict(lambda: 10, {
+    BOT: 0,
+    TOP: 0,
     I: 2,  # \x.x
     K: 3,  # \x,y. x
     B: 6,  # \x,y,z. x (y z)
     C: 6,  # \x,y,z. x z y
-    S: 7,  # \x,y,z. x z (y z)
+    S: 6,  # \x,y,z. x z (y z)
     J: 3,  # (\x,y. x) | (\x,y. y)
     # V: TODO(),
     # A: TODO(),
@@ -197,12 +206,10 @@ def complexity(code):
         return ATOM_COMPLEXITY[code]
     elif is_nvar(code) or is_ivar(code) or is_rvar(code) or is_svar(code):
         return 1
+    elif is_join(code):
+        return max(complexity(code[1]), complexity(code[2]))
     elif isinstance(code, tuple):
-        if len(code) > 2:
-            return sum(complexity(arg) for arg in code[1:])
-        else:
-            assert len(code) == 2, code
-            return 1 + complexity(code[1])
+        return 1 + max(complexity(arg) for arg in code[1:])
     else:
         raise ValueError(code)
 
@@ -237,6 +244,7 @@ def _polish_parse_tokens(tokens):
 
 _PARSERS = {
     _APP: (_polish_parse_tokens, _polish_parse_tokens),
+    _JOIN: (_polish_parse_tokens, _polish_parse_tokens),
     _QUOTE: (_polish_parse_tokens,),
     _FUN: (_polish_parse_tokens, _polish_parse_tokens),
     _LET: (_polish_parse_tokens, _polish_parse_tokens, _polish_parse_tokens),
@@ -283,6 +291,10 @@ def to_sexpr(code):
         head = head[1]
     if is_nvar(head):
         head = head[1]
+    elif is_join(head):
+        args.append(head[2])
+        args.append(head[1])
+        head = _JOIN
     elif is_quote(head):
         args.append(head[1])
         head = _QUOTE
@@ -322,7 +334,12 @@ def from_sexpr(sexpr):
     head = sexpr[0]
     assert isinstance(head, str)
     if head in _keywords:
-        if head is _QUOTE:
+        if head is _JOIN:
+            lhs = from_sexpr(sexpr[1])
+            rhs = from_sexpr(sexpr[2])
+            head = JOIN(lhs, rhs)
+            args = sexpr[3:]
+        elif head is _QUOTE:
             code = from_sexpr(sexpr[1])
             head = QUOTE(code)
             args = sexpr[2:]

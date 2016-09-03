@@ -252,7 +252,7 @@ def test_cont_complexity_eq_code_complexity(code):
 
 
 @for_each([
-    (TOP, [], 0, 1),
+    (TOP, [], 0, 0),
     (x, [], 0, 1),
     (x, [], 1, 1 + 1),
     (x, [], 2, 1 + 2),
@@ -264,13 +264,13 @@ def test_cont_complexity_eq_code_complexity(code):
     (x, [CONT_SET_BOT], 2, 1 + 1 + 2),
     (x, [CONT_SET_x], 0, 1 + 1),
     (x, [CONT_SET_x], 1, 1 + 1 + 1),
-    (x, [CONT_SET_S], 0, 1 + 7),
-    (x, [CONT_SET_x, CONT_SET_TOP], 0, 1 + 1 + 1),
-    (x, [CONT_SET_x, CONT_SET_TOP], 1, 1 + 1 + 1 + 1),
-    (x, [CONT_SET_x, CONT_SET_TOP, CONT_SET_KS], 0, 1 + 1 + 1 + 8),
-    (S, [CONT_SET_x, CONT_SET_TOP, CONT_SET_KS], 0, 7 + 1 + 1 + 8),
-    (x, [CONT_SET_x | CONT_SET_y], 0, 1 + 1),
-    (x, [CONT_SET_x | CONT_SET_S], 0, 1 + 7),
+    (x, [CONT_SET_S], 0, 1 + max(6, 1)),
+    (x, [CONT_SET_x, CONT_SET_TOP], 0, 1 + max(1 + max(1, 0), 1)),
+    (x, [CONT_SET_x, CONT_SET_TOP], 1, 1 + max(1 + max(1, 0), 1) + 1),
+    (x, [CONT_SET_x, CONT_SET_TOP, CONT_SET_KS], 0, 8),
+    (S, [CONT_SET_x, CONT_SET_TOP, CONT_SET_KS], 0, 9),
+    (x, [CONT_SET_x | CONT_SET_y], 0, 1 + max(1, 1)),
+    (x, [CONT_SET_x | CONT_SET_S], 0, 1 + max(1, 6)),
 ])
 def test_cont_complexity(code, args, bound, expected):
     stack = list_to_stack(args)

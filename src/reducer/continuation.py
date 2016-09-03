@@ -455,16 +455,16 @@ def cont_complexity(cont):
     assert is_cont(cont), cont
     result = complexity(cont.head)
     for arg in iter_stack(cont.stack):
-        result += cont_set_complexity(arg)
+        result = 1 + max(result, cont_set_complexity(arg))
     for var in iter_stack(cont.bound):
-        result += complexity(var)
+        result += 1
     return result
 
 
 def cont_set_complexity(cont_set):
     assert is_cont_set(cont_set), cont_set
     if not cont_set:
-        return 1  # BOT
+        return 0  # BOT
     return max(cont_complexity(cont) for cont in cont_set)
 
 
