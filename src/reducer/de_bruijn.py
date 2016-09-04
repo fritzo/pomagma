@@ -694,7 +694,7 @@ def cont_to_code(cont):
             head = abstract(head)
         return head
     elif cont.type is CONT_TYPE_JOIN:
-        codes = set(map(cont_to_code, cont_iter_join(cont)))
+        codes = map(cont_to_code, cont_iter_join(cont))
         return join_codes(codes)
     elif cont.type is CONT_TYPE_QUOTE:
         body = cont.args
@@ -709,24 +709,12 @@ def cont_to_code(cont):
 
 @logged(print_set(print_code), returns=print_code)
 def join_codes(codes):
-    """Joins a set of codes into a single code, simplifying via heuristics."""
-    assert isinstance(codes, set)
+    assert isinstance(codes, list)
     if not codes:
         return BOT
-
-    # Filter out dominated codes.
-    filtered_codes = [
-        code for code in codes
-        if not any(dominates(ub, code) for ub in codes if ub is not code)
-    ]
-
-    # TODO rearrange binary join operator in order of compute_step priority,
-    #  so as to minimize list thrashing.
-    filtered_codes.sort(key=lambda code: (complexity(code), code))
-
-    # Construct a join term.
-    result = filtered_codes[0]
-    for code in filtered_codes[1:]:
+    codes.sort(key=lambda code: (complexity(code), code))
+    result = codes[0]
+    for code in codes[1:]:
         result = JOIN(result, code)
     return result
 

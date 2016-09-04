@@ -22,4 +22,7 @@ pyformat: FORCE
 
 format: clang-format pyformat FORCE
 
+test: lint
+	py.test
+
 FORCE:
