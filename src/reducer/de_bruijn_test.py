@@ -1,14 +1,12 @@
 from pomagma.reducer import de_bruijn
 from pomagma.reducer.code import APP, JOIN, TOP, BOT, I, K, B, C, S
 from pomagma.reducer.code import complexity, sexpr_parse
-from pomagma.reducer.de_bruijn import CONT_TOP, CONT_SET_TOP, make_cont_app
-from pomagma.reducer.de_bruijn import IVAR, abstract
-from pomagma.reducer.de_bruijn import S_LINEAR_LOWER_BOUNDS
-from pomagma.reducer.de_bruijn import S_LINEAR_UPPER_BOUNDS
-from pomagma.reducer.de_bruijn import cont_set_from_codes, cont_set_join
-from pomagma.reducer.de_bruijn import list_to_stack
-from pomagma.reducer.de_bruijn import trool_all, trool_any
-from pomagma.reducer.de_bruijn import try_decide_less
+from pomagma.reducer.de_bruijn import (
+    CONT_TOP, CONT_SET_TOP, CONT_BOT, make_cont_app, cont_set_from_codes,
+    IVAR, abstract,
+    S_LINEAR_LOWER_BOUNDS, S_LINEAR_UPPER_BOUNDS,
+    list_to_stack, trool_all, trool_any, try_decide_less,
+)
 from pomagma.reducer.testing import iter_equations
 from pomagma.reducer.testing import s_codes, s_quoted, s_sk_codes, s_skj_codes
 from pomagma.reducer.transforms import compile_
@@ -19,7 +17,6 @@ import pytest
 x = IVAR(0)
 y = IVAR(1)
 z = IVAR(2)
-
 F = APP(K, I)
 J = JOIN(K, F)
 CI = APP(C, I)
@@ -27,15 +24,7 @@ CI = APP(C, I)
 CONT_SET_BOT = frozenset()
 CONT_SET_x = cont_set_from_codes((x,))
 CONT_SET_y = cont_set_from_codes((y,))
-CONT_SET_z = cont_set_from_codes((z,))
-CONT_SET_zz = cont_set_from_codes((APP(z, z),))
-CONT_SET_I = cont_set_from_codes((I,))
-CONT_SET_K = cont_set_from_codes((K,))
-CONT_SET_F = cont_set_from_codes((F,))
-CONT_SET_B = cont_set_from_codes((B,))
-CONT_SET_C = cont_set_from_codes((C,))
 CONT_SET_S = cont_set_from_codes((S,))
-CONT_SET_J = cont_set_from_codes((J,))
 CONT_SET_KS = cont_set_from_codes((APP(K, S),))
 
 
@@ -248,6 +237,7 @@ def test_cont_complexity_eq_code_complexity(code):
 
 @for_each([
     (TOP, [], 0, 0),
+    (BOT, [], 0, 0),
     (x, [], 0, 1),
     (x, [], 1, 1 + 1),
     (x, [], 2, 1 + 2),
@@ -264,12 +254,17 @@ def test_cont_complexity_eq_code_complexity(code):
     (x, [CONT_SET_x, CONT_SET_TOP], 1, 1 + max(1 + max(1, 0), 1) + 1),
     (x, [CONT_SET_x, CONT_SET_TOP, CONT_SET_KS], 0, 8),
     (S, [CONT_SET_x, CONT_SET_TOP, CONT_SET_KS], 0, 9),
-    (x, [cont_set_join(CONT_SET_x, CONT_SET_y)], 0, 1 + max(1, 1)),
-    (x, [cont_set_join(CONT_SET_x, CONT_SET_S)], 0, 1 + max(1, 6)),
+    (x, [CONT_SET_x | CONT_SET_y], 0, 1 + max(1, 1)),
+    (x, [CONT_SET_x | CONT_SET_S], 0, 1 + max(1, 6)),
 ])
 def test_cont_complexity(code, args, bound, expected):
     stack = list_to_stack(args)
-    cont = CONT_TOP if code is TOP else make_cont_app(code, stack, bound)
+    if code is TOP:
+        cont = CONT_TOP
+    elif code is BOT:
+        cont = CONT_BOT
+    else:
+        cont = make_cont_app(code, stack, bound)
     assert de_bruijn.cont_complexity(cont) == expected
 
 
