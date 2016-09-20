@@ -122,7 +122,7 @@ def make_cont(head, stack, bound):
             stack and stack[1] and stack[1][1] and
             is_cheap_to_copy(stack[1][1][0]))
     elif head in (EVAL, QQUOTE):
-        assert not stack or not (is_quote(stack[0]) or stack[0] in (TOP, BOT))
+        pass  # TODO assert not QUOTE or TOP or BOT
     return Continuation(head, stack, bound)
 
 

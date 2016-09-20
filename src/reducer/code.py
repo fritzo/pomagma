@@ -1,10 +1,30 @@
 from collections import defaultdict
+from pomagma.compiler.util import MEMOIZED_CACHES
 from pomagma.compiler.util import memoize_arg
 from pomagma.compiler.util import memoize_args
 import re
 
+
 # ----------------------------------------------------------------------------
 # Signature
+
+@memoize_args
+def _code(*args):
+    # Slow version:
+    # return args if len(args) > 1 else args[0]
+    # Fast version (works because of make_keyword(-) below):
+    return args
+
+
+_CODES = MEMOIZED_CACHES[_code]
+
+
+def is_code(arg):
+    try:
+        return _CODES[arg] is arg
+    except KeyError:
+        return False
+
 
 re_keyword = re.compile('[A-Z]+$')
 _keywords = set()
@@ -15,6 +35,7 @@ def make_keyword(name):
     assert name not in _keywords
     name = intern(name)
     _keywords.add(name)
+    _CODES[name] = name
     return name
 
 
@@ -54,108 +75,115 @@ SUM = make_keyword('SUM')
 NUM = make_keyword('NUM')
 
 
-@memoize_args
-def _term(*args):
-    return args
-
-
 def NVAR(name):
     if re_keyword.match(name):
         raise ValueError('Variable names cannot match [A-Z]+: {}'.format(name))
-    return _term(_NVAR, intern(name))
+    return _code(_NVAR, intern(name))
 
 
 def IVAR(rank):
     if not isinstance(rank, int) and rank >= 0:
         raise ValueError(
             'Variable index must be a natural number {}'.format(rank))
-    return _term(_IVAR, rank)
+    return _code(_IVAR, rank)
 
 
 def APP(lhs, rhs):
-    return _term(_APP, lhs, rhs)
+    return _code(_APP, lhs, rhs)
 
 
 def JOIN(lhs, rhs):
-    return _term(_JOIN, lhs, rhs)
+    return _code(_JOIN, lhs, rhs)
 
 
 def QUOTE(code):
-    return _term(_QUOTE, code)
+    return _code(_QUOTE, code)
 
 
 def FUN(var, body):
-    return _term(_FUN, var, body)
+    return _code(_FUN, var, body)
 
 
 def LET(var, defn, body):
-    return _term(_LET, var, defn, body)
+    return _code(_LET, var, defn, body)
 
 
 def ABIND(body):
-    return _term(_ABIND, body)
+    return _code(_ABIND, body)
 
 
 def RVAR(rank):
     if not isinstance(rank, int) and rank >= 0:
         raise ValueError(
             'Variable index must be a natural number {}'.format(rank))
-    return _term(_RVAR, rank)
+    return _code(_RVAR, rank)
 
 
 def SVAR(rank):
     if not isinstance(rank, int) and rank >= 0:
         raise ValueError(
             'Variable index must be a natural number {}'.format(rank))
-    return _term(_SVAR, rank)
+    return _code(_SVAR, rank)
 
 
 def is_atom(code):
+    assert is_code(code), code
     return isinstance(code, str)
 
 
 def is_nvar(code):
+    assert is_code(code), code
     return isinstance(code, tuple) and code[0] is _NVAR
 
 
-def is_ivar(term):
-    return isinstance(term, tuple) and term[0] is _IVAR
+def is_ivar(code):
+    assert is_code(code), code
+    return isinstance(code, tuple) and code[0] is _IVAR
 
 
 def is_app(code):
+    assert is_code(code), code
     return isinstance(code, tuple) and code[0] is _APP
 
 
 def is_join(code):
+    assert is_code(code), code
     return isinstance(code, tuple) and code[0] is _JOIN
 
 
 def is_quote(code):
+    assert is_code(code), code
     return isinstance(code, tuple) and code[0] is _QUOTE
 
 
 def is_fun(code):
+    assert is_code(code), code
     return isinstance(code, tuple) and code[0] is _FUN
 
 
 def is_let(code):
+    assert is_code(code), code
     return isinstance(code, tuple) and code[0] is _LET
 
 
 def is_abind(code):
+    assert is_code(code), code
     return isinstance(code, tuple) and code[0] is _ABIND
 
 
 def is_rvar(code):
+    assert is_code(code), code
     return isinstance(code, tuple) and code[0] is _RVAR
 
 
 def is_svar(code):
+    assert is_code(code), code
     return isinstance(code, tuple) and code[0] is _SVAR
 
 
 @memoize_arg
 def free_vars(code):
+    assert is_code(code), code
     if is_nvar(code):
         return frozenset([code])
     elif is_app(code) or is_join(code):
@@ -200,6 +228,7 @@ def complexity(code):
       complexity.
 
     """
+    assert is_code(code), code
     if is_atom(code):
         return ATOM_COMPLEXITY[code]
     elif is_nvar(code) or is_ivar(code) or is_rvar(code) or is_svar(code):
@@ -237,7 +266,7 @@ def _polish_parse_tokens(tokens):
     except KeyError:
         return token if re_keyword.match(token) else NVAR(token)  # atom
     args = tuple(p(tokens) for p in polish_parsers)
-    return _term(token, *args)
+    return _code(token, *args)
 
 
 _PARSERS = {
@@ -254,6 +283,7 @@ _PARSERS = {
 
 
 def polish_print(code):
+    assert is_code(code), code
     tokens = []
     _polish_print_tokens(code, tokens)
     return ' '.join(tokens)
@@ -278,6 +308,7 @@ def _polish_print_tokens(code, tokens):
 
 @memoize_arg
 def to_sexpr(code):
+    assert is_code(code), code
     if isinstance(code, str):
         return code
     elif is_nvar(code):
@@ -285,28 +316,28 @@ def to_sexpr(code):
     head = code
     args = []
     while is_app(head):
-        args.append(head[2])
+        args.append(to_sexpr(head[2]))
         head = head[1]
     if is_nvar(head):
         head = head[1]
     elif is_join(head):
-        args.append(head[2])
-        args.append(head[1])
+        args.append(to_sexpr(head[2]))
+        args.append(to_sexpr(head[1]))
         head = _JOIN
     elif is_quote(head):
-        args.append(head[1])
+        args.append(to_sexpr(head[1]))
         head = _QUOTE
     elif is_fun(head):
-        args.append(head[2])
-        args.append(head[1])
+        args.append(to_sexpr(head[2]))
+        args.append(to_sexpr(head[1]))
         head = _FUN
     elif is_let(head):
-        args.append(head[3])
-        args.append(head[2])
-        args.append(head[1])
+        args.append(to_sexpr(head[3]))
+        args.append(to_sexpr(head[2]))
+        args.append(to_sexpr(head[1]))
         head = _LET
     elif is_abind(head):
-        args.append(head[1])
+        args.append(to_sexpr(head[1]))
         head = _ABIND
     elif is_ivar(head):
         args.append(str(head[1]))
@@ -317,8 +348,9 @@ def to_sexpr(code):
     elif is_svar(head):
         args.append(str(head[1]))
         head = _SVAR
-    args = map(to_sexpr, reversed(args))
-    return tuple([head] + args)
+    args.append(head)
+    args.reverse()
+    return tuple(args)
 
 
 def from_sexpr(sexpr):
@@ -387,6 +419,7 @@ def sexpr_print_sexpr(sexpr):
 
 @memoize_arg
 def sexpr_print(code):
+    assert is_code(code), code
     sexpr = to_sexpr(code)
     return sexpr_print_sexpr(sexpr)
 

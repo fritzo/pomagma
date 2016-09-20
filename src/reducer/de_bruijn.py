@@ -20,7 +20,7 @@ from pomagma.compiler.util import memoize_args
 from pomagma.reducer.code import APP, JOIN, IVAR, TOP, BOT, I, K, B, C, S
 from pomagma.reducer.code import QUOTE, EVAL, LESS
 from pomagma.reducer.code import complexity, is_nvar, is_ivar
-from pomagma.reducer.code import is_atom, is_app, is_join, is_quote
+from pomagma.reducer.code import is_code, is_atom, is_app, is_join, is_quote
 from pomagma.reducer.code import sexpr_print as print_code
 from pomagma.reducer.util import LOG
 from pomagma.reducer.util import logged
@@ -31,10 +31,6 @@ import itertools
 __all__ = ['reduce', 'simplify', 'try_decide_less']
 
 SUPPORTED_TESTDATA = ['sk', 'join', 'quote', 'lib']
-
-
-def is_code(code):
-    return isinstance(code, (tuple, str))
 
 
 def trool_all(args):
@@ -309,8 +305,8 @@ def make_cont(type_, args):
                         assert rhs is not CONT_BOT
                         if rhs.type is CONT_TYPE_QUOTE:
                             assert cont_try_decide_less(lhs, rhs) is None
-                    elif is_quote(rhs):
-                        assert lhs is not CONT_BOT
+                    elif rhs.type is CONT_TYPE_QUOTE:
+                        assert lhs is not CONT_TOP
         else:
             assert is_ivar(head) or is_nvar(head)
         assert is_stack(stack), stack
@@ -678,7 +674,6 @@ def pattern_match_less(precont, pending, result):
 def cont_to_code(cont):
     """Returns code in linear normal form.
 
-
     Desired Theorem: For any cont,
       cont_from_codes((cont_to_code(cont),)) == cont
 
@@ -710,6 +705,7 @@ def cont_to_code(cont):
 @logged(print_set(print_code), returns=print_code)
 def join_codes(codes):
     assert isinstance(codes, list)
+    assert all(map(is_code, codes)), codes
     if not codes:
         return BOT
     codes.sort(key=lambda code: (complexity(code), code))
