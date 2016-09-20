@@ -25,54 +25,14 @@ from pomagma.reducer.code import sexpr_print as print_code
 from pomagma.reducer.util import LOG
 from pomagma.reducer.util import logged
 from pomagma.reducer.util import pretty
+from pomagma.reducer.util import stack_to_list, iter_stack
+from pomagma.reducer.util import trool_all, trool_any
 from pomagma.util import TODO
 import itertools
 
 __all__ = ['reduce', 'simplify', 'try_decide_less']
 
 SUPPORTED_TESTDATA = ['sk', 'join', 'quote', 'lib']
-
-
-def trool_all(args):
-    result = True
-    for arg in args:
-        if arg is False:
-            return False
-        elif arg is None:
-            result = None
-    return result
-
-
-def trool_any(args):
-    result = False
-    for arg in args:
-        if arg is True:
-            return True
-        elif arg is None:
-            result = None
-    return result
-
-
-def stack_to_list(stack):
-    result = []
-    while stack is not None:
-        arg, stack = stack
-        result.append(arg)
-    return result
-
-
-def list_to_stack(args):
-    assert isinstance(args, list), args
-    stack = None
-    for arg in reversed(args):
-        stack = arg, stack
-    return stack
-
-
-def iter_stack(stack):
-    while stack is not None:
-        arg, stack = stack
-        yield arg
 
 
 # ----------------------------------------------------------------------------

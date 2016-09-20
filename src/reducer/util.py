@@ -8,6 +8,49 @@ import os
 import pomagma.util
 import sys
 
+
+def trool_all(args):
+    result = True
+    for arg in args:
+        if arg is False:
+            return False
+        elif arg is None:
+            result = None
+    return result
+
+
+def trool_any(args):
+    result = False
+    for arg in args:
+        if arg is True:
+            return True
+        elif arg is None:
+            result = None
+    return result
+
+
+def stack_to_list(stack):
+    result = []
+    while stack is not None:
+        arg, stack = stack
+        result.append(arg)
+    return result
+
+
+def list_to_stack(args):
+    assert isinstance(args, list), args
+    stack = None
+    for arg in reversed(args):
+        stack = arg, stack
+    return stack
+
+
+def iter_stack(stack):
+    while stack is not None:
+        arg, stack = stack
+        yield arg
+
+
 # ----------------------------------------------------------------------------
 # Logging
 

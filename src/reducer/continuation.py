@@ -23,6 +23,7 @@ from pomagma.reducer.util import LOG
 from pomagma.reducer.util import PROFILE_COUNTERS
 from pomagma.reducer.util import logged
 from pomagma.reducer.util import pretty
+from pomagma.reducer.util import iter_stack
 import itertools
 
 __all__ = ['reduce', 'simplify']
@@ -32,12 +33,6 @@ SUPPORTED_TESTDATA = ['sk', 'join', 'quote', 'lib']
 F = APP(K, I)
 true = K
 false = F
-
-
-def iter_stack(shared_list):
-    while shared_list is not None:
-        arg, shared_list = shared_list
-        yield arg
 
 
 @memoize_arg
