@@ -1,22 +1,25 @@
 from collections import defaultdict
 from pomagma.compiler.util import MEMOIZED_CACHES
 from pomagma.compiler.util import memoize_arg
-from pomagma.compiler.util import memoize_args
 import re
 
 
 # ----------------------------------------------------------------------------
 # Signature
 
-@memoize_args
+_CODES = {}
+
+
 def _code(*args):
     # Slow version:
-    # return args if len(args) > 1 else args[0]
+    # value = args if len(args) > 1 else args[0]
+    # return _CODES.setdefault(args, value)
+
     # Fast version (works because of make_keyword(-) below):
-    return args
+    return _CODES.setdefault(args, args)
 
 
-_CODES = MEMOIZED_CACHES[_code]
+MEMOIZED_CACHES[_code] = _CODES
 
 
 def is_code(arg):
