@@ -52,6 +52,8 @@ _LET = make_keyword('LET')
 _ABIND = make_keyword('ABIND')
 _RVAR = make_keyword('RVAR')  # de Bruijn variable.
 _SVAR = make_keyword('SVAR')  # de Bruijn variable.
+_SLICEBEG = make_keyword('SLICEBEG')
+_SLICEEND = make_keyword('SLICEEND')
 
 TOP = make_keyword('TOP')
 BOT = make_keyword('BOT')
@@ -129,6 +131,14 @@ def SVAR(rank):
     return _code(_SVAR, rank)
 
 
+def SLICEBEG(code):
+    return _code(_SLICEBEG, code)
+
+
+def SLICEEND(code):
+    return _code(_SLICEEND, code)
+
+
 def is_atom(code):
     assert is_code(code), code
     return isinstance(code, str)
@@ -184,6 +194,16 @@ def is_svar(code):
     return isinstance(code, tuple) and code[0] is _SVAR
 
 
+def is_slicebeg(code):
+    assert is_code(code), code
+    return isinstance(code, tuple) and code[0] is _SLICEBEG
+
+
+def is_sliceend(code):
+    assert is_code(code), code
+    return isinstance(code, tuple) and code[0] is _SLICEEND
+
+
 @memoize_arg
 def free_vars(code):
     assert is_code(code), code
@@ -200,6 +220,8 @@ def free_vars(code):
         assert is_nvar(code[1])
         return free_vars(code[3]) - frozenset([code[1]]) | free_vars(code[2])
     elif is_abind(code):
+        return free_vars(code[1])
+    elif is_slicebeg(code) or is_sliceend(code):
         return free_vars(code[1])
     else:
         return frozenset()
@@ -282,6 +304,8 @@ _PARSERS = {
     _IVAR: (_pop_int,),
     _RVAR: (_pop_int,),
     _SVAR: (_pop_int,),
+    _SLICEBEG: (_polish_parse_tokens,),
+    _SLICEEND: (_polish_parse_tokens,),
 }
 
 
@@ -342,6 +366,12 @@ def to_sexpr(code):
     elif is_abind(head):
         args.append(to_sexpr(head[1]))
         head = _ABIND
+    elif is_slicebeg(head):
+        args.append(to_sexpr(head[1]))
+        head = _SLICEBEG
+    elif is_sliceend(head):
+        args.append(to_sexpr(head[1]))
+        head = _SLICEEND
     elif is_ivar(head):
         args.append(str(head[1]))
         head = _IVAR
@@ -390,6 +420,14 @@ def from_sexpr(sexpr):
         elif head is _ABIND:
             body = from_sexpr(sexpr[1])
             head = ABIND(body)
+            args = sexpr[2:]
+        elif head is _SLICEBEG:
+            body = from_sexpr(sexpr[1])
+            head = SLICEBEG(body)
+            args = sexpr[2:]
+        elif head is _SLICEEND:
+            body = from_sexpr(sexpr[1])
+            head = SLICEEND(body)
             args = sexpr[2:]
         elif head is _IVAR:
             head = IVAR(int(sexpr[1]))

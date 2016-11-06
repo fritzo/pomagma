@@ -1,5 +1,5 @@
 from pomagma.reducer.code import (
-    APP, JOIN, NVAR, IVAR, FUN, LET, ABIND, RVAR, SVAR,
+    APP, JOIN, NVAR, IVAR, FUN, LET, ABIND, RVAR, SVAR, SLICEBEG, SLICEEND,
     QUOTE, CODE, EVAL, QAPP, QQUOTE, EQUAL, LESS,
     TOP, BOT, I, K, B, C, S, V, A, UNIT, BOOL, MAYBE, PROD, SUM, NUM,
     free_vars, complexity, polish_parse, polish_print,
@@ -41,8 +41,10 @@ z = NVAR('z')
     (JOIN(x, x), [x]),
     (JOIN(x, y), [x, y]),
     (QUOTE(x), [x]),
-    (QUOTE(x), [x]),
+    (QUOTE(APP(x, y)), [x, y]),
     (APP(x, QUOTE(y)), [x, y]),
+    (SLICEBEG(x), [x]),
+    (SLICEEND(x), [x]),
 ])
 def test_free_vars(code, free):
     assert free_vars(code) == frozenset(free)
@@ -121,6 +123,16 @@ EXAMPLES = [
         'code': ABIND(APP(APP(B, RVAR(0)), SVAR(0))),
         'polish': 'ABIND APP APP B RVAR 0 SVAR 0',
         'sexpr': '(ABIND (B (RVAR 0) (SVAR 0)))',
+    },
+    {
+        'code': APP(SLICEBEG(APP(x, y)), z),
+        'polish': 'APP SLICEBEG APP x y z',
+        'sexpr': '(SLICEBEG (x y) z)',
+    },
+    {
+        'code': APP(SLICEEND(APP(x, y)), z),
+        'polish': 'APP SLICEEND APP x y z',
+        'sexpr': '(SLICEEND (x y) z)',
     },
 ]
 
