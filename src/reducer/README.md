@@ -13,7 +13,7 @@ to nondeterministic combinatory algebra.
   different reduction rules.
   <br> Supports: ['sk', 'join', 'quote', 'types', 'lib', 'unit']
 
-- [`engine.cpp`](./engine.cpp)
+- [`engine.hpp`](./engine.hpp)
   A C++ port of an early version of engine.py. This is very limited, and mostly
   exercises serialization plumbing.
 
@@ -31,6 +31,12 @@ to nondeterministic combinatory algebra.
   nominal variables for &lambda; binding. This simplifies the logic of
   `try_decide_less` by avoiding the need to &alpha;-convert.
   <br> Supports: ['sk', 'join', 'quote', 'lib']
+
+- [`learn.py`](./learn.py)
+  Forked from de_bruijn.py, this aims to implement reduction step learning.
+  The goal is to provide native support for definable types, using the
+  recursive definition of `A`.
+  <br> Supports: ['sk', 'join']
 
 ## References
 

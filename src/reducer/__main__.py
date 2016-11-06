@@ -2,6 +2,7 @@ from parsable import parsable
 from pomagma.reducer import continuation
 from pomagma.reducer import de_bruijn
 from pomagma.reducer import engine
+from pomagma.reducer import learn
 from pomagma.reducer import lib
 from pomagma.reducer import transforms
 from pomagma.reducer.code import polish_parse, polish_print
@@ -115,6 +116,7 @@ ENGINES = {
     'engine': engine,
     'continuation': continuation,
     'de_bruijn': de_bruijn,
+    'learn': learn,
 }
 
 
@@ -124,7 +126,7 @@ def reduce(string, engine='engine', fmt='auto'):
 
     Args:
         string: code to reduce, in some parsable format specified by fmt
-        engine: 'engine', 'continuation', or 'de_bruijn'
+        engine: 'engine', 'continuation', 'de_bruijn', or 'learn'
         fmt: one of 'auto', 'polish', or 'sexpr'
 
     """
