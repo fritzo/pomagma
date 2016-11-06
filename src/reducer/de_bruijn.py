@@ -315,7 +315,6 @@ CONT_FALSE = make_cont_app(IVAR(0), None, 2)
 
 @memoize_args
 def cont_increment_ivars(cont, min_rank):
-    # FIXME is this right? Should we only increment vars below bound?
     assert is_cont(cont), cont
     if cont.type is CONT_TYPE_APP:
         head, stack, bound = cont.args
@@ -974,7 +973,7 @@ def cont_try_compute_step(cont):
             yz = cont_app(y, z)
             precont.push_arg(yz)
             precont.push_arg(z)
-            codes = tuple(sorted(map(cont_to_code, x)))
+            codes = tuple(sorted(map(cont_to_code, x)))  # FIXME
             cont = cont_from_codes(codes, precont.stack, precont.bound)
             return True, cont
         elif head is EVAL:
