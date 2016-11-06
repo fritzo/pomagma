@@ -1,9 +1,36 @@
-# Reduction Engine
+# Reduction Engines
 
-This Reducer module implements an interpreter for nondeterministic extensional combinatory algebra, henceforth SKJ/H&ast;.
-The algorithm extends the beta-eta reduction (aka strong normalization) algorithm of Boulifa and Mezohiche
+This Reducer module implements various interpreters for nondeterministic
+extensional combinatory algebra, henceforth SKJ/H&ast;.
+The algorithms extend the beta-eta reduction (aka strong normalization) algorithm of Boulifa and Mezohiche
 <a href="#user-content-Boulifa03">[Boulifa03]</a>
 to nondeterministic combinatory algebra.
+
+## Lineage of the various engines
+
+- [`engine.py`](./engine.py)
+  An initial implementation of a combinator reduction machine supporting many
+  different reduction rules.
+  <br> Supports: ['sk', 'join', 'quote', 'types', 'lib', 'unit']
+
+- [`engine.cpp`](./engine.cpp)
+  A C++ port of an early version of engine.py. This is very limited, and mostly
+  exercises serialization plumbing.
+
+- [`trace.py`](./trace.py)
+  A simple deterministic engine with tracing support.
+  <br> Supports: ['sk', 'quote', 'lib']
+
+- [`continuation.py`](./continuation.py)
+  Forked from engine.py, this starts to use Bohm-trees = continuations as the
+  basic data structure during evaluation, simplifying nondeterminism.
+  <br> Supports: ['sk', 'join', 'quote', 'lib']
+
+- [`de_bruijn.py`](./de_bruijn.py)
+  Forked from continuation.py, this uses de Bruijn variables rather than
+  nominal variables for &lambda; binding. This simplifies the logic of
+  `try_decide_less` by avoiding the need to &alpha;-convert.
+  <br> Supports: ['sk', 'join', 'quote', 'lib']
 
 ## References
 
