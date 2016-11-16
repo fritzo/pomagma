@@ -1,14 +1,12 @@
 from pomagma.reducer import de_bruijn
 from pomagma.reducer.code import APP, JOIN, TOP, BOT, I, K, B, C, S
-from pomagma.reducer.code import complexity, sexpr_parse
-from pomagma.reducer.de_bruijn import (
-    CONT_TOP, CONT_BOT, make_cont_app, cont_from_codes, IVAR, abstract,
-    S_LINEAR_LOWER_BOUNDS, S_LINEAR_UPPER_BOUNDS, try_decide_less,
-)
+from pomagma.reducer.code import sexpr_parse
+from pomagma.reducer.de_bruijn import IVAR, abstract, try_decide_less
+from pomagma.reducer.de_bruijn import S_LINEAR_LOWER_BOUNDS
+from pomagma.reducer.de_bruijn import S_LINEAR_UPPER_BOUNDS
 from pomagma.reducer.testing import iter_equations
 from pomagma.reducer.testing import s_codes, s_quoted, s_sk_codes, s_skj_codes
 from pomagma.reducer.transforms import compile_
-from pomagma.reducer.util import list_to_stack
 from pomagma.util.testing import for_each, xfail_if_not_implemented
 import hypothesis
 import pytest
@@ -19,13 +17,6 @@ z = IVAR(2)
 F = APP(K, I)
 J = JOIN(K, F)
 CI = APP(C, I)
-
-CONT_x = cont_from_codes((x,))
-CONT_y = cont_from_codes((y,))
-CONT_S = cont_from_codes((S,))
-CONT_KS = cont_from_codes((APP(K, S),))
-CONT_JOIN_x_y = cont_from_codes((JOIN(x, y),))
-CONT_JOIN_x_S = cont_from_codes((JOIN(x, S),))
 
 
 def sexpr_compile(string):
@@ -190,45 +181,6 @@ def test_s_linear_bounds(actual, expected_sexpr):
 
 # ----------------------------------------------------------------------------
 # Reduction
-
-@for_each([x, y, TOP, BOT, I, K, B, C, S])
-def test_cont_complexity_eq_code_complexity(code):
-    cont = de_bruijn.cont_from_codes((code,))
-    assert de_bruijn.cont_complexity(cont) == complexity(code)
-
-
-@for_each([
-    (TOP, [], 0, 0),
-    (BOT, [], 0, 0),
-    (x, [], 0, 1),
-    (x, [], 1, 1 + 1),
-    (x, [], 2, 1 + 2),
-    (x, [CONT_TOP], 0, 1 + 1),
-    (x, [CONT_TOP], 1, 1 + 1 + 1),
-    (x, [CONT_TOP], 2, 1 + 1 + 2),
-    (x, [CONT_BOT], 0, 1 + 1),
-    (x, [CONT_BOT], 1, 1 + 1 + 1),
-    (x, [CONT_BOT], 2, 1 + 1 + 2),
-    (x, [CONT_x], 0, 1 + 1),
-    (x, [CONT_x], 1, 1 + 1 + 1),
-    (x, [CONT_S], 0, 1 + max(6, 1)),
-    (x, [CONT_x, CONT_TOP], 0, 1 + max(1 + max(1, 0), 1)),
-    (x, [CONT_x, CONT_TOP], 1, 1 + max(1 + max(1, 0), 1) + 1),
-    (x, [CONT_x, CONT_TOP, CONT_KS], 0, 8),
-    (S, [CONT_x, CONT_TOP, CONT_KS], 0, 9),
-    (x, [CONT_JOIN_x_y], 0, 1 + max(1, 1)),
-    (x, [CONT_JOIN_x_S], 0, 1 + max(1, 6)),
-])
-def test_cont_complexity(code, args, bound, expected):
-    stack = list_to_stack(args)
-    if code is TOP:
-        cont = CONT_TOP
-    elif code is BOT:
-        cont = CONT_BOT
-    else:
-        cont = make_cont_app(code, stack, bound)
-    assert de_bruijn.cont_complexity(cont) == expected
-
 
 @pytest.mark.timeout(1)
 @for_each(iter_equations('de_bruijn'))

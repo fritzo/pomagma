@@ -1,6 +1,4 @@
-"""Reduction engine with reduction step learning.
-
-"""
+"""Reduction engine with reduction step learning."""
 
 from collections import namedtuple
 from pomagma.compiler.util import memoize_arg
