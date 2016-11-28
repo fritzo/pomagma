@@ -50,10 +50,6 @@ def print_stack(stack):
         ', '.join(print_cont(v) for v in iter_stack(stack)))
 
 
-def print_bound(bound):
-    return '[{}]'.format(', '.join(v[1] for v in iter_stack(bound)))
-
-
 def print_cont(cont):
     type_, args = cont
     if type_ is CONT_TYPE_APP:
@@ -311,7 +307,7 @@ class TopError(Exception):
     pass
 
 
-@logged(print_tuple(print_code), print_stack, print_bound, returns=print_cont)
+@logged(print_tuple(print_code), print_stack, str, returns=print_cont)
 @memoize_args
 def cont_from_codes(codes, stack=None, bound=0):  # DEPRECATED
     assert all(map(is_code, codes)), codes
