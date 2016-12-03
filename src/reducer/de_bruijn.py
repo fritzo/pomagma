@@ -13,16 +13,16 @@
 
 from pomagma.compiler.util import memoize_arg
 from pomagma.compiler.util import memoize_args
-from pomagma.reducer.bohmtrees import CONT_TOP, CONT_BOT, CONT_IVAR_0
-from pomagma.reducer.bohmtrees import CONT_TRUE, CONT_FALSE
-from pomagma.reducer.bohmtrees import CONT_TYPE_APP, CONT_TYPE_JOIN
-from pomagma.reducer.bohmtrees import CONT_TYPE_QUOTE
-from pomagma.reducer.bohmtrees import CONT_TYPE_TOP, CONT_TYPE_BOT
-from pomagma.reducer.bohmtrees import INERT_ATOMS
-from pomagma.reducer.bohmtrees import cont_complexity, is_cheap_to_copy
-from pomagma.reducer.bohmtrees import cont_iter_join
-from pomagma.reducer.bohmtrees import is_cont, is_stack
-from pomagma.reducer.bohmtrees import cont_hnf, cont_join, cont_quote
+from pomagma.reducer.continuations import CONT_TOP, CONT_BOT, CONT_IVAR_0
+from pomagma.reducer.continuations import CONT_TRUE, CONT_FALSE
+from pomagma.reducer.continuations import CONT_TYPE_APP, CONT_TYPE_JOIN
+from pomagma.reducer.continuations import CONT_TYPE_QUOTE
+from pomagma.reducer.continuations import CONT_TYPE_TOP, CONT_TYPE_BOT
+from pomagma.reducer.continuations import INERT_ATOMS
+from pomagma.reducer.continuations import cont_complexity, is_cheap_to_copy
+from pomagma.reducer.continuations import cont_iter_join
+from pomagma.reducer.continuations import is_cont, is_stack
+from pomagma.reducer.continuations import cont_hnf, cont_join, cont_quote
 from pomagma.reducer.code import APP, JOIN, IVAR, TOP, BOT, I, K, B, C, S
 from pomagma.reducer.code import QUOTE, EVAL, LESS
 from pomagma.reducer.code import complexity, is_nvar, is_ivar
