@@ -1,6 +1,6 @@
 from pomagma.reducer import de_bruijn
 from pomagma.reducer.bohmtrees import CONT_TOP, CONT_BOT
-from pomagma.reducer.bohmtrees import make_cont_app, IVAR
+from pomagma.reducer.bohmtrees import cont_hnf, IVAR
 from pomagma.reducer.code import APP, JOIN, TOP, BOT, I, K, B, C, S
 from pomagma.reducer.code import complexity
 from pomagma.reducer.util import list_to_stack
@@ -52,5 +52,5 @@ def test_cont_complexity(code, args, bound, expected):
     elif code is BOT:
         cont = CONT_BOT
     else:
-        cont = make_cont_app(code, stack, bound)
+        cont = cont_hnf(code, stack, bound)
     assert de_bruijn.cont_complexity(cont) == expected

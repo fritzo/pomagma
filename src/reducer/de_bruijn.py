@@ -22,8 +22,7 @@ from pomagma.reducer.bohmtrees import INERT_ATOMS
 from pomagma.reducer.bohmtrees import cont_complexity, is_cheap_to_copy
 from pomagma.reducer.bohmtrees import cont_iter_join
 from pomagma.reducer.bohmtrees import is_cont, is_stack
-from pomagma.reducer.bohmtrees import make_cont_app, make_cont_join
-from pomagma.reducer.bohmtrees import make_cont_quote
+from pomagma.reducer.bohmtrees import cont_hnf, cont_join, cont_quote
 from pomagma.reducer.code import APP, JOIN, IVAR, TOP, BOT, I, K, B, C, S
 from pomagma.reducer.code import QUOTE, EVAL, LESS
 from pomagma.reducer.code import complexity, is_nvar, is_ivar
@@ -211,12 +210,12 @@ def cont_increment_ivars(cont, min_rank):
         head, stack, bound = cont.args
         head = code_increment_ivars(head, min_rank + bound)
         stack = stack_increment_ivars(stack, min_rank + bound)
-        return make_cont_app(head, stack, bound)
+        return cont_hnf(head, stack, bound)
     elif cont.type is CONT_TYPE_JOIN:
         lhs, rhs = cont.args
         lhs = cont_increment_ivars(lhs, min_rank)
         rhs = cont_increment_ivars(rhs, min_rank)
-        return make_cont_join(lhs, rhs)
+        return cont_join(lhs, rhs)
     elif cont.type is CONT_TYPE_QUOTE:
         TODO()
     elif cont.type is CONT_TYPE_TOP:
@@ -300,7 +299,7 @@ class PreContinuation(object):
             return CONT_TOP
         else:
             # TODO eta contract, compensating for expansion in .pop_args().
-            return make_cont_app(self.head, self.stack, self.bound)
+            return cont_hnf(self.head, self.stack, self.bound)
 
 
 class TopError(Exception):
@@ -360,7 +359,7 @@ def cont_from_codes(codes, stack=None, bound=0):  # DEPRECATED
             if stack is not None or bound != 0:
                 # TODO handle eta-expansions
                 return CONT_TOP
-            result.add(make_cont_quote(body))
+            result.add(cont_quote(body))
             continue
         elif head is EVAL:
             try:
@@ -557,7 +556,7 @@ def join_conts(conts):
     # Construct a join term.
     result = filtered_conts[0]
     for cont in filtered_conts[1:]:
-        result = make_cont_join(result, cont)
+        result = cont_join(result, cont)
     return result
 
 
@@ -869,7 +868,7 @@ def cont_try_compute_step(cont):
         body = cont.args
         progress, body = cont_try_compute_step(body)
         if progress:
-            cont = make_cont_quote(body)
+            cont = cont_quote(body)
         return progress, cont
     elif cont.type is CONT_TYPE_TOP:
         return False, CONT_TOP

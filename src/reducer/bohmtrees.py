@@ -47,8 +47,8 @@ def is_stack(stack):
 
 
 @memoize_args
-def make_cont(type_, args):
-    """Continuations are linear-beta-eta normal forms."""
+def _cont_make(type_, args):
+    """Cons-hashed builder for Cont objects."""
     if type_ is CONT_TYPE_APP:
         assert isinstance(args, ContApp), args
         head, stack, bound = args
@@ -98,30 +98,30 @@ def make_cont(type_, args):
     return Cont(type_, args)
 
 
-def make_cont_app(head, stack, bound):
+def cont_hnf(head, stack, bound):
     assert is_code(head), head
     assert is_stack(stack), stack
     assert isinstance(bound, int) and bound >= 0, bound
-    return make_cont(CONT_TYPE_APP, ContApp(head, stack, bound))
+    return _cont_make(CONT_TYPE_APP, ContApp(head, stack, bound))
 
 
-def make_cont_join(lhs, rhs):
+def cont_join(lhs, rhs):
     assert is_cont(lhs), lhs
     assert is_cont(rhs), rhs
     # TODO sort wrt priority
-    return make_cont(CONT_TYPE_JOIN, (lhs, rhs))
+    return _cont_make(CONT_TYPE_JOIN, (lhs, rhs))
 
 
-def make_cont_quote(body):
+def cont_quote(body):
     assert is_cont(body), body
-    return make_cont(CONT_TYPE_QUOTE, body)
+    return _cont_make(CONT_TYPE_QUOTE, body)
 
 
-CONT_BOT = make_cont(CONT_TYPE_BOT, None)
-CONT_TOP = make_cont(CONT_TYPE_TOP, None)
-CONT_IVAR_0 = make_cont_app(IVAR(0), None, 0)
-CONT_TRUE = make_cont_app(IVAR(1), None, 2)
-CONT_FALSE = make_cont_app(IVAR(0), None, 2)
+CONT_BOT = _cont_make(CONT_TYPE_BOT, None)
+CONT_TOP = _cont_make(CONT_TYPE_TOP, None)
+CONT_IVAR_0 = cont_hnf(IVAR(0), None, 0)
+CONT_TRUE = cont_hnf(IVAR(1), None, 2)
+CONT_FALSE = cont_hnf(IVAR(0), None, 2)
 
 
 def cont_iter_join(cont):
