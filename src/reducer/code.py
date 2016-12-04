@@ -43,7 +43,7 @@ def make_keyword(name):
 
 
 _IVAR = make_keyword('IVAR')  # de Bruijn variable.
-_NVAR = make_keyword('NVAR')  # Nonimal variable.
+_NVAR = make_keyword('NVAR')  # Nominal variable.
 _APP = make_keyword('APP')
 _JOIN = make_keyword('JOIN')
 _QUOTE = make_keyword('QUOTE')
