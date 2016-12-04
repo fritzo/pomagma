@@ -42,12 +42,13 @@ def make_keyword(name):
     return name
 
 
-_NVAR = make_keyword('NVAR')  # Nonimal variable.
 _IVAR = make_keyword('IVAR')  # de Bruijn variable.
+_NVAR = make_keyword('NVAR')  # Nonimal variable.
 _APP = make_keyword('APP')
 _JOIN = make_keyword('JOIN')
 _QUOTE = make_keyword('QUOTE')
-_FUN = make_keyword('FUN')
+_ABS = make_keyword('ABS')  # de Bruijn abstraction.
+_FUN = make_keyword('FUN')  # Nominal abstraction.
 _LET = make_keyword('LET')
 _ABIND = make_keyword('ABIND')
 _RVAR = make_keyword('RVAR')  # de Bruijn variable.
@@ -103,6 +104,10 @@ def JOIN(lhs, rhs):
 
 def QUOTE(code):
     return _code(_QUOTE, code)
+
+
+def ABS(body):
+    return _code(_ABS, body)
 
 
 def FUN(var, body):
@@ -169,6 +174,11 @@ def is_quote(code):
     return isinstance(code, tuple) and code[0] is _QUOTE
 
 
+def is_abs(code):
+    assert is_code(code), code
+    return isinstance(code, tuple) and code[0] is _ABS
+
+
 def is_fun(code):
     assert is_code(code), code
     return isinstance(code, tuple) and code[0] is _FUN
@@ -206,6 +216,7 @@ def is_sliceend(code):
 
 @memoize_arg
 def free_vars(code):
+    """Returns set of free nominal variables."""
     assert is_code(code), code
     if is_nvar(code):
         return frozenset([code])
@@ -213,10 +224,12 @@ def free_vars(code):
         return free_vars(code[1]) | free_vars(code[2])
     elif is_quote(code):
         return free_vars(code[1])
+    elif is_abs(code):
+        return free_vars(code[1])
     elif is_fun(code):
         assert is_nvar(code[1])
         return free_vars(code[2]) - frozenset([code[1]])
-    elif is_fun(code):
+    elif is_let(code):
         assert is_nvar(code[1])
         return free_vars(code[3]) - frozenset([code[1]]) | free_vars(code[2])
     elif is_abind(code):
@@ -298,6 +311,7 @@ _PARSERS = {
     _APP: (_polish_parse_tokens, _polish_parse_tokens),
     _JOIN: (_polish_parse_tokens, _polish_parse_tokens),
     _QUOTE: (_polish_parse_tokens,),
+    _ABS: (_polish_parse_tokens,),
     _FUN: (_polish_parse_tokens, _polish_parse_tokens),
     _LET: (_polish_parse_tokens, _polish_parse_tokens, _polish_parse_tokens),
     _ABIND: (_polish_parse_tokens,),
@@ -354,6 +368,9 @@ def to_sexpr(code):
     elif is_quote(head):
         args.append(to_sexpr(head[1]))
         head = _QUOTE
+    elif is_abs(head):
+        args.append(to_sexpr(head[1]))
+        head = _ABS
     elif is_fun(head):
         args.append(to_sexpr(head[2]))
         args.append(to_sexpr(head[1]))
@@ -405,6 +422,10 @@ def from_sexpr(sexpr):
         elif head is _QUOTE:
             code = from_sexpr(sexpr[1])
             head = QUOTE(code)
+            args = sexpr[2:]
+        elif head is _ABS:
+            body = from_sexpr(sexpr[1])
+            head = ABS(body)
             args = sexpr[2:]
         elif head is _FUN:
             var = from_sexpr(sexpr[1])

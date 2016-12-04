@@ -87,6 +87,7 @@ def _cont_make(type_, args):
         lhs, rhs = args
         assert is_cont(lhs), lhs
         assert is_cont(rhs), rhs
+        assert lhs.type is not CONT_TYPE_JOIN, lhs
     elif type_ is CONT_TYPE_QUOTE:
         assert is_cont(args), args
     elif type_ is CONT_TYPE_TOP:
@@ -108,8 +109,13 @@ def cont_hnf(head, stack, bound):
 def cont_join(lhs, rhs):
     assert is_cont(lhs), lhs
     assert is_cont(rhs), rhs
-    # TODO sort wrt priority
-    return _cont_make(CONT_TYPE_JOIN, (lhs, rhs))
+    parts = set(cont for arg in [lhs, rhs] for cont in cont_iter_join(arg))
+    # Sort wrt priority, to reduce cons hashing thrashing.
+    parts = sorted(parts, key=priority, reverse=True)
+    result = parts[0]
+    for part in parts[1:]:
+        result = _cont_make(CONT_TYPE_JOIN, (part, result))
+    return result
 
 
 def cont_quote(body):
@@ -120,6 +126,24 @@ def cont_quote(body):
 CONT_BOT = _cont_make(CONT_TYPE_BOT, None)
 CONT_TOP = _cont_make(CONT_TYPE_TOP, None)
 CONT_IVAR_0 = cont_hnf(IVAR(0), None, 0)
+CONT_IVAR_1 = cont_hnf(IVAR(1), None, 0)
+CONT_I = cont_hnf(IVAR(0), None, 1)
+CONT_K = cont_hnf(IVAR(1), None, 2)
+CONT_B = cont_hnf(
+    IVAR(2),
+    (cont_hnf(IVAR(1), (CONT_IVAR_0, None), 0), None),
+    3,
+)
+CONT_C = cont_hnf(
+    IVAR(2),
+    (CONT_IVAR_0, (CONT_IVAR_1, None)),
+    3,
+)
+CONT_S = cont_hnf(
+    IVAR(2),
+    (CONT_IVAR_0, (cont_hnf(IVAR(1), (CONT_IVAR_0, None), 0), None)),
+    3,
+)
 CONT_TRUE = cont_hnf(IVAR(1), None, 2)
 CONT_FALSE = cont_hnf(IVAR(0), None, 2)
 
@@ -155,6 +179,10 @@ def cont_complexity(cont):
         return 0
     else:
         raise ValueError(cont)
+
+
+def priority(cont):
+    return cont_complexity(cont), cont  # Deterministically break ties.
 
 
 def is_cheap_to_copy(cont):

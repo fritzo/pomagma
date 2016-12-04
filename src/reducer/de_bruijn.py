@@ -246,7 +246,13 @@ def is_head_normal(cont):
 
 
 class PreContinuation(object):
-    """Mutable temporary continuations, not in normal form."""
+    """Mutable temporary continuations, not in normal form.
+
+    Args:
+        head : code
+        stack : stack of continuations
+        bound : nonnegative integer
+    """
 
     __slots__ = 'head', 'stack', 'bound'
 
@@ -876,10 +882,6 @@ def cont_try_compute_step(cont):
         return False, CONT_BOT
     else:
         raise ValueError(cont)
-
-
-def priority(cont):
-    return cont_complexity(cont), cont  # Deterministically break ties.
 
 
 def cont_is_normal(cont):

@@ -57,10 +57,10 @@ from pomagma.reducer.code import (
     CODE, EVAL, QAPP, QQUOTE, EQUAL, LESS,
     TOP, BOT, I, K, B, C, S,
     V, A, UNIT, BOOL, MAYBE, PROD, SUM, NUM,
-    NVAR, IVAR, QUOTE, APP, JOIN, FUN, LET, ABIND, RVAR, SVAR,
-    _NVAR, _IVAR, _JOIN, _QUOTE, _FUN, _LET, _ABIND, _RVAR, _SVAR,
+    NVAR, IVAR, QUOTE, APP, JOIN, ABS, FUN, LET, ABIND, RVAR, SVAR,
+    _NVAR, _IVAR, _JOIN, _QUOTE, _ABS, _FUN, _LET, _ABIND, _RVAR, _SVAR,
     is_abind, is_rvar, is_svar,
-    is_nvar, is_ivar, is_app, is_join, is_quote, is_fun, is_let,
+    is_nvar, is_ivar, is_app, is_join, is_quote, is_abs, is_fun, is_let,
 )
 
 PROTOCOL_VERSION = '0.0.14'  # Semver compliant.
@@ -138,11 +138,11 @@ INT_TO_SYMB = [
     TOP, BOT, I, K, B, C, S,
     CODE, EVAL, QAPP, QQUOTE, EQUAL, LESS,
     V, A, UNIT, BOOL, MAYBE, PROD, SUM, NUM,
-    _NVAR, _IVAR, _JOIN, _QUOTE, _FUN, _LET, _RVAR, _SVAR,
+    _NVAR, _IVAR, _JOIN, _QUOTE, _ABS, _FUN, _LET, _RVAR,
     # Symbols beyond pos 30 require an extra byte.
-    _ABIND,
+    _SVAR, _ABIND,
 ]
-assert len(INT_TO_SYMB) == 31
+assert len(INT_TO_SYMB) == 32
 SYMB_TO_INT = {k: v for v, k in enumerate(INT_TO_SYMB) if k is not RAW_BYTES}
 
 
@@ -186,6 +186,9 @@ def dump(code, f):
     elif is_quote(head):
         args.append(head[1])
         _dump_head_argc(SYMB_TO_INT[_QUOTE], len(args), f)
+    elif is_abs(head):
+        args.append(head[1])
+        _dump_head_argc(SYMB_TO_INT[_ABS], len(args), f)
     elif is_fun(head):
         args.append(head[2])
         args.append(head[1])
@@ -256,6 +259,12 @@ def _load_from(bytes_):
         argc -= 1
         code = _load_from(bytes_)
         head = QUOTE(code)
+    elif head is _ABS:
+        if argc < 1:
+            raise ValueError('ABS requires at least one arg')
+        argc -= 1
+        body = _load_from(bytes_)
+        head = ABS(body)
     elif head is _FUN:
         if argc < 2:
             raise ValueError('FUN requires at least two args')
