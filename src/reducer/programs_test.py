@@ -1,5 +1,5 @@
-from pomagma.reducer import engine
 from pomagma.reducer import lib
+from pomagma.reducer.engines import engine
 from pomagma.reducer.programs import program
 from pomagma.reducer.programs import using_engine
 from pomagma.reducer.sugar import app

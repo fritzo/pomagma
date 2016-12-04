@@ -1,11 +1,11 @@
 from pomagma.compiler.util import memoize_arg
-from pomagma.reducer import engine
 from pomagma.reducer.code import S, is_app, sexpr_print
+from pomagma.reducer.engines import engine
+from pomagma.reducer.engines.trace import lazy_print_trace
+from pomagma.reducer.engines.trace import trace_deterministic
+from pomagma.reducer.engines.trace import trace_nondeterministic
 from pomagma.reducer.testing import iter_equations
 from pomagma.reducer.testing import s_sk_codes, s_skj_codes
-from pomagma.reducer.trace import lazy_print_trace
-from pomagma.reducer.trace import trace_deterministic
-from pomagma.reducer.trace import trace_nondeterministic
 from pomagma.util.testing import for_each, xfail_if_not_implemented
 import hypothesis
 import pytest

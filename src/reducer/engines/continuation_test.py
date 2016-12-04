@@ -1,8 +1,8 @@
-from pomagma.reducer import continuation
 from pomagma.reducer.code import NVAR, TOP, BOT, I, K, B, C, S
 from pomagma.reducer.code import complexity
-from pomagma.reducer.continuation import CONT_SET_TOP, make_cont
-from pomagma.reducer.continuation import cont_set_from_codes
+from pomagma.reducer.engines import continuation
+from pomagma.reducer.engines.continuation import CONT_SET_TOP, make_cont
+from pomagma.reducer.engines.continuation import cont_set_from_codes
 from pomagma.reducer.testing import iter_equations
 from pomagma.reducer.testing import s_codes, s_quoted, s_sk_codes, s_skj_codes
 from pomagma.util.testing import for_each, xfail_if_not_implemented

@@ -3,7 +3,7 @@
 from pomagma.compiler.util import memoize_arg
 from pomagma.compiler.util import memoize_args
 from pomagma.reducer import lib
-from pomagma.reducer.engine import reduce
+from pomagma.reducer.engines.engine import reduce
 from pomagma.reducer.sugar import app
 from pomagma.util import TODO
 import unification

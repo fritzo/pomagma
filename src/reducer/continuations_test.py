@@ -1,8 +1,8 @@
-from pomagma.reducer import de_bruijn
-from pomagma.reducer.continuations import CONT_TOP, CONT_BOT
-from pomagma.reducer.continuations import cont_hnf, IVAR
 from pomagma.reducer.code import APP, JOIN, TOP, BOT, I, K, B, C, S
 from pomagma.reducer.code import complexity
+from pomagma.reducer.continuations import CONT_TOP, CONT_BOT
+from pomagma.reducer.continuations import cont_hnf, IVAR
+from pomagma.reducer.engines import de_bruijn
 from pomagma.reducer.util import list_to_stack
 from pomagma.util.testing import for_each
 

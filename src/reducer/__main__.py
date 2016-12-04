@@ -1,12 +1,12 @@
 from parsable import parsable
-from pomagma.reducer import continuation
-from pomagma.reducer import de_bruijn
-from pomagma.reducer import engine
-from pomagma.reducer import learn
 from pomagma.reducer import lib
 from pomagma.reducer import transforms
 from pomagma.reducer.code import polish_parse, polish_print
 from pomagma.reducer.code import sexpr_parse, sexpr_print
+from pomagma.reducer.engines import continuation
+from pomagma.reducer.engines import de_bruijn
+from pomagma.reducer.engines import engine
+from pomagma.reducer.engines import learn
 from pomagma.reducer.linker import link
 import os
 import pomagma.util
