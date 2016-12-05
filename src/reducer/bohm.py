@@ -16,7 +16,6 @@ from pomagma.reducer.code import (
     is_code, is_nvar, is_ivar, is_app, is_abs, is_join, is_quote,
     complexity,
 )
-from pomagma.util import TODO
 
 
 # ----------------------------------------------------------------------------
@@ -117,7 +116,12 @@ def substitute(body, value, rank):
     elif is_nvar(body):
         return body
     elif is_ivar(body):
-        return value if body[1] == rank else body
+        if body[1] == rank:
+            return value
+        elif body[1] > rank:
+            return IVAR(body[1] - 1)
+        else:
+            return body
     elif is_app(body):
         lhs = body[1]
         rhs = body[2]
@@ -141,28 +145,28 @@ def substitute(body, value, rank):
 
 
 @memoize_args
-def app(fun, key):
+def app(fun, arg):
     """Apply function to argument and linearly reduce."""
     if fun is TOP:
         return fun
     elif fun is BOT:
         return fun
     elif is_nvar(fun):
-        return APP(fun, key)
+        return APP(fun, arg)
     elif is_ivar(fun):
-        return APP(fun, key)
+        return APP(fun, arg)
     elif is_app(fun):
         # TODO try to reduce LESS x y.
-        return APP(fun, key)
+        return APP(fun, arg)
     elif is_abs(fun):
         body = fun[1]
-        return substitute(body, key)
+        return substitute(body, arg, 0)
     elif is_join(fun):
-        lhs = app(fun[1], key)
-        rhs = app(fun[2], key)
+        lhs = app(fun[1], arg)
+        rhs = app(fun[2], arg)
         return join(lhs, rhs)
     elif is_quote(fun):
-        return APP(fun, key)
+        return APP(fun, arg)
     else:
         raise ValueError(fun)
 
@@ -175,7 +179,9 @@ def abstract(body):
     elif body is BOT:
         return body
     elif is_nvar(body):
-        return body
+        return ABS(body)
+    elif is_ivar(body):
+        return ABS(body)
     elif is_join(body):
         lhs = abstract(body[1])
         rhs = abstract(body[2])
@@ -276,63 +282,7 @@ def try_decide_less(lhs, rhs):
     if lhs is TOP and rhs is BOT:
         return False
 
-    # Destructure lhs.
-    TODO()
-
-    # Destructure rhs.
-    TODO()
-
-    # Try incompatible cases.
-    TODO()
-    # if lhs is TOP and is_ivar(rhs_head):
-    #     return False
-    # if is_ivar(lhs_head) and rhs is BOT:
-    #     return False
-
-    # Eta expand until binder counts agree.
-    # for _ in xrange(rhs_bound - lhs_bound):
-    #     lhs_head = code_increment_ivars(lhs_head, 0)
-    #     lhs_stack = stack_increment_ivars(lhs_stack, 0)
-    # for _ in xrange(lhs_bound - rhs_bound):
-    #     rhs_head = code_increment_ivars(rhs_head, 0)
-    #     rhs_stack = stack_increment_ivars(rhs_stack, 0)
-
-    # # Check for unknowns.
-    # if is_nvar(lhs_head) or is_nvar(rhs_head):
-    #     if lhs_head is rhs_head:
-    #         return stack_try_decide_less(lhs_stack, rhs_stack)
-    #     return None
-
-    # # Try comparing stacks.
-    # assert is_ivar(lhs_head) or lhs_head in INERT_ATOMS, lhs_head
-    # assert is_ivar(rhs_head) or rhs_head in INERT_ATOMS, rhs_head
-    # if is_ivar(lhs_head) and is_ivar(rhs_head):
-    #     if lhs_head is not rhs_head:
-    #         return False
-    #     return stack_try_decide_less(lhs_stack, rhs_stack)
-
-    # # Try approximating S.
-    # assert lhs_head is S or rhs_head is S
-    # if lhs_head is S and rhs_head is S:
-    #     # Try to compare assuming lhs and rhs align.
-    #     if stack_try_decide_less(lhs_stack, rhs_stack) is True:
-    #         return True
-    # if lhs_head is S:
-    #     # Try to approximate lhs.
-    #     for lhs_ub in iter_head_upper_bounds(lhs):
-    #         if cont_try_decide_less(lhs_ub, rhs) is True:
-    #             return True
-    #     for lhs_lb in iter_head_lower_bounds(lhs):
-    #         if cont_try_decide_less(lhs_lb, rhs) is False:
-    #             return False
-    # if rhs_head is S:
-    #     # Try to approximate rhs.
-    #     for rhs_lb in iter_head_lower_bounds(rhs):
-    #         if cont_try_decide_less(lhs, rhs_lb) is True:
-    #             return True
-    #     for rhs_ub in iter_head_upper_bounds(rhs):
-    #         if cont_try_decide_less(lhs, rhs_ub) is False:
-    #             return False
+    # TODO Try harder.
 
     # Give up.
     return None
@@ -347,7 +297,13 @@ def priority(code):
 
 @memoize_arg
 def is_normal(code):
-    if is_ivar(code) or is_nvar(code):
+    if code is TOP:
+        return True
+    elif code is BOT:
+        return True
+    elif is_nvar(code):
+        return True
+    elif is_ivar(code):
         return True
     elif is_abs(code):
         return is_normal(code[1])

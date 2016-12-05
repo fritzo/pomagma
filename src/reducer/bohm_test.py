@@ -1,9 +1,11 @@
 from pomagma.reducer.bohm import increment_rank, decrement_rank, is_const
+from pomagma.reducer.bohm import app, abstract
 from pomagma.reducer.code import TOP, BOT, NVAR, IVAR, APP, ABS, JOIN, QUOTE
-from pomagma.util.testing import for_each
+from pomagma.util.testing import for_each, xfail_if_not_implemented
 
 x = NVAR('x')
 y = NVAR('y')
+z = NVAR('z')
 
 
 @for_each([
@@ -72,3 +74,52 @@ def test_decrement_rank(code, expected):
 ])
 def test_is_const(code, expected):
     assert is_const(code) is expected
+
+
+@for_each([
+    (TOP, TOP, TOP),
+    (TOP, BOT, TOP),
+    (TOP, x, TOP),
+    (BOT, TOP, BOT),
+    (BOT, BOT, BOT),
+    (BOT, x, BOT),
+    (x, TOP, APP(x, TOP)),
+    (x, BOT, APP(x, BOT)),
+    (x, x, APP(x, x)),
+    (IVAR(0), TOP, APP(IVAR(0), TOP)),
+    (IVAR(0), BOT, APP(IVAR(0), BOT)),
+    (IVAR(0), x, APP(IVAR(0), x)),
+    (ABS(IVAR(1)), TOP, IVAR(0)),
+    (ABS(IVAR(1)), BOT, IVAR(0)),
+    (ABS(IVAR(1)), x, IVAR(0)),
+    (ABS(IVAR(0)), TOP, TOP),
+    (ABS(IVAR(0)), BOT, BOT),
+    (ABS(IVAR(0)), x, x),
+    (ABS(APP(IVAR(0), y)), TOP, TOP),
+    (ABS(APP(IVAR(0), y)), BOT, BOT),
+    (ABS(APP(IVAR(0), y)), x, APP(x, y)),
+    (ABS(APP(IVAR(0), IVAR(1))), x, APP(x, IVAR(0))),
+    (JOIN(x, y), z, JOIN(APP(x, z), APP(y, z))),
+    (JOIN(ABS(IVAR(0)), x), TOP, TOP),
+    (JOIN(ABS(IVAR(0)), x), BOT, APP(x, BOT)),
+])
+def test_app(fun, arg, expected):
+    with xfail_if_not_implemented():
+        assert app(fun, arg) is expected
+
+
+@for_each([
+    (TOP, TOP),
+    (BOT, BOT),
+    (x, ABS(x)),
+    (IVAR(0), ABS(IVAR(0))),
+    (IVAR(1), ABS(IVAR(1))),
+    (APP(IVAR(0), x), ABS(APP(IVAR(0), x))),
+    (APP(IVAR(0), IVAR(0)), ABS(APP(IVAR(0), IVAR(0)))),
+    (APP(x, IVAR(0)), x),
+    (JOIN(IVAR(0), x), JOIN(ABS(IVAR(0)), ABS(x))),
+    (QUOTE(IVAR(0)), ABS(QUOTE(IVAR(0)))),
+    (APP(QUOTE(IVAR(0)), IVAR(0)), QUOTE(IVAR(0))),
+])
+def test_abstract(code, expected):
+    assert abstract(code) is expected
