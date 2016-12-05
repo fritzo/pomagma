@@ -12,8 +12,8 @@ CHANGELOG
 
 from pomagma.compiler.util import memoize_arg, memoize_args
 from pomagma.reducer.code import (
-    TOP, BOT, IVAR, APP, JOIN, ABS, QUOTE,
-    is_code, is_atom, is_nvar, is_ivar, is_app, is_abs, is_join, is_quote,
+    TOP, BOT, IVAR, APP, ABS, JOIN, QUOTE,
+    is_code, is_nvar, is_ivar, is_app, is_abs, is_join, is_quote,
     complexity,
 )
 from pomagma.util import TODO
@@ -24,13 +24,17 @@ from pomagma.util import TODO
 
 @memoize_args
 def increment_rank(code, min_rank):
-    if is_nvar(code) or is_atom(code) or is_quote(code):
+    if code is TOP:
+        return code
+    elif code is BOT:
+        return code
+    elif is_nvar(code):
         return code
     elif is_ivar(code):
         rank = code[1]
         return IVAR(rank + 1) if rank >= min_rank else code
     elif is_abs(code):
-        return ABS(increment_rank(code, min_rank + 1))
+        return ABS(increment_rank(code[1], min_rank + 1))
     elif is_app(code):
         lhs = increment_rank(code[1], min_rank)
         rhs = increment_rank(code[2], min_rank)
@@ -39,55 +43,81 @@ def increment_rank(code, min_rank):
         lhs = increment_rank(code[1], min_rank)
         rhs = increment_rank(code[2], min_rank)
         return JOIN(lhs, rhs)
+    elif is_quote(code):
+        return code
     else:
         raise ValueError(code)
+
+
+class CannotDecrementRank(Exception):
+    pass
 
 
 @memoize_args
-def try_decrement_rank(code, min_rank):
-    if is_nvar(code) or is_atom(code) or is_quote(code):
+def _try_decrement_rank(code, min_rank):
+    if code is TOP:
+        return code
+    elif code is BOT:
+        return code
+    elif is_nvar(code) or is_quote(code):
         return code
     elif is_ivar(code):
         rank = code[1]
-        if rank == 0:
-            return None
+        if rank < min_rank:
+            return code
+        elif rank == min_rank:
+            raise CannotDecrementRank
         return IVAR(rank - 1)
-    elif is_abs(code):
-        return ABS(decrement_rank(code, min_rank + 1))
     elif is_app(code):
-        lhs = decrement_rank(code[1], min_rank)
-        rhs = decrement_rank(code[2], min_rank)
+        lhs = _try_decrement_rank(code[1], min_rank)
+        rhs = _try_decrement_rank(code[2], min_rank)
         return APP(lhs, rhs)
+    elif is_abs(code):
+        return ABS(_try_decrement_rank(code[1], min_rank + 1))
     elif is_join(code):
-        lhs = decrement_rank(code[1], min_rank)
-        rhs = decrement_rank(code[2], min_rank)
+        lhs = _try_decrement_rank(code[1], min_rank)
+        rhs = _try_decrement_rank(code[2], min_rank)
         return JOIN(lhs, rhs)
     else:
         raise ValueError(code)
 
 
-def decrement_rank(code, min_rank):
-    result = try_decrement_rank(code, min_rank)
-    if result is None:
+def decrement_rank(code):
+    try:
+        return _try_decrement_rank(code, 0)
+    except CannotDecrementRank:
         raise ValueError(code)
-    return result
 
 
 def is_const(code, rank=0):
-    return try_decrement_rank(code, rank) is None
+    try:
+        _try_decrement_rank(code, rank)
+    except CannotDecrementRank:
+        return False
+    return True
 
 
 def is_cheap_to_copy(code):
-    return complexity(code) <= 6  # 6 = complexity(S)
+    """Guard to prevent nontermination.
+
+    This accounts for the worst case of complexity 3:
+
+        ABS(APP(IVAR(0), IVAR(0)))
+    """
+    return complexity(code) <= 3
 
 
 @memoize_args
 def substitute(body, value, rank):
     """Linearly substitute value for IVAR(rank) in body."""
-    if is_ivar(body):
-        return value if body[1] == rank else body
-    elif is_atom(body) or is_nvar(body) or is_quote(body):
+    if body is TOP:
         return body
+    elif body is BOT:
+        return body
+    elif is_nvar(body):
+        return body
+    elif is_ivar(body):
+        return value if body[1] == rank else body
     elif is_app(body):
         lhs = body[1]
         rhs = body[2]
@@ -104,6 +134,8 @@ def substitute(body, value, rank):
         lhs = substitute(body[1], value, rank)
         rhs = substitute(body[2], value, rank)
         return join(lhs, rhs)
+    elif is_quote(body):
+        return body
     else:
         raise ValueError(body)
 
@@ -111,20 +143,26 @@ def substitute(body, value, rank):
 @memoize_args
 def app(fun, key):
     """Apply function to argument and linearly reduce."""
-    if fun is TOP or fun is BOT:
+    if fun is TOP:
         return fun
-    elif is_nvar(fun) or is_ivar(fun) or is_quote(fun):
+    elif fun is BOT:
+        return fun
+    elif is_nvar(fun):
+        return APP(fun, key)
+    elif is_ivar(fun):
         return APP(fun, key)
     elif is_app(fun):
         # TODO try to reduce LESS x y.
         return APP(fun, key)
+    elif is_abs(fun):
+        body = fun[1]
+        return substitute(body, key)
     elif is_join(fun):
         lhs = app(fun[1], key)
         rhs = app(fun[2], key)
         return join(lhs, rhs)
-    elif is_abs(fun):
-        body = fun[1]
-        return substitute(body, key)
+    elif is_quote(fun):
+        return APP(fun, key)
     else:
         raise ValueError(fun)
 
@@ -132,7 +170,11 @@ def app(fun, key):
 @memoize_args
 def abstract(body):
     """Abstract one de Bruijn var and eta-contract."""
-    if body is TOP or body is BOT:
+    if body is TOP:
+        return body
+    elif body is BOT:
+        return body
+    elif is_nvar(body):
         return body
     elif is_join(body):
         lhs = abstract(body[1])
@@ -196,7 +238,7 @@ def dominates(lhs, rhs):
 
 @memoize_args
 def try_decide_less(lhs, rhs):
-    """Weak decision oracle for Scott ordering.
+    """Weak decision oracle for Scott ordering among codes.
 
             | TOP   IVAR   NVAR   APP-ABS
     --------+---------------------------
