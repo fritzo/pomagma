@@ -1,5 +1,5 @@
 from pomagma.reducer.bohm import increment_rank, decrement_rank, is_const
-from pomagma.reducer.bohm import app, abstract
+from pomagma.reducer.bohm import substitute, app, abstract, join
 from pomagma.reducer.code import TOP, BOT, NVAR, IVAR, APP, ABS, JOIN, QUOTE
 from pomagma.util.testing import for_each, xfail_if_not_implemented
 
@@ -77,6 +77,23 @@ def test_is_const(code, expected):
 
 
 @for_each([
+    (TOP, BOT, TOP),
+    (BOT, TOP, BOT),
+    (x, TOP, x),
+    (IVAR(0), x, x),
+    (IVAR(1), x, IVAR(0)),
+    (IVAR(2), x, IVAR(1)),
+    (APP(IVAR(0), IVAR(1)), x, APP(x, IVAR(0))),
+    (ABS(IVAR(0)), x, ABS(IVAR(0))),
+    (ABS(IVAR(1)), x, ABS(x)),
+    (ABS(IVAR(2)), x, ABS(IVAR(1))),
+    (JOIN(IVAR(0), IVAR(1)), x, JOIN(IVAR(0), x)),
+])
+def test_substitute(body, value, expected):
+    assert substitute(body, value, 0) is expected
+
+
+@for_each([
     (TOP, TOP, TOP),
     (TOP, BOT, TOP),
     (TOP, x, TOP),
@@ -123,3 +140,29 @@ def test_app(fun, arg, expected):
 ])
 def test_abstract(code, expected):
     assert abstract(code) is expected
+
+
+@for_each([
+    (TOP, TOP, TOP),
+    (TOP, BOT, TOP),
+    (TOP, x, TOP),
+    (TOP, IVAR(0), TOP),
+    (BOT, TOP, TOP),
+    (BOT, BOT, BOT),
+    (BOT, x, x),
+    (BOT, IVAR(0), IVAR(0)),
+    (x, TOP, TOP),
+    (x, BOT, x),
+    (IVAR(0), TOP, TOP),
+    (IVAR(0), BOT, IVAR(0)),
+    (IVAR(0), IVAR(0), IVAR(0)),
+    (x, y, JOIN(x, y)),
+    (JOIN(x, y), x, JOIN(x, y)),
+    (JOIN(x, y), y, JOIN(x, y)),
+    (JOIN(x, y), z, JOIN(x, JOIN(y, z))),
+    (JOIN(x, z), y, JOIN(x, JOIN(y, z))),
+    (JOIN(y, z), x, JOIN(x, JOIN(y, z))),
+    (JOIN(x, z), JOIN(x, y), JOIN(x, JOIN(y, z))),
+])
+def test_join(lhs, rhs, expected):
+    assert join(lhs, rhs) is expected

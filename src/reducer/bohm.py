@@ -108,7 +108,10 @@ def is_cheap_to_copy(code):
 
 @memoize_args
 def substitute(body, value, rank):
-    """Linearly substitute value for IVAR(rank) in body."""
+    """Substitute value for IVAR(rank) in body, decremeting higher IVARs.
+
+    This is linear-eager, and will be lazy about nonlinear substitutions.
+    """
     if body is TOP:
         return body
     elif body is BOT:
@@ -127,13 +130,16 @@ def substitute(body, value, rank):
         rhs = body[2]
         if (is_cheap_to_copy(value) or is_const(lhs, rank) or
                 is_const(rhs, rank)):
+            # Linear, eager.
             lhs = substitute(lhs, value, rank)
             rhs = substitute(rhs, value, rank)
             return app(lhs, rhs)
         else:
+            # Nonlinear, lazy.
             return APP(ABS(body), value)
     elif is_abs(body):
-        return abstract(substitute(body, increment_rank(value, 0), rank + 1))
+        body = substitute(body[1], increment_rank(value, 0), rank + 1)
+        return abstract(body)
     elif is_join(body):
         lhs = substitute(body[1], value, rank)
         rhs = substitute(body[2], value, rank)
