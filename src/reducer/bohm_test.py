@@ -1,5 +1,6 @@
 from pomagma.reducer.bohm import increment_rank, decrement_rank, is_const
 from pomagma.reducer.bohm import substitute, app, abstract, join
+from pomagma.reducer.bohm import try_decide_less, is_normal, try_compute_step
 from pomagma.reducer.code import TOP, BOT, NVAR, IVAR, APP, ABS, JOIN, QUOTE
 from pomagma.util.testing import for_each, xfail_if_not_implemented
 
@@ -7,6 +8,9 @@ x = NVAR('x')
 y = NVAR('y')
 z = NVAR('z')
 
+
+# ----------------------------------------------------------------------------
+# Functional programming
 
 @for_each([
     (TOP, 0, TOP),
@@ -142,6 +146,9 @@ def test_abstract(code, expected):
     assert abstract(code) is expected
 
 
+# ----------------------------------------------------------------------------
+# Scott ordering
+
 @for_each([
     (TOP, TOP, TOP),
     (TOP, BOT, TOP),
@@ -166,3 +173,44 @@ def test_abstract(code, expected):
 ])
 def test_join(lhs, rhs, expected):
     assert join(lhs, rhs) is expected
+
+
+@for_each([
+    (TOP, TOP, True),
+    (TOP, BOT, False),
+    (BOT, TOP, True),
+    (BOT, BOT, True),
+    (IVAR(0), IVAR(0), True),
+    (IVAR(0), TOP, True),
+    (IVAR(0), BOT, False),
+    (TOP, IVAR(0), False),
+    (BOT, IVAR(0), True),
+    (IVAR(0), IVAR(1), False),
+    (IVAR(1), IVAR(0), False),
+])
+def test_try_decide_less(lhs, rhs, expected):
+    assert try_decide_less(lhs, rhs) is expected
+
+
+# ----------------------------------------------------------------------------
+# Computation
+
+COMPUTE_EXAMPLES = [
+    (TOP, None),
+    (BOT, None),
+    (IVAR(0), None),
+    (IVAR(1), None),
+    (IVAR(2), None),
+]
+
+
+@for_each(COMPUTE_EXAMPLES)
+def test_is_normal(code, expected_try_compute_step):
+    expected = (expected_try_compute_step is None)
+    assert is_normal(code) is expected
+
+
+@for_each(COMPUTE_EXAMPLES)
+def test_try_compute_step(code, expected):
+    with xfail_if_not_implemented():
+        assert try_compute_step(code) is expected

@@ -248,6 +248,7 @@ def dominates(lhs, rhs):
     return rhs_lhs is True and (lhs_rhs is False or lhs < rhs)
 
 
+# TODO move this to oracle.py.
 @memoize_args
 def try_decide_less(lhs, rhs):
     """Weak decision oracle for Scott ordering among codes.
@@ -288,6 +289,28 @@ def try_decide_less(lhs, rhs):
     if lhs is TOP and rhs is BOT:
         return False
 
+    # Distinguish variables.
+    if is_ivar(lhs):
+        if rhs is BOT:
+            return False
+        if is_ivar(rhs):
+            return lhs is rhs
+        if is_nvar(rhs):
+            return False
+    elif is_ivar(rhs):
+        if lhs is TOP:
+            return False
+        if is_nvar(lhs):
+            return False
+    if is_nvar(lhs):
+        if rhs is BOT:
+            return False
+        if is_nvar(rhs):
+            return lhs is rhs
+    elif is_nvar(rhs):
+        if lhs is TOP:
+            return False
+
     # TODO Try harder.
 
     # Give up.
@@ -303,6 +326,7 @@ def priority(code):
 
 @memoize_arg
 def is_normal(code):
+    """Returns whether code is in linear normal form."""
     if code is TOP:
         return True
     elif code is BOT:
@@ -325,9 +349,13 @@ def is_normal(code):
         raise ValueError(code)
 
 
+class UnreachableError(RuntimeError):
+    pass
+
+
 @memoize_arg
 def try_compute_step(code):
-    if not is_normal(code):
+    if is_normal(code):
         return None
     if is_app(code):
         fun = code[1]
@@ -345,7 +373,7 @@ def try_compute_step(code):
             result = try_compute_step(arg)
             if result is not None:
                 return app(fun, result)
-            raise RuntimeError(code)
+            raise UnreachableError(code)
     elif is_join(code):
         lhs = code[1]
         rhs = code[2]
@@ -355,16 +383,16 @@ def try_compute_step(code):
         result = try_compute_step(rhs)
         if result is not None:
             return join(lhs, result)
-        raise RuntimeError(code)
+        raise UnreachableError(code)
     elif is_abs(code):
         result = try_compute_step(code[1])
         if result is not None:
-            return ABS(result)
-        raise RuntimeError(code)
+            return abstract(result)
+        raise UnreachableError(code)
     elif is_quote(code):
         result = try_compute_step(code[1])
         if result is not None:
             return QUOTE(result)
-        raise RuntimeError(code)
+        raise UnreachableError(code)
     else:
         raise ValueError(code)
