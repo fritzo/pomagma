@@ -1,5 +1,29 @@
-from pomagma.reducer.util import trool_all, trool_any
+from pomagma.reducer.util import trool_fuse, trool_all, trool_any
 from pomagma.util.testing import for_each
+import pytest
+
+
+@for_each([
+    (None, []),
+    (True, [True]),
+    (None, [None]),
+    (False, [False]),
+    (True, [True, True]),
+    (True, [True, None]),
+    (ValueError, [True, False]),
+    (True, [None, True]),
+    (False, [None, False]),
+    (None, [None, None]),
+    (ValueError, [False, True]),
+    (False, [False, None]),
+    (False, [False, False]),
+])
+def test_trool_fuse(expected, values):
+    if expected in [None, True, False]:
+        assert trool_fuse(values) is expected
+    else:
+        with pytest.raises(expected):
+            trool_fuse(values)
 
 
 @for_each([
@@ -18,7 +42,7 @@ from pomagma.util.testing import for_each
     (False, [False, False]),
 ])
 def test_trool_all(expected, values):
-    assert trool_all(values) == expected
+    assert trool_all(values) is expected
 
 
 @for_each([
@@ -37,4 +61,4 @@ def test_trool_all(expected, values):
     (False, [False, False]),
 ])
 def test_trool_any(expected, values):
-    assert trool_any(values) == expected
+    assert trool_any(values) is expected

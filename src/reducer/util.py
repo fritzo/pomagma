@@ -9,7 +9,34 @@ import pomagma.util
 import sys
 
 
+def trool_fuse(args):
+    """Combine according to:
+
+          | None  True  False
+    ------+------------------
+     None | None  True  False
+     True | True  True  error
+    False | False error False
+    """
+    result = None
+    for arg in args:
+        if arg is not None:
+            if result is None:
+                result = arg
+            elif result is not arg:
+                raise ValueError('Incompatible: {} vs {}'.format(result, arg))
+    return result
+
+
 def trool_all(args):
+    """Combine according to:
+
+          | None  True  False
+    ------+------------------
+     None | None  None  False
+     True | None  True  False
+    False | False False False
+    """
     result = True
     for arg in args:
         if arg is False:
@@ -20,6 +47,14 @@ def trool_all(args):
 
 
 def trool_any(args):
+    """Combine according to:
+
+          | None  True  False
+    ------+------------------
+     None | None  True  None
+     True | True  True  True
+    False | None  True  False
+    """
     result = False
     for arg in args:
         if arg is True:
