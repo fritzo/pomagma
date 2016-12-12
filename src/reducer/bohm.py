@@ -8,6 +8,7 @@ try_decide_less in engines.continuation.
 
 CHANGELOG
 2016-12-04 Initial prototype.
+2016-12-11 Use linearizing approximations in order decision procedures.
 """
 
 from pomagma.compiler.util import memoize_arg, memoize_args
@@ -58,7 +59,7 @@ def _try_decrement_rank(code, min_rank):
         return code
     elif code is BOT:
         return code
-    elif is_nvar(code) or is_quote(code):
+    elif is_nvar(code):
         return code
     elif is_ivar(code):
         rank = code[1]
@@ -77,6 +78,8 @@ def _try_decrement_rank(code, min_rank):
         lhs = _try_decrement_rank(code[1], min_rank)
         rhs = _try_decrement_rank(code[2], min_rank)
         return JOIN(lhs, rhs)
+    elif is_quote(code):
+        return code
     else:
         raise ValueError(code)
 
@@ -179,7 +182,7 @@ def app(fun, arg):
 
 @memoize_args
 def abstract(body):
-    """Abstract one de Bruijn var and eta-contract."""
+    """Abstract one de Bruijn var and simplify."""
     if body is TOP:
         return body
     elif body is BOT:
@@ -192,17 +195,23 @@ def abstract(body):
         lhs = abstract(body[1])
         rhs = abstract(body[2])
         return join(lhs, rhs)
-    elif is_app(body) and body[2] is IVAR(0) and is_const(body[1]):
-        # Eta contract.
-        return decrement_rank(body[1])
-    else:
+    elif is_app(body):
+        if body[2] is IVAR(0) and is_const(body[1]):
+            # Eta contract.
+            return decrement_rank(body[1])
+        else:
+            return ABS(body)
+    elif is_quote(body):
         return ABS(body)
+    else:
+        raise ValueError(body)
 
 
 # ----------------------------------------------------------------------------
 # Scott ordering
 
 def iter_join(code):
+    """Destructs JOIN and BOT terms."""
     if is_join(code):
         for term in iter_join(code[1]):
             yield term
@@ -228,6 +237,7 @@ def join(lhs, rhs):
         return next(iter(codes))
 
     # Filter out strictly dominated codes.
+    # TODO what do do about equivalence classes?
     filtered_codes = [
         code for code in codes
         if not any(dominates(ub, code) for ub in codes if ub is not code)
@@ -242,44 +252,114 @@ def join(lhs, rhs):
 
 
 def dominates(lhs, rhs):
-    """Strict domination relation."""
-    lhs_rhs = try_decide_less(lhs, rhs)
-    rhs_lhs = try_decide_less(rhs, lhs)
-    return rhs_lhs is True and (lhs_rhs is False or lhs < rhs)
+    """Strict domination relation: lhs =] rhs and lhs [!= rhs.
 
-
-# TODO move this to oracle.py.
-@memoize_args
-def try_decide_less(lhs, rhs):
-    """Weak decision oracle for Scott ordering among codes.
-
-            | TOP   IVAR   NVAR   APP-ABS
-    --------+---------------------------
-        TOP | True  False  None   approx
-       IVAR | True  delta  False  approx
-       NVAR | True  False  ...    approx
-    APP-ABS | True  approx approx approx
-
-    Theorem: (soundness)
-      - If try_decide_less(lhs, rhs) = True, then lhs [= rhs.
-      - If try_decide_less(lhs, rhs) = False, then lhs [!= rhs.
-    Theorem: (linear completeness)
-      - If lhs [= rhs and both are linear,
-        then try_decide_less(lhs, rhs) = True.
-      - If lhs [!= rhs and both are linear,
-        then try_decide_less(lhs, rhs) = False.
-    Desired Theorem: (strong linear completeness)
-      - If lhs [= u [= v [= rhs for some linear u, v,
-        then try_decide_less(lhs, rhs) = True.
-      - If rhs [= u [!= v [= lhs for some linear u, v,
-        then try_decide_less(lhs, rhs) = False.
-
-    Args:
-        lhs, rhs : code
-    Returns:
-        True, False, or None
-
+    TODO If lhs [=] rhs, allow lhs > rhs wrt arbitrary order, eg priority.
     """
+    return try_prove_less(rhs, lhs) and try_prove_nless(lhs, rhs)
+
+
+@memoize_args
+def try_prove_less(lhs, rhs):
+    """Weak proof procedure returning True or False."""
+    return any(
+        try_prove_less_linear(above_lhs, below_rhs)
+        for above_lhs in approximate(lhs, TOP)
+        for below_rhs in approximate(rhs, BOT)
+    )
+
+
+@memoize_args
+def try_prove_nless(lhs, rhs):
+    """Weak proof procedure returning True or False."""
+    return any(
+        try_prove_nless_linear(below_lhs, above_rhs)
+        for below_lhs in approximate(lhs, BOT)
+        for above_rhs in approximate(rhs, TOP)
+    )
+
+
+@memoize_args
+def occurs(code, rank):
+    if code is TOP or code is BOT or is_nvar(code):
+        return False
+    elif is_ivar(code):
+        return code[1] == rank
+    elif is_app(code):
+        return occurs(code[1], rank) or occurs(code[2], rank)
+    elif is_abs(code):
+        return occurs(code[1], rank + 1)
+    elif is_join(code):
+        return occurs(code[1], rank) or occurs(code[2], rank)
+    elif is_quote(code):
+        return False
+    else:
+        raise ValueError(code)
+
+
+@memoize_args
+def approximate_var(code, direction, rank):
+    """Locally approximate wrt one variable."""
+    assert is_code(code), code
+    assert direction is TOP or direction is BOT, direction
+    assert isinstance(rank, int) and rank >= 0, rank
+    result = set()
+    if not occurs(code, rank):
+        result.add(code)
+    elif is_ivar(code):
+        assert code[1] == rank, code
+        result.add(code)
+        result.add(direction)
+    elif is_app(code):
+        for lhs in approximate_var(code[1], direction, rank):
+            for rhs in approximate_var(code[2], direction, rank):
+                result.add(app(lhs, rhs))
+    elif is_abs(code):
+        for body in approximate_var(code[1], direction, rank + 1):
+            result.add(abstract(body))
+    elif is_join(code):
+        for lhs in approximate_var(code[1], direction, rank):
+            for rhs in approximate_var(code[2], direction, rank):
+                result.add(join(lhs, rhs))
+    else:
+        raise ValueError(code)
+    return tuple(sorted(result, key=complexity))
+
+
+@memoize_args
+def approximate(code, direction):
+    result = set()
+    if code is TOP or code is BOT or is_ivar(code) or is_nvar(code):
+        result.add(code)
+    elif is_app(code):
+        if is_abs(code[1]):
+            for fun_body in approximate_var(code[1][1], direction, 0):
+                for lhs in approximate(abstract(fun_body), direction):
+                    for rhs in approximate(code[2], direction):
+                        result.add(app(lhs, rhs))
+        else:
+            for lhs in approximate(code[1], direction):
+                for rhs in approximate(code[2], direction):
+                    result.add(app(lhs, rhs))
+    elif is_abs(code):
+        for body in approximate(code[1]):
+            result.add(abstract(body))
+    elif is_join(code):
+        for lhs in approximate(code[1], direction):
+            for rhs in approximate(code[2], direction):
+                result.add(join(lhs, rhs))
+    elif is_quote(code):
+        # QUOTE flattens nonlearities, so only TOP or BOT can approximate.
+        result.add(code)
+        result.add(direction)
+    else:
+        raise ValueError(code)
+    return tuple(sorted(result, key=complexity))
+
+
+@memoize_args
+def try_prove_less_linear(lhs, rhs):
+    """Weak semidecision procedure to prove LESS lhs rhs."""
     assert is_code(lhs), lhs
     assert is_code(rhs), rhs
 
@@ -288,6 +368,12 @@ def try_decide_less(lhs, rhs):
         return True
     if lhs is TOP and rhs is BOT:
         return False
+
+    # Decompose joins.
+    if is_join(lhs):
+        return all(try_prove_less_linear(i, rhs) for i in iter_join(lhs))
+    if is_join(rhs):
+        return any(try_prove_less_linear(lhs, i) for i in iter_join(rhs))
 
     # Distinguish variables.
     if is_ivar(lhs):
@@ -314,6 +400,62 @@ def try_decide_less(lhs, rhs):
     # TODO Try harder.
 
     # Give up.
+    return False
+
+
+@memoize_args
+def try_prove_nless_linear(lhs, rhs):
+    """Weak semidecision procedure to prove NLESS lhs rhs."""
+    assert is_code(lhs), lhs
+    assert is_code(rhs), rhs
+
+    # Try simple cases.
+    if lhs is BOT or lhs is rhs or rhs is TOP:
+        return False
+    if lhs is TOP and rhs is BOT:
+        return True
+
+    # Decompose joins.
+    if is_join(lhs):
+        return any(try_prove_nless_linear(i, rhs) for i in iter_join(lhs))
+    if is_join(rhs):
+        # TODO Try harder:
+        # return all(try_prove_nless_linear(lhs, i) for i in iter_join(rhs))
+        return False
+
+    # Distinguish variables.
+    if is_ivar(lhs):
+        if rhs is BOT:
+            return True
+        if is_ivar(rhs):
+            return lhs is not rhs
+        if is_nvar(rhs):
+            return False
+    elif is_ivar(rhs):
+        if lhs is TOP:
+            return True
+        if is_nvar(lhs):
+            return True
+    if is_nvar(lhs):
+        if rhs is BOT:
+            return True
+        if is_nvar(rhs):
+            return lhs is not rhs
+    elif is_nvar(rhs):
+        if lhs is TOP:
+            return True
+
+    # TODO Try harder.
+
+    # Give up.
+    return False
+
+
+def try_decide_less(lhs, rhs):
+    if try_prove_less(lhs, rhs):
+        return True
+    if try_prove_nless(lhs, rhs):
+        return False
     return None
 
 
