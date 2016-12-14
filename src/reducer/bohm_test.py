@@ -370,12 +370,17 @@ def test_try_decide_less(lhs, rhs, expected):
 # ----------------------------------------------------------------------------
 # Computation
 
+delta = ABS(APP(IVAR(0), IVAR(0)))
+
 COMPUTE_EXAMPLES = [
     (TOP, None),
     (BOT, None),
     (IVAR(0), None),
     (IVAR(1), None),
     (IVAR(2), None),
+    (delta, None),
+    (APP(delta, delta), APP(delta, delta)),
+    (APP(delta, APP(x, delta)), APP(APP(x, delta), APP(x, delta))),
 ]
 
 

@@ -9,6 +9,7 @@ try_decide_less in engines.continuation.
 CHANGELOG
 2016-12-04 Initial prototype.
 2016-12-11 Use linearizing approximations in order decision procedures.
+
 """
 
 from pomagma.compiler.util import memoize_arg, memoize_args
@@ -153,21 +154,25 @@ def is_cheap_to_copy(code):
     """Guard to prevent nontermination.
 
     Theorem: If is_cheap_to_copy(-) is guards copies during beta steps,
-      then the guarded reduction relation is terminating.
-    Proof: Rank terms by the number ABS subterms that copy variables.
-      Linear reduction is terminating, and each nonlinear beta step strictly
-      reduces rank. Hence there are finitely many linear reduction sequences.
-      []
+    then the guarded reduction relation is terminating. Proof: Rank
+    terms by the number ABS subterms that copy variables.   Linear
+    reduction is terminating, and each nonlinear beta step strictly
+    reduces rank. Hence there are finitely many linear reduction
+    sequences.   []
+
     """
     return is_linear(code)
 
 
 @memoize_args
-def substitute(body, value, rank):
+def substitute(body, value, rank, budget):
     """Substitute value for IVAR(rank) in body, decremeting higher IVARs.
 
-    This is linear-eager, and will be lazy about nonlinear substitutions.
+    This is linear-eager, and will be lazy about nonlinear
+    substitutions.
+
     """
+    assert budget in (True, False), budget
     if body is TOP:
         return body
     elif body is BOT:
@@ -184,21 +189,24 @@ def substitute(body, value, rank):
     elif is_app(body):
         lhs = body[1]
         rhs = body[2]
-        if (is_cheap_to_copy(value) or is_const(lhs, rank) or
-                is_const(rhs, rank)):
-            # Linear, eager.
-            lhs = substitute(lhs, value, rank)
-            rhs = substitute(rhs, value, rank)
+        linear = (is_cheap_to_copy(value) or is_const(lhs, rank) or
+                  is_const(rhs, rank))
+        if linear or budget:
+            # Eager substitution.
+            if not linear:
+                budget = False
+            lhs = substitute(lhs, value, rank, budget)
+            rhs = substitute(rhs, value, rank, budget)
             return app(lhs, rhs)
         else:
-            # Nonlinear, lazy.
+            # Lazy substitution.
             return APP(ABS(body), value)
     elif is_abs(body):
-        body = substitute(body[1], increment_rank(value, 0), rank + 1)
+        body = substitute(body[1], increment_rank(value, 0), rank + 1, budget)
         return abstract(body)
     elif is_join(body):
-        lhs = substitute(body[1], value, rank)
-        rhs = substitute(body[2], value, rank)
+        lhs = substitute(body[1], value, rank, budget)
+        rhs = substitute(body[2], value, rank, budget)
         return join(lhs, rhs)
     elif is_quote(body):
         return body
@@ -222,7 +230,7 @@ def app(fun, arg):
         return APP(fun, arg)
     elif is_abs(fun):
         body = fun[1]
-        return substitute(body, arg, 0)
+        return substitute(body, arg, 0, False)
     elif is_join(fun):
         lhs = app(fun[1], arg)
         rhs = app(fun[2], arg)
@@ -307,7 +315,9 @@ def join(lhs, rhs):
 def dominates(lhs, rhs):
     """Strict domination relation: lhs =] rhs and lhs [!= rhs.
 
-    TODO If lhs [=] rhs, allow lhs > rhs wrt arbitrary order, eg priority.
+    TODO If lhs [=] rhs, allow lhs > rhs wrt arbitrary order, eg
+    priority.
+
     """
     return try_prove_less(rhs, lhs) and try_prove_nless(lhs, rhs)
 
@@ -559,12 +569,7 @@ def try_compute_step(code):
             assert not is_linear(fun), fun
             assert not is_linear(arg), arg
             body = fun[1]
-            # FIXME what if body is ABS(-)?
-            # TODO instead implement budget-constrained substitution.
-            assert is_app(body), code
-            lhs = body[1]
-            rhs = body[2]
-            return app(substitute(lhs, arg, 0), substitute(rhs, arg, 0))
+            return substitute(body, arg, 0, True)
         else:
             result = try_compute_step(fun)
             if result is not None:
