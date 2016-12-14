@@ -99,14 +99,67 @@ def is_const(code, rank=0):
     return True
 
 
+EMPTY_SET = frozenset()
+
+
+@memoize_arg
+def _is_linear(code):
+    """
+    Returns:
+        either None if code is nonlinear, else a pair (L, N) of frozensets,
+        where L is the set of free IVARs appearing exactly once,
+        and N is the set of free IVARs appearing multiply.
+    """
+    if code is TOP:
+        return EMPTY_SET, EMPTY_SET
+    elif code is BOT:
+        return EMPTY_SET, EMPTY_SET
+    elif is_nvar(code):
+        return EMPTY_SET, EMPTY_SET
+    elif is_ivar(code):
+        rank = code[1]
+        return frozenset([rank]), EMPTY_SET
+    elif is_app(code):
+        lhs = _is_linear(code[1])
+        rhs = _is_linear(code[2])
+        if lhs is None or rhs is None:
+            return None
+        return lhs[0] | rhs[0], lhs[1] | rhs[1] | (lhs[0] & rhs[0])
+    elif is_abs(code):
+        body = _is_linear(code[1])
+        if body is None or 0 in body[1]:
+            return None
+        return (
+            frozenset(r - 1 for r in body[0] if r),
+            frozenset(r - 1 for r in body[1]),
+        )
+    elif is_join(code):
+        lhs = _is_linear(code[1])
+        rhs = _is_linear(code[2])
+        if lhs is None or rhs is None:
+            return None
+        return lhs[0] | rhs[0], lhs[1] | rhs[1]
+    elif is_quote(code):
+        return EMPTY_SET, EMPTY_SET
+    else:
+        raise ValueError(code)
+
+
+def is_linear(code):
+    return _is_linear(code) is not None
+
+
 def is_cheap_to_copy(code):
     """Guard to prevent nontermination.
 
-    This accounts for the worst case of complexity 3:
-
-        ABS(APP(IVAR(0), IVAR(0)))
+    Theorem: If is_cheap_to_copy(-) is guards copies during beta steps,
+      then the guarded reduction relation is terminating.
+    Proof: Rank terms by the number ABS subterms that copy variables.
+      Linear reduction is terminating, and each nonlinear beta step strictly
+      reduces rank. Hence there are finitely many linear reduction sequences.
+      []
     """
-    return complexity(code) <= 3
+    return is_linear(code)
 
 
 @memoize_args
@@ -503,7 +556,11 @@ def try_compute_step(code):
         fun = code[1]
         arg = code[2]
         if is_abs(fun):
+            assert not is_linear(fun), fun
+            assert not is_linear(arg), arg
             body = fun[1]
+            # FIXME what if body is ABS(-)?
+            # TODO instead implement budget-constrained substitution.
             assert is_app(body), code
             lhs = body[1]
             rhs = body[2]

@@ -1,5 +1,5 @@
 from pomagma.reducer.bohm import (
-    increment_rank, decrement_rank, is_const,
+    increment_rank, decrement_rank, is_const, is_linear,
     substitute, app, abstract, join, occurs, approximate_var, approximate,
     # try_prove_less_linear, try_prove_nless_linear,
     try_decide_less, is_normal, try_compute_step,
@@ -82,6 +82,29 @@ def test_decrement_rank(code, expected):
 ])
 def test_is_const(code, expected):
     assert is_const(code) is expected
+
+
+@for_each([
+    (TOP, True),
+    (BOT, True),
+    (x, True),
+    (y, True),
+    (IVAR(0), True),
+    (IVAR(1), True),
+    (APP(IVAR(0), IVAR(0)), True),
+    (APP(IVAR(0), IVAR(1)), True),
+    (APP(IVAR(1), IVAR(0)), True),
+    (APP(IVAR(1), IVAR(1)), True),
+    (ABS(APP(IVAR(0), IVAR(0))), False),
+    (ABS(APP(IVAR(0), IVAR(1))), True),
+    (ABS(APP(IVAR(1), IVAR(0))), True),
+    (ABS(APP(IVAR(1), IVAR(1))), True),
+    (ABS(JOIN(IVAR(0), APP(IVAR(0), x))), True),
+    (ABS(JOIN(IVAR(0), APP(IVAR(0), IVAR(0)))), False),
+    (QUOTE(ABS(APP(IVAR(0), IVAR(0)))), True),
+])
+def test_is_linear(code, expected):
+    assert is_linear(code) is expected
 
 
 @for_each([
