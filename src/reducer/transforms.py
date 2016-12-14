@@ -1,4 +1,4 @@
-'''Code-to-code transforms.'''
+"""Code-to-code transforms."""
 
 __all__ = ['try_abstract', 'abstract', 'decompile']
 

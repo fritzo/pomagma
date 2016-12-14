@@ -4,9 +4,7 @@ variable = unification.var
 
 
 def matches(pattern, expr, match):
-    '''
-    If expr matches pattern, returns True and sets match dict in-place.
-    '''
+    """If expr matches pattern, returns True and sets match dict in-place."""
     _match = unification.unify(expr, pattern)
     if _match is False:
         return False

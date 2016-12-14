@@ -257,7 +257,7 @@ def schedule_filter(schedule, pred):
 
 
 def try_decide_less(task_x, task_y):
-    """Weak oracle deciding ordering between tasks-as-continuations"""
+    """Weak oracle deciding ordering between tasks-as-continuations."""
     if task_x[1] is BOT or task_y[1] is TOP or task_x == task_y:
         return True
     return None

@@ -17,6 +17,7 @@ def trool_fuse(args):
      None | None  True  False
      True | True  True  error
     False | False error False
+
     """
     result = None
     for arg in args:
@@ -36,6 +37,7 @@ def trool_all(args):
      None | None  None  False
      True | None  True  False
     False | False False False
+
     """
     result = True
     for arg in args:
@@ -54,6 +56,7 @@ def trool_any(args):
      None | None  True  None
      True | True  True  True
     False | None  True  False
+
     """
     result = False
     for arg in args:

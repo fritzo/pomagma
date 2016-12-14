@@ -1,7 +1,7 @@
 """Nondeterministic linear Bohm trees with de Bruijn indexing.
 
-This data structure intends to make it easy to implement the weak decision
-procedure try_decide_less(-,-).
+This data structure intends to make it easy to implement the weak
+decision procedure try_decide_less(-,-).
 
 """
 

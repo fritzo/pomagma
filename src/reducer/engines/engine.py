@@ -1,4 +1,4 @@
-'''Python reference implementation of beta-eta reduction engine.
+"""Python reference implementation of beta-eta reduction engine.
 
 Environment Variables:
     POMAGMA_PROFILE_ENGINE
@@ -12,7 +12,8 @@ Known Bugs:
     know it.  Eg in (LESS x (QUOTE TOP)), if x is a subtle error the oracle
     will optimistically return K, when the true answer is TOP
 (B4) The oracle is very weak, and does not reduce inside quoted terms.
-'''
+
+"""
 
 from collections import namedtuple
 from pomagma.compiler.util import memoize_arg
@@ -419,20 +420,20 @@ def _reduce(code, nonlinear):
 
 
 def reduce(code, budget=0):
-    '''Beta-eta reduce code, ignoring budget.'''
+    """Beta-eta reduce code, ignoring budget."""
     assert isinstance(budget, int) and budget >= 0, budget
     LOG.info('reduce({})'.format(pretty(code)))
     return _reduce(code, True)
 
 
 def simplify(code):
-    '''Linearly beta-eta reduce.'''
+    """Linearly beta-eta reduce."""
     LOG.info('simplify({})'.format(pretty(code)))
     return _reduce(code, False)
 
 
 def sample(code, budget=0):
-    '''Beta-eta sample code, ignoring budget.'''
+    """Beta-eta sample code, ignoring budget."""
     assert isinstance(budget, int) and budget >= 0, budget
     LOG.info('sample({})'.format(pretty(code)))
     head = code

@@ -431,7 +431,7 @@ def enum_flatten(xs):
 
 @combinator
 def enum_close(f, xs):
-    """forall a, (a -> enum a) -> enum a -> enum a"""
+    """forall a, (a -> enum a) -> enum a -> enum a."""
     # return app(close, lambda ys: app(ys, f), xs)
     return enum_union(xs, app(enum_close, f, xs, f))
 

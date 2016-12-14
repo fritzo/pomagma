@@ -123,7 +123,7 @@ def test_is_linear(code, expected):
     (QUOTE(IVAR(1)), x, QUOTE(IVAR(1))),
 ])
 def test_substitute(body, value, expected):
-    assert substitute(body, value, 0) is expected
+    assert substitute(body, value, 0, False) is expected
 
 
 @for_each([

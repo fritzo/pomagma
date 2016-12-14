@@ -1,4 +1,4 @@
-'''DSL translating from lambda-let notation to SKJ.'''
+"""DSL translating from lambda-let notation to SKJ."""
 
 from pomagma.reducer.code import BOT, JOIN, QAPP, NVAR, APP, QUOTE
 from pomagma.reducer.code import free_vars
@@ -29,12 +29,13 @@ def _compile(fun, actual_fun=None):
 
 
 class _Combinator(object):
-    '''
-    Class for results of the @combinator decorator.
+    """Class for results of the @combinator decorator.
 
-    WARNING recursive combinators must use this via the @combinator decorator,
-    so that a recursion guard can be inserted prior to compilation.
-    '''
+    WARNING recursive combinators must use this via the @combinator
+    decorator, so that a recursion guard can be inserted prior to
+    compilation.
+
+    """
 
     def __init__(self, fun):
         functools.update_wrapper(self, fun)

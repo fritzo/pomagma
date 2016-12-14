@@ -483,14 +483,14 @@ def compute(code):
 
 
 def reduce(code, budget=0):
-    '''Beta-eta reduce code, ignoring budget.'''
+    """Beta-eta reduce code, ignoring budget."""
     assert isinstance(budget, int) and budget >= 0, budget
     LOG.info('reduce({})'.format(pretty(code)))
     return compute(code)
 
 
 def simplify(code):
-    '''Linearly beta-eta reduce.'''
+    """Linearly beta-eta reduce."""
     LOG.info('simplify({})'.format(pretty(code)))
     cont_set = cont_set_from_codes((code,))
     return cont_set_eval(cont_set)

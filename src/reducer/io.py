@@ -1,4 +1,4 @@
-'''Translators between SKJ/H* codes and json.'''
+"""Translators between SKJ/H* codes and json."""
 
 from pomagma.compiler.util import memoize_arg
 from pomagma.compiler.util import memoize_args

@@ -1,4 +1,4 @@
-'''Weak approximations to non-computational queries.'''
+"""Weak approximations to non-computational queries."""
 
 __all__ = [
     'try_decide_equal',
