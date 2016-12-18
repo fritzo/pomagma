@@ -4,7 +4,9 @@ from pomagma.reducer.bohm import (
     # try_prove_less_linear, try_prove_nless_linear,
     try_decide_less, is_normal, try_compute_step,
 )
-from pomagma.reducer.code import TOP, BOT, NVAR, IVAR, APP, ABS, JOIN, QUOTE
+from pomagma.reducer.code import (
+    TOP, BOT, NVAR, IVAR, APP, ABS, JOIN, QUOTE, EVAL,
+)
 from pomagma.util.testing import for_each, xfail_if_not_implemented
 import pytest
 
@@ -35,6 +37,7 @@ z = NVAR('z')
     (ABS(APP(IVAR(1), IVAR(2))), 0, ABS(APP(IVAR(2), IVAR(3)))),
     (JOIN(IVAR(0), IVAR(1)), 0, JOIN(IVAR(1), IVAR(2))),
     (QUOTE(IVAR(0)), 0, QUOTE(IVAR(0))),
+    (EVAL, 0, EVAL),
 ])
 def test_increment_rank(code, min_rank, expected):
     assert increment_rank(code, min_rank) is expected
@@ -53,6 +56,7 @@ def test_increment_rank(code, min_rank, expected):
     (ABS(APP(IVAR(2), IVAR(3))), ABS(APP(IVAR(1), IVAR(2)))),
     (JOIN(IVAR(1), IVAR(2)), JOIN(IVAR(0), IVAR(1))),
     (QUOTE(IVAR(0)), QUOTE(IVAR(0))),
+    (EVAL, EVAL),
 ])
 def test_decrement_rank(code, expected):
     assert decrement_rank(code) is expected
@@ -79,6 +83,7 @@ def test_decrement_rank(code, expected):
     (JOIN(IVAR(1), IVAR(0)), False),
     (JOIN(IVAR(1), IVAR(2)), True),
     (QUOTE(IVAR(0)), True),
+    (EVAL, True),
 ])
 def test_is_const(code, expected):
     assert is_const(code) is expected
@@ -102,6 +107,7 @@ def test_is_const(code, expected):
     (ABS(JOIN(IVAR(0), APP(IVAR(0), x))), True),
     (ABS(JOIN(IVAR(0), APP(IVAR(0), IVAR(0)))), False),
     (QUOTE(ABS(APP(IVAR(0), IVAR(0)))), True),
+    (EVAL, True),
 ])
 def test_is_linear(code, expected):
     assert is_linear(code) is expected
@@ -121,6 +127,7 @@ def test_is_linear(code, expected):
     (JOIN(IVAR(0), IVAR(1)), x, JOIN(IVAR(0), x)),
     (QUOTE(IVAR(0)), x, QUOTE(IVAR(0))),
     (QUOTE(IVAR(1)), x, QUOTE(IVAR(1))),
+    (EVAL, x, EVAL),
 ])
 def test_substitute(body, value, expected):
     assert substitute(body, value, 0, False) is expected
@@ -153,6 +160,10 @@ def test_substitute(body, value, expected):
     pytest.mark.xfail((JOIN(ABS(IVAR(0)), x), TOP, TOP)),
     (JOIN(ABS(IVAR(0)), x), BOT, APP(x, BOT)),
     (QUOTE(TOP), x, APP(QUOTE(TOP), x)),
+    (EVAL, x, APP(EVAL, x)),
+    (EVAL, QUOTE(x), x),
+    (EVAL, TOP, TOP),
+    (EVAL, BOT, BOT),
 ])
 def test_app(fun, arg, expected):
     with xfail_if_not_implemented():
@@ -171,6 +182,7 @@ def test_app(fun, arg, expected):
     pytest.mark.xfail((JOIN(IVAR(0), x), JOIN(ABS(IVAR(0)), ABS(x)))),
     (QUOTE(IVAR(0)), ABS(QUOTE(IVAR(0)))),
     (APP(QUOTE(IVAR(0)), IVAR(0)), QUOTE(IVAR(0))),
+    (EVAL, ABS(EVAL)),
 ])
 def test_abstract(code, expected):
     assert abstract(code) is expected
@@ -193,6 +205,10 @@ def test_abstract(code, expected):
     (IVAR(1), 0, False),
     (IVAR(1), 1, True),
     # TODO Add more examples.
+    (ABS(IVAR(0)), 0, False),
+    (ABS(IVAR(1)), 0, True),
+    (ABS(IVAR(2)), 0, False),
+    (EVAL, 0, False),
 ])
 def test_occurs(code, rank, expected):
     assert occurs(code, rank) is expected
@@ -345,6 +361,7 @@ def test_approximate(code, direction, expected):
     (JOIN(x, z), y, JOIN(x, JOIN(y, z))),
     (JOIN(y, z), x, JOIN(x, JOIN(y, z))),
     (JOIN(x, z), JOIN(x, y), JOIN(x, JOIN(y, z))),
+    (QUOTE(BOT), QUOTE(TOP), JOIN(QUOTE(BOT), QUOTE(TOP))),
 ])
 def test_join(lhs, rhs, expected):
     assert join(lhs, rhs) is expected
@@ -381,6 +398,7 @@ COMPUTE_EXAMPLES = [
     (delta, None),
     (APP(delta, delta), APP(delta, delta)),
     (APP(delta, APP(x, delta)), APP(APP(x, delta), APP(x, delta))),
+    (EVAL, None),
 ]
 
 

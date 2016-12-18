@@ -14,7 +14,7 @@ CHANGELOG
 
 from pomagma.compiler.util import memoize_arg, memoize_args
 from pomagma.reducer.code import (
-    TOP, BOT, IVAR, APP, ABS, JOIN, QUOTE,
+    TOP, BOT, IVAR, APP, ABS, JOIN, QUOTE, EVAL,
     is_code, is_nvar, is_ivar, is_app, is_abs, is_join, is_quote,
     complexity,
 )
@@ -45,6 +45,8 @@ def increment_rank(code, min_rank):
         rhs = increment_rank(code[2], min_rank)
         return JOIN(lhs, rhs)
     elif is_quote(code):
+        return code
+    elif code is EVAL:
         return code
     else:
         raise ValueError(code)
@@ -80,6 +82,8 @@ def _try_decrement_rank(code, min_rank):
         rhs = _try_decrement_rank(code[2], min_rank)
         return JOIN(lhs, rhs)
     elif is_quote(code):
+        return code
+    elif code is EVAL:
         return code
     else:
         raise ValueError(code)
@@ -141,6 +145,8 @@ def _is_linear(code):
             return None
         return lhs[0] | rhs[0], lhs[1] | rhs[1]
     elif is_quote(code):
+        return EMPTY_SET, EMPTY_SET
+    elif code is EVAL:
         return EMPTY_SET, EMPTY_SET
     else:
         raise ValueError(code)
@@ -210,6 +216,8 @@ def substitute(body, value, rank, budget):
         return join(lhs, rhs)
     elif is_quote(body):
         return body
+    elif body is EVAL:
+        return body
     else:
         raise ValueError(body)
 
@@ -237,6 +245,15 @@ def app(fun, arg):
         return join(lhs, rhs)
     elif is_quote(fun):
         return APP(fun, arg)
+    elif fun is EVAL:
+        if arg is TOP:
+            return TOP
+        elif arg is BOT:
+            return BOT
+        elif is_quote(arg):
+            return arg[1]
+        else:
+            return APP(fun, arg)
     else:
         raise ValueError(fun)
 
@@ -263,6 +280,8 @@ def abstract(body):
         else:
             return ABS(body)
     elif is_quote(body):
+        return ABS(body)
+    elif body is EVAL:
         return ABS(body)
     else:
         raise ValueError(body)
@@ -356,6 +375,8 @@ def occurs(code, rank):
         return occurs(code[1], rank) or occurs(code[2], rank)
     elif is_quote(code):
         return False
+    elif code is EVAL:
+        return False
     else:
         raise ValueError(code)
 
@@ -367,7 +388,7 @@ def approximate_var(code, direction, rank):
     assert direction is TOP or direction is BOT, direction
     assert isinstance(rank, int) and rank >= 0, rank
     result = set()
-    if not occurs(code, rank):
+    if not occurs(code, rank):  # TOP, BOT NVAR, IVAR, QUOTE, EVAL
         result.add(code)
     elif is_ivar(code):
         assert code[1] == rank, code
@@ -415,6 +436,8 @@ def approximate(code, direction):
         # QUOTE flattens nonlearities, so only TOP or BOT can approximate.
         result.add(code)
         result.add(direction)
+    elif code is EVAL:
+        result.add(code)
     else:
         raise ValueError(code)
     return tuple(sorted(result, key=complexity))
@@ -550,6 +573,8 @@ def is_normal(code):
         return is_normal(code[1]) and is_normal(code[2])
     elif is_quote(code):
         return is_normal(code[1])
+    elif code is EVAL:
+        return True  # FIXME Is this correct?
     else:
         raise ValueError(code)
 
@@ -560,7 +585,7 @@ class UnreachableError(RuntimeError):
 
 @memoize_arg
 def try_compute_step(code):
-    if is_normal(code):
+    if is_normal(code):  # TOP, BOT, NVAR, IVAR, EVAL
         return None
     if is_app(code):
         fun = code[1]
