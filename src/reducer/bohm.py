@@ -298,7 +298,7 @@ def join(lhs, rhs):
         return next(iter(codes))
 
     # Filter out strictly dominated codes.
-    # TODO what do do about equivalence classes?
+    # TODO what to do about equivalence classes?
     filtered_codes = [
         code for code in codes
         if not any(dominates(ub, code) for ub in codes if ub is not code)

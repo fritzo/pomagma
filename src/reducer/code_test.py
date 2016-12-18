@@ -1,5 +1,5 @@
 from pomagma.reducer.code import (
-    APP, JOIN, NVAR, IVAR, ABS, FUN, LET, ABIND, RVAR, SVAR,
+    APP, JOIN, NVAR, IVAR, ABS, QABS, FUN, LET, ABIND, RVAR, SVAR,
     SLICEBEG, SLICEEND, QUOTE, CODE, EVAL, QAPP, QQUOTE, EQUAL, LESS,
     TOP, BOT, I, K, B, C, S, V, A, UNIT, BOOL, MAYBE, PROD, SUM, NUM,
     free_vars, complexity, polish_parse, polish_print,
@@ -43,6 +43,9 @@ z = NVAR('z')
     (QUOTE(x), [x]),
     (QUOTE(APP(x, y)), [x, y]),
     (APP(x, QUOTE(y)), [x, y]),
+    (ABS(x), [x]),
+    (QABS(x), [x]),
+    (FUN(x, y), [y]),
     (SLICEBEG(x), [x]),
     (SLICEEND(x), [x]),
 ])
@@ -69,6 +72,9 @@ def test_free_vars(code, free):
     (ABS(IVAR(0)), 1 + 1),
     (ABS(I), 1 + 2),
     (ABS(K), 1 + 3),
+    (QABS(I), 1 + 2),
+    (QABS(K), 1 + 3),
+    (QABS(QUOTE(IVAR(0))), 1 + 1 + 1),
     (FUN(x, x), 1 + max(1, 1)),
     (FUN(x, I), 1 + max(1, 2)),
     (FUN(x, K), 1 + max(1, 3)),
@@ -117,6 +123,11 @@ EXAMPLES = [
         'code': ABS(IVAR(0)),
         'polish': 'ABS IVAR 0',
         'sexpr': '(ABS (IVAR 0))',
+    },
+    {
+        'code': QABS(QUOTE(IVAR(0))),
+        'polish': 'QABS QUOTE IVAR 0',
+        'sexpr': '(QABS (QUOTE (IVAR 0)))',
     },
     {
         'code': FUN(x, APP(x, x)),
@@ -222,6 +233,7 @@ def s_codes_extend(terms):
         s.builds(JOIN, terms, terms),
         s.builds(QUOTE, terms),
         s.builds(ABS, terms),
+        s.builds(QABS, terms),
         s.builds(FUN, s_vars, terms),
         s.builds(LET, s_vars, terms, terms),
         s.builds(ABIND, terms),

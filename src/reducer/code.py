@@ -48,6 +48,7 @@ _APP = make_keyword('APP')
 _JOIN = make_keyword('JOIN')
 _QUOTE = make_keyword('QUOTE')
 _ABS = make_keyword('ABS')  # de Bruijn abstraction.
+_QABS = make_keyword('QABS')  # de Bruijn abstraction.
 _FUN = make_keyword('FUN')  # Nominal abstraction.
 _LET = make_keyword('LET')
 _ABIND = make_keyword('ABIND')
@@ -108,6 +109,10 @@ def QUOTE(code):
 
 def ABS(body):
     return _code(_ABS, body)
+
+
+def QABS(body):
+    return _code(_QABS, body)
 
 
 def FUN(var, body):
@@ -179,6 +184,11 @@ def is_abs(code):
     return isinstance(code, tuple) and code[0] is _ABS
 
 
+def is_qabs(code):
+    assert is_code(code), code
+    return isinstance(code, tuple) and code[0] is _QABS
+
+
 def is_fun(code):
     assert is_code(code), code
     return isinstance(code, tuple) and code[0] is _FUN
@@ -223,8 +233,10 @@ def free_vars(code):
     elif is_app(code) or is_join(code):
         return free_vars(code[1]) | free_vars(code[2])
     elif is_quote(code):
-        return free_vars(code[1])
+        return free_vars(code[1])  # FIXME
     elif is_abs(code):
+        return free_vars(code[1])
+    elif is_qabs(code):
         return free_vars(code[1])
     elif is_fun(code):
         assert is_nvar(code[1])
@@ -312,6 +324,7 @@ _PARSERS = {
     _JOIN: (_polish_parse_tokens, _polish_parse_tokens),
     _QUOTE: (_polish_parse_tokens,),
     _ABS: (_polish_parse_tokens,),
+    _QABS: (_polish_parse_tokens,),
     _FUN: (_polish_parse_tokens, _polish_parse_tokens),
     _LET: (_polish_parse_tokens, _polish_parse_tokens, _polish_parse_tokens),
     _ABIND: (_polish_parse_tokens,),
@@ -371,6 +384,9 @@ def to_sexpr(code):
     elif is_abs(head):
         args.append(to_sexpr(head[1]))
         head = _ABS
+    elif is_qabs(head):
+        args.append(to_sexpr(head[1]))
+        head = _QABS
     elif is_fun(head):
         args.append(to_sexpr(head[2]))
         args.append(to_sexpr(head[1]))
@@ -426,6 +442,10 @@ def from_sexpr(sexpr):
         elif head is _ABS:
             body = from_sexpr(sexpr[1])
             head = ABS(body)
+            args = sexpr[2:]
+        elif head is _QABS:
+            body = from_sexpr(sexpr[1])
+            head = QABS(body)
             args = sexpr[2:]
         elif head is _FUN:
             var = from_sexpr(sexpr[1])
