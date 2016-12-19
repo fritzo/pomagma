@@ -1,11 +1,11 @@
 from pomagma.reducer.bohm import (
-    increment_rank, decrement_rank, is_const, is_linear,
+    increment_rank, decrement_rank, is_const, is_linear, is_normal,
     substitute, app, abstract, join, occurs, approximate_var, approximate,
-    # try_prove_less_linear, try_prove_nless_linear,
-    try_decide_less, is_normal, try_compute_step,
+    true, false, try_decide_less, try_decide_equal, try_compute_step,
 )
 from pomagma.reducer.code import (
-    TOP, BOT, NVAR, IVAR, APP, ABS, JOIN, QUOTE, EVAL,
+    TOP, BOT, NVAR, IVAR, APP, ABS, JOIN,
+    QUOTE, EVAL, QAPP, QQUOTE, LESS, EQUAL,
 )
 from pomagma.util.testing import for_each, xfail_if_not_implemented
 import pytest
@@ -18,7 +18,7 @@ z = NVAR('z')
 # ----------------------------------------------------------------------------
 # Functional programming
 
-@for_each([
+INCREMENT_RANK_EXAMPLES = [
     (TOP, 0, TOP),
     (BOT, 0, BOT),
     (x, 0, x),
@@ -38,12 +38,19 @@ z = NVAR('z')
     (JOIN(IVAR(0), IVAR(1)), 0, JOIN(IVAR(1), IVAR(2))),
     (QUOTE(IVAR(0)), 0, QUOTE(IVAR(0))),
     (EVAL, 0, EVAL),
-])
+    (QAPP, 0, QAPP),
+    (QQUOTE, 0, QQUOTE),
+    (LESS, 0, LESS),
+    (EQUAL, 0, EQUAL),
+]
+
+
+@for_each(INCREMENT_RANK_EXAMPLES)
 def test_increment_rank(code, min_rank, expected):
     assert increment_rank(code, min_rank) is expected
 
 
-@for_each([
+DECREMENT_RANK_EXAMPLES = [
     (TOP, TOP),
     (BOT, BOT),
     (x, x),
@@ -57,12 +64,19 @@ def test_increment_rank(code, min_rank, expected):
     (JOIN(IVAR(1), IVAR(2)), JOIN(IVAR(0), IVAR(1))),
     (QUOTE(IVAR(0)), QUOTE(IVAR(0))),
     (EVAL, EVAL),
-])
+    (QAPP, QAPP),
+    (QQUOTE, QQUOTE),
+    (LESS, LESS),
+    (EQUAL, EQUAL),
+]
+
+
+@for_each(DECREMENT_RANK_EXAMPLES)
 def test_decrement_rank(code, expected):
     assert decrement_rank(code) is expected
 
 
-@for_each([
+IS_CONST_EXAMPLES = [
     (TOP, True),
     (BOT, True),
     (x, True),
@@ -84,12 +98,19 @@ def test_decrement_rank(code, expected):
     (JOIN(IVAR(1), IVAR(2)), True),
     (QUOTE(IVAR(0)), True),
     (EVAL, True),
-])
+    (QAPP, True),
+    (QQUOTE, True),
+    (LESS, True),
+    (EQUAL, True),
+]
+
+
+@for_each(IS_CONST_EXAMPLES)
 def test_is_const(code, expected):
     assert is_const(code) is expected
 
 
-@for_each([
+IS_LINEAR_EXAMPLES = [
     (TOP, True),
     (BOT, True),
     (x, True),
@@ -108,12 +129,19 @@ def test_is_const(code, expected):
     (ABS(JOIN(IVAR(0), APP(IVAR(0), IVAR(0)))), False),
     (QUOTE(ABS(APP(IVAR(0), IVAR(0)))), True),
     (EVAL, True),
-])
+    (QAPP, True),
+    (QQUOTE, True),
+    (LESS, True),
+    (EQUAL, True),
+]
+
+
+@for_each(IS_LINEAR_EXAMPLES)
 def test_is_linear(code, expected):
     assert is_linear(code) is expected
 
 
-@for_each([
+SUBSTITUTE_EXAMPLES = [
     (TOP, BOT, TOP),
     (BOT, TOP, BOT),
     (x, TOP, x),
@@ -128,12 +156,19 @@ def test_is_linear(code, expected):
     (QUOTE(IVAR(0)), x, QUOTE(IVAR(0))),
     (QUOTE(IVAR(1)), x, QUOTE(IVAR(1))),
     (EVAL, x, EVAL),
-])
+    (QAPP, x, QAPP),
+    (QQUOTE, x, QQUOTE),
+    (LESS, x, LESS),
+    (EQUAL, x, EQUAL),
+]
+
+
+@for_each(SUBSTITUTE_EXAMPLES)
 def test_substitute(body, value, expected):
     assert substitute(body, value, 0, False) is expected
 
 
-@for_each([
+APP_EXAMPLES = [
     (TOP, TOP, TOP),
     (TOP, BOT, TOP),
     (TOP, x, TOP),
@@ -160,17 +195,78 @@ def test_substitute(body, value, expected):
     pytest.mark.xfail((JOIN(ABS(IVAR(0)), x), TOP, TOP)),
     (JOIN(ABS(IVAR(0)), x), BOT, APP(x, BOT)),
     (QUOTE(TOP), x, APP(QUOTE(TOP), x)),
-    (EVAL, x, APP(EVAL, x)),
-    (EVAL, QUOTE(x), x),
     (EVAL, TOP, TOP),
     (EVAL, BOT, BOT),
-])
+    (EVAL, QUOTE(x), x),
+    (EVAL, x, APP(EVAL, x)),
+    (QAPP, TOP, TOP),
+    (QAPP, BOT, APP(QAPP, BOT)),
+    (QAPP, QUOTE(x), APP(QAPP, QUOTE(x))),
+    (QAPP, x, APP(QAPP, x)),
+    (APP(QAPP, TOP), TOP, TOP),
+    (APP(QAPP, TOP), BOT, TOP),
+    (APP(QAPP, TOP), QUOTE(y), TOP),
+    (APP(QAPP, TOP), y, TOP),
+    (APP(QAPP, BOT), TOP, TOP),
+    (APP(QAPP, BOT), BOT, BOT),
+    (APP(QAPP, BOT), QUOTE(y), BOT),
+    (APP(QAPP, BOT), y, APP(APP(QAPP, BOT), y)),
+    (APP(QAPP, QUOTE(x)), TOP, TOP),
+    (APP(QAPP, QUOTE(x)), BOT, BOT),
+    (APP(QAPP, QUOTE(x)), QUOTE(y), QUOTE(APP(x, y))),
+    (APP(QAPP, QUOTE(x)), y, APP(APP(QAPP, QUOTE(x)), y)),
+    (APP(QAPP, x), TOP, TOP),
+    (APP(QAPP, x), BOT, APP(APP(QAPP, x), BOT)),
+    (APP(QAPP, x), QUOTE(y), APP(APP(QAPP, x), QUOTE(y))),
+    (APP(QAPP, x), y, APP(APP(QAPP, x), y)),
+    (QQUOTE, TOP, TOP),
+    (QQUOTE, BOT, BOT),
+    (QQUOTE, QUOTE(x), QUOTE(QUOTE(x))),
+    (QQUOTE, x, APP(QQUOTE, x)),
+    (APP(LESS, TOP), TOP, TOP),
+    (APP(LESS, TOP), BOT, TOP),
+    (APP(LESS, TOP), QUOTE(y), TOP),
+    (APP(LESS, TOP), y, TOP),
+    (APP(LESS, BOT), TOP, TOP),
+    (APP(LESS, BOT), BOT, BOT),
+    (APP(LESS, BOT), QUOTE(y), BOT),
+    (APP(LESS, BOT), y, APP(APP(LESS, BOT), y)),
+    (APP(LESS, QUOTE(x)), TOP, TOP),
+    (APP(LESS, QUOTE(x)), BOT, BOT),
+    (APP(LESS, QUOTE(x)), QUOTE(y), false),
+    (APP(LESS, QUOTE(x)), QUOTE(x), true),
+    (APP(LESS, QUOTE(x)), y, APP(APP(LESS, QUOTE(x)), y)),
+    (APP(LESS, x), TOP, TOP),
+    (APP(LESS, x), BOT, APP(APP(LESS, x), BOT)),
+    (APP(LESS, x), QUOTE(y), APP(APP(LESS, x), QUOTE(y))),
+    (APP(LESS, x), y, APP(APP(LESS, x), y)),
+    (APP(EQUAL, TOP), TOP, TOP),
+    (APP(EQUAL, TOP), BOT, TOP),
+    (APP(EQUAL, TOP), QUOTE(y), TOP),
+    (APP(EQUAL, TOP), y, TOP),
+    (APP(EQUAL, BOT), TOP, TOP),
+    (APP(EQUAL, BOT), BOT, BOT),
+    (APP(EQUAL, BOT), QUOTE(y), BOT),
+    (APP(EQUAL, BOT), y, APP(APP(EQUAL, BOT), y)),
+    (APP(EQUAL, QUOTE(x)), TOP, TOP),
+    (APP(EQUAL, QUOTE(x)), BOT, BOT),
+    (APP(EQUAL, QUOTE(x)), QUOTE(y), false),
+    (APP(EQUAL, QUOTE(x)), QUOTE(x), true),
+    (APP(EQUAL, QUOTE(x)), y, APP(APP(EQUAL, QUOTE(x)), y)),
+    (APP(EQUAL, x), TOP, TOP),
+    (APP(EQUAL, x), BOT, APP(APP(EQUAL, x), BOT)),
+    (APP(EQUAL, x), QUOTE(y), APP(APP(EQUAL, x), QUOTE(y))),
+    (APP(EQUAL, x), y, APP(APP(EQUAL, x), y)),
+]
+
+
+@for_each(APP_EXAMPLES)
 def test_app(fun, arg, expected):
     with xfail_if_not_implemented():
         assert app(fun, arg) is expected
 
 
-@for_each([
+ABSTRACT_EXAMPLES = [
     (TOP, TOP),
     (BOT, BOT),
     (x, ABS(x)),
@@ -183,7 +279,12 @@ def test_app(fun, arg, expected):
     (QUOTE(IVAR(0)), ABS(QUOTE(IVAR(0)))),
     (APP(QUOTE(IVAR(0)), IVAR(0)), QUOTE(IVAR(0))),
     (EVAL, ABS(EVAL)),
-])
+    (QAPP, ABS(QAPP)),
+    (QQUOTE, ABS(QQUOTE)),
+]
+
+
+@for_each(ABSTRACT_EXAMPLES)
 def test_abstract(code, expected):
     assert abstract(code) is expected
 
@@ -191,7 +292,7 @@ def test_abstract(code, expected):
 # ----------------------------------------------------------------------------
 # Scott ordering
 
-@for_each([
+OCCURS_EXAMPLES = [
     (TOP, 0, False),
     (TOP, 1, False),
     (BOT, 0, False),
@@ -209,7 +310,12 @@ def test_abstract(code, expected):
     (ABS(IVAR(1)), 0, True),
     (ABS(IVAR(2)), 0, False),
     (EVAL, 0, False),
-])
+    (QAPP, 0, False),
+    (QQUOTE, 0, False),
+]
+
+
+@for_each(OCCURS_EXAMPLES)
 def test_occurs(code, rank, expected):
     assert occurs(code, rank) is expected
 
@@ -340,7 +446,7 @@ def test_approximate(code, direction, expected):
     assert set(approximate(code, direction)) == set(expected)
 
 
-@for_each([
+JOIN_EXAMPLES = [
     (TOP, TOP, TOP),
     (TOP, BOT, TOP),
     (TOP, x, TOP),
@@ -362,12 +468,15 @@ def test_approximate(code, direction, expected):
     (JOIN(y, z), x, JOIN(x, JOIN(y, z))),
     (JOIN(x, z), JOIN(x, y), JOIN(x, JOIN(y, z))),
     (QUOTE(BOT), QUOTE(TOP), JOIN(QUOTE(BOT), QUOTE(TOP))),
-])
+]
+
+
+@for_each(JOIN_EXAMPLES)
 def test_join(lhs, rhs, expected):
     assert join(lhs, rhs) is expected
 
 
-@for_each([
+TRY_DECIDE_LESS_EXAMPLES = [
     (TOP, TOP, True),
     (TOP, BOT, False),
     (BOT, TOP, True),
@@ -379,9 +488,45 @@ def test_join(lhs, rhs, expected):
     (BOT, IVAR(0), True),
     (IVAR(0), IVAR(1), False),
     (IVAR(1), IVAR(0), False),
-])
+]
+
+
+@for_each(TRY_DECIDE_LESS_EXAMPLES)
 def test_try_decide_less(lhs, rhs, expected):
     assert try_decide_less(lhs, rhs) is expected
+
+
+@for_each(TRY_DECIDE_LESS_EXAMPLES)
+def test_app_less(lhs, rhs, truth_value):
+    expected = true if truth_value else false
+    assert app(app(LESS, QUOTE(lhs)), QUOTE(rhs)) is expected
+
+
+TRY_DECIDE_EQUAL_EXAMPLES = [
+    (TOP, TOP, True),
+    (BOT, BOT, True),
+    (IVAR(0), IVAR(0), True),
+    (IVAR(1), IVAR(1), True),
+    (TOP, BOT, False),
+    (BOT, TOP, False),
+    (IVAR(0), TOP, False),
+    (IVAR(0), BOT, False),
+    (TOP, IVAR(0), False),
+    (BOT, IVAR(0), False),
+    (IVAR(0), IVAR(1), False),
+    (IVAR(1), IVAR(0), False),
+]
+
+
+@for_each(TRY_DECIDE_EQUAL_EXAMPLES)
+def test_try_decide_equal(lhs, rhs, expected):
+    assert try_decide_equal(lhs, rhs) is expected
+
+
+@for_each(TRY_DECIDE_EQUAL_EXAMPLES)
+def test_app_equal(lhs, rhs, truth_value):
+    expected = true if truth_value else false
+    assert app(app(EQUAL, QUOTE(lhs)), QUOTE(rhs)) is expected
 
 
 # ----------------------------------------------------------------------------
@@ -399,6 +544,10 @@ COMPUTE_EXAMPLES = [
     (APP(delta, delta), APP(delta, delta)),
     (APP(delta, APP(x, delta)), APP(APP(x, delta), APP(x, delta))),
     (EVAL, None),
+    (QAPP, None),
+    (QQUOTE, None),
+    (LESS, None),
+    (EQUAL, None),
 ]
 
 

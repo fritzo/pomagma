@@ -9,15 +9,19 @@ try_decide_less in engines.continuation.
 CHANGELOG
 2016-12-04 Initial prototype.
 2016-12-11 Use linearizing approximations in order decision procedures.
-
+2016-12-18 Add rules for quoting and reflected order.
 """
 
 from pomagma.compiler.util import memoize_arg, memoize_args
 from pomagma.reducer.code import (
-    TOP, BOT, IVAR, APP, ABS, JOIN, QUOTE, EVAL,
-    is_code, is_nvar, is_ivar, is_app, is_abs, is_join, is_quote,
+    TOP, BOT, IVAR, APP, ABS, JOIN, QUOTE, EVAL, QAPP, QQUOTE, LESS, EQUAL,
+    is_code, is_atom, is_nvar, is_ivar, is_app, is_abs, is_join, is_quote,
     complexity,
 )
+from pomagma.reducer.util import UnreachableError
+
+true = ABS(ABS(IVAR(1)))
+false = ABS(ABS(IVAR(0)))
 
 
 # ----------------------------------------------------------------------------
@@ -25,9 +29,7 @@ from pomagma.reducer.code import (
 
 @memoize_args
 def increment_rank(code, min_rank):
-    if code is TOP:
-        return code
-    elif code is BOT:
+    if is_atom(code):
         return code
     elif is_nvar(code):
         return code
@@ -46,10 +48,9 @@ def increment_rank(code, min_rank):
         return JOIN(lhs, rhs)
     elif is_quote(code):
         return code
-    elif code is EVAL:
-        return code
     else:
         raise ValueError(code)
+    raise UnreachableError((code, min_rank))
 
 
 class CannotDecrementRank(Exception):
@@ -58,9 +59,7 @@ class CannotDecrementRank(Exception):
 
 @memoize_args
 def _try_decrement_rank(code, min_rank):
-    if code is TOP:
-        return code
-    elif code is BOT:
+    if is_atom(code):
         return code
     elif is_nvar(code):
         return code
@@ -83,10 +82,9 @@ def _try_decrement_rank(code, min_rank):
         return JOIN(lhs, rhs)
     elif is_quote(code):
         return code
-    elif code is EVAL:
-        return code
     else:
         raise ValueError(code)
+    raise UnreachableError((code, min_rank))
 
 
 def decrement_rank(code):
@@ -115,9 +113,7 @@ def _is_linear(code):
         where L is the set of free IVARs appearing exactly once,
         and N is the set of free IVARs appearing multiply.
     """
-    if code is TOP:
-        return EMPTY_SET, EMPTY_SET
-    elif code is BOT:
+    if is_atom(code):
         return EMPTY_SET, EMPTY_SET
     elif is_nvar(code):
         return EMPTY_SET, EMPTY_SET
@@ -146,10 +142,9 @@ def _is_linear(code):
         return lhs[0] | rhs[0], lhs[1] | rhs[1]
     elif is_quote(code):
         return EMPTY_SET, EMPTY_SET
-    elif code is EVAL:
-        return EMPTY_SET, EMPTY_SET
     else:
         raise ValueError(code)
+    raise UnreachableError(code)
 
 
 def is_linear(code):
@@ -179,9 +174,7 @@ def substitute(body, value, rank, budget):
 
     """
     assert budget in (True, False), budget
-    if body is TOP:
-        return body
-    elif body is BOT:
+    if is_atom(body):
         return body
     elif is_nvar(body):
         return body
@@ -216,10 +209,9 @@ def substitute(body, value, rank, budget):
         return join(lhs, rhs)
     elif is_quote(body):
         return body
-    elif body is EVAL:
-        return body
     else:
         raise ValueError(body)
+    raise UnreachableError((body, value, rank, budget))
 
 
 @memoize_args
@@ -234,7 +226,31 @@ def app(fun, arg):
     elif is_ivar(fun):
         return APP(fun, arg)
     elif is_app(fun):
-        # TODO try to reduce LESS x y.
+        # Try to reduce strict binary functions of quoted codes.
+        if fun[1] in (QAPP, LESS, EQUAL):
+            lhs = fun[2]
+            rhs = arg
+            if lhs is TOP or rhs is TOP:
+                return TOP
+            elif lhs is BOT:
+                if rhs is BOT or is_quote(rhs):
+                    return BOT
+            elif is_quote(lhs):
+                if rhs is BOT:
+                    return BOT
+                elif is_quote(rhs):
+                    if fun[1] is QAPP:
+                        return QUOTE(app(lhs[1], rhs[1]))
+                    if fun[1] is LESS:
+                        ans = try_decide_less(lhs[1], rhs[1])
+                    elif fun[1] is EQUAL:
+                        ans = try_decide_equal(lhs[1], rhs[1])
+                    else:
+                        raise UnreachableError(fun[1])
+                    if ans is True:
+                        return true
+                    elif ans is False:
+                        return false
         return APP(fun, arg)
     elif is_abs(fun):
         body = fun[1]
@@ -254,8 +270,33 @@ def app(fun, arg):
             return arg[1]
         else:
             return APP(fun, arg)
+    elif fun is QAPP:
+        if arg is TOP:
+            return TOP
+        else:
+            return APP(fun, arg)
+    elif fun is QQUOTE:
+        if arg is TOP:
+            return TOP
+        elif arg is BOT:
+            return BOT
+        elif is_quote(arg):
+            return QUOTE(QUOTE(arg[1]))
+        else:
+            return APP(fun, arg)
+    elif fun is LESS:
+        if arg is TOP:
+            return TOP
+        else:
+            return APP(fun, arg)
+    elif fun is EQUAL:
+        if arg is TOP:
+            return TOP
+        else:
+            return APP(fun, arg)
     else:
         raise ValueError(fun)
+    raise UnreachableError((fun, arg))
 
 
 @memoize_args
@@ -265,6 +306,8 @@ def abstract(body):
         return body
     elif body is BOT:
         return body
+    elif is_atom(body):
+        return ABS(body)
     elif is_nvar(body):
         return ABS(body)
     elif is_ivar(body):
@@ -281,10 +324,9 @@ def abstract(body):
             return ABS(body)
     elif is_quote(body):
         return ABS(body)
-    elif body is EVAL:
-        return ABS(body)
     else:
         raise ValueError(body)
+    raise UnreachableError(body)
 
 
 # ----------------------------------------------------------------------------
@@ -363,7 +405,7 @@ def try_prove_nless(lhs, rhs):
 
 @memoize_args
 def occurs(code, rank):
-    if code is TOP or code is BOT or is_nvar(code):
+    if is_atom(code) or is_nvar(code) or is_quote(code):
         return False
     elif is_ivar(code):
         return code[1] == rank
@@ -373,12 +415,9 @@ def occurs(code, rank):
         return occurs(code[1], rank + 1)
     elif is_join(code):
         return occurs(code[1], rank) or occurs(code[2], rank)
-    elif is_quote(code):
-        return False
-    elif code is EVAL:
-        return False
     else:
         raise ValueError(code)
+    raise UnreachableError((code, rank))
 
 
 @memoize_args
@@ -388,7 +427,7 @@ def approximate_var(code, direction, rank):
     assert direction is TOP or direction is BOT, direction
     assert isinstance(rank, int) and rank >= 0, rank
     result = set()
-    if not occurs(code, rank):  # TOP, BOT NVAR, IVAR, QUOTE, EVAL
+    if not occurs(code, rank):
         result.add(code)
     elif is_ivar(code):
         assert code[1] == rank, code
@@ -413,7 +452,7 @@ def approximate_var(code, direction, rank):
 @memoize_args
 def approximate(code, direction):
     result = set()
-    if code is TOP or code is BOT or is_ivar(code) or is_nvar(code):
+    if is_atom(code) or is_ivar(code) or is_nvar(code):
         result.add(code)
     elif is_app(code):
         if is_abs(code[1]):
@@ -436,8 +475,6 @@ def approximate(code, direction):
         # QUOTE flattens nonlearities, so only TOP or BOT can approximate.
         result.add(code)
         result.add(direction)
-    elif code is EVAL:
-        result.add(code)
     else:
         raise ValueError(code)
     return tuple(sorted(result, key=complexity))
@@ -545,6 +582,16 @@ def try_decide_less(lhs, rhs):
     return None
 
 
+def try_decide_equal(lhs, rhs):
+    if lhs is rhs:
+        return True
+    if try_prove_nless(lhs, rhs) or try_prove_nless(rhs, lhs):
+        return False
+    if try_prove_less(lhs, rhs) and try_prove_less(rhs, lhs):
+        return True
+    return None
+
+
 # ----------------------------------------------------------------------------
 # Computation
 
@@ -555,13 +602,7 @@ def priority(code):
 @memoize_arg
 def is_normal(code):
     """Returns whether code is in linear normal form."""
-    if code is TOP:
-        return True
-    elif code is BOT:
-        return True
-    elif is_nvar(code):
-        return True
-    elif is_ivar(code):
+    if is_atom(code) or is_nvar(code) or is_ivar(code):
         return True
     elif is_abs(code):
         return is_normal(code[1])
@@ -573,19 +614,14 @@ def is_normal(code):
         return is_normal(code[1]) and is_normal(code[2])
     elif is_quote(code):
         return is_normal(code[1])
-    elif code is EVAL:
-        return True  # FIXME Is this correct?
     else:
         raise ValueError(code)
-
-
-class UnreachableError(RuntimeError):
-    pass
+    raise UnreachableError(code)
 
 
 @memoize_arg
 def try_compute_step(code):
-    if is_normal(code):  # TOP, BOT, NVAR, IVAR, EVAL
+    if is_normal(code):
         return None
     if is_app(code):
         fun = code[1]
@@ -625,3 +661,4 @@ def try_compute_step(code):
         raise UnreachableError(code)
     else:
         raise ValueError(code)
+    raise UnreachableError(code)

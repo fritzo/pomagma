@@ -9,6 +9,10 @@ import pomagma.util
 import sys
 
 
+class UnreachableError(RuntimeError):
+    pass
+
+
 def trool_fuse(args):
     """Combine according to:
 
