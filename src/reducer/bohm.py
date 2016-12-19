@@ -358,8 +358,7 @@ def join(lhs, rhs):
     if len(codes) == 1:
         return next(iter(codes))
 
-    # Filter out strictly dominated codes.
-    # TODO what to do about equivalence classes?
+    # Filter out strictly dominated codes (requires transitivity).
     filtered_codes = [
         code for code in codes
         if not any(dominates(ub, code) for ub in codes if ub is not code)
@@ -374,10 +373,19 @@ def join(lhs, rhs):
 
 
 def dominates(lhs, rhs):
-    """Strict domination relation: lhs =] rhs and lhs [!= rhs.
+    """Weak strict domination relation: lhs =] rhs and lhs [!= rhs.
 
-    TODO If lhs [=] rhs, allow lhs > rhs wrt arbitrary order, eg
-    priority.
+    This relation is used to reduce reduncancy in join(-, -) terms.
+    This relation is required to be transitive, so that it extends from pairs
+    to arbitrary finite sets of terms and so that it can induces a
+    well-defined filtering operation in join(-, -).
+
+    Theorem: (soundness) dominates(-,-) is weaker than the strict Scott
+      ordering, ie if dominates(u, v) then u =] v and u [!= v.
+    Corollary: dominates(-, -) is irreflexive and antisymmetric.
+    Pf: Irreflexivity follows from strictness.
+      Antisymmetry follows from antisymmetry of the Scott ordering. []
+    Desired Theorem: dominates(-, -) is transitive.
 
     """
     return try_prove_less(rhs, lhs) and try_prove_nless(lhs, rhs)

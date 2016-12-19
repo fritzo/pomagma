@@ -1,7 +1,8 @@
 from pomagma.reducer.bohm import (
     increment_rank, decrement_rank, is_const, is_linear, is_normal,
     substitute, app, abstract, join, occurs, approximate_var, approximate,
-    true, false, try_decide_less, try_decide_equal, try_compute_step,
+    true, false, try_prove_less, try_prove_nless,
+    try_decide_less, try_decide_equal, try_compute_step,
 )
 from pomagma.reducer.code import (
     TOP, BOT, NVAR, IVAR, APP, ABS, JOIN,
@@ -488,6 +489,7 @@ TRY_DECIDE_LESS_EXAMPLES = [
     (BOT, IVAR(0), True),
     (IVAR(0), IVAR(1), False),
     (IVAR(1), IVAR(0), False),
+    # TODO Add more examples.
 ]
 
 
@@ -497,8 +499,34 @@ def test_try_decide_less(lhs, rhs, expected):
 
 
 @for_each(TRY_DECIDE_LESS_EXAMPLES)
+def test_try_prove_less(lhs, rhs, truth_value):
+    assert truth_value in (True, False, None)
+    if truth_value is True:
+        expected = True
+    else:
+        expected = False
+    assert try_prove_less(lhs, rhs) is expected
+
+
+@for_each(TRY_DECIDE_LESS_EXAMPLES)
+def test_try_prove_nless(lhs, rhs, truth_value):
+    assert truth_value in (True, False, None)
+    if truth_value is False:
+        expected = True
+    else:
+        expected = False
+    assert try_prove_nless(lhs, rhs) is expected
+
+
+@for_each(TRY_DECIDE_LESS_EXAMPLES)
 def test_app_less(lhs, rhs, truth_value):
-    expected = true if truth_value else false
+    assert truth_value in (True, False, None)
+    if truth_value is True:
+        expected = true
+    elif truth_value is False:
+        expected = false
+    else:
+        expected = APP(APP(LESS, QUOTE(lhs)), QUOTE(rhs))
     assert app(app(LESS, QUOTE(lhs)), QUOTE(rhs)) is expected
 
 
@@ -515,6 +543,7 @@ TRY_DECIDE_EQUAL_EXAMPLES = [
     (BOT, IVAR(0), False),
     (IVAR(0), IVAR(1), False),
     (IVAR(1), IVAR(0), False),
+    # TODO Add more examples.
 ]
 
 
@@ -525,7 +554,13 @@ def test_try_decide_equal(lhs, rhs, expected):
 
 @for_each(TRY_DECIDE_EQUAL_EXAMPLES)
 def test_app_equal(lhs, rhs, truth_value):
-    expected = true if truth_value else false
+    assert truth_value in (True, False, None)
+    if truth_value is True:
+        expected = true
+    elif truth_value is False:
+        expected = false
+    else:
+        expected = APP(APP(EQUAL, QUOTE(lhs)), QUOTE(rhs))
     assert app(app(EQUAL, QUOTE(lhs)), QUOTE(rhs)) is expected
 
 
