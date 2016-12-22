@@ -294,29 +294,44 @@ def complexity(code):
 # ----------------------------------------------------------------------------
 # Polish notation
 
-def polish_parse(string):
+def polish_parse(string, signature={}):
+    """Parse a string from polish notation to a code.
+
+    Args:
+      string: a string in polish notation.
+      signature: an optional dict of overrides, mapping keyword to builder.
+
+    Returns:
+      a code.
+    """
     assert isinstance(string, str), type(string)
+    assert isinstance(signature, dict), type(signature)
     tokens = map(intern, string.split())
     tokens.reverse()
-    return _polish_parse_tokens(tokens)
+    return _polish_parse_tokens(tokens, signature)
 
 
-def _pop_token(tokens):
+def _pop_token(tokens, signature):
     return tokens.pop()
 
 
-def _pop_int(tokens):
+def _pop_int(tokens, signature):
     return int(tokens.pop())
 
 
-def _polish_parse_tokens(tokens):
+def _polish_parse_tokens(tokens, signature):
     token = tokens.pop()
     try:
         polish_parsers = _PARSERS[token]
     except KeyError:
         return token if re_keyword.match(token) else NVAR(token)  # atom
-    args = tuple(p(tokens) for p in polish_parsers)
-    return _code(token, *args)
+    args = tuple(p(tokens, signature) for p in polish_parsers)
+    try:
+        fun = signature[token]
+    except KeyError:
+        return _code(token, *args)
+    else:
+        return fun(*args)
 
 
 _PARSERS = {
@@ -419,7 +434,8 @@ def to_sexpr(code):
     return tuple(args)
 
 
-def from_sexpr(sexpr):
+def from_sexpr(sexpr, signature={}):
+    assert isinstance(signature, dict), type(signature)
     if isinstance(sexpr, str):
         if sexpr in _keywords:
             return sexpr
@@ -431,43 +447,43 @@ def from_sexpr(sexpr):
     assert isinstance(head, str)
     if head in _keywords:
         if head is _JOIN:
-            lhs = from_sexpr(sexpr[1])
-            rhs = from_sexpr(sexpr[2])
-            head = JOIN(lhs, rhs)
+            lhs = from_sexpr(sexpr[1], signature)
+            rhs = from_sexpr(sexpr[2], signature)
+            head = signature.get('JOIN', JOIN)(lhs, rhs)
             args = sexpr[3:]
         elif head is _QUOTE:
-            code = from_sexpr(sexpr[1])
-            head = QUOTE(code)
+            code = from_sexpr(sexpr[1], signature)
+            head = signature.get('QUOTE', QUOTE)(code)
             args = sexpr[2:]
         elif head is _ABS:
-            body = from_sexpr(sexpr[1])
-            head = ABS(body)
+            body = from_sexpr(sexpr[1], signature)
+            head = signature.get('ABS', ABS)(body)
             args = sexpr[2:]
         elif head is _QABS:
-            body = from_sexpr(sexpr[1])
-            head = QABS(body)
+            body = from_sexpr(sexpr[1], signature)
+            head = signature.get('QABS', QABS)(body)
             args = sexpr[2:]
         elif head is _FUN:
-            var = from_sexpr(sexpr[1])
-            body = from_sexpr(sexpr[2])
-            head = FUN(var, body)
+            var = from_sexpr(sexpr[1], signature)
+            body = from_sexpr(sexpr[2], signature)
+            head = signature.get('FUN', FUN)(var, body)
             args = sexpr[3:]
         elif head is _LET:
-            var = from_sexpr(sexpr[1])
-            defn = from_sexpr(sexpr[2])
-            body = from_sexpr(sexpr[3])
-            head = LET(var, defn, body)
+            var = from_sexpr(sexpr[1], signature)
+            defn = from_sexpr(sexpr[2], signature)
+            body = from_sexpr(sexpr[3], signature)
+            head = signature.get('LET', LET)(var, defn, body)
             args = sexpr[4:]
         elif head is _ABIND:
-            body = from_sexpr(sexpr[1])
-            head = ABIND(body)
+            body = from_sexpr(sexpr[1], signature)
+            head = signature.get('ABIND', ABIND)(body)
             args = sexpr[2:]
         elif head is _SLICEBEG:
-            body = from_sexpr(sexpr[1])
+            body = from_sexpr(sexpr[1], signature)
             head = SLICEBEG(body)
             args = sexpr[2:]
         elif head is _SLICEEND:
-            body = from_sexpr(sexpr[1])
+            body = from_sexpr(sexpr[1], signature)
             head = SLICEEND(body)
             args = sexpr[2:]
         elif head is _IVAR:
@@ -486,9 +502,9 @@ def from_sexpr(sexpr):
             raise ValueError('Unrecognized keyword: {}'.format(head))
         head = NVAR(head)
         args = sexpr[1:]
-    args = map(from_sexpr, args)
     for arg in args:
-        head = APP(head, arg)
+        arg = from_sexpr(arg, signature)
+        head = signature.get('APP', APP)(head, arg)
     return head
 
 
@@ -533,7 +549,18 @@ def sexpr_parse_sexpr(string):
     return sexpr
 
 
-def sexpr_parse(string):
+def sexpr_parse(string, signature={}):
+    """Parse a string from S-expressoin notation to a code.
+
+    Args:
+      string: a string in S-expression notation.
+      signature: an optional dict of overrides, mapping keyword to builder.
+
+    Returns:
+      a code.
+    """
+    assert isinstance(string, str), type(string)
+    assert isinstance(signature, dict), type(signature)
     sexpr = sexpr_parse_sexpr(string)
-    code = from_sexpr(sexpr)
+    code = from_sexpr(sexpr, signature)
     return code
