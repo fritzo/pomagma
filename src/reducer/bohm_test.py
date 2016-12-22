@@ -602,39 +602,42 @@ def test_try_compute_step(code, expected):
 
 
 # ----------------------------------------------------------------------------
-# Parsing
+# Eager parsing
 
 PARSE_EXAMPLES = [
-    ('I', ABS(IVAR(0))),
-    ('K', ABS(ABS(IVAR(1)))),
-    ('B', ABS(ABS(ABS(APP(IVAR(2), APP(IVAR(1), IVAR(0))))))),
-    ('C', ABS(ABS(ABS(APP(APP(IVAR(2), IVAR(0)), IVAR(1)))))),
-    ('S', ABS(ABS(ABS(APP(APP(IVAR(2), IVAR(0)), APP(IVAR(1), IVAR(0))))))),
-    ('(I x)', x),
-    ('(K x)', ABS(x)),
-    ('(K x y)', x),
-    ('(B x)', ABS(ABS(APP(x, APP(IVAR(1), IVAR(0)))))),
-    ('(B x y)', ABS(APP(x, APP(y, IVAR(0))))),
-    ('(B x y z)', APP(x, APP(y, z))),
-    ('(C x)', ABS(ABS(APP(APP(x, IVAR(0)), IVAR(1))))),
-    ('(C x y)', ABS(APP(APP(x, IVAR(0)), y))),
-    ('(C x y z)', APP(APP(x, z), y)),
-    ('(I I)', ABS(IVAR(0))),
-    ('(I K)', ABS(ABS(IVAR(1)))),
-    ('(K I) ', ABS(ABS(IVAR(0)))),
-    ('(I B)', ABS(ABS(ABS(APP(IVAR(2), APP(IVAR(1), IVAR(0))))))),
-    pytest.mark.xfail(
-        ('(B I)', ABS(ABS(ABS(APP(IVAR(2), APP(IVAR(1), IVAR(0)))))))
-    ),
+    ('I', '(ABS (IVAR 0))'),
+    ('K', '(ABS (ABS (IVAR 1)))'),
+    ('B', '(ABS (ABS (ABS (IVAR 2 (IVAR 1 (IVAR 0))))))'),
+    ('C', '(ABS (ABS (ABS (IVAR 2 (IVAR 0) (IVAR 1)))))'),
+    ('S', '(ABS (ABS (ABS (IVAR 2 (IVAR 0) (IVAR 1 (IVAR 0))))))'),
+    ('(I x)', 'x'),
+    ('(K x)', '(ABS x)'),
+    ('(K x y)', 'x'),
+    ('(B x)', '(ABS (ABS (x (IVAR 1 (IVAR 0)))))'),
+    ('(B x y)', '(ABS (x (y (IVAR 0))))'),
+    ('(B x y z)', '(x (y z))'),
+    ('(C x)', '(ABS (ABS (x (IVAR 0) (IVAR 1))))'),
+    ('(C x y)', '(ABS (x (IVAR 0) y))'),
+    ('(C x y z)', '(x z y)'),
+    ('(S x)', '(ABS (ABS (x (IVAR 0) (IVAR 1 (IVAR 0)))))'),
+    ('(S x y)', '(ABS (x (IVAR 0) (y (IVAR 0))))'),
+    ('(S x y z)', '(x  z (y z))'),
+    ('(I I)', '(ABS (IVAR 0))'),
+    ('(I K)', '(ABS (ABS (IVAR 1)))'),
+    ('(K I) ', '(ABS (ABS (IVAR 0)))'),
+    ('(I B)', '(ABS (ABS (ABS (IVAR 2 (IVAR 1 (IVAR 0))))))'),
+    ('(B I)', '(ABS (IVAR 0))'),
+    ('(S K I)', '(ABS (IVAR 0))'),
+    ('(S K K)', '(ABS (IVAR 0))'),
 ]
 
 
 @for_each(PARSE_EXAMPLES)
 def test_polish_simplify(sexpr, expected):
     polish = polish_print(sexpr_parse(sexpr))
-    assert polish_simplify(polish) is expected
+    assert polish_simplify(polish) is sexpr_parse(expected)
 
 
 @for_each(PARSE_EXAMPLES)
 def test_sexpr_simplify(sexpr, expected):
-    assert sexpr_simplify(sexpr) is expected
+    assert sexpr_simplify(sexpr) is sexpr_parse(expected)
