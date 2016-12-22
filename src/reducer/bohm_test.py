@@ -2,12 +2,13 @@ from pomagma.reducer.bohm import (
     increment_rank, decrement_rank, is_const, is_linear, is_normal,
     substitute, app, abstract, join, occurs, approximate_var, approximate,
     true, false, try_prove_less, try_prove_nless,
-    try_decide_less, try_decide_equal, try_compute_step, SIGNATURE,
+    try_decide_less, try_decide_equal, try_compute_step,
+    polish_simplify, sexpr_simplify,
 )
 from pomagma.reducer.code import (
     TOP, BOT, NVAR, IVAR, APP, ABS, JOIN,
     QUOTE, EVAL, QAPP, QQUOTE, LESS, EQUAL,
-    polish_parse, sexpr_parse, sexpr_print,
+    polish_print, sexpr_parse,
 )
 from pomagma.util.testing import for_each, xfail_if_not_implemented
 import pytest
@@ -608,24 +609,32 @@ PARSE_EXAMPLES = [
     ('K', ABS(ABS(IVAR(1)))),
     ('B', ABS(ABS(ABS(APP(IVAR(2), APP(IVAR(1), IVAR(0))))))),
     ('C', ABS(ABS(ABS(APP(APP(IVAR(2), IVAR(0)), IVAR(1)))))),
-    ('S', ABS(ABS(ABS(APP(APP(IVAR(2), APP(IVAR(1), IVAR(0))), IVAR(0)))))),
-    ('APP I I', ABS(IVAR(0))),
-    ('APP I K', ABS(ABS(IVAR(1)))),
-    ('APP K I ', ABS(ABS(IVAR(0)))),
-    ('APP I B', ABS(ABS(ABS(APP(IVAR(2), APP(IVAR(1), IVAR(0))))))),
+    ('S', ABS(ABS(ABS(APP(APP(IVAR(2), IVAR(0)), APP(IVAR(1), IVAR(0))))))),
+    ('(I x)', x),
+    ('(K x)', ABS(x)),
+    ('(K x y)', x),
+    ('(B x)', ABS(ABS(APP(x, APP(IVAR(1), IVAR(0)))))),
+    ('(B x y)', ABS(APP(x, APP(y, IVAR(0))))),
+    ('(B x y z)', APP(x, APP(y, z))),
+    ('(C x)', ABS(ABS(APP(APP(x, IVAR(0)), IVAR(1))))),
+    ('(C x y)', ABS(APP(APP(x, IVAR(0)), y))),
+    ('(C x y z)', APP(APP(x, z), y)),
+    ('(I I)', ABS(IVAR(0))),
+    ('(I K)', ABS(ABS(IVAR(1)))),
+    ('(K I) ', ABS(ABS(IVAR(0)))),
+    ('(I B)', ABS(ABS(ABS(APP(IVAR(2), APP(IVAR(1), IVAR(0))))))),
     pytest.mark.xfail(
-        ('APP B I', ABS(ABS(ABS(APP(IVAR(2), APP(IVAR(1), IVAR(0)))))))
+        ('(B I)', ABS(ABS(ABS(APP(IVAR(2), APP(IVAR(1), IVAR(0)))))))
     ),
 ]
 
 
 @for_each(PARSE_EXAMPLES)
-def test_polish_parse(polish, expected):
-    assert polish_parse(polish, SIGNATURE) is expected
+def test_polish_simplify(sexpr, expected):
+    polish = polish_print(sexpr_parse(sexpr))
+    assert polish_simplify(polish) is expected
 
 
 @for_each(PARSE_EXAMPLES)
-def test_sexpr_parse(polish, expected):
-    code = polish_parse(polish)
-    sexpr = sexpr_print(code)
-    assert sexpr_parse(sexpr, SIGNATURE) is expected
+def test_sexpr_simplify(sexpr, expected):
+    assert sexpr_simplify(sexpr) is expected

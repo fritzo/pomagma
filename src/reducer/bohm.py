@@ -16,7 +16,7 @@ from pomagma.compiler.util import memoize_arg, memoize_args
 from pomagma.reducer.code import (
     TOP, BOT, IVAR, APP, ABS, JOIN, QUOTE, EVAL, QAPP, QQUOTE, LESS, EQUAL,
     is_code, is_atom, is_nvar, is_ivar, is_app, is_abs, is_join, is_quote,
-    complexity,
+    complexity, polish_parse, sexpr_parse,
 )
 from pomagma.reducer.util import UnreachableError
 
@@ -674,6 +674,9 @@ def try_compute_step(code):
     raise UnreachableError(code)
 
 
+# ----------------------------------------------------------------------------
+# Eager parsing
+
 SIGNATURE = {
     'APP': app,
     'ABS': abstract,
@@ -682,5 +685,13 @@ SIGNATURE = {
     'K': ABS(ABS(IVAR(1))),
     'B': ABS(ABS(ABS(APP(IVAR(2), APP(IVAR(1), IVAR(0)))))),
     'C': ABS(ABS(ABS(APP(APP(IVAR(2), IVAR(0)), IVAR(1))))),
-    'S': ABS(ABS(ABS(APP(APP(IVAR(2), APP(IVAR(1), IVAR(0))), IVAR(0))))),
+    'S': ABS(ABS(ABS(APP(APP(IVAR(2), IVAR(0)), APP(IVAR(1), IVAR(0)))))),
 }
+
+
+def sexpr_simplify(string):
+    return sexpr_parse(string, SIGNATURE)
+
+
+def polish_simplify(string):
+    return polish_parse(string, SIGNATURE)
