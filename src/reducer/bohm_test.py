@@ -2,11 +2,12 @@ from pomagma.reducer.bohm import (
     increment_rank, decrement_rank, is_const, is_linear, is_normal,
     substitute, app, abstract, join, occurs, approximate_var, approximate,
     true, false, try_prove_less, try_prove_nless,
-    try_decide_less, try_decide_equal, try_compute_step,
+    try_decide_less, try_decide_equal, try_compute_step, SIGNATURE,
 )
 from pomagma.reducer.code import (
     TOP, BOT, NVAR, IVAR, APP, ABS, JOIN,
     QUOTE, EVAL, QAPP, QQUOTE, LESS, EQUAL,
+    polish_parse, sexpr_parse, sexpr_print,
 )
 from pomagma.util.testing import for_each, xfail_if_not_implemented
 import pytest
@@ -273,6 +274,7 @@ ABSTRACT_EXAMPLES = [
     (x, ABS(x)),
     (IVAR(0), ABS(IVAR(0))),
     (IVAR(1), ABS(IVAR(1))),
+    (ABS(IVAR(0)), ABS(ABS(IVAR(0)))),
     (APP(IVAR(0), x), ABS(APP(IVAR(0), x))),
     (APP(IVAR(0), IVAR(0)), ABS(APP(IVAR(0), IVAR(0)))),
     (APP(x, IVAR(0)), x),
@@ -596,3 +598,34 @@ def test_is_normal(code, expected_try_compute_step):
 def test_try_compute_step(code, expected):
     with xfail_if_not_implemented():
         assert try_compute_step(code) is expected
+
+
+# ----------------------------------------------------------------------------
+# Parsing
+
+PARSE_EXAMPLES = [
+    ('I', ABS(IVAR(0))),
+    ('K', ABS(ABS(IVAR(1)))),
+    ('B', ABS(ABS(ABS(APP(IVAR(2), APP(IVAR(1), IVAR(0))))))),
+    ('C', ABS(ABS(ABS(APP(APP(IVAR(2), IVAR(0)), IVAR(1)))))),
+    ('S', ABS(ABS(ABS(APP(APP(IVAR(2), APP(IVAR(1), IVAR(0))), IVAR(0)))))),
+    ('APP I I', ABS(IVAR(0))),
+    ('APP I K', ABS(ABS(IVAR(1)))),
+    ('APP K I ', ABS(ABS(IVAR(0)))),
+    ('APP I B', ABS(ABS(ABS(APP(IVAR(2), APP(IVAR(1), IVAR(0))))))),
+    pytest.mark.xfail(
+        ('APP B I', ABS(ABS(ABS(APP(IVAR(2), APP(IVAR(1), IVAR(0)))))))
+    ),
+]
+
+
+@for_each(PARSE_EXAMPLES)
+def test_polish_parse(polish, expected):
+    assert polish_parse(polish, SIGNATURE) is expected
+
+
+@for_each(PARSE_EXAMPLES)
+def test_sexpr_parse(polish, expected):
+    code = polish_parse(polish)
+    sexpr = sexpr_print(code)
+    assert sexpr_parse(sexpr, SIGNATURE) is expected

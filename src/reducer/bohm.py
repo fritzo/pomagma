@@ -312,6 +312,8 @@ def abstract(body):
         return ABS(body)
     elif is_ivar(body):
         return ABS(body)
+    elif is_abs(body):
+        return ABS(body)
     elif is_join(body):
         lhs = abstract(body[1])
         rhs = abstract(body[2])
@@ -670,3 +672,15 @@ def try_compute_step(code):
     else:
         raise ValueError(code)
     raise UnreachableError(code)
+
+
+SIGNATURE = {
+    'APP': app,
+    'ABS': abstract,
+    'JOIN': join,
+    'I': ABS(IVAR(0)),
+    'K': ABS(ABS(IVAR(1))),
+    'B': ABS(ABS(ABS(APP(IVAR(2), APP(IVAR(1), IVAR(0)))))),
+    'C': ABS(ABS(ABS(APP(APP(IVAR(2), IVAR(0)), IVAR(1))))),
+    'S': ABS(ABS(ABS(APP(APP(IVAR(2), APP(IVAR(1), IVAR(0))), IVAR(0))))),
+}

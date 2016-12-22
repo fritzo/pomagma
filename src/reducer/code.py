@@ -324,14 +324,16 @@ def _polish_parse_tokens(tokens, signature):
     try:
         polish_parsers = _PARSERS[token]
     except KeyError:
-        return token if re_keyword.match(token) else NVAR(token)  # atom
+        if re_keyword.match(token):
+            return signature.get(token, token)
+        else:
+            return NVAR(token)
     args = tuple(p(tokens, signature) for p in polish_parsers)
     try:
         fun = signature[token]
     except KeyError:
         return _code(token, *args)
-    else:
-        return fun(*args)
+    return fun(*args)
 
 
 _PARSERS = {
@@ -438,7 +440,7 @@ def from_sexpr(sexpr, signature={}):
     assert isinstance(signature, dict), type(signature)
     if isinstance(sexpr, str):
         if sexpr in _keywords:
-            return sexpr
+            return signature.get(sexpr, sexpr)
         else:
             if re_keyword.match(sexpr):
                 raise ValueError('Unrecognized keyword: {}'.format(sexpr))
@@ -496,6 +498,7 @@ def from_sexpr(sexpr, signature={}):
             head = SVAR(int(sexpr[1]))
             args = sexpr[2:]
         else:
+            head = signature.get(head, head)
             args = sexpr[1:]
     else:
         if re_keyword.match(head):
