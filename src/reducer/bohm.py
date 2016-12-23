@@ -199,8 +199,8 @@ def substitute(body, value, rank, budget):
             # Eager substitution.
             if not linear:
                 budget = False
-            lhs = substitute(lhs, value, rank, budget)
-            rhs = substitute(rhs, value, rank, budget)
+            lhs = substitute(lhs, value, rank, False)
+            rhs = substitute(rhs, value, rank, False)
             return app(lhs, rhs)
         else:
             # Lazy substitution.
@@ -539,7 +539,7 @@ def try_decide_less_weak(lhs, rhs):
     while is_abs(lhs) or is_abs(rhs):
         lhs = unabstract(lhs)
         rhs = unabstract(rhs)
-    assert lhs is not rhs
+    assert lhs is not rhs, lhs
 
     # Destructure APP.
     lhs_head, lhs_args = unapply(lhs)

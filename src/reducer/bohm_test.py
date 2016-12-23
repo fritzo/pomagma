@@ -23,15 +23,16 @@ z = NVAR('z')
 
 delta = ABS(APP(IVAR(0), IVAR(0)))
 
+ACTIVE_ATOMS = [EVAL, QAPP, QQUOTE, LESS, EQUAL]
+
 s_atoms = s.one_of(
     s.sampled_from([TOP, BOT]),
     s.just(IVAR(0)),
     s.just(IVAR(1)),
     s.just(IVAR(2)),
     s.just(IVAR(3)),
-    s.just(IVAR(4)),
     s.sampled_from([x, y, z]),
-    s.sampled_from([EVAL, QAPP, QQUOTE, LESS, EQUAL]),
+    s.sampled_from(ACTIVE_ATOMS),
 )
 
 
@@ -229,7 +230,7 @@ APP_EXAMPLES = [
     (ABS(APP(IVAR(0), y)), x, APP(x, y)),
     (ABS(APP(IVAR(0), IVAR(1))), x, APP(x, IVAR(0))),
     (JOIN(x, y), z, JOIN(APP(x, z), APP(y, z))),
-    pytest.mark.xfail((JOIN(ABS(IVAR(0)), x), TOP, TOP)),
+    (JOIN(ABS(IVAR(0)), x), TOP, TOP),
     (JOIN(ABS(IVAR(0)), x), BOT, APP(x, BOT)),
     (QUOTE(TOP), x, APP(QUOTE(TOP), x)),
     (EVAL, TOP, TOP),
@@ -327,7 +328,6 @@ def test_abstract(code, expected):
     assert abstract(code) is expected
 
 
-@pytest.mark.xfail(reason='join(-,-) does not handle ABS(-)')
 @hypothesis.given(s_codes)
 @hypothesis.example(join(TOP, ABS(IVAR(0))))
 def test_abstract_eta(code):
@@ -527,34 +527,130 @@ def test_unabstract(code):
     assert abstract(unabstract(code)) is code
 
 
-TRY_DECIDE_LESS_EXAMPLES = [
-    (TOP, TOP, True),
-    (TOP, BOT, False),
-    (BOT, TOP, True),
-    (BOT, BOT, True),
-    (IVAR(0), IVAR(0), True),
-    (IVAR(0), TOP, True),
-    (IVAR(0), BOT, False),
-    (TOP, IVAR(0), False),
-    (BOT, IVAR(0), True),
-    (IVAR(0), IVAR(1), False),
-    (IVAR(1), IVAR(0), False),
-    # TODO Add more examples.
+INCOMPARABLE_PAIRS = [
+    (IVAR(0), IVAR(1)),
+    (IVAR(0), x),
+    (x, y),
+    (x, EVAL),
+    (x, QAPP),
+    (x, QQUOTE),
+    (x, LESS),
+    (x, EQUAL),
+    (x, QUOTE(TOP)),
+    (QUOTE(TOP), QUOTE(BOT)),
+    (IVAR(0), ABS(IVAR(0))),
+    (IVAR(0), ABS(ABS(IVAR(0)))),
+    (IVAR(0), ABS(IVAR(1))),
+    (IVAR(0), ABS(ABS(IVAR(1)))),
+    (ABS(IVAR(0)), ABS(ABS(IVAR(0)))),
+    (ABS(IVAR(0)), ABS(ABS(IVAR(1)))),
+    (APP(APP(x, y), z), APP(APP(x, TOP), BOT)),
+    (APP(APP(x, y), z), APP(APP(x, BOT), TOP)),
+    pytest.mark.xfail((ABS(IVAR(0)), EVAL)),
+]
+
+INCOMPARABLE_CODES = [
+    ABS(IVAR(0)),
+    ABS(APP(IVAR(0), IVAR(0))),
+    ABS(APP(APP(IVAR(0), IVAR(0)), APP(IVAR(0), IVAR(0)))),
+    ABS(ABS(IVAR(0))),
+    ABS(ABS(IVAR(1))),
+    ABS(ABS(APP(IVAR(0), IVAR(0)))),
+    ABS(ABS(APP(IVAR(0), IVAR(1)))),
+    ABS(ABS(APP(IVAR(1), IVAR(1)))),
+    # TODO Fix missed opportunity with unabstract(atom).
+    # EVAL,
+    # QAPP,
+    # QQUOTE,
+    # LESS,
+    # EQUAL,
+]
+
+DOMINATING_PAIRS = [
+    (BOT, TOP),
+    (BOT, IVAR(0)),
+    (BOT, IVAR(1)),
+    (BOT, x),
+    (BOT, y),
+    (IVAR(0), TOP),
+    (IVAR(1), TOP),
+    (x, TOP),
+    (y, TOP),
+    (APP(APP(x, BOT), z), APP(APP(x, y), z)),
+    (APP(APP(x, y), BOT), APP(APP(x, y), z)),
+    (APP(APP(x, y), z), APP(APP(x, TOP), z)),
+    (APP(APP(x, y), z), APP(APP(x, y), TOP)),
+    (APP(APP(x, BOT), z), APP(APP(x, y), TOP)),
+    (APP(APP(x, y), BOT), APP(APP(x, TOP), z)),
+    (APP(APP(x, y), z), APP(APP(x, JOIN(y, z)), z)),
+    (APP(APP(x, y), z), APP(APP(x, y), JOIN(y, z))),
+    (APP(x, y), APP(x, JOIN(y, z))),
+    (APP(x, z), APP(x, JOIN(y, z))),
+    (APP(x, JOIN(y, z)), APP(x, TOP)),
 ]
 
 
-@for_each(TRY_DECIDE_LESS_EXAMPLES)
-def test_try_decide_less_weak(lhs, rhs, expected):
-    assert try_decide_less_weak(lhs, rhs) is expected
+@for_each(INCOMPARABLE_PAIRS)
+def test_try_decide_less_incomparable_pairs(lhs, rhs):
+    assert try_decide_less_weak(lhs, rhs) is False
+    assert try_decide_less_weak(rhs, lhs) is False
 
 
-@for_each(TRY_DECIDE_LESS_EXAMPLES)
-def test_try_decide_less(lhs, rhs, expected):
+@for_each(itertools.combinations(INCOMPARABLE_CODES, 2))
+def test_try_decide_less_incomparable_codes(lhs, rhs):
+    assert try_decide_less_weak(lhs, rhs) is False
+    assert try_decide_less_weak(rhs, lhs) is False
+
+
+@for_each(DOMINATING_PAIRS)
+def test_try_decide_less_dominating(lhs, rhs):
+    assert try_decide_less_weak(lhs, rhs) is True
+    assert try_decide_less_weak(rhs, lhs) is False
+
+
+@hypothesis.given(s_codes)
+def test_try_decide_less_reflexive(code):
+    assert try_decide_less_weak(code, code) is True
+
+
+@hypothesis.given(s_codes)
+def test_try_decide_less_top(code):
+    assert try_decide_less_weak(code, TOP) is True
+
+
+@hypothesis.given(s_codes)
+def test_try_decide_less_bot(code):
+    assert try_decide_less_weak(BOT, code) is True
+
+
+@hypothesis.given(s_codes, s_codes)
+def test_try_decide_less_join(lhs, rhs):
+    assert try_decide_less_weak(lhs, join(lhs, rhs)) is True
+    assert try_decide_less_weak(rhs, join(lhs, rhs)) is True
+
+
+@for_each(ACTIVE_ATOMS)
+def test_try_decide_less_atom(atom):
+    assert try_decide_less_weak(TOP, atom) is False
+    assert try_decide_less_weak(atom, BOT) is False
+
+
+@for_each(itertools.combinations(ACTIVE_ATOMS, 2))
+def test_try_decide_less_atom_atom(lhs, rhs):
+    assert try_decide_less_weak(lhs, rhs) is False
+
+
+@hypothesis.given(s_codes, s_codes)
+@hypothesis.settings(max_examples=1000)
+def test_try_decide_less_weak(lhs, rhs):
+    expected = try_decide_less_weak(lhs, rhs)
+    hypothesis.assume(expected is not None)
     assert try_decide_less(lhs, rhs) is expected
 
 
-@for_each(TRY_DECIDE_LESS_EXAMPLES)
-def test_app_less(lhs, rhs, truth_value):
+@hypothesis.given(s_codes, s_codes)
+def test_app_less(lhs, rhs):
+    truth_value = try_decide_less(lhs, rhs)
     assert truth_value in (True, False, None)
     if truth_value is True:
         expected = true
@@ -565,30 +661,20 @@ def test_app_less(lhs, rhs, truth_value):
     assert app(app(LESS, QUOTE(lhs)), QUOTE(rhs)) is expected
 
 
-TRY_DECIDE_EQUAL_EXAMPLES = [
-    (TOP, TOP, True),
-    (BOT, BOT, True),
-    (IVAR(0), IVAR(0), True),
-    (IVAR(1), IVAR(1), True),
-    (TOP, BOT, False),
-    (BOT, TOP, False),
-    (IVAR(0), TOP, False),
-    (IVAR(0), BOT, False),
-    (TOP, IVAR(0), False),
-    (BOT, IVAR(0), False),
-    (IVAR(0), IVAR(1), False),
-    (IVAR(1), IVAR(0), False),
-    # TODO Add more examples.
-]
+@hypothesis.given(s_codes)
+def test_try_decide_equal_reflexive(code):
+    assert try_decide_equal(code, code) is True
 
 
-@for_each(TRY_DECIDE_EQUAL_EXAMPLES)
-def test_try_decide_equal(lhs, rhs, expected):
-    assert try_decide_equal(lhs, rhs) is expected
+@for_each(INCOMPARABLE_PAIRS)
+def test_try_decide_equal_incomparable(lhs, rhs):
+    assert try_decide_equal(lhs, rhs) is False
+    assert try_decide_equal(rhs, lhs) is False
 
 
-@for_each(TRY_DECIDE_EQUAL_EXAMPLES)
-def test_app_equal(lhs, rhs, truth_value):
+@hypothesis.given(s_codes, s_codes)
+def test_app_equal(lhs, rhs):
+    truth_value = try_decide_equal(lhs, rhs)
     assert truth_value in (True, False, None)
     if truth_value is True:
         expected = true
