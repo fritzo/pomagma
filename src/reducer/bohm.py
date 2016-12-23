@@ -29,6 +29,7 @@ false = ABS(ABS(IVAR(0)))
 
 @memoize_args
 def increment_rank(code, min_rank):
+    """Increment rank of all IVARs in code."""
     if is_atom(code):
         return code
     elif is_nvar(code):
@@ -88,6 +89,7 @@ def _try_decrement_rank(code, min_rank):
 
 
 def decrement_rank(code):
+    """Decrement rank of all IVARs or err if IVAR(0) is free in code."""
     try:
         return _try_decrement_rank(code, 0)
     except CannotDecrementRank:
@@ -95,6 +97,7 @@ def decrement_rank(code):
 
 
 def is_const(code, rank=0):
+    """Return true if IVAR(rank) is not free in code."""
     try:
         _try_decrement_rank(code, rank)
     except CannotDecrementRank:
@@ -148,6 +151,7 @@ def _is_linear(code):
 
 
 def is_linear(code):
+    """Return whether code never copies an IVAR."""
     return _is_linear(code) is not None
 
 
@@ -475,7 +479,7 @@ def approximate(code, direction):
                 for rhs in approximate(code[2], direction):
                     result.add(app(lhs, rhs))
     elif is_abs(code):
-        for body in approximate(code[1]):
+        for body in approximate(code[1], direction):
             result.add(abstract(body))
     elif is_join(code):
         for lhs in approximate(code[1], direction):

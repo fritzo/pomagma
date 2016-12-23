@@ -1,21 +1,49 @@
 from pomagma.reducer.bohm import (
     increment_rank, decrement_rank, is_const, is_linear, is_normal,
     substitute, app, abstract, join, occurs, approximate_var, approximate,
-    true, false, try_prove_less, try_prove_nless,
+    true, false, try_prove_less, try_prove_nless, dominates,
     try_decide_less, try_decide_equal, try_compute_step,
     polish_simplify, sexpr_simplify,
 )
 from pomagma.reducer.code import (
     TOP, BOT, NVAR, IVAR, APP, ABS, JOIN,
     QUOTE, EVAL, QAPP, QQUOTE, LESS, EQUAL,
-    polish_print, sexpr_parse,
+    polish_print, sexpr_parse, sexpr_print, is_code,
 )
 from pomagma.util.testing import for_each, xfail_if_not_implemented
+import hypothesis
+import hypothesis.strategies as s
+import itertools
 import pytest
 
 x = NVAR('x')
 y = NVAR('y')
 z = NVAR('z')
+
+delta = ABS(APP(IVAR(0), IVAR(0)))
+
+s_atoms = s.one_of(
+    s.sampled_from([TOP, BOT]),
+    s.just(IVAR(0)),
+    s.just(IVAR(1)),
+    s.just(IVAR(2)),
+    s.just(IVAR(3)),
+    s.just(IVAR(4)),
+    s.sampled_from([x, y, z]),
+    s.sampled_from([EVAL, QAPP, QQUOTE, LESS, EQUAL]),
+)
+
+
+def s_codes_extend(codes):
+    return s.one_of(
+        s.builds(app, codes, codes),
+        s.builds(abstract, codes),
+        s.builds(join, codes, codes),
+        s.builds(QUOTE, codes),
+    )
+
+
+s_codes = s.recursive(s_atoms, s_codes_extend, max_leaves=32)
 
 
 # ----------------------------------------------------------------------------
@@ -77,6 +105,11 @@ DECREMENT_RANK_EXAMPLES = [
 @for_each(DECREMENT_RANK_EXAMPLES)
 def test_decrement_rank(code, expected):
     assert decrement_rank(code) is expected
+
+
+@hypothesis.given(s_codes)
+def test_decrement_increment_rank(code):
+    assert decrement_rank(increment_rank(code, 0)) is code
 
 
 IS_CONST_EXAMPLES = [
@@ -279,7 +312,7 @@ ABSTRACT_EXAMPLES = [
     (APP(IVAR(0), x), ABS(APP(IVAR(0), x))),
     (APP(IVAR(0), IVAR(0)), ABS(APP(IVAR(0), IVAR(0)))),
     (APP(x, IVAR(0)), x),
-    pytest.mark.xfail((JOIN(IVAR(0), x), JOIN(ABS(IVAR(0)), ABS(x)))),
+    (JOIN(IVAR(0), x), JOIN(ABS(IVAR(0)), ABS(x))),
     (QUOTE(IVAR(0)), ABS(QUOTE(IVAR(0)))),
     (APP(QUOTE(IVAR(0)), IVAR(0)), QUOTE(IVAR(0))),
     (EVAL, ABS(EVAL)),
@@ -291,6 +324,14 @@ ABSTRACT_EXAMPLES = [
 @for_each(ABSTRACT_EXAMPLES)
 def test_abstract(code, expected):
     assert abstract(code) is expected
+
+
+@pytest.mark.xfail(reason='join(-,-) does not handle ABS(-)')
+@hypothesis.given(s_codes)
+@hypothesis.example(join(TOP, ABS(IVAR(0))))
+def test_abstract_eta(code):
+    hypothesis.assume(is_const(code))
+    assert abstract(app(code, IVAR(0))) is decrement_rank(code)
 
 
 # ----------------------------------------------------------------------------
@@ -567,10 +608,20 @@ def test_app_equal(lhs, rhs, truth_value):
     assert app(app(EQUAL, QUOTE(lhs)), QUOTE(rhs)) is expected
 
 
+@hypothesis.given(s_codes)
+def test_dominates_irreflexive(code):
+    assert not dominates(code, code)
+
+
+@hypothesis.given(s_codes, s_codes, s_codes)
+def test_dominates_transitive(x, y, z):
+    for x, y, z in itertools.permutations([x, y, z]):
+        if dominates(x, y) and dominates(y, z):
+            assert dominates(x, z)
+
+
 # ----------------------------------------------------------------------------
 # Computation
-
-delta = ABS(APP(IVAR(0), IVAR(0)))
 
 COMPUTE_EXAMPLES = [
     (TOP, None),
@@ -595,10 +646,29 @@ def test_is_normal(code, expected_try_compute_step):
     assert is_normal(code) is expected
 
 
+@hypothesis.given(s_codes)
+def test_linear_is_normal(code):
+    hypothesis.assume(is_linear(code))
+    assert is_normal(code)
+
+
 @for_each(COMPUTE_EXAMPLES)
 def test_try_compute_step(code, expected):
     with xfail_if_not_implemented():
         assert try_compute_step(code) is expected
+
+
+@hypothesis.given(s_codes)
+@hypothesis.settings(max_examples=1000)
+def test_try_compute_step_runs(code):
+    for step in xrange(5):
+        with xfail_if_not_implemented():
+            result = try_compute_step(code)
+        if is_normal(code):
+            assert result is None
+            return
+        else:
+            assert is_code(result)
 
 
 # ----------------------------------------------------------------------------
@@ -651,3 +721,9 @@ def test_polish_simplify(sexpr, expected):
 @for_each(PARSE_EXAMPLES)
 def test_sexpr_simplify(sexpr, expected):
     assert sexpr_simplify(sexpr) is sexpr_parse(expected)
+
+
+@hypothesis.given(s_codes)
+def test_sexpr_print_simplify(code):
+    sexpr = sexpr_print(code)
+    assert sexpr_simplify(sexpr) is code
