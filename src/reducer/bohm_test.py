@@ -1,9 +1,10 @@
 from pomagma.reducer.bohm import (
     increment_rank, decrement_rank, is_const, is_linear, is_normal,
-    substitute, app, abstract, join, occurs, approximate_var, approximate,
-    true, false, try_prove_less, try_prove_nless, dominates,
-    try_decide_less, try_decide_equal, try_compute_step,
     polish_simplify, sexpr_simplify,
+    substitute, app, abstract, join, occurs,
+    true, false, approximate_var, approximate, unabstract,
+    try_compute_step,
+    try_decide_less_weak, try_decide_less, try_decide_equal, dominates,
 )
 from pomagma.reducer.code import (
     TOP, BOT, NVAR, IVAR, APP, ABS, JOIN,
@@ -521,6 +522,11 @@ def test_join(lhs, rhs, expected):
     assert join(lhs, rhs) is expected
 
 
+@hypothesis.given(s_codes)
+def test_unabstract(code):
+    assert abstract(unabstract(code)) is code
+
+
 TRY_DECIDE_LESS_EXAMPLES = [
     (TOP, TOP, True),
     (TOP, BOT, False),
@@ -538,28 +544,13 @@ TRY_DECIDE_LESS_EXAMPLES = [
 
 
 @for_each(TRY_DECIDE_LESS_EXAMPLES)
+def test_try_decide_less_weak(lhs, rhs, expected):
+    assert try_decide_less_weak(lhs, rhs) is expected
+
+
+@for_each(TRY_DECIDE_LESS_EXAMPLES)
 def test_try_decide_less(lhs, rhs, expected):
     assert try_decide_less(lhs, rhs) is expected
-
-
-@for_each(TRY_DECIDE_LESS_EXAMPLES)
-def test_try_prove_less(lhs, rhs, truth_value):
-    assert truth_value in (True, False, None)
-    if truth_value is True:
-        expected = True
-    else:
-        expected = False
-    assert try_prove_less(lhs, rhs) is expected
-
-
-@for_each(TRY_DECIDE_LESS_EXAMPLES)
-def test_try_prove_nless(lhs, rhs, truth_value):
-    assert truth_value in (True, False, None)
-    if truth_value is False:
-        expected = True
-    else:
-        expected = False
-    assert try_prove_nless(lhs, rhs) is expected
 
 
 @for_each(TRY_DECIDE_LESS_EXAMPLES)

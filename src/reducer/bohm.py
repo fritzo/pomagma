@@ -18,7 +18,7 @@ from pomagma.reducer.code import (
     is_code, is_atom, is_nvar, is_ivar, is_app, is_abs, is_join, is_quote,
     complexity, polish_parse, sexpr_parse,
 )
-from pomagma.reducer.util import UnreachableError
+from pomagma.reducer.util import UnreachableError, trool_all, trool_any
 
 true = ABS(ABS(IVAR(1)))
 false = ABS(ABS(IVAR(0)))
@@ -152,6 +152,7 @@ def _is_linear(code):
 
 def is_linear(code):
     """Return whether code never copies an IVAR."""
+    assert is_code(code), code
     return _is_linear(code) is not None
 
 
@@ -394,27 +395,33 @@ def dominates(lhs, rhs):
     Desired Theorem: dominates(-, -) is transitive.
 
     """
-    return try_prove_less(rhs, lhs) and try_prove_nless(lhs, rhs)
+    lhs_rhs = try_decide_less(lhs, rhs)
+    rhs_lhs = try_decide_less(rhs, lhs)
+    return rhs_lhs is True and lhs_rhs is False
 
 
 @memoize_args
-def try_prove_less(lhs, rhs):
-    """Weak proof procedure returning True or False."""
-    return any(
-        try_prove_less_linear(above_lhs, below_rhs)
-        for above_lhs in approximate(lhs, TOP)
-        for below_rhs in approximate(rhs, BOT)
-    )
+def try_decide_less(lhs, rhs):
+    """Weak decision procedure returning True, False, or None."""
+    # Try a weak procedure.
+    result = try_decide_less_weak(lhs, rhs)
+    if result is not None:
+        return result
 
+    # Try to prove NLESS lhs rhs by approximation.
+    for below_lhs in approximate(lhs, BOT):
+        for above_rhs in approximate(rhs, TOP):
+            if try_decide_less_weak(below_lhs, above_rhs) is False:
+                return False
 
-@memoize_args
-def try_prove_nless(lhs, rhs):
-    """Weak proof procedure returning True or False."""
-    return any(
-        try_prove_nless_linear(below_lhs, above_rhs)
-        for below_lhs in approximate(lhs, BOT)
-        for above_rhs in approximate(rhs, TOP)
-    )
+    # Try to prove LESS lhs rhs by approximation.
+    for above_lhs in approximate(lhs, TOP):
+        for below_rhs in approximate(rhs, BOT):
+            if try_decide_less_weak(above_lhs, below_rhs) is True:
+                return True
+
+    # Give up.
+    return None
 
 
 @memoize_args
@@ -463,10 +470,14 @@ def approximate_var(code, direction, rank):
     return tuple(sorted(result, key=complexity))
 
 
+def is_var(code):
+    return is_nvar(code) or is_ivar(code)
+
+
 @memoize_args
 def approximate(code, direction):
     result = set()
-    if is_atom(code) or is_ivar(code) or is_nvar(code):
+    if is_atom(code) or is_var(code) or is_quote(code):
         result.add(code)
     elif is_app(code):
         if is_abs(code[1]):
@@ -485,18 +496,29 @@ def approximate(code, direction):
         for lhs in approximate(code[1], direction):
             for rhs in approximate(code[2], direction):
                 result.add(join(lhs, rhs))
-    elif is_quote(code):
-        # QUOTE flattens nonlearities, so only TOP or BOT can approximate.
-        result.add(code)
-        result.add(direction)
     else:
         raise ValueError(code)
     return tuple(sorted(result, key=complexity))
 
 
+def unabstract(code):
+    if is_abs(code):
+        return code[1]
+    else:
+        return app(increment_rank(code, 0), IVAR(0))
+
+
+def unapply(code):
+    args = []
+    while is_app(code):
+        args.append(code[2])
+        code = code[1]
+    return code, args
+
+
 @memoize_args
-def try_prove_less_linear(lhs, rhs):
-    """Weak semidecision procedure to prove LESS lhs rhs."""
+def try_decide_less_weak(lhs, rhs):
+    """Weak decision procedure returning True, False, or None."""
     assert is_code(lhs), lhs
     assert is_code(rhs), rhs
 
@@ -506,104 +528,50 @@ def try_prove_less_linear(lhs, rhs):
     if lhs is TOP and rhs is BOT:
         return False
 
-    # Decompose joins.
+    # Destructure JOIN.
     if is_join(lhs):
-        return all(try_prove_less_linear(i, rhs) for i in iter_join(lhs))
+        return trool_all(try_decide_less_weak(i, rhs) for i in iter_join(lhs))
     if is_join(rhs):
-        return any(try_prove_less_linear(lhs, i) for i in iter_join(rhs))
+        # This requires we give up at unreduced terms.
+        return trool_any(try_decide_less_weak(lhs, i) for i in iter_join(rhs))
 
-    # Distinguish variables.
-    if is_ivar(lhs):
-        if rhs is BOT:
-            return False
-        if is_ivar(rhs):
-            return lhs is rhs
-        if is_nvar(rhs):
-            return False
-    elif is_ivar(rhs):
-        if lhs is TOP:
-            return False
-        if is_nvar(lhs):
-            return False
-    if is_nvar(lhs):
-        if rhs is BOT:
-            return False
-        if is_nvar(rhs):
-            return lhs is rhs
-    elif is_nvar(rhs):
-        if lhs is TOP:
-            return False
+    # Destructure ABS.
+    while is_abs(lhs) or is_abs(rhs):
+        lhs = unabstract(lhs)
+        rhs = unabstract(rhs)
+    assert lhs is not rhs
 
-    # TODO Try harder.
+    # Destructure APP.
+    lhs_head, lhs_args = unapply(lhs)
+    rhs_head, rhs_args = unapply(rhs)
 
-    # Give up.
+    # Give up at unreduced terms.
+    if is_abs(lhs_head) or is_abs(rhs_head):
+        return None
+    if lhs_args and not is_var(lhs_head):
+        return None
+    if rhs_args and not is_var(rhs_head):
+        return None
+
+    # Distinguish solvable terms.
+    if is_var(lhs_head) and is_var(rhs_head):
+        if lhs_head is not rhs_head or len(lhs_args) != len(rhs_args):
+            return False
+        return trool_all(
+            try_decide_less_weak(i, j)
+            for i, j in zip(lhs_args, rhs_args)
+        )
+
+    # Distinguish quoted terms.
+    if is_quote(lhs_head) and is_quote(rhs_head):
+        return try_decide_equal(lhs_head[1], rhs_head[1])
+
+    # Anything else is incomparable.
     return False
-
-
-@memoize_args
-def try_prove_nless_linear(lhs, rhs):
-    """Weak semidecision procedure to prove NLESS lhs rhs."""
-    assert is_code(lhs), lhs
-    assert is_code(rhs), rhs
-
-    # Try simple cases.
-    if lhs is BOT or lhs is rhs or rhs is TOP:
-        return False
-    if lhs is TOP and rhs is BOT:
-        return True
-
-    # Decompose joins.
-    if is_join(lhs):
-        return any(try_prove_nless_linear(i, rhs) for i in iter_join(lhs))
-    if is_join(rhs):
-        # TODO Try harder:
-        # return all(try_prove_nless_linear(lhs, i) for i in iter_join(rhs))
-        return False
-
-    # Distinguish variables.
-    if is_ivar(lhs):
-        if rhs is BOT:
-            return True
-        if is_ivar(rhs):
-            return lhs is not rhs
-        if is_nvar(rhs):
-            return False
-    elif is_ivar(rhs):
-        if lhs is TOP:
-            return True
-        if is_nvar(lhs):
-            return True
-    if is_nvar(lhs):
-        if rhs is BOT:
-            return True
-        if is_nvar(rhs):
-            return lhs is not rhs
-    elif is_nvar(rhs):
-        if lhs is TOP:
-            return True
-
-    # TODO Try harder.
-
-    # Give up.
-    return False
-
-
-def try_decide_less(lhs, rhs):
-    if try_prove_less(lhs, rhs):
-        return True
-    if try_prove_nless(lhs, rhs):
-        return False
-    return None
 
 
 def try_decide_equal(lhs, rhs):
-    if lhs is rhs:
-        return True
-    if try_prove_nless(lhs, rhs) or try_prove_nless(rhs, lhs):
-        return False
-    if try_prove_less(lhs, rhs) and try_prove_less(rhs, lhs):
-        return True
-    return None
+    return trool_all([try_decide_less(lhs, rhs), try_decide_less(rhs, lhs)])
 
 
 # ----------------------------------------------------------------------------
