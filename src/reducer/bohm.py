@@ -151,7 +151,7 @@ def _is_linear(code):
 
 
 def is_linear(code):
-    """Return whether code never copies an IVAR."""
+    """Return whether code never copies a bound IVAR."""
     assert is_code(code), code
     return _is_linear(code) is not None
 
@@ -547,6 +547,11 @@ def try_decide_less_weak(lhs, rhs):
 
     # Give up at unreduced terms.
     if is_abs(lhs_head) or is_abs(rhs_head):
+        if len(lhs_args) == len(rhs_args):
+            if try_decide_less_weak(lhs_head, rhs_head) is True:
+                if all(try_decide_less_weak(i, j) is True
+                       for i, j in zip(lhs_args, rhs_args)):
+                    return True
         return None
     if lhs_args and not is_var(lhs_head):
         return None
@@ -605,6 +610,11 @@ def is_normal(code):
 def try_compute_step(code):
     if is_normal(code):
         return None
+    return _compute_step(code)
+
+
+def _compute_step(code):
+    assert not is_normal(code)
     if is_app(code):
         fun = code[1]
         arg = code[2]
@@ -613,34 +623,21 @@ def try_compute_step(code):
             assert not is_linear(arg), arg
             body = fun[1]
             return substitute(body, arg, 0, True)
+        if is_normal(fun):
+            arg = _compute_step(arg)
         else:
-            result = try_compute_step(fun)
-            if result is not None:
-                return app(result, arg)
-            result = try_compute_step(arg)
-            if result is not None:
-                return app(fun, result)
-            raise UnreachableError(code)
+            fun = _compute_step(fun)
+        return app(fun, arg)
     elif is_join(code):
-        lhs = code[1]
+        lhs = _compute_step(code[1])  # Relies on prioritized sorting.
         rhs = code[2]
-        result = try_compute_step(lhs)
-        if result is not None:
-            return join(result, rhs)
-        result = try_compute_step(rhs)
-        if result is not None:
-            return join(lhs, result)
-        raise UnreachableError(code)
+        return join(lhs, rhs)
     elif is_abs(code):
-        result = try_compute_step(code[1])
-        if result is not None:
-            return abstract(result)
-        raise UnreachableError(code)
+        body = _compute_step(code[1])
+        return abstract(body)
     elif is_quote(code):
-        result = try_compute_step(code[1])
-        if result is not None:
-            return QUOTE(result)
-        raise UnreachableError(code)
+        body = _compute_step(code[1])
+        return QUOTE(body)
     else:
         raise ValueError(code)
     raise UnreachableError(code)

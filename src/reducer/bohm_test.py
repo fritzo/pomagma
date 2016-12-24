@@ -566,6 +566,10 @@ INCOMPARABLE_CODES = [
     # EQUAL,
 ]
 
+W = ABS(ABS(APP(APP(IVAR(1), IVAR(0)), IVAR(0))))
+delta_top = ABS(APP(IVAR(0), ABS(APP(IVAR(1), TOP))))
+delta_bot = ABS(APP(IVAR(0), ABS(APP(IVAR(1), BOT))))
+
 DOMINATING_PAIRS = [
     (BOT, TOP),
     (BOT, IVAR(0)),
@@ -587,6 +591,14 @@ DOMINATING_PAIRS = [
     (APP(x, y), APP(x, JOIN(y, z))),
     (APP(x, z), APP(x, JOIN(y, z))),
     (APP(x, JOIN(y, z)), APP(x, TOP)),
+    (ABS(APP(IVAR(1), BOT)), IVAR(0)),
+    (IVAR(0), ABS(APP(IVAR(1), TOP))),
+    (APP(IVAR(0), IVAR(0)), APP(IVAR(0), ABS(APP(IVAR(1), TOP)))),
+    (delta_bot, delta),  # FIXME These are actually equal: delta delta = BOT.
+    (delta, delta_top),
+    # FIXME These are proven LESS and should be easy to prove NLESS.
+    pytest.mark.xfail((APP(W, delta_bot), APP(W, delta))),
+    pytest.mark.xfail((APP(W, delta), APP(W, delta_top))),
 ]
 
 
