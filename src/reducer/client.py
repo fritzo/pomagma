@@ -18,7 +18,7 @@ class Client(object):
         assert callable(poll_callback), poll_callback
         self._poll_callback = poll_callback
         self._socket = CONTEXT.socket(zmq.REQ)
-        print 'connecting to reducer at', address
+        print('connecting to reducer at {}'.format(address))
         self._socket.connect(address)
 
     def __enter__(self):

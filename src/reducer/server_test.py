@@ -11,14 +11,14 @@ OPTIONS = {
 
 
 def test_ping():
-    print 'starting server'
+    print('starting server')
     server = pomagma.reducer.serve(ADDRESS, **OPTIONS)
     try:
-        print 'connecting client'
+        print('connecting client')
         with server.connect() as client:
             for _ in xrange(10):
-                print 'pinging server'
+                print('pinging server')
                 client.ping()
     finally:
-        print 'stopping server'
+        print('stopping server')
         server.stop()

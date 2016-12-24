@@ -93,3 +93,12 @@ def test_reduce_learn_sexpr_equations(code, expected_code, message):
         actual_string = main.reduce(string, engine='learn')
     expected_string = sexpr_print(expected_code)
     assert actual_string == expected_string, message
+
+
+@for_each([
+    ('(ABS (IVAR 0 (IVAR 0)))', 0),
+    ('(ABS (IVAR 0 (IVAR 0)) (ABS (IVAR 0 (IVAR 0))))', None),
+    ('(ABS (IVAR 0 (IVAR 0)) (ABS (IVAR 0 (IVAR 0 (IVAR 0)))))', None),
+])
+def test_step(code, expected):
+    assert main.step(code) == expected

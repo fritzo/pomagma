@@ -16,13 +16,13 @@ SERVER = None
 
 
 def setup_module():
-    print 'starting server'
+    print('starting server')
     global SERVER
     SERVER = pomagma.reducer.serve(ADDRESS, **OPTIONS)
 
 
 def teardown_module():
-    print 'stopping server'
+    print('stopping server')
     global SERVER
     SERVER.stop()
     SERVER = None

@@ -2,8 +2,10 @@ import contextlib
 import email
 import errno
 import fcntl
+import functools
 import itertools
 import os
+import pdb
 import shutil
 import signal
 import smtplib
@@ -11,6 +13,7 @@ import subprocess
 import sys
 import tempfile
 import timeit
+import traceback
 import uuid
 
 SRC = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -98,6 +101,21 @@ def on_signal(sig):
 def handle_pdb(sig, frame):
     import pdb
     pdb.Pdb().set_trace(frame)
+
+
+def debuggable(fun):
+    """Decorator for functions that start pdb on error."""
+
+    @functools.wraps(fun)
+    def debuggable_fun(*args, **kwargs):
+        try:
+            return fun(*args, **kwargs)
+        except:
+            type, value, tb = sys.exc_info()
+            traceback.print_exc()
+            pdb.post_mortem(tb)
+
+    return debuggable_fun
 
 
 def get_rss(pid):

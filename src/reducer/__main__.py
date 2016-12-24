@@ -1,6 +1,8 @@
 from parsable import parsable
+from pomagma.reducer import bohm
 from pomagma.reducer import lib
 from pomagma.reducer import transforms
+from pomagma.reducer.bohm import polish_simplify, sexpr_simplify
 from pomagma.reducer.code import polish_parse, polish_print
 from pomagma.reducer.code import sexpr_parse, sexpr_print
 from pomagma.reducer.engines import continuation
@@ -8,6 +10,7 @@ from pomagma.reducer.engines import de_bruijn
 from pomagma.reducer.engines import engine
 from pomagma.reducer.engines import learn
 from pomagma.reducer.linker import link
+from pomagma.util import debuggable
 import os
 import pomagma.util
 import subprocess
@@ -15,8 +18,8 @@ import sys
 
 
 FORMATS = {
-    'polish': (polish_parse, polish_print),
-    'sexpr': (sexpr_parse, sexpr_print),
+    'polish': (polish_parse, polish_print, polish_simplify),
+    'sexpr': (sexpr_parse, sexpr_print, sexpr_simplify),
 }
 
 
@@ -37,7 +40,7 @@ def compile(string, fmt='auto'):
     if fmt == 'auto':
         fmt = guess_format(string)
     print('Format: {}'.format(fmt))
-    parse, print_ = FORMATS[fmt]
+    parse, print_, simplify = FORMATS[fmt]
     code = parse(string)
     result = transforms.compile_(code)
     print('In: {}'.format(string))
@@ -55,7 +58,7 @@ def decompile(string, fmt='auto'):
         fmt = guess_format(string)
     print('Format: {}'.format(fmt))
     print('In: {}'.format(string))
-    parse, print_ = FORMATS[fmt]
+    parse, print_, simplify = FORMATS[fmt]
     code = parse(string)
     result = transforms.decompile(code)
     print('Out: {}'.format(print_(result)))
@@ -64,7 +67,7 @@ def decompile(string, fmt='auto'):
 @parsable
 def repl(fmt='sexpr'):
     """Read eval print loop."""
-    parse, print_ = FORMATS[fmt]
+    parse, print_, simplify = FORMATS[fmt]
     while True:
         sys.stdout.write('> ')
         sys.stdout.flush()
@@ -138,13 +141,33 @@ def reduce(string, engine='engine', fmt='auto'):
     print('Format: {}'.format(fmt))
     print('Engine: {}'.format(engine))
     print('In: {}'.format(string))
-    parse, print_ = FORMATS[fmt]
+    parse, print_, simplify = FORMATS[fmt]
     code = parse(string)
     code = link(code, lazy=False)
     result = ENGINES[engine].reduce(code)
     result_string = print_(result)
     print('Out: {}'.format(result_string))
     return result_string
+
+
+@parsable
+@debuggable
+def step(string, steps=10, fmt='auto'):
+    """Step through reduction sequence of bohm library."""
+    if fmt == 'auto':
+        fmt = guess_format(string)
+    print('Format: {}'.format(fmt))
+    print('Press ENTER to continue, anything else to break.')
+    parse, print_, simplify = FORMATS[fmt]
+    code = simplify(string)
+    print(print_(code))
+    for step in xrange(steps):
+        code = bohm.try_compute_step(code)
+        if code is None:
+            print('DONE')
+            return step
+        print(print_(code))
+    return None
 
 
 if __name__ == '__main__':
