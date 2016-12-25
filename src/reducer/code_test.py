@@ -1,5 +1,5 @@
 from pomagma.reducer.code import (
-    APP, JOIN, NVAR, IVAR, ABS, FUN, LET,
+    APP, JOIN, NVAR, IVAR, ABS, FUN,
     QUOTE, CODE, EVAL, QAPP, QQUOTE, EQUAL, LESS,
     TOP, BOT, I, K, B, C, S, V, A, UNIT, BOOL, MAYBE, PROD, SUM, NUM,
     free_vars, complexity, polish_parse, polish_print,
@@ -69,9 +69,6 @@ def test_free_vars(code, free):
     (FUN(x, x), 1 + max(1, 1)),
     (FUN(x, I), 1 + max(1, 2)),
     (FUN(x, K), 1 + max(1, 3)),
-    (LET(x, x, x), 1 + max(1, 1, 1)),
-    (LET(x, I, x), 1 + max(1, 2, 1)),
-    (LET(x, K, x), 1 + max(1, 3, 1)),
     (APP(APP(S, x), x), 1 + max(1 + max(6, 1), 1)),
     (APP(APP(S, I), x), 1 + max(1 + max(6, 2), 1)),
     (APP(APP(S, I), I), 1 + max(1 + max(6, 2), 2)),
@@ -119,11 +116,6 @@ EXAMPLES = [
         'code': FUN(x, APP(x, x)),
         'polish': 'FUN x APP x x',
         'sexpr': '(FUN x (x x))',
-    },
-    {
-        'code': LET(x, I, APP(I, I)),
-        'polish': 'LET x I APP I I',
-        'sexpr': '(LET x I (I I))',
     },
 ]
 
@@ -201,7 +193,6 @@ def s_codes_extend(terms):
         s.builds(QUOTE, terms),
         s.builds(ABS, terms),
         s.builds(FUN, s_vars, terms),
-        s.builds(LET, s_vars, terms, terms),
     )
 
 

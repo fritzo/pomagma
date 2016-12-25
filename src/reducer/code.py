@@ -50,7 +50,6 @@ _JOIN = make_keyword('JOIN')
 _QUOTE = make_keyword('QUOTE')
 _ABS = make_keyword('ABS')  # de Bruijn abstraction.
 _FUN = make_keyword('FUN')  # Nominal abstraction.
-_LET = make_keyword('LET')
 
 TOP = make_keyword('TOP')
 BOT = make_keyword('BOT')
@@ -110,10 +109,6 @@ def FUN(var, body):
     return _code(_FUN, var, body)
 
 
-def LET(var, defn, body):
-    return _code(_LET, var, defn, body)
-
-
 def is_atom(code):
     assert is_code(code), code
     return isinstance(code, str)
@@ -154,11 +149,6 @@ def is_fun(code):
     return isinstance(code, tuple) and code[0] is _FUN
 
 
-def is_let(code):
-    assert is_code(code), code
-    return isinstance(code, tuple) and code[0] is _LET
-
-
 @memoize_arg
 def free_vars(code):
     """Returns set of free nominal variables."""
@@ -174,9 +164,6 @@ def free_vars(code):
     elif is_fun(code):
         assert is_nvar(code[1])
         return free_vars(code[2]) - frozenset([code[1]])
-    elif is_let(code):
-        assert is_nvar(code[1])
-        return free_vars(code[3]) - frozenset([code[1]]) | free_vars(code[2])
     else:
         return frozenset()
 
@@ -273,7 +260,6 @@ _PARSERS = {
     _QUOTE: (_polish_parse_tokens,),
     _ABS: (_polish_parse_tokens,),
     _FUN: (_polish_parse_tokens, _polish_parse_tokens),
-    _LET: (_polish_parse_tokens, _polish_parse_tokens, _polish_parse_tokens),
 }
 
 
@@ -337,11 +323,6 @@ def to_sexpr(code):
         args.append(to_sexpr(head[2]))
         args.append(to_sexpr(head[1]))
         head = _FUN
-    elif is_let(head):
-        args.append(to_sexpr(head[3]))
-        args.append(to_sexpr(head[2]))
-        args.append(to_sexpr(head[1]))
-        head = _LET
     args.append(head)
     args.reverse()
     return tuple(args)
@@ -380,12 +361,6 @@ def from_sexpr(sexpr, signature={}):
             body = from_sexpr(sexpr[2], signature)
             head = signature.get('FUN', FUN)(var, body)
             args = sexpr[3:]
-        elif head is _LET:
-            var = from_sexpr(sexpr[1], signature)
-            defn = from_sexpr(sexpr[2], signature)
-            body = from_sexpr(sexpr[3], signature)
-            head = signature.get('LET', LET)(var, defn, body)
-            args = sexpr[4:]
         else:
             head = signature.get(head, head)
             args = sexpr[1:]

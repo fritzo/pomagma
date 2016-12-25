@@ -32,7 +32,7 @@ def guess_format(string):
 
 @parsable
 def compile(string, fmt='auto'):
-    """Compile code from I,K,B,C,S to FUN,LET form.
+    """Compile code from I,K,B,C,S to FUN form.
 
     Available foramts: polish, sexpr
 
@@ -49,7 +49,7 @@ def compile(string, fmt='auto'):
 
 @parsable
 def decompile(string, fmt='auto'):
-    """Deompile code from FUN,LET to I,K,B,C,S form.
+    """Deompile code from FUN to I,K,B,C,S form.
 
     Available foramts: polish, sexpr
 

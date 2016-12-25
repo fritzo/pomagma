@@ -57,13 +57,12 @@ from pomagma.reducer.code import (
     CODE, EVAL, QAPP, QQUOTE, EQUAL, LESS,
     TOP, BOT, I, K, B, C, S,
     V, A, UNIT, BOOL, MAYBE, PROD, SUM, NUM,
-    NVAR, IVAR, QUOTE, APP, JOIN, ABS, FUN, LET,
-    _NVAR, _IVAR, _JOIN, _QUOTE, _ABS, _FUN, _LET,
-    is_let,
+    NVAR, IVAR, QUOTE, APP, JOIN, ABS, FUN,
+    _NVAR, _IVAR, _JOIN, _QUOTE, _ABS, _FUN,
     is_nvar, is_ivar, is_app, is_join, is_quote, is_abs, is_fun,
 )
 
-PROTOCOL_VERSION = '0.0.16'  # Semver compliant.
+PROTOCOL_VERSION = '0.0.17'  # Semver compliant.
 
 # ----------------------------------------------------------------------------
 # Packed varints.
@@ -138,10 +137,10 @@ INT_TO_SYMB = [
     TOP, BOT, I, K, B, C, S,
     CODE, EVAL, QAPP, QQUOTE, EQUAL, LESS,
     V, A, UNIT, BOOL, MAYBE, PROD, SUM, NUM,
-    _NVAR, _IVAR, _JOIN, _QUOTE, _ABS, _FUN, _LET,
+    _NVAR, _IVAR, _JOIN, _QUOTE, _ABS, _FUN,
     # Symbols beyond pos 30 require an extra byte.
 ]
-assert len(INT_TO_SYMB) == 29, 'Update this to confirm changing INT_TO_SYMB'
+assert len(INT_TO_SYMB) == 28, 'Update this to confirm changing INT_TO_SYMB'
 SYMB_TO_INT = {k: v for v, k in enumerate(INT_TO_SYMB) if k is not RAW_BYTES}
 
 
@@ -192,11 +191,6 @@ def dump(code, f):
         args.append(head[2])
         args.append(head[1])
         _dump_head_argc(SYMB_TO_INT[_FUN], len(args), f)
-    elif is_let(head):
-        args.append(head[3])
-        args.append(head[2])
-        args.append(head[1])
-        _dump_head_argc(SYMB_TO_INT[_LET], len(args), f)
     else:
         try:
             head = SYMB_TO_INT[head]
@@ -262,14 +256,6 @@ def _load_from(bytes_):
         var = _load_from(bytes_)
         body = _load_from(bytes_)
         head = FUN(var, body)
-    elif head is _LET:
-        if argc < 3:
-            raise ValueError('LET requires at least three args')
-        argc -= 3
-        var = _load_from(bytes_)
-        defn = _load_from(bytes_)
-        body = _load_from(bytes_)
-        head = LET(var, defn, body)
     for _ in xrange(argc):
         arg = _load_from(bytes_)
         head = APP(head, arg)

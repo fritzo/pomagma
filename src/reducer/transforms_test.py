@@ -1,5 +1,5 @@
 from pomagma.reducer.code import TOP, BOT, I, K, B, C, S
-from pomagma.reducer.code import NVAR, APP, JOIN, QUOTE, FUN, LET
+from pomagma.reducer.code import NVAR, APP, JOIN, QUOTE, FUN
 from pomagma.reducer.code import polish_print
 from pomagma.reducer.transforms import compile_, decompile
 from pomagma.reducer.transforms import fresh_var, abstract, define, substitute
@@ -114,7 +114,7 @@ c = fresh_var(2)
     (APP(APP(APP(APP(S, x), y), z), w), APP(APP(APP(x, z), APP(y, z)), w)),
     (
         APP(APP(APP(APP(S, x), y), I), w),
-        APP(LET(a, FUN(b, b), APP(APP(x, a), APP(y, a))), w),
+        APP(APP(FUN(a, APP(APP(x, a), APP(y, a))), FUN(b, b)), w),
     ),
     (JOIN(x, y), JOIN(x, y)),
 ])

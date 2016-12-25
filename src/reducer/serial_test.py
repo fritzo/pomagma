@@ -1,7 +1,7 @@
 from cStringIO import StringIO
 from pomagma.reducer.code import APP, ABS, JOIN, QUOTE, TOP, BOT, I, K, B, C, S
 from pomagma.reducer.code import CODE, EVAL, QAPP, QQUOTE, EQUAL, LESS
-from pomagma.reducer.code import NVAR, IVAR, FUN, LET
+from pomagma.reducer.code import NVAR, IVAR, FUN
 from pomagma.reducer.code import V, A, UNIT, BOOL, MAYBE, PROD, SUM, NUM
 from pomagma.reducer.code_test import s_codes
 from pomagma.reducer.serial import dump, load
@@ -84,7 +84,6 @@ x = NVAR('x')
     APP(QUOTE(K), C),
     FUN(x, APP(S, APP(x, x))),
     APP(FUN(x, x), I),
-    LET(x, I, APP(APP(S, x), x)),
 ])
 def test_serialize_deserialize_parametrized(code):
     f_out = StringIO()

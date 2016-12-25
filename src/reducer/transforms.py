@@ -5,9 +5,9 @@ __all__ = ['try_abstract', 'abstract', 'decompile']
 from pomagma.compiler.util import memoize_args
 from pomagma.reducer import pattern
 from pomagma.reducer.code import TOP, BOT, I, K, B, C, S
-from pomagma.reducer.code import NVAR, APP, JOIN, QUOTE, FUN, LET
+from pomagma.reducer.code import NVAR, APP, JOIN, QUOTE, FUN
 from pomagma.reducer.code import is_atom, is_nvar, is_app, is_join, is_quote
-from pomagma.reducer.code import is_fun, is_let
+from pomagma.reducer.code import is_fun
 
 
 # ----------------------------------------------------------------------------
@@ -146,7 +146,7 @@ def substitute(var, defn, body):
 
 
 # ----------------------------------------------------------------------------
-# Symbolic compiler : FUN,LET -> I,K,B,C,S
+# Symbolic compiler : FUN -> I,K,B,C,S
 
 def compile_(code):
     if is_atom(code):
@@ -168,17 +168,12 @@ def compile_(code):
         var = code[1]
         body = compile_(code[2])
         return abstract(var, body)
-    elif is_let(code):
-        var = code[1]
-        defn = compile_(code[2])
-        body = compile_(code[3])
-        return define(var, defn, body)
     else:
         raise ValueError('Cannot compile_: {}'.format(code))
 
 
 # ----------------------------------------------------------------------------
-# Symbolic decompiler : I,K,B,C,S -> FUN,LET
+# Symbolic decompiler : I,K,B,C,S -> FUN
 
 FRESH_ID = 0
 FRESH_VARS = map(NVAR, 'abcdefghijklmnopqrstuvwxyz')
@@ -328,7 +323,7 @@ def _decompile_stack(stack):
         z = _decompile(z)
         xv = APP(x, v)
         yv = APP(y, v)
-        head = LET(v, z, _decompile(APP(xv, yv)))
+        head = APP(FUN(v, _decompile(APP(xv, yv))), z)
         args = _decompile_args(args)
         return _from_stack((head, args))
     else:
