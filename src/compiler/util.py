@@ -183,6 +183,25 @@ def memoize_args(fun):
     return memoized
 
 
+UNIQUE = {}
+
+
+def unique(arg):
+    return UNIQUE.get(arg, arg)
+
+
+MEMOIZED_CACHES[unique] = unique
+
+
+def unique_result(fun):
+
+    @functools.wraps(fun)
+    def decorated(*args, **kwargs):
+        return unique(fun(*args, **kwargs))
+
+    return decorated
+
+
 def profile_memoized():
     sizes = [(len(cache), fun) for (fun, cache) in MEMOIZED_CACHES.iteritems()]
     sizes.sort(reverse=True)

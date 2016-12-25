@@ -25,7 +25,7 @@ from pomagma.reducer.sugar import abstract
 from pomagma.reducer.syntax import (APP, BOOL, BOT, CODE, EQUAL, EVAL, JOIN,
                                     LESS, MAYBE, NVAR, QAPP, QQUOTE, QUOTE,
                                     TOP, UNIT, B, C, I, K, S, complexity,
-                                    free_vars, is_app, is_atom, is_join,
+                                    free_nvars, is_app, is_atom, is_join,
                                     is_nvar, is_quote)
 from pomagma.reducer.util import LOG, PROFILE_COUNTERS, logged, pretty
 
@@ -66,7 +66,7 @@ def context_pop(context, *terms):
     else:
         avoid = frozenset()
         for term in terms:
-            avoid |= free_vars(term)
+            avoid |= free_nvars(term)
         arg = fresh(avoid)
         bound = arg, context.bound
         return arg, Context(context.stack, bound)

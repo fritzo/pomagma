@@ -6,8 +6,8 @@ Intro forms are hand-optimized; see lib_test.py for lambda versions.
 
 from pomagma.reducer.sugar import (app, combinator, join_, let, qapp, quote,
                                    symmetric, typed)
-from pomagma.reducer.syntax import (APP, BOOL, BOT, EQUAL, JOIN, LESS, MAYBE,
-                                    QUOTE, TOP, UNIT, B, C, I, K)
+from pomagma.reducer.syntax import (APP, BOOL, BOT, EQUAL, EVAL, JOIN, LESS,
+                                    MAYBE, QUOTE, TOP, UNIT, B, C, I, K)
 
 CI = APP(C, I)
 
@@ -453,6 +453,11 @@ def fun_type(domain_type, codomain_type):
 def fix(f):
     """The Y combinator."""
     return app(f, fix(f))
+
+
+# @combinator  # TODO This currently raises NotImplementedError.
+def qfix(qf):
+    return app(EVAL, qf, qapp(QUOTE(qfix), qf))
 
 
 @combinator

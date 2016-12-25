@@ -3,9 +3,11 @@
 import functools
 import inspect
 
-from pomagma.reducer.curry import abstract, try_abstract
-from pomagma.reducer.syntax import APP, BOT, JOIN, NVAR, QAPP, QUOTE, free_vars
+from pomagma.reducer.curry import abstract
+from pomagma.reducer.syntax import (APP, BOT, JOIN, NVAR, QAPP, QUOTE,
+                                    free_nvars, quoted_nvars)
 from pomagma.reducer.util import LOG
+from pomagma.util import TODO
 
 
 # ----------------------------------------------------------------------------
@@ -69,11 +71,12 @@ class _Combinator(object):
         self._code = var
 
         code = _compile(self, actual_fun=self._fun)
-        rec_code = try_abstract(var, code)
-        if rec_code is not None:
-            code = rec(rec_code)
+        if var in quoted_nvars(code):
+            TODO('Support quoted recursion')
+        elif var in free_nvars(code):
+            code = rec(abstract(var, code))
 
-        free = free_vars(code)
+        free = free_nvars(code)
         if free:
             raise SyntaxError('Unbound variables: {}'.format(
                 ' '.join(v[1] for v in free)))

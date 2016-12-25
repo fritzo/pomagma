@@ -1,7 +1,7 @@
 import re
 from collections import defaultdict
 
-from pomagma.compiler.util import MEMOIZED_CACHES, memoize_arg
+from pomagma.compiler.util import MEMOIZED_CACHES, memoize_arg, unique_result
 
 # ----------------------------------------------------------------------------
 # Signature
@@ -111,10 +111,13 @@ def QABS(body):
 
 
 def FUN(var, body):
+    assert is_nvar(var), var
+    assert var not in quoted_nvars(body), (var, body)
     return _code(_FUN, var, body)
 
 
 def QFUN(var, body):
+    assert is_nvar(var), var
     return _code(_QFUN, var, body)
 
 
@@ -168,27 +171,47 @@ def is_qfun(code):
     return isinstance(code, tuple) and code[0] is _QFUN
 
 
-# TODO Fork this into free_vars + qfree_vars.
 @memoize_arg
-def free_vars(code):
-    """Returns set of free nominal variables."""
+@unique_result
+def free_nvars(code):
+    """Returns set of free nominal variables, possibly quoted."""
     assert is_code(code), code
     if is_nvar(code):
         return frozenset([code])
     elif is_app(code) or is_join(code):
-        return free_vars(code[1]) | free_vars(code[2])
+        return free_nvars(code[1]) | free_nvars(code[2])
     elif is_quote(code):
-        return free_vars(code[1])  # FIXME
+        return free_nvars(code[1])
     elif is_abs(code):
-        return free_vars(code[1])
+        return free_nvars(code[1])
     elif is_qabs(code):
-        return free_vars(code[1])
+        return free_nvars(code[1])
     elif is_fun(code):
         assert is_nvar(code[1])
-        return free_vars(code[2]) - frozenset([code[1]])
+        return free_nvars(code[2]) - frozenset([code[1]])
     elif is_qfun(code):
         assert is_nvar(code[1])
-        return free_vars(code[2]) - frozenset([code[1]])
+        return free_nvars(code[2]) - frozenset([code[1]])
+    else:
+        return frozenset()
+
+
+@memoize_arg
+@unique_result
+def quoted_nvars(code):
+    """Returns set of free quoted nominal variables."""
+    assert is_code(code), code
+    if is_quote(code):
+        return free_nvars(code[1])
+    elif is_app(code) or is_join(code):
+        return quoted_nvars(code[1]) | quoted_nvars(code[2])
+    elif is_abs(code) or is_qabs(code):
+        return quoted_nvars(code[1])
+    elif is_fun(code):
+        return quoted_nvars(code[2])
+    elif is_qfun(code):
+        assert is_nvar(code[1])
+        return quoted_nvars(code[2]) - frozenset([code[1]])
     else:
         return frozenset()
 
