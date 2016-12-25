@@ -1,17 +1,34 @@
 # Reduction Engines
 
-This Reducer module implements various interpreters for nondeterministic
-extensional combinatory algebra, henceforth SKJ/H&ast;.
-The algorithms extend the beta-eta reduction (aka strong normalization) algorithm of Boulifa and Mezohiche
-<a href="#user-content-Boulifa03">[Boulifa03]</a>
-to nondeterministic combinatory algebra.
+This module implements virtual machines for nondeterministic
+extensional combinatory algebra and &lambda;-calculus.
+
+## Engineering strategy
+
+tl;dr
+- nondeterminism + order oracle = types
+- order oracle + reflection = a very strong foundation
+
+The engineering strategy has been to get "types for free" by adding angelic
+nondeterminism to the language and implementing a theorem prover to weakly
+decide Scott ordering and to "garbage collect" concurrent continuations that
+are provably redundant.  This theorem prover is limited, but approaches the
+Pi02 complete theory H&ast;.  Since we've put so much effort into this theorem
+prover, we put more effort into exposing the theorem prover through
+reflection.  Reflection has to be very careful and work always through a
+quoting comonad that flattens out order.  Once we have the order oracle and
+reflection, this system is very strong, capable of expressing the full
+arithmetic hierarchy.
 
 ## Lineage of the various engines
 
 - [`engine.py`](./engines/engine.py)
   An initial implementation of a combinator reduction machine supporting many
   different reduction rules.
-  <br> Supports: ['sk', 'join', 'quote', 'types', 'lib', 'unit']
+  This is algorithm is based on combinatory beta-eta reduction
+  (aka strong normalization) of Boulifa and Mezohiche
+  <a href="#user-content-Boulifa03">[Boulifa03]</a>,
+  and extends it to nondeterministic combinatory algebra.
 
 - [`engine.hpp`](./engine.hpp)
   A C++ port of an early version of engine.py. This is very limited, and mostly
@@ -39,6 +56,9 @@ to nondeterministic combinatory algebra.
 - [Obermeyer09] <a name="Obermeyer09"/>
   Fritz Obermeyer (2009)
   [Automated Equational Reasoning in Nondeterministic &lambda;-Calculi Modulo Theories H*](http://fritzo.org/thesis.pdf)
+- [Feferman05] <a name="Feferman05"/>
+  Solomon Feferman (2005)
+  [Predicativity](http://math.stanford.edu/~feferman/papers/predicativity.pdf)
 - [Fischer11] <a name="Fischer11"/>
   Sebastian Fischer, Oleg Kiselyov, Chung-Chieh Shan (2011)
   [Purely functional lazy nondeterministic programming](http://okmij.org/ftp/Haskell/FLP/lazy-nondet.pdf)
