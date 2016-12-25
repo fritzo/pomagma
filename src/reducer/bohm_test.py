@@ -1,4 +1,5 @@
 from pomagma.reducer.bohm import (
+    I, K, B, C, S, KI, CI, CB,
     increment_rank, decrement_rank, is_const, is_linear, is_normal,
     polish_simplify, sexpr_simplify, print_tiny,
     substitute, app, abstract, anonymize, nominal_abstract, join, occurs,
@@ -46,6 +47,18 @@ def s_codes_extend(codes):
 
 
 s_codes = s.recursive(s_atoms, s_codes_extend, max_leaves=32)
+s_quoted = s.builds(QUOTE, s_codes)
+
+
+def test_constants():
+    assert app(I, x) is x
+    assert app(app(K, x), y) is x
+    assert app(app(app(B, x), y), z) is APP(x, APP(y, z))
+    assert app(app(app(C, x), y), z) is APP(APP(x, z), y)
+    assert app(app(app(S, x), y), z) is APP(APP(x, z), APP(y, z))
+    assert KI is app(K, I)
+    assert CI is app(C, I)
+    assert CB is app(C, B)
 
 
 # ----------------------------------------------------------------------------

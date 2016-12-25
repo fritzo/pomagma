@@ -22,8 +22,18 @@ from pomagma.reducer.code import (
 )
 from pomagma.reducer.util import UnreachableError, trool_all, trool_any
 
-true = ABS(ABS(IVAR(1)))
-false = ABS(ABS(IVAR(0)))
+I = ABS(IVAR(0))
+K = ABS(ABS(IVAR(1)))
+B = ABS(ABS(ABS(APP(IVAR(2), APP(IVAR(1), IVAR(0))))))
+C = ABS(ABS(ABS(APP(APP(IVAR(2), IVAR(0)), IVAR(1)))))
+S = ABS(ABS(ABS(APP(APP(IVAR(2), IVAR(0)), APP(IVAR(1), IVAR(0))))))
+
+KI = ABS(ABS(IVAR(0)))
+CB = ABS(ABS(ABS(APP(IVAR(1), APP(IVAR(2), IVAR(0))))))
+CI = ABS(ABS(APP(IVAR(0), IVAR(1))))
+
+true = K
+false = KI
 
 
 # ----------------------------------------------------------------------------
@@ -386,13 +396,15 @@ def iter_join(code):
 @memoize_args
 def join(lhs, rhs):
     """Join two codes, modulo linear Scott ordering."""
-
-    # Destructure all JOIN terms.
     codes = set()
     for term in iter_join(lhs):
         codes.add(term)
     for term in iter_join(rhs):
         codes.add(term)
+    return join_set(codes)
+
+
+def join_set(codes):
     if not codes:
         return BOT
     if len(codes) == 1:
@@ -676,6 +688,16 @@ def _compute_step(code):
     raise UnreachableError(code)
 
 
+def reduce(code, budget=100):
+    """Beta-reduce code up to budget."""
+    for _ in xrange(budget):
+        reduced = try_compute_step(code)
+        if reduced is None:
+            return code
+        code = reduced
+    return code
+
+
 # ----------------------------------------------------------------------------
 # Eager parsing
 
@@ -686,11 +708,11 @@ SIGNATURE = {
     # Conversion from nominal lambda calculus.
     'FUN': nominal_abstract,
     # Conversion from combinatory algebra.
-    'I': ABS(IVAR(0)),
-    'K': ABS(ABS(IVAR(1))),
-    'B': ABS(ABS(ABS(APP(IVAR(2), APP(IVAR(1), IVAR(0)))))),
-    'C': ABS(ABS(ABS(APP(APP(IVAR(2), IVAR(0)), IVAR(1))))),
-    'S': ABS(ABS(ABS(APP(APP(IVAR(2), IVAR(0)), APP(IVAR(1), IVAR(0)))))),
+    'I': I,
+    'K': K,
+    'B': B,
+    'C': C,
+    'S': S,
 }
 
 
