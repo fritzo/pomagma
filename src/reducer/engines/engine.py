@@ -438,12 +438,14 @@ def reduce(code, budget=0):
     """Beta-eta reduce code, ignoring budget."""
     assert isinstance(budget, int) and budget >= 0, budget
     LOG.info('reduce({})'.format(pretty(code)))
+    code = convert(code)
     return _reduce(code, True)
 
 
 def simplify(code):
     """Linearly beta-eta reduce."""
     LOG.info('simplify({})'.format(pretty(code)))
+    code = convert(code)
     return _reduce(code, False)
 
 
