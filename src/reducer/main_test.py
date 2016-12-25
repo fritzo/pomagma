@@ -55,26 +55,6 @@ def test_reduce_engine_sexpr_equations(code, expected_code, message):
     assert actual_string == expected_string, message
 
 
-@pytest.mark.timeout(1)
-@for_each(iter_equations('de_bruijn'))
-def test_reduce_de_bruijn_polish_equations(code, expected_code, message):
-    string = polish_print(code)
-    with skip_if_not_implemented():
-        actual_string = main.reduce(string, engine='de_bruijn')
-    expected_string = polish_print(expected_code)
-    assert actual_string == expected_string, message
-
-
-@pytest.mark.timeout(1)
-@for_each(iter_equations('de_bruijn'))
-def test_reduce_de_bruijn_sexpr_equations(code, expected_code, message):
-    string = sexpr_print(code)
-    with skip_if_not_implemented():
-        actual_string = main.reduce(string, engine='de_bruijn')
-    expected_string = sexpr_print(expected_code)
-    assert actual_string == expected_string, message
-
-
 @for_each([
     ('(ABS (0 0))', 0),
     ('(ABS (0 0) (ABS (0 0)))', None),

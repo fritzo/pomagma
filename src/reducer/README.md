@@ -8,7 +8,7 @@ to nondeterministic combinatory algebra.
 
 ## Lineage of the various engines
 
-- [`engine.py`](./engine.py)
+- [`engine.py`](./engines/engine.py)
   An initial implementation of a combinator reduction machine supporting many
   different reduction rules.
   <br> Supports: ['sk', 'join', 'quote', 'types', 'lib', 'unit']
@@ -17,26 +17,10 @@ to nondeterministic combinatory algebra.
   A C++ port of an early version of engine.py. This is very limited, and mostly
   exercises serialization plumbing.
 
-- [`trace.py`](./trace.py)
-  A simple deterministic engine with tracing support.
-  <br> Supports: ['sk', 'quote', 'lib']
-
-- [`continuation.py`](./continuation.py)
-  Forked from engine.py, this starts to use Bohm-trees = continuations as the
-  basic data structure during evaluation, simplifying nondeterminism.
-  <br> Supports: ['sk', 'join', 'quote', 'lib']
-
-- [`de_bruijn.py`](./de_bruijn.py)
+- [`bohm.py`](./bohm.py)
   Forked from continuation.py, this uses de Bruijn variables rather than
   nominal variables for &lambda; binding. This simplifies the logic of
   `try_decide_less` by avoiding the need to &alpha;-convert.
-  <br> Supports: ['sk', 'join', 'quote', 'lib']
-
-- [`learn.py`](./learn.py)
-  Forked from de_bruijn.py, this aims to implement reduction step learning.
-  The goal is to provide native support for definable types, using the
-  recursive definition of `A`.
-  <br> Supports: ['sk', 'join']
 
 ## References
 
