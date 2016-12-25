@@ -1,6 +1,6 @@
 from pomagma.reducer.bohm import (
     increment_rank, decrement_rank, is_const, is_linear, is_normal,
-    polish_simplify, sexpr_simplify,
+    polish_simplify, sexpr_simplify, print_tiny,
     substitute, app, abstract, join, occurs,
     true, false, approximate_var, approximate, unabstract,
     try_compute_step,
@@ -816,3 +816,16 @@ def test_sexpr_simplify(sexpr, expected):
 def test_sexpr_print_simplify(code):
     sexpr = sexpr_print(code)
     assert sexpr_simplify(sexpr) is code
+
+
+@for_each([
+    ('(IVAR 0)', '0'),
+    ('(IVAR 1 (IVAR 2))', '(12)'),
+    ('(IVAR 3 (IVAR 4) (IVAR 5 (IVAR 6)))', '(34(56))'),
+    ('(ABS (IVAR 0))', '^0'),
+    ('(IVAR 1 (IVAR 2) (IVAR 3))', '(123)'),
+    ('(JOIN (IVAR 1) (JOIN (IVAR 2) (IVAR 3)))', '[1|2|3]'),
+])
+def test_print_tiny(sexpr, expected):
+    code = sexpr_simplify(sexpr)
+    assert print_tiny(code) == expected

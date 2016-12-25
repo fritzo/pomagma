@@ -664,3 +664,41 @@ def sexpr_simplify(string):
 
 def polish_simplify(string):
     return polish_parse(string, SIGNATURE)
+
+
+def _print_tiny(code, tokens):
+    if code is TOP:
+        tokens.append('T')
+    elif code is BOT:
+        tokens.append('_')
+    elif is_ivar(code):
+        rank = code[1]
+        assert rank <= 9
+        tokens.append(str(rank))
+    elif is_abs(code):
+        tokens.append('^')
+        _print_tiny(code[1], tokens)
+    elif is_app(code):
+        head, args = unapply(code)
+        tokens.append('(')
+        _print_tiny(head, tokens)
+        for arg in reversed(args):
+            _print_tiny(arg, tokens)
+        tokens.append(')')
+    elif is_join(code):
+        tokens.append('[')
+        terms = list(iter_join(code))
+        _print_tiny(terms[0], tokens)
+        for term in terms[1:]:
+            tokens.append('|')
+            _print_tiny(term, tokens)
+        tokens.append(']')
+    else:
+        raise NotImplementedError(code)
+
+
+def print_tiny(code):
+    """Compact printer for pure bohm trees."""
+    tokens = []
+    _print_tiny(code, tokens)
+    return ''.join(tokens)

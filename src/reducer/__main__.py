@@ -2,7 +2,7 @@ from parsable import parsable
 from pomagma.reducer import bohm
 from pomagma.reducer import lib
 from pomagma.reducer import transforms
-from pomagma.reducer.bohm import polish_simplify, sexpr_simplify
+from pomagma.reducer.bohm import polish_simplify, sexpr_simplify, print_tiny
 from pomagma.reducer.code import polish_parse, polish_print
 from pomagma.reducer.code import sexpr_parse, sexpr_print
 from pomagma.reducer.engines import continuation
@@ -16,10 +16,10 @@ import pomagma.util
 import subprocess
 import sys
 
-
 FORMATS = {
     'polish': (polish_parse, polish_print, polish_simplify),
     'sexpr': (sexpr_parse, sexpr_print, sexpr_simplify),
+    'tiny': (sexpr_parse, print_tiny, sexpr_simplify),
 }
 
 
@@ -157,7 +157,6 @@ def step(string, steps=10, fmt='auto'):
     if fmt == 'auto':
         fmt = guess_format(string)
     print('Format: {}'.format(fmt))
-    print('Press ENTER to continue, anything else to break.')
     parse, print_, simplify = FORMATS[fmt]
     code = simplify(string)
     print(print_(code))
