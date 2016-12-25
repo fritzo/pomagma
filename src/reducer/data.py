@@ -2,7 +2,7 @@
 
 from pomagma.compiler.util import memoize_arg, memoize_args
 from pomagma.reducer import lib, pattern
-from pomagma.reducer.engines.engine import reduce
+from pomagma.reducer.bohm import reduce
 from pomagma.reducer.sugar import app
 from pomagma.reducer.syntax import NVAR, sexpr_print
 from pomagma.util import TODO

@@ -1,7 +1,6 @@
 import pytest
 
-from pomagma.reducer import lib
-from pomagma.reducer.engines import engine
+from pomagma.reducer import bohm, lib
 from pomagma.reducer.programs import program, using_engine
 from pomagma.reducer.sugar import app
 from pomagma.util.testing import for_each
@@ -60,7 +59,7 @@ CALL_EXAMPLES = [
 
 @for_each(CALL_EXAMPLES)
 def test_call(fun, args, expected):
-    with using_engine(engine):
+    with using_engine(bohm):
         if isinstance(expected, type) and issubclass(expected, Exception):
             with pytest.raises(expected):
                 fun(*args)

@@ -3,11 +3,9 @@ import hypothesis.strategies
 import pytest
 
 from pomagma.reducer import data, lib
-from pomagma.reducer.syntax import APP, B, C, I, K, polish_parse, polish_print
+from pomagma.reducer.bohm import CB, B, C, I, K
+from pomagma.reducer.syntax import polish_parse, polish_print
 from pomagma.util.testing import for_each
-
-CB = APP(C, B)
-
 
 # ----------------------------------------------------------------------------
 # Parametrized tests
