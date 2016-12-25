@@ -1,7 +1,7 @@
 from cStringIO import StringIO
-from pomagma.reducer.code import APP, JOIN, QUOTE, TOP, BOT, I, K, B, C, S
+from pomagma.reducer.code import APP, ABS, JOIN, QUOTE, TOP, BOT, I, K, B, C, S
 from pomagma.reducer.code import CODE, EVAL, QAPP, QQUOTE, EQUAL, LESS
-from pomagma.reducer.code import NVAR, FUN, LET, ABIND, RVAR, SVAR
+from pomagma.reducer.code import NVAR, IVAR, FUN, LET
 from pomagma.reducer.code import V, A, UNIT, BOOL, MAYBE, PROD, SUM, NUM
 from pomagma.reducer.code_test import s_codes
 from pomagma.reducer.serial import dump, load
@@ -48,6 +48,9 @@ x = NVAR('x')
     NVAR('take_one_down_and_pass_it_around_and_' * 9),
     NVAR('take_one_down_and_pass_it_around_and_' * 99),
     NVAR('take_one_down_and_pass_it_around_and_' * 999),
+    IVAR(0),
+    IVAR(1),
+    IVAR(2),
     TOP,
     BOT,
     I,
@@ -69,6 +72,8 @@ x = NVAR('x')
     PROD,
     SUM,
     NUM,
+    ABS(IVAR(0)),
+    APP(IVAR(0), x),
     APP(K, I),
     APP(APP(B, C), S),
     APP(APP(APP(S, K), I), B),
@@ -80,7 +85,6 @@ x = NVAR('x')
     FUN(x, APP(S, APP(x, x))),
     APP(FUN(x, x), I),
     LET(x, I, APP(APP(S, x), x)),
-    ABIND(APP(APP(B, RVAR(0)), SVAR(0))),
 ])
 def test_serialize_deserialize_parametrized(code):
     f_out = StringIO()

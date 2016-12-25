@@ -1,5 +1,5 @@
 from pomagma.reducer.code import (
-    APP, JOIN, NVAR, IVAR, ABS, QABS, FUN, LET, ABIND, RVAR, SVAR,
+    APP, JOIN, NVAR, IVAR, ABS, QABS, FUN, LET,
     QUOTE, CODE, EVAL, QAPP, QQUOTE, EQUAL, LESS,
     TOP, BOT, I, K, B, C, S, V, A, UNIT, BOOL, MAYBE, PROD, SUM, NUM,
     free_vars, complexity, polish_parse, polish_print,
@@ -27,9 +27,6 @@ z = NVAR('z')
     (C, []),
     (S, []),
     (A, []),
-    (ABIND(x), [x]),
-    (RVAR(0), []),
-    (SVAR(0), []),
     (IVAR(0), []),
     (IVAR(1), []),
     (x, [x]),
@@ -137,11 +134,6 @@ EXAMPLES = [
         'polish': 'LET x I APP I I',
         'sexpr': '(LET x I (I I))',
     },
-    {
-        'code': ABIND(APP(APP(B, RVAR(0)), SVAR(0))),
-        'polish': 'ABIND APP APP B RVAR 0 SVAR 0',
-        'sexpr': '(ABIND (B (RVAR 0) (SVAR 0)))',
-    },
 ]
 
 
@@ -180,8 +172,6 @@ s_varnames = s.builds(
 s_ranks = s.integers(min_value=0, max_value=99)
 s_vars = s.builds(NVAR, s_varnames)
 s_ivars = s.builds(IVAR, s_ranks)
-s_rvars = s.builds(RVAR, s_ranks)
-s_svars = s.builds(SVAR, s_ranks)
 s_atoms = s.one_of(
     s_vars,
     s_ivars,
@@ -209,8 +199,6 @@ s_atoms = s.one_of(
         s.just(PROD),
         s.just(SUM),
         s.just(NUM),
-        s_rvars,
-        s_svars,
     ),
 )
 
@@ -224,7 +212,6 @@ def s_codes_extend(terms):
         s.builds(QABS, terms),
         s.builds(FUN, s_vars, terms),
         s.builds(LET, s_vars, terms, terms),
-        s.builds(ABIND, terms),
     )
 
 

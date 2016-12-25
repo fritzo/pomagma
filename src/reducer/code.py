@@ -52,9 +52,6 @@ _ABS = make_keyword('ABS')  # de Bruijn abstraction.
 _QABS = make_keyword('QABS')  # de Bruijn abstraction.
 _FUN = make_keyword('FUN')  # Nominal abstraction.
 _LET = make_keyword('LET')
-_ABIND = make_keyword('ABIND')
-_RVAR = make_keyword('RVAR')  # de Bruijn variable.
-_SVAR = make_keyword('SVAR')  # de Bruijn variable.
 
 TOP = make_keyword('TOP')
 BOT = make_keyword('BOT')
@@ -122,24 +119,6 @@ def LET(var, defn, body):
     return _code(_LET, var, defn, body)
 
 
-def ABIND(body):
-    return _code(_ABIND, body)
-
-
-def RVAR(rank):
-    if not isinstance(rank, int) and rank >= 0:
-        raise ValueError(
-            'Variable index must be a natural number {}'.format(rank))
-    return _code(_RVAR, rank)
-
-
-def SVAR(rank):
-    if not isinstance(rank, int) and rank >= 0:
-        raise ValueError(
-            'Variable index must be a natural number {}'.format(rank))
-    return _code(_SVAR, rank)
-
-
 def is_atom(code):
     assert is_code(code), code
     return isinstance(code, str)
@@ -190,21 +169,6 @@ def is_let(code):
     return isinstance(code, tuple) and code[0] is _LET
 
 
-def is_abind(code):
-    assert is_code(code), code
-    return isinstance(code, tuple) and code[0] is _ABIND
-
-
-def is_rvar(code):
-    assert is_code(code), code
-    return isinstance(code, tuple) and code[0] is _RVAR
-
-
-def is_svar(code):
-    assert is_code(code), code
-    return isinstance(code, tuple) and code[0] is _SVAR
-
-
 @memoize_arg
 def free_vars(code):
     """Returns set of free nominal variables."""
@@ -225,8 +189,6 @@ def free_vars(code):
     elif is_let(code):
         assert is_nvar(code[1])
         return free_vars(code[3]) - frozenset([code[1]]) | free_vars(code[2])
-    elif is_abind(code):
-        return free_vars(code[1])
     else:
         return frozenset()
 
@@ -260,7 +222,7 @@ def complexity(code):
     assert is_code(code), code
     if is_atom(code):
         return ATOM_COMPLEXITY[code]
-    elif is_nvar(code) or is_ivar(code) or is_rvar(code) or is_svar(code):
+    elif is_nvar(code) or is_ivar(code):
         return 1
     elif is_join(code):
         return max(complexity(code[1]), complexity(code[2]))
@@ -325,9 +287,6 @@ _PARSERS = {
     _QABS: (_polish_parse_tokens,),
     _FUN: (_polish_parse_tokens, _polish_parse_tokens),
     _LET: (_polish_parse_tokens, _polish_parse_tokens, _polish_parse_tokens),
-    _ABIND: (_polish_parse_tokens,),
-    _RVAR: (_pop_int,),
-    _SVAR: (_pop_int,),
 }
 
 
@@ -399,15 +358,6 @@ def to_sexpr(code):
         args.append(to_sexpr(head[2]))
         args.append(to_sexpr(head[1]))
         head = _LET
-    elif is_abind(head):
-        args.append(to_sexpr(head[1]))
-        head = _ABIND
-    elif is_rvar(head):
-        args.append(head[1])
-        head = _RVAR
-    elif is_svar(head):
-        args.append(head[1])
-        head = _SVAR
     args.append(head)
     args.reverse()
     return tuple(args)
@@ -456,16 +406,6 @@ def from_sexpr(sexpr, signature={}):
             body = from_sexpr(sexpr[3], signature)
             head = signature.get('LET', LET)(var, defn, body)
             args = sexpr[4:]
-        elif head is _ABIND:
-            body = from_sexpr(sexpr[1], signature)
-            head = signature.get('ABIND', ABIND)(body)
-            args = sexpr[2:]
-        elif head is _RVAR:
-            head = RVAR(sexpr[1])
-            args = sexpr[2:]
-        elif head is _SVAR:
-            head = SVAR(sexpr[1])
-            args = sexpr[2:]
         else:
             head = signature.get(head, head)
             args = sexpr[1:]
