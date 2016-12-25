@@ -1,8 +1,8 @@
 from pomagma.reducer.code import TOP, BOT, I, K, B, C, S
 from pomagma.reducer.code import NVAR, APP, JOIN, QUOTE, FUN
 from pomagma.reducer.code import polish_print
-from pomagma.reducer.transforms import compile_, decompile
-from pomagma.reducer.transforms import fresh_var, abstract, define, substitute
+from pomagma.reducer.curry import compile_, decompile
+from pomagma.reducer.curry import fresh_var, abstract, define, substitute
 from pomagma.util.testing import for_each
 import pytest
 

@@ -7,7 +7,7 @@ from pomagma.reducer.engines.learn import (
 )
 from pomagma.reducer.testing import iter_equations
 from pomagma.reducer.testing import s_codes, s_sk_codes, s_skj_codes
-from pomagma.reducer.transforms import compile_
+from pomagma.reducer.curry import compile_
 from pomagma.reducer.util import list_to_stack
 from pomagma.util.testing import for_each, xfail_if_not_implemented
 import hypothesis

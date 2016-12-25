@@ -1,7 +1,7 @@
 from parsable import parsable
 from pomagma.reducer import bohm
 from pomagma.reducer import lib
-from pomagma.reducer import transforms
+from pomagma.reducer import curry
 from pomagma.reducer.bohm import polish_simplify, sexpr_simplify, print_tiny
 from pomagma.reducer.code import polish_parse, polish_print
 from pomagma.reducer.code import sexpr_parse, sexpr_print
@@ -42,7 +42,7 @@ def compile(string, fmt='auto'):
     print('Format: {}'.format(fmt))
     parse, print_, simplify = FORMATS[fmt]
     code = parse(string)
-    result = transforms.compile_(code)
+    result = curry.compile_(code)
     print('In: {}'.format(string))
     print('Out: {}'.format(print_(result)))
 
@@ -60,7 +60,7 @@ def decompile(string, fmt='auto'):
     print('In: {}'.format(string))
     parse, print_, simplify = FORMATS[fmt]
     code = parse(string)
-    result = transforms.decompile(code)
+    result = curry.decompile(code)
     print('Out: {}'.format(print_(result)))
 
 

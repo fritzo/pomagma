@@ -1,7 +1,7 @@
 from pomagma.reducer import lib
 from pomagma.reducer.code import free_vars
 from pomagma.reducer.sugar import as_code
-from pomagma.reducer.transforms import define, substitute
+from pomagma.reducer.curry import define, substitute
 
 
 def bind(code, var, lazy=True):

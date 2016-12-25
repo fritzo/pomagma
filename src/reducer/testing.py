@@ -7,7 +7,7 @@ from pomagma.reducer.code import UNIT, BOOL, MAYBE
 from pomagma.reducer.code import NVAR, APP, JOIN, QUOTE
 from pomagma.reducer.code import is_app, is_quote, sexpr_parse
 from pomagma.reducer.linker import link
-from pomagma.reducer.transforms import compile_
+from pomagma.reducer.curry import compile_
 import hypothesis.strategies as s
 import os
 import pytest

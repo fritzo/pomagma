@@ -1,4 +1,4 @@
-"""Code-to-code transforms."""
+"""Conversions to combinatory logic, a la Curry."""
 
 __all__ = ['try_abstract', 'abstract', 'decompile']
 

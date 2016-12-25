@@ -2,7 +2,7 @@
 
 from pomagma.reducer.code import BOT, JOIN, QAPP, NVAR, APP, QUOTE
 from pomagma.reducer.code import free_vars
-from pomagma.reducer.transforms import try_abstract, abstract
+from pomagma.reducer.curry import try_abstract, abstract
 from pomagma.reducer.util import LOG
 import functools
 import inspect

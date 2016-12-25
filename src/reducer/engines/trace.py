@@ -11,7 +11,7 @@ from pomagma.reducer.code import NVAR, APP, QUOTE, FUN
 from pomagma.reducer.code import is_nvar, is_app, is_join, is_quote, free_vars
 from pomagma.reducer.code import sexpr_parse, sexpr_print
 from pomagma.reducer.linker import link
-from pomagma.reducer.transforms import abstract
+from pomagma.reducer.curry import abstract
 import re
 
 parsable = parsable.Parsable()
