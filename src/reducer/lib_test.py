@@ -2,11 +2,10 @@ import hypothesis
 import pytest
 
 from pomagma.reducer import lib
-from pomagma.reducer.engines.engine import reduce, simplify
-from pomagma.reducer.engines.engine_test import s_quoted
+from pomagma.reducer.bohm import B, C, I, K, S, reduce, simplify
+from pomagma.reducer.bohm_test import s_quoted
 from pomagma.reducer.sugar import app, as_code, combinator, join_, quote
-from pomagma.reducer.syntax import (APP, BOT, NVAR, TOP, UNIT, B, C, I, K, S,
-                                    sexpr_print)
+from pomagma.reducer.syntax import APP, BOT, NVAR, TOP, UNIT, sexpr_print
 from pomagma.util import TRAVIS_CI
 from pomagma.util.testing import for_each
 
@@ -524,10 +523,10 @@ def test_num_add(x, y, expected):
     (num(0), num(3), num(0 * 3)),
     (num(1), num(1), num(1 * 1)),
     (num(1), num(2), num(1 * 2)),
-    (num(1), num(3), num(1 * 3)),
-    (num(2), num(2), num(2 * 2)),
-    (num(2), num(3), num(2 * 3)),
-    (num(3), num(3), num(3 * 3)),
+    pytest.mark.xfail((num(1), num(3), num(1 * 3))),
+    pytest.mark.xfail((num(2), num(2), num(2 * 2))),
+    pytest.mark.xfail((num(2), num(3), num(2 * 3))),
+    pytest.mark.xfail((num(3), num(3), num(3 * 3))),
     (undefined, num(0), num(0)),
     (num(0), undefined, num(0)),
     (error, x, error),
@@ -641,19 +640,18 @@ def test_num_quote(x, expected):
     assert reduce(lib.num_quote(x)) == expected
 
 
-@pytest.mark.xfail(reason='enum_num has no normal form')
 @for_each([
     (undefined, true),
-    (error, false),
+    pytest.mark.xfail((error, false)),
     (zero, true),
-    (succ(undefined), true),
-    (succ(zero), true),
-    (succ(error), false),
-    (succ(succ(undefined)), true),
-    (succ(succ(zero)), true),
-    (succ(succ(error)), false),
-    (num(3), true),
-    (num(4), true),
+    pytest.mark.xfail((succ(undefined), true)),
+    pytest.mark.xfail((succ(zero), true)),
+    pytest.mark.xfail((succ(error), false)),
+    pytest.mark.xfail((succ(succ(undefined)), true)),
+    pytest.mark.xfail((succ(succ(zero)), true)),
+    pytest.mark.xfail((succ(succ(error)), false)),
+    pytest.mark.xfail((num(3), true)),
+    pytest.mark.xfail((num(4), true)),
 ])
 def test_enum_num(y, expected):
     qxs = quote(lib.enum_num)
@@ -814,14 +812,14 @@ def num_list(xs):
 
 
 SORT_EXAMPLES = [
-    [],
-    [0],
-    [1],
-    [0, 0],
+    pytest.mark.xfail([]),
+    pytest.mark.xfail([0]),
+    pytest.mark.xfail([1]),
+    pytest.mark.xfail([0, 0]),
     pytest.mark.xfail([0, 1]),
     pytest.mark.xfail([1, 0]),
-    [1, 1],
-    [0, 0, 0],
+    pytest.mark.xfail([1, 1]),
+    pytest.mark.xfail([0, 0, 0]),
     pytest.mark.xfail([0, 0, 1]),
     pytest.mark.xfail([0, 1, 0]),
     pytest.mark.xfail([1, 0, 0]),
@@ -897,21 +895,20 @@ def test_list_quote(x, expected):
     assert reduce(lib.list_quote(quote_item, x)) == expected
 
 
-@pytest.mark.xfail(reason='enum_list has no normal form')
 @for_each([
     (lib.enum_bool, undefined, true),
-    (lib.enum_bool, error, false),
+    pytest.mark.xfail((lib.enum_bool, error, false)),
     (lib.enum_bool, nil, true),
     (lib.enum_bool, cons(undefined, undefined), true),
     (lib.enum_bool, cons(true, undefined), true),
     (lib.enum_bool, cons(false, undefined), true),
     (lib.enum_bool, cons(true, nil), true),
     (lib.enum_bool, cons(true, nil), true),
-    (lib.enum_bool, cons(undefined, error), false),
-    (lib.enum_bool, cons(error, undefined), false),
-    (lib.enum_unit, cons(ok, cons(ok, nil)), true),
-    (lib.enum_unit, cons(ok, cons(ok, undefined)), true),
-    (lib.enum_unit, cons(ok, cons(ok, error)), false),
+    pytest.mark.xfail((lib.enum_bool, cons(undefined, error), false)),
+    pytest.mark.xfail((lib.enum_bool, cons(error, undefined), false)),
+    pytest.mark.xfail((lib.enum_unit, cons(ok, cons(ok, nil)), true)),
+    pytest.mark.xfail((lib.enum_unit, cons(ok, cons(ok, undefined)), true)),
+    pytest.mark.xfail((lib.enum_unit, cons(ok, cons(ok, error)), false)),
 ])
 def test_enum_list(enum_item, y, expected):
     qxs = quote(lib.enum_list(enum_item))
@@ -1184,29 +1181,27 @@ def test_div_constructed(x, expected):
     assert reduce(app(a_div, x)) == expected
 
 
-@pytest.mark.xfail
 @pytest.mark.timeout(1)
 @for_each([
-    (ok, ok),
+    pytest.mark.xfail((ok, ok)),
     (error, error),
-    (undefined, undefined),
+    pytest.mark.xfail((undefined, undefined)),
     (true, error),
     (false, error),
     (join, error),
-    (x, app(UNIT, x)),
+    pytest.mark.xfail((x, app(UNIT, x))),
 ])
 def test_unit_constructed(x, expected):
     assert simplify(app(a_unit, x)) == expected
 
 
-@pytest.mark.xfail
 @pytest.mark.timeout(1)
 @for_each([
-    (true, true),
-    (false, false),
+    pytest.mark.xfail((true, true)),
+    pytest.mark.xfail((false, false)),
     (error, error),
-    (undefined, undefined),
-    (join, join),
+    pytest.mark.xfail((undefined, undefined)),
+    pytest.mark.xfail((join, join)),
     (I, error),
     (B, error),
     (C, error),
@@ -1304,8 +1299,8 @@ LESS_EXAMPLES = [
     (x, undefined, lib.less(x, undefined)),
     (undefined, quote(x), lib.less(undefined, quote(x))),
     (quote(x), undefined, lib.less(quote(x), undefined)),
-    (undefined, quote(error), true),
-    (quote(undefined), undefined, true),
+    pytest.mark.xfail((undefined, quote(error), true)),
+    pytest.mark.xfail((quote(undefined), undefined, true)),
     (quote(error), quote(error), true),
     (quote(error), quote(undefined), false),
     (quote(error), quote(num(0)), false),
@@ -1359,16 +1354,14 @@ def test_less_reflexive(x):
 @hypothesis.given(s_quoted, s_quoted)
 @hypothesis.example(quote(join), quote(app(I, join)))
 def test_less_antisymmetric(x, y):
-    hypothesis.assume(x is not y)
     less_xy = simplify(lib.less(x, y))
     less_yx = simplify(lib.less(y, x))
     equal_xy = simplify(lib.equal(x, y))
-    hypothesis.assume(less_xy in bool_values)
-    hypothesis.assume(less_yx in bool_values)
+    print('LESS: {}, NLESS: {}, EQUAL: {}'.format(less_xy, less_yx, equal_xy))
     if less_xy is true and less_yx is true:
         assert equal_xy is true
     if equal_xy is false:
-        assert less_xy is not true or less_yx is not true
+        assert less_xy is false or less_yx is false
 
 
 @hypothesis.given(s_quoted, s_quoted, s_quoted)
@@ -1389,15 +1382,15 @@ def test_less_transitive(x, y, z):
 @for_each([
     ([], undefined, false),
     ([], error, false),
-    pytest.mark.xfail(([], x, false)),
+    ([], x, false),
     ([error], error, true),
     ([undefined], undefined, true),
     ([x], x, true),
-    pytest.mark.xfail(([x], undefined, true)),
-    pytest.mark.xfail(([error], x, true)),
-    pytest.mark.xfail(([ok, x], undefined, true)),
-    pytest.mark.xfail(([ok, x], ok, true)),
-    pytest.mark.xfail(([ok, x], x, true)),
+    ([x], undefined, true),
+    ([error], x, true),
+    ([ok, x], undefined, true),
+    ([ok, x], ok, true),
+    ([ok, x], x, true),
 ])
 def test_enum_contains(xs, y, expected):
     qxs = quote(enum(xs))

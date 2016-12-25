@@ -1,5 +1,3 @@
-import pytest
-
 from pomagma.examples.definable_types import trace
 from pomagma.util.testing import for_each
 
@@ -14,8 +12,8 @@ from pomagma.util.testing import for_each
     (('base', 'preconj'), {}),
     (('base', 'postconj'), {}),
     (('base', 'postconj'), {'fmt': 'tiny'}),
-    pytest.mark.xfail((('base', 'compose'), {})),
-    pytest.mark.xfail((('all',), {'steps': 1})),
+    (('base', 'compose'), {}),
+    (('all',), {'steps': 1}),
 ])
 def test_trace_runs(args, kwargs):
     trace(*args, **kwargs)

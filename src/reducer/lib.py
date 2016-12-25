@@ -4,13 +4,11 @@ Intro forms are hand-optimized; see lib_test.py for lambda versions.
 
 """
 
+from pomagma.reducer.bohm import CI, KI, B, C, I, K, false, true
 from pomagma.reducer.sugar import (app, combinator, join_, let, qapp, quote,
                                    symmetric, typed)
-from pomagma.reducer.syntax import (APP, BOOL, BOT, EQUAL, EVAL, LESS, MAYBE,
-                                    QUOTE, TOP, UNIT, B, C, I, K)
-
-KI = APP(K, I)
-CI = APP(C, I)
+from pomagma.reducer.syntax import (BOOL, BOT, EQUAL, EVAL, LESS, MAYBE, QUOTE,
+                                    TOP, UNIT)
 
 
 def COMP(lhs, rhs):
@@ -71,8 +69,8 @@ enum_unit = app(CI, ok)
 # ----------------------------------------------------------------------------
 # Bool
 
-true = K
-false = APP(K, I)
+assert true is K
+assert false is KI
 
 
 @combinator

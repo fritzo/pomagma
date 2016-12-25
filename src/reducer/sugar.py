@@ -3,7 +3,7 @@
 import functools
 import inspect
 
-from pomagma.reducer.curry import convert
+from pomagma.reducer.bohm import convert
 from pomagma.reducer.syntax import NVAR, free_vars, quoted_vars
 from pomagma.reducer.util import LOG
 
