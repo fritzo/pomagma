@@ -30,6 +30,7 @@ def is_code(arg):
 
 
 re_keyword = re.compile('[A-Z]+$')
+re_rank = re.compile(r'\d+$')
 _keywords = set()
 
 
@@ -326,6 +327,8 @@ def _polish_parse_tokens(tokens, signature):
     except KeyError:
         if re_keyword.match(token):
             return signature.get(token, token)
+        elif re_rank.match(token):
+            return IVAR(int(token))
         else:
             return NVAR(token)
     args = tuple(p(tokens, signature) for p in polish_parsers)
@@ -345,7 +348,6 @@ _PARSERS = {
     _FUN: (_polish_parse_tokens, _polish_parse_tokens),
     _LET: (_polish_parse_tokens, _polish_parse_tokens, _polish_parse_tokens),
     _ABIND: (_polish_parse_tokens,),
-    _IVAR: (_pop_int,),
     _RVAR: (_pop_int,),
     _SVAR: (_pop_int,),
     _SLICEBEG: (_polish_parse_tokens,),
@@ -364,9 +366,16 @@ def _polish_print_tokens(code, tokens):
     if isinstance(code, str):
         tokens.append(code)
     elif isinstance(code, tuple):
-        if code[0] is not _NVAR:
+        if code[0] is _NVAR:
+            tokens.append(code[1])
+            pos = 2
+        elif code[0] is _IVAR:
+            tokens.append(str(code[1]))
+            pos = 2
+        else:
             tokens.append(code[0])
-        for arg in code[1:]:
+            pos = 1
+        for arg in code[pos:]:
             _polish_print_tokens(arg, tokens)
     elif isinstance(code, int):
         tokens.append(str(code))
@@ -379,17 +388,18 @@ def _polish_print_tokens(code, tokens):
 
 @memoize_arg
 def to_sexpr(code):
+    """Converts from a python code to a python S-expression."""
     assert is_code(code), code
     if isinstance(code, str):
         return code
-    elif is_nvar(code):
+    elif is_nvar(code) or is_ivar(code):
         return code[1]
     head = code
     args = []
     while is_app(head):
         args.append(to_sexpr(head[2]))
         head = head[1]
-    if is_nvar(head):
+    if is_nvar(head) or is_ivar(head):
         head = head[1]
     elif is_join(head):
         args.append(to_sexpr(head[2]))
@@ -422,14 +432,11 @@ def to_sexpr(code):
     elif is_sliceend(head):
         args.append(to_sexpr(head[1]))
         head = _SLICEEND
-    elif is_ivar(head):
-        args.append(str(head[1]))
-        head = _IVAR
     elif is_rvar(head):
-        args.append(str(head[1]))
+        args.append(head[1])
         head = _RVAR
     elif is_svar(head):
-        args.append(str(head[1]))
+        args.append(head[1])
         head = _SVAR
     args.append(head)
     args.reverse()
@@ -437,6 +444,7 @@ def to_sexpr(code):
 
 
 def from_sexpr(sexpr, signature={}):
+    """Converts from a python S-expression to a python code."""
     assert isinstance(signature, dict), type(signature)
     if isinstance(sexpr, str):
         if sexpr in _keywords:
@@ -445,8 +453,10 @@ def from_sexpr(sexpr, signature={}):
             if re_keyword.match(sexpr):
                 raise ValueError('Unrecognized keyword: {}'.format(sexpr))
             return NVAR(sexpr)
+    if isinstance(sexpr, int):
+        return IVAR(sexpr)
     head = sexpr[0]
-    assert isinstance(head, str)
+    assert isinstance(head, (str, int))
     if head in _keywords:
         if head is _JOIN:
             lhs = from_sexpr(sexpr[1], signature)
@@ -488,21 +498,19 @@ def from_sexpr(sexpr, signature={}):
             body = from_sexpr(sexpr[1], signature)
             head = SLICEEND(body)
             args = sexpr[2:]
-        elif head is _IVAR:
-            head = IVAR(int(sexpr[1]))
-            args = sexpr[2:]
         elif head is _RVAR:
-            head = RVAR(int(sexpr[1]))
+            head = RVAR(sexpr[1])
             args = sexpr[2:]
         elif head is _SVAR:
-            head = SVAR(int(sexpr[1]))
+            head = SVAR(sexpr[1])
             args = sexpr[2:]
         else:
             head = signature.get(head, head)
             args = sexpr[1:]
+    elif isinstance(head, int):
+        head = IVAR(head)
+        args = sexpr[1:]
     else:
-        if re_keyword.match(head):
-            raise ValueError('Unrecognized keyword: {}'.format(head))
         head = NVAR(head)
         args = sexpr[1:]
     for arg in args:
@@ -512,14 +520,18 @@ def from_sexpr(sexpr, signature={}):
 
 
 def sexpr_print_sexpr(sexpr):
+    """Prints a python S-expression as a string S-expression."""
     if isinstance(sexpr, str):
         return sexpr
+    if isinstance(sexpr, int):
+        return str(sexpr)
     parts = map(sexpr_print_sexpr, sexpr)
     return '({})'.format(' '.join(parts))
 
 
 @memoize_arg
 def sexpr_print(code):
+    """Prints a python code as a string S-expression."""
     assert is_code(code), code
     sexpr = to_sexpr(code)
     return sexpr_print_sexpr(sexpr)
@@ -535,11 +547,14 @@ def _sexpr_parse_tokens(tokens):
             yield tuple(_sexpr_parse_tokens(tokens))
         elif token is _RPAREN:
             raise StopIteration
+        elif re_rank.match(token):
+            yield int(token)
         else:
             yield token
 
 
 def sexpr_parse_sexpr(string):
+    """Parses a string S-expression to a python S-expression."""
     tokens = string.replace('(', ' ( ').replace(')', ' ) ').split()
     tokens = iter(map(intern, tokens))
     sexpr = next(_sexpr_parse_tokens(tokens))

@@ -121,13 +121,13 @@ EXAMPLES = [
     },
     {
         'code': ABS(IVAR(0)),
-        'polish': 'ABS IVAR 0',
-        'sexpr': '(ABS (IVAR 0))',
+        'polish': 'ABS 0',
+        'sexpr': '(ABS 0)',
     },
     {
         'code': QABS(QUOTE(IVAR(0))),
-        'polish': 'QABS QUOTE IVAR 0',
-        'sexpr': '(QABS (QUOTE (IVAR 0)))',
+        'polish': 'QABS QUOTE 0',
+        'sexpr': '(QABS (QUOTE 0))',
     },
     {
         'code': FUN(x, APP(x, x)),
