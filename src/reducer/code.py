@@ -49,7 +49,9 @@ _APP = make_keyword('APP')
 _JOIN = make_keyword('JOIN')
 _QUOTE = make_keyword('QUOTE')
 _ABS = make_keyword('ABS')  # de Bruijn abstraction.
+_QABS = make_keyword('QABS')  # de Bruijn abstraction.
 _FUN = make_keyword('FUN')  # Nominal abstraction.
+_QFUN = make_keyword('QFUN')  # Nominal abstraction.
 
 TOP = make_keyword('TOP')
 BOT = make_keyword('BOT')
@@ -105,8 +107,16 @@ def ABS(body):
     return _code(_ABS, body)
 
 
+def QABS(body):
+    return _code(_QABS, body)
+
+
 def FUN(var, body):
     return _code(_FUN, var, body)
+
+
+def QFUN(var, body):
+    return _code(_QFUN, var, body)
 
 
 def is_atom(code):
@@ -144,11 +154,22 @@ def is_abs(code):
     return isinstance(code, tuple) and code[0] is _ABS
 
 
+def is_qabs(code):
+    assert is_code(code), code
+    return isinstance(code, tuple) and code[0] is _QABS
+
+
 def is_fun(code):
     assert is_code(code), code
     return isinstance(code, tuple) and code[0] is _FUN
 
 
+def is_qfun(code):
+    assert is_code(code), code
+    return isinstance(code, tuple) and code[0] is _QFUN
+
+
+# TODO Fork this into free_vars + qfree_vars.
 @memoize_arg
 def free_vars(code):
     """Returns set of free nominal variables."""
@@ -161,7 +182,12 @@ def free_vars(code):
         return free_vars(code[1])  # FIXME
     elif is_abs(code):
         return free_vars(code[1])
+    elif is_qabs(code):
+        return free_vars(code[1])
     elif is_fun(code):
+        assert is_nvar(code[1])
+        return free_vars(code[2]) - frozenset([code[1]])
+    elif is_qfun(code):
         assert is_nvar(code[1])
         return free_vars(code[2]) - frozenset([code[1]])
     else:
@@ -259,7 +285,9 @@ _PARSERS = {
     _JOIN: (_polish_parse_tokens, _polish_parse_tokens),
     _QUOTE: (_polish_parse_tokens,),
     _ABS: (_polish_parse_tokens,),
+    _QABS: (_polish_parse_tokens,),
     _FUN: (_polish_parse_tokens, _polish_parse_tokens),
+    _QFUN: (_polish_parse_tokens, _polish_parse_tokens),
 }
 
 
@@ -319,10 +347,17 @@ def to_sexpr(code):
     elif is_abs(head):
         args.append(to_sexpr(head[1]))
         head = _ABS
+    elif is_qabs(head):
+        args.append(to_sexpr(head[1]))
+        head = _QABS
     elif is_fun(head):
         args.append(to_sexpr(head[2]))
         args.append(to_sexpr(head[1]))
         head = _FUN
+    elif is_qfun(head):
+        args.append(to_sexpr(head[2]))
+        args.append(to_sexpr(head[1]))
+        head = _QFUN
     args.append(head)
     args.reverse()
     return tuple(args)
@@ -356,10 +391,19 @@ def from_sexpr(sexpr, signature={}):
             body = from_sexpr(sexpr[1], signature)
             head = signature.get('ABS', ABS)(body)
             args = sexpr[2:]
+        elif head is _QABS:
+            body = from_sexpr(sexpr[1], signature)
+            head = signature.get('QABS', QABS)(body)
+            args = sexpr[2:]
         elif head is _FUN:
             var = from_sexpr(sexpr[1], signature)
             body = from_sexpr(sexpr[2], signature)
             head = signature.get('FUN', FUN)(var, body)
+            args = sexpr[3:]
+        elif head is _QFUN:
+            var = from_sexpr(sexpr[1], signature)
+            body = from_sexpr(sexpr[2], signature)
+            head = signature.get('QFUN', QFUN)(var, body)
             args = sexpr[3:]
         else:
             head = signature.get(head, head)
