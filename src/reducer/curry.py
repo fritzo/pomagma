@@ -6,6 +6,7 @@ from pomagma.compiler.util import memoize_args
 from pomagma.reducer.syntax import (APP, BOT, JOIN, QUOTE, TOP, B, C, I, K, S,
                                     is_app, is_atom, is_fun, is_join, is_nvar,
                                     is_quote)
+from pomagma.util import TODO
 
 
 # ----------------------------------------------------------------------------
@@ -63,6 +64,10 @@ def abstract(var, body):
         return body  # Rules TOP, BOT
     else:
         return APP(K, body)  # Rule K
+
+
+def qabstract(var, body):
+    TODO('Support quoted recursion')
 
 
 # ----------------------------------------------------------------------------

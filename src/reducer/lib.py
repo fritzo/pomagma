@@ -455,9 +455,9 @@ def fix(f):
     return app(f, fix(f))
 
 
-# @combinator  # TODO This currently raises NotImplementedError.
+@combinator
 def qfix(qf):
-    return app(EVAL, qf, qapp(QUOTE(qfix), qf))
+    return app(EVAL, qf, qapp(quote(qfix), qf))
 
 
 @combinator

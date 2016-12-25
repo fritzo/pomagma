@@ -1104,6 +1104,16 @@ def test_fix(value, expected):
     assert reduce(value) == expected
 
 
+@for_each([
+    # These raise NotImplementedError:
+    # (app(lib.qfix, error), error),
+    # (app(lib.qfix, undefined), undefined),
+    # TODO Add more examples.
+])
+def test_qfix(value, expected):
+    assert reduce(value) == expected
+
+
 @pytest.mark.xfail(run=False, reason='does not terminate')
 @for_each([
     (lambda x: x, x, x),

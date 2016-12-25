@@ -3,11 +3,10 @@
 import functools
 import inspect
 
-from pomagma.reducer.curry import abstract
-from pomagma.reducer.syntax import (APP, BOT, JOIN, NVAR, QAPP, QUOTE,
+from pomagma.reducer.curry import abstract, qabstract
+from pomagma.reducer.syntax import (APP, BOT, JOIN, NVAR, QAPP, QQUOTE, QUOTE,
                                     free_nvars, quoted_nvars)
 from pomagma.reducer.util import LOG
-from pomagma.util import TODO
 
 
 # ----------------------------------------------------------------------------
@@ -72,7 +71,7 @@ class _Combinator(object):
 
         code = _compile(self, actual_fun=self._fun)
         if var in quoted_nvars(code):
-            TODO('Support quoted recursion')
+            code = rec(qabstract(var, code))
         elif var in free_nvars(code):
             code = rec(abstract(var, code))
 
@@ -141,6 +140,11 @@ def qapp(*args):
 def rec(fun):
     fxx = _compile(lambda x: app(fun, app(x, x)))
     return app(fxx, fxx)
+
+
+def qrec(fun):
+    fxx = _compile(lambda qx: app(fun, qapp(qx, qapp(QQUOTE, qx))))
+    return app(fxx, QUOTE(fxx))
 
 
 def typed(*types):
