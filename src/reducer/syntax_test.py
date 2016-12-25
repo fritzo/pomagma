@@ -1,4 +1,4 @@
-from pomagma.reducer.code import (
+from pomagma.reducer.syntax import (
     APP, JOIN, NVAR, IVAR, ABS, QABS, FUN, QFUN,
     QUOTE, CODE, EVAL, QAPP, QQUOTE, EQUAL, LESS,
     TOP, BOT, I, K, B, C, S, V, A, UNIT, BOOL, MAYBE, PROD, SUM, NUM,

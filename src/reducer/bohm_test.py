@@ -7,7 +7,7 @@ from pomagma.reducer.bohm import (
     try_compute_step,
     try_decide_less_weak, try_decide_less, try_decide_equal, dominates,
 )
-from pomagma.reducer.code import (
+from pomagma.reducer.syntax import (
     TOP, BOT, NVAR, IVAR, APP, ABS, JOIN,
     QUOTE, EVAL, QAPP, QQUOTE, LESS, EQUAL,
     polish_print, sexpr_parse, sexpr_print, is_code,

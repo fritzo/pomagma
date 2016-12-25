@@ -3,9 +3,9 @@
 __all__ = ['try_abstract', 'abstract', 'compile_']
 
 from pomagma.compiler.util import memoize_args
-from pomagma.reducer.code import TOP, BOT, I, K, B, C, S, APP, JOIN, QUOTE
-from pomagma.reducer.code import is_atom, is_nvar, is_app, is_join, is_quote
-from pomagma.reducer.code import is_fun
+from pomagma.reducer.syntax import TOP, BOT, I, K, B, C, S, APP, JOIN, QUOTE
+from pomagma.reducer.syntax import is_atom, is_nvar, is_app, is_join, is_quote
+from pomagma.reducer.syntax import is_fun
 
 
 # ----------------------------------------------------------------------------

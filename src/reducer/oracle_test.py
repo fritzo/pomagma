@@ -1,6 +1,6 @@
 from pomagma.reducer import oracle
-from pomagma.reducer.code import QUOTE, QQUOTE, QAPP
-from pomagma.reducer.code import TOP, BOT, I, K, B, C, NVAR
+from pomagma.reducer.syntax import QUOTE, QQUOTE, QAPP
+from pomagma.reducer.syntax import TOP, BOT, I, K, B, C, NVAR
 from pomagma.reducer.sugar import app, join_
 from pomagma.util.testing import for_each
 import pytest

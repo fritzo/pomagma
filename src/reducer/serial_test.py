@@ -1,10 +1,10 @@
 from cStringIO import StringIO
-from pomagma.reducer.code import (
+from pomagma.reducer.syntax import (
     TOP, BOT, I, K, B, C, S, NVAR, IVAR, APP, JOIN, ABS, FUN,
     QUOTE, CODE, EVAL, QAPP, QABS, QFUN, QQUOTE, EQUAL, LESS,
     V, A, UNIT, BOOL, MAYBE, PROD, SUM, NUM,
 )
-from pomagma.reducer.code_test import s_codes
+from pomagma.reducer.syntax_test import s_codes
 from pomagma.reducer.serial import dump, load
 from pomagma.reducer.serial import pack_head_argc, unpack_head_argc
 from pomagma.reducer.serial import pack_varint, unpack_varint

@@ -1,8 +1,8 @@
 from pomagma.reducer import io
 from pomagma.reducer import lib
-from pomagma.reducer.code import I, K, B, C, APP
-from pomagma.reducer.code import polish_parse
-from pomagma.reducer.code import polish_print
+from pomagma.reducer.syntax import I, K, B, C, APP
+from pomagma.reducer.syntax import polish_parse
+from pomagma.reducer.syntax import polish_print
 from pomagma.util.testing import for_each
 import hypothesis
 import hypothesis.strategies

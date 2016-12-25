@@ -19,12 +19,12 @@ from collections import namedtuple
 from pomagma.compiler.util import memoize_arg
 from pomagma.compiler.util import memoize_args
 from pomagma.reducer import oracle
-from pomagma.reducer.code import CODE, EVAL, QQUOTE, QAPP, EQUAL, LESS
-from pomagma.reducer.code import TOP, BOT, I, K, B, C, S
-from pomagma.reducer.code import UNIT, BOOL, MAYBE
-from pomagma.reducer.code import NVAR, APP, JOIN, QUOTE
-from pomagma.reducer.code import free_vars, complexity
-from pomagma.reducer.code import is_nvar, is_atom, is_app, is_join, is_quote
+from pomagma.reducer.syntax import CODE, EVAL, QQUOTE, QAPP, EQUAL, LESS
+from pomagma.reducer.syntax import TOP, BOT, I, K, B, C, S
+from pomagma.reducer.syntax import UNIT, BOOL, MAYBE
+from pomagma.reducer.syntax import NVAR, APP, JOIN, QUOTE
+from pomagma.reducer.syntax import free_vars, complexity
+from pomagma.reducer.syntax import is_nvar, is_atom, is_app, is_join, is_quote
 from pomagma.reducer.sugar import abstract
 from pomagma.reducer.util import LOG
 from pomagma.reducer.util import PROFILE_COUNTERS

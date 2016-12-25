@@ -1,5 +1,5 @@
-from pomagma.reducer.code import TOP, BOT, I, K, B, C, S
-from pomagma.reducer.code import NVAR, APP, JOIN, QUOTE
+from pomagma.reducer.syntax import TOP, BOT, I, K, B, C, S
+from pomagma.reducer.syntax import NVAR, APP, JOIN, QUOTE
 from pomagma.reducer.curry import abstract, substitute
 from pomagma.util.testing import for_each
 

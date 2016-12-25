@@ -1,7 +1,7 @@
 from google.protobuf.descriptor import FieldDescriptor
 from pomagma.reducer import messages_pb2 as messages
-from pomagma.reducer.code import polish_parse
-from pomagma.reducer.code import polish_print
+from pomagma.reducer.syntax import polish_parse
+from pomagma.reducer.syntax import polish_print
 import zmq
 
 

@@ -1,11 +1,11 @@
 """Tools for testing implementations of reduce() and simplify()."""
 
 from importlib import import_module
-from pomagma.reducer.code import CODE, EVAL, QQUOTE, QAPP, EQUAL, LESS
-from pomagma.reducer.code import TOP, BOT, I, K, B, C, S
-from pomagma.reducer.code import UNIT, BOOL, MAYBE
-from pomagma.reducer.code import NVAR, APP, JOIN, QUOTE
-from pomagma.reducer.code import is_app, is_quote, sexpr_parse
+from pomagma.reducer.syntax import CODE, EVAL, QQUOTE, QAPP, EQUAL, LESS
+from pomagma.reducer.syntax import TOP, BOT, I, K, B, C, S
+from pomagma.reducer.syntax import UNIT, BOOL, MAYBE
+from pomagma.reducer.syntax import NVAR, APP, JOIN, QUOTE
+from pomagma.reducer.syntax import is_app, is_quote, sexpr_parse
 from pomagma.reducer.linker import link
 from pomagma.reducer.curry import compile_
 import hypothesis.strategies as s

@@ -3,8 +3,8 @@ from pomagma.reducer import bohm
 from pomagma.reducer import lib
 from pomagma.reducer import curry
 from pomagma.reducer.bohm import polish_simplify, sexpr_simplify, print_tiny
-from pomagma.reducer.code import polish_parse, polish_print
-from pomagma.reducer.code import sexpr_parse, sexpr_print
+from pomagma.reducer.syntax import polish_parse, polish_print
+from pomagma.reducer.syntax import sexpr_parse, sexpr_print
 from pomagma.reducer.engines import engine
 from pomagma.reducer.linker import link
 from pomagma.util import debuggable

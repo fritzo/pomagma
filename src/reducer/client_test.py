@@ -1,4 +1,4 @@
-from pomagma.reducer.code import I, K, B, C, S, BOT, TOP, APP
+from pomagma.reducer.syntax import I, K, B, C, S, BOT, TOP, APP
 from pomagma.util.testing import for_each
 import os
 import pomagma.reducer

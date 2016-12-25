@@ -4,8 +4,8 @@ Intro forms are hand-optimized; see lib_test.py for lambda versions.
 
 """
 
-from pomagma.reducer.code import APP, JOIN, TOP, BOT, I, K, B, C
-from pomagma.reducer.code import QUOTE, EQUAL, LESS, UNIT, BOOL, MAYBE
+from pomagma.reducer.syntax import APP, JOIN, TOP, BOT, I, K, B, C
+from pomagma.reducer.syntax import QUOTE, EQUAL, LESS, UNIT, BOOL, MAYBE
 from pomagma.reducer.sugar import app, join_, quote, qapp, let
 from pomagma.reducer.sugar import combinator, typed, symmetric
 

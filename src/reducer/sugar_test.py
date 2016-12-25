@@ -1,4 +1,4 @@
-from pomagma.reducer.code import I, K, B, C, S, TOP, NVAR, APP
+from pomagma.reducer.syntax import I, K, B, C, S, TOP, NVAR, APP
 from pomagma.reducer.sugar import _compile
 from pomagma.reducer.sugar import combinator, as_code, app, join_
 from pomagma.util.testing import for_each

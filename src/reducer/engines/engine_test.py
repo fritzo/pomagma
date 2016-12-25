@@ -1,5 +1,5 @@
 from pomagma.reducer.engines import engine
-from pomagma.reducer.code import NVAR, I
+from pomagma.reducer.syntax import NVAR, I
 from pomagma.reducer.testing import iter_equations, s_codes, s_quoted
 from pomagma.util.testing import for_each, xfail_if_not_implemented
 import hypothesis

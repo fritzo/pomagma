@@ -1,6 +1,6 @@
 from pomagma.reducer import lib
-from pomagma.reducer.code import NVAR, TOP, BOT, I, K, B, C, S, UNIT
-from pomagma.reducer.code import sexpr_print
+from pomagma.reducer.syntax import NVAR, TOP, BOT, I, K, B, C, S, UNIT
+from pomagma.reducer.syntax import sexpr_print
 from pomagma.reducer.engines.engine import reduce, simplify
 from pomagma.reducer.engines.engine_test import s_quoted
 from pomagma.reducer.sugar import as_code, app, join_, quote, combinator

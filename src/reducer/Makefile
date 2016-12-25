@@ -1,5 +1,5 @@
 .SILENT:
-.PHONY: all lint clang-format pyformat format FORCE
+.PHONY: all lint clang-format pyformat format test clean FORCE
 
 PY_FILES := $(shell find . | grep '\.py$$' | grep -v '_pb2\.py')
 CPP_FILES := $(shell find . | grep '\.[ch]pp$$' | grep -v '\.pb\.')
@@ -24,5 +24,9 @@ format: clang-format pyformat FORCE
 
 test: lint
 	py.test
+
+clean:
+	find . | grep '\.pyc$$' | xargs rm
+	rm -Rf __pycache__
 
 FORCE:

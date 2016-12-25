@@ -53,7 +53,7 @@ Varint format in bytes:
 __all__ = ['dump', 'load', 'PROTOCOL_VERSION']
 
 from cStringIO import StringIO
-from pomagma.reducer.code import (
+from pomagma.reducer.syntax import (
     CODE, EVAL, QAPP, QQUOTE, EQUAL, LESS,
     TOP, BOT, I, K, B, C, S,
     V, A, UNIT, BOOL, MAYBE, PROD, SUM, NUM,
