@@ -1,11 +1,10 @@
-from pomagma.reducer import lib
-from pomagma.reducer.engines import engine
-from pomagma.reducer.programs import program
-from pomagma.reducer.programs import using_engine
-from pomagma.reducer.sugar import app
-from pomagma.util.testing import for_each
 import pytest
 
+from pomagma.reducer import lib
+from pomagma.reducer.engines import engine
+from pomagma.reducer.programs import program, using_engine
+from pomagma.reducer.sugar import app
+from pomagma.util.testing import for_each
 
 bool_not = program('bool', 'bool')(lib.bool_not)
 succ = program('num', 'num')(lib.succ)

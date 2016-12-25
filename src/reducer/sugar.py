@@ -1,11 +1,11 @@
 """DSL translating from lambda-let notation to SKJ."""
 
-from pomagma.reducer.syntax import BOT, JOIN, QAPP, NVAR, APP, QUOTE
-from pomagma.reducer.syntax import free_vars
-from pomagma.reducer.curry import try_abstract, abstract
-from pomagma.reducer.util import LOG
 import functools
 import inspect
+
+from pomagma.reducer.curry import abstract, try_abstract
+from pomagma.reducer.syntax import APP, BOT, JOIN, NVAR, QAPP, QUOTE, free_vars
+from pomagma.reducer.util import LOG
 
 
 # ----------------------------------------------------------------------------

@@ -9,9 +9,8 @@ __all__ = [
 ]
 
 from pomagma.compiler.util import memoize_arg
-from pomagma.reducer.syntax import APP, TOP, BOT, I, K, B, C, S
-from pomagma.reducer.syntax import QQUOTE, QAPP
-from pomagma.reducer.syntax import is_app, is_join, is_quote
+from pomagma.reducer.syntax import (APP, BOT, QAPP, QQUOTE, TOP, B, C, I, K, S,
+                                    is_app, is_join, is_quote)
 
 F = APP(K, I)
 

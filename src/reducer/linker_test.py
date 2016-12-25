@@ -1,7 +1,7 @@
 from pomagma.reducer import lib
-from pomagma.reducer.syntax import NVAR
 from pomagma.reducer.linker import link
-from pomagma.reducer.sugar import as_code, app
+from pomagma.reducer.sugar import app, as_code
+from pomagma.reducer.syntax import NVAR
 from pomagma.util.testing import for_each
 
 x = NVAR('x')

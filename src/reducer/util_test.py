@@ -1,6 +1,7 @@
-from pomagma.reducer.util import trool_fuse, trool_all, trool_any
-from pomagma.util.testing import for_each
 import pytest
+
+from pomagma.reducer.util import trool_all, trool_any, trool_fuse
+from pomagma.util.testing import for_each
 
 
 @for_each([

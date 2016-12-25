@@ -1,22 +1,23 @@
-from pomagma.reducer.bohm import (
-    I, K, B, C, S, KI, CI, CB,
-    increment_rank, decrement_rank, is_const, is_linear, is_normal,
-    polish_simplify, sexpr_simplify, print_tiny,
-    substitute, app, abstract, anonymize, nominal_abstract, join, occurs,
-    true, false, approximate_var, approximate, unabstract,
-    try_compute_step,
-    try_decide_less_weak, try_decide_less, try_decide_equal, dominates,
-)
-from pomagma.reducer.syntax import (
-    TOP, BOT, NVAR, IVAR, APP, ABS, JOIN,
-    QUOTE, EVAL, QAPP, QQUOTE, LESS, EQUAL,
-    polish_print, sexpr_parse, sexpr_print, is_code,
-)
-from pomagma.util.testing import for_each, xfail_if_not_implemented
+import itertools
+
 import hypothesis
 import hypothesis.strategies as s
-import itertools
 import pytest
+
+from pomagma.reducer.bohm import (CB, CI, KI, B, C, I, K, S, abstract,
+                                  anonymize, app, approximate, approximate_var,
+                                  decrement_rank, dominates, false,
+                                  increment_rank, is_const, is_linear,
+                                  is_normal, join, nominal_abstract, occurs,
+                                  polish_simplify, print_tiny, sexpr_simplify,
+                                  substitute, true, try_compute_step,
+                                  try_decide_equal, try_decide_less,
+                                  try_decide_less_weak, unabstract)
+from pomagma.reducer.syntax import (ABS, APP, BOT, EQUAL, EVAL, IVAR, JOIN,
+                                    LESS, NVAR, QAPP, QQUOTE, QUOTE, TOP,
+                                    is_code, polish_print, sexpr_parse,
+                                    sexpr_print)
+from pomagma.util.testing import for_each, xfail_if_not_implemented
 
 x = NVAR('x')
 y = NVAR('y')

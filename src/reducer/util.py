@@ -1,12 +1,13 @@
-from collections import defaultdict
-from pomagma.compiler.util import memoize_args
 import atexit
 import functools
 import inspect
 import logging
 import os
-import pomagma.util
 import sys
+from collections import defaultdict
+
+import pomagma.util
+from pomagma.compiler.util import memoize_args
 
 
 class UnreachableError(RuntimeError):

@@ -1,17 +1,17 @@
-from parsable import parsable
-from pomagma.reducer import bohm
-from pomagma.reducer import lib
-from pomagma.reducer import curry
-from pomagma.reducer.bohm import polish_simplify, sexpr_simplify, print_tiny
-from pomagma.reducer.syntax import polish_parse, polish_print
-from pomagma.reducer.syntax import sexpr_parse, sexpr_print
-from pomagma.reducer.engines import engine
-from pomagma.reducer.linker import link
-from pomagma.util import debuggable
 import os
-import pomagma.util
 import subprocess
 import sys
+
+from parsable import parsable
+
+import pomagma.util
+from pomagma.reducer import bohm, curry, lib
+from pomagma.reducer.bohm import polish_simplify, print_tiny, sexpr_simplify
+from pomagma.reducer.engines import engine
+from pomagma.reducer.linker import link
+from pomagma.reducer.syntax import (polish_parse, polish_print, sexpr_parse,
+                                    sexpr_print)
+from pomagma.util import debuggable
 
 FORMATS = {
     'polish': (polish_parse, polish_print, polish_simplify),

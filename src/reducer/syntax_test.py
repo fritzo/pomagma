@@ -1,16 +1,15 @@
-from pomagma.reducer.syntax import (
-    APP, JOIN, NVAR, IVAR, ABS, QABS, FUN, QFUN,
-    QUOTE, CODE, EVAL, QAPP, QQUOTE, EQUAL, LESS,
-    TOP, BOT, I, K, B, C, S, V, A, UNIT, BOOL, MAYBE, PROD, SUM, NUM,
-    free_vars, complexity, polish_parse, polish_print,
-    sexpr_parse, sexpr_print, sexpr_parse_sexpr, sexpr_print_sexpr,
-    to_sexpr, from_sexpr,
-)
-
-from pomagma.util.testing import for_each
 import hypothesis
 import hypothesis.strategies as s
 
+from pomagma.reducer.syntax import (ABS, APP, BOOL, BOT, CODE, EQUAL, EVAL,
+                                    FUN, IVAR, JOIN, LESS, MAYBE, NUM, NVAR,
+                                    PROD, QABS, QAPP, QFUN, QQUOTE, QUOTE, SUM,
+                                    TOP, UNIT, A, B, C, I, K, S, V, complexity,
+                                    free_vars, from_sexpr, polish_parse,
+                                    polish_print, sexpr_parse,
+                                    sexpr_parse_sexpr, sexpr_print,
+                                    sexpr_print_sexpr, to_sexpr)
+from pomagma.util.testing import for_each
 
 # ----------------------------------------------------------------------------
 # Parameterized tests

@@ -1,11 +1,11 @@
 """Wrapping code to use SKJ programs from python."""
 
-from itertools import izip
-from pomagma.reducer import io
-from pomagma.reducer.sugar import combinator
-from pomagma.reducer.sugar import app
 import contextlib
 import functools
+from itertools import izip
+
+from pomagma.reducer import io
+from pomagma.reducer.sugar import app, combinator
 
 ENGINE = None  # Must have a method .reduce(code, budget=0) -> code.
 BUDGET = 10000

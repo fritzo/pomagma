@@ -1,9 +1,11 @@
-from pomagma.reducer.syntax import I, K, B, C, S, BOT, TOP, APP
-from pomagma.util.testing import for_each
 import os
+
+import pytest
+
 import pomagma.reducer
 import pomagma.util
-import pytest
+from pomagma.reducer.syntax import APP, BOT, TOP, B, C, I, K, S
+from pomagma.util.testing import for_each
 
 DATA = os.path.join(pomagma.util.DATA, 'test', 'debug')
 ADDRESS = 'ipc://{}'.format(os.path.join(DATA, 'reducer.socket'))

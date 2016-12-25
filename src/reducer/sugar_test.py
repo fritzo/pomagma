@@ -1,8 +1,8 @@
-from pomagma.reducer.syntax import I, K, B, C, S, TOP, NVAR, APP
-from pomagma.reducer.sugar import _compile
-from pomagma.reducer.sugar import combinator, as_code, app, join_
-from pomagma.util.testing import for_each
 import pytest
+
+from pomagma.reducer.sugar import _compile, app, as_code, combinator, join_
+from pomagma.reducer.syntax import APP, NVAR, TOP, B, C, I, K, S
+from pomagma.util.testing import for_each
 
 f = NVAR('f')
 x = NVAR('x')

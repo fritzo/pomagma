@@ -1,13 +1,10 @@
-from pomagma.reducer import io
-from pomagma.reducer import lib
-from pomagma.reducer.syntax import I, K, B, C, APP
-from pomagma.reducer.syntax import polish_parse
-from pomagma.reducer.syntax import polish_print
-from pomagma.util.testing import for_each
 import hypothesis
 import hypothesis.strategies
 import pytest
 
+from pomagma.reducer import io, lib
+from pomagma.reducer.syntax import APP, B, C, I, K, polish_parse, polish_print
+from pomagma.util.testing import for_each
 
 # ----------------------------------------------------------------------------
 # Parametrized tests

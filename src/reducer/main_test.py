@@ -1,9 +1,9 @@
+import pytest
+
 from pomagma.reducer import __main__ as main
 from pomagma.reducer.syntax import polish_print, sexpr_print
 from pomagma.reducer.testing import iter_equations
 from pomagma.util.testing import for_each, skip_if_not_implemented
-import pytest
-
 
 COMPILE_EXAMPLES = [
     ('I', '(ABS 0)'),

@@ -1,9 +1,10 @@
-from pomagma.reducer import oracle
-from pomagma.reducer.syntax import QUOTE, QQUOTE, QAPP
-from pomagma.reducer.syntax import TOP, BOT, I, K, B, C, NVAR
-from pomagma.reducer.sugar import app, join_
-from pomagma.util.testing import for_each
 import pytest
+
+from pomagma.reducer import oracle
+from pomagma.reducer.sugar import app, join_
+from pomagma.reducer.syntax import (BOT, NVAR, QAPP, QQUOTE, QUOTE, TOP, B, C,
+                                    I, K)
+from pomagma.util.testing import for_each
 
 F = app(K, I)
 J = join_(K, F)

@@ -53,15 +53,14 @@ Varint format in bytes:
 __all__ = ['dump', 'load', 'PROTOCOL_VERSION']
 
 from cStringIO import StringIO
-from pomagma.reducer.syntax import (
-    CODE, EVAL, QAPP, QQUOTE, EQUAL, LESS,
-    TOP, BOT, I, K, B, C, S,
-    V, A, UNIT, BOOL, MAYBE, PROD, SUM, NUM,
-    NVAR, IVAR, QUOTE, APP, JOIN, ABS, QABS, FUN, QFUN,
-    _NVAR, _IVAR, _JOIN, _QUOTE, _ABS, _QABS, _FUN, _QFUN,
-    is_nvar, is_ivar, is_app, is_join,
-    is_quote, is_abs, is_qabs, is_fun, is_qfun,
-)
+
+from pomagma.reducer.syntax import (_ABS, _FUN, _IVAR, _JOIN, _NVAR, _QABS,
+                                    _QFUN, _QUOTE, ABS, APP, BOOL, BOT, CODE,
+                                    EQUAL, EVAL, FUN, IVAR, JOIN, LESS, MAYBE,
+                                    NUM, NVAR, PROD, QABS, QAPP, QFUN, QQUOTE,
+                                    QUOTE, SUM, TOP, UNIT, A, B, C, I, K, S, V,
+                                    is_abs, is_app, is_fun, is_ivar, is_join,
+                                    is_nvar, is_qabs, is_qfun, is_quote)
 
 PROTOCOL_VERSION = '0.0.18'  # Semver compliant.
 

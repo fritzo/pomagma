@@ -1,6 +1,6 @@
-from pomagma.reducer.syntax import TOP, BOT, I, K, B, C, S
-from pomagma.reducer.syntax import NVAR, APP, JOIN, QUOTE
 from pomagma.reducer.curry import abstract, substitute
+from pomagma.reducer.syntax import (APP, BOT, JOIN, NVAR, QUOTE, TOP, B, C, I,
+                                    K, S)
 from pomagma.util.testing import for_each
 
 a = NVAR('a')

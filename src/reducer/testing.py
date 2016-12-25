@@ -1,16 +1,17 @@
 """Tools for testing implementations of reduce() and simplify()."""
 
-from importlib import import_module
-from pomagma.reducer.syntax import CODE, EVAL, QQUOTE, QAPP, EQUAL, LESS
-from pomagma.reducer.syntax import TOP, BOT, I, K, B, C, S
-from pomagma.reducer.syntax import UNIT, BOOL, MAYBE
-from pomagma.reducer.syntax import NVAR, APP, JOIN, QUOTE
-from pomagma.reducer.syntax import is_app, is_quote, sexpr_parse
-from pomagma.reducer.linker import link
-from pomagma.reducer.curry import compile_
-import hypothesis.strategies as s
 import os
+from importlib import import_module
+
+import hypothesis.strategies as s
 import pytest
+
+from pomagma.reducer.curry import compile_
+from pomagma.reducer.linker import link
+from pomagma.reducer.syntax import (APP, BOOL, BOT, CODE, EQUAL, EVAL, JOIN,
+                                    LESS, MAYBE, NVAR, QAPP, QQUOTE, QUOTE,
+                                    TOP, UNIT, B, C, I, K, S, is_app, is_quote,
+                                    sexpr_parse)
 
 DIR = os.path.dirname(os.path.abspath(__file__))
 TESTDATA = os.path.join(DIR, 'testdata')

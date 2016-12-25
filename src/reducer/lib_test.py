@@ -1,13 +1,14 @@
-from pomagma.reducer import lib
-from pomagma.reducer.syntax import NVAR, TOP, BOT, I, K, B, C, S, UNIT
-from pomagma.reducer.syntax import sexpr_print
-from pomagma.reducer.engines.engine import reduce, simplify
-from pomagma.reducer.engines.engine_test import s_quoted
-from pomagma.reducer.sugar import as_code, app, join_, quote, combinator
-from pomagma.util import TRAVIS_CI
-from pomagma.util.testing import for_each
 import hypothesis
 import pytest
+
+from pomagma.reducer import lib
+from pomagma.reducer.engines.engine import reduce, simplify
+from pomagma.reducer.engines.engine_test import s_quoted
+from pomagma.reducer.sugar import app, as_code, combinator, join_, quote
+from pomagma.reducer.syntax import (BOT, NVAR, TOP, UNIT, B, C, I, K, S,
+                                    sexpr_print)
+from pomagma.util import TRAVIS_CI
+from pomagma.util.testing import for_each
 
 
 class lazy_actual_vs_expected(object):

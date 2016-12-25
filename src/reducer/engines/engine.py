@@ -15,23 +15,19 @@ Known Bugs:
 
 """
 
-from collections import namedtuple
-from pomagma.compiler.util import memoize_arg
-from pomagma.compiler.util import memoize_args
-from pomagma.reducer import oracle
-from pomagma.reducer.syntax import CODE, EVAL, QQUOTE, QAPP, EQUAL, LESS
-from pomagma.reducer.syntax import TOP, BOT, I, K, B, C, S
-from pomagma.reducer.syntax import UNIT, BOOL, MAYBE
-from pomagma.reducer.syntax import NVAR, APP, JOIN, QUOTE
-from pomagma.reducer.syntax import free_vars, complexity
-from pomagma.reducer.syntax import is_nvar, is_atom, is_app, is_join, is_quote
-from pomagma.reducer.sugar import abstract
-from pomagma.reducer.util import LOG
-from pomagma.reducer.util import PROFILE_COUNTERS
-from pomagma.reducer.util import logged
-from pomagma.reducer.util import pretty
 import heapq
 import itertools
+from collections import namedtuple
+
+from pomagma.compiler.util import memoize_arg, memoize_args
+from pomagma.reducer import oracle
+from pomagma.reducer.sugar import abstract
+from pomagma.reducer.syntax import (APP, BOOL, BOT, CODE, EQUAL, EVAL, JOIN,
+                                    LESS, MAYBE, NVAR, QAPP, QQUOTE, QUOTE,
+                                    TOP, UNIT, B, C, I, K, S, complexity,
+                                    free_vars, is_app, is_atom, is_join,
+                                    is_nvar, is_quote)
+from pomagma.reducer.util import LOG, PROFILE_COUNTERS, logged, pretty
 
 __all__ = ['reduce', 'simplify', 'sample']
 

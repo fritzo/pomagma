@@ -1,8 +1,7 @@
-from collections import defaultdict
-from pomagma.compiler.util import MEMOIZED_CACHES
-from pomagma.compiler.util import memoize_arg
 import re
+from collections import defaultdict
 
+from pomagma.compiler.util import MEMOIZED_CACHES, memoize_arg
 
 # ----------------------------------------------------------------------------
 # Signature

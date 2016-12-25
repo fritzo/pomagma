@@ -15,11 +15,11 @@ CHANGELOG
 """
 
 from pomagma.compiler.util import memoize_arg, memoize_args
-from pomagma.reducer.syntax import (
-    TOP, BOT, IVAR, APP, ABS, JOIN, QUOTE, EVAL, QAPP, QQUOTE, LESS, EQUAL,
-    is_code, is_atom, is_nvar, is_ivar, is_app, is_abs, is_join, is_quote,
-    complexity, polish_parse, sexpr_parse,
-)
+from pomagma.reducer.syntax import (ABS, APP, BOT, EQUAL, EVAL, IVAR, JOIN,
+                                    LESS, QAPP, QQUOTE, QUOTE, TOP, complexity,
+                                    is_abs, is_app, is_atom, is_code, is_ivar,
+                                    is_join, is_nvar, is_quote, polish_parse,
+                                    sexpr_parse)
 from pomagma.reducer.util import UnreachableError, trool_all, trool_any
 
 I = ABS(IVAR(0))

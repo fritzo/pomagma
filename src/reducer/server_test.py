@@ -1,4 +1,5 @@
 import os
+
 import pomagma.reducer
 import pomagma.util
 

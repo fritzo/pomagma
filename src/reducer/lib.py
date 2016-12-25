@@ -4,10 +4,10 @@ Intro forms are hand-optimized; see lib_test.py for lambda versions.
 
 """
 
-from pomagma.reducer.syntax import APP, JOIN, TOP, BOT, I, K, B, C
-from pomagma.reducer.syntax import QUOTE, EQUAL, LESS, UNIT, BOOL, MAYBE
-from pomagma.reducer.sugar import app, join_, quote, qapp, let
-from pomagma.reducer.sugar import combinator, typed, symmetric
+from pomagma.reducer.sugar import (app, combinator, join_, let, qapp, quote,
+                                   symmetric, typed)
+from pomagma.reducer.syntax import (APP, BOOL, BOT, EQUAL, JOIN, LESS, MAYBE,
+                                    QUOTE, TOP, UNIT, B, C, I, K)
 
 CI = APP(C, I)
 

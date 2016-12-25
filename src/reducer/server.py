@@ -1,7 +1,8 @@
-from pomagma.reducer.client import Client
-from subprocess import CalledProcessError
 import os
+from subprocess import CalledProcessError
+
 import pomagma.util
+from pomagma.reducer.client import Client
 
 BINARY = os.path.join(pomagma.util.BIN, 'reducer', 'reducer')
 
