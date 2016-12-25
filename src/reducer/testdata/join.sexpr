@@ -20,18 +20,18 @@
 ;; Test of enumeration operations from pomagma.reducer.lib.box
 (EQUAL (QUOTE (lib.box I)) (QUOTE (lib.box I)))
 (EQUAL (QUOTE (JOIN (lib.box I) (lib.box I))) (QUOTE (lib.box I)))
-(EQUAL (QUOTE (JOIN (lib.box I) (lib.box BOT))) (QUOTE (lib.box I)))  ; xfail de_bruijn learn
-(EQUAL (QUOTE (JOIN (lib.box I) (lib.box TOP))) (QUOTE (lib.box TOP)))  ; xfail de_bruijn learn
-(EQUAL (QUOTE (JOIN (JOIN (lib.box BOT) (lib.box I)) (lib.box TOP))) (QUOTE (lib.box TOP)))  ; xfail de_bruijn learn
+(EQUAL (QUOTE (JOIN (lib.box I) (lib.box BOT))) (QUOTE (lib.box I)))  ; xfail de_bruijn
+(EQUAL (QUOTE (JOIN (lib.box I) (lib.box TOP))) (QUOTE (lib.box TOP)))  ; xfail de_bruijn
+(EQUAL (QUOTE (JOIN (JOIN (lib.box BOT) (lib.box I)) (lib.box TOP))) (QUOTE (lib.box TOP)))  ; xfail de_bruijn
 (EQUAL (QUOTE (JOIN (lib.box K) (lib.box (K I)))) (QUOTE (JOIN (lib.box K) (lib.box (K I)))))
-(EQUAL (QUOTE (JOIN (JOIN (lib.box BOT) (lib.box K)) (lib.box (K I)))) (QUOTE (JOIN (lib.box K) (lib.box (K I)))))  ; xfail de_bruijn learn
-(EQUAL (QUOTE (JOIN (lib.box K) (lib.box lib.join))) (QUOTE (lib.box lib.join)))  ; xfail de_bruijn learn
-(EQUAL (QUOTE (JOIN (lib.box (K I)) (lib.box lib.join))) (QUOTE (lib.box lib.join)))  ; xfail de_bruijn learn
-(EQUAL (QUOTE (JOIN (JOIN (lib.box K) (lib.box (K I))) (lib.box lib.join))) (QUOTE (lib.box lib.join)))  ; xfail de_bruijn learn
-(EQUAL (QUOTE (JOIN (JOIN (lib.box K) (lib.box (K I))) (lib.box TOP))) (QUOTE (lib.box TOP)))  ; xfail de_bruijn learn
-(EQUAL (QUOTE (JOIN (lib.box BOT) (lib.box (lib.box BOT)))) (QUOTE (lib.box (lib.box BOT))))  ; xfail de_bruijn learn
-(EQUAL (QUOTE (JOIN (JOIN (lib.box BOT) (lib.box (lib.box BOT))) (lib.box (lib.box (lib.box BOT))))) (QUOTE (lib.box (lib.box (lib.box BOT)))))  ; xfail de_bruijn learn
-(EQUAL (QUOTE (JOIN (JOIN (JOIN (lib.box BOT) (lib.box (lib.box BOT))) (lib.box (lib.box (lib.box BOT)))) (lib.box (lib.box TOP)))) (QUOTE (lib.box (lib.box TOP))))  ; xfail de_bruijn learn
+(EQUAL (QUOTE (JOIN (JOIN (lib.box BOT) (lib.box K)) (lib.box (K I)))) (QUOTE (JOIN (lib.box K) (lib.box (K I)))))  ; xfail de_bruijn
+(EQUAL (QUOTE (JOIN (lib.box K) (lib.box lib.join))) (QUOTE (lib.box lib.join)))  ; xfail de_bruijn
+(EQUAL (QUOTE (JOIN (lib.box (K I)) (lib.box lib.join))) (QUOTE (lib.box lib.join)))  ; xfail de_bruijn
+(EQUAL (QUOTE (JOIN (JOIN (lib.box K) (lib.box (K I))) (lib.box lib.join))) (QUOTE (lib.box lib.join)))  ; xfail de_bruijn
+(EQUAL (QUOTE (JOIN (JOIN (lib.box K) (lib.box (K I))) (lib.box TOP))) (QUOTE (lib.box TOP)))  ; xfail de_bruijn
+(EQUAL (QUOTE (JOIN (lib.box BOT) (lib.box (lib.box BOT)))) (QUOTE (lib.box (lib.box BOT))))  ; xfail de_bruijn
+(EQUAL (QUOTE (JOIN (JOIN (lib.box BOT) (lib.box (lib.box BOT))) (lib.box (lib.box (lib.box BOT))))) (QUOTE (lib.box (lib.box (lib.box BOT)))))  ; xfail de_bruijn
+(EQUAL (QUOTE (JOIN (JOIN (JOIN (lib.box BOT) (lib.box (lib.box BOT))) (lib.box (lib.box (lib.box BOT)))) (lib.box (lib.box TOP)))) (QUOTE (lib.box (lib.box TOP))))  ; xfail de_bruijn
 
 ;; Tests of list operations from pomagma.reducer.lib
 (EQUAL (QUOTE (lib.list_map I lib.nil)) (QUOTE lib.nil))

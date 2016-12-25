@@ -3,7 +3,7 @@
 (EQUAL (QUOTE (QUOTE (I x))) (QUOTE (QUOTE x)))
 (EQUAL (QUOTE (QUOTE (B K I I))) (QUOTE (QUOTE (K I))))
 (EQUAL (QUOTE (QUOTE (C K I I))) (QUOTE (QUOTE I)))
-(EQUAL (QUOTE (QUOTE (S K I I))) (QUOTE (QUOTE I)))  ; xfail engine continuation
+(EQUAL (QUOTE (QUOTE (S K I I))) (QUOTE (QUOTE I)))  ; xfail engine
 
 ;; EVAL
 (EQUAL (QUOTE (EVAL x)) (QUOTE (EVAL x)))

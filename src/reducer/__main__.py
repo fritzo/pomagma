@@ -5,10 +5,8 @@ from pomagma.reducer import curry
 from pomagma.reducer.bohm import polish_simplify, sexpr_simplify, print_tiny
 from pomagma.reducer.code import polish_parse, polish_print
 from pomagma.reducer.code import sexpr_parse, sexpr_print
-from pomagma.reducer.engines import continuation
 from pomagma.reducer.engines import de_bruijn
 from pomagma.reducer.engines import engine
-from pomagma.reducer.engines import learn
 from pomagma.reducer.linker import link
 from pomagma.util import debuggable
 import os
@@ -117,9 +115,7 @@ def reduce_cpp(*args):
 
 ENGINES = {
     'engine': engine,
-    'continuation': continuation,
     'de_bruijn': de_bruijn,
-    'learn': learn,
 }
 
 
@@ -129,7 +125,7 @@ def reduce(string, engine='engine', fmt='auto'):
 
     Args:
         string: code to reduce, in some parsable format specified by fmt
-        engine: 'engine', 'continuation', 'de_bruijn', or 'learn'
+        engine: 'engine' or 'de_bruijn'
         fmt: one of 'auto', 'polish', or 'sexpr'
 
     """
