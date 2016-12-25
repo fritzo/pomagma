@@ -1,7 +1,7 @@
 from pomagma.reducer.bohm import (
     increment_rank, decrement_rank, is_const, is_linear, is_normal,
     polish_simplify, sexpr_simplify, print_tiny,
-    substitute, app, abstract, join, occurs,
+    substitute, app, abstract, anonymize, nominal_abstract, join, occurs,
     true, false, approximate_var, approximate, unabstract,
     try_compute_step,
     try_decide_less_weak, try_decide_less, try_decide_equal, dominates,
@@ -333,6 +333,29 @@ def test_abstract(code, expected):
 def test_abstract_eta(code):
     hypothesis.assume(is_const(code))
     assert abstract(app(code, IVAR(0))) is decrement_rank(code)
+
+
+@for_each([
+    (x, x, IVAR(0)),
+    (y, x, y),
+    (IVAR(0), x, IVAR(1)),
+    (EVAL, x, EVAL),
+    (ABS(IVAR(0)), x, ABS(IVAR(0))),
+    (APP(x, x), x, APP(IVAR(0), IVAR(0))),
+    (JOIN(x, y), x, JOIN(IVAR(0), y)),
+    (JOIN(x, y), y, JOIN(IVAR(0), x)),
+    (QUOTE(x), x, QUOTE(x)),
+])
+def test_anonymize(code, var, expected):
+    assert anonymize(code, var, 0) is expected
+
+
+@for_each([
+    (x, x, ABS(IVAR(0))),
+    (x, IVAR(0), ABS(IVAR(1))),
+])
+def test_nominal_abstract(var, body, expected):
+    assert nominal_abstract(var, body) is expected
 
 
 # ----------------------------------------------------------------------------
@@ -798,6 +821,8 @@ PARSE_EXAMPLES = [
     ('(S K I)', '(ABS 0)'),
     ('(S K K)', '(ABS 0)'),
     ('(S K x y)', 'y'),
+    ('(FUN x (x y))', '(ABS (0 y))'),
+    ('(FUN x (x 0))', '(ABS (0 1))'),
 ]
 
 

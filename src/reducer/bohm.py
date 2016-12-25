@@ -1,10 +1,12 @@
 """Eager linear reduction of linear Bohm trees.
 
-This sketches a method of eagerly linearly reducing de Bruijn indexed codes so
-that the only codes built are linear Bohm trees. This contrasts older
-implementations by entirely avoiding use of combinators. The original
-motivation for avoiding combinators was to make it easier to implement
-try_decide_less in engines.continuation.
+This library works with de-Bruijn-indexed linear-normal lambda terms.
+
+All operations eagerly linearly reduce so that the only codes built are linear
+Bohm trees. This contrasts older implementations by entirely avoiding use of
+combinators and binding of nominal variables. The original motivation for
+avoiding combinators was to make it easier to implement try_decide_less, which
+is a core operation in normalizing JOIN terms.
 
 CHANGELOG
 2016-12-04 Initial prototype.
@@ -306,7 +308,7 @@ def app(fun, arg):
 
 @memoize_args
 def abstract(body):
-    """Abstract one de Bruijn var and simplify."""
+    """Abstract one de Bruijn variable and simplify."""
     if body is TOP:
         return body
     elif body is BOT:
@@ -334,6 +336,37 @@ def abstract(body):
     else:
         raise ValueError(body)
     raise UnreachableError(body)
+
+
+@memoize_args
+def anonymize(code, var, rank):
+    """Convert a nominal variable to a de Bruijn variable."""
+    if code is var:
+        return IVAR(rank)
+    elif is_atom(code) or is_nvar(code) or is_quote(code):
+        return code
+    elif is_ivar(code):
+        return code if code[1] < rank else IVAR(code[1] + 1)
+    elif is_abs(code):
+        body = anonymize(code[1], var, rank + 1)
+        return abstract(body)
+    elif is_app(code):
+        lhs = anonymize(code[1], var, rank)
+        rhs = anonymize(code[2], var, rank)
+        return app(lhs, rhs)
+    elif is_join(code):
+        lhs = anonymize(code[1], var, rank)
+        rhs = anonymize(code[2], var, rank)
+        return join(lhs, rhs)
+    else:
+        raise ValueError(code)
+
+
+@memoize_args
+def nominal_abstract(var, body):
+    """Abstract a nominal variable and simplify."""
+    anonymized = anonymize(body, var, 0)
+    return abstract(anonymized)
 
 
 # ----------------------------------------------------------------------------
@@ -650,6 +683,9 @@ SIGNATURE = {
     'APP': app,
     'ABS': abstract,
     'JOIN': join,
+    # Conversion from nominal lambda calculus.
+    'FUN': nominal_abstract,
+    # Conversion from combinatory algebra.
     'I': ABS(IVAR(0)),
     'K': ABS(ABS(IVAR(1))),
     'B': ABS(ABS(ABS(APP(IVAR(2), APP(IVAR(1), IVAR(0)))))),
