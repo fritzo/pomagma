@@ -5,6 +5,24 @@ from pomagma.util.testing import for_each, skip_if_not_implemented
 import pytest
 
 
+COMPILE_EXAMPLES = [
+    ('I', '(ABS 0)'),
+    ('K', '(ABS (ABS 1))'),
+    # TODO Add more examples.
+]
+
+
+@for_each(COMPILE_EXAMPLES)
+def test_decompile(curry_string, bohm_string):
+    assert main.decompile(curry_string, fmt='sexpr') == bohm_string
+
+
+@pytest.mark.xfail
+@for_each(COMPILE_EXAMPLES)
+def test_compile(curry_string, bohm_string):
+    assert main.compile(bohm_string, fmt='sexpr') == curry_string
+
+
 @for_each([
     ('I', 0),
     ('K', 0),

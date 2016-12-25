@@ -58,8 +58,8 @@ def iter_equations(test_id, suites=None):
             lhs = code[1][2]
             rhs = code[2]
             if is_quote(lhs) and is_quote(rhs):
-                lhs = link(compile_(lhs[1]), lazy=False)
-                rhs = link(compile_(rhs[1]), lazy=False)
+                lhs = link(compile_(lhs[1]))
+                rhs = link(compile_(rhs[1]))
                 example = lhs, rhs, message
                 if comment and parse_xfail(comment, test_id):
                     example = pytest.mark.xfail(example)

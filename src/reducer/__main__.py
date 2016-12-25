@@ -30,7 +30,7 @@ def guess_format(string):
 
 @parsable
 def compile(string, fmt='auto'):
-    """Compile code from I,K,B,C,S to FUN form.
+    """Compile code from Bohm ABS to I,K,B,C,S form.
 
     Available foramts: polish, sexpr
 
@@ -38,16 +38,18 @@ def compile(string, fmt='auto'):
     if fmt == 'auto':
         fmt = guess_format(string)
     print('Format: {}'.format(fmt))
+    print('In: {}'.format(string))
     parse, print_, simplify = FORMATS[fmt]
     code = parse(string)
-    result = curry.compile_(code)
-    print('In: {}'.format(string))
-    print('Out: {}'.format(print_(result)))
+    compiled = curry.compile_(code)
+    result = print_(compiled)
+    print('Out: {}'.format(result))
+    return result
 
 
 @parsable
 def decompile(string, fmt='auto'):
-    """Deompile code from FUN to I,K,B,C,S form.
+    """Decompile code from Curry I,K,B,C,S to Bohm ABS form.
 
     Available foramts: polish, sexpr
 
@@ -57,9 +59,10 @@ def decompile(string, fmt='auto'):
     print('Format: {}'.format(fmt))
     print('In: {}'.format(string))
     parse, print_, simplify = FORMATS[fmt]
-    code = parse(string)
-    result = curry.decompile(code)
-    print('Out: {}'.format(print_(result)))
+    decompiled = simplify(string)
+    result = print_(decompiled)
+    print('Out: {}'.format(result))
+    return result
 
 
 @parsable
@@ -139,7 +142,7 @@ def reduce(string, engine='engine', fmt='auto'):
     print('In: {}'.format(string))
     parse, print_, simplify = FORMATS[fmt]
     code = parse(string)
-    code = link(code, lazy=False)
+    code = link(code)
     result = ENGINES[engine].reduce(code)
     result_string = print_(result)
     print('Out: {}'.format(result_string))
