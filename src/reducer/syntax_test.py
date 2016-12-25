@@ -5,8 +5,8 @@ from pomagma.reducer.syntax import (ABS, APP, BOOL, BOT, CODE, EQUAL, EVAL,
                                     FUN, IVAR, JOIN, LESS, MAYBE, NUM, NVAR,
                                     PROD, QABS, QAPP, QFUN, QQUOTE, QUOTE, SUM,
                                     TOP, UNIT, A, B, C, I, K, S, V, complexity,
-                                    free_nvars, from_sexpr, polish_parse,
-                                    polish_print, quoted_nvars, sexpr_parse,
+                                    free_vars, from_sexpr, polish_parse,
+                                    polish_print, quoted_vars, sexpr_parse,
                                     sexpr_parse_sexpr, sexpr_print,
                                     sexpr_print_sexpr, to_sexpr)
 from pomagma.util.testing import for_each
@@ -26,8 +26,8 @@ NVAR_EXAMPLES = [
     (C, [], []),
     (S, [], []),
     (A, [], []),
-    (IVAR(0), [], []),
-    (IVAR(1), [], []),
+    (IVAR(0), [IVAR(0)], []),
+    (IVAR(1), [IVAR(1)], []),
     (x, [x], []),
     (APP(I, x), [x], []),
     (APP(x, x), [x], []),
@@ -37,6 +37,9 @@ NVAR_EXAMPLES = [
     (JOIN(x, x), [x], []),
     (JOIN(x, y), [x, y], []),
     (QUOTE(x), [x], [x]),
+    (QUOTE(IVAR(0)), [IVAR(0)], [IVAR(0)]),
+    (QUOTE(IVAR(1)), [IVAR(1)], [IVAR(1)]),
+    (ABS(QUOTE(IVAR(1))), [IVAR(0)], [IVAR(0)]),
     (QUOTE(APP(x, y)), [x, y], [x, y]),
     (APP(x, QUOTE(y)), [x, y], [y]),
     (ABS(x), [x], []),
@@ -51,18 +54,18 @@ NVAR_EXAMPLES = [
 
 
 @for_each(NVAR_EXAMPLES)
-def test_free_nvars(code, free, quoted):
-    assert free_nvars(code) == frozenset(free)
+def test_free_vars(code, free, quoted):
+    assert free_vars(code) == frozenset(free)
 
 
 @for_each(NVAR_EXAMPLES)
-def test_quoted_nvars(code, free, quoted):
-    assert quoted_nvars(code) == frozenset(quoted)
+def test_quoted_vars(code, free, quoted):
+    assert quoted_vars(code) == frozenset(quoted)
 
 
 @for_each(NVAR_EXAMPLES)
-def test_quoted_nvars_quote(code, free, quoted):
-    assert quoted_nvars(QUOTE(code)) == frozenset(free)
+def test_quoted_vars_quote(code, free, quoted):
+    assert quoted_vars(QUOTE(code)) == frozenset(free)
 
 
 @for_each([
@@ -225,9 +228,9 @@ def s_codes_extend(terms):
         s.builds(APP, terms, terms),
         s.builds(JOIN, terms, terms),
         s.builds(QUOTE, terms),
-        s.builds(ABS, terms),
+        s.builds(ABS, terms.filter(lambda c: IVAR(0) not in quoted_vars(c))),
         s.builds(QABS, terms),
-        s.builds(FUN, s_vars, terms),
+        s.builds(FUN, s_vars, terms),  # FIXME
         s.builds(QFUN, s_vars, terms),
     )
 
@@ -237,13 +240,13 @@ s_sexprs = s.builds(to_sexpr, s_codes)
 
 
 @hypothesis.given(s_codes)
-def test_free_nvars_runs(code):
-    free_nvars(code)
+def test_free_vars_runs(code):
+    free_vars(code)
 
 
 @hypothesis.given(s_codes)
-def test_qutoed_nvars_runs(code):
-    quoted_nvars(code)
+def test_qutoed_vars_runs(code):
+    quoted_vars(code)
 
 
 @hypothesis.given(s_codes)

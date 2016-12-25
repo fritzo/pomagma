@@ -1,7 +1,7 @@
 from pomagma.reducer import lib
 from pomagma.reducer.curry import substitute
 from pomagma.reducer.sugar import as_code
-from pomagma.reducer.syntax import free_nvars
+from pomagma.reducer.syntax import free_vars
 
 
 def bind(code, var):
@@ -13,7 +13,7 @@ def bind(code, var):
 
 def link(code):
     code = as_code(code)
-    free = free_nvars(code)
+    free = free_vars(code)
     to_bind = sorted(var for var in free if var[1].startswith('lib.'))
     for var in to_bind:
         code = bind(code, var)

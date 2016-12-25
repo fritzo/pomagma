@@ -14,11 +14,12 @@ CHANGELOG
 2016-12-18 Add rules for quoting and reflected order.
 """
 
-from pomagma.compiler.util import memoize_arg, memoize_args
+from pomagma.compiler.util import memoize_arg, memoize_args, unique
 from pomagma.reducer.syntax import (ABS, APP, BOT, EQUAL, EVAL, IVAR, JOIN,
                                     LESS, QAPP, QQUOTE, QUOTE, TOP, complexity,
-                                    is_abs, is_app, is_atom, is_code, is_ivar,
-                                    is_join, is_nvar, is_quote, polish_parse,
+                                    free_vars, is_abs, is_app, is_atom,
+                                    is_code, is_ivar, is_join, is_nvar,
+                                    is_quote, polish_parse, quoted_vars,
                                     sexpr_parse)
 from pomagma.reducer.util import UnreachableError, trool_all, trool_any
 
@@ -40,8 +41,7 @@ false = KI
 # Functional programming
 
 @memoize_args
-def increment_rank(code, min_rank):
-    """Increment rank of all IVARs in code."""
+def _increment_rank(code, min_rank):
     if is_atom(code):
         return code
     elif is_nvar(code):
@@ -50,20 +50,25 @@ def increment_rank(code, min_rank):
         rank = code[1]
         return IVAR(rank + 1) if rank >= min_rank else code
     elif is_abs(code):
-        return ABS(increment_rank(code[1], min_rank + 1))
+        return ABS(_increment_rank(code[1], min_rank + 1))
     elif is_app(code):
-        lhs = increment_rank(code[1], min_rank)
-        rhs = increment_rank(code[2], min_rank)
+        lhs = _increment_rank(code[1], min_rank)
+        rhs = _increment_rank(code[2], min_rank)
         return APP(lhs, rhs)
     elif is_join(code):
-        lhs = increment_rank(code[1], min_rank)
-        rhs = increment_rank(code[2], min_rank)
+        lhs = _increment_rank(code[1], min_rank)
+        rhs = _increment_rank(code[2], min_rank)
         return JOIN(lhs, rhs)
     elif is_quote(code):
-        return code
+        return QUOTE(_increment_rank(code[1], min_rank))
     else:
         raise ValueError(code)
     raise UnreachableError((code, min_rank))
+
+
+def increment_rank(code):
+    """Increment rank of all free IVARs in code."""
+    return _increment_rank(code, 0)
 
 
 class CannotDecrementRank(Exception):
@@ -94,7 +99,7 @@ def _try_decrement_rank(code, min_rank):
         rhs = _try_decrement_rank(code[2], min_rank)
         return JOIN(lhs, rhs)
     elif is_quote(code):
-        return code
+        return QUOTE(_try_decrement_rank(code[1], min_rank))
     else:
         raise ValueError(code)
     raise UnreachableError((code, min_rank))
@@ -108,16 +113,7 @@ def decrement_rank(code):
         raise ValueError(code)
 
 
-def is_const(code, rank=0):
-    """Return true if IVAR(rank) is not free in code."""
-    try:
-        _try_decrement_rank(code, rank)
-    except CannotDecrementRank:
-        return False
-    return True
-
-
-EMPTY_SET = frozenset()
+EMPTY_SET = unique(frozenset())
 
 
 @memoize_arg
@@ -134,7 +130,7 @@ def _is_linear(code):
         return EMPTY_SET, EMPTY_SET
     elif is_ivar(code):
         rank = code[1]
-        return frozenset([rank]), EMPTY_SET
+        return unique(frozenset([rank])), EMPTY_SET
     elif is_app(code):
         lhs = _is_linear(code[1])
         rhs = _is_linear(code[2])
@@ -146,8 +142,8 @@ def _is_linear(code):
         if body is None or 0 in body[1]:
             return None
         return (
-            frozenset(r - 1 for r in body[0] if r),
-            frozenset(r - 1 for r in body[1]),
+            unique(frozenset(r - 1 for r in body[0] if r)),
+            unique(frozenset(r - 1 for r in body[1])),
         )
     elif is_join(code):
         lhs = _is_linear(code[1])
@@ -183,30 +179,31 @@ def is_cheap_to_copy(code):
 
 
 @memoize_args
-def substitute(body, value, rank, budget):
-    """Substitute value for IVAR(rank) in body, decremeting higher IVARs.
+def substitute(code, value, rank, budget):
+    """Substitute value for IVAR(rank) in code, decremeting higher IVARs.
 
     This is linear-eager, and will be lazy about nonlinear
     substitutions.
 
     """
     assert budget in (True, False), budget
-    if is_atom(body):
-        return body
-    elif is_nvar(body):
-        return body
-    elif is_ivar(body):
-        if body[1] == rank:
+    if is_atom(code):
+        return code
+    elif is_nvar(code):
+        return code
+    elif is_ivar(code):
+        if code[1] == rank:
             return value
-        elif body[1] > rank:
-            return IVAR(body[1] - 1)
+        elif code[1] > rank:
+            return IVAR(code[1] - 1)
         else:
-            return body
-    elif is_app(body):
-        lhs = body[1]
-        rhs = body[2]
-        linear = (is_cheap_to_copy(value) or is_const(lhs, rank) or
-                  is_const(rhs, rank))
+            return code
+    elif is_app(code):
+        lhs = code[1]
+        rhs = code[2]
+        linear = (is_cheap_to_copy(value) or
+                  IVAR(rank) not in free_vars(lhs) or
+                  IVAR(rank) not in free_vars(rhs))
         if linear or budget:
             # Eager substitution.
             if not linear:
@@ -216,19 +213,20 @@ def substitute(body, value, rank, budget):
             return app(lhs, rhs)
         else:
             # Lazy substitution.
-            return APP(ABS(body), value)
-    elif is_abs(body):
-        body = substitute(body[1], increment_rank(value, 0), rank + 1, budget)
+            return APP(ABS(code), value)
+    elif is_abs(code):
+        body = substitute(code[1], increment_rank(value), rank + 1, budget)
         return abstract(body)
-    elif is_join(body):
-        lhs = substitute(body[1], value, rank, budget)
-        rhs = substitute(body[2], value, rank, budget)
+    elif is_join(code):
+        lhs = substitute(code[1], value, rank, budget)
+        rhs = substitute(code[2], value, rank, budget)
         return join(lhs, rhs)
-    elif is_quote(body):
-        return body
+    elif is_quote(code):
+        body = substitute(code[1], value, rank, budget)
+        return QUOTE(body)
     else:
-        raise ValueError(body)
-    raise UnreachableError((body, value, rank, budget))
+        raise ValueError(code)
+    raise UnreachableError((code, value, rank, budget))
 
 
 @memoize_args
@@ -319,6 +317,9 @@ def app(fun, arg):
 @memoize_args
 def abstract(body):
     """Abstract one de Bruijn variable and simplify."""
+    if IVAR(0) in quoted_vars(body):
+        raise ValueError(
+            'Cannot abstract quoted variable from {}'.format(body))
     if body is TOP:
         return body
     elif body is BOT:
@@ -336,7 +337,7 @@ def abstract(body):
         rhs = abstract(body[2])
         return join(lhs, rhs)
     elif is_app(body):
-        if body[2] is IVAR(0) and is_const(body[1]):
+        if body[2] is IVAR(0) and IVAR(0) not in free_vars(body[1]):
             # Eta contract.
             return decrement_rank(body[1])
         else:
@@ -550,7 +551,7 @@ def unabstract(code):
     if is_abs(code):
         return code[1]
     else:
-        return app(increment_rank(code, 0), IVAR(0))
+        return app(increment_rank(code), IVAR(0))
 
 
 def unapply(code):

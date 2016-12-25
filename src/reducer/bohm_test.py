@@ -7,16 +7,16 @@ import pytest
 from pomagma.reducer.bohm import (CB, CI, KI, B, C, I, K, S, abstract,
                                   anonymize, app, approximate, approximate_var,
                                   decrement_rank, dominates, false,
-                                  increment_rank, is_const, is_linear,
-                                  is_normal, join, nominal_abstract, occurs,
-                                  polish_simplify, print_tiny, sexpr_simplify,
-                                  substitute, true, try_compute_step,
-                                  try_decide_equal, try_decide_less,
-                                  try_decide_less_weak, unabstract)
+                                  increment_rank, is_linear, is_normal, join,
+                                  nominal_abstract, occurs, polish_simplify,
+                                  print_tiny, sexpr_simplify, substitute, true,
+                                  try_compute_step, try_decide_equal,
+                                  try_decide_less, try_decide_less_weak,
+                                  unabstract)
 from pomagma.reducer.syntax import (ABS, APP, BOT, EQUAL, EVAL, IVAR, JOIN,
                                     LESS, NVAR, QAPP, QQUOTE, QUOTE, TOP,
-                                    is_code, polish_print, sexpr_parse,
-                                    sexpr_print)
+                                    is_code, polish_print, quoted_vars,
+                                    sexpr_parse, sexpr_print)
 from pomagma.util.testing import for_each, xfail_if_not_implemented
 
 x = NVAR('x')
@@ -41,7 +41,10 @@ s_atoms = s.one_of(
 def s_codes_extend(codes):
     return s.one_of(
         s.builds(app, codes, codes),
-        s.builds(abstract, codes),
+        s.builds(
+            abstract,
+            codes.filter(lambda c: IVAR(0) not in quoted_vars(c)),
+        ),
         s.builds(join, codes, codes),
         s.builds(QUOTE, codes),
     )
@@ -66,35 +69,35 @@ def test_constants():
 # Functional programming
 
 INCREMENT_RANK_EXAMPLES = [
-    (TOP, 0, TOP),
-    (BOT, 0, BOT),
-    (x, 0, x),
-    (y, 0, y),
-    (IVAR(0), 0, IVAR(1)),
-    (IVAR(1), 0, IVAR(2)),
-    (IVAR(2), 0, IVAR(3)),
-    (IVAR(0), 1, IVAR(0)),
-    (IVAR(1), 1, IVAR(2)),
-    (IVAR(2), 1, IVAR(3)),
-    (IVAR(0), 2, IVAR(0)),
-    (IVAR(1), 2, IVAR(1)),
-    (IVAR(2), 2, IVAR(3)),
-    (APP(IVAR(0), IVAR(1)), 0, APP(IVAR(1), IVAR(2))),
-    (ABS(APP(IVAR(0), IVAR(0))), 0, ABS(APP(IVAR(0), IVAR(0)))),
-    (ABS(APP(IVAR(1), IVAR(2))), 0, ABS(APP(IVAR(2), IVAR(3)))),
-    (JOIN(IVAR(0), IVAR(1)), 0, JOIN(IVAR(1), IVAR(2))),
-    (QUOTE(IVAR(0)), 0, QUOTE(IVAR(0))),
-    (EVAL, 0, EVAL),
-    (QAPP, 0, QAPP),
-    (QQUOTE, 0, QQUOTE),
-    (LESS, 0, LESS),
-    (EQUAL, 0, EQUAL),
+    (TOP, TOP),
+    (BOT, BOT),
+    (x, x),
+    (y, y),
+    (IVAR(0), IVAR(1)),
+    (IVAR(1), IVAR(2)),
+    (IVAR(2), IVAR(3)),
+    (ABS(IVAR(0)), ABS(IVAR(0))),
+    (ABS(IVAR(1)), ABS(IVAR(2))),
+    (ABS(IVAR(2)), ABS(IVAR(3))),
+    (ABS(ABS(IVAR(0))), ABS(ABS(IVAR(0)))),
+    (ABS(ABS(IVAR(1))), ABS(ABS(IVAR(1)))),
+    (ABS(ABS(IVAR(2))), ABS(ABS(IVAR(3)))),
+    (APP(IVAR(0), IVAR(1)), APP(IVAR(1), IVAR(2))),
+    (ABS(APP(IVAR(0), IVAR(0))), ABS(APP(IVAR(0), IVAR(0)))),
+    (ABS(APP(IVAR(1), IVAR(2))), ABS(APP(IVAR(2), IVAR(3)))),
+    (JOIN(IVAR(0), IVAR(1)), JOIN(IVAR(1), IVAR(2))),
+    (QUOTE(IVAR(0)), QUOTE(IVAR(1))),
+    (EVAL, EVAL),
+    (QAPP, QAPP),
+    (QQUOTE, QQUOTE),
+    (LESS, LESS),
+    (EQUAL, EQUAL),
 ]
 
 
 @for_each(INCREMENT_RANK_EXAMPLES)
-def test_increment_rank(code, min_rank, expected):
-    assert increment_rank(code, min_rank) is expected
+def test_increment_rank(code, expected):
+    assert increment_rank(code) is expected
 
 
 DECREMENT_RANK_EXAMPLES = [
@@ -109,7 +112,7 @@ DECREMENT_RANK_EXAMPLES = [
     (ABS(APP(IVAR(0), IVAR(0))), ABS(APP(IVAR(0), IVAR(0)))),
     (ABS(APP(IVAR(2), IVAR(3))), ABS(APP(IVAR(1), IVAR(2)))),
     (JOIN(IVAR(1), IVAR(2)), JOIN(IVAR(0), IVAR(1))),
-    (QUOTE(IVAR(0)), QUOTE(IVAR(0))),
+    (QUOTE(IVAR(1)), QUOTE(IVAR(0))),
     (EVAL, EVAL),
     (QAPP, QAPP),
     (QQUOTE, QQUOTE),
@@ -125,41 +128,7 @@ def test_decrement_rank(code, expected):
 
 @hypothesis.given(s_codes)
 def test_decrement_increment_rank(code):
-    assert decrement_rank(increment_rank(code, 0)) is code
-
-
-IS_CONST_EXAMPLES = [
-    (TOP, True),
-    (BOT, True),
-    (x, True),
-    (y, True),
-    (IVAR(0), False),
-    (IVAR(1), True),
-    (IVAR(2), True),
-    (IVAR(3), True),
-    (APP(IVAR(0), IVAR(0)), False),
-    (APP(IVAR(0), IVAR(1)), False),
-    (APP(IVAR(1), IVAR(0)), False),
-    (APP(IVAR(1), IVAR(2)), True),
-    (ABS(APP(IVAR(0), IVAR(0))), True),
-    (ABS(APP(IVAR(0), IVAR(1))), False),
-    (ABS(APP(IVAR(1), IVAR(0))), False),
-    (JOIN(IVAR(0), IVAR(0)), False),
-    (JOIN(IVAR(0), IVAR(1)), False),
-    (JOIN(IVAR(1), IVAR(0)), False),
-    (JOIN(IVAR(1), IVAR(2)), True),
-    (QUOTE(IVAR(0)), True),
-    (EVAL, True),
-    (QAPP, True),
-    (QQUOTE, True),
-    (LESS, True),
-    (EQUAL, True),
-]
-
-
-@for_each(IS_CONST_EXAMPLES)
-def test_is_const(code, expected):
-    assert is_const(code) is expected
+    assert decrement_rank(increment_rank(code)) is code
 
 
 IS_LINEAR_EXAMPLES = [
@@ -205,8 +174,8 @@ SUBSTITUTE_EXAMPLES = [
     (ABS(IVAR(1)), x, ABS(x)),
     (ABS(IVAR(2)), x, ABS(IVAR(1))),
     (JOIN(IVAR(0), IVAR(1)), x, JOIN(IVAR(0), x)),
-    (QUOTE(IVAR(0)), x, QUOTE(IVAR(0))),
-    (QUOTE(IVAR(1)), x, QUOTE(IVAR(1))),
+    (QUOTE(IVAR(0)), x, QUOTE(x)),
+    (QUOTE(IVAR(1)), x, QUOTE(IVAR(0))),
     (EVAL, x, EVAL),
     (QAPP, x, QAPP),
     (QQUOTE, x, QQUOTE),
@@ -329,8 +298,8 @@ ABSTRACT_EXAMPLES = [
     (APP(IVAR(0), IVAR(0)), ABS(APP(IVAR(0), IVAR(0)))),
     (APP(x, IVAR(0)), x),
     (JOIN(IVAR(0), x), JOIN(ABS(IVAR(0)), ABS(x))),
-    (QUOTE(IVAR(0)), ABS(QUOTE(IVAR(0)))),
-    (APP(QUOTE(IVAR(0)), IVAR(0)), QUOTE(IVAR(0))),
+    (QUOTE(IVAR(1)), ABS(QUOTE(IVAR(1)))),
+    (APP(QUOTE(IVAR(1)), IVAR(0)), QUOTE(IVAR(0))),
     (EVAL, ABS(EVAL)),
     (QAPP, ABS(QAPP)),
     (QQUOTE, ABS(QQUOTE)),
@@ -343,10 +312,8 @@ def test_abstract(code, expected):
 
 
 @hypothesis.given(s_codes)
-@hypothesis.example(join(TOP, ABS(IVAR(0))))
 def test_abstract_eta(code):
-    hypothesis.assume(is_const(code))
-    assert abstract(app(code, IVAR(0))) is decrement_rank(code)
+    assert abstract(app(increment_rank(code), IVAR(0))) is code
 
 
 @for_each([

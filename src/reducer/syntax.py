@@ -90,6 +90,9 @@ def IVAR(rank):
     return _code(_IVAR, rank)
 
 
+IVAR_0 = IVAR(0)
+
+
 def APP(lhs, rhs):
     return _code(_APP, lhs, rhs)
 
@@ -103,6 +106,7 @@ def QUOTE(code):
 
 
 def ABS(body):
+    assert IVAR_0 not in quoted_vars(body)
     return _code(_ABS, body)
 
 
@@ -112,7 +116,7 @@ def QABS(body):
 
 def FUN(var, body):
     assert is_nvar(var), var
-    assert var not in quoted_nvars(body), (var, body)
+    assert var not in quoted_vars(body), (var, body)
     return _code(_FUN, var, body)
 
 
@@ -171,50 +175,77 @@ def is_qfun(code):
     return isinstance(code, tuple) and code[0] is _QFUN
 
 
+# ----------------------------------------------------------------------------
+# Variables
+
+def decrement_var(var):
+    """Decrement rank of an IVAR or leave an NVAR untouched."""
+    if is_nvar(var):
+        return var
+    elif is_ivar(var):
+        assert var[1] > 0, var
+        return IVAR(var[1] - 1)
+    else:
+        raise ValueError(var)
+
+
 @memoize_arg
 @unique_result
-def free_nvars(code):
-    """Returns set of free nominal variables, possibly quoted."""
+def free_vars(code):
+    """Returns set of free variables, possibly quoted."""
     assert is_code(code), code
-    if is_nvar(code):
+    if is_atom(code):
+        return frozenset()
+    elif is_nvar(code) or is_ivar(code):
         return frozenset([code])
     elif is_app(code) or is_join(code):
-        return free_nvars(code[1]) | free_nvars(code[2])
+        return free_vars(code[1]) | free_vars(code[2])
     elif is_quote(code):
-        return free_nvars(code[1])
-    elif is_abs(code):
-        return free_nvars(code[1])
-    elif is_qabs(code):
-        return free_nvars(code[1])
+        return free_vars(code[1])
+    elif is_abs(code) or is_qabs(code):
+        return frozenset(
+            decrement_var(v)
+            for v in free_vars(code[1])
+            if v is not IVAR_0
+        )
     elif is_fun(code):
         assert is_nvar(code[1])
-        return free_nvars(code[2]) - frozenset([code[1]])
+        return free_vars(code[2]) - frozenset([code[1]])
     elif is_qfun(code):
         assert is_nvar(code[1])
-        return free_nvars(code[2]) - frozenset([code[1]])
+        return free_vars(code[2]) - frozenset([code[1]])
     else:
-        return frozenset()
+        raise ValueError(code)
 
 
 @memoize_arg
 @unique_result
-def quoted_nvars(code):
-    """Returns set of free quoted nominal variables."""
+def quoted_vars(code):
+    """Returns set of free quoted variables."""
     assert is_code(code), code
-    if is_quote(code):
-        return free_nvars(code[1])
+    if is_atom(code) or is_nvar(code) or is_ivar(code):
+        return frozenset()
+    elif is_quote(code):
+        return free_vars(code[1])
     elif is_app(code) or is_join(code):
-        return quoted_nvars(code[1]) | quoted_nvars(code[2])
+        return quoted_vars(code[1]) | quoted_vars(code[2])
     elif is_abs(code) or is_qabs(code):
-        return quoted_nvars(code[1])
+        return frozenset(
+            decrement_var(v)
+            for v in quoted_vars(code[1])
+            if v is not IVAR_0
+        )
     elif is_fun(code):
-        return quoted_nvars(code[2])
+        return quoted_vars(code[2])
     elif is_qfun(code):
         assert is_nvar(code[1])
-        return quoted_nvars(code[2]) - frozenset([code[1]])
+        return quoted_vars(code[2]) - frozenset([code[1]])
     else:
-        return frozenset()
+        raise ValueError(code)
 
+
+# ----------------------------------------------------------------------------
+# Complexity
 
 # Term complexity is roughly the depth of a term, with special cases for atoms,
 # variables, and joins. The complexity of a join is the max complexity of each
@@ -236,10 +267,10 @@ ATOM_COMPLEXITY = defaultdict(lambda: 10, {
 def complexity(code):
     """Complexity norm on code.
 
-    Theorem: Modulo alpha conversion,
+    Theorem: Modulo alpha conversion and excluding JOIN-terms,
       there are finitely many codes with any fixed complexity.
-    Theorem: There are finitely many closed de Bruijn terms at any given
-      complexity.
+    Theorem: There are finitely many JOIN-free closed de Bruijn terms
+      at any given complexity.
 
     """
     assert is_code(code), code

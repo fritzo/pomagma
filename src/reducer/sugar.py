@@ -5,7 +5,7 @@ import inspect
 
 from pomagma.reducer.curry import abstract, qabstract
 from pomagma.reducer.syntax import (APP, BOT, JOIN, NVAR, QAPP, QQUOTE, QUOTE,
-                                    free_nvars, quoted_nvars)
+                                    free_vars, quoted_vars)
 from pomagma.reducer.util import LOG
 
 
@@ -70,12 +70,12 @@ class _Combinator(object):
         self._code = var
 
         code = _compile(self, actual_fun=self._fun)
-        if var in quoted_nvars(code):
+        if var in quoted_vars(code):
             code = rec(qabstract(var, code))
-        elif var in free_nvars(code):
+        elif var in free_vars(code):
             code = rec(abstract(var, code))
 
-        free = free_nvars(code)
+        free = free_vars(code)
         if free:
             raise SyntaxError('Unbound variables: {}'.format(
                 ' '.join(v[1] for v in free)))
