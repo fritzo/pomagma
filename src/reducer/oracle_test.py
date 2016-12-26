@@ -1,15 +1,21 @@
 import pytest
 
 from pomagma.reducer import oracle
-from pomagma.reducer.sugar import app, join_
-from pomagma.reducer.syntax import (BOT, NVAR, QAPP, QQUOTE, QUOTE, TOP, B, C,
-                                    I, K)
+from pomagma.reducer.syntax import (APP, BOT, JOIN, NVAR, QAPP, QQUOTE, QUOTE,
+                                    TOP, B, C, I, K)
 from pomagma.util.testing import for_each
 
-F = app(K, I)
-J = join_(K, F)
+F = APP(K, I)
+J = JOIN(K, F)
 x = NVAR('x')
 y = NVAR('y')
+
+
+def app(*args):
+    result = args[0]
+    for arg in args[1:]:
+        result = APP(result, arg)
+    return result
 
 
 def box(x):
@@ -120,7 +126,7 @@ def some(x):
     (some(I), some(I)),
     (some(K), some(K)),
     (some(F), some(F)),
-    pytest.mark.xfail((join_(some(K), some(F)), some(J))),
+    pytest.mark.xfail((JOIN(some(K), some(F)), some(J))),
     (app(J, none, some(BOT)), TOP),
     (I, TOP),
     (F, TOP),

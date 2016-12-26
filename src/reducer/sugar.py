@@ -197,6 +197,5 @@ def symmetric(fun):
     return symmetric_fun
 
 
-# TODO use define directly instead of abstract
 def let(defn, var_body):
     return app(var_body, defn)

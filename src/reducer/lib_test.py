@@ -5,7 +5,7 @@ from pomagma.reducer import lib
 from pomagma.reducer.engines.engine import reduce, simplify
 from pomagma.reducer.engines.engine_test import s_quoted
 from pomagma.reducer.sugar import app, as_code, combinator, join_, quote
-from pomagma.reducer.syntax import (BOT, NVAR, TOP, UNIT, B, C, I, K, S,
+from pomagma.reducer.syntax import (APP, BOT, NVAR, TOP, UNIT, B, C, I, K, S,
                                     sexpr_print)
 from pomagma.util import TRAVIS_CI
 from pomagma.util.testing import for_each
@@ -68,7 +68,7 @@ def test_intro_forms(name, native):
     (true, error),
     (false, error),
     (join, error),
-    (x, app(UNIT, x)),
+    (x, APP(UNIT, x)),
 ])
 def test_unit_type(x, expected):
     assert simplify(lib.unit_type(x)) == expected
@@ -81,7 +81,7 @@ def test_unit_type(x, expected):
     (true, error),
     (false, error),
     (join, error),
-    (x, app(UNIT, x)),
+    (x, APP(UNIT, x)),
 ])
 def test_unit_test(x, expected):
     assert simplify(lib.unit_test(x)) == expected
@@ -1271,8 +1271,8 @@ def test_equal_reflexive(x):
 def test_equal_symmetric(x, y):
     hypothesis.assume(x is not y)
     equal_xy = simplify(lib.equal(x, y))
-    equal_yx = simplify(lib.equal(y, x))
     hypothesis.assume(equal_xy in bool_values)
+    equal_yx = simplify(lib.equal(y, x))
     hypothesis.assume(equal_yx in bool_values)
     assert equal_xy is equal_yx
 

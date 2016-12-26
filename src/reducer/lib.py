@@ -6,20 +6,21 @@ Intro forms are hand-optimized; see lib_test.py for lambda versions.
 
 from pomagma.reducer.sugar import (app, combinator, join_, let, qapp, quote,
                                    symmetric, typed)
-from pomagma.reducer.syntax import (APP, BOOL, BOT, EQUAL, EVAL, JOIN, LESS,
-                                    MAYBE, QUOTE, TOP, UNIT, B, C, I, K)
+from pomagma.reducer.syntax import (APP, BOOL, BOT, EQUAL, EVAL, LESS, MAYBE,
+                                    QUOTE, TOP, UNIT, B, C, I, K)
 
+KI = APP(K, I)
 CI = APP(C, I)
 
 
 def COMP(lhs, rhs):
-    return APP(APP(B, lhs), rhs)
+    return app(app(B, lhs), rhs)
 
 
 # ----------------------------------------------------------------------------
 # Nondeterminism
 
-join = JOIN(K, APP(K, I))
+join = join_(K, KI)
 
 
 # ----------------------------------------------------------------------------
@@ -64,7 +65,7 @@ def unit_quote(x):
     return app(x, QUOTE(ok))
 
 
-enum_unit = APP(CI, ok)
+enum_unit = app(CI, ok)
 
 
 # ----------------------------------------------------------------------------
@@ -123,7 +124,7 @@ def bool_if_false(x):
     return unit_type(app(x, undefined, ok))
 
 
-enum_bool = join_(APP(CI, true), APP(CI, false))
+enum_bool = join_(app(CI, true), app(CI, false))
 
 
 # ----------------------------------------------------------------------------
@@ -134,7 +135,7 @@ none = K
 
 @combinator
 def some(arg):
-    return APP(K, APP(CI, arg))
+    return app(K, app(CI, arg))
 
 
 @combinator
@@ -168,7 +169,7 @@ def enum_maybe(enum_item):
 
 @combinator
 def pair(x, y):
-    return APP(APP(C, APP(CI, x)), y)
+    return app(app(C, app(CI, x)), y)
 
 
 @combinator
@@ -204,12 +205,12 @@ def enum_prod(enum_fst, enum_snd):
 
 @combinator
 def inl(x):
-    return COMP(K, APP(CI, x))
+    return COMP(K, app(CI, x))
 
 
 @combinator
 def inr(y):
-    return APP(K, APP(CI, y))
+    return app(K, app(CI, y))
 
 
 @combinator
@@ -305,7 +306,7 @@ nil = K
 
 @combinator
 def cons(head, tail):
-    return APP(K, APP(APP(C, APP(CI, head)), tail))
+    return app(K, app(app(C, app(CI, head)), tail))
 
 
 @combinator
@@ -553,8 +554,8 @@ def _make_bits_table(n):
         prev = table
         table = {}
         for k, v in prev.iteritems():
-            table[k] = APP(APP(C, v), false)
-            table[k | (1 << i)] = APP(APP(C, v), true)
+            table[k] = app(app(C, v), false)
+            table[k | (1 << i)] = app(app(C, v), true)
     return table
 
 

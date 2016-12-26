@@ -6,6 +6,9 @@ from pomagma.reducer import io, lib
 from pomagma.reducer.syntax import APP, B, C, I, K, polish_parse, polish_print
 from pomagma.util.testing import for_each
 
+CB = APP(C, B)
+
+
 # ----------------------------------------------------------------------------
 # Parametrized tests
 
@@ -13,12 +16,12 @@ EXAMPLES_BY_TYPE = {
     'unit': {
         'ok': [(lib.ok, None)],
         'encode_error': [True, False, 0, 1, 2, [None], [True]],
-        'decode_error': [K, B, C, APP(C, B)],
+        'decode_error': [K, B, C, CB],
     },
     'bool': {
         'ok': [(lib.true, True), (lib.false, False)],
         'encode_error': [None, 0, 1, 2, [None], [True]],
-        'decode_error': [I, B, C, APP(C, B)],
+        'decode_error': [I, B, C, CB],
     },
     'byte': {
         'ok': [
@@ -27,7 +30,7 @@ EXAMPLES_BY_TYPE = {
             (lib.byte_table[0xff], b'\xff'),
         ],
         'encode_error': [0, ['a'], 'asdf'],
-        'decode_error': [I, K, B, C, APP(C, B)],
+        'decode_error': [I, K, B, C, CB],
     },
     'num': {
         'ok': [
