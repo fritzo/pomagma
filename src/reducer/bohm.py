@@ -18,10 +18,10 @@ CHANGELOG
 from pomagma.compiler.util import memoize_arg, memoize_args, unique
 from pomagma.reducer.syntax import (ABS, APP, BOT, CODE, EQUAL, EVAL, IVAR,
                                     JOIN, LESS, QAPP, QQUOTE, QUOTE, TOP,
-                                    complexity, free_vars, is_abs, is_app,
-                                    is_atom, is_code, is_ivar, is_join,
+                                    complexity, free_vars, from_sexpr, is_abs,
+                                    is_app, is_atom, is_code, is_ivar, is_join,
                                     is_nvar, is_quote, polish_parse,
-                                    quoted_vars, sexpr_parse)
+                                    quoted_vars, sexpr_parse, to_sexpr)
 from pomagma.reducer.util import UnreachableError, trool_all, trool_any
 
 I = ABS(IVAR(0))
@@ -703,20 +703,8 @@ def _compute_step(code):
     raise UnreachableError(code)
 
 
-def reduce(code, budget=100):
-    """Beta-reduce code up to budget."""
-    for _ in xrange(budget):
-        reduced = try_compute_step(code)
-        if reduced is None:
-            return code
-        code = reduced
-    return code
-
-
-# ----------------------------------------------------------------------------
-# Eager parsing
-
 SIGNATURE = {
+    # Eager linear reduction.
     'APP': app,
     'ABS': abstract,
     'QABS': qabstract,
@@ -732,6 +720,27 @@ SIGNATURE = {
     'S': S,
 }
 
+
+@memoize_arg
+def simplify(code):
+    """Simplify code, converting to a linear Bohm tree."""
+    sexpr = to_sexpr(code)
+    return from_sexpr(sexpr, SIGNATURE)
+
+
+def reduce(code, budget=100):
+    """Beta-reduce code up to budget."""
+    code = simplify(code)
+    for _ in xrange(budget):
+        reduced = try_compute_step(code)
+        if reduced is None:
+            return code
+        code = reduced
+    return code
+
+
+# ----------------------------------------------------------------------------
+# Eager parsing
 
 def sexpr_simplify(string):
     return sexpr_parse(string, SIGNATURE)

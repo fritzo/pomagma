@@ -10,8 +10,8 @@ from pomagma.reducer.bohm import (CB, CI, KI, B, C, I, K, S, abstract,
                                   increment_rank, is_linear, is_normal, join,
                                   nominal_abstract, nominal_qabstract,
                                   polish_simplify, print_tiny, qabstract,
-                                  sexpr_simplify, substitute, true,
-                                  try_compute_step, try_decide_equal,
+                                  reduce, sexpr_simplify, simplify, substitute,
+                                  true, try_compute_step, try_decide_equal,
                                   try_decide_less, try_decide_less_weak,
                                   unabstract)
 from pomagma.reducer.syntax import (ABS, APP, BOT, CODE, EQUAL, EVAL, IVAR,
@@ -831,6 +831,38 @@ nonterminating_example_1 = (
 def test_try_compute_step_terminates(code):
     code = sexpr_simplify(code)
     try_compute_step(code)
+
+
+SIMPLIFY_EXAMPLES = [
+    ('I', '(ABS 0)'),
+    ('K', '(ABS (ABS 1))'),
+    ('(I I)', '(ABS 0)'),
+]
+
+
+@for_each(SIMPLIFY_EXAMPLES)
+def test_simplify(code, expected):
+    code = sexpr_parse(code)
+    expected = sexpr_parse(expected)
+    assert simplify(code) is expected
+
+
+@for_each(SIMPLIFY_EXAMPLES)
+def test_reduce_simplifies(code, expected):
+    code = sexpr_parse(code)
+    expected = sexpr_parse(expected)
+    budget = 10
+    assert reduce(code, budget) is expected
+
+
+@for_each([
+    ('(ABS (0 0) (ABS (0 0)))', 0, '(ABS (0 0) (ABS (0 0)))'),
+    ('(ABS (0 0) (ABS (0 0)))', 1, '(ABS (0 0) (ABS (0 0)))'),
+])
+def test_reduce(code, budget, expected):
+    code = sexpr_parse(code)
+    expected = sexpr_parse(expected)
+    assert reduce(code, budget) is expected
 
 
 # ----------------------------------------------------------------------------
