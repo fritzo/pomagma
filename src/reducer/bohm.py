@@ -19,10 +19,9 @@ from pomagma.compiler.util import memoize_arg, memoize_args, unique
 from pomagma.reducer.syntax import (ABS, APP, BOOL, BOT, CODE, EQUAL, EVAL,
                                     IVAR, JOIN, LESS, MAYBE, QAPP, QQUOTE,
                                     QUOTE, TOP, UNIT, complexity, free_vars,
-                                    from_sexpr, is_abs, is_app, is_atom,
-                                    is_code, is_ivar, is_join, is_nvar,
-                                    is_quote, polish_parse, quoted_vars,
-                                    sexpr_parse, to_sexpr)
+                                    is_abs, is_app, is_atom, is_code, is_ivar,
+                                    is_join, is_nvar, is_quote, polish_parse,
+                                    quoted_vars, sexpr_parse)
 from pomagma.reducer.util import UnreachableError, trool_all, trool_any
 
 I = ABS(IVAR(0))
@@ -886,8 +885,13 @@ SIGNATURE = {
 @memoize_arg
 def simplify(code):
     """Simplify code, converting to a linear Bohm tree."""
-    sexpr = to_sexpr(code)
-    return from_sexpr(sexpr, SIGNATURE)
+    assert is_code(code), code
+    if is_atom(code):
+        return SIGNATURE.get(code, code)
+    elif is_ivar(code) or is_nvar(code):
+        return code
+    else:
+        return SIGNATURE[code[0]](*map(simplify, code[1:]))
 
 
 def reduce(code, budget=100):

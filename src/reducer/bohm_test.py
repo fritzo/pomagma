@@ -828,7 +828,7 @@ def some(x):
     (some(I), some(I)),
     (some(K), some(K)),
     (some(F), some(F)),
-    pytest.mark.xfail((join(some(K), some(F)), some(J))),
+    (join(some(K), some(F)), some(J)),
     (app(app(J, none), some(BOT)), TOP),
     (I, TOP),
     (F, TOP),
