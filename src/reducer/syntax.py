@@ -3,13 +3,23 @@ from collections import defaultdict
 
 from pomagma.compiler.util import MEMOIZED_CACHES, memoize_arg, unique_result
 
+
 # ----------------------------------------------------------------------------
 # Signature
+
+class CodeTuple(tuple):
+    def __str__(self):
+        return '{}({})'.format(self[0], ', '.join(str(a) for a in self[1:]))
+
 
 _CODES = {}
 
 
 def _code(*args):
+    # This can be used for pretty printing during debugging,
+    # but is disabled to avoid churn in term ordering.
+    # args = CodeTuple(args)
+
     # Slow version:
     # value = args if len(args) > 1 else args[0]
     # return _CODES.setdefault(args, value)

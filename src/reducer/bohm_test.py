@@ -804,6 +804,35 @@ def test_try_compute_step_runs(code):
             assert is_code(result)
 
 
+nonterminating_example_1 = (
+    '(JOIN (ABS (0 0 (ABS (ABS (2 2 (ABS (ABS (ABS (0 (ABS (5 (3 0))) (ABS (2 '
+    '(4 0))))))))))) (JOIN (ABS (ABS (0 (ABS 0) (ABS 0)))) (ABS (0 0 (ABS (ABS'
+    '(2 2 (ABS (ABS (ABS (0 (ABS (5 (3 0))) (ABS (2 (4 0))))))))))))) (ABS (AB'
+    'S (ABS (2 2) (JOIN (ABS (ABS (0 (ABS 0) (ABS 0)))) (ABS (0 0 (ABS (ABS (2'
+    '2 (ABS (ABS (ABS (0 (ABS (5 (3 0))) (ABS (2 (4 0))))))))))))) (ABS (ABS ('
+    'ABS (0 (ABS (5 (3 0))) (ABS (2 (4 0)))))))))) (ABS (ABS (ABS (2 2) (JOIN '
+    '(ABS (ABS (0 (ABS 0) (ABS 0)))) (ABS (0 0 (ABS (ABS (2 2 (ABS (ABS (ABS ('
+    '0 (ABS (5 (3 0))) (ABS (2 (4 0))))))))))))) (ABS (ABS (ABS (0 (ABS (5 (3 '
+    '0))) (ABS (2 (4 0)))))))))) (ABS (ABS (ABS (2 2) (JOIN (ABS (ABS (0 (ABS '
+    '0) (ABS 0)))) (ABS (0 0 (ABS (ABS (2 2 (ABS (ABS (ABS (0 (ABS (5 (3 0))) '
+    '(ABS (2 (4 0))))))))))))) (ABS (ABS (ABS (0 (ABS (5 (3 0))) (ABS (2 (4 0)'
+    '))))))))) (ABS (ABS (ABS (ABS (3 (1 (2 0))))))) (ABS 0)) (JOIN (ABS 0) (J'
+    'OIN (ABS (0 (ABS (ABS (ABS (ABS (3 (1 (2 0))))))) (ABS 0))) (JOIN (ABS (A'
+    'BS (ABS (ABS (ABS (ABS (4 (ABS (ABS (0 (ABS (ABS (ABS (ABS (9 3 (1 (2 0))'
+    '))))) (ABS (2 (8 0)))))) (1 (2 0))))))))) (ABS (ABS (1 0 (1 0) (ABS (ABS '
+    '(ABS (0 (ABS (5 4 (3 0))) (ABS (2 (ABS (1 1 (ABS (ABS (ABS (0 (ABS (5 (3 '
+    '0))) (ABS (2 (4 0))))))))))))))))))))))'
+)
+
+
+@for_each([
+    pytest.mark.xfail(nonterminating_example_1),
+])
+def test_try_compute_step_terminates(code):
+    code = sexpr_simplify(code)
+    try_compute_step(code)
+
+
 # ----------------------------------------------------------------------------
 # Eager parsing
 
