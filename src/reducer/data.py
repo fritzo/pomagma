@@ -1,11 +1,10 @@
 """Translators between codes and a json-like fragment of python."""
 
-import unification
-
 from pomagma.compiler.util import memoize_arg, memoize_args
-from pomagma.reducer import lib
+from pomagma.reducer import lib, pattern
 from pomagma.reducer.engines.engine import reduce
 from pomagma.reducer.sugar import app
+from pomagma.reducer.syntax import NVAR
 from pomagma.util import TODO
 
 
@@ -109,14 +108,14 @@ def encode_maybe(encode_item):
 
 @memoize_arg
 def decode_maybe(decode_item):
-    item_var = unification.var('item')
+    item_var = NVAR('item')
     some_pattern = lib.some(item_var)
 
     def decode(code):
         if code is lib.none:
             return None
-        match = unification.unify(some_pattern, code)
-        if not match:
+        match = pattern.match(some_pattern, code)
+        if match is None:
             raise TypeError(code)
         return (decode_item(match[item_var]),)
 
@@ -141,13 +140,13 @@ def encode_prod(encode_fst, encode_snd):
 
 @memoize_args
 def decode_prod(decode_fst, decode_snd):
-    x = unification.var('x')
-    y = unification.var('y')
+    x = NVAR('x')
+    y = NVAR('y')
     pair_pattern = lib.pair(x, y)
 
     def decode(code):
-        match = unification.unify(pair_pattern, code)
-        if not match:
+        match = pattern.match(pair_pattern, code)
+        if match is None:
             raise TypeError(code)
         x_value = decode_fst(match[x])
         y_value = decode_snd(match[y])
@@ -176,15 +175,15 @@ def encode_sum(encode_inl, encode_inr):
 
 @memoize_args
 def decode_sum(decode_inl, decode_inr):
-    x = unification.var('x')
+    x = NVAR('x')
     inl_pattern = lib.inl(x)
     inr_pattern = lib.inr(x)
 
     def decode(code):
-        match = unification.unify(inl_pattern, code)
+        match = pattern.match(inl_pattern, code)
         if match:
             return (True, decode_inl(match[x]))
-        match = unification.unify(inr_pattern, code)
+        match = pattern.match(inr_pattern, code)
         if match:
             return (False, decode_inr(match[x]))
         raise TypeError(code)
@@ -204,7 +203,7 @@ def encode_num(num):
     return result
 
 
-_pred_var = unification.var('pred')
+_pred_var = NVAR('pred')
 _succ_pattern = lib.succ(_pred_var)
 
 
@@ -213,8 +212,8 @@ def decode_num(code):
     while True:
         if code is lib.zero:
             return result
-        match = unification.unify(_succ_pattern, code)
-        if not match:
+        match = pattern.match(_succ_pattern, code)
+        if match is None:
             raise TypeError(code)
         result += 1
         code = match[_pred_var]
@@ -239,15 +238,15 @@ def encode_list(encode_item):
 
 @memoize_arg
 def decode_list(decode_item):
-    head = unification.var('head')
-    tail = unification.var('tail')
+    head = NVAR('head')
+    tail = NVAR('tail')
     cons_pattern = lib.cons(head, tail)
 
     def decode(code):
         result = []
         while code is not lib.nil:
-            match = unification.unify(cons_pattern, code)
-            if not match:
+            match = pattern.match(cons_pattern, code)
+            if match is None:
                 raise TypeError(code)
             result.append(decode_item(match[head]))
             code = match[tail]
