@@ -27,7 +27,9 @@ format: clang-format pyformat FORCE
 
 test: lint
 	$(info py.test)
-	py.test -n $(CPU_COUNT)
+	# This freezes, probably due to multiprocessing conflicts.
+	# py.test -n $(CPU_COUNT)
+	py.test
 
 clean:
 	find . | grep '\.pyc$$' | xargs rm
