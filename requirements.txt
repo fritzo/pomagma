@@ -2,6 +2,7 @@ boto
 contextlib2
 flake8
 hypothesis
+isort
 mock
 parsable>=0.2.0
 protobuf<3.0
@@ -9,6 +10,7 @@ psutil
 pyformat
 pytest>=2.8.0
 pytest-timeout
+pytest-xdist
 pyzmq
 simplejson
 unification
