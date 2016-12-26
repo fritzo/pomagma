@@ -20,7 +20,7 @@ import itertools
 from collections import namedtuple
 
 from pomagma.compiler.util import memoize_arg, memoize_args
-from pomagma.reducer import oracle
+from pomagma.reducer.engines import oracle
 from pomagma.reducer.sugar import abstract
 from pomagma.reducer.syntax import (APP, BOOL, BOT, CODE, EQUAL, EVAL, JOIN,
                                     LESS, MAYBE, NVAR, QAPP, QQUOTE, QUOTE,
@@ -274,7 +274,7 @@ def _sample(head, context, nonlinear):
             # FIXME This could be stronger by nonlinearly reducing the
             #   arguments inside QUOTE(-) of the quoted terms; see (B4).
             answer = TRY_DECIDE[pred](try_unquote(x), try_unquote(y))
-            head = TROOL_TO_CODE[answer]
+            head = TROOL_TO_CODE[answer]  # FIXME It is unsafe to admit IDK.
             if head is None:
                 head = APP(APP(pred, x), y)
                 yield head, context
