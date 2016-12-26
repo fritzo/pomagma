@@ -8,13 +8,14 @@ from pomagma.reducer.bohm import (CB, CI, KI, B, C, I, K, S, abstract,
                                   anonymize, app, approximate, approximate_var,
                                   decrement_rank, dominates, false,
                                   increment_rank, is_linear, is_normal, join,
-                                  nominal_abstract, polish_simplify,
-                                  print_tiny, qabstract, sexpr_simplify,
-                                  substitute, true, try_compute_step,
-                                  try_decide_equal, try_decide_less,
-                                  try_decide_less_weak, unabstract)
-from pomagma.reducer.syntax import (ABS, APP, BOT, EQUAL, EVAL, IVAR, JOIN,
-                                    LESS, NVAR, QAPP, QQUOTE, QUOTE, TOP,
+                                  nominal_abstract, nominal_qabstract,
+                                  polish_simplify, print_tiny, qabstract,
+                                  sexpr_simplify, substitute, true,
+                                  try_compute_step, try_decide_equal,
+                                  try_decide_less, try_decide_less_weak,
+                                  unabstract)
+from pomagma.reducer.syntax import (ABS, APP, BOT, CODE, EQUAL, EVAL, IVAR,
+                                    JOIN, LESS, NVAR, QAPP, QQUOTE, QUOTE, TOP,
                                     is_code, polish_print, quoted_vars,
                                     sexpr_parse, sexpr_print)
 from pomagma.util.testing import for_each, xfail_if_not_implemented
@@ -342,7 +343,9 @@ def test_qabstract(code, expected):
     (APP(x, x), x, APP(IVAR(0), IVAR(0))),
     (JOIN(x, y), x, JOIN(IVAR(0), y)),
     (JOIN(x, y), y, JOIN(IVAR(0), x)),
-    (QUOTE(x), x, QUOTE(x)),
+    (QUOTE(x), x, QUOTE(IVAR(0))),
+    (QUOTE(y), x, QUOTE(y)),
+    (QUOTE(IVAR(0)), x, QUOTE(IVAR(1))),
 ])
 def test_anonymize(code, var, expected):
     assert anonymize(code, var, 0) is expected
@@ -355,6 +358,17 @@ def test_anonymize(code, var, expected):
 ])
 def test_nominal_abstract(var, body, expected):
     assert nominal_abstract(var, body) is expected
+
+
+@for_each([
+    (x, x, EVAL),
+    (x, y, ABS(y)),
+    (x, IVAR(0), ABS(IVAR(1))),
+    (x, QUOTE(x), CODE),
+    (x, QUOTE(APP(y, x)), APP(QAPP, QUOTE(y))),
+])
+def test_nominal_qabstract(var, body, expected):
+    assert nominal_qabstract(var, body) is expected
 
 
 # ----------------------------------------------------------------------------

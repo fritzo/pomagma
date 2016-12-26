@@ -371,7 +371,7 @@ def anonymize(code, var, rank):
     """Convert a nominal variable to a de Bruijn variable."""
     if code is var:
         return IVAR(rank)
-    elif is_atom(code) or is_nvar(code) or is_quote(code):
+    elif is_atom(code) or is_nvar(code):
         return code
     elif is_ivar(code):
         return code if code[1] < rank else IVAR(code[1] + 1)
@@ -386,6 +386,9 @@ def anonymize(code, var, rank):
         lhs = anonymize(code[1], var, rank)
         rhs = anonymize(code[2], var, rank)
         return join(lhs, rhs)
+    elif is_quote(code):
+        body = anonymize(code[1], var, rank)
+        return QUOTE(body)
     else:
         raise ValueError(code)
 
