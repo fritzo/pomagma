@@ -8,11 +8,11 @@ from pomagma.reducer.bohm import (CB, CI, KI, B, C, I, K, S, abstract,
                                   anonymize, app, approximate, approximate_var,
                                   decrement_rank, dominates, false,
                                   increment_rank, is_linear, is_normal, join,
-                                  nominal_abstract, occurs, polish_simplify,
-                                  print_tiny, sexpr_simplify, substitute, true,
-                                  try_compute_step, try_decide_equal,
-                                  try_decide_less, try_decide_less_weak,
-                                  unabstract)
+                                  nominal_abstract, polish_simplify,
+                                  print_tiny, qabstract, sexpr_simplify,
+                                  substitute, true, try_compute_step,
+                                  try_decide_equal, try_decide_less,
+                                  try_decide_less_weak, unabstract)
 from pomagma.reducer.syntax import (ABS, APP, BOT, EQUAL, EVAL, IVAR, JOIN,
                                     LESS, NVAR, QAPP, QQUOTE, QUOTE, TOP,
                                     is_code, polish_print, quoted_vars,
@@ -316,6 +316,23 @@ def test_abstract_eta(code):
     assert abstract(app(increment_rank(code), IVAR(0))) is code
 
 
+@hypothesis.given(s_codes)
+def test_app_abstract(code):
+    hypothesis.assume(IVAR(0) not in quoted_vars(code))
+    assert app(increment_rank(abstract(code)), IVAR(0)) is code
+
+
+QABSTRACT_EXAMPLES = [
+    (IVAR(0), EVAL),
+    (IVAR(1), ABS(IVAR(1))),
+]
+
+
+@for_each(QABSTRACT_EXAMPLES)
+def test_qabstract(code, expected):
+    assert qabstract(code) is expected
+
+
 @for_each([
     (x, x, IVAR(0)),
     (y, x, y),
@@ -333,6 +350,7 @@ def test_anonymize(code, var, expected):
 
 @for_each([
     (x, x, ABS(IVAR(0))),
+    (x, y, ABS(y)),
     (x, IVAR(0), ABS(IVAR(1))),
 ])
 def test_nominal_abstract(var, body, expected):
@@ -341,34 +359,6 @@ def test_nominal_abstract(var, body, expected):
 
 # ----------------------------------------------------------------------------
 # Scott ordering
-
-OCCURS_EXAMPLES = [
-    (TOP, 0, False),
-    (TOP, 1, False),
-    (BOT, 0, False),
-    (BOT, 1, False),
-    (x, 0, False),
-    (x, 1, False),
-    (y, 0, False),
-    (y, 1, False),
-    (IVAR(0), 0, True),
-    (IVAR(0), 1, False),
-    (IVAR(1), 0, False),
-    (IVAR(1), 1, True),
-    # TODO Add more examples.
-    (ABS(IVAR(0)), 0, False),
-    (ABS(IVAR(1)), 0, True),
-    (ABS(IVAR(2)), 0, False),
-    (EVAL, 0, False),
-    (QAPP, 0, False),
-    (QQUOTE, 0, False),
-]
-
-
-@for_each(OCCURS_EXAMPLES)
-def test_occurs(code, rank, expected):
-    assert occurs(code, rank) is expected
-
 
 APPROXIMATE_VAR_EXAMPLES = [
     (TOP, TOP, 0, [TOP]),

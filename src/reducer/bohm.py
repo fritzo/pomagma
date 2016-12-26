@@ -12,15 +12,16 @@ CHANGELOG
 2016-12-04 Initial prototype.
 2016-12-11 Use linearizing approximations in order decision procedures.
 2016-12-18 Add rules for quoting and reflected order.
+2016-12-25 Add rules for nominal and quoted abstraction.
 """
 
 from pomagma.compiler.util import memoize_arg, memoize_args, unique
-from pomagma.reducer.syntax import (ABS, APP, BOT, EQUAL, EVAL, IVAR, JOIN,
-                                    LESS, QAPP, QQUOTE, QUOTE, TOP, complexity,
-                                    free_vars, is_abs, is_app, is_atom,
-                                    is_code, is_ivar, is_join, is_nvar,
-                                    is_quote, polish_parse, quoted_vars,
-                                    sexpr_parse)
+from pomagma.reducer.syntax import (ABS, APP, BOT, CODE, EQUAL, EVAL, IVAR,
+                                    JOIN, LESS, QAPP, QQUOTE, QUOTE, TOP,
+                                    complexity, free_vars, is_abs, is_app,
+                                    is_atom, is_code, is_ivar, is_join,
+                                    is_nvar, is_quote, polish_parse,
+                                    quoted_vars, sexpr_parse)
 from pomagma.reducer.util import UnreachableError, trool_all, trool_any
 
 I = ABS(IVAR(0))
@@ -315,38 +316,54 @@ def app(fun, arg):
 
 
 @memoize_args
-def abstract(body):
+def abstract(code):
     """Abstract one de Bruijn variable and simplify."""
-    if IVAR(0) in quoted_vars(body):
+    if IVAR(0) in quoted_vars(code):
         raise ValueError(
-            'Cannot abstract quoted variable from {}'.format(body))
-    if body is TOP:
-        return body
-    elif body is BOT:
-        return body
-    elif is_atom(body):
-        return ABS(body)
-    elif is_nvar(body):
-        return ABS(body)
-    elif is_ivar(body):
-        return ABS(body)
-    elif is_abs(body):
-        return ABS(body)
-    elif is_join(body):
-        lhs = abstract(body[1])
-        rhs = abstract(body[2])
-        return join(lhs, rhs)
-    elif is_app(body):
-        if body[2] is IVAR(0) and IVAR(0) not in free_vars(body[1]):
+            'Cannot abstract quoted variable from {}'.format(code))
+    if code is TOP or code is BOT:
+        return code
+    elif is_app(code):
+        fun = code[1]
+        arg = code[2]
+        if arg is IVAR(0) and IVAR(0) not in free_vars(fun):
             # Eta contract.
-            return decrement_rank(body[1])
-        else:
-            return ABS(body)
-    elif is_quote(body):
-        return ABS(body)
+            return decrement_rank(fun)
+        return ABS(code)
+    elif is_join(code):
+        lhs = abstract(code[1])
+        rhs = abstract(code[2])
+        return join(lhs, rhs)
     else:
-        raise ValueError(body)
-    raise UnreachableError(body)
+        return ABS(code)
+    raise UnreachableError(code)
+
+
+@memoize_args
+def qabstract(code):
+    """Abstract one quoted de Bruijn variable and simplify."""
+    if IVAR(0) not in quoted_vars(code):
+        return app(app(B, abstract(code)), EVAL)
+    elif is_abs(code):
+        body = code[1]
+        return app(C, abstract(qabstract(body)))
+    elif is_app(code):
+        fun = code[1]
+        arg = code[2]
+        return app(app(S, qabstract(fun)), qabstract(arg))
+    elif is_join(code):
+        lhs = qabstract(code[1])
+        rhs = qabstract(code[2])
+        return join(lhs, rhs)
+    elif is_quote(code):
+        body = code[1]
+        if body is IVAR(0):
+            return CODE
+        else:
+            return app(QAPP, QUOTE(abstract(body)))
+    else:
+        raise ValueError(code)
+    raise UnreachableError(code)
 
 
 @memoize_args
@@ -378,6 +395,13 @@ def nominal_abstract(var, body):
     """Abstract a nominal variable and simplify."""
     anonymized = anonymize(body, var, 0)
     return abstract(anonymized)
+
+
+@memoize_args
+def nominal_qabstract(var, body):
+    """Abstract a quoted nominal variable and simplify."""
+    anonymized = anonymize(body, var, 0)
+    return qabstract(anonymized)
 
 
 # ----------------------------------------------------------------------------
@@ -471,30 +495,13 @@ def try_decide_less(lhs, rhs):
 
 
 @memoize_args
-def occurs(code, rank):
-    if is_atom(code) or is_nvar(code) or is_quote(code):
-        return False
-    elif is_ivar(code):
-        return code[1] == rank
-    elif is_app(code):
-        return occurs(code[1], rank) or occurs(code[2], rank)
-    elif is_abs(code):
-        return occurs(code[1], rank + 1)
-    elif is_join(code):
-        return occurs(code[1], rank) or occurs(code[2], rank)
-    else:
-        raise ValueError(code)
-    raise UnreachableError((code, rank))
-
-
-@memoize_args
 def approximate_var(code, direction, rank):
     """Locally approximate wrt one variable."""
     assert is_code(code), code
     assert direction is TOP or direction is BOT, direction
     assert isinstance(rank, int) and rank >= 0, rank
     result = set()
-    if not occurs(code, rank):
+    if IVAR(rank) not in free_vars(code):
         result.add(code)
     elif is_ivar(code):
         assert code[1] == rank, code
@@ -511,6 +518,8 @@ def approximate_var(code, direction, rank):
         for lhs in approximate_var(code[1], direction, rank):
             for rhs in approximate_var(code[2], direction, rank):
                 result.add(join(lhs, rhs))
+    elif is_quote(code):
+        result.add(code)
     else:
         raise ValueError(code)
     return tuple(sorted(result, key=complexity))
@@ -705,9 +714,11 @@ def reduce(code, budget=100):
 SIGNATURE = {
     'APP': app,
     'ABS': abstract,
+    'QABS': qabstract,
     'JOIN': join,
     # Conversion from nominal lambda calculus.
     'FUN': nominal_abstract,
+    'QFUN': nominal_qabstract,
     # Conversion from combinatory algebra.
     'I': I,
     'K': K,
