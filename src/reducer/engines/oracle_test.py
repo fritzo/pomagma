@@ -1,6 +1,6 @@
 import pytest
 
-from pomagma.reducer import oracle
+from pomagma.reducer.engines import oracle
 from pomagma.reducer.syntax import (APP, BOT, JOIN, NVAR, QAPP, QQUOTE, QUOTE,
                                     TOP, B, C, I, K)
 from pomagma.util.testing import for_each

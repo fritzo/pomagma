@@ -16,12 +16,13 @@ CHANGELOG
 """
 
 from pomagma.compiler.util import memoize_arg, memoize_args, unique
-from pomagma.reducer.syntax import (ABS, APP, BOT, CODE, EQUAL, EVAL, IVAR,
-                                    JOIN, LESS, QAPP, QQUOTE, QUOTE, TOP,
-                                    complexity, free_vars, from_sexpr, is_abs,
-                                    is_app, is_atom, is_code, is_ivar, is_join,
-                                    is_nvar, is_quote, polish_parse,
-                                    quoted_vars, sexpr_parse, to_sexpr)
+from pomagma.reducer.syntax import (ABS, APP, BOOL, BOT, CODE, EQUAL, EVAL,
+                                    IVAR, JOIN, LESS, MAYBE, QAPP, QQUOTE,
+                                    QUOTE, TOP, UNIT, complexity, free_vars,
+                                    from_sexpr, is_abs, is_app, is_atom,
+                                    is_code, is_ivar, is_join, is_nvar,
+                                    is_quote, polish_parse, quoted_vars,
+                                    sexpr_parse, to_sexpr)
 from pomagma.reducer.util import UnreachableError, trool_all, trool_any
 
 I = ABS(IVAR(0))
@@ -230,6 +231,18 @@ def substitute(code, value, rank, budget):
     raise UnreachableError((code, value, rank, budget))
 
 
+TRY_CAST = {}
+
+
+def casts(closure):
+
+    def decorator(fun):
+        TRY_CAST[closure] = fun
+        return fun
+
+    return decorator
+
+
 @memoize_args
 def app(fun, arg):
     """Apply function to argument and linearly reduce."""
@@ -310,6 +323,12 @@ def app(fun, arg):
             return TOP
         else:
             return APP(fun, arg)
+    elif fun in TRY_CAST:
+        casted = TRY_CAST[fun](arg)
+        if casted is None:
+            return APP(fun, arg)
+        else:
+            return casted
     else:
         raise ValueError(fun)
     raise UnreachableError((fun, arg))
@@ -605,13 +624,15 @@ def try_decide_less_weak(lhs, rhs):
     lhs_head, lhs_args = unapply(lhs)
     rhs_head, rhs_args = unapply(rhs)
 
+    # Try pointwise comparison.
+    if lhs_args and len(lhs_args) == len(rhs_args):
+        if try_decide_less_weak(lhs_head, rhs_head) is True:
+            if all(try_decide_less_weak(i, j) is True
+                   for i, j in zip(lhs_args, rhs_args)):
+                return True
+
     # Give up at unreduced terms.
     if is_abs(lhs_head) or is_abs(rhs_head):
-        if len(lhs_args) == len(rhs_args):
-            if try_decide_less_weak(lhs_head, rhs_head) is True:
-                if all(try_decide_less_weak(i, j) is True
-                       for i, j in zip(lhs_args, rhs_args)):
-                    return True
         return None
     if lhs_args and not is_var(lhs_head):
         return None
@@ -637,6 +658,147 @@ def try_decide_less_weak(lhs, rhs):
 
 def try_decide_equal(lhs, rhs):
     return trool_all([try_decide_less(lhs, rhs), try_decide_less(rhs, lhs)])
+
+
+# ----------------------------------------------------------------------------
+# Type casting (eventually to be replaced by definable types)
+
+@memoize_args
+def _ground(code, direction, nvars, rank):
+    if is_atom(code):
+        return code
+    elif is_nvar(code):
+        return direction if code in nvars else code
+    elif is_ivar(code):
+        return direction if code[1] >= rank else code
+    elif is_abs(code):
+        body = _ground(code[1], direction, nvars, rank + 1)
+        return abstract(body)
+    elif is_app(code):
+        lhs = _ground(code[1], direction, nvars, rank)
+        rhs = _ground(code[2], direction, nvars, rank)
+        return app(lhs, rhs)
+    elif is_join(code):
+        lhs = _ground(code[1], direction, nvars, rank)
+        rhs = _ground(code[2], direction, nvars, rank)
+        return join(lhs, rhs)
+    elif is_quote(code):
+        for var in free_vars(code):
+            if is_nvar(var) and var in nvars:
+                return direction
+            if is_ivar(var) and var[1] >= rank:
+                return direction
+        return code
+    else:
+        raise ValueError(code)
+
+
+def ground(code):
+    """Approximate by grounding all free variables with [BOT, TOP]."""
+    assert is_code(code)
+    nvars = unique(frozenset(v for v in free_vars(code) if is_nvar(v)))
+    return _ground(code, BOT, nvars, 0), _ground(code, TOP, nvars, 0)
+
+
+@casts(UNIT)
+def try_cast_unit(x):
+    """Weak oracle closing x to type UNIT.
+
+    Args:
+        x : code in linear normal form
+    Returns:
+        TOP, BOT, I, or None
+
+    """
+    assert x is not None
+    if x in (TOP, BOT, I):
+        return x
+    lb, ub = ground(x)
+    if try_decide_less(lb, I) is False:
+        return TOP
+    if try_decide_less(ub, I) is True and try_decide_less(lb, BOT) is False:
+        return I
+    return None
+
+
+@casts(BOOL)
+def try_cast_bool(x):
+    """Weak oracle closing x to type BOOL.
+
+    Args:
+        x : code in linear normal form
+    Returns:
+        TOP, BOT, K, APP(K, I), or None
+
+    """
+    assert x is not None
+    if x in (TOP, BOT, K, KI):
+        return x
+    lb, ub = ground(x)
+    if try_decide_less(lb, K) is False and try_decide_less(lb, KI) is False:
+        return TOP
+    if try_decide_less(lb, BOT) is False:
+        if try_decide_less(ub, K) is True:
+            return K
+        if try_decide_less(ub, KI) is True:
+            return KI
+    return None
+
+
+none = ABS(ABS(IVAR(1)))
+some_TOP = ABS(ABS(APP(IVAR(0), TOP)))
+
+
+@casts(MAYBE)
+def try_cast_maybe(x):
+    """Weak oracle closing x to type MAYBE.
+
+    Args:
+        x : code in linear normal form
+    Returns:
+        TOP, BOT, K, APP(K, APP(APP(C, I), ...)), or None
+
+    """
+    assert x is not None
+    if x in (TOP, BOT, K):
+        return x
+    if is_app(x) and x[1] is K and is_app(x[2]) and x[2][1] is CI:
+        return x
+    lb, ub = ground(x)
+    if try_decide_less(lb, none) is False:
+        if try_decide_less(lb, some_TOP) is False:
+            return TOP
+    if try_decide_less(lb, BOT) is False:
+        if try_decide_less(ub, none) is True:
+            return none
+        if try_decide_less(ub, some_TOP) is True:
+            value = app(app(x, TOP), I)  # Is this safe?
+            value = increment_rank(value)
+            value = increment_rank(value)
+            return ABS(ABS(APP(IVAR(0), value)))
+    return None
+
+
+@casts(CODE)
+def try_cast_code(x):
+    """Weak oracle closing x to type CODE.
+
+    Args:
+        x : code in linear normal form
+    Returns:
+        TOP, BOT, QUOTE(...), APP(QQUOTE, ...), APP(APP(QAPP, ...), ...),
+        or None
+
+    """
+    assert x is not None
+    if x is TOP or x is BOT or is_quote(x):
+        return x
+    if is_app(x):
+        if x[1] is QQUOTE:
+            return x
+        if is_app(x[1]) and x[1][1] is QAPP:
+            return x
+    return None
 
 
 # ----------------------------------------------------------------------------

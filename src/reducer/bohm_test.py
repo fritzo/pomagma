@@ -6,12 +6,14 @@ import pytest
 
 from pomagma.reducer.bohm import (CB, CI, KI, B, C, I, K, S, abstract,
                                   anonymize, app, approximate, approximate_var,
-                                  decrement_rank, dominates, false,
+                                  decrement_rank, dominates, false, ground,
                                   increment_rank, is_linear, is_normal, join,
                                   nominal_abstract, nominal_qabstract,
                                   polish_simplify, print_tiny, qabstract,
                                   reduce, sexpr_simplify, simplify, substitute,
-                                  true, try_compute_step, try_decide_equal,
+                                  true, try_cast_bool, try_cast_code,
+                                  try_cast_maybe, try_cast_unit,
+                                  try_compute_step, try_decide_equal,
                                   try_decide_less, try_decide_less_weak,
                                   unabstract)
 from pomagma.reducer.syntax import (ABS, APP, BOT, CODE, EQUAL, EVAL, IVAR,
@@ -751,6 +753,102 @@ def test_dominates_transitive(x, y, z):
     for x, y, z in itertools.permutations([x, y, z]):
         if dominates(x, y) and dominates(y, z):
             assert dominates(x, z)
+
+
+# ----------------------------------------------------------------------------
+# Type casting
+
+@for_each([
+    (x, BOT, TOP),
+    (IVAR(0), BOT, TOP),
+    (ABS(IVAR(0)), ABS(IVAR(0)), ABS(IVAR(0))),
+    (ABS(IVAR(1)), BOT, TOP),
+    (JOIN(x, I), I, TOP),
+    (ABS(APP(IVAR(0), x)), ABS(APP(IVAR(0), BOT)), ABS(APP(IVAR(0), TOP))),
+    (QUOTE(BOT), QUOTE(BOT), QUOTE(BOT)),
+    (QUOTE(x), BOT, TOP),
+])
+def test_ground(code, expected_lb, expected_ub):
+    lb, ub = ground(code)
+    assert lb is expected_lb
+    assert ub is expected_ub
+
+
+@hypothesis.given(s_codes)
+def test_ground_less(code):
+    lb, ub = ground(code)
+    assert try_decide_less(lb, ub) is True
+
+
+F = KI
+J = join(K, F)
+
+
+@for_each([
+    (TOP, TOP),
+    (BOT, BOT),
+    (I, I),
+    (K, TOP),
+    (F, TOP),
+    (J, TOP),
+    (app(app(B, K), app(CI, TOP)), TOP),
+    (app(app(B, K), app(CI, BOT)), I),
+    (x, None),
+])
+def test_try_cast_unit(x, expected):
+    assert try_cast_unit(x) is expected
+
+
+@for_each([
+    (TOP, TOP),
+    (BOT, BOT),
+    (K, K),
+    (F, F),
+    (I, TOP),
+    (J, TOP),
+    (x, None),
+])
+def test_try_cast_bool(x, expected):
+    assert try_cast_bool(x) is expected
+
+
+none = K
+
+
+def some(x):
+    return app(K, app(CI, x))
+
+
+@for_each([
+    (TOP, TOP),
+    (BOT, BOT),
+    (none, none),
+    (some(TOP), some(TOP)),
+    (some(BOT), some(BOT)),
+    (some(I), some(I)),
+    (some(K), some(K)),
+    (some(F), some(F)),
+    pytest.mark.xfail((join(some(K), some(F)), some(J))),
+    (app(app(J, none), some(BOT)), TOP),
+    (I, TOP),
+    (F, TOP),
+    (J, TOP),
+    (x, None),
+])
+def test_try_cast_maybe(x, expected):
+    assert try_cast_maybe(x) is expected
+
+
+@for_each([
+    (TOP, TOP),
+    (BOT, BOT),
+    (QUOTE(x), QUOTE(x)),
+    (app(QQUOTE, x), app(QQUOTE, x)),
+    (app(app(QAPP, x), y), app(app(QAPP, x), y)),
+    (x, None),
+])
+def test_try_cast_code(x, expected):
+    assert try_cast_code(x) is expected
 
 
 # ----------------------------------------------------------------------------
