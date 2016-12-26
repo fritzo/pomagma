@@ -2,7 +2,7 @@ import hypothesis
 import hypothesis.strategies
 import pytest
 
-from pomagma.reducer import io, lib
+from pomagma.reducer import codec, lib
 from pomagma.reducer.syntax import APP, B, C, I, K, polish_parse, polish_print
 from pomagma.util.testing import for_each
 
@@ -110,28 +110,28 @@ EXAMPLES = {
 
 @for_each(EXAMPLES['ok'])
 def test_encode(tp, code, value):
-    encode = io.encoder(tp)
+    encode = codec.encoder(tp)
     actual_code = encode(value)
     assert actual_code == code
 
 
 @for_each(EXAMPLES['ok'])
 def test_decode(tp, code, value):
-    decode = io.decoder(tp)
+    decode = codec.decoder(tp)
     actual_value = decode(code)
     assert actual_value == value
 
 
 @for_each(EXAMPLES['encode_error'])
 def test_encode_error(tp, value):
-    encode = io.encoder(tp)
+    encode = codec.encoder(tp)
     with pytest.raises(TypeError):
         encode(value)
 
 
 @for_each(EXAMPLES['decode_error'])
 def test_decode_error(tp, code):
-    decode = io.decoder(tp)
+    decode = codec.decoder(tp)
     with pytest.raises(TypeError):
         decode(code)
 
@@ -218,8 +218,8 @@ def type_and_data(draw):
 @hypothesis.settings(max_examples=1000)
 def test_decode_encode(tp_code):
     tp, code = tp_code
-    encode = io.encoder(tp)
-    decode = io.decoder(tp)
+    encode = codec.encoder(tp)
+    decode = codec.decoder(tp)
     value = decode(code)
     actual_code = encode(value)
     assert actual_code == code

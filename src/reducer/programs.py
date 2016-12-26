@@ -4,7 +4,7 @@ import contextlib
 import functools
 from itertools import izip
 
-from pomagma.reducer import io
+from pomagma.reducer import codec
 from pomagma.reducer.sugar import app, combinator
 
 ENGINE = None  # Must have a method .reduce(code, budget=0) -> code.
@@ -52,7 +52,7 @@ class Program(object):
         code_args = [encode(arg) for encode, arg in izip(self._encoders, args)]
         code_in = app(self.combinator.code, *code_args)
         code_out = ENGINE.reduce(code_in)
-        io.check_for_errors(code_out)
+        codec.check_for_errors(code_out)
         data_out = self._decoder(code_out)
         return data_out
 
@@ -67,6 +67,6 @@ def program(*types):
         raise SyntaxError('No output type: program{}'.format(types))
     tps_in = types[:-1]
     tp_out = types[-1]
-    encoders = map(io.encoder, tps_in)
-    decoder = io.decoder(tp_out)
+    encoders = map(codec.encoder, tps_in)
+    decoder = codec.decoder(tp_out)
     return lambda fun: Program(encoders, decoder, fun)

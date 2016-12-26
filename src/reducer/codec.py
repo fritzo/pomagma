@@ -1,4 +1,4 @@
-"""Translators between SKJ/H* codes and json."""
+"""Translators between codes and a json-like fragment of python."""
 
 import unification
 
