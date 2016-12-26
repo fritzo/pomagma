@@ -435,6 +435,8 @@ def join(lhs, rhs):
 def join_set(codes):
     if not codes:
         return BOT
+    if TOP in codes:
+        return TOP
     if len(codes) == 1:
         return next(iter(codes))
 

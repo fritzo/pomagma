@@ -318,6 +318,7 @@ def test_abstract_eta(code):
 
 
 @hypothesis.given(s_codes)
+@hypothesis.example(join(TOP, APP(QUOTE(IVAR(1)), IVAR(0))))
 def test_app_abstract(code):
     hypothesis.assume(IVAR(0) not in quoted_vars(code))
     assert app(increment_rank(abstract(code)), IVAR(0)) is code
@@ -504,6 +505,7 @@ JOIN_EXAMPLES = [
     (TOP, TOP, TOP),
     (TOP, BOT, TOP),
     (TOP, x, TOP),
+    (TOP, APP(QUOTE(IVAR(1)), IVAR(0)), TOP),
     (TOP, IVAR(0), TOP),
     (BOT, TOP, TOP),
     (BOT, BOT, BOT),
@@ -528,6 +530,40 @@ JOIN_EXAMPLES = [
 @for_each(JOIN_EXAMPLES)
 def test_join(lhs, rhs, expected):
     assert join(lhs, rhs) is expected
+
+
+@hypothesis.given(s_codes)
+def test_join_top(code):
+    assert join(code, TOP) is TOP
+    assert join(TOP, code) is TOP
+
+
+@hypothesis.given(s_codes)
+def test_join_bot(code):
+    assert join(code, BOT) is code
+    assert join(BOT, code) is code
+
+
+@hypothesis.given(s_codes, s_codes, s_codes)
+def test_join_associative(x, y, z):
+    assert join(join(x, y), z) is join(x, join(y, z))
+
+
+@hypothesis.given(s_codes, s_codes)
+def test_join_commutative(lhs, rhs):
+    assert join(lhs, rhs) is join(rhs, lhs)
+
+
+@hypothesis.given(s_codes)
+def test_join_idempotent_1(code):
+    assert join(code, code) is code
+
+
+@hypothesis.given(s_codes, s_codes)
+def test_join_idempotent_2(lhs, rhs):
+    expected = join(lhs, rhs)
+    assert join(lhs, expected) is expected
+    assert join(rhs, expected) is expected
 
 
 @hypothesis.given(s_codes)
