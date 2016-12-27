@@ -1,9 +1,10 @@
+import numpy.random
 from parsable import parsable
+
 from pomagma.reducer import lib
 from pomagma.reducer.programs import program
 from pomagma.reducer.sugar import app, combinator
 from pomagma.util import TODO
-import numpy.random
 
 
 def random_entry(size, density):

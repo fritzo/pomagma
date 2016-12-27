@@ -1,9 +1,10 @@
-from pomagma.atlas.bootstrap import THEORY
-from pomagma.atlas.bootstrap import WORLD
 import contextlib
 import os
-import pomagma.util
+
 import pytest
+
+import pomagma.util
+from pomagma.atlas.bootstrap import THEORY, WORLD
 
 assert WORLD  # pacify pyflakes
 

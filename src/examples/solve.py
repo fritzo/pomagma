@@ -1,7 +1,9 @@
+import sys
+
 from parsable import parsable
+
 import pomagma.analyst
 import pomagma.analyst.compiler
-import sys
 
 theories = {
     'unit': '''

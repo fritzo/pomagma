@@ -1,8 +1,9 @@
+import pytest
+
 from pomagma.examples import sudoku
 from pomagma.reducer.engines import engine
 from pomagma.reducer.programs import using_engine
 from pomagma.util.testing import for_each
-import pytest
 
 ALL_DIFFERENT_EXAMPLES = [
     (True, []),

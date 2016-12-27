@@ -1,8 +1,5 @@
-from pomagma.examples.testing import ADDRESS
-from pomagma.examples.testing import SKJA
-from pomagma.examples.testing import WORLD
-from pomagma.examples.testing import serve
 import pomagma.examples.solve
+from pomagma.examples.testing import ADDRESS, SKJA, WORLD, serve
 
 
 def _test_define(name, theory):

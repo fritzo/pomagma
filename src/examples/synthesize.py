@@ -1,10 +1,9 @@
-import pomagma.analyst
 from parsable import parsable
+
+import pomagma.analyst
 from pomagma.analyst.synthesize import synthesize_from_facts
-from pomagma.compiler.expressions import Expression
-from pomagma.compiler.expressions import Expression_2
-from pomagma.compiler.parser import parse_string_to_expr
-from pomagma.compiler.parser import parse_theory_string
+from pomagma.compiler.expressions import Expression, Expression_2
+from pomagma.compiler.parser import parse_string_to_expr, parse_theory_string
 from pomagma.compiler.simplify import simplify_expr
 from pomagma.compiler.sugar import desugar_expr
 

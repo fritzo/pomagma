@@ -1,7 +1,5 @@
 import pomagma.examples.synthesize
-from pomagma.examples.testing import ADDRESS
-from pomagma.examples.testing import SKJA
-from pomagma.examples.testing import serve
+from pomagma.examples.testing import ADDRESS, SKJA, serve
 
 
 def test_define_a():
