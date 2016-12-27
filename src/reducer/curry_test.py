@@ -1,4 +1,4 @@
-from pomagma.reducer.curry import abstract, substitute
+from pomagma.reducer.curry import abstract
 from pomagma.reducer.syntax import (APP, BOT, JOIN, NVAR, QUOTE, TOP, B, C, I,
                                     K, S)
 from pomagma.util.testing import for_each
@@ -17,6 +17,7 @@ z = NVAR('z')
     (x, y, APP(K, y)),
     (x, TOP, TOP),
     (x, BOT, BOT),
+    (x, QUOTE(y), APP(K, QUOTE(y))),
     (x, I, APP(K, I)),
     (x, APP(x, x), APP(APP(S, I), I)),
     (x, APP(x, y), APP(APP(C, I), y)),
@@ -30,25 +31,4 @@ z = NVAR('z')
 ])
 def test_abstract(var, body, expected):
     actual = abstract(var, body)
-    assert actual == expected
-
-
-@for_each([
-    (x, y, z, z),
-    (x, y, y, y),
-    (x, y, x, y),
-    (x, y, I, I),
-    (x, y, APP(x, z), APP(y, z)),
-    (x, y, APP(z, x), APP(z, y)),
-    (x, y, APP(x, x), APP(y, y)),
-    (x, y, JOIN(x, z), JOIN(y, z)),
-    (x, y, JOIN(z, x), JOIN(z, y)),
-    (x, y, JOIN(x, x), JOIN(y, y)),
-    (x, y, QUOTE(y), QUOTE(y)),
-    (x, y, QUOTE(z), QUOTE(z)),
-    (x, y, QUOTE(x), QUOTE(y)),
-    (x, y, APP(x, QUOTE(x)), APP(y, QUOTE(y))),
-])
-def test_substitute(var, defn, body, expected):
-    actual = substitute(var, defn, body)
     assert actual == expected

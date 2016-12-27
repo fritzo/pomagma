@@ -71,34 +71,6 @@ def qabstract(var, body):
 
 
 # ----------------------------------------------------------------------------
-# Eager substitution
-
-def substitute(var, defn, body):
-    if not is_nvar(var):
-        raise ValueError('Expected a nominal variable, got {}'.format(var))
-    if is_atom(body):
-        return body
-    elif is_nvar(body):
-        if body is var:
-            return defn
-        else:
-            return body
-    elif is_app(body):
-        lhs = substitute(var, defn, body[1])
-        rhs = substitute(var, defn, body[2])
-        return APP(lhs, rhs)
-    elif is_join(body):
-        lhs = substitute(var, defn, body[1])
-        rhs = substitute(var, defn, body[2])
-        return JOIN(lhs, rhs)
-    elif is_quote(body):
-        arg = body[1]
-        return QUOTE(substitute(var, defn, arg))
-    else:
-        raise ValueError(body)
-
-
-# ----------------------------------------------------------------------------
 # Symbolic compiler : FUN -> I,K,B,C,S
 
 def compile_(code):
