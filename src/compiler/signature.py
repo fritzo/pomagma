@@ -1,6 +1,6 @@
 import re
-from pomagma.compiler.util import intern_keys
-from pomagma.compiler.util import memoize_arg
+
+from pomagma.compiler.util import intern_keys, memoize_arg
 
 re_const = re.compile('[A-Z]+$')
 

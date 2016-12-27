@@ -1,8 +1,11 @@
-import os
 import glob
+import os
+
 from parsable import parsable
-parsable = parsable.Parsable()
+
 import pomagma.util
+
+parsable = parsable.Parsable()
 
 
 DATA = pomagma.util.DATA

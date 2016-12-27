@@ -1,10 +1,8 @@
 from pomagma.compiler import __main__ as main
 from pomagma.compiler.expressions import Expression
-from pomagma.compiler.extensional import APP, COMP, JOIN, RAND
-from pomagma.compiler.extensional import I, K, B, CB, C, W, S, J, R
-from pomagma.compiler.extensional import iter_closure_maps
-from pomagma.compiler.extensional import iter_eta_substitutions
-from pomagma.compiler.extensional import iter_subsets
+from pomagma.compiler.extensional import (APP, CB, COMP, JOIN, RAND, B, C, I,
+                                          J, K, R, S, W, iter_closure_maps,
+                                          iter_eta_substitutions, iter_subsets)
 from pomagma.compiler.util import find_theories
 
 

@@ -1,14 +1,10 @@
 import re
-from pomagma.compiler.compiler import compile_full
-from pomagma.compiler.compiler import compile_given
-from pomagma.compiler.compiler import get_events
-from pomagma.compiler.expressions import Expression
-from pomagma.compiler.expressions import Expression_0
-from pomagma.compiler.expressions import Expression_1
-from pomagma.compiler.expressions import Expression_2
+
+from pomagma.compiler.compiler import compile_full, compile_given, get_events
+from pomagma.compiler.expressions import (Expression, Expression_0,
+                                          Expression_1, Expression_2)
 from pomagma.compiler.plans import add_costs
 from pomagma.compiler.sequents import Sequent
-
 
 EQUAL = Expression_2('EQUAL')
 LESS = Expression_2('LESS')

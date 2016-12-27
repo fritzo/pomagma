@@ -1,7 +1,7 @@
 # This file is intended to be used as a startup script with PYTHONSTARTUP.
 
-from pomagma.analyst import connect as db
 from pomagma import __version__
+from pomagma.analyst import connect as db
 
 db = db()
 print 'Pomagma {}. Type help(db) for more information on client.'.format(

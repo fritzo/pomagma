@@ -1,7 +1,8 @@
 import os
 import re
-from parsable import parsable
+
 import setuptools
+from parsable import parsable
 
 # TODO add MANIFEST.in as described in
 # http://docs.python.org/2/distutils/sourcedist.html#the-manifest-in-template

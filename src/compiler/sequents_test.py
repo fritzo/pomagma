@@ -1,8 +1,8 @@
 import os
-from pomagma.compiler import sequents
-from pomagma.compiler import parser
-from pomagma.compiler.util import find_theories
+
+from pomagma.compiler import parser, sequents
 from pomagma.compiler.sugar import desugar_theory
+from pomagma.compiler.util import find_theories
 
 RULE_SETS = {
     os.path.basename(f): desugar_theory(parser.parse_theory_file(f))['rules']

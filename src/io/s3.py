@@ -6,13 +6,15 @@ https://github.com/boto/boto/blob/develop/boto/s3
 
 """
 
-import boto
 import multiprocessing
 import os
-from parsable import parsable
-import pomagma.util
 import re
 import subprocess
+
+import boto
+from parsable import parsable
+
+import pomagma.util
 
 parsable = parsable.Parsable()
 

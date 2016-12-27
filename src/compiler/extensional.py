@@ -1,12 +1,9 @@
 import itertools
-from pomagma.compiler.expressions import Expression
-from pomagma.compiler.expressions import Expression_0
-from pomagma.compiler.expressions import Expression_2
+
+from pomagma.compiler.expressions import Expression, Expression_0, Expression_2
 from pomagma.compiler.sequents import Sequent
 from pomagma.compiler.signature import is_positive
-from pomagma.compiler.util import inputs
-from pomagma.compiler.util import logger
-from pomagma.compiler.util import methodof
+from pomagma.compiler.util import inputs, logger, methodof
 from pomagma.util import TODO
 
 I = Expression_0('I')

@@ -1,8 +1,7 @@
 import math
+
 from pomagma.compiler.expressions import Expression_1
-from pomagma.compiler.util import log_sum_exp
-from pomagma.compiler.util import memoize_make
-from pomagma.compiler.util import set_with
+from pomagma.compiler.util import log_sum_exp, memoize_make, set_with
 
 
 def assert_in(element, set_):

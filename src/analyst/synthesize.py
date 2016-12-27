@@ -27,22 +27,20 @@ The pipeline stages are:
 
 import heapq
 import itertools
-import psutil
 import signal
 import sys
 import time
+
+import psutil
+
 from pomagma.analyst.client import VALIDATE_POLL_SEC
 from pomagma.analyst.compiler import unguard_vars
-from pomagma.compiler.expressions import Expression
-from pomagma.compiler.expressions import Expression_2
+from pomagma.compiler.expressions import Expression, Expression_2
 from pomagma.compiler.parser import parse_string_to_expr
-from pomagma.compiler.signature import get_arity
-from pomagma.compiler.signature import get_nargs
+from pomagma.compiler.signature import get_arity, get_nargs
 from pomagma.compiler.simplify import simplify_expr
 from pomagma.compiler.sugar import desugar_expr
-from pomagma.compiler.util import inputs
-from pomagma.compiler.util import intern_keys
-from pomagma.compiler.util import memoize_args
+from pomagma.compiler.util import inputs, intern_keys, memoize_args
 
 MAX_MEMORY = 0.95
 MAX_SOLUTIONS = 10

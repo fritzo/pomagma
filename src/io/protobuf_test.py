@@ -1,7 +1,7 @@
 from google.protobuf import text_format
+
 from pomagma.io import protobuf_test_pb2
-from pomagma.io.protobuf import InFile
-from pomagma.io.protobuf import OutFile
+from pomagma.io.protobuf import InFile, OutFile
 from pomagma.util import in_temp_dir
 from pomagma.util.testing import for_each
 

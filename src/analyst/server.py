@@ -1,5 +1,6 @@
 import os
 from subprocess import CalledProcessError
+
 import pomagma.util
 from pomagma.analyst.client import Client
 

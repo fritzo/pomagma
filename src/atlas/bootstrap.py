@@ -1,6 +1,7 @@
 """Boostrapped data is included in git repo, for testing."""
 
 import os
+
 import pomagma.util
 
 THEORY = os.environ.get('THEORY', 'skrj')

@@ -1,7 +1,10 @@
 from itertools import izip
+
 from parsable import parsable
-parsable = parsable.Parsable()
+
 import pomagma.util
+
+parsable = parsable.Parsable()
 
 
 # ----------------------------------------------------------------------------

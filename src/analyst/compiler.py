@@ -1,14 +1,11 @@
 import re
-from pomagma.compiler.expressions import Expression
-from pomagma.compiler.expressions import Expression_1
+
+from pomagma.compiler.expressions import Expression, Expression_1
 from pomagma.compiler.frontend import write_full_programs
-from pomagma.compiler.parser import parse_string_to_expr
-from pomagma.compiler.parser import parse_theory_string
+from pomagma.compiler.parser import parse_string_to_expr, parse_theory_string
 from pomagma.compiler.sequents import Sequent
-from pomagma.compiler.sugar import desugar_expr
-from pomagma.compiler.sugar import desugar_sequent
-from pomagma.compiler.util import memoize_arg
-from pomagma.compiler.util import set_with
+from pomagma.compiler.sugar import desugar_expr, desugar_sequent
+from pomagma.compiler.util import memoize_arg, set_with
 
 VAR = Expression_1('VAR')
 RETURN = Expression_1('RETURN')

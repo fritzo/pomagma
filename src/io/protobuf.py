@@ -1,5 +1,6 @@
-from pomagma.io import creat
 import gzip
+
+from pomagma.io import creat
 
 
 class InFile(object):

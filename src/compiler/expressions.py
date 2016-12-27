@@ -1,10 +1,8 @@
 import re
+
 from pomagma.compiler import signature
 from pomagma.compiler.signature import ARITY_TABLE
-from pomagma.compiler.util import inputs
-from pomagma.compiler.util import memoize_make
-from pomagma.compiler.util import sortedset
-from pomagma.compiler.util import union
+from pomagma.compiler.util import inputs, memoize_make, sortedset, union
 
 re_name = re.compile('[a-zA-Z][a-zA-Z0-9_]*$')
 re_space = re.compile('[ _]+')

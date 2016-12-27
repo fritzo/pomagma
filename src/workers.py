@@ -1,19 +1,20 @@
-from pomagma.util import DB
-from pomagma.util import suggest_region_sizes
 import glob
 import itertools
 import multiprocessing
 import os
+import shutil
+import subprocess
+import sys
+import time
+
 from parsable import parsable
+
 import pomagma.atlas
 import pomagma.cartographer
 import pomagma.surveyor
 import pomagma.theorist
 import pomagma.util
-import shutil
-import subprocess
-import sys
-import time
+from pomagma.util import DB, suggest_region_sizes
 
 parsable = parsable.Parsable()
 

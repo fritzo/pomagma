@@ -1,7 +1,6 @@
 from pomagma.compiler.parser import parse_string_to_expr as parse
 from pomagma.util.testing import for_each_kwargs
 
-
 EXAMPLES = [
     {
         'polish': 'x',

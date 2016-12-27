@@ -1,9 +1,8 @@
 import heapq
 from itertools import izip
+
 from pomagma.compiler import signature
-from pomagma.compiler.util import eval_float53
-from pomagma.compiler.util import logger
-from pomagma.compiler.util import memoize_arg
+from pomagma.compiler.util import eval_float53, logger, memoize_arg
 
 
 def load_lines(filename):

@@ -1,15 +1,11 @@
 import itertools
-from pomagma.compiler.completion import Inconsistent
-from pomagma.compiler.completion import strengthen_sequent
-from pomagma.compiler.completion import weaken_sequent
-from pomagma.compiler.completion import try_simplify_antecedents
-from pomagma.compiler.expressions import Expression
-from pomagma.compiler.expressions import NotNegatable
-from pomagma.compiler.expressions import try_get_negated
-from pomagma.compiler.util import inputs
-from pomagma.compiler.util import set_with
-from pomagma.compiler.util import set_without
-from pomagma.compiler.util import union
+
+from pomagma.compiler.completion import (Inconsistent, strengthen_sequent,
+                                         try_simplify_antecedents,
+                                         weaken_sequent)
+from pomagma.compiler.expressions import (Expression, NotNegatable,
+                                          try_get_negated)
+from pomagma.compiler.util import inputs, set_with, set_without, union
 
 
 class Sequent(object):

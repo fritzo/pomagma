@@ -1,6 +1,6 @@
 from pomagma.compiler.expressions import Expression
-from pomagma.compiler.util import inputs
 from pomagma.compiler.parser import parse_corpus
+from pomagma.compiler.util import inputs
 from pomagma.util import TODO
 
 HOLE = Expression.make('HOLE')

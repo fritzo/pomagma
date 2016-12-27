@@ -1,8 +1,8 @@
-from pomagma.atlas.bootstrap import THEORY
-from pomagma.atlas.bootstrap import WORLD
 import os
+
 import pomagma.cartographer
 import pomagma.util
+from pomagma.atlas.bootstrap import THEORY, WORLD
 
 DATA = os.path.join(pomagma.util.DATA, 'test', 'debug', 'atlas', THEORY)
 ADDRESS = 'ipc://{}'.format(os.path.join(DATA, 'cartographer.socket'))

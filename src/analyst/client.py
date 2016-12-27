@@ -1,8 +1,10 @@
-from pomagma.analyst import compiler
-from pomagma.analyst import messages_pb2 as messages
-import time
 import sys
+import time
+
 import zmq
+
+from pomagma.analyst import messages_pb2 as messages
+from pomagma.analyst import compiler
 
 CONTEXT = zmq.Context()
 POLL_TIMEOUT_MS = 1000

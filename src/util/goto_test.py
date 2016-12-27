@@ -2,7 +2,7 @@
 # Unlicence and re-licenced under Apache 2.0 as part of Pomagma.
 
 import pytest
-from goto import with_goto, goto, label
+from goto import goto, label, with_goto
 
 CODE = '''\
 i = 0

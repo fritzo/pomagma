@@ -1,7 +1,5 @@
 from pomagma.compiler import extensional
-from pomagma.compiler.expressions import Expression
-from pomagma.compiler.expressions import Expression_0
-from pomagma.compiler.expressions import Expression_2
+from pomagma.compiler.expressions import Expression, Expression_0, Expression_2
 from pomagma.compiler.sequents import Sequent
 from pomagma.compiler.util import inputs
 

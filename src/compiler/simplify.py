@@ -1,8 +1,5 @@
-from pomagma.compiler.expressions import Expression
-from pomagma.compiler.expressions import Expression_0
-from pomagma.compiler.expressions import Expression_2
-from pomagma.compiler.util import memoize_arg
-from pomagma.compiler.util import memoize_args
+from pomagma.compiler.expressions import Expression, Expression_0, Expression_2
+from pomagma.compiler.util import memoize_arg, memoize_args
 
 TOP = Expression_0('TOP')
 BOT = Expression_0('BOT')

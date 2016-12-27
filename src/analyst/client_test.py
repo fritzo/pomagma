@@ -1,16 +1,16 @@
-from itertools import izip
-from pomagma.atlas.bootstrap import THEORY
-from pomagma.atlas.bootstrap import WORLD
-from pomagma.util import TRAVIS_CI
-from pomagma.util import unicode_to_str
-from pomagma.util.testing import for_each
 import os
+from itertools import izip
+
+import pytest
+import simplejson as json
+
 import pomagma.analyst
 import pomagma.cartographer
 import pomagma.surveyor
 import pomagma.util
-import pytest
-import simplejson as json
+from pomagma.atlas.bootstrap import THEORY, WORLD
+from pomagma.util import TRAVIS_CI, unicode_to_str
+from pomagma.util.testing import for_each
 
 DATA = os.path.join(pomagma.util.DATA, 'test', 'debug', 'atlas', THEORY)
 ADDRESS = 'ipc://{}'.format(os.path.join(DATA, 'analyst.socket'))

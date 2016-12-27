@@ -1,8 +1,7 @@
+import pomagma.compiler.syntax as proto
 from pomagma.compiler.parser import parse_string_to_expr
 from pomagma.compiler.sequents import Sequent
-from pomagma.compiler.util import cached
-from pomagma.compiler.util import methodof
-import pomagma.compiler.syntax as proto
+from pomagma.compiler.util import cached, methodof
 
 
 @methodof(proto.Expression)

@@ -1,7 +1,7 @@
-from pomagma.analyst.compiler import compile_solver
-from pomagma.util.testing import for_each_kwargs
 import re
 
+from pomagma.analyst.compiler import compile_solver
+from pomagma.util.testing import for_each_kwargs
 
 SOLVE_EXAMPLES = [
     {

@@ -1,27 +1,14 @@
-import sys
 import inspect
-import pomagma.util
-from pomagma.compiler.expressions import Expression
-from pomagma.compiler.expressions import Expression_1
-from pomagma.compiler.expressions import Expression_2
-from pomagma.compiler.plans import Ensure
-from pomagma.compiler.plans import Iter
-from pomagma.compiler.plans import IterInvBinary
-from pomagma.compiler.plans import IterInvBinaryRange
-from pomagma.compiler.plans import IterInvInjective
-from pomagma.compiler.plans import Let
-from pomagma.compiler.plans import Test
-from pomagma.compiler.sequents import Sequent
-from pomagma.compiler.sequents import assert_normal
-from pomagma.compiler.sequents import normalize
-from pomagma.compiler.util import inputs
-from pomagma.compiler.util import logger
-from pomagma.compiler.util import memoize_args
-from pomagma.compiler.util import set_with
-from pomagma.compiler.util import set_without
-from pomagma.compiler.util import sortedset
-from pomagma.compiler.util import union
+import sys
 
+import pomagma.util
+from pomagma.compiler.expressions import Expression, Expression_1, Expression_2
+from pomagma.compiler.plans import (Ensure, Iter, IterInvBinary,
+                                    IterInvBinaryRange, IterInvInjective, Let,
+                                    Test)
+from pomagma.compiler.sequents import Sequent, assert_normal, normalize
+from pomagma.compiler.util import (inputs, logger, memoize_args, set_with,
+                                   set_without, sortedset, union)
 
 MIN_STACK_DEPTH = float('inf')
 

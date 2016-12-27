@@ -1,9 +1,10 @@
-from pomagma.util import random_uuid, in_temp_dir
-import mock
 import os
-import pomagma.io.s3
+
+import mock
 import pytest
 
+import pomagma.io.s3
+from pomagma.util import in_temp_dir, random_uuid
 
 TEST_BUCKET = pomagma.io.s3.try_connect_s3('pomagma-test')
 

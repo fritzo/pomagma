@@ -1,9 +1,7 @@
-from pomagma.analyst.synthesize import ComplexityEvaluator
-from pomagma.analyst.synthesize import NaiveHoleFiller
-from pomagma.analyst.synthesize import simplify_defs
+from pomagma.analyst.synthesize import (ComplexityEvaluator, NaiveHoleFiller,
+                                        simplify_defs)
 from pomagma.compiler.parser import parse_string_to_expr
-from pomagma.util.testing import for_each
-from pomagma.util.testing import for_each_kwargs
+from pomagma.util.testing import for_each, for_each_kwargs
 
 FREE_VARS = map(parse_string_to_expr, ['x', 'y', 'z'])
 LANGUAGE = {

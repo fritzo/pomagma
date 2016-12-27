@@ -1,7 +1,9 @@
-from parsable import parsable
-from pomagma.util import TODO
 import os
+
+from parsable import parsable
+
 import pomagma.util
+from pomagma.util import TODO
 
 CORPUS = os.path.join(pomagma.util.SRC, 'corpus')
 

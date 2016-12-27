@@ -1,7 +1,7 @@
 import simplejson as json
 from parsable import parsable
-from pomagma.language.language_pb2 import Language
-from pomagma.language.language_pb2 import WeightedTerm
+
+from pomagma.language.language_pb2 import Language, WeightedTerm
 
 parsable = parsable.Parsable()
 

@@ -1,7 +1,6 @@
-from pomagma.atlas import get_hash
-from pomagma.atlas.bootstrap import THEORY
-from pomagma.atlas.bootstrap import WORLD
 import pomagma.cartographer
+from pomagma.atlas import get_hash
+from pomagma.atlas.bootstrap import THEORY, WORLD
 
 
 def test_formats():

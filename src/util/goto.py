@@ -1,11 +1,11 @@
 # Adapted from Sebastian Noack's python-goto, originally licensed under the
 # Unlicence and re-licenced under Apache 2.0 as part of Pomagma.
 
-import dis
-import struct
 import ctypes
-import types
+import dis
 import functools
+import struct
+import types
 
 _STRUCT_OP_WITH_ARG = struct.Struct('<BH')
 _STRUCT_ATTR_LOOKUP = struct.Struct('<BHBHB')

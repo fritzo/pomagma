@@ -1,5 +1,4 @@
-from pomagma.compiler.util import eval_float44
-from pomagma.compiler.util import eval_float53
+from pomagma.compiler.util import eval_float44, eval_float53
 
 
 def test_eval_float44():

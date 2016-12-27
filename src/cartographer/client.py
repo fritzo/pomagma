@@ -1,10 +1,11 @@
 import os
-import pomagma.util
 import re
+
 import zmq
 from google.protobuf.descriptor import FieldDescriptor
-from pomagma.cartographer import messages_pb2 as messages
 
+import pomagma.util
+from pomagma.cartographer import messages_pb2 as messages
 
 CONTEXT = zmq.Context()
 POLL_TIMEOUT_MS = 1000

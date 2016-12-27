@@ -1,17 +1,11 @@
-from pomagma.theorist.diverge import Converged
-from pomagma.theorist.diverge import Diverged
-from pomagma.theorist.diverge import I, K, F, B, C, W, S, Y, TOP
-from pomagma.theorist.diverge import converge_step
-from pomagma.theorist.diverge import iter_terms
-from pomagma.theorist.diverge import may_diverge
-from pomagma.theorist.diverge import must_diverge
-from pomagma.theorist.diverge import parse_term
-from pomagma.theorist.diverge import print_term
-from pomagma.theorist.diverge import try_converge
-from pomagma.theorist.diverge import try_prove_diverge
-import pomagma.util
 import pytest
 
+import pomagma.util
+from pomagma.theorist.diverge import (TOP, B, C, Converged, Diverged, F, I, K,
+                                      S, W, Y, converge_step, iter_terms,
+                                      may_diverge, must_diverge, parse_term,
+                                      print_term, try_converge,
+                                      try_prove_diverge)
 
 a, b, c = ('a',), ('b',), ('c',)  # argument lists
 x, y, z = 'x', 'y', 'z'  # arguments

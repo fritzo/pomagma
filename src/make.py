@@ -1,15 +1,13 @@
-from contextlib2 import ExitStack
-from pomagma import analyst
-from pomagma import atlas
-from pomagma import cartographer
-from pomagma import surveyor
-from pomagma import theorist
-from pomagma.util import DB
-from pomagma.io import blobstore
-import mock
 import os
+
+import mock
+from contextlib2 import ExitStack
 from parsable import parsable
+
 import pomagma.util
+from pomagma import analyst, atlas, cartographer, surveyor, theorist
+from pomagma.io import blobstore
+from pomagma.util import DB
 
 PROFILERS = {
     'time': '/usr/bin/time --verbose',

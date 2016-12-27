@@ -1,6 +1,7 @@
 import multiprocessing
-import pomagma.util
 import time
+
+import pomagma.util
 
 
 def _blocking_mutex(args):

@@ -4,8 +4,9 @@ import csv
 import glob
 import hashlib
 import os
-from parsable import parsable
 import sys
+
+from parsable import parsable
 
 REPO = os.path.dirname(os.path.abspath(__file__))
 VETTED = os.path.join(REPO, 'vetted_hashes.csv')

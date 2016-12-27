@@ -1,8 +1,10 @@
 import os
 from math import exp
+
 from parsable import parsable
-import util
+
 import pomagma.util
+import util
 
 SPECS = {}
 

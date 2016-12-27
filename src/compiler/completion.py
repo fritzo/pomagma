@@ -1,14 +1,8 @@
-from pomagma.compiler.expressions import Expression_0
-from pomagma.compiler.expressions import Expression_2
-from pomagma.compiler.expressions import NotNegatable
-from pomagma.compiler.expressions import Expression
-from pomagma.compiler.expressions import try_get_negated
-from pomagma.compiler.util import function
-from pomagma.compiler.util import inputs
-from pomagma.compiler.util import set_with
-from pomagma.compiler.util import set_without
-from pomagma.compiler.util import sortedset
-from pomagma.compiler.util import union
+from pomagma.compiler.expressions import (Expression, Expression_0,
+                                          Expression_2, NotNegatable,
+                                          try_get_negated)
+from pomagma.compiler.util import (function, inputs, set_with, set_without,
+                                   sortedset, union)
 
 BOT = Expression_0('BOT')
 TOP = Expression_0('TOP')

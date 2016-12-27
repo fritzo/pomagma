@@ -2,8 +2,9 @@
 
 import contextlib
 import os
-from parsable import parsable
 import subprocess
+
+from parsable import parsable
 
 REPO = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(REPO)

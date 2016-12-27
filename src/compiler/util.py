@@ -3,11 +3,11 @@ import functools
 import glob
 import itertools
 import os
-import pomagma.util
 import sys
 from itertools import izip
-from math import exp
-from math import log
+from math import exp, log
+
+import pomagma.util
 
 function = type(lambda x: x)
 

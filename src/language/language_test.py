@@ -1,9 +1,7 @@
-from .util import dict_to_language
-from .util import json_load
-from .util import language_to_dict
-from .util import normalize_dict
 import glob
 import os
+
+from .util import dict_to_language, json_load, language_to_dict, normalize_dict
 
 SCRIPT_DIR = os.path.abspath(os.path.dirname(__file__))
 

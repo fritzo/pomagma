@@ -2,7 +2,6 @@ from pomagma.compiler.parser import parse_string_to_expr
 from pomagma.compiler.sugar import desugar_expr
 from pomagma.util.testing import for_each
 
-
 EXAMPLES = [map(parse_string_to_expr, e) for e in [
     ('x', 'x'),
     ('FUN x x', 'I'),

@@ -1,22 +1,18 @@
-from parsable import parsable
-from pomagma import analyst
-from pomagma import atlas
-from pomagma import cartographer
-from pomagma import linguist
-from pomagma import surveyor
-from pomagma import theorist
-from pomagma.util import DB
-from pomagma.util import suggest_region_sizes
 import glob
 import os
-import pomagma.io.blobstore
-import pomagma.util
-import pomagma.workers
 import re
 import shutil
 import signal
 import sys
 import time
+
+from parsable import parsable
+
+import pomagma.io.blobstore
+import pomagma.util
+import pomagma.workers
+from pomagma import analyst, atlas, cartographer, linguist, surveyor, theorist
+from pomagma.util import DB, suggest_region_sizes
 
 parsable = parsable.Parsable()
 

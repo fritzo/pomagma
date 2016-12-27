@@ -1,13 +1,13 @@
-from itertools import izip
-from pomagma.io import creat
-from pomagma.io import create_directories
 import hashlib
+import multiprocessing
 import os
-import pomagma.util
 import re
 import sys
-import multiprocessing
 import time
+from itertools import izip
+
+import pomagma.util
+from pomagma.io import creat, create_directories
 
 GRACE_PERIOD_DAYS = 7.0
 RE_BLOB = re.compile('^[a-z0-9]{40}$')
