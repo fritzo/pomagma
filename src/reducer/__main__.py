@@ -20,6 +20,12 @@ FORMATS = {
 }
 
 
+ENGINES = {
+    'bohm': bohm,
+    'engine': engine,
+}
+
+
 def guess_format(string):
     if '(' in string or ')' in string:
         return 'sexpr'
@@ -79,7 +85,7 @@ def repl(fmt='sexpr'):
             return
         try:
             code = parse(string)
-            result = engine.reduce(code)
+            result = bohm.reduce(code)
             result_string = print_(result)
             sys.stdout.write(result_string)
             sys.stdout.write('\n')
@@ -92,9 +98,10 @@ def repl(fmt='sexpr'):
 
 
 @parsable
-def profile(count=256):
-    """Run a reduce(lib.gyte_test(lib.byte_table[n])) for the first count
+def profile(engine='engine', count=256):
+    """Run a reduce(lib.byte_test(lib.byte_table[n])) for the first count
     bytes."""
+    engine = ENGINES[engine]
     examples = sorted(lib.byte_table.items())
     for n, byte in examples[:count]:
         engine.reduce(lib.byte_test(byte))
@@ -115,18 +122,13 @@ def reduce_cpp(*args):
     return proc.returncode  # Returns number of errors.
 
 
-ENGINES = {
-    'engine': engine,
-}
-
-
 @parsable
 def reduce(string, engine='engine', fmt='auto'):
     """Reduce code.
 
     Args:
         string: code to reduce, in some parsable format specified by fmt
-        engine: 'engine'
+        engine: 'engine', 'bohm'
         fmt: one of 'auto', 'polish', or 'sexpr'
 
     """

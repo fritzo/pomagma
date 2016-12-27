@@ -1,6 +1,7 @@
 import pytest
 
 from pomagma.reducer import __main__ as main
+from pomagma.reducer import bohm
 from pomagma.reducer.syntax import polish_print, sexpr_print
 from pomagma.reducer.testing import iter_equations
 from pomagma.util.testing import for_each, skip_if_not_implemented
@@ -51,6 +52,26 @@ def test_reduce_engine_sexpr_equations(code, expected_code, message):
     string = sexpr_print(code)
     with skip_if_not_implemented():
         actual_string = main.reduce(string, engine='engine')
+    expected_string = sexpr_print(expected_code)
+    assert actual_string == expected_string, message
+
+
+@for_each(iter_equations('bohm'))
+def test_reduce_bohm_polish_equations(code, expected_code, message):
+    string = polish_print(code)
+    with skip_if_not_implemented():
+        actual_string = main.reduce(string, engine='bohm', fmt='polish')
+        expected_code = bohm.simplify(expected_code)
+    expected_string = polish_print(expected_code)
+    assert actual_string == expected_string, message
+
+
+@for_each(iter_equations('bohm'))
+def test_reduce_bohm_sexpr_equations(code, expected_code, message):
+    string = sexpr_print(code)
+    with skip_if_not_implemented():
+        actual_string = main.reduce(string, engine='bohm', fmt='sexpr')
+        expected_code = bohm.simplify(expected_code)
     expected_string = sexpr_print(expected_code)
     assert actual_string == expected_string, message
 
