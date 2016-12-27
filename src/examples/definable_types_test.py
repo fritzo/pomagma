@@ -13,6 +13,7 @@ from pomagma.util.testing import for_each
     (('base', 'swap'), {}),
     (('base', 'preconj'), {}),
     (('base', 'postconj'), {}),
+    (('base', 'postconj'), {'fmt': 'tiny'}),
     pytest.mark.xfail((('base', 'compose'), {})),
     pytest.mark.xfail((('all',), {'steps': 1})),
 ])
