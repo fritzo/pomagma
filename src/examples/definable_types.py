@@ -23,7 +23,7 @@ from pomagma.reducer.sugar import app, as_code, join_, rec
 from pomagma.reducer.syntax import sexpr_print
 
 CB = app(C, B)
-div = rec(lambda x: join_(x, app(x, TOP)))
+div = rec(lambda a: join_(I, lambda x: app(a, x, TOP)))
 copy = as_code(lambda x, y: app(x, y, y))
 join = as_code(lambda x, y, z: app(x, join_(y, z)))
 postconj = box(lambda r, s: pair(app(B, r), app(B, s)))
@@ -73,6 +73,7 @@ def trace(*part_names, **kwargs):
     if 'all' in part_names:
         part_names = PARTS.keys()
     for name in part_names:
+        print('{} = {}'.format(name, sexpr_print(simplify(PARTS[name]))))
         assert name in PARTS, name
     A = simplify(build_A(*part_names))
     print('A = {}'.format(sexpr_print(A)))
