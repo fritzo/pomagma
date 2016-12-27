@@ -2,11 +2,10 @@ import hypothesis
 import pytest
 
 from pomagma.reducer import lib
-from pomagma.reducer.engines.engine import reduce, simplify
-from pomagma.reducer.engines.engine_test import s_quoted
+from pomagma.reducer.bohm import B, C, I, K, S, reduce, simplify
+from pomagma.reducer.bohm_test import s_quoted
 from pomagma.reducer.sugar import app, as_code, combinator, join_, quote
-from pomagma.reducer.syntax import (APP, BOT, NVAR, TOP, UNIT, B, C, I, K, S,
-                                    sexpr_print)
+from pomagma.reducer.syntax import APP, BOT, NVAR, TOP, UNIT, sexpr_print
 from pomagma.util import TRAVIS_CI
 from pomagma.util.testing import for_each
 

@@ -1,7 +1,8 @@
 import pytest
 
+from pomagma.reducer.bohm import B, C, I, K, S, KI
 from pomagma.reducer.sugar import _compile, app, as_code, combinator, join_
-from pomagma.reducer.syntax import APP, NVAR, TOP, B, C, I, K, S
+from pomagma.reducer.syntax import NVAR, TOP
 from pomagma.util.testing import for_each
 
 f = NVAR('f')
@@ -21,9 +22,9 @@ CLOSED_FUN_EXAMPLES = [
     (lambda: B, B),
     (lambda x: x, I),
     (lambda x, y: x, K),
-    (lambda x, y: y, APP(K, I)),
+    (lambda x, y: y, KI),
     (lambda x: lambda y: x, K),
-    (lambda x: lambda x: x, APP(K, I)),
+    (lambda x: lambda x: x, KI),
     (lambda x, y, z: app(x, z, y), C),
     (lambda x, y, z: app(x, app(y, z)), B),
     (lambda x, y, z: app(x, z, app(y, z)), S),
