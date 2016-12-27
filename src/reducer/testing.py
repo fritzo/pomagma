@@ -27,14 +27,15 @@ def iter_test_cases(test_id, suites=None):
         module = import_module('pomagma.reducer.engines.{}'.format(test_id))
         suites = module.SUPPORTED_TESTDATA
     for suite in suites:
-        filename = '{}/{}.sexpr'.format(TESTDATA, suite)
+        basename = '{}.sexpr'.format(suite)
+        filename = os.path.join(TESTDATA, basename)
         print('reading {}'.format(filename))
         with open(filename) as f:
             for i, line in enumerate(f):
                 parts = line.split(';', 1)
                 sexpr = parts[0].strip()
                 if sexpr:
-                    message = 'In {}:{}\n{}'.format(filename, 1 + i, line)
+                    message = 'In {}:{}\n{}'.format(basename, 1 + i, line)
                     try:
                         code = sexpr_parse(sexpr)
                     except ValueError as e:

@@ -24,6 +24,8 @@ from pomagma.reducer.syntax import (ABS, APP, BOOL, BOT, CODE, EQUAL, EVAL,
                                     quoted_vars, sexpr_parse)
 from pomagma.reducer.util import UnreachableError, trool_all, trool_any
 
+SUPPORTED_TESTDATA = ['sk', 'join', 'quote', 'types', 'lib', 'unit']
+
 I = ABS(IVAR(0))
 K = ABS(ABS(IVAR(1)))
 B = ABS(ABS(ABS(APP(IVAR(2), APP(IVAR(1), IVAR(0))))))
@@ -865,6 +867,7 @@ def _compute_step(code):
 
 
 SIGNATURE = {
+    'QUOTE': QUOTE,
     # Eager linear reduction.
     'APP': app,
     'ABS': abstract,

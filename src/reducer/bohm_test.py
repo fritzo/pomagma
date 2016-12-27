@@ -20,6 +20,7 @@ from pomagma.reducer.syntax import (ABS, APP, BOT, CODE, EQUAL, EVAL, IVAR,
                                     JOIN, LESS, NVAR, QAPP, QQUOTE, QUOTE, TOP,
                                     is_code, polish_print, quoted_vars,
                                     sexpr_parse, sexpr_print)
+from pomagma.reducer.testing import iter_equations
 from pomagma.util.testing import for_each, xfail_if_not_implemented
 
 x = NVAR('x')
@@ -961,6 +962,14 @@ def test_reduce(code, budget, expected):
     code = sexpr_parse(code)
     expected = sexpr_parse(expected)
     assert reduce(code, budget) is expected
+
+
+@for_each(iter_equations('bohm'))
+def test_reduce_equations(code, expected, message):
+    with xfail_if_not_implemented():
+        actual = reduce(code)
+        expected = simplify(expected)
+    assert actual == expected, message
 
 
 # ----------------------------------------------------------------------------
