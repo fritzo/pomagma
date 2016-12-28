@@ -1,10 +1,7 @@
-import os
-import subprocess
 import sys
 
 from parsable import parsable
 
-import pomagma.util
 from pomagma.reducer import bohm, curry, lib
 from pomagma.reducer.bohm import polish_simplify, print_tiny, sexpr_simplify
 from pomagma.reducer.engines import engine
@@ -107,19 +104,6 @@ def profile(engine='engine', count=256):
         engine.reduce(lib.byte_test(byte))
         sys.stdout.write('.')
         sys.stdout.flush()
-
-
-@parsable
-def reduce_cpp(*args):
-    """Reduce each argument using C++ engine."""
-    binary = os.path.join(pomagma.util.BIN, 'reducer', 'cli')
-    proc = subprocess.Popen([binary] + list(args))
-    proc.wait()
-    if proc.returncode == -11:
-        sys.stdout.write('Error:\n')
-        trace = pomagma.util.get_stack_trace(binary, proc.pid)
-        sys.stdout.write(trace)
-    return proc.returncode  # Returns number of errors.
 
 
 @parsable

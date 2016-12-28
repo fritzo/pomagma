@@ -30,10 +30,6 @@ arithmetic hierarchy.
   <a href="#user-content-Boulifa03">[Boulifa03]</a>,
   and extends it to nondeterministic combinatory algebra.
 
-- [`engine.hpp`](./engine.hpp)
-  A C++ port of an early version of engine.py. This is very limited, and mostly
-  exercises serialization plumbing.
-
 - [`bohm.py`](./bohm.py)
   Forked from continuation.py, this uses de Bruijn variables rather than
   nominal variables for &lambda; binding. This simplifies the logic of

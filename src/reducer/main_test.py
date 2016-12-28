@@ -24,20 +24,6 @@ def test_compile(curry_string, bohm_string):
     assert main.compile(bohm_string, fmt='sexpr') == curry_string
 
 
-@for_each([
-    ('I', 0),
-    ('K', 0),
-    ('B', 0),
-    ('C', 0),
-    ('S', 0),
-    ('APP I I', 0),
-    ('APP I', 1),
-    ('APP I I I', 1),
-])
-def test_reduce_cpp_does_not_crash(code, error_count):
-    assert main.reduce_cpp(code) == error_count
-
-
 @for_each(iter_equations('engine'))
 def test_reduce_engine_polish_equations(code, expected_code, message):
     string = polish_print(code)
