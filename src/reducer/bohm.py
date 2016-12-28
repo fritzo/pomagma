@@ -13,6 +13,7 @@ CHANGELOG
 2016-12-11 Use linearizing approximations in order decision procedures.
 2016-12-18 Add rules for quoting and reflected order.
 2016-12-25 Add rules for nominal and quoted abstraction.
+2016-12-27 Treat nominal and de Bruijn variables differently.
 """
 
 from pomagma.compiler.util import memoize_arg, memoize_args, unique
@@ -25,6 +26,9 @@ from pomagma.reducer.syntax import (ABS, APP, BOOL, BOT, CODE, EQUAL, EVAL,
 from pomagma.reducer.util import UnreachableError, trool_all, trool_any
 
 SUPPORTED_TESTDATA = ['sk', 'join', 'quote', 'types', 'lib', 'unit']
+
+# TODO Make strong version not horribly expensive.
+TRY_DECIDE_LESS_STRONG = False
 
 I = ABS(IVAR(0))
 K = ABS(ABS(IVAR(1)))
@@ -386,8 +390,13 @@ def qabstract(code):
     raise UnreachableError(code)
 
 
+def anonymize(code, var):
+    """Convert a nominal variable to a de Bruijn variable."""
+    return _anonymize(code, var, 0)
+
+
 @memoize_args
-def anonymize(code, var, rank):
+def _anonymize(code, var, rank):
     """Convert a nominal variable to a de Bruijn variable."""
     if code is var:
         return IVAR(rank)
@@ -396,18 +405,18 @@ def anonymize(code, var, rank):
     elif is_ivar(code):
         return code if code[1] < rank else IVAR(code[1] + 1)
     elif is_abs(code):
-        body = anonymize(code[1], var, rank + 1)
+        body = _anonymize(code[1], var, rank + 1)
         return abstract(body)
     elif is_app(code):
-        lhs = anonymize(code[1], var, rank)
-        rhs = anonymize(code[2], var, rank)
+        lhs = _anonymize(code[1], var, rank)
+        rhs = _anonymize(code[2], var, rank)
         return app(lhs, rhs)
     elif is_join(code):
-        lhs = anonymize(code[1], var, rank)
-        rhs = anonymize(code[2], var, rank)
+        lhs = _anonymize(code[1], var, rank)
+        rhs = _anonymize(code[2], var, rank)
         return join(lhs, rhs)
     elif is_quote(code):
-        body = anonymize(code[1], var, rank)
+        body = _anonymize(code[1], var, rank)
         return QUOTE(body)
     else:
         raise ValueError(code)
@@ -416,14 +425,14 @@ def anonymize(code, var, rank):
 @memoize_args
 def nominal_abstract(var, body):
     """Abstract a nominal variable and simplify."""
-    anonymized = anonymize(body, var, 0)
+    anonymized = anonymize(body, var)
     return abstract(anonymized)
 
 
 @memoize_args
 def nominal_qabstract(var, body):
     """Abstract a quoted nominal variable and simplify."""
-    anonymized = anonymize(body, var, 0)
+    anonymized = anonymize(body, var)
     return qabstract(anonymized)
 
 
@@ -495,8 +504,15 @@ def dominates(lhs, rhs):
     return rhs_lhs is True and lhs_rhs is False
 
 
-@memoize_args
 def try_decide_less(lhs, rhs):
+    if TRY_DECIDE_LESS_STRONG:
+        return try_decide_less_strong(lhs, rhs)
+    else:
+        return try_decide_less_weak(lhs, rhs)
+
+
+@memoize_args
+def try_decide_less_strong(lhs, rhs):
     """Weak decision procedure returning True, False, or None.
 
     The behavior on closed terms should approximate Scott ordering. The

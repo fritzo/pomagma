@@ -15,7 +15,7 @@ from pomagma.reducer.bohm import (CB, CI, KI, B, C, I, K, S, abstract,
                                   try_cast_maybe, try_cast_unit,
                                   try_compute_step, try_decide_equal,
                                   try_decide_less, try_decide_less_weak,
-                                  unabstract)
+                                  unabstract, TRY_DECIDE_LESS_STRONG)
 from pomagma.reducer.syntax import (ABS, APP, BOT, CODE, EQUAL, EVAL, IVAR,
                                     JOIN, LESS, NVAR, QAPP, QQUOTE, QUOTE, TOP,
                                     is_code, polish_print, quoted_vars,
@@ -364,7 +364,7 @@ def test_qabstract(code, expected):
     (QUOTE(i0), x, QUOTE(i1)),
 ])
 def test_anonymize(code, var, expected):
-    assert anonymize(code, var, 0) is expected
+    assert anonymize(code, var) is expected
 
 
 @for_each([
@@ -785,8 +785,12 @@ def test_ground(code, expected_lb, expected_ub):
 def test_ground_less(code):
     lb, ub = ground(code)
     assert try_decide_less(lb, ub) is True
-    assert try_decide_less(lb, code) is True
-    assert try_decide_less(code, ub) is True
+    if TRY_DECIDE_LESS_STRONG:
+        assert try_decide_less(lb, code) is True
+        assert try_decide_less(code, ub) is True
+    else:
+        assert try_decide_less(lb, code) is not False
+        assert try_decide_less(code, ub) is not False
 
 
 F = KI
