@@ -52,17 +52,13 @@ def make_keyword(name):
     return name
 
 
-_IVAR = make_keyword('IVAR')  # de Bruijn variable, for binding with ABS.
-_NVAR = make_keyword('NVAR')  # Nominal variable, aka a named hole.
+_IVAR = make_keyword('IVAR')  # de Bruijn variable.
+_NVAR = make_keyword('NVAR')  # Nominal variable.
 _APP = make_keyword('APP')
 _JOIN = make_keyword('JOIN')
 _QUOTE = make_keyword('QUOTE')
 _ABS = make_keyword('ABS')  # de Bruijn abstraction.
-
-# TODO deprecated
-_QABS = make_keyword('QABS')  # de Bruijn abstraction.
 _FUN = make_keyword('FUN')  # Nominal abstraction.
-_QFUN = make_keyword('QFUN')  # Nominal abstraction.
 
 TOP = make_keyword('TOP')
 BOT = make_keyword('BOT')
@@ -123,22 +119,10 @@ def ABS(body):
     return _code(_ABS, body)
 
 
-# TODO deprecated
-def QABS(body):
-    return _code(_QABS, body)
-
-
-# TODO deprecated
 def FUN(var, body):
     assert is_nvar(var), var
     assert var not in quoted_vars(body), (var, body)
     return _code(_FUN, var, body)
-
-
-# TODO deprecated
-def QFUN(var, body):
-    assert is_nvar(var), var
-    return _code(_QFUN, var, body)
 
 
 def is_atom(code):
@@ -176,19 +160,9 @@ def is_abs(code):
     return isinstance(code, tuple) and code[0] is _ABS
 
 
-def is_qabs(code):
-    assert is_code(code), code
-    return isinstance(code, tuple) and code[0] is _QABS
-
-
 def is_fun(code):
     assert is_code(code), code
     return isinstance(code, tuple) and code[0] is _FUN
-
-
-def is_qfun(code):
-    assert is_code(code), code
-    return isinstance(code, tuple) and code[0] is _QFUN
 
 
 # ----------------------------------------------------------------------------
@@ -218,16 +192,13 @@ def free_vars(code):
         return free_vars(code[1]) | free_vars(code[2])
     elif is_quote(code):
         return free_vars(code[1])
-    elif is_abs(code) or is_qabs(code):
+    elif is_abs(code):
         return frozenset(
             decrement_var(v)
             for v in free_vars(code[1])
             if v is not IVAR_0
         )
     elif is_fun(code):
-        assert is_nvar(code[1])
-        return free_vars(code[2]) - frozenset([code[1]])
-    elif is_qfun(code):
         assert is_nvar(code[1])
         return free_vars(code[2]) - frozenset([code[1]])
     else:
@@ -245,7 +216,7 @@ def quoted_vars(code):
         return free_vars(code[1])
     elif is_app(code) or is_join(code):
         return quoted_vars(code[1]) | quoted_vars(code[2])
-    elif is_abs(code) or is_qabs(code):
+    elif is_abs(code):
         return frozenset(
             decrement_var(v)
             for v in quoted_vars(code[1])
@@ -253,9 +224,6 @@ def quoted_vars(code):
         )
     elif is_fun(code):
         return quoted_vars(code[2])
-    elif is_qfun(code):
-        assert is_nvar(code[1])
-        return quoted_vars(code[2]) - frozenset([code[1]])
     else:
         raise ValueError(code)
 
@@ -366,9 +334,7 @@ _PARSERS = {
     _JOIN: (_polish_parse_tokens, _polish_parse_tokens),
     _QUOTE: (_polish_parse_tokens,),
     _ABS: (_polish_parse_tokens,),
-    _QABS: (_polish_parse_tokens,),
     _FUN: (_polish_parse_tokens, _polish_parse_tokens),
-    _QFUN: (_polish_parse_tokens, _polish_parse_tokens),
 }
 
 
@@ -428,17 +394,10 @@ def to_sexpr(code):
     elif is_abs(head):
         args.append(to_sexpr(head[1]))
         head = _ABS
-    elif is_qabs(head):
-        args.append(to_sexpr(head[1]))
-        head = _QABS
     elif is_fun(head):
         args.append(to_sexpr(head[2]))
         args.append(to_sexpr(head[1]))
         head = _FUN
-    elif is_qfun(head):
-        args.append(to_sexpr(head[2]))
-        args.append(to_sexpr(head[1]))
-        head = _QFUN
     args.append(head)
     args.reverse()
     return tuple(args)
@@ -472,19 +431,10 @@ def from_sexpr(sexpr, signature={}):
             body = from_sexpr(sexpr[1], signature)
             head = signature.get('ABS', ABS)(body)
             args = sexpr[2:]
-        elif head is _QABS:
-            body = from_sexpr(sexpr[1], signature)
-            head = signature.get('QABS', QABS)(body)
-            args = sexpr[2:]
         elif head is _FUN:
             var = from_sexpr(sexpr[1], signature)
             body = from_sexpr(sexpr[2], signature)
             head = signature.get('FUN', FUN)(var, body)
-            args = sexpr[3:]
-        elif head is _QFUN:
-            var = from_sexpr(sexpr[1], signature)
-            body = from_sexpr(sexpr[2], signature)
-            head = signature.get('QFUN', QFUN)(var, body)
             args = sexpr[3:]
         else:
             head = signature.get(head, head)

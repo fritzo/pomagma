@@ -8,8 +8,8 @@ from pomagma.reducer.serial import (dump, load, pack_head_argc, pack_varint,
                                     unpack_head_argc, unpack_varint)
 from pomagma.reducer.syntax import (ABS, APP, BOOL, BOT, CODE, EQUAL, EVAL,
                                     FUN, IVAR, JOIN, LESS, MAYBE, NUM, NVAR,
-                                    PROD, QABS, QAPP, QFUN, QQUOTE, QUOTE, SUM,
-                                    TOP, UNIT, A, B, C, I, K, S, V)
+                                    PROD, QAPP, QQUOTE, QUOTE, SUM, TOP, UNIT,
+                                    A, B, C, I, K, S, V)
 from pomagma.reducer.syntax_test import s_codes
 from pomagma.util.testing import for_each
 
@@ -74,7 +74,6 @@ x = NVAR('x')
     SUM,
     NUM,
     ABS(IVAR(0)),
-    QABS(APP(IVAR(0), QUOTE(IVAR(0)))),
     APP(IVAR(0), x),
     APP(K, I),
     APP(APP(B, C), S),
@@ -86,8 +85,6 @@ x = NVAR('x')
     APP(QUOTE(K), C),
     FUN(x, APP(S, APP(x, x))),
     APP(FUN(x, x), I),
-    QFUN(x, APP(S, APP(x, QUOTE(x)))),
-    APP(QFUN(x, QUOTE(x)), I),
 ])
 def test_serialize_deserialize_parametrized(code):
     f_out = StringIO()

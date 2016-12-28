@@ -890,11 +890,9 @@ SIGNATURE = {
     # Eager linear reduction.
     'APP': app,
     'ABS': abstract,
-    'QABS': qabstract,
     'JOIN': join,
     # Conversion from nominal lambda calculus.
     'FUN': nominal_abstract,
-    'QFUN': nominal_qabstract,
     # Conversion from combinatory algebra.
     'I': I,
     'K': K,

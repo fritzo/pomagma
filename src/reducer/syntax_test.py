@@ -3,10 +3,10 @@ import hypothesis.strategies as s
 
 from pomagma.reducer.syntax import (ABS, APP, BOOL, BOT, CODE, EQUAL, EVAL,
                                     FUN, IVAR, JOIN, LESS, MAYBE, NUM, NVAR,
-                                    PROD, QABS, QAPP, QFUN, QQUOTE, QUOTE, SUM,
-                                    TOP, UNIT, A, B, C, I, K, S, V, complexity,
-                                    free_vars, from_sexpr, polish_parse,
-                                    polish_print, quoted_vars, sexpr_parse,
+                                    PROD, QAPP, QQUOTE, QUOTE, SUM, TOP, UNIT,
+                                    A, B, C, I, K, S, V, complexity, free_vars,
+                                    from_sexpr, polish_parse, polish_print,
+                                    quoted_vars, sexpr_parse,
                                     sexpr_parse_sexpr, sexpr_print,
                                     sexpr_print_sexpr, to_sexpr)
 from pomagma.util.testing import for_each
@@ -43,13 +43,8 @@ NVAR_EXAMPLES = [
     (QUOTE(APP(x, y)), [x, y], [x, y]),
     (APP(x, QUOTE(y)), [x, y], [y]),
     (ABS(x), [x], []),
-    (QABS(x), [x], []),
     (FUN(x, y), [y], []),
     (FUN(x, x), [], []),
-    (QFUN(x, y), [y], []),
-    (QFUN(x, x), [], []),
-    (QFUN(x, QUOTE(x)), [], []),
-    (QFUN(x, QUOTE(y)), [y], [y]),
 ]
 
 
@@ -87,15 +82,9 @@ def test_quoted_vars_quote(code, free, quoted):
     (ABS(IVAR(0)), 1 + 1),
     (ABS(I), 1 + 2),
     (ABS(K), 1 + 3),
-    (QABS(I), 1 + 2),
-    (QABS(K), 1 + 3),
-    (QABS(QUOTE(IVAR(0))), 1 + 1 + 1),
     (FUN(x, x), 1 + max(1, 1)),
     (FUN(x, I), 1 + max(1, 2)),
     (FUN(x, K), 1 + max(1, 3)),
-    (QFUN(x, x), 1 + max(1, 1)),
-    (QFUN(x, I), 1 + max(1, 2)),
-    (QFUN(x, K), 1 + max(1, 3)),
     (APP(APP(S, x), x), 1 + max(1 + max(6, 1), 1)),
     (APP(APP(S, I), x), 1 + max(1 + max(6, 2), 1)),
     (APP(APP(S, I), I), 1 + max(1 + max(6, 2), 2)),
@@ -140,19 +129,9 @@ EXAMPLES = [
         'sexpr': '(ABS 0)',
     },
     {
-        'code': QABS(QUOTE(IVAR(0))),
-        'polish': 'QABS QUOTE 0',
-        'sexpr': '(QABS (QUOTE 0))',
-    },
-    {
         'code': FUN(x, APP(x, x)),
         'polish': 'FUN x APP x x',
         'sexpr': '(FUN x (x x))',
-    },
-    {
-        'code': QFUN(x, APP(x, x)),
-        'polish': 'QFUN x APP x x',
-        'sexpr': '(QFUN x (x x))',
     },
 ]
 
@@ -229,9 +208,7 @@ def s_codes_extend(terms):
         s.builds(JOIN, terms, terms),
         s.builds(QUOTE, terms),
         s.builds(ABS, terms.filter(lambda c: IVAR(0) not in quoted_vars(c))),
-        s.builds(QABS, terms),
         s.builds(FUN, s_vars, terms),  # FIXME
-        s.builds(QFUN, s_vars, terms),
     )
 
 
