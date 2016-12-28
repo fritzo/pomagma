@@ -71,7 +71,7 @@ class _Combinator(object):
 
         code = _compile(self, actual_fun=self._fun)
         if var in quoted_vars(code):
-            code = rec(qabstract(var, code))
+            code = qrec(qabstract(var, code))
         elif var in free_vars(code):
             code = rec(abstract(var, code))
 
