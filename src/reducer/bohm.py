@@ -497,7 +497,28 @@ def dominates(lhs, rhs):
 
 @memoize_args
 def try_decide_less(lhs, rhs):
-    """Weak decision procedure returning True, False, or None."""
+    """Weak decision procedure returning True, False, or None.
+
+    The behavior on closed terms should approximate Scott ordering. The
+    behavior on variables is defined with the particular application of
+    deciding order among definitions in reducer.lib. We assume all IVARs are
+    bound and all NVARs are free, so that for example:
+
+        # Refrain from decision until x is defined.
+        try_decide_less(NVAR('x'), BOT) = None
+
+        # False for some grounding substitution.
+        try_decide_less(IVAR(0), BOT) = False
+
+    Thus a property of an IVAR is False iff it fails for all substitutions,
+    whereas a property of an NVAR is False iff it fails for some substutution.
+    A property is True iff it holds for all substitutions (for IVAR or NVAR);
+    the difference is only between False vs None.
+
+    Note that this differs from the conventino in the rest of pomagma, where
+    terms are implicitly universally quantified (NVARS act like IVARS).
+
+    """
     # Try a weak procedure.
     result = try_decide_less_weak(lhs, rhs)
     if result is not None:
@@ -550,14 +571,10 @@ def approximate_var(code, direction, rank):
     return tuple(sorted(result, key=complexity))
 
 
-def is_var(code):
-    return is_nvar(code) or is_ivar(code)
-
-
 @memoize_args
 def approximate(code, direction):
     result = set()
-    if is_atom(code) or is_var(code) or is_quote(code):
+    if is_atom(code) or is_nvar(code) or is_ivar(code) or is_quote(code):
         result.add(code)
     elif is_app(code):
         if is_abs(code[1]):
@@ -633,15 +650,17 @@ def try_decide_less_weak(lhs, rhs):
                 return True
 
     # Give up at unreduced terms.
+    if is_nvar(lhs_head) or is_nvar(rhs_head):
+        return None
     if is_abs(lhs_head) or is_abs(rhs_head):
         return None
-    if lhs_args and not is_var(lhs_head):
+    if lhs_args and not is_ivar(lhs_head):
         return None
-    if rhs_args and not is_var(rhs_head):
+    if rhs_args and not is_ivar(rhs_head):
         return None
 
     # Distinguish solvable terms.
-    if is_var(lhs_head) and is_var(rhs_head):
+    if is_ivar(lhs_head) and is_ivar(rhs_head):
         if lhs_head is not rhs_head or len(lhs_args) != len(rhs_args):
             return False
         return trool_all(

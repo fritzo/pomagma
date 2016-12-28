@@ -52,12 +52,14 @@ def make_keyword(name):
     return name
 
 
-_IVAR = make_keyword('IVAR')  # de Bruijn variable.
-_NVAR = make_keyword('NVAR')  # Nominal variable.
+_IVAR = make_keyword('IVAR')  # de Bruijn variable, for binding with ABS.
+_NVAR = make_keyword('NVAR')  # Nominal variable, aka a named hole.
 _APP = make_keyword('APP')
 _JOIN = make_keyword('JOIN')
 _QUOTE = make_keyword('QUOTE')
 _ABS = make_keyword('ABS')  # de Bruijn abstraction.
+
+# TODO deprecated
 _QABS = make_keyword('QABS')  # de Bruijn abstraction.
 _FUN = make_keyword('FUN')  # Nominal abstraction.
 _QFUN = make_keyword('QFUN')  # Nominal abstraction.
@@ -112,6 +114,7 @@ def JOIN(lhs, rhs):
 
 
 def QUOTE(code):
+    # TODO assert all(not is_ivar(v) for v in free_vars(code))
     return _code(_QUOTE, code)
 
 
@@ -120,16 +123,19 @@ def ABS(body):
     return _code(_ABS, body)
 
 
+# TODO deprecated
 def QABS(body):
     return _code(_QABS, body)
 
 
+# TODO deprecated
 def FUN(var, body):
     assert is_nvar(var), var
     assert var not in quoted_vars(body), (var, body)
     return _code(_FUN, var, body)
 
 
+# TODO deprecated
 def QFUN(var, body):
     assert is_nvar(var), var
     return _code(_QFUN, var, body)
@@ -252,6 +258,18 @@ def quoted_vars(code):
         return quoted_vars(code[2]) - frozenset([code[1]])
     else:
         raise ValueError(code)
+
+
+@memoize_arg
+def is_closed(code):
+    """A code is closed if all de Bruijn variables are bound."""
+    return not any(is_ivar(v) for v in free_vars(code))
+
+
+@memoize_arg
+def is_defined(code):
+    """A code is defined if all nominal variables have been substituted."""
+    return not any(is_nvar(v) for v in free_vars(code))
 
 
 # ----------------------------------------------------------------------------

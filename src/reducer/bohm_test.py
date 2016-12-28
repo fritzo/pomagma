@@ -23,20 +23,27 @@ from pomagma.reducer.syntax import (ABS, APP, BOT, CODE, EQUAL, EVAL, IVAR,
 from pomagma.reducer.testing import iter_equations
 from pomagma.util.testing import for_each, xfail_if_not_implemented
 
+pretty = sexpr_print
+
+i0 = IVAR(0)
+i1 = IVAR(1)
+i2 = IVAR(2)
+i3 = IVAR(3)
+
 x = NVAR('x')
 y = NVAR('y')
 z = NVAR('z')
 
-delta = ABS(APP(IVAR(0), IVAR(0)))
+delta = ABS(APP(i0, i0))
 
 ACTIVE_ATOMS = [EVAL, QAPP, QQUOTE, LESS, EQUAL]
 
 s_atoms = s.one_of(
     s.sampled_from([TOP, BOT]),
-    s.just(IVAR(0)),
-    s.just(IVAR(1)),
-    s.just(IVAR(2)),
-    s.just(IVAR(3)),
+    s.just(i0),
+    s.just(i1),
+    s.just(i2),
+    s.just(i3),
     s.sampled_from([x, y, z]),
     s.sampled_from(ACTIVE_ATOMS),
 )
@@ -47,7 +54,7 @@ def s_codes_extend(codes):
         s.builds(app, codes, codes),
         s.builds(
             abstract,
-            codes.filter(lambda c: IVAR(0) not in quoted_vars(c)),
+            codes.filter(lambda c: i0 not in quoted_vars(c)),
         ),
         s.builds(join, codes, codes),
         s.builds(QUOTE, codes),
@@ -77,20 +84,20 @@ INCREMENT_RANK_EXAMPLES = [
     (BOT, BOT),
     (x, x),
     (y, y),
-    (IVAR(0), IVAR(1)),
-    (IVAR(1), IVAR(2)),
-    (IVAR(2), IVAR(3)),
-    (ABS(IVAR(0)), ABS(IVAR(0))),
-    (ABS(IVAR(1)), ABS(IVAR(2))),
-    (ABS(IVAR(2)), ABS(IVAR(3))),
-    (ABS(ABS(IVAR(0))), ABS(ABS(IVAR(0)))),
-    (ABS(ABS(IVAR(1))), ABS(ABS(IVAR(1)))),
-    (ABS(ABS(IVAR(2))), ABS(ABS(IVAR(3)))),
-    (APP(IVAR(0), IVAR(1)), APP(IVAR(1), IVAR(2))),
-    (ABS(APP(IVAR(0), IVAR(0))), ABS(APP(IVAR(0), IVAR(0)))),
-    (ABS(APP(IVAR(1), IVAR(2))), ABS(APP(IVAR(2), IVAR(3)))),
-    (JOIN(IVAR(0), IVAR(1)), JOIN(IVAR(1), IVAR(2))),
-    (QUOTE(IVAR(0)), QUOTE(IVAR(1))),
+    (i0, i1),
+    (i1, i2),
+    (i2, i3),
+    (ABS(i0), ABS(i0)),
+    (ABS(i1), ABS(i2)),
+    (ABS(i2), ABS(i3)),
+    (ABS(ABS(i0)), ABS(ABS(i0))),
+    (ABS(ABS(i1)), ABS(ABS(i1))),
+    (ABS(ABS(i2)), ABS(ABS(i3))),
+    (APP(i0, i1), APP(i1, i2)),
+    (ABS(APP(i0, i0)), ABS(APP(i0, i0))),
+    (ABS(APP(i1, i2)), ABS(APP(i2, i3))),
+    (JOIN(i0, i1), JOIN(i1, i2)),
+    (QUOTE(i0), QUOTE(i1)),
     (EVAL, EVAL),
     (QAPP, QAPP),
     (QQUOTE, QQUOTE),
@@ -109,14 +116,14 @@ DECREMENT_RANK_EXAMPLES = [
     (BOT, BOT),
     (x, x),
     (y, y),
-    (IVAR(1), IVAR(0)),
-    (IVAR(2), IVAR(1)),
-    (IVAR(3), IVAR(2)),
-    (APP(IVAR(1), IVAR(2)), APP(IVAR(0), IVAR(1))),
-    (ABS(APP(IVAR(0), IVAR(0))), ABS(APP(IVAR(0), IVAR(0)))),
-    (ABS(APP(IVAR(2), IVAR(3))), ABS(APP(IVAR(1), IVAR(2)))),
-    (JOIN(IVAR(1), IVAR(2)), JOIN(IVAR(0), IVAR(1))),
-    (QUOTE(IVAR(1)), QUOTE(IVAR(0))),
+    (i1, i0),
+    (i2, i1),
+    (i3, i2),
+    (APP(i1, i2), APP(i0, i1)),
+    (ABS(APP(i0, i0)), ABS(APP(i0, i0))),
+    (ABS(APP(i2, i3)), ABS(APP(i1, i2))),
+    (JOIN(i1, i2), JOIN(i0, i1)),
+    (QUOTE(i1), QUOTE(i0)),
     (EVAL, EVAL),
     (QAPP, QAPP),
     (QQUOTE, QQUOTE),
@@ -140,19 +147,19 @@ IS_LINEAR_EXAMPLES = [
     (BOT, True),
     (x, True),
     (y, True),
-    (IVAR(0), True),
-    (IVAR(1), True),
-    (APP(IVAR(0), IVAR(0)), True),
-    (APP(IVAR(0), IVAR(1)), True),
-    (APP(IVAR(1), IVAR(0)), True),
-    (APP(IVAR(1), IVAR(1)), True),
-    (ABS(APP(IVAR(0), IVAR(0))), False),
-    (ABS(APP(IVAR(0), IVAR(1))), True),
-    (ABS(APP(IVAR(1), IVAR(0))), True),
-    (ABS(APP(IVAR(1), IVAR(1))), True),
-    (ABS(JOIN(IVAR(0), APP(IVAR(0), x))), True),
-    (ABS(JOIN(IVAR(0), APP(IVAR(0), IVAR(0)))), False),
-    (QUOTE(ABS(APP(IVAR(0), IVAR(0)))), True),
+    (i0, True),
+    (i1, True),
+    (APP(i0, i0), True),
+    (APP(i0, i1), True),
+    (APP(i1, i0), True),
+    (APP(i1, i1), True),
+    (ABS(APP(i0, i0)), False),
+    (ABS(APP(i0, i1)), True),
+    (ABS(APP(i1, i0)), True),
+    (ABS(APP(i1, i1)), True),
+    (ABS(JOIN(i0, APP(i0, x))), True),
+    (ABS(JOIN(i0, APP(i0, i0))), False),
+    (QUOTE(ABS(APP(i0, i0))), True),
     (EVAL, True),
     (QAPP, True),
     (QQUOTE, True),
@@ -170,16 +177,16 @@ SUBSTITUTE_EXAMPLES = [
     (TOP, BOT, TOP),
     (BOT, TOP, BOT),
     (x, TOP, x),
-    (IVAR(0), x, x),
-    (IVAR(1), x, IVAR(0)),
-    (IVAR(2), x, IVAR(1)),
-    (APP(IVAR(0), IVAR(1)), x, APP(x, IVAR(0))),
-    (ABS(IVAR(0)), x, ABS(IVAR(0))),
-    (ABS(IVAR(1)), x, ABS(x)),
-    (ABS(IVAR(2)), x, ABS(IVAR(1))),
-    (JOIN(IVAR(0), IVAR(1)), x, JOIN(IVAR(0), x)),
-    (QUOTE(IVAR(0)), x, QUOTE(x)),
-    (QUOTE(IVAR(1)), x, QUOTE(IVAR(0))),
+    (i0, x, x),
+    (i1, x, i0),
+    (i2, x, i1),
+    (APP(i0, i1), x, APP(x, i0)),
+    (ABS(i0), x, ABS(i0)),
+    (ABS(i1), x, ABS(x)),
+    (ABS(i2), x, ABS(i1)),
+    (JOIN(i0, i1), x, JOIN(i0, x)),
+    (QUOTE(i0), x, QUOTE(x)),
+    (QUOTE(i1), x, QUOTE(i0)),
     (EVAL, x, EVAL),
     (QAPP, x, QAPP),
     (QQUOTE, x, QQUOTE),
@@ -197,32 +204,37 @@ APP_EXAMPLES = [
     (TOP, TOP, TOP),
     (TOP, BOT, TOP),
     (TOP, x, TOP),
+    (TOP, i0, TOP),
     (BOT, TOP, BOT),
     (BOT, BOT, BOT),
     (BOT, x, BOT),
+    (BOT, i0, BOT),
     (x, TOP, APP(x, TOP)),
     (x, BOT, APP(x, BOT)),
     (x, x, APP(x, x)),
-    (IVAR(0), TOP, APP(IVAR(0), TOP)),
-    (IVAR(0), BOT, APP(IVAR(0), BOT)),
-    (IVAR(0), x, APP(IVAR(0), x)),
-    (ABS(IVAR(1)), TOP, IVAR(0)),
-    (ABS(IVAR(1)), BOT, IVAR(0)),
-    (ABS(IVAR(1)), x, IVAR(0)),
-    (ABS(IVAR(0)), TOP, TOP),
-    (ABS(IVAR(0)), BOT, BOT),
-    (ABS(IVAR(0)), x, x),
-    (ABS(APP(IVAR(0), y)), TOP, TOP),
-    (ABS(APP(IVAR(0), y)), BOT, BOT),
-    (ABS(APP(IVAR(0), y)), x, APP(x, y)),
-    (ABS(APP(IVAR(0), IVAR(1))), x, APP(x, IVAR(0))),
+    (x, i0, APP(x, i0)),
+    (i0, TOP, APP(i0, TOP)),
+    (i0, BOT, APP(i0, BOT)),
+    (i0, x, APP(i0, x)),
+    (i0, i0, APP(i0, i0)),
+    (ABS(i1), TOP, i0),
+    (ABS(i1), BOT, i0),
+    (ABS(i1), x, i0),
+    (ABS(i0), TOP, TOP),
+    (ABS(i0), BOT, BOT),
+    (ABS(i0), x, x),
+    (ABS(APP(i0, y)), TOP, TOP),
+    (ABS(APP(i0, y)), BOT, BOT),
+    (ABS(APP(i0, y)), x, APP(x, y)),
+    (ABS(APP(i0, i1)), x, APP(x, i0)),
     (JOIN(x, y), z, JOIN(APP(x, z), APP(y, z))),
-    (JOIN(ABS(IVAR(0)), x), TOP, TOP),
-    (JOIN(ABS(IVAR(0)), x), BOT, APP(x, BOT)),
+    (JOIN(ABS(i0), x), TOP, TOP),
+    (JOIN(ABS(i0), x), BOT, APP(x, BOT)),
     (QUOTE(TOP), x, APP(QUOTE(TOP), x)),
     (EVAL, TOP, TOP),
     (EVAL, BOT, BOT),
     (EVAL, QUOTE(x), x),
+    (EVAL, QUOTE(i0), i0),
     (EVAL, x, APP(EVAL, x)),
     (QAPP, TOP, TOP),
     (QAPP, BOT, APP(QAPP, BOT)),
@@ -255,55 +267,55 @@ APP_EXAMPLES = [
     (APP(LESS, BOT), TOP, TOP),
     (APP(LESS, BOT), BOT, BOT),
     (APP(LESS, BOT), QUOTE(y), BOT),
-    (APP(LESS, BOT), y, APP(APP(LESS, BOT), y)),
-    (APP(LESS, QUOTE(x)), TOP, TOP),
-    (APP(LESS, QUOTE(x)), BOT, BOT),
-    (APP(LESS, QUOTE(x)), QUOTE(y), false),
-    (APP(LESS, QUOTE(x)), QUOTE(x), true),
-    (APP(LESS, QUOTE(x)), y, APP(APP(LESS, QUOTE(x)), y)),
-    (APP(LESS, x), TOP, TOP),
-    (APP(LESS, x), BOT, APP(APP(LESS, x), BOT)),
-    (APP(LESS, x), QUOTE(y), APP(APP(LESS, x), QUOTE(y))),
-    (APP(LESS, x), y, APP(APP(LESS, x), y)),
+    (APP(LESS, BOT), i1, APP(APP(LESS, BOT), i1)),
+    (APP(LESS, QUOTE(i0)), TOP, TOP),
+    (APP(LESS, QUOTE(i0)), BOT, BOT),
+    (APP(LESS, QUOTE(i0)), QUOTE(i1), false),
+    (APP(LESS, QUOTE(i0)), QUOTE(i0), true),
+    (APP(LESS, QUOTE(i0)), i1, APP(APP(LESS, QUOTE(i0)), i1)),
+    (APP(LESS, i0), TOP, TOP),
+    (APP(LESS, i0), BOT, APP(APP(LESS, i0), BOT)),
+    (APP(LESS, i0), QUOTE(i1), APP(APP(LESS, i0), QUOTE(i1))),
+    (APP(LESS, i0), i1, APP(APP(LESS, i0), i1)),
     (APP(EQUAL, TOP), TOP, TOP),
     (APP(EQUAL, TOP), BOT, TOP),
-    (APP(EQUAL, TOP), QUOTE(y), TOP),
-    (APP(EQUAL, TOP), y, TOP),
+    (APP(EQUAL, TOP), QUOTE(i1), TOP),
+    (APP(EQUAL, TOP), i1, TOP),
     (APP(EQUAL, BOT), TOP, TOP),
     (APP(EQUAL, BOT), BOT, BOT),
-    (APP(EQUAL, BOT), QUOTE(y), BOT),
-    (APP(EQUAL, BOT), y, APP(APP(EQUAL, BOT), y)),
-    (APP(EQUAL, QUOTE(x)), TOP, TOP),
-    (APP(EQUAL, QUOTE(x)), BOT, BOT),
-    (APP(EQUAL, QUOTE(x)), QUOTE(y), false),
-    (APP(EQUAL, QUOTE(x)), QUOTE(x), true),
-    (APP(EQUAL, QUOTE(x)), y, APP(APP(EQUAL, QUOTE(x)), y)),
-    (APP(EQUAL, x), TOP, TOP),
-    (APP(EQUAL, x), BOT, APP(APP(EQUAL, x), BOT)),
-    (APP(EQUAL, x), QUOTE(y), APP(APP(EQUAL, x), QUOTE(y))),
-    (APP(EQUAL, x), y, APP(APP(EQUAL, x), y)),
+    (APP(EQUAL, BOT), QUOTE(i1), BOT),
+    (APP(EQUAL, BOT), i1, APP(APP(EQUAL, BOT), i1)),
+    (APP(EQUAL, QUOTE(i0)), TOP, TOP),
+    (APP(EQUAL, QUOTE(i0)), BOT, BOT),
+    (APP(EQUAL, QUOTE(i0)), QUOTE(i1), false),
+    (APP(EQUAL, QUOTE(i0)), QUOTE(i0), true),
+    (APP(EQUAL, QUOTE(i0)), i1, APP(APP(EQUAL, QUOTE(i0)), i1)),
+    (APP(EQUAL, i0), TOP, TOP),
+    (APP(EQUAL, i0), BOT, APP(APP(EQUAL, i0), BOT)),
+    (APP(EQUAL, i0), QUOTE(i1), APP(APP(EQUAL, i0), QUOTE(i1))),
+    (APP(EQUAL, i0), i1, APP(APP(EQUAL, i0), i1)),
 ]
 
 
 @for_each(APP_EXAMPLES)
 def test_app(fun, arg, expected):
     with xfail_if_not_implemented():
-        assert app(fun, arg) is expected
+        assert pretty(app(fun, arg)) == pretty(expected)
 
 
 ABSTRACT_EXAMPLES = [
     (TOP, TOP),
     (BOT, BOT),
     (x, ABS(x)),
-    (IVAR(0), ABS(IVAR(0))),
-    (IVAR(1), ABS(IVAR(1))),
-    (ABS(IVAR(0)), ABS(ABS(IVAR(0)))),
-    (APP(IVAR(0), x), ABS(APP(IVAR(0), x))),
-    (APP(IVAR(0), IVAR(0)), ABS(APP(IVAR(0), IVAR(0)))),
-    (APP(x, IVAR(0)), x),
-    (JOIN(IVAR(0), x), JOIN(ABS(IVAR(0)), ABS(x))),
-    (QUOTE(IVAR(1)), ABS(QUOTE(IVAR(1)))),
-    (APP(QUOTE(IVAR(1)), IVAR(0)), QUOTE(IVAR(0))),
+    (i0, ABS(i0)),
+    (i1, ABS(i1)),
+    (ABS(i0), ABS(ABS(i0))),
+    (APP(i0, x), ABS(APP(i0, x))),
+    (APP(i0, i0), ABS(APP(i0, i0))),
+    (APP(x, i0), x),
+    (JOIN(i0, x), JOIN(ABS(i0), ABS(x))),
+    (QUOTE(i1), ABS(QUOTE(i1))),
+    (APP(QUOTE(i1), i0), QUOTE(i0)),
     (EVAL, ABS(EVAL)),
     (QAPP, ABS(QAPP)),
     (QQUOTE, ABS(QQUOTE)),
@@ -317,19 +329,19 @@ def test_abstract(code, expected):
 
 @hypothesis.given(s_codes)
 def test_abstract_eta(code):
-    assert abstract(app(increment_rank(code), IVAR(0))) is code
+    assert abstract(app(increment_rank(code), i0)) is code
 
 
 @hypothesis.given(s_codes)
-@hypothesis.example(join(TOP, APP(QUOTE(IVAR(1)), IVAR(0))))
+@hypothesis.example(join(TOP, APP(QUOTE(i1), i0)))
 def test_app_abstract(code):
-    hypothesis.assume(IVAR(0) not in quoted_vars(code))
-    assert app(increment_rank(abstract(code)), IVAR(0)) is code
+    hypothesis.assume(i0 not in quoted_vars(code))
+    assert app(increment_rank(abstract(code)), i0) is code
 
 
 QABSTRACT_EXAMPLES = [
-    (IVAR(0), EVAL),
-    (IVAR(1), ABS(IVAR(1))),
+    (i0, EVAL),
+    (i1, ABS(i1)),
 ]
 
 
@@ -339,26 +351,26 @@ def test_qabstract(code, expected):
 
 
 @for_each([
-    (x, x, IVAR(0)),
+    (x, x, i0),
     (y, x, y),
-    (IVAR(0), x, IVAR(1)),
+    (i0, x, i1),
     (EVAL, x, EVAL),
-    (ABS(IVAR(0)), x, ABS(IVAR(0))),
-    (APP(x, x), x, APP(IVAR(0), IVAR(0))),
-    (JOIN(x, y), x, JOIN(IVAR(0), y)),
-    (JOIN(x, y), y, JOIN(IVAR(0), x)),
-    (QUOTE(x), x, QUOTE(IVAR(0))),
+    (ABS(i0), x, ABS(i0)),
+    (APP(x, x), x, APP(i0, i0)),
+    (JOIN(x, y), x, JOIN(i0, y)),
+    (JOIN(x, y), y, JOIN(i0, x)),
+    (QUOTE(x), x, QUOTE(i0)),
     (QUOTE(y), x, QUOTE(y)),
-    (QUOTE(IVAR(0)), x, QUOTE(IVAR(1))),
+    (QUOTE(i0), x, QUOTE(i1)),
 ])
 def test_anonymize(code, var, expected):
     assert anonymize(code, var, 0) is expected
 
 
 @for_each([
-    (x, x, ABS(IVAR(0))),
+    (x, x, ABS(i0)),
     (x, y, ABS(y)),
-    (x, IVAR(0), ABS(IVAR(1))),
+    (x, i0, ABS(i1)),
 ])
 def test_nominal_abstract(var, body, expected):
     assert nominal_abstract(var, body) is expected
@@ -367,7 +379,7 @@ def test_nominal_abstract(var, body, expected):
 @for_each([
     (x, x, EVAL),
     (x, y, ABS(y)),
-    (x, IVAR(0), ABS(IVAR(1))),
+    (x, i0, ABS(i1)),
     (x, QUOTE(x), CODE),
     (x, QUOTE(APP(y, x)), APP(QAPP, QUOTE(y))),
 ])
@@ -385,101 +397,101 @@ APPROXIMATE_VAR_EXAMPLES = [
     (BOT, BOT, 0, [BOT]),
     (x, TOP, 0, [x]),
     (x, BOT, 0, [x]),
-    (IVAR(0), TOP, 0, [IVAR(0), TOP]),
-    (IVAR(0), BOT, 0, [IVAR(0), BOT]),
+    (i0, TOP, 0, [i0, TOP]),
+    (i0, BOT, 0, [i0, BOT]),
     # APP
     (
-        APP(IVAR(0), IVAR(1)),
+        APP(i0, i1),
         TOP,
         0,
         [
-            APP(IVAR(0), IVAR(1)),
+            APP(i0, i1),
             TOP,
         ],
     ),
     (
-        APP(IVAR(0), IVAR(1)),
+        APP(i0, i1),
         BOT,
         0,
         [
-            APP(IVAR(0), IVAR(1)),
+            APP(i0, i1),
             BOT,
         ],
     ),
     (
-        APP(IVAR(1), IVAR(0)),
+        APP(i1, i0),
         TOP,
         0,
         [
-            APP(IVAR(1), IVAR(0)),
-            APP(IVAR(1), TOP),
+            APP(i1, i0),
+            APP(i1, TOP),
         ],
     ),
     (
-        APP(IVAR(1), IVAR(0)),
+        APP(i1, i0),
         BOT,
         0,
         [
-            APP(IVAR(1), IVAR(0)),
-            APP(IVAR(1), BOT),
+            APP(i1, i0),
+            APP(i1, BOT),
         ],
     ),
     (
-        APP(IVAR(0), IVAR(0)),
+        APP(i0, i0),
         TOP,
         0,
         [
-            APP(IVAR(0), IVAR(0)),
-            APP(IVAR(0), TOP),
+            APP(i0, i0),
+            APP(i0, TOP),
             TOP,
         ],
     ),
     (
-        APP(IVAR(0), IVAR(0)),
+        APP(i0, i0),
         BOT,
         0,
         [
-            APP(IVAR(0), IVAR(0)),
-            APP(IVAR(0), BOT),
+            APP(i0, i0),
+            APP(i0, BOT),
             BOT,
         ],
     ),
     # JOIN
     (
-        JOIN(IVAR(0), IVAR(1)),
+        JOIN(i0, i1),
         TOP,
         0,
         [
-            JOIN(IVAR(0), IVAR(1)),
+            JOIN(i0, i1),
             TOP,
         ],
     ),
     (
-        JOIN(IVAR(0), IVAR(1)),
+        JOIN(i0, i1),
         BOT,
         0,
         [
-            JOIN(IVAR(0), IVAR(1)),
-            IVAR(1),
+            JOIN(i0, i1),
+            i1,
         ],
     ),
     (
-        JOIN(APP(x, IVAR(0)), APP(y, IVAR(0))),
+        JOIN(APP(x, i0), APP(y, i0)),
         TOP,
         0,
         [
-            JOIN(APP(x, IVAR(0)), APP(y, IVAR(0))),
-            JOIN(APP(x, TOP), APP(y, IVAR(0))),
-            JOIN(APP(x, IVAR(0)), APP(y, TOP)),
+            JOIN(APP(x, i0), APP(y, i0)),
+            JOIN(APP(x, TOP), APP(y, i0)),
+            JOIN(APP(x, i0), APP(y, TOP)),
             JOIN(APP(x, TOP), APP(y, TOP)),
         ],
     ),
     # QUOTE
     (
-        QUOTE(IVAR(0)),
+        QUOTE(i0),
         TOP,
         0,
-        [QUOTE(IVAR(0))],
+        [QUOTE(i0)],
     )
 ]
 
@@ -493,8 +505,8 @@ def test_approximate_var(code, direction, rank, expected):
 # is_cheap_to_copy is already very complex. We could mock, but that would
 # pollute the memoized caches.
 APPROXIMATE_EXAMPLES = [
-    (IVAR(0), TOP, [IVAR(0)]),
-    (IVAR(0), BOT, [IVAR(0)]),
+    (i0, TOP, [i0]),
+    (i0, BOT, [i0]),
     # TODO Add more examples.
 ]
 
@@ -508,17 +520,17 @@ JOIN_EXAMPLES = [
     (TOP, TOP, TOP),
     (TOP, BOT, TOP),
     (TOP, x, TOP),
-    (TOP, APP(QUOTE(IVAR(1)), IVAR(0)), TOP),
-    (TOP, IVAR(0), TOP),
+    (TOP, APP(QUOTE(i1), i0), TOP),
+    (TOP, i0, TOP),
     (BOT, TOP, TOP),
     (BOT, BOT, BOT),
     (BOT, x, x),
-    (BOT, IVAR(0), IVAR(0)),
+    (BOT, i0, i0),
     (x, TOP, TOP),
     (x, BOT, x),
-    (IVAR(0), TOP, TOP),
-    (IVAR(0), BOT, IVAR(0)),
-    (IVAR(0), IVAR(0), IVAR(0)),
+    (i0, TOP, TOP),
+    (i0, BOT, i0),
+    (i0, i0, i0),
     (x, y, JOIN(x, y)),
     (JOIN(x, y), x, JOIN(x, y)),
     (JOIN(x, y), y, JOIN(x, y)),
@@ -575,36 +587,34 @@ def test_unabstract(code):
 
 
 INCOMPARABLE_PAIRS = [
-    (IVAR(0), IVAR(1)),
-    (IVAR(0), x),
-    (x, y),
-    (x, EVAL),
-    (x, QAPP),
-    (x, QQUOTE),
-    (x, LESS),
-    (x, EQUAL),
-    (x, QUOTE(TOP)),
+    (i0, i1),
+    (i0, EVAL),
+    (i0, QAPP),
+    (i0, QQUOTE),
+    (i0, LESS),
+    (i0, EQUAL),
+    (i0, QUOTE(TOP)),
     (QUOTE(TOP), QUOTE(BOT)),
-    (IVAR(0), ABS(IVAR(0))),
-    (IVAR(0), ABS(ABS(IVAR(0)))),
-    (IVAR(0), ABS(IVAR(1))),
-    (IVAR(0), ABS(ABS(IVAR(1)))),
-    (ABS(IVAR(0)), ABS(ABS(IVAR(0)))),
-    (ABS(IVAR(0)), ABS(ABS(IVAR(1)))),
-    (APP(APP(x, y), z), APP(APP(x, TOP), BOT)),
-    (APP(APP(x, y), z), APP(APP(x, BOT), TOP)),
-    pytest.mark.xfail((ABS(IVAR(0)), EVAL)),
+    (i0, ABS(i0)),
+    (i0, ABS(ABS(i0))),
+    (i0, ABS(i1)),
+    (i0, ABS(ABS(i1))),
+    (ABS(i0), ABS(ABS(i0))),
+    (ABS(i0), ABS(ABS(i1))),
+    (APP(APP(i0, i1), i2), APP(APP(i0, TOP), BOT)),
+    (APP(APP(i0, i1), i2), APP(APP(i0, BOT), TOP)),
+    pytest.mark.xfail((ABS(i0), EVAL)),
 ]
 
 INCOMPARABLE_CODES = [
-    ABS(IVAR(0)),
-    ABS(APP(IVAR(0), IVAR(0))),
-    ABS(APP(APP(IVAR(0), IVAR(0)), APP(IVAR(0), IVAR(0)))),
-    ABS(ABS(IVAR(0))),
-    ABS(ABS(IVAR(1))),
-    ABS(ABS(APP(IVAR(0), IVAR(0)))),
-    ABS(ABS(APP(IVAR(0), IVAR(1)))),
-    ABS(ABS(APP(IVAR(1), IVAR(1)))),
+    ABS(i0),
+    ABS(APP(i0, i0)),
+    ABS(APP(APP(i0, i0), APP(i0, i0))),
+    ABS(ABS(i0)),
+    ABS(ABS(i1)),
+    ABS(ABS(APP(i0, i0))),
+    ABS(ABS(APP(i0, i1))),
+    ABS(ABS(APP(i1, i1))),
     # TODO Fix missed opportunity with unabstract(atom).
     # EVAL,
     # QAPP,
@@ -613,34 +623,30 @@ INCOMPARABLE_CODES = [
     # EQUAL,
 ]
 
-W = ABS(ABS(APP(APP(IVAR(1), IVAR(0)), IVAR(0))))
-delta_top = ABS(APP(IVAR(0), ABS(APP(IVAR(1), TOP))))
-delta_bot = ABS(APP(IVAR(0), ABS(APP(IVAR(1), BOT))))
+W = ABS(ABS(APP(APP(i1, i0), i0)))
+delta_top = ABS(APP(i0, ABS(APP(i1, TOP))))
+delta_bot = ABS(APP(i0, ABS(APP(i1, BOT))))
 
 DOMINATING_PAIRS = [
     (BOT, TOP),
-    (BOT, IVAR(0)),
-    (BOT, IVAR(1)),
-    (BOT, x),
-    (BOT, y),
-    (IVAR(0), TOP),
-    (IVAR(1), TOP),
-    (x, TOP),
-    (y, TOP),
-    (APP(APP(x, BOT), z), APP(APP(x, y), z)),
-    (APP(APP(x, y), BOT), APP(APP(x, y), z)),
-    (APP(APP(x, y), z), APP(APP(x, TOP), z)),
-    (APP(APP(x, y), z), APP(APP(x, y), TOP)),
-    (APP(APP(x, BOT), z), APP(APP(x, y), TOP)),
-    (APP(APP(x, y), BOT), APP(APP(x, TOP), z)),
-    (APP(APP(x, y), z), APP(APP(x, JOIN(y, z)), z)),
-    (APP(APP(x, y), z), APP(APP(x, y), JOIN(y, z))),
-    (APP(x, y), APP(x, JOIN(y, z))),
-    (APP(x, z), APP(x, JOIN(y, z))),
-    (APP(x, JOIN(y, z)), APP(x, TOP)),
-    (ABS(APP(IVAR(1), BOT)), IVAR(0)),
-    (IVAR(0), ABS(APP(IVAR(1), TOP))),
-    (APP(IVAR(0), IVAR(0)), APP(IVAR(0), ABS(APP(IVAR(1), TOP)))),
+    (BOT, i0),
+    (BOT, i1),
+    (i0, TOP),
+    (i1, TOP),
+    (APP(APP(i0, BOT), i2), APP(APP(i0, i1), i2)),
+    (APP(APP(i0, i1), BOT), APP(APP(i0, i1), i2)),
+    (APP(APP(i0, i1), i2), APP(APP(i0, TOP), i2)),
+    (APP(APP(i0, i1), i2), APP(APP(i0, i1), TOP)),
+    (APP(APP(i0, BOT), i2), APP(APP(i0, i1), TOP)),
+    (APP(APP(i0, i1), BOT), APP(APP(i0, TOP), i2)),
+    (APP(APP(i0, i1), i2), APP(APP(i0, JOIN(i1, i2)), i2)),
+    (APP(APP(i0, i1), i2), APP(APP(i0, i1), JOIN(i1, i2))),
+    (APP(i0, i1), APP(i0, JOIN(i1, i2))),
+    (APP(i0, i2), APP(i0, JOIN(i1, i2))),
+    (APP(i0, JOIN(i1, i2)), APP(i0, TOP)),
+    (ABS(APP(i1, BOT)), i0),
+    (i0, ABS(APP(i1, TOP))),
+    (APP(i0, i0), APP(i0, ABS(APP(i1, TOP)))),
     (delta_bot, delta),  # FIXME These are actually equal: delta delta = BOT.
     (delta, delta_top),
     # FIXME These are proven LESS and should be easy to prove NLESS.
@@ -761,11 +767,11 @@ def test_dominates_transitive(x, y, z):
 
 @for_each([
     (x, BOT, TOP),
-    (IVAR(0), BOT, TOP),
-    (ABS(IVAR(0)), ABS(IVAR(0)), ABS(IVAR(0))),
-    (ABS(IVAR(1)), BOT, TOP),
+    (i0, BOT, TOP),
+    (ABS(i0), ABS(i0), ABS(i0)),
+    (ABS(i1), BOT, TOP),
     (JOIN(x, I), I, TOP),
-    (ABS(APP(IVAR(0), x)), ABS(APP(IVAR(0), BOT)), ABS(APP(IVAR(0), TOP))),
+    (ABS(APP(i0, x)), ABS(APP(i0, BOT)), ABS(APP(i0, TOP))),
     (QUOTE(BOT), QUOTE(BOT), QUOTE(BOT)),
     (QUOTE(x), BOT, TOP),
 ])
@@ -779,6 +785,8 @@ def test_ground(code, expected_lb, expected_ub):
 def test_ground_less(code):
     lb, ub = ground(code)
     assert try_decide_less(lb, ub) is True
+    assert try_decide_less(lb, code) is True
+    assert try_decide_less(code, ub) is True
 
 
 F = KI
@@ -858,9 +866,9 @@ def test_try_cast_code(x, expected):
 COMPUTE_EXAMPLES = [
     (TOP, None),
     (BOT, None),
-    (IVAR(0), None),
-    (IVAR(1), None),
-    (IVAR(2), None),
+    (i0, None),
+    (i1, None),
+    (i2, None),
     (delta, None),
     (APP(delta, delta), APP(delta, delta)),
     (APP(delta, APP(x, delta)), APP(APP(x, delta), APP(x, delta))),
