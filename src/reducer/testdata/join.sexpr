@@ -4,7 +4,7 @@
 (EQUAL (QUOTE (JOIN x x)) (QUOTE x))
 (EQUAL (QUOTE (JOIN BOT x)) (QUOTE x))
 (EQUAL (QUOTE (JOIN x BOT)) (QUOTE x))
-(EQUAL (QUOTE (JOIN TOP x) (QUOTE TOP))
+(EQUAL (QUOTE (JOIN TOP x) (QUOTE TOP)))
 (EQUAL (QUOTE (JOIN K (K I))) (QUOTE lib.join))
 (EQUAL (QUOTE (JOIN (K I) K)) (QUOTE lib.join))
 (EQUAL (QUOTE (JOIN lib.join K)) (QUOTE lib.join))

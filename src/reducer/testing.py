@@ -5,13 +5,14 @@ from importlib import import_module
 
 import hypothesis.strategies as s
 import pytest
+from parsable import parsable
 
 from pomagma.reducer.curry import compile_
 from pomagma.reducer.linker import link
 from pomagma.reducer.syntax import (APP, BOOL, BOT, CODE, EQUAL, EVAL, JOIN,
                                     LESS, MAYBE, NVAR, QAPP, QQUOTE, QUOTE,
                                     TOP, UNIT, B, C, I, K, S, is_app, is_quote,
-                                    sexpr_parse)
+                                    sexpr_parse, sexpr_print)
 
 DIR = os.path.dirname(os.path.abspath(__file__))
 TESTDATA = os.path.join(DIR, 'testdata')
@@ -66,6 +67,43 @@ def iter_equations(test_id, suites=None):
                 if comment and parse_xfail(comment, test_id):
                     example = pytest.mark.xfail(example)
                 yield example
+
+
+def migrate(fun):
+    """Applies a code->code transform on all files in testdata/."""
+    for basename in os.listdir(TESTDATA):
+        assert basename.endswith('.sexpr'), basename
+        print('processing {}'.format(basename))
+        filename = os.path.join(TESTDATA, basename)
+        lines = []
+        with open(filename) as f:
+            for line in f:
+                line = line.strip()
+                parts = line.split(';', 1)
+                sexpr = parts[0].strip()
+                comment = '' if len(parts) == 1 else parts[1]
+                if sexpr:
+                    code = sexpr_parse(sexpr)
+                    code = fun(code)
+                    sexpr = sexpr_print(code)
+                if not comment:
+                    line = sexpr
+                elif not sexpr:
+                    line = ';{}'.format(comment)
+                else:
+                    line = '{}  ;{}'.format(sexpr, comment)
+                lines.append(line)
+        with open(filename, 'w') as f:
+            for line in lines:
+                f.write(line)
+                f.write('\n')
+    print('done')
+
+
+@parsable
+def reformat():
+    """Reformat all files in testdata/."""
+    migrate(lambda x: x)
 
 
 # ----------------------------------------------------------------------------
@@ -135,3 +173,7 @@ s_sk_codes = s.recursive(s_sk_atoms, s_sk_extend, max_leaves=100)
 s_skj_codes = s.recursive(s_sk_atoms, s_skj_extend, max_leaves=100)
 s_codes = s.recursive(s_atoms, s_codes_extend, max_leaves=100)
 s_quoted = s.builds(QUOTE, s_codes)
+
+
+if __name__ == '__main__':
+    parsable()
