@@ -107,6 +107,33 @@ def profile(engine='engine', count=256):
 
 
 @parsable
+def simplify(string, engine='engine', fmt='auto'):
+    """Reduce code.
+
+    Args:
+        string: code to simplify, in some parsable format specified by fmt
+        engine: 'engine', 'bohm'
+        fmt: one of 'auto', 'polish', or 'sexpr'
+
+    """
+    if fmt == 'auto':
+        fmt = guess_format(string)
+    if engine not in ENGINES:
+        raise ValueError('Unknown engine {}, try one of: {}'.format(
+            engine, ', '.join(ENGINES.keys())))
+    print('Format: {}'.format(fmt))
+    print('Engine: {}'.format(engine))
+    print('In: {}'.format(string))
+    parse, print_, simplify = FORMATS[fmt]
+    code = parse(string)
+    code = link(code)
+    result = ENGINES[engine].simplify(code)
+    result_string = print_(result)
+    print('Out: {}'.format(result_string))
+    return result_string
+
+
+@parsable
 def reduce(string, engine='engine', fmt='auto'):
     """Reduce code.
 

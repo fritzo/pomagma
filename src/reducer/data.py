@@ -4,8 +4,10 @@ from pomagma.compiler.util import memoize_arg, memoize_args
 from pomagma.reducer import lib, pattern
 from pomagma.reducer.engines.engine import reduce
 from pomagma.reducer.sugar import app
-from pomagma.reducer.syntax import NVAR
+from pomagma.reducer.syntax import NVAR, sexpr_print
 from pomagma.util import TODO
+
+pretty = sexpr_print
 
 
 # ----------------------------------------------------------------------------
@@ -22,9 +24,9 @@ def _contains(code, atom):
 
 def check_for_errors(code):
     if _contains(code, lib.error):
-        raise RuntimeError(code)
+        raise RuntimeError(pretty(code))
     if _contains(code, lib.undefined):
-        raise NotImplementedError(code)
+        raise NotImplementedError(pretty(code))
 
 
 # ----------------------------------------------------------------------------
@@ -41,7 +43,7 @@ def decode_unit(code):
     if code is lib.ok:
         return None
     else:
-        raise TypeError(code)
+        raise TypeError(pretty(code))
 
 
 # ----------------------------------------------------------------------------
@@ -60,7 +62,7 @@ def decode_bool(code):
     elif code is lib.false:
         return False
     else:
-        raise TypeError(code)
+        raise TypeError(pretty(code))
 
 
 # ----------------------------------------------------------------------------
@@ -85,7 +87,7 @@ def decode_byte(code):
     try:
         return _decode_byte[code]
     except KeyError:
-        raise TypeError(code)
+        raise TypeError(pretty(code))
 
 
 # ----------------------------------------------------------------------------
@@ -116,7 +118,7 @@ def decode_maybe(decode_item):
             return None
         match = pattern.match(some_pattern, code)
         if match is None:
-            raise TypeError(code)
+            raise TypeError(pretty(code))
         return (decode_item(match[item_var]),)
 
     return decode
@@ -147,7 +149,7 @@ def decode_prod(decode_fst, decode_snd):
     def decode(code):
         match = pattern.match(pair_pattern, code)
         if match is None:
-            raise TypeError(code)
+            raise TypeError(pretty(code))
         x_value = decode_fst(match[x])
         y_value = decode_snd(match[y])
         return (x_value, y_value)
@@ -186,7 +188,7 @@ def decode_sum(decode_inl, decode_inr):
         match = pattern.match(inr_pattern, code)
         if match:
             return (False, decode_inr(match[x]))
-        raise TypeError(code)
+        raise TypeError(pretty(code))
 
     return decode
 
@@ -214,7 +216,7 @@ def decode_num(code):
             return result
         match = pattern.match(_succ_pattern, code)
         if match is None:
-            raise TypeError(code)
+            raise TypeError(pretty(code))
         result += 1
         code = match[_pred_var]
 
@@ -247,7 +249,7 @@ def decode_list(decode_item):
         while code is not lib.nil:
             match = pattern.match(cons_pattern, code)
             if match is None:
-                raise TypeError(code)
+                raise TypeError(pretty(code))
             result.append(decode_item(match[head]))
             code = match[tail]
         return result

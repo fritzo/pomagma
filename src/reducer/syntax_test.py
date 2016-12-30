@@ -19,6 +19,7 @@ y = NVAR('y')
 z = NVAR('z')
 i0 = IVAR(0)
 i1 = IVAR(1)
+i2 = IVAR(2)
 
 
 @for_each([
@@ -27,7 +28,10 @@ i1 = IVAR(1)
     (i0, x, i1),
     (EVAL, x, EVAL),
     (ABS(i0), x, ABS(i0)),
+    (ABS(x), x, ABS(i1)),
+    (ABS(ABS(x)), x, ABS(ABS(i2))),
     (APP(x, x), x, APP(i0, i0)),
+    (APP(x, ABS(x)), x, APP(i0, ABS(i1))),
     (JOIN(x, y), x, JOIN(i0, y)),
     (JOIN(x, y), y, JOIN(x, i0)),
     (QUOTE(x), x, QUOTE(i0)),

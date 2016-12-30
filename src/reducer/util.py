@@ -7,7 +7,6 @@ import sys
 from collections import defaultdict
 
 import pomagma.util
-from pomagma.compiler.util import memoize_args
 
 
 class UnreachableError(RuntimeError):
@@ -160,29 +159,6 @@ def _not_logged(*args, **kwargs):
 
 
 logged = _logged if LOG.isEnabledFor(logging.DEBUG) else _not_logged
-
-
-@memoize_args
-def pretty(code, add_parens=False):
-    if isinstance(code, str):
-        return code
-    elif code[0] == 'NVAR':
-        return code[1]
-    elif code[0] == 'APP':
-        lhs = pretty(code[1])
-        rhs = pretty(code[2], True)
-        mid = '' if lhs.endswith(')') or rhs.startswith('(') else ' '
-        return ('({}{}{})' if add_parens else '{}{}{}').format(lhs, mid, rhs)
-    elif code[0] == 'JOIN':
-        lhs = pretty(code[1])
-        rhs = pretty(code[2])
-        return ('({}|{})' if add_parens else '{}|{}').format(lhs, rhs)
-    elif code[0] == 'QUOTE':
-        arg = pretty(code[1])
-        return '{{{}}}'.format(arg)
-    else:
-        raise NotImplementedError(code)
-
 
 # ----------------------------------------------------------------------------
 # Profiling

@@ -19,8 +19,7 @@ def partial_pred(x):
 num_add = program('num', 'num', 'num')(lib.num_add)
 num_lt = program('num', 'num', 'bool')(lib.num_lt)
 
-
-@for_each([
+CALL_EXAMPLES = [
     (bool_not, (True,), False),
     (bool_not, (False,), True),
     (bool_not, (0,), TypeError),
@@ -56,7 +55,10 @@ num_lt = program('num', 'num', 'bool')(lib.num_lt)
     (num_lt, (2, 0), False),
     (num_lt, (2, 1), False),
     (num_lt, (2, 2), False),
-])
+]
+
+
+@for_each(CALL_EXAMPLES)
 def test_call(fun, args, expected):
     with using_engine(engine):
         if isinstance(expected, type) and issubclass(expected, Exception):

@@ -20,22 +20,30 @@ import itertools
 from collections import namedtuple
 
 from pomagma.compiler.util import memoize_arg, memoize_args
+from pomagma.reducer import syntax
+from pomagma.reducer.curry import abstract, de_bruijn_abstract
 from pomagma.reducer.engines import oracle
-from pomagma.reducer.sugar import abstract
 from pomagma.reducer.syntax import (APP, BOOL, BOT, CODE, EQUAL, EVAL, JOIN,
                                     LESS, MAYBE, NVAR, QAPP, QQUOTE, QUOTE,
                                     TOP, UNIT, B, C, I, K, S, complexity,
                                     free_vars, is_app, is_atom, is_join,
-                                    is_nvar, is_quote)
-from pomagma.reducer.util import LOG, PROFILE_COUNTERS, logged, pretty
+                                    is_nvar, is_quote, sexpr_print)
+from pomagma.reducer.util import LOG, PROFILE_COUNTERS, logged
 
 __all__ = ['reduce', 'simplify', 'sample']
 
 SUPPORTED_TESTDATA = ['sk', 'join', 'quote', 'types', 'lib', 'unit']
 
+pretty = sexpr_print
+
 F = APP(K, I)
 true = K
 false = F
+
+
+def join(lhs, rhs):
+    """Sorted join."""
+    return JOIN(lhs, rhs) if lhs < rhs else JOIN(rhs, lhs)
 
 
 # ----------------------------------------------------------------------------
@@ -362,7 +370,7 @@ def _collect(continuations, nonlinear):
     # Construct a join term.
     result = filtered_samples[0]
     for sample in filtered_samples[1:]:
-        result = JOIN(result, sample)
+        result = join(result, sample)
     return result
 
 
@@ -413,6 +421,17 @@ def _reduce(code, nonlinear):
         return code
     else:
         raise NotImplementedError(code)
+
+
+SIGNATURE = {
+    'ABS': de_bruijn_abstract,
+    'APP': APP,
+    'FUN': abstract,
+    'JOIN': join,
+    'QUOTE': QUOTE,
+}
+
+convert = syntax.Transform(**SIGNATURE)
 
 
 def reduce(code, budget=0):
