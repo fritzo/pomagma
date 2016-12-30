@@ -3,9 +3,8 @@
 import functools
 import inspect
 
-from pomagma.reducer.curry import abstract, qabstract
-from pomagma.reducer.syntax import (APP, BOT, JOIN, NVAR, QAPP, QQUOTE, QUOTE,
-                                    free_vars, quoted_vars)
+from pomagma.reducer.curry import convert
+from pomagma.reducer.syntax import NVAR, free_vars, quoted_vars
 from pomagma.reducer.util import LOG
 
 
@@ -25,7 +24,7 @@ def _compile(fun, actual_fun=None):
         fun, tuple(symbolic_args), symbolic_result))
     code = as_code(symbolic_result)
     for var in reversed(symbolic_args):
-        code = abstract(var, code)
+        code = convert.FUN(var, code)
     return code
 
 
@@ -71,9 +70,9 @@ class _Combinator(object):
 
         code = _compile(self, actual_fun=self._fun)
         if var in quoted_vars(code):
-            code = qrec(qabstract(var, code))
+            code = qrec(convert.QFUN(var, code))
         elif var in free_vars(code):
-            code = rec(abstract(var, code))
+            code = rec(convert.FUN(var, code))
 
         free = free_vars(code)
         if free:
@@ -109,22 +108,22 @@ def app(*args):
         raise SyntaxError('Too few arguments: app{}'.format(args))
     result = args[0]
     for arg in args[1:]:
-        result = APP(result, arg)
+        result = convert.APP(result, arg)
     return result
 
 
 def join_(*args):
     args = map(as_code, args)
     if not args:
-        return BOT
+        return convert.BOT
     result = args[0]
     for arg in args[1:]:
-        result = JOIN(result, arg)
+        result = convert.JOIN(result, arg)
     return result
 
 
 def quote(arg):
-    return QUOTE(as_code(arg))
+    return convert.QUOTE(as_code(arg))
 
 
 def qapp(*args):
@@ -133,7 +132,7 @@ def qapp(*args):
         raise SyntaxError('Too few arguments: qapp{}'.format(args))
     result = args[0]
     for arg in args[1:]:
-        result = APP(APP(QAPP, result), arg)
+        result = convert.APP(convert.APP(convert.QAPP, result), arg)
     return result
 
 
@@ -143,8 +142,8 @@ def rec(fun):
 
 
 def qrec(fun):
-    fxx = _compile(lambda qx: app(fun, qapp(qx, qapp(QQUOTE, qx))))
-    return app(fxx, QUOTE(fxx))
+    fxx = _compile(lambda qx: app(fun, qapp(qx, qapp(convert.QQUOTE, qx))))
+    return app(fxx, convert.QUOTE(fxx))
 
 
 def typed(*types):

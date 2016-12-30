@@ -41,25 +41,26 @@ def is_code(arg):
 
 re_keyword = re.compile('[A-Z]+$')
 re_rank = re.compile(r'\d+$')
-_keywords = set()
+_keywords = {}  # : name -> arity
 
 
-def make_keyword(name):
+def make_keyword(name, arity=0):
     assert re_keyword.match(name)
     assert name not in _keywords
+    assert arity in [0, 1, 2]
     name = intern(name)
-    _keywords.add(name)
+    _keywords[name] = arity
     _CODES[name] = name
     return name
 
 
-_IVAR = make_keyword('IVAR')  # de Bruijn variable.
-_NVAR = make_keyword('NVAR')  # Nominal variable.
-_APP = make_keyword('APP')
-_JOIN = make_keyword('JOIN')
-_QUOTE = make_keyword('QUOTE')
-_ABS = make_keyword('ABS')  # de Bruijn abstraction.
-_FUN = make_keyword('FUN')  # Nominal abstraction.
+_IVAR = make_keyword('IVAR', 1)  # de Bruijn variable.
+_NVAR = make_keyword('NVAR', 1)  # Nominal variable.
+_APP = make_keyword('APP', 2)
+_JOIN = make_keyword('JOIN', 2)
+_QUOTE = make_keyword('QUOTE', 1)
+_ABS = make_keyword('ABS', 1)  # de Bruijn abstraction.
+_FUN = make_keyword('FUN', 2)  # Nominal abstraction.
 
 TOP = make_keyword('TOP')
 BOT = make_keyword('BOT')
@@ -181,7 +182,7 @@ class Transform(object):
         if not is_code(code):
             raise TypeError(code)
         elif is_atom(code):
-            return getattr(self, code, self.ATOM(code))
+            return getattr(self, code)
         elif is_nvar(code):
             return self.NVAR(code[1])
         elif is_ivar(code):
@@ -190,7 +191,6 @@ class Transform(object):
             args = [self(arg) for arg in code[1:]]
             return getattr(self, code[0])(*args)
 
-    ATOM = staticmethod(lambda c: c)
     NVAR = staticmethod(NVAR)
     IVAR = staticmethod(IVAR)
     APP = staticmethod(APP)
@@ -199,7 +199,13 @@ class Transform(object):
     ABS = staticmethod(ABS)
     FUN = staticmethod(FUN)
 
+    @classmethod
+    def init_atoms(cls):
+        for name, arity in _keywords.iteritems():
+            if arity == 0:
+                setattr(cls, name, name)
 
+Transform.init_atoms()
 identity = Transform()
 
 
