@@ -10,6 +10,8 @@ from pomagma.reducer.syntax import (APP, BOT, NVAR, TOP, UNIT, B, C, I, K, S,
 from pomagma.util import TRAVIS_CI
 from pomagma.util.testing import for_each
 
+pretty = sexpr_print
+
 
 class lazy_actual_vs_expected(object):
 
@@ -18,8 +20,8 @@ class lazy_actual_vs_expected(object):
         self.expected = expected
 
     def __str__(self):
-        actual = sexpr_print(self.actual)
-        expected = sexpr_print(self.expected)
+        actual = pretty(self.actual)
+        expected = pretty(self.expected)
         return '\nActual: {}\nExpected: {}'.format(actual, expected)
 
     __repr__ = __str__
@@ -1101,17 +1103,16 @@ succ_fix = lib.fix(lambda f, x: app(x, num(1), lambda px: succ(app(f, px))))
     (app(succ_fix, num(2)), num(3)),
 ])
 def test_fix(value, expected):
-    assert reduce(value) == expected
+    assert pretty(reduce(value)) == pretty(expected)
 
 
 @for_each([
-    # These raise NotImplementedError:
-    # (app(lib.qfix, error), error),
-    # (app(lib.qfix, undefined), undefined),
+    pytest.mark.xfail((error, error)),
+    (undefined, undefined),
     # TODO Add more examples.
 ])
 def test_qfix(value, expected):
-    assert reduce(value) == expected
+    assert pretty(reduce(lib.qfix(value))) == pretty(expected)
 
 
 @pytest.mark.xfail(run=False, reason='does not terminate')
@@ -1292,7 +1293,7 @@ def test_equal_transitive(x, y, z):
         assert equal_xy is false or equal_yz is false
 
 
-@for_each([
+LESS_EXAMPLES = [
     (x, y, lib.less(x, y)),
     (quote(x), quote(x), true),
     (quote(undefined), quote(error), true),
@@ -1341,7 +1342,10 @@ def test_equal_transitive(x, y, z):
     (quote(num(3)), quote(num(1)), false),
     (quote(num(3)), quote(num(2)), false),
     (quote(num(3)), quote(num(3)), true),
-])
+]
+
+
+@for_each(LESS_EXAMPLES)
 def test_less(x, y, expected):
     assert simplify(lib.less(x, y)) == expected
 

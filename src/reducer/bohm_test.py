@@ -920,7 +920,7 @@ nonterminating_example_1 = (
 
 
 @for_each([
-    pytest.mark.xfail(nonterminating_example_1),
+    nonterminating_example_1,
 ])
 def test_try_compute_step_terminates(code):
     code = sexpr_simplify(code)

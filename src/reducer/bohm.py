@@ -331,6 +331,8 @@ def app(fun, arg):
         else:
             return APP(fun, arg)
     elif fun in TRY_CAST:
+        while is_app(arg) and arg[1] is fun:
+            arg = arg[2]
         casted = TRY_CAST[fun](arg)
         if casted is None:
             return APP(fun, arg)
@@ -372,7 +374,7 @@ def qabstract(code):
         return app(app(B, abstract(code)), EVAL)
     elif is_abs(code):
         body = code[1]
-        return app(C, abstract(qabstract(body)))
+        return app(C, abstract(qabstract(body)))  # FIXME increment rank
     elif is_app(code):
         fun = code[1]
         arg = code[2]
