@@ -3,9 +3,9 @@
 import functools
 import inspect
 
-from pomagma.reducer.curry import abstract, qabstract
-from pomagma.reducer.syntax import (APP, BOT, JOIN, NVAR, QAPP, QQUOTE, QUOTE,
-                                    free_vars, quoted_vars)
+from pomagma.reducer import bohm
+from pomagma.reducer.syntax import (NVAR, QAPP, QQUOTE, QUOTE, free_vars,
+                                    quoted_vars)
 from pomagma.reducer.util import LOG
 
 
@@ -25,7 +25,7 @@ def _compile(fun, actual_fun=None):
         fun, tuple(symbolic_args), symbolic_result))
     code = as_code(symbolic_result)
     for var in reversed(symbolic_args):
-        code = abstract(var, code)
+        code = bohm.nominal_abstract(var, code)
     return code
 
 
@@ -71,9 +71,9 @@ class _Combinator(object):
 
         code = _compile(self, actual_fun=self._fun)
         if var in quoted_vars(code):
-            code = qrec(qabstract(var, code))
+            code = qrec(bohm.nominal_qabstract(var, code))
         elif var in free_vars(code):
-            code = rec(abstract(var, code))
+            code = rec(bohm.nominal_abstract(var, code))
 
         free = free_vars(code)
         if free:
@@ -109,18 +109,14 @@ def app(*args):
         raise SyntaxError('Too few arguments: app{}'.format(args))
     result = args[0]
     for arg in args[1:]:
-        result = APP(result, arg)
+        result = bohm.app(result, arg)
     return result
 
 
 def join_(*args):
-    args = map(as_code, args)
-    if not args:
-        return BOT
-    result = args[0]
-    for arg in args[1:]:
-        result = JOIN(result, arg)
-    return result
+    """Finitary join. This is named join_ to avoid conflict with lib.join."""
+    codes = set(map(as_code, args))
+    return bohm.join_set(codes)
 
 
 def quote(arg):
@@ -133,7 +129,7 @@ def qapp(*args):
         raise SyntaxError('Too few arguments: qapp{}'.format(args))
     result = args[0]
     for arg in args[1:]:
-        result = APP(APP(QAPP, result), arg)
+        result = bohm.app(bohm.app(QAPP, result), arg)
     return result
 
 
