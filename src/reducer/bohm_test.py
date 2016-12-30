@@ -4,18 +4,18 @@ import hypothesis
 import hypothesis.strategies as s
 import pytest
 
-from pomagma.reducer.bohm import (CB, CI, KI, B, C, I, K, S, abstract,
-                                  anonymize, app, approximate, approximate_var,
-                                  decrement_rank, dominates, false, ground,
-                                  increment_rank, is_linear, is_normal, join,
-                                  nominal_abstract, nominal_qabstract,
-                                  polish_simplify, print_tiny, qabstract,
-                                  reduce, sexpr_simplify, simplify, substitute,
-                                  true, try_cast_bool, try_cast_code,
-                                  try_cast_maybe, try_cast_unit,
-                                  try_compute_step, try_decide_equal,
-                                  try_decide_less, try_decide_less_weak,
-                                  unabstract, TRY_DECIDE_LESS_STRONG)
+from pomagma.reducer.bohm import (CB, CI, KI, TRY_DECIDE_LESS_STRONG, B, C, I,
+                                  K, S, abstract, app, approximate,
+                                  approximate_var, decrement_rank, dominates,
+                                  false, ground, increment_rank, is_linear,
+                                  is_normal, join, nominal_abstract,
+                                  nominal_qabstract, polish_simplify,
+                                  print_tiny, qabstract, reduce,
+                                  sexpr_simplify, simplify, substitute, true,
+                                  try_cast_bool, try_cast_code, try_cast_maybe,
+                                  try_cast_unit, try_compute_step,
+                                  try_decide_equal, try_decide_less,
+                                  try_decide_less_weak, unabstract)
 from pomagma.reducer.syntax import (ABS, APP, BOT, CODE, EQUAL, EVAL, IVAR,
                                     JOIN, LESS, NVAR, QAPP, QQUOTE, QUOTE, TOP,
                                     is_code, polish_print, quoted_vars,
@@ -348,23 +348,6 @@ QABSTRACT_EXAMPLES = [
 @for_each(QABSTRACT_EXAMPLES)
 def test_qabstract(code, expected):
     assert qabstract(code) is expected
-
-
-@for_each([
-    (x, x, i0),
-    (y, x, y),
-    (i0, x, i1),
-    (EVAL, x, EVAL),
-    (ABS(i0), x, ABS(i0)),
-    (APP(x, x), x, APP(i0, i0)),
-    (JOIN(x, y), x, JOIN(i0, y)),
-    (JOIN(x, y), y, JOIN(i0, x)),
-    (QUOTE(x), x, QUOTE(i0)),
-    (QUOTE(y), x, QUOTE(y)),
-    (QUOTE(i0), x, QUOTE(i1)),
-])
-def test_anonymize(code, var, expected):
-    assert anonymize(code, var) is expected
 
 
 @for_each([

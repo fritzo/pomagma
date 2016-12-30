@@ -1,7 +1,8 @@
 import re
 from collections import defaultdict
 
-from pomagma.compiler.util import MEMOIZED_CACHES, memoize_arg, unique_result
+from pomagma.compiler.util import (MEMOIZED_CACHES, memoize_arg, memoize_args,
+                                   unique_result)
 
 
 # ----------------------------------------------------------------------------
@@ -166,7 +167,79 @@ def is_fun(code):
 
 
 # ----------------------------------------------------------------------------
+# Transforms
+
+class Transform(object):
+    """Recursive transform of code."""
+
+    def __init__(self, **kwargs):
+        for key, val in kwargs.items():
+            setattr(self, key, val)
+
+    @memoize_args
+    def __call__(self, code):
+        if not is_code(code):
+            raise TypeError(code)
+        elif is_atom(code):
+            return getattr(self, code, self.ATOM(code))
+        elif is_nvar(code):
+            return self.NVAR(code[1])
+        elif is_ivar(code):
+            return self.IVAR(code[1])
+        else:
+            args = [self(arg) for arg in code[1:]]
+            return getattr(self, code[0])(*args)
+
+    ATOM = staticmethod(lambda c: c)
+    NVAR = staticmethod(NVAR)
+    IVAR = staticmethod(IVAR)
+    APP = staticmethod(APP)
+    JOIN = staticmethod(JOIN)
+    QUOTE = staticmethod(QUOTE)
+    ABS = staticmethod(ABS)
+    FUN = staticmethod(FUN)
+
+
+identity = Transform()
+
+
+# ----------------------------------------------------------------------------
 # Variables
+
+def anonymize(code, var, transform=identity):
+    """Convert a nominal variable to a de Bruijn variable."""
+    return _anonymize(code, var, 0, transform)
+
+
+@memoize_args
+def _anonymize(code, var, rank, transform):
+    """Convert a nominal variable to a de Bruijn variable."""
+    if code is var:
+        return transform.IVAR(rank)
+    elif is_atom(code) or is_nvar(code):
+        return transform(code)
+    elif is_ivar(code):
+        if code[1] < rank:
+            return transform.IVAR(code[1])
+        else:
+            return transform.IVAR(code[1] + 1)
+    elif is_abs(code):
+        body = _anonymize(code[1], var, rank + 1, transform)
+        return transform.ABS(body)
+    elif is_app(code):
+        lhs = _anonymize(code[1], var, rank, transform)
+        rhs = _anonymize(code[2], var, rank, transform)
+        return transform.APP(lhs, rhs)
+    elif is_join(code):
+        lhs = _anonymize(code[1], var, rank, transform)
+        rhs = _anonymize(code[2], var, rank, transform)
+        return transform.JOIN(lhs, rhs)
+    elif is_quote(code):
+        body = _anonymize(code[1], var, rank, transform)
+        return transform.QUOTE(body)
+    else:
+        raise ValueError(code)
+
 
 def decrement_var(var):
     """Decrement rank of an IVAR or leave an NVAR untouched."""

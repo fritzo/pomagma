@@ -4,11 +4,11 @@ import hypothesis.strategies as s
 from pomagma.reducer.syntax import (ABS, APP, BOOL, BOT, CODE, EQUAL, EVAL,
                                     FUN, IVAR, JOIN, LESS, MAYBE, NUM, NVAR,
                                     PROD, QAPP, QQUOTE, QUOTE, SUM, TOP, UNIT,
-                                    A, B, C, I, K, S, V, complexity, free_vars,
-                                    from_sexpr, polish_parse, polish_print,
-                                    quoted_vars, sexpr_parse,
-                                    sexpr_parse_sexpr, sexpr_print,
-                                    sexpr_print_sexpr, to_sexpr)
+                                    A, B, C, I, K, S, V, anonymize, complexity,
+                                    free_vars, from_sexpr, identity,
+                                    polish_parse, polish_print, quoted_vars,
+                                    sexpr_parse, sexpr_parse_sexpr,
+                                    sexpr_print, sexpr_print_sexpr, to_sexpr)
 from pomagma.util.testing import for_each
 
 # ----------------------------------------------------------------------------
@@ -17,6 +17,25 @@ from pomagma.util.testing import for_each
 x = NVAR('x')
 y = NVAR('y')
 z = NVAR('z')
+i0 = IVAR(0)
+i1 = IVAR(1)
+
+
+@for_each([
+    (x, x, i0),
+    (y, x, y),
+    (i0, x, i1),
+    (EVAL, x, EVAL),
+    (ABS(i0), x, ABS(i0)),
+    (APP(x, x), x, APP(i0, i0)),
+    (JOIN(x, y), x, JOIN(i0, y)),
+    (JOIN(x, y), y, JOIN(x, i0)),
+    (QUOTE(x), x, QUOTE(i0)),
+    (QUOTE(y), x, QUOTE(y)),
+    (QUOTE(i0), x, QUOTE(i1)),
+])
+def test_anonymize(code, var, expected):
+    assert anonymize(code, var) is expected
 
 
 NVAR_EXAMPLES = [
@@ -208,12 +227,17 @@ def s_codes_extend(terms):
         s.builds(JOIN, terms, terms),
         s.builds(QUOTE, terms),
         s.builds(ABS, terms.filter(lambda c: IVAR(0) not in quoted_vars(c))),
-        s.builds(FUN, s_vars, terms),  # FIXME
+        s.builds(FUN, s_vars, terms.filter(lambda c: not quoted_vars(c))),
     )
 
 
 s_codes = s.recursive(s_atoms, s_codes_extend, max_leaves=100)
 s_sexprs = s.builds(to_sexpr, s_codes)
+
+
+@hypothesis.given(s_codes)
+def test_identity_transform(code):
+    assert identity(code) is code
 
 
 @hypothesis.given(s_codes)

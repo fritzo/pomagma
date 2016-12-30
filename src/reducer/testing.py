@@ -7,7 +7,7 @@ import hypothesis.strategies as s
 import pytest
 from parsable import parsable
 
-from pomagma.reducer.curry import compile_
+from pomagma.reducer import curry
 from pomagma.reducer.linker import link
 from pomagma.reducer.syntax import (APP, BOOL, BOT, CODE, EQUAL, EVAL, JOIN,
                                     LESS, MAYBE, NVAR, QAPP, QQUOTE, QUOTE,
@@ -61,8 +61,8 @@ def iter_equations(test_id, suites=None):
             lhs = code[1][2]
             rhs = code[2]
             if is_quote(lhs) and is_quote(rhs):
-                lhs = link(compile_(lhs[1]))
-                rhs = link(compile_(rhs[1]))
+                lhs = link(curry.convert(lhs[1]))
+                rhs = link(curry.convert(rhs[1]))
                 example = lhs, rhs, message
                 if comment and parse_xfail(comment, test_id):
                     example = pytest.mark.xfail(example)

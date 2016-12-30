@@ -17,12 +17,14 @@ CHANGELOG
 """
 
 from pomagma.compiler.util import memoize_arg, memoize_args, unique
+from pomagma.reducer import syntax
 from pomagma.reducer.syntax import (ABS, APP, BOOL, BOT, CODE, EQUAL, EVAL,
                                     IVAR, JOIN, LESS, MAYBE, QAPP, QQUOTE,
-                                    QUOTE, TOP, UNIT, complexity, free_vars,
-                                    is_abs, is_app, is_atom, is_code, is_ivar,
-                                    is_join, is_nvar, is_quote, polish_parse,
-                                    quoted_vars, sexpr_parse)
+                                    QUOTE, TOP, UNIT, anonymize, complexity,
+                                    free_vars, is_abs, is_app, is_atom,
+                                    is_code, is_ivar, is_join, is_nvar,
+                                    is_quote, polish_parse, quoted_vars,
+                                    sexpr_parse)
 from pomagma.reducer.util import UnreachableError, trool_all, trool_any
 
 SUPPORTED_TESTDATA = ['sk', 'join', 'quote', 'types', 'lib', 'unit']
@@ -390,49 +392,17 @@ def qabstract(code):
     raise UnreachableError(code)
 
 
-def anonymize(code, var):
-    """Convert a nominal variable to a de Bruijn variable."""
-    return _anonymize(code, var, 0)
-
-
-@memoize_args
-def _anonymize(code, var, rank):
-    """Convert a nominal variable to a de Bruijn variable."""
-    if code is var:
-        return IVAR(rank)
-    elif is_atom(code) or is_nvar(code):
-        return code
-    elif is_ivar(code):
-        return code if code[1] < rank else IVAR(code[1] + 1)
-    elif is_abs(code):
-        body = _anonymize(code[1], var, rank + 1)
-        return abstract(body)
-    elif is_app(code):
-        lhs = _anonymize(code[1], var, rank)
-        rhs = _anonymize(code[2], var, rank)
-        return app(lhs, rhs)
-    elif is_join(code):
-        lhs = _anonymize(code[1], var, rank)
-        rhs = _anonymize(code[2], var, rank)
-        return join(lhs, rhs)
-    elif is_quote(code):
-        body = _anonymize(code[1], var, rank)
-        return QUOTE(body)
-    else:
-        raise ValueError(code)
-
-
 @memoize_args
 def nominal_abstract(var, body):
     """Abstract a nominal variable and simplify."""
-    anonymized = anonymize(body, var)
+    anonymized = anonymize(body, var, convert)
     return abstract(anonymized)
 
 
 @memoize_args
 def nominal_qabstract(var, body):
     """Abstract a quoted nominal variable and simplify."""
-    anonymized = anonymize(body, var)
+    anonymized = anonymize(body, var, convert)
     return qabstract(anonymized)
 
 
@@ -916,6 +886,8 @@ SIGNATURE = {
     'C': C,
     'S': S,
 }
+
+convert = syntax.Transform(**SIGNATURE)
 
 
 @memoize_arg
