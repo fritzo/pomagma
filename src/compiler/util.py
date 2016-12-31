@@ -1,4 +1,5 @@
 import atexit
+import contextlib
 import functools
 import glob
 import itertools
@@ -181,6 +182,15 @@ def memoize_args(fun):
 
     MEMOIZED_CACHES[memoized] = cache
     return memoized
+
+
+@contextlib.contextmanager
+def temp_memoize():
+    base = MEMOIZED_CACHES.copy()
+    yield
+    for fun, cache in MEMOIZED_CACHES.iteritems():
+        cache.clear()
+        cache.update(base.get(fun, {}))
 
 
 UNIQUE = {}
