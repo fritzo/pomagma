@@ -699,6 +699,7 @@ def _ground(code, direction, nvars, rank):
         return code
     else:
         raise ValueError(code)
+    raise UnreachableError(code)
 
 
 def ground(code):

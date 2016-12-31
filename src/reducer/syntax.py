@@ -3,6 +3,7 @@ from collections import defaultdict
 
 from pomagma.compiler.util import (MEMOIZED_CACHES, memoize_arg, memoize_args,
                                    unique_result)
+from pomagma.reducer.util import UnreachableError
 
 
 # ----------------------------------------------------------------------------
@@ -246,6 +247,7 @@ def _anonymize(code, var, rank, transform):
         return transform.QUOTE(body)
     else:
         raise ValueError(code)
+    raise UnreachableError(code)
 
 
 def decrement_var(var):
@@ -257,6 +259,7 @@ def decrement_var(var):
         return IVAR(var[1] - 1)
     else:
         raise ValueError(var)
+    raise UnreachableError(var)
 
 
 @memoize_arg
@@ -283,6 +286,7 @@ def free_vars(code):
         return free_vars(code[2]) - frozenset([code[1]])
     else:
         raise ValueError(code)
+    raise UnreachableError(code)
 
 
 @memoize_arg
@@ -306,6 +310,7 @@ def quoted_vars(code):
         return quoted_vars(code[2])
     else:
         raise ValueError(code)
+    raise UnreachableError(code)
 
 
 @memoize_arg
@@ -360,6 +365,7 @@ def complexity(code):
         return 1 + max(complexity(arg) for arg in code[1:])
     else:
         raise ValueError(code)
+    raise UnreachableError(code)
 
 
 # ----------------------------------------------------------------------------

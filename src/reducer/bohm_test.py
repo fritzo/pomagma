@@ -1018,16 +1018,19 @@ PARSE_EXAMPLES = [
     ('(S I)', '(ABS (ABS (0 (1 0))))'),
     ('(S I I)', '(ABS (0 0))'),
     ('(S I I x)', '(x x)'),
+    ('(C B (S I I))', '(ABS (ABS (1 (0 0))))'),
+    ('(C B (S I I) f)', '(ABS (f (0 0)))'),
     ('(C B (S I I) f x)', '(f (x x))'),
     ('(B (S I I) x y)', '(x y (x y))'),
-    (
+    ('(S I I (C B (S I I) f))', '(ABS (0 0) (ABS (f (0 0))))'),
+    pytest.mark.xfail((
         '(B (S I I) (C B (S I I)) f)',
-        '(ABS (f 0 (f 0)) (ABS (ABS (1 (0 0)))))',
-    ),
-    (
+        '(ABS (0 f (0 f)) (ABS (ABS (1 (0 0)))))',
+    )),
+    pytest.mark.xfail((
         '(B (S I I) (C B (S I I)))',
-        '(ABS (ABS (1 0 (1 0)) (ABS (ABS (1 (0 0))))))',
-    ),
+        '(ABS (ABS (0 1 (0 1)) (ABS (ABS (1 (0 0))))))',
+    )),
     ('(FUN x (x y))', '(ABS (0 y))'),
     ('(FUN x (x 0))', '(ABS (0 1))'),
 ]
