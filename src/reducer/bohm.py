@@ -24,8 +24,8 @@ from pomagma.reducer.syntax import (ABS, APP, BOOL, BOT, CODE, EQUAL, EVAL,
                                     free_vars, is_abs, is_app, is_atom,
                                     is_code, is_ivar, is_join, is_nvar,
                                     is_quote, polish_parse, quoted_vars,
-                                    sexpr_parse)
-from pomagma.reducer.util import UnreachableError, trool_all, trool_any
+                                    sexpr_parse, sexpr_print)
+from pomagma.reducer.util import UnreachableError, logged, trool_all, trool_any
 
 SUPPORTED_TESTDATA = ['sk', 'join', 'quote', 'types', 'lib', 'unit']
 
@@ -44,6 +44,12 @@ CI = ABS(ABS(APP(IVAR(0), IVAR(1))))
 
 true = K
 false = KI
+
+pretty = sexpr_print
+
+
+def maybe_pretty(code):
+    return 'None' if code is None else pretty(code)
 
 
 # ----------------------------------------------------------------------------
@@ -187,6 +193,7 @@ def is_cheap_to_copy(code):
     return is_linear(code)
 
 
+@logged(pretty, pretty, str, str, returns=pretty)
 @memoize_args
 def substitute(code, value, rank, budget):
     """Substitute value for IVAR(rank) in code, decremeting higher IVARs.
@@ -250,6 +257,7 @@ def casts(closure):
     return decorator
 
 
+@logged(pretty, pretty, returns=pretty)
 @memoize_args
 def app(fun, arg):
     """Apply function to argument and linearly reduce."""
@@ -343,6 +351,7 @@ def app(fun, arg):
     raise UnreachableError((fun, arg))
 
 
+@logged(pretty, returns=pretty)
 @memoize_args
 def abstract(code):
     """Abstract one de Bruijn variable and simplify."""
@@ -367,6 +376,7 @@ def abstract(code):
     raise UnreachableError(code)
 
 
+@logged(pretty, returns=pretty)
 @memoize_args
 def qabstract(code):
     """Abstract one quoted de Bruijn variable and simplify."""
@@ -394,6 +404,7 @@ def qabstract(code):
     raise UnreachableError(code)
 
 
+@logged(pretty, pretty, returns=pretty)
 @memoize_args
 def nominal_abstract(var, body):
     """Abstract a nominal variable and simplify."""
@@ -401,6 +412,7 @@ def nominal_abstract(var, body):
     return abstract(anonymized)
 
 
+@logged(pretty, pretty, returns=pretty)
 @memoize_args
 def nominal_qabstract(var, body):
     """Abstract a quoted nominal variable and simplify."""
@@ -422,6 +434,7 @@ def iter_join(code):
         yield code
 
 
+@logged(pretty, pretty, returns=pretty)
 @memoize_args
 def join(lhs, rhs):
     """Join two codes, modulo linear Scott ordering."""
@@ -476,6 +489,7 @@ def dominates(lhs, rhs):
     return rhs_lhs is True and lhs_rhs is False
 
 
+@logged(pretty, pretty, returns=str)
 def try_decide_less(lhs, rhs):
     if TRY_DECIDE_LESS_STRONG:
         return try_decide_less_strong(lhs, rhs)
@@ -837,6 +851,7 @@ def is_normal(code):
     raise UnreachableError(code)
 
 
+@logged(pretty, returns=maybe_pretty)
 @memoize_arg
 def try_compute_step(code):
     if is_normal(code):
@@ -893,6 +908,7 @@ SIGNATURE = {
 convert = syntax.Transform(**SIGNATURE)
 
 
+@logged(pretty, returns=pretty)
 @memoize_arg
 def simplify(code):
     """Simplify code, converting to a linear Bohm tree."""
@@ -905,6 +921,7 @@ def simplify(code):
         return SIGNATURE[code[0]](*map(simplify, code[1:]))
 
 
+@logged(pretty, returns=pretty)
 def reduce(code, budget=100):
     """Beta-reduce code up to budget."""
     code = simplify(code)

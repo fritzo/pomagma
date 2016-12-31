@@ -190,7 +190,7 @@ def unique(arg):
     return UNIQUE.get(arg, arg)
 
 
-MEMOIZED_CACHES[unique] = unique
+MEMOIZED_CACHES[unique] = UNIQUE
 
 
 def unique_result(fun):

@@ -185,6 +185,14 @@ SUBSTITUTE_EXAMPLES = [
     (ABS(i2), x, ABS(i1)),
     (ABS(i1), i0, ABS(i1)),
     (ABS(i1), i1, ABS(i2)),
+    (ABS(APP(i0, i0)), x, ABS(APP(i0, i0))),
+    (ABS(APP(i0, i1)), x, ABS(APP(i0, x))),
+    (ABS(APP(i0, i2)), x, ABS(APP(i0, i1))),
+    (ABS(APP(i0, i1)), i0, ABS(APP(i0, i1))),
+    (ABS(APP(i0, i1)), i1, ABS(APP(i0, i2))),
+    (ABS(ABS(APP(i2, APP(i1, i0)))), x, ABS(ABS(APP(x, APP(i1, i0))))),
+    (ABS(ABS(APP(i2, APP(i1, i0)))), i0, ABS(ABS(APP(i2, APP(i1, i0))))),
+    (ABS(ABS(APP(i2, APP(i1, i0)))), i1, ABS(ABS(APP(i3, APP(i1, i0))))),
     (APP(i0, i1), x, APP(x, i0)),
     (JOIN(i0, i1), x, JOIN(i0, x)),
     (QUOTE(i0), x, QUOTE(x)),
@@ -199,7 +207,9 @@ SUBSTITUTE_EXAMPLES = [
 
 @for_each(SUBSTITUTE_EXAMPLES)
 def test_substitute(body, value, expected):
-    assert substitute(body, value, 0, False) is expected
+    expected = pretty(expected)
+    actual = pretty(substitute(body, value, 0, False))
+    assert actual == expected
 
 
 APP_EXAMPLES = [
