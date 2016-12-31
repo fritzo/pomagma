@@ -1,7 +1,8 @@
-from pomagma.reducer.curry import abstract, convert
+from pomagma.reducer.curry import abstract, convert, reduce, try_compute_step
 from pomagma.reducer.syntax import (APP, BOT, IVAR, JOIN, NVAR, QUOTE, TOP, B,
                                     C, I, K, S, sexpr_parse)
-from pomagma.util.testing import for_each
+from pomagma.reducer.testing import iter_equations
+from pomagma.util.testing import for_each, xfail_if_not_implemented
 
 a = NVAR('a')
 b = NVAR('b')
@@ -51,3 +52,60 @@ def test_convert(code, expected):
     code = sexpr_parse(code)
     expected = sexpr_parse(expected)
     assert convert(code) is expected
+
+
+NORMAL_EXAMPLES = [
+    TOP,
+    BOT,
+    x,
+    APP(x, y),
+    APP(x, I),
+    APP(x, K),
+    APP(K, x),
+    APP(B, x),
+    APP(C, x),
+    APP(S, x),
+    APP(K, I),
+    APP(APP(B, x), y),
+    APP(APP(C, x), y),
+    APP(APP(S, x), y),
+]
+
+
+@for_each(NORMAL_EXAMPLES)
+def test_compute_step_normal(code):
+    assert try_compute_step(code) is None
+
+
+@for_each(NORMAL_EXAMPLES)
+def test_reduce_normal(code):
+    assert reduce(code) is code
+
+
+COMPUTE_STEP_EXAMPLES = [
+    (APP(TOP, x), TOP),
+    (APP(BOT, x), BOT),
+    (APP(I, x), x),
+    (APP(APP(K, x), y), x),
+    (APP(APP(APP(B, x), y), z), APP(x, APP(y, z))),
+    (APP(APP(APP(C, x), y), z), APP(APP(x, z), y)),
+    (APP(APP(APP(S, x), y), z), APP(APP(x, z), APP(y, z))),
+]
+
+
+@for_each(COMPUTE_STEP_EXAMPLES)
+def test_try_compute_step(code, expected):
+    assert try_compute_step(code) is expected
+
+
+@for_each(COMPUTE_STEP_EXAMPLES)
+def test_reduce_step(code, expected):
+    assert reduce(code, 1) is expected
+
+
+@for_each(iter_equations('curry'))
+def test_reduce_equations(code, expected, message):
+    with xfail_if_not_implemented():
+        actual = reduce(code)
+        expected = convert(expected)
+    assert actual == expected, message

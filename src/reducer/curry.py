@@ -1,11 +1,14 @@
 """Conversions to combinatory logic, a la Curry."""
 
-from pomagma.compiler.util import memoize_args
+from pomagma.compiler.util import memoize_arg, memoize_args
 from pomagma.reducer import syntax
 from pomagma.reducer.bohm import decrement_rank
 from pomagma.reducer.syntax import (APP, BOT, IVAR, JOIN, TOP, B, C, I, K, S,
-                                    anonymize, is_app, is_join)
+                                    anonymize, is_app, is_atom, is_join,
+                                    is_nvar)
 from pomagma.util import TODO
+
+SUPPORTED_TESTDATA = ['sk']
 
 # ----------------------------------------------------------------------------
 # Abstraction
@@ -80,3 +83,54 @@ def qabstract(var, body):
 # Symbolic compiler : ABS,FUN -> I,K,B,C,S
 
 convert = syntax.Transform(FUN=abstract, ABS=de_bruijn_abstract)
+
+
+# ----------------------------------------------------------------------------
+# Computation
+
+@memoize_arg
+def try_compute_step(code):
+    if is_atom(code) or is_nvar(code):
+        return None
+    elif is_app(code):
+        c1 = code[1]
+        c2 = code[2]
+        if c1 is TOP:
+            return TOP
+        elif c1 is BOT:
+            return BOT
+        elif c1 is I:
+            return c2
+        elif is_app(c1):
+            c11 = c1[1]
+            c12 = c1[2]
+            if c11 is K:
+                return c12
+            elif is_app(c11):
+                c111 = c11[1]
+                c112 = c11[2]
+                if c111 is B:
+                    return APP(c112, APP(c12, c2))
+                elif c111 is C:
+                    return APP(APP(c112, c2), c12)
+                elif c111 is S:
+                    return APP(APP(c112, c2), APP(c12, c2))
+        c1_step = try_compute_step(c1)
+        if c1_step is not None:
+            return APP(c1_step, c2)
+        c2_step = try_compute_step(c2)
+        if c2_step is not None:
+            return APP(c1, c2_step)
+        return None
+    else:
+        raise ValueError(code)
+
+
+def reduce(code, budget=100):
+    """Beta-reduce code up to budget."""
+    for _ in xrange(budget):
+        reduced = try_compute_step(code)
+        if reduced is None:
+            break
+        code = reduced
+    return code
