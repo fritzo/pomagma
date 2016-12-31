@@ -180,10 +180,12 @@ SUBSTITUTE_EXAMPLES = [
     (i0, x, x),
     (i1, x, i0),
     (i2, x, i1),
-    (APP(i0, i1), x, APP(x, i0)),
     (ABS(i0), x, ABS(i0)),
     (ABS(i1), x, ABS(x)),
     (ABS(i2), x, ABS(i1)),
+    (ABS(i1), i0, ABS(i1)),
+    (ABS(i1), i1, ABS(i2)),
+    (APP(i0, i1), x, APP(x, i0)),
     (JOIN(i0, i1), x, JOIN(i0, x)),
     (QUOTE(i0), x, QUOTE(x)),
     (QUOTE(i1), x, QUOTE(i0)),
@@ -294,6 +296,9 @@ APP_EXAMPLES = [
     (APP(EQUAL, i0), BOT, APP(APP(EQUAL, i0), BOT)),
     (APP(EQUAL, i0), QUOTE(i1), APP(APP(EQUAL, i0), QUOTE(i1))),
     (APP(EQUAL, i0), i1, APP(APP(EQUAL, i0), i1)),
+    (C, B, ABS(ABS(ABS(APP(i1, APP(i2, i0)))))),
+    (S, I, ABS(ABS(APP(i0, APP(i1, i0))))),
+    (app(S, I), I, ABS(APP(i0, i0))),
 ]
 
 
@@ -354,6 +359,7 @@ def test_qabstract(code, expected):
     (x, x, ABS(i0)),
     (x, y, ABS(y)),
     (x, i0, ABS(i1)),
+    (x, ABS(APP(i0, x)), ABS(ABS(APP(i0, i1)))),
 ])
 def test_nominal_abstract(var, body, expected):
     assert nominal_abstract(var, body) is expected
