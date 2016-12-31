@@ -1,4 +1,4 @@
-"""Conversions to combinatory logic, a la Curry."""
+"""Combinatory logic, a la Haskell Curry."""
 
 from pomagma.compiler.util import memoize_arg, memoize_args
 from pomagma.reducer import syntax
@@ -128,6 +128,7 @@ def try_compute_step(code):
 
 def reduce(code, budget=100):
     """Beta-reduce code up to budget."""
+    code = convert(code)
     for _ in xrange(budget):
         reduced = try_compute_step(code)
         if reduced is None:

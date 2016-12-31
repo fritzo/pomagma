@@ -205,6 +205,7 @@ class Transform(object):
             if arity == 0:
                 setattr(cls, name, name)
 
+
 Transform.init_atoms()
 identity = Transform()
 

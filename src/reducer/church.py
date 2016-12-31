@@ -1,3 +1,5 @@
+"""Nominal lambda-calculus a la Alonzo Church."""
+
 from pomagma.compiler.util import memoize_arg, memoize_args, unique
 from pomagma.reducer.syntax import (ABS, APP, FUN, IVAR, JOIN, NVAR, QUOTE,
                                     is_abs, is_app, is_atom, is_code, is_fun,
@@ -69,7 +71,7 @@ def _nominalize(code, var, rank):
 
 
 def convert(code, fresh=None):
-    """Replace all bound ABS,IVAR pairs with VUN,VAR pairs."""
+    """Replace all bound ABS,IVAR pairs with FUN,VAR pairs."""
     if fresh is None:
         fresh = iter_fresh(code)
     if is_atom(code) or is_nvar(code) or is_ivar(code):

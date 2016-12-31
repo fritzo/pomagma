@@ -1002,6 +1002,10 @@ PARSE_EXAMPLES = [
     ('(B I)', '(ABS 0)'),
     ('(B I x)', 'x'),
     ('(B I x)', 'x'),
+    ('(C B)', '(ABS (ABS (ABS (1 (2 0)))))'),
+    ('(C B f)', '(ABS (ABS (1 (f 0))))'),
+    ('(C B f g)', '(ABS (g (f 0)))'),
+    ('(C B f g x)', '(g (f x))'),
     ('(C B I)', '(ABS 0)'),
     ('(C B I x)', 'x'),
     ('(C (C x))', 'x'),
@@ -1011,6 +1015,19 @@ PARSE_EXAMPLES = [
     ('(S K I)', '(ABS 0)'),
     ('(S K K)', '(ABS 0)'),
     ('(S K x y)', 'y'),
+    ('(S I)', '(ABS (ABS (0 (1 0))))'),
+    ('(S I I)', '(ABS (0 0))'),
+    ('(S I I x)', '(x x)'),
+    ('(C B (S I I) f x)', '(f (x x))'),
+    ('(B (S I I) x y)', '(x y (x y))'),
+    (
+        '(B (S I I) (C B (S I I)) f)',
+        '(ABS (f 0 (f 0)) (ABS (ABS (1 (0 0)))))',
+    ),
+    (
+        '(B (S I I) (C B (S I I)))',
+        '(ABS (ABS (1 0 (1 0)) (ABS (ABS (1 (0 0))))))',
+    ),
     ('(FUN x (x y))', '(ABS (0 y))'),
     ('(FUN x (x 0))', '(ABS (0 1))'),
 ]
@@ -1024,13 +1041,13 @@ def test_polish_simplify(sexpr, expected):
 
 @for_each(PARSE_EXAMPLES)
 def test_sexpr_simplify(sexpr, expected):
-    assert sexpr_simplify(sexpr) is sexpr_parse(expected)
+    assert sexpr_print(sexpr_simplify(sexpr)) == expected
 
 
 @hypothesis.given(s_codes)
 def test_sexpr_print_simplify(code):
     sexpr = sexpr_print(code)
-    assert sexpr_simplify(sexpr) is code
+    assert sexpr_print(sexpr_simplify(sexpr)) == sexpr
 
 
 @for_each([
