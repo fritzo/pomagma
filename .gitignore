@@ -29,6 +29,8 @@ temp.*
 /dist/
 .cache/
 .hypothesis/
+.ipynb_checkpoints
+__pycache__
 prof
 
 # eclipse
