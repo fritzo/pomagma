@@ -1,7 +1,7 @@
 import pytest
 
 from pomagma.examples import sudoku
-from pomagma.reducer.engines import engine
+from pomagma.reducer import bohm
 from pomagma.reducer.programs import using_engine
 from pomagma.util.testing import for_each
 
@@ -33,6 +33,6 @@ def test_all_different(expected, xs):
 @pytest.mark.xfail
 @for_each(ALL_DIFFERENT_EXAMPLES)
 def test_py_all_different(expected, xs):
-    with using_engine(engine):
+    with using_engine(bohm):
         actual = sudoku.py_all_different(xs)
     assert actual == expected

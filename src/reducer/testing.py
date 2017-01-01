@@ -25,7 +25,7 @@ def iter_test_cases(test_id, suites=None):
     assert isinstance(test_id, str), test_id
     print('test_id = {}'.format(test_id))
     if suites is None:
-        module = import_module('pomagma.reducer.engines.{}'.format(test_id))
+        module = import_module('pomagma.reducer.{}'.format(test_id))
         suites = module.SUPPORTED_TESTDATA
     for suite in suites:
         basename = '{}.sexpr'.format(suite)
