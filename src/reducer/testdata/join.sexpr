@@ -16,6 +16,8 @@
 (EQUAL (QUOTE (JOIN x y z)) (QUOTE (JOIN (x z) (y z))))
 (EQUAL (QUOTE (JOIN I (K I) I)) (QUOTE I))
 (EQUAL (QUOTE (JOIN I (K I) K)) (QUOTE (JOIN I K)))
+(EQUAL (QUOTE (JOIN f g x)) (QUOTE (JOIN (f x) (g x))))
+(EQUAL (QUOTE (ABS (ABS (JOIN 0 1)))) (QUOTE (JOIN (ABS (ABS 0)) (ABS (ABS 1)))))
 
 ;; Test of enumeration operations from pomagma.reducer.lib.box
 (EQUAL (QUOTE (lib.box I)) (QUOTE (lib.box I)))
