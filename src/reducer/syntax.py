@@ -95,7 +95,7 @@ def NVAR(name):
 
 
 def IVAR(rank):
-    if not isinstance(rank, int) and rank >= 0:
+    if not (isinstance(rank, int) and rank >= 0):
         raise ValueError(
             'Variable index must be a natural number {}'.format(rank))
     return _code(_IVAR, rank)

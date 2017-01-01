@@ -1,6 +1,6 @@
 """Nominal lambda-calculus a la Alonzo Church."""
 
-from pomagma.compiler.util import memoize_arg, memoize_args, unique
+from pomagma.compiler.util import memoize_arg, memoize_args, unique_result
 from pomagma.reducer.syntax import (ABS, APP, FUN, IVAR, JOIN, NVAR, QUOTE,
                                     is_abs, is_app, is_atom, is_code, is_fun,
                                     is_ivar, is_join, is_nvar, is_quote,
@@ -10,7 +10,7 @@ pretty = sexpr_print
 
 
 @memoize_arg
-@unique
+@unique_result
 def nominal_vars(code):
     """Find all bound and free nominal variables."""
     if not is_code(code):
