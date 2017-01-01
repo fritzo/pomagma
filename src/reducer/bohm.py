@@ -136,8 +136,8 @@ def _is_linear(code):
     """
     Returns:
         either None if code is nonlinear, else a pair (L, N) of frozensets,
-        where L is the set of free IVARs appearing exactly once,
-        and N is the set of free IVARs appearing multiply.
+        where L is the set of free IVARs appearing at least once,
+        and N is the set of free IVARs appearing at least twice.
     """
     if is_atom(code):
         return EMPTY_SET, EMPTY_SET
@@ -193,6 +193,45 @@ def is_cheap_to_copy(code):
     return is_linear(code)
 
 
+@memoize_args
+def _permute_rank(code, min_rank, max_rank):
+    assert min_rank < max_rank
+    if is_atom(code) or is_nvar(code):
+        return code
+    elif is_ivar(code):
+        rank = code[1]
+        if rank < min_rank or max_rank < rank:
+            return code
+        elif rank == max_rank:
+            return IVAR(min_rank)
+        else:
+            return IVAR(rank + 1)
+    elif is_abs(code):
+        body = _permute_rank(code[1], min_rank + 1, max_rank + 1)
+        return ABS(body)
+    elif is_app(code):
+        lhs = _permute_rank(code[1], min_rank, max_rank)
+        rhs = _permute_rank(code[2], min_rank, max_rank)
+        return APP(lhs, rhs)
+    elif is_join(code):
+        lhs = _permute_rank(code[1], min_rank, max_rank)
+        rhs = _permute_rank(code[2], min_rank, max_rank)
+        return JOIN(lhs, rhs)
+    elif is_quote(code):
+        body = _permute_rank(code[1], min_rank, max_rank)
+        return QUOTE(body)
+    else:
+        raise ValueError(code)
+    raise UnreachableError((code, min_rank, max_rank))
+
+
+def permute_rank(code, rank):
+    """Permute IVARs from [0,1,2...,rank] to [1,2,...,rank,0]."""
+    assert is_code(code), code
+    assert isinstance(rank, int) and rank >= 0, rank
+    return _permute_rank(code, 0, rank) if rank > 0 else code
+
+
 @logged(pretty, pretty, str, str, returns=pretty)
 @memoize_args
 def substitute(code, value, rank, budget):
@@ -229,6 +268,7 @@ def substitute(code, value, rank, budget):
             return app(lhs, rhs)
         else:
             # Lazy substitution.
+            code = permute_rank(code, rank)
             return APP(ABS(code), value)
     elif is_abs(code):
         body = substitute(code[1], increment_rank(value), rank + 1, budget)
