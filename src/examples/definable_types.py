@@ -101,7 +101,7 @@ def trace(*part_names, **kwargs):
             print '--- Normalized ---'
             return
         print('{}\t{}'.format(1 + step, print_(code)))
-    print '... Not normalized ...'
+    print('... Not normalized ...')
 
 
 if __name__ == '__main__':
