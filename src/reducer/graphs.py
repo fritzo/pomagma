@@ -27,6 +27,14 @@ def term_make(*args):
     return unique(args)
 
 
+def term_join(lhs, rhs):
+    assert lhs != rhs
+    if lhs < rhs:
+        return term_make(_JOIN, lhs, rhs)
+    else:
+        return term_make(_JOIN, rhs, lhs)
+
+
 def term_shift(term, delta):
     symbol = term[0]
     if symbol in (_TOP, _BOT, _NVAR, _IVAR):
@@ -36,7 +44,7 @@ def term_shift(term, delta):
     elif symbol is _APP:
         return term_make(_APP, term[1] + delta, term[2] + delta)
     elif symbol is _JOIN:
-        return term_make(_JOIN, term[1] + delta, term[2] + delta)
+        return term_join(term[1] + delta, term[2] + delta)
     else:
         raise ValueError(term)
 
@@ -50,7 +58,7 @@ def term_permute(term, perm):
     elif symbol is _APP:
         return term_make(_APP, perm[term[1]], perm[term[2]])
     elif symbol is _JOIN:
-        return term_make(_JOIN, perm[term[1]], perm[term[2]])
+        return term_join(perm[term[1]], perm[term[2]])
     else:
         raise ValueError(term)
 
@@ -72,6 +80,7 @@ def graph_permute(graph, perm):
 
 
 def graph_sort(graph):
+    # FIXME This is very slow.
     return min(
         graph_permute(graph, (0,) + p)
         for p in itertools.permutations(range(1, len(graph)))
@@ -128,6 +137,8 @@ def APP(lhs, rhs):
 
 @memoize_args
 def JOIN(lhs, rhs):
+    if lhs is rhs:
+        return lhs
     lhs_pos = 1
     rhs_pos = 1 + len(lhs)
     terms = [term_make(_JOIN, lhs_pos, rhs_pos)]
