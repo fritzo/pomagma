@@ -1,6 +1,5 @@
 import hypothesis
 import hypothesis.strategies as s
-import pytest
 
 from pomagma.reducer.graphs import (_ABS, _APP, _IVAR, _JOIN, _NVAR, ABS, APP,
                                     BOT, IVAR, JOIN, NVAR, TOP, graph_permute,
@@ -65,7 +64,7 @@ def s_graphs_extend(s_graphs):
     return s.one_of(
         s.builds(ABS, s_graphs),
         s.builds(APP, s_graphs, s_graphs),
-        s.builds(JOIN, s.lists(s_graphs, max_size=4, average_size=2)),
+        s.builds(JOIN, s.lists(s_graphs, min_size=2, max_size=4)),
     )
 
 
@@ -92,7 +91,6 @@ def test_join_commutative(x, y):
     assert JOIN([x, y]) is JOIN([y, x])
 
 
-@pytest.mark.xfail
 @hypothesis.given(s_graphs, s_graphs, s_graphs)
 def test_join_associative(x, y, z):
     xy_z = JOIN([JOIN([x, y]), z])

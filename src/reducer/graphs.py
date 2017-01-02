@@ -6,15 +6,16 @@ where the 0th location of the tuple is the root.
 This rooted graph data structure intends to represent terms just coarsely
 enough to enable cons hashing modulo isomorphism of rooted graphs. In
 particular, we choose fintary JOIN over binary JOIN so as to ease the
-isomorphism problem.
+isomorphism problem: JOIN terms are syntactically accociative, commutative, and
+idempotent.
 
 """
 
+import functools
 import itertools
 import re
 
-from pomagma.compiler.util import (memoize_arg, memoize_args,
-                                   memoize_frozenset, unique)
+from pomagma.compiler.util import memoize_arg, memoize_args, unique
 from pomagma.util import TODO
 
 re_keyword = re.compile('[A-Z]+$')
@@ -22,7 +23,6 @@ re_keyword = re.compile('[A-Z]+$')
 GRAPHS = {}  # : graph -> graph
 
 _TOP = intern('TOP')  # : term
-_BOT = intern('BOT')  # : term
 _NVAR = intern('NVAR')  # : string -> term
 _IVAR = intern('IVAR')  # : int -> term
 _ABS = intern('ABS')  # : term -> term
@@ -40,7 +40,7 @@ def term_join(args):
 
 def term_shift(term, delta):
     symbol = term[0]
-    if symbol in (_TOP, _BOT, _NVAR, _IVAR):
+    if symbol in (_TOP, _NVAR, _IVAR):
         return term
     elif symbol is _ABS:
         return term_make(_ABS, term[1] + delta)
@@ -54,7 +54,7 @@ def term_shift(term, delta):
 
 def term_permute(term, perm):
     symbol = term[0]
-    if symbol in (_TOP, _BOT, _NVAR, _IVAR):
+    if symbol in (_TOP, _NVAR, _IVAR):
         return term
     elif symbol is _ABS:
         return term_make(_ABS, perm[term[1]])
@@ -66,21 +66,54 @@ def term_permute(term, perm):
         raise ValueError(term)
 
 
-def graph_simplify(terms):
-    """Remove unused vertices and deduplicate equivalent vertices."""
-    # TODO
-    return terms
-
-
 def perm_inverse(perm):
-    result = [None] * len(perm)
+    result = [None] * (1 + max(perm))
     for i, j in enumerate(perm):
-        result[j] = i
+        if j is not None:
+            result[j] = i
     return result
 
 
 def graph_permute(graph, perm):
-    return tuple(term_permute(graph[i], perm) for i in perm_inverse(perm))
+    return tuple(
+        term_permute(graph[i], perm)
+        for i in perm_inverse(perm)
+        if i is not None
+    )
+
+
+def iter_neighbors(term):
+    symbol = term[0]
+    if symbol is _ABS:
+        yield term[1]
+    elif symbol is _APP:
+        yield term[1]
+        yield term[2]
+    elif symbol is _JOIN:
+        for pos in term[1]:
+            yield pos
+
+
+def graph_prune(terms):
+    """Remove unused vertices."""
+    connected = set([0])
+    pending = [0]
+    while pending:
+        term = terms[pending.pop()]
+        for pos in iter_neighbors(term):
+            if pos not in connected:
+                connected.add(pos)
+                pending.append(pos)
+    if len(connected) == len(terms):
+        return terms
+    perm = perm_inverse(sorted(connected))
+    return graph_permute(terms, perm)
+
+
+def graph_quotient(terms):
+    """Deduplicate equivalent vertices."""
+    # TODO
+    return terms
 
 
 def graph_sort(graph):
@@ -96,7 +129,8 @@ def graph_sort(graph):
 
 def graph_make(terms):
     """Make a canonical graph, given a messy list of terms."""
-    terms = graph_simplify(terms)
+    terms = graph_prune(terms)
+    terms = graph_quotient(terms)
     graph = graph_sort(terms)
     return GRAPHS.setdefault(graph, graph)
 
@@ -112,8 +146,11 @@ def extract_subterm(graph, pos):
     return graph_make(terms)
 
 
+# ----------------------------------------------------------------------------
+# Graph construction (intro forms)
+
 TOP = graph_make([term_make(_TOP)])
-BOT = graph_make([term_make(_BOT)])
+BOT = graph_make([term_join([])])
 
 
 @memoize_arg
@@ -154,13 +191,31 @@ def APP(lhs, rhs):
     return graph_make(terms)
 
 
-@memoize_frozenset
+def iter_join(graph):
+    """Destruct JOIN terms."""
+    if graph[0][0] is _JOIN:
+        for pos in graph[0][1]:
+            yield extract_subterm(graph, pos)
+    else:
+        yield graph
+
+
+def preprocess_join_args(fun):
+
+    @functools.wraps(fun)
+    def join(args):
+        args = frozenset(g for arg in args for g in iter_join(arg))
+        return fun(args)
+
+    return join
+
+
+@preprocess_join_args
+@memoize_arg
 def JOIN(args):
     # Handle trivial cases.
     if TOP in args:
         return TOP
-    if BOT in args:
-        args = frozenset(arg for arg in args if arg is not BOT)
     if not args:
         return BOT
     if len(args) == 1:
@@ -177,6 +232,9 @@ def JOIN(args):
             terms.append(term_shift(term, offset))
     return graph_make(terms)
 
+
+# ----------------------------------------------------------------------------
+# Graph matching (elim forms)
 
 def is_graph(graph):
     return graph in GRAPHS
@@ -202,16 +260,9 @@ def is_join(graph):
     return graph[0][0] is _JOIN
 
 
+# ----------------------------------------------------------------------------
+# Variables
+
 @memoize_arg
 def free_vars(graph):
     TODO()
-
-
-def iter_join(graph):
-    """Destructs JOIN and BOT terms."""
-    symbol = graph[0][0]
-    if symbol is _JOIN:
-        for pos in graph[0][1]:
-            yield extract_subterm(graph, pos)
-    elif symbol is not _BOT:
-        yield graph

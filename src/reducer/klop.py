@@ -5,11 +5,12 @@ data structures.
 
 """
 
-from pomagma.compiler.util import memoize_arg, memoize_args, memoize_frozenset
+from pomagma.compiler.util import memoize_arg, memoize_args
 from pomagma.reducer import syntax
 from pomagma.reducer.graphs import (ABS, APP, BOT, IVAR, JOIN, NVAR, TOP,
                                     extract_subterm, free_vars, is_abs, is_app,
-                                    is_graph, is_join, iter_join)
+                                    is_graph, is_join, iter_join,
+                                    preprocess_join_args)
 from pomagma.reducer.util import UnreachableError
 from pomagma.util import TODO
 
@@ -52,12 +53,12 @@ def app(fun, arg):
     """Apply function to argument and linearly reduce."""
     if fun is TOP:
         return TOP
-    elif fun is BOT:
-        return BOT
     elif is_abs(fun):
+        # Linear beta reduce.
         body = extract_subterm(fun, fun[0][1])
         return substitute(body, arg, 0, False)
     elif is_join(fun):
+        # Distribute APP over JOIN.
         return join(app(g, arg) for g in iter_join(fun))
     else:
         return APP(fun, arg)
@@ -67,19 +68,17 @@ def app(fun, arg):
 @memoize_args
 def abstract(graph):
     """Abstract one de Bruijn variable and simplify."""
-    root = graph[0]
     if graph is TOP:
         return TOP
-    elif graph is BOT:
-        return BOT
     elif is_app(graph):
-        fun = extract_subterm(graph, root[1])
-        arg = extract_subterm(graph, root[2])
+        fun = extract_subterm(graph, graph[0][1])
+        arg = extract_subterm(graph, graph[0][2])
         if IVAR(0) not in free_vars(fun) and arg is IVAR(0):
             # Eta contract.
             return decrement_rank(fun)
         return ABS(graph)
     elif is_join(graph):
+        # Distribute ABS over JOIN.
         return join(abstract(g) for g in iter_join(graph))
     else:
         return ABS(graph)
@@ -89,15 +88,12 @@ def abstract(graph):
 # ----------------------------------------------------------------------------
 # Scott ordering
 
-@memoize_frozenset
+@preprocess_join_args
+@memoize_arg
 def join(args):
     # Handle trivial cases.
     if TOP in args:
         return TOP
-    if BOT in args:
-        args = frozenset(arg for arg in args if arg is not BOT)
-    if not args:
-        return BOT
     if len(args) == 1:
         return next(iter(args))
 
@@ -140,6 +136,8 @@ def try_decide_less(lhs, rhs):
 # Conversion
 
 SIGNATURE = {
+    'TOP': TOP,
+    'BOT': BOT,
     'NVAR': NVAR,
     'IVAR': IVAR,
     'APP': app,
