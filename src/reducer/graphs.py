@@ -13,7 +13,9 @@ isomorphism problem.
 import itertools
 import re
 
-from pomagma.compiler.util import memoize_arg, memoize_args, unique
+from pomagma.compiler.util import (MEMOIZED_CACHES, memoize_arg, memoize_args,
+                                   unique)
+from pomagma.util import TODO
 
 re_keyword = re.compile('[A-Z]+$')
 
@@ -64,8 +66,9 @@ def term_permute(term, perm):
         raise ValueError(term)
 
 
-def graph_deduplicate(terms):
-    # TODO Deduplicate variables.
+def graph_simplify(terms):
+    """Remove unused vertices and deduplicate equivalent vertices."""
+    # TODO
     return terms
 
 
@@ -81,6 +84,7 @@ def graph_permute(graph, perm):
 
 
 def graph_sort(graph):
+    """Canonicalize the ordering of vertices in a graph."""
     # FIXME This is very slow.
     # TODO Speed this up by first partitioning by symbol, then greedily sorting
     # each partition while adding constraints to later partitions.
@@ -91,9 +95,21 @@ def graph_sort(graph):
 
 
 def graph_make(terms):
-    terms = graph_deduplicate(terms)
+    """Make a canonical graph, given a messy list of terms."""
+    terms = graph_simplify(terms)
     graph = graph_sort(terms)
     return GRAPHS.setdefault(graph, graph)
+
+
+@memoize_args
+def extract_subterm(graph, pos):
+    """Extract the subterm of a graph at given root position."""
+    assert isinstance(pos, int) and 0 <= pos and pos < len(graph), pos
+    perm = range(len(graph))
+    perm[0] = pos
+    perm[pos] = 0
+    terms = graph_permute(graph, perm)
+    return graph_make(terms)
 
 
 TOP = graph_make([term_make(_TOP)])
@@ -138,13 +154,26 @@ def APP(lhs, rhs):
     return graph_make(terms)
 
 
-@memoize_args
+JOIN_CACHE = {}
+
+
+# Memoized manually.
 def JOIN(args):
-    args = list(set(args))
+    # Memoize.
+    args = frozenset(args)
+    try:
+        return JOIN_CACHE[args]
+    except KeyError:
+        pass
+
+    # Handle trivial cases.
     if not args:
         return BOT
     elif len(args) == 1:
-        return args[0]
+        return next(iter(args))
+
+    # Construct a join term.
+    args = list(args)
     offsets = [1]
     for arg in args[:-1]:
         offsets.append(offsets[-1] + len(arg))
@@ -153,3 +182,45 @@ def JOIN(args):
         for term in arg:
             terms.append(term_shift(term, offset))
     return graph_make(terms)
+
+
+MEMOIZED_CACHES[JOIN] = JOIN_CACHE
+
+
+def is_graph(graph):
+    return graph in GRAPHS
+
+
+def is_nvar(graph):
+    return graph[0][0] is _NVAR
+
+
+def is_ivar(graph):
+    return graph[0][0] is _IVAR
+
+
+def is_abs(graph):
+    return graph[0][0] is _ABS
+
+
+def is_app(graph):
+    return graph[0][0] is _APP
+
+
+def is_join(graph):
+    return graph[0][0] is _JOIN
+
+
+@memoize_arg
+def free_vars(graph):
+    TODO()
+
+
+def iter_join(graph):
+    """Destructs JOIN and BOT terms."""
+    symbol = graph[0][0]
+    if symbol is _JOIN:
+        for pos in graph[0][1]:
+            yield extract_subterm(graph, pos)
+    elif symbol is not _BOT:
+        yield graph
