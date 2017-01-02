@@ -3,12 +3,13 @@ import hypothesis.strategies as s
 
 from pomagma.reducer.syntax import (ABS, APP, BOOL, BOT, CODE, EQUAL, EVAL,
                                     FUN, IVAR, JOIN, LESS, MAYBE, NUM, NVAR,
-                                    PROD, QAPP, QQUOTE, QUOTE, SUM, TOP, UNIT,
-                                    A, B, C, I, K, S, V, anonymize, complexity,
-                                    free_vars, from_sexpr, identity,
-                                    polish_parse, polish_print, quoted_vars,
-                                    sexpr_parse, sexpr_parse_sexpr,
-                                    sexpr_print, sexpr_print_sexpr, to_sexpr)
+                                    PROD, QAPP, QQUOTE, QUOTE, REC, SUM, TOP,
+                                    UNIT, A, B, C, I, K, S, V, anonymize,
+                                    complexity, free_vars, from_sexpr,
+                                    identity, polish_parse, polish_print,
+                                    quoted_vars, sexpr_parse,
+                                    sexpr_parse_sexpr, sexpr_print,
+                                    sexpr_print_sexpr, to_sexpr)
 from pomagma.util.testing import for_each
 
 # ----------------------------------------------------------------------------
@@ -30,6 +31,10 @@ i2 = IVAR(2)
     (ABS(i0), x, ABS(i0)),
     (ABS(x), x, ABS(i1)),
     (ABS(ABS(x)), x, ABS(ABS(i2))),
+    (ABS(REC(x)), x, ABS(REC(i2))),
+    (REC(i0), x, REC(i0)),
+    (REC(x), x, REC(i1)),
+    (REC(ABS(x)), x, REC(ABS(i2))),
     (APP(x, x), x, APP(i0, i0)),
     (APP(x, ABS(x)), x, APP(i0, ABS(i1))),
     (JOIN(x, y), x, JOIN(i0, y)),
@@ -63,9 +68,11 @@ NVAR_EXAMPLES = [
     (QUOTE(IVAR(0)), [IVAR(0)], [IVAR(0)]),
     (QUOTE(IVAR(1)), [IVAR(1)], [IVAR(1)]),
     (ABS(QUOTE(IVAR(1))), [IVAR(0)], [IVAR(0)]),
+    (REC(QUOTE(IVAR(1))), [IVAR(0)], [IVAR(0)]),
     (QUOTE(APP(x, y)), [x, y], [x, y]),
     (APP(x, QUOTE(y)), [x, y], [y]),
     (ABS(x), [x], []),
+    (REC(x), [x], []),
     (FUN(x, y), [y], []),
     (FUN(x, x), [], []),
 ]
@@ -105,6 +112,9 @@ def test_quoted_vars_quote(code, free, quoted):
     (ABS(IVAR(0)), 1 + 1),
     (ABS(I), 1 + 2),
     (ABS(K), 1 + 3),
+    (REC(IVAR(0)), 1 + 1),
+    (REC(I), 1 + 2),
+    (REC(K), 1 + 3),
     (FUN(x, x), 1 + max(1, 1)),
     (FUN(x, I), 1 + max(1, 2)),
     (FUN(x, K), 1 + max(1, 3)),
@@ -150,6 +160,11 @@ EXAMPLES = [
         'code': ABS(IVAR(0)),
         'polish': 'ABS 0',
         'sexpr': '(ABS 0)',
+    },
+    {
+        'code': REC(IVAR(0)),
+        'polish': 'REC 0',
+        'sexpr': '(REC 0)',
     },
     {
         'code': FUN(x, APP(x, x)),
@@ -231,6 +246,7 @@ def s_codes_extend(terms):
         s.builds(JOIN, terms, terms),
         s.builds(QUOTE, terms),
         s.builds(ABS, terms.filter(lambda c: IVAR(0) not in quoted_vars(c))),
+        s.builds(REC, terms.filter(lambda c: IVAR(0) not in quoted_vars(c))),
         s.builds(FUN, s_vars, terms.filter(lambda c: not quoted_vars(c))),
     )
 

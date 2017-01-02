@@ -62,6 +62,7 @@ _JOIN = make_keyword('JOIN', 2)
 _QUOTE = make_keyword('QUOTE', 1)
 _ABS = make_keyword('ABS', 1)  # de Bruijn abstraction.
 _FUN = make_keyword('FUN', 2)  # Nominal abstraction.
+_REC = make_keyword('REC', 1)  # de Bruijn recursion.
 
 TOP = make_keyword('TOP')
 BOT = make_keyword('BOT')
@@ -128,6 +129,11 @@ def FUN(var, body):
     return _code(_FUN, var, body)
 
 
+def REC(body):
+    assert IVAR_0 not in quoted_vars(body)
+    return _code(_REC, body)
+
+
 def is_atom(code):
     assert is_code(code), code
     return isinstance(code, str)
@@ -168,6 +174,11 @@ def is_fun(code):
     return isinstance(code, tuple) and code[0] is _FUN
 
 
+def is_rec(code):
+    assert is_code(code), code
+    return isinstance(code, tuple) and code[0] is _REC
+
+
 # ----------------------------------------------------------------------------
 # Transforms
 
@@ -199,6 +210,7 @@ class Transform(object):
     QUOTE = staticmethod(QUOTE)
     ABS = staticmethod(ABS)
     FUN = staticmethod(FUN)
+    REC = staticmethod(REC)
 
     @classmethod
     def init_atoms(cls):
@@ -234,6 +246,9 @@ def _anonymize(code, var, rank, transform):
     elif is_abs(code):
         body = _anonymize(code[1], var, rank + 1, transform)
         return transform.ABS(body)
+    elif is_rec(code):
+        body = _anonymize(code[1], var, rank + 1, transform)
+        return transform.REC(body)
     elif is_app(code):
         lhs = _anonymize(code[1], var, rank, transform)
         rhs = _anonymize(code[2], var, rank, transform)
@@ -275,7 +290,7 @@ def free_vars(code):
         return free_vars(code[1]) | free_vars(code[2])
     elif is_quote(code):
         return free_vars(code[1])
-    elif is_abs(code):
+    elif is_abs(code) or is_rec(code):
         return frozenset(
             decrement_var(v)
             for v in free_vars(code[1])
@@ -300,7 +315,7 @@ def quoted_vars(code):
         return free_vars(code[1])
     elif is_app(code) or is_join(code):
         return quoted_vars(code[1]) | quoted_vars(code[2])
-    elif is_abs(code):
+    elif is_abs(code) or is_rec(code):
         return frozenset(
             decrement_var(v)
             for v in quoted_vars(code[1])
@@ -421,6 +436,7 @@ _PARSERS = {
     _QUOTE: (_polish_parse_tokens,),
     _ABS: (_polish_parse_tokens,),
     _FUN: (_polish_parse_tokens, _polish_parse_tokens),
+    _REC: (_polish_parse_tokens,),
 }
 
 
@@ -484,6 +500,9 @@ def to_sexpr(code):
         args.append(to_sexpr(head[2]))
         args.append(to_sexpr(head[1]))
         head = _FUN
+    elif is_rec(head):
+        args.append(to_sexpr(head[1]))
+        head = _REC
     args.append(head)
     args.reverse()
     return tuple(args)
@@ -522,6 +541,10 @@ def from_sexpr(sexpr, signature={}):
             body = from_sexpr(sexpr[2], signature)
             head = signature.get('FUN', FUN)(var, body)
             args = sexpr[3:]
+        elif head is _REC:
+            body = from_sexpr(sexpr[1], signature)
+            head = signature.get('REC', REC)(body)
+            args = sexpr[2:]
         else:
             head = signature.get(head, head)
             args = sexpr[1:]
