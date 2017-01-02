@@ -13,8 +13,8 @@ isomorphism problem.
 import itertools
 import re
 
-from pomagma.compiler.util import (MEMOIZED_CACHES, memoize_arg, memoize_args,
-                                   unique)
+from pomagma.compiler.util import (memoize_arg, memoize_args,
+                                   memoize_frozenset, unique)
 from pomagma.util import TODO
 
 re_keyword = re.compile('[A-Z]+$')
@@ -154,22 +154,16 @@ def APP(lhs, rhs):
     return graph_make(terms)
 
 
-JOIN_CACHE = {}
-
-
-# Memoized manually.
+@memoize_frozenset
 def JOIN(args):
-    # Memoize.
-    args = frozenset(args)
-    try:
-        return JOIN_CACHE[args]
-    except KeyError:
-        pass
-
     # Handle trivial cases.
+    if TOP in args:
+        return TOP
+    if BOT in args:
+        args = frozenset(arg for arg in args if arg is not BOT)
     if not args:
         return BOT
-    elif len(args) == 1:
+    if len(args) == 1:
         return next(iter(args))
 
     # Construct a join term.
@@ -182,9 +176,6 @@ def JOIN(args):
         for term in arg:
             terms.append(term_shift(term, offset))
     return graph_make(terms)
-
-
-MEMOIZED_CACHES[JOIN] = JOIN_CACHE
 
 
 def is_graph(graph):

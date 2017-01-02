@@ -184,6 +184,23 @@ def memoize_args(fun):
     return memoized
 
 
+def memoize_frozenset(fun):
+    cache = {}
+
+    @functools.wraps(fun)
+    def memoized(args):
+        args = frozenset(args)
+        try:
+            return cache[args]
+        except KeyError:
+            result = fun(args)
+            cache[args] = result
+            return result
+
+    MEMOIZED_CACHES[memoized] = cache
+    return memoized
+
+
 @contextlib.contextmanager
 def temp_memoize():
     base = MEMOIZED_CACHES.copy()

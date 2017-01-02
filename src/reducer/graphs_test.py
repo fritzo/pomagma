@@ -72,13 +72,11 @@ def s_graphs_extend(s_graphs):
 s_graphs = s.recursive(s_atoms, s_graphs_extend, max_leaves=3)
 
 
-@pytest.mark.xfail
 @hypothesis.given(s_graphs)
 def test_join_top(x):
     assert JOIN([x, TOP]) is TOP
 
 
-@pytest.mark.xfail
 @hypothesis.given(s_graphs)
 def test_join_bot(x):
     assert JOIN([x, BOT]) is x
@@ -89,8 +87,6 @@ def test_join_idempotent(x):
     assert JOIN([x, x]) is x
 
 
-# FIXME Why does this fail?
-@pytest.mark.xfail
 @hypothesis.given(s_graphs, s_graphs)
 def test_join_commutative(x, y):
     assert JOIN([x, y]) is JOIN([y, x])

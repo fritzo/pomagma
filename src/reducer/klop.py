@@ -5,12 +5,26 @@ data structures.
 
 """
 
-from pomagma.compiler.util import MEMOIZED_CACHES, memoize_arg, memoize_args
-from pomagma.reducer.graphs import (ABS, APP, BOT, IVAR, JOIN, TOP,
-                                    extract_subterm, free_vars, graph_join,
-                                    is_abs, is_app, is_graph, is_ivar, is_join,
-                                    is_nvar, iter_join)
-from pomagma.util import TODO, UnreachableError
+from pomagma.compiler.util import memoize_arg, memoize_args, memoize_frozenset
+from pomagma.reducer import syntax
+from pomagma.reducer.graphs import (ABS, APP, BOT, IVAR, JOIN, NVAR, TOP,
+                                    extract_subterm, free_vars, is_abs, is_app,
+                                    is_graph, is_join, iter_join)
+from pomagma.reducer.util import UnreachableError
+from pomagma.util import TODO
+
+I = ABS(IVAR(0))
+K = ABS(ABS(IVAR(1)))
+B = ABS(ABS(ABS(APP(IVAR(2), APP(IVAR(1), IVAR(0))))))
+C = ABS(ABS(ABS(APP(APP(IVAR(2), IVAR(0)), IVAR(1)))))
+S = ABS(ABS(ABS(APP(APP(IVAR(2), IVAR(0)), APP(IVAR(1), IVAR(0))))))
+
+KI = ABS(ABS(IVAR(0)))
+CB = ABS(ABS(ABS(APP(IVAR(1), APP(IVAR(2), IVAR(0))))))
+CI = ABS(ABS(APP(IVAR(0), IVAR(1))))
+
+true = K
+false = KI
 
 
 # ----------------------------------------------------------------------------
@@ -40,19 +54,13 @@ def app(fun, arg):
         return TOP
     elif fun is BOT:
         return BOT
-    elif is_nvar(fun):
-        return APP(fun, arg)
-    elif is_ivar(fun):
-        return APP(fun, arg)
     elif is_abs(fun):
         body = extract_subterm(fun, fun[0][1])
         return substitute(body, arg, 0, False)
-    elif is_app(fun):
-        return APP(fun, arg)
     elif is_join(fun):
-        TODO('extract subterms; make apps; and construct a join')
+        return join(app(g, arg) for g in iter_join(fun))
     else:
-        raise ValueError(fun)
+        return APP(fun, arg)
     raise UnreachableError((fun, arg))
 
 
@@ -72,7 +80,7 @@ def abstract(graph):
             return decrement_rank(fun)
         return ABS(graph)
     elif is_join(graph):
-        return graph_join(frozenset(abstract(g) for g in iter_join(graph)))
+        return join(abstract(g) for g in iter_join(graph))
     else:
         return ABS(graph)
     raise UnreachableError(graph)
@@ -81,37 +89,26 @@ def abstract(graph):
 # ----------------------------------------------------------------------------
 # Scott ordering
 
-JOIN_CACHE = {}
-
-
-# Memoized manually.
+@memoize_frozenset
 def join(args):
-    # Memoize.
-    args = frozenset(args)
-    try:
-        return JOIN_CACHE[args]
-    except KeyError:
-        pass
-
     # Handle trivial cases.
-    if not args:
-        return BOT
     if TOP in args:
         return TOP
+    if BOT in args:
+        args = frozenset(arg for arg in args if arg is not BOT)
+    if not args:
+        return BOT
     if len(args) == 1:
         return next(iter(args))
 
     # Filter out strictly dominated terms (requires transitivity).
     filtered = [
-        graph for graph in args
-        if not any(dominates(ub, graph) for ub in args if ub is not graph)
+        arg for arg in args
+        if not any(dominates(ub, arg) for ub in args if ub is not arg)
     ]
 
     # Construct a join term.
     return JOIN(filtered)
-
-
-MEMOIZED_CACHES[join] = JOIN_CACHE
 
 
 def dominates(lhs, rhs):
@@ -137,3 +134,22 @@ def try_decide_less(lhs, rhs):
 
     # Give up.
     return None
+
+
+# ----------------------------------------------------------------------------
+# Conversion
+
+SIGNATURE = {
+    'NVAR': NVAR,
+    'IVAR': IVAR,
+    'APP': app,
+    'JOIN': join,
+    'ABS': abstract,
+    'I': I,
+    'K': K,
+    'B': B,
+    'C': C,
+    'S': S,
+}
+
+convert = syntax.Transform(**SIGNATURE)
