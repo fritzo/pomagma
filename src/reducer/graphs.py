@@ -3,6 +3,11 @@
 Graphs are represented as tuples of function symbols applied to vertex ids,
 where the 0th location of the tuple is the root.
 
+This rooted graph data structure intends to represent terms just coarsely
+enough to enable cons hashing modulo isomorphism of rooted graphs. In
+particular, we choose fintary JOIN over binary JOIN so as to ease the
+isomorphism problem.
+
 """
 
 import itertools
@@ -14,25 +19,21 @@ re_keyword = re.compile('[A-Z]+$')
 
 GRAPHS = {}  # : graph -> graph
 
-_TOP = intern('TOP')
-_BOT = intern('BOT')
-_NVAR = intern('NVAR')
-_IVAR = intern('IVAR')
-_ABS = intern('ABS')
-_APP = intern('APP')
-_JOIN = intern('JOIN')
+_TOP = intern('TOP')  # : term
+_BOT = intern('BOT')  # : term
+_NVAR = intern('NVAR')  # : string -> term
+_IVAR = intern('IVAR')  # : int -> term
+_ABS = intern('ABS')  # : term -> term
+_APP = intern('APP')  # : term -> term -> term
+_JOIN = intern('JOIN')  # : frozenset term -> term
 
 
 def term_make(*args):
     return unique(args)
 
 
-def term_join(lhs, rhs):
-    assert lhs != rhs
-    if lhs < rhs:
-        return term_make(_JOIN, lhs, rhs)
-    else:
-        return term_make(_JOIN, rhs, lhs)
+def term_join(args):
+    return term_make(_JOIN, unique(frozenset(args)))
 
 
 def term_shift(term, delta):
@@ -44,7 +45,7 @@ def term_shift(term, delta):
     elif symbol is _APP:
         return term_make(_APP, term[1] + delta, term[2] + delta)
     elif symbol is _JOIN:
-        return term_join(term[1] + delta, term[2] + delta)
+        return term_join(i + delta for i in term[1])
     else:
         raise ValueError(term)
 
@@ -58,7 +59,7 @@ def term_permute(term, perm):
     elif symbol is _APP:
         return term_make(_APP, perm[term[1]], perm[term[2]])
     elif symbol is _JOIN:
-        return term_join(perm[term[1]], perm[term[2]])
+        return term_join(perm[i] for i in term[1])
     else:
         raise ValueError(term)
 
@@ -81,6 +82,8 @@ def graph_permute(graph, perm):
 
 def graph_sort(graph):
     # FIXME This is very slow.
+    # TODO Speed this up by first partitioning by symbol, then greedily sorting
+    # each partition while adding constraints to later partitions.
     return min(
         graph_permute(graph, (0,) + p)
         for p in itertools.permutations(range(1, len(graph)))
@@ -116,34 +119,37 @@ def IVAR(rank):
 
 @memoize_arg
 def ABS(body):
-    body_pos = 1
-    terms = [term_make(_ABS, body_pos)]
+    body_offset = 1
+    terms = [term_make(_ABS, body_offset)]
     for term in body:
-        terms.append(term_shift(term, body_pos))
+        terms.append(term_shift(term, body_offset))
     return graph_make(terms)
 
 
 @memoize_args
 def APP(lhs, rhs):
-    lhs_pos = 1
-    rhs_pos = 1 + len(lhs)
-    terms = [term_make(_APP, lhs_pos, rhs_pos)]
+    lhs_offset = 1
+    rhs_offset = 1 + len(lhs)
+    terms = [term_make(_APP, lhs_offset, rhs_offset)]
     for term in lhs:
-        terms.append(term_shift(term, lhs_pos))
+        terms.append(term_shift(term, lhs_offset))
     for term in rhs:
-        terms.append(term_shift(term, rhs_pos))
+        terms.append(term_shift(term, rhs_offset))
     return graph_make(terms)
 
 
 @memoize_args
-def JOIN(lhs, rhs):
-    if lhs is rhs:
-        return lhs
-    lhs_pos = 1
-    rhs_pos = 1 + len(lhs)
-    terms = [term_make(_JOIN, lhs_pos, rhs_pos)]
-    for term in lhs:
-        terms.append(term_shift(term, lhs_pos))
-    for term in rhs:
-        terms.append(term_shift(term, rhs_pos))
+def JOIN(args):
+    args = list(set(args))
+    if not args:
+        return BOT
+    elif len(args) == 1:
+        return args[0]
+    offsets = [1]
+    for arg in args[:-1]:
+        offsets.append(offsets[-1] + len(arg))
+    terms = [term_join(offsets)]
+    for arg, offset in itertools.izip(args, offsets):
+        for term in arg:
+            terms.append(term_shift(term, offset))
     return graph_make(terms)

@@ -13,7 +13,8 @@ CHANGELOG
 2016-12-11 Use linearizing approximations in order decision procedures.
 2016-12-18 Add rules for quoting and reflected order.
 2016-12-25 Add rules for nominal and quoted abstraction.
-2016-12-27 Treat nominal and de Bruijn variables differently.
+2016-12-27 Treat nominal and de Bruijn variables differently. TODO revert?
+2016-12-31 Fix bug in substitute(-,-,-,-); tests pass.
 """
 
 from pomagma.compiler.util import memoize_arg, memoize_args, unique
