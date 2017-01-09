@@ -23,25 +23,98 @@ from collections import defaultdict, namedtuple
 
 from pomagma.util import TODO
 
-Combinator = namedtuple('Combinator', ['bound', 'head', 'args'])
+Pattern = namedtuple('Pattern', ['head', 'args'])
+Headex = namedtuple('Headex', ['head', 'args'])
+Combinator = namedtuple('Combinator', ['bound', 'headex'])
 
 
-def make_combinator(bound, head, *args):
-    assert isinstance(bound, int) and bound > 0, bound
-    assert isinstance(head, int) and 0 <= head and head < bound, head
-    for arg in args:
-        assert isinstance(arg, tuple) and isinstance(arg[0], str), args
-        for var in arg[1:]:
-            assert isinstance(var, int) and 0 <= var and var < bound, args
-    return Combinator(bound, head, tuple(args))
+def is_nvar(thing):
+    return isinstance(thing, str)
 
 
-_I = make_combinator(1, 0)
+def is_ivar(thing):
+    return isinstance(thing, int) and thing >= 0
+
+
+def make_pattern(head, *args):
+    assert is_nvar(head)
+    assert all(is_ivar(arg) for arg in args)
+    return Pattern(head, args)
+
+
+def make_headex(head, *args):
+    assert is_ivar(head)
+    assert all(isinstance(arg, Pattern) for arg in args)
+    return Headex(head, args)
+
+
+def make_combinator(bound, headex):
+    assert isinstance(bound, int) and bound >= 0
+    assert isinstance(headex, Headex)
+    return Combinator(bound, headex)
+
+
+def free_vars(headex):
+    assert isinstance(headex, Headex)
+    result = set([headex.head])
+    for patt in headex.args:
+        for var in patt.args:
+            result.add(var)
+    return result
+
+
+def is_closed(comb):
+    assert isinstance(comb, Combinator)
+    return max(free_vars(comb.headex)) < comb.bound
+
+
+_I = make_combinator(1, make_headex(0))
+assert is_closed(_I)
 
 
 def eta_expand(comb):
-    bound, head, args = comb
-    return make_combinator(bound + 1, head, *(args + (('_I', bound),)))
+    assert isinstance(comb, Combinator)
+    bound, (head, args) = comb
+    args += (make_pattern('_I', bound),)
+    bound += 1
+    return make_combinator(bound, make_headex(head, *args))
+
+
+def substitute_headex(headex, src, dst):
+    assert isinstance(headex, Headex)
+    assert is_ivar(src)
+    assert is_ivar(dst)
+    head = dst if headex.head == src else headex.head
+    args = [
+        substitute_pattern(patt, src, dst)
+        for patt in headex.args
+    ]
+    return make_headex(head, *args)
+
+
+def substitute_pattern(patt, src, dst):
+    assert isinstance(patt, Pattern)
+    assert is_ivar(src)
+    assert is_ivar(dst)
+    args = [dst if arg == src else arg for arg in patt.args]
+    return make_pattern(patt.head, *args)
+
+
+def app(comb, *args):
+    assert isinstance(comb, Combinator)
+    assert all(is_ivar(arg) for arg in args)
+    assert all(arg >= comb.bound for arg in args), 'variable name conflict'
+    bound, headex = comb
+    for arg in args:
+        if bound:
+            bound -= 1
+            headex = substitute_headex(headex, bound, arg)
+        else:
+            headex = make_headex(
+                headex.head,
+                headex.args + (make_pattern('_I', arg),),
+            )
+    return make_combinator(bound, headex)
 
 
 class Presentation(object):
@@ -52,26 +125,59 @@ class Presentation(object):
         self._equations['_I'].add(_I)  # Required by eta_expand(-).
 
     def define(self, name, combinator):
-        assert isinstance(name, str), name
-        assert name != '_I', name
-        assert isinstance(combinator, Combinator), combinator
+        assert is_nvar(name) and name != '_I'
+        assert isinstance(combinator, Combinator) and is_closed(combinator)
         self._equations[name].add(combinator)
-        for arg in combinator.args:
-            self._equations[arg[0]]
+        for patt in combinator.headex.args:
+            self._equations[patt.head]
 
     @property
-    def deterministic(self):
-        return max(map(len, self._equations.values())) <= 1
+    def is_deterministic(self):
+        return all(len(body) <= 1 for body in self._equations.values())
+
+    def match_combinator(self, lhs, rhs, hyp):
+        assert isinstance(lhs, Combinator), lhs
+        assert isinstance(rhs, Combinator), rhs
+        while lhs.bound < rhs.bound:
+            lhs = eta_expand(lhs)
+        while rhs.bound < lhs.bound:
+            rhs = eta_expand(rhs)
+        assert lhs.bound == rhs.bound
+        return self.match_headex(lhs.headex, rhs.headex)
+
+    def match_headex(self, lhs, rhs, hyp):
+        assert isinstance(lhs, Headex)
+        assert isinstance(rhs, Headex)
+        if lhs.head != rhs.head or len(lhs.args) != len(rhs.args):
+            return False
+        for l, r in zip(lhs.args, rhs.args):
+            self.match_pattern(l, r, hyp)
+        return True
+
+    def match_pattern(self, lhs, rhs, hyp):
+        assert isinstance(lhs, Pattern), lhs
+        assert isinstance(rhs, Pattern), rhs
+        lhs_comb = self._equations[lhs.head]
+        rhs_comb = self._equations[rhs.head]
+        max_bound = max(lhs_comb.bound, rhs_comb.bound)
+        rename = {
+            old: new + max_bound
+            for new, old in enumerate(sorted(set(lhs.args + rhs.args)))
+        }
+        lhs = app(self._equations[lhs.head], *[rename[v] for v in lhs.args])
+        rhs = app(self._equations[rhs.head], *[rename[v] for v in rhs.args])
+        if lhs != rhs:
+            hyp.add((lhs, rhs))
 
     def decide_less_deterministic(self, lhs, rhs):
-        """Decide Scott ordering between two regular Bohm trees.
+        """Decide Scott ordering between two deterministic regular Bohm trees.
 
         Args: lhs, rhs: names of roots of trees.
         Returns: True or False.
         """
-        assert lhs in self._equations, lhs
-        assert rhs in self._equations, rhs
-        assert self.deterministic
+        assert lhs in self._equations
+        assert rhs in self._equations
+        assert self.is_deterministic
 
         con = set()
         hyp = set([
@@ -84,26 +190,8 @@ class Presentation(object):
             if focus in con:
                 continue
             con.add(focus)
-
-            lc, rc = focus
-            while lc.bound < rc.bound:
-                lc = eta_expand(lc)
-            while rc.bound < lc.bound:
-                rc = eta_expand(rc)
-            assert lc.bound == rc.bound
-            if lc.head != rc.head or len(lc.args) != len(rc.args):
+            if not self.match_combinator(*focus):
                 return False
-            for la, ra in zip(lc.args, rc.args):
-                if len(self._equations[la[0]]) == 0:
-                    continue
-                if len(self._equations[ra[0]]) == 0:
-                    return False
-                lc = iter(next(self._equations[la[0]]))  # FIXME apply args
-                rc = iter(next(self._equations[ra[0]]))  # FIXME apply args
-                TODO('apply args to lc, rc')
-                if lc == rc or (lc, rc) in con:
-                    continue
-                hyp.add(la, ra)
         return True
 
     def decide_less(self, lhs, rhs):
@@ -112,9 +200,9 @@ class Presentation(object):
         Args: lhs, rhs: names of roots of trees.
         Returns: True or False.
         """
-        assert lhs in self._equations, lhs
-        assert rhs in self._equations, rhs
-        if self.deterministic:
+        assert lhs in self._equations
+        assert rhs in self._equations
+        if self.is_deterministic:
             return self.decide_less_deterministic
 
         # Each set is a conjunction of disjunctions.
