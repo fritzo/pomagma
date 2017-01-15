@@ -2,12 +2,12 @@ import hypothesis
 import hypothesis.strategies as s
 
 from pomagma.reducer.syntax import (ABS, APP, BOOL, BOT, CODE, EQUAL, EVAL,
-                                    FUN, IVAR, JOIN, LESS, MAYBE, NUM, NVAR,
-                                    PROD, QAPP, QQUOTE, QUOTE, REC, SUM, TOP,
-                                    UNIT, A, B, C, I, K, S, V, anonymize,
-                                    complexity, free_vars, from_sexpr,
-                                    identity, polish_parse, polish_print,
-                                    quoted_vars, sexpr_parse,
+                                    FUN, IVAR, JOIN, LESS, MAYBE, NLESS, NUM,
+                                    NVAR, PROD, QAPP, QEQUAL, QLESS, QQUOTE,
+                                    QUOTE, REC, SUM, TOP, UNIT, A, B, C, I, K,
+                                    S, V, anonymize, complexity, free_vars,
+                                    from_sexpr, identity, polish_parse,
+                                    polish_print, quoted_vars, sexpr_parse,
                                     sexpr_parse_sexpr, sexpr_print,
                                     sexpr_print_sexpr, to_sexpr)
 from pomagma.util.testing import for_each
@@ -138,8 +138,8 @@ EXAMPLES = [
     {'code': EVAL, 'polish': 'EVAL', 'sexpr': 'EVAL'},
     {'code': QAPP, 'polish': 'QAPP', 'sexpr': 'QAPP'},
     {'code': QQUOTE, 'polish': 'QQUOTE', 'sexpr': 'QQUOTE'},
-    {'code': EQUAL, 'polish': 'EQUAL', 'sexpr': 'EQUAL'},
-    {'code': LESS, 'polish': 'LESS', 'sexpr': 'LESS'},
+    {'code': QEQUAL, 'polish': 'QEQUAL', 'sexpr': 'QEQUAL'},
+    {'code': QLESS, 'polish': 'QLESS', 'sexpr': 'QLESS'},
     {'code': V, 'polish': 'V', 'sexpr': 'V'},
     {'code': A, 'polish': 'A', 'sexpr': 'A'},
     {'code': UNIT, 'polish': 'UNIT', 'sexpr': 'UNIT'},
@@ -171,6 +171,9 @@ EXAMPLES = [
         'polish': 'FUN x APP x x',
         'sexpr': '(FUN x (x x))',
     },
+    {'code': LESS(K, I), 'polish': 'LESS K I', 'sexpr': '(LESS K I)'},
+    {'code': NLESS(K, I), 'polish': 'NLESS K I', 'sexpr': '(NLESS K I)'},
+    {'code': EQUAL(K, I), 'polish': 'EQUAL K I', 'sexpr': '(EQUAL K I)'},
 ]
 
 
@@ -224,8 +227,8 @@ s_atoms = s.one_of(
         s.just(EVAL),
         s.just(QAPP),
         s.just(QQUOTE),
-        s.just(EQUAL),
-        s.just(LESS),
+        s.just(QEQUAL),
+        s.just(QLESS),
     ),
     s.one_of(
         s.just(V),

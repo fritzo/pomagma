@@ -10,9 +10,10 @@ from parsable import parsable
 from pomagma.reducer import bohm
 from pomagma.reducer.linker import link
 from pomagma.reducer.syntax import (APP, BOOL, BOT, CODE, EQUAL, EVAL, JOIN,
-                                    LESS, MAYBE, NVAR, QAPP, QQUOTE, QUOTE,
-                                    TOP, UNIT, B, C, I, K, S, is_app, is_quote,
-                                    sexpr_parse, sexpr_print)
+                                    MAYBE, NVAR, QAPP, QEQUAL, QLESS, QQUOTE,
+                                    QUOTE, TOP, UNIT, B, C, I, K, S, is_app,
+                                    is_equal, is_quote, sexpr_parse,
+                                    sexpr_print)
 
 DIR = os.path.dirname(os.path.abspath(__file__))
 TESTDATA = os.path.join(DIR, 'testdata')
@@ -57,8 +58,8 @@ def parse_xfail(comment, test_id):
 def iter_equations(test_id, suites=None):
     assert isinstance(test_id, str), test_id
     for code, comment, message in iter_test_cases(test_id, suites):
-        if is_app(code) and is_app(code[1]) and code[1][1] is EQUAL:
-            lhs = link(bohm.convert(code[1][2]))
+        if is_equal(code):
+            lhs = link(bohm.convert(code[1]))
             rhs = link(bohm.convert(code[2]))
             example = lhs, rhs, message
             if comment and parse_xfail(comment, test_id):
@@ -151,8 +152,8 @@ s_atoms = s.one_of(
         s.just(EVAL),
         s.just(QAPP),
         s.just(QQUOTE),
-        s.just(EQUAL),
-        s.just(LESS),
+        s.just(QEQUAL),
+        s.just(QLESS),
     ),
     s.one_of(
         s.just(UNIT),

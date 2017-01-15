@@ -43,6 +43,7 @@ def is_code(arg):
 re_keyword = re.compile('[A-Z]+$')
 re_rank = re.compile(r'\d+$')
 _keywords = {}  # : name -> arity
+_builders = {}  # : name -> constructor
 
 
 def make_keyword(name, arity=0):
@@ -55,6 +56,15 @@ def make_keyword(name, arity=0):
     return name
 
 
+def builder(fun):
+    name = intern(fun.__name__)
+    assert name in _keywords, name
+    assert _keywords[name] > 0, (name, _keywords[name])
+    assert name not in _builders, name
+    _builders[name] = fun
+    return fun
+
+
 _IVAR = make_keyword('IVAR', 1)  # de Bruijn variable.
 _NVAR = make_keyword('NVAR', 1)  # Nominal variable.
 _APP = make_keyword('APP', 2)
@@ -63,6 +73,9 @@ _QUOTE = make_keyword('QUOTE', 1)
 _ABS = make_keyword('ABS', 1)  # de Bruijn abstraction.
 _FUN = make_keyword('FUN', 2)  # Nominal abstraction.
 _REC = make_keyword('REC', 1)  # de Bruijn recursion.
+_LESS = make_keyword('LESS', 2)
+_NLESS = make_keyword('NLESS', 2)
+_EQUAL = make_keyword('EQUAL', 2)
 
 TOP = make_keyword('TOP')
 BOT = make_keyword('BOT')
@@ -71,10 +84,6 @@ K = make_keyword('K')
 B = make_keyword('B')
 C = make_keyword('C')
 S = make_keyword('S')
-
-EQUAL = make_keyword('EQUAL')
-LESS = make_keyword('LESS')
-NLESS = make_keyword('NLESS')
 
 CODE = make_keyword('CODE')
 EVAL = make_keyword('EVAL')
@@ -93,12 +102,14 @@ SUM = make_keyword('SUM')
 NUM = make_keyword('NUM')
 
 
+@builder
 def NVAR(name):
     if re_keyword.match(name):
         raise ValueError('Variable names cannot match [A-Z]+: {}'.format(name))
     return _code(_NVAR, intern(name))
 
 
+@builder
 def IVAR(rank):
     if not (isinstance(rank, int) and rank >= 0):
         raise ValueError(
@@ -109,33 +120,54 @@ def IVAR(rank):
 IVAR_0 = IVAR(0)
 
 
+@builder
 def APP(lhs, rhs):
     return _code(_APP, lhs, rhs)
 
 
+@builder
 def JOIN(lhs, rhs):
     return _code(_JOIN, lhs, rhs)
 
 
+@builder
 def QUOTE(code):
     # TODO assert all(not is_ivar(v) for v in free_vars(code))
     return _code(_QUOTE, code)
 
 
+@builder
 def ABS(body):
     assert IVAR_0 not in quoted_vars(body)
     return _code(_ABS, body)
 
 
+@builder
 def FUN(var, body):
     assert is_nvar(var), var
     assert var not in quoted_vars(body), (var, body)
     return _code(_FUN, var, body)
 
 
+@builder
 def REC(body):
     assert IVAR_0 not in quoted_vars(body)
     return _code(_REC, body)
+
+
+@builder
+def LESS(lhs, rhs):
+    return _code(_LESS, lhs, rhs)
+
+
+@builder
+def NLESS(lhs, rhs):
+    return _code(_NLESS, lhs, rhs)
+
+
+@builder
+def EQUAL(lhs, rhs):
+    return _code(_EQUAL, lhs, rhs)
 
 
 def is_atom(code):
@@ -181,6 +213,11 @@ def is_fun(code):
 def is_rec(code):
     assert is_code(code), code
     return isinstance(code, tuple) and code[0] is _REC
+
+
+def is_equal(code):
+    assert is_code(code), code
+    return isinstance(code, tuple) and code[0] is _EQUAL
 
 
 # ----------------------------------------------------------------------------
@@ -441,6 +478,9 @@ _PARSERS = {
     _ABS: (_polish_parse_tokens,),
     _FUN: (_polish_parse_tokens, _polish_parse_tokens),
     _REC: (_polish_parse_tokens,),
+    _LESS: (_polish_parse_tokens, _polish_parse_tokens),
+    _NLESS: (_polish_parse_tokens, _polish_parse_tokens),
+    _EQUAL: (_polish_parse_tokens, _polish_parse_tokens),
 }
 
 
@@ -490,23 +530,10 @@ def to_sexpr(code):
         head = head[1]
     if is_nvar(head) or is_ivar(head):
         head = head[1]
-    elif is_join(head):
-        args.append(to_sexpr(head[2]))
-        args.append(to_sexpr(head[1]))
-        head = _JOIN
-    elif is_quote(head):
-        args.append(to_sexpr(head[1]))
-        head = _QUOTE
-    elif is_abs(head):
-        args.append(to_sexpr(head[1]))
-        head = _ABS
-    elif is_fun(head):
-        args.append(to_sexpr(head[2]))
-        args.append(to_sexpr(head[1]))
-        head = _FUN
-    elif is_rec(head):
-        args.append(to_sexpr(head[1]))
-        head = _REC
+    elif head[0] in _builders:
+        for arg in head[-1:0:-1]:
+            args.append(to_sexpr(arg))
+        head = head[0]
     args.append(head)
     args.reverse()
     return tuple(args)
@@ -515,6 +542,8 @@ def to_sexpr(code):
 def from_sexpr(sexpr, signature={}):
     """Converts from a python S-expression to a python code."""
     assert isinstance(signature, dict), type(signature)
+
+    # Handle atoms.
     if isinstance(sexpr, str):
         if sexpr in _keywords:
             return signature.get(sexpr, sexpr)
@@ -524,34 +553,23 @@ def from_sexpr(sexpr, signature={}):
             return NVAR(sexpr)
     if isinstance(sexpr, int):
         return IVAR(sexpr)
+
+    # Handle tuples.
     head = sexpr[0]
     assert isinstance(head, (str, int))
     if head in _keywords:
-        if head is _JOIN:
-            lhs = from_sexpr(sexpr[1], signature)
-            rhs = from_sexpr(sexpr[2], signature)
-            head = signature.get('JOIN', JOIN)(lhs, rhs)
-            args = sexpr[3:]
-        elif head is _QUOTE:
-            code = from_sexpr(sexpr[1], signature)
-            head = signature.get('QUOTE', QUOTE)(code)
-            args = sexpr[2:]
-        elif head is _ABS:
-            body = from_sexpr(sexpr[1], signature)
-            head = signature.get('ABS', ABS)(body)
-            args = sexpr[2:]
-        elif head is _FUN:
-            var = from_sexpr(sexpr[1], signature)
-            body = from_sexpr(sexpr[2], signature)
-            head = signature.get('FUN', FUN)(var, body)
-            args = sexpr[3:]
-        elif head is _REC:
-            body = from_sexpr(sexpr[1], signature)
-            head = signature.get('REC', REC)(body)
-            args = sexpr[2:]
+        arity = _keywords[head]
+        if arity:
+            if len(sexpr) < 1 + arity:
+                raise ValueError('Too few args to {}: {}'.format(head, sexpr))
+            builder = signature.get(head, _builders[head])
+            head = builder(*(
+                from_sexpr(sexpr[1 + i], signature)
+                for i in xrange(arity)
+            ))
         else:
             head = signature.get(head, head)
-            args = sexpr[1:]
+        args = sexpr[1 + arity:]
     elif isinstance(head, int):
         head = IVAR(head)
         args = sexpr[1:]
