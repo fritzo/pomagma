@@ -385,6 +385,61 @@ def enum_list(enum_item):
 
 
 # ----------------------------------------------------------------------------
+# Streams
+
+@combinator
+def stream_cons(head, tail):
+    return lambda f: app(f, head, tail)
+
+
+@combinator
+def stream_head(xs):
+    return app(xs, lambda h, t: h)
+
+
+@combinator
+def stream_tail(xs):
+    return app(xs, lambda h, t: t)
+
+
+@combinator
+def stream_test(test_item, xs):
+    return join_(I, app(xs, lambda h, t: join_(test_item(h), stream_test(t))))
+
+
+@combinator
+def stream_join(xs):
+    return app(xs, lambda h, t: join_(h, stream_join(t)))
+
+
+@combinator
+def stream_const(x):
+    return stream_cons(x, stream_const(x))
+
+
+stream_bot = stream_const(BOT)
+
+
+@combinator
+def stream_map(f, xs):
+    return app(xs, lambda h, t: stream_cons(app(f, h), stream_map(t)))
+
+
+@combinator
+def stream_quote(quote_item, xs):
+    return app(xs, lambda h, t: qapp(QUOTE(stream_cons),
+                                     quote_item(h),
+                                     stream_quote(quote_item, t)))
+
+
+@combinator
+def enum_stream(enum_item):
+    return app(enum_item, lambda h:
+               join_(stream_cons(h, stream_bot),
+                     app(enum_stream, enum_item, lambda t: stream_cons(h, t))))
+
+
+# ----------------------------------------------------------------------------
 # Enumerable sets
 
 @combinator
