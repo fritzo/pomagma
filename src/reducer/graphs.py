@@ -236,27 +236,27 @@ def JOIN(args):
 # ----------------------------------------------------------------------------
 # Graph matching (elim forms)
 
-def is_graph(graph):
+def isa_graph(graph):
     return graph in GRAPHS
 
 
-def is_nvar(graph):
+def isa_nvar(graph):
     return graph[0][0] is _NVAR
 
 
-def is_ivar(graph):
+def isa_ivar(graph):
     return graph[0][0] is _IVAR
 
 
-def is_abs(graph):
+def isa_abs(graph):
     return graph[0][0] is _ABS
 
 
-def is_app(graph):
+def isa_app(graph):
     return graph[0][0] is _APP
 
 
-def is_join(graph):
+def isa_join(graph):
     return graph[0][0] is _JOIN
 
 

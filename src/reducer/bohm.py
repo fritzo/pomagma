@@ -22,9 +22,9 @@ from pomagma.reducer import syntax
 from pomagma.reducer.syntax import (ABS, APP, BOOL, BOT, CODE, EVAL, IVAR,
                                     JOIN, MAYBE, QAPP, QEQUAL, QLESS, QQUOTE,
                                     QUOTE, TOP, UNIT, anonymize, complexity,
-                                    free_vars, is_abs, is_app, is_atom,
-                                    is_code, is_ivar, is_join, is_nvar,
-                                    is_quote, polish_parse, quoted_vars,
+                                    free_vars, isa_abs, isa_app, isa_atom,
+                                    isa_code, isa_ivar, isa_join, isa_nvar,
+                                    isa_quote, polish_parse, quoted_vars,
                                     sexpr_parse, sexpr_print)
 from pomagma.reducer.util import UnreachableError, logged, trool_all, trool_any
 
@@ -58,24 +58,24 @@ def maybe_pretty(code):
 
 @memoize_args
 def _increment_rank(code, min_rank):
-    if is_atom(code):
+    if isa_atom(code):
         return code
-    elif is_nvar(code):
+    elif isa_nvar(code):
         return code
-    elif is_ivar(code):
+    elif isa_ivar(code):
         rank = code[1]
         return IVAR(rank + 1) if rank >= min_rank else code
-    elif is_abs(code):
+    elif isa_abs(code):
         return ABS(_increment_rank(code[1], min_rank + 1))
-    elif is_app(code):
+    elif isa_app(code):
         lhs = _increment_rank(code[1], min_rank)
         rhs = _increment_rank(code[2], min_rank)
         return APP(lhs, rhs)
-    elif is_join(code):
+    elif isa_join(code):
         lhs = _increment_rank(code[1], min_rank)
         rhs = _increment_rank(code[2], min_rank)
         return JOIN(lhs, rhs)
-    elif is_quote(code):
+    elif isa_quote(code):
         return QUOTE(_increment_rank(code[1], min_rank))
     else:
         raise ValueError(code)
@@ -93,28 +93,28 @@ class CannotDecrementRank(Exception):
 
 @memoize_args
 def _try_decrement_rank(code, min_rank):
-    if is_atom(code):
+    if isa_atom(code):
         return code
-    elif is_nvar(code):
+    elif isa_nvar(code):
         return code
-    elif is_ivar(code):
+    elif isa_ivar(code):
         rank = code[1]
         if rank < min_rank:
             return code
         elif rank == min_rank:
             raise CannotDecrementRank
         return IVAR(rank - 1)
-    elif is_app(code):
+    elif isa_app(code):
         lhs = _try_decrement_rank(code[1], min_rank)
         rhs = _try_decrement_rank(code[2], min_rank)
         return APP(lhs, rhs)
-    elif is_abs(code):
+    elif isa_abs(code):
         return ABS(_try_decrement_rank(code[1], min_rank + 1))
-    elif is_join(code):
+    elif isa_join(code):
         lhs = _try_decrement_rank(code[1], min_rank)
         rhs = _try_decrement_rank(code[2], min_rank)
         return JOIN(lhs, rhs)
-    elif is_quote(code):
+    elif isa_quote(code):
         return QUOTE(_try_decrement_rank(code[1], min_rank))
     else:
         raise ValueError(code)
@@ -140,20 +140,20 @@ def _is_linear(code):
         where L is the set of free IVARs appearing at least once,
         and N is the set of free IVARs appearing at least twice.
     """
-    if is_atom(code):
+    if isa_atom(code):
         return EMPTY_SET, EMPTY_SET
-    elif is_nvar(code):
+    elif isa_nvar(code):
         return EMPTY_SET, EMPTY_SET
-    elif is_ivar(code):
+    elif isa_ivar(code):
         rank = code[1]
         return unique(frozenset([rank])), EMPTY_SET
-    elif is_app(code):
+    elif isa_app(code):
         lhs = _is_linear(code[1])
         rhs = _is_linear(code[2])
         if lhs is None or rhs is None:
             return None
         return lhs[0] | rhs[0], lhs[1] | rhs[1] | (lhs[0] & rhs[0])
-    elif is_abs(code):
+    elif isa_abs(code):
         body = _is_linear(code[1])
         if body is None or 0 in body[1]:
             return None
@@ -161,13 +161,13 @@ def _is_linear(code):
             unique(frozenset(r - 1 for r in body[0] if r)),
             unique(frozenset(r - 1 for r in body[1])),
         )
-    elif is_join(code):
+    elif isa_join(code):
         lhs = _is_linear(code[1])
         rhs = _is_linear(code[2])
         if lhs is None or rhs is None:
             return None
         return lhs[0] | rhs[0], lhs[1] | rhs[1]
-    elif is_quote(code):
+    elif isa_quote(code):
         return EMPTY_SET, EMPTY_SET
     else:
         raise ValueError(code)
@@ -176,7 +176,7 @@ def _is_linear(code):
 
 def is_linear(code):
     """Return whether code never copies a bound IVAR."""
-    assert is_code(code), code
+    assert isa_code(code), code
     return _is_linear(code) is not None
 
 
@@ -197,9 +197,9 @@ def is_cheap_to_copy(code):
 @memoize_args
 def _permute_rank(code, min_rank, max_rank):
     assert min_rank < max_rank
-    if is_atom(code) or is_nvar(code):
+    if isa_atom(code) or isa_nvar(code):
         return code
-    elif is_ivar(code):
+    elif isa_ivar(code):
         rank = code[1]
         if rank < min_rank or max_rank < rank:
             return code
@@ -207,18 +207,18 @@ def _permute_rank(code, min_rank, max_rank):
             return IVAR(min_rank)
         else:
             return IVAR(rank + 1)
-    elif is_abs(code):
+    elif isa_abs(code):
         body = _permute_rank(code[1], min_rank + 1, max_rank + 1)
         return ABS(body)
-    elif is_app(code):
+    elif isa_app(code):
         lhs = _permute_rank(code[1], min_rank, max_rank)
         rhs = _permute_rank(code[2], min_rank, max_rank)
         return APP(lhs, rhs)
-    elif is_join(code):
+    elif isa_join(code):
         lhs = _permute_rank(code[1], min_rank, max_rank)
         rhs = _permute_rank(code[2], min_rank, max_rank)
         return JOIN(lhs, rhs)
-    elif is_quote(code):
+    elif isa_quote(code):
         body = _permute_rank(code[1], min_rank, max_rank)
         return QUOTE(body)
     else:
@@ -228,7 +228,7 @@ def _permute_rank(code, min_rank, max_rank):
 
 def permute_rank(code, rank):
     """Permute IVARs from [0,1,2...,rank] to [1,2,...,rank,0]."""
-    assert is_code(code), code
+    assert isa_code(code), code
     assert isinstance(rank, int) and rank >= 0, rank
     return _permute_rank(code, 0, rank) if rank > 0 else code
 
@@ -243,18 +243,18 @@ def substitute(code, value, rank, budget):
 
     """
     assert budget in (True, False), budget
-    if is_atom(code):
+    if isa_atom(code):
         return code
-    elif is_nvar(code):
+    elif isa_nvar(code):
         return code
-    elif is_ivar(code):
+    elif isa_ivar(code):
         if code[1] == rank:
             return value
         elif code[1] > rank:
             return IVAR(code[1] - 1)
         else:
             return code
-    elif is_app(code):
+    elif isa_app(code):
         lhs = code[1]
         rhs = code[2]
         linear = (is_cheap_to_copy(value) or
@@ -271,14 +271,14 @@ def substitute(code, value, rank, budget):
             # Lazy substitution.
             code = permute_rank(code, rank)
             return APP(ABS(code), value)
-    elif is_abs(code):
+    elif isa_abs(code):
         body = substitute(code[1], increment_rank(value), rank + 1, budget)
         return abstract(body)
-    elif is_join(code):
+    elif isa_join(code):
         lhs = substitute(code[1], value, rank, budget)
         rhs = substitute(code[2], value, rank, budget)
         return join(lhs, rhs)
-    elif is_quote(code):
+    elif isa_quote(code):
         body = substitute(code[1], value, rank, budget)
         return QUOTE(body)
     else:
@@ -306,11 +306,11 @@ def app(fun, arg):
         return fun
     elif fun is BOT:
         return fun
-    elif is_nvar(fun):
+    elif isa_nvar(fun):
         return APP(fun, arg)
-    elif is_ivar(fun):
+    elif isa_ivar(fun):
         return APP(fun, arg)
-    elif is_app(fun):
+    elif isa_app(fun):
         # Try to reduce strict binary functions of quoted codes.
         if fun[1] in (QAPP, QLESS, QEQUAL):
             lhs = fun[2]
@@ -318,12 +318,12 @@ def app(fun, arg):
             if lhs is TOP or rhs is TOP:
                 return TOP
             elif lhs is BOT:
-                if rhs is BOT or is_quote(rhs):
+                if rhs is BOT or isa_quote(rhs):
                     return BOT
-            elif is_quote(lhs):
+            elif isa_quote(lhs):
                 if rhs is BOT:
                     return BOT
-                elif is_quote(rhs):
+                elif isa_quote(rhs):
                     if fun[1] is QAPP:
                         return QUOTE(app(lhs[1], rhs[1]))
                     if fun[1] is QLESS:
@@ -337,21 +337,21 @@ def app(fun, arg):
                     elif ans is False:
                         return false
         return APP(fun, arg)
-    elif is_abs(fun):
+    elif isa_abs(fun):
         body = fun[1]
         return substitute(body, arg, 0, False)
-    elif is_join(fun):
+    elif isa_join(fun):
         lhs = app(fun[1], arg)
         rhs = app(fun[2], arg)
         return join(lhs, rhs)
-    elif is_quote(fun):
+    elif isa_quote(fun):
         return APP(fun, arg)
     elif fun is EVAL:
         if arg is TOP:
             return TOP
         elif arg is BOT:
             return BOT
-        elif is_quote(arg):
+        elif isa_quote(arg):
             return arg[1]
         else:
             return APP(fun, arg)
@@ -365,7 +365,7 @@ def app(fun, arg):
             return TOP
         elif arg is BOT:
             return BOT
-        elif is_quote(arg):
+        elif isa_quote(arg):
             return QUOTE(QUOTE(arg[1]))
         else:
             return APP(fun, arg)
@@ -380,7 +380,7 @@ def app(fun, arg):
         else:
             return APP(fun, arg)
     elif fun in TRY_CAST:
-        while is_app(arg) and arg[1] is fun:
+        while isa_app(arg) and arg[1] is fun:
             arg = arg[2]
         casted = TRY_CAST[fun](arg)
         if casted is None:
@@ -401,14 +401,14 @@ def abstract(code):
             'Cannot abstract quoted variable from {}'.format(code))
     if code is TOP or code is BOT:
         return code
-    elif is_app(code):
+    elif isa_app(code):
         fun = code[1]
         arg = code[2]
         if arg is IVAR(0) and IVAR(0) not in free_vars(fun):
             # Eta contract.
             return decrement_rank(fun)
         return ABS(code)
-    elif is_join(code):
+    elif isa_join(code):
         lhs = abstract(code[1])
         rhs = abstract(code[2])
         return join(lhs, rhs)
@@ -423,18 +423,18 @@ def qabstract(code):
     """Abstract one quoted de Bruijn variable and simplify."""
     if IVAR(0) not in quoted_vars(code):
         return app(app(B, abstract(code)), EVAL)
-    elif is_abs(code):
+    elif isa_abs(code):
         body = code[1]
         return app(C, abstract(qabstract(body)))  # FIXME increment rank
-    elif is_app(code):
+    elif isa_app(code):
         fun = code[1]
         arg = code[2]
         return app(app(S, qabstract(fun)), qabstract(arg))
-    elif is_join(code):
+    elif isa_join(code):
         lhs = qabstract(code[1])
         rhs = qabstract(code[2])
         return join(lhs, rhs)
-    elif is_quote(code):
+    elif isa_quote(code):
         body = code[1]
         if body is IVAR(0):
             return CODE
@@ -466,7 +466,7 @@ def nominal_qabstract(var, body):
 
 def iter_join(code):
     """Destructs JOIN and BOT terms."""
-    if is_join(code):
+    if isa_join(code):
         for term in iter_join(code[1]):
             yield term
         for term in iter_join(code[2]):
@@ -586,28 +586,28 @@ def try_decide_less_strong(lhs, rhs):
 @memoize_args
 def approximate_var(code, direction, rank):
     """Locally approximate wrt one variable."""
-    assert is_code(code), code
+    assert isa_code(code), code
     assert direction is TOP or direction is BOT, direction
     assert isinstance(rank, int) and rank >= 0, rank
     result = set()
     if IVAR(rank) not in free_vars(code):
         result.add(code)
-    elif is_ivar(code):
+    elif isa_ivar(code):
         assert code[1] == rank, code
         result.add(code)
         result.add(direction)
-    elif is_app(code):
+    elif isa_app(code):
         for lhs in approximate_var(code[1], direction, rank):
             for rhs in approximate_var(code[2], direction, rank):
                 result.add(app(lhs, rhs))
-    elif is_abs(code):
+    elif isa_abs(code):
         for body in approximate_var(code[1], direction, rank + 1):
             result.add(abstract(body))
-    elif is_join(code):
+    elif isa_join(code):
         for lhs in approximate_var(code[1], direction, rank):
             for rhs in approximate_var(code[2], direction, rank):
                 result.add(join(lhs, rhs))
-    elif is_quote(code):
+    elif isa_quote(code):
         result.add(code)
     else:
         raise ValueError(code)
@@ -617,10 +617,10 @@ def approximate_var(code, direction, rank):
 @memoize_args
 def approximate(code, direction):
     result = set()
-    if is_atom(code) or is_nvar(code) or is_ivar(code) or is_quote(code):
+    if isa_atom(code) or isa_nvar(code) or isa_ivar(code) or isa_quote(code):
         result.add(code)
-    elif is_app(code):
-        if is_abs(code[1]):
+    elif isa_app(code):
+        if isa_abs(code[1]):
             for fun_body in approximate_var(code[1][1], direction, 0):
                 for lhs in approximate(abstract(fun_body), direction):
                     for rhs in approximate(code[2], direction):
@@ -629,10 +629,10 @@ def approximate(code, direction):
             for lhs in approximate(code[1], direction):
                 for rhs in approximate(code[2], direction):
                     result.add(app(lhs, rhs))
-    elif is_abs(code):
+    elif isa_abs(code):
         for body in approximate(code[1], direction):
             result.add(abstract(body))
-    elif is_join(code):
+    elif isa_join(code):
         for lhs in approximate(code[1], direction):
             for rhs in approximate(code[2], direction):
                 result.add(join(lhs, rhs))
@@ -642,7 +642,7 @@ def approximate(code, direction):
 
 
 def unabstract(code):
-    if is_abs(code):
+    if isa_abs(code):
         return code[1]
     else:
         return app(increment_rank(code), IVAR(0))
@@ -650,7 +650,7 @@ def unabstract(code):
 
 def unapply(code):
     args = []
-    while is_app(code):
+    while isa_app(code):
         args.append(code[2])
         code = code[1]
     return code, args
@@ -659,8 +659,8 @@ def unapply(code):
 @memoize_args
 def try_decide_less_weak(lhs, rhs):
     """Weak decision procedure returning True, False, or None."""
-    assert is_code(lhs), lhs
-    assert is_code(rhs), rhs
+    assert isa_code(lhs), lhs
+    assert isa_code(rhs), rhs
 
     # Try simple cases.
     if lhs is BOT or lhs is rhs or rhs is TOP:
@@ -669,14 +669,14 @@ def try_decide_less_weak(lhs, rhs):
         return False
 
     # Destructure JOIN.
-    if is_join(lhs):
+    if isa_join(lhs):
         return trool_all(try_decide_less_weak(i, rhs) for i in iter_join(lhs))
-    if is_join(rhs):
+    if isa_join(rhs):
         # This requires we give up at unreduced terms.
         return trool_any(try_decide_less_weak(lhs, i) for i in iter_join(rhs))
 
     # Destructure ABS.
-    while is_abs(lhs) or is_abs(rhs):
+    while isa_abs(lhs) or isa_abs(rhs):
         lhs = unabstract(lhs)
         rhs = unabstract(rhs)
     assert lhs is not rhs, lhs
@@ -693,17 +693,17 @@ def try_decide_less_weak(lhs, rhs):
                 return True
 
     # Give up at unreduced terms.
-    if is_nvar(lhs_head) or is_nvar(rhs_head):
+    if isa_nvar(lhs_head) or isa_nvar(rhs_head):
         return None
-    if is_abs(lhs_head) or is_abs(rhs_head):
+    if isa_abs(lhs_head) or isa_abs(rhs_head):
         return None
-    if lhs_args and not is_ivar(lhs_head):
+    if lhs_args and not isa_ivar(lhs_head):
         return None
-    if rhs_args and not is_ivar(rhs_head):
+    if rhs_args and not isa_ivar(rhs_head):
         return None
 
     # Distinguish solvable terms.
-    if is_ivar(lhs_head) and is_ivar(rhs_head):
+    if isa_ivar(lhs_head) and isa_ivar(rhs_head):
         if lhs_head is not rhs_head or len(lhs_args) != len(rhs_args):
             return False
         return trool_all(
@@ -712,7 +712,7 @@ def try_decide_less_weak(lhs, rhs):
         )
 
     # Distinguish quoted terms.
-    if is_quote(lhs_head) and is_quote(rhs_head):
+    if isa_quote(lhs_head) and isa_quote(rhs_head):
         return try_decide_equal(lhs_head[1], rhs_head[1])
 
     # Anything else is incomparable.
@@ -728,28 +728,28 @@ def try_decide_equal(lhs, rhs):
 
 @memoize_args
 def _ground(code, direction, nvars, rank):
-    if is_atom(code):
+    if isa_atom(code):
         return code
-    elif is_nvar(code):
+    elif isa_nvar(code):
         return direction if code in nvars else code
-    elif is_ivar(code):
+    elif isa_ivar(code):
         return direction if code[1] >= rank else code
-    elif is_abs(code):
+    elif isa_abs(code):
         body = _ground(code[1], direction, nvars, rank + 1)
         return abstract(body)
-    elif is_app(code):
+    elif isa_app(code):
         lhs = _ground(code[1], direction, nvars, rank)
         rhs = _ground(code[2], direction, nvars, rank)
         return app(lhs, rhs)
-    elif is_join(code):
+    elif isa_join(code):
         lhs = _ground(code[1], direction, nvars, rank)
         rhs = _ground(code[2], direction, nvars, rank)
         return join(lhs, rhs)
-    elif is_quote(code):
+    elif isa_quote(code):
         for var in free_vars(code):
-            if is_nvar(var) and var in nvars:
+            if isa_nvar(var) and var in nvars:
                 return direction
-            if is_ivar(var) and var[1] >= rank:
+            if isa_ivar(var) and var[1] >= rank:
                 return direction
         return code
     else:
@@ -759,8 +759,8 @@ def _ground(code, direction, nvars, rank):
 
 def ground(code):
     """Approximate by grounding all free variables with [BOT, TOP]."""
-    assert is_code(code)
-    nvars = unique(frozenset(v for v in free_vars(code) if is_nvar(v)))
+    assert isa_code(code)
+    nvars = unique(frozenset(v for v in free_vars(code) if isa_nvar(v)))
     return _ground(code, BOT, nvars, 0), _ground(code, TOP, nvars, 0)
 
 
@@ -826,7 +826,7 @@ def try_cast_maybe(x):
     assert x is not None
     if x in (TOP, BOT, K):
         return x
-    if is_app(x) and x[1] is K and is_app(x[2]) and x[2][1] is CI:
+    if isa_app(x) and x[1] is K and isa_app(x[2]) and x[2][1] is CI:
         return x
     lb, ub = ground(x)
     if try_decide_less(lb, none) is False:
@@ -855,12 +855,12 @@ def try_cast_code(x):
 
     """
     assert x is not None
-    if x is TOP or x is BOT or is_quote(x):
+    if x is TOP or x is BOT or isa_quote(x):
         return x
-    if is_app(x):
+    if isa_app(x):
         if x[1] is QQUOTE:
             return x
-        if is_app(x[1]) and x[1][1] is QAPP:
+        if isa_app(x[1]) and x[1][1] is QAPP:
             return x
     return None
 
@@ -875,17 +875,17 @@ def priority(code):
 @memoize_arg
 def is_normal(code):
     """Returns whether code is in linear normal form."""
-    if is_atom(code) or is_nvar(code) or is_ivar(code):
+    if isa_atom(code) or isa_nvar(code) or isa_ivar(code):
         return True
-    elif is_abs(code):
+    elif isa_abs(code):
         return is_normal(code[1])
-    elif is_app(code):
-        if is_abs(code[1]):
+    elif isa_app(code):
+        if isa_abs(code[1]):
             return False
         return is_normal(code[1]) and is_normal(code[2])
-    elif is_join(code):
+    elif isa_join(code):
         return is_normal(code[1]) and is_normal(code[2])
-    elif is_quote(code):
+    elif isa_quote(code):
         return is_normal(code[1])
     else:
         raise ValueError(code)
@@ -902,10 +902,10 @@ def try_compute_step(code):
 
 def _compute_step(code):
     assert not is_normal(code)
-    if is_app(code):
+    if isa_app(code):
         fun = code[1]
         arg = code[2]
-        if is_abs(fun):
+        if isa_abs(fun):
             assert not is_linear(fun), fun
             assert not is_linear(arg), arg
             body = fun[1]
@@ -915,14 +915,14 @@ def _compute_step(code):
         else:
             fun = _compute_step(fun)
         return app(fun, arg)
-    elif is_join(code):
+    elif isa_join(code):
         lhs = _compute_step(code[1])  # Relies on prioritized sorting.
         rhs = code[2]
         return join(lhs, rhs)
-    elif is_abs(code):
+    elif isa_abs(code):
         body = _compute_step(code[1])
         return abstract(body)
-    elif is_quote(code):
+    elif isa_quote(code):
         body = _compute_step(code[1])
         return QUOTE(body)
     else:
@@ -953,10 +953,10 @@ convert = syntax.Transform(**SIGNATURE)
 @memoize_arg
 def simplify(code):
     """Simplify code, converting to a linear Bohm tree."""
-    assert is_code(code), code
-    if is_atom(code):
+    assert isa_code(code), code
+    if isa_atom(code):
         return SIGNATURE.get(code, code)
-    elif is_ivar(code) or is_nvar(code):
+    elif isa_ivar(code) or isa_nvar(code):
         return code
     else:
         return SIGNATURE[code[0]](*map(simplify, code[1:]))
@@ -990,21 +990,21 @@ def _print_tiny(code, tokens):
         tokens.append('T')
     elif code is BOT:
         tokens.append('_')
-    elif is_ivar(code):
+    elif isa_ivar(code):
         rank = code[1]
         assert rank <= 9
         tokens.append(str(rank))
-    elif is_abs(code):
+    elif isa_abs(code):
         tokens.append('^')
         _print_tiny(code[1], tokens)
-    elif is_app(code):
+    elif isa_app(code):
         head, args = unapply(code)
         tokens.append('(')
         _print_tiny(head, tokens)
         for arg in reversed(args):
             _print_tiny(arg, tokens)
         tokens.append(')')
-    elif is_join(code):
+    elif isa_join(code):
         tokens.append('[')
         terms = list(iter_join(code))
         _print_tiny(terms[0], tokens)

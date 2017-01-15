@@ -33,7 +33,7 @@ def _code(*args):
 MEMOIZED_CACHES[_code] = _CODES
 
 
-def is_code(arg):
+def isa_code(arg):
     try:
         return _CODES[arg] is arg
     except KeyError:
@@ -132,7 +132,7 @@ def JOIN(lhs, rhs):
 
 @builder
 def QUOTE(code):
-    # TODO assert all(not is_ivar(v) for v in free_vars(code))
+    # TODO assert all(not isa_ivar(v) for v in free_vars(code))
     return _code(_QUOTE, code)
 
 
@@ -144,7 +144,7 @@ def ABS(body):
 
 @builder
 def FUN(var, body):
-    assert is_nvar(var), var
+    assert isa_nvar(var), var
     assert var not in quoted_vars(body), (var, body)
     return _code(_FUN, var, body)
 
@@ -170,53 +170,53 @@ def EQUAL(lhs, rhs):
     return _code(_EQUAL, lhs, rhs)
 
 
-def is_atom(code):
-    assert is_code(code), code
+def isa_atom(code):
+    assert isa_code(code), code
     return isinstance(code, str)
 
 
-def is_nvar(code):
-    assert is_code(code), code
+def isa_nvar(code):
+    assert isa_code(code), code
     return isinstance(code, tuple) and code[0] is _NVAR
 
 
-def is_ivar(code):
-    assert is_code(code), code
+def isa_ivar(code):
+    assert isa_code(code), code
     return isinstance(code, tuple) and code[0] is _IVAR
 
 
-def is_app(code):
-    assert is_code(code), code
+def isa_app(code):
+    assert isa_code(code), code
     return isinstance(code, tuple) and code[0] is _APP
 
 
-def is_join(code):
-    assert is_code(code), code
+def isa_join(code):
+    assert isa_code(code), code
     return isinstance(code, tuple) and code[0] is _JOIN
 
 
-def is_quote(code):
-    assert is_code(code), code
+def isa_quote(code):
+    assert isa_code(code), code
     return isinstance(code, tuple) and code[0] is _QUOTE
 
 
-def is_abs(code):
-    assert is_code(code), code
+def isa_abs(code):
+    assert isa_code(code), code
     return isinstance(code, tuple) and code[0] is _ABS
 
 
-def is_fun(code):
-    assert is_code(code), code
+def isa_fun(code):
+    assert isa_code(code), code
     return isinstance(code, tuple) and code[0] is _FUN
 
 
-def is_rec(code):
-    assert is_code(code), code
+def isa_rec(code):
+    assert isa_code(code), code
     return isinstance(code, tuple) and code[0] is _REC
 
 
-def is_equal(code):
-    assert is_code(code), code
+def isa_equal(code):
+    assert isa_code(code), code
     return isinstance(code, tuple) and code[0] is _EQUAL
 
 
@@ -232,13 +232,13 @@ class Transform(object):
 
     @memoize_args
     def __call__(self, code):
-        if not is_code(code):
+        if not isa_code(code):
             raise TypeError(code)
-        elif is_atom(code):
+        elif isa_atom(code):
             return getattr(self, code)
-        elif is_nvar(code):
+        elif isa_nvar(code):
             return self.NVAR(code[1])
-        elif is_ivar(code):
+        elif isa_ivar(code):
             return self.IVAR(code[1])
         else:
             args = [self(arg) for arg in code[1:]]
@@ -277,28 +277,28 @@ def _anonymize(code, var, rank, transform):
     """Convert a nominal variable to a de Bruijn variable."""
     if code is var:
         return transform.IVAR(rank)
-    elif is_atom(code) or is_nvar(code):
+    elif isa_atom(code) or isa_nvar(code):
         return transform(code)
-    elif is_ivar(code):
+    elif isa_ivar(code):
         if code[1] < rank:
             return transform.IVAR(code[1])
         else:
             return transform.IVAR(code[1] + 1)
-    elif is_abs(code):
+    elif isa_abs(code):
         body = _anonymize(code[1], var, rank + 1, transform)
         return transform.ABS(body)
-    elif is_rec(code):
+    elif isa_rec(code):
         body = _anonymize(code[1], var, rank + 1, transform)
         return transform.REC(body)
-    elif is_app(code):
+    elif isa_app(code):
         lhs = _anonymize(code[1], var, rank, transform)
         rhs = _anonymize(code[2], var, rank, transform)
         return transform.APP(lhs, rhs)
-    elif is_join(code):
+    elif isa_join(code):
         lhs = _anonymize(code[1], var, rank, transform)
         rhs = _anonymize(code[2], var, rank, transform)
         return transform.JOIN(lhs, rhs)
-    elif is_quote(code):
+    elif isa_quote(code):
         body = _anonymize(code[1], var, rank, transform)
         return transform.QUOTE(body)
     else:
@@ -308,9 +308,9 @@ def _anonymize(code, var, rank, transform):
 
 def decrement_var(var):
     """Decrement rank of an IVAR or leave an NVAR untouched."""
-    if is_nvar(var):
+    if isa_nvar(var):
         return var
-    elif is_ivar(var):
+    elif isa_ivar(var):
         assert var[1] > 0, var
         return IVAR(var[1] - 1)
     else:
@@ -322,23 +322,23 @@ def decrement_var(var):
 @unique_result
 def free_vars(code):
     """Returns set of free variables, possibly quoted."""
-    assert is_code(code), code
-    if is_atom(code):
+    assert isa_code(code), code
+    if isa_atom(code):
         return frozenset()
-    elif is_nvar(code) or is_ivar(code):
+    elif isa_nvar(code) or isa_ivar(code):
         return frozenset([code])
-    elif is_app(code) or is_join(code):
+    elif isa_app(code) or isa_join(code):
         return free_vars(code[1]) | free_vars(code[2])
-    elif is_quote(code):
+    elif isa_quote(code):
         return free_vars(code[1])
-    elif is_abs(code) or is_rec(code):
+    elif isa_abs(code) or isa_rec(code):
         return frozenset(
             decrement_var(v)
             for v in free_vars(code[1])
             if v is not IVAR_0
         )
-    elif is_fun(code):
-        assert is_nvar(code[1])
+    elif isa_fun(code):
+        assert isa_nvar(code[1])
         return free_vars(code[2]) - frozenset([code[1]])
     else:
         raise ValueError(code)
@@ -349,20 +349,20 @@ def free_vars(code):
 @unique_result
 def quoted_vars(code):
     """Returns set of free quoted variables."""
-    assert is_code(code), code
-    if is_atom(code) or is_nvar(code) or is_ivar(code):
+    assert isa_code(code), code
+    if isa_atom(code) or isa_nvar(code) or isa_ivar(code):
         return frozenset()
-    elif is_quote(code):
+    elif isa_quote(code):
         return free_vars(code[1])
-    elif is_app(code) or is_join(code):
+    elif isa_app(code) or isa_join(code):
         return quoted_vars(code[1]) | quoted_vars(code[2])
-    elif is_abs(code) or is_rec(code):
+    elif isa_abs(code) or isa_rec(code):
         return frozenset(
             decrement_var(v)
             for v in quoted_vars(code[1])
             if v is not IVAR_0
         )
-    elif is_fun(code):
+    elif isa_fun(code):
         return quoted_vars(code[2])
     else:
         raise ValueError(code)
@@ -372,13 +372,13 @@ def quoted_vars(code):
 @memoize_arg
 def is_closed(code):
     """A code is closed if all de Bruijn variables are bound."""
-    return not any(is_ivar(v) for v in free_vars(code))
+    return not any(isa_ivar(v) for v in free_vars(code))
 
 
 @memoize_arg
 def is_defined(code):
     """A code is defined if all nominal variables have been substituted."""
-    return not any(is_nvar(v) for v in free_vars(code))
+    return not any(isa_nvar(v) for v in free_vars(code))
 
 
 # ----------------------------------------------------------------------------
@@ -410,12 +410,12 @@ def complexity(code):
       at any given complexity.
 
     """
-    assert is_code(code), code
-    if is_atom(code):
+    assert isa_code(code), code
+    if isa_atom(code):
         return ATOM_COMPLEXITY[code]
-    elif is_nvar(code) or is_ivar(code):
+    elif isa_nvar(code) or isa_ivar(code):
         return 1
-    elif is_join(code):
+    elif isa_join(code):
         return max(complexity(code[1]), complexity(code[2]))
     elif isinstance(code, tuple):
         return 1 + max(complexity(arg) for arg in code[1:])
@@ -485,7 +485,7 @@ _PARSERS = {
 
 
 def polish_print(code):
-    assert is_code(code), code
+    assert isa_code(code), code
     tokens = []
     _polish_print_tokens(code, tokens)
     return ' '.join(tokens)
@@ -518,17 +518,17 @@ def _polish_print_tokens(code, tokens):
 @memoize_arg
 def to_sexpr(code):
     """Converts from a python code to a python S-expression."""
-    assert is_code(code), code
+    assert isa_code(code), code
     if isinstance(code, str):
         return code
-    elif is_nvar(code) or is_ivar(code):
+    elif isa_nvar(code) or isa_ivar(code):
         return code[1]
     head = code
     args = []
-    while is_app(head):
+    while isa_app(head):
         args.append(to_sexpr(head[2]))
         head = head[1]
-    if is_nvar(head) or is_ivar(head):
+    if isa_nvar(head) or isa_ivar(head):
         head = head[1]
     elif head[0] in _builders:
         for arg in head[-1:0:-1]:
@@ -595,7 +595,7 @@ def sexpr_print_sexpr(sexpr):
 @memoize_arg
 def sexpr_print(code):
     """Prints a python code as a string S-expression."""
-    assert is_code(code), code
+    assert isa_code(code), code
     sexpr = to_sexpr(code)
     return sexpr_print_sexpr(sexpr)
 

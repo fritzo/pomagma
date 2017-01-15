@@ -28,22 +28,22 @@ Headex = namedtuple('Headex', ['head', 'args'])
 Combinator = namedtuple('Combinator', ['bound', 'headex'])
 
 
-def is_nvar(thing):
+def isa_nvar(thing):
     return isinstance(thing, str)
 
 
-def is_ivar(thing):
+def isa_ivar(thing):
     return isinstance(thing, int) and thing >= 0
 
 
 def make_pattern(head, *args):
-    assert is_nvar(head)
-    assert all(is_ivar(arg) for arg in args)
+    assert isa_nvar(head)
+    assert all(isa_ivar(arg) for arg in args)
     return Pattern(head, args)
 
 
 def make_headex(head, *args):
-    assert is_ivar(head)
+    assert isa_ivar(head)
     assert all(isinstance(arg, Pattern) for arg in args)
     return Headex(head, args)
 
@@ -82,8 +82,8 @@ def eta_expand(comb):
 
 def substitute_headex(headex, src, dst):
     assert isinstance(headex, Headex)
-    assert is_ivar(src)
-    assert is_ivar(dst)
+    assert isa_ivar(src)
+    assert isa_ivar(dst)
     head = dst if headex.head == src else headex.head
     args = [
         substitute_pattern(patt, src, dst)
@@ -94,15 +94,15 @@ def substitute_headex(headex, src, dst):
 
 def substitute_pattern(patt, src, dst):
     assert isinstance(patt, Pattern)
-    assert is_ivar(src)
-    assert is_ivar(dst)
+    assert isa_ivar(src)
+    assert isa_ivar(dst)
     args = [dst if arg == src else arg for arg in patt.args]
     return make_pattern(patt.head, *args)
 
 
 def app(comb, *args):
     assert isinstance(comb, Combinator)
-    assert all(is_ivar(arg) for arg in args)
+    assert all(isa_ivar(arg) for arg in args)
     assert all(arg >= comb.bound for arg in args), 'variable name conflict'
     bound, headex = comb
     for arg in args:
@@ -125,7 +125,7 @@ class Presentation(object):
         self._equations['_I'].add(_I)  # Required by eta_expand(-).
 
     def define(self, name, combinator):
-        assert is_nvar(name) and name != '_I'
+        assert isa_nvar(name) and name != '_I'
         assert isinstance(combinator, Combinator) and is_closed(combinator)
         self._equations[name].add(combinator)
         for patt in combinator.headex.args:
