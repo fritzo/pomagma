@@ -7,8 +7,8 @@ Intro forms are hand-optimized; see lib_test.py for lambda versions.
 from pomagma.reducer.bohm import CI, KI, B, C, I, K, false, true
 from pomagma.reducer.sugar import (app, combinator, join_, let, qapp, quote,
                                    symmetric, typed)
-from pomagma.reducer.syntax import (BOOL, BOT, EQUAL, EVAL, LESS, MAYBE, QUOTE,
-                                    TOP, UNIT)
+from pomagma.reducer.syntax import (BOOL, BOT, EVAL, MAYBE, QEQUAL, QLESS,
+                                    QUOTE, TOP, UNIT)
 
 
 def COMP(lhs, rhs):
@@ -530,17 +530,17 @@ def a_arrow(a, b):
 
 @combinator
 def equal(x, y):
-    return bool_type(app(EQUAL, x, y))
+    return bool_type(app(QEQUAL, x, y))
 
 
 @combinator
 def less(x, y):
-    return bool_type(app(LESS, x, y))
+    return bool_type(app(QLESS, x, y))
 
 
 @combinator
 def enum_contains(qxs, qy):
-    return app(LESS, qapp(quote(box), qy), qxs)
+    return app(QLESS, qapp(quote(box), qy), qxs)
 
 
 # ----------------------------------------------------------------------------

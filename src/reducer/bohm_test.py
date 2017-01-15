@@ -10,9 +10,9 @@ from pomagma.reducer.bohm import (CB, CI, KI, B, C, I, K, S, app, false,
                                   print_tiny, sexpr_simplify, true,
                                   try_decide_equal, try_decide_less,
                                   try_decide_less_weak)
-from pomagma.reducer.syntax import (ABS, APP, BOT, CODE, EQUAL, EVAL, IVAR,
-                                    JOIN, LESS, NVAR, QAPP, QQUOTE, QUOTE, TOP,
-                                    is_code, polish_print, quoted_vars,
+from pomagma.reducer.syntax import (ABS, APP, BOT, CODE, EVAL, IVAR, JOIN,
+                                    NVAR, QAPP, QEQUAL, QLESS, QQUOTE, QUOTE,
+                                    TOP, is_code, polish_print, quoted_vars,
                                     sexpr_parse, sexpr_print)
 from pomagma.reducer.testing import iter_equations
 from pomagma.util.testing import for_each, xfail_if_not_implemented
@@ -30,7 +30,7 @@ z = NVAR('z')
 
 delta = ABS(APP(i0, i0))
 
-ACTIVE_ATOMS = [EVAL, QAPP, QQUOTE, LESS, EQUAL]
+ACTIVE_ATOMS = [EVAL, QAPP, QQUOTE, QLESS, QEQUAL]
 
 s_atoms = s.one_of(
     s.sampled_from([TOP, BOT]),
@@ -95,8 +95,8 @@ INCREMENT_RANK_EXAMPLES = [
     (EVAL, EVAL),
     (QAPP, QAPP),
     (QQUOTE, QQUOTE),
-    (LESS, LESS),
-    (EQUAL, EQUAL),
+    (QLESS, QLESS),
+    (QEQUAL, QEQUAL),
 ]
 
 
@@ -121,8 +121,8 @@ DECREMENT_RANK_EXAMPLES = [
     (EVAL, EVAL),
     (QAPP, QAPP),
     (QQUOTE, QQUOTE),
-    (LESS, LESS),
-    (EQUAL, EQUAL),
+    (QLESS, QLESS),
+    (QEQUAL, QEQUAL),
 ]
 
 
@@ -157,8 +157,8 @@ IS_LINEAR_EXAMPLES = [
     (EVAL, True),
     (QAPP, True),
     (QQUOTE, True),
-    (LESS, True),
-    (EQUAL, True),
+    (QLESS, True),
+    (QEQUAL, True),
 ]
 
 
@@ -224,8 +224,8 @@ SUBSTITUTE_EXAMPLES = [
     (EVAL, x, EVAL),
     (QAPP, x, QAPP),
     (QQUOTE, x, QQUOTE),
-    (LESS, x, LESS),
-    (EQUAL, x, EQUAL),
+    (QLESS, x, QLESS),
+    (QEQUAL, x, QEQUAL),
 ]
 
 
@@ -296,40 +296,40 @@ APP_EXAMPLES = [
     (QQUOTE, BOT, BOT),
     (QQUOTE, QUOTE(x), QUOTE(QUOTE(x))),
     (QQUOTE, x, APP(QQUOTE, x)),
-    (APP(LESS, TOP), TOP, TOP),
-    (APP(LESS, TOP), BOT, TOP),
-    (APP(LESS, TOP), QUOTE(y), TOP),
-    (APP(LESS, TOP), y, TOP),
-    (APP(LESS, BOT), TOP, TOP),
-    (APP(LESS, BOT), BOT, BOT),
-    (APP(LESS, BOT), QUOTE(y), BOT),
-    (APP(LESS, BOT), i1, APP(APP(LESS, BOT), i1)),
-    (APP(LESS, QUOTE(i0)), TOP, TOP),
-    (APP(LESS, QUOTE(i0)), BOT, BOT),
-    (APP(LESS, QUOTE(i0)), QUOTE(i1), false),
-    (APP(LESS, QUOTE(i0)), QUOTE(i0), true),
-    (APP(LESS, QUOTE(i0)), i1, APP(APP(LESS, QUOTE(i0)), i1)),
-    (APP(LESS, i0), TOP, TOP),
-    (APP(LESS, i0), BOT, APP(APP(LESS, i0), BOT)),
-    (APP(LESS, i0), QUOTE(i1), APP(APP(LESS, i0), QUOTE(i1))),
-    (APP(LESS, i0), i1, APP(APP(LESS, i0), i1)),
-    (APP(EQUAL, TOP), TOP, TOP),
-    (APP(EQUAL, TOP), BOT, TOP),
-    (APP(EQUAL, TOP), QUOTE(i1), TOP),
-    (APP(EQUAL, TOP), i1, TOP),
-    (APP(EQUAL, BOT), TOP, TOP),
-    (APP(EQUAL, BOT), BOT, BOT),
-    (APP(EQUAL, BOT), QUOTE(i1), BOT),
-    (APP(EQUAL, BOT), i1, APP(APP(EQUAL, BOT), i1)),
-    (APP(EQUAL, QUOTE(i0)), TOP, TOP),
-    (APP(EQUAL, QUOTE(i0)), BOT, BOT),
-    (APP(EQUAL, QUOTE(i0)), QUOTE(i1), false),
-    (APP(EQUAL, QUOTE(i0)), QUOTE(i0), true),
-    (APP(EQUAL, QUOTE(i0)), i1, APP(APP(EQUAL, QUOTE(i0)), i1)),
-    (APP(EQUAL, i0), TOP, TOP),
-    (APP(EQUAL, i0), BOT, APP(APP(EQUAL, i0), BOT)),
-    (APP(EQUAL, i0), QUOTE(i1), APP(APP(EQUAL, i0), QUOTE(i1))),
-    (APP(EQUAL, i0), i1, APP(APP(EQUAL, i0), i1)),
+    (APP(QLESS, TOP), TOP, TOP),
+    (APP(QLESS, TOP), BOT, TOP),
+    (APP(QLESS, TOP), QUOTE(y), TOP),
+    (APP(QLESS, TOP), y, TOP),
+    (APP(QLESS, BOT), TOP, TOP),
+    (APP(QLESS, BOT), BOT, BOT),
+    (APP(QLESS, BOT), QUOTE(y), BOT),
+    (APP(QLESS, BOT), i1, APP(APP(QLESS, BOT), i1)),
+    (APP(QLESS, QUOTE(i0)), TOP, TOP),
+    (APP(QLESS, QUOTE(i0)), BOT, BOT),
+    (APP(QLESS, QUOTE(i0)), QUOTE(i1), false),
+    (APP(QLESS, QUOTE(i0)), QUOTE(i0), true),
+    (APP(QLESS, QUOTE(i0)), i1, APP(APP(QLESS, QUOTE(i0)), i1)),
+    (APP(QLESS, i0), TOP, TOP),
+    (APP(QLESS, i0), BOT, APP(APP(QLESS, i0), BOT)),
+    (APP(QLESS, i0), QUOTE(i1), APP(APP(QLESS, i0), QUOTE(i1))),
+    (APP(QLESS, i0), i1, APP(APP(QLESS, i0), i1)),
+    (APP(QEQUAL, TOP), TOP, TOP),
+    (APP(QEQUAL, TOP), BOT, TOP),
+    (APP(QEQUAL, TOP), QUOTE(i1), TOP),
+    (APP(QEQUAL, TOP), i1, TOP),
+    (APP(QEQUAL, BOT), TOP, TOP),
+    (APP(QEQUAL, BOT), BOT, BOT),
+    (APP(QEQUAL, BOT), QUOTE(i1), BOT),
+    (APP(QEQUAL, BOT), i1, APP(APP(QEQUAL, BOT), i1)),
+    (APP(QEQUAL, QUOTE(i0)), TOP, TOP),
+    (APP(QEQUAL, QUOTE(i0)), BOT, BOT),
+    (APP(QEQUAL, QUOTE(i0)), QUOTE(i1), false),
+    (APP(QEQUAL, QUOTE(i0)), QUOTE(i0), true),
+    (APP(QEQUAL, QUOTE(i0)), i1, APP(APP(QEQUAL, QUOTE(i0)), i1)),
+    (APP(QEQUAL, i0), TOP, TOP),
+    (APP(QEQUAL, i0), BOT, APP(APP(QEQUAL, i0), BOT)),
+    (APP(QEQUAL, i0), QUOTE(i1), APP(APP(QEQUAL, i0), QUOTE(i1))),
+    (APP(QEQUAL, i0), i1, APP(APP(QEQUAL, i0), i1)),
     (C, B, ABS(ABS(ABS(APP(i1, APP(i2, i0)))))),
     (S, I, ABS(ABS(APP(i0, APP(i1, i0))))),
     (app(S, I), I, ABS(APP(i0, i0))),
@@ -614,8 +614,8 @@ INCOMPARABLE_PAIRS = [
     (i0, EVAL),
     (i0, QAPP),
     (i0, QQUOTE),
-    (i0, LESS),
-    (i0, EQUAL),
+    (i0, QLESS),
+    (i0, QEQUAL),
     (i0, QUOTE(TOP)),
     (QUOTE(TOP), QUOTE(BOT)),
     (i0, ABS(i0)),
@@ -642,8 +642,8 @@ INCOMPARABLE_CODES = [
     # EVAL,
     # QAPP,
     # QQUOTE,
-    # LESS,
-    # EQUAL,
+    # QLESS,
+    # QEQUAL,
 ]
 
 W = ABS(ABS(APP(APP(i1, i0), i0)))
@@ -745,8 +745,8 @@ def test_app_less(lhs, rhs):
     elif truth_value is False:
         expected = false
     else:
-        expected = APP(APP(LESS, QUOTE(lhs)), QUOTE(rhs))
-    assert app(app(LESS, QUOTE(lhs)), QUOTE(rhs)) is expected
+        expected = APP(APP(QLESS, QUOTE(lhs)), QUOTE(rhs))
+    assert app(app(QLESS, QUOTE(lhs)), QUOTE(rhs)) is expected
 
 
 @hypothesis.given(s_codes)
@@ -769,8 +769,8 @@ def test_app_equal(lhs, rhs):
     elif truth_value is False:
         expected = false
     else:
-        expected = APP(APP(EQUAL, QUOTE(lhs)), QUOTE(rhs))
-    assert app(app(EQUAL, QUOTE(lhs)), QUOTE(rhs)) is expected
+        expected = APP(APP(QEQUAL, QUOTE(lhs)), QUOTE(rhs))
+    assert app(app(QEQUAL, QUOTE(lhs)), QUOTE(rhs)) is expected
 
 
 @hypothesis.given(s_codes)
@@ -902,8 +902,8 @@ COMPUTE_EXAMPLES = [
     (EVAL, None),
     (QAPP, None),
     (QQUOTE, None),
-    (LESS, None),
-    (EQUAL, None),
+    (QLESS, None),
+    (QEQUAL, None),
 ]
 
 

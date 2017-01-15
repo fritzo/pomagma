@@ -1,49 +1,49 @@
 ;; variables
-(EQUAL (QUOTE x) (QUOTE x))
-(EQUAL (QUOTE x y) (QUOTE x y))
-(EQUAL (QUOTE x I) (QUOTE x I))
+(EQUAL x x)
+(EQUAL (x y) (x y))
+(EQUAL (x I) (x I))
 
 ;; TOP
-(EQUAL (QUOTE TOP) (QUOTE TOP))
-(EQUAL (QUOTE (TOP x) (QUOTE TOP)))
-(EQUAL (QUOTE (TOP x y) (QUOTE TOP)))
+(EQUAL TOP TOP)
+(EQUAL (TOP x) (TOP)
+(EQUAL (TOP x y) (TOP)
 
 ;; BOT
-(EQUAL (QUOTE BOT) (QUOTE BOT))
-(EQUAL (QUOTE (BOT x) (QUOTE BOT)))
-(EQUAL (QUOTE (BOT x y) (QUOTE BOT)))
+(EQUAL BOT BOT)
+(EQUAL (BOT x) BOT)
+(EQUAL (BOT x y) BOT)
 
 ;; I
-(EQUAL (QUOTE I) (QUOTE I))
-(EQUAL (QUOTE (I x)) (QUOTE x))
-(EQUAL (QUOTE (I K)) (QUOTE K))
-(EQUAL (QUOTE (I (B B B))) (QUOTE (B B B)))
+(EQUAL I I)
+(EQUAL (I x) x)
+(EQUAL (I K) K)
+(EQUAL (I (B B B)) (B B B))
 
 ;; K
-(EQUAL (QUOTE K) (QUOTE K))
-(EQUAL (QUOTE (K x)) (QUOTE (K x)))
-(EQUAL (QUOTE (K x y)) (QUOTE x))
-(EQUAL (QUOTE (K x y z)) (QUOTE (x z)))
+(EQUAL K K)
+(EQUAL (K x) (K x))
+(EQUAL (K x y) x)
+(EQUAL (K x y z) (x z))
 
 ;; B
-(EQUAL (QUOTE B) (QUOTE B))
-(EQUAL (QUOTE (B x)) (QUOTE (B x)))
-(EQUAL (QUOTE (B x y)) (QUOTE (B x y)))
-(EQUAL (QUOTE (B x y z)) (QUOTE (x (y z))))
-(EQUAL (QUOTE (B x y z w)) (QUOTE (x (y z) w)))
-(EQUAL (QUOTE (B B)) (QUOTE (B B)))
-(EQUAL (QUOTE (B B B)) (QUOTE (B B B)))
+(EQUAL B B)
+(EQUAL (B x) (B x))
+(EQUAL (B x y) (B x y))
+(EQUAL (B x y z) (x (y z)))
+(EQUAL (B x y z w) (x (y z) w))
+(EQUAL (B B) (B B))
+(EQUAL (B B B) (B B B))
 
 ;; C
-(EQUAL (QUOTE C) (QUOTE C))
-(EQUAL (QUOTE (C x)) (QUOTE (C x)))
-(EQUAL (QUOTE (C x y)) (QUOTE (C x y)))
-(EQUAL (QUOTE (C x y z)) (QUOTE (x z y)))
-(EQUAL (QUOTE (C x y z w)) (QUOTE (x z y w)))
+(EQUAL C C)
+(EQUAL (C x) (C x))
+(EQUAL (C x y) (C x y))
+(EQUAL (C x y z) (x z y))
+(EQUAL (C x y z w) (x z y w))
 
 ;; S
-(EQUAL (QUOTE S) (QUOTE S))
-(EQUAL (QUOTE (S x)) (QUOTE (S x)))
-(EQUAL (QUOTE (S x y)) (QUOTE (S x y)))
-(EQUAL (QUOTE (S x y z)) (QUOTE (x z (y z))))
-(EQUAL (QUOTE (S x y z w)) (QUOTE (x z (y z) w)))
+(EQUAL S S)
+(EQUAL (S x) (S x))
+(EQUAL (S x y) (S x y))
+(EQUAL (S x y z) (x z (y z)))
+(EQUAL (S x y z w) (x z (y z) w))

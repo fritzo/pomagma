@@ -72,12 +72,16 @@ B = make_keyword('B')
 C = make_keyword('C')
 S = make_keyword('S')
 
+EQUAL = make_keyword('EQUAL')
+LESS = make_keyword('LESS')
+NLESS = make_keyword('NLESS')
+
 CODE = make_keyword('CODE')
 EVAL = make_keyword('EVAL')
 QAPP = make_keyword('QAPP')
 QQUOTE = make_keyword('QQUOTE')
-EQUAL = make_keyword('EQUAL')
-LESS = make_keyword('LESS')
+QEQUAL = make_keyword('QEQUAL')
+QLESS = make_keyword('QLESS')
 
 V = make_keyword('V')
 A = make_keyword('A')

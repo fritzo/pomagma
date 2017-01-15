@@ -58,15 +58,14 @@ def iter_equations(test_id, suites=None):
     assert isinstance(test_id, str), test_id
     for code, comment, message in iter_test_cases(test_id, suites):
         if is_app(code) and is_app(code[1]) and code[1][1] is EQUAL:
-            lhs = code[1][2]
-            rhs = code[2]
-            if is_quote(lhs) and is_quote(rhs):
-                lhs = link(bohm.convert(lhs[1]))
-                rhs = link(bohm.convert(rhs[1]))
-                example = lhs, rhs, message
-                if comment and parse_xfail(comment, test_id):
-                    example = pytest.mark.xfail(example)
-                yield example
+            lhs = link(bohm.convert(code[1][2]))
+            rhs = link(bohm.convert(code[2]))
+            example = lhs, rhs, message
+            if comment and parse_xfail(comment, test_id):
+                example = pytest.mark.xfail(example)
+            yield example
+        else:
+            raise NotImplementedError(message)
 
 
 def migrate(fun):
@@ -77,14 +76,19 @@ def migrate(fun):
         filename = os.path.join(TESTDATA, basename)
         lines = []
         with open(filename) as f:
-            for line in f:
+            for lineno, line in enumerate(f):
                 line = line.strip()
                 parts = line.split(';', 1)
                 sexpr = parts[0].strip()
                 comment = '' if len(parts) == 1 else parts[1]
                 if sexpr:
                     code = sexpr_parse(sexpr)
-                    code = fun(code)
+                    try:
+                        code = fun(code)
+                    except Exception:
+                        print('Error at {}:{}'.format(basename, lineno + 1))
+                        print(line)
+                        raise
                     sexpr = sexpr_print(code)
                 if not comment:
                     line = sexpr
@@ -104,6 +108,24 @@ def migrate(fun):
 def reformat():
     """Reformat all files in testdata/."""
     migrate(lambda x: x)
+
+
+def _unquote_equal(code):
+    if not is_app(code) or not is_app(code[1]) or code[1][1] is not EQUAL:
+        return code
+    lhs = code[1][2]
+    rhs = code[2]
+    assert is_quote(lhs), lhs
+    assert is_quote(rhs), rhs
+    lhs = lhs[1]
+    rhs = rhs[1]
+    return APP(APP(EQUAL, lhs), rhs)
+
+
+@parsable
+def unquote_equal():
+    """Convert (EQUAL (QUOTE x) (QUOTE y)) to (EQUAL x y)."""
+    migrate(_unquote_equal)
 
 
 # ----------------------------------------------------------------------------

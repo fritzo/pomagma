@@ -19,8 +19,8 @@ CHANGELOG
 
 from pomagma.compiler.util import memoize_arg, memoize_args, unique
 from pomagma.reducer import syntax
-from pomagma.reducer.syntax import (ABS, APP, BOOL, BOT, CODE, EQUAL, EVAL,
-                                    IVAR, JOIN, LESS, MAYBE, QAPP, QQUOTE,
+from pomagma.reducer.syntax import (ABS, APP, BOOL, BOT, CODE, EVAL, IVAR,
+                                    JOIN, MAYBE, QAPP, QEQUAL, QLESS, QQUOTE,
                                     QUOTE, TOP, UNIT, anonymize, complexity,
                                     free_vars, is_abs, is_app, is_atom,
                                     is_code, is_ivar, is_join, is_nvar,
@@ -312,7 +312,7 @@ def app(fun, arg):
         return APP(fun, arg)
     elif is_app(fun):
         # Try to reduce strict binary functions of quoted codes.
-        if fun[1] in (QAPP, LESS, EQUAL):
+        if fun[1] in (QAPP, QLESS, QEQUAL):
             lhs = fun[2]
             rhs = arg
             if lhs is TOP or rhs is TOP:
@@ -326,9 +326,9 @@ def app(fun, arg):
                 elif is_quote(rhs):
                     if fun[1] is QAPP:
                         return QUOTE(app(lhs[1], rhs[1]))
-                    if fun[1] is LESS:
+                    if fun[1] is QLESS:
                         ans = try_decide_less(lhs[1], rhs[1])
-                    elif fun[1] is EQUAL:
+                    elif fun[1] is QEQUAL:
                         ans = try_decide_equal(lhs[1], rhs[1])
                     else:
                         raise UnreachableError(fun[1])
@@ -369,12 +369,12 @@ def app(fun, arg):
             return QUOTE(QUOTE(arg[1]))
         else:
             return APP(fun, arg)
-    elif fun is LESS:
+    elif fun is QLESS:
         if arg is TOP:
             return TOP
         else:
             return APP(fun, arg)
-    elif fun is EQUAL:
+    elif fun is QEQUAL:
         if arg is TOP:
             return TOP
         else:
