@@ -21,12 +21,13 @@ from pomagma.compiler.util import memoize_arg, memoize_args, unique
 from pomagma.reducer import syntax
 from pomagma.reducer.syntax import (ABS, APP, BOOL, BOT, CODE, EVAL, IVAR,
                                     JOIN, MAYBE, QAPP, QEQUAL, QLESS, QQUOTE,
-                                    QUOTE, TOP, UNIT, anonymize, complexity,
+                                    QUOTE, TOP, UNIT, Y, anonymize, complexity,
                                     free_vars, isa_abs, isa_app, isa_atom,
                                     isa_code, isa_ivar, isa_join, isa_nvar,
                                     isa_quote, polish_parse, quoted_vars,
                                     sexpr_parse, sexpr_print)
 from pomagma.reducer.util import UnreachableError, logged, trool_all, trool_any
+from pomagma.util import TODO
 
 SUPPORTED_TESTDATA = ['sk', 'join', 'quote', 'types', 'lib', 'unit']
 
@@ -346,6 +347,8 @@ def app(fun, arg):
         return join(lhs, rhs)
     elif isa_quote(fun):
         return APP(fun, arg)
+    elif fun is Y:
+        TODO('handle recursion')
     elif fun is EVAL:
         if arg is TOP:
             return TOP

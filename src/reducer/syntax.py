@@ -72,7 +72,6 @@ _JOIN = make_keyword('JOIN', 2)
 _QUOTE = make_keyword('QUOTE', 1)
 _ABS = make_keyword('ABS', 1)  # de Bruijn abstraction.
 _FUN = make_keyword('FUN', 2)  # Nominal abstraction.
-_REC = make_keyword('REC', 1)  # de Bruijn recursion.
 _LESS = make_keyword('LESS', 2)
 _NLESS = make_keyword('NLESS', 2)
 _EQUAL = make_keyword('EQUAL', 2)
@@ -84,6 +83,7 @@ K = make_keyword('K')
 B = make_keyword('B')
 C = make_keyword('C')
 S = make_keyword('S')
+Y = make_keyword('Y')
 
 CODE = make_keyword('CODE')
 EVAL = make_keyword('EVAL')
@@ -150,12 +150,6 @@ def FUN(var, body):
 
 
 @builder
-def REC(body):
-    assert IVAR_0 not in quoted_vars(body)
-    return _code(_REC, body)
-
-
-@builder
 def LESS(lhs, rhs):
     return _code(_LESS, lhs, rhs)
 
@@ -210,11 +204,6 @@ def isa_fun(code):
     return isinstance(code, tuple) and code[0] is _FUN
 
 
-def isa_rec(code):
-    assert isa_code(code), code
-    return isinstance(code, tuple) and code[0] is _REC
-
-
 def isa_equal(code):
     assert isa_code(code), code
     return isinstance(code, tuple) and code[0] is _EQUAL
@@ -251,7 +240,6 @@ class Transform(object):
     QUOTE = staticmethod(QUOTE)
     ABS = staticmethod(ABS)
     FUN = staticmethod(FUN)
-    REC = staticmethod(REC)
 
     @classmethod
     def init_atoms(cls):
@@ -287,9 +275,6 @@ def _anonymize(code, var, rank, transform):
     elif isa_abs(code):
         body = _anonymize(code[1], var, rank + 1, transform)
         return transform.ABS(body)
-    elif isa_rec(code):
-        body = _anonymize(code[1], var, rank + 1, transform)
-        return transform.REC(body)
     elif isa_app(code):
         lhs = _anonymize(code[1], var, rank, transform)
         rhs = _anonymize(code[2], var, rank, transform)
@@ -331,7 +316,7 @@ def free_vars(code):
         return free_vars(code[1]) | free_vars(code[2])
     elif isa_quote(code):
         return free_vars(code[1])
-    elif isa_abs(code) or isa_rec(code):
+    elif isa_abs(code):
         return frozenset(
             decrement_var(v)
             for v in free_vars(code[1])
@@ -356,7 +341,7 @@ def quoted_vars(code):
         return free_vars(code[1])
     elif isa_app(code) or isa_join(code):
         return quoted_vars(code[1]) | quoted_vars(code[2])
-    elif isa_abs(code) or isa_rec(code):
+    elif isa_abs(code):
         return frozenset(
             decrement_var(v)
             for v in quoted_vars(code[1])
@@ -395,6 +380,7 @@ ATOM_COMPLEXITY = defaultdict(lambda: 10, {
     B: 6,  # \x,y,z. x (y z)
     C: 6,  # \x,y,z. x z y
     S: 6,  # \x,y,z. x z (y z)
+    Y: 6,  # \f. (\x. f(x x)) (\x. f(x x))
     # V: TODO(),
     # A: TODO(),
 })
@@ -477,7 +463,6 @@ _PARSERS = {
     _QUOTE: (_polish_parse_tokens,),
     _ABS: (_polish_parse_tokens,),
     _FUN: (_polish_parse_tokens, _polish_parse_tokens),
-    _REC: (_polish_parse_tokens,),
     _LESS: (_polish_parse_tokens, _polish_parse_tokens),
     _NLESS: (_polish_parse_tokens, _polish_parse_tokens),
     _EQUAL: (_polish_parse_tokens, _polish_parse_tokens),
