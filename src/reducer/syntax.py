@@ -251,24 +251,15 @@ class Transform(object):
             args = [self(arg) for arg in code[1:]]
             return getattr(self, code[0])(*args)
 
-    NVAR = staticmethod(NVAR)
-    IVAR = staticmethod(IVAR)
-    APP = staticmethod(APP)
-    JOIN = staticmethod(JOIN)
-    QUOTE = staticmethod(QUOTE)
-    ABS = staticmethod(ABS)
-    FUN = staticmethod(FUN)
-    LESS = staticmethod(LESS)
-    NLESS = staticmethod(NLESS)
-    EQUAL = staticmethod(EQUAL)
-
     @classmethod
-    def init_atoms(cls):
+    def init_class(cls):
         for name, code in _atoms.iteritems():
             setattr(cls, name, code)
+        for name, builder in _builders.iteritems():
+            setattr(cls, name, staticmethod(builder))
 
 
-Transform.init_atoms()
+Transform.init_class()
 identity = Transform()
 
 
