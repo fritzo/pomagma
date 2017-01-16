@@ -953,16 +953,9 @@ convert = syntax.Transform(**SIGNATURE)
 
 
 @logged(pretty, returns=pretty)
-@memoize_arg
 def simplify(code):
     """Simplify code, converting to a linear Bohm tree."""
-    assert isa_code(code), code
-    if isa_atom(code):
-        return SIGNATURE.get(code, code)
-    elif isa_ivar(code) or isa_nvar(code):
-        return code
-    else:
-        return SIGNATURE[code[0]](*map(simplify, code[1:]))
+    return convert(code)
 
 
 @logged(pretty, returns=pretty)
@@ -981,11 +974,11 @@ def reduce(code, budget=100):
 # Eager parsing
 
 def sexpr_simplify(string):
-    return sexpr_parse(string, SIGNATURE)
+    return sexpr_parse(string, convert)
 
 
 def polish_simplify(string):
-    return polish_parse(string, SIGNATURE)
+    return polish_parse(string, convert)
 
 
 def _print_tiny(code, tokens):

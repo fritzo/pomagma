@@ -918,19 +918,20 @@ def test_enum_list(enum_item, y, expected):
 # ----------------------------------------------------------------------------
 # Streams
 
-@pytest.mark.xfail(reason='stream_test is compiled incorrectly')
 @for_each([
     (BOT, BOT, I),
     (app(K, I), BOT, I),
-    (TOP, BOT, TOP),
-    (BOT, lib.stream_bot, I),
-    (app(K, I), lib.stream_bot, I),
+    pytest.mark.xfail((TOP, BOT, TOP)),
+    pytest.mark.xfail((BOT, lib.stream_bot, I)),
+    pytest.mark.xfail((app(K, I), lib.stream_bot, I)),
     (TOP, lib.stream_bot, TOP),
-    (I, lib.stream_cons(BOT, lib.stream_bot), I),
-    (I, lib.stream_cons(I, lib.stream_bot), I),
+    pytest.mark.xfail((I, lib.stream_cons(BOT, lib.stream_bot), I)),
+    pytest.mark.xfail((I, lib.stream_cons(I, lib.stream_bot), I)),
     pytest.mark.xfail((I, lib.stream_cons(K, lib.stream_bot), TOP)),
     (I, lib.stream_cons(TOP, lib.stream_bot), TOP),
-    (I, lib.stream_cons(BOT, lib.stream_cons(TOP, lib.stream_bot)), I),
+    pytest.mark.xfail(
+        (I, lib.stream_cons(BOT, lib.stream_cons(TOP, lib.stream_bot)), I)
+    ),
 ])
 def test_stream_test(test_item, xs, expected):
     assert simplify(lib.stream_test(test_item, xs)) is expected

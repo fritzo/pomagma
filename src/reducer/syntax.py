@@ -9,24 +9,33 @@ from pomagma.reducer.util import UnreachableError
 # ----------------------------------------------------------------------------
 # Signature
 
-class CodeTuple(tuple):
+class Code(tuple):
+    def __repr__(self):
+        if len(self) == 1:
+            return self[0]
+        return '{}({})'.format(self[0], ', '.join(repr(a) for a in self[1:]))
+
     def __str__(self):
+        if len(self) == 1:
+            return self[0]
         return '{}({})'.format(self[0], ', '.join(str(a) for a in self[1:]))
+
+    def __call__(*args):
+        # This syntax will be defined later:
+        # return pomagma.reducer.sugar.app(*args)
+        raise NotImplementedError('import pomagma.reduce.sugar')
+
+    def __or__(lhs, rhs):
+        # This syntax will be defined later:
+        # return pomagma.reducer.sugar.join_(lhs, rhs)
+        raise NotImplementedError('import pomagma.reduce.sugar')
 
 
 _CODES = {}
 
 
 def _code(*args):
-    # This can be used for pretty printing during debugging,
-    # but is disabled to avoid churn in term ordering.
-    # args = CodeTuple(args)
-
-    # Slow version:
-    # value = args if len(args) > 1 else args[0]
-    # return _CODES.setdefault(args, value)
-
-    # Fast version (works because of make_keyword(-) below):
+    args = Code(args)
     return _CODES.setdefault(args, args)
 
 
@@ -44,9 +53,10 @@ re_keyword = re.compile('[A-Z]+$')
 re_rank = re.compile(r'\d+$')
 _keywords = {}  # : name -> arity
 _builders = {}  # : name -> constructor
+_atoms = {}  # name -> code
 
 
-def make_keyword(name, arity=0):
+def make_keyword(name, arity):
     assert re_keyword.match(name)
     assert name not in _keywords
     assert arity in [0, 1, 2]
@@ -54,6 +64,14 @@ def make_keyword(name, arity=0):
     _keywords[name] = arity
     _CODES[name] = name
     return name
+
+
+def make_atom(name):
+    assert name not in _atoms
+    name = make_keyword(name, arity=0)
+    code = _code(name)
+    _atoms[name] = code
+    return code
 
 
 def builder(fun):
@@ -76,30 +94,30 @@ _LESS = make_keyword('LESS', 2)
 _NLESS = make_keyword('NLESS', 2)
 _EQUAL = make_keyword('EQUAL', 2)
 
-TOP = make_keyword('TOP')
-BOT = make_keyword('BOT')
-I = make_keyword('I')
-K = make_keyword('K')
-B = make_keyword('B')
-C = make_keyword('C')
-S = make_keyword('S')
-Y = make_keyword('Y')
+TOP = make_atom('TOP')
+BOT = make_atom('BOT')
+I = make_atom('I')
+K = make_atom('K')
+B = make_atom('B')
+C = make_atom('C')
+S = make_atom('S')
+Y = make_atom('Y')
 
-CODE = make_keyword('CODE')
-EVAL = make_keyword('EVAL')
-QAPP = make_keyword('QAPP')
-QQUOTE = make_keyword('QQUOTE')
-QEQUAL = make_keyword('QEQUAL')
-QLESS = make_keyword('QLESS')
+CODE = make_atom('CODE')
+EVAL = make_atom('EVAL')
+QAPP = make_atom('QAPP')
+QQUOTE = make_atom('QQUOTE')
+QEQUAL = make_atom('QEQUAL')
+QLESS = make_atom('QLESS')
 
-V = make_keyword('V')
-A = make_keyword('A')
-UNIT = make_keyword('UNIT')
-BOOL = make_keyword('BOOL')
-MAYBE = make_keyword('MAYBE')
-PROD = make_keyword('PROD')
-SUM = make_keyword('SUM')
-NUM = make_keyword('NUM')
+V = make_atom('V')
+A = make_atom('A')
+UNIT = make_atom('UNIT')
+BOOL = make_atom('BOOL')
+MAYBE = make_atom('MAYBE')
+PROD = make_atom('PROD')
+SUM = make_atom('SUM')
+NUM = make_atom('NUM')
 
 
 @builder
@@ -166,47 +184,47 @@ def EQUAL(lhs, rhs):
 
 def isa_atom(code):
     assert isa_code(code), code
-    return isinstance(code, str)
+    return len(code) == 1
 
 
 def isa_nvar(code):
     assert isa_code(code), code
-    return isinstance(code, tuple) and code[0] is _NVAR
+    return code[0] is _NVAR
 
 
 def isa_ivar(code):
     assert isa_code(code), code
-    return isinstance(code, tuple) and code[0] is _IVAR
+    return code[0] is _IVAR
 
 
 def isa_app(code):
     assert isa_code(code), code
-    return isinstance(code, tuple) and code[0] is _APP
+    return code[0] is _APP
 
 
 def isa_join(code):
     assert isa_code(code), code
-    return isinstance(code, tuple) and code[0] is _JOIN
+    return code[0] is _JOIN
 
 
 def isa_quote(code):
     assert isa_code(code), code
-    return isinstance(code, tuple) and code[0] is _QUOTE
+    return code[0] is _QUOTE
 
 
 def isa_abs(code):
     assert isa_code(code), code
-    return isinstance(code, tuple) and code[0] is _ABS
+    return code[0] is _ABS
 
 
 def isa_fun(code):
     assert isa_code(code), code
-    return isinstance(code, tuple) and code[0] is _FUN
+    return code[0] is _FUN
 
 
 def isa_equal(code):
     assert isa_code(code), code
-    return isinstance(code, tuple) and code[0] is _EQUAL
+    return code[0] is _EQUAL
 
 
 # ----------------------------------------------------------------------------
@@ -224,7 +242,7 @@ class Transform(object):
         if not isa_code(code):
             raise TypeError(code)
         elif isa_atom(code):
-            return getattr(self, code)
+            return getattr(self, code[0])
         elif isa_nvar(code):
             return self.NVAR(code[1])
         elif isa_ivar(code):
@@ -240,12 +258,14 @@ class Transform(object):
     QUOTE = staticmethod(QUOTE)
     ABS = staticmethod(ABS)
     FUN = staticmethod(FUN)
+    LESS = staticmethod(LESS)
+    NLESS = staticmethod(NLESS)
+    EQUAL = staticmethod(EQUAL)
 
     @classmethod
     def init_atoms(cls):
-        for name, arity in _keywords.iteritems():
-            if arity == 0:
-                setattr(cls, name, name)
+        for name, code in _atoms.iteritems():
+            setattr(cls, name, code)
 
 
 Transform.init_atoms()
@@ -413,45 +433,45 @@ def complexity(code):
 # ----------------------------------------------------------------------------
 # Polish notation
 
-def polish_parse(string, signature={}):
+def polish_parse(string, transform=identity):
     """Parse a string from polish notation to a code.
 
     Args:
       string: a string in polish notation.
-      signature: an optional dict of overrides, mapping keyword to builder.
+      transform: an optional Transform, mapping keyword to builder.
 
     Returns:
       a code.
     """
     assert isinstance(string, str), type(string)
-    assert isinstance(signature, dict), type(signature)
+    assert isinstance(transform, Transform), type(transform)
     tokens = map(intern, string.split())
     tokens.reverse()
-    return _polish_parse_tokens(tokens, signature)
+    return _polish_parse_tokens(tokens, transform)
 
 
-def _pop_token(tokens, signature):
+def _pop_token(tokens, transform):
     return tokens.pop()
 
 
-def _pop_int(tokens, signature):
+def _pop_int(tokens, transform):
     return int(tokens.pop())
 
 
-def _polish_parse_tokens(tokens, signature):
+def _polish_parse_tokens(tokens, transform):
     token = tokens.pop()
     try:
         polish_parsers = _PARSERS[token]
     except KeyError:
         if re_keyword.match(token):
-            return signature.get(token, token)
+            return getattr(transform, token)
         elif re_rank.match(token):
             return IVAR(int(token))
         else:
             return NVAR(token)
-    args = tuple(p(tokens, signature) for p in polish_parsers)
+    args = tuple(p(tokens, transform) for p in polish_parsers)
     try:
-        fun = signature[token]
+        fun = getattr(transform, token)
     except KeyError:
         return _code(token, *args)
     return fun(*args)
@@ -504,8 +524,8 @@ def _polish_print_tokens(code, tokens):
 def to_sexpr(code):
     """Converts from a python code to a python S-expression."""
     assert isa_code(code), code
-    if isinstance(code, str):
-        return code
+    if isa_atom(code):
+        return code[0]
     elif isa_nvar(code) or isa_ivar(code):
         return code[1]
     head = code
@@ -515,7 +535,7 @@ def to_sexpr(code):
         head = head[1]
     if isa_nvar(head) or isa_ivar(head):
         head = head[1]
-    elif head[0] in _builders:
+    elif head[0] in _keywords:
         for arg in head[-1:0:-1]:
             args.append(to_sexpr(arg))
         head = head[0]
@@ -524,18 +544,17 @@ def to_sexpr(code):
     return tuple(args)
 
 
-def from_sexpr(sexpr, signature={}):
+def from_sexpr(sexpr, transform=identity):
     """Converts from a python S-expression to a python code."""
-    assert isinstance(signature, dict), type(signature)
+    assert isinstance(transform, Transform), type(transform)
 
-    # Handle atoms.
+    # Handle atoms and variables.
     if isinstance(sexpr, str):
-        if sexpr in _keywords:
-            return signature.get(sexpr, sexpr)
-        else:
-            if re_keyword.match(sexpr):
-                raise ValueError('Unrecognized keyword: {}'.format(sexpr))
-            return NVAR(sexpr)
+        if sexpr in _atoms:
+            return getattr(transform, sexpr)
+        if re_keyword.match(sexpr):
+            raise ValueError('Unrecognized atom: {}'.format(sexpr))
+        return NVAR(sexpr)
     if isinstance(sexpr, int):
         return IVAR(sexpr)
 
@@ -544,16 +563,14 @@ def from_sexpr(sexpr, signature={}):
     assert isinstance(head, (str, int))
     if head in _keywords:
         arity = _keywords[head]
+        head = getattr(transform, head)
         if arity:
             if len(sexpr) < 1 + arity:
                 raise ValueError('Too few args to {}: {}'.format(head, sexpr))
-            builder = signature.get(head, _builders[head])
-            head = builder(*(
-                from_sexpr(sexpr[1 + i], signature)
+            head = head(*(
+                from_sexpr(sexpr[1 + i], transform)
                 for i in xrange(arity)
             ))
-        else:
-            head = signature.get(head, head)
         args = sexpr[1 + arity:]
     elif isinstance(head, int):
         head = IVAR(head)
@@ -562,8 +579,8 @@ def from_sexpr(sexpr, signature={}):
         head = NVAR(head)
         args = sexpr[1:]
     for arg in args:
-        arg = from_sexpr(arg, signature)
-        head = signature.get('APP', APP)(head, arg)
+        arg = from_sexpr(arg, transform)
+        head = transform.APP(head, arg)
     return head
 
 
@@ -571,10 +588,14 @@ def sexpr_print_sexpr(sexpr):
     """Prints a python S-expression as a string S-expression."""
     if isinstance(sexpr, str):
         return sexpr
-    if isinstance(sexpr, int):
+    elif isinstance(sexpr, int):
         return str(sexpr)
-    parts = map(sexpr_print_sexpr, sexpr)
-    return '({})'.format(' '.join(parts))
+    elif isinstance(sexpr, tuple):
+        assert len(sexpr) > 1, sexpr
+        parts = map(sexpr_print_sexpr, sexpr)
+        return '({})'.format(' '.join(parts))
+    else:
+        raise ValueError(sexpr)
 
 
 @memoize_arg
@@ -615,18 +636,18 @@ def sexpr_parse_sexpr(string):
     return sexpr
 
 
-def sexpr_parse(string, signature={}):
+def sexpr_parse(string, transform=identity):
     """Parse a string from S-expressoin notation to a code.
 
     Args:
       string: a string in S-expression notation.
-      signature: an optional dict of overrides, mapping keyword to builder.
+      transform: an optional Transform, mapping keyword to builder.
 
     Returns:
       a code.
     """
     assert isinstance(string, str), type(string)
-    assert isinstance(signature, dict), type(signature)
+    assert isinstance(transform, Transform), type(transform)
     sexpr = sexpr_parse_sexpr(string)
-    code = from_sexpr(sexpr, signature)
+    code = from_sexpr(sexpr, transform)
     return code

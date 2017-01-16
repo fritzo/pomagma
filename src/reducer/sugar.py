@@ -4,7 +4,7 @@ import functools
 import inspect
 
 from pomagma.reducer.bohm import convert
-from pomagma.reducer.syntax import NVAR, free_vars, quoted_vars
+from pomagma.reducer.syntax import NVAR, Code, free_vars, isa_code, quoted_vars
 from pomagma.reducer.util import LOG
 
 
@@ -91,12 +91,14 @@ def combinator(arg):
 
 
 def as_code(arg):
-    if isinstance(arg, _Combinator):
-        return arg.code
-    elif callable(arg):
-        return _compile(arg)
-    else:
+    if isa_code(arg):
         return arg
+    elif isinstance(arg, _Combinator):
+        return arg.code
+    else:
+        if not callable(arg):
+            raise SyntaxError('Cannot convert to code: {}'.format(arg))
+        return _compile(arg)
 
 
 # ----------------------------------------------------------------------------
@@ -112,6 +114,9 @@ def app(*args):
     return result
 
 
+Code.__call__ = app
+
+
 def join_(*args):
     args = map(as_code, args)
     if not args:
@@ -120,6 +125,9 @@ def join_(*args):
     for arg in args[1:]:
         result = convert.JOIN(result, arg)
     return result
+
+
+Code.__or__ = join_
 
 
 def quote(arg):

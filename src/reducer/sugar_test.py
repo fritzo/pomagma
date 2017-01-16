@@ -13,8 +13,13 @@ z = NVAR('z')
 
 CODE_EXAMPLES = [
     (I, I),
+    (I(K), K),
     (K, K),
     (app(S, I, I), app(S, I, I)),
+    (join_(K, I), join_(K, I)),
+    (S(I, I), app(S, I, I)),
+    (K | I, join_(K, I)),
+    # (TOP(K | I), TOP),
 ]
 
 CLOSED_FUN_EXAMPLES = [
@@ -35,6 +40,7 @@ CLOSED_FUN_EXAMPLES = [
 OPEN_FUN_EXAMPLES = [
     (lambda: x, x),
     (lambda x: y, app(K, y)),
+    (lambda x: y, K(y)),
     (lambda x: app(f, x), f),
 ]
 
