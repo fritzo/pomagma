@@ -426,6 +426,20 @@ def stream_map(f, xs):
 
 
 @combinator
+def stream_zip(xs, ys):
+    return app(xs, lambda xh, xt:
+               app(ys, lambda yh, yt:
+                   stream_cons(pair(xh, yh), stream_zip(xt, yt))))
+
+
+@combinator
+def stream_dovetail(xs, ys):
+    return app(xs, lambda xh, xt: stream_cons(xh,
+               app(ys, lambda yh, yt: stream_cons(yh,
+                   stream_dovetail(xt, yt)))))
+
+
+@combinator
 def stream_quote(quote_item, xs):
     return app(xs, lambda h, t: qapp(QUOTE(stream_cons),
                                      quote_item(h),

@@ -51,6 +51,7 @@ class _Combinator(object):
             return app(code, *args)
         else:
             self._calling = True
+            # TODO handle variable number of arguments.
             result = self._fun(*args)
             self._calling = False
             return result
@@ -65,15 +66,19 @@ class _Combinator(object):
 
     def _compile(self):
         assert not hasattr(self, '_code')
+
+        # Compile without recursion.
         var = NVAR('_{}'.format(self.__name__))
         self._code = var
-
         code = _compile(self, actual_fun=self._fun)
+
+        # Handle recursion.
         if var in quoted_vars(code):
             code = qrec(convert.QFUN(var, code))
         elif var in free_vars(code):
             code = rec(convert.FUN(var, code))
 
+        # Check that result has no free variables.
         free = free_vars(code)
         if free:
             raise SyntaxError('Unbound variables: {}'.format(
@@ -106,7 +111,7 @@ def as_code(arg):
 
 def app(*args):
     args = map(as_code, args)
-    if len(args) < 2:
+    if not args:
         raise SyntaxError('Too few arguments: app{}'.format(args))
     result = args[0]
     for arg in args[1:]:
