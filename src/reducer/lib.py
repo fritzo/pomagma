@@ -11,10 +11,6 @@ from pomagma.reducer.syntax import (BOOL, BOT, EVAL, MAYBE, QEQUAL, QLESS,
                                     QUOTE, TOP, UNIT)
 
 
-def COMP(lhs, rhs):
-    return app(B(lhs), rhs)
-
-
 # ----------------------------------------------------------------------------
 # Nondeterminism
 
@@ -196,7 +192,7 @@ def enum_prod(enum_fst, enum_snd):
 
 @combinator
 def inl(x):
-    return COMP(K, CI(x))
+    return B(K, CI(x))
 
 
 @combinator
@@ -211,11 +207,8 @@ def sum_test(xy):
 
 @combinator
 def sum_quote(quote_inl, quote_inr, xy):
-    return app(
-        xy,
-        lambda x: qapp(quote(inl), quote_inl(x)),
-        lambda y: qapp(quote(inr), quote_inr(y)),
-    )
+    return xy(lambda x: qapp(quote(inl), quote_inl(x)),
+              lambda y: qapp(quote(inr), quote_inr(y)))
 
 
 @combinator
@@ -297,7 +290,7 @@ nil = K
 
 @combinator
 def cons(head, tail):
-    return K(app(C(CI(head)), tail))
+    return K(C(CI(head), tail))
 
 
 @combinator
@@ -352,20 +345,15 @@ def list_sort(lt, xs):
         list_sort(lt), lambda sort:
         xs(nil, lambda h, t:
             let(lt(h), lambda lt_h:
-                app(list_cat,
+                list_cat(
                     sort(list_filter(lt_h, t)),
-                    cons(h,
-                         app(sort,
-                             list_filter(compose(bool_not, lt_h), t)))))))
+                    cons(h, sort(list_filter(compose(bool_not, lt_h), t)))))))
 
 
 @combinator
 def list_quote(quote_item, xs):
-    return app(
-        xs,
-        QUOTE(nil),
-        lambda h, t: qapp(quote(cons), quote_item(h), list_quote(t)),
-    )
+    return xs(QUOTE(nil), lambda h, t:
+              qapp(quote(cons), quote_item(h), list_quote(t)))
 
 
 @combinator
@@ -539,9 +527,7 @@ def a_postconj(f):
 
 @combinator
 def a_compose(f1, f2):
-    return f1(lambda r1, s1: f2(lambda r2, s2: app(
-        pair, compose(r1, r2), compose(s2, s1)),
-    ))
+    return f1(lambda r1, s1: f2(lambda r2, s2: pair(B(r1, r2), B(s2, s1))))
 
 
 @combinator
