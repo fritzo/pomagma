@@ -43,6 +43,9 @@ class _Combinator(object):
         self._calling = False
 
     def __repr__(self):
+        return repr(self.code)
+
+    def __str__(self):
         return self.__name__
 
     def __call__(self, *args):
@@ -54,7 +57,10 @@ class _Combinator(object):
             # TODO handle variable number of arguments.
             result = self._fun(*args)
             self._calling = False
-            return result
+            return as_code(result)
+
+    def __or__(*args):
+        return join_(args)
 
     @property
     def code(self):
@@ -145,18 +151,18 @@ def qapp(*args):
         raise SyntaxError('Too few arguments: qapp{}'.format(args))
     result = args[0]
     for arg in args[1:]:
-        result = convert.APP(convert.APP(convert.QAPP, result), arg)
+        result = convert.QAPP(result, arg)
     return result
 
 
 def rec(fun):
-    fxx = _compile(lambda x: app(fun, app(x, x)))
-    return app(fxx, fxx)
+    fxx = _compile(lambda x: app(fun, x(x)))
+    return fxx(fxx)
 
 
 def qrec(fun):
     fxx = _compile(lambda qx: app(fun, qapp(qx, qapp(convert.QQUOTE, qx))))
-    return app(fxx, convert.QUOTE(fxx))
+    return fxx(convert.QUOTE(fxx))
 
 
 def typed(*types):
@@ -167,6 +173,8 @@ def typed(*types):
     """
     if len(types) < 1:
         raise SyntaxError('Too few arguments: typed{}'.format(types))
+    if len(types) > 3:
+        raise NotImplementedError('Too many arguments: typed{}'.format(types))
     result_type = types[-1]
     arg_types = types[:-1]
 
@@ -174,7 +182,7 @@ def typed(*types):
 
         @functools.wraps(fun)
         def typed_fun():
-            return app(result_type, fun())
+            return result_type(fun())
 
         return typed_fun
 
@@ -182,8 +190,8 @@ def typed(*types):
 
         @functools.wraps(fun)
         def typed_fun(arg):
-            arg = app(arg_types[0], arg)
-            return app(result_type, fun(arg))
+            arg = arg_types[0](arg)
+            return result_type(fun(arg))
 
         return typed_fun
 
@@ -191,9 +199,9 @@ def typed(*types):
 
         @functools.wraps(fun)
         def typed_fun(arg0, arg1):
-            arg0 = app(arg_types[0], arg0)
-            arg1 = app(arg_types[1], arg1)
-            return app(result_type, fun(arg0, arg1))
+            arg0 = arg_types[0](arg0)
+            arg1 = arg_types[1](arg1)
+            return result_type(fun(arg0, arg1))
 
         return typed_fun
 

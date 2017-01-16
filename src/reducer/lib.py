@@ -12,13 +12,13 @@ from pomagma.reducer.syntax import (BOOL, BOT, EVAL, MAYBE, QEQUAL, QLESS,
 
 
 def COMP(lhs, rhs):
-    return app(app(B, lhs), rhs)
+    return app(B(lhs), rhs)
 
 
 # ----------------------------------------------------------------------------
 # Nondeterminism
 
-join = join_(K, KI)
+join = K | KI
 
 
 # ----------------------------------------------------------------------------
@@ -36,7 +36,7 @@ ok = I
 
 @combinator
 def unit_type(x):
-    return app(UNIT, x)
+    return UNIT(x)
 
 
 @combinator
@@ -48,22 +48,22 @@ def unit_test(x):
 @typed(unit_type, unit_type, unit_type)
 @symmetric
 def unit_and(x, y):
-    return app(x, y)
+    return x(y)
 
 
 @combinator
 @typed(unit_type, unit_type, unit_type)
 def unit_or(x, y):
-    return join_(x, y)
+    return x | y
 
 
 @combinator
 def unit_quote(x):
     x = unit_type(x)
-    return app(x, QUOTE(ok))
+    return x(QUOTE(ok))
 
 
-enum_unit = app(CI, ok)
+enum_unit = CI(ok)
 
 
 # ----------------------------------------------------------------------------
@@ -75,54 +75,54 @@ assert false is KI
 
 @combinator
 def bool_type(x):
-    return app(BOOL, x)
+    return BOOL(x)
 
 
 @combinator
 @typed(bool_type, unit_type)
 def bool_test(x):
-    return app(x, ok, ok)
+    return x(ok, ok)
 
 
 @combinator
 @typed(bool_type, bool_type)
 def bool_not(x):
-    return app(x, false, true)
+    return x(false, true)
 
 
 @combinator
 @typed(bool_type, bool_type, bool_type)
 @symmetric
 def bool_and(x, y):
-    return app(x, y, false)
+    return x(y, false)
 
 
 @combinator
 @typed(bool_type, bool_type, bool_type)
 @symmetric
 def bool_or(x, y):
-    return app(x, true, y)
+    return x(true, y)
 
 
 @combinator
 def bool_quote(x):
     x = bool_type(x)
-    return app(x, QUOTE(true), QUOTE(false))
+    return x(QUOTE(true), QUOTE(false))
 
 
 @combinator
 def bool_if_true(x):
     x = bool_type(x)
-    return unit_type(app(x, ok, undefined))
+    return unit_type(x(ok, undefined))
 
 
 @combinator
 def bool_if_false(x):
     x = bool_type(x)
-    return unit_type(app(x, undefined, ok))
+    return unit_type(x(undefined, ok))
 
 
-enum_bool = join_(app(CI, true), app(CI, false))
+enum_bool = CI(true) | CI(false)
 
 
 # ----------------------------------------------------------------------------
@@ -133,33 +133,29 @@ none = K
 
 @combinator
 def some(arg):
-    return app(K, app(CI, arg))
+    return K(CI(arg))
 
 
 @combinator
 def maybe_type(x):
-    return app(MAYBE, x)
+    return MAYBE(x)
 
 
 @combinator
 def maybe_test(x):
     x = maybe_type(x)
-    return unit_type(app(x, ok, lambda y: ok))
+    return unit_type(x(ok, lambda y: ok))
 
 
 @combinator
 def maybe_quote(quote_some, x):
     x = maybe_type(x)
-    return app(
-        x,
-        QUOTE(none),
-        lambda y: qapp(quote(some), app(quote_some, y)),
-    )
+    return x(QUOTE(none), lambda y: qapp(quote(some), quote_some(y)))
 
 
 @combinator
 def enum_maybe(enum_item):
-    return join_(box(none), enum_map(some, enum_item))
+    return box(none) | enum_map(some, enum_item)
 
 
 # ----------------------------------------------------------------------------
@@ -167,35 +163,32 @@ def enum_maybe(enum_item):
 
 @combinator
 def pair(x, y):
-    return app(app(C, app(CI, x)), y)
+    return C(CI(x), y)
 
 
 @combinator
 def prod_test(xy):
-    return unit_type(app(xy, lambda x, y: ok))
+    return unit_type(xy(lambda x, y: ok))
 
 
 @combinator
 def prod_fst(xy):
-    return app(xy, lambda x, y: x)
+    return xy(lambda x, y: x)
 
 
 @combinator
 def prod_snd(xy):
-    return app(xy, lambda x, y: y)
+    return xy(lambda x, y: y)
 
 
 @combinator
 def prod_quote(quote_fst, quote_snd, xy):
-    return app(
-        xy,
-        lambda x, y: qapp(quote(pair), app(quote_fst, x), app(quote_snd, y)),
-    )
+    return xy(lambda x, y: qapp(quote(pair), quote_fst(x), quote_snd(y)))
 
 
 @combinator
 def enum_prod(enum_fst, enum_snd):
-    return app(enum_fst, lambda x: app(enum_snd, lambda y: box(pair(x, y))))
+    return enum_fst(lambda x: enum_snd(lambda y: box(pair(x, y))))
 
 
 # ----------------------------------------------------------------------------
@@ -203,31 +196,31 @@ def enum_prod(enum_fst, enum_snd):
 
 @combinator
 def inl(x):
-    return COMP(K, app(CI, x))
+    return COMP(K, CI(x))
 
 
 @combinator
 def inr(y):
-    return app(K, app(CI, y))
+    return K(CI(y))
 
 
 @combinator
 def sum_test(xy):
-    return unit_type(app(xy, lambda x: ok, lambda y: ok))
+    return unit_type(xy(lambda x: ok, lambda y: ok))
 
 
 @combinator
 def sum_quote(quote_inl, quote_inr, xy):
     return app(
         xy,
-        lambda x: qapp(quote(inl), app(quote_inl, x)),
-        lambda y: qapp(quote(inr), app(quote_inr, y)),
+        lambda x: qapp(quote(inl), quote_inl(x)),
+        lambda y: qapp(quote(inr), quote_inr(y)),
     )
 
 
 @combinator
 def enum_sum(enum_inl, enum_inr):
-    return join_(enum_map(inl, enum_inl), enum_map(inr, enum_inr))
+    return enum_map(inl, enum_inl) | enum_map(inr, enum_inr)
 
 
 # ----------------------------------------------------------------------------
@@ -239,61 +232,61 @@ succ = some
 
 @combinator
 def num_test(x):
-    return unit_type(app(x, ok, num_test))
+    return unit_type(x(ok, num_test))
 
 
 @combinator
 def num_is_zero(x):
-    return app(x, true, lambda px: false)
+    return x(true, lambda px: false)
 
 
 @combinator
 def num_pred(x):
-    return app(x, error, lambda px: px)
+    return x(error, lambda px: px)
 
 
 @combinator
 @symmetric
 def num_add(x, y):
-    return app(y, x, lambda py: succ(num_add(x, py)))
+    return y(x, lambda py: succ(num_add(x, py)))
 
 
 @combinator
 @symmetric
 def num_mul(x, y):
-    return num_rec(zero, lambda py: app(num_add, x, py), y)
+    return num_rec(zero, lambda py: num_add(x, py), y)
 
 
 @combinator
 @symmetric
 def num_eq(x, y):
-    return app(x, app(y, true, lambda py: false), lambda px:
-               app(y, false, lambda py: num_eq(px, py)))
+    return x(y(true, lambda py: false), lambda px:
+             y(false, lambda py: num_eq(px, py)))
 
 
 @combinator
 def num_le(x, y):
-    return app(x, true, lambda px: app(y, false, lambda py: num_le(px, py)))
+    return x(true, lambda px: y(false, lambda py: num_le(px, py)))
 
 
 @combinator
 def num_lt(x, y):
-    return app(y, false, lambda py: app(x, true, lambda px: num_lt(px, py)))
+    return y(false, lambda py: x(true, lambda px: num_lt(px, py)))
 
 
 @combinator
 def num_rec(z, s, x):
-    return app(x, z, lambda px: app(s, num_rec(z, s, px)))
+    return x(z, lambda px: s(num_rec(z, s, px)))
 
 
 @combinator
 def num_quote(x):
-    return app(x, QUOTE(zero), lambda px: qapp(quote(succ), num_quote(px)))
+    return x(QUOTE(zero), lambda px: qapp(quote(succ), num_quote(px)))
 
 
 @combinator
 def enum_num():
-    return join_(box(zero), app(enum_map, succ, enum_num))
+    return box(zero) | enum_map(succ, enum_num)
 
 
 # ----------------------------------------------------------------------------
@@ -304,66 +297,66 @@ nil = K
 
 @combinator
 def cons(head, tail):
-    return app(K, app(app(C, app(CI, head)), tail))
+    return K(app(C(CI(head)), tail))
 
 
 @combinator
 def list_test(xs):
-    return unit_type(app(xs, ok, lambda h, t: list_test(t)))
+    return unit_type(xs(ok, lambda h, t: list_test(t)))
 
 
 @combinator
 def list_empty(xs):
-    return app(xs, true, lambda h, t: false)
+    return xs(true, lambda h, t: false)
 
 
 @combinator
 def list_all(xs):
-    return app(xs, true, lambda h, t: bool_and(h, list_all(t)))
+    return xs(true, lambda h, t: bool_and(h, list_all(t)))
 
 
 @combinator
 def list_any(xs):
-    return app(xs, false, lambda h, t: bool_or(h, list_any(t)))
+    return xs(false, lambda h, t: bool_or(h, list_any(t)))
 
 
 @combinator
 def list_cat(xs, ys):
-    return app(xs, ys, lambda h, t: cons(h, list_cat(t, ys)))
+    return xs(ys, lambda h, t: cons(h, list_cat(t, ys)))
 
 
 @combinator
 def list_map(f, xs):
-    return app(xs, nil, lambda h, t: cons(app(f, h), list_map(f, t)))
+    return xs(nil, lambda h, t: cons(f(h), list_map(f, t)))
 
 
 @combinator
 def list_rec(n, c, xs):
-    return app(xs, n, lambda h, t: app(c, h, list_rec(n, c, t)))
+    return xs(n, lambda h, t: c(h, list_rec(n, c, t)))
 
 
 @combinator
 def list_filter(p, xs):
     p = compose(bool_type, p)
-    return list_rec(nil, lambda h, t: app(p, h, app(cons, h), I, t), xs)
+    return list_rec(nil, lambda h, t: p(h, app(cons, h), I, t), xs)
 
 
 @combinator
 def list_size(xs):
-    return app(xs, zero, lambda h, t: succ(list_size(t)))
+    return xs(zero, lambda h, t: succ(list_size(t)))
 
 
 @combinator
 def list_sort(lt, xs):
     return let(
-        app(list_sort, lt), lambda sort:
-        app(xs, nil, lambda h, t:
-            let(app(lt, h), lambda lt_h:
+        list_sort(lt), lambda sort:
+        xs(nil, lambda h, t:
+            let(lt(h), lambda lt_h:
                 app(list_cat,
-                    app(sort, app(list_filter, lt_h, t)),
+                    sort(list_filter(lt_h, t)),
                     cons(h,
                          app(sort,
-                             app(list_filter, compose(bool_not, lt_h), t)))))))
+                             list_filter(compose(bool_not, lt_h), t)))))))
 
 
 @combinator
@@ -371,17 +364,14 @@ def list_quote(quote_item, xs):
     return app(
         xs,
         QUOTE(nil),
-        lambda h, t: qapp(quote(cons), app(quote_item, h), list_quote(t)),
+        lambda h, t: qapp(quote(cons), quote_item(h), list_quote(t)),
     )
 
 
 @combinator
 def enum_list(enum_item):
-    return join_(
-        box(nil),
-        app(enum_list(enum_item), lambda t:
-            app(enum_item, lambda h: box(cons(h, t)))),
-    )
+    return box(nil) | enum_list(enum_item,
+                                lambda t: enum_item(lambda h: box(cons(h, t))))
 
 
 # ----------------------------------------------------------------------------
@@ -389,27 +379,27 @@ def enum_list(enum_item):
 
 @combinator
 def stream_cons(head, tail):
-    return lambda f: app(f, head, tail)
+    return lambda f: f(head, tail)
 
 
 @combinator
 def stream_head(xs):
-    return app(xs, lambda h, t: h)
+    return xs(lambda h, t: h)
 
 
 @combinator
 def stream_tail(xs):
-    return app(xs, lambda h, t: t)
+    return xs(lambda h, t: t)
 
 
 @combinator
 def stream_test(test_item, xs):
-    return join_(I, app(xs, lambda h, t: join_(test_item(h), stream_test(t))))
+    return I | xs(lambda h, t: test_item(h) | stream_test(t))
 
 
 @combinator
 def stream_join(xs):
-    return app(xs, lambda h, t: join_(h, stream_join(t)))
+    return xs(lambda h, t: h | stream_join(t))
 
 
 @combinator
@@ -422,35 +412,35 @@ stream_bot = stream_const(BOT)
 
 @combinator
 def stream_map(f, xs):
-    return app(xs, lambda h, t: stream_cons(app(f, h), stream_map(t)))
+    return xs(lambda h, t: stream_cons(f(h), stream_map(t)))
 
 
 @combinator
 def stream_zip(xs, ys):
-    return app(xs, lambda xh, xt:
-               app(ys, lambda yh, yt:
-                   stream_cons(pair(xh, yh), stream_zip(xt, yt))))
+    return xs(lambda xh, xt:
+              ys(lambda yh, yt:
+                 stream_cons(pair(xh, yh), stream_zip(xt, yt))))
 
 
 @combinator
 def stream_dovetail(xs, ys):
-    return app(xs, lambda xh, xt: stream_cons(xh,
-               app(ys, lambda yh, yt: stream_cons(yh,
-                   stream_dovetail(xt, yt)))))
+    return xs(lambda xh, xt:
+              stream_cons(xh, ys(lambda yh, yt:
+                                 stream_cons(yh, stream_dovetail(xt, yt)))))
 
 
 @combinator
 def stream_quote(quote_item, xs):
-    return app(xs, lambda h, t: qapp(QUOTE(stream_cons),
-                                     quote_item(h),
-                                     stream_quote(quote_item, t)))
+    return xs(lambda h, t: qapp(QUOTE(stream_cons),
+                                quote_item(h),
+                                stream_quote(quote_item, t)))
 
 
 @combinator
 def enum_stream(enum_item):
-    return app(enum_item, lambda h:
-               join_(stream_cons(h, stream_bot),
-                     app(enum_stream, enum_item, lambda t: stream_cons(h, t))))
+    return enum_item(lambda h:
+                     stream_cons(h, stream_bot) |
+                     enum_stream(enum_item, lambda t: stream_cons(h, t)))
 
 
 # ----------------------------------------------------------------------------
@@ -458,7 +448,7 @@ def enum_stream(enum_item):
 
 @combinator
 def box(item):
-    return app(CI, item)
+    return CI(item)
 
 
 def enum(items):
@@ -468,40 +458,40 @@ def enum(items):
 
 @combinator
 def enum_test(xs):
-    return unit_type(app(xs, lambda x: ok))
+    return unit_type(xs(lambda x: ok))
 
 
 @combinator
 def enum_union(xs, ys):
-    return join_(xs, ys)
+    return xs | ys
 
 
 @combinator
 def enum_any(xs):
-    return unit_type(app(xs, unit_type))
+    return unit_type(xs(unit_type))
 
 
 @combinator
 def enum_filter(p, xs):
     p = compose(unit_type, p)
-    return app(xs, lambda x: app(p, x, box(x)))
+    return xs(lambda x: p(x, box(x)))
 
 
 @combinator
 def enum_map(f, xs):
-    return app(xs, lambda x: box(app(f, x)))
+    return xs(lambda x: box(f(x)))
 
 
 @combinator
 def enum_flatten(xs):
-    return app(xs, lambda x: x)
+    return xs(lambda x: x)
 
 
 @combinator
 def enum_close(f, xs):
     """forall a, (a -> enum a) -> enum a -> enum a."""
-    # return app(close, lambda ys: app(ys, f), xs)
-    return enum_union(xs, app(enum_close, f, xs, f))
+    # return close(lambda ys: ys(f), xs)
+    return enum_union(xs, enum_close(f, xs, f))
 
 
 # ----------------------------------------------------------------------------
@@ -509,12 +499,12 @@ def enum_close(f, xs):
 
 @combinator
 def compose(f, g):
-    return lambda x: app(f, app(g, x))
+    return lambda x: f(g(x))
 
 
 @combinator
 def fun_type(domain_type, codomain_type):
-    return lambda f, x: app(codomain_type, app(f, app(domain_type, x)))
+    return lambda f, x: codomain_type(f(domain_type(x)))
 
 
 @combinator
@@ -525,13 +515,13 @@ def fix(f):
 
 @combinator
 def qfix(qf):
-    return app(EVAL, qf, qapp(quote(qfix), qf))
+    return EVAL(qf, qapp(quote(qfix), qf))
 
 
 @combinator
 def close(f):
     """Scott's universal closure operator V."""
-    return lambda x: join_(x, app(f, close(x)))
+    return lambda x: x | f(close(x))
 
 
 # ----------------------------------------------------------------------------
@@ -539,47 +529,47 @@ def close(f):
 
 @combinator
 def a_preconj(f):
-    return app(f, lambda r, s: pair(app(B, r), app(B, s)))
+    return f(lambda r, s: pair(B(r), B(s)))
 
 
 @combinator
 def a_postconj(f):
-    return app(f, lambda r, s: pair(app(C, B, s), app(C, B, r)))
+    return f(lambda r, s: pair(C(B, s), C(B, r)))
 
 
 @combinator
 def a_compose(f1, f2):
-    return app(f1, lambda r1, s1: app(f2, lambda r2, s2: app(
+    return f1(lambda r1, s1: f2(lambda r2, s2: app(
         pair, compose(r1, r2), compose(s2, s1)),
     ))
 
 
 @combinator
 def div(f):
-    return join_(f, app(div, f, TOP))
+    return f | div(f, TOP)
 
 
 @combinator
 def a_copy(f, x):
-    return app(f, x, x)
+    return f(x, x)
 
 
 @combinator
 def a_join(f, x, y):
-    return app(f, join_(x, y))
+    return f(x | y)
 
 
 @combinator
 def a_construct():
     return join_(
-        app(pair, I, I),
-        app(pair, BOT, TOP),
-        app(pair, div, BOT),
-        app(pair, a_copy, a_join),
-        app(pair, C, C),
-        app(a_preconj, a_construct),
-        app(a_postconj, a_construct),
-        app(a_compose, a_construct, a_construct),
+        pair(I, I),
+        pair(BOT, TOP),
+        pair(div, BOT),
+        pair(a_copy, a_join),
+        pair(C, C),
+        a_preconj(a_construct),
+        a_postconj(a_construct),
+        a_compose(a_construct, a_construct),
     )
 
 
@@ -591,7 +581,7 @@ def construct(f):
 
 @construct
 def a_arrow(a, b):
-    return lambda f, x: app(b, app(f, app(a, x)))
+    return lambda f, x: b(f(a(x)))
 
 
 # ----------------------------------------------------------------------------
@@ -599,17 +589,17 @@ def a_arrow(a, b):
 
 @combinator
 def equal(x, y):
-    return bool_type(app(QEQUAL, x, y))
+    return bool_type(QEQUAL(x, y))
 
 
 @combinator
 def less(x, y):
-    return bool_type(app(QLESS, x, y))
+    return bool_type(QLESS(x, y))
 
 
 @combinator
 def enum_contains(qxs, qy):
-    return app(QLESS, qapp(quote(box), qy), qxs)
+    return QLESS(qapp(quote(box), qy), qxs)
 
 
 # ----------------------------------------------------------------------------
@@ -621,8 +611,8 @@ def _make_bits_table(n):
         prev = table
         table = {}
         for k, v in prev.iteritems():
-            table[k] = app(app(C, v), false)
-            table[k | (1 << i)] = app(app(C, v), true)
+            table[k] = C(v, false)
+            table[k | (1 << i)] = C(v, true)
     return table
 
 
@@ -634,31 +624,31 @@ assert len(byte_table) == 256
 def _bits_test(b0, b1, b2, b3, b4, b5, b6, b7):
     bits = [b0, b1, b2, b3, b4, b5, b6, b7]
     tests = map(bool_test, bits)
-    return app(join_(*tests), *tests)
+    return join_(*tests)(*tests)
 
 
 @combinator
 def byte_test(x):
-    return unit_type(app(x, _bits_test))
+    return unit_type(x(_bits_test))
 
 
 @combinator
 def byte_make(b0, b1, b2, b3, b4, b5, b6, b7):
     result = I
     for b in (b0, b1, b2, b3, b4, b5, b6, b7):
-        result = app(C, result, b)
+        result = C(result, b)
     return result
 
 
 byte_get_bit = [
-    combinator(lambda x: app(x, lambda b0, b1, b2, b3, b4, b5, b6, b7: b0)),
-    combinator(lambda x: app(x, lambda b0, b1, b2, b3, b4, b5, b6, b7: b1)),
-    combinator(lambda x: app(x, lambda b0, b1, b2, b3, b4, b5, b6, b7: b2)),
-    combinator(lambda x: app(x, lambda b0, b1, b2, b3, b4, b5, b6, b7: b3)),
-    combinator(lambda x: app(x, lambda b0, b1, b2, b3, b4, b5, b6, b7: b4)),
-    combinator(lambda x: app(x, lambda b0, b1, b2, b3, b4, b5, b6, b7: b5)),
-    combinator(lambda x: app(x, lambda b0, b1, b2, b3, b4, b5, b6, b7: b6)),
-    combinator(lambda x: app(x, lambda b0, b1, b2, b3, b4, b5, b6, b7: b7)),
+    combinator(lambda x: x(lambda b0, b1, b2, b3, b4, b5, b6, b7: b0)),
+    combinator(lambda x: x(lambda b0, b1, b2, b3, b4, b5, b6, b7: b1)),
+    combinator(lambda x: x(lambda b0, b1, b2, b3, b4, b5, b6, b7: b2)),
+    combinator(lambda x: x(lambda b0, b1, b2, b3, b4, b5, b6, b7: b3)),
+    combinator(lambda x: x(lambda b0, b1, b2, b3, b4, b5, b6, b7: b4)),
+    combinator(lambda x: x(lambda b0, b1, b2, b3, b4, b5, b6, b7: b5)),
+    combinator(lambda x: x(lambda b0, b1, b2, b3, b4, b5, b6, b7: b6)),
+    combinator(lambda x: x(lambda b0, b1, b2, b3, b4, b5, b6, b7: b7)),
 ]
 
 
@@ -668,4 +658,4 @@ byte_get_bit = [
 @combinator
 def bytes_test(xs):
     return unit_type(
-        app(xs, ok, lambda h, t: unit_and(byte_test(h), bytes_test(t))))
+        xs(ok, lambda h, t: unit_and(byte_test(h), bytes_test(t))))
