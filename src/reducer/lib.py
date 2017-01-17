@@ -617,11 +617,12 @@ byte_table = _make_bits_table(8)
 assert len(byte_table) == 256
 
 
-# FIXME this is very slow
 def _bits_test(b0, b1, b2, b3, b4, b5, b6, b7):
     bits = [b0, b1, b2, b3, b4, b5, b6, b7]
     tests = map(bool_test, bits)
-    return join_(*tests)(*tests)
+    all_defined = app(*tests)
+    any_error = join_(*tests)
+    return any_error(all_defined)
 
 
 @combinator
