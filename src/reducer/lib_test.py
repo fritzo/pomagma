@@ -2,7 +2,8 @@ import hypothesis
 import pytest
 
 from pomagma.reducer import lib
-from pomagma.reducer.bohm import B, C, I, K, S, reduce, simplify
+from pomagma.reducer.bohm import (B, C, I, K, S, reduce, simplify,
+                                  try_decide_less)
 from pomagma.reducer.bohm_test import s_quoted
 from pomagma.reducer.sugar import app, as_code, combinator, join_, quote
 from pomagma.reducer.syntax import APP, BOT, NVAR, TOP, UNIT, sexpr_print
@@ -665,6 +666,14 @@ nil = lib.nil
 cons = lib.cons
 
 
+def make_list(xs, end=nil):
+    assert end in (nil, undefined, error)
+    result = nil
+    for x in reversed(xs):
+        result = cons(x, result)
+    return result
+
+
 @for_each([
     (nil, ok),
     (cons(x, nil), ok),
@@ -918,6 +927,13 @@ def test_enum_list(enum_item, y, expected):
 # ----------------------------------------------------------------------------
 # Streams
 
+def make_stream(xs, limit):
+    result = lib.stream_const(limit)
+    for x in reversed(xs):
+        result = lib.stream_cons(x, result)
+    return result
+
+
 @for_each([
     (BOT, BOT, I),
     (app(K, I), BOT, I),
@@ -925,18 +941,142 @@ def test_enum_list(enum_item, y, expected):
     pytest.mark.xfail((BOT, lib.stream_bot, I)),
     pytest.mark.xfail((app(K, I), lib.stream_bot, I)),
     (TOP, lib.stream_bot, TOP),
-    pytest.mark.xfail((I, lib.stream_cons(BOT, lib.stream_bot), I)),
-    pytest.mark.xfail((I, lib.stream_cons(I, lib.stream_bot), I)),
-    pytest.mark.xfail((I, lib.stream_cons(K, lib.stream_bot), TOP)),
-    (I, lib.stream_cons(TOP, lib.stream_bot), TOP),
-    pytest.mark.xfail(
-        (I, lib.stream_cons(BOT, lib.stream_cons(TOP, lib.stream_bot)), I)
-    ),
+    pytest.mark.xfail((I, lib.stream_bot, BOT)),
+    pytest.mark.xfail((I, make_stream([I], BOT), I)),
+    pytest.mark.xfail((I, make_stream([BOT, I], BOT), I)),
+    pytest.mark.xfail((I, make_stream([BOT, BOT, I], BOT), I)),
+    pytest.mark.xfail((I, make_stream([K], BOT), TOP)),
+    (I, make_stream([TOP], BOT), TOP),
+    pytest.mark.xfail((I, make_stream([BOT, TOP], BOT), TOP)),
+    pytest.mark.xfail((I, make_stream([BOT, BOT, TOP], BOT), TOP)),
 ])
 def test_stream_test(test_item, xs, expected):
-    assert simplify(lib.stream_test(test_item, xs)) is expected
+    assert reduce(lib.stream_test(test_item, xs)) is expected
 
-# TODO add more stream tests
+
+@pytest.mark.xfail
+@for_each([TOP, BOT, I, K, B, C, S, x, x | y, S(I, I)])
+def test_stream_const(x):
+    expected = lib.stream_const(x)
+    actual = simplify(lib.stream_cons(x, lib.stream_const(x)))
+    assert actual is expected
+
+
+@for_each([
+    (BOT, BOT),
+    pytest.mark.xfail((lib.stream_bot, BOT)),
+    (lib.stream_const(TOP), TOP),
+    pytest.mark.xfail((lib.stream_const(I), I)),
+    pytest.mark.xfail((lib.stream_const(K), K)),
+    pytest.mark.xfail((lib.stream_const(B), B)),
+    pytest.mark.xfail((lib.stream_const(S), S)),
+    pytest.mark.xfail((lib.stream_const(x), x)),
+    pytest.mark.xfail((lib.stream_cons(BOT, lib.stream_const(x)), x)),
+    pytest.mark.xfail((lib.stream_cons(x, lib.stream_const(BOT)), x)),
+    pytest.mark.xfail(
+        (lib.stream_cons(BOT, lib.stream_cons(BOT, lib.stream_const(x))), x),
+    ),
+    pytest.mark.xfail(
+        (lib.stream_cons(BOT, lib.stream_cons(x, lib.stream_bot)), x),
+    ),
+    pytest.mark.xfail(
+        (lib.stream_cons(x, lib.stream_cons(y, lib.stream_bot)), x | y),
+    ),
+])
+def test_stream_join(xs, expected):
+    assert simplify(lib.stream_join(xs)) is expected
+
+
+@pytest.mark.xfail
+@for_each([
+    (I, lib.stream_bot, lib.stream_bot),
+    (TOP, lib.stream_bot, lib.stream_const(TOP)),
+    (BOT, lib.stream_const(TOP), lib.stream_bot),
+    (lib.bool_not, lib.stream_const(true), lib.stream_const(false)),
+    (lib.bool_not, lib.stream_const(false), lib.stream_const(true)),
+    (
+        succ,
+        make_stream(map(num, [2, 0, 1]), BOT),
+        make_stream(map(num, [3, 1, 2]), succ(BOT)),
+    ),
+])
+def test_stream_map(f, xs, expected):
+    assert reduce(lib.stream_map(f, xs)) is expected
+
+
+@pytest.mark.xfail
+@for_each([
+    (
+        [I, K, B],
+        [true, false, true],
+        [lib.pair(I, true), lib.pair(K, false), lib.pair(B, true)],
+    ),
+])
+def test_stream_zip(xs, ys, expected):
+    xs = make_stream(xs, BOT)
+    ys = make_stream(ys, BOT)
+    expected = make_stream(expected, BOT)
+    assert lib.stream_zip(xs, ys) is expected
+
+
+@pytest.mark.xfail
+@for_each([
+    ([I, K, B, C], [true, false, true], [I, true, K, false, B, true, C]),
+])
+def test_stream_dovetail(xs, ys, expected):
+    xs = make_stream(xs, BOT)
+    ys = make_stream(ys, BOT)
+    expected = make_stream(expected, BOT)
+    assert lib.stream_dovetail(xs, ys) is expected
+
+
+@pytest.mark.xfail
+@for_each([
+    (lib.bool_quote, make_stream([true, false], true)),
+    (lib.num_quote, make_stream([num(2), num(1)], num(0))),
+])
+def test_stream_quote(quote_item, xs):
+    assert lib.stream_quote(quote_item, xs) is quote(xs)
+
+
+@pytest.mark.xfail
+@for_each([
+    (lib.enum_unit, lib.stream_const(BOT)),
+    (lib.enum_unit, lib.stream_const(I)),
+    (lib.enum_bool, lib.stream_const(BOT)),
+    (lib.enum_bool, lib.stream_const(true)),
+    (lib.enum_bool, lib.stream_const(false)),
+    (
+        lib.enum_bool,
+        lib.stream_dovetail(lib.stream_const(true), lib.stream_const(false)),
+    ),
+    (lib.enum_num, lib.stream_const(BOT)),
+    (lib.enum_num, lib.stream_const(zero)),
+    (lib.enum_num, lib.stream_num),
+])
+def test_stream_enum(enum_item, expected_lb):
+    actual = lib.stream_enum(enum_item)
+    assert try_decide_less(expected_lb, actual) is not False
+
+
+@pytest.mark.xfail
+@for_each(range(10))
+def test_stream_num(index):
+    expected = zero
+    xs = lib.stream_num
+    for _ in xrange(index):
+        expected = succ(expected)
+        xs = lib.stream_tail(xs)
+    assert lib.stream_head(xs) is expected
+
+
+@pytest.mark.xfail
+@for_each(range(10))
+def test_stream_take(size):
+    expected = nil
+    for n in reversed(range(size)):
+        expected = cons(num(n), expected)
+    assert lib.stream_take(lib.stream_num(num(size))) is expected
 
 
 # ----------------------------------------------------------------------------

@@ -386,16 +386,16 @@ def stream_test(test_item, xs):
 
 
 @combinator
-def stream_join(xs):
-    return xs(lambda h, t: h | stream_join(t))
-
-
-@combinator
 def stream_const(x):
     return stream_cons(x, stream_const(x))
 
 
 stream_bot = stream_const(BOT)
+
+
+@combinator
+def stream_join(xs):
+    return xs(lambda h, t: h | stream_join(t))
 
 
 @combinator
@@ -429,6 +429,17 @@ def enum_stream(enum_item):
     return enum_item(lambda h:
                      stream_cons(h, stream_bot) |
                      enum_stream(enum_item, lambda t: stream_cons(h, t)))
+
+
+@combinator
+def stream_num():
+    return stream_cons(zero, stream_map(succ, stream_num))
+
+
+@combinator
+def stream_take(xs, size):
+    """Return a list containing the first `size` elements of a stream."""
+    return size(nil, lambda p: xs(lambda h, t: cons(h, stream_take(t, p))))
 
 
 # ----------------------------------------------------------------------------
