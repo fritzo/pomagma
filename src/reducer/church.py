@@ -2,9 +2,9 @@
 
 from pomagma.compiler.util import memoize_arg, memoize_args, unique_result
 from pomagma.reducer.syntax import (ABS, APP, FUN, IVAR, JOIN, NVAR, QUOTE,
-                                    isa_abs, isa_app, isa_atom, isa_code,
-                                    isa_fun, isa_ivar, isa_join, isa_nvar,
-                                    isa_quote, sexpr_print)
+                                    Code, isa_abs, isa_app, isa_atom, isa_fun,
+                                    isa_ivar, isa_join, isa_nvar, isa_quote,
+                                    sexpr_print)
 
 pretty = sexpr_print
 
@@ -13,7 +13,7 @@ pretty = sexpr_print
 @unique_result
 def nominal_vars(code):
     """Find all bound and free nominal variables."""
-    if not isa_code(code):
+    if not isinstance(code, Code):
         raise ValueError(code)
     elif isa_nvar(code):
         return frozenset([code])

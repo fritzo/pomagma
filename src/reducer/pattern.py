@@ -1,7 +1,7 @@
 from pomagma.reducer.bohm import decrement_rank
-from pomagma.reducer.syntax import (IVAR_0, free_vars, isa_abs, isa_app,
-                                    isa_atom, isa_code, isa_ivar, isa_join,
-                                    isa_nvar, isa_quote)
+from pomagma.reducer.syntax import (IVAR_0, Code, free_vars, isa_abs, isa_app,
+                                    isa_atom, isa_ivar, isa_join, isa_nvar,
+                                    isa_quote)
 
 
 class NoMatch(Exception):
@@ -52,8 +52,8 @@ def match(pattern, code):
       None if no match was found; otherwise a dict from NVARs to values.
 
     """
-    assert isa_code(pattern), pattern
-    assert isa_code(code), code
+    assert isinstance(pattern, Code), pattern
+    assert isinstance(code, Code), code
     defs = {}
     try:
         _match(pattern, code, defs, 0)

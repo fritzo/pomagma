@@ -21,9 +21,9 @@ from pomagma.compiler.util import memoize_arg, memoize_args, unique
 from pomagma.reducer import syntax
 from pomagma.reducer.syntax import (ABS, APP, BOOL, BOT, CODE, EVAL, IVAR,
                                     JOIN, MAYBE, QAPP, QEQUAL, QLESS, QQUOTE,
-                                    QUOTE, TOP, UNIT, Y, anonymize, complexity,
-                                    free_vars, isa_abs, isa_app, isa_atom,
-                                    isa_code, isa_ivar, isa_join, isa_nvar,
+                                    QUOTE, TOP, UNIT, Code, Y, anonymize,
+                                    complexity, free_vars, isa_abs, isa_app,
+                                    isa_atom, isa_ivar, isa_join, isa_nvar,
                                     isa_quote, polish_parse, quoted_vars,
                                     sexpr_parse, sexpr_print)
 from pomagma.reducer.util import UnreachableError, logged, trool_all, trool_any
@@ -177,7 +177,7 @@ def _is_linear(code):
 
 def is_linear(code):
     """Return whether code never copies a bound IVAR."""
-    assert isa_code(code), code
+    assert isinstance(code, Code), code
     return _is_linear(code) is not None
 
 
@@ -229,7 +229,7 @@ def _permute_rank(code, min_rank, max_rank):
 
 def permute_rank(code, rank):
     """Permute IVARs from [0,1,2...,rank] to [1,2,...,rank,0]."""
-    assert isa_code(code), code
+    assert isinstance(code, Code), code
     assert isinstance(rank, int) and rank >= 0, rank
     return _permute_rank(code, 0, rank) if rank > 0 else code
 
@@ -589,7 +589,7 @@ def try_decide_less_strong(lhs, rhs):
 @memoize_args
 def approximate_var(code, direction, rank):
     """Locally approximate wrt one variable."""
-    assert isa_code(code), code
+    assert isinstance(code, Code), code
     assert direction is TOP or direction is BOT, direction
     assert isinstance(rank, int) and rank >= 0, rank
     result = set()
@@ -662,8 +662,8 @@ def unapply(code):
 @memoize_args
 def try_decide_less_weak(lhs, rhs):
     """Weak decision procedure returning True, False, or None."""
-    assert isa_code(lhs), lhs
-    assert isa_code(rhs), rhs
+    assert isinstance(lhs, Code), lhs
+    assert isinstance(rhs, Code), rhs
 
     # Try simple cases.
     if lhs is BOT or lhs is rhs or rhs is TOP:
@@ -762,7 +762,7 @@ def _ground(code, direction, nvars, rank):
 
 def ground(code):
     """Approximate by grounding all free variables with [BOT, TOP]."""
-    assert isa_code(code)
+    assert isinstance(code, Code)
     nvars = unique(frozenset(v for v in free_vars(code) if isa_nvar(v)))
     return _ground(code, BOT, nvars, 0), _ground(code, TOP, nvars, 0)
 

@@ -4,7 +4,7 @@ import functools
 import inspect
 
 from pomagma.reducer.bohm import convert
-from pomagma.reducer.syntax import NVAR, Code, free_vars, isa_code, quoted_vars
+from pomagma.reducer.syntax import NVAR, Code, free_vars, quoted_vars
 from pomagma.reducer.util import LOG
 
 
@@ -102,7 +102,7 @@ def combinator(arg):
 
 
 def as_code(arg):
-    if isa_code(arg):
+    if isinstance(arg, Code):
         return arg
     elif isinstance(arg, _Combinator):
         return arg.code

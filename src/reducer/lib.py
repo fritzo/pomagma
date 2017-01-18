@@ -10,7 +10,6 @@ from pomagma.reducer.sugar import (app, combinator, join_, let, qapp, quote,
 from pomagma.reducer.syntax import (BOOL, BOT, EVAL, MAYBE, QEQUAL, QLESS,
                                     QUOTE, TOP, UNIT)
 
-
 # ----------------------------------------------------------------------------
 # Nondeterminism
 

@@ -1,8 +1,7 @@
 import re
 from collections import defaultdict
 
-from pomagma.compiler.util import (MEMOIZED_CACHES, memoize_arg, memoize_args,
-                                   unique_result)
+from pomagma.compiler.util import memoize_arg, memoize_args, unique_result
 from pomagma.reducer.util import UnreachableError
 
 
@@ -30,23 +29,10 @@ class Code(tuple):
         # return pomagma.reducer.sugar.join_(lhs, rhs)
         raise NotImplementedError('import pomagma.reduce.sugar')
 
-
-_CODES = {}
-
-
-def _code(*args):
-    args = Code(args)
-    return _CODES.setdefault(args, args)
-
-
-MEMOIZED_CACHES[_code] = _CODES
-
-
-def isa_code(arg):
-    try:
-        return _CODES[arg] is arg
-    except KeyError:
-        return False
+    @staticmethod
+    @memoize_args
+    def make(*args):
+        return Code(args)
 
 
 re_keyword = re.compile('[A-Z]+$')
@@ -62,14 +48,13 @@ def make_keyword(name, arity):
     assert arity in [0, 1, 2]
     name = intern(name)
     _keywords[name] = arity
-    _CODES[name] = name
     return name
 
 
 def make_atom(name):
     assert name not in _atoms
     name = make_keyword(name, arity=0)
-    code = _code(name)
+    code = Code.make(name)
     _atoms[name] = code
     return code
 
@@ -124,7 +109,7 @@ NUM = make_atom('NUM')
 def NVAR(name):
     if re_keyword.match(name):
         raise ValueError('Variable names cannot match [A-Z]+: {}'.format(name))
-    return _code(_NVAR, intern(name))
+    return Code.make(_NVAR, intern(name))
 
 
 @builder
@@ -132,7 +117,7 @@ def IVAR(rank):
     if not (isinstance(rank, int) and rank >= 0):
         raise ValueError(
             'Variable index must be a natural number {}'.format(rank))
-    return _code(_IVAR, rank)
+    return Code.make(_IVAR, rank)
 
 
 IVAR_0 = IVAR(0)
@@ -140,90 +125,90 @@ IVAR_0 = IVAR(0)
 
 @builder
 def APP(lhs, rhs):
-    return _code(_APP, lhs, rhs)
+    return Code.make(_APP, lhs, rhs)
 
 
 @builder
 def JOIN(lhs, rhs):
-    return _code(_JOIN, lhs, rhs)
+    return Code.make(_JOIN, lhs, rhs)
 
 
 @builder
 def QUOTE(code):
     # TODO assert all(not isa_ivar(v) for v in free_vars(code))
-    return _code(_QUOTE, code)
+    return Code.make(_QUOTE, code)
 
 
 @builder
 def ABS(body):
     assert IVAR_0 not in quoted_vars(body)
-    return _code(_ABS, body)
+    return Code.make(_ABS, body)
 
 
 @builder
 def FUN(var, body):
     assert isa_nvar(var), var
     assert var not in quoted_vars(body), (var, body)
-    return _code(_FUN, var, body)
+    return Code.make(_FUN, var, body)
 
 
 @builder
 def LESS(lhs, rhs):
-    return _code(_LESS, lhs, rhs)
+    return Code.make(_LESS, lhs, rhs)
 
 
 @builder
 def NLESS(lhs, rhs):
-    return _code(_NLESS, lhs, rhs)
+    return Code.make(_NLESS, lhs, rhs)
 
 
 @builder
 def EQUAL(lhs, rhs):
-    return _code(_EQUAL, lhs, rhs)
+    return Code.make(_EQUAL, lhs, rhs)
 
 
 def isa_atom(code):
-    assert isa_code(code), code
+    assert isinstance(code, Code), code
     return len(code) == 1
 
 
 def isa_nvar(code):
-    assert isa_code(code), code
+    assert isinstance(code, Code), code
     return code[0] is _NVAR
 
 
 def isa_ivar(code):
-    assert isa_code(code), code
+    assert isinstance(code, Code), code
     return code[0] is _IVAR
 
 
 def isa_app(code):
-    assert isa_code(code), code
+    assert isinstance(code, Code), code
     return code[0] is _APP
 
 
 def isa_join(code):
-    assert isa_code(code), code
+    assert isinstance(code, Code), code
     return code[0] is _JOIN
 
 
 def isa_quote(code):
-    assert isa_code(code), code
+    assert isinstance(code, Code), code
     return code[0] is _QUOTE
 
 
 def isa_abs(code):
-    assert isa_code(code), code
+    assert isinstance(code, Code), code
     return code[0] is _ABS
 
 
 def isa_fun(code):
-    assert isa_code(code), code
+    assert isinstance(code, Code), code
     return code[0] is _FUN
 
 
 def isa_equal(code):
-    assert isa_code(code), code
+    assert isinstance(code, Code), code
     return code[0] is _EQUAL
 
 
@@ -239,7 +224,7 @@ class Transform(object):
 
     @memoize_args
     def __call__(self, code):
-        if not isa_code(code):
+        if not isinstance(code, Code):
             raise TypeError(code)
         elif isa_atom(code):
             return getattr(self, code[0])
@@ -318,7 +303,7 @@ def decrement_var(var):
 @unique_result
 def free_vars(code):
     """Returns set of free variables, possibly quoted."""
-    assert isa_code(code), code
+    assert isinstance(code, Code), code
     if isa_atom(code):
         return frozenset()
     elif isa_nvar(code) or isa_ivar(code):
@@ -345,7 +330,7 @@ def free_vars(code):
 @unique_result
 def quoted_vars(code):
     """Returns set of free quoted variables."""
-    assert isa_code(code), code
+    assert isinstance(code, Code), code
     if isa_atom(code) or isa_nvar(code) or isa_ivar(code):
         return frozenset()
     elif isa_quote(code):
@@ -407,7 +392,7 @@ def complexity(code):
       at any given complexity.
 
     """
-    assert isa_code(code), code
+    assert isinstance(code, Code), code
     if isa_atom(code):
         return ATOM_COMPLEXITY[code]
     elif isa_nvar(code) or isa_ivar(code):
@@ -464,7 +449,7 @@ def _polish_parse_tokens(tokens, transform):
     try:
         fun = getattr(transform, token)
     except KeyError:
-        return _code(token, *args)
+        return Code.make(token, *args)
     return fun(*args)
 
 
@@ -481,7 +466,7 @@ _PARSERS = {
 
 
 def polish_print(code):
-    assert isa_code(code), code
+    assert isinstance(code, Code), code
     tokens = []
     _polish_print_tokens(code, tokens)
     return ' '.join(tokens)
@@ -514,7 +499,7 @@ def _polish_print_tokens(code, tokens):
 @memoize_arg
 def to_sexpr(code):
     """Converts from a python code to a python S-expression."""
-    assert isa_code(code), code
+    assert isinstance(code, Code), code
     if isa_atom(code):
         return code[0]
     elif isa_nvar(code) or isa_ivar(code):
@@ -592,7 +577,7 @@ def sexpr_print_sexpr(sexpr):
 @memoize_arg
 def sexpr_print(code):
     """Prints a python code as a string S-expression."""
-    assert isa_code(code), code
+    assert isinstance(code, Code), code
     sexpr = to_sexpr(code)
     return sexpr_print_sexpr(sexpr)
 

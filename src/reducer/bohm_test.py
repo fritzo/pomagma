@@ -12,7 +12,7 @@ from pomagma.reducer.bohm import (CB, CI, KI, B, C, I, K, S, app, false,
                                   try_decide_less_weak)
 from pomagma.reducer.syntax import (ABS, APP, BOT, CODE, EVAL, IVAR, JOIN,
                                     NVAR, QAPP, QEQUAL, QLESS, QQUOTE, QUOTE,
-                                    TOP, isa_code, polish_print, quoted_vars,
+                                    TOP, Code, polish_print, quoted_vars,
                                     sexpr_parse, sexpr_print)
 from pomagma.reducer.testing import iter_equations
 from pomagma.util.testing import for_each, xfail_if_not_implemented
@@ -935,7 +935,7 @@ def test_try_compute_step_runs(code):
             assert result is None
             return
         else:
-            assert isa_code(result)
+            assert isinstance(result, Code)
 
 
 nonterminating_example_1 = (
