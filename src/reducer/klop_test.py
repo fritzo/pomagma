@@ -1,4 +1,4 @@
-from pomagma.reducer.klop import convert, isa_graph
+from pomagma.reducer.klop import Graph, convert
 from pomagma.reducer.syntax import sexpr_parse
 from pomagma.util.testing import for_each, xfail_if_not_implemented
 
@@ -20,4 +20,4 @@ def test_convert_runs(sexpr):
     term = sexpr_parse(sexpr)
     with xfail_if_not_implemented():
         graph = convert(term)
-    assert isa_graph(graph)
+    assert isinstance(graph, Graph)

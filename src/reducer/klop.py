@@ -8,8 +8,8 @@ data structures.
 from pomagma.compiler.util import memoize_arg, memoize_args
 from pomagma.reducer import syntax
 from pomagma.reducer.graphs import (ABS, APP, BOT, IVAR, JOIN, NVAR, TOP,
-                                    extract_subterm, free_vars, isa_abs,
-                                    isa_app, isa_graph, isa_join, iter_join,
+                                    Graph, extract_subterm, free_vars, isa_abs,
+                                    isa_app, isa_join, iter_join,
                                     preprocess_join_args)
 from pomagma.reducer.util import UnreachableError
 from pomagma.util import TODO
@@ -117,8 +117,8 @@ def dominates(lhs, rhs):
 @memoize_args
 def try_decide_less(lhs, rhs):
     """Weak decision procedure returning True, False, or None."""
-    assert isa_graph(lhs), lhs
-    assert isa_graph(rhs), rhs
+    assert isinstance(lhs, Graph), lhs
+    assert isinstance(rhs, Graph), rhs
 
     # Try simple cases.
     if lhs is BOT or lhs is rhs or rhs is TOP:

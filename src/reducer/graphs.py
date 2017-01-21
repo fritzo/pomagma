@@ -18,9 +18,25 @@ import re
 from pomagma.compiler.util import memoize_arg, memoize_args, unique
 from pomagma.util import TODO
 
-re_keyword = re.compile('[A-Z]+$')
 
-GRAPHS = {}  # : graph -> graph
+# ----------------------------------------------------------------------------
+# Signature
+
+class Term(tuple):
+    @staticmethod
+    @memoize_args
+    def make(*args):
+        return Term(args)
+
+
+class Graph(tuple):
+    @staticmethod
+    @memoize_args
+    def make(*args):
+        return Graph(args)
+
+
+re_keyword = re.compile('[A-Z]+$')
 
 _TOP = intern('TOP')  # : term
 _NVAR = intern('NVAR')  # : string -> term
@@ -30,12 +46,8 @@ _APP = intern('APP')  # : term -> term -> term
 _JOIN = intern('JOIN')  # : frozenset term -> term
 
 
-def term_make(*args):
-    return unique(args)
-
-
 def term_join(args):
-    return term_make(_JOIN, unique(frozenset(args)))
+    return Term.make(_JOIN, unique(frozenset(args)))
 
 
 def term_shift(term, delta):
@@ -43,9 +55,9 @@ def term_shift(term, delta):
     if symbol in (_TOP, _NVAR, _IVAR):
         return term
     elif symbol is _ABS:
-        return term_make(_ABS, term[1] + delta)
+        return Term.make(_ABS, term[1] + delta)
     elif symbol is _APP:
-        return term_make(_APP, term[1] + delta, term[2] + delta)
+        return Term.make(_APP, term[1] + delta, term[2] + delta)
     elif symbol is _JOIN:
         return term_join(i + delta for i in term[1])
     else:
@@ -57,9 +69,9 @@ def term_permute(term, perm):
     if symbol in (_TOP, _NVAR, _IVAR):
         return term
     elif symbol is _ABS:
-        return term_make(_ABS, perm[term[1]])
+        return Term.make(_ABS, perm[term[1]])
     elif symbol is _APP:
-        return term_make(_APP, perm[term[1]], perm[term[2]])
+        return Term.make(_APP, perm[term[1]], perm[term[2]])
     elif symbol is _JOIN:
         return term_join(perm[i] for i in term[1])
     else:
@@ -131,8 +143,8 @@ def graph_make(terms):
     """Make a canonical graph, given a messy list of terms."""
     terms = graph_prune(terms)
     terms = graph_quotient(terms)
-    graph = graph_sort(terms)
-    return GRAPHS.setdefault(graph, graph)
+    terms = graph_sort(terms)
+    return Graph.make(*terms)
 
 
 @memoize_args
@@ -149,7 +161,7 @@ def extract_subterm(graph, pos):
 # ----------------------------------------------------------------------------
 # Graph construction (intro forms)
 
-TOP = graph_make([term_make(_TOP)])
+TOP = graph_make([Term.make(_TOP)])
 BOT = graph_make([term_join([])])
 
 
@@ -157,7 +169,7 @@ BOT = graph_make([term_join([])])
 def NVAR(name):
     if re_keyword.match(name):
         raise ValueError('Variable names cannot match [A-Z]+: {}'.format(name))
-    terms = [term_make(_NVAR, intern(name))]
+    terms = [Term.make(_NVAR, intern(name))]
     return graph_make(terms)
 
 
@@ -166,14 +178,14 @@ def IVAR(rank):
     if not (isinstance(rank, int) and rank >= 0):
         raise ValueError(
             'Variable index must be a natural number {}'.format(rank))
-    terms = [term_make(_IVAR, rank)]
+    terms = [Term.make(_IVAR, rank)]
     return graph_make(terms)
 
 
 @memoize_arg
 def ABS(body):
     body_offset = 1
-    terms = [term_make(_ABS, body_offset)]
+    terms = [Term.make(_ABS, body_offset)]
     for term in body:
         terms.append(term_shift(term, body_offset))
     return graph_make(terms)
@@ -183,7 +195,7 @@ def ABS(body):
 def APP(lhs, rhs):
     lhs_offset = 1
     rhs_offset = 1 + len(lhs)
-    terms = [term_make(_APP, lhs_offset, rhs_offset)]
+    terms = [Term.make(_APP, lhs_offset, rhs_offset)]
     for term in lhs:
         terms.append(term_shift(term, lhs_offset))
     for term in rhs:
@@ -235,10 +247,6 @@ def JOIN(args):
 
 # ----------------------------------------------------------------------------
 # Graph matching (elim forms)
-
-def isa_graph(graph):
-    return graph in GRAPHS
-
 
 def isa_nvar(graph):
     return graph[0][0] is _NVAR
