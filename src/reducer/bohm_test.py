@@ -5,7 +5,7 @@ import hypothesis.strategies as s
 import pytest
 
 from pomagma.reducer import bohm
-from pomagma.reducer.bohm import (CB, CI, KI, B, C, I, K, S, app, false,
+from pomagma.reducer.bohm import (CB, CI, KI, B, C, I, K, S, Y, app, false,
                                   is_linear, is_normal, join, polish_simplify,
                                   print_tiny, sexpr_simplify, true,
                                   try_decide_equal, try_decide_less,
@@ -30,7 +30,7 @@ z = NVAR('z')
 
 delta = ABS(APP(i0, i0))
 
-ACTIVE_ATOMS = [EVAL, QAPP, QQUOTE, QLESS, QEQUAL]
+ACTIVE_ATOMS = [Y, EVAL, QAPP, QQUOTE, QLESS, QEQUAL]
 
 s_atoms = s.one_of(
     s.sampled_from([TOP, BOT]),
@@ -151,10 +151,13 @@ IS_LINEAR_EXAMPLES = [
     (ABS(APP(i0, i1)), True),
     (ABS(APP(i1, i0)), True),
     (ABS(APP(i1, i1)), True),
-    (ABS(JOIN(i0, APP(i0, x))), True),
-    (ABS(JOIN(i0, APP(i0, i0))), False),
+    (JOIN(ABS(i0), ABS(APP(i0, x))), True),
+    (JOIN(ABS(i0), ABS(APP(i0, i0))), False),
+    (JOIN(ABS(i0), ABS(ABS(i1))), True),
+    (JOIN(ABS(ABS(i0)), ABS(ABS(i1))), True),
     (QUOTE(ABS(APP(i0, i0))), True),
-    (EVAL, True),
+    (Y, False),
+    (EVAL, False),
     (QAPP, True),
     (QQUOTE, True),
     (QLESS, True),
@@ -266,6 +269,11 @@ APP_EXAMPLES = [
     (JOIN(x, y), z, JOIN(APP(x, z), APP(y, z))),
     (JOIN(ABS(i0), x), TOP, TOP),
     (JOIN(ABS(i0), x), BOT, APP(x, BOT)),
+    (Y, TOP, TOP),
+    (Y, BOT, BOT),
+    (Y, Y, BOT),
+    (Y, x, APP(Y, x)),
+    (Y, ABS(x), APP(Y, ABS(x))),
     (QUOTE(TOP), x, APP(QUOTE(TOP), x)),
     (EVAL, TOP, TOP),
     (EVAL, BOT, BOT),
@@ -899,6 +907,10 @@ COMPUTE_EXAMPLES = [
     (delta, None),
     (APP(delta, delta), APP(delta, delta)),
     (APP(delta, APP(x, delta)), APP(APP(x, delta), APP(x, delta))),
+    (Y, None),
+    (APP(Y, ABS(x)), x),
+    (APP(Y, ABS(i0)), APP(Y, ABS(i0))),
+    (APP(Y, ABS(join(I, i0))), join(I, APP(Y, ABS(join(I, i0))))),
     (EVAL, None),
     (QAPP, None),
     (QQUOTE, None),

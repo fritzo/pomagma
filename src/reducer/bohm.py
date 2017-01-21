@@ -27,7 +27,6 @@ from pomagma.reducer.syntax import (ABS, APP, BOOL, BOT, CODE, EVAL, IVAR,
                                     isa_quote, polish_parse, quoted_vars,
                                     sexpr_parse, sexpr_print)
 from pomagma.reducer.util import UnreachableError, logged, trool_all, trool_any
-from pomagma.util import TODO
 
 SUPPORTED_TESTDATA = ['sk', 'join', 'quote', 'types', 'lib', 'unit']
 
@@ -142,6 +141,8 @@ def _is_linear(code):
         and N is the set of free IVARs appearing at least twice.
     """
     if isa_atom(code):
+        if code is Y or code is EVAL:
+            return None
         return EMPTY_SET, EMPTY_SET
     elif isa_nvar(code):
         return EMPTY_SET, EMPTY_SET
@@ -176,7 +177,17 @@ def _is_linear(code):
 
 
 def is_linear(code):
-    """Return whether code never copies a bound IVAR."""
+    """Return whether code and its subterms never copy an input argument.
+
+    This definition is tuned for use as a beta-redex guard to prevent
+    nontermination, under the alias is_cheap_to_copy.
+
+    Design decisions:
+    * Nondeterminism is allowed, so that e.g. K|K(I) is linear.
+    * TOP is linear.
+    * Y is nonlinear.
+    * QUOTE(x) is linear for any x, hence EVAL must be nonlinear.
+    """
     assert isinstance(code, Code), code
     return _is_linear(code) is not None
 
@@ -185,12 +196,11 @@ def is_cheap_to_copy(code):
     """Guard to prevent nontermination.
 
     Theorem: If is_cheap_to_copy(-) is guards copies during beta steps,
-    then the guarded reduction relation is terminating. Proof: Rank
-    terms by the number ABS subterms that copy variables.   Linear
-    reduction is terminating, and each nonlinear beta step strictly
-    reduces rank. Hence there are finitely many linear reduction
-    sequences.   []
-
+      then the guarded reduction relation is terminating.
+    Proof: Rank terms by the number ABS subterms that copy variables. Linear
+      reduction (ie with no copying) is terminating, and each nonlinear beta
+      step strictly reduces rank. Hence there are finitely many linear
+      reduction sequences. []
     """
     return is_linear(code)
 
@@ -348,7 +358,14 @@ def app(fun, arg):
     elif isa_quote(fun):
         return APP(fun, arg)
     elif fun is Y:
-        TODO('handle recursion')
+        if arg is TOP:
+            return TOP
+        elif arg is BOT:
+            return BOT
+        elif arg is Y:
+            return BOT
+        else:
+            return APP(Y, arg)
     elif fun is EVAL:
         if arg is TOP:
             return TOP
@@ -883,9 +900,15 @@ def is_normal(code):
     elif isa_abs(code):
         return is_normal(code[1])
     elif isa_app(code):
-        if isa_abs(code[1]):
+        fun = code[1]
+        arg = code[2]
+        if not is_normal(fun) or not is_normal(arg):
             return False
-        return is_normal(code[1]) and is_normal(code[2])
+        if isa_abs(fun):
+            return False
+        if fun is Y and isa_abs(arg):
+            return False
+        return True
     elif isa_join(code):
         return is_normal(code[1]) and is_normal(code[2])
     elif isa_quote(code):
@@ -913,11 +936,13 @@ def _compute_step(code):
             assert not is_linear(arg), arg
             body = fun[1]
             return substitute(body, arg, 0, True)
-        if is_normal(fun):
-            arg = _compute_step(arg)
+        elif fun is Y and isa_abs(arg):
+            body = arg[1]
+            return substitute(body, code, 0, False)
+        elif is_normal(fun):
+            return app(fun, _compute_step(arg))
         else:
-            fun = _compute_step(fun)
-        return app(fun, arg)
+            return app(_compute_step(fun), arg)
     elif isa_join(code):
         lhs = _compute_step(code[1])  # Relies on prioritized sorting.
         rhs = code[2]
