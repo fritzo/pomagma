@@ -1,6 +1,6 @@
 from pomagma.reducer import lib
 from pomagma.reducer.linker import link, substitute
-from pomagma.reducer.sugar import app, as_code
+from pomagma.reducer.sugar import app, as_term
 from pomagma.reducer.syntax import ABS, APP, IVAR, JOIN, NVAR, QUOTE, I
 from pomagma.util.testing import for_each
 
@@ -39,7 +39,7 @@ def test_substitute(var, defn, body, expected):
     (NVAR('lib.succ'), lib.succ),
     (app(x, NVAR('lib.ok'), NVAR('lib.ok')), app(x, lib.ok, lib.ok)),
 ])
-def test_link(code, expected):
-    expected = as_code(expected)
-    actual = link(code)
+def test_link(term, expected):
+    expected = as_term(expected)
+    actual = link(term)
     assert actual == expected

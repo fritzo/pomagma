@@ -39,8 +39,8 @@ i2 = IVAR(2)
     (QUOTE(y), x, QUOTE(y)),
     (QUOTE(i0), x, QUOTE(i1)),
 ])
-def test_anonymize(code, var, expected):
-    assert anonymize(code, var) is expected
+def test_anonymize(term, var, expected):
+    assert anonymize(term, var) is expected
 
 
 NVAR_EXAMPLES = [
@@ -75,18 +75,18 @@ NVAR_EXAMPLES = [
 
 
 @for_each(NVAR_EXAMPLES)
-def test_free_vars(code, free, quoted):
-    assert free_vars(code) == frozenset(free)
+def test_free_vars(term, free, quoted):
+    assert free_vars(term) == frozenset(free)
 
 
 @for_each(NVAR_EXAMPLES)
-def test_quoted_vars(code, free, quoted):
-    assert quoted_vars(code) == frozenset(quoted)
+def test_quoted_vars(term, free, quoted):
+    assert quoted_vars(term) == frozenset(quoted)
 
 
 @for_each(NVAR_EXAMPLES)
-def test_quoted_vars_quote(code, free, quoted):
-    assert quoted_vars(QUOTE(code)) == frozenset(free)
+def test_quoted_vars_quote(term, free, quoted):
+    assert quoted_vars(QUOTE(term)) == frozenset(free)
 
 
 @for_each([
@@ -116,79 +116,79 @@ def test_quoted_vars_quote(code, free, quoted):
     (APP(APP(S, I), x), 1 + max(1 + max(6, 2), 1)),
     (APP(APP(S, I), I), 1 + max(1 + max(6, 2), 2)),
 ])
-def test_complexity(code, expected):
-    assert complexity(code) == expected
+def test_complexity(term, expected):
+    assert complexity(term) == expected
 
 
 EXAMPLES = [
-    {'code': TOP, 'polish': 'TOP', 'sexpr': 'TOP'},
-    {'code': BOT, 'polish': 'BOT', 'sexpr': 'BOT'},
-    {'code': I, 'polish': 'I', 'sexpr': 'I'},
-    {'code': K, 'polish': 'K', 'sexpr': 'K'},
-    {'code': B, 'polish': 'B', 'sexpr': 'B'},
-    {'code': C, 'polish': 'C', 'sexpr': 'C'},
-    {'code': S, 'polish': 'S', 'sexpr': 'S'},
-    {'code': CODE, 'polish': 'CODE', 'sexpr': 'CODE'},
-    {'code': EVAL, 'polish': 'EVAL', 'sexpr': 'EVAL'},
-    {'code': QAPP, 'polish': 'QAPP', 'sexpr': 'QAPP'},
-    {'code': QQUOTE, 'polish': 'QQUOTE', 'sexpr': 'QQUOTE'},
-    {'code': QEQUAL, 'polish': 'QEQUAL', 'sexpr': 'QEQUAL'},
-    {'code': QLESS, 'polish': 'QLESS', 'sexpr': 'QLESS'},
-    {'code': Y, 'polish': 'Y', 'sexpr': 'Y'},
-    {'code': V, 'polish': 'V', 'sexpr': 'V'},
-    {'code': A, 'polish': 'A', 'sexpr': 'A'},
-    {'code': UNIT, 'polish': 'UNIT', 'sexpr': 'UNIT'},
-    {'code': BOOL, 'polish': 'BOOL', 'sexpr': 'BOOL'},
-    {'code': MAYBE, 'polish': 'MAYBE', 'sexpr': 'MAYBE'},
-    {'code': PROD, 'polish': 'PROD', 'sexpr': 'PROD'},
-    {'code': SUM, 'polish': 'SUM', 'sexpr': 'SUM'},
-    {'code': NUM, 'polish': 'NUM', 'sexpr': 'NUM'},
-    {'code': x, 'polish': 'x', 'sexpr': 'x'},
-    {'code': APP(K, I), 'polish': 'APP K I', 'sexpr': '(K I)'},
-    {'code': JOIN(I, K), 'polish': 'JOIN I K', 'sexpr': '(JOIN I K)'},
+    {'term': TOP, 'polish': 'TOP', 'sexpr': 'TOP'},
+    {'term': BOT, 'polish': 'BOT', 'sexpr': 'BOT'},
+    {'term': I, 'polish': 'I', 'sexpr': 'I'},
+    {'term': K, 'polish': 'K', 'sexpr': 'K'},
+    {'term': B, 'polish': 'B', 'sexpr': 'B'},
+    {'term': C, 'polish': 'C', 'sexpr': 'C'},
+    {'term': S, 'polish': 'S', 'sexpr': 'S'},
+    {'term': CODE, 'polish': 'CODE', 'sexpr': 'CODE'},
+    {'term': EVAL, 'polish': 'EVAL', 'sexpr': 'EVAL'},
+    {'term': QAPP, 'polish': 'QAPP', 'sexpr': 'QAPP'},
+    {'term': QQUOTE, 'polish': 'QQUOTE', 'sexpr': 'QQUOTE'},
+    {'term': QEQUAL, 'polish': 'QEQUAL', 'sexpr': 'QEQUAL'},
+    {'term': QLESS, 'polish': 'QLESS', 'sexpr': 'QLESS'},
+    {'term': Y, 'polish': 'Y', 'sexpr': 'Y'},
+    {'term': V, 'polish': 'V', 'sexpr': 'V'},
+    {'term': A, 'polish': 'A', 'sexpr': 'A'},
+    {'term': UNIT, 'polish': 'UNIT', 'sexpr': 'UNIT'},
+    {'term': BOOL, 'polish': 'BOOL', 'sexpr': 'BOOL'},
+    {'term': MAYBE, 'polish': 'MAYBE', 'sexpr': 'MAYBE'},
+    {'term': PROD, 'polish': 'PROD', 'sexpr': 'PROD'},
+    {'term': SUM, 'polish': 'SUM', 'sexpr': 'SUM'},
+    {'term': NUM, 'polish': 'NUM', 'sexpr': 'NUM'},
+    {'term': x, 'polish': 'x', 'sexpr': 'x'},
+    {'term': APP(K, I), 'polish': 'APP K I', 'sexpr': '(K I)'},
+    {'term': JOIN(I, K), 'polish': 'JOIN I K', 'sexpr': '(JOIN I K)'},
     {
-        'code': QUOTE(APP(I, K)),
+        'term': QUOTE(APP(I, K)),
         'polish': 'QUOTE APP I K',
         'sexpr': '(QUOTE (I K))',
     },
     {
-        'code': ABS(IVAR(0)),
+        'term': ABS(IVAR(0)),
         'polish': 'ABS 0',
         'sexpr': '(ABS 0)',
     },
     {
-        'code': FUN(x, APP(x, x)),
+        'term': FUN(x, APP(x, x)),
         'polish': 'FUN x APP x x',
         'sexpr': '(FUN x (x x))',
     },
-    {'code': LESS(K, I), 'polish': 'LESS K I', 'sexpr': '(LESS K I)'},
-    {'code': NLESS(K, I), 'polish': 'NLESS K I', 'sexpr': '(NLESS K I)'},
-    {'code': EQUAL(K, I), 'polish': 'EQUAL K I', 'sexpr': '(EQUAL K I)'},
+    {'term': LESS(K, I), 'polish': 'LESS K I', 'sexpr': '(LESS K I)'},
+    {'term': NLESS(K, I), 'polish': 'NLESS K I', 'sexpr': '(NLESS K I)'},
+    {'term': EQUAL(K, I), 'polish': 'EQUAL K I', 'sexpr': '(EQUAL K I)'},
 ]
 
 
 @for_each(EXAMPLES)
 def test_polish_print(example):
-    actual = polish_print(example['code'])
+    actual = polish_print(example['term'])
     assert actual == example['polish']
 
 
 @for_each(EXAMPLES)
 def test_polish_parse(example):
     actual = polish_parse(example['polish'])
-    assert actual == example['code']
+    assert actual == example['term']
 
 
 @for_each(EXAMPLES)
 def test_sexpr_print(example):
-    actual = sexpr_print(example['code'])
+    actual = sexpr_print(example['term'])
     assert actual == example['sexpr']
 
 
 @for_each(EXAMPLES)
 def test_sexpr_parse(example):
     actual = sexpr_parse(example['sexpr'])
-    assert actual == example['code']
+    assert actual == example['term']
 
 
 # ----------------------------------------------------------------------------
@@ -234,7 +234,7 @@ s_atoms = s.one_of(
 )
 
 
-def s_codes_extend(terms):
+def s_terms_extend(terms):
     return s.one_of(
         s.builds(APP, terms, terms),
         s.builds(JOIN, terms, terms),
@@ -244,45 +244,45 @@ def s_codes_extend(terms):
     )
 
 
-s_codes = s.recursive(s_atoms, s_codes_extend, max_leaves=100)
-s_sexprs = s.builds(to_sexpr, s_codes)
+s_terms = s.recursive(s_atoms, s_terms_extend, max_leaves=100)
+s_sexprs = s.builds(to_sexpr, s_terms)
 
 
-@hypothesis.given(s_codes)
-def test_identity_transform(code):
-    assert identity(code) is code
+@hypothesis.given(s_terms)
+def test_identity_transform(term):
+    assert identity(term) is term
 
 
-@hypothesis.given(s_codes)
-def test_free_vars_runs(code):
-    free_vars(code)
+@hypothesis.given(s_terms)
+def test_free_vars_runs(term):
+    free_vars(term)
 
 
-@hypothesis.given(s_codes)
-def test_qutoed_vars_runs(code):
-    quoted_vars(code)
+@hypothesis.given(s_terms)
+def test_qutoed_vars_runs(term):
+    quoted_vars(term)
 
 
-@hypothesis.given(s_codes)
-def test_complexity_runs(code):
-    complexity(code)
+@hypothesis.given(s_terms)
+def test_complexity_runs(term):
+    complexity(term)
 
 
-@hypothesis.given(s_codes)
+@hypothesis.given(s_terms)
 @hypothesis.settings(max_examples=1000)
-def test_polish_print_parse(code):
-    string = polish_print(code)
+def test_polish_print_parse(term):
+    string = polish_print(term)
     assert isinstance(string, str)
-    actual_code = polish_parse(string)
-    assert actual_code == code
+    actual_term = polish_parse(string)
+    assert actual_term == term
 
 
-@hypothesis.given(s_codes)
+@hypothesis.given(s_terms)
 @hypothesis.settings(max_examples=1000)
-def test_to_sexpr_from_sexpr(code):
-    sexpr = to_sexpr(code)
-    actual_code = from_sexpr(sexpr)
-    assert actual_code == code
+def test_to_sexpr_from_sexpr(term):
+    sexpr = to_sexpr(term)
+    actual_term = from_sexpr(sexpr)
+    assert actual_term == term
 
 
 @hypothesis.given(s_sexprs)
@@ -294,10 +294,10 @@ def test_sexpr_print_parse_sexpr(sexpr):
     assert actual_sexpr == sexpr
 
 
-@hypothesis.given(s_codes)
+@hypothesis.given(s_terms)
 @hypothesis.settings(max_examples=1000)
-def test_sexpr_print_parse(code):
-    string = sexpr_print(code)
+def test_sexpr_print_parse(term):
+    string = sexpr_print(term)
     assert isinstance(string, str)
-    actual_code = sexpr_parse(string)
-    assert actual_code == code
+    actual_term = sexpr_parse(string)
+    assert actual_term == term

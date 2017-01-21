@@ -38,7 +38,7 @@ def decrement_rank(graph):
 
 @memoize_args
 def substitute(graph, value, rank, budget):
-    """Substitute value for IVAR(rank) in code, decremeting higher IVARs.
+    """Substitute value for IVAR(rank) in term, decremeting higher IVARs.
 
     This is linear-eager, and will be lazy about nonlinear
     substitutions.

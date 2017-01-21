@@ -8,7 +8,7 @@ from pomagma.reducer.util import UnreachableError
 # ----------------------------------------------------------------------------
 # Signature
 
-class Code(tuple):
+class Term(tuple):
     def __repr__(self):
         if len(self) == 1:
             return self[0]
@@ -32,14 +32,14 @@ class Code(tuple):
     @staticmethod
     @memoize_args
     def make(*args):
-        return Code(args)
+        return Term(args)
 
 
 re_keyword = re.compile('[A-Z]+$')
 re_rank = re.compile(r'\d+$')
 _keywords = {}  # : name -> arity
 _builders = {}  # : name -> constructor
-_atoms = {}  # name -> code
+_atoms = {}  # name -> term
 
 
 def make_keyword(name, arity):
@@ -54,9 +54,9 @@ def make_keyword(name, arity):
 def make_atom(name):
     assert name not in _atoms
     name = make_keyword(name, arity=0)
-    code = Code.make(name)
-    _atoms[name] = code
-    return code
+    term = Term.make(name)
+    _atoms[name] = term
+    return term
 
 
 def builder(fun):
@@ -109,7 +109,7 @@ NUM = make_atom('NUM')
 def NVAR(name):
     if re_keyword.match(name):
         raise ValueError('Variable names cannot match [A-Z]+: {}'.format(name))
-    return Code.make(_NVAR, intern(name))
+    return Term.make(_NVAR, intern(name))
 
 
 @builder
@@ -117,7 +117,7 @@ def IVAR(rank):
     if not (isinstance(rank, int) and rank >= 0):
         raise ValueError(
             'Variable index must be a natural number {}'.format(rank))
-    return Code.make(_IVAR, rank)
+    return Term.make(_IVAR, rank)
 
 
 IVAR_0 = IVAR(0)
@@ -125,121 +125,121 @@ IVAR_0 = IVAR(0)
 
 @builder
 def APP(lhs, rhs):
-    return Code.make(_APP, lhs, rhs)
+    return Term.make(_APP, lhs, rhs)
 
 
 @builder
 def JOIN(lhs, rhs):
-    return Code.make(_JOIN, lhs, rhs)
+    return Term.make(_JOIN, lhs, rhs)
 
 
 @builder
-def QUOTE(code):
-    # TODO assert all(not isa_ivar(v) for v in free_vars(code))
-    return Code.make(_QUOTE, code)
+def QUOTE(term):
+    # TODO assert all(not isa_ivar(v) for v in free_vars(term))
+    return Term.make(_QUOTE, term)
 
 
 @builder
 def ABS(body):
     assert IVAR_0 not in quoted_vars(body)
-    return Code.make(_ABS, body)
+    return Term.make(_ABS, body)
 
 
 @builder
 def FUN(var, body):
     assert isa_nvar(var), var
     assert var not in quoted_vars(body), (var, body)
-    return Code.make(_FUN, var, body)
+    return Term.make(_FUN, var, body)
 
 
 @builder
 def LESS(lhs, rhs):
-    return Code.make(_LESS, lhs, rhs)
+    return Term.make(_LESS, lhs, rhs)
 
 
 @builder
 def NLESS(lhs, rhs):
-    return Code.make(_NLESS, lhs, rhs)
+    return Term.make(_NLESS, lhs, rhs)
 
 
 @builder
 def EQUAL(lhs, rhs):
-    return Code.make(_EQUAL, lhs, rhs)
+    return Term.make(_EQUAL, lhs, rhs)
 
 
-def isa_atom(code):
-    assert isinstance(code, Code), code
-    return len(code) == 1
+def isa_atom(term):
+    assert isinstance(term, Term), term
+    return len(term) == 1
 
 
-def isa_nvar(code):
-    assert isinstance(code, Code), code
-    return code[0] is _NVAR
+def isa_nvar(term):
+    assert isinstance(term, Term), term
+    return term[0] is _NVAR
 
 
-def isa_ivar(code):
-    assert isinstance(code, Code), code
-    return code[0] is _IVAR
+def isa_ivar(term):
+    assert isinstance(term, Term), term
+    return term[0] is _IVAR
 
 
-def isa_app(code):
-    assert isinstance(code, Code), code
-    return code[0] is _APP
+def isa_app(term):
+    assert isinstance(term, Term), term
+    return term[0] is _APP
 
 
-def isa_join(code):
-    assert isinstance(code, Code), code
-    return code[0] is _JOIN
+def isa_join(term):
+    assert isinstance(term, Term), term
+    return term[0] is _JOIN
 
 
-def isa_quote(code):
-    assert isinstance(code, Code), code
-    return code[0] is _QUOTE
+def isa_quote(term):
+    assert isinstance(term, Term), term
+    return term[0] is _QUOTE
 
 
-def isa_abs(code):
-    assert isinstance(code, Code), code
-    return code[0] is _ABS
+def isa_abs(term):
+    assert isinstance(term, Term), term
+    return term[0] is _ABS
 
 
-def isa_fun(code):
-    assert isinstance(code, Code), code
-    return code[0] is _FUN
+def isa_fun(term):
+    assert isinstance(term, Term), term
+    return term[0] is _FUN
 
 
-def isa_equal(code):
-    assert isinstance(code, Code), code
-    return code[0] is _EQUAL
+def isa_equal(term):
+    assert isinstance(term, Term), term
+    return term[0] is _EQUAL
 
 
 # ----------------------------------------------------------------------------
 # Transforms
 
 class Transform(object):
-    """Recursive transform of code."""
+    """Recursive transform of term."""
 
     def __init__(self, **kwargs):
         for key, val in kwargs.items():
             setattr(self, key, val)
 
     @memoize_args
-    def __call__(self, code):
-        if not isinstance(code, Code):
-            raise TypeError(code)
-        elif isa_atom(code):
-            return getattr(self, code[0])
-        elif isa_nvar(code):
-            return self.NVAR(code[1])
-        elif isa_ivar(code):
-            return self.IVAR(code[1])
+    def __call__(self, term):
+        if not isinstance(term, Term):
+            raise TypeError(term)
+        elif isa_atom(term):
+            return getattr(self, term[0])
+        elif isa_nvar(term):
+            return self.NVAR(term[1])
+        elif isa_ivar(term):
+            return self.IVAR(term[1])
         else:
-            args = [self(arg) for arg in code[1:]]
-            return getattr(self, code[0])(*args)
+            args = [self(arg) for arg in term[1:]]
+            return getattr(self, term[0])(*args)
 
     @classmethod
     def init_class(cls):
-        for name, code in _atoms.iteritems():
-            setattr(cls, name, code)
+        for name, term in _atoms.iteritems():
+            setattr(cls, name, term)
         for name, builder in _builders.iteritems():
             setattr(cls, name, staticmethod(builder))
 
@@ -251,40 +251,40 @@ identity = Transform()
 # ----------------------------------------------------------------------------
 # Variables
 
-def anonymize(code, var, transform=identity):
+def anonymize(term, var, transform=identity):
     """Convert a nominal variable to a de Bruijn variable."""
-    return _anonymize(code, var, 0, transform)
+    return _anonymize(term, var, 0, transform)
 
 
 @memoize_args
-def _anonymize(code, var, rank, transform):
+def _anonymize(term, var, rank, transform):
     """Convert a nominal variable to a de Bruijn variable."""
-    if code is var:
+    if term is var:
         return transform.IVAR(rank)
-    elif isa_atom(code) or isa_nvar(code):
-        return transform(code)
-    elif isa_ivar(code):
-        if code[1] < rank:
-            return transform.IVAR(code[1])
+    elif isa_atom(term) or isa_nvar(term):
+        return transform(term)
+    elif isa_ivar(term):
+        if term[1] < rank:
+            return transform.IVAR(term[1])
         else:
-            return transform.IVAR(code[1] + 1)
-    elif isa_abs(code):
-        body = _anonymize(code[1], var, rank + 1, transform)
+            return transform.IVAR(term[1] + 1)
+    elif isa_abs(term):
+        body = _anonymize(term[1], var, rank + 1, transform)
         return transform.ABS(body)
-    elif isa_app(code):
-        lhs = _anonymize(code[1], var, rank, transform)
-        rhs = _anonymize(code[2], var, rank, transform)
+    elif isa_app(term):
+        lhs = _anonymize(term[1], var, rank, transform)
+        rhs = _anonymize(term[2], var, rank, transform)
         return transform.APP(lhs, rhs)
-    elif isa_join(code):
-        lhs = _anonymize(code[1], var, rank, transform)
-        rhs = _anonymize(code[2], var, rank, transform)
+    elif isa_join(term):
+        lhs = _anonymize(term[1], var, rank, transform)
+        rhs = _anonymize(term[2], var, rank, transform)
         return transform.JOIN(lhs, rhs)
-    elif isa_quote(code):
-        body = _anonymize(code[1], var, rank, transform)
+    elif isa_quote(term):
+        body = _anonymize(term[1], var, rank, transform)
         return transform.QUOTE(body)
     else:
-        raise ValueError(code)
-    raise UnreachableError(code)
+        raise ValueError(term)
+    raise UnreachableError(term)
 
 
 def decrement_var(var):
@@ -301,65 +301,65 @@ def decrement_var(var):
 
 @memoize_arg
 @unique_result
-def free_vars(code):
+def free_vars(term):
     """Returns set of free variables, possibly quoted."""
-    assert isinstance(code, Code), code
-    if isa_atom(code):
+    assert isinstance(term, Term), term
+    if isa_atom(term):
         return frozenset()
-    elif isa_nvar(code) or isa_ivar(code):
-        return frozenset([code])
-    elif isa_app(code) or isa_join(code):
-        return free_vars(code[1]) | free_vars(code[2])
-    elif isa_quote(code):
-        return free_vars(code[1])
-    elif isa_abs(code):
+    elif isa_nvar(term) or isa_ivar(term):
+        return frozenset([term])
+    elif isa_app(term) or isa_join(term):
+        return free_vars(term[1]) | free_vars(term[2])
+    elif isa_quote(term):
+        return free_vars(term[1])
+    elif isa_abs(term):
         return frozenset(
             decrement_var(v)
-            for v in free_vars(code[1])
+            for v in free_vars(term[1])
             if v is not IVAR_0
         )
-    elif isa_fun(code):
-        assert isa_nvar(code[1])
-        return free_vars(code[2]) - frozenset([code[1]])
+    elif isa_fun(term):
+        assert isa_nvar(term[1])
+        return free_vars(term[2]) - frozenset([term[1]])
     else:
-        raise ValueError(code)
-    raise UnreachableError(code)
+        raise ValueError(term)
+    raise UnreachableError(term)
 
 
 @memoize_arg
 @unique_result
-def quoted_vars(code):
+def quoted_vars(term):
     """Returns set of free quoted variables."""
-    assert isinstance(code, Code), code
-    if isa_atom(code) or isa_nvar(code) or isa_ivar(code):
+    assert isinstance(term, Term), term
+    if isa_atom(term) or isa_nvar(term) or isa_ivar(term):
         return frozenset()
-    elif isa_quote(code):
-        return free_vars(code[1])
-    elif isa_app(code) or isa_join(code):
-        return quoted_vars(code[1]) | quoted_vars(code[2])
-    elif isa_abs(code):
+    elif isa_quote(term):
+        return free_vars(term[1])
+    elif isa_app(term) or isa_join(term):
+        return quoted_vars(term[1]) | quoted_vars(term[2])
+    elif isa_abs(term):
         return frozenset(
             decrement_var(v)
-            for v in quoted_vars(code[1])
+            for v in quoted_vars(term[1])
             if v is not IVAR_0
         )
-    elif isa_fun(code):
-        return quoted_vars(code[2])
+    elif isa_fun(term):
+        return quoted_vars(term[2])
     else:
-        raise ValueError(code)
-    raise UnreachableError(code)
+        raise ValueError(term)
+    raise UnreachableError(term)
 
 
 @memoize_arg
-def is_closed(code):
-    """A code is closed if all de Bruijn variables are bound."""
-    return not any(isa_ivar(v) for v in free_vars(code))
+def is_closed(term):
+    """A term is closed if all de Bruijn variables are bound."""
+    return not any(isa_ivar(v) for v in free_vars(term))
 
 
 @memoize_arg
-def is_defined(code):
-    """A code is defined if all nominal variables have been substituted."""
-    return not any(isa_nvar(v) for v in free_vars(code))
+def is_defined(term):
+    """A term is defined if all nominal variables have been substituted."""
+    return not any(isa_nvar(v) for v in free_vars(term))
 
 
 # ----------------------------------------------------------------------------
@@ -383,41 +383,41 @@ ATOM_COMPLEXITY = defaultdict(lambda: 10, {
 
 
 @memoize_arg
-def complexity(code):
-    """Complexity norm on code.
+def complexity(term):
+    """Complexity norm on term.
 
     Theorem: Modulo alpha conversion and excluding JOIN-terms,
-      there are finitely many codes with any fixed complexity.
+      there are finitely many terms with any fixed complexity.
     Theorem: There are finitely many JOIN-free closed de Bruijn terms
       at any given complexity.
 
     """
-    assert isinstance(code, Code), code
-    if isa_atom(code):
-        return ATOM_COMPLEXITY[code]
-    elif isa_nvar(code) or isa_ivar(code):
+    assert isinstance(term, Term), term
+    if isa_atom(term):
+        return ATOM_COMPLEXITY[term]
+    elif isa_nvar(term) or isa_ivar(term):
         return 1
-    elif isa_join(code):
-        return max(complexity(code[1]), complexity(code[2]))
-    elif isinstance(code, tuple):
-        return 1 + max(complexity(arg) for arg in code[1:])
+    elif isa_join(term):
+        return max(complexity(term[1]), complexity(term[2]))
+    elif isinstance(term, tuple):
+        return 1 + max(complexity(arg) for arg in term[1:])
     else:
-        raise ValueError(code)
-    raise UnreachableError(code)
+        raise ValueError(term)
+    raise UnreachableError(term)
 
 
 # ----------------------------------------------------------------------------
 # Polish notation
 
 def polish_parse(string, transform=identity):
-    """Parse a string from polish notation to a code.
+    """Parse a string from polish notation to a term.
 
     Args:
       string: a string in polish notation.
       transform: an optional Transform, mapping keyword to builder.
 
     Returns:
-      a code.
+      a term.
     """
     assert isinstance(string, str), type(string)
     assert isinstance(transform, Transform), type(transform)
@@ -449,7 +449,7 @@ def _polish_parse_tokens(tokens, transform):
     try:
         fun = getattr(transform, token)
     except KeyError:
-        return Code.make(token, *args)
+        return Term.make(token, *args)
     return fun(*args)
 
 
@@ -465,46 +465,46 @@ _PARSERS = {
 }
 
 
-def polish_print(code):
-    assert isinstance(code, Code), code
+def polish_print(term):
+    assert isinstance(term, Term), term
     tokens = []
-    _polish_print_tokens(code, tokens)
+    _polish_print_tokens(term, tokens)
     return ' '.join(tokens)
 
 
-def _polish_print_tokens(code, tokens):
-    if isinstance(code, str):
-        tokens.append(code)
-    elif isinstance(code, tuple):
-        if code[0] is _NVAR:
-            tokens.append(code[1])
+def _polish_print_tokens(term, tokens):
+    if isinstance(term, str):
+        tokens.append(term)
+    elif isinstance(term, tuple):
+        if term[0] is _NVAR:
+            tokens.append(term[1])
             pos = 2
-        elif code[0] is _IVAR:
-            tokens.append(str(code[1]))
+        elif term[0] is _IVAR:
+            tokens.append(str(term[1]))
             pos = 2
         else:
-            tokens.append(code[0])
+            tokens.append(term[0])
             pos = 1
-        for arg in code[pos:]:
+        for arg in term[pos:]:
             _polish_print_tokens(arg, tokens)
-    elif isinstance(code, int):
-        tokens.append(str(code))
+    elif isinstance(term, int):
+        tokens.append(str(term))
     else:
-        raise ValueError(code)
+        raise ValueError(term)
 
 
 # ----------------------------------------------------------------------------
 # S-Expression notation
 
 @memoize_arg
-def to_sexpr(code):
-    """Converts from a python code to a python S-expression."""
-    assert isinstance(code, Code), code
-    if isa_atom(code):
-        return code[0]
-    elif isa_nvar(code) or isa_ivar(code):
-        return code[1]
-    head = code
+def to_sexpr(term):
+    """Converts from a python term to a python S-expression."""
+    assert isinstance(term, Term), term
+    if isa_atom(term):
+        return term[0]
+    elif isa_nvar(term) or isa_ivar(term):
+        return term[1]
+    head = term
     args = []
     while isa_app(head):
         args.append(to_sexpr(head[2]))
@@ -521,7 +521,7 @@ def to_sexpr(code):
 
 
 def from_sexpr(sexpr, transform=identity):
-    """Converts from a python S-expression to a python code."""
+    """Converts from a python S-expression to a python term."""
     assert isinstance(transform, Transform), type(transform)
 
     # Handle atoms and variables.
@@ -575,10 +575,10 @@ def sexpr_print_sexpr(sexpr):
 
 
 @memoize_arg
-def sexpr_print(code):
-    """Prints a python code as a string S-expression."""
-    assert isinstance(code, Code), code
-    sexpr = to_sexpr(code)
+def sexpr_print(term):
+    """Prints a python term as a string S-expression."""
+    assert isinstance(term, Term), term
+    sexpr = to_sexpr(term)
     return sexpr_print_sexpr(sexpr)
 
 
@@ -613,17 +613,17 @@ def sexpr_parse_sexpr(string):
 
 
 def sexpr_parse(string, transform=identity):
-    """Parse a string from S-expressoin notation to a code.
+    """Parse a string from S-expressoin notation to a term.
 
     Args:
       string: a string in S-expression notation.
       transform: an optional Transform, mapping keyword to builder.
 
     Returns:
-      a code.
+      a term.
     """
     assert isinstance(string, str), type(string)
     assert isinstance(transform, Transform), type(transform)
     sexpr = sexpr_parse_sexpr(string)
-    code = from_sexpr(sexpr, transform)
-    return code
+    term = from_sexpr(sexpr, transform)
+    return term

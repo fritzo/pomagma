@@ -1,4 +1,4 @@
-"""Wrapping code to use SKJ programs from python."""
+"""Wrapping term to use SKJ programs from python."""
 
 import contextlib
 import functools
@@ -7,7 +7,7 @@ from itertools import izip
 from pomagma.reducer import data
 from pomagma.reducer.sugar import app, combinator
 
-ENGINE = None  # Must have a method .reduce(code, budget=0) -> code.
+ENGINE = None  # Must have a method .reduce(term, budget=0) -> term.
 BUDGET = 10000
 
 
@@ -49,11 +49,11 @@ class Program(object):
                 self.__name__, len(self._encoders), len(args)))
         if ENGINE is None:
             raise RuntimeError('No engine specified')
-        code_args = [encode(arg) for encode, arg in izip(self._encoders, args)]
-        code_in = app(self.combinator.code, *code_args)
-        code_out = ENGINE.reduce(code_in)
-        data.check_for_errors(code_out)
-        data_out = self._decoder(code_out)
+        term_args = [encode(arg) for encode, arg in izip(self._encoders, args)]
+        term_in = app(self.combinator.term, *term_args)
+        term_out = ENGINE.reduce(term_in)
+        data.check_for_errors(term_out)
+        data_out = self._decoder(term_out)
         return data_out
 
 

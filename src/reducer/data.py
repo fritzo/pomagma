@@ -1,4 +1,8 @@
-"""Translators between codes and a json-like fragment of python."""
+"""Translators between terms and a json-like fragment of python.
+
+encode : python -> Term
+decode : Term -> python
+"""
 
 from pomagma.compiler.util import memoize_arg, memoize_args
 from pomagma.reducer import lib, pattern
@@ -13,20 +17,20 @@ pretty = sexpr_print
 # ----------------------------------------------------------------------------
 # Errors
 
-def _contains(code, atom):
-    if code is atom:
+def _contains(term, atom):
+    if term is atom:
         return True
-    elif isinstance(code, tuple):
-        return any(_contains(arg, atom) for arg in code[1:])
+    elif isinstance(term, tuple):
+        return any(_contains(arg, atom) for arg in term[1:])
     else:
         return False
 
 
-def check_for_errors(code):
-    if _contains(code, lib.error):
-        raise RuntimeError(pretty(code))
-    if _contains(code, lib.undefined):
-        raise NotImplementedError(pretty(code))
+def check_for_errors(term):
+    if _contains(term, lib.error):
+        raise RuntimeError(pretty(term))
+    if _contains(term, lib.undefined):
+        raise NotImplementedError(pretty(term))
 
 
 # ----------------------------------------------------------------------------
@@ -38,12 +42,12 @@ def encode_unit(value):
     return lib.ok
 
 
-def decode_unit(code):
+def decode_unit(term):
     """Decode unit to None, or raise an exception."""
-    if code is lib.ok:
+    if term is lib.ok:
         return None
     else:
-        raise TypeError(pretty(code))
+        raise TypeError(pretty(term))
 
 
 # ----------------------------------------------------------------------------
@@ -55,14 +59,14 @@ def encode_bool(value):
     return lib.true if value else lib.false
 
 
-def decode_bool(code):
+def decode_bool(term):
     """Decode bool to {True, False} or raise an exception."""
-    if code is lib.true:
+    if term is lib.true:
         return True
-    elif code is lib.false:
+    elif term is lib.false:
         return False
     else:
-        raise TypeError(pretty(code))
+        raise TypeError(pretty(term))
 
 
 # ----------------------------------------------------------------------------
@@ -83,11 +87,11 @@ def encode_byte(byte):
 
 
 @memoize_arg
-def decode_byte(code):
+def decode_byte(term):
     try:
-        return _decode_byte[code]
+        return _decode_byte[term]
     except KeyError:
-        raise TypeError(pretty(code))
+        raise TypeError(pretty(term))
 
 
 # ----------------------------------------------------------------------------
@@ -113,12 +117,12 @@ def decode_maybe(decode_item):
     item_var = NVAR('item')
     some_pattern = lib.some(item_var)
 
-    def decode(code):
-        if code is lib.none:
+    def decode(term):
+        if term is lib.none:
             return None
-        match = pattern.match(some_pattern, code)
+        match = pattern.match(some_pattern, term)
         if match is None:
-            raise TypeError(pretty(code))
+            raise TypeError(pretty(term))
         return (decode_item(match[item_var]),)
 
     return decode
@@ -133,9 +137,9 @@ def encode_prod(encode_fst, encode_snd):
     def encode(value):
         if not (isinstance(value, tuple) and len(value) == 2):
             raise TypeError(value)
-        code_fst = encode_fst(value[0])
-        code_snd = encode_snd(value[1])
-        return lib.pair(code_fst, code_snd)
+        term_fst = encode_fst(value[0])
+        term_snd = encode_snd(value[1])
+        return lib.pair(term_fst, term_snd)
 
     return encode
 
@@ -146,10 +150,10 @@ def decode_prod(decode_fst, decode_snd):
     y = NVAR('y')
     pair_pattern = lib.pair(x, y)
 
-    def decode(code):
-        match = pattern.match(pair_pattern, code)
+    def decode(term):
+        match = pattern.match(pair_pattern, term)
         if match is None:
-            raise TypeError(pretty(code))
+            raise TypeError(pretty(term))
         x_value = decode_fst(match[x])
         y_value = decode_snd(match[y])
         return (x_value, y_value)
@@ -181,14 +185,14 @@ def decode_sum(decode_inl, decode_inr):
     inl_pattern = lib.inl(x)
     inr_pattern = lib.inr(x)
 
-    def decode(code):
-        match = pattern.match(inl_pattern, code)
+    def decode(term):
+        match = pattern.match(inl_pattern, term)
         if match:
             return (True, decode_inl(match[x]))
-        match = pattern.match(inr_pattern, code)
+        match = pattern.match(inr_pattern, term)
         if match:
             return (False, decode_inr(match[x]))
-        raise TypeError(pretty(code))
+        raise TypeError(pretty(term))
 
     return decode
 
@@ -209,16 +213,16 @@ _pred_var = NVAR('pred')
 _succ_pattern = lib.succ(_pred_var)
 
 
-def decode_num(code):
+def decode_num(term):
     result = 0
     while True:
-        if code is lib.zero:
+        if term is lib.zero:
             return result
-        match = pattern.match(_succ_pattern, code)
+        match = pattern.match(_succ_pattern, term)
         if match is None:
-            raise TypeError(pretty(code))
+            raise TypeError(pretty(term))
         result += 1
-        code = match[_pred_var]
+        term = match[_pred_var]
 
 
 # ----------------------------------------------------------------------------
@@ -230,10 +234,10 @@ def encode_list(encode_item):
     def encode(values):
         if not isinstance(values, list):
             raise TypeError(values)
-        code = lib.nil
+        term = lib.nil
         for value in reversed(values):
-            code = lib.cons(encode_item(value), code)
-        return code
+            term = lib.cons(encode_item(value), term)
+        return term
 
     return encode
 
@@ -244,14 +248,14 @@ def decode_list(decode_item):
     tail = NVAR('tail')
     cons_pattern = lib.cons(head, tail)
 
-    def decode(code):
+    def decode(term):
         result = []
-        while code is not lib.nil:
-            match = pattern.match(cons_pattern, code)
+        while term is not lib.nil:
+            match = pattern.match(cons_pattern, term)
             if match is None:
-                raise TypeError(pretty(code))
+                raise TypeError(pretty(term))
             result.append(decode_item(match[head]))
-            code = match[tail]
+            term = match[tail]
         return result
 
     return decode
@@ -267,8 +271,8 @@ def encode_bytes(value):
     return encode_list(encode_byte)(byte_list)
 
 
-def decode_bytes(code):
-    byte_list = decode_list(decode_byte)(code)
+def decode_bytes(term):
+    byte_list = decode_list(decode_byte)(term)
     return b''.join(byte_list)
 
 

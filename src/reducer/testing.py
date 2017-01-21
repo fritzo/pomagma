@@ -39,11 +39,11 @@ def iter_test_cases(test_id, suites=None):
                 if sexpr:
                     message = 'In {}:{}\n{}'.format(basename, 1 + i, line)
                     try:
-                        code = sexpr_parse(sexpr)
+                        term = sexpr_parse(sexpr)
                     except ValueError as e:
                         raise ValueError('{} {}'.format(message, e))
                     comment = None if len(parts) < 2 else parts[1].strip()
-                    yield code, comment, message
+                    yield term, comment, message
 
 
 def parse_xfail(comment, test_id):
@@ -57,10 +57,10 @@ def parse_xfail(comment, test_id):
 
 def iter_equations(test_id, suites=None):
     assert isinstance(test_id, str), test_id
-    for code, comment, message in iter_test_cases(test_id, suites):
-        if isa_equal(code):
-            lhs = link(bohm.convert(code[1]))
-            rhs = link(bohm.convert(code[2]))
+    for term, comment, message in iter_test_cases(test_id, suites):
+        if isa_equal(term):
+            lhs = link(bohm.convert(term[1]))
+            rhs = link(bohm.convert(term[2]))
             example = lhs, rhs, message
             if comment and parse_xfail(comment, test_id):
                 example = pytest.mark.xfail(example)
@@ -70,7 +70,7 @@ def iter_equations(test_id, suites=None):
 
 
 def migrate(fun):
-    """Applies a code->code transform on all files in testdata/."""
+    """Applies a term->term transform on all files in testdata/."""
     for basename in os.listdir(TESTDATA):
         assert basename.endswith('.sexpr'), basename
         print('processing {}'.format(basename))
@@ -83,14 +83,14 @@ def migrate(fun):
                 sexpr = parts[0].strip()
                 comment = '' if len(parts) == 1 else parts[1]
                 if sexpr:
-                    code = sexpr_parse(sexpr)
+                    term = sexpr_parse(sexpr)
                     try:
-                        code = fun(code)
+                        term = fun(term)
                     except Exception:
                         print('Error at {}:{}'.format(basename, lineno + 1))
                         print(line)
                         raise
-                    sexpr = sexpr_print(code)
+                    sexpr = sexpr_print(term)
                 if not comment:
                     line = sexpr
                 elif not sexpr:
@@ -111,11 +111,11 @@ def reformat():
     migrate(lambda x: x)
 
 
-def _unquote_equal(code):
-    if not isa_app(code) or not isa_app(code[1]) or code[1][1] is not EQUAL:
-        return code
-    lhs = code[1][2]
-    rhs = code[2]
+def _unquote_equal(term):
+    if not isa_app(term) or not isa_app(term[1]) or term[1][1] is not EQUAL:
+        return term
+    lhs = term[1][2]
+    rhs = term[2]
     assert isa_quote(lhs), lhs
     assert isa_quote(rhs), rhs
     lhs = lhs[1]
@@ -173,29 +173,29 @@ s_sk_atoms = s.one_of(
 )
 
 
-def s_sk_extend(codes):
-    return s.builds(APP, codes, codes)
+def s_sk_extend(terms):
+    return s.builds(APP, terms, terms)
 
 
-def s_skj_extend(codes):
+def s_skj_extend(terms):
     return s.one_of(
-        s.builds(APP, codes, codes),
-        s.builds(JOIN, codes, codes),
+        s.builds(APP, terms, terms),
+        s.builds(JOIN, terms, terms),
     )
 
 
-def s_codes_extend(codes):
+def s_terms_extend(terms):
     return s.one_of(
-        s.builds(APP, codes, codes),
-        s.builds(JOIN, codes, codes),
-        s.builds(QUOTE, codes),
+        s.builds(APP, terms, terms),
+        s.builds(JOIN, terms, terms),
+        s.builds(QUOTE, terms),
     )
 
 
-s_sk_codes = s.recursive(s_sk_atoms, s_sk_extend, max_leaves=100)
-s_skj_codes = s.recursive(s_sk_atoms, s_skj_extend, max_leaves=100)
-s_codes = s.recursive(s_atoms, s_codes_extend, max_leaves=100)
-s_quoted = s.builds(QUOTE, s_codes)
+s_sk_terms = s.recursive(s_sk_atoms, s_sk_extend, max_leaves=100)
+s_skj_terms = s.recursive(s_sk_atoms, s_skj_extend, max_leaves=100)
+s_terms = s.recursive(s_atoms, s_terms_extend, max_leaves=100)
+s_quoted = s.builds(QUOTE, s_terms)
 
 
 if __name__ == '__main__':

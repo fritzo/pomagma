@@ -48,10 +48,10 @@ def test_abstract(var, body, expected):
     ('(FUN x (FUN y (FUN z (x z y))))', 'C'),
     ('(FUN x (FUN y (FUN z (x z (y z)))))', 'S'),
 ])
-def test_convert(code, expected):
-    code = sexpr_parse(code)
+def test_convert(term, expected):
+    term = sexpr_parse(term)
     expected = sexpr_parse(expected)
-    assert convert(code) is expected
+    assert convert(term) is expected
 
 
 NORMAL_EXAMPLES = [
@@ -73,13 +73,13 @@ NORMAL_EXAMPLES = [
 
 
 @for_each(NORMAL_EXAMPLES)
-def test_compute_step_normal(code):
-    assert try_compute_step(code) is None
+def test_compute_step_normal(term):
+    assert try_compute_step(term) is None
 
 
 @for_each(NORMAL_EXAMPLES)
-def test_reduce_normal(code):
-    assert reduce(code) is code
+def test_reduce_normal(term):
+    assert reduce(term) is term
 
 
 COMPUTE_STEP_EXAMPLES = [
@@ -94,18 +94,18 @@ COMPUTE_STEP_EXAMPLES = [
 
 
 @for_each(COMPUTE_STEP_EXAMPLES)
-def test_try_compute_step(code, expected):
-    assert try_compute_step(code) is expected
+def test_try_compute_step(term, expected):
+    assert try_compute_step(term) is expected
 
 
 @for_each(COMPUTE_STEP_EXAMPLES)
-def test_reduce_step(code, expected):
-    assert reduce(code, 1) is expected
+def test_reduce_step(term, expected):
+    assert reduce(term, 1) is expected
 
 
 @for_each(iter_equations('curry'))
-def test_reduce_equations(code, expected, message):
+def test_reduce_equations(term, expected, message):
     with xfail_if_not_implemented():
-        actual = reduce(code)
+        actual = reduce(term)
         expected = convert(expected)
     assert actual == expected, message

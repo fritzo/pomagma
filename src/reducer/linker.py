@@ -1,6 +1,6 @@
 from pomagma.compiler.util import memoize_args
 from pomagma.reducer import lib
-from pomagma.reducer.sugar import as_code
+from pomagma.reducer.sugar import as_term
 from pomagma.reducer.syntax import (ABS, APP, JOIN, QUOTE, free_vars, isa_abs,
                                     isa_app, isa_atom, isa_ivar, isa_join,
                                     isa_nvar, isa_quote)
@@ -42,18 +42,18 @@ def substitute(var, defn, body):
     return _substitute(var, defn, body)
 
 
-def bind(code, var):
+def bind(term, var):
     assert var[1].startswith('lib.')
     name = var[1][4:]
     defn = getattr(lib, name)  # raises AttributeError if not found.
-    return substitute(var, as_code(defn), code)
+    return substitute(var, as_term(defn), term)
 
 
-def link(code):
-    code = as_code(code)
-    free = free_vars(code)
+def link(term):
+    term = as_term(term)
+    free = free_vars(term)
     to_bind = sorted(var for var in free if var[1].startswith('lib.'))
     for var in to_bind:
-        code = bind(code, var)
+        term = bind(term, var)
 
-    return code
+    return term

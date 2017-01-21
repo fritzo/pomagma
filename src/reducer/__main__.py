@@ -31,7 +31,7 @@ def guess_format(string):
 
 @parsable
 def compile(string, fmt='auto'):
-    """Compile code from Bohm ABS to I,K,B,C,S form.
+    """Compile term from Bohm ABS to I,K,B,C,S form.
 
     Available foramts: polish, sexpr
 
@@ -41,8 +41,8 @@ def compile(string, fmt='auto'):
     print('Format: {}'.format(fmt))
     print('In: {}'.format(string))
     parse, print_, simplify = FORMATS[fmt]
-    code = parse(string)
-    compiled = curry.compile_(code)
+    term = parse(string)
+    compiled = curry.compile_(term)
     result = print_(compiled)
     print('Out: {}'.format(result))
     return result
@@ -50,7 +50,7 @@ def compile(string, fmt='auto'):
 
 @parsable
 def decompile(string, fmt='auto'):
-    """Decompile code from Curry I,K,B,C,S to Bohm ABS form.
+    """Decompile term from Curry I,K,B,C,S to Bohm ABS form.
 
     Available foramts: polish, sexpr
 
@@ -80,8 +80,8 @@ def repl(fmt='sexpr'):
             sys.stderr.flush()
             return
         try:
-            code = parse(string)
-            result = bohm.reduce(code)
+            term = parse(string)
+            result = bohm.reduce(term)
             result_string = print_(result)
             sys.stdout.write(result_string)
             sys.stdout.write('\n')
@@ -107,10 +107,10 @@ def profile(engine='bohm', count=256):
 
 @parsable
 def simplify(string, engine='bohm', fmt='auto'):
-    """Reduce code.
+    """Reduce term.
 
     Args:
-        string: code to simplify, in some parsable format specified by fmt
+        string: term to simplify, in some parsable format specified by fmt
         engine: 'bohm', 'curry'
         fmt: one of 'auto', 'polish', or 'sexpr'
 
@@ -124,9 +124,9 @@ def simplify(string, engine='bohm', fmt='auto'):
     print('Engine: {}'.format(engine))
     print('In: {}'.format(string))
     parse, print_, simplify = FORMATS[fmt]
-    code = parse(string)
-    code = link(code)
-    result = ENGINES[engine].simplify(code)
+    term = parse(string)
+    term = link(term)
+    result = ENGINES[engine].simplify(term)
     result_string = print_(result)
     print('Out: {}'.format(result_string))
     return result_string
@@ -134,10 +134,10 @@ def simplify(string, engine='bohm', fmt='auto'):
 
 @parsable
 def reduce(string, engine='bohm', fmt='auto'):
-    """Reduce code.
+    """Reduce term.
 
     Args:
-        string: code to reduce, in some parsable format specified by fmt
+        string: term to reduce, in some parsable format specified by fmt
         engine: 'bohm', 'curry'
         fmt: one of 'auto', 'polish', or 'sexpr'
 
@@ -151,9 +151,9 @@ def reduce(string, engine='bohm', fmt='auto'):
     print('Engine: {}'.format(engine))
     print('In: {}'.format(string))
     parse, print_, simplify = FORMATS[fmt]
-    code = parse(string)
-    code = link(code)
-    result = ENGINES[engine].reduce(code)
+    term = parse(string)
+    term = link(term)
+    result = ENGINES[engine].reduce(term)
     result_string = print_(result)
     print('Out: {}'.format(result_string))
     return result_string
@@ -167,14 +167,14 @@ def step(string, steps=10, fmt='auto'):
         fmt = guess_format(string)
     print('Format: {}'.format(fmt))
     parse, print_, simplify = FORMATS[fmt]
-    code = simplify(string)
-    print(print_(code))
+    term = simplify(string)
+    print(print_(term))
     for step in xrange(steps):
-        code = bohm.try_compute_step(code)
-        if code is None:
+        term = bohm.try_compute_step(term)
+        if term is None:
             print('DONE')
             return step
-        print(print_(code))
+        print(print_(term))
     return None
 
 

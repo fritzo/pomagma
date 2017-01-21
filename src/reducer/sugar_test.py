@@ -1,7 +1,7 @@
 import pytest
 
 from pomagma.reducer.bohm import KI, B, C, I, K, S
-from pomagma.reducer.sugar import _compile, app, as_code, combinator, join_
+from pomagma.reducer.sugar import _compile, app, as_term, combinator, join_
 from pomagma.reducer.syntax import NVAR, TOP
 from pomagma.util.testing import for_each
 
@@ -11,7 +11,7 @@ y = NVAR('y')
 z = NVAR('z')
 
 
-CODE_EXAMPLES = [
+TERM_EXAMPLES = [
     (I, I),
     (I(K), K),
     (K, K),
@@ -51,8 +51,8 @@ def test_compile_fun(arg, expected):
     assert actual == expected
 
 
-@for_each(CODE_EXAMPLES)
-def test_compile_code_raises_type_error(arg, expected):
+@for_each(TERM_EXAMPLES)
+def test_compile_term_raises_type_error(arg, expected):
     with pytest.raises(TypeError):
         _compile(arg)
 
@@ -60,7 +60,7 @@ def test_compile_code_raises_type_error(arg, expected):
 @for_each(OPEN_FUN_EXAMPLES)
 def test_combinator_must_be_closed(arg, expected):
     with pytest.raises(SyntaxError):
-        combinator(arg).code
+        combinator(arg).term
 
 
 @combinator
@@ -86,11 +86,11 @@ def div_rec_app(x):
     (div_rec_app, div_Y),
 ])
 def test_combinator_recursion(arg, expected):
-    actual = arg.code
+    actual = arg.term
     assert actual == expected
 
 
-@for_each(CODE_EXAMPLES + CLOSED_FUN_EXAMPLES + OPEN_FUN_EXAMPLES)
-def test_as_code(arg, expected):
-    actual = as_code(arg)
+@for_each(TERM_EXAMPLES + CLOSED_FUN_EXAMPLES + OPEN_FUN_EXAMPLES)
+def test_as_term(arg, expected):
+    actual = as_term(arg)
     assert actual == expected

@@ -89,12 +89,12 @@ convert = syntax.Transform(FUN=abstract, ABS=de_bruijn_abstract)
 # Computation
 
 @memoize_arg
-def try_compute_step(code):
-    if isa_atom(code) or isa_nvar(code):
+def try_compute_step(term):
+    if isa_atom(term) or isa_nvar(term):
         return None
-    elif isa_app(code):
-        c1 = code[1]
-        c2 = code[2]
+    elif isa_app(term):
+        c1 = term[1]
+        c2 = term[2]
         if c1 is TOP:
             return TOP
         elif c1 is BOT:
@@ -123,15 +123,15 @@ def try_compute_step(code):
             return APP(c1, c2_step)
         return None
     else:
-        raise ValueError(code)
+        raise ValueError(term)
 
 
-def reduce(code, budget=100):
-    """Beta-reduce code up to budget."""
-    code = convert(code)
+def reduce(term, budget=100):
+    """Beta-reduce term up to budget."""
+    term = convert(term)
     for _ in xrange(budget):
-        reduced = try_compute_step(code)
+        reduced = try_compute_step(term)
         if reduced is None:
             break
-        code = reduced
-    return code
+        term = reduced
+    return term

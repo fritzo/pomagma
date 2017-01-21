@@ -20,16 +20,16 @@ from parsable import parsable
 from pomagma.reducer.bohm import (print_tiny, sexpr_simplify, simplify,
                                   try_compute_step)
 from pomagma.reducer.lib import BOT, TOP, B, C, I, box, pair
-from pomagma.reducer.sugar import app, as_code, join_, rec
+from pomagma.reducer.sugar import app, as_term, join_, rec
 from pomagma.reducer.syntax import sexpr_print
 
 CB = app(C, B)
 div = rec(lambda a: join_(I, lambda x: app(a, x, TOP)))
-copy = as_code(lambda x, y: app(x, y, y))
-join = as_code(lambda x, y, z: app(x, join_(y, z)))
+copy = as_term(lambda x, y: app(x, y, y))
+join = as_term(lambda x, y, z: app(x, join_(y, z)))
 postconj = box(lambda r, s: pair(app(B, r), app(B, s)))
 preconj = box(lambda r, s: pair(app(CB, s), app(CB, r)))
-compose = as_code(lambda f1, f2:
+compose = as_term(lambda f1, f2:
                   app(f1, lambda r1, s1:
                       app(f2, lambda r2, s2:
                           pair(app(B, r1, r2), app(B, s2, s1)))))
@@ -38,14 +38,14 @@ compose = as_code(lambda f1, f2:
 # A = A | <I, I> | <copy, join> | <div, BOT> | <BOT, TOP> | <C, C>
 #       | preconj A | postconj A | compose A A.
 PARTS = {
-    'base': as_code(lambda a: pair(I, I)),
-    'copy': as_code(lambda a: pair(copy, join)),
-    'div': as_code(lambda a: pair(div, BOT)),
-    'bot': as_code(lambda a: pair(BOT, TOP)),
-    'swap': as_code(lambda a: pair(C, C)),
+    'base': as_term(lambda a: pair(I, I)),
+    'copy': as_term(lambda a: pair(copy, join)),
+    'div': as_term(lambda a: pair(div, BOT)),
+    'bot': as_term(lambda a: pair(BOT, TOP)),
+    'swap': as_term(lambda a: pair(C, C)),
     'preconj': preconj,
     'postconj': postconj,
-    'compose': as_code(lambda a: app(compose, a, a)),
+    'compose': as_term(lambda a: app(compose, a, a)),
 }
 
 
@@ -53,7 +53,7 @@ def build_A(*part_names):
     return rec(join_(*(PARTS[name] for name in part_names)))
 
 
-unit_sig = as_code(lambda r, s, f, x: app(r, app(f, app(s, x))))
+unit_sig = as_term(lambda r, s, f, x: app(r, app(f, app(s, x))))
 
 default_type = '(FUN r (FUN s (FUN f (FUN x (r (f (s x)))))))'
 default_inhab = '(FUN x x)'
@@ -90,17 +90,17 @@ def trace(*part_names, **kwargs):
     # Cast a candidate inhabitant via the defined type.
     type_ = sexpr_simplify(kwargs.get('type', default_type))
     inhab = sexpr_simplify(kwargs.get('inhab', default_inhab))
-    code = simplify(app(A, type_, inhab))
-    print('0\t{}'.format(print_(code)))
+    term = simplify(app(A, type_, inhab))
+    print('0\t{}'.format(print_(term)))
 
     # Print a reduction sequence.
     steps = int(kwargs.get('steps', 10))
     for step in xrange(steps):
-        code = try_compute_step(code)
-        if code is None:
+        term = try_compute_step(term)
+        if term is None:
             print '--- Normalized ---'
             return
-        print('{}\t{}'.format(1 + step, print_(code)))
+        print('{}\t{}'.format(1 + step, print_(term)))
     print('... Not normalized ...')
 
 

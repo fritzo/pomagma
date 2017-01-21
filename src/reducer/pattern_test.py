@@ -27,5 +27,5 @@ y = NVAR('y')
     (QUOTE(x), QUOTE(y), {x: y}),
     (QUOTE(x), APP(x, y), None),
 ])
-def test_match(pattern, code, expected):
-    assert match(pattern, code) == expected
+def test_match(pattern, term, expected):
+    assert match(pattern, term) == expected

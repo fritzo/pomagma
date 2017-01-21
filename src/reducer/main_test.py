@@ -25,42 +25,42 @@ def test_compile(curry_string, bohm_string):
 
 
 @for_each(iter_equations('curry'))
-def test_reduce_curry_polish_equations(code, expected_code, message):
-    string = polish_print(code)
+def test_reduce_curry_polish_equations(term, expected_term, message):
+    string = polish_print(term)
     with skip_if_not_implemented():
         actual_string = main.reduce(string, engine='curry')
-        expected_code = curry.convert(expected_code)
-    expected_string = polish_print(expected_code)
+        expected_term = curry.convert(expected_term)
+    expected_string = polish_print(expected_term)
     assert actual_string == expected_string, message
 
 
 @for_each(iter_equations('curry'))
-def test_reduce_curry_sexpr_equations(code, expected_code, message):
-    string = sexpr_print(code)
+def test_reduce_curry_sexpr_equations(term, expected_term, message):
+    string = sexpr_print(term)
     with skip_if_not_implemented():
         actual_string = main.reduce(string, engine='curry')
-        expected_code = curry.convert(expected_code)
-    expected_string = sexpr_print(expected_code)
+        expected_term = curry.convert(expected_term)
+    expected_string = sexpr_print(expected_term)
     assert actual_string == expected_string, message
 
 
 @for_each(iter_equations('bohm'))
-def test_reduce_bohm_polish_equations(code, expected_code, message):
-    string = polish_print(code)
+def test_reduce_bohm_polish_equations(term, expected_term, message):
+    string = polish_print(term)
     with skip_if_not_implemented():
         actual_string = main.reduce(string, engine='bohm', fmt='polish')
-        expected_code = bohm.simplify(expected_code)
-    expected_string = polish_print(expected_code)
+        expected_term = bohm.simplify(expected_term)
+    expected_string = polish_print(expected_term)
     assert actual_string == expected_string, message
 
 
 @for_each(iter_equations('bohm'))
-def test_reduce_bohm_sexpr_equations(code, expected_code, message):
-    string = sexpr_print(code)
+def test_reduce_bohm_sexpr_equations(term, expected_term, message):
+    string = sexpr_print(term)
     with skip_if_not_implemented():
         actual_string = main.reduce(string, engine='bohm', fmt='sexpr')
-        expected_code = bohm.simplify(expected_code)
-    expected_string = sexpr_print(expected_code)
+        expected_term = bohm.simplify(expected_term)
+    expected_string = sexpr_print(expected_term)
     assert actual_string == expected_string, message
 
 
@@ -69,5 +69,5 @@ def test_reduce_bohm_sexpr_equations(code, expected_code, message):
     ('(ABS (0 0) (ABS (0 0)))', None),
     ('(ABS (0 0) (ABS (0 (0 0))))', None),
 ])
-def test_step(code, expected):
-    assert main.step(code) == expected
+def test_step(term, expected):
+    assert main.step(term) == expected

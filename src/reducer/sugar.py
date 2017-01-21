@@ -4,7 +4,7 @@ import functools
 import inspect
 
 from pomagma.reducer.bohm import convert
-from pomagma.reducer.syntax import NVAR, Code, free_vars, quoted_vars
+from pomagma.reducer.syntax import NVAR, Term, free_vars, quoted_vars
 from pomagma.reducer.util import LOG
 
 
@@ -22,10 +22,10 @@ def _compile(fun, actual_fun=None):
     symbolic_result = fun(*symbolic_args)
     LOG.debug('compiling {}{} = {}'.format(
         fun, tuple(symbolic_args), symbolic_result))
-    code = as_code(symbolic_result)
+    term = as_term(symbolic_result)
     for var in reversed(symbolic_args):
-        code = convert.FUN(var, code)
-    return code
+        term = convert.FUN(var, term)
+    return term
 
 
 class _Combinator(object):
@@ -43,54 +43,54 @@ class _Combinator(object):
         self._calling = False
 
     def __repr__(self):
-        return repr(self.code)
+        return repr(self.term)
 
     def __str__(self):
         return self.__name__
 
     def __call__(self, *args):
-        code = self.code  # Compile at first call.
+        term = self.term  # Compile at first call.
         if self._calling:  # Disallow reentrance.
-            return app(code, *args)
+            return app(term, *args)
         else:
             self._calling = True
             # TODO handle variable number of arguments.
             result = self._fun(*args)
             self._calling = False
-            return as_code(result)
+            return as_term(result)
 
     def __or__(*args):
         return join_(args)
 
     @property
-    def code(self):
+    def term(self):
         try:
-            return self._code
+            return self._term
         except AttributeError:
             self._compile()
-            return self._code
+            return self._term
 
     def _compile(self):
-        assert not hasattr(self, '_code')
+        assert not hasattr(self, '_term')
 
         # Compile without recursion.
         var = NVAR('_{}'.format(self.__name__))
-        self._code = var
-        code = _compile(self, actual_fun=self._fun)
+        self._term = var
+        term = _compile(self, actual_fun=self._fun)
 
         # Handle recursion.
-        if var in quoted_vars(code):
-            code = qrec(convert.QFUN(var, code))
-        elif var in free_vars(code):
-            code = rec(convert.FUN(var, code))
+        if var in quoted_vars(term):
+            term = qrec(convert.QFUN(var, term))
+        elif var in free_vars(term):
+            term = rec(convert.FUN(var, term))
 
         # Check that result has no free variables.
-        free = free_vars(code)
+        free = free_vars(term)
         if free:
             raise SyntaxError('Unbound variables: {}'.format(
                 ' '.join(v[1] for v in free)))
 
-        self._code = code
+        self._term = term
 
 
 def combinator(arg):
@@ -101,14 +101,14 @@ def combinator(arg):
     return _Combinator(arg)
 
 
-def as_code(arg):
-    if isinstance(arg, Code):
+def as_term(arg):
+    if isinstance(arg, Term):
         return arg
     elif isinstance(arg, _Combinator):
-        return arg.code
+        return arg.term
     else:
         if not callable(arg):
-            raise SyntaxError('Cannot convert to code: {}'.format(arg))
+            raise SyntaxError('Cannot convert to term: {}'.format(arg))
         return _compile(arg)
 
 
@@ -116,7 +116,7 @@ def as_code(arg):
 # Sugar
 
 def app(*args):
-    args = map(as_code, args)
+    args = map(as_term, args)
     if not args:
         raise SyntaxError('Too few arguments: app{}'.format(args))
     result = args[0]
@@ -125,11 +125,11 @@ def app(*args):
     return result
 
 
-Code.__call__ = app
+Term.__call__ = app
 
 
 def join_(*args):
-    args = map(as_code, args)
+    args = map(as_term, args)
     if not args:
         return convert.BOT
     result = args[0]
@@ -138,15 +138,15 @@ def join_(*args):
     return result
 
 
-Code.__or__ = join_
+Term.__or__ = join_
 
 
 def quote(arg):
-    return convert.QUOTE(as_code(arg))
+    return convert.QUOTE(as_term(arg))
 
 
 def qapp(*args):
-    args = map(as_code, args)
+    args = map(as_term, args)
     if len(args) < 2:
         raise SyntaxError('Too few arguments: qapp{}'.format(args))
     result = args[0]

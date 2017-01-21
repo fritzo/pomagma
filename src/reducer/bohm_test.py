@@ -12,7 +12,7 @@ from pomagma.reducer.bohm import (CB, CI, KI, B, C, I, K, S, Y, app, false,
                                   try_decide_less_weak)
 from pomagma.reducer.syntax import (ABS, APP, BOT, CODE, EVAL, IVAR, JOIN,
                                     NVAR, QAPP, QEQUAL, QLESS, QQUOTE, QUOTE,
-                                    TOP, Code, polish_print, quoted_vars,
+                                    TOP, Term, polish_print, quoted_vars,
                                     sexpr_parse, sexpr_print)
 from pomagma.reducer.testing import iter_equations
 from pomagma.util.testing import for_each, xfail_if_not_implemented
@@ -43,20 +43,20 @@ s_atoms = s.one_of(
 )
 
 
-def s_codes_extend(codes):
+def s_terms_extend(terms):
     return s.one_of(
-        s.builds(app, codes, codes),
+        s.builds(app, terms, terms),
         s.builds(
             bohm.abstract,
-            codes.filter(lambda c: i0 not in quoted_vars(c)),
+            terms.filter(lambda c: i0 not in quoted_vars(c)),
         ),
-        s.builds(join, codes, codes),
-        s.builds(QUOTE, codes),
+        s.builds(join, terms, terms),
+        s.builds(QUOTE, terms),
     )
 
 
-s_codes = s.recursive(s_atoms, s_codes_extend, max_leaves=32)
-s_quoted = s.builds(QUOTE, s_codes)
+s_terms = s.recursive(s_atoms, s_terms_extend, max_leaves=32)
+s_quoted = s.builds(QUOTE, s_terms)
 
 
 def test_constants():
@@ -101,8 +101,8 @@ INCREMENT_RANK_EXAMPLES = [
 
 
 @for_each(INCREMENT_RANK_EXAMPLES)
-def test_increment_rank(code, expected):
-    assert bohm.increment_rank(code) is expected
+def test_increment_rank(term, expected):
+    assert bohm.increment_rank(term) is expected
 
 
 DECREMENT_RANK_EXAMPLES = [
@@ -127,13 +127,13 @@ DECREMENT_RANK_EXAMPLES = [
 
 
 @for_each(DECREMENT_RANK_EXAMPLES)
-def test_decrement_rank(code, expected):
-    assert bohm.decrement_rank(code) is expected
+def test_decrement_rank(term, expected):
+    assert bohm.decrement_rank(term) is expected
 
 
-@hypothesis.given(s_codes)
-def test_decrement_increment_rank(code):
-    assert bohm.decrement_rank(bohm.increment_rank(code)) is code
+@hypothesis.given(s_terms)
+def test_decrement_increment_rank(term):
+    assert bohm.decrement_rank(bohm.increment_rank(term)) is term
 
 
 IS_LINEAR_EXAMPLES = [
@@ -166,8 +166,8 @@ IS_LINEAR_EXAMPLES = [
 
 
 @for_each(IS_LINEAR_EXAMPLES)
-def test_is_linear(code, expected):
-    assert is_linear(code) is expected
+def test_is_linear(term, expected):
+    assert is_linear(term) is expected
 
 
 PERMUTE_RANK_EXAMPLES = [
@@ -195,8 +195,8 @@ PERMUTE_RANK_EXAMPLES = [
 
 
 @for_each(PERMUTE_RANK_EXAMPLES)
-def test_permute_rank(code, rank, expected):
-    actual = sexpr_print(bohm.permute_rank(sexpr_parse(code), rank))
+def test_permute_rank(term, rank, expected):
+    actual = sexpr_print(bohm.permute_rank(sexpr_parse(term), rank))
     assert actual == expected
 
 
@@ -370,20 +370,20 @@ ABSTRACT_EXAMPLES = [
 
 
 @for_each(ABSTRACT_EXAMPLES)
-def test_abstract(code, expected):
-    assert bohm.abstract(code) is expected
+def test_abstract(term, expected):
+    assert bohm.abstract(term) is expected
 
 
-@hypothesis.given(s_codes)
-def test_abstract_eta(code):
-    assert bohm.abstract(app(bohm.increment_rank(code), i0)) is code
+@hypothesis.given(s_terms)
+def test_abstract_eta(term):
+    assert bohm.abstract(app(bohm.increment_rank(term), i0)) is term
 
 
-@hypothesis.given(s_codes)
+@hypothesis.given(s_terms)
 @hypothesis.example(join(TOP, APP(QUOTE(i1), i0)))
-def test_app_abstract(code):
-    hypothesis.assume(i0 not in quoted_vars(code))
-    assert app(bohm.increment_rank(bohm.abstract(code)), i0) is code
+def test_app_abstract(term):
+    hypothesis.assume(i0 not in quoted_vars(term))
+    assert app(bohm.increment_rank(bohm.abstract(term)), i0) is term
 
 
 QABSTRACT_EXAMPLES = [
@@ -393,8 +393,8 @@ QABSTRACT_EXAMPLES = [
 
 
 @for_each(QABSTRACT_EXAMPLES)
-def test_qabstract(code, expected):
-    assert bohm.qabstract(code) is expected
+def test_qabstract(term, expected):
+    assert bohm.qabstract(term) is expected
 
 
 @for_each([
@@ -528,8 +528,8 @@ APPROXIMATE_VAR_EXAMPLES = [
 
 
 @for_each(APPROXIMATE_VAR_EXAMPLES)
-def test_approximate_var(code, direction, rank, expected):
-    assert set(bohm.approximate_var(code, direction, rank)) == set(expected)
+def test_approximate_var(term, direction, rank, expected):
+    assert set(bohm.approximate_var(term, direction, rank)) == set(expected)
 
 
 # TODO This is difficult to test, because the simplest argument that not
@@ -543,8 +543,8 @@ APPROXIMATE_EXAMPLES = [
 
 
 @for_each(APPROXIMATE_EXAMPLES)
-def test_approximate(code, direction, expected):
-    assert set(bohm.approximate(code, direction)) == set(expected)
+def test_approximate(term, direction, expected):
+    assert set(bohm.approximate(term, direction)) == set(expected)
 
 
 JOIN_EXAMPLES = [
@@ -578,43 +578,43 @@ def test_join(lhs, rhs, expected):
     assert join(lhs, rhs) is expected
 
 
-@hypothesis.given(s_codes)
-def test_join_top(code):
-    assert join(code, TOP) is TOP
-    assert join(TOP, code) is TOP
+@hypothesis.given(s_terms)
+def test_join_top(term):
+    assert join(term, TOP) is TOP
+    assert join(TOP, term) is TOP
 
 
-@hypothesis.given(s_codes)
-def test_join_bot(code):
-    assert join(code, BOT) is code
-    assert join(BOT, code) is code
+@hypothesis.given(s_terms)
+def test_join_bot(term):
+    assert join(term, BOT) is term
+    assert join(BOT, term) is term
 
 
-@hypothesis.given(s_codes, s_codes, s_codes)
+@hypothesis.given(s_terms, s_terms, s_terms)
 def test_join_associative(x, y, z):
     assert join(join(x, y), z) is join(x, join(y, z))
 
 
-@hypothesis.given(s_codes, s_codes)
+@hypothesis.given(s_terms, s_terms)
 def test_join_commutative(lhs, rhs):
     assert join(lhs, rhs) is join(rhs, lhs)
 
 
-@hypothesis.given(s_codes)
-def test_join_idempotent_1(code):
-    assert join(code, code) is code
+@hypothesis.given(s_terms)
+def test_join_idempotent_1(term):
+    assert join(term, term) is term
 
 
-@hypothesis.given(s_codes, s_codes)
+@hypothesis.given(s_terms, s_terms)
 def test_join_idempotent_2(lhs, rhs):
     expected = join(lhs, rhs)
     assert join(lhs, expected) is expected
     assert join(rhs, expected) is expected
 
 
-@hypothesis.given(s_codes)
-def test_unabstract(code):
-    assert bohm.abstract(bohm.unabstract(code)) is code
+@hypothesis.given(s_terms)
+def test_unabstract(term):
+    assert bohm.abstract(bohm.unabstract(term)) is term
 
 
 INCOMPARABLE_PAIRS = [
@@ -693,7 +693,7 @@ def test_try_decide_less_incomparable_pairs(lhs, rhs):
 
 
 @for_each(itertools.combinations(INCOMPARABLE_CODES, 2))
-def test_try_decide_less_incomparable_codes(lhs, rhs):
+def test_try_decide_less_incomparable_terms(lhs, rhs):
     assert try_decide_less_weak(lhs, rhs) is False
     assert try_decide_less_weak(rhs, lhs) is False
 
@@ -704,22 +704,22 @@ def test_try_decide_less_dominating(lhs, rhs):
     assert try_decide_less_weak(rhs, lhs) is False
 
 
-@hypothesis.given(s_codes)
-def test_try_decide_less_reflexive(code):
-    assert try_decide_less_weak(code, code) is True
+@hypothesis.given(s_terms)
+def test_try_decide_less_reflexive(term):
+    assert try_decide_less_weak(term, term) is True
 
 
-@hypothesis.given(s_codes)
-def test_try_decide_less_top(code):
-    assert try_decide_less_weak(code, TOP) is True
+@hypothesis.given(s_terms)
+def test_try_decide_less_top(term):
+    assert try_decide_less_weak(term, TOP) is True
 
 
-@hypothesis.given(s_codes)
-def test_try_decide_less_bot(code):
-    assert try_decide_less_weak(BOT, code) is True
+@hypothesis.given(s_terms)
+def test_try_decide_less_bot(term):
+    assert try_decide_less_weak(BOT, term) is True
 
 
-@hypothesis.given(s_codes, s_codes)
+@hypothesis.given(s_terms, s_terms)
 def test_try_decide_less_join(lhs, rhs):
     assert try_decide_less_weak(lhs, join(lhs, rhs)) is True
     assert try_decide_less_weak(rhs, join(lhs, rhs)) is True
@@ -736,7 +736,7 @@ def test_try_decide_less_atom_atom(lhs, rhs):
     assert try_decide_less_weak(lhs, rhs) is False
 
 
-@hypothesis.given(s_codes, s_codes)
+@hypothesis.given(s_terms, s_terms)
 @hypothesis.settings(max_examples=1000)
 def test_try_decide_less_weak(lhs, rhs):
     expected = try_decide_less_weak(lhs, rhs)
@@ -744,7 +744,7 @@ def test_try_decide_less_weak(lhs, rhs):
     assert try_decide_less(lhs, rhs) is expected
 
 
-@hypothesis.given(s_codes, s_codes)
+@hypothesis.given(s_terms, s_terms)
 def test_app_less(lhs, rhs):
     truth_value = try_decide_less(lhs, rhs)
     assert truth_value in (True, False, None)
@@ -757,9 +757,9 @@ def test_app_less(lhs, rhs):
     assert app(app(QLESS, QUOTE(lhs)), QUOTE(rhs)) is expected
 
 
-@hypothesis.given(s_codes)
-def test_try_decide_equal_reflexive(code):
-    assert try_decide_equal(code, code) is True
+@hypothesis.given(s_terms)
+def test_try_decide_equal_reflexive(term):
+    assert try_decide_equal(term, term) is True
 
 
 @for_each(INCOMPARABLE_PAIRS)
@@ -768,7 +768,7 @@ def test_try_decide_equal_incomparable(lhs, rhs):
     assert try_decide_equal(rhs, lhs) is False
 
 
-@hypothesis.given(s_codes, s_codes)
+@hypothesis.given(s_terms, s_terms)
 def test_app_equal(lhs, rhs):
     truth_value = try_decide_equal(lhs, rhs)
     assert truth_value in (True, False, None)
@@ -781,12 +781,12 @@ def test_app_equal(lhs, rhs):
     assert app(app(QEQUAL, QUOTE(lhs)), QUOTE(rhs)) is expected
 
 
-@hypothesis.given(s_codes)
-def test_dominates_irreflexive(code):
-    assert not bohm.dominates(code, code)
+@hypothesis.given(s_terms)
+def test_dominates_irreflexive(term):
+    assert not bohm.dominates(term, term)
 
 
-@hypothesis.given(s_codes, s_codes, s_codes)
+@hypothesis.given(s_terms, s_terms, s_terms)
 def test_dominates_transitive(x, y, z):
     for x, y, z in itertools.permutations([x, y, z]):
         if bohm.dominates(x, y) and bohm.dominates(y, z):
@@ -806,22 +806,22 @@ def test_dominates_transitive(x, y, z):
     (QUOTE(BOT), QUOTE(BOT), QUOTE(BOT)),
     (QUOTE(x), BOT, TOP),
 ])
-def test_ground(code, expected_lb, expected_ub):
-    lb, ub = bohm.ground(code)
+def test_ground(term, expected_lb, expected_ub):
+    lb, ub = bohm.ground(term)
     assert lb is expected_lb
     assert ub is expected_ub
 
 
-@hypothesis.given(s_codes)
-def test_ground_less(code):
-    lb, ub = bohm.ground(code)
+@hypothesis.given(s_terms)
+def test_ground_less(term):
+    lb, ub = bohm.ground(term)
     assert try_decide_less(lb, ub) is True
     if bohm.TRY_DECIDE_LESS_STRONG:
-        assert try_decide_less(lb, code) is True
-        assert try_decide_less(code, ub) is True
+        assert try_decide_less(lb, term) is True
+        assert try_decide_less(term, ub) is True
     else:
-        assert try_decide_less(lb, code) is not False
-        assert try_decide_less(code, ub) is not False
+        assert try_decide_less(lb, term) is not False
+        assert try_decide_less(term, ub) is not False
 
 
 F = KI
@@ -920,34 +920,34 @@ COMPUTE_EXAMPLES = [
 
 
 @for_each(COMPUTE_EXAMPLES)
-def test_is_normal(code, expected_try_compute_step):
+def test_is_normal(term, expected_try_compute_step):
     expected = (expected_try_compute_step is None)
-    assert is_normal(code) is expected
+    assert is_normal(term) is expected
 
 
-@hypothesis.given(s_codes)
-def test_linear_is_normal(code):
-    hypothesis.assume(is_linear(code))
-    assert is_normal(code)
+@hypothesis.given(s_terms)
+def test_linear_is_normal(term):
+    hypothesis.assume(is_linear(term))
+    assert is_normal(term)
 
 
 @for_each(COMPUTE_EXAMPLES)
-def test_try_compute_step(code, expected):
+def test_try_compute_step(term, expected):
     with xfail_if_not_implemented():
-        assert bohm.try_compute_step(code) is expected
+        assert bohm.try_compute_step(term) is expected
 
 
-@hypothesis.given(s_codes)
+@hypothesis.given(s_terms)
 @hypothesis.settings(max_examples=1000)
-def test_try_compute_step_runs(code):
+def test_try_compute_step_runs(term):
     for step in xrange(5):
         with xfail_if_not_implemented():
-            result = bohm.try_compute_step(code)
-        if is_normal(code):
+            result = bohm.try_compute_step(term)
+        if is_normal(term):
             assert result is None
             return
         else:
-            assert isinstance(result, Code)
+            assert isinstance(result, Term)
 
 
 nonterminating_example_1 = (
@@ -974,9 +974,9 @@ nonterminating_example_1 = (
 @for_each([
     nonterminating_example_1,
 ])
-def test_try_compute_step_terminates(code):
-    code = sexpr_simplify(code)
-    bohm.try_compute_step(code)
+def test_try_compute_step_terminates(term):
+    term = sexpr_simplify(term)
+    bohm.try_compute_step(term)
 
 
 SIMPLIFY_EXAMPLES = [
@@ -987,34 +987,34 @@ SIMPLIFY_EXAMPLES = [
 
 
 @for_each(SIMPLIFY_EXAMPLES)
-def test_simplify(code, expected):
-    code = sexpr_parse(code)
+def test_simplify(term, expected):
+    term = sexpr_parse(term)
     expected = sexpr_parse(expected)
-    assert bohm.simplify(code) is expected
+    assert bohm.simplify(term) is expected
 
 
 @for_each(SIMPLIFY_EXAMPLES)
-def test_reduce_simplifies(code, expected):
-    code = sexpr_parse(code)
+def test_reduce_simplifies(term, expected):
+    term = sexpr_parse(term)
     expected = sexpr_parse(expected)
     budget = 10
-    assert bohm.reduce(code, budget) is expected
+    assert bohm.reduce(term, budget) is expected
 
 
 @for_each([
     ('(ABS (0 0) (ABS (0 0)))', 0, '(ABS (0 0) (ABS (0 0)))'),
     ('(ABS (0 0) (ABS (0 0)))', 1, '(ABS (0 0) (ABS (0 0)))'),
 ])
-def test_reduce(code, budget, expected):
-    code = sexpr_parse(code)
+def test_reduce(term, budget, expected):
+    term = sexpr_parse(term)
     expected = sexpr_parse(expected)
-    assert bohm.reduce(code, budget) is expected
+    assert bohm.reduce(term, budget) is expected
 
 
 @for_each(iter_equations('bohm'))
-def test_reduce_equations(code, expected, message):
+def test_reduce_equations(term, expected, message):
     with xfail_if_not_implemented():
-        actual = bohm.reduce(code)
+        actual = bohm.reduce(term)
         expected = bohm.simplify(expected)
     assert actual == expected, message
 
@@ -1093,9 +1093,9 @@ def test_sexpr_simplify(sexpr, expected):
     assert sexpr_print(sexpr_simplify(sexpr)) == expected
 
 
-@hypothesis.given(s_codes)
-def test_sexpr_print_simplify(code):
-    sexpr = sexpr_print(code)
+@hypothesis.given(s_terms)
+def test_sexpr_print_simplify(term):
+    sexpr = sexpr_print(term)
     assert sexpr_print(sexpr_simplify(sexpr)) == sexpr
 
 
@@ -1108,5 +1108,5 @@ def test_sexpr_print_simplify(code):
     ('(JOIN 1 (JOIN 2 3))', '[1|2|3]'),
 ])
 def test_print_tiny(sexpr, expected):
-    code = sexpr_simplify(sexpr)
-    assert print_tiny(code) == expected
+    term = sexpr_simplify(sexpr)
+    assert print_tiny(term) == expected

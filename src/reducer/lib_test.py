@@ -5,7 +5,7 @@ from pomagma.reducer import lib
 from pomagma.reducer.bohm import (B, C, I, K, S, reduce, simplify,
                                   try_decide_less)
 from pomagma.reducer.bohm_test import s_quoted
-from pomagma.reducer.sugar import app, as_code, combinator, join_, quote
+from pomagma.reducer.sugar import app, as_term, combinator, join_, quote
 from pomagma.reducer.syntax import APP, BOT, NVAR, TOP, UNIT, sexpr_print
 from pomagma.util import TRAVIS_CI
 from pomagma.util.testing import for_each
@@ -57,7 +57,7 @@ compose = lib.compose
     ('cons', lambda head, tail, n, c: app(c, head, tail)),
 ])
 def test_intro_forms(name, native):
-    assert as_code(getattr(lib, name)) == as_code(native)
+    assert as_term(getattr(lib, name)) == as_term(native)
 
 
 # ----------------------------------------------------------------------------
@@ -1229,7 +1229,7 @@ maybe_t = lib.maybe_type
     pytest.mark.xfail((lib.bool_not, lib.bool_not, bool_t)),
 ])
 def test_compose(f, g, expected):
-    assert reduce(as_code(compose(f, g))) == simplify(as_code(expected))
+    assert reduce(as_term(compose(f, g))) == simplify(as_term(expected))
 
 
 @for_each([
@@ -1249,7 +1249,7 @@ def test_compose(f, g, expected):
     (lib.maybe_quote, fun_t(I, fun_t(maybe_t, I))),
 ])
 def test_fun_type_fixes(value, type_):
-    assert reduce(app(type_, value)) == reduce(as_code(value))
+    assert reduce(app(type_, value)) == reduce(as_term(value))
 
 
 # succ implemented using fix.

@@ -17,7 +17,7 @@ from pomagma.util.testing import for_each, xfail_if_not_implemented
     '(ABS x 0 1)',
 ])
 def test_convert_runs(sexpr):
-    code = sexpr_parse(sexpr)
+    term = sexpr_parse(sexpr)
     with xfail_if_not_implemented():
-        graph = convert(code)
+        graph = convert(term)
     assert isa_graph(graph)

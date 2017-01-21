@@ -89,9 +89,9 @@ EXAMPLES_BY_TYPE = {
 
 EXAMPLES = {
     'ok': [
-        (tp, code, value)
+        (tp, term, value)
         for tp, examples in EXAMPLES_BY_TYPE.iteritems()
-        for code, value in examples.get('ok', [])
+        for term, value in examples.get('ok', [])
     ],
     'encode_error': [
         (tp, value)
@@ -99,24 +99,24 @@ EXAMPLES = {
         for value in examples.get('encode_error', [])
     ],
     'decode_error': [
-        (tp, code)
+        (tp, term)
         for tp, examples in EXAMPLES_BY_TYPE.iteritems()
-        for code in examples.get('decode_error', [])
+        for term in examples.get('decode_error', [])
     ],
 }
 
 
 @for_each(EXAMPLES['ok'])
-def test_encode(tp, code, value):
+def test_encode(tp, term, value):
     encode = data.encoder(tp)
-    actual_code = encode(value)
-    assert actual_code == code
+    actual_term = encode(value)
+    assert actual_term == term
 
 
 @for_each(EXAMPLES['ok'])
-def test_decode(tp, code, value):
+def test_decode(tp, term, value):
     decode = data.decoder(tp)
-    actual_value = decode(code)
+    actual_value = decode(term)
     assert actual_value == value
 
 
@@ -128,18 +128,18 @@ def test_encode_error(tp, value):
 
 
 @for_each(EXAMPLES['decode_error'])
-def test_decode_error(tp, code):
+def test_decode_error(tp, term):
     decode = data.decoder(tp)
     with pytest.raises(TypeError):
-        decode(code)
+        decode(term)
 
 
 @for_each(EXAMPLES['ok'])
-def test_polish_serialize_parse(tp, code, value):
-    string = polish_print(code)
+def test_polish_serialize_parse(tp, term, value):
+    string = polish_print(term)
     assert isinstance(string, str)
-    actual_code = polish_parse(string)
-    assert actual_code == code
+    actual_term = polish_parse(string)
+    assert actual_term == term
 
 
 # ----------------------------------------------------------------------------
@@ -168,7 +168,7 @@ def types_extend(types_):
 types = s.recursive(types_base, types_extend, max_leaves=10)
 
 
-def code_of_type(tp):
+def term_of_type(tp):
     if not isinstance(tp, tuple):
         if tp == 'unit':
             return s.just(lib.ok)
@@ -182,25 +182,25 @@ def code_of_type(tp):
                 lambda n: s.builds(lib.succ, n),
             )
         if tp == 'bytes':
-            return code_of_type(('list', 'byte'))
+            return term_of_type(('list', 'byte'))
     elif len(tp) == 2:
         if tp[0] == 'maybe':
             return s.one_of(
                 s.just(lib.none),
-                s.builds(lib.some, code_of_type(tp[1])),
+                s.builds(lib.some, term_of_type(tp[1])),
             )
         if tp[0] == 'list':
             return s.recursive(
                 s.just(lib.nil),
-                lambda tail: s.builds(lib.cons, code_of_type(tp[1]), tail),
+                lambda tail: s.builds(lib.cons, term_of_type(tp[1]), tail),
             )
     elif len(tp) == 3:
         if tp[0] == 'prod':
-            return s.builds(lib.pair, code_of_type(tp[1]), code_of_type(tp[2]))
+            return s.builds(lib.pair, term_of_type(tp[1]), term_of_type(tp[2]))
         if tp[0] == 'sum':
             return s.one_of(
-                s.builds(lib.inl, code_of_type(tp[1])),
-                s.builds(lib.inr, code_of_type(tp[2])),
+                s.builds(lib.inl, term_of_type(tp[1])),
+                s.builds(lib.inr, term_of_type(tp[2])),
             )
     raise ValueError(tp)
 
@@ -208,16 +208,16 @@ def code_of_type(tp):
 @hypothesis.strategies.composite
 def type_and_data(draw):
     tp = draw(types)
-    code = draw(code_of_type(tp))
-    return (tp, code)
+    term = draw(term_of_type(tp))
+    return (tp, term)
 
 
 @hypothesis.given(type_and_data())
 @hypothesis.settings(max_examples=1000)
-def test_decode_encode(tp_code):
-    tp, code = tp_code
+def test_decode_encode(tp_term):
+    tp, term = tp_term
     encode = data.encoder(tp)
     decode = data.decoder(tp)
-    value = decode(code)
-    actual_code = encode(value)
-    assert actual_code == code
+    value = decode(term)
+    actual_term = encode(value)
+    assert actual_term == term
