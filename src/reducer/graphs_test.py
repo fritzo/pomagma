@@ -37,8 +37,8 @@ def test_term_permute(perm, term, expected):
     ),
     (
         (1, 2, 0),
-        ((_JOIN, frozenset([1, 2])), (_ABS, 0), (_IVAR, 0)),
-        ((_IVAR, 0), (_JOIN, frozenset([0, 2])), (_ABS, 1)),
+        ((_JOIN, 1, 2), (_ABS, 0), (_IVAR, 0)),
+        ((_IVAR, 0), (_JOIN, 0, 2), (_ABS, 1)),
     ),
 ])
 def test_graph_permute(perm, graph, expected):

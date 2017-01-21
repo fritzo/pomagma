@@ -15,7 +15,7 @@ import functools
 import itertools
 import re
 
-from pomagma.compiler.util import memoize_arg, memoize_args, unique
+from pomagma.compiler.util import memoize_arg, memoize_args
 from pomagma.util import TODO
 
 
@@ -43,11 +43,11 @@ _NVAR = intern('NVAR')  # : string -> term
 _IVAR = intern('IVAR')  # : int -> term
 _ABS = intern('ABS')  # : term -> term
 _APP = intern('APP')  # : term -> term -> term
-_JOIN = intern('JOIN')  # : frozenset term -> term
+_JOIN = intern('JOIN')  # : set term -> term
 
 
 def term_join(args):
-    return Term.make(_JOIN, unique(frozenset(args)))
+    return Term.make(_JOIN, *sorted(set(args)))
 
 
 def term_shift(term, delta):
@@ -59,7 +59,7 @@ def term_shift(term, delta):
     elif symbol is _APP:
         return Term.make(_APP, term[1] + delta, term[2] + delta)
     elif symbol is _JOIN:
-        return term_join(i + delta for i in term[1])
+        return term_join(i + delta for i in term[1:])
     else:
         raise ValueError(term)
 
@@ -73,7 +73,7 @@ def term_permute(term, perm):
     elif symbol is _APP:
         return Term.make(_APP, perm[term[1]], perm[term[2]])
     elif symbol is _JOIN:
-        return term_join(perm[i] for i in term[1])
+        return term_join(perm[i] for i in term[1:])
     else:
         raise ValueError(term)
 
@@ -102,7 +102,7 @@ def iter_neighbors(term):
         yield term[1]
         yield term[2]
     elif symbol is _JOIN:
-        for pos in term[1]:
+        for pos in term[1:]:
             yield pos
 
 
@@ -206,7 +206,7 @@ def APP(lhs, rhs):
 def iter_join(graph):
     """Destruct JOIN terms."""
     if graph[0][0] is _JOIN:
-        for pos in graph[0][1]:
+        for pos in graph[0][1:]:
             yield extract_subterm(graph, pos)
     else:
         yield graph
