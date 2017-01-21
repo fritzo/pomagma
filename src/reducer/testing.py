@@ -11,8 +11,8 @@ from pomagma.reducer import bohm
 from pomagma.reducer.linker import link
 from pomagma.reducer.syntax import (APP, BOOL, BOT, CODE, EQUAL, EVAL, JOIN,
                                     MAYBE, NVAR, QAPP, QEQUAL, QLESS, QQUOTE,
-                                    QUOTE, TOP, UNIT, B, C, I, K, S, isa_app,
-                                    isa_equal, isa_quote, sexpr_parse,
+                                    QUOTE, TOP, UNIT, B, C, I, K, S, Y,
+                                    isa_app, isa_equal, isa_quote, sexpr_parse,
                                     sexpr_print)
 
 DIR = os.path.dirname(os.path.abspath(__file__))
@@ -147,6 +147,7 @@ s_atoms = s.one_of(
     s.just(B),
     s.just(C),
     s.just(S),
+    s.just(Y),
     s.one_of(
         s.just(CODE),
         s.just(EVAL),
@@ -170,6 +171,7 @@ s_sk_atoms = s.one_of(
     s.just(B),
     s.just(C),
     s.just(S),
+    s.just(Y),
 )
 
 
