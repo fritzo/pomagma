@@ -2,8 +2,8 @@ import hypothesis
 import hypothesis.strategies as s
 
 from pomagma.reducer.graphs import (ABS, APP, BOT, IVAR, JOIN, NVAR, TOP, Term,
-                                    graph_permute, partitioned_permutations,
-                                    term_permute)
+                                    graph_address, graph_permute, graph_sort,
+                                    partitioned_permutations, term_permute)
 from pomagma.util.testing import for_each
 
 
@@ -107,6 +107,30 @@ def s_graphs_extend(s_graphs):
 
 
 s_graphs = s.recursive(s_atoms, s_graphs_extend, max_leaves=8)
+
+
+@hypothesis.given(s_graphs, s.randoms())
+def test_graph_address(terms, r):
+    perm = range(1, len(terms))
+    r.shuffle(perm)
+    hypothesis.assume(perm != sorted(perm))
+    perm = [0] + perm
+    shuffled_terms = graph_permute(terms, perm)
+    shuffled_address = graph_address(shuffled_terms)
+    address = graph_address(terms)
+    for source, target in enumerate(perm):
+        assert address[source] == shuffled_address[target]
+
+
+@hypothesis.given(s_graphs, s.randoms())
+def test_graph_sort(terms, r):
+    perm = range(1, len(terms))
+    r.shuffle(perm)
+    hypothesis.assume(perm != sorted(perm))
+    perm = [0] + perm
+    shuffled_terms = graph_permute(terms, perm)
+    sorted_terms = graph_sort(shuffled_terms)
+    assert sorted_terms == list(terms)
 
 
 @hypothesis.given(s_graphs)

@@ -106,9 +106,9 @@ def perm_inverse(perm):
     return result
 
 
-def graph_permute(graph, perm):
+def graph_permute(terms, perm):
     return [
-        term_permute(graph[i], perm)
+        term_permute(terms[i], perm)
         for i in perm_inverse(perm)
         if i is not None
     ]
