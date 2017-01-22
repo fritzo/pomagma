@@ -1,4 +1,4 @@
-"""Eager linear reduction of linear Bohm term graphs.
+"""Eager linear reduction of term graphs.
 
 This library intends to generalize reducer.bohm operations to reducer.graph
 data structures.
