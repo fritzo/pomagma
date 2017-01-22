@@ -53,12 +53,13 @@ class Term(tuple):
     def make(*args):
         return Term(args)
 
-    TOP = _TOP
-    NVAR = staticmethod(lambda name: Term.make(_NVAR, name))
-    IVAR = staticmethod(lambda rank: Term.make(_IVAR, rank))
-    ABS = staticmethod(lambda body: Term.make(_ABS, body))
-    APP = staticmethod(lambda lhs, rhs: Term.make(_APP, lhs, rhs))
-    JOIN = staticmethod(lambda args: Term.make(_JOIN, *sorted(set(args))))
+
+Term.TOP = Term.make(_TOP)
+Term.NVAR = staticmethod(lambda name: Term.make(_NVAR, name))
+Term.IVAR = staticmethod(lambda rank: Term.make(_IVAR, rank))
+Term.ABS = staticmethod(lambda body: Term.make(_ABS, body))
+Term.APP = staticmethod(lambda lhs, rhs: Term.make(_APP, lhs, rhs))
+Term.JOIN = staticmethod(lambda args: Term.make(_JOIN, *sorted(set(args))))
 
 
 class Graph(tuple):
@@ -193,9 +194,9 @@ def graph_address(terms):
 def partition_by_address(min_address):
     """Partition terms by address, given min addresses from graph_addres.
 
-    This is partition is guaranteed to be invariant to graph permutation
-    (although the ordering of groups and items in the partition is not
-    invariant to graph permutation).
+    This is partition and the ordering of its parts are both guaranteed to be
+    invariant to graph isomorphism, however the ordering of items within parts
+    is not invariang under graph isomorphism.
     """
     by_address = defaultdict(list)
     for i, address in enumerate(min_address):
@@ -210,7 +211,13 @@ def partitioned_permutations(partitions):
 
 
 def graph_sort(terms):
-    """Canonicalize the ordering of vertices in a graph."""
+    """Canonicalize the ordering of vertices in a graph.
+
+    This implementation first sorts terms by an isomorphism-invariant
+    address, and then disambiguates address collisions by finding the
+    min graph among all graphs with the same address partitions, wrt the
+    arbitrary linear order of the python langauge.
+    """
     min_address = graph_address(terms)
     partitions = partition_by_address(min_address)
     perms = partitioned_permutations(partitions)
@@ -240,7 +247,7 @@ def extract_subterm(graph, pos):
 # ----------------------------------------------------------------------------
 # Graph construction (intro forms)
 
-TOP = graph_make([Term.make(_TOP)])
+TOP = graph_make([Term.TOP])
 BOT = graph_make([Term.JOIN([])])
 
 
