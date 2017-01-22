@@ -116,7 +116,9 @@ class NaiveHoleFiller(object):
 class UniquePriorityQueue(object):
     """Duplicates may be pushed, but will only be poppoed once.
 
-    The least-priority item is popped.
+    The least-priority item is popped. Implementation assumes that items will
+    be pushed more often than popped, so that the queue never becomes empty,
+    hence there is no test for emptiness.
 
     """
 
