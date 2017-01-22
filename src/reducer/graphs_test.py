@@ -2,7 +2,8 @@ import hypothesis
 import hypothesis.strategies as s
 
 from pomagma.reducer.graphs import (ABS, APP, BOT, IVAR, JOIN, NVAR, TOP, Term,
-                                    graph_permute, term_permute)
+                                    graph_permute, partitioned_permutations,
+                                    term_permute)
 from pomagma.util.testing import for_each
 
 
@@ -42,6 +43,35 @@ def test_term_permute(perm, term, expected):
 ])
 def test_graph_permute(perm, graph, expected):
     assert graph_permute(graph, perm) == expected
+
+
+@for_each([
+    ([], [()]),
+    ([[0]], [(0,)]),
+    ([[0], [1]], [(0, 1)]),
+    ([[0, 1]], [(0, 1), (1, 0)]),
+    ([[0], [1], [2]], [(0, 1, 2)]),
+    ([[0, 1], [2]], [(0, 1, 2), (1, 0, 2)]),
+    ([[0, 2], [1]], [(0, 1, 2), (2, 1, 0)]),
+    ([[0], [1, 2]], [(0, 1, 2), (0, 2, 1)]),
+    (
+        [[0, 1, 2]],
+        [
+            (0, 1, 2),
+            (0, 2, 1),
+            (1, 0, 2),
+            (1, 2, 0),
+            (2, 0, 1),
+            (2, 1, 0),
+        ],
+    ),
+    (
+        [[0, 1], [2, 3]],
+        [(0, 1, 2, 3), (0, 1, 3, 2), (1, 0, 2, 3), (1, 0, 3, 2)],
+    ),
+])
+def test_partitioned_permutations(partitions, expected_perms):
+    assert partitioned_permutations(partitions) == expected_perms
 
 
 # ----------------------------------------------------------------------------
