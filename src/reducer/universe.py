@@ -4,7 +4,7 @@ Graphs are constructed much like terms in reducer.syntax, but with an extra
 level of indirection 'Ob' so as to allow building of cyclic terms.
 """
 
-from pomagma.compiler.util import MEMOIZED_CACHES, memoize_arg
+from pomagma.compiler.util import MEMOIZED_CACHES, memoize_arg, memoize_args
 from pomagma.util import TODO
 
 # ----------------------------------------------------------------------------
@@ -22,12 +22,12 @@ class Ob(int):
 
 
 class Term(tuple):
-    _make = {}
+    _make_cache = {}
 
     @staticmethod
     def make(args, ob=None):
         try:
-            return Term._make[args]
+            return Term._make_cache[args]
         except KeyError:
             pass
         term = Term(args)
@@ -35,12 +35,13 @@ class Term(tuple):
             ob = Ob.make()
         _ob_to_term[ob] = term
         _term_to_ob[term] = ob
-        Term._make[args] = term
+        Term._make_cache[args] = term
         return term
 
 
-MEMOIZED_CACHES[Term.make] = Term._make
+MEMOIZED_CACHES[Term.make] = Term._make_cache
 
+_HOLE = intern('HOLE')
 _TOP = intern('TOP')
 _NVAR = intern('NVAR')
 _IVAR = intern('IVAR')
@@ -48,6 +49,7 @@ _ABS = intern('ABS')
 _APP = intern('APP')
 _JOIN = intern('JOIN')
 
+HOLE = Term.make(_HOLE)
 TOP = Term.make(_TOP)
 
 
@@ -77,6 +79,9 @@ def JOIN(args):
     return Term.make((_JOIN,) + tuple(sorted(set(args))))
 
 
+# ----------------------------------------------------------------------------
+# Mutual recursion
+
 def term_iter_obs(term):
     assert isinstance(term, Term)
     symbol = term[0]
@@ -90,24 +95,58 @@ def term_iter_obs(term):
             yield ob
 
 
-_acyclic_stack = set()
+_cyclic_stack = set()
 
 
 @memoize_arg
-def is_acyclic(ob):
-    """Return whether ob is well founded."""
+def is_cyclic(ob):
+    """Return whether ob contains cycles, i.e. is not well founded."""
     assert isinstance(ob, Ob)
-    if ob in _acyclic_stack:
-        return False
+    if ob in _cyclic_stack:
+        return True
     term = _ob_to_term[ob]
-    _acyclic_stack.add(ob)
-    result = all(is_acyclic(sub) for sub in term_iter_obs(term))
-    _acyclic_stack.remove(ob)
+    _cyclic_stack.add(ob)
+    result = any(is_cyclic(sub) for sub in term_iter_obs(term))
+    _cyclic_stack.remove(ob)
     return result
 
 
-# ----------------------------------------------------------------------------
-# Mutual recursion
+@memoize_args
+def _approximate(term, depth):
+    assert is_cyclic(term)
+    assert depth > 0
+    symbol = term[0]
+    if symbol in (_HOLE, _TOP, _IVAR, _NVAR):
+        return term
+    elif symbol is _ABS:
+        body = _term_to_ob[approximate(term[1], depth - 1)]
+        return ABS(body)
+    elif symbol is _APP:
+        lhs = _term_to_ob[approximate(term[1], depth - 1)]
+        rhs = _term_to_ob[approximate(term[2], depth - 1)]
+        return APP(lhs, rhs)
+    elif symbol is _JOIN:
+        args = [_term_to_ob[approximate(arg, depth - 1)] for arg in term[1:]]
+        return JOIN(args)
+    else:
+        raise ValueError(term)
+
+
+def approximate(term, depth):
+    """Approximate cyclic portion of term to given depth.
+
+    Approximated subterms will be replaced by HOLE.
+    Acyclic subterms will be returned in entirety, possibly exceeding depth.
+    """
+    assert isinstance(term, Term)
+    assert isinstance(depth, int) and depth >= 0
+    if not is_cyclic(term):
+        return term
+    elif depth == 0:
+        return HOLE
+    else:
+        return _approximate(term, depth)
+
 
 def rec(**defs):
     """Construct a set of mutually recursive graph terms.

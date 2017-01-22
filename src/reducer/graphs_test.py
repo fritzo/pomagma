@@ -106,6 +106,7 @@ def s_graphs_extend(s_graphs):
     )
 
 
+# FIXME This generates only acyclic graphs, ie trees.
 s_graphs = s.recursive(s_atoms, s_graphs_extend, max_leaves=8)
 
 

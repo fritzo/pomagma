@@ -133,7 +133,7 @@ def term_iter_subterms(term):
 
 
 def graph_prune(terms):
-    """Remove unused vertices."""
+    """Remove vertices unreachable from the root."""
     assert all(isinstance(term, Term) for term in terms)
     connected = set([0])
     pending = [0]
@@ -149,9 +149,12 @@ def graph_prune(terms):
     return graph_permute(terms, perm)
 
 
-def graph_quotient(terms):
-    """Deduplicate equivalent vertices."""
-    # TODO Deduplicate cycles.
+def graph_quotient_weak(terms):
+    """Deduplicate vertices by forward-chaining equality.
+
+    This cheap incomplete algorithm simply identifies equivalent terms.
+    This algorithm cannot deduplicate cyclic terms.
+    """
     while True:
         partitions = defaultdict(list)
         for i, term in enumerate(terms):
@@ -166,6 +169,97 @@ def graph_quotient(terms):
                 perm[source] = target
         assert all(target is not None for target in perm)
         terms = graph_permute(terms, perm)
+    return terms
+
+
+class ApartnessRelation(object):
+    def __init__(self, size):
+        self._size = size
+        self._table = [False] * (size * size)
+
+    def add(self, x, y):
+        assert isinstance(x, int), x
+        assert isinstance(y, int), y
+        assert x != y
+        self._table[x + y * self._size] = True
+        self._table[y + x * self._size] = True
+
+    def __call__(self, x, y):
+        assert isinstance(x, int), x
+        assert isinstance(y, int), y
+        return self._table[x + y * self._size]
+
+    def __len__(self):
+        return sum(self._table)
+
+    def copy(self):
+        other = ApartnessRelation(self._size)
+        other._table = self._table[:]
+        return other
+
+
+def graph_quotient_strong(terms):
+    """Deduplicate vertices by forward-chaining apartness and backtracking.
+
+    This complete algorithm is similar to the standard algorithm for
+    minimization of nondeterministic finite automata. For deterministic terms,
+    it suffices to forward-chain apartness (aka separability aka
+    distinguishability) and quotient by the resulting equivalence relation.
+    However JOIN terms introduce nondeterminism and require additional
+    backtracking.
+    """
+    # Compute apartness by forward-chaining.
+    apart = ApartnessRelation(size=len(terms))
+    old_count = -1
+    while len(apart) > old_count:
+        old_count = len(apart)
+        for i, x in enumerate(terms):
+            symbol = x[0]
+            for j, y in enumerate(terms[:i]):
+                if y[0] is not symbol:
+                    apart.add(i, j)
+                elif symbol is _ABS:
+                    if apart(x[1], y[1]):
+                        apart.add(i, j)
+                elif symbol is _APP:
+                    if apart(x[1], y[1]) or apart(x[2], y[2]):
+                        apart.add(i, j)
+                elif symbol is _JOIN:
+                    if len(x) != len(y):
+                        apart.add(i, j)
+                    elif set(x[1:]) != set(y[1:]):
+                        # TODO Branch, searching among feasible matchings.
+                        # FIXME The following is not complete:
+                        apart.add(i, j)
+                elif x is not y:
+                    apart.add(i, j)
+
+    # Construct the coarsest equivalence relation.
+    pending = set(range(len(terms)))
+    partitions = []
+    while pending:
+        seed = pending.pop()
+        partition = [seed]
+        for i in list(pending):
+            if not apart(i, seed):
+                pending.remove(i)
+                partition.append(i)
+        partition.sort()
+        partitions.append(partition)
+    partitions.sort()
+
+    # Quotient the graph.
+    perm = [None] * len(terms)
+    for target, part in enumerate(partitions):
+        for source in part:
+            perm[source] = target
+    return graph_permute(terms, perm)
+
+
+def graph_quotient(terms):
+    """Deduplicate equivalent vertices."""
+    terms = graph_quotient_weak(terms)
+    terms = graph_quotient_strong(terms)
     return terms
 
 
