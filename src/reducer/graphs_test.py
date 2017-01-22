@@ -22,23 +22,23 @@ def test_term_permute(perm, term, expected):
 @for_each([
     (
         (0, 1, 2, 3),
-        (Term.ABS(1), Term.APP(2, 3), Term.NVAR('x'), Term.IVAR(0)),
-        (Term.ABS(1), Term.APP(2, 3), Term.NVAR('x'), Term.IVAR(0)),
+        [Term.ABS(1), Term.APP(2, 3), Term.NVAR('x'), Term.IVAR(0)],
+        [Term.ABS(1), Term.APP(2, 3), Term.NVAR('x'), Term.IVAR(0)],
     ),
     (
         (1, 0, 2, 3),
-        (Term.ABS(1), Term.APP(2, 3), Term.NVAR('x'), Term.IVAR(0)),
-        (Term.APP(2, 3), Term.ABS(0), Term.NVAR('x'), Term.IVAR(0)),
+        [Term.ABS(1), Term.APP(2, 3), Term.NVAR('x'), Term.IVAR(0)],
+        [Term.APP(2, 3), Term.ABS(0), Term.NVAR('x'), Term.IVAR(0)],
     ),
     (
         (1, 2, 3, 0),
-        (Term.ABS(1), Term.APP(2, 3), Term.NVAR('x'), Term.IVAR(0)),
-        (Term.IVAR(0), Term.ABS(2), Term.APP(3, 0), Term.NVAR('x')),
+        [Term.ABS(1), Term.APP(2, 3), Term.NVAR('x'), Term.IVAR(0)],
+        [Term.IVAR(0), Term.ABS(2), Term.APP(3, 0), Term.NVAR('x')],
     ),
     (
         (1, 2, 0),
-        (Term.JOIN([1, 2]), Term.ABS(0), Term.IVAR(0)),
-        (Term.IVAR(0), Term.JOIN([0, 2]), Term.ABS(1)),
+        [Term.JOIN([1, 2]), Term.ABS(0), Term.IVAR(0)],
+        [Term.IVAR(0), Term.JOIN([0, 2]), Term.ABS(1)],
     ),
 ])
 def test_graph_permute(perm, graph, expected):
@@ -46,32 +46,41 @@ def test_graph_permute(perm, graph, expected):
 
 
 @for_each([
-    ([], [()]),
-    ([[0]], [(0,)]),
-    ([[0], [1]], [(0, 1)]),
-    ([[0, 1]], [(0, 1), (1, 0)]),
-    ([[0], [1], [2]], [(0, 1, 2)]),
-    ([[0, 1], [2]], [(0, 1, 2), (1, 0, 2)]),
-    ([[0, 2], [1]], [(0, 1, 2), (2, 1, 0)]),
-    ([[0], [1, 2]], [(0, 1, 2), (0, 2, 1)]),
+    ([[0]], [[0]]),
+    ([[0], [1]], [[0, 1]]),
+    ([[1], [0]], [[1, 0]]),
+    ([[0, 1]], [[0, 1], [1, 0]]),
+    ([[0], [1], [2]], [[0, 1, 2]]),
+    ([[0], [2], [1]], [[0, 2, 1]]),
+    ([[1], [0], [2]], [[1, 0, 2]]),
+    ([[1], [2], [0]], [[2, 0, 1]]),
+    ([[2], [0], [1]], [[1, 2, 0]]),
+    ([[2], [1], [0]], [[2, 1, 0]]),
+    ([[0, 1], [2]], [[0, 1, 2], [1, 0, 2]]),
+    ([[0, 2], [1]], [[0, 2, 1], [1, 2, 0]]),
+    ([[0], [1, 2]], [[0, 1, 2], [0, 2, 1]]),
+    ([[1, 2], [0]], [[2, 0, 1], [2, 1, 0]]),
+    ([[1], [0, 2]], [[1, 0, 2], [2, 0, 1]]),
+    ([[2], [0, 1]], [[1, 2, 0], [2, 1, 0]]),
     (
         [[0, 1, 2]],
         [
-            (0, 1, 2),
-            (0, 2, 1),
-            (1, 0, 2),
-            (1, 2, 0),
-            (2, 0, 1),
-            (2, 1, 0),
+            [0, 1, 2],
+            [0, 2, 1],
+            [1, 0, 2],
+            [1, 2, 0],
+            [2, 0, 1],
+            [2, 1, 0],
         ],
     ),
     (
         [[0, 1], [2, 3]],
-        [(0, 1, 2, 3), (0, 1, 3, 2), (1, 0, 2, 3), (1, 0, 3, 2)],
+        [[0, 1, 2, 3], [0, 1, 3, 2], [1, 0, 2, 3], [1, 0, 3, 2]],
     ),
 ])
 def test_partitioned_permutations(partitions, expected_perms):
-    assert partitioned_permutations(partitions) == expected_perms
+    actual_perms = sorted(partitioned_permutations(partitions))
+    assert actual_perms == expected_perms
 
 
 # ----------------------------------------------------------------------------
@@ -93,11 +102,11 @@ def s_graphs_extend(s_graphs):
     return s.one_of(
         s.builds(ABS, s_graphs),
         s.builds(APP, s_graphs, s_graphs),
-        s.builds(JOIN, s.lists(s_graphs, min_size=2, max_size=4)),
+        s.builds(JOIN, s.lists(s_graphs, min_size=2, max_size=5)),
     )
 
 
-s_graphs = s.recursive(s_atoms, s_graphs_extend, max_leaves=3)
+s_graphs = s.recursive(s_atoms, s_graphs_extend, max_leaves=8)
 
 
 @hypothesis.given(s_graphs)

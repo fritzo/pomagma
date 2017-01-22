@@ -34,6 +34,20 @@ _JOIN = intern('JOIN')  # : set term -> term
 
 
 class Term(tuple):
+    def __repr__(self):
+        symbol = self[0]
+        if symbol is _TOP:
+            return 'Term.TOP'
+        elif symbol is _NVAR:
+            return "Term.NVAR('{}')".format(self[1])
+        else:
+            return 'Term.{}({})'.format(
+                symbol,
+                ', '.join(str(a) for a in self[1:]),
+            )
+
+    __str__ = __repr__
+
     @staticmethod
     @memoize_args
     def make(*args):
@@ -93,24 +107,28 @@ def perm_inverse(perm):
 
 
 def graph_permute(graph, perm):
-    return tuple(
+    return [
         term_permute(graph[i], perm)
         for i in perm_inverse(perm)
         if i is not None
-    )
+    ]
 
 
-def iter_neighbors(term):
+_APP_LHS = intern('APP_LHS')
+_APP_RHS = intern('APP_RHS')
+
+
+def term_iter_subterms(term):
     assert isinstance(term, Term)
     symbol = term[0]
     if symbol is _ABS:
-        yield term[1]
+        yield _ABS, term[1]
     elif symbol is _APP:
-        yield term[1]
-        yield term[2]
+        yield _APP_LHS, term[1]
+        yield _APP_RHS, term[2]
     elif symbol is _JOIN:
-        for pos in term[1:]:
-            yield pos
+        for part in term[1:]:
+            yield _JOIN, part
 
 
 def graph_prune(terms):
@@ -120,7 +138,7 @@ def graph_prune(terms):
     pending = [0]
     while pending:
         term = terms[pending.pop()]
-        for pos in iter_neighbors(term):
+        for _, pos in term_iter_subterms(term):
             if pos not in connected:
                 connected.add(pos)
                 pending.append(pos)
@@ -132,21 +150,22 @@ def graph_prune(terms):
 
 def graph_quotient(terms):
     """Deduplicate equivalent vertices."""
-    # TODO
+    # TODO Deduplicate cycles.
+    while True:
+        partitions = defaultdict(list)
+        for i, term in enumerate(terms):
+            partitions[term].append(i)
+        if len(partitions) == len(terms):
+            break
+        partitions = sorted(map(sorted, partitions.values()))
+        assert 0 in partitions[0], partitions
+        perm = [None] * len(terms)
+        for target, sources in enumerate(partitions):
+            for source in sources:
+                perm[source] = target
+        assert all(target is not None for target in perm)
+        terms = graph_permute(terms, perm)
     return terms
-
-
-def term_iter_subterms(term):
-    assert isinstance(term, Term)
-    symbol = term[0]
-    if symbol is _ABS:
-        yield (_ABS,), term[1]
-    elif symbol is _APP:
-        yield (_APP, 0), term[1]
-        yield (_APP, 1), term[2]
-    elif symbol is _JOIN:
-        for part in term[1:]:
-            yield (_JOIN,), part
 
 
 def graph_address(terms):
@@ -163,8 +182,8 @@ def graph_address(terms):
     while pending:
         i = pending.popleft()
         address = min_address[i]
-        for addr, j in term_iter_subterms(terms[i]):
-            subaddress = address + addr
+        for direction, j in term_iter_subterms(terms[i]):
+            subaddress = address + (direction,)
             if min_address[j] is None or subaddress < min_address[j]:
                 min_address[j] = subaddress
                 pending.append(j)
@@ -181,28 +200,13 @@ def partition_by_address(min_address):
     by_address = defaultdict(list)
     for i, address in enumerate(min_address):
         by_address[address].append(i)
-    return by_address.values()
+    return [by_address[key] for key in sorted(by_address)]
 
 
 def partitioned_permutations(partitions):
-    assert isinstance(partitions, list)
-    assert all(isinstance(group, list) for group in partitions)
-    identity = tuple(range(sum(map(len, partitions))))
-    perms = [identity]
-    for group in partitions:
-        if len(group) < 2:
-            continue
-        old_perms = perms
-        perms = []
-        for p in itertools.permutations(group):
-            group_perm = zip(group, p)
-            for perm in old_perms:
-                perm = list(perm)
-                for source, target in group_perm:
-                    perm[source] = target
-                perms.append(tuple(perm))
-    perms.sort()
-    return perms
+    factors = map(itertools.permutations, partitions)
+    for perms in itertools.product(*factors):
+        yield perm_inverse(sum(perms, ()))
 
 
 def graph_sort(terms):
