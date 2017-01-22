@@ -37,14 +37,12 @@ class Term(tuple):
     def __repr__(self):
         symbol = self[0]
         if symbol is _TOP:
-            return 'Term.TOP'
+            return 'TOP'
         elif symbol is _NVAR:
-            return "Term.NVAR('{}')".format(self[1])
+            return "NVAR('{}')".format(self[1])
         else:
-            return 'Term.{}({})'.format(
-                symbol,
-                ', '.join(str(a) for a in self[1:]),
-            )
+            args = ','.join(str(a) for a in self[1:])
+            return '{}({})'.format(symbol, args)
 
     __str__ = __repr__
 
@@ -343,6 +341,7 @@ def extract_subterm(graph, pos):
 
 TOP = graph_make([Term.TOP])
 BOT = graph_make([Term.JOIN([])])
+Y = graph_make([Term.ABS(1), Term.APP(2, 1), Term.IVAR(0)])
 
 
 @memoize_arg

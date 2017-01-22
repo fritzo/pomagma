@@ -2,8 +2,9 @@ import hypothesis
 import hypothesis.strategies as s
 
 from pomagma.reducer.graphs import (ABS, APP, BOT, IVAR, JOIN, NVAR, TOP, Term,
-                                    graph_address, graph_permute, graph_sort,
-                                    partitioned_permutations, term_permute)
+                                    Y, graph_address, graph_permute,
+                                    graph_sort, partitioned_permutations,
+                                    term_permute)
 from pomagma.util.testing import for_each
 
 
@@ -89,6 +90,7 @@ def test_partitioned_permutations(partitions, expected_perms):
 s_atoms = s.sampled_from([
     TOP,
     BOT,
+    Y,
     NVAR('x'),
     NVAR('y'),
     NVAR('z'),
@@ -106,7 +108,7 @@ def s_graphs_extend(s_graphs):
     )
 
 
-# FIXME This generates only acyclic graphs, ie trees.
+# FIXME Y is the only cyclic graph that this generates.
 s_graphs = s.recursive(s_atoms, s_graphs_extend, max_leaves=8)
 
 

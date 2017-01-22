@@ -7,9 +7,10 @@ data structures.
 
 from pomagma.compiler.util import memoize_arg, memoize_args
 from pomagma.reducer import syntax
-from pomagma.reducer.graphs import (ABS, APP, BOT, IVAR, JOIN, NVAR, TOP,
-                                    Graph, extract_subterm, free_vars, isa_abs,
-                                    isa_app, isa_join, iter_join,
+from pomagma.reducer.graphs import (_ABS, _APP, _IVAR, _JOIN, _NVAR, _TOP, ABS,
+                                    APP, BOT, IVAR, JOIN, NVAR, TOP, Graph,
+                                    extract_subterm, free_vars, graph_make,
+                                    isa_abs, isa_app, isa_join, iter_join,
                                     preprocess_join_args)
 from pomagma.reducer.util import UnreachableError
 from pomagma.util import TODO
@@ -31,21 +32,56 @@ false = KI
 # ----------------------------------------------------------------------------
 # Functional programming
 
-@memoize_arg
 def decrement_rank(graph):
     TODO()
 
 
+def increment_rank(terms):
+    TODO()
+
+
 @memoize_args
-def substitute(graph, value, rank, budget):
+def substitute(graph, value):
     """Substitute value for IVAR(rank) in term, decremeting higher IVARs.
 
     This is linear-eager, and will be lazy about nonlinear
     substitutions.
 
     """
-    assert budget in (True, False), budget
-    TODO()
+    terms = list(graph)
+    shifted_values = {0: value}
+    value_roots = []
+    # for term in value:
+    #     terms.append(term_shift(term, value_root))
+    updated = {}
+    pending = set([(0, 0, 0)])
+    while pending:
+        root, value_rank, rank = pending.pop()
+        term = terms[root]
+        symbol = term[0]
+        if symbol in (_TOP, _NVAR):
+            updated[root] = root
+        elif symbol is _IVAR:
+            if term[1] != rank:
+                updated[root] = root
+            else:
+                while value_rank not in shifted_values:
+                    max_rank = max(shifted_values)
+                    max_value = shifted_values[max_rank]
+                    shifted_values[max_rank + 1] = increment_rank(max_value)
+                while value_rank < len(shifted_values):
+                    TODO()
+                updated[root] = value_roots[value_rank]
+        elif symbol is _APP:
+            TODO()
+        elif symbol is _ABS:
+            TODO()
+        elif symbol is _JOIN:
+            TODO()
+        else:
+            raise ValueError(term)
+    TODO('apply updated dict to terms')
+    return graph_make(terms)
 
 
 @memoize_args
@@ -56,7 +92,7 @@ def app(fun, arg):
     elif isa_abs(fun):
         # Linear beta reduce.
         body = extract_subterm(fun, fun[0][1])
-        return substitute(body, arg, 0, False)
+        return substitute(body, arg)
     elif isa_join(fun):
         # Distribute APP over JOIN.
         return join(app(g, arg) for g in iter_join(fun))
