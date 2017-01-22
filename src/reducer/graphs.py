@@ -14,6 +14,7 @@ idempotent.
 import functools
 import itertools
 import re
+from collections import defaultdict, deque
 
 from pomagma.compiler.util import memoize_arg, memoize_args
 from pomagma.util import TODO
@@ -21,20 +22,6 @@ from pomagma.util import TODO
 
 # ----------------------------------------------------------------------------
 # Signature
-
-class Term(tuple):
-    @staticmethod
-    @memoize_args
-    def make(*args):
-        return Term(args)
-
-
-class Graph(tuple):
-    @staticmethod
-    @memoize_args
-    def make(*args):
-        return Graph(args)
-
 
 re_keyword = re.compile('[A-Z]+$')
 
@@ -46,34 +33,53 @@ _APP = intern('APP')  # : term -> term -> term
 _JOIN = intern('JOIN')  # : set term -> term
 
 
-def term_join(args):
-    return Term.make(_JOIN, *sorted(set(args)))
+class Term(tuple):
+    @staticmethod
+    @memoize_args
+    def make(*args):
+        return Term(args)
+
+    TOP = _TOP
+    NVAR = staticmethod(lambda name: Term.make(_NVAR, name))
+    IVAR = staticmethod(lambda rank: Term.make(_IVAR, rank))
+    ABS = staticmethod(lambda body: Term.make(_ABS, body))
+    APP = staticmethod(lambda lhs, rhs: Term.make(_APP, lhs, rhs))
+    JOIN = staticmethod(lambda args: Term.make(_JOIN, *sorted(set(args))))
+
+
+class Graph(tuple):
+    @staticmethod
+    @memoize_args
+    def make(*args):
+        return Graph(args)
 
 
 def term_shift(term, delta):
+    assert isinstance(term, Term)
     symbol = term[0]
     if symbol in (_TOP, _NVAR, _IVAR):
         return term
     elif symbol is _ABS:
-        return Term.make(_ABS, term[1] + delta)
+        return Term.ABS(term[1] + delta)
     elif symbol is _APP:
-        return Term.make(_APP, term[1] + delta, term[2] + delta)
+        return Term.APP(term[1] + delta, term[2] + delta)
     elif symbol is _JOIN:
-        return term_join(i + delta for i in term[1:])
+        return Term.JOIN(i + delta for i in term[1:])
     else:
         raise ValueError(term)
 
 
 def term_permute(term, perm):
+    assert isinstance(term, Term)
     symbol = term[0]
     if symbol in (_TOP, _NVAR, _IVAR):
         return term
     elif symbol is _ABS:
-        return Term.make(_ABS, perm[term[1]])
+        return Term.ABS(perm[term[1]])
     elif symbol is _APP:
-        return Term.make(_APP, perm[term[1]], perm[term[2]])
+        return Term.APP(perm[term[1]], perm[term[2]])
     elif symbol is _JOIN:
-        return term_join(perm[i] for i in term[1:])
+        return Term.JOIN(perm[i] for i in term[1:])
     else:
         raise ValueError(term)
 
@@ -95,6 +101,7 @@ def graph_permute(graph, perm):
 
 
 def iter_neighbors(term):
+    assert isinstance(term, Term)
     symbol = term[0]
     if symbol is _ABS:
         yield term[1]
@@ -108,6 +115,7 @@ def iter_neighbors(term):
 
 def graph_prune(terms):
     """Remove unused vertices."""
+    assert all(isinstance(term, Term) for term in terms)
     connected = set([0])
     pending = [0]
     while pending:
@@ -128,19 +136,86 @@ def graph_quotient(terms):
     return terms
 
 
-def graph_sort(graph):
+def term_iter_subterms(term):
+    assert isinstance(term, Term)
+    symbol = term[0]
+    if symbol is _ABS:
+        yield (_ABS,), term[1]
+    elif symbol is _APP:
+        yield (_APP, 0), term[1]
+        yield (_APP, 1), term[2]
+    elif symbol is _JOIN:
+        for part in term[1:]:
+            yield (_JOIN,), part
+
+
+def graph_address(terms):
+    """Find the least address of each term in a graph, up to nondeterminism.
+
+    This acts as a hashing function for terms in graphs, in that, except for
+    nondeterminism, each term has a unique minimum address. Thus graph sorting
+    can restrict to permutations within address equivalence class.
+    """
+    assert all(isinstance(term, Term) for term in terms)
+    min_address = [None] * len(terms)
+    min_address[0] = ()  # Root address.
+    pending = deque([0])
+    while pending:
+        i = pending.popleft()
+        address = min_address[i]
+        for addr, j in term_iter_subterms(terms[i]):
+            subaddress = address + addr
+            if min_address[j] is None or subaddress < min_address[j]:
+                min_address[j] = subaddress
+                pending.append(j)
+    return min_address
+
+
+def partition_by_address(min_address):
+    """Partition terms by address, given min addresses from graph_addres.
+
+    This is partition is guaranteed to be invariant to graph permutation
+    (although the ordering of groups and items in the partition is not
+    invariant to graph permutation).
+    """
+    by_address = defaultdict(list)
+    for i, address in enumerate(min_address):
+        by_address[address].append(i)
+    return by_address.values()
+
+
+def partitioned_permutations(partitions):
+    assert isinstance(partitions, list)
+    assert all(isinstance(group, list) for group in partitions)
+    identity = tuple(range(sum(map(len, partitions))))
+    perms = [identity]
+    for group in partitions:
+        if len(group) < 2:
+            continue
+        old_perms = perms
+        perms = []
+        for p in itertools.permutations(group):
+            group_perm = zip(group, p)
+            for perm in old_perms:
+                perm = list(perm)
+                for source, target in group_perm:
+                    perm[source] = target
+                perms.append(tuple(perm))
+    perms.sort()
+    return perms
+
+
+def graph_sort(terms):
     """Canonicalize the ordering of vertices in a graph."""
-    # FIXME This is very slow.
-    # TODO Speed this up by first partitioning by symbol, then greedily sorting
-    # each partition while adding constraints to later partitions.
-    return min(
-        graph_permute(graph, (0,) + p)
-        for p in itertools.permutations(range(1, len(graph)))
-    )
+    min_address = graph_address(terms)
+    partitions = partition_by_address(min_address)
+    perms = partitioned_permutations(partitions)
+    return min(graph_permute(terms, p) for p in perms)
 
 
 def graph_make(terms):
     """Make a canonical graph, given a messy list of terms."""
+    assert all(isinstance(term, Term) for term in terms)
     terms = graph_prune(terms)
     terms = graph_quotient(terms)
     terms = graph_sort(terms)
@@ -162,14 +237,14 @@ def extract_subterm(graph, pos):
 # Graph construction (intro forms)
 
 TOP = graph_make([Term.make(_TOP)])
-BOT = graph_make([term_join([])])
+BOT = graph_make([Term.JOIN([])])
 
 
 @memoize_arg
 def NVAR(name):
     if re_keyword.match(name):
         raise ValueError('Variable names cannot match [A-Z]+: {}'.format(name))
-    terms = [Term.make(_NVAR, intern(name))]
+    terms = [Term.NVAR(intern(name))]
     return graph_make(terms)
 
 
@@ -178,14 +253,14 @@ def IVAR(rank):
     if not (isinstance(rank, int) and rank >= 0):
         raise ValueError(
             'Variable index must be a natural number {}'.format(rank))
-    terms = [Term.make(_IVAR, rank)]
+    terms = [Term.IVAR(rank)]
     return graph_make(terms)
 
 
 @memoize_arg
 def ABS(body):
     body_offset = 1
-    terms = [Term.make(_ABS, body_offset)]
+    terms = [Term.ABS(body_offset)]
     for term in body:
         terms.append(term_shift(term, body_offset))
     return graph_make(terms)
@@ -195,7 +270,7 @@ def ABS(body):
 def APP(lhs, rhs):
     lhs_offset = 1
     rhs_offset = 1 + len(lhs)
-    terms = [Term.make(_APP, lhs_offset, rhs_offset)]
+    terms = [Term.APP(lhs_offset, rhs_offset)]
     for term in lhs:
         terms.append(term_shift(term, lhs_offset))
     for term in rhs:
@@ -238,7 +313,7 @@ def JOIN(args):
     offsets = [1]
     for arg in args[:-1]:
         offsets.append(offsets[-1] + len(arg))
-    terms = [term_join(offsets)]
+    terms = [Term.JOIN(offsets)]
     for arg, offset in itertools.izip(args, offsets):
         for term in arg:
             terms.append(term_shift(term, offset))
