@@ -2,6 +2,9 @@
 
 Graphs are constructed much like terms in reducer.syntax, but with an extra
 level of indirection 'Ob' so as to allow building of cyclic terms.
+
+Unlike pomagma.cartographer and pomagma.analyst, each Ob has a unique parse,
+i.e. the database here is not quotiented.
 """
 
 from pomagma.compiler.util import MEMOIZED_CACHES, memoize_arg, memoize_args
@@ -133,7 +136,9 @@ def _approximate(term, depth):
 
 
 def approximate(term, depth):
-    """Approximate cyclic portion of term to given depth.
+    """Approximate the cyclic portion of a term to given depth.
+
+    This is used for hashing and cheap approximate equality teting.
 
     Approximated subterms will be replaced by HOLE.
     Acyclic subterms will be returned in entirety, possibly exceeding depth.
