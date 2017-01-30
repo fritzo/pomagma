@@ -100,6 +100,7 @@ def decode_byte(term):
 
 @memoize_arg
 def encode_maybe(encode_item):
+    """Encode either None to lib.none or (v,) to lib.some(encode_item(v))."""
 
     def encode(value):
         if value is None:
@@ -114,6 +115,7 @@ def encode_maybe(encode_item):
 
 @memoize_arg
 def decode_maybe(decode_item):
+    """Decode to either None or (decode_item(...),)."""
     item_var = NVAR('item')
     some_pattern = lib.some(item_var)
 
