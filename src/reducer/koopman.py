@@ -160,7 +160,7 @@ def try_beta_step(node):
 
 
 def _try_beta_step(node, stack):
-    print(print_to_depth(node))
+    # print(print_to_depth(node))
     if node.is_atom:
         return False
     elif node.is_app:
@@ -207,3 +207,12 @@ def _try_beta_step(node, stack):
         return False
     else:
         raise ValueError(node)
+
+
+def count_beta_steps(node):
+    """Returns number of reduction steps."""
+    assert isinstance(node, Node)
+    count = 0
+    while try_beta_step(node):
+        count += 1
+    return count
