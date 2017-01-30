@@ -5,6 +5,7 @@ _ATOM = intern('ATOM')
 
 
 def make_equation(lhs, rhs):
+    assert lhs is not rhs
     lhs = id(lhs)
     rhs = id(rhs)
     return (lhs, rhs) if lhs <= rhs else (rhs, lhs)
@@ -84,6 +85,8 @@ class Node(object):
     def __eq__(self, other):
         """Syntactic equality modulo graph quotient."""
         assert isinstance(other, Node)
+        if self is other:
+            return True
         node_by_id = {id(self): self, id(other): other}
         hyp = set([make_equation(self, other)])
         con = set()
@@ -100,6 +103,8 @@ class Node(object):
             elif lhs.is_app:
                 con.add(eqn)
                 for lhs, rhs in zip(lhs.args, rhs.args):
+                    if lhs is rhs:
+                        continue
                     node_by_id[id(lhs)] = lhs
                     node_by_id[id(rhs)] = rhs
                     eqn = make_equation(lhs, rhs)
