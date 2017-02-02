@@ -48,20 +48,20 @@ for example in EXAMPLES:
 
 
 @for_each_kwargs(EXAMPLES)
-def test_polish(expression, polish, **unused):
+def test_polish(expression, polish):
     assert expression.polish == polish
 
 
 @for_each_kwargs(EXAMPLES)
-def test_vars(expression, vars, **unused):
+def test_vars(expression, vars):
     assert set(expression.vars) == set(vars)
 
 
 @for_each_kwargs(EXAMPLES)
-def test_consts(expression, consts, **unused):
+def test_consts(expression, consts):
     assert set(expression.consts) == set(consts)
 
 
 @for_each_kwargs(EXAMPLES)
-def test_terms(expression, terms, **unused):
+def test_terms(expression, terms):
     assert set(expression.terms) == set(terms)

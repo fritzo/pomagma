@@ -10,7 +10,13 @@ def for_each(examples):
     def decorator(fun):
         args, vargs, kwargs, defaults = inspect.getargspec(fun)
         if vargs or kwargs or defaults:
-            raise TypeError('Unsupported signature: {}'.format(fun))
+            raise TypeError('\n  '.join([
+                'Unsupported signature: '.format(fun),
+                'args = {}'.format(args),
+                'vargs = {}'.format(vargs),
+                'kwargs = {}'.format(kwargs),
+                'defaults = {}'.format(defaults),
+            ]))
         argnames = ','.join(args)
         return pytest.mark.parametrize(argnames, examples)(fun)
 
@@ -20,16 +26,24 @@ def for_each(examples):
 def for_each_kwargs(examples):
 
     def decorator(fun):
+        args, vargs, kwargs, defaults = inspect.getargspec(fun)
+        if vargs or kwargs:
+            raise TypeError('\n  '.join([
+                'Unsupported signature: '.format(fun),
+                'args = {}'.format(args),
+                'vargs = {}'.format(vargs),
+                'kwargs = {}'.format(kwargs),
+                'defaults = {}'.format(defaults),
+            ]))
 
-        def fun_one(i):
-            fun(**examples[i])
-
+        # FIXME This wrapper pollutes the test log.
         @functools.wraps(fun)
-        def decorated():
-            for i in xrange(len(examples)):
-                yield fun_one, i
+        def wrapped_fun(example):
+            example = {k: v for k, v in example.iteritems() if k in args}
+            return fun(**example)
 
-        return decorated
+        return pytest.mark.parametrize('example', examples)(wrapped_fun)
+
     return decorator
 
 
