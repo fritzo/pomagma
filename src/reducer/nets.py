@@ -14,6 +14,20 @@ class Node(object):
     pass
 
 
+class ROOT(Node):
+    ports = ['root']
+    __slots__ = ports
+
+
+class VAR(Node):
+    """VARs are used only during net construction."""
+    ports = ['val']
+    __slots__ = ['name'] + ports
+
+    def __init__(self, name):
+        self.name = name
+
+
 class APP(Node):
     ports = ['fun', 'arg', 'val']
     __slots__ = ports
@@ -159,3 +173,76 @@ def reduce_net(net):
     while try_step_net(net):
         count += 1
     return count
+
+
+# ----------------------------------------------------------------------------
+# Construction
+
+def make_root(net, node):
+    assert isinstance(net, Net)
+    assert isinstance(node, Node)
+    assert node in net
+    if __debug__:
+        validate_net(net)
+    root = ROOT()
+    connect(root.root, node.val)
+    net.add(root)
+    if __debug__:
+        validate_net(net)
+    return root
+
+
+def make_var(net, name):
+    var = VAR(name)
+    net.add(var)
+    return var
+
+
+def make_app(net, lhs, rhs):
+    assert isinstance(net, Net)
+    assert isinstance(lhs, Node)
+    assert isinstance(rhs, Node)
+    assert lhs in net
+    assert rhs in net
+    if __debug__:
+        validate_net(net)
+    val = APP()
+    connect(val.lhs, lhs.val)
+    connect(val.rhs, rhs.val)
+    net.add(val)
+    if __debug__:
+        validate_net(net)
+
+
+def make_abs(net, name, body):
+    assert isinstance(net, Net)
+    assert isinstance(name, str)
+    assert isinstance(body, Node)
+    if __debug__:
+        validate_net(net)
+    occurrences = []  # (node, port) pairs.
+    TODO('depth first search for occurrences')
+    abs_ = ABS()
+    net.add(abs_)
+    connect((abs_, 'body'), (body, 'val'))
+    if not occurrences:
+        erase = ERASE()
+        net.add(erase)
+        connect((abs_, 'var'), (erase, 'val'))
+    else:
+        var = occurrences[0]
+        for rhs in occurrences[1:]:
+            lhs = var
+            var = COPY()
+            net.add(var)
+            connect((var, 'lhs'), lhs)
+            connect((var, 'rhs'), rhs)
+    if __debug__:
+        validate_net(net)
+    return abs_
+
+
+# ----------------------------------------------------------------------------
+# Read out
+
+# TODO
