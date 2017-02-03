@@ -72,15 +72,16 @@ def try_step_node(net, node):
     if isinstance(node, ERASE):
         val, port = node.val
         if isinstance(val, COPY):
-            assert port in ERASE.ports
             if port == 'val':
                 lhs = node
                 rhs = ERASE()
+                net.add(rhs)
                 connect(lhs.val, val.lhs)
                 connect(rhs.val, val.rhs)
             elif port == 'lhs':
                 connect(node.val, val.rhs)
             else:
+                assert port == 'rhs'
                 connect(node.val, val.lhs)
             net.erase(val)
             return True
@@ -89,6 +90,7 @@ def try_step_node(net, node):
             val = node.val[0]
             fun = node
             arg = ERASE()
+            net.add(arg)
             connect(fun.val, val.fun)
             connect(arg.val, val.arg)
             net.erase(val)
@@ -97,6 +99,7 @@ def try_step_node(net, node):
             if port == 'val':
                 var = node
                 body = ERASE()
+                net.add(body)
                 connect(var.val, val.var)
                 connect(body.val, val.body)
                 net.remove(val)
@@ -107,13 +110,17 @@ def try_step_node(net, node):
                 # Cancel copies.
                 connect(node.lhs, node.val.lhs)
                 connect(node.rhs, node.val.rhs)
+                net.remove(node)
+                net.remove(node.val[0])
                 return True
             else:
                 # Duplicate copies.
                 ax = node
                 ay = COPY(node.id)
+                net.add(ay)
                 bx = node.val
                 by = COPY(node.val)
+                net.add(by)
                 connect(ax.val, node.lhs)
                 connect(ay.val, node.rhs)
                 connect(bx.val, node.val[0].lhs)
