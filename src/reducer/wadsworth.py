@@ -7,23 +7,27 @@ data structures.
 
 from pomagma.compiler.util import memoize_arg, memoize_args
 from pomagma.reducer import syntax
-from pomagma.reducer.graphs import (_ABS, _APP, _IVAR, _JOIN, _NVAR, _TOP, ABS,
-                                    APP, BOT, IVAR, JOIN, NVAR, TOP, Graph,
-                                    extract_subterm, free_vars, graph_make,
-                                    isa_abs, isa_app, isa_join, iter_join,
+from pomagma.reducer.graphs import (_ABS, _APP, _JOIN, _NVAR, _TOP, _VAR, APP,
+                                    BOT, FUN, JOIN, NVAR, TOP, Graph,
+                                    extract_subterm, graph_make, isa_abs,
+                                    isa_app, isa_join, iter_join,
                                     preprocess_join_args)
 from pomagma.reducer.util import UnreachableError
 from pomagma.util import TODO
 
-I = ABS(IVAR(0))
-K = ABS(ABS(IVAR(1)))
-B = ABS(ABS(ABS(APP(IVAR(2), APP(IVAR(1), IVAR(0))))))
-C = ABS(ABS(ABS(APP(APP(IVAR(2), IVAR(0)), IVAR(1)))))
-S = ABS(ABS(ABS(APP(APP(IVAR(2), IVAR(0)), APP(IVAR(1), IVAR(0))))))
+x = NVAR('x')
+y = NVAR('y')
+z = NVAR('z')
 
-KI = ABS(ABS(IVAR(0)))
-CB = ABS(ABS(ABS(APP(IVAR(1), APP(IVAR(2), IVAR(0))))))
-CI = ABS(ABS(APP(IVAR(0), IVAR(1))))
+I = FUN(x, x)
+K = FUN(x, FUN(y, x))
+B = FUN(x, FUN(y, FUN(z, APP(x, APP(y, z)))))
+C = FUN(x, FUN(y, FUN(z, APP(APP(x, z), y))))
+S = FUN(x, FUN(y, FUN(z, APP(APP(x, z), APP(y, z)))))
+
+KI = FUN(x, FUN(y, y))
+CB = FUN(x, FUN(y, FUN(z, APP(y, APP(x, z)))))
+CI = FUN(x, FUN(y, APP(y, x)))
 
 true = K
 false = KI
@@ -32,17 +36,9 @@ false = KI
 # ----------------------------------------------------------------------------
 # Functional programming
 
-def decrement_rank(graph):
-    TODO()
-
-
-def increment_rank(terms):
-    TODO()
-
-
 @memoize_args
 def substitute(graph, value):
-    """Substitute value for IVAR(rank) in term, decremeting higher IVARs.
+    """Substitute value for VAR() in term.
 
     This is linear-eager, and will be lazy about nonlinear
     substitutions.
@@ -61,14 +57,16 @@ def substitute(graph, value):
         symbol = term[0]
         if symbol in (_TOP, _NVAR):
             updated[root] = root
-        elif symbol is _IVAR:
+        elif symbol is _VAR:
             if term[1] != rank:
                 updated[root] = root
             else:
                 while value_rank not in shifted_values:
                     max_rank = max(shifted_values)
                     max_value = shifted_values[max_rank]
-                    shifted_values[max_rank + 1] = increment_rank(max_value)
+                    TODO('deal with cycles')
+                    # shifted_values[max_rank + 1] = increment_rank(max_value)
+                    shifted_values[max_rank + 1] = max_value
                 while value_rank < len(shifted_values):
                     TODO()
                 updated[root] = value_roots[value_rank]
@@ -102,22 +100,21 @@ def app(fun, arg):
 
 
 @memoize_args
-def abstract(graph):
-    """Abstract one de Bruijn variable and simplify."""
+def abstract(var, graph):
+    """Abstract a named variable and simplify."""
+    TODO()
     if graph is TOP:
         return TOP
     elif isa_app(graph):
-        fun = extract_subterm(graph, graph[0][1])
-        arg = extract_subterm(graph, graph[0][2])
-        if IVAR(0) not in free_vars(fun) and arg is IVAR(0):
-            # Eta contract.
-            return decrement_rank(fun)
-        return ABS(graph)
+        # fun = extract_subterm(graph, graph[0][1])
+        # arg = extract_subterm(graph, graph[0][2])
+        TODO('test for self-reference and eta-contract')
+        return FUN(graph)
     elif isa_join(graph):
         # Distribute ABS over JOIN.
         return join(abstract(g) for g in iter_join(graph))
     else:
-        return ABS(graph)
+        return FUN(graph)
     raise UnreachableError(graph)
 
 
@@ -175,10 +172,9 @@ SIGNATURE = {
     'TOP': TOP,
     'BOT': BOT,
     'NVAR': NVAR,
-    'IVAR': IVAR,
     'APP': app,
     'JOIN': join,
-    'ABS': abstract,
+    'FUN': abstract,
     'I': I,
     'K': K,
     'B': B,

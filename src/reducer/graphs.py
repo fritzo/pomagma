@@ -17,8 +17,6 @@ import re
 from collections import defaultdict, deque
 
 from pomagma.compiler.util import memoize_arg, memoize_args
-from pomagma.util import TODO
-
 
 # ----------------------------------------------------------------------------
 # Signature
@@ -27,7 +25,7 @@ re_keyword = re.compile('[A-Z]+$')
 
 _TOP = intern('TOP')  # : term
 _NVAR = intern('NVAR')  # : string -> term
-_IVAR = intern('IVAR')  # : int -> term
+_VAR = intern('VAR')  # : term -> term
 _ABS = intern('ABS')  # : term -> term
 _APP = intern('APP')  # : term -> term -> term
 _JOIN = intern('JOIN')  # : set term -> term
@@ -54,7 +52,7 @@ class Term(tuple):
 
 Term.TOP = Term.make(_TOP)
 Term.NVAR = staticmethod(lambda name: Term.make(_NVAR, name))
-Term.IVAR = staticmethod(lambda rank: Term.make(_IVAR, rank))
+Term.VAR = staticmethod(lambda abs_: Term.make(_VAR, abs_))
 Term.ABS = staticmethod(lambda body: Term.make(_ABS, body))
 Term.APP = staticmethod(lambda lhs, rhs: Term.make(_APP, lhs, rhs))
 Term.JOIN = staticmethod(lambda args: Term.make(_JOIN, *sorted(set(args))))
@@ -70,8 +68,10 @@ class Graph(tuple):
 def term_shift(term, delta):
     assert isinstance(term, Term)
     symbol = term[0]
-    if symbol in (_TOP, _NVAR, _IVAR):
+    if symbol in (_TOP, _NVAR):
         return term
+    elif symbol is _VAR:
+        return Term.VAR(term[1] + delta)
     elif symbol is _ABS:
         return Term.ABS(term[1] + delta)
     elif symbol is _APP:
@@ -85,8 +85,10 @@ def term_shift(term, delta):
 def term_permute(term, perm):
     assert isinstance(term, Term)
     symbol = term[0]
-    if symbol in (_TOP, _NVAR, _IVAR):
+    if symbol in (_TOP, _NVAR):
         return term
+    elif symbol is _VAR:
+        return Term.VAR(perm[term[1]])
     elif symbol is _ABS:
         return Term.ABS(perm[term[1]])
     elif symbol is _APP:
@@ -120,7 +122,9 @@ _APP_RHS = intern('APP_RHS')
 def term_iter_subterms(term):
     assert isinstance(term, Term)
     symbol = term[0]
-    if symbol is _ABS:
+    if symbol is _VAR:
+        yield _VAR, term[1]
+    elif symbol is _ABS:
         yield _ABS, term[1]
     elif symbol is _APP:
         yield _APP_LHS, term[1]
@@ -341,37 +345,37 @@ def extract_subterm(graph, pos):
 
 TOP = graph_make([Term.TOP])
 BOT = graph_make([Term.JOIN([])])
-Y = graph_make([Term.ABS(1), Term.APP(2, 1), Term.IVAR(0)])
+Y = graph_make([Term.ABS(1), Term.APP(2, 1), Term.VAR(0)])
 
 
 @memoize_arg
 def NVAR(name):
+    assert isinstance(name, str), name
     if re_keyword.match(name):
         raise ValueError('Variable names cannot match [A-Z]+: {}'.format(name))
     terms = [Term.NVAR(intern(name))]
     return graph_make(terms)
 
 
-@memoize_arg
-def IVAR(rank):
-    if not (isinstance(rank, int) and rank >= 0):
-        raise ValueError(
-            'Variable index must be a natural number {}'.format(rank))
-    terms = [Term.IVAR(rank)]
-    return graph_make(terms)
-
-
-@memoize_arg
-def ABS(body):
+@memoize_args
+def FUN(var, body):
+    assert isinstance(var, Graph) and len(var) == 1 and isa_nvar(var), var
+    assert isinstance(body, Graph), body
+    name = var[0][1]
     body_offset = 1
-    terms = [Term.ABS(body_offset)]
+    terms = [Term.ABS(1)]
     for term in body:
         terms.append(term_shift(term, body_offset))
+    for i, term in enumerate(terms):
+        if isa_nvar(term) and term[1] == name:
+            terms[i] = Term.VAR(0)
     return graph_make(terms)
 
 
 @memoize_args
 def APP(lhs, rhs):
+    assert isinstance(lhs, Graph), lhs
+    assert isinstance(rhs, Graph), rhs
     lhs_offset = 1
     rhs_offset = 1 + len(lhs)
     terms = [Term.APP(lhs_offset, rhs_offset)]
@@ -404,6 +408,7 @@ def preprocess_join_args(fun):
 @preprocess_join_args
 @memoize_arg
 def JOIN(args):
+    assert all(isinstance(arg, Graph) for arg in args), args
     # Handle trivial cases.
     if TOP in args:
         return TOP
@@ -431,8 +436,8 @@ def isa_nvar(graph):
     return graph[0][0] is _NVAR
 
 
-def isa_ivar(graph):
-    return graph[0][0] is _IVAR
+def isa_var(graph):
+    return graph[0][0] is _VAR
 
 
 def isa_abs(graph):
@@ -445,11 +450,3 @@ def isa_app(graph):
 
 def isa_join(graph):
     return graph[0][0] is _JOIN
-
-
-# ----------------------------------------------------------------------------
-# Variables
-
-@memoize_arg
-def free_vars(graph):
-    TODO()

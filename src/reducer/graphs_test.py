@@ -1,11 +1,14 @@
 import hypothesis
 import hypothesis.strategies as s
 
-from pomagma.reducer.graphs import (ABS, APP, BOT, IVAR, JOIN, NVAR, TOP, Term,
-                                    Y, graph_address, graph_permute,
-                                    graph_sort, partitioned_permutations,
-                                    term_permute)
+from pomagma.reducer.graphs import (APP, BOT, FUN, JOIN, NVAR, TOP, Term, Y,
+                                    graph_address, graph_permute, graph_sort,
+                                    partitioned_permutations, term_permute)
 from pomagma.util.testing import for_each
+
+x = NVAR('x')
+y = NVAR('y')
+z = NVAR('z')
 
 
 @for_each([
@@ -23,23 +26,23 @@ def test_term_permute(perm, term, expected):
 @for_each([
     (
         (0, 1, 2, 3),
-        [Term.ABS(1), Term.APP(2, 3), Term.NVAR('x'), Term.IVAR(0)],
-        [Term.ABS(1), Term.APP(2, 3), Term.NVAR('x'), Term.IVAR(0)],
+        [Term.ABS(1), Term.APP(2, 3), Term.NVAR('x'), Term.VAR(0)],
+        [Term.ABS(1), Term.APP(2, 3), Term.NVAR('x'), Term.VAR(0)],
     ),
     (
         (1, 0, 2, 3),
-        [Term.ABS(1), Term.APP(2, 3), Term.NVAR('x'), Term.IVAR(0)],
-        [Term.APP(2, 3), Term.ABS(0), Term.NVAR('x'), Term.IVAR(0)],
+        [Term.ABS(1), Term.APP(2, 3), Term.NVAR('x'), Term.VAR(0)],
+        [Term.APP(2, 3), Term.ABS(0), Term.NVAR('x'), Term.VAR(1)],
     ),
     (
         (1, 2, 3, 0),
-        [Term.ABS(1), Term.APP(2, 3), Term.NVAR('x'), Term.IVAR(0)],
-        [Term.IVAR(0), Term.ABS(2), Term.APP(3, 0), Term.NVAR('x')],
+        [Term.ABS(1), Term.APP(2, 3), Term.NVAR('x'), Term.VAR(0)],
+        [Term.VAR(1), Term.ABS(2), Term.APP(3, 0), Term.NVAR('x')],
     ),
     (
         (1, 2, 0),
-        [Term.JOIN([1, 2]), Term.ABS(0), Term.IVAR(0)],
-        [Term.IVAR(0), Term.JOIN([0, 2]), Term.ABS(1)],
+        [Term.JOIN([1, 2]), Term.ABS(0), Term.VAR(1)],
+        [Term.VAR(2), Term.JOIN([0, 2]), Term.ABS(1)],
     ),
 ])
 def test_graph_permute(perm, graph, expected):
@@ -87,22 +90,13 @@ def test_partitioned_permutations(partitions, expected_perms):
 # ----------------------------------------------------------------------------
 # Property based tests
 
-s_atoms = s.sampled_from([
-    TOP,
-    BOT,
-    Y,
-    NVAR('x'),
-    NVAR('y'),
-    NVAR('z'),
-    IVAR(0),
-    IVAR(1),
-    IVAR(2),
-])
+s_nvars = s.sampled_from([x, y, z])
+s_atoms = s.sampled_from([TOP, BOT, Y, x, y, z])
 
 
 def s_graphs_extend(s_graphs):
     return s.one_of(
-        s.builds(ABS, s_graphs),
+        s.builds(FUN, s_nvars, s_graphs),  # Introduces VAR.
         s.builds(APP, s_graphs, s_graphs),
         s.builds(JOIN, s.lists(s_graphs, min_size=2, max_size=5)),
     )
