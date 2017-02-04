@@ -77,6 +77,10 @@ def validate_net(net):
 
 
 def connect(lhs, rhs):
+    assert isinstance(lhs, tuple) and len(lhs) == 2
+    assert isinstance(rhs, tuple) and len(rhs) == 2
+    assert isinstance(lhs[0], Node) and isinstance(lhs[1], str)
+    assert isinstance(rhs[0], Node) and isinstance(rhs[1], str)
     setattr(lhs[0], lhs[1], rhs)
     setattr(rhs[0], rhs[1], lhs)
 
