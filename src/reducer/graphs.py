@@ -9,6 +9,16 @@ particular, we choose fintary JOIN over binary JOIN so as to ease the
 isomorphism problem: JOIN terms are syntactically accociative, commutative, and
 idempotent.
 
+The implementation of abstraction as ABS,VAR is a little unusual in that an ABS
+term points only to its body and each VAR points back to its abstraction (after
+graph_quotient_weak(-), there should be at most one VAR pointing to each
+abstraction). This implementation of abstraction makes it easy to collect
+garbage in graph_prune(-), and makes substitution easier than it would be with
+de Bruijn indices (which are complex in the presence of cycles [1]).
+
+[1] "Lazy Specialization" (1999) Michael Jonathan Thyer
+  http://thyer.name/phd-thesis/thesis-thyer.pdf
+
 """
 
 import functools
@@ -332,6 +342,7 @@ def graph_make(terms):
 @memoize_args
 def extract_subterm(graph, pos):
     """Extract the subterm of a graph at given root position."""
+    assert isinstance(graph, Graph)
     assert isinstance(pos, int) and 0 <= pos and pos < len(graph), pos
     perm = range(len(graph))
     perm[0] = pos
@@ -450,3 +461,66 @@ def isa_app(graph):
 
 def isa_join(graph):
     return graph[0][0] is _JOIN
+
+
+# ----------------------------------------------------------------------------
+# Reduction
+
+# FIXME this does not support copying cycles.
+def _substitute(terms, abs_pos, arg_pos, body_pos, cache):
+    # Memoize.
+    try:
+        return cache[body_pos]
+    except KeyError:
+        pass
+
+    # Match type of body.
+    body = terms[body_pos]
+    if body is Term.TOP or isa_nvar(body):
+        new_body = body
+    elif isa_var(body):
+        if body[1] == abs_pos:
+            new_body = terms[arg_pos]
+        else:
+            new_body = body
+    elif isa_app(body):
+        lhs_pos = _substitute(terms, abs_pos, arg_pos, body[1], cache)
+        rhs_pos = _substitute(terms, abs_pos, arg_pos, body[2], cache)
+        new_body = Term.APP(lhs_pos, rhs_pos)
+    elif isa_join(body):
+        new_body = Term.JOIN(
+            _substitute(terms, abs_pos, arg_pos, join_pos, cache)
+            for join_pos in body[1]
+        )
+    else:
+        raise ValueError(body)
+
+    # Locate or insert new_body in terms.
+    if new_body == body:
+        new_pos = body_pos
+    else:
+        try:
+            new_pos = terms.index(new_body)
+        except ValueError:
+            new_pos = len(terms)
+            terms.append(new_body)
+    cache[body_pos] = new_pos
+    return new_pos
+
+
+@memoize_args
+def graph_beta_step(graph, app_pos):
+    """Simple naive beta reduction step."""
+    assert isinstance(graph, Graph)
+    assert isinstance(app_pos, int) and 0 <= app_pos and app_pos < len(graph)
+    app = graph[app_pos]
+    assert isa_app(app)
+    abs_pos = app[1]
+    arg_pos = app[2]
+    abs_ = graph[abs_pos]
+    assert isa_abs(abs_)
+    body_pos = abs_[1]
+    terms = list(graph)
+    cache = {}
+    terms[app_pos] = _substitute(terms, abs_pos, arg_pos, body_pos, cache)
+    return graph_make(terms)
