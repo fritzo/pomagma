@@ -894,7 +894,7 @@ def priority(term):
 
 @memoize_arg
 def is_normal(term):
-    """Returns whether term is in linear normal form."""
+    """Returns whether term is in normal form, i.e. is irreducible."""
     if isa_atom(term) or isa_nvar(term) or isa_ivar(term):
         return True
     elif isa_abs(term):
