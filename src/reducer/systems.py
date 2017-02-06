@@ -112,11 +112,11 @@ def unfold(system, body):
 
     # Get a linear normal form.
     if isa_app(body):
-        body = bohm.app(unfold(body[1]), body[2])  # Only unfold head.
+        body = bohm.app(unfold(system, body[1]), body[2])  # Only unfold head.
     elif isa_abs(body):
-        body = bohm.abstract(unfold(body[1]))
+        body = bohm.abstract(unfold(system, body[1]))
     elif isa_join(body):
-        body = bohm.join(unfold(part) for part in bohm.iter_join(body))
+        body = bohm.join(unfold(system, part) for part in bohm.iter_join(body))
     else:
         raise ValueError(body)
 

@@ -1,5 +1,3 @@
-import pytest
-
 from pomagma.reducer.syntax import ABS, APP, BOT, IVAR, NVAR, TOP
 from pomagma.reducer.systems import System, try_beta_step
 from pomagma.util.testing import for_each
@@ -15,6 +13,7 @@ i0 = IVAR(0)
     System(x=ABS(i0)),
     System(x=ABS(APP(i0, TOP))),
     System(x=ABS(APP(i0, BOT))),
+    System(x=ABS(i0), y=ABS(i0)),
 ])
 def test_try_beta_step_normal(system):
     system = system.copy()
@@ -22,10 +21,8 @@ def test_try_beta_step_normal(system):
 
 
 @for_each([
-    pytest.mark.xfail((
-        System(x=ABS(i0), y=APP(x, x)),
-        System(x=ABS(i0), y=ABS(i0)),
-    )),
+    (System(x=ABS(i0), y=APP(x, x)), System(x=ABS(i0), y=x)),
+    (System(x=ABS(i0), y=x), System(x=ABS(i0), y=ABS(i0))),
 ])
 def test_try_beta_step_nonnormal(system, expected):
     actual = system.copy()
