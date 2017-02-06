@@ -4,7 +4,43 @@ from pomagma.compiler.util import memoize_arg
 from pomagma.reducer import bohm
 from pomagma.reducer.syntax import (NVAR, Term, free_vars, is_closed, isa_abs,
                                     isa_app, isa_atom, isa_ivar, isa_join,
-                                    isa_nvar, iter_join)
+                                    isa_nvar, iter_join, TOP, BOT)
+
+
+@memoize_arg
+def is_abs_free(term):
+    """Whether term has no ABS subterms."""
+    assert isinstance(term, Term)
+    if isa_abs(term):
+        return False
+    elif isa_atom(term) or isa_ivar(term) or isa_nvar(term):
+        return True
+    elif isa_app(term):
+        return is_abs_free(term[1]) and is_abs_free(term[2])
+    elif isa_join(term):
+        return all(is_abs_free(part) for part in iter_join(term))
+    else:
+        raise ValueError(term)
+
+
+@memoize_arg
+def is_valid_body(term):
+    """Whether a term is a valid body of a definition.
+
+    Valid terms:
+    * must be closed (no free IVARs)
+    * must be normal
+    * must have ABS only at the top level
+    * cannot be TOP or BOT.
+    """
+    assert isinstance(term, Term)
+    if not is_closed(term) or not bohm.is_normal(term):
+        return False
+    if term is TOP or term is BOT:
+        return False
+    while isa_abs(term):
+        term = term[1]
+    return is_abs_free(term)
 
 
 class System(object):
@@ -19,8 +55,7 @@ class System(object):
     def define(self, name, body):
         assert isinstance(name, str)
         assert isinstance(body, Term)
-        assert is_closed(body)
-        assert bohm.is_normal(body)
+        assert is_valid_body(body)
         self._defs[NVAR(name)] = body
 
     def __getitem__(self, var):
@@ -51,16 +86,14 @@ class System(object):
 @memoize_arg
 def is_unfoldable(body):
     assert isinstance(body, Term)
+    assert is_valid_body(body)
     if isa_join(body):
         return any(is_unfoldable(term) for term in iter_join(body))
-    elif isa_abs(body):
-        return is_unfoldable(body[1])
-    elif isa_app(body):
-        fun = body[1]
-        arg = body[2]
-        return isa_nvar(fun) or is_unfoldable(fun) or is_unfoldable(arg)
-    else:
-        raise ValueError(body)
+    while isa_abs(body):
+        body = body[1]
+    while isa_app(body):
+        body = body[1]
+    return isa_nvar(body)
 
 
 def unfold(system, body):
