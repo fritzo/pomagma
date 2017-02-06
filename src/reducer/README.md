@@ -28,6 +28,8 @@ arithmetic hierarchy.
 - [Obermeyer09] <a name="Obermeyer09"/>
   Fritz Obermeyer (2009)
   [Automated Equational Reasoning in Nondeterministic &lambda;-Calculi Modulo Theories H*](http://fritzo.org/thesis.pdf)
+- [Huet98] Gerard Huet (1998)
+  [Regular Bohm Trees](http://pauillac.inria.fr/~huet/PUBLIC/RBT2.pdf)
 - [Feferman05] <a name="Feferman05"/>
   Solomon Feferman (2005)
   [Predicativity](http://math.stanford.edu/~feferman/papers/predicativity.pdf)

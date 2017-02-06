@@ -1,3 +1,20 @@
+r"""Systems of combinators in nearly head normal form.
+
+This aims to generalize Huet's Regular Bohm Trees [1] to non-normal terms.
+Whereas Huet restricted combinators to \x1,...,xm. xm M1 ... Mn (where
+x1,...,xm are local variables (here IVARs) and each argument M is a single
+combinatator variable (here NVARs) followed by local variables), we restrict to
+arbitrary normal closed terms of the form \x1,....,xm. M (where M is an
+ABS-free term (i.e. M can contain local variables (IVARs), combinator variables
+(NVARs), APP(-,-), JOIN(-,-), and atoms like TOP, BOT).
+
+Reduction is accomplished by unfolding the first definition whose head is a
+combinator var, then reducing (which is not guaranteed to terminate).
+
+[1] Gerard Huet (1998) "Regular Bohm Trees"
+    http://pauillac.inria.fr/~huet/PUBLIC/RBT2.pdf
+"""
+
 from collections import OrderedDict
 
 from pomagma.compiler.util import memoize_arg
@@ -48,24 +65,29 @@ class System(object):
 
     def __init__(self, **defs):
         self._defs = OrderedDict()  # : NVAR -> closed Term
-        for name, body in defs.iteritems():
-            self.define(name, body)
-        assert self.is_closed()
+        for name, body in sorted(defs.iteritems()):
+            NVAR(name)  # Asserts that name is not a keyword.
+            self._set(name, body)
+        # assert self.is_closed()
 
-    def define(self, name, body):
+    def _set(self, name, body):
         assert isinstance(name, str)
         assert isinstance(body, Term)
         assert is_valid_body(body)
-        self._defs[NVAR(name)] = body
+        self._defs[name] = body
+
+    def update(self, name, body):
+        assert name in self._defs, 'Use .define(-,-) instead'
+        self._set(name, body)
 
     def copy(self):
         result = System()
         result._defs = self._defs.copy()
         return result
 
-    def __getitem__(self, var):
-        assert isa_nvar(var)
-        return self._defs[var]
+    def __getitem__(self, name):
+        assert isinstance(name, str)
+        return self._defs[name]
 
     def __iter__(self):
         return self._defs.iteritems()
@@ -75,17 +97,17 @@ class System(object):
 
     def __repr__(self):
         defs = [
-            '{}={}'.format(var[1], body)
-            for var, body in self._defs.iteritems()
+            '{}={}'.format(name, body)
+            for name, body in self._defs.iteritems()
         ]
-        return 'System(\n    {}\n)'.format('\n,    '.join(defs))
+        return 'System({})'.format(', '.join(defs))
 
     __str__ = __repr__
 
     def is_closed(self):
         """Whether all free NVARs are defined."""
         return all(
-            var in self._defs
+            var[1] in self._defs
             for body in self._defs.itervalues()
             for var in free_vars(body)
         )
@@ -105,10 +127,16 @@ def is_unfoldable(body):
 
 
 def unfold(system, body):
+    """Unfold the head variables in body via definitions in system.
+
+    Note that due to JOIN terms, there may be multiple head variables.
+    """
+    assert isinstance(system, System)
+    assert isinstance(body, Term)
     if isa_atom(body) or isa_ivar(body):
         return body
     if isa_nvar(body):
-        return system[body]
+        return system[body[1]]
 
     # Get a linear normal form.
     if isa_app(body):
@@ -127,9 +155,9 @@ def unfold(system, body):
 def try_beta_step(system):
     assert isinstance(system, System)
     assert system.is_closed()
-    for var, body in system:
+    for name, body in system:
         if is_unfoldable(body):
             unfolded = unfold(system, body)
-            system.define(var[1], unfolded)
+            system.update(name, unfolded)
             return True
     return False
