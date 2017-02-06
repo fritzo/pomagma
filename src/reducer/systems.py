@@ -2,9 +2,9 @@ from collections import OrderedDict
 
 from pomagma.compiler.util import memoize_arg
 from pomagma.reducer import bohm
-from pomagma.reducer.syntax import (NVAR, Term, free_vars, is_closed, isa_abs,
-                                    isa_app, isa_atom, isa_ivar, isa_join,
-                                    isa_nvar, iter_join, TOP, BOT)
+from pomagma.reducer.syntax import (BOT, NVAR, TOP, Term, free_vars, is_closed,
+                                    isa_abs, isa_app, isa_atom, isa_ivar,
+                                    isa_join, isa_nvar)
 
 
 @memoize_arg
@@ -18,7 +18,7 @@ def is_abs_free(term):
     elif isa_app(term):
         return is_abs_free(term[1]) and is_abs_free(term[2])
     elif isa_join(term):
-        return all(is_abs_free(part) for part in iter_join(term))
+        return all(is_abs_free(part) for part in bohm.iter_join(term))
     else:
         raise ValueError(term)
 
@@ -47,9 +47,9 @@ class System(object):
     """System of mutually recursive combinators."""
 
     def __init__(self, **defs):
-        self._defs = OrderedDict  # : NVAR -> closed Term
+        self._defs = OrderedDict()  # : NVAR -> closed Term
         for name, body in defs.iteritems():
-            self.define(NVAR(name), body)
+            self.define(name, body)
         assert self.is_closed()
 
     def define(self, name, body):
@@ -58,12 +58,20 @@ class System(object):
         assert is_valid_body(body)
         self._defs[NVAR(name)] = body
 
+    def copy(self):
+        result = System()
+        result._defs = self._defs.copy()
+        return result
+
     def __getitem__(self, var):
         assert isa_nvar(var)
         return self._defs[var]
 
     def __iter__(self):
         return self._defs.iteritems()
+
+    def __eq__(self, other):
+        return self._defs == other._defs
 
     def __repr__(self):
         defs = [
@@ -88,7 +96,7 @@ def is_unfoldable(body):
     assert isinstance(body, Term)
     assert is_valid_body(body)
     if isa_join(body):
-        return any(is_unfoldable(term) for term in iter_join(body))
+        return any(is_unfoldable(term) for term in bohm.iter_join(body))
     while isa_abs(body):
         body = body[1]
     while isa_app(body):
@@ -108,7 +116,7 @@ def unfold(system, body):
     elif isa_abs(body):
         body = bohm.abstract(unfold(body[1]))
     elif isa_join(body):
-        body = bohm.join(unfold(part) for part in iter_join(body))
+        body = bohm.join(unfold(part) for part in bohm.iter_join(body))
     else:
         raise ValueError(body)
 
@@ -118,6 +126,7 @@ def unfold(system, body):
 
 def try_beta_step(system):
     assert isinstance(system, System)
+    assert system.is_closed()
     for var, body in system:
         if is_unfoldable(body):
             unfolded = unfold(system, body)
