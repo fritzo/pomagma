@@ -1,4 +1,4 @@
-"""Regular Nondeterministic Bohm Trees.
+r"""Regular Nondeterministic Bohm Trees.
 
 This module implements data structures and decision procedures for regular
 Bohm trees as described by Gerard Huet (1998). It generalizes Huet's

@@ -22,6 +22,7 @@ from pomagma.reducer import bohm
 from pomagma.reducer.syntax import (BOT, NVAR, TOP, Term, free_vars, is_closed,
                                     isa_abs, isa_app, isa_atom, isa_ivar,
                                     isa_join, isa_nvar)
+from pomagma.util import TODO
 
 
 @memoize_arg
@@ -116,7 +117,8 @@ class System(object):
 @memoize_arg
 def is_unfoldable(body):
     assert isinstance(body, Term)
-    assert is_valid_body(body)
+    # TODO Allow open terms to be unfolded.
+    # assert is_valid_body(body)
     if isa_join(body):
         return any(is_unfoldable(term) for term in bohm.iter_join(body))
     while isa_abs(body):
@@ -161,3 +163,107 @@ def try_beta_step(system):
             system.update(name, unfolded)
             return True
     return False
+
+
+# ----------------------------------------------------------------------------
+# Decision procedures
+
+class Theory(object):
+    def __init__(self):
+        self._hyp = set()
+        self._con = set()
+
+    def assume_equal(self, lhs, rhs):
+        if lhs is rhs:
+            return
+        eqn = (lhs, rhs) if lhs < rhs else (rhs, lhs)
+        if eqn not in self._con:
+            self._hyp.add(eqn)
+
+    def conclude_equal(self, lhs, rhs):
+        if lhs is rhs:
+            return
+        eqn = (lhs, rhs) if lhs < rhs else (rhs, lhs)
+        self._con.add(eqn)
+
+    def has_assumptions(self):
+        return bool(self._hyp)
+
+    def pop(self):
+        # TODO Prioritize to ensure progress.
+        return self._hyp.pop()
+
+
+# Adapted from bohm.try_decide_less_weak(-,-).
+def try_match_equal(system, theory, lhs, rhs):
+    assert isinstance(system, System)
+    assert isinstance(theory, Theory)
+    assert isinstance(lhs, Term)
+    assert isinstance(rhs, Term)
+
+    # Distinguish atoms and local variables.
+    if isa_ivar(lhs) or lhs is TOP or lhs is BOT:
+        if isa_ivar(rhs) or rhs is TOP or rhs is BOT:
+            return lhs is rhs
+
+    # Destructure JOIN.
+    if isa_join(lhs) or isa_join(rhs):
+        TODO('handle JOIN')
+
+    # Destructure ABS.
+    while isa_abs(lhs) or isa_abs(rhs):
+        lhs = bohm.unabstract(lhs)
+        rhs = bohm.unabstract(rhs)
+    assert lhs is not rhs, lhs
+
+    # Destructure APP.
+    lhs_head, lhs_args = bohm.unapply(lhs)
+    rhs_head, rhs_args = bohm.unapply(rhs)
+
+    # Distinguish solvable terms.
+    if isa_ivar(lhs_head) and isa_ivar(rhs_head):
+        if lhs_head is not rhs_head or len(lhs_args) != len(rhs_args):
+            return False
+        for eqn in zip(lhs_args, rhs_args):
+            lhs_arg, rhs_arg = eqn
+            theory.assume_equal(lhs_arg, rhs_arg)
+        return True
+
+    # Distinguish atoms from local variables.
+    if isa_ivar(lhs_head) and (rhs is TOP or rhs is BOT):
+        return False
+    if isa_ivar(rhs_head) and (lhs is TOP or lhs is BOT):
+        return False
+
+    # Unfold NVARs.
+    assert is_unfoldable(lhs) or is_unfoldable(rhs), (lhs, rhs)
+    if is_unfoldable(lhs):
+        lhs = unfold(system, lhs)
+        theory.assume_equal(lhs, rhs)
+    if is_unfoldable(rhs):
+        rhs = unfold(system, rhs)
+        theory.assume_equal(lhs, rhs)
+    return True
+
+
+def try_decide_equal(system, lhs, rhs):
+    """Incomplete unsound decision procedure for extensional equality.
+
+    This attempts to adapt Huet's decision procedure for extensional equality
+    from rational Bohm trees to arbitrary systems of combinators.
+
+    Does not handle JOIN.
+    Does not handle nonterminating terms.
+    Does not handle least fixed points defined via mutual recursion.
+    """
+    assert isinstance(system, System)
+    assert is_valid_body(lhs)
+    assert is_valid_body(rhs)
+
+    theory = Theory()
+    theory.assume_equal(lhs, rhs)
+    while theory.has_assumptions():
+        lhs, rhs = theory.pop()
+        if not try_match_equal(system, theory, lhs, rhs):
+            return False
+    return True

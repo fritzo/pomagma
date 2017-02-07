@@ -1,5 +1,6 @@
 from pomagma.reducer.syntax import ABS, APP, BOT, IVAR, NVAR, TOP
-from pomagma.reducer.systems import System, try_beta_step, unfold
+from pomagma.reducer.systems import (System, try_beta_step, try_decide_equal,
+                                     unfold)
 from pomagma.util.testing import for_each
 
 x = NVAR('x')
@@ -48,3 +49,11 @@ def test_try_beta_step_nonnormal(system, expected):
     actual = system.copy()
     assert try_beta_step(actual)
     assert actual == expected
+
+
+@for_each([
+    (System(x=ABS(i0), y=ABS(i0)), x, y, True),
+    (System(x=ABS(i0), y=ABS(APP(i0, TOP))), x, y, False),
+])
+def test_try_decide_equal(system, lhs, rhs, expected):
+    assert try_decide_equal(system, lhs, rhs) is expected
