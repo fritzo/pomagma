@@ -8,6 +8,7 @@ of reducer.koopman's combinatory graph reduction.
 """
 
 from pomagma.compiler.util import memoize_arg
+from pomagma.reducer.util import logged
 
 DEFAULT_DEPTH = 10
 
@@ -43,22 +44,20 @@ class Node(object):
         self.args = other.args
 
     def copy(self, results=None):
-        """Deep copy. Mainly useful for testing."""
+        """Deep copy ABS and APP terms; do not copy ATOMs or VARs."""
+        if self.typ is _ATOM or self.typ is _VAR:
+            return self
         if results is None:
             results = {}
-        else:
-            try:
-                return results[id(self)]
-            except KeyError:
-                pass
+        elif id(self) in results:
+            return results[id(self)]
         result = Node(self.typ, *self.args)
         results[id(self)] = result
-        if not is_atom(self):
-            result.args = tuple(arg.copy(results) for arg in self.args)
+        result.args = tuple(arg.copy(results) for arg in self.args)
         return result
 
     def __eq__(self, other):
-        """Syntactic equality modulo graph quotient."""
+        """Syntactic equality modulo graph quotient (i.e. bisimilarity)."""
         assert isinstance(other, Node)
         if self is other:
             return True
@@ -107,6 +106,8 @@ def ATOM(name):
     return Node(_ATOM, intern(name))
 
 
+HOLE = ATOM('HOLE')
+
 _VAR_CACHE = {}
 
 
@@ -150,6 +151,7 @@ def is_app(node):
 # ----------------------------------------------------------------------------
 # Substitution
 
+# FIXME This does not correctly handle cycles.
 def _substitute(old, new, node, results):
     try:
         return results[id(node)]
@@ -162,6 +164,7 @@ def _substitute(old, new, node, results):
         result = node
     elif is_abs(node) or is_app(node):
         args = tuple(
+            # FIXME This does not converge on cyclic terms.
             _substitute(old, new, arg, results)
             for arg in node.args
         )
@@ -171,10 +174,12 @@ def _substitute(old, new, node, results):
             result = Node(node.typ, args)
     else:
         raise ValueError(node)
+
     results[id(node)] = result
     return result
 
 
+@logged(str, str, str, returns=str)
 def substitute(old, new, node):
     """Substitute old for new in node."""
     assert isinstance(old, Node)
@@ -191,9 +196,8 @@ def NVAR(name):
 def FUN(nvar, body):
     assert isinstance(nvar, Node) and is_atom(nvar)
     assert isinstance(body, Node)
-    result = ABS(body)
-    var = VAR(result)
-    body = substitute(nvar, var, body)
+    result = ABS(HOLE)
+    body = substitute(nvar, VAR(result), body)
     result.args = (body,)
     return result
 
@@ -201,6 +205,7 @@ def FUN(nvar, body):
 # ----------------------------------------------------------------------------
 # Reduction
 
+@logged(str, returns=str)
 def try_beta_step(node):
     """Tries to reduce a node in-place. Returns False if node is normal."""
     assert isinstance(node, Node)

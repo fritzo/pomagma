@@ -23,21 +23,20 @@ def test_neq(x, y):
 
 
 @for_each([
-    pytest.mark.xfail((x, y, x, y)),
+    (x, y, x, y),
     (x, y, y, y),
     (x, y, z, z),
 ])
 def test_substitute(old, new, node, expected):
-    old = old.copy()
-    new = new.copy()
-    node = node.copy()
-    expected = expected.copy()
     actual = substitute(old, new, node)
     assert actual == expected, '{} vs {}'.format(actual, expected)
 
 
 @for_each([
+    (x, x, False),
+    (APP(x, x), APP(x, x), False),
     (FUN(x, x), FUN(x, x), False),
+    (FUN(x, y), FUN(x, y), False),
     pytest.mark.xfail((APP(FUN(x, x), y), y, True)),
 ])
 def test_try_beta_step(node, expected_node, expected_whether):
