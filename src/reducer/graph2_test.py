@@ -1,5 +1,3 @@
-import pytest
-
 from pomagma.reducer.graph2 import APP, FUN, NVAR, substitute, try_beta_step
 from pomagma.util.testing import for_each
 
@@ -37,7 +35,18 @@ def test_substitute(old, new, node, expected):
     (APP(x, x), APP(x, x), False),
     (FUN(x, x), FUN(x, x), False),
     (FUN(x, y), FUN(x, y), False),
-    pytest.mark.xfail((APP(FUN(x, x), y), y, True)),
+    (APP(FUN(x, y), z), y, True),
+    (APP(FUN(x, x), y), y, True),
+    (APP(FUN(x, x), y), y, True),
+    (APP(APP(FUN(x, x), z), y), APP(z, y), True),
+    (APP(y, APP(FUN(x, x), z)), APP(y, z), True),
+    (APP(APP(x, APP(FUN(x, x), y)), z), APP(APP(x, y), z), True),
+    (APP(APP(x, z), APP(FUN(x, x), y)), APP(APP(x, z), y), True),
+    (
+        APP(APP(x, APP(FUN(x, x), y)), APP(FUN(x, x), z)),
+        APP(APP(x, y), APP(FUN(x, x), z)),
+        True,
+    ),
 ])
 def test_try_beta_step(node, expected_node, expected_whether):
     actual_node = node.copy()

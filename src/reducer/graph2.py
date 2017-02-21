@@ -1,10 +1,11 @@
 """Lambda term graph reduction.
 
-This is probably broken, specifically around substitution and cycles.
-
 This is similar to reducer.graph, but relies on python object references rather
 than explicit int pointers. This can also be seen as a lambda-caclulus version
 of reducer.koopman's combinatory graph reduction.
+
+This implementation aims for correctness rather than efficiency. Hence graphs
+are .copy()ed more often than needed, and there is minimal sharing.
 """
 
 from pomagma.compiler.util import memoize_arg
@@ -151,32 +152,23 @@ def is_app(node):
 # ----------------------------------------------------------------------------
 # Substitution
 
-# FIXME This does not correctly handle cycles.
+@logged(str, str, str, str, returns=str)
 def _substitute(old, new, node, results):
-    try:
-        return results[id(node)]
-    except KeyError:
-        pass
-
-    if node is old:  # Works for VAR and NVAR-as-ATOM.
-        result = new
-    elif is_atom(node) or is_var(node):
-        result = node
-    elif is_abs(node) or is_app(node):
-        args = tuple(
-            # FIXME This does not converge on cyclic terms.
-            _substitute(old, new, arg, results)
-            for arg in node.args
-        )
-        if all(x is y for (x, y) in zip(args, node.args)):
-            result = node
+    key = id(node)
+    if key not in results:
+        if is_atom(node) or is_var(node):
+            # While '==' is quite expensive, 'is' would not suffice.
+            results[key] = new if node == old else node
+        elif is_abs(node) or is_app(node):
+            result = node.copy()
+            results[key] = result  # This must be set before recursing.
+            result.args = tuple(
+                _substitute(old, new, arg, results)
+                for arg in node.args
+            )
         else:
-            result = Node(node.typ, args)
-    else:
-        raise ValueError(node)
-
-    results[id(node)] = result
-    return result
+            raise ValueError(node)
+    return results[key]
 
 
 @logged(str, str, str, returns=str)
