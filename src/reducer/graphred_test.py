@@ -1,5 +1,6 @@
+from pomagma.reducer.graphred import convert
+from pomagma.reducer.graphs import Graph
 from pomagma.reducer.syntax import sexpr_parse
-from pomagma.reducer.wadsworth import Graph, convert
 from pomagma.util.testing import for_each, xfail_if_not_implemented
 
 

@@ -10,11 +10,18 @@ isomorphism problem: JOIN terms are syntactically accociative, commutative, and
 idempotent.
 
 The implementation of abstraction as ABS,VAR is a little unusual in that an ABS
-term points only to its body and each VAR points back to its abstraction (after
+term points only to its body and each VAR points back to its abstraction. After
 graph_quotient_weak(-), there should be at most one VAR pointing to each
-abstraction). This implementation of abstraction makes it easy to collect
+abstraction. This implementation of abstraction makes it easy to collect
 garbage in graph_prune(-), and makes substitution easier than it would be with
 de Bruijn indices (which are complex in the presence of cycles [1]).
+
+Sharing is accomplished at two levels: term nodes are shared among graphs and
+graphs are shared among computations (by memoization). While this form of
+sharing is weaker than that of cons hashed terms, it is well suited to modern
+architectures, since graphs are compact arrays of pointers to terms. This
+format translates well to C/C++, where terms can be atoms, graphs can be arrays
+of small 16 bit or 32 bit pointers to terms, and hashing is cheap.
 
 [1] "Lazy Specialization" (1999) Michael Jonathan Thyer
   http://thyer.name/phd-thesis/thesis-thyer.pdf

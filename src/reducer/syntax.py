@@ -72,6 +72,7 @@ _IVAR = make_keyword('IVAR', 1)  # de Bruijn variable.
 _NVAR = make_keyword('NVAR', 1)  # Nominal variable.
 _APP = make_keyword('APP', 2)
 _JOIN = make_keyword('JOIN', 2)
+_RAND = make_keyword('RAND', 2)
 _QUOTE = make_keyword('QUOTE', 1)
 _ABS = make_keyword('ABS', 1)  # de Bruijn abstraction.
 _FUN = make_keyword('FUN', 2)  # Nominal abstraction.
@@ -134,6 +135,11 @@ def JOIN(lhs, rhs):
 
 
 @builder
+def RAND(lhs, rhs):
+    return Term.make(_RAND, lhs, rhs)
+
+
+@builder
 def QUOTE(term):
     # TODO assert all(not isa_ivar(v) for v in free_vars(term))
     return Term.make(_QUOTE, term)
@@ -190,6 +196,11 @@ def isa_app(term):
 def isa_join(term):
     assert isinstance(term, Term), term
     return term[0] is _JOIN
+
+
+def isa_rand(term):
+    assert isinstance(term, Term), term
+    return term[0] is _RAND
 
 
 def isa_quote(term):
@@ -279,6 +290,10 @@ def _anonymize(term, var, rank, transform):
         lhs = _anonymize(term[1], var, rank, transform)
         rhs = _anonymize(term[2], var, rank, transform)
         return transform.JOIN(lhs, rhs)
+    elif isa_rand(term):
+        lhs = _anonymize(term[1], var, rank, transform)
+        rhs = _anonymize(term[2], var, rank, transform)
+        return transform.RAND(lhs, rhs)
     elif isa_quote(term):
         body = _anonymize(term[1], var, rank, transform)
         return transform.QUOTE(body)
@@ -308,7 +323,7 @@ def free_vars(term):
         return frozenset()
     elif isa_nvar(term) or isa_ivar(term):
         return frozenset([term])
-    elif isa_app(term) or isa_join(term):
+    elif isa_app(term) or isa_join(term) or isa_rand(term):
         return free_vars(term[1]) | free_vars(term[2])
     elif isa_quote(term):
         return free_vars(term[1])
@@ -335,7 +350,7 @@ def quoted_vars(term):
         return frozenset()
     elif isa_quote(term):
         return free_vars(term[1])
-    elif isa_app(term) or isa_join(term):
+    elif isa_app(term) or isa_join(term) or isa_rand(term):
         return quoted_vars(term[1]) | quoted_vars(term[2])
     elif isa_abs(term):
         return frozenset(
@@ -456,6 +471,7 @@ def _polish_parse_tokens(tokens, transform):
 _PARSERS = {
     _APP: (_polish_parse_tokens, _polish_parse_tokens),
     _JOIN: (_polish_parse_tokens, _polish_parse_tokens),
+    _RAND: (_polish_parse_tokens, _polish_parse_tokens),
     _QUOTE: (_polish_parse_tokens,),
     _ABS: (_polish_parse_tokens,),
     _FUN: (_polish_parse_tokens, _polish_parse_tokens),
