@@ -1,4 +1,4 @@
-import numpy.random
+import random
 from parsable import parsable
 
 from pomagma.reducer import lib
@@ -8,8 +8,8 @@ from pomagma.util import TODO
 
 
 def random_entry(size, density):
-    if numpy.random.uniform() < density:
-        return numpy.random.randint(1, size)
+    if random.uniform(0, 1) < density:
+        return random.randint(1, size)
     else:
         return None
 
@@ -30,7 +30,7 @@ def generate(size=9, density=0.2, seed=0):
     """Generate a random sudoku problem (that may be unsolvable)."""
     assert size >= 0, size
     assert 0 <= density and density <= 1, density
-    numpy.random.seed(seed)
+    random.seed(seed)
     grid = [
         [random_entry(size, density) for j in xrange(size)]
         for i in xrange(size)
