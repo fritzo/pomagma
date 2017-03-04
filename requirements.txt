@@ -2,14 +2,16 @@ boto
 contextlib2
 flake8
 hypothesis
+ipython
 isort
 mock
+nbval
 parsable>=0.2.0
 protobuf<3.0
 psutil
 pyformat
-pytest>=2.8.0
 pytest-timeout
 pytest-xdist
+pytest>=2.8.0
 pyzmq
 simplejson

@@ -80,8 +80,7 @@ cpp-test: all FORCE
 
 unit-test: all bootstrap FORCE
 	./vet.py check || { ./diff.py codegen; exit 1; }
-	# TODO switch from nosetests to py.test
-	POMAGMA_DEBUG=1 py.test -v pomagma
+	POMAGMA_DEBUG=1 py.test --nbval -v pomagma
 	$(MAKE) cpp-test
 	POMAGMA_DEBUG=1 pomagma.make profile-misc
 	pomagma.make profile-misc
