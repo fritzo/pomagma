@@ -10,17 +10,8 @@ i0 = IVAR(0)
 
 
 @for_each([
-    (System(), True),
-    (System(x=x), True),
-    (System(x=y), False),
-])
-def test_is_closed(system, expected):
-    assert system.is_closed() is expected
-
-
-@for_each([
-    (System(x=y), x, y),
-    (System(x=y), APP(x, x), APP(y, x)),
+    (System(x=y, y=y), x, y),
+    (System(x=y, y=y), APP(x, x), APP(y, x)),
 ])
 def test_unfold(system, body, expected):
     assert unfold(system, body) is expected

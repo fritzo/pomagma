@@ -15,14 +15,21 @@ combinator var, then reducing (which is not guaranteed to terminate).
     http://pauillac.inria.fr/~huet/PUBLIC/RBT2.pdf
 """
 
+import sys
 from collections import OrderedDict
 
 from pomagma.compiler.util import memoize_arg
 from pomagma.reducer import bohm
 from pomagma.reducer.syntax import (BOT, NVAR, TOP, Term, free_vars, is_closed,
                                     isa_abs, isa_app, isa_atom, isa_ivar,
-                                    isa_join, isa_nvar)
+                                    isa_join, isa_nvar, sexpr_print)
 from pomagma.util import TODO
+
+
+def log_error(message):
+    sys.stderr.write(message)
+    sys.stderr.write('\n')
+    sys.stderr.flush()
 
 
 @memoize_arg
@@ -52,13 +59,23 @@ def is_valid_body(term):
     * cannot be TOP or BOT.
     """
     assert isinstance(term, Term)
-    if not is_closed(term) or not bohm.is_normal(term):
+    if not is_closed(term):
+        log_error('Not closed: {}'.format(term))
+        return False
+    if not bohm.is_normal(term):
+        log_error('Not normal: {}'.format(term))
         return False
     if term is TOP or term is BOT:
+        log_error('Disallowed: {}'.format(term))
         return False
+    if isa_join(term):
+        return all(is_valid_body(part) for part in bohm.iter_join(term))
     while isa_abs(term):
         term = term[1]
-    return is_abs_free(term)
+    if not is_abs_free(term):
+        log_error('ABS in inner term: {}'.format(term))
+        return False
+    return True
 
 
 class System(object):
@@ -69,17 +86,24 @@ class System(object):
         for name, body in sorted(defs.iteritems()):
             NVAR(name)  # Asserts that name is not a keyword.
             self._set(name, body)
-        # assert self.is_closed()
+        assert self.is_closed()
 
     def _set(self, name, body):
-        assert isinstance(name, str)
-        assert isinstance(body, Term)
-        assert is_valid_body(body)
+        assert isinstance(name, str), name
+        assert isinstance(body, Term), body
+        assert is_valid_body(body), body
         self._defs[name] = body
 
+    def define(self, **kwargs):
+        for name, body in kwargs.iteritems():
+            assert name not in self._defs, 'Use .update(-,-) instead'
+            self._set(name, body)
+        assert self.is_closed()
+
     def update(self, name, body):
-        assert name in self._defs, 'Use .define(-,-) instead'
+        assert name in self._defs, 'Use .define(name=body) instead'
         self._set(name, body)
+        assert self.is_closed()
 
     def copy(self):
         result = System()
@@ -104,6 +128,13 @@ class System(object):
         return 'System({})'.format(', '.join(defs))
 
     __str__ = __repr__
+
+    def pretty(self):
+        width = max(len(name) for name, body in self)
+        return '\n'.join(
+            '{} = {}'.format(name.rjust(width), sexpr_print(body))
+            for name, body in self
+        )
 
     def is_closed(self):
         """Whether all free NVARs are defined."""
@@ -256,9 +287,9 @@ def try_decide_equal(system, lhs, rhs):
     Does not handle nonterminating terms.
     Does not handle least fixed points defined via mutual recursion.
     """
-    assert isinstance(system, System)
-    assert is_valid_body(lhs)
-    assert is_valid_body(rhs)
+    assert isinstance(system, System), system
+    assert is_valid_body(lhs), lhs
+    assert is_valid_body(rhs), rhs
 
     theory = Theory()
     theory.assume_equal(lhs, rhs)
