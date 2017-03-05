@@ -3,6 +3,7 @@ import os
 from pomagma.compiler import parser, sequents
 from pomagma.compiler.sugar import desugar_theory
 from pomagma.compiler.util import find_theories
+from pomagma.util.testing import for_each
 
 RULE_SETS = {
     os.path.basename(f): desugar_theory(parser.parse_theory_file(f))['rules']
@@ -10,7 +11,8 @@ RULE_SETS = {
 }
 
 
-def _test_contrapositives(name):
+@for_each(RULE_SETS)
+def test_contrapositives(name):
     print '# contrapositives'
     print
     for rule in RULE_SETS[name]:
@@ -25,12 +27,8 @@ def _test_contrapositives(name):
             print
 
 
-def test_contrapositives():
-    for name in RULE_SETS:
-        yield _test_contrapositives, name
-
-
-def _test_get_atomic(name):
+@for_each(RULE_SETS)
+def test_get_atomic(name):
     print '# get_atomic'
     print
     for rule in RULE_SETS[name]:
@@ -45,12 +43,8 @@ def _test_get_atomic(name):
             print
 
 
-def test_get_atomic():
-    for name in RULE_SETS:
-        yield _test_get_atomic, name
-
-
-def _test_normalize(name):
+@for_each(RULE_SETS)
+def test_normalize(name):
     print '# normalized'
     print
     for rule in RULE_SETS[name]:
@@ -64,8 +58,3 @@ def _test_normalize(name):
             print seq.ascii(indent=4)
             print
             sequents.assert_normal(seq)
-
-
-def test_normalize():
-    for name in RULE_SETS:
-        yield _test_normalize, name

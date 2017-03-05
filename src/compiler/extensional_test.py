@@ -4,6 +4,7 @@ from pomagma.compiler.extensional import (APP, CB, COMP, JOIN, RAND, B, C, I,
                                           J, K, R, S, W, iter_closure_maps,
                                           iter_eta_substitutions, iter_subsets)
 from pomagma.compiler.util import find_theories
+from pomagma.util.testing import for_each
 
 
 def lam(v, e):
@@ -73,7 +74,7 @@ def test_iter_closure_maps():
     assert set(iter_closure_maps(APP(x, y))) == set([I, APP(C, I), APP(W, I)])
 
 
-def test_close_rules():
+def iter_close_rules():
     blacklist = [
         # not abstractable:
         'group.theory',
@@ -83,4 +84,9 @@ def test_close_rules():
     ]
     for filename in find_theories():
         is_extensional = filename.split('/')[-1] not in blacklist
-        yield main.test_close_rules, filename, is_extensional
+        yield filename, is_extensional
+
+
+@for_each(iter_close_rules())
+def test_close_rules(filename, is_extensional):
+    main.test_close_rules(filename, is_extensional)
