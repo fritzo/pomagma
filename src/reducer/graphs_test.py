@@ -1,9 +1,10 @@
 import hypothesis
 import hypothesis.strategies as s
 
-from pomagma.reducer.graphs import (APP, BOT, FUN, JOIN, NVAR, TOP, Term, Y,
-                                    graph_address, graph_permute, graph_sort,
-                                    partitioned_permutations, term_permute)
+from pomagma.reducer.graphs import (APP, BOT, FUN, JOIN, NVAR, TOP, Graph,
+                                    Term, Y, graph_address, graph_permute,
+                                    graph_sort, partitioned_permutations,
+                                    term_permute)
 from pomagma.util.testing import for_each
 
 x = NVAR('x')
@@ -85,6 +86,106 @@ def test_graph_permute(perm, graph, expected):
 def test_partitioned_permutations(partitions, expected_perms):
     actual_perms = sorted(partitioned_permutations(partitions))
     assert actual_perms == expected_perms
+
+
+FUN_EXAMPLES = [
+    (x, x, Graph.make(Term.ABS(1), Term.VAR(0))),
+    (x, y, Graph.make(Term.ABS(1), Term.NVAR('y'))),
+    (x, APP(x, x), Graph.make(Term.ABS(1), Term.APP(2, 2), Term.VAR(0))),
+    (
+        x,
+        APP(x, y),
+        Graph.make(Term.ABS(1), Term.APP(2, 3), Term.VAR(0), Term.NVAR('y')),
+    ),
+    (
+        x,
+        APP(y, x),
+        Graph.make(Term.ABS(1), Term.APP(2, 3), Term.NVAR('y'), Term.VAR(0)),
+    ),
+    (
+        x,
+        APP(APP(x, y), z),
+        Graph.make(
+            Term.ABS(1),
+            Term.APP(2, 5),
+            Term.APP(3, 4),
+            Term.VAR(0),
+            Term.NVAR('y'),
+            Term.NVAR('z'),
+        ),
+    ),
+    (
+        y,
+        APP(APP(x, y), z),
+        Graph.make(
+            Term.ABS(1),
+            Term.APP(2, 5),
+            Term.APP(3, 4),
+            Term.NVAR('x'),
+            Term.VAR(0),
+            Term.NVAR('z'),
+        ),
+    ),
+    (
+        z,
+        APP(APP(x, y), z),
+        Graph.make(
+            Term.ABS(1),
+            Term.APP(2, 5),
+            Term.APP(3, 4),
+            Term.NVAR('x'),
+            Term.NVAR('y'),
+            Term.VAR(0),
+        ),
+    ),
+    (
+        y,
+        Graph.make(
+            Term.ABS(1),
+            Term.APP(2, 5),
+            Term.APP(3, 4),
+            Term.NVAR('x'),
+            Term.NVAR('y'),
+            Term.VAR(0),
+        ),
+        Graph.make(
+            Term.ABS(1),
+            Term.ABS(2),
+            Term.APP(3, 6),
+            Term.APP(4, 5),
+            Term.NVAR('x'),
+            Term.VAR(0),
+            Term.VAR(1),
+        ),
+    ),
+    (
+        x,
+        Graph.make(
+            Term.ABS(1),
+            Term.ABS(2),
+            Term.APP(3, 6),
+            Term.APP(4, 5),
+            Term.NVAR('x'),
+            Term.VAR(0),
+            Term.VAR(1),
+        ),
+        Graph.make(
+            Term.ABS(1),
+            Term.ABS(2),
+            Term.ABS(3),
+            Term.APP(4, 7),
+            Term.APP(5, 6),
+            Term.VAR(0),
+            Term.VAR(1),
+            Term.VAR(2),
+        ),
+    ),
+]
+
+
+@for_each(FUN_EXAMPLES)
+def test_fun(var, graph, expected):
+    assert FUN(var, graph) is expected
 
 
 # ----------------------------------------------------------------------------

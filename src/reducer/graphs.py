@@ -81,6 +81,22 @@ class Graph(tuple):
     def make(*args):
         return Graph(args)
 
+    def __call__(*args):
+        # This syntax will be defined later:
+        # return pomagma.reducer.graphred.app(*args)
+        raise NotImplementedError('import pomagma.reduce.graphred')
+
+    def __or__(lhs, rhs):
+        # This syntax will be defined later:
+        # return pomagma.reducer.graphred.join(lhs, rhs)
+        raise NotImplementedError('import pomagma.reduce.graphred')
+
+    def pretty(self):
+        return '\n'.join(
+            '{} = {}'.format(pos, term)
+            for pos, term in enumerate(self)
+        )
+
 
 def term_shift(term, delta):
     assert isinstance(term, Term)
@@ -385,7 +401,7 @@ def FUN(var, body):
     for term in body:
         terms.append(term_shift(term, body_offset))
     for i, term in enumerate(terms):
-        if isa_nvar(term) and term[1] == name:
+        if term[0] is _NVAR and term[1] == name:
             terms[i] = Term.VAR(0)
     return graph_make(terms)
 
@@ -451,22 +467,27 @@ def JOIN(args):
 # Graph matching (elim forms)
 
 def isa_nvar(graph):
+    assert isinstance(graph, Graph), graph
     return graph[0][0] is _NVAR
 
 
 def isa_var(graph):
+    assert isinstance(graph, Graph), graph
     return graph[0][0] is _VAR
 
 
 def isa_abs(graph):
+    assert isinstance(graph, Graph), graph
     return graph[0][0] is _ABS
 
 
 def isa_app(graph):
+    assert isinstance(graph, Graph), graph
     return graph[0][0] is _APP
 
 
 def isa_join(graph):
+    assert isinstance(graph, Graph), graph
     return graph[0][0] is _JOIN
 
 

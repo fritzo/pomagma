@@ -1,7 +1,13 @@
-from pomagma.reducer.graphred import convert
+from pomagma.reducer.graphred import abstract, convert
 from pomagma.reducer.graphs import Graph
+from pomagma.reducer.graphs_test import FUN_EXAMPLES
 from pomagma.reducer.syntax import sexpr_parse
 from pomagma.util.testing import for_each, xfail_if_not_implemented
+
+
+@for_each(FUN_EXAMPLES)
+def test_abstract_fun(var, graph, expected):
+    assert abstract(var, graph) is expected
 
 
 @for_each([

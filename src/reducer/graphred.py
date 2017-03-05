@@ -10,7 +10,7 @@ from pomagma.reducer import syntax
 from pomagma.reducer.graphs import (_ABS, _APP, _JOIN, _NVAR, _TOP, _VAR, APP,
                                     BOT, FUN, JOIN, NVAR, TOP, Graph,
                                     extract_subterm, graph_make, isa_abs,
-                                    isa_app, isa_join, iter_join,
+                                    isa_join, isa_nvar, iter_join,
                                     preprocess_join_args)
 from pomagma.reducer.util import UnreachableError
 from pomagma.util import TODO
@@ -99,22 +99,31 @@ def app(fun, arg):
     raise UnreachableError((fun, arg))
 
 
+def graph_apply(fun, *args):
+    """Currying wrapper around reducer.graphred.app(-,-)."""
+    result = fun
+    for arg in args:
+        result = app(result, arg)
+    return result
+
+
+Graph.__call__ = graph_apply
+
+
 @memoize_args
 def abstract(var, graph):
     """Abstract a named variable and simplify."""
-    TODO()
+    assert isinstance(var, Graph) and isa_nvar(var), var
+    assert isinstance(graph, Graph), graph
     if graph is TOP:
         return TOP
-    elif isa_app(graph):
-        # fun = extract_subterm(graph, graph[0][1])
-        # arg = extract_subterm(graph, graph[0][2])
-        TODO('test for self-reference and eta-contract')
-        return FUN(graph)
     elif isa_join(graph):
         # Distribute ABS over JOIN.
         return join(abstract(g) for g in iter_join(graph))
     else:
-        return FUN(graph)
+        result = FUN(var, graph)
+        # TODO eta contract.
+        return result
     raise UnreachableError(graph)
 
 
@@ -138,6 +147,9 @@ def join(args):
 
     # Construct a join term.
     return JOIN(filtered)
+
+
+Graph.__or__ = join
 
 
 def dominates(lhs, rhs):
