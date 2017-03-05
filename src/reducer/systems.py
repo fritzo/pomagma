@@ -65,9 +65,10 @@ def is_valid_body(term):
     if not bohm.is_normal(term):
         log_error('Not normal: {}'.format(term))
         return False
-    if term is TOP or term is BOT:
-        log_error('Disallowed: {}'.format(term))
-        return False
+    # TODO Decide whether TOP and BOT should be allowed as bodies.
+    # if term is TOP or term is BOT:
+    #     log_error('Disallowed: {}'.format(term))
+    #     return False
     if isa_join(term):
         return all(is_valid_body(part) for part in bohm.iter_join(term))
     while isa_abs(term):
@@ -182,10 +183,12 @@ def unfold(system, body):
     elif isa_abs(body):
         body = bohm.abstract(unfold(system, body[1]))
     elif isa_join(body):
-        body = bohm.join_set(set(
-            unfold(system, part)
-            for part in bohm.iter_join(body)
-        ))
+        parts = sorted(bohm.iter_join(body), key=bohm.priority)
+        for i, part in enumerate(parts):
+            if is_unfoldable(part):
+                parts[i] = unfold(system, part)
+                break
+        body = bohm.join_set(set(parts))
     else:
         raise ValueError(body)
 
