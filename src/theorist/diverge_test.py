@@ -6,6 +6,7 @@ from pomagma.theorist.diverge import (TOP, B, C, Converged, Diverged, F, I, K,
                                       may_diverge, must_diverge, parse_term,
                                       print_term, try_converge,
                                       try_prove_diverge)
+from pomagma.util.testing import for_each
 
 a, b, c = ('a',), ('b',), ('c',)  # argument lists
 x, y, z = 'x', 'y', 'z'  # arguments
@@ -55,14 +56,10 @@ STEPS = [
 ]
 
 
-def _test_converge_step(term, expected):
+@for_each(STEPS)
+def test_converge_step(term, expected):
     actual = converge_step(term)
     assert expected == actual
-
-
-def test_converge_step():
-    for term, expected in STEPS:
-        yield _test_converge_step, term, expected
 
 
 def test_converge():
@@ -84,18 +81,17 @@ def assert_diverges(string):
         try_converge(term, steps)
 
 
-def test_diverges():
-    strings = [
-        'APP APP W W W',
-        'APP APP W W APP W W',
-        'COMP Y CI',
-        'COMP Y CB',
-        'COMP Y APP S I',
-        'COMP Y APP S W',
-        'COMP Y APP S S',
-    ]
-    for string in strings:
-        yield assert_diverges, string
+@for_each([
+    'APP APP W W W',
+    'APP APP W W APP W W',
+    'COMP Y CI',
+    'COMP Y CB',
+    'COMP Y APP S I',
+    'COMP Y APP S W',
+    'COMP Y APP S S',
+])
+def test_diverges(string):
+    assert_diverges(string)
 
 
 def test_try_prove_diverge():

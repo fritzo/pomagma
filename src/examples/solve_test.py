@@ -1,18 +1,23 @@
 import pomagma.examples.solve
 from pomagma.examples.testing import ADDRESS, SKJA, WORLD, serve
+from pomagma.util.testing import for_each
+
+WORLD_EXAMPLES = [
+    (name, WORLD)
+    for name in pomagma.examples.solve.theories
+    if name.endswith('_test')
+]
+
+SKJA_EXAMPLES = [
+    (name, SKJA)
+    for name in pomagma.examples.solve.theories
+]
 
 
-def _test_define(name, theory):
+@for_each(WORLD_EXAMPLES + SKJA_EXAMPLES)
+def test_define(name, theory):
     with serve(theory):
         pomagma.examples.solve.define(name, address=ADDRESS)
-
-
-def test_define():
-    for name in pomagma.examples.solve.theories:
-        if name.endswith('_test'):
-            yield _test_define, name, WORLD
-    for name in pomagma.examples.solve.theories:
-        yield _test_define, name, SKJA
 
 
 def test_rs_pairs():
