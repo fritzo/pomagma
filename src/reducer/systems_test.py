@@ -1,6 +1,6 @@
-from pomagma.reducer.syntax import ABS, APP, BOT, IVAR, NVAR, TOP
-from pomagma.reducer.systems import (System, try_beta_step, try_decide_equal,
-                                     unfold)
+from pomagma.reducer.syntax import ABS, APP, BOT, IVAR, JOIN, NVAR, TOP
+from pomagma.reducer.systems import (System, try_compute_step,
+                                     try_decide_equal, unfold)
 from pomagma.util.testing import for_each
 
 x = NVAR('x')
@@ -12,6 +12,8 @@ i0 = IVAR(0)
 @for_each([
     (System(x=y, y=y), x, y),
     (System(x=y, y=y), APP(x, x), APP(y, x)),
+    (System(x=y, y=y), JOIN(x, y), y),
+    (System(x=y, y=y, z=z), JOIN(x, JOIN(y, z)), JOIN(y, z)),
 ])
 def test_unfold(system, body, expected):
     assert unfold(system, body) is expected
@@ -24,9 +26,9 @@ def test_unfold(system, body, expected):
     System(x=ABS(APP(i0, BOT))),
     System(x=ABS(i0), y=ABS(i0)),
 ])
-def test_try_beta_step_normal(system):
+def test_try_compute_step_normal(system):
     system = system.copy()
-    assert not try_beta_step(system), system
+    assert not try_compute_step(system), system
 
 
 @for_each([
@@ -36,9 +38,9 @@ def test_try_beta_step_normal(system):
     (System(x=ABS(i0), y=APP(x, x)), System(x=ABS(i0), y=x)),
     (System(x=ABS(i0), y=x), System(x=ABS(i0), y=ABS(i0))),
 ])
-def test_try_beta_step_nonnormal(system, expected):
+def test_try_compute_step_nonnormal(system, expected):
     actual = system.copy()
-    assert try_beta_step(actual)
+    assert try_compute_step(actual)
     assert actual == expected
 
 

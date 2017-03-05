@@ -110,6 +110,11 @@ class System(object):
         result._defs = self._defs.copy()
         return result
 
+    def extended_by(self, **kwargs):
+        result = self.copy()
+        result.define(**kwargs)
+        return result
+
     def __getitem__(self, name):
         assert isinstance(name, str)
         return self._defs[name]
@@ -177,7 +182,10 @@ def unfold(system, body):
     elif isa_abs(body):
         body = bohm.abstract(unfold(system, body[1]))
     elif isa_join(body):
-        body = bohm.join(unfold(system, part) for part in bohm.iter_join(body))
+        body = bohm.join_set(set(
+            unfold(system, part)
+            for part in bohm.iter_join(body)
+        ))
     else:
         raise ValueError(body)
 
@@ -185,10 +193,17 @@ def unfold(system, body):
     return bohm.reduce(body, budget=1234567890)
 
 
-def try_beta_step(system):
+def try_compute_step(system, name=None):
     assert isinstance(system, System)
     assert system.is_closed()
-    for name, body in system:
+    if name is None:
+        for name, body in system:
+            if is_unfoldable(body):
+                unfolded = unfold(system, body)
+                system.update(name, unfolded)
+                return True
+    else:
+        body = system[name]
         if is_unfoldable(body):
             unfolded = unfold(system, body)
             system.update(name, unfolded)
@@ -239,7 +254,7 @@ def try_match_equal(system, theory, lhs, rhs):
 
     # Destructure JOIN.
     if isa_join(lhs) or isa_join(rhs):
-        TODO('handle JOIN')
+        TODO('handle JOIN: {} vs {}'.format(lhs, rhs))
 
     # Destructure ABS.
     while isa_abs(lhs) or isa_abs(rhs):
