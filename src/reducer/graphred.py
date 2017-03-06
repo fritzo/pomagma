@@ -46,14 +46,23 @@ def _var_is_linear(graph, var_pos):
     assert graph[var_pos][0] is _VAR
     counts = [0] * len(graph)
     counts[var_pos] = 1
+
+    # Propagate in reverse order.
+    # Most graphs should converge after two iterations.
+    schedule = [
+        (i, term)
+        for i, term in enumerate(graph)
+        if term[0] not in (_TOP, _NVAR, _VAR)
+    ]
+    schedule.reverse()
+
+    # Propagate until convergence.
     changed = True
     while changed:
         changed = False
-        for i, term in enumerate(graph):
+        for i, term in schedule:
             symbol = term[0]
-            if symbol in (_TOP, _NVAR, _VAR):
-                continue
-            elif symbol is _ABS:
+            if symbol is _ABS:
                 count = counts[term[1]]
             elif symbol is _APP:
                 count = counts[term[1]] + counts[term[2]]
