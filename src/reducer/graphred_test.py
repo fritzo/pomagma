@@ -1,8 +1,9 @@
+import hypothesis
 import pytest
 
 from pomagma.reducer.graphred import B, abstract, as_graph, convert, is_linear
 from pomagma.reducer.graphs import NVAR, Graph, Term
-from pomagma.reducer.graphs_test import FUN_EXAMPLES
+from pomagma.reducer.graphs_test import FUN_EXAMPLES, s_graphs
 from pomagma.reducer.syntax import sexpr_parse
 from pomagma.util.testing import for_each, xfail_if_not_implemented
 
@@ -13,22 +14,38 @@ y = NVAR('y')
 
 
 @for_each([
-    (Graph.make(Term.ABS(1), Term.VAR(0)), True),
-    (Graph.make(Term.ABS(1), Term.APP(2, 2), Term.VAR(0)), False),
-    (
-        Graph.make(
-            Term.ABS(1),
-            Term.ABS(2),
-            Term.APP(3, 4),
-            Term.VAR(0),
-            Term.VAR(1),
-        ),
-        False,
-    ),
+    (x, True),
+    (x(x), True),
+    (lambda x: x, True),
+    (lambda x: x(x), False),
+    (lambda x, y: x, True),
+    (lambda x, y: y, True),
+    (lambda x, y: x(y), True),
+    (lambda x, y: y(x), True),
+    (lambda x, y: x(x), False),
+    (lambda x, y: y(y), False),
+    (lambda x, y: x | y, True),
+    (lambda x, y: x | y(x), True),
+    (lambda x, y: x(y) | y, True),
+    (lambda x, y: x(y) | y(x), True),
+    (lambda x, y: x(x) | y(x), False),
+    (lambda x, y: x(y) | y(y), False),
 ])
 def test_is_linear(graph, expected):
-    with xfail_if_not_implemented():
-        assert is_linear(graph) is expected
+    graph = as_graph(graph)
+    assert is_linear(graph) is expected
+
+
+@hypothesis.given(s_graphs)
+def test_is_linear_runs(graph):
+    assert is_linear(graph) in (True, False)
+
+
+@pytest.mark.xfail
+@hypothesis.given(s_graphs, s_graphs)
+def test_app_runs(lhs, rhs):
+    result = lhs(rhs)
+    assert isinstance(result, Graph)
 
 
 @for_each(FUN_EXAMPLES)

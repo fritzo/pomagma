@@ -38,18 +38,52 @@ false = KI
 # ----------------------------------------------------------------------------
 # Functional programming
 
+def _var_is_linear(graph, var_pos):
+    """Whether no terms of a graph ever copy the given bound variable."""
+    assert isinstance(graph, Graph)
+    assert isinstance(var_pos, int)
+    assert 0 <= var_pos and var_pos < len(graph)
+    assert graph[var_pos][0] is _VAR
+    counts = [0] * len(graph)
+    counts[var_pos] = 1
+    changed = True
+    while changed:
+        changed = False
+        for i, term in enumerate(graph):
+            symbol = term[0]
+            if symbol in (_TOP, _NVAR, _VAR):
+                continue
+            elif symbol is _ABS:
+                count = counts[term[1]]
+            elif symbol is _APP:
+                count = counts[term[1]] + counts[term[2]]
+            elif symbol is _JOIN:
+                if len(term) == 1:
+                    count = 0
+                else:
+                    count = max(counts[j] for j in term[1:])
+            else:
+                raise UnreachableError(symbol)
+            if count > 1:
+                return False
+            if count != counts[i]:
+                counts[i] = count
+                changed = True
+    return True
+
 
 @memoize_arg
 def is_linear(graph):
-    """Returns whether no terms of a graph ever copy a bound variable."""
+    """Whether no terms of a graph ever copy any bound variable.
+
+    Note that JOIN is not considered copying.
+    """
     assert isinstance(graph, Graph)
-    for var in graph:
-        if var[0] is _VAR:
-            abs_pos = var[1]
-            abs_term = graph[abs_pos]
-            assert abs_term  # pyflakes
-            TODO('Search for multiple paths to bound VAR terms.')
-    return True
+    return all(
+        _var_is_linear(graph, pos)
+        for pos, var in enumerate(graph)
+        if var[0] is _VAR
+    )
 
 
 @memoize_args
