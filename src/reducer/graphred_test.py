@@ -1,11 +1,34 @@
-from pomagma.reducer.graphred import abstract, as_graph, convert
+import pytest
+
+from pomagma.reducer.graphred import B, abstract, as_graph, convert, is_linear
 from pomagma.reducer.graphs import NVAR, Graph, Term
 from pomagma.reducer.graphs_test import FUN_EXAMPLES
 from pomagma.reducer.syntax import sexpr_parse
 from pomagma.util.testing import for_each, xfail_if_not_implemented
 
+CB = as_graph(lambda f, g, x: g(f(x)))
+
 x = NVAR('x')
 y = NVAR('y')
+
+
+@for_each([
+    (Graph.make(Term.ABS(1), Term.VAR(0)), True),
+    (Graph.make(Term.ABS(1), Term.APP(2, 2), Term.VAR(0)), False),
+    (
+        Graph.make(
+            Term.ABS(1),
+            Term.ABS(2),
+            Term.APP(3, 4),
+            Term.VAR(0),
+            Term.VAR(1),
+        ),
+        False,
+    ),
+])
+def test_is_linear(graph, expected):
+    with xfail_if_not_implemented():
+        assert is_linear(graph) is expected
 
 
 @for_each(FUN_EXAMPLES)
@@ -50,10 +73,39 @@ def test_abstract(var, graph, expected):
             Term.VAR(1),
         ),
     ),
+    (
+        lambda f, g, x: g(f(x)),
+        Graph.make(
+            Term.ABS(1),
+            Term.ABS(2),
+            Term.ABS(3),
+            Term.APP(4, 5),
+            Term.VAR(1),
+            Term.APP(6, 7),
+            Term.VAR(0),
+            Term.VAR(2),
+        ),
+    ),
 ])
 def test_as_graph(graph, expected):
     assert as_graph(graph) is expected
     assert as_graph(expected) is expected
+
+
+@for_each([
+    ('pair', lambda x, y, f: f(x, y)),
+    ('copy', lambda x, y: x(y, y)),
+    ('join', lambda x, y, z: x(y | z)),
+    pytest.mark.xfail(('postconj', lambda r, s, f: f(B(r), B(s)))),
+    pytest.mark.xfail(('preconj', lambda r, s, f: f(CB(r), CB(s)))),
+    pytest.mark.xfail(
+        ('conjugate', lambda r1, s1, r2, s2, f: f(B(r1, r2), B(s2, s1)))
+    ),
+])
+def test_as_graph_runs(name, graph):
+    print(name)
+    actual = as_graph(graph)
+    assert as_graph(actual) is actual
 
 
 @for_each([
@@ -67,7 +119,7 @@ def test_as_graph(graph, expected):
     '(I K)',
     '(K I)',
     '(JOIN K (K I))',
-    '(FUN x x 0 1)',
+    pytest.mark.xfail('(FUN x x 0 1)'),
 ])
 def test_convert_runs(sexpr):
     term = sexpr_parse(sexpr)

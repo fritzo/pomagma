@@ -38,6 +38,20 @@ false = KI
 # ----------------------------------------------------------------------------
 # Functional programming
 
+
+@memoize_arg
+def is_linear(graph):
+    """Returns whether no terms of a graph ever copy a bound variable."""
+    assert isinstance(graph, Graph)
+    for var in graph:
+        if var[0] is _VAR:
+            abs_pos = var[1]
+            abs_term = graph[abs_pos]
+            assert abs_term  # pyflakes
+            TODO('Search for multiple paths to bound VAR terms.')
+    return True
+
+
 @memoize_args
 def substitute(graph, value):
     """Substitute value for VAR() in graph.
@@ -87,6 +101,8 @@ def substitute(graph, value):
 @memoize_args
 def app(fun, arg):
     """Apply function to argument and linearly reduce."""
+    assert isinstance(fun, Graph), fun
+    assert isinstance(arg, Graph), arg
     if fun is TOP:
         return TOP
     elif isa_abs(fun):
@@ -157,6 +173,11 @@ def as_graph(fun):
 @preprocess_join_args
 @memoize_arg
 def join(args):
+    if not isinstance(args, set):
+        args = set(args)
+    for arg in args:
+        assert isinstance(arg, Graph), arg
+
     # Handle trivial cases.
     if TOP in args:
         return TOP
