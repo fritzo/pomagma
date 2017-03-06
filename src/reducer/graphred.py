@@ -213,7 +213,7 @@ SIGNATURE = {
     'BOT': BOT,
     'NVAR': NVAR,
     'APP': app,
-    'JOIN': join,
+    'JOIN': graph_join,
     'FUN': abstract,
     'I': I,
     'K': K,

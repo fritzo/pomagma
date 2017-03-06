@@ -69,13 +69,38 @@ class Term(tuple):
     def make(*args):
         return Term(args)
 
+    TOP = None  # Defined below.
+
+    @staticmethod
+    def NVAR(name):
+        assert isinstance(name, str), name
+        return Term.make(_NVAR, name)
+
+    @staticmethod
+    def VAR(abs_):
+        assert isinstance(abs_, int) and abs_ >= 0, abs
+        return Term.make(_VAR, abs_)
+
+    @staticmethod
+    def ABS(body):
+        assert isinstance(body, int) and body >= 0, body
+        return Term.make(_ABS, body)
+
+    @staticmethod
+    def APP(lhs, rhs):
+        assert isinstance(lhs, int) and lhs >= 0, lhs
+        assert isinstance(rhs, int) and rhs >= 0, rhs
+        return Term.make(_APP, lhs, rhs)
+
+    @staticmethod
+    def JOIN(args):
+        args = sorted(set(args))
+        for arg in args:
+            assert isinstance(arg, int) and arg >= 0, arg
+        return Term.make(_JOIN, *args)
+
 
 Term.TOP = Term.make(_TOP)
-Term.NVAR = staticmethod(lambda name: Term.make(_NVAR, name))
-Term.VAR = staticmethod(lambda abs_: Term.make(_VAR, abs_))
-Term.ABS = staticmethod(lambda body: Term.make(_ABS, body))
-Term.APP = staticmethod(lambda lhs, rhs: Term.make(_APP, lhs, rhs))
-Term.JOIN = staticmethod(lambda args: Term.make(_JOIN, *sorted(set(args))))
 
 
 class Graph(tuple):
