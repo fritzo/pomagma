@@ -5,6 +5,8 @@ data structures.
 
 """
 
+import inspect
+
 from pomagma.compiler.util import memoize_arg, memoize_args
 from pomagma.reducer import syntax
 from pomagma.reducer.graphs import (_ABS, _APP, _JOIN, _NVAR, _TOP, _VAR, APP,
@@ -38,7 +40,7 @@ false = KI
 
 @memoize_args
 def substitute(graph, value):
-    """Substitute value for VAR() in term.
+    """Substitute value for VAR() in graph.
 
     This is linear-eager, and will be lazy about nonlinear
     substitutions.
@@ -119,12 +121,34 @@ def abstract(var, graph):
         return TOP
     elif isa_join(graph):
         # Distribute ABS over JOIN.
-        return join(abstract(g) for g in iter_join(graph))
+        return join(abstract(var, g) for g in iter_join(graph))
     else:
         result = FUN(var, graph)
         # TODO eta contract.
         return result
     raise UnreachableError(graph)
+
+
+def as_graph(fun):
+    """Convert lambdas to graphs using Higher Order Abstract Syntax [1].
+
+    [1] Pfenning, Elliot (1988) "Higher-order abstract syntax"
+      https://www.cs.cmu.edu/~fp/papers/pldi88.pdf
+    """
+    if isinstance(fun, Graph):
+        return fun
+    if not callable(fun):
+        raise SyntaxError('Expected callable, got: {}'.format(fun))
+    args, vargs, kwargs, defaults = inspect.getargspec(fun)
+    if vargs or kwargs or defaults:
+        source = inspect.getsource(fun)
+        raise SyntaxError('Unsupported signature: {}'.format(source))
+    symbolic_args = map(NVAR, args)
+    symbolic_result = fun(*symbolic_args)
+    graph = as_graph(symbolic_result)
+    for var in reversed(symbolic_args):
+        graph = abstract(var, graph)
+    return graph
 
 
 # ----------------------------------------------------------------------------
@@ -149,7 +173,11 @@ def join(args):
     return JOIN(filtered)
 
 
-Graph.__or__ = join
+def graph_join(lhs, rhs):
+    return join(set([lhs, rhs]))
+
+
+Graph.__or__ = graph_join
 
 
 def dominates(lhs, rhs):

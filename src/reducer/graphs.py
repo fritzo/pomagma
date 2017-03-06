@@ -55,6 +55,9 @@ class Term(tuple):
             return 'TOP'
         elif symbol is _NVAR:
             return "NVAR('{}')".format(self[1])
+        elif symbol is _JOIN:
+            args = ','.join(str(a) for a in self[1:])
+            return '{}([{}])'.format(symbol, args)
         else:
             args = ','.join(str(a) for a in self[1:])
             return '{}({})'.format(symbol, args)
@@ -362,6 +365,7 @@ def graph_make(terms):
     return Graph.make(*terms)
 
 
+# FIXME This incorrectly handles bound variables.
 @memoize_args
 def extract_subterm(graph, pos):
     """Extract the subterm of a graph at given root position."""
