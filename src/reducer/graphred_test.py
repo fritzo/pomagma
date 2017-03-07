@@ -42,6 +42,20 @@ def test_is_linear_runs(graph):
     assert is_linear(graph) in (True, False)
 
 
+@hypothesis.given(s_graphs, s_graphs)
+def test_is_linear_app(lhs, rhs):
+    if is_linear(lhs) and is_linear(rhs):
+        with xfail_if_not_implemented():
+            assert is_linear(lhs(rhs))
+            assert is_linear(rhs(lhs))
+
+
+@hypothesis.given(s_graphs, s_graphs)
+def test_is_linear_join(lhs, rhs):
+    if is_linear(lhs) and is_linear(rhs):
+        assert is_linear(lhs | rhs)
+
+
 @pytest.mark.xfail
 @hypothesis.given(s_graphs, s_graphs)
 def test_app_runs(lhs, rhs):
