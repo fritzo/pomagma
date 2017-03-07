@@ -164,6 +164,7 @@ def graph_apply(fun, *args):
     """Currying wrapper around reducer.graphred.app(-,-)."""
     result = fun
     for arg in args:
+        arg = as_graph(arg)
         result = app(result, arg)
     return result
 
@@ -238,6 +239,7 @@ def join(args):
 
 
 def graph_join(lhs, rhs):
+    rhs = as_graph(rhs)
     return join(set([lhs, rhs]))
 
 

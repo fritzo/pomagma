@@ -30,6 +30,7 @@ y = NVAR('y')
     (lambda x, y: x(y) | y(x), True),
     (lambda x, y: x(x) | y(x), False),
     (lambda x, y: x(y) | y(y), False),
+    (lambda x: x(lambda x: x)(lambda x: x), True),
 ])
 def test_is_linear(graph, expected):
     graph = as_graph(graph)
