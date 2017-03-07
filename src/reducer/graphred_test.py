@@ -1,8 +1,9 @@
 import hypothesis
 import pytest
 
-from pomagma.reducer.graphred import B, abstract, as_graph, convert, is_linear
-from pomagma.reducer.graphs import NVAR, Graph, Term
+from pomagma.reducer.graphred import (B, abstract, as_graph, convert,
+                                      is_linear, try_decide_less)
+from pomagma.reducer.graphs import BOT, NVAR, TOP, Graph, Term
 from pomagma.reducer.graphs_test import FUN_EXAMPLES, s_graphs
 from pomagma.reducer.syntax import sexpr_parse
 from pomagma.util.testing import for_each, xfail_if_not_implemented
@@ -56,10 +57,10 @@ def test_is_linear_join(lhs, rhs):
         assert is_linear(lhs | rhs)
 
 
-@pytest.mark.xfail
 @hypothesis.given(s_graphs, s_graphs)
 def test_app_runs(lhs, rhs):
-    result = lhs(rhs)
+    with xfail_if_not_implemented():
+        result = lhs(rhs)
     assert isinstance(result, Graph)
 
 
@@ -139,6 +140,77 @@ def test_as_graph_runs(name, graph):
     actual = as_graph(graph)
     assert as_graph(actual) is actual
 
+
+# ----------------------------------------------------------------------------
+# Scott ordering
+
+@hypothesis.given(s_graphs)
+def test_join_top(graph):
+    assert graph | TOP is TOP
+
+
+@hypothesis.given(s_graphs)
+def test_join_bot(graph):
+    assert graph | BOT is graph
+
+
+@hypothesis.given(s_graphs)
+def test_join_idempotent(graph):
+    assert graph | graph is graph
+
+
+@hypothesis.given(s_graphs, s_graphs)
+def test_join_commutative(x, y):
+    assert x | y is y | x
+
+
+@hypothesis.given(s_graphs, s_graphs, s_graphs)
+def test_join_associative(x, y, z):
+    assert (x | y) | z is x | (y | z)
+
+
+@hypothesis.given(s_graphs, s_graphs, s_graphs)
+def test_join_distributive(f, g, x):
+    with xfail_if_not_implemented():
+        assert (f | g)(x) is f(x) | g(x)
+
+
+@hypothesis.given(s_graphs)
+def test_less_top(graph):
+    assert try_decide_less(graph, TOP) is True
+
+
+@hypothesis.given(s_graphs)
+def test_less_bot(graph):
+    assert try_decide_less(BOT, graph) is True
+
+
+@hypothesis.given(s_graphs)
+def test_less_reflexive(graph):
+    assert try_decide_less(graph, graph) is True
+
+
+@hypothesis.given(s_graphs, s_graphs, s_graphs)
+def test_less_transitive(x, y, z):
+    with xfail_if_not_implemented():
+        xy = try_decide_less(x, y)
+        yz = try_decide_less(y, z)
+        xz = try_decide_less(x, z)
+    if xy is True and yz is True:
+        assert xz is True
+    elif xz is False:
+        assert xy is not True or yz is not True
+
+
+@pytest.mark.xfail
+@hypothesis.given(s_graphs, s_graphs)
+def test_less_join(x, y):
+    with xfail_if_not_implemented():
+        assert try_decide_less(x, x | y) is True
+
+
+# ----------------------------------------------------------------------------
+# Conversion
 
 @for_each([
     'TOP',
