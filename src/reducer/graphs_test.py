@@ -4,7 +4,7 @@ import hypothesis.strategies as s
 from pomagma.reducer.graphs import (APP, BOT, FUN, JOIN, NVAR, TOP, Graph,
                                     Term, Y, graph_address, graph_permute,
                                     graph_sort, partitioned_permutations,
-                                    term_permute)
+                                    term_permute, try_compute_step)
 from pomagma.util.testing import for_each
 
 x = NVAR('x')
@@ -186,6 +186,28 @@ FUN_EXAMPLES = [
 @for_each(FUN_EXAMPLES)
 def test_fun(var, graph, expected):
     assert FUN(var, graph) is expected
+
+
+@for_each([
+    (Graph.make(Term.ABS(1), Term.VAR(0)), None),
+    (Graph.make(Term.ABS(1), Term.ABS(2), Term.VAR(0)), None),
+    (Graph.make(Term.ABS(1), Term.ABS(2), Term.VAR(1)), None),
+    (
+        Graph.make(
+            Term.APP(1, 3),
+            Term.ABS(2),
+            Term.VAR(1),
+            Term.NVAR('x'),
+        ),
+        Graph.make(Term.NVAR('x')),
+    ),
+    (
+        Graph.make(Term.APP(1, 1), Term.ABS(2), Term.VAR(1)),
+        Graph.make(Term.ABS(1), Term.VAR(0)),
+    ),
+])
+def test_try_compute_step(graph, expected):
+    assert try_compute_step(graph) is expected
 
 
 # ----------------------------------------------------------------------------

@@ -533,18 +533,18 @@ def _substitute(terms, abs_pos, arg_pos, body_pos, cache):
 
     # Match type of body.
     body = terms[body_pos]
-    if body is Term.TOP or isa_nvar(body):
+    if body is Term.TOP or body[0] is _NVAR:
         new_body = body
-    elif isa_var(body):
+    elif body[0] is _VAR:
         if body[1] == abs_pos:
             new_body = terms[arg_pos]
         else:
             new_body = body
-    elif isa_app(body):
+    elif body[0] is _APP:
         lhs_pos = _substitute(terms, abs_pos, arg_pos, body[1], cache)
         rhs_pos = _substitute(terms, abs_pos, arg_pos, body[2], cache)
         new_body = Term.APP(lhs_pos, rhs_pos)
-    elif isa_join(body):
+    elif body[0] is _JOIN:
         new_body = Term.JOIN(
             _substitute(terms, abs_pos, arg_pos, join_pos, cache)
             for join_pos in body[1]
@@ -566,18 +566,36 @@ def _substitute(terms, abs_pos, arg_pos, body_pos, cache):
 
 
 @memoize_args
-def graph_beta_step(graph, app_pos):
+def _compute_step(graph, app_pos):
     """Simple naive beta reduction step."""
     assert isinstance(graph, Graph)
     assert isinstance(app_pos, int) and 0 <= app_pos and app_pos < len(graph)
-    app = graph[app_pos]
-    assert isa_app(app)
-    abs_pos = app[1]
-    arg_pos = app[2]
-    abs_ = graph[abs_pos]
-    assert isa_abs(abs_)
-    body_pos = abs_[1]
+    app_term = graph[app_pos]
+    assert app_term[0] is _APP
+    abs_pos = app_term[1]
+    arg_pos = app_term[2]
+    abs_term = graph[abs_pos]
+    assert abs_term[0] is _ABS
+    body_pos = abs_term[1]
     terms = list(graph)
     cache = {}
-    terms[app_pos] = _substitute(terms, abs_pos, arg_pos, body_pos, cache)
+    subs_pos = _substitute(terms, abs_pos, arg_pos, body_pos, cache)
+    terms[app_pos] = terms[subs_pos]
     return graph_make(terms)
+
+
+@memoize_arg
+def try_compute_step(graph):
+    """Tries to execute one beta step.
+
+    Returns: reduced graph if possible, else None.
+    """
+    assert isinstance(graph, Graph)
+    # This is a deterministic but nonstandard reduction order.
+    for app_pos, app_term in enumerate(graph):
+        if app_term[0] is _APP:
+            abs_pos = app_term[1]
+            abs_term = graph[abs_pos]
+            if abs_term[0] is _ABS:
+                return _compute_step(graph, app_pos)
+    return None
