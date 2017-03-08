@@ -390,12 +390,40 @@ def graph_make(terms):
     return Graph.make(*terms)
 
 
-# FIXME This incorrectly handles bound variables.
+def graph_reachable_by(graph, pos):
+    """Return set of positions reachable by pos."""
+    assert isinstance(graph, Graph)
+    assert isinstance(pos, int) and 0 <= pos and pos < len(graph), pos
+    result = set([])
+    pending = set([pos])
+    while pending:
+        pos = pending.pop()
+        result.add(pos)
+        term = graph[pos]
+        for _, pos in term_iter_subterms(term):
+            if pos not in result:
+                pending.add(pos)
+    return result
+
+
+def subterm_is_closed(graph, pos):
+    """Whether for each reachable VAR, its ABS binder is reachable."""
+    reachable = graph_reachable_by(graph, pos)
+    for var_pos in reachable:
+        var_term = graph[var_pos]
+        if var_term[0] is _VAR:
+            abs_pos = var_term[1]
+            if abs_pos not in reachable:
+                return False
+    return True
+
+
 @memoize_args
 def extract_subterm(graph, pos):
     """Extract the subterm of a graph at given root position."""
     assert isinstance(graph, Graph)
     assert isinstance(pos, int) and 0 <= pos and pos < len(graph), pos
+    assert subterm_is_closed(graph, pos)  # TODO Relax this.
     perm = range(len(graph))
     perm[0] = pos
     perm[pos] = 0
