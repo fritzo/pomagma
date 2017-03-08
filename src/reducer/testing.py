@@ -11,8 +11,8 @@ from pomagma.reducer import bohm
 from pomagma.reducer.linker import link
 from pomagma.reducer.syntax import (APP, BOOL, BOT, CODE, EQUAL, EVAL, JOIN,
                                     MAYBE, NVAR, QAPP, QEQUAL, QLESS, QQUOTE,
-                                    QUOTE, TOP, UNIT, B, C, I, K, S, Y,
-                                    isa_app, isa_equal, isa_quote, sexpr_parse,
+                                    QUOTE, TOP, UNIT, B, C, I, K, S, Y, is_app,
+                                    is_equal, is_quote, sexpr_parse,
                                     sexpr_print)
 
 DIR = os.path.dirname(os.path.abspath(__file__))
@@ -58,7 +58,7 @@ def parse_xfail(comment, test_id):
 def iter_equations(test_id, suites=None):
     assert isinstance(test_id, str), test_id
     for term, comment, message in iter_test_cases(test_id, suites):
-        if isa_equal(term):
+        if is_equal(term):
             lhs = link(bohm.convert(term[1]))
             rhs = link(bohm.convert(term[2]))
             example = lhs, rhs, message
@@ -112,12 +112,12 @@ def reformat():
 
 
 def _unquote_equal(term):
-    if not isa_app(term) or not isa_app(term[1]) or term[1][1] is not EQUAL:
+    if not is_app(term) or not is_app(term[1]) or term[1][1] is not EQUAL:
         return term
     lhs = term[1][2]
     rhs = term[2]
-    assert isa_quote(lhs), lhs
-    assert isa_quote(rhs), rhs
+    assert is_quote(lhs), lhs
+    assert is_quote(rhs), rhs
     lhs = lhs[1]
     rhs = rhs[1]
     return APP(APP(EQUAL, lhs), rhs)

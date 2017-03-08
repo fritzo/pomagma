@@ -1,32 +1,32 @@
 from pomagma.compiler.util import memoize_args
 from pomagma.reducer import lib
 from pomagma.reducer.sugar import as_term
-from pomagma.reducer.syntax import (ABS, APP, JOIN, QUOTE, free_vars, isa_abs,
-                                    isa_app, isa_atom, isa_ivar, isa_join,
-                                    isa_nvar, isa_quote)
+from pomagma.reducer.syntax import (ABS, APP, JOIN, QUOTE, free_vars, is_abs,
+                                    is_app, is_atom, is_ivar, is_join, is_nvar,
+                                    is_quote)
 
 
 @memoize_args
 def _substitute(var, defn, body):
-    if isa_atom(body) or isa_ivar(body):
+    if is_atom(body) or is_ivar(body):
         return body
-    elif isa_nvar(body):
+    elif is_nvar(body):
         if body is var:
             return defn
         else:
             return body
-    elif isa_abs(body):
+    elif is_abs(body):
         arg = _substitute(var, defn, body[1])
         return ABS(arg)
-    elif isa_app(body):
+    elif is_app(body):
         lhs = _substitute(var, defn, body[1])
         rhs = _substitute(var, defn, body[2])
         return APP(lhs, rhs)
-    elif isa_join(body):
+    elif is_join(body):
         lhs = _substitute(var, defn, body[1])
         rhs = _substitute(var, defn, body[2])
         return JOIN(lhs, rhs)
-    elif isa_quote(body):
+    elif is_quote(body):
         arg = _substitute(var, defn, body[1])
         return QUOTE(arg)
     else:
@@ -35,9 +35,9 @@ def _substitute(var, defn, body):
 
 def substitute(var, defn, body):
     """Eagerly substitute a de Bruijn-closed term for a nominal variable."""
-    if not isa_nvar(var):
+    if not is_nvar(var):
         raise ValueError('Expected a nominal variable, got {}'.format(var))
-    if any(map(isa_ivar, free_vars(defn))):
+    if any(map(is_ivar, free_vars(defn))):
         raise ValueError('Definition is not closed: {}'.format(defn))
     return _substitute(var, defn, body)
 

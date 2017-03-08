@@ -20,9 +20,9 @@ from collections import OrderedDict
 
 from pomagma.compiler.util import memoize_arg
 from pomagma.reducer import bohm
-from pomagma.reducer.syntax import (BOT, NVAR, TOP, Term, free_vars, is_closed,
-                                    isa_abs, isa_app, isa_atom, isa_ivar,
-                                    isa_join, isa_nvar, sexpr_print)
+from pomagma.reducer.syntax import (BOT, NVAR, TOP, Term, free_vars, is_abs,
+                                    is_app, is_atom, is_closed, is_ivar,
+                                    is_join, is_nvar, sexpr_print)
 from pomagma.util import TODO
 
 
@@ -36,13 +36,13 @@ def log_error(message):
 def is_abs_free(term):
     """Whether term has no ABS subterms."""
     assert isinstance(term, Term)
-    if isa_abs(term):
+    if is_abs(term):
         return False
-    elif isa_atom(term) or isa_ivar(term) or isa_nvar(term):
+    elif is_atom(term) or is_ivar(term) or is_nvar(term):
         return True
-    elif isa_app(term):
+    elif is_app(term):
         return is_abs_free(term[1]) and is_abs_free(term[2])
-    elif isa_join(term):
+    elif is_join(term):
         return all(is_abs_free(part) for part in bohm.iter_join(term))
     else:
         raise ValueError(term)
@@ -69,9 +69,9 @@ def is_valid_body(term):
     # if term is TOP or term is BOT:
     #     log_error('Disallowed: {}'.format(term))
     #     return False
-    if isa_join(term):
+    if is_join(term):
         return all(is_valid_body(part) for part in bohm.iter_join(term))
-    while isa_abs(term):
+    while is_abs(term):
         term = term[1]
     if not is_abs_free(term):
         log_error('ABS in inner term: {}'.format(term))
@@ -156,13 +156,13 @@ def is_unfoldable(body):
     assert isinstance(body, Term)
     # TODO Allow open terms to be unfolded.
     # assert is_valid_body(body)
-    if isa_join(body):
+    if is_join(body):
         return any(is_unfoldable(term) for term in bohm.iter_join(body))
-    while isa_abs(body):
+    while is_abs(body):
         body = body[1]
-    while isa_app(body):
+    while is_app(body):
         body = body[1]
-    return isa_nvar(body)
+    return is_nvar(body)
 
 
 def unfold(system, body):
@@ -172,17 +172,17 @@ def unfold(system, body):
     """
     assert isinstance(system, System)
     assert isinstance(body, Term)
-    if isa_atom(body) or isa_ivar(body):
+    if is_atom(body) or is_ivar(body):
         return body
-    if isa_nvar(body):
+    if is_nvar(body):
         return system[body[1]]
 
     # Get a linear normal form.
-    if isa_app(body):
+    if is_app(body):
         body = bohm.app(unfold(system, body[1]), body[2])  # Only unfold head.
-    elif isa_abs(body):
+    elif is_abs(body):
         body = bohm.abstract(unfold(system, body[1]))
-    elif isa_join(body):
+    elif is_join(body):
         parts = sorted(bohm.iter_join(body), key=bohm.priority)
         for i, part in enumerate(parts):
             if is_unfoldable(part):
@@ -251,16 +251,16 @@ def try_match_equal(system, theory, lhs, rhs):
     assert isinstance(rhs, Term)
 
     # Distinguish atoms and local variables.
-    if isa_ivar(lhs) or lhs is TOP or lhs is BOT:
-        if isa_ivar(rhs) or rhs is TOP or rhs is BOT:
+    if is_ivar(lhs) or lhs is TOP or lhs is BOT:
+        if is_ivar(rhs) or rhs is TOP or rhs is BOT:
             return lhs is rhs
 
     # Destructure JOIN.
-    if isa_join(lhs) or isa_join(rhs):
+    if is_join(lhs) or is_join(rhs):
         TODO('handle JOIN: {} vs {}'.format(lhs, rhs))
 
     # Destructure ABS.
-    while isa_abs(lhs) or isa_abs(rhs):
+    while is_abs(lhs) or is_abs(rhs):
         lhs = bohm.unabstract(lhs)
         rhs = bohm.unabstract(rhs)
     assert lhs is not rhs, lhs
@@ -270,7 +270,7 @@ def try_match_equal(system, theory, lhs, rhs):
     rhs_head, rhs_args = bohm.unapply(rhs)
 
     # Distinguish solvable terms.
-    if isa_ivar(lhs_head) and isa_ivar(rhs_head):
+    if is_ivar(lhs_head) and is_ivar(rhs_head):
         if lhs_head is not rhs_head or len(lhs_args) != len(rhs_args):
             return False
         for eqn in zip(lhs_args, rhs_args):
@@ -279,9 +279,9 @@ def try_match_equal(system, theory, lhs, rhs):
         return True
 
     # Distinguish atoms from local variables.
-    if isa_ivar(lhs_head) and (rhs is TOP or rhs is BOT):
+    if is_ivar(lhs_head) and (rhs is TOP or rhs is BOT):
         return False
-    if isa_ivar(rhs_head) and (lhs is TOP or lhs is BOT):
+    if is_ivar(rhs_head) and (lhs is TOP or lhs is BOT):
         return False
 
     # Unfold NVARs.

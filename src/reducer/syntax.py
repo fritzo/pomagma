@@ -141,7 +141,7 @@ def RAND(lhs, rhs):
 
 @builder
 def QUOTE(term):
-    # TODO assert all(not isa_ivar(v) for v in free_vars(term))
+    # TODO assert all(not is_ivar(v) for v in free_vars(term))
     return Term.make(_QUOTE, term)
 
 
@@ -153,7 +153,7 @@ def ABS(body):
 
 @builder
 def FUN(var, body):
-    assert isa_nvar(var), var
+    assert is_nvar(var), var
     assert var not in quoted_vars(body), (var, body)
     return Term.make(_FUN, var, body)
 
@@ -173,52 +173,52 @@ def EQUAL(lhs, rhs):
     return Term.make(_EQUAL, lhs, rhs)
 
 
-def isa_atom(term):
+def is_atom(term):
     assert isinstance(term, Term), term
     return len(term) == 1
 
 
-def isa_nvar(term):
+def is_nvar(term):
     assert isinstance(term, Term), term
     return term[0] is _NVAR
 
 
-def isa_ivar(term):
+def is_ivar(term):
     assert isinstance(term, Term), term
     return term[0] is _IVAR
 
 
-def isa_app(term):
+def is_app(term):
     assert isinstance(term, Term), term
     return term[0] is _APP
 
 
-def isa_join(term):
+def is_join(term):
     assert isinstance(term, Term), term
     return term[0] is _JOIN
 
 
-def isa_rand(term):
+def is_rand(term):
     assert isinstance(term, Term), term
     return term[0] is _RAND
 
 
-def isa_quote(term):
+def is_quote(term):
     assert isinstance(term, Term), term
     return term[0] is _QUOTE
 
 
-def isa_abs(term):
+def is_abs(term):
     assert isinstance(term, Term), term
     return term[0] is _ABS
 
 
-def isa_fun(term):
+def is_fun(term):
     assert isinstance(term, Term), term
     return term[0] is _FUN
 
 
-def isa_equal(term):
+def is_equal(term):
     assert isinstance(term, Term), term
     return term[0] is _EQUAL
 
@@ -237,11 +237,11 @@ class Transform(object):
     def __call__(self, term):
         if not isinstance(term, Term):
             raise TypeError(term)
-        elif isa_atom(term):
+        elif is_atom(term):
             return getattr(self, term[0])
-        elif isa_nvar(term):
+        elif is_nvar(term):
             return self.NVAR(term[1])
-        elif isa_ivar(term):
+        elif is_ivar(term):
             return self.IVAR(term[1])
         else:
             args = [self(arg) for arg in term[1:]]
@@ -272,29 +272,29 @@ def _anonymize(term, var, rank, transform):
     """Convert a nominal variable to a de Bruijn variable."""
     if term is var:
         return transform.IVAR(rank)
-    elif isa_atom(term) or isa_nvar(term):
+    elif is_atom(term) or is_nvar(term):
         return transform(term)
-    elif isa_ivar(term):
+    elif is_ivar(term):
         if term[1] < rank:
             return transform.IVAR(term[1])
         else:
             return transform.IVAR(term[1] + 1)
-    elif isa_abs(term):
+    elif is_abs(term):
         body = _anonymize(term[1], var, rank + 1, transform)
         return transform.ABS(body)
-    elif isa_app(term):
+    elif is_app(term):
         lhs = _anonymize(term[1], var, rank, transform)
         rhs = _anonymize(term[2], var, rank, transform)
         return transform.APP(lhs, rhs)
-    elif isa_join(term):
+    elif is_join(term):
         lhs = _anonymize(term[1], var, rank, transform)
         rhs = _anonymize(term[2], var, rank, transform)
         return transform.JOIN(lhs, rhs)
-    elif isa_rand(term):
+    elif is_rand(term):
         lhs = _anonymize(term[1], var, rank, transform)
         rhs = _anonymize(term[2], var, rank, transform)
         return transform.RAND(lhs, rhs)
-    elif isa_quote(term):
+    elif is_quote(term):
         body = _anonymize(term[1], var, rank, transform)
         return transform.QUOTE(body)
     else:
@@ -304,9 +304,9 @@ def _anonymize(term, var, rank, transform):
 
 def decrement_var(var):
     """Decrement rank of an IVAR or leave an NVAR untouched."""
-    if isa_nvar(var):
+    if is_nvar(var):
         return var
-    elif isa_ivar(var):
+    elif is_ivar(var):
         assert var[1] > 0, var
         return IVAR(var[1] - 1)
     else:
@@ -319,22 +319,22 @@ def decrement_var(var):
 def free_vars(term):
     """Returns set of free variables, possibly quoted."""
     assert isinstance(term, Term), term
-    if isa_atom(term):
+    if is_atom(term):
         return frozenset()
-    elif isa_nvar(term) or isa_ivar(term):
+    elif is_nvar(term) or is_ivar(term):
         return frozenset([term])
-    elif isa_app(term) or isa_join(term) or isa_rand(term):
+    elif is_app(term) or is_join(term) or is_rand(term):
         return free_vars(term[1]) | free_vars(term[2])
-    elif isa_quote(term):
+    elif is_quote(term):
         return free_vars(term[1])
-    elif isa_abs(term):
+    elif is_abs(term):
         return frozenset(
             decrement_var(v)
             for v in free_vars(term[1])
             if v is not IVAR_0
         )
-    elif isa_fun(term):
-        assert isa_nvar(term[1])
+    elif is_fun(term):
+        assert is_nvar(term[1])
         return free_vars(term[2]) - frozenset([term[1]])
     else:
         raise ValueError(term)
@@ -346,19 +346,19 @@ def free_vars(term):
 def quoted_vars(term):
     """Returns set of free quoted variables."""
     assert isinstance(term, Term), term
-    if isa_atom(term) or isa_nvar(term) or isa_ivar(term):
+    if is_atom(term) or is_nvar(term) or is_ivar(term):
         return frozenset()
-    elif isa_quote(term):
+    elif is_quote(term):
         return free_vars(term[1])
-    elif isa_app(term) or isa_join(term) or isa_rand(term):
+    elif is_app(term) or is_join(term) or is_rand(term):
         return quoted_vars(term[1]) | quoted_vars(term[2])
-    elif isa_abs(term):
+    elif is_abs(term):
         return frozenset(
             decrement_var(v)
             for v in quoted_vars(term[1])
             if v is not IVAR_0
         )
-    elif isa_fun(term):
+    elif is_fun(term):
         return quoted_vars(term[2])
     else:
         raise ValueError(term)
@@ -368,13 +368,13 @@ def quoted_vars(term):
 @memoize_arg
 def is_closed(term):
     """A term is closed if all de Bruijn variables are bound."""
-    return not any(isa_ivar(v) for v in free_vars(term))
+    return not any(is_ivar(v) for v in free_vars(term))
 
 
 @memoize_arg
 def is_defined(term):
     """A term is defined if all nominal variables have been substituted."""
-    return not any(isa_nvar(v) for v in free_vars(term))
+    return not any(is_nvar(v) for v in free_vars(term))
 
 
 # ----------------------------------------------------------------------------
@@ -408,11 +408,11 @@ def complexity(term):
 
     """
     assert isinstance(term, Term), term
-    if isa_atom(term):
+    if is_atom(term):
         return ATOM_COMPLEXITY[term]
-    elif isa_nvar(term) or isa_ivar(term):
+    elif is_nvar(term) or is_ivar(term):
         return 1
-    elif isa_join(term):
+    elif is_join(term):
         return max(complexity(term[1]), complexity(term[2]))
     elif isinstance(term, tuple):
         return 1 + max(complexity(arg) for arg in term[1:])
@@ -516,16 +516,16 @@ def _polish_print_tokens(term, tokens):
 def to_sexpr(term):
     """Converts from a python term to a python S-expression."""
     assert isinstance(term, Term), term
-    if isa_atom(term):
+    if is_atom(term):
         return term[0]
-    elif isa_nvar(term) or isa_ivar(term):
+    elif is_nvar(term) or is_ivar(term):
         return term[1]
     head = term
     args = []
-    while isa_app(head):
+    while is_app(head):
         args.append(to_sexpr(head[2]))
         head = head[1]
-    if isa_nvar(head) or isa_ivar(head):
+    if is_nvar(head) or is_ivar(head):
         head = head[1]
     elif head[0] in _keywords:
         for arg in head[-1:0:-1]:

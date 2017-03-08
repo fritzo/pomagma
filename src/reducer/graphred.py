@@ -11,8 +11,8 @@ from pomagma.compiler.util import memoize_arg, memoize_args
 from pomagma.reducer import syntax
 from pomagma.reducer.graphs import (_ABS, _APP, _JOIN, _NVAR, _TOP, _VAR, APP,
                                     BOT, FUN, JOIN, NVAR, TOP, Graph,
-                                    extract_subterm, graph_make, isa_abs,
-                                    isa_join, isa_nvar, iter_join,
+                                    extract_subterm, graph_make, is_abs,
+                                    is_join, is_nvar, iter_join,
                                     preprocess_join_args)
 from pomagma.reducer.util import UnreachableError
 from pomagma.util import TODO
@@ -148,11 +148,11 @@ def app(fun, arg):
     assert isinstance(arg, Graph), arg
     if fun is TOP:
         return TOP
-    elif isa_abs(fun):
+    elif is_abs(fun):
         # Linear beta reduce.
         body = extract_subterm(fun, fun[0][1])
         return substitute(body, arg)
-    elif isa_join(fun):
+    elif is_join(fun):
         # Distribute APP over JOIN.
         return join(app(g, arg) for g in iter_join(fun))
     else:
@@ -175,11 +175,11 @@ Graph.__call__ = graph_apply
 @memoize_args
 def abstract(var, graph):
     """Abstract a named variable and simplify."""
-    assert isinstance(var, Graph) and isa_nvar(var), var
+    assert isinstance(var, Graph) and is_nvar(var), var
     assert isinstance(graph, Graph), graph
     if graph is TOP:
         return TOP
-    elif isa_join(graph):
+    elif is_join(graph):
         # Distribute ABS over JOIN.
         return join(abstract(var, g) for g in iter_join(graph))
     else:

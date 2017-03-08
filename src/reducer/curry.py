@@ -4,8 +4,8 @@ from pomagma.compiler.util import memoize_arg, memoize_args
 from pomagma.reducer import syntax
 from pomagma.reducer.bohm import decrement_rank
 from pomagma.reducer.syntax import (APP, BOT, IVAR, JOIN, TOP, B, C, I, K, S,
-                                    anonymize, isa_app, isa_atom, isa_join,
-                                    isa_nvar)
+                                    anonymize, is_app, is_atom, is_join,
+                                    is_nvar)
 from pomagma.util import TODO
 
 SUPPORTED_TESTDATA = ['sk']
@@ -21,7 +21,7 @@ def _try_abstract(body):
     """Returns abstraction if IVAR(0) occurs in body, else None."""
     if body is IVAR_0:
         return I  # Rule I
-    elif isa_app(body):
+    elif is_app(body):
         lhs = body[1]
         rhs = body[2]
         lhs_abs = _try_abstract(lhs)
@@ -38,7 +38,7 @@ def _try_abstract(body):
                 return APP(APP(C, lhs_abs), decrement_rank(rhs))  # Rule C
             else:
                 return APP(APP(S, lhs_abs), rhs_abs)  # Rule S
-    elif isa_join(body):
+    elif is_join(body):
         lhs = body[1]
         rhs = body[2]
         lhs_abs = _try_abstract(lhs)
@@ -90,9 +90,9 @@ convert = syntax.Transform(FUN=abstract, ABS=de_bruijn_abstract)
 
 @memoize_arg
 def try_compute_step(term):
-    if isa_atom(term) or isa_nvar(term):
+    if is_atom(term) or is_nvar(term):
         return None
-    elif isa_app(term):
+    elif is_app(term):
         c1 = term[1]
         c2 = term[2]
         if c1 is TOP:
@@ -101,12 +101,12 @@ def try_compute_step(term):
             return BOT
         elif c1 is I:
             return c2
-        elif isa_app(c1):
+        elif is_app(c1):
             c11 = c1[1]
             c12 = c1[2]
             if c11 is K:
                 return c12
-            elif isa_app(c11):
+            elif is_app(c11):
                 c111 = c11[1]
                 c112 = c11[2]
                 if c111 is B:

@@ -422,7 +422,7 @@ def NVAR(name):
 
 @memoize_args
 def FUN(var, body):
-    assert isinstance(var, Graph) and len(var) == 1 and isa_nvar(var), var
+    assert isinstance(var, Graph) and len(var) == 1 and is_nvar(var), var
     assert isinstance(body, Graph), body
     name = var[0][1]
     body_offset = 1
@@ -495,27 +495,27 @@ def JOIN(args):
 # ----------------------------------------------------------------------------
 # Graph matching (elim forms)
 
-def isa_nvar(graph):
+def is_nvar(graph):
     assert isinstance(graph, Graph), graph
     return graph[0][0] is _NVAR
 
 
-def isa_var(graph):
+def is_var(graph):
     assert isinstance(graph, Graph), graph
     return graph[0][0] is _VAR
 
 
-def isa_abs(graph):
+def is_abs(graph):
     assert isinstance(graph, Graph), graph
     return graph[0][0] is _ABS
 
 
-def isa_app(graph):
+def is_app(graph):
     assert isinstance(graph, Graph), graph
     return graph[0][0] is _APP
 
 
-def isa_join(graph):
+def is_join(graph):
     assert isinstance(graph, Graph), graph
     return graph[0][0] is _JOIN
 
