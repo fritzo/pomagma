@@ -74,6 +74,7 @@ class Term(tuple):
     @staticmethod
     def NVAR(name):
         assert isinstance(name, str), name
+        name = intern(name)
         return Term.make(_NVAR, name)
 
     @staticmethod
@@ -98,6 +99,30 @@ class Term(tuple):
         for arg in args:
             assert isinstance(arg, int) and arg >= 0, arg
         return Term.make(_JOIN, *args)
+
+    @property
+    def is_top(self):
+        return self[0] is _TOP
+
+    @property
+    def is_nvar(self):
+        return self[0] is _NVAR
+
+    @property
+    def is_var(self):
+        return self[0] is _VAR
+
+    @property
+    def is_abs(self):
+        return self[0] is _ABS
+
+    @property
+    def is_app(self):
+        return self[0] is _APP
+
+    @property
+    def is_join(self):
+        return self[0] is _JOIN
 
 
 Term.TOP = Term.make(_TOP)
@@ -411,7 +436,7 @@ def subterm_is_closed(graph, pos):
     reachable = graph_reachable_by(graph, pos)
     for var_pos in reachable:
         var_term = graph[var_pos]
-        if var_term[0] is _VAR:
+        if var_term.is_var:
             abs_pos = var_term[1]
             if abs_pos not in reachable:
                 return False
@@ -458,7 +483,7 @@ def FUN(var, body):
     for term in body:
         terms.append(term_shift(term, body_offset))
     for i, term in enumerate(terms):
-        if term[0] is _NVAR and term[1] == name:
+        if term.is_nvar and term[1] is name:
             terms[i] = Term.VAR(0)
     return graph_make(terms)
 
@@ -479,8 +504,9 @@ def APP(lhs, rhs):
 
 def iter_join(graph):
     """Destruct JOIN terms."""
-    if graph[0][0] is _JOIN:
-        for pos in graph[0][1:]:
+    term = graph[0]
+    if term.is_join:
+        for pos in term[1:]:
             yield extract_subterm(graph, pos)
     else:
         yield graph
@@ -525,27 +551,27 @@ def JOIN(args):
 
 def is_nvar(graph):
     assert isinstance(graph, Graph), graph
-    return graph[0][0] is _NVAR
+    return graph[0].is_nvar
 
 
 def is_var(graph):
     assert isinstance(graph, Graph), graph
-    return graph[0][0] is _VAR
+    return graph[0].is_var
 
 
 def is_abs(graph):
     assert isinstance(graph, Graph), graph
-    return graph[0][0] is _ABS
+    return graph[0].is_abs
 
 
 def is_app(graph):
     assert isinstance(graph, Graph), graph
-    return graph[0][0] is _APP
+    return graph[0].is_app
 
 
 def is_join(graph):
     assert isinstance(graph, Graph), graph
-    return graph[0][0] is _JOIN
+    return graph[0].is_join
 
 
 # ----------------------------------------------------------------------------
@@ -561,18 +587,18 @@ def _substitute(terms, abs_pos, arg_pos, body_pos, cache):
 
     # Match type of body.
     body = terms[body_pos]
-    if body is Term.TOP or body[0] is _NVAR:
+    if body.is_top or body.is_nvar:
         new_body = body
-    elif body[0] is _VAR:
+    elif body.is_var:
         if body[1] == abs_pos:
             new_body = terms[arg_pos]
         else:
             new_body = body
-    elif body[0] is _APP:
+    elif body.is_app:
         lhs_pos = _substitute(terms, abs_pos, arg_pos, body[1], cache)
         rhs_pos = _substitute(terms, abs_pos, arg_pos, body[2], cache)
         new_body = Term.APP(lhs_pos, rhs_pos)
-    elif body[0] is _JOIN:
+    elif body.is_join:
         new_body = Term.JOIN(
             _substitute(terms, abs_pos, arg_pos, join_pos, cache)
             for join_pos in body[1]
@@ -599,11 +625,11 @@ def _compute_step(graph, app_pos):
     assert isinstance(graph, Graph)
     assert isinstance(app_pos, int) and 0 <= app_pos and app_pos < len(graph)
     app_term = graph[app_pos]
-    assert app_term[0] is _APP
+    assert app_term.is_app
     abs_pos = app_term[1]
     arg_pos = app_term[2]
     abs_term = graph[abs_pos]
-    assert abs_term[0] is _ABS
+    assert abs_term.is_abs
     body_pos = abs_term[1]
     terms = list(graph)
     cache = {}
@@ -621,9 +647,9 @@ def try_compute_step(graph):
     assert isinstance(graph, Graph)
     # This is a deterministic but nonstandard reduction order.
     for app_pos, app_term in enumerate(graph):
-        if app_term[0] is _APP:
+        if app_term.is_app:
             abs_pos = app_term[1]
             abs_term = graph[abs_pos]
-            if abs_term[0] is _ABS:
+            if abs_term.is_abs:
                 return _compute_step(graph, app_pos)
     return None

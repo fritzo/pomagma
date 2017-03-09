@@ -43,7 +43,7 @@ def _var_is_linear(graph, var_pos):
     assert isinstance(graph, Graph)
     assert isinstance(var_pos, int)
     assert 0 <= var_pos and var_pos < len(graph)
-    assert graph[var_pos][0] is _VAR
+    assert graph[var_pos].is_var
     counts = [0] * len(graph)
     counts[var_pos] = 1
 
@@ -91,7 +91,7 @@ def is_linear(graph):
     return all(
         _var_is_linear(graph, pos)
         for pos, var in enumerate(graph)
-        if var[0] is _VAR
+        if var.is_var
     )
 
 
