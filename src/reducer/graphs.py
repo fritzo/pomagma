@@ -29,11 +29,14 @@ of small 16 bit or 32 bit pointers to terms, and hashing is cheap.
 """
 
 import functools
+import inspect
 import itertools
 import re
 from collections import defaultdict, deque
 
 from pomagma.compiler.util import memoize_arg, memoize_args
+from pomagma.reducer import syntax
+from pomagma.reducer.util import UnreachableError
 
 # ----------------------------------------------------------------------------
 # Signature
@@ -130,16 +133,6 @@ class Graph(tuple):
     def make(*args):
         return Graph(args)
 
-    def __call__(*args):
-        # This syntax will be defined later:
-        # return pomagma.reducer.graphred.app(*args)
-        raise NotImplementedError('import pomagma.reduce.graphred')
-
-    def __or__(lhs, rhs):
-        # This syntax will be defined later:
-        # return pomagma.reducer.graphred.join(lhs, rhs)
-        raise NotImplementedError('import pomagma.reduce.graphred')
-
     def pretty(self):
         return '\n'.join(
             '{} = {}'.format(pos, term)
@@ -165,6 +158,9 @@ class Graph(tuple):
     @property
     def is_join(self):
         return self[0].is_join
+
+    __call__ = None  # Defined below.
+    __or__ = None  # Defined below.
 
 
 def term_shift(term, delta):
@@ -564,6 +560,163 @@ def JOIN(args):
         for term in arg:
             terms.append(term_shift(term, offset))
     return graph_make(terms)
+
+
+# ----------------------------------------------------------------------------
+# Syntax
+
+def as_graph(fun):
+    """Convert lambdas to graphs using Higher Order Abstract Syntax [1].
+
+    [1] Pfenning, Elliot (1988) "Higher-order abstract syntax"
+      https://www.cs.cmu.edu/~fp/papers/pldi88.pdf
+    """
+    if isinstance(fun, Graph):
+        return fun
+    if not callable(fun):
+        raise SyntaxError('Expected callable, got: {}'.format(fun))
+    args, vargs, kwargs, defaults = inspect.getargspec(fun)
+    if vargs or kwargs or defaults:
+        source = inspect.getsource(fun)
+        raise SyntaxError('Unsupported signature: {}'.format(source))
+    symbolic_args = map(NVAR, args)
+    symbolic_result = fun(*symbolic_args)
+    graph = as_graph(symbolic_result)
+    for var in reversed(symbolic_args):
+        graph = FUN(var, graph)
+    return graph
+
+
+def graph_apply(fun, *args):
+    """Currying wrapper around APP(-,-)."""
+    result = fun
+    for arg in args:
+        arg = as_graph(arg)
+        result = APP(result, arg)
+    return result
+
+
+def graph_join(lhs, rhs):
+    rhs = as_graph(rhs)
+    return JOIN([lhs, rhs])
+
+
+Graph.__call__ = graph_apply
+Graph.__or__ = graph_join
+
+I = as_graph(lambda x: x)
+K = as_graph(lambda x, y: x)
+B = as_graph(lambda x, y, z: x(y(z)))
+C = as_graph(lambda x, y, z: x(z, y))
+S = as_graph(lambda x, y, z: x(z, y(z)))
+
+KI = as_graph(lambda x, y: y)
+CB = as_graph(lambda x, y, z: y(x(z)))
+CI = as_graph(lambda x, y: y(x))
+
+SIGNATURE = {
+    'TOP': TOP,
+    'BOT': BOT,
+    'NVAR': NVAR,
+    'APP': graph_apply,
+    'JOIN': graph_join,
+    'FUN': FUN,
+    'I': I,
+    'K': K,
+    'B': B,
+    'C': C,
+    'S': S,
+}
+
+convert = syntax.Transform(**SIGNATURE)
+
+
+# ----------------------------------------------------------------------------
+# Scott ordering
+
+def dominates(lhs, rhs):
+    """Weak strict domination relation: lhs =] rhs and lhs [!= rhs."""
+    lhs_rhs = try_decide_less(lhs, rhs)
+    rhs_lhs = try_decide_less(rhs, lhs)
+    return rhs_lhs is True and lhs_rhs is False
+
+
+@memoize_args
+def try_decide_less(lhs, rhs):
+    """Weak decision procedure returning True, False, or None."""
+    assert isinstance(lhs, Graph), lhs
+    assert isinstance(rhs, Graph), rhs
+
+    # Try simple cases.
+    if lhs is BOT or lhs is rhs or rhs is TOP:
+        return True
+    if lhs is TOP and rhs is BOT:
+        return False
+
+    # TODO Try harder.
+
+    # Give up.
+    return None
+
+
+# ----------------------------------------------------------------------------
+# Linearity
+
+def _var_is_linear(graph, var_pos):
+    """Whether no terms of a graph ever copy the given bound variable."""
+    assert isinstance(graph, Graph)
+    assert isinstance(var_pos, int)
+    assert 0 <= var_pos and var_pos < len(graph)
+    assert graph[var_pos].is_var
+    counts = [0] * len(graph)
+    counts[var_pos] = 1
+
+    # Propagate in reverse order.
+    # Most graphs should converge after two iterations.
+    schedule = [
+        (i, term)
+        for i, term in enumerate(graph)
+        if term[0] not in (_TOP, _NVAR, _VAR)
+    ]
+    schedule.reverse()
+
+    # Propagate until convergence.
+    changed = True
+    while changed:
+        changed = False
+        for i, term in schedule:
+            symbol = term[0]
+            if symbol is _ABS:
+                count = counts[term[1]]
+            elif symbol is _APP:
+                count = counts[term[1]] + counts[term[2]]
+            elif symbol is _JOIN:
+                if len(term) == 1:
+                    count = 0
+                else:
+                    count = max(counts[j] for j in term[1:])
+            else:
+                raise UnreachableError(symbol)
+            if count > 1:
+                return False
+            if count != counts[i]:
+                counts[i] = count
+                changed = True
+    return True
+
+
+@memoize_arg
+def is_linear(graph):
+    """Whether no terms of a graph ever copy any bound variable.
+
+    Note that JOIN is not considered copying.
+    """
+    assert isinstance(graph, Graph)
+    return all(
+        _var_is_linear(graph, pos)
+        for pos, var in enumerate(graph)
+        if var.is_var
+    )
 
 
 # ----------------------------------------------------------------------------
