@@ -482,6 +482,7 @@ Y = graph_make([Term.ABS(1), Term.APP(2, 1), Term.VAR(0)])
 
 @memoize_arg
 def NVAR(name):
+    """Create a named variable Graph."""
     assert isinstance(name, str), name
     if re_keyword.match(name):
         raise ValueError('Variable names cannot match [A-Z]+: {}'.format(name))
@@ -491,6 +492,7 @@ def NVAR(name):
 
 @memoize_args
 def FUN(var, body):
+    """Abstract an NVAR Graph from another Graph."""
     assert isinstance(var, Graph) and len(var) == 1 and var.is_nvar, var
     assert isinstance(body, Graph), body
     name = var[0][1]
@@ -506,6 +508,7 @@ def FUN(var, body):
 
 @memoize_args
 def APP(lhs, rhs):
+    """Apply one graph to another."""
     assert isinstance(lhs, Graph), lhs
     assert isinstance(rhs, Graph), rhs
     lhs_offset = 1
@@ -519,7 +522,7 @@ def APP(lhs, rhs):
 
 
 def iter_join(graph):
-    """Destruct JOIN terms."""
+    """Destruct JOIN terms, yielding graphs."""
     term = graph[0]
     if term.is_join:
         for pos in term[1:]:
@@ -541,6 +544,7 @@ def preprocess_join_args(fun):
 @preprocess_join_args
 @memoize_arg
 def JOIN(args):
+    """Join a collection of graphs."""
     assert all(isinstance(arg, Graph) for arg in args), args
     # Handle trivial cases.
     if TOP in args:
@@ -565,46 +569,75 @@ def JOIN(args):
 # ----------------------------------------------------------------------------
 # Reduction
 
-# FIXME this does not support copying cycles.
-def _substitute(terms, abs_pos, arg_pos, body_pos, cache):
-    # Memoize.
+class Substitution(dict):
+    def __call__(self, key):
+        return self.get(key, key)
+
+
+def term_replace(term, subs):
+    assert isinstance(term, Term)
+    assert isinstance(subs, Substitution)
+    if term is Term.TOP:
+        return term
+    elif term.is_nvar:
+        return term
+    elif term.is_var:
+        return Term.VAR(subs(term[1]))
+    elif term.is_abs:
+        return Term.ABS(subs(term[1]))
+    elif term.is_app:
+        return Term.APP(subs(term[1]), subs(term[2]))
+    elif term.is_join:
+        return Term.JOIN([subs(pos) for pos in term[1:]])
+    else:
+        raise ValueError(term)
+
+
+def _copy_abs_body(terms, app_pos):
+    """Copies the ABS body in a beta redex."""
+    app_term = terms[app_pos]
+    assert app_term.is_app
+    abs_pos = app_term[1]
+    abs_term = terms[abs_pos]
+    assert abs_term.is_abs
+    body_pos = abs_term[1]
+
+    # Collect positions to copy.
+    pending = set([body_pos])
+    to_copy = set()
+    while pending:
+        pos = pending.pop()
+        to_copy.add(pos)
+        term = terms[pos]
+        for _, sub_pos in term_iter_subterms(term):
+            if sub_pos in to_copy or sub_pos in pending:
+                continue
+            # Avoid copying the APP, to allow infinite parallel beta steps.
+            if sub_pos == app_pos:
+                continue
+            pending.add(sub_pos)
+
+    # Copy terms.
+    to_copy = sorted(to_copy)
+    shift = len(to_copy)
+    old2new = Substitution({
+        old_pos: shift + i
+        for i, old_pos in enumerate(to_copy)
+    })
+    for old_pos in to_copy:
+        old_term = terms[old_pos]
+        new_term = term_replace(old_term, old2new)
+        terms.append(new_term)
+
+    # Find new body_pos and optional var_pos.
+    abs_pos = old2new(abs_pos)
+    body_pos = old2new(body_pos)
+    var = Term.VAR(abs_pos)
     try:
-        return cache[body_pos]
-    except KeyError:
-        pass
-
-    # Match type of body.
-    body = terms[body_pos]
-    if body is Term.TOP or body.is_nvar:
-        new_body = body
-    elif body.is_var:
-        if body[1] == abs_pos:
-            new_body = terms[arg_pos]
-        else:
-            new_body = body
-    elif body.is_app:
-        lhs_pos = _substitute(terms, abs_pos, arg_pos, body[1], cache)
-        rhs_pos = _substitute(terms, abs_pos, arg_pos, body[2], cache)
-        new_body = Term.APP(lhs_pos, rhs_pos)
-    elif body.is_join:
-        new_body = Term.JOIN(
-            _substitute(terms, abs_pos, arg_pos, join_pos, cache)
-            for join_pos in body[1]
-        )
-    else:
-        raise ValueError(body)
-
-    # Locate or insert new_body in terms.
-    if new_body == body:
-        new_pos = body_pos
-    else:
-        try:
-            new_pos = terms.index(new_body)
-        except ValueError:
-            new_pos = len(terms)
-            terms.append(new_body)
-    cache[body_pos] = new_pos
-    return new_pos
+        var_pos = terms.index(var)
+    except ValueError:
+        var_pos = None
+    return body_pos, var_pos
 
 
 @memoize_args
@@ -620,9 +653,13 @@ def _compute_step(graph, app_pos):
     assert abs_term.is_abs
     body_pos = abs_term[1]
     terms = list(graph)
-    cache = {}
-    subs_pos = _substitute(terms, abs_pos, arg_pos, body_pos, cache)
-    terms[app_pos] = terms[subs_pos]
+
+    body_pos, var_pos = _copy_abs_body(terms, app_pos)
+    subs = Substitution({app_pos: body_pos})
+    if var_pos is not None:
+        subs[var_pos] = arg_pos
+    for pos, term in enumerate(terms):
+        terms[pos] = term_replace(term, subs)
     return graph_make(terms)
 
 
