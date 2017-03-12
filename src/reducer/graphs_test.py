@@ -4,10 +4,10 @@ import pytest
 
 from pomagma.reducer.graphs import (APP, BOT, CB, FUN, JOIN, NVAR, TOP, B,
                                     Graph, Term, Y, as_graph, convert,
-                                    graph_address, graph_permute, graph_sort,
-                                    is_linear, partitioned_permutations,
-                                    term_permute, try_compute_step,
-                                    try_decide_less)
+                                    free_vars, graph_address, graph_permute,
+                                    graph_sort, is_linear,
+                                    partitioned_permutations, term_permute,
+                                    try_compute_step, try_decide_less)
 from pomagma.reducer.syntax import sexpr_parse
 from pomagma.util.testing import for_each, xfail_if_not_implemented
 
@@ -380,6 +380,58 @@ def test_less_join(x, y):
 
 # ----------------------------------------------------------------------------
 # Variables
+
+@hypothesis.given(s_graphs)
+def test_free_vars_runs(graph):
+    free_vars(graph, 0)
+
+
+@for_each([
+    (
+        Graph.make(Term.TOP),
+        (frozenset(),),
+    ),
+    (
+        Graph.make(Term.ABS(1), Term.VAR(0)),
+        (frozenset(), frozenset([Term.VAR(0)])),
+    ),
+    (
+        Graph.make(
+            Term.ABS(1),
+            Term.ABS(2),
+            Term.APP(3, 4),
+            Term.VAR(1),
+            Term.VAR(0),
+        ),
+        (
+            frozenset(),
+            frozenset([Term.VAR(0)]),
+            frozenset([Term.VAR(0), Term.VAR(1)]),
+            frozenset([Term.VAR(1)]),
+            frozenset([Term.VAR(0)]),
+        ),
+    ),
+    (
+        Graph.make(
+            Term.ABS(1),
+            Term.ABS(2),
+            Term.JOIN([3, 4]),
+            Term.VAR(1),
+            Term.VAR(0),
+        ),
+        (
+            frozenset(),
+            frozenset([Term.VAR(0)]),
+            frozenset([Term.VAR(0), Term.VAR(1)]),
+            frozenset([Term.VAR(1)]),
+            frozenset([Term.VAR(0)]),
+        ),
+    ),
+])
+def test_free_vars(graph, expecteds):
+    for pos, expected in enumerate(expecteds):
+        assert free_vars(graph, pos) == expected
+
 
 @for_each([
     (x, True),
