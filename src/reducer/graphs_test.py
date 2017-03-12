@@ -23,7 +23,7 @@ def s_graphs_extend(s_graphs):
     return s.one_of(
         s.builds(FUN, s_nvars, s_graphs),  # Introduces VAR.
         s.builds(APP, s_graphs, s_graphs),
-        s.builds(JOIN, s.lists(s_graphs, min_size=2, max_size=4)),
+        s.builds(JOIN, s.lists(s_graphs, min_size=2, max_size=3)),
     )
 
 

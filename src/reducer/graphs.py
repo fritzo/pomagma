@@ -37,6 +37,7 @@ from collections import defaultdict, deque
 from pomagma.compiler.util import memoize_arg, memoize_args
 from pomagma.reducer import syntax
 from pomagma.reducer.util import UnreachableError
+from pomagma.util import TODO
 
 # ----------------------------------------------------------------------------
 # Signature
@@ -726,24 +727,26 @@ class Substitution(dict):
     def __call__(self, key):
         return self.get(key, key)
 
+    def map_term(self, term):
+        assert isinstance(term, Term)
+        if term is Term.TOP:
+            return term
+        elif term.is_nvar:
+            return term
+        elif term.is_var:
+            return Term.VAR(self(term[1]))
+        elif term.is_abs:
+            return Term.ABS(self(term[1]))
+        elif term.is_app:
+            return Term.APP(self(term[1]), self(term[2]))
+        elif term.is_join:
+            return Term.JOIN([self(pos) for pos in term[1:]])
+        else:
+            raise ValueError(term)
 
-def term_replace(term, subs):
-    assert isinstance(term, Term)
-    assert isinstance(subs, Substitution)
-    if term is Term.TOP:
-        return term
-    elif term.is_nvar:
-        return term
-    elif term.is_var:
-        return Term.VAR(subs(term[1]))
-    elif term.is_abs:
-        return Term.ABS(subs(term[1]))
-    elif term.is_app:
-        return Term.APP(subs(term[1]), subs(term[2]))
-    elif term.is_join:
-        return Term.JOIN([subs(pos) for pos in term[1:]])
-    else:
-        raise ValueError(term)
+    def map_terms(self, terms):
+        assert all(isinstance(term, Term) for term in terms)
+        return [self.map_term(term) for term in terms]
 
 
 def _copy_abs_body(terms, app_pos):
@@ -779,7 +782,7 @@ def _copy_abs_body(terms, app_pos):
     })
     for old_pos in to_copy:
         old_term = terms[old_pos]
-        new_term = term_replace(old_term, old2new)
+        new_term = old2new.map_term(old_term)
         terms.append(new_term)
 
     # Find new body_pos and optional var_pos.
@@ -793,8 +796,7 @@ def _copy_abs_body(terms, app_pos):
     return body_pos, var_pos
 
 
-@memoize_args
-def _compute_step(graph, app_pos):
+def _app_abs_step(graph, app_pos):
     """Simple naive beta reduction step."""
     assert isinstance(graph, Graph)
     assert isinstance(app_pos, int) and 0 <= app_pos and app_pos < len(graph)
@@ -807,27 +809,83 @@ def _compute_step(graph, app_pos):
     body_pos = abs_term[1]
     terms = list(graph)
 
+    if app_pos == 0:
+        TODO('re-root graph')
     body_pos, var_pos = _copy_abs_body(terms, app_pos)
     subs = Substitution({app_pos: body_pos})
     if var_pos is not None:
         subs[var_pos] = arg_pos
-    for pos, term in enumerate(terms):
-        terms[pos] = term_replace(term, subs)
+    terms = subs.map_terms(terms)
     return graph_make(terms)
+
+
+def _top_step(graph, pos, top_pos):
+    """Replace each occurrence of pos by top_pos."""
+    assert isinstance(graph, Graph)
+    assert isinstance(pos, int) and 0 <= pos and pos < len(graph)
+    assert isinstance(top_pos, int) and 0 <= top_pos and top_pos < len(graph)
+    assert graph[top_pos] is Term.TOP
+
+    if pos == 0:
+        return TOP
+    subs = Substitution({pos, top_pos})
+    terms = subs.map_terms(graph)
+    return graph_make(terms)
+
+
+def _app_join_step(graph, app_pos):
+    assert isinstance(graph, Graph)
+    assert isinstance(app_pos, int) and 0 <= app_pos and app_pos < len(graph)
+    app_term = graph[app_pos]
+    assert app_term.is_app
+    fun_term = graph[app_term[1]]
+    assert fun_term.is_join
+
+    if app_pos == 0:
+        TODO('re-root graph')
+    TODO('Distribute APP over JOIN')
+
+
+def _abs_join_step(graph, abs_pos):
+    assert isinstance(graph, Graph)
+    assert isinstance(abs_pos, int) and 0 <= abs_pos and abs_pos < len(graph)
+    abs_term = graph[abs_pos]
+    assert abs_term.is_abs
+    fun_term = graph[abs_term[1]]
+    assert fun_term.is_join
+
+    if abs_pos == 0:
+        TODO('re-root graph')
+    TODO('Distribute ABS over JOIN')
 
 
 @memoize_arg
 def try_compute_step(graph):
-    """Tries to execute one beta step.
+    """Tries to execute one compute step.
 
-    Returns: reduced graph if possible, else None.
+    Returns: reduced graph if possible, otherwise None.
     """
     assert isinstance(graph, Graph)
-    # This is a deterministic but nonstandard reduction order.
-    for app_pos, app_term in enumerate(graph):
-        if app_term.is_app:
-            abs_pos = app_term[1]
-            abs_term = graph[abs_pos]
-            if abs_term.is_abs:
-                return _compute_step(graph, app_pos)
+    for pos, term in enumerate(graph):
+        if term.is_app:
+            fun_pos = term[1]
+            fun_term = graph[fun_pos]
+            if fun_term is Term.TOP:
+                return _top_step(graph, pos)
+            elif fun_term.is_abs:
+                return _app_abs_step(graph, pos)
+            elif fun_term.is_join:
+                return _app_join_step(graph, pos)
+        elif term.is_abs:
+            body_pos = term[1]
+            body_term = graph[body_pos]
+            if body_term is Term.TOP:
+                return _top_step(graph, pos, body_pos)
+            elif body_term.is_join:
+                return _abs_join_step(graph, pos)
+            # TODO Eta-contract.
+        elif term.is_join:
+            for top_pos in term[1:]:
+                if graph[top_pos] is Term.TOP:
+                    return _top_step(graph, pos, top_pos)
     return None
