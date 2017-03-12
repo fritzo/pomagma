@@ -9,12 +9,13 @@ particular, we choose fintary JOIN over binary JOIN so as to ease the
 isomorphism problem: JOIN terms are syntactically accociative, commutative, and
 idempotent.
 
-The implementation of abstraction as ABS,VAR is a little unusual in that an ABS
-term points only to its body and each VAR points back to its abstraction. After
-graph_quotient_weak(-), there should be at most one VAR pointing to each
-abstraction. This implementation of abstraction makes it easy to collect
-garbage in graph_prune(-), and makes substitution easier than it would be with
-de Bruijn indices (which are complex in the presence of cycles [1]).
+The implementation of abstraction as ABS,VAR follows Bourbaki's representation
+of quantifiers [2,3]. Each ABS term points only to its body and each VAR points
+back to its abstraction. After graph_quotient_weak(-), there should be at most
+one VAR pointing to each abstraction. This implementation of abstraction makes
+it easy to collect garbage in graph_prune(-), and makes substitution easier
+than it would be with de Bruijn indices (which are complex in the presence of
+cycles [1]).
 
 Sharing is accomplished at two levels: term nodes are shared among graphs and
 graphs are shared among computations (by memoization). While this form of
@@ -25,7 +26,9 @@ of small 16 bit or 32 bit pointers to terms, and hashing is cheap.
 
 [1] "Lazy Specialization" (1999) Michael Jonathan Thyer
   http://thyer.name/phd-thesis/thesis-thyer.pdf
-
+[2] "Elements de Theorie des Ensembles" (1977) -Bourbaki
+[3] "Cyclic Lambda Calculi" (1997) -Zena M. Ariola1, Stefan Blom
+  http://pdfs.semanticscholar.org/0987/97b8cc108fc0d90d3e2ad7eba0117113d6ec.pdf
 """
 
 import functools
@@ -605,6 +608,27 @@ def graph_join(lhs, rhs):
 Graph.__call__ = graph_apply
 Graph.__or__ = graph_join
 
+
+def letrec(root, **defs):
+    """Define a term using mutually recursive helpers."""
+    root = as_graph(root)
+    terms = list(root)
+    defs_pos = {}  # : Term -> pos
+    for name, defn in defs.iteritems():
+        defn = as_graph(defn)
+        var_term = Term.NVAR(name)
+        offset = len(terms)
+        defs_pos[var_term] = offset
+        for term in defn:
+            terms.append(term_shift(term, offset))
+    subs = Substitution()
+    for term_pos, term in enumerate(terms):
+        if term in defs_pos:
+            subs[term_pos] = defs_pos[term]
+    terms = subs.map_graph(terms)
+    return graph_make(terms)
+
+
 I = as_graph(lambda x: x)
 K = as_graph(lambda x, y: x)
 B = as_graph(lambda x, y, z: x(y(z)))
@@ -694,7 +718,7 @@ def _free_vars(graph):
 
 
 def free_vars(graph, pos):
-    """Return frozenset of Terms representing free vars of graph[pos]."""
+    """Return frozenset of Terms representing free VARs of graph[pos]."""
     return _free_vars(graph)[pos]
 
 
@@ -868,8 +892,8 @@ def _top_step(graph, pos, top_pos):
     assert graph[top_pos] is Term.TOP
 
     if pos == 0:
-        return TOP
-    subs = Substitution({pos, top_pos})
+        return TOP  # Just an optimization.
+    subs = Substitution({pos: top_pos})
     terms = subs.map_graph(graph)
     return graph_make(terms)
 
@@ -940,4 +964,5 @@ def try_compute_step(graph):
             for top_pos in term[1:]:
                 if graph[top_pos] is Term.TOP:
                     return _top_step(graph, pos, top_pos)
+            # TODO Subsume dominated parts of a JOIN.
     return None

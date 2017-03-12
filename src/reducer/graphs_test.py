@@ -5,12 +5,13 @@ import pytest
 from pomagma.reducer.graphs import (APP, BOT, CB, FUN, JOIN, NVAR, TOP, B,
                                     Graph, Term, Y, as_graph, convert,
                                     free_vars, graph_address, graph_permute,
-                                    graph_sort, is_linear,
+                                    graph_sort, is_linear, letrec,
                                     partitioned_permutations, term_permute,
                                     try_compute_step, try_decide_less)
 from pomagma.reducer.syntax import sexpr_parse
 from pomagma.util.testing import for_each, xfail_if_not_implemented
 
+j = NVAR('j')
 x = NVAR('x')
 y = NVAR('y')
 z = NVAR('z')
@@ -322,6 +323,24 @@ def test_as_graph_runs(name, graph):
 
 
 @for_each([
+    (
+        j,
+        dict(j=lambda x, y: x(j(y))),
+        Graph.make(
+            Term.ABS(1),
+            Term.ABS(2),
+            Term.APP(3, 4),
+            Term.VAR(0),
+            Term.APP(0, 5),
+            Term.VAR(1),
+        ),
+    ),
+])
+def test_letrec(root, defs, expected):
+    assert letrec(root, **defs) is expected
+
+
+@for_each([
     'TOP',
     'BOT',
     'I',
@@ -479,7 +498,7 @@ def test_is_linear_join(lhs, rhs):
 # ----------------------------------------------------------------------------
 # Reduction
 
-@for_each([
+COMPUTE_STEP_EXAMPLES = [
     (Graph.make(Term.ABS(1), Term.VAR(0)), None),
     (Graph.make(Term.ABS(1), Term.ABS(2), Term.VAR(0)), None),
     (Graph.make(Term.ABS(1), Term.ABS(2), Term.VAR(1)), None),
@@ -536,6 +555,9 @@ def test_is_linear_join(lhs, rhs):
             Term.VAR(0),
         ),
     ),
-])
+]
+
+
+@for_each(COMPUTE_STEP_EXAMPLES)
 def test_try_compute_step(graph, expected):
     assert try_compute_step(graph) is expected
