@@ -483,7 +483,7 @@ def test_is_linear_join(lhs, rhs):
     (Graph.make(Term.ABS(1), Term.VAR(0)), None),
     (Graph.make(Term.ABS(1), Term.ABS(2), Term.VAR(0)), None),
     (Graph.make(Term.ABS(1), Term.ABS(2), Term.VAR(1)), None),
-    pytest.mark.xfail((
+    (
         Graph.make(
             Term.APP(1, 3),
             Term.ABS(2),
@@ -491,7 +491,7 @@ def test_is_linear_join(lhs, rhs):
             Term.NVAR('x'),
         ),
         Graph.make(Term.NVAR('x')),
-    )),
+    ),
     pytest.mark.xfail((
         Graph.make(Term.APP(1, 1), Term.ABS(2), Term.VAR(1)),
         Graph.make(Term.ABS(1), Term.VAR(0)),

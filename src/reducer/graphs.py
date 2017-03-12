@@ -779,9 +779,17 @@ class Substitution(dict):
         else:
             raise ValueError(term)
 
-    def map_terms(self, terms):
+    def map_graph(self, terms):
         assert all(isinstance(term, Term) for term in terms)
-        return [self.map_term(term) for term in terms]
+        terms = [self.map_term(term) for term in terms]
+        old_root = 0
+        new_root = self(0)
+        if new_root != old_root:
+            perm = range(len(terms))
+            perm[old_root] = new_root
+            perm[new_root] = old_root
+            terms = graph_permute(terms, perm)
+        return terms
 
 
 def _copy_abs_body(terms, app_pos):
@@ -844,13 +852,11 @@ def _app_abs_step(graph, app_pos):
     body_pos = abs_term[1]
     terms = list(graph)
 
-    if app_pos == 0:
-        TODO('re-root graph')
     body_pos, var_pos = _copy_abs_body(terms, app_pos)
     subs = Substitution({app_pos: body_pos})
     if var_pos is not None:
         subs[var_pos] = arg_pos
-    terms = subs.map_terms(terms)
+    terms = subs.map_graph(terms)
     return graph_make(terms)
 
 
@@ -864,7 +870,7 @@ def _top_step(graph, pos, top_pos):
     if pos == 0:
         return TOP
     subs = Substitution({pos, top_pos})
-    terms = subs.map_terms(graph)
+    terms = subs.map_graph(graph)
     return graph_make(terms)
 
 
@@ -876,8 +882,6 @@ def _app_join_step(graph, app_pos):
     fun_term = graph[app_term[1]]
     assert fun_term.is_join
 
-    if app_pos == 0:
-        TODO('re-root graph')
     TODO('Distribute APP over JOIN')
 
 
@@ -889,8 +893,6 @@ def _abs_join_step(graph, abs_pos):
     fun_term = graph[abs_term[1]]
     assert fun_term.is_join
 
-    if abs_pos == 0:
-        TODO('re-root graph')
     TODO('Distribute ABS over JOIN')
 
 
@@ -899,10 +901,8 @@ def _eta_step(graph, pos, fun_pos):
     assert isinstance(pos, int) and 0 <= pos and pos < len(graph)
     assert isinstance(fun_pos, int) and 0 <= fun_pos and fun_pos < len(graph)
 
-    if pos == 0:
-        TODO('re-root graph')
     subs = Substitution({pos: fun_pos})
-    terms = subs.map_terms(graph)
+    terms = subs.map_graph(graph)
     return graph_make(terms)
 
 
