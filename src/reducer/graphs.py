@@ -661,7 +661,42 @@ def try_decide_less(lhs, rhs):
 
 
 # ----------------------------------------------------------------------------
-# Linearity
+# Variables
+
+@memoize_arg
+def _free_vars(graph):
+    result = [set() for _ in xrange(len(graph))]
+    for pos, term in enumerate(graph):
+        if term.is_var:
+            result[pos].add(term)
+    changed = True
+    while changed:
+        changed = False
+        for pos, term in enumerate(graph):
+            if term is Term.TOP or term.is_nvar or term.is_var:
+                continue
+            elif term.is_abs:
+                arg_pos = term[1]
+                for var in result[arg_pos]:
+                    if var[1] != pos:  # Bind.
+                        if var not in result[pos]:
+                            changed = True
+                            result[pos].add(var)
+            elif term.is_app or term.is_join:
+                for arg_pos in term[1:]:
+                    for var in result[arg_pos]:
+                        if var not in result[pos]:
+                            changed = True
+                            result[pos].add(var)
+            else:
+                raise UnreachableError(term)
+    return tuple(frozenset(r) for r in result)  # Freeze.
+
+
+def free_vars(graph, pos):
+    """Return frozenset of Terms representing free vars of graph[pos]."""
+    return _free_vars(graph)[pos]
+
 
 def _var_is_linear(graph, var_pos):
     """Whether no terms of a graph ever copy the given bound variable."""
@@ -859,6 +894,18 @@ def _abs_join_step(graph, abs_pos):
     TODO('Distribute ABS over JOIN')
 
 
+def _eta_step(graph, pos, fun_pos):
+    assert isinstance(graph, Graph)
+    assert isinstance(pos, int) and 0 <= pos and pos < len(graph)
+    assert isinstance(fun_pos, int) and 0 <= fun_pos and fun_pos < len(graph)
+
+    if pos == 0:
+        TODO('re-root graph')
+    subs = Substitution({pos: fun_pos})
+    terms = subs.map_terms(graph)
+    return graph_make(terms)
+
+
 @memoize_arg
 def try_compute_step(graph):
     """Tries to execute one compute step.
@@ -883,7 +930,12 @@ def try_compute_step(graph):
                 return _top_step(graph, pos, body_pos)
             elif body_term.is_join:
                 return _abs_join_step(graph, pos)
-            # TODO Eta-contract.
+            elif body_term.is_app:
+                _, fun_pos, var_pos = body_term
+                var_term = graph[var_pos]
+                if var_term.is_var:
+                    if var_term not in free_vars(graph, fun_pos):
+                        return _eta_step(graph, pos, fun_pos)
         elif term.is_join:
             for top_pos in term[1:]:
                 if graph[top_pos] is Term.TOP:

@@ -379,7 +379,7 @@ def test_less_join(x, y):
 
 
 # ----------------------------------------------------------------------------
-# Linearity
+# Variables
 
 @for_each([
     (x, True),
@@ -454,7 +454,36 @@ def test_is_linear_join(lhs, rhs):
         ),
         Graph.make(Term.APP(1, 1), Term.NVAR('x')),
     )),
-    # TODO Add cyclic examples.
+    (  # {j x y = x (j y)} -> {j x y = x y}
+        Graph.make(
+            Term.ABS(1),
+            Term.ABS(2),
+            Term.APP(3, 4),
+            Term.VAR(0),
+            Term.APP(0, 5),
+            Term.VAR(1),
+        ),
+        Graph.make(
+            Term.ABS(1),
+            Term.ABS(2),
+            Term.APP(3, 4),
+            Term.VAR(0),
+            Term.VAR(1),
+        ),
+    ),
+    (  # {j x y = x y} -> {j x = x}
+        Graph.make(
+            Term.ABS(1),
+            Term.ABS(2),
+            Term.APP(3, 4),
+            Term.VAR(0),
+            Term.VAR(1),
+        ),
+        Graph.make(
+            Term.ABS(1),
+            Term.VAR(0),
+        ),
+    ),
 ])
 def test_try_compute_step(graph, expected):
     assert try_compute_step(graph) is expected
