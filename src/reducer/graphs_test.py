@@ -511,11 +511,11 @@ COMPUTE_STEP_EXAMPLES = [
         ),
         Graph.make(Term.NVAR('x')),
     ),
-    pytest.mark.xfail((
+    (
         Graph.make(Term.APP(1, 1), Term.ABS(2), Term.VAR(1)),
         Graph.make(Term.ABS(1), Term.VAR(0)),
-    )),
-    pytest.mark.xfail((
+    ),
+    (
         Graph.make(
             Term.APP(1, 4),
             Term.ABS(2),
@@ -524,8 +524,8 @@ COMPUTE_STEP_EXAMPLES = [
             Term.NVAR('x'),
         ),
         Graph.make(Term.APP(1, 1), Term.NVAR('x')),
-    )),
-    (  # {j x y = x (j y)} -> {j x y = x y}
+    ),
+    pytest.mark.xfail((  # {j x y = x (j y)} -> {j x y = x y}
         Graph.make(
             Term.ABS(1),
             Term.ABS(2),
@@ -541,7 +541,7 @@ COMPUTE_STEP_EXAMPLES = [
             Term.VAR(0),
             Term.VAR(1),
         ),
-    ),
+    )),
     (  # {j x y = x y} -> {j x = x}
         Graph.make(
             Term.ABS(1),

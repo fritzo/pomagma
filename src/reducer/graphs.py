@@ -816,53 +816,6 @@ class Substitution(dict):
         return terms
 
 
-def _copy_abs_body(terms, app_pos):
-    """Copies the ABS body in a beta redex."""
-    app_term = terms[app_pos]
-    assert app_term.is_app
-    abs_pos = app_term[1]
-    abs_term = terms[abs_pos]
-    assert abs_term.is_abs
-    body_pos = abs_term[1]
-
-    # Collect positions to copy.
-    pending = set([body_pos])
-    to_copy = set()
-    while pending:
-        pos = pending.pop()
-        to_copy.add(pos)
-        term = terms[pos]
-        for _, sub_pos in term_iter_subterms(term):
-            if sub_pos in to_copy or sub_pos in pending:
-                continue
-            # Avoid copying the APP, to allow infinite parallel beta steps.
-            if sub_pos == app_pos:
-                continue
-            pending.add(sub_pos)
-
-    # Copy terms.
-    to_copy = sorted(to_copy)
-    shift = len(to_copy)
-    old2new = Substitution({
-        old_pos: shift + i
-        for i, old_pos in enumerate(to_copy)
-    })
-    for old_pos in to_copy:
-        old_term = terms[old_pos]
-        new_term = old2new.map_term(old_term)
-        terms.append(new_term)
-
-    # Find new body_pos and optional var_pos.
-    abs_pos = old2new(abs_pos)
-    body_pos = old2new(body_pos)
-    var = Term.VAR(abs_pos)
-    try:
-        var_pos = terms.index(var)
-    except ValueError:
-        var_pos = None
-    return body_pos, var_pos
-
-
 def _app_abs_step(graph, app_pos):
     """Simple naive beta reduction step."""
     assert isinstance(graph, Graph)
@@ -874,12 +827,47 @@ def _app_abs_step(graph, app_pos):
     abs_term = graph[abs_pos]
     assert abs_term.is_abs
     body_pos = abs_term[1]
-    terms = list(graph)
+    var_term = Term.VAR(abs_pos)
+    try:
+        var_pos = graph.index(var_term)
+    except ValueError:
+        var_pos = None
 
-    body_pos, var_pos = _copy_abs_body(terms, app_pos)
+    # Handle easy case of constant functions.
+    if var_pos is None:
+        subs = Substitution({app_pos: body_pos})
+        terms = subs.map_graph(graph)
+        return graph_make(terms)
+
+    # Handle easy case of eta contraction.
+    if var_pos == body_pos:
+        subs = Substitution({app_pos: arg_pos})
+        terms = subs.map_graph(graph)
+        return graph_make(terms)
+
+    # Copy scope of ABS (see [3] for definition of scope).
+    # FIXME This results in a scope that does not obey the nesting property.
+    scope = [
+        pos
+        for pos in range(len(graph))
+        if pos != abs_pos
+        if pos != var_pos
+        if var_term in free_vars(graph, pos)
+    ]
+    terms = list(graph)
+    offset = len(terms)
+    old2new = Substitution({
+        old_pos: offset + i
+        for i, old_pos in enumerate(scope)
+    })
+    old2new[var_pos] = arg_pos
+    for old_pos in scope:
+        old_term = graph[old_pos]
+        terms.append(old2new.map_term(old_term))
+
+    # Replace the APP with the copied body.
+    body_pos = old2new(body_pos)
     subs = Substitution({app_pos: body_pos})
-    if var_pos is not None:
-        subs[var_pos] = arg_pos
     terms = subs.map_graph(terms)
     return graph_make(terms)
 
