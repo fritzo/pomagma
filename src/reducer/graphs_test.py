@@ -4,7 +4,8 @@ import pytest
 
 from pomagma.reducer.graphs import (APP, BOT, CB, FUN, JOIN, NVAR, TOP, B,
                                     Graph, Term, Y, as_graph, convert,
-                                    free_vars, graph_address, graph_permute,
+                                    find_scope, free_vars, graph_address,
+                                    graph_is_wellformed, graph_permute,
                                     graph_sort, is_linear, letrec,
                                     partitioned_permutations, term_permute,
                                     try_compute_step, try_decide_less)
@@ -450,6 +451,113 @@ def test_free_vars_runs(graph):
 def test_free_vars(graph, expecteds):
     for pos, expected in enumerate(expecteds):
         assert free_vars(graph, pos) == expected
+
+
+@hypothesis.given(s_graphs)
+def test_find_scope_runs(graph):
+    hypothesis.assume(any(term.is_abs for term in graph))
+    for pos, term in enumerate(graph):
+        if term.is_abs:
+            find_scope(graph, pos)
+
+
+SCOPE_EXAMPLES = [
+    (
+        Graph.make(Term.ABS(1), Term.TOP),
+        {0: frozenset([])},
+    ),
+    (
+        Graph.make(Term.ABS(1), Term.NVAR('x')),
+        {0: frozenset([])},
+    ),
+    (
+        Graph.make(Term.ABS(1), Term.VAR(0)),
+        {0: frozenset([1])},
+    ),
+    (
+        Graph.make(Term.ABS(1), Term.APP(0, 0)),
+        {0: frozenset([])},
+    ),
+    (
+        Graph.make(Term.ABS(1), Term.ABS(2), Term.VAR(1)),
+        {
+            0: frozenset([]),
+            1: frozenset([2]),
+        },
+    ),
+    (
+        Graph.make(Term.ABS(1), Term.ABS(2), Term.VAR(0)),
+        {
+            0: frozenset([1, 2]),
+            1: frozenset([]),
+        },
+    ),
+    (
+        Graph.make(Term.ABS(1), Term.APP(2, 2), Term.VAR(0)),
+        {0: frozenset([1, 2])},
+    ),
+    (
+        Graph.make(Term.ABS(1), Term.APP(2, 1), Term.VAR(0)),
+        {0: frozenset([1, 2])},
+    ),
+    (
+        Graph.make(
+            Term.ABS(1),
+            Term.ABS(2),
+            Term.JOIN([3, 4]),
+            Term.VAR(1),
+            Term.VAR(0),
+        ),
+        {
+            0: frozenset([1, 2, 3, 4]),
+            1: frozenset([2, 3]),
+        },
+    ),
+    (
+        Graph.make(
+            Term.ABS(1),
+            Term.ABS(2),
+            Term.APP(3, 4),
+            Term.VAR(0),
+            Term.ABS(5),
+            Term.APP(6, 7),
+            Term.VAR(1),
+            Term.VAR(4),
+        ),
+        {
+            0: frozenset([1, 2, 3, 4, 5, 6, 7]),
+            1: frozenset([2, 4, 5, 6, 7]),
+            4: frozenset([5, 7]),
+        },
+    ),
+]
+
+
+@for_each(SCOPE_EXAMPLES)
+def test_find_scope(graph, pos_scope_dict):
+    for pos, term in enumerate(graph):
+        if term.is_abs:
+            expected_scope = pos_scope_dict[pos]
+            assert find_scope(graph, pos) == expected_scope
+
+
+@hypothesis.given(s_graphs)
+def test_graph_is_wellformed(graph):
+    assert graph_is_wellformed(graph)
+
+
+@for_each([
+    Graph.make(
+        Term.ABS(1),
+        Term.APP(2, 3),
+        Term.VAR(3),
+        Term.ABS(4),
+        Term.APP(5, 0),
+        Term.VAR(0),
+    ),
+])
+def test_not_graph_is_wellformed(graph):
+    assert not graph_is_wellformed(graph)
 
 
 @for_each([

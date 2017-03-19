@@ -27,8 +27,10 @@ of small 16 bit or 32 bit pointers to terms, and hashing is cheap.
 [1] "Lazy Specialization" (1999) Michael Jonathan Thyer
   http://thyer.name/phd-thesis/thesis-thyer.pdf
 [2] "Elements de Theorie des Ensembles" (1977) -Bourbaki
-[3] "Cyclic Lambda Calculi" (1997) -Zena M. Ariola1, Stefan Blom
+[3] "Cyclic Lambda Calculi" (1997) -Zena M. Ariola, Stefan Blom
   http://pdfs.semanticscholar.org/0987/97b8cc108fc0d90d3e2ad7eba0117113d6ec.pdf
+[4] "Lambda calculi plus letrec" (1997) -Zen M. Ariola, Stefan Blom
+  http://ix.cs.uoregon.edu/~ariola/cycles.pdf
 """
 
 import functools
@@ -135,6 +137,7 @@ class Graph(tuple):
     @staticmethod
     @memoize_args
     def make(*args):
+        assert args
         return Graph(args)
 
     def pretty(self):
@@ -720,6 +723,54 @@ def _free_vars(graph):
 def free_vars(graph, pos):
     """Return frozenset of Terms representing free VARs of graph[pos]."""
     return _free_vars(graph)[pos]
+
+
+@memoize_args
+def find_scope(graph, abs_pos):
+    """Find scope of an ABS term, as defined by Ariola [4].
+
+    The scope of an ABS term is the set of terms that must be copied during
+    beta reduction of that ABS term. The minimal scope of an ABS contains (1)
+    all nodes in the directed graph interval [VAR,ABS), and (2) all nodes in
+    any other ABS term's scope if that scope interesects this scope (i.e.
+    Ariola's "nesting" property).
+
+    Returns: a frozenset of positions."""
+    assert isinstance(graph, Graph)
+    assert isinstance(abs_pos, int)
+    assert 0 <= abs_pos and abs_pos < len(graph)
+    assert graph[abs_pos].is_abs
+    var_term = Term.VAR(abs_pos)
+    vars_in_scope = set([var_term])
+    changed = True
+    while changed:
+        changed = False
+        scope = set([
+            pos
+            for pos in xrange(len(graph))
+            if vars_in_scope & free_vars(graph, pos)
+        ])
+        for pos in scope:
+            # FIXME This is wrong; subtracting free_vars(graph, abs_pos)
+            # is a hack.
+            for var in free_vars(graph, pos) - free_vars(graph, abs_pos):
+                if var not in vars_in_scope:
+                    vars_in_scope.add(var)
+                    changed = True
+    return frozenset(scope)
+
+
+def graph_is_wellformed(graph):
+    assert isinstance(graph, Graph)
+    for term in graph:
+        for _, pos in term_iter_subterms(term):
+            if not (0 <= pos and pos < len(graph)):
+                return False
+        if term.is_var and not graph[term[1]].is_abs:
+            return False
+    if free_vars(graph, 0):
+        return False
+    return True
 
 
 def _var_is_linear(graph, var_pos):
