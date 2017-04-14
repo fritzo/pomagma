@@ -80,7 +80,7 @@ cpp-test: all FORCE
 
 unit-test: all bootstrap FORCE
 	./vet.py check || { ./diff.py codegen; exit 1; }
-	POMAGMA_DEBUG=1 py.test --nbval --sanitize-with=nbval_sanitize.txt -v pomagma
+	POMAGMA_DEBUG=1 py.test --nbval -v pomagma
 	$(MAKE) cpp-test
 	POMAGMA_DEBUG=1 pomagma.make profile-misc
 	pomagma.make profile-misc

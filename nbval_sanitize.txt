@@ -1,4 +1,0 @@
-
-[ Work around https://github.com/computationalmodelling/nbval/issues/54 ]
-regex: (stream)+
-replace: stream

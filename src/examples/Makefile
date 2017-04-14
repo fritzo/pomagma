@@ -11,7 +11,7 @@ lint: FORCE
 
 test: lint
 	$(info py.test)
-	py.test --nbval --sanitize-with=../../nbval_sanitize.txt
+	py.test --nbval
 
 clean:
 	find . | grep '\.pyc$$' | xargs rm
