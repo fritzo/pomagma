@@ -1,3 +1,4 @@
+#include <gtest/gtest.h>
 #include <pomagma/util/hasher.hpp>
 
 using namespace pomagma;
@@ -15,19 +16,11 @@ const std::string examples[] = {
     "89abcdef0123456789abcdef0123456789abcdef",
 };
 
-void test_print_parse_hash() {
+TEST(PrintParseHashTest, ParseAndPrintDigest) {
     POMAGMA_INFO("Testing parse_digest and print_digest");
     for (const auto& expected : examples) {
         Hasher::Digest digest = parse_digest(expected);
         std::string actual = print_digest(digest);
-        POMAGMA_ASSERT_EQ(actual, expected);
+        EXPECT_EQ(actual, expected);
     }
-}
-
-int main() {
-    Log::Context log_context("Running Hasher Test");
-
-    test_print_parse_hash();
-
-    return 0;
 }

@@ -84,5 +84,6 @@ if(CCACHE_FOUND)
 endif(CCACHE_FOUND)
 
 enable_testing()
+set(GTEST_FLAGS "-Wno-error=undef -Wno-undef")
 
 add_subdirectory(src)

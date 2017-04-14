@@ -26,7 +26,8 @@ add_executable(queue_profile queue_profile.cpp)
 target_link_libraries(queue_profile ${POMAGMA_UTIL_LIBS})
 
 add_executable(hasher_test hasher_test.cpp)
-target_link_libraries(hasher_test ${POMAGMA_UTIL_LIBS})
+set_source_files_properties(hasher_test.cpp COMPILE_FLAGS ${GTEST_FLAGS})
+target_link_libraries(hasher_test ${POMAGMA_UTIL_LIBS} gtest_main)
 add_test(NAME hasher COMMAND hasher_test)
 
 add_executable(threading_profile threading_profile.cpp)
