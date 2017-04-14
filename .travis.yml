@@ -10,15 +10,15 @@ cache:
 addons:
   apt:
     sources:
-      # Required for newer g++.
       - ubuntu-toolchain-r-test
+      - boost-latest
     packages:
       - ccache
       - cmake
       - g++-4.9
       - gdb
       - graphviz
-      - libboost-filesystem-dev
+      - libboost-filesystem1.54-dev
       - libgoogle-perftools-dev
       - libprotobuf-dev
       - libssl-dev
@@ -32,8 +32,7 @@ addons:
 virtualenv:
   system_site_packages: true
 env:
-  - CC=gcc-4.9
-  - CXX=g++-4.9
+  - CC=gcc-4.9 CXX=g++-4.9
 install:
   - pip install -r requirements.txt
 before_script:

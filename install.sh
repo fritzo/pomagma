@@ -10,7 +10,7 @@ case "`uname`" in
       g++ \
       gdb \
       graphviz \
-      libboost-filesystem-dev \
+      libboost-filesystem1.54-dev \
       libgoogle-perftools-dev \
       libprotobuf-dev \
       libssl-dev \
