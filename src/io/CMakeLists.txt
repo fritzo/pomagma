@@ -22,6 +22,7 @@ target_link_libraries(io_message_test
 	${POMAGMA_UTIL_LIBS}
 )
 add_test(NAME io_message COMMAND io_message_test)
+
 add_executable(io_message_profile message_profile.cpp)
 target_link_libraries(io_message_profile
 	${POMAGMA_IO_LIBS}
