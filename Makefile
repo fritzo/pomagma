@@ -2,16 +2,25 @@
 .PHONY: all protobuf tags lint python codegen debug release cpp-test unit-test bootstrap h4-test sk-test skj-test skja-test skrj-test batch-test small-test test big-test sk skj skja skrj profile clean FORCE
 
 THEORY = skrj
-PY_FILES := *.py $(shell find src | grep '\.py$$' | grep -v '_pb2\.py')
-PROTO_FILES := $(shell find src | grep -v '\.proto$$' | grep -v '\.pb\.')
-CPP_FILES := $(shell find src | grep -v vendor \
-                              | grep '\.[ch]pp$$' \
-			      | grep -v '\.pb\.')
+
+# File lists for linting and formatting.
+PY_FILES := *.py $(shell find src -not -wholename 'src/third_party/*' \
+                                  -name '*.py' \
+				  -not -name '*_pb2.py')
+CPP_FILES := $(shell find src -not -wholename 'src/third_party/*' \
+                              -regex '.*\.[ch]pp$$' \
+			      -not -name '*.pb.*')
 
 all: data/blob bootstrap FORCE
 	$(MAKE) python
 	$(MAKE) -C src/language
 	$(MAKE) codegen codegen-summary debug release
+
+echo-py-files: FORCE
+	echo $(PY_FILES)
+echo-cpp-files: FORCE
+	echo $(CPP_FILES)
+
 
 protobuf: FORCE
 	$(MAKE) -C src protobuf
@@ -27,7 +36,7 @@ clang-ctags:
 	  --compile-commands build/tags build/tags/compile_commands.json
 
 lint: FORCE
-	# TODO Use clang-tidy
+	# TODO Use clang-tidy.
 	$(info flake8)
 	@flake8 --jobs auto --ignore=E402 $(PY_FILES)
 
@@ -53,10 +62,10 @@ codegen-summary: FORCE
 
 CMAKE = cmake
 ifdef CC
-	CMAKE += -DCMAKE_C_COMPILER=$(CC)
+	CMAKE += -DCMAKE_C_COMPILER=$(shell which $(CC))
 endif
 ifdef CXX
-	CMAKE += -DCMAKE_CXX_COMPILER=$(CXX)
+	CMAKE += -DCMAKE_CXX_COMPILER=$(shell which $(CXX))
 endif
 
 debug: protobuf FORCE
@@ -141,8 +150,8 @@ skrj: all
 
 profile: release
 	pomagma.make profile-misc
-	#pomagma.make profile-surveyor
-	#pomagma.make profile-cartographer
+	# pomagma.make profile-surveyor
+	# pomagma.make profile-cartographer
 
 clean: FORCE
 	rm -rf build lib
