@@ -5,29 +5,35 @@ sudo: false
 cache:
   apt: true
   directories:
-  - $HOME/.pip-cache
-  - $HOME/.ccache
+    - $HOME/.pip-cache
+    - $HOME/.ccache
 addons:
   apt:
+    sources:
+      # Required for newer g++.
+      - ubuntu-toolchain-r-test
     packages:
-    - ccache
-    - cmake
-    - g++
-    - gdb
-    - graphviz
-    - libboost-filesystem-dev
-    - libgoogle-perftools-dev
-    - libprotobuf-dev
-    - libssl-dev
-    - libtbb-dev
-    - libzmq3-dev
-    - make
-    - p7zip-full
-    - protobuf-compiler
-    - python-pip
-    - python-protobuf
+      - ccache
+      - cmake
+      - g++-4.9
+      - gdb
+      - graphviz
+      - libboost-filesystem-dev
+      - libgoogle-perftools-dev
+      - libprotobuf-dev
+      - libssl-dev
+      - libtbb-dev
+      - libzmq3-dev
+      - make
+      - p7zip-full
+      - protobuf-compiler
+      - python-pip
+      - python-protobuf
 virtualenv:
   system_site_packages: true
+env:
+  - CC=gcc-4.9
+  - CXX=g++-4.9
 install:
   - pip install -r requirements.txt
 before_script:
