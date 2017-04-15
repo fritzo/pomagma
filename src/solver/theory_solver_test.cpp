@@ -1,4 +1,4 @@
-#include <pomagma/solver/solver.hpp>
+#include <pomagma/solver/theory_solver.hpp>
 #include <gtest/gtest.h>
 
 namespace pomagma {
