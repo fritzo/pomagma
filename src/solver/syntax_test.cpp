@@ -15,13 +15,13 @@ static const std::string example_nvar[] = {
 
 unsigned random_rank(rng_t& rng) {
     static std::uniform_int_distribution<> random_index(
-        0, sizeof(example_ivar) / sizeof(example_ivar[0]));
+        0, sizeof(example_ivar) / sizeof(example_ivar[0]) - 1);
     return example_ivar[random_index(rng)];
 }
 
 std::string random_name(rng_t& rng) {
     static std::uniform_int_distribution<> random_index(
-        0, sizeof(example_nvar) / sizeof(example_nvar[0]));
+        0, sizeof(example_nvar) / sizeof(example_nvar[0]) - 1);
     return example_nvar[random_index(rng)];
 }
 

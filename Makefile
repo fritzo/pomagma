@@ -72,7 +72,7 @@ debug: protobuf FORCE
 	mkdir -p build/debug
 	cd build/debug \
 	  && $(CMAKE) -DCMAKE_BUILD_TYPE=Debug ../.. \
-	  && $(MAKE) VERBOSE=1
+	  && $(MAKE)
 
 release: protobuf FORCE
 	mkdir -p build/release
