@@ -1,7 +1,7 @@
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
 add_library(pomagma_solver SHARED
-	structure.cpp
+	syntax.cpp
 	solver.cpp
 )
 target_link_libraries(pomagma_solver
@@ -14,10 +14,10 @@ set(POMAGMA_SOLVER_LIBS
 	${POMAGMA_UTIL_LIBS}
 )
 
-add_executable(structure_test structure_test.cpp)
-set_source_files_properties(structure_test.cpp COMPILE_FLAGS ${GTEST_FLAGS})
-target_link_libraries(structure_test ${POMAGMA_SOLVER_LIBS} gtest_main)
-add_test(NAME solver_structure COMMAND structure_test)
+add_executable(syntax_test syntax_test.cpp)
+set_source_files_properties(syntax_test.cpp COMPILE_FLAGS ${GTEST_FLAGS})
+target_link_libraries(syntax_test ${POMAGMA_SOLVER_LIBS} gtest_main)
+add_test(NAME solver_syntax COMMAND syntax_test)
 
 add_executable(solver_test solver_test.cpp)
 set_source_files_properties(solver_test.cpp COMPILE_FLAGS ${GTEST_FLAGS})

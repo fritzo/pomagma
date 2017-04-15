@@ -1,6 +1,6 @@
 #pragma once
 
-#include <pomagma/solver/structure.hpp>
+#include <pomagma/solver/syntax.hpp>
 #include <pomagma/util/util.hpp>
 
 namespace pomagma {

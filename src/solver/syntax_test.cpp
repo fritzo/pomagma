@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include <pomagma/solver/structure.hpp>
+#include <pomagma/solver/syntax.hpp>
 #include <tuple>
 #include <utility>
 

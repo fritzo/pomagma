@@ -1,4 +1,4 @@
-#include <pomagma/solver/structure.hpp>
+#include <pomagma/solver/syntax.hpp>
 
 namespace pomagma {
 namespace solver {
