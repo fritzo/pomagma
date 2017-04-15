@@ -87,7 +87,12 @@ class Structure {
     // Literal elim forms.
     const std::pair<Term, Term>& literal_arg(Literal lit) const;
 
+    // Random generation for testing.
+    Term choose_random_term(rng_t& rng) const;
+    Literal choose_random_literal(rng_t& rng) const;
+
    private:
+    // This internal helper does not preserve validity.
     Term new_term(TermArity arity);
 
     // Term intro tables.
@@ -219,6 +224,19 @@ inline const std::pair<Term, Term>& Structure::join_arg(Term term) const {
     auto i = join_arg_.find(term);
     POMAGMA_ASSERT1(i != join_arg_.end(), "Term not found: " << term);
     return i->second;
+}
+
+inline Literal Structure::less(Term lhs, Term rhs) {
+    const std::pair<Term, Term> arg(lhs, rhs);
+    Literal& result = less_[arg];
+    if (unlikely(result == 0)) {
+        result = less_arg_.size();
+        less_arg_.push_back(arg);
+    }
+    if (POMAGMA_DEBUG_LEVEL >= 1) {
+        assert_valid();
+    }
+    return result;
 }
 
 inline const std::pair<Term, Term>& Structure::literal_arg(Literal lit) const {

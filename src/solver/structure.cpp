@@ -48,6 +48,64 @@ void Structure::assert_valid() {
     POMAGMA_ASSERT(term_arity(TermAtom::B) == TermArity::B, "Missing B");
     POMAGMA_ASSERT(term_arity(TermAtom::C) == TermArity::C, "Missing C");
     POMAGMA_ASSERT(term_arity(TermAtom::S) == TermArity::S, "Missing S");
+
+    // Check terms.
+    const Term max_term = term_arity_.size() - 1;
+    for (Term term = 1; term <= max_term; ++term) {
+        const TermArity arity = term_arity(term);
+        switch (arity) {
+            case TermArity::IVAR: {
+                const unsigned rank = ivar_arg(term);
+                POMAGMA_ASSERT_EQ(term, ivar(rank));
+                break;
+            }
+            case TermArity::NVAR: {
+                const std::string& name = nvar_arg(term);
+                POMAGMA_ASSERT_EQ(term, nvar(name));
+                break;
+            }
+            case TermArity::APP: {
+                Term lhs;
+                Term rhs;
+                std::tie(lhs, rhs) = app_arg(term);
+                POMAGMA_ASSERT_EQ(term, app(lhs, rhs));
+                break;
+            }
+            case TermArity::JOIN: {
+                Term lhs;
+                Term rhs;
+                std::tie(lhs, rhs) = join_arg(term);
+                POMAGMA_ASSERT_EQ(term, join(lhs, rhs));
+                break;
+            }
+            default:
+                break;
+        }
+    }
+
+    // Check literals.
+    const Literal max_lit = less_arg_.size() - 1;
+    for (Literal lit = 1; lit <= max_lit; ++lit) {
+        Term lhs;
+        Term rhs;
+
+        std::tie(lhs, rhs) = literal_arg(lit);
+        POMAGMA_ASSERT_EQ(lit, less(lhs, rhs));
+
+        std::tie(lhs, rhs) = literal_arg(-lit);
+        POMAGMA_ASSERT_EQ(-lit, nless(lhs, rhs));
+    }
+}
+
+Term Structure::choose_random_term(rng_t& rng) const {
+    const Term max_term = term_arity_.size() - 1;
+    return std::uniform_int_distribution<Term>(1, max_term)(rng);
+}
+
+Literal Structure::choose_random_literal(rng_t& rng) const {
+    const Literal max_lit = less_arg_.size() - 1;
+    Literal lit = std::uniform_int_distribution<Literal>(1, max_lit)(rng);
+    return std::bernoulli_distribution(0.5)(rng) ? lit : -lit;
 }
 
 }  // namespace solver
