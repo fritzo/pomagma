@@ -5,7 +5,8 @@ namespace pomagma {
 namespace solver {
 namespace {
 
-TEST(SmtSolverTest, IsValid) {
+TEST(HstarSolverTest, IsValid) {
+    HstarSolver solver;
     // TODO
 }
 
