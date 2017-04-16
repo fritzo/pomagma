@@ -1,14 +1,22 @@
+#include <atomic>
+#include <gtest/gtest.h>
 #include <pomagma/util/util.hpp>
 #include <pomagma/util/worker_pool.hpp>
-#include <atomic>
+#include <utility>
 
-using namespace pomagma;
+namespace pomagma {
+namespace {
 
-void test_threadpool(size_t thread_count, size_t max_duration) {
+typedef std::pair<size_t, size_t> TestParam;
+class WorkerPoolTest : public ::testing::TestWithParam<TestParam> {};
+
+TEST_P(WorkerPoolTest, IsCorrect) {
+    const size_t thread_count = GetParam().first;
+    const size_t max_duration = GetParam().first;
     POMAGMA_INFO("Testing pool of " << thread_count << " threads "
                                     << "with tasks taking up to "
                                     << max_duration << "ms");
-    POMAGMA_ASSERT_LT(0, thread_count);
+    ASSERT_LT(0UL, thread_count);
 
     std::atomic<uint_fast64_t> counter(0);
     {
@@ -24,13 +32,12 @@ void test_threadpool(size_t thread_count, size_t max_duration) {
             });
         }
     }
-    POMAGMA_ASSERT_EQ(counter, 1 + max_duration);
+    ASSERT_EQ(counter, 1 + max_duration);
 }
 
-int main() {
-    test_threadpool(1, 20);
-    test_threadpool(10, 100);
-    test_threadpool(10, 20);
+INSTANTIATE_TEST_CASE_P(AllParams, WorkerPoolTest,
+                        ::testing::Values(TestParam(1, 20), TestParam(10, 100),
+                                          TestParam(10, 20)));
 
-    return 0;
-}
+}  // namespace
+}  // namespace pomagma
