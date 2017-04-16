@@ -18,7 +18,7 @@ std::string print_set(const DenseSet& set) {
     return result;
 }
 
-class DenseSetTest : public ::testing::TestWithParam<size_t>{};
+class DenseSetTest : public ::testing::TestWithParam<size_t> {};
 
 TEST_P(DenseSetTest, StoreLoad) {
     const size_t item_dim = GetParam();
@@ -38,20 +38,19 @@ TEST_P(DenseSetTest, StoreLoad) {
         POMAGMA_ASSERT(not set.is_alias(), "programmer error");
         SetId id = sets.store(std::move(set));
         if (known_ids.insert(id).second) {
-            POMAGMA_ASSERT(set.is_alias(), "data was not moved");
-            POMAGMA_ASSERT(sets.load(id).raw_data() == set.raw_data(),
-                           "inserted pointer does not match source");
+            ASSERT_TRUE(set.is_alias()) << "data was not moved";
+            ASSERT_TRUE(sets.load(id).raw_data() == set.raw_data())
+                << "inserted pointer does not match source";
         } else {
-            POMAGMA_ASSERT(not set.is_alias(),
-                           "data freed but set not inserted");
+            ASSERT_FALSE(set.is_alias()) << "data freed but set not inserted";
         }
 
         const DenseSet loaded1 = sets.load(id);
-        POMAGMA_ASSERT(loaded1.is_alias(), "loaded set is not alias");
+        ASSERT_TRUE(loaded1.is_alias()) << "loaded set is not alias";
         loaded1.validate();
         const DenseSet loaded2 = sets.load(id);
-        POMAGMA_ASSERT(loaded1.raw_data() == loaded2.raw_data(),
-                       "two loads disagree");
+        ASSERT_TRUE(loaded1.raw_data() == loaded2.raw_data())
+            << "two loads disagree";
         if (loaded1 != set) {
             POMAGMA_WARN("expected: " << print_set(set));
             POMAGMA_WARN("actual: " << print_set(loaded1));
@@ -59,7 +58,7 @@ TEST_P(DenseSetTest, StoreLoad) {
             POMAGMA_ERROR("loaded does not match stored");
         }
 
-        POMAGMA_ASSERT(id == sets.store(std::move(set)), "two stores disagree");
+        ASSERT_EQ(id, sets.store(std::move(set))) << "two stores disagree";
     }
 }
 

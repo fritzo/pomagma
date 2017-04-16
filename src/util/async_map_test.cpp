@@ -45,7 +45,7 @@ TEST(AsyncMapTest, IsCorrect) {
     }
 
     for (size_t periods = 0; pending_count; ++periods) {
-        POMAGMA_ASSERT_LT(periods, 20);
+        EXPECT_LT(periods, 20UL);
         POMAGMA_INFO("waiting " << periods);
         std::this_thread::sleep_for(std::chrono::milliseconds(max_wait));
     }
