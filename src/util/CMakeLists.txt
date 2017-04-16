@@ -30,6 +30,7 @@ add_unit_test(queue)
 add_unit_test(hasher)
 add_unit_test(worker_pool)
 add_unit_test(async_map)
+add_unit_test(lazy_map)
 
 add_executable(queue_profile queue_profile.cpp)
 target_link_libraries(queue_profile ${POMAGMA_UTIL_LIBS})
@@ -40,10 +41,6 @@ target_link_libraries(threading_profile ${POMAGMA_UTIL_LIBS})
 add_executable(dense_set_store_test dense_set_store_test.cpp)
 target_link_libraries(dense_set_store_test ${POMAGMA_UTIL_LIBS})
 add_test(NAME util_dense_set_store COMMAND dense_set_store_test)
-
-add_executable(lazy_map_test lazy_map_test.cpp)
-target_link_libraries(lazy_map_test ${POMAGMA_UTIL_LIBS})
-add_test(NAME util_lazy_map COMMAND lazy_map_test)
 
 add_subdirectory(concurrent)
 add_subdirectory(sequential)

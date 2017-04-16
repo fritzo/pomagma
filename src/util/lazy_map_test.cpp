@@ -1,14 +1,17 @@
+#include <gtest/gtest.h>
 #include <pomagma/util/util.hpp>
 #include <pomagma/util/lazy_map.hpp>
 
-using namespace pomagma;
-
-namespace test {
+namespace pomagma {
+namespace {
 
 typedef const std::pair<int, int>* Key;
 typedef int Value;
 
-void async_map_test(size_t eval_count, size_t max_wait) {
+TEST(LazyMapTest, IsCorrect) {
+    const size_t eval_count = 100;
+    const size_t max_wait = 100;
+
     WorkerPool worker_pool;
     LazyMap<Key, Value> lazy_map(worker_pool, [](const Key& key) {
         Value value = 1 + key->first + key->second;
@@ -41,12 +44,5 @@ void async_map_test(size_t eval_count, size_t max_wait) {
     }
 }
 
-}  // namespace test
-
-int main() {
-    Log::Context log_context("LazyMap Test");
-
-    test::async_map_test(100, 100);
-
-    return 0;
-}
+}  // namespace
+}  // namespace pomagma
