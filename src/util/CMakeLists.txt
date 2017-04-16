@@ -19,16 +19,18 @@ target_link_libraries(pomagma_util
 	${Boost_SYSTEM_LIBRARY}
 )
 
-add_executable(queue_test queue_test.cpp)
-target_link_libraries(queue_test ${POMAGMA_UTIL_LIBS})
-add_test(NAME util_queue COMMAND queue_test)
+function(add_unit_test N)
+	add_executable(${N}_test ${N}_test.cpp)
+	set_source_files_properties(${N}_test.cpp COMPILE_FLAGS ${GTEST_FLAGS})
+	target_link_libraries(${N}_test ${POMAGMA_UTIL_LIBS} gtest_main)
+	add_test(NAME util_${N} COMMAND ${N}_test)
+endfunction()
+
+add_unit_test(queue)
+add_unit_test(hasher)
+
 add_executable(queue_profile queue_profile.cpp)
 target_link_libraries(queue_profile ${POMAGMA_UTIL_LIBS})
-
-add_executable(hasher_test hasher_test.cpp)
-set_source_files_properties(hasher_test.cpp COMPILE_FLAGS ${GTEST_FLAGS})
-target_link_libraries(hasher_test ${POMAGMA_UTIL_LIBS} gtest_main)
-add_test(NAME util_hasher COMMAND hasher_test)
 
 add_executable(threading_profile threading_profile.cpp)
 target_link_libraries(threading_profile ${POMAGMA_UTIL_LIBS})

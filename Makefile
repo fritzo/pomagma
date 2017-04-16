@@ -81,7 +81,7 @@ release: protobuf FORCE
 	  && $(MAKE)
 
 DEBUG_LOG="$(shell pwd)/data/debug.log"
-cpp-test: all FORCE
+cpp-test: debug FORCE
 	rm -f $(DEBUG_LOG)
 	POMAGMA_LOG_FILE=$(DEBUG_LOG) \
 	  CTEST_OUTPUT_ON_FAILURE=1 $(MAKE) -C build/debug test \

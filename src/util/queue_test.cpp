@@ -1,11 +1,13 @@
 #include <atomic>
+#include <gtest/gtest.h>
 #include <pomagma/util/queue.hpp>
 #include <thread>
 #include <typeinfo>
 
-using namespace pomagma;
+namespace pomagma {
+namespace {
 
-void writer_thread(pomagma::SharedQueueBase* queue, std::string message,
+void writer_thread(SharedQueueBase* queue, std::string message,
                    size_t message_count,
                    std::atomic<uint_fast64_t>* worker_count) {
     POMAGMA_INFO("sending " << message_count << " messages");
@@ -19,7 +21,13 @@ void writer_thread(pomagma::SharedQueueBase* queue, std::string message,
 }
 
 template <class Queue>
-void test_queue() {
+class QueueTest : public ::testing::Test {};
+
+typedef ::testing::Types<VectorQueue, FileBackedQueue> QueueTypes;
+TYPED_TEST_CASE(QueueTest, QueueTypes);
+
+TYPED_TEST(QueueTest, IsCorrect) {
+    typedef TypeParam Queue;
     POMAGMA_INFO("Testing " << demangle(typeid(Queue).name()));
     Queue queue;
 
@@ -60,18 +68,12 @@ void test_queue() {
         }
     }
     POMAGMA_INFO("received " << actual_message_count << " messages");
-    POMAGMA_ASSERT_EQ(actual_message_count, 6 * message_count);
+    EXPECT_EQ(actual_message_count, 6 * message_count);
 
     for (auto& thread : threads) {
         thread.join();
     }
 }
 
-int main() {
-    Log::Context log_context("Queue Test");
-
-    test_queue<pomagma::VectorQueue>();
-    test_queue<pomagma::FileBackedQueue>();
-
-    return 0;
-}
+}  // namespace
+}  // namespace pomagma
