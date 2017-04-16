@@ -19,11 +19,15 @@ target_link_libraries(pomagma_util
 	${Boost_SYSTEM_LIBRARY}
 )
 
-function(add_unit_test N)
-	add_executable(${N}_test ${N}_test.cpp)
-	set_source_files_properties(${N}_test.cpp COMPILE_FLAGS ${GTEST_FLAGS})
-	target_link_libraries(${N}_test ${POMAGMA_UTIL_LIBS} gtest_main)
-	add_test(NAME util_${N} COMMAND ${N}_test)
+set_source_files_properties(gtest_main.cpp COMPILE_FLAGS ${GTEST_FLAGS})
+add_library(pomagma_gtest_main SHARED gtest_main.cpp)
+target_link_libraries(pomagma_gtest_main pomagma_util gtest)
+
+function(add_unit_test T)
+	add_executable(${T}_test ${T}_test.cpp)
+	set_source_files_properties(${T}_test.cpp COMPILE_FLAGS ${GTEST_FLAGS})
+	target_link_libraries(${T}_test ${POMAGMA_UTIL_LIBS} pomagma_gtest_main)
+	add_test(NAME util_${T} COMMAND ${T}_test)
 endfunction()
 
 add_unit_test(queue)
