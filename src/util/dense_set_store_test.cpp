@@ -1,9 +1,12 @@
+#include <gtest/gtest.h>
 #include <pomagma/util/dense_set_store.hpp>
-#include <vector>
 #include <unordered_set>
+#include <vector>
 
-using namespace pomagma;
-using namespace sequential;
+namespace pomagma {
+namespace {
+
+using namespace ::pomagma::sequential;
 
 rng_t rng;
 
@@ -15,7 +18,12 @@ std::string print_set(const DenseSet& set) {
     return result;
 }
 
-void test_store_load(size_t item_dim, size_t element_count) {
+class DenseSetTest : public ::testing::TestWithParam<size_t>{};
+
+TEST_P(DenseSetTest, StoreLoad) {
+    const size_t item_dim = GetParam();
+    const size_t element_count = 1000;
+
     POMAGMA_INFO("Testing store and load with size " << item_dim);
 
     DenseSetStore sets(item_dim);
@@ -55,12 +63,7 @@ void test_store_load(size_t item_dim, size_t element_count) {
     }
 }
 
-int main() {
-    Log::Context log_context("DenseSetStore Test");
+INSTANTIATE_TEST_CASE_P(AllDims, DenseSetTest, ::testing::Range(1UL, 128UL));
 
-    for (size_t item_dim = 1; item_dim < 128; ++item_dim) {
-        test_store_load(item_dim, 1000);
-    }
-
-    return 0;
-}
+}  // namespace
+}  // namespace pomagma
