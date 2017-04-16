@@ -1,18 +1,21 @@
-#include <pomagma/util/util.hpp>
+#include <gtest/gtest.h>
 #include <pomagma/util/async_map.hpp>
+#include <pomagma/util/util.hpp>
 #include <pomagma/util/worker_pool.hpp>
 
-using namespace pomagma;
-
-namespace test {
+namespace pomagma {
+namespace {
 
 typedef const std::pair<int, int>* Key;
 typedef int Value;
 
 typedef AsyncMap<Key, Value> Cache;
 
-void async_map_test(size_t thread_count, size_t eval_count,
-                    size_t max_wait = 100) {
+TEST(AsyncMapTest, IsCorrect) {
+    const size_t thread_count = 10;
+    const size_t eval_count = 100;
+    const size_t max_wait = 100;
+
     WorkerPool pool(thread_count);
     Cache cache([&pool](Key key, Cache::Callback callback) {
         pool.schedule([key, callback] {
@@ -48,12 +51,5 @@ void async_map_test(size_t thread_count, size_t eval_count,
     }
 }
 
-}  // namespace test
-
-int main() {
-    Log::Context log_context("AsyncMap Test");
-
-    test::async_map_test(10, 100);
-
-    return 0;
-}
+}  // namespace
+}  // namespace pomagma
