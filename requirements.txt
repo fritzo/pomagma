@@ -2,7 +2,7 @@ boto
 contextlib2
 flake8
 hypothesis
-ipython
+ipython==5.1.0
 isort
 mock
 nbval
