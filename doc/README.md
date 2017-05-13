@@ -95,11 +95,14 @@ More expensive tests are available via
 
 ## Benchmarking
 
-Pomagma has microbenchmarks available via
+Full system profiling information is written to the `INFO` log.
+See [/doc/benchmarks.md](/doc/benchmarks.md) for the latest results.
+
+C++ microbenchmarks are available via
 
     pomagma.make profile-misc
 
-as well as larger benchmarks for forward-chaining inference
+Larger benchmarks for forward-chaining inference are available via
 
     pomagma.make profile-surveyor
     pomagma.make profile-cartographer
