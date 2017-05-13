@@ -42,20 +42,30 @@
 
 - [/doc](/doc) - developer documentation
 - [/data](/data) - generated data, mirroring an S3 bucket
-- [/src](/src) - source code (C++, python)
-  - [/src/examples](/src/examples) - example applications using the analyst
-  - [/src/theory](/src/theory) - theories of combinatory algebras
-  - [/src/language](/src/language) - probabilistic grammars
-  - [/src/corpus](/src/corpus) - literate code expressed in combinatory algebra
-  - [/src/atlas](/src/atlas) - code to manage the atlas
-  - [/src/surveyor](/src/surveyor) - the main forward-chaining engine
-  - [/src/cartographer](/src/cartographer) - a scalable weaker inference engine
-  - [/src/analyst](/src/analyst) - the query server
-  - [/src/compiler](/src/compiler) - syntactic algorithms
-  - [/src/linguist](/src/linguist) - machine learning for tuning languages
+- [/src](/src) - source code (C++, python, DSLs)
+  - [/src/theory](/src/theory) -
+    theories of ordered combinatory algebras
   - [/src/theorist](/src/theorist) - machine learning for conjecturing theories
+  - [/src/language](/src/language) -
+    probabilistic grammars representing Solomonoff priors
+  - [/src/linguist](/src/linguist) - machine learning for tuning languages
+  - [/src/analyst](/src/analyst) -
+    combinatory database server and client
+  - [/src/examples](/src/examples) - example applications using the analyst
+  - [/src/surveyor](/src/surveyor) -
+    the main forward-chaining engine for building databases
+  - [/src/cartographer](/src/cartographer) - a scalable weaker inference engine
+  - [/src/atlas](/src/atlas) -
+    data structures for in-memory combinatory databases
+  - [/src/io](/src/io) -
+    serialization utilities for persisting combinatory databases
+  - [/src/compiler](/src/compiler) -
+    compiler for forward chaining inference strategies
+  - [/src/reducer](/src/reducer) -
+    interpreters for &lambda;-calculus with lots of unit tests
+  - [/src/corpus](/src/corpus) -
+    literate code expressed in combinatory algebra
   - [/src/util](/src/util) - core utilities
-  - [/src/io](/src/io) - serialization utilities
 - [/bootstrap](/bootstrap) - a small git-cached atlas for testing
 - [/build](/build) - destination of C++ builds
 - [/pomagma](/pomagma) - a symbolic link to appease `pip install -e`
