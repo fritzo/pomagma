@@ -44,6 +44,11 @@ from pomagma.reducer import syntax
 from pomagma.reducer.util import UnreachableError
 from pomagma.util import TODO
 
+try:
+    intern
+except NameError:
+    from sys import intern
+
 # ----------------------------------------------------------------------------
 # Signature
 

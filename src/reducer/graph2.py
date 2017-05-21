@@ -11,6 +11,11 @@ are .copy()ed more often than needed, and there is minimal sharing.
 from pomagma.compiler.util import memoize_arg
 from pomagma.reducer.util import logged
 
+try:
+    intern
+except NameError:
+    from sys import intern
+
 DEFAULT_DEPTH = 10
 
 # ----------------------------------------------------------------------------

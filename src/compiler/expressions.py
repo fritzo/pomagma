@@ -4,6 +4,11 @@ from pomagma.compiler import signature
 from pomagma.compiler.signature import ARITY_TABLE
 from pomagma.compiler.util import inputs, memoize_make, sortedset, union
 
+try:
+    intern
+except NameError:
+    from sys import intern
+
 re_name = re.compile('[a-zA-Z][a-zA-Z0-9_]*$')
 re_space = re.compile('[ _]+')
 

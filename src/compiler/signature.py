@@ -2,6 +2,11 @@ import re
 
 from pomagma.compiler.util import intern_keys, memoize_arg
 
+try:
+    intern
+except NameError:
+    from sys import intern
+
 re_const = re.compile('[A-Z]+$')
 
 

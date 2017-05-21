@@ -1,5 +1,10 @@
 """Combinator Graph Reduction."""
 
+try:
+    intern
+except NameError:
+    from sys import intern
+
 _APP = intern('APP')
 _ATOM = intern('ATOM')
 

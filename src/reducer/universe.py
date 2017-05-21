@@ -10,6 +10,11 @@ i.e. the database here is not quotiented.
 from pomagma.compiler.util import MEMOIZED_CACHES, memoize_arg, memoize_args
 from pomagma.util import TODO
 
+try:
+    intern
+except NameError:
+    from sys import intern
+
 # ----------------------------------------------------------------------------
 # Signature
 

@@ -4,6 +4,11 @@ from collections import defaultdict
 from pomagma.compiler.util import memoize_arg, memoize_args, unique_result
 from pomagma.reducer.util import UnreachableError
 
+try:
+    intern
+except NameError:
+    from sys import intern
+
 
 # ----------------------------------------------------------------------------
 # Signature

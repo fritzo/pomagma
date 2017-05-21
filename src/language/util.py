@@ -3,6 +3,11 @@ from parsable import parsable
 
 from pomagma.language.language_pb2 import Language, WeightedTerm
 
+try:
+    intern
+except NameError:
+    from sys import intern
+
 parsable = parsable.Parsable()
 
 

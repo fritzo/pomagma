@@ -10,6 +10,11 @@ from math import exp, log
 
 import pomagma.util
 
+try:
+    intern
+except NameError:
+    from sys import intern
+
 function = type(lambda x: x)
 
 
