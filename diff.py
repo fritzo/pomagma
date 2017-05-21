@@ -51,11 +51,11 @@ def parallel_check_call(*args):
 def chdir(destin):
     source = os.path.abspath(os.curdir)
     try:
-        print '# cd {}'.format(destin)
+        print('# cd {}'.format(destin))
         os.chdir(destin)
         yield
     finally:
-        print '# cd {}'.format(source)
+        print('# cd {}'.format(source))
         os.chdir(source)
 
 
@@ -67,11 +67,11 @@ def clone(commit='HEAD'):
             ['git', 'rev-parse', '--verify', commit]).strip()
 
     if os.path.exists(TEMP):
-        print 'using clone {}'.format(TEMP)
+        print('using clone {}'.format(TEMP))
         with chdir(TEMP):
             subprocess.check_call(['git', 'fetch', '--all'])
     else:
-        print 'cloning to {}'.format(TEMP)
+        print('cloning to {}'.format(TEMP))
         with chdir(ROOT):
             subprocess.check_call(['git', 'clone', REPO, TEMP])
 
