@@ -2,7 +2,7 @@ import os
 
 
 import pytest
-import simplejson as json
+import json
 
 import pomagma.analyst
 import pomagma.cartographer

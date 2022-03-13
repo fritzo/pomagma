@@ -1,5 +1,5 @@
 .SILENT:
-.PHONY: all protobuf tags lint python codegen debug release cpp-test unit-test bootstrap h4-test sk-test skj-test skja-test skrj-test batch-test small-test test big-test sk skj skja skrj profile clean FORCE
+.PHONY: all protobuf tags lint install python codegen debug release cpp-test unit-test bootstrap h4-test sk-test skj-test skja-test skrj-test batch-test small-test test big-test sk skj skja skrj profile clean FORCE
 
 THEORY = skrj
 
@@ -15,6 +15,8 @@ all: data/blob bootstrap FORCE
 	$(MAKE) python
 	$(MAKE) -C src/language
 	$(MAKE) codegen codegen-summary debug release
+
+install: python FORCE
 
 echo-py-files: FORCE
 	echo $(PY_FILES)
@@ -50,7 +52,9 @@ pyformat: FORCE
 
 format: clang-format pyformat FORCE
 
-python: protobuf lint FORCE
+python: protobuf FORCE
+	conda install protobuf
+	pip install parsable  # used by setup.py
 	pip install -e .
 
 codegen: FORCE
@@ -88,7 +92,7 @@ cpp-test: debug FORCE
 
 unit-test: all bootstrap FORCE
 	./vet.py check || { ./diff.py codegen; exit 1; }
-	POMAGMA_DEBUG=1 py.test -v --nbval --ignore=pomagma/third_party pomagma
+	POMAGMA_DEBUG=1 pytest -v --nbval --ignore=pomagma/third_party pomagma
 	$(MAKE) cpp-test
 	POMAGMA_DEBUG=1 pomagma.make profile-misc
 	pomagma.make profile-misc

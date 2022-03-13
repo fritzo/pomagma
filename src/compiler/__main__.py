@@ -6,7 +6,7 @@ import os
 import pstats
 import re
 
-import simplejson as json
+import json
 from parsable import parsable
 
 from pomagma.compiler import (compiler, completion, extensional, frontend,

@@ -1,4 +1,4 @@
-import simplejson as json
+import json
 from parsable import parsable
 
 from pomagma.language.language_pb2 import Language, WeightedTerm
