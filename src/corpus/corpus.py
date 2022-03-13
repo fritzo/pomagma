@@ -21,8 +21,8 @@ class Corpus(object):
     def dump(self, filename):
         with open(filename, 'w') as f:
             f.write('# Corpus written by {}'.format(__file__))
-            for var, expr in sorted(self._defs.iteritems()):
-                assert isinstance(var, basestring), var
+            for var, expr in sorted(self._defs.items()):
+                assert isinstance(var, str), var
                 assert isinstance(expr, Expression), expr
                 f.write('\nEQUAL {} {}'.format(var, expr))
 
@@ -41,7 +41,7 @@ class Corpus(object):
             self._defs[var] = expr
 
     def __iter__(self):
-        return self._defs.iteritems()
+        return iter(self._defs.items())
 
     def insert(self, key, value='HOLE'):
         var = Expression.make(key)

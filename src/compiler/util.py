@@ -5,7 +5,7 @@ import glob
 import itertools
 import os
 import sys
-from itertools import izip
+
 from math import exp, log
 
 import pomagma.util
@@ -14,7 +14,7 @@ function = type(lambda x: x)
 
 
 def intern_keys(string_dict):
-    return {intern(str(key)): val for key, val in string_dict.iteritems()}
+    return {sys.intern(str(key)): val for key, val in iter(string_dict.items())}
 
 
 def DELETE(*args, **kwargs):
@@ -23,7 +23,7 @@ def DELETE(*args, **kwargs):
 
 def logger(message, *args):
     if pomagma.util.LOG_LEVEL >= pomagma.util.LOG_LEVEL_DEBUG:
-        print '#', message.format(*args)
+        print('#', message.format(*args))
 
 
 class sortedset(set):
@@ -188,7 +188,7 @@ def memoize_args(fun):
 def temp_memoize():
     base = MEMOIZED_CACHES.copy()
     yield
-    for fun, cache in MEMOIZED_CACHES.iteritems():
+    for fun, cache in MEMOIZED_CACHES.items():
         cache.clear()
         cache.update(base.get(fun, {}))
 
@@ -213,7 +213,7 @@ def unique_result(fun):
 
 
 def profile_memoized():
-    sizes = [(len(cache), fun) for (fun, cache) in MEMOIZED_CACHES.iteritems()]
+    sizes = [(len(cache), fun) for (fun, cache) in MEMOIZED_CACHES.items()]
     sizes.sort(reverse=True)
     sys.stderr.write('{: >10} {}\n'.format('# entries', 'memoized function'))
     sys.stderr.write('-' * 32 + '\n')
@@ -256,14 +256,14 @@ def memoize_modulo_renaming_constants(fun):
         consts = sorted(c.name for c in get_consts(args))
         result = None
         for permuted_consts in itertools.permutations(consts):
-            perm = {i: j for i, j in izip(consts, permuted_consts) if i != j}
+            perm = {i: j for i, j in zip(consts, permuted_consts) if i != j}
             permuted_args = permute_symbols(perm, args)
             try:
                 permuted_result = cache[permuted_args]
             except KeyError:
                 continue
             logger('{}: using cache via {}', fun.__name__, perm)
-            inverse = {j: i for i, j in perm.iteritems()}
+            inverse = {j: i for i, j in iter(perm.items())}
             return permute_symbols(inverse, permuted_result)
         logger('{}: compute', fun.__name__)
         result = fun(*args)

@@ -3,6 +3,7 @@ import re
 from pomagma.compiler import signature
 from pomagma.compiler.signature import ARITY_TABLE
 from pomagma.compiler.util import inputs, memoize_make, sortedset, union
+import sys
 
 re_name = re.compile('[a-zA-Z][a-zA-Z0-9_]*$')
 re_space = re.compile('[ _]+')
@@ -22,10 +23,10 @@ class Expression(object):
         assert len(args) == signature.get_nargs(arity), (args, arity)
         for arg in args:
             assert isinstance(arg, Expression), arg
-        self._name = intern(name)
+        self._name = sys.intern(name)
         self._args = args
         self._arity = arity
-        self._polish = intern(' '.join([name] + [arg._polish for arg in args]))
+        self._polish = sys.intern(' '.join([name] + [arg._polish for arg in args]))
         self._hash = hash(self._polish)
         self._sort = (len(self._polish), self._polish)
         # all other fields are lazily initialized

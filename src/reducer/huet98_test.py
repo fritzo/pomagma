@@ -51,7 +51,7 @@ DECIDE_EQUAL_EXAMPLES = [
 @for_each(DECIDE_EQUAL_EXAMPLES)
 def test_decide_equal(defs, lhs, rhs, expected):
     p = Presentation()
-    for key, val in defs.iteritems():
+    for key, val in defs.items():
         p.define(key, val)
     assert p.decide_equal(lhs, rhs) is expected
 

@@ -25,7 +25,7 @@ from parsable import parsable
 version = None
 with open(os.path.join('src', '__init__.py')) as f:
     for line in f:
-        if re.match("__version__ = '\S+'$", line):
+        if re.match(r"__version__ = '\S+'$", line):
             version = line.split()[-1].strip("'")
 assert version, 'could not determine version'
 

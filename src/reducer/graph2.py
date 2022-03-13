@@ -10,16 +10,17 @@ are .copy()ed more often than needed, and there is minimal sharing.
 
 from pomagma.compiler.util import memoize_arg
 from pomagma.reducer.util import logged
+import sys
 
 DEFAULT_DEPTH = 10
 
 # ----------------------------------------------------------------------------
 # Signature
 
-_ATOM = intern('ATOM')
-_VAR = intern('VAR')
-_ABS = intern('ABS')
-_APP = intern('APP')
+_ATOM = sys.intern('ATOM')
+_VAR = sys.intern('VAR')
+_ABS = sys.intern('ABS')
+_APP = sys.intern('APP')
 
 
 def make_equation(lhs, rhs):
@@ -104,7 +105,7 @@ class Node(object):
 @memoize_arg
 def ATOM(name):
     assert isinstance(name, str)
-    return Node(_ATOM, intern(name))
+    return Node(_ATOM, sys.intern(name))
 
 
 HOLE = ATOM('HOLE')

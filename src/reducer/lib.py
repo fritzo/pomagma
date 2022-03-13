@@ -451,7 +451,7 @@ def box(item):
 
 def enum(items):
     assert isinstance(items, (list, set, frozenset)), items
-    return join_(*map(box, items))
+    return join_(*list(map(box, items)))
 
 
 @combinator
@@ -603,10 +603,10 @@ def enum_contains(qxs, qy):
 
 def _make_bits_table(n):
     table = {0: I}
-    for i in xrange(n):
+    for i in range(n):
         prev = table
         table = {}
-        for k, v in prev.iteritems():
+        for k, v in prev.items():
             table[k] = C(v, false)
             table[k | (1 << i)] = C(v, true)
     return table
@@ -618,7 +618,7 @@ assert len(byte_table) == 256
 
 def _bits_test(b0, b1, b2, b3, b4, b5, b6, b7):
     bits = [b0, b1, b2, b3, b4, b5, b6, b7]
-    tests = map(bool_test, bits)
+    tests = list(map(bool_test, bits))
     all_defined = app(*tests)
     any_error = join_(*tests)
     return any_error(all_defined)

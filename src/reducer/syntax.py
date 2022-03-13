@@ -3,6 +3,7 @@ from collections import defaultdict
 
 from pomagma.compiler.util import memoize_arg, memoize_args, unique_result
 from pomagma.reducer.util import UnreachableError
+import sys
 
 
 # ----------------------------------------------------------------------------
@@ -46,7 +47,7 @@ def make_keyword(name, arity):
     assert re_keyword.match(name)
     assert name not in _keywords
     assert arity in [0, 1, 2]
-    name = intern(name)
+    name = sys.intern(name)
     _keywords[name] = arity
     return name
 
@@ -60,7 +61,7 @@ def make_atom(name):
 
 
 def builder(fun):
-    name = intern(fun.__name__)
+    name = sys.intern(fun.__name__)
     assert name in _keywords, name
     assert _keywords[name] > 0, (name, _keywords[name])
     assert name not in _builders, name
@@ -110,7 +111,7 @@ NUM = make_atom('NUM')
 def NVAR(name):
     if re_keyword.match(name):
         raise ValueError('Variable names cannot match [A-Z]+: {}'.format(name))
-    return Term.make(_NVAR, intern(name))
+    return Term.make(_NVAR, sys.intern(name))
 
 
 @builder
@@ -230,7 +231,7 @@ class Transform(object):
     """Recursive transform of term."""
 
     def __init__(self, **kwargs):
-        for key, val in kwargs.items():
+        for key, val in list(kwargs.items()):
             setattr(self, key, val)
 
     @memoize_args
@@ -249,9 +250,9 @@ class Transform(object):
 
     @classmethod
     def init_class(cls):
-        for name, term in _atoms.iteritems():
+        for name, term in _atoms.items():
             setattr(cls, name, term)
-        for name, builder in _builders.iteritems():
+        for name, builder in _builders.items():
             setattr(cls, name, staticmethod(builder))
 
 
@@ -436,7 +437,7 @@ def polish_parse(string, transform=identity):
     """
     assert isinstance(string, str), type(string)
     assert isinstance(transform, Transform), type(transform)
-    tokens = map(intern, string.split())
+    tokens = list(map(sys.intern, string.split()))
     tokens.reverse()
     return _polish_parse_tokens(tokens, transform)
 
@@ -561,7 +562,7 @@ def from_sexpr(sexpr, transform=identity):
                 raise ValueError('Too few args to {}: {}'.format(head, sexpr))
             head = head(*(
                 from_sexpr(sexpr[1 + i], transform)
-                for i in xrange(arity)
+                for i in range(arity)
             ))
         args = sexpr[1 + arity:]
     elif isinstance(head, int):
@@ -584,7 +585,7 @@ def sexpr_print_sexpr(sexpr):
         return str(sexpr)
     elif isinstance(sexpr, tuple):
         assert len(sexpr) > 1, sexpr
-        parts = map(sexpr_print_sexpr, sexpr)
+        parts = list(map(sexpr_print_sexpr, sexpr))
         return '({})'.format(' '.join(parts))
     else:
         raise ValueError(sexpr)
@@ -598,8 +599,8 @@ def sexpr_print(term):
     return sexpr_print_sexpr(sexpr)
 
 
-_LPAREN = intern('(')
-_RPAREN = intern(')')
+_LPAREN = sys.intern('(')
+_RPAREN = sys.intern(')')
 
 
 def _sexpr_parse_tokens(tokens):
@@ -617,7 +618,7 @@ def _sexpr_parse_tokens(tokens):
 def sexpr_parse_sexpr(string):
     """Parses a string S-expression to a python S-expression."""
     tokens = string.replace('(', ' ( ').replace(')', ' ) ').split()
-    tokens = iter(map(intern, tokens))
+    tokens = iter(map(sys.intern, tokens))
     sexpr = next(_sexpr_parse_tokens(tokens))
     try:
         extra = next(tokens)

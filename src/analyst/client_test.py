@@ -1,5 +1,5 @@
 import os
-from itertools import izip
+
 
 import pytest
 import simplejson as json
@@ -35,7 +35,7 @@ CORPUS = json_load('testdata/corpus.json')
 
 def setup_module():
     if not os.path.exists(WORLD):
-        print 'Building test fixture', WORLD
+        print('Building test fixture', WORLD)
         dirname = os.path.dirname(WORLD)
         if not os.path.exists(dirname):
             os.makedirs(dirname)
@@ -56,16 +56,16 @@ def load():
 
 
 def test_ping():
-    print 'starting server'
+    print('starting server')
     server = serve()
     try:
-        print 'connecting client'
+        print('connecting client')
         with server.connect() as client:
-            for _ in xrange(10):
-                print 'pinging server'
+            for _ in range(10):
+                print('pinging server')
                 client.ping()
     finally:
-        print 'stopping server'
+        print('stopping server')
         server.stop()
 
 
@@ -78,9 +78,13 @@ def test_ping_id():
 
 def test_inference():
     with load() as db:
-        print 'Testing analyst inference'
+        print('Testing analyst inference')
         fail_count = db.test_inference()
     assert fail_count == 0, 'analyst failed with {} errors'.format(fail_count)
+
+
+def cmp(x, y):
+    return (x > y) - (x < y)
 
 
 def assert_equal_example(expected, actual, example, cmp=cmp):
@@ -94,12 +98,12 @@ def assert_equal_example(expected, actual, example, cmp=cmp):
 def assert_examples(examples, expected, actual, cmp=cmp):
     assert len(expected) == len(examples)
     assert len(actual) == len(examples)
-    for example, e, a in izip(examples, expected, actual):
-        print '{} : {}'.format(example, e)
+    for example, e, a in zip(examples, expected, actual):
+        print('{} : {}'.format(example, e))
         if cmp(e, a):
-            print 'WARNING {}\n  expected: {}\n  actual: {}'.format(
-                example, e, a)
-    for example, e, a in izip(examples, expected, actual):
+            print('WARNING {}\n  expected: {}\n  actual: {}'.format(
+                example, e, a))
+    for example, e, a in zip(examples, expected, actual):
         assert_equal_example(e, a, example, cmp)
 
 
@@ -116,7 +120,7 @@ def cmp_validity(x, y):
 
 
 def transpose(lists):
-    return map(list, izip(* lists))
+    return list(map(list, zip(* lists)))
 
 
 def test_simplify():
@@ -274,8 +278,8 @@ def test_validate():
 
 def validate_corpus(lines, max_attempts=100):
     with load() as db:
-        for attempt in xrange(1, 1 + max_attempts):
-            print 'validating corpus, attempt', attempt
+        for attempt in range(1, 1 + max_attempts):
+            print('validating corpus, attempt', attempt)
             results = db.validate_corpus(lines)
             if not any(result['pending'] for result in results):
                 for validity in results:
@@ -373,19 +377,19 @@ def test_validate_facts():
 def test_get_histogram():
     lines = [line for _, line in CORPUS]
     with load() as db:
-        for _ in xrange(10):
+        for _ in range(10):
             db.validate_corpus(lines)
         histogram = db.get_histogram()
-    print 'histogram:', histogram
+    print('histogram:', histogram)
     assert histogram['obs']
     assert histogram['symbols']
 
 
 def validate_language(language):
-    total = sum(language.itervalues())
+    total = sum(language.values())
     assert abs(total - 1) < 1e-4, 'bad total: {}'.format(total)
     assert isinstance(language, dict), language
-    for key, val in language.iteritems():
+    for key, val in language.items():
         assert isinstance(key, str), key
         assert isinstance(val, float), val
         assert val > 0, '{} has no mass'.format(key)
@@ -394,7 +398,7 @@ def validate_language(language):
 def test_fit_language_histogram():
     with load() as db:
         lines = [line for _, line in CORPUS]
-        for _ in xrange(10):
+        for _ in range(10):
             db.validate_corpus(lines)
         histogram = db.get_histogram()
         language = db.fit_language(histogram)
@@ -404,7 +408,7 @@ def test_fit_language_histogram():
 def test_fit_language_default():
     with load() as db:
         lines = [line for _, line in CORPUS]
-        for _ in xrange(10):
+        for _ in range(10):
             db.validate_corpus(lines)
         language = db.fit_language()
         validate_language(language)

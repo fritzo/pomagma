@@ -1,4 +1,4 @@
-from itertools import izip
+
 
 from parsable import parsable
 
@@ -22,12 +22,12 @@ UNKNOWNS = [
 
 def iter_terms(atoms, max_atom_count):
     assert max_atom_count > 0
-    for atom_count in xrange(1, 1 + max_atom_count):
+    for atom_count in range(1, 1 + max_atom_count):
         if atom_count == 1:
             for atom in atoms:
                 yield (atom,)
         else:
-            for lhs_count in xrange(1, atom_count):
+            for lhs_count in range(1, atom_count):
                 rhs_count = atom_count - lhs_count
                 for lhs in iter_terms(atoms, lhs_count):
                     for rhs in iter_terms(atoms, rhs_count):
@@ -147,7 +147,7 @@ def converge_step(term):
     elif head in UNKNOWNS:
         raise Unknown()
     else:
-        print 'WARNING unrecognized atom: {}'.format(head)
+        print('WARNING unrecognized atom: {}'.format(head))
         raise Unknown()
 
 
@@ -166,7 +166,7 @@ def converge_less(lhs, rhs):
     rhs_head, rhs_args = rhs[:1], rhs[1:]
     if not trivially_less(lhs_head, rhs_head):
         return False
-    for lhs_arg, rhs_arg in izip(lhs_args, rhs_args):
+    for lhs_arg, rhs_arg in zip(lhs_args, rhs_args):
         if not trivially_less(lhs_arg, rhs_arg):
             return False
     return True
@@ -176,7 +176,7 @@ def try_converge(term, steps):
     """If a term 'DIV x' head reduces to a term less than or equal to itself,
     then it diverges."""
     seen = set([term])
-    for _ in xrange(steps):
+    for _ in range(steps):
         try:
             term = converge_step(term)
         except Unknown:
@@ -271,7 +271,7 @@ def try_prove_diverge(
         if log_file:
             pomagma.util.log_print(message, log_file)
         else:
-            print message
+            print(message)
 
     lines = list(stripped_lines(conjectures_in))
     log_print('Trying to prove {} conjectures'.format(len(lines)))
@@ -329,24 +329,24 @@ def print_terms(atoms='x,y', max_atom_count=3):
     """
     atoms = atoms.split(',')
     for term in iter_terms(atoms, max_atom_count):
-        print print_term(term)
+        print(print_term(term))
 
 
 @parsable
 def count_terms(max_count=8):
     """Count all terms up to some max atom count."""
-    atom_counts = range(1, 1 + max_count)
-    max_counts = range(1, 1 + max_count)
+    atom_counts = list(range(1, 1 + max_count))
+    max_counts = list(range(1, 1 + max_count))
 
     def count(a, m):
-        return sum(1 for term in iter_terms(range(a), m))
+        return sum(1 for term in iter_terms(list(range(a)), m))
 
-    print '\t' * (max_count / 2) + '|atoms|'
-    print '\t'.join(['|term|'] + [str(a) for a in atom_counts])
-    print '-' * 8 * (1 + max_count)
+    print('\t' * (max_count / 2) + '|atoms|')
+    print('\t'.join(['|term|'] + [str(a) for a in atom_counts]))
+    print('-' * 8 * (1 + max_count))
     for m in max_counts:
         counts = [count(a, m) for a in atom_counts if a + m <= max_count + 1]
-        print '\t'.join(map(str, [m] + counts))
+        print('\t'.join(map(str, [m] + counts)))
 
 
 @parsable
@@ -356,9 +356,9 @@ def may_diverge(atoms='I,K,F,B,C,W,S,Y', max_atom_count=4, max_steps=20):
     for term in iter_terms(atoms, max_atom_count):
         try:
             try_converge(term, max_steps)
-            print term
+            print(term)
         except Diverged:
-            print term
+            print(term)
         except Converged:
             pass
 
@@ -373,7 +373,7 @@ def must_diverge(atoms='I,K,F,B,C,W,S,Y', max_atom_count=4, max_steps=20):
         except Converged:
             pass
         except Diverged:
-            print term
+            print(term)
 
 
 if __name__ == '__main__':

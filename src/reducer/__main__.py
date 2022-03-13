@@ -38,13 +38,13 @@ def compile(string, fmt='auto'):
     """
     if fmt == 'auto':
         fmt = guess_format(string)
-    print('Format: {}'.format(fmt))
-    print('In: {}'.format(string))
+    print(('Format: {}'.format(fmt)))
+    print(('In: {}'.format(string)))
     parse, print_, simplify = FORMATS[fmt]
     term = parse(string)
     compiled = curry.compile_(term)
     result = print_(compiled)
-    print('Out: {}'.format(result))
+    print(('Out: {}'.format(result)))
     return result
 
 
@@ -57,12 +57,12 @@ def decompile(string, fmt='auto'):
     """
     if fmt == 'auto':
         fmt = guess_format(string)
-    print('Format: {}'.format(fmt))
-    print('In: {}'.format(string))
+    print(('Format: {}'.format(fmt)))
+    print(('In: {}'.format(string)))
     parse, print_, simplify = FORMATS[fmt]
     decompiled = simplify(string)
     result = print_(decompiled)
-    print('Out: {}'.format(result))
+    print(('Out: {}'.format(result)))
     return result
 
 
@@ -74,7 +74,7 @@ def repl(fmt='sexpr'):
         sys.stdout.write('> ')
         sys.stdout.flush()
         try:
-            string = raw_input()
+            string = input()
         except KeyboardInterrupt:
             sys.stderr.write('Bye!\n')
             sys.stderr.flush()
@@ -119,16 +119,16 @@ def simplify(string, engine='bohm', fmt='auto'):
         fmt = guess_format(string)
     if engine not in ENGINES:
         raise ValueError('Unknown engine {}, try one of: {}'.format(
-            engine, ', '.join(ENGINES.keys())))
-    print('Format: {}'.format(fmt))
-    print('Engine: {}'.format(engine))
-    print('In: {}'.format(string))
+            engine, ', '.join(list(ENGINES.keys()))))
+    print(('Format: {}'.format(fmt)))
+    print(('Engine: {}'.format(engine)))
+    print(('In: {}'.format(string)))
     parse, print_, simplify = FORMATS[fmt]
     term = parse(string)
     term = link(term)
     result = ENGINES[engine].simplify(term)
     result_string = print_(result)
-    print('Out: {}'.format(result_string))
+    print(('Out: {}'.format(result_string)))
     return result_string
 
 
@@ -146,16 +146,16 @@ def reduce(string, engine='bohm', fmt='auto'):
         fmt = guess_format(string)
     if engine not in ENGINES:
         raise ValueError('Unknown engine {}, try one of: {}'.format(
-            engine, ', '.join(ENGINES.keys())))
-    print('Format: {}'.format(fmt))
-    print('Engine: {}'.format(engine))
-    print('In: {}'.format(string))
+            engine, ', '.join(list(ENGINES.keys()))))
+    print(('Format: {}'.format(fmt)))
+    print(('Engine: {}'.format(engine)))
+    print(('In: {}'.format(string)))
     parse, print_, simplify = FORMATS[fmt]
     term = parse(string)
     term = link(term)
     result = ENGINES[engine].reduce(term)
     result_string = print_(result)
-    print('Out: {}'.format(result_string))
+    print(('Out: {}'.format(result_string)))
     return result_string
 
 
@@ -165,16 +165,16 @@ def step(string, steps=10, fmt='auto'):
     """Step through reduction sequence of bohm library."""
     if fmt == 'auto':
         fmt = guess_format(string)
-    print('Format: {}'.format(fmt))
+    print(('Format: {}'.format(fmt)))
     parse, print_, simplify = FORMATS[fmt]
     term = simplify(string)
-    print(print_(term))
-    for step in xrange(steps):
+    print((print_(term)))
+    for step in range(steps):
         term = bohm.try_compute_step(term)
         if term is None:
             print('DONE')
             return step
-        print(print_(term))
+        print((print_(term)))
     return None
 
 

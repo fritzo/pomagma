@@ -49,19 +49,19 @@ def test_s3():
             text = random_uuid()
             with in_temp_dir():
                 dump(text, filename)
-                print 'putting to s3...',
+                print('putting to s3...', end=' ')
                 pomagma.io.s3.s3_lazy_put(filename)
-                print 'done'
+                print('done')
             assert pomagma.io.s3.s3_exists(filename)
             with in_temp_dir():
-                print 'getting from s3...',
+                print('getting from s3...', end=' ')
                 pomagma.io.s3.s3_lazy_get(filename)
-                print 'done'
+                print('done')
                 assert os.path.exists(filename)
                 assert load(filename) == text
-            print 'removing from s3...',
+            print('removing from s3...', end=' ')
             pomagma.io.s3.s3_remove(filename)
-            print 'done'
+            print('done')
             assert not pomagma.io.s3.s3_exists(filename)
 
 

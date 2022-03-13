@@ -37,8 +37,7 @@ clang-ctags:
 
 lint: FORCE
 	# TODO Use clang-tidy.
-	$(info flake8)
-	@flake8 --jobs auto --ignore=E402 $(PY_FILES)
+	flake8
 
 clang-format: FORCE
 	$(info clang-format)

@@ -2,7 +2,7 @@
 # Unlicence and re-licenced under Apache 2.0 as part of Pomagma.
 
 import pytest
-from goto import goto, label, with_goto
+from .goto import goto, label, with_goto
 
 CODE = '''\
 i = 0
@@ -102,7 +102,7 @@ def test_jump_out_of_try_block():
         try:
             rv = None
             goto.end
-        except:
+        except BaseException:
             rv = 'except'
         finally:
             rv = 'finally'
@@ -116,7 +116,7 @@ def test_jump_into_try_block():
     def func():
         try:
             label.block
-        except:
+        except BaseException:
             pass
         goto.block
 

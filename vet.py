@@ -41,7 +41,7 @@ def hash_files(filenames):
 def read_vetted_hashes():
     with open(VETTED) as f:
         reader = csv.reader(f)
-        header = reader.next()
+        header = next(reader)
         assert header == ['filename', 'hexdigest'], header
         hashes = {filename: hexdigest for filename, hexdigest in reader}
     return hashes
@@ -51,7 +51,7 @@ def write_vetted_hashes(hashes):
     with open(VETTED, 'w') as f:
         writer = csv.writer(f)
         writer.writerow(['filename', 'hexdigest'])
-        for filename, hexdigest in sorted(hashes.iteritems()):
+        for filename, hexdigest in sorted(hashes.items()):
             writer.writerow([filename, hexdigest])
 
 
@@ -64,17 +64,17 @@ def vet(*filenames):
     """
     hashes = read_vetted_hashes()
     if list(filenames) == ['all']:
-        filenames = hashes.keys()
+        filenames = list(hashes.keys())
     for filename in filenames:
         if filename in hashes:
             if os.path.exists(filename):
-                print 'Updating', filename
+                print('Updating', filename)
                 hashes[filename] = hash_file(filename)
             else:
-                print 'Removing', filename
+                print('Removing', filename)
                 del hashes[filename]
         else:
-            print 'Adding', filename
+            print('Adding', filename)
             hashes[filename] = hash_file(filename)
     write_vetted_hashes(hashes)
 
@@ -86,11 +86,11 @@ def check_diffs(actual, expected):
         if filename in actual
         if actual[filename] != expected[filename])
     if failures:
-        print 'Files differ from vetted versions:'
+        print('Files differ from vetted versions:')
         for filename in failures:
-            print ' ', filename
-        print 'Use "./diff.py codegen" to see differences.'
-        print 'Use "./vet.py vet" to vet the changed files.'
+            print(' ', filename)
+        print('Use "./diff.py codegen" to see differences.')
+        print('Use "./vet.py vet" to vet the changed files.')
     return failures
 
 
@@ -100,11 +100,11 @@ def check_missing(actual, expected):
         for filename in expected
         if filename not in actual)
     if failures:
-        print 'Files have not been generated:'
+        print('Files have not been generated:')
         for filename in failures:
-            print ' ', filename
-        print 'Use "make" to generate files if they should still exist.'
-        print 'Use "./vet.py vet -filename" to remove files.'
+            print(' ', filename)
+        print('Use "make" to generate files if they should still exist.')
+        print('Use "./vet.py vet -filename" to remove files.')
     return failures
 
 
@@ -115,10 +115,10 @@ def check_unknown(actual, expected):
         for filename in glob.glob(pattern)
         if filename not in expected)
     if failures:
-        print 'Files have no vetted versions:'
+        print('Files have no vetted versions:')
         for filename in failures:
-            print ' ', filename
-        print 'Use "./vet.py vet filename" to add new files.'
+            print(' ', filename)
+        print('Use "./vet.py vet filename" to add new files.')
     return failures
 
 

@@ -36,11 +36,11 @@ class ServerError(Exception):
 class Client(object):
 
     def __init__(self, address, poll_callback=None):
-        assert isinstance(address, basestring), address
+        assert isinstance(address, str), address
         assert poll_callback is None or callable(poll_callback), poll_callback
         self._poll_callback = poll_callback
         self._socket = CONTEXT.socket(zmq.REQ)
-        print 'connecting to analyst at', address
+        print('connecting to analyst at', address)
         self._socket.connect(address)
 
     def __enter__(self):
@@ -71,7 +71,7 @@ class Client(object):
         self._call(request)
 
     def ping_id(self, id):
-        assert isinstance(id, basestring), id
+        assert isinstance(id, str), id
         request = Request()
         request.id = id
         reply = self._call(request)
@@ -94,10 +94,10 @@ class Client(object):
     def simplify(self, codes):
         assert isinstance(codes, list), codes
         for code in codes:
-            assert isinstance(code, basestring), code
+            assert isinstance(code, str), code
         results = self._simplify(codes)
         assert len(results) == len(codes), results
-        return map(str, results)
+        return list(map(str, results))
 
     def _solve(self, var, theory, max_solutions):
         request = Request()
@@ -106,13 +106,13 @@ class Client(object):
             request.solve.max_solutions = max_solutions
         reply = self._call(request)
         return {
-            'necessary': map(str, reply.solve.necessary),
-            'possible': map(str, reply.solve.possible),
+            'necessary': list(map(str, reply.solve.necessary)),
+            'possible': list(map(str, reply.solve.possible)),
         }
 
     def solve(self, var, theory, max_solutions=None):
-        assert isinstance(var, basestring), var
-        assert isinstance(theory, basestring), theory
+        assert isinstance(var, str), var
+        assert isinstance(theory, str), theory
         if max_solutions is not None:
             assert isinstance(max_solutions, (int, float)), max_solutions
         solutions = self._solve(var, theory, max_solutions)
@@ -139,7 +139,7 @@ class Client(object):
     def validate(self, codes):
         assert isinstance(codes, list), codes
         for code in codes:
-            assert isinstance(code, basestring), code
+            assert isinstance(code, str), code
         results = self._validate(codes)
         assert len(results) == len(codes), results
         return results
@@ -169,9 +169,9 @@ class Client(object):
             assert isinstance(line, dict), line
             assert sorted(line.keys()) == ['code', 'name']
             name = line['name']
-            assert name is None or isinstance(name, basestring), name
+            assert name is None or isinstance(name, str), name
             code = line['code']
-            assert isinstance(code, basestring), code
+            assert isinstance(code, str), code
         results = self._validate_corpus(lines)
         assert len(results) == len(lines), results
         return results
@@ -181,7 +181,7 @@ class Client(object):
         request = Request()
         request.validate_facts.SetInParent()
         for fact in facts:
-            assert isinstance(fact, basestring), fact
+            assert isinstance(fact, str), fact
             request.validate_facts.facts.append(compiler.desugar(fact))
         reply = self._call(request)
         while block and reply.validate_facts.result == Response.MAYBE:
@@ -210,11 +210,11 @@ class Client(object):
         request.fit_language.SetInParent()
         if histogram is not None:
             terms = request.fit_language.histogram.terms
-            for name, count in histogram['symbols'].iteritems():
+            for name, count in histogram['symbols'].items():
                 term = terms.add()
                 term.name = name
                 term.count = count
-            for ob, count in histogram['obs'].iteritems():
+            for ob, count in histogram['obs'].items():
                 term = terms.add()
                 term.ob = ob
                 term.count = count
@@ -231,10 +231,10 @@ class Client(object):
             assert isinstance(histogram, dict), histogram
             keys = set(histogram.keys())
             assert keys == set(['symbols', 'obs']), keys
-            for name, count in histogram['symbols'].iteritems():
+            for name, count in histogram['symbols'].items():
                 assert isinstance(name, str), name
                 assert isinstance(count, int), count
-            for ob, count in histogram['obs'].iteritems():
+            for ob, count in histogram['obs'].items():
                 assert isinstance(ob, int), ob
                 assert isinstance(count, int), count
         return self._fit_language(histogram)

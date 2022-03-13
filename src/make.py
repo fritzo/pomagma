@@ -115,14 +115,14 @@ def _test_atlas(theory):
 def test_atlas(theory='all'):
     """Test atlas exploration and analysis operations."""
     if theory == 'all':
-        theories = pomagma.util.MIN_SIZES.keys()
+        theories = list(pomagma.util.MIN_SIZES.keys())
         theories.sort(key=pomagma.util.MIN_SIZES.__getitem__)
     else:
         theories = [theory]
 
     for theory in theories:
-        print '-' * 78
-        print 'Testing', theory
+        print('-' * 78)
+        print('Testing', theory)
         _test_atlas(theory)
 
 
@@ -136,7 +136,7 @@ def test_analyst(theory):
         with analyst.load(theory, world, **opts) as db:
             fail_count = db.test()
     assert fail_count == 0, 'Failed {} cases'.format(fail_count)
-    print 'Passed analyst test'
+    print('Passed analyst test')
 
 
 @parsable
@@ -155,7 +155,7 @@ def profile_misc():
     ]
     assert cmds, 'no profiles found in {}'.format(pomagma.util.BIN)
     for cmd in cmds:
-        print 'Profiling', cmd
+        print('Profiling', cmd)
         pomagma.util.log_call(cmd, **opts)
     pomagma.util.check_call('cat', log_file)
 
@@ -174,7 +174,7 @@ def profile_surveyor(theory='skj', grow_by=64, extra_size=0, tool='time'):
         temp = pomagma.util.temp_name(DB('profile'))
         world = DB('world')
         if not os.path.exists(region):
-            print 'Creating {} for profile'.format(region)
+            print('Creating {} for profile'.format(region))
             assert os.path.exists(world), 'First initialize world map'
             with cartographer.load(theory, world, **opts) as db:
                 db.trim([{'size': size, 'filename': region}])
@@ -197,10 +197,10 @@ def profile_cartographer(theory='skj', extra_size=0, tool='time', infer=True):
         world = DB('world')
         world_size = atlas.get_item_count(world)
         if size >= world_size:
-            print 'Using world of size {}'.format(world_size)
+            print('Using world of size {}'.format(world_size))
             region = world
         elif not os.path.exists(region):
-            print 'Creating {} for profile'.format(region)
+            print('Creating {} for profile'.format(region))
             assert os.path.exists(world), 'First initialize world map'
             with cartographer.load(theory, world, **opts) as db:
                 db.trim([{'size': size, 'filename': region}])
@@ -209,9 +209,9 @@ def profile_cartographer(theory='skj', extra_size=0, tool='time', infer=True):
             if infer:
                 for priority in [0, 1]:
                     count = db.infer(priority)
-                    print 'Proved {} theorems'.format(count)
+                    print('Proved {} theorems'.format(count))
             db.dump(temp)
-        print 'Hash:', atlas.get_hash(temp)
+        print('Hash:', atlas.get_hash(temp))
         os.remove(temp)
 
 

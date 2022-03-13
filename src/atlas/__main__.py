@@ -27,7 +27,7 @@ def cp(theory, source, destin):
 def blobs(root):
     """Find all blobs referenced under a root directory."""
     for blob in pomagma.atlas.find_used_blobs(root):
-        print blob
+        print(blob)
 
 
 parsable()

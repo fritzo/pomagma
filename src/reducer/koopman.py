@@ -1,7 +1,8 @@
 """Combinator Graph Reduction."""
+import sys
 
-_APP = intern('APP')
-_ATOM = intern('ATOM')
+_APP = sys.intern('APP')
+_ATOM = sys.intern('ATOM')
 
 
 def make_equation(lhs, rhs):
@@ -115,7 +116,7 @@ class Node(object):
 
 def ATOM(name):
     assert isinstance(name, str)
-    return Node(_ATOM, intern(name))
+    return Node(_ATOM, sys.intern(name))
 
 
 def APP(fun, arg):

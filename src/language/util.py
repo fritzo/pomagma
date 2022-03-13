@@ -2,6 +2,7 @@ import simplejson as json
 from parsable import parsable
 
 from pomagma.language.language_pb2 import Language, WeightedTerm
+import sys
 
 parsable = parsable.Parsable()
 
@@ -17,13 +18,13 @@ def json_dump(data, filename):
 
 
 ARITY_TO_PB2 = {
-    intern('NULLARY'): WeightedTerm.NULLARY,
-    intern('INJECTIVE'): WeightedTerm.INJECTIVE,
-    intern('BINARY'): WeightedTerm.BINARY,
-    intern('SYMMETRIC'): WeightedTerm.SYMMETRIC,
+    sys.intern('NULLARY'): WeightedTerm.NULLARY,
+    sys.intern('INJECTIVE'): WeightedTerm.INJECTIVE,
+    sys.intern('BINARY'): WeightedTerm.BINARY,
+    sys.intern('SYMMETRIC'): WeightedTerm.SYMMETRIC,
 }
 
-ARITY_FROM_PB2 = {val: key for key, val in ARITY_TO_PB2.iteritems()}
+ARITY_FROM_PB2 = {val: key for key, val in iter(ARITY_TO_PB2.items())}
 
 
 def normalize_dict(grouped):
@@ -32,13 +33,13 @@ def normalize_dict(grouped):
     '''
     total = sum(
         weight
-        for group in grouped.itervalues()
-        for weight in group.itervalues()
+        for group in iter(grouped.values())
+        for weight in iter(group.values())
     )
     assert total > 0, 'total weight is zero'
     scale = 1.0 / total
 
-    for group in grouped.itervalues():
+    for group in grouped.values():
         for key in group:
             group[key] *= scale
 
@@ -68,8 +69,8 @@ def dict_to_language(grouped):
     grouped = grouped.copy()
     normalize_dict(grouped)
     language = Language()
-    for arity, group in grouped.iteritems():
-        for name, weight in group.iteritems():
+    for arity, group in grouped.items():
+        for name, weight in group.items():
             term = language.terms.add()
             term.name = name
             term.arity = ARITY_TO_PB2[arity.upper()]
@@ -83,7 +84,7 @@ def language_to_dict(language):
     grouped = {}
     for term in language.terms:
         arity = ARITY_FROM_PB2[term.arity]
-        name = intern(str(term.name))
+        name = sys.intern(str(term.name))
         grouped.setdefault(arity, {})[name] = term.weight
     return grouped
 

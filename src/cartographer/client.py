@@ -16,11 +16,11 @@ Response = messages.CartographerResponse
 class Client(object):
 
     def __init__(self, address, poll_callback):
-        assert isinstance(address, basestring), address
+        assert isinstance(address, str), address
         assert callable(poll_callback), poll_callback
         self._poll_callback = poll_callback
         self._socket = CONTEXT.socket(zmq.REQ)
-        print 'connecting to cartographer at', address
+        print('connecting to cartographer at', address)
         self._socket.connect(address)
 
     def __enter__(self):
@@ -53,7 +53,7 @@ class Client(object):
         self._call(request)
 
     def crop(self, headroom=0):
-        assert isinstance(headroom, (int, long)), headroom
+        assert isinstance(headroom, int), headroom
         assert headroom >= 0, headroom
         request = Request()
         request.crop.SetInParent()
@@ -67,13 +67,13 @@ class Client(object):
         self._call(request)
 
     def aggregate(self, survey_in):
-        assert isinstance(survey_in, basestring), survey_in
+        assert isinstance(survey_in, str), survey_in
         assert os.path.exists(survey_in), survey_in
         self._aggregate(survey_in)
 
     def declare(self, *nullary_functions):
         for name in nullary_functions:
-            assert isinstance(name, basestring), name
+            assert isinstance(name, str), name
         request = Request()
         request.declare.SetInParent()
         request.declare.nullary_functions += nullary_functions
@@ -92,7 +92,7 @@ class Client(object):
         }
 
     def assume(self, facts_in):
-        assert isinstance(facts_in, basestring), facts_in
+        assert isinstance(facts_in, str), facts_in
         assert os.path.exists(facts_in), facts_in
         return self._assume(facts_in)
 
@@ -114,7 +114,7 @@ class Client(object):
                 pass
 
     def execute(self, program):
-        assert isinstance(program, basestring), program
+        assert isinstance(program, str), program
         assert not re.search('FOR_BLOCK', program), 'cannot parallelize'
         request = Request()
         request.execute.program = program
@@ -139,7 +139,7 @@ class Client(object):
         self._call(request)
 
     def dump(self, world_out):
-        assert isinstance(world_out, basestring), world_out
+        assert isinstance(world_out, str), world_out
         assert os.path.exists(os.path.dirname(os.path.abspath(world_out)))
         with pomagma.util.temp_copy(world_out) as temp_world_out:
             self._dump(temp_world_out)
@@ -163,7 +163,7 @@ class Client(object):
             assert 'size' in task, task
             assert isinstance(task['size'], int), task['size']
             assert 'filename' in task, task
-            assert isinstance(task['filename'], basestring), task['filename']
+            assert isinstance(task['filename'], str), task['filename']
             temperature = task.setdefault('temperature', 1)
             assert temperature in [0, 1], temperature
         filenames = [task['filename'] for task in tasks]
@@ -188,8 +188,8 @@ class Client(object):
         }
 
     def conjecture(self, diverge_out, equal_out, max_count=1000):
-        assert isinstance(diverge_out, basestring), diverge_out
-        assert isinstance(equal_out, basestring), equal_out
+        assert isinstance(diverge_out, str), diverge_out
+        assert isinstance(equal_out, str), equal_out
         assert isinstance(max_count, int)
         assert max_count > 0
         with pomagma.util.temp_copy(diverge_out) as temp_diverge_out:

@@ -24,8 +24,8 @@ def up_to_date(infiles, outfiles):
     if not all(os.path.exists(f) for f in infiles + outfiles):
         return False
     infiles = glob.glob(os.path.join(SRC, 'compiler', '*.py')) + infiles
-    intimes = map(os.path.getmtime, infiles)
-    outtimes = map(os.path.getmtime, outfiles)
+    intimes = list(map(os.path.getmtime, infiles))
+    outtimes = list(map(os.path.getmtime, outfiles))
     return max(intimes) < min(outtimes)
 
 
@@ -55,11 +55,11 @@ def abstract(*args):
         abstract x y z 'APP APP x z APP y z'
 
     """
-    args = map(parser.parse_string_to_expr, args)
+    args = list(map(parser.parse_string_to_expr, args))
     expression, vars = args[-1], args[:-1]
     for var in reversed(vars):
         expression = expression.abstract(var)
-    print expression
+    print(expression)
 
 
 @parsable
@@ -72,8 +72,8 @@ def desugar(*exprs):
 
     """
     for expr in map(parser.parse_string_to_expr, exprs):
-        print expr
-        print '  =', desugar_expr(expr)
+        print(expr)
+        print('  =', desugar_expr(expr))
 
 
 @parsable
@@ -83,7 +83,7 @@ def complete(*facts):
     facts = completion.complete(facts)
     facts = sorted(facts)
     for fact in facts:
-        print fact
+        print(fact)
 
 
 @contextlib.contextmanager
@@ -91,8 +91,8 @@ def writer(outfile=None):
     if outfile is None:
 
         def write(line):
-            print line
-            print
+            print(line)
+            print()
 
         yield write
     else:
@@ -107,22 +107,22 @@ def writer(outfile=None):
 
 def print_compiles(compiles):
     for cost, seq, plan in compiles:
-        print '# cost = {0}'.format(cost)
-        print '# infer {0}'.format(seq)
-        print re.sub(': ', '\n', repr(plan))
-        print
+        print('# cost = {0}'.format(cost))
+        print('# infer {0}'.format(seq))
+        print(re.sub(': ', '\n', repr(plan)))
+        print()
 
 
 def measure_sequent(sequent):
-    print '-' * 78
-    print 'Compiling full search: {0}'.format(sequent)
+    print('-' * 78)
+    print('Compiling full search: {0}'.format(sequent))
     compiles = compile_full(sequent)
     print_compiles(compiles)
     full_cost = add_costs(c for (c, _, _) in compiles)
 
     incremental_cost = None
     for event in get_events(sequent):
-        print 'Compiling incremental search given: {0}'.format(event)
+        print('Compiling incremental search given: {0}'.format(event))
         compiles = compile_given(sequent, event)
         print_compiles(compiles)
         if event.args:
@@ -134,7 +134,7 @@ def measure_sequent(sequent):
         else:
             pass  # event is only triggered once, so ignore cost
 
-    print '# full cost =', full_cost, 'incremental cost =', incremental_cost
+    print('# full cost =', full_cost, 'incremental cost =', incremental_cost)
 
 
 @parsable
@@ -146,11 +146,11 @@ def contrapositves(*filenames):
     for filename in filenames:
         sequents += load_theory(filename)['rules']
     for sequent in sequents:
-        print sequent.ascii()
-        print
+        print(sequent.ascii())
+        print()
         for neg in sequent.contrapositives():
-            print neg.ascii(indent=4)
-            print
+            print(neg.ascii(indent=4))
+            print()
 
 
 @parsable
@@ -162,11 +162,11 @@ def normalize(*filenames):
     for filename in filenames:
         sequents += load_theory(filename)['rules']
     for sequent in sequents:
-        print sequent.ascii()
-        print
+        print(sequent.ascii())
+        print()
         for neg in sequent.contrapositives():
-            print neg.ascii(indent=4)
-            print
+            print(neg.ascii(indent=4))
+            print()
 
 
 @parsable
@@ -243,8 +243,8 @@ def test_compile(*filenames):
                 programs += [
                     '',
                     '# using {}'.format(sequent),
-                    '# infer '.format(seq),
-                    '# cost = '.format(cost),
+                    '# infer {}'.format(seq),
+                    '# cost = {}'.format(cost),
                 ]
                 plan.program(programs)
 
@@ -259,7 +259,7 @@ def test_compile(*filenames):
                     ]
                     plan.program(programs)
 
-        print '\n'.join(programs)
+        print('\n'.join(programs))
 
 
 @parsable
@@ -278,7 +278,7 @@ def profile_tasks(*filenames, **kwargs):
     if loadfrom is None:
         command = 'batch_extract_tasks({}, parallel=false)'.format(
             ', '.join(map('"{}"'.format, filenames)))
-        print 'profiling {}'.format(command)
+        print('profiling {}'.format(command))
         profile.run(command, saveto)
         loadfrom = saveto
     stats = pstats.Stats(loadfrom)
@@ -305,7 +305,7 @@ def profile_compile(*filenames, **kwargs):
     if loadfrom is None:
         command = 'compile({}, frontend_out="/dev/null")'.format(
             ', '.join(map('"{}"'.format, filenames)))
-        print 'profiling {}'.format(command)
+        print('profiling {}'.format(command))
         profile.runctx(command, {'compile': compile}, None, saveto)
         loadfrom = saveto
     stats = pstats.Stats(loadfrom)
@@ -324,10 +324,10 @@ def test_close_rules(infile, is_extensional=True):
     assert infile.endswith('.theory')
     rules = load_theory(infile)['rules']
     for rule in rules:
-        print
-        print '#', rule
+        print()
+        print('#', rule)
         for fact in extensional.derive_facts(rule):
-            print fact
+            print(fact)
             if is_extensional:
                 extensional.validate(fact)
 
@@ -370,7 +370,7 @@ def compile(*infiles, **kwargs):
         [relpath(path) for path in infiles] +
         [
             '{0}={1}'.format(key, relpath(path))
-            for key, path in kwargs.iteritems()
+            for key, path in kwargs.items()
         ])
     header = (
         '# This file was auto generated by pomagma using:\n'
@@ -391,13 +391,13 @@ def compile(*infiles, **kwargs):
 
     symbols = frontend.write_symbols(rules, facts)
     with open(symbols_out, 'w') as f:
-        print '# writing', symbols_out
+        print('# writing', symbols_out)
         f.write(header)
         for arity, name in symbols:
             f.write('\n{} {}'.format(arity, name))
 
     with open(facts_out, 'w') as f:
-        print '# writing', facts_out
+        print('# writing', facts_out)
         f.write(header)
         for fact in facts:
             assert fact.is_rel(), 'bad fact: %s' % fact
@@ -406,7 +406,7 @@ def compile(*infiles, **kwargs):
 
     programs = frontend.write_programs(rules)
     with open(programs_out, 'w') as f:
-        print '# writing', programs_out
+        print('# writing', programs_out)
         f.write(header)
         for line in programs:
             f.write('\n')
@@ -415,7 +415,7 @@ def compile(*infiles, **kwargs):
     lines = sequencer.load_lines(programs_out)
     optimized = sequencer.optimize(lines)
     with open(optimized_out, 'w') as f:
-        print '# writing', optimized_out
+        print('# writing', optimized_out)
         f.write(header)
         for line in optimized:
             f.write('\n')
@@ -432,7 +432,7 @@ def batch_compile(parallel=True):
     params = []
     theories_json = os.path.join(SRC, 'theory', 'theories.json')
     theories = json_load(theories_json)
-    for name, spec in theories.iteritems():
+    for name, spec in theories.items():
         infiles = sorted(
             os.path.join(SRC, 'theory', '{}.theory'.format(t))
             for t in spec['theories']

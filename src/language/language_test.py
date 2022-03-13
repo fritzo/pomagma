@@ -12,9 +12,9 @@ def assert_converts(expected):
     language = dict_to_language(expected)
     actual = language_to_dict(language)
     assert set(expected.keys()) == set(actual.keys())
-    for arity in expected.keys():
+    for arity in list(expected.keys()):
         assert set(expected[arity].keys()) == set(actual[arity].keys())
-        for term, weight in expected[arity].iteritems():
+        for term, weight in expected[arity].items():
             assert abs(weight - actual[arity][term]) < 1e-8
 
 

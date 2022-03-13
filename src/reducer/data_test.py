@@ -90,17 +90,17 @@ EXAMPLES_BY_TYPE = {
 EXAMPLES = {
     'ok': [
         (tp, term, value)
-        for tp, examples in EXAMPLES_BY_TYPE.iteritems()
+        for tp, examples in EXAMPLES_BY_TYPE.items()
         for term, value in examples.get('ok', [])
     ],
     'encode_error': [
         (tp, value)
-        for tp, examples in EXAMPLES_BY_TYPE.iteritems()
+        for tp, examples in EXAMPLES_BY_TYPE.items()
         for value in examples.get('encode_error', [])
     ],
     'decode_error': [
         (tp, term)
-        for tp, examples in EXAMPLES_BY_TYPE.iteritems()
+        for tp, examples in EXAMPLES_BY_TYPE.items()
         for term in examples.get('decode_error', [])
     ],
 }
@@ -175,7 +175,7 @@ def term_of_type(tp):
         if tp == 'bool':
             return s.sampled_from([lib.true, lib.false])
         if tp == 'byte':
-            return s.sampled_from(lib.byte_table.values())
+            return s.sampled_from(list(lib.byte_table.values()))
         if tp == 'num':
             return s.recursive(
                 s.just(lib.zero),

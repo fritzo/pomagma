@@ -1,6 +1,7 @@
 import re
 
 from pomagma.compiler.util import intern_keys, memoize_arg
+import sys
 
 re_const = re.compile('[A-Z]+$')
 
@@ -45,24 +46,24 @@ ARITY_TABLE = intern_keys({
     'FIXES': 'BinaryMeta',
 })
 
-RELATION_ARITIES = frozenset(map(intern, [
+RELATION_ARITIES = frozenset(list(map(sys.intern, [
     'UnaryRelation',
     'Equation',
     'BinaryRelation',
-]))
+])))
 
-FUNCTION_ARITIES = frozenset(map(intern, [
+FUNCTION_ARITIES = frozenset(list(map(sys.intern, [
     'NullaryFunction',
     'InjectiveFunction',
     'BinaryFunction',
     'SymmetricFunction',
-]))
+])))
 
-META_ARITIES = frozenset(map(intern, [
+META_ARITIES = frozenset(list(map(sys.intern, [
     'UnaryMeta',
     'BinaryMeta',
     'TernaryMeta',
-]))
+])))
 
 
 def declare_arity(name, arity):
@@ -72,7 +73,7 @@ def declare_arity(name, arity):
     if name in ARITY_TABLE:
         assert ARITY_TABLE[name] == arity, 'Cannot change arity'
     else:
-        ARITY_TABLE[intern(name)] = arity
+        ARITY_TABLE[sys.intern(name)] = arity
 
 
 @memoize_arg
@@ -124,7 +125,7 @@ def is_positive(symbol):
 
 
 def validate():
-    for symbol, arity in ARITY_TABLE.iteritems():
+    for symbol, arity in ARITY_TABLE.items():
         assert not is_var(symbol)
         assert arity in NARGS_TABLE
     assert get_arity('x') == 'Variable'

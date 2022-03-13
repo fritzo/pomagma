@@ -23,7 +23,7 @@ def guard_vars(expr):
     elif expr.is_var():
         return VAR(expr)
     else:
-        args = map(guard_vars, expr.args)
+        args = list(map(guard_vars, expr.args))
         return Expression.make(expr.name, *args)
 
 
@@ -34,7 +34,7 @@ def unguard_vars(expr):
     elif expr.is_var():
         return expr
     else:
-        args = map(unguard_vars, expr.args)
+        args = list(map(unguard_vars, expr.args))
         return Expression.make(expr.name, *args)
 
 
@@ -63,13 +63,13 @@ def compile_solver(expr, theory):
             LESS TOP APP s TOP
             """
     '''
-    assert isinstance(expr, basestring), expr
-    assert isinstance(theory, basestring), theory
+    assert isinstance(expr, str), expr
+    assert isinstance(theory, str), theory
     expr = desugar_expr(parse_string_to_expr(expr))
     assert expr.vars, expr
     theory = parse_theory_string(theory)
-    facts = map(desugar_expr, theory['facts'])
-    rules = map(desugar_sequent, theory['rules'])
+    facts = list(map(desugar_expr, theory['facts']))
+    rules = list(map(desugar_sequent, theory['rules']))
     sequents = []
     can_infer_necessary = not rules and all(f.vars <= expr.vars for f in facts)
     can_infer_possible = expr.is_var()  # TODO generalize to injective exprs

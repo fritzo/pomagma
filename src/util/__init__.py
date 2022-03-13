@@ -25,7 +25,7 @@ DB = '{}.pb'.format
 BLOB_DIR = os.path.join(DATA, 'blob')
 debug = int(os.environ.get('POMAGMA_DEBUG', 0))
 if debug:
-    print 'Running in debug mode'
+    print('Running in debug mode')
     BUILD = os.path.join(ROOT, 'build', 'debug')
 else:
     BUILD = os.path.join(ROOT, 'build', 'release')
@@ -77,10 +77,10 @@ def unicode_to_str(data):
     '''
     Convert all unicode leaves of a json-like object to strings, in-place.
     '''
-    if isinstance(data, unicode):
+    if isinstance(data, str):
         data = str(data)
     elif isinstance(data, dict):
-        for key, value in data.iteritems():
+        for key, value in data.items():
             data[key] = unicode_to_str(value)
     elif isinstance(data, (list, tuple)):
         for key, value in enumerate(data):
@@ -110,7 +110,7 @@ def debuggable(fun):
     def debuggable_fun(*args, **kwargs):
         try:
             return fun(*args, **kwargs)
-        except:
+        except BaseException:
             type, value, tb = sys.exc_info()
             traceback.print_exc()
             pdb.post_mortem(tb)
@@ -139,11 +139,11 @@ def chdir(path):
     old_path = os.path.abspath(os.path.curdir)
     try:
         # os.makedirs(path)
-        print '# cd {}\n'.format(path)
+        print('# cd {}\n'.format(path))
         os.chdir(path)
         yield os.path.curdir
     finally:
-        print '# cd {}\n'.format(old_path)
+        print('# cd {}\n'.format(old_path))
         os.chdir(old_path)
 
 
@@ -195,7 +195,7 @@ def in_temp_dir():
         cleanup = True
     finally:
         if cleanup:
-            print '# rm -rf {}\n'.format(path)
+            print('# rm -rf {}\n'.format(path))
             shutil.rmtree(path)
 
 
@@ -249,7 +249,7 @@ def log_duration():
         yield
     finally:
         duration = timeit.default_timer() - start_time
-        print '# took {:0.3g} sec'.format(duration)
+        print('# took {:0.3g} sec'.format(duration))
 
 
 def abspath(path):
@@ -274,7 +274,7 @@ def log_print(message, log_file):
     with open(log_file, 'a') as log:
         log.write(message)
         log.write('\n')
-    print message
+    print(message)
 
 
 def make_env(options):
@@ -289,13 +289,13 @@ def make_env(options):
     options['blob_dir'] = os.path.abspath(options.get('blob_dir', BLOB_DIR))
     env = {
         'POMAGMA_{}'.format(key.upper()): str(val)
-        for key, val in options.iteritems()
+        for key, val in iter(options.items())
     }
     return env
 
 
 def print_command(args, env={}):
-    lines = ['{}={}'.format(key, val) for key, val in env.iteritems()]
+    lines = ['{}={}'.format(key, val) for key, val in env.items()]
     lines += args
     message = '{}\n'.format(' \\\n  '.join(lines))
     sys.stderr.write(message)
@@ -316,9 +316,9 @@ def check_call(*args):
 
 
 def print_logged_error(log_file):
-    print
-    print '==== LOG FILE ===='
-    print 'file://{}'.format(log_file)
+    print()
+    print('==== LOG FILE ====')
+    print('file://{}'.format(log_file))
     grep = ' '.join([
         'grep',
         '--before-context=40',
@@ -367,7 +367,7 @@ def prepare_core_dump():
     if os.path.exists('core'):
         os.remove('core')
     if subprocess.check_output('ulimit -c', shell=True).strip() == '0':
-        print 'WARNING cannot write core file; try `ulimit -c unlimited`'
+        print('WARNING cannot write core file; try `ulimit -c unlimited`')
 
 
 def log_call(*args, **options):
@@ -377,7 +377,7 @@ def log_call(*args, **options):
     dump stack trace to log file.
 
     """
-    args = map(str, args)
+    args = list(map(str, args))
     args = options.pop('runner', '').split() + args
     extra_env = make_env(options)
     log_file = extra_env['POMAGMA_LOG_FILE']
@@ -406,7 +406,7 @@ def log_Popen(*args, **options):
     Pass options into environment variables. Log process.
 
     """
-    args = map(str, args)
+    args = list(map(str, args))
     args = options.pop('runner', '').split() + args
     extra_env = make_env(options)
     prepare_core_dump()

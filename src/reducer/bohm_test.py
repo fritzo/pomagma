@@ -940,7 +940,7 @@ def test_try_compute_step(term, expected):
 @hypothesis.given(s_terms)
 @hypothesis.settings(max_examples=1000)
 def test_try_compute_step_runs(term):
-    for step in xrange(5):
+    for step in range(5):
         with xfail_if_not_implemented():
             result = bohm.try_compute_step(term)
         if is_normal(term):

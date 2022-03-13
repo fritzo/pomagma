@@ -129,7 +129,7 @@ def try_compute_step(term):
 def reduce(term, budget=100):
     """Beta-reduce term up to budget."""
     term = convert(term)
-    for _ in xrange(budget):
+    for _ in range(budget):
         reduced = try_compute_step(term)
         if reduced is None:
             break

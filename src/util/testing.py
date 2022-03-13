@@ -11,7 +11,8 @@ def for_each(examples):
         args, vargs, kwargs, defaults = inspect.getargspec(fun)
         if vargs or kwargs or defaults:
             raise TypeError('\n  '.join([
-                'Unsupported signature: '.format(fun),
+                'Unsupported signature: '
+                'fun = {}'.format(fun),
                 'args = {}'.format(args),
                 'vargs = {}'.format(vargs),
                 'kwargs = {}'.format(kwargs),
@@ -29,7 +30,8 @@ def for_each_kwargs(examples):
         args, vargs, kwargs, defaults = inspect.getargspec(fun)
         if vargs or kwargs:
             raise TypeError('\n  '.join([
-                'Unsupported signature: '.format(fun),
+                'Unsupported signature: '
+                'fun = {}'.format(fun),
                 'args = {}'.format(args),
                 'vargs = {}'.format(vargs),
                 'kwargs = {}'.format(kwargs),
@@ -39,7 +41,7 @@ def for_each_kwargs(examples):
         # FIXME This wrapper pollutes the test log.
         @functools.wraps(fun)
         def wrapped_fun(example):
-            example = {k: v for k, v in example.iteritems() if k in args}
+            example = {k: v for k, v in iter(example.items()) if k in args}
             return fun(**example)
 
         return pytest.mark.parametrize('example', examples)(wrapped_fun)

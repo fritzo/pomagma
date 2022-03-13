@@ -21,17 +21,17 @@ parsable = parsable.Parsable()
 
 def try_connect_s3(bucket):
     if pomagma.util.TRAVIS_CI:
-        print 'WARNING avoid connecting to bucket on travis-ci'
+        print('WARNING avoid connecting to bucket on travis-ci')
         return None
     try:
         connection = boto.connect_s3().get_bucket(bucket)
-        print 'connected to bucket', bucket
+        print('connected to bucket', bucket)
         return connection
     except boto.exception.NoAuthHandlerFound as e:
-        print 'WARNING failed to authenticate s3 bucket {}\n'.format(bucket), e
+        print('WARNING failed to authenticate s3 bucket {}\n'.format(bucket), e)
         return None
     except Exception as e:
-        print 'WARNING failed to connect to s3 bucket {}\n'.format(bucket), e
+        print('WARNING failed to connect to s3 bucket {}\n'.format(bucket), e)
         return None
 
 
@@ -44,7 +44,7 @@ def s3_lazy_put(filename, assume_immutable=False):
     key = BUCKET.get_key(filename)
     if key is None:
         key = BUCKET.new_key(filename)
-        print 'uploading', filename
+        print('uploading', filename)
         key.set_contents_from_filename(filename)
         return key
     elif assume_immutable:
@@ -59,7 +59,7 @@ def s3_lazy_put(filename, assume_immutable=False):
             # print 'already synchronized'
             return key
         else:
-            print 'uploading', filename
+            print('uploading', filename)
             key.set_contents_from_filename(filename, md5=md5)
             return key
 
@@ -68,7 +68,7 @@ def s3_lazy_get(filename, assume_immutable=False):
     """Get file from s3 only if out of sync."""
     key = BUCKET.get_key(filename)
     if key is None:
-        print 'missing', filename
+        print('missing', filename)
         return key
     if os.path.exists(filename):
         if assume_immutable:
@@ -85,7 +85,7 @@ def s3_lazy_get(filename, assume_immutable=False):
     dirname = os.path.dirname(filename)
     if dirname and not os.path.exists(dirname):
         os.makedirs(dirname)
-    print 'downloading', filename
+    print('downloading', filename)
     key.get_contents_to_filename(filename)
     return key
 
@@ -128,7 +128,7 @@ def archive_7z(filename):
     filename_ext = filename + '.7z'
     if os.path.exists(filename_ext):
         os.remove(filename_ext)
-    print 'compressing', filename
+    print('compressing', filename)
     _silent_check_call(['7z', 'a', '-y', filename_ext, filename])
     return filename_ext
 
@@ -138,7 +138,7 @@ def extract_7z(filename_ext):
     filename = filename_ext[:-3]
     if os.path.exists(filename):
         os.remove(filename)
-    print 'extracting', filename_ext
+    print('extracting', filename_ext)
     _silent_check_call(['7z', 'x', '-mtm=off', '-y', filename_ext])
     return filename
 
@@ -202,7 +202,7 @@ def remove(filename):
 
 def parallel_map(fun, args):
     if len(args) <= 1:
-        return map(fun, args)
+        return list(map(fun, args))
     else:
         return multiprocessing.Pool().map(fun, args)
 
@@ -221,13 +221,13 @@ BLACKLIST = re.compile('(test|core|temp|mutex|queue|socket|7z)')
 
 def find(path):
     if os.path.isdir(path):
-        return filter(os.path.isfile, [
+        return list(filter(os.path.isfile, [
             os.path.abspath(os.path.join(root, filename))
             for root, dirnames, filenames in os.walk(path)
             if not BLACKLIST.search(root)
             for filename in filenames
             if not BLACKLIST.search(filename)
-        ])
+        ]))
     elif not BLACKLIST.search(os.path.basename(path)):
         return [os.path.abspath(path)]
     else:
@@ -241,14 +241,14 @@ def find_s3(prefix=''):
     '''
     assert BUCKET
     for filename in listdir(prefix):
-        print filename
+        print(filename)
 
 
 @parsable
 def find_local(path='.'):
     """Find copyable files on local filesystem."""
     for filename in find(path):
-        print filename
+        print(filename)
 
 
 @parsable
@@ -284,8 +284,8 @@ def pull(*filenames):
 def push(*filenames):
     """Push files to S3 from local cache."""
     assert BUCKET
-    filenames = sum(map(find, filenames), [])
-    filenames = map(os.path.relpath, filenames)
+    filenames = sum(list(map(find, filenames)), [])
+    filenames = list(map(os.path.relpath, filenames))
     parallel_map(put, filter_cache(filenames))
 
 

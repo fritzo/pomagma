@@ -4,7 +4,7 @@ from math import exp
 from parsable import parsable
 
 import pomagma.util
-import util
+from . import util
 
 SPECS = {}
 
@@ -174,10 +174,10 @@ def make(theory):
     nullary_prob = 1.0 - compound_prob
     nullary_probs = {
         key: exp(-val)
-        for key, val in nullary_weights.iteritems()
+        for key, val in iter(nullary_weights.items())
     }
     scale = nullary_prob / sum(nullary_probs.values())
-    for key in nullary_probs.keys():
+    for key in list(nullary_probs.keys()):
         nullary_probs[key] *= scale
 
     probs = {
@@ -186,7 +186,7 @@ def make(theory):
         'BINARY': binary_probs,
         'SYMMETRIC': symmetric_probs,
     }
-    for arity, group in probs.items():
+    for arity, group in list(probs.items()):
         if not group:
             del probs[arity]
 

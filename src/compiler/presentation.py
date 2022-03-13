@@ -11,8 +11,8 @@ def pythonize_expr(proto_expr):
 
 @methodof(proto.Sequent)
 def pythonize_sequent(proto_sequent):
-    antecedents = map(pythonize_expr, proto_sequent.antecedents)
-    succedents = map(pythonize_expr, proto_sequent.succedents)
+    antecedents = list(map(pythonize_expr, proto_sequent.antecedents))
+    succedents = list(map(pythonize_expr, proto_sequent.succedents))
     return Sequent(antecedents, succedents)
 
 

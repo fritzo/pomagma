@@ -19,7 +19,7 @@ class ParseError(Exception):
     def __str__(self):
         header = ', '.join(['ParseError'] + [
             '{} {}'.format(key, val)
-            for key, val in sorted(self.debuginfo.iteritems())
+            for key, val in sorted(self.debuginfo.items())
         ])
         return '{}: {}'.format(header, self.message)
 
@@ -63,8 +63,8 @@ def parse_lines_to_rules(lines, **debuginfo):
     bars = find_bars(lines, **debuginfo)
     rules = []
     for lineno, left, right in bars:
-        bar_to_top = xrange(lineno - 1, -1, -1)
-        bar_to_bottom = xrange(lineno + 1, len(lines))
+        bar_to_top = range(lineno - 1, -1, -1)
+        bar_to_bottom = range(lineno + 1, len(lines))
         a, above = get_spans(lines, bar_to_top, left, right, **debuginfo)
         b, below = get_spans(lines, bar_to_bottom, left, right, **debuginfo)
         block = {'top': a + 1, 'bottom': b, 'left': left, 'right': right}
@@ -103,7 +103,7 @@ def parse_tokens_to_expr(tokens):
     head = tokens.pop()
     arity = get_arity(head)
     nargs = get_nargs(arity)
-    args = [parse_tokens_to_expr(tokens) for _ in xrange(nargs)]
+    args = [parse_tokens_to_expr(tokens) for _ in range(nargs)]
     return Expression.make(head, *args)
 
 

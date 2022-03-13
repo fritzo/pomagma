@@ -13,14 +13,14 @@ OPTIONS = {
 
 
 def test_ping():
-    print 'starting server'
+    print('starting server')
     server = pomagma.cartographer.serve(THEORY, WORLD, ADDRESS, **OPTIONS)
     try:
-        print 'connecting client'
+        print('connecting client')
         with server.connect() as client:
-            for _ in xrange(10):
-                print 'pinging server'
+            for _ in range(10):
+                print('pinging server')
                 client.ping()
     finally:
-        print 'stopping server'
+        print('stopping server')
         server.stop()

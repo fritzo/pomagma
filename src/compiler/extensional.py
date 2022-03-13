@@ -192,7 +192,7 @@ def validate(expr):
     assert expr.is_rel(), expr
     assert expr.name in ['LESS', 'EQUAL']
     if expr.name != 'EQUAL':
-        print 'WARNING: not validating {0}'.format(expr)
+        print('WARNING: not validating {0}'.format(expr))
         return
     while True:
         try:
@@ -215,7 +215,7 @@ def validate(expr):
             rhs = APP(rhs, fresh)
             expr = Expression.make(expr.name, lhs, rhs)
         except SkipValidation:
-            print 'WARNING: not validating {0}'.format(expr)
+            print('WARNING: not validating {0}'.format(expr))
             return
 
 
@@ -227,7 +227,7 @@ def iter_eta_substitutions(expr):
     '''
     varlist = list(expr.vars)
     fresh = get_fresh(expr.vars)
-    for cases in itertools.product(range(3), repeat=len(varlist)):
+    for cases in itertools.product(list(range(3)), repeat=len(varlist)):
         result = expr
         for var, case in zip(varlist, cases):
             if case == 0:
@@ -248,7 +248,7 @@ def iter_eta_substitutions(expr):
 def iter_subsets(set_):
     list_ = list(set_)
     for cases in itertools.product([0, 1], repeat=len(list_)):
-        yield set(x for (x, case) in itertools.izip(list_, cases) if case)
+        yield set(x for (x, case) in zip(list_, cases) if case)
     raise StopIteration
 
 
@@ -311,7 +311,7 @@ def iter_closures(expr):
 def derive_facts(rule):
     facts = set()
     if len(rule.antecedents) == 0 and len(rule.succedents) == 1:
-        expr = iter(rule.succedents).next()
+        expr = next(iter(rule.succedents))
         for derived in iter_closures(expr):
             lhs, rhs = derived.args
             if lhs != rhs:

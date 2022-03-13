@@ -709,7 +709,7 @@ def try_decide_less_weak(lhs, rhs):
     if lhs_args and len(lhs_args) == len(rhs_args):
         if try_decide_less_weak(lhs_head, rhs_head) is True:
             if all(try_decide_less_weak(i, j) is True
-                   for i, j in zip(lhs_args, rhs_args)):
+                   for i, j in list(zip(lhs_args, rhs_args))):
                 return True
 
     # Give up at unreduced terms.
@@ -728,7 +728,7 @@ def try_decide_less_weak(lhs, rhs):
             return False
         return trool_all(
             try_decide_less_weak(i, j)
-            for i, j in zip(lhs_args, rhs_args)
+            for i, j in list(zip(lhs_args, rhs_args))
         )
 
     # Distinguish quoted terms.
@@ -987,7 +987,7 @@ def simplify(term):
 def reduce(term, budget=100):
     """Beta-reduce term up to budget."""
     term = simplify(term)
-    for _ in xrange(budget):
+    for _ in range(budget):
         reduced = try_compute_step(term)
         if reduced is None:
             return term

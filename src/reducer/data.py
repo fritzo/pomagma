@@ -72,8 +72,8 @@ def decode_bool(term):
 # ----------------------------------------------------------------------------
 # Byte
 
-_encode_byte = {chr(k): v for k, v in lib.byte_table.iteritems()}
-_decode_byte = {v: chr(k) for k, v in lib.byte_table.iteritems()}
+_encode_byte = {chr(k): v for k, v in iter(lib.byte_table.items())}
+_decode_byte = {v: chr(k) for k, v in iter(lib.byte_table.items())}
 
 
 @memoize_arg
@@ -206,7 +206,7 @@ def encode_num(num):
     if not isinstance(num, int) or isinstance(num, bool) or not num >= 0:
         raise TypeError(num)
     result = lib.zero
-    for i in xrange(num):
+    for i in range(num):
         result = lib.succ(result)
     return result
 
@@ -297,7 +297,7 @@ def decode_fun(encode_args, decode_result):
 
         def py_fun(*py_args):
             assert len(py_args) == len(encode_args)
-            un_args = tuple(e(a) for (e, a) in zip(encode_args, py_args))
+            un_args = tuple(e(a) for (e, a) in list(zip(encode_args, py_args)))
             un_result = reduce(app(un_fun, *un_args))
             py_result = decode_result(un_result)
             return py_result
@@ -328,7 +328,7 @@ def decoder(tp):
         if tp[0] == 'list':
             return decode_list(decoder(tp[1]))
         if tp[0] == 'fun':
-            encode_args = map(encoder, tp[1])
+            encode_args = list(map(encoder, tp[1]))
             decode_result = decoder(tp[2])
             return decode_fun(encode_args, decode_result)
     elif len(tp) == 3:
@@ -357,7 +357,7 @@ def encoder(tp):
         if tp[0] == 'list':
             return encode_list(encoder(tp[1]))
         if tp[0] == 'fun':
-            decode_args = map(decoder, tp[1])
+            decode_args = list(map(decoder, tp[1]))
             encode_result = encoder(tp[2])
             return encode_fun(decode_args, encode_result)
     elif len(tp) == 3:

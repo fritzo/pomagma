@@ -16,7 +16,7 @@ EQUAL = Expression_2('EQUAL')
 
 @inputs(Expression)
 def desugar_expr(self):
-    expr = Expression.make(self.name, *map(desugar_expr, self.args))
+    expr = Expression.make(self.name, *list(map(desugar_expr, self.args)))
     if expr.name == 'FUN':
         var, body = expr.args
         assert var.is_var(), var
@@ -48,7 +48,7 @@ def desugar_sequent(self):
 
 @inputs(dict)
 def desugar_theory(theory):
-    rules = map(desugar_sequent, theory['rules'])
+    rules = list(map(desugar_sequent, theory['rules']))
     facts = []
     for fact in map(desugar_expr, theory['facts']):
         if fact.vars:

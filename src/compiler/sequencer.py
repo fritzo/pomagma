@@ -1,12 +1,12 @@
 import heapq
-from itertools import izip
+
 
 from pomagma.compiler import signature
 from pomagma.compiler.util import eval_float53, logger, memoize_arg
 
 
 def load_lines(filename):
-    assert isinstance(filename, basestring)
+    assert isinstance(filename, str)
     with open(filename) as f:
         for line in f:
             if not line.startswith('#'):
@@ -88,7 +88,7 @@ def merge_programs(program1, program2):
     if sizeof_program(program1) > sizeof_program(program2):
         program1, program2 = program2, program1
     program = []
-    for i in xrange(min(len(program1), len(program2))):
+    for i in range(min(len(program1), len(program2))):
         if program1[i] != program2[i]:
             break
         program.append(program1[i])
@@ -113,7 +113,7 @@ def program_order(program):
 class MergeProcessor:
 
     def __init__(self, programs):
-        programs = map(tuple, programs)
+        programs = list(map(tuple, programs))
         programs.sort(key=program_order)
         self._programs = dict(enumerate(programs))
         self._prev = {}
@@ -121,7 +121,7 @@ class MergeProcessor:
         self._tasks = []
         count = len(programs)
         self._id = count
-        for id1, id2 in izip(xrange(count - 1), xrange(1, count)):
+        for id1, id2 in zip(range(count - 1), range(1, count)):
             self.add_task(id1, id2)
 
     def get_id(self):
@@ -175,7 +175,7 @@ class MergeProcessor:
         assert not self._tasks, self._tasks
         assert not self._prev, self._prev
         assert not self._next, self._next
-        programs = list(self._programs.itervalues())
+        programs = list(self._programs.values())
         programs.sort(key=program_order)
         return programs
 

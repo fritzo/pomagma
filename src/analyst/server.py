@@ -19,7 +19,7 @@ class Server(object):
             pomagma.util.abspath(language_file),
             address.replace('tcp://localhost', 'tcp://*'),
         ]
-        assert isinstance(address, basestring), address
+        assert isinstance(address, str), address
         assert os.path.exists(world), world
         assert os.path.exists(language_file), language_file
         self._theory = theory

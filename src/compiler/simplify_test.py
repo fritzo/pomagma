@@ -58,7 +58,7 @@ NONNORMAL_EXAMPLES = [
 
 @for_each(NORMAL_EXAMPLES)
 def test_normal_term(example):
-    print example
+    print(example)
     expected = parse_string_to_expr(example)
     actual = simplify_term(expected)
     assert actual == expected
@@ -66,7 +66,7 @@ def test_normal_term(example):
 
 @for_each(NONNORMAL_EXAMPLES)
 def test_simplify_term(example):
-    print example
-    term, expected = map(parse_string_to_expr, example)
+    print(example)
+    term, expected = list(map(parse_string_to_expr, example))
     actual = simplify_term(term)
     assert actual == expected

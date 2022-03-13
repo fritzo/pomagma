@@ -37,11 +37,11 @@ def update_theory(theory, world, updated, dry_run=False, **opts):
         pomagma.surveyor.survey(theory, world, updated, size, **opts)
         new_hash = get_hash(updated)
         if new_hash == old_hash:
-            print 'theory did not change'
+            print('theory did not change')
             os.remove(updated)
             return False
         else:
-            print 'theory changed'
+            print('theory changed')
             if dry_run:
                 os.remove(updated)
             else:
@@ -63,7 +63,7 @@ def update_language(theory, init, world, updated, **opts):
 
 
 def update_format(theory, source, destin, **opts):
-    print 'converting {} {} -> {}'.format(theory, source, destin)
+    print('converting {} {} -> {}'.format(theory, source, destin))
     assert source != destin
     with pomagma.util.mutex(source):
         assert os.path.exists(source)
@@ -85,11 +85,11 @@ def assume(theory, world, updated, theorems, **opts):
 
 
 def find(path):
-    return filter(os.path.isfile, [
+    return list(filter(os.path.isfile, [
         os.path.abspath(os.path.join(root, filename))
         for root, dirnames, filenames in os.walk(path)
         for filename in filenames
-    ])
+    ]))
 
 
 def find_used_blobs(root):
@@ -157,10 +157,10 @@ def get_filesize(filename):
 def print_info(filename):
     assert get_ext(filename) == 'pb'
     files = [filename]
-    files += map(blobstore.find_blob, blobstore.iter_blob_refs(filename))
-    print 'file_count =', len(files)
-    print 'byte_count =', sum(map(get_filesize, files))
+    files += list(map(blobstore.find_blob, blobstore.iter_blob_refs(filename)))
+    print('file_count =', len(files))
+    print('byte_count =', sum(map(get_filesize, files)))
     structure = pb_load(filename)
-    print 'item_dim =', structure.carrier.item_count
-    print 'item_count =', structure.carrier.item_count
-    print structure
+    print('item_dim =', structure.carrier.item_count)
+    print('item_count =', structure.carrier.item_count)
+    print(structure)
