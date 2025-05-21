@@ -44,19 +44,20 @@ from pomagma.compiler.util import inputs, intern_keys, memoize_args
 
 MAX_MEMORY = 0.95
 MAX_SOLUTIONS = 10
-INFINITY = float('inf')
-HOLE = Expression.make('HOLE')
-BOT = Expression.make('BOT')
-I = Expression.make('I')
-EQUAL = Expression_2('EQUAL')
+INFINITY = float("inf")
+HOLE = Expression.make("HOLE")
+BOT = Expression.make("BOT")
+I = Expression.make("I")
+EQUAL = Expression_2("EQUAL")
 
-format_invalid = '\033[31mInvalid:\033[0m %s'.__mod__
-format_partial = '\033[33mPartial:\033[0m %s'.__mod__
-format_complete = '\033[32;1mComplete:\033[0m %s'.__mod__
+format_invalid = "\033[31mInvalid:\033[0m %s".__mod__
+format_partial = "\033[33mPartial:\033[0m %s".__mod__
+format_complete = "\033[32;1mComplete:\033[0m %s".__mod__
 
 
 # ----------------------------------------------------------------------------
 # streams of sketches
+
 
 @inputs(Expression)
 def is_complete(expr):
@@ -72,13 +73,12 @@ class ComplexityEvaluator(object):
             assert isinstance(cost, float), cost
             assert cost > 0, cost
         language = language.copy()
-        language['HOLE'] = 0.0
+        language["HOLE"] = 0.0
         self._language = intern_keys(language)
 
     def __call__(self, term):
         assert isinstance(term, Expression)
-        return sum(self._language.get(n, INFINITY)
-                   for n in term.polish.split())
+        return sum(self._language.get(n, INFINITY) for n in term.polish.split())
 
 
 def make_template(name):
@@ -102,15 +102,17 @@ class NaiveHoleFiller(object):
             return self._fillings if term is HOLE else ()
         elif nargs == 1:
             name = term.name
-            key, = term.args
+            (key,) = term.args
             return tuple(Expression.make(name, f) for f in self(key))
         elif nargs == 2:
             name = term.name
             lhs, rhs = term.args
-            return tuple(itertools.chain(
-                (Expression.make(name, f, rhs) for f in self(lhs)),
-                (Expression.make(name, lhs, f) for f in self(rhs)),
-            ))
+            return tuple(
+                itertools.chain(
+                    (Expression.make(name, f, rhs) for f in self(lhs)),
+                    (Expression.make(name, lhs, f) for f in self(rhs)),
+                )
+            )
 
 
 class UniquePriorityQueue(object):
@@ -134,15 +136,15 @@ class UniquePriorityQueue(object):
             heapq.heappush(self._to_pop, (self._priority(item), item))
 
     def pop(self):
-        assert self._to_pop, 'cannot pop from empty queue'
+        assert self._to_pop, "cannot pop from empty queue"
         return heapq.heappop(self._to_pop)[1]
 
 
 def iter_sketches(priority, fill_holes, initial_sketch=HOLE):
-    '''
+    """
     priority : term -> float
     fill_holes : term -> list(term), must increase priority, decrease validity
-    '''
+    """
     assert callable(priority), priority
     assert callable(fill_holes), fill_holes
     assert isinstance(initial_sketch, Expression), initial_sketch
@@ -166,11 +168,7 @@ def filter_normal_sketches(sketches):
             yield sketch, steps
 
 
-def lazy_iter_valid_sketches(
-        fill,
-        lazy_validate,
-        normal_sketches,
-        verbose=0):
+def lazy_iter_valid_sketches(fill, lazy_validate, normal_sketches, verbose=0):
     """Yield (state, term) pairs and Nones; consumers should filter out Nones.
     Since satisfiability is undecidable, consumers must decide when to give up.
 
@@ -233,7 +231,7 @@ class Interruptable(object):
 
     def poll(self):
         if self._interrupted:
-            sys.stderr.write('\nReceived SIGINT\n')
+            sys.stderr.write("\nReceived SIGINT\n")
             sys.stderr.flush()
             raise StopIteration
 
@@ -251,7 +249,7 @@ def polling_iterator(lazy_iterator, max_memory):
         for value_or_none in lazy_iterator:
             interrupted.poll()
             if psutil.virtual_memory().percent > max_memory * 100:
-                sys.stderr.write('Reached memory limit\n')
+                sys.stderr.write("Reached memory limit\n")
                 sys.stderr.flush()
                 raise StopIteration
             if value_or_none is not None:
@@ -260,13 +258,9 @@ def polling_iterator(lazy_iterator, max_memory):
 
 # this ties everything together
 def iter_valid_sketches(
-        fill,
-        lazy_validate,
-        language,
-        initial_sketch=HOLE,
-        max_memory=MAX_MEMORY,
-        verbose=0):
-    '''
+    fill, lazy_validate, language, initial_sketch=HOLE, max_memory=MAX_MEMORY, verbose=0
+):
+    """
     Yield (complexity, term, sketch) tuples until memory runs out or Ctrl-C.
 
     fill : term -> state, substitutes sketches into holes and simplifies
@@ -274,7 +268,7 @@ def iter_valid_sketches(
     language : dict(name:str -> cost:float), costs must be positive
     initial_sketch : term, must have at least one hole
     max_memory : float, max portion of memory, in [0,1]
-    '''
+    """
     assert callable(fill), fill
     assert callable(lazy_validate), lazy_validate
     assert isinstance(language, dict), language
@@ -287,16 +281,15 @@ def iter_valid_sketches(
     sketches = iter_sketches(complexity, fill_holes, initial_sketch)
     sketches = filter_normal_sketches(sketches)
     lazy_valid_sketches = lazy_iter_valid_sketches(
-        fill,
-        lazy_validate,
-        sketches,
-        verbose=verbose)
+        fill, lazy_validate, sketches, verbose=verbose
+    )
     for term, sketch in polling_iterator(lazy_valid_sketches, max_memory):
         yield complexity(sketch), term, sketch  # suitable for sort()
 
 
 # ----------------------------------------------------------------------------
 # fillers and validators
+
 
 @memoize_args
 def _db_simplify_expr(db, expr):
@@ -314,7 +307,7 @@ def simplify_filling(db, term):
 
 
 def is_def(fact):
-    return fact.name == 'EQUAL' and fact.args[0].is_var()
+    return fact.name == "EQUAL" and fact.args[0].is_var()
 
 
 @inputs(set, dict)
@@ -416,14 +409,15 @@ class FactsValidator(object):
 
 # this ties everything together
 def synthesize_from_facts(
-        db,
-        facts,
-        var,
-        language,
-        initial_sketch,
-        max_solutions=MAX_SOLUTIONS,
-        max_memory=MAX_MEMORY,
-        verbose=0):
+    db,
+    facts,
+    var,
+    language,
+    initial_sketch,
+    max_solutions=MAX_SOLUTIONS,
+    max_memory=MAX_MEMORY,
+    verbose=0,
+):
     """Synthesize a list of sketches which replace `var` in `facts` by filling
     in HOLEs in an `initial_sketch` with terms generated from a `langauge`."""
     assert isinstance(facts, list), facts
@@ -436,17 +430,16 @@ def synthesize_from_facts(
     assert isinstance(max_memory, float), max_memory
     assert 0 < max_memory and max_memory < 1, max_memory
     validator = FactsValidator(
-        db=db,
-        facts=facts,
-        var=var,
-        initial_sketch=initial_sketch)
+        db=db, facts=facts, var=var, initial_sketch=initial_sketch
+    )
     valid_sketches = iter_valid_sketches(
         fill=validator.fill,
         lazy_validate=validator.lazy_validate,
         language=language,
         initial_sketch=initial_sketch,
         max_memory=max_memory,
-        verbose=verbose)
+        verbose=verbose,
+    )
     valid_sketches = (r for r in valid_sketches if is_complete(r[-1]))
     results = sorted(itertools.islice(valid_sketches, 0, max_solutions))
     return results

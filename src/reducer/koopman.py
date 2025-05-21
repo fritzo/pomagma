@@ -1,8 +1,9 @@
 """Combinator Graph Reduction."""
+
 import sys
 
-_APP = sys.intern('APP')
-_ATOM = sys.intern('ATOM')
+_APP = sys.intern("APP")
+_ATOM = sys.intern("ATOM")
 
 
 def make_equation(lhs, rhs):
@@ -13,7 +14,7 @@ def make_equation(lhs, rhs):
 
 
 class Node(object):
-    __slots__ = ['typ', 'args']
+    __slots__ = ["typ", "args"]
 
     def __init__(self, typ, *args):
         self.typ = typ
@@ -125,13 +126,13 @@ def APP(fun, arg):
     return Node(_APP, fun, arg)
 
 
-TOP = ATOM('TOP')
-BOT = ATOM('BOT')
-I = ATOM('I')
-K = ATOM('K')
-B = ATOM('B')
-C = ATOM('C')
-S = ATOM('S')
+TOP = ATOM("TOP")
+BOT = ATOM("BOT")
+I = ATOM("I")
+K = ATOM("K")
+B = ATOM("B")
+C = ATOM("C")
+S = ATOM("S")
 
 
 def print_to_depth(node, depth=10):
@@ -142,9 +143,9 @@ def print_to_depth(node, depth=10):
         if depth > 0:
             fun = print_to_depth(node.fun, depth - 1)
             arg = print_to_depth(node.arg, depth - 1)
-            return 'APP({},{})'.format(fun, arg)
+            return "APP({},{})".format(fun, arg)
         else:
-            return 'APP(...,...)'
+            return "APP(...,...)"
     else:
         raise ValueError(node)
 

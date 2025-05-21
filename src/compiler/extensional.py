@@ -6,23 +6,23 @@ from pomagma.compiler.signature import is_positive
 from pomagma.compiler.util import inputs, logger, methodof
 from pomagma.util import TODO
 
-I = Expression_0('I')
-K = Expression_0('K')
-F = Expression_0('F')
-J = Expression_0('J')
-R = Expression_0('R')
-B = Expression_0('B')
-CB = Expression_0('CB')
-C = Expression_0('C')
-W = Expression_0('W')
-S = Expression_0('S')
-A = Expression_0('A')
-BOT = Expression_0('BOT')
-TOP = Expression_0('TOP')
-APP = Expression_2('APP')
-COMP = Expression_2('COMP')
-JOIN = Expression_2('JOIN')
-RAND = Expression_2('RAND')
+I = Expression_0("I")
+K = Expression_0("K")
+F = Expression_0("F")
+J = Expression_0("J")
+R = Expression_0("R")
+B = Expression_0("B")
+CB = Expression_0("CB")
+C = Expression_0("C")
+W = Expression_0("W")
+S = Expression_0("S")
+A = Expression_0("A")
+BOT = Expression_0("BOT")
+TOP = Expression_0("TOP")
+APP = Expression_2("APP")
+COMP = Expression_2("COMP")
+JOIN = Expression_2("JOIN")
+RAND = Expression_2("RAND")
 
 
 class AbstractionFailed(Exception):
@@ -51,7 +51,7 @@ def abstract_symmetric(self, var, atom, operation):
 def abstract(self, var):
     assert isinstance(var, Expression)
     assert var.is_var()
-    if self.name == 'VAR':
+    if self.name == "VAR":
         self = self.args[0]
     if self.is_var():
         if self == var:
@@ -62,7 +62,7 @@ def abstract(self, var):
         name = self.name
         if var not in self.vars:
             return APP(K, self)
-        elif name == 'APP':
+        elif name == "APP":
             # I,K,C,SW,COMP,eta abstraction
             lhs, rhs = self.args
             if var in lhs.vars:
@@ -80,7 +80,7 @@ def abstract(self, var):
                     return lhs
                 else:
                     return COMP(lhs, rhs.abstract(var))
-        elif name == 'COMP':
+        elif name == "COMP":
             # K,B,CB,C,S,COMP,eta abstraction
             lhs, rhs = self.args
             if var in lhs.vars:
@@ -98,9 +98,9 @@ def abstract(self, var):
                     return APP(B, lhs)
                 else:
                     return COMP(APP(B, lhs), rhs.abstract(var))
-        elif name == 'JOIN':
+        elif name == "JOIN":
             return abstract_symmetric(self, var, J, JOIN)
-        elif name == 'RAND':
+        elif name == "RAND":
             return abstract_symmetric(self, var, R, RAND)
         else:
             raise AbstractionFailed
@@ -108,7 +108,7 @@ def abstract(self, var):
         args = [arg.abstract(var) for arg in self.args]
         return Expression.make(self.name, *args)
     else:
-        raise ValueError('bad expression: %s' % self.name)
+        raise ValueError("bad expression: %s" % self.name)
 
 
 class RequireVariable(Exception):
@@ -120,11 +120,11 @@ class SkipValidation(Exception):
 
 
 def get_fresh(bound):
-    for name in 'abcdefghijklmnopqrstuvwxyz':
+    for name in "abcdefghijklmnopqrstuvwxyz":
         fresh = Expression.make(name)
         if fresh not in bound:
             return fresh
-    raise NotImplementedError('Exceeded fresh variable limit')
+    raise NotImplementedError("Exceeded fresh variable limit")
 
 
 def pop_arg(args):
@@ -140,71 +140,73 @@ def head_normalize(expr, *args):
     else:
         assert expr.is_fun(), expr
         name = expr.name
-        if name == 'APP':
+        if name == "APP":
             lhs, rhs = expr.args
             return head_normalize(lhs, rhs, *args)
-        elif name == 'COMP':
+        elif name == "COMP":
             lhs, rhs = expr.args
             arg0, args = pop_arg(args)
             return head_normalize(lhs, APP(rhs, arg0), *args)
-        elif name in ['BOT', 'TOP']:
+        elif name in ["BOT", "TOP"]:
             return [expr]
-        elif name == 'I':
+        elif name == "I":
             arg0, args = pop_arg(args)
             return head_normalize(arg0, *args)
-        elif name == 'K':
+        elif name == "K":
             arg0, args = pop_arg(args)
             arg1, args = pop_arg(args)
             return head_normalize(arg0, *args)
-        elif name == 'F':
+        elif name == "F":
             arg0, args = pop_arg(args)
             return head_normalize(*args)
-        elif name == 'B':
+        elif name == "B":
             arg0, args = pop_arg(args)
             arg1, args = pop_arg(args)
             arg2, args = pop_arg(args)
             return head_normalize(arg0, APP(arg1, arg2), *args)
-        elif name == 'C':
+        elif name == "C":
             arg0, args = pop_arg(args)
             arg1, args = pop_arg(args)
             arg2, args = pop_arg(args)
             return head_normalize(arg0, arg2, arg1, *args)
-        elif name == 'W':
+        elif name == "W":
             arg0, args = pop_arg(args)
             arg1, args = pop_arg(args)
             return head_normalize(arg0, arg1, arg1, *args)
-        elif name == 'S':
+        elif name == "S":
             arg0, args = pop_arg(args)
             arg1, args = pop_arg(args)
             arg2, args = pop_arg(args)
             return head_normalize(arg0, arg2, APP(arg1, arg2), *args)
-        elif name == 'CI':
+        elif name == "CI":
             return head_normalize(C, I, *args)
-        elif name == 'CB':
+        elif name == "CB":
             return head_normalize(C, B, *args)
-        elif name in ['Y', 'J', 'JOIN', 'R', 'RAND', 'U', 'V', 'P', 'A']:
+        elif name in ["Y", "J", "JOIN", "R", "RAND", "U", "V", "P", "A"]:
             raise SkipValidation
         else:
-            raise TODO('head normalize %s expressions' % name)
+            raise TODO("head normalize %s expressions" % name)
 
 
 def validate(expr):
     assert expr.is_rel(), expr
-    assert expr.name in ['LESS', 'EQUAL']
-    if expr.name != 'EQUAL':
-        print('WARNING: not validating {0}'.format(expr))
+    assert expr.name in ["LESS", "EQUAL"]
+    if expr.name != "EQUAL":
+        print("WARNING: not validating {0}".format(expr))
         return
     while True:
         try:
             lhs, rhs = expr.args
             lhs = head_normalize(lhs)
             rhs = head_normalize(rhs)
-            assert len(lhs) == len(rhs),\
-                'Failed to validate\n  {0}\nbecause\n  {1} != {2}'.format(
-                    expr, lhs, rhs)
-            assert lhs[0] == rhs[0],\
-                'Failed to validate\n  {0}\nbecause  \n{1} != {2}'.format(
-                    expr, lhs[0], rhs[0])
+            assert len(lhs) == len(
+                rhs
+            ), "Failed to validate\n  {0}\nbecause\n  {1} != {2}".format(expr, lhs, rhs)
+            assert (
+                lhs[0] == rhs[0]
+            ), "Failed to validate\n  {0}\nbecause  \n{1} != {2}".format(
+                expr, lhs[0], rhs[0]
+            )
             for args in zip(lhs[1:], rhs[1:]):
                 validate(Expression.make(expr.name, *args))
             break
@@ -215,16 +217,16 @@ def validate(expr):
             rhs = APP(rhs, fresh)
             expr = Expression.make(expr.name, lhs, rhs)
         except SkipValidation:
-            print('WARNING: not validating {0}'.format(expr))
+            print("WARNING: not validating {0}".format(expr))
             return
 
 
 @inputs(Expression)
 def iter_eta_substitutions(expr):
-    '''
+    """
     Iterate over Hindley-style substitutions:
         [x/x], [x/a], [x/APP x a] (and maybe [x/COMP x a])
-    '''
+    """
     varlist = list(expr.vars)
     fresh = get_fresh(expr.vars)
     for cases in itertools.product(list(range(3)), repeat=len(varlist)):
@@ -286,7 +288,7 @@ def iter_closure_permutations(expr):
 
 @inputs(Expression)
 def iter_closures(expr):
-    if expr.name in ['OPTIONALLY', 'NONEGATE']:
+    if expr.name in ["OPTIONALLY", "NONEGATE"]:
         expr = expr.args[0]
     try:
         assert expr.is_rel(), expr
@@ -318,5 +320,5 @@ def derive_facts(rule):
                 assert derived.is_rel()
                 facts.add(derived)
         facts = sorted(list(facts), key=lambda expr: len(expr.polish))
-        logger('derived {0} facts from {1}'.format(len(facts), expr))
+        logger("derived {0} facts from {1}".format(len(facts), expr))
     return facts

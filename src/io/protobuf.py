@@ -6,7 +6,7 @@ from pomagma.io import creat
 class InFile(object):
 
     def __init__(self, filename):
-        self._gzip = gzip.GzipFile(filename, 'rb')
+        self._gzip = gzip.GzipFile(filename, "rb")
 
     def __enter__(self):
         return self
@@ -25,7 +25,7 @@ class OutFile(object):
 
     def __init__(self, filename):
         self._file = creat(filename, 0o444)
-        self._gzip = gzip.GzipFile(mode='wb', fileobj=self._file)
+        self._gzip = gzip.GzipFile(mode="wb", fileobj=self._file)
 
     def __enter__(self):
         return self

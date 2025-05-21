@@ -1,7 +1,16 @@
 from pomagma.reducer.bohm import decrement_rank
-from pomagma.reducer.syntax import (IVAR_0, Term, free_vars, is_abs, is_app,
-                                    is_atom, is_ivar, is_join, is_nvar,
-                                    is_quote)
+from pomagma.reducer.syntax import (
+    IVAR_0,
+    Term,
+    free_vars,
+    is_abs,
+    is_app,
+    is_atom,
+    is_ivar,
+    is_join,
+    is_nvar,
+    is_quote,
+)
 
 
 class NoMatch(Exception):

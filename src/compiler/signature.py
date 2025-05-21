@@ -3,67 +3,92 @@ import re
 from pomagma.compiler.util import intern_keys, memoize_arg
 import sys
 
-re_const = re.compile('[A-Z]+$')
+re_const = re.compile("[A-Z]+$")
 
 
-NARGS_TABLE = intern_keys({
-    'UnaryRelation': 1,
-    'Equation': 2,
-    'BinaryRelation': 2,
-    'NullaryFunction': 0,
-    'InjectiveFunction': 1,
-    'BinaryFunction': 2,
-    'SymmetricFunction': 2,
-    'Variable': 0,
-    'UnaryMeta': 1,
-    'BinaryMeta': 2,
-    'TernaryMeta': 3,
-})
+NARGS_TABLE = intern_keys(
+    {
+        "UnaryRelation": 1,
+        "Equation": 2,
+        "BinaryRelation": 2,
+        "NullaryFunction": 0,
+        "InjectiveFunction": 1,
+        "BinaryFunction": 2,
+        "SymmetricFunction": 2,
+        "Variable": 0,
+        "UnaryMeta": 1,
+        "BinaryMeta": 2,
+        "TernaryMeta": 3,
+    }
+)
 
-ARITY_TABLE = intern_keys({
-    'EQUAL': 'Equation',
-    'CLOSED': 'UnaryRelation',
-    'NCLOSED': 'UnaryRelation',
-    'RETURN': 'UnaryRelation',
-    'NRETURN': 'UnaryRelation',
-    'LESS': 'BinaryRelation',
-    'NLESS': 'BinaryRelation',
-    'CO': 'InjectiveFunction',
-    'QUOTE': 'InjectiveFunction',
-    'APP': 'BinaryFunction',
-    'COMP': 'BinaryFunction',
-    'JOIN': 'SymmetricFunction',
-    'RAND': 'SymmetricFunction',
-    'VAR': 'UnaryMeta',
-    'UNKNOWN': 'UnaryMeta',
-    'OPTIONALLY': 'UnaryMeta',
-    'NONEGATE': 'UnaryMeta',
-    'EQUIVALENTLY': 'BinaryMeta',
-    'FUN': 'BinaryMeta',
-    'PAIR': 'BinaryMeta',
-    'ABIND': 'TernaryMeta',
-    'FIX': 'BinaryMeta',
-    'FIXES': 'BinaryMeta',
-})
+ARITY_TABLE = intern_keys(
+    {
+        "EQUAL": "Equation",
+        "CLOSED": "UnaryRelation",
+        "NCLOSED": "UnaryRelation",
+        "RETURN": "UnaryRelation",
+        "NRETURN": "UnaryRelation",
+        "LESS": "BinaryRelation",
+        "NLESS": "BinaryRelation",
+        "CO": "InjectiveFunction",
+        "QUOTE": "InjectiveFunction",
+        "APP": "BinaryFunction",
+        "COMP": "BinaryFunction",
+        "JOIN": "SymmetricFunction",
+        "RAND": "SymmetricFunction",
+        "VAR": "UnaryMeta",
+        "UNKNOWN": "UnaryMeta",
+        "OPTIONALLY": "UnaryMeta",
+        "NONEGATE": "UnaryMeta",
+        "EQUIVALENTLY": "BinaryMeta",
+        "FUN": "BinaryMeta",
+        "PAIR": "BinaryMeta",
+        "ABIND": "TernaryMeta",
+        "FIX": "BinaryMeta",
+        "FIXES": "BinaryMeta",
+    }
+)
 
-RELATION_ARITIES = frozenset(list(map(intern, [
-    'UnaryRelation',
-    'Equation',
-    'BinaryRelation',
-])))
+RELATION_ARITIES = frozenset(
+    list(
+        map(
+            intern,
+            [
+                "UnaryRelation",
+                "Equation",
+                "BinaryRelation",
+            ],
+        )
+    )
+)
 
-FUNCTION_ARITIES = frozenset(list(map(intern, [
-    'NullaryFunction',
-    'InjectiveFunction',
-    'BinaryFunction',
-    'SymmetricFunction',
-])))
+FUNCTION_ARITIES = frozenset(
+    list(
+        map(
+            intern,
+            [
+                "NullaryFunction",
+                "InjectiveFunction",
+                "BinaryFunction",
+                "SymmetricFunction",
+            ],
+        )
+    )
+)
 
-META_ARITIES = frozenset(list(map(intern, [
-    'UnaryMeta',
-    'BinaryMeta',
-    'TernaryMeta',
-])))
+META_ARITIES = frozenset(
+    list(
+        map(
+            intern,
+            [
+                "UnaryMeta",
+                "BinaryMeta",
+                "TernaryMeta",
+            ],
+        )
+    )
+)
 
 
 def declare_arity(name, arity):
@@ -71,7 +96,7 @@ def declare_arity(name, arity):
     assert not is_var(name), name
     assert arity in FUNCTION_ARITIES
     if name in ARITY_TABLE:
-        assert ARITY_TABLE[name] == arity, 'Cannot change arity'
+        assert ARITY_TABLE[name] == arity, "Cannot change arity"
     else:
         ARITY_TABLE[sys.intern(name)] = arity
 
@@ -104,9 +129,9 @@ def is_con(symbol):
 @memoize_arg
 def get_arity(symbol):
     if is_var(symbol):
-        return 'Variable'
+        return "Variable"
     else:
-        return ARITY_TABLE.get(symbol, 'NullaryFunction')
+        return ARITY_TABLE.get(symbol, "NullaryFunction")
 
 
 def get_nargs(arity):
@@ -118,7 +143,7 @@ def arity_sort(arity):
 
 
 def is_positive(symbol):
-    if symbol == 'NLESS':
+    if symbol == "NLESS":
         return False
     else:
         return True
@@ -128,5 +153,5 @@ def validate():
     for symbol, arity in ARITY_TABLE.items():
         assert not is_var(symbol)
         assert arity in NARGS_TABLE
-    assert get_arity('x') == 'Variable'
-    assert get_arity('S') == 'NullaryFunction'
+    assert get_arity("x") == "Variable"
+    assert get_arity("S") == "NullaryFunction"

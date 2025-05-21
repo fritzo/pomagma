@@ -4,7 +4,7 @@
 import pytest
 from .goto import goto, label, with_goto
 
-CODE = '''\
+CODE = """\
 i = 0
 result = []
 
@@ -17,24 +17,26 @@ i += 1
 goto.start
 
 label.end
-'''
+"""
 
 EXPECTED = list(range(10))
 
 
 def test_range_as_code():
     ns = {}
-    exec(with_goto(compile(CODE, '', 'exec')), ns)
-    assert ns['result'] == EXPECTED
+    exec(with_goto(compile(CODE, "", "exec")), ns)
+    assert ns["result"] == EXPECTED
 
 
 def test_range_as_function():
     ns = {}
-    exec('\n'.join(
-        ['def func():'] +
-        ['\t' + x for x in CODE.splitlines() + ['return result']]
-    ), ns)
-    assert with_goto(ns['func'])() == EXPECTED
+    exec(
+        "\n".join(
+            ["def func():"] + ["\t" + x for x in CODE.splitlines() + ["return result"]]
+        ),
+        ns,
+    )
+    assert with_goto(ns["func"])() == EXPECTED
 
 
 def test_jump_out_of_loop():
@@ -103,9 +105,9 @@ def test_jump_out_of_try_block():
             rv = None
             goto.end
         except:
-            rv = 'except'
+            rv = "except"
         finally:
-            rv = 'finally'
+            rv = "finally"
         label.end
         return rv
 
@@ -134,8 +136,8 @@ def test_function_is_copy():
     def func():
         pass
 
-    func.foo = 'bar'
+    func.foo = "bar"
     newfunc = with_goto(func)
 
     assert newfunc is not func
-    assert newfunc.foo == 'bar'
+    assert newfunc.foo == "bar"

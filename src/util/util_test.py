@@ -7,7 +7,7 @@ import pomagma.util
 def _blocking_mutex(args):
     (_id, curdir) = args
     with pomagma.util.chdir(curdir), pomagma.util.mutex(block=True):
-        print('Running process', _id)
+        print("Running process", _id)
         time.sleep(0.1)
 
 
@@ -23,11 +23,11 @@ def _nonblocking_mutex(args):
     (_id, curdir) = args
     try:
         with pomagma.util.chdir(curdir), pomagma.util.mutex(block=False):
-            print('Running process', _id)
+            print("Running process", _id)
             time.sleep(0.1)
             return 1
     except pomagma.util.MutexLockedException:
-        print('Failing process', _id)
+        print("Failing process", _id)
         return 0
 
 

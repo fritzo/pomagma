@@ -48,29 +48,29 @@ import sys
 # ----------------------------------------------------------------------------
 # Signature
 
-re_keyword = re.compile('[A-Z]+$')
+re_keyword = re.compile("[A-Z]+$")
 
-_TOP = sys.intern('TOP')  # : term
-_NVAR = sys.intern('NVAR')  # : string -> term
-_VAR = sys.intern('VAR')  # : term -> term
-_ABS = sys.intern('ABS')  # : term -> term
-_APP = sys.intern('APP')  # : term -> term -> term
-_JOIN = sys.intern('JOIN')  # : set term -> term
+_TOP = sys.intern("TOP")  # : term
+_NVAR = sys.intern("NVAR")  # : string -> term
+_VAR = sys.intern("VAR")  # : term -> term
+_ABS = sys.intern("ABS")  # : term -> term
+_APP = sys.intern("APP")  # : term -> term -> term
+_JOIN = sys.intern("JOIN")  # : set term -> term
 
 
 class Term(tuple):
     def __repr__(self):
         symbol = self[0]
         if symbol is _TOP:
-            return 'TOP'
+            return "TOP"
         elif symbol is _NVAR:
             return "NVAR('{}')".format(self[1])
         elif symbol is _JOIN:
-            args = ','.join(str(a) for a in self[1:])
-            return '{}([{}])'.format(symbol, args)
+            args = ",".join(str(a) for a in self[1:])
+            return "{}([{}])".format(symbol, args)
         else:
-            args = ','.join(str(a) for a in self[1:])
-            return '{}({})'.format(symbol, args)
+            args = ",".join(str(a) for a in self[1:])
+            return "{}({})".format(symbol, args)
 
     __str__ = __repr__
 
@@ -142,10 +142,7 @@ class Graph(tuple):
         return Graph(args)
 
     def pretty(self):
-        return '\n'.join(
-            '{} = {}'.format(pos, term)
-            for pos, term in enumerate(self)
-        )
+        return "\n".join("{} = {}".format(pos, term) for pos, term in enumerate(self))
 
     @property
     def is_nvar(self):
@@ -214,15 +211,11 @@ def perm_inverse(perm):
 
 
 def graph_permute(terms, perm):
-    return [
-        term_permute(terms[i], perm)
-        for i in perm_inverse(perm)
-        if i is not None
-    ]
+    return [term_permute(terms[i], perm) for i in perm_inverse(perm) if i is not None]
 
 
-_APP_LHS = sys.intern('APP_LHS')
-_APP_RHS = sys.intern('APP_RHS')
+_APP_LHS = sys.intern("APP_LHS")
+_APP_RHS = sys.intern("APP_RHS")
 
 
 def term_iter_subterms(term):
@@ -489,7 +482,7 @@ def NVAR(name):
     """Create a named variable Graph."""
     assert isinstance(name, str), name
     if re_keyword.match(name):
-        raise ValueError('Variable names cannot match [A-Z]+: {}'.format(name))
+        raise ValueError("Variable names cannot match [A-Z]+: {}".format(name))
     terms = [Term.NVAR(sys.intern(name))]
     return graph_make(terms)
 
@@ -573,6 +566,7 @@ def JOIN(args):
 # ----------------------------------------------------------------------------
 # Syntax
 
+
 def as_graph(fun):
     """Convert lambdas to graphs using Higher Order Abstract Syntax [1].
 
@@ -582,11 +576,11 @@ def as_graph(fun):
     if isinstance(fun, Graph):
         return fun
     if not callable(fun):
-        raise SyntaxError('Expected callable, got: {}'.format(fun))
+        raise SyntaxError("Expected callable, got: {}".format(fun))
     args, vargs, kwargs, defaults = inspect.getargspec(fun)
     if vargs or kwargs or defaults:
         source = inspect.getsource(fun)
-        raise SyntaxError('Unsupported signature: {}'.format(source))
+        raise SyntaxError("Unsupported signature: {}".format(source))
     symbolic_args = list(map(NVAR, args))
     symbolic_result = fun(*symbolic_args)
     graph = as_graph(symbolic_result)
@@ -644,17 +638,17 @@ CB = as_graph(lambda x, y, z: y(x(z)))
 CI = as_graph(lambda x, y: y(x))
 
 SIGNATURE = {
-    'TOP': TOP,
-    'BOT': BOT,
-    'NVAR': NVAR,
-    'APP': graph_apply,
-    'JOIN': graph_join,
-    'FUN': FUN,
-    'I': I,
-    'K': K,
-    'B': B,
-    'C': C,
-    'S': S,
+    "TOP": TOP,
+    "BOT": BOT,
+    "NVAR": NVAR,
+    "APP": graph_apply,
+    "JOIN": graph_join,
+    "FUN": FUN,
+    "I": I,
+    "K": K,
+    "B": B,
+    "C": C,
+    "S": S,
 }
 
 convert = syntax.Transform(**SIGNATURE)
@@ -662,6 +656,7 @@ convert = syntax.Transform(**SIGNATURE)
 
 # ----------------------------------------------------------------------------
 # Scott ordering
+
 
 def dominates(lhs, rhs):
     """Weak strict domination relation: lhs =] rhs and lhs [!= rhs."""
@@ -690,6 +685,7 @@ def try_decide_less(lhs, rhs):
 
 # ----------------------------------------------------------------------------
 # Variables
+
 
 @memoize_arg
 def _free_vars(graph):
@@ -746,11 +742,9 @@ def find_scope(graph, abs_pos):
     changed = True
     while changed:
         changed = False
-        scope = set([
-            pos
-            for pos in range(len(graph))
-            if vars_in_scope & free_vars(graph, pos)
-        ])
+        scope = set(
+            [pos for pos in range(len(graph)) if vars_in_scope & free_vars(graph, pos)]
+        )
         for pos in scope:
             # FIXME This is wrong; subtracting free_vars(graph, abs_pos)
             # is a hack.
@@ -786,9 +780,7 @@ def _var_is_linear(graph, var_pos):
     # Propagate in reverse order.
     # Most graphs should converge after two iterations.
     schedule = [
-        (i, term)
-        for i, term in enumerate(graph)
-        if term[0] not in (_TOP, _NVAR, _VAR)
+        (i, term) for i, term in enumerate(graph) if term[0] not in (_TOP, _NVAR, _VAR)
     ]
     schedule.reverse()
 
@@ -825,14 +817,13 @@ def is_linear(graph):
     """
     assert isinstance(graph, Graph)
     return all(
-        _var_is_linear(graph, pos)
-        for pos, var in enumerate(graph)
-        if var.is_var
+        _var_is_linear(graph, pos) for pos, var in enumerate(graph) if var.is_var
     )
 
 
 # ----------------------------------------------------------------------------
 # Reduction
+
 
 class Substitution(dict):
     def __call__(self, key):
@@ -908,10 +899,7 @@ def _app_abs_step(graph, app_pos):
     ]
     terms = list(graph)
     offset = len(terms)
-    old2new = Substitution({
-        old_pos: offset + i
-        for i, old_pos in enumerate(scope)
-    })
+    old2new = Substitution({old_pos: offset + i for i, old_pos in enumerate(scope)})
     old2new[var_pos] = arg_pos
     for old_pos in scope:
         old_term = graph[old_pos]
@@ -946,7 +934,7 @@ def _app_join_step(graph, app_pos):
     fun_term = graph[app_term[1]]
     assert fun_term.is_join
 
-    TODO('Distribute APP over JOIN')
+    TODO("Distribute APP over JOIN")
 
 
 def _abs_join_step(graph, abs_pos):
@@ -957,7 +945,7 @@ def _abs_join_step(graph, abs_pos):
     fun_term = graph[abs_term[1]]
     assert fun_term.is_join
 
-    TODO('Distribute ABS over JOIN')
+    TODO("Distribute ABS over JOIN")
 
 
 def _eta_step(graph, pos, fun_pos):

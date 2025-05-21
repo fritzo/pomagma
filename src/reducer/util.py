@@ -29,7 +29,7 @@ def trool_fuse(args):
             if result is None:
                 result = arg
             elif result is not arg:
-                raise ValueError('Incompatible: {} vs {}'.format(result, arg))
+                raise ValueError("Incompatible: {} vs {}".format(result, arg))
     return result
 
 
@@ -107,8 +107,8 @@ LOG_LEVELS = {
 class IndentingFormatter(logging.Formatter):
 
     def __init__(self):
-        logging.Formatter.__init__(self, '%(indent)s %(message)s')
-        self.min_indent = float('inf')
+        logging.Formatter.__init__(self, "%(indent)s %(message)s")
+        self.min_indent = float("inf")
 
     def format(self, record):
         stack = inspect.stack()
@@ -116,7 +116,7 @@ class IndentingFormatter(logging.Formatter):
         if indent < self.min_indent:
             self.min_indent = indent
         indent -= self.min_indent
-        record.indent = ' ' * indent
+        record.indent = " " * indent
         return logging.Formatter.format(self, record)
 
 
@@ -142,11 +142,11 @@ def _logged(*format_args, **format_kwargs):
                 akwargs.append(arg)
             for key, val in kwargs.items():
                 val = formatters.get(key, repr)(val)
-                akwargs.append('{}={}'.format(key, val))
-            LOG.debug(r'{}({})'.format(fun.__name__, ', '.join(akwargs)))
+                akwargs.append("{}={}".format(key, val))
+            LOG.debug(r"{}({})".format(fun.__name__, ", ".join(akwargs)))
             result = fun(*args, **kwargs)
-            returns = formatters.get('returns', repr)(result)
-            LOG.debug(' return {}'.format(returns))
+            returns = formatters.get("returns", repr)(result)
+            LOG.debug(" return {}".format(returns))
             return result
 
         return decorated
@@ -169,15 +169,14 @@ PROFILE_COUNTERS = defaultdict(lambda: 0)
 
 def profile_engine():
     counts = [
-        (count, fun.__name__, arg)
-        for ((fun, arg), count) in PROFILE_COUNTERS.items()
+        (count, fun.__name__, arg) for ((fun, arg), count) in PROFILE_COUNTERS.items()
     ]
     counts.sort(reverse=True)
-    sys.stderr.write('{: >10} {: >10} {}\n'.format('count', 'fun', 'arg'))
-    sys.stderr.write('-' * 32 + '\n')
+    sys.stderr.write("{: >10} {: >10} {}\n".format("count", "fun", "arg"))
+    sys.stderr.write("-" * 32 + "\n")
     for count, fun, arg in counts:
-        sys.stderr.write('{: >10} {: >10} {}\n'.format(count, fun, arg))
+        sys.stderr.write("{: >10} {: >10} {}\n".format(count, fun, arg))
 
 
-if int(os.environ.get('POMAGMA_PROFILE_ENGINE', 0)):
+if int(os.environ.get("POMAGMA_PROFILE_ENGINE", 0)):
     atexit.register(profile_engine)

@@ -11,12 +11,12 @@ import pomagma.util
 
 @contextlib.contextmanager
 def chdir(theory, init=False):
-    path = os.path.join(pomagma.util.DATA, 'atlas', theory)
+    path = os.path.join(pomagma.util.DATA, "atlas", theory)
     if init:
-        assert not os.path.exists(path), 'World map is already initialized'
+        assert not os.path.exists(path), "World map is already initialized"
         os.makedirs(path)
     else:
-        assert os.path.exists(path), 'First initialize world map'
+        assert os.path.exists(path), "First initialize world map"
     with pomagma.util.chdir(path):
         yield
 
@@ -37,11 +37,11 @@ def update_theory(theory, world, updated, dry_run=False, **opts):
         pomagma.surveyor.survey(theory, world, updated, size, **opts)
         new_hash = get_hash(updated)
         if new_hash == old_hash:
-            print('theory did not change')
+            print("theory did not change")
             os.remove(updated)
             return False
         else:
-            print('theory changed')
+            print("theory changed")
             if dry_run:
                 os.remove(updated)
             else:
@@ -63,7 +63,7 @@ def update_language(theory, init, world, updated, **opts):
 
 
 def update_format(theory, source, destin, **opts):
-    print('converting {} {} -> {}'.format(theory, source, destin))
+    print("converting {} {} -> {}".format(theory, source, destin))
     assert source != destin
     with pomagma.util.mutex(source):
         assert os.path.exists(source)
@@ -85,18 +85,23 @@ def assume(theory, world, updated, theorems, **opts):
 
 
 def find(path):
-    return list(filter(os.path.isfile, [
-        os.path.abspath(os.path.join(root, filename))
-        for root, dirnames, filenames in os.walk(path)
-        for filename in filenames
-    ]))
+    return list(
+        filter(
+            os.path.isfile,
+            [
+                os.path.abspath(os.path.join(root, filename))
+                for root, dirnames, filenames in os.walk(path)
+                for filename in filenames
+            ],
+        )
+    )
 
 
 def find_used_blobs(root):
     root = os.path.abspath(root)
     used_blobs = set()
     for filename in find(root):
-        if filename.endswith('.pb'):
+        if filename.endswith(".pb"):
             with open(filename) as f:
                 for line in f:
                     hexdigest = line.strip()
@@ -112,11 +117,11 @@ def garbage_collect(grace_period_days=blobstore.GRACE_PERIOD_DAYS):
 
 
 def get_ext(filename):
-    parts = filename.split('.')
-    while parts[-1] in ['gz', 'bz2', '7z']:
+    parts = filename.split(".")
+    while parts[-1] in ["gz", "bz2", "7z"]:
         parts = parts[:-1]
     ext = parts[-1]
-    assert ext in ['pb'], 'unsupported filetype: {}'.format(filename)
+    assert ext in ["pb"], "unsupported filetype: {}".format(filename)
     return ext
 
 
@@ -128,26 +133,26 @@ def pb_load(filename):
 
 
 def count_obs(structure):
-    points = structure.getNode('/carrier/points')
+    points = structure.getNode("/carrier/points")
     item_dim = max(points)
-    item_count, = points.shape
+    (item_count,) = points.shape
     return item_dim, item_count
 
 
 def get_hash(filename):
-    assert get_ext(filename) == 'pb'
+    assert get_ext(filename) == "pb"
     return pb_load(filename).hash  # FIXME this is a string, not a list
 
 
 def get_info(filename):
-    assert get_ext(filename) == 'pb'
+    assert get_ext(filename) == "pb"
     item_count = pb_load(filename).carrier.item_count
     item_dim = item_count
-    return {'item_dim': item_dim, 'item_count': item_count}
+    return {"item_dim": item_dim, "item_count": item_count}
 
 
 def get_item_count(filename):
-    return get_info(filename)['item_count']
+    return get_info(filename)["item_count"]
 
 
 def get_filesize(filename):
@@ -155,12 +160,12 @@ def get_filesize(filename):
 
 
 def print_info(filename):
-    assert get_ext(filename) == 'pb'
+    assert get_ext(filename) == "pb"
     files = [filename]
     files += list(map(blobstore.find_blob, blobstore.iter_blob_refs(filename)))
-    print('file_count =', len(files))
-    print('byte_count =', sum(map(get_filesize, files)))
+    print("file_count =", len(files))
+    print("byte_count =", sum(map(get_filesize, files)))
     structure = pb_load(filename)
-    print('item_dim =', structure.carrier.item_count)
-    print('item_count =', structure.carrier.item_count)
+    print("item_dim =", structure.carrier.item_count)
+    print("item_count =", structure.carrier.item_count)
     print(structure)

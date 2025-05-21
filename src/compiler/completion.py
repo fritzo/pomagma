@@ -1,32 +1,55 @@
-from pomagma.compiler.expressions import (Expression, Expression_0,
-                                          Expression_2, NotNegatable,
-                                          try_get_negated)
-from pomagma.compiler.util import (function, inputs, set_with, set_without,
-                                   sortedset, union)
+from pomagma.compiler.expressions import (
+    Expression,
+    Expression_0,
+    Expression_2,
+    NotNegatable,
+    try_get_negated,
+)
+from pomagma.compiler.util import (
+    function,
+    inputs,
+    set_with,
+    set_without,
+    sortedset,
+    union,
+)
 
-BOT = Expression_0('BOT')
-TOP = Expression_0('TOP')
-I = Expression_0('I')
-K = Expression_0('K')
-F = Expression_0('F')
-J = Expression_0('J')
-EQUAL = Expression_2('EQUAL')
-LESS = Expression_2('LESS')
-NLESS = Expression_2('NLESS')
+BOT = Expression_0("BOT")
+TOP = Expression_0("TOP")
+I = Expression_0("I")
+K = Expression_0("K")
+F = Expression_0("F")
+J = Expression_0("J")
+EQUAL = Expression_2("EQUAL")
+LESS = Expression_2("LESS")
+NLESS = Expression_2("NLESS")
 
 # this will be completed below
-basic_facts = set([
-    NLESS(TOP, BOT),
-    NLESS(I, BOT), NLESS(TOP, I),
-    NLESS(K, BOT), NLESS(TOP, K), NLESS(K, F),
-    NLESS(F, BOT), NLESS(TOP, F), NLESS(F, K),
-    NLESS(J, BOT), NLESS(TOP, J),
-    LESS(K, J), NLESS(J, K),
-    LESS(F, J), NLESS(J, F),
-    NLESS(I, K), NLESS(K, I),
-    NLESS(I, F), NLESS(F, I),
-    NLESS(I, J), NLESS(J, I),
-])
+basic_facts = set(
+    [
+        NLESS(TOP, BOT),
+        NLESS(I, BOT),
+        NLESS(TOP, I),
+        NLESS(K, BOT),
+        NLESS(TOP, K),
+        NLESS(K, F),
+        NLESS(F, BOT),
+        NLESS(TOP, F),
+        NLESS(F, K),
+        NLESS(J, BOT),
+        NLESS(TOP, J),
+        LESS(K, J),
+        NLESS(J, K),
+        LESS(F, J),
+        NLESS(J, F),
+        NLESS(I, K),
+        NLESS(K, I),
+        NLESS(I, F),
+        NLESS(F, I),
+        NLESS(I, J),
+        NLESS(J, I),
+    ]
+)
 
 
 # TODO compile this from *.rules, rather than hand-coding
@@ -35,9 +58,9 @@ def complete_step(terms, relevant_facts):
 
     def step(facts):
         result = relevant_facts | facts
-        equal = [p for p in result if p.name == 'EQUAL']
-        less = [p for p in result if p.name == 'LESS']
-        nless = [p for p in result if p.name == 'NLESS']
+        equal = [p for p in result if p.name == "EQUAL"]
+        less = [p for p in result if p.name == "LESS"]
+        nless = [p for p in result if p.name == "NLESS"]
         # |- EQUAL x x
         # |- LESS x x
         # |- LESS x TOP
@@ -125,7 +148,7 @@ def weaken_facts(facts, fact):
     if fact.is_rel():
         without = set_without(facts, fact)
         yield without
-        if fact.name == 'EQUAL':
+        if fact.name == "EQUAL":
             lhs, rhs = fact.args
             yield set_with(without, LESS(lhs, rhs))
             yield set_with(without, LESS(rhs, lhs))
@@ -149,8 +172,8 @@ def simplify_step(completed):
 
 
 def objective_function(facts):
-    weight = sum(2 if p.name == 'EQUAL' else 1 for p in facts if p.is_rel())
-    string = ', '.join(sorted(str(p) for p in facts))
+    weight = sum(2 if p.name == "EQUAL" else 1 for p in facts if p.is_rel())
+    string = ", ".join(sorted(str(p) for p in facts))
     return weight, len(string), string
 
 
@@ -166,10 +189,10 @@ def try_simplify_antecedents(facts):
 
 
 def strengthen_sequent(fact):
-    while fact.arity == 'UnaryMeta':
+    while fact.arity == "UnaryMeta":
         fact = fact.args[0]
     assert fact.is_rel(), fact
-    if fact.name == 'LESS':
+    if fact.name == "LESS":
         lhs, rhs = fact.args
         if lhs == TOP or rhs == BOT:
             return EQUAL(lhs, rhs)
@@ -177,11 +200,11 @@ def strengthen_sequent(fact):
 
 
 def weaken_sequent(fact):
-    if fact.arity == 'UnaryMeta':
+    if fact.arity == "UnaryMeta":
         return Expression.make(fact.name, weaken_sequent(fact.args[0]))
     else:
         assert fact.is_rel(), fact
-        if fact.name == 'EQUAL':
+        if fact.name == "EQUAL":
             lhs, rhs = fact.args
             if lhs == TOP or rhs == BOT:
                 return LESS(lhs, rhs)

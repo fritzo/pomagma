@@ -10,6 +10,7 @@ from pomagma.util import TODO
 # ----------------------------------------------------------------------------
 # Net data structure
 
+
 class Node(object):
     def validate(self):
         """Asserts that node's neighbors point back to node."""
@@ -25,40 +26,42 @@ class Node(object):
 
 
 class ROOT(Node):
-    ports = ['root']
+    ports = ["root"]
     __slots__ = ports
 
 
 class VAR(Node):
     """VARs are used only during net construction."""
-    ports = ['val']
-    __slots__ = ['name'] + ports
+
+    ports = ["val"]
+    __slots__ = ["name"] + ports
 
     def __init__(self, name):
         self.name = name
 
 
 class APP(Node):
-    ports = ['fun', 'arg', 'val']
+    ports = ["fun", "arg", "val"]
     __slots__ = ports
 
 
 class ABS(Node):
-    ports = ['var', 'body', 'val']
+    ports = ["var", "body", "val"]
     __slots__ = ports
 
 
 class COPY(Node):
     """Copy nodes have ids as in https://arxiv.org/pdf/1701.04691.pdf"""
-    ports = ['lhs', 'rhs', 'val']
-    __slots__ = ['id'] + ports
+
+    ports = ["lhs", "rhs", "val"]
+    __slots__ = ["id"] + ports
 
     def __init__(self, id):
         self.id = id
 
 
 class ERASE(Node):
-    ports = ['val']
+    ports = ["val"]
     __slots__ = ports
 
 
@@ -99,20 +102,20 @@ def interact_copy_app(net, app, copy):
     assert isinstance(net, Net)
     assert isinstance(app, APP)
     assert isinstance(copy, COPY)
-    assert app.fun == (copy, 'val')
-    assert copy.val == (app, 'fun')
+    assert app.fun == (copy, "val")
+    assert copy.val == (app, "fun")
     lhs_app = app
     rhs_app = net.make(APP)
     val_copy = copy
     arg_copy = net.make(COPY)
-    connect((val_copy, 'val'), lhs_app.val)
-    connect((arg_copy, 'arg'), lhs_app.arg)
-    connect((lhs_app, 'fun'), val_copy.lhs)
-    connect((rhs_app, 'fun'), val_copy.rhs)
-    connect((val_copy, 'lhs'), (lhs_app, 'val'))
-    connect((val_copy, 'rhs'), (rhs_app, 'val'))
-    connect((arg_copy, 'lhs'), (lhs_app, 'arg'))
-    connect((arg_copy, 'rhs'), (rhs_app, 'arg'))
+    connect((val_copy, "val"), lhs_app.val)
+    connect((arg_copy, "arg"), lhs_app.arg)
+    connect((lhs_app, "fun"), val_copy.lhs)
+    connect((rhs_app, "fun"), val_copy.rhs)
+    connect((val_copy, "lhs"), (lhs_app, "val"))
+    connect((val_copy, "rhs"), (rhs_app, "val"))
+    connect((arg_copy, "lhs"), (lhs_app, "arg"))
+    connect((arg_copy, "rhs"), (rhs_app, "arg"))
 
 
 def try_step_node(net, node):
@@ -120,53 +123,53 @@ def try_step_node(net, node):
     if isinstance(node, ERASE):
         val, port = node.val
         if isinstance(val, COPY):
-            if port == 'val':
+            if port == "val":
                 lhs = node
                 rhs = net.make(ERASE)
                 connect(lhs.val, val.lhs)
                 connect(rhs.val, val.rhs)
-            elif port == 'lhs':
+            elif port == "lhs":
                 connect(node.val, val.rhs)
             else:
-                assert port == 'rhs'
+                assert port == "rhs"
                 connect(node.val, val.lhs)
             net.erase(val)
             return True
         elif isinstance(val, APP):
-            assert node.val[1] == 'val'
+            assert node.val[1] == "val"
             val = node.val[0]
             fun = node
             arg = net.make(ERASE)
-            connect((fun, 'val'), val.fun)
-            connect((arg, 'val'), val.arg)
+            connect((fun, "val"), val.fun)
+            connect((arg, "val"), val.arg)
             net.remove(val)
             return True
         elif isinstance(val, ABS):
-            if port == 'val':
+            if port == "val":
                 var = node
                 body = net.make(ERASE)
-                connect((var, 'val'), val.var)
-                connect((body, 'val'), val.body)
+                connect((var, "val"), val.var)
+                connect((body, "val"), val.body)
                 net.remove(val)
                 return True
     elif isinstance(node, COPY):
-        if isinstance(node.val[0], APP) and node.val[1] == 'fun':
+        if isinstance(node.val[0], APP) and node.val[1] == "fun":
             interact_copy_app(net, node, node.val[0])
-        elif isinstance(node.val[0], ABS) and node.val[1] == 'val':
+        elif isinstance(node.val[0], ABS) and node.val[1] == "val":
             # Copy abs.val.
             lhs_abs = node.val[0]
             rhs_abs = net.make(ABS)
             val_copy = node
             arg_copy = net.make(COPY)
-            connect((val_copy, 'val'), lhs_abs.val)
-            connect((arg_copy, 'arg'), lhs_abs.arg)
-            connect((lhs_abs, 'fun'), val_copy.lhs)
-            connect((rhs_abs, 'fun'), val_copy.rhs)
-            connect((val_copy, 'lhs'), (lhs_abs, 'val'))
-            connect((val_copy, 'rhs'), (rhs_abs, 'val'))
-            connect((arg_copy, 'lhs'), (lhs_abs, 'arg'))
-            connect((arg_copy, 'rhs'), (rhs_abs, 'arg'))
-        elif isinstance(node.val[0], COPY) and node.val[1] == 'val':
+            connect((val_copy, "val"), lhs_abs.val)
+            connect((arg_copy, "arg"), lhs_abs.arg)
+            connect((lhs_abs, "fun"), val_copy.lhs)
+            connect((rhs_abs, "fun"), val_copy.rhs)
+            connect((val_copy, "lhs"), (lhs_abs, "val"))
+            connect((val_copy, "rhs"), (rhs_abs, "val"))
+            connect((arg_copy, "lhs"), (lhs_abs, "arg"))
+            connect((arg_copy, "rhs"), (rhs_abs, "arg"))
+        elif isinstance(node.val[0], COPY) and node.val[1] == "val":
             if node.id == node.val.id:
                 # Cancel copies.
                 connect(node.lhs, node.val.lhs)
@@ -188,10 +191,10 @@ def try_step_node(net, node):
                 connect(ax.rhs, by.lhs)
                 connect(ay.lhs, bx.rhs)
                 connect(ay.rhs, by.rhs)
-                TODO('create new ids')
+                TODO("create new ids")
                 return True
     elif isinstance(node, APP) and isinstance(node.fun[0], ABS):
-        assert node.fun[1] == 'fun'
+        assert node.fun[1] == "fun"
         # Beta step.
         connect(node.val, node.fun.body)
         connect(node.arg, node.fun.var)
@@ -199,9 +202,9 @@ def try_step_node(net, node):
         net.remove(node.fun)
         return True
     elif isinstance(node, ABS):
-        if isinstance(node.var[0], COPY) and node.var[1] == 'val':
+        if isinstance(node.var[0], COPY) and node.var[1] == "val":
             # Propagate copies.
-            TODO('')
+            TODO("")
     return False
 
 
@@ -222,6 +225,7 @@ def reduce_net(net):
 
 # ----------------------------------------------------------------------------
 # Construction
+
 
 def make_root(net, node):
     assert isinstance(net, Net)
@@ -254,22 +258,22 @@ def make_abs(net, name, body):
     assert isinstance(body, Node)
     net.validate()
     occurrences = []  # (node, port) pairs.
-    TODO('depth first search for occurrences')
+    TODO("depth first search for occurrences")
     abs_ = ABS()
     net.add(abs_)
-    connect((abs_, 'body'), (body, 'val'))
+    connect((abs_, "body"), (body, "val"))
     if not occurrences:
         erase = ERASE()
         net.add(erase)
-        connect((abs_, 'var'), (erase, 'val'))
+        connect((abs_, "var"), (erase, "val"))
     else:
         var = occurrences[0]
         for rhs in occurrences[1:]:
             lhs = var
             var = COPY()
             net.add(var)
-            connect((var, 'lhs'), lhs)
-            connect((var, 'rhs'), rhs)
+            connect((var, "lhs"), lhs)
+            connect((var, "rhs"), rhs)
     net.validate()
     return abs_
 

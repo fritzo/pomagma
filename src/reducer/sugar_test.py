@@ -5,10 +5,10 @@ from pomagma.reducer.sugar import _compile, app, as_term, combinator, join_
 from pomagma.reducer.syntax import NVAR, TOP
 from pomagma.util.testing import for_each
 
-f = NVAR('f')
-x = NVAR('x')
-y = NVAR('y')
-z = NVAR('z')
+f = NVAR("f")
+x = NVAR("x")
+y = NVAR("y")
+z = NVAR("z")
 
 
 TERM_EXAMPLES = [
@@ -81,10 +81,12 @@ def div_rec_app(x):
     return join_(x, app(div_rec_app, app(x, TOP)))
 
 
-@for_each([
-    (div_rec_call, div_Y),
-    (div_rec_app, div_Y),
-])
+@for_each(
+    [
+        (div_rec_call, div_Y),
+        (div_rec_app, div_Y),
+    ]
+)
 def test_combinator_recursion(arg, expected):
     actual = arg.term
     assert actual == expected

@@ -16,13 +16,13 @@ def random_entry(size, density):
 
 def print_entry(entry):
     if entry is None:
-        return '  .'
+        return "  ."
     else:
-        return '{: 3d}'.format(entry)
+        return "{: 3d}".format(entry)
 
 
 def print_grid(grid):
-    return '\n'.join(''.join(map(print_entry, row)) for row in grid)
+    return "\n".join("".join(map(print_entry, row)) for row in grid)
 
 
 @parsable
@@ -31,10 +31,7 @@ def generate(size=9, density=0.2, seed=0):
     assert size >= 0, size
     assert 0 <= density and density <= 1, density
     random.seed(seed)
-    grid = [
-        [random_entry(size, density) for j in range(size)]
-        for i in range(size)
-    ]
+    grid = [[random_entry(size, density) for j in range(size)] for i in range(size)]
     print(print_grid(grid))
     return grid
 
@@ -56,10 +53,14 @@ def is_valid(grid):
 
 @combinator
 def un_all_different(xs):
-    return app(xs, lib.true, lambda h, t:
-               lib.bool_and(
-                   lib.list_all(lambda x: lib.bool_not(lib.list_num_eq(h, x))),
-                   all_different(t)))
+    return app(
+        xs,
+        lib.true,
+        lambda h, t: lib.bool_and(
+            lib.list_all(lambda x: lib.bool_not(lib.list_num_eq(h, x))),
+            all_different(t),
+        ),
+    )
 
 
 @combinator
@@ -67,9 +68,9 @@ def un_is_valid(grid):
     TODO()
 
 
-py_all_different = program(('list', 'num'), 'bool')(un_all_different)
-py_is_valid = program(('list', ('list', 'num')), 'bool')(un_is_valid)
+py_all_different = program(("list", "num"), "bool")(un_all_different)
+py_is_valid = program(("list", ("list", "num")), "bool")(un_is_valid)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     parsable()

@@ -16,20 +16,19 @@ def assert_subset(subset, set_):
     assert subset <= set_, (subset, set_)
 
 
-OBJECT_COUNT = 1e4                          # optimize for this many obs
-LOGIC_COST = OBJECT_COUNT / 64.0            # perform logic on 64-bit words
+OBJECT_COUNT = 1e4  # optimize for this many obs
+LOGIC_COST = OBJECT_COUNT / 64.0  # perform logic on 64-bit words
 LOG_OBJECT_COUNT = math.log(OBJECT_COUNT)
 
-UNKNOWN = Expression_1('UNKNOWN')
+UNKNOWN = Expression_1("UNKNOWN")
 
 
 def add_costs(costs):
-    return (log_sum_exp(*(LOG_OBJECT_COUNT * c for c in costs)) /
-            LOG_OBJECT_COUNT)
+    return log_sum_exp(*(LOG_OBJECT_COUNT * c for c in costs)) / LOG_OBJECT_COUNT
 
 
 class Plan(object):
-    __slots__ = ['_args', '_cost', '_rank']
+    __slots__ = ["_args", "_cost", "_rank"]
 
     def __init__(self, *args):
         self._args = args
@@ -53,15 +52,12 @@ class Plan(object):
         return self.rank < other.rank
 
     def permute_symbols(self, perm):
-        return self.__class__.make(*(
-            a.permute_symbols(perm)
-            for a in self._args
-        ))
+        return self.__class__.make(*(a.permute_symbols(perm) for a in self._args))
 
 
 @memoize_make
 class Iter(Plan):
-    __slots__ = ['_repr', 'var', 'body', 'tests', 'lets', 'stack']
+    __slots__ = ["_repr", "var", "body", "tests", "lets", "stack"]
 
     def __init__(self, var, body):
         Plan.__init__(self, var, body)
@@ -76,13 +72,13 @@ class Iter(Plan):
         self.optimize()
 
     def add_test(self, test):
-        assert isinstance(test, Test), 'add_test arg is not a Test'
+        assert isinstance(test, Test), "add_test arg is not a Test"
         self.tests.append(test.expr)
         self.stack.add(test)
 
     def add_let(self, let):
-        assert isinstance(let, Let), 'add_let arg is not a Let'
-        assert let.var not in self.lets, 'add_let var is not in Iter.lets'
+        assert isinstance(let, Let), "add_let arg is not a Let"
+        assert let.var not in self.lets, "add_let var is not in Iter.lets"
         self.lets[let.var] = let.expr
         self.stack.add(let)
 
@@ -94,7 +90,7 @@ class Iter(Plan):
             # self._repr = 'for {0}: {1}'.format(
             #     ' '.join([str(self.var)] + tests + lets),
             #     self.body)
-            self._repr = 'for {}: {}'.format(self.var, self.body)
+            self._repr = "for {}: {}".format(self.var, self.body)
         return self._repr
 
     def validate(self, bound):
@@ -123,14 +119,14 @@ class Iter(Plan):
             if isinstance(node, Let):
                 new_lets.add(node.var)
             expr = node.expr
-            while expr.name == 'UNKNOWN':
+            while expr.name == "UNKNOWN":
                 expr = expr.args[0]
             optimizable = (
-                self.var in expr.vars and
-                expr.vars.isdisjoint(new_lets) and
-                sum(1 for arg in expr.args if self.var == arg) == 1 and
-                sum(1 for arg in expr.args if self.var in arg.vars) == 1 and
-                (isinstance(node, Let) or expr.is_rel())
+                self.var in expr.vars
+                and expr.vars.isdisjoint(new_lets)
+                and sum(1 for arg in expr.args if self.var == arg) == 1
+                and sum(1 for arg in expr.args if self.var in arg.vars) == 1
+                and (isinstance(node, Let) or expr.is_rel())
             )
             if optimizable:
                 if isinstance(node, Test):
@@ -143,18 +139,18 @@ class Iter(Plan):
 # TODO injective function inverse need not be iterated
 @memoize_make
 class IterInvInjective(Plan):
-    __slots__ = ['fun', 'value', 'var', 'body']
+    __slots__ = ["fun", "value", "var", "body"]
 
     def __init__(self, fun, body):
         Plan.__init__(self, fun, body)
-        assert fun.arity == 'InjectiveFunction'
+        assert fun.arity == "InjectiveFunction"
         self.fun = fun.name
         self.value = fun.var
         (self.var,) = fun.args
         self.body = body
 
     def __repr__(self):
-        return 'for {0} {1}: {2}'.format(self.fun, self.var, self.body)
+        return "for {0} {1}: {2}".format(self.fun, self.var, self.body)
 
     def validate(self, bound):
         assert_in(self.value, bound)
@@ -167,19 +163,18 @@ class IterInvInjective(Plan):
 
 @memoize_make
 class IterInvBinary(Plan):
-    __slots__ = ['fun', 'value', 'var1', 'var2', 'body']
+    __slots__ = ["fun", "value", "var1", "var2", "body"]
 
     def __init__(self, fun, body):
         Plan.__init__(self, fun, body)
-        assert fun.arity in ['BinaryFunction', 'SymmetricFunction']
+        assert fun.arity in ["BinaryFunction", "SymmetricFunction"]
         self.fun = fun.name
         self.value = fun.var
         self.var1, self.var2 = fun.args
         self.body = body
 
     def __repr__(self):
-        return 'for {0} {1} {2}: {3}'.format(
-            self.fun, self.var1, self.var2, self.body)
+        return "for {0} {1} {2}: {3}".format(self.fun, self.var1, self.var2, self.body)
 
     def validate(self, bound):
         assert_in(self.value, bound)
@@ -193,26 +188,28 @@ class IterInvBinary(Plan):
 
 @memoize_make
 class IterInvBinaryRange(Plan):
-    __slots__ = ['fun', 'value', 'var1', 'var2', 'lhs_fixed', 'body']
+    __slots__ = ["fun", "value", "var1", "var2", "lhs_fixed", "body"]
 
     def __init__(self, fun, fixed, body):
         Plan.__init__(self, fun, fixed, body)
-        assert fun.arity in ['BinaryFunction', 'SymmetricFunction']
+        assert fun.arity in ["BinaryFunction", "SymmetricFunction"]
         self.fun = fun.name
         self.value = fun.var
         self.var1, self.var2 = fun.args
         assert self.var1 != self.var2
         assert self.var1 == fixed or self.var2 == fixed
-        self.lhs_fixed = (fixed == self.var1)
+        self.lhs_fixed = fixed == self.var1
         self.body = body
 
     def __repr__(self):
         if self.lhs_fixed:
-            return 'for {0} ({1}) {2}: {3}'.format(
-                self.fun, self.var1, self.var2, self.body)
+            return "for {0} ({1}) {2}: {3}".format(
+                self.fun, self.var1, self.var2, self.body
+            )
         else:
-            return 'for {0} {1} ({2}): {3}'.format(
-                self.fun, self.var1, self.var2, self.body)
+            return "for {0} {1} ({2}): {3}".format(
+                self.fun, self.var1, self.var2, self.body
+            )
 
     def validate(self, bound):
         assert self.value in bound
@@ -231,7 +228,7 @@ class IterInvBinaryRange(Plan):
 
 @memoize_make
 class Let(Plan):
-    __slots__ = ['var', 'expr', 'body']
+    __slots__ = ["var", "expr", "body"]
 
     def __init__(self, expr, body):
         Plan.__init__(self, expr, body)
@@ -242,14 +239,14 @@ class Let(Plan):
         self.body = body
 
     def __repr__(self):
-        return 'let {0}: {1}'.format(self.var, self.body)
+        return "let {0}: {1}".format(self.var, self.body)
 
     def validate(self, bound):
         assert_subset(self.expr.vars, bound)
         assert_not_in(self.var, bound)
         self.body.validate(set_with(bound, self.var))
 
-    __probs = {'NullaryFunction': 0.9}
+    __probs = {"NullaryFunction": 0.9}
 
     def prob(self):
         return self.__probs.get(self.expr.arity, 0.1)
@@ -263,7 +260,7 @@ class Let(Plan):
 
 @memoize_make
 class Test(Plan):
-    __slots__ = ['expr', 'body']
+    __slots__ = ["expr", "body"]
 
     def __init__(self, expr, body):
         Plan.__init__(self, expr, body)
@@ -273,13 +270,13 @@ class Test(Plan):
         self.body = body
 
     def __repr__(self):
-        return 'if {0}: {1}'.format(self.expr, self.body)
+        return "if {0}: {1}".format(self.expr, self.body)
 
     def validate(self, bound):
         assert_subset(self.expr.vars, bound)
         self.body.validate(bound)
 
-    __probs = {'NLESS': 0.9}
+    __probs = {"NLESS": 0.9}
 
     def prob(self):
         return self.__probs.get(self.expr.name, 0.1)
@@ -293,22 +290,22 @@ class Test(Plan):
 
 @memoize_make
 class Ensure(Plan):
-    __slots__ = ['expr']
+    __slots__ = ["expr"]
 
     def __init__(self, expr):
         Plan.__init__(self, expr)
-        assert expr.args, ('expr is not compound', expr)
+        assert expr.args, ("expr is not compound", expr)
         self.expr = expr
 
     def __repr__(self):
-        return 'ensure {0}'.format(self.expr)
+        return "ensure {0}".format(self.expr)
 
     def validate(self, bound):
         assert_subset(self.expr.vars, bound)
 
     def op_count(self, stack=None):
         fun_count = 0
-        if self.expr.name == 'EQUATION':
+        if self.expr.name == "EQUATION":
             for arg in self.expr.args:
                 if arg.is_fun():
                     fun_count += 1

@@ -3,13 +3,13 @@ from pomagma.compiler.parser import parse_corpus
 from pomagma.compiler.util import inputs
 from pomagma.util import TODO
 
-HOLE = Expression.make('HOLE')
+HOLE = Expression.make("HOLE")
 
 
 class Corpus(object):
-    '''
+    """
     Corpus is a general-recursive set of definitions with holes.
-    '''
+    """
 
     def __init__(self):
         self._defs = {}
@@ -19,12 +19,12 @@ class Corpus(object):
             self._defs = parse_corpus(f, filename=filename)
 
     def dump(self, filename):
-        with open(filename, 'w') as f:
-            f.write('# Corpus written by {}'.format(__file__))
+        with open(filename, "w") as f:
+            f.write("# Corpus written by {}".format(__file__))
             for var, expr in sorted(self._defs.items()):
                 assert isinstance(var, str), var
                 assert isinstance(expr, Expression), expr
-                f.write('\nEQUAL {} {}'.format(var, expr))
+                f.write("\nEQUAL {} {}".format(var, expr))
 
     def __getitem__(self, var):
         assert isinstance(var, Expression), var
@@ -43,7 +43,7 @@ class Corpus(object):
     def __iter__(self):
         return iter(self._defs.items())
 
-    def insert(self, key, value='HOLE'):
+    def insert(self, key, value="HOLE"):
         var = Expression.make(key)
         expr = Expression.make(value)
         self[var] = expr
@@ -51,9 +51,9 @@ class Corpus(object):
 
 @inputs(Corpus)
 def assess(corpus):
-    TODO('report belief of validity of corpus')
+    TODO("report belief of validity of corpus")
 
 
 @inputs(Corpus)
-def refine(corpus, result_count=(2 ** 5), search_count=(2 ** 15)):
-    TODO('propose candidate joint hole-filling refinements of a corpus')
+def refine(corpus, result_count=(2**5), search_count=(2**15)):
+    TODO("propose candidate joint hole-filling refinements of a corpus")

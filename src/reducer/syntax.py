@@ -9,26 +9,27 @@ import sys
 # ----------------------------------------------------------------------------
 # Signature
 
+
 class Term(tuple):
     def __repr__(self):
         if len(self) == 1:
             return self[0]
-        return '{}({})'.format(self[0], ', '.join(repr(a) for a in self[1:]))
+        return "{}({})".format(self[0], ", ".join(repr(a) for a in self[1:]))
 
     def __str__(self):
         if len(self) == 1:
             return self[0]
-        return '{}({})'.format(self[0], ', '.join(str(a) for a in self[1:]))
+        return "{}({})".format(self[0], ", ".join(str(a) for a in self[1:]))
 
     def __call__(*args):
         # This syntax will be defined later:
         # return pomagma.reducer.sugar.app(*args)
-        raise NotImplementedError('import pomagma.reduce.sugar')
+        raise NotImplementedError("import pomagma.reduce.sugar")
 
     def __or__(lhs, rhs):
         # This syntax will be defined later:
         # return pomagma.reducer.sugar.join_(lhs, rhs)
-        raise NotImplementedError('import pomagma.reduce.sugar')
+        raise NotImplementedError("import pomagma.reduce.sugar")
 
     @staticmethod
     @memoize_args
@@ -36,8 +37,8 @@ class Term(tuple):
         return Term(args)
 
 
-re_keyword = re.compile('[A-Z]+$')
-re_rank = re.compile(r'\d+$')
+re_keyword = re.compile("[A-Z]+$")
+re_rank = re.compile(r"\d+$")
 _keywords = {}  # : name -> arity
 _builders = {}  # : name -> constructor
 _atoms = {}  # name -> term
@@ -69,56 +70,55 @@ def builder(fun):
     return fun
 
 
-_IVAR = make_keyword('IVAR', 1)  # de Bruijn variable.
-_NVAR = make_keyword('NVAR', 1)  # Nominal variable.
-_APP = make_keyword('APP', 2)
-_JOIN = make_keyword('JOIN', 2)
-_RAND = make_keyword('RAND', 2)
-_QUOTE = make_keyword('QUOTE', 1)
-_ABS = make_keyword('ABS', 1)  # de Bruijn abstraction.
-_FUN = make_keyword('FUN', 2)  # Nominal abstraction.
-_LESS = make_keyword('LESS', 2)
-_NLESS = make_keyword('NLESS', 2)
-_EQUAL = make_keyword('EQUAL', 2)
+_IVAR = make_keyword("IVAR", 1)  # de Bruijn variable.
+_NVAR = make_keyword("NVAR", 1)  # Nominal variable.
+_APP = make_keyword("APP", 2)
+_JOIN = make_keyword("JOIN", 2)
+_RAND = make_keyword("RAND", 2)
+_QUOTE = make_keyword("QUOTE", 1)
+_ABS = make_keyword("ABS", 1)  # de Bruijn abstraction.
+_FUN = make_keyword("FUN", 2)  # Nominal abstraction.
+_LESS = make_keyword("LESS", 2)
+_NLESS = make_keyword("NLESS", 2)
+_EQUAL = make_keyword("EQUAL", 2)
 
-TOP = make_atom('TOP')
-BOT = make_atom('BOT')
-I = make_atom('I')
-K = make_atom('K')
-B = make_atom('B')
-C = make_atom('C')
-S = make_atom('S')
-Y = make_atom('Y')
+TOP = make_atom("TOP")
+BOT = make_atom("BOT")
+I = make_atom("I")
+K = make_atom("K")
+B = make_atom("B")
+C = make_atom("C")
+S = make_atom("S")
+Y = make_atom("Y")
 
-CODE = make_atom('CODE')
-EVAL = make_atom('EVAL')
-QAPP = make_atom('QAPP')
-QQUOTE = make_atom('QQUOTE')
-QEQUAL = make_atom('QEQUAL')
-QLESS = make_atom('QLESS')
+CODE = make_atom("CODE")
+EVAL = make_atom("EVAL")
+QAPP = make_atom("QAPP")
+QQUOTE = make_atom("QQUOTE")
+QEQUAL = make_atom("QEQUAL")
+QLESS = make_atom("QLESS")
 
-V = make_atom('V')
-A = make_atom('A')
-UNIT = make_atom('UNIT')
-BOOL = make_atom('BOOL')
-MAYBE = make_atom('MAYBE')
-PROD = make_atom('PROD')
-SUM = make_atom('SUM')
-NUM = make_atom('NUM')
+V = make_atom("V")
+A = make_atom("A")
+UNIT = make_atom("UNIT")
+BOOL = make_atom("BOOL")
+MAYBE = make_atom("MAYBE")
+PROD = make_atom("PROD")
+SUM = make_atom("SUM")
+NUM = make_atom("NUM")
 
 
 @builder
 def NVAR(name):
     if re_keyword.match(name):
-        raise ValueError('Variable names cannot match [A-Z]+: {}'.format(name))
+        raise ValueError("Variable names cannot match [A-Z]+: {}".format(name))
     return Term.make(_NVAR, sys.intern(name))
 
 
 @builder
 def IVAR(rank):
     if not (isinstance(rank, int) and rank >= 0):
-        raise ValueError(
-            'Variable index must be a natural number {}'.format(rank))
+        raise ValueError("Variable index must be a natural number {}".format(rank))
     return Term.make(_IVAR, rank)
 
 
@@ -227,6 +227,7 @@ def is_equal(term):
 # ----------------------------------------------------------------------------
 # Transforms
 
+
 class Transform(object):
     """Recursive transform of term."""
 
@@ -262,6 +263,7 @@ identity = Transform()
 
 # ----------------------------------------------------------------------------
 # Variables
+
 
 def anonymize(term, var, transform=identity):
     """Convert a nominal variable to a de Bruijn variable."""
@@ -330,9 +332,7 @@ def free_vars(term):
         return free_vars(term[1])
     elif is_abs(term):
         return frozenset(
-            decrement_var(v)
-            for v in free_vars(term[1])
-            if v is not IVAR_0
+            decrement_var(v) for v in free_vars(term[1]) if v is not IVAR_0
         )
     elif is_fun(term):
         assert is_nvar(term[1])
@@ -355,9 +355,7 @@ def quoted_vars(term):
         return quoted_vars(term[1]) | quoted_vars(term[2])
     elif is_abs(term):
         return frozenset(
-            decrement_var(v)
-            for v in quoted_vars(term[1])
-            if v is not IVAR_0
+            decrement_var(v) for v in quoted_vars(term[1]) if v is not IVAR_0
         )
     elif is_fun(term):
         return quoted_vars(term[2])
@@ -384,18 +382,21 @@ def is_defined(term):
 # Term complexity is roughly the depth of a term, with special cases for atoms,
 # variables, and joins. The complexity of a join is the max complexity of each
 # part of the join.
-ATOM_COMPLEXITY = defaultdict(lambda: 10, {
-    BOT: 0,
-    TOP: 0,
-    I: 2,  # \x.x
-    K: 3,  # \x,y. x
-    B: 6,  # \x,y,z. x (y z)
-    C: 6,  # \x,y,z. x z y
-    S: 6,  # \x,y,z. x z (y z)
-    Y: 6,  # \f. (\x. f(x x)) (\x. f(x x))
-    # V: TODO(),
-    # A: TODO(),
-})
+ATOM_COMPLEXITY = defaultdict(
+    lambda: 10,
+    {
+        BOT: 0,
+        TOP: 0,
+        I: 2,  # \x.x
+        K: 3,  # \x,y. x
+        B: 6,  # \x,y,z. x (y z)
+        C: 6,  # \x,y,z. x z y
+        S: 6,  # \x,y,z. x z (y z)
+        Y: 6,  # \f. (\x. f(x x)) (\x. f(x x))
+        # V: TODO(),
+        # A: TODO(),
+    },
+)
 
 
 @memoize_arg
@@ -424,6 +425,7 @@ def complexity(term):
 
 # ----------------------------------------------------------------------------
 # Polish notation
+
 
 def polish_parse(string, transform=identity):
     """Parse a string from polish notation to a term.
@@ -486,7 +488,7 @@ def polish_print(term):
     assert isinstance(term, Term), term
     tokens = []
     _polish_print_tokens(term, tokens)
-    return ' '.join(tokens)
+    return " ".join(tokens)
 
 
 def _polish_print_tokens(term, tokens):
@@ -512,6 +514,7 @@ def _polish_print_tokens(term, tokens):
 
 # ----------------------------------------------------------------------------
 # S-Expression notation
+
 
 @memoize_arg
 def to_sexpr(term):
@@ -546,7 +549,7 @@ def from_sexpr(sexpr, transform=identity):
         if sexpr in _atoms:
             return getattr(transform, sexpr)
         if re_keyword.match(sexpr):
-            raise ValueError('Unrecognized atom: {}'.format(sexpr))
+            raise ValueError("Unrecognized atom: {}".format(sexpr))
         return NVAR(sexpr)
     if isinstance(sexpr, int):
         return IVAR(sexpr)
@@ -559,12 +562,9 @@ def from_sexpr(sexpr, transform=identity):
         head = getattr(transform, head)
         if arity:
             if len(sexpr) < 1 + arity:
-                raise ValueError('Too few args to {}: {}'.format(head, sexpr))
-            head = head(*(
-                from_sexpr(sexpr[1 + i], transform)
-                for i in range(arity)
-            ))
-        args = sexpr[1 + arity:]
+                raise ValueError("Too few args to {}: {}".format(head, sexpr))
+            head = head(*(from_sexpr(sexpr[1 + i], transform) for i in range(arity)))
+        args = sexpr[1 + arity :]
     elif isinstance(head, int):
         head = IVAR(head)
         args = sexpr[1:]
@@ -586,7 +586,7 @@ def sexpr_print_sexpr(sexpr):
     elif isinstance(sexpr, tuple):
         assert len(sexpr) > 1, sexpr
         parts = list(map(sexpr_print_sexpr, sexpr))
-        return '({})'.format(' '.join(parts))
+        return "({})".format(" ".join(parts))
     else:
         raise ValueError(sexpr)
 
@@ -599,8 +599,8 @@ def sexpr_print(term):
     return sexpr_print_sexpr(sexpr)
 
 
-_LPAREN = sys.intern('(')
-_RPAREN = sys.intern(')')
+_LPAREN = sys.intern("(")
+_RPAREN = sys.intern(")")
 
 
 def _sexpr_parse_tokens(tokens):
@@ -617,7 +617,7 @@ def _sexpr_parse_tokens(tokens):
 
 def sexpr_parse_sexpr(string):
     """Parses a string S-expression to a python S-expression."""
-    tokens = string.replace('(', ' ( ').replace(')', ' ) ').split()
+    tokens = string.replace("(", " ( ").replace(")", " ) ").split()
     tokens = iter(map(intern, tokens))
     sexpr = next(_sexpr_parse_tokens(tokens))
     try:
@@ -625,7 +625,7 @@ def sexpr_parse_sexpr(string):
     except StopIteration:
         pass
     else:
-        raise ValueError('Extra tokens at end of sexpr: {}'.format(extra))
+        raise ValueError("Extra tokens at end of sexpr: {}".format(extra))
     return sexpr
 
 

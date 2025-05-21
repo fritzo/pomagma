@@ -45,13 +45,13 @@ class Term(tuple):
 
 MEMOIZED_CACHES[Term.make] = Term._make_cache
 
-_HOLE = sys.intern('HOLE')
-_TOP = sys.intern('TOP')
-_NVAR = sys.intern('NVAR')
-_IVAR = sys.intern('IVAR')
-_ABS = sys.intern('ABS')
-_APP = sys.intern('APP')
-_JOIN = sys.intern('JOIN')
+_HOLE = sys.intern("HOLE")
+_TOP = sys.intern("TOP")
+_NVAR = sys.intern("NVAR")
+_IVAR = sys.intern("IVAR")
+_ABS = sys.intern("ABS")
+_APP = sys.intern("APP")
+_JOIN = sys.intern("JOIN")
 
 HOLE = Term.make(_HOLE)
 TOP = Term.make(_TOP)
@@ -85,6 +85,7 @@ def JOIN(args):
 
 # ----------------------------------------------------------------------------
 # Mutual recursion
+
 
 def term_iter_obs(term):
     assert isinstance(term, Term)
@@ -168,5 +169,5 @@ def rec(**defs):
     assert all(isinstance(key, str) for key in list(defs.keys()))
     assert all(isinstance(val, Term) for val in list(defs.values()))
     defs = {NVAR(key): val for key, val in defs.items()}
-    TODO('search for existing instances of graph')
+    TODO("search for existing instances of graph")
     return defs

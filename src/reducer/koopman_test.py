@@ -1,14 +1,25 @@
 import pytest
 
-from pomagma.reducer.koopman import (APP, ATOM, BOT, TOP, B, C, I, K, S,
-                                     count_beta_steps, print_to_depth,
-                                     try_beta_step)
+from pomagma.reducer.koopman import (
+    APP,
+    ATOM,
+    BOT,
+    TOP,
+    B,
+    C,
+    I,
+    K,
+    S,
+    count_beta_steps,
+    print_to_depth,
+    try_beta_step,
+)
 from pomagma.util.testing import for_each
 
-f = ATOM('f')
-x = ATOM('x')
-y = ATOM('y')
-z = ATOM('z')
+f = ATOM("f")
+x = ATOM("x")
+y = ATOM("y")
+z = ATOM("z")
 
 BETA_STEP_EXAMPLES = [
     (x, False, x),
@@ -73,8 +84,8 @@ def const_stream(x):
 def test_try_beta_step_stream(x, expected_result, expected_x):
     actual = const_stream(x)
     expected = const_stream(expected_x)
-    print(('actual = {}'.format(print_to_depth(actual))))
-    print(('expected = {}'.format(print_to_depth(expected))))
+    print(("actual = {}".format(print_to_depth(actual))))
+    print(("expected = {}".format(print_to_depth(expected))))
     actual = actual.copy()
     assert try_beta_step(actual) is expected_result
     assert actual == expected
@@ -90,6 +101,7 @@ def test_equal_is_extensional():
 
 # ----------------------------------------------------------------------------
 # Church numerals
+
 
 def succ(x):
     return APP(APP(S, B), x)
@@ -137,13 +149,15 @@ def test_church_numeral_three():
 
 
 # Results:
-@for_each([
-    1,  # Steps = 5.
-    2,  # Steps = 14.
-    3,  # Steps = 49.
-    pytest.mark.skip(4),  # Steps = 131136.
-    pytest.mark.skip(5),
-])
+@for_each(
+    [
+        1,  # Steps = 5.
+        2,  # Steps = 14.
+        3,  # Steps = 49.
+        pytest.mark.skip(4),  # Steps = 131136.
+        pytest.mark.skip(5),
+    ]
+)
 def test_tower_of_two(n):
     assert n >= 1
     node = two
@@ -153,7 +167,7 @@ def test_tower_of_two(n):
     node = APP(node, x)
     node = node.copy()
     count = count_beta_steps(node)
-    print(('n = {}, steps = {}'.format(n, count)))
+    print(("n = {}, steps = {}".format(n, count)))
     assert node == x
 
 
@@ -205,31 +219,33 @@ Table 2. The number of total interactions and beta-steps for various net-based
 """
 
 
-@for_each([
-    # From table 1.
-    app(two, I, I),
-    app(two, two, I, I),
-    app(two, two, two, I, I),
-    app(two, two, two, two, I, I),
-    pytest.mark.skip(app(two, two, two, two, two, I, I)),
-    # ---------------------------------------------------
-    app(three, two, I, I),
-    app(four, two, I, I),
-    app(five, two, I, I),
-    pytest.mark.skip(app(ten, two, I, I)),
-    pytest.mark.skip(app(three, two, two, I, I)),
-    pytest.mark.skip(app(four, two, two, I, I)),
-    pytest.mark.skip(app(five, two, two, I, I)),
-    pytest.mark.skip(app(ten, two, two, I, I)),
-    pytest.mark.skip(app(three, two, two, two, I, I)),
-    pytest.mark.skip(app(four, two, two, two, I, I)),
-    # From table 2.
-    pytest.mark.skip(app(two, two, two, ten, I, I)),
-    pytest.mark.skip(app(three, two, two, two, I, I)),
-    pytest.mark.skip(app(ten, two, two, I, I)),
-    pytest.mark.skip(app(four, two, two, two, I, I)),
-    pytest.mark.skip(app(two, two, two, two, ten, I, I)),
-])
+@for_each(
+    [
+        # From table 1.
+        app(two, I, I),
+        app(two, two, I, I),
+        app(two, two, two, I, I),
+        app(two, two, two, two, I, I),
+        pytest.mark.skip(app(two, two, two, two, two, I, I)),
+        # ---------------------------------------------------
+        app(three, two, I, I),
+        app(four, two, I, I),
+        app(five, two, I, I),
+        pytest.mark.skip(app(ten, two, I, I)),
+        pytest.mark.skip(app(three, two, two, I, I)),
+        pytest.mark.skip(app(four, two, two, I, I)),
+        pytest.mark.skip(app(five, two, two, I, I)),
+        pytest.mark.skip(app(ten, two, two, I, I)),
+        pytest.mark.skip(app(three, two, two, two, I, I)),
+        pytest.mark.skip(app(four, two, two, two, I, I)),
+        # From table 2.
+        pytest.mark.skip(app(two, two, two, ten, I, I)),
+        pytest.mark.skip(app(three, two, two, two, I, I)),
+        pytest.mark.skip(app(ten, two, two, I, I)),
+        pytest.mark.skip(app(four, two, two, two, I, I)),
+        pytest.mark.skip(app(two, two, two, two, ten, I, I)),
+    ]
+)
 def test_benchmarks(node):
     count = count_beta_steps(node)
-    print(('steps = {}'.format(count)))
+    print(("steps = {}".format(count)))

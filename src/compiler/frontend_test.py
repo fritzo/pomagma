@@ -9,7 +9,8 @@ def test_compile(filename):
     with pomagma.util.in_temp_dir():
         main.compile(
             filename,
-            symbols_out='temp.symbols',
-            facts_out='temp.facts',
-            programs_out='temp.programs',
-            optimized_out='temp.optimized.programs')
+            symbols_out="temp.symbols",
+            facts_out="temp.facts",
+            programs_out="temp.programs",
+            optimized_out="temp.optimized.programs",
+        )

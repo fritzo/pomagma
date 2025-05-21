@@ -9,7 +9,7 @@ def load_lines(filename):
     assert isinstance(filename, str)
     with open(filename) as f:
         for line in f:
-            if not line.startswith('#'):
+            if not line.startswith("#"):
                 yield line.strip()
 
 
@@ -28,14 +28,14 @@ def load_programs(lines):
 def dump_programs(programs):
     lines = []
     for i, program in enumerate(programs):
-        lines.append('')
-        lines.append('# plan {}: {} bytes'.format(i, sizeof_program(program)))
+        lines.append("")
+        lines.append("# plan {}: {} bytes".format(i, sizeof_program(program)))
         for line in program:
-            lines.append(' '.join(line))
+            lines.append(" ".join(line))
     return lines
 
 
-alphabet = 'abcdefghijklmnopqrstuvwxyz'
+alphabet = "abcdefghijklmnopqrstuvwxyz"
 
 
 def normalize_alpha(program):
@@ -44,18 +44,15 @@ def normalize_alpha(program):
         for token in line[1:]:
             if signature.is_var(token):
                 rename.setdefault(token, alphabet[len(rename)])
-    return tuple(
-        tuple(rename.get(token, token) for token in line)
-        for line in program
-    )
+    return tuple(tuple(rename.get(token, token) for token in line) for line in program)
 
 
 def are_compatible(program1, program2):
     head1 = program1[0]
     head2 = program2[0]
-    if head1[0].startswith('GIVEN') or head2[0].startswith('GIVEN'):
+    if head1[0].startswith("GIVEN") or head2[0].startswith("GIVEN"):
         return head1 == head2
-    elif head1[0] == 'FOR_BLOCK' or head2[0] == 'FOR_BLOCK':
+    elif head1[0] == "FOR_BLOCK" or head2[0] == "FOR_BLOCK":
         return False
     else:
         return head1 == head2
@@ -78,13 +75,13 @@ def get_jump(jump_size):
     jump = 0
     while eval_float53(jump) < jump_size:
         jump += 1
-    assert jump < 256, 'jump out of range: {}'.format(jump_size)
+    assert jump < 256, "jump out of range: {}".format(jump_size)
     padding = eval_float53(jump) - jump_size
     return jump, padding
 
 
 def merge_programs(program1, program2):
-    assert program1 != program2, 'duplicate'
+    assert program1 != program2, "duplicate"
     if sizeof_program(program1) > sizeof_program(program2):
         program1, program2 = program2, program1
     program = []
@@ -92,14 +89,14 @@ def merge_programs(program1, program2):
         if program1[i] != program2[i]:
             break
         program.append(program1[i])
-    logger('saved {} operations by merging', i)
+    logger("saved {} operations by merging", i)
     program1 = program1[i:]
     program2 = program2[i:]
     assert program1 and program2
     jump, padding = get_jump(sizeof_program(program1))
-    program.append(('SEQUENCE', str(jump)))
+    program.append(("SEQUENCE", str(jump)))
     program += list(program1)
-    program += [('PADDING',)] * padding
+    program += [("PADDING",)] * padding
     program += list(program2)
     return tuple(program)
 
@@ -107,7 +104,7 @@ def merge_programs(program1, program2):
 @memoize_arg
 def program_order(program):
     token = program[0][0]
-    return token.startswith('GIVEN'), token == 'FOR_BLOCK', program
+    return token.startswith("GIVEN"), token == "FOR_BLOCK", program
 
 
 class MergeProcessor:
@@ -142,7 +139,7 @@ class MergeProcessor:
             heapq.heappush(self._tasks, task)
 
     def process_tasks(self):
-        logger('processing {} merge tasks', len(self._tasks))
+        logger("processing {} merge tasks", len(self._tasks))
         while self._tasks:
             _, id1, id2 = heapq.heappop(self._tasks)
             if id1 in self._programs and id2 in self._programs:

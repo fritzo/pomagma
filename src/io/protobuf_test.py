@@ -13,15 +13,20 @@ def parse(text, Message=protobuf_test_pb2.TestMessage):
 
 
 EXAMPLES = [
-    parse(''),
-    parse('''
+    parse(""),
+    parse(
+        """
         optional_string: 'test'
-    '''),
-    parse('''
+    """
+    ),
+    parse(
+        """
         repeated_string: 'test1'
         repeated_string: 'test2'
-    '''),
-    parse('''
+    """
+    ),
+    parse(
+        """
         optional_string: 'test'
         repeated_string: 'test1'
         repeated_string: 'test2'
@@ -38,16 +43,17 @@ EXAMPLES = [
                 repeated_string: 'sub 2'
             }
         }
-    '''),
+    """
+    ),
 ]
 
 
 @for_each(EXAMPLES)
 def test_write_read(expected):
-    print('Testing read(write({}))'.format(expected))
+    print("Testing read(write({}))".format(expected))
     actual = protobuf_test_pb2.TestMessage()
     with in_temp_dir():
-        filename = 'test.pb'
+        filename = "test.pb"
         with OutFile(filename) as f:
             f.write(expected)
         with InFile(filename) as f:

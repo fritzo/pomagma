@@ -19,8 +19,8 @@ def pythonize_sequent(proto_sequent):
 @methodof(proto.Theory)
 def pythonize_theory(proto_theory):
     return {
-        'facts': set(map(pythonize_expr, proto_theory.facts)),
-        'rules': set(map(pythonize_sequent, proto_theory.rules)),
+        "facts": set(map(pythonize_expr, proto_theory.facts)),
+        "rules": set(map(pythonize_sequent, proto_theory.rules)),
     }
 
 

@@ -10,14 +10,18 @@ def for_each(examples):
     def decorator(fun):
         args, vargs, kwargs, defaults = inspect.getargspec(fun)
         if vargs or kwargs or defaults:
-            raise TypeError('\n  '.join([
-                'Unsupported signature: '.format(fun),
-                'args = {}'.format(args),
-                'vargs = {}'.format(vargs),
-                'kwargs = {}'.format(kwargs),
-                'defaults = {}'.format(defaults),
-            ]))
-        argnames = ','.join(args)
+            raise TypeError(
+                "\n  ".join(
+                    [
+                        "Unsupported signature: ".format(fun),
+                        "args = {}".format(args),
+                        "vargs = {}".format(vargs),
+                        "kwargs = {}".format(kwargs),
+                        "defaults = {}".format(defaults),
+                    ]
+                )
+            )
+        argnames = ",".join(args)
         return pytest.mark.parametrize(argnames, examples)(fun)
 
     return decorator
@@ -28,13 +32,17 @@ def for_each_kwargs(examples):
     def decorator(fun):
         args, vargs, kwargs, defaults = inspect.getargspec(fun)
         if vargs or kwargs:
-            raise TypeError('\n  '.join([
-                'Unsupported signature: '.format(fun),
-                'args = {}'.format(args),
-                'vargs = {}'.format(vargs),
-                'kwargs = {}'.format(kwargs),
-                'defaults = {}'.format(defaults),
-            ]))
+            raise TypeError(
+                "\n  ".join(
+                    [
+                        "Unsupported signature: ".format(fun),
+                        "args = {}".format(args),
+                        "vargs = {}".format(vargs),
+                        "kwargs = {}".format(kwargs),
+                        "defaults = {}".format(defaults),
+                    ]
+                )
+            )
 
         # FIXME This wrapper pollutes the test log.
         @functools.wraps(fun)
@@ -42,7 +50,7 @@ def for_each_kwargs(examples):
             example = {k: v for k, v in example.items() if k in args}
             return fun(**example)
 
-        return pytest.mark.parametrize('example', examples)(wrapped_fun)
+        return pytest.mark.parametrize("example", examples)(wrapped_fun)
 
     return decorator
 

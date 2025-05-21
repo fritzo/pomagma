@@ -11,6 +11,7 @@ from pomagma.reducer.util import LOG
 # ----------------------------------------------------------------------------
 # Compiler
 
+
 def _compile(fun, actual_fun=None):
     """Convert lambdas to terms using Higher Order Abstract Syntax [1].
 
@@ -22,11 +23,10 @@ def _compile(fun, actual_fun=None):
     args, vargs, kwargs, defaults = inspect.getargspec(actual_fun)
     if vargs or kwargs or defaults:
         source = inspect.getsource(actual_fun)
-        raise SyntaxError('Unsupported signature: {}'.format(source))
+        raise SyntaxError("Unsupported signature: {}".format(source))
     symbolic_args = list(map(NVAR, args))
     symbolic_result = fun(*symbolic_args)
-    LOG.debug('compiling {}{} = {}'.format(
-        fun, tuple(symbolic_args), symbolic_result))
+    LOG.debug("compiling {}{} = {}".format(fun, tuple(symbolic_args), symbolic_result))
     term = as_term(symbolic_result)
     for var in reversed(symbolic_args):
         term = convert.FUN(var, term)
@@ -76,10 +76,10 @@ class _Combinator(object):
             return self._term
 
     def _compile(self):
-        assert not hasattr(self, '_term')
+        assert not hasattr(self, "_term")
 
         # Compile without recursion.
-        var = NVAR('_{}'.format(self.__name__))
+        var = NVAR("_{}".format(self.__name__))
         self._term = var
         term = _compile(self, actual_fun=self._fun)
 
@@ -92,8 +92,9 @@ class _Combinator(object):
         # Check that result has no free variables.
         free = free_vars(term)
         if free:
-            raise SyntaxError('Unbound variables: {}'.format(
-                ' '.join(v[1] for v in free)))
+            raise SyntaxError(
+                "Unbound variables: {}".format(" ".join(v[1] for v in free))
+            )
 
         self._term = term
 
@@ -102,7 +103,7 @@ def combinator(arg):
     if isinstance(arg, _Combinator):
         return arg
     if not callable(arg):
-        raise SyntaxError('Cannot apply @combinator to {}'.format(arg))
+        raise SyntaxError("Cannot apply @combinator to {}".format(arg))
     return _Combinator(arg)
 
 
@@ -113,17 +114,18 @@ def as_term(arg):
         return arg.term
     else:
         if not callable(arg):
-            raise SyntaxError('Cannot convert to term: {}'.format(arg))
+            raise SyntaxError("Cannot convert to term: {}".format(arg))
         return _compile(arg)
 
 
 # ----------------------------------------------------------------------------
 # Sugar
 
+
 def app(*args):
     args = list(map(as_term, args))
     if not args:
-        raise SyntaxError('Too few arguments: app{}'.format(args))
+        raise SyntaxError("Too few arguments: app{}".format(args))
     result = args[0]
     for arg in args[1:]:
         result = convert.APP(result, arg)
@@ -153,7 +155,7 @@ def quote(arg):
 def qapp(*args):
     args = list(map(as_term, args))
     if len(args) < 2:
-        raise SyntaxError('Too few arguments: qapp{}'.format(args))
+        raise SyntaxError("Too few arguments: qapp{}".format(args))
     result = args[0]
     for arg in args[1:]:
         result = convert.QAPP(result, arg)
@@ -177,9 +179,9 @@ def typed(*types):
 
     """
     if len(types) < 1:
-        raise SyntaxError('Too few arguments: typed{}'.format(types))
+        raise SyntaxError("Too few arguments: typed{}".format(types))
     if len(types) > 3:
-        raise NotImplementedError('Too many arguments: typed{}'.format(types))
+        raise NotImplementedError("Too many arguments: typed{}".format(types))
     result_type = types[-1]
     arg_types = types[:-1]
 

@@ -13,30 +13,26 @@ def json_load(filename):
 
 
 def json_dump(data, filename):
-    with open(filename, 'w') as f:
+    with open(filename, "w") as f:
         json.dump(data, f, indent=4, sort_keys=True)
 
 
 ARITY_TO_PB2 = {
-    sys.intern('NULLARY'): WeightedTerm.NULLARY,
-    sys.intern('INJECTIVE'): WeightedTerm.INJECTIVE,
-    sys.intern('BINARY'): WeightedTerm.BINARY,
-    sys.intern('SYMMETRIC'): WeightedTerm.SYMMETRIC,
+    sys.intern("NULLARY"): WeightedTerm.NULLARY,
+    sys.intern("INJECTIVE"): WeightedTerm.INJECTIVE,
+    sys.intern("BINARY"): WeightedTerm.BINARY,
+    sys.intern("SYMMETRIC"): WeightedTerm.SYMMETRIC,
 }
 
 ARITY_FROM_PB2 = {val: key for key, val in ARITY_TO_PB2.items()}
 
 
 def normalize_dict(grouped):
-    '''
+    """
     L1-normalize the weights in a groupd dict in-place.
-    '''
-    total = sum(
-        weight
-        for group in grouped.values()
-        for weight in group.values()
-    )
-    assert total > 0, 'total weight is zero'
+    """
+    total = sum(weight for group in grouped.values() for weight in group.values())
+    assert total > 0, "total weight is zero"
     scale = 1.0 / total
 
     for group in grouped.values():
@@ -95,9 +91,9 @@ def compile(json_in, language_out):
     with open(json_in) as f:
         grouped = json.load(f)
     language = dict_to_language(grouped)
-    with open(language_out, 'wb') as f:
+    with open(language_out, "wb") as f:
         f.write(language.SerializeToString())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     parsable()

@@ -5,9 +5,9 @@ from pomagma.compiler.expressions import Expression
 from pomagma.compiler.sequents import Sequent
 from pomagma.compiler.signature import get_arity, get_nargs
 
-RE_BAR = re.compile('---+')
-RE_PADDING = re.compile('   +')
-RE_COMMENT = re.compile('#.*$')
+RE_BAR = re.compile("---+")
+RE_PADDING = re.compile("   +")
+RE_COMMENT = re.compile("#.*$")
 
 
 class ParseError(Exception):
@@ -17,11 +17,11 @@ class ParseError(Exception):
         self.debuginfo = debuginfo
 
     def __str__(self):
-        header = ', '.join(['ParseError'] + [
-            '{} {}'.format(key, val)
-            for key, val in sorted(self.debuginfo.items())
-        ])
-        return '{}: {}'.format(header, self.message)
+        header = ", ".join(
+            ["ParseError"]
+            + ["{} {}".format(key, val) for key, val in sorted(self.debuginfo.items())]
+        )
+        return "{}: {}".format(header, self.message)
 
 
 def find_bars(lines, **debuginfo):
@@ -34,25 +34,24 @@ def find_bars(lines, **debuginfo):
             bars.append((lineno, left, right))
             match = RE_BAR.search(line, right)
             if match and match.start() - right < 3:
-                raise ParseError(
-                    'horizontal rule overlap', lineno=lineno, **debuginfo)
+                raise ParseError("horizontal rule overlap", lineno=lineno, **debuginfo)
     return bars
 
 
 def get_spans(lines, linenos, left, right, **debuginfo):
     results = []
     for lineno in linenos:
-        debuginfo['lineno'] = lineno
+        debuginfo["lineno"] = lineno
         line = lines[lineno]
-        stripped = lines[lineno][left: right].strip()
+        stripped = lines[lineno][left:right].strip()
         if RE_BAR.match(stripped):
-            raise ParseError('vertical rule overlap', **debuginfo)
+            raise ParseError("vertical rule overlap", **debuginfo)
         if stripped:
             for string in RE_PADDING.split(stripped):
                 try:
                     expr = parse_string_to_expr(string)
                 except Exception as e:
-                    raise ParseError('{}\n{}'.format(e, line), **debuginfo)
+                    raise ParseError("{}\n{}".format(e, line), **debuginfo)
                 results.append(expr)
         else:
             break
@@ -67,12 +66,12 @@ def parse_lines_to_rules(lines, **debuginfo):
         bar_to_bottom = range(lineno + 1, len(lines))
         a, above = get_spans(lines, bar_to_top, left, right, **debuginfo)
         b, below = get_spans(lines, bar_to_bottom, left, right, **debuginfo)
-        block = {'top': a + 1, 'bottom': b, 'left': left, 'right': right}
+        block = {"top": a + 1, "bottom": b, "left": left, "right": right}
         # print 'DEBUG found'
         # for line in lines[block['top']: block['bottom']]:
         #     print 'DEBUG', line[block['left']: block['right']]
         rule = Sequent(above, below)
-        debuginfo['block'] = block
+        debuginfo["block"] = block
         rule.debuginfo = dict(debuginfo)
         rules.append(rule)
     return rules
@@ -81,21 +80,21 @@ def parse_lines_to_rules(lines, **debuginfo):
 def erase_rules_from_lines(rules, lines, **debuginfo):
     lines = copy(lines)
     for rule in rules:
-        block = rule.debuginfo['block']
-        top = block['top']
-        bottom = block['bottom']
-        left = block['left']
-        right = block['right']
+        block = rule.debuginfo["block"]
+        top = block["top"]
+        bottom = block["bottom"]
+        left = block["left"]
+        right = block["right"]
         for lineno in range(top, bottom):
             line = lines[lineno]
-            assert line[left: right].strip(), 'nothing to erase'
-            lines[lineno] = line[:left] + ' ' * (right - left) + line[right:]
+            assert line[left:right].strip(), "nothing to erase"
+            lines[lineno] = line[:left] + " " * (right - left) + line[right:]
         for lineno in range(max(0, top - 1), min(len(lines), bottom + 1)):
-            debuginfo['lineno'] = lineno
+            debuginfo["lineno"] = lineno
             debuginfo.update(block)
             line = lines[lineno]
-            if line[max(0, left - 3): right + 3].strip():
-                raise ParseError('insufficient padding', **debuginfo)
+            if line[max(0, left - 3) : right + 3].strip():
+                raise ParseError("insufficient padding", **debuginfo)
     return lines
 
 
@@ -108,29 +107,29 @@ def parse_tokens_to_expr(tokens):
 
 
 def parse_string_to_expr(string):
-    tokens = string.strip().split(' ')
+    tokens = string.strip().split(" ")
     for token in tokens:
         if not token:
-            raise ValueError('extra whitespace:\n{}'.format(repr(string)))
+            raise ValueError("extra whitespace:\n{}".format(repr(string)))
     tokens.reverse()
     expr = parse_tokens_to_expr(tokens)
     if tokens:
-        raise ValueError('trailing tokens: {} in:\n{}'.format(tokens, string))
+        raise ValueError("trailing tokens: {} in:\n{}".format(tokens, string))
     return expr
 
 
 def remove_comments_and_add_padding(lines_with_comments):
-    lines = ['']
+    lines = [""]
     for line in lines_with_comments:
-        lines.append(RE_COMMENT.sub('', line).rstrip())
-    lines.append('')
+        lines.append(RE_COMMENT.sub("", line).rstrip())
+    lines.append("")
     return lines
 
 
 def parse_lines_to_facts(lines, **debuginfo):
     facts = []
     for lineno, line in enumerate(lines):
-        debuginfo['lineno'] = lineno
+        debuginfo["lineno"] = lineno
         line = line.strip()
         if line:
             for string in RE_PADDING.split(line):
@@ -146,7 +145,7 @@ def parse_theory(lines, **debuginfo):
     rules = parse_lines_to_rules(lines, **debuginfo)
     lines = erase_rules_from_lines(rules, lines, **debuginfo)
     facts = parse_lines_to_facts(lines, **debuginfo)
-    return {'facts': facts, 'rules': rules}
+    return {"facts": facts, "rules": rules}
 
 
 def parse_theory_file(filename):
@@ -163,7 +162,7 @@ def parse_corpus(lines, **debuginfo):
     facts = parse_lines_to_facts(lines, **debuginfo)
     defs = {}
     for fact in facts:
-        assert fact.name == 'EQUAL', fact
+        assert fact.name == "EQUAL", fact
         var, expr = fact.args
         assert var.is_var(), var
         defs[var] = expr

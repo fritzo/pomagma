@@ -19,16 +19,43 @@ CHANGELOG
 
 from pomagma.compiler.util import memoize_arg, memoize_args, unique
 from pomagma.reducer import syntax
-from pomagma.reducer.syntax import (ABS, APP, BOOL, BOT, CODE, EVAL, IVAR,
-                                    JOIN, MAYBE, QAPP, QEQUAL, QLESS, QQUOTE,
-                                    QUOTE, TOP, UNIT, Term, Y, anonymize,
-                                    complexity, free_vars, is_abs, is_app,
-                                    is_atom, is_ivar, is_join, is_nvar,
-                                    is_quote, polish_parse, quoted_vars,
-                                    sexpr_parse, sexpr_print)
+from pomagma.reducer.syntax import (
+    ABS,
+    APP,
+    BOOL,
+    BOT,
+    CODE,
+    EVAL,
+    IVAR,
+    JOIN,
+    MAYBE,
+    QAPP,
+    QEQUAL,
+    QLESS,
+    QQUOTE,
+    QUOTE,
+    TOP,
+    UNIT,
+    Term,
+    Y,
+    anonymize,
+    complexity,
+    free_vars,
+    is_abs,
+    is_app,
+    is_atom,
+    is_ivar,
+    is_join,
+    is_nvar,
+    is_quote,
+    polish_parse,
+    quoted_vars,
+    sexpr_parse,
+    sexpr_print,
+)
 from pomagma.reducer.util import UnreachableError, logged, trool_all, trool_any
 
-SUPPORTED_TESTDATA = ['sk', 'join', 'quote', 'types', 'lib', 'unit']
+SUPPORTED_TESTDATA = ["sk", "join", "quote", "types", "lib", "unit"]
 
 # TODO Make strong version not horribly expensive.
 TRY_DECIDE_LESS_STRONG = False
@@ -50,11 +77,12 @@ pretty = sexpr_print
 
 
 def maybe_pretty(term):
-    return 'None' if term is None else pretty(term)
+    return "None" if term is None else pretty(term)
 
 
 # ----------------------------------------------------------------------------
 # Functional programming
+
 
 @memoize_args
 def _increment_rank(term, min_rank):
@@ -268,9 +296,11 @@ def substitute(term, value, rank, budget):
     elif is_app(term):
         lhs = term[1]
         rhs = term[2]
-        linear = (is_cheap_to_copy(value) or
-                  IVAR(rank) not in free_vars(lhs) or
-                  IVAR(rank) not in free_vars(rhs))
+        linear = (
+            is_cheap_to_copy(value)
+            or IVAR(rank) not in free_vars(lhs)
+            or IVAR(rank) not in free_vars(rhs)
+        )
         if linear or budget:
             # Eager substitution.
             if not linear:
@@ -417,8 +447,7 @@ def app(fun, arg):
 def abstract(term):
     """Abstract one de Bruijn variable and simplify."""
     if IVAR(0) in quoted_vars(term):
-        raise ValueError(
-            'Cannot abstract quoted variable from {}'.format(term))
+        raise ValueError("Cannot abstract quoted variable from {}".format(term))
     if term is TOP or term is BOT:
         return term
     elif is_app(term):
@@ -484,6 +513,7 @@ def nominal_qabstract(var, body):
 # ----------------------------------------------------------------------------
 # Scott ordering
 
+
 def iter_join(term):
     """Destructs JOIN and BOT terms."""
     if is_join(term):
@@ -517,7 +547,8 @@ def join_set(terms):
 
     # Filter out strictly dominated terms (requires transitivity).
     filtered_terms = [
-        term for term in terms
+        term
+        for term in terms
         if not any(dominates(ub, term) for ub in terms if ub is not term)
     ]
     filtered_terms.sort(key=priority, reverse=True)
@@ -708,8 +739,9 @@ def try_decide_less_weak(lhs, rhs):
     # Try pointwise comparison.
     if lhs_args and len(lhs_args) == len(rhs_args):
         if try_decide_less_weak(lhs_head, rhs_head) is True:
-            if all(try_decide_less_weak(i, j) is True
-                   for i, j in zip(lhs_args, rhs_args)):
+            if all(
+                try_decide_less_weak(i, j) is True for i, j in zip(lhs_args, rhs_args)
+            ):
                 return True
 
     # Give up at unreduced terms.
@@ -726,10 +758,7 @@ def try_decide_less_weak(lhs, rhs):
     if is_ivar(lhs_head) and is_ivar(rhs_head):
         if lhs_head is not rhs_head or len(lhs_args) != len(rhs_args):
             return False
-        return trool_all(
-            try_decide_less_weak(i, j)
-            for i, j in zip(lhs_args, rhs_args)
-        )
+        return trool_all(try_decide_less_weak(i, j) for i, j in zip(lhs_args, rhs_args))
 
     # Distinguish quoted terms.
     if is_quote(lhs_head) and is_quote(rhs_head):
@@ -745,6 +774,7 @@ def try_decide_equal(lhs, rhs):
 
 # ----------------------------------------------------------------------------
 # Type casting (eventually to be replaced by definable types)
+
 
 @memoize_args
 def _ground(term, direction, nvars, rank):
@@ -888,6 +918,7 @@ def try_cast_code(x):
 # ----------------------------------------------------------------------------
 # Computation
 
+
 def priority(term):
     return is_normal(term), complexity(term), term
 
@@ -959,19 +990,19 @@ def _compute_step(term):
 
 
 SIGNATURE = {
-    'QUOTE': QUOTE,
+    "QUOTE": QUOTE,
     # Eager linear reduction.
-    'APP': app,
-    'ABS': abstract,
-    'JOIN': join,
+    "APP": app,
+    "ABS": abstract,
+    "JOIN": join,
     # Conversion from nominal lambda calculus.
-    'FUN': nominal_abstract,
+    "FUN": nominal_abstract,
     # Conversion from combinatory algebra.
-    'I': I,
-    'K': K,
-    'B': B,
-    'C': C,
-    'S': S,
+    "I": I,
+    "K": K,
+    "B": B,
+    "C": C,
+    "S": S,
 }
 
 convert = syntax.Transform(**SIGNATURE)
@@ -998,6 +1029,7 @@ def reduce(term, budget=100):
 # ----------------------------------------------------------------------------
 # Eager parsing
 
+
 def sexpr_simplify(string):
     return sexpr_parse(string, convert)
 
@@ -1008,31 +1040,31 @@ def polish_simplify(string):
 
 def _print_tiny(term, tokens):
     if term is TOP:
-        tokens.append('T')
+        tokens.append("T")
     elif term is BOT:
-        tokens.append('_')
+        tokens.append("_")
     elif is_ivar(term):
         rank = term[1]
         assert rank <= 9
         tokens.append(str(rank))
     elif is_abs(term):
-        tokens.append('^')
+        tokens.append("^")
         _print_tiny(term[1], tokens)
     elif is_app(term):
         head, args = unapply(term)
-        tokens.append('(')
+        tokens.append("(")
         _print_tiny(head, tokens)
         for arg in reversed(args):
             _print_tiny(arg, tokens)
-        tokens.append(')')
+        tokens.append(")")
     elif is_join(term):
-        tokens.append('[')
+        tokens.append("[")
         parts = list(iter_join(term))
         _print_tiny(parts[0], tokens)
         for part in parts[1:]:
-            tokens.append('|')
+            tokens.append("|")
             _print_tiny(part, tokens)
-        tokens.append(']')
+        tokens.append("]")
     else:
         raise NotImplementedError(term)
 
@@ -1041,4 +1073,4 @@ def print_tiny(term):
     """Compact printer for pure bohm trees."""
     tokens = []
     _print_tiny(term, tokens)
-    return ''.join(tokens)
+    return "".join(tokens)

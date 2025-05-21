@@ -16,7 +16,7 @@ from pomagma.util import DB, suggest_region_sizes
 
 parsable = parsable.Parsable()
 
-THEORY = os.environ.get('POMAGMA_THEORY', 'skrj')
+THEORY = os.environ.get("POMAGMA_THEORY", "skrj")
 
 
 # as suggested in http://stackoverflow.com/questions/974189
@@ -36,19 +36,19 @@ def test(theory=THEORY, extra_size=0, **options):
     Options: log_level, log_file
 
     """
-    buildtype = 'debug' if pomagma.util.debug else 'release'
-    path = os.path.join(pomagma.util.DATA, 'test', buildtype, 'atlas', theory)
+    buildtype = "debug" if pomagma.util.debug else "release"
+    path = os.path.join(pomagma.util.DATA, "test", buildtype, "atlas", theory)
     if os.path.exists(path):
-        os.system('rm -f {}/*'.format(path))
+        os.system("rm -f {}/*".format(path))
     else:
         os.makedirs(path)
     with pomagma.util.chdir(path), pomagma.util.mutex(block=False):
-        options.setdefault('log_file', 'test.log')
-        world = DB('test.world')
-        diverge_conjectures = 'diverge_conjectures.facts'
-        diverge_theorems = 'diverge_theorems.facts'
-        equal_conjectures = 'equal_conjectures.facts'
-        equal_theorems = 'equal_theorems.facts'
+        options.setdefault("log_file", "test.log")
+        world = DB("test.world")
+        diverge_conjectures = "diverge_conjectures.facts"
+        diverge_theorems = "diverge_theorems.facts"
+        equal_conjectures = "equal_conjectures.facts"
+        equal_theorems = "equal_theorems.facts"
 
         size = pomagma.util.MIN_SIZES[theory] + extra_size
         surveyor.init(theory, world, size, **options)
@@ -60,10 +60,8 @@ def test(theory=THEORY, extra_size=0, **options):
                     db.validate()
             db.conjecture(diverge_conjectures, equal_conjectures)
             theorist.try_prove_diverge(
-                diverge_conjectures,
-                diverge_conjectures,
-                diverge_theorems,
-                **options)
+                diverge_conjectures, diverge_conjectures, diverge_theorems, **options
+            )
             db.assume(diverge_theorems)
             db.validate()
             db.dump(world)
@@ -74,7 +72,8 @@ def test(theory=THEORY, extra_size=0, **options):
             equal_conjectures,
             equal_conjectures,
             equal_theorems,
-            **options)
+            **options
+        )
 
         with cartographer.load(theory, world, **options) as db:
             db.assume(equal_theorems)
@@ -86,8 +85,8 @@ def test(theory=THEORY, extra_size=0, **options):
 
         with analyst.load(theory, world, **options) as db:
             fail_count = db.test_inference()
-            assert fail_count == 0, 'analyst.test_inference failed'
-    print('Theory {} appears valid.'.format(theory))
+            assert fail_count == 0, "analyst.test_inference failed"
+    print("Theory {} appears valid.".format(theory))
 
 
 @parsable
@@ -97,13 +96,13 @@ def init(theory=THEORY, **options):
     Options: log_level, log_file
 
     """
-    log_file = options.setdefault('log_file', 'init.log')
+    log_file = options.setdefault("log_file", "init.log")
     world_size = pomagma.util.MIN_SIZES[theory]
-    pomagma.util.log_print('initialize to {}'.format(world_size), log_file)
+    pomagma.util.log_print("initialize to {}".format(world_size), log_file)
     with atlas.chdir(theory, init=True):
-        survey = DB('survey')
-        world = DB('world')
-        normal = DB('world.normal')
+        survey = DB("survey")
+        world = DB("world")
+        normal = DB("world.normal")
         with pomagma.util.temp_copy(survey) as temp:
             surveyor.init(theory, temp, world_size, **options)
         with atlas.load(theory, survey, **options) as db:
@@ -116,11 +115,12 @@ def init(theory=THEORY, **options):
 
 @parsable
 def explore(
-        theory=THEORY,
-        max_size=pomagma.workers.DEFAULT_SURVEY_SIZE,
-        step_size=512,
-        region_queue_size=4,
-        **options):
+    theory=THEORY,
+    max_size=pomagma.workers.DEFAULT_SURVEY_SIZE,
+    step_size=512,
+    region_queue_size=4,
+    **options
+):
     """Continuously expand world map for given theory, inferring and surveying.
 
     Options: log_level, log_file, deadline_sec
@@ -132,11 +132,7 @@ def explore(
     assert region_size >= min_size
     region_size = max(min_size, max_size - step_size)
     workers = [
-        pomagma.workers.cartographer(
-            theory,
-            region_size,
-            region_queue_size,
-            **options),
+        pomagma.workers.cartographer(theory, region_size, region_queue_size, **options),
         pomagma.workers.surveyor(theory, step_size, **options),
     ]
     try:
@@ -149,16 +145,17 @@ def explore(
 
 @parsable
 def make(
-        theory=THEORY,
-        max_size=pomagma.workers.DEFAULT_SURVEY_SIZE,
-        step_size=512,
-        **options):
+    theory=THEORY,
+    max_size=pomagma.workers.DEFAULT_SURVEY_SIZE,
+    step_size=512,
+    **options
+):
     """Initialize; explore.
 
     Options: log_level, log_file, deadline_sec
 
     """
-    path = os.path.join(pomagma.util.DATA, 'atlas', theory)
+    path = os.path.join(pomagma.util.DATA, "atlas", theory)
     if not already_exists(path):
         init(theory, **options)
     explore(theory, max_size, step_size, **options)
@@ -173,10 +170,10 @@ def update_theory(theory=THEORY, dry_run=False, **options):
     """
     print(dry_run)
     with atlas.chdir(theory):
-        world = DB('world')
-        updated = pomagma.util.temp_name(DB('world'))
-        assert already_exists(world), 'First initialize world map'
-        options.setdefault('log_file', 'update_theory.log')
+        world = DB("world")
+        updated = pomagma.util.temp_name(DB("world"))
+        assert already_exists(world), "First initialize world map"
+        options.setdefault("log_file", "update_theory.log")
         atlas.update_theory(theory, world, updated, dry_run=dry_run, **options)
 
 
@@ -188,11 +185,11 @@ def update_language(theory=THEORY, **options):
 
     """
     with atlas.chdir(theory):
-        world = DB('world')
-        init = pomagma.util.temp_name(DB('init'))
-        aggregate = pomagma.util.temp_name(DB('aggregate'))
-        assert already_exists(world), 'First initialize world map'
-        options.setdefault('log_file', 'update_language.log')
+        world = DB("world")
+        init = pomagma.util.temp_name(DB("init"))
+        aggregate = pomagma.util.temp_name(DB("aggregate"))
+        assert already_exists(world), "First initialize world map"
+        options.setdefault("log_file", "update_language.log")
         init_size = pomagma.util.MIN_SIZES[theory]
         surveyor.init(theory, init, init_size, **options)
         atlas.update_language(theory, init, world, aggregate, **options)
@@ -202,34 +199,28 @@ def update_language(theory=THEORY, **options):
 def theorize(theory=THEORY, **options):
     """Make conjectures based on atlas and update atlas based on theorems."""
     with atlas.chdir(theory):
-        world = DB('world')
-        diverge_conjectures = 'diverge_conjectures.facts'
-        diverge_theorems = 'diverge_theorems.facts'
-        equal_conjectures = 'equal_conjectures.facts'
-        nless_theorems = 'nless_theorems.facts'
-        assert already_exists(world), 'First build world map'
-        options.setdefault('log_file', 'theorize.log')
+        world = DB("world")
+        diverge_conjectures = "diverge_conjectures.facts"
+        diverge_theorems = "diverge_theorems.facts"
+        equal_conjectures = "equal_conjectures.facts"
+        nless_theorems = "nless_theorems.facts"
+        assert already_exists(world), "First build world map"
+        options.setdefault("log_file", "theorize.log")
 
         with atlas.load(theory, world, **options) as db:
             db.conjecture(diverge_conjectures, equal_conjectures)
             with pomagma.util.temp_copy(diverge_conjectures) as temp:
                 theorem_count = theorist.try_prove_diverge(
-                    diverge_conjectures,
-                    temp,
-                    diverge_theorems,
-                    **options)
+                    diverge_conjectures, temp, diverge_theorems, **options
+                )
             if theorem_count > 0:
                 db.assume(diverge_theorems)
                 db.dump(world)
 
         with pomagma.util.temp_copy(equal_conjectures) as temp:
             theorem_count = theorist.try_prove_nless(
-                theory,
-                world,
-                equal_conjectures,
-                temp,
-                nless_theorems,
-                **options)
+                theory, world, equal_conjectures, temp, nless_theorems, **options
+            )
         if theorem_count > 0:
             with atlas.load(theory, world, **options) as db:
                 db.assume(nless_theorems)
@@ -244,38 +235,41 @@ def trim(theory=THEORY, parallel=True, **options):
 
     """
     with atlas.chdir(theory):
-        options.setdefault('log_file', 'trim.log')
-        with cartographer.load(theory, DB('world.normal'), **options) as db:
+        options.setdefault("log_file", "trim.log")
+        with cartographer.load(theory, DB("world.normal"), **options) as db:
             min_size = pomagma.util.MIN_SIZES[theory]
-            max_size = db.info()['item_count']
+            max_size = db.info()["item_count"]
             sizes = suggest_region_sizes(min_size, max_size)
             tasks = []
             for size in sizes:
-                tasks.append({
-                    'size': size,
-                    'temperature': 0,
-                    'filename': DB('region.normal.{:d}').format(size)
-                })
+                tasks.append(
+                    {
+                        "size": size,
+                        "temperature": 0,
+                        "filename": DB("region.normal.{:d}").format(size),
+                    }
+                )
             if parallel:
-                print('Trimming {} regions of sizes {}-{}'.format(
-                    len(sizes),
-                    sizes[0],
-                    sizes[-1]))
+                print(
+                    "Trimming {} regions of sizes {}-{}".format(
+                        len(sizes), sizes[0], sizes[-1]
+                    )
+                )
                 db.trim(tasks)
             else:
                 for task in tasks:
-                    print('Trimming region of size {}'.format(task['size']))
+                    print("Trimming region of size {}".format(task["size"]))
                     db.trim([task])
 
 
 def _analyze(theory=THEORY, size=None, address=analyst.ADDRESS, **options):
     with atlas.chdir(theory):
-        options.setdefault('log_file', 'analyst.log')
+        options.setdefault("log_file", "analyst.log")
         if size is None:
-            world = DB('world.normal')
+            world = DB("world.normal")
         else:
-            world = DB('region.normal.{}'.format(size))
-        assert os.path.exists(world), 'First initialize normalized world'
+            world = DB("region.normal.{}".format(size))
+        assert os.path.exists(world), "First initialize normalized world"
         return analyst.serve(theory, world, address=address, **options)
 
 
@@ -287,17 +281,17 @@ def analyze(theory=THEORY, size=None, address=analyst.ADDRESS, **options):
     Options: log_level, log_file
 
     """
-    if size == '?':
+    if size == "?":
         with atlas.chdir(theory):
-            files = glob.glob(DB('region.normal.*'))
-            sizes = sorted(int(re.search('\d+', f).group()) for f in files)
-        print('Try one of: {}'.format(' '.join(str(s) for s in sizes)))
+            files = glob.glob(DB("region.normal.*"))
+            sizes = sorted(int(re.search("\d+", f).group()) for f in files)
+        print("Try one of: {}".format(" ".join(str(s) for s in sizes)))
         sys.exit(1)
     server = _analyze(theory, size, address, **options)
     try:
         server.wait()
     except KeyboardInterrupt:
-        print('stopping analyst')
+        print("stopping analyst")
     finally:
         server.stop()
 
@@ -305,9 +299,9 @@ def analyze(theory=THEORY, size=None, address=analyst.ADDRESS, **options):
 @parsable
 def connect(address=analyst.ADDRESS):
     """Connect to analyst and start python client."""
-    startup = os.path.join(pomagma.util.SRC, 'analyst', 'startup.py')
-    os.environ['PYTHONSTARTUP'] = startup
-    os.system('python')
+    startup = os.path.join(pomagma.util.SRC, "analyst", "startup.py")
+    os.environ["PYTHONSTARTUP"] = startup
+    os.system("python")
 
 
 @parsable
@@ -317,47 +311,46 @@ def fit_language(theory, address=analyst.ADDRESS, **options):
     Options: log_level, log_file
 
     """
-    options.setdefault('log_file', 'linguist.log')
+    options.setdefault("log_file", "linguist.log")
     linguist.fit_language(theory, address=address, **options)
 
 
-match_atlas = re.compile(r'^atlas\.20\d\d(-\d\d)*').match
-default_tag = time.strftime('%Y-%m-%d', time.gmtime())
+match_atlas = re.compile(r"^atlas\.20\d\d(-\d\d)*").match
+default_tag = time.strftime("%Y-%m-%d", time.gmtime())
 
 
 def list_s3_atlases():
     import pomagma.io.s3
+
     filenames = pomagma.io.s3.listdir()
     return set(m.group() for m in map(match_atlas, filenames) if m)
 
 
 @parsable
-def pull(tag='<most recent>', force=False):
-    '''
+def pull(tag="<most recent>", force=False):
+    """
     Pull atlas from s3.
-    '''
+    """
     import pomagma.io.s3
+
     if not os.path.exists(pomagma.util.DATA):
         os.makedirs(pomagma.util.DATA)
     with pomagma.util.chdir(pomagma.util.DATA):
-        master = 'atlas'
+        master = "atlas"
         if os.path.exists(master):
             if force:
                 shutil.rmtree(master)
             else:
-                raise IOError('atlas exists; first remove atlas')
-        if tag == '<most recent>':
+                raise IOError("atlas exists; first remove atlas")
+        if tag == "<most recent>":
             snapshot = max(list_s3_atlases())
         else:
-            snapshot = 'atlas.{}'.format(tag)
-            assert match_atlas(snapshot), 'invalid tag: {}'.format(tag)
-        print('pulling {}'.format(snapshot))
-        pomagma.io.s3.pull('{}/'.format(snapshot))
-        blobs = [
-            os.path.join('blob', blob)
-            for blob in atlas.find_used_blobs(snapshot)
-        ]
-        print('pulling {} blobs'.format(len(blobs)))
+            snapshot = "atlas.{}".format(tag)
+            assert match_atlas(snapshot), "invalid tag: {}".format(tag)
+        print("pulling {}".format(snapshot))
+        pomagma.io.s3.pull("{}/".format(snapshot))
+        blobs = [os.path.join("blob", blob) for blob in atlas.find_used_blobs(snapshot)]
+        print("pulling {} blobs".format(len(blobs)))
         pomagma.io.s3.pull(*blobs)
         pomagma.io.blobstore.validate_blobs()
         pomagma.io.s3.snapshot(snapshot, master)  # only after validation
@@ -365,24 +358,22 @@ def pull(tag='<most recent>', force=False):
 
 @parsable
 def push(tag=default_tag, force=False):
-    '''
+    """
     Push atlas to s3.
-    '''
+    """
     import pomagma.io.s3
+
     pomagma.io.blobstore.validate_blobs()
     with pomagma.util.chdir(pomagma.util.DATA):
-        master = 'atlas'
-        assert os.path.exists(master), 'atlas does not exist'
-        snapshot = 'atlas.{}'.format(tag)
-        assert match_atlas(snapshot), 'invalid tag: {}'.format(tag)
+        master = "atlas"
+        assert os.path.exists(master), "atlas does not exist"
+        snapshot = "atlas.{}".format(tag)
+        assert match_atlas(snapshot), "invalid tag: {}".format(tag)
         if snapshot in list_s3_atlases() and not force:
-            raise IOError('snapshot already exists: {}'.format(snapshot))
-        print('pushing {}'.format(snapshot))
+            raise IOError("snapshot already exists: {}".format(snapshot))
+        print("pushing {}".format(snapshot))
         pomagma.io.s3.snapshot(master, snapshot)
-        blobs = [
-            os.path.join('blob', blob)
-            for blob in atlas.find_used_blobs(snapshot)
-        ]
+        blobs = [os.path.join("blob", blob) for blob in atlas.find_used_blobs(snapshot)]
         pomagma.io.s3.push(snapshot, *blobs)
 
 
@@ -392,7 +383,7 @@ def gc(grace_period_days=pomagma.io.blobstore.GRACE_PERIOD_DAYS):
     atlas.garbage_collect(grace_period_days)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     signal.signal(signal.SIGINT, raise_keyboard_interrupt)
-    sys.argv[0] = 'pomagma'
+    sys.argv[0] = "pomagma"
     parsable()
