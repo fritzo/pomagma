@@ -42,8 +42,8 @@ def POMAGMA_DEBUG_0(*args):
 
 
 def POMAGMA_DEBUG_1(message, *args):
-    print 'DEBUG{}'.format(' ' * stack_depth()),
-    print message.format(*args)
+    print('DEBUG{}'.format(' ' * stack_depth()), end=' ')
+    print(message.format(*args))
 
 
 if pomagma.util.LOG_LEVEL >= pomagma.util.LOG_LEVEL_DEBUG:
@@ -87,7 +87,7 @@ def get_events(seq):
             else:
                 events.add(antecedent)
         # HACK to deal with Equation args
-        succedent = iter(sequent.succedents).next()
+        succedent = next(iter(sequent.succedents))
         for arg in succedent.args:
             if not arg.is_var():
                 events.add(arg)
@@ -117,7 +117,7 @@ def normalize_given(seq, atom, bound=None):
         if atom in normal.antecedents or atom.is_var():
             yield normal
         # HACK to deal with Equation args
-        succedent = iter(normal.succedents).next()
+        succedent = next(iter(normal.succedents))
         if succedent.name == 'EQUAL':
             lhs, rhs = succedent.args
             if lhs == atom:
@@ -200,7 +200,7 @@ def optimize_plan(antecedents, succedent, bound):
     if succedent.is_rel() and succedent.name != 'EQUAL':  # TODO handle EQUAL
         s_free = succedent.vars - bound
         if len(succedent.vars) == len(succedent.args) and len(s_free) == 1:
-            v = iter(s_free).next()
+            v = next(iter(s_free))
             bound_v = set_with(bound, v)
             POMAGMA_DEBUG('iterate unknown {}', v)
             body = optimize_plan(antecedents, succedent, bound_v)

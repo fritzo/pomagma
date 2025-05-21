@@ -18,7 +18,7 @@ def parse_expr(string):
 
 def parse_facts(string):
     facts = parse_theory_string(string)['facts']
-    facts = map(desugar_expr, facts)
+    facts = list(map(desugar_expr, facts))
     for fact in facts:
         for var in fact.vars:
             assert len(var.name) > 2, 'unbound variable: {}'.format(var)
@@ -104,11 +104,11 @@ def define_a(
             max_solutions=max_solutions,
             max_memory=max_memory,
             verbose=verbose)
-    print 'Possible Fillings:'
+    print('Possible Fillings:')
     APP = Expression_2('APP')
     f = Expression.make('f')
     for complexity, term, filling in results:
-        print simplify_expr(APP(filling, f))
+        print(simplify_expr(APP(filling, f)))
     return results
 
 
@@ -155,11 +155,11 @@ def define_a_pair(
             max_solutions=max_solutions,
             max_memory=max_memory,
             verbose=verbose)
-    print 'Possible Fillings:'
+    print('Possible Fillings:')
     for complexity, term, filling in results:
-        print '<{},\t{}>'.format(
+        print('<{},\t{}>'.format(
             simplify_expr(APP(filling, K)),
-            simplify_expr(APP(filling, F)))
+            simplify_expr(APP(filling, F))))
     return results
 
 

@@ -27,7 +27,7 @@ def nominal_vars(term):
         raise ValueError(pretty(term))
 
 
-VARS = map(NVAR, 'abcdefghijklmnopqrstuvwxyz')
+VARS = list(map(NVAR, 'abcdefghijklmnopqrstuvwxyz'))
 
 
 def iter_fresh(term):

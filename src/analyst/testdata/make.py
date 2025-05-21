@@ -3,7 +3,7 @@ import simplejson as json
 
 def save(name, data):
     filename = '{}.json'.format(name)
-    print 'saving', filename
+    print('saving', filename)
     with open(filename, 'w') as f:
         json.dump(data, f, indent=4, sort_keys=True)
 

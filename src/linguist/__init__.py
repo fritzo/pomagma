@@ -21,7 +21,7 @@ def fit_language(
             if log_file:
                 pomagma.util.log_print(message, log_file)
             else:
-                print message
+                print(message)
 
     log_print('fitting language', pomagma.util.LOG_LEVEL_INFO)
     with pomagma.analyst.connect(address) as db:
@@ -29,8 +29,8 @@ def fit_language(
 
     log_print('converting language', pomagma.util.LOG_LEVEL_DEBUG)
     language = pomagma.language.util.json_load(language_json)
-    new_terms = sorted(new_weights.iterkeys())
-    old_terms = sorted(key for group in language.itervalues() for key in group)
+    new_terms = sorted(new_weights.keys())
+    old_terms = sorted(key for group in language.values() for key in group)
     assert new_terms == old_terms, '\n  '.join([
         'language mismatch,'
         'expected: {}'.format(old_terms),

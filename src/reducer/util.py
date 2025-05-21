@@ -140,7 +140,7 @@ def _logged(*format_args, **format_kwargs):
             for i, arg in enumerate(args):
                 arg = formatters.get(i, repr)(arg)
                 akwargs.append(arg)
-            for key, val in kwargs.iteritems():
+            for key, val in kwargs.items():
                 val = formatters.get(key, repr)(val)
                 akwargs.append('{}={}'.format(key, val))
             LOG.debug(r'{}({})'.format(fun.__name__, ', '.join(akwargs)))
@@ -170,7 +170,7 @@ PROFILE_COUNTERS = defaultdict(lambda: 0)
 def profile_engine():
     counts = [
         (count, fun.__name__, arg)
-        for ((fun, arg), count) in PROFILE_COUNTERS.iteritems()
+        for ((fun, arg), count) in PROFILE_COUNTERS.items()
     ]
     counts.sort(reverse=True)
     sys.stderr.write('{: >10} {: >10} {}\n'.format('count', 'fun', 'arg'))

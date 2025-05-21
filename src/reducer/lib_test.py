@@ -446,7 +446,7 @@ zero = lib.zero
 def num(n):
     assert isinstance(n, int) and n >= 0
     result = zero
-    for _ in xrange(n):
+    for _ in range(n):
         result = succ(result)
     return result
 
@@ -996,8 +996,8 @@ def test_stream_join(xs, expected):
     (lib.bool_not, lib.stream_const(false), lib.stream_const(true)),
     (
         succ,
-        make_stream(map(num, [2, 0, 1]), BOT),
-        make_stream(map(num, [3, 1, 2]), succ(BOT)),
+        make_stream(list(map(num, [2, 0, 1])), BOT),
+        make_stream(list(map(num, [3, 1, 2])), succ(BOT)),
     ),
 ])
 def test_stream_map(f, xs, expected):
@@ -1060,21 +1060,21 @@ def test_stream_enum(enum_item, expected_lb):
 
 
 @pytest.mark.xfail
-@for_each(range(10))
+@for_each(list(range(10)))
 def test_stream_num(index):
     expected = zero
     xs = lib.stream_num
-    for _ in xrange(index):
+    for _ in range(index):
         expected = succ(expected)
         xs = lib.stream_tail(xs)
     assert lib.stream_head(xs) is expected
 
 
 @pytest.mark.xfail
-@for_each(range(10))
+@for_each(list(range(10)))
 def test_stream_take(size):
     expected = nil
-    for n in reversed(range(size)):
+    for n in reversed(list(range(size))):
         expected = cons(num(n), expected)
     assert lib.stream_take(lib.stream_num(num(size))) is expected
 
@@ -1205,9 +1205,9 @@ def num_try_pred(n):
     (compose(box, num_try_pred), enum([undefined]), enum([undefined])),
     (compose(box, num_try_pred), enum([num(0)]), enum([num(0)])),
     (compose(box, num_try_pred), enum([num(1)]), enum([num(0), num(1)])),
-    (compose(box, num_try_pred), enum([num(2)]), enum(map(num, range(3)))),
-    (compose(box, num_try_pred), enum([num(3)]), enum(map(num, range(4)))),
-    (compose(box, num_try_pred), enum([num(4)]), enum(map(num, range(5)))),
+    (compose(box, num_try_pred), enum([num(2)]), enum(list(map(num, list(range(3)))))),
+    (compose(box, num_try_pred), enum([num(3)]), enum(list(map(num, list(range(4)))))),
+    (compose(box, num_try_pred), enum([num(4)]), enum(list(map(num, list(range(5)))))),
 ])
 def test_enum_close(f, xs, expected):
     assert reduce(lib.enum_close(f, xs)) == simplify(expected)
@@ -1521,7 +1521,7 @@ def test_less_antisymmetric(x, y):
     less_xy = simplify(lib.less(x, y))
     less_yx = simplify(lib.less(y, x))
     equal_xy = simplify(lib.equal(x, y))
-    print('LESS: {}, NLESS: {}, EQUAL: {}'.format(less_xy, less_yx, equal_xy))
+    print(('LESS: {}, NLESS: {}, EQUAL: {}'.format(less_xy, less_yx, equal_xy)))
     if less_xy is true and less_yx is true:
         assert equal_xy is true
     if equal_xy is false:
@@ -1599,12 +1599,12 @@ def test_byte_test_ok(n, byte):
 
 @for_each(BYTE_EXAMPLES)
 def test_byte_make(n, expected):
-    bits = [true if (n & (1 << i)) else false for i in xrange(8)]
+    bits = [true if (n & (1 << i)) else false for i in range(8)]
     assert lib.byte_make(*bits) == expected
 
 
 @for_each(BYTE_EXAMPLES)
 def test_byte_get_bit(n, byte):
-    for i in xrange(8):
+    for i in range(8):
         expected = true if (n & (1 << i)) else false
         assert simplify(lib.byte_get_bit[i](byte)) == expected

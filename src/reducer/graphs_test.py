@@ -114,7 +114,7 @@ def test_partitioned_permutations(partitions, expected_perms):
 
 @hypothesis.given(s_graphs, s.randoms())
 def test_graph_address(terms, r):
-    perm = range(1, len(terms))
+    perm = list(range(1, len(terms)))
     r.shuffle(perm)
     hypothesis.assume(perm != sorted(perm))
     perm = [0] + perm
@@ -127,7 +127,7 @@ def test_graph_address(terms, r):
 
 @hypothesis.given(s_graphs, s.randoms())
 def test_graph_sort(terms, r):
-    perm = range(1, len(terms))
+    perm = list(range(1, len(terms)))
     r.shuffle(perm)
     hypothesis.assume(perm != sorted(perm))
     perm = [0] + perm

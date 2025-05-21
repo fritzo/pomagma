@@ -91,7 +91,7 @@ def _patch_code(code):
     labels, gotos = _find_labels_and_gotos(code)
     buf = ctypes.create_string_buffer(code.co_code, len(code.co_code))
 
-    for label_pos, _ in labels.values():
+    for label_pos, _ in list(labels.values()):
         _inject_ops(buf, label_pos, 'NOP', _STRUCT_ATTR_LOOKUP.size)
 
     for goto_pos, arg, goto_stack in gotos:

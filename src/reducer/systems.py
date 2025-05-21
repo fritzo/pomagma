@@ -84,7 +84,7 @@ class System(object):
 
     def __init__(self, **defs):
         self._defs = OrderedDict()  # : NVAR -> closed Term
-        for name, body in sorted(defs.iteritems()):
+        for name, body in sorted(defs.items()):
             NVAR(name)  # Asserts that name is not a keyword.
             self._set(name, body)
         assert self.is_closed()
@@ -96,7 +96,7 @@ class System(object):
         self._defs[name] = body
 
     def define(self, **kwargs):
-        for name, body in kwargs.iteritems():
+        for name, body in kwargs.items():
             assert name not in self._defs, 'Use .update(-,-) instead'
             self._set(name, body)
         assert self.is_closed()
@@ -121,7 +121,7 @@ class System(object):
         return self._defs[name]
 
     def __iter__(self):
-        return self._defs.iteritems()
+        return iter(self._defs.items())
 
     def __eq__(self, other):
         return self._defs == other._defs
@@ -129,7 +129,7 @@ class System(object):
     def __repr__(self):
         defs = [
             '{}={}'.format(name, body)
-            for name, body in self._defs.iteritems()
+            for name, body in self._defs.items()
         ]
         return 'System({})'.format(', '.join(defs))
 
@@ -146,7 +146,7 @@ class System(object):
         """Whether all free NVARs are defined."""
         return all(
             var[1] in self._defs
-            for body in self._defs.itervalues()
+            for body in self._defs.values()
             for var in free_vars(body)
         )
 

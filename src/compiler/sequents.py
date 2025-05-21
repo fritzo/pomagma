@@ -47,7 +47,7 @@ class Sequent(object):
         return (len(s), s) < (len(o), o)
 
     def __print_set(self, items, sep=', '):
-        items = map(str, items)
+        items = list(map(str, items))
         items.sort(key=lambda s: (len(s), s))
         return sep.join(items)
 
@@ -69,8 +69,8 @@ class Sequent(object):
         bot = bot.center(width)
         bar = '-' * width
         lines = [top, bar, bot]
-        lines = filter(bool, lines)
-        lines = map((' ' * indent).__add__, lines)
+        lines = list(filter(bool, lines))
+        lines = list(map((' ' * indent).__add__, lines))
         return '\n'.join(lines)
 
     @property
@@ -147,7 +147,7 @@ def get_pointed(seq):
         for succedent in seq.succedents:
             remaining = set_without(seq.succedents, succedent)
             try:
-                neg_remaining = map(try_get_negated, remaining)
+                neg_remaining = list(map(try_get_negated, remaining))
             except NotNegatable:
                 continue
             for negated in itertools.product(*neg_remaining):
@@ -171,7 +171,7 @@ def get_atomic(seq, bound=set()):
     """
     result = set()
     for pointed in get_pointed(seq):
-        improper_succedent = iter(pointed.succedents).next()
+        improper_succedent = next(iter(pointed.succedents))
         improper_succedent = strengthen_sequent(improper_succedent)
         antecedents, succedent = as_succedent(improper_succedent, bound)
         for a in pointed.antecedents:
@@ -213,7 +213,7 @@ def get_contrapositives(seq):
     result = set()
     for _, succedents in ante_succ_pairs:
         if succedents:
-            succedent = iter(succedents).next()
+            succedent = next(iter(succedents))
             antecedents_product = []
             for other_antecedents, other_succedents in ante_succ_pairs:
                 if other_succedents != succedents:

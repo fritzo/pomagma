@@ -987,7 +987,7 @@ def simplify(term):
 def reduce(term, budget=100):
     """Beta-reduce term up to budget."""
     term = simplify(term)
-    for _ in xrange(budget):
+    for _ in range(budget):
         reduced = try_compute_step(term)
         if reduced is None:
             return term

@@ -102,7 +102,7 @@ class Iter(Plan):
         bound = set_with(bound, self.var)
         for test in self.tests:
             assert_subset(test.vars, bound)
-        for var, expr in self.lets.iteritems():
+        for var, expr in self.lets.items():
             assert_subset(expr.vars, bound)
             assert_not_in(var, bound)
         self.body.validate(bound)

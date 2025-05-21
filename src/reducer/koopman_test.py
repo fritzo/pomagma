@@ -73,8 +73,8 @@ def const_stream(x):
 def test_try_beta_step_stream(x, expected_result, expected_x):
     actual = const_stream(x)
     expected = const_stream(expected_x)
-    print('actual = {}'.format(print_to_depth(actual)))
-    print('expected = {}'.format(print_to_depth(expected)))
+    print(('actual = {}'.format(print_to_depth(actual))))
+    print(('expected = {}'.format(print_to_depth(expected))))
     actual = actual.copy()
     assert try_beta_step(actual) is expected_result
     assert actual == expected
@@ -147,13 +147,13 @@ def test_church_numeral_three():
 def test_tower_of_two(n):
     assert n >= 1
     node = two
-    for _ in xrange(1, n):
+    for _ in range(1, n):
         node = APP(node, two)
     node = APP(node, I)
     node = APP(node, x)
     node = node.copy()
     count = count_beta_steps(node)
-    print('n = {}, steps = {}'.format(n, count))
+    print(('n = {}, steps = {}'.format(n, count)))
     assert node == x
 
 
@@ -232,4 +232,4 @@ Table 2. The number of total interactions and beta-steps for various net-based
 ])
 def test_benchmarks(node):
     count = count_beta_steps(node)
-    print('steps = {}'.format(count))
+    print(('steps = {}'.format(count)))

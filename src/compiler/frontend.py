@@ -70,7 +70,7 @@ def Iter_program(self, program, stack=None, poll=None):
             raise ValueError(
                 'invalid modifier,arity: {},{}'.format(modifier, test.arity))
 
-    for var, expr in sorted(self.lets.iteritems()):
+    for var, expr in sorted(self.lets.items()):
         assert self.var in expr.args,\
             '{} not in {}'.format(self.var, expr.args)
         set_var = expr.var.name
@@ -139,7 +139,7 @@ def Iter_program(self, program, stack=None, poll=None):
         program.append(for_)
         if poll:
             program.append('IF_BLOCK {val}'.format(val=self.var))
-        for var, expr in sorted(self.lets.iteritems()):
+        for var, expr in sorted(self.lets.items()):
             arity = expr.arity
             ARITY = arity.replace('Function', '').upper()
             assert ARITY in ['INJECTIVE', 'BINARY', 'SYMMETRIC'], ARITY
@@ -360,14 +360,14 @@ def write_event_programs(programs, sequents):
             tasks.append((cost, event, sequent, plans))
 
     group_tasks = {}
-    for name, tasks in event_tasks.iteritems():
+    for name, tasks in event_tasks.items():
         groupname = signature.get_arity(name)
         group_tasks.setdefault(groupname, {})[name] = sorted(tasks)
 
-    group_tasks = sorted(group_tasks.iteritems())
+    group_tasks = sorted(group_tasks.items())
     group_id = 0
     for groupname, group in group_tasks:
-        group = sorted(group.iteritems())
+        group = sorted(group.items())
         arity = signature.get_arity(group[0][0])
 
         for eventname, tasks in group:
@@ -474,7 +474,7 @@ def get_symbols_used_in(sequents, exprs):
         arity = signature.get_arity(c)
         if arity in valid_arities:
             symbols.setdefault(signature.get_arity(c), []).append(c)
-    for val in symbols.itervalues():
+    for val in symbols.values():
         val.sort()
     return symbols
 
@@ -493,7 +493,7 @@ def write_symbols(rules, facts):
     symbols = get_symbols_used_in(sequents, facts)
     symbols = [
         (arity, name)
-        for arity, names in symbols.iteritems()
+        for arity, names in symbols.items()
         if (arity in signature.FUNCTION_ARITIES or
             arity in signature.RELATION_ARITIES)
         for name in names

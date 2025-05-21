@@ -23,7 +23,7 @@ def _compile(fun, actual_fun=None):
     if vargs or kwargs or defaults:
         source = inspect.getsource(actual_fun)
         raise SyntaxError('Unsupported signature: {}'.format(source))
-    symbolic_args = map(NVAR, args)
+    symbolic_args = list(map(NVAR, args))
     symbolic_result = fun(*symbolic_args)
     LOG.debug('compiling {}{} = {}'.format(
         fun, tuple(symbolic_args), symbolic_result))
@@ -121,7 +121,7 @@ def as_term(arg):
 # Sugar
 
 def app(*args):
-    args = map(as_term, args)
+    args = list(map(as_term, args))
     if not args:
         raise SyntaxError('Too few arguments: app{}'.format(args))
     result = args[0]
@@ -134,7 +134,7 @@ Term.__call__ = app
 
 
 def join_(*args):
-    args = map(as_term, args)
+    args = list(map(as_term, args))
     if not args:
         return convert.BOT
     result = args[0]
@@ -151,7 +151,7 @@ def quote(arg):
 
 
 def qapp(*args):
-    args = map(as_term, args)
+    args = list(map(as_term, args))
     if len(args) < 2:
         raise SyntaxError('Too few arguments: qapp{}'.format(args))
     result = args[0]

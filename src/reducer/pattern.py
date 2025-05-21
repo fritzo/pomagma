@@ -10,7 +10,7 @@ class NoMatch(Exception):
 
 def _match(pattern, term, defs, rank):
     if is_nvar(pattern):
-        for _ in xrange(rank):
+        for _ in range(rank):
             if IVAR_0 in free_vars(term):
                 raise NoMatch
             term = decrement_rank(term)

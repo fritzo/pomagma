@@ -87,7 +87,7 @@ def test(theory=THEORY, extra_size=0, **options):
         with analyst.load(theory, world, **options) as db:
             fail_count = db.test_inference()
             assert fail_count == 0, 'analyst.test_inference failed'
-    print 'Theory {} appears valid.'.format(theory)
+    print('Theory {} appears valid.'.format(theory))
 
 
 @parsable
@@ -171,7 +171,7 @@ def update_theory(theory=THEORY, dry_run=False, **options):
     Options: log_level, log_file
 
     """
-    print dry_run
+    print(dry_run)
     with atlas.chdir(theory):
         world = DB('world')
         updated = pomagma.util.temp_name(DB('world'))
@@ -257,14 +257,14 @@ def trim(theory=THEORY, parallel=True, **options):
                     'filename': DB('region.normal.{:d}').format(size)
                 })
             if parallel:
-                print 'Trimming {} regions of sizes {}-{}'.format(
+                print('Trimming {} regions of sizes {}-{}'.format(
                     len(sizes),
                     sizes[0],
-                    sizes[-1])
+                    sizes[-1]))
                 db.trim(tasks)
             else:
                 for task in tasks:
-                    print 'Trimming region of size {}'.format(task['size'])
+                    print('Trimming region of size {}'.format(task['size']))
                     db.trim([task])
 
 
@@ -291,13 +291,13 @@ def analyze(theory=THEORY, size=None, address=analyst.ADDRESS, **options):
         with atlas.chdir(theory):
             files = glob.glob(DB('region.normal.*'))
             sizes = sorted(int(re.search('\d+', f).group()) for f in files)
-        print 'Try one of: {}'.format(' '.join(str(s) for s in sizes))
+        print('Try one of: {}'.format(' '.join(str(s) for s in sizes)))
         sys.exit(1)
     server = _analyze(theory, size, address, **options)
     try:
         server.wait()
     except KeyboardInterrupt:
-        print 'stopping analyst'
+        print('stopping analyst')
     finally:
         server.stop()
 
@@ -351,13 +351,13 @@ def pull(tag='<most recent>', force=False):
         else:
             snapshot = 'atlas.{}'.format(tag)
             assert match_atlas(snapshot), 'invalid tag: {}'.format(tag)
-        print 'pulling {}'.format(snapshot)
+        print('pulling {}'.format(snapshot))
         pomagma.io.s3.pull('{}/'.format(snapshot))
         blobs = [
             os.path.join('blob', blob)
             for blob in atlas.find_used_blobs(snapshot)
         ]
-        print 'pulling {} blobs'.format(len(blobs))
+        print('pulling {} blobs'.format(len(blobs)))
         pomagma.io.s3.pull(*blobs)
         pomagma.io.blobstore.validate_blobs()
         pomagma.io.s3.snapshot(snapshot, master)  # only after validation
@@ -377,7 +377,7 @@ def push(tag=default_tag, force=False):
         assert match_atlas(snapshot), 'invalid tag: {}'.format(tag)
         if snapshot in list_s3_atlases() and not force:
             raise IOError('snapshot already exists: {}'.format(snapshot))
-        print 'pushing {}'.format(snapshot)
+        print('pushing {}'.format(snapshot))
         pomagma.io.s3.snapshot(master, snapshot)
         blobs = [
             os.path.join('blob', blob)

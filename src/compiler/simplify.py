@@ -21,7 +21,7 @@ is_terminal = (TOP, BOT, HOLE).__contains__
 
 @memoize_args
 def simplify_stack(head, *args):
-    args = map(simplify_term, args)
+    args = list(map(simplify_term, args))
     nargs = len(args)
     if is_terminal(head):
         return [head]
@@ -57,7 +57,7 @@ def simplify_stack(head, *args):
         lhs, rhs = head.args
         return simplify_stack(lhs, rhs, *args)
     elif head.name == 'COMP':
-        lhs, rhs = map(simplify_term, head.args)
+        lhs, rhs = list(map(simplify_term, head.args))
         if is_terminal(lhs):
             return [lhs]
         if lhs == I:
@@ -67,7 +67,7 @@ def simplify_stack(head, *args):
         if nargs >= 1:
             return simplify_stack(lhs, APP(rhs, args[0]), *args[1:])
     elif head.name == 'JOIN':
-        lhs, rhs = map(simplify_term, head.args)
+        lhs, rhs = list(map(simplify_term, head.args))
         if lhs == TOP or rhs == TOP:
             return [TOP]
         elif lhs == BOT:
@@ -83,7 +83,7 @@ def simplify_stack(head, *args):
             return [JOIN(lhs, rhs)] + args
         # TODO simplify wrt associativity
 
-    head = Expression.make(head.name, *map(simplify_term, head.args))
+    head = Expression.make(head.name, *list(map(simplify_term, head.args)))
     return [head] + args
 
 
@@ -99,7 +99,7 @@ def simplify_term(term):
 @memoize_arg
 def simplify_expr(expr):
     if expr.is_rel():
-        args = map(simplify_term, expr.args)
+        args = list(map(simplify_term, expr.args))
         return Expression.make(expr.name, *args)
     else:
         return simplify_term(expr)

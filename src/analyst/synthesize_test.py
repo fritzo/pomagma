@@ -3,7 +3,7 @@ from pomagma.analyst.synthesize import (ComplexityEvaluator, NaiveHoleFiller,
 from pomagma.compiler.parser import parse_string_to_expr
 from pomagma.util.testing import for_each, for_each_kwargs
 
-FREE_VARS = map(parse_string_to_expr, ['x', 'y', 'z'])
+FREE_VARS = list(map(parse_string_to_expr, ['x', 'y', 'z']))
 LANGUAGE = {
     'APP': 1.0,
     'COMP': 1.6,
@@ -61,7 +61,7 @@ HOLE_FILLER_EXAMPLES = [
 @for_each(HOLE_FILLER_EXAMPLES)
 def test_hole_filler(example):
     term = parse_string_to_expr(example[0])
-    expected = map(parse_string_to_expr, example[1])
+    expected = list(map(parse_string_to_expr, example[1]))
     actual = list(fill_holes(term))
     assert actual == expected
 

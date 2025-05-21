@@ -4,7 +4,7 @@ import os
 import re
 import sys
 import time
-from itertools import izip
+
 
 import pomagma.util
 from pomagma.io import creat, create_directories
@@ -39,7 +39,7 @@ def create_blob():
     filename = 'temp.{}.{}'.format(os.getpid(), count)
     path = os.path.join(pomagma.util.BLOB_DIR, filename)
     if os.path.exists(path):
-        print 'removing temp file ', path
+        print('removing temp file ', path)
         os.remove(path)
     return path
 
@@ -74,12 +74,12 @@ def load_blob_ref(filename):
 
 def dump_blob_ref(root_hexdigest, filename, sub_hexdigests=[]):
     """Write root and sub hexdigests to ref file."""
-    assert isinstance(root_hexdigest, basestring), root_hexdigest
+    assert isinstance(root_hexdigest, str), root_hexdigest
     assert len(root_hexdigest) == 40, root_hexdigest
     with creat(filename, 0o444) as f:
         f.write(root_hexdigest)
         for sub_hexdigest in sub_hexdigests:
-            assert isinstance(sub_hexdigest, basestring), sub_hexdigest
+            assert isinstance(sub_hexdigest, str), sub_hexdigest
             assert len(sub_hexdigest) == 40, sub_hexdigest
             f.write('\n')
             f.write(sub_hexdigest)
@@ -104,7 +104,7 @@ def garbage_collect(used_blobs, grace_period_days=GRACE_PERIOD_DAYS):
             if os.path.getmtime(path) < deadline:
                 os.remove(path)
                 count += 1
-    print 'removed {} files from {}'.format(count, pomagma.util.BLOB_DIR)
+    print('removed {} files from {}'.format(count, pomagma.util.BLOB_DIR))
 
 
 def validate_blobs():
@@ -115,12 +115,12 @@ def validate_blobs():
         for blob in os.listdir(pomagma.util.BLOB_DIR)
         if RE_BLOB.match(blob)
     )
-    print 'validating {} blobs'.format(len(blobs))
+    print('validating {} blobs'.format(len(blobs)))
     paths = [os.path.join(pomagma.util.BLOB_DIR, blob) for blob in blobs]
     hexdigests = multiprocessing.Pool().map(hash_file, paths)
     errors = [
         blob
-        for blob, hexdigest in izip(blobs, hexdigests)
+        for blob, hexdigest in zip(blobs, hexdigests)
         if blob != hexdigest
     ]
     if errors:

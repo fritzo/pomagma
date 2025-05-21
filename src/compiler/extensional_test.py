@@ -44,7 +44,7 @@ def test_abstraction():
 
 
 def test_iter_subsets():
-    actual = set(map(frozenset, iter_subsets(range(3))))
+    actual = set(map(frozenset, iter_subsets(list(range(3)))))
     expected = set(map(frozenset, [
         [],
         [1],

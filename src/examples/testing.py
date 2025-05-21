@@ -26,8 +26,8 @@ SKJA = os.path.join(
 def serve(world, address=ADDRESS):
     if not os.path.exists(world):
         pytest.skip('fixture not found')
-    print 'starting server'
+    print('starting server')
     server = pomagma.analyst.serve(THEORY, world, address, **OPTIONS)
     yield server
-    print 'stopping server'
+    print('stopping server')
     server.stop()

@@ -67,7 +67,7 @@ class ComplexityEvaluator(object):
 
     def __init__(self, language):
         assert isinstance(language, dict), language
-        for name, cost in language.iteritems():
+        for name, cost in language.items():
             assert isinstance(name, str), name
             assert isinstance(cost, float), cost
             assert cost > 0, cost
@@ -202,16 +202,16 @@ def lazy_iter_valid_sketches(
             invalid_states.add(state)
             invalid_sketches.update(steps)  # propagate
             if verbose >= 3:
-                print format_invalid(sketch)
+                print(format_invalid(sketch))
             yield
             continue
 
         valid_states.add(state)
         if verbose >= 1:
             if is_complete(sketch):
-                print format_complete(sketch)
+                print(format_complete(sketch))
             elif verbose >= 2:
-                print format_partial(sketch)
+                print(format_partial(sketch))
         yield state, sketch
 
 
@@ -350,20 +350,20 @@ def simplify_defs(facts, vars_to_keep=set()):
     changed = True
     while changed:
         changed = False
-        for var, bodies in defs.items():
+        for var, bodies in list(defs.items()):
             if any(v in defs for b in bodies for v in b.vars):
                 continue  # avoid substitution cycles
-            if not any(var in b.vars for bs in defs.itervalues() for b in bs):
+            if not any(var in b.vars for bs in defs.values() for b in bs):
                 if not any(var in f.vars for f in facts):
                     continue
             if var not in vars_to_keep:
                 del defs[var]
             substitute_bodies(facts, var, bodies)
-            for var2, bodies2 in defs.iteritems():
+            for var2, bodies2 in defs.items():
                 substitute_bodies(bodies2, var, bodies)
             extract_defs_from_facts(facts, defs)
             changed = True
-    for var, bodies in defs.iteritems():
+    for var, bodies in defs.items():
         facts.update(EQUAL(var, b) for b in bodies)
     return facts
 
@@ -378,7 +378,7 @@ def simplify_facts(db, facts, vars_to_keep):
     facts = simplify_defs(facts, vars_to_keep)
     strings = db.simplify([f.polish for f in facts])
     facts = set(parse_string_to_expr(s) for s in strings)
-    facts = map(unguard_vars, facts)
+    facts = list(map(unguard_vars, facts))
     return facts
 
 

@@ -39,7 +39,7 @@ def for_each_kwargs(examples):
         # FIXME This wrapper pollutes the test log.
         @functools.wraps(fun)
         def wrapped_fun(example):
-            example = {k: v for k, v in example.iteritems() if k in args}
+            example = {k: v for k, v in example.items() if k in args}
             return fun(**example)
 
         return pytest.mark.parametrize('example', examples)(wrapped_fun)

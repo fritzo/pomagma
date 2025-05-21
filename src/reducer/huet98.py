@@ -133,7 +133,7 @@ class Presentation(object):
 
     @property
     def is_deterministic(self):
-        return all(len(body) <= 1 for body in self._equations.values())
+        return all(len(body) <= 1 for body in list(self._equations.values()))
 
     def match_combinator(self, lhs, rhs, hyp):
         assert isinstance(lhs, Combinator), lhs

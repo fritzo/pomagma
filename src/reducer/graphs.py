@@ -43,18 +43,19 @@ from pomagma.compiler.util import memoize_arg, memoize_args
 from pomagma.reducer import syntax
 from pomagma.reducer.util import UnreachableError
 from pomagma.util import TODO
+import sys
 
 # ----------------------------------------------------------------------------
 # Signature
 
 re_keyword = re.compile('[A-Z]+$')
 
-_TOP = intern('TOP')  # : term
-_NVAR = intern('NVAR')  # : string -> term
-_VAR = intern('VAR')  # : term -> term
-_ABS = intern('ABS')  # : term -> term
-_APP = intern('APP')  # : term -> term -> term
-_JOIN = intern('JOIN')  # : set term -> term
+_TOP = sys.intern('TOP')  # : term
+_NVAR = sys.intern('NVAR')  # : string -> term
+_VAR = sys.intern('VAR')  # : term -> term
+_ABS = sys.intern('ABS')  # : term -> term
+_APP = sys.intern('APP')  # : term -> term -> term
+_JOIN = sys.intern('JOIN')  # : set term -> term
 
 
 class Term(tuple):
@@ -83,7 +84,7 @@ class Term(tuple):
     @staticmethod
     def NVAR(name):
         assert isinstance(name, str), name
-        name = intern(name)
+        name = sys.intern(name)
         return Term.make(_NVAR, name)
 
     @staticmethod
@@ -220,8 +221,8 @@ def graph_permute(terms, perm):
     ]
 
 
-_APP_LHS = intern('APP_LHS')
-_APP_RHS = intern('APP_RHS')
+_APP_LHS = sys.intern('APP_LHS')
+_APP_RHS = sys.intern('APP_RHS')
 
 
 def term_iter_subterms(term):
@@ -268,7 +269,7 @@ def graph_quotient_weak(terms):
             partitions[term].append(i)
         if len(partitions) == len(terms):
             break
-        partitions = sorted(map(sorted, partitions.values()))
+        partitions = sorted(map(sorted, list(partitions.values())))
         assert 0 in partitions[0], partitions
         perm = [None] * len(terms)
         for target, sources in enumerate(partitions):
@@ -406,7 +407,7 @@ def partition_by_address(min_address):
 
 
 def partitioned_permutations(partitions):
-    factors = map(itertools.permutations, partitions)
+    factors = list(map(itertools.permutations, partitions))
     for perms in itertools.product(*factors):
         yield perm_inverse(sum(perms, ()))
 
@@ -468,7 +469,7 @@ def extract_subterm(graph, pos):
     assert isinstance(graph, Graph)
     assert isinstance(pos, int) and 0 <= pos and pos < len(graph), pos
     assert subterm_is_closed(graph, pos)  # TODO Relax this.
-    perm = range(len(graph))
+    perm = list(range(len(graph)))
     perm[0] = pos
     perm[pos] = 0
     terms = graph_permute(graph, perm)
@@ -489,7 +490,7 @@ def NVAR(name):
     assert isinstance(name, str), name
     if re_keyword.match(name):
         raise ValueError('Variable names cannot match [A-Z]+: {}'.format(name))
-    terms = [Term.NVAR(intern(name))]
+    terms = [Term.NVAR(sys.intern(name))]
     return graph_make(terms)
 
 
@@ -563,7 +564,7 @@ def JOIN(args):
     for arg in args[:-1]:
         offsets.append(offsets[-1] + len(arg))
     terms = [Term.JOIN(offsets)]
-    for arg, offset in itertools.izip(args, offsets):
+    for arg, offset in zip(args, offsets):
         for term in arg:
             terms.append(term_shift(term, offset))
     return graph_make(terms)
@@ -586,7 +587,7 @@ def as_graph(fun):
     if vargs or kwargs or defaults:
         source = inspect.getsource(fun)
         raise SyntaxError('Unsupported signature: {}'.format(source))
-    symbolic_args = map(NVAR, args)
+    symbolic_args = list(map(NVAR, args))
     symbolic_result = fun(*symbolic_args)
     graph = as_graph(symbolic_result)
     for var in reversed(symbolic_args):
@@ -617,7 +618,7 @@ def letrec(root, **defs):
     root = as_graph(root)
     terms = list(root)
     defs_pos = {}  # : Term -> pos
-    for name, defn in defs.iteritems():
+    for name, defn in defs.items():
         defn = as_graph(defn)
         var_term = Term.NVAR(name)
         offset = len(terms)
@@ -692,7 +693,7 @@ def try_decide_less(lhs, rhs):
 
 @memoize_arg
 def _free_vars(graph):
-    result = [set() for _ in xrange(len(graph))]
+    result = [set() for _ in range(len(graph))]
     for pos, term in enumerate(graph):
         if term.is_var:
             result[pos].add(term)
@@ -747,7 +748,7 @@ def find_scope(graph, abs_pos):
         changed = False
         scope = set([
             pos
-            for pos in xrange(len(graph))
+            for pos in range(len(graph))
             if vars_in_scope & free_vars(graph, pos)
         ])
         for pos in scope:
@@ -860,7 +861,7 @@ class Substitution(dict):
         old_root = 0
         new_root = self(0)
         if new_root != old_root:
-            perm = range(len(terms))
+            perm = list(range(len(terms)))
             perm[old_root] = new_root
             perm[new_root] = old_root
             terms = graph_permute(terms, perm)

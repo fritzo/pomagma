@@ -53,12 +53,12 @@ theories = {
 
 
 def print_solutions(solutions):
-    print 'Necessary:'
+    print('Necessary:')
     for term in solutions['necessary']:
-        print '  {}'.format(term)
-    print 'Possible:'
+        print('  {}'.format(term))
+    print('Possible:')
     for term in solutions['possible']:
-        print '  {}'.format(term)
+        print('  {}'.format(term))
 
 
 @parsable
@@ -70,9 +70,9 @@ def show_define(name=None):
 
     """
     if name not in theories:
-        print 'Try one of: {}'.format(' '.join(sorted(theories)))
+        print('Try one of: {}'.format(' '.join(sorted(theories))))
         sys.exit(1)
-    print pomagma.analyst.compiler.compile_solver('t', theories[name])
+    print(pomagma.analyst.compiler.compile_solver('t', theories[name]))
 
 
 @parsable
@@ -83,7 +83,7 @@ def define(name=None, max_solutions=32, address=pomagma.analyst.ADDRESS):
 
     """
     if name not in theories:
-        print 'Try one of: {}'.format(' '.join(sorted(theories)))
+        print('Try one of: {}'.format(' '.join(sorted(theories))))
         sys.exit(1)
     with pomagma.analyst.connect(address) as db:
         solutions = db.solve('t', theories[name], max_solutions)
@@ -107,7 +107,7 @@ def rs_pairs(max_solutions=32, address=pomagma.analyst.ADDRESS):
             [(rs, False) for rs in solutions['possible']])
         retracts = db.simplify(['APP {} K'.format(rs) for rs, _ in pairs])
         sections = db.simplify(['APP {} F'.format(rs) for rs, _ in pairs])
-    parts = zip(pairs, retracts, sections)
+    parts = list(zip(pairs, retracts, sections))
     solutions = {
         'necessary': [(rs, r, s) for (rs, n), r, s in parts if n],
         'possible': [(rs, r, s) for (rs, n), r, s in parts if not n],

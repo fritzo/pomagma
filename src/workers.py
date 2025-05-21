@@ -28,8 +28,8 @@ class parsable_fork(object):
 
     def __init__(self, fun, *args, **kwargs):
         self.args = [PYTHON, '-m', 'pomagma.workers', fun.__name__]
-        self.args += map(str, args)
-        for key, val in kwargs.iteritems():
+        self.args += list(map(str, args))
+        for key, val in kwargs.items():
             self.args.append('{}={}'.format(key, val))
         self.proc = subprocess.Popen(self.args)
 
@@ -51,7 +51,7 @@ class fork(object):
         self.command = '{}({})'.format(fun.__name__, ', '.join([
             str(arg) for arg in args
         ] + [
-            '{}={}'.format(key, repr(val)) for key, val in kwargs.iteritems()
+            '{}={}'.format(key, repr(val)) for key, val in kwargs.items()
         ]))
         self.proc = multiprocessing.Process(
             target=fun,

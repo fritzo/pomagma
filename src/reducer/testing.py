@@ -24,14 +24,14 @@ TESTDATA = os.path.join(DIR, 'testdata')
 
 def iter_test_cases(test_id, suites=None):
     assert isinstance(test_id, str), test_id
-    print('test_id = {}'.format(test_id))
+    print(('test_id = {}'.format(test_id)))
     if suites is None:
         module = import_module('pomagma.reducer.{}'.format(test_id))
         suites = module.SUPPORTED_TESTDATA
     for suite in suites:
         basename = '{}.sexpr'.format(suite)
         filename = os.path.join(TESTDATA, basename)
-        print('reading {}'.format(filename))
+        print(('reading {}'.format(filename)))
         with open(filename) as f:
             for i, line in enumerate(f):
                 parts = line.split(';', 1)
@@ -73,7 +73,7 @@ def migrate(fun):
     """Applies a term->term transform on all files in testdata/."""
     for basename in os.listdir(TESTDATA):
         assert basename.endswith('.sexpr'), basename
-        print('processing {}'.format(basename))
+        print(('processing {}'.format(basename)))
         filename = os.path.join(TESTDATA, basename)
         lines = []
         with open(filename) as f:
@@ -87,7 +87,7 @@ def migrate(fun):
                     try:
                         term = fun(term)
                     except Exception:
-                        print('Error at {}:{}'.format(basename, lineno + 1))
+                        print(('Error at {}:{}'.format(basename, lineno + 1)))
                         print(line)
                         raise
                     sexpr = sexpr_print(term)

@@ -32,10 +32,10 @@ def generate(size=9, density=0.2, seed=0):
     assert 0 <= density and density <= 1, density
     random.seed(seed)
     grid = [
-        [random_entry(size, density) for j in xrange(size)]
-        for i in xrange(size)
+        [random_entry(size, density) for j in range(size)]
+        for i in range(size)
     ]
-    print print_grid(grid)
+    print(print_grid(grid))
     return grid
 
 
@@ -46,10 +46,10 @@ def all_different(xs):
 def is_valid(grid):
     size = len(grid)
     rows = grid
-    cols = zip(*rows)
+    cols = list(zip(*rows))
     diags = [
-        [grid[i][i] for i in xrange(size)],
-        [grid[i][size - i - 1] for i in xrange(size)],
+        [grid[i][i] for i in range(size)],
+        [grid[i][size - i - 1] for i in range(size)],
     ]
     return all(all_different(s) for s in rows + cols + diags)
 

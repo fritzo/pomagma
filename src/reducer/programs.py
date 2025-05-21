@@ -2,7 +2,7 @@
 
 import contextlib
 import functools
-from itertools import izip
+
 
 from pomagma.reducer import data
 from pomagma.reducer.sugar import app, combinator
@@ -49,7 +49,7 @@ class Program(object):
                 self.__name__, len(self._encoders), len(args)))
         if ENGINE is None:
             raise RuntimeError('No engine specified')
-        term_args = [encode(arg) for encode, arg in izip(self._encoders, args)]
+        term_args = [encode(arg) for encode, arg in zip(self._encoders, args)]
         term_in = app(self.combinator.term, *term_args)
         term_out = ENGINE.reduce(term_in)
         data.check_for_errors(term_out)
@@ -67,6 +67,6 @@ def program(*types):
         raise SyntaxError('No output type: program{}'.format(types))
     tps_in = types[:-1]
     tp_out = types[-1]
-    encoders = map(data.encoder, tps_in)
+    encoders = list(map(data.encoder, tps_in))
     decoder = data.decoder(tp_out)
     return lambda fun: Program(encoders, decoder, fun)
