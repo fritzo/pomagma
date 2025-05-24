@@ -13,8 +13,8 @@ add_library(pomagma_util SHARED
 )
 target_link_libraries(pomagma_util
 	pomagma_farmhash
-	tbb
-	crypto ssl
+	${TBB_LIBRARIES}
+	OpenSSL::Crypto OpenSSL::SSL
 	${Boost_FILESYSTEM_LIBRARY}
 	${Boost_SYSTEM_LIBRARY}
 )

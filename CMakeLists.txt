@@ -82,12 +82,35 @@ elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 endif()
 message(STATUS "CMake C++ flags: ${CMAKE_CXX_FLAGS}")
 
+# Handle deprecated FindBoost module warning
+if(POLICY CMP0167)
+  cmake_policy(SET CMP0167 NEW)
+endif()
+
 find_package(Boost COMPONENTS system filesystem REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
 
 # Use modern CMake protobuf and abseil packages
 find_package(Protobuf REQUIRED)
 find_package(absl REQUIRED)
+
+# Find OpenSSL
+find_package(OpenSSL REQUIRED)
+
+# Find TBB using pkg-config
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(TBB REQUIRED tbb)
+
+# Find ZeroMQ using pkg-config
+pkg_check_modules(ZMQ REQUIRED libzmq)
+
+# Add TBB include directories as system headers (suppresses warnings)
+include_directories(SYSTEM ${TBB_INCLUDE_DIRS})
+link_directories(${TBB_LIBRARY_DIRS})
+
+# Add ZeroMQ include directories and library directories
+include_directories(${ZMQ_INCLUDE_DIRS})
+link_directories(${ZMQ_LIBRARY_DIRS})
 
 find_program(CCACHE_FOUND ccache)
 if(CCACHE_FOUND)

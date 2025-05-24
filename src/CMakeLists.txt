@@ -3,8 +3,8 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 set(POMAGMA_UTIL_LIBS
 	pomagma_util
 	pomagma_farmhash
-	tbb
-	crypto ssl
+	${TBB_LIBRARIES}
+	OpenSSL::Crypto OpenSSL::SSL
 	${Boost_FILESYSTEM_LIBRARY}
 	${Boost_SYSTEM_LIBRARY}
 	#tcmalloc  # THIS MUST LINKED LAST

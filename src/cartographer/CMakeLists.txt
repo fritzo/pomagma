@@ -23,6 +23,6 @@ add_executable(cartographer
        	messages.pb.cc
 )
 target_link_libraries(cartographer
-	zmq
+	${ZMQ_LIBRARIES}
 	${POMAGMA_WORLD_LIBS}
 )
