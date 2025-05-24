@@ -5,7 +5,7 @@ import glob
 import itertools
 import os
 import sys
-from itertools import izip
+
 from math import exp, log
 
 import pomagma.util
@@ -14,20 +14,20 @@ function = type(lambda x: x)
 
 
 def intern_keys(string_dict):
-    return {intern(str(key)): val for key, val in string_dict.iteritems()}
+    return {sys.intern(str(key)): val for key, val in list(string_dict.items())}
 
 
 def DELETE(*args, **kwargs):
-    raise ValueError('deleted method')
+    raise ValueError("deleted method")
 
 
 def logger(message, *args):
     if pomagma.util.LOG_LEVEL >= pomagma.util.LOG_LEVEL_DEBUG:
-        print '#', message.format(*args)
+        print("#"), message.format(*args)
 
 
 class sortedset(set):
-    __slots__ = ['_sorted', '_hash']
+    __slots__ = ["_sorted", "_hash"]
 
     def __init__(self, *args, **kwargs):
         set.__init__(self, *args, **kwargs)
@@ -101,28 +101,28 @@ def log_sum_exp(*args):
         shift = max(args)
         return log(sum(exp(arg - shift) for arg in args)) + shift
     else:
-        return -float('inf')
+        return -float("inf")
 
 
 def eval_float44(num):
-    '''
+    """
     8 bit nonnegative floating point = 4 bit significand + 4 bit exponent.
     Gradually increase from 0 to about 1e6 over inputs 0...255
     such that output is monotone increasing and has small relative increase.
-    '''
+    """
     assert isinstance(num, int) and 0 <= num and num < 256, num
-    nibbles = (num % 16, num / 16)
+    nibbles = (num % 16, num // 16)
     return (nibbles[0] + 16) * 2 ** nibbles[1] - 16
 
 
 def eval_float53(num):
-    '''
+    """
     8 bit nonnegative floating point = 5 bit significand + 3 bit exponent.
     Gradually increase from 0 to about 8e3 over inputs 0...255
     such that output is monotone increasing and has small relative increase.
-    '''
+    """
     assert isinstance(num, int) and 0 <= num and num < 256, num
-    nibbles = (num % 32, num / 32)
+    nibbles = (num % 32, num // 32)
     return (nibbles[0] + 32) * 2 ** nibbles[1] - 32
 
 
@@ -133,7 +133,9 @@ def inputs(*types):
             for arg, typ in zip(args, types):
                 assert isinstance(arg, typ), arg
             return fun(*args, **kwargs)
+
         return typed
+
     return deco
 
 
@@ -142,11 +144,12 @@ def methodof(class_, name=None):
         if name is not None:
             fun.__name__ = name
         setattr(class_, fun.__name__, fun)
+
     return deco
 
 
 def find_theories():
-    return glob.glob(os.path.join(pomagma.util.THEORY, '*.theory'))
+    return glob.glob(os.path.join(pomagma.util.THEORY, "*.theory"))
 
 
 MEMOIZED_CACHES = {}
@@ -188,7 +191,7 @@ def memoize_args(fun):
 def temp_memoize():
     base = MEMOIZED_CACHES.copy()
     yield
-    for fun, cache in MEMOIZED_CACHES.iteritems():
+    for fun, cache in list(MEMOIZED_CACHES.items()):
         cache.clear()
         cache.update(base.get(fun, {}))
 
@@ -213,22 +216,23 @@ def unique_result(fun):
 
 
 def profile_memoized():
-    sizes = [(len(cache), fun) for (fun, cache) in MEMOIZED_CACHES.iteritems()]
+    sizes = [(len(cache), fun) for (fun, cache) in list(MEMOIZED_CACHES.items())]
     sizes.sort(reverse=True)
-    sys.stderr.write('{: >10} {}\n'.format('# entries', 'memoized function'))
-    sys.stderr.write('-' * 32 + '\n')
+    sys.stderr.write("{: >10} {}\n".format("# entries", "memoized function"))
+    sys.stderr.write("-" * 32 + "\n")
     for size, fun in sizes:
         if size > 0:
             sys.stderr.write(
-                '{: >10} {}.{}\n'.format(size, fun.__module__, fun.__name__))
+                "{: >10} {}.{}\n".format(size, fun.__module__, fun.__name__)
+            )
 
 
-if int(os.environ.get('POMAGMA_PROFILE_MEMOIZED', 0)):
+if int(os.environ.get("POMAGMA_PROFILE_MEMOIZED", 0)):
     atexit.register(profile_memoized)
 
 
 def get_consts(thing):
-    if hasattr(thing, 'consts'):
+    if hasattr(thing, "consts"):
         return thing.consts
     else:
         return union(get_consts(i) for i in thing)
@@ -238,14 +242,14 @@ def get_consts(thing):
 def permute_symbols(perm, thing):
     if not perm:
         return thing
-    elif hasattr(thing, 'permute_symbols'):
+    elif hasattr(thing, "permute_symbols"):
         return thing.permute_symbols(perm)
-    elif hasattr(thing, '__iter__'):
+    elif hasattr(thing, "__iter__"):
         return thing.__class__(permute_symbols(perm, i) for i in thing)
     elif isinstance(thing, (int, float)):
         return thing
     else:
-        raise ValueError('cannot permute_symbols of {}'.format(thing))
+        raise ValueError("cannot permute_symbols of {}".format(thing))
 
 
 def memoize_modulo_renaming_constants(fun):
@@ -256,16 +260,16 @@ def memoize_modulo_renaming_constants(fun):
         consts = sorted(c.name for c in get_consts(args))
         result = None
         for permuted_consts in itertools.permutations(consts):
-            perm = {i: j for i, j in izip(consts, permuted_consts) if i != j}
+            perm = {i: j for i, j in zip(consts, permuted_consts) if i != j}
             permuted_args = permute_symbols(perm, args)
             try:
                 permuted_result = cache[permuted_args]
             except KeyError:
                 continue
-            logger('{}: using cache via {}', fun.__name__, perm)
-            inverse = {j: i for i, j in perm.iteritems()}
+            logger("{}: using cache via {}", fun.__name__, perm)
+            inverse = {j: i for i, j in list(perm.items())}
             return permute_symbols(inverse, permuted_result)
-        logger('{}: compute', fun.__name__)
+        logger("{}: compute", fun.__name__)
         result = fun(*args)
         cache[args] = result
         return result

@@ -1,46 +1,87 @@
 import hypothesis
 import hypothesis.strategies as s
 
-from pomagma.reducer.syntax import (ABS, APP, BOOL, BOT, CODE, EQUAL, EVAL,
-                                    FUN, IVAR, JOIN, LESS, MAYBE, NLESS, NUM,
-                                    NVAR, PROD, QAPP, QEQUAL, QLESS, QQUOTE,
-                                    QUOTE, RAND, SUM, TOP, UNIT, A, B, C, I, K,
-                                    S, V, Y, anonymize, complexity, free_vars,
-                                    from_sexpr, identity, polish_parse,
-                                    polish_print, quoted_vars, sexpr_parse,
-                                    sexpr_parse_sexpr, sexpr_print,
-                                    sexpr_print_sexpr, to_sexpr)
+from pomagma.reducer.syntax import (
+    ABS,
+    APP,
+    BOOL,
+    BOT,
+    CODE,
+    EQUAL,
+    EVAL,
+    FUN,
+    IVAR,
+    JOIN,
+    LESS,
+    MAYBE,
+    NLESS,
+    NUM,
+    NVAR,
+    PROD,
+    QAPP,
+    QEQUAL,
+    QLESS,
+    QQUOTE,
+    QUOTE,
+    RAND,
+    SUM,
+    TOP,
+    UNIT,
+    A,
+    B,
+    C,
+    I,
+    K,
+    S,
+    V,
+    Y,
+    anonymize,
+    complexity,
+    free_vars,
+    from_sexpr,
+    identity,
+    polish_parse,
+    polish_print,
+    quoted_vars,
+    sexpr_parse,
+    sexpr_parse_sexpr,
+    sexpr_print,
+    sexpr_print_sexpr,
+    to_sexpr,
+)
 from pomagma.util.testing import for_each
 
 # ----------------------------------------------------------------------------
 # Parameterized tests
 
-x = NVAR('x')
-y = NVAR('y')
-z = NVAR('z')
+x = NVAR("x")
+y = NVAR("y")
+z = NVAR("z")
 i0 = IVAR(0)
 i1 = IVAR(1)
 i2 = IVAR(2)
 
 
-@for_each([
-    (x, x, i0),
-    (y, x, y),
-    (i0, x, i1),
-    (EVAL, x, EVAL),
-    (ABS(i0), x, ABS(i0)),
-    (ABS(x), x, ABS(i1)),
-    (ABS(ABS(x)), x, ABS(ABS(i2))),
-    (APP(x, x), x, APP(i0, i0)),
-    (APP(x, ABS(x)), x, APP(i0, ABS(i1))),
-    (JOIN(x, y), x, JOIN(i0, y)),
-    (JOIN(x, y), y, JOIN(x, i0)),
-    (RAND(x, y), x, RAND(i0, y)),
-    (RAND(x, y), y, RAND(x, i0)),
-    (QUOTE(x), x, QUOTE(i0)),
-    (QUOTE(y), x, QUOTE(y)),
-    (QUOTE(i0), x, QUOTE(i1)),
-])
+@for_each(
+    [
+        (x, x, i0),
+        (y, x, y),
+        (i0, x, i1),
+        (EVAL, x, EVAL),
+        (ABS(i0), x, ABS(i0)),
+        (ABS(x), x, ABS(i1)),
+        (ABS(ABS(x)), x, ABS(ABS(i2))),
+        (APP(x, x), x, APP(i0, i0)),
+        (APP(x, ABS(x)), x, APP(i0, ABS(i1))),
+        (JOIN(x, y), x, JOIN(i0, y)),
+        (JOIN(x, y), y, JOIN(x, i0)),
+        (RAND(x, y), x, RAND(i0, y)),
+        (RAND(x, y), y, RAND(x, i0)),
+        (QUOTE(x), x, QUOTE(i0)),
+        (QUOTE(y), x, QUOTE(y)),
+        (QUOTE(i0), x, QUOTE(i1)),
+    ]
+)
 def test_anonymize(term, var, expected):
     assert anonymize(term, var) is expected
 
@@ -94,115 +135,117 @@ def test_quoted_vars_quote(term, free, quoted):
     assert quoted_vars(QUOTE(term)) == frozenset(free)
 
 
-@for_each([
-    (TOP, 0),
-    (BOT, 0),
-    (x, 1),
-    (y, 1),
-    (I, 1 + 1),
-    (K, 2 + 1),
-    (B, 3 + 3),
-    (C, 3 + 3),
-    (S, 3 + 3),
-    (Y, 6),
-    (APP(K, I), 1 + max(3, 2)),
-    (APP(I, x), 1 + max(2, 1)),
-    (JOIN(K, I), max(3, 2)),
-    (JOIN(I, x), max(2, 1)),
-    (RAND(K, I), 1 + max(3, 2)),
-    (RAND(I, x), 1 + max(2, 1)),
-    (QUOTE(I), 1 + 2),
-    (IVAR(0), 1),
-    (ABS(IVAR(0)), 1 + 1),
-    (ABS(I), 1 + 2),
-    (ABS(K), 1 + 3),
-    (FUN(x, x), 1 + max(1, 1)),
-    (FUN(x, I), 1 + max(1, 2)),
-    (FUN(x, K), 1 + max(1, 3)),
-    (APP(APP(S, x), x), 1 + max(1 + max(6, 1), 1)),
-    (APP(APP(S, I), x), 1 + max(1 + max(6, 2), 1)),
-    (APP(APP(S, I), I), 1 + max(1 + max(6, 2), 2)),
-])
+@for_each(
+    [
+        (TOP, 0),
+        (BOT, 0),
+        (x, 1),
+        (y, 1),
+        (I, 1 + 1),
+        (K, 2 + 1),
+        (B, 3 + 3),
+        (C, 3 + 3),
+        (S, 3 + 3),
+        (Y, 6),
+        (APP(K, I), 1 + max(3, 2)),
+        (APP(I, x), 1 + max(2, 1)),
+        (JOIN(K, I), max(3, 2)),
+        (JOIN(I, x), max(2, 1)),
+        (RAND(K, I), 1 + max(3, 2)),
+        (RAND(I, x), 1 + max(2, 1)),
+        (QUOTE(I), 1 + 2),
+        (IVAR(0), 1),
+        (ABS(IVAR(0)), 1 + 1),
+        (ABS(I), 1 + 2),
+        (ABS(K), 1 + 3),
+        (FUN(x, x), 1 + max(1, 1)),
+        (FUN(x, I), 1 + max(1, 2)),
+        (FUN(x, K), 1 + max(1, 3)),
+        (APP(APP(S, x), x), 1 + max(1 + max(6, 1), 1)),
+        (APP(APP(S, I), x), 1 + max(1 + max(6, 2), 1)),
+        (APP(APP(S, I), I), 1 + max(1 + max(6, 2), 2)),
+    ]
+)
 def test_complexity(term, expected):
     assert complexity(term) == expected
 
 
 EXAMPLES = [
-    {'term': TOP, 'polish': 'TOP', 'sexpr': 'TOP'},
-    {'term': BOT, 'polish': 'BOT', 'sexpr': 'BOT'},
-    {'term': I, 'polish': 'I', 'sexpr': 'I'},
-    {'term': K, 'polish': 'K', 'sexpr': 'K'},
-    {'term': B, 'polish': 'B', 'sexpr': 'B'},
-    {'term': C, 'polish': 'C', 'sexpr': 'C'},
-    {'term': S, 'polish': 'S', 'sexpr': 'S'},
-    {'term': CODE, 'polish': 'CODE', 'sexpr': 'CODE'},
-    {'term': EVAL, 'polish': 'EVAL', 'sexpr': 'EVAL'},
-    {'term': QAPP, 'polish': 'QAPP', 'sexpr': 'QAPP'},
-    {'term': QQUOTE, 'polish': 'QQUOTE', 'sexpr': 'QQUOTE'},
-    {'term': QEQUAL, 'polish': 'QEQUAL', 'sexpr': 'QEQUAL'},
-    {'term': QLESS, 'polish': 'QLESS', 'sexpr': 'QLESS'},
-    {'term': Y, 'polish': 'Y', 'sexpr': 'Y'},
-    {'term': V, 'polish': 'V', 'sexpr': 'V'},
-    {'term': A, 'polish': 'A', 'sexpr': 'A'},
-    {'term': UNIT, 'polish': 'UNIT', 'sexpr': 'UNIT'},
-    {'term': BOOL, 'polish': 'BOOL', 'sexpr': 'BOOL'},
-    {'term': MAYBE, 'polish': 'MAYBE', 'sexpr': 'MAYBE'},
-    {'term': PROD, 'polish': 'PROD', 'sexpr': 'PROD'},
-    {'term': SUM, 'polish': 'SUM', 'sexpr': 'SUM'},
-    {'term': NUM, 'polish': 'NUM', 'sexpr': 'NUM'},
-    {'term': x, 'polish': 'x', 'sexpr': 'x'},
-    {'term': APP(K, I), 'polish': 'APP K I', 'sexpr': '(K I)'},
-    {'term': JOIN(I, K), 'polish': 'JOIN I K', 'sexpr': '(JOIN I K)'},
-    {'term': RAND(I, K), 'polish': 'RAND I K', 'sexpr': '(RAND I K)'},
+    {"term": TOP, "polish": "TOP", "sexpr": "TOP"},
+    {"term": BOT, "polish": "BOT", "sexpr": "BOT"},
+    {"term": I, "polish": "I", "sexpr": "I"},
+    {"term": K, "polish": "K", "sexpr": "K"},
+    {"term": B, "polish": "B", "sexpr": "B"},
+    {"term": C, "polish": "C", "sexpr": "C"},
+    {"term": S, "polish": "S", "sexpr": "S"},
+    {"term": CODE, "polish": "CODE", "sexpr": "CODE"},
+    {"term": EVAL, "polish": "EVAL", "sexpr": "EVAL"},
+    {"term": QAPP, "polish": "QAPP", "sexpr": "QAPP"},
+    {"term": QQUOTE, "polish": "QQUOTE", "sexpr": "QQUOTE"},
+    {"term": QEQUAL, "polish": "QEQUAL", "sexpr": "QEQUAL"},
+    {"term": QLESS, "polish": "QLESS", "sexpr": "QLESS"},
+    {"term": Y, "polish": "Y", "sexpr": "Y"},
+    {"term": V, "polish": "V", "sexpr": "V"},
+    {"term": A, "polish": "A", "sexpr": "A"},
+    {"term": UNIT, "polish": "UNIT", "sexpr": "UNIT"},
+    {"term": BOOL, "polish": "BOOL", "sexpr": "BOOL"},
+    {"term": MAYBE, "polish": "MAYBE", "sexpr": "MAYBE"},
+    {"term": PROD, "polish": "PROD", "sexpr": "PROD"},
+    {"term": SUM, "polish": "SUM", "sexpr": "SUM"},
+    {"term": NUM, "polish": "NUM", "sexpr": "NUM"},
+    {"term": x, "polish": "x", "sexpr": "x"},
+    {"term": APP(K, I), "polish": "APP K I", "sexpr": "(K I)"},
+    {"term": JOIN(I, K), "polish": "JOIN I K", "sexpr": "(JOIN I K)"},
+    {"term": RAND(I, K), "polish": "RAND I K", "sexpr": "(RAND I K)"},
     {
-        'term': QUOTE(APP(I, K)),
-        'polish': 'QUOTE APP I K',
-        'sexpr': '(QUOTE (I K))',
+        "term": QUOTE(APP(I, K)),
+        "polish": "QUOTE APP I K",
+        "sexpr": "(QUOTE (I K))",
     },
     {
-        'term': ABS(IVAR(0)),
-        'polish': 'ABS 0',
-        'sexpr': '(ABS 0)',
+        "term": ABS(IVAR(0)),
+        "polish": "ABS 0",
+        "sexpr": "(ABS 0)",
     },
     {
-        'term': FUN(x, APP(x, x)),
-        'polish': 'FUN x APP x x',
-        'sexpr': '(FUN x (x x))',
+        "term": FUN(x, APP(x, x)),
+        "polish": "FUN x APP x x",
+        "sexpr": "(FUN x (x x))",
     },
-    {'term': LESS(K, I), 'polish': 'LESS K I', 'sexpr': '(LESS K I)'},
-    {'term': NLESS(K, I), 'polish': 'NLESS K I', 'sexpr': '(NLESS K I)'},
-    {'term': EQUAL(K, I), 'polish': 'EQUAL K I', 'sexpr': '(EQUAL K I)'},
+    {"term": LESS(K, I), "polish": "LESS K I", "sexpr": "(LESS K I)"},
+    {"term": NLESS(K, I), "polish": "NLESS K I", "sexpr": "(NLESS K I)"},
+    {"term": EQUAL(K, I), "polish": "EQUAL K I", "sexpr": "(EQUAL K I)"},
 ]
 
 
 @for_each(EXAMPLES)
 def test_polish_print(example):
-    actual = polish_print(example['term'])
-    assert actual == example['polish']
+    actual = polish_print(example["term"])
+    assert actual == example["polish"]
 
 
 @for_each(EXAMPLES)
 def test_polish_parse(example):
-    actual = polish_parse(example['polish'])
-    assert actual == example['term']
+    actual = polish_parse(example["polish"])
+    assert actual == example["term"]
 
 
 @for_each(EXAMPLES)
 def test_sexpr_print(example):
-    actual = sexpr_print(example['term'])
-    assert actual == example['sexpr']
+    actual = sexpr_print(example["term"])
+    assert actual == example["sexpr"]
 
 
 @for_each(EXAMPLES)
 def test_sexpr_parse(example):
-    actual = sexpr_parse(example['sexpr'])
-    assert actual == example['term']
+    actual = sexpr_parse(example["sexpr"])
+    assert actual == example["term"]
 
 
 # ----------------------------------------------------------------------------
 # Property-based tests
 
-alphabet = '_abcdefghijklmnopqrstuvwxyz'
+alphabet = "_abcdefghijklmnopqrstuvwxyz"
 s_varnames = s.builds(
     str,
     s.text(alphabet=alphabet, min_size=1, average_size=5),

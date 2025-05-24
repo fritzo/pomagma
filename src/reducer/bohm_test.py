@@ -5,15 +5,50 @@ import hypothesis.strategies as s
 import pytest
 
 from pomagma.reducer import bohm
-from pomagma.reducer.bohm import (CB, CI, KI, B, C, I, K, S, Y, app, false,
-                                  is_linear, is_normal, join, polish_simplify,
-                                  print_tiny, sexpr_simplify, true,
-                                  try_decide_equal, try_decide_less,
-                                  try_decide_less_weak)
-from pomagma.reducer.syntax import (ABS, APP, BOT, CODE, EVAL, IVAR, JOIN,
-                                    NVAR, QAPP, QEQUAL, QLESS, QQUOTE, QUOTE,
-                                    TOP, Term, polish_print, quoted_vars,
-                                    sexpr_parse, sexpr_print)
+from pomagma.reducer.bohm import (
+    CB,
+    CI,
+    KI,
+    B,
+    C,
+    I,
+    K,
+    S,
+    Y,
+    app,
+    false,
+    is_linear,
+    is_normal,
+    join,
+    polish_simplify,
+    print_tiny,
+    sexpr_simplify,
+    true,
+    try_decide_equal,
+    try_decide_less,
+    try_decide_less_weak,
+)
+from pomagma.reducer.syntax import (
+    ABS,
+    APP,
+    BOT,
+    CODE,
+    EVAL,
+    IVAR,
+    JOIN,
+    NVAR,
+    QAPP,
+    QEQUAL,
+    QLESS,
+    QQUOTE,
+    QUOTE,
+    TOP,
+    Term,
+    polish_print,
+    quoted_vars,
+    sexpr_parse,
+    sexpr_print,
+)
 from pomagma.reducer.testing import iter_equations
 from pomagma.util.testing import for_each, xfail_if_not_implemented
 
@@ -24,9 +59,9 @@ i1 = IVAR(1)
 i2 = IVAR(2)
 i3 = IVAR(3)
 
-x = NVAR('x')
-y = NVAR('y')
-z = NVAR('z')
+x = NVAR("x")
+y = NVAR("y")
+z = NVAR("z")
 
 delta = ABS(APP(i0, i0))
 
@@ -171,26 +206,26 @@ def test_is_linear(term, expected):
 
 
 PERMUTE_RANK_EXAMPLES = [
-    ('(0 1 2 3)', 0, '(0 1 2 3)'),
-    ('(0 1 2 3)', 1, '(1 0 2 3)'),
-    ('(0 1 2 3)', 2, '(1 2 0 3)'),
-    ('(0 1 2 3)', 3, '(1 2 3 0)'),
-    ('(0 1 2 3)', 4, '(1 2 3 4)'),
-    ('(0 1 2 3)', 5, '(1 2 3 4)'),
-    ('(0 1 x y EVAL)', 1, '(1 0 x y EVAL)'),
-    ('(ABS (0 1 2 3)) ', 0, '(ABS (0 1 2 3))'),
-    ('(ABS (0 1 2 3)) ', 1, '(ABS (0 2 1 3))'),
-    ('(ABS (0 1 2 3)) ', 2, '(ABS (0 2 3 1))'),
-    ('(ABS (0 1 2 3)) ', 3, '(ABS (0 2 3 4))'),
-    ('(ABS (ABS (0 1 2 3))) ', 0, '(ABS (ABS (0 1 2 3)))'),
-    ('(ABS (ABS (0 1 2 3))) ', 1, '(ABS (ABS (0 1 3 2)))'),
-    ('(ABS (ABS (0 1 2 3))) ', 2, '(ABS (ABS (0 1 3 4)))'),
-    ('(JOIN (x 0 1 2) (y 0 1 2))', 0, '(JOIN (x 0 1 2) (y 0 1 2))'),
-    ('(JOIN (x 0 1 2) (y 0 1 2))', 1, '(JOIN (x 1 0 2) (y 1 0 2))'),
-    ('(JOIN (x 0 1 2) (y 0 1 2))', 2, '(JOIN (x 1 2 0) (y 1 2 0))'),
-    ('(QUOTE (0 1 2))', 0, '(QUOTE (0 1 2))'),
-    ('(QUOTE (0 1 2))', 1, '(QUOTE (1 0 2))'),
-    ('(QUOTE (0 1 2))', 2, '(QUOTE (1 2 0))'),
+    ("(0 1 2 3)", 0, "(0 1 2 3)"),
+    ("(0 1 2 3)", 1, "(1 0 2 3)"),
+    ("(0 1 2 3)", 2, "(1 2 0 3)"),
+    ("(0 1 2 3)", 3, "(1 2 3 0)"),
+    ("(0 1 2 3)", 4, "(1 2 3 4)"),
+    ("(0 1 2 3)", 5, "(1 2 3 4)"),
+    ("(0 1 x y EVAL)", 1, "(1 0 x y EVAL)"),
+    ("(ABS (0 1 2 3)) ", 0, "(ABS (0 1 2 3))"),
+    ("(ABS (0 1 2 3)) ", 1, "(ABS (0 2 1 3))"),
+    ("(ABS (0 1 2 3)) ", 2, "(ABS (0 2 3 1))"),
+    ("(ABS (0 1 2 3)) ", 3, "(ABS (0 2 3 4))"),
+    ("(ABS (ABS (0 1 2 3))) ", 0, "(ABS (ABS (0 1 2 3)))"),
+    ("(ABS (ABS (0 1 2 3))) ", 1, "(ABS (ABS (0 1 3 2)))"),
+    ("(ABS (ABS (0 1 2 3))) ", 2, "(ABS (ABS (0 1 3 4)))"),
+    ("(JOIN (x 0 1 2) (y 0 1 2))", 0, "(JOIN (x 0 1 2) (y 0 1 2))"),
+    ("(JOIN (x 0 1 2) (y 0 1 2))", 1, "(JOIN (x 1 0 2) (y 1 0 2))"),
+    ("(JOIN (x 0 1 2) (y 0 1 2))", 2, "(JOIN (x 1 2 0) (y 1 2 0))"),
+    ("(QUOTE (0 1 2))", 0, "(QUOTE (0 1 2))"),
+    ("(QUOTE (0 1 2))", 1, "(QUOTE (1 0 2))"),
+    ("(QUOTE (0 1 2))", 2, "(QUOTE (1 2 0))"),
 ]
 
 
@@ -397,23 +432,27 @@ def test_qabstract(term, expected):
     assert bohm.qabstract(term) is expected
 
 
-@for_each([
-    (x, x, ABS(i0)),
-    (x, y, ABS(y)),
-    (x, i0, ABS(i1)),
-    (x, ABS(APP(i0, x)), ABS(ABS(APP(i0, i1)))),
-])
+@for_each(
+    [
+        (x, x, ABS(i0)),
+        (x, y, ABS(y)),
+        (x, i0, ABS(i1)),
+        (x, ABS(APP(i0, x)), ABS(ABS(APP(i0, i1)))),
+    ]
+)
 def test_nominal_abstract(var, body, expected):
     assert bohm.nominal_abstract(var, body) is expected
 
 
-@for_each([
-    (x, x, EVAL),
-    (x, y, ABS(y)),
-    (x, i0, ABS(i1)),
-    (x, QUOTE(x), CODE),
-    (x, QUOTE(APP(y, x)), APP(QAPP, QUOTE(y))),
-])
+@for_each(
+    [
+        (x, x, EVAL),
+        (x, y, ABS(y)),
+        (x, i0, ABS(i1)),
+        (x, QUOTE(x), CODE),
+        (x, QUOTE(APP(y, x)), APP(QAPP, QUOTE(y))),
+    ]
+)
 def test_nominal_qabstract(var, body, expected):
     assert bohm.nominal_qabstract(var, body) is expected
 
@@ -523,7 +562,7 @@ APPROXIMATE_VAR_EXAMPLES = [
         TOP,
         0,
         [QUOTE(i0)],
-    )
+    ),
 ]
 
 
@@ -796,16 +835,19 @@ def test_dominates_transitive(x, y, z):
 # ----------------------------------------------------------------------------
 # Type casting
 
-@for_each([
-    (x, BOT, TOP),
-    (i0, BOT, TOP),
-    (ABS(i0), ABS(i0), ABS(i0)),
-    (ABS(i1), BOT, TOP),
-    (JOIN(x, I), I, TOP),
-    (ABS(APP(i0, x)), ABS(APP(i0, BOT)), ABS(APP(i0, TOP))),
-    (QUOTE(BOT), QUOTE(BOT), QUOTE(BOT)),
-    (QUOTE(x), BOT, TOP),
-])
+
+@for_each(
+    [
+        (x, BOT, TOP),
+        (i0, BOT, TOP),
+        (ABS(i0), ABS(i0), ABS(i0)),
+        (ABS(i1), BOT, TOP),
+        (JOIN(x, I), I, TOP),
+        (ABS(APP(i0, x)), ABS(APP(i0, BOT)), ABS(APP(i0, TOP))),
+        (QUOTE(BOT), QUOTE(BOT), QUOTE(BOT)),
+        (QUOTE(x), BOT, TOP),
+    ]
+)
 def test_ground(term, expected_lb, expected_ub):
     lb, ub = bohm.ground(term)
     assert lb is expected_lb
@@ -828,30 +870,34 @@ F = KI
 J = join(K, F)
 
 
-@for_each([
-    (TOP, TOP),
-    (BOT, BOT),
-    (I, I),
-    (K, TOP),
-    (F, TOP),
-    (J, TOP),
-    (app(app(B, K), app(CI, TOP)), TOP),
-    (app(app(B, K), app(CI, BOT)), I),
-    (x, None),
-])
+@for_each(
+    [
+        (TOP, TOP),
+        (BOT, BOT),
+        (I, I),
+        (K, TOP),
+        (F, TOP),
+        (J, TOP),
+        (app(app(B, K), app(CI, TOP)), TOP),
+        (app(app(B, K), app(CI, BOT)), I),
+        (x, None),
+    ]
+)
 def test_try_cast_unit(x, expected):
     assert bohm.try_cast_unit(x) is expected
 
 
-@for_each([
-    (TOP, TOP),
-    (BOT, BOT),
-    (K, K),
-    (F, F),
-    (I, TOP),
-    (J, TOP),
-    (x, None),
-])
+@for_each(
+    [
+        (TOP, TOP),
+        (BOT, BOT),
+        (K, K),
+        (F, F),
+        (I, TOP),
+        (J, TOP),
+        (x, None),
+    ]
+)
 def test_try_cast_bool(x, expected):
     assert bohm.try_cast_bool(x) is expected
 
@@ -863,34 +909,38 @@ def some(x):
     return app(K, app(CI, x))
 
 
-@for_each([
-    (TOP, TOP),
-    (BOT, BOT),
-    (none, none),
-    (some(TOP), some(TOP)),
-    (some(BOT), some(BOT)),
-    (some(I), some(I)),
-    (some(K), some(K)),
-    (some(F), some(F)),
-    (join(some(K), some(F)), some(J)),
-    (app(app(J, none), some(BOT)), TOP),
-    (I, TOP),
-    (F, TOP),
-    (J, TOP),
-    (x, None),
-])
+@for_each(
+    [
+        (TOP, TOP),
+        (BOT, BOT),
+        (none, none),
+        (some(TOP), some(TOP)),
+        (some(BOT), some(BOT)),
+        (some(I), some(I)),
+        (some(K), some(K)),
+        (some(F), some(F)),
+        (join(some(K), some(F)), some(J)),
+        (app(app(J, none), some(BOT)), TOP),
+        (I, TOP),
+        (F, TOP),
+        (J, TOP),
+        (x, None),
+    ]
+)
 def test_try_cast_maybe(x, expected):
     assert bohm.try_cast_maybe(x) is expected
 
 
-@for_each([
-    (TOP, TOP),
-    (BOT, BOT),
-    (QUOTE(x), QUOTE(x)),
-    (app(QQUOTE, x), app(QQUOTE, x)),
-    (app(app(QAPP, x), y), app(app(QAPP, x), y)),
-    (x, None),
-])
+@for_each(
+    [
+        (TOP, TOP),
+        (BOT, BOT),
+        (QUOTE(x), QUOTE(x)),
+        (app(QQUOTE, x), app(QQUOTE, x)),
+        (app(app(QAPP, x), y), app(app(QAPP, x), y)),
+        (x, None),
+    ]
+)
 def test_try_cast_code(x, expected):
     assert bohm.try_cast_code(x) is expected
 
@@ -921,7 +971,7 @@ COMPUTE_EXAMPLES = [
 
 @for_each(COMPUTE_EXAMPLES)
 def test_is_normal(term, expected_try_compute_step):
-    expected = (expected_try_compute_step is None)
+    expected = expected_try_compute_step is None
     assert is_normal(term) is expected
 
 
@@ -940,7 +990,7 @@ def test_try_compute_step(term, expected):
 @hypothesis.given(s_terms)
 @hypothesis.settings(max_examples=1000)
 def test_try_compute_step_runs(term):
-    for step in xrange(5):
+    for step in range(5):
         with xfail_if_not_implemented():
             result = bohm.try_compute_step(term)
         if is_normal(term):
@@ -951,38 +1001,40 @@ def test_try_compute_step_runs(term):
 
 
 nonterminating_example_1 = (
-    '(JOIN (ABS (0 0 (ABS (ABS (2 2 (ABS (ABS (ABS (0 (ABS (5 (3 0))) (ABS (2 '
-    '(4 0))))))))))) (JOIN (ABS (ABS (0 (ABS 0) (ABS 0)))) (ABS (0 0 (ABS (ABS'
-    '(2 2 (ABS (ABS (ABS (0 (ABS (5 (3 0))) (ABS (2 (4 0))))))))))))) (ABS (AB'
-    'S (ABS (2 2) (JOIN (ABS (ABS (0 (ABS 0) (ABS 0)))) (ABS (0 0 (ABS (ABS (2'
-    '2 (ABS (ABS (ABS (0 (ABS (5 (3 0))) (ABS (2 (4 0))))))))))))) (ABS (ABS ('
-    'ABS (0 (ABS (5 (3 0))) (ABS (2 (4 0)))))))))) (ABS (ABS (ABS (2 2) (JOIN '
-    '(ABS (ABS (0 (ABS 0) (ABS 0)))) (ABS (0 0 (ABS (ABS (2 2 (ABS (ABS (ABS ('
-    '0 (ABS (5 (3 0))) (ABS (2 (4 0))))))))))))) (ABS (ABS (ABS (0 (ABS (5 (3 '
-    '0))) (ABS (2 (4 0)))))))))) (ABS (ABS (ABS (2 2) (JOIN (ABS (ABS (0 (ABS '
-    '0) (ABS 0)))) (ABS (0 0 (ABS (ABS (2 2 (ABS (ABS (ABS (0 (ABS (5 (3 0))) '
-    '(ABS (2 (4 0))))))))))))) (ABS (ABS (ABS (0 (ABS (5 (3 0))) (ABS (2 (4 0)'
-    '))))))))) (ABS (ABS (ABS (ABS (3 (1 (2 0))))))) (ABS 0)) (JOIN (ABS 0) (J'
-    'OIN (ABS (0 (ABS (ABS (ABS (ABS (3 (1 (2 0))))))) (ABS 0))) (JOIN (ABS (A'
-    'BS (ABS (ABS (ABS (ABS (4 (ABS (ABS (0 (ABS (ABS (ABS (ABS (9 3 (1 (2 0))'
-    '))))) (ABS (2 (8 0)))))) (1 (2 0))))))))) (ABS (ABS (1 0 (1 0) (ABS (ABS '
-    '(ABS (0 (ABS (5 4 (3 0))) (ABS (2 (ABS (1 1 (ABS (ABS (ABS (0 (ABS (5 (3 '
-    '0))) (ABS (2 (4 0))))))))))))))))))))))'
+    "(JOIN (ABS (0 0 (ABS (ABS (2 2 (ABS (ABS (ABS (0 (ABS (5 (3 0))) (ABS (2 "
+    "(4 0))))))))))) (JOIN (ABS (ABS (0 (ABS 0) (ABS 0)))) (ABS (0 0 (ABS (ABS"
+    "(2 2 (ABS (ABS (ABS (0 (ABS (5 (3 0))) (ABS (2 (4 0))))))))))))) (ABS (AB"
+    "S (ABS (2 2) (JOIN (ABS (ABS (0 (ABS 0) (ABS 0)))) (ABS (0 0 (ABS (ABS (2"
+    "2 (ABS (ABS (ABS (0 (ABS (5 (3 0))) (ABS (2 (4 0))))))))))))) (ABS (ABS ("
+    "ABS (0 (ABS (5 (3 0))) (ABS (2 (4 0)))))))))) (ABS (ABS (ABS (2 2) (JOIN "
+    "(ABS (ABS (0 (ABS 0) (ABS 0)))) (ABS (0 0 (ABS (ABS (2 2 (ABS (ABS (ABS ("
+    "0 (ABS (5 (3 0))) (ABS (2 (4 0))))))))))))) (ABS (ABS (ABS (0 (ABS (5 (3 "
+    "0))) (ABS (2 (4 0)))))))))) (ABS (ABS (ABS (2 2) (JOIN (ABS (ABS (0 (ABS "
+    "0) (ABS 0)))) (ABS (0 0 (ABS (ABS (2 2 (ABS (ABS (ABS (0 (ABS (5 (3 0))) "
+    "(ABS (2 (4 0))))))))))))) (ABS (ABS (ABS (0 (ABS (5 (3 0))) (ABS (2 (4 0)"
+    "))))))))) (ABS (ABS (ABS (ABS (3 (1 (2 0))))))) (ABS 0)) (JOIN (ABS 0) (J"
+    "OIN (ABS (0 (ABS (ABS (ABS (ABS (3 (1 (2 0))))))) (ABS 0))) (JOIN (ABS (A"
+    "BS (ABS (ABS (ABS (ABS (4 (ABS (ABS (0 (ABS (ABS (ABS (ABS (9 3 (1 (2 0))"
+    "))))) (ABS (2 (8 0)))))) (1 (2 0))))))))) (ABS (ABS (1 0 (1 0) (ABS (ABS "
+    "(ABS (0 (ABS (5 4 (3 0))) (ABS (2 (ABS (1 1 (ABS (ABS (ABS (0 (ABS (5 (3 "
+    "0))) (ABS (2 (4 0))))))))))))))))))))))"
 )
 
 
-@for_each([
-    nonterminating_example_1,
-])
+@for_each(
+    [
+        nonterminating_example_1,
+    ]
+)
 def test_try_compute_step_terminates(term):
     term = sexpr_simplify(term)
     bohm.try_compute_step(term)
 
 
 SIMPLIFY_EXAMPLES = [
-    ('I', '(ABS 0)'),
-    ('K', '(ABS (ABS 1))'),
-    ('(I I)', '(ABS 0)'),
+    ("I", "(ABS 0)"),
+    ("K", "(ABS (ABS 1))"),
+    ("(I I)", "(ABS 0)"),
 ]
 
 
@@ -1001,17 +1053,19 @@ def test_reduce_simplifies(term, expected):
     assert bohm.reduce(term, budget) is expected
 
 
-@for_each([
-    ('(ABS (0 0) (ABS (0 0)))', 0, '(ABS (0 0) (ABS (0 0)))'),
-    ('(ABS (0 0) (ABS (0 0)))', 1, '(ABS (0 0) (ABS (0 0)))'),
-])
+@for_each(
+    [
+        ("(ABS (0 0) (ABS (0 0)))", 0, "(ABS (0 0) (ABS (0 0)))"),
+        ("(ABS (0 0) (ABS (0 0)))", 1, "(ABS (0 0) (ABS (0 0)))"),
+    ]
+)
 def test_reduce(term, budget, expected):
     term = sexpr_parse(term)
     expected = sexpr_parse(expected)
     assert bohm.reduce(term, budget) is expected
 
 
-@for_each(iter_equations('bohm'))
+@for_each(iter_equations("bohm"))
 def test_reduce_equations(term, expected, message):
     with xfail_if_not_implemented():
         actual = bohm.reduce(term)
@@ -1023,62 +1077,62 @@ def test_reduce_equations(term, expected, message):
 # Eager parsing
 
 PARSE_EXAMPLES = [
-    ('I', '(ABS 0)'),
-    ('K', '(ABS (ABS 1))'),
-    ('B', '(ABS (ABS (ABS (2 (1 0)))))'),
-    ('C', '(ABS (ABS (ABS (2 0 1))))'),
-    ('S', '(ABS (ABS (ABS (2 0 (1 0)))))'),
-    ('(I x)', 'x'),
-    ('(K x)', '(ABS x)'),
-    ('(K x y)', 'x'),
-    ('(B x)', '(ABS (ABS (x (1 0))))'),
-    ('(B x y)', '(ABS (x (y 0)))'),
-    ('(B x y z)', '(x (y z))'),
-    ('(C x)', '(ABS (ABS (x 0 1)))'),
-    ('(C x y)', '(ABS (x 0 y))'),
-    ('(C x y z)', '(x z y)'),
-    ('(S x)', '(ABS (ABS (x 0 (1 0))))'),
-    ('(S x y)', '(ABS (x 0 (y 0)))'),
-    ('(S x y z)', '(x z (y z))'),
-    ('(I I)', '(ABS 0)'),
-    ('(I K)', '(ABS (ABS 1))'),
-    ('(K I) ', '(ABS (ABS 0))'),
-    ('(K I x y) ', 'y'),
-    ('(I B)', '(ABS (ABS (ABS (2 (1 0)))))'),
-    ('(B I)', '(ABS 0)'),
-    ('(B I x)', 'x'),
-    ('(B I x)', 'x'),
-    ('(C B)', '(ABS (ABS (ABS (1 (2 0)))))'),
-    ('(C B f)', '(ABS (ABS (1 (f 0))))'),
-    ('(C B f g)', '(ABS (g (f 0)))'),
-    ('(C B f g x)', '(g (f x))'),
-    ('(C B I)', '(ABS 0)'),
-    ('(C B I x)', 'x'),
-    ('(C (C x))', 'x'),
-    ('(B C C)', '(ABS 0)'),
-    ('(B C C x)', 'x'),
-    ('(S K)', '(ABS (ABS 0))'),
-    ('(S K I)', '(ABS 0)'),
-    ('(S K K)', '(ABS 0)'),
-    ('(S K x y)', 'y'),
-    ('(S I)', '(ABS (ABS (0 (1 0))))'),
-    ('(S I I)', '(ABS (0 0))'),
-    ('(S I I x)', '(x x)'),
-    ('(C B (S I I))', '(ABS (ABS (1 (0 0))))'),
-    ('(C B (S I I) f)', '(ABS (f (0 0)))'),
-    ('(C B (S I I) f x)', '(f (x x))'),
-    ('(B (S I I) x y)', '(x y (x y))'),
-    ('(S I I (C B (S I I) f))', '(ABS (0 0) (ABS (f (0 0))))'),
+    ("I", "(ABS 0)"),
+    ("K", "(ABS (ABS 1))"),
+    ("B", "(ABS (ABS (ABS (2 (1 0)))))"),
+    ("C", "(ABS (ABS (ABS (2 0 1))))"),
+    ("S", "(ABS (ABS (ABS (2 0 (1 0)))))"),
+    ("(I x)", "x"),
+    ("(K x)", "(ABS x)"),
+    ("(K x y)", "x"),
+    ("(B x)", "(ABS (ABS (x (1 0))))"),
+    ("(B x y)", "(ABS (x (y 0)))"),
+    ("(B x y z)", "(x (y z))"),
+    ("(C x)", "(ABS (ABS (x 0 1)))"),
+    ("(C x y)", "(ABS (x 0 y))"),
+    ("(C x y z)", "(x z y)"),
+    ("(S x)", "(ABS (ABS (x 0 (1 0))))"),
+    ("(S x y)", "(ABS (x 0 (y 0)))"),
+    ("(S x y z)", "(x z (y z))"),
+    ("(I I)", "(ABS 0)"),
+    ("(I K)", "(ABS (ABS 1))"),
+    ("(K I) ", "(ABS (ABS 0))"),
+    ("(K I x y) ", "y"),
+    ("(I B)", "(ABS (ABS (ABS (2 (1 0)))))"),
+    ("(B I)", "(ABS 0)"),
+    ("(B I x)", "x"),
+    ("(B I x)", "x"),
+    ("(C B)", "(ABS (ABS (ABS (1 (2 0)))))"),
+    ("(C B f)", "(ABS (ABS (1 (f 0))))"),
+    ("(C B f g)", "(ABS (g (f 0)))"),
+    ("(C B f g x)", "(g (f x))"),
+    ("(C B I)", "(ABS 0)"),
+    ("(C B I x)", "x"),
+    ("(C (C x))", "x"),
+    ("(B C C)", "(ABS 0)"),
+    ("(B C C x)", "x"),
+    ("(S K)", "(ABS (ABS 0))"),
+    ("(S K I)", "(ABS 0)"),
+    ("(S K K)", "(ABS 0)"),
+    ("(S K x y)", "y"),
+    ("(S I)", "(ABS (ABS (0 (1 0))))"),
+    ("(S I I)", "(ABS (0 0))"),
+    ("(S I I x)", "(x x)"),
+    ("(C B (S I I))", "(ABS (ABS (1 (0 0))))"),
+    ("(C B (S I I) f)", "(ABS (f (0 0)))"),
+    ("(C B (S I I) f x)", "(f (x x))"),
+    ("(B (S I I) x y)", "(x y (x y))"),
+    ("(S I I (C B (S I I) f))", "(ABS (0 0) (ABS (f (0 0))))"),
     (
-        '(B (S I I) (C B (S I I)) f)',
-        '(ABS (0 f (0 f)) (ABS (ABS (1 (0 0)))))',
+        "(B (S I I) (C B (S I I)) f)",
+        "(ABS (0 f (0 f)) (ABS (ABS (1 (0 0)))))",
     ),
     (
-        '(B (S I I) (C B (S I I)))',
-        '(ABS (ABS (0 1 (0 1)) (ABS (ABS (1 (0 0))))))',
+        "(B (S I I) (C B (S I I)))",
+        "(ABS (ABS (0 1 (0 1)) (ABS (ABS (1 (0 0))))))",
     ),
-    ('(FUN x (x y))', '(ABS (0 y))'),
-    ('(FUN x (x 0))', '(ABS (0 1))'),
+    ("(FUN x (x y))", "(ABS (0 y))"),
+    ("(FUN x (x 0))", "(ABS (0 1))"),
 ]
 
 
@@ -1099,14 +1153,16 @@ def test_sexpr_print_simplify(term):
     assert sexpr_print(sexpr_simplify(sexpr)) == sexpr
 
 
-@for_each([
-    ('0', '0'),
-    ('(1 2)', '(12)'),
-    ('(3 4 (5 6))', '(34(56))'),
-    ('(ABS 0)', '^0'),
-    ('(1 2 3)', '(123)'),
-    ('(JOIN 1 (JOIN 2 3))', '[1|2|3]'),
-])
+@for_each(
+    [
+        ("0", "0"),
+        ("(1 2)", "(12)"),
+        ("(3 4 (5 6))", "(34(56))"),
+        ("(ABS 0)", "^0"),
+        ("(1 2 3)", "(123)"),
+        ("(JOIN 1 (JOIN 2 3))", "[1|2|3]"),
+    ]
+)
 def test_print_tiny(sexpr, expected):
     term = sexpr_simplify(sexpr)
     assert print_tiny(term) == expected

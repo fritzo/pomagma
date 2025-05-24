@@ -1,27 +1,27 @@
 from pomagma.compiler.expressions import Expression, Expression_0, Expression_2
 from pomagma.compiler.util import memoize_arg, memoize_args
 
-TOP = Expression_0('TOP')
-BOT = Expression_0('BOT')
-I = Expression_0('I')
-F = Expression_0('F')
-K = Expression_0('K')
-B = Expression_0('B')
-C = Expression_0('C')
-J = Expression_0('J')
-CB = Expression_0('CB')
-CI = Expression_0('CI')
-HOLE = Expression_0('HOLE')
-APP = Expression_2('APP')
-COMP = Expression_2('COMP')
-JOIN = Expression_2('JOIN')
+TOP = Expression_0("TOP")
+BOT = Expression_0("BOT")
+I = Expression_0("I")
+F = Expression_0("F")
+K = Expression_0("K")
+B = Expression_0("B")
+C = Expression_0("C")
+J = Expression_0("J")
+CB = Expression_0("CB")
+CI = Expression_0("CI")
+HOLE = Expression_0("HOLE")
+APP = Expression_2("APP")
+COMP = Expression_2("COMP")
+JOIN = Expression_2("JOIN")
 
 is_terminal = (TOP, BOT, HOLE).__contains__
 
 
 @memoize_args
 def simplify_stack(head, *args):
-    args = map(simplify_term, args)
+    args = list(map(simplify_term, args))
     nargs = len(args)
     if is_terminal(head):
         return [head]
@@ -53,11 +53,11 @@ def simplify_stack(head, *args):
         return simplify_stack(C, B, *args)
     elif head == CI:
         return simplify_stack(C, I, *args)
-    elif head.name == 'APP':
+    elif head.name == "APP":
         lhs, rhs = head.args
         return simplify_stack(lhs, rhs, *args)
-    elif head.name == 'COMP':
-        lhs, rhs = map(simplify_term, head.args)
+    elif head.name == "COMP":
+        lhs, rhs = list(map(simplify_term, head.args))
         if is_terminal(lhs):
             return [lhs]
         if lhs == I:
@@ -66,8 +66,8 @@ def simplify_stack(head, *args):
             return simplify_stack(lhs, *args)
         if nargs >= 1:
             return simplify_stack(lhs, APP(rhs, args[0]), *args[1:])
-    elif head.name == 'JOIN':
-        lhs, rhs = map(simplify_term, head.args)
+    elif head.name == "JOIN":
+        lhs, rhs = list(map(simplify_term, head.args))
         if lhs == TOP or rhs == TOP:
             return [TOP]
         elif lhs == BOT:
@@ -83,7 +83,7 @@ def simplify_stack(head, *args):
             return [JOIN(lhs, rhs)] + args
         # TODO simplify wrt associativity
 
-    head = Expression.make(head.name, *map(simplify_term, head.args))
+    head = Expression.make(head.name, *list(map(simplify_term, head.args)))
     return [head] + args
 
 
@@ -99,7 +99,7 @@ def simplify_term(term):
 @memoize_arg
 def simplify_expr(expr):
     if expr.is_rel():
-        args = map(simplify_term, expr.args)
+        args = list(map(simplify_term, expr.args))
         return Expression.make(expr.name, *args)
     else:
         return simplify_term(expr)

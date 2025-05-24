@@ -1,15 +1,17 @@
 import itertools
 
-from pomagma.compiler.completion import (Inconsistent, strengthen_sequent,
-                                         try_simplify_antecedents,
-                                         weaken_sequent)
-from pomagma.compiler.expressions import (Expression, NotNegatable,
-                                          try_get_negated)
+from pomagma.compiler.completion import (
+    Inconsistent,
+    strengthen_sequent,
+    try_simplify_antecedents,
+    weaken_sequent,
+)
+from pomagma.compiler.expressions import Expression, NotNegatable, try_get_negated
 from pomagma.compiler.util import inputs, set_with, set_without, union
 
 
 class Sequent(object):
-    __slots__ = ['_antecedents', '_succedents', '_hash', '_str', 'debuginfo']
+    __slots__ = ["_antecedents", "_succedents", "_hash", "_str", "debuginfo"]
 
     def __init__(self, antecedents, succedents):
         antecedents = frozenset(antecedents)
@@ -32,46 +34,48 @@ class Sequent(object):
 
     @property
     def optional(self):
-        return all(s.name == 'OPTIONALLY' for s in self.succedents)
+        return all(s.name == "OPTIONALLY" for s in self.succedents)
 
     def __hash__(self):
         return self._hash
 
     def __eq__(self, other):
-        return (self._antecedents == other._antecedents and
-                self._succedents == other._succedents)
+        return (
+            self._antecedents == other._antecedents
+            and self._succedents == other._succedents
+        )
 
     def __lt__(self, other):
         s = str(self)
         o = str(other)
         return (len(s), s) < (len(o), o)
 
-    def __print_set(self, items, sep=', '):
-        items = map(str, items)
+    def __print_set(self, items, sep=", "):
+        items = list(map(str, items))
         items.sort(key=lambda s: (len(s), s))
         return sep.join(items)
 
     def __str__(self):
         if self._str is None:
-            self._str = '{0} |- {1}'.format(
-                self.__print_set(self.antecedents),
-                self.__print_set(self.succedents))
+            self._str = "{0} |- {1}".format(
+                self.__print_set(self.antecedents), self.__print_set(self.succedents)
+            )
         return self._str
 
     def __repr__(self):
-        return 'Sequent({0})'.format(self)
+        return "Sequent({0})".format(self)
 
     def ascii(self, indent=0):
-        top = self.__print_set(self.antecedents, sep='   ')
-        bot = self.__print_set(self.succedents, sep='   ')
+        top = self.__print_set(self.antecedents, sep="   ")
+        bot = self.__print_set(self.succedents, sep="   ")
         width = max(len(top), len(bot))
         top = top.center(width)
         bot = bot.center(width)
-        bar = '-' * width
+        bar = "-" * width
         lines = [top, bar, bot]
-        lines = filter(bool, lines)
-        lines = map((' ' * indent).__add__, lines)
-        return '\n'.join(lines)
+        lines = list(filter(bool, lines))
+        lines = list(map((" " * indent).__add__, lines))
+        return "\n".join(lines)
 
     @property
     def vars(self):
@@ -85,7 +89,8 @@ class Sequent(object):
         assert isinstance(perm, dict)
         return Sequent(
             (e.permute_symbols(perm) for e in self.antecedents),
-            (e.permute_symbols(perm) for e in self.succedents))
+            (e.permute_symbols(perm) for e in self.succedents),
+        )
 
 
 @inputs(Expression)
@@ -97,9 +102,9 @@ def as_atom(expr):
 @inputs(Expression)
 def as_antecedents(expr, bound):
     antecedents = set()
-    while expr.name in ['OPTIONALLY', 'NONEGATE']:
+    while expr.name in ["OPTIONALLY", "NONEGATE"]:
         expr = expr.args[0]
-    if expr.arity != 'Variable':
+    if expr.arity != "Variable":
         atom = as_atom(expr)
         if not (atom.var in bound and all(arg in bound for arg in atom.args)):
             antecedents.add(atom)
@@ -110,10 +115,10 @@ def as_antecedents(expr, bound):
 
 @inputs(Expression)
 def as_succedent(expr, bound):
-    while expr.name in ['OPTIONALLY', 'NONEGATE']:
+    while expr.name in ["OPTIONALLY", "NONEGATE"]:
         expr = expr.args[0]
     antecedents = set()
-    if expr.arity == 'Equation':
+    if expr.arity == "Equation":
         args = []
         for arg in expr.args:
             if arg.is_var() or arg.var in bound:
@@ -123,7 +128,7 @@ def as_succedent(expr, bound):
                 for argarg in arg.args:
                     antecedents |= as_antecedents(argarg, bound)
             else:
-                assert arg.arity == 'NullaryFunction', arg
+                assert arg.arity == "NullaryFunction", arg
                 args.append(arg.var)
                 antecedents.add(arg)
         succedent = Expression.make(expr.name, *args)
@@ -141,24 +146,25 @@ def get_pointed(seq):
     result = set()
     if len(seq.succedents) == 1:
         for succedent in seq.succedents:
-            if succedent.name != 'OPTIONALLY':
+            if succedent.name != "OPTIONALLY":
                 result.add(seq)
     elif len(seq.succedents) > 1:
         for succedent in seq.succedents:
             remaining = set_without(seq.succedents, succedent)
             try:
-                neg_remaining = map(try_get_negated, remaining)
+                neg_remaining = list(map(try_get_negated, remaining))
             except NotNegatable:
                 continue
             for negated in itertools.product(*neg_remaining):
                 try:
                     antecedents = try_simplify_antecedents(
-                        set(negated) | seq.antecedents)
+                        set(negated) | seq.antecedents
+                    )
                 except Inconsistent:
                     continue
                 result.add(Sequent(antecedents, set([succedent])))
     else:
-        raise ValueError('get_contrapositives never returns empty succedents')
+        raise ValueError("get_contrapositives never returns empty succedents")
     return result
 
 
@@ -171,7 +177,7 @@ def get_atomic(seq, bound=set()):
     """
     result = set()
     for pointed in get_pointed(seq):
-        improper_succedent = iter(pointed.succedents).next()
+        improper_succedent = next(iter(pointed.succedents))
         improper_succedent = strengthen_sequent(improper_succedent)
         antecedents, succedent = as_succedent(improper_succedent, bound)
         for a in pointed.antecedents:
@@ -213,7 +219,7 @@ def get_contrapositives(seq):
     result = set()
     for _, succedents in ante_succ_pairs:
         if succedents:
-            succedent = iter(succedents).next()
+            succedent = next(iter(succedents))
             antecedents_product = []
             for other_antecedents, other_succedents in ante_succ_pairs:
                 if other_succedents != succedents:
@@ -231,7 +237,7 @@ def get_contrapositives(seq):
 
 @inputs(Sequent)
 def get_inverses(sequent):
-    '''
+    """
     Given a sequent A |- B, return set of sequents ~A |- ~B,
     dealing with multiple antecedents and succedents. For example
 
@@ -241,7 +247,7 @@ def get_inverses(sequent):
 
         A, ~B |- ~C, ~D
         ~A, B |- ~C, ~D
-    '''
+    """
     result = set()
     neg_succedents = union(try_get_negated(s) for s in sequent.succedents)
     pos_antecedents = set(sequent.antecedents)
@@ -269,7 +275,7 @@ def normalize(seq, bound=set()):
     result = set()
     for contra in get_contrapositives(seq):
         result |= get_atomic(contra, bound)
-    assert result, 'failed to normalize {0} binding {1}'.format(seq, bound)
+    assert result, "failed to normalize {0} binding {1}".format(seq, bound)
     return result
 
 
@@ -278,12 +284,12 @@ def assert_normal(seq):
     assert len(seq.succedents) == 1
     for expr in seq.antecedents:
         for arg in expr.args:
-            assert arg.arity == 'Variable', arg
+            assert arg.arity == "Variable", arg
     for expr in seq.succedents:
-        if expr.arity == 'Equation':
+        if expr.arity == "Equation":
             for arg in expr.args:
                 for arg_arg in arg.args:
-                    assert arg_arg.arity == 'Variable', arg_arg
+                    assert arg_arg.arity == "Variable", arg_arg
         else:
             for arg in expr.args:
-                assert arg.arity == 'Variable', arg
+                assert arg.arity == "Variable", arg

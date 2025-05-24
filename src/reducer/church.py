@@ -1,10 +1,25 @@
 """Nominal lambda-calculus a la Alonzo Church."""
 
 from pomagma.compiler.util import memoize_arg, memoize_args, unique_result
-from pomagma.reducer.syntax import (ABS, APP, FUN, IVAR, JOIN, NVAR, QUOTE,
-                                    Term, is_abs, is_app, is_atom, is_fun,
-                                    is_ivar, is_join, is_nvar, is_quote,
-                                    sexpr_print)
+from pomagma.reducer.syntax import (
+    ABS,
+    APP,
+    FUN,
+    IVAR,
+    JOIN,
+    NVAR,
+    QUOTE,
+    Term,
+    is_abs,
+    is_app,
+    is_atom,
+    is_fun,
+    is_ivar,
+    is_join,
+    is_nvar,
+    is_quote,
+    sexpr_print,
+)
 
 pretty = sexpr_print
 
@@ -27,7 +42,7 @@ def nominal_vars(term):
         raise ValueError(pretty(term))
 
 
-VARS = map(NVAR, 'abcdefghijklmnopqrstuvwxyz')
+VARS = list(map(NVAR, "abcdefghijklmnopqrstuvwxyz"))
 
 
 def iter_fresh(term):
@@ -35,7 +50,7 @@ def iter_fresh(term):
     for var in VARS:
         if var not in avoid:
             yield var
-    raise NotImplementedError('Too many bound variables')
+    raise NotImplementedError("Too many bound variables")
 
 
 @memoize_args

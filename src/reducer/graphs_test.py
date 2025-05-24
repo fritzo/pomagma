@@ -2,20 +2,40 @@ import hypothesis
 import hypothesis.strategies as s
 import pytest
 
-from pomagma.reducer.graphs import (APP, BOT, CB, FUN, JOIN, NVAR, TOP, B,
-                                    Graph, Term, Y, as_graph, convert,
-                                    find_scope, free_vars, graph_address,
-                                    graph_is_wellformed, graph_permute,
-                                    graph_sort, is_linear, letrec,
-                                    partitioned_permutations, term_permute,
-                                    try_compute_step, try_decide_less)
+from pomagma.reducer.graphs import (
+    APP,
+    BOT,
+    CB,
+    FUN,
+    JOIN,
+    NVAR,
+    TOP,
+    B,
+    Graph,
+    Term,
+    Y,
+    as_graph,
+    convert,
+    find_scope,
+    free_vars,
+    graph_address,
+    graph_is_wellformed,
+    graph_permute,
+    graph_sort,
+    is_linear,
+    letrec,
+    partitioned_permutations,
+    term_permute,
+    try_compute_step,
+    try_decide_less,
+)
 from pomagma.reducer.syntax import sexpr_parse
 from pomagma.util.testing import for_each, xfail_if_not_implemented
 
-j = NVAR('j')
-x = NVAR('x')
-y = NVAR('y')
-z = NVAR('z')
+j = NVAR("j")
+x = NVAR("x")
+y = NVAR("y")
+z = NVAR("z")
 
 s_nvars = s.sampled_from([x, y, z])
 s_atoms = s.sampled_from([TOP, BOT, Y, x, y, z])
@@ -36,77 +56,84 @@ s_graphs = s.recursive(s_atoms, s_graphs_extend, max_leaves=8)
 # ----------------------------------------------------------------------------
 # Signature
 
-@for_each([
-    ((0, 1, 2), Term.APP(0, 1), Term.APP(0, 1)),
-    ((0, 2, 1), Term.APP(0, 1), Term.APP(0, 2)),
-    ((1, 0, 2), Term.APP(0, 1), Term.APP(1, 0)),
-    ((1, 2, 0), Term.APP(0, 1), Term.APP(1, 2)),
-    ((2, 0, 1), Term.APP(0, 1), Term.APP(2, 0)),
-    ((2, 1, 0), Term.APP(0, 1), Term.APP(2, 1)),
-])
+
+@for_each(
+    [
+        ((0, 1, 2), Term.APP(0, 1), Term.APP(0, 1)),
+        ((0, 2, 1), Term.APP(0, 1), Term.APP(0, 2)),
+        ((1, 0, 2), Term.APP(0, 1), Term.APP(1, 0)),
+        ((1, 2, 0), Term.APP(0, 1), Term.APP(1, 2)),
+        ((2, 0, 1), Term.APP(0, 1), Term.APP(2, 0)),
+        ((2, 1, 0), Term.APP(0, 1), Term.APP(2, 1)),
+    ]
+)
 def test_term_permute(perm, term, expected):
     assert term_permute(term, perm) == expected
 
 
-@for_each([
-    (
-        (0, 1, 2, 3),
-        [Term.ABS(1), Term.APP(2, 3), Term.NVAR('x'), Term.VAR(0)],
-        [Term.ABS(1), Term.APP(2, 3), Term.NVAR('x'), Term.VAR(0)],
-    ),
-    (
-        (1, 0, 2, 3),
-        [Term.ABS(1), Term.APP(2, 3), Term.NVAR('x'), Term.VAR(0)],
-        [Term.APP(2, 3), Term.ABS(0), Term.NVAR('x'), Term.VAR(1)],
-    ),
-    (
-        (1, 2, 3, 0),
-        [Term.ABS(1), Term.APP(2, 3), Term.NVAR('x'), Term.VAR(0)],
-        [Term.VAR(1), Term.ABS(2), Term.APP(3, 0), Term.NVAR('x')],
-    ),
-    (
-        (1, 2, 0),
-        [Term.JOIN([1, 2]), Term.ABS(0), Term.VAR(1)],
-        [Term.VAR(2), Term.JOIN([0, 2]), Term.ABS(1)],
-    ),
-])
+@for_each(
+    [
+        (
+            (0, 1, 2, 3),
+            [Term.ABS(1), Term.APP(2, 3), Term.NVAR("x"), Term.VAR(0)],
+            [Term.ABS(1), Term.APP(2, 3), Term.NVAR("x"), Term.VAR(0)],
+        ),
+        (
+            (1, 0, 2, 3),
+            [Term.ABS(1), Term.APP(2, 3), Term.NVAR("x"), Term.VAR(0)],
+            [Term.APP(2, 3), Term.ABS(0), Term.NVAR("x"), Term.VAR(1)],
+        ),
+        (
+            (1, 2, 3, 0),
+            [Term.ABS(1), Term.APP(2, 3), Term.NVAR("x"), Term.VAR(0)],
+            [Term.VAR(1), Term.ABS(2), Term.APP(3, 0), Term.NVAR("x")],
+        ),
+        (
+            (1, 2, 0),
+            [Term.JOIN([1, 2]), Term.ABS(0), Term.VAR(1)],
+            [Term.VAR(2), Term.JOIN([0, 2]), Term.ABS(1)],
+        ),
+    ]
+)
 def test_graph_permute(perm, graph, expected):
     assert graph_permute(graph, perm) == expected
 
 
-@for_each([
-    ([[0]], [[0]]),
-    ([[0], [1]], [[0, 1]]),
-    ([[1], [0]], [[1, 0]]),
-    ([[0, 1]], [[0, 1], [1, 0]]),
-    ([[0], [1], [2]], [[0, 1, 2]]),
-    ([[0], [2], [1]], [[0, 2, 1]]),
-    ([[1], [0], [2]], [[1, 0, 2]]),
-    ([[1], [2], [0]], [[2, 0, 1]]),
-    ([[2], [0], [1]], [[1, 2, 0]]),
-    ([[2], [1], [0]], [[2, 1, 0]]),
-    ([[0, 1], [2]], [[0, 1, 2], [1, 0, 2]]),
-    ([[0, 2], [1]], [[0, 2, 1], [1, 2, 0]]),
-    ([[0], [1, 2]], [[0, 1, 2], [0, 2, 1]]),
-    ([[1, 2], [0]], [[2, 0, 1], [2, 1, 0]]),
-    ([[1], [0, 2]], [[1, 0, 2], [2, 0, 1]]),
-    ([[2], [0, 1]], [[1, 2, 0], [2, 1, 0]]),
-    (
-        [[0, 1, 2]],
-        [
-            [0, 1, 2],
-            [0, 2, 1],
-            [1, 0, 2],
-            [1, 2, 0],
-            [2, 0, 1],
-            [2, 1, 0],
-        ],
-    ),
-    (
-        [[0, 1], [2, 3]],
-        [[0, 1, 2, 3], [0, 1, 3, 2], [1, 0, 2, 3], [1, 0, 3, 2]],
-    ),
-])
+@for_each(
+    [
+        ([[0]], [[0]]),
+        ([[0], [1]], [[0, 1]]),
+        ([[1], [0]], [[1, 0]]),
+        ([[0, 1]], [[0, 1], [1, 0]]),
+        ([[0], [1], [2]], [[0, 1, 2]]),
+        ([[0], [2], [1]], [[0, 2, 1]]),
+        ([[1], [0], [2]], [[1, 0, 2]]),
+        ([[1], [2], [0]], [[2, 0, 1]]),
+        ([[2], [0], [1]], [[1, 2, 0]]),
+        ([[2], [1], [0]], [[2, 1, 0]]),
+        ([[0, 1], [2]], [[0, 1, 2], [1, 0, 2]]),
+        ([[0, 2], [1]], [[0, 2, 1], [1, 2, 0]]),
+        ([[0], [1, 2]], [[0, 1, 2], [0, 2, 1]]),
+        ([[1, 2], [0]], [[2, 0, 1], [2, 1, 0]]),
+        ([[1], [0, 2]], [[1, 0, 2], [2, 0, 1]]),
+        ([[2], [0, 1]], [[1, 2, 0], [2, 1, 0]]),
+        (
+            [[0, 1, 2]],
+            [
+                [0, 1, 2],
+                [0, 2, 1],
+                [1, 0, 2],
+                [1, 2, 0],
+                [2, 0, 1],
+                [2, 1, 0],
+            ],
+        ),
+        (
+            [[0, 1], [2, 3]],
+            [[0, 1, 2, 3], [0, 1, 3, 2], [1, 0, 2, 3], [1, 0, 3, 2]],
+        ),
+    ]
+)
 def test_partitioned_permutations(partitions, expected_perms):
     actual_perms = sorted(partitioned_permutations(partitions))
     assert actual_perms == expected_perms
@@ -114,7 +141,7 @@ def test_partitioned_permutations(partitions, expected_perms):
 
 @hypothesis.given(s_graphs, s.randoms())
 def test_graph_address(terms, r):
-    perm = range(1, len(terms))
+    perm = list(range(1, len(terms)))
     r.shuffle(perm)
     hypothesis.assume(perm != sorted(perm))
     perm = [0] + perm
@@ -127,7 +154,7 @@ def test_graph_address(terms, r):
 
 @hypothesis.given(s_graphs, s.randoms())
 def test_graph_sort(terms, r):
-    perm = range(1, len(terms))
+    perm = list(range(1, len(terms)))
     r.shuffle(perm)
     hypothesis.assume(perm != sorted(perm))
     perm = [0] + perm
@@ -141,17 +168,17 @@ def test_graph_sort(terms, r):
 
 FUN_EXAMPLES = [
     (x, x, Graph.make(Term.ABS(1), Term.VAR(0))),
-    (x, y, Graph.make(Term.ABS(1), Term.NVAR('y'))),
+    (x, y, Graph.make(Term.ABS(1), Term.NVAR("y"))),
     (x, APP(x, x), Graph.make(Term.ABS(1), Term.APP(2, 2), Term.VAR(0))),
     (
         x,
         APP(x, y),
-        Graph.make(Term.ABS(1), Term.APP(2, 3), Term.VAR(0), Term.NVAR('y')),
+        Graph.make(Term.ABS(1), Term.APP(2, 3), Term.VAR(0), Term.NVAR("y")),
     ),
     (
         x,
         APP(y, x),
-        Graph.make(Term.ABS(1), Term.APP(2, 3), Term.NVAR('y'), Term.VAR(0)),
+        Graph.make(Term.ABS(1), Term.APP(2, 3), Term.NVAR("y"), Term.VAR(0)),
     ),
     (
         x,
@@ -161,8 +188,8 @@ FUN_EXAMPLES = [
             Term.APP(2, 5),
             Term.APP(3, 4),
             Term.VAR(0),
-            Term.NVAR('y'),
-            Term.NVAR('z'),
+            Term.NVAR("y"),
+            Term.NVAR("z"),
         ),
     ),
     (
@@ -172,9 +199,9 @@ FUN_EXAMPLES = [
             Term.ABS(1),
             Term.APP(2, 5),
             Term.APP(3, 4),
-            Term.NVAR('x'),
+            Term.NVAR("x"),
             Term.VAR(0),
-            Term.NVAR('z'),
+            Term.NVAR("z"),
         ),
     ),
     (
@@ -184,8 +211,8 @@ FUN_EXAMPLES = [
             Term.ABS(1),
             Term.APP(2, 5),
             Term.APP(3, 4),
-            Term.NVAR('x'),
-            Term.NVAR('y'),
+            Term.NVAR("x"),
+            Term.NVAR("y"),
             Term.VAR(0),
         ),
     ),
@@ -195,8 +222,8 @@ FUN_EXAMPLES = [
             Term.ABS(1),
             Term.APP(2, 5),
             Term.APP(3, 4),
-            Term.NVAR('x'),
-            Term.NVAR('y'),
+            Term.NVAR("x"),
+            Term.NVAR("y"),
             Term.VAR(0),
         ),
         Graph.make(
@@ -204,7 +231,7 @@ FUN_EXAMPLES = [
             Term.ABS(2),
             Term.APP(3, 6),
             Term.APP(4, 5),
-            Term.NVAR('x'),
+            Term.NVAR("x"),
             Term.VAR(0),
             Term.VAR(1),
         ),
@@ -216,7 +243,7 @@ FUN_EXAMPLES = [
             Term.ABS(2),
             Term.APP(3, 6),
             Term.APP(4, 5),
-            Term.NVAR('x'),
+            Term.NVAR("x"),
             Term.VAR(0),
             Term.VAR(1),
         ),
@@ -273,87 +300,96 @@ def test_join_distributive(f, g, x):
 # ----------------------------------------------------------------------------
 # Syntax
 
-@for_each([
-    (lambda x: x, Graph.make(Term.ABS(1), Term.VAR(0))),
-    (lambda x: x(x), Graph.make(Term.ABS(1), Term.APP(2, 2), Term.VAR(0))),
-    (lambda x: lambda y: x, Graph.make(Term.ABS(1), Term.ABS(2), Term.VAR(0))),
-    (lambda x: lambda y: y, Graph.make(Term.ABS(1), Term.ABS(2), Term.VAR(1))),
-    (lambda x: lambda x: x, Graph.make(Term.ABS(1), Term.ABS(2), Term.VAR(1))),
-    (lambda x, y: x, Graph.make(Term.ABS(1), Term.ABS(2), Term.VAR(0))),
-    (lambda x, y: y, Graph.make(Term.ABS(1), Term.ABS(2), Term.VAR(1))),
-    (
-        lambda x: x | x(x),
-        Graph.make(
-            Term.ABS(1),
-            Term.JOIN([2, 3]),
-            Term.APP(3, 3),
-            Term.VAR(0),
+
+@for_each(
+    [
+        (lambda x: x, Graph.make(Term.ABS(1), Term.VAR(0))),
+        (lambda x: x(x), Graph.make(Term.ABS(1), Term.APP(2, 2), Term.VAR(0))),
+        (lambda x: lambda y: x, Graph.make(Term.ABS(1), Term.ABS(2), Term.VAR(0))),
+        (lambda x: lambda y: y, Graph.make(Term.ABS(1), Term.ABS(2), Term.VAR(1))),
+        (lambda x: lambda x: x, Graph.make(Term.ABS(1), Term.ABS(2), Term.VAR(1))),
+        (lambda x, y: x, Graph.make(Term.ABS(1), Term.ABS(2), Term.VAR(0))),
+        (lambda x, y: y, Graph.make(Term.ABS(1), Term.ABS(2), Term.VAR(1))),
+        (
+            lambda x: x | x(x),
+            Graph.make(
+                Term.ABS(1),
+                Term.JOIN([2, 3]),
+                Term.APP(3, 3),
+                Term.VAR(0),
+            ),
         ),
-    ),
-    (
-        lambda f, g, x: g(f(x)),
-        Graph.make(
-            Term.ABS(1),
-            Term.ABS(2),
-            Term.ABS(3),
-            Term.APP(4, 5),
-            Term.VAR(1),
-            Term.APP(6, 7),
-            Term.VAR(0),
-            Term.VAR(2),
+        (
+            lambda f, g, x: g(f(x)),
+            Graph.make(
+                Term.ABS(1),
+                Term.ABS(2),
+                Term.ABS(3),
+                Term.APP(4, 5),
+                Term.VAR(1),
+                Term.APP(6, 7),
+                Term.VAR(0),
+                Term.VAR(2),
+            ),
         ),
-    ),
-])
+    ]
+)
 def test_as_graph(graph, expected):
     assert as_graph(graph) is expected
     assert as_graph(expected) is expected
 
 
-@for_each([
-    ('pair', lambda x, y, f: f(x, y)),
-    ('copy', lambda x, y: x(y, y)),
-    ('join', lambda x, y, z: x(y | z)),
-    ('postconj', lambda r, s, f: f(B(r), B(s))),
-    ('preconj', lambda r, s, f: f(CB(r), CB(s))),
-    ('conjugate', lambda r1, s1, r2, s2, f: f(B(r1, r2), B(s2, s1))),
-])
+@for_each(
+    [
+        ("pair", lambda x, y, f: f(x, y)),
+        ("copy", lambda x, y: x(y, y)),
+        ("join", lambda x, y, z: x(y | z)),
+        ("postconj", lambda r, s, f: f(B(r), B(s))),
+        ("preconj", lambda r, s, f: f(CB(r), CB(s))),
+        ("conjugate", lambda r1, s1, r2, s2, f: f(B(r1, r2), B(s2, s1))),
+    ]
+)
 def test_as_graph_runs(name, graph):
     print(name)
     actual = as_graph(graph)
     assert as_graph(actual) is actual
 
 
-@for_each([
-    (
-        j,
-        dict(j=lambda x, y: x(j(y))),
-        Graph.make(
-            Term.ABS(1),
-            Term.ABS(2),
-            Term.APP(3, 4),
-            Term.VAR(0),
-            Term.APP(0, 5),
-            Term.VAR(1),
+@for_each(
+    [
+        (
+            j,
+            dict(j=lambda x, y: x(j(y))),
+            Graph.make(
+                Term.ABS(1),
+                Term.ABS(2),
+                Term.APP(3, 4),
+                Term.VAR(0),
+                Term.APP(0, 5),
+                Term.VAR(1),
+            ),
         ),
-    ),
-])
+    ]
+)
 def test_letrec(root, defs, expected):
     assert letrec(root, **defs) is expected
 
 
-@for_each([
-    'TOP',
-    'BOT',
-    'I',
-    'K',
-    'B',
-    'C',
-    'S',
-    '(I K)',
-    '(K I)',
-    '(JOIN K (K I))',
-    pytest.mark.xfail('(FUN x x 0 1)'),
-])
+@for_each(
+    [
+        "TOP",
+        "BOT",
+        "I",
+        "K",
+        "B",
+        "C",
+        "S",
+        "(I K)",
+        "(K I)",
+        "(JOIN K (K I))",
+        pytest.mark.xfail("(FUN x x 0 1)"),
+    ]
+)
 def test_convert_runs(sexpr):
     term = sexpr_parse(sexpr)
     with xfail_if_not_implemented():
@@ -363,6 +399,7 @@ def test_convert_runs(sexpr):
 
 # ----------------------------------------------------------------------------
 # Scott ordering
+
 
 @hypothesis.given(s_graphs)
 def test_less_top(graph):
@@ -401,53 +438,56 @@ def test_less_join(x, y):
 # ----------------------------------------------------------------------------
 # Variables
 
+
 @hypothesis.given(s_graphs)
 def test_free_vars_runs(graph):
     free_vars(graph, 0)
 
 
-@for_each([
-    (
-        Graph.make(Term.TOP),
-        (frozenset(),),
-    ),
-    (
-        Graph.make(Term.ABS(1), Term.VAR(0)),
-        (frozenset(), frozenset([Term.VAR(0)])),
-    ),
-    (
-        Graph.make(
-            Term.ABS(1),
-            Term.ABS(2),
-            Term.APP(3, 4),
-            Term.VAR(1),
-            Term.VAR(0),
+@for_each(
+    [
+        (
+            Graph.make(Term.TOP),
+            (frozenset(),),
         ),
         (
-            frozenset(),
-            frozenset([Term.VAR(0)]),
-            frozenset([Term.VAR(0), Term.VAR(1)]),
-            frozenset([Term.VAR(1)]),
-            frozenset([Term.VAR(0)]),
-        ),
-    ),
-    (
-        Graph.make(
-            Term.ABS(1),
-            Term.ABS(2),
-            Term.JOIN([3, 4]),
-            Term.VAR(1),
-            Term.VAR(0),
+            Graph.make(Term.ABS(1), Term.VAR(0)),
+            (frozenset(), frozenset([Term.VAR(0)])),
         ),
         (
-            frozenset(),
-            frozenset([Term.VAR(0)]),
-            frozenset([Term.VAR(0), Term.VAR(1)]),
-            frozenset([Term.VAR(1)]),
-            frozenset([Term.VAR(0)]),
+            Graph.make(
+                Term.ABS(1),
+                Term.ABS(2),
+                Term.APP(3, 4),
+                Term.VAR(1),
+                Term.VAR(0),
+            ),
+            (
+                frozenset(),
+                frozenset([Term.VAR(0)]),
+                frozenset([Term.VAR(0), Term.VAR(1)]),
+                frozenset([Term.VAR(1)]),
+                frozenset([Term.VAR(0)]),
+            ),
         ),
-    ),
-])
+        (
+            Graph.make(
+                Term.ABS(1),
+                Term.ABS(2),
+                Term.JOIN([3, 4]),
+                Term.VAR(1),
+                Term.VAR(0),
+            ),
+            (
+                frozenset(),
+                frozenset([Term.VAR(0)]),
+                frozenset([Term.VAR(0), Term.VAR(1)]),
+                frozenset([Term.VAR(1)]),
+                frozenset([Term.VAR(0)]),
+            ),
+        ),
+    ]
+)
 def test_free_vars(graph, expecteds):
     for pos, expected in enumerate(expecteds):
         assert free_vars(graph, pos) == expected
@@ -467,7 +507,7 @@ SCOPE_EXAMPLES = [
         {0: frozenset([])},
     ),
     (
-        Graph.make(Term.ABS(1), Term.NVAR('x')),
+        Graph.make(Term.ABS(1), Term.NVAR("x")),
         {0: frozenset([])},
     ),
     (
@@ -546,39 +586,43 @@ def test_graph_is_wellformed(graph):
     assert graph_is_wellformed(graph)
 
 
-@for_each([
-    Graph.make(
-        Term.ABS(1),
-        Term.APP(2, 3),
-        Term.VAR(3),
-        Term.ABS(4),
-        Term.APP(5, 0),
-        Term.VAR(0),
-    ),
-])
+@for_each(
+    [
+        Graph.make(
+            Term.ABS(1),
+            Term.APP(2, 3),
+            Term.VAR(3),
+            Term.ABS(4),
+            Term.APP(5, 0),
+            Term.VAR(0),
+        ),
+    ]
+)
 def test_not_graph_is_wellformed(graph):
     assert not graph_is_wellformed(graph)
 
 
-@for_each([
-    (x, True),
-    (x(x), True),
-    (lambda x: x, True),
-    (lambda x: x(x), False),
-    (lambda x, y: x, True),
-    (lambda x, y: y, True),
-    (lambda x, y: x(y), True),
-    (lambda x, y: y(x), True),
-    (lambda x, y: x(x), False),
-    (lambda x, y: y(y), False),
-    (lambda x, y: x | y, True),
-    (lambda x, y: x | y(x), True),
-    (lambda x, y: x(y) | y, True),
-    (lambda x, y: x(y) | y(x), True),
-    (lambda x, y: x(x) | y(x), False),
-    (lambda x, y: x(y) | y(y), False),
-    (lambda x: x(lambda x: x)(lambda x: x), True),
-])
+@for_each(
+    [
+        (x, True),
+        (x(x), True),
+        (lambda x: x, True),
+        (lambda x: x(x), False),
+        (lambda x, y: x, True),
+        (lambda x, y: y, True),
+        (lambda x, y: x(y), True),
+        (lambda x, y: y(x), True),
+        (lambda x, y: x(x), False),
+        (lambda x, y: y(y), False),
+        (lambda x, y: x | y, True),
+        (lambda x, y: x | y(x), True),
+        (lambda x, y: x(y) | y, True),
+        (lambda x, y: x(y) | y(x), True),
+        (lambda x, y: x(x) | y(x), False),
+        (lambda x, y: x(y) | y(y), False),
+        (lambda x: x(lambda x: x)(lambda x: x), True),
+    ]
+)
 def test_is_linear(graph, expected):
     graph = as_graph(graph)
     assert is_linear(graph) is expected
@@ -615,9 +659,9 @@ COMPUTE_STEP_EXAMPLES = [
             Term.APP(1, 3),
             Term.ABS(2),
             Term.VAR(1),
-            Term.NVAR('x'),
+            Term.NVAR("x"),
         ),
-        Graph.make(Term.NVAR('x')),
+        Graph.make(Term.NVAR("x")),
     ),
     (
         Graph.make(Term.APP(1, 1), Term.ABS(2), Term.VAR(1)),
@@ -629,27 +673,29 @@ COMPUTE_STEP_EXAMPLES = [
             Term.ABS(2),
             Term.APP(3, 3),
             Term.VAR(1),
-            Term.NVAR('x'),
+            Term.NVAR("x"),
         ),
-        Graph.make(Term.APP(1, 1), Term.NVAR('x')),
+        Graph.make(Term.APP(1, 1), Term.NVAR("x")),
     ),
-    pytest.mark.xfail((  # {j x y = x (j y)} -> {j x y = x y}
-        Graph.make(
-            Term.ABS(1),
-            Term.ABS(2),
-            Term.APP(3, 4),
-            Term.VAR(0),
-            Term.APP(0, 5),
-            Term.VAR(1),
-        ),
-        Graph.make(
-            Term.ABS(1),
-            Term.ABS(2),
-            Term.APP(3, 4),
-            Term.VAR(0),
-            Term.VAR(1),
-        ),
-    )),
+    pytest.mark.xfail(
+        (  # {j x y = x (j y)} -> {j x y = x y}
+            Graph.make(
+                Term.ABS(1),
+                Term.ABS(2),
+                Term.APP(3, 4),
+                Term.VAR(0),
+                Term.APP(0, 5),
+                Term.VAR(1),
+            ),
+            Graph.make(
+                Term.ABS(1),
+                Term.ABS(2),
+                Term.APP(3, 4),
+                Term.VAR(0),
+                Term.VAR(1),
+            ),
+        )
+    ),
     (  # {j x y = x y} -> {j x = x}
         Graph.make(
             Term.ABS(1),

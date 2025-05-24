@@ -9,48 +9,73 @@ from parsable import parsable
 
 from pomagma.reducer import bohm
 from pomagma.reducer.linker import link
-from pomagma.reducer.syntax import (APP, BOOL, BOT, CODE, EQUAL, EVAL, JOIN,
-                                    MAYBE, NVAR, QAPP, QEQUAL, QLESS, QQUOTE,
-                                    QUOTE, TOP, UNIT, B, C, I, K, S, Y, is_app,
-                                    is_equal, is_quote, sexpr_parse,
-                                    sexpr_print)
+from pomagma.reducer.syntax import (
+    APP,
+    BOOL,
+    BOT,
+    CODE,
+    EQUAL,
+    EVAL,
+    JOIN,
+    MAYBE,
+    NVAR,
+    QAPP,
+    QEQUAL,
+    QLESS,
+    QQUOTE,
+    QUOTE,
+    TOP,
+    UNIT,
+    B,
+    C,
+    I,
+    K,
+    S,
+    Y,
+    is_app,
+    is_equal,
+    is_quote,
+    sexpr_parse,
+    sexpr_print,
+)
 
 DIR = os.path.dirname(os.path.abspath(__file__))
-TESTDATA = os.path.join(DIR, 'testdata')
+TESTDATA = os.path.join(DIR, "testdata")
 
 
 # ----------------------------------------------------------------------------
 # parameterized testing
 
+
 def iter_test_cases(test_id, suites=None):
     assert isinstance(test_id, str), test_id
-    print('test_id = {}'.format(test_id))
+    print("test_id = {}".format(test_id))
     if suites is None:
-        module = import_module('pomagma.reducer.{}'.format(test_id))
+        module = import_module("pomagma.reducer.{}".format(test_id))
         suites = module.SUPPORTED_TESTDATA
     for suite in suites:
-        basename = '{}.sexpr'.format(suite)
+        basename = "{}.sexpr".format(suite)
         filename = os.path.join(TESTDATA, basename)
-        print('reading {}'.format(filename))
+        print("reading {}".format(filename))
         with open(filename) as f:
             for i, line in enumerate(f):
-                parts = line.split(';', 1)
+                parts = line.split(";", 1)
                 sexpr = parts[0].strip()
                 if sexpr:
-                    message = 'In {}:{}\n{}'.format(basename, 1 + i, line)
+                    message = "In {}:{}\n{}".format(basename, 1 + i, line)
                     try:
                         term = sexpr_parse(sexpr)
                     except ValueError as e:
-                        raise ValueError('{} {}'.format(message, e))
+                        raise ValueError("{} {}".format(message, e))
                     comment = None if len(parts) < 2 else parts[1].strip()
                     yield term, comment, message
 
 
 def parse_xfail(comment, test_id):
-    if comment.startswith('xfail'):
+    if comment.startswith("xfail"):
         if test_id is None:
             return True
-        if test_id in comment[len('xfail'):].strip().split(' '):
+        if test_id in comment[len("xfail") :].strip().split(" "):
             return True
     return False
 
@@ -72,37 +97,37 @@ def iter_equations(test_id, suites=None):
 def migrate(fun):
     """Applies a term->term transform on all files in testdata/."""
     for basename in os.listdir(TESTDATA):
-        assert basename.endswith('.sexpr'), basename
-        print('processing {}'.format(basename))
+        assert basename.endswith(".sexpr"), basename
+        print("processing {}".format(basename))
         filename = os.path.join(TESTDATA, basename)
         lines = []
         with open(filename) as f:
             for lineno, line in enumerate(f):
                 line = line.strip()
-                parts = line.split(';', 1)
+                parts = line.split(";", 1)
                 sexpr = parts[0].strip()
-                comment = '' if len(parts) == 1 else parts[1]
+                comment = "" if len(parts) == 1 else parts[1]
                 if sexpr:
                     term = sexpr_parse(sexpr)
                     try:
                         term = fun(term)
                     except Exception:
-                        print('Error at {}:{}'.format(basename, lineno + 1))
+                        print("Error at {}:{}".format(basename, lineno + 1))
                         print(line)
                         raise
                     sexpr = sexpr_print(term)
                 if not comment:
                     line = sexpr
                 elif not sexpr:
-                    line = ';{}'.format(comment)
+                    line = ";{}".format(comment)
                 else:
-                    line = '{}  ;{}'.format(sexpr, comment)
+                    line = "{}  ;{}".format(sexpr, comment)
                 lines.append(line)
-        with open(filename, 'w') as f:
+        with open(filename, "w") as f:
             for line in lines:
                 f.write(line)
-                f.write('\n')
-    print('done')
+                f.write("\n")
+    print("done")
 
 
 @parsable
@@ -132,7 +157,7 @@ def unquote_equal():
 # ----------------------------------------------------------------------------
 # property-based testing
 
-alphabet = '_abcdefghijklmnopqrstuvwxyz'
+alphabet = "_abcdefghijklmnopqrstuvwxyz"
 s_vars = s.builds(
     NVAR,
     s.builds(str, s.text(alphabet=alphabet, min_size=1, average_size=5)),
@@ -200,5 +225,5 @@ s_terms = s.recursive(s_atoms, s_terms_extend, max_leaves=100)
 s_quoted = s.builds(QUOTE, s_terms)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     parsable()

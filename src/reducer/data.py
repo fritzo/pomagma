@@ -17,6 +17,7 @@ pretty = sexpr_print
 # ----------------------------------------------------------------------------
 # Errors
 
+
 def _contains(term, atom):
     if term is atom:
         return True
@@ -36,6 +37,7 @@ def check_for_errors(term):
 # ----------------------------------------------------------------------------
 # Unit
 
+
 def encode_unit(value):
     if value is not None:
         raise TypeError(value)
@@ -52,6 +54,7 @@ def decode_unit(term):
 
 # ----------------------------------------------------------------------------
 # Bool
+
 
 def encode_bool(value):
     if not isinstance(value, bool):
@@ -72,8 +75,8 @@ def decode_bool(term):
 # ----------------------------------------------------------------------------
 # Byte
 
-_encode_byte = {chr(k): v for k, v in lib.byte_table.iteritems()}
-_decode_byte = {v: chr(k) for k, v in lib.byte_table.iteritems()}
+_encode_byte = {chr(k): v for k, v in list(lib.byte_table.items())}
+_decode_byte = {v: chr(k) for k, v in list(lib.byte_table.items())}
 
 
 @memoize_arg
@@ -116,7 +119,7 @@ def encode_maybe(encode_item):
 @memoize_arg
 def decode_maybe(decode_item):
     """Decode to either None or (decode_item(...),)."""
-    item_var = NVAR('item')
+    item_var = NVAR("item")
     some_pattern = lib.some(item_var)
 
     def decode(term):
@@ -133,6 +136,7 @@ def decode_maybe(decode_item):
 # ----------------------------------------------------------------------------
 # Products
 
+
 @memoize_args
 def encode_prod(encode_fst, encode_snd):
 
@@ -148,8 +152,8 @@ def encode_prod(encode_fst, encode_snd):
 
 @memoize_args
 def decode_prod(decode_fst, decode_snd):
-    x = NVAR('x')
-    y = NVAR('y')
+    x = NVAR("x")
+    y = NVAR("y")
     pair_pattern = lib.pair(x, y)
 
     def decode(term):
@@ -166,12 +170,14 @@ def decode_prod(decode_fst, decode_snd):
 # ----------------------------------------------------------------------------
 # Sums
 
+
 @memoize_args
 def encode_sum(encode_inl, encode_inr):
 
     def encode(value):
-        if not (isinstance(value, tuple) and len(value) == 2 and
-                isinstance(value[0], bool)):
+        if not (
+            isinstance(value, tuple) and len(value) == 2 and isinstance(value[0], bool)
+        ):
             raise TypeError(value)
         if value[0]:
             return lib.inl(encode_inl(value[1]))
@@ -183,7 +189,7 @@ def encode_sum(encode_inl, encode_inr):
 
 @memoize_args
 def decode_sum(decode_inl, decode_inr):
-    x = NVAR('x')
+    x = NVAR("x")
     inl_pattern = lib.inl(x)
     inr_pattern = lib.inr(x)
 
@@ -202,16 +208,17 @@ def decode_sum(decode_inl, decode_inr):
 # ----------------------------------------------------------------------------
 # Numerals as Y Maybe
 
+
 def encode_num(num):
     if not isinstance(num, int) or isinstance(num, bool) or not num >= 0:
         raise TypeError(num)
     result = lib.zero
-    for i in xrange(num):
+    for i in range(num):
         result = lib.succ(result)
     return result
 
 
-_pred_var = NVAR('pred')
+_pred_var = NVAR("pred")
 _succ_pattern = lib.succ(_pred_var)
 
 
@@ -230,6 +237,7 @@ def decode_num(term):
 # ----------------------------------------------------------------------------
 # Finite homogeneous lists
 
+
 @memoize_arg
 def encode_list(encode_item):
 
@@ -246,8 +254,8 @@ def encode_list(encode_item):
 
 @memoize_arg
 def decode_list(decode_item):
-    head = NVAR('head')
-    tail = NVAR('tail')
+    head = NVAR("head")
+    tail = NVAR("tail")
     cons_pattern = lib.cons(head, tail)
 
     def decode(term):
@@ -266,6 +274,7 @@ def decode_list(decode_item):
 # ----------------------------------------------------------------------------
 # Bytes
 
+
 def encode_bytes(value):
     if not isinstance(value, bytes):
         raise TypeError(value)
@@ -275,17 +284,18 @@ def encode_bytes(value):
 
 def decode_bytes(term):
     byte_list = decode_list(decode_byte)(term)
-    return b''.join(byte_list)
+    return b"".join(byte_list)
 
 
 # ----------------------------------------------------------------------------
 # Functions
 
+
 @memoize_arg
 def encode_fun(decode_args, encode_result):
 
     def encode(py_fun):
-        TODO('encode python function as a combinator')
+        TODO("encode python function as a combinator")
 
     return encode
 
@@ -310,59 +320,60 @@ def decode_fun(encode_args, decode_result):
 # ----------------------------------------------------------------------------
 # Generic
 
+
 def decoder(tp):
     if not isinstance(tp, tuple):
-        if tp == 'unit':
+        if tp == "unit":
             return decode_unit
-        if tp == 'bool':
+        if tp == "bool":
             return decode_bool
-        if tp == 'byte':
+        if tp == "byte":
             return decode_byte
-        if tp == 'num':
+        if tp == "num":
             return decode_num
-        if tp == 'bytes':
+        if tp == "bytes":
             return decode_bytes
     elif len(tp) == 2:
-        if tp[0] == 'maybe':
+        if tp[0] == "maybe":
             return decode_maybe(decoder(tp[1]))
-        if tp[0] == 'list':
+        if tp[0] == "list":
             return decode_list(decoder(tp[1]))
-        if tp[0] == 'fun':
-            encode_args = map(encoder, tp[1])
+        if tp[0] == "fun":
+            encode_args = list(map(encoder, tp[1]))
             decode_result = decoder(tp[2])
             return decode_fun(encode_args, decode_result)
     elif len(tp) == 3:
-        if tp[0] == 'prod':
+        if tp[0] == "prod":
             return decode_prod(decoder(tp[1]), decoder(tp[2]))
-        if tp[0] == 'sum':
+        if tp[0] == "sum":
             return decode_sum(decoder(tp[1]), decoder(tp[2]))
     raise ValueError(tp)
 
 
 def encoder(tp):
     if not isinstance(tp, tuple):
-        if tp == 'unit':
+        if tp == "unit":
             return encode_unit
-        if tp == 'bool':
+        if tp == "bool":
             return encode_bool
-        if tp == 'byte':
+        if tp == "byte":
             return encode_byte
-        if tp == 'num':
+        if tp == "num":
             return encode_num
-        if tp == 'bytes':
+        if tp == "bytes":
             return encode_bytes
     elif len(tp) == 2:
-        if tp[0] == 'maybe':
+        if tp[0] == "maybe":
             return encode_maybe(encoder(tp[1]))
-        if tp[0] == 'list':
+        if tp[0] == "list":
             return encode_list(encoder(tp[1]))
-        if tp[0] == 'fun':
-            decode_args = map(decoder, tp[1])
+        if tp[0] == "fun":
+            decode_args = list(map(decoder, tp[1]))
             encode_result = encoder(tp[2])
             return encode_fun(decode_args, encode_result)
     elif len(tp) == 3:
-        if tp[0] == 'prod':
+        if tp[0] == "prod":
             return encode_prod(encoder(tp[1]), encoder(tp[2]))
-        if tp[0] == 'sum':
+        if tp[0] == "sum":
             return encode_sum(encoder(tp[1]), encoder(tp[2]))
     raise ValueError(tp)

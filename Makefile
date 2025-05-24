@@ -37,17 +37,18 @@ clang-ctags:
 lint: FORCE
 	# TODO Use clang-tidy.
 	# TODO use ruff
+	black --check $(PY_FILES)
 
 clang-format: FORCE
 	$(info clang-format)
 	@clang-format -i --style="{BasedOnStyle: Google, IndentWidth: 4}" \
 	  $(CPP_FILES)
 
-pyformat: FORCE
-	$(info pyformat)
-	@pyformat --jobs 0 --aggressive --in-place $(PY_FILES)
+black: FORCE
+	$(info black)
+	@black $(PY_FILES)
 
-format: clang-format pyformat FORCE
+format: clang-format black FORCE
 
 python: protobuf lint FORCE
 	pip install -e .

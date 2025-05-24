@@ -7,10 +7,10 @@ from pomagma.compiler.sequents import Sequent
 from pomagma.compiler.sugar import desugar_expr, desugar_sequent
 from pomagma.compiler.util import memoize_arg, set_with
 
-VAR = Expression_1('VAR')
-RETURN = Expression_1('RETURN')
-NRETURN = Expression_1('NRETURN')
-NONEGATE = Expression_1('NONEGATE')
+VAR = Expression_1("VAR")
+RETURN = Expression_1("RETURN")
+NRETURN = Expression_1("NRETURN")
+NONEGATE = Expression_1("NONEGATE")
 
 
 @memoize_arg
@@ -18,23 +18,23 @@ def guard_vars(expr):
     """Whereas pomagma.compiler follows the variable naming convention defined
     in pomagma.compiler.signature.is_var(), pomagma.analyst.validate and the
     puddle editor require VAR guarded variables."""
-    if expr.name == 'VAR':
+    if expr.name == "VAR":
         return expr
     elif expr.is_var():
         return VAR(expr)
     else:
-        args = map(guard_vars, expr.args)
+        args = list(map(guard_vars, expr.args))
         return Expression.make(expr.name, *args)
 
 
 @memoize_arg
 def unguard_vars(expr):
-    if expr.name == 'VAR':
+    if expr.name == "VAR":
         return expr.args[0]
     elif expr.is_var():
         return expr
     else:
-        args = map(unguard_vars, expr.args)
+        args = list(map(unguard_vars, expr.args))
         return Expression.make(expr.name, *args)
 
 
@@ -63,13 +63,13 @@ def compile_solver(expr, theory):
             LESS TOP APP s TOP
             """
     '''
-    assert isinstance(expr, basestring), expr
-    assert isinstance(theory, basestring), theory
+    assert isinstance(expr, str), expr
+    assert isinstance(theory, str), theory
     expr = desugar_expr(parse_string_to_expr(expr))
     assert expr.vars, expr
     theory = parse_theory_string(theory)
-    facts = map(desugar_expr, theory['facts'])
-    rules = map(desugar_sequent, theory['rules'])
+    facts = list(map(desugar_expr, theory["facts"]))
+    rules = list(map(desugar_sequent, theory["rules"]))
     sequents = []
     can_infer_necessary = not rules and all(f.vars <= expr.vars for f in facts)
     can_infer_possible = expr.is_var()  # TODO generalize to injective exprs
@@ -79,12 +79,11 @@ def compile_solver(expr, theory):
         fail = NONEGATE(NRETURN(expr))
         sequents += [Sequent([], [f, fail]) for f in facts]
         sequents += [
-            Sequent(r.antecedents, set_with(r.succedents, fail))
-            for r in rules
+            Sequent(r.antecedents, set_with(r.succedents, fail)) for r in rules
         ]
-    assert sequents, 'Cannot infer anything'
+    assert sequents, "Cannot infer anything"
     programs = []
     write_full_programs(programs, sequents, can_parallelize=False)
-    program = '\n'.join(programs)
-    assert not re.search('FOR_BLOCK', program), 'cannot parallelize'
+    program = "\n".join(programs)
+    assert not re.search("FOR_BLOCK", program), "cannot parallelize"
     return program

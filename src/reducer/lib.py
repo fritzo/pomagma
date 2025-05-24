@@ -5,10 +5,27 @@ Intro forms are hand-optimized; see lib_test.py for lambda versions.
 """
 
 from pomagma.reducer.bohm import CI, KI, B, C, I, K, false, true
-from pomagma.reducer.sugar import (app, combinator, join_, let, qapp, quote,
-                                   symmetric, typed)
-from pomagma.reducer.syntax import (BOOL, BOT, EVAL, MAYBE, QEQUAL, QLESS,
-                                    QUOTE, TOP, UNIT)
+from pomagma.reducer.sugar import (
+    app,
+    combinator,
+    join_,
+    let,
+    qapp,
+    quote,
+    symmetric,
+    typed,
+)
+from pomagma.reducer.syntax import (
+    BOOL,
+    BOT,
+    EVAL,
+    MAYBE,
+    QEQUAL,
+    QLESS,
+    QUOTE,
+    TOP,
+    UNIT,
+)
 
 # ----------------------------------------------------------------------------
 # Nondeterminism
@@ -156,6 +173,7 @@ def enum_maybe(enum_item):
 # ----------------------------------------------------------------------------
 # Products
 
+
 @combinator
 def pair(x, y):
     return C(CI(x), y)
@@ -189,6 +207,7 @@ def enum_prod(enum_fst, enum_snd):
 # ----------------------------------------------------------------------------
 # Sums
 
+
 @combinator
 def inl(x):
     return B(K, CI(x))
@@ -206,8 +225,10 @@ def sum_test(xy):
 
 @combinator
 def sum_quote(quote_inl, quote_inr, xy):
-    return xy(lambda x: qapp(quote(inl), quote_inl(x)),
-              lambda y: qapp(quote(inr), quote_inr(y)))
+    return xy(
+        lambda x: qapp(quote(inl), quote_inl(x)),
+        lambda y: qapp(quote(inr), quote_inr(y)),
+    )
 
 
 @combinator
@@ -252,8 +273,7 @@ def num_mul(x, y):
 @combinator
 @symmetric
 def num_eq(x, y):
-    return x(y(true, lambda py: false), lambda px:
-             y(false, lambda py: num_eq(px, py)))
+    return x(y(true, lambda py: false), lambda px: y(false, lambda py: num_eq(px, py)))
 
 
 @combinator
@@ -341,28 +361,35 @@ def list_size(xs):
 @combinator
 def list_sort(lt, xs):
     return let(
-        list_sort(lt), lambda sort:
-        xs(nil, lambda h, t:
-            let(lt(h), lambda lt_h:
-                list_cat(
+        list_sort(lt),
+        lambda sort: xs(
+            nil,
+            lambda h, t: let(
+                lt(h),
+                lambda lt_h: list_cat(
                     sort(list_filter(lt_h, t)),
-                    cons(h, sort(list_filter(compose(bool_not, lt_h), t)))))))
+                    cons(h, sort(list_filter(compose(bool_not, lt_h), t))),
+                ),
+            ),
+        ),
+    )
 
 
 @combinator
 def list_quote(quote_item, xs):
-    return xs(QUOTE(nil), lambda h, t:
-              qapp(quote(cons), quote_item(h), list_quote(t)))
+    return xs(QUOTE(nil), lambda h, t: qapp(quote(cons), quote_item(h), list_quote(t)))
 
 
 @combinator
 def enum_list(enum_item):
-    return box(nil) | enum_list(enum_item,
-                                lambda t: enum_item(lambda h: box(cons(h, t))))
+    return box(nil) | enum_list(
+        enum_item, lambda t: enum_item(lambda h: box(cons(h, t)))
+    )
 
 
 # ----------------------------------------------------------------------------
 # Streams
+
 
 @combinator
 def stream_cons(head, tail):
@@ -404,30 +431,35 @@ def stream_map(f, xs):
 
 @combinator
 def stream_zip(xs, ys):
-    return xs(lambda xh, xt:
-              ys(lambda yh, yt:
-                 stream_cons(pair(xh, yh), stream_zip(xt, yt))))
+    return xs(
+        lambda xh, xt: ys(lambda yh, yt: stream_cons(pair(xh, yh), stream_zip(xt, yt)))
+    )
 
 
 @combinator
 def stream_dovetail(xs, ys):
-    return xs(lambda xh, xt:
-              stream_cons(xh, ys(lambda yh, yt:
-                                 stream_cons(yh, stream_dovetail(xt, yt)))))
+    return xs(
+        lambda xh, xt: stream_cons(
+            xh, ys(lambda yh, yt: stream_cons(yh, stream_dovetail(xt, yt)))
+        )
+    )
 
 
 @combinator
 def stream_quote(quote_item, xs):
-    return xs(lambda h, t: qapp(QUOTE(stream_cons),
-                                quote_item(h),
-                                stream_quote(quote_item, t)))
+    return xs(
+        lambda h, t: qapp(
+            QUOTE(stream_cons), quote_item(h), stream_quote(quote_item, t)
+        )
+    )
 
 
 @combinator
 def enum_stream(enum_item):
-    return enum_item(lambda h:
-                     stream_cons(h, stream_bot) |
-                     enum_stream(enum_item, lambda t: stream_cons(h, t)))
+    return enum_item(
+        lambda h: stream_cons(h, stream_bot)
+        | enum_stream(enum_item, lambda t: stream_cons(h, t))
+    )
 
 
 @combinator
@@ -444,6 +476,7 @@ def stream_take(xs, size):
 # ----------------------------------------------------------------------------
 # Enumerable sets
 
+
 @combinator
 def box(item):
     return CI(item)
@@ -451,7 +484,7 @@ def box(item):
 
 def enum(items):
     assert isinstance(items, (list, set, frozenset)), items
-    return join_(*map(box, items))
+    return join_(*list(map(box, items)))
 
 
 @combinator
@@ -495,6 +528,7 @@ def enum_close(f, xs):
 # ----------------------------------------------------------------------------
 # Functions
 
+
 @combinator
 def compose(f, g):
     return lambda x: f(g(x))
@@ -524,6 +558,7 @@ def close(f):
 
 # ----------------------------------------------------------------------------
 # Type constructor
+
 
 @combinator
 def a_preconj(f):
@@ -583,6 +618,7 @@ def a_arrow(a, b):
 # ----------------------------------------------------------------------------
 # Scott ordering
 
+
 @combinator
 def equal(x, y):
     return bool_type(QEQUAL(x, y))
@@ -601,12 +637,13 @@ def enum_contains(qxs, qy):
 # ----------------------------------------------------------------------------
 # Byte as an 8-tuple of bits
 
+
 def _make_bits_table(n):
     table = {0: I}
-    for i in xrange(n):
+    for i in range(n):
         prev = table
         table = {}
-        for k, v in prev.iteritems():
+        for k, v in list(prev.items()):
             table[k] = C(v, false)
             table[k | (1 << i)] = C(v, true)
     return table
@@ -618,7 +655,7 @@ assert len(byte_table) == 256
 
 def _bits_test(b0, b1, b2, b3, b4, b5, b6, b7):
     bits = [b0, b1, b2, b3, b4, b5, b6, b7]
-    tests = map(bool_test, bits)
+    tests = list(map(bool_test, bits))
     all_defined = app(*tests)
     any_error = join_(*tests)
     return any_error(all_defined)
@@ -652,7 +689,7 @@ byte_get_bit = [
 # ----------------------------------------------------------------------------
 # Bytes, as a homogeneous list of Byte
 
+
 @combinator
 def bytes_test(xs):
-    return unit_type(
-        xs(ok, lambda h, t: unit_and(byte_test(h), bytes_test(t))))
+    return unit_type(xs(ok, lambda h, t: unit_and(byte_test(h), bytes_test(t))))

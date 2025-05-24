@@ -6,28 +6,28 @@ import pomagma.analyst
 import pomagma.analyst.compiler
 
 theories = {
-    'unit': '''
+    "unit": """
         CLOSED t         -----------------   LESS APP f TOP APP g TOP
         FIXES V t        EQUAL APP t x TOP   LESS APP f I APP g I
         FIXES t I        EQUAL APP t x I     ------------------------
         LESS APP J I t                       LESS COMP f t COMP g t
-        ''',
-    'semi': '''
+        """,
+    "semi": """
         CLOSED t      -----------------   LESS APP f TOP APP g TOP
         FIXES V t     EQUAL APP t x TOP   LESS APP f I APP g I
         FIXES t BOT   EQUAL APP t x I     LESS APP f BOT APP g BOT
         FIXES t I     EQUAL APP t x BOT   ------------------------
                                           LESS COMP f t COMP g t
-        ''',
-    'bool': '''
+        """,
+    "bool": """
         CLOSED t      -----------------   LESS APP f TOP APP g TOP
         FIXES V t     EQUAL APP t x TOP   LESS APP f K APP g K
         FIXES t BOT   EQUAL APP t x K     LESS APP f F APP g F
         FIXES t K     EQUAL APP t x F     LESS APP f BOT APP g BOT
         FIXES t F     EQUAL APP t x BOT   ------------------------
                                           LESS COMP f t COMP g t
-        ''',
-    'boool': '''
+        """,
+    "boool": """
         CLOSED t      -----------------   LESS APP f TOP APP g TOP
         FIXES V t     EQUAL APP t x TOP   LESS APP f J APP g J
         FIXES t BOT   EQUAL APP t x J     LESS APP f K APP g K
@@ -35,30 +35,30 @@ theories = {
         FIXES t F     EQUAL APP t x F     LESS APP f BOT APP g BOT
         FIXES t J     EQUAL APP t x BOT   ------------------------
                                           LESS COMP f t COMP g t
-        ''',
-    'unit_test': '''
+        """,
+    "unit_test": """
                          -----------------   LESS APP f TOP APP g TOP
         FIXES V t        EQUAL APP t x TOP   LESS APP f I APP g I
         FIXES t I        EQUAL APP t x I     ------------------------
         LESS APP J I t                       LESS COMP f t COMP g t
-        ''',
-    'semi_test': '''
+        """,
+    "semi_test": """
                       -----------------   LESS APP f TOP APP g TOP
         FIXES V t     EQUAL APP t x TOP   LESS APP f I APP g I
         FIXES t BOT   EQUAL APP t x I     LESS APP f BOT APP g BOT
         FIXES t I     EQUAL APP t x BOT   ------------------------
                                           LESS COMP f t COMP g t
-        ''',
+        """,
 }
 
 
 def print_solutions(solutions):
-    print 'Necessary:'
-    for term in solutions['necessary']:
-        print '  {}'.format(term)
-    print 'Possible:'
-    for term in solutions['possible']:
-        print '  {}'.format(term)
+    print("Necessary:")
+    for term in solutions["necessary"]:
+        print("  {}".format(term))
+    print("Possible:")
+    for term in solutions["possible"]:
+        print("  {}".format(term))
 
 
 @parsable
@@ -70,9 +70,9 @@ def show_define(name=None):
 
     """
     if name not in theories:
-        print 'Try one of: {}'.format(' '.join(sorted(theories)))
+        print("Try one of: {}".format(" ".join(sorted(theories))))
         sys.exit(1)
-    print pomagma.analyst.compiler.compile_solver('t', theories[name])
+    print(pomagma.analyst.compiler.compile_solver("t", theories[name]))
 
 
 @parsable
@@ -83,10 +83,10 @@ def define(name=None, max_solutions=32, address=pomagma.analyst.ADDRESS):
 
     """
     if name not in theories:
-        print 'Try one of: {}'.format(' '.join(sorted(theories)))
+        print("Try one of: {}".format(" ".join(sorted(theories))))
         sys.exit(1)
     with pomagma.analyst.connect(address) as db:
-        solutions = db.solve('t', theories[name], max_solutions)
+        solutions = db.solve("t", theories[name], max_solutions)
     print_solutions(solutions)
     return solutions
 
@@ -94,27 +94,27 @@ def define(name=None, max_solutions=32, address=pomagma.analyst.ADDRESS):
 @parsable
 def rs_pairs(max_solutions=32, address=pomagma.analyst.ADDRESS):
     """Find retract,section pairs (i.e. pairs below A)."""
-    expr = 'PAIR r s'
-    theory = '''
+    expr = "PAIR r s"
+    theory = """
         CLOSED r   NLESS r BOT      # r is closed and nontrivial
         CLOSED s   NLESS s BOT      # s is closed and nontrivial
         LESS COMP r s I             # (r, s) is a section-retract pair
-        '''
+        """
     with pomagma.analyst.connect(address) as db:
         solutions = db.solve(expr, theory, max_solutions)
-        pairs = (
-            [(rs, True) for rs in solutions['necessary']] +
-            [(rs, False) for rs in solutions['possible']])
-        retracts = db.simplify(['APP {} K'.format(rs) for rs, _ in pairs])
-        sections = db.simplify(['APP {} F'.format(rs) for rs, _ in pairs])
-    parts = zip(pairs, retracts, sections)
+        pairs = [(rs, True) for rs in solutions["necessary"]] + [
+            (rs, False) for rs in solutions["possible"]
+        ]
+        retracts = db.simplify(["APP {} K".format(rs) for rs, _ in pairs])
+        sections = db.simplify(["APP {} F".format(rs) for rs, _ in pairs])
+    parts = list(zip(pairs, retracts, sections))
     solutions = {
-        'necessary': [(rs, r, s) for (rs, n), r, s in parts if n],
-        'possible': [(rs, r, s) for (rs, n), r, s in parts if not n],
+        "necessary": [(rs, r, s) for (rs, n), r, s in parts if n],
+        "possible": [(rs, r, s) for (rs, n), r, s in parts if not n],
     }
     print_solutions(solutions)
     return solutions
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     parsable()

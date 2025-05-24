@@ -4,22 +4,22 @@ from subprocess import CalledProcessError
 import pomagma.util
 from pomagma.analyst.client import Client
 
-BINARY = os.path.join(pomagma.util.BIN, 'analyst', 'analyst')
+BINARY = os.path.join(pomagma.util.BIN, "analyst", "analyst")
 
 
 class Server(object):
 
     def __init__(self, theory, world, address, **opts):
         language_file = os.path.join(
-            pomagma.util.LANGUAGE,
-            '{}.language'.format(theory))
+            pomagma.util.LANGUAGE, "{}.language".format(theory)
+        )
         args = [
             BINARY,
             pomagma.util.abspath(world),
             pomagma.util.abspath(language_file),
-            address.replace('tcp://localhost', 'tcp://*'),
+            address.replace("tcp://localhost", "tcp://*"),
         ]
-        assert isinstance(address, basestring), address
+        assert isinstance(address, str), address
         assert os.path.exists(world), world
         assert os.path.exists(language_file), language_file
         self._theory = theory

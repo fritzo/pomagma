@@ -4,22 +4,22 @@ from subprocess import CalledProcessError
 import pomagma.util
 from pomagma.cartographer.client import Client
 
-BINARY = os.path.join(pomagma.util.BIN, 'cartographer', 'cartographer')
+BINARY = os.path.join(pomagma.util.BIN, "cartographer", "cartographer")
 
 
 class Server(object):
 
     def __init__(self, theory, world, address=None, **opts):
         if address is None:
-            address = 'ipc://{}'.format(os.path.join(
-                os.path.dirname(pomagma.util.abspath(world)),
-                'cartographer.socket'))
-        theory_file = os.path.join(
-            pomagma.util.THEORY,
-            '{}.facts'.format(theory))
+            address = "ipc://{}".format(
+                os.path.join(
+                    os.path.dirname(pomagma.util.abspath(world)), "cartographer.socket"
+                )
+            )
+        theory_file = os.path.join(pomagma.util.THEORY, "{}.facts".format(theory))
         language_file = os.path.join(
-            pomagma.util.LANGUAGE,
-            '{}.language'.format(theory))
+            pomagma.util.LANGUAGE, "{}.language".format(theory)
+        )
         args = [
             BINARY,
             pomagma.util.abspath(world),

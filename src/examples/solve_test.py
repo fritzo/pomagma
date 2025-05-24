@@ -3,15 +3,10 @@ from pomagma.examples.testing import ADDRESS, SKJA, WORLD, serve
 from pomagma.util.testing import for_each
 
 WORLD_EXAMPLES = [
-    (name, WORLD)
-    for name in pomagma.examples.solve.theories
-    if name.endswith('_test')
+    (name, WORLD) for name in pomagma.examples.solve.theories if name.endswith("_test")
 ]
 
-SKJA_EXAMPLES = [
-    (name, SKJA)
-    for name in pomagma.examples.solve.theories
-]
+SKJA_EXAMPLES = [(name, SKJA) for name in pomagma.examples.solve.theories]
 
 
 @for_each(WORLD_EXAMPLES + SKJA_EXAMPLES)

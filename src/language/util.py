@@ -2,6 +2,7 @@ import simplejson as json
 from parsable import parsable
 
 from pomagma.language.language_pb2 import Language, WeightedTerm
+import sys
 
 parsable = parsable.Parsable()
 
@@ -12,33 +13,31 @@ def json_load(filename):
 
 
 def json_dump(data, filename):
-    with open(filename, 'w') as f:
+    with open(filename, "w") as f:
         json.dump(data, f, indent=4, sort_keys=True)
 
 
 ARITY_TO_PB2 = {
-    intern('NULLARY'): WeightedTerm.NULLARY,
-    intern('INJECTIVE'): WeightedTerm.INJECTIVE,
-    intern('BINARY'): WeightedTerm.BINARY,
-    intern('SYMMETRIC'): WeightedTerm.SYMMETRIC,
+    sys.intern("NULLARY"): WeightedTerm.NULLARY,
+    sys.intern("INJECTIVE"): WeightedTerm.INJECTIVE,
+    sys.intern("BINARY"): WeightedTerm.BINARY,
+    sys.intern("SYMMETRIC"): WeightedTerm.SYMMETRIC,
 }
 
-ARITY_FROM_PB2 = {val: key for key, val in ARITY_TO_PB2.iteritems()}
+ARITY_FROM_PB2 = {val: key for key, val in list(ARITY_TO_PB2.items())}
 
 
 def normalize_dict(grouped):
-    '''
+    """
     L1-normalize the weights in a groupd dict in-place.
-    '''
+    """
     total = sum(
-        weight
-        for group in grouped.itervalues()
-        for weight in group.itervalues()
+        weight for group in list(grouped.values()) for weight in list(group.values())
     )
-    assert total > 0, 'total weight is zero'
+    assert total > 0, "total weight is zero"
     scale = 1.0 / total
 
-    for group in grouped.itervalues():
+    for group in list(grouped.values()):
         for key in group:
             group[key] *= scale
 
@@ -68,8 +67,8 @@ def dict_to_language(grouped):
     grouped = grouped.copy()
     normalize_dict(grouped)
     language = Language()
-    for arity, group in grouped.iteritems():
-        for name, weight in group.iteritems():
+    for arity, group in list(grouped.items()):
+        for name, weight in list(group.items()):
             term = language.terms.add()
             term.name = name
             term.arity = ARITY_TO_PB2[arity.upper()]
@@ -83,7 +82,7 @@ def language_to_dict(language):
     grouped = {}
     for term in language.terms:
         arity = ARITY_FROM_PB2[term.arity]
-        name = intern(str(term.name))
+        name = sys.intern(str(term.name))
         grouped.setdefault(arity, {})[name] = term.weight
     return grouped
 
@@ -94,9 +93,9 @@ def compile(json_in, language_out):
     with open(json_in) as f:
         grouped = json.load(f)
     language = dict_to_language(grouped)
-    with open(language_out, 'wb') as f:
+    with open(language_out, "wb") as f:
         f.write(language.SerializeToString())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     parsable()

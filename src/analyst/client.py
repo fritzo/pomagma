@@ -20,7 +20,7 @@ TROOL = {
 
 
 def WARN(message):
-    sys.stdout.write('WARNING {}\n'.format(message))
+    sys.stdout.write("WARNING {}\n".format(message))
     sys.stdout.flush()
 
 
@@ -30,17 +30,17 @@ class ServerError(Exception):
         self.messages = list(messages)
 
     def __str__(self):
-        return '\n'.join(['Server Errors:'] + self.messages)
+        return "\n".join(["Server Errors:"] + self.messages)
 
 
 class Client(object):
 
     def __init__(self, address, poll_callback=None):
-        assert isinstance(address, basestring), address
+        assert isinstance(address, str), address
         assert poll_callback is None or callable(poll_callback), poll_callback
         self._poll_callback = poll_callback
         self._socket = CONTEXT.socket(zmq.REQ)
-        print 'connecting to analyst at', address
+        print("connecting to analyst at", address)
         self._socket.connect(address)
 
     def __enter__(self):
@@ -71,7 +71,7 @@ class Client(object):
         self._call(request)
 
     def ping_id(self, id):
-        assert isinstance(id, basestring), id
+        assert isinstance(id, str), id
         request = Request()
         request.id = id
         reply = self._call(request)
@@ -94,10 +94,10 @@ class Client(object):
     def simplify(self, codes):
         assert isinstance(codes, list), codes
         for code in codes:
-            assert isinstance(code, basestring), code
+            assert isinstance(code, str), code
         results = self._simplify(codes)
         assert len(results) == len(codes), results
-        return map(str, results)
+        return list(map(str, results))
 
     def _solve(self, var, theory, max_solutions):
         request = Request()
@@ -106,19 +106,19 @@ class Client(object):
             request.solve.max_solutions = max_solutions
         reply = self._call(request)
         return {
-            'necessary': map(str, reply.solve.necessary),
-            'possible': map(str, reply.solve.possible),
+            "necessary": list(map(str, reply.solve.necessary)),
+            "possible": list(map(str, reply.solve.possible)),
         }
 
     def solve(self, var, theory, max_solutions=None):
-        assert isinstance(var, basestring), var
-        assert isinstance(theory, basestring), theory
+        assert isinstance(var, str), var
+        assert isinstance(theory, str), theory
         if max_solutions is not None:
             assert isinstance(max_solutions, (int, float)), max_solutions
         solutions = self._solve(var, theory, max_solutions)
-        assert not (set(solutions['necessary']) & set(solutions['possible']))
+        assert not (set(solutions["necessary"]) & set(solutions["possible"]))
         if max_solutions is not None:
-            count = len(solutions['necessary']) + len(solutions['possible'])
+            count = len(solutions["necessary"]) + len(solutions["possible"])
             assert count <= max_solutions, solutions
         return solutions
 
@@ -130,16 +130,18 @@ class Client(object):
         reply = self._call(request)
         results = []
         for result in reply.validate.results:
-            results.append({
-                'is_top': TROOL[result.is_top],
-                'is_bot': TROOL[result.is_bot],
-            })
+            results.append(
+                {
+                    "is_top": TROOL[result.is_top],
+                    "is_bot": TROOL[result.is_bot],
+                }
+            )
         return results
 
     def validate(self, codes):
         assert isinstance(codes, list), codes
         for code in codes:
-            assert isinstance(code, basestring), code
+            assert isinstance(code, str), code
         results = self._validate(codes)
         assert len(results) == len(codes), results
         return results
@@ -149,29 +151,31 @@ class Client(object):
         request.validate_corpus.SetInParent()
         for line in lines:
             request_line = request.validate_corpus.lines.add()
-            name = line['name']
+            name = line["name"]
             if name:
                 request_line.name = name
-            request_line.code = line['code']
+            request_line.code = line["code"]
         reply = self._call(request)
         results = []
         for result in reply.validate_corpus.results:
-            results.append({
-                'is_top': TROOL[result.is_top],
-                'is_bot': TROOL[result.is_bot],
-                'pending': result.pending,
-            })
+            results.append(
+                {
+                    "is_top": TROOL[result.is_top],
+                    "is_bot": TROOL[result.is_bot],
+                    "pending": result.pending,
+                }
+            )
         return results
 
     def validate_corpus(self, lines):
         assert isinstance(lines, list), lines
         for line in lines:
             assert isinstance(line, dict), line
-            assert sorted(line.keys()) == ['code', 'name']
-            name = line['name']
-            assert name is None or isinstance(name, basestring), name
-            code = line['code']
-            assert isinstance(code, basestring), code
+            assert sorted(line.keys()) == ["code", "name"]
+            name = line["name"]
+            assert name is None or isinstance(name, str), name
+            code = line["code"]
+            assert isinstance(code, str), code
         results = self._validate_corpus(lines)
         assert len(results) == len(lines), results
         return results
@@ -181,7 +185,7 @@ class Client(object):
         request = Request()
         request.validate_facts.SetInParent()
         for fact in facts:
-            assert isinstance(fact, basestring), fact
+            assert isinstance(fact, str), fact
             request.validate_facts.facts.append(compiler.desugar(fact))
         reply = self._call(request)
         while block and reply.validate_facts.result == Response.MAYBE:
@@ -202,7 +206,7 @@ class Client(object):
                 obs[int(term.ob)] = count
             else:
                 symbols[str(term.name)] = count
-        result = {'obs': obs, 'symbols': symbols}
+        result = {"obs": obs, "symbols": symbols}
         return result
 
     def _fit_language(self, histogram=None):
@@ -210,11 +214,11 @@ class Client(object):
         request.fit_language.SetInParent()
         if histogram is not None:
             terms = request.fit_language.histogram.terms
-            for name, count in histogram['symbols'].iteritems():
+            for name, count in list(histogram["symbols"].items()):
                 term = terms.add()
                 term.name = name
                 term.count = count
-            for ob, count in histogram['obs'].iteritems():
+            for ob, count in list(histogram["obs"].items()):
                 term = terms.add()
                 term.ob = ob
                 term.count = count
@@ -230,11 +234,11 @@ class Client(object):
         if histogram is not None:
             assert isinstance(histogram, dict), histogram
             keys = set(histogram.keys())
-            assert keys == set(['symbols', 'obs']), keys
-            for name, count in histogram['symbols'].iteritems():
+            assert keys == set(["symbols", "obs"]), keys
+            for name, count in list(histogram["symbols"].items()):
                 assert isinstance(name, str), name
                 assert isinstance(count, int), count
-            for ob, count in histogram['obs'].iteritems():
+            for ob, count in list(histogram["obs"].items()):
                 assert isinstance(ob, int), ob
                 assert isinstance(count, int), count
         return self._fit_language(histogram)

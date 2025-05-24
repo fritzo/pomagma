@@ -1,8 +1,23 @@
 from pomagma.compiler import __main__ as main
 from pomagma.compiler.expressions import Expression
-from pomagma.compiler.extensional import (APP, CB, COMP, JOIN, RAND, B, C, I,
-                                          J, K, R, S, W, iter_closure_maps,
-                                          iter_eta_substitutions, iter_subsets)
+from pomagma.compiler.extensional import (
+    APP,
+    CB,
+    COMP,
+    JOIN,
+    RAND,
+    B,
+    C,
+    I,
+    J,
+    K,
+    R,
+    S,
+    W,
+    iter_closure_maps,
+    iter_eta_substitutions,
+    iter_subsets,
+)
 from pomagma.compiler.util import find_theories
 from pomagma.util.testing import for_each
 
@@ -12,9 +27,9 @@ def lam(v, e):
 
 
 def test_abstraction():
-    x = Expression.make('x')
-    y = Expression.make('y')
-    z = Expression.make('z')
+    x = Expression.make("x")
+    y = Expression.make("y")
+    z = Expression.make("z")
 
     assert lam(x, x) == I
     assert lam(x, y) == APP(K, y)
@@ -44,31 +59,36 @@ def test_abstraction():
 
 
 def test_iter_subsets():
-    actual = set(map(frozenset, iter_subsets(range(3))))
-    expected = set(map(frozenset, [
-        [],
-        [1],
-        [2],
-        [1, 2],
-        [0],
-        [0, 1],
-        [0, 2],
-        [0, 1, 2],
-    ]))
+    actual = set(map(frozenset, iter_subsets(list(range(3)))))
+    expected = set(
+        map(
+            frozenset,
+            [
+                [],
+                [1],
+                [2],
+                [1, 2],
+                [0],
+                [0, 1],
+                [0, 2],
+                [0, 1, 2],
+            ],
+        )
+    )
     assert actual == expected
 
 
 def test_iter_eta_substitutions():
-    a = Expression.make('a')
-    x = Expression.make('x')
+    a = Expression.make("a")
+    x = Expression.make("x")
     actual = set(iter_eta_substitutions(x))
     expected = set([x, a.abstract(a), APP(x, a).abstract(a)])
     assert actual == expected
 
 
 def test_iter_closure_maps():
-    x = Expression.make('x')
-    y = Expression.make('y')
+    x = Expression.make("x")
+    y = Expression.make("y")
     assert set(iter_closure_maps(x)) == set([I])
     assert set(iter_closure_maps(APP(x, x))) == set([APP(W, I)])
     assert set(iter_closure_maps(APP(x, y))) == set([I, APP(C, I), APP(W, I)])
@@ -77,13 +97,13 @@ def test_iter_closure_maps():
 def iter_close_rules():
     blacklist = [
         # not abstractable:
-        'group.theory',
-        'h4.theory',
+        "group.theory",
+        "h4.theory",
         # no validator implemented:
-        'quote.theory',
+        "quote.theory",
     ]
     for filename in find_theories():
-        is_extensional = filename.split('/')[-1] not in blacklist
+        is_extensional = filename.split("/")[-1] not in blacklist
         yield filename, is_extensional
 
 

@@ -3,12 +3,26 @@
 from pomagma.compiler.util import memoize_arg, memoize_args
 from pomagma.reducer import syntax
 from pomagma.reducer.bohm import decrement_rank
-from pomagma.reducer.syntax import (APP, BOT, IVAR, JOIN, TOP, B, C, I, K, S,
-                                    anonymize, is_app, is_atom, is_join,
-                                    is_nvar)
+from pomagma.reducer.syntax import (
+    APP,
+    BOT,
+    IVAR,
+    JOIN,
+    TOP,
+    B,
+    C,
+    I,
+    K,
+    S,
+    anonymize,
+    is_app,
+    is_atom,
+    is_join,
+    is_nvar,
+)
 from pomagma.util import TODO
 
-SUPPORTED_TESTDATA = ['sk']
+SUPPORTED_TESTDATA = ["sk"]
 
 # ----------------------------------------------------------------------------
 # Abstraction
@@ -76,7 +90,7 @@ def abstract(var, body):
 
 
 def qabstract(var, body):
-    TODO('Support quoted recursion')
+    TODO("Support quoted recursion")
 
 
 # ----------------------------------------------------------------------------
@@ -87,6 +101,7 @@ convert = syntax.Transform(FUN=abstract, ABS=de_bruijn_abstract)
 
 # ----------------------------------------------------------------------------
 # Computation
+
 
 @memoize_arg
 def try_compute_step(term):
@@ -129,7 +144,7 @@ def try_compute_step(term):
 def reduce(term, budget=100):
     """Beta-reduce term up to budget."""
     term = convert(term)
-    for _ in xrange(budget):
+    for _ in range(budget):
         reduced = try_compute_step(term)
         if reduced is None:
             break

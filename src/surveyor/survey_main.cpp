@@ -8,7 +8,8 @@ int main(int argc, char** argv) {
     const char* executable = *argv++;
 
     if (argc != 7) {
-        std::cout << "Usage: " << boost::filesystem::path(executable).filename().string()
+        std::cout << "Usage: "
+                  << boost::filesystem::path(executable).filename().string()
                   << " structure_in structure_out"
                   << " symbols facts programs language"
                   << "\n"

@@ -20,15 +20,27 @@ from collections import OrderedDict
 
 from pomagma.compiler.util import memoize_arg
 from pomagma.reducer import bohm
-from pomagma.reducer.syntax import (BOT, NVAR, TOP, Term, free_vars, is_abs,
-                                    is_app, is_atom, is_closed, is_ivar,
-                                    is_join, is_nvar, sexpr_print)
+from pomagma.reducer.syntax import (
+    BOT,
+    NVAR,
+    TOP,
+    Term,
+    free_vars,
+    is_abs,
+    is_app,
+    is_atom,
+    is_closed,
+    is_ivar,
+    is_join,
+    is_nvar,
+    sexpr_print,
+)
 from pomagma.util import TODO
 
 
 def log_error(message):
     sys.stderr.write(message)
-    sys.stderr.write('\n')
+    sys.stderr.write("\n")
     sys.stderr.flush()
 
 
@@ -61,10 +73,10 @@ def is_valid_body(term):
     """
     assert isinstance(term, Term)
     if not is_closed(term):
-        log_error('Not closed: {}'.format(term))
+        log_error("Not closed: {}".format(term))
         return False
     if not bohm.is_normal(term):
-        log_error('Not normal: {}'.format(term))
+        log_error("Not normal: {}".format(term))
         return False
     # TODO Decide whether TOP and BOT should be allowed as bodies.
     # if term is TOP or term is BOT:
@@ -75,7 +87,7 @@ def is_valid_body(term):
     while is_abs(term):
         term = term[1]
     if not is_abs_free(term):
-        log_error('ABS in inner term: {}'.format(term))
+        log_error("ABS in inner term: {}".format(term))
         return False
     return True
 
@@ -85,7 +97,7 @@ class System(object):
 
     def __init__(self, **defs):
         self._defs = OrderedDict()  # : NVAR -> closed Term
-        for name, body in sorted(defs.iteritems()):
+        for name, body in sorted(defs.items()):
             NVAR(name)  # Asserts that name is not a keyword.
             self._set(name, body)
         assert self.is_closed()
@@ -97,13 +109,13 @@ class System(object):
         self._defs[name] = body
 
     def define(self, **kwargs):
-        for name, body in kwargs.iteritems():
-            assert name not in self._defs, 'Use .update(-,-) instead'
+        for name, body in list(kwargs.items()):
+            assert name not in self._defs, "Use .update(-,-) instead"
             self._set(name, body)
         assert self.is_closed()
 
     def update(self, name, body):
-        assert name in self._defs, 'Use .define(name=body) instead'
+        assert name in self._defs, "Use .define(name=body) instead"
         self._set(name, body)
         assert self.is_closed()
 
@@ -122,24 +134,21 @@ class System(object):
         return self._defs[name]
 
     def __iter__(self):
-        return self._defs.iteritems()
+        return iter(list(self._defs.items()))
 
     def __eq__(self, other):
         return self._defs == other._defs
 
     def __repr__(self):
-        defs = [
-            '{}={}'.format(name, body)
-            for name, body in self._defs.iteritems()
-        ]
-        return 'System({})'.format(', '.join(defs))
+        defs = ["{}={}".format(name, body) for name, body in list(self._defs.items())]
+        return "System({})".format(", ".join(defs))
 
     __str__ = __repr__
 
     def pretty(self):
         width = max(len(name) for name, body in self)
-        return '\n'.join(
-            '{} = {}'.format(name.rjust(width), sexpr_print(body))
+        return "\n".join(
+            "{} = {}".format(name.rjust(width), sexpr_print(body))
             for name, body in self
         )
 
@@ -147,7 +156,7 @@ class System(object):
         """Whether all free NVARs are defined."""
         return all(
             var[1] in self._defs
-            for body in self._defs.itervalues()
+            for body in list(self._defs.values())
             for var in free_vars(body)
         )
 
@@ -219,6 +228,7 @@ def try_compute_step(system, name=None):
 # ----------------------------------------------------------------------------
 # Decision procedures
 
+
 class Theory(object):
     def __init__(self):
         self._hyp = set()
@@ -259,7 +269,7 @@ def try_match_equal(system, theory, lhs, rhs):
 
     # Destructure JOIN.
     if is_join(lhs) or is_join(rhs):
-        TODO('handle JOIN: {} vs {}'.format(lhs, rhs))
+        TODO("handle JOIN: {} vs {}".format(lhs, rhs))
 
     # Destructure ABS.
     while is_abs(lhs) or is_abs(rhs):

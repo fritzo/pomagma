@@ -18,7 +18,8 @@ int main(int argc, char** argv) {
         conjectures_out_file = argv[4];
         theorems_file = argv[5];
     } else {
-        std::cout << "Usage: " << boost::filesystem::path(argv[0]).filename().string()
+        std::cout << "Usage: "
+                  << boost::filesystem::path(argv[0]).filename().string()
                   << " structure_in"
                   << " language_in"
                   << " conjectures_in"

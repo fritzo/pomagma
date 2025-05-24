@@ -11,16 +11,17 @@ are .copy()ed more often than needed, and there is minimal sharing.
 
 from pomagma.compiler.util import memoize_arg
 from pomagma.reducer.util import logged
+import sys
 
 DEFAULT_DEPTH = 10
 
 # ----------------------------------------------------------------------------
 # Signature
 
-_ATOM = intern('ATOM')
-_VAR = intern('VAR')
-_ABS = intern('ABS')
-_APP = intern('APP')
+_ATOM = sys.intern("ATOM")
+_VAR = sys.intern("VAR")
+_ABS = sys.intern("ABS")
+_APP = sys.intern("APP")
 
 
 def make_equation(lhs, rhs):
@@ -33,7 +34,7 @@ def make_equation(lhs, rhs):
 class Node(object):
     """Mutable node in a term graph."""
 
-    __slots__ = ['typ', 'args']
+    __slots__ = ["typ", "args"]
 
     def __init__(self, typ, *args):
         self.typ = typ
@@ -95,8 +96,8 @@ class Node(object):
             if depth > 0:
                 args = [arg.print_to_depth(depth - 1) for arg in self.args]
             else:
-                args = ['...'] * len(self.args)
-            return '{}({})'.format(self.typ, ','.join(args))
+                args = ["..."] * len(self.args)
+            return "{}({})".format(self.typ, ",".join(args))
 
     def __str__(self):
         return self.print_to_depth(DEFAULT_DEPTH)
@@ -105,10 +106,10 @@ class Node(object):
 @memoize_arg
 def ATOM(name):
     assert isinstance(name, str)
-    return Node(_ATOM, intern(name))
+    return Node(_ATOM, sys.intern(name))
 
 
-HOLE = ATOM('HOLE')
+HOLE = ATOM("HOLE")
 
 _VAR_CACHE = {}
 
@@ -153,6 +154,7 @@ def is_app(node):
 # ----------------------------------------------------------------------------
 # Substitution
 
+
 @logged(str, str, str, str, returns=str)
 def _substitute(old, new, node, results):
     key = id(node)
@@ -164,8 +166,7 @@ def _substitute(old, new, node, results):
             result = node.copy()
             results[key] = result  # This must be set before recursing.
             result.args = tuple(
-                _substitute(old, new, arg, results)
-                for arg in node.args
+                _substitute(old, new, arg, results) for arg in node.args
             )
         else:
             raise ValueError(node)
@@ -176,7 +177,7 @@ def _substitute(old, new, node, results):
 def substitute(old, new, node):
     """Substitute old for new in node."""
     assert isinstance(old, Node)
-    assert is_atom(old) or is_var(old), 'old must be is-comparable'
+    assert is_atom(old) or is_var(old), "old must be is-comparable"
     assert isinstance(new, Node)
     assert isinstance(node, Node)
     return _substitute(old, new, node, {})
@@ -197,6 +198,7 @@ def FUN(nvar, body):
 
 # ----------------------------------------------------------------------------
 # Reduction
+
 
 @logged(str, returns=str)
 def try_beta_step(node):

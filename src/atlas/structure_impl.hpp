@@ -14,10 +14,10 @@
 
 #include <algorithm>
 #include <array>
+#include <boost/filesystem.hpp>
 #include <pomagma/atlas/protobuf.hpp>
 #include <pomagma/io/protoblob.hpp>
 #include <thread>
-#include <boost/filesystem.hpp>
 
 namespace pomagma {
 
@@ -478,14 +478,15 @@ inline void dump(const Carrier &carrier, const SymmetricFunction &fun,
 inline Hasher::Dict get_tree_hash(const protobuf::Structure &structure) {
     Hasher::Dict dict;
 
-    POMAGMA_ASSERT(!structure.carrier().hash().empty(), "carrier is missing hash");
+    POMAGMA_ASSERT(!structure.carrier().hash().empty(),
+                   "carrier is missing hash");
     dict["carrier"] = parse_digest(structure.carrier().hash());
 
-#define CASE_ARITY(Kind, kind, Arity, arity)                             \
-    for (const auto &i : structure.arity##_##kind##s()) {                \
-        POMAGMA_ASSERT(!i.name().empty(), #Arity #Kind " is missing name");   \
-        POMAGMA_ASSERT(!i.hash().empty(), #Arity #Kind " is missing hash");   \
-        dict[#kind "s/" #arity "/" + i.name()] = parse_digest(i.hash()); \
+#define CASE_ARITY(Kind, kind, Arity, arity)                                \
+    for (const auto &i : structure.arity##_##kind##s()) {                   \
+        POMAGMA_ASSERT(!i.name().empty(), #Arity #Kind " is missing name"); \
+        POMAGMA_ASSERT(!i.hash().empty(), #Arity #Kind " is missing hash"); \
+        dict[#kind "s/" #arity "/" + i.name()] = parse_digest(i.hash());    \
     }
     POMAGMA_SWITCH_ARITY(CASE_ARITY)
 #undef CASE_ARITY
@@ -690,10 +691,10 @@ inline void load_signature(Signature &signature,
     signature.declare(*new Carrier(item_dim));
     Carrier &carrier = *signature.carrier();
 
-#define CASE_ARITY(Kind, kind, Arity, arity)                           \
-    for (const auto &i : structure.arity##_##kind##s()) {              \
+#define CASE_ARITY(Kind, kind, Arity, arity)                                \
+    for (const auto &i : structure.arity##_##kind##s()) {                   \
         POMAGMA_ASSERT(!i.name().empty(), #Arity #Kind " is missing name"); \
-        signature.declare(i.name(), *new Arity##Kind(carrier));        \
+        signature.declare(i.name(), *new Arity##Kind(carrier));             \
     }
     POMAGMA_SWITCH_ARITY(CASE_ARITY)
 #undef CASE_ARITY
@@ -712,7 +713,7 @@ inline void check_signature(Signature &signature,
 
 #define CASE_ARITY(Kind, kind, Arity, arity)                                  \
     for (const auto &i : structure.arity##_##kind##s()) {                     \
-        POMAGMA_ASSERT(!i.name().empty(), #Arity #Kind " is missing name");        \
+        POMAGMA_ASSERT(!i.name().empty(), #Arity #Kind " is missing name");   \
         POMAGMA_ASSERT(signature.arity##_##kind(i.name()),                    \
                        "file has unknown " #arity " " #kind " " << i.name()); \
     }
@@ -884,11 +885,11 @@ inline void load_data(Signature &signature, protobuf::Structure &structure) {
 
     std::vector<std::function<void()>> tasks;
 
-#define CASE_ARITY(Kind, kind, Arity, arity)                           \
-    for (auto &i : *structure.mutable_##arity##_##kind##s()) {         \
+#define CASE_ARITY(Kind, kind, Arity, arity)                                \
+    for (auto &i : *structure.mutable_##arity##_##kind##s()) {              \
         POMAGMA_ASSERT(!i.name().empty(), #Arity #Kind " is missing name"); \
-        POMAGMA_INFO("loading " #Arity #Kind " " << i.name());         \
-        load_data(*signature.arity##_##kind(i.name()), i, &tasks);     \
+        POMAGMA_INFO("loading " #Arity #Kind " " << i.name());              \
+        load_data(*signature.arity##_##kind(i.name()), i, &tasks);          \
     }
     POMAGMA_SWITCH_ARITY(CASE_ARITY)
 #undef CASE_ARITY

@@ -23,9 +23,9 @@ from collections import defaultdict, namedtuple
 
 from pomagma.util import TODO
 
-Pattern = namedtuple('Pattern', ['head', 'args'])
-Headex = namedtuple('Headex', ['head', 'args'])
-Combinator = namedtuple('Combinator', ['bound', 'headex'])
+Pattern = namedtuple("Pattern", ["head", "args"])
+Headex = namedtuple("Headex", ["head", "args"])
+Combinator = namedtuple("Combinator", ["bound", "headex"])
 
 
 def is_nvar(thing):
@@ -75,7 +75,7 @@ assert is_closed(_I)
 def eta_expand(comb):
     assert isinstance(comb, Combinator)
     bound, (head, args) = comb
-    args += (make_pattern('_I', bound),)
+    args += (make_pattern("_I", bound),)
     bound += 1
     return make_combinator(bound, make_headex(head, *args))
 
@@ -85,10 +85,7 @@ def substitute_headex(headex, src, dst):
     assert is_ivar(src)
     assert is_ivar(dst)
     head = dst if headex.head == src else headex.head
-    args = [
-        substitute_pattern(patt, src, dst)
-        for patt in headex.args
-    ]
+    args = [substitute_pattern(patt, src, dst) for patt in headex.args]
     return make_headex(head, *args)
 
 
@@ -103,7 +100,7 @@ def substitute_pattern(patt, src, dst):
 def app(comb, *args):
     assert isinstance(comb, Combinator)
     assert all(is_ivar(arg) for arg in args)
-    assert all(arg >= comb.bound for arg in args), 'variable name conflict'
+    assert all(arg >= comb.bound for arg in args), "variable name conflict"
     bound, headex = comb
     for arg in args:
         if bound:
@@ -112,7 +109,7 @@ def app(comb, *args):
         else:
             headex = make_headex(
                 headex.head,
-                headex.args + (make_pattern('_I', arg),),
+                headex.args + (make_pattern("_I", arg),),
             )
     return make_combinator(bound, headex)
 
@@ -122,10 +119,10 @@ class Presentation(object):
 
     def __init__(self):
         self._equations = defaultdict(set)
-        self._equations['_I'].add(_I)  # Required by eta_expand(-).
+        self._equations["_I"].add(_I)  # Required by eta_expand(-).
 
     def define(self, name, combinator):
-        assert is_nvar(name) and name != '_I'
+        assert is_nvar(name) and name != "_I"
         assert isinstance(combinator, Combinator) and is_closed(combinator)
         self._equations[name].add(combinator)
         for patt in combinator.headex.args:
@@ -133,7 +130,7 @@ class Presentation(object):
 
     @property
     def is_deterministic(self):
-        return all(len(body) <= 1 for body in self._equations.values())
+        return all(len(body) <= 1 for body in list(self._equations.values()))
 
     def match_combinator(self, lhs, rhs, hyp):
         assert isinstance(lhs, Combinator), lhs
@@ -181,11 +178,9 @@ class Presentation(object):
         assert self.is_deterministic
 
         con = set()
-        hyp = set([
-            (lc, rc)
-            for lc in self._equations[lhs]
-            for rc in self._equations[rhs]
-        ])
+        hyp = set(
+            [(lc, rc) for lc in self._equations[lhs] for rc in self._equations[rhs]]
+        )
         while hyp:
             focus = hyp.pop()
             if focus in con:
@@ -209,15 +204,17 @@ class Presentation(object):
 
         # Each set is a conjunction of disjunctions.
         con = set()
-        hyp = set([
-            set([(lc, rc) for rc in self._equations[rhs]])
-            for lc in self._equations[lhs]
-        ])
+        hyp = set(
+            [
+                set([(lc, rc) for rc in self._equations[rhs]])
+                for lc in self._equations[lhs]
+            ]
+        )
         while hyp:
             focus = hyp.pop()
             if focus in con:
                 continue
-            TODO('Implement backtracking')
+            TODO("Implement backtracking")
 
     def decide_equal(self, lhs, rhs):
         return self.decide_less(lhs, rhs) and self.decide_less(rhs, lhs)

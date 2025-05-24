@@ -3,16 +3,25 @@ import re
 from pomagma.compiler import signature
 from pomagma.compiler.signature import ARITY_TABLE
 from pomagma.compiler.util import inputs, memoize_make, sortedset, union
+import sys
 
-re_name = re.compile('[a-zA-Z][a-zA-Z0-9_]*$')
-re_space = re.compile('[ _]+')
+re_name = re.compile("[a-zA-Z][a-zA-Z0-9_]*$")
+re_space = re.compile("[ _]+")
 
 
 @memoize_make
 class Expression(object):
     __slots__ = [
-        '_name', '_args', '_arity', '_polish', '_hash', '_sort', '_var',
-        '_vars', '_consts', '_terms',
+        "_name",
+        "_args",
+        "_arity",
+        "_polish",
+        "_hash",
+        "_sort",
+        "_var",
+        "_vars",
+        "_consts",
+        "_terms",
     ]
 
     def __init__(self, name, *args):
@@ -22,10 +31,10 @@ class Expression(object):
         assert len(args) == signature.get_nargs(arity), (args, arity)
         for arg in args:
             assert isinstance(arg, Expression), arg
-        self._name = intern(name)
+        self._name = sys.intern(name)
         self._args = args
         self._arity = arity
-        self._polish = intern(' '.join([name] + [arg._polish for arg in args]))
+        self._polish = sys.intern(" ".join([name] + [arg._polish for arg in args]))
         self._hash = hash(self._polish)
         self._sort = (len(self._polish), self._polish)
         # all other fields are lazily initialized
@@ -53,21 +62,21 @@ class Expression(object):
     @property
     def var(self):
         if self._var is None:
-            if self._arity == 'Variable':
+            if self._arity == "Variable":
                 self._var = self
-            elif self._arity == 'NullaryFunction':
-                self._var = Expression.make(self._name + '_')
+            elif self._arity == "NullaryFunction":
+                self._var = Expression.make(self._name + "_")
             elif self._arity in signature.FUNCTION_ARITIES:
-                var = re_space.sub('_', self._polish.rstrip('_'))
+                var = re_space.sub("_", self._polish.rstrip("_"))
                 self._var = Expression.make(var)
         return self._var
 
     @property
     def vars(self):
         if self._vars is None:
-            if self._arity == 'Variable':
+            if self._arity == "Variable":
                 self._vars = set([self])
-            elif self._arity == 'NullaryFunction':
+            elif self._arity == "NullaryFunction":
                 self._vars = set()
             elif self._arity in signature.FUNCTION_ARITIES:
                 self._vars = union(a.vars for a in self._args)
@@ -134,8 +143,8 @@ class Expression(object):
             return defn
         else:
             return Expression.make(
-                self.name,
-                *(arg.substitute(var, defn) for arg in self._args))
+                self.name, *(arg.substitute(var, defn) for arg in self._args)
+            )
 
     def swap(self, var1, var2):
         assert isinstance(var1, Expression) and var1.is_var()
@@ -148,12 +157,12 @@ class Expression(object):
             return var1
         else:
             return Expression.make(
-                self.name,
-                *(arg.swap(var1, var2) for arg in self._args))
+                self.name, *(arg.swap(var1, var2) for arg in self._args)
+            )
 
     def permute_symbols(self, perm):
         assert isinstance(perm, dict)
-        name = '_'.join(perm.get(n, n) for n in self.name.split('_'))
+        name = "_".join(perm.get(n, n) for n in self.name.split("_"))
         args = (a.permute_symbols(perm) for a in self._args)
         return Expression.make(name, *args)
 
@@ -176,7 +185,7 @@ class NotNegatable(Exception):
 
 def try_negate_name(pos):
     assert pos in ARITY_TABLE
-    neg = pos[1:] if pos.startswith('N') else 'N' + pos
+    neg = pos[1:] if pos.startswith("N") else "N" + pos
     if neg not in ARITY_TABLE or ARITY_TABLE[neg] != ARITY_TABLE[pos]:
         raise NotNegatable
     return neg
@@ -185,10 +194,11 @@ def try_negate_name(pos):
 @inputs(Expression)
 def try_get_negated(expr):
     """Returns a disjunction."""
-    if expr.name == 'EQUAL':
+    if expr.name == "EQUAL":
         lhs, rhs = expr.args
-        return set([Expression.make('NLESS', lhs, rhs),
-                    Expression.make('NLESS', rhs, lhs)])
+        return set(
+            [Expression.make("NLESS", lhs, rhs), Expression.make("NLESS", rhs, lhs)]
+        )
     else:
         neg_name = try_negate_name(expr.name)
         return set([Expression.make(neg_name, *expr.args)])

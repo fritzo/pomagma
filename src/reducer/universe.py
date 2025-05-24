@@ -10,6 +10,7 @@ i.e. the database here is not quotiented.
 
 from pomagma.compiler.util import MEMOIZED_CACHES, memoize_arg, memoize_args
 from pomagma.util import TODO
+import sys
 
 # ----------------------------------------------------------------------------
 # Signature
@@ -45,13 +46,13 @@ class Term(tuple):
 
 MEMOIZED_CACHES[Term.make] = Term._make_cache
 
-_HOLE = intern('HOLE')
-_TOP = intern('TOP')
-_NVAR = intern('NVAR')
-_IVAR = intern('IVAR')
-_ABS = intern('ABS')
-_APP = intern('APP')
-_JOIN = intern('JOIN')
+_HOLE = sys.intern("HOLE")
+_TOP = sys.intern("TOP")
+_NVAR = sys.intern("NVAR")
+_IVAR = sys.intern("IVAR")
+_ABS = sys.intern("ABS")
+_APP = sys.intern("APP")
+_JOIN = sys.intern("JOIN")
 
 HOLE = Term.make(_HOLE)
 TOP = Term.make(_TOP)
@@ -85,6 +86,7 @@ def JOIN(args):
 
 # ----------------------------------------------------------------------------
 # Mutual recursion
+
 
 def term_iter_obs(term):
     assert isinstance(term, Term)
@@ -167,8 +169,8 @@ def rec(**defs):
       the definitions; the definitions now refer to graph terms.
 
     """
-    assert all(isinstance(key, str) for key in defs.keys())
-    assert all(isinstance(val, Term) for val in defs.values())
-    defs = {NVAR(key): val for key, val in defs.iteritems()}
-    TODO('search for existing instances of graph')
+    assert all(isinstance(key, str) for key in list(defs.keys()))
+    assert all(isinstance(val, Term) for val in list(defs.values()))
+    defs = {NVAR(key): val for key, val in list(defs.items())}
+    TODO("search for existing instances of graph")
     return defs

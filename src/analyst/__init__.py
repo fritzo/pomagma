@@ -5,7 +5,7 @@ from pomagma.analyst import client
 from pomagma.analyst import server
 
 
-ADDRESS = os.environ.get('POMAGMA_ANALYST_ADDRESS', 'tcp://localhost:34936')
+ADDRESS = os.environ.get("POMAGMA_ANALYST_ADDRESS", "tcp://localhost:34936")
 
 
 def connect(address=ADDRESS):
@@ -18,9 +18,9 @@ def serve(theory, world, address=ADDRESS, **opts):
 
 @contextlib.contextmanager
 def load(theory, world, **opts):
-    address = 'ipc://{}'.format(os.path.join(
-        os.path.dirname(pomagma.util.abspath(world)),
-        'analyst.socket'))
+    address = "ipc://{}".format(
+        os.path.join(os.path.dirname(pomagma.util.abspath(world)), "analyst.socket")
+    )
     with pomagma.util.log_duration():
         server = serve(theory, world, address, **opts)
         with server.connect() as client:

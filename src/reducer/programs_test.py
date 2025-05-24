@@ -5,18 +5,18 @@ from pomagma.reducer.programs import program, using_engine
 from pomagma.reducer.sugar import app
 from pomagma.util.testing import for_each
 
-bool_not = program('bool', 'bool')(lib.bool_not)
-succ = program('num', 'num')(lib.succ)
-num_pred = program('num', 'num')(lib.num_pred)
+bool_not = program("bool", "bool")(lib.bool_not)
+succ = program("num", "num")(lib.succ)
+num_pred = program("num", "num")(lib.num_pred)
 
 
-@program('num', 'num')
+@program("num", "num")
 def partial_pred(x):
     return app(x, lib.undefined, lambda px: px)
 
 
-num_add = program('num', 'num', 'num')(lib.num_add)
-num_lt = program('num', 'num', 'bool')(lib.num_lt)
+num_add = program("num", "num", "num")(lib.num_add)
+num_lt = program("num", "num", "bool")(lib.num_lt)
 
 CALL_EXAMPLES = [
     (bool_not, (True,), False),
