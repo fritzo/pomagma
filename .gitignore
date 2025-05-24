@@ -32,6 +32,7 @@ temp.*
 .ipynb_checkpoints
 __pycache__
 prof
+.venv/
 
 # eclipse
 /.cproject

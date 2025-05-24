@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 set -x
 
 case "`uname`" in
@@ -33,24 +34,42 @@ case "`uname`" in
     ;;
 esac
 
-if env | grep -q ^VIRTUAL_ENV=
-then
-  echo "Installing in $VIRTUAL_ENV"
-else
-  echo "Making new virtualenv"
-  mkvirtualenv --system-site-packages pomagma
-  if [ "`uname`" -eq 'Darwin' ]; then
-    echo "Using clang-omp compiler"
-    echo 'export CC=/usr/local/bin/clang-omp' >> \
-      "$VIRTUAL_ENV/bin/postactivate"
-    echo 'export CXX=/usr/local/bin/clang-omp++' >> \
-      "$VIRTUAL_ENV/bin/postactivate"
-  fi
-  deactivate
-  workon pomagma
+# Check if uv is installed
+if ! command -v uv &> /dev/null; then
+    echo "uv is not installed. Installing uv..."
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+    export PATH="$HOME/.cargo/bin:$PATH"
 fi
-pip install -r requirements.txt
-pip install -e .
-. $VIRTUAL_ENV/bin/activate
 
-make all
+# Create virtual environment with uv if it doesn't exist
+if [ ! -d ".venv" ]; then
+    echo "Creating virtual environment with uv"
+    uv venv --system-site-packages
+fi
+
+# Set compiler environment variables for Darwin
+if [ "`uname`" = 'Darwin' ]; then
+    echo "Setting up compilers for macOS"
+    # Install libomp for OpenMP support
+    brew install libomp
+    # Add OpenMP configuration to activation script
+    echo "Adding OpenMP configuration to .venv/bin/activate"
+    cat >> .venv/bin/activate << 'EOF'
+
+# OpenMP support for macOS (added by install.sh)
+export CC=clang
+export CXX=clang++
+export LDFLAGS="-L/opt/homebrew/opt/libomp/lib"
+export CPPFLAGS="-I/opt/homebrew/opt/libomp/include"
+EOF
+    echo "Added OpenMP flags to activation script"
+fi
+
+# Install dependencies
+echo "Installing Python dependencies"
+uv pip install parsable
+uv pip install -r requirements.txt
+uv pip install -e .
+
+# Run build
+uv run make all
