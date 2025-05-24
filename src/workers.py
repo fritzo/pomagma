@@ -25,7 +25,6 @@ PYTHON = sys.executable
 
 
 class parsable_fork(object):
-
     def __init__(self, fun, *args, **kwargs):
         self.args = [PYTHON, "-m", "pomagma.workers", fun.__name__]
         self.args += list(map(str, args))
@@ -49,7 +48,6 @@ class parsable_fork(object):
 
 
 class fork(object):
-
     def __init__(self, fun, *args, **kwargs):
         self.command = "{}({})".format(
             fun.__name__,
@@ -74,7 +72,6 @@ class fork(object):
 
 
 class Sleeper(object):
-
     def __init__(self, name):
         self.name = name
         self.duration = MIN_SLEEP_SEC
@@ -90,7 +87,6 @@ class Sleeper(object):
 
 
 class FileQueue(object):
-
     def __init__(self, path, template="{}"):
         self.path = path
         self.template = template
@@ -128,7 +124,6 @@ class FileQueue(object):
 
 
 class CartographerWorker(object):
-
     def __init__(self, theory, region_size, region_queue_size, **options):
         self.options = options
         self.log_file = options["log_file"]

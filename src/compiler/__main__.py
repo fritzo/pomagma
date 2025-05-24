@@ -254,9 +254,9 @@ def test_compile(*filenames):
             for cost, seq, plan in compile_full(sequent):
                 programs += [
                     "",
-                    "# using {}".format(sequent),
-                    "# infer ".format(seq),
-                    "# cost = ".format(cost),
+                    f"# using {sequent}",
+                    f"# infer {seq}",
+                    f"# cost = {cost}",
                 ]
                 plan.program(programs)
 
@@ -264,10 +264,10 @@ def test_compile(*filenames):
                 for cost, seq, plan in compile_given(sequent, event):
                     programs += [
                         "",
-                        "# given {}".format(event),
-                        "# using {}".format(sequent),
-                        "# infer {}".format(seq),
-                        "# cost {}".format(cost),
+                        f"# given {event}",
+                        f"# using {sequent}",
+                        f"# infer {seq}",
+                        f"# cost {cost}",
                     ]
                     plan.program(programs)
 

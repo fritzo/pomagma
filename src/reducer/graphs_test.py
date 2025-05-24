@@ -291,7 +291,7 @@ def test_join_associative(x, y, z):
     assert (x | y) | z is x | (y | z)
 
 
-@pytest.mark.xfail
+@pytest.mark.xfail(reason="Join distributivity not implemented")
 @hypothesis.given(s_graphs, s_graphs, s_graphs)
 def test_join_distributive(f, g, x):
     assert (f | g)(x) is f(x) | g(x)
@@ -387,7 +387,10 @@ def test_letrec(root, defs, expected):
         "(I K)",
         "(K I)",
         "(JOIN K (K I))",
-        pytest.mark.xfail("(FUN x x 0 1)"),
+        pytest.param(
+            "(FUN x x 0 1)",
+            marks=pytest.mark.xfail(reason="FUN syntax not fully supported"),
+        ),
     ]
 )
 def test_convert_runs(sexpr):
@@ -428,7 +431,7 @@ def test_less_transitive(x, y, z):
         assert xy is not True or yz is not True
 
 
-@pytest.mark.xfail
+@pytest.mark.xfail(reason="Less join implementation incomplete")
 @hypothesis.given(s_graphs, s_graphs)
 def test_less_join(x, y):
     with xfail_if_not_implemented():
@@ -677,24 +680,23 @@ COMPUTE_STEP_EXAMPLES = [
         ),
         Graph.make(Term.APP(1, 1), Term.NVAR("x")),
     ),
-    pytest.mark.xfail(
-        (  # {j x y = x (j y)} -> {j x y = x y}
-            Graph.make(
-                Term.ABS(1),
-                Term.ABS(2),
-                Term.APP(3, 4),
-                Term.VAR(0),
-                Term.APP(0, 5),
-                Term.VAR(1),
-            ),
-            Graph.make(
-                Term.ABS(1),
-                Term.ABS(2),
-                Term.APP(3, 4),
-                Term.VAR(0),
-                Term.VAR(1),
-            ),
-        )
+    pytest.param(  # {j x y = x (j y)} -> {j x y = x y}
+        Graph.make(
+            Term.ABS(1),
+            Term.ABS(2),
+            Term.APP(3, 4),
+            Term.VAR(0),
+            Term.APP(0, 5),
+            Term.VAR(1),
+        ),
+        Graph.make(
+            Term.ABS(1),
+            Term.ABS(2),
+            Term.APP(3, 4),
+            Term.VAR(0),
+            Term.VAR(1),
+        ),
+        marks=pytest.mark.xfail(reason="Recursive graph reduction not implemented"),
     ),
     (  # {j x y = x y} -> {j x = x}
         Graph.make(

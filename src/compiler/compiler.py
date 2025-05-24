@@ -34,7 +34,6 @@ def stack_depth():
 
 
 class DotPrinter(object):
-
     def __init__(self, out=sys.stdout):
         self.out = out
         self.count = 0

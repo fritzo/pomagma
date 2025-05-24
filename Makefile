@@ -36,8 +36,8 @@ clang-ctags:
 
 lint: FORCE
 	# TODO Use clang-tidy.
-	# TODO use ruff
 	black --check $(PY_FILES)
+	ruff check $(PY_FILES)
 
 clang-format: FORCE
 	$(info clang-format)
@@ -48,7 +48,12 @@ black: FORCE
 	$(info black)
 	@black $(PY_FILES)
 
-format: clang-format black FORCE
+ruff: FORCE
+	$(info ruff)
+	@ruff check --fix $(PY_FILES)
+	@ruff format $(PY_FILES)
+
+format: clang-format black ruff FORCE
 
 python: protobuf lint FORCE
 	pip install -e .
@@ -86,9 +91,9 @@ cpp-test: debug FORCE
 	  CTEST_OUTPUT_ON_FAILURE=1 $(MAKE) -C build/debug test \
 	  || { cat $(DEBUG_LOG); exit 1; }
 
-unit-test: all bootstrap FORCE
+unit-test: bootstrap FORCE
 	./vet.py check || { ./diff.py codegen; exit 1; }
-	POMAGMA_DEBUG=1 py.test -v --nbval --ignore=pomagma/third_party pomagma
+	POMAGMA_DEBUG=1 pytest -v --nbval --ignore=pomagma/third_party pomagma
 	$(MAKE) cpp-test
 	POMAGMA_DEBUG=1 pomagma.make profile-misc
 	pomagma.make profile-misc
@@ -104,26 +109,26 @@ bootstrap: FORCE
 	  && (test -e world.pb || ln region.normal.2047.pb world.pb) \
 	  && test -e world.normal.pb || ln region.normal.2047.pb world.normal.pb
 
-h4-test: all FORCE
+h4-test: FORCE
 	POMAGMA_DEBUG=1 pomagma.make test-atlas h4
-sk-test: all FORCE
+sk-test: FORCE
 	POMAGMA_DEBUG=1 pomagma.make test-atlas sk
-skj-test: all FORCE
+skj-test: FORCE
 	POMAGMA_DEBUG=1 pomagma.make test-atlas skj
-skja-test: all FORCE
+skja-test: FORCE
 	POMAGMA_DEBUG=1 pomagma.make test-atlas skja
-skrj-test: all FORCE
+skrj-test: FORCE
 	POMAGMA_DEBUG=1 pomagma.make test-atlas skrj
-batch-test: all FORCE
+batch-test: FORCE
 	POMAGMA_DEBUG=1 pomagma.make test-atlas
 
-small-test: all FORCE
+small-test: FORCE
 	$(MAKE) unit-test
 	$(MAKE) h4-test
 	@echo '----------------'
 	@echo 'PASSED ALL TESTS'
 
-test: all FORCE
+test: FORCE
 	$(MAKE) unit-test
 	$(MAKE) batch-test
 	@echo '----------------'
@@ -136,15 +141,15 @@ big-test: test FORCE
 	@echo '----------------'
 	@echo 'PASSED ALL TESTS'
 
-h4: all
+h4:
 	pomagma make h4
-sk: all
+sk:
 	pomagma make sk
-skj: all
+skj:
 	pomagma make skj
-skja: all
+skja:
 	pomagma make skja
-skrj: all
+skrj:
 	pomagma make skrj
 
 profile: release

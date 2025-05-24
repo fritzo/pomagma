@@ -1,7 +1,7 @@
 import re
 
 from pomagma.analyst.compiler import compile_solver
-from pomagma.util.testing import for_each_kwargs
+import pytest
 
 SOLVE_EXAMPLES = [
     {
@@ -235,8 +235,7 @@ SOLVE_EXAMPLES = [
                     "LETS_BINARY_FUNCTION_RHS COMP COMP_r_s s",
                     "LETS_BINARY_FUNCTION_LHS APP APP_C_APP_APP_C_I_s "
                     "APP_APP_C_APP_APP_C_I_s_r",
-                    "FOR_POS_POS_POS r NLESS_r_BOT COMP_r_s "
-                    "APP_APP_C_APP_APP_C_I_s_r",
+                    "FOR_POS_POS_POS r NLESS_r_BOT COMP_r_s APP_APP_C_APP_APP_C_I_s_r",
                     "LET_BINARY_FUNCTION COMP r s COMP_r_s",
                     "LET_BINARY_FUNCTION APP APP_C_APP_APP_C_I_s r "
                     "APP_APP_C_APP_APP_C_I_s_r",
@@ -262,8 +261,11 @@ def parse_programs(script):
     return set(tuple(s.strip().splitlines()) for s in scripts)
 
 
-@for_each_kwargs(SOLVE_EXAMPLES)
-def test_compile_solver(expr, theory, expected_programs):
+@pytest.mark.parametrize("example", SOLVE_EXAMPLES)
+def test_compile_solver(example):
+    expr = example["expr"]
+    theory = example["theory"]
+    expected_programs = example["expected_programs"]
     script = compile_solver(expr, theory)
     actual_programs = parse_programs(script)
     assert set(expected_programs) == set(actual_programs)

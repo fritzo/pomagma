@@ -27,7 +27,7 @@ def try_prove_nless(
         pomagma.util.abspath(conjectures_in),
         pomagma.util.abspath(conjectures_out),
         pomagma.util.abspath(theorems_out),
-        **opts
+        **opts,
     )
     theorem_count = _count_facts(theorems_out) - prev_theorem_count
     return theorem_count
@@ -38,6 +38,6 @@ def try_prove_diverge(conjectures_in, conjectures_out, theorems_out, **opts):
         pomagma.util.abspath(conjectures_in),
         pomagma.util.abspath(conjectures_out),
         pomagma.util.abspath(theorems_out),
-        **opts
+        **opts,
     )
     return theorem_count

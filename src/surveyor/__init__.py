@@ -15,7 +15,7 @@ def init(theory, chart_out, size=None, **opts):
         os.path.join(pomagma.util.THEORY, "{}.optimized.programs".format(theory)),
         os.path.join(pomagma.util.LANGUAGE, "{}.language".format(theory)),
         size=size,
-        **opts
+        **opts,
     )
 
 
@@ -31,5 +31,5 @@ def survey(theory, chart_in, chart_out, size, **opts):
         os.path.join(pomagma.util.THEORY, "{}.optimized.programs".format(theory)),
         os.path.join(pomagma.util.LANGUAGE, "{}.language".format(theory)),
         size=size,
-        **opts
+        **opts,
     )

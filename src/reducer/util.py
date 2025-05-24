@@ -105,7 +105,6 @@ LOG_LEVELS = {
 
 
 class IndentingFormatter(logging.Formatter):
-
     def __init__(self):
         logging.Formatter.__init__(self, "%(indent)s %(message)s")
         self.min_indent = float("inf")
@@ -133,7 +132,6 @@ def _logged(*format_args, **format_kwargs):
         formatters[i] = fmt
 
     def decorator(fun):
-
         @functools.wraps(fun)
         def decorated(*args, **kwargs):
             akwargs = []

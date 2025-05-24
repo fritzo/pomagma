@@ -8,7 +8,6 @@ BINARY = os.path.join(pomagma.util.BIN, "analyst", "analyst")
 
 
 class Server(object):
-
     def __init__(self, theory, world, address, **opts):
         language_file = os.path.join(
             pomagma.util.LANGUAGE, "{}.language".format(theory)

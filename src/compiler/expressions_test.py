@@ -1,5 +1,5 @@
 from pomagma.compiler.parser import parse_string_to_expr as parse
-from pomagma.util.testing import for_each_kwargs
+import pytest
 
 EXAMPLES = [
     {
@@ -47,21 +47,29 @@ for example in EXAMPLES:
     example["terms"] = set(map(parse, example["polish_terms"]))
 
 
-@for_each_kwargs(EXAMPLES)
-def test_polish(expression, polish):
+@pytest.mark.parametrize("example", EXAMPLES)
+def test_polish(example):
+    expression = example["expression"]
+    polish = example["polish"]
     assert expression.polish == polish
 
 
-@for_each_kwargs(EXAMPLES)
-def test_vars(expression, vars):
+@pytest.mark.parametrize("example", EXAMPLES)
+def test_vars(example):
+    expression = example["expression"]
+    vars = example["vars"]
     assert set(expression.vars) == set(vars)
 
 
-@for_each_kwargs(EXAMPLES)
-def test_consts(expression, consts):
+@pytest.mark.parametrize("example", EXAMPLES)
+def test_consts(example):
+    expression = example["expression"]
+    consts = example["consts"]
     assert set(expression.consts) == set(consts)
 
 
-@for_each_kwargs(EXAMPLES)
-def test_terms(expression, terms):
+@pytest.mark.parametrize("example", EXAMPLES)
+def test_terms(example):
+    expression = example["expression"]
+    terms = example["terms"]
     assert set(expression.terms) == set(terms)

@@ -18,10 +18,10 @@ pyformat: FORCE
 	pyformat --jobs 0 --aggressive --in-place $(PY_FILES)
 
 test: lint
-	$(info py.test)
+	$(info pytest)
 	# This freezes, probably due to multiprocessing conflicts.
-	# py.test -n $(CPU_COUNT)
-	py.test
+	# pytest -n $(CPU_COUNT)
+	pytest
 
 clean:
 	find . | grep '\.pyc$$' | xargs rm

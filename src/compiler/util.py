@@ -207,7 +207,6 @@ MEMOIZED_CACHES[unique] = UNIQUE
 
 
 def unique_result(fun):
-
     @functools.wraps(fun)
     def decorated(*args, **kwargs):
         return unique(fun(*args, **kwargs))

@@ -108,7 +108,6 @@ def program_order(program):
 
 
 class MergeProcessor:
-
     def __init__(self, programs):
         programs = list(map(tuple, programs))
         programs.sort(key=program_order)

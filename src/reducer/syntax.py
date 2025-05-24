@@ -613,7 +613,7 @@ def _sexpr_parse_tokens(tokens):
         if token is _LPAREN:
             yield tuple(_sexpr_parse_tokens(tokens))
         elif token is _RPAREN:
-            raise StopIteration
+            return
         elif re_rank.match(token):
             yield int(token)
         else:

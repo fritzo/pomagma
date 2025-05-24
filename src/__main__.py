@@ -72,7 +72,7 @@ def test(theory=THEORY, extra_size=0, **options):
             equal_conjectures,
             equal_conjectures,
             equal_theorems,
-            **options
+            **options,
         )
 
         with cartographer.load(theory, world, **options) as db:
@@ -119,7 +119,7 @@ def explore(
     max_size=pomagma.workers.DEFAULT_SURVEY_SIZE,
     step_size=512,
     region_queue_size=4,
-    **options
+    **options,
 ):
     """Continuously expand world map for given theory, inferring and surveying.
 
@@ -148,7 +148,7 @@ def make(
     theory=THEORY,
     max_size=pomagma.workers.DEFAULT_SURVEY_SIZE,
     step_size=512,
-    **options
+    **options,
 ):
     """Initialize; explore.
 

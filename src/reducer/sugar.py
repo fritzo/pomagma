@@ -21,7 +21,7 @@ def _compile(fun, actual_fun=None):
     """
     if actual_fun is None:
         actual_fun = fun
-    args, vargs, kwargs, defaults = inspect.getargspec(actual_fun)
+    args, vargs, kwargs, defaults = inspect.getfullargspec(actual_fun)[:4]
     if vargs or kwargs or defaults:
         source = inspect.getsource(actual_fun)
         raise SyntaxError("Unsupported signature: {}".format(source))
@@ -187,7 +187,6 @@ def typed(*types):
     arg_types = types[:-1]
 
     def decorator_0(fun):
-
         @functools.wraps(fun)
         def typed_fun():
             return result_type(fun())
@@ -195,7 +194,6 @@ def typed(*types):
         return typed_fun
 
     def decorator_1(fun):
-
         @functools.wraps(fun)
         def typed_fun(arg):
             arg = arg_types[0](arg)
@@ -204,7 +202,6 @@ def typed(*types):
         return typed_fun
 
     def decorator_2(fun):
-
         @functools.wraps(fun)
         def typed_fun(arg0, arg1):
             arg0 = arg_types[0](arg0)
@@ -217,7 +214,6 @@ def typed(*types):
 
 
 def symmetric(fun):
-
     @functools.wraps(fun)
     def symmetric_fun(x, y):
         return join_(fun(x, y), fun(y, x))

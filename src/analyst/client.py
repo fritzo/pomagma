@@ -3,7 +3,7 @@ import time
 
 import zmq
 
-from pomagma.analyst import messages_pb2 as messages
+from pomagma.analyst import analyst_messages_pb2 as messages
 from pomagma.analyst import compiler
 
 CONTEXT = zmq.Context()
@@ -25,7 +25,6 @@ def WARN(message):
 
 
 class ServerError(Exception):
-
     def __init__(self, messages):
         self.messages = list(messages)
 
@@ -34,7 +33,6 @@ class ServerError(Exception):
 
 
 class Client(object):
-
     def __init__(self, address, poll_callback=None):
         assert isinstance(address, str), address
         assert poll_callback is None or callable(poll_callback), poll_callback

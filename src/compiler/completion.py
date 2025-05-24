@@ -55,7 +55,6 @@ basic_facts = set(
 # TODO compile this from *.rules, rather than hand-coding
 @inputs(set)
 def complete_step(terms, relevant_facts):
-
     def step(facts):
         result = relevant_facts | facts
         equal = [p for p in result if p.name == "EQUAL"]

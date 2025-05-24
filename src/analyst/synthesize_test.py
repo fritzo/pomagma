@@ -4,7 +4,8 @@ from pomagma.analyst.synthesize import (
     simplify_defs,
 )
 from pomagma.compiler.parser import parse_string_to_expr
-from pomagma.util.testing import for_each, for_each_kwargs
+from pomagma.util.testing import for_each
+import pytest
 
 FREE_VARS = list(map(parse_string_to_expr, ["x", "y", "z"]))
 LANGUAGE = {
@@ -110,8 +111,11 @@ SIMPLIFY_DEFS_EXAMPLES = [
 ]
 
 
-@for_each_kwargs(SIMPLIFY_DEFS_EXAMPLES)
-def test_simplify_defs(facts, expected, vars_to_keep=[]):
+@pytest.mark.parametrize("example", SIMPLIFY_DEFS_EXAMPLES)
+def test_simplify_defs(example):
+    facts = example["facts"]
+    expected = example["expected"]
+    vars_to_keep = example.get("vars_to_keep", [])
     facts = set(map(parse_string_to_expr, facts))
     expected = set(map(parse_string_to_expr, expected))
     vars_to_keep = set(map(parse_string_to_expr, vars_to_keep))

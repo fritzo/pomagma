@@ -248,7 +248,7 @@ def test_sexpr_parse(example):
 alphabet = "_abcdefghijklmnopqrstuvwxyz"
 s_varnames = s.builds(
     str,
-    s.text(alphabet=alphabet, min_size=1, average_size=5),
+    s.text(alphabet=alphabet, min_size=1),
 )
 s_ranks = s.integers(min_value=0, max_value=99)
 s_vars = s.builds(NVAR, s_varnames)

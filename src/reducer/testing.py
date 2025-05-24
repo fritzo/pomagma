@@ -4,7 +4,6 @@ import os
 from importlib import import_module
 
 import hypothesis.strategies as s
-import pytest
 from parsable import parsable
 
 from pomagma.reducer import bohm
@@ -38,6 +37,7 @@ from pomagma.reducer.syntax import (
     sexpr_parse,
     sexpr_print,
 )
+from pomagma.util.testing import xfail_param
 
 DIR = os.path.dirname(os.path.abspath(__file__))
 TESTDATA = os.path.join(DIR, "testdata")
@@ -86,10 +86,10 @@ def iter_equations(test_id, suites=None):
         if is_equal(term):
             lhs = link(bohm.convert(term[1]))
             rhs = link(bohm.convert(term[2]))
-            example = lhs, rhs, message
             if comment and parse_xfail(comment, test_id):
-                example = pytest.mark.xfail(example)
-            yield example
+                yield xfail_param(lhs, rhs, message)
+            else:
+                yield lhs, rhs, message
         else:
             raise NotImplementedError(message)
 
@@ -160,7 +160,7 @@ def unquote_equal():
 alphabet = "_abcdefghijklmnopqrstuvwxyz"
 s_vars = s.builds(
     NVAR,
-    s.builds(str, s.text(alphabet=alphabet, min_size=1, average_size=5)),
+    s.builds(str, s.text(alphabet=alphabet, min_size=1)),
 )
 
 s_atoms = s.one_of(

@@ -1,0 +1,14 @@
+{
+    "python.pythonPath": ".venv/bin/python",
+    "python.defaultInterpreterPath": ".venv/bin/python",
+    "terminal.integrated.env.osx": {
+        "PATH": ".venv/bin:${env:PATH}"
+    },
+    "terminal.integrated.shellArgs.osx": [
+        "-c",
+        "source env.sh && exec zsh"
+    ],
+    "python.terminal.activateEnvironment": true,
+    "python.terminal.executeInFileDir": false,
+    "terminal.integrated.cwd": "${workspaceFolder}"
+} 

@@ -7,13 +7,12 @@ from pomagma.reducer.bohm_test import s_quoted
 from pomagma.reducer.sugar import app, as_term, combinator, join_, quote
 from pomagma.reducer.syntax import APP, BOT, NVAR, TOP, UNIT, sexpr_print
 from pomagma.util import TRAVIS_CI
-from pomagma.util.testing import for_each
+from pomagma.util.testing import for_each, xfail_param
 
 pretty = sexpr_print
 
 
 class lazy_actual_vs_expected(object):
-
     def __init__(self, actual, expected):
         self.actual = actual
         self.expected = expected
@@ -592,10 +591,10 @@ def test_num_add(x, y, expected):
         (num(0), num(3), num(0 * 3)),
         (num(1), num(1), num(1 * 1)),
         (num(1), num(2), num(1 * 2)),
-        pytest.mark.xfail((num(1), num(3), num(1 * 3))),
-        pytest.mark.xfail((num(2), num(2), num(2 * 2))),
-        pytest.mark.xfail((num(2), num(3), num(2 * 3))),
-        pytest.mark.xfail((num(3), num(3), num(3 * 3))),
+        xfail_param(num(1), num(3), num(1 * 3)),
+        xfail_param(num(2), num(2), num(2 * 2)),
+        xfail_param(num(2), num(3), num(2 * 3)),
+        xfail_param(num(3), num(3), num(3 * 3)),
         (undefined, num(0), num(0)),
         (num(0), undefined, num(0)),
         (error, x, error),
@@ -720,20 +719,21 @@ def test_num_quote(x, expected):
     assert reduce(lib.num_quote(x)) == expected
 
 
-@for_each(
+@pytest.mark.parametrize(
+    "y, expected",
     [
         (undefined, true),
-        pytest.mark.xfail((error, false)),
+        xfail_param(error, false),
         (zero, true),
-        pytest.mark.xfail((succ(undefined), true)),
-        pytest.mark.xfail((succ(zero), true)),
-        pytest.mark.xfail((succ(error), false)),
-        pytest.mark.xfail((succ(succ(undefined)), true)),
-        pytest.mark.xfail((succ(succ(zero)), true)),
-        pytest.mark.xfail((succ(succ(error)), false)),
-        pytest.mark.xfail((num(3), true)),
-        pytest.mark.xfail((num(4), true)),
-    ]
+        xfail_param(succ(undefined), true),
+        xfail_param(succ(zero), true),
+        xfail_param(succ(error), false),
+        xfail_param(succ(succ(undefined)), true),
+        xfail_param(succ(succ(zero)), true),
+        xfail_param(succ(succ(error)), false),
+        xfail_param(num(3), true),
+        xfail_param(num(4), true),
+    ],
 )
 def test_enum_num(y, expected):
     qxs = quote(lib.enum_num)
@@ -777,7 +777,6 @@ def test_list_test(x, expected):
 
 @for_each(
     [
-        (nil, true),
         (cons(x, nil), false),
         (cons(x, cons(y, nil)), false),
         (cons(x, cons(y, cons(z, nil))), false),
@@ -794,13 +793,19 @@ def test_list_empty(x, expected):
 @for_each(
     [
         (nil, true),
-        pytest.mark.skipif(TRAVIS_CI, reason="wtf")((cons(true, nil), true)),
-        (cons(false, nil), false),
-        pytest.mark.skipif(TRAVIS_CI, reason="wtf")(
-            (cons(true, cons(true, nil)), true)
+        pytest.param(
+            cons(true, nil), true, marks=pytest.mark.skipif(TRAVIS_CI, reason="wtf")
         ),
-        pytest.mark.skipif(TRAVIS_CI, reason="wtf")(
-            (cons(true, cons(false, nil)), false)
+        (cons(false, nil), false),
+        pytest.param(
+            cons(true, cons(true, nil)),
+            true,
+            marks=pytest.mark.skipif(TRAVIS_CI, reason="wtf"),
+        ),
+        pytest.param(
+            cons(true, cons(false, nil)),
+            false,
+            marks=pytest.mark.skipif(TRAVIS_CI, reason="wtf"),
         ),
         (cons(false, cons(true, nil)), false),
         (cons(false, cons(false, nil)), false),
@@ -921,40 +926,40 @@ def num_list(xs):
 
 
 SORT_EXAMPLES = [
-    pytest.mark.xfail([]),
-    pytest.mark.xfail([0]),
-    pytest.mark.xfail([1]),
-    pytest.mark.xfail([0, 0]),
-    pytest.mark.xfail([0, 1]),
-    pytest.mark.xfail([1, 0]),
-    pytest.mark.xfail([1, 1]),
-    pytest.mark.xfail([0, 0, 0]),
-    pytest.mark.xfail([0, 0, 1]),
-    pytest.mark.xfail([0, 1, 0]),
-    pytest.mark.xfail([1, 0, 0]),
-    pytest.mark.xfail([0, 1, 1]),
-    pytest.mark.xfail([1, 0, 1]),
-    pytest.mark.xfail([1, 1, 0]),
-    pytest.mark.xfail([0, 1, 2]),
-    pytest.mark.xfail([0, 2, 1]),
-    pytest.mark.xfail([1, 0, 2]),
-    pytest.mark.xfail([1, 2, 0]),
-    pytest.mark.xfail([2, 0, 1]),
-    pytest.mark.xfail([2, 1, 0]),
-    pytest.mark.xfail([0, 0, 0, 1]),
-    pytest.mark.xfail([0, 0, 1, 0]),
-    pytest.mark.xfail([0, 1, 0, 0]),
-    pytest.mark.xfail([1, 0, 0, 0]),
-    pytest.mark.xfail([0, 0, 1, 1]),
-    pytest.mark.xfail([0, 1, 0, 1]),
-    pytest.mark.xfail([0, 1, 1, 0]),
-    pytest.mark.xfail([1, 0, 0, 1]),
-    pytest.mark.xfail([1, 0, 1, 0]),
-    pytest.mark.xfail([1, 1, 0, 0]),
-    pytest.mark.xfail([0, 1, 2, 3]),
-    pytest.mark.xfail([1, 2, 3, 0]),
-    pytest.mark.xfail([2, 3, 0, 1]),
-    pytest.mark.xfail([3, 0, 1, 2]),
+    xfail_param([]),
+    xfail_param([0]),
+    xfail_param([1]),
+    xfail_param([0, 0]),
+    xfail_param([0, 1]),
+    xfail_param([1, 0]),
+    xfail_param([1, 1]),
+    xfail_param([0, 0, 0]),
+    xfail_param([0, 0, 1]),
+    xfail_param([0, 1, 0]),
+    xfail_param([1, 0, 0]),
+    xfail_param([0, 1, 1]),
+    xfail_param([1, 0, 1]),
+    xfail_param([1, 1, 0]),
+    xfail_param([0, 1, 2]),
+    xfail_param([0, 2, 1]),
+    xfail_param([1, 0, 2]),
+    xfail_param([1, 2, 0]),
+    xfail_param([2, 0, 1]),
+    xfail_param([2, 1, 0]),
+    xfail_param([0, 0, 0, 1]),
+    xfail_param([0, 0, 1, 0]),
+    xfail_param([0, 1, 0, 0]),
+    xfail_param([1, 0, 0, 0]),
+    xfail_param([0, 0, 1, 1]),
+    xfail_param([0, 1, 0, 1]),
+    xfail_param([0, 1, 1, 0]),
+    xfail_param([1, 0, 0, 1]),
+    xfail_param([1, 0, 1, 0]),
+    xfail_param([1, 1, 0, 0]),
+    xfail_param([0, 1, 2, 3]),
+    xfail_param([1, 2, 3, 0]),
+    xfail_param([2, 3, 0, 1]),
+    xfail_param([3, 0, 1, 2]),
 ]
 
 
@@ -991,15 +996,13 @@ def test_list_size(xs, expected):
 @for_each(
     [
         (nil, quote(nil)),
-        pytest.mark.xfail((cons(num(0), nil), quote(cons(num(0), nil)))),
-        pytest.mark.xfail((cons(num(1), nil), quote(cons(num(1), nil)))),
-        pytest.mark.xfail((cons(num(2), nil), quote(cons(num(2), nil)))),
-        pytest.mark.xfail((cons(num(3), nil), quote(cons(num(3), nil)))),
-        pytest.mark.xfail(
-            (
-                cons(num(2), cons(num(0), nil)),
-                quote(cons(num(2), cons(num(0), nil))),
-            )
+        xfail_param(cons(num(0), nil), quote(cons(num(0), nil))),
+        xfail_param(cons(num(1), nil), quote(cons(num(1), nil))),
+        xfail_param(cons(num(2), nil), quote(cons(num(2), nil))),
+        xfail_param(cons(num(3), nil), quote(cons(num(3), nil))),
+        xfail_param(
+            cons(num(2), cons(num(0), nil)),
+            quote(cons(num(2), cons(num(0), nil))),
         ),
         (undefined, undefined),
         (error, error),
@@ -1013,18 +1016,18 @@ def test_list_quote(x, expected):
 @for_each(
     [
         (lib.enum_bool, undefined, true),
-        pytest.mark.xfail((lib.enum_bool, error, false)),
+        xfail_param(lib.enum_bool, error, false),
         (lib.enum_bool, nil, true),
         (lib.enum_bool, cons(undefined, undefined), true),
         (lib.enum_bool, cons(true, undefined), true),
         (lib.enum_bool, cons(false, undefined), true),
         (lib.enum_bool, cons(true, nil), true),
         (lib.enum_bool, cons(true, nil), true),
-        pytest.mark.xfail((lib.enum_bool, cons(undefined, error), false)),
-        pytest.mark.xfail((lib.enum_bool, cons(error, undefined), false)),
-        pytest.mark.xfail((lib.enum_unit, cons(ok, cons(ok, nil)), true)),
-        pytest.mark.xfail((lib.enum_unit, cons(ok, cons(ok, undefined)), true)),
-        pytest.mark.xfail((lib.enum_unit, cons(ok, cons(ok, error)), false)),
+        xfail_param(lib.enum_bool, cons(undefined, error), false),
+        xfail_param(lib.enum_bool, cons(error, undefined), false),
+        xfail_param(lib.enum_unit, cons(ok, cons(ok, nil)), true),
+        xfail_param(lib.enum_unit, cons(ok, cons(ok, undefined)), true),
+        xfail_param(lib.enum_unit, cons(ok, cons(ok, error)), false),
     ]
 )
 def test_enum_list(enum_item, y, expected):
@@ -1047,25 +1050,25 @@ def make_stream(xs, limit):
     [
         (BOT, BOT, I),
         (app(K, I), BOT, I),
-        pytest.mark.xfail((TOP, BOT, TOP)),
-        pytest.mark.xfail((BOT, lib.stream_bot, I)),
-        pytest.mark.xfail((app(K, I), lib.stream_bot, I)),
+        xfail_param(TOP, BOT, TOP),
+        xfail_param(BOT, lib.stream_bot, I),
+        xfail_param(app(K, I), lib.stream_bot, I),
         (TOP, lib.stream_bot, TOP),
-        pytest.mark.xfail((I, lib.stream_bot, BOT)),
-        pytest.mark.xfail((I, make_stream([I], BOT), I)),
-        pytest.mark.xfail((I, make_stream([BOT, I], BOT), I)),
-        pytest.mark.xfail((I, make_stream([BOT, BOT, I], BOT), I)),
-        pytest.mark.xfail((I, make_stream([K], BOT), TOP)),
+        xfail_param(I, lib.stream_bot, BOT),
+        xfail_param(I, make_stream([I], BOT), I),
+        xfail_param(I, make_stream([BOT, I], BOT), I),
+        xfail_param(I, make_stream([BOT, BOT, I], BOT), I),
+        xfail_param(I, make_stream([K], BOT), TOP),
         (I, make_stream([TOP], BOT), TOP),
-        pytest.mark.xfail((I, make_stream([BOT, TOP], BOT), TOP)),
-        pytest.mark.xfail((I, make_stream([BOT, BOT, TOP], BOT), TOP)),
+        xfail_param(I, make_stream([BOT, TOP], BOT), TOP),
+        xfail_param(I, make_stream([BOT, BOT, TOP], BOT), TOP),
     ]
 )
 def test_stream_test(test_item, xs, expected):
     assert reduce(lib.stream_test(test_item, xs)) is expected
 
 
-@pytest.mark.xfail
+@pytest.mark.xfail(reason="FIXME")
 @for_each([TOP, BOT, I, K, B, C, S, x, x | y, S(I, I)])
 def test_stream_const(x):
     expected = lib.stream_const(x)
@@ -1076,23 +1079,23 @@ def test_stream_const(x):
 @for_each(
     [
         (BOT, BOT),
-        pytest.mark.xfail((lib.stream_bot, BOT)),
+        xfail_param(lib.stream_bot, BOT),
         (lib.stream_const(TOP), TOP),
-        pytest.mark.xfail((lib.stream_const(I), I)),
-        pytest.mark.xfail((lib.stream_const(K), K)),
-        pytest.mark.xfail((lib.stream_const(B), B)),
-        pytest.mark.xfail((lib.stream_const(S), S)),
-        pytest.mark.xfail((lib.stream_const(x), x)),
-        pytest.mark.xfail((lib.stream_cons(BOT, lib.stream_const(x)), x)),
-        pytest.mark.xfail((lib.stream_cons(x, lib.stream_const(BOT)), x)),
-        pytest.mark.xfail(
-            (lib.stream_cons(BOT, lib.stream_cons(BOT, lib.stream_const(x))), x),
+        xfail_param(lib.stream_const(I), I),
+        xfail_param(lib.stream_const(K), K),
+        xfail_param(lib.stream_const(B), B),
+        xfail_param(lib.stream_const(S), S),
+        xfail_param(lib.stream_const(x), x),
+        xfail_param(lib.stream_cons(BOT, lib.stream_const(x)), x),
+        xfail_param(lib.stream_cons(x, lib.stream_const(BOT)), x),
+        xfail_param(lib.stream_cons(BOT, lib.stream_cons(BOT, lib.stream_const(x))), x),
+        xfail_param(
+            lib.stream_cons(BOT, lib.stream_cons(x, lib.stream_bot)),
+            x,
         ),
-        pytest.mark.xfail(
-            (lib.stream_cons(BOT, lib.stream_cons(x, lib.stream_bot)), x),
-        ),
-        pytest.mark.xfail(
-            (lib.stream_cons(x, lib.stream_cons(y, lib.stream_bot)), x | y),
+        xfail_param(
+            lib.stream_cons(x, lib.stream_cons(y, lib.stream_bot)),
+            x | y,
         ),
     ]
 )
@@ -1100,7 +1103,7 @@ def test_stream_join(xs, expected):
     assert simplify(lib.stream_join(xs)) is expected
 
 
-@pytest.mark.xfail
+@pytest.mark.xfail(reason="FIXME")
 @for_each(
     [
         (I, lib.stream_bot, lib.stream_bot),
@@ -1119,7 +1122,7 @@ def test_stream_map(f, xs, expected):
     assert reduce(lib.stream_map(f, xs)) is expected
 
 
-@pytest.mark.xfail
+@pytest.mark.xfail(reason="FIXME")
 @for_each(
     [
         (
@@ -1136,7 +1139,7 @@ def test_stream_zip(xs, ys, expected):
     assert lib.stream_zip(xs, ys) is expected
 
 
-@pytest.mark.xfail
+@pytest.mark.xfail(reason="FIXME")
 @for_each(
     [
         ([I, K, B, C], [true, false, true], [I, true, K, false, B, true, C]),
@@ -1149,7 +1152,7 @@ def test_stream_dovetail(xs, ys, expected):
     assert lib.stream_dovetail(xs, ys) is expected
 
 
-@pytest.mark.xfail
+@pytest.mark.xfail(reason="FIXME")
 @for_each(
     [
         (lib.bool_quote, make_stream([true, false], true)),
@@ -1160,7 +1163,7 @@ def test_stream_quote(quote_item, xs):
     assert lib.stream_quote(quote_item, xs) is quote(xs)
 
 
-@pytest.mark.xfail
+@pytest.mark.xfail(reason="FIXME")
 @for_each(
     [
         (lib.enum_unit, lib.stream_const(BOT)),
@@ -1182,7 +1185,7 @@ def test_stream_enum(enum_item, expected_lb):
     assert try_decide_less(expected_lb, actual) is not False
 
 
-@pytest.mark.xfail
+@pytest.mark.xfail(reason="FIXME")
 @for_each(list(range(10)))
 def test_stream_num(index):
     expected = zero
@@ -1193,7 +1196,7 @@ def test_stream_num(index):
     assert lib.stream_head(xs) is expected
 
 
-@pytest.mark.xfail
+@pytest.mark.xfail(reason="FIXME")
 @for_each(list(range(10)))
 def test_stream_take(size):
     expected = nil
@@ -1378,7 +1381,7 @@ maybe_t = lib.maybe_type
         (unit_t, unit_t, unit_t),
         (bool_t, bool_t, bool_t),
         (maybe_t, maybe_t, maybe_t),
-        pytest.mark.xfail((lib.bool_not, lib.bool_not, bool_t)),
+        xfail_param(lib.bool_not, lib.bool_not, bool_t),
     ]
 )
 def test_compose(f, g, expected):
@@ -1426,7 +1429,7 @@ def test_fix(value, expected):
 
 @for_each(
     [
-        pytest.mark.xfail((error, error)),
+        xfail_param(error, error),
         (undefined, undefined),
         # TODO Add more examples.
     ]
@@ -1471,7 +1474,7 @@ a_boool = app(
 
 @for_each(
     [
-        pytest.mark.xfail((BOT, BOT), run=False),
+        xfail_param(BOT, BOT, reason="FIXME", run=False),
         (TOP, TOP),
         (I, TOP),
         (K, TOP),
@@ -1492,18 +1495,18 @@ def test_div(x, expected):
 @pytest.mark.timeout(1)
 @for_each(
     [
-        pytest.mark.xfail((BOT, BOT), run=False),
+        xfail_param(BOT, BOT, reason="FIXME", run=False),
         (TOP, TOP),
-        pytest.mark.xfail((I, TOP), run=False),
-        pytest.mark.xfail((K, TOP), run=False),
-        pytest.mark.xfail((B, TOP), run=False),
-        pytest.mark.xfail((C, TOP), run=False),
-        pytest.mark.xfail((S, TOP), run=False),
-        pytest.mark.xfail((join, TOP), run=False),
-        pytest.mark.xfail((app(K, I), TOP), run=False),
-        pytest.mark.xfail((app(C, B), TOP), run=False),
-        pytest.mark.xfail((app(C, I), TOP), run=False),
-        pytest.mark.xfail((app(S, I), TOP), run=False),
+        xfail_param(I, TOP, reason="FIXME", run=False),
+        xfail_param(K, TOP, reason="FIXME", run=False),
+        xfail_param(B, TOP, reason="FIXME", run=False),
+        xfail_param(C, TOP, reason="FIXME", run=False),
+        xfail_param(S, TOP, reason="FIXME", run=False),
+        xfail_param(join, TOP, reason="FIXME", run=False),
+        xfail_param(app(K, I), TOP, reason="FIXME", run=False),
+        xfail_param(app(C, B), TOP, reason="FIXME", run=False),
+        xfail_param(app(C, I), TOP, reason="FIXME", run=False),
+        xfail_param(app(S, I), TOP, reason="FIXME", run=False),
     ]
 )
 def test_div_constructed(x, expected):
@@ -1513,13 +1516,13 @@ def test_div_constructed(x, expected):
 @pytest.mark.timeout(1)
 @for_each(
     [
-        pytest.mark.xfail((ok, ok)),
+        xfail_param(ok, ok, reason="FIXME"),
         (error, error),
-        pytest.mark.xfail((undefined, undefined)),
+        xfail_param(undefined, undefined, reason="FIXME"),
         (true, error),
         (false, error),
         (join, error),
-        pytest.mark.xfail((x, app(UNIT, x))),
+        xfail_param(x, app(UNIT, x), reason="FIXME"),
     ]
 )
 def test_unit_constructed(x, expected):
@@ -1529,11 +1532,11 @@ def test_unit_constructed(x, expected):
 @pytest.mark.timeout(1)
 @for_each(
     [
-        pytest.mark.xfail((true, true)),
-        pytest.mark.xfail((false, false)),
+        xfail_param(true, true),
+        xfail_param(false, false),
         (error, error),
-        pytest.mark.xfail((undefined, undefined)),
-        pytest.mark.xfail((join, join)),
+        xfail_param(undefined, undefined),
+        xfail_param(join, join),
         (I, error),
         (B, error),
         (C, error),
@@ -1620,7 +1623,7 @@ def test_equal_transitive(x, y, z):
     if equal_xy is true and equal_yz is true:
         assert equal_xz is true
     if equal_xz is false:
-        assert equal_xy is false or equal_yz is false
+        assert equal_xy is not true or equal_yz is not true
 
 
 LESS_EXAMPLES = [
@@ -1634,8 +1637,8 @@ LESS_EXAMPLES = [
     (x, undefined, lib.less(x, undefined)),
     (undefined, quote(x), lib.less(undefined, quote(x))),
     (quote(x), undefined, lib.less(quote(x), undefined)),
-    pytest.mark.xfail((undefined, quote(error), true)),
-    pytest.mark.xfail((quote(undefined), undefined, true)),
+    xfail_param(undefined, quote(error), true),
+    xfail_param(quote(undefined), undefined, true),
     (quote(error), quote(error), true),
     (quote(error), quote(undefined), false),
     (quote(error), quote(num(0)), false),

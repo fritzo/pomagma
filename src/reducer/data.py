@@ -139,7 +139,6 @@ def decode_maybe(decode_item):
 
 @memoize_args
 def encode_prod(encode_fst, encode_snd):
-
     def encode(value):
         if not (isinstance(value, tuple) and len(value) == 2):
             raise TypeError(value)
@@ -173,7 +172,6 @@ def decode_prod(decode_fst, decode_snd):
 
 @memoize_args
 def encode_sum(encode_inl, encode_inr):
-
     def encode(value):
         if not (
             isinstance(value, tuple) and len(value) == 2 and isinstance(value[0], bool)
@@ -240,7 +238,6 @@ def decode_num(term):
 
 @memoize_arg
 def encode_list(encode_item):
-
     def encode(values):
         if not isinstance(values, list):
             raise TypeError(values)
@@ -293,7 +290,6 @@ def decode_bytes(term):
 
 @memoize_arg
 def encode_fun(decode_args, encode_result):
-
     def encode(py_fun):
         TODO("encode python function as a combinator")
 
@@ -302,9 +298,7 @@ def encode_fun(decode_args, encode_result):
 
 @memoize_arg
 def decode_fun(encode_args, decode_result):
-
     def decode(un_fun):
-
         def py_fun(*py_args):
             assert len(py_args) == len(encode_args)
             un_args = tuple(e(a) for (e, a) in zip(encode_args, py_args))

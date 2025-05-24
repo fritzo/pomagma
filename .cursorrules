@@ -1,0 +1,4 @@
+# Cursor Rules for Pomagma
+
+**NEVER DELETE TESTS**: Do not delete tests, test cases, or test data unless the user explicitly asks you to remove them. Tests are critical documentation of expected behavior and should be preserved. When encountering test failures, investigate and fix the underlying implementation rather than removing the failing test. If you need to modify a test, explain why and ask for permission first.
+

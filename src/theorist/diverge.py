@@ -364,7 +364,7 @@ def try_prove_diverge(
     max_steps=20,
     log_file=None,
     log_level=0,
-    **unused
+    **unused,
 ):
     assert conjectures_in != theorems_out
     assert conjectures_out != theorems_out

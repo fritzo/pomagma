@@ -334,7 +334,6 @@ TRY_CAST = {}
 
 
 def casts(closure):
-
     def decorator(fun):
         TRY_CAST[closure] = fun
         return fun

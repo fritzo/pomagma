@@ -10,8 +10,8 @@ lint: FORCE
 	flake8 --jobs auto --ignore=E402 $(PY_FILES)
 
 test: lint
-	$(info py.test)
-	py.test --nbval
+	$(info pytest)
+	pytest --nbval
 
 clean:
 	find . | grep '\.pyc$$' | xargs rm

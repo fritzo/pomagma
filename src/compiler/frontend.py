@@ -249,7 +249,6 @@ def Ensure_program(self, program, stack=None, poll=None):
     expr = self.expr
     args = [arg if arg.args else arg.var for arg in expr.args]
     if all(arg.is_var() for arg in args):
-
         arity = self.expr.arity
         if self.expr.name == "EQUAL":
             line = "INFER_EQUAL {lhs} {rhs}".format(lhs=args[0], rhs=args[1])
@@ -314,7 +313,6 @@ def write_full_programs(programs, sequents, can_parallelize=True):
 
 
 def write_event_programs(programs, sequents):
-
     event_tasks = {}
     for sequent in sequents:
         for event in compiler.get_events(sequent):

@@ -11,7 +11,6 @@ RE_COMMENT = re.compile("#.*$")
 
 
 class ParseError(Exception):
-
     def __init__(self, message, **debuginfo):
         self.message = str(message)
         self.debuginfo = debuginfo

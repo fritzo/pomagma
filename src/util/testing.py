@@ -6,18 +6,17 @@ import pytest
 
 
 def for_each(examples):
-
     def decorator(fun):
         args, vargs, kwargs, defaults = inspect.getfullargspec(fun)[:4]
         if vargs or kwargs or defaults:
             raise TypeError(
                 "\n  ".join(
                     [
-                        "Unsupported signature: ".format(fun),
-                        "args = {}".format(args),
-                        "vargs = {}".format(vargs),
-                        "kwargs = {}".format(kwargs),
-                        "defaults = {}".format(defaults),
+                        f"Unsupported signature: {fun}",
+                        f"args = {args}",
+                        f"vargs = {vargs}",
+                        f"kwargs = {kwargs}",
+                        f"defaults = {defaults}",
                     ]
                 )
             )
@@ -28,18 +27,17 @@ def for_each(examples):
 
 
 def for_each_kwargs(examples):
-
     def decorator(fun):
         args, vargs, kwargs, defaults = inspect.getfullargspec(fun)[:4]
         if vargs or kwargs:
             raise TypeError(
                 "\n  ".join(
                     [
-                        "Unsupported signature: ".format(fun),
-                        "args = {}".format(args),
-                        "vargs = {}".format(vargs),
-                        "kwargs = {}".format(kwargs),
-                        "defaults = {}".format(defaults),
+                        f"Unsupported signature: {fun}",
+                        f"args = {args}",
+                        f"vargs = {vargs}",
+                        f"kwargs = {kwargs}",
+                        f"defaults = {defaults}",
                     ]
                 )
             )
@@ -69,3 +67,8 @@ def skip_if_not_implemented():
         yield
     except NotImplementedError as e:
         pytest.skip(str(e))
+
+
+def xfail_param(*args, reason="FIXME", **kwargs):
+    """Helper to create pytest.param with xfail mark."""
+    return pytest.param(*args, marks=pytest.mark.xfail(reason=reason, **kwargs))

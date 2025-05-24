@@ -5,7 +5,7 @@ import zmq
 from google.protobuf.descriptor import FieldDescriptor
 
 import pomagma.util
-from pomagma.cartographer import messages_pb2 as messages
+from pomagma.cartographer import cartographer_messages_pb2 as messages
 
 CONTEXT = zmq.Context()
 POLL_TIMEOUT_MS = 1000
@@ -14,7 +14,6 @@ Response = messages.CartographerResponse
 
 
 class Client(object):
-
     def __init__(self, address, poll_callback):
         assert isinstance(address, str), address
         assert callable(poll_callback), poll_callback

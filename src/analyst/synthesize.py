@@ -65,7 +65,6 @@ def is_complete(expr):
 
 
 class ComplexityEvaluator(object):
-
     def __init__(self, language):
         assert isinstance(language, dict), language
         for name, cost in list(language.items()):
@@ -214,7 +213,6 @@ def lazy_iter_valid_sketches(fill, lazy_validate, normal_sketches, verbose=0):
 
 
 class Interruptable(object):
-
     def __enter__(self):
         self._interrupted = False
         self._old_handler = signal.signal(signal.SIGINT, self)
@@ -376,7 +374,6 @@ def simplify_facts(db, facts, vars_to_keep):
 
 
 class FactsValidator(object):
-
     def __init__(self, db, facts, var, initial_sketch=HOLE):
         assert isinstance(facts, list), facts
         assert all(isinstance(f, Expression) for f in facts), facts

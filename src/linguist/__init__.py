@@ -8,7 +8,6 @@ PROTO = os.path.join(pomagma.util.LANGUAGE, "{}.language")
 
 
 def fit_language(theory, address=pomagma.analyst.ADDRESS, log_file=None, log_level=0):
-
     language_json = JSON.format(theory)
     language_proto = PROTO.format(theory)
 
@@ -29,7 +28,7 @@ def fit_language(theory, address=pomagma.analyst.ADDRESS, log_file=None, log_lev
     old_terms = sorted(key for group in list(language.values()) for key in group)
     assert new_terms == old_terms, "\n  ".join(
         [
-            "language mismatch," "expected: {}".format(old_terms),
+            "language mismatch,expected: {}".format(old_terms),
             "actual: {}".format(new_terms),
         ]
     )

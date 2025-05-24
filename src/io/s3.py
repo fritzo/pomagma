@@ -6,12 +6,14 @@ https://github.com/boto/boto/blob/develop/boto/s3
 
 """
 
+import hashlib
 import multiprocessing
 import os
 import re
 import subprocess
 
-import boto
+import boto3
+from botocore.exceptions import ClientError
 from parsable import parsable
 
 import pomagma.util
@@ -24,86 +26,119 @@ def try_connect_s3(bucket):
         print("WARNING avoid connecting to bucket on travis-ci")
         return None
     try:
-        connection = boto.connect_s3().get_bucket(bucket)
+        s3 = boto3.client("s3")
+        # Test access by trying to head the bucket
+        s3.head_bucket(Bucket=bucket)
         print("connected to bucket", bucket)
-        return connection
-    except boto.exception.NoAuthHandlerFound as e:
-        print("WARNING failed to authenticate s3 bucket {}\n".format(bucket), e)
-        return None
+        return s3
     except Exception as e:
         print("WARNING failed to connect to s3 bucket {}\n".format(bucket), e)
         return None
 
 
 # TODO allow different buckets to be specified, e.g. for a logging bucket
-BUCKET = try_connect_s3(os.environ.get("POMAGMA_BUCKET", "pomagma"))
+BUCKET_NAME = os.environ.get("POMAGMA_BUCKET", "pomagma")
+BUCKET = try_connect_s3(BUCKET_NAME)
 
 
-def s3_lazy_put(filename, assume_immutable=False):
+def s3_lazy_put(filename, assume_immutable=False) -> str | None:
     """Put file to s3 only if out of sync."""
-    key = BUCKET.get_key(filename)
-    if key is None:
-        key = BUCKET.new_key(filename)
-        print("uploading", filename)
-        key.set_contents_from_filename(filename)
-        return key
-    elif assume_immutable:
-        # print('already synchronized')
-        return key
-    else:
-        with open(filename, "rb") as f:
-            # print('checking cached'), filename
-            md5 = key.compute_md5(f)
-        key_md5_0 = key.etag.strip('"')  # WTF
-        if md5[0] == key_md5_0:
-            # print('already synchronized')
-            return key
+    try:
+        # Check if object exists
+        BUCKET.head_object(Bucket=BUCKET_NAME, Key=filename)
+        object_exists = True
+    except ClientError as e:
+        if e.response["Error"]["Code"] == "404":
+            object_exists = False
         else:
+            raise
+
+    if not object_exists:
+        print("uploading", filename)
+        BUCKET.upload_file(filename, BUCKET_NAME, filename)
+        return filename
+
+    if object_exists and assume_immutable:
+        return filename
+
+    # Check if local file is newer
+    local_stat = os.stat(filename)
+
+    try:
+        remote_obj = BUCKET.head_object(Bucket=BUCKET_NAME, Key=filename)
+        local_mtime = local_stat.st_mtime
+        remote_mtime = remote_obj["LastModified"].timestamp()
+
+        if local_mtime > remote_mtime:
             print("uploading", filename)
-            key.set_contents_from_filename(filename, md5=md5)
-            return key
+            BUCKET.upload_file(filename, BUCKET_NAME, filename)
+            return filename
+        else:
+            print("current", filename)
+            return filename
+    except ClientError:
+        print("uploading", filename)
+        BUCKET.upload_file(filename, BUCKET_NAME, filename)
+        return filename
 
 
 def s3_lazy_get(filename, assume_immutable=False):
     """Get file from s3 only if out of sync."""
-    key = BUCKET.get_key(filename)
-    if key is None:
-        print("missing", filename)
-        return key
+    try:
+        # Check if object exists
+        response = BUCKET.head_object(Bucket=BUCKET_NAME, Key=filename)
+    except ClientError as e:
+        if e.response["Error"]["Code"] == "404":
+            print("missing", filename)
+            return None
+        else:
+            raise
+
     if os.path.exists(filename):
         if assume_immutable:
             # print('already synchronized')
-            return key
+            return filename
         else:
+            # Calculate local file MD5
             with open(filename, "rb") as f:
-                # print('checking cached'), filename
-                md5 = key.compute_md5(f)
-            key_md5_0 = key.etag.strip('"')  # WTF
-            if md5[0] == key_md5_0:
+                file_hash = hashlib.md5(f.read()).hexdigest()
+
+            key_etag = response["ETag"].strip('"')
+            if file_hash == key_etag:
                 # print('already synchronized')
-                return key
+                return filename
+
     dirname = os.path.dirname(filename)
     if dirname and not os.path.exists(dirname):
         os.makedirs(dirname)
     print("downloading", filename)
-    key.get_contents_to_filename(filename)
-    return key
+    BUCKET.download_file(BUCKET_NAME, filename, filename)
+    return filename
 
 
 def s3_listdir(prefix):
-    keys = BUCKET.list(prefix)
-    return [key for key in keys if not key.name.endswith("/")]
+    response = BUCKET.list_objects_v2(Bucket=BUCKET_NAME, Prefix=prefix)
+    if "Contents" not in response:
+        return []
+    return [obj for obj in response["Contents"] if not obj["Key"].endswith("/")]
 
 
 def s3_remove(filename):
-    key = BUCKET.get_key(filename)
-    if key is not None:
-        key.delete()
+    try:
+        BUCKET.delete_object(Bucket=BUCKET_NAME, Key=filename)
+    except ClientError:
+        pass  # Object may not exist
 
 
 def s3_exists(filename):
-    key = BUCKET.get_key(filename)
-    return key is not None
+    try:
+        BUCKET.head_object(Bucket=BUCKET_NAME, Key=filename)
+        return True
+    except ClientError as e:
+        if e.response["Error"]["Code"] == "404":
+            return False
+        else:
+            raise
 
 
 def bzip2(filename):
@@ -179,10 +214,10 @@ def put(filename):
 
 def listdir(prefix=""):
     for key in s3_listdir(prefix):
-        if is_blob(key.name):
-            filename = key.name
+        if is_blob(key["Key"]):
+            filename = key["Key"]
         else:
-            filename_ext = key.name
+            filename_ext = key["Key"]
             assert filename_ext[-len(EXT) :] == EXT, filename_ext
             filename = filename_ext[: -len(EXT)]
         yield filename

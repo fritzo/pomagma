@@ -534,7 +534,6 @@ def iter_join(graph):
 
 
 def preprocess_join_args(fun):
-
     @functools.wraps(fun)
     def join(args):
         args = frozenset(g for arg in args for g in iter_join(arg))
@@ -583,7 +582,7 @@ def as_graph(fun):
         return fun
     if not callable(fun):
         raise SyntaxError("Expected callable, got: {}".format(fun))
-    args, vargs, kwargs, defaults = inspect.getargspec(fun)
+    args, vargs, kwargs, defaults = inspect.getfullargspec(fun)[:4]
     if vargs or kwargs or defaults:
         source = inspect.getsource(fun)
         raise SyntaxError("Unsupported signature: {}".format(source))

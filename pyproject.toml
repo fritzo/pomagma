@@ -1,0 +1,35 @@
+[project]
+name = "pomagma"
+description = "An inference engine for extensional lambda-calculus"
+authors = [{name = "Fritz Obermeyer", email = "fritz.obermeyer@gmail.com"}]
+license = {text = "Apache 2.0"}
+dynamic = ["version"]
+
+[tool.ruff]
+# Configure line length to match black
+line-length = 88
+
+# Target Python 3.7+ (adjust as needed for your minimum supported version)
+target-version = "py37"
+
+[tool.ruff.lint]
+# Enable additional rules as needed
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+]
+
+# Ignore E741 (ambiguous variable name) since we use mathematical notation
+# where single letters like I, K, F, etc. are conventional combinators
+ignore = ["E741"]
+
+[tool.ruff.format]
+# Enable the formatter with same settings as black
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
+
+[tool.black]
+line-length = 88
+target-version = ['py37'] 

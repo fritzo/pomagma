@@ -202,7 +202,6 @@ def in_temp_dir():
 
 
 class MutexLockedException(Exception):
-
     def __init__(self, filename):
         self.filename = os.path.abspath(filename)
 

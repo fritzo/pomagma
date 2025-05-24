@@ -49,16 +49,15 @@ def test_eta_expand(comb, expected):
 
 
 DECIDE_EQUAL_EXAMPLES = [
-    pytest.mark.xfail(
-        (
-            {
-                "K": make_combinator(2, make_headex(0)),
-                "F": make_combinator(2, make_headex(1)),
-            },
-            "K",
-            "F",
-            False,
-        )
+    pytest.param(
+        {
+            "K": make_combinator(2, make_headex(0)),
+            "F": make_combinator(2, make_headex(1)),
+        },
+        "K",
+        "F",
+        False,
+        marks=pytest.mark.xfail(reason="Equality decision not fully implemented"),
     ),
 ]
 

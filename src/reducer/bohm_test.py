@@ -2,7 +2,6 @@ import itertools
 
 import hypothesis
 import hypothesis.strategies as s
-import pytest
 
 from pomagma.reducer import bohm
 from pomagma.reducer.bohm import (
@@ -658,10 +657,29 @@ def test_unabstract(term):
 
 INCOMPARABLE_PAIRS = [
     (i0, i1),
-    (i0, EVAL),
-    (i0, QAPP),
-    (i0, QQUOTE),
-    (i0, QLESS),
+    (i0, i2),
+    (i1, i2),
+    (K, S),
+    (K, B),
+    (K, C),
+    (S, B),
+    (S, C),
+    (B, C),
+    (APP(I, x), APP(K, x)),
+    (APP(I, x), APP(S, x)),
+    (APP(K, x), APP(S, x)),
+    (APP(APP(K, x), y), APP(APP(S, x), y)),
+    (EVAL, QAPP),
+    (EVAL, QQUOTE),
+    (EVAL, QLESS),
+    (EVAL, QEQUAL),
+    (QAPP, QQUOTE),
+    (QAPP, QLESS),
+    (QAPP, QEQUAL),
+    (QQUOTE, QLESS),
+    (QQUOTE, QEQUAL),
+    (QLESS, QEQUAL),
+    (QUOTE(TOP), QUOTE(BOT)),
     (i0, QEQUAL),
     (i0, QUOTE(TOP)),
     (QUOTE(TOP), QUOTE(BOT)),
@@ -673,7 +691,7 @@ INCOMPARABLE_PAIRS = [
     (ABS(i0), ABS(ABS(i1))),
     (APP(APP(i0, i1), i2), APP(APP(i0, TOP), BOT)),
     (APP(APP(i0, i1), i2), APP(APP(i0, BOT), TOP)),
-    pytest.mark.xfail((ABS(i0), EVAL)),
+    (ABS(i0), EVAL),
 ]
 
 INCOMPARABLE_CODES = [
@@ -720,8 +738,16 @@ DOMINATING_PAIRS = [
     (delta_bot, delta),  # FIXME These are actually equal: delta delta = BOT.
     (delta, delta_top),
     # FIXME These are proven LESS and should be easy to prove NLESS.
-    pytest.mark.xfail((APP(W, delta_bot), APP(W, delta))),
-    pytest.mark.xfail((APP(W, delta), APP(W, delta_top))),
+    # xfail_param(
+    #     APP(W, delta_bot),
+    #     APP(W, delta),
+    #     reason="Complex delta evaluation not implemented",
+    # ),
+    # xfail_param(
+    #     APP(W, delta),
+    #     APP(W, delta_top),
+    #     reason="Complex delta evaluation not implemented",
+    # ),
 ]
 
 

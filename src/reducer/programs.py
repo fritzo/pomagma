@@ -29,7 +29,6 @@ def using_engine(engine, budget=None):
 
 
 class Program(object):
-
     def __init__(self, encoders, decoder, fun):
         functools.update_wrapper(self, fun)
         self._encoders = encoders

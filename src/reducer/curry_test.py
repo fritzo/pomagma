@@ -16,7 +16,6 @@ from pomagma.reducer.syntax import (
 )
 from pomagma.reducer.testing import iter_equations
 from pomagma.util.testing import for_each, xfail_if_not_implemented
-from functools import reduce
 
 a = NVAR("a")
 b = NVAR("b")
