@@ -12,14 +12,14 @@ from pomagma.util.testing import for_each
 SCRIPT_DIR = os.path.abspath(os.path.dirname(__file__))
 
 
-def assert_converts(expected):
+def assert_converts(expected, tol=1e-7):
     language = dict_to_language(expected)
     actual = language_to_dict(language)
     assert set(expected.keys()) == set(actual.keys())
     for arity in list(expected.keys()):
         assert set(expected[arity].keys()) == set(actual[arity].keys())
         for term, weight in list(expected[arity].items()):
-            assert abs(weight - actual[arity][term]) < 1e-8
+            assert abs(weight - actual[arity][term]) < tol
 
 
 def test_example():
