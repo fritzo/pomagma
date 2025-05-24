@@ -1,4 +1,5 @@
 #include "message.hpp"
+
 #include <vector>
 
 using namespace pomagma;
@@ -46,7 +47,7 @@ void test_write_read(const std::vector<uint32_t>& example, Args... args) {
 int main() {
     Log::Context log_context("Atlas Message Test");
 
-    for (const auto example : examples) {
+    for (const auto& example : examples) {
         POMAGMA_INFO("Example: " << example);
         test_write_read<Int32Writer, Int32Reader>(example);
         test_write_read<Varint32Writer, Varint32Reader>(example);

@@ -1,9 +1,10 @@
 #pragma once
 
-#include "util.hpp"
-#include "structure.hpp"
 #include <pomagma/util/sequential/dense_set.hpp>
 #include <unordered_map>
+
+#include "structure.hpp"
+#include "util.hpp"
 
 namespace pomagma {
 

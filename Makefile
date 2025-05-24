@@ -21,7 +21,6 @@ echo-py-files: FORCE
 echo-cpp-files: FORCE
 	echo $(CPP_FILES)
 
-
 protobuf: FORCE
 	$(MAKE) -C src protobuf
 
@@ -37,8 +36,7 @@ clang-ctags:
 
 lint: FORCE
 	# TODO Use clang-tidy.
-	$(info flake8)
-	@flake8 --jobs auto --ignore=E402 $(PY_FILES)
+	# TODO use ruff
 
 clang-format: FORCE
 	$(info clang-format)

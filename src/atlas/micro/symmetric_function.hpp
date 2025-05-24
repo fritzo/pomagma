@@ -1,9 +1,10 @@
 #pragma once
 
-#include "util.hpp"
+#include <pomagma/util/concurrent/dense_set.hpp>
+
 #include "base_bin_rel.hpp"
 #include "inverse_bin_fun.hpp"
-#include <pomagma/util/concurrent/dense_set.hpp>
+#include "util.hpp"
 
 namespace pomagma {
 

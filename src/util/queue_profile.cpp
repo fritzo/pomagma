@@ -1,15 +1,15 @@
+#include <algorithm>
 #include <pomagma/util/queue.hpp>
 #include <thread>
-#include <algorithm>
 
 using namespace pomagma;
 
 template <class Queue>
 void profile_readers_writers(size_t topic_count, size_t worker_count,
                              size_t message_count) {
-    POMAGMA_INFO(demangle(typeid(Queue).name()) << ": " << worker_count
-                                                << " workers, " << topic_count
-                                                << " topics");
+    POMAGMA_INFO(demangle(typeid(Queue).name())
+                 << ": " << worker_count << " workers, " << topic_count
+                 << " topics");
     POMAGMA_ASSERT_EQ(0, message_count % worker_count);
     SharedBroker<Queue> broker(topic_count);
 
@@ -41,19 +41,18 @@ void profile_readers_writers(size_t topic_count, size_t worker_count,
 
     // read sequentially until topic is empty, then jump to another topic
     for (size_t w = 0; w < worker_count; ++w) {
-        threads.push_back(std::thread(
-            [topic_count, worker_count, message_count, &broker, w]() {
-                rng_t rng(w);
-                std::uniform_int_distribution<> random_topic(0,
-                                                             topic_count - 1);
-                uint8_t message[256];
-                size_t topic = random_topic(rng);
-                for (size_t m = 0; m < message_count / worker_count; ++m) {
-                    while (unlikely(not broker.try_pop(topic, &message))) {
-                        topic = random_topic(rng);
-                    }
+        threads.push_back(std::thread([topic_count, worker_count, message_count,
+                                       &broker, w]() {
+            rng_t rng(w);
+            std::uniform_int_distribution<> random_topic(0, topic_count - 1);
+            uint8_t message[256];
+            size_t topic = random_topic(rng);
+            for (size_t m = 0; m < message_count / worker_count; ++m) {
+                while (unlikely(not broker.try_pop(topic, &message))) {
+                    topic = random_topic(rng);
                 }
-            }));
+            }
+        }));
     }
 
     for (auto& thread : threads) {

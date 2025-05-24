@@ -1,5 +1,6 @@
-#include <atomic>
 #include <gtest/gtest.h>
+
+#include <atomic>
 #include <pomagma/util/queue.hpp>
 #include <thread>
 #include <typeinfo>

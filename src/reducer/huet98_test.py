@@ -57,7 +57,11 @@ def test_decide_equal(defs, lhs, rhs, expected):
 
 
 def test_fixed_points():
-    """Example from huet1998regular pp. 6."""
+    """Example from huet1998regular pp.
+
+    6.
+
+    """
     p = Presentation()
     # Y f = f(Y(f))
     p.define('Y', make_combinator(1, make_headex(0, make_pattern('Y', 0))))
@@ -72,7 +76,11 @@ def test_fixed_points():
 
 
 def test_J_equals_I():
-    """Example from huet1998regular pp. 8."""
+    """Example from huet1998regular pp.
+
+    8.
+
+    """
     p = Presentation()
     # J x y = (x (J y))
     p.define('J', make_combinator(2, make_headex(0, make_pattern('J', 1))))

@@ -290,7 +290,7 @@ def analyze(theory=THEORY, size=None, address=analyst.ADDRESS, **options):
     if size == '?':
         with atlas.chdir(theory):
             files = glob.glob(DB('region.normal.*'))
-            sizes = sorted(int(re.search('\d+', f).group()) for f in files)
+            sizes = sorted(int(re.search('\\d+', f).group()) for f in files)
         print 'Try one of: {}'.format(' '.join(str(s) for s in sizes))
         sys.exit(1)
     server = _analyze(theory, size, address, **options)

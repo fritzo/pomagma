@@ -1,9 +1,10 @@
 #pragma once
 
-#include <pomagma/util/util.hpp>
-#include <pomagma/util/hash_map.hpp>
-#include <unordered_set>
 #include <tbb/concurrent_unordered_set.h>
+
+#include <pomagma/util/hash_map.hpp>
+#include <pomagma/util/util.hpp>
+#include <unordered_set>
 
 namespace pomagma {
 

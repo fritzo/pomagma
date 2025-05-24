@@ -31,6 +31,7 @@ of small 16 bit or 32 bit pointers to terms, and hashing is cheap.
   http://pdfs.semanticscholar.org/0987/97b8cc108fc0d90d3e2ad7eba0117113d6ec.pdf
 [4] "Lambda calculi plus letrec" (1997) -Zen M. Ariola, Stefan Blom
   http://ix.cs.uoregon.edu/~ariola/cycles.pdf
+
 """
 
 import functools
@@ -373,9 +374,11 @@ def graph_quotient(terms):
 def graph_address(terms):
     """Find the least address of each term in a graph, up to nondeterminism.
 
-    This acts as a hashing function for terms in graphs, in that, except for
-    nondeterminism, each term has a unique minimum address. Thus graph sorting
-    can restrict to permutations within address equivalence class.
+    This acts as a hashing function for terms in graphs, in that, except
+    for nondeterminism, each term has a unique minimum address. Thus
+    graph sorting can restrict to permutations within address
+    equivalence class.
+
     """
     assert all(isinstance(term, Term) for term in terms)
     min_address = [None] * len(terms)
@@ -395,9 +398,10 @@ def graph_address(terms):
 def partition_by_address(min_address):
     """Partition terms by address, given min addresses from graph_addres.
 
-    This is partition and the ordering of its parts are both guaranteed to be
-    invariant to graph isomorphism, however the ordering of items within parts
-    is not invariang under graph isomorphism.
+    This is partition and the ordering of its parts are both guaranteed
+    to be invariant to graph isomorphism, however the ordering of items
+    within parts is not invariang under graph isomorphism.
+
     """
     by_address = defaultdict(list)
     for i, address in enumerate(min_address):
@@ -418,6 +422,7 @@ def graph_sort(terms):
     address, and then disambiguates address collisions by finding the
     min graph among all graphs with the same address partitions, wrt the
     arbitrary linear order of the python langauge.
+
     """
     min_address = graph_address(terms)
     partitions = partition_by_address(min_address)
@@ -577,6 +582,7 @@ def as_graph(fun):
 
     [1] Pfenning, Elliot (1988) "Higher-order abstract syntax"
       https://www.cs.cmu.edu/~fp/papers/pldi88.pdf
+
     """
     if isinstance(fun, Graph):
         return fun
@@ -735,7 +741,9 @@ def find_scope(graph, abs_pos):
     any other ABS term's scope if that scope interesects this scope (i.e.
     Ariola's "nesting" property).
 
-    Returns: a frozenset of positions."""
+    Returns: a frozenset of positions.
+
+    """
     assert isinstance(graph, Graph)
     assert isinstance(abs_pos, int)
     assert 0 <= abs_pos and abs_pos < len(graph)
@@ -821,6 +829,7 @@ def is_linear(graph):
     """Whether no terms of a graph ever copy any bound variable.
 
     Note that JOIN is not considered copying.
+
     """
     assert isinstance(graph, Graph)
     return all(
@@ -974,6 +983,7 @@ def try_compute_step(graph):
     """Tries to execute one compute step.
 
     Returns: reduced graph if possible, otherwise None.
+
     """
     assert isinstance(graph, Graph)
     for pos, term in enumerate(graph):

@@ -1,7 +1,8 @@
 #pragma once
 
-#include "util.hpp"
 #include <pomagma/util/sequential/dense_set.hpp>
+
+#include "util.hpp"
 
 namespace pomagma {
 namespace shard {

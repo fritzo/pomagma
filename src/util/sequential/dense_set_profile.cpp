@@ -15,7 +15,7 @@ double test_iterator(size_t exponent, float density, size_t iters = 10000) {
         }
     }
 
-    size_t count = 0;
+    size_t count __attribute__((unused)) = 0;
     Timer timer;
     for (size_t i = 0; i < iters; ++i) {
         for (auto iter = set.iter(); iter.ok(); iter.next()) {
@@ -35,7 +35,7 @@ double test_iterator2(size_t exponent, float density, size_t iters = 10000) {
         if (randomly_insert(rng)) set2.insert(i);
     }
 
-    size_t count = 0;
+    size_t count __attribute__((unused)) = 0;
     Timer timer;
     for (size_t i = 0; i < iters; ++i) {
         for (auto iter = set2.iter_insn(set2); iter.ok(); iter.next()) {
@@ -53,7 +53,7 @@ double test_equal(size_t exponent, float density, size_t iters = 10000) {
         if (randomly_insert(rng)) set.insert(i);
     }
 
-    size_t count = 0;
+    size_t count __attribute__((unused)) = 0;
     Timer timer;
     for (size_t i = 0; i < iters; ++i) {
         // operator== is usually called with actually equal sets
@@ -76,7 +76,7 @@ double test_likely_disjoint(size_t exponent, float density,
     // likely_disjoint is usually called with actually disjoint sets
     set2 -= set1;
 
-    size_t count = 0;
+    size_t count __attribute__((unused)) = 0;
     Timer timer;
     for (size_t i = 0; i < iters; ++i) {
         count += set1.likely_disjoint(set2);
@@ -95,7 +95,7 @@ double test_unlikely_disjoint(size_t exponent, float density,
         if (randomly_insert(rng)) set2.insert(i);
     }
 
-    size_t count = 0;
+    size_t count __attribute__((unused)) = 0;
     Timer timer;
     for (size_t i = 0; i < iters; ++i) {
         count += set1.unlikely_disjoint(set2);
@@ -108,11 +108,11 @@ int main() {
 
     size_t min_exponent = 10;
     size_t max_exponent = 16;
-    POMAGMA_INFO(std::setw(10) << "log2(size)" << std::setw(10) << "iter(kHz)"
-                               << std::setw(15) << "iter_insn(kHz)"
-                               << std::setw(15) << "equal(kHz)" << std::setw(20)
-                               << "likely_disjoint(kHz)" << std::setw(20)
-                               << "unlikely_disj(kHz)");
+    POMAGMA_INFO(std::setw(10)
+                 << "log2(size)" << std::setw(10) << "iter(kHz)"
+                 << std::setw(15) << "iter_insn(kHz)" << std::setw(15)
+                 << "equal(kHz)" << std::setw(20) << "likely_disjoint(kHz)"
+                 << std::setw(20) << "unlikely_disj(kHz)");
     for (size_t exponent = min_exponent; exponent < max_exponent; ++exponent) {
         float density = 1.f / (1 << (exponent - min_exponent));
         float freq1 = test_iterator(exponent, density) / 1000;
@@ -120,10 +120,10 @@ int main() {
         float freq3 = test_equal(exponent, density) / 1000;
         float freq4 = test_likely_disjoint(exponent, 0.5) / 1000;
         float freq5 = test_unlikely_disjoint(exponent, 0.5) / 1000;
-        POMAGMA_INFO(std::setw(15) << exponent << std::setw(15) << freq1
-                                   << std::setw(15) << freq2 << std::setw(15)
-                                   << freq3 << std::setw(15) << freq4
-                                   << std::setw(15) << freq5);
+        POMAGMA_INFO(std::setw(15)
+                     << exponent << std::setw(15) << freq1 << std::setw(15)
+                     << freq2 << std::setw(15) << freq3 << std::setw(15)
+                     << freq4 << std::setw(15) << freq5);
     }
 
     return 0;

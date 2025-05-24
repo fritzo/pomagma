@@ -71,7 +71,7 @@ def Iter_program(self, program, stack=None, poll=None):
                 'invalid modifier,arity: {},{}'.format(modifier, test.arity))
 
     for var, expr in sorted(self.lets.iteritems()):
-        assert self.var in expr.args,\
+        assert self.var in expr.args, \
             '{} not in {}'.format(self.var, expr.args)
         set_var = expr.var.name
         if expr.arity == 'InjectiveFunction':

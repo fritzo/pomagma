@@ -1,10 +1,12 @@
-#include <map>
-#include <unordered_set>
-#include <typeinfo>
-#include <sstream>
-#include <fstream>
-#include <algorithm>
 #include "program.hpp"
+
+#include <algorithm>
+#include <fstream>
+#include <map>
+#include <sstream>
+#include <typeinfo>
+#include <unordered_set>
+
 #include "signature.hpp"
 
 namespace pomagma {
@@ -17,9 +19,7 @@ const std::string g_op_code_names[] = {
 };
 
 const std::map<std::string, OpCode> g_op_codes = {
-#define DO(X, Y) \
-    { #X, X }    \
-    ,
+#define DO(X, Y) {#X, X},
     POMAGMA_OP_CODES(DO)
 #undef DO
 };
@@ -44,9 +44,9 @@ class ProgramParser::SymbolTable {
     uint8_t store(const std::string &name, size_t lineno) {
         POMAGMA_ASSERT(m_registers.find(name) == m_registers.end(),
                        "line " << lineno << ": duplicate variable: " << name);
-        POMAGMA_ASSERT(m_registers.size() < 256,
-                       "line " << lineno
-                               << ": too many variables, limit = 256");
+        POMAGMA_ASSERT(
+            m_registers.size() < 256,
+            "line " << lineno << ": too many variables, limit = 256");
 
         uint8_t index = m_registers.size();
         m_registers.insert(std::make_pair(name, index));
@@ -89,14 +89,16 @@ class ProgramParser::SymbolTableStack {
     }
 
     void clear(size_t lineno) {
-        POMAGMA_ASSERT(m_jumps.empty(),
-                       "line " << lineno
-                               << ": unterminated SEQUENCE command"
-                                  ", len(jumps) = " << m_jumps.size());
+        POMAGMA_ASSERT(m_jumps.empty(), "line "
+                                            << lineno
+                                            << ": unterminated SEQUENCE command"
+                                               ", len(jumps) = "
+                                            << m_jumps.size());
         POMAGMA_ASSERT(m_stack.size() == 1,
                        "line " << lineno
                                << ": unterminated SEQUENCE command"
-                                  ", len(stack) = " << m_stack.size());
+                                  ", len(stack) = "
+                               << m_stack.size());
         if (m_warn_unused) {
             m_stack.back().check_unused(lineno);
         }
@@ -211,16 +213,16 @@ std::vector<Listing> ProgramParser::parse(std::istream &infile) {
         program.push_back(op_code);
 
         for (auto arg_type : g_op_code_arities[op_code]) {
-            POMAGMA_ASSERT(stream >> word, "line " << lineno
-                                                   << ": too few arguments");
+            POMAGMA_ASSERT(stream >> word,
+                           "line " << lineno << ": too few arguments");
 
             uint8_t arg = 0xff;
             switch (arg_type) {
                 case UINT8: {
                     int uint8 = atoi(word.c_str());
-                    POMAGMA_ASSERT((0 < uint8) and (uint8 < 255),
-                                   "line " << lineno
-                                           << ": out of range: " << uint8);
+                    POMAGMA_ASSERT(
+                        (0 < uint8) and (uint8 < 255),
+                        "line " << lineno << ": out of range: " << uint8);
                     arg = uint8;
                 } break;
 
@@ -239,9 +241,9 @@ std::vector<Listing> ProgramParser::parse(std::istream &infile) {
 
                 default: {
                     auto i = m_constants.find(std::make_pair(arg_type, word));
-                    POMAGMA_ASSERT(i != m_constants.end(),
-                                   "line " << lineno
-                                           << ": unknown constant: " << word);
+                    POMAGMA_ASSERT(
+                        i != m_constants.end(),
+                        "line " << lineno << ": unknown constant: " << word);
                     arg = i->second;
                 } break;
             }

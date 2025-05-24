@@ -23,27 +23,29 @@ from parsable import parsable
 
 
 version = None
-with open(os.path.join('src', '__init__.py')) as f:
+with open(os.path.join("src", "__init__.py")) as f:
     for line in f:
-        if re.match("__version__ = '\S+'$", line):
-            version = line.split()[-1].strip("'")
-assert version, 'could not determine version'
+        if re.match(r'__version__ = "\S+"$', line):
+            version = line.split()[-1].strip('"')
+assert version, "could not determine version"
 
-with open('README.md') as f:
+with open("README.md") as f:
     long_description = f.read()
 
-config = {
-    'name': 'pomagma',
-    'version': version,
-    'description': 'An inference engine for extensional lambda-calculus',
-    'long_description': long_description,
-    'url': 'https://github.com/fritzo/pomagma',
-    'author': 'Fritz Obermeyer',
-    'maintainer': 'Fritz Obermeyer',
-    'maintainer_email': 'fritz.obermeyer@gmail.com',
-    'license': 'Apache 2.0',
-    'packages': setuptools.find_packages(exclude='src'),
-    'entry_points': parsable.find_entry_points('pomagma'),
-}
+with open("requirements.txt") as f:
+    requirements = f.read().splitlines()
 
-setuptools.setup(**config)
+setuptools.setup(
+    name="pomagma",
+    version=version,
+    description="An inference engine for extensional lambda-calculus",
+    long_description=long_description,
+    url="https://github.com/fritzo/pomagma",
+    author="Fritz Obermeyer",
+    maintainer="Fritz Obermeyer",
+    maintainer_email="fritz.obermeyer@gmail.com",
+    license="Apache 2.0",
+    install_requires=requirements,
+    packages=setuptools.find_packages(exclude="src"),
+    entry_points=parsable.find_entry_points("pomagma"),
+)

@@ -57,6 +57,7 @@ def is_valid_body(term):
     * must be normal
     * must have ABS only at the top level
     * cannot be TOP or BOT.
+
     """
     assert isinstance(term, Term)
     if not is_closed(term):
@@ -169,6 +170,7 @@ def unfold(system, body):
     """Unfold the head variables in body via definitions in system.
 
     Note that due to JOIN terms, there may be multiple head variables.
+
     """
     assert isinstance(system, System)
     assert isinstance(body, Term)
@@ -304,6 +306,7 @@ def try_decide_equal(system, lhs, rhs):
     Does not handle JOIN.
     Does not handle nonterminating terms.
     Does not handle least fixed points defined via mutual recursion.
+
     """
     assert isinstance(system, System), system
     assert is_valid_body(lhs), lhs

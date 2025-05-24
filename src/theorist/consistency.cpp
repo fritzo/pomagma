@@ -1,8 +1,10 @@
 #include "consistency.hpp"
-#include <pomagma/atlas/macro/scheduler.hpp>
-#include <pomagma/atlas/macro/carrier.hpp>
-#include <pomagma/atlas/macro/binary_relation.hpp>
+
 #include <unistd.h>  // for _exit
+
+#include <pomagma/atlas/macro/binary_relation.hpp>
+#include <pomagma/atlas/macro/carrier.hpp>
+#include <pomagma/atlas/macro/scheduler.hpp>
 
 namespace pomagma {
 

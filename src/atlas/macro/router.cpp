@@ -1,11 +1,13 @@
 #include "router.hpp"
-#include "carrier.hpp"
-#include "nullary_function.hpp"
-#include "injective_function.hpp"
-#include "binary_function.hpp"
-#include "symmetric_function.hpp"
+
 #include <algorithm>
 #include <tuple>
+
+#include "binary_function.hpp"
+#include "carrier.hpp"
+#include "injective_function.hpp"
+#include "nullary_function.hpp"
+#include "symmetric_function.hpp"
 
 namespace pomagma {
 
@@ -202,7 +204,7 @@ std::vector<float> Router::measure_probs(float reltol) const {
 
         // The following three cannot be mixed: openmp, gcc, fork.
         // see http://bisqwit.iki.fi/story/howto/openmp/#OpenmpAndFork
-        //# pragma omp parallel for schedule(dynamic, 1)
+        // # pragma omp parallel for schedule(dynamic, 1)
         for (size_t i = 0; i < item_count; ++i) {
             Ob ob = 1 + i;
 
@@ -212,7 +214,7 @@ std::vector<float> Router::measure_probs(float reltol) const {
             }
 
             if (prob > probs[ob] * max_increase) {
-                //#pragma omp atomic
+                // #pragma omp atomic
                 changed = true;
             }
             probs[ob] = prob;  // relaxed memory order
@@ -235,7 +237,7 @@ std::vector<std::string> Router::find_routes() const {
 
         POMAGMA_DEBUG("finding best local routes");
 
-        //#pragma omp parallel for schedule(dynamic, 1)
+        // #pragma omp parallel for schedule(dynamic, 1)
         for (size_t i = 0; i < item_count; ++i) {
             Ob ob = 1 + i;
 
@@ -253,7 +255,7 @@ std::vector<std::string> Router::find_routes() const {
             }
 
             if (best_changed) {
-                //#pragma omp atomic
+                // #pragma omp atomic
                 changed = true;
             }
         }
@@ -387,7 +389,7 @@ void Router::update_weights(
     std::vector<float> temp_symbol_weights(symbol_weights.size());
     std::vector<float> temp_ob_weights(ob_weights.size());
 
-update_weights_loop : {
+update_weights_loop: {
     POMAGMA_DEBUG("distributing route weight");
 
     std::fill(temp_symbol_weights.begin(), temp_symbol_weights.end(), 0);

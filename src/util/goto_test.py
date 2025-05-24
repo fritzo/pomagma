@@ -102,7 +102,7 @@ def test_jump_out_of_try_block():
         try:
             rv = None
             goto.end
-        except:
+        except BaseException:
             rv = 'except'
         finally:
             rv = 'finally'
@@ -116,7 +116,7 @@ def test_jump_into_try_block():
     def func():
         try:
             label.block
-        except:
+        except BaseException:
             pass
         goto.block
 

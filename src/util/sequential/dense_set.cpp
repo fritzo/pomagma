@@ -1,10 +1,10 @@
 
-#include <pomagma/util/sequential/dense_set.hpp>
-#include <pomagma/util/aligned_alloc.hpp>
 #include <cstring>
+#include <pomagma/util/aligned_alloc.hpp>
+#include <pomagma/util/sequential/dense_set.hpp>
 
 #define POMAGMA_DEBUG1(message)
-//#define POMAGMA_DEBUG1(message) POMAGMA_DEBUG(message)
+// #define POMAGMA_DEBUG1(message) POMAGMA_DEBUG(message)
 
 namespace pomagma {
 namespace sequential {
@@ -127,12 +127,12 @@ size_t DenseSet::insert_one() {
     m_words[0] ^= 1;  // simplifies code
 
     Word *restrict word = assume_aligned(m_words);
-    while (likely(!~ * word)) {
+    while (likely(!~*word)) {
         ++word;
     }
     size_t ob = BITS_PER_WORD * (word - m_words);
 
-    const Word free = ~ * word;
+    const Word free = ~*word;
     Word mask = 1;
     while (not(mask & free)) {
         mask <<= Word(1);

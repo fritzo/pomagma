@@ -1,6 +1,7 @@
-#include "message.hpp"
 #include <pomagma/util/queue.hpp>
 #include <thread>
+
+#include "message.hpp"
 
 using namespace pomagma;
 using namespace pomagma::io;

@@ -1,6 +1,7 @@
 #include "injective_function.hpp"
-#include <pomagma/util/aligned_alloc.hpp>
+
 #include <cstring>
+#include <pomagma/util/aligned_alloc.hpp>
 
 namespace pomagma {
 
@@ -91,9 +92,11 @@ void InjectiveFunction::validate() const {
 
 void InjectiveFunction::log_stats(const std::string& prefix) const {
     POMAGMA_INFO(prefix << " "
-                           "count = " << m_set.count_items()
+                           "count = "
+                        << m_set.count_items()
                         << ", "
-                           "inverse_count = " << m_inverse_set.count_items());
+                           "inverse_count = "
+                        << m_inverse_set.count_items());
 }
 
 void InjectiveFunction::clear() {

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <pomagma/atlas/structure.pb.h>
+
 #include <pomagma/io/blobstore.hpp>
 #include <pomagma/io/protobuf.hpp>
 #include <pomagma/util/util.hpp>

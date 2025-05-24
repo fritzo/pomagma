@@ -1,7 +1,9 @@
 #pragma once
 
+// clang-format off
 #include "util.hpp"
 #include <pomagma/atlas/sampler.hpp>
+// clang-format on
 
 namespace pomagma {
 

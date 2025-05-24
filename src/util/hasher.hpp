@@ -1,16 +1,16 @@
 #pragma once
 
-#include <pomagma/util/util.hpp>
-#include <string>
-#include <sstream>
-#include <iomanip>
-#include <vector>
 #include <array>
+#include <iomanip>
 #include <map>
+#include <pomagma/util/util.hpp>
+#include <sstream>
+#include <string>
+#include <vector>
 
 // Assumes one of the following is included:
-//#include <pomagma/util/sequential/dense_set.hpp>
-//#include <pomagma/util/concurrent/dense_set.hpp>
+// #include <pomagma/util/sequential/dense_set.hpp>
+// #include <pomagma/util/concurrent/dense_set.hpp>
 
 // http://www.openssl.org/docs/crypto/sha.html
 extern "C" {

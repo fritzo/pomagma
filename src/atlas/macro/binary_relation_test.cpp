@@ -1,4 +1,5 @@
 #include "binary_relation.hpp"
+
 #include <utility>
 
 using namespace pomagma;
@@ -50,16 +51,16 @@ void test_BinaryRelation(size_t size, bool (*test_fun)(Ob, Ob)) {
     for (auto i = support.iter(); i.ok(); i.next()) {
         for (auto j = support.iter(); j.ok(); j.next()) {
             if (test_fun(*i, *j)) {
-                POMAGMA_ASSERT(rel.find_Lx(*i, *j), "Lx relation missing "
-                                                        << *i << ',' << *j);
-                POMAGMA_ASSERT(rel.find_Rx(*i, *j), "Rx relation missing "
-                                                        << *i << ',' << *j);
+                POMAGMA_ASSERT(rel.find_Lx(*i, *j),
+                               "Lx relation missing " << *i << ',' << *j);
+                POMAGMA_ASSERT(rel.find_Rx(*i, *j),
+                               "Rx relation missing " << *i << ',' << *j);
                 ++num_pairs;
             } else {
-                POMAGMA_ASSERT(not rel.find_Lx(*i, *j), "Lx relation has extra "
-                                                            << *i << ',' << *j);
-                POMAGMA_ASSERT(not rel.find_Rx(*i, *j), "Rx relation has extra "
-                                                            << *i << ',' << *j);
+                POMAGMA_ASSERT(not rel.find_Lx(*i, *j),
+                               "Lx relation has extra " << *i << ',' << *j);
+                POMAGMA_ASSERT(not rel.find_Rx(*i, *j),
+                               "Rx relation has extra " << *i << ',' << *j);
             }
         }
     }

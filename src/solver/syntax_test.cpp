@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+
 #include <pomagma/solver/syntax.hpp>
 #include <tuple>
 #include <utility>
@@ -47,7 +48,8 @@ Term add_random_term(Structure& structure, rng_t& rng) {
             const std::string name = random_name(rng);
             return structure.nvar(name);
         }
-        default: POMAGMA_ERROR("unreachable");
+        default:
+            POMAGMA_ERROR("unreachable");
     }
 }
 

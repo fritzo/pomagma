@@ -1,5 +1,6 @@
 #pragma once
 
+#include <mutex>
 #include <pomagma/analyst/approximate.hpp>
 #include <pomagma/analyst/cached_approximator.hpp>
 #include <pomagma/analyst/corpus.hpp>
@@ -7,7 +8,6 @@
 #include <pomagma/util/unique_set.hpp>
 #include <set>
 #include <thread>
-#include <mutex>
 
 namespace pomagma {
 
@@ -21,7 +21,9 @@ class Validator : noncopyable {
             : m_validator(validator),
               m_term(term),
               m_callback(callback),
-              m_state(term->arg1 ? 3 : term->arg0 ? 2 : 1) {
+              m_state(term->arg1   ? 3
+                      : term->arg0 ? 2
+                                   : 1) {
             if (term->arg0) {
                 m_validator.m_cache.find_async(
                     term->arg0, std::bind(&Task::operator(), this, _1));

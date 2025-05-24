@@ -1,4 +1,5 @@
 #include "index.hpp"
+
 #include <algorithm>
 #include <pomagma/atlas/program.hpp>
 

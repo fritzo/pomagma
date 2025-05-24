@@ -3,8 +3,8 @@
 // TODO try out google's tcmalloc:
 // http://gperftools.googlecode.com/svn/trunk/doc/tcmalloc.html
 
-#include <pomagma/util/util.hpp>
 #include <cstring>
+#include <pomagma/util/util.hpp>
 
 #if GCC_VERSION > 40700
 #define assume_aligned(x)      \

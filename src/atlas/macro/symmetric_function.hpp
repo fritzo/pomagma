@@ -1,9 +1,10 @@
 #pragma once
 
-#include "util.hpp"
-#include "base_bin_rel.hpp"
-#include <pomagma/util/sequential/dense_set.hpp>
 #include <mutex>
+#include <pomagma/util/sequential/dense_set.hpp>
+
+#include "base_bin_rel.hpp"
+#include "util.hpp"
 
 namespace pomagma {
 

@@ -1,5 +1,6 @@
-#include <pomagma/util/dense_set_store.hpp>
 #include <pomagma/third_party/farmhash/farmhash.h>
+
+#include <pomagma/util/dense_set_store.hpp>
 
 namespace pomagma {
 

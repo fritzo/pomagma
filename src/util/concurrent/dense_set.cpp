@@ -1,10 +1,10 @@
 
-#include <pomagma/util/concurrent/dense_set.hpp>
-#include <pomagma/util/aligned_alloc.hpp>
 #include <cstring>
+#include <pomagma/util/aligned_alloc.hpp>
+#include <pomagma/util/concurrent/dense_set.hpp>
 
 #define POMAGMA_DEBUG1(message)
-//#define POMAGMA_DEBUG1(message) POMAGMA_DEBUG(message)
+// #define POMAGMA_DEBUG1(message) POMAGMA_DEBUG(message)
 
 namespace pomagma {
 namespace concurrent {

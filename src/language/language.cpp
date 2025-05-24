@@ -1,6 +1,8 @@
 #include "language.hpp"
-#include "language.pb.h"
+
 #include <pomagma/util/util.hpp>
+
+#include "language.pb.h"
 
 namespace pomagma {
 

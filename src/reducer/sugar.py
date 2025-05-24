@@ -16,6 +16,7 @@ def _compile(fun, actual_fun=None):
 
     [1] Pfenning, Elliot (1988) "Higher-order abstract syntax"
       https://www.cs.cmu.edu/~fp/papers/pldi88.pdf
+
     """
     if actual_fun is None:
         actual_fun = fun

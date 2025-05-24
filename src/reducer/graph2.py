@@ -6,6 +6,7 @@ of reducer.koopman's combinatory graph reduction.
 
 This implementation aims for correctness rather than efficiency. Hence graphs
 are .copy()ed more often than needed, and there is minimal sharing.
+
 """
 
 from pomagma.compiler.util import memoize_arg

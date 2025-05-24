@@ -1,7 +1,8 @@
 #pragma once
 
-#include <pomagma/util/util.hpp>
 #include <google/protobuf/io/coded_stream.h>
+
+#include <pomagma/util/util.hpp>
 
 namespace pomagma {
 namespace io {

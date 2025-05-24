@@ -1,19 +1,22 @@
 #include "server.hpp"
-#include "trim.hpp"
-#include "aggregate.hpp"
-#include "infer.hpp"
-#include "signature.hpp"
+
+#include <zmq.h>
+
+#include <algorithm>
+#include <pomagma/atlas/macro/compact.hpp>
+#include <pomagma/atlas/macro/router.hpp>
+#include <pomagma/atlas/macro/structure_impl.hpp>
+#include <pomagma/atlas/macro/vm.hpp>
+#include <pomagma/language/language.hpp>
 #include <pomagma/theorist/assume.hpp>
 #include <pomagma/theorist/conjecture_diverge.hpp>
 #include <pomagma/theorist/conjecture_equal.hpp>
-#include <pomagma/language/language.hpp>
-#include <pomagma/atlas/macro/structure_impl.hpp>
-#include <pomagma/atlas/macro/compact.hpp>
-#include <pomagma/atlas/macro/router.hpp>
-#include <pomagma/atlas/macro/vm.hpp>
+
+#include "aggregate.hpp"
+#include "infer.hpp"
 #include "messages.pb.h"
-#include <zmq.h>
-#include <algorithm>
+#include "signature.hpp"
+#include "trim.hpp"
 
 namespace pomagma {
 
@@ -33,8 +36,9 @@ void Server::trim(const std::vector<TrimTask>& tasks) {
 
     std::vector<TrimTask> sorted_tasks = tasks;
     std::sort(sorted_tasks.begin(), sorted_tasks.end(),
-              [](const TrimTask& lhs,
-                 const TrimTask& rhs) { return lhs.size > rhs.size; });
+              [](const TrimTask& lhs, const TrimTask& rhs) {
+                  return lhs.size > rhs.size;
+              });
     const size_t task_count = sorted_tasks.size();
 #pragma omp parallel for schedule(dynamic, 1)
     for (size_t iter = 0; iter < task_count; ++iter) {

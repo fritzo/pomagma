@@ -1,5 +1,6 @@
-#include <pomagma/solver/solver.hpp>
 #include <gtest/gtest.h>
+
+#include <pomagma/solver/solver.hpp>
 
 namespace pomagma {
 namespace solver {

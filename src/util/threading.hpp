@@ -1,17 +1,18 @@
 #pragma once
 
-#include <pomagma/util/util.hpp>
-#include <mutex>
-#include <atomic>
 #include <pthread.h>
 
+#include <atomic>
+#include <mutex>
+#include <pomagma/util/util.hpp>
+
 #ifdef POMAGMA_ASSUME_X86
-#define barrier() asm volatile("" :: : "memory")
-#define memory_barrier() asm volatile("mfence" :: : "memory")
-#define load_barrier() asm volatile("lfence" :: : "memory")
-#define store_barrier() asm volatile("sfence" :: : "memory")
+#define barrier() asm volatile("" ::: "memory")
+#define memory_barrier() asm volatile("mfence" ::: "memory")
+#define load_barrier() asm volatile("lfence" ::: "memory")
+#define store_barrier() asm volatile("sfence" ::: "memory")
 #else  // POMAGMA_ASSUME_X86
-#warn "defaulting to full memory barriers"
+#pragma message "defaulting to full memory barriers"
 #define barrier() __sync_synchronize()
 #define memory_barrier() __sync_synchronize()
 #define load_barrier() __sync_synchronize()
@@ -19,9 +20,9 @@
 #endif  // POMAGMA_ASSUME_X86
 
 // these do not prevent compiler from reordering non-atomic loads/stores
-//#define memory_barrier() std::atomic_thread_fence(std::memory_order_acq_rel)
-//#define acquire_barrier() std::atomic_thread_fence(std::memory_order_acquire)
-//#define release_barrier() std::atomic_thread_fence(std::memory_order_release)
+// #define memory_barrier() std::atomic_thread_fence(std::memory_order_acq_rel)
+// #define acquire_barrier() std::atomic_thread_fence(std::memory_order_acquire)
+// #define release_barrier() std::atomic_thread_fence(std::memory_order_release)
 
 namespace pomagma {
 
@@ -29,8 +30,8 @@ size_t get_cpu_count();
 
 // add default constructor for use in std::vector
 struct atomic_flag : std::atomic_flag {
-    atomic_flag() : std::atomic_flag(ATOMIC_FLAG_INIT) { test_and_set(); }
-    atomic_flag(const atomic_flag &) : std::atomic_flag(ATOMIC_FLAG_INIT) {
+    atomic_flag() : std::atomic_flag{} { test_and_set(); }
+    atomic_flag(const atomic_flag &) : std::atomic_flag{} {
         POMAGMA_ERROR("fail");
     }
     void operator=(const atomic_flag &) { POMAGMA_ERROR("fail"); }

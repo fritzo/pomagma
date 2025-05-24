@@ -1,4 +1,7 @@
+// clang-format off
 #include "structure_impl.hpp"
+// clang-format on
+
 #include <pomagma/atlas/structure_impl.hpp>
 
 namespace pomagma {

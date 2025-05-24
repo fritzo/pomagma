@@ -74,4 +74,4 @@ class ProgramParser {
 };
 
 }  // namespace vm
-}  // namespacepomagma
+}  // namespace pomagma

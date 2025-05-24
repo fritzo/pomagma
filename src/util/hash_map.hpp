@@ -19,4 +19,4 @@ class HashState {
     uint64_t get() { return m_state; }
 };
 
-}  // namespace FNV_hasher
+}  // namespace FNV_hash

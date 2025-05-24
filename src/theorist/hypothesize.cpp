@@ -1,12 +1,15 @@
 #include "hypothesize.hpp"
-#include "consistency.hpp"
+
+#include <sys/wait.h>  // for wait
+#include <unistd.h>    // for fork
+
+#include <cstdlib>
 #include <pomagma/atlas/macro/binary_relation.hpp>
 #include <pomagma/atlas/macro/compact.hpp>
 #include <pomagma/atlas/macro/router.hpp>
 #include <pomagma/atlas/macro/scheduler.hpp>
-#include <cstdlib>
-#include <unistd.h>    // for fork
-#include <sys/wait.h>  // for wait
+
+#include "consistency.hpp"
 
 namespace pomagma {
 
@@ -74,8 +77,8 @@ float hypothesize_entropy(
         int status;
         POMAGMA_DEBUG("Waiting for child process " << child);
         waitpid(child, &status, 0);
-        POMAGMA_ASSERT(WIFEXITED(status), "child process failed with status "
-                                              << status);
+        POMAGMA_ASSERT(WIFEXITED(status),
+                       "child process failed with status " << status);
         int info = WEXITSTATUS(status);
 
         float entropy = NAN;

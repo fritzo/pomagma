@@ -49,27 +49,19 @@ fi
 
 # Set compiler environment variables for Darwin
 if [ "`uname`" = 'Darwin' ]; then
-    echo "Setting up compilers for macOS"
+    echo "Setting up dependencies for macOS"
     # Install libomp for OpenMP support
     brew install libomp
-    # Add OpenMP configuration to activation script
-    echo "Adding OpenMP configuration to .venv/bin/activate"
-    cat >> .venv/bin/activate << 'EOF'
-
-# OpenMP support for macOS (added by install.sh)
-export CC=clang
-export CXX=clang++
-export LDFLAGS="-L/opt/homebrew/opt/libomp/lib"
-export CPPFLAGS="-I/opt/homebrew/opt/libomp/include"
-EOF
-    echo "Added OpenMP flags to activation script"
+    # Make sure LLVM is installed
+    brew install llvm
+    echo "Dependencies installed. Use 'source .env' to set up compiler environment."
 fi
 
 # Install dependencies
 echo "Installing Python dependencies"
-uv pip install parsable
-uv pip install -r requirements.txt
-uv pip install -e .
+source .venv/bin/activate
+uv pip install parsable setuptools  # Needed in setup.py
+uv pip install --no-build-isolation -e .
 
 # Run build
 uv run make all

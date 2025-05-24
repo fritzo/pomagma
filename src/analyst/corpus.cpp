@@ -1,6 +1,7 @@
 #include "corpus.hpp"
-#include <pomagma/util/unique_set.hpp>
+
 #include <map>
+#include <pomagma/util/unique_set.hpp>
 #include <queue>
 
 namespace pomagma {
@@ -366,7 +367,7 @@ Corpus::Linker Corpus::linker(
     Parser parser(m_signature, m_dag, error_log);
     Linker linker(m_dag, error_log);
     for (const auto &line : lines) {
-        if (line.has_name()) {
+        if (!line.maybe_name.empty()) {
             const std::string &name = line.maybe_name;
             const Term *term = parser.parse(line.body);
             linker.define(name, term);

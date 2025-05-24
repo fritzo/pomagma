@@ -6,9 +6,9 @@
 #include <pomagma/util/lazy_map.hpp>
 #include <pomagma/util/trool.hpp>
 #include <string>
+#include <tuple>
 #include <unordered_map>
 #include <utility>
-#include <tuple>
 #include <vector>
 
 // declared in pomagma/third_party/farmhash/farmhash.h
@@ -132,11 +132,14 @@ class Approximator : noncopyable {
     // LazyMap caches.
     typedef std::tuple<uint64_t, Target, Parity> CacheKey;
     typedef LazyMap<std::pair<SetId, SetId>, Trool, Trool::MAYBE,
-                    PodHash<std::pair<SetId, SetId>>> SetPairToTroolCache;
+                    PodHash<std::pair<SetId, SetId>>>
+        SetPairToTroolCache;
     typedef LazyMap<std::vector<SetId>, SetId, 0, VectorPodHash<SetId>,
-                    VectorPodEqual<SetId>> SetVectorToSetCache;
+                    VectorPodEqual<SetId>>
+        SetVectorToSetCache;
     typedef LazyMap<std::pair<SetId, SetId>, SetId, 0,
-                    PodHash<std::pair<SetId, SetId>>> SetPairToSetCache;
+                    PodHash<std::pair<SetId, SetId>>>
+        SetPairToSetCache;
 
     SetPairToTroolCache m_disjoint_cache;
     SetVectorToSetCache m_union_cache;

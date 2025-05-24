@@ -1,4 +1,5 @@
 #include "profiler.hpp"
+
 #include <algorithm>
 
 namespace pomagma {

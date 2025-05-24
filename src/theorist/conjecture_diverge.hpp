@@ -1,10 +1,10 @@
 #pragma once
 
-#include <pomagma/atlas/macro/util.hpp>
 #include <pomagma/atlas/macro/structure.hpp>
+#include <pomagma/atlas/macro/util.hpp>
 #include <string>
-#include <vector>
 #include <unordered_map>
+#include <vector>
 
 namespace pomagma {
 

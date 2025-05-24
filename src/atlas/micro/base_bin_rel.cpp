@@ -1,6 +1,7 @@
 #include "base_bin_rel.hpp"
-#include <pomagma/util/aligned_alloc.hpp>
+
 #include <cstring>
+#include <pomagma/util/aligned_alloc.hpp>
 
 namespace pomagma {
 
@@ -59,8 +60,8 @@ void base_bin_rel_<symmetric>::validate() const {
         // check for Lx/Rx agreement
         for (Ob i = 1; i <= item_dim(); ++i) {
             for (Ob j = i; j <= item_dim(); ++j) {
-                POMAGMA_ASSERT(Lx(i, j) == Rx(i, j), "Lx, Rx disagree at "
-                                                         << i << ',' << j);
+                POMAGMA_ASSERT(Lx(i, j) == Rx(i, j),
+                               "Lx, Rx disagree at " << i << ',' << j);
             }
         }
 

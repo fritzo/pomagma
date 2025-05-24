@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+
 #include <pomagma/util/dense_set_store.hpp>
 #include <unordered_set>
 #include <vector>

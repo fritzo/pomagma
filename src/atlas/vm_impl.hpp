@@ -1,9 +1,10 @@
-#include <map>
-#include <unordered_set>
-#include <typeinfo>
-#include <sstream>
-#include <fstream>
 #include <algorithm>
+#include <fstream>
+#include <map>
+#include <sstream>
+#include <typeinfo>
+#include <unordered_set>
+
 #include "program.hpp"
 #include "vm.hpp"
 
@@ -20,10 +21,10 @@ static void declare(
     const std::unordered_map<std::string, Table *> &unordered_map,
     Table *array[]) {
     POMAGMA_ASSERT(unordered_map.size() <= 256,
-                   "too many "
-                       << demangle(typeid(Table).name())
-                       << " symbols: "
-                          "expected <= 256, actual = " << unordered_map.size());
+                   "too many " << demangle(typeid(Table).name())
+                               << " symbols: "
+                                  "expected <= 256, actual = "
+                               << unordered_map.size());
 
     for (size_t i = 0; i < 256; ++i) {
         array[i] = nullptr;
@@ -961,8 +962,8 @@ void Agenda::log_stats() const {
     POMAGMA_INFO("Agenda:");
     POMAGMA_INFO("\tEvent\tCount\tTotal bytes");
     POMAGMA_INFO("\t---------------------------");
-    POMAGMA_INFO("\tExists"
-                 << "\t" << m_exists.size() << "\t" << count_bytes(m_exists));
+    POMAGMA_INFO("\tExists" << "\t" << m_exists.size() << "\t"
+                            << count_bytes(m_exists));
     for (const auto &pair : m_names) {
         auto i = m_structures.find(pair.second);
         if (i != m_structures.end()) {
@@ -971,12 +972,10 @@ void Agenda::log_stats() const {
                               << count_bytes(programs));
         }
     }
-    POMAGMA_INFO("\tCleanup"
-                 << "\t" << m_cleanup_small.size() << "\t"
-                 << count_bytes(m_cleanup_small));
-    POMAGMA_INFO("\tCleanup"
-                 << "\t" << m_cleanup_large.size() << "\t"
-                 << count_bytes(m_cleanup_large));
+    POMAGMA_INFO("\tCleanup" << "\t" << m_cleanup_small.size() << "\t"
+                             << count_bytes(m_cleanup_small));
+    POMAGMA_INFO("\tCleanup" << "\t" << m_cleanup_large.size() << "\t"
+                             << count_bytes(m_cleanup_large));
 }
 
 }  // namespace vm

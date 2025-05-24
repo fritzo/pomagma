@@ -433,6 +433,7 @@ def polish_parse(string, transform=identity):
 
     Returns:
       a term.
+
     """
     assert isinstance(string, str), type(string)
     assert isinstance(transform, Transform), type(transform)

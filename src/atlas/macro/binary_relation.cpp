@@ -1,6 +1,7 @@
 #include "binary_relation.hpp"
-#include <pomagma/util/aligned_alloc.hpp>
+
 #include <cstring>
+#include <pomagma/util/aligned_alloc.hpp>
 
 namespace pomagma {
 
@@ -42,11 +43,11 @@ void BinaryRelation::validate() const {
                                                << i << "," << j << ", Lx is "
                                                << Lx_ij << ", Rx is " << Rx_ij);
 
-            POMAGMA_ASSERT(sup_ij or not Lx_ij, "Lx unsupported at " << i << ","
-                                                                     << j);
+            POMAGMA_ASSERT(sup_ij or not Lx_ij,
+                           "Lx unsupported at " << i << "," << j);
 
-            POMAGMA_ASSERT(sup_ij or not Rx_ij, "Rx unsupported at " << i << ","
-                                                                     << j);
+            POMAGMA_ASSERT(sup_ij or not Rx_ij,
+                           "Rx unsupported at " << i << "," << j);
         }
     }
 

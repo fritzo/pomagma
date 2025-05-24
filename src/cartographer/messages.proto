@@ -1,62 +1,64 @@
+syntax = "proto3";
+
 package pomagma.protobuf;
 
 message CartographerRequest {
 
   message Crop {
-    optional uint32 headroom = 1 [default = 0];
+    uint32 headroom = 1;
   }
   message Declare {
     repeated string nullary_functions = 1;
   }
   message Assume {
-    required string facts_in = 1;
+    string facts_in = 1;
   }
   message Infer {
-    required uint32 priority = 1;
+    uint32 priority = 1;
   }
   message Execute {
-    required string program = 1;
+    string program = 1;
   }
   message Aggregate {
-    required string survey_in = 1;
+    string survey_in = 1;
   }
   message Validate {
   }
   message Info {
   }
   message Dump {
-    required string world_out = 1;
+    string world_out = 1;
   }
   message Trim {
-    required uint32 size = 1;
-    required bool temperature = 2;
-    required string filename = 3;
+    uint32 size = 1;
+    bool temperature = 2;
+    string filename = 3;
   }
   message Conjecture {
-    required string diverge_out = 1;
-    required string equal_out = 2;
-    required uint64 max_count = 3;
+    string diverge_out = 1;
+    string equal_out = 2;
+    uint64 max_count = 3;
   }
   message Stop {
   }
 
   // ordered by priority
-  optional Crop crop = 10;
-  optional Declare declare = 11;
-  optional Assume assume = 12;
-  optional Infer infer = 13;
-  optional Execute execute = 14;
+  Crop crop = 10;
+  Declare declare = 11;
+  Assume assume = 12;
+  Infer infer = 13;
+  Execute execute = 14;
 
-  optional Aggregate aggregate = 20;
+  Aggregate aggregate = 20;
 
-  optional Validate validate = 30;
+  Validate validate = 30;
 
-  optional Info info = 40;
-  optional Dump dump = 41;
+  Info info = 40;
+  Dump dump = 41;
   repeated Trim trim = 42;
-  optional Conjecture conjecture = 43;
+  Conjecture conjecture = 43;
 
-  optional Stop stop = 99;
+  Stop stop = 99;
 }
 
 message CartographerResponse {
@@ -66,13 +68,13 @@ message CartographerResponse {
   message Declare {
   }
   message Assume {
-    required uint64 pos_count = 1;
-    required uint64 neg_count = 2;
-    required uint64 merge_count = 3;
-    required uint64 ignored_count = 4;
+    uint64 pos_count = 1;
+    uint64 neg_count = 2;
+    uint64 merge_count = 3;
+    uint64 ignored_count = 4;
   }
   message Infer {
-    required uint64 theorem_count = 1;
+    uint64 theorem_count = 1;
   }
   message Execute {
   }
@@ -81,33 +83,33 @@ message CartographerResponse {
   message Validate {
   }
   message Info {
-    required uint32 item_count = 1;
+    uint32 item_count = 1;
   }
   message Dump {
   }
   message Trim {
   }
   message Conjecture {
-    required uint64 diverge_count = 1;
-    required uint64 equal_count = 2;
+    uint64 diverge_count = 1;
+    uint64 equal_count = 2;
   }
   message Stop {
   }
 
-  optional Crop crop = 10;
-  optional Declare declare = 11;
-  optional Assume assume = 12;
-  optional Infer infer = 13;
-  optional Execute execute = 14;
+  Crop crop = 10;
+  Declare declare = 11;
+  Assume assume = 12;
+  Infer infer = 13;
+  Execute execute = 14;
 
-  optional Aggregate aggregate = 20;
+  Aggregate aggregate = 20;
 
-  optional Validate validate = 30;
+  Validate validate = 30;
 
-  optional Info info = 40;
-  optional Dump dump = 41;
+  Info info = 40;
+  Dump dump = 41;
   repeated Trim trim = 42;
-  optional Conjecture conjecture = 43;
+  Conjecture conjecture = 43;
 
-  optional Stop stop = 99;
+  Stop stop = 99;
 }

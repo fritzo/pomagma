@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 
+from pomagma.reducer import bohm  # isort:skip
+from pomagma.compiler.util import temp_memoize  # isort:skip
 import os
 
 os.environ['POMAGMA_LOG_LEVEL'] = '3'
-
-from pomagma.compiler.util import temp_memoize  # isort:skip
-from pomagma.reducer import bohm  # isort:skip
 
 
 print('Example 1.')

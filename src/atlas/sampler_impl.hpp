@@ -1,7 +1,8 @@
 #pragma once
 
-#include "sampler.hpp"
 #include <pomagma/language/language.pb.h>
+
+#include "sampler.hpp"
 
 namespace pomagma {
 
@@ -112,8 +113,8 @@ void Sampler::load(const std::string &language_file) {
     protobuf::Language language;
 
     std::ifstream file(language_file, std::ios::in | std::ios::binary);
-    POMAGMA_ASSERT(file.is_open(), "failed to open language file "
-                                       << language_file);
+    POMAGMA_ASSERT(file.is_open(),
+                   "failed to open language file " << language_file);
     POMAGMA_ASSERT(language.ParseFromIstream(&file),
                    "failed tp parse language file " << language_file);
 

@@ -1,5 +1,6 @@
-#include "conjecture_equal.hpp"
 #include <pomagma/atlas/macro/carrier.hpp>
+
+#include "conjecture_equal.hpp"
 
 int main(int argc, char** argv) {
     pomagma::Log::Context log_context(argc, argv);
@@ -17,7 +18,7 @@ int main(int argc, char** argv) {
         conjectures_out_file = argv[4];
         theorems_file = argv[5];
     } else {
-        std::cout << "Usage: " << boost::filesystem::basename(argv[0])
+        std::cout << "Usage: " << boost::filesystem::path(argv[0]).filename().string()
                   << " structure_in"
                   << " language_in"
                   << " conjectures_in"

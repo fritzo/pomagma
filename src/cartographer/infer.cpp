@@ -1,12 +1,13 @@
 #include "infer.hpp"
-#include <pomagma/atlas/macro/structure_impl.hpp>
-#include <pomagma/atlas/macro/scheduler.hpp>
+
 #include <mutex>
+#include <pomagma/atlas/macro/scheduler.hpp>
+#include <pomagma/atlas/macro/structure_impl.hpp>
 #include <unordered_set>
 
-#define POMAGMA_ASSERT_UNDECIDED(rel, x, y)                                    \
-    POMAGMA_ASSERT(not rel.find(x, y), "already decided " #rel " " << x << " " \
-                                                                   << y)
+#define POMAGMA_ASSERT_UNDECIDED(rel, x, y) \
+    POMAGMA_ASSERT(not rel.find(x, y),      \
+                   "already decided " #rel " " << x << " " << y)
 
 namespace pomagma {
 

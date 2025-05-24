@@ -1,5 +1,5 @@
-#include <pomagma/analyst/intervals.hpp>
 #include <functional>
+#include <pomagma/analyst/intervals.hpp>
 #include <set>
 
 #define POMAGMA_INSERT(collection, key, val)                 \
@@ -26,26 +26,29 @@ Approximator::Approximator(Structure& structure, DenseSetStore& sets,
       m_nless(structure.binary_relation("NLESS")),
       // dense set stores
       m_sets(sets),
-      m_empty_set(sets.store(std::move(DenseSet(m_item_dim)))),
+      m_empty_set(sets.store(DenseSet(m_item_dim))),
       m_known(1 + m_item_dim),
       m_unknown(),
       // lazy map caches
-      m_disjoint_cache(worker_pool,
-                       [this](const std::pair<SetId, SetId>& pair) {
-          return m_sets.load(pair.first).disjoint(m_sets.load(pair.second))
-                     ? Trool::TRUE
-                     : Trool::FALSE;
-      }),
-      m_union_cache(worker_pool, [this](const std::vector<SetId>& sets) {
-          const size_t count = sets.size();
-          POMAGMA_ASSERT1(count >= 2, "too few sets: " << count);
-          DenseSet val(m_item_dim);
-          val.set_union(m_sets.load(sets[0]), m_sets.load(sets[1]));
-          for (size_t i = 2; i < count; ++i) {
-              val += m_sets.load(sets[i]);
-          }
-          return m_sets.store(std::move(val));
-      }),
+      m_disjoint_cache(
+          worker_pool,
+          [this](const std::pair<SetId, SetId>& pair) {
+              return m_sets.load(pair.first).disjoint(m_sets.load(pair.second))
+                         ? Trool::TRUE
+                         : Trool::FALSE;
+          }),
+      m_union_cache(worker_pool,
+                    [this](const std::vector<SetId>& sets) {
+                        const size_t count = sets.size();
+                        POMAGMA_ASSERT1(count >= 2, "too few sets: " << count);
+                        DenseSet val(m_item_dim);
+                        val.set_union(m_sets.load(sets[0]),
+                                      m_sets.load(sets[1]));
+                        for (size_t i = 2; i < count; ++i) {
+                            val += m_sets.load(sets[i]);
+                        }
+                        return m_sets.store(std::move(val));
+                    }),
       m_nullary_cache(),
       m_binary_cache() {
     POMAGMA_ASSERT(m_top, "TOP is not defined");
@@ -80,22 +83,22 @@ Approximator::Approximator(Structure& structure, DenseSetStore& sets,
         for (Parity p : {ABOVE, BELOW}) {
             POMAGMA_INSERT(
                 m_binary_cache, CacheKey(hash, VAL, p),
-                new Cache(worker_pool,
-                          [this, &fun, p](const std::pair<SetId, SetId>& x) {
+                new Cache(worker_pool, [this, &fun,
+                                        p](const std::pair<SetId, SetId>& x) {
                     return function_lhs_rhs(fun, x.first, x.second, p);
                 }));
         }
         for (Parity p : {NABOVE, NBELOW}) {
             POMAGMA_INSERT(
                 m_binary_cache, CacheKey(hash, RHS, p),
-                new Cache(worker_pool,
-                          [this, &fun, p](const std::pair<SetId, SetId>& x) {
+                new Cache(worker_pool, [this, &fun,
+                                        p](const std::pair<SetId, SetId>& x) {
                     return function_lhs_val(fun, x.first, x.second, p);
                 }));
             POMAGMA_INSERT(
                 m_binary_cache, CacheKey(hash, LHS, p),
-                new Cache(worker_pool,
-                          [this, &fun, p](const std::pair<SetId, SetId>& x) {
+                new Cache(worker_pool, [this, &fun,
+                                        p](const std::pair<SetId, SetId>& x) {
                     return function_rhs_val(fun, x.first, x.second, p);
                 }));
         }
@@ -109,8 +112,8 @@ Approximator::Approximator(Structure& structure, DenseSetStore& sets,
         for (Parity p : {ABOVE, BELOW}) {
             POMAGMA_INSERT(
                 m_binary_cache, CacheKey(hash, VAL, p),
-                new Cache(worker_pool,
-                          [this, &fun, p](const std::pair<SetId, SetId>& x) {
+                new Cache(worker_pool, [this, &fun,
+                                        p](const std::pair<SetId, SetId>& x) {
                     return function_lhs_rhs(fun, x.first, x.second, p);
                 }));
         }

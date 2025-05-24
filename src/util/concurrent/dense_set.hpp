@@ -1,9 +1,9 @@
 #pragma once
 
 #include <array>
-#include <pomagma/util/util.hpp>
 #include <pomagma/util/concurrent/bool_ref.hpp>
 #include <pomagma/util/threading.hpp>
+#include <pomagma/util/util.hpp>
 
 namespace pomagma {
 

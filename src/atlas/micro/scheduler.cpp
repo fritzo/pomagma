@@ -1,12 +1,14 @@
 #include "scheduler.hpp"
-#include <pomagma/util/threading.hpp>
-#include <vector>
-#include <thread>
-#include <condition_variable>
-#include <chrono>
+
 #include <tbb/concurrent_queue.h>
 
-//#define POMAGMA_DEBUG1(message)
+#include <chrono>
+#include <condition_variable>
+#include <pomagma/util/threading.hpp>
+#include <thread>
+#include <vector>
+
+// #define POMAGMA_DEBUG1(message)
 #define POMAGMA_DEBUG1(message) POMAGMA_DEBUG(message)
 
 namespace pomagma {
@@ -243,15 +245,14 @@ void start_deadline() {
     POMAGMA_ASSERT_LE(1, duration_sec);
     POMAGMA_ASSERT_LE(duration_sec, 3600 * 24 * 7);
     std::thread([duration_sec]() {
-                    // check 1000x more often than duration
-                    const auto sleep_interval =
-                        std::chrono::milliseconds(duration_sec);
-                    while (get_elapsed_time() < duration_sec) {
-                        std::this_thread::sleep_for(sleep_interval);
-                    }
-                    POMAGMA_INFO("Deadline reached");
-                    g_deadline_flag.store(false);
-                }).detach();
+        // check 1000x more often than duration
+        const auto sleep_interval = std::chrono::milliseconds(duration_sec);
+        while (get_elapsed_time() < duration_sec) {
+            std::this_thread::sleep_for(sleep_interval);
+        }
+        POMAGMA_INFO("Deadline reached");
+        g_deadline_flag.store(false);
+    }).detach();
 }
 
 bool try_initialize_work(rng_t &) {

@@ -10,12 +10,14 @@
 // InjectiveFunction
 // BinaryFunction
 // SymmetricFunction
+#include <pomagma/atlas/structure.pb.h>
+
 #include <algorithm>
 #include <array>
-#include <pomagma/atlas/structure.pb.h>
 #include <pomagma/atlas/protobuf.hpp>
 #include <pomagma/io/protoblob.hpp>
 #include <thread>
+#include <boost/filesystem.hpp>
 
 namespace pomagma {
 
@@ -476,13 +478,13 @@ inline void dump(const Carrier &carrier, const SymmetricFunction &fun,
 inline Hasher::Dict get_tree_hash(const protobuf::Structure &structure) {
     Hasher::Dict dict;
 
-    POMAGMA_ASSERT(structure.carrier().has_hash(), "carrier is missing hash");
+    POMAGMA_ASSERT(!structure.carrier().hash().empty(), "carrier is missing hash");
     dict["carrier"] = parse_digest(structure.carrier().hash());
 
 #define CASE_ARITY(Kind, kind, Arity, arity)                             \
     for (const auto &i : structure.arity##_##kind##s()) {                \
-        POMAGMA_ASSERT(i.has_name(), #Arity #Kind " is missing name");   \
-        POMAGMA_ASSERT(i.has_hash(), #Arity #Kind " is missing hash");   \
+        POMAGMA_ASSERT(!i.name().empty(), #Arity #Kind " is missing name");   \
+        POMAGMA_ASSERT(!i.hash().empty(), #Arity #Kind " is missing hash");   \
         dict[#kind "s/" #arity "/" + i.name()] = parse_digest(i.hash()); \
     }
     POMAGMA_SWITCH_ARITY(CASE_ARITY)
@@ -533,7 +535,8 @@ inline void dump(Signature &signature, protobuf::Structure &structure,
 
 void dump(Signature &signature, const std::string &filename) {
     POMAGMA_INFO("Dumping structure to file " << filename);
-    POMAGMA_ASSERT_EQ(fs::extension(filename), ".pb");
+    boost::filesystem::path p(filename);
+    POMAGMA_ASSERT_EQ(p.extension().string(), ".pb");
 
     protobuf::Structure structure;
 
@@ -541,8 +544,8 @@ void dump(Signature &signature, const std::string &filename) {
     detail::dump(signature, structure, sub_hexdigests);
 
     protobuf::BlobWriter([&](const std::string &hexdigest) {
-                             dump_blob_ref(hexdigest, filename, sub_hexdigests);
-                         }).write(structure);
+        dump_blob_ref(hexdigest, filename, sub_hexdigests);
+    }).write(structure);
 
     POMAGMA_INFO("done dumping structure");
 }
@@ -571,8 +574,8 @@ inline void update_data(const Carrier &, UnaryRelation &rel,
     rel.update();
     auto actual = get_hash(rel);
     auto expected = map_find(hash, "relations/unary/" + name);
-    POMAGMA_ASSERT(actual == expected, "unary relation " << name
-                                                         << " is corrupt");
+    POMAGMA_ASSERT(actual == expected,
+                   "unary relation " << name << " is corrupt");
 
     POMAGMA_INFO("done updating unary relation " << name);
 }
@@ -584,8 +587,8 @@ inline void update_data(const Carrier &carrier, BinaryRelation &rel,
     rel.update();
     auto expected = map_find(hash, "relations/binary/" + name);
     auto actual = get_hash(carrier, rel);
-    POMAGMA_ASSERT(actual == expected, "binary relation " << name
-                                                          << " is corrupt");
+    POMAGMA_ASSERT(actual == expected,
+                   "binary relation " << name << " is corrupt");
 
     POMAGMA_INFO("done updating binary relation " << name);
 }
@@ -597,8 +600,8 @@ inline void update_data(const Carrier &, NullaryFunction &fun,
     fun.update();
     auto actual = get_hash(fun);
     auto expected = map_find(hash, "functions/nullary/" + name);
-    POMAGMA_ASSERT(actual == expected, "nullary function " << name
-                                                           << " is corrupt");
+    POMAGMA_ASSERT(actual == expected,
+                   "nullary function " << name << " is corrupt");
 
     POMAGMA_DEBUG("done updating nullary function " << name);
 }
@@ -610,8 +613,8 @@ inline void update_data(const Carrier &, InjectiveFunction &fun,
     fun.update();
     auto actual = get_hash(fun);
     auto expected = map_find(hash, "functions/injective/" + name);
-    POMAGMA_ASSERT(actual == expected, "injective function " << name
-                                                             << " is corrupt");
+    POMAGMA_ASSERT(actual == expected,
+                   "injective function " << name << " is corrupt");
 
     POMAGMA_INFO("done updating injective function " << name);
 }
@@ -625,8 +628,8 @@ inline void update_data(const Carrier &carrier, Function &fun,
     fun.update();
     auto actual = get_hash(carrier, fun);
     auto expected = map_find(hash, "functions/" + arity + "/" + name);
-    POMAGMA_ASSERT(actual == expected, arity << " function " << name
-                                             << " is corrupt");
+    POMAGMA_ASSERT(actual == expected,
+                   arity << " function " << name << " is corrupt");
 
     POMAGMA_INFO("done updating " << arity << " function " << name);
 }
@@ -689,7 +692,7 @@ inline void load_signature(Signature &signature,
 
 #define CASE_ARITY(Kind, kind, Arity, arity)                           \
     for (const auto &i : structure.arity##_##kind##s()) {              \
-        POMAGMA_ASSERT(i.has_name(), #Arity #Kind " is missing name"); \
+        POMAGMA_ASSERT(!i.name().empty(), #Arity #Kind " is missing name"); \
         signature.declare(i.name(), *new Arity##Kind(carrier));        \
     }
     POMAGMA_SWITCH_ARITY(CASE_ARITY)
@@ -709,7 +712,7 @@ inline void check_signature(Signature &signature,
 
 #define CASE_ARITY(Kind, kind, Arity, arity)                                  \
     for (const auto &i : structure.arity##_##kind##s()) {                     \
-        POMAGMA_ASSERT(i.has_name(), #Arity #Kind " is missing name");        \
+        POMAGMA_ASSERT(!i.name().empty(), #Arity #Kind " is missing name");        \
         POMAGMA_ASSERT(signature.arity##_##kind(i.name()),                    \
                        "file has unknown " #arity " " #kind " " << i.name()); \
     }
@@ -776,7 +779,7 @@ inline void load_data(BinaryRelation &rel,
 inline void load_data(NullaryFunction &fun,
                       const protobuf::NullaryFunction &message,
                       std::vector<std::function<void()>> *) {
-    if (message.has_val()) {
+    if (message.val() != 0) {
         fun.raw_insert(message.val());
     }
 }
@@ -785,7 +788,7 @@ inline void load_data(NullaryFunction &fun,
 inline void load_data(InjectiveFunction &fun, protobuf::UnaryFunction &message,
                       std::vector<std::function<void()>> *tasks = nullptr) {
     // load data in message
-    if (message.has_map()) {
+    if (message.map().key_size() > 0) {
         auto &map = *message.mutable_map();
         protobuf::delta_decompress(map);
         POMAGMA_ASSERT_EQ(map.key_size(), map.val_size());
@@ -883,7 +886,7 @@ inline void load_data(Signature &signature, protobuf::Structure &structure) {
 
 #define CASE_ARITY(Kind, kind, Arity, arity)                           \
     for (auto &i : *structure.mutable_##arity##_##kind##s()) {         \
-        POMAGMA_ASSERT(i.has_name(), #Arity #Kind " is missing name"); \
+        POMAGMA_ASSERT(!i.name().empty(), #Arity #Kind " is missing name"); \
         POMAGMA_INFO("loading " #Arity #Kind " " << i.name());         \
         load_data(*signature.arity##_##kind(i.name()), i, &tasks);     \
     }
@@ -904,13 +907,14 @@ inline void load_data(Signature &signature, protobuf::Structure &structure) {
 void load(Signature &signature, const std::string &filename,
           size_t extra_item_dim) {
     POMAGMA_INFO("Loading structure from file " << filename);
-    POMAGMA_ASSERT_EQ(fs::extension(filename), ".pb");
+    boost::filesystem::path p(filename);
+    POMAGMA_ASSERT_EQ(p.extension().string(), ".pb");
 
     protobuf::Structure structure;
     POMAGMA_ASSERT(structure.descriptor(), "protobuf error");
     protobuf::InFile(find_blob(load_blob_ref(filename))).read(structure);
 
-    POMAGMA_ASSERT(structure.has_hash(), "structure is missing hash");
+    POMAGMA_ASSERT(!structure.hash().empty(), "structure is missing hash");
     auto digest = Hasher::digest(detail::get_tree_hash(structure));
     POMAGMA_ASSERT(Hasher::str(digest) == structure.hash(), "file is corrupt");
 
@@ -922,13 +926,14 @@ void load(Signature &signature, const std::string &filename,
 
 void load_data(Signature &signature, const std::string &filename) {
     POMAGMA_INFO("Loading structure from file " << filename);
-    POMAGMA_ASSERT_EQ(fs::extension(filename), ".pb");
+    boost::filesystem::path p(filename);
+    POMAGMA_ASSERT_EQ(p.extension().string(), ".pb");
 
     protobuf::Structure structure;
     POMAGMA_ASSERT(structure.descriptor(), "protobuf error");
     protobuf::InFile(find_blob(load_blob_ref(filename))).read(structure);
 
-    POMAGMA_ASSERT(structure.has_hash(), "structure is missing hash");
+    POMAGMA_ASSERT(!structure.hash().empty(), "structure is missing hash");
     auto digest = Hasher::digest(detail::get_tree_hash(structure));
     POMAGMA_ASSERT(Hasher::str(digest) == structure.hash(), "file is corrupt");
 

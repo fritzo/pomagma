@@ -1,12 +1,12 @@
 #pragma once
 
-#include <pomagma/util/threading.hpp>
 #include <atomic>
-#include <thread>
-#include <vector>
 #include <map>
+#include <pomagma/util/threading.hpp>
+#include <thread>
 #include <unordered_map>
 #include <unordered_set>
+#include <vector>
 
 namespace pomagma {
 

@@ -1,8 +1,9 @@
 #pragma once
 
-#include "util.hpp"
-#include "carrier.hpp"
 #include <pomagma/util/sequential/dense_set.hpp>
+
+#include "carrier.hpp"
+#include "util.hpp"
 
 namespace pomagma {
 

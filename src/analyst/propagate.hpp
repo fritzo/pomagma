@@ -1,9 +1,9 @@
 #pragma once
 
+#include <memory>
 #include <pomagma/analyst/intervals.hpp>
 #include <pomagma/util/trool.hpp>
 #include <vector>
-#include <memory>
 
 namespace pomagma {
 namespace propagate {

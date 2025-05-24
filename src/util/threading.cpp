@@ -1,6 +1,7 @@
+#include <unistd.h>
+
 #include <pomagma/util/threading.hpp>
 #include <thread>
-#include <unistd.h>
 
 namespace pomagma {
 

@@ -1,3 +1,5 @@
+syntax = "proto3";
+
 package pomagma.compiler.protobuf;
 
 message Signature {
@@ -13,7 +15,7 @@ message Signature {
 
 message Expression {
   // Space-delimited polish notation. Requires a signature for parsing.
-  required string polish = 1;
+  string polish = 1;
 }
 
 message Sequent {
@@ -29,14 +31,14 @@ message Theory {
 }
 
 message Presentation {
-  optional Signature signature = 1;
-  optional Theory theory = 2;
+  Signature signature = 1;
+  Theory theory = 2;
 }
 
 message Corpus {
   message Definition {
-    required string name = 1;  // Must be nonempty and whitespace-free.
-    required Expression value = 2;
+    string name = 1;  // Must be nonempty and whitespace-free.
+    Expression value = 2;
   }
 
   // This represents a map; enties should be sorted and unique by key.

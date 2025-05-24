@@ -12,7 +12,14 @@ set(POMAGMA_UTIL_LIBS
 
 set(POMAGMA_IO_LIBS
 	pomagma_io
-	${PROTOBUF_LIBRARIES}
+	protobuf::libprotobuf
+	absl::log
+	absl::log_internal_message
+	absl::log_internal_check_op
+	absl::log_internal_format
+	absl::base
+	absl::strings
+	absl::str_format
 )
 
 set(POMAGMA_WORLD_LIBS

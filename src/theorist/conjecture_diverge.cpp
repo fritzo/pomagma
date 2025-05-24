@@ -1,10 +1,11 @@
 #include "conjecture_diverge.hpp"
-#include <pomagma/atlas/macro/carrier.hpp>
+
+#include <algorithm>
 #include <pomagma/atlas/macro/binary_relation.hpp>
+#include <pomagma/atlas/macro/carrier.hpp>
 #include <pomagma/atlas/macro/nullary_function.hpp>
 #include <pomagma/atlas/macro/router.hpp>
 #include <pomagma/language/language.hpp>
-#include <algorithm>
 
 namespace pomagma {
 

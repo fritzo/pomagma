@@ -1,8 +1,9 @@
 #pragma once
 
-#include "util.hpp"
-#include "base_bin_rel.hpp"
 #include <pomagma/util/concurrent/dense_set.hpp>
+
+#include "base_bin_rel.hpp"
+#include "util.hpp"
 
 namespace pomagma {
 

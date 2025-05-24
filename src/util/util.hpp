@@ -1,5 +1,9 @@
 #pragma once
 
+#include <stdint.h>
+#include <unistd.h>
+
+#include <boost/filesystem.hpp>
 #include <chrono>
 #include <cstdlib>
 #include <fstream>
@@ -9,16 +13,13 @@
 #include <mutex>
 #include <random>
 #include <sstream>
-#include <stdint.h>
 #include <string>
-#include <unistd.h>
 #include <vector>
-
-#include <boost/filesystem.hpp>
 
 // for demangle() below
 #ifdef __GNUG__
 #include <cxxabi.h>
+
 #include <memory>
 #endif  // __GNUG__
 
@@ -60,10 +61,10 @@ namespace fs = boost::filesystem;
 //----------------------------------------------------------------------------
 // compiler-specific
 
-//#ifndef __STDC_VERSION__
-//#  warning "__STDC_VERSION__ was undefined"
-//#  define __STDC_VERSION__ 199901L
-//#endif // __STDC_VERSION__
+// #ifndef __STDC_VERSION__
+// #  warning "__STDC_VERSION__ was undefined"
+// #  define __STDC_VERSION__ 199901L
+// #endif // __STDC_VERSION__
 
 #ifdef __GNUG__
 #define GCC_VERSION (__GNUC__ * 10000 + __GNUC_MINOR__ * 100)
@@ -347,10 +348,11 @@ class Log {
                     1 <= (POMAGMA_i) and (POMAGMA_i) <= (POMAGMA_dim), \
                     "out of range: " #POMAGMA_i " = " << (POMAGMA_i))
 
-#define POMAGMA_ASSERT_ALIGNED_(POMAGMA_level, POMAGMA_ptr)                   \
-    POMAGMA_ASSERT_((POMAGMA_level), (reinterpret_cast<size_t>(POMAGMA_ptr) % \
-                                      BYTES_PER_CACHE_LINE) == 0,             \
-                    "bad alignment for variable " #POMAGMA_ptr)
+#define POMAGMA_ASSERT_ALIGNED_(POMAGMA_level, POMAGMA_ptr)                  \
+    POMAGMA_ASSERT_(                                                         \
+        (POMAGMA_level),                                                     \
+        (reinterpret_cast<size_t>(POMAGMA_ptr) % BYTES_PER_CACHE_LINE) == 0, \
+        "bad alignment for variable " #POMAGMA_ptr)
 
 //----------------------------------------------------------------------------
 // data types
@@ -439,7 +441,7 @@ inline std::string demangle(const char *name) {
         abi::__cxa_demangle(name, NULL, NULL, &status), std::free};
     return (status == 0) ? result.get() : name;
 }
-#else  // __GNUG__
+#else   // __GNUG__
 inline std::string demangle(const char *name) { return name; }
 #endif  // __GNUG__
 

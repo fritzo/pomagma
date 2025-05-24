@@ -1,3 +1,5 @@
+syntax = "proto3";
+
 package pomagma.atlas.protobuf;
 
 //----------------------------------------------------------------------------
@@ -12,73 +14,73 @@ message ObMap {
 }
 
 message ObSet {
-  required bytes dense = 1;
+  bytes dense = 1;
 }
 
 //----------------------------------------------------------------------------
 // algebraic structure
 
 message Carrier {
-  optional string name = 1;
-  optional bytes hash = 2;
-  optional uint32 item_count = 3;
+  string name = 1;
+  bytes hash = 2;
+  uint32 item_count = 3;
 }
 
 message NullaryFunction {
-  optional string name = 1;
-  optional bytes hash = 2;
-  optional uint32 val = 3;
+  string name = 1;
+  bytes hash = 2;
+  uint32 val = 3;
 
   repeated bytes blobs = 15;
 }
 
 message UnaryFunction {
-  optional string name = 1;
-  optional bytes hash = 2;
-  optional ObMap map = 3;
+  string name = 1;
+  bytes hash = 2;
+  ObMap map = 3;
 
   repeated bytes blobs = 15;
 }
 
 message BinaryFunction {
   message Row {
-    required uint32 lhs = 1;
-    required ObMap rhs_val = 2;
+    uint32 lhs = 1;
+    ObMap rhs_val = 2;
   }
 
-  optional string name = 1;
-  optional bytes hash = 2;
+  string name = 1;
+  bytes hash = 2;
   repeated Row rows = 3;
 
   repeated bytes blobs = 15;
 }
 
 message UnaryRelation {
-  optional string name = 1;
-  optional bytes hash = 2;
-  optional ObSet set = 3;
+  string name = 1;
+  bytes hash = 2;
+  ObSet set = 3;
 
   repeated bytes blobs = 15;
 }
 
 message BinaryRelation {
   message Row {
-    required uint32 lhs = 1;
-    required ObSet rhs = 2;
+    uint32 lhs = 1;
+    ObSet rhs = 2;
   }
 
-  optional string name = 1;
-  optional bytes hash = 2;
+  string name = 1;
+  bytes hash = 2;
   repeated Row rows = 3;
 
   repeated bytes blobs = 15;
 }
 
 message Structure {
-  optional string name = 1;
-  optional bytes hash = 2;
+  string name = 1;
+  bytes hash = 2;
 
-  optional Carrier carrier = 3;
+  Carrier carrier = 3;
 
   repeated NullaryFunction nullary_functions = 4;
   // reserved 5;  // For unary_functions.
@@ -103,9 +105,9 @@ message Chart {
   // Lemma: min_presentation.signature is a subset of
   //   max_presentation.signature.
   // Lemma: min_presentation.theory is entailed by max_presentation.theory.
-  required bytes min_presentation_blob = 1;
-  required bytes max_presentation_blob = 2;
-  required bytes structure_blob = 3;
+  bytes min_presentation_blob = 1;
+  bytes max_presentation_blob = 2;
+  bytes structure_blob = 3;
   repeated bytes subsumed_structure_blobs = 4;
 }
 

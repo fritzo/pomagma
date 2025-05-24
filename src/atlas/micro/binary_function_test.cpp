@@ -1,6 +1,8 @@
 #include "binary_function.hpp"
-#include "function_test.hpp"
+
 #include <vector>
+
+#include "function_test.hpp"
 
 using namespace pomagma;
 
@@ -33,8 +35,8 @@ struct Example {
             for (auto j = support.iter(); j.ok(); j.next()) {
                 Ob k = example_fun(*i, *j);
                 if ((k > 1) and carrier.contains(k)) {
-                    POMAGMA_ASSERT(fun.defined(*i, *j), "missing pair "
-                                                            << *i << ',' << *j);
+                    POMAGMA_ASSERT(fun.defined(*i, *j),
+                                   "missing pair " << *i << ',' << *j);
                     POMAGMA_ASSERT(fun.find(*i, *j) == k,
                                    "bad value at " << *i << ',' << *j);
                 } else {

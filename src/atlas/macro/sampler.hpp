@@ -1,6 +1,9 @@
 #pragma once
 
+// clang-format off
 #include "util.hpp"
+// clang-format on
+
 #include <pomagma/atlas/sampler.hpp>
 #include <pomagma/util/sequential/dense_set.hpp>
 

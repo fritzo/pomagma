@@ -15,6 +15,7 @@ CHANGELOG
 2016-12-25 Add rules for nominal and quoted abstraction.
 2016-12-27 Treat nominal and de Bruijn variables differently. TODO revert?
 2016-12-31 Fix bug in substitute(-,-,-,-); tests pass.
+
 """
 
 from pomagma.compiler.util import memoize_arg, memoize_args, unique
@@ -187,6 +188,7 @@ def is_linear(term):
     * TOP is linear.
     * Y is nonlinear.
     * QUOTE(x) is linear for any x, hence EVAL must be nonlinear.
+
     """
     assert isinstance(term, Term), term
     return _is_linear(term) is not None
@@ -201,6 +203,7 @@ def is_cheap_to_copy(term):
       reduction (ie with no copying) is terminating, and each nonlinear beta
       step strictly reduces rank. Hence there are finitely many linear
       reduction sequences. []
+
     """
     return is_linear(term)
 

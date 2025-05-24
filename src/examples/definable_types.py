@@ -75,6 +75,7 @@ def trace(*part_names, **kwargs):
       type = '(FUN r (FUN s (FUN f (FUN x (r (f (s x)))))))'
       inhab = '(FUN x x)'
       fmt = 'sexpr' (one of: 'sexpr', 'tiny')
+
     """
     print_ = PRINTERS[kwargs.get('fmt', 'sexpr')]
 

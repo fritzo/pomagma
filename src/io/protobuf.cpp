@@ -1,5 +1,3 @@
-#include <pomagma/io/protobuf.hpp>
-
 #include <fcntl.h>
 #include <google/protobuf/io/coded_stream.h>
 #include <google/protobuf/io/gzip_stream.h>
@@ -10,8 +8,10 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#include <pomagma/io/protobuf.hpp>
+
 #define POMAGMA_DEBUG1(message)
-//#define POMAGMA_DEBUG1(message) POMAGMA_DEBUG(message)
+// #define POMAGMA_DEBUG1(message) POMAGMA_DEBUG(message)
 
 namespace pomagma {
 namespace protobuf {
@@ -97,8 +97,8 @@ static const MagicNumber g_lz4_magic_number = {{0x18, 0x4D, 0x22, 0x04}, 4};
 InFile::InFile(const std::string& filename)
     : m_filename(filename),
       m_fid(open(filename.c_str(), O_RDONLY | O_NOATIME)) {
-    POMAGMA_ASSERT(m_fid != -1, "opening " << filename << ": "
-                                           << strerror(errno));
+    POMAGMA_ASSERT(m_fid != -1,
+                   "opening " << filename << ": " << strerror(errno));
     m_file = new google::protobuf::io::FileInputStream(m_fid);
     const auto magic_number = detail::read_magic_number(m_fid);
     if (magic_number.matches(detail::g_gzip_magic_number)) {
@@ -145,8 +145,8 @@ bool InFile::try_read_chunk(google::protobuf::Message& message) {
 
 OutFile::OutFile(const std::string& filename)
     : m_filename(filename), m_fid(creat(filename.c_str(), 0444)) {
-    POMAGMA_ASSERT(m_fid != -1, "opening " << filename << ": "
-                                           << strerror(errno));
+    POMAGMA_ASSERT(m_fid != -1,
+                   "opening " << filename << ": " << strerror(errno));
     m_file = new google::protobuf::io::FileOutputStream(m_fid);
     m_gzip = new google::protobuf::io::GzipOutputStream(m_file, g_gzip_options);
 }
@@ -154,8 +154,8 @@ OutFile::OutFile(const std::string& filename)
 OutFile::~OutFile() {
     delete m_gzip;
     delete m_file;
-    POMAGMA_ASSERT(close(m_fid) != -1, "closing " << m_filename << ": "
-                                                  << strerror(errno));
+    POMAGMA_ASSERT(close(m_fid) != -1,
+                   "closing " << m_filename << ": " << strerror(errno));
 }
 
 void OutFile::write(const google::protobuf::Message& message) {
@@ -168,8 +168,8 @@ size_t OutFile::approx_bytes_written() { return m_file->ByteCount(); }
 
 Sha1OutFile::Sha1OutFile(const std::string& filename)
     : m_filename(filename), m_fid(creat(filename.c_str(), 0444)) {
-    POMAGMA_ASSERT(m_fid != -1, "opening " << filename << ": "
-                                           << strerror(errno));
+    POMAGMA_ASSERT(m_fid != -1,
+                   "opening " << filename << ": " << strerror(errno));
     m_file = new Sha1OutputStream(m_fid);
     m_gzip = new google::protobuf::io::GzipOutputStream(m_file, g_gzip_options);
 }
@@ -177,8 +177,8 @@ Sha1OutFile::Sha1OutFile(const std::string& filename)
 Sha1OutFile::~Sha1OutFile() {
     POMAGMA_ASSERT(m_gzip == nullptr, "digest() has not been called");
     delete m_file;
-    POMAGMA_ASSERT(close(m_fid) != -1, "closing " << m_filename << ": "
-                                                  << strerror(errno));
+    POMAGMA_ASSERT(close(m_fid) != -1,
+                   "closing " << m_filename << ": " << strerror(errno));
 }
 
 void Sha1OutFile::write(const google::protobuf::Message& message) {

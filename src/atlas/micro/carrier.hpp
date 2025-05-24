@@ -1,9 +1,10 @@
 #pragma once
 
-#include "util.hpp"
+#include <atomic>
 #include <pomagma/util/concurrent/dense_set.hpp>
 #include <pomagma/util/threading.hpp>
-#include <atomic>
+
+#include "util.hpp"
 
 namespace pomagma {
 

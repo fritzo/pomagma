@@ -1,8 +1,8 @@
 #pragma once
 
-#include <pomagma/io/protobuf.hpp>
-#include <pomagma/io/blobstore.hpp>
 #include <functional>
+#include <pomagma/io/blobstore.hpp>
+#include <pomagma/io/protobuf.hpp>
 
 namespace pomagma {
 namespace protobuf {

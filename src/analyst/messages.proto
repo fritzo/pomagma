@@ -1,10 +1,12 @@
+syntax = "proto3";
+
 package pomagma.protobuf;
 
 message Histogram {
   message Term {
-    required uint64 count = 1;
-    optional uint32 ob = 2;
-    optional string name = 3;
+    uint64 count = 1;
+    uint32 ob = 2;
+    string name = 3;
   }
   repeated Term terms = 1;
 }
@@ -21,34 +23,34 @@ message AnalystRequest {
   }
   message ValidateCorpus {
     message Line {
-      optional string name = 1;
-      required string code = 2;
+      string name = 1;
+      string code = 2;
     }
     repeated Line lines = 1;
   }
   message GetHistogram {
   }
   message FitLanguage {
-    optional Histogram histogram = 1;
+    Histogram histogram = 1;
   }
   message Solve {
-    required string program = 1;
-    optional uint64 max_solutions = 2;
+    string program = 1;
+    uint64 max_solutions = 2;
   }
   message ValidateFacts {
     repeated string facts = 1;
   }
 
   repeated string error_log = 1;
-  optional string id = 2;
-  optional TestInference test_inference = 3;
-  optional Simplify simplify = 4;
-  optional Validate validate = 5;
-  optional ValidateCorpus validate_corpus = 6;
-  optional GetHistogram get_histogram = 7;
-  optional FitLanguage fit_language = 8;
-  optional Solve solve = 9;
-  optional ValidateFacts validate_facts = 10;
+  string id = 2;
+  TestInference test_inference = 3;
+  Simplify simplify = 4;
+  Validate validate = 5;
+  ValidateCorpus validate_corpus = 6;
+  GetHistogram get_histogram = 7;
+  FitLanguage fit_language = 8;
+  Solve solve = 9;
+  ValidateFacts validate_facts = 10;
 }
 
 message AnalystResponse {
@@ -59,13 +61,13 @@ message AnalystResponse {
     TRUE = 2;
   }
   message Validity {
-    required Trool is_top = 1 [default = MAYBE];
-    required Trool is_bot = 2 [default = MAYBE];
-    required bool pending = 3 [default = false];
+    Trool is_top = 1;
+    Trool is_bot = 2;
+    bool pending = 3;
   }
 
   message TestInference {
-    required uint64 fail_count = 1;
+    uint64 fail_count = 1;
   }
   message Simplify {
     repeated string codes = 1;
@@ -77,12 +79,12 @@ message AnalystResponse {
     repeated Validity results = 1;
   }
   message GetHistogram {
-    required Histogram histogram = 1;
+    Histogram histogram = 1;
   }
   message FitLanguage {
     message Symbol {
-      required string name = 1;
-      required float prob = 2;
+      string name = 1;
+      float prob = 2;
     }
     repeated Symbol symbols = 1;
   }
@@ -91,17 +93,17 @@ message AnalystResponse {
     repeated string possible = 2;
   }
   message ValidateFacts {
-    required Trool result = 1;
+    Trool result = 1;
   }
 
   repeated string error_log = 1;
-  optional string id = 2;
-  optional TestInference test_inference = 3;
-  optional Simplify simplify = 4;
-  optional Validate validate = 5;
-  optional ValidateCorpus validate_corpus = 6;
-  optional GetHistogram get_histogram = 7;
-  optional FitLanguage fit_language = 8;
-  optional Solve solve = 9;
-  optional ValidateFacts validate_facts = 10;
+  string id = 2;
+  TestInference test_inference = 3;
+  Simplify simplify = 4;
+  Validate validate = 5;
+  ValidateCorpus validate_corpus = 6;
+  GetHistogram get_histogram = 7;
+  FitLanguage fit_language = 8;
+  Solve solve = 9;
+  ValidateFacts validate_facts = 10;
 }

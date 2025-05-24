@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
-#include <pomagma/util/util.hpp>
+
 #include <pomagma/util/lazy_map.hpp>
+#include <pomagma/util/util.hpp>
 
 namespace pomagma {
 namespace {

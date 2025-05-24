@@ -1,9 +1,11 @@
 #include "theory.hpp"
-#include <pomagma/util/profiler.hpp>
+
 #include <pomagma/atlas/micro/sampler.hpp>
-#include <pomagma/atlas/micro/structure_impl.hpp>
 #include <pomagma/atlas/micro/scheduler.hpp>
+#include <pomagma/atlas/micro/structure_impl.hpp>
 #include <pomagma/atlas/micro/vm.hpp>
+#include <pomagma/util/profiler.hpp>
+
 #include "insert_parser.hpp"
 
 namespace pomagma {

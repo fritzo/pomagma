@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+
 #include <pomagma/util/hasher.hpp>
 
 using namespace pomagma;

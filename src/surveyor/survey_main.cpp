@@ -1,5 +1,6 @@
-#include <pomagma/atlas/micro/util.hpp>
 #include <pomagma/atlas/micro/scheduler.hpp>
+#include <pomagma/atlas/micro/util.hpp>
+
 #include "theory.hpp"
 
 int main(int argc, char** argv) {
@@ -7,7 +8,7 @@ int main(int argc, char** argv) {
     const char* executable = *argv++;
 
     if (argc != 7) {
-        std::cout << "Usage: " << boost::filesystem::basename(executable)
+        std::cout << "Usage: " << boost::filesystem::path(executable).filename().string()
                   << " structure_in structure_out"
                   << " symbols facts programs language"
                   << "\n"

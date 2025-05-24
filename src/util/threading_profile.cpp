@@ -1,7 +1,8 @@
+#include <tbb/concurrent_queue.h>
+
+#include <future>
 #include <pomagma/util/threading.hpp>
 #include <thread>
-#include <future>
-#include <tbb/concurrent_queue.h>
 
 using namespace pomagma;
 

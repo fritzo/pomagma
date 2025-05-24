@@ -5,6 +5,7 @@ level of indirection 'Ob' so as to allow building of cyclic terms.
 
 Unlike pomagma.cartographer and pomagma.analyst, each Ob has a unique parse,
 i.e. the database here is not quotiented.
+
 """
 
 from pomagma.compiler.util import MEMOIZED_CACHES, memoize_arg, memoize_args
@@ -142,6 +143,7 @@ def approximate(term, depth):
 
     Approximated subterms will be replaced by HOLE.
     Acyclic subterms will be returned in entirety, possibly exceeding depth.
+
     """
     assert isinstance(term, Term)
     assert isinstance(depth, int) and depth >= 0
@@ -163,6 +165,7 @@ def rec(**defs):
     Returns:
       Dict of (name = definition) pairs, where no NVAR(name) occurs in any of
       the definitions; the definitions now refer to graph terms.
+
     """
     assert all(isinstance(key, str) for key in defs.keys())
     assert all(isinstance(val, Term) for val in defs.values())

@@ -110,7 +110,7 @@ def debuggable(fun):
     def debuggable_fun(*args, **kwargs):
         try:
             return fun(*args, **kwargs)
-        except:
+        except BaseException:
             type, value, tb = sys.exc_info()
             traceback.print_exc()
             pdb.post_mortem(tb)

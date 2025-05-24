@@ -5,10 +5,10 @@
 // pomagma/?structure/structure_impl.hpp
 
 #include <map>
-#include <unordered_map>
-#include <pomagma/util/aligned_alloc.hpp>
 #include <pomagma/atlas/program_fwd.hpp>
+#include <pomagma/util/aligned_alloc.hpp>
 #include <pomagma/util/profiler.hpp>
+#include <unordered_map>
 
 namespace pomagma {
 namespace vm {
@@ -263,4 +263,4 @@ class Agenda {
 };
 
 }  // namespace vm
-}  // namespacepomagma
+}  // namespace pomagma

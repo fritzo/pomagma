@@ -1,7 +1,7 @@
 #pragma once
 
-#include <pomagma/util/util.hpp>
 #include <atomic>
+#include <pomagma/util/util.hpp>
 
 #define POMAGMA_HAS_INVERSE_INDEX (1)
 

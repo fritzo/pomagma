@@ -1,7 +1,7 @@
 #pragma once
 
-#include <pomagma/util/util.hpp>
 #include <pomagma/atlas/signature.hpp>
+#include <pomagma/util/util.hpp>
 #include <tuple>
 
 namespace pomagma {
@@ -58,9 +58,9 @@ class TermParser {
 
     void end() {
         std::string token;
-        POMAGMA_ASSERT(not std::getline(m_stream, token, ' '),
-                       "unexpected token '" << token
-                                            << "' in: " << m_stream.str());
+        POMAGMA_ASSERT(
+            not std::getline(m_stream, token, ' '),
+            "unexpected token '" << token << "' in: " << m_stream.str());
     }
 
    private:

@@ -174,6 +174,7 @@ class Presentation(object):
 
         Args: lhs, rhs: names of roots of trees.
         Returns: True or False.
+
         """
         assert lhs in self._equations
         assert rhs in self._equations
@@ -199,6 +200,7 @@ class Presentation(object):
 
         Args: lhs, rhs: names of roots of trees.
         Returns: True or False.
+
         """
         assert lhs in self._equations
         assert rhs in self._equations

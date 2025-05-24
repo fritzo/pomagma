@@ -1,10 +1,12 @@
 #include "trim.hpp"
-#include <pomagma/atlas/macro/structure_impl.hpp>
-#include <pomagma/atlas/macro/sampler.hpp>
-#include <pomagma/atlas/macro/router.hpp>
-#include <pomagma/language/language.hpp>
-#include "collect_parser.hpp"
+
 #include <algorithm>
+#include <pomagma/atlas/macro/router.hpp>
+#include <pomagma/atlas/macro/sampler.hpp>
+#include <pomagma/atlas/macro/structure_impl.hpp>
+#include <pomagma/language/language.hpp>
+
+#include "collect_parser.hpp"
 
 namespace pomagma {
 

@@ -1,7 +1,7 @@
 #pragma once
 
-#include <pomagma/atlas/macro/util.hpp>
 #include <pomagma/analyst/approximate.hpp>
+#include <pomagma/atlas/macro/util.hpp>
 #include <pomagma/util/hash_map.hpp>
 #include <unordered_set>
 

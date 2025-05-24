@@ -1,6 +1,6 @@
-#include "util.hpp"
 #include "carrier.hpp"
 #include "scheduler.hpp"
+#include "util.hpp"
 
 namespace pomagma {
 

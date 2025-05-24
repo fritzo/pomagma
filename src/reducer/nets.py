@@ -2,6 +2,7 @@
 
 Each node has multiple port attributes, each port attribute's value is a
 (node, port type) pair.
+
 """
 
 from pomagma.util import TODO

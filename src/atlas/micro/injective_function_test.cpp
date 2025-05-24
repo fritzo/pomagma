@@ -1,6 +1,8 @@
 #include "injective_function.hpp"
-#include "function_test.hpp"
+
 #include <vector>
+
+#include "function_test.hpp"
 
 using namespace pomagma;
 
@@ -41,8 +43,8 @@ struct Example {
                 POMAGMA_ASSERT(fun.defined(*i), "missing value at " << *i);
                 POMAGMA_ASSERT(fun.find(*i) == val, "bad value at " << *i);
             } else {
-                POMAGMA_ASSERT(not fun.defined(*i), "unexpected value at "
-                                                        << *i);
+                POMAGMA_ASSERT(not fun.defined(*i),
+                               "unexpected value at " << *i);
             }
         }
         fun.validate();

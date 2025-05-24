@@ -15,7 +15,7 @@ double test_iterator(size_t exponent, float density, size_t iters = 10000) {
         }
     }
 
-    size_t count = 0;
+    size_t count __attribute__((unused)) = 0;
     Timer timer;
     for (size_t i = 0; i < iters; ++i) {
         for (auto iter = set.iter(); iter.ok(); iter.next()) {
@@ -35,7 +35,7 @@ double test_iterator2(size_t exponent, float density, size_t iters = 10000) {
         if (randomly_insert(rng)) set2.insert(i);
     }
 
-    size_t count = 0;
+    size_t count __attribute__((unused)) = 0;
     Timer timer;
     for (size_t i = 0; i < iters; ++i) {
         for (auto iter = set2.iter_insn(set2); iter.ok(); iter.next()) {
@@ -53,7 +53,7 @@ double test_equal(size_t exponent, float density, size_t iters = 10000) {
         if (randomly_insert(rng)) set.insert(i);
     }
 
-    size_t count = 0;
+    size_t count __attribute__((unused)) = 0;
     Timer timer;
     for (size_t i = 0; i < iters; ++i) {
         // operator== is usually called with actually equal sets
@@ -75,9 +75,9 @@ int main() {
         float freq1 = test_iterator(exponent, density) / 1000;
         float freq2 = test_iterator2(exponent, density) / 1000;
         float freq3 = test_equal(exponent, density) / 1000;
-        POMAGMA_INFO(std::setw(15) << exponent << std::setw(15) << freq1
-                                   << std::setw(15) << freq2 << std::setw(15)
-                                   << freq3);
+        POMAGMA_INFO(std::setw(15)
+                     << exponent << std::setw(15) << freq1 << std::setw(15)
+                     << freq2 << std::setw(15) << freq3);
     }
 
     return 0;

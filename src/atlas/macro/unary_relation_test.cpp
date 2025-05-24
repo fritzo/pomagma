@@ -1,4 +1,5 @@
 #include "unary_relation.hpp"
+
 #include <utility>
 
 using namespace pomagma;

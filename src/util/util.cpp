@@ -1,7 +1,7 @@
-#include <pomagma/util/util.hpp>
-
 #include <sys/resource.h>
 #include <sys/time.h>
+
+#include <pomagma/util/util.hpp>
 #include <vector>
 
 namespace pomagma {
@@ -68,7 +68,8 @@ int Log::init() {
     std::ostringstream message;
     message << "----------------------------------------"
                "----------------------------------------"
-               "\n" << get_date() << "\n";
+               "\n"
+            << get_date() << "\n";
     s_state.write(message.str());
     return 0;
 }

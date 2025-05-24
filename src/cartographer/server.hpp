@@ -1,6 +1,6 @@
+#include <map>
 #include <pomagma/atlas/macro/structure.hpp>
 #include <vector>
-#include <map>
 
 namespace pomagma {
 

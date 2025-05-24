@@ -1,8 +1,9 @@
 #pragma once
 
-#include "util.hpp"
-#include "carrier.hpp"
 #include <unordered_map>
+
+#include "carrier.hpp"
+#include "util.hpp"
 
 namespace pomagma {
 namespace shard {

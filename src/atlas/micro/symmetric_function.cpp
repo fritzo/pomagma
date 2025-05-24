@@ -1,7 +1,8 @@
 
 #include "symmetric_function.hpp"
-#include <pomagma/util/aligned_alloc.hpp>
+
 #include <cstring>
+#include <pomagma/util/aligned_alloc.hpp>
 
 namespace pomagma {
 
@@ -59,9 +60,9 @@ void SymmetricFunction::validate() const {
                                                           << i << ',' << j
                                                           << ',' << val);
                     } else {
-                        POMAGMA_ASSERT(not defined(i, j),
-                                       "found defined null value " << i << ','
-                                                                   << j);
+                        POMAGMA_ASSERT(
+                            not defined(i, j),
+                            "found defined null value " << i << ',' << j);
                     }
                 }
         }

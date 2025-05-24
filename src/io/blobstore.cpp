@@ -1,8 +1,9 @@
 #include "blobstore.hpp"
 
-#include <atomic>
 #include <fcntl.h>
 #include <sys/time.h>
+
+#include <atomic>
 
 #define POMAGMA_ASSERT_C(info, message) \
     POMAGMA_ASSERT((info) != -1, message << "; " << strerror(errno))
@@ -82,8 +83,8 @@ void dump_blob_ref(const std::string& hexdigest, const std::string& filename,
                    const std::vector<std::string>& sub_hexdigests) {
     POMAGMA_ASSERT_EQ(hexdigest.size(), HEXDIGEST_SIZE);
     int fid = creat(filename.c_str(), 0444);
-    POMAGMA_ASSERT(fid != -1, "creating " << filename << ": "
-                                          << strerror(errno));
+    POMAGMA_ASSERT(fid != -1,
+                   "creating " << filename << ": " << strerror(errno));
     POMAGMA_ASSERT(write(fid, hexdigest.data(), hexdigest.size()) != -1,
                    "writing " << filename << ": " << strerror(errno));
     for (const auto& sub_hexdigest : sub_hexdigests) {
@@ -93,8 +94,8 @@ void dump_blob_ref(const std::string& hexdigest, const std::string& filename,
         POMAGMA_ASSERT(write(fid, sub_hexdigest.data(), HEXDIGEST_SIZE) != -1,
                        "writing " << filename << ": " << strerror(errno));
     }
-    POMAGMA_ASSERT(close(fid) != -1, "closing " << filename << ": "
-                                                << strerror(errno));
+    POMAGMA_ASSERT(close(fid) != -1,
+                   "closing " << filename << ": " << strerror(errno));
 }
 
 }  // namespace pomagma

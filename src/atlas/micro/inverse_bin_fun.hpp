@@ -1,10 +1,12 @@
 #pragma once
 
-#include "util.hpp"
-#include <vector>
-#include <utility>
 #include <tbb/concurrent_unordered_map.h>
 #include <tbb/concurrent_unordered_set.h>
+
+#include <utility>
+#include <vector>
+
+#include "util.hpp"
 
 namespace pomagma {
 
@@ -40,7 +42,8 @@ struct small_pair_hasher<uint32_t> {
 // val -> lhs, rhs
 class Vlr_Table : noncopyable {
     typedef tbb::concurrent_unordered_set<std::pair<Ob, Ob>,
-                                          detail::small_pair_hasher<Ob>> Set;
+                                          detail::small_pair_hasher<Ob>>
+        Set;
     typedef std::vector<Set> Data;
     mutable Data m_data;
 
@@ -106,7 +109,8 @@ template <bool transpose>
 class VXx_Table : noncopyable {
     typedef tbb::concurrent_unordered_set<Ob> Set;
     typedef tbb::concurrent_unordered_map<std::pair<Ob, Ob>, Set,
-                                          detail::small_pair_hasher<Ob>> Data;
+                                          detail::small_pair_hasher<Ob>>
+        Data;
     mutable Data m_data;
 
    public:
@@ -129,9 +133,9 @@ class VXx_Table : noncopyable {
     VXx_Table<transpose>& unsafe_remove(Ob lhs, Ob rhs, Ob val) {
         Ob fixed = transpose ? rhs : lhs;
         Ob moving = transpose ? lhs : rhs;
-        Data::const_iterator i = m_data.find(std::make_pair(val, fixed));
-        POMAGMA_ASSERT1(i != m_data.end(), "double erase: " << val << "," << lhs
-                                                            << "," << rhs);
+        Data::iterator i = m_data.find(std::make_pair(val, fixed));
+        POMAGMA_ASSERT1(i != m_data.end(),
+                        "double erase: " << val << "," << lhs << "," << rhs);
         i->second.unsafe_erase(moving);
         if (i->second.empty()) {
             m_data.unsafe_erase(i);

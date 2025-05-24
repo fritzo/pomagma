@@ -1,5 +1,6 @@
-#include <atomic>
 #include <gtest/gtest.h>
+
+#include <atomic>
 #include <pomagma/util/util.hpp>
 #include <pomagma/util/worker_pool.hpp>
 #include <utility>

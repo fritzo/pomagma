@@ -1,4 +1,5 @@
 #include "nullary_function.hpp"
+
 #include <vector>
 
 using namespace pomagma;

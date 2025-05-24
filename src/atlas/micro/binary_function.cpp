@@ -1,6 +1,7 @@
 #include "binary_function.hpp"
-#include <pomagma/util/aligned_alloc.hpp>
+
 #include <cstring>
+#include <pomagma/util/aligned_alloc.hpp>
 
 namespace pomagma {
 
@@ -53,9 +54,9 @@ void BinaryFunction::validate() const {
                         POMAGMA_ASSERT(not val, "found unsupported val: "
                                                     << i << ',' << j);
                     } else if (val) {
-                        POMAGMA_ASSERT(defined(i, j),
-                                       "found unsupported value: " << i << ','
-                                                                   << j);
+                        POMAGMA_ASSERT(
+                            defined(i, j),
+                            "found unsupported value: " << i << ',' << j);
                     } else {
                         POMAGMA_ASSERT(
                             not defined(i, j),

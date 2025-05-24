@@ -1,7 +1,7 @@
 #pragma once
 
-#include <pomagma/util/util.hpp>
 #include <pomagma/util/threading.hpp>
+#include <pomagma/util/util.hpp>
 
 namespace pomagma {
 namespace concurrent {

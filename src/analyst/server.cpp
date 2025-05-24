@@ -1,10 +1,11 @@
-#include <algorithm>
 #include <pomagma/analyst/messages.pb.h>
+#include <zmq.h>
+
+#include <algorithm>
 #include <pomagma/analyst/propagate.hpp>
 #include <pomagma/analyst/server.hpp>
 #include <pomagma/atlas/macro/router.hpp>
 #include <pomagma/language/language.hpp>
-#include <zmq.h>
 
 namespace pomagma {
 
@@ -129,7 +130,8 @@ Server::SolutionSet Server::solve(const std::string& program,
         m_virtual_machine.execute(program);
     }
     POMAGMA_ASSERT(m_return.get_set().disjoint(m_nreturn.get_set()),
-                   "inconsistent query result; check programs:\n" << program);
+                   "inconsistent query result; check programs:\n"
+                       << program);
 
     SolutionSet solutions;
     print_ob_set(m_return.get_set(), solutions.necessary, max_solutions);
@@ -158,16 +160,16 @@ static protobuf::AnalystResponse handle(Server& server,
     protobuf::AnalystResponse response;
     typedef protobuf::AnalystResponse::Trool Trool;
 
-    if (request.has_id()) {
+    if (!request.id().empty()) {
         response.set_id(request.id());
     }
 
-    if (request.has_test_inference()) {
+    if (request.test_inference().ByteSizeLong() > 0) {
         size_t fail_count = server.test_inference();
         response.mutable_test_inference()->set_fail_count(fail_count);
     }
 
-    if (request.has_simplify()) {
+    if (request.simplify().codes_size() > 0) {
         size_t code_count = request.simplify().codes_size();
         for (size_t i = 0; i < code_count; ++i) {
             const std::string& code = request.simplify().codes(i);
@@ -176,7 +178,7 @@ static protobuf::AnalystResponse handle(Server& server,
         }
     }
 
-    if (request.has_validate()) {
+    if (request.validate().codes_size() > 0) {
         size_t code_count = request.validate().codes_size();
         for (size_t i = 0; i < code_count; ++i) {
             const std::string& code = request.validate().codes(i);
@@ -188,12 +190,12 @@ static protobuf::AnalystResponse handle(Server& server,
         }
     }
 
-    if (request.has_validate_corpus()) {
+    if (request.validate_corpus().lines_size() > 0) {
         size_t line_count = request.validate_corpus().lines_size();
         std::vector<Corpus::LineOf<std::string>> lines(line_count);
         for (size_t i = 0; i < line_count; ++i) {
             const auto& line = request.validate_corpus().lines(i);
-            if (line.has_name()) {
+            if (!line.name().empty()) {
                 lines[i].maybe_name = line.name();
             }
             lines[i].body = line.code();
@@ -208,7 +210,7 @@ static protobuf::AnalystResponse handle(Server& server,
         }
     }
 
-    if (request.has_get_histogram()) {
+    if (request.get_histogram().ByteSizeLong() > 0) {
         const Corpus::Histogram& histogram = server.get_histogram();
         auto& response_histogram =
             *response.mutable_get_histogram()->mutable_histogram();
@@ -224,15 +226,15 @@ static protobuf::AnalystResponse handle(Server& server,
         }
     }
 
-    if (request.has_fit_language()) {
+    if (request.fit_language().histogram().terms_size() > 0) {
         std::unordered_map<std::string, float> language;
-        if (request.fit_language().has_histogram()) {
+        if (request.fit_language().histogram().terms_size() > 0) {
             Corpus::Histogram histogram;
             const auto& request_histogram = request.fit_language().histogram();
             size_t terms_size = request_histogram.terms_size();
             for (size_t i = 0; i < terms_size; ++i) {
                 const auto& term = request_histogram.terms(i);
-                if (term.has_ob()) {
+                if (term.ob() != 0) {
                     histogram.obs[term.ob()] = term.count();
                 } else {
                     histogram.symbols[term.name()] = term.count();
@@ -250,9 +252,9 @@ static protobuf::AnalystResponse handle(Server& server,
         }
     }
 
-    if (request.has_solve()) {
+    if (request.solve().program().size() > 0) {
         size_t max_solutions = std::numeric_limits<size_t>::max();
-        if (request.solve().has_max_solutions()) {
+        if (request.solve().max_solutions() != 0) {
             max_solutions = request.solve().max_solutions();
         }
         if (max_solutions > 0) {
@@ -271,7 +273,7 @@ static protobuf::AnalystResponse handle(Server& server,
         }
     }
 
-    if (request.has_validate_facts()) {
+    if (request.validate_facts().facts_size() > 0) {
         const auto& facts = request.validate_facts().facts();
         const std::vector<std::string> polish_facts(facts.begin(), facts.end());
         const auto result = server.validate_facts(polish_facts);

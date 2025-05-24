@@ -1,11 +1,12 @@
 #pragma once
 
+#include <tbb/concurrent_unordered_map.h>
+
 #include <pomagma/analyst/approximate.hpp>
 #include <pomagma/util/async_map.hpp>
 #include <pomagma/util/hash_map.hpp>
 #include <pomagma/util/unique_set.hpp>
 #include <pomagma/util/worker_pool.hpp>
-#include <tbb/concurrent_unordered_map.h>
 
 namespace pomagma {
 

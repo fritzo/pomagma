@@ -1,12 +1,13 @@
 #pragma once
 
-#include "program_fwd.hpp"
-#include <pomagma/io/message.hpp>
 #include <fstream>
 #include <map>
+#include <pomagma/io/message.hpp>
 #include <sstream>
 #include <typeinfo>
 #include <unordered_set>
+
+#include "program_fwd.hpp"
 
 namespace pomagma {
 namespace vm {

@@ -1,9 +1,9 @@
 #include <pomagma/analyst/propagate.hpp>
 #include <pomagma/atlas/macro/structure_impl.hpp>
 #include <pomagma/atlas/parser.hpp>
+#include <tuple>
 #include <unordered_map>
 #include <unordered_set>
-#include <tuple>
 
 // defined in pomagma/third_party/farmhash/farmhash.h
 namespace util {

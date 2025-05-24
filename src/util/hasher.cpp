@@ -1,4 +1,5 @@
 #include "hasher.hpp"
+
 #include <cstdio>
 
 namespace pomagma {

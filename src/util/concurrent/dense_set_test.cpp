@@ -78,8 +78,8 @@ void test_even(size_t size) {
         for (Ob j = 1; j <= 6; ++j) {
             POMAGMA_INFO(j << " % " << i << " = " << (j % i));
             if (j % i == 0) {
-                POMAGMA_ASSERT(*evens[j] <= *evens[i], "expected containment "
-                                                           << j << ", " << i);
+                POMAGMA_ASSERT(*evens[j] <= *evens[i],
+                               "expected containment " << j << ", " << i);
             } else if (size > i * j) {
                 POMAGMA_ASSERT(not(*evens[j] <= *evens[i]),
                                "expected non-containment " << j << ", " << i);

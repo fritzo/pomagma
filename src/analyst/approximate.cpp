@@ -1,8 +1,9 @@
 #include "approximate.hpp"
+
 #include <vector>
 
 #define POMAGMA_DEBUG1(message)
-//#define POMAGMA_DEBUG1 POMAGMA_DEBUG
+// #define POMAGMA_DEBUG1 POMAGMA_DEBUG
 
 namespace pomagma {
 
@@ -171,9 +172,9 @@ void Approximator::validate(const Approximation& approx) {
     }
     for (auto x : set) {
         for (auto y : set) {
-            POMAGMA_ASSERT(not m_nless.find(x, y),
-                           "approximation contains distinct obs: " << x << ", "
-                                                                   << y);
+            POMAGMA_ASSERT(
+                not m_nless.find(x, y),
+                "approximation contains distinct obs: " << x << ", " << y);
         }
     }
 
@@ -190,7 +191,7 @@ void Approximator::validate(const Approximation& approx) {
 
 void Approximator::close(Approximation& approx, DenseSet& temp_set) {
     POMAGMA_ASSERT_EQ(temp_set.item_dim(), m_item_dim);
-    for (size_t iter = 0;; ++iter) {
+    for (size_t iter __attribute__((unused)) = 0;; ++iter) {
         POMAGMA_DEBUG1("close step " << iter);
         if (try_close(approx, temp_set)) {
             return;
