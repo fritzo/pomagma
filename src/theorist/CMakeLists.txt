@@ -14,5 +14,5 @@ set(POMAGMA_THEORIST_LIBS
 	${POMAGMA_WORLD_LIBS}
 )
 
-add_executable(try_prove_nless try_prove_nless_main.cpp)
+pomagma_add_executable(try_prove_nless try_prove_nless_main.cpp)
 target_link_libraries(try_prove_nless ${POMAGMA_THEORIST_LIBS})

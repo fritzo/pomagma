@@ -24,7 +24,7 @@ add_library(pomagma_gtest_main SHARED gtest_main.cpp)
 target_link_libraries(pomagma_gtest_main pomagma_util gtest)
 
 function(add_unit_test T)
-	add_executable(${T}_test ${T}_test.cpp)
+	pomagma_add_executable(${T}_test ${T}_test.cpp)
 	set_source_files_properties(${T}_test.cpp COMPILE_FLAGS ${GTEST_FLAGS})
 	target_link_libraries(${T}_test ${POMAGMA_UTIL_LIBS} pomagma_gtest_main)
 	add_test(NAME util_${T} COMMAND ${T}_test)
@@ -37,10 +37,10 @@ add_unit_test(async_map)
 add_unit_test(lazy_map)
 add_unit_test(dense_set_store)
 
-add_executable(queue_profile queue_profile.cpp)
+pomagma_add_executable(queue_profile queue_profile.cpp)
 target_link_libraries(queue_profile ${POMAGMA_UTIL_LIBS})
 
-add_executable(threading_profile threading_profile.cpp)
+pomagma_add_executable(threading_profile threading_profile.cpp)
 target_link_libraries(threading_profile ${POMAGMA_UTIL_LIBS})
 
 add_subdirectory(concurrent)

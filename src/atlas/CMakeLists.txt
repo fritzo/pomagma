@@ -17,7 +17,7 @@ target_link_libraries(pomagma_atlas
 	${POMAGMA_UTIL_LIBS}
 )
 
-add_executable(atlas_protobuf_test protobuf_test.cpp)
+pomagma_add_executable(atlas_protobuf_test protobuf_test.cpp)
 target_link_libraries(atlas_protobuf_test
 	pomagma_atlas
 	protobuf::libprotobuf

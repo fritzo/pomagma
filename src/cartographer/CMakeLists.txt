@@ -8,7 +8,7 @@ add_custom_command(
 	DEPENDS ${CMAKE_CURRENT_LIST_DIR}/cartographer_messages.proto
 )
 
-add_executable(cartographer
+pomagma_add_executable(cartographer
 	main.cpp
        	server.cpp
 	signature.cpp

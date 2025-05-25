@@ -8,7 +8,7 @@ add_custom_command(
 	DEPENDS ${CMAKE_CURRENT_LIST_DIR}/analyst_messages.proto
 )
 
-add_executable(analyst
+pomagma_add_executable(analyst
 	main.cpp
 	server.cpp
 	simplify.cpp

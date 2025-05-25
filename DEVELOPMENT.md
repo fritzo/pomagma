@@ -21,7 +21,7 @@ ulimit -c unlimited
 sudo sysctl kern.coredump=1
 sudo sysctl kern.corefile=/cores/core.%P
 ```
-create a `debug.entitlements` file with `<key>com.apple.security.get-task-allow</key><true/>`, and code sign binaries with `codesign -s - -f --entitlements debug.entitlements path/to/binary`. The test framework automatically extracts stack traces using lldb when crashes occur.
+Our CMakeLists.txt codesigns all executables with `debug.entitlements`.
 
 ## Coding style
 

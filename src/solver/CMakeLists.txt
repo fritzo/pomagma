@@ -16,7 +16,7 @@ set(POMAGMA_SOLVER_LIBS
 )
 
 function(add_unit_test T)
-	add_executable(${T}_test ${T}_test.cpp)
+	pomagma_add_executable(${T}_test ${T}_test.cpp)
 	set_source_files_properties(${T}_test.cpp COMPILE_FLAGS ${GTEST_FLAGS})
 	target_link_libraries(${T}_test
 	       	${POMAGMA_SOLVER_LIBS}
@@ -29,5 +29,5 @@ add_unit_test(syntax)
 add_unit_test(theory_solver)
 add_unit_test(solver)
 
-add_executable(solve solve_main.cpp)
+pomagma_add_executable(solve solve_main.cpp)
 target_link_libraries(solve ${POMAGMA_SOLVER_LIBS})

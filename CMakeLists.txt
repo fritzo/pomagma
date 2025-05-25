@@ -122,6 +122,27 @@ if(CCACHE_FOUND)
   set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ccache)
 endif(CCACHE_FOUND)
 
+# macOS codesigning for debugging support
+if(APPLE AND EXISTS "${CMAKE_SOURCE_DIR}/debug.entitlements")
+  macro(pomagma_add_executable target_name)
+    add_executable(${target_name} ${ARGN})
+    # Only codesign actual executables (not imported targets)
+    get_target_property(target_type ${target_name} TYPE)
+    get_target_property(target_imported ${target_name} IMPORTED)
+    if(target_type STREQUAL "EXECUTABLE" AND NOT target_imported)
+      add_custom_command(TARGET ${target_name} POST_BUILD
+        COMMAND codesign -s - -f --entitlements "${CMAKE_SOURCE_DIR}/debug.entitlements" "$<TARGET_FILE:${target_name}>"
+        # COMMENT "Code signing ${target_name} for debugging"
+        VERBATIM
+      )
+    endif()
+  endmacro()
+else()
+  macro(pomagma_add_executable)
+    add_executable(${ARGV})
+  endmacro()
+endif()
+
 enable_testing()
 set(GTEST_FLAGS "-Wno-error=undef -Wno-undef")
 
