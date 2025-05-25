@@ -204,7 +204,11 @@ def term_permute(term, perm):
 
 
 def perm_inverse(perm):
-    result = [None] * (1 + max(perm))
+    # Filter out None values before finding max (Python 3 compatibility)
+    non_none_values = [x for x in perm if x is not None]
+    if not non_none_values:
+        return []
+    result = [None] * (1 + max(non_none_values))
     for i, j in enumerate(perm):
         if j is not None:
             result[j] = i

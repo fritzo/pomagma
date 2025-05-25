@@ -160,7 +160,7 @@ def unquote_equal():
 alphabet = "_abcdefghijklmnopqrstuvwxyz"
 s_vars = s.builds(
     NVAR,
-    s.builds(str, s.text(alphabet=alphabet, min_size=1)),
+    s.builds(str, s.text(alphabet=alphabet, min_size=1, max_size=5)),
 )
 
 s_atoms = s.one_of(

@@ -1,4 +1,10 @@
-"""Combinator Graph Reduction."""
+"""
+Combinator Graph Reduction.
+
+[1] Philip Koopman (1990)
+  "An Architecture for Combinator Graph Reduction"
+  https://users.ece.cmu.edu/~koopman/tigre/index.html
+"""
 
 import sys
 

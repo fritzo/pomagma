@@ -1,5 +1,3 @@
-import pytest
-
 from pomagma.reducer.koopman import (
     APP,
     ATOM,
@@ -14,7 +12,7 @@ from pomagma.reducer.koopman import (
     print_to_depth,
     try_beta_step,
 )
-from pomagma.util.testing import for_each
+from pomagma.util.testing import for_each, skip_param
 
 f = ATOM("f")
 x = ATOM("x")
@@ -154,8 +152,8 @@ def test_church_numeral_three():
         1,  # Steps = 5.
         2,  # Steps = 14.
         3,  # Steps = 49.
-        pytest.mark.skip(4),  # Steps = 131136.
-        pytest.mark.skip(5),
+        skip_param(4, reason="Steps = 131136"),  # Steps = 131136.
+        skip_param(5, reason="Too slow"),
     ]
 )
 def test_tower_of_two(n):
@@ -226,24 +224,24 @@ Table 2. The number of total interactions and beta-steps for various net-based
         app(two, two, I, I),
         app(two, two, two, I, I),
         app(two, two, two, two, I, I),
-        pytest.mark.skip(app(two, two, two, two, two, I, I)),
+        skip_param(app(two, two, two, two, two, I, I), reason="Too slow"),
         # ---------------------------------------------------
         app(three, two, I, I),
         app(four, two, I, I),
         app(five, two, I, I),
-        pytest.mark.skip(app(ten, two, I, I)),
-        pytest.mark.skip(app(three, two, two, I, I)),
-        pytest.mark.skip(app(four, two, two, I, I)),
-        pytest.mark.skip(app(five, two, two, I, I)),
-        pytest.mark.skip(app(ten, two, two, I, I)),
-        pytest.mark.skip(app(three, two, two, two, I, I)),
-        pytest.mark.skip(app(four, two, two, two, I, I)),
+        skip_param(app(ten, two, I, I), reason="Too slow"),
+        skip_param(app(three, two, two, I, I), reason="Too slow"),
+        skip_param(app(four, two, two, I, I), reason="Too slow"),
+        skip_param(app(five, two, two, I, I), reason="Too slow"),
+        skip_param(app(ten, two, two, I, I), reason="Too slow"),
+        skip_param(app(three, two, two, two, I, I), reason="Too slow"),
+        skip_param(app(four, two, two, two, I, I), reason="Too slow"),
         # From table 2.
-        pytest.mark.skip(app(two, two, two, ten, I, I)),
-        pytest.mark.skip(app(three, two, two, two, I, I)),
-        pytest.mark.skip(app(ten, two, two, I, I)),
-        pytest.mark.skip(app(four, two, two, two, I, I)),
-        pytest.mark.skip(app(two, two, two, two, ten, I, I)),
+        skip_param(app(two, two, two, ten, I, I), reason="Too slow"),
+        skip_param(app(three, two, two, two, I, I), reason="Too slow"),
+        skip_param(app(ten, two, two, I, I), reason="Too slow"),
+        skip_param(app(four, two, two, two, I, I), reason="Too slow"),
+        skip_param(app(two, two, two, two, ten, I, I), reason="Too slow"),
     ]
 )
 def test_benchmarks(node):

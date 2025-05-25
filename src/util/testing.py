@@ -72,3 +72,8 @@ def skip_if_not_implemented():
 def xfail_param(*args, reason="FIXME", **kwargs):
     """Helper to create pytest.param with xfail mark."""
     return pytest.param(*args, marks=pytest.mark.xfail(reason=reason, **kwargs))
+
+
+def skip_param(*args, reason="SKIP", **kwargs):
+    """Helper to create pytest.param with skip mark."""
+    return pytest.param(*args, marks=pytest.mark.skip(reason=reason, **kwargs))

@@ -84,7 +84,9 @@ def encode_byte(byte):
     if not isinstance(byte, bytes) or len(byte) != 1:
         raise TypeError(byte)
     try:
-        return _encode_byte[byte]
+        # Convert bytes to string for dictionary lookup
+        char = byte.decode("latin-1")
+        return _encode_byte[char]
     except KeyError:
         raise TypeError(byte)
 
@@ -92,7 +94,9 @@ def encode_byte(byte):
 @memoize_arg
 def decode_byte(term):
     try:
-        return _decode_byte[term]
+        # _decode_byte returns a string, convert to bytes
+        char = _decode_byte[term]
+        return char.encode("latin-1")
     except KeyError:
         raise TypeError(pretty(term))
 
@@ -275,7 +279,8 @@ def decode_list(decode_item):
 def encode_bytes(value):
     if not isinstance(value, bytes):
         raise TypeError(value)
-    byte_list = list(value)
+    # In Python 3, list(bytes) returns integers, so convert each to single-byte bytes
+    byte_list = [bytes([b]) for b in value]
     return encode_list(encode_byte)(byte_list)
 
 

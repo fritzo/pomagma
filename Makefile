@@ -95,7 +95,7 @@ cpp-test: debug FORCE
 
 unit-test: bootstrap FORCE
 	./vet.py check || { ./diff.py codegen; exit 1; }
-	POMAGMA_DEBUG=1 pytest -v --nbval --ignore=pomagma/third_party pomagma
+	pytest -v --nbval pomagma
 	$(MAKE) cpp-test
 	POMAGMA_DEBUG=1 pomagma.make profile-misc
 	pomagma.make profile-misc

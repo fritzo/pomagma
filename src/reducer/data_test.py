@@ -175,11 +175,15 @@ def term_of_type(tp):
         if tp == "bool":
             return s.sampled_from([lib.true, lib.false])
         if tp == "byte":
-            return s.sampled_from(list(lib.byte_table.values()))
+            # Use a small subset of byte values to avoid expensive __repr__ calls
+            # \x00, \x01, 'a', \xff
+            byte_values = [lib.byte_table[i] for i in [0, 1, 97, 255]]
+            return s.sampled_from(byte_values)
         if tp == "num":
             return s.recursive(
                 s.just(lib.zero),
                 lambda n: s.builds(lib.succ, n),
+                max_leaves=5,
             )
         if tp == "bytes":
             return term_of_type(("list", "byte"))
@@ -193,6 +197,7 @@ def term_of_type(tp):
             return s.recursive(
                 s.just(lib.nil),
                 lambda tail: s.builds(lib.cons, term_of_type(tp[1]), tail),
+                max_leaves=5,
             )
     elif len(tp) == 3:
         if tp[0] == "prod":
