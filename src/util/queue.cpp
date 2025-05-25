@@ -53,6 +53,12 @@ FileBackedQueue::FileBackedQueue()
     POMAGMA_ASSERT_C(m_fid);
 }
 
+FileBackedQueue::~FileBackedQueue() {
+    if (m_fid != -1) {
+        close(m_fid);
+    }
+}
+
 void FileBackedQueue::push(const void* message, uint8_t size) {
     POMAGMA_ASSERT1(size, "empty messages are not allowed");
     std::unique_lock<std::mutex> lock(m_mutex);

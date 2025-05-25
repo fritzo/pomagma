@@ -55,7 +55,7 @@ class VectorQueue : public SharedQueueBase {
 class FileBackedQueue : public SharedQueueBase {
    public:
     FileBackedQueue();
-    virtual ~FileBackedQueue() {}
+    virtual ~FileBackedQueue();
 
     // these are thread safe for multiple producers and multiple consumers
     virtual void push(const void* message, uint8_t size);

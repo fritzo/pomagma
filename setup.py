@@ -40,6 +40,7 @@ setuptools.setup(
     version=version,
     description="An inference engine for extensional lambda-calculus",
     long_description=long_description,
+    long_description_content_type="text/markdown",
     url="https://github.com/fritzo/pomagma",
     author="Fritz Obermeyer",
     maintainer="Fritz Obermeyer",

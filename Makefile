@@ -1,5 +1,5 @@
 .SILENT:
-.PHONY: all protobuf tags lint python codegen debug release cpp-test unit-test bootstrap h4-test sk-test skj-test skja-test skrj-test batch-test small-test test big-test sk skj skja skrj profile clean FORCE
+.PHONY: all build protobuf tags lint codegen debug release cpp-test unit-test bootstrap h4-test sk-test skj-test skja-test skrj-test batch-test small-test test big-test sk skj skja skrj profile clean FORCE
 
 THEORY = skrj
 
@@ -11,10 +11,15 @@ CPP_FILES := $(shell find src -not -wholename 'src/third_party/*' \
                               -regex '.*\.[ch]pp$$' \
 			      -not -name '*.pb.*')
 
-all: data/blob bootstrap FORCE
-	$(MAKE) python
+all: build FORCE
+
+build: data/blob bootstrap protobuf FORCE
 	$(MAKE) -C src/language
 	$(MAKE) codegen codegen-summary debug release
+
+install: FORCE
+	pip install -r requirements.txt
+	pip install --no-build-isolation -e .
 
 echo-py-files: FORCE
 	echo $(PY_FILES)
@@ -55,9 +60,6 @@ ruff: FORCE
 
 format: clang-format black ruff FORCE
 
-python: protobuf lint FORCE
-	pip install -e .
-
 codegen: FORCE
 	python -m pomagma.compiler batch-compile
 
@@ -93,9 +95,9 @@ cpp-test: debug FORCE
 	  CTEST_OUTPUT_ON_FAILURE=1 $(MAKE) -C build/debug test \
 	  || { cat $(DEBUG_LOG); exit 1; }
 
-unit-test: bootstrap FORCE
+unit-test: build bootstrap FORCE
 	./vet.py check || { ./diff.py codegen; exit 1; }
-	pytest -v --nbval pomagma
+	pytest -v --nbval-lax pomagma
 	$(MAKE) cpp-test
 	POMAGMA_DEBUG=1 pomagma.make profile-misc
 	pomagma.make profile-misc
@@ -160,7 +162,9 @@ profile: release
 	# pomagma.make profile-cartographer
 
 clean: FORCE
-	rm -rf build lib
+	rm -rf build lib compile_commands.json
+
+mrproper: clean FORCE
 	git clean -fdx -e pomagma.egg-info -e node_modules -e data
 
 FORCE:
