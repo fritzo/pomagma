@@ -1,10 +1,12 @@
 #!/usr/bin/env python
-
-from pomagma.reducer import bohm  # isort:skip
-from pomagma.compiler.util import temp_memoize  # isort:skip
 import os
 
 os.environ["POMAGMA_LOG_LEVEL"] = "3"
+
+# isort: split
+
+from pomagma.reducer import bohm
+from pomagma.compiler.util import temp_memoize
 
 
 print("Example 1.")

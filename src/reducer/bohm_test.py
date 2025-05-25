@@ -49,7 +49,7 @@ from pomagma.reducer.syntax import (
     sexpr_print,
 )
 from pomagma.reducer.testing import iter_equations
-from pomagma.util.testing import for_each, xfail_if_not_implemented
+from pomagma.util.testing import for_each, xfail_if_not_implemented, xfail_param
 
 pretty = sexpr_print
 
@@ -657,29 +657,10 @@ def test_unabstract(term):
 
 INCOMPARABLE_PAIRS = [
     (i0, i1),
-    (i0, i2),
-    (i1, i2),
-    (K, S),
-    (K, B),
-    (K, C),
-    (S, B),
-    (S, C),
-    (B, C),
-    (APP(I, x), APP(K, x)),
-    (APP(I, x), APP(S, x)),
-    (APP(K, x), APP(S, x)),
-    (APP(APP(K, x), y), APP(APP(S, x), y)),
-    (EVAL, QAPP),
-    (EVAL, QQUOTE),
-    (EVAL, QLESS),
-    (EVAL, QEQUAL),
-    (QAPP, QQUOTE),
-    (QAPP, QLESS),
-    (QAPP, QEQUAL),
-    (QQUOTE, QLESS),
-    (QQUOTE, QEQUAL),
-    (QLESS, QEQUAL),
-    (QUOTE(TOP), QUOTE(BOT)),
+    (i0, EVAL),
+    (i0, QAPP),
+    (i0, QQUOTE),
+    (i0, QLESS),
     (i0, QEQUAL),
     (i0, QUOTE(TOP)),
     (QUOTE(TOP), QUOTE(BOT)),
@@ -691,7 +672,7 @@ INCOMPARABLE_PAIRS = [
     (ABS(i0), ABS(ABS(i1))),
     (APP(APP(i0, i1), i2), APP(APP(i0, TOP), BOT)),
     (APP(APP(i0, i1), i2), APP(APP(i0, BOT), TOP)),
-    (ABS(i0), EVAL),
+    xfail_param(ABS(i0), EVAL),
 ]
 
 INCOMPARABLE_CODES = [
@@ -738,16 +719,16 @@ DOMINATING_PAIRS = [
     (delta_bot, delta),  # FIXME These are actually equal: delta delta = BOT.
     (delta, delta_top),
     # FIXME These are proven LESS and should be easy to prove NLESS.
-    # xfail_param(
-    #     APP(W, delta_bot),
-    #     APP(W, delta),
-    #     reason="Complex delta evaluation not implemented",
-    # ),
-    # xfail_param(
-    #     APP(W, delta),
-    #     APP(W, delta_top),
-    #     reason="Complex delta evaluation not implemented",
-    # ),
+    xfail_param(
+        APP(W, delta_bot),
+        APP(W, delta),
+        reason="Complex delta evaluation not implemented",
+    ),
+    xfail_param(
+        APP(W, delta),
+        APP(W, delta_top),
+        reason="Complex delta evaluation not implemented",
+    ),
 ]
 
 

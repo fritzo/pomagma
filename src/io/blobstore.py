@@ -61,7 +61,7 @@ def iter_blob_refs(filename):
     """Iterate over all hexdigests in ref file."""
     with open(filename, "rb") as f:
         for line in f:
-            hexdigest = line.strip()
+            hexdigest = line.strip().decode("utf-8")
             assert len(hexdigest) == 40, hexdigest
             yield hexdigest
 
@@ -77,12 +77,12 @@ def dump_blob_ref(root_hexdigest, filename, sub_hexdigests=[]):
     assert isinstance(root_hexdigest, str), root_hexdigest
     assert len(root_hexdigest) == 40, root_hexdigest
     with creat(filename, 0o444) as f:
-        f.write(root_hexdigest)
+        f.write(root_hexdigest.encode("utf-8"))
         for sub_hexdigest in sub_hexdigests:
             assert isinstance(sub_hexdigest, str), sub_hexdigest
             assert len(sub_hexdigest) == 40, sub_hexdigest
-            f.write("\n")
-            f.write(sub_hexdigest)
+            f.write(b"\n")
+            f.write(sub_hexdigest.encode("utf-8"))
 
 
 def garbage_collect(used_blobs, grace_period_days=GRACE_PERIOD_DAYS):
