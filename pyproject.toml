@@ -1,3 +1,51 @@
+[build-system]
+requires = ["setuptools>=45", "wheel", "parsable"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pomagma"
+description = "An inference engine for extensional lambda-calculus"
+authors = [{name = "Fritz Obermeyer", email = "fritz.obermeyer@gmail.com"}]
+maintainers = [{name = "Fritz Obermeyer", email = "fritz.obermeyer@gmail.com"}]
+license = {text = "Apache 2.0"}
+readme = "README.md"
+requires-python = ">=3.11"
+dynamic = ["version"]
+dependencies = [
+    "black",
+    "boto3",
+    "hypothesis",
+    "isort",
+    "nbval",
+    "notebook",
+    "parsable",
+    "protobuf",
+    "psutil",
+    "pytest",
+    "pytest-timeout",
+    "pytest-xdist",
+    "pyzmq",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+
+[project.urls]
+Homepage = "https://github.com/fritzo/pomagma"
+Repository = "https://github.com/fritzo/pomagma"
+
+[tool.setuptools]
+packages = {find = {exclude = ["src*"]}}
+
+[tool.setuptools.dynamic]
+version = {attr = "src.__version__"}
+
 [tool.ruff]
 # Configure line length to match black
 line-length = 88

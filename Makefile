@@ -18,8 +18,7 @@ build: data/blob bootstrap protobuf FORCE
 	$(MAKE) codegen codegen-summary debug release
 
 install: FORCE
-	pip install -r requirements.txt
-	pip install --no-build-isolation -e .
+	pip install -e .
 
 echo-py-files: FORCE
 	echo $(PY_FILES)
