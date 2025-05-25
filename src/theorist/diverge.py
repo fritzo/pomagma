@@ -37,7 +37,6 @@ def iter_terms(atoms, max_atom_count):
                 for lhs in iter_terms(atoms, lhs_count):
                     for rhs in iter_terms(atoms, rhs_count):
                         yield lhs + (rhs,)
-    raise StopIteration()
 
 
 # ----------------------------------------------------------------------------
