@@ -5,8 +5,15 @@ add_library(pomagma_language SHARED
 	language.pb.cc
 )
 target_link_libraries(pomagma_language
+	protobuf::libprotobuf
+	absl::log
+	absl::log_internal_message
+	absl::log_internal_check_op
+	absl::log_internal_format
+	absl::base
+	absl::strings
+	absl::str_format
 	${POMAGMA_UTIL_LIBS}
-	${PROTOBUF_LIBRARIES}
 )
 
 add_custom_command(

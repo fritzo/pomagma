@@ -5,6 +5,14 @@ add_library(pomagma_atlas SHARED
 	program.cpp
 )
 target_link_libraries(pomagma_atlas
+	protobuf::libprotobuf
+	absl::log
+	absl::log_internal_message
+	absl::log_internal_check_op
+	absl::log_internal_format
+	absl::base
+	absl::strings
+	absl::str_format
 	${POMAGMA_IO_LIBS}
 	${POMAGMA_UTIL_LIBS}
 )
@@ -12,6 +20,14 @@ target_link_libraries(pomagma_atlas
 add_executable(atlas_protobuf_test protobuf_test.cpp)
 target_link_libraries(atlas_protobuf_test
 	pomagma_atlas
+	protobuf::libprotobuf
+	absl::log
+	absl::log_internal_message
+	absl::log_internal_check_op
+	absl::log_internal_format
+	absl::base
+	absl::strings
+	absl::str_format
 	${POMAGMA_IO_LIBS}
 	${POMAGMA_UTIL_LIBS}
 )

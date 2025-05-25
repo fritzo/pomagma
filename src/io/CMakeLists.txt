@@ -5,12 +5,27 @@ add_library(pomagma_io SHARED
 	protobuf.cpp
 )
 target_link_libraries(pomagma_io
-	${PROTOBUF_LIBRARIES}
+	protobuf::libprotobuf
+	absl::log
+	absl::log_internal_message
+	absl::log_internal_check_op
+	absl::log_internal_format
+	absl::base
+	absl::strings
+	absl::str_format
 	${POMAGMA_UTIL_LIBS}
 )
 
 add_executable(io_protobuf_test protobuf_test.cpp protobuf_test.pb.cc)
 target_link_libraries(io_protobuf_test
+	protobuf::libprotobuf
+	absl::log
+	absl::log_internal_message
+	absl::log_internal_check_op
+	absl::log_internal_format
+	absl::base
+	absl::strings
+	absl::str_format
 	${POMAGMA_IO_LIBS}
 	${POMAGMA_UTIL_LIBS}
 )
