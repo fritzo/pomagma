@@ -59,7 +59,18 @@ class Client(object):
         for message in reply.error_log:
             WARN(message)
         for key, val in request.ListFields():
-            assert reply.HasField(key.name), key.name
+            # Handle different field types for proto3 compatibility
+            if key.name == "id":
+                # For id field (scalar string), verify response id matches request id
+                assert (
+                    reply.id == val
+                ), f"Response id '{reply.id}' != request id '{val}'"
+            elif key.name == "error_log":
+                # repeated field, always present in proto3, skip validation
+                pass
+            else:
+                # For message fields, HasField still works in proto3
+                assert reply.HasField(key.name), key.name
         if reply.error_log:
             raise ServerError(reply.error_log)
         return reply

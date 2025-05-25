@@ -43,14 +43,14 @@ message AnalystRequest {
 
   repeated string error_log = 1;
   string id = 2;
-  TestInference test_inference = 3;
-  Simplify simplify = 4;
-  Validate validate = 5;
-  ValidateCorpus validate_corpus = 6;
-  GetHistogram get_histogram = 7;
-  FitLanguage fit_language = 8;
-  Solve solve = 9;
-  ValidateFacts validate_facts = 10;
+  optional TestInference test_inference = 3;
+  optional Simplify simplify = 4;
+  optional Validate validate = 5;
+  optional ValidateCorpus validate_corpus = 6;
+  optional GetHistogram get_histogram = 7;
+  optional FitLanguage fit_language = 8;
+  optional Solve solve = 9;
+  optional ValidateFacts validate_facts = 10;
 }
 
 message AnalystResponse {
@@ -98,12 +98,12 @@ message AnalystResponse {
 
   repeated string error_log = 1;
   string id = 2;
-  TestInference test_inference = 3;
-  Simplify simplify = 4;
-  Validate validate = 5;
-  ValidateCorpus validate_corpus = 6;
-  GetHistogram get_histogram = 7;
-  FitLanguage fit_language = 8;
-  Solve solve = 9;
-  ValidateFacts validate_facts = 10;
+  optional TestInference test_inference = 3;
+  optional Simplify simplify = 4;
+  optional Validate validate = 5;
+  optional ValidateCorpus validate_corpus = 6;
+  optional GetHistogram get_histogram = 7;
+  optional FitLanguage fit_language = 8;
+  optional Solve solve = 9;
+  optional ValidateFacts validate_facts = 10;
 }

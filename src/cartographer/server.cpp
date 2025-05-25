@@ -13,8 +13,8 @@
 #include <pomagma/theorist/conjecture_equal.hpp>
 
 #include "aggregate.hpp"
+#include "cartographer_messages.pb.h"
 #include "infer.hpp"
-#include "messages.pb.h"
 #include "signature.hpp"
 #include "trim.hpp"
 

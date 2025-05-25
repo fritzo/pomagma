@@ -77,12 +77,14 @@ debug: protobuf FORCE
 	cd build/debug \
 	  && $(CMAKE) -DCMAKE_BUILD_TYPE=Debug ../.. \
 	  && $(MAKE)
+	ln -sf build/debug/compile_commands.json compile_commands.json
 
 release: protobuf FORCE
 	mkdir -p build/release
 	cd build/release \
 	  && $(CMAKE) -DCMAKE_BUILD_TYPE=RelWithDebInfo ../.. \
 	  && $(MAKE)
+	ln -sf build/release/compile_commands.json compile_commands.json
 
 DEBUG_LOG="$(shell pwd)/data/debug.log"
 cpp-test: debug FORCE

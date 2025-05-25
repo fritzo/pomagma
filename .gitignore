@@ -33,6 +33,7 @@ temp.*
 __pycache__
 prof
 .venv/
+compile_commands.json
 
 # eclipse
 /.cproject

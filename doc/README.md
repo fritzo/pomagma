@@ -83,6 +83,17 @@ To use specific ports or addresses, override these defaults
 
 Pomagma uses even ports for production and odd ports for testing.
 
+### Language Server Support
+
+Pomagma automatically generates a `compile_commands.json` file for language servers
+like clangd to provide accurate C++ IntelliSense, error checking, and navigation.
+This file is automatically created and symlinked to the project root when running:
+
+    make debug      # creates compile_commands.json -> build/debug/compile_commands.json
+    make release    # creates compile_commands.json -> build/release/compile_commands.json
+
+The symlink is ignored by git and will be automatically recreated on each build.
+
 To store data on S3, pomagma needs Amazon AWS credentials and an S3 bucket.
 These are specified by environment variables
 

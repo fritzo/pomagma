@@ -206,7 +206,7 @@ SOLVE_EXAMPLES = [
         "possible": ["TOP", "J", "V", "P", "APP C K"],
     },
     {  # FIXME
-        "skip_compare": "spurriously fails with either JOIN B CB or JOIN CB B",
+        "skip_compare": "spuriously fails with either JOIN B CB or JOIN CB B",
         "var": "s",
         "theory": """
             NLESS x I
@@ -223,7 +223,7 @@ SOLVE_EXAMPLES = [
         ],
     },
     {  # FIXME
-        "skip_compare": "spurriously fails with either RAND B CI or RAND CI B",
+        "skip_compare": "spuriously fails with either RAND B CI or RAND CI B",
         "var": "s",
         "theory": """
             # The entire theory of SEMI:

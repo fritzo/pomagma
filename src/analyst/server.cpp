@@ -1,11 +1,17 @@
-#include <pomagma/analyst/messages.pb.h>
 #include <zmq.h>
 
 #include <algorithm>
+#include <iostream>
+#include <limits>
+#include <map>
 #include <pomagma/analyst/propagate.hpp>
 #include <pomagma/analyst/server.hpp>
 #include <pomagma/atlas/macro/router.hpp>
 #include <pomagma/language/language.hpp>
+#include <sstream>
+#include <unordered_map>
+
+#include "analyst_messages.pb.h"
 
 namespace pomagma {
 
@@ -164,12 +170,12 @@ static protobuf::AnalystResponse handle(Server& server,
         response.set_id(request.id());
     }
 
-    if (request.test_inference().ByteSizeLong() > 0) {
+    if (request.has_test_inference()) {
         size_t fail_count = server.test_inference();
         response.mutable_test_inference()->set_fail_count(fail_count);
     }
 
-    if (request.simplify().codes_size() > 0) {
+    if (request.has_simplify()) {
         size_t code_count = request.simplify().codes_size();
         for (size_t i = 0; i < code_count; ++i) {
             const std::string& code = request.simplify().codes(i);
@@ -178,7 +184,7 @@ static protobuf::AnalystResponse handle(Server& server,
         }
     }
 
-    if (request.validate().codes_size() > 0) {
+    if (request.has_validate()) {
         size_t code_count = request.validate().codes_size();
         for (size_t i = 0; i < code_count; ++i) {
             const std::string& code = request.validate().codes(i);
@@ -190,7 +196,7 @@ static protobuf::AnalystResponse handle(Server& server,
         }
     }
 
-    if (request.validate_corpus().lines_size() > 0) {
+    if (request.has_validate_corpus()) {
         size_t line_count = request.validate_corpus().lines_size();
         std::vector<Corpus::LineOf<std::string>> lines(line_count);
         for (size_t i = 0; i < line_count; ++i) {
@@ -210,7 +216,7 @@ static protobuf::AnalystResponse handle(Server& server,
         }
     }
 
-    if (request.get_histogram().ByteSizeLong() > 0) {
+    if (request.has_get_histogram()) {
         const Corpus::Histogram& histogram = server.get_histogram();
         auto& response_histogram =
             *response.mutable_get_histogram()->mutable_histogram();
@@ -226,7 +232,7 @@ static protobuf::AnalystResponse handle(Server& server,
         }
     }
 
-    if (request.fit_language().histogram().terms_size() > 0) {
+    if (request.has_fit_language()) {
         std::unordered_map<std::string, float> language;
         if (request.fit_language().histogram().terms_size() > 0) {
             Corpus::Histogram histogram;
@@ -252,7 +258,7 @@ static protobuf::AnalystResponse handle(Server& server,
         }
     }
 
-    if (request.solve().program().size() > 0) {
+    if (request.has_solve()) {
         size_t max_solutions = std::numeric_limits<size_t>::max();
         if (request.solve().max_solutions() != 0) {
             max_solutions = request.solve().max_solutions();
@@ -273,7 +279,7 @@ static protobuf::AnalystResponse handle(Server& server,
         }
     }
 
-    if (request.validate_facts().facts_size() > 0) {
+    if (request.has_validate_facts()) {
         const auto& facts = request.validate_facts().facts();
         const std::vector<std::string> polish_facts(facts.begin(), facts.end());
         const auto result = server.validate_facts(polish_facts);

@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 3.10)
 project(pomagma)
 set(CMAKE_MACOSX_RPATH 1)
 
+# Export compile commands for language servers (clangd, etc.)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 if(DEFINED ENV{CC})
   set(CMAKE_C_COMPILER "$ENV{CC}")
 endif()

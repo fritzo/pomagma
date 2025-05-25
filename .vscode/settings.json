@@ -10,5 +10,10 @@
     ],
     "python.terminal.activateEnvironment": true,
     "python.terminal.executeInFileDir": false,
-    "terminal.integrated.cwd": "${workspaceFolder}"
+    "terminal.integrated.cwd": "${workspaceFolder}",
+    "cSpell.words": [
+        "NLESS",
+        "pomagma",
+        "trool"
+    ]
 } 

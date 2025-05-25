@@ -43,22 +43,22 @@ message CartographerRequest {
   }
 
   // ordered by priority
-  Crop crop = 10;
-  Declare declare = 11;
-  Assume assume = 12;
-  Infer infer = 13;
-  Execute execute = 14;
+  optional Crop crop = 10;
+  optional Declare declare = 11;
+  optional Assume assume = 12;
+  optional Infer infer = 13;
+  optional Execute execute = 14;
 
-  Aggregate aggregate = 20;
+  optional Aggregate aggregate = 20;
 
-  Validate validate = 30;
+  optional Validate validate = 30;
 
-  Info info = 40;
-  Dump dump = 41;
+  optional Info info = 40;
+  optional Dump dump = 41;
   repeated Trim trim = 42;
-  Conjecture conjecture = 43;
+  optional Conjecture conjecture = 43;
 
-  Stop stop = 99;
+  optional Stop stop = 99;
 }
 
 message CartographerResponse {
@@ -96,20 +96,20 @@ message CartographerResponse {
   message Stop {
   }
 
-  Crop crop = 10;
-  Declare declare = 11;
-  Assume assume = 12;
-  Infer infer = 13;
-  Execute execute = 14;
+  optional Crop crop = 10;
+  optional Declare declare = 11;
+  optional Assume assume = 12;
+  optional Infer infer = 13;
+  optional Execute execute = 14;
 
-  Aggregate aggregate = 20;
+  optional Aggregate aggregate = 20;
 
-  Validate validate = 30;
+  optional Validate validate = 30;
 
-  Info info = 40;
-  Dump dump = 41;
+  optional Info info = 40;
+  optional Dump dump = 41;
   repeated Trim trim = 42;
-  Conjecture conjecture = 43;
+  optional Conjecture conjecture = 43;
 
-  Stop stop = 99;
+  optional Stop stop = 99;
 }
