@@ -19,7 +19,7 @@ dependencies = [
     "nbval",
     "notebook",
     "parsable",
-    "protobuf",
+    "protobuf==5",
     "psutil",
     "pytest",
     "pytest-timeout",

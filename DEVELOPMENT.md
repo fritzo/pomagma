@@ -13,6 +13,16 @@ The `env.sh` script configures the environment to use Homebrew's LLVM (which sup
 - **Compiler**: Uses Homebrew LLVM for full flag support on macOS
 - **Architecture-aware**: Automatically configures for x86_64 vs ARM64
 
+## macOS Core Dumping
+
+To enable core dumps on macOS for debugging crashes: run
+```sh
+ulimit -c unlimited
+sudo sysctl kern.coredump=1
+sudo sysctl kern.corefile=/cores/core.%P
+```
+create a `debug.entitlements` file with `<key>com.apple.security.get-task-allow</key><true/>`, and code sign binaries with `codesign -s - -f --entitlements debug.entitlements path/to/binary`. The test framework automatically extracts stack traces using lldb when crashes occur.
+
 ## Coding style
 
 - Prefer annotations like `__attribute__((unused))` over hacks.

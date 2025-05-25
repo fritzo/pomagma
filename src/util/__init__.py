@@ -351,7 +351,9 @@ def get_stack_trace(binary, pid):
                     "thread backtrace all",
                     "-o",
                     "quit",
-                ]
+                ],
+                stderr=subprocess.STDOUT,
+                universal_newlines=True
             )
         else:
             trace += subprocess.check_output(
@@ -364,7 +366,9 @@ def get_stack_trace(binary, pid):
                     "thread apply all bt",
                     "-ex",
                     "quit",
-                ]
+                ],
+                stderr=subprocess.STDOUT,
+                universal_newlines=True
             )
     except subprocess.CalledProcessError:
         trace += "ERROR stack trace failed"

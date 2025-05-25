@@ -94,7 +94,7 @@ find_package(Boost COMPONENTS system filesystem REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
 
 # Use modern CMake protobuf and abseil packages
-find_package(Protobuf REQUIRED)
+find_package(Protobuf REQUIRED CONFIG)
 find_package(absl REQUIRED)
 
 # Find OpenSSL

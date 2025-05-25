@@ -18,7 +18,7 @@ build: data/blob bootstrap protobuf FORCE
 	$(MAKE) codegen codegen-summary debug release
 
 install: FORCE
-	pip install -e .
+	uv pip install --no-build-isolation -e .
 
 echo-py-files: FORCE
 	echo $(PY_FILES)
@@ -162,6 +162,7 @@ profile: release
 
 clean: FORCE
 	rm -rf build lib compile_commands.json
+	cd src && git clean -fdx -e third_party/
 
 mrproper: clean FORCE
 	git clean -fdx -e pomagma.egg-info -e node_modules -e data
