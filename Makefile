@@ -26,7 +26,7 @@ build: data/blob bootstrap protobuf FORCE
 	$(MAKE) codegen codegen-summary debug release
 
 install: FORCE
-	uv pip install --no-build-isolation -e .
+	uv pip install --no-build-isolation --verbose -e .
 
 setup-vcpkg: FORCE
 	@echo "Setting up vcpkg for dependency management..."
@@ -70,7 +70,7 @@ ruff: FORCE
 	@ruff check --fix $(PY_FILES)
 	@ruff format $(PY_FILES)
 
-format: clang-format ruff-format FORCE
+format: clang-format ruff FORCE
 
 codegen: FORCE
 	python -m pomagma.compiler batch-compile

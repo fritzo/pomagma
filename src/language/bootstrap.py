@@ -4,6 +4,7 @@ from math import exp
 from parsable import parsable
 
 import pomagma.util
+
 from . import util
 
 SPECS = {}

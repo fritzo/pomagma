@@ -1,8 +1,9 @@
 import json
+import sys
+
 from parsable import parsable
 
 from pomagma.language.language_pb2 import Language, WeightedTerm
-import sys
 
 parsable = parsable.Parsable()
 

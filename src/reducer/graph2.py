@@ -9,9 +9,10 @@ are .copy()ed more often than needed, and there is minimal sharing.
 
 """
 
+import sys
+
 from pomagma.compiler.util import memoize_arg
 from pomagma.reducer.util import logged
-import sys
 
 DEFAULT_DEPTH = 10
 

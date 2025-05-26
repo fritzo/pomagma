@@ -1,12 +1,12 @@
 import contextlib
 import cProfile as profile
 import glob
+import json
 import multiprocessing
 import os
 import pstats
 import re
 
-import json
 from parsable import parsable
 
 from pomagma.compiler import (

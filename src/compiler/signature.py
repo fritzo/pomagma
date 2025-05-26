@@ -1,7 +1,7 @@
 import re
+import sys
 
 from pomagma.compiler.util import intern_keys, memoize_arg
-import sys
 
 re_const = re.compile("[A-Z]+$")
 

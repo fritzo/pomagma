@@ -1,10 +1,9 @@
 import re
+import sys
 from collections import defaultdict
 
 from pomagma.compiler.util import memoize_arg, memoize_args, unique_result
 from pomagma.reducer.util import UnreachableError
-import sys
-
 
 # ----------------------------------------------------------------------------
 # Signature

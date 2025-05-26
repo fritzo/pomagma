@@ -1,4 +1,5 @@
 import os
+
 import pomagma.util
 
 BIN = os.path.join(pomagma.util.BIN, "surveyor")

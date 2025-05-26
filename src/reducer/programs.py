@@ -3,7 +3,6 @@
 import contextlib
 import functools
 
-
 from pomagma.reducer import data
 from pomagma.reducer.sugar import app, combinator
 

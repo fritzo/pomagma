@@ -1,5 +1,6 @@
-from pomagma.compiler.parser import parse_string_to_expr as parse
 import pytest
+
+from pomagma.compiler.parser import parse_string_to_expr as parse
 
 EXAMPLES = [
     {

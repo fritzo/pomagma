@@ -7,7 +7,6 @@ Each node has multiple port attributes, each port attribute's value is a
 
 from pomagma.util import TODO
 
-
 # ----------------------------------------------------------------------------
 # Net data structure
 

@@ -1,8 +1,7 @@
+import json
 import os
 
-
 import pytest
-import json
 
 import pomagma.analyst
 import pomagma.cartographer

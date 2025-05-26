@@ -8,9 +8,10 @@ i.e. the database here is not quotiented.
 
 """
 
+import sys
+
 from pomagma.compiler.util import MEMOIZED_CACHES, memoize_arg, memoize_args
 from pomagma.util import TODO
-import sys
 
 # ----------------------------------------------------------------------------
 # Signature

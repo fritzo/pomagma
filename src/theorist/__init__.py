@@ -1,7 +1,7 @@
 import os
-import pomagma.util
-import pomagma.theorist.diverge
 
+import pomagma.theorist.diverge
+import pomagma.util
 
 BIN = os.path.join(pomagma.util.BIN, "theorist")
 

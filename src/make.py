@@ -1,7 +1,7 @@
 import os
-
-from unittest import mock
 from contextlib import ExitStack
+from unittest import mock
+
 from parsable import parsable
 
 import pomagma.util

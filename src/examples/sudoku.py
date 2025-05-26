@@ -1,4 +1,5 @@
 import random
+
 from parsable import parsable
 
 from pomagma.reducer import lib

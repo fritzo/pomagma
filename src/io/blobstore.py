@@ -5,7 +5,6 @@ import re
 import sys
 import time
 
-
 import pomagma.util
 from pomagma.io import creat, create_directories
 

@@ -1,6 +1,6 @@
 import os
-
 from unittest import mock
+
 import pytest
 
 import pomagma.io.s3

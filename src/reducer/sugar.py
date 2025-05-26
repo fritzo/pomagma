@@ -7,7 +7,6 @@ from pomagma.reducer.bohm import convert
 from pomagma.reducer.syntax import NVAR, Term, free_vars, quoted_vars
 from pomagma.reducer.util import LOG
 
-
 # ----------------------------------------------------------------------------
 # Compiler
 

@@ -1,9 +1,8 @@
-import os
 import contextlib
-import pomagma.util
-from pomagma.analyst import client
-from pomagma.analyst import server
+import os
 
+import pomagma.util
+from pomagma.analyst import client, server
 
 ADDRESS = os.environ.get("POMAGMA_ANALYST_ADDRESS", "tcp://localhost:34936")
 

@@ -13,9 +13,12 @@
     "terminal.integrated.cwd": "${workspaceFolder}",
     "cSpell.words": [
         "approximator",
+        "blobstore",
         "CTEST",
+        "injective",
         "letrec",
         "NLESS",
+        "nullary",
         "pomagma",
         "pytest",
         "skja",

@@ -1,12 +1,13 @@
-from pomagma.atlas.structure_pb2 import Structure
-from pomagma.io import blobstore
-from pomagma.io.protobuf import InFile
 import contextlib
 import os
+
 import pomagma.cartographer
 import pomagma.surveyor
 import pomagma.theorist
 import pomagma.util
+from pomagma.atlas.structure_pb2 import Structure
+from pomagma.io import blobstore
+from pomagma.io.protobuf import InFile
 
 
 @contextlib.contextmanager

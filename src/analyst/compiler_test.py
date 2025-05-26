@@ -1,7 +1,8 @@
 import re
 
-from pomagma.analyst.compiler import compile_solver
 import pytest
+
+from pomagma.analyst.compiler import compile_solver
 
 SOLVE_EXAMPLES = [
     {

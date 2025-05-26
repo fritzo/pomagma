@@ -5,7 +5,6 @@ import glob
 import itertools
 import os
 import sys
-
 from math import exp, log
 
 import pomagma.util

@@ -38,13 +38,13 @@ import functools
 import inspect
 import itertools
 import re
+import sys
 from collections import defaultdict, deque
 
 from pomagma.compiler.util import memoize_arg, memoize_args
 from pomagma.reducer import syntax
 from pomagma.reducer.util import UnreachableError
 from pomagma.util import TODO
-import sys
 
 # ----------------------------------------------------------------------------
 # Signature

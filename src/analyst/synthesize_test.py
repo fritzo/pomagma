@@ -1,3 +1,5 @@
+import pytest
+
 from pomagma.analyst.synthesize import (
     ComplexityEvaluator,
     NaiveHoleFiller,
@@ -5,7 +7,6 @@ from pomagma.analyst.synthesize import (
 )
 from pomagma.compiler.parser import parse_string_to_expr
 from pomagma.util.testing import for_each
-import pytest
 
 FREE_VARS = list(map(parse_string_to_expr, ["x", "y", "z"]))
 LANGUAGE = {

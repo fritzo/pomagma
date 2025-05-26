@@ -5,9 +5,8 @@ os.environ["POMAGMA_LOG_LEVEL"] = "3"
 
 # isort: split
 
-from pomagma.reducer import bohm
 from pomagma.compiler.util import temp_memoize
-
+from pomagma.reducer import bohm
 
 print("Example 1.")
 with temp_memoize():
