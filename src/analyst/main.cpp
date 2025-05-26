@@ -6,8 +6,7 @@ int main(int argc, char** argv) {
     if (argc != 4) {
         std::filesystem::path program_path(argv[0]);
         std::cout << "Usage: " << program_path.filename().string()
-                  << " structure language address"
-                  << "\n"
+                  << " structure language address" << "\n"
                   << "Environment Variables:\n"
                   << "  POMAGMA_LOG_FILE = " << pomagma::DEFAULT_LOG_FILE
                   << "\n"

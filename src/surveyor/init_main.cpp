@@ -10,8 +10,7 @@ int main(int argc, char** argv) {
     if (argc != 6) {
         std::cout << "Usage: "
                   << std::filesystem::path(executable).filename().string()
-                  << "structure_out symbols facts programs language"
-                  << "\n"
+                  << "structure_out symbols facts programs language" << "\n"
                   << "Environment Variables:\n"
                   << "  POMAGMA_SIZE = " << pomagma::DEFAULT_ITEM_DIM << "\n"
                   << "  POMAGMA_LOG_FILE = " << pomagma::DEFAULT_LOG_FILE

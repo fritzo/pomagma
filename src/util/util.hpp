@@ -3,9 +3,9 @@
 #include <stdint.h>
 #include <unistd.h>
 
-#include <filesystem>
 #include <chrono>
 #include <cstdlib>
+#include <filesystem>
 #include <fstream>
 #include <functional>
 #include <iomanip>
@@ -214,13 +214,14 @@ void in_temp_dir(std::function<void()> body);
 
 // Custom replacement for std::filesystem::unique_path
 // Generates a unique path using random characters
-inline fs::path unique_path(const std::string& pattern = "%%%%-%%%%-%%%%-%%%%") {
+inline fs::path unique_path(
+    const std::string &pattern = "%%%%-%%%%-%%%%-%%%%") {
     static std::random_device rd;
     static std::mt19937 gen(rd());
     static std::uniform_int_distribution<> dis(0, 15);
-    
+
     std::string result = pattern;
-    for (char& c : result) {
+    for (char &c : result) {
         if (c == '%') {
             c = "0123456789abcdef"[dis(gen)];
         }

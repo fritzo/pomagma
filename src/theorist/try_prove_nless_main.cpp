@@ -20,12 +20,8 @@ int main(int argc, char** argv) {
     } else {
         std::cout << "Usage: "
                   << std::filesystem::path(argv[0]).filename().string()
-                  << " structure_in"
-                  << " language_in"
-                  << " conjectures_in"
-                  << " conjectures_out"
-                  << " theorems_out"
-                  << "\n"
+                  << " structure_in" << " language_in" << " conjectures_in"
+                  << " conjectures_out" << " theorems_out" << "\n"
                   << "Environment Variables:\n"
                   << "  POMAGMA_LOG_FILE = " << pomagma::DEFAULT_LOG_FILE
                   << "\n"

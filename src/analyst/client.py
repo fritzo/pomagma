@@ -62,9 +62,9 @@ class Client(object):
             # Handle different field types for proto3 compatibility
             if key.name == "id":
                 # For id field (scalar string), verify response id matches request id
-                assert (
-                    reply.id == val
-                ), f"Response id '{reply.id}' != request id '{val}'"
+                assert reply.id == val, (
+                    f"Response id '{reply.id}' != request id '{val}'"
+                )
             elif key.name == "error_log":
                 # repeated field, always present in proto3, skip validation
                 pass

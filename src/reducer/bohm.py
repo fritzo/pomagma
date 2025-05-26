@@ -945,7 +945,7 @@ def is_normal(term):
     elif is_join(term):
         return is_normal(term[1]) and is_normal(term[2])
     elif is_quote(term):
-        return is_normal(term[1])
+        return True
     else:
         raise ValueError(term)
     raise UnreachableError(term)
@@ -983,9 +983,6 @@ def _compute_step(term):
     elif is_abs(term):
         body = _compute_step(term[1])
         return abstract(body)
-    elif is_quote(term):
-        body = _compute_step(term[1])
-        return QUOTE(body)
     else:
         raise ValueError(term)
     raise UnreachableError(term)

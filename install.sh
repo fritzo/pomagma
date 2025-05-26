@@ -10,6 +10,7 @@ case "`uname`" in
       ccache \
       cmake \
       clang \
+      clang-format \
       gdb \
       graphviz \
       libc++-dev \

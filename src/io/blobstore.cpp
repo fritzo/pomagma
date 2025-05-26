@@ -2,9 +2,9 @@
 
 #include <fcntl.h>
 #include <sys/time.h>
-#include <cstring>
 
 #include <atomic>
+#include <cstring>
 
 #define POMAGMA_ASSERT_C(info, message) \
     POMAGMA_ASSERT((info) != -1, message << "; " << strerror(errno))

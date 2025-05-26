@@ -1,11 +1,11 @@
 #pragma once
 
+#include <cstring>
 #include <pomagma/atlas/macro/structure_impl.hpp>
 #include <pomagma/atlas/macro/util.hpp>
 #include <pomagma/util/dense_set_store.hpp>
 #include <pomagma/util/lazy_map.hpp>
 #include <pomagma/util/trool.hpp>
-#include <cstring>
 #include <string>
 #include <tuple>
 #include <unordered_map>

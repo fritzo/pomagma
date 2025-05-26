@@ -11,8 +11,7 @@ int main(int argc, char** argv) {
         std::cout << "Usage: "
                   << std::filesystem::path(executable).filename().string()
                   << " structure_in structure_out"
-                  << " symbols facts programs language"
-                  << "\n"
+                  << " symbols facts programs language" << "\n"
                   << "Environment Variables:\n"
                   << "  POMAGMA_SIZE = " << pomagma::DEFAULT_ITEM_DIM << "\n"
                   << "  POMAGMA_LOG_FILE = " << pomagma::DEFAULT_LOG_FILE
