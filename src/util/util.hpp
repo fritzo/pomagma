@@ -72,23 +72,29 @@ namespace fs = std::filesystem;
 #define GCC_VERSION 0
 #endif  // __GNUG__
 
+#ifdef __clang__
+#define CLANG_VERSION (__clang_major__ * 10000 + __clang_minor__ * 100)
+#else  // __clang__
+#define CLANG_VERSION 0
+#endif  // __clang__
+
 #ifndef restrict
-#ifdef __GNUG__
+#if defined(__GNUG__) || defined(__clang__)
 #define restrict __restrict__
-#else  // __GNUG__
+#else  // defined(__GNUG__) || defined(__clang__)
 #warning "ignoring keyword 'restrict'"
 #define restrict
-#endif  // __GNUG__
+#endif  // defined(__GNUG__) || defined(__clang__)
 #endif  // restrict
 
-#ifdef __GNUG__
+#if defined(__GNUG__) || defined(__clang__)
 #define likely(x) __builtin_expect(bool(x), true)
 #define unlikely(x) __builtin_expect(bool(x), false)
-#else  // __GNUG__
+#else  // defined(__GNUG__) || defined(__clang__)
 #warning "ignoring likely(-), unlikely(-)"
 #define likely(x) (x)
 #define unlikely(x) (x)
-#endif  // __GNUG__
+#endif  // defined(__GNUG__) || defined(__clang__)
 
 #if defined(__GNUG__) && (GCC_VERSION < 40800)
 #define thread_local __thread
