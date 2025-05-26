@@ -1,7 +1,7 @@
 .SILENT:
 .PHONY: all build protobuf tags lint codegen debug release cpp-test unit-test bootstrap h4-test sk-test skj-test skja-test skrj-test batch-test small-test test big-test sk skj skja skrj profile clean setup-vcpkg FORCE
 
-THEORY = skrj
+THEORY = skja
 
 # File lists for linting and formatting.
 PY_FILES := *.py $(shell find src -not -wholename 'src/third_party/*' \

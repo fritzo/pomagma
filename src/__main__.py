@@ -16,7 +16,7 @@ from pomagma.util import DB, suggest_region_sizes
 
 parsable = parsable.Parsable()
 
-THEORY = os.environ.get("POMAGMA_THEORY", "skrj")
+THEORY = os.environ.get("POMAGMA_THEORY", "skja")
 
 
 # as suggested in http://stackoverflow.com/questions/974189
