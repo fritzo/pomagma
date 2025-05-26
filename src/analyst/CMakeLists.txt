@@ -20,7 +20,16 @@ pomagma_add_executable(analyst
 	validator.cpp
 	analyst_messages.pb.cc
 )
-target_link_libraries(analyst
-	${ZMQ_LIBRARIES}
-	${POMAGMA_WORLD_LIBS}
-)
+
+# Use vcpkg ZeroMQ if available, otherwise fallback to system ZMQ
+if(cppzmq_FOUND)
+	target_link_libraries(analyst
+		cppzmq
+		${POMAGMA_WORLD_LIBS}
+	)
+else()
+	target_link_libraries(analyst
+		${ZMQ_LIBRARIES}
+		${POMAGMA_WORLD_LIBS}
+	)
+endif()

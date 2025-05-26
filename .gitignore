@@ -35,6 +35,10 @@ prof
 .venv/
 compile_commands.json
 
+# vcpkg
+/vcpkg/
+/vcpkg_installed/
+
 # eclipse
 /.cproject
 /.project

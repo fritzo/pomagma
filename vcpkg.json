@@ -1,0 +1,20 @@
+{
+  "name": "pomagma",
+  "version": "1.0.0",
+  "description": "An inference engine for extensional lambda-calculus",
+  "dependencies": [
+    "abseil",
+    {
+      "name": "protobuf",
+      "features": ["zlib"]
+    },
+    "boost-system",
+    "boost-filesystem",
+    "openssl",
+    "tbb",
+    "zeromq",
+    "gtest",
+    "zlib"
+  ],
+  "builtin-baseline": "8f54ef5453e7e76ff01e15988bf243e7247c5eb5"
+} 

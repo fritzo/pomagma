@@ -1,4 +1,14 @@
 cmake_minimum_required(VERSION 3.10)
+
+# Set up vcpkg toolchain before project() call
+if(DEFINED ENV{VCPKG_ROOT})
+  set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+      CACHE STRING "Vcpkg toolchain file")
+elseif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake")
+  set(CMAKE_TOOLCHAIN_FILE "${CMAKE_CURRENT_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake"
+      CACHE STRING "Vcpkg toolchain file")
+endif()
+
 project(pomagma)
 set(CMAKE_MACOSX_RPATH 1)
 
@@ -79,7 +89,8 @@ elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
   
   # Workaround for LLVM 18+ with Abseil compatibility issue
   # See: https://github.com/abseil/abseil-cpp/issues/1747
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fclang-abi-compat=17")
+  # Commented out to match vcpkg ABI
+  # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fclang-abi-compat=17")
 elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
 elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 endif()
@@ -90,30 +101,28 @@ if(POLICY CMP0167)
   cmake_policy(SET CMP0167 NEW)
 endif()
 
-find_package(Boost COMPONENTS system filesystem REQUIRED)
-include_directories(${Boost_INCLUDE_DIRS})
-
-# Use modern CMake protobuf and abseil packages
-find_package(Protobuf REQUIRED CONFIG)
-find_package(absl REQUIRED)
-
-# Find OpenSSL
+# Use vcpkg-managed dependencies
+find_package(Boost REQUIRED COMPONENTS system filesystem)
+find_package(protobuf CONFIG REQUIRED)
+find_package(absl CONFIG REQUIRED)
 find_package(OpenSSL REQUIRED)
-
-# Find TBB using pkg-config
+find_package(TBB CONFIG REQUIRED)
 find_package(PkgConfig REQUIRED)
-pkg_check_modules(TBB REQUIRED tbb)
+find_package(GTest CONFIG REQUIRED)
+find_package(ZLIB REQUIRED)
 
-# Find ZeroMQ using pkg-config
-pkg_check_modules(ZMQ REQUIRED libzmq)
-
-# Add TBB include directories as system headers (suppresses warnings)
-include_directories(SYSTEM ${TBB_INCLUDE_DIRS})
-link_directories(${TBB_LIBRARY_DIRS})
-
-# Add ZeroMQ include directories and library directories
-include_directories(${ZMQ_INCLUDE_DIRS})
-link_directories(${ZMQ_LIBRARY_DIRS})
+# Try to find ZeroMQ via vcpkg first, fallback to pkg-config
+find_package(PkgConfig REQUIRED)
+find_package(cppzmq CONFIG QUIET)
+if(cppzmq_FOUND)
+  message(STATUS "Using vcpkg-managed ZeroMQ")
+  set(ZMQ_LIBRARIES cppzmq cppzmq-static)
+else()
+  message(STATUS "Using system ZeroMQ via pkg-config")
+  pkg_check_modules(ZMQ REQUIRED libzmq)
+  include_directories(${ZMQ_INCLUDE_DIRS})
+  link_directories(${ZMQ_LIBRARY_DIRS})
+endif()
 
 find_program(CCACHE_FOUND ccache)
 if(CCACHE_FOUND)

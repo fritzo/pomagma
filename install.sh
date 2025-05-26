@@ -25,8 +25,19 @@ case "`uname`" in
       #
     ;;
   'Darwin')
+    echo "Setting up macOS dependencies..."
+    
+    # Install basic tools via Homebrew (minimal set)
     brew update
-    brew bundle -v  # installs dependencies from Brewfile
+    brew install cmake ccache git
+    
+    # Set up vcpkg for C++ dependencies
+    echo "Setting up vcpkg for consistent C++ dependency management..."
+    chmod +x setup-vcpkg.sh
+    ./setup-vcpkg.sh
+    
+    # Source vcpkg environment
+    source ./vcpkg-env.sh
     ;;
   *)
     echo "Unsupported OS: `uname`"
@@ -47,16 +58,6 @@ if [ ! -d ".venv" ]; then
     uv venv --system-site-packages
 fi
 
-# Set compiler environment variables for Darwin
-if [ "`uname`" = 'Darwin' ]; then
-    echo "Setting up dependencies for macOS"
-    # Install libomp for OpenMP support
-    brew install libomp
-    # Make sure LLVM is installed
-    brew install llvm
-    echo "Dependencies installed. Use 'source .env' to set up compiler environment."
-fi
-
 # Install dependencies
 echo "Installing Python dependencies"
 source .venv/bin/activate
@@ -64,4 +65,9 @@ uv pip install parsable setuptools  # Needed in setup.py
 uv pip install --no-build-isolation -e .
 
 # Run build
+if [ "`uname`" = 'Darwin' ]; then
+    echo "Building with vcpkg dependencies..."
+    source ./vcpkg-env.sh
+fi
+
 uv run make all

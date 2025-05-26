@@ -13,15 +13,15 @@ add_library(pomagma_util SHARED
 )
 target_link_libraries(pomagma_util
 	pomagma_farmhash
-	${TBB_LIBRARIES}
+	TBB::tbb
 	OpenSSL::Crypto OpenSSL::SSL
-	${Boost_FILESYSTEM_LIBRARY}
-	${Boost_SYSTEM_LIBRARY}
+	Boost::filesystem
+	Boost::system
 )
 
 set_source_files_properties(gtest_main.cpp COMPILE_FLAGS ${GTEST_FLAGS})
 add_library(pomagma_gtest_main SHARED gtest_main.cpp)
-target_link_libraries(pomagma_gtest_main pomagma_util gtest)
+target_link_libraries(pomagma_gtest_main pomagma_util GTest::gtest)
 
 function(add_unit_test T)
 	pomagma_add_executable(${T}_test ${T}_test.cpp)

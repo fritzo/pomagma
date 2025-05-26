@@ -1,5 +1,5 @@
 .SILENT:
-.PHONY: all build protobuf tags lint codegen debug release cpp-test unit-test bootstrap h4-test sk-test skj-test skja-test skrj-test batch-test small-test test big-test sk skj skja skrj profile clean FORCE
+.PHONY: all build protobuf tags lint codegen debug release cpp-test unit-test bootstrap h4-test sk-test skj-test skja-test skrj-test batch-test small-test test big-test sk skj skja skrj profile clean setup-vcpkg FORCE
 
 THEORY = skrj
 
@@ -19,6 +19,11 @@ build: data/blob bootstrap protobuf FORCE
 
 install: FORCE
 	uv pip install --no-build-isolation -e .
+
+setup-vcpkg: FORCE
+	@echo "Setting up vcpkg for dependency management..."
+	chmod +x setup-vcpkg.sh
+	./setup-vcpkg.sh
 
 echo-py-files: FORCE
 	echo $(PY_FILES)
@@ -71,6 +76,13 @@ ifdef CC
 endif
 ifdef CXX
 	CMAKE += -DCMAKE_CXX_COMPILER=$(shell which $(CXX))
+endif
+
+# Add vcpkg toolchain if available
+ifneq ($(wildcard vcpkg/scripts/buildsystems/vcpkg.cmake),)
+	CMAKE += -DCMAKE_TOOLCHAIN_FILE=$(shell pwd)/vcpkg/scripts/buildsystems/vcpkg.cmake
+else ifdef VCPKG_ROOT
+	CMAKE += -DCMAKE_TOOLCHAIN_FILE=$(VCPKG_ROOT)/scripts/buildsystems/vcpkg.cmake
 endif
 
 debug: protobuf FORCE
@@ -164,7 +176,10 @@ clean: FORCE
 	rm -rf build lib compile_commands.json
 	cd src && git clean -fdx -e third_party/
 
-mrproper: clean FORCE
+clean-vcpkg: FORCE
+	rm -rf vcpkg
+
+mrproper: clean clean-vcpkg FORCE
 	git clean -fdx -e pomagma.egg-info -e node_modules -e data
 
 FORCE:

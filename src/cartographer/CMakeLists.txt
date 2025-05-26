@@ -22,7 +22,16 @@ pomagma_add_executable(cartographer
 	../theorist/hypothesize.cpp
        	cartographer_messages.pb.cc
 )
-target_link_libraries(cartographer
-	${ZMQ_LIBRARIES}
-	${POMAGMA_WORLD_LIBS}
-)
+
+# Use vcpkg ZeroMQ if available, otherwise fallback to system ZMQ
+if(cppzmq_FOUND)
+	target_link_libraries(cartographer
+		cppzmq
+		${POMAGMA_WORLD_LIBS}
+	)
+else()
+	target_link_libraries(cartographer
+		${ZMQ_LIBRARIES}
+		${POMAGMA_WORLD_LIBS}
+	)
+endif()

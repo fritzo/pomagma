@@ -7,9 +7,7 @@ add_library(pomagma_atlas SHARED
 target_link_libraries(pomagma_atlas
 	protobuf::libprotobuf
 	absl::log
-	absl::log_internal_message
-	absl::log_internal_check_op
-	absl::log_internal_format
+	absl::absl_log
 	absl::base
 	absl::strings
 	absl::str_format
@@ -22,9 +20,7 @@ target_link_libraries(atlas_protobuf_test
 	pomagma_atlas
 	protobuf::libprotobuf
 	absl::log
-	absl::log_internal_message
-	absl::log_internal_check_op
-	absl::log_internal_format
+	absl::absl_log
 	absl::base
 	absl::strings
 	absl::str_format

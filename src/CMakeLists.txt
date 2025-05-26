@@ -3,20 +3,24 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 set(POMAGMA_UTIL_LIBS
 	pomagma_util
 	pomagma_farmhash
-	${TBB_LIBRARIES}
+	TBB::tbb
 	OpenSSL::Crypto OpenSSL::SSL
-	${Boost_FILESYSTEM_LIBRARY}
-	${Boost_SYSTEM_LIBRARY}
+	Boost::filesystem
+	Boost::system
 	#tcmalloc  # THIS MUST LINKED LAST
 )
 
 set(POMAGMA_IO_LIBS
 	pomagma_io
 	protobuf::libprotobuf
+	ZLIB::ZLIB
 	absl::log
+	absl::absl_log
 	absl::log_internal_message
 	absl::log_internal_check_op
 	absl::log_internal_format
+	absl::log_internal_log_impl
+	absl::log_streamer
 	absl::base
 	absl::strings
 	absl::str_format
