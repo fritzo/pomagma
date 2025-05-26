@@ -8,8 +8,6 @@
       "name": "protobuf",
       "features": ["zlib"]
     },
-    "boost-system",
-    "boost-filesystem",
     "openssl",
     "tbb",
     "zeromq",

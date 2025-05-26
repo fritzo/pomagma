@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <unistd.h>
 
-#include <boost/filesystem.hpp>
+#include <filesystem>
 #include <chrono>
 #include <cstdlib>
 #include <fstream>
@@ -56,7 +56,7 @@ inline bool operator==(const std::vector<T> &x, const std::vector<T> &y) {
 
 namespace pomagma {
 
-namespace fs = boost::filesystem;
+namespace fs = std::filesystem;
 
 //----------------------------------------------------------------------------
 // compiler-specific
@@ -211,6 +211,22 @@ inline float getenv_default(const char *key, float default_val) {
 // file system
 
 void in_temp_dir(std::function<void()> body);
+
+// Custom replacement for std::filesystem::unique_path
+// Generates a unique path using random characters
+inline fs::path unique_path(const std::string& pattern = "%%%%-%%%%-%%%%-%%%%") {
+    static std::random_device rd;
+    static std::mt19937 gen(rd());
+    static std::uniform_int_distribution<> dis(0, 15);
+    
+    std::string result = pattern;
+    for (char& c : result) {
+        if (c == '%') {
+            c = "0123456789abcdef"[dis(gen)];
+        }
+    }
+    return fs::temp_directory_path() / result;
+}
 
 //----------------------------------------------------------------------------
 // logging

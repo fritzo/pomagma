@@ -14,7 +14,7 @@
 
 #include <algorithm>
 #include <array>
-#include <boost/filesystem.hpp>
+#include <filesystem>
 #include <pomagma/atlas/protobuf.hpp>
 #include <pomagma/io/protoblob.hpp>
 #include <thread>
@@ -536,7 +536,7 @@ inline void dump(Signature &signature, protobuf::Structure &structure,
 
 void dump(Signature &signature, const std::string &filename) {
     POMAGMA_INFO("Dumping structure to file " << filename);
-    boost::filesystem::path p(filename);
+    std::filesystem::path p(filename);
     POMAGMA_ASSERT_EQ(p.extension().string(), ".pb");
 
     protobuf::Structure structure;
@@ -908,7 +908,7 @@ inline void load_data(Signature &signature, protobuf::Structure &structure) {
 void load(Signature &signature, const std::string &filename,
           size_t extra_item_dim) {
     POMAGMA_INFO("Loading structure from file " << filename);
-    boost::filesystem::path p(filename);
+    std::filesystem::path p(filename);
     POMAGMA_ASSERT_EQ(p.extension().string(), ".pb");
 
     protobuf::Structure structure;
@@ -927,7 +927,7 @@ void load(Signature &signature, const std::string &filename,
 
 void load_data(Signature &signature, const std::string &filename) {
     POMAGMA_INFO("Loading structure from file " << filename);
-    boost::filesystem::path p(filename);
+    std::filesystem::path p(filename);
     POMAGMA_ASSERT_EQ(p.extension().string(), ".pb");
 
     protobuf::Structure structure;

@@ -96,13 +96,7 @@ elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 endif()
 message(STATUS "CMake C++ flags: ${CMAKE_CXX_FLAGS}")
 
-# Handle deprecated FindBoost module warning
-if(POLICY CMP0167)
-  cmake_policy(SET CMP0167 NEW)
-endif()
-
 # Use vcpkg-managed dependencies
-find_package(Boost REQUIRED COMPONENTS system filesystem)
 find_package(protobuf CONFIG REQUIRED)
 find_package(absl CONFIG REQUIRED)
 find_package(OpenSSL REQUIRED)

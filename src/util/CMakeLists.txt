@@ -15,8 +15,6 @@ target_link_libraries(pomagma_util
 	pomagma_farmhash
 	TBB::tbb
 	OpenSSL::Crypto OpenSSL::SSL
-	Boost::filesystem
-	Boost::system
 )
 
 set_source_files_properties(gtest_main.cpp COMPILE_FLAGS ${GTEST_FLAGS})

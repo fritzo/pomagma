@@ -1,4 +1,4 @@
-"""Boostrapped data is included in git repo, for testing."""
+"""Bootstrapped data is included in git repo, for testing."""
 
 import os
 

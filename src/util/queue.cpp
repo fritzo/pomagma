@@ -40,7 +40,7 @@ uint8_t VectorQueue::try_pop(void* message) {
 // FileBackedQueue
 
 inline int create_inaccessible_temp_file() {
-    auto path = fs::unique_path("/tmp/pomagma.queue.%%%%%%%%%%%%%%%%%%%%");
+    auto path = unique_path("/tmp/pomagma.queue.%%%%%%%%%%%%%%%%%%%%");
     int fid = open(path.c_str(), O_CREAT | O_TRUNC | O_RDWR, S_IRUSR | S_IWUSR);
     unlink(path.c_str());
     return fid;

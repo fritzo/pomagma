@@ -5,8 +5,6 @@ set(POMAGMA_UTIL_LIBS
 	pomagma_farmhash
 	TBB::tbb
 	OpenSSL::Crypto OpenSSL::SSL
-	Boost::filesystem
-	Boost::system
 	#tcmalloc  # THIS MUST LINKED LAST
 )
 

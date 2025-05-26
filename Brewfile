@@ -1,4 +1,3 @@
-brew "boost"
 brew "ccache"
 brew "cscope"
 brew "ctags"

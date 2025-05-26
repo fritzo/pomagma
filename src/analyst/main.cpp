@@ -4,7 +4,7 @@ int main(int argc, char** argv) {
     pomagma::Log::Context log_context(argc, argv);
 
     if (argc != 4) {
-        boost::filesystem::path program_path(argv[0]);
+        std::filesystem::path program_path(argv[0]);
         std::cout << "Usage: " << program_path.filename().string()
                   << " structure language address"
                   << "\n"

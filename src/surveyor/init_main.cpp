@@ -9,7 +9,7 @@ int main(int argc, char** argv) {
 
     if (argc != 6) {
         std::cout << "Usage: "
-                  << boost::filesystem::path(executable).filename().string()
+                  << std::filesystem::path(executable).filename().string()
                   << "structure_out symbols facts programs language"
                   << "\n"
                   << "Environment Variables:\n"

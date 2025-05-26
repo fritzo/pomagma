@@ -19,7 +19,7 @@ int main(int argc, char** argv) {
         theorems_file = argv[5];
     } else {
         std::cout << "Usage: "
-                  << boost::filesystem::path(argv[0]).filename().string()
+                  << std::filesystem::path(argv[0]).filename().string()
                   << " structure_in"
                   << " language_in"
                   << " conjectures_in"

@@ -51,8 +51,7 @@ void util_static_tests() {
 
 void in_temp_dir(std::function<void()> body) {
     const auto old_path = fs::current_path();
-    const auto temp_path =
-        fs::unique_path("/tmp/pomagma.temp.%%%%-%%%%-%%%%-%%%%");
+    const auto temp_path = unique_path("/tmp/pomagma.temp.%%%%-%%%%-%%%%-%%%%");
     POMAGMA_ASSERT(fs::create_directories(temp_path),
                    "failed to create temp directory");
     fs::current_path(temp_path);

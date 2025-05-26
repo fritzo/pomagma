@@ -70,7 +70,7 @@ int main() {
 
     // FileBackedQueue creates one temporary file per topic, which can exhaust
     // file descriptors. Using 100 topics instead of 400 to avoid:
-    // "boost::filesystem::unique_path: Too many open files [system:24]"
+    // "std::filesystem::unique_path: Too many open files [system:24]"
     profile_readers_writers<FileBackedQueue>(100, 8, 1000000);
 
     return 0;

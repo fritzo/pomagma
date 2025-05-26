@@ -8,7 +8,6 @@ vcpkg is a C++ package manager that provides consistent, reproducible builds acr
 
 - protobuf (Protocol Buffers)
 - abseil-cpp (Abseil C++ libraries)
-- boost (Boost C++ libraries)
 - TBB (Threading Building Blocks)
 - OpenSSL
 - ZeroMQ
