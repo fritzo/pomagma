@@ -73,6 +73,16 @@ s_atoms = s.one_of(
     s.just(i2),
     s.just(i3),
     s.sampled_from([x, y, z]),
+    s.just(Y),
+)
+
+s_qatoms = s.one_of(
+    s.sampled_from([TOP, BOT]),
+    s.just(i0),
+    s.just(i1),
+    s.just(i2),
+    s.just(i3),
+    s.sampled_from([x, y, z]),
     s.sampled_from(ACTIVE_ATOMS),
 )
 
@@ -85,12 +95,24 @@ def s_terms_extend(terms):
             terms.filter(lambda c: i0 not in quoted_vars(c)),
         ),
         s.builds(join, terms, terms),
+    )
+
+
+def s_qterms_extend(terms):
+    return s.one_of(
+        s.builds(app, terms, terms),
+        s.builds(
+            bohm.abstract,
+            terms.filter(lambda c: i0 not in quoted_vars(c)),
+        ),
+        s.builds(join, terms, terms),
         s.builds(QUOTE, terms),
     )
 
 
 s_terms = s.recursive(s_atoms, s_terms_extend, max_leaves=32)
-s_quoted = s.builds(QUOTE, s_terms)
+s_qterms = s.recursive(s_qatoms, s_qterms_extend, max_leaves=32)
+s_quoted = s.builds(QUOTE, s_qterms)
 
 
 def test_constants():
@@ -165,7 +187,7 @@ def test_decrement_rank(term, expected):
     assert bohm.decrement_rank(term) is expected
 
 
-@hypothesis.given(s_terms)
+@hypothesis.given(s_qterms)
 def test_decrement_increment_rank(term):
     assert bohm.decrement_rank(bohm.increment_rank(term)) is term
 
@@ -408,12 +430,12 @@ def test_abstract(term, expected):
     assert bohm.abstract(term) is expected
 
 
-@hypothesis.given(s_terms)
+@hypothesis.given(s_qterms)
 def test_abstract_eta(term):
     assert bohm.abstract(app(bohm.increment_rank(term), i0)) is term
 
 
-@hypothesis.given(s_terms)
+@hypothesis.given(s_qterms)
 @hypothesis.example(join(TOP, APP(QUOTE(i1), i0)))
 def test_app_abstract(term):
     hypothesis.assume(i0 not in quoted_vars(term))
@@ -616,41 +638,41 @@ def test_join(lhs, rhs, expected):
     assert join(lhs, rhs) is expected
 
 
-@hypothesis.given(s_terms)
+@hypothesis.given(s_qterms)
 def test_join_top(term):
     assert join(term, TOP) is TOP
     assert join(TOP, term) is TOP
 
 
-@hypothesis.given(s_terms)
+@hypothesis.given(s_qterms)
 def test_join_bot(term):
     assert join(term, BOT) is term
     assert join(BOT, term) is term
 
 
-@hypothesis.given(s_terms, s_terms, s_terms)
+@hypothesis.given(s_qterms, s_qterms, s_qterms)
 def test_join_associative(x, y, z):
     assert join(join(x, y), z) is join(x, join(y, z))
 
 
-@hypothesis.given(s_terms, s_terms)
+@hypothesis.given(s_qterms, s_qterms)
 def test_join_commutative(lhs, rhs):
     assert join(lhs, rhs) is join(rhs, lhs)
 
 
-@hypothesis.given(s_terms)
+@hypothesis.given(s_qterms)
 def test_join_idempotent_1(term):
     assert join(term, term) is term
 
 
-@hypothesis.given(s_terms, s_terms)
+@hypothesis.given(s_qterms, s_qterms)
 def test_join_idempotent_2(lhs, rhs):
     expected = join(lhs, rhs)
     assert join(lhs, expected) is expected
     assert join(rhs, expected) is expected
 
 
-@hypothesis.given(s_terms)
+@hypothesis.given(s_qterms)
 def test_unabstract(term):
     assert bohm.abstract(bohm.unabstract(term)) is term
 
@@ -750,22 +772,22 @@ def test_try_decide_less_dominating(lhs, rhs):
     assert try_decide_less_weak(rhs, lhs) is False
 
 
-@hypothesis.given(s_terms)
+@hypothesis.given(s_qterms)
 def test_try_decide_less_reflexive(term):
     assert try_decide_less_weak(term, term) is True
 
 
-@hypothesis.given(s_terms)
+@hypothesis.given(s_qterms)
 def test_try_decide_less_top(term):
     assert try_decide_less_weak(term, TOP) is True
 
 
-@hypothesis.given(s_terms)
+@hypothesis.given(s_qterms)
 def test_try_decide_less_bot(term):
     assert try_decide_less_weak(BOT, term) is True
 
 
-@hypothesis.given(s_terms, s_terms)
+@hypothesis.given(s_qterms, s_qterms)
 def test_try_decide_less_join(lhs, rhs):
     assert try_decide_less_weak(lhs, join(lhs, rhs)) is True
     assert try_decide_less_weak(rhs, join(lhs, rhs)) is True
@@ -782,7 +804,7 @@ def test_try_decide_less_atom_atom(lhs, rhs):
     assert try_decide_less_weak(lhs, rhs) is False
 
 
-@hypothesis.given(s_terms, s_terms)
+@hypothesis.given(s_qterms, s_qterms)
 @hypothesis.settings(max_examples=1000)
 def test_try_decide_less_weak(lhs, rhs):
     expected = try_decide_less_weak(lhs, rhs)
@@ -790,7 +812,7 @@ def test_try_decide_less_weak(lhs, rhs):
     assert try_decide_less(lhs, rhs) is expected
 
 
-@hypothesis.given(s_terms, s_terms)
+@hypothesis.given(s_qterms, s_qterms)
 def test_app_less(lhs, rhs):
     truth_value = try_decide_less(lhs, rhs)
     assert truth_value in (True, False, None)
@@ -803,7 +825,7 @@ def test_app_less(lhs, rhs):
     assert app(app(QLESS, QUOTE(lhs)), QUOTE(rhs)) is expected
 
 
-@hypothesis.given(s_terms)
+@hypothesis.given(s_qterms)
 def test_try_decide_equal_reflexive(term):
     assert try_decide_equal(term, term) is True
 
@@ -814,7 +836,7 @@ def test_try_decide_equal_incomparable(lhs, rhs):
     assert try_decide_equal(rhs, lhs) is False
 
 
-@hypothesis.given(s_terms, s_terms)
+@hypothesis.given(s_qterms, s_qterms)
 def test_app_equal(lhs, rhs):
     truth_value = try_decide_equal(lhs, rhs)
     assert truth_value in (True, False, None)
@@ -827,12 +849,12 @@ def test_app_equal(lhs, rhs):
     assert app(app(QEQUAL, QUOTE(lhs)), QUOTE(rhs)) is expected
 
 
-@hypothesis.given(s_terms)
+@hypothesis.given(s_qterms)
 def test_dominates_irreflexive(term):
     assert not bohm.dominates(term, term)
 
 
-@hypothesis.given(s_terms, s_terms, s_terms)
+@hypothesis.given(s_qterms, s_qterms, s_qterms)
 def test_dominates_transitive(x, y, z):
     for x, y, z in itertools.permutations([x, y, z]):
         if bohm.dominates(x, y) and bohm.dominates(y, z):
@@ -861,7 +883,7 @@ def test_ground(term, expected_lb, expected_ub):
     assert ub is expected_ub
 
 
-@hypothesis.given(s_terms)
+@hypothesis.given(s_qterms)
 def test_ground_less(term):
     lb, ub = bohm.ground(term)
     assert try_decide_less(lb, ub) is True
@@ -982,6 +1004,10 @@ def test_is_normal(term, expected_try_compute_step):
     assert is_normal(term) is expected
 
 
+# Note there is a semantic mismatch for QUOTE(x) terms, whose implementation is
+# normal, but whose inner syntax may be not normal, i.e. we can have a normal
+# bot meta-unnormal term. To sidestep this subtlety, we simply avoid testing on
+# QUOTE(x) terms.
 @hypothesis.given(s_terms)
 def test_linear_is_normal(term):
     hypothesis.assume(is_linear(term))
@@ -994,7 +1020,7 @@ def test_try_compute_step(term, expected):
         assert bohm.try_compute_step(term) is expected
 
 
-@hypothesis.given(s_terms)
+@hypothesis.given(s_qterms)
 @hypothesis.settings(max_examples=1000)
 def test_try_compute_step_runs(term):
     for step in range(5):
@@ -1154,7 +1180,7 @@ def test_sexpr_simplify(sexpr, expected):
     assert sexpr_print(sexpr_simplify(sexpr)) == expected
 
 
-@hypothesis.given(s_terms)
+@hypothesis.given(s_qterms)
 def test_sexpr_print_simplify(term):
     sexpr = sexpr_print(term)
     assert sexpr_print(sexpr_simplify(sexpr)) == sexpr
