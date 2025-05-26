@@ -1,6 +1,6 @@
 # Pomagma
 
-[![Build Status](https://travis-ci.org/fritzo/pomagma.svg?branch=master)](https://travis-ci.org/fritzo/pomagma)
+[![Tests](https://github.com/fritzo/pomagma/actions/workflows/test.yml/badge.svg)](https://github.com/fritzo/pomagma/actions/workflows/test.yml)
 [![PyPI Version](https://badge.fury.io/py/pomagma.svg)](https://pypi.python.org/pypi/pomagma)
 
 Pomagma is an inference engine for
@@ -37,7 +37,7 @@ and a shared C++ database server performs low-level inference work.
 
 ## Installing
 
-The server targets Ubuntu 14.04 and 12.04, and installs in a python virtualenv.
+The server targets Ubuntu 24.04, and installs in a uv virtual environment
 
     git clone https://github.com/fritzo/pomagma
     cd pomagma
@@ -45,7 +45,7 @@ The server targets Ubuntu 14.04 and 12.04, and installs in a python virtualenv.
     make small-test     # takes ~5 CPU minutes
     make test           # takes ~1 CPU hour
 
-The client library supports Python 2.7.
+The client library supports Python 3.12.
 
     pip install pomagma
 
@@ -72,10 +72,10 @@ Alternatively, connect using the Python client library
     python
     from pomagma import analyst
     with analyst.connect() as db:
-        print db.simplify(["APP I I"])
-        print db.validate(["I"])
-        print db.solve('x', 'EQUAL x APP x x', max_solutions=4)
-        print db.validate_facts(['EQUAL x TOP', 'LESS x BOT'])
+        print(db.simplify(["APP I I"]))
+        print(db.validate(["I"]))
+        print(db.solve('x', 'EQUAL x APP x x', max_solutions=4))
+        print(db.validate_facts(['EQUAL x TOP', 'LESS x BOT']))
 
 ## Get an Atlas
 
