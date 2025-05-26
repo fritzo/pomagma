@@ -353,7 +353,7 @@ def get_stack_trace(binary, pid):
                     "quit",
                 ],
                 stderr=subprocess.STDOUT,
-                universal_newlines=True
+                universal_newlines=True,
             )
         else:
             trace += subprocess.check_output(
@@ -368,7 +368,7 @@ def get_stack_trace(binary, pid):
                     "quit",
                 ],
                 stderr=subprocess.STDOUT,
-                universal_newlines=True
+                universal_newlines=True,
             )
     except subprocess.CalledProcessError:
         trace += "ERROR stack trace failed"

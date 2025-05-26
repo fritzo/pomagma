@@ -19,12 +19,13 @@ dependencies = [
     "nbval",
     "notebook",
     "parsable",
-    "protobuf==5",
+    "protobuf>=5,<6",
     "psutil",
     "pytest",
     "pytest-timeout",
     "pytest-xdist",
     "pyzmq",
+    "ruff",
 ]
 classifiers = [
     "Development Status :: 4 - Beta",

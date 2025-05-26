@@ -1,11 +1,11 @@
 #pragma once
 
+#include <google/protobuf/stubs/common.h>
 #include <pomagma/atlas/structure.pb.h>
 
 #include <pomagma/io/blobstore.hpp>
 #include <pomagma/io/protobuf.hpp>
 #include <pomagma/util/util.hpp>
-#include <google/protobuf/stubs/common.h>
 
 namespace pomagma {
 namespace protobuf {
@@ -13,16 +13,18 @@ namespace protobuf {
 using namespace atlas::protobuf;
 
 // Template function to initialize protobuf with static linking support
-// This ensures descriptor initialization happens properly with vcpkg static linking
-template<typename T>
+// This ensures descriptor initialization happens properly with vcpkg static
+// linking
+template <typename T>
 inline void init_protobuf() {
     // Initialize protobuf library
     GOOGLE_PROTOBUF_VERIFY_VERSION;
-    
+
     // Force descriptor initialization by accessing the descriptor
     // This ensures static initialization happens with static linking
     const auto* descriptor = T::descriptor();
-    POMAGMA_ASSERT(descriptor != nullptr, "Failed to initialize protobuf descriptors");
+    POMAGMA_ASSERT(descriptor != nullptr,
+                   "Failed to initialize protobuf descriptors");
 }
 
 inline void delta_compress(ObMap& map) {

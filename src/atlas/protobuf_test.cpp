@@ -1,6 +1,7 @@
+#include <pomagma/atlas/structure.pb.h>
+
 #include <pomagma/atlas/protobuf.hpp>
 #include <pomagma/util/sequential/dense_set.hpp>
-#include <pomagma/atlas/structure.pb.h>
 
 using namespace pomagma;
 
@@ -69,7 +70,7 @@ void test_dump_load() {
 int main() {
     // Initialize protobuf with static linking support
     protobuf::init_protobuf<protobuf::ObMap>();
-    
+
     Log::Context log_context("Atlas Protobuf Test");
 
     for (const auto& example : g_examples) {
