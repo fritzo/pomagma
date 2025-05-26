@@ -1,4 +1,3 @@
-
 #include <cstring>
 #include <pomagma/util/aligned_alloc.hpp>
 #include <pomagma/util/concurrent/dense_set.hpp>
@@ -88,15 +87,26 @@ size_t DenseSet::max_item() const {
 void DenseSet::insert_all() {
     Word all = ~Word(0);
     if (item_dim() < BITS_PER_WORD) {
+        // For small sets that fit in one word
         size_t trim = BITS_PER_WORD - (item_dim() + 1);
         m_words[0].store(~Word(1) & (all >> trim), relaxed);
     } else {
-        m_words[0].store(~Word(1));
+        // For larger sets spanning multiple words
+        m_words[0].store(~Word(1),
+                         relaxed);  // First word: all bits except bit 0
         for (size_t w = 1; w < word_dim() - 1; ++w) {
-            m_words[w].store(all, relaxed);
+            m_words[w].store(all, relaxed);  // Middle words: all bits set
         }
-        size_t trim = BITS_PER_WORD - ((item_dim() + 1) % BITS_PER_WORD);
-        m_words[word_dim() - 1].store(all >> trim, relaxed);
+        // Last word: trim to only include valid item bits
+        size_t end = (item_dim() + 1) % BITS_PER_WORD;
+        if (end == 0) {
+            // Last word is completely filled
+            m_words[word_dim() - 1].store(all, relaxed);
+        } else {
+            // Last word needs trimming
+            Word word = all >> (BITS_PER_WORD - end);
+            m_words[word_dim() - 1].store(word, relaxed);
+        }
     }
 }
 
