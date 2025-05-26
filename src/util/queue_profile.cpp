@@ -68,9 +68,10 @@ int main() {
 
     profile_readers_writers<VectorQueue>(40000, 8, 1000000);
 
-    // If we test with too many topics, this fails with:
-    // boost::filesystem::unique_path: Too many open files
-    profile_readers_writers<FileBackedQueue>(400, 8, 1000000);
+    // FileBackedQueue creates one temporary file per topic, which can exhaust
+    // file descriptors. Using 100 topics instead of 400 to avoid:
+    // "boost::filesystem::unique_path: Too many open files [system:24]"
+    profile_readers_writers<FileBackedQueue>(100, 8, 1000000);
 
     return 0;
 }
