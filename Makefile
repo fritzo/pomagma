@@ -53,24 +53,24 @@ clang-ctags:
 
 lint: FORCE
 	# TODO Use clang-tidy.
-	black --check $(PY_FILES)
 	ruff check $(PY_FILES)
+	ruff format --check $(PY_FILES)
 
 clang-format: FORCE
 	$(info clang-format)
 	@clang-format -i --style="{BasedOnStyle: Google, IndentWidth: 4}" \
 	  $(CPP_FILES)
 
-black: FORCE
-	$(info black)
-	@black $(PY_FILES)
+ruff-format: FORCE
+	$(info ruff format)
+	@ruff format $(PY_FILES)
 
 ruff: FORCE
 	$(info ruff)
 	@ruff check --fix $(PY_FILES)
 	@ruff format $(PY_FILES)
 
-format: clang-format black ruff FORCE
+format: clang-format ruff-format FORCE
 
 codegen: FORCE
 	python -m pomagma.compiler batch-compile

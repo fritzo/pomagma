@@ -12,7 +12,6 @@ readme = "README.md"
 requires-python = ">=3.11"
 dynamic = ["version", "scripts"]
 dependencies = [
-    "black",
     "boto3",
     "hypothesis",
     "isort",
@@ -48,11 +47,11 @@ packages = {find = {exclude = ["src*"]}}
 version = {attr = "src.__version__"}
 
 [tool.ruff]
-# Configure line length to match black
+# Configure line length and formatting settings
 line-length = 88
 
-# Target Python 3.7+ (adjust as needed for your minimum supported version)
-target-version = "py37"
+# Target Python 3.11+ to match project requirements
+target-version = "py311"
 
 [tool.ruff.lint]
 # Enable additional rules as needed
@@ -67,11 +66,6 @@ select = [
 ignore = ["E741"]
 
 [tool.ruff.format]
-# Enable the formatter with same settings as black
 quote-style = "double"
 indent-style = "space"
 line-ending = "auto"
-
-[tool.black]
-line-length = 88
-target-version = ['py37'] 
