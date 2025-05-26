@@ -32,7 +32,7 @@ make setup-vcpkg
 
 2. Source the vcpkg environment:
 ```bash
-source ./vcpkg-env.sh
+source ./env.sh
 ```
 
 3. Build the project:
@@ -65,7 +65,7 @@ make clean
 
 2. Ensure vcpkg environment is loaded:
 ```bash
-source ./vcpkg-env.sh
+source ./env.sh
 ```
 
 3. Rebuild:
@@ -89,7 +89,7 @@ export OLD_PATH="$PATH"
 export PATH=$(echo $PATH | tr ':' '\n' | grep -v '/opt/homebrew' | tr '\n' ':')
 
 # Source vcpkg environment
-source ./vcpkg-env.sh
+source ./env.sh
 
 # Build
 make clean && make debug
@@ -103,7 +103,7 @@ export PATH="$OLD_PATH"
 - `vcpkg.json`: vcpkg manifest file listing dependencies
 - `vcpkg-configuration.json`: vcpkg configuration with baseline
 - `setup-vcpkg.sh`: Script to install and configure vcpkg
-- `vcpkg-env.sh`: Environment setup script
+- `env.sh`: Environment setup script
 - `CMakeLists.txt`: Updated to use vcpkg toolchain
 - `Makefile`: Updated with vcpkg support
 

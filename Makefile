@@ -11,6 +11,14 @@ CPP_FILES := $(shell find src -not -wholename 'src/third_party/*' \
                               -regex '.*\.[ch]pp$$' \
 			      -not -name '*.pb.*')
 
+# Detect number of CPU cores for parallel builds
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S),Darwin)
+    NPROC := $(shell sysctl -n hw.ncpu)
+else
+    NPROC := $(shell nproc)
+endif
+
 all: build FORCE
 
 build: data/blob bootstrap protobuf FORCE
@@ -89,21 +97,21 @@ debug: protobuf FORCE
 	mkdir -p build/debug
 	cd build/debug \
 	  && $(CMAKE) -DCMAKE_BUILD_TYPE=Debug ../.. \
-	  && $(MAKE)
+	  && $(MAKE) -j$(NPROC)
 	ln -sf build/debug/compile_commands.json compile_commands.json
 
 release: protobuf FORCE
 	mkdir -p build/release
 	cd build/release \
 	  && $(CMAKE) -DCMAKE_BUILD_TYPE=RelWithDebInfo ../.. \
-	  && $(MAKE)
+	  && $(MAKE) -j$(NPROC)
 	ln -sf build/release/compile_commands.json compile_commands.json
 
 DEBUG_LOG="$(shell pwd)/data/debug.log"
 cpp-test: debug FORCE
 	rm -f $(DEBUG_LOG)
 	POMAGMA_LOG_FILE=$(DEBUG_LOG) \
-	  CTEST_OUTPUT_ON_FAILURE=1 $(MAKE) -C build/debug test \
+	  CTEST_OUTPUT_ON_FAILURE=1 $(MAKE) -j$(NPROC) -C build/debug test \
 	  || { cat $(DEBUG_LOG); exit 1; }
 
 unit-test: build bootstrap FORCE

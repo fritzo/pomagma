@@ -85,7 +85,11 @@ elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-error=mismatched-tags")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Qunused-arguments")
   #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ferror-limit 1")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+  
+  # Use libc++ on macOS, libstdc++ on Linux for better compatibility
+  if(APPLE)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+  endif()
   
   # Workaround for LLVM 18+ with Abseil compatibility issue
   # See: https://github.com/abseil/abseil-cpp/issues/1747
@@ -97,7 +101,7 @@ endif()
 message(STATUS "CMake C++ flags: ${CMAKE_CXX_FLAGS}")
 
 # Use vcpkg-managed dependencies
-find_package(protobuf CONFIG REQUIRED)
+find_package(protobuf REQUIRED)
 find_package(absl CONFIG REQUIRED)
 find_package(OpenSSL REQUIRED)
 find_package(TBB CONFIG REQUIRED)

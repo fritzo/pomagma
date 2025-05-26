@@ -2,6 +2,39 @@
 # Environment configuration for pomagma development
 # Source this file with: source env.sh
 
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Set up vcpkg environment if available
+if [ -d "$SCRIPT_DIR/vcpkg" ]; then
+  export VCPKG_ROOT="$SCRIPT_DIR/vcpkg"
+  export PATH="$VCPKG_ROOT:$PATH"
+  export CMAKE_TOOLCHAIN_FILE="$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
+  
+  # Add vcpkg tools to PATH if available
+  if [ -d "$SCRIPT_DIR/vcpkg_installed/x64-linux/tools/protobuf" ]; then
+    export PATH="$SCRIPT_DIR/vcpkg_installed/x64-linux/tools/protobuf:$PATH"
+    echo "vcpkg protoc added to PATH"
+  fi
+  
+  # Detect OS and set vcpkg triplet
+  case "$(uname)" in
+    'Linux')
+      export VCPKG_DEFAULT_TRIPLET="x64-linux"
+      ;;
+    'Darwin')
+      export VCPKG_DEFAULT_TRIPLET="x64-osx"
+      ;;
+    *)
+      export VCPKG_DEFAULT_TRIPLET="x64-linux"
+      ;;
+  esac
+  
+  echo "vcpkg environment configured: $VCPKG_ROOT (triplet: $VCPKG_DEFAULT_TRIPLET)"
+else
+  echo "vcpkg not found in $SCRIPT_DIR/vcpkg - run ./setup-vcpkg.sh first"
+fi
+
 # Detect OS and set appropriate compiler paths
 case "$(uname)" in
   'Darwin')
@@ -31,9 +64,10 @@ case "$(uname)" in
     export PATH="/opt/homebrew/bin:/opt/homebrew/sbin:$PATH"
     ;;
   'Linux')
-    # Linux: Use system compilers (usually support the flags we need)
-    export CC=gcc
-    export CXX=g++
+    # Linux: Use clang compilers for consistency with install.sh
+    export CC=/usr/bin/clang
+    export CXX=/usr/bin/clang++
+    echo "Using system clang: CC=$CC, CXX=$CXX"
     ;;
   *)
     echo "Unknown OS: $(uname)"

@@ -4,24 +4,35 @@ set -x
 
 case "`uname`" in
   'Linux')
-    sudo apt-get update
-    sudo apt-get install -y \
+    sudo apt update
+    sudo apt install -y \
+      bzip2 \
       ccache \
       cmake \
-      g++ \
+      clang \
       gdb \
       graphviz \
+      libc++-dev \
       libgoogle-perftools-dev \
-      libprotobuf-dev \
-      libssl-dev \
-      libtbb-dev \
-      libzmq3-dev \
+      libomp-dev \
+      linux-libc-dev \
       make \
       p7zip-full \
-      protobuf-compiler \
-      python-pip \
-      python-protobuf \
+      pkg-config \
+      zip \
       #
+    
+    # Set compiler to clang
+    export CC=/usr/bin/clang
+    export CXX=/usr/bin/clang++
+    
+    # Set up vcpkg for C++ dependencies
+    echo "Setting up vcpkg for consistent C++ dependency management..."
+    chmod +x setup-vcpkg.sh
+    ./setup-vcpkg.sh
+    
+    # Source vcpkg environment
+    source ./env.sh
     ;;
   'Darwin')
     echo "Setting up macOS dependencies..."
@@ -36,7 +47,7 @@ case "`uname`" in
     ./setup-vcpkg.sh
     
     # Source vcpkg environment
-    source ./vcpkg-env.sh
+    source ./env.sh
     ;;
   *)
     echo "Unsupported OS: `uname`"
@@ -49,6 +60,7 @@ if ! command -v uv &> /dev/null; then
     echo "uv is not installed. Installing uv..."
     curl -LsSf https://astral.sh/uv/install.sh | sh
     export PATH="$HOME/.cargo/bin:$PATH"
+    source $HOME/.local/bin/env
 fi
 
 # Create virtual environment with uv if it doesn't exist
@@ -64,9 +76,16 @@ uv pip install parsable setuptools  # Needed in setup.py
 uv pip install --no-build-isolation -e .
 
 # Run build
-if [ "`uname`" = 'Darwin' ]; then
+if [ "`uname`" = 'Darwin' ] || [ "`uname`" = 'Linux' ]; then
     echo "Building with vcpkg dependencies..."
-    source ./vcpkg-env.sh
+    source ./env.sh
+    
+    # Ensure compiler settings are preserved on Linux
+    if [ "`uname`" = 'Linux' ]; then
+        export CC=/usr/bin/clang
+        export CXX=/usr/bin/clang++
+        echo "Using clang compiler: CC=$CC, CXX=$CXX"
+    fi
 fi
 
 uv run make all

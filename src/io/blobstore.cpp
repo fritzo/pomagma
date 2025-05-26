@@ -2,6 +2,7 @@
 
 #include <fcntl.h>
 #include <sys/time.h>
+#include <cstring>
 
 #include <atomic>
 
