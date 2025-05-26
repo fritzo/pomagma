@@ -343,7 +343,12 @@ def pull(tag="<most recent>", force=False):
             else:
                 raise IOError("atlas exists; first remove atlas")
         if tag == "<most recent>":
-            snapshot = max(list_s3_atlases())
+            atlases = list_s3_atlases()
+            if not atlases:
+                raise IOError(
+                    "No atlases available on S3 (S3 connection may have failed)"
+                )
+            snapshot = max(atlases)
         else:
             snapshot = "atlas.{}".format(tag)
             assert match_atlas(snapshot), "invalid tag: {}".format(tag)
@@ -369,7 +374,8 @@ def push(tag=default_tag, force=False):
         assert os.path.exists(master), "atlas does not exist"
         snapshot = "atlas.{}".format(tag)
         assert match_atlas(snapshot), "invalid tag: {}".format(tag)
-        if snapshot in list_s3_atlases() and not force:
+        atlases = list_s3_atlases()
+        if snapshot in atlases and not force:
             raise IOError("snapshot already exists: {}".format(snapshot))
         print("pushing {}".format(snapshot))
         pomagma.io.s3.snapshot(master, snapshot)

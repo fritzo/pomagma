@@ -43,6 +43,10 @@ BUCKET = try_connect_s3(BUCKET_NAME)
 
 def s3_lazy_put(filename, assume_immutable=False) -> str | None:
     """Put file to s3 only if out of sync."""
+    if BUCKET is None:
+        print("WARNING: S3 not available, skipping upload of", filename)
+        return None
+
     try:
         # Check if object exists
         BUCKET.head_object(Bucket=BUCKET_NAME, Key=filename)
@@ -84,6 +88,10 @@ def s3_lazy_put(filename, assume_immutable=False) -> str | None:
 
 def s3_lazy_get(filename, assume_immutable=False):
     """Get file from s3 only if out of sync."""
+    if BUCKET is None:
+        print("WARNING: S3 not available, cannot download", filename)
+        return None
+
     try:
         # Check if object exists
         response = BUCKET.head_object(Bucket=BUCKET_NAME, Key=filename)
@@ -117,6 +125,10 @@ def s3_lazy_get(filename, assume_immutable=False):
 
 
 def s3_listdir(prefix):
+    if BUCKET is None:
+        print("WARNING: S3 not available, returning empty list")
+        return []
+
     response = BUCKET.list_objects_v2(Bucket=BUCKET_NAME, Prefix=prefix)
     if "Contents" not in response:
         return []
@@ -124,6 +136,10 @@ def s3_listdir(prefix):
 
 
 def s3_remove(filename):
+    if BUCKET is None:
+        print("WARNING: S3 not available, skipping removal of", filename)
+        return
+
     try:
         BUCKET.delete_object(Bucket=BUCKET_NAME, Key=filename)
     except ClientError:
@@ -131,6 +147,9 @@ def s3_remove(filename):
 
 
 def s3_exists(filename):
+    if BUCKET is None:
+        return False
+
     try:
         BUCKET.head_object(Bucket=BUCKET_NAME, Key=filename)
         return True
@@ -196,12 +215,14 @@ def is_blob(filename):
 
 def get(filename):
     if is_blob(filename):
-        s3_lazy_get(filename, assume_immutable=True)
-        os.chmod(filename, 0o444)
+        result = s3_lazy_get(filename, assume_immutable=True)
+        if result is not None:
+            os.chmod(filename, 0o444)
     else:
         filename_ext = filename + EXT
-        s3_lazy_get(filename_ext)
-        EXTRACT(filename_ext)
+        result = s3_lazy_get(filename_ext)
+        if result is not None:
+            EXTRACT(filename_ext)
 
 
 def put(filename):
