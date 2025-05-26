@@ -10,7 +10,7 @@ maintainers = [{name = "Fritz Obermeyer", email = "fritz.obermeyer@gmail.com"}]
 license = {text = "Apache 2.0"}
 readme = "README.md"
 requires-python = ">=3.11"
-dynamic = ["version"]
+dynamic = ["version", "scripts"]
 dependencies = [
     "black",
     "boto3",

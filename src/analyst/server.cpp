@@ -32,7 +32,7 @@ Server::Server(const char* structure_file, const char* language_file)
       m_validator(m_approximator),
       m_parser(),
       m_virtual_machine() {
-    // parser and virtual_machine must be loaded after RETURN is delclared.
+    // parser and virtual_machine must be loaded after RETURN is declared.
     Signature& signature = m_structure.signature();
     POMAGMA_ASSERT(not signature.unary_relation("RETURN"),
                    "reserved name RETURN is defined in loaded structure");
