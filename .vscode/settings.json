@@ -23,6 +23,7 @@
         "pytest",
         "skja",
         "skrj",
-        "trool"
+        "trool",
+        "vcpkg"
     ]
 } 

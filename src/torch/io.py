@@ -1,3 +1,4 @@
+import logging
 from dataclasses import dataclass
 from typing import Mapping, NewType
 
@@ -10,6 +11,8 @@ import torch
 from pomagma.atlas.structure_pb2 import Structure as ProtoStructure
 from pomagma.io import blobstore
 from pomagma.io.protobuf import InFile
+
+logger = logging.getLogger(__name__)
 
 Ob = NewType("Ob", int)
 
@@ -100,9 +103,9 @@ def load_blob_chunks(hexdigest, message_type):
 def load_injective_function_data(proto_func, item_count: int) -> torch.Tensor:
     """
     Load injective function data into a PyTorch tensor.
-    Returns a tensor of shape [item_count + 1] where tensor[i] = f(i) or 0 if undefined.
+    Returns a tensor of shape [1 + item_count] where tensor[i] = f(i) or 0 if undefined.
     """
-    result = torch.zeros(item_count + 1, dtype=torch.int32)
+    result = torch.zeros(1 + item_count, dtype=torch.int32)
 
     # Load data from the main message
     if proto_func.map.key:
@@ -129,10 +132,10 @@ def load_injective_function_data(proto_func, item_count: int) -> torch.Tensor:
 def load_binary_function_data(proto_func, item_count: int) -> torch.Tensor:
     """
     Load binary function data into a PyTorch tensor.
-    Returns a tensor of shape [item_count + 1, item_count + 1]
+    Returns a tensor of shape [1 + item_count, 1 + item_count]
     where tensor[i, j] = f(i, j) or 0 if undefined.
     """
-    result = torch.zeros(item_count + 1, item_count + 1, dtype=torch.int32)
+    result = torch.zeros(1 + item_count, 1 + item_count, dtype=torch.int32)
 
     # Load data from the main message
     for row in proto_func.rows:
@@ -165,7 +168,7 @@ def load_symmetric_function_data(proto_func, item_count: int) -> torch.Tensor:
     Load symmetric function data into a PyTorch tensor.
     For symmetric functions, we only store the lower triangle and mirror it.
     """
-    result = torch.zeros(item_count + 1, item_count + 1, dtype=torch.int32)
+    result = torch.zeros(1 + item_count, 1 + item_count, dtype=torch.int32)
 
     # Load data from the main message
     for row in proto_func.rows:
@@ -198,9 +201,9 @@ def load_symmetric_function_data(proto_func, item_count: int) -> torch.Tensor:
 def load_unary_relation_data(proto_rel, item_count: int) -> torch.Tensor:
     """
     Load unary relation data into a PyTorch tensor.
-    Returns a boolean tensor of shape [item_count + 1].
+    Returns a boolean tensor of shape [1 + item_count].
     """
-    result = torch.zeros(item_count + 1, dtype=torch.bool)
+    result = torch.zeros(1 + item_count, dtype=torch.bool)
 
     # Load data from the main message
     if proto_rel.set.dense:
@@ -223,9 +226,9 @@ def load_unary_relation_data(proto_rel, item_count: int) -> torch.Tensor:
 def load_binary_relation_data(proto_rel, item_count: int) -> torch.Tensor:
     """
     Load binary relation data into a PyTorch tensor.
-    Returns a boolean tensor of shape [item_count + 1, item_count + 1].
+    Returns a boolean tensor of shape [1 + item_count, 1 + item_count].
     """
-    result = torch.zeros(item_count + 1, item_count + 1, dtype=torch.bool)
+    result = torch.zeros(1 + item_count, 1 + item_count, dtype=torch.bool)
 
     # Load data from the main message
     for row in proto_rel.rows:
@@ -252,31 +255,16 @@ def load_binary_relation_data(proto_rel, item_count: int) -> torch.Tensor:
 @dataclass(frozen=True, slots=True, eq=False)
 class Structure:
     """
-    PyTorch representation of an algebraic structure.
+    PyTorch representation of an algebraic structure. Immutable.
     """
 
+    item_count: int
     nullary_functions: Mapping[str, int]
     injective_functions: Mapping[str, torch.Tensor]
     binary_functions: Mapping[str, torch.Tensor]
     symmetric_functions: Mapping[str, torch.Tensor]
     unary_relations: Mapping[str, torch.Tensor]
     binary_relations: Mapping[str, torch.Tensor]
-
-    @property
-    def item_count(self) -> int:
-        """Get the number of items in the carrier."""
-        # Infer from the size of any tensor
-        for tensor in self.injective_functions.values():
-            return tensor.shape[0] - 1
-        for tensor in self.binary_functions.values():
-            return tensor.shape[0] - 1
-        for tensor in self.symmetric_functions.values():
-            return tensor.shape[0] - 1
-        for tensor in self.unary_relations.values():
-            return tensor.shape[0] - 1
-        for tensor in self.binary_relations.values():
-            return tensor.shape[0] - 1
-        return 0
 
     @staticmethod
     def load(filename: str, *, relations: bool = False) -> "Structure":
@@ -286,13 +274,13 @@ class Structure:
         return load_structure(filename, relations=relations)
 
 
-def load_structure(filename: str, *, relations: bool = False) -> "Structure":
+def load_structure(filename: str, *, relations: bool = False) -> Structure:
     """
     Load a structure from a protobuf file.
 
     Args:
-        filename: Path to the .pb file
-        relations: Whether to load relation data
+        filename: Path to the .pb file.
+        relations: Whether to load relation data. Default: False.
     """
     # Load the main structure
     with InFile(blobstore.find_blob(blobstore.load_blob_ref(filename))) as f:
@@ -300,7 +288,6 @@ def load_structure(filename: str, *, relations: bool = False) -> "Structure":
         f.read(proto_structure)
 
     item_count = proto_structure.carrier.item_count
-
     nullary_functions = {}
     injective_functions = {}
     binary_functions = {}
@@ -309,36 +296,46 @@ def load_structure(filename: str, *, relations: bool = False) -> "Structure":
     binary_relations = {}
 
     # Load nullary functions
+    constants = " ".join(
+        sorted(proto_func.name for proto_func in proto_structure.nullary_functions)
+    )
+    logger.debug(f"Loading constants: {constants}")
     for proto_func in proto_structure.nullary_functions:
         nullary_functions[proto_func.name] = proto_func.val
 
     # Load injective functions
     for proto_func in proto_structure.injective_functions:
+        logger.debug(f"Loading injective function: {proto_func.name}")
         tensor = load_injective_function_data(proto_func, item_count)
         injective_functions[proto_func.name] = tensor
 
     # Load binary functions
     for proto_func in proto_structure.binary_functions:
+        logger.debug(f"Loading binary function: {proto_func.name}")
         tensor = load_binary_function_data(proto_func, item_count)
         binary_functions[proto_func.name] = tensor
 
     # Load symmetric functions
     for proto_func in proto_structure.symmetric_functions:
+        logger.debug(f"Loading symmetric function: {proto_func.name}")
         tensor = load_symmetric_function_data(proto_func, item_count)
         symmetric_functions[proto_func.name] = tensor
 
     if relations:
         # Load unary relations
         for proto_rel in proto_structure.unary_relations:
+            logger.debug(f"Loading unary relation: {proto_rel.name}")
             tensor = load_unary_relation_data(proto_rel, item_count)
             unary_relations[proto_rel.name] = tensor
 
         # Load binary relations
         for proto_rel in proto_structure.binary_relations:
+            logger.debug(f"Loading binary relation: {proto_rel.name}")
             tensor = load_binary_relation_data(proto_rel, item_count)
             binary_relations[proto_rel.name] = tensor
 
     return Structure(
+        item_count=item_count,
         nullary_functions=Map(nullary_functions),
         injective_functions=Map(injective_functions),
         binary_functions=Map(binary_functions),
