@@ -54,8 +54,9 @@ def get_difftool(tool, left, right, diffignore):
 
 
 def parallel_check_call(*args):
-    for proc in map(subprocess.Popen, args):
-        proc.wait()
+    processes = [subprocess.Popen(args) for args in args]
+    for process in processes:
+        process.wait()
 
 
 @contextlib.contextmanager

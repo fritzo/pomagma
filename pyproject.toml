@@ -83,7 +83,6 @@ known-third-party = ["torch"]
 # TODO: Incrementally fix these errors and remove ignores
 unresolved-attribute = "ignore"
 unresolved-import = "ignore"
-unresolved-reference = "ignore"
-possibly-unbound-attribute = "ignore"
+unresolved-reference = "ignore"  # __debug__
+possibly-unbound-attribute = "ignore"  # parsable, convert, re.search().group()
 call-non-callable = "ignore"  # pytest.skip(), pytest.xfail() calls 
-no-matching-overload = "ignore"

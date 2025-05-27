@@ -41,7 +41,7 @@ def examples(suffix):
     for depth in range(3):
         dirs = [random_uuid() for _ in range(depth)]
         filename = random_uuid() + suffix
-        path = os.path.join(*dirs + [filename])
+        path = os.path.join(*dirs, filename)
         yield path
 
 

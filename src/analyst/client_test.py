@@ -121,7 +121,7 @@ def cmp_validity(x, y):
 
 
 def transpose(lists):
-    return list(map(list, list(zip(*lists))))
+    return [list(x) for x in zip(*lists)]
 
 
 def test_simplify():
