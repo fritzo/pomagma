@@ -1,8 +1,6 @@
 .SILENT:
 .PHONY: all build protobuf tags lint codegen debug release cpp-test unit-test bootstrap h4-test sk-test skj-test skja-test skrj-test batch-test small-test test big-test sk skj skja skrj profile clean setup-vcpkg FORCE
 
-THEORY = skja
-
 # File lists for linting and formatting.
 PY_FILES := *.py $(shell find src -not -wholename 'src/third_party/*' \
                                   -name '*.py' \
@@ -127,8 +125,8 @@ data/blob:
 bootstrap: FORCE
 	mkdir -p data
 	cp -Rn bootstrap/* data/ \
-	  || test -e data/atlas/$(THEORY)/region.normal.2047.pb
-	cd data/atlas/$(THEORY) \
+	  || test -e data/atlas/skrj/region.normal.2047.pb
+	cd data/atlas/skrj \
 	  && (test -e world.pb || ln region.normal.2047.pb world.pb) \
 	  && test -e world.normal.pb || ln region.normal.2047.pb world.normal.pb
 
