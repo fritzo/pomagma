@@ -2,8 +2,8 @@ import logging
 import os
 
 import pytest
-
 import torch
+
 from pomagma.atlas.structure_pb2 import ObMap, ObSet
 
 from .io import Structure, delta_decompress, load_dense_set

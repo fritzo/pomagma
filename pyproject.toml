@@ -76,3 +76,4 @@ line-ending = "auto"
 
 [tool.ruff.lint.isort]
 known-first-party = ["pomagma"]
+known-third-party = ["torch"]

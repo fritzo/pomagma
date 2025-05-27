@@ -3,18 +3,17 @@ from dataclasses import dataclass
 from typing import Mapping, NewType
 
 import numpy as np
+import torch
 from immutables import Map
 
-import torch
-
-# Import the protobuf structures
-from pomagma.atlas.structure_pb2 import Structure as ProtoStructure
+import pomagma.atlas.structure_pb2 as pb2
 from pomagma.io import blobstore
 from pomagma.io.protobuf import InFile
 
 logger = logging.getLogger(__name__)
 
 Ob = NewType("Ob", int)
+"""An item in the carrier. 1-indexed, so 0 means undefined."""
 
 
 def delta_decompress(ob_map) -> tuple[list[Ob], list[Ob]]:
@@ -116,9 +115,7 @@ def load_injective_function_data(proto_func, item_count: int) -> torch.Tensor:
 
     # Load data from blobs
     for hexdigest in proto_func.blobs:
-        from pomagma.atlas.structure_pb2 import UnaryFunction
-
-        chunks = load_blob_chunks(hexdigest, UnaryFunction)
+        chunks = load_blob_chunks(hexdigest, pb2.UnaryFunction)
         for chunk in chunks:
             if chunk.map.key:
                 keys, vals = delta_decompress(chunk.map)
@@ -148,9 +145,7 @@ def load_binary_function_data(proto_func, item_count: int) -> torch.Tensor:
 
     # Load data from blobs
     for hexdigest in proto_func.blobs:
-        from pomagma.atlas.structure_pb2 import BinaryFunction
-
-        chunks = load_blob_chunks(hexdigest, BinaryFunction)
+        chunks = load_blob_chunks(hexdigest, pb2.BinaryFunction)
         for chunk in chunks:
             for row in chunk.rows:
                 lhs = row.lhs
@@ -182,9 +177,7 @@ def load_symmetric_function_data(proto_func, item_count: int) -> torch.Tensor:
 
     # Load data from blobs
     for hexdigest in proto_func.blobs:
-        from pomagma.atlas.structure_pb2 import BinaryFunction
-
-        chunks = load_blob_chunks(hexdigest, BinaryFunction)
+        chunks = load_blob_chunks(hexdigest, pb2.BinaryFunction)
         for chunk in chunks:
             for row in chunk.rows:
                 lhs = row.lhs
@@ -212,9 +205,7 @@ def load_unary_relation_data(proto_rel, item_count: int) -> torch.Tensor:
 
     # Load data from blobs
     for hexdigest in proto_rel.blobs:
-        from pomagma.atlas.structure_pb2 import UnaryRelation
-
-        chunks = load_blob_chunks(hexdigest, UnaryRelation)
+        chunks = load_blob_chunks(hexdigest, pb2.UnaryRelation)
         for chunk in chunks:
             if chunk.set.dense:
                 dense_set = load_dense_set(chunk.set, item_count)
@@ -239,9 +230,7 @@ def load_binary_relation_data(proto_rel, item_count: int) -> torch.Tensor:
 
     # Load data from blobs
     for hexdigest in proto_rel.blobs:
-        from pomagma.atlas.structure_pb2 import BinaryRelation
-
-        chunks = load_blob_chunks(hexdigest, BinaryRelation)
+        chunks = load_blob_chunks(hexdigest, pb2.BinaryRelation)
         for chunk in chunks:
             for row in chunk.rows:
                 lhs = row.lhs
@@ -258,6 +247,7 @@ class Structure:
     PyTorch representation of an algebraic structure. Immutable.
     """
 
+    name: str
     item_count: int
     nullary_functions: Mapping[str, int]
     injective_functions: Mapping[str, torch.Tensor]
@@ -282,11 +272,11 @@ def load_structure(filename: str, *, relations: bool = False) -> Structure:
         filename: Path to the .pb file.
         relations: Whether to load relation data. Default: False.
     """
-    # Load the main structure
+    proto_structure = pb2.Structure()
     with InFile(blobstore.find_blob(blobstore.load_blob_ref(filename))) as f:
-        proto_structure = ProtoStructure()
         f.read(proto_structure)
 
+    name = proto_structure.name
     item_count = proto_structure.carrier.item_count
     nullary_functions = {}
     injective_functions = {}
@@ -295,7 +285,6 @@ def load_structure(filename: str, *, relations: bool = False) -> Structure:
     unary_relations = {}
     binary_relations = {}
 
-    # Load nullary functions
     constants = " ".join(
         sorted(proto_func.name for proto_func in proto_structure.nullary_functions)
     )
@@ -303,38 +292,34 @@ def load_structure(filename: str, *, relations: bool = False) -> Structure:
     for proto_func in proto_structure.nullary_functions:
         nullary_functions[proto_func.name] = proto_func.val
 
-    # Load injective functions
     for proto_func in proto_structure.injective_functions:
         logger.debug(f"Loading injective function: {proto_func.name}")
         tensor = load_injective_function_data(proto_func, item_count)
         injective_functions[proto_func.name] = tensor
 
-    # Load binary functions
     for proto_func in proto_structure.binary_functions:
         logger.debug(f"Loading binary function: {proto_func.name}")
         tensor = load_binary_function_data(proto_func, item_count)
         binary_functions[proto_func.name] = tensor
 
-    # Load symmetric functions
     for proto_func in proto_structure.symmetric_functions:
         logger.debug(f"Loading symmetric function: {proto_func.name}")
         tensor = load_symmetric_function_data(proto_func, item_count)
         symmetric_functions[proto_func.name] = tensor
 
     if relations:
-        # Load unary relations
         for proto_rel in proto_structure.unary_relations:
             logger.debug(f"Loading unary relation: {proto_rel.name}")
             tensor = load_unary_relation_data(proto_rel, item_count)
             unary_relations[proto_rel.name] = tensor
 
-        # Load binary relations
         for proto_rel in proto_structure.binary_relations:
             logger.debug(f"Loading binary relation: {proto_rel.name}")
             tensor = load_binary_relation_data(proto_rel, item_count)
             binary_relations[proto_rel.name] = tensor
 
     return Structure(
+        name=name,
         item_count=item_count,
         nullary_functions=Map(nullary_functions),
         injective_functions=Map(injective_functions),
