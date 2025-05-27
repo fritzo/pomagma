@@ -158,7 +158,8 @@ def head_normalize(expr, *args):
             return head_normalize(arg0, *args)
         elif name == "F":
             arg0, args = pop_arg(args)
-            return head_normalize(*args)
+            arg1, args = pop_arg(args)
+            return head_normalize(arg1, *args)
         elif name == "B":
             arg0, args = pop_arg(args)
             arg1, args = pop_arg(args)

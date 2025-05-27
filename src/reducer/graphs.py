@@ -984,7 +984,8 @@ def try_compute_step(graph):
             fun_pos = term[1]
             fun_term = graph[fun_pos]
             if fun_term is Term.TOP:
-                return _top_step(graph, pos)
+                TODO("fix missing-argument")
+                return _top_step(graph, pos)  # type: ignore[missing-argument]
             elif fun_term.is_abs:
                 return _app_abs_step(graph, pos)
             elif fun_term.is_join:

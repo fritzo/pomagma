@@ -36,8 +36,8 @@ def print_compiles(compiles):
         print()
 
 
-def _test_sequent(*args):
-    sequent = Sequent(*args)
+def _test_sequent(antecedents, conclusion):
+    sequent = Sequent(antecedents, conclusion)
     print("-" * 78)
     print("Compiling full search: {0}".format(sequent))
     compiles = compile_full(sequent)

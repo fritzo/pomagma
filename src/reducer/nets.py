@@ -270,7 +270,8 @@ def make_abs(net, name, body):
         var = occurrences[0]
         for rhs in occurrences[1:]:
             lhs = var
-            var = COPY()
+            TODO("fix missing-argument")
+            var = COPY()  # type: ignore[missing-argument]
             net.add(var)
             connect((var, "lhs"), lhs)
             connect((var, "rhs"), rhs)

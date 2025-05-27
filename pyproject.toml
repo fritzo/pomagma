@@ -87,5 +87,5 @@ unresolved-reference = "ignore"
 possibly-unbound-attribute = "ignore"
 call-non-callable = "ignore"  # pytest.skip(), pytest.xfail() calls 
 no-matching-overload = "ignore"
-missing-argument = "ignore"
+#missing-argument = "ignore"
 invalid-argument-type = "ignore"
