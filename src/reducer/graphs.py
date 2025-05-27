@@ -40,6 +40,7 @@ import itertools
 import re
 import sys
 from collections import defaultdict, deque
+from typing import Any, Callable
 
 from pomagma.compiler.util import memoize_arg, memoize_args
 from pomagma.reducer import syntax
@@ -165,8 +166,8 @@ class Graph(tuple):
     def is_join(self):
         return self[0].is_join
 
-    __call__ = None  # Defined below.
-    __or__ = None  # Defined below.
+    __call__: "Callable[..., Graph]"  # Defined below.
+    __or__: "Callable[[Graph, Any], Graph]"  # Defined below.
 
 
 def term_shift(term, delta):
@@ -612,8 +613,8 @@ def graph_join(lhs, rhs):
     return JOIN([lhs, rhs])
 
 
-Graph.__call__ = graph_apply
-Graph.__or__ = graph_join
+Graph.__call__ = graph_apply  # type: ignore[invalid-assignment]
+Graph.__or__ = graph_join  # type: ignore[invalid-assignment]
 
 
 def letrec(root, **defs):

@@ -132,7 +132,7 @@ def app(*args):
     return result
 
 
-Term.__call__ = app
+Term.__call__ = app  # type: ignore[invalid-assignment]
 
 
 def join_(*args):
@@ -145,7 +145,7 @@ def join_(*args):
     return result
 
 
-Term.__or__ = join_
+Term.__or__ = join_  # type: ignore[invalid-assignment]
 
 
 def quote(arg):
