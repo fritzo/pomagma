@@ -1,4 +1,3 @@
-
 #include <cstring>
 #include <pomagma/util/aligned_alloc.hpp>
 #include <pomagma/util/sequential/dense_set.hpp>
@@ -109,7 +108,9 @@ void DenseSet::insert_all() {
     // for (size_t i = 1; i <= m_item_dim; ++i) { insert(i); }
 
     // fast version
-    for (size_t m = 0; m < m_word_dim; ++m) {
+    const size_t M = m_word_dim;
+    POMAGMA_VECTORIZE_LOOP
+    for (size_t m = 0; m < M; ++m) {
         m_words[m] = FULL_WORD;
     }
 
@@ -178,11 +179,13 @@ bool DenseSet::operator==(const DenseSet &other) const {
 bool DenseSet::operator<=(const DenseSet &other) const {
     POMAGMA_ASSERT1(item_dim() == other.item_dim(), "item_dim mismatch");
 
+    const size_t M = m_word_dim;
     const Word *restrict s = assume_aligned(m_words);
     const Word *restrict t = assume_aligned(other.m_words);
     Word u = 0;
 
-    for (size_t m = 0, M = m_word_dim; m < M; ++m) {
+    POMAGMA_VECTORIZE_LOOP
+    for (size_t m = 0; m < M; ++m) {
         u |= s[m] & ~t[m];
     }
 
@@ -192,10 +195,11 @@ bool DenseSet::operator<=(const DenseSet &other) const {
 bool DenseSet::unlikely_disjoint(const DenseSet &other) const {
     POMAGMA_ASSERT1(item_dim() == other.item_dim(), "item_dim mismatch");
 
+    const size_t M = m_word_dim;
     const Word *restrict s = assume_aligned(m_words);
     const Word *restrict t = assume_aligned(other.m_words);
 
-    for (size_t m = 0, M = m_word_dim; m < M; ++m) {
+    for (size_t m = 0; m < M; ++m) {
         if (s[m] & t[m]) return false;
     }
     return true;
@@ -204,11 +208,13 @@ bool DenseSet::unlikely_disjoint(const DenseSet &other) const {
 bool DenseSet::likely_disjoint(const DenseSet &other) const {
     POMAGMA_ASSERT1(item_dim() == other.item_dim(), "item_dim mismatch");
 
+    const size_t M = m_word_dim;
     const Word *restrict s = assume_aligned(m_words);
     const Word *restrict t = assume_aligned(other.m_words);
     Word u = 0;
 
-    for (size_t m = 0, M = m_word_dim; m < M; ++m) {
+    POMAGMA_VECTORIZE_LOOP
+    for (size_t m = 0; m < M; ++m) {
         u |= s[m] & t[m];
     }
 
@@ -219,10 +225,12 @@ bool DenseSet::likely_disjoint(const DenseSet &other) const {
 void DenseSet::operator+=(const DenseSet &other) {
     POMAGMA_ASSERT1(item_dim() == other.item_dim(), "item_dim mismatch");
 
+    const size_t M = m_word_dim;
     const Word *restrict s = assume_aligned(other.m_words);
     Word *restrict t = assume_aligned(m_words);
-
-    for (size_t m = 0, M = m_word_dim; m < M; ++m) {
+    
+    POMAGMA_VECTORIZE_LOOP
+    for (size_t m = 0; m < M; ++m) {
         t[m] |= s[m];
     }
 }
@@ -231,10 +239,12 @@ void DenseSet::operator+=(const DenseSet &other) {
 void DenseSet::operator*=(const DenseSet &other) {
     POMAGMA_ASSERT1(item_dim() == other.item_dim(), "item_dim mismatch");
 
+    const size_t M = m_word_dim;
     const Word *restrict s = assume_aligned(other.m_words);
     Word *restrict t = assume_aligned(m_words);
-
-    for (size_t m = 0, M = m_word_dim; m < M; ++m) {
+    
+    POMAGMA_VECTORIZE_LOOP
+    for (size_t m = 0; m < M; ++m) {
         t[m] &= s[m];
     }
 }
@@ -243,10 +253,12 @@ void DenseSet::operator*=(const DenseSet &other) {
 void DenseSet::operator-=(const DenseSet &other) {
     POMAGMA_ASSERT1(item_dim() == other.item_dim(), "item_dim mismatch");
 
+    const size_t M = m_word_dim;
     const Word *restrict s = assume_aligned(other.m_words);
     Word *restrict t = assume_aligned(m_words);
-
-    for (size_t m = 0, M = m_word_dim; m < M; ++m) {
+    
+    POMAGMA_VECTORIZE_LOOP
+    for (size_t m = 0; m < M; ++m) {
         t[m] &= ~s[m];
     }
 }
@@ -255,11 +267,13 @@ void DenseSet::set_union(const DenseSet &lhs, const DenseSet &rhs) {
     POMAGMA_ASSERT1(item_dim() == lhs.item_dim(), "lhs.item_dim mismatch");
     POMAGMA_ASSERT1(item_dim() == rhs.item_dim(), "rhs.item_dim mismatch");
 
+    const size_t M = m_word_dim;
     const Word *restrict s = assume_aligned(lhs.m_words);
     const Word *restrict t = assume_aligned(rhs.m_words);
     Word *restrict u = assume_aligned(m_words);
-
-    for (size_t m = 0, M = m_word_dim; m < M; ++m) {
+    
+    POMAGMA_VECTORIZE_LOOP
+    for (size_t m = 0; m < M; ++m) {
         u[m] = s[m] | t[m];
     }
 }
@@ -268,11 +282,13 @@ void DenseSet::set_insn(const DenseSet &lhs, const DenseSet &rhs) {
     POMAGMA_ASSERT1(item_dim() == lhs.item_dim(), "lhs.item_dim mismatch");
     POMAGMA_ASSERT1(item_dim() == rhs.item_dim(), "rhs.item_dim mismatch");
 
+    const size_t M = m_word_dim;
     const Word *restrict s = assume_aligned(lhs.m_words);
     const Word *restrict t = assume_aligned(rhs.m_words);
     Word *restrict u = assume_aligned(m_words);
-
-    for (size_t m = 0, M = m_word_dim; m < M; ++m) {
+    
+    POMAGMA_VECTORIZE_LOOP
+    for (size_t m = 0; m < M; ++m) {
         u[m] = s[m] & t[m];
     }
 }
@@ -283,12 +299,14 @@ void DenseSet::set_insn(const DenseSet &xs, const DenseSet &ys,
     POMAGMA_ASSERT1(item_dim() == ys.item_dim(), "ys.item_dim mismatch");
     POMAGMA_ASSERT1(item_dim() == zs.item_dim(), "zs.item_dim mismatch");
 
+    const size_t M = m_word_dim;
     const Word *restrict x = assume_aligned(xs.m_words);
     const Word *restrict y = assume_aligned(ys.m_words);
     const Word *restrict z = assume_aligned(zs.m_words);
     Word *restrict w = assume_aligned(m_words);
 
-    for (size_t m = 0, M = m_word_dim; m < M; ++m) {
+    POMAGMA_VECTORIZE_LOOP
+    for (size_t m = 0; m < M; ++m) {
         w[m] = x[m] & y[m] & z[m];
     }
 }
@@ -297,11 +315,13 @@ void DenseSet::set_diff(const DenseSet &pos, const DenseSet &neg) {
     POMAGMA_ASSERT1(item_dim() == pos.item_dim(), "pos.item_dim mismatch");
     POMAGMA_ASSERT1(item_dim() == neg.item_dim(), "neg.item_dim mismatch");
 
+    const size_t M = m_word_dim;
     const Word *restrict s = assume_aligned(pos.m_words);
     const Word *restrict t = assume_aligned(neg.m_words);
     Word *restrict u = assume_aligned(m_words);
 
-    for (size_t m = 0, M = m_word_dim; m < M; ++m) {
+    POMAGMA_VECTORIZE_LOOP
+    for (size_t m = 0; m < M; ++m) {
         u[m] = s[m] & ~t[m];
     }
 }
@@ -312,12 +332,14 @@ void DenseSet::set_ppn(const DenseSet &pos1, const DenseSet &pos2,
     POMAGMA_ASSERT1(item_dim() == pos2.item_dim(), "pos2.item_dim mismatch");
     POMAGMA_ASSERT1(item_dim() == neg.item_dim(), "neg.item_dim mismatch");
 
+    const size_t M = m_word_dim;
     const Word *restrict s = assume_aligned(pos1.m_words);
     const Word *restrict t = assume_aligned(pos2.m_words);
     const Word *restrict u = assume_aligned(neg.m_words);
     Word *restrict v = assume_aligned(m_words);
 
-    for (size_t m = 0, M = m_word_dim; m < M; ++m) {
+    POMAGMA_VECTORIZE_LOOP
+    for (size_t m = 0; m < M; ++m) {
         v[m] = s[m] & t[m] & ~u[m];
     }
 }
@@ -329,13 +351,15 @@ void DenseSet::set_ppnn(const DenseSet &pos1, const DenseSet &pos2,
     POMAGMA_ASSERT1(item_dim() == neg1.item_dim(), "neg1.item_dim mismatch");
     POMAGMA_ASSERT1(item_dim() == neg2.item_dim(), "neg2.item_dim mismatch");
 
+    const size_t M = m_word_dim;
     const Word *restrict s = assume_aligned(pos1.m_words);
     const Word *restrict t = assume_aligned(pos2.m_words);
     const Word *restrict u = assume_aligned(neg1.m_words);
     const Word *restrict v = assume_aligned(neg2.m_words);
     Word *restrict w = assume_aligned(m_words);
 
-    for (size_t m = 0, M = m_word_dim; m < M; ++m) {
+    POMAGMA_VECTORIZE_LOOP
+    for (size_t m = 0; m < M; ++m) {
         w[m] = s[m] & t[m] & ~(u[m] | v[m]);
     }
 }
@@ -346,12 +370,14 @@ void DenseSet::set_pnn(const DenseSet &pos, const DenseSet &neg1,
     POMAGMA_ASSERT1(item_dim() == neg1.item_dim(), "neg1.item_dim mismatch");
     POMAGMA_ASSERT1(item_dim() == neg2.item_dim(), "neg2.item_dim mismatch");
 
+    const size_t M = m_word_dim;
     const Word *restrict s = assume_aligned(pos.m_words);
     const Word *restrict t = assume_aligned(neg1.m_words);
     const Word *restrict u = assume_aligned(neg2.m_words);
     Word *restrict v = assume_aligned(m_words);
 
-    for (size_t m = 0, M = m_word_dim; m < M; ++m) {
+    POMAGMA_VECTORIZE_LOOP
+    for (size_t m = 0; m < M; ++m) {
         v[m] = s[m] & ~(t[m] | u[m]);
     }
 }
@@ -360,10 +386,12 @@ void DenseSet::set_pnn(const DenseSet &pos, const DenseSet &neg1,
 void DenseSet::merge(DenseSet &dep) {
     POMAGMA_ASSERT4(m_item_dim == dep.m_item_dim, "dep has wrong size");
 
+    const size_t M = m_word_dim;
     Word *restrict d = assume_aligned(dep.m_words);
     Word *restrict r = assume_aligned(m_words);
 
-    for (size_t m = 0, M = m_word_dim; m < M; ++m) {
+    POMAGMA_VECTORIZE_LOOP
+    for (size_t m = 0; m < M; ++m) {
         r[m] |= d[m];
         d[m] = 0;
     }
@@ -374,12 +402,14 @@ bool DenseSet::merge(DenseSet &dep, DenseSet &diff) {
     POMAGMA_ASSERT4(m_item_dim == dep.m_item_dim, "dep has wrong size");
     POMAGMA_ASSERT4(m_item_dim == diff.m_item_dim, "diff has wrong size");
 
+    const size_t M = m_word_dim;
     Word *restrict d = assume_aligned(dep.m_words);
     Word *restrict r = assume_aligned(m_words);
     Word *restrict c = assume_aligned(diff.m_words);
 
     Word changed = 0;
-    for (size_t m = 0, M = m_word_dim; m < M; ++m) {
+    POMAGMA_VECTORIZE_LOOP
+    for (size_t m = 0; m < M; ++m) {
         Word dm = d[m];
         Word rm = r[m];
         Word change = dm & ~rm;
@@ -397,12 +427,14 @@ bool DenseSet::ensure(const DenseSet &src, DenseSet &diff) {
     POMAGMA_ASSERT4(m_item_dim == src.m_item_dim, "src has wrong size");
     POMAGMA_ASSERT4(m_item_dim == diff.m_item_dim, "diff has wrong size");
 
+    const size_t M = m_word_dim;
     const Word *restrict d = assume_aligned(src.m_words);
     Word *restrict r = assume_aligned(m_words);
     Word *restrict c = assume_aligned(diff.m_words);
 
     Word changed = 0;
-    for (size_t m = 0, M = m_word_dim; m < M; ++m) {
+    POMAGMA_VECTORIZE_LOOP
+    for (size_t m = 0; m < M; ++m) {
         Word dm = d[m];
         Word rm = r[m];
         Word change = dm & ~rm;

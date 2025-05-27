@@ -6,13 +6,13 @@
 #include <cstring>
 #include <pomagma/util/util.hpp>
 
-#if GCC_VERSION > 40700
+#if GCC_VERSION > 40700 || defined(__clang__)
 #define assume_aligned(x)      \
     (static_cast<decltype(x)>( \
         __builtin_assume_aligned((x), BYTES_PER_CACHE_LINE)))
-#else  // GCC_VERSION > 40700
+#else  // GCC_VERSION > 40700 || defined(__clang__)
 #define assume_aligned(x) (x)
-#endif  // GCC_VERSION > 40700
+#endif  // GCC_VERSION > 40700 || defined(__clang__)
 
 namespace pomagma {
 

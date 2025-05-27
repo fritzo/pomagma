@@ -378,6 +378,20 @@ class Log {
         "bad alignment for variable " #POMAGMA_ptr)
 
 //----------------------------------------------------------------------------
+// vectorization hints
+
+#if defined(__clang__)
+#define POMAGMA_VECTORIZE_LOOP \
+    _Pragma("clang loop vectorize(enable) interleave(enable) unroll(enable)")
+#elif defined(__GNUC__)
+#define POMAGMA_VECTORIZE_LOOP \
+    _Pragma("GCC ivdep") \
+    _Pragma("GCC unroll 8")
+#else
+#define POMAGMA_VECTORIZE_LOOP
+#endif
+
+//----------------------------------------------------------------------------
 // data types
 
 template <size_t bytes>
