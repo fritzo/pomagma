@@ -60,15 +60,11 @@ clang-format: FORCE
 	  $(CPP_FILES)
 
 ruff-format: FORCE
-	$(info ruff format)
-	@ruff format $(PY_FILES)
-
-ruff: FORCE
 	$(info ruff)
-	@ruff check --fix $(PY_FILES)
 	@ruff format $(PY_FILES)
+	@ruff check --fix $(PY_FILES)
 
-format: clang-format ruff FORCE
+format: clang-format ruff-format FORCE
 
 codegen: FORCE
 	python -m pomagma.compiler batch-compile

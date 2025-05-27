@@ -23,8 +23,10 @@ def hash_file(filename):
     return hasher.hexdigest()
 
 
-def find_blob(hexdigest):
+def find_blob(hexdigest: str | bytes) -> str:
     """Return path to read-only file."""
+    if isinstance(hexdigest, bytes):
+        hexdigest = hexdigest.decode("utf-8")
     return os.path.join(pomagma.util.BLOB_DIR, hexdigest)
 
 

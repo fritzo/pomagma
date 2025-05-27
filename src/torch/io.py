@@ -1,9 +1,10 @@
 import logging
 from dataclasses import dataclass
-from typing import Mapping, NewType
+from typing import Iterable, Mapping, NewType, TypeVar
 
 import numpy as np
 import torch
+from google.protobuf.message import Message
 from immutables import Map
 
 import pomagma.atlas.structure_pb2 as pb2
@@ -12,11 +13,13 @@ from pomagma.io.protobuf import InFile
 
 logger = logging.getLogger(__name__)
 
+_M = TypeVar("_M", bound=Message)
+
 Ob = NewType("Ob", int)
 """An item in the carrier. 1-indexed, so 0 means undefined."""
 
 
-def delta_decompress(ob_map) -> tuple[list[Ob], list[Ob]]:
+def delta_decompress(ob_map: pb2.ObMap) -> tuple[list[Ob], list[Ob]]:
     """
     Python implementation of delta decompression for ObMap.
     Equivalent to the C++ protobuf::delta_decompress function.
@@ -41,7 +44,21 @@ def delta_decompress(ob_map) -> tuple[list[Ob], list[Ob]]:
     return keys, vals
 
 
-def load_dense_set(ob_set, max_item: int) -> torch.Tensor:
+def load_ob_map(ob_map: pb2.ObMap) -> tuple[Iterable[Ob], Iterable[Ob]]:
+    """
+    Load an ObMap from protobuf to Python lists.
+    """
+    if ob_map.key:
+        return ob_map.key, ob_map.val
+    return delta_decompress(ob_map)
+
+
+def count_ob_map_entries(ob_map: pb2.ObMap) -> int:
+    """Count the number of entries in an ObMap."""
+    return len(ob_map.key) + len(ob_map.key_diff_minus_one)  # either dense or sparse
+
+
+def load_dense_set(ob_set: pb2.ObSet, max_item: int) -> torch.Tensor:
     """
     Load a dense set from protobuf ObSet to PyTorch tensor.
     The dense field contains a bitset where each bit represents whether an item
@@ -67,176 +84,157 @@ def load_dense_set(ob_set, max_item: int) -> torch.Tensor:
     return torch.from_numpy(bits.astype(bool))
 
 
-def load_blob_chunks(hexdigest, message_type):
+def iter_chunks(message: _M) -> Iterable[_M]:
     """
-    Load and parse chunks from a blob file.
+    Iterate over the main message and all chunks from blobs.
     Equivalent to the C++ BlobReader functionality.
     """
-    # Convert bytes to string if necessary
-    if isinstance(hexdigest, bytes):
-        hexdigest = hexdigest.decode("utf-8")
+    # Yield the main message
+    yield message
 
-    blob_path = blobstore.find_blob(hexdigest)
-    chunks = []
-
-    try:
+    # Yield chunks from blobs
+    for hexdigest in message.blobs:
+        blob_path = blobstore.find_blob(hexdigest)
         with InFile(blob_path) as f:
-            while True:
-                try:
-                    chunk = message_type()
-                    # Try to read a chunk - this is a simplified version
-                    # In the C++ version, this uses try_read_chunk which parses
-                    # individual fields.  For simplicity, we'll assume each blob
-                    # contains a single message.
-                    f.read(chunk)
-                    chunks.append(chunk)
-                    break  # For now, assume one message per blob
-                except Exception:
-                    break
-    except Exception as e:
-        print(f"Warning: Could not load blob {hexdigest}: {e}")
-
-    return chunks
+            chunk = type(message)()
+            f.read(chunk)
+            yield chunk
+            assert not chunk.blobs
 
 
-def load_injective_function_data(proto_func, item_count: int) -> torch.Tensor:
+def load_unary_function_data(proto_func: pb2.UnaryFunction) -> torch.Tensor:
     """
-    Load injective function data into a PyTorch tensor.
-    Returns a tensor of shape [1 + item_count] where tensor[i] = f(i) or 0 if undefined.
+    Load unary function data into COO format.
+    Returns a tensor of shape [2, num_entries] where:
+    - tensor[0, :] are the input indices
+    - tensor[1, :] are the output values
     """
-    result = torch.zeros(1 + item_count, dtype=torch.int32)
+    # First pass: count entries
+    num_entries = sum(
+        count_ob_map_entries(chunk.map) for chunk in iter_chunks(proto_func)
+    )
+    result = torch.zeros((2, num_entries), dtype=torch.int32)
+    idx = 0
 
-    # Load data from the main message
-    if proto_func.map.key:
-        keys, vals = delta_decompress(proto_func.map)
+    for chunk in iter_chunks(proto_func):
+        keys, vals = load_ob_map(chunk.map)
         for key, val in zip(keys, vals):
-            if key <= item_count:
-                result[key] = val
+            result[0, idx] = key
+            result[1, idx] = val
+            idx += 1
 
-    # Load data from blobs
-    for hexdigest in proto_func.blobs:
-        chunks = load_blob_chunks(hexdigest, pb2.UnaryFunction)
-        for chunk in chunks:
-            if chunk.map.key:
-                keys, vals = delta_decompress(chunk.map)
-                for key, val in zip(keys, vals):
-                    if key <= item_count:
-                        result[key] = val
-
+    assert idx == num_entries, f"Expected {num_entries} entries, got {idx}"
     return result
 
 
-def load_binary_function_data(proto_func, item_count: int) -> torch.Tensor:
-    """
-    Load binary function data into a PyTorch tensor.
-    Returns a tensor of shape [1 + item_count, 1 + item_count]
-    where tensor[i, j] = f(i, j) or 0 if undefined.
-    """
-    result = torch.zeros(1 + item_count, 1 + item_count, dtype=torch.int32)
+def count_binary_function_entries(proto_func: pb2.BinaryFunction) -> int:
+    """Count the number of entries in a binary function."""
+    return sum(
+        count_ob_map_entries(row.rhs_val)
+        for chunk in iter_chunks(proto_func)
+        for row in chunk.rows
+    )
 
-    # Load data from the main message
-    for row in proto_func.rows:
-        lhs = row.lhs
-        if lhs <= item_count and row.rhs_val.key:
-            keys, vals = delta_decompress(row.rhs_val)
+
+def load_binary_function_data(proto_func: pb2.BinaryFunction) -> torch.Tensor:
+    """
+    Load binary function data into COO format.
+    Returns a tensor of shape [3, num_entries] where:
+    - tensor[0, :] are the first argument indices
+    - tensor[1, :] are the second argument indices
+    - tensor[2, :] are the output values
+    """
+    # First pass: count entries
+    num_entries = count_binary_function_entries(proto_func)
+    result = torch.zeros((3, num_entries), dtype=torch.int32)
+    idx = 0
+
+    for chunk in iter_chunks(proto_func):
+        for row in chunk.rows:
+            lhs = row.lhs
+            keys, vals = load_ob_map(row.rhs_val)
             for rhs, val in zip(keys, vals):
-                if rhs <= item_count:
-                    result[lhs, rhs] = val
+                result[0, idx] = lhs
+                result[1, idx] = rhs
+                result[2, idx] = val
+                idx += 1
 
-    # Load data from blobs
-    for hexdigest in proto_func.blobs:
-        chunks = load_blob_chunks(hexdigest, pb2.BinaryFunction)
-        for chunk in chunks:
-            for row in chunk.rows:
-                lhs = row.lhs
-                if lhs <= item_count and row.rhs_val.key:
-                    keys, vals = delta_decompress(row.rhs_val)
-                    for rhs, val in zip(keys, vals):
-                        if rhs <= item_count:
-                            result[lhs, rhs] = val
-
+    assert idx == num_entries, f"Expected {num_entries} entries, got {idx}"
     return result
 
 
-def load_symmetric_function_data(proto_func, item_count: int) -> torch.Tensor:
+def load_symmetric_function_data(proto_func: pb2.BinaryFunction) -> torch.Tensor:
     """
-    Load symmetric function data into a PyTorch tensor.
-    For symmetric functions, we only store the lower triangle and mirror it.
+    Load symmetric function data into COO format.
+    For symmetric functions, we duplicate off-diagonal elements.
+    Returns a tensor of shape [3, num_entries] where:
+    - tensor[0, :] are the first argument indices
+    - tensor[1, :] are the second argument indices
+    - tensor[2, :] are the output values
     """
-    result = torch.zeros(1 + item_count, 1 + item_count, dtype=torch.int32)
+    # First pass: count entries
+    # Allocate double the base entries as an overestimate for symmetric duplicates
+    base_entries = count_binary_function_entries(proto_func)
+    max_entries = 2 * base_entries
+    result = torch.zeros((3, max_entries), dtype=torch.int32)
+    idx = 0
 
-    # Load data from the main message
-    for row in proto_func.rows:
-        lhs = row.lhs
-        if lhs <= item_count and row.rhs_val.key:
-            keys, vals = delta_decompress(row.rhs_val)
+    for chunk in iter_chunks(proto_func):
+        for row in chunk.rows:
+            lhs = row.lhs
+            keys, vals = load_ob_map(row.rhs_val)
             for rhs, val in zip(keys, vals):
-                if rhs <= item_count:
-                    result[lhs, rhs] = val
-                    result[rhs, lhs] = val  # Mirror for symmetry
+                # Add the original entry
+                result[0, idx] = lhs
+                result[1, idx] = rhs
+                result[2, idx] = val
+                idx += 1
 
-    # Load data from blobs
-    for hexdigest in proto_func.blobs:
-        chunks = load_blob_chunks(hexdigest, pb2.BinaryFunction)
-        for chunk in chunks:
-            for row in chunk.rows:
-                lhs = row.lhs
-                if lhs <= item_count and row.rhs_val.key:
-                    keys, vals = delta_decompress(row.rhs_val)
-                    for rhs, val in zip(keys, vals):
-                        if rhs <= item_count:
-                            result[lhs, rhs] = val
-                            result[rhs, lhs] = val  # Mirror for symmetry
+                # Add symmetric entry if different
+                if lhs != rhs:
+                    result[0, idx] = rhs
+                    result[1, idx] = lhs
+                    result[2, idx] = val
+                    idx += 1
 
+    # Trim to actual size used
+    assert idx <= max_entries, f"Expected {max_entries} entries, got {idx}"
+    if idx < max_entries:
+        result = result[:, :idx]
     return result
 
 
-def load_unary_relation_data(proto_rel, item_count: int) -> torch.Tensor:
+def load_unary_relation_data(
+    proto_rel: pb2.UnaryRelation, item_count: int
+) -> torch.Tensor:
     """
     Load unary relation data into a PyTorch tensor.
     Returns a boolean tensor of shape [1 + item_count].
     """
     result = torch.zeros(1 + item_count, dtype=torch.bool)
 
-    # Load data from the main message
-    if proto_rel.set.dense:
-        dense_set = load_dense_set(proto_rel.set, item_count)
-        result = dense_set
-
-    # Load data from blobs
-    for hexdigest in proto_rel.blobs:
-        chunks = load_blob_chunks(hexdigest, pb2.UnaryRelation)
-        for chunk in chunks:
-            if chunk.set.dense:
-                dense_set = load_dense_set(chunk.set, item_count)
-                result = result | dense_set  # Union
+    for chunk in iter_chunks(proto_rel):
+        if chunk.set.dense:
+            dense_set = load_dense_set(chunk.set, item_count)
+            result = result | dense_set
 
     return result
 
 
-def load_binary_relation_data(proto_rel, item_count: int) -> torch.Tensor:
+def load_binary_relation_data(
+    proto_rel: pb2.BinaryRelation, item_count: int
+) -> torch.Tensor:
     """
     Load binary relation data into a PyTorch tensor.
     Returns a boolean tensor of shape [1 + item_count, 1 + item_count].
     """
     result = torch.zeros(1 + item_count, 1 + item_count, dtype=torch.bool)
 
-    # Load data from the main message
-    for row in proto_rel.rows:
-        lhs = row.lhs
-        if lhs <= item_count and row.rhs.dense:
+    for chunk in iter_chunks(proto_rel):
+        for row in chunk.rows:
+            lhs = row.lhs
             rhs_set = load_dense_set(row.rhs, item_count)
             result[lhs] = result[lhs] | rhs_set
-
-    # Load data from blobs
-    for hexdigest in proto_rel.blobs:
-        chunks = load_blob_chunks(hexdigest, pb2.BinaryRelation)
-        for chunk in chunks:
-            for row in chunk.rows:
-                lhs = row.lhs
-                if lhs <= item_count and row.rhs.dense:
-                    rhs_set = load_dense_set(row.rhs, item_count)
-                    result[lhs] = result[lhs] | rhs_set
 
     return result
 
@@ -245,6 +243,14 @@ def load_binary_relation_data(proto_rel, item_count: int) -> torch.Tensor:
 class Structure:
     """
     PyTorch representation of an algebraic structure. Immutable.
+
+    Functions are in COO format:
+    - Injective functions: shape [2, num_entries] with [inputs, outputs]
+    - Binary/symmetric functions: shape [3, num_entries] with [arg1, arg2, outputs]
+
+    Relations are dense:
+    - Unary relations: shape [1 + item_count]
+    - Binary relations: shape [1 + item_count, 1 + item_count]
     """
 
     name: str
@@ -294,17 +300,17 @@ def load_structure(filename: str, *, relations: bool = False) -> Structure:
 
     for proto_func in proto_structure.injective_functions:
         logger.debug(f"Loading injective function: {proto_func.name}")
-        tensor = load_injective_function_data(proto_func, item_count)
+        tensor = load_unary_function_data(proto_func)
         injective_functions[proto_func.name] = tensor
 
     for proto_func in proto_structure.binary_functions:
         logger.debug(f"Loading binary function: {proto_func.name}")
-        tensor = load_binary_function_data(proto_func, item_count)
+        tensor = load_binary_function_data(proto_func)
         binary_functions[proto_func.name] = tensor
 
     for proto_func in proto_structure.symmetric_functions:
         logger.debug(f"Loading symmetric function: {proto_func.name}")
-        tensor = load_symmetric_function_data(proto_func, item_count)
+        tensor = load_symmetric_function_data(proto_func)
         symmetric_functions[proto_func.name] = tensor
 
     if relations:

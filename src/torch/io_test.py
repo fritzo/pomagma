@@ -58,6 +58,7 @@ def test_structure_loading(filename: str) -> None:
     structure = Structure.load(filename, relations=True)
 
     logger.info("Structure loaded successfully!")
+    logger.info(f"  Name: {structure.name}")
     logger.info(f"  Item count: {structure.item_count}")
     logger.info(f"  Nullary functions: {len(structure.nullary_functions)}")
     logger.info(f"  Injective functions: {len(structure.injective_functions)}")
@@ -71,24 +72,24 @@ def test_structure_loading(filename: str) -> None:
         logger.info(f"    Nullary function '{name}': {val}")
 
     for name, tensor in structure.injective_functions.items():
-        non_zero = torch.count_nonzero(tensor)
+        num_entries = tensor.shape[1]
         logger.info(
             f"    Injective function '{name}': "
-            f"shape {tensor.shape}, {non_zero} non-zero entries"
+            f"COO shape {tensor.shape}, {num_entries} entries"
         )
 
     for name, tensor in structure.binary_functions.items():
-        non_zero = torch.count_nonzero(tensor)
+        num_entries = tensor.shape[1]
         logger.info(
             f"    Binary function '{name}': "
-            f"shape {tensor.shape}, {non_zero} non-zero entries"
+            f"COO shape {tensor.shape}, {num_entries} entries"
         )
 
     for name, tensor in structure.symmetric_functions.items():
-        non_zero = torch.count_nonzero(tensor)
+        num_entries = tensor.shape[1]
         logger.info(
             f"    Symmetric function '{name}': "
-            f"shape {tensor.shape}, {non_zero} non-zero entries"
+            f"COO shape {tensor.shape}, {num_entries} entries"
         )
 
     for name, tensor in structure.unary_relations.items():
