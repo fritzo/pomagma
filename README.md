@@ -15,8 +15,9 @@ Pomagma can:
 - solve systems of inequalities and horn clauses
 - synthesize code from sketches and inequality constraints
 
-Pomagma's base theory is being formally verified in the
-[Hstar project](https://github.com/fritzo/hstar).
+Pomagma's base theory has been partially verified in Coq
+([hstar](https://github.com/fritzo/hstar)) and Z3
+([hstar-z3](https://github.com/fritzo/hstar-z3)).
 
 Pomagma's architecture follows a client-server model,
 where a Python client library performs high-level syntactic tasks,
@@ -105,7 +106,7 @@ Pomagma is parallelized and needs lots of memory to build a large atlas.
 
 ## License
 
-Copyright (c) 2005-2017 Fritz Obermeyer.<br/>
+Copyright (c) 2005-2025 Fritz Obermeyer.<br/>
 Pomagma is licensed under the [Apache 2.0 License](/LICENSE).
 
 Pomagma ships with the [Google Farmhash](https://github.com/google/farmhash)
