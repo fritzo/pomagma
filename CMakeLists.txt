@@ -125,6 +125,68 @@ else()
   link_directories(${ZMQ_LIBRARY_DIRS})
 endif()
 
+# Download and find LibTorch
+include(FetchContent)
+
+# Detect PyTorch version from Python installation
+find_program(PYTHON_EXECUTABLE python3 python)
+execute_process(
+  COMMAND ${PYTHON_EXECUTABLE} -c "import torch; print(torch.__version__)"
+  OUTPUT_VARIABLE TORCH_VERSION_FROM_PYTHON
+  ERROR_QUIET
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+if(TORCH_VERSION_FROM_PYTHON)
+  # Extract major.minor.patch from version string (removes any +cpu, +cu118, etc.)
+  string(REGEX MATCH "^[0-9]+\\.[0-9]+\\.[0-9]+" LIBTORCH_VERSION "${TORCH_VERSION_FROM_PYTHON}")
+  message(STATUS "Detected PyTorch version: ${TORCH_VERSION_FROM_PYTHON} -> Using LibTorch: ${LIBTORCH_VERSION}")
+else()
+  set(LIBTORCH_VERSION "2.7.0")
+  message(WARNING "Could not detect PyTorch version, using default: ${LIBTORCH_VERSION}")
+endif()
+
+# Determine the correct LibTorch URL based on platform and version
+if(APPLE)
+  if(CMAKE_SYSTEM_PROCESSOR MATCHES "arm64|aarch64")
+    set(LIBTORCH_URL "https://download.pytorch.org/libtorch/cpu/libtorch-macos-arm64-${LIBTORCH_VERSION}.zip")
+    set(LIBTORCH_NAME "libtorch-macos-arm64")
+  else()
+    set(LIBTORCH_URL "https://download.pytorch.org/libtorch/cpu/libtorch-macos-x86_64-${LIBTORCH_VERSION}.zip")
+    set(LIBTORCH_NAME "libtorch-macos-x86_64")
+  endif()
+elseif(WIN32)
+  set(LIBTORCH_URL "https://download.pytorch.org/libtorch/cpu/libtorch-win-shared-with-deps-${LIBTORCH_VERSION}%2Bcpu.zip")
+  set(LIBTORCH_NAME "libtorch-win")
+else()
+  # Linux
+  set(LIBTORCH_URL "https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-${LIBTORCH_VERSION}%2Bcpu.zip")
+  set(LIBTORCH_NAME "libtorch-linux")
+endif()
+
+message(STATUS "Downloading LibTorch from: ${LIBTORCH_URL}")
+
+FetchContent_Declare(
+  libtorch
+  URL ${LIBTORCH_URL}
+)
+
+FetchContent_MakeAvailable(libtorch)
+
+# Set the CMAKE_PREFIX_PATH to find LibTorch
+list(APPEND CMAKE_PREFIX_PATH ${libtorch_SOURCE_DIR})
+
+# Now find LibTorch
+find_package(Torch REQUIRED)
+
+message(STATUS "Found LibTorch ${Torch_VERSION}")
+message(STATUS "LibTorch libraries: ${TORCH_LIBRARIES}")
+message(STATUS "LibTorch include dirs: ${TORCH_INCLUDE_DIRS}")
+
+# Set C++ standard required by LibTorch
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 find_program(CCACHE_FOUND ccache)
 if(CCACHE_FOUND)
   message(STATUS "CMake using ccache")
