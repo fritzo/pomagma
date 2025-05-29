@@ -235,10 +235,9 @@ int main() {
 
     // Profile vectorized operations
     POMAGMA_INFO("--------------------------------");
-    POMAGMA_INFO(std::setw(10)
-                 << "log2(size)" << std::setw(15) << "union(kHz)"
-                 << std::setw(15) << "insn2(kHz)" << std::setw(15)
-                 << "insn3(kHz)" << std::setw(15) << "ppnn(kHz)");
+    POMAGMA_INFO(std::setw(10) << "log2(size)" << std::setw(15) << "union(kHz)"
+                               << std::setw(15) << "insn2(kHz)" << std::setw(15)
+                               << "insn3(kHz)" << std::setw(15) << "ppnn(kHz)");
     for (size_t exponent = min_exponent; exponent < max_exponent; ++exponent) {
         // Use a more reasonable density that decreases as set size increases
         float density = 0.1f + 0.4f / (1 << (exponent - min_exponent));
@@ -246,10 +245,9 @@ int main() {
         float freq2 = test_insn2(exponent, density) / 1000;
         float freq3 = test_insn3(exponent, density) / 1000;
         float freq4 = test_ppnn(exponent, density) / 1000;
-        POMAGMA_INFO(std::setw(15)
-                     << exponent << std::setw(15) << freq1 << std::setw(15)
-                     << freq2 << std::setw(15) << freq3 << std::setw(15)
-                     << freq4);
+        POMAGMA_INFO(std::setw(15) << exponent << std::setw(15) << freq1
+                                   << std::setw(15) << freq2 << std::setw(15)
+                                   << freq3 << std::setw(15) << freq4);
     }
 
     return 0;

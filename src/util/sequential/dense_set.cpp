@@ -228,7 +228,7 @@ void DenseSet::operator+=(const DenseSet &other) {
     const size_t M = m_word_dim;
     const Word *restrict s = assume_aligned(other.m_words);
     Word *restrict t = assume_aligned(m_words);
-    
+
     POMAGMA_VECTORIZE_LOOP
     for (size_t m = 0; m < M; ++m) {
         t[m] |= s[m];
@@ -242,7 +242,7 @@ void DenseSet::operator*=(const DenseSet &other) {
     const size_t M = m_word_dim;
     const Word *restrict s = assume_aligned(other.m_words);
     Word *restrict t = assume_aligned(m_words);
-    
+
     POMAGMA_VECTORIZE_LOOP
     for (size_t m = 0; m < M; ++m) {
         t[m] &= s[m];
@@ -256,7 +256,7 @@ void DenseSet::operator-=(const DenseSet &other) {
     const size_t M = m_word_dim;
     const Word *restrict s = assume_aligned(other.m_words);
     Word *restrict t = assume_aligned(m_words);
-    
+
     POMAGMA_VECTORIZE_LOOP
     for (size_t m = 0; m < M; ++m) {
         t[m] &= ~s[m];
@@ -271,7 +271,7 @@ void DenseSet::set_union(const DenseSet &lhs, const DenseSet &rhs) {
     const Word *restrict s = assume_aligned(lhs.m_words);
     const Word *restrict t = assume_aligned(rhs.m_words);
     Word *restrict u = assume_aligned(m_words);
-    
+
     POMAGMA_VECTORIZE_LOOP
     for (size_t m = 0; m < M; ++m) {
         u[m] = s[m] | t[m];
@@ -286,7 +286,7 @@ void DenseSet::set_insn(const DenseSet &lhs, const DenseSet &rhs) {
     const Word *restrict s = assume_aligned(lhs.m_words);
     const Word *restrict t = assume_aligned(rhs.m_words);
     Word *restrict u = assume_aligned(m_words);
-    
+
     POMAGMA_VECTORIZE_LOOP
     for (size_t m = 0; m < M; ++m) {
         u[m] = s[m] & t[m];

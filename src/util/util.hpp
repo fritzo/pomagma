@@ -384,9 +384,7 @@ class Log {
 #define POMAGMA_VECTORIZE_LOOP \
     _Pragma("clang loop vectorize(enable) interleave(enable) unroll(enable)")
 #elif defined(__GNUC__)
-#define POMAGMA_VECTORIZE_LOOP \
-    _Pragma("GCC ivdep") \
-    _Pragma("GCC unroll 8")
+#define POMAGMA_VECTORIZE_LOOP _Pragma("GCC ivdep") _Pragma("GCC unroll 8")
 #else
 #define POMAGMA_VECTORIZE_LOOP
 #endif
