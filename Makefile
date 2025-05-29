@@ -177,7 +177,7 @@ profile: release
 
 clean: FORCE
 	rm -rf build lib compile_commands.json
-	cd src && git clean -fdx -e third_party/
+	cd src && git clean -fdX -e third_party/
 
 clean-vcpkg: FORCE
 	rm -rf vcpkg
