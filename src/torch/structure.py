@@ -13,27 +13,27 @@ class TorchBinaryFunction(torch.autograd.Function):
         ctx,
         LRv_ptrs: torch.Tensor,
         LRv_args: torch.Tensor,
-        LVr_ptrs: torch.Tensor,
-        LVr_args: torch.Tensor,
-        RVl_ptrs: torch.Tensor,
-        RVl_args: torch.Tensor,
+        VLr_ptrs: torch.Tensor,
+        VLr_args: torch.Tensor,
+        VRl_ptrs: torch.Tensor,
+        VRl_args: torch.Tensor,
         lhs: torch.Tensor,
         rhs: torch.Tensor,
     ) -> torch.Tensor:
         val = torch.ops.pomagma.binary_function(LRv_ptrs, LRv_args, lhs, rhs)
-        ctx.save_for_backward(LVr_ptrs, LVr_args, RVl_ptrs, RVl_args, lhs, rhs)
+        ctx.save_for_backward(VLr_ptrs, VLr_args, VRl_ptrs, VRl_args, lhs, rhs)
         return val
 
     @staticmethod
     def backward(ctx, grad_val: torch.Tensor) -> tuple[torch.Tensor, ...]:
-        LVr_ptrs, LVr_args, RVl_ptrs, RVl_args, lhs, rhs = ctx.saved_tensors
-        grad_lhs = torch.ops.pomagma.binary_function(LVr_ptrs, LVr_args, grad_val, rhs)
-        grad_rhs = torch.ops.pomagma.binary_function(RVl_ptrs, RVl_args, grad_val, lhs)
+        VLr_ptrs, VLr_args, VRl_ptrs, VRl_args, lhs, rhs = ctx.saved_tensors
+        grad_lhs = torch.ops.pomagma.binary_function(VRl_ptrs, VRl_args, grad_val, rhs)
+        grad_rhs = torch.ops.pomagma.binary_function(VLr_ptrs, VLr_args, grad_val, lhs)
         return (None, None, None, None, None, None, grad_lhs, grad_rhs)
 
 
 @dataclass(frozen=True, slots=True, eq=False)
-class BinaryFunctionDirection:
+class BinaryFunctionTable:
     ptrs: torch.Tensor
     args: torch.Tensor
 
@@ -45,18 +45,18 @@ class BinaryFunction:
     """
 
     name: str
-    LRv: BinaryFunctionDirection
-    LVr: BinaryFunctionDirection
-    RVl: BinaryFunctionDirection
+    LRv: BinaryFunctionTable
+    VLr: BinaryFunctionTable
+    VRl: BinaryFunctionTable
 
     def __call__(self, lhs: torch.Tensor, rhs: torch.Tensor) -> torch.Tensor:
         return TorchBinaryFunction.apply(
             self.LRv.ptrs,
             self.LRv.args,
-            self.LVr.ptrs,
-            self.LVr.args,
-            self.RVl.ptrs,
-            self.RVl.args,
+            self.VLr.ptrs,
+            self.VLr.args,
+            self.VRl.ptrs,
+            self.VRl.args,
             lhs,
             rhs,
         )

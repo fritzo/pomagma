@@ -14,77 +14,43 @@ def make_dense_bin_fun(N: int) -> list[tuple[int, int, int]]:
     return table
 
 
+def make_XYz_sparse(
+    N: int, XYz_table: list[tuple[int, int, int]]
+) -> tuple[torch.Tensor, torch.Tensor]:
+    counts: list[int] = [0] * N
+    for X, Y, Z in XYz_table:
+        counts[Z] += 1
+    ptrs = torch.empty(N + 1, dtype=torch.int32)
+    ptrs[0] = 0
+    for i in range(N):
+        ptrs[i + 1] = ptrs[i] + counts[i]
+    nnz = sum(counts)
+    pos = [0] * N
+    args = torch.empty((nnz, 2), dtype=torch.int32)
+    for X, Y, Z in XYz_table:
+        e = ptrs[Z] + pos[Z]
+        args[e, 0] = X
+        args[e, 1] = Y
+        pos[Z] += 1
+    return ptrs, args
+
+
 def make_LRv_sparse(
     N: int, LRv_table: list[tuple[int, int, int]]
 ) -> tuple[torch.Tensor, torch.Tensor]:
-    counts: list[int] = [0] * N
-    for i, j, k in LRv_table:
-        counts[k] += 1
-    f_ptrs = torch.empty(N + 1, dtype=torch.int32)
-    f_ptrs[0] = 0
-    for i in range(N):
-        f_ptrs[i + 1] = f_ptrs[i] + counts[i]
-
-    nnz = sum(counts)
-    pos = [0] * N
-    f_args = torch.empty((nnz, 2), dtype=torch.int32)
-    for i, j, k in LRv_table:
-        e = f_ptrs[k] + pos[k]
-        f_args[e, 0] = i
-        f_args[e, 1] = j
-        pos[k] += 1
-
-    return f_ptrs, f_args
+    return make_XYz_sparse(N, [(L, R, V) for L, R, V in LRv_table])
 
 
-def make_LVr_sparse(
+def make_VLr_sparse(
     N: int, LRv_table: list[tuple[int, int, int]]
 ) -> tuple[torch.Tensor, torch.Tensor]:
-    """Create sparse representation mapping L -> (V,R) pairs."""
-    counts: list[int] = [0] * N
-    for L, R, V in LRv_table:
-        counts[L] += 1
-
-    ptrs = torch.empty(N + 1, dtype=torch.int32)
-    ptrs[0] = 0
-    for i in range(N):
-        ptrs[i + 1] = ptrs[i] + counts[i]
-
-    nnz = sum(counts)
-    pos = [0] * N
-    args = torch.empty((nnz, 2), dtype=torch.int32)
-    for L, R, V in LRv_table:
-        e = ptrs[L] + pos[L]
-        args[e, 0] = V  # output index
-        args[e, 1] = R  # other input index
-        pos[L] += 1
-
-    return ptrs, args
+    return make_XYz_sparse(N, [(V, L, R) for L, R, V in LRv_table])
 
 
-def make_RVl_sparse(
+def make_VRl_sparse(
     N: int, LRv_table: list[tuple[int, int, int]]
 ) -> tuple[torch.Tensor, torch.Tensor]:
-    """Create sparse representation mapping R -> (V,L) pairs."""
-    counts: list[int] = [0] * N
-    for L, R, V in LRv_table:
-        counts[R] += 1
-
-    ptrs = torch.empty(N + 1, dtype=torch.int32)
-    ptrs[0] = 0
-    for i in range(N):
-        ptrs[i + 1] = ptrs[i] + counts[i]
-
-    nnz = sum(counts)
-    pos = [0] * N
-    args = torch.empty((nnz, 2), dtype=torch.int32)
-    for L, R, V in LRv_table:
-        e = ptrs[R] + pos[R]
-        args[e, 0] = V  # output index
-        args[e, 1] = L  # other input index
-        pos[R] += 1
-
-    return ptrs, args
+    return make_XYz_sparse(N, [(V, R, L) for L, R, V in LRv_table])
 
 
 @pytest.mark.parametrize("N", [10, 100])
@@ -108,14 +74,14 @@ def test_torch_binary_function_gradients(N: int) -> None:
 
     # Create all three sparse representations
     LRv_ptrs, LRv_args = make_LRv_sparse(N, table)  # L,R -> V
-    LVr_ptrs, LVr_args = make_LVr_sparse(N, table)  # L -> V,R
-    RVl_ptrs, RVl_args = make_RVl_sparse(N, table)  # R -> V,L
+    VLr_ptrs, VLr_args = make_VLr_sparse(N, table)  # V,L -> R
+    VRl_ptrs, VRl_args = make_VRl_sparse(N, table)  # V,R -> L
 
     def torch_binary_function_wrapper(
         lhs: torch.Tensor, rhs: torch.Tensor
     ) -> torch.Tensor:
         return TorchBinaryFunction.apply(
-            LRv_ptrs, LRv_args, LVr_ptrs, LVr_args, RVl_ptrs, RVl_args, lhs, rhs
+            LRv_ptrs, LRv_args, VLr_ptrs, VLr_args, VRl_ptrs, VRl_args, lhs, rhs
         )
 
     # Create test inputs that require gradients

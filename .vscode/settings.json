@@ -20,6 +20,7 @@
         "NLESS",
         "nullary",
         "pomagma",
+        "ptrs",
         "pytest",
         "skja",
         "skrj",
