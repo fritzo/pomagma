@@ -1,6 +1,5 @@
 import logging
-from dataclasses import dataclass
-from typing import Iterable, Mapping, NewType, TypeVar
+from typing import Iterable, TypeVar
 
 import numpy as np
 import torch
@@ -11,12 +10,11 @@ import pomagma.atlas.structure_pb2 as pb2
 from pomagma.io import blobstore
 from pomagma.io.protobuf import InFile
 
+from .structure import Ob, Structure
+
 logger = logging.getLogger(__name__)
 
 _M = TypeVar("_M", bound=Message)
-
-Ob = NewType("Ob", int)
-"""An item in the carrier. 1-indexed, so 0 means undefined."""
 
 
 def delta_decompress(ob_map: pb2.ObMap) -> tuple[list[Ob], list[Ob]]:
@@ -237,37 +235,6 @@ def load_binary_relation_data(
             result[lhs] = result[lhs] | rhs_set
 
     return result
-
-
-@dataclass(frozen=True, slots=True, eq=False)
-class Structure:
-    """
-    PyTorch representation of an algebraic structure. Immutable.
-
-    Functions are in COO format:
-    - Injective functions: shape [2, num_entries] with [inputs, outputs]
-    - Binary/symmetric functions: shape [3, num_entries] with [arg1, arg2, outputs]
-
-    Relations are dense:
-    - Unary relations: shape [1 + item_count]
-    - Binary relations: shape [1 + item_count, 1 + item_count]
-    """
-
-    name: str
-    item_count: int
-    nullary_functions: Mapping[str, int]
-    injective_functions: Mapping[str, torch.Tensor]
-    binary_functions: Mapping[str, torch.Tensor]
-    symmetric_functions: Mapping[str, torch.Tensor]
-    unary_relations: Mapping[str, torch.Tensor]
-    binary_relations: Mapping[str, torch.Tensor]
-
-    @staticmethod
-    def load(filename: str, *, relations: bool = False) -> "Structure":
-        """
-        Load a structure from a protobuf file.
-        """
-        return load_structure(filename, relations=relations)
 
 
 def load_structure(filename: str, *, relations: bool = False) -> Structure:

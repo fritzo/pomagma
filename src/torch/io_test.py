@@ -6,7 +6,8 @@ import torch
 
 from pomagma.atlas.structure_pb2 import ObMap, ObSet
 
-from .io import Structure, delta_decompress, load_dense_set
+from .io import delta_decompress, load_dense_set
+from .structure import Structure
 
 logger = logging.getLogger(__name__)
 
