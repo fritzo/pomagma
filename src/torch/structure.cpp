@@ -9,9 +9,8 @@
 namespace pomagma {
 namespace torch {
 
-at::Tensor binary_function_fwd(const at::Tensor& f_ptrs,
-                               const at::Tensor& f_args, const at::Tensor& lhs,
-                               const at::Tensor& rhs) {
+at::Tensor binary_function(const at::Tensor& f_ptrs, const at::Tensor& f_args,
+                           const at::Tensor& lhs, const at::Tensor& rhs) {
     // Check shapes: f_ptrs [N+1], f_args [NNZ, 2], lhs [N], rhs [N]
     TORCH_CHECK(f_ptrs.dim() == 1);
     TORCH_CHECK(f_args.dim() == 2);

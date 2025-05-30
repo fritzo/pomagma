@@ -8,9 +8,8 @@ namespace torch {
 
 // Function declarations for PyTorch operations
 
-at::Tensor binary_function_fwd(const at::Tensor& f_ptrs,
-                               const at::Tensor& f_args, const at::Tensor& lhs,
-                               const at::Tensor& rhs);
+at::Tensor binary_function(const at::Tensor& f_ptrs, const at::Tensor& f_args,
+                           const at::Tensor& lhs, const at::Tensor& rhs);
 
 }  // namespace torch
 }  // namespace pomagma
