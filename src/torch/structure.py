@@ -3,6 +3,8 @@ from typing import Mapping, NewType
 
 import torch
 
+from .language import Language
+
 Ob = NewType("Ob", int)
 """An item in the carrier. 1-indexed, so 0 means undefined."""
 
@@ -93,3 +95,33 @@ class Structure:
         from .io import load_structure
 
         return load_structure(filename, relations=relations)
+
+    def propagate_complexity(
+        self, language: Language, *, tol: float = 1e-6
+    ) -> torch.Tensor:
+        assert 0.0 < tol < 1.0
+        with torch.no_grad():
+            # Initialize with atoms.
+            probs = language.nullary_functions / language.nullary_functions.sum()
+
+            # Propagate until convergence.
+            diff = 1.0
+            while diff > tol:
+                prev = probs
+                probs = self._propagate_complexity_step(language, probs)
+                diff = (probs - prev).abs().sum().item()
+
+        # Propagate one more step, in case gradients are needed.
+        return self._propagate_complexity_step(language, probs)
+
+    def _propagate_complexity_step(
+        self, language: Language, probs: torch.Tensor
+    ) -> torch.Tensor:
+        out = language.nullary_functions
+        for name, weight in language.injective_functions.items():
+            out += weight * self.injective_functions[name](probs)
+        for name, weight in language.binary_functions.items():
+            out += weight * self.binary_functions[name](probs, probs)
+        for name, weight in language.symmetric_functions.items():
+            out += weight * self.symmetric_functions[name](probs, probs)
+        return out
