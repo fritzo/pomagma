@@ -7,11 +7,10 @@ namespace pomagma {
 namespace torch {
 
 // Function declarations for PyTorch operations
-void iadd_binary_function(const at::Tensor& f_ptrs, const at::Tensor& f_args,
-                          const at::Tensor& args, at::Tensor& out,
-                          double weight);
 
-// Add more function declarations here as needed
+at::Tensor binary_function_fwd(const at::Tensor& f_ptrs,
+                               const at::Tensor& f_args, const at::Tensor& lhs,
+                               const at::Tensor& rhs);
 
 }  // namespace torch
 }  // namespace pomagma

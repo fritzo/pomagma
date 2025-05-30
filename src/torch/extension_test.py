@@ -1,3 +1,4 @@
+import pytest
 import torch
 
 
@@ -19,7 +20,7 @@ def make_sparse_bin_fun(
         counts[k] += 1
     f_ptrs = torch.empty(N + 1, dtype=torch.int32)
     f_ptrs[0] = 0
-    for i in range(N - 1):
+    for i in range(N):
         f_ptrs[i + 1] = f_ptrs[i] + counts[i]
 
     nnz = sum(counts)
@@ -34,13 +35,15 @@ def make_sparse_bin_fun(
     return f_ptrs, f_args
 
 
-def test_iadd_binary_function() -> None:
-    N = 10
+@pytest.mark.parametrize("N", [10, 100])
+def test_binary_function_fwd(N: int) -> None:
     table = make_dense_bin_fun(N)
     f_ptrs, f_args = make_sparse_bin_fun(N, table)
 
-    args = torch.randn((2, N), dtype=torch.float32)
-    out = torch.zeros(N, dtype=torch.float32)
-    weight = 2.5
+    lhs = torch.randn(N, dtype=torch.float32)
+    rhs = torch.randn(N, dtype=torch.float32)
 
-    torch.ops.pomagma.iadd_binary_function(f_ptrs, f_args, args, out, weight)
+    out = torch.ops.pomagma.binary_function_fwd(f_ptrs, f_args, lhs, rhs)
+    assert out.shape == (N,)
+    assert out.dtype == lhs.dtype
+    assert out.device == lhs.device

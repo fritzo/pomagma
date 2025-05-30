@@ -12,12 +12,9 @@ logger = logging.getLogger(__name__)
 
 
 def test_delta_decompress() -> None:
-    """Test the delta decompression function."""
-
-    # Create a test ObMap with compressed data
     ob_map = ObMap()
-    ob_map.key_diff_minus_one.extend([0, 1, 2])  # keys will be 1, 3, 6
-    ob_map.val_diff.extend([10, 5, -3])  # vals will be 10, 15, 12
+    ob_map.key_diff_minus_one.extend([0, 1, 2])
+    ob_map.val_diff.extend([10, 5, -3])
 
     keys, vals = delta_decompress(ob_map)
 
@@ -26,14 +23,10 @@ def test_delta_decompress() -> None:
 
     assert keys == expected_keys, f"Expected keys {expected_keys}, got {keys}"
     assert vals == expected_vals, f"Expected vals {expected_vals}, got {vals}"
-    print("✓ Delta decompression test passed")
 
 
 def test_dense_set_loading() -> None:
-    """Test loading dense sets."""
-    # Create a test ObSet with some bits set
     ob_set = ObSet()
-    # Set bits 1, 3, 5 (in a byte: 00101010 = 0x2A)
     ob_set.dense = bytes([0x2A])
 
     tensor = load_dense_set(ob_set, 7)
@@ -45,7 +38,6 @@ def test_dense_set_loading() -> None:
     expected[5] = True
 
     assert torch.equal(tensor, expected), f"Expected {expected}, got {tensor}"
-    print("✓ Dense set loading test passed")
 
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))

@@ -4,13 +4,13 @@
 
 #include "structure.hpp"
 
+// Note: Use Tensor(a!) to indicate mutated tensors.
 TORCH_LIBRARY(pomagma, m) {
-    // Note: Using Tensor(a!) to indicate that 'out' is mutated
     m.def(
-        "iadd_binary_function(Tensor f_ptrs, Tensor f_args, Tensor args, "
-        "Tensor(a!) out, float weight) -> ()");
+        "binary_function_fwd(Tensor f_ptrs, Tensor f_args, Tensor lhs, "
+        "Tensor rhs) -> Tensor");
 }
 
 TORCH_LIBRARY_IMPL(pomagma, CPU, m) {
-    m.impl("iadd_binary_function", &pomagma::torch::iadd_binary_function);
+    m.impl("binary_function_fwd", &pomagma::torch::binary_function_fwd);
 }
