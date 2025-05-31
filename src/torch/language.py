@@ -16,6 +16,9 @@ class Language(torch.nn.Module):
 
     Nullary functions are materialized as a dense tensor wrt a Structure.
     All other data are merely scalar weights.
+
+    Note this data structure is agnostic to weight semantics: weights can denote
+    a probabilistic generator, or observation counts, or log-probabilities, etc.
     """
 
     def __init__(
@@ -68,7 +71,7 @@ class Language(torch.nn.Module):
         for _, weight in sorted(self.symmetric_functions.items()):
             weight *= scale
 
-    def propagate_complexity(
+    def propagate_probs(
         self, structure: Structure, *, tol: float = 1e-6
     ) -> torch.Tensor:
         assert 0.0 < tol < 1.0
@@ -79,13 +82,13 @@ class Language(torch.nn.Module):
         diff = 1.0
         while diff > tol:
             prev = probs
-            probs = self._propagate_complexity_step(structure, probs)
+            probs = self._propagate_probs_step(structure, probs)
             with torch.no_grad():
                 diff = (probs - prev).abs().sum().item()
 
         return probs
 
-    def _propagate_complexity_step(
+    def _propagate_probs_step(
         self, structure: Structure, probs: torch.Tensor
     ) -> torch.Tensor:
         out = self.nullary_functions.clone()
@@ -96,6 +99,30 @@ class Language(torch.nn.Module):
             fn = structure.symmetric_functions[name]
             out += weight * fn.sum_product(probs, probs)
         return out
+
+    def log_prob(self, data: "Language") -> torch.Tensor:
+        """
+        Compute the log probability of data under this probabilistic language.
+        """
+        h = torch.nn.functional.cross_entropy(
+            data.nullary_functions, self.nullary_functions, reduction="sum"
+        )
+        weights: list[torch.Tensor] = []
+        probs: list[torch.Tensor] = []
+        for name, weight in data.injective_functions.items():
+            probs.append(self.injective_functions[name])
+            weights.append(weight)
+        for name, weight in data.binary_functions.items():
+            probs.append(self.binary_functions[name])
+            weights.append(weight)
+        for name, weight in data.symmetric_functions.items():
+            probs.append(self.symmetric_functions[name])
+            weights.append(weight)
+        if weights:
+            h += torch.nn.functional.cross_entropy(
+                torch.stack(weights), torch.stack(probs), reduction="sum"
+            )
+        return -h
 
     def iadd_corpus(self, ob_tree: ObTree, weight: float = 1.0) -> None:
         # Count symbols and objects

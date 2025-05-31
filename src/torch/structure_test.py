@@ -162,11 +162,19 @@ def test_binary_function_lookup(structure: Structure) -> None:
                         assert f.func[rhs, lhs] == val
 
 
-def test_propagate_complexity(structure: Structure, language: Language) -> None:
-    probs = language.propagate_complexity(structure)
+def test_propagate_probs(structure: Structure, language: Language) -> None:
+    probs = language.propagate_probs(structure)
     assert probs.shape == (structure.item_count + 1,)
     assert probs.dtype == torch.float32
     assert probs.device == torch.device("cpu")
     # Check probability mass (finite subset of infinite structure)
     total_prob = probs.sum().item()
     assert 0.5 <= total_prob <= 1.0
+
+
+def test_log_prob(structure: Structure, language: Language) -> None:
+    log_prob = language.log_prob(language)
+    assert log_prob.shape == ()
+    assert log_prob.dtype == torch.float32
+    assert log_prob.device == torch.device("cpu")
+    assert log_prob.item() < 0.0

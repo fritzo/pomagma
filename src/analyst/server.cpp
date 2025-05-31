@@ -1,7 +1,6 @@
 #include <zmq.h>
 
 #include <algorithm>
-#include <iostream>
 #include <limits>
 #include <map>
 #include <pomagma/analyst/propagate.hpp>

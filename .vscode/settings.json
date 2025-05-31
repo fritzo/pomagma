@@ -28,6 +28,7 @@
         "ptrs",
         "pytest",
         "randn",
+        "reltol",
         "skja",
         "skrj",
         "sortedset",
