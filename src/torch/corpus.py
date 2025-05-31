@@ -2,8 +2,6 @@ import logging
 from collections import Counter
 from dataclasses import dataclass
 
-import torch
-
 from pomagma.compiler.expressions import Expression
 from pomagma.compiler.parser import parse_string_to_expr
 from pomagma.util.hashcons import HashConsMeta
@@ -39,9 +37,10 @@ class ObTree(metaclass=HashConsMeta):
             elif name in structure.symmetric_functions:
                 fn = structure.symmetric_functions[name]
             if fn is not None:
-                if args[0].ob is not None and args[1].ob is not None:
-                    if ob := fn[args[0].ob, args[1].ob]:
-                        return ObTree(ob=ob)
+                assert args[0].ob
+                assert args[1].ob
+                if ob := fn[args[0].ob, args[1].ob]:
+                    return ObTree(ob=ob)
         logger.warning(f"Unknown symbol: {name}")
         return ObTree(name=name, args=args)
 
@@ -59,17 +58,16 @@ class ObTree(metaclass=HashConsMeta):
         return " ".join(parts)
 
     # TODO make this O(dag size) rather than O(tree size)
-    def count(self, counts: Counter[Ob]) -> None:
+    def count(
+        self,
+        symbol_counts: Counter[str],
+        ob_counts: Counter[Ob],
+    ) -> None:
         if self.ob:
-            counts[self.ob] += 1
+            ob_counts[self.ob] += 1
         else:
+            assert self.name is not None
             assert self.args is not None
+            symbol_counts[self.name] += 1
             for arg in self.args:
-                arg.count(counts)
-
-
-def iadd_ob_tree(ob_tree: ObTree, out: torch.Tensor, weight: float = 1.0) -> None:
-    counts = Counter[Ob]()
-    ob_tree.count(counts)
-    for ob, count in counts.items():
-        out[ob] += count * weight
+                arg.count(symbol_counts, ob_counts)

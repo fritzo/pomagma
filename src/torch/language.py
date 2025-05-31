@@ -1,7 +1,11 @@
+from collections import Counter
 from typing import Mapping
 
 import torch
 from immutables import Map
+
+from .corpus import ObTree
+from .structure import Ob
 
 EMPTY_MAP: Mapping[str, torch.Tensor] = Map()
 
@@ -60,3 +64,22 @@ class Language(torch.nn.Module):
             weight *= scale
         for _, weight in sorted(self.symmetric_functions.items()):
             weight *= scale
+
+    def iadd_corpus(self, ob_tree: ObTree, weight: float = 1.0) -> None:
+        # Count symbols and objects
+        symbol_counts: Counter[str] = Counter()
+        ob_counts: Counter[Ob] = Counter()
+        ob_tree.count(symbol_counts, ob_counts)
+
+        # Add counts to language
+        for ob, count in ob_counts.items():
+            self.nullary_functions[ob] += count * weight
+        for name, count in symbol_counts.items():
+            if name in self.injective_functions:
+                self.injective_functions[name] += count * weight
+            elif name in self.binary_functions:
+                self.binary_functions[name] += count * weight
+            elif name in self.symmetric_functions:
+                self.symmetric_functions[name] += count * weight
+            else:
+                raise ValueError(f"Unknown symbol: {name}")
