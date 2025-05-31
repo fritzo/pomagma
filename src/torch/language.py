@@ -5,8 +5,7 @@ import torch
 from immutables import Map
 
 from .corpus import ObTree
-from .structure import Structure
-from .util import Ob
+from .structure import Ob, Structure
 
 EMPTY_MAP: Mapping[str, torch.Tensor] = Map()
 

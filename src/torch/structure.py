@@ -1,9 +1,10 @@
 from dataclasses import dataclass
-from typing import Mapping
+from typing import Mapping, NewType
 
 import torch
 
-from .util import Ob
+Ob = NewType("Ob", int)
+"""An item in the carrier. 1-indexed, so 0 means undefined."""
 
 
 class BinaryFunctionSumProduct(torch.autograd.Function):
