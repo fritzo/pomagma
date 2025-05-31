@@ -1,7 +1,18 @@
+import os
+
 import pytest
 import torch
 
-from .structure import TorchBinaryFunction
+from .language import Language
+from .structure import Structure, TorchBinaryFunction
+
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+TEST_FILE = os.path.join(ROOT, "bootstrap", "atlas", "skrj", "region.normal.2047.pb")
+
+
+@pytest.fixture(scope="session")
+def structure() -> Structure:
+    return Structure.load(TEST_FILE, relations=False)
 
 
 def make_dense_bin_fun(N: int) -> list[tuple[int, int, int]]:
@@ -12,6 +23,29 @@ def make_dense_bin_fun(N: int) -> list[tuple[int, int, int]]:
             if k < N:
                 table.append((i, j, k))
     return table
+
+
+@pytest.fixture(scope="session")
+def language(structure: Structure) -> Language:
+    # Use item_count + 1 because objects are 1-indexed (0 means undefined)
+    nullary_functions = torch.zeros(structure.item_count + 1, dtype=torch.float32)
+    nullary_functions[structure.nullary_functions["S"]] = 0.1
+    nullary_functions[structure.nullary_functions["K"]] = 0.1
+    nullary_functions[structure.nullary_functions["J"]] = 0.1
+    nullary_functions[structure.nullary_functions["R"]] = 0.1
+    binary_functions = {
+        "APP": torch.tensor(0.2, dtype=torch.float32),
+        "COMP": torch.tensor(0.2, dtype=torch.float32),
+    }
+    symmetric_functions = {
+        "JOIN": torch.tensor(0.2, dtype=torch.float32),
+    }
+    language = Language(
+        nullary_functions=nullary_functions,
+        binary_functions=binary_functions,
+        symmetric_functions=symmetric_functions,
+    )
+    return language
 
 
 def make_XYz_sparse(
@@ -98,4 +132,11 @@ def test_torch_binary_function_gradients(N: int) -> None:
     ), "Gradient check failed for TorchBinaryFunction"
 
 
-# TODO test TorchBinaryFunction
+def test_propagate_complexity(structure: Structure, language: Language) -> None:
+    probs = structure.propagate_complexity(language)
+    assert probs.shape == (structure.item_count + 1,)
+    assert probs.dtype == torch.float32
+    assert probs.device == torch.device("cpu")
+    # Check probability mass (finite subset of infinite structure)
+    total_prob = probs.sum().item()
+    assert 0.5 <= total_prob <= 1.0

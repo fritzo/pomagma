@@ -11,6 +11,9 @@ from .structure import Structure
 
 logger = logging.getLogger(__name__)
 
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+TEST_FILE = os.path.join(ROOT, "bootstrap", "atlas", "skrj", "region.normal.2047.pb")
+
 
 def test_delta_decompress() -> None:
     ob_map = ObMap()
@@ -41,10 +44,6 @@ def test_dense_set_loading() -> None:
     assert torch.equal(tensor, expected), f"Expected {expected}, got {tensor}"
 
 
-ROOT = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-TEST_FILE = os.path.join(ROOT, "bootstrap", "atlas", "skrj", "region.normal.2047.pb")
-
-
 @pytest.mark.parametrize("filename", [TEST_FILE])
 def test_structure_loading(filename: str) -> None:
     logger.info(f"Loading structure from {filename}...")
@@ -54,7 +53,6 @@ def test_structure_loading(filename: str) -> None:
     logger.info(f"  Name: {structure.name}")
     logger.info(f"  Item count: {structure.item_count}")
     logger.info(f"  Nullary functions: {len(structure.nullary_functions)}")
-    logger.info(f"  Injective functions: {len(structure.injective_functions)}")
     logger.info(f"  Binary functions: {len(structure.binary_functions)}")
     logger.info(f"  Symmetric functions: {len(structure.symmetric_functions)}")
     logger.info(f"  Unary relations: {len(structure.unary_relations)}")
@@ -64,26 +62,13 @@ def test_structure_loading(filename: str) -> None:
     for name, val in structure.nullary_functions.items():
         logger.info(f"    Nullary function '{name}': {val}")
 
-    for name, tensor in structure.injective_functions.items():
-        num_entries = tensor.shape[1]
-        logger.info(
-            f"    Injective function '{name}': "
-            f"COO shape {tensor.shape}, {num_entries} entries"
-        )
+    for name, func in structure.binary_functions.items():
+        LRv_entries = func.LRv.ptrs[-1].item()
+        logger.info(f"    Binary function '{name}': LRv has {LRv_entries} entries")
 
-    for name, tensor in structure.binary_functions.items():
-        num_entries = tensor.shape[1]
-        logger.info(
-            f"    Binary function '{name}': "
-            f"COO shape {tensor.shape}, {num_entries} entries"
-        )
-
-    for name, tensor in structure.symmetric_functions.items():
-        num_entries = tensor.shape[1]
-        logger.info(
-            f"    Symmetric function '{name}': "
-            f"COO shape {tensor.shape}, {num_entries} entries"
-        )
+    for name, func in structure.symmetric_functions.items():
+        LRv_entries = func.LRv.ptrs[-1].item()
+        logger.info(f"    Symmetric function '{name}': LRv has {LRv_entries} entries")
 
     for name, tensor in structure.unary_relations.items():
         non_zero = torch.count_nonzero(tensor)

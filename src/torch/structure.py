@@ -36,6 +36,23 @@ class TorchBinaryFunction(torch.autograd.Function):
 
 @dataclass(frozen=True, slots=True, eq=False)
 class BinaryFunctionTable:
+    """
+    Sparse representation of a binary function table in compressed sparse row
+    (CSR) format.
+
+    This stores mappings from (X, Y) -> Z where the function is indexed by Z.
+    For example, if we have f(X, Y) = Z, this stores all (X, Y) pairs that
+    produce each Z.
+
+    Fields:
+        ptrs: Tensor of shape [N+1] where N is the size of the domain.
+              ptrs[i] to ptrs[i+1] gives the range in args for output value i.
+              This is the row pointer array in CSR format.
+        args: Tensor of shape [nnz, 2] where nnz is the number of non-zero entries.
+              Each row contains [X, Y] coordinates for the corresponding output.
+              This is the column indices array in CSR format.
+    """
+
     ptrs: torch.Tensor
     args: torch.Tensor
 
@@ -43,13 +60,20 @@ class BinaryFunctionTable:
 @dataclass(frozen=True, slots=True, eq=False)
 class BinaryFunction:
     """
-    A binary function in the structure.
+    A binary function in the structure with support for automatic differentiation.
+
+    Stores the function f(L, R) = V in three different sparse representations:
+    - LRv: Maps (Left, Right) -> Value for forward evaluation
+    - VLr: Maps (Value, Left) -> Right for backward differentiation wrt right argument
+    - VRl: Maps (Value, Right) -> Left for backward differentiation wrt left argument
+
+    These three tables enable efficient forward and backward passes in autograd.
     """
 
     name: str
-    LRv: BinaryFunctionTable
-    VLr: BinaryFunctionTable
-    VRl: BinaryFunctionTable
+    LRv: BinaryFunctionTable  # (Left, Right) -> Value mapping for forward pass
+    VLr: BinaryFunctionTable  # (Value, Left) -> Right mapping for right gradient
+    VRl: BinaryFunctionTable  # (Value, Right) -> Left mapping for left gradient
 
     def __call__(self, lhs: torch.Tensor, rhs: torch.Tensor) -> torch.Tensor:
         return TorchBinaryFunction.apply(
@@ -69,11 +93,8 @@ class Structure:
     """
     PyTorch representation of an algebraic structure. Immutable.
 
-    Functions are in COO format:
-    - Injective functions: shape [2, num_entries] with [inputs, outputs]
-    - Binary/symmetric functions: shape [3, num_entries] with [arg1, arg2, outputs]
-
-    Relations are dense:
+    Functions are stored as BinaryFunction objects with sparse CSR representations.
+    Relations are dense tensors:
     - Unary relations: shape [1 + item_count]
     - Binary relations: shape [1 + item_count, 1 + item_count]
     """
@@ -81,9 +102,8 @@ class Structure:
     name: str
     item_count: int
     nullary_functions: Mapping[str, Ob]
-    injective_functions: Mapping[str, torch.Tensor]
-    binary_functions: Mapping[str, torch.Tensor]
-    symmetric_functions: Mapping[str, torch.Tensor]
+    binary_functions: Mapping[str, BinaryFunction]
+    symmetric_functions: Mapping[str, BinaryFunction]
     unary_relations: Mapping[str, torch.Tensor]
     binary_relations: Mapping[str, torch.Tensor]
 
@@ -100,26 +120,23 @@ class Structure:
         self, language: Language, *, tol: float = 1e-6
     ) -> torch.Tensor:
         assert 0.0 < tol < 1.0
-        with torch.no_grad():
-            # Initialize with atoms.
-            probs = language.nullary_functions / language.nullary_functions.sum()
+        # Initialize with atoms.
+        probs = language.nullary_functions / language.nullary_functions.sum()
 
-            # Propagate until convergence.
-            diff = 1.0
-            while diff > tol:
-                prev = probs
-                probs = self._propagate_complexity_step(language, probs)
+        # Propagate until convergence.
+        diff = 1.0
+        while diff > tol:
+            prev = probs
+            probs = self._propagate_complexity_step(language, probs)
+            with torch.no_grad():
                 diff = (probs - prev).abs().sum().item()
 
-        # Propagate one more step, in case gradients are needed.
-        return self._propagate_complexity_step(language, probs)
+        return probs
 
     def _propagate_complexity_step(
         self, language: Language, probs: torch.Tensor
     ) -> torch.Tensor:
-        out = language.nullary_functions
-        for name, weight in language.injective_functions.items():
-            out += weight * self.injective_functions[name](probs)
+        out = language.nullary_functions.clone()
         for name, weight in language.binary_functions.items():
             out += weight * self.binary_functions[name](probs, probs)
         for name, weight in language.symmetric_functions.items():

@@ -1,6 +1,9 @@
 from typing import Mapping
 
 import torch
+from immutables import Map
+
+EMPTY_MAP: Mapping[str, torch.Tensor] = Map()
 
 
 class Language(torch.nn.Module):
@@ -10,11 +13,12 @@ class Language(torch.nn.Module):
 
     def __init__(
         self,
+        *,
         nullary_functions: torch.Tensor,
-        injective_functions: Mapping[str, torch.Tensor],
-        binary_functions: Mapping[str, torch.Tensor],
-        symmetric_functions: Mapping[str, torch.Tensor],
-    ):
+        injective_functions: Mapping[str, torch.Tensor] = EMPTY_MAP,
+        binary_functions: Mapping[str, torch.Tensor] = EMPTY_MAP,
+        symmetric_functions: Mapping[str, torch.Tensor] = EMPTY_MAP,
+    ) -> None:
         super().__init__()
         self.nullary_functions = torch.nn.Parameter(nullary_functions)
         self.injective_functions = torch.nn.ParameterDict(
