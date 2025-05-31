@@ -35,6 +35,49 @@ class TorchBinaryFunction(torch.autograd.Function):
 
 
 @dataclass(frozen=True, slots=True, eq=False)
+class SparseBinaryFunction:
+    """
+    Sparse representation of a partial binary function.
+
+    This is a linear-probe hash table.
+    Zero denotes the undefined value.
+
+    Fields:
+        hash_table: Tensor of shape [H, 3] where H > N is the size of the hash table.
+            hash_table[i, 0] is the left argument.
+            hash_table[i, 1] is the right argument.
+            hash_table[i, 2] is the value of the function.
+    """
+
+    hash_table: torch.Tensor
+
+    def __init__(self, num_entries: int) -> None:
+        optimal_size = 2 ** (num_entries.bit_length() + 1)
+        hash_table = torch.zeros(optimal_size, 3, dtype=torch.int32)
+        object.__setattr__(self, "hash_table", hash_table)
+
+    def __getitem__(self, key: tuple[Ob, Ob]) -> Ob:
+        lhs, rhs = key
+        H = self.hash_table.size(0)
+        h = hash((lhs, rhs)) % H
+        while self.hash_table[h, 0] != lhs or self.hash_table[h, 1] != rhs:
+            if self.hash_table[h, 0] == 0:
+                return Ob(0)
+            h = (h + 1) % H
+        return int(self.hash_table[h, 2])
+
+    def __setitem__(self, key: tuple[Ob, Ob], val: Ob) -> None:
+        lhs, rhs = key
+        H = self.hash_table.size(0)
+        h = hash((lhs, rhs)) % H
+        while self.hash_table[h, 0] != 0:
+            h = (h + 1) % H
+        self.hash_table[h, 0] = lhs
+        self.hash_table[h, 1] = rhs
+        self.hash_table[h, 2] = val
+
+
+@dataclass(frozen=True, slots=True, eq=False)
 class SparseTernaryRelation:
     """
     Sparse representation of a binary function table in compressed sparse row
@@ -62,20 +105,27 @@ class BinaryFunction:
     """
     A binary function in the structure with support for automatic differentiation.
 
-    Stores the function f(L, R) = V in three different sparse representations:
-    - LRv: Maps (Left, Right) -> Value for forward evaluation
-    - VLr: Maps (Value, Left) -> Right for backward differentiation wrt right argument
-    - VRl: Maps (Value, Right) -> Left for backward differentiation wrt left argument
+    Stores the function f(L, R) = V in four different sparse representations:
+    - func: Maps (Left, Right) -> Value for lookup
+    - LRv: Maps Value -> (Left, Right) pairs for forward evaluation
+    - VLr: Maps Right -> (Value, Left) pairs for backward wrt right
+    - VRl: Maps Left -> (Value, Right) pairs for backward wrt left
 
     These three tables enable efficient forward and backward passes in autograd.
     """
 
     name: str
-    LRv: SparseTernaryRelation  # (Left, Right) -> Value mapping for forward pass
-    VLr: SparseTernaryRelation  # (Value, Left) -> Right mapping for right gradient
-    VRl: SparseTernaryRelation  # (Value, Right) -> Left mapping for left gradient
+    func: SparseBinaryFunction  # (Left, Right) -> Value mapping for lookup
+    LRv: SparseTernaryRelation  # Value -> (Left, Right) pairs for forward pass
+    VLr: SparseTernaryRelation  # Right -> (Value, Left) pairs for backward wrt right
+    VRl: SparseTernaryRelation  # Left -> (Value, Right) pairs for backward wrt left
+
+    def __getitem__(self, key: tuple[Ob, Ob]) -> Ob:
+        """Lookup the value of the function at the given (lhs, rhs) pair."""
+        return self.func[key]
 
     def __call__(self, lhs: torch.Tensor, rhs: torch.Tensor) -> torch.Tensor:
+        """Differentiably convolve two weight vectors."""
         return TorchBinaryFunction.apply(
             self.LRv.ptrs,
             self.LRv.args,

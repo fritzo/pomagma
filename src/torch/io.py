@@ -10,7 +10,13 @@ import pomagma.atlas.structure_pb2 as pb2
 from pomagma.io import blobstore
 from pomagma.io.protobuf import InFile
 
-from .structure import BinaryFunction, Ob, SparseTernaryRelation, Structure
+from .structure import (
+    BinaryFunction,
+    Ob,
+    SparseBinaryFunction,
+    SparseTernaryRelation,
+    Structure,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -116,6 +122,7 @@ def load_binary_function(
     Load binary function data into a BinaryFunction object.
     """
     # Pass 1: Count entries for each table
+    func_entries = 0
     LRv_counts = [0] * (item_count + 1)  # indexed by val
     VLr_counts = [0] * (item_count + 1)  # indexed by rhs
     VRl_counts = [0] * (item_count + 1)  # indexed by lhs
@@ -125,6 +132,7 @@ def load_binary_function(
             lhs = row.lhs
             keys, vals = load_ob_map(row.rhs_val)
             for rhs, val in zip(keys, vals):
+                func_entries += 1
                 LRv_counts[val] += 1
                 VLr_counts[rhs] += 1
                 VRl_counts[lhs] += 1
@@ -140,7 +148,8 @@ def load_binary_function(
     VLr_ptrs = create_ptrs_from_counts(VLr_counts)
     VRl_ptrs = create_ptrs_from_counts(VRl_counts)
 
-    # Allocate args tensors
+    # Allocate tensors
+    func = SparseBinaryFunction(func_entries)
     LRv_nnz = int(LRv_ptrs[-1].item())
     VLr_nnz = int(VLr_ptrs[-1].item())
     VRl_nnz = int(VRl_ptrs[-1].item())
@@ -159,6 +168,8 @@ def load_binary_function(
             lhs = row.lhs
             keys, vals = load_ob_map(row.rhs_val)
             for rhs, val in zip(keys, vals):
+                func[lhs, rhs] = val
+
                 # LRv table: indexed by val, stores (lhs, rhs)
                 idx = LRv_ptrs[val] + LRv_pos[val]
                 LRv_args[idx, 0] = lhs
@@ -187,7 +198,7 @@ def load_binary_function(
     VLr = SparseTernaryRelation(ptrs=VLr_ptrs, args=VLr_args)
     VRl = SparseTernaryRelation(ptrs=VRl_ptrs, args=VRl_args)
 
-    return BinaryFunction(name=proto_func.name, LRv=LRv, VLr=VLr, VRl=VRl)
+    return BinaryFunction(name=proto_func.name, func=func, LRv=LRv, VLr=VLr, VRl=VRl)
 
 
 def load_symmetric_function(
@@ -198,6 +209,7 @@ def load_symmetric_function(
     For symmetric functions, we duplicate off-diagonal elements.
     """
     # Pass 1: Count entries for each table, including symmetric duplicates
+    func_entries = 0
     LRv_counts = [0] * (item_count + 1)  # indexed by val
     VLr_counts = [0] * (item_count + 1)  # indexed by rhs
     VRl_counts = [0] * (item_count + 1)  # indexed by lhs
@@ -208,17 +220,18 @@ def load_symmetric_function(
             keys, vals = load_ob_map(row.rhs_val)
             for rhs, val in zip(keys, vals):
                 # Original entry
+                func_entries += 1
                 LRv_counts[val] += 1
                 VLr_counts[rhs] += 1
                 VRl_counts[lhs] += 1
 
                 # Symmetric entry (if different)
-                if lhs != rhs:
-                    LRv_counts[val] += (
-                        1  # Same val, but (rhs, lhs) instead of (lhs, rhs)
-                    )
-                    VLr_counts[lhs] += 1  # Now indexed by lhs, stores (val, rhs)
-                    VRl_counts[rhs] += 1  # Now indexed by rhs, stores (val, lhs)
+                if lhs == rhs:
+                    continue
+                func_entries += 1
+                LRv_counts[val] += 1  # Same val, but (rhs, lhs) instead of (lhs, rhs)
+                VLr_counts[lhs] += 1  # Now indexed by lhs, stores (val, rhs)
+                VRl_counts[rhs] += 1  # Now indexed by rhs, stores (val, lhs)
 
     # Create pointers from counts
     def create_ptrs_from_counts(counts: list[int]) -> torch.Tensor:
@@ -231,7 +244,8 @@ def load_symmetric_function(
     VLr_ptrs = create_ptrs_from_counts(VLr_counts)
     VRl_ptrs = create_ptrs_from_counts(VRl_counts)
 
-    # Allocate args tensors
+    # Allocate tensors
+    func = SparseBinaryFunction(func_entries)
     LRv_nnz = int(LRv_ptrs[-1].item())
     VLr_nnz = int(VLr_ptrs[-1].item())
     VRl_nnz = int(VRl_ptrs[-1].item())
@@ -251,6 +265,8 @@ def load_symmetric_function(
             keys, vals = load_ob_map(row.rhs_val)
             for rhs, val in zip(keys, vals):
                 # Original entry: (lhs, rhs, val)
+                func[lhs, rhs] = val
+
                 # LRv table: indexed by val, stores (lhs, rhs)
                 idx = LRv_ptrs[val] + LRv_pos[val]
                 LRv_args[idx, 0] = lhs
@@ -272,6 +288,7 @@ def load_symmetric_function(
                 # Symmetric entry: (rhs, lhs, val) if lhs != rhs
                 if lhs == rhs:
                     continue
+                func[rhs, lhs] = val
 
                 # LRv table: indexed by val, stores (rhs, lhs)
                 idx = LRv_ptrs[val] + LRv_pos[val]
@@ -301,7 +318,7 @@ def load_symmetric_function(
     VLr = SparseTernaryRelation(ptrs=VLr_ptrs, args=VLr_args)
     VRl = SparseTernaryRelation(ptrs=VRl_ptrs, args=VRl_args)
 
-    return BinaryFunction(name=proto_func.name, LRv=LRv, VLr=VLr, VRl=VRl)
+    return BinaryFunction(name=proto_func.name, func=func, LRv=LRv, VLr=VLr, VRl=VRl)
 
 
 def load_unary_relation(proto_rel: pb2.UnaryRelation, item_count: int) -> torch.Tensor:

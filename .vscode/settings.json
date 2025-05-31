@@ -13,12 +13,16 @@
     "terminal.integrated.cwd": "${workspaceFolder}",
     "cSpell.words": [
         "approximator",
+        "ARITIES",
         "blobstore",
         "CTEST",
+        "debuginfo",
+        "Differentiably",
         "gradcheck",
         "injective",
         "letrec",
         "NLESS",
+        "noncopyable",
         "nullary",
         "pomagma",
         "ptrs",
@@ -26,6 +30,7 @@
         "randn",
         "skja",
         "skrj",
+        "sortedset",
         "trool",
         "vcpkg"
     ]

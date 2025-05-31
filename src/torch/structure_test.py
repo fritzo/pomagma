@@ -1,10 +1,14 @@
+import logging
 import os
+import random
 
 import pytest
 import torch
 
 from .language import Language
-from .structure import Structure, TorchBinaryFunction
+from .structure import Ob, Structure, TorchBinaryFunction
+
+logger = logging.getLogger(__name__)
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 TEST_FILE = os.path.join(ROOT, "bootstrap", "atlas", "skrj", "region.normal.2047.pb")
@@ -130,6 +134,26 @@ def test_torch_binary_function_gradients(N: int) -> None:
         atol=1e-2,
         check_undefined_grad=False,  # We return None for non-differentiable args
     ), "Gradient check failed for TorchBinaryFunction"
+
+
+def test_binary_function_lookup(structure: Structure) -> None:
+    for symmetric, funs in [
+        (False, structure.binary_functions),
+        (True, structure.symmetric_functions),
+    ]:
+        for name, f in funs.items():
+            logger.info(f"Testing {name} lookup")
+            for i in range(1000):
+                val = Ob(random.randint(1, structure.item_count))
+                if f.LRv.ptrs[val] < f.LRv.ptrs[val + 1]:
+                    start = int(f.LRv.ptrs[val].item())
+                    end = int(f.LRv.ptrs[val + 1].item()) - 1
+                    e = random.randint(start, end)
+                    lhs = Ob(int(f.LRv.args[e, 0].item()))
+                    rhs = Ob(int(f.LRv.args[e, 1].item()))
+                    assert f.func[lhs, rhs] == val
+                    if symmetric:
+                        assert f.func[rhs, lhs] == val
 
 
 def test_propagate_complexity(structure: Structure, language: Language) -> None:
