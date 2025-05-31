@@ -7,7 +7,7 @@ name = "pomagma"
 description = "An inference engine for extensional lambda-calculus"
 authors = [{name = "Fritz Obermeyer", email = "fritz.obermeyer@gmail.com"}]
 maintainers = [{name = "Fritz Obermeyer", email = "fritz.obermeyer@gmail.com"}]
-license = {text = "Apache 2.0"}
+license = "Apache-2.0"
 readme = "README.md"
 requires-python = ">=3.11"
 dynamic = ["version", "scripts"]
@@ -16,6 +16,7 @@ dependencies = [
     "hypothesis",
     "immutables",
     "isort",
+    "mypy",
     "nbval",
     "notebook",
     "numpy",
@@ -28,12 +29,10 @@ dependencies = [
     "pyzmq",
     "ruff",
     "torch",
-    "ty",
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -79,10 +78,103 @@ line-ending = "auto"
 known-first-party = ["pomagma"]
 known-third-party = ["torch"]
 
-[tool.ty.rules]
-# TODO: Incrementally fix these errors and remove ignores
-unresolved-attribute = "ignore"
-unresolved-import = "ignore"
-unresolved-reference = "ignore"  # __debug__
-possibly-unbound-attribute = "ignore"  # parsable, convert, re.search().group()
-call-non-callable = "ignore"  # pytest.skip(), pytest.xfail() calls 
+[tool.mypy]
+# Configure mypy type checking
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+check_untyped_defs = true
+disallow_untyped_decorators = false
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+
+# Global ignores for now
+ignore_missing_imports = true
+disable_error_code = ["name-defined"]
+
+# Handle symlinks properly (pomagma -> src)
+follow_imports_for_stubs = true
+
+# Since pomagma/* is symlinked to src/*, we ignore all pomagma.* modules 
+# to avoid checking the same code twice
+[[tool.mypy.overrides]]
+module = "pomagma.*"
+ignore_errors = true
+
+# TODO: Incrementally fix these errors by removing module-specific ignores
+# When fixing a sub-package, remove its entire [[tool.mypy.overrides]] section
+# Note: pomagma.* modules are symlinked to src.* so we only need src.* overrides
+
+# Core utility modules - fix first
+[[tool.mypy.overrides]]
+module = "src.util.*"
+disable_error_code = ["var-annotated", "index", "comparison-overlap", "assignment", "attr-defined"]
+
+# Language and protobuf modules
+[[tool.mypy.overrides]]
+module = "src.language.*"
+disable_error_code = ["attr-defined", "var-annotated"]
+
+# Src.reducer - one of the main sub-packages to fix
+[[tool.mypy.overrides]]
+module = "src.reducer.*"
+disable_error_code = ["attr-defined", "assignment", "call-overload", "index", "var-annotated", "call-arg", "operator", "method-assign", "unreachable", "unused-ignore", "misc", "arg-type"]
+
+# Src.compiler - one of the main sub-packages to fix
+[[tool.mypy.overrides]]
+module = "src.compiler.*"
+disable_error_code = ["method-assign", "assignment", "var-annotated", "index", "override", "attr-defined", "operator", "misc", "return-value"]
+
+# Src.analyst - one of the main sub-packages to fix  
+[[tool.mypy.overrides]]
+module = "src.analyst.*"  
+disable_error_code = ["attr-defined", "var-annotated", "index"]
+
+# Src.torch - one of the main sub-packages to fix
+[[tool.mypy.overrides]]
+module = "src.torch.*"
+disable_error_code = ["misc", "no-any-return", "return-value", "operator", "attr-defined"]
+
+# IO modules
+[[tool.mypy.overrides]]
+module = "src.io.*"
+disable_error_code = ["attr-defined", "no-any-return", "misc", "arg-type", "assignment"]
+
+# Cartographer modules
+[[tool.mypy.overrides]]
+module = "src.cartographer.*"
+disable_error_code = ["attr-defined"]
+
+# Atlas modules  
+[[tool.mypy.overrides]]
+module = "src.atlas.*"
+disable_error_code = ["attr-defined"]
+
+# Theorist modules
+[[tool.mypy.overrides]]
+module = "src.theorist.*"
+disable_error_code = ["var-annotated"]
+
+# Examples and corpus modules
+[[tool.mypy.overrides]]
+module = "src.examples.*"
+disable_error_code = ["assignment", "attr-defined"]
+
+[[tool.mypy.overrides]]
+module = "src.corpus.*"
+disable_error_code = ["attr-defined"]
+
+# Main modules and top-level scripts
+[[tool.mypy.overrides]]
+module = "src.__main__"
+disable_error_code = ["union-attr"]
+
+[[tool.mypy.overrides]]
+module = "vet"
+disable_error_code = ["assignment"] 

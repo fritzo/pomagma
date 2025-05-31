@@ -53,7 +53,7 @@ lint: FORCE
 	# TODO Use clang-tidy.
 	ruff check $(PY_FILES)
 	ruff format --check $(PY_FILES)
-	ty check $(PY_FILES)
+	mypy --install-types --non-interactive $(PY_FILES)
 
 clang-format: FORCE
 	$(info clang-format)
