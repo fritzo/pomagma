@@ -173,7 +173,9 @@ def test_propagate_probs(structure: Structure, language: Language) -> None:
 
 
 def test_log_prob(structure: Structure, language: Language) -> None:
-    log_prob = language.log_prob(language)
+    data = language
+    probs = language.propagate_probs(structure)
+    log_prob = data.log_prob(language, probs)
     assert log_prob.shape == ()
     assert log_prob.dtype == torch.float32
     assert log_prob.device == torch.device("cpu")

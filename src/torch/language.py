@@ -4,6 +4,8 @@ from typing import Mapping
 import torch
 from immutables import Map
 
+from pomagma.util import TODO
+
 from .corpus import ObTree
 from .structure import Ob, Structure
 
@@ -72,25 +74,35 @@ class Language(torch.nn.Module):
             weight *= scale
 
     def propagate_probs(
-        self, structure: Structure, *, tol: float = 1e-6
+        self, structure: Structure, *, reltol: float = 1e-3
     ) -> torch.Tensor:
-        assert 0.0 < tol < 1.0
+        """
+        Propagates from a normalized grammar to a sub-normalized weighted set of obs.
+
+        (The ob set would be normalized if the structure were closed, but the
+        structure is only a finite subset of the full structure.)
+        """
+        assert 0.0 < reltol < 1.0
+        eps = torch.finfo(self.nullary_functions.dtype).eps
+
         # Initialize with atoms.
         probs = self.nullary_functions / self.nullary_functions.sum()
 
         # Propagate until convergence.
         diff = 1.0
-        while diff > tol:
+        while diff > reltol:
             prev = probs
             probs = self._propagate_probs_step(structure, probs)
             with torch.no_grad():
-                diff = (probs - prev).abs().sum().item()
+                diffs = (probs - prev).abs() / (probs + eps)
+                diff = diffs.max().item()
 
         return probs
 
     def _propagate_probs_step(
         self, structure: Structure, probs: torch.Tensor
     ) -> torch.Tensor:
+        # Propagates mass from subexpressions to their super-expressions.
         out = self.nullary_functions.clone()
         for name, weight in self.binary_functions.items():
             fn = structure.binary_functions[name]
@@ -100,31 +112,87 @@ class Language(torch.nn.Module):
             out += weight * fn.sum_product(probs, probs)
         return out
 
-    def log_prob(self, data: "Language") -> torch.Tensor:
+    def propagate_occurrences(
+        self, structure: Structure, data: torch.Tensor, *, reltol=1e-3
+    ) -> torch.Tensor:
         """
-        Compute the log probability of data under this probabilistic language.
+        Counts the effective number of occurrences of each ob in the data, averaged
+        over extractions.
+        """
+        assert data.shape == self.nullary_functions.shape
+        assert 0.0 < reltol < 1.0
+        eps = torch.finfo(data.dtype).eps
+
+        # Initialize with raw data.
+        result = data.clone()
+
+        # Propagate until convergence.
+        diff = 1.0
+        while diff > reltol:
+            prev = result
+            result = self._propagate_occurrences_step(structure, result)
+            with torch.no_grad():
+                diffs = (result - prev).abs() / (result + eps)
+                diff = diffs.max().item()
+
+        return result
+
+    def _propagate_occurrences_step(
+        self, structure: Structure, data: torch.Tensor
+    ) -> torch.Tensor:
+        # Propagates mass from super-expressions to their subexpressions.
+        # This is the reverse of _propagate_probs_step, propagating from each
+        # val to all rhs,lhs pairs that could have produced it, proportional to
+        # their contribution.
+        out = data.clone()
+        TODO()
+        return out
+
+    def log_prob(self, generator: "Language", probs: torch.Tensor) -> torch.Tensor:
+        """
+        Compute the log probability of data under propagated probabilities.
         """
         h = torch.nn.functional.cross_entropy(
-            data.nullary_functions, self.nullary_functions, reduction="sum"
+            self.nullary_functions, probs, reduction="sum"
         )
-        weights: list[torch.Tensor] = []
-        probs: list[torch.Tensor] = []
-        for name, weight in data.injective_functions.items():
-            probs.append(self.injective_functions[name])
-            weights.append(weight)
-        for name, weight in data.binary_functions.items():
-            probs.append(self.binary_functions[name])
-            weights.append(weight)
-        for name, weight in data.symmetric_functions.items():
-            probs.append(self.symmetric_functions[name])
-            weights.append(weight)
-        if weights:
+        ws: list[torch.Tensor] = []
+        ps: list[torch.Tensor] = []
+        for name, weight in self.injective_functions.items():
+            ws.append(weight)
+            ps.append(generator.injective_functions[name])
+        for name, weight in self.binary_functions.items():
+            ws.append(weight)
+            ps.append(generator.binary_functions[name])
+        for name, weight in self.symmetric_functions.items():
+            ws.append(weight)
+            ps.append(generator.symmetric_functions[name])
+        if ws:
             h += torch.nn.functional.cross_entropy(
-                torch.stack(weights), torch.stack(probs), reduction="sum"
+                torch.stack(ws), torch.stack(ps), reduction="sum"
             )
         return -h
 
+    def zeros_like(self) -> "Language":
+        """
+        Returns a new language with the same structure but all weights zero.
+        """
+        return Language(
+            nullary_functions=torch.zeros_like(self.nullary_functions),
+            injective_functions=Map(
+                {k: torch.zeros_like(v) for k, v in self.injective_functions.items()}
+            ),
+            binary_functions=Map(
+                {k: torch.zeros_like(v) for k, v in self.binary_functions.items()}
+            ),
+            symmetric_functions=Map(
+                {k: torch.zeros_like(v) for k, v in self.symmetric_functions.items()}
+            ),
+        )
+
     def iadd_corpus(self, ob_tree: ObTree, weight: float = 1.0) -> None:
+        """
+        Adds data weights from a corpus, in-place.
+        """
         # Count symbols and objects
         symbol_counts: Counter[str] = Counter()
         ob_counts: Counter[Ob] = Counter()

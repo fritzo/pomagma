@@ -18,6 +18,7 @@
         "CTEST",
         "debuginfo",
         "Differentiably",
+        "finfo",
         "gradcheck",
         "injective",
         "letrec",
