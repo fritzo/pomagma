@@ -10,7 +10,7 @@ import pomagma.atlas.structure_pb2 as pb2
 from pomagma.io import blobstore
 from pomagma.io.protobuf import InFile
 
-from .structure import BinaryFunction, BinaryFunctionTable, Ob, Structure
+from .structure import BinaryFunction, Ob, SparseTernaryRelation, Structure
 
 logger = logging.getLogger(__name__)
 
@@ -109,76 +109,6 @@ def count_binary_function_entries(proto_func: pb2.BinaryFunction) -> int:
     )
 
 
-def obsolete_load_binary_function_data(proto_func: pb2.BinaryFunction) -> torch.Tensor:
-    """
-    Load binary function data into COO format.
-    Returns a tensor of shape [3, num_entries] where:
-    - tensor[0, :] are the first argument indices
-    - tensor[1, :] are the second argument indices
-    - tensor[2, :] are the output values
-    """
-    # First pass: count entries
-    num_entries = count_binary_function_entries(proto_func)
-    result = torch.zeros((3, num_entries), dtype=torch.int32)
-    idx = 0
-
-    for chunk in iter_chunks(proto_func):
-        for row in chunk.rows:
-            lhs = row.lhs
-            keys, vals = load_ob_map(row.rhs_val)
-            for rhs, val in zip(keys, vals):
-                result[0, idx] = lhs
-                result[1, idx] = rhs
-                result[2, idx] = val
-                idx += 1
-
-    assert idx == num_entries, f"Expected {num_entries} entries, got {idx}"
-    return result
-
-
-def obsolete_load_symmetric_function_data(
-    proto_func: pb2.BinaryFunction,
-) -> torch.Tensor:
-    """
-    Load symmetric function data into COO format.
-    For symmetric functions, we duplicate off-diagonal elements.
-    Returns a tensor of shape [3, num_entries] where:
-    - tensor[0, :] are the first argument indices
-    - tensor[1, :] are the second argument indices
-    - tensor[2, :] are the output values
-    """
-    # First pass: count entries
-    # Allocate double the base entries as an overestimate for symmetric duplicates
-    base_entries = count_binary_function_entries(proto_func)
-    max_entries = 2 * base_entries
-    result = torch.zeros((3, max_entries), dtype=torch.int32)
-    idx = 0
-
-    for chunk in iter_chunks(proto_func):
-        for row in chunk.rows:
-            lhs = row.lhs
-            keys, vals = load_ob_map(row.rhs_val)
-            for rhs, val in zip(keys, vals):
-                # Add the original entry
-                result[0, idx] = lhs
-                result[1, idx] = rhs
-                result[2, idx] = val
-                idx += 1
-
-                # Add symmetric entry if different
-                if lhs != rhs:
-                    result[0, idx] = rhs
-                    result[1, idx] = lhs
-                    result[2, idx] = val
-                    idx += 1
-
-    # Trim to actual size used
-    assert idx <= max_entries, f"Expected {max_entries} entries, got {idx}"
-    if idx < max_entries:
-        result = result[:, :idx]
-    return result
-
-
 def load_binary_function(
     proto_func: pb2.BinaryFunction, item_count: int
 ) -> BinaryFunction:
@@ -253,9 +183,9 @@ def load_binary_function(
     assert VRl_pos == VRl_counts, f"VRl position mismatch: {VRl_pos} != {VRl_counts}"
 
     # Create BinaryFunctionTable objects
-    LRv = BinaryFunctionTable(ptrs=LRv_ptrs, args=LRv_args)
-    VLr = BinaryFunctionTable(ptrs=VLr_ptrs, args=VLr_args)
-    VRl = BinaryFunctionTable(ptrs=VRl_ptrs, args=VRl_args)
+    LRv = SparseTernaryRelation(ptrs=LRv_ptrs, args=LRv_args)
+    VLr = SparseTernaryRelation(ptrs=VLr_ptrs, args=VLr_args)
+    VRl = SparseTernaryRelation(ptrs=VRl_ptrs, args=VRl_args)
 
     return BinaryFunction(name=proto_func.name, LRv=LRv, VLr=VLr, VRl=VRl)
 
@@ -340,34 +270,36 @@ def load_symmetric_function(
                 VRl_pos[lhs] += 1
 
                 # Symmetric entry: (rhs, lhs, val) if lhs != rhs
-                if lhs != rhs:
-                    # LRv table: indexed by val, stores (rhs, lhs)
-                    idx = LRv_ptrs[val] + LRv_pos[val]
-                    LRv_args[idx, 0] = rhs
-                    LRv_args[idx, 1] = lhs
-                    LRv_pos[val] += 1
+                if lhs == rhs:
+                    continue
 
-                    # VLr table: indexed by lhs (now the rhs), stores (val, rhs)
-                    idx = VLr_ptrs[lhs] + VLr_pos[lhs]
-                    VLr_args[idx, 0] = val
-                    VLr_args[idx, 1] = rhs
-                    VLr_pos[lhs] += 1
+                # LRv table: indexed by val, stores (rhs, lhs)
+                idx = LRv_ptrs[val] + LRv_pos[val]
+                LRv_args[idx, 0] = rhs
+                LRv_args[idx, 1] = lhs
+                LRv_pos[val] += 1
 
-                    # VRl table: indexed by rhs (now the lhs), stores (val, lhs)
-                    idx = VRl_ptrs[rhs] + VRl_pos[rhs]
-                    VRl_args[idx, 0] = val
-                    VRl_args[idx, 1] = lhs
-                    VRl_pos[rhs] += 1
+                # VLr table: indexed by lhs (now the rhs), stores (val, rhs)
+                idx = VLr_ptrs[lhs] + VLr_pos[lhs]
+                VLr_args[idx, 0] = val
+                VLr_args[idx, 1] = rhs
+                VLr_pos[lhs] += 1
+
+                # VRl table: indexed by rhs (now the lhs), stores (val, lhs)
+                idx = VRl_ptrs[rhs] + VRl_pos[rhs]
+                VRl_args[idx, 0] = val
+                VRl_args[idx, 1] = lhs
+                VRl_pos[rhs] += 1
 
     # Verify that positions match counts
-    assert LRv_pos == LRv_counts, f"LRv position mismatch: {LRv_pos} != {LRv_counts}"
-    assert VLr_pos == VLr_counts, f"VLr position mismatch: {VLr_pos} != {VLr_counts}"
-    assert VRl_pos == VRl_counts, f"VRl position mismatch: {VRl_pos} != {VRl_counts}"
+    assert LRv_pos == LRv_counts
+    assert VLr_pos == VLr_counts
+    assert VRl_pos == VRl_counts
 
-    # Create BinaryFunctionTable objects
-    LRv = BinaryFunctionTable(ptrs=LRv_ptrs, args=LRv_args)
-    VLr = BinaryFunctionTable(ptrs=VLr_ptrs, args=VLr_args)
-    VRl = BinaryFunctionTable(ptrs=VRl_ptrs, args=VRl_args)
+    # Create SparseTernaryRelation objects
+    LRv = SparseTernaryRelation(ptrs=LRv_ptrs, args=LRv_args)
+    VLr = SparseTernaryRelation(ptrs=VLr_ptrs, args=VLr_args)
+    VRl = SparseTernaryRelation(ptrs=VRl_ptrs, args=VRl_args)
 
     return BinaryFunction(name=proto_func.name, LRv=LRv, VLr=VLr, VRl=VRl)
 

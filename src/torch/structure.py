@@ -35,7 +35,7 @@ class TorchBinaryFunction(torch.autograd.Function):
 
 
 @dataclass(frozen=True, slots=True, eq=False)
-class BinaryFunctionTable:
+class SparseTernaryRelation:
     """
     Sparse representation of a binary function table in compressed sparse row
     (CSR) format.
@@ -71,9 +71,9 @@ class BinaryFunction:
     """
 
     name: str
-    LRv: BinaryFunctionTable  # (Left, Right) -> Value mapping for forward pass
-    VLr: BinaryFunctionTable  # (Value, Left) -> Right mapping for right gradient
-    VRl: BinaryFunctionTable  # (Value, Right) -> Left mapping for left gradient
+    LRv: SparseTernaryRelation  # (Left, Right) -> Value mapping for forward pass
+    VLr: SparseTernaryRelation  # (Value, Left) -> Right mapping for right gradient
+    VRl: SparseTernaryRelation  # (Value, Right) -> Left mapping for left gradient
 
     def __call__(self, lhs: torch.Tensor, rhs: torch.Tensor) -> torch.Tensor:
         return TorchBinaryFunction.apply(
