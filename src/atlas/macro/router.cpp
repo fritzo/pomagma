@@ -306,6 +306,7 @@ void Router::fit_language(
     const std::unordered_map<std::string, size_t>& symbol_counts,
     const std::unordered_map<Ob, size_t>& ob_counts, float reltol) {
     POMAGMA_INFO("Fitting language");
+    // EM algorithm to optimize PCFG production rule probabilities from training corpus
     const size_t item_count = m_carrier.item_count();
     std::vector<float> ob_probs(1 + item_count, 0);
     std::vector<float> ob_weights(1 + item_count, 0);
@@ -313,15 +314,19 @@ void Router::fit_language(
     POMAGMA_ASSERT_EQ(m_types.size(), m_language.size());
     const float max_increase = 1.0 + reltol;
 
+    // EM iterations: alternate between E-step (compute expectations) and M-step (maximize parameters)
     bool changed = true;
     while (changed) {
         changed = false;
 
+        // E-step: compute probability of each object under current grammar
         update_probs(ob_probs, reltol);
 
+        // Redistribute observed counts proportionally to rule usage probabilities
         update_weights(ob_probs, symbol_counts, ob_counts, symbol_weights,
                        ob_weights, reltol);
 
+        // M-step: normalize symbol weights to get new production rule probabilities
         POMAGMA_DEBUG("optimizing language");
         float total_weight = 0;
         for (float weight : symbol_weights) {
@@ -329,11 +334,12 @@ void Router::fit_language(
         }
         for (size_t i = 0; i < m_types.size(); ++i) {
             SegmentType& type = m_types[i];
-            float new_prob = symbol_weights[i] / total_weight;
+            float new_prob = symbol_weights[i] / total_weight;  // MLE normalization
             float old_prob = type.prob;
             type.prob = new_prob;
             m_language[type.name] = new_prob;
 
+            // Check convergence: continue if any parameter changed significantly
             if (new_prob > old_prob * max_increase) {
                 changed = true;
             }
