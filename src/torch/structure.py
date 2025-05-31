@@ -1,15 +1,12 @@
 from dataclasses import dataclass
-from typing import Mapping, NewType
+from typing import Mapping
 
 import torch
 
-from .language import Language
-
-Ob = NewType("Ob", int)
-"""An item in the carrier. 1-indexed, so 0 means undefined."""
+from .util import Ob
 
 
-class TorchBinaryFunction(torch.autograd.Function):
+class BinaryFunctionSumProduct(torch.autograd.Function):
     @staticmethod
     def forward(
         ctx,
@@ -22,15 +19,21 @@ class TorchBinaryFunction(torch.autograd.Function):
         lhs: torch.Tensor,
         rhs: torch.Tensor,
     ) -> torch.Tensor:
-        val = torch.ops.pomagma.binary_function(LRv_ptrs, LRv_args, lhs, rhs)
+        val = torch.ops.pomagma.binary_function_sum_product(
+            LRv_ptrs, LRv_args, lhs, rhs
+        )
         ctx.save_for_backward(VLr_ptrs, VLr_args, VRl_ptrs, VRl_args, lhs, rhs)
         return val
 
     @staticmethod
     def backward(ctx, grad_val: torch.Tensor) -> tuple[torch.Tensor, ...]:
         VLr_ptrs, VLr_args, VRl_ptrs, VRl_args, lhs, rhs = ctx.saved_tensors
-        grad_lhs = torch.ops.pomagma.binary_function(VRl_ptrs, VRl_args, grad_val, rhs)
-        grad_rhs = torch.ops.pomagma.binary_function(VLr_ptrs, VLr_args, grad_val, lhs)
+        grad_lhs = torch.ops.pomagma.binary_function_sum_product(
+            VRl_ptrs, VRl_args, grad_val, rhs
+        )
+        grad_rhs = torch.ops.pomagma.binary_function_sum_product(
+            VLr_ptrs, VLr_args, grad_val, lhs
+        )
         return (None, None, None, None, None, None, grad_lhs, grad_rhs)
 
 
@@ -124,9 +127,9 @@ class BinaryFunction:
         """Lookup the value of the function at the given (lhs, rhs) pair."""
         return self.func[key]
 
-    def __call__(self, lhs: torch.Tensor, rhs: torch.Tensor) -> torch.Tensor:
+    def sum_product(self, lhs: torch.Tensor, rhs: torch.Tensor) -> torch.Tensor:
         """Differentiably convolve two weight vectors."""
-        return TorchBinaryFunction.apply(
+        return BinaryFunctionSumProduct.apply(
             self.LRv.ptrs,
             self.LRv.args,
             self.VLr.ptrs,
@@ -135,6 +138,13 @@ class BinaryFunction:
             self.VRl.args,
             lhs,
             rhs,
+        )
+
+    @torch.no_grad()
+    def max_product(self, lhs: torch.Tensor, rhs: torch.Tensor) -> torch.Tensor:
+        """Non-differentiably max-convolve two weight vectors."""
+        return torch.ops.pomagma.binary_function_max_product(
+            self.LRv.ptrs, self.LRv.args, lhs, rhs
         )
 
 
@@ -165,30 +175,3 @@ class Structure:
         from .io import load_structure
 
         return load_structure(filename, relations=relations)
-
-    def propagate_complexity(
-        self, language: Language, *, tol: float = 1e-6
-    ) -> torch.Tensor:
-        assert 0.0 < tol < 1.0
-        # Initialize with atoms.
-        probs = language.nullary_functions / language.nullary_functions.sum()
-
-        # Propagate until convergence.
-        diff = 1.0
-        while diff > tol:
-            prev = probs
-            probs = self._propagate_complexity_step(language, probs)
-            with torch.no_grad():
-                diff = (probs - prev).abs().sum().item()
-
-        return probs
-
-    def _propagate_complexity_step(
-        self, language: Language, probs: torch.Tensor
-    ) -> torch.Tensor:
-        out = language.nullary_functions.clone()
-        for name, weight in language.binary_functions.items():
-            out += weight * self.binary_functions[name](probs, probs)
-        for name, weight in language.symmetric_functions.items():
-            out += weight * self.symmetric_functions[name](probs, probs)
-        return out

@@ -7,10 +7,16 @@
 // Note: Use Tensor(a!) to indicate mutated tensors.
 TORCH_LIBRARY(pomagma, m) {
     m.def(
-        "binary_function(Tensor f_ptrs, Tensor f_args, Tensor lhs, "
+        "binary_function_sum_product(Tensor f_ptrs, Tensor f_args, Tensor lhs, "
+        "Tensor rhs) -> Tensor");
+    m.def(
+        "binary_function_max_product(Tensor f_ptrs, Tensor f_args, Tensor lhs, "
         "Tensor rhs) -> Tensor");
 }
 
 TORCH_LIBRARY_IMPL(pomagma, CPU, m) {
-    m.impl("binary_function", &pomagma::torch::binary_function);
+    m.impl("binary_function_sum_product",
+           &pomagma::torch::binary_function_reduce_product<true>);
+    m.impl("binary_function_max_product",
+           &pomagma::torch::binary_function_reduce_product<false>);
 }

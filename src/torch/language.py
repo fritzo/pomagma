@@ -5,7 +5,8 @@ import torch
 from immutables import Map
 
 from .corpus import ObTree
-from .structure import Ob
+from .structure import Structure
+from .util import Ob
 
 EMPTY_MAP: Mapping[str, torch.Tensor] = Map()
 
@@ -13,6 +14,9 @@ EMPTY_MAP: Mapping[str, torch.Tensor] = Map()
 class Language(torch.nn.Module):
     """
     PyTorch representation of a probabilistic grammar.
+
+    Nullary functions are materialized as a dense tensor wrt a Structure.
+    All other data are merely scalar weights.
     """
 
     def __init__(
@@ -64,6 +68,35 @@ class Language(torch.nn.Module):
             weight *= scale
         for _, weight in sorted(self.symmetric_functions.items()):
             weight *= scale
+
+    def propagate_complexity(
+        self, structure: Structure, *, tol: float = 1e-6
+    ) -> torch.Tensor:
+        assert 0.0 < tol < 1.0
+        # Initialize with atoms.
+        probs = self.nullary_functions / self.nullary_functions.sum()
+
+        # Propagate until convergence.
+        diff = 1.0
+        while diff > tol:
+            prev = probs
+            probs = self._propagate_complexity_step(structure, probs)
+            with torch.no_grad():
+                diff = (probs - prev).abs().sum().item()
+
+        return probs
+
+    def _propagate_complexity_step(
+        self, structure: Structure, probs: torch.Tensor
+    ) -> torch.Tensor:
+        out = self.nullary_functions.clone()
+        for name, weight in self.binary_functions.items():
+            fn = structure.binary_functions[name]
+            out += weight * fn.sum_product(probs, probs)
+        for name, weight in self.symmetric_functions.items():
+            fn = structure.symmetric_functions[name]
+            out += weight * fn.sum_product(probs, probs)
+        return out
 
     def iadd_corpus(self, ob_tree: ObTree, weight: float = 1.0) -> None:
         # Count symbols and objects

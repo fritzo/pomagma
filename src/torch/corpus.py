@@ -6,7 +6,8 @@ from pomagma.compiler.expressions import Expression
 from pomagma.compiler.parser import parse_string_to_expr
 from pomagma.util.hashcons import HashConsMeta
 
-from .structure import BinaryFunction, Ob, Structure
+from .structure import BinaryFunction, Structure
+from .util import Ob
 
 logger = logging.getLogger(__name__)
 

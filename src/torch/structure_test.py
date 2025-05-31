@@ -6,7 +6,7 @@ import pytest
 import torch
 
 from .language import Language
-from .structure import Ob, Structure, TorchBinaryFunction
+from .structure import BinaryFunctionSumProduct, Ob, Structure
 
 logger = logging.getLogger(__name__)
 
@@ -91,15 +91,21 @@ def make_VRl_sparse(
     return make_XYz_sparse(N, [(V, R, L) for L, R, V in LRv_table])
 
 
+@pytest.mark.parametrize("temperature", [True, False])
 @pytest.mark.parametrize("N", [10, 100])
-def test_binary_function(N: int) -> None:
+def test_binary_function(N: int, temperature: bool) -> None:
     table = make_dense_bin_fun(N)
     f_ptrs, f_args = make_LRv_sparse(N, table)
 
     lhs = torch.randn(N, dtype=torch.float32)
     rhs = torch.randn(N, dtype=torch.float32)
 
-    out = torch.ops.pomagma.binary_function(f_ptrs, f_args, lhs, rhs)
+    if temperature:
+        op = torch.ops.pomagma.binary_function_sum_product
+    else:
+        op = torch.ops.pomagma.binary_function_max_product
+
+    out = op(f_ptrs, f_args, lhs, rhs)
     assert out.shape == (N,)
     assert out.dtype == lhs.dtype
     assert out.device == lhs.device
@@ -118,7 +124,7 @@ def test_torch_binary_function_gradients(N: int) -> None:
     def torch_binary_function_wrapper(
         lhs: torch.Tensor, rhs: torch.Tensor
     ) -> torch.Tensor:
-        return TorchBinaryFunction.apply(
+        return BinaryFunctionSumProduct.apply(
             LRv_ptrs, LRv_args, VLr_ptrs, VLr_args, VRl_ptrs, VRl_args, lhs, rhs
         )
 
@@ -137,11 +143,11 @@ def test_torch_binary_function_gradients(N: int) -> None:
 
 
 def test_binary_function_lookup(structure: Structure) -> None:
-    for symmetric, funs in [
+    for symmetric, functions in [
         (False, structure.binary_functions),
         (True, structure.symmetric_functions),
     ]:
-        for name, f in funs.items():
+        for name, f in functions.items():
             logger.info(f"Testing {name} lookup")
             for i in range(1000):
                 val = Ob(random.randint(1, structure.item_count))
@@ -157,7 +163,7 @@ def test_binary_function_lookup(structure: Structure) -> None:
 
 
 def test_propagate_complexity(structure: Structure, language: Language) -> None:
-    probs = structure.propagate_complexity(language)
+    probs = language.propagate_complexity(structure)
     assert probs.shape == (structure.item_count + 1,)
     assert probs.dtype == torch.float32
     assert probs.device == torch.device("cpu")

@@ -9,8 +9,11 @@
 namespace pomagma {
 namespace torch {
 
-at::Tensor binary_function(const at::Tensor& f_ptrs, const at::Tensor& f_args,
-                           const at::Tensor& lhs, const at::Tensor& rhs) {
+template <bool temperature>
+at::Tensor binary_function_reduce_product(const at::Tensor& f_ptrs,
+                                          const at::Tensor& f_args,
+                                          const at::Tensor& lhs,
+                                          const at::Tensor& rhs) {
     // Check shapes: f_ptrs [N+1], f_args [NNZ, 2], lhs [N], rhs [N]
     TORCH_CHECK(f_ptrs.dim() == 1);
     TORCH_CHECK(f_args.dim() == 2);
@@ -57,13 +60,26 @@ at::Tensor binary_function(const at::Tensor& f_ptrs, const at::Tensor& f_args,
         for (int64_t j = begin; j < end; j++) {
             const int64_t lhs_idx = f_args_data[j * 2];
             const int64_t rhs_idx = f_args_data[j * 2 + 1];
-            accum += lhs_data[lhs_idx] * rhs_data[rhs_idx];
+            const float val = lhs_data[lhs_idx] * rhs_data[rhs_idx];
+            if constexpr (temperature) {
+                accum += val;
+            } else {
+                accum = std::max(accum, val);
+            }
         }
         out_data[i] = accum;
     }
 
     return out;
 }
+
+template at::Tensor binary_function_reduce_product<false>(
+    const at::Tensor& f_ptrs, const at::Tensor& f_args, const at::Tensor& lhs,
+    const at::Tensor& rhs);
+
+template at::Tensor binary_function_reduce_product<true>(
+    const at::Tensor& f_ptrs, const at::Tensor& f_args, const at::Tensor& lhs,
+    const at::Tensor& rhs);
 
 }  // namespace torch
 }  // namespace pomagma
