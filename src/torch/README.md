@@ -70,21 +70,25 @@ $$\mathcal{T}(p)[v] = w_{\text{nullary}}[v] + \sum_{f} w_f \sum_{(l,r) \mapsto v
 
 For convergent PCFGs (where the total probability mass devoted to non-nullary productions is less than 1), this converges to the unique probability distribution over generated terms.
 
-### Occurrence Counting (WIP)
-The `compute_occurrences` method uses Eisner's **gradient trick**<sup>1</sup> to count expected occurrences of each E-class in expressions from a corpus.
+### Rule Counting
+The `compute_rules` method uses Eisner's **gradient trick**<sup>1</sup> to count the expected number of times each grammar production rule is used to generate observed E-class frequencies.
 
-While `compute_probs` computes the forward direction (grammar → E-class probabilities), `compute_occurrences` computes the backward direction (corpus expressions → expected E-class usage).
+Given observed counts/weights for each E-class (the `data` parameter), this method computes how frequently each grammar rule was used in generating those observations.
 
-**Algorithm sketch:**
-1. For each corpus expression represented as `ObTree`, compute $\nabla_p \log P(\text{tree} | p)$
-2. This gradient gives the expected number of times each E-class appears in the expression, marginalized over all possible ways to extract the tree from the E-graph
-3. Aggregate gradients across the corpus to get global occurrence statistics
+**Algorithm:**
+1. Compute E-class probabilities using current grammar weights: `probs = compute_probs(structure)`
+2. Compute log-likelihood of observed data: $\mathcal{L} = \sum_i \text{data}[i] \cdot \log(\text{probs}[i])$
+3. Take gradients with respect to grammar parameters: $\nabla_w \mathcal{L}$
+4. Scale gradients by current weights to get expected rule usage counts
 
 **Mathematical Foundation:**
-If $P(\text{tree} | p)$ is the probability of extracting a given tree from the E-graph under distribution $p$, then:
-$$\frac{\partial}{\partial p[v]} \log P(\text{tree} | p) = \mathbb{E}[\text{count of E-class } v \text{ in tree extraction}]$$
+Eisner's key insight is that for log-linear (exponential family) distributions, the gradient of log-likelihood with respect to parameters equals expected feature counts:
+$$\frac{\partial}{\partial w} \log P(\text{data} | w) = \mathbb{E}[\text{count of grammar rule } w \text{ used in generating data}]$$
 
-This identity from the score function estimator allows us to compute occurrence expectations without explicitly enumerating all possible tree extractions from the E-graph.
+This allows computing expected rule usage without explicitly enumerating all possible derivations that could generate the observed E-class frequencies.
+
+### Occurrence Counting (WIP)
+The `compute_occurrences` counts the number of of occurrences of each subexpression of each E-class in expressions from a corpus. Whereas `compute_rules` counts the leaf nodes of grammar production rules (with multi-ary functions aggregated), `compute_occurrences` additionally counts internal node E-classes. This requires a separate propagation scheme.
 
 ### References
 1. Jason Eisner (2016)

@@ -217,45 +217,9 @@ def test_log_prob(structure: Structure, language: Language) -> None:
     assert log_prob.item() < 0.0
 
 
-def test_compute_occurrences(structure: Structure, language: Language) -> None:
-    data = torch.zeros(1 + structure.item_count, dtype=torch.float32)
-    s_ob = structure.nullary_functions["S"]
-    k_ob = structure.nullary_functions["K"]
-    data[s_ob] = 2.0  # Observed S twice
-    data[k_ob] = 1.0  # Observed K once
-
-    # Compute expected occurrences
-    occurrences = language.compute_occurrences(structure, data)
-
-    # Basic checks
-    assert occurrences.shape == (1 + structure.item_count,)
-    assert occurrences.dtype == torch.float32
-    assert occurrences.device == torch.device("cpu")
-
-    # The gradient should give us the expected count for each E-class
-    # Since we observed S twice and K once, and probabilities are normalized,
-    # the expected counts should reflect these observations
-    assert occurrences[s_ob].item() > 0.0  # Should have positive expected count for S
-    assert occurrences[k_ob].item() > 0.0  # Should have positive expected count for K
-
-    # Most entries should be zero since we only observed specific E-classes
-    num_nonzero = (occurrences.abs() > 1e-6).sum().item()
-    assert num_nonzero >= 2  # At least S and K should have non-zero occurrences
-
-    # Test that it's actually computing gradients correctly
-    # If we double the observations, the expected counts should also scale
-    data_doubled = 2.0 * data
-    occurrences_doubled = language.compute_occurrences(structure, data_doubled)
-
-    # The gradient should scale linearly with the data
-    torch.testing.assert_close(
-        occurrences_doubled, 2.0 * occurrences, atol=1e-5, rtol=1e-3
-    )
-
-
-@pytest.mark.xfail(reason="Bug in compute_occurrences")
+# @pytest.mark.xfail(reason="Bug in compute_occurrences")
 @pytest.mark.parametrize("item_count", [10])
-def test_compute_occurrences_mul(item_count: int) -> None:
+def test_compute_rules_mul(item_count: int) -> None:
     # Build a structure, the multiplication table.
     mul = make_binary_function(item_count)
     primes: Mapping[str, Ob] = Map(
@@ -290,18 +254,73 @@ def test_compute_occurrences_mul(item_count: int) -> None:
     weight = 12.34
     eight = torch.zeros(1 + item_count, dtype=torch.float32)
     eight[8] = weight
-    occurrences = language.compute_occurrences(structure, eight)
-    assert occurrences.shape == (1 + item_count,)
+    rules = language.compute_rules(structure, eight)
+    nullary = rules.nullary_functions
+    assert nullary.shape == (1 + item_count,)
+    assert nullary.dtype == torch.float32
+    assert nullary.device == torch.device("cpu")
+    assert nullary[2].item() == approx(3 * weight)
+    assert nullary[3].item() == approx(0)
+    assert nullary[4].item() == approx(0)
+    assert nullary[5].item() == approx(0)
+    assert nullary[6].item() == approx(0)
+    assert nullary[7].item() == approx(0)
+    assert nullary[8].item() == approx(0)
+    assert nullary[9].item() == approx(0)
+    assert nullary[10].item() == approx(0)
+
+    # Check a simple probe.
+    weight = 5.67
+    six = torch.zeros(1 + item_count, dtype=torch.float32)
+    six[6] = weight
+    rules = language.compute_rules(structure, six)
+    nullary = rules.nullary_functions
+    assert nullary.shape == (1 + item_count,)
+    assert nullary.dtype == torch.float32
+    assert nullary.device == torch.device("cpu")
+    assert nullary[2].item() == approx(weight)
+    assert nullary[3].item() == approx(weight)
+    assert nullary[4].item() == approx(0)
+    assert nullary[5].item() == approx(0)
+    assert nullary[6].item() == approx(0)
+    assert nullary[7].item() == approx(0)
+    assert nullary[8].item() == approx(0)
+    assert nullary[9].item() == approx(0)
+    assert nullary[10].item() == approx(0)
+
+
+@pytest.mark.xfail(reason="Not implemented")
+def test_compute_occurrences(structure: Structure, language: Language) -> None:
+    data = torch.zeros(1 + structure.item_count, dtype=torch.float32)
+    s_ob = structure.nullary_functions["S"]
+    k_ob = structure.nullary_functions["K"]
+    data[s_ob] = 2.0  # Observed S twice
+    data[k_ob] = 1.0  # Observed K once
+
+    # Compute expected occurrences
+    occurrences = language.compute_occurrences(structure, data)
+
+    # Basic checks
+    assert occurrences.shape == (1 + structure.item_count,)
     assert occurrences.dtype == torch.float32
     assert occurrences.device == torch.device("cpu")
-    # assert occurrences[0].item() == approx(0)
-    # assert occurrences[1].item() == approx(0.1 * weight)
-    assert occurrences[2].item() == approx(3 * weight)
-    assert occurrences[3].item() == approx(0)
-    assert occurrences[4].item() == approx(1 * weight)
-    assert occurrences[5].item() == approx(0)
-    assert occurrences[6].item() == approx(0)
-    assert occurrences[7].item() == approx(0)
-    assert occurrences[8].item() == approx(weight)
-    assert occurrences[9].item() == approx(0)
-    assert occurrences[10].item() == approx(0)
+
+    # The gradient should give us the expected count for each E-class
+    # Since we observed S twice and K once, and probabilities are normalized,
+    # the expected counts should reflect these observations
+    assert occurrences[s_ob].item() > 0.0  # Should have positive expected count for S
+    assert occurrences[k_ob].item() > 0.0  # Should have positive expected count for K
+
+    # Most entries should be zero since we only observed specific E-classes
+    num_nonzero = (occurrences.abs() > 1e-6).sum().item()
+    assert num_nonzero >= 2  # At least S and K should have non-zero occurrences
+
+    # Test that it's actually computing gradients correctly
+    # If we double the observations, the expected counts should also scale
+    data_doubled = 2.0 * data
+    occurrences_doubled = language.compute_occurrences(structure, data_doubled)
+
+    # The gradient should scale linearly with the data
+    torch.testing.assert_close(
+        occurrences_doubled, 2.0 * occurrences, atol=1e-5, rtol=1e-3
+    )

@@ -1,8 +1,10 @@
 from collections import Counter
-from typing import Mapping
+from typing import Mapping, Sequence
 
 import torch
 from immutables import Map
+
+from pomagma.util import TODO
 
 from .corpus import ObTree
 from .structure import Ob, Structure
@@ -111,12 +113,12 @@ class Language(torch.nn.Module):
             out += weight * fn.sum_product(probs, probs)
         return out
 
-    def compute_occurrences(
+    def compute_rules(
         self, structure: Structure, data: torch.Tensor, *, reltol=1e-3
     ) -> torch.Tensor:
         """
-        Counts the effective number of occurrences of each ob in the data, averaged
-        over extractions.
+        Counts the effective number of uses of each grammar production rule in
+        the data, averaged over extractions.
         """
         # This uses Eisner's gradient trick: the gradient of log P(data | probs)
         # with respect to grammar parameters gives the expected count of each
@@ -135,15 +137,49 @@ class Language(torch.nn.Module):
 
         # Apply Eisner's gradient trick: ∂/∂params log P(data | params) = E[counts]
         # The gradient automatically propagates through the E-graph structure
-        grad_nullary = torch.autograd.grad(
+        inputs: list[torch.Tensor] = [
+            self.nullary_functions,
+            *self.injective_functions.values(),
+            *self.binary_functions.values(),
+            *self.symmetric_functions.values(),
+        ]
+        grads: Sequence[torch.Tensor] = torch.autograd.grad(
             outputs=log_likelihood,
-            inputs=self.nullary_functions,
+            inputs=inputs,
             create_graph=False,
             retain_graph=False,
             only_inputs=True,
-        )[0]
+        )
 
-        return grad_nullary
+        # Scale the gradients and collate into a Language.
+        grads = list(reversed(grads))
+        with torch.no_grad():
+            nullary_functions = grads.pop() * self.nullary_functions
+            injective_functions = {
+                name: grads.pop() * weight
+                for name, weight in self.injective_functions.items()
+            }
+            binary_functions = {
+                name: grads.pop() * weight
+                for name, weight in self.binary_functions.items()
+            }
+            symmetric_functions = {
+                name: grads.pop() * weight
+                for name, weight in self.symmetric_functions.items()
+            }
+        return Language(
+            nullary_functions=nullary_functions,
+            injective_functions=injective_functions,
+            binary_functions=binary_functions,
+            symmetric_functions=symmetric_functions,
+        )
+
+    def compute_occurrences(
+        self, structure: Structure, data: torch.Tensor, *, reltol=1e-3
+    ) -> torch.Tensor:
+        counts = data.clone()
+        TODO()
+        return counts
 
     def log_prob(self, generator: "Language", probs: torch.Tensor) -> torch.Tensor:
         """
