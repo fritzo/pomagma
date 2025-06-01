@@ -289,38 +289,106 @@ def test_compute_rules_mul(item_count: int) -> None:
     assert nullary[10].item() == approx(0)
 
 
-@pytest.mark.xfail(reason="Not implemented")
-def test_compute_occurrences(structure: Structure, language: Language) -> None:
-    data = torch.zeros(1 + structure.item_count, dtype=torch.float32)
-    s_ob = structure.nullary_functions["S"]
-    k_ob = structure.nullary_functions["K"]
-    data[s_ob] = 2.0  # Observed S twice
-    data[k_ob] = 1.0  # Observed K once
+@pytest.mark.xfail(reason="Bug in compute_occurrences")
+@pytest.mark.parametrize("item_count", [12])
+def test_compute_occurrences_mul(item_count: int) -> None:
+    # Build a structure, the multiplication table.
+    mul = make_binary_function(item_count)
+    primes: Mapping[str, Ob] = Map(
+        {
+            "ONE": Ob(1),
+            "TWO": Ob(2),
+            "THREE": Ob(3),
+            "FIVE": Ob(5),
+            "SEVEN": Ob(7),
+            "ELEVEN": Ob(11),
+        }
+    )
+    structure = Structure(
+        name="MUL",
+        item_count=item_count,
+        nullary_functions=primes,
+        binary_functions={"MUL": mul},
+        symmetric_functions={},
+        unary_relations={},
+        binary_relations={},
+    )
 
-    # Compute expected occurrences
-    occurrences = language.compute_occurrences(structure, data)
+    # Build a language
+    nullary_functions = torch.zeros(1 + item_count, dtype=torch.float32)
+    nullary_functions[primes["ONE"]] = 1e-20
+    nullary_functions[primes["TWO"]] = 0.1
+    nullary_functions[primes["THREE"]] = 0.1
+    nullary_functions[primes["FIVE"]] = 0.1
+    nullary_functions[primes["SEVEN"]] = 0.1
+    nullary_functions[primes["ELEVEN"]] = 0.1
+    language = Language(
+        nullary_functions=nullary_functions,
+        binary_functions={"MUL": torch.tensor(0.5, dtype=torch.float32)},
+        symmetric_functions={},
+    )
 
-    # Basic checks
-    assert occurrences.shape == (1 + structure.item_count,)
+    approx = functools.partial(pytest.approx, abs=1e-3, rel=1e-3)
+
+    # Check a simple probe.
+    weight = 12.34
+    eight = torch.zeros(1 + item_count, dtype=torch.float32)
+    eight[8] = weight
+    occurrences = language.compute_occurrences(structure, eight)
+    assert occurrences.shape == (1 + item_count,)
     assert occurrences.dtype == torch.float32
     assert occurrences.device == torch.device("cpu")
+    # For 8 = 2*4, we should see occurrences of 2, 4, and 8 itself
+    assert occurrences[2].item() == approx(3 * weight)  # 2 occurs in 2*2*2=8
+    assert occurrences[3].item() == approx(0)
+    assert occurrences[4].item() == approx(weight)  # 4 occurs in 2*4=8
+    assert occurrences[5].item() == approx(0)
+    assert occurrences[6].item() == approx(0)
+    assert occurrences[7].item() == approx(0)
+    assert occurrences[8].item() == approx(weight)  # 8 occurs as itself
+    assert occurrences[9].item() == approx(0)
+    assert occurrences[10].item() == approx(0)
+    assert occurrences[11].item() == approx(0)
+    assert occurrences[12].item() == approx(0)
 
-    # The gradient should give us the expected count for each E-class
-    # Since we observed S twice and K once, and probabilities are normalized,
-    # the expected counts should reflect these observations
-    assert occurrences[s_ob].item() > 0.0  # Should have positive expected count for S
-    assert occurrences[k_ob].item() > 0.0  # Should have positive expected count for K
+    # Check another probe.
+    weight = 5.67
+    six = torch.zeros(1 + item_count, dtype=torch.float32)
+    six[6] = weight
+    occurrences = language.compute_occurrences(structure, six)
+    assert occurrences.shape == (1 + item_count,)
+    assert occurrences.dtype == torch.float32
+    assert occurrences.device == torch.device("cpu")
+    # For 6 = 2*3, we should see occurrences of 2, 3, and 6 itself
+    assert occurrences[2].item() == approx(weight)  # 2 occurs in 2*3=6
+    assert occurrences[3].item() == approx(weight)  # 3 occurs in 2*3=6
+    assert occurrences[4].item() == approx(0)
+    assert occurrences[5].item() == approx(0)
+    assert occurrences[6].item() == approx(weight)  # 6 occurs as itself
+    assert occurrences[7].item() == approx(0)
+    assert occurrences[8].item() == approx(0)
+    assert occurrences[9].item() == approx(0)
+    assert occurrences[10].item() == approx(0)
+    assert occurrences[11].item() == approx(0)
+    assert occurrences[12].item() == approx(0)
 
-    # Most entries should be zero since we only observed specific E-classes
-    num_nonzero = (occurrences.abs() > 1e-6).sum().item()
-    assert num_nonzero >= 2  # At least S and K should have non-zero occurrences
-
-    # Test that it's actually computing gradients correctly
-    # If we double the observations, the expected counts should also scale
-    data_doubled = 2.0 * data
-    occurrences_doubled = language.compute_occurrences(structure, data_doubled)
-
-    # The gradient should scale linearly with the data
-    torch.testing.assert_close(
-        occurrences_doubled, 2.0 * occurrences, atol=1e-5, rtol=1e-3
-    )
+    # Check another probe.
+    weight = 8.9
+    twelve = torch.zeros(1 + item_count, dtype=torch.float32)
+    twelve[12] = weight
+    occurrences = language.compute_occurrences(structure, twelve)
+    assert occurrences.shape == (1 + item_count,)
+    assert occurrences.dtype == torch.float32
+    assert occurrences.device == torch.device("cpu")
+    # For 12 = 2*2*3, we should see weight split between 4 and 6.
+    assert occurrences[2].item() == approx(2 * weight)  # 2 occurs in 2*2*3=12
+    assert occurrences[3].item() == approx(weight)  # 3 occurs in 2*2*3=12
+    assert occurrences[4].item() == approx(1 / 3 * weight)  # 4 occurs in (2*2)*3=12
+    assert occurrences[5].item() == approx(0)
+    assert occurrences[6].item() == approx(2 / 3 * weight)  # 6 occurs in 2*(2*3)=12
+    assert occurrences[7].item() == approx(0)
+    assert occurrences[8].item() == approx(0)
+    assert occurrences[9].item() == approx(0)
+    assert occurrences[10].item() == approx(0)
+    assert occurrences[11].item() == approx(0)
+    assert occurrences[12].item() == approx(weight)  # 12 occurs as itself
