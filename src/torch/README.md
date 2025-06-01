@@ -71,7 +71,7 @@ $$\mathcal{T}(p)[v] = w_{\text{nullary}}[v] + \sum_{f} w_f \sum_{(l,r) \mapsto v
 For convergent PCFGs (where the total probability mass devoted to non-nullary productions is less than 1), this converges to the unique probability distribution over generated terms.
 
 ### Occurrence Counting (WIP)
-The `propagate_occurrences` method uses the **gradient trick** to count expected occurrences of each E-class in expressions from a corpus.
+The `propagate_occurrences` method uses Eisner's **gradient trick**<sup>1</sup> to count expected occurrences of each E-class in expressions from a corpus.
 
 While `propagate_probs` computes the forward direction (grammar → E-class probabilities), `propagate_occurrences` computes the backward direction (corpus expressions → expected E-class usage).
 
@@ -85,3 +85,8 @@ If $P(\text{tree} | p)$ is the probability of extracting a given tree from the E
 $$\frac{\partial}{\partial p[v]} \log P(\text{tree} | p) = \mathbb{E}[\text{count of E-class } v \text{ in tree extraction}]$$
 
 This identity from the score function estimator allows us to compute occurrence expectations without explicitly enumerating all possible tree extractions from the E-graph.
+
+### References
+1. Jason Eisner (2016)
+  "Inside-Outside and Forward-Backward Algorithms are Just Backprop"
+  <https://www.cs.jhu.edu/~jason/papers/eisner.spnlp16.pdf>

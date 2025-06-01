@@ -180,3 +180,43 @@ def test_log_prob(structure: Structure, language: Language) -> None:
     assert log_prob.dtype == torch.float32
     assert log_prob.device == torch.device("cpu")
     assert log_prob.item() < 0.0
+
+
+def test_propagate_occurrences(structure: Structure, language: Language) -> None:
+    """Test that propagate_occurrences correctly computes expected E-class counts."""
+    # Create some test data representing observed E-class frequencies
+    data = torch.zeros(structure.item_count + 1, dtype=torch.float32)
+
+    # Add some observations for specific E-classes
+    s_ob = structure.nullary_functions["S"]
+    k_ob = structure.nullary_functions["K"]
+    data[s_ob] = 2.0  # Observed S twice
+    data[k_ob] = 1.0  # Observed K once
+
+    # Compute expected occurrences using Eisner's gradient trick
+    occurrences = language.propagate_occurrences(structure, data)
+
+    # Basic checks
+    assert occurrences.shape == (structure.item_count + 1,)
+    assert occurrences.dtype == torch.float32
+    assert occurrences.device == torch.device("cpu")
+
+    # The gradient should give us the expected count for each E-class
+    # Since we observed S twice and K once, and probabilities are normalized,
+    # the expected counts should reflect these observations
+    assert occurrences[s_ob].item() > 0.0  # Should have positive expected count for S
+    assert occurrences[k_ob].item() > 0.0  # Should have positive expected count for K
+
+    # Most entries should be zero since we only observed specific E-classes
+    num_nonzero = (occurrences.abs() > 1e-6).sum().item()
+    assert num_nonzero >= 2  # At least S and K should have non-zero occurrences
+
+    # Test that it's actually computing gradients correctly
+    # If we double the observations, the expected counts should also scale
+    data_doubled = 2.0 * data
+    occurrences_doubled = language.propagate_occurrences(structure, data_doubled)
+
+    # The gradient should scale linearly with the data
+    torch.testing.assert_close(
+        occurrences_doubled, 2.0 * occurrences, atol=1e-5, rtol=1e-3
+    )

@@ -4,8 +4,6 @@ from typing import Mapping
 import torch
 from immutables import Map
 
-from pomagma.util import TODO
-
 from .corpus import ObTree
 from .structure import Ob, Structure
 
@@ -94,6 +92,7 @@ class Language(torch.nn.Module):
             prev = probs
             probs = self._propagate_probs_step(structure, probs)
             with torch.no_grad():
+                # Only the convergence check is in no_grad - doesn't affect gradients
                 diffs = (probs - prev).abs() / (probs + eps)
                 diff = diffs.max().item()
 
@@ -118,35 +117,33 @@ class Language(torch.nn.Module):
         """
         Counts the effective number of occurrences of each ob in the data, averaged
         over extractions.
+
+        Uses Eisner's gradient trick: the gradient of log P(data | probs) with respect
+        to grammar parameters gives the expected count of each grammar rule/E-class.
         """
         assert data.shape == self.nullary_functions.shape
         assert 0.0 < reltol < 1.0
-        eps = torch.finfo(data.dtype).eps
 
-        # Initialize with raw data.
-        result = data.clone()
+        # Compute the "inside" probabilities with gradient tracking
+        self.nullary_functions.requires_grad_(True)
+        probs = self.propagate_probs(structure, reltol=reltol)
 
-        # Propagate until convergence.
-        diff = 1.0
-        while diff > reltol:
-            prev = result
-            result = self._propagate_occurrences_step(structure, result)
-            with torch.no_grad():
-                diffs = (result - prev).abs() / (result + eps)
-                diff = diffs.max().item()
+        # Compute log-probability of observed data under the probability distribution
+        # log P(data | probs) = ∑_i data[i] * log(probs[i])
+        tiny = torch.finfo(probs.dtype).tiny
+        log_likelihood = torch.xlogy(data, probs + tiny).sum()
 
-        return result
+        # Apply Eisner's gradient trick: ∂/∂params log P(data | params) = E[counts]
+        # The gradient automatically propagates through the E-graph structure
+        grad_nullary = torch.autograd.grad(
+            outputs=log_likelihood,
+            inputs=self.nullary_functions,
+            create_graph=False,
+            retain_graph=False,
+            only_inputs=True,
+        )[0]
 
-    def _propagate_occurrences_step(
-        self, structure: Structure, data: torch.Tensor
-    ) -> torch.Tensor:
-        # Propagates mass from super-expressions to their subexpressions.
-        # This is the reverse of _propagate_probs_step, propagating from each
-        # val to all rhs,lhs pairs that could have produced it, proportional to
-        # their contribution.
-        out = data.clone()
-        TODO()
-        return out
+        return grad_nullary
 
     def log_prob(self, generator: "Language", probs: torch.Tensor) -> torch.Tensor:
         """
