@@ -15,6 +15,7 @@
         "approximator",
         "ARITIES",
         "blobstore",
+        "combinatory",
         "CTEST",
         "debuginfo",
         "Differentiably",
@@ -25,6 +26,8 @@
         "NLESS",
         "noncopyable",
         "nullary",
+        "PCFG",
+        "PCFGs",
         "pomagma",
         "ptrs",
         "pytest",
@@ -33,6 +36,7 @@
         "skja",
         "skrj",
         "sortedset",
+        "subterms",
         "trool",
         "vcpkg"
     ]

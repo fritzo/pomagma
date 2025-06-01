@@ -27,6 +27,7 @@ and a shared C++ database server performs low-level inference work.
 - [Quick Start](#quick-start)
 - [Get An Atlas](#get-an-atlas)
 - [Using The Client Library](/doc/client.md)
+- [Using the PyTorch front end](/src/torch/README.md)
 - [Developing](/doc/README.md)
   - [Architecture](/doc/README.md#dataflow-architecture)
   - [Organization](/doc/README.md#file-organization)

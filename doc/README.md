@@ -65,6 +65,7 @@
     interpreters for &lambda;-calculus with lots of unit tests
   - [/src/corpus](/src/corpus) -
     literate code expressed in combinatory algebra
+  - [/src/torch](/src/torch) - PyTorch front end
   - [/src/util](/src/util) - core utilities
 - [/bootstrap](/bootstrap) - a small git-cached atlas for testing
 - [/build](/build) - destination of C++ builds
