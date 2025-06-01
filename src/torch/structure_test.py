@@ -162,8 +162,8 @@ def test_binary_function_lookup(structure: Structure) -> None:
                         assert f.func[rhs, lhs] == val
 
 
-def test_propagate_probs(structure: Structure, language: Language) -> None:
-    probs = language.propagate_probs(structure)
+def test_compute_probs(structure: Structure, language: Language) -> None:
+    probs = language.compute_probs(structure)
     assert probs.shape == (structure.item_count + 1,)
     assert probs.dtype == torch.float32
     assert probs.device == torch.device("cpu")
@@ -174,7 +174,7 @@ def test_propagate_probs(structure: Structure, language: Language) -> None:
 
 def test_log_prob(structure: Structure, language: Language) -> None:
     data = language
-    probs = language.propagate_probs(structure)
+    probs = language.compute_probs(structure)
     log_prob = data.log_prob(language, probs)
     assert log_prob.shape == ()
     assert log_prob.dtype == torch.float32
@@ -182,19 +182,15 @@ def test_log_prob(structure: Structure, language: Language) -> None:
     assert log_prob.item() < 0.0
 
 
-def test_propagate_occurrences(structure: Structure, language: Language) -> None:
-    """Test that propagate_occurrences correctly computes expected E-class counts."""
-    # Create some test data representing observed E-class frequencies
+def test_compute_occurrences(structure: Structure, language: Language) -> None:
     data = torch.zeros(structure.item_count + 1, dtype=torch.float32)
-
-    # Add some observations for specific E-classes
     s_ob = structure.nullary_functions["S"]
     k_ob = structure.nullary_functions["K"]
     data[s_ob] = 2.0  # Observed S twice
     data[k_ob] = 1.0  # Observed K once
 
-    # Compute expected occurrences using Eisner's gradient trick
-    occurrences = language.propagate_occurrences(structure, data)
+    # Compute expected occurrences
+    occurrences = language.compute_occurrences(structure, data)
 
     # Basic checks
     assert occurrences.shape == (structure.item_count + 1,)
@@ -214,7 +210,7 @@ def test_propagate_occurrences(structure: Structure, language: Language) -> None
     # Test that it's actually computing gradients correctly
     # If we double the observations, the expected counts should also scale
     data_doubled = 2.0 * data
-    occurrences_doubled = language.propagate_occurrences(structure, data_doubled)
+    occurrences_doubled = language.compute_occurrences(structure, data_doubled)
 
     # The gradient should scale linearly with the data
     torch.testing.assert_close(

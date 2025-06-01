@@ -71,7 +71,7 @@ class Language(torch.nn.Module):
         for _, weight in sorted(self.symmetric_functions.items()):
             weight *= scale
 
-    def propagate_probs(
+    def compute_probs(
         self, structure: Structure, *, reltol: float = 1e-3
     ) -> torch.Tensor:
         """
@@ -90,7 +90,7 @@ class Language(torch.nn.Module):
         diff = 1.0
         while diff > reltol:
             prev = probs
-            probs = self._propagate_probs_step(structure, probs)
+            probs = self._compute_probs_step(structure, probs)
             with torch.no_grad():
                 # Only the convergence check is in no_grad - doesn't affect gradients
                 diffs = (probs - prev).abs() / (probs + eps)
@@ -98,7 +98,7 @@ class Language(torch.nn.Module):
 
         return probs
 
-    def _propagate_probs_step(
+    def _compute_probs_step(
         self, structure: Structure, probs: torch.Tensor
     ) -> torch.Tensor:
         # Propagates mass from subexpressions to their super-expressions.
@@ -111,22 +111,22 @@ class Language(torch.nn.Module):
             out += weight * fn.sum_product(probs, probs)
         return out
 
-    def propagate_occurrences(
+    def compute_occurrences(
         self, structure: Structure, data: torch.Tensor, *, reltol=1e-3
     ) -> torch.Tensor:
         """
         Counts the effective number of occurrences of each ob in the data, averaged
         over extractions.
-
-        Uses Eisner's gradient trick: the gradient of log P(data | probs) with respect
-        to grammar parameters gives the expected count of each grammar rule/E-class.
         """
+        # This uses Eisner's gradient trick: the gradient of log P(data | probs)
+        # with respect to grammar parameters gives the expected count of each
+        # grammar rule/E-class.
         assert data.shape == self.nullary_functions.shape
         assert 0.0 < reltol < 1.0
 
         # Compute the "inside" probabilities with gradient tracking
         self.nullary_functions.requires_grad_(True)
-        probs = self.propagate_probs(structure, reltol=reltol)
+        probs = self.compute_probs(structure, reltol=reltol)
 
         # Compute log-probability of observed data under the probability distribution
         # log P(data | probs) = ∑_i data[i] * log(probs[i])

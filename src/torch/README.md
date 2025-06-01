@@ -55,7 +55,7 @@ It stores probability weights for:
 ## Algorithms
 
 ### Probability Propagation
-The `propagate_probs` method computes the **probability distribution over E-classes** given a normalized PCFG. This implements a fixed-point iteration:
+The `compute_probs` method computes the **probability distribution over E-classes** given a normalized PCFG. This implements a fixed-point iteration:
 
 **Algorithm:**
 1. **Initialize** with atomic probabilities: $p[i] \leftarrow w_{\text{nullary}}[i]$ (for nullary functions only)
@@ -71,9 +71,9 @@ $$\mathcal{T}(p)[v] = w_{\text{nullary}}[v] + \sum_{f} w_f \sum_{(l,r) \mapsto v
 For convergent PCFGs (where the total probability mass devoted to non-nullary productions is less than 1), this converges to the unique probability distribution over generated terms.
 
 ### Occurrence Counting (WIP)
-The `propagate_occurrences` method uses Eisner's **gradient trick**<sup>1</sup> to count expected occurrences of each E-class in expressions from a corpus.
+The `compute_occurrences` method uses Eisner's **gradient trick**<sup>1</sup> to count expected occurrences of each E-class in expressions from a corpus.
 
-While `propagate_probs` computes the forward direction (grammar → E-class probabilities), `propagate_occurrences` computes the backward direction (corpus expressions → expected E-class usage).
+While `compute_probs` computes the forward direction (grammar → E-class probabilities), `compute_occurrences` computes the backward direction (corpus expressions → expected E-class usage).
 
 **Algorithm sketch:**
 1. For each corpus expression represented as `ObTree`, compute $\nabla_p \log P(\text{tree} | p)$
