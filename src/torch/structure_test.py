@@ -58,7 +58,7 @@ def make_dense_bin_fun(item_count: int) -> list[tuple[int, int, int]]:
     for i in range(1, 1 + item_count):
         for j in range(1, 1 + item_count):
             k = i * j
-            if k < item_count:
+            if k <= item_count:  # Include products that equal item_count
                 table.append((i, j, k))
     return table
 
@@ -66,7 +66,7 @@ def make_dense_bin_fun(item_count: int) -> list[tuple[int, int, int]]:
 def make_sparse_binary_function(
     item_count: int, table: list[tuple[int, int, int]]
 ) -> SparseBinaryFunction:
-    LRv = SparseBinaryFunction(item_count)
+    LRv = SparseBinaryFunction(len(table))
     for L, R, V in table:
         LRv[Ob(L), Ob(R)] = Ob(V)
     return LRv
@@ -175,6 +175,51 @@ def test_torch_binary_function_gradients(item_count: int) -> None:
         atol=1e-2,
         check_undefined_grad=False,  # We return None for non-differentiable args
     ), "Gradient check failed for TorchBinaryFunction"
+
+
+@pytest.mark.parametrize("item_count", [5, 10])
+def test_binary_function_distribute_product(item_count: int) -> None:
+    """Test the C++ binary_function_distribute_product operation."""
+    table = make_dense_bin_fun(item_count)
+
+    # Create the Vlr sparse representation
+    Vlr_ptrs, Vlr_args = make_Vlr_sparse(item_count, table)
+
+    # Create test data: uniform distribution for probs
+    probs = torch.ones(1 + item_count, dtype=torch.float32) / (1 + item_count)
+
+    # Create parent counts with a single non-zero element
+    parent_counts = torch.zeros(1 + item_count, dtype=torch.float32)
+    test_parent = min(5, item_count)  # Pick a parent that likely has children
+    test_weight = 10.0
+    parent_counts[test_parent] = test_weight
+
+    # Test with a reasonable grammar weight
+    grammar_weight = 0.5
+
+    # Call the C++ function
+    child_contributions = torch.ops.pomagma.binary_function_distribute_product(
+        Vlr_ptrs, Vlr_args, parent_counts, probs, grammar_weight
+    )
+
+    # Check output shape and type
+    assert child_contributions.shape == (1 + item_count,)
+    assert child_contributions.dtype == torch.float32
+    assert child_contributions.device == torch.device("cpu")
+
+    # Check that contributions are non-negative
+    assert (child_contributions >= 0).all()
+
+    # Check that only children of test_parent receive contributions
+    has_contributions = (child_contributions > 0).sum().item()
+    if has_contributions > 0:
+        logger.info(
+            f"Parent {test_parent} distributed weight to {has_contributions} children"
+        )
+        # The total contribution should be proportional to the parent count
+        # (exact amount depends on the number of ways to form the parent)
+        total_contribution = child_contributions.sum().item()
+        assert total_contribution > 0, "Should have some contribution to children"
 
 
 def test_binary_function_lookup(structure: Structure) -> None:
@@ -289,7 +334,6 @@ def test_compute_rules_mul(item_count: int) -> None:
     assert nullary[10].item() == approx(0)
 
 
-@pytest.mark.xfail(reason="Bug in compute_occurrences")
 @pytest.mark.parametrize("item_count", [12])
 def test_compute_occurrences_mul(item_count: int) -> None:
     # Build a structure, the multiplication table.

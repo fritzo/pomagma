@@ -73,6 +73,84 @@ at::Tensor binary_function_reduce_product(const at::Tensor& f_ptrs,
     return out;
 }
 
+at::Tensor binary_function_distribute_product(const at::Tensor& f_ptrs,
+                                              const at::Tensor& f_args,
+                                              const at::Tensor& parent_counts,
+                                              const at::Tensor& probs,
+                                              double weight) {
+    // Check shapes: f_ptrs [N+1], f_args [NNZ, 2], parent_counts [N], probs [N]
+    TORCH_CHECK(f_ptrs.dim() == 1);
+    TORCH_CHECK(f_args.dim() == 2);
+    TORCH_CHECK(parent_counts.dim() == 1);
+    TORCH_CHECK(probs.dim() == 1);
+    const int64_t N = f_ptrs.size(0) - 1;
+    const int64_t NNZ = f_args.size(0);
+    TORCH_CHECK(parent_counts.size(0) == N);
+    TORCH_CHECK(probs.size(0) == N);
+
+    // Check dtypes
+    TORCH_CHECK(f_ptrs.dtype() == at::kInt);
+    TORCH_CHECK(f_args.dtype() == at::kInt);
+    TORCH_CHECK(parent_counts.dtype() == at::kFloat);
+    TORCH_CHECK(probs.dtype() == at::kFloat);
+
+    // Check all tensors are on CPU
+    TORCH_CHECK(f_ptrs.device().type() == at::DeviceType::CPU);
+    TORCH_CHECK(f_args.device().type() == at::DeviceType::CPU);
+    TORCH_CHECK(parent_counts.device().type() == at::DeviceType::CPU);
+    TORCH_CHECK(probs.device().type() == at::DeviceType::CPU);
+
+    // Check all tensors are contiguous
+    TORCH_CHECK(f_ptrs.is_contiguous());
+    TORCH_CHECK(f_args.is_contiguous());
+    TORCH_CHECK(parent_counts.is_contiguous());
+    TORCH_CHECK(probs.is_contiguous());
+
+    const int32_t* f_ptrs_data = f_ptrs.data_ptr<int32_t>();
+    TORCH_CHECK(f_ptrs_data[0] == 0);
+    TORCH_CHECK(f_ptrs_data[N] == NNZ);
+    const int32_t* f_args_data = f_args.data_ptr<int32_t>();
+    const float* parent_counts_data = parent_counts.data_ptr<float>();
+    const float* probs_data = probs.data_ptr<float>();
+
+    at::Tensor out = at::zeros_like(probs);
+    float* out_data = out.data_ptr<float>();
+
+    const float eps = 1e-10f;  // Small epsilon to avoid division by zero
+    const float weight_f = static_cast<float>(weight);
+
+    // For each parent E-class, distribute its count to children
+    for (int64_t v = 0; v < N; v++) {
+        const float parent_count = parent_counts_data[v];
+        if (parent_count == 0.0f) continue;
+
+        const float parent_prob = probs_data[v];
+        if (parent_prob <= eps)
+            continue;  // Skip if parent has negligible probability
+
+        // For each way to form v = f(l,r)
+        const int64_t begin = f_ptrs_data[v];
+        const int64_t end = f_ptrs_data[v + 1];
+        for (int64_t j = begin; j < end; j++) {
+            const int64_t l = f_args_data[j * 2];
+            const int64_t r = f_args_data[j * 2 + 1];
+
+            // Probability contribution of this decomposition f(l,r) = v
+            const float decomp_prob = weight_f * probs_data[l] * probs_data[r];
+            const float fraction = decomp_prob / parent_prob;
+            const float contribution = parent_count * fraction;
+
+// Add contributions to both children (atomic operations for thread safety)
+#pragma omp atomic
+            out_data[l] += contribution;
+#pragma omp atomic
+            out_data[r] += contribution;
+        }
+    }
+
+    return out;
+}
+
 template at::Tensor binary_function_reduce_product<false>(
     const at::Tensor& f_ptrs, const at::Tensor& f_args, const at::Tensor& lhs,
     const at::Tensor& rhs);

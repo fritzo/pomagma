@@ -63,7 +63,7 @@ class SparseBinaryFunction:
     def __getitem__(self, key: tuple[Ob, Ob]) -> Ob:
         lhs, rhs = key
         H = self.hash_table.size(0)
-        h = hash((lhs, rhs)) % H
+        h = abs(hash((lhs, rhs))) % H
         while self.hash_table[h, 0] != lhs or self.hash_table[h, 1] != rhs:
             if self.hash_table[h, 0] == 0:
                 return Ob(0)
@@ -73,7 +73,7 @@ class SparseBinaryFunction:
     def __setitem__(self, key: tuple[Ob, Ob], val: Ob) -> None:
         lhs, rhs = key
         H = self.hash_table.size(0)
-        h = hash((lhs, rhs)) % H
+        h = abs(hash((lhs, rhs))) % H
         while self.hash_table[h, 0] != 0:
             h = (h + 1) % H
         self.hash_table[h, 0] = lhs
@@ -139,6 +139,20 @@ class BinaryFunction:
             self.Lvr.args,
             lhs,
             rhs,
+        )
+
+    def distribute_product(
+        self, parent_counts: torch.Tensor, probs: torch.Tensor, weight: float
+    ) -> torch.Tensor:
+        """
+        Distribute parent occurrence counts to children based on probability weights.
+        """
+        return torch.ops.pomagma.binary_function_distribute_product(
+            self.Vlr.ptrs,
+            self.Vlr.args,
+            parent_counts,
+            probs,
+            weight,
         )
 
     @torch.no_grad()

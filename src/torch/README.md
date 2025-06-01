@@ -87,8 +87,14 @@ $$\frac{\partial}{\partial w} \log P(\text{data} | w) = \mathbb{E}[\text{count o
 
 This allows computing expected rule usage without explicitly enumerating all possible derivations that could generate the observed E-class frequencies.
 
-### Occurrence Counting (WIP)
-The `compute_occurrences` counts the number of of occurrences of each subexpression of each E-class in expressions from a corpus. Whereas `compute_rules` counts the leaf nodes of grammar production rules (with multi-ary functions aggregated), `compute_occurrences` additionally counts internal node E-classes. This requires a separate propagation scheme.
+### Occurrence Counting
+The `compute_occurrences` method counts total occurrences of each subexpression (E-class) across all parse trees of observed expressions, weighted by grammar probabilities. Unlike `compute_rules` which counts only leaf nodes, this counts **all subexpressions** including internal nodes.
+
+**Algorithm:** Backward propagation through the E-graph
+1. Compute forward probabilities: `probs = compute_probs(structure)`
+2. Initialize: `counts[i] = data[i]` (observed occurrences)  
+3. Iterate until convergence: for each E-node `f(l,r) = v`, distribute parent occurrences to children:
+   $$\text{counts}[l] \mathrel{+}= \frac{w_f \cdot \text{probs}[l] \cdot \text{probs}[r] \cdot \text{counts}[v]}{\text{probs}[v]}$$
 
 ### References
 1. Jason Eisner (2016)

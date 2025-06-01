@@ -4,8 +4,6 @@ from typing import Mapping, Sequence
 import torch
 from immutables import Map
 
-from pomagma.util import TODO
-
 from .corpus import ObTree
 from .structure import Ob, Structure
 
@@ -113,6 +111,26 @@ class Language(torch.nn.Module):
             out += weight * fn.sum_product(probs, probs)
         return out
 
+    def _compute_occurrences_step(
+        self,
+        structure: Structure,
+        counts: torch.Tensor,
+        probs: torch.Tensor,
+        data: torch.Tensor,
+    ) -> torch.Tensor:
+        # Propagates counts from super-expressions to their sub-expressions.
+        # Start with the original data (baseline occurrences)
+        new_counts = data.clone()
+        for name, weight in self.binary_functions.items():
+            fn = structure.binary_functions[name]
+            child_contributions = fn.distribute_product(counts, probs, weight.item())
+            new_counts += child_contributions
+        for name, weight in self.symmetric_functions.items():
+            fn = structure.symmetric_functions[name]
+            child_contributions = fn.distribute_product(counts, probs, weight.item())
+            new_counts += child_contributions
+        return new_counts
+
     def compute_rules(
         self, structure: Structure, data: torch.Tensor, *, reltol=1e-3
     ) -> torch.Tensor:
@@ -177,8 +195,34 @@ class Language(torch.nn.Module):
     def compute_occurrences(
         self, structure: Structure, data: torch.Tensor, *, reltol=1e-3
     ) -> torch.Tensor:
+        """
+        Counts the number of occurrences of each subexpression of each E-class in
+        expressions from a corpus. This includes both leaf nodes (from grammar rules)
+        and internal node E-classes.
+
+        Uses backward propagation from observed data through the E-graph structure,
+        distributing occurrence counts based on probability-weighted decompositions.
+        """
+        assert data.shape == self.nullary_functions.shape
+        assert 0.0 < reltol < 1.0
+        eps = torch.finfo(self.nullary_functions.dtype).eps
+
+        # Compute the forward probabilities once
+        probs = self.compute_probs(structure, reltol=reltol)
+
+        # Initialize with the observed data - these are the "root" occurrences
         counts = data.clone()
-        TODO()
+
+        # Propagate until convergence
+        diff = 1.0
+        while diff > reltol:
+            prev = counts
+            counts = self._compute_occurrences_step(structure, counts, probs, data)
+            with torch.no_grad():
+                # Only the convergence check is in no_grad - doesn't affect gradients
+                diffs = (counts - prev).abs() / (counts + eps)
+                diff = diffs.max().item()
+
         return counts
 
     def log_prob(self, generator: "Language", probs: torch.Tensor) -> torch.Tensor:
