@@ -33,11 +33,13 @@
         "pytest",
         "randn",
         "reltol",
+        "rtol",
         "skja",
         "skrj",
         "sortedset",
         "subterms",
         "trool",
-        "vcpkg"
+        "vcpkg",
+        "xlogy"
     ]
 } 

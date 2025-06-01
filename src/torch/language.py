@@ -123,6 +123,7 @@ class Language(torch.nn.Module):
         # grammar rule/E-class.
         assert data.shape == self.nullary_functions.shape
         assert 0.0 < reltol < 1.0
+        tiny = torch.finfo(self.nullary_functions.dtype).tiny
 
         # Compute the "inside" probabilities with gradient tracking
         self.nullary_functions.requires_grad_(True)
@@ -130,7 +131,6 @@ class Language(torch.nn.Module):
 
         # Compute log-probability of observed data under the probability distribution
         # log P(data | probs) = ∑_i data[i] * log(probs[i])
-        tiny = torch.finfo(probs.dtype).tiny
         log_likelihood = torch.xlogy(data, probs + tiny).sum()
 
         # Apply Eisner's gradient trick: ∂/∂params log P(data | params) = E[counts]
