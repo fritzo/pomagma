@@ -11,29 +11,29 @@ class BinaryFunctionSumProduct(torch.autograd.Function):
     @staticmethod
     def forward(
         ctx,
-        LRv_ptrs: torch.Tensor,
-        LRv_args: torch.Tensor,
-        VLr_ptrs: torch.Tensor,
-        VLr_args: torch.Tensor,
-        VRl_ptrs: torch.Tensor,
-        VRl_args: torch.Tensor,
+        Vlr_ptrs: torch.Tensor,
+        Vlr_args: torch.Tensor,
+        Rvl_ptrs: torch.Tensor,
+        Rvl_args: torch.Tensor,
+        Lvr_ptrs: torch.Tensor,
+        Lvr_args: torch.Tensor,
         lhs: torch.Tensor,
         rhs: torch.Tensor,
     ) -> torch.Tensor:
         val = torch.ops.pomagma.binary_function_sum_product(
-            LRv_ptrs, LRv_args, lhs, rhs
+            Vlr_ptrs, Vlr_args, lhs, rhs
         )
-        ctx.save_for_backward(VLr_ptrs, VLr_args, VRl_ptrs, VRl_args, lhs, rhs)
+        ctx.save_for_backward(Rvl_ptrs, Rvl_args, Lvr_ptrs, Lvr_args, lhs, rhs)
         return val
 
     @staticmethod
     def backward(ctx, grad_val: torch.Tensor) -> tuple[torch.Tensor, ...]:
-        VLr_ptrs, VLr_args, VRl_ptrs, VRl_args, lhs, rhs = ctx.saved_tensors
+        Rvl_ptrs, Rvl_args, Lvr_ptrs, Lvr_args, lhs, rhs = ctx.saved_tensors
         grad_lhs = torch.ops.pomagma.binary_function_sum_product(
-            VRl_ptrs, VRl_args, grad_val, rhs
+            Lvr_ptrs, Lvr_args, grad_val, rhs
         )
         grad_rhs = torch.ops.pomagma.binary_function_sum_product(
-            VLr_ptrs, VLr_args, grad_val, lhs
+            Rvl_ptrs, Rvl_args, grad_val, lhs
         )
         return (None, None, None, None, None, None, grad_lhs, grad_rhs)
 
@@ -110,33 +110,33 @@ class BinaryFunction:
     A binary function in the structure with support for automatic differentiation.
 
     Stores the function f(L, R) = V in four different sparse representations:
-    - func: Maps (Left, Right) -> Value for lookup
-    - LRv: Maps Value -> (Left, Right) pairs for forward evaluation
-    - VLr: Maps Right -> (Value, Left) pairs for backward wrt right
-    - VRl: Maps Left -> (Value, Right) pairs for backward wrt left
+    - LRv: Maps (Left, Right) -> Value for deterministic lookup
+    - Vlr: Maps Value -> (Left, Right) pairs for forward evaluation
+    - Rvl: Maps Right -> (Value, Left) pairs for backward wrt right
+    - Lvr: Maps Left -> (Value, Right) pairs for backward wrt left
 
     These three tables enable efficient forward and backward passes in autograd.
     """
 
     name: str
-    func: SparseBinaryFunction  # (Left, Right) -> Value mapping for lookup
-    LRv: SparseTernaryRelation  # Value -> (Left, Right) pairs for forward pass
-    VLr: SparseTernaryRelation  # Right -> (Value, Left) pairs for backward wrt right
-    VRl: SparseTernaryRelation  # Left -> (Value, Right) pairs for backward wrt left
+    LRv: SparseBinaryFunction  # (Left, Right) -> Value mapping for lookup
+    Vlr: SparseTernaryRelation  # Value -> (Left, Right) pairs for forward pass
+    Rvl: SparseTernaryRelation  # Right -> (Value, Left) pairs for backward wrt right
+    Lvr: SparseTernaryRelation  # Left -> (Value, Right) pairs for backward wrt left
 
     def __getitem__(self, key: tuple[Ob, Ob]) -> Ob:
         """Lookup the value of the function at the given (lhs, rhs) pair."""
-        return self.func[key]
+        return self.LRv[key]
 
     def sum_product(self, lhs: torch.Tensor, rhs: torch.Tensor) -> torch.Tensor:
         """Differentiably convolve two weight vectors."""
         return BinaryFunctionSumProduct.apply(
-            self.LRv.ptrs,
-            self.LRv.args,
-            self.VLr.ptrs,
-            self.VLr.args,
-            self.VRl.ptrs,
-            self.VRl.args,
+            self.Vlr.ptrs,
+            self.Vlr.args,
+            self.Rvl.ptrs,
+            self.Rvl.args,
+            self.Lvr.ptrs,
+            self.Lvr.args,
             lhs,
             rhs,
         )
@@ -145,7 +145,7 @@ class BinaryFunction:
     def max_product(self, lhs: torch.Tensor, rhs: torch.Tensor) -> torch.Tensor:
         """Non-differentiably max-convolve two weight vectors."""
         return torch.ops.pomagma.binary_function_max_product(
-            self.LRv.ptrs, self.LRv.args, lhs, rhs
+            self.Vlr.ptrs, self.Vlr.args, lhs, rhs
         )
 
 

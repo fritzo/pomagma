@@ -123,9 +123,9 @@ def load_binary_function(
     """
     # Pass 1: Count entries for each table
     func_entries = 0
-    LRv_counts = [0] * (item_count + 1)  # indexed by val
-    VLr_counts = [0] * (item_count + 1)  # indexed by rhs
-    VRl_counts = [0] * (item_count + 1)  # indexed by lhs
+    Vlr_counts = [0] * (item_count + 1)  # indexed by val
+    Rvl_counts = [0] * (item_count + 1)  # indexed by rhs
+    Lvr_counts = [0] * (item_count + 1)  # indexed by lhs
 
     for chunk in iter_chunks(proto_func):
         for row in chunk.rows:
@@ -133,9 +133,9 @@ def load_binary_function(
             keys, vals = load_ob_map(row.rhs_val)
             for rhs, val in zip(keys, vals):
                 func_entries += 1
-                LRv_counts[val] += 1
-                VLr_counts[rhs] += 1
-                VRl_counts[lhs] += 1
+                Vlr_counts[val] += 1
+                Rvl_counts[rhs] += 1
+                Lvr_counts[lhs] += 1
 
     # Create pointers from counts
     def create_ptrs_from_counts(counts: list[int]) -> torch.Tensor:
@@ -144,61 +144,61 @@ def load_binary_function(
             ptrs[i + 1] = ptrs[i] + counts[i]
         return ptrs
 
-    LRv_ptrs = create_ptrs_from_counts(LRv_counts)
-    VLr_ptrs = create_ptrs_from_counts(VLr_counts)
-    VRl_ptrs = create_ptrs_from_counts(VRl_counts)
+    Vlr_ptrs = create_ptrs_from_counts(Vlr_counts)
+    Rvl_ptrs = create_ptrs_from_counts(Rvl_counts)
+    Lvr_ptrs = create_ptrs_from_counts(Lvr_counts)
 
     # Allocate tensors
-    func = SparseBinaryFunction(func_entries)
-    LRv_nnz = int(LRv_ptrs[-1].item())
-    VLr_nnz = int(VLr_ptrs[-1].item())
-    VRl_nnz = int(VRl_ptrs[-1].item())
+    LRv = SparseBinaryFunction(func_entries)
+    Vlr_nnz = int(Vlr_ptrs[-1].item())
+    Rvl_nnz = int(Rvl_ptrs[-1].item())
+    Lvr_nnz = int(Lvr_ptrs[-1].item())
 
-    LRv_args = torch.zeros((LRv_nnz, 2), dtype=torch.int32)
-    VLr_args = torch.zeros((VLr_nnz, 2), dtype=torch.int32)
-    VRl_args = torch.zeros((VRl_nnz, 2), dtype=torch.int32)
+    Vlr_args = torch.zeros((Vlr_nnz, 2), dtype=torch.int32)
+    Rvl_args = torch.zeros((Rvl_nnz, 2), dtype=torch.int32)
+    Lvr_args = torch.zeros((Lvr_nnz, 2), dtype=torch.int32)
 
     # Pass 2: Load data with position tracking
-    LRv_pos = [0] * (item_count + 1)
-    VLr_pos = [0] * (item_count + 1)
-    VRl_pos = [0] * (item_count + 1)
+    Vlr_pos = [0] * (item_count + 1)
+    Rvl_pos = [0] * (item_count + 1)
+    Lvr_pos = [0] * (item_count + 1)
 
     for chunk in iter_chunks(proto_func):
         for row in chunk.rows:
             lhs = row.lhs
             keys, vals = load_ob_map(row.rhs_val)
             for rhs, val in zip(keys, vals):
-                func[lhs, rhs] = val
+                LRv[lhs, rhs] = val
 
-                # LRv table: indexed by val, stores (lhs, rhs)
-                idx = LRv_ptrs[val] + LRv_pos[val]
-                LRv_args[idx, 0] = lhs
-                LRv_args[idx, 1] = rhs
-                LRv_pos[val] += 1
+                # Vlr table: indexed by val, stores (lhs, rhs)
+                idx = Vlr_ptrs[val] + Vlr_pos[val]
+                Vlr_args[idx, 0] = lhs
+                Vlr_args[idx, 1] = rhs
+                Vlr_pos[val] += 1
 
-                # VLr table: indexed by rhs, stores (val, lhs)
-                idx = VLr_ptrs[rhs] + VLr_pos[rhs]
-                VLr_args[idx, 0] = val
-                VLr_args[idx, 1] = lhs
-                VLr_pos[rhs] += 1
+                # Rvl table: indexed by rhs, stores (val, lhs)
+                idx = Rvl_ptrs[rhs] + Rvl_pos[rhs]
+                Rvl_args[idx, 0] = val
+                Rvl_args[idx, 1] = lhs
+                Rvl_pos[rhs] += 1
 
-                # VRl table: indexed by lhs, stores (val, rhs)
-                idx = VRl_ptrs[lhs] + VRl_pos[lhs]
-                VRl_args[idx, 0] = val
-                VRl_args[idx, 1] = rhs
-                VRl_pos[lhs] += 1
+                # Lvr table: indexed by lhs, stores (val, rhs)
+                idx = Lvr_ptrs[lhs] + Lvr_pos[lhs]
+                Lvr_args[idx, 0] = val
+                Lvr_args[idx, 1] = rhs
+                Lvr_pos[lhs] += 1
 
     # Verify that positions match counts
-    assert LRv_pos == LRv_counts, f"LRv position mismatch: {LRv_pos} != {LRv_counts}"
-    assert VLr_pos == VLr_counts, f"VLr position mismatch: {VLr_pos} != {VLr_counts}"
-    assert VRl_pos == VRl_counts, f"VRl position mismatch: {VRl_pos} != {VRl_counts}"
+    assert Vlr_pos == Vlr_counts, f"Vlr position mismatch: {Vlr_pos} != {Vlr_counts}"
+    assert Rvl_pos == Rvl_counts, f"Rvl position mismatch: {Rvl_pos} != {Rvl_counts}"
+    assert Lvr_pos == Lvr_counts, f"Lvr position mismatch: {Lvr_pos} != {Lvr_counts}"
 
     # Create BinaryFunctionTable objects
-    LRv = SparseTernaryRelation(ptrs=LRv_ptrs, args=LRv_args)
-    VLr = SparseTernaryRelation(ptrs=VLr_ptrs, args=VLr_args)
-    VRl = SparseTernaryRelation(ptrs=VRl_ptrs, args=VRl_args)
+    Vlr = SparseTernaryRelation(ptrs=Vlr_ptrs, args=Vlr_args)
+    Rvl = SparseTernaryRelation(ptrs=Rvl_ptrs, args=Rvl_args)
+    Lvr = SparseTernaryRelation(ptrs=Lvr_ptrs, args=Lvr_args)
 
-    return BinaryFunction(name=proto_func.name, func=func, LRv=LRv, VLr=VLr, VRl=VRl)
+    return BinaryFunction(name=proto_func.name, LRv=LRv, Vlr=Vlr, Rvl=Rvl, Lvr=Lvr)
 
 
 def load_symmetric_function(
@@ -210,9 +210,9 @@ def load_symmetric_function(
     """
     # Pass 1: Count entries for each table, including symmetric duplicates
     func_entries = 0
-    LRv_counts = [0] * (item_count + 1)  # indexed by val
-    VLr_counts = [0] * (item_count + 1)  # indexed by rhs
-    VRl_counts = [0] * (item_count + 1)  # indexed by lhs
+    Vlr_counts = [0] * (item_count + 1)  # indexed by val
+    Rvl_counts = [0] * (item_count + 1)  # indexed by rhs
+    Lvr_counts = [0] * (item_count + 1)  # indexed by lhs
 
     for chunk in iter_chunks(proto_func):
         for row in chunk.rows:
@@ -221,17 +221,17 @@ def load_symmetric_function(
             for rhs, val in zip(keys, vals):
                 # Original entry
                 func_entries += 1
-                LRv_counts[val] += 1
-                VLr_counts[rhs] += 1
-                VRl_counts[lhs] += 1
+                Vlr_counts[val] += 1
+                Rvl_counts[rhs] += 1
+                Lvr_counts[lhs] += 1
 
                 # Symmetric entry (if different)
                 if lhs == rhs:
                     continue
                 func_entries += 1
-                LRv_counts[val] += 1  # Same val, but (rhs, lhs) instead of (lhs, rhs)
-                VLr_counts[lhs] += 1  # Now indexed by lhs, stores (val, rhs)
-                VRl_counts[rhs] += 1  # Now indexed by rhs, stores (val, lhs)
+                Vlr_counts[val] += 1  # Same val, but (rhs, lhs) instead of (lhs, rhs)
+                Rvl_counts[lhs] += 1  # Now indexed by lhs, stores (val, rhs)
+                Lvr_counts[rhs] += 1  # Now indexed by rhs, stores (val, lhs)
 
     # Create pointers from counts
     def create_ptrs_from_counts(counts: list[int]) -> torch.Tensor:
@@ -240,24 +240,24 @@ def load_symmetric_function(
             ptrs[i + 1] = ptrs[i] + counts[i]
         return ptrs
 
-    LRv_ptrs = create_ptrs_from_counts(LRv_counts)
-    VLr_ptrs = create_ptrs_from_counts(VLr_counts)
-    VRl_ptrs = create_ptrs_from_counts(VRl_counts)
+    Vlr_ptrs = create_ptrs_from_counts(Vlr_counts)
+    Rvl_ptrs = create_ptrs_from_counts(Rvl_counts)
+    Lvr_ptrs = create_ptrs_from_counts(Lvr_counts)
 
     # Allocate tensors
     func = SparseBinaryFunction(func_entries)
-    LRv_nnz = int(LRv_ptrs[-1].item())
-    VLr_nnz = int(VLr_ptrs[-1].item())
-    VRl_nnz = int(VRl_ptrs[-1].item())
+    Vlr_nnz = int(Vlr_ptrs[-1].item())
+    Rvl_nnz = int(Rvl_ptrs[-1].item())
+    Lvr_nnz = int(Lvr_ptrs[-1].item())
 
-    LRv_args = torch.zeros((LRv_nnz, 2), dtype=torch.int32)
-    VLr_args = torch.zeros((VLr_nnz, 2), dtype=torch.int32)
-    VRl_args = torch.zeros((VRl_nnz, 2), dtype=torch.int32)
+    Vlr_args = torch.zeros((Vlr_nnz, 2), dtype=torch.int32)
+    Rvl_args = torch.zeros((Rvl_nnz, 2), dtype=torch.int32)
+    Lvr_args = torch.zeros((Lvr_nnz, 2), dtype=torch.int32)
 
     # Pass 2: Load data with position tracking, including symmetric duplicates
-    LRv_pos = [0] * (item_count + 1)
-    VLr_pos = [0] * (item_count + 1)
-    VRl_pos = [0] * (item_count + 1)
+    Vlr_pos = [0] * (item_count + 1)
+    Rvl_pos = [0] * (item_count + 1)
+    Lvr_pos = [0] * (item_count + 1)
 
     for chunk in iter_chunks(proto_func):
         for row in chunk.rows:
@@ -267,58 +267,58 @@ def load_symmetric_function(
                 # Original entry: (lhs, rhs, val)
                 func[lhs, rhs] = val
 
-                # LRv table: indexed by val, stores (lhs, rhs)
-                idx = LRv_ptrs[val] + LRv_pos[val]
-                LRv_args[idx, 0] = lhs
-                LRv_args[idx, 1] = rhs
-                LRv_pos[val] += 1
+                # Vlr table: indexed by val, stores (lhs, rhs)
+                idx = Vlr_ptrs[val] + Vlr_pos[val]
+                Vlr_args[idx, 0] = lhs
+                Vlr_args[idx, 1] = rhs
+                Vlr_pos[val] += 1
 
-                # VLr table: indexed by rhs, stores (val, lhs)
-                idx = VLr_ptrs[rhs] + VLr_pos[rhs]
-                VLr_args[idx, 0] = val
-                VLr_args[idx, 1] = lhs
-                VLr_pos[rhs] += 1
+                # Rvl table: indexed by rhs, stores (val, lhs)
+                idx = Rvl_ptrs[rhs] + Rvl_pos[rhs]
+                Rvl_args[idx, 0] = val
+                Rvl_args[idx, 1] = lhs
+                Rvl_pos[rhs] += 1
 
-                # VRl table: indexed by lhs, stores (val, rhs)
-                idx = VRl_ptrs[lhs] + VRl_pos[lhs]
-                VRl_args[idx, 0] = val
-                VRl_args[idx, 1] = rhs
-                VRl_pos[lhs] += 1
+                # Lvr table: indexed by lhs, stores (val, rhs)
+                idx = Lvr_ptrs[lhs] + Lvr_pos[lhs]
+                Lvr_args[idx, 0] = val
+                Lvr_args[idx, 1] = rhs
+                Lvr_pos[lhs] += 1
 
                 # Symmetric entry: (rhs, lhs, val) if lhs != rhs
                 if lhs == rhs:
                     continue
                 func[rhs, lhs] = val
 
-                # LRv table: indexed by val, stores (rhs, lhs)
-                idx = LRv_ptrs[val] + LRv_pos[val]
-                LRv_args[idx, 0] = rhs
-                LRv_args[idx, 1] = lhs
-                LRv_pos[val] += 1
+                # Vlr table: indexed by val, stores (rhs, lhs)
+                idx = Vlr_ptrs[val] + Vlr_pos[val]
+                Vlr_args[idx, 0] = rhs
+                Vlr_args[idx, 1] = lhs
+                Vlr_pos[val] += 1
 
-                # VLr table: indexed by lhs (now the rhs), stores (val, rhs)
-                idx = VLr_ptrs[lhs] + VLr_pos[lhs]
-                VLr_args[idx, 0] = val
-                VLr_args[idx, 1] = rhs
-                VLr_pos[lhs] += 1
+                # Rvl table: indexed by lhs (now the rhs), stores (val, rhs)
+                idx = Rvl_ptrs[lhs] + Rvl_pos[lhs]
+                Rvl_args[idx, 0] = val
+                Rvl_args[idx, 1] = rhs
+                Rvl_pos[lhs] += 1
 
-                # VRl table: indexed by rhs (now the lhs), stores (val, lhs)
-                idx = VRl_ptrs[rhs] + VRl_pos[rhs]
-                VRl_args[idx, 0] = val
-                VRl_args[idx, 1] = lhs
-                VRl_pos[rhs] += 1
+                # Lvr table: indexed by rhs (now the lhs), stores (val, lhs)
+                idx = Lvr_ptrs[rhs] + Lvr_pos[rhs]
+                Lvr_args[idx, 0] = val
+                Lvr_args[idx, 1] = lhs
+                Lvr_pos[rhs] += 1
 
     # Verify that positions match counts
-    assert LRv_pos == LRv_counts
-    assert VLr_pos == VLr_counts
-    assert VRl_pos == VRl_counts
+    assert Vlr_pos == Vlr_counts
+    assert Rvl_pos == Rvl_counts
+    assert Lvr_pos == Lvr_counts
 
     # Create SparseTernaryRelation objects
-    LRv = SparseTernaryRelation(ptrs=LRv_ptrs, args=LRv_args)
-    VLr = SparseTernaryRelation(ptrs=VLr_ptrs, args=VLr_args)
-    VRl = SparseTernaryRelation(ptrs=VRl_ptrs, args=VRl_args)
+    Vlr = SparseTernaryRelation(ptrs=Vlr_ptrs, args=Vlr_args)
+    Rvl = SparseTernaryRelation(ptrs=Rvl_ptrs, args=Rvl_args)
+    Lvr = SparseTernaryRelation(ptrs=Lvr_ptrs, args=Lvr_args)
 
-    return BinaryFunction(name=proto_func.name, func=func, LRv=LRv, VLr=VLr, VRl=VRl)
+    return BinaryFunction(name=proto_func.name, LRv=func, Vlr=Vlr, Rvl=Rvl, Lvr=Lvr)
 
 
 def load_unary_relation(proto_rel: pb2.UnaryRelation, item_count: int) -> torch.Tensor:

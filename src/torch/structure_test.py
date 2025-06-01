@@ -66,19 +66,19 @@ def make_dense_bin_fun(item_count: int) -> list[tuple[int, int, int]]:
 def make_sparse_binary_function(
     item_count: int, table: list[tuple[int, int, int]]
 ) -> SparseBinaryFunction:
-    func = SparseBinaryFunction(item_count)
+    LRv = SparseBinaryFunction(item_count)
     for L, R, V in table:
-        func[Ob(L), Ob(R)] = Ob(V)
-    return func
+        LRv[Ob(L), Ob(R)] = Ob(V)
+    return LRv
 
 
-def make_XYz_sparse(
-    item_count: int, XYz_table: list[tuple[int, int, int]]
+def make_Xyz_sparse(
+    item_count: int, Xyz_table: list[tuple[int, int, int]]
 ) -> tuple[torch.Tensor, torch.Tensor]:
-    nnz = len(XYz_table)
+    nnz = len(Xyz_table)
     counts: list[int] = [0] * (1 + item_count)
-    for X, Y, Z in XYz_table:
-        counts[Z] += 1
+    for X, Y, Z in Xyz_table:
+        counts[X] += 1
     assert counts[0] == 0
     # 1 on the left for null, 1 on the right for end.
     ptrs = torch.empty(1 + item_count + 1, dtype=torch.int32)
@@ -89,48 +89,48 @@ def make_XYz_sparse(
     assert ptrs[-1] == nnz
     pos = [0] * (1 + item_count)
     args = torch.empty((nnz, 2), dtype=torch.int32)
-    for X, Y, Z in XYz_table:
-        e = ptrs[Z] + pos[Z]
-        args[e, 0] = X
-        args[e, 1] = Y
-        pos[Z] += 1
+    for X, Y, Z in Xyz_table:
+        e = ptrs[X] + pos[X]
+        args[e, 0] = Y
+        args[e, 1] = Z
+        pos[X] += 1
     assert pos == counts
     return ptrs, args
 
 
-def make_LRv_sparse(
-    item_count: int, LRv_table: list[tuple[int, int, int]]
+def make_Vlr_sparse(
+    item_count: int, table: list[tuple[int, int, int]]
 ) -> tuple[torch.Tensor, torch.Tensor]:
-    return make_XYz_sparse(item_count, [(L, R, V) for L, R, V in LRv_table])
+    return make_Xyz_sparse(item_count, [(V, L, R) for L, R, V in table])
 
 
-def make_VLr_sparse(
-    item_count: int, LRv_table: list[tuple[int, int, int]]
+def make_Rvl_sparse(
+    item_count: int, table: list[tuple[int, int, int]]
 ) -> tuple[torch.Tensor, torch.Tensor]:
-    return make_XYz_sparse(item_count, [(V, L, R) for L, R, V in LRv_table])
+    return make_Xyz_sparse(item_count, [(R, V, L) for L, R, V in table])
 
 
-def make_VRl_sparse(
-    item_count: int, LRv_table: list[tuple[int, int, int]]
+def make_Lvr_sparse(
+    item_count: int, table: list[tuple[int, int, int]]
 ) -> tuple[torch.Tensor, torch.Tensor]:
-    return make_XYz_sparse(item_count, [(V, R, L) for L, R, V in LRv_table])
+    return make_Xyz_sparse(item_count, [(L, V, R) for L, R, V in table])
 
 
 def make_binary_function(item_count: int) -> BinaryFunction:
     name = "MUL"
     table = make_dense_bin_fun(item_count)
-    func = make_sparse_binary_function(item_count, table)
-    LRv = SparseTernaryRelation(*make_LRv_sparse(item_count, table))
-    VLr = SparseTernaryRelation(*make_VLr_sparse(item_count, table))
-    VRl = SparseTernaryRelation(*make_VRl_sparse(item_count, table))
-    return BinaryFunction(name, func, LRv, VLr, VRl)
+    LRv = make_sparse_binary_function(item_count, table)
+    Vlr = SparseTernaryRelation(*make_Vlr_sparse(item_count, table))
+    Rvl = SparseTernaryRelation(*make_Rvl_sparse(item_count, table))
+    Lvr = SparseTernaryRelation(*make_Lvr_sparse(item_count, table))
+    return BinaryFunction(name, LRv, Vlr, Rvl, Lvr)
 
 
 @pytest.mark.parametrize("temperature", [True, False])
 @pytest.mark.parametrize("item_count", [10, 100])
 def test_binary_function(item_count: int, temperature: bool) -> None:
     table = make_dense_bin_fun(item_count)
-    f_ptrs, f_args = make_LRv_sparse(item_count, table)
+    f_ptrs, f_args = make_Vlr_sparse(item_count, table)
 
     lhs = torch.randn(1 + item_count, dtype=torch.float32)
     rhs = torch.randn(1 + item_count, dtype=torch.float32)
@@ -152,15 +152,15 @@ def test_torch_binary_function_gradients(item_count: int) -> None:
     table = make_dense_bin_fun(item_count)
 
     # Create all three sparse representations
-    LRv_ptrs, LRv_args = make_LRv_sparse(item_count, table)  # L,R -> V
-    VLr_ptrs, VLr_args = make_VLr_sparse(item_count, table)  # V,L -> R
-    VRl_ptrs, VRl_args = make_VRl_sparse(item_count, table)  # V,R -> L
+    Vlr_ptrs, Vlr_args = make_Vlr_sparse(item_count, table)  # L,R -> V
+    Rvl_ptrs, Rvl_args = make_Rvl_sparse(item_count, table)  # V,L -> R
+    Lvr_ptrs, Lvr_args = make_Lvr_sparse(item_count, table)  # V,R -> L
 
     def torch_binary_function_wrapper(
         lhs: torch.Tensor, rhs: torch.Tensor
     ) -> torch.Tensor:
         return BinaryFunctionSumProduct.apply(
-            LRv_ptrs, LRv_args, VLr_ptrs, VLr_args, VRl_ptrs, VRl_args, lhs, rhs
+            Vlr_ptrs, Vlr_args, Rvl_ptrs, Rvl_args, Lvr_ptrs, Lvr_args, lhs, rhs
         )
 
     # Create test inputs that require gradients
@@ -186,15 +186,15 @@ def test_binary_function_lookup(structure: Structure) -> None:
             logger.info(f"Testing {name} lookup")
             for i in range(1000):
                 val = Ob(random.randint(1, structure.item_count))
-                if f.LRv.ptrs[val] < f.LRv.ptrs[val + 1]:
-                    start = int(f.LRv.ptrs[val].item())
-                    end = int(f.LRv.ptrs[val + 1].item()) - 1
+                if f.Vlr.ptrs[val] < f.Vlr.ptrs[val + 1]:
+                    start = int(f.Vlr.ptrs[val].item())
+                    end = int(f.Vlr.ptrs[val + 1].item()) - 1
                     e = random.randint(start, end)
-                    lhs = Ob(int(f.LRv.args[e, 0].item()))
-                    rhs = Ob(int(f.LRv.args[e, 1].item()))
-                    assert f.func[lhs, rhs] == val
+                    lhs = Ob(int(f.Vlr.args[e, 0].item()))
+                    rhs = Ob(int(f.Vlr.args[e, 1].item()))
+                    assert f.LRv[lhs, rhs] == val
                     if symmetric:
-                        assert f.func[rhs, lhs] == val
+                        assert f.LRv[rhs, lhs] == val
 
 
 def test_compute_probs(structure: Structure, language: Language) -> None:

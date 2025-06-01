@@ -63,12 +63,12 @@ def test_structure_loading(filename: str) -> None:
         logger.info(f"    Nullary function '{name}': {val}")
 
     for name, func in structure.binary_functions.items():
-        LRv_entries = func.LRv.ptrs[-1].item()
-        logger.info(f"    Binary function '{name}': LRv has {LRv_entries} entries")
+        Vlr_entries = func.Vlr.ptrs[-1].item()
+        logger.info(f"    Binary function '{name}': Vlr has {Vlr_entries} entries")
 
     for name, func in structure.symmetric_functions.items():
-        LRv_entries = func.LRv.ptrs[-1].item()
-        logger.info(f"    Symmetric function '{name}': LRv has {LRv_entries} entries")
+        Vlr_entries = func.Vlr.ptrs[-1].item()
+        logger.info(f"    Symmetric function '{name}': Vlr has {Vlr_entries} entries")
 
     for name, tensor in structure.unary_relations.items():
         non_zero = torch.count_nonzero(tensor)
