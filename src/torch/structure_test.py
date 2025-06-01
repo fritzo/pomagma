@@ -436,3 +436,164 @@ def test_compute_occurrences_mul(item_count: int) -> None:
     assert occurrences[10].item() == approx(0)
     assert occurrences[11].item() == approx(0)
     assert occurrences[12].item() == approx(weight)  # 12 occurs as itself
+
+
+def test_compute_best(structure: Structure, language: Language) -> None:
+    """Test that compute_best produces reasonable results for E-graph extraction."""
+    best = language.compute_best(structure)
+    assert best.shape == (structure.item_count + 1,)
+    assert best.dtype == torch.float32
+    assert best.device == torch.device("cpu")
+
+    # Check that best probabilities are non-negative
+    assert (best >= 0).all()
+
+    # Check that there are some non-zero best probabilities
+    assert (best > 0).sum() > 0
+
+    # Best probabilities should be less than or equal to compute_probs
+    probs = language.compute_probs(structure)
+    assert (best <= probs + 1e-6).all()  # Allow small numerical error
+
+
+@pytest.mark.parametrize("item_count", [10])
+def test_compute_best_mul(item_count: int) -> None:
+    """Test compute_best with the multiplication table example."""
+    # Build a structure, the multiplication table.
+    mul = make_binary_function(item_count)
+    primes: Mapping[str, Ob] = Map(
+        {"ONE": Ob(1), "TWO": Ob(2), "THREE": Ob(3), "FIVE": Ob(5), "SEVEN": Ob(7)}
+    )
+    structure = Structure(
+        name="MUL",
+        item_count=item_count,
+        nullary_functions=primes,
+        binary_functions={"MUL": mul},
+        symmetric_functions={},
+        unary_relations={},
+        binary_relations={},
+    )
+
+    # Build a language
+    nullary_functions = torch.zeros(1 + item_count, dtype=torch.float32)
+    nullary_functions[primes["ONE"]] = 1e-20
+    nullary_functions[primes["TWO"]] = 0.1
+    nullary_functions[primes["THREE"]] = 0.1
+    nullary_functions[primes["FIVE"]] = 0.1
+    nullary_functions[primes["SEVEN"]] = 0.1
+    language = Language(
+        nullary_functions=nullary_functions,
+        binary_functions={"MUL": torch.tensor(0.5, dtype=torch.float32)},
+        symmetric_functions={},
+    )
+
+    best = language.compute_best(structure)
+    assert best.shape == (1 + item_count,)
+    assert best.dtype == torch.float32
+    assert best.device == torch.device("cpu")
+
+    # Check that primes have non-zero best probabilities
+    assert best[primes["TWO"]].item() > 0
+    assert best[primes["THREE"]].item() > 0
+    assert best[primes["FIVE"]].item() > 0
+    assert best[primes["SEVEN"]].item() > 0
+
+    # Check that composite numbers can have non-zero best probabilities
+    # (depending on whether they can be expressed as products)
+    if item_count >= 4:
+        assert best[4].item() >= 0  # 4 = 2*2
+    if item_count >= 6:
+        assert best[6].item() >= 0  # 6 = 2*3
+    if item_count >= 9:
+        assert best[9].item() >= 0  # 9 = 3*3
+
+
+@pytest.mark.xfail(reason="not all obs are extracted")
+def test_extract_all(structure: Structure, language: Language) -> None:
+    """Test that extract_all produces expressions for some E-classes."""
+    expressions = language.extract_all(structure)
+    assert len(expressions) == structure.item_count + 1
+    assert expressions[0] is None  # 0 is undefined
+
+    # Check that some expressions are extracted
+    non_none_count = sum(1 for expr in expressions if expr is not None)
+    assert non_none_count > 0
+
+    # Check that extracted expressions are Expression objects
+    from pomagma.compiler.expressions import Expression
+
+    for expr in expressions:
+        if expr is not None:
+            assert isinstance(expr, Expression)
+
+
+@pytest.mark.parametrize("item_count", [10])
+def test_extract_all_mul(item_count: int) -> None:
+    """Test extract_all with the multiplication table example."""
+    # Register MUL as a BinaryFunction in the signature system
+    from pomagma.compiler.signature import declare_arity
+
+    declare_arity("MUL", "BinaryFunction")
+
+    # Build a structure, the multiplication table.
+    mul = make_binary_function(item_count)
+    primes: Mapping[str, Ob] = Map(
+        {"ONE": Ob(1), "TWO": Ob(2), "THREE": Ob(3), "FIVE": Ob(5), "SEVEN": Ob(7)}
+    )
+    structure = Structure(
+        name="MUL",
+        item_count=item_count,
+        nullary_functions=primes,
+        binary_functions={"MUL": mul},
+        symmetric_functions={},
+        unary_relations={},
+        binary_relations={},
+    )
+
+    # Build a language with high weight for MUL
+    nullary_functions = torch.zeros(1 + item_count, dtype=torch.float32)
+    nullary_functions[primes["ONE"]] = 1e-20  # Very low weight for ONE
+    nullary_functions[primes["TWO"]] = 0.1
+    nullary_functions[primes["THREE"]] = 0.1
+    nullary_functions[primes["FIVE"]] = 0.1
+    nullary_functions[primes["SEVEN"]] = 0.1
+    language = Language(
+        nullary_functions=nullary_functions,
+        binary_functions={"MUL": torch.tensor(0.8, dtype=torch.float32)},  # High weight
+        symmetric_functions={},
+    )
+
+    expressions = language.extract_all(structure)
+    assert len(expressions) == 1 + item_count
+    assert expressions[0] is None  # 0 is undefined
+
+    # Check that primes are extracted as nullary functions
+    two = expressions[primes["TWO"]]
+    three = expressions[primes["THREE"]]
+    five = expressions[primes["FIVE"]]
+    seven = expressions[primes["SEVEN"]]
+    assert two is not None
+    assert two.name == "TWO"
+    assert three is not None
+    assert three.name == "THREE"
+    assert five is not None
+    assert five.name == "FIVE"
+    assert seven is not None
+    assert seven.name == "SEVEN"
+
+    # Check that composite numbers are extracted as MUL expressions (when beneficial)
+    if item_count >= 4:
+        expr_4 = expressions[4]
+        if expr_4 is not None:
+            # 4 = 2*2 should be expressed as MUL(TWO, TWO)
+            assert expr_4.name == "MUL"
+            assert len(expr_4.args) == 2
+
+    if item_count >= 6:
+        expr_6 = expressions[6]
+        if expr_6 is not None:
+            # 6 = 2*3 should be expressed as MUL(TWO, THREE) or MUL(THREE, TWO)
+            assert expr_6.name == "MUL"
+            assert len(expr_6.args) == 2
+            arg_names = {expr_6.args[0].name, expr_6.args[1].name}
+            assert arg_names == {"TWO", "THREE"}

@@ -9,6 +9,7 @@
 - Do not relax pytest.mark.xfail to pytest.mark.skip
 - Do not relax timeouts
 - Do not weaken hypothesis test generators
+- Do not weaken assertions - fix the underlying issue instead
 
 ## Be efficient
 

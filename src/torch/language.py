@@ -4,6 +4,8 @@ from typing import Mapping, Sequence
 import torch
 from immutables import Map
 
+from pomagma.compiler.expressions import Expression
+
 from .corpus import ObTree
 from .structure import Ob, Structure
 
@@ -84,7 +86,7 @@ class Language(torch.nn.Module):
         eps = torch.finfo(self.nullary_functions.dtype).eps
 
         # Initialize with atoms.
-        probs = self.nullary_functions / self.nullary_functions.sum()
+        probs = self.nullary_functions.detach()
 
         # Propagate until convergence.
         diff = 1.0
@@ -98,6 +100,33 @@ class Language(torch.nn.Module):
 
         return probs
 
+    @torch.no_grad()
+    def compute_best(
+        self, structure: Structure, *, reltol: float = 1e-3
+    ) -> torch.Tensor:
+        """
+        Propagates from a normalized grammar to find the best (max probability)
+        path to each ob.
+
+        Unlike compute_probs which sums over all derivations, this finds the single
+        highest-probability derivation for each E-class for E-graph extraction.
+        """
+        assert 0.0 < reltol < 1.0
+        eps = torch.finfo(self.nullary_functions.dtype).eps
+
+        # Initialize with atoms.
+        best = self.nullary_functions.detach()
+
+        # Propagate until convergence.
+        diff = 1.0
+        while diff > reltol:
+            prev = best
+            best = self._compute_best_step(structure, best)
+            diffs = (best - prev).abs() / (best + eps)
+            diff = diffs.max().item()
+
+        return best
+
     def _compute_probs_step(
         self, structure: Structure, probs: torch.Tensor
     ) -> torch.Tensor:
@@ -109,6 +138,19 @@ class Language(torch.nn.Module):
         for name, weight in self.symmetric_functions.items():
             fn = structure.symmetric_functions[name]
             out += weight * fn.sum_product(probs, probs)
+        return out
+
+    def _compute_best_step(
+        self, structure: Structure, best: torch.Tensor
+    ) -> torch.Tensor:
+        # Propagates max probability from subexpressions to their super-expressions.
+        out = self.nullary_functions.clone()
+        for name, weight in self.binary_functions.items():
+            fn = structure.binary_functions[name]
+            out = torch.maximum(out, weight * fn.max_product(best, best))
+        for name, weight in self.symmetric_functions.items():
+            fn = structure.symmetric_functions[name]
+            out = torch.maximum(out, weight * fn.max_product(best, best))
         return out
 
     def _compute_occurrences_step(
@@ -291,3 +333,65 @@ class Language(torch.nn.Module):
                 self.symmetric_functions[name] += count * weight
             else:
                 raise ValueError(f"Unknown symbol: {name}")
+
+    def extract_all(
+        self, structure: Structure, *, best: torch.Tensor | None = None
+    ) -> list[Expression | None]:
+        """
+        Extracts the shortest expression for each E-class.
+        """
+        if best is None:
+            best = self.compute_best(structure)
+        assert best.shape == (1 + structure.item_count,)
+
+        # Sort from highest to lowest probability, a valid topological order.
+        order: list[Ob] = list(map(Ob, range(1, 1 + structure.item_count)))
+        order.sort(key=lambda i: best[i].item(), reverse=True)
+
+        # Index nullary functions by ob.
+        nullary_functions: dict[Ob, str] = {}
+        for name, ob in structure.nullary_functions.items():
+            nullary_functions[ob] = name
+
+        # Extract the shortest expression for each E-class.
+        expressions: list[Expression | None] = [None] * (1 + structure.item_count)
+        for ob in order:
+            # Find the best grammar rule to apply.
+            best_prob: float = 0.0
+
+            # Nullary functions.
+            if ob in nullary_functions:
+                best_prob = self.nullary_functions[ob].item()
+                name = nullary_functions[ob]
+                expressions[ob] = Expression.make(name)
+
+            # Binary functions.
+            for self_fs, struct_fs in [
+                (self.binary_functions, structure.binary_functions),
+                (self.symmetric_functions, structure.symmetric_functions),
+            ]:
+                for name, weight in self_fs.items():
+                    Vlr = struct_fs[name].Vlr
+                    begin = Vlr.ptrs[ob].item()
+                    end = Vlr.ptrs[ob + 1].item()
+                    if begin == end:
+                        continue
+                    lhs_obs, rhs_obs = Vlr.args[begin:end].T
+                    lhs_probs = best[lhs_obs.long()]
+                    rhs_probs = best[rhs_obs.long()]
+                    part_probs = weight * lhs_probs * rhs_probs
+                    values, indices = part_probs.max(dim=-1)
+                    value = values.item()
+                    index = indices.item()
+                    if value <= best_prob:
+                        continue
+                    best_prob = value
+                    lhs = expressions[lhs_obs[index]]
+                    rhs = expressions[rhs_obs[index]]
+                    if lhs is None or rhs is None:
+                        continue
+                    expressions[ob] = Expression.make(name, lhs, rhs)
+
+        # Check that all expressions were successfully extracted.
+        assert all(e is not None for e in expressions[1:])
+        return expressions
