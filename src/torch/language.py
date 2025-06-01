@@ -192,23 +192,29 @@ class Language(torch.nn.Module):
             symmetric_functions=symmetric_functions,
         )
 
+    @torch.no_grad()
     def compute_occurrences(
-        self, structure: Structure, data: torch.Tensor, *, reltol=1e-3
+        self,
+        structure: Structure,
+        data: torch.Tensor,
+        *,
+        probs: torch.Tensor | None = None,
+        reltol: float = 1e-3,
     ) -> torch.Tensor:
         """
         Counts the number of occurrences of each subexpression of each E-class in
         expressions from a corpus. This includes both leaf nodes (from grammar rules)
         and internal node E-classes.
-
-        Uses backward propagation from observed data through the E-graph structure,
-        distributing occurrence counts based on probability-weighted decompositions.
         """
+        # This uses backward propagation from observed data through the E-graph
+        # structure, distributing occurrence counts based on
+        # probability-weighted decompositions.
         assert data.shape == self.nullary_functions.shape
         assert 0.0 < reltol < 1.0
         eps = torch.finfo(self.nullary_functions.dtype).eps
-
-        # Compute the forward probabilities once
-        probs = self.compute_probs(structure, reltol=reltol)
+        if probs is None:
+            # Compute the forward probabilities once
+            probs = self.compute_probs(structure, reltol=reltol)
 
         # Initialize with the observed data - these are the "root" occurrences
         counts = data.clone()
@@ -218,10 +224,8 @@ class Language(torch.nn.Module):
         while diff > reltol:
             prev = counts
             counts = self._compute_occurrences_step(structure, counts, probs, data)
-            with torch.no_grad():
-                # Only the convergence check is in no_grad - doesn't affect gradients
-                diffs = (counts - prev).abs() / (counts + eps)
-                diff = diffs.max().item()
+            diffs = (counts - prev).abs() / (counts + eps)
+            diff = diffs.max().item()
 
         return counts
 
