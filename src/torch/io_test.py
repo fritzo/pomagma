@@ -1,10 +1,12 @@
 import logging
 import os
+from typing import Literal
 
 import pytest
 import torch
 
 from pomagma.atlas.structure_pb2 import ObMap, ObSet
+from pomagma.util.testing import xfail_param
 
 from .io import delta_decompress, load_dense_set
 from .structure import Structure
@@ -45,9 +47,16 @@ def test_dense_set_loading() -> None:
 
 
 @pytest.mark.parametrize("filename", [TEST_FILE])
-def test_structure_loading(filename: str) -> None:
-    logger.info(f"Loading structure from {filename}...")
-    structure = Structure.load(filename, relations=True)
+@pytest.mark.parametrize(
+    "backend",
+    [
+        "python",
+        xfail_param("cpp", reason="aborts", run=False),
+    ],
+)
+def test_structure_loading(filename: str, backend: Literal["python", "cpp"]) -> None:
+    logger.info(f"Loading structure from {filename} using {backend} backend...")
+    structure = Structure.load(filename, relations=True, backend=backend)
 
     logger.info("Structure loaded successfully!")
     logger.info(f"  Name: {structure.name}")

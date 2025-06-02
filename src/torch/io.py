@@ -1,5 +1,5 @@
 import logging
-from typing import Iterable, TypeVar
+from typing import Iterable, Literal, TypeVar
 
 import numpy as np
 import torch
@@ -354,7 +354,20 @@ def load_binary_relation(
     return result
 
 
-def load_structure(filename: str, *, relations: bool = False) -> Structure:
+def load_structure(
+    filename: str,
+    *,
+    relations: bool = False,
+    backend: Literal["python", "cpp"] = "python",
+) -> Structure:
+    if backend == "python":
+        return load_structure_py(filename, relations=relations)
+    if backend == "cpp":
+        return load_structure_cpp(filename, relations=relations)
+    raise ValueError(f"Invalid backend: {backend}")
+
+
+def load_structure_py(filename: str, *, relations: bool = False) -> Structure:
     """
     Load a structure from a protobuf file.
 
@@ -414,3 +427,14 @@ def load_structure(filename: str, *, relations: bool = False) -> Structure:
         unary_relations=Map(unary_relations),
         binary_relations=Map(binary_relations),
     )
+
+
+def load_structure_cpp(filename: str, *, relations: bool = False) -> Structure:
+    """
+    Load a structure from a protobuf file using C++ implementation.
+
+    Args:
+        filename: Path to the .pb file.
+        relations: Whether to load relation data. Default: False.
+    """
+    raise NotImplementedError("TODO")

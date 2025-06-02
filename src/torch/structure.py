@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Mapping, NewType
+from typing import Literal, Mapping, NewType
 
 import torch
 
@@ -183,10 +183,15 @@ class Structure:
     binary_relations: Mapping[str, torch.Tensor]
 
     @staticmethod
-    def load(filename: str, *, relations: bool = False) -> "Structure":
+    def load(
+        filename: str,
+        *,
+        relations: bool = False,
+        backend: Literal["python", "cpp"] = "python",
+    ) -> "Structure":
         """
         Load a structure from a protobuf file.
         """
         from .io import load_structure
 
-        return load_structure(filename, relations=relations)
+        return load_structure(filename, relations=relations, backend=backend)
