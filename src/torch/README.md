@@ -96,6 +96,15 @@ The `compute_occurrences` method counts total occurrences of each subexpression 
 3. Iterate until convergence: for each E-node `f(l,r) = v`, distribute parent occurrences to children:
    $$\text{counts}[l] \mathrel{+}= \frac{w_f \cdot \text{probs}[l] \cdot \text{probs}[r] \cdot \text{counts}[v]}{\text{probs}[v]}$$
 
+### Extraction
+The `extract_all` method implements **E-graph extraction**—finding the single best (highest probability) concrete expression for each E-class. This converts the compact E-graph representation back to explicit syntax trees by selecting one representative from each equivalence class.
+
+**Algorithm:** Extraction proceeds in two phases:
+1. **`compute_best`**: A max-product analog of `compute_probs` that finds the highest probability derivation for each E-class. Like `compute_probs`, it iterates until convergence, but uses `max` instead of `sum`:
+   $$\text{best}[v] \leftarrow \max\left(w_{\text{nullary}}[v], \max_{f} w_f \max_{\substack{(l,r): \\ f(l,r) = v}} \text{best}[l] \cdot \text{best}[r]\right)$$
+
+2. **Extraction**: Sort E-classes by descending `best` probability (which gives a valid topological order since compound expressions have probability ≤ min(dependency probabilities)), then greedily select the highest-probability decomposition for each E-class.
+
 ### References
 1. Jason Eisner (2016)
   "Inside-Outside and Forward-Backward Algorithms are Just Backprop"
