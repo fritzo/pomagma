@@ -15,6 +15,7 @@ TORCH_LIBRARY(pomagma, m) {
     m.def(
         "binary_function_distribute_product(Tensor f_ptrs, Tensor f_args, "
         "Tensor parent_counts, Tensor probs, float weight) -> Tensor");
+    m.def("hash_pair(int lhs, int rhs) -> int");
 }
 
 TORCH_LIBRARY_IMPL(pomagma, CPU, m) {
@@ -24,4 +25,10 @@ TORCH_LIBRARY_IMPL(pomagma, CPU, m) {
            &pomagma::torch::binary_function_reduce_product<false>);
     m.impl("binary_function_distribute_product",
            &pomagma::torch::binary_function_distribute_product);
+    m.impl("hash_pair", &pomagma::torch::hash_pair);
+}
+
+// Register fallback for hash_pair to handle scalar arguments
+TORCH_LIBRARY_IMPL(pomagma, BackendSelect, m) {
+    m.impl("hash_pair", &pomagma::torch::hash_pair);
 }

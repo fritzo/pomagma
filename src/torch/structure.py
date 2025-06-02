@@ -63,7 +63,7 @@ class SparseBinaryFunction:
     def __getitem__(self, key: tuple[Ob, Ob]) -> Ob:
         lhs, rhs = key
         H = self.hash_table.size(0)
-        h = abs(hash((lhs, rhs))) % H
+        h = abs(torch.ops.pomagma.hash_pair(lhs, rhs)) % H
         while self.hash_table[h, 0] != lhs or self.hash_table[h, 1] != rhs:
             if self.hash_table[h, 0] == 0:
                 return Ob(0)
@@ -73,7 +73,7 @@ class SparseBinaryFunction:
     def __setitem__(self, key: tuple[Ob, Ob], val: Ob) -> None:
         lhs, rhs = key
         H = self.hash_table.size(0)
-        h = abs(hash((lhs, rhs))) % H
+        h = abs(torch.ops.pomagma.hash_pair(lhs, rhs)) % H
         while self.hash_table[h, 0] != 0:
             h = (h + 1) % H
         self.hash_table[h, 0] = lhs

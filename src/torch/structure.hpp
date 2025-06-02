@@ -27,5 +27,8 @@ at::Tensor binary_function_distribute_product(const at::Tensor& f_ptrs,
                                               const at::Tensor& probs,
                                               double weight);
 
+// Hash function for SparseBinaryFunction
+int64_t hash_pair(int64_t lhs, int64_t rhs);
+
 }  // namespace torch
 }  // namespace pomagma

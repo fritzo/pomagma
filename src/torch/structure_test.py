@@ -596,3 +596,59 @@ def test_extract_all_mul(item_count: int) -> None:
             assert len(expr_6.args) == 2
             arg_names = {expr_6.args[0].name, expr_6.args[1].name}
             assert arg_names == {"TWO", "THREE"}
+
+
+def test_hash_pair() -> None:
+    # Test basic functionality
+    hash1 = torch.ops.pomagma.hash_pair(42, 13)
+    hash2 = torch.ops.pomagma.hash_pair(42, 13)
+    assert hash1 == hash2, "Hash should be deterministic"
+
+    # Test different inputs give different hashes (with very high probability)
+    hash3 = torch.ops.pomagma.hash_pair(42, 14)
+    hash4 = torch.ops.pomagma.hash_pair(43, 13)
+    assert hash1 != hash3, "Different rhs should give different hash"
+    assert hash1 != hash4, "Different lhs should give different hash"
+
+    # Test order matters
+    hash5 = torch.ops.pomagma.hash_pair(13, 42)
+    assert hash1 != hash5, "Order should matter: hash(a,b) != hash(b,a)"
+
+    # Test with edge cases
+    hash_zero = torch.ops.pomagma.hash_pair(0, 0)
+    hash_large = torch.ops.pomagma.hash_pair(2**32, 2**32)
+    hash_negative = torch.ops.pomagma.hash_pair(-1, -1)
+
+    # All hashes should be different (with very high probability)
+    hashes = [hash1, hash3, hash4, hash5, hash_zero, hash_large, hash_negative]
+    assert len(set(hashes)) == len(hashes), "All test hashes should be different"
+
+
+def test_sparse_binary_function_with_hash_pair() -> None:
+    # Create a small test function
+    sparse_func = SparseBinaryFunction(10)
+
+    # Test basic operations
+    sparse_func[Ob(1), Ob(2)] = Ob(3)
+    sparse_func[Ob(4), Ob(5)] = Ob(6)
+    sparse_func[Ob(7), Ob(8)] = Ob(9)
+
+    # Test retrieval
+    assert sparse_func[Ob(1), Ob(2)] == Ob(3)
+    assert sparse_func[Ob(4), Ob(5)] == Ob(6)
+    assert sparse_func[Ob(7), Ob(8)] == Ob(9)
+
+    # Test missing entries return 0
+    assert sparse_func[Ob(1), Ob(3)] == Ob(0)
+    assert sparse_func[Ob(2), Ob(1)] == Ob(0)  # Order matters
+
+    # Test with larger values to check hash distribution
+    sparse_func[Ob(100), Ob(200)] = Ob(300)
+    sparse_func[Ob(1000), Ob(2000)] = Ob(3000)
+
+    assert sparse_func[Ob(100), Ob(200)] == Ob(300)
+    assert sparse_func[Ob(1000), Ob(2000)] == Ob(3000)
+
+    # Original entries should still work
+    assert sparse_func[Ob(4), Ob(5)] == Ob(6)
+    assert sparse_func[Ob(7), Ob(8)] == Ob(9)

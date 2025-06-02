@@ -4,6 +4,8 @@
 
 #include "structure.hpp"
 
+#include <pomagma/third_party/farmhash/farmhash.h>
+
 #include <pomagma/io/protobuf.hpp>
 
 namespace pomagma {
@@ -149,6 +151,18 @@ at::Tensor binary_function_distribute_product(const at::Tensor& f_ptrs,
     }
 
     return out;
+}
+
+int64_t hash_pair(int64_t lhs, int64_t rhs) {
+    // Pack two int64_t values into a 16-byte buffer for hashing
+    uint64_t data[2] = {static_cast<uint64_t>(lhs), static_cast<uint64_t>(rhs)};
+
+    // Use farmhash Fingerprint64 for consistent, portable hashing
+    uint64_t hash_value =
+        util::Fingerprint64(reinterpret_cast<const char*>(data), sizeof(data));
+
+    // Convert back to signed int64_t for compatibility with Python
+    return static_cast<int64_t>(hash_value);
 }
 
 template at::Tensor binary_function_reduce_product<false>(
