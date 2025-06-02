@@ -508,7 +508,6 @@ def test_compute_best_mul(item_count: int) -> None:
         assert best[9].item() >= 0  # 9 = 3*3
 
 
-@pytest.mark.xfail(reason="not all obs are extracted")
 def test_extract_all(structure: Structure, language: Language) -> None:
     """Test that extract_all produces expressions for some E-classes."""
     expressions = language.extract_all(structure)

@@ -1,3 +1,4 @@
+import logging
 from collections import Counter
 from typing import Mapping, Sequence
 
@@ -8,6 +9,8 @@ from pomagma.compiler.expressions import Expression
 
 from .corpus import ObTree
 from .structure import Ob, Structure
+
+logger = logging.getLogger(__name__)
 
 EMPTY_MAP: Mapping[str, torch.Tensor] = Map()
 
@@ -356,14 +359,21 @@ class Language(torch.nn.Module):
         # Extract the shortest expression for each E-class.
         expressions: list[Expression | None] = [None] * (1 + structure.item_count)
         for ob in order:
+            # Skip if this object has zero probability
+            if best[ob].item() <= 0:
+                continue
+
             # Find the best grammar rule to apply.
             best_prob: float = 0.0
+            best_expr: Expression | None = None
 
             # Nullary functions.
             if ob in nullary_functions:
-                best_prob = self.nullary_functions[ob].item()
-                name = nullary_functions[ob]
-                expressions[ob] = Expression.make(name)
+                prob = self.nullary_functions[ob].item()
+                if prob > best_prob:
+                    best_prob = prob
+                    name = nullary_functions[ob]
+                    best_expr = Expression.make(name)
 
             # Binary functions.
             for self_fs, struct_fs in [
@@ -372,26 +382,40 @@ class Language(torch.nn.Module):
             ]:
                 for name, weight in self_fs.items():
                     Vlr = struct_fs[name].Vlr
-                    begin = Vlr.ptrs[ob].item()
-                    end = Vlr.ptrs[ob + 1].item()
+                    begin = int(Vlr.ptrs[ob].item())
+                    end = int(Vlr.ptrs[ob + 1].item())
                     if begin == end:
                         continue
-                    lhs_obs, rhs_obs = Vlr.args[begin:end].T
+                    # Get all (lhs, rhs) pairs that produce ob
+                    lhs_rhs_pairs = Vlr.args[begin:end]  # Shape: [num_pairs, 2]
+                    if lhs_rhs_pairs.numel() == 0:
+                        continue
+                    lhs_obs = lhs_rhs_pairs[:, 0]
+                    rhs_obs = lhs_rhs_pairs[:, 1]
                     lhs_probs = best[lhs_obs.long()]
                     rhs_probs = best[rhs_obs.long()]
-                    part_probs = weight * lhs_probs * rhs_probs
-                    values, indices = part_probs.max(dim=-1)
-                    value = values.item()
-                    index = indices.item()
+                    part_probs = weight.item() * lhs_probs * rhs_probs
+                    max_value, max_idx = part_probs.max(dim=0)
+                    value = max_value.item()
+                    index = max_idx.item()
                     if value <= best_prob:
                         continue
-                    best_prob = value
-                    lhs = expressions[lhs_obs[index]]
-                    rhs = expressions[rhs_obs[index]]
-                    if lhs is None or rhs is None:
+                    # Get subexpressions (guaranteed to exist due to topological order)
+                    lhs_ob = int(lhs_obs[index].item())
+                    rhs_ob = int(rhs_obs[index].item())
+                    lhs_expr = expressions[lhs_ob]
+                    rhs_expr = expressions[rhs_ob]
+                    if lhs_expr is None or rhs_expr is None:
                         continue
-                    expressions[ob] = Expression.make(name, lhs, rhs)
+                    best_prob = value
+                    best_expr = Expression.make(name, lhs_expr, rhs_expr)
+
+            expressions[ob] = best_expr
 
         # Check that all expressions were successfully extracted.
-        assert all(e is not None for e in expressions[1:])
+        extracted_count = sum(1 for e in expressions[1:] if e is not None)
+        logger.info(f"Extracted {extracted_count}/{structure.item_count} obs")
+        expected_count = (best[1:] > 0).long().sum().item()
+        assert extracted_count == expected_count
+
         return expressions
