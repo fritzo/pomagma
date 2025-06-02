@@ -22,6 +22,7 @@ set_target_properties(pomagma_torch PROPERTIES
 # Link against PyTorch libraries and Pomagma libraries
 target_link_libraries(pomagma_torch PRIVATE 
     ${TORCH_LIBRARIES}
+    pomagma_atlas
     ${POMAGMA_IO_LIBS}
     ${POMAGMA_UTIL_LIBS}
 )

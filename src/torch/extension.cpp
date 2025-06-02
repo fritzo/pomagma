@@ -16,6 +16,9 @@ TORCH_LIBRARY(pomagma, m) {
         "binary_function_distribute_product(Tensor f_ptrs, Tensor f_args, "
         "Tensor parent_counts, Tensor probs, float weight) -> Tensor");
     m.def("hash_pair(int lhs, int rhs) -> int");
+    m.def(
+        "load_structure_cpp(str filename, bool relations) -> (str[], "
+        "Tensor[])");
 }
 
 TORCH_LIBRARY_IMPL(pomagma, CPU, m) {
@@ -26,9 +29,11 @@ TORCH_LIBRARY_IMPL(pomagma, CPU, m) {
     m.impl("binary_function_distribute_product",
            &pomagma::torch::binary_function_distribute_product);
     m.impl("hash_pair", &pomagma::torch::hash_pair);
+    m.impl("load_structure_cpp", &pomagma::torch::load_structure_cpp);
 }
 
-// Register fallback for hash_pair to handle scalar arguments
+// Register fallback for functions with no tensor arguments
 TORCH_LIBRARY_IMPL(pomagma, BackendSelect, m) {
     m.impl("hash_pair", &pomagma::torch::hash_pair);
+    m.impl("load_structure_cpp", &pomagma::torch::load_structure_cpp);
 }
