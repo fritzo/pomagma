@@ -167,14 +167,33 @@ int64_t hash_pair(int64_t lhs, int64_t rhs) {
     return static_cast<int64_t>(hash_value);
 }
 
-std::tuple<std::vector<std::string>, std::vector<at::Tensor>>
-load_structure_cpp(const std::string& filename, bool relations) {
+template <typename MessageType, typename Func>
+void visit_chunks(const MessageType& message, Func func) {
+    // Visit the main message first
+    func(message);
+
+    // Visit chunks from blobs
+    for (const auto& hexdigest : message.blobs()) {
+        std::string blob_path = find_blob(hexdigest);
+        protobuf::InFile blob_file(blob_path);
+        MessageType chunk;
+        blob_file.read(chunk);
+        func(chunk);
+        // Assert that chunks don't have nested blobs
+        TORCH_CHECK(chunk.blobs().empty(),
+                    "Chunk should not have nested blobs");
+    }
+}
+
+std::tuple<std::vector<std::string>, std::vector<at::Tensor>> load_structure(
+    const std::string& filename, bool relations) {
     std::vector<std::string> keys;
     std::vector<at::Tensor> tensors;
 
     // Read protobuf structure file using existing infrastructure
+    // Note: filename should be a resolved blob path, not a blob reference
     atlas::protobuf::Structure proto_structure;
-    protobuf::InFile file(find_blob(load_blob_ref(filename)));
+    protobuf::InFile file(filename);
     file.read(proto_structure);
 
     // Extract basic information
@@ -217,174 +236,194 @@ load_structure_cpp(const std::string& filename, bool relations) {
     };
 
     // Helper to process binary functions
-    auto process_binary_function = [&](const atlas::protobuf::BinaryFunction&
-                                           proto_func,
-                                       bool symmetric) {
-        std::string func_name = proto_func.name();
+    auto process_binary_function =
+        [&](const atlas::protobuf::BinaryFunction& proto_func, bool symmetric) {
+            std::string func_name = proto_func.name();
 
-        // Count entries first (pass 1)
-        int func_entries = 0;
-        std::vector<int> Vlr_counts(item_count + 1, 0);
-        std::vector<int> Rvl_counts(item_count + 1, 0);
-        std::vector<int> Lvr_counts(item_count + 1, 0);
+            // Count entries first (pass 1) using visit_chunks
+            int func_entries = 0;
+            std::vector<int> Vlr_counts(item_count + 1, 0);
+            std::vector<int> Rvl_counts(item_count + 1, 0);
+            std::vector<int> Lvr_counts(item_count + 1, 0);
 
-        // Iterate through all rows in the function
-        for (const auto& row : proto_func.rows()) {
-            uint32_t lhs = row.lhs();
-            auto [rhs_keys, vals] = delta_decompress(row.rhs_val());
+            // Use visit_chunks to iterate over main message and all blob chunks
+            visit_chunks(
+                proto_func, [&](const atlas::protobuf::BinaryFunction& chunk) {
+                    for (const auto& row : chunk.rows()) {
+                        uint32_t lhs = row.lhs();
+                        auto [rhs_keys, vals] = delta_decompress(row.rhs_val());
 
-            for (size_t i = 0; i < rhs_keys.size(); ++i) {
-                uint32_t rhs = rhs_keys[i];
-                uint32_t val = vals[i];
+                        for (size_t i = 0; i < rhs_keys.size(); ++i) {
+                            uint32_t rhs = rhs_keys[i];
+                            uint32_t val = vals[i];
 
-                // Count for original entry
-                func_entries++;
-                Vlr_counts[val]++;
-                Rvl_counts[rhs]++;
-                Lvr_counts[lhs]++;
+                            // Count for original entry
+                            func_entries++;
+                            Vlr_counts[val]++;
+                            Rvl_counts[rhs]++;
+                            Lvr_counts[lhs]++;
 
-                // Count for symmetric entry if needed
-                if (symmetric && lhs != rhs) {
-                    func_entries++;
-                    Vlr_counts[val]++;  // Same val, but (rhs, lhs) instead of
-                                        // (lhs, rhs)
-                    Rvl_counts[lhs]++;  // Now indexed by lhs, stores (val, rhs)
-                    Lvr_counts[rhs]++;  // Now indexed by rhs, stores (val, lhs)
+                            // Count for symmetric entry if needed
+                            if (symmetric && lhs != rhs) {
+                                func_entries++;
+                                Vlr_counts[val]++;  // Same val, but (rhs, lhs)
+                                                    // instead of (lhs, rhs)
+                                Rvl_counts[lhs]++;  // Now indexed by lhs,
+                                                    // stores (val, rhs)
+                                Lvr_counts[rhs]++;  // Now indexed by rhs,
+                                                    // stores (val, lhs)
+                            }
+                        }
+                    }
+                });
+
+            // Create pointers from counts
+            auto create_ptrs_from_counts =
+                [](const std::vector<int>& counts) -> at::Tensor {
+                at::Tensor ptrs =
+                    at::zeros({static_cast<long>(counts.size() + 1)},
+                              at::dtype(at::kInt));
+                auto ptrs_acc = ptrs.accessor<int, 1>();
+                for (size_t i = 0; i < counts.size(); ++i) {
+                    ptrs_acc[i + 1] = ptrs_acc[i] + counts[i];
                 }
-            }
-        }
+                return ptrs;
+            };
 
-        // Create pointers from counts
-        auto create_ptrs_from_counts =
-            [](const std::vector<int>& counts) -> at::Tensor {
-            at::Tensor ptrs = at::zeros({static_cast<long>(counts.size() + 1)},
-                                        at::dtype(at::kInt));
-            auto ptrs_acc = ptrs.accessor<int, 1>();
-            for (size_t i = 0; i < counts.size(); ++i) {
-                ptrs_acc[i + 1] = ptrs_acc[i] + counts[i];
+            at::Tensor Vlr_ptrs = create_ptrs_from_counts(Vlr_counts);
+            at::Tensor Rvl_ptrs = create_ptrs_from_counts(Rvl_counts);
+            at::Tensor Lvr_ptrs = create_ptrs_from_counts(Lvr_counts);
+
+            int Vlr_nnz = Vlr_ptrs[Vlr_ptrs.size(0) - 1].item<int>();
+            int Rvl_nnz = Rvl_ptrs[Rvl_ptrs.size(0) - 1].item<int>();
+            int Lvr_nnz = Lvr_ptrs[Lvr_ptrs.size(0) - 1].item<int>();
+
+            at::Tensor Vlr_args = at::zeros({Vlr_nnz, 2}, at::dtype(at::kInt));
+            at::Tensor Rvl_args = at::zeros({Rvl_nnz, 2}, at::dtype(at::kInt));
+            at::Tensor Lvr_args = at::zeros({Lvr_nnz, 2}, at::dtype(at::kInt));
+
+            // Create hash table for LRv sparse function with optimal size
+            // Use power-of-2 sizing like SparseBinaryFunction constructor
+            int optimal_size = 1;
+            while (optimal_size <= func_entries) {
+                optimal_size <<= 1;
             }
-            return ptrs;
+            optimal_size <<= 1;  // Extra factor of 2 for good hash performance
+            at::Tensor hash_table =
+                at::zeros({optimal_size, 3}, at::dtype(at::kInt));
+
+            // Pass 2: Fill data using visit_chunks
+            std::vector<int> Vlr_pos(item_count + 1, 0);
+            std::vector<int> Rvl_pos(item_count + 1, 0);
+            std::vector<int> Lvr_pos(item_count + 1, 0);
+
+            auto Vlr_ptrs_acc = Vlr_ptrs.accessor<int, 1>();
+            auto Rvl_ptrs_acc = Rvl_ptrs.accessor<int, 1>();
+            auto Lvr_ptrs_acc = Lvr_ptrs.accessor<int, 1>();
+            auto Vlr_args_acc = Vlr_args.accessor<int, 2>();
+            auto Rvl_args_acc = Rvl_args.accessor<int, 2>();
+            auto Lvr_args_acc = Lvr_args.accessor<int, 2>();
+            auto hash_table_acc = hash_table.accessor<int, 2>();
+
+            // Helper function to insert into hash table using linear probing
+            auto insert_into_hash_table = [&](int lhs, int rhs, int val) {
+                int64_t hash_val = hash_pair(lhs, rhs);
+                int h = static_cast<int>(std::abs(hash_val) % optimal_size);
+                while (hash_table_acc[h][0] != 0) {
+                    h = (h + 1) % optimal_size;
+                }
+                hash_table_acc[h][0] = lhs;
+                hash_table_acc[h][1] = rhs;
+                hash_table_acc[h][2] = val;
+            };
+
+            // Use visit_chunks again to fill the data structures
+            visit_chunks(
+                proto_func, [&](const atlas::protobuf::BinaryFunction& chunk) {
+                    for (const auto& row : chunk.rows()) {
+                        uint32_t lhs = row.lhs();
+                        auto [rhs_keys, vals] = delta_decompress(row.rhs_val());
+
+                        for (size_t i = 0; i < rhs_keys.size(); ++i) {
+                            uint32_t rhs = rhs_keys[i];
+                            uint32_t val = vals[i];
+
+                            // Store in hash table for LRv
+                            insert_into_hash_table(lhs, rhs, val);
+
+                            // Vlr table: indexed by val, stores (lhs, rhs)
+                            int idx = Vlr_ptrs_acc[val] + Vlr_pos[val];
+                            Vlr_args_acc[idx][0] = lhs;
+                            Vlr_args_acc[idx][1] = rhs;
+                            Vlr_pos[val]++;
+
+                            // Rvl table: indexed by rhs, stores (val, lhs)
+                            idx = Rvl_ptrs_acc[rhs] + Rvl_pos[rhs];
+                            Rvl_args_acc[idx][0] = val;
+                            Rvl_args_acc[idx][1] = lhs;
+                            Rvl_pos[rhs]++;
+
+                            // Lvr table: indexed by lhs, stores (val, rhs)
+                            idx = Lvr_ptrs_acc[lhs] + Lvr_pos[lhs];
+                            Lvr_args_acc[idx][0] = val;
+                            Lvr_args_acc[idx][1] = rhs;
+                            Lvr_pos[lhs]++;
+
+                            // Handle symmetric entries
+                            if (symmetric && lhs != rhs) {
+                                // Store symmetric entry in hash table
+                                insert_into_hash_table(rhs, lhs, val);
+
+                                // Vlr table: indexed by val, stores (rhs, lhs)
+                                idx = Vlr_ptrs_acc[val] + Vlr_pos[val];
+                                Vlr_args_acc[idx][0] = rhs;
+                                Vlr_args_acc[idx][1] = lhs;
+                                Vlr_pos[val]++;
+
+                                // Rvl table: indexed by lhs (now the rhs),
+                                // stores (val, rhs)
+                                idx = Rvl_ptrs_acc[lhs] + Rvl_pos[lhs];
+                                Rvl_args_acc[idx][0] = val;
+                                Rvl_args_acc[idx][1] = rhs;
+                                Rvl_pos[lhs]++;
+
+                                // Lvr table: indexed by rhs (now the lhs),
+                                // stores (val, lhs)
+                                idx = Lvr_ptrs_acc[rhs] + Lvr_pos[rhs];
+                                Lvr_args_acc[idx][0] = val;
+                                Lvr_args_acc[idx][1] = lhs;
+                                Lvr_pos[rhs]++;
+                            }
+                        }
+                    }
+                });
+
+            // Add tensors with fully qualified names
+            std::string func_prefix =
+                (symmetric ? "symmetric_functions." : "binary_functions.") +
+                func_name;
+
+            keys.emplace_back(func_prefix + ".LRv");
+            tensors.emplace_back(hash_table);
+
+            keys.emplace_back(func_prefix + ".Vlr.ptrs");
+            tensors.emplace_back(Vlr_ptrs);
+
+            keys.emplace_back(func_prefix + ".Vlr.args");
+            tensors.emplace_back(Vlr_args);
+
+            keys.emplace_back(func_prefix + ".Rvl.ptrs");
+            tensors.emplace_back(Rvl_ptrs);
+
+            keys.emplace_back(func_prefix + ".Rvl.args");
+            tensors.emplace_back(Rvl_args);
+
+            keys.emplace_back(func_prefix + ".Lvr.ptrs");
+            tensors.emplace_back(Lvr_ptrs);
+
+            keys.emplace_back(func_prefix + ".Lvr.args");
+            tensors.emplace_back(Lvr_args);
         };
-
-        at::Tensor Vlr_ptrs = create_ptrs_from_counts(Vlr_counts);
-        at::Tensor Rvl_ptrs = create_ptrs_from_counts(Rvl_counts);
-        at::Tensor Lvr_ptrs = create_ptrs_from_counts(Lvr_counts);
-
-        int Vlr_nnz = Vlr_ptrs[Vlr_ptrs.size(0) - 1].item<int>();
-        int Rvl_nnz = Rvl_ptrs[Rvl_ptrs.size(0) - 1].item<int>();
-        int Lvr_nnz = Lvr_ptrs[Lvr_ptrs.size(0) - 1].item<int>();
-
-        at::Tensor Vlr_args = at::zeros({Vlr_nnz, 2}, at::dtype(at::kInt));
-        at::Tensor Rvl_args = at::zeros({Rvl_nnz, 2}, at::dtype(at::kInt));
-        at::Tensor Lvr_args = at::zeros({Lvr_nnz, 2}, at::dtype(at::kInt));
-
-        // Create hash table for LRv sparse function
-        at::Tensor hash_table =
-            at::zeros({func_entries, 3}, at::dtype(at::kInt));
-
-        // Pass 2: Fill data
-        std::vector<int> Vlr_pos(item_count + 1, 0);
-        std::vector<int> Rvl_pos(item_count + 1, 0);
-        std::vector<int> Lvr_pos(item_count + 1, 0);
-        int hash_pos = 0;
-
-        auto Vlr_ptrs_acc = Vlr_ptrs.accessor<int, 1>();
-        auto Rvl_ptrs_acc = Rvl_ptrs.accessor<int, 1>();
-        auto Lvr_ptrs_acc = Lvr_ptrs.accessor<int, 1>();
-        auto Vlr_args_acc = Vlr_args.accessor<int, 2>();
-        auto Rvl_args_acc = Rvl_args.accessor<int, 2>();
-        auto Lvr_args_acc = Lvr_args.accessor<int, 2>();
-        auto hash_table_acc = hash_table.accessor<int, 2>();
-
-        for (const auto& row : proto_func.rows()) {
-            uint32_t lhs = row.lhs();
-            auto [rhs_keys, vals] = delta_decompress(row.rhs_val());
-
-            for (size_t i = 0; i < rhs_keys.size(); ++i) {
-                uint32_t rhs = rhs_keys[i];
-                uint32_t val = vals[i];
-
-                // Store in hash table for LRv
-                hash_table_acc[hash_pos][0] = lhs;
-                hash_table_acc[hash_pos][1] = rhs;
-                hash_table_acc[hash_pos][2] = val;
-                hash_pos++;
-
-                // Vlr table: indexed by val, stores (lhs, rhs)
-                int idx = Vlr_ptrs_acc[val] + Vlr_pos[val];
-                Vlr_args_acc[idx][0] = lhs;
-                Vlr_args_acc[idx][1] = rhs;
-                Vlr_pos[val]++;
-
-                // Rvl table: indexed by rhs, stores (val, lhs)
-                idx = Rvl_ptrs_acc[rhs] + Rvl_pos[rhs];
-                Rvl_args_acc[idx][0] = val;
-                Rvl_args_acc[idx][1] = lhs;
-                Rvl_pos[rhs]++;
-
-                // Lvr table: indexed by lhs, stores (val, rhs)
-                idx = Lvr_ptrs_acc[lhs] + Lvr_pos[lhs];
-                Lvr_args_acc[idx][0] = val;
-                Lvr_args_acc[idx][1] = rhs;
-                Lvr_pos[lhs]++;
-
-                // Handle symmetric entries
-                if (symmetric && lhs != rhs) {
-                    // Store symmetric entry in hash table
-                    hash_table_acc[hash_pos][0] = rhs;
-                    hash_table_acc[hash_pos][1] = lhs;
-                    hash_table_acc[hash_pos][2] = val;
-                    hash_pos++;
-
-                    // Vlr table: indexed by val, stores (rhs, lhs)
-                    idx = Vlr_ptrs_acc[val] + Vlr_pos[val];
-                    Vlr_args_acc[idx][0] = rhs;
-                    Vlr_args_acc[idx][1] = lhs;
-                    Vlr_pos[val]++;
-
-                    // Rvl table: indexed by lhs (now the rhs), stores (val,
-                    // rhs)
-                    idx = Rvl_ptrs_acc[lhs] + Rvl_pos[lhs];
-                    Rvl_args_acc[idx][0] = val;
-                    Rvl_args_acc[idx][1] = rhs;
-                    Rvl_pos[lhs]++;
-
-                    // Lvr table: indexed by rhs (now the lhs), stores (val,
-                    // lhs)
-                    idx = Lvr_ptrs_acc[rhs] + Lvr_pos[rhs];
-                    Lvr_args_acc[idx][0] = val;
-                    Lvr_args_acc[idx][1] = lhs;
-                    Lvr_pos[rhs]++;
-                }
-            }
-        }
-
-        // Add tensors with fully qualified names
-        std::string func_prefix =
-            (symmetric ? "symmetric_functions." : "binary_functions.") +
-            func_name;
-
-        keys.emplace_back(func_prefix + ".LRv");
-        tensors.emplace_back(hash_table);
-
-        keys.emplace_back(func_prefix + ".Vlr.ptrs");
-        tensors.emplace_back(Vlr_ptrs);
-
-        keys.emplace_back(func_prefix + ".Vlr.args");
-        tensors.emplace_back(Vlr_args);
-
-        keys.emplace_back(func_prefix + ".Rvl.ptrs");
-        tensors.emplace_back(Rvl_ptrs);
-
-        keys.emplace_back(func_prefix + ".Rvl.args");
-        tensors.emplace_back(Rvl_args);
-
-        keys.emplace_back(func_prefix + ".Lvr.ptrs");
-        tensors.emplace_back(Lvr_ptrs);
-
-        keys.emplace_back(func_prefix + ".Lvr.args");
-        tensors.emplace_back(Lvr_args);
-    };
 
     // Process binary functions
     for (const auto& proto_func : proto_structure.binary_functions()) {

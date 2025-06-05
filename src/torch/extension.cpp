@@ -17,7 +17,7 @@ TORCH_LIBRARY(pomagma, m) {
         "Tensor parent_counts, Tensor probs, float weight) -> Tensor");
     m.def("hash_pair(int lhs, int rhs) -> int");
     m.def(
-        "load_structure_cpp(str filename, bool relations) -> (str[], "
+        "load_structure(str filename, bool relations) -> (str[], "
         "Tensor[])");
 }
 
@@ -29,11 +29,11 @@ TORCH_LIBRARY_IMPL(pomagma, CPU, m) {
     m.impl("binary_function_distribute_product",
            &pomagma::torch::binary_function_distribute_product);
     m.impl("hash_pair", &pomagma::torch::hash_pair);
-    m.impl("load_structure_cpp", &pomagma::torch::load_structure_cpp);
+    m.impl("load_structure", &pomagma::torch::load_structure);
 }
 
 // Register fallback for functions with no tensor arguments
 TORCH_LIBRARY_IMPL(pomagma, BackendSelect, m) {
     m.impl("hash_pair", &pomagma::torch::hash_pair);
-    m.impl("load_structure_cpp", &pomagma::torch::load_structure_cpp);
+    m.impl("load_structure", &pomagma::torch::load_structure);
 }

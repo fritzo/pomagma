@@ -7,6 +7,13 @@ Ob = NewType("Ob", int)
 """An item in the carrier. 1-indexed, so 0 means undefined."""
 
 
+def assert_tensors_equal(a: torch.Tensor, b: torch.Tensor) -> None:
+    assert a.shape == b.shape, f"Shapes do not match: {a.shape} != {b.shape}"
+    assert a.dtype == b.dtype, f"Dtypes do not match: {a.dtype} != {b.dtype}"
+    assert a.device == b.device, f"Devices do not match: {a.device} != {b.device}"
+    assert torch.allclose(a, b)
+
+
 class BinaryFunctionSumProduct(torch.autograd.Function):
     @staticmethod
     def forward(
@@ -55,10 +62,17 @@ class SparseBinaryFunction:
 
     hash_table: torch.Tensor
 
-    def __init__(self, num_entries: int) -> None:
-        optimal_size = 2 ** (num_entries.bit_length() + 1)
-        hash_table = torch.zeros(optimal_size, 3, dtype=torch.int32)
+    def __init__(
+        self, num_entries: int = 0, *, hash_table: torch.Tensor | None = None
+    ) -> None:
+        assert (num_entries > 0) == (hash_table is None)
+        if hash_table is None:
+            optimal_size = 2 ** (num_entries.bit_length() + 1)
+            hash_table = torch.zeros(optimal_size, 3, dtype=torch.int32)
         object.__setattr__(self, "hash_table", hash_table)
+
+    def assert_eq(self, other: "SparseBinaryFunction") -> None:
+        assert_tensors_equal(self.hash_table, other.hash_table)
 
     def __getitem__(self, key: tuple[Ob, Ob]) -> Ob:
         lhs, rhs = key
@@ -103,6 +117,10 @@ class SparseTernaryRelation:
     ptrs: torch.Tensor
     args: torch.Tensor
 
+    def assert_eq(self, other: "SparseTernaryRelation") -> None:
+        assert_tensors_equal(self.ptrs, other.ptrs)
+        assert_tensors_equal(self.args, other.args)
+
 
 @dataclass(frozen=True, slots=True, eq=False)
 class BinaryFunction:
@@ -123,6 +141,13 @@ class BinaryFunction:
     Vlr: SparseTernaryRelation  # Value -> (Left, Right) pairs for forward pass
     Rvl: SparseTernaryRelation  # Right -> (Value, Left) pairs for backward wrt right
     Lvr: SparseTernaryRelation  # Left -> (Value, Right) pairs for backward wrt left
+
+    def assert_eq(self, other: "BinaryFunction") -> None:
+        assert self.name == other.name
+        self.LRv.assert_eq(other.LRv)
+        self.Vlr.assert_eq(other.Vlr)
+        self.Rvl.assert_eq(other.Rvl)
+        self.Lvr.assert_eq(other.Lvr)
 
     def __getitem__(self, key: tuple[Ob, Ob]) -> Ob:
         """Lookup the value of the function at the given (lhs, rhs) pair."""
@@ -182,12 +207,37 @@ class Structure:
     unary_relations: Mapping[str, torch.Tensor]
     binary_relations: Mapping[str, torch.Tensor]
 
+    def assert_eq(self, other: "Structure") -> None:
+        assert self.name == other.name
+        assert self.item_count == other.item_count
+        assert self.nullary_functions == other.nullary_functions
+
+        assert set(self.binary_functions) == set(other.binary_functions)
+        for name, func in self.binary_functions.items():
+            assert name in other.binary_functions
+            func.assert_eq(other.binary_functions[name])
+
+        assert set(self.symmetric_functions) == set(other.symmetric_functions)
+        for name, func in self.symmetric_functions.items():
+            assert name in other.symmetric_functions
+            func.assert_eq(other.symmetric_functions[name])
+
+        assert set(self.unary_relations) == set(other.unary_relations)
+        for name, rel in self.unary_relations.items():
+            assert name in other.unary_relations
+            assert_tensors_equal(rel, other.unary_relations[name])
+
+        assert set(self.binary_relations) == set(other.binary_relations)
+        for name, rel in self.binary_relations.items():
+            assert name in other.binary_relations
+            assert_tensors_equal(rel, other.binary_relations[name])
+
     @staticmethod
     def load(
         filename: str,
         *,
         relations: bool = False,
-        backend: Literal["python", "cpp"] = "python",
+        backend: Literal["python", "cpp"] = "cpp",
     ) -> "Structure":
         """
         Load a structure from a protobuf file.

@@ -358,7 +358,7 @@ def load_structure(
     filename: str,
     *,
     relations: bool = False,
-    backend: Literal["python", "cpp"] = "python",
+    backend: Literal["python", "cpp"] = "cpp",
 ) -> Structure:
     if backend == "python":
         return load_structure_py(filename, relations=relations)
@@ -437,4 +437,94 @@ def load_structure_cpp(filename: str, *, relations: bool = False) -> Structure:
         filename: Path to the .pb file.
         relations: Whether to load relation data. Default: False.
     """
-    raise NotImplementedError("TODO")
+    # Resolve blob path once for both C++ and Python usage
+    resolved_blob_path = blobstore.find_blob(blobstore.load_blob_ref(filename))
+
+    # Load tensors indexed by fully qualified names
+    keys: list[str]
+    values: list[torch.Tensor]
+    cpp_relations = False  # TODO: Implement relations in C++
+    keys, values = torch.ops.pomagma.load_structure(resolved_blob_path, cpp_relations)
+    tensors = dict(zip(keys, values))
+
+    # Fall back to Python proto loading for structure name and relations
+    proto_structure = pb2.Structure()
+    with InFile(resolved_blob_path) as f:
+        f.read(proto_structure)
+
+    name = proto_structure.name
+    item_count = tensors["item_count"].item()
+
+    # Parse nullary functions
+    nullary_functions = {}
+    for key, tensor in tensors.items():
+        if key.startswith("nullary_functions."):
+            func_name = key[len("nullary_functions.") :]
+            nullary_functions[func_name] = tensor.item()
+
+    # Helper function to parse binary/symmetric functions
+    def parse_functions(prefix: str, target_dict: dict):
+        """Parse binary or symmetric functions from tensors."""
+        func_keys = {
+            parts[1]
+            for key in tensors.keys()
+            if key.startswith(prefix)
+            if len(parts := key.split(".")) >= 3
+        }
+
+        for func_name in func_keys:
+            func_prefix = f"{prefix}{func_name}"
+
+            # Get LRv hash table and pass directly to SparseBinaryFunction
+            LRv = SparseBinaryFunction(hash_table=tensors[f"{func_prefix}.LRv"])
+
+            # Create SparseTernaryRelation objects
+            Vlr = SparseTernaryRelation(
+                ptrs=tensors[f"{func_prefix}.Vlr.ptrs"],
+                args=tensors[f"{func_prefix}.Vlr.args"],
+            )
+            Rvl = SparseTernaryRelation(
+                ptrs=tensors[f"{func_prefix}.Rvl.ptrs"],
+                args=tensors[f"{func_prefix}.Rvl.args"],
+            )
+            Lvr = SparseTernaryRelation(
+                ptrs=tensors[f"{func_prefix}.Lvr.ptrs"],
+                args=tensors[f"{func_prefix}.Lvr.args"],
+            )
+
+            target_dict[func_name] = BinaryFunction(
+                name=func_name, LRv=LRv, Vlr=Vlr, Rvl=Rvl, Lvr=Lvr
+            )
+
+    # Parse binary functions
+    binary_functions = {}
+    parse_functions("binary_functions.", binary_functions)
+
+    # Parse symmetric functions
+    symmetric_functions = {}
+    parse_functions("symmetric_functions.", symmetric_functions)
+
+    # Parse relations
+    unary_relations = {}
+    binary_relations = {}
+    if relations:
+        # Fall back to Python proto loading for relations
+        for proto_rel in proto_structure.unary_relations:
+            logger.debug(f"Loading unary relation: {proto_rel.name}")
+            unary_relations[proto_rel.name] = load_unary_relation(proto_rel, item_count)
+
+        for proto_rel in proto_structure.binary_relations:
+            logger.debug(f"Loading binary relation: {proto_rel.name}")
+            binary_relations[proto_rel.name] = load_binary_relation(
+                proto_rel, item_count
+            )
+
+    return Structure(
+        name=name,
+        item_count=item_count,
+        nullary_functions=Map(nullary_functions),
+        binary_functions=Map(binary_functions),
+        symmetric_functions=Map(symmetric_functions),
+        unary_relations=Map(unary_relations),
+        binary_relations=Map(binary_relations),
+    )

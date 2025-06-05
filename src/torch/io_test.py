@@ -1,12 +1,10 @@
 import logging
 import os
-from typing import Literal
 
 import pytest
 import torch
 
 from pomagma.atlas.structure_pb2 import ObMap, ObSet
-from pomagma.util.testing import xfail_param
 
 from .io import delta_decompress, load_dense_set
 from .structure import Structure
@@ -15,6 +13,16 @@ logger = logging.getLogger(__name__)
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 TEST_FILE = os.path.join(ROOT, "bootstrap", "atlas", "skrj", "region.normal.2047.pb")
+
+
+@pytest.fixture(scope="session")
+def structure_cpp() -> Structure:
+    return Structure.load(TEST_FILE, backend="cpp")
+
+
+@pytest.fixture(scope="session")
+def structure_py() -> Structure:
+    return Structure.load(TEST_FILE, backend="python")
 
 
 def test_delta_decompress() -> None:
@@ -46,49 +54,5 @@ def test_dense_set_loading() -> None:
     assert torch.equal(tensor, expected), f"Expected {expected}, got {tensor}"
 
 
-@pytest.mark.parametrize("filename", [TEST_FILE])
-@pytest.mark.parametrize(
-    "backend",
-    [
-        "python",
-        xfail_param("cpp", reason="aborts", run=False),
-    ],
-)
-def test_structure_loading(filename: str, backend: Literal["python", "cpp"]) -> None:
-    logger.info(f"Loading structure from {filename} using {backend} backend...")
-    structure = Structure.load(filename, relations=True, backend=backend)
-
-    logger.info("Structure loaded successfully!")
-    logger.info(f"  Name: {structure.name}")
-    logger.info(f"  Item count: {structure.item_count}")
-    logger.info(f"  Nullary functions: {len(structure.nullary_functions)}")
-    logger.info(f"  Binary functions: {len(structure.binary_functions)}")
-    logger.info(f"  Symmetric functions: {len(structure.symmetric_functions)}")
-    logger.info(f"  Unary relations: {len(structure.unary_relations)}")
-    logger.info(f"  Binary relations: {len(structure.binary_relations)}")
-
-    # Print some details about the loaded data
-    for name, val in structure.nullary_functions.items():
-        logger.info(f"    Nullary function '{name}': {val}")
-
-    for name, func in structure.binary_functions.items():
-        Vlr_entries = func.Vlr.ptrs[-1].item()
-        logger.info(f"    Binary function '{name}': Vlr has {Vlr_entries} entries")
-
-    for name, func in structure.symmetric_functions.items():
-        Vlr_entries = func.Vlr.ptrs[-1].item()
-        logger.info(f"    Symmetric function '{name}': Vlr has {Vlr_entries} entries")
-
-    for name, tensor in structure.unary_relations.items():
-        non_zero = torch.count_nonzero(tensor)
-        logger.info(
-            f"    Unary relation '{name}': "
-            f"shape {tensor.shape}, {non_zero} non-zero entries"
-        )
-
-    for name, tensor in structure.binary_relations.items():
-        non_zero = torch.count_nonzero(tensor)
-        logger.info(
-            f"    Binary relation '{name}': "
-            f"shape {tensor.shape}, {non_zero} non-zero entries"
-        )
+def test_structure_loading(structure_cpp: Structure, structure_py: Structure) -> None:
+    structure_cpp.assert_eq(structure_py)
