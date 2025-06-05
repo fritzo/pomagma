@@ -5,7 +5,12 @@
 
 namespace pomagma {
 
-extern const char* BLOB_DIR;
+// Global blob directory - initialized by init_blob_dir()
+extern std::string g_blob_dir;
+
+// Initialize the blob directory
+void init_blob_dir(const std::string& blob_dir);
+
 static const size_t GOOD_BLOB_SIZE_BYTES = (1UL << 23UL);  // 8MiB
 
 inline std::string hash_file(const std::string& filename) {

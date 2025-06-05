@@ -13,24 +13,31 @@ namespace pomagma {
 
 static const size_t HEXDIGEST_SIZE = 40;
 
-const char* BLOB_DIR = getenv("POMAGMA_BLOB_DIR");
+// Global blob directory - set by init_blob_dir()
+std::string g_blob_dir;
+
+void init_blob_dir(const std::string& blob_dir) { g_blob_dir = blob_dir; }
 
 std::string find_blob(const std::string& hexdigest) {
-    POMAGMA_ASSERT(BLOB_DIR, "POMAGMA_BLOB_DIR is not defined");
-    fs::path path(BLOB_DIR);
+    POMAGMA_ASSERT(
+        !g_blob_dir.empty(),
+        "Blob directory not initialized. Call init_blob_dir() first.");
+    fs::path path(g_blob_dir);
     path /= hexdigest;
     return path.string();
 }
 
 std::string create_blob() {
-    POMAGMA_ASSERT(BLOB_DIR, "POMAGMA_BLOB_DIR is not defined");
-    fs::create_directories(BLOB_DIR);
+    POMAGMA_ASSERT(
+        !g_blob_dir.empty(),
+        "Blob directory not initialized. Call init_blob_dir() first.");
+    fs::create_directories(g_blob_dir);
     static std::atomic<uint_fast64_t> counter;
     size_t pid = getpid();
     size_t count = counter++;
     std::ostringstream stream;
     stream << "temp." << pid << "." << count;
-    fs::path path(BLOB_DIR);
+    fs::path path(g_blob_dir);
     path /= stream.str();
     if (fs::exists(path)) {
         POMAGMA_DEBUG("removing temp file " << path);

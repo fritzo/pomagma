@@ -35,5 +35,8 @@ int64_t hash_pair(int64_t lhs, int64_t rhs);
 std::tuple<std::vector<std::string>, std::vector<at::Tensor>> load_structure(
     const std::string& filename, bool relations);
 
+// Initialize the extension with blob directory
+void init_extension(const std::string& blob_dir);
+
 }  // namespace torch
 }  // namespace pomagma

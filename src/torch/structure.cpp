@@ -444,6 +444,8 @@ std::tuple<std::vector<std::string>, std::vector<at::Tensor>> load_structure(
     return std::make_tuple(std::move(keys), std::move(tensors));
 }
 
+void init_extension(const std::string& blob_dir) { init_blob_dir(blob_dir); }
+
 template at::Tensor binary_function_reduce_product<false>(
     const at::Tensor& f_ptrs, const at::Tensor& f_args, const at::Tensor& lhs,
     const at::Tensor& rhs);

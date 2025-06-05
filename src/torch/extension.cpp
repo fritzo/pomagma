@@ -19,6 +19,7 @@ TORCH_LIBRARY(pomagma, m) {
     m.def(
         "load_structure(str filename, bool relations) -> (str[], "
         "Tensor[])");
+    m.def("init_extension(str blob_dir) -> ()");
 }
 
 TORCH_LIBRARY_IMPL(pomagma, CPU, m) {
@@ -30,10 +31,12 @@ TORCH_LIBRARY_IMPL(pomagma, CPU, m) {
            &pomagma::torch::binary_function_distribute_product);
     m.impl("hash_pair", &pomagma::torch::hash_pair);
     m.impl("load_structure", &pomagma::torch::load_structure);
+    m.impl("init_extension", &pomagma::torch::init_extension);
 }
 
 // Register fallback for functions with no tensor arguments
 TORCH_LIBRARY_IMPL(pomagma, BackendSelect, m) {
     m.impl("hash_pair", &pomagma::torch::hash_pair);
     m.impl("load_structure", &pomagma::torch::load_structure);
+    m.impl("init_extension", &pomagma::torch::init_extension);
 }
