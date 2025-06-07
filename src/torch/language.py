@@ -1,5 +1,4 @@
 import logging
-from collections import Counter
 from typing import Mapping, Sequence
 
 import torch
@@ -7,7 +6,7 @@ from immutables import Map
 
 from pomagma.compiler.expressions import Expression
 
-from .corpus import ObTree
+from .corpus import CorpusStats
 from .structure import Ob, Structure
 
 logger = logging.getLogger(__name__)
@@ -76,13 +75,28 @@ class Language(torch.nn.Module):
         for _, weight in sorted(self.symmetric_functions.items()):
             weight *= scale
 
+    @torch.no_grad()
+    def project_to_feasible_(self) -> None:
+        """Project parameters to feasible set: nonnegativity + normalization."""
+        # Ensure nonnegativity
+        self.nullary_functions.clamp_(min=0.0)
+        for weight in self.injective_functions.values():
+            weight.clamp_(min=0.0)
+        for weight in self.binary_functions.values():
+            weight.clamp_(min=0.0)
+        for weight in self.symmetric_functions.values():
+            weight.clamp_(min=0.0)
+
+        # Renormalize
+        self.normalize_()
+
     def compute_probs(
         self,
         structure: Structure,
         *,
         reltol: float = 1e-3,
         init_probs: torch.Tensor | None = None,
-        min_iterations: int = 3,
+        min_steps: int = 5,
     ) -> torch.Tensor:
         """
         Propagates from a normalized grammar to a sub-normalized weighted set of obs.
@@ -94,30 +108,29 @@ class Language(torch.nn.Module):
             structure: The E-graph structure
             reltol: Relative tolerance for convergence
             init_probs: Optional warm start initialization
-            min_iterations: Minimum iterations to run even if converged
-                (for gradient quality)
+            min_steps: Minimum steps to run even if converged (for gradient quality)
         """
         assert 0.0 < reltol < 1.0
-        assert min_iterations >= 0
+        assert min_steps >= 0
         eps = torch.finfo(self.nullary_functions.dtype).eps
 
         # Initialize with warm start if provided, else atoms.
-        if init_probs is not None:
-            probs = init_probs.clone()
-        else:
+        if init_probs is None:
             probs = self.nullary_functions.detach()
+        else:
+            probs = init_probs.clone()
 
-        # Propagate until convergence (with minimum iterations).
+        # Propagate until convergence (with minimum steps).
         diff = 1.0
-        iteration = 0
-        while diff > reltol or iteration < min_iterations:
+        step = 0
+        while diff > reltol or step < min_steps:
             prev = probs
             probs = self._compute_probs_step(structure, probs)
             with torch.no_grad():
                 # Only the convergence check is in no_grad - doesn't affect gradients
                 diffs = (probs - prev).abs() / (probs + eps)
                 diff = diffs.max().item()
-            iteration += 1
+            step += 1
 
         return probs
 
@@ -363,19 +376,14 @@ class Language(torch.nn.Module):
         )
 
     @torch.no_grad()
-    def iadd_corpus(self, ob_tree: ObTree, weight: float = 1.0) -> None:
+    def iadd_corpus(self, corpus_stats: CorpusStats, weight: float = 1.0) -> None:
         """
         Adds data weights from a corpus, in-place.
         """
-        # Count symbols and objects
-        symbol_counts: Counter[str] = Counter()
-        ob_counts: Counter[Ob] = Counter()
-        ob_tree.count(symbol_counts, ob_counts)
-
         # Add counts to language
-        for ob, count in ob_counts.items():
+        for ob, count in corpus_stats.obs.items():
             self.nullary_functions[ob] += count * weight
-        for name, count in symbol_counts.items():
+        for name, count in corpus_stats.symbols.items():
             if name in self.injective_functions:
                 self.injective_functions[name] += count * weight
             elif name in self.binary_functions:
@@ -468,25 +476,10 @@ class Language(torch.nn.Module):
 
         return expressions
 
-    @torch.no_grad()
-    def project_to_feasible_(self) -> None:
-        """Project parameters to feasible set: nonnegativity + normalization."""
-        # Ensure nonnegativity
-        self.nullary_functions.clamp_(min=0.0)
-        for weight in self.injective_functions.values():
-            weight.clamp_(min=0.0)
-        for weight in self.binary_functions.values():
-            weight.clamp_(min=0.0)
-        for weight in self.symmetric_functions.values():
-            weight.clamp_(min=0.0)
-
-        # Renormalize
-        self.normalize_()
-
     def fit(
         self,
         structure: Structure,
-        corpus: ObTree,
+        corpus_stats: CorpusStats,
         *,
         max_steps: int = 50,
         learning_rate: float = 0.1,
@@ -494,23 +487,22 @@ class Language(torch.nn.Module):
         reltol: float = 1e-4,
     ) -> list[float]:
         """
-        Fit language weights to corpus using gradient descent.
+        Fit language weights to a corpus using L-BFGS.
 
         Args:
             structure: The E-graph structure
-            corpus: Training corpus (ObTree)
+            corpus_stats: Training corpus statistics (CorpusStats)
             max_steps: Maximum optimization steps
             learning_rate: Learning rate for L-BFGS
             tol: Tolerance for optimization convergence
             reltol: Relative tolerance for compute_probs iterations
-            verbose: Whether to print progress
 
         Returns:
             List of losses
         """
         # Create a Language with the same structure as self to hold corpus counts
         corpus_language = self.zeros_like()
-        corpus_language.iadd_corpus(corpus)
+        corpus_language.iadd_corpus(corpus_stats)
         corpus_size = int(corpus_language.nullary_functions.sum().item())
 
         # Track metrics
@@ -536,7 +528,7 @@ class Language(torch.nn.Module):
 
             # Compute probabilities with warm start
             probs = self.compute_probs(
-                structure, reltol=reltol, init_probs=prev_probs, min_iterations=3
+                structure, reltol=reltol, init_probs=prev_probs, min_steps=3
             )
             prev_probs = probs.detach()
 

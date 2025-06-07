@@ -1,9 +1,8 @@
-
 import pytest
 import torch
 from immutables import Map
 
-from pomagma.torch.corpus import ObTree
+from pomagma.torch.corpus import CorpusStats, ObTree
 from pomagma.torch.language import Language
 from pomagma.torch.structure import (
     BinaryFunction,
@@ -126,6 +125,18 @@ def simple_language(simple_structure: Structure) -> Language:
 
 
 @pytest.fixture
+def simple_corpus_stats(simple_structure: Structure) -> CorpusStats:
+    """Create a simple corpus as CorpusStats."""
+    # Create corpus: X, Y, APP(X,Y)
+    # This represents the counts from parsing "APP X Y"
+    # X appears once, Y appears once, APP appears once
+    # The result APP(X,Y) creates ob 3, so that appears once too
+    obs = Map({Ob(1): 1, Ob(2): 1, Ob(3): 1})  # X, Y, APP(X,Y) result
+    symbols = Map({"APP": 1})  # APP symbol appears once
+    return CorpusStats(obs=obs, symbols=symbols)
+
+
+@pytest.fixture
 def simple_corpus(simple_structure: Structure) -> ObTree:
     """Create a simple corpus as an ObTree."""
     # Create corpus: X, Y, APP(X,Y)
@@ -144,7 +155,7 @@ def simple_corpus_data() -> torch.Tensor:
 
 
 def test_warm_starting(simple_structure: Structure, simple_language: Language) -> None:
-    """Test that warm starting reduces iterations."""
+    """Test that warm starting reduces steps."""
     # First call without warm start
     probs1 = simple_language.compute_probs(simple_structure, reltol=1e-4)
 
@@ -157,27 +168,25 @@ def test_warm_starting(simple_structure: Structure, simple_language: Language) -
     assert torch.allclose(probs1, probs2, atol=1e-6)
 
 
-def test_minimum_iterations(
-    simple_structure: Structure, simple_language: Language
-) -> None:
-    """Test minimum iterations parameter."""
-    # Test with min_iterations=0 vs min_iterations=5
+def test_minimum_steps(simple_structure: Structure, simple_language: Language) -> None:
+    """Test minimum steps parameter."""
+    # Test with min_steps=0 vs min_steps=5
     probs_min0 = simple_language.compute_probs(
         simple_structure,
         reltol=1e-1,  # High tolerance for quick convergence
-        min_iterations=0,
+        min_steps=0,
     )
 
-    probs_min5 = simple_language.compute_probs(
+    probs_min10 = simple_language.compute_probs(
         simple_structure,
         reltol=1e-1,  # High tolerance for quick convergence
-        min_iterations=5,
+        min_steps=10,
     )
 
     # Both should give valid results
-    assert probs_min0.shape == probs_min5.shape
+    assert probs_min0.shape == probs_min10.shape
     assert torch.all(probs_min0 >= 0)
-    assert torch.all(probs_min5 >= 0)
+    assert torch.all(probs_min10 >= 0)
 
 
 def test_project_to_feasible(simple_language: Language) -> None:
@@ -199,10 +208,12 @@ def test_project_to_feasible(simple_language: Language) -> None:
     assert torch.allclose(total, torch.tensor(1.0), atol=1e-6)
 
 
-def test_fit_with_obtree_corpus(
-    simple_structure: Structure, simple_language: Language, simple_corpus: ObTree
+def test_fit_with_corpus_stats(
+    simple_structure: Structure,
+    simple_language: Language,
+    simple_corpus_stats: CorpusStats,
 ) -> None:
-    """Test fitting with ObTree corpus."""
+    """Test fitting with CorpusStats corpus."""
     # Make a copy to fit
     language_copy = Language(
         nullary_functions=simple_language.nullary_functions.clone(),
@@ -212,7 +223,35 @@ def test_fit_with_obtree_corpus(
     )
 
     # Fit to corpus
-    losses = language_copy.fit(simple_structure, simple_corpus, max_steps=5)
+    losses = language_copy.fit(simple_structure, simple_corpus_stats, max_steps=5)
+
+    # Check that we tracked progress
+    assert len(losses) == 5
+
+    # Check constraints are satisfied
+    assert torch.all(torch.isfinite(language_copy.nullary_functions))
+    assert torch.all(language_copy.nullary_functions >= 0)
+    total = language_copy.total()
+    assert torch.allclose(total, torch.tensor(1.0), atol=1e-6)
+
+
+def test_fit_with_obtree_corpus(
+    simple_structure: Structure, simple_language: Language, simple_corpus: ObTree
+) -> None:
+    """Test fitting with ObTree corpus (backwards compatibility)."""
+    # Make a copy to fit
+    language_copy = Language(
+        nullary_functions=simple_language.nullary_functions.clone(),
+        binary_functions={
+            k: v.clone() for k, v in simple_language.binary_functions.items()
+        },
+    )
+
+    # Convert ObTree to CorpusStats
+    corpus_stats = simple_corpus.stats
+
+    # Fit to corpus
+    losses = language_copy.fit(simple_structure, corpus_stats, max_steps=5)
 
     # Check that we tracked progress
     assert len(losses) == 5
@@ -225,7 +264,9 @@ def test_fit_with_obtree_corpus(
 
 
 def test_fit_maintains_gradients(
-    simple_structure: Structure, simple_language: Language, simple_corpus: ObTree
+    simple_structure: Structure,
+    simple_language: Language,
+    simple_corpus_stats: CorpusStats,
 ) -> None:
     """Test that fitting maintains gradient computation."""
     # Enable gradients
@@ -257,3 +298,22 @@ def test_fit_maintains_gradients(
     # Should have gradients
     assert language_copy.nullary_functions.grad is not None
     assert torch.any(language_copy.nullary_functions.grad != 0)
+
+
+def test_iadd_corpus_with_corpus_stats(
+    simple_structure: Structure,
+    simple_language: Language,
+    simple_corpus_stats: CorpusStats,
+) -> None:
+    """Test iadd_corpus with CorpusStats."""
+    # Create empty language to add corpus to
+    language_copy = simple_language.zeros_like()
+
+    # Add corpus stats
+    language_copy.iadd_corpus(simple_corpus_stats, weight=2.0)
+
+    # Check that counts were added correctly with weight
+    assert language_copy.nullary_functions[Ob(1)].item() == 2.0  # X
+    assert language_copy.nullary_functions[Ob(2)].item() == 2.0  # Y
+    assert language_copy.nullary_functions[Ob(3)].item() == 2.0  # APP(X,Y) result
+    assert language_copy.binary_functions["APP"].item() == 2.0  # APP symbol
