@@ -1,4 +1,3 @@
-import math
 
 import pytest
 import torch
@@ -181,27 +180,6 @@ def test_minimum_iterations(
     assert torch.all(probs_min5 >= 0)
 
 
-def test_sparsity_utilities(simple_language: Language) -> None:
-    """Test sparsity counting and target computation."""
-    # Test count_nonzero_nullary
-    sparsity = simple_language.count_nonzero_nullary()
-    expected_nonzero = (simple_language.nullary_functions.abs() > 1e-8).sum().item()
-    assert sparsity == expected_nonzero
-
-    # Test compute_target_sparsity
-    corpus_size = 100
-    target = simple_language.compute_target_sparsity(corpus_size)
-    assert target == int(math.sqrt(corpus_size))
-    assert target == 10
-
-
-def test_l1_penalty(simple_language: Language) -> None:
-    """Test L1 penalty computation."""
-    penalty = simple_language.compute_l1_penalty()
-    expected = simple_language.nullary_functions.abs().sum()
-    assert torch.allclose(penalty, expected)
-
-
 def test_project_to_feasible(simple_language: Language) -> None:
     """Test constraint projection."""
     # Make some weights negative
@@ -234,104 +212,16 @@ def test_fit_with_obtree_corpus(
     )
 
     # Fit to corpus
-    metrics = language_copy.fit(
-        simple_structure, simple_corpus, l1_lambda=0.01, max_steps=5, verbose=False
-    )
-
-    # Check metrics structure
-    assert "losses" in metrics
-    assert "sparsities" in metrics
-    assert "likelihoods" in metrics
-    assert "l1_penalties" in metrics
-    assert "final_sparsity" in metrics
-    assert "target_sparsity" in metrics
-    assert "corpus_size" in metrics
+    losses = language_copy.fit(simple_structure, simple_corpus, max_steps=5)
 
     # Check that we tracked progress
-    assert len(metrics["losses"]) == 5
-    assert len(metrics["sparsities"]) == 5
+    assert len(losses) == 5
 
     # Check constraints are satisfied
     assert torch.all(torch.isfinite(language_copy.nullary_functions))
     assert torch.all(language_copy.nullary_functions >= 0)
     total = language_copy.total()
     assert torch.allclose(total, torch.tensor(1.0), atol=1e-6)
-
-
-def test_fit_with_language_corpus(
-    simple_structure: Structure, simple_language: Language
-) -> None:
-    """Test fitting with Language corpus."""
-    # Create corpus as another language with different weights
-    corpus_nullary = torch.tensor([0.0, 0.5, 0.3, 0.1, 0.1, 0.0])
-    corpus_language = Language(
-        nullary_functions=corpus_nullary, binary_functions={"APP": torch.tensor(0.0)}
-    )
-
-    # Make a copy to fit
-    language_copy = Language(
-        nullary_functions=simple_language.nullary_functions.clone(),
-        binary_functions={
-            k: v.clone() for k, v in simple_language.binary_functions.items()
-        },
-    )
-
-    # Fit to corpus
-    metrics = language_copy.fit(
-        simple_structure, corpus_language, l1_lambda=0.1, max_steps=3, verbose=False
-    )
-
-    # Should have updated weights toward corpus
-    assert len(metrics["losses"]) == 3
-
-    # Check constraints
-    assert torch.all(language_copy.nullary_functions >= 0)
-    total = language_copy.total()
-    assert torch.allclose(total, torch.tensor(1.0), atol=1e-6)
-
-
-def test_l1_regularization_effect(
-    simple_structure: Structure, simple_language: Language
-) -> None:
-    """Test that L1 regularization affects sparsity."""
-    # Create corpus with only a few nonzero elements
-    corpus_nullary = torch.tensor([0.0, 1.0, 0.0, 0.0, 0.0, 0.0])  # Only X
-    corpus_language = Language(
-        nullary_functions=corpus_nullary, binary_functions={"APP": torch.tensor(0.0)}
-    )
-
-    # Fit with no regularization
-    language_no_reg = Language(
-        nullary_functions=torch.ones_like(simple_language.nullary_functions) * 0.1,
-        binary_functions={
-            k: v.clone() for k, v in simple_language.binary_functions.items()
-        },
-    )
-    language_no_reg.normalize_()
-
-    metrics_no_reg = language_no_reg.fit(
-        simple_structure, corpus_language, l1_lambda=0.0, max_steps=10, verbose=False
-    )
-
-    # Fit with strong regularization
-    language_with_reg = Language(
-        nullary_functions=torch.ones_like(simple_language.nullary_functions) * 0.1,
-        binary_functions={
-            k: v.clone() for k, v in simple_language.binary_functions.items()
-        },
-    )
-    language_with_reg.normalize_()
-
-    metrics_with_reg = language_with_reg.fit(
-        simple_structure, corpus_language, l1_lambda=1.0, max_steps=10, verbose=False
-    )
-
-    # Regularized version should be sparser
-    final_sparsity_no_reg = metrics_no_reg["final_sparsity"]
-    final_sparsity_with_reg = metrics_with_reg["final_sparsity"]
-
-    # With strong L1, we should get sparser results
-    assert final_sparsity_with_reg <= final_sparsity_no_reg
 
 
 def test_fit_maintains_gradients(
@@ -359,8 +249,7 @@ def test_fit_maintains_gradients(
     # Compute loss
     tiny = torch.finfo(probs.dtype).tiny
     log_likelihood = torch.xlogy(data, probs + tiny).sum()
-    l1_penalty = language_copy.compute_l1_penalty()
-    loss = -log_likelihood + 0.1 * l1_penalty
+    loss = -log_likelihood
 
     # Check that we can compute gradients
     loss.backward()

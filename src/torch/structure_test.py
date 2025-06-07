@@ -255,7 +255,7 @@ def test_compute_probs(structure: Structure, language: Language) -> None:
 def test_log_prob(structure: Structure, language: Language) -> None:
     data = language
     probs = language.compute_probs(structure)
-    log_prob = data.log_prob(language, probs)
+    log_prob = data.log_prob(structure, language, probs)
     assert log_prob.shape == ()
     assert log_prob.dtype == torch.float32
     assert log_prob.device == torch.device("cpu")

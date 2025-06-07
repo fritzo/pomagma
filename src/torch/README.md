@@ -55,20 +55,13 @@ It stores probability weights for:
 ## Algorithms
 
 ### Probability Propagation
-The `compute_probs` method computes the **probability distribution over E-classes** given a normalized PCFG. This implements a fixed-point iteration:
+The `compute_probs` method computes the **probability distribution over E-classes** given a normalized PCFG using fixed-point iteration:
 
-**Algorithm:**
-1. **Initialize** with atomic probabilities: $p[i] \leftarrow w_{\text{nullary}}[i]$ (for nullary functions only)
+1. **Initialize** with atomic probabilities: $p[i] \leftarrow w_{\text{nullary}}[i]$ 
 2. **Iterate** until convergence:
    $$p[v] \leftarrow w_{\text{nullary}}[v] + \sum_{f \in \text{Functions}} w_f \sum_{\substack{(l,r): \\ f(l,r) = v}} p[l] \cdot p[r]$$
 
-This computes the marginal probability that a randomly generated term from the PCFG reduces to each E-class under the equational theory.
-
-**Mathematical Interpretation:**
-The iteration corresponds to computing the **least fixed point** of the operator:
-$$\mathcal{T}(p)[v] = w_{\text{nullary}}[v] + \sum_{f} w_f \sum_{(l,r) \mapsto v} p[l] \cdot p[r]$$
-
-For convergent PCFGs (where the total probability mass devoted to non-nullary productions is less than 1), this converges to the unique probability distribution over generated terms.
+This computes the marginal probability that a randomly generated term from the PCFG reduces to each E-class under the equational theory. For convergent PCFGs, this converges to the unique probability distribution over generated terms.
 
 ### Rule Counting
 The `compute_rules` method uses Eisner's **gradient trick**<sup>1</sup> to count the expected number of times each grammar production rule is used to generate observed E-class frequencies.
@@ -106,27 +99,20 @@ The `extract_all` method implements **E-graph extraction**—finding the single 
 2. **Extraction**: Sort E-classes by descending `best` probability (which gives a valid topological order since compound expressions have probability ≤ min(dependency probabilities)), then greedily select the highest-probability decomposition for each E-class.
 
 ### Grammar Fitting
-The `fit` method uses **gradient descent with L1 regularization** to fit normalized PCFG weights to observed corpus data while controlling sparsity.
+The `fit` method uses **gradient descent** to fit normalized PCFG weights to observed corpus data.
 
-**Algorithm:**
-1. **Convert corpus** to E-class frequency data: `data[i]` = observed count of E-class `i`
-2. **Objective function**: `Loss = -log P(data | grammar) + λ ||nullary_functions||₁`
-   - Log-likelihood term encourages fitting the observed frequencies
-   - L1 penalty term controls sparsity of nullary function weights
-3. **Gradient descent**: Use L-BFGS optimizer with warm-started `compute_probs`
-4. **Constraints**: After each step, project to feasible set:
-   - **Nonnegativity**: `weights ← max(weights, 0)`
-   - **Normalization**: `weights ← weights / weights.sum()`
+**Objective function**: `Loss = -log P(data | grammar)`
+- Log-likelihood term fits observed E-class frequencies  
+
+**Algorithm**: Use L-BFGS optimizer with constraint projection after each step:
+- **Nonnegativity**: `weights ← max(weights, 0)`
+- **Normalization**: `weights ← weights / weights.sum()`
 
 **Key features:**
-- **Warm starting**: Each `compute_probs` call is initialized with results from the previous step, reducing iteration count
-- **Sparsity control**: L1 regularization automatically sets low-frequency terms to zero
-- **Automatic differentiation**: Gradients computed through the iterative E-graph propagation
+- **Warm starting**: Each `compute_probs` call initialized with previous step results
+- **Automatic differentiation**: Gradients flow through iterative E-graph propagation via PyTorch autograd
 
-**Mathematical Foundation:**
-The log-likelihood term is computed as:
-$$\log P(\text{data} | \text{grammar}) = \sum_i \text{data}[i] \cdot \log(\text{probs}[i])$$
-where `probs` comes from `compute_probs`. The gradient flows back through the entire iterative fixed-point computation via PyTorch's autograd.
+The log-likelihood $\log P(\text{data} | \text{grammar}) = \sum_i \text{data}[i] \cdot \log(\text{probs}[i])$ where `probs` comes from `compute_probs`.
 
 ### References
 1. Jason Eisner (2016)

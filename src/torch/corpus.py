@@ -63,6 +63,29 @@ class ObTree(metaclass=HashConsMeta):
         symbol_counts: Counter[str],
         ob_counts: Counter[Ob],
     ) -> None:
+        """
+        Count occurrences of symbols and E-classes in this expression tree.
+
+        This method traverses the ObTree and extracts two types of counts:
+
+        Args:
+            symbol_counts: Counter to accumulate function symbol usage counts.
+                For each internal node with a function name (e.g., "APP", "COMP"),
+                increments the count for that symbol.
+            ob_counts: Counter to accumulate E-class occurrence counts.
+                For each leaf node that is fully reduced to an E-class (Ob),
+                increments the count for that E-class.
+
+        Example:
+            For the expression APP(X, Y) where X and Y are E-classes:
+            - symbol_counts["APP"] += 1  (the APP function is used once)
+            - ob_counts[X] += 1          (E-class X appears once)
+            - ob_counts[Y] += 1          (E-class Y appears once)
+
+        This separation is crucial for fitting Language models, where:
+        - ob_counts determine the target distribution over E-classes
+        - symbol_counts determine the target weights for function symbols
+        """
         if self.ob:
             ob_counts[self.ob] += 1
         else:

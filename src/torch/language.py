@@ -1,7 +1,6 @@
 import logging
-import math
 from collections import Counter
-from typing import Any, Mapping, Sequence
+from typing import Mapping, Sequence
 
 import torch
 from immutables import Map
@@ -293,29 +292,58 @@ class Language(torch.nn.Module):
 
         return counts
 
-    def log_prob(self, generator: "Language", probs: torch.Tensor) -> torch.Tensor:
+    def log_prob(
+        self,
+        structure: Structure,
+        generator: "Language",
+        probs: torch.Tensor | None = None,
+    ) -> torch.Tensor:
         """
-        Compute the log probability of data under propagated probabilities.
+        Compute the log probability of corpus data (self) under a generator PCFG.
+
+        This method computes the total log-likelihood of the corpus represented by
+        `self` under the probability distribution defined by `generator`. The corpus
+        should have been created via `Language.zeros_like()` + `Language.iadd_corpus()`
+        from an ObTree.
+
+        The log-likelihood has two components:
+        1. E-class probabilities: For each E-class, sum(corpus_count[i] * log(prob[i]))
+           where corpus_count comes from self.nullary_functions and prob comes from
+           generator.compute_probs(structure).
+        2. Function weights: For each function symbol,
+           sum(corpus_count[f] * log(weight[f])) where corpus_count comes from
+           self.binary_functions etc. and weight comes from generator's
+           corresponding function weights.
+
+        Args:
+            structure: The E-graph structure for computing E-class probabilities
+            generator: The PCFG Language model from which to compute probabilities
+            probs: Optional pre-computed E-class probabilities from generator.
+                  If None, will compute via generator.compute_probs(structure).
+
+        Returns:
+            Total log-likelihood of the corpus under the generator
         """
-        h = torch.nn.functional.cross_entropy(
-            self.nullary_functions, probs, reduction="sum"
-        )
-        ws: list[torch.Tensor] = []
-        ps: list[torch.Tensor] = []
-        for name, weight in self.injective_functions.items():
-            ws.append(weight)
-            ps.append(generator.injective_functions[name])
-        for name, weight in self.binary_functions.items():
-            ws.append(weight)
-            ps.append(generator.binary_functions[name])
-        for name, weight in self.symmetric_functions.items():
-            ws.append(weight)
-            ps.append(generator.symmetric_functions[name])
-        if ws:
-            h += torch.nn.functional.cross_entropy(
-                torch.stack(ws), torch.stack(ps), reduction="sum"
-            )
-        return -h
+        if probs is None:
+            probs = generator.compute_probs(structure)
+
+        tiny = torch.finfo(probs.dtype).tiny
+
+        # E-class probability contributions
+        log_likelihood = torch.xlogy(self.nullary_functions, probs + tiny).sum()
+
+        # Function weight contributions
+        for name, corpus_count in self.injective_functions.items():
+            generator_weight = generator.injective_functions[name]
+            log_likelihood += torch.xlogy(corpus_count, generator_weight + tiny)
+        for name, corpus_count in self.binary_functions.items():
+            generator_weight = generator.binary_functions[name]
+            log_likelihood += torch.xlogy(corpus_count, generator_weight + tiny)
+        for name, corpus_count in self.symmetric_functions.items():
+            generator_weight = generator.symmetric_functions[name]
+            log_likelihood += torch.xlogy(corpus_count, generator_weight + tiny)
+
+        return log_likelihood
 
     def zeros_like(self) -> "Language":
         """
@@ -334,6 +362,7 @@ class Language(torch.nn.Module):
             ),
         )
 
+    @torch.no_grad()
     def iadd_corpus(self, ob_tree: ObTree, weight: float = 1.0) -> None:
         """
         Adds data weights from a corpus, in-place.
@@ -439,18 +468,6 @@ class Language(torch.nn.Module):
 
         return expressions
 
-    def count_nonzero_nullary(self) -> int:
-        """Count number of nonzero nullary function weights."""
-        return (self.nullary_functions.abs() > 1e-8).sum().item()
-
-    def compute_target_sparsity(self, corpus_size: int) -> int:
-        """Compute target sparsity as sqrt of corpus size."""
-        return int(math.sqrt(corpus_size))
-
-    def compute_l1_penalty(self) -> torch.Tensor:
-        """Compute L1 penalty on nullary function weights."""
-        return self.nullary_functions.abs().sum()
-
     @torch.no_grad()
     def project_to_feasible_(self) -> None:
         """Project parameters to feasible set: nonnegativity + normalization."""
@@ -469,22 +486,19 @@ class Language(torch.nn.Module):
     def fit(
         self,
         structure: Structure,
-        corpus: "ObTree | Language",
+        corpus: ObTree,
         *,
-        l1_lambda: float = 0.0,
         max_steps: int = 50,
         learning_rate: float = 0.1,
         tol: float = 1e-6,
         reltol: float = 1e-4,
-        verbose: bool = False,
-    ) -> dict[str, Any]:
+    ) -> list[float]:
         """
-        Fit language weights to corpus using gradient descent with L1 regularization.
+        Fit language weights to corpus using gradient descent.
 
         Args:
             structure: The E-graph structure
-            corpus: Training corpus (ObTree or Language with counts)
-            l1_lambda: L1 regularization strength for sparsity control
+            corpus: Training corpus (ObTree)
             max_steps: Maximum optimization steps
             learning_rate: Learning rate for L-BFGS
             tol: Tolerance for optimization convergence
@@ -492,34 +506,16 @@ class Language(torch.nn.Module):
             verbose: Whether to print progress
 
         Returns:
-            Dictionary with training metrics (loss, sparsity, etc.)
+            List of losses
         """
-        # Convert corpus to data tensor
-        if isinstance(corpus, ObTree):
-            # Count occurrences in ObTree
-            symbol_counts: Counter[str] = Counter()
-            ob_counts: Counter[Ob] = Counter()
-            corpus.count(symbol_counts, ob_counts)
+        # Create a Language with the same structure as self to hold corpus counts
+        corpus_language = self.zeros_like()
+        corpus_language.iadd_corpus(corpus)
+        corpus_size = int(corpus_language.nullary_functions.sum().item())
 
-            # Convert to data tensor
-            data = torch.zeros_like(self.nullary_functions)
-            for ob, count in ob_counts.items():
-                data[ob] = float(count)
-        else:
-            # Use corpus language's nullary functions as data
-            data = corpus.nullary_functions.detach().clone()
-
-        corpus_size = int(data.sum().item())
-        target_sparsity = self.compute_target_sparsity(corpus_size)
-
-        if verbose:
-            initial_sparsity = self.count_nonzero_nullary()
-            logger.info(
-                f"Fitting to corpus of size {corpus_size}, "
-                f"target sparsity {target_sparsity}, "
-                f"initial sparsity {initial_sparsity}, "
-                f"L1 lambda {l1_lambda}"
-            )
+        # Track metrics
+        losses: list[float] = []
+        logger.info(f"Fitting to corpus of size {corpus_size}")
 
         # Setup optimizer
         optimizer = torch.optim.LBFGS(
@@ -530,12 +526,6 @@ class Language(torch.nn.Module):
             tolerance_change=tol,
             history_size=10,
         )
-
-        # Track metrics
-        losses = []
-        sparsities = []
-        likelihoods = []
-        l1_penalties = []
 
         # Warm start for compute_probs
         prev_probs = None
@@ -550,58 +540,17 @@ class Language(torch.nn.Module):
             )
             prev_probs = probs.detach()
 
-            # Compute log-likelihood term
-            tiny = torch.finfo(probs.dtype).tiny
-            log_likelihood = torch.xlogy(data, probs + tiny).sum()
-
-            # Compute L1 penalty
-            l1_penalty = self.compute_l1_penalty()
-
-            # Total loss (negative log-likelihood + L1 penalty)
-            loss = -log_likelihood + l1_lambda * l1_penalty
-
-            # Backward pass
+            # Compute loss as negative log-likelihood
+            loss = -corpus_language.log_prob(structure, self, probs)
             loss.backward()
-
             return loss
 
         # Optimization loop
         for step in range(max_steps):
-            # Take optimization step
             loss = optimizer.step(closure)
-
-            # Project to feasible set
             self.project_to_feasible_()
+            losses.append(loss.item())
+            if step % 10 == 0 or step == max_steps - 1:
+                logger.info(f"Step {step}: loss={loss.item():.6f}")
 
-            # Compute metrics
-            with torch.no_grad():
-                probs = self.compute_probs(
-                    structure, reltol=reltol, init_probs=prev_probs
-                )
-                tiny = torch.finfo(probs.dtype).tiny
-                likelihood = torch.xlogy(data, probs + tiny).sum().item()
-                l1_penalty = self.compute_l1_penalty().item()
-                sparsity = self.count_nonzero_nullary()
-
-                losses.append(loss.item())
-                likelihoods.append(likelihood)
-                l1_penalties.append(l1_penalty)
-                sparsities.append(sparsity)
-
-                if verbose and (step % 10 == 0 or step == max_steps - 1):
-                    logger.info(
-                        f"Step {step}: loss={loss.item():.6f}, "
-                        f"likelihood={likelihood:.6f}, "
-                        f"L1={l1_penalty:.6f}, "
-                        f"sparsity={sparsity}/{len(self.nullary_functions)}"
-                    )
-
-        return {
-            "losses": losses,
-            "likelihoods": likelihoods,
-            "l1_penalties": l1_penalties,
-            "sparsities": sparsities,
-            "final_sparsity": sparsities[-1],
-            "target_sparsity": target_sparsity,
-            "corpus_size": corpus_size,
-        }
+        return losses
