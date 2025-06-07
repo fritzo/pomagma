@@ -1,6 +1,7 @@
 import logging
+import math
 from collections import Counter
-from typing import Mapping, Sequence
+from typing import Any, Mapping, Sequence
 
 import torch
 from immutables import Map
@@ -77,29 +78,47 @@ class Language(torch.nn.Module):
             weight *= scale
 
     def compute_probs(
-        self, structure: Structure, *, reltol: float = 1e-3
+        self,
+        structure: Structure,
+        *,
+        reltol: float = 1e-3,
+        init_probs: torch.Tensor | None = None,
+        min_iterations: int = 3,
     ) -> torch.Tensor:
         """
         Propagates from a normalized grammar to a sub-normalized weighted set of obs.
 
         (The ob set would be normalized if the structure were closed, but the
         structure is only a finite subset of the full structure.)
+
+        Args:
+            structure: The E-graph structure
+            reltol: Relative tolerance for convergence
+            init_probs: Optional warm start initialization
+            min_iterations: Minimum iterations to run even if converged
+                (for gradient quality)
         """
         assert 0.0 < reltol < 1.0
+        assert min_iterations >= 0
         eps = torch.finfo(self.nullary_functions.dtype).eps
 
-        # Initialize with atoms.
-        probs = self.nullary_functions.detach()
+        # Initialize with warm start if provided, else atoms.
+        if init_probs is not None:
+            probs = init_probs.clone()
+        else:
+            probs = self.nullary_functions.detach()
 
-        # Propagate until convergence.
+        # Propagate until convergence (with minimum iterations).
         diff = 1.0
-        while diff > reltol:
+        iteration = 0
+        while diff > reltol or iteration < min_iterations:
             prev = probs
             probs = self._compute_probs_step(structure, probs)
             with torch.no_grad():
                 # Only the convergence check is in no_grad - doesn't affect gradients
                 diffs = (probs - prev).abs() / (probs + eps)
                 diff = diffs.max().item()
+            iteration += 1
 
         return probs
 
@@ -419,3 +438,170 @@ class Language(torch.nn.Module):
         assert extracted_count == expected_count
 
         return expressions
+
+    def count_nonzero_nullary(self) -> int:
+        """Count number of nonzero nullary function weights."""
+        return (self.nullary_functions.abs() > 1e-8).sum().item()
+
+    def compute_target_sparsity(self, corpus_size: int) -> int:
+        """Compute target sparsity as sqrt of corpus size."""
+        return int(math.sqrt(corpus_size))
+
+    def compute_l1_penalty(self) -> torch.Tensor:
+        """Compute L1 penalty on nullary function weights."""
+        return self.nullary_functions.abs().sum()
+
+    @torch.no_grad()
+    def project_to_feasible_(self) -> None:
+        """Project parameters to feasible set: nonnegativity + normalization."""
+        # Ensure nonnegativity
+        self.nullary_functions.clamp_(min=0.0)
+        for weight in self.injective_functions.values():
+            weight.clamp_(min=0.0)
+        for weight in self.binary_functions.values():
+            weight.clamp_(min=0.0)
+        for weight in self.symmetric_functions.values():
+            weight.clamp_(min=0.0)
+
+        # Renormalize
+        self.normalize_()
+
+    def fit(
+        self,
+        structure: Structure,
+        corpus: "ObTree | Language",
+        *,
+        l1_lambda: float = 0.0,
+        max_steps: int = 50,
+        learning_rate: float = 0.1,
+        tol: float = 1e-6,
+        reltol: float = 1e-4,
+        verbose: bool = False,
+    ) -> dict[str, Any]:
+        """
+        Fit language weights to corpus using gradient descent with L1 regularization.
+
+        Args:
+            structure: The E-graph structure
+            corpus: Training corpus (ObTree or Language with counts)
+            l1_lambda: L1 regularization strength for sparsity control
+            max_steps: Maximum optimization steps
+            learning_rate: Learning rate for L-BFGS
+            tol: Tolerance for optimization convergence
+            reltol: Relative tolerance for compute_probs iterations
+            verbose: Whether to print progress
+
+        Returns:
+            Dictionary with training metrics (loss, sparsity, etc.)
+        """
+        # Convert corpus to data tensor
+        if isinstance(corpus, ObTree):
+            # Count occurrences in ObTree
+            symbol_counts: Counter[str] = Counter()
+            ob_counts: Counter[Ob] = Counter()
+            corpus.count(symbol_counts, ob_counts)
+
+            # Convert to data tensor
+            data = torch.zeros_like(self.nullary_functions)
+            for ob, count in ob_counts.items():
+                data[ob] = float(count)
+        else:
+            # Use corpus language's nullary functions as data
+            data = corpus.nullary_functions.detach().clone()
+
+        corpus_size = int(data.sum().item())
+        target_sparsity = self.compute_target_sparsity(corpus_size)
+
+        if verbose:
+            initial_sparsity = self.count_nonzero_nullary()
+            logger.info(
+                f"Fitting to corpus of size {corpus_size}, "
+                f"target sparsity {target_sparsity}, "
+                f"initial sparsity {initial_sparsity}, "
+                f"L1 lambda {l1_lambda}"
+            )
+
+        # Setup optimizer
+        optimizer = torch.optim.LBFGS(
+            self.parameters(),
+            lr=learning_rate,
+            max_iter=20,
+            tolerance_grad=tol,
+            tolerance_change=tol,
+            history_size=10,
+        )
+
+        # Track metrics
+        losses = []
+        sparsities = []
+        likelihoods = []
+        l1_penalties = []
+
+        # Warm start for compute_probs
+        prev_probs = None
+
+        def closure():
+            nonlocal prev_probs
+            optimizer.zero_grad()
+
+            # Compute probabilities with warm start
+            probs = self.compute_probs(
+                structure, reltol=reltol, init_probs=prev_probs, min_iterations=3
+            )
+            prev_probs = probs.detach()
+
+            # Compute log-likelihood term
+            tiny = torch.finfo(probs.dtype).tiny
+            log_likelihood = torch.xlogy(data, probs + tiny).sum()
+
+            # Compute L1 penalty
+            l1_penalty = self.compute_l1_penalty()
+
+            # Total loss (negative log-likelihood + L1 penalty)
+            loss = -log_likelihood + l1_lambda * l1_penalty
+
+            # Backward pass
+            loss.backward()
+
+            return loss
+
+        # Optimization loop
+        for step in range(max_steps):
+            # Take optimization step
+            loss = optimizer.step(closure)
+
+            # Project to feasible set
+            self.project_to_feasible_()
+
+            # Compute metrics
+            with torch.no_grad():
+                probs = self.compute_probs(
+                    structure, reltol=reltol, init_probs=prev_probs
+                )
+                tiny = torch.finfo(probs.dtype).tiny
+                likelihood = torch.xlogy(data, probs + tiny).sum().item()
+                l1_penalty = self.compute_l1_penalty().item()
+                sparsity = self.count_nonzero_nullary()
+
+                losses.append(loss.item())
+                likelihoods.append(likelihood)
+                l1_penalties.append(l1_penalty)
+                sparsities.append(sparsity)
+
+                if verbose and (step % 10 == 0 or step == max_steps - 1):
+                    logger.info(
+                        f"Step {step}: loss={loss.item():.6f}, "
+                        f"likelihood={likelihood:.6f}, "
+                        f"L1={l1_penalty:.6f}, "
+                        f"sparsity={sparsity}/{len(self.nullary_functions)}"
+                    )
+
+        return {
+            "losses": losses,
+            "likelihoods": likelihoods,
+            "l1_penalties": l1_penalties,
+            "sparsities": sparsities,
+            "final_sparsity": sparsities[-1],
+            "target_sparsity": target_sparsity,
+            "corpus_size": corpus_size,
+        }

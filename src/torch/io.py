@@ -454,13 +454,14 @@ def load_structure_cpp(filename: str, *, relations: bool = False) -> Structure:
 
     name = proto_structure.name
     item_count = tensors["item_count"].item()
+    assert isinstance(item_count, int)
 
     # Parse nullary functions
-    nullary_functions = {}
+    nullary_functions: dict[str, Ob] = {}
     for key, tensor in tensors.items():
         if key.startswith("nullary_functions."):
             func_name = key[len("nullary_functions.") :]
-            nullary_functions[func_name] = tensor.item()
+            nullary_functions[func_name] = Ob(int(tensor.item()))
 
     # Helper function to parse binary/symmetric functions
     def parse_functions(prefix: str, target_dict: dict):
@@ -497,16 +498,16 @@ def load_structure_cpp(filename: str, *, relations: bool = False) -> Structure:
             )
 
     # Parse binary functions
-    binary_functions = {}
+    binary_functions: dict[str, BinaryFunction] = {}
     parse_functions("binary_functions.", binary_functions)
 
     # Parse symmetric functions
-    symmetric_functions = {}
+    symmetric_functions: dict[str, BinaryFunction] = {}
     parse_functions("symmetric_functions.", symmetric_functions)
 
     # Parse relations
-    unary_relations = {}
-    binary_relations = {}
+    unary_relations: dict[str, torch.Tensor] = {}
+    binary_relations: dict[str, torch.Tensor] = {}
     if relations:
         # Fall back to Python proto loading for relations
         for proto_rel in proto_structure.unary_relations:

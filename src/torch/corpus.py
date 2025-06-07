@@ -11,7 +11,7 @@ from .structure import BinaryFunction, Ob, Structure
 logger = logging.getLogger(__name__)
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True, slots=True, weakref_slot=True)
 class ObTree(metaclass=HashConsMeta):
     """A partially understood expression, whose leaves are Obs i.e. E-classes."""
 

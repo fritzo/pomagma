@@ -105,6 +105,29 @@ The `extract_all` method implements **E-graph extraction**—finding the single 
 
 2. **Extraction**: Sort E-classes by descending `best` probability (which gives a valid topological order since compound expressions have probability ≤ min(dependency probabilities)), then greedily select the highest-probability decomposition for each E-class.
 
+### Grammar Fitting
+The `fit` method uses **gradient descent with L1 regularization** to fit normalized PCFG weights to observed corpus data while controlling sparsity.
+
+**Algorithm:**
+1. **Convert corpus** to E-class frequency data: `data[i]` = observed count of E-class `i`
+2. **Objective function**: `Loss = -log P(data | grammar) + λ ||nullary_functions||₁`
+   - Log-likelihood term encourages fitting the observed frequencies
+   - L1 penalty term controls sparsity of nullary function weights
+3. **Gradient descent**: Use L-BFGS optimizer with warm-started `compute_probs`
+4. **Constraints**: After each step, project to feasible set:
+   - **Nonnegativity**: `weights ← max(weights, 0)`
+   - **Normalization**: `weights ← weights / weights.sum()`
+
+**Key features:**
+- **Warm starting**: Each `compute_probs` call is initialized with results from the previous step, reducing iteration count
+- **Sparsity control**: L1 regularization automatically sets low-frequency terms to zero
+- **Automatic differentiation**: Gradients computed through the iterative E-graph propagation
+
+**Mathematical Foundation:**
+The log-likelihood term is computed as:
+$$\log P(\text{data} | \text{grammar}) = \sum_i \text{data}[i] \cdot \log(\text{probs}[i])$$
+where `probs` comes from `compute_probs`. The gradient flows back through the entire iterative fixed-point computation via PyTorch's autograd.
+
 ### References
 1. Jason Eisner (2016)
   "Inside-Outside and Forward-Backward Algorithms are Just Backprop"
