@@ -1,4 +1,5 @@
 import logging
+import math
 from typing import Mapping, Sequence
 
 import torch
@@ -6,8 +7,8 @@ from immutables import Map
 
 from pomagma.compiler.expressions import Expression
 
-from .corpus import CorpusStats
-from .structure import Ob, Structure
+from .corpus import CorpusStats, ObTree
+from .structure import Structure
 
 logger = logging.getLogger(__name__)
 
@@ -398,83 +399,124 @@ class Language(torch.nn.Module):
     ) -> list[Expression | None]:
         """
         Extracts the shortest expression for each E-class.
+        Delegates to Extractor for the actual implementation.
         """
-        if best is None:
-            best = self.compute_best(structure)
-        assert best.shape == (1 + structure.item_count,)
+        from .extraction import Extractor
 
-        # Sort from highest to lowest probability, a valid topological order.
-        order: list[Ob] = list(map(Ob, range(1, 1 + structure.item_count)))
-        order.sort(key=lambda i: best[i].item(), reverse=True)
+        extractor = Extractor(structure, self)
+        ob_to_expr = extractor.extract_all_obs(best=best)
 
-        # Index nullary functions by ob.
-        nullary_functions: dict[Ob, str] = {}
-        for name, ob in structure.nullary_functions.items():
-            nullary_functions[ob] = name
-
-        # Extract the shortest expression for each E-class.
+        # Convert to list format for backward compatibility
         expressions: list[Expression | None] = [None] * (1 + structure.item_count)
-        for ob in order:
-            # Skip if this object has zero probability
-            if best[ob].item() <= 0:
-                continue
-
-            # Find the best grammar rule to apply.
-            best_prob: float = 0.0
-            best_expr: Expression | None = None
-
-            # Nullary functions.
-            if ob in nullary_functions:
-                prob = self.nullary_functions[ob].item()
-                if prob > best_prob:
-                    best_prob = prob
-                    name = nullary_functions[ob]
-                    best_expr = Expression.make(name)
-
-            # Binary functions.
-            for self_fs, struct_fs in [
-                (self.binary_functions, structure.binary_functions),
-                (self.symmetric_functions, structure.symmetric_functions),
-            ]:
-                for name, weight in self_fs.items():
-                    Vlr = struct_fs[name].Vlr
-                    begin = int(Vlr.ptrs[ob].item())
-                    end = int(Vlr.ptrs[ob + 1].item())
-                    if begin == end:
-                        continue
-                    # Get all (lhs, rhs) pairs that produce ob
-                    lhs_rhs_pairs = Vlr.args[begin:end]  # Shape: [num_pairs, 2]
-                    if lhs_rhs_pairs.numel() == 0:
-                        continue
-                    lhs_obs = lhs_rhs_pairs[:, 0]
-                    rhs_obs = lhs_rhs_pairs[:, 1]
-                    lhs_probs = best[lhs_obs.long()]
-                    rhs_probs = best[rhs_obs.long()]
-                    part_probs = weight.item() * lhs_probs * rhs_probs
-                    max_value, max_idx = part_probs.max(dim=0)
-                    value = max_value.item()
-                    index = max_idx.item()
-                    if value <= best_prob:
-                        continue
-                    # Get subexpressions (guaranteed to exist due to topological order)
-                    lhs_ob = int(lhs_obs[index].item())
-                    rhs_ob = int(rhs_obs[index].item())
-                    lhs_expr = expressions[lhs_ob]
-                    rhs_expr = expressions[rhs_ob]
-                    if lhs_expr is None or rhs_expr is None:
-                        continue
-                    best_prob = value
-                    best_expr = Expression.make(name, lhs_expr, rhs_expr)
-
-            expressions[ob] = best_expr
-
-        # Check that all expressions were successfully extracted.
-        extracted_count = sum(1 for e in expressions[1:] if e is not None)
-        logger.info(f"Extracted {extracted_count}/{structure.item_count} obs")
-        expected_count = (best[1:] > 0).long().sum().item()
-        assert extracted_count == expected_count
+        for ob, expr in ob_to_expr.items():
+            expressions[ob] = expr
 
         return expressions
+
+    def compute_expression_size(
+        self,
+        structure: Structure,
+        expr: Expression,
+        *,
+        probs: torch.Tensor | None = None,
+    ) -> float:
+        """
+        Compute expression size as negative log probability.
+
+        This provides a principled size metric for compression decisions.
+
+        Args:
+            structure: The E-graph structure
+            expr: Expression to measure
+            probs: Pre-computed probabilities (optional)
+
+        Returns:
+            Negative log probability (higher = larger/more complex)
+        """
+
+        # TODO: Implement proper negative log probability computation
+        # For now, use a simple tree size heuristic
+        def tree_size(e: Expression) -> int:
+            return 1 + sum(tree_size(arg) for arg in e.args)
+
+        size = tree_size(expr)
+        # Convert to negative log probability scale (larger size = higher cost)
+        return float(size)  # Placeholder - should be -log(P(expr))
+
+    def obtree_complexity(
+        self, structure: Structure, probs: torch.Tensor, tree: "ObTree"
+    ) -> float:
+        """
+        Compute complexity of an ObTree as negative log probability.
+
+        This computes the cost of an expression represented as an ObTree,
+        taking into account both the symbol costs and E-class probabilities.
+
+        Args:
+            structure: The E-graph structure
+            probs: Pre-computed E-class probabilities from
+                   language.compute_probs(structure)
+            tree: ObTree to measure complexity of
+
+        Returns:
+            Negative log probability (higher = more complex)
+        """
+        # Base case: if this is an E-class (leaf), use its negative log probability
+        if tree.ob is not None:
+            prob = probs[tree.ob].item()
+            if prob <= 0:
+                return float("inf")  # Impossible expression
+            return -math.log(prob)
+
+        # Recursive case: compute cost of function symbol + arguments
+        if tree.name is None or tree.args is None:
+            return float("inf")  # Malformed tree
+
+        # Cost of the function symbol itself
+        symbol_cost = 0.0
+        if tree.name in self.binary_functions:
+            weight = self.binary_functions[tree.name].item()
+            if weight <= 0:
+                return float("inf")
+            symbol_cost = -math.log(weight)
+        elif tree.name in self.symmetric_functions:
+            weight = self.symmetric_functions[tree.name].item()
+            if weight <= 0:
+                return float("inf")
+            symbol_cost = -math.log(weight)
+        else:
+            # Unknown symbol - assign high cost
+            symbol_cost = 10.0  # Arbitrary high cost
+
+        # Cost of arguments
+        args_cost = sum(
+            self.obtree_complexity(structure, probs, arg) for arg in tree.args
+        )
+
+        return symbol_cost + args_cost
+
+    def expr_complexity(
+        self, structure: Structure, probs: torch.Tensor, expr: Expression
+    ) -> float:
+        """
+        Compute expression complexity as negative log probability.
+
+        This converts an Expression to an ObTree and computes its complexity.
+
+        Args:
+            structure: The E-graph structure
+            probs: Pre-computed E-class probabilities from
+                language.compute_probs(structure)
+            expr: Expression to measure complexity of
+
+        Returns:
+            Negative log probability (higher = more complex)
+        """
+        # Convert Expression to ObTree using the existing method
+        obtree = ObTree.from_expr(structure, expr)
+
+        # Compute complexity of the ObTree
+        return self.obtree_complexity(structure, probs, obtree)
 
     def fit(
         self,

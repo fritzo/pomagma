@@ -146,6 +146,46 @@ class Expression(object):
                 self.name, *(arg.substitute(var, defn) for arg in self._args)
             )
 
+    def replace(self, pattern, replacement):
+        """
+        Replace all occurrences of pattern with replacement in expression.
+
+        Args:
+            pattern: Expression pattern to find and replace
+            replacement: Expression to substitute for the pattern
+
+        Returns:
+            New expression with pattern replaced by replacement
+        """
+        assert isinstance(pattern, Expression)
+        assert isinstance(replacement, Expression)
+
+        # If this expression matches the pattern exactly, replace it
+        if self is pattern:
+            return replacement
+
+        # Otherwise, recursively apply to arguments
+        new_args = []
+        changed = False
+        for arg in self._args:
+            new_arg = arg.replace(pattern, replacement)
+            new_args.append(new_arg)
+            if new_arg is not arg:
+                changed = True
+
+        # If no changes were made, return self (for efficiency)
+        if not changed:
+            return self
+
+        # Create new expression with replaced arguments
+        result = Expression.make(self.name, *new_args)
+
+        # Check if the newly created expression matches the pattern
+        if result is pattern:
+            result = replacement
+
+        return result
+
     def swap(self, var1, var2):
         assert isinstance(var1, Expression) and var1.is_var()
         assert isinstance(var2, Expression) and var2.is_var()

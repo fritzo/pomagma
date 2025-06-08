@@ -98,6 +98,16 @@ The `extract_all` method implements **E-graph extraction**—finding the single 
 
 2. **Extraction**: Sort E-classes by descending `best` probability (which gives a valid topological order since compound expressions have probability ≤ min(dependency probabilities)), then greedily select the highest-probability decomposition for each E-class.
 
+### Beta-Compression
+The `beta_compress` function compresses expressions by extracting common subpatterns into lambda abstractions. For a pattern $P$ occurring in multiple expressions, the transformation is:
+$$\text{compressed} = (\lambda x. \text{term}[P/x]) \, P$$
+where $\text{term}[P/x]$ substitutes pattern $P$ with variable $x$.
+
+The algorithm minimizes total complexity measured as negative log probability under the PCFG. For pattern $P$ with frequency $f$, compression benefit is:
+$$\text{benefit}(P) = f \cdot (\text{complexity}(P) - \text{complexity}(x)) - \text{cost}(\lambda x. P)$$
+
+The procedure iteratively finds frequent subexpressions, estimates compression benefits, and applies lambda abstractions to profitable patterns. It returns equations mapping original expressions to compressed forms, ranked by benefit for selective application.
+
 ### Grammar Fitting
 The `fit` method uses **gradient descent** to fit normalized PCFG weights to observed corpus data.
 
