@@ -110,7 +110,7 @@ def estimate_compression_benefit(
         Estimated benefit (positive means compression is beneficial)
     """
     # Use proper complexity computation with negative log probability
-    pattern_complexity = language.expr_complexity(structure, probs, candidate.pattern)
+    pattern_complexity = language.complexity(structure, probs, candidate.pattern)
     variable_complexity = 1.0  # Cost of a variable reference (arbitrary unit)
 
     # Benefit per occurrence = pattern complexity - variable complexity

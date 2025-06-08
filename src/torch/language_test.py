@@ -317,3 +317,142 @@ def test_iadd_corpus_with_corpus_stats(
     assert language_copy.nullary_functions[Ob(2)].item() == 2.0  # Y
     assert language_copy.nullary_functions[Ob(3)].item() == 2.0  # APP(X,Y) result
     assert language_copy.binary_functions["APP"].item() == 2.0  # APP symbol
+
+
+def test_complexity_with_string_input(
+    simple_structure: Structure, simple_language: Language
+) -> None:
+    """Test complexity method with string input."""
+    probs = simple_language.compute_probs(simple_structure)
+
+    # Test with simple string expression
+    complexity = simple_language.complexity(simple_structure, probs, "X")
+    assert isinstance(complexity, float)
+    assert complexity >= 0
+
+    # Test with compound expression
+    complexity_compound = simple_language.complexity(simple_structure, probs, "APP X Y")
+    assert isinstance(complexity_compound, float)
+    assert complexity_compound >= 0
+    assert complexity_compound > complexity  # Compound should be more complex
+
+
+def test_complexity_with_expression_input(
+    simple_structure: Structure, simple_language: Language
+) -> None:
+    """Test complexity method with Expression input."""
+    from pomagma.compiler.parser import parse_string_to_expr
+
+    probs = simple_language.compute_probs(simple_structure)
+
+    # Test with Expression
+    expr = parse_string_to_expr("APP X Y")
+    complexity = simple_language.complexity(simple_structure, probs, expr)
+    assert isinstance(complexity, float)
+    assert complexity >= 0
+
+
+def test_complexity_with_obtree_input(
+    simple_structure: Structure, simple_language: Language, simple_corpus: ObTree
+) -> None:
+    """Test complexity method with ObTree input."""
+    probs = simple_language.compute_probs(simple_structure)
+
+    # Test with ObTree
+    complexity = simple_language.complexity(simple_structure, probs, simple_corpus)
+    assert isinstance(complexity, float)
+    assert complexity >= 0
+
+
+def test_complexity_with_corpus_stats_input(
+    simple_structure: Structure,
+    simple_language: Language,
+    simple_corpus_stats: CorpusStats,
+) -> None:
+    """Test complexity method with CorpusStats input."""
+    probs = simple_language.compute_probs(simple_structure)
+
+    # Test with CorpusStats
+    complexity = simple_language.complexity(
+        simple_structure, probs, simple_corpus_stats
+    )
+    assert isinstance(complexity, float)
+    assert complexity >= 0
+
+
+def test_complexity_input_equivalence(
+    simple_structure: Structure, simple_language: Language
+) -> None:
+    """Test that different input types give the same complexity result."""
+    from pomagma.compiler.parser import parse_string_to_expr
+
+    probs = simple_language.compute_probs(simple_structure)
+
+    # Create equivalent inputs
+    string_input = "APP X Y"
+    expr_input = parse_string_to_expr(string_input)
+    obtree_input = ObTree.from_expr(simple_structure, expr_input)
+    stats_input = obtree_input.stats
+
+    # Compute complexity for each input type
+    complexity_str = simple_language.complexity(simple_structure, probs, string_input)
+    complexity_expr = simple_language.complexity(simple_structure, probs, expr_input)
+    complexity_obtree = simple_language.complexity(
+        simple_structure, probs, obtree_input
+    )
+    complexity_stats = simple_language.complexity(simple_structure, probs, stats_input)
+
+    # All should give the same result
+    assert abs(complexity_str - complexity_expr) < 1e-6
+    assert abs(complexity_expr - complexity_obtree) < 1e-6
+    assert abs(complexity_obtree - complexity_stats) < 1e-6
+
+
+def test_complexity_backward_compatibility(
+    simple_structure: Structure, simple_language: Language
+) -> None:
+    """Test that deprecated methods still work and give same results as new method."""
+    from pomagma.compiler.parser import parse_string_to_expr
+
+    probs = simple_language.compute_probs(simple_structure)
+
+    # Test expression complexity
+    expr = parse_string_to_expr("APP X Y")
+    old_complexity = simple_language.expr_complexity(simple_structure, probs, expr)
+    new_complexity = simple_language.complexity(simple_structure, probs, expr)
+    assert abs(old_complexity - new_complexity) < 1e-6
+
+    # Test obtree complexity
+    obtree = ObTree.from_expr(simple_structure, expr)
+    old_obtree_complexity = simple_language.obtree_complexity(
+        simple_structure, probs, obtree
+    )
+    new_obtree_complexity = simple_language.complexity(simple_structure, probs, obtree)
+    assert abs(old_obtree_complexity - new_obtree_complexity) < 1e-6
+
+
+def test_complexity_handles_invalid_inputs(
+    simple_structure: Structure, simple_language: Language
+) -> None:
+    """Test that complexity method handles edge cases appropriately."""
+    probs = simple_language.compute_probs(simple_structure)
+
+    # Test with zero probability (should return infinity)
+    # Create a CorpusStats with an E-class that has zero probability
+    zero_probs = probs.clone()
+    zero_probs[1] = 0.0  # Make X (Ob(1)) have zero probability
+
+    # Create a CorpusStats that directly references the zero-probability E-class
+    zero_prob_stats = CorpusStats(obs=Map({Ob(1): 1}), symbols=Map())
+    complexity = simple_language.complexity(
+        simple_structure, zero_probs, zero_prob_stats
+    )
+    assert complexity == float("inf")
+
+    # Test with unknown symbol (should handle gracefully)
+    unknown_stats = CorpusStats(obs=Map(), symbols=Map({"UNKNOWN_SYMBOL": 1}))
+    complexity_unknown = simple_language.complexity(
+        simple_structure, probs, unknown_stats
+    )
+    assert isinstance(complexity_unknown, float)
+    assert complexity_unknown >= 0

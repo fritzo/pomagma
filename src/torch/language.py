@@ -6,6 +6,7 @@ import torch
 from immutables import Map
 
 from pomagma.compiler.expressions import Expression
+from pomagma.compiler.parser import parse_string_to_expr
 
 from .corpus import CorpusStats, ObTree
 from .structure import Structure
@@ -443,80 +444,93 @@ class Language(torch.nn.Module):
         # Convert to negative log probability scale (larger size = higher cost)
         return float(size)  # Placeholder - should be -log(P(expr))
 
-    def obtree_complexity(
-        self, structure: Structure, probs: torch.Tensor, tree: "ObTree"
+    def complexity(
+        self,
+        structure: Structure,
+        probs: torch.Tensor,
+        x: CorpusStats | ObTree | Expression | str,
     ) -> float:
         """
-        Compute complexity of an ObTree as negative log probability.
+        Compute complexity as negative log probability.
 
-        This computes the cost of an expression represented as an ObTree,
-        taking into account both the symbol costs and E-class probabilities.
+        This unified method handles multiple input types and computes complexity
+        using corpus statistics, taking into account both symbol costs and
+        E-class probabilities.
 
         Args:
             structure: The E-graph structure
-            probs: Pre-computed E-class probabilities from
-                   language.compute_probs(structure)
-            tree: ObTree to measure complexity of
+            probs: Pre-computed E-class probabilities from language.compute_probs
+            x: Input to measure complexity of - can be:
+                - str: Parsed to Expression
+                - Expression: Converted to ObTree
+                - ObTree: Converted to CorpusStats
+                - CorpusStats: Used directly
 
         Returns:
             Negative log probability (higher = more complex)
         """
-        # Base case: if this is an E-class (leaf), use its negative log probability
-        if tree.ob is not None:
-            prob = probs[tree.ob].item()
+        # Convert input through the transformation chain
+        if isinstance(x, str):
+            x = parse_string_to_expr(x)
+        if isinstance(x, Expression):
+            x = ObTree.from_expr(structure, x)
+        if isinstance(x, ObTree):
+            x = x.stats
+        assert isinstance(x, CorpusStats), f"Expected CorpusStats, got {type(x)}"
+
+        # Now compute complexity using corpus stats
+        total_cost = 0.0
+
+        # Cost from E-class occurrences (negative log probability)
+        for ob, count in x.obs.items():
+            prob = probs[ob].item()
             if prob <= 0:
                 return float("inf")  # Impossible expression
-            return -math.log(prob)
+            total_cost += count * (-math.log(prob))
 
-        # Recursive case: compute cost of function symbol + arguments
-        if tree.name is None or tree.args is None:
-            return float("inf")  # Malformed tree
+        # Cost from symbol occurrences (negative log probability)
+        for symbol, count in x.symbols.items():
+            symbol_cost = 0.0
+            if symbol in self.injective_functions:
+                weight = self.injective_functions[symbol].item()
+                if weight <= 0:
+                    return float("inf")
+                symbol_cost = -math.log(weight)
+            elif symbol in self.binary_functions:
+                weight = self.binary_functions[symbol].item()
+                if weight <= 0:
+                    return float("inf")
+                symbol_cost = -math.log(weight)
+            elif symbol in self.symmetric_functions:
+                weight = self.symmetric_functions[symbol].item()
+                if weight <= 0:
+                    return float("inf")
+                symbol_cost = -math.log(weight)
+            else:
+                # Unknown symbol - assign high cost
+                symbol_cost = 10.0  # Arbitrary high cost
 
-        # Cost of the function symbol itself
-        symbol_cost = 0.0
-        if tree.name in self.binary_functions:
-            weight = self.binary_functions[tree.name].item()
-            if weight <= 0:
-                return float("inf")
-            symbol_cost = -math.log(weight)
-        elif tree.name in self.symmetric_functions:
-            weight = self.symmetric_functions[tree.name].item()
-            if weight <= 0:
-                return float("inf")
-            symbol_cost = -math.log(weight)
-        else:
-            # Unknown symbol - assign high cost
-            symbol_cost = 10.0  # Arbitrary high cost
+            total_cost += count * symbol_cost
 
-        # Cost of arguments
-        args_cost = sum(
-            self.obtree_complexity(structure, probs, arg) for arg in tree.args
-        )
+        return total_cost
 
-        return symbol_cost + args_cost
+    def obtree_complexity(
+        self, structure: Structure, probs: torch.Tensor, tree: "ObTree"
+    ) -> float:
+        """
+        DEPRECATED: Use complexity() instead.
+        Compute complexity of an ObTree as negative log probability.
+        """
+        return self.complexity(structure, probs, tree)
 
     def expr_complexity(
         self, structure: Structure, probs: torch.Tensor, expr: Expression
     ) -> float:
         """
+        DEPRECATED: Use complexity() instead.
         Compute expression complexity as negative log probability.
-
-        This converts an Expression to an ObTree and computes its complexity.
-
-        Args:
-            structure: The E-graph structure
-            probs: Pre-computed E-class probabilities from
-                language.compute_probs(structure)
-            expr: Expression to measure complexity of
-
-        Returns:
-            Negative log probability (higher = more complex)
         """
-        # Convert Expression to ObTree using the existing method
-        obtree = ObTree.from_expr(structure, expr)
-
-        # Compute complexity of the ObTree
-        return self.obtree_complexity(structure, probs, obtree)
+        return self.complexity(structure, probs, expr)
 
     def fit(
         self,
