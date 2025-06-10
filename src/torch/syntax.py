@@ -24,7 +24,7 @@ def count_patterns(expr: Expression, pattern: Expression) -> int:
     return _COUNT_PATTERNS_CACHE[expr][pattern]
 
 
-def beta_compress_expr(
+def beta_compress_expr_pattern(
     expr: Expression,
     pattern: Expression,
     cost_func: Callable[[Expression], float],

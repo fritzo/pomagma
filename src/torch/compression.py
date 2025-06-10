@@ -1,196 +1,168 @@
+import functools
 import logging
-from dataclasses import dataclass
-from typing import Dict, List, Set
+from collections import Counter
+from typing import Callable
 
 import torch
 
 from pomagma.compiler.expressions import Expression
+from pomagma.util.metrics import COUNTERS
 
 from .corpus import ObTree
 from .extraction import Extractor
 from .language import Language
-from .patterns import (
-    PatternCandidate,
-    estimate_compression_benefit,
-    find_common_patterns,
-)
-from .structure import Structure
-from .syntax import (
-    generate_fresh_variable_name,
-    replace_pattern_with_variable,
-)
+from .structure import Ob, Structure
+from .syntax import beta_compress_expr_pattern
 
 logger = logging.getLogger(__name__)
+counter = COUNTERS[__name__]
 
 
-@dataclass
-class CompressionConfig:
-    """Configuration for beta-compression algorithm."""
+@torch.no_grad()
+def find_best_pattern(
+    structure: Structure, language: Language, probs: torch.Tensor, obtree: ObTree
+) -> Ob | None:
+    """
+    Find the best pattern E-class in an obtree based on occurrence analysis.
 
-    min_pattern_frequency: int = 2
-    min_pattern_size: int = 2
-    max_iterations: int = 5
-    compression_threshold: float = 0.1  # minimum relative benefit
+    Patterns are ranked by (num_occurrences - 1) * pattern_complexity.
+
+    Args:
+        structure: The E-graph structure
+        language: PCFG for complexity computation
+        probs: Pre-computed E-class probabilities
+        obtree: ObTree to analyze for patterns
+
+    Returns:
+        Best pattern E-class (Ob) or None if no good patterns found.
+    """
+    counter["find_best_pattern"] += 1
+    data_tensor = obtree.materialize(structure)
+    occurrences = language.compute_occurrences(structure, data_tensor, probs=probs)
+
+    # Benefit is the number of consolidated occurrences times the complexity,
+    # where complexity = -log(probability).
+    approx_benefit = -torch.xlogy(occurrences - 1, probs)
+    best_ob_idx = approx_benefit.argmax(dim=0)
+    best_benefit = approx_benefit[best_ob_idx]
+
+    if best_benefit.item() > 0:
+        return Ob(int(best_ob_idx.item()))
+
+    counter["find_best_pattern.no_pattern"] += 1
+    return None
 
 
-@dataclass
-class CompressionStats:
-    """Statistics about compression results."""
+@torch.no_grad()
+def extract_tilted(
+    structure: Structure,
+    language: Language,
+    probs: torch.Tensor,
+    obtree: ObTree,
+    pattern_ob: Ob,
+) -> Expression | None:
+    """
+    Extract expression with tilted language favoring pattern_ob.
 
-    patterns_found: int
-    abstractions_created: int
-    original_total_size: int
-    compressed_total_size: int
-    compression_ratio: float
+    Uses "rule of three" - triples the probability mass of the pattern E-class.
+
+    Args:
+        structure: The E-graph structure
+        language: Original language
+        pattern_ob: E-class to favor in extraction
+        obtree: ObTree to extract from
+
+    Returns:
+        Extracted expression or None if extraction fails
+    """
+    counter["extract_tilted"] += 1
+
+    # Fork the language
+    tilted_language = Language(
+        nullary_functions=language.nullary_functions.clone(),
+        injective_functions={
+            k: v.clone() for k, v in language.injective_functions.items()
+        },
+        binary_functions={k: v.clone() for k, v in language.binary_functions.items()},
+        symmetric_functions={
+            k: v.clone() for k, v in language.symmetric_functions.items()
+        },
+    )
+
+    # Apply "rule of three" tilting - triple the mass
+    tilted_language.nullary_functions[pattern_ob] += 2.0 * probs[pattern_ob]
+    tilted_language.normalize_()
+
+    # Extract with tilted language
+    extractor = Extractor(structure, tilted_language)
+    return extractor.extract_from_obtree(obtree)
 
 
 def beta_compress(
     structure: Structure,
     language: Language,
     probs: torch.Tensor,
-    obtrees: List[ObTree],
-    config: CompressionConfig = CompressionConfig(),
-) -> Dict[Expression, float]:
+    obtrees: list[ObTree],
+) -> dict[Expression, float]:
     """
     Apply beta-compression to simplify a set of expressions.
 
-    Algorithm:
-    1. Extract expressions from ObTrees using enhanced extraction
-    2. Find common subexpressions via pattern mining
-    3. Create lambda abstractions for profitable patterns
-    4. Apply syntactic reduction (beta-eta)
-    5. Return equations between original and compressed forms with their benefits
+    For each obtree:
+    1. Find best pattern (E-class) via occurrence analysis
+    2. Extract expression with tilted language favoring that pattern
+    3. Apply beta_compress_expr_pattern to compress with the pattern
+    4. Aggregate results
 
     Args:
         structure: The E-graph structure
         language: PCFG for probability computation
         probs: Pre-computed E-class probabilities from language.compute_probs(structure)
         obtrees: List of expressions to compress (as ObTrees)
-        config: Compression configuration
 
     Returns:
         Dict mapping EQUAL(original, compressed) equations to their compression benefits
     """
-    logger.info(f"Starting beta-compression on {len(obtrees)} expressions")
+    counter["beta_compress"] += 1
+    equation_benefits: Counter[Expression] = Counter()
+    cost_func = functools.partial(language.complexity, structure, probs)
+    for i, obtree in enumerate(obtrees):
+        benefits = beta_compress_obtree(structure, language, probs, obtree, cost_func)
+        equation_benefits.update(benefits)
+    counter["beta_compress.equations"] = len(equation_benefits)
+    return dict(equation_benefits)
 
-    # Step 1: Extract expressions from ObTrees
-    extractor = Extractor(structure, language)
-    expressions = []
-    for obtree in obtrees:
-        expr = extractor.extract_from_obtree(obtree)
-        if expr is not None:
-            expressions.append(expr)
 
-    if not expressions:
-        logger.warning("No expressions could be extracted")
+def beta_compress_obtree(
+    structure: Structure,
+    language: Language,
+    probs: torch.Tensor,
+    obtree: ObTree,
+    cost_func: Callable[[Expression], float],
+) -> dict[Expression, float]:
+    """
+    Apply beta-compression to simplify an obtree.
+    """
+    counter["beta_compress_obtree"] += 1
+    # Find best pattern as E-class (Ob)
+    pattern_ob = find_best_pattern(structure, language, probs, obtree)
+    if pattern_ob is None:
+        counter["beta_compress_obtree.no_pattern"] += 1
         return {}
 
-    logger.info(f"Extracted {len(expressions)} expressions for compression")
+    # Extract expression with tilted language favoring the pattern
+    expr = extract_tilted(structure, language, probs, obtree, pattern_ob)
+    if expr is None:
+        counter["beta_compress_obtree.no_expr"] += 1
+        return {}
 
-    # Step 2: Iterative compression
-    equation_benefits: Dict[Expression, float] = {}
-    current_expressions = expressions[:]
+    # Get the actual pattern expression for compression
+    extractor = Extractor(structure, language)
+    ob_to_expr = extractor.extract_all_obs()
+    pattern_expr = ob_to_expr.get(pattern_ob)
+    if pattern_expr is None:
+        counter["beta_compress_obtree.no_pattern_expr"] += 1
+        return {}
 
-    for iteration in range(config.max_iterations):
-        logger.info(f"Compression iteration {iteration + 1}")
-
-        # Find common patterns
-        candidates = find_common_patterns(
-            current_expressions,
-            min_frequency=config.min_pattern_frequency,
-            min_size=config.min_pattern_size,
-        )
-
-        if not candidates:
-            logger.info("No more patterns found, stopping")
-            break
-
-        # Estimate benefits and select best candidate
-        best_candidate = None
-        best_benefit = 0.0
-
-        for candidate in candidates:
-            benefit = estimate_compression_benefit(
-                candidate, current_expressions, language, structure, probs
-            )
-            if benefit > best_benefit:
-                best_benefit = benefit
-                best_candidate = candidate
-
-        if best_candidate is None or best_benefit < config.compression_threshold:
-            logger.info(f"No profitable patterns found (best benefit: {best_benefit})")
-            break
-
-        logger.info(
-            f"Compressing pattern {best_candidate.pattern} "
-            f"(frequency: {best_candidate.frequency}, benefit: {best_benefit})"
-        )
-
-        # Step 3: Create abstraction
-        compressed_expressions = _apply_compression(
-            current_expressions, best_candidate, config
-        )
-
-        # Step 4: Generate equations with benefits
-        for original, compressed in zip(current_expressions, compressed_expressions):
-            if original != compressed:
-                equation = Expression.make("EQUAL", original, compressed)
-                equation_benefits[equation] = best_benefit
-
-        # Update for next iteration
-        current_expressions = compressed_expressions
-
-    logger.info(f"Compression complete, generated {len(equation_benefits)} equations")
-    return equation_benefits
-
-
-def _apply_compression(
-    expressions: List[Expression],
-    candidate: PatternCandidate,
-    config: CompressionConfig,
-) -> List[Expression]:
-    """
-    Apply compression by abstracting a pattern candidate.
-
-    Args:
-        expressions: List of expressions to transform
-        candidate: Pattern to abstract
-        config: Compression configuration
-
-    Returns:
-        List of transformed expressions
-    """
-    # Generate fresh variable name
-    existing_names = _collect_existing_names(expressions)
-    var_name = generate_fresh_variable_name(existing_names)
-
-    # Create variable and abstraction
-    variable = Expression.make(var_name)
-
-    # Step 1: Replace pattern with variable in all expressions
-    substituted_expressions = []
-    for expr in expressions:
-        substituted = replace_pattern_with_variable(expr, candidate.pattern, variable)
-        substituted_expressions.append(substituted)
-
-    # For each expression, replace pattern with variable and create abstraction
-    # Step 2: Create lambda abstraction for the pattern
-    # Step 3: Apply beta-eta reduction
-
-    # For now, return the substituted expressions (reduction is stubbed)
-    return substituted_expressions
-
-
-def _collect_existing_names(expressions: List[Expression]) -> Set[str]:
-    """Collect all existing names in expressions to avoid conflicts."""
-    names = set()
-
-    def collect_names(expr: Expression):
-        names.add(expr.name)
-        for arg in expr.args:
-            collect_names(arg)
-
-    for expr in expressions:
-        collect_names(expr)
-
-    return names
+    # Apply beta compression for this (expression, pattern) pair
+    counter["beta_compress_obtree.compress"] += 1
+    return beta_compress_expr_pattern(expr, pattern_expr, cost_func)

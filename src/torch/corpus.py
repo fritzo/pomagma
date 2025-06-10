@@ -3,6 +3,7 @@ from collections import Counter
 from dataclasses import dataclass
 from weakref import WeakKeyDictionary
 
+import torch
 from immutables import Map
 
 from pomagma.compiler.expressions import Expression
@@ -104,3 +105,10 @@ class ObTree(metaclass=HashConsMeta):
         stats = CorpusStats(obs=Map(obs), symbols=Map(symbols))
         _STATS[self] = stats
         return stats
+
+    def materialize(self, structure: Structure) -> torch.Tensor:
+        """Convert ObTree stats to dense tensor for compute_occurrences."""
+        result = torch.zeros(structure.item_count + 1, dtype=torch.float32)
+        for ob, count in self.stats.obs.items():
+            result[ob] = count
+        return result

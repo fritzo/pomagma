@@ -22,6 +22,7 @@ class Expression(object):
         "_vars",
         "_consts",
         "_terms",
+        "__weakref__",
     ]
 
     def __init__(self, name, *args):
