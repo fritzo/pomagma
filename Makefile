@@ -2,10 +2,10 @@
 .PHONY: all build protobuf tags lint codegen debug release cpp-test unit-test bootstrap h4-test sk-test skj-test skja-test skrj-test batch-test small-test test big-test sk skj skja skrj profile clean setup-vcpkg FORCE
 
 # File lists for linting and formatting.
-PY_FILES := *.py $(shell find src -not -wholename 'src/third_party/*' \
+PY_FILES := *.py $(shell find pomagma -not -wholename 'pomagma/third_party/*' \
                                   -name '*.py' \
 				  -not -name '*_pb2.py')
-CPP_FILES := $(shell find src -not -wholename 'src/third_party/*' \
+CPP_FILES := $(shell find pomagma -not -wholename 'pomagma/third_party/*' \
                               -regex '.*\.[ch]pp$$' \
 			      -not -name '*.pb.*')
 
@@ -20,7 +20,7 @@ endif
 all: build FORCE
 
 build: data/blob bootstrap protobuf FORCE
-	$(MAKE) -C src/language
+	$(MAKE) -C pomagma/language
 	$(MAKE) codegen codegen-summary debug release
 
 install: FORCE
@@ -37,16 +37,16 @@ echo-cpp-files: FORCE
 	echo $(CPP_FILES)
 
 protobuf: FORCE
-	$(MAKE) -C src protobuf
+	$(MAKE) -C pomagma protobuf
 
 tags: protobuf FORCE
-	cd src ; ctags -R
-	cd src ; cscope -bcqR
+	cd pomagma ; ctags -R
+	cd pomagma ; cscope -bcqR
 
 clang-ctags:
 	mkdir -p build/tags
 	cd build/tags && cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=1 ../..
-	clang-ctags --output src/tags \
+	clang-ctags --output pomagma/tags \
 	  --compile-commands build/tags build/tags/compile_commands.json
 
 lint: FORCE
@@ -177,7 +177,7 @@ profile: release
 
 clean: FORCE
 	rm -rf build lib compile_commands.json
-	cd src && git clean -fdX -e third_party/
+	cd pomagma && git clean -fdX -e third_party/
 
 clean-vcpkg: FORCE
 	rm -rf vcpkg

@@ -218,4 +218,4 @@ endif()
 enable_testing()
 set(GTEST_FLAGS "-Wno-error=undef -Wno-undef")
 
-add_subdirectory(src)
+add_subdirectory(pomagma)
