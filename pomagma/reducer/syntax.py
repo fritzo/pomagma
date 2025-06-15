@@ -10,6 +10,8 @@ from pomagma.reducer.util import UnreachableError
 
 
 class Term(tuple):
+    __slots__ = ()
+
     def __repr__(self):
         if len(self) == 1:
             return self[0]

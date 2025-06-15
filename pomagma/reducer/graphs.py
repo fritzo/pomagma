@@ -62,6 +62,8 @@ _JOIN = sys.intern("JOIN")  # : set term -> term
 
 
 class Term(tuple):
+    __slots__ = ()
+
     def __repr__(self):
         symbol = self[0]
         if symbol is _TOP:
@@ -137,6 +139,8 @@ Term.TOP = Term.make(_TOP)
 
 
 class Graph(tuple):
+    __slots__ = ()
+
     @staticmethod
     @memoize_args
     def make(*args):

@@ -28,6 +28,7 @@ class Ob(int):
 
 
 class Term(tuple):
+    __slots__ = ()
     _make_cache = {}
 
     @staticmethod

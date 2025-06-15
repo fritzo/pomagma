@@ -73,7 +73,6 @@ ignore = [
   "SIM108",
   "SIM300",
   "SIM117",
-  "SLOT001",
 ]
 select = [
     # "ANN",
