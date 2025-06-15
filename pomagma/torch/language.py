@@ -377,6 +377,23 @@ class Language(torch.nn.Module):
             ),
         )
 
+    def clone(self) -> "Language":
+        """
+        Returns a deep copy of the language with the same structure and weights.
+        """
+        return Language(
+            nullary_functions=self.nullary_functions.clone().detach(),
+            injective_functions=Map(
+                {k: v.clone().detach() for k, v in self.injective_functions.items()}
+            ),
+            binary_functions=Map(
+                {k: v.clone().detach() for k, v in self.binary_functions.items()}
+            ),
+            symmetric_functions=Map(
+                {k: v.clone().detach() for k, v in self.symmetric_functions.items()}
+            ),
+        )
+
     @torch.no_grad()
     def iadd_corpus(self, corpus_stats: CorpusStats, weight: float = 1.0) -> None:
         """

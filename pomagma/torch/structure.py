@@ -194,7 +194,7 @@ class BinaryFunction:
         )
 
 
-@dataclass(frozen=True, slots=True, eq=False)
+@dataclass(frozen=True, slots=True, weakref_slot=True, eq=False)
 class Structure:
     """
     PyTorch representation of an algebraic structure. Immutable.

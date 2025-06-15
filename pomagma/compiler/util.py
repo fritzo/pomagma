@@ -6,6 +6,7 @@ import itertools
 import os
 import sys
 from math import exp, log
+from weakref import WeakKeyDictionary
 
 import pomagma.util
 
@@ -279,3 +280,35 @@ def memoize_modulo_renaming_constants(fun):
 def memoize_make(cls):
     cls.make = staticmethod(memoize_args(cls))
     return cls
+
+
+def weak_memoize_1(fun):
+    """Weakly memoize a function of one argument. Kwargs are not memoized."""
+    cache = WeakKeyDictionary()
+
+    @functools.wraps(fun)
+    def memoized(arg, **kwargs):
+        if (result := cache.get(arg, None)) is not None:
+            return result
+        result = fun(arg, **kwargs)
+        cache[arg] = result
+        return result
+
+    return memoized
+
+
+def weak_memoize_2(fun):
+    """Weakly memoize a function of one argument. Kwargs are not memoized."""
+    caches = WeakKeyDictionary()
+
+    @functools.wraps(fun)
+    def memoized(arg1, arg2, **kwargs):
+        if (cache := caches.get(arg1, None)) is None:
+            cache = caches[arg1] = WeakKeyDictionary()
+        if (result := cache.get(arg2, None)) is not None:
+            return result
+        result = fun(arg1, arg2, **kwargs)
+        cache[arg2] = result
+        return result
+
+    return memoized

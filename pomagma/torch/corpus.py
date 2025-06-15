@@ -1,13 +1,13 @@
 import logging
 from collections import Counter
 from dataclasses import dataclass
-from weakref import WeakKeyDictionary
 
 import torch
 from immutables import Map
 
 from pomagma.compiler.expressions import Expression
 from pomagma.compiler.parser import parse_string_to_expr
+from pomagma.compiler.util import weak_memoize_1, weak_memoize_2
 from pomagma.util.hashcons import HashConsMeta
 
 from .structure import Ob, Structure
@@ -30,9 +30,6 @@ class CorpusStats:
         return CorpusStats(obs=Map(obs), symbols=Map(symbols))
 
 
-_STATS: WeakKeyDictionary["ObTree", CorpusStats] = WeakKeyDictionary()
-
-
 @dataclass(frozen=True, slots=True, weakref_slot=True)
 class ObTree(metaclass=HashConsMeta):
     """A partially understood expression, whose leaves are Obs i.e. E-classes."""
@@ -42,6 +39,7 @@ class ObTree(metaclass=HashConsMeta):
     args: tuple["ObTree", ...] | None = None
 
     @staticmethod
+    @weak_memoize_2
     def from_expr(
         structure: Structure,
         expr: Expression,
@@ -99,14 +97,9 @@ class ObTree(metaclass=HashConsMeta):
         return " ".join(parts)
 
     @property
+    @weak_memoize_1
     def stats(self) -> CorpusStats:
         """Count occurrences of symbols and E-classes in this expression dag."""
-        # Check cache
-        stats = _STATS.get(self, None)
-        if stats is not None:
-            return stats
-
-        # Count
         obs: Counter[Ob] = Counter()
         symbols: Counter[str] = Counter()
         if self.ob:
@@ -119,11 +112,7 @@ class ObTree(metaclass=HashConsMeta):
                 stats = arg.stats
                 obs.update(stats.obs)
                 symbols.update(stats.symbols)
-
-        # Store in cache
-        stats = CorpusStats(obs=Map(obs), symbols=Map(symbols))
-        _STATS[self] = stats
-        return stats
+        return CorpusStats(obs=Map(obs), symbols=Map(symbols))
 
     def materialize(self, structure: Structure) -> torch.Tensor:
         """Convert ObTree stats to dense tensor for compute_occurrences."""

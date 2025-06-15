@@ -29,6 +29,7 @@ dependencies = [
     "pyzmq",
     "ruff",
     "torch",
+    "tqdm",
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
