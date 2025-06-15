@@ -14,7 +14,7 @@ namespace pomagma {
 static const size_t HEXDIGEST_SIZE = 40;
 
 // Global blob directory - set by init_blob_dir()
-std::string g_blob_dir;
+std::string g_blob_dir = getenv("POMAGMA_BLOB_DIR") ?: "";
 
 void init_blob_dir(const std::string& blob_dir) { g_blob_dir = blob_dir; }
 
