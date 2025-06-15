@@ -23,10 +23,8 @@ from pomagma.compiler.sugar import desugar_expr, desugar_theory
 from pomagma.compiler.util import find_theories
 
 # Set multiprocessing start method for Python 3 compatibility
-try:
+with contextlib.suppress(RuntimeError):
     multiprocessing.set_start_method("fork")
-except RuntimeError:
-    pass  # Already set
 
 SRC = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ROOT = os.path.dirname(SRC)

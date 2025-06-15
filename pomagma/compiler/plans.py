@@ -115,7 +115,7 @@ class Iter(Plan):
     def optimize(self):
         node = self.body
         new_lets = set()
-        while isinstance(node, Test) or isinstance(node, Let):
+        while isinstance(node, (Test, Let)):
             if isinstance(node, Let):
                 new_lets.add(node.var)
             expr = node.expr

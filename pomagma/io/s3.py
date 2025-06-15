@@ -6,6 +6,7 @@ https://github.com/boto/boto/blob/develop/boto/s3
 
 """
 
+import contextlib
 import functools
 import hashlib
 import multiprocessing
@@ -139,10 +140,8 @@ def s3_remove(filename):
         print("WARNING: S3 not available, skipping removal of", filename)
         return
 
-    try:
+    with contextlib.suppress(ClientError):
         BUCKET.delete_object(Bucket=BUCKET_NAME, Key=filename)
-    except ClientError:
-        pass  # Object may not exist
 
 
 def s3_exists(filename):

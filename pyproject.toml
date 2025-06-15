@@ -69,8 +69,10 @@ ignore = [
   "RUF012",
   "RUF023",
   "SIM102",
+  "SIM103",
   "SIM108",
   "SIM300",
+  "SIM117"
 ]
 select = [
     # "ANN",
@@ -95,6 +97,7 @@ select = [
     "RET",
     "RSE",
     "RUF",
+    "SIM",  # simplify
     "W",  # pycodestyle warnings
 ]
 

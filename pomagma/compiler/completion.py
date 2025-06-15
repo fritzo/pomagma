@@ -1,3 +1,5 @@
+import contextlib
+
 from pomagma.compiler.expressions import (
     Expression,
     Expression_0,
@@ -129,10 +131,8 @@ basic_facts = complete(basic_facts)
 def all_consistent(completed):
     negated = set()
     for p in completed:
-        try:
+        with contextlib.suppress(NotNegatable):
             negated.update(try_get_negated(p))
-        except NotNegatable:
-            pass
     return negated.isdisjoint(completed)
 
 

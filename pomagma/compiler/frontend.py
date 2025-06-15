@@ -1,3 +1,5 @@
+import contextlib
+
 from pomagma.compiler import compiler, signature
 from pomagma.compiler.expressions import Expression, NotNegatable, try_negate_name
 from pomagma.compiler.plans import add_costs
@@ -420,10 +422,8 @@ def get_symbols_used_in(sequents, exprs):
         tokens |= set(expr.polish.split())
     for token in list(tokens):
         if signature.get_arity(token) in signature.RELATION_ARITIES:
-            try:
+            with contextlib.suppress(NotNegatable):
                 tokens.add(try_negate_name(token))
-            except NotNegatable:
-                pass
     valid_arities = signature.FUNCTION_ARITIES | signature.RELATION_ARITIES
     for c in tokens:
         arity = signature.get_arity(c)

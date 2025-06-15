@@ -468,7 +468,7 @@ def load_structure_cpp(filename: str, *, relations: bool = False) -> Structure:
         """Parse binary or symmetric functions from tensors."""
         func_keys = {
             parts[1]
-            for key in tensors.keys()
+            for key in tensors
             if key.startswith(prefix)
             if len(parts := key.split(".")) >= 3
         }
