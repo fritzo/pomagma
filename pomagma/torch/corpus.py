@@ -75,7 +75,7 @@ class ObTree(metaclass=HashConsMeta):
                     return ObTree(name=name, args=args)
         if strict:
             raise ValueError(f"Unknown symbol: {name}")
-        logger.warning(f"Unknown symbol: {name}")
+        logger.warning("Unknown symbol: %s", name)
         return ObTree(name=name, args=args)
 
     @staticmethod

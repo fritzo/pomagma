@@ -61,9 +61,10 @@ target-version = "py311"
 # Enable additional rules as needed
 select = [
     "E",  # pycodestyle errors
-    "W",  # pycodestyle warnings
+    "G",  # logging format
     "F",  # pyflakes
     "I",  # isort (import sorting)
+    "W",  # pycodestyle warnings
 ]
 
 # Ignore E741 (ambiguous variable name) since we use mathematical notation

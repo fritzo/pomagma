@@ -580,7 +580,7 @@ class Language(torch.nn.Module):
 
         # Track metrics
         losses: list[float] = []
-        logger.info(f"Fitting to corpus of size {corpus_size}")
+        logger.info("Fitting to corpus of size %s", corpus_size)
 
         # Setup optimizer
         optimizer = torch.optim.LBFGS(
@@ -616,6 +616,6 @@ class Language(torch.nn.Module):
             self.project_to_feasible_()
             losses.append(loss.item())
             if step % 10 == 0 or step == max_steps - 1:
-                logger.info(f"Step {step}: loss={loss.item():.6f}")
+                logger.info("Step %s: loss=%.6f", step, loss.item())
 
         return losses

@@ -182,7 +182,9 @@ def test_binary_function_distribute_product(item_count: int) -> None:
     has_contributions = (child_contributions > 0).sum().item()
     if has_contributions > 0:
         logger.info(
-            f"Parent {test_parent} distributed weight to {has_contributions} children"
+            "Parent %s distributed weight to %s children",
+            test_parent,
+            has_contributions,
         )
         # The total contribution should be proportional to the parent count
         # (exact amount depends on the number of ways to form the parent)
@@ -196,7 +198,7 @@ def test_binary_function_lookup(structure: Structure) -> None:
         (True, structure.symmetric_functions),
     ]:
         for name, f in functions.items():
-            logger.info(f"Testing {name} lookup")
+            logger.info("Testing %s lookup", name)
             for i in range(1000):
                 val = Ob(random.randint(1, structure.item_count))
                 if f.Vlr.ptrs[val] < f.Vlr.ptrs[val + 1]:

@@ -109,7 +109,7 @@ class Extractor:
         extracted_count = sum(
             1 for ob, e in expressions.items() if e is not None and ob != Ob(0)
         )
-        logger.info(f"Extracted {extracted_count}/{self.structure.item_count} obs")
+        logger.info("Extracted %s/%s obs", extracted_count, self.structure.item_count)
         expected_count = (best[1:] > 0).long().sum().item()
         assert extracted_count == expected_count
 

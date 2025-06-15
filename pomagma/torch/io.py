@@ -390,7 +390,7 @@ def load_structure_py(filename: str, *, relations: bool = False) -> Structure:
     constants = " ".join(
         sorted(proto_func.name for proto_func in proto_structure.nullary_functions)
     )
-    logger.debug(f"Loading constants: {constants}")
+    logger.debug("Loading constants: %s", constants)
     for proto_func in proto_structure.nullary_functions:
         nullary_functions[proto_func.name] = proto_func.val
 
@@ -398,22 +398,22 @@ def load_structure_py(filename: str, *, relations: bool = False) -> Structure:
         raise NotImplementedError("Injective functions are not supported yet.")
 
     for proto_func in proto_structure.binary_functions:
-        logger.debug(f"Loading binary function: {proto_func.name}")
+        logger.debug("Loading binary function: %s", proto_func.name)
         binary_functions[proto_func.name] = load_binary_function(proto_func, item_count)
 
     for proto_func in proto_structure.symmetric_functions:
-        logger.debug(f"Loading symmetric function: {proto_func.name}")
+        logger.debug("Loading symmetric function: %s", proto_func.name)
         symmetric_functions[proto_func.name] = load_symmetric_function(
             proto_func, item_count
         )
 
     if relations:
         for proto_rel in proto_structure.unary_relations:
-            logger.debug(f"Loading unary relation: {proto_rel.name}")
+            logger.debug("Loading unary relation: %s", proto_rel.name)
             unary_relations[proto_rel.name] = load_unary_relation(proto_rel, item_count)
 
         for proto_rel in proto_structure.binary_relations:
-            logger.debug(f"Loading binary relation: {proto_rel.name}")
+            logger.debug("Loading binary relation: %s", proto_rel.name)
             binary_relations[proto_rel.name] = load_binary_relation(
                 proto_rel, item_count
             )
@@ -511,11 +511,11 @@ def load_structure_cpp(filename: str, *, relations: bool = False) -> Structure:
     if relations:
         # Fall back to Python proto loading for relations
         for proto_rel in proto_structure.unary_relations:
-            logger.debug(f"Loading unary relation: {proto_rel.name}")
+            logger.debug("Loading unary relation: %s", proto_rel.name)
             unary_relations[proto_rel.name] = load_unary_relation(proto_rel, item_count)
 
         for proto_rel in proto_structure.binary_relations:
-            logger.debug(f"Loading binary relation: {proto_rel.name}")
+            logger.debug("Loading binary relation: %s", proto_rel.name)
             binary_relations[proto_rel.name] = load_binary_relation(
                 proto_rel, item_count
             )

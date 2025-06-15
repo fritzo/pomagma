@@ -141,10 +141,10 @@ def _logged(*format_args, **format_kwargs):
             for key, val in list(kwargs.items()):
                 val = formatters.get(key, repr)(val)
                 akwargs.append("{}={}".format(key, val))
-            LOG.debug(r"{}({})".format(fun.__name__, ", ".join(akwargs)))
+            LOG.debug(r"%s(%s)", fun.__name__, ", ".join(akwargs))
             result = fun(*args, **kwargs)
             returns = formatters.get("returns", repr)(result)
-            LOG.debug(" return {}".format(returns))
+            LOG.debug(" return %s", returns)
             return result
 
         return decorated
