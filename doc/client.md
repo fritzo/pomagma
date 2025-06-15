@@ -4,7 +4,7 @@ Pomagma currently has a client library in [python](#python).
 The python API includes internal database testing methods
 that are not documented here.
 
-See [analyst/test.py](/src/analyst/test.py) for example python usage.<br/>
+See [analyst/test.py](/pomagma/analyst/test.py) for example python usage.<br/>
 
 ### Python client <a name=python></a>
 

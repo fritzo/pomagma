@@ -95,7 +95,7 @@ def clone(commit="HEAD"):
 @parsable
 def codegen(commit="HEAD", difftool=DIFFTOOL):
     """
-    Diff generated code src/theory/*.symbols, *.programs, *.facts, *.tasks
+    Diff generated code pomagma/theory/*.symbols, *.programs, *.facts, *.tasks
     Supported difftools: diff, meld, cdiff, vim, gvim, mvim
     """
     clone(commit=commit)
@@ -106,8 +106,8 @@ def codegen(commit="HEAD", difftool=DIFFTOOL):
     subprocess.check_call(
         get_difftool(
             difftool,
-            os.path.join(REPO, "src", "theory"),
-            os.path.join(TEMP, "src", "theory"),
+            os.path.join(REPO, "pomagma", "theory"),
+            os.path.join(TEMP, "pomagma", "theory"),
             diffignore=[
                 # '*.tasks',
                 "*.rules",
@@ -121,7 +121,7 @@ def codegen(commit="HEAD", difftool=DIFFTOOL):
 @parsable
 def codegen_summary(commit="HEAD", difftool=DIFFTOOL):
     """
-    Diff generated code sommary in src/theory/*.tasks.
+    Diff generated code sommary in pomagma/theory/*.tasks.
     Supported difftools: diff, meld, cdiff, vim, gvim, mvim
     """
     clone(commit=commit)
@@ -131,8 +131,8 @@ def codegen_summary(commit="HEAD", difftool=DIFFTOOL):
     subprocess.check_call(
         get_difftool(
             difftool,
-            os.path.join(REPO, "src", "theory"),
-            os.path.join(TEMP, "src", "theory"),
+            os.path.join(REPO, "pomagma", "theory"),
+            os.path.join(TEMP, "pomagma", "theory"),
             diffignore=[
                 "*.symbols",
                 "*.programs",

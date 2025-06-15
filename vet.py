@@ -11,10 +11,10 @@ from parsable import parsable
 REPO = os.path.dirname(os.path.abspath(__file__))
 VETTED = os.path.join(REPO, "vetted_hashes.csv")
 FILES_TO_VET = [
-    "src/theory/*.facts",
-    "src/theory/*.programs",
-    "src/theory/*.symbols",
-    "src/theory/*.tasks",
+    "pomagma/theory/*.facts",
+    "pomagma/theory/*.programs",
+    "pomagma/theory/*.symbols",
+    "pomagma/theory/*.tasks",
 ]
 
 

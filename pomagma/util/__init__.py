@@ -29,7 +29,7 @@ if debug:
     BUILD = os.path.join(ROOT, "build", "debug")
 else:
     BUILD = os.path.join(ROOT, "build", "release")
-BIN = os.path.join(BUILD, "src")
+BIN = os.path.join(BUILD, "pomagma")
 NOTIFY_EMAIL = os.environ.get("POMAGMA_NOTIFY_EMAIL")
 CLEANUP_ON_ERROR = int(os.environ.get("CLEANUP_ON_ERROR", 1))
 COVERITY = os.path.join(ROOT, "cov-int")

@@ -359,10 +359,10 @@ def compile(*infiles, **kwargs):
     """
     Compile rules -> programs for the virtual machine.
     Optional keyword arguments:
-        symbols_out=$POMAGMA_ROOT/src/theory/<STEM>.symbols
-        facts_out=$POMAGMA_ROOT/src/theory/<STEM>.facts
-        programs_out=$POMAGMA_ROOT/src/theory/<STEM>.programs
-        optimized_out=$POMAGMA_ROOT/src/theory/<STEM>.optimized.programs
+        symbols_out=$POMAGMA_ROOT/pomagma/theory/<STEM>.symbols
+        facts_out=$POMAGMA_ROOT/pomagma/theory/<STEM>.facts
+        programs_out=$POMAGMA_ROOT/pomagma/theory/<STEM>.programs
+        optimized_out=$POMAGMA_ROOT/pomagma/theory/<STEM>.optimized.programs
         extensional=true
     """
     stem = infiles[-1].split(".")[0]

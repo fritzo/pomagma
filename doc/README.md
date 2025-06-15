@@ -42,31 +42,31 @@
 
 - [/doc](/doc) - developer documentation
 - [/data](/data) - generated data, mirroring an S3 bucket
-- [/src](/src) - source code (C++, python, DSLs)
-  - [/src/theory](/src/theory) -
+- [/pomagma](/pomagma) - source code (C++, python, DSLs)
+  - [/pomagma/theory](/pomagma/theory) -
     theories of ordered combinatory algebras
-  - [/src/theorist](/src/theorist) - machine learning for conjecturing theories
-  - [/src/language](/src/language) -
+  - [/pomagma/theorist](/pomagma/theorist) - machine learning for conjecturing theories
+  - [/pomagma/language](/pomagma/language) -
     probabilistic grammars representing Solomonoff priors
-  - [/src/linguist](/src/linguist) - machine learning for tuning languages
-  - [/src/analyst](/src/analyst) -
+  - [/pomagma/linguist](/pomagma/linguist) - machine learning for tuning languages
+  - [/pomagma/analyst](/pomagma/analyst) -
     combinatory database server and client
-  - [/src/examples](/src/examples) - example applications using the analyst
-  - [/src/surveyor](/src/surveyor) -
+  - [/pomagma/examples](/pomagma/examples) - example applications using the analyst
+  - [/pomagma/surveyor](/pomagma/surveyor) -
     the main forward-chaining engine for building databases
-  - [/src/cartographer](/src/cartographer) - a scalable weaker inference engine
-  - [/src/atlas](/src/atlas) -
+  - [/pomagma/cartographer](/pomagma/cartographer) - a scalable weaker inference engine
+  - [/pomagma/atlas](/pomagma/atlas) -
     data structures for in-memory combinatory databases
-  - [/src/io](/src/io) -
+  - [/pomagma/io](/pomagma/io) -
     serialization utilities for persisting combinatory databases
-  - [/src/compiler](/src/compiler) -
+  - [/pomagma/compiler](/pomagma/compiler) -
     compiler for forward chaining inference strategies
-  - [/src/reducer](/src/reducer) -
+  - [/pomagma/reducer](/pomagma/reducer) -
     interpreters for &lambda;-calculus with lots of unit tests
-  - [/src/corpus](/src/corpus) -
+  - [/pomagma/corpus](/pomagma/corpus) -
     literate code expressed in combinatory algebra
-  - [/src/torch](/src/torch) - PyTorch front end
-  - [/src/util](/src/util) - core utilities
+  - [/pomagma/torch](/pomagma/torch) - PyTorch front end
+  - [/pomagma/util](/pomagma/util) - core utilities
 - [/bootstrap](/bootstrap) - a small git-cached atlas for testing
 - [/build](/build) - destination of C++ builds
 - [/pomagma](/pomagma) - a symbolic link to appease `pip install -e`
@@ -137,11 +137,11 @@ define the environment variable
 ## Vetting Changes
 
 Pomagma includes a vetting system to manage changes in generated code.
-To commit changes to [pomagma.compiler](/src/compiler)
-or [src/theory/*.theory](/src/theory), you first need to vet the changes using
+To commit changes to [pomagma.compiler](/pomagma/compiler)
+or [pomagma/theory/*.theory](/pomagma/theory), you first need to vet the changes using
 [vet.py](/vet.py) which updates [vetted_hashes.csv](/vetted_hashes.csv).
 
-    vi src/theory/types.theory      # ...make some changes...
+    vi pomagma/theory/types.theory  # ...make some changes...
     make codegen                    # rebuilds generated code
     ./vet.py check                  # checks whether anything changed
     ./diff.py codegen               # ...review changes to generated code...

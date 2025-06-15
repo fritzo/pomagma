@@ -71,7 +71,7 @@ def define_a(
     """
     Search for definition of A = Join {<r, s> | r o s [= I}.
     Tip: use pyprofile and snakeviz to profile this function:
-    $ pyprofile -o define_a.pstats -s time src/examples/synthesize.py define_a
+    $ pyprofile -o define_a.pstats -s time pomagma/examples/synthesize.py define_a
     $ snakeviz define_a.pstats
     """
     assert max_solutions > 0, max_solutions
@@ -124,7 +124,7 @@ def define_a_pair(
     """
     Search for definition of A = Join {<r, s> | r o s [= I}.
     Tip: use pyprofile and snakeviz to profile this function:
-    $ pyprofile -o define_a.pstats -s time src/examples/synthesize.py define_a
+    $ pyprofile -o define_a.pstats -s time pomagma/examples/synthesize.py define_a
     $ snakeviz define_a.pstats
     """
     assert max_solutions > 0, max_solutions
