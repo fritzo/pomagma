@@ -6,7 +6,7 @@ from pomagma.util import TODO
 HOLE = Expression.make("HOLE")
 
 
-class Corpus(object):
+class Corpus:
     """
     Corpus is a general-recursive set of definitions with holes.
     """
@@ -20,11 +20,11 @@ class Corpus(object):
 
     def dump(self, filename):
         with open(filename, "w") as f:
-            f.write("# Corpus written by {}".format(__file__))
+            f.write(f"# Corpus written by {__file__}")
             for var, expr in sorted(self._defs.items()):
                 assert isinstance(var, str), var
                 assert isinstance(expr, Expression), expr
-                f.write("\nEQUAL {} {}".format(var, expr))
+                f.write(f"\nEQUAL {var} {expr}")
 
     def __getitem__(self, var):
         assert isinstance(var, Expression), var

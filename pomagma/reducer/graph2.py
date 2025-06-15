@@ -32,7 +32,7 @@ def make_equation(lhs, rhs):
     return (lhs, rhs) if lhs <= rhs else (rhs, lhs)
 
 
-class Node(object):
+class Node:
     """Mutable node in a term graph."""
 
     __slots__ = ["typ", "args"]

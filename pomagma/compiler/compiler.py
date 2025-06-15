@@ -33,7 +33,7 @@ def stack_depth():
     return depth - MIN_STACK_DEPTH
 
 
-class DotPrinter(object):
+class DotPrinter:
     def __init__(self, out=sys.stdout):
         self.out = out
         self.count = 0
@@ -78,7 +78,7 @@ def compile_full(seq):
         context = frozenset()
         bound = frozenset()
         results.append(optimize_given(derived_seq, context, bound))
-    assert results, "failed to compile {0}".format(seq)
+    assert results, f"failed to compile {seq}"
     logger("derived {} rules from {}", len(results), seq)
     return results
 
@@ -142,7 +142,7 @@ def compile_given(seq, atom):
     context = frozenset([atom])
     bound = frozenset(get_bound(atom))
     normals = sorted(normalize_given(seq, atom, bound))
-    assert normals, "failed to compile {0} given {1}".format(seq, atom)
+    assert normals, f"failed to compile {seq} given {atom}"
     logger("derived {} rules from {} | {}", len(normals), atom, seq)
     return [optimize_given(n, context, bound) for n in normals]
 

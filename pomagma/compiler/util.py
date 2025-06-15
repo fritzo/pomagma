@@ -220,9 +220,7 @@ def profile_memoized():
     sys.stderr.write("-" * 32 + "\n")
     for size, fun in sizes:
         if size > 0:
-            sys.stderr.write(
-                "{: >10} {}.{}\n".format(size, fun.__module__, fun.__name__)
-            )
+            sys.stderr.write(f"{size: >10} {fun.__module__}.{fun.__name__}\n")
 
 
 if int(os.environ.get("POMAGMA_PROFILE_MEMOIZED", 0)):
@@ -243,9 +241,9 @@ def permute_symbols(perm, thing):
         return thing.permute_symbols(perm)
     if hasattr(thing, "__iter__"):
         return thing.__class__(permute_symbols(perm, i) for i in thing)
-    if isinstance(thing, (int, float)):
+    if isinstance(thing, int | float):
         return thing
-    raise ValueError("cannot permute_symbols of {}".format(thing))
+    raise ValueError(f"cannot permute_symbols of {thing}")
 
 
 def memoize_modulo_renaming_constants(fun):

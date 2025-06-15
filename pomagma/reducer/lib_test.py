@@ -12,7 +12,7 @@ from pomagma.util.testing import for_each, xfail_param
 pretty = sexpr_print
 
 
-class lazy_actual_vs_expected(object):
+class lazy_actual_vs_expected:
     def __init__(self, actual, expected):
         self.actual = actual
         self.expected = expected
@@ -20,7 +20,7 @@ class lazy_actual_vs_expected(object):
     def __str__(self):
         actual = pretty(self.actual)
         expected = pretty(self.expected)
-        return "\nActual: {}\nExpected: {}".format(actual, expected)
+        return f"\nActual: {actual}\nExpected: {expected}"
 
     __repr__ = __str__
 
@@ -1696,7 +1696,7 @@ def test_less_antisymmetric(x, y):
     less_xy = simplify(lib.less(x, y))
     less_yx = simplify(lib.less(y, x))
     equal_xy = simplify(lib.equal(x, y))
-    print("LESS: {}, NLESS: {}, EQUAL: {}".format(less_xy, less_yx, equal_xy))
+    print(f"LESS: {less_xy}, NLESS: {less_yx}, EQUAL: {equal_xy}")
     if less_xy is true and less_yx is true:
         assert equal_xy is true
     if equal_xy is false:

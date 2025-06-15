@@ -7,7 +7,7 @@ from pomagma.cartographer.client import Client
 BINARY = os.path.join(pomagma.util.BIN, "cartographer", "cartographer")
 
 
-class Server(object):
+class Server:
     def __init__(self, theory, world, address=None, **opts):
         if address is None:
             address = "ipc://{}".format(
@@ -15,10 +15,8 @@ class Server(object):
                     os.path.dirname(pomagma.util.abspath(world)), "cartographer.socket"
                 )
             )
-        theory_file = os.path.join(pomagma.util.THEORY, "{}.facts".format(theory))
-        language_file = os.path.join(
-            pomagma.util.LANGUAGE, "{}.language".format(theory)
-        )
+        theory_file = os.path.join(pomagma.util.THEORY, f"{theory}.facts")
+        language_file = os.path.join(pomagma.util.LANGUAGE, f"{theory}.language")
         args = [
             BINARY,
             pomagma.util.abspath(world),

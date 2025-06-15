@@ -1,6 +1,6 @@
 import logging
 import math
-from typing import Mapping, Sequence
+from collections.abc import Mapping, Sequence
 
 import torch
 from immutables import Map

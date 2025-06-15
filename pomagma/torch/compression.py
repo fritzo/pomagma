@@ -1,7 +1,7 @@
 import functools
 import logging
 from collections import Counter
-from typing import Callable
+from collections.abc import Callable
 
 import torch
 

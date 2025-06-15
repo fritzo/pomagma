@@ -55,10 +55,10 @@ theories = {
 def print_solutions(solutions):
     print("Necessary:")
     for term in solutions["necessary"]:
-        print("  {}".format(term))
+        print(f"  {term}")
     print("Possible:")
     for term in solutions["possible"]:
-        print("  {}".format(term))
+        print(f"  {term}")
 
 
 @parsable
@@ -105,8 +105,8 @@ def rs_pairs(max_solutions=32, address=pomagma.analyst.ADDRESS):
         pairs = [(rs, True) for rs in solutions["necessary"]] + [
             (rs, False) for rs in solutions["possible"]
         ]
-        retracts = db.simplify(["APP {} K".format(rs) for rs, _ in pairs])
-        sections = db.simplify(["APP {} F".format(rs) for rs, _ in pairs])
+        retracts = db.simplify([f"APP {rs} K" for rs, _ in pairs])
+        sections = db.simplify([f"APP {rs} F" for rs, _ in pairs])
     parts = list(zip(pairs, retracts, sections))
     solutions = {
         "necessary": [(rs, r, s) for (rs, n), r, s in parts if n],

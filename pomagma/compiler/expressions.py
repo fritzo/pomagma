@@ -10,7 +10,7 @@ re_space = re.compile("[ _]+")
 
 
 @memoize_make
-class Expression(object):
+class Expression:
     __slots__ = [
         "_name",
         "_args",

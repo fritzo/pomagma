@@ -30,8 +30,8 @@ outfile = None
 
 def print_compiles(compiles):
     for cost, seq, plan in compiles:
-        print("# cost = {0}".format(cost))
-        print("# infer {0}".format(seq))
+        print(f"# cost = {cost}")
+        print(f"# infer {seq}")
         print(re.sub(": ", "\n", repr(plan)))
         print()
 
@@ -39,14 +39,14 @@ def print_compiles(compiles):
 def _test_sequent(antecedents, conclusion):
     sequent = Sequent(antecedents, conclusion)
     print("-" * 78)
-    print("Compiling full search: {0}".format(sequent))
+    print(f"Compiling full search: {sequent}")
     compiles = compile_full(sequent)
     print_compiles(compiles)
     full_cost = add_costs(c for (c, _, _) in compiles)
 
     incremental_cost = None
     for event in get_events(sequent):
-        print("Compiling incremental search given: {0}".format(event))
+        print(f"Compiling incremental search given: {event}")
         compiles = compile_given(sequent, event)
         print_compiles(compiles)
         if event.args:

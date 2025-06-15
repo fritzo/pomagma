@@ -1,7 +1,7 @@
 import functools
 import logging
 import random
-from typing import Mapping
+from collections.abc import Mapping
 
 import pytest
 import torch

@@ -50,7 +50,7 @@ EXAMPLES = [
 
 @for_each(EXAMPLES)
 def test_write_read(expected):
-    print("Testing read(write({}))".format(expected))
+    print(f"Testing read(write({expected}))")
     actual = protobuf_test_pb2.TestMessage()
     with in_temp_dir():
         filename = "test.pb"

@@ -1,6 +1,7 @@
 import os
+from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Literal, Mapping, NewType
+from typing import Literal, NewType
 
 import torch
 

@@ -1,5 +1,6 @@
 import logging
-from typing import Iterable, Literal, TypeVar
+from collections.abc import Iterable
+from typing import Literal, TypeVar
 
 import numpy as np
 import torch

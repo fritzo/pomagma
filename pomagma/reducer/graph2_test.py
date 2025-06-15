@@ -31,7 +31,7 @@ def test_neq(x, y):
 )
 def test_substitute(old, new, node, expected):
     actual = substitute(old, new, node)
-    assert actual == expected, "{} vs {}".format(actual, expected)
+    assert actual == expected, f"{actual} vs {expected}"
 
 
 @for_each(
@@ -57,4 +57,4 @@ def test_substitute(old, new, node, expected):
 def test_try_beta_step(node, expected_node, expected_whether):
     actual_node = node.copy()
     assert try_beta_step(actual_node) is expected_whether
-    assert actual_node == expected_node, "{} vs {}".format(actual_node, expected_node)
+    assert actual_node == expected_node, f"{actual_node} vs {expected_node}"

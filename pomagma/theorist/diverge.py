@@ -57,7 +57,7 @@ class Unknown(Exception):
 
 def converge_step(term):
     head = term[0]
-    assert isinstance(head, str), "bad head: {}".format(head)
+    assert isinstance(head, str), f"bad head: {head}"
     argv = term[1:]
     argc = len(argv)
     if head == TOP:
@@ -217,7 +217,7 @@ def converge_step(term):
         raise Unknown
     if head in UNKNOWNS:
         raise Unknown
-    print("WARNING unrecognized atom: {}".format(head))
+    print(f"WARNING unrecognized atom: {head}")
     raise Unknown
 
 
@@ -361,7 +361,7 @@ def try_prove_diverge(
             print(message)
 
     lines = list(stripped_lines(conjectures_in))
-    log_print("Trying to prove {} conjectures".format(len(lines)))
+    log_print(f"Trying to prove {len(lines)} conjectures")
 
     conjecture_count = 0
     diverge_count = 0
@@ -372,7 +372,7 @@ def try_prove_diverge(
 
             def write_theorem(theorem):
                 if log_level >= pomagma.util.LOG_LEVEL_DEBUG:
-                    log_print("proved {}".format(theorem))
+                    log_print(f"proved {theorem}")
                 if diverge_count + converge_count == 0:
                     theorems.write("# divergence theorems proved by pomagma\n")
                 theorems.write(theorem)
@@ -388,17 +388,17 @@ def try_prove_diverge(
                     conjectures.write("\n")
                     conjecture_count += 1
                 except Diverged:
-                    theorem = "EQUAL BOT {}".format(term_string)
+                    theorem = f"EQUAL BOT {term_string}"
                     write_theorem(theorem)
                     diverge_count += 1
                 except Converged:
-                    theorem = "NLESS {} BOT".format(term_string)
+                    theorem = f"NLESS {term_string} BOT"
                     write_theorem(theorem)
                     converge_count += 1
     if log_level >= pomagma.util.LOG_LEVEL_INFO:
-        log_print("Proved {} diverge theorems".format(diverge_count))
-        log_print("Proved {} converge theorems".format(converge_count))
-        log_print("Failed to prove {} conjectures".format(conjecture_count))
+        log_print(f"Proved {diverge_count} diverge theorems")
+        log_print(f"Proved {converge_count} converge theorems")
+        log_print(f"Failed to prove {conjecture_count} conjectures")
     return diverge_count + converge_count
 
 

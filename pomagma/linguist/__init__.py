@@ -29,16 +29,16 @@ def fit_language(theory, address=pomagma.analyst.ADDRESS, log_file=None, log_lev
     old_terms = sorted(key for group in list(language.values()) for key in group)
     assert new_terms == old_terms, "\n  ".join(
         [
-            "language mismatch,expected: {}".format(old_terms),
-            "actual: {}".format(new_terms),
+            f"language mismatch,expected: {old_terms}",
+            f"actual: {new_terms}",
         ]
     )
     for group in language:
         for key in group:
             group[key] = new_weights[key]
 
-    log_print("writing {}".format(language_json), pomagma.util.LOG_LEVEL_INFO)
+    log_print(f"writing {language_json}", pomagma.util.LOG_LEVEL_INFO)
     pomagma.language.util.json_dump(language, language_json)
 
-    log_print("writing {}".format(language_proto), pomagma.util.LOG_LEVEL_INFO)
+    log_print(f"writing {language_proto}", pomagma.util.LOG_LEVEL_INFO)
     pomagma.language.util.compile(language_json, language_proto)

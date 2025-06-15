@@ -45,9 +45,9 @@ def _substitute(var, defn, body):
 def substitute(var, defn, body):
     """Eagerly substitute a de Bruijn-closed term for a nominal variable."""
     if not is_nvar(var):
-        raise ValueError("Expected a nominal variable, got {}".format(var))
+        raise ValueError(f"Expected a nominal variable, got {var}")
     if any(map(is_ivar, free_vars(defn))):
-        raise ValueError("Definition is not closed: {}".format(defn))
+        raise ValueError(f"Definition is not closed: {defn}")
     return _substitute(var, defn, body)
 
 

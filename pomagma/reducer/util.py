@@ -29,7 +29,7 @@ def trool_fuse(args):
             if result is None:
                 result = arg
             elif result is not arg:
-                raise ValueError("Incompatible: {} vs {}".format(result, arg))
+                raise ValueError(f"Incompatible: {result} vs {arg}")
     return result
 
 
@@ -139,7 +139,7 @@ def _logged(*format_args, **format_kwargs):
                 akwargs.append(arg)
             for key, val in list(kwargs.items()):
                 val = formatters.get(key, repr)(val)
-                akwargs.append("{}={}".format(key, val))
+                akwargs.append(f"{key}={val}")
             LOG.debug(r"%s(%s)", fun.__name__, ", ".join(akwargs))
             result = fun(*args, **kwargs)
             returns = formatters.get("returns", repr)(result)
@@ -173,7 +173,7 @@ def profile_engine():
     sys.stderr.write("{: >10} {: >10} {}\n".format("count", "fun", "arg"))
     sys.stderr.write("-" * 32 + "\n")
     for count, fun, arg in counts:
-        sys.stderr.write("{: >10} {: >10} {}\n".format(count, fun, arg))
+        sys.stderr.write(f"{count: >10} {fun: >10} {arg}\n")
 
 
 if int(os.environ.get("POMAGMA_PROFILE_ENGINE", 0)):

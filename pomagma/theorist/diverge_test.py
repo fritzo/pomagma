@@ -390,7 +390,7 @@ def test_try_prove_diverge():
             f.write("# test terms")
             for term in iter_terms(atoms, max_atom_count):
                 f.write("\n")
-                f.write("EQUAL BOT {}".format(print_term(term)))
+                f.write(f"EQUAL BOT {print_term(term)}")
         try_prove_diverge("source.facts", "unproven.facts", "theorems.facts", max_steps)
         with open("theorems.facts") as f:
             for line in f:
@@ -404,7 +404,7 @@ def test_try_prove_diverge():
                     with pytest.raises(Converged):
                         try_converge(term, max_steps)
                 elif line:
-                    raise ValueError("Bad line:\n{}".format(line))
+                    raise ValueError(f"Bad line:\n{line}")
 
 
 def test_may_diverge():

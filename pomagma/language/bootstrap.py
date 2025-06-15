@@ -190,7 +190,7 @@ def make(theory):
             del probs[arity]
 
     with pomagma.util.chdir(os.path.dirname(os.path.abspath(__file__))):
-        util.json_dump(probs, "{}.json".format(theory))
+        util.json_dump(probs, f"{theory}.json")
         # util.compile('{}.json'.format(theory), '{}.language'.format(theory))
 
 

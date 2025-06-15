@@ -28,7 +28,7 @@ def dump_programs(programs):
     lines = []
     for i, program in enumerate(programs):
         lines.append("")
-        lines.append("# plan {}: {} bytes".format(i, sizeof_program(program)))
+        lines.append(f"# plan {i}: {sizeof_program(program)} bytes")
         lines.extend(" ".join(line) for line in program)
     return lines
 
@@ -72,7 +72,7 @@ def get_jump(jump_size):
     jump = 0
     while eval_float53(jump) < jump_size:
         jump += 1
-    assert jump < 256, "jump out of range: {}".format(jump_size)
+    assert jump < 256, f"jump out of range: {jump_size}"
     padding = eval_float53(jump) - jump_size
     return jump, padding
 

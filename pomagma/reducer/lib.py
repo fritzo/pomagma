@@ -483,7 +483,7 @@ def box(item):
 
 
 def enum(items):
-    assert isinstance(items, (list, set, frozenset)), items
+    assert isinstance(items, list | set | frozenset), items
     return join_(*list(map(box, items)))
 
 

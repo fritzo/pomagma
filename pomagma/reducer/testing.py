@@ -49,24 +49,24 @@ TESTDATA = os.path.join(DIR, "testdata")
 
 def iter_test_cases(test_id, suites=None):
     assert isinstance(test_id, str), test_id
-    print("test_id = {}".format(test_id))
+    print(f"test_id = {test_id}")
     if suites is None:
-        module = import_module("pomagma.reducer.{}".format(test_id))
+        module = import_module(f"pomagma.reducer.{test_id}")
         suites = module.SUPPORTED_TESTDATA
     for suite in suites:
-        basename = "{}.sexpr".format(suite)
+        basename = f"{suite}.sexpr"
         filename = os.path.join(TESTDATA, basename)
-        print("reading {}".format(filename))
+        print(f"reading {filename}")
         with open(filename) as f:
             for i, line in enumerate(f):
                 parts = line.split(";", 1)
                 sexpr = parts[0].strip()
                 if sexpr:
-                    message = "In {}:{}\n{}".format(basename, 1 + i, line)
+                    message = f"In {basename}:{1 + i}\n{line}"
                     try:
                         term = sexpr_parse(sexpr)
                     except ValueError as e:
-                        raise ValueError("{} {}".format(message, e))
+                        raise ValueError(f"{message} {e}")
                     comment = None if len(parts) < 2 else parts[1].strip()
                     yield term, comment, message
 
@@ -98,7 +98,7 @@ def migrate(fun):
     """Applies a term->term transform on all files in testdata/."""
     for basename in os.listdir(TESTDATA):
         assert basename.endswith(".sexpr"), basename
-        print("processing {}".format(basename))
+        print(f"processing {basename}")
         filename = os.path.join(TESTDATA, basename)
         lines = []
         with open(filename) as f:
@@ -112,16 +112,16 @@ def migrate(fun):
                     try:
                         term = fun(term)
                     except Exception:
-                        print("Error at {}:{}".format(basename, lineno + 1))
+                        print(f"Error at {basename}:{lineno + 1}")
                         print(line)
                         raise
                     sexpr = sexpr_print(term)
                 if not comment:
                     line = sexpr
                 elif not sexpr:
-                    line = ";{}".format(comment)
+                    line = f";{comment}"
                 else:
-                    line = "{}  ;{}".format(sexpr, comment)
+                    line = f"{sexpr}  ;{comment}"
                 lines.append(line)
         with open(filename, "w") as f:
             for line in lines:

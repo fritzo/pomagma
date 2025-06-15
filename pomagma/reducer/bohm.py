@@ -433,7 +433,7 @@ def app(fun, arg):
 def abstract(term):
     """Abstract one de Bruijn variable and simplify."""
     if IVAR(0) in quoted_vars(term):
-        raise ValueError("Cannot abstract quoted variable from {}".format(term))
+        raise ValueError(f"Cannot abstract quoted variable from {term}")
     if term is TOP or term is BOT:
         return term
     if is_app(term):

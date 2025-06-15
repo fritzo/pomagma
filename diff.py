@@ -8,7 +8,7 @@ from parsable import parsable
 
 REPO = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(REPO)
-TEMP = os.path.join(ROOT, "{}-temp".format(os.path.basename(REPO)))
+TEMP = os.path.join(ROOT, f"{os.path.basename(REPO)}-temp")
 DIFFTOOL = os.environ.get("POMAGMA_DIFFTOOL", os.environ.get("EDITOR", "meld"))
 
 
@@ -29,7 +29,7 @@ def get_difftool(tool, left, right, diffignore):
             "-c",
             'let g:DirDiffExcludes = "{}"'.format(",".join(diffignore)),
             "-c",
-            "DirDiff {} {}".format(left, right),
+            f"DirDiff {left} {right}",
         ]
     if tool == "gvim":
         return [
@@ -39,7 +39,7 @@ def get_difftool(tool, left, right, diffignore):
             "-c",
             'let g:DirDiffExcludes = "{}"'.format(",".join(diffignore)),
             "-c",
-            "DirDiff {} {}".format(left, right),
+            f"DirDiff {left} {right}",
         ]
     if tool == "mvim":
         return [
@@ -49,7 +49,7 @@ def get_difftool(tool, left, right, diffignore):
             "-c",
             'let g:DirDiffExcludes = "{}"'.format(",".join(diffignore)),
             "-c",
-            "DirDiff {} {}".format(left, right),
+            f"DirDiff {left} {right}",
         ]
     return [tool, left, right]
 
@@ -64,11 +64,11 @@ def parallel_check_call(*args):
 def chdir(destin):
     source = os.path.abspath(os.curdir)
     try:
-        print("# cd {}".format(destin))
+        print(f"# cd {destin}")
         os.chdir(destin)
         yield
     finally:
-        print("# cd {}".format(source))
+        print(f"# cd {source}")
         os.chdir(source)
 
 
@@ -81,11 +81,11 @@ def clone(commit="HEAD"):
         ).strip()
 
     if os.path.exists(TEMP):
-        print("using clone {}".format(TEMP))
+        print(f"using clone {TEMP}")
         with chdir(TEMP):
             subprocess.check_call(["git", "fetch", "--all"])
     else:
-        print("cloning to {}".format(TEMP))
+        print(f"cloning to {TEMP}")
         with chdir(ROOT):
             subprocess.check_call(["git", "clone", REPO, TEMP])
 

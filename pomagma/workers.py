@@ -24,12 +24,12 @@ MAX_SLEEP_SEC = 600
 PYTHON = sys.executable
 
 
-class parsable_fork(object):
+class parsable_fork:
     def __init__(self, fun, *args, **kwargs):
         self.args = [PYTHON, "-m", "pomagma.workers", fun.__name__]
         self.args += list(map(str, args))
         for key, val in list(kwargs.items()):
-            self.args.append("{}={}".format(key, val))
+            self.args.append(f"{key}={val}")
         self.proc = subprocess.Popen(self.args)
 
     def wait(self):
@@ -37,7 +37,7 @@ class parsable_fork(object):
         code = self.proc.returncode
         assert code == 0, "\n".join(
             [
-                "forked command failed with exit code {}".format(code),
+                f"forked command failed with exit code {code}",
                 " ".join(self.args),
             ]
         )
@@ -47,13 +47,13 @@ class parsable_fork(object):
             self.proc.terminate()
 
 
-class fork(object):
+class fork:
     def __init__(self, fun, *args, **kwargs):
         self.command = "{}({})".format(
             fun.__name__,
             ", ".join(
                 [str(arg) for arg in args]
-                + ["{}={}".format(key, repr(val)) for key, val in list(kwargs.items())]
+                + [f"{key}={val!r}" for key, val in list(kwargs.items())]
             ),
         )
         self.proc = multiprocessing.Process(target=fun, args=args, kwargs=kwargs)
@@ -63,7 +63,7 @@ class fork(object):
         self.proc.join()
         code = self.proc.exitcode
         assert code == 0, "\n".join(
-            ["forked command failed with exit code {}".format(code), self.command]
+            [f"forked command failed with exit code {code}", self.command]
         )
 
     def terminate(self):
@@ -71,7 +71,7 @@ class fork(object):
             self.proc.terminate()
 
 
-class Sleeper(object):
+class Sleeper:
     def __init__(self, name):
         self.name = name
         self.duration = MIN_SLEEP_SEC
@@ -80,13 +80,13 @@ class Sleeper(object):
         self.duration = MIN_SLEEP_SEC
 
     def sleep(self):
-        sys.stderr.write("# {} sleeping\n".format(self.name))
+        sys.stderr.write(f"# {self.name} sleeping\n")
         sys.stderr.flush()
         time.sleep(self.duration)
         self.duration = min(MAX_SLEEP_SEC, 2 * self.duration)
 
 
-class FileQueue(object):
+class FileQueue:
     def __init__(self, path, template="{}"):
         self.path = path
         self.template = template
@@ -123,7 +123,7 @@ class FileQueue(object):
             os.remove(item)
 
 
-class CartographerWorker(object):
+class CartographerWorker:
     def __init__(self, theory, region_size, region_queue_size, **options):
         self.options = options
         self.log_file = options["log_file"]
@@ -156,7 +156,7 @@ class CartographerWorker(object):
 
     def log(self, message):
         rss = pomagma.util.get_rss(self.server.pid)
-        message = "Cartographer {}k {}".format(rss, message)
+        message = f"Cartographer {rss}k {message}"
         pomagma.util.log_print(message, self.log_file)
 
     def is_normal(self):
@@ -204,7 +204,7 @@ class CartographerWorker(object):
         surveys = self.survey_queue.get()
         if not surveys:
             return False
-        self.log("Aggregating {} surveys".format(len(surveys)))
+        self.log(f"Aggregating {len(surveys)} surveys")
         for survey in surveys:
             self.db.aggregate(survey)
             self.db.validate()
@@ -212,7 +212,7 @@ class CartographerWorker(object):
             self.garbage_collect()
             self.infer_state = 0
             world_size = self.db.info()["item_count"]
-            self.log("world_size = {}".format(world_size))
+            self.log(f"world_size = {world_size}")
             os.remove(survey)
         self.db.crop()
         self.replace_region_queue()
@@ -263,7 +263,7 @@ class CartographerWorker(object):
                     conjectures, temp_conjectures, temp_theorems, **self.options
                 )
         if theorem_count > 0:
-            self.log("Proved {} theorems".format(theorem_count))
+            self.log(f"Proved {theorem_count} theorems")
             counts = self.db.assume(theorems)
             if counts["pos"] + counts["neg"]:
                 self.log(

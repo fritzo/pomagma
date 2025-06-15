@@ -21,7 +21,7 @@ def parse_facts(string):
     facts = list(map(desugar_expr, facts))
     for fact in facts:
         for var in fact.vars:
-            assert len(var.name) > 2, "unbound variable: {}".format(var)
+            assert len(var.name) > 2, f"unbound variable: {var}"
     return facts
 
 
@@ -161,11 +161,7 @@ def define_a_pair(
         )
     print("Possible Fillings:")
     for complexity, term, filling in results:
-        print(
-            "<{},\t{}>".format(
-                simplify_expr(APP(filling, K)), simplify_expr(APP(filling, F))
-            )
-        )
+        print(f"<{simplify_expr(APP(filling, K))},\t{simplify_expr(APP(filling, F))}>")
     return results
 
 

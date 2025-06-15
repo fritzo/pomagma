@@ -6,6 +6,4 @@ import pomagma.util
 
 THEORY = os.environ.get("THEORY", "skrj")
 SIZE = pomagma.util.MIN_SIZES[THEORY]
-WORLD = os.path.join(
-    pomagma.util.DATA, "atlas", THEORY, "region.normal.{:d}.pb".format(SIZE)
-)
+WORLD = os.path.join(pomagma.util.DATA, "atlas", THEORY, f"region.normal.{SIZE:d}.pb")

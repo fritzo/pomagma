@@ -17,7 +17,7 @@ def get_set_var(name, args):
 def Iter_program(self, program, stack=None, poll=None):
     pos_sets = []
     neg_sets = []
-    for_ = "FOR_ALL {val}".format(val=self.var)
+    for_ = f"FOR_ALL {self.var}"
 
     for test in self.tests:
         if test.name == "UNKNOWN":
@@ -27,103 +27,73 @@ def Iter_program(self, program, stack=None, poll=None):
             modifier = "POS"
         set_var = get_set_var(test.name, test.args)
         if modifier == "POS" and test.arity == "UnaryRelation":
-            for_ = "FOR_UNARY_RELATION {rel} {val}".format(rel=test.name, val=self.var)
-            pos_set = "LETS_UNARY_RELATION {rel} {var}".format(
-                rel=test.name, var=set_var
-            )
+            for_ = f"FOR_UNARY_RELATION {test.name} {self.var}"
+            pos_set = f"LETS_UNARY_RELATION {test.name} {set_var}"
             pos_sets.append((set_var, pos_set))
         elif modifier == "POS" and test.arity == "BinaryRelation":
             lhs, rhs = test.args
             assert lhs != rhs, lhs
             PARITY = "LHS" if self.var == rhs else "RHS"
-            for_ = "FOR_BINARY_RELATION_{PARITY} {rel} {lhs} {rhs}".format(
-                PARITY=PARITY, rel=test.name, lhs=lhs, rhs=rhs
-            )
-            pos_set = "LETS_BINARY_RELATION_{PARITY} {rel} {lhs} {rhs}".format(
-                PARITY=PARITY,
-                rel=test.name,
-                lhs=set_var if self.var == lhs else lhs,
-                rhs=set_var if self.var == rhs else rhs,
-            )
+            for_ = f"FOR_BINARY_RELATION_{PARITY} {test.name} {lhs} {rhs}"
+            pos_set = f"LETS_BINARY_RELATION_{PARITY} {test.name} {set_var if self.var == lhs else lhs} {set_var if self.var == rhs else rhs}"
             pos_sets.append((set_var, pos_set))
         elif modifier == "UNKNOWN" and test.arity == "UnaryRelation":
             for_ = None
-            neg_set = "LETS_UNARY_RELATION {rel} {var}".format(
-                rel=test.name, var=set_var
-            )
+            neg_set = f"LETS_UNARY_RELATION {test.name} {set_var}"
             neg_sets.append((set_var, neg_set))
         elif modifier == "UNKNOWN" and test.arity == "BinaryRelation":
             for_ = None
             lhs, rhs = test.args
             assert lhs != rhs, lhs
             PARITY = "LHS" if self.var == rhs else "RHS"
-            neg_set = "LETS_BINARY_RELATION_{PARITY} {rel} {lhs} {rhs}".format(
-                PARITY=PARITY,
-                rel=test.name,
-                lhs=set_var if self.var == lhs else lhs,
-                rhs=set_var if self.var == rhs else rhs,
-            )
+            neg_set = f"LETS_BINARY_RELATION_{PARITY} {test.name} {set_var if self.var == lhs else lhs} {set_var if self.var == rhs else rhs}"
             neg_sets.append((set_var, neg_set))
         else:
-            raise ValueError(
-                "invalid modifier,arity: {},{}".format(modifier, test.arity)
-            )
+            raise ValueError(f"invalid modifier,arity: {modifier},{test.arity}")
 
     for var, expr in sorted(self.lets.items()):
-        assert self.var in expr.args, "{} not in {}".format(self.var, expr.args)
+        assert self.var in expr.args, f"{self.var} not in {expr.args}"
         set_var = expr.var.name
         if expr.arity == "InjectiveFunction":
-            for_ = "FOR_INJECTIVE_FUNCTION {fun} {key} {val}".format(
-                fun=expr.name, key=self.var, val=var
-            )
-            pos_set = "LETS_INJECTIVE_FUNCTION {fun} {var}".format(
-                fun=expr.name, var=set_var
-            )
+            for_ = f"FOR_INJECTIVE_FUNCTION {expr.name} {self.var} {var}"
+            pos_set = f"LETS_INJECTIVE_FUNCTION {expr.name} {set_var}"
         elif expr.arity == "BinaryFunction":
             lhs, rhs = expr.args
             assert lhs != rhs, lhs
             if self.var == lhs:
-                for_ = "FOR_BINARY_FUNCTION_RHS {fun} {lhs} {rhs} {val}".format(
-                    fun=expr.name, lhs=lhs, rhs=rhs, val=expr.var.name
+                for_ = (
+                    f"FOR_BINARY_FUNCTION_RHS {expr.name} {lhs} {rhs} {expr.var.name}"
                 )
-                pos_set = "LETS_BINARY_FUNCTION_RHS {fun} {lhs} {rhs}".format(
-                    fun=expr.name, lhs=set_var, rhs=rhs
-                )
+                pos_set = f"LETS_BINARY_FUNCTION_RHS {expr.name} {set_var} {rhs}"
             else:
-                for_ = "FOR_BINARY_FUNCTION_LHS {fun} {lhs} {rhs} {val}".format(
-                    fun=expr.name, lhs=lhs, rhs=rhs, val=expr.var.name
+                for_ = (
+                    f"FOR_BINARY_FUNCTION_LHS {expr.name} {lhs} {rhs} {expr.var.name}"
                 )
-                pos_set = "LETS_BINARY_FUNCTION_LHS {fun} {lhs} {rhs}".format(
-                    fun=expr.name, lhs=lhs, rhs=set_var
-                )
+                pos_set = f"LETS_BINARY_FUNCTION_LHS {expr.name} {lhs} {set_var}"
         elif expr.arity == "SymmetricFunction":
             lhs, rhs = expr.args
             assert lhs != rhs, lhs
             fixed = rhs if self.var == lhs else lhs
-            for_ = "FOR_SYMMETRIC_FUNCTION_LHS {fun} {lhs} {rhs} {val}".format(
-                fun=expr.name, lhs=fixed, rhs=self.var, val=expr.var.name
-            )
-            pos_set = "LETS_SYMMETRIC_FUNCTION_LHS {fun} {lhs} {rhs}".format(
-                fun=expr.name, lhs=fixed, rhs=set_var
-            )
+            for_ = f"FOR_SYMMETRIC_FUNCTION_LHS {expr.name} {fixed} {self.var} {expr.var.name}"
+            pos_set = f"LETS_SYMMETRIC_FUNCTION_LHS {expr.name} {fixed} {set_var}"
         else:
-            raise ValueError("invalid arity {}".format(expr.arity))
+            raise ValueError(f"invalid arity {expr.arity}")
         pos_sets.append((set_var, pos_set))
 
     if len(pos_sets) <= 1 and len(neg_sets) == 0:
         program.append(for_)
         if poll:
-            program.append("IF_BLOCK {val}".format(val=self.var))
+            program.append(f"IF_BLOCK {self.var}")
     else:
         for_ = "FOR{pos}{neg} {val}".format(
             pos="_POS" * len(pos_sets), neg="_NEG" * len(neg_sets), val=self.var
         )
         for set_var, pos_set in pos_sets + neg_sets:
             program.append(pos_set)
-            for_ += " {var}".format(var=set_var)
+            for_ += f" {set_var}"
         program.append(for_)
         if poll:
-            program.append("IF_BLOCK {val}".format(val=self.var))
+            program.append(f"IF_BLOCK {self.var}")
         for var, expr in sorted(self.lets.items()):
             arity = expr.arity
             ARITY = arity.replace("Function", "").upper()
@@ -138,11 +108,7 @@ def Iter_program(self, program, stack=None, poll=None):
 
 @methodof(compiler.IterInvInjective, "program")
 def IterInvInjective_program(self, program, stack=None, poll=None):
-    program.append(
-        "FOR_INJECTIVE_FUNCTION_INVERSE {fun} {key} {val}".format(
-            fun=self.fun, key=self.var, val=self.value
-        )
-    )
+    program.append(f"FOR_INJECTIVE_FUNCTION_INVERSE {self.fun} {self.var} {self.value}")
     self.body.program(program, poll=poll)
 
 
@@ -150,9 +116,7 @@ def IterInvInjective_program(self, program, stack=None, poll=None):
 def IterInvBinary_program(self, program, stack=None, poll=None):
     ARITY = signature.get_arity(self.fun).replace("Function", "").upper()
     program.append(
-        "FOR_{ARITY}_FUNCTION_VAL {fun} {lhs} {rhs} {val}".format(
-            ARITY=ARITY, fun=self.fun, lhs=self.var1, rhs=self.var2, val=self.value
-        )
+        f"FOR_{ARITY}_FUNCTION_VAL {self.fun} {self.var1} {self.var2} {self.value}"
     )
     if poll:
         raise NotImplementedError("cannot poll IterInvBinary")
@@ -165,14 +129,7 @@ def IterInvBinaryRange_program(self, program, stack=None, poll=None):
     PARITY = "LHS" if self.lhs_fixed else "RHS"
     ARITY = signature.get_arity(self.fun).replace("Function", "").upper()
 
-    line = "FOR_{ARITY}_FUNCTION_{PARITY}_VAL {fun} {lhs} {rhs} {val}".format(
-        ARITY=ARITY,
-        PARITY=PARITY,
-        fun=self.fun,
-        lhs=self.var1,
-        rhs=self.var2,
-        val=self.value,
-    )
+    line = f"FOR_{ARITY}_FUNCTION_{PARITY}_VAL {self.fun} {self.var1} {self.var2} {self.value}"
     program.append(line)
     if poll:
         raise NotImplementedError("cannot poll IterInvBinaryRange")
@@ -186,23 +143,15 @@ def Let_program(self, program, stack=None, poll=None):
         arity = self.expr.arity
         args = [arg.name for arg in self.expr.args]
         if arity == "NullaryFunction":
-            line = "FOR_NULLARY_FUNCTION {fun} {val}".format(
-                fun=self.expr.name, val=self.var
-            )
+            line = f"FOR_NULLARY_FUNCTION {self.expr.name} {self.var}"
         elif arity == "InjectiveFunction":
-            line = "FOR_INJECTIVE_FUNCTION_KEY {fun} {key} {val}".format(
-                fun=self.expr.name, key=args[0], val=self.var
-            )
+            line = f"FOR_INJECTIVE_FUNCTION_KEY {self.expr.name} {args[0]} {self.var}"
         elif arity == "BinaryFunction":
-            line = "FOR_BINARY_FUNCTION_LHS_RHS {fun} {lhs} {rhs} {val}".format(
-                fun=self.expr.name, lhs=args[0], rhs=args[1], val=self.var
-            )
+            line = f"FOR_BINARY_FUNCTION_LHS_RHS {self.expr.name} {args[0]} {args[1]} {self.var}"
         elif arity == "SymmetricFunction":
-            line = "FOR_SYMMETRIC_FUNCTION_LHS_RHS {fun} {lhs} {rhs} {val}".format(
-                fun=self.expr.name, lhs=args[0], rhs=args[1], val=self.var
-            )
+            line = f"FOR_SYMMETRIC_FUNCTION_LHS_RHS {self.expr.name} {args[0]} {args[1]} {self.var}"
         else:
-            raise ValueError("unknown arity: {}".format(arity))
+            raise ValueError(f"unknown arity: {arity}")
         program.append(line)
     self.body.program(program, stack=stack, poll=poll)
 
@@ -213,35 +162,23 @@ def Test_program(self, program, stack=None, poll=None):
         arity = self.expr.arity
         args = [arg.name for arg in self.expr.args]
         if self.expr.name == "EQUAL":
-            line = "IF_EQUAL {lhs} {rhs}".format(
-                lhs=self.expr.args[0], rhs=self.expr.args[1]
-            )
+            line = f"IF_EQUAL {self.expr.args[0]} {self.expr.args[1]}"
         elif arity == "UnaryRelation":
-            line = "IF_UNARY_RELATION {rel} {key}".format(
-                rel=self.expr.name, key=args[0]
-            )
+            line = f"IF_UNARY_RELATION {self.expr.name} {args[0]}"
         elif arity == "BinaryRelation":
-            line = "IF_BINARY_RELATION {rel} {lhs} {rhs}".format(
-                rel=self.expr.name, lhs=args[0], rhs=args[1]
-            )
+            line = f"IF_BINARY_RELATION {self.expr.name} {args[0]} {args[1]}"
         elif arity == "NullaryFunction":
-            line = "IF_NULLARY_FUNCTION {fun} {val}".format(
-                fun=self.expr.name, val=self.expr.var.name
-            )
+            line = f"IF_NULLARY_FUNCTION {self.expr.name} {self.expr.var.name}"
         elif arity == "InjectiveFunction":
-            line = "IF_INJECTIVE_FUNCTION {fun} {key} {val}".format(
-                fun=self.expr.name, key=args[0], val=self.expr.var.name
+            line = (
+                f"IF_INJECTIVE_FUNCTION {self.expr.name} {args[0]} {self.expr.var.name}"
             )
         elif arity == "BinaryFunction":
-            line = "IF_BINARY_FUNCTION {fun} {lhs} {rhs} {val}".format(
-                fun=self.expr.name, lhs=args[0], rhs=args[1], val=self.expr.var.name
-            )
+            line = f"IF_BINARY_FUNCTION {self.expr.name} {args[0]} {args[1]} {self.expr.var.name}"
         elif arity == "SymmetricFunction":
-            line = "IF_SYMMETRIC_FUNCTION {fun} {lhs} {rhs} {val}".format(
-                fun=self.expr.name, lhs=args[0], rhs=args[1], val=self.expr.var.name
-            )
+            line = f"IF_SYMMETRIC_FUNCTION {self.expr.name} {args[0]} {args[1]} {self.expr.var.name}"
         else:
-            raise ValueError("unknown arity: {}".format(arity))
+            raise ValueError(f"unknown arity: {arity}")
         program.append(line)
     self.body.program(program, stack=stack, poll=poll)
 
@@ -253,17 +190,13 @@ def Ensure_program(self, program, stack=None, poll=None):
     if all(arg.is_var() for arg in args):
         arity = self.expr.arity
         if self.expr.name == "EQUAL":
-            line = "INFER_EQUAL {lhs} {rhs}".format(lhs=args[0], rhs=args[1])
+            line = f"INFER_EQUAL {args[0]} {args[1]}"
         elif arity == "UnaryRelation":
-            line = "INFER_UNARY_RELATION {rel} {key}".format(
-                rel=self.expr.name, key=args[0]
-            )
+            line = f"INFER_UNARY_RELATION {self.expr.name} {args[0]}"
         elif arity == "BinaryRelation":
-            line = "INFER_BINARY_RELATION {rel} {lhs} {rhs}".format(
-                rel=self.expr.name, lhs=args[0], rhs=args[1]
-            )
+            line = f"INFER_BINARY_RELATION {self.expr.name} {args[0]} {args[1]}"
         else:
-            raise ValueError("unknown arity: {}".format(arity))
+            raise ValueError(f"unknown arity: {arity}")
 
     elif any(arg.is_var() for arg in args):
         assert self.expr.name == "EQUAL", self.expr.name
@@ -305,9 +238,9 @@ def write_full_programs(programs, sequents, can_parallelize=True):
         poll = can_parallelize and (cost >= MIN_SPLIT_COST)
         programs += [
             "",
-            "# plan {}: cost = {:0.1f}".format(plan_id, cost),
-            "# using {}".format(sequent),
-            "# infer {}".format(seq),
+            f"# plan {plan_id}: cost = {cost:0.1f}",
+            f"# using {sequent}",
+            f"# infer {seq}",
         ]
         if poll:
             programs.append("FOR_BLOCK")
@@ -340,8 +273,8 @@ def write_event_programs(programs, sequents):
             programs += [
                 "",
                 "# " + "-" * 76,
-                "# plans {}.*: total cost = {:0.1f}".format(group_id, total_cost),
-                "# given {}".format(eventname),
+                f"# plans {group_id}.*: total cost = {total_cost:0.1f}",
+                f"# given {eventname}",
             ]
 
             plan_id = 0
@@ -354,54 +287,32 @@ def write_event_programs(programs, sequents):
                     event = Expression.make(event.name, lhs, rhs)
 
                 if arity == "Variable":
-                    given = "GIVEN_EXISTS {var}".format(var=event.name)
+                    given = f"GIVEN_EXISTS {event.name}"
                 elif arity == "UnaryRelation":
-                    given = "GIVEN_UNARY_RELATION {rel} {key}".format(
-                        rel=event.name, key=event.args[0]
-                    )
+                    given = f"GIVEN_UNARY_RELATION {event.name} {event.args[0]}"
                 elif arity == "BinaryRelation":
-                    given = "GIVEN_BINARY_RELATION {rel} {lhs} {rhs}".format(
-                        rel=event.name, lhs=event.args[0], rhs=event.args[1]
-                    )
+                    given = f"GIVEN_BINARY_RELATION {event.name} {event.args[0]} {event.args[1]}"
                 elif arity == "NullaryFunction":
-                    given = "GIVEN_NULLARY_FUNCTION {fun} {val}".format(
-                        fun=event.name, val=event.var.name
-                    )
+                    given = f"GIVEN_NULLARY_FUNCTION {event.name} {event.var.name}"
                 elif arity == "InjectiveFunction":
-                    given = "GIVEN_INJECTIVE_FUNCTION {fun} {key} {val}".format(
-                        fun=event.name, key=event.args[0], val=event.var.name
-                    )
+                    given = f"GIVEN_INJECTIVE_FUNCTION {event.name} {event.args[0]} {event.var.name}"
                 elif arity == "BinaryFunction":
-                    given = "GIVEN_BINARY_FUNCTION {fun} {lhs} {rhs} {val}".format(
-                        fun=event.name,
-                        lhs=event.args[0],
-                        rhs=event.args[1],
-                        val=event.var.name,
-                    )
+                    given = f"GIVEN_BINARY_FUNCTION {event.name} {event.args[0]} {event.args[1]} {event.var.name}"
                 elif arity == "SymmetricFunction":
-                    given = "GIVEN_SYMMETRIC_FUNCTION {fun} {lhs} {rhs} {val}".format(
-                        fun=event.name,
-                        lhs=event.args[0],
-                        rhs=event.args[1],
-                        val=event.var.name,
-                    )
+                    given = f"GIVEN_SYMMETRIC_FUNCTION {event.name} {event.args[0]} {event.args[1]} {event.var.name}"
                 else:
-                    raise ValueError("invalid arity: {}".format(arity))
+                    raise ValueError(f"invalid arity: {arity}")
                 header = [given]
 
                 if diagonal:
-                    header.append(
-                        "IF_EQUAL {lhs} {rhs}".format(
-                            lhs=event.args[0], rhs=event.args[1]
-                        )
-                    )
+                    header.append(f"IF_EQUAL {event.args[0]} {event.args[1]}")
 
                 for cost, seq, plan in plans:
                     programs += [
                         "",
-                        "# plan {}.{}: cost = {:0.1f}".format(group_id, plan_id, cost),
-                        "# using {}".format(sequent),
-                        "# infer {}".format(seq),
+                        f"# plan {group_id}.{plan_id}: cost = {cost:0.1f}",
+                        f"# using {sequent}",
+                        f"# infer {seq}",
                     ]
                     programs += header
                     plan.program(programs)

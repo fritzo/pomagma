@@ -37,7 +37,7 @@ def create_blob():
         create_blob.counter = 0
     count = create_blob.counter
     create_blob.counter += 1
-    filename = "temp.{}.{}".format(os.getpid(), count)
+    filename = f"temp.{os.getpid()}.{count}"
     path = os.path.join(pomagma.util.BLOB_DIR, filename)
     if os.path.exists(path):
         print("removing temp file", path)
@@ -106,7 +106,7 @@ def garbage_collect(used_blobs, grace_period_days=GRACE_PERIOD_DAYS):
             if os.path.getmtime(path) < deadline:
                 os.remove(path)
                 count += 1
-    print("removed {} files from {}".format(count, pomagma.util.BLOB_DIR))
+    print(f"removed {count} files from {pomagma.util.BLOB_DIR}")
 
 
 def validate_blobs():
@@ -115,7 +115,7 @@ def validate_blobs():
     blobs = sorted(
         blob for blob in os.listdir(pomagma.util.BLOB_DIR) if RE_BLOB.match(blob)
     )
-    print("validating {} blobs".format(len(blobs)))
+    print(f"validating {len(blobs)} blobs")
     paths = [os.path.join(pomagma.util.BLOB_DIR, blob) for blob in blobs]
     hexdigests = multiprocessing.Pool().map(hash_file, paths)
     errors = [blob for blob, hexdigest in zip(blobs, hexdigests) if blob != hexdigest]
@@ -132,5 +132,5 @@ def validate_blobs():
         path = os.path.join(pomagma.util.BLOB_DIR, blob)
         mode = oct(os.stat(path).st_mode)[-3:]
         if mode != "444":
-            sys.stderr.write("WARNING repairing mode of {}\n".format(blob))
+            sys.stderr.write(f"WARNING repairing mode of {blob}\n")
             os.chmod(path, 0o444)

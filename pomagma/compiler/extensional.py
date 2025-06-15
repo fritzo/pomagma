@@ -94,7 +94,7 @@ def abstract(self, var):
     if self.is_rel():
         args = [arg.abstract(var) for arg in self.args]
         return Expression.make(self.name, *args)
-    raise ValueError("bad expression: %s" % self.name)
+    raise ValueError(f"bad expression: {self.name}")
 
 
 class RequireVariable(Exception):
@@ -169,14 +169,14 @@ def head_normalize(expr, *args):
         return head_normalize(C, B, *args)
     if name in ["Y", "J", "JOIN", "R", "RAND", "U", "V", "P", "A"]:
         raise SkipValidation
-    raise TODO("head normalize %s expressions" % name)
+    raise TODO(f"head normalize {name} expressions")
 
 
 def validate(expr):
     assert expr.is_rel(), expr
     assert expr.name in ["LESS", "EQUAL"]
     if expr.name != "EQUAL":
-        print("WARNING: not validating {0}".format(expr))
+        print(f"WARNING: not validating {expr}")
         return
     while True:
         try:
@@ -184,14 +184,10 @@ def validate(expr):
             lhs = head_normalize(lhs)
             rhs = head_normalize(rhs)
             assert len(lhs) == len(rhs), (
-                "Failed to validate\n  {0}\nbecause\n  {1} != {2}".format(
-                    expr, lhs, rhs
-                )
+                f"Failed to validate\n  {expr}\nbecause\n  {lhs} != {rhs}"
             )
             assert lhs[0] == rhs[0], (
-                "Failed to validate\n  {0}\nbecause  \n{1} != {2}".format(
-                    expr, lhs[0], rhs[0]
-                )
+                f"Failed to validate\n  {expr}\nbecause  \n{lhs[0]} != {rhs[0]}"
             )
             for args in zip(lhs[1:], rhs[1:]):
                 validate(Expression.make(expr.name, *args))
@@ -203,7 +199,7 @@ def validate(expr):
             rhs = APP(rhs, fresh)
             expr = Expression.make(expr.name, lhs, rhs)
         except SkipValidation:
-            print("WARNING: not validating {0}".format(expr))
+            print(f"WARNING: not validating {expr}")
             return
 
 
@@ -252,8 +248,7 @@ def iter_closure_maps(expr):
                 for other in varset:
                     abstracted = abstracted.substitute(other, var)
                 abstracted = abstracted.abstract(var)
-                for result in iter_closure_maps(abstracted):
-                    yield result
+                yield from iter_closure_maps(abstracted)
 
 
 @inputs(Expression)
@@ -264,8 +259,7 @@ def iter_closure_permutations(expr):
     else:
         for var in expr.vars:
             abstracted = expr.abstract(var)
-            for result in iter_closure_maps(abstracted):
-                yield result
+            yield from iter_closure_maps(abstracted)
 
 
 @inputs(Expression)
@@ -301,5 +295,5 @@ def derive_facts(rule):
                 assert derived.is_rel()
                 facts.add(derived)
         facts = sorted(facts, key=lambda expr: len(expr.polish))
-        logger("derived {0} facts from {1}".format(len(facts), expr))
+        logger(f"derived {len(facts)} facts from {expr}")
     return facts

@@ -64,7 +64,7 @@ def is_complete(expr):
     return expr is not HOLE and all(is_complete(arg) for arg in expr.args)
 
 
-class ComplexityEvaluator(object):
+class ComplexityEvaluator:
     def __init__(self, language):
         assert isinstance(language, dict), language
         for name, cost in list(language.items()):
@@ -86,7 +86,7 @@ def make_template(name):
     return Expression.make(name, *holes)
 
 
-class NaiveHoleFiller(object):
+class NaiveHoleFiller:
     """A more intelligent hole filler would only enumerate normal forms."""
 
     def __init__(self, language):
@@ -115,7 +115,7 @@ class NaiveHoleFiller(object):
         return None
 
 
-class UniquePriorityQueue(object):
+class UniquePriorityQueue:
     """Duplicates may be pushed, but will only be poppoed once.
 
     The least-priority item is popped. Implementation assumes that items will
@@ -213,7 +213,7 @@ def lazy_iter_valid_sketches(fill, lazy_validate, normal_sketches, verbose=0):
         yield state, sketch
 
 
-class Interruptable(object):
+class Interruptable:
     def __enter__(self):
         self._interrupted = False
         self._old_handler = signal.signal(signal.SIGINT, self)
@@ -371,7 +371,7 @@ def simplify_facts(db, facts, vars_to_keep):
     return list(map(unguard_vars, facts))
 
 
-class FactsValidator(object):
+class FactsValidator:
     def __init__(self, db, facts, var, initial_sketch=HOLE):
         assert isinstance(facts, list), facts
         assert all(isinstance(f, Expression) for f in facts), facts

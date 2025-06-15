@@ -19,7 +19,7 @@ def make_equation(lhs, rhs):
     return (lhs, rhs) if lhs <= rhs else (rhs, lhs)
 
 
-class Node(object):
+class Node:
     __slots__ = ["typ", "args"]
 
     def __init__(self, typ, *args):
@@ -149,7 +149,7 @@ def print_to_depth(node, depth=10):
         if depth > 0:
             fun = print_to_depth(node.fun, depth - 1)
             arg = print_to_depth(node.arg, depth - 1)
-            return "APP({},{})".format(fun, arg)
+            return f"APP({fun},{arg})"
         return "APP(...,...)"
     raise ValueError(node)
 

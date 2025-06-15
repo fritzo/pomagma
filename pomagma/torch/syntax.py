@@ -1,5 +1,5 @@
 from collections import Counter
-from typing import Callable
+from collections.abc import Callable
 from weakref import WeakKeyDictionary
 
 import pomagma.compiler.extensional  # noqa: F401

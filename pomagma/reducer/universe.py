@@ -98,8 +98,7 @@ def term_iter_obs(term):
         yield term[1]
         yield term[2]
     elif symbol is _JOIN:
-        for ob in term[1:]:
-            yield ob
+        yield from term[1:]
 
 
 _cyclic_stack = set()

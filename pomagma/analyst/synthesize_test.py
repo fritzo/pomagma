@@ -69,12 +69,11 @@ HOLE_FILLER_EXAMPLES = [
     ("I", []),
     ("APP COMP S K I", []),
     ("HOLE", FILLINGS),
-    ("APP K HOLE", ["APP K {}".format(f) for f in FILLINGS]),
-    ("APP HOLE K", ["APP {} K".format(f) for f in FILLINGS]),
+    ("APP K HOLE", [f"APP K {f}" for f in FILLINGS]),
+    ("APP HOLE K", [f"APP {f} K" for f in FILLINGS]),
     (
         "APP HOLE HOLE",
-        ["APP {} HOLE".format(f) for f in FILLINGS]
-        + ["APP HOLE {}".format(f) for f in FILLINGS],
+        [f"APP {f} HOLE" for f in FILLINGS] + [f"APP HOLE {f}" for f in FILLINGS],
     ),
 ]
 

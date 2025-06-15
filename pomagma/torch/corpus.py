@@ -49,7 +49,7 @@ class ObTree(metaclass=HashConsMeta):
         strict: bool = True,
     ) -> "ObTree":
         name = expr.name
-        args: tuple["ObTree", ...] = tuple(
+        args: tuple[ObTree, ...] = tuple(
             ObTree.from_expr(structure, arg, strict=strict) for arg in expr.args
         )
         if not all(arg.ob for arg in args):

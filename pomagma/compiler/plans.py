@@ -27,7 +27,7 @@ def add_costs(costs):
     return log_sum_exp(*(LOG_OBJECT_COUNT * c for c in costs)) / LOG_OBJECT_COUNT
 
 
-class Plan(object):
+class Plan:
     __slots__ = ["_args", "_cost", "_rank"]
 
     def __init__(self, *args):
@@ -90,7 +90,7 @@ class Iter(Plan):
             # self._repr = 'for {0}: {1}'.format(
             #     ' '.join([str(self.var)] + tests + lets),
             #     self.body)
-            self._repr = "for {}: {}".format(self.var, self.body)
+            self._repr = f"for {self.var}: {self.body}"
         return self._repr
 
     def validate(self, bound):
@@ -115,7 +115,7 @@ class Iter(Plan):
     def optimize(self):
         node = self.body
         new_lets = set()
-        while isinstance(node, (Test, Let)):
+        while isinstance(node, Test | Let):
             if isinstance(node, Let):
                 new_lets.add(node.var)
             expr = node.expr
@@ -150,7 +150,7 @@ class IterInvInjective(Plan):
         self.body = body
 
     def __repr__(self):
-        return "for {0} {1}: {2}".format(self.fun, self.var, self.body)
+        return f"for {self.fun} {self.var}: {self.body}"
 
     def validate(self, bound):
         assert_in(self.value, bound)
@@ -174,7 +174,7 @@ class IterInvBinary(Plan):
         self.body = body
 
     def __repr__(self):
-        return "for {0} {1} {2}: {3}".format(self.fun, self.var1, self.var2, self.body)
+        return f"for {self.fun} {self.var1} {self.var2}: {self.body}"
 
     def validate(self, bound):
         assert_in(self.value, bound)
@@ -203,12 +203,8 @@ class IterInvBinaryRange(Plan):
 
     def __repr__(self):
         if self.lhs_fixed:
-            return "for {0} ({1}) {2}: {3}".format(
-                self.fun, self.var1, self.var2, self.body
-            )
-        return "for {0} {1} ({2}): {3}".format(
-            self.fun, self.var1, self.var2, self.body
-        )
+            return f"for {self.fun} ({self.var1}) {self.var2}: {self.body}"
+        return f"for {self.fun} {self.var1} ({self.var2}): {self.body}"
 
     def validate(self, bound):
         assert self.value in bound
@@ -238,7 +234,7 @@ class Let(Plan):
         self.body = body
 
     def __repr__(self):
-        return "let {0}: {1}".format(self.var, self.body)
+        return f"let {self.var}: {self.body}"
 
     def validate(self, bound):
         assert_subset(self.expr.vars, bound)
@@ -268,7 +264,7 @@ class Test(Plan):
         self.body = body
 
     def __repr__(self):
-        return "if {0}: {1}".format(self.expr, self.body)
+        return f"if {self.expr}: {self.body}"
 
     def validate(self, bound):
         assert_subset(self.expr.vars, bound)
@@ -295,7 +291,7 @@ class Ensure(Plan):
         self.expr = expr
 
     def __repr__(self):
-        return "ensure {0}".format(self.expr)
+        return f"ensure {self.expr}"
 
     def validate(self, bound):
         assert_subset(self.expr.vars, bound)

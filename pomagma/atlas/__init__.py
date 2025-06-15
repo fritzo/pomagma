@@ -63,7 +63,7 @@ def update_language(theory, init, world, updated, **opts):
 
 
 def update_format(theory, source, destin, **opts):
-    print("converting {} {} -> {}".format(theory, source, destin))
+    print(f"converting {theory} {source} -> {destin}")
     assert source != destin
     with pomagma.util.mutex(source):
         assert os.path.exists(source)
@@ -121,7 +121,7 @@ def get_ext(filename):
     while parts[-1] in ["gz", "bz2", "7z"]:
         parts = parts[:-1]
     ext = parts[-1]
-    assert ext in ["pb"], "unsupported filetype: {}".format(filename)
+    assert ext in ["pb"], f"unsupported filetype: {filename}"
     return ext
 
 

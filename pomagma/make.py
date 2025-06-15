@@ -27,7 +27,7 @@ def _test_atlas(theory):
     buildtype = "debug" if pomagma.util.debug else "release"
     path = os.path.join(pomagma.util.DATA, "test", buildtype, "atlas", theory)
     if os.path.exists(path):
-        os.system("rm -f {}/*".format(path))
+        os.system(f"rm -f {path}/*")
     else:
         os.makedirs(path)
     with ExitStack() as stack:
@@ -128,7 +128,7 @@ def test_analyst(theory):
         assert os.path.exists(world), "First initialize normalized world"
         with analyst.load(theory, world, **opts) as db:
             fail_count = db.test()
-    assert fail_count == 0, "Failed {} cases".format(fail_count)
+    assert fail_count == 0, f"Failed {fail_count} cases"
     print("Passed analyst test")
 
 
@@ -146,7 +146,7 @@ def profile_misc():
         for filename in filenames
         if filename.endswith("_profile")
     ]
-    assert cmds, "no profiles found in {}".format(pomagma.util.BIN)
+    assert cmds, f"no profiles found in {pomagma.util.BIN}"
     for cmd in cmds:
         print("Profiling", cmd)
         pomagma.util.log_call(cmd, **opts)
@@ -163,11 +163,11 @@ def profile_surveyor(theory="skj", grow_by=64, extra_size=0, tool="time"):
     size = pomagma.util.MIN_SIZES[theory] + extra_size
     with atlas.chdir(theory):
         opts = {"log_file": "profile.log", "log_level": 2}
-        region = DB("region.normal.{:d}".format(size))
+        region = DB(f"region.normal.{size:d}")
         temp = pomagma.util.temp_name(DB("profile"))
         world = DB("world")
         if not os.path.exists(region):
-            print("Creating {} for profile".format(region))
+            print(f"Creating {region} for profile")
             assert os.path.exists(world), "First initialize world map"
             with cartographer.load(theory, world, **opts) as db:
                 db.trim([{"size": size, "filename": region}])
@@ -185,15 +185,15 @@ def profile_cartographer(theory="skj", extra_size=0, tool="time", infer=True):
     size = pomagma.util.MIN_SIZES[theory] + extra_size
     with atlas.chdir(theory):
         opts = {"log_file": "profile.log", "log_level": 2}
-        region = DB("region.normal.{:d}".format(size))
+        region = DB(f"region.normal.{size:d}")
         temp = pomagma.util.temp_name(DB("profile"))
         world = DB("world")
         world_size = atlas.get_item_count(world)
         if size >= world_size:
-            print("Using world of size {}".format(world_size))
+            print(f"Using world of size {world_size}")
             region = world
         elif not os.path.exists(region):
-            print("Creating {} for profile".format(region))
+            print(f"Creating {region} for profile")
             assert os.path.exists(world), "First initialize world map"
             with cartographer.load(theory, world, **opts) as db:
                 db.trim([{"size": size, "filename": region}])
@@ -202,7 +202,7 @@ def profile_cartographer(theory="skj", extra_size=0, tool="time", infer=True):
             if infer:
                 for priority in [0, 1]:
                     count = db.infer(priority)
-                    print("Proved {} theorems".format(count))
+                    print(f"Proved {count} theorems")
             db.dump(temp)
         print("Hash:", atlas.get_hash(temp))
         os.remove(temp)

@@ -35,7 +35,7 @@ def try_connect_s3(bucket):
         print("connected to bucket", bucket)
         return s3
     except Exception as e:
-        print("WARNING failed to connect to s3 bucket {}\n".format(bucket), e)
+        print(f"WARNING failed to connect to s3 bucket {bucket}\n", e)
         return None
 
 

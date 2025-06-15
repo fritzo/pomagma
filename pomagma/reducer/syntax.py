@@ -110,14 +110,14 @@ NUM = make_atom("NUM")
 @builder
 def NVAR(name):
     if re_keyword.match(name):
-        raise ValueError("Variable names cannot match [A-Z]+: {}".format(name))
+        raise ValueError(f"Variable names cannot match [A-Z]+: {name}")
     return Term.make(_NVAR, sys.intern(name))
 
 
 @builder
 def IVAR(rank):
     if not (isinstance(rank, int) and rank >= 0):
-        raise ValueError("Variable index must be a natural number {}".format(rank))
+        raise ValueError(f"Variable index must be a natural number {rank}")
     return Term.make(_IVAR, rank)
 
 
@@ -227,7 +227,7 @@ def is_equal(term):
 # Transforms
 
 
-class Transform(object):
+class Transform:
     """Recursive transform of term."""
 
     def __init__(self, **kwargs):
@@ -544,20 +544,20 @@ def from_sexpr(sexpr, transform=identity):
         if sexpr in _atoms:
             return getattr(transform, sexpr)
         if re_keyword.match(sexpr):
-            raise ValueError("Unrecognized atom: {}".format(sexpr))
+            raise ValueError(f"Unrecognized atom: {sexpr}")
         return NVAR(sexpr)
     if isinstance(sexpr, int):
         return IVAR(sexpr)
 
     # Handle tuples.
     head = sexpr[0]
-    assert isinstance(head, (str, int))
+    assert isinstance(head, str | int)
     if head in _keywords:
         arity = _keywords[head]
         head = getattr(transform, head)
         if arity:
             if len(sexpr) < 1 + arity:
-                raise ValueError("Too few args to {}: {}".format(head, sexpr))
+                raise ValueError(f"Too few args to {head}: {sexpr}")
             head = head(*(from_sexpr(sexpr[1 + i], transform) for i in range(arity)))
         args = sexpr[1 + arity :]
     elif isinstance(head, int):
@@ -619,7 +619,7 @@ def sexpr_parse_sexpr(string):
     except StopIteration:
         pass
     else:
-        raise ValueError("Extra tokens at end of sexpr: {}".format(extra))
+        raise ValueError(f"Extra tokens at end of sexpr: {extra}")
     return sexpr
 
 

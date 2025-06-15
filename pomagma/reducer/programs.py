@@ -27,7 +27,7 @@ def using_engine(engine, budget=None):
         BUDGET = old_budget
 
 
-class Program(object):
+class Program:
     def __init__(self, encoders, decoder, fun):
         functools.update_wrapper(self, fun)
         self._encoders = encoders
@@ -44,9 +44,7 @@ class Program(object):
     def __call__(self, *args):
         if len(args) != len(self._encoders):
             raise TypeError(
-                "{} takes {} arguments ({} given)".format(
-                    self.__name__, len(self._encoders), len(args)
-                )
+                f"{self.__name__} takes {len(self._encoders)} arguments ({len(args)} given)"
             )
         if ENGINE is None:
             raise RuntimeError("No engine specified")
@@ -64,7 +62,7 @@ def program(*types):
 
     """
     if not types:
-        raise SyntaxError("No output type: program{}".format(types))
+        raise SyntaxError(f"No output type: program{types}")
     tps_in = types[:-1]
     tp_out = types[-1]
     encoders = list(map(data.encoder, tps_in))

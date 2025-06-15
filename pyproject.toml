@@ -72,7 +72,8 @@ ignore = [
   "SIM103",
   "SIM108",
   "SIM300",
-  "SIM117"
+  "SIM117",
+  "SLOT001",
 ]
 select = [
     # "ANN",
@@ -98,6 +99,8 @@ select = [
     "RSE",
     "RUF",
     "SIM",  # simplify
+    "SLOT",
+    "UP",  # pyupgrade
     "W",  # pycodestyle warnings
 ]
 

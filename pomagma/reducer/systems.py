@@ -72,10 +72,10 @@ def is_valid_body(term):
     """
     assert isinstance(term, Term)
     if not is_closed(term):
-        log_error("Not closed: {}".format(term))
+        log_error(f"Not closed: {term}")
         return False
     if not bohm.is_normal(term):
-        log_error("Not normal: {}".format(term))
+        log_error(f"Not normal: {term}")
         return False
     # TODO Decide whether TOP and BOT should be allowed as bodies.
     # if term is TOP or term is BOT:
@@ -86,12 +86,12 @@ def is_valid_body(term):
     while is_abs(term):
         term = term[1]
     if not is_abs_free(term):
-        log_error("ABS in inner term: {}".format(term))
+        log_error(f"ABS in inner term: {term}")
         return False
     return True
 
 
-class System(object):
+class System:
     """System of mutually recursive combinators."""
 
     def __init__(self, **defs):
@@ -139,7 +139,7 @@ class System(object):
         return self._defs == other._defs
 
     def __repr__(self):
-        defs = ["{}={}".format(name, body) for name, body in list(self._defs.items())]
+        defs = [f"{name}={body}" for name, body in list(self._defs.items())]
         return "System({})".format(", ".join(defs))
 
     __str__ = __repr__
@@ -147,8 +147,7 @@ class System(object):
     def pretty(self):
         width = max(len(name) for name, body in self)
         return "\n".join(
-            "{} = {}".format(name.rjust(width), sexpr_print(body))
-            for name, body in self
+            f"{name.rjust(width)} = {sexpr_print(body)}" for name, body in self
         )
 
     def is_closed(self):
@@ -228,7 +227,7 @@ def try_compute_step(system, name=None):
 # Decision procedures
 
 
-class Theory(object):
+class Theory:
     def __init__(self):
         self._hyp = set()
         self._con = set()
@@ -268,7 +267,7 @@ def try_match_equal(system, theory, lhs, rhs):
 
     # Destructure JOIN.
     if is_join(lhs) or is_join(rhs):
-        TODO("handle JOIN: {} vs {}".format(lhs, rhs))
+        TODO(f"handle JOIN: {lhs} vs {rhs}")
 
     # Destructure ABS.
     while is_abs(lhs) or is_abs(rhs):

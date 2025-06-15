@@ -20,7 +20,7 @@ TROOL = {
 
 
 def WARN(message):
-    sys.stdout.write("WARNING {}\n".format(message))
+    sys.stdout.write(f"WARNING {message}\n")
     sys.stdout.flush()
 
 
@@ -32,7 +32,7 @@ class ServerError(Exception):
         return "\n".join(["Server Errors:", *self.messages])
 
 
-class Client(object):
+class Client:
     def __init__(self, address, poll_callback=None):
         assert isinstance(address, str), address
         assert poll_callback is None or callable(poll_callback), poll_callback
@@ -123,7 +123,7 @@ class Client(object):
         assert isinstance(var, str), var
         assert isinstance(theory, str), theory
         if max_solutions is not None:
-            assert isinstance(max_solutions, (int, float)), max_solutions
+            assert isinstance(max_solutions, int | float), max_solutions
         solutions = self._solve(var, theory, max_solutions)
         assert not (set(solutions["necessary"]) & set(solutions["possible"]))
         if max_solutions is not None:

@@ -114,7 +114,7 @@ def app(comb, *args):
     return make_combinator(bound, headex)
 
 
-class Presentation(object):
+class Presentation:
     """Finite presentation of a regular Bohm forest."""
 
     def __init__(self):

@@ -10,7 +10,7 @@ from pomagma.compiler.expressions import Expression, NotNegatable, try_get_negat
 from pomagma.compiler.util import inputs, set_with, set_without, union
 
 
-class Sequent(object):
+class Sequent:
     __slots__ = ["_antecedents", "_succedents", "_hash", "_str", "debuginfo"]
 
     def __init__(self, antecedents, succedents):
@@ -57,13 +57,11 @@ class Sequent(object):
 
     def __str__(self):
         if self._str is None:
-            self._str = "{0} |- {1}".format(
-                self.__print_set(self.antecedents), self.__print_set(self.succedents)
-            )
+            self._str = f"{self.__print_set(self.antecedents)} |- {self.__print_set(self.succedents)}"
         return self._str
 
     def __repr__(self):
-        return "Sequent({0})".format(self)
+        return f"Sequent({self})"
 
     def ascii(self, indent=0):
         top = self.__print_set(self.antecedents, sep="   ")
@@ -275,7 +273,7 @@ def normalize(seq, bound=set()):
     result = set()
     for contra in get_contrapositives(seq):
         result |= get_atomic(contra, bound)
-    assert result, "failed to normalize {0} binding {1}".format(seq, bound)
+    assert result, f"failed to normalize {seq} binding {bound}"
     return result
 
 

@@ -23,13 +23,13 @@ def conjectures(theory):
         os.makedirs(destin)
     with open(conjectures_html, "w") as html:
         html.write(
-            """
+            f"""
             <html>
             <head>
             <title> Pomagma {theory} Conjectures </title>
             </head>
             <body>
-            """.format(theory=theory)
+            """
         )
         for conjectures_file in conjectures_files:
             with open(conjectures_file) as conjectures:

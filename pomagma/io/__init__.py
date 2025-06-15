@@ -5,7 +5,7 @@ def create_directories(path):
     if not os.path.exists(path):
         try:
             os.makedirs(path)
-        except os.error as e:
+        except OSError as e:
             if not os.path.exists(path):
                 raise e
 

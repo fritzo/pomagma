@@ -17,7 +17,7 @@ def random_entry(size, density):
 def print_entry(entry):
     if entry is None:
         return "  ."
-    return "{: 3d}".format(entry)
+    return f"{entry: 3d}"
 
 
 def print_grid(grid):

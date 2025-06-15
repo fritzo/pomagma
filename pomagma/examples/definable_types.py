@@ -83,16 +83,16 @@ def trace(*part_names, **kwargs):
     if "all" in part_names:
         part_names = list(PARTS.keys())
     for name in part_names:
-        print("{} = {}".format(name, print_(simplify(PARTS[name]))))
+        print(f"{name} = {print_(simplify(PARTS[name]))}")
         assert name in PARTS, name
     A = simplify(build_A(*part_names))
-    print("A = {}".format(print_(A)))
+    print(f"A = {print_(A)}")
 
     # Cast a candidate inhabitant via the defined type.
     type_ = sexpr_simplify(kwargs.get("type", default_type))
     inhab = sexpr_simplify(kwargs.get("inhab", default_inhab))
     term = simplify(app(A, type_, inhab))
-    print("0\t{}".format(print_(term)))
+    print(f"0\t{print_(term)}")
 
     # Print a reduction sequence.
     steps = int(kwargs.get("steps", 10))
@@ -101,7 +101,7 @@ def trace(*part_names, **kwargs):
         if term is None:
             print("--- Normalized ---")
             return
-        print("{}\t{}".format(1 + step, print_(term)))
+        print(f"{1 + step}\t{print_(term)}")
     print("... Not normalized ...")
 
 

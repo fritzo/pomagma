@@ -1,5 +1,5 @@
 import logging
-from typing import TYPE_CHECKING, Dict, List, Optional
+from typing import TYPE_CHECKING
 
 import torch
 
@@ -20,11 +20,11 @@ class Extractor:
     def __init__(self, structure: Structure, language: "Language"):
         self.structure = structure
         self.language = language
-        self._ob_to_expr_cache: Optional[Dict[Ob, Optional[Expression]]] = None
+        self._ob_to_expr_cache: dict[Ob, Expression | None] | None = None
 
     def extract_all_obs(
         self, *, best: torch.Tensor | None = None
-    ) -> Dict[Ob, Optional[Expression]]:
+    ) -> dict[Ob, Expression | None]:
         """
         Extracts the shortest expression for each E-class.
         Moved from Language.extract_all().
@@ -37,16 +37,16 @@ class Extractor:
         assert best.shape == (1 + self.structure.item_count,)
 
         # Sort from highest to lowest probability, a valid topological order.
-        order: List[Ob] = list(map(Ob, range(1, 1 + self.structure.item_count)))
+        order: list[Ob] = list(map(Ob, range(1, 1 + self.structure.item_count)))
         order.sort(key=lambda i: best[i].item(), reverse=True)
 
         # Index nullary functions by ob.
-        nullary_functions: Dict[Ob, str] = {
+        nullary_functions: dict[Ob, str] = {
             ob: name for name, ob in self.structure.nullary_functions.items()
         }
 
         # Extract the shortest expression for each E-class.
-        expressions: Dict[Ob, Optional[Expression]] = {Ob(0): None}
+        expressions: dict[Ob, Expression | None] = {Ob(0): None}
         for ob in order:
             # Skip if this object has zero probability
             if best[ob].item() <= 0:
@@ -55,7 +55,7 @@ class Extractor:
 
             # Find the best grammar rule to apply.
             best_prob: float = 0.0
-            best_expr: Optional[Expression] = None
+            best_expr: Expression | None = None
 
             # Nullary functions.
             if ob in nullary_functions:
@@ -115,7 +115,7 @@ class Extractor:
 
         return expressions
 
-    def extract_from_obtree(self, obtree: ObTree) -> Optional[Expression]:
+    def extract_from_obtree(self, obtree: ObTree) -> Expression | None:
         """
         Extract full expression from ObTree, combining E-class extraction with
         ObTree traversal.

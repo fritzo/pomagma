@@ -40,7 +40,8 @@ import itertools
 import re
 import sys
 from collections import defaultdict, deque
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from pomagma.compiler.util import memoize_arg, memoize_args
 from pomagma.reducer import syntax
@@ -66,12 +67,12 @@ class Term(tuple):
         if symbol is _TOP:
             return "TOP"
         if symbol is _NVAR:
-            return "NVAR('{}')".format(self[1])
+            return f"NVAR('{self[1]}')"
         if symbol is _JOIN:
             args = ",".join(str(a) for a in self[1:])
-            return "{}([{}])".format(symbol, args)
+            return f"{symbol}([{args}])"
         args = ",".join(str(a) for a in self[1:])
-        return "{}({})".format(symbol, args)
+        return f"{symbol}({args})"
 
     __str__ = __repr__
 
@@ -143,7 +144,7 @@ class Graph(tuple):
         return Graph(args)
 
     def pretty(self):
-        return "\n".join("{} = {}".format(pos, term) for pos, term in enumerate(self))
+        return "\n".join(f"{pos} = {term}" for pos, term in enumerate(self))
 
     @property
     def is_nvar(self):
@@ -276,7 +277,7 @@ def graph_quotient_weak(terms):
     return terms
 
 
-class ApartnessRelation(object):
+class ApartnessRelation:
     def __init__(self, size):
         self._size = size
         self._table = [False] * (size * size)
@@ -488,7 +489,7 @@ def NVAR(name):
     """Create a named variable Graph."""
     assert isinstance(name, str), name
     if re_keyword.match(name):
-        raise ValueError("Variable names cannot match [A-Z]+: {}".format(name))
+        raise ValueError(f"Variable names cannot match [A-Z]+: {name}")
     terms = [Term.NVAR(sys.intern(name))]
     return graph_make(terms)
 
@@ -578,11 +579,11 @@ def as_graph(fun):
     if isinstance(fun, Graph):
         return fun
     if not callable(fun):
-        raise SyntaxError("Expected callable, got: {}".format(fun))
+        raise SyntaxError(f"Expected callable, got: {fun}")
     args, vargs, kwargs, defaults = inspect.getfullargspec(fun)[:4]
     if vargs or kwargs or defaults:
         source = inspect.getsource(fun)
-        raise SyntaxError("Unsupported signature: {}".format(source))
+        raise SyntaxError(f"Unsupported signature: {source}")
     symbolic_args = list(map(NVAR, args))
     symbolic_result = fun(*symbolic_args)
     graph = as_graph(symbolic_result)

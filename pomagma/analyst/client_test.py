@@ -85,15 +85,15 @@ def test_inference():
     with load() as db:
         print("Testing analyst inference")
         fail_count = db.test_inference()
-    assert fail_count == 0, "analyst failed with {} errors".format(fail_count)
+    assert fail_count == 0, f"analyst failed with {fail_count} errors"
 
 
 def assert_equal_example(expected, actual, example, cmp=cmp):
     assert not cmp(expected, actual), "\n".join(
         [
-            "failed {}".format(example),
-            "expected: {}".format(expected),
-            "actual: {}".format(actual),
+            f"failed {example}",
+            f"expected: {expected}",
+            f"actual: {actual}",
         ]
     )
 
@@ -102,9 +102,9 @@ def assert_examples(examples, expected, actual, cmp=cmp):
     assert len(expected) == len(examples)
     assert len(actual) == len(examples)
     for example, e, a in zip(examples, expected, actual):
-        print("{} : {}".format(example, e))
+        print(f"{example} : {e}")
         if cmp(e, a):
-            print("WARNING {}\n  expected: {}\n  actual: {}".format(example, e, a))
+            print(f"WARNING {example}\n  expected: {e}\n  actual: {a}")
     for example, e, a in zip(examples, expected, actual):
         assert_equal_example(e, a, example, cmp)
 
@@ -285,9 +285,7 @@ def validate_corpus(lines, max_attempts=100):
                 for validity in results:
                     del validity["pending"]
                 return results
-    raise ValueError(
-        "validate_corpus did not complete in {} attempts".format(max_attempts)
-    )
+    raise ValueError(f"validate_corpus did not complete in {max_attempts} attempts")
 
 
 def test_validate_corpus():
@@ -388,12 +386,12 @@ def test_get_histogram():
 
 def validate_language(language):
     total = sum(language.values())
-    assert abs(total - 1) < 1e-4, "bad total: {}".format(total)
+    assert abs(total - 1) < 1e-4, f"bad total: {total}"
     assert isinstance(language, dict), language
     for key, val in list(language.items()):
         assert isinstance(key, str), key
         assert isinstance(val, float), val
-        assert val > 0, "{} has no mass".format(key)
+        assert val > 0, f"{key} has no mass"
 
 
 def test_fit_language_histogram():

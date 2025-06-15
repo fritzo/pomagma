@@ -11,7 +11,7 @@ from pomagma.util import TODO
 # Net data structure
 
 
-class Node(object):
+class Node:
     def validate(self):
         """Asserts that node's neighbors point back to node."""
         if __debug__:

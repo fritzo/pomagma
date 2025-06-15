@@ -63,7 +63,7 @@ clang-format: FORCE
 ruff-format: FORCE
 	$(info ruff)
 	@ruff format $(PY_FILES)
-	@ruff check --fix $(PY_FILES)
+	@ruff check --fix --unsafe-fixes $(PY_FILES)
 
 format: clang-format ruff-format FORCE
 

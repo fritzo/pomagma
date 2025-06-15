@@ -18,9 +18,9 @@ class ParseError(Exception):
     def __str__(self):
         header = ", ".join(
             ["ParseError"]
-            + ["{} {}".format(key, val) for key, val in sorted(self.debuginfo.items())]
+            + [f"{key} {val}" for key, val in sorted(self.debuginfo.items())]
         )
-        return "{}: {}".format(header, self.message)
+        return f"{header}: {self.message}"
 
 
 def find_bars(lines, **debuginfo):
@@ -50,7 +50,7 @@ def get_spans(lines, linenos, left, right, **debuginfo):
                 try:
                     expr = parse_string_to_expr(string)
                 except Exception as e:
-                    raise ParseError("{}\n{}".format(e, line), **debuginfo)
+                    raise ParseError(f"{e}\n{line}", **debuginfo)
                 results.append(expr)
         else:
             break
@@ -109,11 +109,11 @@ def parse_string_to_expr(string):
     tokens = string.strip().split(" ")
     for token in tokens:
         if not token:
-            raise ValueError("extra whitespace:\n{}".format(repr(string)))
+            raise ValueError(f"extra whitespace:\n{string!r}")
     tokens.reverse()
     expr = parse_tokens_to_expr(tokens)
     if tokens:
-        raise ValueError("trailing tokens: {} in:\n{}".format(tokens, string))
+        raise ValueError(f"trailing tokens: {tokens} in:\n{string}")
     return expr
 
 

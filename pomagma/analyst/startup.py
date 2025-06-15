@@ -4,7 +4,7 @@ from pomagma import __version__
 from pomagma.analyst import connect as db
 
 db = db()
-print("Pomagma {}. Type help(db) for more information on client.".format(__version__))
+print(f"Pomagma {__version__}. Type help(db) for more information on client.")
 
 for name in dir(db):
     if not name.startswith("_"):

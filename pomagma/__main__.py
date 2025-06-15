@@ -39,7 +39,7 @@ def test(theory=THEORY, extra_size=0, **options):
     buildtype = "debug" if pomagma.util.debug else "release"
     path = os.path.join(pomagma.util.DATA, "test", buildtype, "atlas", theory)
     if os.path.exists(path):
-        os.system("rm -f {}/*".format(path))
+        os.system(f"rm -f {path}/*")
     else:
         os.makedirs(path)
     with pomagma.util.chdir(path), pomagma.util.mutex(block=False):
@@ -86,7 +86,7 @@ def test(theory=THEORY, extra_size=0, **options):
         with analyst.load(theory, world, **options) as db:
             fail_count = db.test_inference()
             assert fail_count == 0, "analyst.test_inference failed"
-    print("Theory {} appears valid.".format(theory))
+    print(f"Theory {theory} appears valid.")
 
 
 @parsable
@@ -98,7 +98,7 @@ def init(theory=THEORY, **options):
     """
     log_file = options.setdefault("log_file", "init.log")
     world_size = pomagma.util.MIN_SIZES[theory]
-    pomagma.util.log_print("initialize to {}".format(world_size), log_file)
+    pomagma.util.log_print(f"initialize to {world_size}", log_file)
     with atlas.chdir(theory, init=True):
         survey = DB("survey")
         world = DB("world")
@@ -249,11 +249,7 @@ def trim(theory=THEORY, parallel=True, **options):
                 for size in sizes
             ]
             if parallel:
-                print(
-                    "Trimming {} regions of sizes {}-{}".format(
-                        len(sizes), sizes[0], sizes[-1]
-                    )
-                )
+                print(f"Trimming {len(sizes)} regions of sizes {sizes[0]}-{sizes[-1]}")
                 db.trim(tasks)
             else:
                 for task in tasks:
@@ -267,7 +263,7 @@ def _analyze(theory=THEORY, size=None, address=analyst.ADDRESS, **options):
         if size is None:
             world = DB("world.normal")
         else:
-            world = DB("region.normal.{}".format(size))
+            world = DB(f"region.normal.{size}")
         assert os.path.exists(world), "First initialize normalized world"
         return analyst.serve(theory, world, address=address, **options)
 
@@ -340,21 +336,21 @@ def pull(tag="<most recent>", force=False):
             if force:
                 shutil.rmtree(master)
             else:
-                raise IOError("atlas exists; first remove atlas")
+                raise OSError("atlas exists; first remove atlas")
         if tag == "<most recent>":
             atlases = list_s3_atlases()
             if not atlases:
-                raise IOError(
+                raise OSError(
                     "No atlases available on S3 (S3 connection may have failed)"
                 )
             snapshot = max(atlases)
         else:
-            snapshot = "atlas.{}".format(tag)
-            assert match_atlas(snapshot), "invalid tag: {}".format(tag)
-        print("pulling {}".format(snapshot))
-        pomagma.io.s3.pull("{}/".format(snapshot))
+            snapshot = f"atlas.{tag}"
+            assert match_atlas(snapshot), f"invalid tag: {tag}"
+        print(f"pulling {snapshot}")
+        pomagma.io.s3.pull(f"{snapshot}/")
         blobs = [os.path.join("blob", blob) for blob in atlas.find_used_blobs(snapshot)]
-        print("pulling {} blobs".format(len(blobs)))
+        print(f"pulling {len(blobs)} blobs")
         pomagma.io.s3.pull(*blobs)
         pomagma.io.blobstore.validate_blobs()
         pomagma.io.s3.snapshot(snapshot, master)  # only after validation
@@ -371,12 +367,12 @@ def push(tag=default_tag, force=False):
     with pomagma.util.chdir(pomagma.util.DATA):
         master = "atlas"
         assert os.path.exists(master), "atlas does not exist"
-        snapshot = "atlas.{}".format(tag)
-        assert match_atlas(snapshot), "invalid tag: {}".format(tag)
+        snapshot = f"atlas.{tag}"
+        assert match_atlas(snapshot), f"invalid tag: {tag}"
         atlases = list_s3_atlases()
         if snapshot in atlases and not force:
-            raise IOError("snapshot already exists: {}".format(snapshot))
-        print("pushing {}".format(snapshot))
+            raise OSError(f"snapshot already exists: {snapshot}")
+        print(f"pushing {snapshot}")
         pomagma.io.s3.snapshot(master, snapshot)
         blobs = [os.path.join("blob", blob) for blob in atlas.find_used_blobs(snapshot)]
         pomagma.io.s3.push(snapshot, *blobs)

@@ -7,11 +7,9 @@ from pomagma.analyst.client import Client
 BINARY = os.path.join(pomagma.util.BIN, "analyst", "analyst")
 
 
-class Server(object):
+class Server:
     def __init__(self, theory, world, address, **opts):
-        language_file = os.path.join(
-            pomagma.util.LANGUAGE, "{}.language".format(theory)
-        )
+        language_file = os.path.join(pomagma.util.LANGUAGE, f"{theory}.language")
         args = [
             BINARY,
             pomagma.util.abspath(world),

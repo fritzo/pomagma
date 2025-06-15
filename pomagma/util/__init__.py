@@ -71,7 +71,7 @@ def suggest_region_sizes(min_size, max_size):
 
 
 def TODO(message=""):
-    raise NotImplementedError("TODO {}".format(message))
+    raise NotImplementedError(f"TODO {message}")
 
 
 def unicode_to_str(data):
@@ -83,7 +83,7 @@ def unicode_to_str(data):
     elif isinstance(data, dict):
         for key, value in list(data.items()):
             data[key] = unicode_to_str(value)
-    elif isinstance(data, (list, tuple)):
+    elif isinstance(data, list | tuple):
         for key, value in enumerate(data):
             data[key] = unicode_to_str(value)
     return data
@@ -142,18 +142,18 @@ def chdir(path):
     old_path = os.path.abspath(os.path.curdir)
     try:
         # os.makedirs(path)
-        print("# cd {}\n".format(path))
+        print(f"# cd {path}\n")
         os.chdir(path)
         yield os.path.curdir
     finally:
-        print("# cd {}\n".format(old_path))
+        print(f"# cd {old_path}\n")
         os.chdir(old_path)
 
 
 def temp_name(path):
     dirname, filename = os.path.split(path)
     # assert not filename.startswith('temp.'), path
-    return os.path.join(dirname, "temp.{}.{}".format(os.getpid(), filename))
+    return os.path.join(dirname, f"temp.{os.getpid()}.{filename}")
 
 
 @contextlib.contextmanager
@@ -198,7 +198,7 @@ def in_temp_dir():
         cleanup = True
     finally:
         if cleanup:
-            print("# rm -rf {}\n".format(path))
+            print(f"# rm -rf {path}\n")
             shutil.rmtree(path)
 
 
@@ -207,7 +207,7 @@ class MutexLockedException(Exception):
         self.filename = os.path.abspath(filename)
 
     def __str__(self):
-        return "Failed to acquire lock on {}".format(self.filename)
+        return f"Failed to acquire lock on {self.filename}"
 
 
 # Adapted from:
@@ -219,12 +219,12 @@ def mutex(filename=None, block=True):
     elif os.path.isdir(filename):
         mutex_filename = os.path.join(filename, "mutex")
     else:
-        mutex_filename = "{}.mutex".format(filename)
+        mutex_filename = f"{filename}.mutex"
     with open(mutex_filename, "w") as fd:
         if block:
             try:
                 fcntl.flock(fd, fcntl.LOCK_EX)
-                fd.write("{}\n".format(os.getpid()))
+                fd.write(f"{os.getpid()}\n")
                 fd.flush()
                 yield
             finally:
@@ -232,9 +232,9 @@ def mutex(filename=None, block=True):
         else:
             try:
                 fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-                fd.write("{}\n".format(os.getpid()))
+                fd.write(f"{os.getpid()}\n")
                 fd.flush()
-            except IOError as e:
+            except OSError as e:
                 assert e.errno in [errno.EACCES, errno.EAGAIN]
                 raise MutexLockedException(mutex_filename)
             else:
@@ -251,7 +251,7 @@ def log_duration():
         yield
     finally:
         duration = timeit.default_timer() - start_time
-        print("# took {:0.3g} sec".format(duration))
+        print(f"# took {duration:0.3g} sec")
 
 
 def abspath(path):
@@ -288,13 +288,11 @@ def make_env(options):
     default_log_level = LOG_LEVEL_DEBUG if debug else LOG_LEVEL_INFO
     options.setdefault("log_level", default_log_level)
     options["blob_dir"] = os.path.abspath(options.get("blob_dir", BLOB_DIR))
-    return {
-        "POMAGMA_{}".format(key.upper()): str(val) for key, val in list(options.items())
-    }
+    return {f"POMAGMA_{key.upper()}": str(val) for key, val in list(options.items())}
 
 
 def print_command(args, env={}):
-    lines = ["{}={}".format(key, val) for key, val in list(env.items())]
+    lines = [f"{key}={val}" for key, val in list(env.items())]
     lines += args
     message = "{}\n".format(" \\\n  ".join(lines))
     sys.stderr.write(message)
@@ -317,7 +315,7 @@ def check_call(*args):
 def print_logged_error(log_file):
     print()
     print("==== LOG FILE ====")
-    print("file://{}".format(log_file))
+    print(f"file://{log_file}")
     grep = " ".join(
         [
             "grep",
@@ -331,7 +329,7 @@ def print_logged_error(log_file):
         ]
     )
     tac = "tail -r" if os.system("which tac") else "tac"
-    revgrep = "{tac} {file} | {grep} | {tac}".format(tac=tac, file=log_file, grep=grep)
+    revgrep = f"{tac} {log_file} | {grep} | {tac}"
     subprocess.call(revgrep, shell=True)
 
 
@@ -343,7 +341,7 @@ def get_stack_trace(binary, pid):
                 [
                     "lldb",
                     "-c",
-                    "/cores/core.{}".format(pid),
+                    f"/cores/core.{pid}",
                     binary,
                     "--batch",
                     "-o",
@@ -442,8 +440,8 @@ def use_memcheck(options, output="memcheck.out"):
             "--leak-check=full",
             "--show-reachable=yes",
             "--track-origins=yes",
-            "--log-file={}".format(output),
-            "--suppressions={}".format(suppressions),
+            f"--log-file={output}",
+            f"--suppressions={suppressions}",
         ]
     )
     return options
@@ -454,7 +452,7 @@ def coverity():
     See http://scan.coverity.com
     """
     buildtype = "Debug"
-    buildflag = "-DCMAKE_BUILD_TYPE={}".format(buildtype)
+    buildflag = f"-DCMAKE_BUILD_TYPE={buildtype}"
     for d in [BUILD, COVERITY]:
         if os.path.exists(d):
             shutil.rmtree(d)
@@ -468,11 +466,11 @@ def notify(subject, content):
     """Send notification email to POMAGMA_NOTIFY_EMAIL or write to stderr."""
     if not NOTIFY_EMAIL:
         sys.stderr.write("POMAGMA_NOTIFY_EMAIL not set\n")
-        sys.stderr.write("Subject: {}\n".format(subject))
-        sys.stderr.write("Message:\n{}\n".format(content))
+        sys.stderr.write(f"Subject: {subject}\n")
+        sys.stderr.write(f"Message:\n{content}\n")
         sys.stderr.flush()
     message = email.mime.text.MIMEText(content)
-    message["Subject"] = "[POMAGMA] {}".format(subject)
+    message["Subject"] = f"[POMAGMA] {subject}"
     message["From"] = "noreply@pomagma.org"
     message["To"] = NOTIFY_EMAIL
     s = smtplib.SMTP("localhost")

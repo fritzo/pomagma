@@ -23,7 +23,7 @@ def try_prove_nless(
     pomagma.util.log_call(
         os.path.join(BIN, "try_prove_nless"),
         pomagma.util.abspath(world_in),
-        os.path.join(pomagma.util.LANGUAGE, "{}.language".format(theory)),
+        os.path.join(pomagma.util.LANGUAGE, f"{theory}.language"),
         pomagma.util.abspath(conjectures_in),
         pomagma.util.abspath(conjectures_out),
         pomagma.util.abspath(theorems_out),

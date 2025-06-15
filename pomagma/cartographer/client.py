@@ -13,7 +13,7 @@ Request = messages.CartographerRequest
 Response = messages.CartographerResponse
 
 
-class Client(object):
+class Client:
     def __init__(self, address, poll_callback):
         assert isinstance(address, str), address
         assert callable(poll_callback), poll_callback
