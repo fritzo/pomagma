@@ -82,16 +82,16 @@ def test_iter_eta_substitutions():
     a = Expression.make("a")
     x = Expression.make("x")
     actual = set(iter_eta_substitutions(x))
-    expected = set([x, a.abstract(a), APP(x, a).abstract(a)])
+    expected = {x, a.abstract(a), APP(x, a).abstract(a)}
     assert actual == expected
 
 
 def test_iter_closure_maps():
     x = Expression.make("x")
     y = Expression.make("y")
-    assert set(iter_closure_maps(x)) == set([I])
-    assert set(iter_closure_maps(APP(x, x))) == set([APP(W, I)])
-    assert set(iter_closure_maps(APP(x, y))) == set([I, APP(C, I), APP(W, I)])
+    assert set(iter_closure_maps(x)) == {I}
+    assert set(iter_closure_maps(APP(x, x))) == {APP(W, I)}
+    assert set(iter_closure_maps(APP(x, y))) == {I, APP(C, I), APP(W, I)}
 
 
 def iter_close_rules():

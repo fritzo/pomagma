@@ -361,7 +361,7 @@ def test_as_graph_runs(name, graph):
     [
         (
             j,
-            dict(j=lambda x, y: x(j(y))),
+            {"j": lambda x, y: x(j(y))},
             Graph.make(
                 Term.ABS(1),
                 Term.ABS(2),

@@ -133,13 +133,9 @@ def normalize_given(seq, atom, bound=None):
         if succedent.name == "EQUAL":
             lhs, rhs = succedent.args
             if lhs == atom:
-                yield Sequent(
-                    set_with(normal.antecedents, lhs), set([EQUAL(lhs.var, rhs)])
-                )
+                yield Sequent(set_with(normal.antecedents, lhs), {EQUAL(lhs.var, rhs)})
             elif rhs == atom:
-                yield Sequent(
-                    set_with(normal.antecedents, rhs), set([EQUAL(lhs, rhs.var)])
-                )
+                yield Sequent(set_with(normal.antecedents, rhs), {EQUAL(lhs, rhs.var)})
 
 
 @inputs(Sequent, Expression)

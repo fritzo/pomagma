@@ -42,8 +42,8 @@ def desugar_expr(self):
 @inputs(Sequent)
 def desugar_sequent(self):
     return Sequent(
-        set(desugar_expr(a) for a in self.antecedents),
-        set(desugar_expr(s) for s in self.succedents),
+        {desugar_expr(a) for a in self.antecedents},
+        {desugar_expr(s) for s in self.succedents},
     )
 
 
@@ -53,7 +53,7 @@ def desugar_theory(theory):
     facts = []
     for fact in map(desugar_expr, theory["facts"]):
         if fact.vars:
-            rules.append(Sequent(set(), set([fact])))
+            rules.append(Sequent(set(), {fact}))
         else:
             facts.append(fact)
     return {"facts": facts, "rules": rules}

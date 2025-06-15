@@ -41,9 +41,9 @@ class Extractor:
         order.sort(key=lambda i: best[i].item(), reverse=True)
 
         # Index nullary functions by ob.
-        nullary_functions: Dict[Ob, str] = {}
-        for name, ob in self.structure.nullary_functions.items():
-            nullary_functions[ob] = name
+        nullary_functions: Dict[Ob, str] = {
+            ob: name for name, ob in self.structure.nullary_functions.items()
+        }
 
         # Extract the shortest expression for each E-class.
         expressions: Dict[Ob, Optional[Expression]] = {Ob(0): None}

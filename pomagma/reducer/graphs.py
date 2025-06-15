@@ -242,7 +242,7 @@ def term_iter_subterms(term):
 def graph_prune(terms):
     """Remove vertices unreachable from the root."""
     assert all(isinstance(term, Term) for term in terms)
-    connected = set([0])
+    connected = {0}
     pending = [0]
     while pending:
         term = terms[pending.pop()]
@@ -442,8 +442,8 @@ def graph_reachable_by(graph, pos):
     """Return set of positions reachable by pos."""
     assert isinstance(graph, Graph)
     assert isinstance(pos, int) and 0 <= pos and pos < len(graph), pos
-    result = set([])
-    pending = set([pos])
+    result = set()
+    pending = {pos}
     while pending:
         pos = pending.pop()
         result.add(pos)
@@ -505,8 +505,7 @@ def FUN(var, body):
     name = var[0][1]
     body_offset = 1
     terms = [Term.ABS(1)]
-    for term in body:
-        terms.append(term_shift(term, body_offset))
+    terms.extend(term_shift(term, body_offset) for term in body)
     for i, term in enumerate(terms):
         if term.is_nvar and term[1] is name:
             terms[i] = Term.VAR(0)
@@ -521,10 +520,8 @@ def APP(lhs, rhs):
     lhs_offset = 1
     rhs_offset = 1 + len(lhs)
     terms = [Term.APP(lhs_offset, rhs_offset)]
-    for term in lhs:
-        terms.append(term_shift(term, lhs_offset))
-    for term in rhs:
-        terms.append(term_shift(term, rhs_offset))
+    terms.extend(term_shift(term, lhs_offset) for term in lhs)
+    terms.extend(term_shift(term, rhs_offset) for term in rhs)
     return graph_make(terms)
 
 
@@ -567,8 +564,7 @@ def JOIN(args):
         offsets.append(offsets[-1] + len(arg))
     terms = [Term.JOIN(offsets)]
     for arg, offset in zip(args, offsets):
-        for term in arg:
-            terms.append(term_shift(term, offset))
+        terms.extend(term_shift(term, offset) for term in arg)
     return graph_make(terms)
 
 
@@ -627,8 +623,7 @@ def letrec(root, **defs):
         var_term = Term.NVAR(name)
         offset = len(terms)
         defs_pos[var_term] = offset
-        for term in defn:
-            terms.append(term_shift(term, offset))
+        terms.extend(term_shift(term, offset) for term in defn)
     subs = Substitution()
     for term_pos, term in enumerate(terms):
         if term in defs_pos:
@@ -750,13 +745,13 @@ def find_scope(graph, abs_pos):
     assert 0 <= abs_pos and abs_pos < len(graph)
     assert graph[abs_pos].is_abs
     var_term = Term.VAR(abs_pos)
-    vars_in_scope = set([var_term])
+    vars_in_scope = {var_term}
     changed = True
     while changed:
         changed = False
-        scope = set(
-            [pos for pos in range(len(graph)) if vars_in_scope & free_vars(graph, pos)]
-        )
+        scope = {
+            pos for pos in range(len(graph)) if vars_in_scope & free_vars(graph, pos)
+        }
         for pos in scope:
             # FIXME This is wrong; subtracting free_vars(graph, abs_pos)
             # is a hack.

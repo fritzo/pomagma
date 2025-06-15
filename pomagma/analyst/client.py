@@ -137,14 +137,13 @@ class Client(object):
         for code in codes:
             request.validate.codes.append(code)
         reply = self._call(request)
-        results = []
-        for result in reply.validate.results:
-            results.append(
-                {
-                    "is_top": TROOL[result.is_top],
-                    "is_bot": TROOL[result.is_bot],
-                }
-            )
+        results = [
+            {
+                "is_top": TROOL[result.is_top],
+                "is_bot": TROOL[result.is_bot],
+            }
+            for result in reply.validate.results
+        ]
         return results
 
     def validate(self, codes):
@@ -165,15 +164,14 @@ class Client(object):
                 request_line.name = name
             request_line.code = line["code"]
         reply = self._call(request)
-        results = []
-        for result in reply.validate_corpus.results:
-            results.append(
-                {
-                    "is_top": TROOL[result.is_top],
-                    "is_bot": TROOL[result.is_bot],
-                    "pending": result.pending,
-                }
-            )
+        results = [
+            {
+                "is_top": TROOL[result.is_top],
+                "is_bot": TROOL[result.is_bot],
+                "pending": result.pending,
+            }
+            for result in reply.validate_corpus.results
+        ]
         return results
 
     def validate_corpus(self, lines):
@@ -243,7 +241,7 @@ class Client(object):
         if histogram is not None:
             assert isinstance(histogram, dict), histogram
             keys = set(histogram.keys())
-            assert keys == set(["symbols", "obs"]), keys
+            assert keys == {"symbols", "obs"}, keys
             for name, count in list(histogram["symbols"].items()):
                 assert isinstance(name, str), name
                 assert isinstance(count, int), count

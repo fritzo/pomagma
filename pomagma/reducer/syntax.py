@@ -536,8 +536,7 @@ def to_sexpr(term):
     if is_nvar(head) or is_ivar(head):
         head = head[1]
     elif head[0] in _keywords:
-        for arg in head[-1:0:-1]:
-            args.append(to_sexpr(arg))
+        args.extend(to_sexpr(arg) for arg in head[-1:0:-1])
         head = head[0]
     args.append(head)
     args.reverse()

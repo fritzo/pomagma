@@ -128,8 +128,7 @@ LOG.addHandler(handler)
 
 def _logged(*format_args, **format_kwargs):
     formatters = dict(format_kwargs)
-    for i, fmt in enumerate(format_args):
-        formatters[i] = fmt
+    formatters.update(dict(enumerate(format_args)))
 
     def decorator(fun):
         @functools.wraps(fun)

@@ -258,7 +258,7 @@ def converge_less(lhs, rhs):
 def try_converge(term, steps):
     """If a term 'DIV x' head reduces to a term less than or equal to itself,
     then it diverges."""
-    seen = set([term])
+    seen = {term}
     for _ in range(steps):
         try:
             term = converge_step(term)

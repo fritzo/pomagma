@@ -335,7 +335,7 @@ def simplify_defs(facts, vars_to_keep=set()):
     free variables.
 
     """
-    facts = set(desugar_expr(f) for f in facts)
+    facts = {desugar_expr(f) for f in facts}
     defs = {}
     extract_defs_from_facts(facts, defs)
     changed = True
@@ -365,10 +365,10 @@ def simplify_facts(db, facts, vars_to_keep):
     assert isinstance(vars_to_keep, set), vars_to_keep
     assert all(isinstance(v, Expression) for v in vars_to_keep), vars_to_keep
     assert all(v.is_var() for v in vars_to_keep), vars_to_keep
-    facts = set(simplify_expr(f) for f in facts)
+    facts = {simplify_expr(f) for f in facts}
     facts = simplify_defs(facts, vars_to_keep)
     strings = db.simplify([f.polish for f in facts])
-    facts = set(parse_string_to_expr(s) for s in strings)
+    facts = {parse_string_to_expr(s) for s in strings}
     facts = list(map(unguard_vars, facts))
     return facts
 

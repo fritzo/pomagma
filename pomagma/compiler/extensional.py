@@ -252,7 +252,7 @@ def iter_eta_substitutions(expr):
 def iter_subsets(set_):
     list_ = list(set_)
     for cases in itertools.product([0, 1], repeat=len(list_)):
-        yield set(x for (x, case) in zip(list_, cases) if case)
+        yield {x for (x, case) in zip(list_, cases) if case}
 
 
 @inputs(Expression)
@@ -317,6 +317,6 @@ def derive_facts(rule):
             if lhs != rhs:
                 assert derived.is_rel()
                 facts.add(derived)
-        facts = sorted(list(facts), key=lambda expr: len(expr.polish))
+        facts = sorted(facts, key=lambda expr: len(expr.polish))
         logger("derived {0} facts from {1}".format(len(facts), expr))
     return facts

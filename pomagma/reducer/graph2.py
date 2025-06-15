@@ -66,7 +66,7 @@ class Node(object):
         if self is other:
             return True
         node_by_id = {id(self): self, id(other): other}
-        hyp = set([make_equation(self, other)])
+        hyp = {make_equation(self, other)}
         con = set()
         while hyp:
             eqn = hyp.pop()

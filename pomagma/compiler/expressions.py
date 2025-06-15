@@ -76,7 +76,7 @@ class Expression(object):
     def vars(self):
         if self._vars is None:
             if self._arity == "Variable":
-                self._vars = set([self])
+                self._vars = {self}
             elif self._arity == "NullaryFunction":
                 self._vars = set()
             elif self._arity in signature.FUNCTION_ARITIES:
@@ -237,9 +237,7 @@ def try_get_negated(expr):
     """Returns a disjunction."""
     if expr.name == "EQUAL":
         lhs, rhs = expr.args
-        return set(
-            [Expression.make("NLESS", lhs, rhs), Expression.make("NLESS", rhs, lhs)]
-        )
+        return {Expression.make("NLESS", lhs, rhs), Expression.make("NLESS", rhs, lhs)}
     else:
         neg_name = try_negate_name(expr.name)
-        return set([Expression.make(neg_name, *expr.args)])
+        return {Expression.make(neg_name, *expr.args)}

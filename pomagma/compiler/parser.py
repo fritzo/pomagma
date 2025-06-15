@@ -119,8 +119,7 @@ def parse_string_to_expr(string):
 
 def remove_comments_and_add_padding(lines_with_comments):
     lines = [""]
-    for line in lines_with_comments:
-        lines.append(RE_COMMENT.sub("", line).rstrip())
+    lines.extend(RE_COMMENT.sub("", line).rstrip() for line in lines_with_comments)
     lines.append("")
     return lines
 

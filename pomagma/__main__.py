@@ -240,15 +240,14 @@ def trim(theory=THEORY, parallel=True, **options):
             min_size = pomagma.util.MIN_SIZES[theory]
             max_size = db.info()["item_count"]
             sizes = suggest_region_sizes(min_size, max_size)
-            tasks = []
-            for size in sizes:
-                tasks.append(
-                    {
-                        "size": size,
-                        "temperature": 0,
-                        "filename": DB("region.normal.{:d}").format(size),
-                    }
-                )
+            tasks = [
+                {
+                    "size": size,
+                    "temperature": 0,
+                    "filename": DB("region.normal.{:d}").format(size),
+                }
+                for size in sizes
+            ]
             if parallel:
                 print(
                     "Trimming {} regions of sizes {}-{}".format(
@@ -323,7 +322,7 @@ def list_s3_atlases():
     import pomagma.io.s3
 
     filenames = pomagma.io.s3.listdir()
-    return set(m.group() for m in map(match_atlas, filenames) if m)
+    return {m.group() for m in map(match_atlas, filenames) if m}
 
 
 @parsable

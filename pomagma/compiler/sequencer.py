@@ -29,8 +29,7 @@ def dump_programs(programs):
     for i, program in enumerate(programs):
         lines.append("")
         lines.append("# plan {}: {} bytes".format(i, sizeof_program(program)))
-        for line in program:
-            lines.append(" ".join(line))
+        lines.extend(" ".join(line) for line in program)
     return lines
 
 

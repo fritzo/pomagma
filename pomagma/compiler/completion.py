@@ -25,31 +25,29 @@ LESS = Expression_2("LESS")
 NLESS = Expression_2("NLESS")
 
 # this will be completed below
-basic_facts = set(
-    [
-        NLESS(TOP, BOT),
-        NLESS(I, BOT),
-        NLESS(TOP, I),
-        NLESS(K, BOT),
-        NLESS(TOP, K),
-        NLESS(K, F),
-        NLESS(F, BOT),
-        NLESS(TOP, F),
-        NLESS(F, K),
-        NLESS(J, BOT),
-        NLESS(TOP, J),
-        LESS(K, J),
-        NLESS(J, K),
-        LESS(F, J),
-        NLESS(J, F),
-        NLESS(I, K),
-        NLESS(K, I),
-        NLESS(I, F),
-        NLESS(F, I),
-        NLESS(I, J),
-        NLESS(J, I),
-    ]
-)
+basic_facts = {
+    NLESS(TOP, BOT),
+    NLESS(I, BOT),
+    NLESS(TOP, I),
+    NLESS(K, BOT),
+    NLESS(TOP, K),
+    NLESS(K, F),
+    NLESS(F, BOT),
+    NLESS(TOP, F),
+    NLESS(F, K),
+    NLESS(J, BOT),
+    NLESS(TOP, J),
+    LESS(K, J),
+    NLESS(J, K),
+    LESS(F, J),
+    NLESS(J, F),
+    NLESS(I, K),
+    NLESS(K, I),
+    NLESS(I, F),
+    NLESS(F, I),
+    NLESS(I, J),
+    NLESS(J, I),
+}
 
 
 # TODO compile this from *.rules, rather than hand-coding
@@ -119,8 +117,8 @@ def close_under(facts, closure_op):
 
 
 def complete(facts, terms=set()):
-    terms = terms | union(p.terms for p in facts) | set([BOT, TOP])
-    relevant_facts = set(p for p in basic_facts if p.terms <= terms)
+    terms = terms | union(p.terms for p in facts) | {BOT, TOP}
+    relevant_facts = {p for p in basic_facts if p.terms <= terms}
     return close_under(facts, complete_step(terms, relevant_facts))
 
 
@@ -181,7 +179,7 @@ def try_simplify_antecedents(facts):
     completed = complete(facts)
     if not all_consistent(completed):
         raise Inconsistent
-    simple = set([frozenset(facts)])
+    simple = {frozenset(facts)}
     simple = close_under(simple, simplify_step(completed))
     facts = set(min(simple, key=objective_function))
     return facts

@@ -162,7 +162,7 @@ def get_pointed(seq):
                     )
                 except Inconsistent:
                     continue
-                result.add(Sequent(antecedents, set([succedent])))
+                result.add(Sequent(antecedents, {succedent}))
     else:
         raise ValueError("get_contrapositives never returns empty succedents")
     return result
@@ -182,7 +182,7 @@ def get_atomic(seq, bound=set()):
         antecedents, succedent = as_succedent(improper_succedent, bound)
         for a in pointed.antecedents:
             antecedents |= as_antecedents(a, bound)
-        result.add(Sequent(antecedents, set([succedent])))
+        result.add(Sequent(antecedents, {succedent}))
     return result
 
 
@@ -209,13 +209,13 @@ def get_contrapositives(seq):
             antecedents = try_get_negated(succedent)
         except NotNegatable:
             antecedents = set()
-        ante_succ_pairs.append((antecedents, set([succedent])))
+        ante_succ_pairs.append((antecedents, {succedent}))
     for antecedent in map(weaken_sequent, seq.antecedents):
         try:
             succedents = try_get_negated(antecedent)
         except NotNegatable:
             succedents = set()
-        ante_succ_pairs.append((set([antecedent]), succedents))
+        ante_succ_pairs.append(({antecedent}, succedents))
     result = set()
     for _, succedents in ante_succ_pairs:
         if succedents:

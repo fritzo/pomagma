@@ -60,10 +60,21 @@ target-version = "py311"
 [tool.ruff.lint]
 # Enable additional rules as needed
 select = [
-    "E",  # pycodestyle errors
+    # "ANN",
+    "ASYNC",
+    # "B",  # bugbear
+    "C4",
+    # "COM",
+    "E",  # pycodestyle
+    "EXE",
     "G",  # logging format
     "F",  # pyflakes
-    "I",  # isort (import sorting)
+    "FA",
+    "I",  # isort
+    "ICN",
+    "INT",  # gettext
+    "ISC",
+    "PERF",
     "W",  # pycodestyle warnings
 ]
 

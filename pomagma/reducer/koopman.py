@@ -96,7 +96,7 @@ class Node(object):
         if self is other:
             return True
         node_by_id = {id(self): self, id(other): other}
-        hyp = set([make_equation(self, other)])
+        hyp = {make_equation(self, other)}
         con = set()
         while hyp:
             eqn = hyp.pop()
@@ -163,7 +163,7 @@ def try_beta_step(node):
         True or False, depending on whether a step was performed.
     """
     assert isinstance(node, Node)
-    stack = set([id(node)])
+    stack = {id(node)}
     return _try_beta_step(node, stack)
 
 

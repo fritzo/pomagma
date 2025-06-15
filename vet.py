@@ -43,7 +43,7 @@ def read_vetted_hashes():
         reader = csv.reader(f)
         header = next(reader)
         assert header == ["filename", "hexdigest"], header
-        hashes = {filename: hexdigest for filename, hexdigest in reader}
+        hashes = {filename: hexdigest for filename, hexdigest in reader}  # noqa: C416
     return hashes
 
 

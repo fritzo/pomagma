@@ -56,7 +56,7 @@ def make_combinator(bound, headex):
 
 def free_vars(headex):
     assert isinstance(headex, Headex)
-    result = set([headex.head])
+    result = {headex.head}
     for patt in headex.args:
         for var in patt.args:
             result.add(var)
@@ -178,9 +178,7 @@ class Presentation(object):
         assert self.is_deterministic
 
         con = set()
-        hyp = set(
-            [(lc, rc) for lc in self._equations[lhs] for rc in self._equations[rhs]]
-        )
+        hyp = {(lc, rc) for lc in self._equations[lhs] for rc in self._equations[rhs]}
         while hyp:
             focus = hyp.pop()
             if focus in con:
@@ -204,12 +202,7 @@ class Presentation(object):
 
         # Each set is a conjunction of disjunctions.
         con = set()
-        hyp = set(
-            [
-                set([(lc, rc) for rc in self._equations[rhs]])
-                for lc in self._equations[lhs]
-            ]
-        )
+        hyp = {{(lc, rc) for rc in self._equations[rhs]} for lc in self._equations[lhs]}
         while hyp:
             focus = hyp.pop()
             if focus in con:
