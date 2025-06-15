@@ -144,7 +144,7 @@ def test_graph_address(terms, r):
     perm = list(range(1, len(terms)))
     r.shuffle(perm)
     hypothesis.assume(perm != sorted(perm))
-    perm = [0] + perm
+    perm = [0, *perm]
     shuffled_terms = graph_permute(terms, perm)
     shuffled_address = graph_address(shuffled_terms)
     address = graph_address(terms)
@@ -157,7 +157,7 @@ def test_graph_sort(terms, r):
     perm = list(range(1, len(terms)))
     r.shuffle(perm)
     hypothesis.assume(perm != sorted(perm))
-    perm = [0] + perm
+    perm = [0, *perm]
     shuffled_terms = graph_permute(terms, perm)
     sorted_terms = graph_sort(shuffled_terms)
     assert sorted_terms == list(terms)

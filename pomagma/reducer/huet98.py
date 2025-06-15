@@ -109,7 +109,7 @@ def app(comb, *args):
         else:
             headex = make_headex(
                 headex.head,
-                headex.args + (make_pattern("_I", arg),),
+                (*headex.args, make_pattern("_I", arg)),
             )
     return make_combinator(bound, headex)
 

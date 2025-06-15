@@ -34,7 +34,7 @@ class VAR(Node):
     """VARs are used only during net construction."""
 
     ports = ["val"]
-    __slots__ = ["name"] + ports
+    __slots__ = ["name", *ports]
 
     def __init__(self, name):
         self.name = name
@@ -54,7 +54,7 @@ class COPY(Node):
     """Copy nodes have ids as in https://arxiv.org/pdf/1701.04691.pdf"""
 
     ports = ["lhs", "rhs", "val"]
-    __slots__ = ["id"] + ports
+    __slots__ = ["id", *ports]
 
     def __init__(self, id):
         self.id = id

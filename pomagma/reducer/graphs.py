@@ -383,7 +383,7 @@ def graph_address(terms):
         i = pending.popleft()
         address = min_address[i]
         for direction, j in term_iter_subterms(terms[i]):
-            subaddress = address + (direction,)
+            subaddress = (*address, direction)
             if min_address[j] is None or subaddress < min_address[j]:
                 min_address[j] = subaddress
                 pending.append(j)

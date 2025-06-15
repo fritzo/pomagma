@@ -121,7 +121,7 @@ def pop_arg(args):
 
 def head_normalize(expr, *args):
     if expr.is_var():
-        return [expr] + list(args)
+        return [expr, *list(args)]
     assert expr.is_fun(), expr
     name = expr.name
     if name == "APP":

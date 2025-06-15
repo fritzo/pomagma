@@ -48,9 +48,21 @@ def test_complexity_evaluator(example):
 
 
 FILLINGS = sorted(
-    ["BOT", "TOP", "I", "K", "B", "C", "S"]
-    + ["APP HOLE HOLE", "COMP HOLE HOLE", "JOIN HOLE HOLE"]
-    + ["x", "y", "z"]
+    [
+        "BOT",
+        "TOP",
+        "I",
+        "K",
+        "B",
+        "C",
+        "S",
+        "APP HOLE HOLE",
+        "COMP HOLE HOLE",
+        "JOIN HOLE HOLE",
+        "x",
+        "y",
+        "z",
+    ]
 )
 
 HOLE_FILLER_EXAMPLES = [

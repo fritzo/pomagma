@@ -36,7 +36,7 @@ def iter_terms(atoms, max_atom_count):
                 rhs_count = atom_count - lhs_count
                 for lhs in iter_terms(atoms, lhs_count):
                     for rhs in iter_terms(atoms, rhs_count):
-                        yield lhs + (rhs,)
+                        yield (*lhs, rhs)
 
 
 # ----------------------------------------------------------------------------
@@ -266,7 +266,7 @@ def parse_tokens_unsafe(tokens):
     if head == "APP":
         lhs = parse_tokens_unsafe(tokens)
         rhs = parse_tokens_unsafe(tokens)
-        return lhs + (rhs,)
+        return (*lhs, rhs)
     if head == "COMP":
         lhs = parse_tokens_unsafe(tokens)
         rhs = parse_tokens_unsafe(tokens)
@@ -432,7 +432,7 @@ def count_terms(max_count=8):
     print("-" * 8 * (1 + max_count))
     for m in max_counts:
         counts = [count(a, m) for a in atom_counts if a + m <= max_count + 1]
-        print("\t".join(map(str, [m] + counts)))
+        print("\t".join(map(str, [m, *counts])))
 
 
 @parsable

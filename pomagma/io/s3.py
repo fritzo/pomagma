@@ -6,8 +6,10 @@ https://github.com/boto/boto/blob/develop/boto/s3
 
 """
 
+import functools
 import hashlib
 import multiprocessing
+import operator
 import os
 import re
 import subprocess
@@ -326,8 +328,10 @@ def snapshot(source, destin):
 def pull(*filenames):
     """Pull files from S3 into local cache."""
     assert BUCKET
-    filenames = sum(
-        [list(listdir(f)) if f.endswith("/") else [f] for f in filenames], []
+    filenames = functools.reduce(
+        operator.iadd,
+        [list(listdir(f)) if f.endswith("/") else [f] for f in filenames],
+        [],
     )
     parallel_map(get, filter_cache(filenames))
 
@@ -336,7 +340,7 @@ def pull(*filenames):
 def push(*filenames):
     """Push files to S3 from local cache."""
     assert BUCKET
-    filenames = sum(list(map(find, filenames)), [])
+    filenames = functools.reduce(operator.iadd, list(map(find, filenames)), [])
     filenames = list(map(os.path.relpath, filenames))
     parallel_map(put, filter_cache(filenames))
 

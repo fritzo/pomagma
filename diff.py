@@ -14,11 +14,13 @@ DIFFTOOL = os.environ.get("POMAGMA_DIFFTOOL", os.environ.get("EDITOR", "meld"))
 
 def get_difftool(tool, left, right, diffignore):
     if tool == "diff":
-        return (
-            ["diff", "-r"]
-            + list(map("--exclude={}".format, diffignore))
-            + [left, right]
-        )
+        return [
+            "diff",
+            "-r",
+            *list(map("--exclude={}".format, diffignore)),
+            left,
+            right,
+        ]
     if tool == "cdiff":
         return ["cdiff", "-s", "-w", "0", left, right]
     if tool == "vim":

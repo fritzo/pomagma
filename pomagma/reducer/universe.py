@@ -82,7 +82,7 @@ def APP(fun, arg):
 
 def JOIN(args):
     assert all(isinstance(arg, Ob) for arg in args)
-    return Term.make((_JOIN,) + tuple(sorted(set(args))))
+    return Term.make((_JOIN, *tuple(sorted(set(args)))))
 
 
 # ----------------------------------------------------------------------------

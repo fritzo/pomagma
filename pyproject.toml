@@ -58,13 +58,26 @@ line-length = 88
 target-version = "py311"
 
 [tool.ruff.lint]
-# Enable additional rules as needed
+unfixable = ["F841"]
+ignore = [
+  "COM812",
+  "E203",
+  "E501",
+  "E741",
+  "RET504",
+  "RUF001",
+  "RUF012",
+  "RUF023",
+  "SIM102",
+  "SIM108",
+  "SIM300",
+]
 select = [
     # "ANN",
     "ASYNC",
     # "B",  # bugbear
     "C4",
-    # "COM",
+    "COM",
     "E",  # pycodestyle
     "EXE",
     "G",  # logging format
@@ -81,12 +94,9 @@ select = [
     "Q",
     "RET",
     "RSE",
+    "RUF",
     "W",  # pycodestyle warnings
 ]
-
-# Ignore E741 (ambiguous variable name) since we use mathematical notation
-# where single letters like I, K, F, etc. are conventional combinators
-ignore = ["E741"]
 
 [tool.ruff.format]
 quote-style = "double"

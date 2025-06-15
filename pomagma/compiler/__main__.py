@@ -455,7 +455,7 @@ def batch_compile(parallel=True):
             SRC, "theory", "{}.optimized.programs".format(name)
         )
         outfiles = [symbols_out, facts_out, programs_out]
-        if not up_to_date(infiles + [theories_json], outfiles):
+        if not up_to_date([*infiles, theories_json], outfiles):
             params.append(
                 {
                     "args": infiles,

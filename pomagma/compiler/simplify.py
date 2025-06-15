@@ -79,11 +79,11 @@ def simplify_stack(head, *args):
             return simplify_stack(lhs, *args)
         # commutativity
         lhs, rhs = sorted((lhs, rhs))
-        return [JOIN(lhs, rhs)] + args
+        return [JOIN(lhs, rhs), *args]
         # TODO simplify wrt associativity
 
     head = Expression.make(head.name, *list(map(simplify_term, head.args)))
-    return [head] + args
+    return [head, *args]
 
 
 @memoize_arg
