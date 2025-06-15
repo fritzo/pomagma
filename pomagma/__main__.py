@@ -21,7 +21,7 @@ THEORY = os.environ.get("POMAGMA_THEORY", "skja")
 
 # as suggested in http://stackoverflow.com/questions/974189
 def raise_keyboard_interrupt(signum, frame):
-    raise KeyboardInterrupt()
+    raise KeyboardInterrupt
 
 
 def already_exists(path):

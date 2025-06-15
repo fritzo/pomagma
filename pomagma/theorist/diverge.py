@@ -61,9 +61,9 @@ def converge_step(term):
     argv = term[1:]
     argc = len(argv)
     if head == TOP:
-        raise Converged()
+        raise Converged
     if head == BOT:
-        raise Diverged()
+        raise Diverged
     if head == I:
         if argc == 0:
             return (TOP,)
@@ -214,11 +214,11 @@ def converge_step(term):
             ),
         ) + argv[2:]
     if head in [R]:
-        raise Unknown()
+        raise Unknown
     if head in UNKNOWNS:
-        raise Unknown()
+        raise Unknown
     print("WARNING unrecognized atom: {}".format(head))
-    raise Unknown()
+    raise Unknown
 
 
 def trivially_less(lhs, rhs):

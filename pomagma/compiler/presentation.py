@@ -27,4 +27,4 @@ def pythonize_theory(proto_theory):
 @cached
 @methodof(proto.Theory, proto.Theory)
 def entails(lhs, rhs):
-    raise NotImplementedError()
+    raise NotImplementedError

@@ -80,6 +80,7 @@ select = [
     # "PT",
     "Q",
     "RET",
+    "RSE",
     "W",  # pycodestyle warnings
 ]
 
