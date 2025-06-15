@@ -44,10 +44,10 @@ Homepage = "https://github.com/fritzo/pomagma"
 Repository = "https://github.com/fritzo/pomagma"
 
 [tool.setuptools]
-packages = {find = {exclude = ["src*"]}}
+packages = {find = {}}
 
 [tool.setuptools.dynamic]
-version = {attr = "src.__version__"}
+version = {attr = "pomagma.__version__"}
 
 [tool.ruff]
 # Configure line length and formatting settings
