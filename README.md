@@ -25,7 +25,7 @@ and a shared C++ database server performs low-level inference work.
 
 - [Installing](#installing)
 - [Quick Start](#quick-start)
-- [Get An Atlas](#get-an-atlas)
+- [Get An E-graph](#get-an-e-graph)
 - [Using The Client Library](/doc/client.md)
 - [Using the PyTorch front end](/src/torch/README.md)
 - [Developing](/doc/README.md)
@@ -53,7 +53,7 @@ The client library supports Python 3.12.
 
 ## Quick Start
 
-Start a local analysis server with the tiny pre-built atlas
+Start a local analysis server with the tiny pre-built E-graph
 
     pomagma analyze             # starts server, Ctrl-C to quit
 
@@ -79,31 +79,31 @@ Alternatively, connect using the Python client library
         print(db.solve('x', 'EQUAL x APP x x', max_solutions=4))
         print(db.validate_facts(['EQUAL x TOP', 'LESS x BOT']))
 
-## Get an Atlas
+## Get an E-graph
 
 Pomagma reasons about large programs by approximately locating code fragments
-in an **atlas** of 10<sup>3</sup>-10<sup>5</sup> basic programs.
-The more basic programs in an atlas,
+in an **E-graph** of 10<sup>3</sup>-10<sup>5</sup> basic programs.
+The more basic programs in an E-graph,
 the more accurate pomagma's analysis will be.
-Pomagma ships with a tiny pre-built atlas of ~2000 basic programs.
+Pomagma ships with a tiny pre-built E-graph of ~2000 basic programs.
 
-To get a large pre-built atlas, put your AWS credentials in the environment and
+To get a large pre-built E-graph, put your AWS credentials in the environment and
 
     export AWS_ACCESS_KEY_ID=...        # put your id here
     export AWS_SECRET_ACCESS_KEY=...    # put your hey here
-    pomagma pull                        # downloads latest atlas from S3
+    pomagma pull                        # downloads latest E-graph from S3
 
-To start building a custom atlas from scratch
+To start building a custom E-graph from scratch
 
     pomagma make max_size=10000         # kill and restart at any time
 
-Pomagma is parallelized and needs lots of memory to build a large atlas.
+Pomagma is parallelized and needs lots of memory to build a large E-graph.
 
-| Atlas Size    | Compute Time | Memory Space | Storage Space |
-|---------------|--------------|--------------|---------------|
-| 1 000 atoms   | ~1 CPU hour  | ~10MB        | ~1MB          |
-| 10 000 atoms  | ~1 CPU week  | ~1GB         | ~100MB        |
-| 100 000 atoms | ~1 CPU year  | ~100GB       | ~10GB         |
+| E-graph Size      | Compute Time | Memory Space | Storage Space |
+|-------------------|--------------|--------------|---------------|
+| 1 000 E-classes   | ~1 CPU hour  | ~10MB        | ~1MB          |
+| 10 000 E-classes  | ~1 CPU week  | ~1GB         | ~100MB        |
+| 100 000 E-classes | ~1 CPU year  | ~100GB       | ~10GB         |
 
 ## License
 

@@ -29,6 +29,9 @@ the non-deterministic &lambda;-calculus <a href="#user-content-1">[1]</a>,
 and a "maximally-coarse" semantics <a href="#user-content-2">[2]</a>
 where as many programs as possible
 are considered equal.
+This extensional approach is implemented using E-graphs,
+a data structure that compactly represents equivalence classes of expressions
+and enables efficient reasoning about program equality.
 At the core of the Pomagma system is an inference engine
 that is used for verification and search/suggestion.
 
