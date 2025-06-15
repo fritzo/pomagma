@@ -1,5 +1,4 @@
 import logging
-import os
 
 import pytest
 import torch
@@ -7,22 +6,19 @@ import torch
 from pomagma.atlas.structure_pb2 import ObMap, ObSet
 
 from .io import delta_decompress, load_dense_set
-from .structure import Structure
+from .structure import BOOTSTRAP, Structure
 
 logger = logging.getLogger(__name__)
-
-ROOT = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-TEST_FILE = os.path.join(ROOT, "bootstrap", "atlas", "skrj", "region.normal.2047.pb")
 
 
 @pytest.fixture(scope="session")
 def structure_cpp() -> Structure:
-    return Structure.load(TEST_FILE, backend="cpp")
+    return Structure.load(BOOTSTRAP, backend="cpp")
 
 
 @pytest.fixture(scope="session")
 def structure_py() -> Structure:
-    return Structure.load(TEST_FILE, backend="python")
+    return Structure.load(BOOTSTRAP, backend="python")
 
 
 def test_delta_decompress() -> None:

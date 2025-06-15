@@ -1,7 +1,13 @@
+import os
 from dataclasses import dataclass
 from typing import Literal, Mapping, NewType
 
 import torch
+
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+BOOTSTRAP = os.path.join(ROOT, "bootstrap", "atlas", "skrj", "region.normal.2047.pb")
+"""Path to the bootstrap structure file, for testing."""
+
 
 Ob = NewType("Ob", int)
 """An item in the carrier. 1-indexed, so 0 means undefined."""

@@ -1,20 +1,14 @@
-import os
-
 import pytest
 import torch
 
 from pomagma.torch.language import Language
-from pomagma.torch.structure import Structure
-
-# Path to test data file
-ROOT = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-TEST_FILE = os.path.join(ROOT, "bootstrap", "atlas", "skrj", "region.normal.2047.pb")
+from pomagma.torch.structure import BOOTSTRAP, Structure
 
 
 @pytest.fixture(scope="session")
 def structure() -> Structure:
     """Load a real structure from bootstrap data for testing."""
-    return Structure.load(TEST_FILE, relations=False)
+    return Structure.load(BOOTSTRAP, relations=False)
 
 
 @pytest.fixture(scope="session")

@@ -263,13 +263,9 @@ def test_obtree_from_string(simple_structure: Structure) -> None:
     # Test parsing a simple expression
     tree = ObTree.from_string(simple_structure, "APP X Y")
 
-    # When parsing from string, X and Y are not recognized as nullary functions
-    # They remain as symbols, so the APP function can't be evaluated
     stats = tree.stats
-    expected_obs: Map[Ob, int] = Map()  # No obs because X and Y are unknown symbols
-    expected_symbols: Map[str, int] = Map(
-        {"APP": 1, "X": 1, "Y": 1}
-    )  # All remain as symbols
+    expected_obs: Map[Ob, int] = Map({Ob(3): 1})
+    expected_symbols: Map[str, int] = Map()
 
     assert stats.obs == expected_obs
     assert stats.symbols == expected_symbols

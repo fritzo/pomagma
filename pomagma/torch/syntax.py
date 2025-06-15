@@ -2,6 +2,7 @@ from collections import Counter
 from typing import Callable
 from weakref import WeakKeyDictionary
 
+import pomagma.compiler.extensional  # noqa: F401
 from pomagma.compiler.expressions import Expression
 
 _COUNT_PATTERNS_CACHE: WeakKeyDictionary[
