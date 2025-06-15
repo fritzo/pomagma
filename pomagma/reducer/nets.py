@@ -135,7 +135,7 @@ def try_step_node(net, node):
                 connect(node.val, val.lhs)
             net.erase(val)
             return True
-        elif isinstance(val, APP):
+        if isinstance(val, APP):
             assert node.val[1] == "val"
             val = node.val[0]
             fun = node
@@ -144,7 +144,7 @@ def try_step_node(net, node):
             connect((arg, "val"), val.arg)
             net.remove(val)
             return True
-        elif isinstance(val, ABS):
+        if isinstance(val, ABS):
             if port == "val":
                 var = node
                 body = net.make(ERASE)
@@ -177,22 +177,21 @@ def try_step_node(net, node):
                 net.remove(node)
                 net.remove(node.val[0])
                 return True
-            else:
-                # Duplicate copies.
-                ax = node
-                ay = net.make(COPY, node.id)
-                bx = node.val
-                by = net.make(COPY, node.val)
-                connect(ax.val, node.lhs)
-                connect(ay.val, node.rhs)
-                connect(bx.val, node.val[0].lhs)
-                connect(bx.val, node.val[0].rhs)
-                connect(ax.lhs, bx.lhs)
-                connect(ax.rhs, by.lhs)
-                connect(ay.lhs, bx.rhs)
-                connect(ay.rhs, by.rhs)
-                TODO("create new ids")
-                return True
+            # Duplicate copies.
+            ax = node
+            ay = net.make(COPY, node.id)
+            bx = node.val
+            by = net.make(COPY, node.val)
+            connect(ax.val, node.lhs)
+            connect(ay.val, node.rhs)
+            connect(bx.val, node.val[0].lhs)
+            connect(bx.val, node.val[0].rhs)
+            connect(ax.lhs, bx.lhs)
+            connect(ax.rhs, by.lhs)
+            connect(ay.lhs, bx.rhs)
+            connect(ay.rhs, by.rhs)
+            TODO("create new ids")
+            return True
     elif isinstance(node, APP) and isinstance(node.fun[0], ABS):
         assert node.fun[1] == "fun"
         # Beta step.

@@ -65,14 +65,13 @@ class Term(tuple):
         symbol = self[0]
         if symbol is _TOP:
             return "TOP"
-        elif symbol is _NVAR:
+        if symbol is _NVAR:
             return "NVAR('{}')".format(self[1])
-        elif symbol is _JOIN:
+        if symbol is _JOIN:
             args = ",".join(str(a) for a in self[1:])
             return "{}([{}])".format(symbol, args)
-        else:
-            args = ",".join(str(a) for a in self[1:])
-            return "{}({})".format(symbol, args)
+        args = ",".join(str(a) for a in self[1:])
+        return "{}({})".format(symbol, args)
 
     __str__ = __repr__
 
@@ -175,16 +174,15 @@ def term_shift(term, delta):
     symbol = term[0]
     if symbol in (_TOP, _NVAR):
         return term
-    elif symbol is _VAR:
+    if symbol is _VAR:
         return Term.VAR(term[1] + delta)
-    elif symbol is _ABS:
+    if symbol is _ABS:
         return Term.ABS(term[1] + delta)
-    elif symbol is _APP:
+    if symbol is _APP:
         return Term.APP(term[1] + delta, term[2] + delta)
-    elif symbol is _JOIN:
+    if symbol is _JOIN:
         return Term.JOIN(i + delta for i in term[1:])
-    else:
-        raise ValueError(term)
+    raise ValueError(term)
 
 
 def term_permute(term, perm):
@@ -192,16 +190,15 @@ def term_permute(term, perm):
     symbol = term[0]
     if symbol in (_TOP, _NVAR):
         return term
-    elif symbol is _VAR:
+    if symbol is _VAR:
         return Term.VAR(perm[term[1]])
-    elif symbol is _ABS:
+    if symbol is _ABS:
         return Term.ABS(perm[term[1]])
-    elif symbol is _APP:
+    if symbol is _APP:
         return Term.APP(perm[term[1]], perm[term[2]])
-    elif symbol is _JOIN:
+    if symbol is _JOIN:
         return Term.JOIN(perm[i] for i in term[1:])
-    else:
-        raise ValueError(term)
+    raise ValueError(term)
 
 
 def perm_inverse(perm):
@@ -366,8 +363,7 @@ def graph_quotient_strong(terms):
 def graph_quotient(terms):
     """Deduplicate equivalent vertices."""
     terms = graph_quotient_weak(terms)
-    terms = graph_quotient_strong(terms)
-    return terms
+    return graph_quotient_strong(terms)
 
 
 def graph_address(terms):
@@ -704,7 +700,7 @@ def _free_vars(graph):
         for pos, term in enumerate(graph):
             if term is Term.TOP or term.is_nvar or term.is_var:
                 continue
-            elif term.is_abs:
+            if term.is_abs:
                 arg_pos = term[1]
                 for var in result[arg_pos]:
                     if var[1] != pos:  # Bind.
@@ -841,18 +837,17 @@ class Substitution(dict):
         assert isinstance(term, Term)
         if term is Term.TOP:
             return term
-        elif term.is_nvar:
+        if term.is_nvar:
             return term
-        elif term.is_var:
+        if term.is_var:
             return Term.VAR(self(term[1]))
-        elif term.is_abs:
+        if term.is_abs:
             return Term.ABS(self(term[1]))
-        elif term.is_app:
+        if term.is_app:
             return Term.APP(self(term[1]), self(term[2]))
-        elif term.is_join:
+        if term.is_join:
             return Term.JOIN([self(pos) for pos in term[1:]])
-        else:
-            raise ValueError(term)
+        raise ValueError(term)
 
     def map_graph(self, terms):
         assert all(isinstance(term, Term) for term in terms)
@@ -981,18 +976,18 @@ def try_compute_step(graph):
             if fun_term is Term.TOP:
                 TODO("fix missing-argument")
                 return _top_step(graph, pos)  # type: ignore[missing-argument]
-            elif fun_term.is_abs:
+            if fun_term.is_abs:
                 return _app_abs_step(graph, pos)
-            elif fun_term.is_join:
+            if fun_term.is_join:
                 return _app_join_step(graph, pos)
         elif term.is_abs:
             body_pos = term[1]
             body_term = graph[body_pos]
             if body_term is Term.TOP:
                 return _top_step(graph, pos, body_pos)
-            elif body_term.is_join:
+            if body_term.is_join:
                 return _abs_join_step(graph, pos)
-            elif body_term.is_app:
+            if body_term.is_app:
                 _, fun_pos, var_pos = body_term
                 var_term = graph[var_pos]
                 if var_term.is_var:

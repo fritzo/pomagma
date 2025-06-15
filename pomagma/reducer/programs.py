@@ -54,8 +54,7 @@ class Program(object):
         term_in = app(self.combinator.term, *term_args)
         term_out = ENGINE.reduce(term_in)
         data.check_for_errors(term_out)
-        data_out = self._decoder(term_out)
-        return data_out
+        return self._decoder(term_out)
 
 
 def program(*types):

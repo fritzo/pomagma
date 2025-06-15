@@ -181,8 +181,7 @@ def try_simplify_antecedents(facts):
         raise Inconsistent
     simple = {frozenset(facts)}
     simple = close_under(simple, simplify_step(completed))
-    facts = set(min(simple, key=objective_function))
-    return facts
+    return set(min(simple, key=objective_function))
 
 
 def strengthen_sequent(fact):
@@ -199,12 +198,11 @@ def strengthen_sequent(fact):
 def weaken_sequent(fact):
     if fact.arity == "UnaryMeta":
         return Expression.make(fact.name, weaken_sequent(fact.args[0]))
-    else:
-        assert fact.is_rel(), fact
-        if fact.name == "EQUAL":
-            lhs, rhs = fact.args
-            if lhs == TOP or rhs == BOT:
-                return LESS(lhs, rhs)
-            elif rhs == TOP or lhs == BOT:
-                return LESS(rhs, lhs)
-        return fact
+    assert fact.is_rel(), fact
+    if fact.name == "EQUAL":
+        lhs, rhs = fact.args
+        if lhs == TOP or rhs == BOT:
+            return LESS(lhs, rhs)
+        if rhs == TOP or lhs == BOT:
+            return LESS(rhs, lhs)
+    return fact

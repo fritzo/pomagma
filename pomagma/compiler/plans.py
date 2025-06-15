@@ -206,10 +206,9 @@ class IterInvBinaryRange(Plan):
             return "for {0} ({1}) {2}: {3}".format(
                 self.fun, self.var1, self.var2, self.body
             )
-        else:
-            return "for {0} {1} ({2}): {3}".format(
-                self.fun, self.var1, self.var2, self.body
-            )
+        return "for {0} {1} ({2}): {3}".format(
+            self.fun, self.var1, self.var2, self.body
+        )
 
     def validate(self, bound):
         assert self.value in bound
@@ -254,8 +253,7 @@ class Let(Plan):
     def op_count(self, stack=None):
         if stack and self in stack:
             return self.body.op_count(stack=stack)
-        else:
-            return 1.0 + self.prob() * self.body.op_count(stack=stack)
+        return 1.0 + self.prob() * self.body.op_count(stack=stack)
 
 
 @memoize_make
@@ -284,8 +282,7 @@ class Test(Plan):
     def op_count(self, stack=None):
         if stack and self in stack:
             return self.body.op_count(stack=stack)
-        else:
-            return 1.0 + self.prob() * self.body.op_count(stack=stack)
+        return 1.0 + self.prob() * self.body.op_count(stack=stack)
 
 
 @memoize_make

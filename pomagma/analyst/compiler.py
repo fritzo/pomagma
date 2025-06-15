@@ -20,22 +20,20 @@ def guard_vars(expr):
     puddle editor require VAR guarded variables."""
     if expr.name == "VAR":
         return expr
-    elif expr.is_var():
+    if expr.is_var():
         return VAR(expr)
-    else:
-        args = list(map(guard_vars, expr.args))
-        return Expression.make(expr.name, *args)
+    args = list(map(guard_vars, expr.args))
+    return Expression.make(expr.name, *args)
 
 
 @memoize_arg
 def unguard_vars(expr):
     if expr.name == "VAR":
         return expr.args[0]
-    elif expr.is_var():
+    if expr.is_var():
         return expr
-    else:
-        args = list(map(unguard_vars, expr.args))
-        return Expression.make(expr.name, *args)
+    args = list(map(unguard_vars, expr.args))
+    return Expression.make(expr.name, *args)
 
 
 def desugar(string):

@@ -41,13 +41,12 @@ def update_theory(theory, world, updated, dry_run=False, **opts):
             print("theory did not change")
             os.remove(updated)
             return False
+        print("theory changed")
+        if dry_run:
+            os.remove(updated)
         else:
-            print("theory changed")
-            if dry_run:
-                os.remove(updated)
-            else:
-                os.rename(updated, world)
-            return True
+            os.rename(updated, world)
+        return True
 
 
 def update_language(theory, init, world, updated, **opts):

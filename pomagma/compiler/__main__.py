@@ -350,8 +350,7 @@ def relpath(string):
     is_path = "." in string and "/" in string  # heuristic
     if is_path:
         return os.path.relpath(string, ROOT)
-    else:
-        return string
+    return string
 
 
 @parsable

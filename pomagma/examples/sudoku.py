@@ -11,15 +11,13 @@ from pomagma.util import TODO
 def random_entry(size, density):
     if random.uniform(0, 1) < density:
         return random.randint(1, size)
-    else:
-        return None
+    return None
 
 
 def print_entry(entry):
     if entry is None:
         return "  ."
-    else:
-        return "{: 3d}".format(entry)
+    return "{: 3d}".format(entry)
 
 
 def print_grid(grid):

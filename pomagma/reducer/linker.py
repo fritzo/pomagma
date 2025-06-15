@@ -21,27 +21,25 @@ from pomagma.reducer.syntax import (
 def _substitute(var, defn, body):
     if is_atom(body) or is_ivar(body):
         return body
-    elif is_nvar(body):
+    if is_nvar(body):
         if body is var:
             return defn
-        else:
-            return body
-    elif is_abs(body):
+        return body
+    if is_abs(body):
         arg = _substitute(var, defn, body[1])
         return ABS(arg)
-    elif is_app(body):
+    if is_app(body):
         lhs = _substitute(var, defn, body[1])
         rhs = _substitute(var, defn, body[2])
         return APP(lhs, rhs)
-    elif is_join(body):
+    if is_join(body):
         lhs = _substitute(var, defn, body[1])
         rhs = _substitute(var, defn, body[2])
         return JOIN(lhs, rhs)
-    elif is_quote(body):
+    if is_quote(body):
         arg = _substitute(var, defn, body[1])
         return QUOTE(arg)
-    else:
-        raise ValueError(body)
+    raise ValueError(body)
 
 
 def substitute(var, defn, body):

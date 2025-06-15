@@ -117,8 +117,7 @@ def get_events(seq):
 def get_bound(atom):
     if atom.is_fun():
         return set_with(atom.vars, atom.var)
-    else:
-        return atom.vars
+    return atom.vars
 
 
 @inputs(Sequent, Expression)
@@ -198,9 +197,7 @@ def optimize_plan(antecedents, succedent, bound):
                 POMAGMA_DEBUG("let {}", a)
                 body = optimize_plan(antecedents_a, succedent, bound_a)
                 return Let.make(a, body)
-            else:
-                # TODO find inverse if injective function
-                pass
+            # TODO find inverse if injective function
 
     results = []
 

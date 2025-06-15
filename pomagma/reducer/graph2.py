@@ -74,7 +74,7 @@ class Node(object):
             rhs = node_by_id[eqn[1]]
             if lhs.typ is not rhs.typ:
                 return False
-            elif is_atom(lhs):
+            if is_atom(lhs):
                 if rhs.args[0] is not lhs.args[0]:
                     return False
                 con.add(eqn)
@@ -93,12 +93,11 @@ class Node(object):
     def print_to_depth(self, depth=10):
         if self.typ == _ATOM:
             return self.args[0]
+        if depth > 0:
+            args = [arg.print_to_depth(depth - 1) for arg in self.args]
         else:
-            if depth > 0:
-                args = [arg.print_to_depth(depth - 1) for arg in self.args]
-            else:
-                args = ["..."] * len(self.args)
-            return "{}({})".format(self.typ, ",".join(args))
+            args = ["..."] * len(self.args)
+        return "{}({})".format(self.typ, ",".join(args))
 
     def __str__(self):
         return self.print_to_depth(DEFAULT_DEPTH)
@@ -207,17 +206,15 @@ def try_beta_step(node):
     assert isinstance(node, Node)
     if is_atom(node) or is_var(node):
         return False
-    elif is_abs(node):
+    if is_abs(node):
         body = node.args[0]
         return try_beta_step(body)
-    elif is_app(node):
+    if is_app(node):
         fun, arg = node.args
         if is_abs(fun):
             var = VAR(fun)
             body = fun.args[0]
             node.copy_from(substitute(var, arg, body))
             return True
-        else:
-            return try_beta_step(fun) or try_beta_step(arg)
-    else:
-        raise ValueError(node)
+        return try_beta_step(fun) or try_beta_step(arg)
+    raise ValueError(node)

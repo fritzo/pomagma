@@ -130,8 +130,7 @@ def is_con(symbol):
 def get_arity(symbol):
     if is_var(symbol):
         return "Variable"
-    else:
-        return ARITY_TABLE.get(symbol, "NullaryFunction")
+    return ARITY_TABLE.get(symbol, "NullaryFunction")
 
 
 def get_nargs(arity):
@@ -145,8 +144,7 @@ def arity_sort(arity):
 def is_positive(symbol):
     if symbol == "NLESS":
         return False
-    else:
-        return True
+    return True
 
 
 def validate():

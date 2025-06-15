@@ -50,10 +50,9 @@ def are_compatible(program1, program2):
     head2 = program2[0]
     if head1[0].startswith("GIVEN") or head2[0].startswith("GIVEN"):
         return head1 == head2
-    elif head1[0] == "FOR_BLOCK" or head2[0] == "FOR_BLOCK":
+    if head1[0] == "FOR_BLOCK" or head2[0] == "FOR_BLOCK":
         return False
-    else:
-        return head1 == head2
+    return head1 == head2
 
 
 def count_overlap(program1, program2):

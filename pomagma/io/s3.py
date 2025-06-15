@@ -77,9 +77,8 @@ def s3_lazy_put(filename, assume_immutable=False) -> str | None:
             print("uploading", filename)
             BUCKET.upload_file(filename, BUCKET_NAME, filename)
             return filename
-        else:
-            print("current", filename)
-            return filename
+        print("current", filename)
+        return filename
     except ClientError:
         print("uploading", filename)
         BUCKET.upload_file(filename, BUCKET_NAME, filename)
@@ -99,22 +98,20 @@ def s3_lazy_get(filename, assume_immutable=False):
         if e.response["Error"]["Code"] == "404":
             print("missing", filename)
             return None
-        else:
-            raise
+        raise
 
     if os.path.exists(filename):
         if assume_immutable:
             # print('already synchronized')
             return filename
-        else:
-            # Calculate local file MD5
-            with open(filename, "rb") as f:
-                file_hash = hashlib.md5(f.read()).hexdigest()
+        # Calculate local file MD5
+        with open(filename, "rb") as f:
+            file_hash = hashlib.md5(f.read()).hexdigest()
 
-            key_etag = response["ETag"].strip('"')
-            if file_hash == key_etag:
-                # print('already synchronized')
-                return filename
+        key_etag = response["ETag"].strip('"')
+        if file_hash == key_etag:
+            # print('already synchronized')
+            return filename
 
     dirname = os.path.dirname(filename)
     if dirname and not os.path.exists(dirname):
@@ -156,14 +153,12 @@ def s3_exists(filename):
     except ClientError as e:
         if e.response["Error"]["Code"] == "404":
             return False
-        else:
-            raise
+        raise
 
 
 def bzip2(filename):
     subprocess.check_call(["bzip2", "--keep", "--force", filename])
-    filename_ext = filename + ".bz2"
-    return filename_ext
+    return filename + ".bz2"
 
 
 def bunzip2(filename_ext):
@@ -209,8 +204,7 @@ def is_blob(filename):
         # mode = oct(os.stat(filename).st_mode)[-3:]
         # assert mode == '444', 'invalid blob mode: {}'.format(mode)
         return True
-    else:
-        return False
+    return False
 
 
 def get(filename):
@@ -259,8 +253,7 @@ def remove(filename):
 def parallel_map(fun, args):
     if len(args) <= 1:
         return list(map(fun, args))
-    else:
-        return multiprocessing.Pool().map(fun, args)
+    return multiprocessing.Pool().map(fun, args)
 
 
 def filter_cache(filenames):
@@ -289,10 +282,9 @@ def find(path):
                 ],
             )
         )
-    elif not BLACKLIST.search(os.path.basename(path)):
+    if not BLACKLIST.search(os.path.basename(path)):
         return [os.path.abspath(path)]
-    else:
-        return []
+    return []
 
 
 @parsable

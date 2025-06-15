@@ -140,12 +140,11 @@ class Expression(object):
         assert isinstance(defn, Expression)
         if var not in self.vars:
             return self
-        elif self.is_var():
+        if self.is_var():
             return defn
-        else:
-            return Expression.make(
-                self.name, *(arg.substitute(var, defn) for arg in self._args)
-            )
+        return Expression.make(
+            self.name, *(arg.substitute(var, defn) for arg in self._args)
+        )
 
     def replace(self, pattern, replacement):
         """
@@ -192,14 +191,11 @@ class Expression(object):
         assert isinstance(var2, Expression) and var2.is_var()
         if var1 not in self.vars and var2 not in self.vars:
             return self
-        elif self == var1:
+        if self == var1:
             return var2
-        elif self == var2:
+        if self == var2:
             return var1
-        else:
-            return Expression.make(
-                self.name, *(arg.swap(var1, var2) for arg in self._args)
-            )
+        return Expression.make(self.name, *(arg.swap(var1, var2) for arg in self._args))
 
     def permute_symbols(self, perm):
         assert isinstance(perm, dict)
@@ -238,6 +234,5 @@ def try_get_negated(expr):
     if expr.name == "EQUAL":
         lhs, rhs = expr.args
         return {Expression.make("NLESS", lhs, rhs), Expression.make("NLESS", rhs, lhs)}
-    else:
-        neg_name = try_negate_name(expr.name)
-        return {Expression.make(neg_name, *expr.args)}
+    neg_name = try_negate_name(expr.name)
+    return {Expression.make(neg_name, *expr.args)}

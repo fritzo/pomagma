@@ -31,6 +31,7 @@ def hash_file(filename, blocksize=8192):
 
 
 def hash_files(filenames):
+    """Returns a dict of filename -> hexdigest of the file."""
     return {
         filename: hash_file(filename)
         for filename in filenames
@@ -38,16 +39,15 @@ def hash_files(filenames):
     }
 
 
-def read_vetted_hashes():
+def read_vetted_hashes() -> dict[str, str]:
     with open(VETTED) as f:
         reader = csv.reader(f)
         header = next(reader)
         assert header == ["filename", "hexdigest"], header
-        hashes = {filename: hexdigest for filename, hexdigest in reader}  # noqa: C416
-    return hashes
+        return {filename: hexdigest for filename, hexdigest in reader}  # noqa: C416
 
 
-def write_vetted_hashes(hashes):
+def write_vetted_hashes(hashes: dict[str, str]) -> None:
     with open(VETTED, "w") as f:
         writer = csv.writer(f)
         writer.writerow(["filename", "hexdigest"])

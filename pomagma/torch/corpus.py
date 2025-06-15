@@ -62,8 +62,7 @@ class ObTree(metaclass=HashConsMeta):
                 assert args[1].ob
                 if ob := fn[args[0].ob, args[1].ob]:
                     return ObTree(ob=ob)
-                else:
-                    return ObTree(name=name, args=args)
+                return ObTree(name=name, args=args)
         elif expr.arity == "SymmetricFunction":
             if name in structure.symmetric_functions:
                 fn = structure.symmetric_functions[name]
@@ -71,8 +70,7 @@ class ObTree(metaclass=HashConsMeta):
                 assert args[1].ob
                 if ob := fn[args[0].ob, args[1].ob]:
                     return ObTree(ob=ob)
-                else:
-                    return ObTree(name=name, args=args)
+                return ObTree(name=name, args=args)
         if strict:
             raise ValueError(f"Unknown symbol: {name}")
         logger.warning("Unknown symbol: %s", name)

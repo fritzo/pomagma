@@ -47,7 +47,7 @@ def trool_all(args):
     for arg in args:
         if arg is False:
             return False
-        elif arg is None:
+        if arg is None:
             result = None
     return result
 
@@ -66,7 +66,7 @@ def trool_any(args):
     for arg in args:
         if arg is True:
             return True
-        elif arg is None:
+        if arg is None:
             result = None
     return result
 

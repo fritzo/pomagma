@@ -142,16 +142,14 @@ def simple_corpus(simple_structure: Structure) -> ObTree:
     # Create corpus: X, Y, APP(X,Y)
     x_tree = ObTree(ob=Ob(1))  # X
     y_tree = ObTree(ob=Ob(2))  # Y
-    app_tree = ObTree(name="APP", args=(x_tree, y_tree))
-    return app_tree
+    return ObTree(name="APP", args=(x_tree, y_tree))
 
 
 @pytest.fixture
 def simple_corpus_data() -> torch.Tensor:
     """Create simple corpus data as tensor directly."""
     # Simple corpus with X=1, Y=1, APP(X,Y)=1 counts
-    corpus_data = torch.tensor([0.0, 1.0, 1.0, 1.0, 0.0, 0.0])  # X, Y, APP(X,Y) result
-    return corpus_data
+    return torch.tensor([0.0, 1.0, 1.0, 1.0, 0.0, 0.0])  # X, Y, APP(X,Y) result
 
 
 def test_warm_starting(simple_structure: Structure, simple_language: Language) -> None:

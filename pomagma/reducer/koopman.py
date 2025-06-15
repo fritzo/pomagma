@@ -104,7 +104,7 @@ class Node(object):
             rhs = node_by_id[eqn[1]]
             if lhs.typ is not rhs.typ:
                 return False
-            elif lhs.is_atom:
+            if lhs.is_atom:
                 if rhs.name is not lhs.name:
                     return False
                 con.add(eqn)
@@ -145,15 +145,13 @@ def print_to_depth(node, depth=10):
     assert isinstance(node, Node)
     if node.is_atom:
         return node.name
-    elif node.is_app:
+    if node.is_app:
         if depth > 0:
             fun = print_to_depth(node.fun, depth - 1)
             arg = print_to_depth(node.arg, depth - 1)
             return "APP({},{})".format(fun, arg)
-        else:
-            return "APP(...,...)"
-    else:
-        raise ValueError(node)
+        return "APP(...,...)"
+    raise ValueError(node)
 
 
 def try_beta_step(node):
@@ -171,16 +169,16 @@ def _try_beta_step(node, stack):
     # print(print_to_depth(node))
     if node.is_atom:
         return False
-    elif node.is_app:
+    if node.is_app:
         if node.fun.is_atom:
             atom = node.fun
             if atom == TOP:
                 node.copy_from(TOP)
                 return True
-            elif atom == BOT:
+            if atom == BOT:
                 node.copy_from(BOT)
                 return True
-            elif atom == I:
+            if atom == I:
                 node.copy_from(node.arg)
                 return True
         elif node.fun.is_app:
@@ -198,10 +196,10 @@ def _try_beta_step(node, stack):
                     if atom == B:
                         node.copy_from(APP(x, APP(y, z)))
                         return True
-                    elif atom == C:
+                    if atom == C:
                         node.copy_from(APP(APP(x, z), y))
                         return True
-                    elif atom == S:
+                    if atom == S:
                         node.copy_from(APP(APP(x, z), APP(y, z)))
                         return True
         for subnode in node.args:
@@ -213,8 +211,7 @@ def _try_beta_step(node, stack):
             if step:
                 return True
         return False
-    else:
-        raise ValueError(node)
+    raise ValueError(node)
 
 
 def count_beta_steps(node):

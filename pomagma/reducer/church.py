@@ -30,16 +30,15 @@ def nominal_vars(term):
     """Find all bound and free nominal variables."""
     if not isinstance(term, Term):
         raise ValueError(term)
-    elif is_nvar(term):
+    if is_nvar(term):
         return frozenset([term])
-    elif is_ivar(term) or is_atom(term):
+    if is_ivar(term) or is_atom(term):
         return frozenset()
-    elif is_abs(term) or is_quote(term):
+    if is_abs(term) or is_quote(term):
         return nominal_vars(term[1])
-    elif is_app(term) or is_join(term) or is_fun(term):
+    if is_app(term) or is_join(term) or is_fun(term):
         return nominal_vars(term[1]) | nominal_vars(term[2])
-    else:
-        raise ValueError(pretty(term))
+    raise ValueError(pretty(term))
 
 
 VARS = list(map(NVAR, "abcdefghijklmnopqrstuvwxyz"))
@@ -58,31 +57,29 @@ def _nominalize(term, var, rank):
     if is_ivar(term):
         if term[1] < rank:
             return term
-        elif term[1] == rank:
+        if term[1] == rank:
             return var
-        else:
-            return IVAR(term[1] - 1)
-    elif is_atom(term) or is_nvar(term):
+        return IVAR(term[1] - 1)
+    if is_atom(term) or is_nvar(term):
         return term
-    elif is_abs(term):
+    if is_abs(term):
         body = _nominalize(term[1], var, rank + 1)
         return ABS(body)
-    elif is_fun(term):
+    if is_fun(term):
         body = _nominalize(term[2], var, rank)
         return FUN(term[1], body)
-    elif is_app(term):
+    if is_app(term):
         lhs = _nominalize(term[1], var, rank)
         rhs = _nominalize(term[2], var, rank)
         return APP(lhs, rhs)
-    elif is_join(term):
+    if is_join(term):
         lhs = _nominalize(term[1], var, rank)
         rhs = _nominalize(term[2], var, rank)
         return JOIN(lhs, rhs)
-    elif is_quote(term):
+    if is_quote(term):
         body = _nominalize(term[1], var, rank)
         return QUOTE(body)
-    else:
-        return ValueError(term)
+    return ValueError(term)
 
 
 def convert(term, fresh=None):
@@ -91,24 +88,23 @@ def convert(term, fresh=None):
         fresh = iter_fresh(term)
     if is_atom(term) or is_nvar(term) or is_ivar(term):
         return term
-    elif is_abs(term):
+    if is_abs(term):
         var = next(fresh)
         body = _nominalize(term[1], var, 0)
         body = convert(body, fresh)
         return FUN(var, body)
-    elif is_fun(term):
+    if is_fun(term):
         body = convert(term[2], fresh)
         return FUN(term[1], body)
-    elif is_app(term):
+    if is_app(term):
         lhs = convert(term[1], fresh)
         rhs = convert(term[2], fresh)
         return APP(lhs, rhs)
-    elif is_join(term):
+    if is_join(term):
         lhs = convert(term[1], fresh)
         rhs = convert(term[2], fresh)
         return JOIN(lhs, rhs)
-    elif is_quote(term):
+    if is_quote(term):
         body = convert(term[1], fresh)
         return QUOTE(body)
-    else:
-        raise ValueError(term)
+    raise ValueError(term)

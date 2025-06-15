@@ -19,9 +19,9 @@ def get_difftool(tool, left, right, diffignore):
             + list(map("--exclude={}".format, diffignore))
             + [left, right]
         )
-    elif tool == "cdiff":
+    if tool == "cdiff":
         return ["cdiff", "-s", "-w", "0", left, right]
-    elif tool == "vim":
+    if tool == "vim":
         return [
             "vim",
             "-c",
@@ -29,7 +29,7 @@ def get_difftool(tool, left, right, diffignore):
             "-c",
             "DirDiff {} {}".format(left, right),
         ]
-    elif tool == "gvim":
+    if tool == "gvim":
         return [
             "gvim",
             "-geom",
@@ -39,7 +39,7 @@ def get_difftool(tool, left, right, diffignore):
             "-c",
             "DirDiff {} {}".format(left, right),
         ]
-    elif tool == "mvim":
+    if tool == "mvim":
         return [
             "mvim",
             "-c",
@@ -49,8 +49,7 @@ def get_difftool(tool, left, right, diffignore):
             "-c",
             "DirDiff {} {}".format(left, right),
         ]
-    else:
-        return [tool, left, right]
+    return [tool, left, right]
 
 
 def parallel_check_call(*args):

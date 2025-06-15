@@ -99,11 +99,11 @@ class NaiveHoleFiller(object):
         nargs = len(term.args)
         if nargs == 0:
             return self._fillings if term is HOLE else ()
-        elif nargs == 1:
+        if nargs == 1:
             name = term.name
             (key,) = term.args
             return tuple(Expression.make(name, f) for f in self(key))
-        elif nargs == 2:
+        if nargs == 2:
             name = term.name
             lhs, rhs = term.args
             return tuple(
@@ -112,6 +112,7 @@ class NaiveHoleFiller(object):
                     (Expression.make(name, lhs, f) for f in self(rhs)),
                 )
             )
+        return None
 
 
 class UniquePriorityQueue(object):
@@ -293,15 +294,13 @@ def iter_valid_sketches(
 def _db_simplify_expr(db, expr):
     string = db.simplify([expr.polish])[0]
     expr = parse_string_to_expr(string)
-    expr = unguard_vars(expr)
-    return expr
+    return unguard_vars(expr)
 
 
 @inputs(object, Expression)
 def simplify_filling(db, term):
     term = simplify_expr(term)
-    term = _db_simplify_expr(db, term)
-    return term
+    return _db_simplify_expr(db, term)
 
 
 def is_def(fact):
@@ -369,8 +368,7 @@ def simplify_facts(db, facts, vars_to_keep):
     facts = simplify_defs(facts, vars_to_keep)
     strings = db.simplify([f.polish for f in facts])
     facts = {parse_string_to_expr(s) for s in strings}
-    facts = list(map(unguard_vars, facts))
-    return facts
+    return list(map(unguard_vars, facts))
 
 
 class FactsValidator(object):
@@ -438,5 +436,4 @@ def synthesize_from_facts(
         verbose=verbose,
     )
     valid_sketches = (r for r in valid_sketches if is_complete(r[-1]))
-    results = sorted(itertools.islice(valid_sketches, 0, max_solutions))
-    return results
+    return sorted(itertools.islice(valid_sketches, 0, max_solutions))

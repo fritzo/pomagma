@@ -1029,8 +1029,7 @@ def test_try_compute_step_runs(term):
         if is_normal(term):
             assert result is None
             return
-        else:
-            assert isinstance(result, Term)
+        assert isinstance(result, Term)
 
 
 nonterminating_example_1 = (

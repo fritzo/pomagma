@@ -67,6 +67,7 @@ def suggest_region_sizes(min_size, max_size):
             return sizes
         if size >= min_size:
             sizes.append(size)
+    return None
 
 
 def TODO(message=""):
@@ -267,8 +268,7 @@ def ensure_abspath(filename):
 
 def get_log_file(options):
     log_file = os.path.join(DATA, "default.log")
-    log_file = abspath(options.get("log_file", log_file))
-    return log_file
+    return abspath(options.get("log_file", log_file))
 
 
 def log_print(message, log_file):
@@ -288,10 +288,9 @@ def make_env(options):
     default_log_level = LOG_LEVEL_DEBUG if debug else LOG_LEVEL_INFO
     options.setdefault("log_level", default_log_level)
     options["blob_dir"] = os.path.abspath(options.get("blob_dir", BLOB_DIR))
-    env = {
+    return {
         "POMAGMA_{}".format(key.upper()): str(val) for key, val in list(options.items())
     }
-    return env
 
 
 def print_command(args, env={}):

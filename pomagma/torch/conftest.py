@@ -27,9 +27,8 @@ def language(structure: Structure) -> Language:
     symmetric_functions = {
         "JOIN": torch.tensor(0.2, dtype=torch.float32),
     }
-    language = Language(
+    return Language(
         nullary_functions=nullary_functions,
         binary_functions=binary_functions,
         symmetric_functions=symmetric_functions,
     )
-    return language

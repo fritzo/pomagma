@@ -50,14 +50,13 @@ def is_abs_free(term):
     assert isinstance(term, Term)
     if is_abs(term):
         return False
-    elif is_atom(term) or is_ivar(term) or is_nvar(term):
+    if is_atom(term) or is_ivar(term) or is_nvar(term):
         return True
-    elif is_app(term):
+    if is_app(term):
         return is_abs_free(term[1]) and is_abs_free(term[2])
-    elif is_join(term):
+    if is_join(term):
         return all(is_abs_free(part) for part in bohm.iter_join(term))
-    else:
-        raise ValueError(term)
+    raise ValueError(term)
 
 
 @memoize_arg

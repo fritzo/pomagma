@@ -178,48 +178,45 @@ class CartographerWorker(object):
         queue_size = len(self.region_queue)
         if queue_size >= self.region_queue_size:
             return False
-        else:
-            self.fill_region_queue(self.region_queue)
-            return True
+        self.fill_region_queue(self.region_queue)
+        return True
 
     def try_normalize(self):
         if self.is_normal():
             return False
+        self.log("Inferring {}".format(["pos", "neg"][self.infer_state]))
+        if self.db.infer(self.infer_state):
+            self.db.validate()
+            self.db.dump(self.world)
+            self.garbage_collect()
+            self.replace_region_queue()
         else:
-            self.log("Inferring {}".format(["pos", "neg"][self.infer_state]))
-            if self.db.infer(self.infer_state):
-                self.db.validate()
-                self.db.dump(self.world)
+            self.infer_state += 1
+            if self.is_normal():
+                self.log("Normalized")
+                self.db.dump(self.normal_world)
+                self.trim_normal_regions()
                 self.garbage_collect()
-                self.replace_region_queue()
-            else:
-                self.infer_state += 1
-                if self.is_normal():
-                    self.log("Normalized")
-                    self.db.dump(self.normal_world)
-                    self.trim_normal_regions()
-                    self.garbage_collect()
-                    self.theorize()
-            return True
+                self.theorize()
+        return True
 
     def try_consume_surveys(self):
         surveys = self.survey_queue.get()
         if not surveys:
             return False
-        else:
-            self.log("Aggregating {} surveys".format(len(surveys)))
-            for survey in surveys:
-                self.db.aggregate(survey)
-                self.db.validate()
-                self.db.dump(self.world)
-                self.garbage_collect()
-                self.infer_state = 0
-                world_size = self.db.info()["item_count"]
-                self.log("world_size = {}".format(world_size))
-                os.remove(survey)
-            self.db.crop()
-            self.replace_region_queue()
-            return True
+        self.log("Aggregating {} surveys".format(len(surveys)))
+        for survey in surveys:
+            self.db.aggregate(survey)
+            self.db.validate()
+            self.db.dump(self.world)
+            self.garbage_collect()
+            self.infer_state = 0
+            world_size = self.db.info()["item_count"]
+            self.log("world_size = {}".format(world_size))
+            os.remove(survey)
+        self.db.crop()
+        self.replace_region_queue()
+        return True
 
     def fill_region_queue(self, queue):
         self.log("Filling region queue")

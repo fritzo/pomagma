@@ -75,6 +75,11 @@ select = [
     "INT",  # gettext
     "ISC",
     "PERF",
+    "PIE",
+    "PLE",
+    # "PT",
+    "Q",
+    "RET",
     "W",  # pycodestyle warnings
 ]
 

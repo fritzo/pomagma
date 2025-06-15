@@ -238,15 +238,14 @@ class Transform(object):
     def __call__(self, term):
         if not isinstance(term, Term):
             raise TypeError(term)
-        elif is_atom(term):
+        if is_atom(term):
             return getattr(self, term[0])
-        elif is_nvar(term):
+        if is_nvar(term):
             return self.NVAR(term[1])
-        elif is_ivar(term):
+        if is_ivar(term):
             return self.IVAR(term[1])
-        else:
-            args = [self(arg) for arg in term[1:]]
-            return getattr(self, term[0])(*args)
+        args = [self(arg) for arg in term[1:]]
+        return getattr(self, term[0])(*args)
 
     @classmethod
     def init_class(cls):
@@ -274,33 +273,31 @@ def _anonymize(term, var, rank, transform):
     """Convert a nominal variable to a de Bruijn variable."""
     if term is var:
         return transform.IVAR(rank)
-    elif is_atom(term) or is_nvar(term):
+    if is_atom(term) or is_nvar(term):
         return transform(term)
-    elif is_ivar(term):
+    if is_ivar(term):
         if term[1] < rank:
             return transform.IVAR(term[1])
-        else:
-            return transform.IVAR(term[1] + 1)
-    elif is_abs(term):
+        return transform.IVAR(term[1] + 1)
+    if is_abs(term):
         body = _anonymize(term[1], var, rank + 1, transform)
         return transform.ABS(body)
-    elif is_app(term):
+    if is_app(term):
         lhs = _anonymize(term[1], var, rank, transform)
         rhs = _anonymize(term[2], var, rank, transform)
         return transform.APP(lhs, rhs)
-    elif is_join(term):
+    if is_join(term):
         lhs = _anonymize(term[1], var, rank, transform)
         rhs = _anonymize(term[2], var, rank, transform)
         return transform.JOIN(lhs, rhs)
-    elif is_rand(term):
+    if is_rand(term):
         lhs = _anonymize(term[1], var, rank, transform)
         rhs = _anonymize(term[2], var, rank, transform)
         return transform.RAND(lhs, rhs)
-    elif is_quote(term):
+    if is_quote(term):
         body = _anonymize(term[1], var, rank, transform)
         return transform.QUOTE(body)
-    else:
-        raise ValueError(term)
+    raise ValueError(term)
     raise UnreachableError(term)
 
 
@@ -308,11 +305,10 @@ def decrement_var(var):
     """Decrement rank of an IVAR or leave an NVAR untouched."""
     if is_nvar(var):
         return var
-    elif is_ivar(var):
+    if is_ivar(var):
         assert var[1] > 0, var
         return IVAR(var[1] - 1)
-    else:
-        raise ValueError(var)
+    raise ValueError(var)
     raise UnreachableError(var)
 
 
@@ -323,21 +319,20 @@ def free_vars(term):
     assert isinstance(term, Term), term
     if is_atom(term):
         return frozenset()
-    elif is_nvar(term) or is_ivar(term):
+    if is_nvar(term) or is_ivar(term):
         return frozenset([term])
-    elif is_app(term) or is_join(term) or is_rand(term):
+    if is_app(term) or is_join(term) or is_rand(term):
         return free_vars(term[1]) | free_vars(term[2])
-    elif is_quote(term):
+    if is_quote(term):
         return free_vars(term[1])
-    elif is_abs(term):
+    if is_abs(term):
         return frozenset(
             decrement_var(v) for v in free_vars(term[1]) if v is not IVAR_0
         )
-    elif is_fun(term):
+    if is_fun(term):
         assert is_nvar(term[1])
         return free_vars(term[2]) - frozenset([term[1]])
-    else:
-        raise ValueError(term)
+    raise ValueError(term)
     raise UnreachableError(term)
 
 
@@ -348,18 +343,17 @@ def quoted_vars(term):
     assert isinstance(term, Term), term
     if is_atom(term) or is_nvar(term) or is_ivar(term):
         return frozenset()
-    elif is_quote(term):
+    if is_quote(term):
         return free_vars(term[1])
-    elif is_app(term) or is_join(term) or is_rand(term):
+    if is_app(term) or is_join(term) or is_rand(term):
         return quoted_vars(term[1]) | quoted_vars(term[2])
-    elif is_abs(term):
+    if is_abs(term):
         return frozenset(
             decrement_var(v) for v in quoted_vars(term[1]) if v is not IVAR_0
         )
-    elif is_fun(term):
+    if is_fun(term):
         return quoted_vars(term[2])
-    else:
-        raise ValueError(term)
+    raise ValueError(term)
     raise UnreachableError(term)
 
 
@@ -411,14 +405,13 @@ def complexity(term):
     assert isinstance(term, Term), term
     if is_atom(term):
         return ATOM_COMPLEXITY[term]
-    elif is_nvar(term) or is_ivar(term):
+    if is_nvar(term) or is_ivar(term):
         return 1
-    elif is_join(term):
+    if is_join(term):
         return max(complexity(term[1]), complexity(term[2]))
-    elif isinstance(term, tuple):
+    if isinstance(term, tuple):
         return 1 + max(complexity(arg) for arg in term[1:])
-    else:
-        raise ValueError(term)
+    raise ValueError(term)
     raise UnreachableError(term)
 
 
@@ -463,10 +456,9 @@ def _polish_parse_tokens(tokens, transform):
     except KeyError:
         if re_keyword.match(token):
             return getattr(transform, token)
-        elif re_rank.match(token):
+        if re_rank.match(token):
             return IVAR(int(token))
-        else:
-            return NVAR(token)
+        return NVAR(token)
     args = tuple(p(tokens, transform) for p in polish_parsers)
     try:
         fun = getattr(transform, token)
@@ -526,7 +518,7 @@ def to_sexpr(term):
     assert isinstance(term, Term), term
     if is_atom(term):
         return term[0]
-    elif is_nvar(term) or is_ivar(term):
+    if is_nvar(term) or is_ivar(term):
         return term[1]
     head = term
     args = []
@@ -584,14 +576,13 @@ def sexpr_print_sexpr(sexpr):
     """Prints a python S-expression as a string S-expression."""
     if isinstance(sexpr, str):
         return sexpr
-    elif isinstance(sexpr, int):
+    if isinstance(sexpr, int):
         return str(sexpr)
-    elif isinstance(sexpr, tuple):
+    if isinstance(sexpr, tuple):
         assert len(sexpr) > 1, sexpr
         parts = list(map(sexpr_print_sexpr, sexpr))
         return "({})".format(" ".join(parts))
-    else:
-        raise ValueError(sexpr)
+    raise ValueError(sexpr)
 
 
 @memoize_arg
@@ -645,5 +636,4 @@ def sexpr_parse(string, transform=identity):
     assert isinstance(string, str), type(string)
     assert isinstance(transform, Transform), type(transform)
     sexpr = sexpr_parse_sexpr(string)
-    term = from_sexpr(sexpr, transform)
-    return term
+    return from_sexpr(sexpr, transform)

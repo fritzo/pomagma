@@ -21,10 +21,9 @@ pretty = sexpr_print
 def _contains(term, atom):
     if term is atom:
         return True
-    elif isinstance(term, tuple):
+    if isinstance(term, tuple):
         return any(_contains(arg, atom) for arg in term[1:])
-    else:
-        return False
+    return False
 
 
 def check_for_errors(term):
@@ -47,9 +46,8 @@ def encode_unit(value):
 def decode_unit(term):
     """Decode unit to None, or raise an exception."""
     if term is lib.ok:
-        return None
-    else:
-        raise TypeError(pretty(term))
+        return
+    raise TypeError(pretty(term))
 
 
 # ----------------------------------------------------------------------------
@@ -66,10 +64,9 @@ def decode_bool(term):
     """Decode bool to {True, False} or raise an exception."""
     if term is lib.true:
         return True
-    elif term is lib.false:
+    if term is lib.false:
         return False
-    else:
-        raise TypeError(pretty(term))
+    raise TypeError(pretty(term))
 
 
 # ----------------------------------------------------------------------------
@@ -114,8 +111,7 @@ def encode_maybe(encode_item):
             return lib.none
         if isinstance(value, tuple) and len(value) == 1:
             return lib.some(encode_item(value[0]))
-        else:
-            raise TypeError(value)
+        raise TypeError(value)
 
     return encode
 
@@ -183,8 +179,7 @@ def encode_sum(encode_inl, encode_inr):
             raise TypeError(value)
         if value[0]:
             return lib.inl(encode_inl(value[1]))
-        else:
-            return lib.inr(encode_inr(value[1]))
+        return lib.inr(encode_inr(value[1]))
 
     return encode
 
@@ -308,8 +303,7 @@ def decode_fun(encode_args, decode_result):
             assert len(py_args) == len(encode_args)
             un_args = tuple(e(a) for (e, a) in zip(encode_args, py_args))
             un_result = reduce(app(un_fun, *un_args))
-            py_result = decode_result(un_result)
-            return py_result
+            return decode_result(un_result)
 
         return py_fun
 

@@ -89,25 +89,24 @@ def maybe_pretty(term):
 def _increment_rank(term, min_rank):
     if is_atom(term):
         return term
-    elif is_nvar(term):
+    if is_nvar(term):
         return term
-    elif is_ivar(term):
+    if is_ivar(term):
         rank = term[1]
         return IVAR(rank + 1) if rank >= min_rank else term
-    elif is_abs(term):
+    if is_abs(term):
         return ABS(_increment_rank(term[1], min_rank + 1))
-    elif is_app(term):
+    if is_app(term):
         lhs = _increment_rank(term[1], min_rank)
         rhs = _increment_rank(term[2], min_rank)
         return APP(lhs, rhs)
-    elif is_join(term):
+    if is_join(term):
         lhs = _increment_rank(term[1], min_rank)
         rhs = _increment_rank(term[2], min_rank)
         return JOIN(lhs, rhs)
-    elif is_quote(term):
+    if is_quote(term):
         return QUOTE(_increment_rank(term[1], min_rank))
-    else:
-        raise ValueError(term)
+    raise ValueError(term)
     raise UnreachableError((term, min_rank))
 
 
@@ -124,29 +123,28 @@ class CannotDecrementRank(Exception):
 def _try_decrement_rank(term, min_rank):
     if is_atom(term):
         return term
-    elif is_nvar(term):
+    if is_nvar(term):
         return term
-    elif is_ivar(term):
+    if is_ivar(term):
         rank = term[1]
         if rank < min_rank:
             return term
-        elif rank == min_rank:
+        if rank == min_rank:
             raise CannotDecrementRank
         return IVAR(rank - 1)
-    elif is_app(term):
+    if is_app(term):
         lhs = _try_decrement_rank(term[1], min_rank)
         rhs = _try_decrement_rank(term[2], min_rank)
         return APP(lhs, rhs)
-    elif is_abs(term):
+    if is_abs(term):
         return ABS(_try_decrement_rank(term[1], min_rank + 1))
-    elif is_join(term):
+    if is_join(term):
         lhs = _try_decrement_rank(term[1], min_rank)
         rhs = _try_decrement_rank(term[2], min_rank)
         return JOIN(lhs, rhs)
-    elif is_quote(term):
+    if is_quote(term):
         return QUOTE(_try_decrement_rank(term[1], min_rank))
-    else:
-        raise ValueError(term)
+    raise ValueError(term)
     raise UnreachableError((term, min_rank))
 
 
@@ -173,18 +171,18 @@ def _is_linear(term):
         if term is Y or term is EVAL:
             return None
         return EMPTY_SET, EMPTY_SET
-    elif is_nvar(term):
+    if is_nvar(term):
         return EMPTY_SET, EMPTY_SET
-    elif is_ivar(term):
+    if is_ivar(term):
         rank = term[1]
         return unique(frozenset([rank])), EMPTY_SET
-    elif is_app(term):
+    if is_app(term):
         lhs = _is_linear(term[1])
         rhs = _is_linear(term[2])
         if lhs is None or rhs is None:
             return None
         return lhs[0] | rhs[0], lhs[1] | rhs[1] | (lhs[0] & rhs[0])
-    elif is_abs(term):
+    if is_abs(term):
         body = _is_linear(term[1])
         if body is None or 0 in body[1]:
             return None
@@ -192,16 +190,15 @@ def _is_linear(term):
             unique(frozenset(r - 1 for r in body[0] if r)),
             unique(frozenset(r - 1 for r in body[1])),
         )
-    elif is_join(term):
+    if is_join(term):
         lhs = _is_linear(term[1])
         rhs = _is_linear(term[2])
         if lhs is None or rhs is None:
             return None
         return lhs[0] | rhs[0], lhs[1] | rhs[1]
-    elif is_quote(term):
+    if is_quote(term):
         return EMPTY_SET, EMPTY_SET
-    else:
-        raise ValueError(term)
+    raise ValueError(term)
     raise UnreachableError(term)
 
 
@@ -241,30 +238,28 @@ def _permute_rank(term, min_rank, max_rank):
     assert min_rank < max_rank
     if is_atom(term) or is_nvar(term):
         return term
-    elif is_ivar(term):
+    if is_ivar(term):
         rank = term[1]
         if rank < min_rank or max_rank < rank:
             return term
-        elif rank == max_rank:
+        if rank == max_rank:
             return IVAR(min_rank)
-        else:
-            return IVAR(rank + 1)
-    elif is_abs(term):
+        return IVAR(rank + 1)
+    if is_abs(term):
         body = _permute_rank(term[1], min_rank + 1, max_rank + 1)
         return ABS(body)
-    elif is_app(term):
+    if is_app(term):
         lhs = _permute_rank(term[1], min_rank, max_rank)
         rhs = _permute_rank(term[2], min_rank, max_rank)
         return APP(lhs, rhs)
-    elif is_join(term):
+    if is_join(term):
         lhs = _permute_rank(term[1], min_rank, max_rank)
         rhs = _permute_rank(term[2], min_rank, max_rank)
         return JOIN(lhs, rhs)
-    elif is_quote(term):
+    if is_quote(term):
         body = _permute_rank(term[1], min_rank, max_rank)
         return QUOTE(body)
-    else:
-        raise ValueError(term)
+    raise ValueError(term)
     raise UnreachableError((term, min_rank, max_rank))
 
 
@@ -287,16 +282,15 @@ def substitute(term, value, rank, budget):
     assert budget in (True, False), budget
     if is_atom(term):
         return term
-    elif is_nvar(term):
+    if is_nvar(term):
         return term
-    elif is_ivar(term):
+    if is_ivar(term):
         if term[1] == rank:
             return value
-        elif term[1] > rank:
+        if term[1] > rank:
             return IVAR(term[1] - 1)
-        else:
-            return term
-    elif is_app(term):
+        return term
+    if is_app(term):
         lhs = term[1]
         rhs = term[2]
         linear = (
@@ -311,22 +305,20 @@ def substitute(term, value, rank, budget):
             lhs = substitute(lhs, value, rank, False)
             rhs = substitute(rhs, value, rank, False)
             return app(lhs, rhs)
-        else:
-            # Lazy substitution.
-            term = permute_rank(term, rank)
-            return APP(ABS(term), value)
-    elif is_abs(term):
+        # Lazy substitution.
+        term = permute_rank(term, rank)
+        return APP(ABS(term), value)
+    if is_abs(term):
         body = substitute(term[1], increment_rank(value), rank + 1, budget)
         return abstract(body)
-    elif is_join(term):
+    if is_join(term):
         lhs = substitute(term[1], value, rank, budget)
         rhs = substitute(term[2], value, rank, budget)
         return join(lhs, rhs)
-    elif is_quote(term):
+    if is_quote(term):
         body = substitute(term[1], value, rank, budget)
         return QUOTE(body)
-    else:
-        raise ValueError(term)
+    raise ValueError(term)
     raise UnreachableError((term, value, rank, budget))
 
 
@@ -347,26 +339,26 @@ def app(fun, arg):
     """Apply function to argument and linearly reduce."""
     if fun is TOP:
         return fun
-    elif fun is BOT:
+    if fun is BOT:
         return fun
-    elif is_nvar(fun):
+    if is_nvar(fun):
         return APP(fun, arg)
-    elif is_ivar(fun):
+    if is_ivar(fun):
         return APP(fun, arg)
-    elif is_app(fun):
+    if is_app(fun):
         # Try to reduce strict binary functions of quoted terms.
         if fun[1] in (QAPP, QLESS, QEQUAL):
             lhs = fun[2]
             rhs = arg
             if lhs is TOP or rhs is TOP:
                 return TOP
-            elif lhs is BOT:
+            if lhs is BOT:
                 if rhs is BOT or is_quote(rhs):
                     return BOT
             elif is_quote(lhs):
                 if rhs is BOT:
                     return BOT
-                elif is_quote(rhs):
+                if is_quote(rhs):
                     if fun[1] is QAPP:
                         return QUOTE(app(lhs[1], rhs[1]))
                     if fun[1] is QLESS:
@@ -377,70 +369,62 @@ def app(fun, arg):
                         raise UnreachableError(fun[1])
                     if ans is True:
                         return true
-                    elif ans is False:
+                    if ans is False:
                         return false
         return APP(fun, arg)
-    elif is_abs(fun):
+    if is_abs(fun):
         body = fun[1]
         return substitute(body, arg, 0, False)
-    elif is_join(fun):
+    if is_join(fun):
         lhs = app(fun[1], arg)
         rhs = app(fun[2], arg)
         return join(lhs, rhs)
-    elif is_quote(fun):
+    if is_quote(fun):
         return APP(fun, arg)
-    elif fun is Y:
+    if fun is Y:
         if arg is TOP:
             return TOP
-        elif arg is BOT:
+        if arg is BOT:
             return BOT
-        elif arg is Y:
+        if arg is Y:
             return BOT
-        else:
-            return APP(Y, arg)
-    elif fun is EVAL:
+        return APP(Y, arg)
+    if fun is EVAL:
         if arg is TOP:
             return TOP
-        elif arg is BOT:
+        if arg is BOT:
             return BOT
-        elif is_quote(arg):
+        if is_quote(arg):
             return arg[1]
-        else:
-            return APP(fun, arg)
-    elif fun is QAPP:
+        return APP(fun, arg)
+    if fun is QAPP:
         if arg is TOP:
             return TOP
-        else:
-            return APP(fun, arg)
-    elif fun is QQUOTE:
+        return APP(fun, arg)
+    if fun is QQUOTE:
         if arg is TOP:
             return TOP
-        elif arg is BOT:
+        if arg is BOT:
             return BOT
-        elif is_quote(arg):
+        if is_quote(arg):
             return QUOTE(QUOTE(arg[1]))
-        else:
-            return APP(fun, arg)
-    elif fun is QLESS:
+        return APP(fun, arg)
+    if fun is QLESS:
         if arg is TOP:
             return TOP
-        else:
-            return APP(fun, arg)
-    elif fun is QEQUAL:
+        return APP(fun, arg)
+    if fun is QEQUAL:
         if arg is TOP:
             return TOP
-        else:
-            return APP(fun, arg)
-    elif fun in TRY_CAST:
+        return APP(fun, arg)
+    if fun in TRY_CAST:
         while is_app(arg) and arg[1] is fun:
             arg = arg[2]
         casted = TRY_CAST[fun](arg)
         if casted is None:
             return APP(fun, arg)
-        else:
-            return casted
-    else:
-        raise ValueError(fun)
+        return casted
+    raise ValueError(fun)
     raise UnreachableError((fun, arg))
 
 
@@ -452,19 +436,18 @@ def abstract(term):
         raise ValueError("Cannot abstract quoted variable from {}".format(term))
     if term is TOP or term is BOT:
         return term
-    elif is_app(term):
+    if is_app(term):
         fun = term[1]
         arg = term[2]
         if arg is IVAR(0) and IVAR(0) not in free_vars(fun):
             # Eta contract.
             return decrement_rank(fun)
         return ABS(term)
-    elif is_join(term):
+    if is_join(term):
         lhs = abstract(term[1])
         rhs = abstract(term[2])
         return join(lhs, rhs)
-    else:
-        return ABS(term)
+    return ABS(term)
     raise UnreachableError(term)
 
 
@@ -474,25 +457,23 @@ def qabstract(term):
     """Abstract one quoted de Bruijn variable and simplify."""
     if IVAR(0) not in quoted_vars(term):
         return app(app(B, abstract(term)), EVAL)
-    elif is_abs(term):
+    if is_abs(term):
         body = term[1]
         return app(C, abstract(qabstract(body)))  # FIXME increment rank
-    elif is_app(term):
+    if is_app(term):
         fun = term[1]
         arg = term[2]
         return app(app(S, qabstract(fun)), qabstract(arg))
-    elif is_join(term):
+    if is_join(term):
         lhs = qabstract(term[1])
         rhs = qabstract(term[2])
         return join(lhs, rhs)
-    elif is_quote(term):
+    if is_quote(term):
         body = term[1]
         if body is IVAR(0):
             return CODE
-        else:
-            return app(QAPP, QUOTE(abstract(body)))
-    else:
-        raise ValueError(term)
+        return app(QAPP, QUOTE(abstract(body)))
+    raise ValueError(term)
     raise UnreachableError(term)
 
 
@@ -587,8 +568,7 @@ def dominates(lhs, rhs):
 def try_decide_less(lhs, rhs):
     if TRY_DECIDE_LESS_STRONG:
         return try_decide_less_strong(lhs, rhs)
-    else:
-        return try_decide_less_weak(lhs, rhs)
+    return try_decide_less_weak(lhs, rhs)
 
 
 @memoize_args
@@ -697,8 +677,7 @@ def approximate(term, direction):
 def unabstract(term):
     if is_abs(term):
         return term[1]
-    else:
-        return app(increment_rank(term), IVAR(0))
+    return app(increment_rank(term), IVAR(0))
 
 
 def unapply(term):
@@ -782,30 +761,29 @@ def try_decide_equal(lhs, rhs):
 def _ground(term, direction, nvars, rank):
     if is_atom(term):
         return term
-    elif is_nvar(term):
+    if is_nvar(term):
         return direction if term in nvars else term
-    elif is_ivar(term):
+    if is_ivar(term):
         return direction if term[1] >= rank else term
-    elif is_abs(term):
+    if is_abs(term):
         body = _ground(term[1], direction, nvars, rank + 1)
         return abstract(body)
-    elif is_app(term):
+    if is_app(term):
         lhs = _ground(term[1], direction, nvars, rank)
         rhs = _ground(term[2], direction, nvars, rank)
         return app(lhs, rhs)
-    elif is_join(term):
+    if is_join(term):
         lhs = _ground(term[1], direction, nvars, rank)
         rhs = _ground(term[2], direction, nvars, rank)
         return join(lhs, rhs)
-    elif is_quote(term):
+    if is_quote(term):
         for var in free_vars(term):
             if is_nvar(var) and var in nvars:
                 return direction
             if is_ivar(var) and var[1] >= rank:
                 return direction
         return term
-    else:
-        raise ValueError(term)
+    raise ValueError(term)
     raise UnreachableError(term)
 
 
@@ -930,9 +908,9 @@ def is_normal(term):
     """Returns whether term is in normal form, i.e. is irreducible."""
     if is_atom(term) or is_nvar(term) or is_ivar(term):
         return True
-    elif is_abs(term):
+    if is_abs(term):
         return is_normal(term[1])
-    elif is_app(term):
+    if is_app(term):
         fun = term[1]
         arg = term[2]
         if not is_normal(fun) or not is_normal(arg):
@@ -942,12 +920,11 @@ def is_normal(term):
         if fun is Y and is_abs(arg):
             return False
         return True
-    elif is_join(term):
+    if is_join(term):
         return is_normal(term[1]) and is_normal(term[2])
-    elif is_quote(term):
+    if is_quote(term):
         return True
-    else:
-        raise ValueError(term)
+    raise ValueError(term)
     raise UnreachableError(term)
 
 
@@ -969,22 +946,20 @@ def _compute_step(term):
             assert not is_linear(arg), arg
             body = fun[1]
             return substitute(body, arg, 0, True)
-        elif fun is Y and is_abs(arg):
+        if fun is Y and is_abs(arg):
             body = arg[1]
             return substitute(body, term, 0, False)
-        elif is_normal(fun):
+        if is_normal(fun):
             return app(fun, _compute_step(arg))
-        else:
-            return app(_compute_step(fun), arg)
-    elif is_join(term):
+        return app(_compute_step(fun), arg)
+    if is_join(term):
         lhs = _compute_step(term[1])  # Relies on prioritized sorting.
         rhs = term[2]
         return join(lhs, rhs)
-    elif is_abs(term):
+    if is_abs(term):
         body = _compute_step(term[1])
         return abstract(body)
-    else:
-        raise ValueError(term)
+    raise ValueError(term)
     raise UnreachableError(term)
 
 

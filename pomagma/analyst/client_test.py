@@ -112,8 +112,7 @@ def assert_examples(examples, expected, actual, cmp=cmp):
 def cmp_trool(x, y):
     if x is None or y is None:
         return 0
-    else:
-        return cmp(x, y)
+    return cmp(x, y)
 
 
 def cmp_validity(x, y):

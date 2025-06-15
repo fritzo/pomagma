@@ -208,6 +208,7 @@ class Presentation(object):
             if focus in con:
                 continue
             TODO("Implement backtracking")
+        return None
 
     def decide_equal(self, lhs, rhs):
         return self.decide_less(lhs, rhs) and self.decide_less(rhs, lhs)

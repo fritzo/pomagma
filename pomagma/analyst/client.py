@@ -137,14 +137,13 @@ class Client(object):
         for code in codes:
             request.validate.codes.append(code)
         reply = self._call(request)
-        results = [
+        return [
             {
                 "is_top": TROOL[result.is_top],
                 "is_bot": TROOL[result.is_bot],
             }
             for result in reply.validate.results
         ]
-        return results
 
     def validate(self, codes):
         assert isinstance(codes, list), codes
@@ -164,7 +163,7 @@ class Client(object):
                 request_line.name = name
             request_line.code = line["code"]
         reply = self._call(request)
-        results = [
+        return [
             {
                 "is_top": TROOL[result.is_top],
                 "is_bot": TROOL[result.is_bot],
@@ -172,7 +171,6 @@ class Client(object):
             }
             for result in reply.validate_corpus.results
         ]
-        return results
 
     def validate_corpus(self, lines):
         assert isinstance(lines, list), lines
@@ -213,8 +211,7 @@ class Client(object):
                 obs[int(term.ob)] = count
             else:
                 symbols[str(term.name)] = count
-        result = {"obs": obs, "symbols": symbols}
-        return result
+        return {"obs": obs, "symbols": symbols}
 
     def _fit_language(self, histogram=None):
         request = Request()

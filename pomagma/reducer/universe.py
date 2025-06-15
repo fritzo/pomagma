@@ -125,18 +125,17 @@ def _approximate(term, depth):
     symbol = term[0]
     if symbol in (_HOLE, _TOP, _IVAR, _NVAR):
         return term
-    elif symbol is _ABS:
+    if symbol is _ABS:
         body = _term_to_ob[approximate(term[1], depth - 1)]
         return ABS(body)
-    elif symbol is _APP:
+    if symbol is _APP:
         lhs = _term_to_ob[approximate(term[1], depth - 1)]
         rhs = _term_to_ob[approximate(term[2], depth - 1)]
         return APP(lhs, rhs)
-    elif symbol is _JOIN:
+    if symbol is _JOIN:
         args = [_term_to_ob[approximate(arg, depth - 1)] for arg in term[1:]]
         return JOIN(args)
-    else:
-        raise ValueError(term)
+    raise ValueError(term)
 
 
 def approximate(term, depth):
@@ -152,10 +151,9 @@ def approximate(term, depth):
     assert isinstance(depth, int) and depth >= 0
     if not is_cyclic(term):
         return term
-    elif depth == 0:
+    if depth == 0:
         return HOLE
-    else:
-        return _approximate(term, depth)
+    return _approximate(term, depth)
 
 
 def rec(**defs):

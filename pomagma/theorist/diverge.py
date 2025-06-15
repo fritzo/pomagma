@@ -62,176 +62,163 @@ def converge_step(term):
     argc = len(argv)
     if head == TOP:
         raise Converged()
-    elif head == BOT:
+    if head == BOT:
         raise Diverged()
-    elif head == I:
+    if head == I:
         if argc == 0:
             return (TOP,)
-        else:
-            return argv[0] + argv[1:]
-    elif head == K:
+        return argv[0] + argv[1:]
+    if head == K:
         if argc == 0:
             return (TOP,)
-        else:
-            return argv[0] + argv[2:]
-    elif head == F:
+        return argv[0] + argv[2:]
+    if head == F:
         if argc == 0:
             return (TOP,)
-        elif argc == 1:
+        if argc == 1:
             return (TOP,)
-        else:
-            return argv[1] + argv[2:]
-    elif head == B:
+        return argv[1] + argv[2:]
+    if head == B:
         if argc == 0:
             return (TOP,)
-        elif argc == 1:
+        if argc == 1:
             return argv[0]
-        elif argc == 2:
+        if argc == 2:
             return argv[0] + (argv[1] + ((TOP,),),) + argv[3:]
-        else:
-            return argv[0] + (argv[1] + (argv[2],),) + argv[3:]
-    elif head == C:
+        return argv[0] + (argv[1] + (argv[2],),) + argv[3:]
+    if head == C:
         if argc == 0:
             return (TOP,)
-        elif argc == 1:
+        if argc == 1:
             return argv[0]
-        elif argc == 2:
+        if argc == 2:
             return argv[0] + (
                 (TOP,),
                 argv[1],
             )
-        else:
-            return (
-                argv[0]
-                + (
-                    argv[2],
-                    argv[1],
-                )
-                + argv[3:]
+        return (
+            argv[0]
+            + (
+                argv[2],
+                argv[1],
             )
-    elif head == W:
+            + argv[3:]
+        )
+    if head == W:
         if argc == 0:
             return (TOP,)
-        elif argc == 1:
+        if argc == 1:
             return argv[0] + (
                 (TOP,),
                 (TOP,),
             )
-        else:
-            return (
-                argv[0]
-                + (
-                    argv[1],
-                    argv[1],
-                )
-                + argv[2:]
+        return (
+            argv[0]
+            + (
+                argv[1],
+                argv[1],
             )
-    elif head == S:
+            + argv[2:]
+        )
+    if head == S:
         if argc == 0:
             return (TOP,)
-        elif argc == 1:
+        if argc == 1:
             return argv[0] + (
                 (TOP,),
                 (TOP,),
             )
-        elif argc == 2:
+        if argc == 2:
             return argv[0] + (
                 (TOP,),
                 argv[1] + ((TOP,),),
             )
-        else:
-            return (
-                argv[0]
-                + (
-                    argv[2],
-                    argv[1] + (argv[2],),
-                )
-                + argv[3:]
+        return (
+            argv[0]
+            + (
+                argv[2],
+                argv[1] + (argv[2],),
             )
-    elif head == Y:
+            + argv[3:]
+        )
+    if head == Y:
         if argc == 0:
             return (TOP,)
-        else:
-            return (
-                argv[0]
-                + (
-                    (
-                        Y,
-                        argv[0],
-                    ),
-                )
-                + argv[1:]
+        return (
+            argv[0]
+            + (
+                (
+                    Y,
+                    argv[0],
+                ),
             )
-    elif head == J:
+            + argv[1:]
+        )
+    if head == J:
         if argc <= 1:
             return (TOP,)
-        elif argc == 2:
+        if argc == 2:
             return (
                 J,
                 converge_step(argv[1]),
                 argv[0],
             )
-        else:
-            return (
-                J,
-                argv[0] + argv[2:],
-                argv[1] + argv[2:],
-            )
-    elif head == U:
+        return (
+            J,
+            argv[0] + argv[2:],
+            argv[1] + argv[2:],
+        )
+    if head == U:
         if argc == 0:
             return (TOP,)
-        else:
-            f = argv[0]
-            return (
-                J,
+        f = argv[0]
+        return (
+            J,
+            f,
+            (
+                B,
                 f,
                 (
-                    B,
+                    U,
                     f,
-                    (
-                        U,
-                        f,
-                    ),
                 ),
-            ) + argv[1:]
-    elif head == V:
+            ),
+        ) + argv[1:]
+    if head == V:
         if argc == 0:
             return (TOP,)
-        else:
-            f = argv[0]
-            return (
-                J,
-                (I,),
+        f = argv[0]
+        return (
+            J,
+            (I,),
+            (
+                B,
+                f,
                 (
-                    B,
+                    U,
                     f,
-                    (
-                        U,
-                        f,
-                    ),
                 ),
-            ) + argv[1:]
-    elif head == P:
+            ),
+        ) + argv[1:]
+    if head == P:
         if argc <= 1:
             return (TOP,)
-        else:
-            f = argv[0]
-            g = argv[1]
-            return (
-                V,
-                (
-                    J,
-                    f,
-                    g,
-                ),
-            ) + argv[2:]
-    elif head in [R]:
+        f = argv[0]
+        g = argv[1]
+        return (
+            V,
+            (
+                J,
+                f,
+                g,
+            ),
+        ) + argv[2:]
+    if head in [R]:
         raise Unknown()
-    elif head in UNKNOWNS:
+    if head in UNKNOWNS:
         raise Unknown()
-    else:
-        print("WARNING unrecognized atom: {}".format(head))
-        raise Unknown()
+    print("WARNING unrecognized atom: {}".format(head))
+    raise Unknown()
 
 
 def trivially_less(lhs, rhs):
@@ -280,7 +267,7 @@ def parse_tokens_unsafe(tokens):
         lhs = parse_tokens_unsafe(tokens)
         rhs = parse_tokens_unsafe(tokens)
         return lhs + (rhs,)
-    elif head == "COMP":
+    if head == "COMP":
         lhs = parse_tokens_unsafe(tokens)
         rhs = parse_tokens_unsafe(tokens)
         return (
@@ -288,7 +275,7 @@ def parse_tokens_unsafe(tokens):
             lhs,
             rhs,
         )
-    elif head == "JOIN":
+    if head == "JOIN":
         lhs = parse_tokens_unsafe(tokens)
         rhs = parse_tokens_unsafe(tokens)
         return (
@@ -296,7 +283,7 @@ def parse_tokens_unsafe(tokens):
             lhs,
             rhs,
         )
-    elif head == "RAND":
+    if head == "RAND":
         lhs = parse_tokens_unsafe(tokens)
         rhs = parse_tokens_unsafe(tokens)
         return (
@@ -304,18 +291,17 @@ def parse_tokens_unsafe(tokens):
             lhs,
             rhs,
         )
-    elif head == "CI":
+    if head == "CI":
         return (
             C,
             (I,),
         )
-    elif head == "CB":
+    if head == "CB":
         return (
             C,
             (B,),
         )
-    else:
-        return (head,)
+    return (head,)
 
 
 def parse_tokens(tokens):
@@ -413,8 +399,7 @@ def try_prove_diverge(
         log_print("Proved {} diverge theorems".format(diverge_count))
         log_print("Proved {} converge theorems".format(converge_count))
         log_print("Failed to prove {} conjectures".format(conjecture_count))
-    theorem_count = diverge_count + converge_count
-    return theorem_count
+    return diverge_count + converge_count
 
 
 # ----------------------------------------------------------------------------

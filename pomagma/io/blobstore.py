@@ -71,6 +71,7 @@ def load_blob_ref(filename):
     """Return root hexdigest from ref file."""
     for root_hexdigest in iter_blob_refs(filename):
         return root_hexdigest
+    return None
 
 
 def dump_blob_ref(root_hexdigest, filename, sub_hexdigests=[]):

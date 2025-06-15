@@ -100,8 +100,7 @@ def log_sum_exp(*args):
     if args:
         shift = max(args)
         return log(sum(exp(arg - shift) for arg in args)) + shift
-    else:
-        return -float("inf")
+    return -float("inf")
 
 
 def eval_float44(num):
@@ -233,22 +232,20 @@ if int(os.environ.get("POMAGMA_PROFILE_MEMOIZED", 0)):
 def get_consts(thing):
     if hasattr(thing, "consts"):
         return thing.consts
-    else:
-        return union(get_consts(i) for i in thing)
+    return union(get_consts(i) for i in thing)
 
 
 @inputs(dict)
 def permute_symbols(perm, thing):
     if not perm:
         return thing
-    elif hasattr(thing, "permute_symbols"):
+    if hasattr(thing, "permute_symbols"):
         return thing.permute_symbols(perm)
-    elif hasattr(thing, "__iter__"):
+    if hasattr(thing, "__iter__"):
         return thing.__class__(permute_symbols(perm, i) for i in thing)
-    elif isinstance(thing, (int, float)):
+    if isinstance(thing, (int, float)):
         return thing
-    else:
-        raise ValueError("cannot permute_symbols of {}".format(thing))
+    raise ValueError("cannot permute_symbols of {}".format(thing))
 
 
 def memoize_modulo_renaming_constants(fun):

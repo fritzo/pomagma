@@ -35,16 +35,13 @@ def abstract_symmetric(self, var, atom, operation):
     if var in lhs.vars:
         if var in rhs.vars:
             return operation(lhs.abstract(var), rhs.abstract(var))
-        elif lhs == var:
+        if lhs == var:
             return APP(atom, rhs)
-        else:
-            return COMP(APP(atom, rhs), lhs.abstract(var))
-    else:
-        assert var in rhs.vars
-        if rhs == var:
-            return APP(atom, lhs)
-        else:
-            return COMP(APP(atom, lhs), rhs.abstract(var))
+        return COMP(APP(atom, rhs), lhs.abstract(var))
+    assert var in rhs.vars
+    if rhs == var:
+        return APP(atom, lhs)
+    return COMP(APP(atom, lhs), rhs.abstract(var))
 
 
 @methodof(Expression)
@@ -56,13 +53,12 @@ def abstract(self, var):
     if self.is_var():
         if self == var:
             return I
-        else:
-            return APP(K, self)
-    elif self.is_fun():
+        return APP(K, self)
+    if self.is_fun():
         name = self.name
         if var not in self.vars:
             return APP(K, self)
-        elif name == "APP":
+        if name == "APP":
             # I,K,C,SW,COMP,eta abstraction
             lhs, rhs = self.args
             if var in lhs.vars:
@@ -70,45 +66,35 @@ def abstract(self, var):
                 if var in rhs.vars:
                     if rhs == var:
                         return APP(W, lhs_abs)
-                    else:
-                        return APP(APP(S, lhs_abs), rhs.abstract(var))
-                else:
-                    return APP(APP(C, lhs_abs), rhs)
-            else:
-                assert var in rhs.vars
-                if rhs == var:
-                    return lhs
-                else:
-                    return COMP(lhs, rhs.abstract(var))
-        elif name == "COMP":
+                    return APP(APP(S, lhs_abs), rhs.abstract(var))
+                return APP(APP(C, lhs_abs), rhs)
+            assert var in rhs.vars
+            if rhs == var:
+                return lhs
+            return COMP(lhs, rhs.abstract(var))
+        if name == "COMP":
             # K,B,CB,C,S,COMP,eta abstraction
             lhs, rhs = self.args
             if var in lhs.vars:
                 lhs_abs = lhs.abstract(var)
                 if var in rhs.vars:
                     return APP(APP(S, COMP(B, lhs_abs)), rhs.abstract(var))
-                else:
-                    if lhs == var:
-                        return APP(CB, rhs)
-                    else:
-                        return COMP(APP(CB, rhs), lhs_abs)
-            else:
-                assert var in rhs.vars
-                if rhs == var:
-                    return APP(B, lhs)
-                else:
-                    return COMP(APP(B, lhs), rhs.abstract(var))
-        elif name == "JOIN":
+                if lhs == var:
+                    return APP(CB, rhs)
+                return COMP(APP(CB, rhs), lhs_abs)
+            assert var in rhs.vars
+            if rhs == var:
+                return APP(B, lhs)
+            return COMP(APP(B, lhs), rhs.abstract(var))
+        if name == "JOIN":
             return abstract_symmetric(self, var, J, JOIN)
-        elif name == "RAND":
+        if name == "RAND":
             return abstract_symmetric(self, var, R, RAND)
-        else:
-            raise AbstractionFailed
-    elif self.is_rel():
+        raise AbstractionFailed
+    if self.is_rel():
         args = [arg.abstract(var) for arg in self.args]
         return Expression.make(self.name, *args)
-    else:
-        raise ValueError("bad expression: %s" % self.name)
+    raise ValueError("bad expression: %s" % self.name)
 
 
 class RequireVariable(Exception):
@@ -130,63 +116,60 @@ def get_fresh(bound):
 def pop_arg(args):
     if args:
         return args[0], args[1:]
-    else:
-        raise RequireVariable
+    raise RequireVariable
 
 
 def head_normalize(expr, *args):
     if expr.is_var():
         return [expr] + list(args)
-    else:
-        assert expr.is_fun(), expr
-        name = expr.name
-        if name == "APP":
-            lhs, rhs = expr.args
-            return head_normalize(lhs, rhs, *args)
-        elif name == "COMP":
-            lhs, rhs = expr.args
-            arg0, args = pop_arg(args)
-            return head_normalize(lhs, APP(rhs, arg0), *args)
-        elif name in ["BOT", "TOP"]:
-            return [expr]
-        elif name == "I":
-            arg0, args = pop_arg(args)
-            return head_normalize(arg0, *args)
-        elif name == "K":
-            arg0, args = pop_arg(args)
-            arg1, args = pop_arg(args)
-            return head_normalize(arg0, *args)
-        elif name == "F":
-            arg0, args = pop_arg(args)
-            arg1, args = pop_arg(args)
-            return head_normalize(arg1, *args)
-        elif name == "B":
-            arg0, args = pop_arg(args)
-            arg1, args = pop_arg(args)
-            arg2, args = pop_arg(args)
-            return head_normalize(arg0, APP(arg1, arg2), *args)
-        elif name == "C":
-            arg0, args = pop_arg(args)
-            arg1, args = pop_arg(args)
-            arg2, args = pop_arg(args)
-            return head_normalize(arg0, arg2, arg1, *args)
-        elif name == "W":
-            arg0, args = pop_arg(args)
-            arg1, args = pop_arg(args)
-            return head_normalize(arg0, arg1, arg1, *args)
-        elif name == "S":
-            arg0, args = pop_arg(args)
-            arg1, args = pop_arg(args)
-            arg2, args = pop_arg(args)
-            return head_normalize(arg0, arg2, APP(arg1, arg2), *args)
-        elif name == "CI":
-            return head_normalize(C, I, *args)
-        elif name == "CB":
-            return head_normalize(C, B, *args)
-        elif name in ["Y", "J", "JOIN", "R", "RAND", "U", "V", "P", "A"]:
-            raise SkipValidation
-        else:
-            raise TODO("head normalize %s expressions" % name)
+    assert expr.is_fun(), expr
+    name = expr.name
+    if name == "APP":
+        lhs, rhs = expr.args
+        return head_normalize(lhs, rhs, *args)
+    if name == "COMP":
+        lhs, rhs = expr.args
+        arg0, args = pop_arg(args)
+        return head_normalize(lhs, APP(rhs, arg0), *args)
+    if name in ["BOT", "TOP"]:
+        return [expr]
+    if name == "I":
+        arg0, args = pop_arg(args)
+        return head_normalize(arg0, *args)
+    if name == "K":
+        arg0, args = pop_arg(args)
+        arg1, args = pop_arg(args)
+        return head_normalize(arg0, *args)
+    if name == "F":
+        arg0, args = pop_arg(args)
+        arg1, args = pop_arg(args)
+        return head_normalize(arg1, *args)
+    if name == "B":
+        arg0, args = pop_arg(args)
+        arg1, args = pop_arg(args)
+        arg2, args = pop_arg(args)
+        return head_normalize(arg0, APP(arg1, arg2), *args)
+    if name == "C":
+        arg0, args = pop_arg(args)
+        arg1, args = pop_arg(args)
+        arg2, args = pop_arg(args)
+        return head_normalize(arg0, arg2, arg1, *args)
+    if name == "W":
+        arg0, args = pop_arg(args)
+        arg1, args = pop_arg(args)
+        return head_normalize(arg0, arg1, arg1, *args)
+    if name == "S":
+        arg0, args = pop_arg(args)
+        arg1, args = pop_arg(args)
+        arg2, args = pop_arg(args)
+        return head_normalize(arg0, arg2, APP(arg1, arg2), *args)
+    if name == "CI":
+        return head_normalize(C, I, *args)
+    if name == "CB":
+        return head_normalize(C, B, *args)
+    if name in ["Y", "J", "JOIN", "R", "RAND", "U", "V", "P", "A"]:
+        raise SkipValidation
+    raise TODO("head normalize %s expressions" % name)
 
 
 def validate(expr):

@@ -57,12 +57,11 @@ class _Combinator(object):
         term = self.term  # Compile at first call.
         if self._calling:  # Disallow reentrance.
             return app(term, *args)
-        else:
-            self._calling = True
-            # TODO handle variable number of arguments.
-            result = self._fun(*args)
-            self._calling = False
-            return as_term(result)
+        self._calling = True
+        # TODO handle variable number of arguments.
+        result = self._fun(*args)
+        self._calling = False
+        return as_term(result)
 
     def __or__(*args):
         return join_(args)
@@ -110,12 +109,11 @@ def combinator(arg):
 def as_term(arg):
     if isinstance(arg, Term):
         return arg
-    elif isinstance(arg, _Combinator):
+    if isinstance(arg, _Combinator):
         return arg.term
-    else:
-        if not callable(arg):
-            raise SyntaxError("Cannot convert to term: {}".format(arg))
-        return _compile(arg)
+    if not callable(arg):
+        raise SyntaxError("Cannot convert to term: {}".format(arg))
+    return _compile(arg)
 
 
 # ----------------------------------------------------------------------------

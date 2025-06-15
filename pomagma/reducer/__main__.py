@@ -24,8 +24,7 @@ ENGINES = {
 def guess_format(string):
     if "(" in string or ")" in string:
         return "sexpr"
-    else:
-        return "polish"
+    return "polish"
 
 
 @parsable

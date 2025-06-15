@@ -25,7 +25,7 @@ def simplify_stack(head, *args):
     nargs = len(args)
     if is_terminal(head):
         return [head]
-    elif head == I:
+    if head == I:
         if nargs >= 1:
             return simplify_stack(*args)
     elif head == F:
@@ -70,17 +70,16 @@ def simplify_stack(head, *args):
         lhs, rhs = list(map(simplify_term, head.args))
         if lhs == TOP or rhs == TOP:
             return [TOP]
-        elif lhs == BOT:
+        if lhs == BOT:
             return simplify_stack(rhs, *args)
-        elif rhs == BOT:
+        if rhs == BOT:
             return simplify_stack(lhs, *args)
-        elif lhs == rhs:
+        if lhs == rhs:
             # idempotence
             return simplify_stack(lhs, *args)
-        else:
-            # commutativity
-            lhs, rhs = sorted((lhs, rhs))
-            return [JOIN(lhs, rhs)] + args
+        # commutativity
+        lhs, rhs = sorted((lhs, rhs))
+        return [JOIN(lhs, rhs)] + args
         # TODO simplify wrt associativity
 
     head = Expression.make(head.name, *list(map(simplify_term, head.args)))
@@ -101,5 +100,4 @@ def simplify_expr(expr):
     if expr.is_rel():
         args = list(map(simplify_term, expr.args))
         return Expression.make(expr.name, *args)
-    else:
-        return simplify_term(expr)
+    return simplify_term(expr)
