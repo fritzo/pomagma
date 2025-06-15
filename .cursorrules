@@ -17,7 +17,3 @@
 - If you absolutely need to clean then build, try combining commands, e.g.
   `make clean && make debug`
 
-## Repository structure
-
-- The `pomagma/` and `include/pomagma/` directories are symlinks to `src/`
-- When making changes, only edit files in `src/`, not the symlinks
