@@ -88,6 +88,10 @@ else ifdef VCPKG_ROOT
 	CMAKE += -DCMAKE_TOOLCHAIN_FILE=$(VCPKG_ROOT)/scripts/buildsystems/vcpkg.cmake
 endif
 
+CMAKE += --log-level=WARNING -Wno-dev
+CMAKE += -DVCPKG_INSTALL_OPTIONS=--no-print-usage
+CMAKE += -DCMAKE_COLOR_DIAGNOSTICS=ON
+
 debug: protobuf FORCE
 	mkdir -p build/debug
 	cd build/debug \
