@@ -47,6 +47,7 @@ MIN_SIZES = {
     "sk": 1023,
     "skj": 1535,
     "skja": 2047,
+    "skjam": 2047,
     "skrj": 2047,
 }
 

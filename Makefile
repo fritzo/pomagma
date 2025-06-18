@@ -171,6 +171,8 @@ skj:
 	pomagma make skj
 skja:
 	pomagma make skja
+skjam:
+	pomagma make skjam
 skrj:
 	pomagma make skrj
 

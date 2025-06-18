@@ -13,6 +13,10 @@
         "theories": ["sk", "order", "join", "closures", "a", "types"],
         "cheap": ["sk", "order", "join", "closures", "a"]
     },
+    "skjam": {
+        "theories": ["sk", "order", "join", "meet", "closures", "a", "types"],
+        "cheap": ["sk", "order", "join", "meet", "closures", "a"]
+    },
     "skrj": {
         "theories": ["sk", "order", "join", "closures", "rand"]
     },
