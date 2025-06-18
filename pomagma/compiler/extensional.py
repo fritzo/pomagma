@@ -10,6 +10,7 @@ I = Expression_0("I")
 K = Expression_0("K")
 F = Expression_0("F")
 J = Expression_0("J")
+M = Expression_0("M")
 R = Expression_0("R")
 B = Expression_0("B")
 CB = Expression_0("CB")
@@ -22,6 +23,7 @@ TOP = Expression_0("TOP")
 APP = Expression_2("APP")
 COMP = Expression_2("COMP")
 JOIN = Expression_2("JOIN")
+MEET = Expression_2("MEET")
 RAND = Expression_2("RAND")
 
 
@@ -88,6 +90,8 @@ def abstract(self, var):
             return COMP(APP(B, lhs), rhs.abstract(var))
         if name == "JOIN":
             return abstract_symmetric(self, var, J, JOIN)
+        if name == "MEET":
+            return abstract_symmetric(self, var, M, MEET)
         if name == "RAND":
             return abstract_symmetric(self, var, R, RAND)
         raise AbstractionFailed

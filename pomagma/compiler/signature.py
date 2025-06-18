@@ -36,6 +36,7 @@ ARITY_TABLE = intern_keys(
         "APP": "BinaryFunction",
         "COMP": "BinaryFunction",
         "JOIN": "SymmetricFunction",
+        "MEET": "SymmetricFunction",
         "RAND": "SymmetricFunction",
         "VAR": "UnaryMeta",
         "UNKNOWN": "UnaryMeta",

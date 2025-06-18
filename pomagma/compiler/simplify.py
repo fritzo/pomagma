@@ -15,6 +15,7 @@ HOLE = Expression_0("HOLE")
 APP = Expression_2("APP")
 COMP = Expression_2("COMP")
 JOIN = Expression_2("JOIN")
+MEET = Expression_2("MEET")
 
 is_terminal = (TOP, BOT, HOLE).__contains__
 
