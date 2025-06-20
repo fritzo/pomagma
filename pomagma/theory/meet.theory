@@ -1,12 +1,15 @@
 # meet of semipredicates, defined by the truth table:
-#     | TOP  I  BOT
-# ----+------------
-# TOP | TOP TOP TOP
-#  I  | TOP  I  BOT
-# BOT | TOP BOT BOT
+#       | TOP  I  BOT
+#   ----+------------
+#   TOP | TOP TOP TOP
+#    I  | TOP  I  BOT
+#   BOT | TOP BOT BOT
+# Note unlike JOIN which is a join on the whole space, MEET is a meet operation
+# only on the space any -> [BOT, I], hence the rules below are weaker than the
+# JOIN rules.
 
-# definition: meet = (\x:any->semi,y:any->semi. x*y | y*x).
-EQUAL MEET x y JOIN COMP COMP SEMI x COMP SEMI y COMP COMP SEMI y COMP SEMI x
+# definition: meet = (\x:any->semi,y:any->semi. S x y | S y x).
+EQUAL MEET x y JOIN APP S COMP SEMI x COMP SEMI y APP S COMP SEMI y COMP SEMI x
 
 CLOSED x   CLOSED y
 -------------------
@@ -23,7 +26,7 @@ EQUAL MEET KI x COMP SEMI x
 EQUAL MEET TOP x TOP
 EQUAL MEET x x COMP SEMI x
 
-# FIXME these rules fails for y = TOP.
+# FIXME these rules fail for y = TOP.
 # We need to somehow include COMP APP CB BOT COMP SEMI y
 # LESS MEET x y COMP SEMI x 
 # EQUAL MEET BOT y BOT
