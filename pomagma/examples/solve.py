@@ -67,7 +67,6 @@ def show_define(name=None):
     define.
 
     Available types: unit, semi, bool, boool
-
     """
     if name not in theories:
         print("Try one of: {}".format(" ".join(sorted(theories))))
@@ -80,7 +79,6 @@ def define(name=None, max_solutions=32, address=pomagma.analyst.ADDRESS):
     """Conjecture definitions of a type.
 
     Available types: unit, semi, bool, boool
-
     """
     if name not in theories:
         print("Try one of: {}".format(" ".join(sorted(theories))))

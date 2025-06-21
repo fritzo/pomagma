@@ -129,8 +129,8 @@ class Expression:
     def is_rel(self):
         return signature.is_rel(self.name)
 
-    def is_con(self):
-        return signature.is_con(self.name)
+    def is_meta(self):
+        return signature.is_meta(self.name)
 
     def is_term(self):
         return signature.is_term(self.name)

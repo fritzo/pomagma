@@ -122,7 +122,7 @@ def is_rel(symbol):
 
 
 @memoize_arg
-def is_con(symbol):
+def is_meta(symbol):
     return get_arity(symbol) in META_ARITIES
 
 
