@@ -1,5 +1,6 @@
 import os
 from subprocess import CalledProcessError
+from typing import Any
 
 import pomagma.util
 from pomagma.cartographer.client import Client
@@ -8,7 +9,9 @@ BINARY = os.path.join(pomagma.util.BIN, "cartographer", "cartographer")
 
 
 class Server:
-    def __init__(self, theory, world, address=None, **opts):
+    def __init__(
+        self, theory: str, world: str, address: str | None = None, **opts: Any
+    ) -> None:
         if address is None:
             address = "ipc://{}".format(
                 os.path.join(
@@ -34,36 +37,36 @@ class Server:
         self._proc = pomagma.util.log_Popen(*args, **opts)
 
     @property
-    def theory(self):
+    def theory(self) -> str:
         return self._theory
 
     @property
-    def address(self):
+    def address(self) -> str:
         return self._address
 
     @property
-    def pid(self):
+    def pid(self) -> int:
         return self._proc.pid
 
-    def connect(self):
+    def connect(self) -> Client:
         return Client(self.address, poll_callback=self.check)
 
-    def stop(self):
+    def stop(self) -> None:
         if self._proc.poll() is None:
             self._proc.terminate()
 
-    def kill(self):
+    def kill(self) -> None:
         self._proc.kill()
 
-    def wait(self):
+    def wait(self) -> None:
         if self._proc.wait() != 0:
             self.log_error()
 
-    def check(self):
+    def check(self) -> None:
         if self._proc.poll() is not None:
             self.log_error()
 
-    def log_error(self):
+    def log_error(self) -> None:
         pomagma.util.print_logged_error(self._log_file)
         with pomagma.util.chdir(self._dir):
             trace = pomagma.util.get_stack_trace(BINARY, self.pid)

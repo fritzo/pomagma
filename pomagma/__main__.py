@@ -34,7 +34,6 @@ def test(theory=THEORY, extra_size=0, **options):
     """Test theory by building a world map.
 
     Options: log_level, log_file
-
     """
     buildtype = "debug" if pomagma.util.debug else "release"
     path = os.path.join(pomagma.util.DATA, "test", buildtype, "atlas", theory)
@@ -94,7 +93,6 @@ def init(theory=THEORY, **options):
     """Initialize world map for given theory.
 
     Options: log_level, log_file
-
     """
     log_file = options.setdefault("log_file", "init.log")
     world_size = pomagma.util.MIN_SIZES[theory]
@@ -124,7 +122,6 @@ def explore(
     """Continuously expand world map for given theory, inferring and surveying.
 
     Options: log_level, log_file, deadline_sec
-
     """
     assert step_size > 0
     region_size = max_size - step_size
@@ -153,7 +150,6 @@ def make(
     """Initialize; explore.
 
     Options: log_level, log_file, deadline_sec
-
     """
     path = os.path.join(pomagma.util.DATA, "atlas", theory)
     if not already_exists(path):
@@ -166,7 +162,6 @@ def update_theory(theory=THEORY, dry_run=False, **options):
     """Update (small) world map after theory changes, and note changes.
 
     Options: log_level, log_file
-
     """
     print(dry_run)
     with atlas.chdir(theory):
@@ -182,7 +177,6 @@ def update_language(theory=THEORY, **options):
     """Update world map after language changes.
 
     Options: log_level, log_file
-
     """
     with atlas.chdir(theory):
         world = DB("world")
@@ -232,7 +226,6 @@ def trim(theory=THEORY, parallel=True, **options):
     """Trim a set of normal regions for running analyst on small machines.
 
     Options: log_level, log_file
-
     """
     with atlas.chdir(theory):
         options.setdefault("log_file", "trim.log")
@@ -274,7 +267,6 @@ def analyze(theory=THEORY, size=None, address=analyst.ADDRESS, **options):
 
     Set size=? to list available sizes.
     Options: log_level, log_file
-
     """
     if size == "?":
         with atlas.chdir(theory):
@@ -304,7 +296,6 @@ def fit_language(theory, address=analyst.ADDRESS, **options):
     """Fit language to corpus, saving results to git working tree.
 
     Options: log_level, log_file
-
     """
     options.setdefault("log_file", "linguist.log")
     linguist.fit_language(theory, address=address, **options)
