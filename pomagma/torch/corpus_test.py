@@ -94,7 +94,7 @@ def simple_structure() -> Structure:
     )
     Lvr = SparseTernaryRelation(lvr_ptrs, lvr_args)
 
-    nullary_functions = Map({"X": Ob(1), "Y": Ob(2)})
+    nullary_functions = Map({"X": Ob(1), "Y": Ob(2), "BOT": Ob(3)})
     binary_functions = Map({"APP": BinaryFunction("APP", LRv, Vlr, Rvl, Lvr)})
 
     return Structure(
@@ -272,12 +272,68 @@ def test_obtree_from_string(simple_structure: Structure) -> None:
 
 
 def test_obtree_str_representation() -> None:
-    """Test ObTree string representation."""
-    # Test ob representation
-    x_tree = ObTree(ob=Ob(1))
-    assert str(x_tree) == "[1]"
+    """Test string representation of ObTree."""
+    # Test E-class representation
+    obtree_ob = ObTree(ob=Ob(1))
+    assert str(obtree_ob) == "[1]"
 
-    # Test compound expression representation
-    y_tree = ObTree(ob=Ob(2))
-    app_tree = ObTree(name="APP", args=(x_tree, y_tree))
-    assert str(app_tree) == "APP [1] [2]"
+    # Test compound representation
+    x = ObTree(ob=Ob(1))
+    y = ObTree(ob=Ob(2))
+    obtree_compound = ObTree(name="APP", args=(x, y))
+    assert str(obtree_compound) == "APP [1] [2]"
+
+
+def test_obtree_from_join(simple_structure: Structure) -> None:
+    """Test ObTree.from_join method for finitary joins."""
+    x = ObTree(ob=Ob(1))
+    y = ObTree(ob=Ob(2))
+    z = ObTree(name="APP", args=(x, y))
+
+    # Test empty join (should try to return BOT, but BOT not defined in simple_structure)
+    empty_join = ObTree.from_join(simple_structure, [])
+    assert empty_join.ob == simple_structure.nullary_functions["BOT"]
+
+    # Test singleton join (should return the single element)
+    singleton_join = ObTree.from_join(simple_structure, [x])
+    assert singleton_join is x
+
+    # Test binary join (should create JOIN with frozenset)
+    binary_join = ObTree.from_join(simple_structure, [x, y])
+    assert binary_join.name == "JOIN"
+    assert isinstance(binary_join.args, frozenset)
+    assert binary_join.args == frozenset([x, y])
+
+    # Test ternary join
+    ternary_join = ObTree.from_join(simple_structure, [x, y, z])
+    assert ternary_join.name == "JOIN"
+    assert isinstance(ternary_join.args, frozenset)
+    assert ternary_join.args == frozenset([x, y, z])
+
+
+def test_obtree_finitary_join_stats(simple_structure: Structure) -> None:
+    """Test that finitary joins are counted correctly in stats."""
+    x = ObTree(ob=Ob(1))
+    y = ObTree(ob=Ob(2))
+    z = ObTree(name="APP", args=(x, y))
+
+    # Test binary join stats (should count as 1 JOIN operation)
+    binary_join = ObTree.from_join(simple_structure, [x, y])
+    stats = binary_join.stats
+    assert stats.symbols.get("JOIN") == 1  # 2-1 = 1
+    assert stats.obs.get(Ob(1)) == 1
+    assert stats.obs.get(Ob(2)) == 1
+
+    # Test ternary join stats (should count as 2 JOIN operations)
+    ternary_join = ObTree.from_join(simple_structure, [x, y, z])
+    stats = ternary_join.stats
+    assert stats.symbols.get("JOIN") == 2  # 3-1 = 2
+    assert stats.obs.get(Ob(1)) == 2  # x appears in z and directly
+    assert stats.obs.get(Ob(2)) == 2  # y appears in z and directly
+    assert stats.symbols.get("APP") == 1  # from z
+
+    # Test larger finitary join
+    w = ObTree(ob=Ob(3))  # Assuming simple_structure has 3 items
+    quad_join = ObTree.from_join(simple_structure, [x, y, z, w])
+    stats = quad_join.stats
+    assert stats.symbols.get("JOIN") == 3  # 4-1 = 3

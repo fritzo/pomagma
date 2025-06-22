@@ -1,5 +1,6 @@
 import logging
 from collections import Counter
+from collections.abc import Collection
 from dataclasses import dataclass
 
 import torch
@@ -38,7 +39,7 @@ class ObTree(metaclass=HashConsMeta):
 
     ob: Ob | None = None
     name: str | None = None
-    args: tuple["ObTree", ...] | None = None
+    args: tuple["ObTree", ...] | frozenset["ObTree"] | None = None
 
     @staticmethod
     @weak_memoize_2
@@ -72,7 +73,7 @@ class ObTree(metaclass=HashConsMeta):
                 assert args[1].ob
                 if ob := fn[args[0].ob, args[1].ob]:
                     return ObTree(ob=ob)
-                return ObTree(name=name, args=args)
+                return ObTree(name=name, args=frozenset(args))
         if strict:
             raise ValueError(f"Unknown symbol: {name}")
         logger.warning("Unknown symbol: %s", name)
@@ -96,6 +97,15 @@ class ObTree(metaclass=HashConsMeta):
         parts = [self.name, *map(str, self.args)]
         return " ".join(parts)
 
+    @staticmethod
+    def from_join(structure: Structure, args: Collection["ObTree"]) -> "ObTree":
+        """Construct a finitary join from a collection of ObTrees."""
+        if len(args) == 0:
+            return ObTree(ob=structure.nullary_functions["BOT"])
+        if len(args) == 1:
+            return next(iter(args))
+        return ObTree(name="JOIN", args=frozenset(args))
+
     @property
     @weak_memoize_1
     def stats(self) -> CorpusStats:
@@ -107,7 +117,10 @@ class ObTree(metaclass=HashConsMeta):
         else:
             assert self.name is not None
             assert self.args is not None
-            symbols[self.name] += 1
+            if isinstance(self.args, tuple):
+                symbols[self.name] += 1
+            elif isinstance(self.args, frozenset):  # finitary joins
+                symbols[self.name] += len(self.args) - 1
             for arg in self.args:
                 stats = arg.stats
                 obs.update(stats.obs)

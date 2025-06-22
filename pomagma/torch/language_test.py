@@ -454,3 +454,87 @@ def test_complexity_handles_invalid_inputs(
     )
     assert isinstance(complexity_unknown, float)
     assert complexity_unknown >= 0
+
+
+def test_language_iadd_corpus_finitary_joins() -> None:
+    """Test that Language.iadd_corpus correctly handles finitary joins."""
+    from pomagma.torch.corpus import ObTree
+    from pomagma.torch.structure import (
+        BinaryFunction,
+        Ob,
+        SparseBinaryFunction,
+        SparseTernaryRelation,
+    )
+
+    # Create a minimal structure for testing
+    item_count = 3
+    nullary_functions = Map({"X": Ob(1), "Y": Ob(2), "Z": Ob(3)})
+
+    # Create empty binary and symmetric function structures
+    empty_table = SparseBinaryFunction(hash_table=torch.zeros(2, 3, dtype=torch.int32))
+    empty_ternary = SparseTernaryRelation(
+        torch.zeros(item_count + 2, dtype=torch.int32),
+        torch.zeros((0, 2), dtype=torch.int32),
+    )
+
+    binary_functions = Map({})
+    symmetric_functions = Map(
+        {
+            "JOIN": BinaryFunction(
+                "JOIN", empty_table, empty_ternary, empty_ternary, empty_ternary
+            )
+        }
+    )
+
+    structure = Structure(
+        name="test",
+        item_count=item_count,
+        nullary_functions=nullary_functions,
+        binary_functions=binary_functions,
+        symmetric_functions=symmetric_functions,
+        unary_relations=Map(),
+        binary_relations=Map(),
+    )
+
+    # Create a language
+    language = Language(
+        nullary_functions=torch.ones(item_count + 1),
+        symmetric_functions=Map({"JOIN": torch.tensor(1.0)}),
+    )
+
+    # Create finitary join ObTrees
+    x = ObTree(ob=Ob(1))
+    y = ObTree(ob=Ob(2))
+    z = ObTree(ob=Ob(3))
+
+    # Test binary join
+    binary_join = ObTree.from_join(structure, [x, y])
+    binary_stats = binary_join.stats
+
+    # Test ternary join
+    ternary_join = ObTree.from_join(structure, [x, y, z])
+    ternary_stats = ternary_join.stats
+
+    # Add corpus stats to language
+    initial_join_weight = language.symmetric_functions["JOIN"].item()
+
+    language.iadd_corpus(binary_stats, weight=1.0)
+    assert (
+        language.symmetric_functions["JOIN"].item() == initial_join_weight + 1.0
+    )  # 1 JOIN operation
+
+    language.iadd_corpus(ternary_stats, weight=1.0)
+    assert (
+        language.symmetric_functions["JOIN"].item() == initial_join_weight + 1.0 + 2.0
+    )  # +2 JOIN operations
+
+    # Verify E-class counts are correct
+    assert (
+        language.nullary_functions[1].item() == 1.0 + 1.0 + 1.0
+    )  # x appears in both joins
+    assert (
+        language.nullary_functions[2].item() == 1.0 + 1.0 + 1.0
+    )  # y appears in both joins
+    assert (
+        language.nullary_functions[3].item() == 1.0 + 1.0
+    )  # z appears only in ternary join

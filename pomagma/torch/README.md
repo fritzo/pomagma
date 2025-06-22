@@ -38,6 +38,7 @@ An `ObTree` represents a **partially understood expression** where:
 - Internal nodes are function symbols whose arguments haven't been fully evaluated/reduced to E-classes in the current E-graph
 
 This hybrid structure bridges the gap between raw syntax trees (from parsing) and fully reduced E-classes, allowing efficient representation of expressions during the reduction process.
+Large finitary joins are supported via `ObTree.from_join(structure, {x, y, z, ...})` using frozenset representation.
 
 ### Language (Probabilistic Grammar)
 The `Language` class represents probability weights that can be interpreted as either:
