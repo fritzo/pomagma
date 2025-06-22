@@ -9,7 +9,8 @@
 # JOIN rules.
 
 # definition: meet = (\x:any->semi,y:any->semi. S x y | S y x).
-EQUAL MEET x y JOIN APP S COMP SEMI x COMP SEMI y APP S COMP SEMI y COMP SEMI x
+EQUAL MEET x y JS COMP SEMI x COMP SEMI y
+EQUAL JS JOIN S APP C S
 
 CLOSED x   CLOSED y
 -------------------
