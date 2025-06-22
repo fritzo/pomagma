@@ -31,4 +31,3 @@ add_test(NAME atlas_protobuf COMMAND atlas_protobuf_test)
 
 add_subdirectory(micro)
 add_subdirectory(macro)
-add_subdirectory(shard)

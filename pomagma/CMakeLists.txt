@@ -40,13 +40,7 @@ set(POMAGMA_CHART_LIBS
 	${POMAGMA_UTIL_LIBS}
 )
 
-set(POMAGMA_SHARD_LIBS
-	pomagma_shard
-	pomagma_atlas
-	pomagma_language
-	${POMAGMA_IO_LIBS}
-	${POMAGMA_UTIL_LIBS}
-)
+
 
 add_subdirectory(analyst)
 add_subdirectory(atlas)

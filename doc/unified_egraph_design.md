@@ -18,7 +18,7 @@ Memory requirements grow superlinearly, approaching O(N²) for dense binary func
 
 ## E-graph Storage Implementations
 
-Pomagma implements three distinct atlas data structures and a separate torch representation, each optimized for different scenarios. (A fourth "shard" atlas exists but appears abandoned.)
+Pomagma implements three distinct atlas data structures and a separate torch representation, each optimized for different scenarios.
 
 ### Atlas Micro Implementation
 
@@ -36,11 +36,7 @@ Three hash map configurations are configurable via `POMAGMA_USE_SPARSE_HASH`: Go
 
 Hash computation (`pomagma/atlas/macro/util.hpp`) for 32-bit pairs uses `((x << 32) | y) * HASH_MULTIPLIER` with full 64-bit arithmetic, or simplified `(x << 32) | y` for `TrivialObPairHash`.
 
-### Atlas Shard Implementation
 
-The shard atlas (`pomagma/atlas/shard/`) provides distributed storage using `std::unordered_map` for sparse representation. Binary functions use `ObPairMap` (typedef for `std::unordered_map<std::pair<Ob, Ob>, Ob, TrivialObPairHash>`) with 32-bit identifiers like the macro implementation. Memory overhead scales as O(E) where E is the number of actual edges, making it suitable for sparse graphs where most function applications are undefined.
-
-Hash computation (`pomagma/atlas/shard/util.hpp`) uses a simplified approach `(x << 32) | y` without the multiplicative constant, prioritizing speed over hash quality for distributed scenarios where the hash map load factor is less critical.
 
 ### Torch Representation
 
@@ -84,28 +80,7 @@ Source code analysis reveals the relationship between high-level interfaces and 
 
 **Reducer** (`pomagma/reducer/`) implements λ-calculus interpreters with extensive unit tests, operating on abstract syntax trees rather than E-graph representations.
 
-### Vestigial Components for Removal
 
-Analysis of the codebase reveals several abandoned or vestigial components that can be safely removed to simplify the refactoring task:
-
-**Shard Atlas (Abandoned)** - The entire `pomagma/atlas/shard/` directory appears to be an abandoned research direction. Evidence includes:
-- No includes of shard headers outside the shard directory itself
-- No usage of `shard::` namespace or shard classes in any production code
-- Most tests are commented out in `pomagma/atlas/shard/CMakeLists.txt` (lines 30-52)
-- Library definition exists (`pomagma_shard`) but no production components link against it
-- Only one test (`shard_carrier_test`) remains active, suggesting minimal maintenance
-
-**Commented-out Shard Tests** - Six major test executables are commented out:
-- `shard_unary_relation_test`
-- `shard_binary_relation_test`  
-- `shard_nullary_function_test`
-- `shard_injective_function_test`
-- `shard_binary_function_test`
-- `shard_symmetric_function_test`
-
-This pattern strongly suggests the shard implementation was experimental and never reached production use. Removing the entire `pomagma/atlas/shard/` directory, its CMake references in `pomagma/CMakeLists.txt` (lines 42-46), and the `add_subdirectory(shard)` call in `pomagma/atlas/CMakeLists.txt` would eliminate one of the five representations mentioned in our complexity analysis.
-
-**Deprecated Binary Relation Implementation** - While the `BinaryRelation` class is actively used, its implementation in `pomagma/atlas/macro/binary_relation.hpp` is marked "DEPRECATED" with a TODO suggesting migration to a tiled representation like the surveyor's binary function. However, this requires careful analysis before removal since the class is still heavily used throughout the system.
 
 ## Related Work: Database Alternatives
 
@@ -129,15 +104,15 @@ Datalog engines like Soufflé would be more natural for recursive inference patt
 
 ## Design Overview
 
-The unified E-graph design addresses Pomagma's maintenance complexity by creating an adaptive storage engine that automatically selects appropriate data structures based on workload characteristics. Rather than maintaining separate micro, macro, and torch implementations (plus the abandoned shard atlas), the unified system adapts between storage formats (dense tiled arrays, sparse hash maps, vectorized tensors) based on density, access patterns, and scale. This approach prioritizes code simplification and maintainability, accepting modest performance trade-offs where necessary to achieve substantial reductions in implementation complexity.
+The unified E-graph design addresses Pomagma's maintenance complexity by creating an adaptive storage engine that automatically selects appropriate data structures based on workload characteristics. Rather than maintaining separate micro, macro, and torch implementations, the unified system adapts between storage formats (dense tiled arrays, sparse hash maps, vectorized tensors) based on density, access patterns, and scale. This approach prioritizes code simplification and maintainability, accepting modest performance trade-offs where necessary to achieve substantial reductions in implementation complexity.
 
 ## Design Details
 
 ### Motivation: Maintainability Through Simplification
 
-The primary goal is reducing maintenance burden by consolidating redundant implementations. Pomagma currently maintains four distinct representations (micro, macro, torch, plus the abandoned shard atlas), each with its own memory management, serialization, and validation logic. This creates substantial maintenance overhead: bug fixes must be replicated across implementations, performance optimizations benefit only specific use cases, and new developers face a steep learning curve understanding the relationships between representations.
+The primary goal is reducing maintenance burden by consolidating redundant implementations. Pomagma currently maintains three distinct representations (micro, macro, torch), each with its own memory management, serialization, and validation logic. This creates substantial maintenance overhead: bug fixes must be replicated across implementations, performance optimizations benefit only specific use cases, and new developers face a steep learning curve understanding the relationships between representations.
 
-Evidence of this complexity burden includes duplicated binary function implementations across `pomagma/atlas/micro/binary_function.hpp`, `pomagma/atlas/macro/binary_function.hpp`, and `pomagma/atlas/shard/`, each with different concurrency models, hash functions, and memory layouts serving similar fundamental purposes.
+Evidence of this complexity burden includes duplicated binary function implementations across `pomagma/atlas/micro/binary_function.hpp` and `pomagma/atlas/macro/binary_function.hpp`, each with different concurrency models, hash functions, and memory layouts serving similar fundamental purposes.
 
 ### Concurrency Strategy
 
@@ -187,7 +162,7 @@ The refactoring strategy prioritizes incremental migration to maintain system fu
 
 Implementation tasks in dependency order:
 
-- [ ] Remove abandoned shard atlas implementation (`pomagma/atlas/shard/` directory and CMake references) to simplify unification scope
+- [x] Remove abandoned shard atlas implementation (`pomagma/atlas/shard/` directory and CMake references) to simplify unification scope
 - [ ] Create unified `EGraphInterface` abstract base class with iterator and mutation methods from existing `BinaryFunction` classes
 - [ ] Implement `MicroAtlasAdapter` and `MacroAtlasAdapter` wrapper classes that expose unified interface over current implementations
 - [ ] Add benchmarking harness comparing adapter performance against direct atlas usage to establish baseline metrics
