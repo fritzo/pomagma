@@ -1,6 +1,6 @@
 # Unified E-graph Storage Design
 
-This document analyzes Pomagma's multiple E-graph representations and proposes simplification through unification. The primary motivation is reducing maintenance complexity while accepting modest performance trade-offs where necessary to achieve substantial code simplification.
+This document analyzes Pomagma's multiple E-graph representations and proposes simplification through unification. The primary motivation is enabling a unified workflow where users can perform complete analysis pipelines (E-graph growth → incremental inference → batch inference → querying → conjecturing → language optimization → analytics extraction) against a single database instance in a single Python script. This requires both reducing maintenance complexity of multiple storage formats and providing a consistent interface that supports all use cases without requiring users to manually transfer data between different storage systems.
 
 ## Background: Current State of the System
 
@@ -104,7 +104,7 @@ Datalog engines like Soufflé would be more natural for recursive inference patt
 
 ## Design Overview
 
-The unified E-graph design addresses Pomagma's maintenance complexity by creating an adaptive storage engine that automatically selects appropriate data structures based on workload characteristics. Rather than maintaining separate micro, macro, and torch implementations, the unified system adapts between storage formats (dense tiled arrays, sparse hash maps, vectorized tensors) based on density, access patterns, and scale. This approach prioritizes code simplification and maintainability, accepting modest performance trade-offs where necessary to achieve substantial reductions in implementation complexity.
+The unified E-graph design addresses Pomagma's maintenance complexity by creating a flexible storage engine that constructs indices and storage formats on-demand based on user operations. Rather than maintaining separate micro, macro, and torch implementations, the unified system provides a single interface that can utilize different storage formats (dense tiled arrays, sparse hash maps, vectorized tensors) as needed by specific operations. The system follows a "follow-the-user" workflow: when users attempt operations requiring specific indices, those indices are built on-demand; when mutations invalidate indices, they are removed. This approach prioritizes predictability and user control while enabling the full range of Pomagma operations against a single database instance.
 
 ## Design Details
 
@@ -113,6 +113,32 @@ The unified E-graph design addresses Pomagma's maintenance complexity by creatin
 The primary goal is reducing maintenance burden by consolidating redundant implementations. Pomagma currently maintains three distinct representations (micro, macro, torch), each with its own memory management, serialization, and validation logic. This creates substantial maintenance overhead: bug fixes must be replicated across implementations, performance optimizations benefit only specific use cases, and new developers face a steep learning curve understanding the relationships between representations.
 
 Evidence of this complexity burden includes duplicated binary function implementations across `pomagma/atlas/micro/binary_function.hpp` and `pomagma/atlas/macro/binary_function.hpp`, each with different concurrency models, hash functions, and memory layouts serving similar fundamental purposes.
+
+### Low-Level Code Smell: Header-Based Polymorphism
+
+A particularly problematic aspect of the current design is the "header-based polymorphism" pattern used to support different `Ob` identifier widths. The system maintains parallel directory hierarchies (`micro/` vs `macro/`) with nearly identical class implementations that differ only in their underlying storage strategies and the width of the `Ob` typedef:
+
+**Micro Atlas** (`uint16_t Ob`):
+- Supports up to 65,535 E-classes
+- Uses tiled atomic arrays optimized for concurrent access
+- Includes complex inverse lookup tables (`POMAGMA_HAS_INVERSE_INDEX = 1`)
+- Memory layout: 8×8 tiles fitting exactly in cache lines
+
+**Macro Atlas** (`uint32_t Ob`):
+- Supports up to 4 billion E-classes  
+- Uses hash maps with configurable backends (sparse/dense/std::unordered_map)
+- No inverse lookup tables (`POMAGMA_HAS_INVERSE_INDEX = 0`)
+- Memory layout: Linear hash table storage
+
+The "dirty trick" works through:
+1. Each directory defines its own `util.hpp` with different `typedef Ob` definitions
+2. Client code includes headers from either `atlas/micro/` or `atlas/macro/` directories
+3. Shared template code uses conditional compilation (`#if POMAGMA_HAS_INVERSE_INDEX`)
+4. Identical class names (`BinaryFunction`, `Carrier`) resolve to different implementations
+
+This creates significant maintenance overhead: bug fixes must be replicated across both implementations, performance optimizations only benefit specific use cases, and the conditional compilation makes template code difficult to read and verify.
+
+**Proposed Solution**: Replace header-based polymorphism with explicit template-based storage policies. Use `template<typename StoragePolicy>` parameterization where storage policies encapsulate both the `Ob` type and implementation strategy. This eliminates code duplication while maintaining zero-cost abstraction through `if constexpr` template specialization. The approach preserves performance characteristics while improving type safety and maintainability.
 
 ### Concurrency Strategy
 
@@ -124,21 +150,52 @@ The unified design builds on existing concurrency patterns rather than introduci
 
 **Hierarchical locking for restructuring** protects major operations like format migration or compaction using the existing lock ordering (carrier, relations, functions) already established in the atlas implementations to prevent deadlocks.
 
-### Adaptive Storage Strategy
+### On-Demand Index Construction Strategy
 
-The unified representation selects storage formats based on concrete measurable characteristics rather than abstract optimization goals. Dense regions where function tables are >50% populated benefit from micro-style tiled arrays that optimize cache locality. Sparse regions where <10% of function applications are defined benefit from macro-style hash maps that avoid storing undefined entries.
+The unified representation builds storage formats and indices only when required by specific operations, prioritizing predictability over automatic optimization. The system follows a "follow-the-user" workflow where data structures are constructed in response to user actions rather than preemptive heuristics.
 
-**Format selection criteria** include density (ratio of defined to possible function applications), access patterns (random vs. sequential), and scale (memory constraints). These metrics can be measured during operation and trigger format migrations when beneficial.
+**Identifier Width Selection** is determined at session start based on E-graph size requirements with safety margins for growth:
+- **16-bit mode** (`uint16_t Ob`): Up to ~50,000 E-classes, leaving headroom for cartographer merging operations
+- **32-bit mode** (`uint32_t Ob`): Beyond 50,000 E-classes or when large merges are anticipated
 
-**Lazy index construction** builds on existing patterns where inverse indices (`Vlr_Table`, `VLr_Table`, `VRl_Table`) are populated on demand during binary function insertions. The unified approach extends this by making index materialization completely demand-driven with eviction based on usage patterns rather than maintaining all indices simultaneously.
+**Index Construction Triggers** follow operation requirements:
+- **Inverse lookup tables** (`Vlr_Table`, `VLr_Table`, `VRl_Table`) are built when VM programs require inverse queries (`FOR_BINARY_FUNCTION_VAL`, etc.)  
+- **Torch CSR indices** are constructed on-demand for analytics operations and torn down immediately after mutations
+- **Hash vs. tiled storage** depends on identifier width: 16-bit uses tiled arrays, 32-bit uses hash maps
 
-### Implementation Challenges
+**Index Invalidation** follows mutation semantics:
+- Any structural modification (insert, merge) invalidates dependent read-only indices
+- Torch CSR indices are immediately discarded on any mutation
+- Inverse lookup tables can be incrementally maintained or rebuilt depending on operation frequency
 
-**Interface abstraction** requires designing virtual iterators that can traverse both dense tile structures and sparse hash maps efficiently. The existing iterator patterns in `BinaryFunction::iter_lhs()` and `BinaryFunction::iter_rhs()` provide templates for unified iteration interfaces.
+This approach eliminates unpredictable format switching while ensuring that expensive indices are only maintained when actively needed.
 
-**Migration mechanics** must handle transitions between storage formats without corrupting ongoing operations. This can build on existing compaction logic in the cartographer (`pomagma/cartographer/trim.cpp`) that already handles structural reorganization of atlas data.
+### Performance-Critical Interface Design
 
-**Memory management** across different allocators (tiled arrays vs. hash maps vs. tensor storage) requires careful coordination to avoid fragmentation. The existing aligned allocation utilities (`pomagma/util/aligned_alloc.hpp`) provide building blocks for unified memory management.
+**Bottleneck Analysis** reveals three distinct performance tiers requiring different abstraction strategies:
+
+1. **VM Program Execution** (17.9M calls, 59% execution time): Both surveyor forward-chaining and analyst solving (`client.solve()`, `validate_facts()`) generate VM programs that execute operations like `fun.find(lhs, rhs)`, `fun.iter_lhs(lhs)`, and `fun.insert(lhs, rhs, val)` in tight loops requiring zero-cost abstraction
+2. **Cartographer Batch Inference**: Parallel algorithms for transitivity, monotonicity, and convexity with intensive `DenseSet` operations, binary function lookups, and OpenMP parallelization - core E-graph reasoning functionality  
+3. **Session Management**: High-level operations like `load()`, `dump()`, `execute_program()` can afford virtual dispatch
+4. **Torch Analytics**: CSR-based operations for language modeling and analytics that can be built on-demand as needed
+
+**Two-Tier Interface Strategy**:
+- **High-level virtual interface** (`EGraphSession`) for infrequent session/structure operations where virtual dispatch is acceptable
+- **Zero-cost inner interface** using templates or `std::variant` for hot-path operations (binary function lookups, iteration, insertion)
+
+**Compilation Strategy** compiles performance-critical components against all storage policies in separate translation units:
+- `vm_micro.cpp` - VM execution (surveyor + analyst) specialized for 16-bit tiled storage
+- `vm_macro.cpp` - VM execution (surveyor + analyst) specialized for 32-bit hash storage  
+- `cartographer_micro.cpp` - Batch inference algorithms specialized for 16-bit operations
+- `cartographer_macro.cpp` - Batch inference algorithms specialized for 32-bit operations
+- `torch_csr.cpp` - Analytics operations specialized for CSR tensor indices (lower priority)
+
+**Index Management** coordinates expensive auxiliary indices through the high-level interface:
+- Inverse lookup tables built on-demand when VM programs require `FOR_BINARY_FUNCTION_VAL` operations
+- Torch CSR indices constructed for analytics operations and discarded after mutations
+- Session tracks which indices are active and invalidates them atomically during structural modifications
+
+This approach ensures that hot paths maintain current performance characteristics while providing unified workflow capabilities through careful abstraction boundary design.
 
 ### In-Process vs Client-Server Architecture
 
@@ -163,13 +220,17 @@ The refactoring strategy prioritizes incremental migration to maintain system fu
 Implementation tasks in dependency order:
 
 - [x] Remove abandoned shard atlas implementation (`pomagma/atlas/shard/` directory and CMake references) to simplify unification scope
-- [ ] Create unified `EGraphInterface` abstract base class with iterator and mutation methods from existing `BinaryFunction` classes
-- [ ] Implement `MicroAtlasAdapter` and `MacroAtlasAdapter` wrapper classes that expose unified interface over current implementations
-- [ ] Add benchmarking harness comparing adapter performance against direct atlas usage to establish baseline metrics
-- [ ] Create format detection logic measuring density and access patterns to guide storage format selection
-- [ ] Implement unified `BinaryFunction` class that delegates to appropriate adapter based on runtime characteristics
-- [ ] Add lazy index materialization extending existing on-demand inverse index patterns with LRU eviction
-- [ ] Create format migration mechanisms building on existing compaction and trim operations for consistency
-- [ ] Extend concurrency model using existing atomic operations and VM context patterns for reader isolation
-- [ ] Integrate torch CSR representation as additional adapter option within unified framework
-- [ ] Migrate surveyor, cartographer, analyst, and theorist components incrementally to use unified interface 
+- [ ] Clean up Ob typedef code smell using template-based storage policies to eliminate header duplication between micro/macro implementations
+- [ ] Create high-level `EGraphSession` virtual interface for session management (load/dump/execute_program) where virtual dispatch is acceptable
+- [ ] Implement zero-cost inner `Structure<StoragePolicy>` template for hot-path operations (find/iter/insert) using compile-time dispatch
+- [ ] Create storage policy classes (`MicroStoragePolicy`, `MacroStoragePolicy`) encapsulating Ob types and core data structures  
+- [ ] Compile VM execution against all storage policies in separate translation units (vm_micro.cpp, vm_macro.cpp) for surveyor and analyst operations
+- [ ] Compile cartographer batch inference against all storage policies (cartographer_micro.cpp, cartographer_macro.cpp) for core reasoning algorithms
+- [ ] Add session management layer with identifier width selection at startup and index tracking
+- [ ] Implement on-demand inverse index construction in session layer triggered by VM program analysis (`FOR_BINARY_FUNCTION_VAL` detection)
+- [ ] Add atomic index invalidation system coordinated through session layer during structural modifications
+- [ ] Create torch CSR storage policy (`TorchStoragePolicy`) and compile analytics operations (torch_csr.cpp) for on-demand ML workflows
+- [ ] Implement benchmarking harness measuring compilation time vs. runtime performance trade-offs for template specialization approach
+- [ ] Create operation pattern tracking in session layer to optimize index lifetime decisions (build/cache/discard)
+- [ ] Migrate surveyor, cartographer, analyst, and theorist to use session interface with appropriate storage policy selection
+- [ ] Add unified Python API that provides single-script workflow capabilities while preserving performance through proper abstraction boundaries 
