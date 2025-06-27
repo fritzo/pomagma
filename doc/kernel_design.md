@@ -35,6 +35,8 @@ For matrix-like operations (similar to NLESS transitivity checking), Hilbert cur
 
 **Cache-oblivious algorithms** work efficiently across all cache levels without explicit cache size knowledge. They use recursive divide-and-conquer patterns that naturally adapt to memory hierarchy, ideal for algorithms with unknown data sizes.
 
+**Note on SIMD intrinsics**: For simple bitwise operations on arrays (like `DenseSet` intersections), modern compilers excel at auto-vectorization. Explicit SIMD intrinsics add platform-specific complexity without significant benefit for these straightforward operations. Pomagma's existing `POMAGMA_VECTORIZE_LOOP` directives already enable effective compiler auto-vectorization across Intel, AMD, and ARM architectures.
+
 ### CPU vs GPU Characteristics
 
 **CPUs** excel through 64-byte cache lines matching Pomagma's tiled data, hardware prefetching for sequential access, 99%+ branch prediction accuracy, and AVX-512 SIMD for vectorized set operations. Current implementations use OpenMP across 16-32 cores.
@@ -95,7 +97,7 @@ for (Ob x = 1; x <= item_dim; ++x) {
 // 32-bit Hilbert decode for macro atlas (cartographer, analyst)  
 // Supports 2^30 x 2^30 coordinate space using 60-bit Hilbert index
 // (Full 2^32 x 2^32 would require 128-bit arithmetic)
-inline std::tuple<uint32_t, uint32_t> hilbert_decode_32(uint64_t h) {
+inline std::tuple<uint32_t, uint32_t> hilbert_decode_30(uint64_t h) {
     constexpr uint32_t order = 30;  // 2^30 = 1,073,741,824 max coordinate
     
     uint64_t s = h;
@@ -133,6 +135,8 @@ inline std::tuple<uint32_t, uint32_t> hilbert_decode_32(uint64_t h) {
     const uint32_t y = static_cast<uint32_t>(_pext_u64(s, 0x5555555555555555ULL));
 #else
     // Parallel bit deinterleaving using optimized bit manipulation
+    // Note: ARM64 NEON doesn't have a direct equivalent to PEXT, so this fallback
+    // works efficiently across all architectures (x86, ARM64, etc.)
     t = (s ^ (s >> 1)) & 0x2222222222222222ULL; s ^= t ^ (t << 1);
     t = (s ^ (s >> 2)) & 0x0C0C0C0C0C0C0C0CULL; s ^= t ^ (t << 2);
     t = (s ^ (s >> 4)) & 0x00F000F000F000F0ULL; s ^= t ^ (t << 4);
@@ -185,6 +189,8 @@ inline std::tuple<uint16_t, uint16_t> hilbert_decode_16(uint32_t h) {
     const uint16_t y = static_cast<uint16_t>(_pext_u32(s, 0x55555555U));
 #else
     // Parallel bit deinterleaving using optimized bit manipulation
+    // Note: ARM64 NEON doesn't have a direct equivalent to PEXT, so this fallback
+    // works efficiently across all architectures (x86, ARM64, etc.)
     t = (s ^ (s >> 1)) & 0x22222222U; s ^= t ^ (t << 1);
     t = (s ^ (s >> 2)) & 0x0C0C0C0CU; s ^= t ^ (t << 2);
     t = (s ^ (s >> 4)) & 0x00F000F0U; s ^= t ^ (t << 4);
@@ -212,7 +218,7 @@ void hilbert_transitivity_macro(uint32_t size) {
     
     #pragma omp parallel for schedule(dynamic, chunk_size)
     for (uint64_t h = 0; h < total_points; ++h) {
-        auto [x, y] = hilbert_decode_32(h);
+        auto [x, y] = hilbert_decode_30(h);
         if (x < size && y < size) {
             if (check_transitivity(x, y)) process_pair(x, y);
         }
@@ -248,7 +254,8 @@ void hilbert_transitivity_micro(uint16_t size) {
 
 **Performance characteristics**:
 - **O(1) decode complexity**: No loops in Hilbert decode, only bit manipulation operations
-- **BMI2 optimization**: 50x faster than naive implementations on Haswell+ CPUs  
+- **BMI2 optimization**: 50x faster than naive implementations on Intel Haswell+ CPUs (when available)
+- **ARM64 compatibility**: Fallback bit manipulation works efficiently on Apple Silicon and other ARM64 processors
 - **Dual precision**: 16-bit version for surveyor (micro atlas), 30-bit version for cartographer (macro atlas)
 - **Practical range**: 30-bit coordinates support 1 billion × 1 billion grids, far exceeding typical E-graph sizes
 - **OpenMP parallelization**: Linear scaling across CPU cores with preserved cache locality
@@ -297,39 +304,7 @@ void blocked_inner_kernel(const DenseSet* LESS, uint32_t x0, uint32_t y0, uint32
 
 Expected speedup: 2-4x through reduced cache misses.
 
-#### 3. SIMD Set Intersection Kernel (CPU)
-
-**Target**: `DenseSet::intersects` operations using AVX-512 vectorization.
-
-**Vectorized implementation**:
-```cpp
-bool simd_intersects(const uint64_t* a, const uint64_t* b, size_t word_count) {
-    const size_t simd_words = 8;  // AVX-512 processes 8 uint64_t at once
-    const size_t simd_blocks = word_count / simd_words;
-    
-    __m512i zero = _mm512_setzero_si512();
-    
-    for (size_t i = 0; i < simd_blocks; ++i) {
-        __m512i va = _mm512_load_si512(&a[i * simd_words]);
-        __m512i vb = _mm512_load_si512(&b[i * simd_words]);
-        __m512i intersection = _mm512_and_si512(va, vb);
-        
-        if (!_mm512_testz_si512(intersection, intersection)) {
-            return true;  // Found intersection
-        }
-    }
-    
-    // Handle remaining words
-    for (size_t i = simd_blocks * simd_words; i < word_count; ++i) {
-        if (a[i] & b[i]) return true;
-    }
-    return false;
-}
-```
-
-Expected speedup: 4-8x for large dense sets.
-
-#### 4. GPU Sparse Matrix Transitivity Kernel (GPU)
+#### 3. GPU Sparse Matrix Transitivity Kernel (GPU)
 
 **Target**: Transitivity checking for sparse LESS relations using GPU.
 
@@ -381,7 +356,7 @@ __global__ void gpu_sparse_transitivity(
 
 Expected speedup: 3-5x for sparse graphs on modern GPUs.
 
-#### 5. Cache-Oblivious Composition Kernel (CPU)
+#### 4. Cache-Oblivious Composition Kernel (CPU)
 
 **Target**: COMP/APP composition rules (Lines 906/914, ~18% runtime) using recursive divide-and-conquer.
 
@@ -452,9 +427,11 @@ Expected speedup: 2-3x through automatic cache adaptation across all levels.
 
 - Intel Developer Guide: [Loop Optimizations Where Blocks are Required](https://www.intel.com/content/www/us/en/developer/articles/technical/loop-optimizations-where-blocks-are-required.html)
 
-### SIMD and Vectorization
+### Auto-Vectorization and Compiler Optimization
 
-- Intel Intrinsics Guide: [AVX-512 Instructions](https://www.intel.com/content/www/us/en/docs/intrinsics-guide/index.html)
+- GCC Manual: [Auto-vectorization in GCC](https://gcc.gnu.org/projects/tree-ssa/vectorization.html)
+
+- Clang/LLVM: [Loop Vectorization](https://llvm.org/docs/Vectorizers.html)
 
 - Agner Fog's Optimization Manuals: [Software optimization resources](https://www.agner.org/optimize/)
 
