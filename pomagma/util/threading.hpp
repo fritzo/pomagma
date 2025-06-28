@@ -6,23 +6,30 @@
 #include <mutex>
 #include <pomagma/util/util.hpp>
 
-#ifdef POMAGMA_ASSUME_X86
+#if defined(__x86_64__) || defined(__amd64__) || defined(_M_X64) || \
+    defined(_M_AMD64)
 #define barrier() asm volatile("" ::: "memory")
 #define memory_barrier() asm volatile("mfence" ::: "memory")
 #define load_barrier() asm volatile("lfence" ::: "memory")
 #define store_barrier() asm volatile("sfence" ::: "memory")
-#else  // POMAGMA_ASSUME_X86
+#elif defined(__aarch64__) || defined(__arm64__)
+#define barrier() asm volatile("" ::: "memory")
+#define memory_barrier() asm volatile("dmb sy" ::: "memory")
+#define load_barrier() asm volatile("dmb ld" ::: "memory")
+#define store_barrier() asm volatile("dmb st" ::: "memory")
+#else  // Other architectures
 #pragma message "defaulting to full memory barriers"
 #define barrier() __sync_synchronize()
 #define memory_barrier() __sync_synchronize()
 #define load_barrier() __sync_synchronize()
 #define store_barrier() __sync_synchronize()
-#endif  // POMAGMA_ASSUME_X86
+#endif
 
-// these do not prevent compiler from reordering non-atomic loads/stores
-// #define memory_barrier() std::atomic_thread_fence(std::memory_order_acq_rel)
-// #define acquire_barrier() std::atomic_thread_fence(std::memory_order_acquire)
-// #define release_barrier() std::atomic_thread_fence(std::memory_order_release)
+// Alternative portable C++11 barriers (these do not prevent compiler from
+// reordering non-atomic loads/stores): #define memory_barrier()
+// std::atomic_thread_fence(std::memory_order_acq_rel) #define acquire_barrier()
+// std::atomic_thread_fence(std::memory_order_acquire) #define release_barrier()
+// std::atomic_thread_fence(std::memory_order_release)
 
 namespace pomagma {
 

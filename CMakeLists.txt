@@ -43,14 +43,6 @@ endif()
 # This is very verbose:
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Rpass=loop-vectorize -Rpass-missed=loop-vectorize -Rpass-analysis=loop-vectorize")
 
-# Architecture-specific flags
-if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|amd64|AMD64)$")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DPOMAGMA_ASSUME_X86")
-elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm64|aarch64)$")
-  # ARM64-specific flags (if any needed in future)
-  message(STATUS "Building for ARM64 architecture")
-endif()
-
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} -DPOMAGMA_DEBUG_LEVEL=9")
 set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS} -DNDEBUG=1")
 
