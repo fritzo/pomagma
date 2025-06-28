@@ -1,4 +1,5 @@
 import os
+import platform
 from contextlib import ExitStack
 from unittest import mock
 
@@ -9,8 +10,13 @@ from pomagma import analyst, atlas, cartographer, surveyor, theorist
 from pomagma.io import blobstore
 from pomagma.util import DB
 
+# On macOS, /usr/bin/time uses -l for verbose output instead of --verbose
+_TIME_CMD = (
+    "/usr/bin/time -l" if platform.system() == "Darwin" else "/usr/bin/time --verbose"
+)
+
 PROFILERS = {
-    "time": "/usr/bin/time --verbose",
+    "time": _TIME_CMD,
     "valgrind": "valgrind --leak-check=full --track-origins=yes",
     "cachegrind": "valgrind --tool=cachegrind",
     "callgrind": "valgrind --tool=callgrind --callgrind-out-file=callgrind.out",

@@ -17,6 +17,31 @@ Profiling data from `doc/benchmarks.md` reveals specific hotspots consuming most
 
 The dominant bottleneck is NLESS (not-less-than) inference consuming nearly 60% of runtime. This involves checking transitivity patterns across millions of E-class pairs using set intersection operations.
 
+### NLESS Inference Implementation
+
+The NLESS inference is implemented in `pomagma/cartographer/infer.cpp` in the `infer_nless()` function. It checks multiple inference rules:
+
+1. **Transitivity**: `NLESS x z, LESS y z ⟹ NLESS x y` and `LESS z x, NLESS z y ⟹ NLESS x y`
+2. **Monotonicity**: Various rules for APP, COMP, JOIN, and RAND functions
+
+The core algorithm follows this pattern:
+```cpp
+for (Ob x = 1; x <= item_dim; ++x) {
+    y_set.set_pnn(carrier.support(), LESS.get_Lx_set(x), NLESS.get_Lx_set(x));
+    for (auto iter = y_set.iter(); iter.ok(); iter.next()) {
+        Ob y = *iter;
+        if (infer_nless_transitive(LESS, NLESS, x, y) or
+            infer_nless_monotone(NLESS, APP, nonconst, x, y, z_set) or
+            infer_nless_monotone(NLESS, COMP, nonconst, x, y, z_set) or
+            /* ... other rules ... */) {
+            theorems.push(x, y);
+        }
+    }
+}
+```
+
+This nested loop structure over E-class pairs is precisely where Hilbert curve traversal can improve cache locality.
+
 **Batch inference algorithms** in `pomagma/cartographer/infer.cpp` implement mathematical properties like transitivity (`LESS x z, LESS z y ==> LESS x y`) and monotonicity (`LESS f g, LESS x y ==> LESS fun(f,x) fun(g,y)`). These feature embarrassingly parallel outer loops over E-classes with nested set operations and hash table lookups.
 
 **Atlas size differences**: Pomagma uses different identifier widths for different scales:
@@ -24,6 +49,40 @@ The dominant bottleneck is NLESS (not-less-than) inference consuming nearly 60% 
 - **Macro atlas** (`pomagma/atlas/macro/`): 32-bit E-class IDs (`typedef uint32_t Ob`) supporting up to 4 billion E-classes, used by cartographer and analyst for large-scale batch processing
 
 **Memory access patterns** are read-heavy (~1000:1 read/write ratio) with sequential bitwise operations on `DenseSet` structures and random hash table probes for function lookups. The `DenseSet` operations use vectorized code (`POMAGMA_VECTORIZE_LOOP`) for set intersection, union, and difference computations.
+
+### Benchmarking NLESS Inference
+
+To benchmark the NLESS inference kernel specifically:
+
+**Profiling Commands**:
+```bash
+# Profile cartographer (where NLESS inference happens)
+pomagma.make profile-cartographer
+
+# With specific profiling tools
+pomagma.make profile-cartographer tool=callgrind extra_size=1000
+
+# Profile with time measurements  
+pomagma.make profile-cartographer tool=time theory=skja extra_size=2000
+```
+
+**Direct Cartographer Benchmarking**:
+```bash
+# Build a larger atlas for more realistic benchmarking
+pomagma make skja max_size=20000
+
+# Run cartographer inference on the atlas  
+cd data/atlas/skja
+python3 -c "
+import pomagma.cartographer as cartographer
+with cartographer.load('skja', 'world', log_level=1) as db:
+    print('Starting NLESS inference...')
+    theorem_count = db.infer(1)  # priority=1 runs NLESS inference
+    print(f'Proved {theorem_count} NLESS theorems')
+"
+```
+
+The profiling output shows VM program execution statistics where "Line 4837" corresponds to the compiled NLESS inference program. The line numbers refer to compiled VM bytecode, with each line representing a specific inference pattern.
 
 ### Cache-Friendly Algorithms
 
@@ -263,6 +322,65 @@ void cache_oblivious_composition(uint32_t start_x, uint32_t end_x,
 ```
 
 Expected speedup: 2-3x through automatic cache adaptation across all levels.
+
+## Benchmarking Methodology
+
+### NLESS Kernel Benchmarking
+
+To A/B test the Hilbert curve optimization against the current implementation:
+
+1. **Baseline Measurement**:
+```bash
+# Build release version for accurate timing
+make release
+
+# Profile current NLESS implementation
+pomagma.make profile-cartographer theory=skja extra_size=5000 tool=time
+
+# Look for "Line 4837" timing in output
+```
+
+2. **Modified Implementation Test**:
+```bash
+# After implementing Hilbert traversal in infer_nless()
+make release
+
+# Profile modified NLESS implementation
+pomagma.make profile-cartographer theory=skja extra_size=5000 tool=time
+
+# Compare "Line 4837" timing and overall inference performance
+```
+
+3. **Controlled Benchmarking**:
+```bash
+# Create reproducible test atlas
+cd data/atlas/skja
+pomagma.make test-atlas skja
+
+# Time NLESS inference specifically
+python3 -c "
+import time
+import pomagma.cartographer as cartographer
+
+with cartographer.load('skja', 'world') as db:
+    # Warm up caches
+    db.infer(1)
+    
+    # Benchmark NLESS inference (priority=1)
+    start_time = time.time()
+    theorem_count = db.infer(1)
+    end_time = time.time()
+    
+    print(f'NLESS inference: {theorem_count} theorems in {end_time - start_time:.3f}s')
+    print(f'Throughput: {theorem_count / (end_time - start_time):.0f} theorems/sec')
+"
+```
+
+**Success Metrics**:
+- 30-40% reduction in cache misses (measured via `tool=cachegrind`)
+- 20-30% reduction in total NLESS inference time
+- Maintained correctness (same theorem count)
+- Linear scaling with thread count
 
 ## References
 
