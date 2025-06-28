@@ -88,163 +88,28 @@ for (Ob x = 1; x <= item_dim; ++x) {
 ```
 
 **Hilbert-curve optimization**:
+
+Pomagma now includes optimized Hilbert curve utilities in `pomagma/util/hilbert.hpp` that provide O(1) space-filling curve traversal for cache-friendly matrix operations. The implementation features:
+
+- **Ultra-fast decoding**: Uses "Hacker's Delight" parallel-prefix method for constant-time coordinate computation
+- **BMI2 optimization**: 50x speedup on Intel Haswell+ CPUs using PEXT instructions when available  
+- **ARM64 compatibility**: Efficient fallback bit manipulation for Apple Silicon and other ARM64 processors
+- **Dual precision**: `hilbert_decode_16()` for micro atlas, `hilbert_decode_30()` for macro atlas
+- **OpenMP parallelization**: Template-based traversal functions with adaptive chunking
+
+Example usage:
 ```cpp
-#include <omp.h>        // For OpenMP parallelization
-#ifdef __BMI2__
-#include <immintrin.h>  // For BMI2 PEXT instructions
-#endif
+#include <pomagma/util/hilbert.hpp>
 
-// 32-bit Hilbert decode for macro atlas (cartographer, analyst)  
-// Supports 2^30 x 2^30 coordinate space using 60-bit Hilbert index
-// (Full 2^32 x 2^32 would require 128-bit arithmetic)
-inline std::tuple<uint32_t, uint32_t> hilbert_decode_30(uint64_t h) {
-    constexpr uint32_t order = 30;  // 2^30 = 1,073,741,824 max coordinate
-    
-    uint64_t s = h;
-    
-    // Pad s on left with 01 pattern for parallel processing
-    s |= 0x5555555555555555ULL << (2 * order);
-    
-    // Extract right-shifted bits for parallel operations
-    const uint64_t sr = (s >> 1) & 0x5555555555555555ULL;
-    
-    // Compute complement & swap info using bit arithmetic trick
-    uint64_t cs = ((s & 0x5555555555555555ULL) + sr) ^ 0x5555555555555555ULL;
-    
-    // Parallel prefix XOR to propagate complement/swap info left-to-right
-    cs ^= (cs >> 2);
-    cs ^= (cs >> 4);
-    cs ^= (cs >> 8);
-    cs ^= (cs >> 16);
-    cs ^= (cs >> 32);
-    
-    // Extract swap and complement bits into separate masks
-    const uint64_t swap = cs & 0x5555555555555555ULL;
-    const uint64_t comp = (cs >> 1) & 0x5555555555555555ULL;
-    
-    // Apply transformations to compute final coordinates
-    uint64_t t = (s & swap) ^ comp;
-    s ^= sr ^ t ^ (t << 1);
-    
-    // Mask to remove padding bits
-    s &= ((1ULL << (2 * order)) - 1);
-    
-#ifdef __BMI2__
-    // Intel BMI2 PEXT optimization for 50x speedup on Haswell+ CPUs
-    const uint32_t x = static_cast<uint32_t>(_pext_u64(s, 0xAAAAAAAAAAAAAAAAULL));
-    const uint32_t y = static_cast<uint32_t>(_pext_u64(s, 0x5555555555555555ULL));
-#else
-    // Parallel bit deinterleaving using optimized bit manipulation
-    // Note: ARM64 NEON doesn't have a direct equivalent to PEXT, so this fallback
-    // works efficiently across all architectures (x86, ARM64, etc.)
-    t = (s ^ (s >> 1)) & 0x2222222222222222ULL; s ^= t ^ (t << 1);
-    t = (s ^ (s >> 2)) & 0x0C0C0C0C0C0C0C0CULL; s ^= t ^ (t << 2);
-    t = (s ^ (s >> 4)) & 0x00F000F000F000F0ULL; s ^= t ^ (t << 4);
-    t = (s ^ (s >> 8)) & 0x0000FF000000FF00ULL; s ^= t ^ (t << 8);
-    t = (s ^ (s >> 16)) & 0x00000000FFFF0000ULL; s ^= t ^ (t << 16);
-    
-    const uint32_t x = static_cast<uint32_t>(s >> 32);
-    const uint32_t y = static_cast<uint32_t>(s & 0xFFFFFFFFULL);
-#endif
-    
-    return std::make_tuple(x, y);
-}
-
-// 16-bit Hilbert decode for micro atlas (surveyor)
-// Supports 2^16 x 2^16 coordinate space using 32-bit Hilbert index
-inline std::tuple<uint16_t, uint16_t> hilbert_decode_16(uint32_t h) {
-    constexpr uint32_t order = 16;  // 2^16 = 65,536 max coordinate
-    
-    uint32_t s = h;
-    
-    // Pad s on left with 01 pattern for parallel processing
-    s |= 0x55555555U << (2 * order);
-    
-    // Extract right-shifted bits for parallel operations
-    const uint32_t sr = (s >> 1) & 0x55555555U;
-    
-    // Compute complement & swap info using bit arithmetic trick
-    uint32_t cs = ((s & 0x55555555U) + sr) ^ 0x55555555U;
-    
-    // Parallel prefix XOR to propagate complement/swap info left-to-right
-    cs ^= (cs >> 2);
-    cs ^= (cs >> 4);
-    cs ^= (cs >> 8);
-    cs ^= (cs >> 16);
-    
-    // Extract swap and complement bits into separate masks
-    const uint32_t swap = cs & 0x55555555U;
-    const uint32_t comp = (cs >> 1) & 0x55555555U;
-    
-    // Apply transformations to compute final coordinates
-    uint32_t t = (s & swap) ^ comp;
-    s ^= sr ^ t ^ (t << 1);
-    
-    // Mask to remove padding bits
-    s &= ((1U << (2 * order)) - 1);
-    
-#ifdef __BMI2__
-    // Intel BMI2 PEXT optimization for 50x speedup on Haswell+ CPUs
-    const uint16_t x = static_cast<uint16_t>(_pext_u32(s, 0xAAAAAAAAU));
-    const uint16_t y = static_cast<uint16_t>(_pext_u32(s, 0x55555555U));
-#else
-    // Parallel bit deinterleaving using optimized bit manipulation
-    // Note: ARM64 NEON doesn't have a direct equivalent to PEXT, so this fallback
-    // works efficiently across all architectures (x86, ARM64, etc.)
-    t = (s ^ (s >> 1)) & 0x22222222U; s ^= t ^ (t << 1);
-    t = (s ^ (s >> 2)) & 0x0C0C0C0CU; s ^= t ^ (t << 2);
-    t = (s ^ (s >> 4)) & 0x00F000F0U; s ^= t ^ (t << 4);
-    t = (s ^ (s >> 8)) & 0x0000FF00U; s ^= t ^ (t << 8);
-    
-    const uint16_t x = static_cast<uint16_t>(s >> 16);
-    const uint16_t y = static_cast<uint16_t>(s & 0xFFFFU);
-#endif
-    
-    return std::make_tuple(x, y);
-}
-
-void hilbert_transitivity_macro(uint32_t size) {
-    uint32_t n = 1;
-    while (n < size) n *= 2;  // Round to power of 2
-    
-    const uint64_t total_points = static_cast<uint64_t>(n) * n;
-    
-    // Adaptive chunk sizing for cache efficiency vs load balancing
-    // Larger chunks preserve Hilbert locality, but smaller chunks improve load balancing
-    // when many coordinates fall outside the actual size
-    const int num_threads = omp_get_max_threads();
-    const uint64_t base_chunk = total_points / (num_threads * 4);  // 4 chunks per thread
-    const uint64_t chunk_size = std::clamp(base_chunk, 1000ULL, 50000ULL);
-    
-    #pragma omp parallel for schedule(dynamic, chunk_size)
-    for (uint64_t h = 0; h < total_points; ++h) {
-        auto [x, y] = hilbert_decode_30(h);
-        if (x < size && y < size) {
-            if (check_transitivity(x, y)) process_pair(x, y);
-        }
+// For transitivity checking with improved cache locality over [1,size) x [1,size)
+pomagma::for_xy(size, [](uint32_t x, uint32_t y) {
+    if (check_transitivity(x, y)) {
+        process_pair(x, y);
     }
-}
-
-void hilbert_transitivity_micro(uint16_t size) {
-    uint16_t n = 1;
-    while (n < size) n *= 2;  // Round to power of 2
-    
-    const uint32_t total_points = static_cast<uint32_t>(n) * n;
-    
-    // Smaller chunks for micro atlas due to smaller coordinate space
-    const int num_threads = omp_get_max_threads();
-    const uint32_t base_chunk = total_points / (num_threads * 4);
-    const uint32_t chunk_size = std::clamp(base_chunk, 256U, 8192U);
-    
-    #pragma omp parallel for schedule(dynamic, chunk_size)
-    for (uint32_t h = 0; h < total_points; ++h) {
-        auto [x, y] = hilbert_decode_16(h);
-        if (x < size && y < size) {
-            if (check_transitivity(x, y)) process_pair(x, y);
-        }
-    }
-}
+});
 ```
+
+See `pomagma/util/hilbert_test.cpp` for comprehensive test coverage including correctness, bounds checking, locality properties, and performance validation.
 
 **Parallelization strategy**:
 - **Dynamic scheduling**: Handles load imbalancing when many coordinates fall outside actual E-graph size

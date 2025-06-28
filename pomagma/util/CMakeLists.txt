@@ -30,6 +30,7 @@ endfunction()
 
 add_unit_test(queue)
 add_unit_test(hasher)
+add_unit_test(hilbert)
 add_unit_test(worker_pool)
 add_unit_test(async_map)
 add_unit_test(lazy_map)
