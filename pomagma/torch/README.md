@@ -103,7 +103,8 @@ The `extract_all` method implements **E-graph extraction**—finding the single 
 The `fit` method uses **gradient descent** to fit normalized PCFG weights to observed corpus data.
 
 **Objective function**: `Loss = -log P(data | grammar)`
-- Log-likelihood term fits observed E-class frequencies  
+- Log-likelihood term fits observed counts of production rules
+- Supports conjugate Bayesian priors in the form of pseudo-counts added to data
 
 **Algorithm**: Use L-BFGS optimizer with constraint projection after each step:
 - **Nonnegativity**: `weights ← max(weights, 0)`

@@ -248,8 +248,14 @@ def test_fit_with_obtree_corpus(
     # Convert ObTree to CorpusStats
     corpus_stats = simple_corpus.stats
 
+    # Add a Bayesian prior in the form of pseudo-data
+    prior_stats = CorpusStats(
+        obs=Map({Ob(1): 1, Ob(2): 1, Ob(3): 1}), symbols=Map({"APP": 1})
+    )
+    stats = corpus_stats + prior_stats
+
     # Fit to corpus
-    losses = language_copy.fit(simple_structure, corpus_stats, max_steps=5)
+    losses = language_copy.fit(simple_structure, stats, max_steps=5)
 
     # Check that we tracked progress
     assert len(losses) == 5
