@@ -62,8 +62,6 @@ Source code analysis reveals the relationship between high-level interfaces and 
 
 ### Components Not Using E-graph Storage
 
-**Solver** (`pomagma/solver/`) implements an independent SMT solver for the Hstar theory with its own syntax representation (`syntax.hpp`, `theory_solver.hpp`). It operates on logical formulas rather than E-graph structures and has no atlas dependencies.
-
 **Linguist** (`pomagma/linguist/`) focuses on language model fitting and grammar optimization without direct E-graph manipulation, operating at a higher abstraction level.
 
 **Corpus** (`pomagma/corpus/`) manages literate code representations in combinatory algebra without requiring low-level E-graph access.
