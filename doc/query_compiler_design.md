@@ -21,9 +21,6 @@ Term rewriting systems use directed equations (rules) to transform terms by repe
 ### Abstract Interpretation and Domain Theory
 In abstract interpretation, program properties are computed by executing programs over abstract domains that safely approximate concrete values. Pomagma's ordered combinatory algebras embody this principle: the Scott ordering `x ⊑ y` means "x approximates y," and inference rules preserve this approximation relationship, enabling sound reasoning about program properties through symbolic execution.
 
-### Probabilistic Programming and Bayesian Inference
-Modern probabilistic programming systems must efficiently explore large spaces of possible executions. Pomagma's cost-based optimization mirrors techniques from probabilistic inference, where the goal is to focus computational resources on the most promising regions of the search space, guided by probability estimates and relevance measures.
-
 ## Design Overview
 
 The query compilation system transforms declarative inference rules into optimized virtual machine programs through a multi-stage pipeline. **Theory files** (`.theory`) contain facts and rules in a logic programming language with ASCII-art inference rule syntax. The **parser** converts these into normalized sequents, which the **optimizing compiler** transforms into execution plans using cost-based heuristics. The **code generator** translates plans into assembly-like virtual machine programs that execute efficiently over E-graph data structures. The **virtual machine** provides specialized opcodes for iterating over relations and functions, with automatic parallelization and set operations for scalable performance.
@@ -49,7 +46,7 @@ The query compilation system transforms declarative inference rules into optimiz
 
 ### Logic Programming Language
 
-Pomagma's logic programming language provides a declarative syntax for expressing inference rules over ordered combinatory algebras. The language supports **facts** (ground statements) and **rules** (conditional inference patterns) using a distinctive ASCII-art syntax that visually separates premises from conclusions.
+Pomagma's logic programming language provides a declarative syntax for expressing inference rules over ordered combinatory algebras. The language supports **facts** (ground statements) and **rules** (conditional inference patterns) using a two-dimensional ASCII-art syntax that visually separates premises from conclusions.
 
 **Facts** are atomic statements written in Polish notation:
 ```
@@ -71,6 +68,9 @@ LESS x y   LESS y z
 -------------------
      LESS x z
 ```
+Rules can have multiple antecedents and multiple succedents.
+The semantics is that if all antecedents are true than at least one succedent is true.
+A lone statement is equivalent to a rule with no antecedents and one succedent.
 
 The language supports several relation and function types from universal algebra:
 - **Unary relations**: `CLOSED x`, `NCLOSED x` (predicates on terms)

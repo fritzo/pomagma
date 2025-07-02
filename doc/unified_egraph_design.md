@@ -36,8 +36,6 @@ Three hash map configurations are configurable via `POMAGMA_USE_SPARSE_HASH`: Go
 
 Hash computation (`pomagma/atlas/macro/util.hpp`) for 32-bit pairs uses `((x << 32) | y) * HASH_MULTIPLIER` with full 64-bit arithmetic, or simplified `(x << 32) | y` for `TrivialObPairHash`.
 
-
-
 ### Torch Representation
 
 The torch layer (`pomagma/torch/structure.py`) uses multiple sparse representations for automatic differentiation. Each `BinaryFunction` stores four views: `LRv` as a `SparseBinaryFunction` using linear-probe hash tables for lookup, and `Vlr`, `Rvl`, `Lvr` as `SparseTernaryRelation` objects in Compressed Sparse Row format.
@@ -80,8 +78,6 @@ Source code analysis reveals the relationship between high-level interfaces and 
 
 **Reducer** (`pomagma/reducer/`) implements λ-calculus interpreters with extensive unit tests, operating on abstract syntax trees rather than E-graph representations.
 
-
-
 ## Related Work: Database Alternatives
 
 ### Performance Cost Analysis
@@ -114,31 +110,21 @@ The primary goal is reducing maintenance burden by consolidating redundant imple
 
 Evidence of this complexity burden includes duplicated binary function implementations across `pomagma/atlas/micro/binary_function.hpp` and `pomagma/atlas/macro/binary_function.hpp`, each with different concurrency models, hash functions, and memory layouts serving similar fundamental purposes.
 
-### Low-Level Code Smell: Header-Based Polymorphism
+### Header-Based Polymorphism Pattern
 
-A particularly problematic aspect of the current design is the "header-based polymorphism" pattern used to support different `Ob` identifier widths. The system maintains parallel directory hierarchies (`micro/` vs `macro/`) with nearly identical class implementations that differ only in their underlying storage strategies and the width of the `Ob` typedef:
+The current system uses a "header-based polymorphism" pattern to support different `Ob` identifier widths through parallel directory hierarchies (`micro/` vs `macro/`). This approach provides identical class interfaces with different underlying implementations:
 
 **Micro Atlas** (`uint16_t Ob`):
 - Supports up to 65,535 E-classes
 - Uses tiled atomic arrays optimized for concurrent access
-- Includes complex inverse lookup tables (`POMAGMA_HAS_INVERSE_INDEX = 1`)
-- Memory layout: 8×8 tiles fitting exactly in cache lines
+- Includes inverse lookup tables (`POMAGMA_HAS_INVERSE_INDEX = 1`)
 
 **Macro Atlas** (`uint32_t Ob`):
 - Supports up to 4 billion E-classes  
-- Uses hash maps with configurable backends (sparse/dense/std::unordered_map)
+- Uses hash maps with configurable backends
 - No inverse lookup tables (`POMAGMA_HAS_INVERSE_INDEX = 0`)
-- Memory layout: Linear hash table storage
 
-The "dirty trick" works through:
-1. Each directory defines its own `util.hpp` with different `typedef Ob` definitions
-2. Client code includes headers from either `atlas/micro/` or `atlas/macro/` directories
-3. Shared template code uses conditional compilation (`#if POMAGMA_HAS_INVERSE_INDEX`)
-4. Identical class names (`BinaryFunction`, `Carrier`) resolve to different implementations
-
-This creates significant maintenance overhead: bug fixes must be replicated across both implementations, performance optimizations only benefit specific use cases, and the conditional compilation makes template code difficult to read and verify.
-
-**Proposed Solution**: Replace header-based polymorphism with explicit template-based storage policies. Use `template<typename StoragePolicy>` parameterization where storage policies encapsulate both the `Ob` type and implementation strategy. This eliminates code duplication while maintaining zero-cost abstraction through `if constexpr` template specialization. The approach preserves performance characteristics while improving type safety and maintainability.
+The pattern works by having each directory define its own `util.hpp` with different `typedef Ob` definitions, while client code includes headers from the appropriate directory. Identical class names (`BinaryFunction`, `Carrier`) resolve to different implementations based on the include path, with shared template code using conditional compilation for variant-specific features.
 
 ### Concurrency Strategy
 
@@ -220,7 +206,6 @@ The refactoring strategy prioritizes incremental migration to maintain system fu
 Implementation tasks in dependency order:
 
 - [x] Remove abandoned shard atlas implementation (`pomagma/atlas/shard/` directory and CMake references) to simplify unification scope
-- [ ] Clean up Ob typedef code smell using template-based storage policies to eliminate header duplication between micro/macro implementations
 - [ ] Create high-level `EGraphSession` virtual interface for session management (load/dump/execute_program) where virtual dispatch is acceptable
 - [ ] Implement zero-cost inner `Structure<StoragePolicy>` template for hot-path operations (find/iter/insert) using compile-time dispatch
 - [ ] Create storage policy classes (`MicroStoragePolicy`, `MacroStoragePolicy`) encapsulating Ob types and core data structures  
