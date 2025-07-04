@@ -135,78 +135,76 @@ disable_error_code = ["name-defined"]
 # Handle symlinks properly (pomagma -> src)
 follow_imports_for_stubs = true
 
-# Since pomagma/* is symlinked to src/*, we ignore all pomagma.* modules 
-# to avoid checking the same code twice
-[[tool.mypy.overrides]]
-module = "pomagma.*"
-ignore_errors = true
-
 # TODO: Incrementally fix these errors by removing module-specific ignores
 # When fixing a sub-package, remove its entire [[tool.mypy.overrides]] section
-# Note: pomagma.* modules are symlinked to src.* so we only need src.* overrides
 
 # Core utility modules - fix first
 [[tool.mypy.overrides]]
-module = "src.util.*"
+module = "pomagma.util.*"
 disable_error_code = ["var-annotated", "index", "comparison-overlap", "assignment", "attr-defined"]
 
 # Language and protobuf modules
 [[tool.mypy.overrides]]
-module = "src.language.*"
+module = "pomagma.language.*"
 disable_error_code = ["attr-defined", "var-annotated"]
 
 # Src.reducer - one of the main sub-packages to fix
 [[tool.mypy.overrides]]
-module = "src.reducer.*"
+module = "pomagma.reducer.*"
 disable_error_code = ["attr-defined", "assignment", "call-overload", "index", "var-annotated", "call-arg", "operator", "method-assign", "unreachable", "unused-ignore", "misc", "arg-type"]
 
 # Src.compiler - one of the main sub-packages to fix
 [[tool.mypy.overrides]]
-module = "src.compiler.*"
+module = "pomagma.compiler.*"
 disable_error_code = ["method-assign", "assignment", "var-annotated", "index", "override", "attr-defined", "operator", "misc", "return-value"]
 
 # Src.analyst - one of the main sub-packages to fix  
 [[tool.mypy.overrides]]
-module = "src.analyst.*"  
+module = "pomagma.analyst.*"  
 disable_error_code = ["attr-defined", "var-annotated", "index"]
 
 # Src.torch - one of the main sub-packages to fix
 [[tool.mypy.overrides]]
-module = "src.torch.*"
+module = "pomagma.torch.*"
 disable_error_code = ["misc", "no-any-return", "return-value", "operator", "attr-defined"]
 
 # IO modules
 [[tool.mypy.overrides]]
-module = "src.io.*"
+module = "pomagma.io.*"
 disable_error_code = ["attr-defined", "no-any-return", "misc", "arg-type", "assignment"]
 
 # Cartographer modules
 [[tool.mypy.overrides]]
-module = "src.cartographer.*"
-disable_error_code = ["attr-defined"]
+module = "pomagma.cartographer.*"
+disable_error_code = ["attr-defined", "no-any-return"]
+
+# Make module
+[[tool.mypy.overrides]]
+module = "pomagma.make"
+disable_error_code = ["arg-type"]
 
 # Atlas modules  
 [[tool.mypy.overrides]]
-module = "src.atlas.*"
+module = "pomagma.atlas.*"
 disable_error_code = ["attr-defined"]
 
 # Theorist modules
 [[tool.mypy.overrides]]
-module = "src.theorist.*"
+module = "pomagma.theorist.*"
 disable_error_code = ["var-annotated"]
 
 # Examples and corpus modules
 [[tool.mypy.overrides]]
-module = "src.examples.*"
+module = "pomagma.examples.*"
 disable_error_code = ["assignment", "attr-defined"]
 
 [[tool.mypy.overrides]]
-module = "src.corpus.*"
+module = "pomagma.corpus.*"
 disable_error_code = ["attr-defined"]
 
 # Main modules and top-level scripts
 [[tool.mypy.overrides]]
-module = "src.__main__"
+module = "pomagma.__main__"
 disable_error_code = ["union-attr"]
 
 [[tool.mypy.overrides]]

@@ -16,7 +16,7 @@ and many computations are cached (memoized).
 
 The pipeline stages are:
 1. Generate a stream of hole-fillings, filtered to remove duplicates.
-2. Quotient out by normalizing the fillings, and dedulicate.
+2. Quotient out by normalizing the fillings, and deduplicate.
 3. Filter out strict narrowings of previously invalidated fillings.
 4. Substitute the filling into a context; quotient by simplifying; and dedup.
 5. Filter out contexts by client-side validation, which is heavily memoized.

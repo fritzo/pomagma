@@ -98,7 +98,9 @@ def simple_structure() -> Structure:
     Lvr = SparseTernaryRelation(lvr_ptrs, lvr_args)
 
     nullary_functions = Map({"X": Ob(1), "Y": Ob(2)})
-    binary_functions = Map({"APP": BinaryFunction("APP", LRv, Vlr, Rvl, Lvr)})
+    binary_functions: Map[str, BinaryFunction] = Map(
+        {"APP": BinaryFunction("APP", LRv, Vlr, Rvl, Lvr)}
+    )
 
     return Structure(
         name="test",
@@ -483,7 +485,7 @@ def test_language_iadd_corpus_finitary_joins() -> None:
         torch.zeros((0, 2), dtype=torch.int32),
     )
 
-    binary_functions = Map({})
+    binary_functions: Map[str, BinaryFunction] = Map({})
     symmetric_functions = Map(
         {
             "JOIN": BinaryFunction(

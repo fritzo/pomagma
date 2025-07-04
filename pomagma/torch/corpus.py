@@ -15,15 +15,16 @@ from .structure import Ob, Structure
 
 logger = logging.getLogger(__name__)
 
-EMPTY_MAP = Map()
+EMPTY_OB_MAP: Map[Ob, int] = Map()
+EMPTY_STR_MAP: Map[str, int] = Map()
 
 
 @dataclass(frozen=True, slots=True)
 class CorpusStats:
     """Counts of symbols and E-classes in a corpus."""
 
-    obs: Map[Ob, int] = EMPTY_MAP
-    symbols: Map[str, int] = EMPTY_MAP
+    obs: Map[Ob, int] = EMPTY_OB_MAP
+    symbols: Map[str, int] = EMPTY_STR_MAP
 
     def __add__(self, other: "CorpusStats") -> "CorpusStats":
         obs = Counter(self.obs)

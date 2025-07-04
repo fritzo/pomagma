@@ -46,7 +46,10 @@ class Server:
 
     @property
     def pid(self) -> int:
-        return self._proc.pid
+        pid = self._proc.pid
+        if pid is None:
+            raise RuntimeError("Process PID is not available")
+        return pid
 
     def connect(self) -> Client:
         return Client(self.address, poll_callback=self.check)
