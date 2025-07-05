@@ -91,17 +91,17 @@ The analyst pipeline processes string inputs through C++ Term structures for hig
 
 ## Interoperability and Conversion
 
-Current conversion patterns rely heavily on string intermediaries for cross-representation communication. Expression integrates with string parsing through `parse_string_to_expr()` and string serialization, while ObTree connects to Expression via `ObTree.from_expr()` and back through `Extractor.extract_from_obtree()`. Term supports both Polish notation through `polish_parse()` and `polish_print()`, and the C++ Corpus Term uses dedicated parser infrastructure for string processing.
+Current conversion patterns support both string intermediaries and direct conversions for cross-representation communication. Expression integrates with string parsing through `parse_string_to_expr()` and string serialization, while ObTree connects to Expression via `ObTree.from_expr()` and back through `Extractor.extract_from_obtree()`. Direct Expression-Term conversion is available through `pomagma.reducer.bridge` module functions, and ObTree supports Term input via `ObTree.from_term()`. Term supports Polish notation through `polish_parse()` and `polish_print()`, and the C++ Corpus Term uses dedicated parser infrastructure for string processing.
 
-Significant conversion gaps exist between representations, particularly the lack of direct Expression-Term conversion which forces expensive string round-trips. Similarly, Term and ObTree lack direct conversion paths, and the C++/Python boundary limits Corpus Term integration with Python-based representations, creating performance bottlenecks and development friction.
+Remaining conversion gaps include limited Term-ObTree direct paths beyond the Expression intermediary, and the C++/Python boundary continues to limit Corpus Term integration with Python-based representations in some high-performance scenarios.
 
 ## Future Improvements
+
+- [x] **Implement direct Expression↔Term conversion** - Added `expression_to_term()` and `term_to_expression()` functions in `pomagma.reducer.bridge` module with clean imports (using `from pomagma.reducer import syntax`) and `ObTree.from_term()` integration, eliminating expensive string round-trips for compiler-reducer integration and program synthesis workflows
 
 - [ ] **Standardize on Polish notation** - Remove S-expression support from `pomagma.reducer.syntax` and `pomagma.reducer.graphs`, eliminate `sexpr_parse()` and `sexpr_print()` functions in favor of consistent Polish notation across all representations
 
 - [ ] **Consolidate graphs.Term into syntax.Term** - Merge `pomagma.reducer.graphs.Term` functionality into the main `pomagma.reducer.syntax.Term`, eliminating the specialized integer-based representation while preserving graph operation capabilities
-
-- [ ] **Implement direct Expression↔Term conversion** - Add `Expression.to_term()` and `Term.to_expression()` methods to eliminate expensive string round-trips, benefiting the compiler-reducer integration and program synthesis workflows
 
 - [ ] **Create PyTorch bridge for analyst** - Extend `pomagma.torch.corpus` to interface with C++ `Corpus Term` structures, enabling PyTorch-based analysis of high-performance corpus validation results for machine learning applications
 

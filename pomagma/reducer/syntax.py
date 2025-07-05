@@ -466,7 +466,7 @@ def complexity(term):
 # Polish notation
 
 
-def polish_parse(string, transform=identity):
+def polish_parse(string: str, transform: Transform = identity) -> Term:
     """
     Parse a string from polish notation to a term.
 
@@ -496,13 +496,13 @@ def _pop_int(tokens, transform):
     return int(tokens.pop())
 
 
-def _polish_parse_tokens(tokens, transform):
+def _polish_parse_tokens(tokens: list[str], transform: Transform) -> Term:
     token = tokens.pop()
     try:
         polish_parsers = _PARSERS[token]
     except KeyError:
         if re_keyword.match(token):
-            return getattr(transform, token)
+            return getattr(transform, token)  # type: ignore[no-any-return]
         if re_rank.match(token):
             return IVAR(int(token))
         return NVAR(token)
@@ -511,7 +511,7 @@ def _polish_parse_tokens(tokens, transform):
         fun = getattr(transform, token)
     except KeyError:
         return Term.make(token, *args)
-    return fun(*args)
+    return fun(*args)  # type: ignore[no-any-return]
 
 
 _PARSERS = {

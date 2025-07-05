@@ -337,3 +337,70 @@ def test_obtree_finitary_join_stats(simple_structure: Structure) -> None:
     quad_join = ObTree.from_join(simple_structure, [x, y, z, w])
     stats = quad_join.stats
     assert stats.symbols.get("JOIN") == 3  # 4-1 = 3
+
+
+def test_obtree_from_term_basic(simple_structure: Structure) -> None:
+    """Test ObTree creation from basic Term."""
+    from pomagma.reducer.syntax import NVAR, I
+
+    # Test atom term
+    i_tree = ObTree.from_term(simple_structure, I, strict=False)
+    assert i_tree.name == "I"
+    assert i_tree.args == ()
+
+    # Test variable term
+    x_tree = ObTree.from_term(simple_structure, NVAR("x"), strict=False)
+    assert x_tree.name == "x"
+    assert x_tree.args == ()
+
+
+def test_obtree_from_term_application(simple_structure: Structure) -> None:
+    """Test ObTree creation from application Term."""
+    from pomagma.reducer.syntax import APP, I, K
+
+    # Test APP(I, K)
+    app_term = APP(I, K)
+    app_tree = ObTree.from_term(simple_structure, app_term, strict=False)
+
+    assert app_tree.name == "APP"
+    assert app_tree.args is not None
+    assert isinstance(app_tree.args, tuple)
+    assert len(app_tree.args) == 2
+    assert app_tree.args[0].name == "I"
+    assert app_tree.args[1].name == "K"
+
+
+def test_obtree_from_term_with_e_classes(simple_structure: Structure) -> None:
+    """Test ObTree creation from Term with E-class resolution."""
+    from pomagma.reducer.syntax import APP, NVAR
+
+    # Create APP(x, y) where x and y are variables that won't resolve to E-classes
+    x_term = NVAR("x")  # Variable, not E-class
+    y_term = NVAR("y")  # Variable, not E-class
+    app_term = APP(x_term, y_term)
+
+    app_tree = ObTree.from_term(simple_structure, app_term, strict=False)
+
+    # Should create an APP expression with variable arguments
+    assert app_tree.name == "APP"
+    assert app_tree.args is not None
+    assert isinstance(app_tree.args, tuple)
+    assert len(app_tree.args) == 2
+    assert app_tree.args[0].name == "x"
+    assert app_tree.args[1].name == "y"
+
+
+def test_obtree_from_term_stats(simple_structure: Structure) -> None:
+    """Test stats computation for ObTree created from Term."""
+    from pomagma.reducer.syntax import APP, JOIN, I, K
+
+    # Create JOIN(I, APP(I, K))
+    app_term = APP(I, K)
+    join_term = JOIN(I, app_term)
+
+    join_tree = ObTree.from_term(simple_structure, join_term, strict=False)
+    stats = join_tree.stats
+
+    # Should count symbols used in the term
+    assert stats.symbols.get("JOIN") == 1
+    assert stats.symbols.get("APP") == 1

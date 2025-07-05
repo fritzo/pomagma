@@ -2,6 +2,7 @@ import logging
 from collections import Counter
 from collections.abc import Collection
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 import torch
 from immutables import Map
@@ -9,9 +10,13 @@ from immutables import Map
 from pomagma.compiler.expressions import Expression
 from pomagma.compiler.parser import parse_string_to_expr
 from pomagma.compiler.util import weak_memoize_1, weak_memoize_2
+from pomagma.reducer.bridge import term_to_expression
 from pomagma.util.hashcons import WeakHashConsMeta
 
 from .structure import Ob, Structure
+
+if TYPE_CHECKING:
+    from pomagma.reducer.syntax import Term
 
 logger = logging.getLogger(__name__)
 
@@ -50,6 +55,7 @@ class ObTree(metaclass=WeakHashConsMeta):
         *,
         strict: bool = True,
     ) -> "ObTree":
+        """Create an ObTree from a pomagma.compiler.expressions.Expression."""
         name = expr.name
         args: tuple[ObTree, ...] = tuple(
             ObTree.from_expr(structure, arg, strict=strict) for arg in expr.args
@@ -87,7 +93,16 @@ class ObTree(metaclass=WeakHashConsMeta):
         *,
         strict: bool = False,
     ) -> "ObTree":
+        """Create an ObTree from a string in polish notation."""
         expr = parse_string_to_expr(string)
+        return ObTree.from_expr(structure, expr, strict=strict)
+
+    @staticmethod
+    def from_term(
+        structure: Structure, term: "Term", *, strict: bool = True
+    ) -> "ObTree":
+        """Create an ObTree from a pomagma.reducer.syntax.Term."""
+        expr = term_to_expression(term)
         return ObTree.from_expr(structure, expr, strict=strict)
 
     def __str__(self) -> str:
