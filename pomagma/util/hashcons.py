@@ -28,7 +28,7 @@ def intern(x: _V) -> _V:
         return x
 
 
-class HashConsMeta(ABCMeta):
+class WeakHashConsMeta(ABCMeta):
     """Metaclass to hash cons instances."""
 
     def __call__(cls, *args, **kwargs):

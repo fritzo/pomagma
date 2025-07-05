@@ -10,6 +10,7 @@ from pomagma.compiler.plans import (
     IterInvBinaryRange,
     IterInvInjective,
     Let,
+    Plan,
     Test,
 )
 from pomagma.compiler.sequents import Sequent, assert_normal, normalize
@@ -167,7 +168,7 @@ def optimize_plan(antecedents, succedent, bound):
     # ensure
     if not antecedents and succedent.vars <= bound:
         POMAGMA_DEBUG("ensure {}", succedent)
-        return Ensure.make(succedent)
+        return Ensure(succedent)
 
     # conditionals
     # HEURISTIC test eagerly in arbitrary order
@@ -177,14 +178,14 @@ def optimize_plan(antecedents, succedent, bound):
                 antecedents_a = sortedset(set_without(antecedents, a))
                 POMAGMA_DEBUG("test relation {}", a)
                 body = optimize_plan(antecedents_a, succedent, bound)
-                return Test.make(a, body)
+                return Test(a, body)
         else:
             assert a.is_fun(), a
             if a.vars <= bound and a.var in bound:
                 antecedents_a = sortedset(set_without(antecedents, a))
                 POMAGMA_DEBUG("test function {}", a)
                 body = optimize_plan(antecedents_a, succedent, bound)
-                return Test.make(a, body)
+                return Test(a, body)
 
     # find & bind variable
     # HEURISTIC bind eagerly in arbitrary order
@@ -196,10 +197,10 @@ def optimize_plan(antecedents, succedent, bound):
                 bound_a = set_with(bound, a.var)
                 POMAGMA_DEBUG("let {}", a)
                 body = optimize_plan(antecedents_a, succedent, bound_a)
-                return Let.make(a, body)
+                return Let(a, body)
             # TODO find inverse if injective function
 
-    results = []
+    results: list[Plan] = []
 
     # iterate unknown
     if succedent.is_rel() and succedent.name != "EQUAL":  # TODO handle EQUAL
@@ -209,7 +210,7 @@ def optimize_plan(antecedents, succedent, bound):
             bound_v = set_with(bound, v)
             POMAGMA_DEBUG("iterate unknown {}", v)
             body = optimize_plan(antecedents, succedent, bound_v)
-            results.append(Iter.make(v, Test.make(UNKNOWN(succedent), body)))
+            results.append(Iter(v, Test(UNKNOWN(succedent), body)))
 
     # iterate forward
     forward_vars = set()
@@ -221,7 +222,7 @@ def optimize_plan(antecedents, succedent, bound):
         bound_v = set_with(bound, v)
         POMAGMA_DEBUG("iterate forward {}", v)
         body = optimize_plan(antecedents, succedent, bound_v)
-        results.append(Iter.make(v, body))
+        results.append(Iter(v, body))
 
     # iterate backward
     for a in antecedents:
@@ -236,14 +237,14 @@ def optimize_plan(antecedents, succedent, bound):
             if nargs == 1 and len(a_free) == 1:
                 # TODO injective function inverse need not be iterated
                 body = optimize_plan(antecedents_a, succedent, bound_v)
-                results.append(IterInvInjective.make(a, body))
+                results.append(IterInvInjective(a, body))
             elif nargs == 2 and len(a_free) == 1 and len(a.vars) == 2:
                 (fixed,) = list(a.vars - a_free)
                 body = optimize_plan(antecedents_a, succedent, bound_v)
-                results.append(IterInvBinaryRange.make(a, fixed, body))
+                results.append(IterInvBinaryRange(a, fixed, body))
             elif nargs == 2 and len(a_free) == 2:
                 body = optimize_plan(antecedents_a, succedent, bound_v)
-                results.append(IterInvBinary.make(a, body))
+                results.append(IterInvBinary(a, body))
 
     # HEURISTIC iterate locally eagerly
     if results:
@@ -254,6 +255,6 @@ def optimize_plan(antecedents, succedent, bound):
         bound_v = set_with(bound, v)
         POMAGMA_DEBUG("iterate non-locally")
         body = optimize_plan(antecedents, succedent, bound_v)
-        results.append(Iter.make(v, body))
+        results.append(Iter(v, body))
 
     return min(results)

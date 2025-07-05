@@ -279,11 +279,6 @@ def memoize_modulo_renaming_constants(fun):
     return memoized
 
 
-def memoize_make(cls):
-    cls.make = staticmethod(memoize_args(cls))
-    return cls
-
-
 def weak_memoize_1(fun):
     """Weakly memoize a function of one argument. Kwargs are not memoized."""
     cache = WeakKeyDictionary()

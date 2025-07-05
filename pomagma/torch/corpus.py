@@ -9,7 +9,7 @@ from immutables import Map
 from pomagma.compiler.expressions import Expression
 from pomagma.compiler.parser import parse_string_to_expr
 from pomagma.compiler.util import weak_memoize_1, weak_memoize_2
-from pomagma.util.hashcons import HashConsMeta
+from pomagma.util.hashcons import WeakHashConsMeta
 
 from .structure import Ob, Structure
 
@@ -35,7 +35,7 @@ class CorpusStats:
 
 
 @dataclass(frozen=True, slots=True, weakref_slot=True)
-class ObTree(metaclass=HashConsMeta):
+class ObTree(metaclass=WeakHashConsMeta):
     """A partially understood expression, whose leaves are Obs i.e. E-classes."""
 
     ob: Ob | None = None

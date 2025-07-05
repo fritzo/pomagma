@@ -1,7 +1,8 @@
 import math
 
 from pomagma.compiler.expressions import Expression_1
-from pomagma.compiler.util import log_sum_exp, memoize_make, set_with
+from pomagma.compiler.util import log_sum_exp, set_with
+from pomagma.util.hashcons import HashConsArgsMeta
 
 
 def assert_in(element, set_):
@@ -27,7 +28,7 @@ def add_costs(costs):
     return log_sum_exp(*(LOG_OBJECT_COUNT * c for c in costs)) / LOG_OBJECT_COUNT
 
 
-class Plan:
+class Plan(metaclass=HashConsArgsMeta):
     __slots__ = ["_args", "_cost", "_rank"]
 
     def __init__(self, *args):
@@ -52,10 +53,9 @@ class Plan:
         return self.rank < other.rank
 
     def permute_symbols(self, perm):
-        return self.__class__.make(*(a.permute_symbols(perm) for a in self._args))
+        return self.__class__(*(a.permute_symbols(perm) for a in self._args))
 
 
-@memoize_make
 class Iter(Plan):
     __slots__ = ["_repr", "var", "body", "tests", "lets", "stack"]
 
@@ -137,7 +137,6 @@ class Iter(Plan):
 
 
 # TODO injective function inverse need not be iterated
-@memoize_make
 class IterInvInjective(Plan):
     __slots__ = ["fun", "value", "var", "body"]
 
@@ -161,7 +160,6 @@ class IterInvInjective(Plan):
         return 4.0 + 0.5 * self.body.op_count()  # amortized
 
 
-@memoize_make
 class IterInvBinary(Plan):
     __slots__ = ["fun", "value", "var1", "var2", "body"]
 
@@ -186,7 +184,6 @@ class IterInvBinary(Plan):
         return 4.0 + 0.25 * OBJECT_COUNT * self.body.op_count()  # amortized
 
 
-@memoize_make
 class IterInvBinaryRange(Plan):
     __slots__ = ["fun", "value", "var1", "var2", "lhs_fixed", "body"]
 
@@ -221,7 +218,6 @@ class IterInvBinaryRange(Plan):
         return 4.0 + 0.5 * self.body.op_count()  # amortized
 
 
-@memoize_make
 class Let(Plan):
     __slots__ = ["var", "expr", "body"]
 
@@ -252,7 +248,6 @@ class Let(Plan):
         return 1.0 + self.prob() * self.body.op_count(stack=stack)
 
 
-@memoize_make
 class Test(Plan):
     __slots__ = ["expr", "body"]
 
@@ -281,7 +276,6 @@ class Test(Plan):
         return 1.0 + self.prob() * self.body.op_count(stack=stack)
 
 
-@memoize_make
 class Ensure(Plan):
     __slots__ = ["expr"]
 
