@@ -1,8 +1,23 @@
+from typing import NotRequired, TypedDict
+
 import pytest
 
+from pomagma.compiler.expressions import Expression
 from pomagma.compiler.parser import parse_string_to_expr as parse
 
-EXAMPLES = [
+
+class Example(TypedDict):
+    polish: str
+    polish_vars: set[str]
+    polish_consts: set[str]
+    polish_terms: set[str]
+    expression: NotRequired[Expression]
+    vars: NotRequired[set[Expression]]
+    consts: NotRequired[set[Expression]]
+    terms: NotRequired[set[Expression]]
+
+
+EXAMPLES: list[Example] = [
     {
         "polish": "x",
         "polish_vars": {"x"},

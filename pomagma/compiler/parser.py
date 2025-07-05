@@ -1,5 +1,7 @@
 import re
+from collections.abc import Iterable
 from copy import copy
+from typing import Any, TypedDict
 
 from pomagma.compiler.expressions import Expression
 from pomagma.compiler.sequents import Sequent
@@ -10,12 +12,17 @@ RE_PADDING = re.compile("   +")
 RE_COMMENT = re.compile("#.*$")
 
 
+class Theory(TypedDict):
+    facts: list[Expression]
+    rules: list[Sequent]
+
+
 class ParseError(Exception):
-    def __init__(self, message, **debuginfo):
+    def __init__(self, message: str, **debuginfo: Any) -> None:
         self.message = str(message)
         self.debuginfo = debuginfo
 
-    def __str__(self):
+    def __str__(self) -> str:
         header = ", ".join(
             ["ParseError"]
             + [f"{key} {val}" for key, val in sorted(self.debuginfo.items())]
@@ -23,8 +30,9 @@ class ParseError(Exception):
         return f"{header}: {self.message}"
 
 
-def find_bars(lines, **debuginfo):
-    bars = []
+def find_bars(lines: list[str], **debuginfo: Any) -> list[tuple[int, int, int]]:
+    """Find bars in a list of lines. Return a list of tuples (lineno, left, right)."""
+    bars: list[tuple[int, int, int]] = []
     for lineno, line in enumerate(lines):
         match = RE_BAR.search(line)
         while match:
@@ -37,8 +45,11 @@ def find_bars(lines, **debuginfo):
     return bars
 
 
-def get_spans(lines, linenos, left, right, **debuginfo):
-    results = []
+def get_spans(
+    lines: list[str], linenos: list[int], left: int, right: int, **debuginfo: Any
+) -> tuple[int, list[Expression]]:
+    """Get spans of expressions between bars."""
+    results: list[Expression] = []
     for lineno in linenos:
         debuginfo["lineno"] = lineno
         line = lines[lineno]
@@ -57,9 +68,10 @@ def get_spans(lines, linenos, left, right, **debuginfo):
     return lineno, results
 
 
-def parse_lines_to_rules(lines, **debuginfo):
+def parse_lines_to_rules(lines: list[str], **debuginfo: Any) -> list[Sequent]:
+    """Parse a list of lines to a list of rules."""
     bars = find_bars(lines, **debuginfo)
-    rules = []
+    rules: list[Sequent] = []
     for lineno, left, right in bars:
         bar_to_top = list(range(lineno - 1, -1, -1))
         bar_to_bottom = list(range(lineno + 1, len(lines)))
@@ -76,7 +88,9 @@ def parse_lines_to_rules(lines, **debuginfo):
     return rules
 
 
-def erase_rules_from_lines(rules, lines, **debuginfo):
+def erase_rules_from_lines(
+    rules: list[Sequent], lines: list[str], **debuginfo: Any
+) -> list[str]:
     lines = copy(lines)
     for rule in rules:
         block = rule.debuginfo["block"]
@@ -97,7 +111,8 @@ def erase_rules_from_lines(rules, lines, **debuginfo):
     return lines
 
 
-def parse_tokens_to_expr(tokens):
+def parse_tokens_to_expr(tokens: list[str]) -> Expression:
+    """Parse a list of tokens on polish order to an Expression."""
     head = tokens.pop()
     arity = get_arity(head)
     nargs = get_nargs(arity)
@@ -105,7 +120,8 @@ def parse_tokens_to_expr(tokens):
     return Expression(head, *args)
 
 
-def parse_string_to_expr(string):
+def parse_string_to_expr(string: str) -> Expression:
+    """Parse a string on polish notation to an Expression."""
     tokens = string.strip().split(" ")
     for token in tokens:
         if not token:
@@ -117,28 +133,32 @@ def parse_string_to_expr(string):
     return expr
 
 
-def remove_comments_and_add_padding(lines_with_comments):
+def remove_comments_and_add_padding(lines_with_comments: Iterable[str]) -> list[str]:
+    """Remove comments and add padding to a list of lines."""
     lines = [""]
     lines.extend(RE_COMMENT.sub("", line).rstrip() for line in lines_with_comments)
     lines.append("")
     return lines
 
 
-def parse_lines_to_facts(lines, **debuginfo):
-    facts = []
+def parse_lines_to_facts(lines: Iterable[str], **debuginfo: Any) -> list[Expression]:
+    """Parse a list of lines to a list of facts."""
+    facts: list[Expression] = []
     for lineno, line in enumerate(lines):
         debuginfo["lineno"] = lineno
         line = line.strip()
-        if line:
-            for string in RE_PADDING.split(line):
-                try:
-                    facts.append(parse_string_to_expr(string))
-                except Exception as e:
-                    raise ParseError(e, **debuginfo)
+        if not line:
+            continue
+        for string in RE_PADDING.split(line):
+            try:
+                facts.append(parse_string_to_expr(string))
+            except Exception as e:
+                raise ParseError(str(e), **debuginfo) from e
     return facts
 
 
-def parse_theory(lines, **debuginfo):
+def parse_theory(lines: Iterable[str], **debuginfo: Any) -> Theory:
+    """Parse a list of lines to a theory."""
     lines = remove_comments_and_add_padding(lines)
     rules = parse_lines_to_rules(lines, **debuginfo)
     lines = erase_rules_from_lines(rules, lines, **debuginfo)
@@ -146,19 +166,24 @@ def parse_theory(lines, **debuginfo):
     return {"facts": facts, "rules": rules}
 
 
-def parse_theory_file(filename):
+def parse_theory_file(filename: str) -> Theory:
+    """Parse a theory file to a theory."""
     with open(filename) as f:
         return parse_theory(f, file=filename)
 
 
-def parse_theory_string(string):
+def parse_theory_string(string: str) -> Theory:
+    """Parse a theory string to a theory."""
     return parse_theory(string.splitlines())
 
 
-def parse_corpus(lines, **debuginfo):
+def parse_corpus(
+    lines: Iterable[str], **debuginfo: Any
+) -> dict[Expression, Expression]:
+    """Parse a list of lines to a corpus."""
     lines = remove_comments_and_add_padding(lines)
     facts = parse_lines_to_facts(lines, **debuginfo)
-    defs = {}
+    defs: dict[Expression, Expression] = {}
     for fact in facts:
         assert fact.name == "EQUAL", fact
         var, expr = fact.args
