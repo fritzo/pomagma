@@ -30,11 +30,14 @@ def DELETE(*args, **kwargs):
 
 def logger(message, *args):
     if pomagma.util.LOG_LEVEL >= pomagma.util.LOG_LEVEL_DEBUG:
-        print("#"), message.format(*args)
+        print("#", message.format(*args))
 
 
 class sortedset(set, Generic[_T]):
     __slots__ = ["_sorted", "_hash"]
+
+    _sorted: tuple[_T]
+    _hash: int
 
     def __init__(self, *args, **kwargs):
         set.__init__(self, *args, **kwargs)
@@ -190,7 +193,7 @@ def memoize_args(fun: Callable[_A, _B]) -> Callable[_A, _B]:
             return result
 
     MEMOIZED_CACHES[memoized] = cache
-    return memoized
+    return memoized  # type: ignore[return-value]
 
 
 @contextlib.contextmanager
@@ -212,7 +215,7 @@ def unique(arg):
 MEMOIZED_CACHES[unique] = UNIQUE
 
 
-def unique_result(fun):
+def unique_result(fun: Callable[_A, _B]) -> Callable[_A, _B]:
     @functools.wraps(fun)
     def decorated(*args, **kwargs):
         return unique(fun(*args, **kwargs))

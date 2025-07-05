@@ -42,7 +42,7 @@ class Expression(metaclass=HashConsArgsMeta):
         self._sort: tuple[int, str] = (len(self._polish), self._polish)
         # all other fields are lazily initialized
         self._var: Expression | None = None
-        self._vars: sortedset[Expression] | None = None
+        self._vars: set[Expression] | None = None
         self._consts: sortedset[Expression] | None = None
         self._terms: sortedset[Expression] | None = None
 
@@ -63,7 +63,7 @@ class Expression(metaclass=HashConsArgsMeta):
         return self._polish
 
     @property
-    def var(self) -> "Expression":
+    def var(self) -> "Expression | None":
         if self._var is None:
             if self._arity == "Variable":
                 self._var = self
@@ -72,20 +72,21 @@ class Expression(metaclass=HashConsArgsMeta):
             elif self._arity in signature.FUNCTION_ARITIES:
                 var = re_space.sub("_", self._polish.rstrip("_"))
                 self._var = Expression(var)
+            # TODO should we handle other cases here?
         return self._var
 
     @property
-    def vars(self) -> sortedset["Expression"]:
+    def vars(self) -> set["Expression"]:
         if self._vars is None:
             if self._arity == "Variable":
-                self._vars = {self}
+                result = {self}
             elif self._arity == "NullaryFunction":
-                self._vars = set()
+                result = set()
             elif self._arity in signature.FUNCTION_ARITIES:
-                self._vars = union(a.vars for a in self._args)
+                result = union(a.vars for a in self._args)
             else:
-                self._vars = union(a.vars for a in self._args)
-            self._vars = sortedset(self._vars)
+                result = union(a.vars for a in self._args)
+            self._vars = sortedset(result)
         return self._vars
 
     @property
@@ -100,10 +101,10 @@ class Expression(metaclass=HashConsArgsMeta):
     @property
     def terms(self) -> sortedset["Expression"]:
         if self._terms is None:
-            self._terms = union(a.terms for a in self._args)
+            result = union(a.terms for a in self._args)
             if self.is_term():
-                self._terms.add(self)
-            self._terms = sortedset(self._terms)
+                result.add(self)
+            self._terms = sortedset(result)
         return self._terms
 
     def __hash__(self) -> int:

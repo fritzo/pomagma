@@ -20,7 +20,7 @@ from parsable import parsable
 from pomagma.reducer.bohm import print_tiny, sexpr_simplify, simplify, try_compute_step
 from pomagma.reducer.lib import BOT, TOP, B, C, I, box, pair
 from pomagma.reducer.sugar import app, as_term, join_, rec
-from pomagma.reducer.syntax import sexpr_print
+from pomagma.reducer.syntax import Term, sexpr_print
 
 CB = app(C, B)
 div = rec(lambda a: join_(I, lambda x: app(a, x, TOP)))
@@ -49,8 +49,8 @@ PARTS = {
 }
 
 
-def build_A(*part_names):
-    return rec(join_(*(PARTS[name] for name in part_names)))
+def build_A(*part_names: str) -> Term:
+    return rec(join_(*(PARTS[name] for name in part_names)))  # type: ignore[arg-type]
 
 
 unit_sig = as_term(lambda r, s, f, x: app(r, app(f, app(s, x))))

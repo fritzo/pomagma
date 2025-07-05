@@ -59,6 +59,7 @@
         "reltol",
         "rtol",
         "Satisfiability",
+        "sexpr",
         "skja",
         "skrj",
         "Solomonoff",

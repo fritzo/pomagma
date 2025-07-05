@@ -5,8 +5,14 @@ import logging
 import os
 import sys
 from collections import defaultdict
+from collections.abc import Callable, Iterable
+from typing import ParamSpec, TypeVar
 
 import pomagma.util
+
+_A = ParamSpec("_A")
+_B = TypeVar("_B")
+Decorator = Callable[[Callable[_A, _B]], Callable[_A, _B]]
 
 
 class UnreachableError(RuntimeError):
@@ -33,7 +39,7 @@ def trool_fuse(args):
     return result
 
 
-def trool_all(args):
+def trool_all(args: Iterable[bool | None]) -> bool | None:
     """Combine according to:
 
           | None  True  False
@@ -52,7 +58,7 @@ def trool_all(args):
     return result
 
 
-def trool_any(args):
+def trool_any(args: Iterable[bool | None]) -> bool | None:
     """Combine according to:
 
           | None  True  False
@@ -107,7 +113,7 @@ LOG_LEVELS = {
 class IndentingFormatter(logging.Formatter):
     def __init__(self):
         logging.Formatter.__init__(self, "%(indent)s %(message)s")
-        self.min_indent = float("inf")
+        self.min_indent = 99999999
 
     def format(self, record):
         stack = inspect.stack()
@@ -126,19 +132,19 @@ handler.setFormatter(IndentingFormatter())
 LOG.addHandler(handler)
 
 
-def _logged(*format_args, **format_kwargs):
+def _logged(*format_args, **format_kwargs) -> Decorator:
     formatters = dict(format_kwargs)
-    formatters.update(dict(enumerate(format_args)))
+    formatters.update(dict(enumerate(format_args)))  # type: ignore[arg-type]
 
-    def decorator(fun):
+    def decorator(fun: Callable[_A, _B]) -> Callable[_A, _B]:
         @functools.wraps(fun)
-        def decorated(*args, **kwargs):
+        def decorated(*args: _A.args, **kwargs: _A.kwargs) -> _B:
             akwargs = []
             for i, arg in enumerate(args):
-                arg = formatters.get(i, repr)(arg)
+                arg = formatters.get(i, repr)(arg)  # type: ignore[index]
                 akwargs.append(arg)
             for key, val in list(kwargs.items()):
-                val = formatters.get(key, repr)(val)
+                val = formatters.get(key, repr)(val)  # type: ignore[index]
                 akwargs.append(f"{key}={val}")
             LOG.debug(r"%s(%s)", fun.__name__, ", ".join(akwargs))
             result = fun(*args, **kwargs)
@@ -151,7 +157,7 @@ def _logged(*format_args, **format_kwargs):
     return decorator
 
 
-def _not_logged(*args, **kwargs):
+def _not_logged(*args, **kwargs) -> Decorator:
     return lambda fun: fun
 
 

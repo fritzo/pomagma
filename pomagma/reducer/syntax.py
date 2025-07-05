@@ -1,40 +1,46 @@
 import re
 import sys
 from collections import defaultdict
+from collections.abc import Callable, Iterator
+from typing import Any, ClassVar, ParamSpec, TypeAlias
 
 from pomagma.compiler.util import memoize_arg, memoize_args, unique_result
 from pomagma.reducer.util import UnreachableError
+
+_A = ParamSpec("_A")
+
+Sexpr: TypeAlias = str | int | tuple["Sexpr", ...]
 
 # ----------------------------------------------------------------------------
 # Signature
 
 
-class Term(tuple):
+class Term(tuple[str, *tuple["Term | str | int", ...]]):
     __slots__ = ()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         if len(self) == 1:
             return self[0]
         return "{}({})".format(self[0], ", ".join(repr(a) for a in self[1:]))
 
-    def __str__(self):
+    def __str__(self) -> str:
         if len(self) == 1:
             return self[0]
         return "{}({})".format(self[0], ", ".join(str(a) for a in self[1:]))
 
-    def __call__(*args):
+    def __call__(*args: Any) -> "Term":
         # This syntax will be defined later:
         # return pomagma.reducer.sugar.app(*args)
         raise NotImplementedError("import pomagma.reduce.sugar")
 
-    def __or__(lhs, rhs):
+    def __or__(self: "Term", rhs: "Term") -> "Term":
         # This syntax will be defined later:
         # return pomagma.reducer.sugar.join_(lhs, rhs)
         raise NotImplementedError("import pomagma.reduce.sugar")
 
     @staticmethod
     @memoize_args
-    def make(*args):
+    def make(*args: "Term | str | int") -> "Term":
         return Term(args)
 
 
@@ -45,7 +51,7 @@ _builders = {}  # : name -> constructor
 _atoms = {}  # name -> term
 
 
-def make_keyword(name, arity):
+def make_keyword(name: str, arity: int) -> str:
     assert re_keyword.match(name)
     assert name not in _keywords
     assert arity in [0, 1, 2]
@@ -54,7 +60,7 @@ def make_keyword(name, arity):
     return name
 
 
-def make_atom(name):
+def make_atom(name: str) -> Term:
     assert name not in _atoms
     name = make_keyword(name, arity=0)
     term = Term.make(name)
@@ -62,7 +68,7 @@ def make_atom(name):
     return term
 
 
-def builder(fun):
+def builder(fun: Callable[_A, Term]) -> Callable[_A, Term]:
     name = sys.intern(fun.__name__)
     assert name in _keywords, name
     assert _keywords[name] > 0, (name, _keywords[name])
@@ -110,14 +116,14 @@ NUM = make_atom("NUM")
 
 
 @builder
-def NVAR(name):
+def NVAR(name: str) -> Term:
     if re_keyword.match(name):
         raise ValueError(f"Variable names cannot match [A-Z]+: {name}")
     return Term.make(_NVAR, sys.intern(name))
 
 
 @builder
-def IVAR(rank):
+def IVAR(rank: int) -> Term:
     if not (isinstance(rank, int) and rank >= 0):
         raise ValueError(f"Variable index must be a natural number {rank}")
     return Term.make(_IVAR, rank)
@@ -127,100 +133,100 @@ IVAR_0 = IVAR(0)
 
 
 @builder
-def APP(lhs, rhs):
+def APP(lhs: Term, rhs: Term) -> Term:
     return Term.make(_APP, lhs, rhs)
 
 
 @builder
-def JOIN(lhs, rhs):
+def JOIN(lhs: Term, rhs: Term) -> Term:
     return Term.make(_JOIN, lhs, rhs)
 
 
 @builder
-def RAND(lhs, rhs):
+def RAND(lhs: Term, rhs: Term) -> Term:
     return Term.make(_RAND, lhs, rhs)
 
 
 @builder
-def QUOTE(term):
+def QUOTE(term: Term) -> Term:
     # TODO assert all(not is_ivar(v) for v in free_vars(term))
     return Term.make(_QUOTE, term)
 
 
 @builder
-def ABS(body):
+def ABS(body: Term) -> Term:
     assert IVAR_0 not in quoted_vars(body)
     return Term.make(_ABS, body)
 
 
 @builder
-def FUN(var, body):
+def FUN(var: Term, body: Term) -> Term:
     assert is_nvar(var), var
     assert var not in quoted_vars(body), (var, body)
     return Term.make(_FUN, var, body)
 
 
 @builder
-def LESS(lhs, rhs):
+def LESS(lhs: Term, rhs: Term) -> Term:
     return Term.make(_LESS, lhs, rhs)
 
 
 @builder
-def NLESS(lhs, rhs):
+def NLESS(lhs: Term, rhs: Term) -> Term:
     return Term.make(_NLESS, lhs, rhs)
 
 
 @builder
-def EQUAL(lhs, rhs):
+def EQUAL(lhs: Term, rhs: Term) -> Term:
     return Term.make(_EQUAL, lhs, rhs)
 
 
-def is_atom(term):
+def is_atom(term: Term) -> bool:
     assert isinstance(term, Term), term
     return len(term) == 1
 
 
-def is_nvar(term):
+def is_nvar(term: Term) -> bool:
     assert isinstance(term, Term), term
     return term[0] is _NVAR
 
 
-def is_ivar(term):
+def is_ivar(term: Term) -> bool:
     assert isinstance(term, Term), term
     return term[0] is _IVAR
 
 
-def is_app(term):
+def is_app(term: Term) -> bool:
     assert isinstance(term, Term), term
     return term[0] is _APP
 
 
-def is_join(term):
+def is_join(term: Term) -> bool:
     assert isinstance(term, Term), term
     return term[0] is _JOIN
 
 
-def is_rand(term):
+def is_rand(term: Term) -> bool:
     assert isinstance(term, Term), term
     return term[0] is _RAND
 
 
-def is_quote(term):
+def is_quote(term: Term) -> bool:
     assert isinstance(term, Term), term
     return term[0] is _QUOTE
 
 
-def is_abs(term):
+def is_abs(term: Term) -> bool:
     assert isinstance(term, Term), term
     return term[0] is _ABS
 
 
-def is_fun(term):
+def is_fun(term: Term) -> bool:
     assert isinstance(term, Term), term
     return term[0] is _FUN
 
 
-def is_equal(term):
+def is_equal(term: Term) -> bool:
     assert isinstance(term, Term), term
     return term[0] is _EQUAL
 
@@ -232,22 +238,60 @@ def is_equal(term):
 class Transform:
     """Recursive transform of term."""
 
-    def __init__(self, **kwargs):
+    # Explicitly declare all dynamically added atom attributes
+    TOP: ClassVar[Term]
+    BOT: ClassVar[Term]
+    I: ClassVar[Term]
+    K: ClassVar[Term]
+    B: ClassVar[Term]
+    C: ClassVar[Term]
+    S: ClassVar[Term]
+    Y: ClassVar[Term]
+    CODE: ClassVar[Term]
+    EVAL: ClassVar[Term]
+    QAPP: ClassVar[Term]
+    QQUOTE: ClassVar[Term]
+    QEQUAL: ClassVar[Term]
+    QLESS: ClassVar[Term]
+    V: ClassVar[Term]
+    A: ClassVar[Term]
+    UNIT: ClassVar[Term]
+    BOOL: ClassVar[Term]
+    MAYBE: ClassVar[Term]
+    PROD: ClassVar[Term]
+    SUM: ClassVar[Term]
+    NUM: ClassVar[Term]
+
+    # Explicitly declare all dynamically added builder methods
+    # Note: These are set as staticmethod(builder) by init_class()
+    NVAR: Callable[[str], Term]
+    IVAR: Callable[[int], Term]
+    APP: Callable[[Any, Any], Term]
+    JOIN: Callable[[Any, Any], Term]
+    RAND: Callable[[Any, Any], Term]
+    QUOTE: Callable[[Any], Term]
+    ABS: Callable[[Any], Term]
+    FUN: Callable[[Any, Any], Term]
+    LESS: Callable[[Any, Any], Term]
+    NLESS: Callable[[Any, Any], Term]
+    EQUAL: Callable[[Any, Any], Term]
+
+    def __init__(self, **kwargs) -> None:
         for key, val in list(kwargs.items()):
             setattr(self, key, val)
 
     @memoize_args
-    def __call__(self, term):
+    def __call__(self, term: Term) -> Term:
         if not isinstance(term, Term):
             raise TypeError(term)
         if is_atom(term):
-            return getattr(self, term[0])
+            return getattr(self, term[0])  # type: ignore[no-any-return]
         if is_nvar(term):
-            return self.NVAR(term[1])
+            return self.NVAR(term[1])  # type: ignore[no-any-return]
         if is_ivar(term):
-            return self.IVAR(term[1])
-        args = [self(arg) for arg in term[1:]]
-        return getattr(self, term[0])(*args)
+            return self.IVAR(term[1])  # type: ignore[no-any-return]
+        args = [self(arg) for arg in term[1:]]  # type: ignore[arg-type]
+        return getattr(self, term[0])(*args)  # type: ignore[no-any-return]
 
     @classmethod
     def init_class(cls):
@@ -316,7 +360,7 @@ def decrement_var(var):
 
 @memoize_arg
 @unique_result
-def free_vars(term):
+def free_vars(term) -> frozenset[Term]:
     """Returns set of free variables, possibly quoted."""
     assert isinstance(term, Term), term
     if is_atom(term):
@@ -332,8 +376,9 @@ def free_vars(term):
             decrement_var(v) for v in free_vars(term[1]) if v is not IVAR_0
         )
     if is_fun(term):
-        assert is_nvar(term[1])
-        return free_vars(term[2]) - frozenset([term[1]])
+        v: Term = term[1]  # type: ignore[assignment]
+        assert is_nvar(v)
+        return free_vars(term[2]) - frozenset([v])
     raise ValueError(term)
     raise UnreachableError(term)
 
@@ -515,46 +560,47 @@ def _polish_print_tokens(term, tokens):
 
 
 @memoize_arg
-def to_sexpr(term):
+def to_sexpr(term: Term) -> Sexpr:
     """Converts from a python term to a python S-expression."""
     assert isinstance(term, Term), term
     if is_atom(term):
         return term[0]
     if is_nvar(term) or is_ivar(term):
+        assert isinstance(term[1], str | int)
         return term[1]
-    head = term
-    args = []
+    head: Term = term
+    args: list[Sexpr] = []
     while is_app(head):
-        args.append(to_sexpr(head[2]))
-        head = head[1]
+        args.append(to_sexpr(head[2]))  # type: ignore[arg-type]
+        head = head[1]  # type: ignore[assignment]
     if is_nvar(head) or is_ivar(head):
-        head = head[1]
+        head = head[1]  # type: ignore[assignment]
     elif head[0] in _keywords:
-        args.extend(to_sexpr(arg) for arg in head[-1:0:-1])
-        head = head[0]
+        args.extend(to_sexpr(arg) for arg in head[-1:0:-1])  # type: ignore[arg-type]
+        head = head[0]  # type: ignore[assignment]
     args.append(head)
     args.reverse()
     return tuple(args)
 
 
-def from_sexpr(sexpr, transform=identity):
+def from_sexpr(sexpr: Sexpr, transform: Transform = identity) -> Term:
     """Converts from a python S-expression to a python term."""
     assert isinstance(transform, Transform), type(transform)
 
     # Handle atoms and variables.
     if isinstance(sexpr, str):
         if sexpr in _atoms:
-            return getattr(transform, sexpr)
+            return getattr(transform, sexpr)  # type: ignore[no-any-return]
         if re_keyword.match(sexpr):
             raise ValueError(f"Unrecognized atom: {sexpr}")
-        return NVAR(sexpr)
+        return NVAR(sexpr)  # type: ignore[no-any-return]
     if isinstance(sexpr, int):
-        return IVAR(sexpr)
+        return IVAR(sexpr)  # type: ignore[no-any-return]
 
     # Handle tuples.
     head = sexpr[0]
     assert isinstance(head, str | int)
-    if head in _keywords:
+    if isinstance(head, str) and head in _keywords:
         arity = _keywords[head]
         head = getattr(transform, head)
         if arity:
@@ -571,10 +617,10 @@ def from_sexpr(sexpr, transform=identity):
     for arg in args:
         arg = from_sexpr(arg, transform)
         head = transform.APP(head, arg)
-    return head
+    return head  # type: ignore
 
 
-def sexpr_print_sexpr(sexpr):
+def sexpr_print_sexpr(sexpr: Sexpr) -> str:
     """Prints a python S-expression as a string S-expression."""
     if isinstance(sexpr, str):
         return sexpr
@@ -588,7 +634,7 @@ def sexpr_print_sexpr(sexpr):
 
 
 @memoize_arg
-def sexpr_print(term):
+def sexpr_print(term: Term) -> str:
     """Prints a python term as a string S-expression."""
     assert isinstance(term, Term), term
     sexpr = to_sexpr(term)
@@ -599,7 +645,7 @@ _LPAREN = sys.intern("(")
 _RPAREN = sys.intern(")")
 
 
-def _sexpr_parse_tokens(tokens):
+def _sexpr_parse_tokens(tokens: Iterator[str]) -> Iterator[Sexpr]:
     for token in tokens:
         if token is _LPAREN:
             yield tuple(_sexpr_parse_tokens(tokens))
@@ -611,7 +657,7 @@ def _sexpr_parse_tokens(tokens):
             yield token
 
 
-def sexpr_parse_sexpr(string):
+def sexpr_parse_sexpr(string: str) -> Sexpr:
     """Parses a string S-expression to a python S-expression."""
     tokens = string.replace("(", " ( ").replace(")", " ) ").split()
     tokens = iter(map(sys.intern, tokens))
@@ -625,8 +671,8 @@ def sexpr_parse_sexpr(string):
     return sexpr
 
 
-def sexpr_parse(string, transform=identity):
-    """Parse a string from S-expressoin notation to a term.
+def sexpr_parse(string: str, transform: Transform = identity) -> Term:
+    """Parse a string from S-expression notation to a term.
 
     Args:
       string: a string in S-expression notation.

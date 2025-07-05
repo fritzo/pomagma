@@ -156,7 +156,7 @@ disable_error_code = ["attr-defined", "assignment", "call-overload", "index", "v
 # Src.compiler - one of the main sub-packages to fix
 [[tool.mypy.overrides]]
 module = "pomagma.compiler.*"
-disable_error_code = ["method-assign", "assignment", "var-annotated", "index", "override", "attr-defined", "operator", "misc", "return-value"]
+disable_error_code = ["method-assign", "assignment", "var-annotated", "index", "override", "attr-defined", "operator", "misc"]
 
 # Src.analyst - one of the main sub-packages to fix  
 [[tool.mypy.overrides]]

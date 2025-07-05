@@ -2,6 +2,8 @@
 
 import functools
 import inspect
+from collections.abc import Callable
+from typing import Any
 
 from pomagma.reducer.bohm import convert
 from pomagma.reducer.syntax import NVAR, Term, free_vars, quoted_vars
@@ -11,7 +13,7 @@ from pomagma.reducer.util import LOG
 # Compiler
 
 
-def _compile(fun, actual_fun=None):
+def _compile(fun: Callable, actual_fun: Callable | None = None) -> Term:
     """Convert lambdas to terms using Higher Order Abstract Syntax [1].
 
     [1] Pfenning, Elliot (1988) "Higher-order abstract syntax"
@@ -34,26 +36,31 @@ def _compile(fun, actual_fun=None):
 
 
 class _Combinator:
-    """Class for results of the @combinator decorator.
+    """
+    Class for results of the @combinator decorator.
 
     WARNING recursive combinators must use this via the @combinator
     decorator, so that a recursion guard can be inserted prior to
     compilation.
-
     """
 
-    def __init__(self, fun):
+    _fun: Callable
+    _calling: bool
+    _term: Term
+    __name__: str
+
+    def __init__(self, fun: Callable) -> None:
         functools.update_wrapper(self, fun)
         self._fun = fun
         self._calling = False
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return repr(self.term)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.__name__
 
-    def __call__(self, *args):
+    def __call__(self, *args: Any) -> Term:
         term = self.term  # Compile at first call.
         if self._calling:  # Disallow reentrance.
             return app(term, *args)
@@ -63,18 +70,18 @@ class _Combinator:
         self._calling = False
         return as_term(result)
 
-    def __or__(*args):
+    def __or__(*args: Any) -> Term:
         return join_(args)
 
     @property
-    def term(self):
+    def term(self) -> Term:
         try:
             return self._term
         except AttributeError:
             self._compile()
             return self._term
 
-    def _compile(self):
+    def _compile(self) -> None:
         assert not hasattr(self, "_term")
 
         # Compile without recursion.
@@ -84,7 +91,8 @@ class _Combinator:
 
         # Handle recursion.
         if var in quoted_vars(term):
-            term = qrec(convert.QFUN(var, term))
+            # FIXME QFUN is not defined.
+            term = qrec(convert.QFUN(var, term))  # type: ignore[attr-defined]
         elif var in free_vars(term):
             term = rec(convert.FUN(var, term))
 
@@ -92,13 +100,13 @@ class _Combinator:
         free = free_vars(term)
         if free:
             raise SyntaxError(
-                "Unbound variables: {}".format(" ".join(v[1] for v in free))
+                "Unbound variables: {}".format(" ".join(str(v[1]) for v in free))
             )
 
         self._term = term
 
 
-def combinator(arg):
+def combinator(arg: Any) -> _Combinator:
     if isinstance(arg, _Combinator):
         return arg
     if not callable(arg):
@@ -106,7 +114,7 @@ def combinator(arg):
     return _Combinator(arg)
 
 
-def as_term(arg):
+def as_term(arg: Any) -> Term:
     if isinstance(arg, Term):
         return arg
     if isinstance(arg, _Combinator):
@@ -120,57 +128,54 @@ def as_term(arg):
 # Sugar
 
 
-def app(*args):
-    args = list(map(as_term, args))
+def app(*args: Any) -> Term:
     if not args:
         raise SyntaxError(f"Too few arguments: app{args}")
-    result = args[0]
+    result = as_term(args[0])
     for arg in args[1:]:
-        result = convert.APP(result, arg)
+        result = convert.APP(result, as_term(arg))
     return result
 
 
 Term.__call__ = app  # type: ignore[invalid-assignment]
 
 
-def join_(*args):
-    args = list(map(as_term, args))
+def join_(*args: Any) -> Term:
     if not args:
         return convert.BOT
-    result = args[0]
+    result = as_term(args[0])
     for arg in args[1:]:
-        result = convert.JOIN(result, arg)
+        result = convert.JOIN(result, as_term(arg))
     return result
 
 
 Term.__or__ = join_  # type: ignore[invalid-assignment]
 
 
-def quote(arg):
+def quote(arg: Any) -> Term:
     return convert.QUOTE(as_term(arg))
 
 
-def qapp(*args):
-    args = list(map(as_term, args))
+def qapp(*args: Any) -> Term:
     if len(args) < 2:
         raise SyntaxError(f"Too few arguments: qapp{args}")
-    result = args[0]
+    result = as_term(args[0])
     for arg in args[1:]:
-        result = convert.QAPP(result, arg)
+        result = convert.QAPP(result, as_term(arg))
     return result
 
 
-def rec(fun):
+def rec(fun: Callable) -> Term:
     fxx = _compile(lambda x: app(fun, x(x)))
     return fxx(fxx)
 
 
-def qrec(fun):
+def qrec(fun: Callable) -> Term:
     fxx = _compile(lambda qx: app(fun, qapp(qx, qapp(convert.QQUOTE, qx))))
     return fxx(convert.QUOTE(fxx))
 
 
-def typed(*types):
+def typed(*types: Any) -> Callable:
     """Type annotation.
 
     The final type is the output type.
@@ -193,7 +198,7 @@ def typed(*types):
     def decorator_1(fun):
         @functools.wraps(fun)
         def typed_fun(arg):
-            arg = arg_types[0](arg)
+            arg = arg_types[0](arg)  # type: ignore[index]
             return result_type(fun(arg))
 
         return typed_fun
@@ -201,8 +206,8 @@ def typed(*types):
     def decorator_2(fun):
         @functools.wraps(fun)
         def typed_fun(arg0, arg1):
-            arg0 = arg_types[0](arg0)
-            arg1 = arg_types[1](arg1)
+            arg0 = arg_types[0](arg0)  # type: ignore[index]
+            arg1 = arg_types[1](arg1)  # type: ignore[index]
             return result_type(fun(arg0, arg1))
 
         return typed_fun
@@ -210,7 +215,7 @@ def typed(*types):
     return [decorator_0, decorator_1, decorator_2][len(arg_types)]
 
 
-def symmetric(fun):
+def symmetric(fun: Callable) -> Callable:
     @functools.wraps(fun)
     def symmetric_fun(x, y):
         return join_(fun(x, y), fun(y, x))
@@ -218,5 +223,5 @@ def symmetric(fun):
     return symmetric_fun
 
 
-def let(defn, var_body):
+def let(defn: Term, var_body: Term) -> Term:
     return app(var_body, defn)

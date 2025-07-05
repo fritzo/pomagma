@@ -15,8 +15,9 @@ CHANGELOG
 2016-12-25 Add rules for nominal and quoted abstraction.
 2016-12-27 Treat nominal and de Bruijn variables differently. TODO revert?
 2016-12-31 Fix bug in substitute(-,-,-,-); tests pass.
-
 """
+
+from collections.abc import Callable, Collection, Iterable, Iterator
 
 from pomagma.compiler.util import memoize_arg, memoize_args, unique
 from pomagma.reducer import syntax
@@ -120,35 +121,35 @@ class CannotDecrementRank(Exception):
 
 
 @memoize_args
-def _try_decrement_rank(term, min_rank):
+def _try_decrement_rank(term: Term, min_rank: int) -> Term:
     if is_atom(term):
         return term
     if is_nvar(term):
         return term
     if is_ivar(term):
-        rank = term[1]
+        rank: int = term[1]  # type: ignore[assignment]
         if rank < min_rank:
             return term
         if rank == min_rank:
             raise CannotDecrementRank
         return IVAR(rank - 1)
     if is_app(term):
-        lhs = _try_decrement_rank(term[1], min_rank)
-        rhs = _try_decrement_rank(term[2], min_rank)
+        lhs = _try_decrement_rank(term[1], min_rank)  # type: ignore[arg-type]
+        rhs = _try_decrement_rank(term[2], min_rank)  # type: ignore[arg-type]
         return APP(lhs, rhs)
     if is_abs(term):
-        return ABS(_try_decrement_rank(term[1], min_rank + 1))
+        return ABS(_try_decrement_rank(term[1], min_rank + 1))  # type: ignore[arg-type]
     if is_join(term):
-        lhs = _try_decrement_rank(term[1], min_rank)
-        rhs = _try_decrement_rank(term[2], min_rank)
+        lhs = _try_decrement_rank(term[1], min_rank)  # type: ignore[arg-type]
+        rhs = _try_decrement_rank(term[2], min_rank)  # type: ignore[arg-type]
         return JOIN(lhs, rhs)
     if is_quote(term):
-        return QUOTE(_try_decrement_rank(term[1], min_rank))
+        return QUOTE(_try_decrement_rank(term[1], min_rank))  # type: ignore[arg-type]
     raise ValueError(term)
     raise UnreachableError((term, min_rank))
 
 
-def decrement_rank(term):
+def decrement_rank(term: Term) -> Term:
     """Decrement rank of all IVARs or err if IVAR(0) is free in term."""
     try:
         return _try_decrement_rank(term, 0)
@@ -263,16 +264,16 @@ def _permute_rank(term, min_rank, max_rank):
     raise UnreachableError((term, min_rank, max_rank))
 
 
-def permute_rank(term, rank):
+def permute_rank(term: Term, rank: int) -> Term:
     """Permute IVARs from [0,1,2...,rank] to [1,2,...,rank,0]."""
     assert isinstance(term, Term), term
     assert isinstance(rank, int) and rank >= 0, rank
     return _permute_rank(term, 0, rank) if rank > 0 else term
 
 
-@logged(pretty, pretty, str, str, returns=pretty)
+# @logged(pretty, pretty, str, str, returns=pretty)
 @memoize_args
-def substitute(term, value, rank, budget):
+def substitute(term: Term, value: Term, rank: int, budget: bool) -> Term:
     """Substitute value for IVAR(rank) in term, decremeting higher IVARs.
 
     This is linear-eager, and will be lazy about nonlinear
@@ -285,10 +286,11 @@ def substitute(term, value, rank, budget):
     if is_nvar(term):
         return term
     if is_ivar(term):
-        if term[1] == rank:
+        i: int = term[1]  # type: ignore[assignment]
+        if i == rank:
             return value
-        if term[1] > rank:
-            return IVAR(term[1] - 1)
+        if i > rank:  # type: ignore[operator]
+            return IVAR(i - 1)
         return term
     if is_app(term):
         lhs = term[1]
@@ -302,27 +304,27 @@ def substitute(term, value, rank, budget):
             # Eager substitution.
             if not linear:
                 budget = False
-            lhs = substitute(lhs, value, rank, False)
-            rhs = substitute(rhs, value, rank, False)
+            lhs = substitute(lhs, value, rank, False)  # type: ignore[arg-type]
+            rhs = substitute(rhs, value, rank, False)  # type: ignore[arg-type]
             return app(lhs, rhs)
         # Lazy substitution.
         term = permute_rank(term, rank)
         return APP(ABS(term), value)
     if is_abs(term):
-        body = substitute(term[1], increment_rank(value), rank + 1, budget)
+        body = substitute(term[1], increment_rank(value), rank + 1, budget)  # type: ignore[arg-type]
         return abstract(body)
     if is_join(term):
-        lhs = substitute(term[1], value, rank, budget)
-        rhs = substitute(term[2], value, rank, budget)
+        lhs = substitute(term[1], value, rank, budget)  # type: ignore[arg-type]
+        rhs = substitute(term[2], value, rank, budget)  # type: ignore[arg-type]
         return join(lhs, rhs)
     if is_quote(term):
-        body = substitute(term[1], value, rank, budget)
+        body = substitute(term[1], value, rank, budget)  # type: ignore[arg-type]
         return QUOTE(body)
     raise ValueError(term)
     raise UnreachableError((term, value, rank, budget))
 
 
-TRY_CAST = {}
+TRY_CAST: dict[Term, Callable[[Term], Term]] = {}
 
 
 def casts(closure):
@@ -333,9 +335,9 @@ def casts(closure):
     return decorator
 
 
-@logged(pretty, pretty, returns=pretty)
+# @logged(pretty, pretty, returns=pretty)
 @memoize_args
-def app(fun, arg):
+def app(fun: Term, arg: Term) -> Term:
     """Apply function to argument and linearly reduce."""
     if fun is TOP:
         return fun
@@ -351,20 +353,20 @@ def app(fun, arg):
             lhs = fun[2]
             rhs = arg
             if lhs is TOP or rhs is TOP:
-                return TOP
+                return TOP  # type: ignore[no-any-return]
             if lhs is BOT:
                 if rhs is BOT or is_quote(rhs):
-                    return BOT
-            elif is_quote(lhs):
+                    return BOT  # type: ignore[no-any-return]
+            elif isinstance(lhs, Term) and is_quote(lhs):
                 if rhs is BOT:
-                    return BOT
+                    return BOT  # type: ignore[no-any-return]
                 if is_quote(rhs):
                     if fun[1] is QAPP:
-                        return QUOTE(app(lhs[1], rhs[1]))
+                        return QUOTE(app(lhs[1], rhs[1]))  # type: ignore[arg-type]
                     if fun[1] is QLESS:
-                        ans = try_decide_less(lhs[1], rhs[1])
+                        ans = try_decide_less(lhs[1], rhs[1])  # type: ignore[arg-type]
                     elif fun[1] is QEQUAL:
-                        ans = try_decide_equal(lhs[1], rhs[1])
+                        ans = try_decide_equal(lhs[1], rhs[1])  # type: ignore[arg-type]
                     else:
                         raise UnreachableError(fun[1])
                     if ans is True:
@@ -373,11 +375,11 @@ def app(fun, arg):
                         return false
         return APP(fun, arg)
     if is_abs(fun):
-        body = fun[1]
+        body: Term = fun[1]  # type: ignore[assignment]
         return substitute(body, arg, 0, False)
     if is_join(fun):
-        lhs = app(fun[1], arg)
-        rhs = app(fun[2], arg)
+        lhs = app(fun[1], arg)  # type: ignore[arg-type]
+        rhs = app(fun[2], arg)  # type: ignore[arg-type]
         return join(lhs, rhs)
     if is_quote(fun):
         return APP(fun, arg)
@@ -395,7 +397,7 @@ def app(fun, arg):
         if arg is BOT:
             return BOT
         if is_quote(arg):
-            return arg[1]
+            return arg[1]  # type: ignore[no-any-return]
         return APP(fun, arg)
     if fun is QAPP:
         if arg is TOP:
@@ -407,7 +409,7 @@ def app(fun, arg):
         if arg is BOT:
             return BOT
         if is_quote(arg):
-            return QUOTE(QUOTE(arg[1]))
+            return QUOTE(QUOTE(arg[1]))  # type: ignore[no-any-return]
         return APP(fun, arg)
     if fun is QLESS:
         if arg is TOP:
@@ -419,7 +421,7 @@ def app(fun, arg):
         return APP(fun, arg)
     if fun in TRY_CAST:
         while is_app(arg) and arg[1] is fun:
-            arg = arg[2]
+            arg = arg[2]  # type: ignore[assignment]
         casted = TRY_CAST[fun](arg)
         if casted is None:
             return APP(fun, arg)
@@ -428,48 +430,48 @@ def app(fun, arg):
     raise UnreachableError((fun, arg))
 
 
-@logged(pretty, returns=pretty)
+# @logged(pretty, returns=pretty)
 @memoize_args
-def abstract(term):
+def abstract(term: Term) -> Term:
     """Abstract one de Bruijn variable and simplify."""
     if IVAR(0) in quoted_vars(term):
         raise ValueError(f"Cannot abstract quoted variable from {term}")
     if term is TOP or term is BOT:
         return term
     if is_app(term):
-        fun = term[1]
-        arg = term[2]
+        fun: Term = term[1]  # type: ignore[assignment]
+        arg: Term = term[2]  # type: ignore[assignment]
         if arg is IVAR(0) and IVAR(0) not in free_vars(fun):
             # Eta contract.
             return decrement_rank(fun)
         return ABS(term)
     if is_join(term):
-        lhs = abstract(term[1])
-        rhs = abstract(term[2])
+        lhs = abstract(term[1])  # type: ignore[arg-type]
+        rhs = abstract(term[2])  # type: ignore[arg-type]
         return join(lhs, rhs)
     return ABS(term)
     raise UnreachableError(term)
 
 
-@logged(pretty, returns=pretty)
+# @logged(pretty, returns=pretty)
 @memoize_args
-def qabstract(term):
+def qabstract(term: Term) -> Term:
     """Abstract one quoted de Bruijn variable and simplify."""
     if IVAR(0) not in quoted_vars(term):
         return app(app(B, abstract(term)), EVAL)
     if is_abs(term):
-        body = term[1]
+        body: Term = term[1]  # type: ignore[assignment]
         return app(C, abstract(qabstract(body)))  # FIXME increment rank
     if is_app(term):
-        fun = term[1]
-        arg = term[2]
+        fun: Term = term[1]  # type: ignore[assignment]
+        arg: Term = term[2]  # type: ignore[assignment]
         return app(app(S, qabstract(fun)), qabstract(arg))
     if is_join(term):
-        lhs = qabstract(term[1])
-        rhs = qabstract(term[2])
+        lhs = qabstract(term[1])  # type: ignore[arg-type]
+        rhs = qabstract(term[2])  # type: ignore[arg-type]
         return join(lhs, rhs)
     if is_quote(term):
-        body = term[1]
+        body = term[1]  # type: ignore[assignment]
         if body is IVAR(0):
             return CODE
         return app(QAPP, QUOTE(abstract(body)))
@@ -477,17 +479,17 @@ def qabstract(term):
     raise UnreachableError(term)
 
 
-@logged(pretty, pretty, returns=pretty)
+# @logged(pretty, pretty, returns=pretty)
 @memoize_args
-def nominal_abstract(var, body):
+def nominal_abstract(var: Term, body: Term) -> Term:
     """Abstract a nominal variable and simplify."""
     anonymized = anonymize(body, var, convert)
     return abstract(anonymized)
 
 
-@logged(pretty, pretty, returns=pretty)
+# @logged(pretty, pretty, returns=pretty)
 @memoize_args
-def nominal_qabstract(var, body):
+def nominal_qabstract(var: Term, body: Term) -> Term:
     """Abstract a quoted nominal variable and simplify."""
     anonymized = anonymize(body, var, convert)
     return qabstract(anonymized)
@@ -497,22 +499,24 @@ def nominal_qabstract(var, body):
 # Scott ordering
 
 
-def iter_join(term):
+def iter_join(term: Term) -> Iterator[Term]:
     """Destructs JOIN and BOT terms."""
     if is_join(term):
-        for part in iter_join(term[1]):
+        lhs: Term = term[1]  # type: ignore[assignment]
+        rhs: Term = term[2]  # type: ignore[assignment]
+        for part in iter_join(lhs):
             yield part
-        for part in iter_join(term[2]):
+        for part in iter_join(rhs):
             yield part
     elif term is not BOT:
         yield term
 
 
-@logged(pretty, pretty, returns=pretty)
+# @logged(pretty, pretty, returns=pretty)
 @memoize_args
-def join(lhs, rhs):
+def join(lhs: Term, rhs: Term) -> Term:
     """Join two terms, modulo linear Scott ordering."""
-    terms = set()
+    terms: set[Term] = set()
     for part in iter_join(lhs):
         terms.add(part)
     for part in iter_join(rhs):
@@ -520,11 +524,11 @@ def join(lhs, rhs):
     return join_set(terms)
 
 
-def join_set(terms):
+def join_set(terms: Collection[Term]) -> Term:
     if not terms:
-        return BOT
+        return BOT  # type: ignore[no-any-return]
     if TOP in terms:
-        return TOP
+        return TOP  # type: ignore[no-any-return]
     if len(terms) == 1:
         return next(iter(terms))
 
@@ -543,7 +547,7 @@ def join_set(terms):
     return result
 
 
-def dominates(lhs, rhs):
+def dominates(lhs: Term, rhs: Term) -> bool:
     """Weak strict domination relation: lhs =] rhs and lhs [!= rhs.
 
     This relation is used to reduce reduncancy in join(-, -) terms.
@@ -564,15 +568,15 @@ def dominates(lhs, rhs):
     return rhs_lhs is True and lhs_rhs is False
 
 
-@logged(pretty, pretty, returns=str)
-def try_decide_less(lhs, rhs):
+# @logged(pretty, pretty, returns=str)
+def try_decide_less(lhs: Term, rhs: Term) -> bool | None:
     if TRY_DECIDE_LESS_STRONG:
         return try_decide_less_strong(lhs, rhs)
     return try_decide_less_weak(lhs, rhs)
 
 
 @memoize_args
-def try_decide_less_strong(lhs, rhs):
+def try_decide_less_strong(lhs: Term, rhs: Term) -> bool | None:
     """Weak decision procedure returning True, False, or None.
 
     The behavior on closed terms should approximate Scott ordering. The
@@ -617,7 +621,7 @@ def try_decide_less_strong(lhs, rhs):
 
 
 @memoize_args
-def approximate_var(term, direction, rank):
+def approximate_var(term: Term, direction: Term, rank: int) -> Iterable[Term]:
     """Locally approximate wrt one variable."""
     assert isinstance(term, Term), term
     assert direction is TOP or direction is BOT, direction
@@ -630,16 +634,21 @@ def approximate_var(term, direction, rank):
         result.add(term)
         result.add(direction)
     elif is_app(term):
-        for lhs in approximate_var(term[1], direction, rank):
-            for rhs in approximate_var(term[2], direction, rank):
-                result.add(app(lhs, rhs))
+        fun: Term = term[1]  # type: ignore[assignment]
+        arg: Term = term[2]  # type: ignore[assignment]
+        for fun_ in approximate_var(fun, direction, rank):
+            for arg_ in approximate_var(arg, direction, rank):
+                result.add(app(fun_, arg_))
     elif is_abs(term):
-        for body in approximate_var(term[1], direction, rank + 1):
-            result.add(abstract(body))
+        body: Term = term[1]  # type: ignore[assignment]
+        for body_ in approximate_var(body, direction, rank + 1):
+            result.add(abstract(body_))
     elif is_join(term):
-        for lhs in approximate_var(term[1], direction, rank):
-            for rhs in approximate_var(term[2], direction, rank):
-                result.add(join(lhs, rhs))
+        lhs: Term = term[1]  # type: ignore[assignment]
+        rhs: Term = term[2]  # type: ignore[assignment]
+        for lhs_ in approximate_var(lhs, direction, rank):
+            for rhs_ in approximate_var(rhs, direction, rank):
+                result.add(join(lhs_, rhs_))
     elif is_quote(term):
         result.add(term)
     else:
@@ -648,48 +657,56 @@ def approximate_var(term, direction, rank):
 
 
 @memoize_args
-def approximate(term, direction):
+def approximate(term: Term, direction: Term) -> Iterable[Term]:
     result = set()
     if is_atom(term) or is_nvar(term) or is_ivar(term) or is_quote(term):
         result.add(term)
     elif is_app(term):
-        if is_abs(term[1]):
-            for fun_body in approximate_var(term[1][1], direction, 0):
-                for lhs in approximate(abstract(fun_body), direction):
-                    for rhs in approximate(term[2], direction):
-                        result.add(app(lhs, rhs))
+        fun: Term = term[1]  # type: ignore[assignment]
+        arg: Term = term[2]  # type: ignore[assignment]
+        if is_abs(fun):
+            fun_body: Term = fun[1]  # type: ignore[assignment]
+            for fun_body_ in approximate_var(fun_body, direction, 0):
+                for lhs_ in approximate(abstract(fun_body_), direction):
+                    for rhs_ in approximate(arg, direction):
+                        result.add(app(lhs_, rhs_))
         else:
-            for lhs in approximate(term[1], direction):
-                for rhs in approximate(term[2], direction):
-                    result.add(app(lhs, rhs))
+            lhs: Term = term[1]  # type: ignore[assignment]
+            rhs: Term = term[2]  # type: ignore[assignment]
+            for lhs_ in approximate(lhs, direction):
+                for rhs_ in approximate(rhs, direction):
+                    result.add(app(lhs_, rhs_))
     elif is_abs(term):
-        for body in approximate(term[1], direction):
-            result.add(abstract(body))
+        body: Term = term[1]  # type: ignore[assignment]
+        for body_ in approximate(body, direction):
+            result.add(abstract(body_))
     elif is_join(term):
-        for lhs in approximate(term[1], direction):
-            for rhs in approximate(term[2], direction):
-                result.add(join(lhs, rhs))
+        lhs = term[1]  # type: ignore[assignment]
+        rhs = term[2]  # type: ignore[assignment]
+        for lhs_ in approximate(lhs, direction):
+            for rhs_ in approximate(rhs, direction):
+                result.add(join(lhs_, rhs_))
     else:
         raise ValueError(term)
     return tuple(sorted(result, key=complexity))
 
 
-def unabstract(term):
+def unabstract(term: Term) -> Term:
     if is_abs(term):
-        return term[1]
+        return term[1]  # type: ignore[no-any-return]
     return app(increment_rank(term), IVAR(0))
 
 
-def unapply(term):
+def unapply(term: Term) -> tuple[Term, list[Term]]:
     args = []
     while is_app(term):
         args.append(term[2])
-        term = term[1]
+        term = term[1]  # type: ignore[assignment]
     return term, args
 
 
 @memoize_args
-def try_decide_less_weak(lhs, rhs):
+def try_decide_less_weak(lhs: Term, rhs: Term) -> bool | None:
     """Weak decision procedure returning True, False, or None."""
     assert isinstance(lhs, Term), lhs
     assert isinstance(rhs, Term), rhs
@@ -743,13 +760,13 @@ def try_decide_less_weak(lhs, rhs):
 
     # Distinguish quoted terms.
     if is_quote(lhs_head) and is_quote(rhs_head):
-        return try_decide_equal(lhs_head[1], rhs_head[1])
+        return try_decide_equal(lhs_head[1], rhs_head[1])  # type: ignore[arg-type]
 
     # Anything else is incomparable.
     return False
 
 
-def try_decide_equal(lhs, rhs):
+def try_decide_equal(lhs: Term, rhs: Term) -> bool | None:
     return trool_all([try_decide_less(lhs, rhs), try_decide_less(rhs, lhs)])
 
 
