@@ -223,5 +223,5 @@ def symmetric(fun: Callable) -> Callable:
     return symmetric_fun
 
 
-def let(defn: Term, var_body: Term) -> Term:
+def let(defn: Term, var_body: Callable[[Any], Term]) -> Term:
     return app(var_body, defn)

@@ -449,7 +449,7 @@ def stream_dovetail(xs, ys):
 def stream_quote(quote_item, xs):
     return xs(
         lambda h, t: qapp(
-            QUOTE(stream_cons), quote_item(h), stream_quote(quote_item, t)
+            quote(stream_cons), quote_item(h), stream_quote(quote_item, t)
         )
     )
 
