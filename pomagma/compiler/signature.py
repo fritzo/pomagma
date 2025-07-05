@@ -91,7 +91,7 @@ META_ARITIES = frozenset(
 )
 
 
-def declare_arity(name, arity):
+def declare_arity(name: str, arity: str) -> None:
     assert isinstance(name, str)
     assert not is_var(name), name
     assert arity in FUNCTION_ARITIES
@@ -102,52 +102,52 @@ def declare_arity(name, arity):
 
 
 @memoize_arg
-def is_var(symbol):
+def is_var(symbol: str) -> bool:
     return re_const.match(symbol) is None
 
 
 @memoize_arg
-def is_fun(symbol):
+def is_fun(symbol: str) -> bool:
     return get_arity(symbol) in FUNCTION_ARITIES
 
 
 @memoize_arg
-def is_term(symbol):
+def is_term(symbol: str) -> bool:
     return is_var(symbol) or is_fun(symbol)
 
 
 @memoize_arg
-def is_rel(symbol):
+def is_rel(symbol: str) -> bool:
     return get_arity(symbol) in RELATION_ARITIES
 
 
 @memoize_arg
-def is_meta(symbol):
+def is_meta(symbol: str) -> bool:
     return get_arity(symbol) in META_ARITIES
 
 
 @memoize_arg
-def get_arity(symbol):
+def get_arity(symbol: str) -> str:
     if is_var(symbol):
         return "Variable"
     return ARITY_TABLE.get(symbol, "NullaryFunction")
 
 
-def get_nargs(arity):
+def get_nargs(arity: str) -> int:
     return NARGS_TABLE[arity]
 
 
-def arity_sort(arity):
+def arity_sort(arity: str) -> tuple[bool, int]:
     return (arity in FUNCTION_ARITIES, get_nargs(arity))
 
 
-def is_positive(symbol):
+def is_positive(symbol: str) -> bool:
     if symbol == "NLESS":
         return False
     return True
 
 
-def validate():
+def validate() -> None:
     for symbol, arity in list(ARITY_TABLE.items()):
         assert not is_var(symbol)
         assert arity in NARGS_TABLE

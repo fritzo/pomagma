@@ -5,15 +5,22 @@ import glob
 import itertools
 import os
 import sys
+from collections.abc import Callable
 from math import exp, log
+from typing import Generic, ParamSpec, TypeVar
 from weakref import WeakKeyDictionary
 
 import pomagma.util
 
 function = type(lambda x: x)
 
+_A = ParamSpec("_A")
+_B = TypeVar("_B")
+_C = TypeVar("_C")
+_T = TypeVar("_T")
 
-def intern_keys(string_dict):
+
+def intern_keys(string_dict: dict[str, _B]) -> dict[str, _B]:
     return {sys.intern(str(key)): val for key, val in list(string_dict.items())}
 
 
@@ -26,7 +33,7 @@ def logger(message, *args):
         print("#"), message.format(*args)
 
 
-class sortedset(set):
+class sortedset(set, Generic[_T]):
     __slots__ = ["_sorted", "_hash"]
 
     def __init__(self, *args, **kwargs):
@@ -154,11 +161,11 @@ def find_theories():
 MEMOIZED_CACHES = {}
 
 
-def memoize_arg(fun):
-    cache = {}
+def memoize_arg(fun: Callable[[_B], _C]) -> Callable[[_B], _C]:
+    cache: dict[_B, _C] = {}
 
     @functools.wraps(fun)
-    def memoized(arg):
+    def memoized(arg: _B) -> _C:
         try:
             return cache[arg]
         except KeyError:
@@ -170,15 +177,15 @@ def memoize_arg(fun):
     return memoized
 
 
-def memoize_args(fun):
-    cache = {}
+def memoize_args(fun: Callable[_A, _B]) -> Callable[_A, _B]:
+    cache: dict[tuple, _B] = {}
 
     @functools.wraps(fun)
-    def memoized(*args):
+    def memoized(*args) -> _B:
         try:
             return cache[args]
         except KeyError:
-            result = fun(*args)
+            result = fun(*args)  # type: ignore[call-arg]
             cache[args] = result
             return result
 
