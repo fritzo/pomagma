@@ -107,6 +107,7 @@ QLESS = make_atom("QLESS")
 
 V = make_atom("V")
 A = make_atom("A")
+SEMI = make_atom("SEMI")
 UNIT = make_atom("UNIT")
 BOOL = make_atom("BOOL")
 MAYBE = make_atom("MAYBE")
@@ -255,6 +256,7 @@ class Transform:
     QLESS: ClassVar[Term]
     V: ClassVar[Term]
     A: ClassVar[Term]
+    SEMI: ClassVar[Term]
     UNIT: ClassVar[Term]
     BOOL: ClassVar[Term]
     MAYBE: ClassVar[Term]

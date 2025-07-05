@@ -1,7 +1,10 @@
-"""Standard library of combinators.
+"""
+Standard library of combinators.
 
-Intro forms are hand-optimized; see lib_test.py for lambda versions.
+Objects in this library are either `Term`s or `_Combinator`s that can be
+converted to terms via `pomagma.reducer.sugar.as_term()`.
 
+Intro forms are hand-optimized; see `lib_test.py` for lambda versions.
 """
 
 from pomagma.reducer.bohm import CI, KI, B, C, I, K, false, true
@@ -23,27 +26,59 @@ from pomagma.reducer.syntax import (
     QEQUAL,
     QLESS,
     QUOTE,
+    SEMI,
     TOP,
     UNIT,
 )
 
-# ----------------------------------------------------------------------------
+################################################################
 # Nondeterminism
 
 join = K | KI
 
 
-# ----------------------------------------------------------------------------
+################################################################
 # Errors
 
 error = TOP
 undefined = BOT
 
 
-# ----------------------------------------------------------------------------
-# Unit
+################################################################
+# Semi-boolean type with inhabitants {BOT, I, TOP}
 
 ok = I
+
+
+@combinator
+def semi_type(x):
+    return SEMI(x)
+
+
+@combinator
+def semi_test(x):
+    return semi_type(x)
+
+
+@combinator
+@typed(semi_type, semi_type, semi_type)
+@symmetric
+def semi_meet(x, y):
+    return x(y)
+
+
+@combinator
+@typed(semi_type, semi_type, semi_type)
+@symmetric
+def semi_join(x, y):
+    return x | y
+
+
+enum_semi = CI(ok)
+
+
+################################################################
+# Unit type with inhabitants {I, TOP}
 
 
 @combinator
@@ -78,8 +113,8 @@ def unit_quote(x):
 enum_unit = CI(ok)
 
 
-# ----------------------------------------------------------------------------
-# Bool
+################################################################
+# Boolean type with inhabitants {BOT, K, KI, TOP}
 
 assert true is K
 assert false is KI
@@ -137,8 +172,8 @@ def bool_if_false(x):
 enum_bool = CI(true) | CI(false)
 
 
-# ----------------------------------------------------------------------------
-# Maybe
+################################################################
+# Maybe type with inhabitants {BOT, none, TOP} u {some(x) | x}
 
 none = K
 
@@ -170,8 +205,8 @@ def enum_maybe(enum_item):
     return box(none) | enum_map(some, enum_item)
 
 
-# ----------------------------------------------------------------------------
-# Products
+################################################################
+# Products with inhabitants {TOP} u {pair(x, y) | x, y}
 
 
 @combinator
@@ -204,8 +239,8 @@ def enum_prod(enum_fst, enum_snd):
     return enum_fst(lambda x: enum_snd(lambda y: box(pair(x, y))))
 
 
-# ----------------------------------------------------------------------------
-# Sums
+################################################################
+# Sums with inhabitants {BOT, TOP} u {inl(x) | x} u {inr(y) | y}
 
 
 @combinator
@@ -236,7 +271,7 @@ def enum_sum(enum_inl, enum_inr):
     return enum_map(inl, enum_inl) | enum_map(inr, enum_inr)
 
 
-# ----------------------------------------------------------------------------
+################################################################
 # Numerals as Y Maybe
 
 zero = none
@@ -301,7 +336,7 @@ def enum_num():
     return box(zero) | enum_map(succ, enum_num)
 
 
-# ----------------------------------------------------------------------------
+################################################################
 # Finite homogeneous lists
 
 nil = K
@@ -387,7 +422,7 @@ def enum_list(enum_item):
     )
 
 
-# ----------------------------------------------------------------------------
+################################################################
 # Streams
 
 
@@ -473,7 +508,7 @@ def stream_take(xs, size):
     return size(nil, lambda p: xs(lambda h, t: cons(h, stream_take(t, p))))
 
 
-# ----------------------------------------------------------------------------
+################################################################
 # Enumerable sets
 
 
@@ -525,7 +560,7 @@ def enum_close(f, xs):
     return enum_union(xs, enum_close(f, xs, f))
 
 
-# ----------------------------------------------------------------------------
+################################################################
 # Functions
 
 
@@ -556,7 +591,7 @@ def close(f):
     return lambda x: x | f(close(x))
 
 
-# ----------------------------------------------------------------------------
+################################################################
 # Type constructor
 
 
@@ -615,7 +650,7 @@ def a_arrow(a, b):
     return lambda f, x: b(f(a(x)))
 
 
-# ----------------------------------------------------------------------------
+################################################################
 # Scott ordering
 
 
@@ -634,7 +669,7 @@ def enum_contains(qxs, qy):
     return QLESS(qapp(quote(box), qy), qxs)
 
 
-# ----------------------------------------------------------------------------
+################################################################
 # Byte as an 8-tuple of bits
 
 
@@ -686,7 +721,7 @@ byte_get_bit = [
 ]
 
 
-# ----------------------------------------------------------------------------
+################################################################
 # Bytes, as a homogeneous list of Byte
 
 

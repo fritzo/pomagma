@@ -89,6 +89,10 @@ PyTorch integration leverages ObTree to bridge symbolic expressions with E-graph
 
 The analyst pipeline processes string inputs through C++ Term structures for high-performance validation and constraint satisfaction. The C++ implementation maximizes performance for corpus validation and approximation-based analysis tasks requiring intensive computational processing.
 
+### Standard Library Applications
+
+The `pomagma.reducer.lib` module contains a standard library of combinators built on Term using the `@combinator` decorator and sugar DSL. It implements data types including Unit, Bool, Maybe, Products, Sums, Numerals, finite Lists, infinite Streams, and enumerable Sets. The library uses `@typed` decorators for type annotations, `@symmetric` for commutative operations, and fixed-point combinators for recursive definitions. Applications include join operations for nondeterminism, Maybe types for error handling, Scott ordering comparisons, and byte manipulation operations.
+
 ## Interoperability and Conversion
 
 Current conversion patterns support both string intermediaries and direct conversions for cross-representation communication. Expression integrates with string parsing through `parse_string_to_expr()` and string serialization, while ObTree connects to Expression via `ObTree.from_expr()` and back through `Extractor.extract_from_obtree()`. Direct Expression-Term conversion is available through `pomagma.reducer.bridge` module functions, and ObTree supports Term input via `ObTree.from_term()`. Term supports Polish notation through `polish_parse()` and `polish_print()`, and the C++ Corpus Term uses dedicated parser infrastructure for string processing.

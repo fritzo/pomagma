@@ -23,6 +23,7 @@ from pomagma.reducer.syntax import (
     QLESS,
     QQUOTE,
     QUOTE,
+    SEMI,
     TOP,
     UNIT,
     B,
@@ -182,6 +183,7 @@ s_atoms = s.one_of(
         s.just(QLESS),
     ),
     s.one_of(
+        s.just(SEMI),
         s.just(UNIT),
         s.just(BOOL),
         s.just(MAYBE),

@@ -1,4 +1,4 @@
-from parsable import parsable
+import parsable
 
 import pomagma.util
 

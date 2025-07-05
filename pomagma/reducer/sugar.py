@@ -9,7 +9,18 @@ from pomagma.reducer.bohm import convert
 from pomagma.reducer.syntax import NVAR, Term, free_vars, quoted_vars
 from pomagma.reducer.util import LOG
 
-# ----------------------------------------------------------------------------
+
+@functools.singledispatch
+def as_term(arg: Any) -> Term:
+    raise NotImplementedError(f"Cannot convert to term: {arg}")
+
+
+@as_term.register
+def _as_term_term(arg: Term) -> Term:
+    return arg
+
+
+################################################################
 # Compiler
 
 
@@ -114,17 +125,17 @@ def combinator(arg: Any) -> _Combinator:
     return _Combinator(arg)
 
 
-def as_term(arg: Any) -> Term:
-    if isinstance(arg, Term):
-        return arg
-    if isinstance(arg, _Combinator):
-        return arg.term
-    if not callable(arg):
-        raise SyntaxError(f"Cannot convert to term: {arg}")
+@as_term.register
+def _as_term_combinator(arg: _Combinator) -> Term:
+    return arg.term
+
+
+@as_term.register
+def _as_term_callable(arg: Callable) -> Term:
     return _compile(arg)
 
 
-# ----------------------------------------------------------------------------
+################################################################
 # Sugar
 
 
