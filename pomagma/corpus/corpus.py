@@ -3,7 +3,7 @@ from pomagma.compiler.parser import parse_corpus
 from pomagma.compiler.util import inputs
 from pomagma.util import TODO
 
-HOLE = Expression.make("HOLE")
+HOLE = Expression("HOLE")
 
 
 class Corpus:
@@ -44,8 +44,8 @@ class Corpus:
         return iter(list(self._defs.items()))
 
     def insert(self, key, value="HOLE"):
-        var = Expression.make(key)
-        expr = Expression.make(value)
+        var = Expression(key)
+        expr = Expression(value)
         self[var] = expr
 
 

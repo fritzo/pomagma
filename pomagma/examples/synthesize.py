@@ -8,8 +8,8 @@ from pomagma.compiler.simplify import simplify_expr
 from pomagma.compiler.sugar import desugar_expr
 
 APP = Expression_2("APP")
-K = Expression.make("K")
-F = Expression.make("F")
+K = Expression("K")
+F = Expression("F")
 
 
 def parse_expr(string):
@@ -77,7 +77,7 @@ def define_a(
     assert max_solutions > 0, max_solutions
     assert 0 < max_memory and max_memory < 1, max_memory
     facts = parse_facts(A_THEORY)
-    hole = Expression.make("hole")
+    hole = Expression("hole")
     initial_sketch = parse_expr("HOLE")
     language = {
         "APP": 1.0,
@@ -108,7 +108,7 @@ def define_a(
         )
     print("Possible Fillings:")
     APP = Expression_2("APP")
-    f = Expression.make("f")
+    f = Expression("f")
     for complexity, term, filling in results:
         print(simplify_expr(APP(filling, f)))
     return results
@@ -130,7 +130,7 @@ def define_a_pair(
     assert max_solutions > 0, max_solutions
     assert 0 < max_memory and max_memory < 1, max_memory
     facts = parse_facts(A_THEORY)
-    hole = Expression.make("hole")
+    hole = Expression("hole")
     initial_sketch = parse_expr("PAIR HOLE HOLE")
     language = {
         "APP": 1.0,

@@ -82,7 +82,7 @@ def simplify_stack(head, *args):
         return [JOIN(lhs, rhs), *args]
         # TODO simplify wrt associativity
 
-    head = Expression.make(head.name, *list(map(simplify_term, head.args)))
+    head = Expression(head.name, *list(map(simplify_term, head.args)))
     return [head, *args]
 
 
@@ -99,5 +99,5 @@ def simplify_term(term):
 def simplify_expr(expr):
     if expr.is_rel():
         args = list(map(simplify_term, expr.args))
-        return Expression.make(expr.name, *args)
+        return Expression(expr.name, *args)
     return simplify_term(expr)

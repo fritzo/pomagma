@@ -102,7 +102,7 @@ def parse_tokens_to_expr(tokens):
     arity = get_arity(head)
     nargs = get_nargs(arity)
     args = [parse_tokens_to_expr(tokens) for _ in range(nargs)]
-    return Expression.make(head, *args)
+    return Expression(head, *args)
 
 
 def parse_string_to_expr(string):

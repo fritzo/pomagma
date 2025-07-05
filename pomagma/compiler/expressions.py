@@ -5,14 +5,14 @@ from typing import Any
 
 from pomagma.compiler import signature
 from pomagma.compiler.signature import ARITY_TABLE
-from pomagma.compiler.util import inputs, memoize_make, sortedset, union
+from pomagma.compiler.util import inputs, sortedset, union
+from pomagma.util.hashcons import HashConsArgsMeta
 
 re_name = re.compile("[a-zA-Z][a-zA-Z0-9_]*$")
 re_space = re.compile("[ _]+")
 
 
-@memoize_make
-class Expression:
+class Expression(metaclass=HashConsArgsMeta):
     __slots__ = [
         "_name",
         "_args",
@@ -26,8 +26,6 @@ class Expression:
         "_terms",
         "__weakref__",
     ]
-
-    make: Callable[..., "Expression"]
 
     def __init__(self, name: str, *args: "Expression") -> None:
         assert isinstance(name, str), type(name)
@@ -70,10 +68,10 @@ class Expression:
             if self._arity == "Variable":
                 self._var = self
             elif self._arity == "NullaryFunction":
-                self._var = Expression.make(self._name + "_")
+                self._var = Expression(self._name + "_")
             elif self._arity in signature.FUNCTION_ARITIES:
                 var = re_space.sub("_", self._polish.rstrip("_"))
-                self._var = Expression.make(var)
+                self._var = Expression(var)
         return self._var
 
     @property
@@ -113,7 +111,7 @@ class Expression:
 
     def __eq__(self, other: Any) -> bool:
         assert isinstance(other, Expression), other
-        return self._polish == other._polish
+        return self._polish is other._polish
 
     def __lt__(self, other: "Expression") -> bool:
         return self._sort < other._sort
@@ -146,9 +144,7 @@ class Expression:
             return self
         if self.is_var():
             return defn
-        return Expression.make(
-            self.name, *(arg.substitute(var, defn) for arg in self._args)
-        )
+        return Expression(self.name, *(arg.substitute(var, defn) for arg in self._args))
 
     def replace(self, pattern: "Expression", replacement: "Expression") -> "Expression":
         """
@@ -182,7 +178,7 @@ class Expression:
             return self
 
         # Create new expression with replaced arguments
-        result = Expression.make(self.name, *new_args)
+        result = Expression(self.name, *new_args)
 
         # Check if the newly created expression matches the pattern
         if result is pattern:
@@ -199,25 +195,25 @@ class Expression:
             return var2
         if self == var2:
             return var1
-        return Expression.make(self.name, *(arg.swap(var1, var2) for arg in self._args))
+        return Expression(self.name, *(arg.swap(var1, var2) for arg in self._args))
 
     def permute_symbols(self, perm: dict[str, str]) -> "Expression":
         assert isinstance(perm, dict)
         name = "_".join(perm.get(n, n) for n in self.name.split("_"))
         args = (a.permute_symbols(perm) for a in self._args)
-        return Expression.make(name, *args)
+        return Expression(name, *args)
 
 
 def Expression_0(name: str) -> "Expression":
-    return Expression.make(name)
+    return Expression(name)
 
 
 def Expression_1(name: str) -> Callable[[Expression], "Expression"]:
-    return lambda x: Expression.make(name, x)
+    return lambda x: Expression(name, x)
 
 
 def Expression_2(name: str) -> Callable[[Expression, Expression], "Expression"]:
-    return lambda x, y: Expression.make(name, x, y)
+    return lambda x, y: Expression(name, x, y)
 
 
 class NotNegatable(Exception):
@@ -237,6 +233,6 @@ def try_get_negated(expr: "Expression") -> set["Expression"]:
     """Returns a disjunction."""
     if expr.name == "EQUAL":
         lhs, rhs = expr.args
-        return {Expression.make("NLESS", lhs, rhs), Expression.make("NLESS", rhs, lhs)}
+        return {Expression("NLESS", lhs, rhs), Expression("NLESS", rhs, lhs)}
     neg_name = try_negate_name(expr.name)
-    return {Expression.make(neg_name, *expr.args)}
+    return {Expression(neg_name, *expr.args)}

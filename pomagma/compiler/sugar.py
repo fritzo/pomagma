@@ -16,7 +16,7 @@ EQUAL = Expression_2("EQUAL")
 
 @inputs(Expression)
 def desugar_expr(self):
-    expr = Expression.make(self.name, *list(map(desugar_expr, self.args)))
+    expr = Expression(self.name, *list(map(desugar_expr, self.args)))
     if expr.name == "FUN":
         var, body = expr.args
         assert var.is_var(), var

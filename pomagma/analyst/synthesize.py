@@ -45,9 +45,9 @@ from pomagma.compiler.util import inputs, intern_keys, memoize_args
 MAX_MEMORY = 0.95
 MAX_SOLUTIONS = 10
 INFINITY = float("inf")
-HOLE = Expression.make("HOLE")
-BOT = Expression.make("BOT")
-I = Expression.make("I")
+HOLE = Expression("HOLE")
+BOT = Expression("BOT")
+I = Expression("I")
 EQUAL = Expression_2("EQUAL")
 
 format_invalid = "\033[31mInvalid:\033[0m %s".__mod__
@@ -83,7 +83,7 @@ class ComplexityEvaluator:
 def make_template(name):
     assert isinstance(name, str), name
     holes = [HOLE] * get_nargs(get_arity(name))
-    return Expression.make(name, *holes)
+    return Expression(name, *holes)
 
 
 class NaiveHoleFiller:
@@ -102,14 +102,14 @@ class NaiveHoleFiller:
         if nargs == 1:
             name = term.name
             (key,) = term.args
-            return tuple(Expression.make(name, f) for f in self(key))
+            return tuple(Expression(name, f) for f in self(key))
         if nargs == 2:
             name = term.name
             lhs, rhs = term.args
             return tuple(
                 itertools.chain(
-                    (Expression.make(name, f, rhs) for f in self(lhs)),
-                    (Expression.make(name, lhs, f) for f in self(rhs)),
+                    (Expression(name, f, rhs) for f in self(lhs)),
+                    (Expression(name, lhs, f) for f in self(rhs)),
                 )
             )
         return None

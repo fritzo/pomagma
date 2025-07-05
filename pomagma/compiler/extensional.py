@@ -93,7 +93,7 @@ def abstract(self, var):
         raise AbstractionFailed
     if self.is_rel():
         args = [arg.abstract(var) for arg in self.args]
-        return Expression.make(self.name, *args)
+        return Expression(self.name, *args)
     raise ValueError(f"bad expression: {self.name}")
 
 
@@ -107,7 +107,7 @@ class SkipValidation(Exception):
 
 def get_fresh(bound):
     for name in "abcdefghijklmnopqrstuvwxyz":
-        fresh = Expression.make(name)
+        fresh = Expression(name)
         if fresh not in bound:
             return fresh
     raise NotImplementedError("Exceeded fresh variable limit")
@@ -190,14 +190,14 @@ def validate(expr):
                 f"Failed to validate\n  {expr}\nbecause  \n{lhs[0]} != {rhs[0]}"
             )
             for args in zip(lhs[1:], rhs[1:]):
-                validate(Expression.make(expr.name, *args))
+                validate(Expression(expr.name, *args))
             break
         except RequireVariable:
             lhs, rhs = expr.args
             fresh = get_fresh(expr.vars)
             lhs = APP(lhs, fresh)
             rhs = APP(rhs, fresh)
-            expr = Expression.make(expr.name, lhs, rhs)
+            expr = Expression(expr.name, lhs, rhs)
         except SkipValidation:
             print(f"WARNING: not validating {expr}")
             return

@@ -94,7 +94,7 @@ class Sequent:
 @inputs(Expression)
 def as_atom(expr):
     args = [arg.var for arg in expr.args]
-    return Expression.make(expr.name, *args)
+    return Expression(expr.name, *args)
 
 
 @inputs(Expression)
@@ -129,7 +129,7 @@ def as_succedent(expr, bound):
                 assert arg.arity == "NullaryFunction", arg
                 args.append(arg.var)
                 antecedents.add(arg)
-        succedent = Expression.make(expr.name, *args)
+        succedent = Expression(expr.name, *args)
     else:
         assert expr.args, expr.args
         succedent = as_atom(expr)

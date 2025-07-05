@@ -60,27 +60,27 @@ def _test_sequent(antecedents, conclusion):
 
 
 def test_compile_I():
-    I = Expression.make("I")
+    I = Expression("I")
     _test_sequent([], [EQUAL(APP(I, x), x)])
 
 
 def test_compile_K():
-    K = Expression.make("K")
+    K = Expression("K")
     _test_sequent([], [EQUAL(APP(APP(K, x), y), x)])
 
 
 def test_compile_W():
-    W = Expression.make("W")
+    W = Expression("W")
     _test_sequent([], [EQUAL(APP(APP(W, x), y), APP(APP(x, y), y))])
 
 
 def test_compile_B_app():
-    B = Expression.make("B")
+    B = Expression("B")
     _test_sequent([], [EQUAL(APP(APP(APP(B, x), y), z), APP(x, APP(y, z)))])
 
 
 def test_compile_B_comp():
-    B = Expression.make("B")
+    B = Expression("B")
     _test_sequent([], [EQUAL(APP(APP(B, x), y), COMP(x, y))])
 
 
@@ -93,7 +93,7 @@ def test_compile_comp_assoc():
 
 
 def test_compile_C():
-    C = Expression.make("C")
+    C = Expression("C")
     _test_sequent([], [EQUAL(APP(APP(APP(C, x), y), z), APP(APP(x, z), y))])
 
 
@@ -105,17 +105,17 @@ def test_compile_S():
     # for y if APP x y let APP_APP_S_x_y
     # for z if APP y z let APP_APP_APP_S_x_y_z
     # ensure EQUAL APP_APP_APP_S_x_y_z APP_APP_x_z_APP_y_z
-    S = Expression.make("S")
+    S = Expression("S")
     _test_sequent([], [EQUAL(APP(APP(APP(S, x), y), z), APP(APP(x, z), APP(y, z)))])
 
 
 def test_compile_Y():
-    Y = Expression.make("Y")
+    Y = Expression("Y")
     _test_sequent([], [EQUAL(APP(Y, f), APP(f, APP(Y, f)))])
 
 
 def test_compile_bot():
-    BOT = Expression.make("BOT")
+    BOT = Expression("BOT")
     _test_sequent([], [LESS(BOT, x)])
 
 
@@ -149,20 +149,20 @@ def test_compile_co():
 
 
 def test_compile_comp_x_x_x():
-    U = Expression.make("U")
+    U = Expression("U")
     _test_sequent([EQUAL(COMP(x, x), x)], [EQUAL(x, APP(U, x))])
 
 
 def test_compile_eval():
-    EVAL = Expression.make("EVAL")
+    EVAL = Expression("EVAL")
     _test_sequent([], [EQUAL(APP(EVAL, QUOTE(x)), x)])
 
 
 def test_compile_qt_quote():
-    QT = Expression.make("QT")
+    QT = Expression("QT")
     _test_sequent([], [EQUAL(APP(QT, QUOTE(x)), QUOTE(QUOTE(x)))])
 
 
 def test_compile_ap_quote():
-    AP = Expression.make("AP")
+    AP = Expression("AP")
     _test_sequent([], [EQUAL(APP(APP(AP, QUOTE(x)), QUOTE(y)), QUOTE(APP(x, y)))])

@@ -27,9 +27,9 @@ def lam(v, e):
 
 
 def test_abstraction():
-    x = Expression.make("x")
-    y = Expression.make("y")
-    z = Expression.make("z")
+    x = Expression("x")
+    y = Expression("y")
+    z = Expression("z")
 
     assert lam(x, x) == I
     assert lam(x, y) == APP(K, y)
@@ -79,16 +79,16 @@ def test_iter_subsets():
 
 
 def test_iter_eta_substitutions():
-    a = Expression.make("a")
-    x = Expression.make("x")
+    a = Expression("a")
+    x = Expression("x")
     actual = set(iter_eta_substitutions(x))
     expected = {x, a.abstract(a), APP(x, a).abstract(a)}
     assert actual == expected
 
 
 def test_iter_closure_maps():
-    x = Expression.make("x")
-    y = Expression.make("y")
+    x = Expression("x")
+    y = Expression("y")
     assert set(iter_closure_maps(x)) == {I}
     assert set(iter_closure_maps(APP(x, x))) == {APP(W, I)}
     assert set(iter_closure_maps(APP(x, y))) == {I, APP(C, I), APP(W, I)}

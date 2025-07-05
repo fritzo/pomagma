@@ -197,7 +197,7 @@ def strengthen_sequent(fact):
 
 def weaken_sequent(fact):
     if fact.arity == "UnaryMeta":
-        return Expression.make(fact.name, weaken_sequent(fact.args[0]))
+        return Expression(fact.name, weaken_sequent(fact.args[0]))
     assert fact.is_rel(), fact
     if fact.name == "EQUAL":
         lhs, rhs = fact.args

@@ -41,12 +41,12 @@ def beta_compress_expr_pattern(
     if count < 2:
         return Counter()
 
-    var = Expression.make("pattern")
+    var = Expression("pattern")
 
     def compress(old: Expression) -> tuple[Expression, float]:
         new = old.replace(pattern, var).abstract(var)
         new = simplify(new)
-        equation = Expression.make("EQUAL", old, new)
+        equation = Expression("EQUAL", old, new)
         benefit = cost_func(old) - cost_func(new)
         return equation, benefit
 

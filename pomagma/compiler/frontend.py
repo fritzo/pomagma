@@ -283,8 +283,8 @@ def write_event_programs(programs, sequents):
                 if diagonal:
                     lhs = event.args[0]
                     assert lhs.arity == "Variable"
-                    rhs = Expression.make(lhs.name + "_")
-                    event = Expression.make(event.name, lhs, rhs)
+                    rhs = Expression(lhs.name + "_")
+                    event = Expression(event.name, lhs, rhs)
 
                 if arity == "Variable":
                     given = f"GIVEN_EXISTS {event.name}"

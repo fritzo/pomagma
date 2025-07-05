@@ -63,7 +63,7 @@ class Extractor:
                 if prob > best_prob:
                     best_prob = prob
                     name = nullary_functions[ob]
-                    best_expr = Expression.make(name)
+                    best_expr = Expression(name)
 
             # Binary functions.
             for self_fs, struct_fs in [
@@ -98,7 +98,7 @@ class Extractor:
                     if lhs_expr is None or rhs_expr is None:
                         continue
                     best_prob = value
-                    best_expr = Expression.make(name, lhs_expr, rhs_expr)
+                    best_expr = Expression(name, lhs_expr, rhs_expr)
 
             expressions[ob] = best_expr
 
@@ -139,4 +139,4 @@ class Extractor:
                 return None
             extracted_args.append(extracted_arg)
 
-        return Expression.make(obtree.name, *extracted_args)
+        return Expression(obtree.name, *extracted_args)
