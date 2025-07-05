@@ -203,6 +203,9 @@ class Expression(metaclass=HashConsArgsMeta):
         args = (a.permute_symbols(perm) for a in self._args)
         return Expression(name, *args)
 
+    def abstract(self, var: "Expression") -> "Expression":
+        raise NotImplementedError("defined in extensional.py")
+
 
 def Expression_0(name: str) -> "Expression":
     return Expression(name)

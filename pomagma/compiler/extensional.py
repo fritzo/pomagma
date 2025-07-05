@@ -1,4 +1,5 @@
 import itertools
+from collections.abc import Callable
 
 from pomagma.compiler.expressions import Expression, Expression_0, Expression_2
 from pomagma.compiler.sequents import Sequent
@@ -29,7 +30,12 @@ class AbstractionFailed(Exception):
     pass
 
 
-def abstract_symmetric(self, var, atom, operation):
+def abstract_symmetric(
+    self: "Expression",
+    var: "Expression",
+    atom: "Expression",
+    operation: Callable[["Expression", "Expression"], "Expression"],
+) -> "Expression":
     # K-compose-eta abstraction
     lhs, rhs = self.args
     if var in lhs.vars:
@@ -45,9 +51,11 @@ def abstract_symmetric(self, var, atom, operation):
 
 
 @methodof(Expression)
-def abstract(self, var):
+def abstract(self, var: "Expression") -> "Expression":
     assert isinstance(var, Expression)
     assert var.is_var()
+    lhs: Expression
+    rhs: Expression
     if self.name == "VAR":
         self = self.args[0]
     if self.is_var():
