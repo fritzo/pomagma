@@ -700,6 +700,30 @@ def test_num_mul(x, y, expected):
 
 @for_each(
     [
+        (num(0), num(0), ok),
+        (num(0), num(1), undefined),
+        (num(0), num(2), undefined),
+        (num(0), num(3), undefined),
+        (num(1), num(0), undefined),
+        (num(1), num(1), ok),
+        (num(1), num(2), undefined),
+        (num(1), num(3), undefined),
+        (num(2), num(0), undefined),
+        (num(2), num(1), undefined),
+        (num(2), num(2), ok),
+        (num(2), num(3), undefined),
+        (num(3), num(0), undefined),
+        (num(3), num(1), undefined),
+        (num(3), num(2), undefined),
+        (num(3), num(3), ok),
+    ]
+)
+def test_num_if_eq(x, y, expected):
+    assert reduce(lib.num_if_eq(x, y)) == expected
+
+
+@for_each(
+    [
         (num(0), num(0), true),
         (num(0), num(1), false),
         (num(0), num(2), false),
@@ -720,6 +744,30 @@ def test_num_mul(x, y, expected):
 )
 def test_num_eq(x, y, expected):
     assert reduce(lib.num_eq(x, y)) == expected
+
+
+@for_each(
+    [
+        (num(0), num(0), ok),
+        (num(0), num(1), ok),
+        (num(0), num(2), ok),
+        (num(0), num(3), ok),
+        (num(1), num(0), undefined),
+        (num(1), num(1), ok),
+        (num(1), num(2), ok),
+        (num(1), num(3), ok),
+        (num(2), num(0), undefined),
+        (num(2), num(1), undefined),
+        (num(2), num(2), ok),
+        (num(2), num(3), ok),
+        (num(3), num(0), undefined),
+        (num(3), num(1), undefined),
+        (num(3), num(2), undefined),
+        (num(3), num(3), ok),
+    ]
+)
+def test_num_if_le(x, y, expected):
+    assert reduce(lib.num_if_le(x, y)) == expected
 
 
 @for_each(

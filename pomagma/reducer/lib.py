@@ -338,6 +338,12 @@ def num_eq(x, y):
 
 
 @combinator
+@typed(num_type, num_type, semi_type)
+def num_if_le(x, y):
+    return x(y(ok, lambda _: ok), lambda px: y(_, lambda py: num_if_le(px, py)))
+
+
+@combinator
 @typed(num_type, num_type, bool_type)
 def num_le(x, y):
     return x(true, lambda px: y(false, lambda py: num_le(px, py)))
