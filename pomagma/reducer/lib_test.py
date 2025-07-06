@@ -647,7 +647,7 @@ def test_num_is_zero(x, expected):
         (succ(succ(undefined)), succ(undefined)),
         (error, error),
         (succ(error), error),
-        (succ(succ(error)), succ(error)),
+        (succ(succ(error)), error),
     ]
 )
 def test_num_pred(x, expected):

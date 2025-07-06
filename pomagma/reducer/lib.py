@@ -23,6 +23,7 @@ from pomagma.reducer.syntax import (
     BOT,
     EVAL,
     MAYBE,
+    NUM,
     QEQUAL,
     QLESS,
     QUOTE,
@@ -35,6 +36,7 @@ from pomagma.reducer.syntax import (
 # Nondeterminism
 
 join = K | KI
+_ = BOT
 
 
 ################################################################
@@ -166,13 +168,13 @@ def bool_quote(x):
 @combinator
 def bool_if_true(x):
     x = bool_type(x)
-    return semi_type(x(ok, undefined))
+    return semi_type(x(ok, _))
 
 
 @combinator
 def bool_if_false(x):
     x = bool_type(x)
-    return semi_type(x(undefined, ok))
+    return semi_type(x(_, ok))
 
 
 enum_bool = CI(true) | CI(false)
@@ -285,49 +287,70 @@ succ = some
 
 
 @combinator
+def num_type(x):
+    return NUM(x)
+
+
+@combinator
+@typed(num_type, semi_type)
 def num_test(x):
     return semi_type(x(ok, num_test))
 
 
 @combinator
+@typed(num_type, bool_type)
 def num_is_zero(x):
     return x(true, lambda px: false)
 
 
 @combinator
+@typed(num_type, num_type)
 def num_pred(x):
     return x(error, lambda px: px)
 
 
 @combinator
+@typed(num_type, num_type, num_type)
 @symmetric
 def num_add(x, y):
     return y(x, lambda py: succ(num_add(x, py)))
 
 
 @combinator
+@typed(num_type, num_type, num_type)
 @symmetric
 def num_mul(x, y):
     return num_rec(zero, lambda py: num_add(x, py), y)
 
 
 @combinator
+@typed(num_type, num_type, semi_type)
+@symmetric
+def num_if_eq(x, y):
+    return x(y(ok, _), lambda px: y(_, lambda py: num_if_eq(px, py)))
+
+
+@combinator
+@typed(num_type, num_type, bool_type)
 @symmetric
 def num_eq(x, y):
     return x(y(true, lambda py: false), lambda px: y(false, lambda py: num_eq(px, py)))
 
 
 @combinator
+@typed(num_type, num_type, bool_type)
 def num_le(x, y):
     return x(true, lambda px: y(false, lambda py: num_le(px, py)))
 
 
 @combinator
+@typed(num_type, num_type, bool_type)
 def num_lt(x, y):
     return y(false, lambda py: x(true, lambda px: num_lt(px, py)))
 
 
 @combinator
+# @typed ???
 def num_rec(z, s, x):
     return x(z, lambda px: s(num_rec(z, s, px)))
 

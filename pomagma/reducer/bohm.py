@@ -33,6 +33,7 @@ from pomagma.reducer.syntax import (
     IVAR,
     JOIN,
     MAYBE,
+    NUM,
     QAPP,
     QEQUAL,
     QLESS,
@@ -586,7 +587,7 @@ def try_decide_less_strong(lhs: Term, rhs: Term) -> bool | None:
     The behavior on closed terms should approximate Scott ordering. The
     behavior on variables is defined with the particular application of
     deciding order among definitions in reducer.lib. We assume all IVARs are
-    bound and all NVARs are free, so that for example:
+    bound and all NVARS are free, so that for example:
 
         # Refrain from decision until x is defined.
         try_decide_less(NVAR('x'), BOT) = None
@@ -912,6 +913,34 @@ def try_cast_maybe(x):
             value = increment_rank(value)
             return ABS(ABS(APP(IVAR(0), value)))
     return None
+
+
+@casts(NUM)
+def try_cast_num(x):
+    """
+    Weak oracle closing x to type NUM = Y MAYBE.
+
+    Args:
+        x : term in linear normal form
+    Returns:
+        TOP, BOT, zero, succ(BOT), succ(zero), ... or None
+
+    TODO support infinity = Y(succ)
+    """
+    head = try_cast_maybe(x)  # type: ignore[arg-type]
+    if head in (None, TOP, BOT, K):
+        return head
+    # head is succ(...) = some(...) = K(CI(...))
+    # Extract the predecessor from K(CI(predecessor))
+    pred_x = app(app(head, TOP), ABS(IVAR(0)))
+    pred_value = try_cast_num(pred_x)
+    if pred_value is None:
+        return None
+    if pred_value is TOP:
+        return TOP
+    pred_value = increment_rank(pred_value)
+    pred_value = increment_rank(pred_value)
+    return ABS(ABS(APP(IVAR(0), pred_value)))
 
 
 @casts(CODE)
