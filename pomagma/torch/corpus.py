@@ -10,7 +10,7 @@ from immutables import Map
 from pomagma.compiler.expressions import Expression
 from pomagma.compiler.parser import parse_string_to_expr
 from pomagma.compiler.util import weak_memoize_1, weak_memoize_2
-from pomagma.reducer.bridge import term_to_expression
+from pomagma.reducer.curry import convert
 from pomagma.util.hashcons import WeakHashConsMeta
 
 from .structure import Ob, Structure
@@ -87,6 +87,44 @@ class ObTree(metaclass=WeakHashConsMeta):
         return ObTree(name=name, args=args)
 
     @staticmethod
+    def from_term(
+        structure: Structure, term: "Term", *, strict: bool = True
+    ) -> "ObTree":
+        """Create an ObTree from a pomagma.reducer.syntax.Term."""
+        term = convert(term)  # eliminate abstraction
+        return ObTree._from_term(structure, term, strict=strict)
+
+    @staticmethod
+    @weak_memoize_2
+    def _from_term(
+        structure: Structure, term: "Term", *, strict: bool = True
+    ) -> "ObTree":
+        name: str = term[0]
+        if name in ("ABS", "FUN", "NVAR", "IVAR"):
+            raise NotImplementedError(f"Variables are not allowed: {name}")
+        args: tuple[ObTree, ...] = tuple(
+            ObTree._from_term(structure, arg, strict=strict) for arg in term[1:]
+        )
+        if not all(arg.ob for arg in args):
+            return ObTree(name=name, args=args)
+        if len(args) == 0:
+            if nullary := structure.nullary_functions.get(name):
+                return ObTree(ob=nullary)
+        elif len(args) == 2:
+            lhs: Ob = args[0].ob  # type: ignore[assignment]
+            rhs: Ob = args[1].ob  # type: ignore[assignment]
+            if binary := structure.binary_functions.get(name):
+                if ob := binary[lhs, rhs]:
+                    return ObTree(ob=ob)
+            elif symmetric := structure.symmetric_functions.get(name):
+                if ob := symmetric[lhs, rhs]:
+                    return ObTree(ob=ob)
+        if strict:
+            raise ValueError(f"Unknown symbol: {name}")
+        logger.warning("Unknown symbol: %s", name)
+        return ObTree(name=name, args=args)
+
+    @staticmethod
     def from_string(
         structure: Structure,
         string: str,
@@ -95,14 +133,6 @@ class ObTree(metaclass=WeakHashConsMeta):
     ) -> "ObTree":
         """Create an ObTree from a string in polish notation."""
         expr = parse_string_to_expr(string)
-        return ObTree.from_expr(structure, expr, strict=strict)
-
-    @staticmethod
-    def from_term(
-        structure: Structure, term: "Term", *, strict: bool = True
-    ) -> "ObTree":
-        """Create an ObTree from a pomagma.reducer.syntax.Term."""
-        expr = term_to_expression(term)
         return ObTree.from_expr(structure, expr, strict=strict)
 
     def __str__(self) -> str:

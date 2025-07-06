@@ -341,17 +341,17 @@ def test_obtree_finitary_join_stats(simple_structure: Structure) -> None:
 
 def test_obtree_from_term_basic(simple_structure: Structure) -> None:
     """Test ObTree creation from basic Term."""
-    from pomagma.reducer.syntax import NVAR, I
+    from pomagma.reducer.syntax import FUN, NVAR, I
 
     # Test atom term
-    i_tree = ObTree.from_term(simple_structure, I, strict=False)
-    assert i_tree.name == "I"
-    assert i_tree.args == ()
+    tree = ObTree.from_term(simple_structure, I, strict=False)
+    assert tree.name == "I"
+    assert tree.args == ()
 
-    # Test variable term
-    x_tree = ObTree.from_term(simple_structure, NVAR("x"), strict=False)
-    assert x_tree.name == "x"
-    assert x_tree.args == ()
+    # Test nominal abstraction term
+    tree = ObTree.from_term(simple_structure, FUN(NVAR("x"), NVAR("x")), strict=False)
+    assert tree.name == "I"
+    assert tree.args == ()
 
 
 def test_obtree_from_term_application(simple_structure: Structure) -> None:
@@ -371,23 +371,21 @@ def test_obtree_from_term_application(simple_structure: Structure) -> None:
 
 
 def test_obtree_from_term_with_e_classes(simple_structure: Structure) -> None:
-    """Test ObTree creation from Term with E-class resolution."""
-    from pomagma.reducer.syntax import APP, NVAR
+    """Test ObTree creation from Term with unknown symbols."""
+    from pomagma.reducer.syntax import APP, I, K
 
-    # Create APP(x, y) where x and y are variables that won't resolve to E-classes
-    x_term = NVAR("x")  # Variable, not E-class
-    y_term = NVAR("y")  # Variable, not E-class
-    app_term = APP(x_term, y_term)
-
+    # Create APP(I, K) where I and K are unknown to the simple_structure
+    # This tests behavior when symbols don't resolve to E-classes in the structure
+    app_term = APP(I, K)
     app_tree = ObTree.from_term(simple_structure, app_term, strict=False)
 
-    # Should create an APP expression with variable arguments
+    # Should create an APP expression with atom arguments that don't resolve to E-classes
     assert app_tree.name == "APP"
     assert app_tree.args is not None
     assert isinstance(app_tree.args, tuple)
     assert len(app_tree.args) == 2
-    assert app_tree.args[0].name == "x"
-    assert app_tree.args[1].name == "y"
+    assert app_tree.args[0].name == "I"
+    assert app_tree.args[1].name == "K"
 
 
 def test_obtree_from_term_stats(simple_structure: Structure) -> None:
