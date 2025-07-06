@@ -130,6 +130,8 @@ def is_meta(symbol: str) -> bool:
 def get_arity(symbol: str) -> str:
     if is_var(symbol):
         return "Variable"
+    if symbol == "ABS":
+        raise NotImplementedError("de Bruijn abstraction ABS is not supported")
     return ARITY_TABLE.get(symbol, "NullaryFunction")
 
 

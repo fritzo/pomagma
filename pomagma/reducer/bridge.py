@@ -3,6 +3,7 @@
 from pomagma.compiler.expressions import Expression
 from pomagma.compiler.parser import parse_string_to_expr
 from pomagma.reducer import syntax
+from pomagma.reducer.curry import convert
 from pomagma.reducer.syntax import Term
 
 
@@ -85,6 +86,7 @@ def term_to_expression(term: Term) -> Expression:
     Returns:
         Equivalent Expression representation
     """
+    term = convert(term)
     if syntax.is_atom(term):
         return Expression(term[0])
     if syntax.is_nvar(term):
