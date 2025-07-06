@@ -1,9 +1,10 @@
-"""Eager linear reduction of linear Bohm trees.
+"""
+Eager linear reduction of linear Böhm trees.
 
 This library works with de-Bruijn-indexed linear-normal lambda terms.
 
 All operations eagerly linearly reduce so that the only terms built are linear
-Bohm trees. This contrasts older implementations by entirely avoiding use of
+Böhm trees. This contrasts older implementations by entirely avoiding use of
 combinators and binding of nominal variables. The original motivation for
 avoiding combinators was to make it easier to implement try_decide_less, which
 is a core operation in normalizing JOIN terms.
@@ -82,7 +83,7 @@ def maybe_pretty(term):
     return "None" if term is None else pretty(term)
 
 
-# ----------------------------------------------------------------------------
+################################################################
 # Functional programming
 
 
@@ -274,11 +275,11 @@ def permute_rank(term: Term, rank: int) -> Term:
 # @logged(pretty, pretty, str, str, returns=pretty)
 @memoize_args
 def substitute(term: Term, value: Term, rank: int, budget: bool) -> Term:
-    """Substitute value for IVAR(rank) in term, decremeting higher IVARs.
+    """
+    Substitute value for IVAR(rank) in term, decrementing higher IVARs.
 
     This is linear-eager, and will be lazy about nonlinear
     substitutions.
-
     """
     assert budget in (True, False), budget
     if is_atom(term):
@@ -495,7 +496,7 @@ def nominal_qabstract(var: Term, body: Term) -> Term:
     return qabstract(anonymized)
 
 
-# ----------------------------------------------------------------------------
+################################################################
 # Scott ordering
 
 
@@ -548,9 +549,10 @@ def join_set(terms: Collection[Term]) -> Term:
 
 
 def dominates(lhs: Term, rhs: Term) -> bool:
-    """Weak strict domination relation: lhs =] rhs and lhs [!= rhs.
+    """
+    Weak strict domination relation: lhs =] rhs and lhs [!= rhs.
 
-    This relation is used to reduce reduncancy in join(-, -) terms.
+    This relation is used to reduce redundancy in join(-, -) terms.
     This relation is required to be transitive, so that it extends from pairs
     to arbitrary finite sets of terms and so that it can induces a
     well-defined filtering operation in join(-, -).
@@ -561,7 +563,6 @@ def dominates(lhs: Term, rhs: Term) -> bool:
     Pf: Irreflexivity follows from strictness.
       Antisymmetry follows from antisymmetry of the Scott ordering. []
     Desired Theorem: dominates(-, -) is transitive.
-
     """
     lhs_rhs = try_decide_less(lhs, rhs)
     rhs_lhs = try_decide_less(rhs, lhs)
@@ -577,7 +578,8 @@ def try_decide_less(lhs: Term, rhs: Term) -> bool | None:
 
 @memoize_args
 def try_decide_less_strong(lhs: Term, rhs: Term) -> bool | None:
-    """Weak decision procedure returning True, False, or None.
+    """
+    Weak decision procedure returning True, False, or None.
 
     The behavior on closed terms should approximate Scott ordering. The
     behavior on variables is defined with the particular application of
@@ -591,13 +593,12 @@ def try_decide_less_strong(lhs: Term, rhs: Term) -> bool | None:
         try_decide_less(IVAR(0), BOT) = False
 
     Thus a property of an IVAR is False iff it fails for all substitutions,
-    whereas a property of an NVAR is False iff it fails for some substutution.
+    whereas a property of an NVAR is False iff it fails for any substitution.
     A property is True iff it holds for all substitutions (for IVAR or NVAR);
     the difference is only between False vs None.
 
-    Note that this differs from the conventino in the rest of pomagma, where
+    Note that this differs from the convention in the rest of pomagma, where
     terms are implicitly universally quantified (NVARS act like IVARS).
-
     """
     # Try a weak procedure.
     result = try_decide_less_weak(lhs, rhs)
@@ -770,7 +771,7 @@ def try_decide_equal(lhs: Term, rhs: Term) -> bool | None:
     return trool_all([try_decide_less(lhs, rhs), try_decide_less(rhs, lhs)])
 
 
-# ----------------------------------------------------------------------------
+################################################################
 # Type casting (eventually to be replaced by definable types)
 
 
@@ -813,13 +814,13 @@ def ground(term):
 
 @casts(UNIT)
 def try_cast_unit(x):
-    """Weak oracle closing x to type UNIT.
+    """
+    Weak oracle closing x to type UNIT.
 
     Args:
         x : term in linear normal form
     Returns:
         TOP, BOT, I, or None
-
     """
     assert x is not None
     if x in (TOP, BOT, I):
@@ -834,13 +835,13 @@ def try_cast_unit(x):
 
 @casts(BOOL)
 def try_cast_bool(x):
-    """Weak oracle closing x to type BOOL.
+    """
+    Weak oracle closing x to type BOOL.
 
     Args:
         x : term in linear normal form
     Returns:
         TOP, BOT, K, APP(K, I), or None
-
     """
     assert x is not None
     if x in (TOP, BOT, K, KI):
@@ -862,13 +863,13 @@ some_TOP = ABS(ABS(APP(IVAR(0), TOP)))
 
 @casts(MAYBE)
 def try_cast_maybe(x):
-    """Weak oracle closing x to type MAYBE.
+    """
+    Weak oracle closing x to type MAYBE.
 
     Args:
         x : term in linear normal form
     Returns:
         TOP, BOT, K, APP(K, APP(APP(C, I), ...)), or None
-
     """
     assert x is not None
     if x in (TOP, BOT, K):
@@ -892,14 +893,14 @@ def try_cast_maybe(x):
 
 @casts(CODE)
 def try_cast_code(x):
-    """Weak oracle closing x to type CODE.
+    """
+    Weak oracle closing x to type CODE.
 
     Args:
         x : term in linear normal form
     Returns:
         TOP, BOT, QUOTE(...), APP(QQUOTE, ...), APP(APP(QAPP, ...), ...),
         or None
-
     """
     assert x is not None
     if x is TOP or x is BOT or is_quote(x):
@@ -912,7 +913,7 @@ def try_cast_code(x):
     return None
 
 
-# ----------------------------------------------------------------------------
+################################################################
 # Computation
 
 
@@ -1017,7 +1018,7 @@ def reduce(term, budget=100):
     return term
 
 
-# ----------------------------------------------------------------------------
+################################################################
 # Eager parsing
 
 

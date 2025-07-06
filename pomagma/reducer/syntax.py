@@ -1,3 +1,5 @@
+"""Lightweight immutable terms."""
+
 import re
 import sys
 from collections import defaultdict
@@ -11,11 +13,13 @@ _A = ParamSpec("_A")
 
 Sexpr: TypeAlias = str | int | tuple["Sexpr", ...]
 
-# ----------------------------------------------------------------------------
+################################################################
 # Signature
 
 
 class Term(tuple[str, *tuple["Term | str | int", ...]]):
+    """A term is a tuple of a keyword and a list of arguments."""
+
     __slots__ = ()
 
     def __repr__(self) -> str:
@@ -232,7 +236,7 @@ def is_equal(term: Term) -> bool:
     return term[0] is _EQUAL
 
 
-# ----------------------------------------------------------------------------
+################################################################
 # Transforms
 
 
@@ -307,7 +311,7 @@ Transform.init_class()
 identity = Transform()
 
 
-# ----------------------------------------------------------------------------
+################################################################
 # Variables
 
 
@@ -418,7 +422,7 @@ def is_defined(term):
     return not any(is_nvar(v) for v in free_vars(term))
 
 
-# ----------------------------------------------------------------------------
+################################################################
 # Complexity
 
 # Term complexity is roughly the depth of a term, with special cases for atoms,
@@ -464,7 +468,7 @@ def complexity(term):
     raise UnreachableError(term)
 
 
-# ----------------------------------------------------------------------------
+################################################################
 # Polish notation
 
 
@@ -557,7 +561,7 @@ def _polish_print_tokens(term, tokens):
         raise ValueError(term)
 
 
-# ----------------------------------------------------------------------------
+################################################################
 # S-Expression notation
 
 

@@ -44,8 +44,8 @@ DIR = os.path.dirname(os.path.abspath(__file__))
 TESTDATA = os.path.join(DIR, "testdata")
 
 
-# ----------------------------------------------------------------------------
-# parameterized testing
+################################################################
+# Parameterized testing
 
 
 def iter_test_cases(test_id, suites=None):
@@ -85,8 +85,8 @@ def iter_equations(test_id, suites=None):
     assert isinstance(test_id, str), test_id
     for term, comment, message in iter_test_cases(test_id, suites):
         if is_equal(term):
-            lhs = link(bohm.convert(term[1]))
-            rhs = link(bohm.convert(term[2]))
+            lhs = link(bohm.convert(term[1]))  # type: ignore[arg-type]
+            rhs = link(bohm.convert(term[2]))  # type: ignore[arg-type]
             if comment and parse_xfail(comment, test_id):
                 yield xfail_param(lhs, rhs, message)
             else:
@@ -146,7 +146,8 @@ def _unquote_equal(term):
     assert is_quote(rhs), rhs
     lhs = lhs[1]
     rhs = rhs[1]
-    return APP(APP(EQUAL, lhs), rhs)
+    # FIXME is this correct?
+    return APP(APP(EQUAL, lhs), rhs)  # type: ignore[arg-type]
 
 
 @parsable
@@ -155,8 +156,8 @@ def unquote_equal():
     migrate(_unquote_equal)
 
 
-# ----------------------------------------------------------------------------
-# property-based testing
+################################################################
+# Property-based testing
 
 alphabet = "_abcdefghijklmnopqrstuvwxyz"
 s_vars = s.builds(
