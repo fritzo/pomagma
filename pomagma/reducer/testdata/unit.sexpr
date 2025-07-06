@@ -5,7 +5,7 @@
 ;; unit_type
 (EQUAL (lib.unit_type lib.ok) lib.ok)
 (EQUAL (lib.unit_type lib.error) lib.error)
-(EQUAL (lib.unit_type lib.undefined) lib.undefined)
+(EQUAL (lib.unit_type lib.undefined) lib.ok)
 (EQUAL (lib.unit_type lib.true) lib.error)
 (EQUAL (lib.unit_type lib.false) lib.error)
 (EQUAL (lib.unit_type lib.join) lib.error)
@@ -14,7 +14,7 @@
 ;; unit_test
 (EQUAL (lib.unit_test lib.ok) lib.ok)
 (EQUAL (lib.unit_test lib.error) lib.error)
-(EQUAL (lib.unit_test lib.undefined) lib.undefined)
+(EQUAL (lib.unit_test lib.undefined) lib.ok)
 (EQUAL (lib.unit_test lib.true) lib.error)
 (EQUAL (lib.unit_test lib.false) lib.error)
 (EQUAL (lib.unit_test lib.join) lib.error)
@@ -22,11 +22,12 @@
 
 ;; unit_and
 (EQUAL (lib.unit_and lib.ok lib.ok) lib.ok)
-(EQUAL (lib.unit_and lib.ok lib.undefined) lib.undefined)
-(EQUAL (lib.unit_and lib.undefined lib.ok) lib.undefined)
-(EQUAL (lib.unit_and lib.undefined lib.undefined) lib.undefined)
+(EQUAL (lib.unit_and lib.ok lib.error) lib.error)
+(EQUAL (lib.unit_and lib.error lib.ok) lib.error)
+(EQUAL (lib.unit_and lib.ok lib.undefined) lib.ok)
 (EQUAL (lib.unit_and lib.ok lib.true) lib.error)
 (EQUAL (lib.unit_and lib.ok lib.false) lib.error)
+(EQUAL (lib.unit_and lib.undefined lib.ok) lib.ok)
 (EQUAL (lib.unit_and lib.true lib.ok) lib.error)
 (EQUAL (lib.unit_and lib.false lib.ok) lib.error)
 
@@ -34,7 +35,6 @@
 (EQUAL (lib.unit_or lib.ok lib.ok) lib.ok)
 (EQUAL (lib.unit_or lib.ok lib.undefined) lib.ok)
 (EQUAL (lib.unit_or lib.undefined lib.ok) lib.ok)
-(EQUAL (lib.unit_or lib.undefined lib.undefined) lib.undefined)
 (EQUAL (lib.unit_or lib.ok lib.true) lib.error)
 (EQUAL (lib.unit_or lib.ok lib.false) lib.error)
 (EQUAL (lib.unit_or lib.true lib.ok) lib.error)
@@ -42,7 +42,7 @@
 
 ;; quote_unit
 (EQUAL (lib.unit_quote lib.ok) (QUOTE lib.ok))
-(EQUAL (lib.unit_quote lib.undefined) lib.undefined)
+(EQUAL (lib.unit_quote lib.undefined) (QUOTE lib.ok))
 (EQUAL (lib.unit_quote lib.error) lib.error)
 (EQUAL (lib.unit_quote lib.true) lib.error)
 (EQUAL (lib.unit_quote lib.false) lib.error)

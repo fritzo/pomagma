@@ -912,6 +912,23 @@ J = join(K, F)
         (x, None),
     ]
 )
+def test_try_cast_semi(x, expected):
+    assert bohm.try_cast_semi(x) is expected
+
+
+@for_each(
+    [
+        (TOP, TOP),
+        (BOT, I),
+        (I, I),
+        (K, TOP),
+        (F, TOP),
+        (J, TOP),
+        (app(app(B, K), app(CI, TOP)), TOP),
+        (app(app(B, K), app(CI, BOT)), I),
+        (x, None),
+    ]
+)
 def test_try_cast_unit(x, expected):
     assert bohm.try_cast_unit(x) is expected
 

@@ -99,7 +99,7 @@ def iter_stack(stack):
         yield arg
 
 
-# ----------------------------------------------------------------------------
+################################################################
 # Logging
 
 LOG_LEVELS = {
@@ -161,9 +161,12 @@ def _not_logged(*args, **kwargs) -> Decorator:
     return lambda fun: fun
 
 
-logged = _logged if LOG.isEnabledFor(logging.DEBUG) else _not_logged
+logged: Callable[..., Decorator] = (
+    _logged if LOG.isEnabledFor(logging.DEBUG) else _not_logged
+)
 
-# ----------------------------------------------------------------------------
+
+################################################################
 # Profiling
 
 # (fun, arg) -> count

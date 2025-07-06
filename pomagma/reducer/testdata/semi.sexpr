@@ -1,0 +1,55 @@
+;;; Unit
+
+; TODO define lib.semi_* here, rather than in pomagma.reducer.lib
+
+;; semi_type
+(EQUAL (lib.semi_type lib.ok) lib.ok)
+(EQUAL (lib.semi_type lib.error) lib.error)
+(EQUAL (lib.semi_type lib.undefined) lib.undefined)
+(EQUAL (lib.semi_type lib.true) lib.error)
+(EQUAL (lib.semi_type lib.false) lib.error)
+(EQUAL (lib.semi_type lib.join) lib.error)
+(EQUAL (lib.semi_type x) (SEMI x))
+
+;; semi_test
+(EQUAL (lib.semi_test lib.ok) lib.ok)
+(EQUAL (lib.semi_test lib.error) lib.error)
+(EQUAL (lib.semi_test lib.undefined) lib.undefined)
+(EQUAL (lib.semi_test lib.true) lib.error)
+(EQUAL (lib.semi_test lib.false) lib.error)
+(EQUAL (lib.semi_test lib.join) lib.error)
+(EQUAL (lib.semi_test x) (SEMI x))
+
+;; semi_join
+(EQUAL (lib.semi_join lib.ok lib.ok) lib.ok)
+(EQUAL (lib.semi_join lib.ok lib.undefined) lib.ok)
+(EQUAL (lib.semi_join lib.undefined lib.ok) lib.ok)
+(EQUAL (lib.semi_join lib.undefined lib.undefined) lib.undefined)
+(EQUAL (lib.semi_join lib.ok lib.true) lib.error)
+(EQUAL (lib.semi_join lib.ok lib.false) lib.error)
+(EQUAL (lib.semi_join lib.true lib.ok) lib.error)
+(EQUAL (lib.semi_join lib.false lib.ok) lib.error)
+
+;; semi_meet
+(EQUAL (lib.semi_meet lib.ok lib.ok) lib.ok)
+(EQUAL (lib.semi_meet lib.ok lib.undefined) lib.undefined)
+(EQUAL (lib.semi_meet lib.undefined lib.ok) lib.undefined)
+(EQUAL (lib.semi_meet lib.undefined lib.undefined) lib.undefined)
+(EQUAL (lib.semi_meet lib.ok lib.true) lib.error)
+(EQUAL (lib.semi_meet lib.ok lib.false) lib.error)
+(EQUAL (lib.semi_meet lib.true lib.ok) lib.error)
+(EQUAL (lib.semi_meet lib.false lib.ok) lib.error)
+
+;; quote_semi
+(EQUAL (lib.semi_quote lib.ok) (QUOTE lib.ok))
+(EQUAL (lib.semi_quote lib.undefined) lib.undefined)
+(EQUAL (lib.semi_quote lib.error) lib.error)
+(EQUAL (lib.semi_quote lib.true) lib.error)
+(EQUAL (lib.semi_quote lib.false) lib.error)
+
+;; enum_semi
+(EQUAL (lib.enum_contains (QUOTE lib.enum_semi) (QUOTE lib.ok)) lib.true)
+(EQUAL (lib.enum_contains (QUOTE lib.enum_semi) (QUOTE lib.undefined)) lib.true)
+(EQUAL (lib.enum_contains (QUOTE lib.enum_semi) (QUOTE lib.error)) lib.false)
+(EQUAL (lib.enum_contains (QUOTE lib.enum_semi) (QUOTE lib.true)) lib.false)
+(EQUAL (lib.enum_contains (QUOTE lib.enum_semi) (QUOTE lib.false)) lib.false)

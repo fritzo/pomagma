@@ -16,6 +16,7 @@ CHANGELOG
 2016-12-25 Add rules for nominal and quoted abstraction.
 2016-12-27 Treat nominal and de Bruijn variables differently. TODO revert?
 2016-12-31 Fix bug in substitute(-,-,-,-); tests pass.
+2025-07-05 Distinguish between SEMI and UNIT.
 """
 
 from collections.abc import Callable, Collection, Iterable, Iterator
@@ -37,6 +38,7 @@ from pomagma.reducer.syntax import (
     QLESS,
     QQUOTE,
     QUOTE,
+    SEMI,
     TOP,
     UNIT,
     Term,
@@ -58,7 +60,7 @@ from pomagma.reducer.syntax import (
 )
 from pomagma.reducer.util import UnreachableError, logged, trool_all, trool_any
 
-SUPPORTED_TESTDATA = ["sk", "join", "quote", "types", "lib", "unit"]
+SUPPORTED_TESTDATA = ["sk", "join", "quote", "types", "lib", "semi", "unit"]
 
 # TODO Make strong version not horribly expensive.
 TRY_DECIDE_LESS_STRONG = False
@@ -812,10 +814,10 @@ def ground(term):
     return _ground(term, BOT, nvars, 0), _ground(term, TOP, nvars, 0)
 
 
-@casts(UNIT)
-def try_cast_unit(x):
+@casts(SEMI)
+def try_cast_semi(x):
     """
-    Weak oracle closing x to type UNIT.
+    Weak oracle closing x to type SEMI.
 
     Args:
         x : term in linear normal form
@@ -829,6 +831,27 @@ def try_cast_unit(x):
     if try_decide_less(lb, I) is False:
         return TOP
     if try_decide_less(ub, I) is True and try_decide_less(lb, BOT) is False:
+        return I
+    return None
+
+
+@casts(UNIT)
+def try_cast_unit(x):
+    """
+    Weak oracle closing x to type UNIT.
+
+    Args:
+        x : term in linear normal form
+    Returns:
+        TOP, I, or None
+    """
+    assert x is not None
+    if x in (TOP, I):
+        return x
+    lb, ub = ground(x)
+    if try_decide_less(lb, I) is False:
+        return TOP
+    if try_decide_less(ub, I) is True:
         return I
     return None
 

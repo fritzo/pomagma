@@ -5,7 +5,7 @@ from pomagma.reducer import lib
 from pomagma.reducer.bohm import B, C, I, K, S, reduce, simplify, try_decide_less
 from pomagma.reducer.bohm_test import s_quoted
 from pomagma.reducer.sugar import app, as_term, combinator, join_, quote
-from pomagma.reducer.syntax import APP, BOT, NVAR, TOP, UNIT, sexpr_print
+from pomagma.reducer.syntax import APP, BOT, NVAR, SEMI, TOP, UNIT, sexpr_print
 from pomagma.util import TRAVIS_CI
 from pomagma.util.testing import for_each, xfail_param
 
@@ -60,8 +60,8 @@ def test_intro_forms(name, native):
     assert as_term(getattr(lib, name)) == as_term(native)
 
 
-# ----------------------------------------------------------------------------
-# Unit
+################################################################
+# Semi-boolean type
 
 
 @for_each(
@@ -69,6 +69,99 @@ def test_intro_forms(name, native):
         (ok, ok),
         (error, error),
         (undefined, undefined),
+        (true, error),
+        (false, error),
+        (join, error),
+        (x, APP(SEMI, x)),
+    ]
+)
+def test_semi_type(x, expected):
+    assert simplify(lib.semi_type(x)) == expected
+
+
+@for_each(
+    [
+        (ok, ok),
+        (error, error),
+        (undefined, undefined),
+        (true, error),
+        (false, error),
+        (join, error),
+        (x, APP(SEMI, x)),
+    ]
+)
+def test_semi_test(x, expected):
+    assert simplify(lib.semi_test(x)) == expected
+
+
+@for_each(
+    [
+        (ok, ok, ok),
+        (ok, undefined, ok),
+        (undefined, ok, ok),
+        (undefined, undefined, undefined),
+        (ok, true, error),
+        (ok, false, error),
+        (true, ok, error),
+        (false, ok, error),
+    ]
+)
+def test_semi_join(x, y, expected):
+    assert simplify(lib.semi_join(x, y)) == expected
+
+
+@for_each(
+    [
+        (ok, ok, ok),
+        (ok, undefined, undefined),
+        (undefined, ok, undefined),
+        (undefined, undefined, undefined),
+        (ok, true, error),
+        (ok, false, error),
+        (true, ok, error),
+        (false, ok, error),
+    ]
+)
+def test_semi_meet(x, y, expected):
+    assert simplify(lib.semi_meet(x, y)) == expected
+
+
+@for_each(
+    [
+        (ok, quote(ok)),
+        (undefined, undefined),
+        (error, error),
+        (true, error),
+        (false, error),
+    ]
+)
+def test_semi_quote(x, expected):
+    assert simplify(lib.semi_quote(x)) == expected
+
+
+@for_each(
+    [
+        (ok, true),
+        (undefined, true),
+        (error, false),
+        (true, false),
+        (false, false),
+    ]
+)
+def test_enum_semi(y, expected):
+    qxs = quote(lib.enum_semi)
+    assert simplify(lib.enum_contains(qxs, quote(y))) == expected
+
+
+################################################################
+# Unit
+
+
+@for_each(
+    [
+        (ok, ok),
+        (error, error),
+        (undefined, ok),
         (true, error),
         (false, error),
         (join, error),
@@ -83,7 +176,7 @@ def test_unit_type(x, expected):
     [
         (ok, ok),
         (error, error),
-        (undefined, undefined),
+        (undefined, ok),
         (true, error),
         (false, error),
         (join, error),
@@ -97,9 +190,9 @@ def test_unit_test(x, expected):
 @for_each(
     [
         (ok, ok, ok),
-        (ok, undefined, undefined),
-        (undefined, ok, undefined),
-        (undefined, undefined, undefined),
+        (ok, undefined, ok),
+        (undefined, ok, ok),
+        (undefined, undefined, ok),
         (ok, true, error),
         (ok, false, error),
         (true, ok, error),
@@ -115,7 +208,7 @@ def test_unit_and(x, y, expected):
         (ok, ok, ok),
         (ok, undefined, ok),
         (undefined, ok, ok),
-        (undefined, undefined, undefined),
+        (undefined, undefined, ok),
         (ok, true, error),
         (ok, false, error),
         (true, ok, error),
@@ -129,7 +222,7 @@ def test_unit_or(x, y, expected):
 @for_each(
     [
         (ok, quote(ok)),
-        (undefined, undefined),
+        (undefined, quote(ok)),
         (error, error),
         (true, error),
         (false, error),
@@ -153,8 +246,8 @@ def test_enum_unit(y, expected):
     assert simplify(lib.enum_contains(qxs, quote(y))) == expected
 
 
-# ----------------------------------------------------------------------------
-# Bool
+################################################################
+# Boolean type
 
 
 @for_each(
@@ -307,8 +400,8 @@ def test_enum_bool(y, expected):
     assert simplify(lib.enum_contains(qxs, quote(y))) == expected
 
 
-# ----------------------------------------------------------------------------
-# Maybe
+################################################################
+# Maybe type
 
 
 @for_each(
@@ -371,7 +464,7 @@ def test_enum_maybe(enum_item, y, expected):
     assert simplify(lib.enum_contains(qxs, quote(y))) == expected
 
 
-# ----------------------------------------------------------------------------
+################################################################
 # Products
 
 xy = lib.pair(x, y)
@@ -442,7 +535,7 @@ def test_enum_prod(enum_fst, enum_snd, y, expected):
     assert simplify(lib.enum_contains(qxs, quote(y))) == expected
 
 
-# ----------------------------------------------------------------------------
+################################################################
 # Sums
 
 
@@ -494,7 +587,7 @@ def test_enum_sum(enum_inl, enum_inr, y, expected):
     assert simplify(lib.enum_contains(qxs, quote(y))) == expected
 
 
-# ----------------------------------------------------------------------------
+################################################################
 # Numerals as Y Maybe
 
 succ = lib.succ
@@ -740,7 +833,7 @@ def test_enum_num(y, expected):
     assert simplify(lib.enum_contains(qxs, quote(y))) == expected
 
 
-# ----------------------------------------------------------------------------
+################################################################
 # Finite homogeneous lists
 
 nil = lib.nil
@@ -1036,7 +1129,7 @@ def test_enum_list(enum_item, y, expected):
     assert simplify(lib.enum_contains(qxs, quote(y))) == expected
 
 
-# ----------------------------------------------------------------------------
+################################################################
 # Streams
 
 
@@ -1206,7 +1299,7 @@ def test_stream_take(size):
     assert lib.stream_take(lib.stream_num(num(size))) is expected
 
 
-# ----------------------------------------------------------------------------
+################################################################
 # Enumerable sets
 
 box = lib.box
@@ -1272,10 +1365,10 @@ def test_enum_any(xs, expected):
 
 @for_each(
     [
-        (lib.unit_type, undefined, undefined),
-        (lib.unit_type, error, error),
-        (lib.unit_type, box(undefined), undefined),
-        (lib.unit_type, box(ok), box(ok)),
+        (lib.semi_type, undefined, undefined),
+        (lib.semi_type, error, error),
+        (lib.semi_type, box(undefined), undefined),
+        (lib.semi_type, box(ok), box(ok)),
         (lib.bool_if_true, undefined, undefined),
         (lib.bool_if_true, box(true), box(true)),
         (lib.bool_if_true, box(false), undefined),
@@ -1292,13 +1385,13 @@ def test_enum_filter(p, xs, expected):
 
 @for_each(
     [
-        (lib.unit_type, undefined, undefined),
-        (lib.unit_type, error, error),
-        (lib.unit_type, box(undefined), box(undefined)),
-        (lib.unit_type, box(error), box(error)),
-        (lib.unit_type, box(ok), box(ok)),
-        (lib.unit_type, box(true), box(error)),
-        (lib.unit_type, box(false), box(error)),
+        (lib.semi_type, undefined, undefined),
+        (lib.semi_type, error, error),
+        (lib.semi_type, box(undefined), box(undefined)),
+        (lib.semi_type, box(error), box(error)),
+        (lib.semi_type, box(ok), box(ok)),
+        (lib.semi_type, box(true), box(error)),
+        (lib.semi_type, box(false), box(error)),
         (lib.bool_not, box(true), box(false)),
         (lib.bool_not, box(false), box(true)),
         (succ, undefined, undefined),
@@ -1368,18 +1461,18 @@ def test_enum_close(f, xs, expected):
     assert reduce(lib.enum_close(f, xs)) == simplify(expected)
 
 
-# ----------------------------------------------------------------------------
+################################################################
 # Functions
 
 fun_t = lib.fun_type
-unit_t = lib.unit_type
+semi_t = lib.semi_type
 bool_t = lib.bool_type
 maybe_t = lib.maybe_type
 
 
 @for_each(
     [
-        (unit_t, unit_t, unit_t),
+        (semi_t, semi_t, semi_t),
         (bool_t, bool_t, bool_t),
         (maybe_t, maybe_t, maybe_t),
         xfail_param(lib.bool_not, lib.bool_not, bool_t),
@@ -1391,19 +1484,19 @@ def test_compose(f, g, expected):
 
 @for_each(
     [
-        (unit_t, fun_t(unit_t, unit_t)),
-        (lib.unit_test, fun_t(unit_t, unit_t)),
-        (lib.unit_and, fun_t(unit_t, fun_t(unit_t, unit_t))),
-        (lib.unit_or, fun_t(unit_t, fun_t(unit_t, unit_t))),
-        (lib.unit_quote, fun_t(unit_t, I)),
+        (semi_t, fun_t(semi_t, semi_t)),
+        (lib.semi_test, fun_t(semi_t, semi_t)),
+        (lib.semi_join, fun_t(semi_t, fun_t(semi_t, semi_t))),
+        (lib.semi_meet, fun_t(semi_t, fun_t(semi_t, semi_t))),
+        (lib.semi_quote, fun_t(semi_t, I)),
         (bool_t, fun_t(bool_t, bool_t)),
-        (lib.bool_test, fun_t(bool_t, unit_t)),
+        (lib.bool_test, fun_t(bool_t, semi_t)),
         (lib.bool_not, fun_t(bool_t, bool_t)),
         (lib.bool_and, fun_t(bool_t, fun_t(bool_t, bool_t))),
         (lib.bool_or, fun_t(bool_t, fun_t(bool_t, bool_t))),
         (lib.bool_quote, fun_t(bool_t, I)),
         (maybe_t, fun_t(maybe_t, maybe_t)),
-        (lib.maybe_test, fun_t(maybe_t, unit_t)),
+        (lib.maybe_test, fun_t(maybe_t, semi_t)),
         (lib.maybe_quote, fun_t(I, fun_t(maybe_t, I))),
     ]
 )
@@ -1462,7 +1555,7 @@ def test_close(f, x, expected):
     assert reduce(app(lib.close(f), x)) == expected
 
 
-# ----------------------------------------------------------------------------
+################################################################
 # Type constructor
 
 a_div = app(lib.construct, lambda a: a)
@@ -1548,7 +1641,7 @@ def test_boool_constructed(x, expected):
     assert simplify(app(a_boool, x)) == expected
 
 
-# ----------------------------------------------------------------------------
+################################################################
 # Scott ordering
 
 bool_values = (error, undefined, true, false)

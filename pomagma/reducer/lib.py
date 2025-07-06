@@ -74,6 +74,12 @@ def semi_join(x, y):
     return x | y
 
 
+@combinator
+def semi_quote(x):
+    x = semi_type(x)
+    return x(QUOTE(ok))
+
+
 enum_semi = CI(ok)
 
 
@@ -126,7 +132,7 @@ def bool_type(x):
 
 
 @combinator
-@typed(bool_type, unit_type)
+@typed(bool_type, semi_type)
 def bool_test(x):
     return x(ok, ok)
 
@@ -160,13 +166,13 @@ def bool_quote(x):
 @combinator
 def bool_if_true(x):
     x = bool_type(x)
-    return unit_type(x(ok, undefined))
+    return semi_type(x(ok, undefined))
 
 
 @combinator
 def bool_if_false(x):
     x = bool_type(x)
-    return unit_type(x(undefined, ok))
+    return semi_type(x(undefined, ok))
 
 
 enum_bool = CI(true) | CI(false)
@@ -191,7 +197,7 @@ def maybe_type(x):
 @combinator
 def maybe_test(x):
     x = maybe_type(x)
-    return unit_type(x(ok, lambda y: ok))
+    return semi_type(x(ok, lambda y: ok))
 
 
 @combinator
@@ -216,7 +222,7 @@ def pair(x, y):
 
 @combinator
 def prod_test(xy):
-    return unit_type(xy(lambda x, y: ok))
+    return semi_type(xy(lambda x, y: ok))
 
 
 @combinator
@@ -255,7 +261,7 @@ def inr(y):
 
 @combinator
 def sum_test(xy):
-    return unit_type(xy(lambda x: ok, lambda y: ok))
+    return semi_type(xy(lambda x: ok, lambda y: ok))
 
 
 @combinator
@@ -280,7 +286,7 @@ succ = some
 
 @combinator
 def num_test(x):
-    return unit_type(x(ok, num_test))
+    return semi_type(x(ok, num_test))
 
 
 @combinator
@@ -349,7 +355,7 @@ def cons(head, tail):
 
 @combinator
 def list_test(xs):
-    return unit_type(xs(ok, lambda h, t: list_test(t)))
+    return semi_type(xs(ok, lambda h, t: list_test(t)))
 
 
 @combinator
@@ -524,7 +530,7 @@ def enum(items):
 
 @combinator
 def enum_test(xs):
-    return unit_type(xs(lambda x: ok))
+    return semi_type(xs(lambda x: ok))
 
 
 @combinator
@@ -534,12 +540,12 @@ def enum_union(xs, ys):
 
 @combinator
 def enum_any(xs):
-    return unit_type(xs(unit_type))
+    return semi_type(xs(semi_type))
 
 
 @combinator
 def enum_filter(p, xs):
-    p = compose(unit_type, p)
+    p = compose(semi_type, p)
     return xs(lambda x: p(x, box(x)))
 
 
@@ -698,7 +704,7 @@ def _bits_test(b0, b1, b2, b3, b4, b5, b6, b7):
 
 @combinator
 def byte_test(x):
-    return unit_type(x(_bits_test))
+    return semi_type(x(_bits_test))
 
 
 @combinator
@@ -727,4 +733,4 @@ byte_get_bit = [
 
 @combinator
 def bytes_test(xs):
-    return unit_type(xs(ok, lambda h, t: unit_and(byte_test(h), bytes_test(t))))
+    return semi_type(xs(ok, lambda h, t: unit_and(byte_test(h), bytes_test(t))))

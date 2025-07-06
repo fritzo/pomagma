@@ -71,6 +71,7 @@
         "sortedset",
         "subexpression",
         "subterms",
+        "succ",
         "succedent",
         "succedents",
         "trool",
