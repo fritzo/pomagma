@@ -20,6 +20,45 @@ quoting comonad that flattens out order.  Once we have the order oracle and
 reflection, this system is very strong, capable of expressing the full
 arithmetic hierarchy.
 
+## Formats
+
+The reducer supports multiple syntax representations for terms:
+
+### Polish Notation (Canonical)
+Parentheses-free prefix notation for compact internal processing:
+```
+APP f x    JOIN x y    EQUAL APP I x x
+```
+
+### S-expressions (Human-Readable)  
+Lisp-style notation for test data and interactive use:
+```lisp
+(APP f x)    (JOIN x y)    (EQUAL (APP I x) x)
+```
+
+### @combinator Embedded DSL
+Python functions using Higher Order Abstract Syntax for ergonomic term construction:
+```python
+@combinator
+def bool_and(x, y):
+    return x(y, false)
+
+@combinator  
+def list_map(f, xs):
+    return xs(nil, lambda h, t: cons(f(h), list_map(f, t)))
+```
+
+The `@combinator` decorator compiles Python lambda-let notation to SKJ combinators using symbolic arguments, enabling readable functional programming that compiles to pure combinatory logic.
+
+### Symbolic Programming with Linker
+All formats support `lib.*` references resolved by the linker:
+```lisp
+(EQUAL lib.ok lib.ok)                    ;; Before linking
+(EQUAL I I)                              ;; After linking  
+```
+
+The linker enables readable symbolic programming while maintaining mathematical precision.
+
 ## Submodules
 
 ### Core Reduction Engines

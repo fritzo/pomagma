@@ -18,7 +18,7 @@ The representation excels in performance through hash-consing and string interni
 
 ### 2. Term (`pomagma.reducer.syntax`)
 
-Term provides a functional representation optimized for lambda calculus reduction and combinatory logic operations. Built on a tuple-based immutable structure that supports efficient pattern matching, it uses de Bruijn indices for variable binding through `IVAR` and `NVAR` constructs. The design includes quotation support for reflection and metaprogramming, an extensible transform system for recursive tree transformations, and dual parsing support for both Polish notation and S-expressions. Built-in complexity analysis uses configurable atom costs for performance evaluation.
+Term provides a functional representation optimized for lambda calculus reduction and combinatory logic operations. Built on a tuple-based immutable structure that supports efficient pattern matching, it uses de Bruijn indices for variable binding through `IVAR` and `NVAR` constructs. The design includes quotation support for reflection and metaprogramming, an extensible transform system for recursive tree transformations, and dual parsing support for both Polish notation and S-expressions. Polish notation serves as the canonical compact format while S-expressions provide human-readable syntax for test data, interactive use, and symbolic programming with library references. Built-in complexity analysis uses configurable atom costs for performance evaluation.
 
 The representation drives lambda calculus reduction including beta reduction, normalization, and evaluation processes. It supports various combinator calculi including SK, BICS, and other systems, enables program transformation through abstract interpretation and code generation, and facilitates sugar compilation from domain-specific languages to combinator targets.
 
@@ -102,8 +102,6 @@ Remaining conversion gaps include limited Term-ObTree direct paths beyond the Ex
 ## Future Improvements
 
 - [x] **Implement direct Expression↔Term conversion** - Added `expression_to_term()` and `term_to_expression()` functions in `pomagma.reducer.bridge` module with clean imports (using `from pomagma.reducer import syntax`) and `ObTree.from_term()` integration, eliminating expensive string round-trips for compiler-reducer integration and program synthesis workflows
-
-- [ ] **Standardize on Polish notation** - Remove S-expression support from `pomagma.reducer.syntax` and `pomagma.reducer.graphs`, eliminate `sexpr_parse()` and `sexpr_print()` functions in favor of consistent Polish notation across all representations
 
 - [ ] **Consolidate graphs.Term into syntax.Term** - Merge `pomagma.reducer.graphs.Term` functionality into the main `pomagma.reducer.syntax.Term`, eliminating the specialized integer-based representation while preserving graph operation capabilities
 

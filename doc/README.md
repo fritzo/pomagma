@@ -7,7 +7,7 @@
 - [Benchmarking](#benchmarking)
 - [Vetting changes](#vetting-changes)
 
-## Dataflow Architecture <a name="dataflow"/>
+## Dataflow Architecture
 
 ![Architecture](/doc/architecture.png)
 
@@ -71,6 +71,17 @@
 - [/build](/build) - destination of C++ builds
 - [/pomagma](/pomagma) - a symbolic link to appease `pip install -e`
 - [/include/pomagma](/include/pomagma) - a symbolic link to appease g++
+
+## Choosing Syntax Formats
+
+Choose the syntax format that best matches your use case and performance requirements:
+
+- **Expression** (`pomagma.compiler.expressions`) - Rich APIs for compiler frontends, query processors, and complex symbolic manipulation with automatic deduplication
+- **Term Polish notation** (`pomagma.reducer.syntax`) - Minimal memory footprint for reduction algorithms, internal pipelines, and performance-critical applications  
+- **Term S-expressions** (`pomagma.reducer.syntax`) - Human-readable syntax for test data, interactive debugging, and prototyping with symbolic `lib.*` references
+- **@combinator embedded DSL** (`pomagma.reducer.sugar`) - Functional Python syntax that compiles to combinatory logic for implementing algorithms and standard library functions
+- **ObTree** (`pomagma.torch.corpus`) - PyTorch integration for machine learning over symbolic expressions, corpus analysis, and probabilistic grammars
+- **C++ Corpus Term** - Maximum performance for production servers, large-scale validation, and E-graph approximation systems
 
 ## Configuring
 
