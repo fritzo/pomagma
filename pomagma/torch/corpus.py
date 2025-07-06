@@ -9,7 +9,7 @@ from immutables import Map
 
 from pomagma.compiler.expressions import Expression
 from pomagma.compiler.parser import parse_string_to_expr
-from pomagma.compiler.util import weak_memoize_1, weak_memoize_2
+from pomagma.compiler.util import memoize_weak_strong, weak_memoize_1, weak_memoize_2
 from pomagma.reducer.curry import convert
 from pomagma.util.hashcons import WeakHashConsMeta
 
@@ -95,7 +95,7 @@ class ObTree(metaclass=WeakHashConsMeta):
         return ObTree._from_term(structure, term, strict=strict)
 
     @staticmethod
-    @weak_memoize_2
+    @memoize_weak_strong
     def _from_term(
         structure: Structure, term: "Term", *, strict: bool = True
     ) -> "ObTree":

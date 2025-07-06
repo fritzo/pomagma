@@ -312,3 +312,23 @@ def weak_memoize_2(fun):
         return result
 
     return memoized
+
+
+def memoize_weak_strong(fun):
+    """
+    Memoize a function weakly on the first argument, strongly on the second.
+    Kwargs are not memoized.
+    """
+    caches = WeakKeyDictionary()
+
+    @functools.wraps(fun)
+    def memoized(arg1, arg2, **kwargs):
+        if (cache := caches.get(arg1, None)) is None:
+            cache = caches[arg1] = {}
+        if (result := cache.get(arg2, None)) is not None:
+            return result
+        result = fun(arg1, arg2, **kwargs)
+        cache[arg2] = result
+        return result
+
+    return memoized
