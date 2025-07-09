@@ -21,7 +21,11 @@ UNKNOWNS = [
     "SEMI",
     "BOOL",
     "BOOOL",
-    "NAT",
+    "MAYBE",
+    "SOME",
+    "NUM",
+    "SUCC",
+    "PRED",
 ]
 
 
