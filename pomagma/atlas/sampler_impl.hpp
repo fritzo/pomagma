@@ -123,6 +123,32 @@ void Sampler::load(const std::string &language_file) {
         POMAGMA_DEBUG("setting P(" << term.name() << ") = " << term.weight());
         set_prob(term.name(), term.weight());
     }
+
+    // Check that all functions in the signature have language mass.
+    std::vector<std::string> missing;
+    for (auto &[name, fun] : m_signature.nullary_functions()) {
+        if (m_nullary_probs.find(fun) == m_nullary_probs.end()) {
+            missing.push_back(name);
+        }
+    }
+    for (auto &[name, fun] : m_signature.injective_functions()) {
+        if (m_injective_probs.find(fun) == m_injective_probs.end()) {
+            missing.push_back(name);
+        }
+    }
+    for (auto &[name, fun] : m_signature.binary_functions()) {
+        if (m_binary_probs.find(fun) == m_binary_probs.end()) {
+            missing.push_back(name);
+        }
+    }
+    for (auto &[name, fun] : m_signature.symmetric_functions()) {
+        if (m_symmetric_probs.find(fun) == m_symmetric_probs.end()) {
+            missing.push_back(name);
+        }
+    }
+    if (not missing.empty()) {
+        POMAGMA_ERROR("Missing language mass for functions: " << missing);
+    }
 }
 
 //----------------------------------------------------------------------------
