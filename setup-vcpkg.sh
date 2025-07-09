@@ -9,21 +9,46 @@ NC='\033[0m' # No Color
 
 echo -e "${GREEN}Setting up vcpkg for Pomagma...${NC}"
 
-# Detect OS and set triplet
-case "$(uname)" in
+# Detect OS and architecture, then set triplet
+OS="$(uname)"
+ARCH="$(uname -m)"
+
+case "$OS" in
   'Linux')
-    TRIPLET="x64-linux"
+    case "$ARCH" in
+      'x86_64')
+        TRIPLET="x64-linux"
+        ;;
+      'aarch64')
+        TRIPLET="arm64-linux"
+        ;;
+      *)
+        echo -e "${RED}Unsupported Linux architecture: $ARCH${NC}"
+        exit 1
+        ;;
+    esac
     ;;
   'Darwin')
-    TRIPLET="x64-osx"
+    case "$ARCH" in
+      'x86_64')
+        TRIPLET="x64-osx"
+        ;;
+      'arm64')
+        TRIPLET="arm64-osx"
+        ;;
+      *)
+        echo -e "${RED}Unsupported macOS architecture: $ARCH${NC}"
+        exit 1
+        ;;
+    esac
     ;;
   *)
-    echo -e "${RED}Unsupported OS: $(uname)${NC}"
+    echo -e "${RED}Unsupported OS: $OS${NC}"
     exit 1
     ;;
 esac
 
-echo -e "${YELLOW}Detected OS: $(uname), using triplet: $TRIPLET${NC}"
+echo -e "${YELLOW}Detected OS: $OS, Architecture: $ARCH, using triplet: $TRIPLET${NC}"
 
 # Check if vcpkg is already installed
 if [ ! -d "vcpkg" ]; then
