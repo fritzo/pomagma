@@ -1,40 +1,56 @@
-# WARNING these rules do not hold in SKRJ
+# WARNING these rules do not hold in SKRJ.
+
+################################################################################
+# DIV = /\a. a, with inhabitants {BOT, TOP}
 
 EQUAL DIV ABIND r s r
 
-CLOSED DIV          -------------------   LESS APP f TOP APP g TOP
+                    -------------------   LESS APP f TOP APP g TOP
 FIXES V DIV         EQUAL APP DIV x TOP   LESS APP f BOT APP g BOT
 FIXES DIV BOT       EQUAL APP DIV x BOT   --------------------------
 EQUAL DIV APP V K                         LESS COMP f DIV COMP g DIV
 EQUAL DIV APP V APP CI TOP
 
-#EQUAL UNIT JOIN SEMI APP J I
+################################################################################
+# UNIT <: /\a. a -> a, with inhabitants {I, TOP}
 
-CLOSED UNIT         --------------------   LESS APP f TOP APP g TOP
+EQUAL UNIT JOIN SEMI APP J I
+
+                    --------------------   LESS APP f TOP APP g TOP
 FIXES V UNIT        EQUAL APP UNIT x TOP   LESS APP f I APP g I
 FIXES UNIT I        EQUAL APP UNIT x I     ----------------------------
 LESS APP J I UNIT                          LESS COMP f UNIT COMP g UNIT
 
-#EQUAL SEMI ABIND r s FUN f COMP r COMP f s
+################################################################################
+# SEMI = /\a. a -> a, with inhabitants {BOT, I, TOP}
 
-CLOSED SEMI      --------------------   LESS APP f TOP APP g TOP
+EQUAL SEMI ABIND r s FUN f COMP r COMP f s
+EQUAL SEMI ABIND r s FUN f COMP COMP r f s
+
+                 --------------------   LESS APP f TOP APP g TOP
 FIXES V SEMI     EQUAL APP SEMI x TOP   LESS APP f I APP g I
 FIXES SEMI BOT   EQUAL APP SEMI x I     LESS APP f BOT APP g BOT
 FIXES SEMI I     EQUAL APP SEMI x BOT   ----------------------------
                                         LESS COMP f SEMI COMP g SEMI
-                    
-#EQUAL BOOL APP APP P BOOOL FUN x APP APP x APP APP x BOT TOP APP APP x TOP BOT
 
-CLOSED BOOL      --------------------   LESS APP f TOP APP g TOP
+################################################################################
+# BOOL <: /\a. a -> a -> a, with inhabitants {BOT, K, F, TOP}
+                    
+EQUAL BOOL APP APP P BOOOL FUN x APP APP x APP APP x K TOP APP APP x TOP F
+
+                 --------------------   LESS APP f TOP APP g TOP
 FIXES V BOOL     EQUAL APP BOOL x TOP   LESS APP f K APP g K
 FIXES BOOL BOT   EQUAL APP BOOL x K     LESS APP f F APP g F
 FIXES BOOL K     EQUAL APP BOOL x F     LESS APP f BOT APP g BOT
 FIXES BOOL F     EQUAL APP BOOL x BOT   ----------------------------
                                         LESS COMP f BOOL COMP g BOOL
 
-#EQUAL BOOOL ABIND r s FUN f FUN x FUN y APP r APP APP f APP s x APP s y
+################################################################################
+# BOOOL = /\a. a -> a -> a, with inhabitants {BOT, K, F, J, TOP}
 
-CLOSED BOOOL      ---------------------   LESS APP f TOP APP g TOP
+EQUAL BOOOL ABIND r s FUN f FUN x FUN y APP r APP APP f APP s x APP s y
+
+                  ---------------------   LESS APP f TOP APP g TOP
 FIXES V BOOOL     EQUAL APP BOOOL x TOP   LESS APP f J APP g J
 FIXES BOOOL BOT   EQUAL APP BOOOL x J     LESS APP f K APP g K
 FIXES BOOOL K     EQUAL APP BOOOL x K     LESS APP f F APP g F
@@ -42,58 +58,51 @@ FIXES BOOOL F     EQUAL APP BOOOL x F     LESS APP f BOT APP g BOT
 FIXES BOOOL J     EQUAL APP BOOOL x BOT   ------------------------------
                                           LESS COMP f BOOOL COMP g BOOOL
 
-#EQUAL MAYBE ???
-#
-#FIXES V MAYBE
-#FIXES MAYBE NONE
-#FIXES MAYBE APP SOME x
-#
-#DEFINE NONE FUN n FUN s n
-#EQUAL SOME FUN x FUN n FUN s APP s x
-#
-#----------------------------
-#EQUAL APP MAYBE x TOP
-#EQUAL APP MAYBE x NONE
-#EQUAL APP MAYBE x APP SOME y  # FIXME deal with existential variable y
-#EQUAL APP MAYBE x BOT
-#
-#LESS APP f TOP APP g TOP
-#LESS APP f NONE APP g NONE
-#LESS COMP f SOME COMP g SOME
-#LESS APP f BOT APP g BOT
-#------------------------------
-#LESS COMP f MAYBE COMP g MAYBE
+################################################################################
+# MAYBE = /\a. a -> (any -> a) -> a,
+# with inhabitants {K} u {SOME x | x}, where NONE = K
 
-#EQUAL NAT APP APP P ??? APP A ???
-#EQUAL CHECKNAT APP APP P ??? APP A ???
-#
-#CLOSED NAT
-#CLOSED CHECKNAT
-#FIXES V NAT
-#EQUAL CHECKNAT COMP UNIT CHECKNAT
-#EQUAL CHECKNAT COMP CHECKNAT NAT
-#EQUAL NAT APP APP S CHECKNAT NAT
-#
-#DEFINE ZERO FUN z FUN s z
-#EQUAL SUCC FUN n FUN z APP CHECKNAT n FUN s APP s n
-#FIXES NAT BOT
-#FIXES NAT ZERO
-#FIXES NAT APP SUCC ZERO
-#EQUAL COMP PRED SUCC NAT
-#EQUAL APP SUCC TOP TOP
-#EQUAL APP PRED TOP TOP
-#EQUAL APP PRED BOT BOT
-#EQUAL APP PRED ZERO TOP
-#
-#--------------------------
-#EQUAL APP NAT x TOP
-#EQUAL APP NAT x ZERO
-#EQUAL APP NAT x APP SUCC y  # FIXME deal with existential y
-#EQUAL APP NAT x BOT
-#
-#LESS APP f TOP APP g TOP
-#LESS APP f ZERO APP g ZERO
-#LESS COMP f SUCC COMP g SUCC
-#LESS APP f BOT APP g BOT
-#----------------------------
-#LESS COMP f NAT COMP g NAT
+EQUAL MAYBE ABIND r s FUN f FUN n FUN s APP r APP APP f APP s x COMP s y
+EQUAL SOME FUN x FUN n FUN s APP s x
+FIXES V MAYBE
+FIXES MAYBE K
+FIXES MAYBE APP SOME x
+
+------------------------------------------   LESS APP f TOP APP g TOP
+EQUAL APP MAYBE x TOP                        LESS APP f K APP g K
+EQUAL APP MAYBE x K                          LESS COMP f SOME COMP g SOME
+EQUAL APP MAYBE x APP SOME APP APP x TOP I   LESS APP f BOT APP g BOT
+EQUAL APP MAYBE x BOT                        ------------------------------
+                                             LESS COMP f MAYBE COMP g MAYBE
+
+################################################################################
+# NUM <: Y Maybe are Barendregt numerals, with inhabitants
+# {K, SUCC BOT, SUCC K, SUCC(SUCC BOT), SUCC(SUCC K), ...} u {Y SUCC},
+# where ZERO = K
+
+EQUAL NUM FIX t APP APP P MAYBE FUN n APP APP n APP APP n K TOP COMP K t
+FIXES V NUM
+FIXES NUM BOT
+FIXES NUM K
+
+EQUAL SUCC COMP FUN n APP APP APP n I F FUN z FUN s APP s n NUM
+FIXES NUM APP SUCC BOT
+FIXES NUM APP SUCC K
+FIXES NUM APP SUCC APP SUCC BOT
+FIXES NUM APP SUCC APP SUCC K
+FIXES NUM APP Y SUCC
+EQUAL APP SUCC TOP TOP
+
+EQUAL PRED COMP FUN n APP APP n TOP I NUM
+EQUAL NUM COMP PRED SUCC
+EQUAL APP PRED TOP TOP
+EQUAL APP PRED BOT BOT
+EQUAL APP PRED K TOP
+EQUAL APP PRED APP SUCC BOT BOT
+EQUAL APP PRED APP SUCC K K
+
+-----------------------------------   LESS APP f BOT APP g BOT
+EQUAL APP NUM x BOT                   LESS APP f K APP g K
+EQUAL APP NUM x K                     LESS COMP f SUCC COMP g SUCC
+EQUAL APP NUM x APP SUCC APP PRED x   ----------------------------
+                                      LESS COMP f NUM COMP g NUM
