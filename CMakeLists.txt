@@ -140,6 +140,7 @@ else()
 endif()
 
 # Determine the correct LibTorch URL based on platform and version
+set(LIBTORCH_AVAILABLE TRUE)
 if(APPLE)
   if(CMAKE_SYSTEM_PROCESSOR MATCHES "arm64|aarch64")
     set(LIBTORCH_URL "https://download.pytorch.org/libtorch/cpu/libtorch-macos-arm64-${LIBTORCH_VERSION}.zip")
@@ -153,28 +154,32 @@ elseif(WIN32)
   set(LIBTORCH_NAME "libtorch-win")
 else()
   # Linux
-  set(LIBTORCH_URL "https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-${LIBTORCH_VERSION}%2Bcpu.zip")
-  set(LIBTORCH_NAME "libtorch-linux")
+  if(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64|arm64")
+    # ARM64 Linux: LibTorch not officially available from PyTorch
+    message(WARNING "LibTorch binaries not officially available for ARM64 Linux. Skipping LibTorch download.")
+    set(LIBTORCH_AVAILABLE FALSE)
+  else()
+    set(LIBTORCH_URL "https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-${LIBTORCH_VERSION}%2Bcpu.zip")
+    set(LIBTORCH_NAME "libtorch-linux")
+  endif()
 endif()
 
-message(STATUS "Downloading LibTorch from: ${LIBTORCH_URL}")
-
-FetchContent_Declare(
-  libtorch
-  URL ${LIBTORCH_URL}
-)
-
-FetchContent_MakeAvailable(libtorch)
-
-# Set the CMAKE_PREFIX_PATH to find LibTorch
-list(APPEND CMAKE_PREFIX_PATH ${libtorch_SOURCE_DIR})
-
-# Now find LibTorch
-find_package(Torch REQUIRED)
-
-message(STATUS "Found LibTorch ${Torch_VERSION}")
-message(STATUS "LibTorch libraries: ${TORCH_LIBRARIES}")
-message(STATUS "LibTorch include dirs: ${TORCH_INCLUDE_DIRS}")
+if(LIBTORCH_AVAILABLE)
+  message(STATUS "Downloading LibTorch from: ${LIBTORCH_URL}")
+  FetchContent_Declare(libtorch URL ${LIBTORCH_URL})
+  FetchContent_MakeAvailable(libtorch)
+  list(APPEND CMAKE_PREFIX_PATH ${libtorch_SOURCE_DIR})
+  find_package(Torch REQUIRED)
+  message(STATUS "Found LibTorch ${Torch_VERSION}")
+  message(STATUS "LibTorch libraries: ${TORCH_LIBRARIES}")
+  message(STATUS "LibTorch include dirs: ${TORCH_INCLUDE_DIRS}")
+else()
+  message(STATUS "Skipping LibTorch - not officially available")
+  # TODO: LibTorch could be built from source using:
+  #   git clone --recursive https://github.com/pytorch/pytorch
+  #   cd pytorch && python setup.py build_libtorch
+  #   This requires significant compile time and dependencies.
+endif()
 
 # Set C++ standard required by LibTorch
 set(CMAKE_CXX_STANDARD 17)
