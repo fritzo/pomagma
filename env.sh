@@ -11,24 +11,49 @@ if [ -d "$SCRIPT_DIR/vcpkg" ]; then
   export PATH="$VCPKG_ROOT:$PATH"
   export CMAKE_TOOLCHAIN_FILE="$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
   
-  # Add vcpkg tools to PATH if available
-  if [ -d "$SCRIPT_DIR/vcpkg_installed/x64-linux/tools/protobuf" ]; then
-    export PATH="$SCRIPT_DIR/vcpkg_installed/x64-linux/tools/protobuf:$PATH"
-    echo "vcpkg protoc added to PATH"
-  fi
+  # Detect OS and architecture to determine correct triplet
+  OS="$(uname)"
+  ARCH="$(uname -m)"
   
-  # Detect OS and set vcpkg triplet
-  case "$(uname)" in
+  case "$OS" in
     'Linux')
-      export VCPKG_DEFAULT_TRIPLET="x64-linux"
+      case "$ARCH" in
+        'x86_64')
+          TRIPLET="x64-linux"
+          ;;
+        'aarch64')
+          TRIPLET="arm64-linux"
+          ;;
+        *)
+          TRIPLET="x64-linux"  # fallback
+          ;;
+      esac
       ;;
     'Darwin')
-      export VCPKG_DEFAULT_TRIPLET="x64-osx"
+      case "$ARCH" in
+        'x86_64')
+          TRIPLET="x64-osx"
+          ;;
+        'arm64')
+          TRIPLET="arm64-osx"
+          ;;
+        *)
+          TRIPLET="x64-osx"  # fallback
+          ;;
+      esac
       ;;
     *)
-      export VCPKG_DEFAULT_TRIPLET="x64-linux"
+      TRIPLET="x64-linux"  # fallback
       ;;
   esac
+  
+  export VCPKG_DEFAULT_TRIPLET="$TRIPLET"
+  
+  # Add vcpkg tools to PATH if available
+  if [ -d "$SCRIPT_DIR/vcpkg_installed/$TRIPLET/tools/protobuf" ]; then
+    export PATH="$SCRIPT_DIR/vcpkg_installed/$TRIPLET/tools/protobuf:$PATH"
+    echo "vcpkg protoc added to PATH"
+  fi
   
   echo "vcpkg environment configured: $VCPKG_ROOT (triplet: $VCPKG_DEFAULT_TRIPLET)"
 else
