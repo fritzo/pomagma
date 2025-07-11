@@ -25,6 +25,28 @@ COMP = Expression_2("COMP")
 JOIN = Expression_2("JOIN")
 RAND = Expression_2("RAND")
 
+SKIP_VALIDATION = [
+    "A",
+    "BOOL",
+    "BOOOL",
+    "DIV",
+    "J",
+    "JOIN",
+    "MAYBE",
+    "NUM",
+    "P",
+    "PRED",
+    "R",
+    "RAND",
+    "SEMI",
+    "SOME",
+    "SUCC",
+    "U",
+    "UNIT",
+    "V",
+    "Y",
+]
+
 
 class AbstractionFailed(Exception):
     pass
@@ -175,7 +197,7 @@ def head_normalize(expr, *args):
         return head_normalize(C, I, *args)
     if name == "CB":
         return head_normalize(C, B, *args)
-    if name in ["Y", "J", "JOIN", "R", "RAND", "U", "V", "P", "A"]:
+    if name in SKIP_VALIDATION:
         raise SkipValidation
     raise TODO(f"head normalize {name} expressions")
 
