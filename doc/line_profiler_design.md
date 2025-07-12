@@ -170,10 +170,6 @@ public:
         state ^= state << 17;
         return static_cast<uint32_t>(state);
     }
-    
-    static bool should_sample(uint32_t rate_per_million) {
-        return next() % 1000000 < rate_per_million;
-    }
 };
 ```
 
@@ -181,18 +177,19 @@ The time-based sampling check adds ~25-30 cycles per VM instruction (timer read 
 
 ### Low-overhead histogram storage
 
-Sample collection uses time-based sampling with stochastic rounding to record instruction execution at random points in time. The profiler uses a single histogram array matching the layout of `ProgramParser::m_program_data`, where each byte offset corresponds to one histogram counter. This eliminates the need for program ID mapping and program base address tracking.
+Sample collection uses time-based sampling with stochastic rounding to record instruction execution at random points in time. The profiler uses a single histogram array matching the layout of `ProgramParser::m_program_data`, where each byte offset corresponds to one histogram counter. Timing attribution is corrected by tracking the previous program counter and attributing elapsed time to the instruction that was actually executing, not the subsequent instruction.
 
 ```cpp
 class LineProfiler {
     static constexpr uint64_t TARGET_SAMPLE_INTERVAL_NS = 100000; // 100μs between samples
     
     // Single histogram covering the entire program data array
-    static std::vector<std::atomic<uint64_t>> histogram;
+    static std::vector<std::atomic<uint32_t>> histogram;
     static const uint8_t* program_data_base;
     
     // Per-thread sampling state  
     thread_local static uint64_t last_sample_time;
+    thread_local static Program previous_pc;
     
 public:
     static void init(const uint8_t* program_data, size_t size) {
@@ -202,36 +199,56 @@ public:
             counter.store(0, std::memory_order_relaxed);
         }
     }
+
+    static void start() {
+      last_sample_time = FastClock::now();
+      previous_pc = nullptr;
+    }
     
     static void sample_instruction(Program pc) {
         uint64_t current_time = FastClock::now();
-        uint64_t elapsed_ns = current_time - last_sample_time;
-        
-        // Stochastic rounding: add random dither and divide
-        uint64_t random_dither = FastRNG::next() % TARGET_SAMPLE_INTERVAL_NS;
-        uint64_t total = elapsed_ns + random_dither;
-        uint64_t samples = total / TARGET_SAMPLE_INTERVAL_NS;
-        
-        if (likely(samples == 0)) return;
-        
-        // Record sample and update last sample time
-        last_sample_time = current_time;
-        
-        size_t offset = pc - program_data_base;
-        if (likely(offset < histogram.size())) {
-            histogram[offset].fetch_add(1, std::memory_order_relaxed);
+
+        // Attribute elapsed time to the previous instruction
+        if (previous_pc != nullptr) {
+            uint64_t elapsed_ns = current_time - last_sample_time;
+            // Stochastic rounding: add random dither and divide
+            uint64_t random_dither = FastRNG::next() % TARGET_SAMPLE_INTERVAL_NS;
+            uint64_t total = elapsed_ns + random_dither;
+            if (uint64_t samples = total / TARGET_SAMPLE_INTERVAL_NS) {
+                size_t offset = previous_pc - program_data_base;
+                histogram[offset].fetch_add(1, std::memory_order_relaxed);
+            }
         }
+        
+        // Update state for next sample
+        last_sample_time = current_time;
+        previous_pc = pc;
+    }
+
+    static void stop() {
+      sample_instruction(nullptr);
     }
 };
 ```
 
-The direct offset approach is much simpler than tracking separate program IDs. Since `ProgramParser` already stores all programs in a single contiguous array, the profiler uses the same layout for its histogram. The `init()` method gets the base address from `ProgramParser::m_program_data`, and `sample_instruction()` calculates the offset directly as `pc - program_data_base`. This eliminates hash table lookups, program base address tracking, and complex indexing while providing perfect alignment with the existing program storage layout.
+The direct offset approach is much simpler than tracking separate program IDs. Since `ProgramParser` already stores all programs in a single contiguous array, the profiler uses the same layout for its histogram. The `init()` method gets the base address from `ProgramParser::m_program_data`, and `sample_instruction()` calculates the offset directly as `pc - program_data_base`. This avoids hash table lookups, program base address tracking, and complex indexing while providing perfect alignment with the existing program storage layout.
 
 ### Usage in the virtual machine
 
-The line profiler integrates into the VM execution hot path by sampling at every instruction boundary. Since programs are stored in a single contiguous array, no additional context tracking is needed.
+The line profiler integrates into the VM execution hot path by sampling at every instruction boundary, with reset calls at program boundaries to ensure correct timing attribution.
 
 ```cpp
+// In profiler.hpp, add start and stop calls to the existing Block class
+class ProgramProfiler::Block {
+    Block(ProgramProfiler &profiler, const void *program) ... {
+        LineProfiler::start();
+    }
+    ~Block() {
+        ...
+        LineProfiler::stop();
+    }
+}
+
 // Initialize profiler with program data (in VirtualMachine::load or similar)
 void VirtualMachine::load(Signature &signature) {
     // ... existing code ...
@@ -249,7 +266,7 @@ void VirtualMachine::_execute(Program program, Context *context) const {
 }
 ```
 
-The integration is extremely simple since the profiler leverages the existing program storage layout. The `sample_instruction()` method is called once per VM instruction with just the program counter, and the profiler calculates the offset directly from the global program data base address.
+The integration uses `sample_instruction(nullptr)` at program boundaries to reset timing state and flush final instruction timing. This ensures that execution time is correctly attributed to the instruction that was actually executing, not the subsequent instruction.
 
 ### Persistence format
 
@@ -308,9 +325,10 @@ Output formats include annotated assembly for human review and CSV data for auto
 
 - [ ] Add `FastClock` class in `pomagma/util/fast_clock.hpp` with platform-specific timer implementations and thread-local calibration
 - [ ] Add `FastRNG` class in `pomagma/util/fast_rng.hpp` using Xorshift algorithm with thread-local state and sampling interface  
-- [ ] Add `LineProfiler` class in `pomagma/util/line_profiler.hpp` with single histogram array matching program data layout
+- [ ] Add `LineProfiler` class in `pomagma/util/line_profiler.hpp` with single histogram array and previous program counter tracking
 - [ ] Modify `VirtualMachine::load()` in `pomagma/atlas/vm_impl.hpp` to initialize `LineProfiler` with program data base address
-- [ ] Modify `VirtualMachine::_execute()` in `pomagma/atlas/vm_impl.hpp` to call `LineProfiler::sample_instruction()` on entry
+- [ ] Modify all `VirtualMachine::execute()` methods in `pomagma/atlas/vm.hpp` to call `LineProfiler::sample_instruction(nullptr)` at start and end
+- [ ] Modify `VirtualMachine::_execute()` in `pomagma/atlas/vm_impl.hpp` to call `LineProfiler::sample_instruction(program)` on entry
 - [ ] Add binary format writer in `LineProfiler` class using varint encoding to save sparse histogram data to disk
 - [ ] Create `postprocess_profile.py` script to read binary data and merge with `.optimized.programs` files 
 - [ ] Add environment variable `POMAGMA_LINE_PROFILING=1` to enable profiling and set sampling rate configuration
