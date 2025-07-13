@@ -9,18 +9,19 @@ std::unordered_set<ProgramProfiler *> ProgramProfiler::s_instances;
 std::unordered_map<const void *, ProgramProfiler::Stat>
     ProgramProfiler::s_stats;
 
-inline void ProgramProfiler::unsafe_report() {
+inline void ProgramProfiler::unsafe_report() noexcept {
     for (auto &pair : m_stats) {
         pair.second.report_to(s_stats[pair.first]);
     }
+    m_stats.clear();
 }
 
-ProgramProfiler::ProgramProfiler() {
+ProgramProfiler::ProgramProfiler() noexcept {
     std::unique_lock<std::mutex> lock(s_mutex);
     s_instances.insert(this);
 }
 
-ProgramProfiler::~ProgramProfiler() {
+ProgramProfiler::~ProgramProfiler() noexcept {
     std::unique_lock<std::mutex> lock(s_mutex);
     unsafe_report();
     s_instances.erase(this);

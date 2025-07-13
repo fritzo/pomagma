@@ -6,7 +6,7 @@ import signal
 import sys
 import time
 
-from parsable import parsable
+from parsable import Parsable
 
 import pomagma.io.blobstore
 import pomagma.util
@@ -14,7 +14,7 @@ import pomagma.workers
 from pomagma import analyst, atlas, cartographer, linguist, surveyor, theorist
 from pomagma.util import DB, suggest_region_sizes
 
-parsable = parsable.Parsable()
+parsable = Parsable()
 
 THEORY = os.environ.get("POMAGMA_THEORY", "skja")
 

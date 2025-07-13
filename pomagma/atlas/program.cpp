@@ -1,10 +1,8 @@
 #include "program.hpp"
 
-#include <algorithm>
 #include <fstream>
 #include <map>
 #include <sstream>
-#include <typeinfo>
 #include <unordered_set>
 
 #include "signature.hpp"

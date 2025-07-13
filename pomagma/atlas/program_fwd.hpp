@@ -13,6 +13,7 @@ namespace vm {
 enum OpCode : uint8_t;
 enum OpArgType : uint8_t;
 
+// Thread local context
 template <class Ob, class SetPtr>
 struct Context_ {
     Ob obs[256];
@@ -43,6 +44,9 @@ class ProgramParser {
     std::vector<Listing> parse(std::istream& infile);
     std::vector<Listing> parse_file(const std::string& filename);
 
+    const std::vector<uint8_t>& programs() const { return m_program_data; }
+    std::vector<uint32_t>& histogram() const { return m_histogram; }
+
     // Calling parse() or parse_file() invalidates the returned Program.
     Program find_program(const Listing& listing) const {
         POMAGMA_ASSERT_LE(listing.program_offset + listing.size,
@@ -68,7 +72,7 @@ class ProgramParser {
 
     std::vector<uint8_t> m_program_data;  // all programs in contiguous memory
     std::map<std::pair<OpArgType, std::string>, uint8_t> m_constants;
-    std::vector<uint32_t> m_histogram;  // same size as m_program_data
+    mutable std::vector<uint32_t> m_histogram;  // same size as m_program_data
 
     class SymbolTable;
     class SymbolTableStack;

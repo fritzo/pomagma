@@ -33,14 +33,18 @@ class VirtualMachine {
 
     void execute(Program program) const {
         Context *context = new_context();
-        ProgramProfiler::Block profiler(context->profiler, program);
+        ProgramProfiler::Block profiler(context->profiler, program,
+                                        m_parser.programs(),
+                                        m_parser.histogram());
         _execute(program, context);
     }
 
     void execute(Program program, Ob arg) const {
         Context *context = new_context();
         context->obs[0] = arg;
-        ProgramProfiler::Block profiler(context->profiler, program);
+        ProgramProfiler::Block profiler(context->profiler, program,
+                                        m_parser.programs(),
+                                        m_parser.histogram());
         _execute(program, context);
     }
 
@@ -48,7 +52,9 @@ class VirtualMachine {
         Context *context = new_context();
         context->obs[0] = arg1;
         context->obs[1] = arg2;
-        ProgramProfiler::Block profiler(context->profiler, program);
+        ProgramProfiler::Block profiler(context->profiler, program,
+                                        m_parser.programs(),
+                                        m_parser.histogram());
         _execute(program, context);
     }
 
@@ -57,14 +63,18 @@ class VirtualMachine {
         context->obs[0] = arg1;
         context->obs[1] = arg2;
         context->obs[2] = arg3;
-        ProgramProfiler::Block profiler(context->profiler, program);
+        ProgramProfiler::Block profiler(context->profiler, program,
+                                        m_parser.programs(),
+                                        m_parser.histogram());
         _execute(program, context);
     }
 
     void execute_block(Program program, size_t block) const {
         Context *context = new_context();
         context->block = block;
-        ProgramProfiler::Block profiler(context->profiler, program);
+        ProgramProfiler::Block profiler(context->profiler, program,
+                                        m_parser.programs(),
+                                        m_parser.histogram());
         _execute(program, context);
     }
 
