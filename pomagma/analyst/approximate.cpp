@@ -473,23 +473,23 @@ Approximation Approximator::find(const std::string& name,
 
 Approximator::Trool Approximator::is_top(const Approximation& approx) {
     if (approx.lower.contains(m_top)) {
-        return TRUE;
+        return kTrue;
     }
     if (approx.upper.intersects(m_nless.get_Lx_set(m_top))) {
-        return FALSE;
+        return kFalse;
     } else {
-        return MAYBE;
+        return kMaybe;
     }
 }
 
 Approximator::Trool Approximator::is_bot(const Approximation& approx) {
     if (approx.upper.contains(m_bot)) {
-        return TRUE;
+        return kTrue;
     }
     if (approx.lower.intersects(m_nless.get_Rx_set(m_bot))) {
-        return FALSE;
+        return kFalse;
     } else {
-        return MAYBE;
+        return kMaybe;
     }
 }
 

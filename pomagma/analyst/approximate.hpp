@@ -79,7 +79,7 @@ class Approximator : noncopyable {
     Approximation find(const std::string &name, const Approximation &arg0,
                        const Approximation &arg1);
 
-    enum Trool { MAYBE = 0, FALSE = 1, TRUE = 2 };
+    enum Trool { kMaybe = 0, kFalse = 1, kTrue = 2 };
     Trool is_top(const Approximation &approx);
     Trool is_bot(const Approximation &approx);
 
@@ -89,7 +89,7 @@ class Approximator : noncopyable {
 
         Validity() {}
         Validity(Trool t, Trool b) : is_top(t), is_bot(b) {}
-        static Validity unknown() { return Validity(MAYBE, MAYBE); }
+        static Validity unknown() { return Validity(kMaybe, kMaybe); }
     };
     Validity is_valid(const Approximation &approx) {
         return Validity(is_top(approx), is_bot(approx));
