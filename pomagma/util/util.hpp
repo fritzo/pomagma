@@ -16,6 +16,10 @@
 #include <string>
 #include <vector>
 
+#ifdef __x86_64__
+#include <thread>
+#endif
+
 #ifdef __APPLE__
 #include <mach/mach_time.h>
 #endif
