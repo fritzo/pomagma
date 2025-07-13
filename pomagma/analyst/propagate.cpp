@@ -289,7 +289,7 @@ inline size_t propagate_step(
             ++change_count;
         }
         state = updated_state;
-        if (approximator.lazy_is_valid(state) == Trool::FALSE) {
+        if (approximator.lazy_is_valid(state) == Trool::kFalse) {
             POMAGMA_DEBUG("solution is invalid");
             return 0;
         }
@@ -321,7 +321,7 @@ Trool lazy_validate(const Theory &theory, Approximator &approximator) {
                                              << max_steps << " steps");
     }
 
-    Trool is_valid = Trool::TRUE;
+    Trool is_valid = Trool::kTrue;
     for (const auto &i : states) {
         is_valid = and_trool(is_valid, approximator.lazy_is_valid(i.second));
     }

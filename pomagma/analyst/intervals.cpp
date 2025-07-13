@@ -34,8 +34,8 @@ Approximator::Approximator(Structure& structure, DenseSetStore& sets,
           worker_pool,
           [this](const std::pair<SetId, SetId>& pair) {
               return m_sets.load(pair.first).disjoint(m_sets.load(pair.second))
-                         ? Trool::TRUE
-                         : Trool::FALSE;
+                         ? Trool::kTrue
+                         : Trool::kFalse;
           }),
       m_union_cache(worker_pool,
                     [this](const std::vector<SetId>& sets) {
@@ -145,10 +145,10 @@ Trool Approximator::lazy_is_valid(const Approximation& approx) {
 
 inline Trool Approximator::lazy_disjoint(SetId lhs, SetId rhs) {
     if (not lhs or not rhs) {
-        return Trool::MAYBE;
+        return Trool::kMaybe;
     }
     if (unlikely(lhs == rhs)) {
-        return (lhs == m_empty_set) ? Trool::TRUE : Trool::FALSE;
+        return (lhs == m_empty_set) ? Trool::kTrue : Trool::kFalse;
     }
     if (lhs > rhs) {
         std::swap(lhs, rhs);

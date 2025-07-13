@@ -132,7 +132,7 @@ class Approximator : noncopyable {
 
     // LazyMap caches.
     typedef std::tuple<uint64_t, Target, Parity> CacheKey;
-    typedef LazyMap<std::pair<SetId, SetId>, Trool, Trool::MAYBE,
+    typedef LazyMap<std::pair<SetId, SetId>, Trool, Trool::kMaybe,
                     PodHash<std::pair<SetId, SetId>>>
         SetPairToTroolCache;
     typedef LazyMap<std::vector<SetId>, SetId, 0, VectorPodHash<SetId>,
