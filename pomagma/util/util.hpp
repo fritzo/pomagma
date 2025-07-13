@@ -16,6 +16,10 @@
 #include <string>
 #include <vector>
 
+#ifdef __APPLE__
+#include <mach/mach_time.h>
+#endif
+
 // for demangle() below
 #ifdef __GNUG__
 #include <cxxabi.h>
@@ -184,7 +188,9 @@ class Stopwatch {
 
 class noncopyable {
     noncopyable(const noncopyable &) = delete;
+    noncopyable(noncopyable &&) = delete;
     void operator=(const noncopyable &) = delete;
+    void operator=(noncopyable &&) = delete;
 
    public:
     noncopyable() {}
@@ -479,5 +485,82 @@ inline std::string demangle(const char *name) {
 #else   // __GNUG__
 inline std::string demangle(const char *name) { return name; }
 #endif  // __GNUG__
+
+//----------------------------------------------------------------------------
+// fast profiling utilities
+
+class FastClock {
+   public:
+    static inline uint64_t now() {
+#ifdef __x86_64__
+        // x86-64: Use RDTSC for ~20-30 cycle overhead
+        uint32_t lo, hi;
+        __asm__ volatile("rdtsc" : "=a"(lo), "=d"(hi));
+        return ((uint64_t)hi << 32) | lo;
+#elif defined(__aarch64__)
+        // ARM64: Use virtual counter for ~15 cycle overhead
+        uint64_t val;
+        __asm__ volatile("mrs %0, cntvct_el0" : "=r"(val));
+        return val;
+#elif defined(__APPLE__)
+        // Apple Silicon: Use mach_absolute_time for ~10 cycle overhead
+        return mach_absolute_time();
+#else
+        // Fallback: Use std::chrono (slower but portable)
+        return std::chrono::steady_clock::now().time_since_epoch().count();
+#endif
+    }
+
+    static inline uint64_t cycles_to_nanoseconds(uint64_t cycles) {
+        return (cycles * 1000000000ULL) / cycles_per_second();
+    }
+
+   private:
+    static inline uint64_t cycles_per_second() {
+        static uint64_t freq = estimate_frequency();
+        return freq;
+    }
+
+    static uint64_t estimate_frequency() {
+#ifdef __x86_64__
+        // Estimate CPU frequency by timing a known operation
+        auto start_time = std::chrono::high_resolution_clock::now();
+        uint64_t start_cycles = now();
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        uint64_t end_cycles = now();
+        auto end_time = std::chrono::high_resolution_clock::now();
+
+        auto duration_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
+                               end_time - start_time)
+                               .count();
+        return ((end_cycles - start_cycles) * 1000000000ULL) / duration_ns;
+#elif defined(__aarch64__)
+        // ARM64: Read counter frequency from system register
+        uint64_t freq;
+        __asm__ volatile("mrs %0, cntfrq_el0" : "=r"(freq));
+        return freq;
+#elif defined(__APPLE__)
+        // Apple Silicon: Get timebase frequency
+        mach_timebase_info_data_t timebase;
+        mach_timebase_info(&timebase);
+        return 1000000000ULL * timebase.denom / timebase.numer;
+#else
+        // Fallback: std::chrono resolution
+        return std::chrono::steady_clock::period::den;
+#endif
+    }
+};
+
+class FastRNG {
+   public:
+    static inline uint64_t next() {
+        // Linear Congruential Generator (~5 cycles)
+        thread_local static uint64_t state = 0;
+        state = state * 1103515245ULL + 12345ULL;
+        return state;
+    }
+
+    static inline uint32_t next32() { return static_cast<uint32_t>(next()); }
+};
 
 }  // namespace pomagma
