@@ -68,6 +68,7 @@ class ProgramParser {
 
     std::vector<uint8_t> m_program_data;  // all programs in contiguous memory
     std::map<std::pair<OpArgType, std::string>, uint8_t> m_constants;
+    std::vector<uint32_t> m_histogram;  // same size as m_program_data
 
     class SymbolTable;
     class SymbolTableStack;

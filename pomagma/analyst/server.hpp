@@ -27,7 +27,6 @@ class Server {
     Simplifier m_simplifier;
     Corpus m_corpus;
     Validator m_validator;
-    vm::ProgramParser m_parser;
     vm::VirtualMachine m_virtual_machine;
     std::vector<std::string> m_error_log;
 

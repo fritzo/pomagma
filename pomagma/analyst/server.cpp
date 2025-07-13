@@ -29,7 +29,6 @@ Server::Server(const char* structure_file, const char* language_file)
       m_simplifier(m_structure.signature(), m_routes, m_error_log),
       m_corpus(m_structure.signature()),
       m_validator(m_approximator),
-      m_parser(),
       m_virtual_machine() {
     // parser and virtual_machine must be loaded after RETURN is declared.
     Signature& signature = m_structure.signature();
@@ -39,7 +38,6 @@ Server::Server(const char* structure_file, const char* language_file)
                    "reserved name NRETURN is defined in loaded structure");
     signature.declare("RETURN", m_return);
     signature.declare("NRETURN", m_nreturn);
-    m_parser.load(signature);
     m_virtual_machine.load(signature);
 
     if (POMAGMA_DEBUG_LEVEL > 1) {
@@ -125,13 +123,14 @@ void Server::print_ob_set(const DenseSet& set, std::vector<std::string>& result,
 Server::SolutionSet Server::solve(const std::string& program,
                                   size_t max_solutions) {
     std::istringstream infile(program);
-    auto listings = m_parser.parse(infile);
+    auto& parser = m_virtual_machine.parser();
+    auto listings = parser.parse(infile);
     POMAGMA_ASSERT_LE(1, listings.size());
 
     m_return.clear();
     m_nreturn.clear();
     for (const auto& listing : listings) {
-        vm::Program program = m_parser.find_program(listing);
+        vm::Program program = parser.find_program(listing);
         m_virtual_machine.execute(program);
     }
     POMAGMA_ASSERT(m_return.get_set().disjoint(m_nreturn.get_set()),

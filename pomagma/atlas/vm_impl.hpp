@@ -8,6 +8,7 @@
 #include "program.hpp"
 #include "vm.hpp"
 
+#define POMAGMA_LINE_PROFILER (true)
 #define POMAGMA_TRACE_VM (false)
 
 namespace pomagma {
@@ -38,6 +39,8 @@ static void declare(
 }
 
 void VirtualMachine::load(Signature &signature) {
+    m_parser.load(signature);
+
     m_carrier = signature.carrier();
 
     declare(signature.unary_relations(), m_unary_relations);
@@ -96,10 +99,15 @@ static const char *const spaces_256 =
     "                                                                "
     "                                                                ";
 
-void VirtualMachine::_execute(Program program, Context *context) const {
+void VirtualMachine::_execute(Program program,
+                              Context *context) const noexcept {
+    if constexpr (POMAGMA_LINE_PROFILER) {
+        // TODO
+    }
+
     OpCode op_code = pop_op_code(program);
 
-    if (POMAGMA_TRACE_VM) {
+    if constexpr (POMAGMA_TRACE_VM) {
         POMAGMA_ASSERT_LE(context->trace, 256);
         POMAGMA_DEBUG((spaces_256 + 256 - context->trace)
                       << g_op_code_names[op_code]);
@@ -855,7 +863,7 @@ void VirtualMachine::_execute(Program program, Context *context) const {
 #endif  // POMAGMA_HAS_INVERSE_INDEX
     }
 
-    if (POMAGMA_TRACE_VM) {
+    if constexpr (POMAGMA_TRACE_VM) {
         --context->trace;
     }
 }
@@ -892,8 +900,8 @@ inline void Agenda::add_program_to(Programs &programs, Program program,
     m_linenos[program] = lineno;
 }
 
-void Agenda::add_listing(const ProgramParser &parser, const Listing &listing) {
-    Program program = parser.find_program(listing);
+void Agenda::add_listing(const Listing &listing) {
+    Program program = parser().find_program(listing);
     const size_t size = listing.size;
     const size_t lineno = listing.lineno;
 

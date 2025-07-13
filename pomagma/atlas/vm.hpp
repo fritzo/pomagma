@@ -20,11 +20,14 @@ typedef Context_<Ob, DenseSet::RawData> Context;
 
 class VirtualMachine {
    public:
-    enum { block_size = 64 };  // granularity of FOR_BLOCK/IF_BLOCK parallelism
+    // granularity of FOR_BLOCK/IF_BLOCK parallelism
+    static constexpr size_t block_size = 64;
 
     VirtualMachine() : m_carrier(nullptr) {
         POMAGMA_ASSERT(is_aligned(this, 64), "VirtualMachine is misaligned");
     }
+
+    ProgramParser &parser() noexcept { return m_parser; }
 
     void load(Signature &signature);
 
@@ -73,7 +76,7 @@ class VirtualMachine {
     const SymmetricFunction *symmetric_function(uint8_t index) const;
 
    private:
-    static Context *new_context() {
+    static Context *new_context() noexcept {
         // never freed
         static thread_local Context *context = nullptr;
         if (unlikely(context == nullptr)) {
@@ -86,7 +89,7 @@ class VirtualMachine {
         return context;
     }
 
-    void _execute(Program program, Context *context) const;
+    void _execute(Program program, Context *context) const noexcept;
 
     static uint8_t pop_arg(Program &program) { return *program++; }
 
@@ -139,6 +142,7 @@ class VirtualMachine {
     BinaryFunction *m_binary_functions[256];
     SymmetricFunction *m_symmetric_functions[256];
     Carrier *m_carrier;
+    ProgramParser m_parser;
 
 } __attribute__((aligned(64)));
 
@@ -149,8 +153,10 @@ class Agenda {
    public:
     Agenda() : m_block_count(0) {}
 
+    ProgramParser &parser() noexcept { return m_virtual_machine.parser(); }
+
     void load(Signature &signature);
-    void add_listing(const ProgramParser &parser, const Listing &listing);
+    void add_listing(const Listing &listing);
     void log_stats() const;
     const std::map<const void *, size_t> &get_linenos() { return m_linenos; }
 

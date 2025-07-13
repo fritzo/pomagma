@@ -186,15 +186,15 @@ void Server::declare(const std::string& name) {
 }
 
 void Server::execute(const std::string& program) {
+    vm::VirtualMachine virtual_machine;
+    virtual_machine.load(m_structure.signature());
+
     POMAGMA_DEBUG("parsing program");
-    vm::ProgramParser parser;
-    parser.load(m_structure.signature());
+    auto& parser = virtual_machine.parser();
     std::istringstream istream(program);
     const auto listings = parser.parse(istream);
 
     POMAGMA_DEBUG("executing " << listings.size() << " listings");
-    vm::VirtualMachine virtual_machine;
-    virtual_machine.load(m_structure.signature());
     for (const auto& listing : listings) {
         vm::Program program = parser.find_program(listing);
         virtual_machine.execute(program);

@@ -150,6 +150,7 @@ static void declare(
 void ProgramParser::load(Signature &signature) {
     m_program_data.clear();
     m_constants.clear();
+    m_histogram.clear();
     declare(UNARY_RELATION, signature.unary_relations(), m_constants);
     declare(BINARY_RELATION, signature.binary_relations(), m_constants);
     declare(NULLARY_FUNCTION, signature.nullary_functions(), m_constants);
@@ -181,6 +182,7 @@ std::vector<Listing> ProgramParser::parse(std::istream &infile) {
         result.push_back(listing);
         m_program_data.insert(m_program_data.end(), program.begin(),
                               program.end());
+        m_histogram.resize(m_program_data.size());
         program.clear();
     };
 

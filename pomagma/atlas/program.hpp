@@ -157,7 +157,7 @@ enum OpCode : uint8_t {
 extern const std::string g_op_code_names[];
 extern const std::map<std::string, OpCode> g_op_codes;
 extern const std::vector<std::vector<OpArgType>> g_op_code_arities;
-static const size_t g_op_code_count = 0
+static constexpr size_t g_op_code_count = 0
 #define DO(X, Y) +1
     POMAGMA_OP_CODES(DO)
 #undef DO
