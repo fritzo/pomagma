@@ -8,6 +8,7 @@
 #include "program.hpp"
 #include "vm.hpp"
 
+#define POMAGMA_LINE_PROFILER (false)
 #define POMAGMA_TRACE_VM (false)
 
 namespace pomagma {
@@ -100,7 +101,9 @@ static const char *const spaces_256 =
 
 void VirtualMachine::_execute(Program program,
                               Context *context) const noexcept {
-    context->profiler.sample(program);
+    if constexpr (POMAGMA_LINE_PROFILER) {
+        context->line_profiler.sample(program);
+    }
 
     OpCode op_code = pop_op_code(program);
 

@@ -21,6 +21,7 @@ struct Context_ {
     size_t block;
     size_t trace;
     ProgramProfiler profiler;
+    LineProfiler line_profiler;
 
     void clear() {
         std::fill(std::begin(obs), std::end(obs), 0);
