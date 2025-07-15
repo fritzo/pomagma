@@ -38,6 +38,25 @@ struct Listing {
     uint32_t lineno;
 };
 
+class FileIndex {
+   public:
+    void add_file(const std::string& filename,
+                  const std::vector<Listing>& listings);
+
+    void save_stats(const std::vector<uint32_t>& histogram) const;
+
+   private:
+    // Four parallel arrays:
+    std::vector<std::string> m_filenames;
+    std::vector<std::string> m_hexdigests;
+    std::vector<size_t> m_sizes;
+    std::vector<size_t> m_offsets;
+
+    void write_stats_file(
+        const std::string& filepath,
+        const std::map<uint32_t, uint64_t>& line_counts) const;
+};
+
 class ProgramParser {
    public:
     void load(Signature& signature);  // TODO input a proto, not Signature
@@ -47,6 +66,10 @@ class ProgramParser {
 
     const std::vector<uint8_t>& programs() const { return m_program_data; }
     std::vector<uint32_t>& histogram() const { return m_histogram; }
+
+    void save_line_profile_stats() const {
+        m_file_index.save_stats(m_histogram);
+    }
 
     // Calling parse() or parse_file() invalidates the returned Program.
     Program find_program(const Listing& listing) const {
@@ -74,6 +97,7 @@ class ProgramParser {
     std::vector<uint8_t> m_program_data;  // all programs in contiguous memory
     std::map<std::pair<OpArgType, std::string>, uint8_t> m_constants;
     mutable std::vector<uint32_t> m_histogram;  // same size as m_program_data
+    FileIndex m_file_index;                     // tracks source locations
 
     class SymbolTable;
     class SymbolTableStack;

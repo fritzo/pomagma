@@ -110,7 +110,7 @@ void validate_all() {
 
 void log_profile_stats() {
     ProgramProfiler::log_stats(agenda.get_linenos());
-    // TODO save agenda.m_virtual_machine.m_parser.histogram()
+    agenda.parser().save_line_profile_stats();
 }
 
 void log_stats() {

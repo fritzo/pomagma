@@ -1,7 +1,9 @@
 #include "program.hpp"
 
+#include <filesystem>
 #include <fstream>
 #include <map>
+#include <pomagma/util/hasher.hpp>
 #include <sstream>
 #include <unordered_set>
 
@@ -161,7 +163,9 @@ std::vector<Listing> ProgramParser::parse_file(const std::string &filename) {
     POMAGMA_INFO("loading programs from " << filename);
     std::ifstream infile(filename, std::ifstream::in | std::ifstream::binary);
     POMAGMA_ASSERT(infile.is_open(), "failed to open file: " << filename);
-    return parse(infile);
+    auto listings = parse(infile);
+    m_file_index.add_file(filename, listings);
+    return listings;
 }
 
 std::vector<Listing> ProgramParser::parse(std::istream &infile) {
@@ -268,6 +272,89 @@ std::vector<Listing> ProgramParser::parse(std::istream &infile) {
     }
 
     return result;
+}
+
+//----------------------------------------------------------------------------
+// FileIndex implementation
+
+void FileIndex::add_file(const std::string &filename,
+                         const std::vector<Listing> &listings) {
+    auto it = std::find(m_filenames.begin(), m_filenames.end(), filename);
+    POMAGMA_ASSERT(it == m_filenames.end(), "duplicate filename: " << filename);
+    POMAGMA_ASSERT(m_filenames.size() < 255,
+                   "Too many source files, limit is 255");
+    m_filenames.push_back(filename);
+
+    Hasher hasher;
+    hasher.add_file(filename);
+    hasher.finish();
+    m_hexdigests.push_back(hasher.str());
+
+    // Update sizes and offsets
+    size_t size = 0;
+    for (const auto &listing : listings) {
+        size += listing.size;
+    }
+    m_sizes.push_back(size);
+    size_t previous_offset = m_offsets.empty() ? 0 : m_offsets.back();
+    m_offsets.push_back(previous_offset + size);
+}
+
+void FileIndex::save_stats(const std::vector<uint32_t> &histogram) const {
+    // Create a dense index mapping offset -> filename index
+    std::vector<uint8_t> offset_to_filename(histogram.size());
+    for (uint8_t i = 0; i < m_filenames.size(); ++i) {
+        auto begin = offset_to_filename.begin() + m_offsets[i];
+        auto end = i == m_filenames.size() - 1
+                       ? offset_to_filename.end()
+                       : offset_to_filename.begin() + m_offsets[i + 1];
+        std::fill(begin, end, i);
+    }
+
+    // Group as filename_idx -> local_offset -> count
+    std::map<uint8_t, std::map<uint32_t, uint64_t>> file_counts;
+    for (uint32_t offset = 0; offset < histogram.size(); ++offset) {
+        uint32_t count = histogram[offset];
+        if (!count) continue;
+        uint8_t filename_idx = offset_to_filename.at(offset);
+        uint32_t local_offset = offset - m_offsets[filename_idx];
+        file_counts[filename_idx][local_offset] += count;
+    }
+
+    // Write stats file for each file
+    for (const auto &[filename_idx, counts] : file_counts) {
+        std::string dirname = std::filesystem::path(m_filenames[filename_idx])
+                                  .parent_path()
+                                  .string();
+        const std::string &hexdigest = m_hexdigests[filename_idx];
+        std::string filepath = dirname + "/" + hexdigest + ".lineprof";
+        write_stats_file(filepath, counts);
+    }
+}
+
+void FileIndex::write_stats_file(
+    const std::string &filepath,
+    const std::map<uint32_t, uint64_t> &line_counts) const {
+    std::string temp_path = filepath + "." + std::to_string(getpid()) + ".tmp";
+    if (std::filesystem::exists(filepath)) {
+        // Copy existing counts
+        std::filesystem::copy(filepath, temp_path);
+    }
+    {
+        // Append new counts, in append or create mode
+        std::ofstream file(temp_path, std::ios::app | std::ios::out);
+        POMAGMA_ASSERT(file.is_open(), "Failed to open " << temp_path);
+        for (const auto &[lineno, count] : line_counts) {
+            file << lineno << "\t" << count << "\n";
+        }
+        POMAGMA_ASSERT(file.good(), "Failed to write " << temp_path);
+    }
+
+    // Atomic rename
+    int error = std::rename(temp_path.c_str(), filepath.c_str());
+    POMAGMA_ASSERT(error == 0,
+                   "Failed to rename " << temp_path << " to " << filepath);
+    POMAGMA_INFO("Saved line profile stats to " << filepath);
 }
 
 }  // namespace vm
