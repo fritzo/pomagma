@@ -21,6 +21,7 @@ temp.*
 /pomagma/theory/*.facts
 /pomagma/theory/*.programs
 /pomagma/theory/*.tasks
+/pomagma/theory/*.lineprof
 /pomagma/language/*.language
 /data/
 /build/

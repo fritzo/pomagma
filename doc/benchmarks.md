@@ -1,7 +1,8 @@
 # Benchmarking Results
 
-From `python -m pomagma explore skja`:
+## 2015-05-06
 
+From `python -m pomagma explore skja`:
 <pre>
 2015:05:06:09:04
 ...
@@ -1002,8 +1003,10 @@ FOR_BINARY_FUNCTION_LHS_RHS APP a e g
 FOR_BINARY_FUNCTION_LHS APP d h i
 INFER_BINARY_BINARY APP c i APP g h
 </pre>
-After implementing an inference deadline, cleanup exits early and NLESS tasks now take up most of the time:
 
+## 2015-06-28
+
+After implementing an inference deadline, cleanup exits early and NLESS tasks now take up most of the time:
 <pre>
 2015:06:28:03:32
 ...
@@ -1027,3 +1030,41 @@ After implementing an inference deadline, cleanup exits early and NLESS tasks no
 ...
 </pre>
 
+
+## 2025-07-16
+
+From `pomagma make skja`:
+<pre>
+2025:07:15:14:29
+...
+41007   2106.27     INFO    starting 8 initialize threads
+41007   17517.2     INFO    finished 8 initialize threads
+41007   17517.2     INFO    merge tasks: 0 executed / 0 scheduled
+41007   17517.2     INFO    enforce tasks: 1452910 executed / 1451658 scheduled
+41007   17517.2     INFO    sample tasks: 0 executed / 0 scheduled
+41007   17517.2     INFO    cleanup tasks: 10038 executed / 0 scheduled
+41007   17517.2     INFO    Profile of VirtualMachine programs:
+41007   17517.2     INFO     Line       Calls Percent   Total sec Per call sec
+41007   17517.2     INFO    ----- ----------- ------- ----------- ------------
+41007   17517.2     INFO     6439     1441744   88.86   109525.08      0.08
+41007   17517.2     INFO     1116         233    2.54     3132.41     13.44
+41007   17517.2     INFO     1124         233    1.88     2315.77      9.94
+41007   17517.2     INFO     1356         233    1.74     2150.35      9.23
+41007   17517.2     INFO     1070         233    0.91     1116.55      4.79
+</pre>
+where the heaviest hitting program is `given NLESS`
+<pre>
+# plan 65: 4952 bytes
+GIVEN_BINARY_RELATION NLESS a b
+...
+</pre>
+
+Line profiling with `pomagma lineprof skja` shows the top hotspots are all in this program:
+<pre>
+FOR_BINARY_FUNCTION_RHS_VAL COMP e d b       # 86,843 samples (29.4%)
+FOR_BINARY_FUNCTION_LHS_VAL APP c e b        # 60,311 samples (20.4%)
+FOR_BINARY_FUNCTION_LHS_VAL COMP c e b       # 40,042 samples (13.6%)
+FOR_BINARY_FUNCTION_RHS_VAL APP e d b        # 32,910 samples (11.2%)
+FOR_SYMMETRIC_FUNCTION_LHS_VAL JOIN c e b    # 31,296 samples (10.6%)
+<pre>
+These are all inverse iteration, using `VXx_Table::Iterator` which uses `tbb::concurrent_unordered_set<Ob>::const_iterator` under the hood.

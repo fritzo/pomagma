@@ -301,6 +301,21 @@ def fit_language(theory, address=analyst.ADDRESS, **options):
     linguist.fit_language(theory, address=address, **options)
 
 
+@parsable
+def lineprof(theory=THEORY):
+    """Process line profiling data for a theory's programs."""
+    from pomagma.theory.lineprof import process_programs_file
+
+    programs_filename = os.path.join(
+        pomagma.util.SRC, "theory", f"{theory}.optimized.programs"
+    )
+    assert os.path.exists(programs_filename), f"Missing {programs_filename}"
+
+    created_file = process_programs_file(programs_filename)
+    assert created_file, f"Missing profiling data for {programs_filename}"
+    print(f"Created {created_file}")
+
+
 match_atlas = re.compile(r"^atlas\.20\d\d(-\d\d)*").match
 default_tag = time.strftime("%Y-%m-%d", time.gmtime())
 

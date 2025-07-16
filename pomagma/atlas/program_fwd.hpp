@@ -40,17 +40,19 @@ struct Listing {
 
 class FileIndex {
    public:
+    FileIndex() : m_offsets(1, 0) {}
+
     void add_file(const std::string& filename,
                   const std::vector<Listing>& listings);
 
     void save_stats(const std::vector<uint32_t>& histogram) const;
 
    private:
-    // Four parallel arrays:
+    // Parallel arrays:
     std::vector<std::string> m_filenames;
     std::vector<std::string> m_hexdigests;
     std::vector<size_t> m_sizes;
-    std::vector<size_t> m_offsets;
+    std::vector<size_t> m_offsets;  // Has an extra starting 0 element
 
     void write_stats_file(
         const std::string& filepath,

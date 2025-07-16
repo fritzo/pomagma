@@ -296,8 +296,7 @@ void FileIndex::add_file(const std::string &filename,
         size += listing.size;
     }
     m_sizes.push_back(size);
-    size_t previous_offset = m_offsets.empty() ? 0 : m_offsets.back();
-    m_offsets.push_back(previous_offset + size);
+    m_offsets.push_back(m_offsets.back() + size);
 }
 
 void FileIndex::save_stats(const std::vector<uint32_t> &histogram) const {
@@ -305,9 +304,7 @@ void FileIndex::save_stats(const std::vector<uint32_t> &histogram) const {
     std::vector<uint8_t> offset_to_filename(histogram.size());
     for (uint8_t i = 0; i < m_filenames.size(); ++i) {
         auto begin = offset_to_filename.begin() + m_offsets[i];
-        auto end = i == m_filenames.size() - 1
-                       ? offset_to_filename.end()
-                       : offset_to_filename.begin() + m_offsets[i + 1];
+        auto end = offset_to_filename.begin() + m_offsets[i + 1];
         std::fill(begin, end, i);
     }
 
