@@ -9,6 +9,8 @@ import logging
 import os
 from collections import Counter
 
+from pomagma.compiler.util import eval_float53
+
 logger = logging.getLogger(__name__)
 
 
@@ -93,11 +95,24 @@ def annotate_programs_file(
     # Load lines from programs file
     lines: list[str] = []
     comment_column = 0
+    token_position = 0
+    indent_until: list[int] = []
     with open(programs_filename) as f:
         for line in f:
             line = line.strip()
             # Remove trailing comments
             stripped = line.split("#", 1)[0].strip()
+            tokens = stripped.split()
+            # Indent according to SEQUENCE instructions
+            while indent_until and token_position >= indent_until[-1]:
+                indent_until.pop()
+            if indent_until:
+                stripped = "  " * len(indent_until) + stripped
+            if tokens and tokens[0] == "SEQUENCE":
+                end = token_position + eval_float53(int(tokens[1]))
+                indent_until.append(end)
+            token_position += len(tokens)
+            # Measure line width
             comment_column = max(comment_column, len(stripped))
             lines.append(stripped or line)
 

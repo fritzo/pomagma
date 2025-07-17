@@ -1066,5 +1066,43 @@ FOR_BINARY_FUNCTION_LHS_VAL APP c e b        # 60,311 samples (20.4%)
 FOR_BINARY_FUNCTION_LHS_VAL COMP c e b       # 40,042 samples (13.6%)
 FOR_BINARY_FUNCTION_RHS_VAL APP e d b        # 32,910 samples (11.2%)
 FOR_SYMMETRIC_FUNCTION_LHS_VAL JOIN c e b    # 31,296 samples (10.6%)
-<pre>
+</pre>
 These are all inverse iteration, using `VXx_Table::Iterator` which uses `tbb::concurrent_unordered_set<Ob>::const_iterator` under the hood.
+
+The program fragment relevant to these hotspots is
+<pre>
+GIVEN_BINARY_RELATION NLESS a b
+SEQUENCE
+  FOR_SYMMETRIC_FUNCTION_VAL JOIN c d a         # 66 samples (0.0%)
+  FOR_SYMMETRIC_FUNCTION_LHS_VAL JOIN c e b     # 31,296 samples (10.6%)
+  INFER_BINARY_RELATION NLESS d e               # 33 samples (0.0%)
+SEQUENCE
+  FOR_BINARY_FUNCTION_VAL APP c d a             # 67 samples (0.0%)
+  SEQUENCE                                      # 48 samples (0.0%)
+    FOR_BINARY_FUNCTION_LHS_VAL APP c e b       # 60,311 samples (20.4%)
+    INFER_BINARY_RELATION NLESS d e             # 128 samples (0.0%)
+  FOR_BINARY_FUNCTION_RHS_VAL APP e d b         # 32,910 samples (11.2%)
+  INFER_BINARY_RELATION NLESS c e               # 112 samples (0.0%)
+SEQUENCE
+  FOR_BINARY_FUNCTION_VAL COMP c d a            # 53 samples (0.0%)
+  SEQUENCE                                      # 177 samples (0.1%)
+    FOR_BINARY_FUNCTION_LHS_VAL COMP c e b      # 40,042 samples (13.6%)
+    INFER_BINARY_RELATION NLESS d e             # 42 samples (0.0%)
+  FOR_BINARY_FUNCTION_RHS_VAL COMP e d b        # 86,843 samples (29.4%)
+  INFER_BINARY_RELATION NLESS c e               # 542 samples (0.2%)
+...
+</pre>
+which implement the monotonicity rules
+<pre>
+NLESS JOIN c d JOIN c e
+-----------------------
+      NLESS d e
+
+NLESS APP c d APP c e   NLESS APP c d APP e d
+---------------------   ---------------------
+      NLESS d e               NLESS c e
+
+NLESS COMP c d COMP c e   NLESS COMP c d COMP e d
+-----------------------   -----------------------
+       NLESS d e                NLESS c e
+</pre>
