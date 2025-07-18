@@ -1,3 +1,14 @@
+---
+description: Project-specific rules for Pomagma development focusing on test preservation and build efficiency
+globs: /**/*
+alwaysApply: true
+---
+---
+description: Project-specific rules for Pomagma development
+globs: /**/*
+alwaysApply: true
+---
+
 # Cursor Rules for Pomagma
 
 ## NEVER DELETE OR RELAX TESTS
@@ -15,5 +26,4 @@
 
 - Try to avoid `make clean` as it requires a complete slow rebuild
 - If you absolutely need to clean then build, try combining commands, e.g.
-  `make clean && make debug`
-
+  `make clean && make debug` 

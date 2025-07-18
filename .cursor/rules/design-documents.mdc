@@ -1,0 +1,62 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+---
+description: Guidelines for writing design documents in /doc/*.md
+globs: /doc/*.md
+alwaysApply: false
+---
+
+# Design Document Guidelines
+
+## Writing Standards
+
+- Design documents should be concise, factual, sober, and concrete
+- Try to balance half prose + half code snippets or math
+- Include links to relevant files, and brief quotations where appropriate
+- Do not guess time estimates. Do not guess numbers, e.g. speedups. Limit to known facts
+
+## Required Document Format
+
+All design documents must follow this exact structure:
+
+### Document Template
+
+```markdown
+# Title
+## Objective
+Single concise sentence describing the goal (the why, not the how).
+
+## Background
+### One background subsection per relevant topic, typically 2-5 background subsections total
+Each background section should be one or a few paragraphs with links and code snippets or math.
+
+## Design Overview
+A single paragraph + code snippet or math describing the high level approach of the design
+
+## Design Details
+### One details subsection per relevant nuance or technical issue, typically 3-6 subsections total
+
+## Work Plan
+A concise - [ ] todo list of 5-10 todo items. Each todo item is a single concise sentence describing one task, the size of about one git commit.
+```
+
+## Section Guidelines
+
+- **Title**: Clear, specific name for the design
+- **Objective**: Single sentence stating the goal (why, not how)
+- **Background**: 2-5 subsections with paragraphs, links, and code/math
+- **Design Overview**: One paragraph + code/math for high-level approach  
+- **Design Details**: 3-6 subsections covering technical nuances
+- **Work Plan**: 5-10 concise todo items, each about one commit size
+
+## Content Requirements
+
+- Include links to relevant source files
+- Add brief quotations from code where appropriate
+- Balance prose with code snippets and mathematical expressions
+- Stick to known facts - avoid speculation on timelines or performance gains
+- Keep all content factual and concrete
+
