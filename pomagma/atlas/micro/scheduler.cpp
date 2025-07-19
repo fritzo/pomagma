@@ -1,11 +1,12 @@
 #include "scheduler.hpp"
 
-#include <tbb/concurrent_queue.h>
 #include <omp.h>
+#include <tbb/concurrent_queue.h>
 
 #include <chrono>
 #include <condition_variable>
 #include <pomagma/atlas/micro/vm.hpp>
+#include <pomagma/surveyor/infer.hpp>
 #include <pomagma/util/threading.hpp>
 #include <thread>
 
@@ -13,6 +14,8 @@
 #define POMAGMA_DEBUG1(message) POMAGMA_DEBUG(message)
 
 namespace pomagma {
+
+Structure &get_structure();
 
 namespace Cleanup {
 
@@ -99,6 +102,7 @@ void set_thread_count(size_t worker_count) {
         worker_count = get_cpu_count();
     }
     POMAGMA_ASSERT_LE(1, worker_count);
+    POMAGMA_INFO("using " << worker_count << " threads");
     g_worker_count = worker_count;
     omp_set_num_threads(worker_count);
 }
@@ -187,25 +191,27 @@ class NegativeOrderTaskQueue : public TaskQueue<NegativeOrderTask> {
    public:
     NegativeOrderTaskQueue() : m_size(0) {}
 
+    uint64_t size() const { return m_size.load(std::memory_order_acquire); }
+
     void push(const NegativeOrderTask &task) {
         TaskQueue<NegativeOrderTask>::push(task);
         uint64_t size = m_size.fetch_add(1, relaxed);
         if (unlikely(size == g_nless_monotone_threshold)) {
-            POMAGMA_INFO("NLESS monotone threshold reached: " << size);
-            vm::VirtualMachine::enable_nless_monotone(false);
+            vm::VirtualMachine::set_nless_monotone(false);
         }
     }
 
     bool try_execute() {
-        m_size.fetch_sub(1, relaxed);
-        return TaskQueue<NegativeOrderTask>::try_execute();
+        if (TaskQueue<NegativeOrderTask>::try_execute()) {
+            m_size.fetch_sub(1, relaxed);
+            return true;
+        }
+        return false;
     }
 
     void cancel_referencing(Ob ob) {
-        int64_t diff = -TaskQueue<NegativeOrderTask>::m_queue.unsafe_size();
         TaskQueue<NegativeOrderTask>::cancel_referencing(ob);
-        diff += TaskQueue<NegativeOrderTask>::m_queue.unsafe_size();
-        m_size.fetch_add(diff, relaxed);
+        m_size.store(m_queue.unsafe_size(), relaxed);
     }
 };
 
@@ -329,30 +335,46 @@ void do_work(bool (*try_work)(rng_t &)) {
     }
 }
 
+inline void reset_nless_monotone() {
+    vm::VirtualMachine::set_nless_monotone(g_negative_order_tasks.size() <
+                                           g_nless_monotone_threshold);
+}
+
 void initialize(const char *theory_file) {
     insert_nullary_functions();
     if (theory_file) {
         assume_core_facts(theory_file);
     }
     Cleanup::push_all();
-    POMAGMA_INFO("starting " << g_worker_count << " initialize threads");
     reset_stats();
+    while (true) {
+        POMAGMA_INFO("starting incremental inference");
 #pragma omp parallel
-    {
-        do_work(try_initialize_work);
+        {
+            do_work(try_initialize_work);
+        }
+        if (vm::VirtualMachine::get_nless_monotone()) break;
+        POMAGMA_INFO("starting batch inference");
+        if (!infer_nless(get_structure())) break;
     }
-    POMAGMA_INFO("finished " << g_worker_count << " initialize threads");
+    POMAGMA_INFO("finished inference");
     log_stats();
 }
 
 void survey() {
-    POMAGMA_INFO("starting " << g_worker_count << " survey threads");
     reset_stats();
+    while (true) {
+        POMAGMA_INFO("starting incremental inference");
+        reset_nless_monotone();
 #pragma omp parallel
-    {
-        do_work(try_survey_work);
+        {
+            do_work(try_survey_work);
+        }
+        if (vm::VirtualMachine::get_nless_monotone()) break;
+        POMAGMA_INFO("starting batch inference");
+        if (!infer_nless(get_structure())) break;
     }
-    POMAGMA_INFO("finished " << g_worker_count << " survey threads");
+    POMAGMA_INFO("finished inference");
     log_stats();
 }
 
@@ -362,14 +384,21 @@ void survey_until_deadline(const char *theory_file) {
         assume_core_facts(theory_file);
     }
     Cleanup::push_all();
-    POMAGMA_INFO("starting " << g_worker_count << " deadlined threads");
     start_deadline();
     reset_stats();
+    while (true) {
+        POMAGMA_INFO("starting incremental inference");
+        reset_nless_monotone();
 #pragma omp parallel
-    {
-        do_work(try_deadline_work);
+        {
+            do_work(try_deadline_work);
+        }
+        if (!g_deadline_flag) break;
+        if (vm::VirtualMachine::get_nless_monotone()) break;
+        POMAGMA_INFO("starting batch inference");
+        if (!infer_nless(get_structure())) break;
     }
-    POMAGMA_INFO("finished " << g_worker_count << " deadlined threads");
+    POMAGMA_INFO("finished inference");
     log_stats();
 }
 

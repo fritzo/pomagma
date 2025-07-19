@@ -115,8 +115,6 @@ inline bool infer_nless_monotone(const BinaryRelation& NLESS,
 }  // namespace
 
 size_t infer_nless(Structure& structure) {
-    POMAGMA_INFO("Inferring NLESS");
-
     Signature& signature = structure.signature();
     const Carrier& carrier = structure.carrier();
     const BinaryRelation* LESS = signature.binary_relation("LESS");
@@ -125,7 +123,7 @@ size_t infer_nless(Structure& structure) {
     const BinaryFunction* COMP = signature.binary_function("COMP");
     const SymmetricFunction* JOIN = signature.symmetric_function("JOIN");
     const SymmetricFunction* RAND = signature.symmetric_function("RAND");
-    POMAGMA_ASSERT(LESS && NLESS && APP && COMP, "missing relations/functions");
+    POMAGMA_ASSERT(LESS && NLESS, "missing relations");
 
     const DenseSet nonconst = get_nonconst(structure);
     const size_t item_dim = carrier.item_dim();
@@ -152,9 +150,10 @@ size_t infer_nless(Structure& structure) {
                 POMAGMA_ASSERT_UNDECIDED(*LESS, x, y);
                 POMAGMA_ASSERT_UNDECIDED(*NLESS, x, y);
 
-                if (infer_nless_monotone(*NLESS, *APP, nonconst, x, y, z_set) or
-                    infer_nless_monotone(*NLESS, *COMP, nonconst, x, y,
-                                         z_set) or
+                if ((APP and infer_nless_monotone(*NLESS, *APP, nonconst, x, y,
+                                                  z_set)) or
+                    (COMP and infer_nless_monotone(*NLESS, *COMP, nonconst, x,
+                                                   y, z_set)) or
                     (JOIN and
                      infer_nless_monotone(*NLESS, *JOIN, x, y, z_set)) or
                     (RAND and
@@ -167,7 +166,7 @@ size_t infer_nless(Structure& structure) {
     }
 
     size_t theorem_count = NLESS->count_pairs() - start_count;
-    POMAGMA_INFO("inferred " << theorem_count << " NLESS facts (batch)");
+    POMAGMA_INFO("inferred " << theorem_count << " NLESS facts");
     return theorem_count;
 }
 

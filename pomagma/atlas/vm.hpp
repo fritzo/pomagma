@@ -25,7 +25,7 @@ class VirtualMachine {
 
     VirtualMachine() : m_carrier(nullptr) {
         POMAGMA_ASSERT(is_aligned(this, 64), "VirtualMachine is misaligned");
-        enable_nless_monotone();
+        set_nless_monotone();
     }
 
     ProgramParser &parser() noexcept { return m_parser; }
@@ -91,7 +91,11 @@ class VirtualMachine {
         ENABLE_NLESS_MONOTONE = 1,
     };
 
-    static void enable_nless_monotone(bool value = true) {
+    static bool get_nless_monotone() {
+        return s_global_config[ENABLE_NLESS_MONOTONE];
+    }
+
+    static void set_nless_monotone(bool value = true) {
         s_global_config[ENABLE_NLESS_MONOTONE] = value;
     }
 

@@ -18,6 +18,8 @@ static Signature &signature = structure.signature();
 static Sampler sampler(signature);
 static vm::Agenda agenda;
 
+Structure &get_structure() { return structure; }
+
 void load_structure(const std::string &filename) { structure.load(filename); }
 void dump_structure(const std::string &filename) { structure.dump(filename); }
 void load_language(const std::string &filename) { sampler.load(filename); }
