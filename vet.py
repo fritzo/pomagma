@@ -111,6 +111,7 @@ def check_unknown(actual, expected):
         filename
         for pattern in FILES_TO_VET
         for filename in glob.glob(pattern)
+        if ".lineprof." not in filename
         if filename not in expected
     )
     if failures:
