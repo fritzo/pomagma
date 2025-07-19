@@ -77,24 +77,21 @@ def extract_block(program: Program) -> Program:
     return tuple(result)
 
 
-def are_compatible_v2(program1: Program, program2: Program) -> bool:
+TRIVIAL_BLOCK: Program = (("FOR_BLOCK",), ("FOR_ALL", "a"), ("IF_BLOCK", "a"))
+
+
+def are_compatible(program1: Program, program2: Program) -> bool:
     if program1[0] != program2[0]:
         return False
     if program1[0] == ("FOR_BLOCK",):
-        if extract_block(program1) != extract_block(program2):
+        block1 = extract_block(program1)
+        block2 = extract_block(program2)
+        if block1 != block2:
             return False
+        if block1 == TRIVIAL_BLOCK:
+            # Require nontrivial sharing
+            return program1[3] == program2[3]
     return True
-
-
-# DEPRECATED
-def are_compatible(program1: Program, program2: Program) -> bool:
-    head1 = program1[0]
-    head2 = program2[0]
-    if head1[0].startswith("GIVEN") or head2[0].startswith("GIVEN"):
-        return head1 == head2
-    if head1[0] == "FOR_BLOCK" or head2[0] == "FOR_BLOCK":
-        return False
-    return head1 == head2
 
 
 def count_overlap(program1: Program, program2: Program) -> int:
