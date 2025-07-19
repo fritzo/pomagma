@@ -275,7 +275,7 @@ Compare the execution times to find the optimal threshold for your workload size
 
 - [x] Add IF_GLOBAL opcode to [`pomagma/atlas/program.hpp`](../pomagma/atlas/program.hpp) and implement VM handler in [`pomagma/atlas/vm_impl.hpp`](../pomagma/atlas/vm_impl.hpp)
 - [x] Extend VirtualMachine class in [`pomagma/atlas/vm.hpp`](../pomagma/atlas/vm.hpp) with global configuration state management
-- [ ] Modify [`pomagma/compiler/compiler.py`](../pomagma/compiler/compiler.py) to generate conditional NLESS programs with proper skip-byte calculation
+- [x] Modify [`pomagma/compiler/compiler.py`](../pomagma/compiler/compiler.py) to generate conditional NLESS programs with proper skip-byte calculation
 - [ ] Add queue size tracking to [`pomagma/atlas/micro/scheduler.cpp`](../pomagma/atlas/micro/scheduler.cpp) and integrate with NLESS insertion callbacks
 - [ ] Port cartographer's batch algorithms from [`pomagma/cartographer/infer.cpp`](../pomagma/cartographer/infer.cpp) to new BatchNlessInference class for atlas/micro
 - [ ] Implement DenseSet mode selection supporting both concurrent and sequential variants for batch processing

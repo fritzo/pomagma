@@ -1,6 +1,7 @@
 import heapq
 
 from pomagma.compiler import signature
+from pomagma.compiler.compiler import GlobalConfig
 from pomagma.compiler.util import eval_float53, logger, memoize_arg
 
 
@@ -173,7 +174,46 @@ class MergeProcessor:
         return programs
 
 
+_EXPENSIVE_OPCODES: tuple[str, ...] = (
+    "FOR_BINARY_FUNCTION_LHS_VAL",
+    "FOR_BINARY_FUNCTION_RHS_VAL",
+    "FOR_BINARY_FUNCTION_VAL",
+    "FOR_SYMMETRIC_FUNCTION_LHS_VAL",
+    "FOR_SYMMETRIC_FUNCTION_VAL",
+)
+
+
+def is_nless_monotone_program(program):
+    """Detect expensive NLESS monotonicity programs."""
+    if len(program) != 4:
+        return False
+    if program[0][:2] != ("GIVEN_BINARY_RELATION", "NLESS"):
+        return False
+    if program[1][0] not in _EXPENSIVE_OPCODES:
+        return False
+    if program[2][0] not in _EXPENSIVE_OPCODES:
+        return False
+    if program[3][:2] != ("INFER_BINARY_RELATION", "NLESS"):
+        return False
+    return True
+
+
+def add_nless_conditionals(programs):
+    """Add IF_GLOBAL conditionals to NLESS monotonicity programs."""
+    result = []
+    for program in programs:
+        if is_nless_monotone_program(program):
+            program = (
+                program[0],
+                ("IF_GLOBAL", str(GlobalConfig.ENABLE_NLESS_MONOTONE)),
+                *program[1:],
+            )
+        result.append(program)
+    return result
+
+
 def optimize(lines):
     programs = sorted(set(map(normalize_alpha, load_programs(lines))))
+    programs = add_nless_conditionals(programs)
     programs = MergeProcessor(programs).run()
     return dump_programs(programs)

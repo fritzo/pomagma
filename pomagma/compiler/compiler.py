@@ -1,5 +1,6 @@
 import inspect
 import sys
+from enum import IntEnum
 
 import pomagma.util
 from pomagma.compiler.expressions import Expression, Expression_1, Expression_2
@@ -25,6 +26,13 @@ from pomagma.compiler.util import (
 )
 
 MIN_STACK_DEPTH = float("inf")
+
+
+class GlobalConfig(IntEnum):
+    """Global configuration indices - must match GlobalConfig enum in vm.hpp"""
+
+    ENABLE_NLESS_MONOTONE = 1
+    # Add more config flags as needed
 
 
 def stack_depth():

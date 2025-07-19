@@ -25,6 +25,7 @@ class VirtualMachine {
 
     VirtualMachine() : m_carrier(nullptr) {
         POMAGMA_ASSERT(is_aligned(this, 64), "VirtualMachine is misaligned");
+        m_global_config[ENABLE_NLESS_MONOTONE] = true;
     }
 
     ProgramParser &parser() noexcept { return m_parser; }
@@ -84,6 +85,11 @@ class VirtualMachine {
     const InjectiveFunction *injective_function(uint8_t index) const;
     const BinaryFunction *binary_function(uint8_t index) const;
     const SymmetricFunction *symmetric_function(uint8_t index) const;
+
+    // Global configuration indices
+    enum GlobalConfig : uint8_t {
+        ENABLE_NLESS_MONOTONE = 1,
+    };
 
     void set_global_config(uint8_t index, bool value) {
         m_global_config[index] = value;
