@@ -25,7 +25,7 @@ from pomagma.compiler.util import (
     union,
 )
 
-MIN_STACK_DEPTH = float("inf")
+MIN_STACK_DEPTH = 99999999
 
 
 class GlobalConfig(IntEnum):
@@ -35,7 +35,7 @@ class GlobalConfig(IntEnum):
     # Add more config flags as needed
 
 
-def stack_depth():
+def stack_depth() -> int:
     global MIN_STACK_DEPTH
     depth = len(inspect.stack())
     MIN_STACK_DEPTH = min(MIN_STACK_DEPTH, depth)

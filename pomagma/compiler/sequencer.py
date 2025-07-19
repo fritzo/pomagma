@@ -1,8 +1,11 @@
 import heapq
+from typing import TypeAlias
 
 from pomagma.compiler import signature
 from pomagma.compiler.compiler import GlobalConfig
 from pomagma.compiler.util import eval_float53, logger, memoize_arg
+
+Program: TypeAlias = tuple[tuple[str, ...], ...]
 
 
 def load_lines(filename):
@@ -13,9 +16,9 @@ def load_lines(filename):
                 yield line.strip()
 
 
-def load_programs(lines):
-    programs = []
-    program = []
+def load_programs(lines: list[str]) -> list[Program]:
+    programs: list[Program] = []
+    program: list[tuple[str, ...]] = []
     for line in lines:
         if line:
             program.append(tuple(line.split()))
@@ -25,8 +28,8 @@ def load_programs(lines):
     return programs
 
 
-def dump_programs(programs):
-    lines = []
+def dump_programs(programs: list[Program]) -> list[str]:
+    lines: list[str] = []
     for i, program in enumerate(programs):
         lines.append("")
         lines.append(f"# plan {i}: {sizeof_program(program)} bytes")
@@ -37,8 +40,8 @@ def dump_programs(programs):
 alphabet = "abcdefghijklmnopqrstuvwxyz"
 
 
-def normalize_alpha(program):
-    rename = {}
+def normalize_alpha(program: Program) -> Program:
+    rename: dict[str, str] = {}
     for line in program:
         for token in line[1:]:
             if signature.is_var(token):
@@ -46,7 +49,24 @@ def normalize_alpha(program):
     return tuple(tuple(rename.get(token, token) for token in line) for line in program)
 
 
-def are_compatible(program1, program2):
+def extract_block(program: Program) -> Program:
+    result = list(program)
+    while result and result[-1][0] != "IF_BLOCK":
+        result.pop()
+    return tuple(result)
+
+
+def are_compatible_v2(program1: Program, program2: Program) -> bool:
+    if program1[0] != program2[0]:
+        return False
+    if program1[0] == ("FOR_BLOCK",):
+        if extract_block(program1) != extract_block(program2):
+            return False
+    return True
+
+
+# DEPRECATED
+def are_compatible(program1: Program, program2: Program) -> bool:
     head1 = program1[0]
     head2 = program2[0]
     if head1[0].startswith("GIVEN") or head2[0].startswith("GIVEN"):
@@ -56,20 +76,20 @@ def are_compatible(program1, program2):
     return head1 == head2
 
 
-def count_overlap(program1, program2):
+def count_overlap(program1: Program, program2: Program) -> int:
     result = 0
-    for line1, line2 in zip(program1, program2):
+    for line1, line2 in zip(program1, program2, strict=False):
         if line1 != line2:
             break
         result += 1
     return result
 
 
-def sizeof_program(program):
+def sizeof_program(program: Program) -> int:
     return sum(len(line) for line in program)
 
 
-def get_jump(jump_size):
+def get_jump(jump_size: int) -> tuple[int, int]:
     jump = 0
     while eval_float53(jump) < jump_size:
         jump += 1
@@ -78,11 +98,11 @@ def get_jump(jump_size):
     return jump, padding
 
 
-def merge_programs(program1, program2):
+def merge_programs(program1: Program, program2: Program) -> Program:
     assert program1 != program2, "duplicate"
     if sizeof_program(program1) > sizeof_program(program2):
         program1, program2 = program2, program1
-    program = []
+    program: list[tuple[str, ...]] = []
     for i in range(min(len(program1), len(program2))):
         if program1[i] != program2[i]:
             break

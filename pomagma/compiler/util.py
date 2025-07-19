@@ -113,28 +113,29 @@ def log_sum_exp(*args):
     return -float("inf")
 
 
-def eval_float44(num):
+def eval_float44(num: int) -> int:
     """
     8 bit nonnegative floating point = 4 bit significand + 4 bit exponent.
     Gradually increase from 0 to about 1e6 over inputs 0...255
     such that output is monotone increasing and has small relative increase.
     """
     assert isinstance(num, int) and 0 <= num and num < 256, num
-    nibbles = (num % 16, num // 16)
-    return (nibbles[0] + 16) * 2 ** nibbles[1] - 16
+    hi, lo = divmod(num, 16)
+    return (lo + 16) * 2**hi - 16  # type: ignore[no-any-return]
 
 
-def eval_float53(num):
+def eval_float53(num: int) -> int:
     """
     8 bit nonnegative floating point = 5 bit significand + 3 bit exponent.
     Gradually increase from 0 to about 8e3 over inputs 0...255
     such that output is monotone increasing and has small relative increase.
     """
     assert isinstance(num, int) and 0 <= num and num < 256, num
-    nibbles = (num % 32, num // 32)
-    return (nibbles[0] + 32) * 2 ** nibbles[1] - 32
+    hi, lo = divmod(num, 32)
+    return (lo + 32) * 2**hi - 32  # type: ignore[no-any-return]
 
 
+# DEPRECATED use type hints instead
 def inputs(*types):
     def deco(fun):
         @functools.wraps(fun)
@@ -157,7 +158,7 @@ def methodof(class_, name=None):
     return deco
 
 
-def find_theories():
+def find_theories() -> list[str]:
     return glob.glob(os.path.join(pomagma.util.THEORY, "*.theory"))
 
 
