@@ -1,13 +1,13 @@
 #include "scheduler.hpp"
 
 #include <tbb/concurrent_queue.h>
+#include <omp.h>
 
 #include <chrono>
 #include <condition_variable>
 #include <pomagma/atlas/micro/vm.hpp>
 #include <pomagma/util/threading.hpp>
 #include <thread>
-#include <vector>
 
 // #define POMAGMA_DEBUG1(message)
 #define POMAGMA_DEBUG1(message) POMAGMA_DEBUG(message)
@@ -100,6 +100,7 @@ void set_thread_count(size_t worker_count) {
     }
     POMAGMA_ASSERT_LE(1, worker_count);
     g_worker_count = worker_count;
+    omp_set_num_threads(worker_count);
 }
 
 void reset_stats() {
@@ -336,12 +337,9 @@ void initialize(const char *theory_file) {
     Cleanup::push_all();
     POMAGMA_INFO("starting " << g_worker_count << " initialize threads");
     reset_stats();
-    std::vector<std::thread> threads;
-    for (size_t i = 0; i < g_worker_count; ++i) {
-        threads.push_back(std::thread(do_work, try_initialize_work));
-    }
-    for (auto &thread : threads) {
-        thread.join();
+#pragma omp parallel
+    {
+        do_work(try_initialize_work);
     }
     POMAGMA_INFO("finished " << g_worker_count << " initialize threads");
     log_stats();
@@ -350,12 +348,9 @@ void initialize(const char *theory_file) {
 void survey() {
     POMAGMA_INFO("starting " << g_worker_count << " survey threads");
     reset_stats();
-    std::vector<std::thread> threads;
-    for (size_t i = 0; i < g_worker_count; ++i) {
-        threads.push_back(std::thread(do_work, try_survey_work));
-    }
-    for (auto &thread : threads) {
-        thread.join();
+#pragma omp parallel
+    {
+        do_work(try_survey_work);
     }
     POMAGMA_INFO("finished " << g_worker_count << " survey threads");
     log_stats();
@@ -370,12 +365,9 @@ void survey_until_deadline(const char *theory_file) {
     POMAGMA_INFO("starting " << g_worker_count << " deadlined threads");
     start_deadline();
     reset_stats();
-    std::vector<std::thread> threads;
-    for (size_t i = 0; i < g_worker_count; ++i) {
-        threads.push_back(std::thread(do_work, try_deadline_work));
-    }
-    for (auto &thread : threads) {
-        thread.join();
+#pragma omp parallel
+    {
+        do_work(try_deadline_work);
     }
     POMAGMA_INFO("finished " << g_worker_count << " deadlined threads");
     log_stats();
