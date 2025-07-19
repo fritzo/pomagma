@@ -21,13 +21,13 @@ inline size_t items_to_words(size_t item_dim) {
 
 template <size_t pos_rank, size_t neg_rank = 0>
 class Intersection {
-    enum { rank = pos_rank + neg_rank };
+    static constexpr size_t rank = pos_rank + neg_rank;
 
     const size_t m_word_dim;
     const std::array<const std::atomic<Word> *, rank> m_words;
 
    public:
-    enum { is_monotone = (neg_rank == 0) };
+    static constexpr bool is_monotone = (neg_rank == 0);
 
     typedef std::array<const std::atomic<Word> *, rank> init_t;
 
@@ -67,7 +67,7 @@ class Intersection<1, 0> {
     const std::atomic<Word> *const m_words;
 
    public:
-    enum { is_monotone = true };
+    static constexpr bool is_monotone = true;
 
     typedef const std::atomic<Word> *init_t;
 
