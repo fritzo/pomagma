@@ -119,6 +119,7 @@ enum OpArgType : uint8_t {
     DO(IF_INJECTIVE_FUNCTION, ({INJECTIVE_FUNCTION, OB, OB}))                  \
     DO(IF_BINARY_FUNCTION, ({BINARY_FUNCTION, OB, OB, OB}))                    \
     DO(IF_SYMMETRIC_FUNCTION, ({SYMMETRIC_FUNCTION, OB, OB, OB}))              \
+    DO(IF_GLOBAL, ({UINT8}))                                                   \
     DO(LET_NULLARY_FUNCTION, ({NULLARY_FUNCTION, NEW_OB}))                     \
     DO(LET_INJECTIVE_FUNCTION, ({INJECTIVE_FUNCTION, OB, NEW_OB}))             \
     DO(LET_BINARY_FUNCTION, ({BINARY_FUNCTION, OB, OB, NEW_OB}))               \

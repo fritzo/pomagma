@@ -85,6 +85,10 @@ class VirtualMachine {
     const BinaryFunction *binary_function(uint8_t index) const;
     const SymmetricFunction *symmetric_function(uint8_t index) const;
 
+    void set_global_config(uint8_t index, bool value) {
+        m_global_config[index] = value;
+    }
+
    private:
     static Context *new_context() noexcept {
         // never freed
@@ -153,6 +157,7 @@ class VirtualMachine {
     SymmetricFunction *m_symmetric_functions[256];
     Carrier *m_carrier;
     ProgramParser m_parser;
+    std::array<bool, 256> m_global_config;
 
 } __attribute__((aligned(64)));
 

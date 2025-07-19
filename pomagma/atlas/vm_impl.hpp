@@ -640,6 +640,12 @@ void VirtualMachine::_execute(Program program,
             }
         } break;
 
+        case IF_GLOBAL: {
+            if (m_global_config[pop_arg(program)]) {
+                _execute(program, context);
+            }
+        } break;
+
         case LET_NULLARY_FUNCTION: {
             NullaryFunction &fun = pop_nullary_function(program);
             Ob &val = pop_ob(program, context);
