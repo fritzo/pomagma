@@ -60,7 +60,8 @@ namespace Scheduler {
 
 static const size_t g_nless_monotone_threshold = [] {
     const char *env = getenv("POMAGMA_NLESS_MONOTONE_THRESHOLD");
-    return env ? std::stoul(env) : 9'999'999'999ull;
+    constexpr size_t default_value = 1000;
+    return env ? std::stoul(env) : default_value;
 }();
 
 static size_t g_worker_count = DEFAULT_THREAD_COUNT;

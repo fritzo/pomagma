@@ -275,5 +275,5 @@ Compare the execution times to find the optimal threshold for your workload size
 - [x] Add queue size tracking to [`pomagma/atlas/micro/scheduler.cpp`](../pomagma/atlas/micro/scheduler.cpp) and integrate with NLESS insertion callbacks
 - [x] Integrate hybrid mode selection in [`pomagma/surveyor/survey_main.cpp`](../pomagma/surveyor/survey_main.cpp) with environment variable control
 - [x] Update the survey() and survey_until_deadline() functions in [`pomagma/atlas/micro/scheduler.cpp`](../pomagma/atlas/micro/scheduler.cpp) with threshold-based mode switching
+- [x] Benchmark hybrid system against baseline surveyor using existing `profile_surveyor` command and validate correctness across theories
 - [ ] Implement DenseSet mode selection supporting both concurrent and sequential variants for batch processing
-- [ ] Benchmark hybrid system against baseline surveyor using existing `profile_surveyor` command and validate correctness across theories
