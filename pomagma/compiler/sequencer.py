@@ -28,12 +28,33 @@ def load_programs(lines: list[str]) -> list[Program]:
     return programs
 
 
-def dump_programs(programs: list[Program]) -> list[str]:
+def indent_program(program: Program) -> list[str]:
+    lines: list[str] = []
+    token_position = 0
+    indent_until: list[int] = []
+    for tokens in program:
+        line = " ".join(tokens)
+        while indent_until and token_position >= indent_until[-1]:
+            indent_until.pop()
+        if indent_until:
+            line = "  " * len(indent_until) + line
+        if tokens[0] == "SEQUENCE":
+            end = token_position + eval_float53(int(tokens[1]))
+            indent_until.append(end)
+        token_position += len(tokens)
+        lines.append(line)
+    return lines
+
+
+def dump_programs(programs: list[Program], indent: bool = True) -> list[str]:
     lines: list[str] = []
     for i, program in enumerate(programs):
         lines.append("")
         lines.append(f"# plan {i}: {sizeof_program(program)} bytes")
-        lines.extend(" ".join(line) for line in program)
+        if indent:
+            lines.extend(indent_program(program))
+        else:
+            lines.extend(" ".join(line) for line in program)
     return lines
 
 
