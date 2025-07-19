@@ -159,6 +159,7 @@ size_t infer_nless(Structure& structure) {
                      infer_nless_monotone(*NLESS, *JOIN, x, y, z_set)) or
                     (RAND and
                      infer_nless_monotone(*NLESS, *RAND, x, y, z_set))) {
+                    NLESS->insert(x, y);
                     schedule(NegativeOrderTask(x, y));
                 }
             }

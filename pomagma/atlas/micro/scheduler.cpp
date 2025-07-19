@@ -4,6 +4,7 @@
 
 #include <chrono>
 #include <condition_variable>
+#include <pomagma/atlas/micro/vm.hpp>
 #include <pomagma/util/threading.hpp>
 #include <thread>
 #include <vector>
@@ -53,6 +54,11 @@ inline bool try_pop(CleanupTask &task) {
 }  // namespace Cleanup
 
 namespace Scheduler {
+
+static const size_t g_nless_monotone_threshold = [] {
+    const char *env = getenv("POMAGMA_NLESS_MONOTONE_THRESHOLD");
+    return env ? std::stoul(env) : 9'999'999'999ull;
+}();
 
 static size_t g_worker_count = DEFAULT_THREAD_COUNT;
 
@@ -112,6 +118,7 @@ void log_stats() {
 
 template <class Task>
 class TaskQueue {
+   protected:
     tbb::concurrent_queue<Task> m_queue;
 
    public:
@@ -173,10 +180,38 @@ class TaskQueue<MergeTask> {
     }
 };
 
+class NegativeOrderTaskQueue : public TaskQueue<NegativeOrderTask> {
+    std::atomic_uint64_t m_size;
+
+   public:
+    NegativeOrderTaskQueue() : m_size(0) {}
+
+    void push(const NegativeOrderTask &task) {
+        TaskQueue<NegativeOrderTask>::push(task);
+        uint64_t size = m_size.fetch_add(1, relaxed);
+        if (unlikely(size == g_nless_monotone_threshold)) {
+            POMAGMA_INFO("NLESS monotone threshold reached: " << size);
+            vm::VirtualMachine::enable_nless_monotone(false);
+        }
+    }
+
+    bool try_execute() {
+        m_size.fetch_sub(1, relaxed);
+        return TaskQueue<NegativeOrderTask>::try_execute();
+    }
+
+    void cancel_referencing(Ob ob) {
+        int64_t diff = -TaskQueue<NegativeOrderTask>::m_queue.unsafe_size();
+        TaskQueue<NegativeOrderTask>::cancel_referencing(ob);
+        diff += TaskQueue<NegativeOrderTask>::m_queue.unsafe_size();
+        m_size.fetch_add(diff, relaxed);
+    }
+};
+
 static TaskQueue<MergeTask> g_merge_tasks;
 static TaskQueue<ExistsTask> g_exists_tasks;
 static TaskQueue<PositiveOrderTask> g_positive_order_tasks;
-static TaskQueue<NegativeOrderTask> g_negative_order_tasks;
+static NegativeOrderTaskQueue g_negative_order_tasks;
 static TaskQueue<UnaryRelationTask> g_unary_relation_tasks;
 static TaskQueue<NullaryFunctionTask> g_nullary_function_tasks;
 static TaskQueue<InjectiveFunctionTask> g_injective_function_tasks;

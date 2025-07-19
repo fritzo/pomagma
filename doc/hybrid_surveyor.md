@@ -122,10 +122,10 @@ Extend the VirtualMachine class in [`pomagma/atlas/vm.hpp`](../pomagma/atlas/vm.
 
 ```cpp
 class VirtualMachine {
-    std::array<bool, 256> m_global_config;
+    static std::array<bool, 256> s_global_config;
     
-    void set_global_config(uint8_t index, bool value) {
-        m_global_config[index] = value;
+    static void set_global_config(uint8_t index, bool value) {
+        s_global_config[index] = value;
     }
 };
 ```
@@ -135,7 +135,7 @@ The VM handler in [`pomagma/atlas/vm_impl.hpp`](../pomagma/atlas/vm_impl.hpp) fo
 ```cpp
 case IF_GLOBAL: {
     uint8_t config_id = pop_arg(program);
-    if (m_global_config[config_id]) {
+    if (s_global_config[config_id]) {
         _execute(program, context);  // Execute rest of this branch
     }
     // Otherwise skip this entire branch
@@ -272,9 +272,9 @@ Compare the execution times to find the optimal threshold for your workload size
 - [x] Extend VirtualMachine class in [`pomagma/atlas/vm.hpp`](../pomagma/atlas/vm.hpp) with global configuration state management
 - [x] Modify [`pomagma/compiler/compiler.py`](../pomagma/compiler/compiler.py) to generate conditional NLESS programs with proper skip-byte calculation
 - [x] Port cartographer's batch algorithms from [`pomagma/cartographer/infer.cpp`](../pomagma/cartographer/infer.cpp) to new BatchNlessInference class for atlas/micro
-- [ ] Implement DenseSet mode selection supporting both concurrent and sequential variants for batch processing
-- [ ] Add queue size tracking to [`pomagma/atlas/micro/scheduler.cpp`](../pomagma/atlas/micro/scheduler.cpp) and integrate with NLESS insertion callbacks
+- [x] Add queue size tracking to [`pomagma/atlas/micro/scheduler.cpp`](../pomagma/atlas/micro/scheduler.cpp) and integrate with NLESS insertion callbacks
+- [x] Integrate hybrid mode selection in [`pomagma/surveyor/survey_main.cpp`](../pomagma/surveyor/survey_main.cpp) with environment variable control
 - [ ] Create survey_hybrid() function in [`pomagma/atlas/micro/scheduler.cpp`](../pomagma/atlas/micro/scheduler.cpp) with threshold-based mode switching
 - [ ] Extend [`pomagma/atlas/micro/binary_relation.cpp`](../pomagma/atlas/micro/binary_relation.cpp) to track NLESS-specific insertions
-- [ ] Integrate hybrid mode selection in [`pomagma/surveyor/survey_main.cpp`](../pomagma/surveyor/survey_main.cpp) with environment variable control
+- [ ] Implement DenseSet mode selection supporting both concurrent and sequential variants for batch processing
 - [ ] Benchmark hybrid system against baseline surveyor using existing `profile_surveyor` command and validate correctness across theories

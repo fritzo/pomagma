@@ -17,6 +17,8 @@ namespace vm {
 //----------------------------------------------------------------------------
 // VirtualMachine
 
+std::array<bool, 256> VirtualMachine::s_global_config;
+
 template <class Table>
 static void declare(
     const std::unordered_map<std::string, Table *> &unordered_map,
@@ -641,7 +643,7 @@ void VirtualMachine::_execute(Program program,
         } break;
 
         case IF_GLOBAL: {
-            if (m_global_config[pop_arg(program)]) {
+            if (s_global_config[pop_arg(program)]) {
                 _execute(program, context);
             }
         } break;

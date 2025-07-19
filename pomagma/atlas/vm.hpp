@@ -25,7 +25,7 @@ class VirtualMachine {
 
     VirtualMachine() : m_carrier(nullptr) {
         POMAGMA_ASSERT(is_aligned(this, 64), "VirtualMachine is misaligned");
-        m_global_config[ENABLE_NLESS_MONOTONE] = true;
+        enable_nless_monotone();
     }
 
     ProgramParser &parser() noexcept { return m_parser; }
@@ -91,8 +91,8 @@ class VirtualMachine {
         ENABLE_NLESS_MONOTONE = 1,
     };
 
-    void set_global_config(uint8_t index, bool value) {
-        m_global_config[index] = value;
+    static void enable_nless_monotone(bool value = true) {
+        s_global_config[ENABLE_NLESS_MONOTONE] = value;
     }
 
    private:
@@ -155,6 +155,7 @@ class VirtualMachine {
     size_t item_dim() const { return support().item_dim(); }
     size_t word_dim() const { return support().word_dim(); }
 
+    static std::array<bool, 256> s_global_config;
     UnaryRelation *m_unary_relations[256];
     BinaryRelation *m_binary_relations[256];
     NullaryFunction *m_nullary_functions[256];
@@ -163,7 +164,6 @@ class VirtualMachine {
     SymmetricFunction *m_symmetric_functions[256];
     Carrier *m_carrier;
     ProgramParser m_parser;
-    std::array<bool, 256> m_global_config;
 
 } __attribute__((aligned(64)));
 
