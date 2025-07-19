@@ -220,6 +220,43 @@ void DenseSet::set_insn(const DenseSet& lhs, const DenseSet& rhs) {
     }
 }
 
+void DenseSet::set_insn(const DenseSet& xs, const DenseSet& ys,
+                        const DenseSet& zs) {
+    POMAGMA_ASSERT1(item_dim() == xs.item_dim(), "xs.item_dim mismatch");
+    POMAGMA_ASSERT1(item_dim() == ys.item_dim(), "ys.item_dim mismatch");
+    POMAGMA_ASSERT1(item_dim() == zs.item_dim(), "zs.item_dim mismatch");
+
+    const size_t M = m_word_dim;
+    const std::atomic<Word>* restrict x = assume_aligned(xs.m_words);
+    const std::atomic<Word>* restrict y = assume_aligned(ys.m_words);
+    const std::atomic<Word>* restrict z = assume_aligned(zs.m_words);
+    std::atomic<Word>* restrict w = assume_aligned(m_words);
+
+    for (size_t m = 0; m < M; ++m) {
+        w[m].store(x[m].load(relaxed) & y[m].load(relaxed) & z[m].load(relaxed),
+                   relaxed);
+    }
+}
+
+void DenseSet::set_pnn(const DenseSet& pos1, const DenseSet& pos2,
+                       const DenseSet& neg) {
+    POMAGMA_ASSERT1(item_dim() == pos1.item_dim(), "pos1.item_dim mismatch");
+    POMAGMA_ASSERT1(item_dim() == pos2.item_dim(), "pos2.item_dim mismatch");
+    POMAGMA_ASSERT1(item_dim() == neg.item_dim(), "neg.item_dim mismatch");
+
+    const size_t M = m_word_dim;
+    const std::atomic<Word>* restrict s = assume_aligned(pos1.m_words);
+    const std::atomic<Word>* restrict t = assume_aligned(pos2.m_words);
+    const std::atomic<Word>* restrict u = assume_aligned(neg.m_words);
+    std::atomic<Word>* restrict v = assume_aligned(m_words);
+
+    for (size_t m = 0; m < M; ++m) {
+        v[m].store(
+            s[m].load(relaxed) & ~t[m].load(relaxed) & ~u[m].load(relaxed),
+            relaxed);
+    }
+}
+
 // this += dep; dep = 0;
 void DenseSet::merge(DenseSet& dep) {
     POMAGMA_ASSERT4(m_item_dim == dep.m_item_dim, "dep has wrong size");

@@ -519,7 +519,6 @@ inline bool infer_nless_monotone(const BinaryRelation& NLESS,
                     return true;
                 }
             }
-
         } else if (Ob y_ = fun.find(y, y)) {
             DenseSet nless = NLESS.get_Rx_set(y_);
             for (auto iter = fun.iter_lhs(x); iter.ok(); iter.next()) {

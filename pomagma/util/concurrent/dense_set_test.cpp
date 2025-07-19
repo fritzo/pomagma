@@ -135,14 +135,17 @@ void test_operations(size_t size, rng_t &rng) {
 
     DenseSet x(size);
     DenseSet y(size);
+    DenseSet z(size);
     DenseSet expected(size);
     DenseSet actual(size);
 
     x.fill_random(rng);
     y.fill_random(rng);
+    z.fill_random(rng);
 
     POMAGMA_ASSERT(bool(x.count_items()) ^ x.empty(), ".empty() is wrong");
     POMAGMA_ASSERT(bool(y.count_items()) ^ y.empty(), ".empty() is wrong");
+    POMAGMA_ASSERT(bool(z.count_items()) ^ z.empty(), ".empty() is wrong");
 
     POMAGMA_INFO("testing comparison");
     POMAGMA_ASSERT_EQ(x == y, x <= y and y <= x);
@@ -198,7 +201,7 @@ void test_operations(size_t size, rng_t &rng) {
     actual.set_union(x, y);
     POMAGMA_ASSERT(actual == expected, "set_union is wrong");
 
-    POMAGMA_INFO("testing intersection");
+    POMAGMA_INFO("testing binary intersection");
     expected.zero();
     actual.zero();
     for (Ob i = 1; i <= size; ++i) {
@@ -216,6 +219,28 @@ void test_operations(size_t size, rng_t &rng) {
     actual.zero();
     actual.set_insn(x, y);
     POMAGMA_ASSERT(actual == expected, "set_insn is wrong");
+
+    POMAGMA_INFO("testing ternary intersection");
+    expected.zero();
+    for (Ob i = 1; i <= size; ++i) {
+        if (x.contains(i) and y.contains(i) and z.contains(i)) {
+            expected.insert(i);
+        }
+    }
+    actual.zero();
+    actual.set_insn(x, y, z);
+    POMAGMA_ASSERT(actual == expected, "ternary set_insn is wrong");
+
+    POMAGMA_INFO("testing pnn");
+    expected.zero();
+    for (Ob i = 1; i <= size; ++i) {
+        if (x.contains(i) and not y.contains(i) and not z.contains(i)) {
+            expected.insert(i);
+        }
+    }
+    actual.zero();
+    actual.set_pnn(x, y, z);
+    POMAGMA_ASSERT(actual == expected, "set_pnn is wrong");
 
     // these are shared for merge(-), merge(-,-) & ensure
     DenseSet expected_rep(size);

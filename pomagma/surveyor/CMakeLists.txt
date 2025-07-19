@@ -1,6 +1,6 @@
 include_directories(${CMAKE_SOURCE_DIR})
 
-add_library(pomagma_surveyor SHARED theory.cpp)
+add_library(pomagma_surveyor SHARED theory.cpp infer.cpp)
 target_link_libraries(pomagma_surveyor
 	${POMAGMA_CHART_LIBS}
 )

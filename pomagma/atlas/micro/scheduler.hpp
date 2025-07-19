@@ -11,7 +11,7 @@
 
 namespace pomagma {
 
-const size_t DEFAULT_THREAD_COUNT = 1;
+constexpr size_t DEFAULT_THREAD_COUNT = 1;
 
 class UnaryRelation;
 class NullaryFunction;

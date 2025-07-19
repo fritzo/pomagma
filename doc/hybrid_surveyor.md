@@ -65,8 +65,7 @@ size_t infer_nless(Structure& structure) {
         // ... filtering code ...
         for (auto iter = y_set.iter(); iter.ok(); iter.next()) {
             Ob y = *iter;
-            if (infer_nless_transitive(LESS, NLESS, x, y) or
-                infer_nless_monotone(NLESS, APP, nonconst, x, y, z_set) or
+            if (infer_nless_monotone(NLESS, APP, nonconst, x, y, z_set) or
                 infer_nless_monotone(NLESS, COMP, nonconst, x, y, z_set) or
                 (JOIN and infer_nless_monotone(NLESS, *JOIN, x, y, z_set)) or
                 (RAND and infer_nless_monotone(NLESS, *RAND, x, y, z_set))) {
@@ -77,9 +76,7 @@ size_t infer_nless(Structure& structure) {
 }
 ```
 
-This includes:
-- `infer_nless_transitive()` - Handles transitivity rules `NLESS x z, LESS y z ⟹ NLESS x y`
-- Multiple `infer_nless_monotone()` calls for APP, COMP, JOIN, and RAND functions implementing monotonicity rules
+This includes multiple `infer_nless_monotone()` calls for APP, COMP, JOIN, and RAND functions implementing the expensive monotonicity rules that correspond to the performance hotspots identified in the benchmarks.
 
 ### VM Program Structure and Compilation
 
@@ -208,10 +205,8 @@ public:
         // Disable incremental NLESS processing
         get_vm().set_global_config(0, false);
         
-        // Run adapted versions of cartographer algorithms
-        size_t count = 0;
-        count += infer_nless_transitive_batch();
-        count += infer_nless_monotone_batch();
+        // Run adapted versions of cartographer's monotonicity algorithms
+        size_t count = infer_nless_monotone_batch();
         
         // Reset queue size and re-enable incremental processing
         Scheduler::reset_nless_queue();
@@ -222,7 +217,7 @@ public:
 };
 ```
 
-The batch algorithms use embarrassingly parallel outer loops over E-classes with efficient set operations, avoiding the expensive inverse iteration that dominates incremental processing.
+The batch algorithms use embarrassingly parallel outer loops over E-classes with efficient set operations, avoiding the expensive inverse iteration that dominates incremental processing. This focuses specifically on the monotonicity rules for APP, COMP, JOIN, and RAND functions.
 
 ### Hybrid Convergence Loop
 
@@ -276,9 +271,9 @@ Compare the execution times to find the optimal threshold for your workload size
 - [x] Add IF_GLOBAL opcode to [`pomagma/atlas/program.hpp`](../pomagma/atlas/program.hpp) and implement VM handler in [`pomagma/atlas/vm_impl.hpp`](../pomagma/atlas/vm_impl.hpp)
 - [x] Extend VirtualMachine class in [`pomagma/atlas/vm.hpp`](../pomagma/atlas/vm.hpp) with global configuration state management
 - [x] Modify [`pomagma/compiler/compiler.py`](../pomagma/compiler/compiler.py) to generate conditional NLESS programs with proper skip-byte calculation
-- [ ] Add queue size tracking to [`pomagma/atlas/micro/scheduler.cpp`](../pomagma/atlas/micro/scheduler.cpp) and integrate with NLESS insertion callbacks
-- [ ] Port cartographer's batch algorithms from [`pomagma/cartographer/infer.cpp`](../pomagma/cartographer/infer.cpp) to new BatchNlessInference class for atlas/micro
+- [x] Port cartographer's batch algorithms from [`pomagma/cartographer/infer.cpp`](../pomagma/cartographer/infer.cpp) to new BatchNlessInference class for atlas/micro
 - [ ] Implement DenseSet mode selection supporting both concurrent and sequential variants for batch processing
+- [ ] Add queue size tracking to [`pomagma/atlas/micro/scheduler.cpp`](../pomagma/atlas/micro/scheduler.cpp) and integrate with NLESS insertion callbacks
 - [ ] Create survey_hybrid() function in [`pomagma/atlas/micro/scheduler.cpp`](../pomagma/atlas/micro/scheduler.cpp) with threshold-based mode switching
 - [ ] Extend [`pomagma/atlas/micro/binary_relation.cpp`](../pomagma/atlas/micro/binary_relation.cpp) to track NLESS-specific insertions
 - [ ] Integrate hybrid mode selection in [`pomagma/surveyor/survey_main.cpp`](../pomagma/surveyor/survey_main.cpp) with environment variable control
