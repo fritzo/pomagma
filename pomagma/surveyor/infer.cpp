@@ -1,6 +1,5 @@
 #include "infer.hpp"
 
-#include <mutex>
 #include <pomagma/atlas/micro/scheduler.hpp>
 #include <pomagma/atlas/micro/structure_impl.hpp>
 
@@ -130,7 +129,6 @@ size_t infer_nless(Structure& structure) {
 
     size_t start_count = NLESS->count_pairs();
 
-    std::mutex mutex;
 #pragma omp parallel
     {
         DenseSet y_set(item_dim);
