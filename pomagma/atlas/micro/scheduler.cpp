@@ -356,7 +356,7 @@ void initialize(const char *theory_file) {
         }
         if (vm::VirtualMachine::get_nless_monotone()) break;
         POMAGMA_INFO("starting batch inference");
-        if (!infer_nless(get_structure())) break;
+        if (!infer_nless()) break;
     }
     POMAGMA_INFO("finished inference");
     log_stats();
@@ -373,7 +373,7 @@ void survey() {
         }
         if (vm::VirtualMachine::get_nless_monotone()) break;
         POMAGMA_INFO("starting batch inference");
-        if (!infer_nless(get_structure())) break;
+        if (!infer_nless()) break;
     }
     POMAGMA_INFO("finished inference");
     log_stats();
@@ -397,7 +397,7 @@ void survey_until_deadline(const char *theory_file) {
         if (!g_deadline_flag) break;
         if (vm::VirtualMachine::get_nless_monotone()) break;
         POMAGMA_INFO("starting batch inference");
-        if (!infer_nless(get_structure())) break;
+        if (!infer_nless()) break;
     }
     POMAGMA_INFO("finished inference");
     log_stats();

@@ -9,6 +9,8 @@
 
 namespace pomagma {
 
+Structure& get_structure();  // defined in theory.cpp
+
 namespace {
 
 // All the nonconst filtering below is only an optimization.
@@ -113,7 +115,8 @@ inline bool infer_nless_monotone(const BinaryRelation& NLESS,
 
 }  // namespace
 
-size_t infer_nless(Structure& structure) {
+size_t infer_nless() {
+    Structure& structure = get_structure();
     Signature& signature = structure.signature();
     const Carrier& carrier = structure.carrier();
     const BinaryRelation* LESS = signature.binary_relation("LESS");

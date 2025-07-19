@@ -1,8 +1,9 @@
 #pragma once
 
-#include <pomagma/atlas/micro/structure.hpp>
+#include <cstddef>
+
 namespace pomagma {
 
-size_t infer_nless(Structure& structure);
+size_t infer_nless();
 
 }  // namespace pomagma

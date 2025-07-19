@@ -56,4 +56,9 @@ void validate_all() { POMAGMA_INFO("validate_all()"); }
 
 void log_stats() { POMAGMA_INFO("log_stats()"); }
 
+size_t infer_nless() {
+    POMAGMA_INFO("infer_nless()");
+    return 0;
+}
+
 }  // namespace pomagma
