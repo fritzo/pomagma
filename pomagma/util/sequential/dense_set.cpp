@@ -58,16 +58,30 @@ bool DenseSet::empty() const {
     return true;
 }
 
-// supa-slow, try not to use
+// optimized with popcount intrinsic
 size_t DenseSet::count_items() const {
     size_t result = 0;
-    for (size_t m = 0, M = m_word_dim; m < M; ++m) {
-        // WARNING only unsigned's work with >>
-        static_assert(Word(1) >> 1 == 0, "bitshifting Word fails");
-        for (Word word = m_words[m]; word; word >>= 1) {
-            result += word & Word(1);
+    const size_t M = m_word_dim;
+    const Word *restrict words = assume_aligned(m_words);
+
+#if defined(__GNUC__) || defined(__clang__)
+    // Use compiler intrinsic for popcount - much faster than bit-by-bit
+    POMAGMA_VECTORIZE_LOOP
+    for (size_t m = 0; m < M; ++m) {
+        result += __builtin_popcountl(words[m]);
+    }
+#else
+    // Fallback for other compilers - still better than original
+    POMAGMA_VECTORIZE_LOOP
+    for (size_t m = 0; m < M; ++m) {
+        Word word = words[m];
+        // Brian Kernighan's bit counting - faster than shifting
+        while (word) {
+            result++;
+            word &= word - 1;  // Clear lowest set bit
         }
     }
+#endif
     return result;
 }
 

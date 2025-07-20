@@ -115,8 +115,10 @@ void base_bin_rel_<symmetric>::log_stats(const std::string &prefix) const {
 template <bool symmetric>
 size_t base_bin_rel_<symmetric>::count_pairs() const {
     size_t result = 0;
-    for (auto i = support().iter(); i.ok(); i.next()) {
-        result += Lx_set(*i).count_items();
+#pragma omp parallel for reduction(+ : result)
+    for (size_t i = 1; i <= item_dim(); ++i) {
+        if (not support().contains(i)) continue;
+        result += Lx_set(i).count_items();
     }
     return result;
 }

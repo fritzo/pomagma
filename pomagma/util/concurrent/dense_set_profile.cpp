@@ -62,6 +62,26 @@ double test_equal(size_t exponent, float density, size_t iters = 10000) {
     return iters / timer.elapsed();
 }
 
+double test_count_items(size_t exponent, float density, size_t iters = 100000) {
+    size_t item_count = (1 << exponent) - 1;
+    DenseSet set(item_count);
+    std::bernoulli_distribution randomly_insert(density);
+    for (size_t i = 1; i <= item_count; ++i) {
+        if (randomly_insert(rng)) {
+            set.insert(i);
+        }
+    }
+
+    volatile size_t count = 0;  // volatile prevents optimization
+    Timer timer;
+    for (size_t i = 0; i < iters; ++i) {
+        count += set.count_items();
+    }
+    double elapsed = timer.elapsed();
+    if (elapsed <= 0.0) return 0.0;  // prevent division by zero
+    return iters / elapsed;
+}
+
 int main() {
     Log::Context log_context("concurrent DenseSet profile");
 
@@ -78,6 +98,18 @@ int main() {
         POMAGMA_INFO(std::setw(15)
                      << exponent << std::setw(15) << freq1 << std::setw(15)
                      << freq2 << std::setw(15) << freq3);
+    }
+
+    // Profile count_items specifically
+    POMAGMA_INFO("--------------------------------");
+    POMAGMA_INFO("count_items() benchmark (optimized with popcount):");
+    POMAGMA_INFO(std::setw(10) << "log2(size)" << std::setw(15) << "count(MHz)"
+                               << std::setw(15) << "density");
+    for (size_t exponent = min_exponent; exponent < max_exponent; ++exponent) {
+        float density = 0.1f + 0.4f / (1 << (exponent - min_exponent));
+        float freq = test_count_items(exponent, density) / 1000000;  // MHz
+        POMAGMA_INFO(std::setw(15) << exponent << std::setw(15) << freq
+                                   << std::setw(15) << density);
     }
 
     return 0;
