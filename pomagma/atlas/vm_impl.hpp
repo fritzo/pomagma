@@ -17,7 +17,7 @@ namespace vm {
 //----------------------------------------------------------------------------
 // VirtualMachine
 
-std::array<bool, 256> VirtualMachine::s_global_config;
+concurrent::DenseSet VirtualMachine::s_global_config(256);
 
 template <class Table>
 static void declare(
@@ -643,7 +643,7 @@ void VirtualMachine::_execute(Program program,
         } break;
 
         case IF_GLOBAL: {
-            if (s_global_config[pop_arg(program)]) {
+            if (s_global_config.contains(pop_arg(program))) {
                 _execute(program, context);
             }
         } break;

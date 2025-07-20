@@ -7,6 +7,7 @@
 #include <map>
 #include <pomagma/atlas/program_fwd.hpp>
 #include <pomagma/util/aligned_alloc.hpp>
+#include <pomagma/util/concurrent/dense_set.hpp>
 #include <pomagma/util/profiler.hpp>
 #include <unordered_map>
 
@@ -92,11 +93,11 @@ class VirtualMachine {
     };
 
     static bool get_nless_monotone() {
-        return s_global_config[ENABLE_NLESS_MONOTONE];
+        return s_global_config.contains(ENABLE_NLESS_MONOTONE);
     }
 
     static void set_nless_monotone(bool value = true) {
-        s_global_config[ENABLE_NLESS_MONOTONE] = value;
+        s_global_config.set(ENABLE_NLESS_MONOTONE, value);
     }
 
    private:
@@ -159,7 +160,7 @@ class VirtualMachine {
     size_t item_dim() const { return support().item_dim(); }
     size_t word_dim() const { return support().word_dim(); }
 
-    static std::array<bool, 256> s_global_config;
+    static concurrent::DenseSet s_global_config;
     UnaryRelation *m_unary_relations[256];
     BinaryRelation *m_binary_relations[256];
     NullaryFunction *m_nullary_functions[256];

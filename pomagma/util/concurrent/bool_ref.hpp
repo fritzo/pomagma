@@ -34,6 +34,13 @@ class bool_ref {
     bool fetch_zero(order_t order = relaxed) {
         return m_word->fetch_and(~m_mask, order) & m_mask;
     }
+    void set(bool value, order_t order = relaxed) {
+        if (value) {
+            one(order);
+        } else {
+            zero(order);
+        }
+    }
 };
 
 }  // namespace concurrent

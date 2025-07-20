@@ -230,6 +230,7 @@ class DenseSet : noncopyable {
     void insert(size_t i, order_t order = relaxed);
     bool try_insert(size_t i);
     void remove(size_t i, order_t order = relaxed);
+    void set(size_t i, bool value, order_t order = relaxed);
     void merge(size_t i, size_t j);
     void insert_all();
     size_t try_insert_one();
@@ -286,6 +287,10 @@ inline bool DenseSet::try_insert(size_t i) {
 inline void DenseSet::remove(size_t i, order_t order) {
     POMAGMA_ASSERT4(contains(i), "double removal: " << i);
     _bit(i).zero(order);
+}
+
+inline void DenseSet::set(size_t i, bool value, order_t order) {
+    _bit(i).set(value, order);
 }
 
 inline void DenseSet::merge(size_t i, size_t j __attribute__((unused))) {
