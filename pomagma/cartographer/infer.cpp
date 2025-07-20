@@ -891,14 +891,14 @@ size_t infer_nless(Structure& structure) {
     const DenseSet nonconst = get_nonconst(structure);
     const size_t item_dim = carrier.item_dim();
 
-    size_t start_count = NLESS.count_pairs();
-
+    std::atomic_size_t theorem_count = 0;
     std::mutex mutex;
 #pragma omp parallel
     {
         DenseSet y_set(item_dim);
         DenseSet z_set(item_dim);
         LhsFixedTheoremQueue theorems(NLESS);
+        size_t local_count = 0;
 
 #pragma omp for schedule(dynamic, 1)
         for (Ob x = 1; x <= item_dim; ++x) {
@@ -922,14 +922,15 @@ size_t infer_nless(Structure& structure) {
                     (RAND and
                      infer_nless_monotone(NLESS, *RAND, x, y, z_set))) {
                     theorems.push(x, y);
+                    ++local_count;
                 }
             }
 
             theorems.flush(mutex);
+            theorem_count.fetch_add(local_count, std::memory_order_acq_rel);
         }
     }
 
-    size_t theorem_count = NLESS.count_pairs() - start_count;
     POMAGMA_INFO("inferred " << theorem_count << " NLESS facts");
     return theorem_count;
 }

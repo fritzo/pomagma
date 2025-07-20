@@ -119,23 +119,22 @@ size_t infer_nless() {
     Structure& structure = get_structure();
     Signature& signature = structure.signature();
     const Carrier& carrier = structure.carrier();
-    const BinaryRelation* LESS = signature.binary_relation("LESS");
-    BinaryRelation* NLESS = signature.binary_relation("NLESS");
-    const BinaryFunction* APP = signature.binary_function("APP");
-    const BinaryFunction* COMP = signature.binary_function("COMP");
+    const BinaryRelation& LESS = structure.binary_relation("LESS");
+    BinaryRelation& NLESS = structure.binary_relation("NLESS");
+    const BinaryFunction& APP = structure.binary_function("APP");
+    const BinaryFunction& COMP = structure.binary_function("COMP");
     const SymmetricFunction* JOIN = signature.symmetric_function("JOIN");
     const SymmetricFunction* RAND = signature.symmetric_function("RAND");
-    POMAGMA_ASSERT(LESS && NLESS, "missing relations");
-
     const DenseSet nonconst = get_nonconst(structure);
     const size_t item_dim = carrier.item_dim();
 
-    size_t start_count = NLESS->count_pairs();
+    std::atomic_size_t theorem_count = 0;
 
 #pragma omp parallel
     {
         DenseSet y_set(item_dim);
         DenseSet z_set(item_dim);
+        size_t local_count = 0;
 
 #pragma omp for schedule(dynamic, 1)
         for (Ob x = 1; x <= item_dim; ++x) {
@@ -143,30 +142,29 @@ size_t infer_nless() {
                 continue;
             }
 
-            y_set.set_pnn(carrier.support(), LESS->get_Lx_set(x),
-                          NLESS->get_Lx_set(x));
+            y_set.set_pnn(carrier.support(), LESS.get_Lx_set(x),
+                          NLESS.get_Lx_set(x));
             for (auto iter = y_set.iter(); iter.ok(); iter.next()) {
                 Ob y = *iter;
                 POMAGMA_ASSERT(carrier.contains(y), "unsupported ob: " << y);
-                POMAGMA_ASSERT_UNDECIDED(*LESS, x, y);
-                POMAGMA_ASSERT_UNDECIDED(*NLESS, x, y);
+                POMAGMA_ASSERT_UNDECIDED(LESS, x, y);
+                POMAGMA_ASSERT_UNDECIDED(NLESS, x, y);
 
-                if ((APP and infer_nless_monotone(*NLESS, *APP, nonconst, x, y,
-                                                  z_set)) or
-                    (COMP and infer_nless_monotone(*NLESS, *COMP, nonconst, x,
-                                                   y, z_set)) or
+                if (infer_nless_monotone(NLESS, APP, nonconst, x, y, z_set) or
+                    infer_nless_monotone(NLESS, COMP, nonconst, x, y, z_set) or
                     (JOIN and
-                     infer_nless_monotone(*NLESS, *JOIN, x, y, z_set)) or
+                     infer_nless_monotone(NLESS, *JOIN, x, y, z_set)) or
                     (RAND and
-                     infer_nless_monotone(*NLESS, *RAND, x, y, z_set))) {
-                    NLESS->insert(x, y);
+                     infer_nless_monotone(NLESS, *RAND, x, y, z_set))) {
+                    NLESS.insert(x, y);
                     schedule(NegativeOrderTask(x, y));
+                    ++local_count;
                 }
             }
         }
+        theorem_count.fetch_add(local_count, std::memory_order_acq_rel);
     }
 
-    size_t theorem_count = NLESS->count_pairs() - start_count;
     POMAGMA_INFO("inferred " << theorem_count << " NLESS facts");
     return theorem_count;
 }
