@@ -43,3 +43,6 @@ compile_commands.json
 # eclipse
 /.cproject
 /.project
+
+# ai
+.claude/
