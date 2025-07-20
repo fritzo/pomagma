@@ -78,6 +78,7 @@ def extract_block(program: Program) -> Program:
 
 
 TRIVIAL_BLOCK: Program = (("FOR_BLOCK",), ("FOR_ALL", "a"), ("IF_BLOCK", "a"))
+FUSE_BLOCK_OVERLAP: int = 2
 
 
 def are_compatible(program1: Program, program2: Program) -> bool:
@@ -89,8 +90,10 @@ def are_compatible(program1: Program, program2: Program) -> bool:
         if block1 != block2:
             return False
         if block1 == TRIVIAL_BLOCK:
-            # Require nontrivial sharing
-            return program1[3] == program2[3]
+            # Require nontrivial overlap
+            tail1 = program1[len(TRIVIAL_BLOCK):]
+            tail2 = program2[len(TRIVIAL_BLOCK):]
+            return tail1[:FUSE_BLOCK_OVERLAP] == tail2[:FUSE_BLOCK_OVERLAP]
     return True
 
 
