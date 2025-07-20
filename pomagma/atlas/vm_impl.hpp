@@ -823,10 +823,14 @@ void VirtualMachine::_execute(Program program,
             auto &fun2 = pop_binary_function(program);
             auto &lhs2 = pop_ob(program, context);
             auto &rhs2 = pop_ob(program, context);
-            if (Ob val = fun1.find(lhs1, rhs1)) {
-                fun2.insert(lhs2, rhs2, val);
-            } else if (Ob val = fun2.find(lhs2, rhs2)) {
-                fun1.insert(lhs1, rhs1, val);
+            Ob val1 = fun1.defined(lhs1, rhs1) ? fun1.find(lhs1, rhs1) : 0;
+            Ob val2 = fun2.defined(lhs2, rhs2) ? fun2.find(lhs2, rhs2) : 0;
+            if (val1 && val2) {
+                carrier().ensure_equal(val1, val2);
+            } else if (val1) {
+                fun2.insert(lhs2, rhs2, val1);
+            } else if (val2) {
+                fun1.insert(lhs1, rhs1, val2);
             }
         } break;
 
@@ -837,10 +841,14 @@ void VirtualMachine::_execute(Program program,
             auto &fun2 = pop_symmetric_function(program);
             auto &lhs2 = pop_ob(program, context);
             auto &rhs2 = pop_ob(program, context);
-            if (Ob val = fun1.find(lhs1, rhs1)) {
-                fun2.insert(lhs2, rhs2, val);
-            } else if (Ob val = fun2.find(lhs2, rhs2)) {
-                fun1.insert(lhs1, rhs1, val);
+            Ob val1 = fun1.defined(lhs1, rhs1) ? fun1.find(lhs1, rhs1) : 0;
+            Ob val2 = fun2.defined(lhs2, rhs2) ? fun2.find(lhs2, rhs2) : 0;
+            if (val1 && val2) {
+                carrier().ensure_equal(val1, val2);
+            } else if (val1) {
+                fun2.insert(lhs2, rhs2, val1);
+            } else if (val2) {
+                fun1.insert(lhs1, rhs1, val2);
             }
         } break;
 
@@ -851,10 +859,14 @@ void VirtualMachine::_execute(Program program,
             auto &fun2 = pop_symmetric_function(program);
             auto &lhs2 = pop_ob(program, context);
             auto &rhs2 = pop_ob(program, context);
-            if (Ob val = fun1.find(lhs1, rhs1)) {
-                fun2.insert(lhs2, rhs2, val);
-            } else if (Ob val = fun2.find(lhs2, rhs2)) {
-                fun1.insert(lhs1, rhs1, val);
+            Ob val1 = fun1.defined(lhs1, rhs1) ? fun1.find(lhs1, rhs1) : 0;
+            Ob val2 = fun2.defined(lhs2, rhs2) ? fun2.find(lhs2, rhs2) : 0;
+            if (val1 && val2) {
+                carrier().ensure_equal(val1, val2);
+            } else if (val1) {
+                fun2.insert(lhs2, rhs2, val1);
+            } else if (val2) {
+                fun1.insert(lhs1, rhs1, val2);
             }
         } break;
 
