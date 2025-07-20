@@ -1106,3 +1106,107 @@ NLESS COMP c d COMP c e   NLESS COMP c d COMP e d
 -----------------------   -----------------------
        NLESS d e                NLESS c e
 </pre>
+
+## 2025-07-20
+
+After moving the surveyor's NLESS monotone inference from incremental to batch kernels, profiling shows `GIVEN...NLESS` is reduced from ~88% to ~55% of inference time.
+Before (`pomagma make skja`):
+<pre>
+ Line       Calls Percent   Total sec Per call sec
+----- ----------- ------- ----------- ------------
+ 6439     1441744   88.86   109525.08      0.08
+ 1116         233    2.54     3132.41     13.44
+ 1124         233    1.88     2315.77      9.94
+ 1356         233    1.74     2150.35      9.23
+ 1070         233    0.91     1116.55      4.79
+</pre>
+After (`pomagma make skja`):
+<pre>
+ Line       Calls Percent   Total sec Per call sec
+----- ----------- ------- ----------- ------------
+ 6324    14531884   55.21    95706.39      0.01
+ 1101        1398   23.07    39993.45     28.61
+ 1070        1628    7.96    13806.70      8.48
+ 1257        1398    6.44    11168.21      7.99
+ 1160        1398    3.70     6413.09      4.59
+</pre>
+where first line is `GIVEN...NLESS` and the next four are initial cleanup tasks (which I've since unfused to reduce per call sec).
+
+Consider a smaller profile with POMAGMA_LINE_PROFILE enabled
+<pre>
+pomagma.make profile-surveyor skja extra_size=6144 grow_by=128
+</pre>
+<pre>
+30564   1205.36     INFO     Line       Calls Percent   Total sec Per call sec
+30564   1205.36     INFO    ----- ----------- ------- ----------- ------------
+30564   1205.36     INFO     6403     2045840   25.58     1813.31      0.00
+30564   1205.36     INFO     1116         650   18.21     1290.67      1.99
+30564   1205.36     INFO     1124         650   15.36     1088.46      1.67
+30564   1205.36     INFO     1336         520   11.82      838.08      1.61
+30564   1205.36     INFO     1070         650    3.86      273.44      0.42
+</pre>
+The first is NLESS and the next three are all cleanup tasks.
+The heaviest hitting `GIVEN...NLESS` lines are in the `U` inference rule:
+<pre>
+GIVEN_BINARY_RELATION NLESS a b
+FOR_NULLARY_FUNCTION U c
+SEQUENCE
+  FOR_BINARY_FUNCTION_VAL APP d e a           # 6 samples (0.0%)
+  FOR_BINARY_FUNCTION_LHS_RHS APP c d f       # 1,004 samples (5.2%)
+  IF_BINARY_FUNCTION APP f e b                # 991 samples (5.1%)
+  INFER_BINARY_RELATION NLESS a e
+FOR_BINARY_FUNCTION_VAL APP d e b             # 1 samples (0.0%)
+FOR_BINARY_FUNCTION_LHS_RHS APP c d f         # 821 samples (4.2%)
+IF_BINARY_FUNCTION APP f e a                  # 833 samples (4.3%)
+INFER_BINARY_RELATION NLESS b e
+</pre>
+corresponding to the sequents in `closures.theory`
+<pre>
+        LESS APP f x x                LESS APP f x x
+  --------------------------   ---------------------------
+  LESS APP APP U f x APP f x   EQUAL APP APP U f x APP f x
+</pre>
+
+The cleanup rules are:
+<pre>
+# Implements app-comp-assoc: EQUAL APP COMP x y z APP x APP y z
+FOR_BLOCK
+FOR_ALL a
+IF_BLOCK a
+FOR_BINARY_FUNCTION_LHS COMP a b c
+FOR_BINARY_FUNCTION_LHS APP b d e               # 6 samples (0.0%)
+INFER_BINARY_BINARY APP c d APP a e             # 3,573 samples (18.3%)
+
+# Implements comp-assoc: EQUAL COMP x COMP y z COMP COMP x y z
+FOR_BLOCK
+FOR_ALL a
+IF_BLOCK a
+FOR_BINARY_FUNCTION_LHS COMP a b c
+FOR_BINARY_FUNCTION_LHS COMP b d e              # 1 samples (0.0%)
+INFER_BINARY_BINARY COMP a e COMP c d           # 3,058 samples (15.7%)
+
+# Implements beta-C: EQUAL APP APP APP C x y z APP APP x z y
+FOR_BLOCK
+FOR_NULLARY_FUNCTION C a
+FOR_BINARY_FUNCTION_LHS APP a b c
+IF_BLOCK b
+FOR_BINARY_FUNCTION_LHS APP c d e
+FOR_BINARY_FUNCTION_LHS APP b f g               # 2 samples (0.0%)
+INFER_BINARY_BINARY APP e f APP g d             # 2,487 samples (12.8%)
+</pre>
+The associativity rules might be sped up via const-filtering as in infer.cpp.
+It may be worth implementing const-filtering in the compiler.
+
+The beta-C rule could see better cache-locality with a pairwise iterator, materializing both Lrv lines, then traversing their cartesian product in Hilbert curve order.
+This could be a new FOR_CARTESIAN instruction, yielding a more cache-friendly beta-C program:
+<pre>
+FOR_NULLARY_FUNCTION C c
+FOR_BINARY_FUNCTION_LHS APP c x cx
+LETS_BINARY_FUNCTION_LHS APP cx ys
+LETS_BINARY_FUNCTION_LHS APP x zs
+FOR_CARTESIAN ys zs y z
+LET_BINARY_FUNCTION cx y cxy
+LET_BINARY_FUNCTION x z xz
+INFER_BINARY_BINARY APP xz y APP cxy z
+</pre>
+Also in f1d66196 I made `INFER_BINARY_BINARY` read the function support before reading function values, reducing memory bandwidth at the cost of an extra read on success.
