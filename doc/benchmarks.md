@@ -1210,3 +1210,14 @@ LET_BINARY_FUNCTION x z xz
 INFER_BINARY_BINARY APP xz y APP cxy z
 </pre>
 Also in f1d66196 I made `INFER_BINARY_BINARY` read the function support before reading function values, reducing memory bandwidth at the cost of an extra read on success.
+
+Running `pomagma make skja` at `item_dim=15921`, NLESS is more expensive:
+<pre>
+ Line       Calls Percent   Total sec Per call sec
+----- ----------- ------- ----------- ------------
+ 6403    15287186   48.21    99881.30      0.01
+ 1116        2241   11.00    22784.32     10.17
+ 1124        2241    9.63    19954.73      8.90
+ 1336        1992    6.21    12860.61      6.46
+ 1070        2241    4.85    10055.44      4.49
+</pre>
