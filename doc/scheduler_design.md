@@ -123,7 +123,7 @@ This division of labor allows the system to benefit from both complete inference
 
 The design focuses on three main optimizations to reduce surveyor cleanup overhead:
 
-1. **Reduce cleanup work** by refactoring the surveyor incremental scheduler to use acquire-release semantics and a phased/BSP (Bulk Synchronous Parallel) workflow. This eliminates the need for a final cleanup phase by ensuring incremental inference is complete.
+1. **Reduce cleanup work** by refactoring the surveyor incremental scheduler to use acquire-release semantics and a phased/BSP (Bulk Synchronous Parallel) workflow. This eliminates the need for a final cleanup phase by ensuring incremental inference is complete. *See [theorem_queue.md](theorem_queue.md) for the detailed implementation of phased inference using theorem queues.*
 
 2. **Avoid initial cleanup work** for rules implemented in the cartographer by detecting when databases have already been processed by the cartographer's rule set.
 This requires the compiler to add `IF_GLOBAL` guards to cleanup rules that are known to be implemented in the cartographer.
@@ -142,136 +142,211 @@ The redesigned scheduler addresses the fundamental completeness issues by implem
 
 **Relaxed Memory Ordering with Barriers**: With full barriers between phases, database operations can use `std::memory_order_relaxed` for performance, since the barriers provide necessary synchronization points. Only the barriers themselves need acquire-release semantics.
 
-**Double-Buffer with Work Stealing**: Use ping-pong queues for phase transitions and work stealing within each phase for optimal load balancing.
+**Double-Buffer with Work Redistribution and Stealing**: Use ping-pong queues for phase transitions, work redistribution at barriers for load balancing, and work stealing within phases for efficiency.
 
-#### Hybrid Double-Buffer + Work Stealing Architecture
+#### Phased Scheduler Architecture
 
-The new scheduler combines ping-pong queues for phase management with work stealing for load balancing:
+The scheduler uses `uint64_t` tasks with double-buffered queues, combining work redistribution at barriers with work stealing within phases:
 
 ```cpp
-class HybridScheduler {
+class PhasedScheduler {
 private:
-    // Double-buffered per-thread work deques  
-    std::vector<std::array<WorkStealingDeque<Task>, 2>> thread_deques;
-    
-    // Current buffer indices (ping-pong between 0 and 1)
+    std::vector<std::array<std::vector<uint64_t>, 2>> thread_queues;
     std::atomic<int> read_buffer{0};
     std::atomic<int> write_buffer{1};
-    
-    // Phase synchronization
     ThreadBarrier phase_barrier;
-    const int num_threads;
 
 public:
-    // Schedule task to current write buffer
-    template<typename TaskType>
-    void schedule_task(TaskType&& task, int thread_id) {
-        int write_idx = write_buffer.load(std::memory_order_relaxed);
-        thread_deques[thread_id][write_idx].push_bottom(task);
-    }
-    
-    // Worker thread main loop
     void worker_loop(int thread_id) {
         while (true) {
             int read_idx = read_buffer.load(std::memory_order_relaxed);
+            auto& my_tasks = thread_queues[thread_id][read_idx];
             
-            // Phase 1: Execute local tasks from read buffer
-            while (auto task = thread_deques[thread_id][read_idx].pop_bottom()) {
-                execute_task(*task);
-                
-                // New tasks go to write buffer for next phase
-                schedule_generated_tasks(task->generated_tasks, thread_id);
+            // Process local tasks first
+            for (uint64_t task : my_tasks) {
+                execute_task(task, thread_id);
             }
+            my_tasks.clear();
             
-            // Phase 2: Steal work from other threads' read buffers
-            for (int steal_attempts = 0; steal_attempts < num_threads; ++steal_attempts) {
-                int victim = (thread_id + steal_attempts + 1) % num_threads;
-                if (auto task = thread_deques[victim][read_idx].steal_top()) {
-                    execute_task(*task);
-                    schedule_generated_tasks(task->generated_tasks, thread_id);
-                    break; // Found work, restart local processing
+            // Steal work from other threads
+            for (int victim = 0; victim < num_threads; ++victim) {
+                if (victim == thread_id) continue;
+                auto& victim_tasks = thread_queues[victim][read_idx];
+                if (!victim_tasks.empty()) {
+                    // Steal half the remaining work
+                    size_t steal_count = victim_tasks.size() / 2;
+                    for (size_t i = 0; i < steal_count; ++i) {
+                        execute_task(victim_tasks.back(), thread_id);
+                        victim_tasks.pop_back();
+                    }
                 }
             }
             
-            // Phase 3: Wait for phase completion and buffer swap
+            // Barrier: last thread redistributes work and swaps buffers
             if (phase_barrier.wait()) {
-                // Last thread: swap ping-pong buffers
-                swap_buffers();
+                redistribute_and_swap();
             }
         }
     }
     
 private:
-    void swap_buffers() {
-        int old_read = read_buffer.load(std::memory_order_relaxed);
-        int old_write = write_buffer.load(std::memory_order_relaxed);
+    void redistribute_and_swap() {
+        // Collect and redistribute work from write buffers
+        std::vector<uint64_t> all_tasks;
+        int write_idx = write_buffer.load(std::memory_order_relaxed);
         
-        read_buffer.store(old_write, std::memory_order_relaxed);
-        write_buffer.store(old_read, std::memory_order_relaxed);
+        for (auto& thread_buffer : thread_queues) {
+            auto& tasks = thread_buffer[write_idx];
+            all_tasks.insert(all_tasks.end(), tasks.begin(), tasks.end());
+            tasks.clear();
+        }
+        
+        // Round-robin distribution
+        for (size_t i = 0; i < all_tasks.size(); ++i) {
+            thread_queues[i % num_threads][write_idx].push_back(all_tasks[i]);
+        }
+        
+        // Swap ping-pong buffers
+        std::swap(read_buffer, write_buffer);
     }
 };
 ```
 
-#### Cache-Friendly Data Structure Design
+#### WorkStealingDeque with Batch Operations
 
-**Per-Thread Work Deques**: Each thread maintains a cache-line-aligned double-ended queue optimized for local LIFO scheduling and remote FIFO stealing:
+**Per-Thread Work Deques**: Each thread maintains a cache-line-aligned deque optimized for `uint64_t` tasks with batch operations:
 
 ```cpp
-template<typename T>
 class WorkStealingDeque {
 private:
-    // Cache-line aligned to prevent false sharing
     alignas(64) std::atomic<size_t> top{0};
     alignas(64) std::atomic<size_t> bottom{0};
-    alignas(64) std::vector<std::atomic<T*>> buffer;
+    alignas(64) std::vector<uint64_t> buffer;
     
 public:
-    // Local thread pushes to bottom (LIFO for cache locality)
-    void push_bottom(T* task) {
+    // Batch push for multiple tasks (avoids excessive individual pushes)
+    void push_batch(const std::vector<uint64_t>& tasks) {
         size_t b = bottom.load(std::memory_order_relaxed);
-        buffer[b % buffer.size()].store(task, std::memory_order_relaxed);
+        size_t new_bottom = b + tasks.size();
+        
+        // Ensure buffer capacity
+        if (new_bottom >= buffer.size()) {
+            buffer.resize(std::max(new_bottom * 2, buffer.size()));
+        }
+        
+        // Copy tasks to buffer
+        for (size_t i = 0; i < tasks.size(); ++i) {
+            buffer[(b + i) % buffer.size()] = tasks[i];
+        }
+        
+        bottom.store(new_bottom, std::memory_order_release);
+    }
+    
+    // Single push for immediate scheduling
+    void push_bottom(uint64_t task) {
+        size_t b = bottom.load(std::memory_order_relaxed);
+        if (b >= buffer.size()) {
+            buffer.resize(std::max(b * 2, size_t(64)));
+        }
+        buffer[b % buffer.size()] = task;
         bottom.store(b + 1, std::memory_order_release);
     }
     
-    // Local thread pops from bottom (LIFO)
-    T* pop_bottom() {
+    // Local pop (LIFO for cache locality)
+    uint64_t pop_bottom() {
         size_t b = bottom.load(std::memory_order_relaxed);
-        if (b == 0) return nullptr;
+        if (b == 0) return 0;  // Empty (0 is invalid task)
         
         b = b - 1;
         bottom.store(b, std::memory_order_relaxed);
         
-        T* task = buffer[b % buffer.size()].load(std::memory_order_relaxed);
+        uint64_t task = buffer[b % buffer.size()];
         
         size_t t = top.load(std::memory_order_acquire);
         if (t <= b) {
             return task;  // Common case: no contention
         }
         
-        // Contention with steal - use acquire-release semantics
+        // Contention with steal
         bottom.store(b + 1, std::memory_order_relaxed);
-        return nullptr;
+        return 0;
     }
     
-    // Remote threads steal from top (FIFO for work distribution)
-    T* steal_top() {
+    // Steal approximately half the current work
+    std::vector<uint64_t> steal_half() {
         size_t t = top.load(std::memory_order_acquire);
         size_t b = bottom.load(std::memory_order_acquire);
         
-        if (t >= b) return nullptr;  // Empty or contention
+        if (t >= b) return {};  // Empty
         
-        T* task = buffer[t % buffer.size()].load(std::memory_order_relaxed);
+        size_t available = b - t;
+        size_t steal_count = available / 2;
+        if (steal_count == 0) steal_count = 1;
         
-        if (!top.compare_exchange_weak(t, t + 1, 
+        // Try to reserve steal_count items
+        if (!top.compare_exchange_weak(t, t + steal_count,
                                        std::memory_order_acq_rel,
                                        std::memory_order_relaxed)) {
-            return nullptr;  // Race with another stealer
+            return {};  // Race with another stealer
         }
         
-        return task;
+        // Extract stolen tasks
+        std::vector<uint64_t> stolen;
+        stolen.reserve(steal_count);
+        for (size_t i = 0; i < steal_count; ++i) {
+            stolen.push_back(buffer[(t + i) % buffer.size()]);
+        }
+        
+        return stolen;
     }
 };
 ```
+
+#### Task Encoding as uint64_t
+
+Tasks are encoded as `uint64_t` using a union structure with `uint8_t` tag, `uint8_t` ID field, and `uint24_t` object identifiers:
+
+```cpp
+union Task {
+    uint64_t raw;
+    uint32_t uint32s[2];
+    uint8_t uint8s[8];
+    
+    static_assert(std::endian::native == std::endian::little, 
+                  "Task encoding requires little-endian architecture");
+    
+    Task(uint8_t t, uint8_t i, uint32_t o1, uint32_t o2 = 0) {
+        uint32s[0] = o1;
+        uint32s[1] = o2;
+        uint8s[0] = t;
+        uint8s[4] = i;
+    }
+        
+    // Fast accessors using array indexing (no shifts!)
+    uint8_t get_type() const { return uint8s[0]; }
+    uint8_t get_id() const { return uint8s[4]; }
+    uint32_t get_ob1() const { return uint32s[0] & 0xFFFFFF; }
+    uint32_t get_ob2() const { return uint32s[1] & 0xFFFFFF; }
+};
+
+enum TaskType : uint8_t {
+    _UNUSED,                  // 0 = empty/invalid task
+    MERGE_TASK,               // fields: {type, _, merged_ob, target_ob}
+    EXISTS_TASK,              // fields: {type, _, new_ob, _}
+    POSITIVE_ORDER_TASK,      // fields: {type, _, lhs_ob, rhs_ob}
+    NEGATIVE_ORDER_TASK,      // fields: {type, _, lhs_ob, rhs_ob}
+    UNARY_RELATION_TASK,      // fields: {type, relation_id, ob, _}
+    BINARY_RELATION_TASK,     // fields: {type, relation_id, lhs_ob, rhs_ob}
+    BINARY_FUNCTION_TASK,     // fields: {type, function_id, lhs_ob, rhs_ob}
+    SYMMETRIC_FUNCTION_TASK,  // fields: {type, function_id, lhs_ob, rhs_ob}
+    CLEANUP_TASK,             // fields: {type, cleanup_type, block_id, _}
+    SAMPLE_TASK,              // fields: {type, _, target_size, _}
+    ASSUME_TASK,              // fields: {type, _, theory_index, _}
+    NLESS_BATCH_TASK          // fields: {type, _, start_ob, end_ob}
+};
+```
+
+This encoding supports both surveyor (16-bit objects) and cartographer (24-bit objects, up to 16M) while fitting perfectly in 64 bits. The `id` field efficiently encodes relation/function identifiers, and the tag-based dispatch enables fast task type identification.
 
 #### Performance Optimizations
 
@@ -329,3 +404,18 @@ This would enable a workflow where:
 3. Only truly new inference (from incremental GIVEN tasks) requires cleanup
 
 The implementation complexity would be moderate - the compiler already generates specialized versions of rules for different atlas types, so extending this to generate inverse-table-free complete rules is feasible.
+
+## Work Plan
+
+The following tasks implement the scheduler redesign in incremental commits:
+
+- [ ] Implement `WorkStealingDeque` class with cache-aligned atomics and LIFO/FIFO operations
+- [ ] Add `ThreadBarrier` class using futex-based synchronization for BSP-style phase coordination  
+- [ ] Create `HybridScheduler` class with double-buffered per-thread deques and ping-pong buffer management
+- [ ] Replace current task queue system in `/pomagma/atlas/micro/scheduler.cpp` with hybrid scheduler interface
+- [ ] Add task classification logic to route tasks to appropriate phases (merge/enforce/cleanup/batch)
+- [ ] Implement phase transition logic with barrier synchronization and buffer swapping
+- [ ] Add work stealing algorithm with NUMA-aware victim selection and batch stealing optimization
+- [ ] Update database operations to use relaxed memory ordering while maintaining correctness through barriers
+- [ ] Add saturation tracking to skip cleanup phase when no new inference is generated
+- [ ] Update compiler to generate `IF_GLOBAL` guards for cleanup rules implemented in cartographer
