@@ -252,7 +252,7 @@ void execute_phased_vm_programs() {
 
 ## Work Plan
 
-- [ ] Extract theorem queue classes from cartographer/infer.cpp into shared header `/pomagma/atlas/theorem_queue.hpp` with template support for micro/macro atlas types
+- [x] Extract theorem queue classes from cartographer/infer.cpp into shared header `/pomagma/atlas/theorem_queue.hpp` with template support for micro/macro atlas types
 - [ ] Implement `TheoremQueueSet` class with thread-safe merging and BSP-style coordination using OpenMP implicit barriers
 - [ ] Create `ProvingContext` extension of VM `Context` that captures theorem queues instead of direct database writes during proving phases
 - [ ] Modify VM opcodes `INFER_*` in vm_impl.hpp to route through theorem queues when in proving context mode
