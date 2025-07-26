@@ -91,7 +91,7 @@ The design splits inference into two distinct phases connected by theorem queues
 **Per-Thread Queues with Global Merging**: Each worker thread maintains private theorem queues during the proving phase to avoid contention. During the write phase, a designated coordinator thread merges all per-thread queues before applying theorems:
 
 ```cpp
-class TheoremQueueSet {
+class TheoremQueue {
     std::vector<UnaryTheoremQueue> unary_queues;
     std::vector<BinaryTheoremQueue> binary_queues;
     std::vector<FunctionTheoremQueue> function_queues;
@@ -102,7 +102,7 @@ public:
     void prove_phase_push_binary(uint8_t rel_id, Ob lhs, Ob rhs);
     void prove_phase_push_function(uint8_t fun_id, Ob lhs, Ob rhs, Ob val);
     
-    void merge_from_thread(const TheoremQueueSet& local_queues);
+    void merge_from_thread(const TheoremQueue& local_queues);
     void write_phase_apply_all(Signature& signature);
 };
 ```
@@ -170,7 +170,7 @@ size_t infer_nless() {
 ```cpp
 struct Context {
     // ... existing fields ...
-    TheoremQueueSet theorem_queues;
+    TheoremQueue theorem_queues;
     
     void clear() {
         // ... existing clear logic ...
@@ -202,7 +202,7 @@ case INFER_BINARY_RELATION: {
 ```cpp
 namespace Scheduler {
 void execute_phased_vm_programs() {
-    TheoremQueueSet global_queues;
+    TheoremQueue global_queues;
     
     // Proving phase - programs distributed across threads
 #pragma omp parallel
@@ -253,8 +253,8 @@ void execute_phased_vm_programs() {
 ## Work Plan
 
 - [x] Extract theorem queue classes from cartographer/infer.cpp into shared header `/pomagma/atlas/theorem_queue.hpp` with template support for micro/macro atlas types
-- [ ] Implement `TheoremQueueSet` class with thread-safe merging and BSP-style coordination using OpenMP implicit barriers
-- [ ] Create `ProvingContext` extension of VM `Context` that captures theorem queues instead of direct database writes during proving phases
+- [ ] Implement `TheoremQueue` class with thread-safe merging and BSP-style coordination using OpenMP implicit barriers
+- [ ] Add a `TheoremQueue` to the `Context` to capture queue theorems instead of direct database writing during proving phases
 - [ ] Modify VM opcodes `INFER_*` in vm_impl.hpp to route through theorem queues when in proving context mode
 - [ ] Add phased execution methods to scheduler.cpp using OpenMP implicit barriers between proving and write phases for VM program execution
 - [ ] Refactor surveyor/infer.cpp to use shared theorem queue infrastructure instead of direct `NLESS.insert()` calls during parallel computation

@@ -3,6 +3,9 @@
 #include <atomic>
 #include <pomagma/util/util.hpp>
 
+#define POMAGMA_OB_BITWIDTH 16
+#include <pomagma/atlas/obs.hpp>
+
 #define POMAGMA_HAS_INVERSE_INDEX (1)
 
 namespace pomagma {
@@ -11,24 +14,13 @@ namespace concurrent {}
 using namespace concurrent;
 
 //----------------------------------------------------------------------------
-// Obs
-
-// Ob is a 1-based index type with 0 = none
-typedef uint16_t Ob;
-static_assert(sizeof(Ob) == sizeof(std::atomic<Ob>),
-              "std::atomic<Ob> is larger than Ob");
-
-static const size_t MAX_ITEM_DIM = (1UL << (8UL * sizeof(Ob))) - 1UL;
-static const size_t DEFAULT_ITEM_DIM = BITS_PER_CACHE_LINE - 1;
-
-//----------------------------------------------------------------------------
 // tiled blocks of atomic Ob
 
 // There are two 64B cache lines per square tile.
 // The more common traversal pattern is fixed-lhs while varying-rhs.
-static const size_t LOG2_ITEMS_PER_TILE = 3;
-static const size_t ITEMS_PER_TILE = 1 << LOG2_ITEMS_PER_TILE;
-static const size_t TILE_POS_MASK = ITEMS_PER_TILE - 1;
+static constexpr size_t LOG2_ITEMS_PER_TILE = 3;
+static constexpr size_t ITEMS_PER_TILE = 1 << LOG2_ITEMS_PER_TILE;
+static constexpr size_t TILE_POS_MASK = ITEMS_PER_TILE - 1;
 typedef std::atomic<Ob> Tile[ITEMS_PER_TILE * ITEMS_PER_TILE];
 
 inline std::atomic<Ob>& _tile2value(std::atomic<Ob>* tile, Ob i, Ob j) {

@@ -2,6 +2,9 @@
 
 #include <pomagma/util/util.hpp>
 
+#define POMAGMA_OB_BITWIDTH 32
+#include <pomagma/atlas/obs.hpp>
+
 #define POMAGMA_USE_SPARSE_HASH 0
 
 #if POMAGMA_USE_SPARSE_HASH == 1
@@ -19,52 +22,7 @@ namespace pomagma {
 namespace sequential {}
 using namespace sequential;
 
-//----------------------------------------------------------------------------
-// Obs
-
-// Ob is a 1-based index type with 0 = none
-typedef uint32_t Ob;
-static const size_t MAX_ITEM_DIM = (1UL << (8UL * sizeof(Ob))) - 1UL;
-static const size_t HASH_MULTIPLIER = 11400714819323198485ULL;
-
-struct FastObHash {
-    static size_t hash(size_t ob1) { return ob1; }
-
-    static size_t hash(size_t ob1, size_t ob2) { return (ob1 << 32) | ob2; }
-
-    static size_t hash(size_t ob1, size_t ob2, size_t ob3) {
-        size_t state = (ob1 << 32) | ob2;
-        state *= HASH_MULTIPLIER;
-        state += ob3;
-        return state;
-    }
-
-    static size_t hash(size_t ob1, size_t ob2, size_t ob3, size_t ob4) {
-        size_t state = (ob1 << 32) | ob2;
-        state *= HASH_MULTIPLIER;
-        state += (ob3 << 32) | ob4;
-        return state;
-    }
-};
-
-struct ObPairHash {
-    size_t operator()(const std::pair<Ob, Ob>& pair) const {
-        static_assert(sizeof(size_t) == 8, "invalid sizeof(size_t)");
-        size_t x = pair.first;
-        size_t y = pair.second;
-        return ((x << 32) | y) * HASH_MULTIPLIER;
-    }
-};
-
-struct TrivialObPairHash {
-    size_t operator()(const std::pair<Ob, Ob>& pair) const {
-        static_assert(sizeof(size_t) == 8, "invalid sizeof(size_t)");
-        size_t x = pair.first;
-        size_t y = pair.second;
-        return (x << 32) | y;
-    }
-};
-
+// TODO switch to absl::flat_hash_map and absl::flat_hash_set
 #if POMAGMA_USE_SPARSE_HASH == 1
 
 struct ObPairMap : google::sparse_hash_map<std::pair<Ob, Ob>, Ob, ObPairHash> {
