@@ -58,7 +58,7 @@ void infer_less_transitive(const Carrier& carrier, BinaryRelation& LESS,
 #pragma omp parallel
     {
         DenseSet y_set(item_dim);
-        LhsFixedTheoremQueue theorems(LESS);
+        BinaryRelationRowTheoremQueue theorems(LESS);
 
 #pragma omp for schedule(dynamic, 1)
         for (Ob x = 1; x <= item_dim; ++x) {
@@ -89,7 +89,7 @@ inline void infer_less_monotone_nonconst(const BinaryRelation& LESS,
                                          const BinaryFunction& fun,
                                          const DenseSet& nonconst, const Ob f,
                                          DenseSet& x_set, DenseSet& y_set,
-                                         TheoremQueue& theorems) {
+                                         BinaryRelationTheoremQueue& theorems) {
     for (auto iter = LESS.iter_lhs(f); iter.ok(); iter.next()) {
         Ob g = *iter;
         if (unlikely(g == f)) {
@@ -143,7 +143,8 @@ inline void infer_less_monotone_nonconst(const BinaryRelation& LESS,
 inline void infer_less_monotone_const(const BinaryRelation& LESS,
                                       const BinaryFunction& fun,
                                       const DenseSet& nonconst, const Ob f,
-                                      const Ob f_, TheoremQueue& theorems) {
+                                      const Ob f_,
+                                      BinaryRelationTheoremQueue& theorems) {
     for (auto iter = LESS.iter_lhs(f); iter.ok(); iter.next()) {
         Ob g = *iter;
         if (nonconst(g)) {
@@ -175,7 +176,7 @@ void infer_less_monotone(const Carrier& carrier, BinaryRelation& LESS,
     {
         DenseSet x_set(item_dim);
         DenseSet y_set(item_dim);
-        TheoremQueue theorems(LESS);
+        BinaryRelationTheoremQueue theorems(LESS);
 
 #pragma omp for schedule(dynamic, 1)
         for (Ob f = 1; f <= item_dim; ++f) {
@@ -216,7 +217,7 @@ void infer_less_monotone(const Carrier& carrier, BinaryRelation& LESS,
         DenseSet g_set(item_dim);
         DenseSet x_set(item_dim);
         DenseSet y_set(item_dim);
-        TheoremQueue theorems(LESS);
+        BinaryRelationTheoremQueue theorems(LESS);
 
 #pragma omp for schedule(dynamic, 1)
         for (size_t iter = 0; iter < f_count; ++iter) {
@@ -277,7 +278,7 @@ void infer_less_join_monotone(const Carrier& carrier, BinaryRelation& LESS,
         DenseSet x_set(item_dim);
         DenseSet g_set(item_dim);
         DenseSet y_set(item_dim);
-        TheoremQueue theorems(LESS);
+        BinaryRelationTheoremQueue theorems(LESS);
 
 #pragma omp for schedule(dynamic, 1)
         for (size_t iter = 0; iter < f_count; ++iter) {
@@ -354,7 +355,7 @@ void infer_less_convex(const Carrier& carrier, BinaryRelation& LESS,
     {
         DenseSet z_set(item_dim);
         DenseSet y_set(item_dim);
-        TheoremQueue theorems(LESS);
+        BinaryRelationTheoremQueue theorems(LESS);
 
 #pragma omp for schedule(dynamic, 1)
         for (Ob x = 1; x <= item_dim; ++x) {
@@ -396,7 +397,7 @@ void infer_less_linear(const Carrier& carrier, BinaryRelation& LESS,
     {
         DenseSet z_set(item_dim);
         DenseSet y_set(item_dim);
-        TheoremQueue theorems(LESS);
+        BinaryRelationTheoremQueue theorems(LESS);
 
 #pragma omp for schedule(dynamic, 1)
         for (Ob x = 1; x <= item_dim; ++x) {
@@ -522,11 +523,11 @@ size_t infer_assoc(Structure& structure, BinaryFunction& FUN1,
     const size_t item_dim = structure.carrier().item_dim();
     const DenseSet nonconst = get_nonconst(structure);
 
-    BinaryTheoremQueue master_queue;
+    BinaryFunctionTheoremQueue master_queue;
 #pragma omp parallel
     {
         DenseSet y_set(item_dim);
-        BinaryTheoremQueue worker_queue;
+        BinaryFunctionTheoremQueue worker_queue;
 #pragma omp for schedule(dynamic, 1)
         for (Ob x = 1; x <= item_dim; ++x) {
             if (not nonconst.contains(x)) {
@@ -561,10 +562,10 @@ size_t infer_assoc(Structure& structure, SymmetricFunction& FUN) {
     const Carrier& carrier = structure.carrier();
     const size_t item_dim = carrier.item_dim();
 
-    BinaryTheoremQueue master_queue;
+    BinaryFunctionTheoremQueue master_queue;
 #pragma omp parallel
     {
-        BinaryTheoremQueue worker_queue;
+        BinaryFunctionTheoremQueue worker_queue;
 #pragma omp for schedule(dynamic, 1)
         for (Ob x = 1; x <= item_dim; ++x) {
             if (not carrier.contains(x)) {
@@ -602,10 +603,10 @@ size_t infer_transpose(Structure& structure, const BinaryFunction& APP,
     const size_t item_dim = structure.carrier().item_dim();
     const DenseSet C_set = APP.get_Lx_set(C);
 
-    BinaryTheoremQueue master_queue;
+    BinaryFunctionTheoremQueue master_queue;
 #pragma omp parallel
     {
-        BinaryTheoremQueue worker_queue;
+        BinaryFunctionTheoremQueue worker_queue;
 #pragma omp for schedule(dynamic, 1)
         for (Ob x = 1; x <= item_dim; ++x) {
             if (not C_set.contains(x)) {
@@ -781,7 +782,7 @@ size_t infer_nless(Structure& structure) {
     {
         DenseSet y_set(item_dim);
         DenseSet z_set(item_dim);
-        LhsFixedTheoremQueue theorems(NLESS);
+        BinaryRelationRowTheoremQueue theorems(NLESS);
         size_t local_count = 0;
 
 #pragma omp for schedule(dynamic, 1)

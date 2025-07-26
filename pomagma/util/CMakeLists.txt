@@ -35,6 +35,7 @@ add_unit_test(worker_pool)
 add_unit_test(async_map)
 add_unit_test(lazy_map)
 add_unit_test(dense_set_store)
+add_unit_test(sort_uniq)
 
 pomagma_add_executable(queue_profile queue_profile.cpp)
 target_link_libraries(queue_profile ${POMAGMA_UTIL_LIBS})
