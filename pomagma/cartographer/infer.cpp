@@ -1,5 +1,6 @@
 #include "infer.hpp"
 
+#include <atomic>
 #include <mutex>
 #include <pomagma/atlas/macro/scheduler.hpp>
 #include <pomagma/atlas/macro/structure_impl.hpp>
