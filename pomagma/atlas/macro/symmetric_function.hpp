@@ -56,10 +56,9 @@ class SymmetricFunction : noncopyable {
     size_t item_dim() const { return support().item_dim(); }
 
     struct Queue {
+        Queue() { clear(); }
         std::vector<std::tuple<Ob, Ob, Ob>> m_tasks;
         void insert(Ob lhs, Ob rhs, Ob val);
-        void infer_equal(const SymmetricFunction& fun, Ob lhs1, Ob rhs1,
-                         Ob lhs2, Ob rhs2);
         void clear();
     };
     Queue& worker_queue() const;
