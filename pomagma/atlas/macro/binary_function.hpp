@@ -40,6 +40,12 @@ class BinaryFunction : noncopyable {
     void insert(Ob lhs, Ob rhs, Ob val) const;
     void update_values() const;  // postcondition: all values are reps
 
+    // safe thread-locally queued operations
+    void lazy_insert(Ob lhs, Ob rhs, Ob val) const;
+    void lazy_equate(Ob lhs1, Ob rhs1, Ob lhs2, Ob rhs2) const;
+    void lazy_gather() const;   // called by worker threads
+    size_t lazy_flush() const;  // called by main thread
+
     // unsafe operations
     void unsafe_merge(const Ob dep);
 
@@ -47,6 +53,18 @@ class BinaryFunction : noncopyable {
     const Carrier& carrier() const { return m_lines.carrier(); }
     const DenseSet& support() const { return m_lines.support(); }
     size_t item_dim() const { return support().item_dim(); }
+
+    struct Queue {
+        Queue() { clear(); }
+        std::vector<std::tuple<Ob, Ob, Ob>> m_tasks;
+        void insert(Ob lhs, Ob rhs, Ob val);
+        void clear();
+    };
+    Queue& worker_queue() const;
+    mutable Queue m_queue;
+    mutable std::mutex m_queue_mutex;
+    static thread_local std::unordered_map<const BinaryFunction*, Queue>*
+        s_worker_queues;
 };
 
 inline bool BinaryFunction::defined(Ob lhs, Ob rhs) const {
@@ -105,6 +123,34 @@ inline void BinaryFunction::insert(Ob lhs, Ob rhs, Ob val) const {
         m_lines.Lx(lhs, rhs).one();
         m_lines.Rx(lhs, rhs).one();
     }
+}
+
+inline void BinaryFunction::lazy_insert(Ob lhs, Ob rhs, Ob val) const {
+    worker_queue().insert(lhs, rhs, val);
+}
+
+inline void BinaryFunction::lazy_equate(Ob lhs1, Ob rhs1, Ob lhs2,
+                                        Ob rhs2) const {
+    Ob val1 = find(lhs1, rhs1);
+    Ob val2 = find(lhs2, rhs2);
+    if (likely(val1 == val2)) return;
+    if (val2 == 0 or (val1 != 0 and val2 > val1)) {
+        lazy_insert(lhs2, rhs2, val1);
+    } else {
+        lazy_insert(lhs1, rhs1, val2);
+    }
+}
+
+inline BinaryFunction::Queue& BinaryFunction::worker_queue() const {
+    if (unlikely(s_worker_queues == nullptr)) {
+        // never freed
+        s_worker_queues = new std::unordered_map<const BinaryFunction*, Queue>;
+    }
+    return (*s_worker_queues)[this];
+}
+
+inline void BinaryFunction::Queue::insert(Ob lhs, Ob rhs, Ob val) {
+    m_tasks.emplace_back(lhs, rhs, val);
 }
 
 }  // namespace pomagma

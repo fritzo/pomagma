@@ -524,11 +524,9 @@ size_t infer_assoc(Structure& structure, BinaryFunction& FUN1,
     const size_t item_dim = structure.carrier().item_dim();
     const DenseSet nonconst = get_nonconst(structure);
 
-    BinaryFunctionTheoremQueue master_queue;
 #pragma omp parallel
     {
         DenseSet y_set(item_dim);
-        BinaryFunctionTheoremQueue worker_queue;
 #pragma omp for schedule(dynamic, 1)
         for (Ob x = 1; x <= item_dim; ++x) {
             if (not nonconst.contains(x)) {
@@ -543,16 +541,15 @@ size_t infer_assoc(Structure& structure, BinaryFunction& FUN1,
                 for (auto iter = FUN1.iter_lhs(y); iter.ok(); iter.next()) {
                     Ob z = *iter;
                     Ob yz = FUN1.find(y, z);
-
-                    worker_queue.infer_equal(FUN1, x, yz, xy, z);
+                    FUN1.lazy_equate(x, yz, xy, z);
                 }
             }
         }
-
-        worker_queue.delegate_to(master_queue);
+        FUN1.lazy_gather();
     }
 
-    size_t theorem_count = master_queue.process(structure, FUN1);
+    size_t theorem_count = FUN1.lazy_flush();
+    process_mergers(structure.signature());
     POMAGMA_INFO("inferred " << theorem_count << " assoc facts");
     return theorem_count;
 }
@@ -563,10 +560,8 @@ size_t infer_assoc(Structure& structure, SymmetricFunction& FUN) {
     const Carrier& carrier = structure.carrier();
     const size_t item_dim = carrier.item_dim();
 
-    BinaryFunctionTheoremQueue master_queue;
 #pragma omp parallel
     {
-        BinaryFunctionTheoremQueue worker_queue;
 #pragma omp for schedule(dynamic, 1)
         for (Ob x = 1; x <= item_dim; ++x) {
             if (not carrier.contains(x)) {
@@ -583,16 +578,15 @@ size_t infer_assoc(Structure& structure, SymmetricFunction& FUN) {
                         break;
                     }  // by symmetry
                     Ob yz = FUN.find(y, z);
-
-                    worker_queue.infer_equal(FUN, x, yz, xy, z);
+                    FUN.lazy_equate(x, yz, xy, z);
                 }
             }
         }
-
-        worker_queue.delegate_to(master_queue);
+        FUN.lazy_gather();
     }
 
-    size_t theorem_count = master_queue.process(structure, FUN);
+    size_t theorem_count = FUN.lazy_flush();
+    process_mergers(structure.signature());
     POMAGMA_INFO("inferred " << theorem_count << " assoc facts");
     return theorem_count;
 }
@@ -604,10 +598,8 @@ size_t infer_transpose(Structure& structure, const BinaryFunction& APP,
     const size_t item_dim = structure.carrier().item_dim();
     const DenseSet C_set = APP.get_Lx_set(C);
 
-    BinaryFunctionTheoremQueue master_queue;
 #pragma omp parallel
     {
-        BinaryFunctionTheoremQueue worker_queue;
 #pragma omp for schedule(dynamic, 1)
         for (Ob x = 1; x <= item_dim; ++x) {
             if (not C_set.contains(x)) {
@@ -626,15 +618,15 @@ size_t infer_transpose(Structure& structure, const BinaryFunction& APP,
                     Ob z = *iter;
                     Ob xz = APP.find(x, z);
 
-                    worker_queue.infer_equal(APP, Cxy, z, xz, y);
+                    APP.lazy_equate(Cxy, z, xz, y);
                 }
             }
         }
-
-        worker_queue.delegate_to(master_queue);
+        APP.lazy_gather();
     }
 
-    size_t theorem_count = master_queue.process(structure, APP);
+    size_t theorem_count = APP.lazy_flush();
+    process_mergers(structure.signature());
     POMAGMA_INFO("inferred " << theorem_count << " transpose facts");
     return theorem_count;
 }
