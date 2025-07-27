@@ -106,7 +106,7 @@ void SymmetricFunction::unsafe_merge(const Ob dep) {
 }
 
 void SymmetricFunction::flush_to(Queue& source, Queue& destin) const {
-    if (&source == &destin) return;
+    if (source.m_tasks.empty()) return;
     sort_uniq(source.m_tasks);
     if (&source == &destin) return;
     {
