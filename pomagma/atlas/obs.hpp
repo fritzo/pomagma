@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <pomagma/util/util.hpp>
 
 namespace pomagma {
