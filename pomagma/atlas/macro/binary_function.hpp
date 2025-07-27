@@ -141,11 +141,10 @@ inline void BinaryFunction::Queue::infer_equal(const BinaryFunction& fun,
                                                Ob rhs2) {
     Ob val1 = fun.find(lhs1, rhs1);
     Ob val2 = fun.find(lhs2, rhs2);
-    if (val1 and val2) {
-        fun.carrier().ensure_equal(val1, val2);
-    } else if (val1) {
+    if (likely(val1 == val2)) return;
+    if (val2 == 0 or (val1 != 0 and val2 > val1)) {
         insert(lhs2, rhs2, val1);
-    } else if (val2) {
+    } else {
         insert(lhs1, rhs1, val2);
     }
 }

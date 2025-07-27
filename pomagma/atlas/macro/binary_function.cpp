@@ -127,8 +127,8 @@ void BinaryFunction::flush_to(Queue& source, Queue& destin) const {
 
 size_t BinaryFunction::flush(Queue& queue) const {
     if (queue.m_tasks.empty()) return 0;
-    for (const auto& task : queue.m_tasks) {
-        insert(std::get<0>(task), std::get<1>(task), std::get<2>(task));
+    for (const auto [lhs, rhs, val] : queue.m_tasks) {
+        insert(lhs, rhs, val);
     }
     size_t theorem_count = queue.m_tasks.size();
     queue.clear();
