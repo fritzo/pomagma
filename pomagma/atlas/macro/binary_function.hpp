@@ -40,6 +40,18 @@ class BinaryFunction : noncopyable {
     void insert(Ob lhs, Ob rhs, Ob val) const;
     void update_values() const;  // postcondition: all values are reps
 
+    // safe thread-locally queued operations
+    struct Queue {
+        std::vector<std::tuple<Ob, Ob, Ob>> m_tasks;
+        void insert(Ob lhs, Ob rhs, Ob val);
+        void infer_equal(const BinaryFunction& fun, Ob lhs1, Ob rhs1, Ob lhs2,
+                         Ob rhs2);
+        void clear() { decltype(m_tasks)().swap(m_tasks); }
+    };
+    Queue& queue() const;
+    void flush_to(Queue& source, Queue& destin) const;
+    size_t flush(Queue& queue) const;
+
     // unsafe operations
     void unsafe_merge(const Ob dep);
 
@@ -47,6 +59,10 @@ class BinaryFunction : noncopyable {
     const Carrier& carrier() const { return m_lines.carrier(); }
     const DenseSet& support() const { return m_lines.support(); }
     size_t item_dim() const { return support().item_dim(); }
+
+    static thread_local std::unordered_map<const BinaryFunction*, Queue>*
+        s_queues;
+    mutable std::mutex m_queue_mutex;
 };
 
 inline bool BinaryFunction::defined(Ob lhs, Ob rhs) const {
@@ -104,6 +120,33 @@ inline void BinaryFunction::insert(Ob lhs, Ob rhs, Ob val) const {
         val_ref = val;
         m_lines.Lx(lhs, rhs).one();
         m_lines.Rx(lhs, rhs).one();
+    }
+}
+inline BinaryFunction::Queue& BinaryFunction::queue() const {
+    if (unlikely(s_queues == nullptr)) {
+        // never freed
+        s_queues = new std::unordered_map<const BinaryFunction*, Queue>;
+    }
+    Queue& queue = (*s_queues)[this];
+    queue.m_tasks.reserve(1024);
+    return queue;
+}
+
+inline void BinaryFunction::Queue::insert(Ob lhs, Ob rhs, Ob val) {
+    m_tasks.emplace_back(lhs, rhs, val);
+}
+
+inline void BinaryFunction::Queue::infer_equal(const BinaryFunction& fun,
+                                               Ob lhs1, Ob rhs1, Ob lhs2,
+                                               Ob rhs2) {
+    Ob val1 = fun.find(lhs1, rhs1);
+    Ob val2 = fun.find(lhs2, rhs2);
+    if (val1 and val2) {
+        fun.carrier().ensure_equal(val1, val2);
+    } else if (val1) {
+        insert(lhs2, rhs2, val1);
+    } else if (val2) {
+        insert(lhs1, rhs1, val2);
     }
 }
 

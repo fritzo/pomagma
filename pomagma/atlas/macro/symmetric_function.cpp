@@ -2,8 +2,13 @@
 
 #include <cstring>
 #include <pomagma/util/aligned_alloc.hpp>
+#include <pomagma/util/sort_uniq.hpp>
 
 namespace pomagma {
+
+thread_local std::unordered_map<const SymmetricFunction*,
+                                SymmetricFunction::Queue>*
+    SymmetricFunction::s_queues = nullptr;
 
 SymmetricFunction::SymmetricFunction(Carrier& carrier) : m_lines(carrier) {
     POMAGMA_DEBUG("creating SymmetricFunction");
@@ -98,6 +103,27 @@ void SymmetricFunction::unsafe_merge(const Ob dep) {
     rep_set.merge(dep_set);
 
     // values must be updated in batch by update_values
+}
+
+void SymmetricFunction::flush_to(Queue& source, Queue& destin) const {
+    if (&source == &destin) return;
+    sort_uniq(source.m_tasks);
+    if (&source == &destin) return;
+    {
+        std::unique_lock<std::mutex> lock(m_queue_mutex);
+        union_sort_uniq(destin.m_tasks, source.m_tasks);
+    }
+    source.clear();
+}
+
+size_t SymmetricFunction::flush(Queue& queue) const {
+    if (queue.m_tasks.empty()) return 0;
+    for (const auto [lhs, rhs, val] : queue.m_tasks) {
+        insert(lhs, rhs, val);
+    }
+    size_t theorem_count = queue.m_tasks.size();
+    queue.clear();
+    return theorem_count;
 }
 
 }  // namespace pomagma

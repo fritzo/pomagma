@@ -2,8 +2,12 @@
 
 #include <cstring>
 #include <pomagma/util/aligned_alloc.hpp>
+#include <pomagma/util/sort_uniq.hpp>
 
 namespace pomagma {
+
+thread_local std::unordered_map<const BinaryFunction*, BinaryFunction::Queue>*
+    BinaryFunction::s_queues = nullptr;
 
 BinaryFunction::BinaryFunction(Carrier& carrier) : m_lines(carrier) {
     POMAGMA_DEBUG("creating BinaryFunction");
@@ -108,6 +112,27 @@ void BinaryFunction::unsafe_merge(const Ob dep) {
     }
 
     // values must be updated in batch by update_values
+}
+
+void BinaryFunction::flush_to(Queue& source, Queue& destin) const {
+    if (source.m_tasks.empty()) return;
+    sort_uniq(source.m_tasks);
+    if (&source == &destin) return;
+    {
+        std::unique_lock<std::mutex> lock(m_queue_mutex);
+        union_sort_uniq(destin.m_tasks, source.m_tasks);
+    }
+    source.clear();
+}
+
+size_t BinaryFunction::flush(Queue& queue) const {
+    if (queue.m_tasks.empty()) return 0;
+    for (const auto& task : queue.m_tasks) {
+        insert(std::get<0>(task), std::get<1>(task), std::get<2>(task));
+    }
+    size_t theorem_count = queue.m_tasks.size();
+    queue.clear();
+    return theorem_count;
 }
 
 }  // namespace pomagma
