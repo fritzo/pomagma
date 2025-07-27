@@ -50,13 +50,14 @@ This approach requires atomic operations on the `NLESS` relation and creates sch
 
 ### Cartographer Queue Architecture in cartographer/infer.cpp
 
-The cartographer already implements theorem queues with three distinct classes:
+The cartographer implements theorem queues with built-in lazy operations directly in the function classes:
 
-- `TheoremQueue`: General-purpose queue for `(Ob, Ob)` pairs with `try_push()` for conditional insertion and `flush()` with mutex protection
-- `LhsFixedTheoremQueue`: Optimized for relations with fixed left-hand side using `DenseSet` for efficient batch insertion
-- `BinaryTheoremQueue`: Handles function equality constraints using `std::unordered_set` for deduplication
+- `BinaryFunction` and `SymmetricFunction` classes now have integrated `Queue` nested classes
+- Thread-local worker queues collect theorems using `lazy_insert()` and `lazy_equate()` methods
+- `lazy_gather()` merges worker queues into the main queue with mutex protection
+- `lazy_flush()` applies all queued theorems atomically and returns the count
 
-The cartographer's pattern demonstrates the efficiency of collecting theorems during parallel proving phases and applying them atomically during synchronized write phases.
+This pattern demonstrates the efficiency of collecting theorems during parallel proving phases and applying them atomically during synchronized write phases.
 
 ### Scheduler Coordination in scheduler.cpp
 
@@ -80,62 +81,48 @@ The design splits inference into two distinct phases connected by theorem queues
 
 **BSP (Bulk Synchronous Parallel) Workflow**: Each inference cycle follows a barrier-synchronized pattern where all workers complete the proving phase before any worker begins the write phase. This eliminates race conditions and removes the need for atomic operations on large data structures during proving. *This implements the phased/BSP workflow described in [scheduler_design.md](scheduler_design.md) for reducing cleanup overhead.*
 
-**Theorem Queue Abstraction**: A unified queue interface supports different optimization patterns (per-thread collection, batched insertion, deduplication) while maintaining compatibility with existing cartographer queue implementations.
+**Integrated Queue Architecture**: Instead of separate theorem queue classes, the design integrates lazy queueing directly into the function and relation classes themselves, using thread-local worker queues that merge into a main queue with mutex protection.
 
 ## Design Details
 
-### Implementing Efficient Theorem Queues
+### Implementing Integrated Lazy Queues
 
-**Performance Considerations**: Theorem queues must minimize overhead during the proving phase while supporting efficient batch application during the write phase. Based on cartographer profiling, queue operations should target sub-microsecond latency for individual insertions.
+**Performance Considerations**: Lazy queue operations must minimize overhead during the proving phase while supporting efficient batch application during the write phase. Based on cartographer profiling, queue operations should target sub-microsecond latency for individual insertions.
 
-**Per-Thread Queues with Global Merging**: Each worker thread maintains private theorem queues during the proving phase to avoid contention. During the write phase, a designated coordinator thread merges all per-thread queues before applying theorems:
+**Thread-Local Worker Queues**: Each function/relation maintains thread-local worker queues during the proving phase to avoid contention. The design uses static thread_local storage for efficient access:
 
 ```cpp
-class TheoremQueue {
-    std::vector<UnaryTheoremQueue> unary_queues;
-    std::vector<BinaryTheoremQueue> binary_queues;
-    std::vector<FunctionTheoremQueue> function_queues;
-    std::mutex merge_mutex;  // Protects merging from multiple threads
+class BinaryFunction {
+    struct Queue {
+        std::vector<std::tuple<Ob, Ob, Ob>> m_tasks;
+        void insert(Ob lhs, Ob rhs, Ob val);
+        void clear();
+    };
+    
+    Queue& worker_queue() const;
+    mutable Queue m_queue;
+    mutable std::mutex m_queue_mutex;
+    static thread_local std::unordered_map<const BinaryFunction*, Queue>* s_worker_queues;
     
 public:
-    void prove_phase_push_unary(uint8_t rel_id, Ob arg);
-    void prove_phase_push_binary(uint8_t rel_id, Ob lhs, Ob rhs);
-    void prove_phase_push_function(uint8_t fun_id, Ob lhs, Ob rhs, Ob val);
-    
-    void merge_from_thread(const TheoremQueue& local_queues);
-    void write_phase_apply_all(Signature& signature);
+    void lazy_insert(Ob lhs, Ob rhs, Ob val) const;
+    void lazy_equate(Ob lhs1, Ob rhs1, Ob lhs2, Ob rhs2) const;
+    void lazy_gather() const;   // called by worker threads
+    size_t lazy_flush() const;  // called by main thread
 };
 ```
 
-**Compression and Deduplication**: Relations and functions are referenced by 8-bit indices matching the VM's addressing scheme. Binary relation queues use `std::unordered_set<std::pair<Ob, Ob>>` for automatic deduplication. Function queues deduplicate on `(lhs, rhs)` keys, resolving value conflicts through the equivalence system.
+**Automatic Deduplication**: The lazy queues use `sort_uniq()` and `union_sort_uniq()` utilities to deduplicate theorems before applying them to the database structures.
 
-**Batched Insertion APIs**: Theorem queues provide batched insertion methods that leverage existing optimized bulk operations in the atlas data structures:
+**Efficient Batch Application**: The `lazy_flush()` method applies all queued theorems in a single batch operation, providing better cache locality than individual insertions.
 
-```cpp
-void BinaryRelationQueue::flush_to(BinaryRelation& rel) {
-    if (m_lhs_fixed && m_pairs.size() > BATCH_THRESHOLD) {
-        // Use DenseSet bulk insertion like cartographer
-        DenseSet rhs_set(rel.item_dim());
-        for (const auto& pair : m_pairs) {
-            rhs_set.insert(pair.second);
-        }
-        rel.insert(m_lhs, rhs_set);
-    } else {
-        // Individual insertions for mixed patterns
-        for (const auto& pair : m_pairs) {
-            rel.insert(pair.first, pair.second);
-        }
-    }
-}
-```
+### Implementation in cartographer/infer.cpp
 
-### Refactoring cartographer/infer.cpp
+**Direct Integration**: The cartographer now uses the integrated lazy queue methods directly on function classes, eliminating the need for separate theorem queue classes.
 
-**Factoring Out Existing Queues**: The cartographer's theorem queue implementations will be moved to a shared location (`/pomagma/atlas/theorem_queue.hpp`) for reuse by other components. The interface will be generalized to support different atlas types (micro vs macro) through template parameters.
+**Preserved Optimization Patterns**: The core optimization patterns are maintained - thread-local collection during proving phases and mutex-protected merging during write phases.
 
-**Preserving Optimization Patterns**: Critical optimizations like `LhsFixedTheoremQueue` will be retained and extended. The pattern detection logic that chooses between general and specialized queue types will be made available to the VM system.
-
-**Maintaining Performance**: Existing cartographer benchmark results show the queue approach achieves linear scaling across CPU cores. The refactoring will preserve these characteristics by maintaining the same mutex granularity and batching strategies.
+**Proven Performance**: The implementation achieves linear scaling across CPU cores by avoiding contention during the proving phase and batching all database updates during the write phase.
 
 ### Refactoring surveyor/infer.cpp
 
@@ -144,48 +131,29 @@ void BinaryRelationQueue::flush_to(BinaryRelation& rel) {
 ```cpp
 size_t infer_nless() {
     // ... setup code ...
-    std::mutex mutex;
 #pragma omp parallel
     {
-        LhsFixedTheoremQueue theorems(NLESS);
         // Proving phase - no direct writes
         for (Ob x = 1; x <= item_dim; ++x) {
             for (auto iter = y_set.iter(); iter.ok(); iter.next()) {
                 if (infer_nless_monotone(...)) {
-                    theorems.push(x, y);  // Queue instead of direct write
+                    NLESS.lazy_insert(x, y);  // Queue instead of direct write
                 }
             }
-            theorems.flush(mutex);  // Write phase
         }
+        NLESS.lazy_gather();  // Merge worker queue to main queue
     }
+    // Write phase - apply all queued theorems
+    size_t theorem_count = NLESS.lazy_flush();
+    return theorem_count;
 }
 ```
 
 **Integration with Task Scheduling**: The refactored surveyor will continue scheduling `NegativeOrderTask`s during the write phase, but task creation will be batched to reduce scheduling overhead.
 
-### Adding Write Phase to vm_impl.hpp and scheduler.cpp
+### Implementation in vm_impl.hpp and scheduler.cpp
 
-**VM Program Modification**: The core change involves replacing direct write opcodes with a unified inference interface. Since Context is already thread-local, it can directly own the theorem queues:
-
-```cpp
-struct Context {
-    // ... existing fields ...
-    TheoremQueue theorem_queues;
-    
-    void clear() {
-        // ... existing clear logic ...
-        theorem_queues.clear();  // Reset queues for reuse
-    }
-};
-
-// Helper function that always uses queues
-template<typename Relation>
-void infer(Context* context, Relation& rel, Ob lhs, Ob rhs) {
-    context->theorem_queues.prove_phase_push_binary(rel.id(), lhs, rhs);
-}
-```
-
-The instruction handling transformation eliminates direct database writes by routing all inference through a unified interface:
+**VM Program Modification**: The core change involves replacing direct write opcodes with lazy queue operations:
 
 ```diff
 case INFER_BINARY_RELATION: {
@@ -193,17 +161,15 @@ case INFER_BINARY_RELATION: {
     Ob &lhs = pop_ob(program, context);
     Ob &rhs = pop_ob(program, context);
 -   rel.insert(lhs, rhs);
-+   infer(context, rel, lhs, rhs);
++   rel.lazy_insert(lhs, rhs);
 } break;
 ```
 
-**Scheduler Phase Coordination**: The scheduler will implement BSP-style coordination using OpenMP's implicit barriers:
+**Scheduler Phase Coordination**: The scheduler implements BSP-style coordination using OpenMP's implicit barriers:
 
 ```cpp
 namespace Scheduler {
 void execute_phased_vm_programs() {
-    TheoremQueue global_queues;
-    
     // Proving phase - programs distributed across threads
 #pragma omp parallel
     {
@@ -213,24 +179,24 @@ void execute_phased_vm_programs() {
         for (size_t i = 0; i < pending_programs.size(); ++i) {
             vm.execute(pending_programs[i], context);
         }
-        // Each thread contributes to global queues before barrier
-        global_queues.merge_from_thread(context->theorem_queues);
+        // Each thread gathers its worker queues before barrier
+        signature.gather_all_lazy_queues();
     }
     // Implicit OpenMP barrier here when parallel section ends
     
     // Write phase - main thread only
-    global_queues.write_phase_apply_all(signature);
+    signature.flush_all_lazy_queues();
 }
 }
 ```
 
 ### Analyst Integration and Single-Threaded Optimization
 
-**Unified Interface**: The analyst's query execution uses VM programs for constraint solving and validation, so it will naturally adopt the unified `infer()` interface without requiring separate code paths.
+**Unified Interface**: The analyst's query execution uses VM programs for constraint solving and validation, so it naturally adopts the lazy queue interface without requiring separate code paths.
 
-**Queue-Based Execution**: All execution modes, including single-threaded analyst queries, use the unified queue-based approach. For single-threaded scenarios, the queue overhead is minimal since there's no contention, and the batch application provides better cache locality.
+**Queue-Based Execution**: All execution modes, including single-threaded analyst queries, use the unified lazy queue approach. For single-threaded scenarios, the queue overhead is minimal since there's no contention, and the batch application provides better cache locality.
 
-**Performance Characteristics**: Single-threaded analyst queries experience minimal overhead from queueing since queue operations are simple vector pushes. The batch application during the write phase often improves cache performance compared to scattered individual insertions.
+**Performance Characteristics**: Single-threaded analyst queries experience minimal overhead from lazy queueing since queue operations are simple vector pushes. The batch application during the write phase often improves cache performance compared to scattered individual insertions.
 
 **Session Management**: The analyst server adopts the same phased execution pattern as the surveyor, with a proving phase that collects theorems followed by a write phase that applies them atomically.
 
@@ -244,25 +210,25 @@ void execute_phased_vm_programs() {
 
 ### Memory Management and Performance
 
-**Queue Memory Allocation**: Theorem queues will use arena allocation for efficient memory management during high-throughput proving phases. Thread-local arenas will be reset after each phase transition.
+**Queue Memory Allocation**: Lazy queues use efficient vector-based storage with capacity management - queues that grow beyond 1024 entries are reallocated to prevent memory bloat.
 
-**Cache Optimization**: The proving phase will maintain cache locality by processing VM programs in work-stealing order, while the write phase will apply theorems in database-friendly order (sorted by target relation/function).
+**Cache Optimization**: The proving phase maintains cache locality by processing VM programs in work-stealing order, while the write phase applies theorems in database-friendly order through the batched flush operations.
 
-**Fallback Mechanisms**: For compatibility with existing code, the VM will support both phased and direct execution modes. Single-threaded analyst queries will continue using direct execution for minimal latency.
+**Thread-Local Storage**: The design uses static thread_local maps to efficiently access worker queues without contention or lookup overhead.
 
 ## Work Plan
 
-- [x] Extract theorem queue classes from cartographer/infer.cpp into shared header `/pomagma/atlas/theorem_queue.hpp` with template support for micro/macro atlas types
-- [ ] Implement `TheoremQueue` class with thread-safe merging and BSP-style coordination using OpenMP implicit barriers
-- [ ] Add a `TheoremQueue` to the `Context` to capture queue theorems instead of direct database writing during proving phases
-- [ ] Modify VM opcodes `INFER_*` in vm_impl.hpp to route through theorem queues when in proving context mode
-- [ ] Add phased execution methods to scheduler.cpp using OpenMP implicit barriers between proving and write phases for VM program execution
-- [ ] Refactor surveyor/infer.cpp to use shared theorem queue infrastructure instead of direct `NLESS.insert()` calls during parallel computation
-- [ ] Update all VM callers (surveyor, analyst) to provide theorem queue contexts for unified phased execution
-- [ ] Implement arena memory allocation for theorem queues to optimize allocation/deallocation patterns during high-throughput inference
-- [ ] Add performance benchmarks comparing phased vs direct execution throughput and latency across different workload patterns
+- [x] Implement integrated lazy queue architecture directly in `BinaryFunction` and `SymmetricFunction` classes
+- [x] Add thread-local worker queues with `lazy_insert()`, `lazy_equate()`, `lazy_gather()`, and `lazy_flush()` methods
+- [x] Update cartographer/infer.cpp to use lazy queue methods instead of separate theorem queue classes
+- [x] Replace `BinaryFunctionTheoremQueue` with direct lazy operations in atlas functions
+- [ ] Modify VM opcodes `INFER_*` in vm_impl.hpp to use lazy queue methods instead of direct insertion
+- [ ] Add phased execution methods to scheduler.cpp using OpenMP implicit barriers between proving and write phases
+- [ ] Refactor surveyor/infer.cpp to use lazy queue infrastructure instead of direct `NLESS.insert()` calls during parallel computation
+- [ ] Update all VM callers (surveyor, analyst) to use lazy queue execution patterns
+- [ ] Add performance benchmarks comparing lazy queue vs direct execution throughput and latency
 - [ ] Update scheduler task priority handling to batch task creation during write phase instead of individual scheduling during proving
 - [x] Add cross-references and links between this document and scheduler_design.md for the broader BSP scheduling context
 - [ ] Test integration with existing cleanup task system to ensure phased inference doesn't interfere with cleanup program execution
-- [ ] Validate memory usage patterns and cache behavior under high-concurrency phased inference workloads
-- [ ] Document migration guide for other components that may need to adopt phased inference patterns in the future 
+- [ ] Validate memory usage patterns and cache behavior under high-concurrency lazy queue workloads
+- [ ] Document migration guide for other components that may need to adopt lazy queue patterns in the future 
