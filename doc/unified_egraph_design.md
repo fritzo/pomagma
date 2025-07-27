@@ -34,7 +34,7 @@ The macro atlas (`pomagma/atlas/macro/`) supports larger E-graphs with 32-bit id
 
 Three hash map configurations are configurable via `POMAGMA_USE_SPARSE_HASH`: Google's `sparse_hash_map` for memory efficiency, `dense_hash_map` for speed, or `std::unordered_map` as the default (`POMAGMA_USE_SPARSE_HASH == 0`). The macro implementation uses a single `std::mutex m_raw_mutex` for synchronization rather than fine-grained locking.
 
-Hash computation (`pomagma/atlas/macro/util.hpp`) for 32-bit pairs uses `((x << 32) | y) * HASH_MULTIPLIER` with full 64-bit arithmetic, or simplified `(x << 32) | y` for `TrivialObPairHash`.
+Hash computation (`pomagma/atlas/macro/util.hpp`) for 32-bit pairs uses an improved xxHash-inspired algorithm with better distribution than simple concatenation.
 
 ### Torch Representation
 

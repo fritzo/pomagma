@@ -40,7 +40,7 @@ struct ObPairMap : google::dense_hash_map<std::pair<Ob, Ob>, Ob, ObPairHash> {
 
 #else  // POMAGMA_USE_SPARSE_HASH == 0
 
-typedef std::unordered_map<std::pair<Ob, Ob>, Ob, TrivialObPairHash> ObPairMap;
+typedef std::unordered_map<std::pair<Ob, Ob>, Ob, ObPairHash> ObPairMap;
 
 #endif  // POMAGMA_USE_SPARSE_HASH
 
