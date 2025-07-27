@@ -8,7 +8,7 @@
 namespace pomagma {
 
 // a pair of dense sets of dense sets, one col-row, one row-col
-class BinaryRelation : noncopyable {
+class BinaryRelation : noncopyable, public not_lazy {
     mutable base_bin_rel m_lines;
     void (*m_insert_callback)(Ob, Ob);
 

@@ -7,7 +7,7 @@
 
 namespace pomagma {
 
-class NullaryFunction : noncopyable {
+class NullaryFunction : noncopyable, public not_lazy {
     const Carrier &m_carrier;
     mutable std::atomic<Ob> m_value;
 

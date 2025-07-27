@@ -29,6 +29,8 @@ void Structure::init_carrier(size_t item_dim) {
 }
 
 void Structure::log_stats() { pomagma::log_stats(m_signature); }
+void Structure::lazy_gather() { pomagma::lazy_gather(m_signature); }
+void Structure::lazy_flush() { pomagma::lazy_flush(m_signature); }
 
 void Structure::resize(size_t item_dim) {
     Carrier* carrier = new Carrier(item_dim, *m_signature.carrier());

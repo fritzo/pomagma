@@ -2,8 +2,12 @@
 
 #include <cstring>
 #include <pomagma/util/aligned_alloc.hpp>
+#include <pomagma/util/sort_uniq.hpp>
 
 namespace pomagma {
+
+thread_local std::unordered_map<const NullaryFunction*, NullaryFunction::Queue>*
+    NullaryFunction::s_worker_queues = nullptr;
 
 NullaryFunction::NullaryFunction(const Carrier& carrier)
     : m_carrier(carrier), m_value(0) {
@@ -43,6 +47,27 @@ void NullaryFunction::unsafe_merge(Ob dep) {
     if (m_value == dep) {
         m_value = rep;
     }
+}
+
+void NullaryFunction::lazy_gather() const {
+    Queue& source = worker_queue();
+    if (source.m_tasks.empty()) return;
+    sort_uniq(source.m_tasks);
+    {
+        std::unique_lock<std::mutex> lock(m_queue_mutex);
+        union_sort_uniq(m_queue.m_tasks, source.m_tasks);
+    }
+    source.clear();
+}
+
+size_t NullaryFunction::lazy_flush() const {
+    if (m_queue.m_tasks.empty()) return 0;
+    for (const auto val : m_queue.m_tasks) {
+        insert(val);
+    }
+    size_t theorem_count = m_queue.m_tasks.size();
+    m_queue.clear();
+    return theorem_count;
 }
 
 }  // namespace pomagma

@@ -11,7 +11,7 @@ namespace pomagma {
 inline size_t unordered_pair_count(size_t i) { return (i * (i + 1)) / 2; }
 
 // a tight symmetric binary function tiled in blocks
-class SymmetricFunction : noncopyable {
+class SymmetricFunction : noncopyable, public not_lazy {
     mutable base_sym_rel m_lines;
     const size_t m_tile_dim;
     Tile *const m_tiles;

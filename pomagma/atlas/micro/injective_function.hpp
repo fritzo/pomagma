@@ -7,7 +7,7 @@
 
 namespace pomagma {
 
-class InjectiveFunction : noncopyable {
+class InjectiveFunction : noncopyable, public not_lazy {
     const Carrier &m_carrier;
     mutable DenseSet m_set;
     mutable DenseSet m_inverse_set;

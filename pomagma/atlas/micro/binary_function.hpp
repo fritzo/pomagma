@@ -9,7 +9,7 @@
 namespace pomagma {
 
 // a tight binary function tiled in blocks
-class BinaryFunction : noncopyable {
+class BinaryFunction : noncopyable, public not_lazy {
     mutable base_bin_rel m_lines;
     const size_t m_tile_dim;
     Tile *const m_tiles;

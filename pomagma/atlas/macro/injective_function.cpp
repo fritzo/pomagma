@@ -2,8 +2,13 @@
 
 #include <cstring>
 #include <pomagma/util/aligned_alloc.hpp>
+#include <pomagma/util/sort_uniq.hpp>
 
 namespace pomagma {
+
+thread_local std::unordered_map<const InjectiveFunction*,
+                                InjectiveFunction::Queue>*
+    InjectiveFunction::s_worker_queues = nullptr;
 
 InjectiveFunction::InjectiveFunction(const Carrier& carrier)
     : m_carrier(carrier),
@@ -142,6 +147,27 @@ void InjectiveFunction::unsafe_merge(Ob dep) {
     for (auto iter = inverse_iter(); iter.ok(); iter.next()) {
         replace(dep, rep, m_inverse[*iter]);
     }
+}
+
+void InjectiveFunction::lazy_gather() const {
+    Queue& source = worker_queue();
+    if (source.m_tasks.empty()) return;
+    sort_uniq(source.m_tasks);
+    {
+        std::unique_lock<std::mutex> lock(m_queue_mutex);
+        union_sort_uniq(m_queue.m_tasks, source.m_tasks);
+    }
+    source.clear();
+}
+
+size_t InjectiveFunction::lazy_flush() {
+    if (m_queue.m_tasks.empty()) return 0;
+    for (const auto [key, val] : m_queue.m_tasks) {
+        insert(key, val);
+    }
+    size_t theorem_count = m_queue.m_tasks.size();
+    m_queue.clear();
+    return theorem_count;
 }
 
 }  // namespace pomagma

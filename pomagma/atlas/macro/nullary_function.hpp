@@ -28,10 +28,26 @@ class NullaryFunction : noncopyable {
     void insert(Ob val) const;
     void update_values() const {}  // postcondition: all values are reps
 
+    // safe thread-locally queued operations
+    void lazy_insert(Ob val) const;
+    void lazy_gather() const;
+    size_t lazy_flush() const;
+
     // unsafe operations
     void unsafe_merge(Ob dep);
 
    private:
+    struct Queue {
+        std::vector<Ob> m_tasks;
+        void insert(Ob val) { m_tasks.push_back(val); }
+        void clear() { std::vector<Ob>().swap(m_tasks); }
+    };
+    Queue& worker_queue() const;
+    mutable Queue m_queue;
+    mutable std::mutex m_queue_mutex;
+    static thread_local std::unordered_map<const NullaryFunction*, Queue>*
+        s_worker_queues;
+
     const DenseSet& support() const { return m_carrier.support(); }
 };
 
@@ -47,6 +63,18 @@ inline void NullaryFunction::insert(Ob val) const {
     POMAGMA_ASSERT5(support().contains(val), "unsupported value: " << val);
 
     m_carrier.set_or_merge(m_value, val);
+}
+
+inline void NullaryFunction::lazy_insert(Ob val) const {
+    worker_queue().insert(val);
+}
+
+inline NullaryFunction::Queue& NullaryFunction::worker_queue() const {
+    if (unlikely(s_worker_queues == nullptr)) {
+        // never freed
+        s_worker_queues = new std::unordered_map<const NullaryFunction*, Queue>;
+    }
+    return (*s_worker_queues)[this];
 }
 
 }  // namespace pomagma

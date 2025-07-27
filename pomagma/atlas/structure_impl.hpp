@@ -29,6 +29,8 @@ void validate(Signature &signature);
 void clear(Signature &signature);
 void clear_data(Signature &signature);
 void log_stats(Signature &signature);
+void lazy_gather(Signature &signature);
+void lazy_flush(Signature &signature);
 
 void dump(Signature &signature, const std::string &filename);
 
@@ -955,6 +957,27 @@ void log_stats(Signature &signature) {
 #define CASE_ARITY(Kind, kind, Arity, arity)          \
     for (auto pair : signature.arity##_##kind##s()) { \
         pair.second->log_stats(pair.first);           \
+    }
+    POMAGMA_SWITCH_ARITY(CASE_ARITY)
+#undef CASE_ARITY
+}
+
+//----------------------------------------------------------------------------
+// Lazy queues
+
+inline void lazy_gather(Signature &signature) {
+#define CASE_ARITY(Kind, kind, Arity, arity)          \
+    for (auto pair : signature.arity##_##kind##s()) { \
+        pair.second->lazy_gather();                   \
+    }
+    POMAGMA_SWITCH_ARITY(CASE_ARITY)
+#undef CASE_ARITY
+}
+
+inline void lazy_flush(Signature &signature) {
+#define CASE_ARITY(Kind, kind, Arity, arity)          \
+    for (auto pair : signature.arity##_##kind##s()) { \
+        pair.second->lazy_flush();                    \
     }
     POMAGMA_SWITCH_ARITY(CASE_ARITY)
 #undef CASE_ARITY

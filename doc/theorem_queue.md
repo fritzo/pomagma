@@ -245,6 +245,9 @@ void execute_phased_vm_programs() {
 - [x] Replace `BinaryFunctionTheoremQueue` and `BinaryRelationTheoremQueue` with direct lazy operations in atlas functions
 - [x] Implement BinaryRelation lazy queue methods (`lazy_insert()`, `lazy_try_insert()`, `lazy_gather()`, `lazy_flush()`)
 - [x] Remove old theorem queue classes (`BinaryRelationRowTheoremQueue`, `BinaryRelationTheoremQueue`) from cartographer
+- [x] Implement lazy queue architecture in macro atlas components (`InjectiveFunction`, `NullaryFunction`, `UnaryRelation`)
+- [x] Add `not_lazy` base class for micro atlas components to maintain existing behavior
+- [x] Add `lazy_gather()` and `lazy_flush()` methods to macro `Structure` class for coordinated queue management
 - [ ] Modify VM opcodes `INFER_*` in vm_impl.hpp to use lazy queue methods instead of direct insertion
 - [ ] Add phased execution methods to scheduler.cpp using OpenMP implicit barriers between proving and write phases
 - [ ] Refactor surveyor/infer.cpp to use lazy queue infrastructure instead of direct `NLESS.insert()` calls during parallel computation

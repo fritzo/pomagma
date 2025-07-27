@@ -11,6 +11,11 @@ namespace pomagma {
 namespace concurrent {}
 using namespace concurrent;
 
+struct not_lazy {
+    void lazy_gather() const {}
+    void lazy_flush() const {}
+};
+
 //----------------------------------------------------------------------------
 // tiled blocks of atomic Ob
 

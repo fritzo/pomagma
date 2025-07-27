@@ -7,7 +7,7 @@
 
 namespace pomagma {
 
-class UnaryRelation : noncopyable {
+class UnaryRelation : noncopyable, public not_lazy {
     const Carrier &m_carrier;
     mutable DenseSet m_set;
     void (*m_insert_callback)(const UnaryRelation *, Ob);

@@ -41,12 +41,28 @@ class InjectiveFunction : noncopyable {
     void insert(Ob key, Ob val);
     void update_values() const {}  // postcondition: all values are reps
 
+    // safe thread-locally queued operations
+    void lazy_insert(Ob key, Ob val) const;
+    void lazy_gather() const;
+    size_t lazy_flush();
+
     // strict operations
     void unsafe_merge(Ob dep);
 
    private:
     const DenseSet& support() const { return m_carrier.support(); }
     size_t item_dim() const { return support().item_dim(); }
+
+    struct Queue {
+        std::vector<std::pair<Ob, Ob>> m_tasks;
+        void insert(Ob key, Ob val) { m_tasks.emplace_back(key, val); }
+        void clear() { std::vector<std::pair<Ob, Ob>>().swap(m_tasks); }
+    };
+    Queue& worker_queue() const;
+    mutable Queue m_queue;
+    mutable std::mutex m_queue_mutex;
+    static thread_local std::unordered_map<const InjectiveFunction*, Queue>*
+        s_worker_queues;
 };
 
 inline bool InjectiveFunction::defined(Ob key) const {
@@ -98,6 +114,19 @@ inline void InjectiveFunction::insert(Ob key, Ob val) {
     if (m_carrier.set_or_merge(m_inverse[val], key)) {
         m_inverse_set(val).one();
     }
+}
+
+inline void InjectiveFunction::lazy_insert(Ob key, Ob val) const {
+    worker_queue().insert(key, val);
+}
+
+inline InjectiveFunction::Queue& InjectiveFunction::worker_queue() const {
+    if (unlikely(s_worker_queues == nullptr)) {
+        // never freed
+        s_worker_queues =
+            new std::unordered_map<const InjectiveFunction*, Queue>;
+    }
+    return (*s_worker_queues)[this];
 }
 
 }  // namespace pomagma

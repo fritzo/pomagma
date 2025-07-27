@@ -34,6 +34,11 @@ class UnaryRelation : noncopyable {
     DenseSet::Iterator iter() const { return m_set.iter(); }
     void insert(Ob i) { m_set.raw_insert(i); }
 
+    // safe thread-locally queued operations
+    void lazy_insert(Ob i) const;
+    void lazy_gather() const;  // called by worker threads
+    size_t lazy_flush();       // called by main thread
+
     // unsafe operations
     void unsafe_merge(Ob dep);
 
@@ -41,7 +46,28 @@ class UnaryRelation : noncopyable {
     const DenseSet& support() const { return m_carrier.support(); }
     bool supports(Ob i) const { return support().contains(i); }
 
+    struct Queue {
+        std::vector<Ob> m_tasks;
+        void insert(Ob i) { m_tasks.push_back(i); }
+        void clear() { std::vector<Ob>().swap(m_tasks); }
+    };
+    Queue& worker_queue() const;
+    mutable Queue m_queue;
+    mutable std::mutex m_queue_mutex;
+    static thread_local std::unordered_map<const UnaryRelation*, Queue>*
+        s_worker_queues;
+
     void _remove(Ob i) { m_set.remove(i); }
 };
+
+inline void UnaryRelation::lazy_insert(Ob i) const { worker_queue().insert(i); }
+
+inline UnaryRelation::Queue& UnaryRelation::worker_queue() const {
+    if (unlikely(s_worker_queues == nullptr)) {
+        // never freed
+        s_worker_queues = new std::unordered_map<const UnaryRelation*, Queue>;
+    }
+    return (*s_worker_queues)[this];
+}
 
 }  // namespace pomagma
