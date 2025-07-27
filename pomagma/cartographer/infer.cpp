@@ -1,11 +1,7 @@
 #include "infer.hpp"
 
-#include <atomic>
-#include <mutex>
 #include <pomagma/atlas/macro/scheduler.hpp>
 #include <pomagma/atlas/macro/structure_impl.hpp>
-#include <pomagma/atlas/theorem_queue.hpp>
-#include <unordered_set>
 
 #define POMAGMA_ASSERT_UNDECIDED(rel, x, y) \
     POMAGMA_ASSERT(not rel.find(x, y),      \
@@ -55,17 +51,13 @@ void infer_less_transitive(const Carrier& carrier, BinaryRelation& LESS,
 
     const size_t item_dim = carrier.item_dim();
 
-    std::mutex mutex;
 #pragma omp parallel
     {
         DenseSet y_set(item_dim);
-        BinaryRelationRowTheoremQueue theorems(LESS);
 
 #pragma omp for schedule(dynamic, 1)
         for (Ob x = 1; x <= item_dim; ++x) {
-            if (not carrier.contains(x)) {
-                continue;
-            }
+            if (not carrier.contains(x)) continue;
             const DenseSet less_x = LESS.get_Lx_set(x);
 
             y_set.set_pnn(carrier.support(), LESS.get_Lx_set(x),
@@ -77,20 +69,21 @@ void infer_less_transitive(const Carrier& carrier, BinaryRelation& LESS,
                 POMAGMA_ASSERT_UNDECIDED(LESS, x, y);
 
                 if (unlikely(less_x.intersects(LESS.get_Rx_set(y)))) {
-                    theorems.push(x, y);
+                    LESS.lazy_insert(x, y);
                 }
             }
-
-            theorems.flush(mutex);
         }
+        LESS.lazy_gather();
     }
+
+    size_t theorem_count = LESS.lazy_flush();
+    POMAGMA_INFO("inferred " << theorem_count << " LESS-transitive");
 }
 
 inline void infer_less_monotone_nonconst(const BinaryRelation& LESS,
                                          const BinaryFunction& fun,
                                          const DenseSet& nonconst, const Ob f,
-                                         DenseSet& x_set, DenseSet& y_set,
-                                         BinaryRelationTheoremQueue& theorems) {
+                                         DenseSet& x_set, DenseSet& y_set) {
     for (auto iter = LESS.iter_lhs(f); iter.ok(); iter.next()) {
         Ob g = *iter;
         if (unlikely(g == f)) {
@@ -102,7 +95,7 @@ inline void infer_less_monotone_nonconst(const BinaryRelation& LESS,
                 for (auto iter = y_set.iter(); iter.ok(); iter.next()) {
                     Ob y = *iter;
                     Ob fy = fun.find(f, y);
-                    theorems.try_push(fx, fy);
+                    LESS.lazy_try_insert(fx, fy);
                 }
             }
 
@@ -112,7 +105,7 @@ inline void infer_less_monotone_nonconst(const BinaryRelation& LESS,
                 Ob x = *iter;
                 Ob fx = fun.find(f, x);
                 Ob gx = fun.find(g, x);
-                theorems.try_push(fx, gx);
+                LESS.lazy_try_insert(fx, gx);
             }
 
             x_set.set_diff(fun.get_Lx_set(f), fun.get_Lx_set(g));
@@ -126,7 +119,7 @@ inline void infer_less_monotone_nonconst(const BinaryRelation& LESS,
                     Ob y = *iter;
                     Ob gy = fun.find(g, y);
                     if (unlikely(not less_fx(gy))) {
-                        theorems.push(fx, gy);
+                        LESS.lazy_insert(fx, gy);
                     }
                 }
             }
@@ -135,7 +128,7 @@ inline void infer_less_monotone_nonconst(const BinaryRelation& LESS,
             for (auto iter = fun.iter_lhs(f); iter.ok(); iter.next()) {
                 Ob x = *iter;
                 Ob fx = fun.find(f, x);
-                theorems.try_push(fx, g_);
+                LESS.lazy_try_insert(fx, g_);
             }
         }
     }
@@ -144,19 +137,18 @@ inline void infer_less_monotone_nonconst(const BinaryRelation& LESS,
 inline void infer_less_monotone_const(const BinaryRelation& LESS,
                                       const BinaryFunction& fun,
                                       const DenseSet& nonconst, const Ob f,
-                                      const Ob f_,
-                                      BinaryRelationTheoremQueue& theorems) {
+                                      const Ob f_) {
     for (auto iter = LESS.iter_lhs(f); iter.ok(); iter.next()) {
         Ob g = *iter;
         if (nonconst(g)) {
             for (auto iter = fun.iter_lhs(g); iter.ok(); iter.next()) {
                 Ob x = *iter;
                 Ob gx = fun.find(g, x);
-                theorems.try_push(f_, gx);
+                LESS.lazy_try_insert(f_, gx);
             }
 
         } else if (Ob g_ = fun.find(g, g)) {
-            theorems.try_push(f_, g_);
+            LESS.lazy_try_insert(f_, g_);
         }
     }
 }
@@ -172,29 +164,27 @@ void infer_less_monotone(const Carrier& carrier, BinaryRelation& LESS,
 
     const size_t item_dim = carrier.item_dim();
 
-    std::mutex mutex;
 #pragma omp parallel
     {
         DenseSet x_set(item_dim);
         DenseSet y_set(item_dim);
-        BinaryRelationTheoremQueue theorems(LESS);
 
 #pragma omp for schedule(dynamic, 1)
         for (Ob f = 1; f <= item_dim; ++f) {
-            if (not carrier.contains(f)) {
-                continue;
-            }
+            if (not carrier.contains(f)) continue;
             if (nonconst(f)) {
                 infer_less_monotone_nonconst(LESS, fun, nonconst, f, x_set,
-                                             y_set, theorems);
-                theorems.flush(mutex);
+                                             y_set);
 
             } else if (Ob f_ = fun.find(f, f)) {
-                infer_less_monotone_const(LESS, fun, nonconst, f, f_, theorems);
-                theorems.flush(mutex);
+                infer_less_monotone_const(LESS, fun, nonconst, f, f_);
             }
         }
+        LESS.lazy_gather();
     }
+
+    size_t theorem_count = LESS.lazy_flush();
+    POMAGMA_INFO("inferred " << theorem_count << " LESS-monotone");
 }
 
 //        LESS f g           LESS f g    LESS x y
@@ -212,13 +202,11 @@ void infer_less_monotone(const Carrier& carrier, BinaryRelation& LESS,
     }
     const size_t f_count = f_set.size();
 
-    std::mutex mutex;
 #pragma omp parallel
     {
         DenseSet g_set(item_dim);
         DenseSet x_set(item_dim);
         DenseSet y_set(item_dim);
-        BinaryRelationTheoremQueue theorems(LESS);
 
 #pragma omp for schedule(dynamic, 1)
         for (size_t iter = 0; iter < f_count; ++iter) {
@@ -233,7 +221,7 @@ void infer_less_monotone(const Carrier& carrier, BinaryRelation& LESS,
                     Ob x = *iter;
                     Ob fx = RAND.find(f, x);
                     Ob gx = RAND.find(g, x);
-                    theorems.try_push(fx, gx);
+                    LESS.lazy_try_insert(fx, gx);
                 }
 
                 x_set.set_diff(RAND.get_Lx_set(f), RAND.get_Lx_set(g));
@@ -247,15 +235,17 @@ void infer_less_monotone(const Carrier& carrier, BinaryRelation& LESS,
                         Ob y = *iter;
                         Ob gy = RAND.find(g, y);
                         if (unlikely(not less_fx(gy))) {
-                            theorems.push(fx, gy);
+                            LESS.lazy_insert(fx, gy);
                         }
                     }
                 }
             }
-
-            theorems.flush(mutex);
         }
+        LESS.lazy_gather();
     }
+
+    size_t theorem_count = LESS.lazy_flush();
+    POMAGMA_INFO("inferred " << theorem_count << " symmetric LESS-monotone");
 }
 
 //        LESS f g                 LESS x y           LESS f g    LESS x y
@@ -273,13 +263,11 @@ void infer_less_join_monotone(const Carrier& carrier, BinaryRelation& LESS,
     }
     const size_t f_count = f_set.size();
 
-    std::mutex mutex;
 #pragma omp parallel
     {
         DenseSet x_set(item_dim);
         DenseSet g_set(item_dim);
         DenseSet y_set(item_dim);
-        BinaryRelationTheoremQueue theorems(LESS);
 
 #pragma omp for schedule(dynamic, 1)
         for (size_t iter = 0; iter < f_count; ++iter) {
@@ -295,8 +283,8 @@ void infer_less_join_monotone(const Carrier& carrier, BinaryRelation& LESS,
                 Ob fx = JOIN.find(f, x);
                 const DenseSet less_fx = LESS.get_Lx_set(fx);
 
-                theorems.try_push(f, fx);
-                theorems.try_push(x, fx);
+                LESS.lazy_try_insert(f, fx);
+                LESS.lazy_try_insert(x, fx);
 
                 g_set.set_insn(LESS.get_Lx_set(f),   // if LESS f g
                                JOIN.get_Lx_set(x));  // and JOIN g x is defined
@@ -304,7 +292,7 @@ void infer_less_join_monotone(const Carrier& carrier, BinaryRelation& LESS,
                     Ob g = *iter;
                     Ob gx = JOIN.find(g, x);
                     if (unlikely(not less_fx(gx))) {
-                        theorems.push(fx, gx);
+                        LESS.lazy_insert(fx, gx);
                     }
                 }
 
@@ -314,7 +302,7 @@ void infer_less_join_monotone(const Carrier& carrier, BinaryRelation& LESS,
                     Ob y = *iter;
                     Ob fy = JOIN.find(f, y);
                     if (unlikely(not less_fx(fy))) {
-                        theorems.push(fx, fy);
+                        LESS.lazy_insert(fx, fy);
                     }
                 }
 
@@ -332,15 +320,17 @@ void infer_less_join_monotone(const Carrier& carrier, BinaryRelation& LESS,
                         Ob y = *iter;
                         Ob gy = JOIN.find(g, y);
                         if (unlikely(not less_fx(gy))) {
-                            theorems.push(fx, gy);
+                            LESS.lazy_insert(fx, gy);
                         }
                     }
                 }
             }
-
-            theorems.flush(mutex);
         }
+        LESS.lazy_gather();
     }
+
+    size_t theorem_count = LESS.lazy_flush();
+    POMAGMA_INFO("inferred " << theorem_count << " LESS-JOIN-monotone");
 }
 
 // LESS x z   LESS y z
@@ -351,18 +341,14 @@ void infer_less_convex(const Carrier& carrier, BinaryRelation& LESS,
     POMAGMA_INFO("Inferring LESS-JOIN-convex");
 
     const size_t item_dim = carrier.item_dim();
-    std::mutex mutex;
 #pragma omp parallel
     {
         DenseSet z_set(item_dim);
         DenseSet y_set(item_dim);
-        BinaryRelationTheoremQueue theorems(LESS);
 
 #pragma omp for schedule(dynamic, 1)
         for (Ob x = 1; x <= item_dim; ++x) {
-            if (not carrier.contains(x)) {
-                continue;
-            }
+            if (not carrier.contains(x)) continue;
 
             y_set.set_pnn(JOIN.get_Lx_set(x), LESS.get_Lx_set(x),
                           LESS.get_Rx_set(x));
@@ -376,13 +362,15 @@ void infer_less_convex(const Carrier& carrier, BinaryRelation& LESS,
                               LESS.get_Lx_set(xy));
                 for (auto iter = z_set.iter(); iter.ok(); iter.next()) {
                     Ob z = *iter;
-                    theorems.push(xy, z);
+                    LESS.lazy_insert(xy, z);
                 }
             }
-
-            theorems.flush(mutex);
         }
+        LESS.lazy_gather();
     }
+
+    size_t theorem_count = LESS.lazy_flush();
+    POMAGMA_INFO("inferred " << theorem_count << " LESS-JOIN-convex");
 }
 
 //  LESS x z   LESS y z   LESS z x   LESS z y
@@ -393,12 +381,10 @@ void infer_less_linear(const Carrier& carrier, BinaryRelation& LESS,
     POMAGMA_INFO("Inferring LESS-RAND-linear");
 
     const size_t item_dim = carrier.item_dim();
-    std::mutex mutex;
 #pragma omp parallel
     {
         DenseSet z_set(item_dim);
         DenseSet y_set(item_dim);
-        BinaryRelationTheoremQueue theorems(LESS);
 
 #pragma omp for schedule(dynamic, 1)
         for (Ob x = 1; x <= item_dim; ++x) {
@@ -419,20 +405,22 @@ void infer_less_linear(const Carrier& carrier, BinaryRelation& LESS,
                               LESS.get_Lx_set(xy));
                 for (auto iter = z_set.iter(); iter.ok(); iter.next()) {
                     Ob z = *iter;
-                    theorems.push(xy, z);
+                    LESS.lazy_insert(xy, z);
                 }
 
                 z_set.set_ppn(LESS.get_Rx_set(x), LESS.get_Rx_set(y),
                               LESS.get_Rx_set(xy));
                 for (auto iter = z_set.iter(); iter.ok(); iter.next()) {
                     Ob z = *iter;
-                    theorems.push(z, xy);
+                    LESS.lazy_insert(z, xy);
                 }
             }
-
-            theorems.flush(mutex);
         }
+        LESS.lazy_gather();
     }
+
+    size_t theorem_count = LESS.lazy_flush();
+    POMAGMA_INFO("inferred " << theorem_count << " LESS-RAND-linear");
 }
 
 // NLESS x z   LESS y z   LESS z x   NLESS z y
@@ -769,20 +757,14 @@ size_t infer_nless(Structure& structure) {
     const DenseSet nonconst = get_nonconst(structure);
     const size_t item_dim = carrier.item_dim();
 
-    std::atomic_size_t theorem_count = 0;
-    std::mutex mutex;
 #pragma omp parallel
     {
         DenseSet y_set(item_dim);
         DenseSet z_set(item_dim);
-        BinaryRelationRowTheoremQueue theorems(NLESS);
-        size_t local_count = 0;
 
 #pragma omp for schedule(dynamic, 1)
         for (Ob x = 1; x <= item_dim; ++x) {
-            if (not carrier.contains(x)) {
-                continue;
-            }
+            if (not carrier.contains(x)) continue;
 
             y_set.set_pnn(carrier.support(), LESS.get_Lx_set(x),
                           NLESS.get_Lx_set(x));
@@ -799,16 +781,14 @@ size_t infer_nless(Structure& structure) {
                      infer_nless_monotone(NLESS, *JOIN, x, y, z_set)) or
                     (RAND and
                      infer_nless_monotone(NLESS, *RAND, x, y, z_set))) {
-                    theorems.push(x, y);
-                    ++local_count;
+                    NLESS.lazy_insert(x, y);
                 }
             }
-
-            theorems.flush(mutex);
-            theorem_count.fetch_add(local_count, std::memory_order_acq_rel);
         }
+        NLESS.lazy_gather();
     }
 
+    size_t theorem_count = NLESS.lazy_flush();
     POMAGMA_INFO("inferred " << theorem_count << " NLESS facts");
     return theorem_count;
 }

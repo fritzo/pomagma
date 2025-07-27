@@ -50,10 +50,10 @@ This approach requires atomic operations on the `NLESS` relation and creates sch
 
 ### Cartographer Queue Architecture in cartographer/infer.cpp
 
-The cartographer implements theorem queues with built-in lazy operations directly in the function classes:
+The cartographer implements theorem queues with built-in lazy operations directly in the function and relation classes:
 
-- `BinaryFunction` and `SymmetricFunction` classes now have integrated `Queue` nested classes
-- Thread-local worker queues collect theorems using `lazy_insert()` and `lazy_equate()` methods
+- `BinaryFunction`, `SymmetricFunction`, and `BinaryRelation` classes now have integrated `Queue` nested classes
+- Thread-local worker queues collect theorems using `lazy_insert()`, `lazy_try_insert()`, and `lazy_equate()` methods
 - `lazy_gather()` merges worker queues into the main queue with mutex protection
 - `lazy_flush()` applies all queued theorems atomically and returns the count
 
@@ -110,6 +110,25 @@ public:
     void lazy_gather() const;   // called by worker threads
     size_t lazy_flush() const;  // called by main thread
 };
+
+class BinaryRelation {
+    struct Queue {
+        std::vector<std::pair<Ob, Ob>> m_tasks;
+        void insert(Ob i, Ob j);
+        void clear();
+    };
+    
+    Queue& worker_queue() const;
+    mutable Queue m_queue;
+    mutable std::mutex m_queue_mutex;
+    static thread_local std::unordered_map<const BinaryRelation*, Queue>* s_worker_queues;
+    
+public:
+    void lazy_insert(Ob i, Ob j) const;
+    void lazy_try_insert(Ob i, Ob j) const;
+    void lazy_gather() const;   // called by worker threads
+    size_t lazy_flush();        // called by main thread
+};
 ```
 
 **Automatic Deduplication**: The lazy queues use `sort_uniq()` and `union_sort_uniq()` utilities to deduplicate theorems before applying them to the database structures.
@@ -118,11 +137,13 @@ public:
 
 ### Implementation in cartographer/infer.cpp
 
-**Direct Integration**: The cartographer now uses the integrated lazy queue methods directly on function classes, eliminating the need for separate theorem queue classes.
+**Direct Integration**: The cartographer now uses the integrated lazy queue methods directly on function and relation classes, eliminating the need for separate theorem queue classes like `BinaryRelationTheoremQueue`.
+
+**Replaced Theorem Queue Classes**: The old `BinaryRelationRowTheoremQueue` and `BinaryRelationTheoremQueue` classes have been completely removed in favor of the integrated lazy queue methods (`lazy_insert()`, `lazy_try_insert()`, `lazy_gather()`, `lazy_flush()`).
 
 **Preserved Optimization Patterns**: The core optimization patterns are maintained - thread-local collection during proving phases and mutex-protected merging during write phases.
 
-**Proven Performance**: The implementation achieves linear scaling across CPU cores by avoiding contention during the proving phase and batching all database updates during the write phase.
+**Proven Performance**: The implementation achieves linear scaling across CPU cores by avoiding contention during the proving phase and batching all database updates during the write phase. Atomic operations and mutex contention during proving have been eliminated.
 
 ### Refactoring surveyor/infer.cpp
 
@@ -218,10 +239,12 @@ void execute_phased_vm_programs() {
 
 ## Work Plan
 
-- [x] Implement integrated lazy queue architecture directly in `BinaryFunction` and `SymmetricFunction` classes
-- [x] Add thread-local worker queues with `lazy_insert()`, `lazy_equate()`, `lazy_gather()`, and `lazy_flush()` methods
+- [x] Implement integrated lazy queue architecture directly in `BinaryFunction`, `SymmetricFunction`, and `BinaryRelation` classes
+- [x] Add thread-local worker queues with `lazy_insert()`, `lazy_try_insert()`, `lazy_equate()`, `lazy_gather()`, and `lazy_flush()` methods
 - [x] Update cartographer/infer.cpp to use lazy queue methods instead of separate theorem queue classes
-- [x] Replace `BinaryFunctionTheoremQueue` with direct lazy operations in atlas functions
+- [x] Replace `BinaryFunctionTheoremQueue` and `BinaryRelationTheoremQueue` with direct lazy operations in atlas functions
+- [x] Implement BinaryRelation lazy queue methods (`lazy_insert()`, `lazy_try_insert()`, `lazy_gather()`, `lazy_flush()`)
+- [x] Remove old theorem queue classes (`BinaryRelationRowTheoremQueue`, `BinaryRelationTheoremQueue`) from cartographer
 - [ ] Modify VM opcodes `INFER_*` in vm_impl.hpp to use lazy queue methods instead of direct insertion
 - [ ] Add phased execution methods to scheduler.cpp using OpenMP implicit barriers between proving and write phases
 - [ ] Refactor surveyor/infer.cpp to use lazy queue infrastructure instead of direct `NLESS.insert()` calls during parallel computation

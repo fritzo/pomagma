@@ -46,6 +46,12 @@ class BinaryRelation : noncopyable {
     void insert(Ob i, const DenseSet& js);
     void insert(const DenseSet& is, Ob j);
 
+    // safe thread-locally queued operations
+    void lazy_insert(Ob i, Ob j) const;
+    void lazy_try_insert(Ob i, Ob j) const;
+    void lazy_gather() const;
+    size_t lazy_flush();
+
     // unsafe operations
     void unsafe_merge(Ob dep);
 
@@ -58,6 +64,18 @@ class BinaryRelation : noncopyable {
     size_t word_dim() const { return m_lines.word_dim(); }
     size_t round_item_dim() const { return m_lines.round_item_dim(); }
     size_t data_size_words() const { return m_lines.data_size_words(); }
+
+    struct Queue {
+        Queue() { clear(); }
+        std::vector<std::pair<Ob, Ob>> m_tasks;
+        void insert(Ob i, Ob j) { m_tasks.emplace_back(i, j); }
+        void clear();
+    };
+    Queue& worker_queue() const;
+    mutable Queue m_queue;
+    mutable std::mutex m_queue_mutex;
+    static thread_local std::unordered_map<const BinaryRelation*, Queue>*
+        s_worker_queues;
 
     void _insert(Ob i, Ob j) {
         _insert_Lx(i, j);
@@ -91,6 +109,23 @@ inline void BinaryRelation::insert_Rx(Ob i, Ob j) {
     if (not m_lines.Rx(i, j).fetch_one()) {
         _insert_Lx(i, j);
     }
+}
+
+inline void BinaryRelation::lazy_insert(Ob i, Ob j) const {
+    worker_queue().insert(i, j);
+}
+
+inline void BinaryRelation::lazy_try_insert(Ob i, Ob j) const {
+    if (likely(find(i, j))) return;
+    lazy_insert(i, j);
+}
+
+inline BinaryRelation::Queue& BinaryRelation::worker_queue() const {
+    if (unlikely(s_worker_queues == nullptr)) {
+        // never freed
+        s_worker_queues = new std::unordered_map<const BinaryRelation*, Queue>;
+    }
+    return (*s_worker_queues)[this];
 }
 
 }  // namespace pomagma
