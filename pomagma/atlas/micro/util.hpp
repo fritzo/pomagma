@@ -1,10 +1,8 @@
 #pragma once
 
 #include <atomic>
-#include <pomagma/util/util.hpp>
-
-#define POMAGMA_OB_BITWIDTH 16
 #include <pomagma/atlas/obs.hpp>
+#include <pomagma/util/util.hpp>
 
 #define POMAGMA_HAS_INVERSE_INDEX (1)
 

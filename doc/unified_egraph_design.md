@@ -30,11 +30,11 @@ Hash computation (`pomagma/atlas/micro/inverse_bin_fun.hpp`) uses multiplicative
 
 ### Atlas Macro Implementation
 
-The macro atlas (`pomagma/atlas/macro/`) supports larger E-graphs with 32-bit identifiers (`typedef uint32_t Ob`) accommodating up to 4 billion E-classes. Binary functions (`pomagma/atlas/macro/binary_function.hpp`) use a simple hash map design with `ObPairMap m_values` storing `(lhs, rhs) -> val` mappings directly.
+The macro atlas (`pomagma/atlas/macro/`) supports E-graphs with 16-bit identifiers by default (`typedef uint16_t Ob`) accommodating up to 65K E-classes. Binary functions (`pomagma/atlas/macro/binary_function.hpp`) use a simple hash map design with `ObPairMap m_values` storing `(lhs, rhs) -> val` mappings directly.
 
 Three hash map configurations are configurable via `POMAGMA_USE_SPARSE_HASH`: Google's `sparse_hash_map` for memory efficiency, `dense_hash_map` for speed, or `std::unordered_map` as the default (`POMAGMA_USE_SPARSE_HASH == 0`). The macro implementation uses a single `std::mutex m_raw_mutex` for synchronization rather than fine-grained locking.
 
-Hash computation (`pomagma/atlas/macro/util.hpp`) for 32-bit pairs uses an improved xxHash-inspired algorithm with better distribution than simple concatenation.
+Hash computation (`pomagma/atlas/macro/util.hpp`) for 16-bit pairs uses an improved xxHash-inspired algorithm with better distribution than simple concatenation.
 
 ### Torch Representation
 
@@ -52,7 +52,7 @@ Source code analysis reveals the relationship between high-level interfaces and 
 
 **Surveyor** (forward-chaining inference, `pomagma/surveyor/`) uses micro atlas exclusively. Files like `theory.cpp` and `insert_parser.hpp` include `pomagma/atlas/micro/structure_impl.hpp`. The atomic operations and tiled memory layout optimize for the write-heavy workload of growing E-graphs through concurrent exploration.
 
-**Cartographer** (batch inference server, `pomagma/cartographer/`) uses macro atlas throughout. Files including `server.hpp`, `aggregate.cpp`, `infer.cpp`, `trim.cpp`, `collect_parser.hpp`, and `signature.cpp` all include `pomagma/atlas/macro/structure.hpp` or its implementation header. The 32-bit identifiers and hash map storage support aggregating multiple survey results and batch processing workflows.
+**Cartographer** (batch inference server, `pomagma/cartographer/`) uses macro atlas throughout. Files including `server.hpp`, `aggregate.cpp`, `infer.cpp`, `trim.cpp`, `collect_parser.hpp`, and `signature.cpp` all include `pomagma/atlas/macro/structure.hpp` or its implementation header. The 16-bit identifiers and hash map storage support aggregating multiple survey results and batch processing workflows.
 
 **Analyst** (query engine, `pomagma/analyst/`) uses macro atlas for read-heavy operations. Files like `server.hpp`, `approximate.hpp`, `simplify.hpp`, `intervals.hpp`, and `propagate.cpp` include `pomagma/atlas/macro/structure.hpp`. The hash map storage and simple locking optimize complex constraint propagation and theorem proving queries.
 
@@ -117,8 +117,8 @@ The current system uses a "header-based polymorphism" pattern to support differe
 - Uses tiled atomic arrays optimized for concurrent access
 - Includes inverse lookup tables (`POMAGMA_HAS_INVERSE_INDEX = 1`)
 
-**Macro Atlas** (`uint32_t Ob`):
-- Supports up to 4 billion E-classes  
+**Macro Atlas** (`uint16_t Ob`):
+- Supports up to 65K E-classes  
 - Uses hash maps with configurable backends
 - No inverse lookup tables (`POMAGMA_HAS_INVERSE_INDEX = 0`)
 
@@ -138,14 +138,14 @@ The unified design builds on existing concurrency patterns rather than introduci
 
 The unified representation builds storage formats and indices only when required by specific operations, prioritizing predictability over automatic optimization. The system follows a "follow-the-user" workflow where data structures are constructed in response to user actions rather than preemptive heuristics.
 
-**Identifier Width Selection** is determined at session start based on E-graph size requirements with safety margins for growth:
-- **16-bit mode** (`uint16_t Ob`): Up to ~50,000 E-classes, leaving headroom for cartographer merging operations
-- **32-bit mode** (`uint32_t Ob`): Beyond 50,000 E-classes or when large merges are anticipated
+**Identifier Width** is now standardized at 16-bit for all components:
+- **16-bit mode** (`uint16_t Ob`): All components use up to 65K E-classes with configurable `POMAGMA_OB_BITWIDTH=16`
+- **32-bit mode** (`uint32_t Ob`): Vestigial support remains in codebase but is not actively used
 
 **Index Construction Triggers** follow operation requirements:
 - **Inverse lookup tables** (`Vlr_Table`, `VLr_Table`, `VRl_Table`) are built when VM programs require inverse queries (`FOR_BINARY_FUNCTION_VAL`, etc.)  
 - **Torch CSR indices** are constructed on-demand for analytics operations and torn down immediately after mutations
-- **Hash vs. tiled storage** depends on identifier width: 16-bit uses tiled arrays, 32-bit uses hash maps
+- **Storage strategy** uses hash maps for all binary functions regardless of identifier width
 
 **Index Invalidation** follows mutation semantics:
 - Any structural modification (insert, merge) invalidates dependent read-only indices
@@ -167,11 +167,11 @@ This approach eliminates unpredictable format switching while ensuring that expe
 - **High-level virtual interface** (`EGraphSession`) for infrequent session/structure operations where virtual dispatch is acceptable
 - **Zero-cost inner interface** using templates or `std::variant` for hot-path operations (binary function lookups, iteration, insertion)
 
-**Compilation Strategy** compiles performance-critical components against all storage policies in separate translation units:
-- `vm_micro.cpp` - VM execution (surveyor + analyst) specialized for 16-bit tiled storage
-- `vm_macro.cpp` - VM execution (surveyor + analyst) specialized for 32-bit hash storage  
-- `cartographer_micro.cpp` - Batch inference algorithms specialized for 16-bit operations
-- `cartographer_macro.cpp` - Batch inference algorithms specialized for 32-bit operations
+**Compilation Strategy** now standardized for 16-bit identifiers across all components:
+- `vm_micro.cpp` - VM execution (surveyor + analyst) using 16-bit identifiers
+- `vm_macro.cpp` - VM execution (surveyor + analyst) using 16-bit identifiers with hash storage  
+- `cartographer_micro.cpp` - Batch inference algorithms using 16-bit identifiers
+- `cartographer_macro.cpp` - Batch inference algorithms using 16-bit identifiers
 - `torch_csr.cpp` - Analytics operations specialized for CSR tensor indices (lower priority)
 
 **Index Management** coordinates expensive auxiliary indices through the high-level interface:

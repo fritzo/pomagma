@@ -8,7 +8,7 @@ Speed up inference in the surveyor by reducing cleanup overhead and improving pa
 
 ### Architecture Overview
 
-Pomagma implements two primary inference engines: the **surveyor** for forward-chaining database construction and the **cartographer** for scalable batch operations. The surveyor operates on **micro atlases** (16-bit identifiers, up to 65K E-classes) optimized for concurrent write-heavy growth, while the cartographer uses **macro atlases** (32-bit identifiers) optimized for read-heavy batch processing and aggregation.
+Pomagma implements two primary inference engines: the **surveyor** for forward-chaining database construction and the **cartographer** for scalable batch operations. Both now operate on **16-bit identifiers** (up to 65K E-classes), with the surveyor using micro atlases optimized for concurrent write-heavy growth, while the cartographer uses macro atlases optimized for read-heavy batch processing and aggregation.
 
 ### Inference Types and Completeness
 

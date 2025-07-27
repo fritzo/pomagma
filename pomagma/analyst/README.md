@@ -1,6 +1,6 @@
 # Analyst: Query Engine for E-graphs
 
-The analyst provides constraint satisfaction and validation services over read-only equality graphs (E-graphs) in ordered combinatory algebras. It compiles declarative queries into efficient constraint propagation algorithms using 32-bit E-class identifiers (macro atlas).
+The analyst provides constraint satisfaction and validation services over read-only equality graphs (E-graphs) in ordered combinatory algebras. It compiles declarative queries into efficient constraint propagation algorithms using 16-bit E-class identifiers (macro atlas).
 
 ## Purpose
 
@@ -49,7 +49,7 @@ The validator processes expression collections through dependency analysis, memo
 ### Approximation Objects
 ```cpp
 struct Approximation {
-    Ob ob;           // 32-bit E-class identifier
+    Ob ob;           // 16-bit E-class identifier
     DenseSet upper;  // possible values (bit vector)
     DenseSet lower;  // impossible values (bit vector)
 };
@@ -58,7 +58,7 @@ struct Approximation {
 ### Virtual Machine Context
 ```cpp
 struct Context {
-    Ob obs[256];                        // 32-bit E-class identifiers
+    Ob obs[256];                        // 16-bit E-class identifiers
     const DenseSet::RawData* sets[256]; // set references for iteration
     size_t block;                       // parallelization state
 };

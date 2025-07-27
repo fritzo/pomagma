@@ -6,6 +6,9 @@
 namespace pomagma {
 
 // Ob is a 1-based index type with 0 = none
+#ifndef POMAGMA_OB_BITWIDTH
+#define POMAGMA_OB_BITWIDTH 16
+#endif  // POMAGMA_OB_BITWIDTH
 #if POMAGMA_OB_BITWIDTH == 16
 typedef uint16_t Ob;
 #elif POMAGMA_OB_BITWIDTH == 32

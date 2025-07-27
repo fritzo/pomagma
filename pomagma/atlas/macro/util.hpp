@@ -1,9 +1,7 @@
 #pragma once
 
-#include <pomagma/util/util.hpp>
-
-#define POMAGMA_OB_BITWIDTH 32
 #include <pomagma/atlas/obs.hpp>
+#include <pomagma/util/util.hpp>
 
 #define POMAGMA_USE_SPARSE_HASH 0
 

@@ -44,9 +44,9 @@ This nested loop structure over E-class pairs is precisely where Hilbert curve t
 
 **Batch inference algorithms** in `pomagma/cartographer/infer.cpp` implement mathematical properties like transitivity (`LESS x z, LESS z y ==> LESS x y`) and monotonicity (`LESS f g, LESS x y ==> LESS fun(f,x) fun(g,y)`). These feature embarrassingly parallel outer loops over E-classes with nested set operations and hash table lookups.
 
-**Atlas size differences**: Pomagma uses different identifier widths for different scales:
+**Atlas identifier width**: Pomagma now standardizes on 16-bit identifiers across all components:
 - **Micro atlas** (`pomagma/atlas/micro/`): 16-bit E-class IDs (`typedef uint16_t Ob`) supporting up to 65,535 E-classes, used by surveyor for concurrent E-graph growth
-- **Macro atlas** (`pomagma/atlas/macro/`): 32-bit E-class IDs (`typedef uint32_t Ob`) supporting up to 4 billion E-classes, used by cartographer and analyst for large-scale batch processing
+- **Macro atlas** (`pomagma/atlas/macro/`): 16-bit E-class IDs (`typedef uint16_t Ob`) supporting up to 65,535 E-classes, used by cartographer and analyst for batch processing
 
 **Memory access patterns** are read-heavy (~1000:1 read/write ratio) with sequential bitwise operations on `DenseSet` structures and random hash table probes for function lookups. The `DenseSet` operations use vectorized code (`POMAGMA_VECTORIZE_LOOP`) for set intersection, union, and difference computations.
 
