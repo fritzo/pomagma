@@ -10,40 +10,9 @@
 
 namespace pomagma {
 
-namespace detail {
-
-static const size_t HASH_MULTIPLIER = 11400714819323198485ULL;
-
-template <class smallint_t>
-struct small_pair_hasher;
-
-template <>
-struct small_pair_hasher<uint16_t> {
-    size_t operator()(const std::pair<uint16_t, uint16_t>& pair) const {
-        static_assert(sizeof(size_t) == 8, "invalid sizeof(size_t)");
-        size_t x = pair.first;
-        size_t y = pair.second;
-        return ((x << 16) | y) * HASH_MULTIPLIER;
-    }
-};
-
-template <>
-struct small_pair_hasher<uint32_t> {
-    size_t operator()(const std::pair<uint32_t, uint32_t>& pair) const {
-        static_assert(sizeof(size_t) == 8, "invalid sizeof(size_t)");
-        size_t x = pair.first;
-        size_t y = pair.second;
-        return ((x << 32) | y) * HASH_MULTIPLIER;
-    }
-};
-
-}  // namespace detail
-
 // val -> lhs, rhs
 class Vlr_Table : noncopyable {
-    typedef tbb::concurrent_unordered_set<std::pair<Ob, Ob>,
-                                          detail::small_pair_hasher<Ob>>
-        Set;
+    typedef tbb::concurrent_unordered_set<std::pair<Ob, Ob>, ObPairHash> Set;
     typedef std::vector<Set> Data;
     mutable Data m_data;
 
@@ -108,8 +77,7 @@ class Vlr_Table : noncopyable {
 template <bool transpose>
 class VXx_Table : noncopyable {
     typedef tbb::concurrent_unordered_set<Ob> Set;
-    typedef tbb::concurrent_unordered_map<std::pair<Ob, Ob>, Set,
-                                          detail::small_pair_hasher<Ob>>
+    typedef tbb::concurrent_unordered_map<std::pair<Ob, Ob>, Set, ObPairHash>
         Data;
     mutable Data m_data;
 

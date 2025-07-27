@@ -17,7 +17,6 @@ static_assert(sizeof(Ob) == sizeof(std::atomic<Ob>),
 
 static constexpr size_t DEFAULT_ITEM_DIM = BITS_PER_CACHE_LINE - 1;
 static constexpr size_t MAX_ITEM_DIM = (1UL << (8UL * sizeof(Ob))) - 1UL;
-static constexpr size_t HASH_MULTIPLIER = 11400714819323198485ULL;
 
 // Hash constants with good distribution
 static constexpr uint64_t HASH_PRIME1 = 11400714785074694791ULL;
