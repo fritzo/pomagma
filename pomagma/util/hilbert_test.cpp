@@ -49,6 +49,24 @@ TEST_F(HilbertTest, HilbertDecode30Basic) {
     EXPECT_TRUE(x3 != x2 || y3 != y2);
 }
 
+// Test basic functionality of 8-bit Hilbert decode
+TEST_F(HilbertTest, HilbertDecode8Basic) {
+    // Test some known points
+    auto [x0, y0] = hilbert_decode_8(0);
+    EXPECT_EQ(x0, 0);
+    EXPECT_EQ(y0, 0);
+
+    // Test that we get different coordinates for different indices
+    auto [x1, y1] = hilbert_decode_8(1);
+    auto [x2, y2] = hilbert_decode_8(2);
+    auto [x3, y3] = hilbert_decode_8(3);
+
+    // Should all be different
+    EXPECT_TRUE(x1 != x0 || y1 != y0);
+    EXPECT_TRUE(x2 != x1 || y2 != y1);
+    EXPECT_TRUE(x3 != x2 || y3 != y2);
+}
+
 // Test that coordinates stay within expected bounds
 TEST_F(HilbertTest, HilbertDecode16Bounds) {
     const uint16_t max_coord = 65535;  // 2^16 - 1
@@ -75,6 +93,74 @@ TEST_F(HilbertTest, HilbertDecode30Bounds) {
         // Note: Individual decode functions can return 0, but for_xy filters
         // them out
     }
+}
+
+// Test that coordinates stay within expected bounds for 8-bit
+TEST_F(HilbertTest, HilbertDecode8Bounds) {
+    const uint8_t max_coord = 255;  // 2^8 - 1
+
+    // Test a range of indices
+    for (uint16_t h = 0; h < 1000; ++h) {
+        auto [x, y] = hilbert_decode_8(h);
+        EXPECT_LE(x, max_coord);
+        EXPECT_LE(y, max_coord);
+        // Note: Individual decode functions can return 0, but for_xy filters
+        // them out
+    }
+}
+
+// Test locality property for 8-bit: nearby indices should map to nearby
+// coordinates
+TEST_F(HilbertTest, HilbertLocality8) {
+    std::vector<std::pair<uint8_t, uint8_t>> coords;
+
+    // Get first 100 coordinates
+    for (uint16_t h = 0; h < 100; ++h) {
+        auto [x, y] = hilbert_decode_8(h);
+        coords.emplace_back(x, y);
+    }
+
+    // Check that most consecutive pairs are close to each other
+    int close_pairs = 0;
+    for (size_t i = 1; i < coords.size(); ++i) {
+        auto [x1, y1] = coords[i - 1];
+        auto [x2, y2] = coords[i];
+
+        // Manhattan distance
+        uint32_t distance =
+            std::abs(static_cast<int32_t>(x2) - static_cast<int32_t>(x1)) +
+            std::abs(static_cast<int32_t>(y2) - static_cast<int32_t>(y1));
+
+        if (distance <= 2) {  // Very close
+            close_pairs++;
+        }
+    }
+
+    // Most pairs should be close (Hilbert curve locality property)
+    EXPECT_GT(close_pairs, static_cast<int>(coords.size()) *
+                               0.7);  // At least 70% should be close
+}
+
+// Test that different indices produce different coordinates for 8-bit
+// (injectivity)
+TEST_F(HilbertTest, HilbertInjectivity8) {
+    std::set<std::pair<uint8_t, uint8_t>> seen_coords;
+
+    // Test first 1000 indices
+    for (uint16_t h = 0; h < 1000; ++h) {
+        auto [x, y] = hilbert_decode_8(h);
+        std::pair<uint8_t, uint8_t> coord = {x, y};
+
+        // Should not have seen this coordinate before
+        EXPECT_EQ(seen_coords.find(coord), seen_coords.end())
+            << "Duplicate coordinate (" << static_cast<int>(x) << ", "
+            << static_cast<int>(y) << ") at index " << h;
+
+        seen_coords.insert(coord);
+    }
+
+    // Should have exactly 1000 unique coordinates
+    EXPECT_EQ(seen_coords.size(), 1000U);
 }
 
 // Test locality property: nearby indices should map to nearby coordinates
@@ -232,6 +318,14 @@ TEST_F(HilbertTest, ConsistencyTest) {
     for (uint32_t h = 0; h < 100; ++h) {
         auto [x1, y1] = hilbert_decode_16(h);
         auto [x2, y2] = hilbert_decode_16(h);
+
+        EXPECT_EQ(x1, x2);
+        EXPECT_EQ(y1, y2);
+    }
+
+    for (uint16_t h = 0; h < 100; ++h) {
+        auto [x1, y1] = hilbert_decode_8(h);
+        auto [x2, y2] = hilbert_decode_8(h);
 
         EXPECT_EQ(x1, x2);
         EXPECT_EQ(y1, y2);

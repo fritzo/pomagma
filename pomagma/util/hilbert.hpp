@@ -151,6 +151,70 @@ inline std::tuple<uint16_t, uint16_t> hilbert_decode_16(uint32_t h) {
 }
 
 /**
+ * Ultra-fast O(1) Hilbert curve decode for 8-bit coordinates.
+ * Supports 2^8 x 2^8 coordinate space using 16-bit Hilbert index.
+ *
+ * Optimized version for very small coordinate spaces with 8-bit coordinates.
+ */
+inline std::tuple<uint8_t, uint8_t> hilbert_decode_8(uint16_t h) {
+    constexpr uint32_t order = 8;  // 2^8 = 256 max coordinate
+
+    uint16_t s = h;
+
+    // Pad s on left with 01 pattern for parallel processing
+    if (2 * order < 16) {
+        s |= 0x5555U << (2 * order);
+    }
+
+    // Extract right-shifted bits for parallel operations
+    const uint16_t sr = (s >> 1) & 0x5555U;
+
+    // Compute complement & swap info using bit arithmetic trick
+    uint16_t cs = ((s & 0x5555U) + sr) ^ 0x5555U;
+
+    // Parallel prefix XOR to propagate complement/swap info left-to-right
+    cs ^= (cs >> 2);
+    cs ^= (cs >> 4);
+    cs ^= (cs >> 8);
+
+    // Extract swap and complement bits into separate masks
+    const uint16_t swap = cs & 0x5555U;
+    const uint16_t comp = (cs >> 1) & 0x5555U;
+
+    // Apply transformations to compute final coordinates
+    uint16_t t = (s & swap) ^ comp;
+    s ^= sr ^ t ^ (t << 1);
+
+    // Mask to remove padding bits
+    if (2 * order < 16) {
+        s &= ((1U << (2 * order)) - 1);
+    } else {
+        s &= 0xFFFFU;  // Keep all 16 bits
+    }
+
+#ifdef __BMI2__
+    // Intel BMI2 PEXT optimization for 50x speedup on Haswell+ CPUs
+    const uint8_t x = static_cast<uint8_t>(_pext_u32(s, 0xAAAAU));
+    const uint8_t y = static_cast<uint8_t>(_pext_u32(s, 0x5555U));
+#else
+    // Parallel bit deinterleaving using optimized bit manipulation
+    // Note: ARM64 NEON doesn't have a direct equivalent to PEXT, so this
+    // fallback works efficiently across all architectures (x86, ARM64, etc.)
+    t = (s ^ (s >> 1)) & 0x2222U;
+    s ^= t ^ (t << 1);
+    t = (s ^ (s >> 2)) & 0x0C0CU;
+    s ^= t ^ (t << 2);
+    t = (s ^ (s >> 4)) & 0x00F0U;
+    s ^= t ^ (t << 4);
+
+    const uint8_t x = static_cast<uint8_t>(s >> 8);
+    const uint8_t y = static_cast<uint8_t>(s & 0xFFU);
+#endif
+
+    return std::make_tuple(x, y);
+}
+
+/**
  * Iterates over [1,size) x [1,size) in parallel Hilbert curve order.
  *
  * @param size Maximum coordinate value (exclusive)
