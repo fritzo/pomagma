@@ -28,9 +28,9 @@ case INFER_BINARY_RELATION: {
 
 These direct writes occur during the proving phase within nested loops and conditional logic, creating contention on shared data structures. The VM processes millions of inference operations per second, with line 4837 in profiling data showing 17.9M calls consuming 59% of execution time.
 
-### Surveyor Batch Inference in surveyor/infer.cpp
+### Forward-Chaining Inference Patterns
 
-The surveyor's `infer_nless()` function implements parallel batch inference for NLESS monotonicity rules. It uses OpenMP parallelization with direct database writes:
+Forward-chaining inference (as exemplified by the surveyor's `infer_nless()` function) implements parallel batch inference for NLESS monotonicity rules. The enhanced cartographer will adopt these patterns using OpenMP parallelization with lazy queue writes:
 
 ```cpp
 #pragma omp parallel
@@ -145,9 +145,9 @@ public:
 
 **Proven Performance**: The implementation achieves linear scaling across CPU cores by avoiding contention during the proving phase and batching all database updates during the write phase. Atomic operations and mutex contention during proving have been eliminated.
 
-### Refactoring surveyor/infer.cpp
+### Enhanced Cartographer Inference Implementation
 
-**Adopting Cartographer Patterns**: The surveyor's `infer_nless()` function will be refactored to use the same theorem queue patterns as the cartographer:
+**Adopting Proven Patterns**: The cartographer will incorporate forward-chaining inference capabilities using theorem queue patterns, including NLESS monotonicity rules:
 
 ```cpp
 size_t infer_nless() {
@@ -170,7 +170,7 @@ size_t infer_nless() {
 }
 ```
 
-**Integration with Task Scheduling**: The refactored surveyor will continue scheduling `NegativeOrderTask`s during the write phase, but task creation will be batched to reduce scheduling overhead.
+**Integration with Task Scheduling**: The enhanced cartographer will schedule `NegativeOrderTask`s during the write phase, with batched task creation to reduce scheduling overhead through the new cartographer scheduler implementation.
 
 ### Implementation in vm_impl.hpp and scheduler.cpp
 
@@ -186,28 +186,30 @@ case INFER_BINARY_RELATION: {
 } break;
 ```
 
-**Scheduler Phase Coordination**: The scheduler implements BSP-style coordination using OpenMP's implicit barriers:
+**Cartographer Scheduler Coordination**: The cartographer scheduler implements BSP-style coordination using OpenMP's implicit barriers:
 
 ```cpp
-namespace Scheduler {
-void execute_phased_vm_programs() {
-    // Proving phase - programs distributed across threads
-#pragma omp parallel
-    {
-        Context* context = vm.new_context();  // Gets thread-local context
-        
-#pragma omp for
-        for (size_t i = 0; i < pending_programs.size(); ++i) {
-            vm.execute(pending_programs[i], context);
+namespace cartographer {
+class Scheduler {
+    void execute_phased_vm_programs() {
+        // Proving phase - programs distributed across threads
+    #pragma omp parallel
+        {
+            Context* context = vm.new_context();  // Gets thread-local context
+            
+    #pragma omp for
+            for (size_t i = 0; i < pending_programs.size(); ++i) {
+                vm.execute(pending_programs[i], context);
+            }
+            // Each thread gathers its worker queues before barrier
+            signature.gather_all_lazy_queues();
         }
-        // Each thread gathers its worker queues before barrier
-        signature.gather_all_lazy_queues();
+        // Implicit OpenMP barrier here when parallel section ends
+        
+        // Write phase - main thread only
+        signature.flush_all_lazy_queues();
     }
-    // Implicit OpenMP barrier here when parallel section ends
-    
-    // Write phase - main thread only
-    signature.flush_all_lazy_queues();
-}
+};
 }
 ```
 
@@ -249,11 +251,11 @@ void execute_phased_vm_programs() {
 - [x] Add `not_lazy` base class for micro atlas components to maintain existing behavior
 - [x] Add `lazy_gather()` and `lazy_flush()` methods to macro `Structure` class for coordinated queue management
 - [ ] Modify VM opcodes `INFER_*` in vm_impl.hpp to use lazy queue methods instead of direct insertion
-- [ ] Add phased execution methods to scheduler.cpp using OpenMP implicit barriers between proving and write phases
-- [ ] Refactor surveyor/infer.cpp to use lazy queue infrastructure instead of direct `NLESS.insert()` calls during parallel computation
-- [ ] Update all VM callers (surveyor, analyst) to use lazy queue execution patterns
+- [ ] Add phased execution methods to cartographer scheduler using OpenMP implicit barriers between proving and write phases  
+- [ ] Implement forward-chaining inference in cartographer using lazy queue infrastructure for all inference patterns
+- [ ] Update all VM callers (cartographer, analyst) to use lazy queue execution patterns
 - [ ] Add performance benchmarks comparing lazy queue vs direct execution throughput and latency
-- [ ] Update scheduler task priority handling to batch task creation during write phase instead of individual scheduling during proving
+- [ ] Update cartographer scheduler task priority handling to batch task creation during write phase instead of individual scheduling during proving
 - [x] Add cross-references and links between this document and scheduler_design.md for the broader BSP scheduling context
 - [ ] Test integration with existing cleanup task system to ensure phased inference doesn't interfere with cleanup program execution
 - [ ] Validate memory usage patterns and cache behavior under high-concurrency lazy queue workloads

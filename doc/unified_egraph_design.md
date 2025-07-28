@@ -1,6 +1,8 @@
 # Unified E-graph Storage Design
 
-This document analyzes Pomagma's multiple E-graph representations and proposes simplification through unification. The primary motivation is enabling a unified workflow where users can perform complete analysis pipelines (E-graph growth → incremental inference → batch inference → querying → conjecturing → language optimization → analytics extraction) against a single database instance in a single Python script. This requires both reducing maintenance complexity of multiple storage formats and providing a consistent interface that supports all use cases without requiring users to manually transfer data between different storage systems.
+This document analyzes Pomagma's multiple E-graph representations and proposes simplification through unification and architectural consolidation. The primary motivation is enabling a unified workflow where users can perform complete analysis pipelines (E-graph growth → incremental inference → batch inference → querying → conjecturing → language optimization → analytics extraction) against a single database instance in a single Python script. 
+
+**NEW DIRECTION:** The design has evolved towards eliminating the surveyor entirely and consolidating all inference capabilities into the cartographer. This eliminates the maintenance burden of dual atlas implementations (micro/macro) and the TBB dependency while providing a single, scalable inference engine with phased execution.
 
 ## Background: Current State of the System
 
@@ -18,15 +20,17 @@ Memory requirements grow superlinearly, approaching O(N²) for dense binary func
 
 ## E-graph Storage Implementations
 
-Pomagma implements three distinct atlas data structures and a separate torch representation, each optimized for different scenarios.
+**DEPRECATION NOTICE:** The micro atlas implementation is being eliminated in favor of a unified cartographer-based approach. This section documents the current state before consolidation.
 
-### Atlas Micro Implementation
+### Atlas Micro Implementation (TO BE REMOVED)
 
 The micro atlas (`pomagma/atlas/micro/`) targets high-performance concurrent access with 16-bit identifiers (`typedef uint16_t Ob`) supporting up to 65,535 E-classes. Data is organized in 8×8 tiles of 64 elements each (`LOG2_ITEMS_PER_TILE = 3`), optimized for cache locality. Each tile occupies exactly two 64-byte cache lines, with traversal patterns favoring fixed-left-hand-side while varying right-hand-side access.
 
 Binary functions (`pomagma/atlas/micro/binary_function.hpp`) maintain four index structures per function: `m_tiles` for tiled storage and three inverse indices (`m_Vlr_table`, `m_VLr_table`, `m_VRl_table`) using Intel TBB concurrent data structures. The `Vlr_Table` uses `tbb::concurrent_unordered_set<std::pair<Ob, Ob>>` while `VXx_Table` uses `tbb::concurrent_unordered_map`. All operations use `std::atomic<Ob>` with `acquire`/`release` semantics for lock-free reads and atomic writes.
 
 Hash computation (`pomagma/atlas/micro/inverse_bin_fun.hpp`) uses multiplicative hashing with `HASH_MULTIPLIER = 11400714819323198485ULL`, applied as `((x << 16) | y) * HASH_MULTIPLIER` for 16-bit pairs.
+
+**The micro atlas and TBB dependency will be completely removed in favor of the enhanced cartographer architecture.**
 
 ### Atlas Macro Implementation
 
@@ -50,9 +54,9 @@ Source code analysis reveals the relationship between high-level interfaces and 
 
 ### Components Using E-graph Storage
 
-**Surveyor** (forward-chaining inference, `pomagma/surveyor/`) uses micro atlas exclusively. Files like `theory.cpp` and `insert_parser.hpp` include `pomagma/atlas/micro/structure_impl.hpp`. The atomic operations and tiled memory layout optimize for the write-heavy workload of growing E-graphs through concurrent exploration.
+**Surveyor** (forward-chaining inference, `pomagma/surveyor/`) **TO BE REMOVED** - Currently uses micro atlas exclusively. Files like `theory.cpp` and `insert_parser.hpp` include `pomagma/atlas/micro/structure_impl.hpp`. The atomic operations and tiled memory layout optimize for the write-heavy workload of growing E-graphs through concurrent exploration. **All surveyor functionality will be migrated to the enhanced cartographer.**
 
-**Cartographer** (batch inference server, `pomagma/cartographer/`) uses macro atlas throughout. Files including `server.hpp`, `aggregate.cpp`, `infer.cpp`, `trim.cpp`, `collect_parser.hpp`, and `signature.cpp` all include `pomagma/atlas/macro/structure.hpp` or its implementation header. The 16-bit identifiers and hash map storage support aggregating multiple survey results and batch processing workflows.
+**Cartographer** (batch inference server, `pomagma/cartographer/`) uses macro atlas throughout and **will become the primary inference engine**. Files including `server.hpp`, `aggregate.cpp`, `infer.cpp`, `trim.cpp`, `collect_parser.hpp`, and `signature.cpp` all include `pomagma/atlas/macro/structure.hpp` or its implementation header. The 16-bit identifiers and hash map storage support aggregating multiple survey results and batch processing workflows. **The cartographer will be enhanced with a new scheduler supporting complete forward-chaining inference and phased execution.**
 
 **Analyst** (query engine, `pomagma/analyst/`) uses macro atlas for read-heavy operations. Files like `server.hpp`, `approximate.hpp`, `simplify.hpp`, `intervals.hpp`, and `propagate.cpp` include `pomagma/atlas/macro/structure.hpp`. The hash map storage and simple locking optimize complex constraint propagation and theorem proving queries.
 
@@ -98,7 +102,23 @@ Datalog engines like Soufflé would be more natural for recursive inference patt
 
 ## Design Overview
 
-The unified E-graph design addresses Pomagma's maintenance complexity by creating a flexible storage engine that constructs indices and storage formats on-demand based on user operations. Rather than maintaining separate micro, macro, and torch implementations, the unified system provides a single interface that can utilize different storage formats (dense tiled arrays, sparse hash maps, vectorized tensors) as needed by specific operations. The system follows a "follow-the-user" workflow: when users attempt operations requiring specific indices, those indices are built on-demand; when mutations invalidate indices, they are removed. This approach prioritizes predictability and user control while enabling the full range of Pomagma operations against a single database instance.
+The unified E-graph design eliminates Pomagma's architectural complexity by consolidating all inference capabilities into a single cartographer-based system. Rather than maintaining separate surveyor (micro atlas) and cartographer (macro atlas) implementations with different concurrency models and storage strategies, the new design provides a single, enhanced cartographer that supports:
+
+1. **Complete forward-chaining inference** through a new scheduler implementation (based on `pomagma/surveyor/scheduler.cpp` patterns)
+2. **Phased inference execution** using the proven theorem queue architecture from `doc/theorem_queue.md`
+3. **Lazy inverse binary function tables** constructed as optimized read-only CSR tables per inference phase
+4. **Unified client interface** with a new `.survey()` method for database growth and saturation
+
+This eliminates the TBB dependency, removes the micro atlas maintenance burden, and provides a single scalable inference engine that can handle both incremental database growth and large-scale batch operations through the same optimized infrastructure.
+
+### Key Architectural Benefits
+
+1. **Simplified Maintenance**: Eliminates dual atlas implementations (micro/macro) and their separate concurrency models, testing requirements, and optimization needs
+2. **Unified Workflow**: Users can perform complete analysis pipelines through a single cartographer client without transferring data between different systems
+3. **Reduced Dependencies**: Removes Intel TBB dependency, simplifying builds and deployments
+4. **Enhanced Scalability**: The cartographer's hash-map based storage scales better than micro atlas's tiled arrays for large databases
+5. **Proven Inference**: Incorporates the surveyor's complete inference capabilities through the scheduler and theorem queue architecture
+6. **Lazy Optimization**: Inverse tables are constructed only when needed and optimized for specific inference phases
 
 ## Design Details
 
@@ -197,23 +217,87 @@ Several resolution strategies are possible:
 
 The hybrid approach appears most promising, allowing torch to access data in-process for performance while preserving the distributed architecture for other use cases.
 
-## Implementation Plan
+## Work Plan
 
-The refactoring strategy prioritizes incremental migration to maintain system functionality throughout the transition. The approach uses an adapter pattern initially, allowing existing components to continue working while gradually introducing unified interfaces. This minimizes risk and enables rollback at each stage.
+The refactoring strategy follows an incremental approach where each step is fully tested and documented before proceeding. The system remains working throughout, with the surveyor elimination as the final step.
 
-Implementation tasks in dependency order:
+### Step 1: Add Cartographer Survey Interface (Minimal Implementation)
+- [ ] Add `.survey(chunk_size=512)` method to `pomagma/cartographer/client.py:Client` class
+- [ ] Update `pomagma/cartographer/cartographer_messages.proto` with `Survey` message containing `chunk_size` parameter
+- [ ] Add `survey()` method to `pomagma/cartographer/server.hpp` and `server.cpp` that initially delegates to existing `infer()` methods
+- [ ] Write unit tests for new client/server survey interface
+- [ ] Update `doc/client.md` to document the new `.survey()` method
+- [ ] **Git commit:** "Add basic cartographer survey interface"
 
-- [x] Remove abandoned shard atlas implementation (`pomagma/atlas/shard/` directory and CMake references) to simplify unification scope
-- [ ] Create high-level `EGraphSession` virtual interface for session management (load/dump/execute_program) where virtual dispatch is acceptable
-- [ ] Implement zero-cost inner `Structure<StoragePolicy>` template for hot-path operations (find/iter/insert) using compile-time dispatch
-- [ ] Create storage policy classes (`MicroStoragePolicy`, `MacroStoragePolicy`) encapsulating Ob types and core data structures  
-- [ ] Compile VM execution against all storage policies in separate translation units (vm_micro.cpp, vm_macro.cpp) for surveyor and analyst operations
-- [ ] Compile cartographer batch inference against all storage policies (cartographer_micro.cpp, cartographer_macro.cpp) for core reasoning algorithms
-- [ ] Add session management layer with identifier width selection at startup and index tracking
-- [ ] Implement on-demand inverse index construction in session layer triggered by VM program analysis (`FOR_BINARY_FUNCTION_VAL` detection)
-- [ ] Add atomic index invalidation system coordinated through session layer during structural modifications
-- [ ] Create torch CSR storage policy (`TorchStoragePolicy`) and compile analytics operations (torch_csr.cpp) for on-demand ML workflows
-- [ ] Implement benchmarking harness measuring compilation time vs. runtime performance trade-offs for template specialization approach
-- [ ] Create operation pattern tracking in session layer to optimize index lifetime decisions (build/cache/discard)
-- [ ] Migrate surveyor, cartographer, analyst, and theorist to use session interface with appropriate storage policy selection
-- [ ] Add unified Python API that provides single-script workflow capabilities while preserving performance through proper abstraction boundaries 
+### Step 2: Implement Lazy Inverse Binary Function Tables
+- [ ] Add lazy CSR (Compressed Sparse Row) inverse table infrastructure to `pomagma/atlas/macro/binary_function.hpp`
+- [ ] Implement `build_inverse_tables()` and `clear_inverse_tables()` methods with proper lifecycle management
+- [ ] Add unit tests for CSR table construction, access patterns, and invalidation
+- [ ] Optimize CSR construction for read-only sequential access during inference phases
+- [ ] **Git commit:** "Add lazy inverse tables to macro atlas"
+
+### Step 3: Implement Cartographer Scheduler Infrastructure
+- [ ] Create `pomagma/cartographer/scheduler.hpp` and `scheduler.cpp` based on proven surveyor patterns
+- [ ] Implement basic `Agenda` class with priority queues for task management (MergeTask, EnforceTask, SampleTask, CleanupTask)
+- [ ] Add `WorkStealingDeque` and `ThreadBarrier` classes for phased execution
+- [ ] Write comprehensive unit tests for scheduler components
+- [ ] **Git commit:** "Add cartographer scheduler infrastructure"
+
+### Step 4: Integrate Theorem Queues and Phased Execution
+- [ ] Integrate lazy theorem queue architecture into cartographer scheduler
+- [ ] Implement phased execution (proving phase → write phase) using OpenMP barriers
+- [ ] Update VM opcodes in `vm_impl.hpp` to support both direct writes (existing) and lazy queues (new) via compile-time flag
+- [ ] Add integration tests for phased inference execution
+- [ ] **Git commit:** "Add theorem queue and phased execution to cartographer"
+
+### Step 5: Implement Complete Survey Functionality
+- [ ] Enhance cartographer `survey()` method with actual database growth logic using PCFG sampling
+- [ ] Integrate scheduler with survey operations for complete forward-chaining inference
+- [ ] Add saturation detection and chunk-based growth to reach target database size
+- [ ] Create comprehensive integration tests comparing cartographer survey results with surveyor results
+- [ ] **Git commit:** "Implement complete survey functionality in cartographer"
+
+### Step 6: Add Experimental Survey Mode to Main Commands
+- [ ] Add `POMAGMA_USE_CARTOGRAPHER_SURVEY=1` environment variable to `pomagma/__main__.py`
+- [ ] Modify `init()`, `explore()`, and `make()` commands to optionally use cartographer survey instead of surveyor
+- [ ] Ensure both paths work and produce equivalent results
+- [ ] Add integration tests for both surveyor and cartographer workflows
+- [ ] Update documentation to describe experimental mode
+- [ ] **Git commit:** "Add experimental cartographer survey mode to main commands"
+
+### Step 7: Switch Default to Cartographer Survey
+- [ ] Change default behavior in `pomagma/__main__.py` to use cartographer survey
+- [ ] Add `POMAGMA_USE_LEGACY_SURVEYOR=1` fallback environment variable for compatibility
+- [ ] Run full test suite with new default, ensuring no regressions
+- [ ] Update user documentation to reflect new default behavior
+- [ ] **Git commit:** "Switch default to cartographer survey with legacy fallback"
+
+### Step 8: Remove Surveyor Fallback and Legacy Code
+- [ ] Remove legacy surveyor usage from `pomagma/__main__.py`, `pomagma/workers.py`, `pomagma/make.py`
+- [ ] Remove `POMAGMA_USE_LEGACY_SURVEYOR` environment variable and associated code paths
+- [ ] Update all documentation to remove surveyor references
+- [ ] Run full test suite to ensure clean removal
+- [ ] **Git commit:** "Remove surveyor fallback and legacy code paths"
+
+### Step 9: Delete Surveyor Implementation
+- [ ] Delete `pomagma/surveyor/` directory entirely (`.cpp`, `.hpp`, `CMakeLists.txt`, Python `__init__.py`)
+- [ ] Remove surveyor CMake targets and build dependencies
+- [ ] Update any remaining surveyor references in examples or documentation
+- [ ] **Git commit:** "Delete surveyor implementation"
+
+### Step 10: Delete Micro Atlas and TBB Dependency
+- [ ] Delete `pomagma/atlas/micro/` directory entirely
+- [ ] Remove micro atlas CMake targets and dependencies from build system
+- [ ] Remove Intel TBB from CMake dependencies and vcpkg requirements
+- [ ] Remove all `#include <tbb/*.hpp>` references from remaining codebase
+- [ ] Update build documentation to reflect simplified dependencies
+- [ ] **Git commit:** "Remove micro atlas and TBB dependency"
+
+### Step 11: Final Documentation and Architecture Updates
+- [ ] Update `doc/README.md` to reflect new single-engine architecture
+- [ ] Update architecture diagrams and component descriptions throughout documentation
+- [ ] Create migration guide documenting the transition from dual-engine to single-engine architecture
+- [ ] Update benchmarking documentation to focus on cartographer performance
+- [ ] **Git commit:** "Update documentation for unified cartographer architecture"
+
+Each step includes comprehensive testing at the appropriate level (unit, integration, or system tests) and maintains full backward compatibility until the final removal steps. The system remains functional and well-documented throughout the entire transition. 

@@ -1,14 +1,14 @@
-# Design Doc: Inference Scheduling
+# Design Doc: Cartographer Scheduler Implementation
 
 ## Objective
 
-Speed up inference in the surveyor by reducing cleanup overhead and improving parallel efficiency.
+Implement complete forward-chaining inference capabilities in the cartographer by incorporating the surveyor's scheduler patterns, phased execution, and cleanup reduction optimizations. This eliminates the need for separate surveyor and cartographer inference engines.
 
 ## Background
 
 ### Architecture Overview
 
-Pomagma implements two primary inference engines: the **surveyor** for forward-chaining database construction and the **cartographer** for scalable batch operations. Both now operate on **16-bit identifiers** (up to 65K E-classes), with the surveyor using micro atlases optimized for concurrent write-heavy growth, while the cartographer uses macro atlases optimized for read-heavy batch processing and aggregation.
+**NEW DIRECTION:** Pomagma will consolidate into a single **enhanced cartographer** that combines forward-chaining database construction with scalable batch operations. The enhanced cartographer will operate on **16-bit identifiers** (up to 65K E-classes) using macro atlases, enhanced with complete inference capabilities through a new scheduler implementation based on proven surveyor patterns.
 
 ### Inference Types and Completeness
 
@@ -69,11 +69,15 @@ When incremental inference accumulates too many negative ordering tasks (thresho
 
 Batch inference is **incomplete** by design - it only implements specific, hand-optimized algorithms for particular inference patterns (mainly NLESS monotonicity and transitivity), trading logical completeness for computational tractability.
 
-### Surveyor vs Cartographer: Growth Models and Saturation
+### Enhanced Cartographer: Unified Growth and Inference Model
 
-The **surveyor only grows** through monotonic addition of facts and objects. When contradictions are discovered, objects are merged rather than deleted, preserving all information while maintaining consistency. The surveyor implements **complete inference** through the combination of incremental GIVEN tasks and systematic cleanup phases, always resulting in a saturated database.
+**NEW DIRECTION:** The enhanced cartographer will unify the surveyor's complete inference capabilities with the cartographer's scalable batch operations. Rather than maintaining separate engines, the enhanced cartographer will support:
 
-The **cartographer can truncate, grow, and merge** databases. It implements three key operations:
+1. **Complete forward-chaining inference** through a new scheduler implementation (this document)
+2. **Database growth** through sampling and saturation via a new `.survey()` method  
+3. **Batch operations** for truncation, merging, and aggregation
+
+The **enhanced cartographer will grow, truncate, and merge** databases while maintaining complete inference capabilities. It implements the following operations:
 
 1. **Truncate** (`/pomagma/cartographer/trim.cpp`): Creates smaller E-graphs by probabilistically selecting important E-classes using language models
 2. **Grow**: Extends E-graphs through controlled VM program execution  
@@ -407,15 +411,16 @@ The implementation complexity would be moderate - the compiler already generates
 
 ## Work Plan
 
-The following tasks implement the scheduler redesign in incremental commits:
+The following tasks implement the cartographer scheduler in incremental commits:
 
+- [ ] Create `pomagma/cartographer/scheduler.hpp` and `scheduler.cpp` based on proven surveyor patterns
 - [ ] Implement `WorkStealingDeque` class with cache-aligned atomics and LIFO/FIFO operations
 - [ ] Add `ThreadBarrier` class using futex-based synchronization for BSP-style phase coordination  
 - [ ] Create `HybridScheduler` class with double-buffered per-thread deques and ping-pong buffer management
-- [ ] Replace current task queue system in `/pomagma/atlas/micro/scheduler.cpp` with hybrid scheduler interface
+- [ ] Implement `Agenda` class for task management with priority queues (MergeTask, Enforce tasks, SampleTask, CleanupTask)
 - [ ] Add task classification logic to route tasks to appropriate phases (merge/enforce/cleanup/batch)
 - [ ] Implement phase transition logic with barrier synchronization and buffer swapping
 - [ ] Add work stealing algorithm with NUMA-aware victim selection and batch stealing optimization
-- [ ] Update database operations to use relaxed memory ordering while maintaining correctness through barriers
+- [ ] Integrate with cartographer's macro atlas operations using relaxed memory ordering with barriers
 - [ ] Add saturation tracking to skip cleanup phase when no new inference is generated
-- [ ] Update compiler to generate `IF_GLOBAL` guards for cleanup rules implemented in cartographer
+- [ ] Update compiler to generate complete rule sets optimized for macro atlas (no inverse table dependencies)
