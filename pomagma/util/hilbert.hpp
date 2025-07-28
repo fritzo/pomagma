@@ -260,4 +260,146 @@ inline void for_xy(size_t size, Func func, size_t chunks_per_thread = 16ULL,
     }
 }
 
+/**
+ * Naive O(n) Hilbert curve encode for 16-bit coordinates.
+ * Supports 2^16 x 2^16 coordinate space using 32-bit Hilbert index.
+ *
+ * Uses the Lam & Shapiro algorithm from Hacker's Delight.
+ * This is the reference implementation - correct but not optimized.
+ */
+inline uint32_t hilbert_encode_16_naive(uint16_t x, uint16_t y) {
+    // Implementation of Lam & Shapiro algorithm from Hacker's Delight
+    // This converts 2D coordinates to Hilbert curve index
+
+    constexpr int n = 16;  // number of bits per coordinate
+    uint32_t s = 0;
+
+    for (int i = n - 1; i >= 0; i--) {
+        uint32_t xi = (x >> i) & 1U;
+        uint32_t yi = (y >> i) & 1U;
+
+        if (yi == 0) {
+            uint32_t temp = x;
+            x = y ^ (static_cast<uint16_t>(-static_cast<int32_t>(xi)));
+            y = temp ^ (static_cast<uint16_t>(-static_cast<int32_t>(xi)));
+        }
+
+        s = 4 * s + 2 * xi + (xi ^ yi);
+    }
+
+    return s;
+}
+
+/**
+ * Naive O(n) Hilbert curve encode for 8-bit coordinates.
+ * Supports 2^8 x 2^8 coordinate space using 16-bit Hilbert index.
+ *
+ * Uses the Lam & Shapiro algorithm from Hacker's Delight.
+ * This is the reference implementation - correct but not optimized.
+ */
+inline uint16_t hilbert_encode_8_naive(uint8_t x, uint8_t y) {
+    // Implementation of Lam & Shapiro algorithm from Hacker's Delight
+    // This converts 2D coordinates to Hilbert curve index
+
+    constexpr int n = 8;  // number of bits per coordinate
+    uint16_t s = 0;
+
+    for (int i = n - 1; i >= 0; i--) {
+        uint16_t xi = (x >> i) & 1U;
+        uint16_t yi = (y >> i) & 1U;
+
+        if (yi == 0) {
+            uint16_t temp = x;
+            x = y ^ (static_cast<uint8_t>(-static_cast<int16_t>(xi)));
+            y = temp ^ (static_cast<uint8_t>(-static_cast<int16_t>(xi)));
+        }
+
+        s = 4 * s + 2 * xi + (xi ^ yi);
+    }
+
+    return s;
+}
+
+// Fast O(1) Hilbert curve encode for up to 16-bit coordinates.
+// Adapted from @rawrunprotected's algorithm
+// https://threadlocalmutex.com/?p=126
+// https://github.com/rawrunprotected/hilbert_curves
+inline uint32_t hilbert_encode_16(uint16_t x, uint16_t y) {
+    uint32_t A, B, C, D;
+
+    // Initial prefix scan round, prime with x and y
+    {
+        uint32_t a = x ^ y;
+        uint32_t b = 0xFFFF ^ a;
+        uint32_t c = 0xFFFF ^ (x | y);
+        uint32_t d = x & (y ^ 0xFFFF);
+
+        A = a | (b >> 1);
+        B = (a >> 1) ^ a;
+
+        C = ((c >> 1) ^ (b & (d >> 1))) ^ c;
+        D = ((a & (c >> 1)) ^ (d >> 1)) ^ d;
+    }
+
+    {
+        uint32_t a = A;
+        uint32_t b = B;
+        uint32_t c = C;
+        uint32_t d = D;
+
+        A = ((a & (a >> 2)) ^ (b & (b >> 2)));
+        B = ((a & (b >> 2)) ^ (b & ((a ^ b) >> 2)));
+
+        C ^= ((a & (c >> 2)) ^ (b & (d >> 2)));
+        D ^= ((b & (c >> 2)) ^ ((a ^ b) & (d >> 2)));
+    }
+
+    {
+        uint32_t a = A;
+        uint32_t b = B;
+        uint32_t c = C;
+        uint32_t d = D;
+
+        A = ((a & (a >> 4)) ^ (b & (b >> 4)));
+        B = ((a & (b >> 4)) ^ (b & ((a ^ b) >> 4)));
+
+        C ^= ((a & (c >> 4)) ^ (b & (d >> 4)));
+        D ^= ((b & (c >> 4)) ^ ((a ^ b) & (d >> 4)));
+    }
+
+    // Final round and projection
+    {
+        uint32_t a = A;
+        uint32_t b = B;
+        uint32_t c = C;
+        uint32_t d = D;
+
+        C ^= ((a & (c >> 8)) ^ (b & (d >> 8)));
+        D ^= ((b & (c >> 8)) ^ ((a ^ b) & (d >> 8)));
+    }
+
+    // Undo transformation prefix scan
+    uint32_t a = C ^ (C >> 1);
+    uint32_t b = D ^ (D >> 1);
+
+    // Recover index bits
+    uint32_t i0 = x ^ y;
+    uint32_t i1 = b | (0xFFFF ^ (i0 | a));
+
+    // Interleave function optimized for 16-bit result
+    auto interleave = [](uint32_t x) -> uint32_t {
+        x = (x | (x << 8)) & 0x00FF00FF;
+        x = (x | (x << 4)) & 0x0F0F0F0F;
+        x = (x | (x << 2)) & 0x33333333;
+        x = (x | (x << 1)) & 0x55555555;
+        return x;
+    };
+
+    return (interleave(i1) << 1) | interleave(i0);
+}
+
+inline uint16_t hilbert_encode_8(uint8_t x, uint8_t y) {
+    return hilbert_encode_16(x, y);
+}
+
 }  // namespace pomagma

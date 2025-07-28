@@ -25,6 +25,7 @@ temp.*
 /pomagma/language/*.language
 /data/
 /build/
+/tmp/
 /cov-int/
 *.egg-info/
 /dist/
