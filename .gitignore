@@ -24,8 +24,8 @@ temp.*
 /pomagma/theory/*.lineprof
 /pomagma/language/*.language
 /data/
-/build/
 /tmp/
+/build/
 /cov-int/
 *.egg-info/
 /dist/
