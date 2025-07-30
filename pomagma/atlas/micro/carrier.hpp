@@ -8,7 +8,7 @@
 
 namespace pomagma {
 
-class Carrier : noncopyable {
+class Carrier : noncopyable, public not_lazy {
     mutable DenseSet m_support;
     mutable std::atomic<size_t> m_item_count;
     mutable std::atomic<size_t> m_rep_count;

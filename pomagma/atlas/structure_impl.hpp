@@ -30,7 +30,7 @@ void clear(Signature &signature);
 void clear_data(Signature &signature);
 void log_stats(Signature &signature);
 void lazy_gather(Signature &signature);
-void lazy_flush(Signature &signature);
+size_t lazy_flush(Signature &signature);
 
 void dump(Signature &signature, const std::string &filename);
 
@@ -966,6 +966,7 @@ void log_stats(Signature &signature) {
 // Lazy queues
 
 inline void lazy_gather(Signature &signature) {
+    signature.carrier()->lazy_gather();
 #define CASE_ARITY(Kind, kind, Arity, arity)          \
     for (auto pair : signature.arity##_##kind##s()) { \
         pair.second->lazy_gather();                   \
@@ -974,13 +975,15 @@ inline void lazy_gather(Signature &signature) {
 #undef CASE_ARITY
 }
 
-inline void lazy_flush(Signature &signature) {
+inline size_t lazy_flush(Signature &signature) {
+    size_t theorem_count = signature.carrier()->lazy_flush();
 #define CASE_ARITY(Kind, kind, Arity, arity)          \
     for (auto pair : signature.arity##_##kind##s()) { \
-        pair.second->lazy_flush();                    \
+        theorem_count += pair.second->lazy_flush();   \
     }
     POMAGMA_SWITCH_ARITY(CASE_ARITY)
 #undef CASE_ARITY
+    return theorem_count;
 }
 
 }  // namespace pomagma

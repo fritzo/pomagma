@@ -31,7 +31,7 @@ class Structure : noncopyable {
     void init_carrier(size_t item_dim);
     void log_stats();
     void lazy_gather();
-    void lazy_flush();
+    size_t lazy_flush();
 };
 
 inline UnaryRelation& Structure::unary_relation(const std::string& name) {

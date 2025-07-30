@@ -2,10 +2,13 @@
 
 #include <cstring>
 #include <pomagma/util/aligned_alloc.hpp>
+#include <pomagma/util/sort_uniq.hpp>
 
 #define POMAGMA_DEBUG1(message) POMAGMA_DEBUG(message)
 
 namespace pomagma {
+
+thread_local Carrier::Queue* Carrier::s_worker_queue = nullptr;
 
 Carrier::Carrier(size_t item_dim, void (*merge_callback)(Ob))
     : m_support(item_dim),
@@ -150,6 +153,27 @@ void Carrier::log_stats() const {
     POMAGMA_PRINT(carrier.item_dim());
     POMAGMA_PRINT(carrier.item_count());
     POMAGMA_PRINT(carrier.rep_count());
+}
+
+void Carrier::lazy_gather() const {
+    Queue& source = worker_queue();
+    if (source.m_tasks.empty()) return;
+    sort_uniq(source.m_tasks);
+    {
+        std::unique_lock<std::mutex> lock(m_queue_mutex);
+        union_sort_uniq(m_queue.m_tasks, source.m_tasks);
+    }
+    source.clear();
+}
+
+size_t Carrier::lazy_flush() const {
+    if (m_queue.m_tasks.empty()) return 0;
+    for (const auto [dep, rep] : m_queue.m_tasks) {
+        merge(dep, rep);
+    }
+    size_t theorem_count = m_queue.m_tasks.size();
+    m_queue.clear();
+    return theorem_count;
 }
 
 }  // namespace pomagma

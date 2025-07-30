@@ -1,5 +1,6 @@
 #pragma once
 
+#include <mutex>
 #include <pomagma/util/sequential/dense_set.hpp>
 
 #include "util.hpp"
@@ -45,6 +46,11 @@ class Carrier : noncopyable {
     bool set_or_merge(Ob& destin, Ob source) const;
     DenseSet::Iterator iter() const { return m_support.iter(); }
 
+    // safe thread-locally queued operations
+    void lazy_equate(Ob lhs, Ob rhs) const;
+    void lazy_gather() const;   // called by worker threads
+    size_t lazy_flush() const;  // called by main thread
+
     // unsafe operations
     Ob unsafe_insert();
     void unsafe_remove(const Ob ob);
@@ -53,6 +59,16 @@ class Carrier : noncopyable {
     Ob _find(Ob ob, Ob rep) const;
 
     mutable std::mutex m_merge_mutex;
+
+    struct Queue {
+        std::vector<std::pair<Ob, Ob>> m_tasks;
+        void insert(Ob dep, Ob rep) { m_tasks.emplace_back(dep, rep); }
+        void clear() { std::vector<std::pair<Ob, Ob>>().swap(m_tasks); }
+    };
+    Queue& worker_queue() const;
+    mutable Queue m_queue;
+    mutable std::mutex m_queue_mutex;
+    static thread_local Queue* s_worker_queue;
 };
 
 inline void Carrier::raw_insert(Ob ob) {
@@ -98,6 +114,21 @@ inline bool Carrier::set_or_merge(Ob& destin, Ob source) const {
         destin = source;
         return true;
     }
+}
+
+inline void Carrier::lazy_equate(Ob lhs, Ob rhs) const {
+    if (lhs == rhs) return;
+    Ob dep = lhs > rhs ? lhs : rhs;
+    Ob rep = lhs > rhs ? rhs : lhs;
+    worker_queue().insert(dep, rep);
+}
+
+inline Carrier::Queue& Carrier::worker_queue() const {
+    if (unlikely(s_worker_queue == nullptr)) {
+        // never freed
+        s_worker_queue = new Queue;
+    }
+    return *s_worker_queue;
 }
 
 }  // namespace pomagma

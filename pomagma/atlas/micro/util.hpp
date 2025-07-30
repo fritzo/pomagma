@@ -13,7 +13,7 @@ using namespace concurrent;
 
 struct not_lazy {
     void lazy_gather() const {}
-    void lazy_flush() const {}
+    size_t lazy_flush() const { return 0; }
 };
 
 //----------------------------------------------------------------------------

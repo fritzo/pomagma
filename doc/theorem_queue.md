@@ -250,6 +250,7 @@ class Scheduler {
 - [x] Implement lazy queue architecture in macro atlas components (`InjectiveFunction`, `NullaryFunction`, `UnaryRelation`)
 - [x] Add `not_lazy` base class for micro atlas components to maintain existing behavior
 - [x] Add `lazy_gather()` and `lazy_flush()` methods to macro `Structure` class for coordinated queue management
+- [x] Add lazy queue methods to Carrier class for E-graph reasoning (equate, gather, flush)
 - [ ] Modify VM opcodes `INFER_*` in vm_impl.hpp to use lazy queue methods instead of direct insertion
 - [ ] Add phased execution methods to cartographer scheduler using OpenMP implicit barriers between proving and write phases  
 - [ ] Implement forward-chaining inference in cartographer using lazy queue infrastructure for all inference patterns
