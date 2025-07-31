@@ -54,6 +54,9 @@ class SymmetricFunction : noncopyable, public not_lazy {
     VLr_Table::Iterator iter_val_rhs(Ob val, Ob lhs) const;
     void insert(Ob lhs, Ob rhs, Ob val) const;
 
+    // lazy interface, for compatibility
+    void lazy_insert(Ob lhs, Ob rhs, Ob val) const { insert(lhs, rhs, val); }
+
     // strict operations
     void unsafe_merge(const Ob dep);
 

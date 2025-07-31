@@ -39,6 +39,9 @@ class UnaryRelation : noncopyable, public not_lazy {
     DenseSet::Iterator iter() const { return m_set.iter(); }
     void insert(Ob i);
 
+    // lazy interface, for compatibility
+    void lazy_insert(Ob i) { insert(i); }
+
     // strict operations
     void unsafe_merge(Ob dep);
 

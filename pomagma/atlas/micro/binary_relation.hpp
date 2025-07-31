@@ -47,6 +47,9 @@ class BinaryRelation : noncopyable, public not_lazy {
     void insert(Ob i, const DenseSet& js);
     void insert(const DenseSet& is, Ob j);
 
+    // lazy interface, for compatibility
+    void lazy_insert(Ob i, Ob j) { insert(i, j); }
+
     // strict operations
     void unsafe_merge(Ob dep);
 

@@ -32,6 +32,9 @@ class NullaryFunction : noncopyable, public not_lazy {
     Ob find() const;
     void insert(Ob val) const;
 
+    // lazy interface, for compatibility
+    void lazy_insert(Ob val) const { insert(val); }
+
     // strict operations
     void unsafe_merge(Ob dep);
 

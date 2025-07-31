@@ -46,6 +46,9 @@ class InjectiveFunction : noncopyable, public not_lazy {
     DenseSet::Iterator inverse_iter() const { return m_inverse_set.iter(); }
     void insert(Ob key, Ob val) const;
 
+    // lazy interface, for compatibility
+    void lazy_insert(Ob key, Ob val) const { insert(key, val); }
+
     // strict operations
     void unsafe_merge(Ob dep);
 

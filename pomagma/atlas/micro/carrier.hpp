@@ -53,6 +53,9 @@ class Carrier : noncopyable, public not_lazy {
     DenseSet::Iterator iter() const { return m_support.iter(); }
     Ob try_insert() const;
 
+    // lazy interface, for compatibility
+    void lazy_equate(Ob lhs, Ob rhs) const { ensure_equal(lhs, rhs); }
+
     // strict operations
     void unsafe_remove(const Ob ob);
 

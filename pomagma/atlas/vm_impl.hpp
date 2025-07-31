@@ -688,33 +688,33 @@ void VirtualMachine::_execute(Program program,
         case INFER_EQUAL: {
             Ob &lhs = pop_ob(program, context);
             Ob &rhs = pop_ob(program, context);
-            carrier().ensure_equal(lhs, rhs);
+            carrier().lazy_equate(lhs, rhs);
         } break;
 
         case INFER_UNARY_RELATION: {
             UnaryRelation &rel = pop_unary_relation(program);
             Ob &key = pop_ob(program, context);
-            rel.insert(key);
+            rel.lazy_insert(key);
         } break;
 
         case INFER_BINARY_RELATION: {
             BinaryRelation &rel = pop_binary_relation(program);
             Ob &lhs = pop_ob(program, context);
             Ob &rhs = pop_ob(program, context);
-            rel.insert(lhs, rhs);
+            rel.lazy_insert(lhs, rhs);
         } break;
 
         case INFER_NULLARY_FUNCTION: {
             NullaryFunction &fun = pop_nullary_function(program);
             Ob &val = pop_ob(program, context);
-            fun.insert(val);
+            fun.lazy_insert(val);
         } break;
 
         case INFER_INJECTIVE_FUNCTION: {
             InjectiveFunction &fun = pop_injective_function(program);
             Ob &key = pop_ob(program, context);
             Ob &val = pop_ob(program, context);
-            fun.insert(key, val);
+            fun.lazy_insert(key, val);
         } break;
 
         case INFER_BINARY_FUNCTION: {
@@ -722,7 +722,7 @@ void VirtualMachine::_execute(Program program,
             Ob &lhs = pop_ob(program, context);
             Ob &rhs = pop_ob(program, context);
             Ob &val = pop_ob(program, context);
-            fun.insert(lhs, rhs, val);
+            fun.lazy_insert(lhs, rhs, val);
         } break;
 
         case INFER_SYMMETRIC_FUNCTION: {
@@ -730,16 +730,16 @@ void VirtualMachine::_execute(Program program,
             Ob &lhs = pop_ob(program, context);
             Ob &rhs = pop_ob(program, context);
             Ob &key = pop_ob(program, context);
-            fun.insert(lhs, rhs, key);
+            fun.lazy_insert(lhs, rhs, key);
         } break;
 
         case INFER_NULLARY_NULLARY: {
             auto &fun1 = pop_nullary_function(program);
             auto &fun2 = pop_nullary_function(program);
             if (Ob val = fun1.find()) {
-                fun2.insert(val);
+                fun2.lazy_insert(val);
             } else if (Ob val = fun2.find()) {
-                fun1.insert(val);
+                fun1.lazy_insert(val);
             }
         } break;
 
@@ -748,9 +748,9 @@ void VirtualMachine::_execute(Program program,
             auto &fun2 = pop_injective_function(program);
             auto &key2 = pop_ob(program, context);
             if (Ob val = fun1.find()) {
-                fun2.insert(key2, val);
+                fun2.lazy_insert(key2, val);
             } else if (Ob val = fun2.find(key2)) {
-                fun1.insert(val);
+                fun1.lazy_insert(val);
             }
         } break;
 
@@ -760,9 +760,9 @@ void VirtualMachine::_execute(Program program,
             auto &lhs2 = pop_ob(program, context);
             auto &rhs2 = pop_ob(program, context);
             if (Ob val = fun1.find()) {
-                fun2.insert(lhs2, rhs2, val);
+                fun2.lazy_insert(lhs2, rhs2, val);
             } else if (Ob val = fun2.find(lhs2, rhs2)) {
-                fun1.insert(val);
+                fun1.lazy_insert(val);
             }
         } break;
 
@@ -772,9 +772,9 @@ void VirtualMachine::_execute(Program program,
             auto &lhs2 = pop_ob(program, context);
             auto &rhs2 = pop_ob(program, context);
             if (Ob val = fun1.find()) {
-                fun2.insert(lhs2, rhs2, val);
+                fun2.lazy_insert(lhs2, rhs2, val);
             } else if (Ob val = fun2.find(lhs2, rhs2)) {
-                fun1.insert(val);
+                fun1.lazy_insert(val);
             }
         } break;
 
@@ -784,9 +784,9 @@ void VirtualMachine::_execute(Program program,
             auto &fun2 = pop_injective_function(program);
             auto &key2 = pop_ob(program, context);
             if (Ob val = fun1.find(key1)) {
-                fun2.insert(key2, val);
+                fun2.lazy_insert(key2, val);
             } else if (Ob val = fun2.find(key2)) {
-                fun1.insert(key1, val);
+                fun1.lazy_insert(key1, val);
             }
         } break;
 
@@ -797,9 +797,9 @@ void VirtualMachine::_execute(Program program,
             auto &lhs2 = pop_ob(program, context);
             auto &rhs2 = pop_ob(program, context);
             if (Ob val = fun1.find(key1)) {
-                fun2.insert(lhs2, rhs2, val);
+                fun2.lazy_insert(lhs2, rhs2, val);
             } else if (Ob val = fun2.find(lhs2, rhs2)) {
-                fun1.insert(key1, val);
+                fun1.lazy_insert(key1, val);
             }
         } break;
 
@@ -810,9 +810,9 @@ void VirtualMachine::_execute(Program program,
             auto &lhs2 = pop_ob(program, context);
             auto &rhs2 = pop_ob(program, context);
             if (Ob val = fun1.find(key1)) {
-                fun2.insert(lhs2, rhs2, val);
+                fun2.lazy_insert(lhs2, rhs2, val);
             } else if (Ob val = fun2.find(lhs2, rhs2)) {
-                fun1.insert(key1, val);
+                fun1.lazy_insert(key1, val);
             }
         } break;
 
@@ -826,11 +826,11 @@ void VirtualMachine::_execute(Program program,
             Ob val1 = fun1.defined(lhs1, rhs1) ? fun1.find(lhs1, rhs1) : 0;
             Ob val2 = fun2.defined(lhs2, rhs2) ? fun2.find(lhs2, rhs2) : 0;
             if (val1 && val2) {
-                carrier().ensure_equal(val1, val2);
+                carrier().lazy_equate(val1, val2);
             } else if (val1) {
-                fun2.insert(lhs2, rhs2, val1);
+                fun2.lazy_insert(lhs2, rhs2, val1);
             } else if (val2) {
-                fun1.insert(lhs1, rhs1, val2);
+                fun1.lazy_insert(lhs1, rhs1, val2);
             }
         } break;
 
@@ -844,11 +844,11 @@ void VirtualMachine::_execute(Program program,
             Ob val1 = fun1.defined(lhs1, rhs1) ? fun1.find(lhs1, rhs1) : 0;
             Ob val2 = fun2.defined(lhs2, rhs2) ? fun2.find(lhs2, rhs2) : 0;
             if (val1 && val2) {
-                carrier().ensure_equal(val1, val2);
+                carrier().lazy_equate(val1, val2);
             } else if (val1) {
-                fun2.insert(lhs2, rhs2, val1);
+                fun2.lazy_insert(lhs2, rhs2, val1);
             } else if (val2) {
-                fun1.insert(lhs1, rhs1, val2);
+                fun1.lazy_insert(lhs1, rhs1, val2);
             }
         } break;
 
@@ -862,11 +862,11 @@ void VirtualMachine::_execute(Program program,
             Ob val1 = fun1.defined(lhs1, rhs1) ? fun1.find(lhs1, rhs1) : 0;
             Ob val2 = fun2.defined(lhs2, rhs2) ? fun2.find(lhs2, rhs2) : 0;
             if (val1 && val2) {
-                carrier().ensure_equal(val1, val2);
+                carrier().lazy_equate(val1, val2);
             } else if (val1) {
-                fun2.insert(lhs2, rhs2, val1);
+                fun2.lazy_insert(lhs2, rhs2, val1);
             } else if (val2) {
-                fun1.insert(lhs1, rhs1, val2);
+                fun1.lazy_insert(lhs1, rhs1, val2);
             }
         } break;
 
