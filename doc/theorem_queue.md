@@ -243,6 +243,8 @@ class Scheduler {
 
 **Thread-Local Storage**: The design uses static thread_local maps to efficiently access worker queues without contention or lookup overhead.
 
+**Merge Coordination**: The macro `Structure::lazy_flush()` automatically calls `process_mergers()` after flushing all theorem queues to handle object merging triggered during theorem application. This ensures that equivalence class merges (from `INFER_EQUAL` operations) are processed atomically within each flush cycle, maintaining database consistency without requiring complex coordination between lazy queues and the global merge queue infrastructure.
+
 ## Work Plan
 
 - [x] Implement integrated lazy queue architecture directly in `BinaryFunction`, `SymmetricFunction`, and `BinaryRelation` classes

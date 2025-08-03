@@ -2,6 +2,7 @@
 #include "structure_impl.hpp"
 // clang-format on
 
+#include <pomagma/atlas/macro/scheduler.hpp>
 #include <pomagma/atlas/structure_impl.hpp>
 
 namespace pomagma {
@@ -30,7 +31,11 @@ void Structure::init_carrier(size_t item_dim) {
 
 void Structure::log_stats() { pomagma::log_stats(m_signature); }
 void Structure::lazy_gather() { pomagma::lazy_gather(m_signature); }
-size_t Structure::lazy_flush() { return pomagma::lazy_flush(m_signature); }
+size_t Structure::lazy_flush() {
+    size_t theorem_count = pomagma::lazy_flush(m_signature);
+    process_mergers(m_signature);
+    return theorem_count;
+}
 
 void Structure::resize(size_t item_dim) {
     Carrier* carrier = new Carrier(item_dim, *m_signature.carrier());
