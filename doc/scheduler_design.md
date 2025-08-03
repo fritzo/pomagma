@@ -372,6 +372,35 @@ The hybrid approach provides:
 - **Cache locality** through per-thread deques
 - **Performance** through relaxed atomics with barrier synchronization
 
+### Expression Queue Architecture for Enhanced Cartographer
+
+**Expression Queues as RETE Agenda**: The enhanced cartographer will implement expression queues that function as a RETE-style agenda or conflict set - a collection of expressions waiting to trigger `GIVEN_*` program execution. These queues bridge the gap between database writes and program activation:
+
+1. **DB Write Phase**: When facts are inserted during `lazy_flush()`, newly satisfied conditions populate expression queues
+2. **Program Activation**: Expressions in queues trigger execution of corresponding `GIVEN_*` programs compiled from inference rules
+3. **Queue Processing**: Programs execute in read-only mode, generating new facts for the next cycle
+
+**Queue-Aware Merge Processing**: Expression queues must be treated as additional database tables that require `update_values()` processing during object merging. When `process_mergers()` updates object representations across atlas components, it must also update any queued expressions that reference deprecated objects:
+
+```cpp
+void process_mergers(Signature& signature) {
+    // ... existing merge processing ...
+    
+    // Update expression queues with canonical object references
+    for (auto& queue : signature.expression_queues()) {
+        queue.second->update_values();  // Replace deprecated obs with reps
+    }
+}
+```
+
+**Checkpointed Inference with Persistent Queues**: For low-latency checkpointing (crucial for AWS EC2 spot instances), expression queues should support persistence alongside database state. This enables:
+
+- **Frequent checkpointing** without losing in-flight inference work
+- **Fast restart** from checkpoints with queued work intact  
+- **Incremental state saving** where only queue deltas need persistence
+
+The expression queues become part of the persistent database state, allowing inference to checkpoint mid-cycle and resume exactly where it left off.
+
 ### Surveyor-Cartographer Workflows
 
 The current workflow creates inefficiency when charts flow from cartographer to surveyor:
@@ -423,4 +452,7 @@ The following tasks implement the cartographer scheduler in incremental commits:
 - [ ] Add work stealing algorithm with NUMA-aware victim selection and batch stealing optimization
 - [ ] Integrate with cartographer's macro atlas operations using relaxed memory ordering with barriers
 - [ ] Add saturation tracking to skip cleanup phase when no new inference is generated
+- [ ] Implement expression queue classes with RETE-style agenda functionality for triggering GIVEN_* programs
+- [ ] Extend `process_mergers()` to call `update_values()` on expression queues during object merging
+- [ ] Add persistence support for expression queues to enable frequent checkpointing and fast restart
 - [ ] Update compiler to generate complete rule sets optimized for macro atlas (no inverse table dependencies)
