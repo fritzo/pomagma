@@ -121,7 +121,7 @@ void Server::print_ob_set(const DenseSet& set, std::vector<std::string>& result,
 }
 
 Server::SolutionSet Server::solve(const std::string& program,
-                                  size_t max_solutions) {
+                                  size_t max_solutions, size_t max_steps) {
     std::istringstream infile(program);
     auto& parser = m_virtual_machine.parser();
     auto listings = parser.parse(infile);
@@ -129,10 +129,18 @@ Server::SolutionSet Server::solve(const std::string& program,
 
     m_return.clear();
     m_nreturn.clear();
-    for (const auto& listing : listings) {
-        vm::Program program = parser.find_program(listing);
-        m_virtual_machine.execute(program);
+    // Execute programs until saturation.
+    size_t theorem_count = 1;
+    for (size_t i = 0; theorem_count && i < max_steps; ++i) {
+        for (const auto& listing : listings) {
+            vm::Program program = parser.find_program(listing);
+            m_virtual_machine.execute(program);
+        }
+        m_structure.lazy_gather();
+        theorem_count = m_structure.lazy_flush();
+        POMAGMA_INFO("Inferred " << theorem_count << " facts");
     }
+
     POMAGMA_ASSERT(m_return.get_set().disjoint(m_nreturn.get_set()),
                    "inconsistent query result; check programs:\n"
                        << program);

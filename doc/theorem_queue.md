@@ -186,7 +186,9 @@ case INFER_BINARY_RELATION: {
 } break;
 ```
 
-**Scope of VM Inference Programs**: The `INFER_*` opcodes are currently used exclusively by the surveyor's forward-chaining inference engine. The cartographer and analyst currently execute only query programs (using `RETURN`/`NRETURN` opcodes) and theory loading operations, neither of which contain `INFER_*` opcodes. This means lazy queue operations are automatically flushed only in surveyor contexts where the phased execution scheduler handles the write phase. The micro atlas compatibility layer ensures cartographer and analyst operations continue to work unchanged through direct delegation to existing `insert()` methods.
+**Scope of VM Inference Programs**: The `INFER_*` opcodes are used by both the surveyor's forward-chaining inference engine and the analyst's constraint solving operations. The cartographer executes only query programs (using `RETURN`/`NRETURN` opcodes) and theory loading operations, which do not contain `INFER_*` opcodes. 
+
+For the surveyor, lazy queue operations are automatically flushed by the phased execution scheduler during the write phase. For the analyst, explicit calls to `m_structure.lazy_gather()` and `m_structure.lazy_flush()` are required after VM program execution in `Server::solve()` to ensure all queued theorems are applied to the database before query results are collected. The micro atlas compatibility layer ensures these operations work correctly through direct delegation to existing `insert()` methods.
 
 **Cartographer Scheduler Coordination**: The cartographer scheduler implements BSP-style coordination using OpenMP's implicit barriers:
 

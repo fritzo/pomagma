@@ -47,7 +47,8 @@ class Server {
     const Corpus::Histogram& get_histogram();
     std::unordered_map<std::string, float> fit_language(
         const Corpus::Histogram& histogram);
-    SolutionSet solve(const std::string& program, size_t max_solutions);
+    SolutionSet solve(const std::string& program, size_t max_solutions,
+                      size_t max_steps = 10);
     Trool validate_facts(const std::vector<std::string>& polish_facts);
 
     void serve(const char* address) __attribute__((noreturn));
