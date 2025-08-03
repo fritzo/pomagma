@@ -71,11 +71,11 @@ class BinaryRelation : noncopyable {
         void insert(Ob i, Ob j) { m_tasks.emplace_back(i, j); }
         void clear();
     };
-    Queue& worker_queue() const;
-    mutable Queue m_queue;
-    mutable std::mutex m_queue_mutex;
+    Queue& worker_consequents() const;
+    mutable Queue m_consequents;
+    mutable std::mutex m_consequents_mutex;
     static thread_local std::unordered_map<const BinaryRelation*, Queue>*
-        s_worker_queues;
+        s_consequents;
 
     void _insert(Ob i, Ob j) {
         _insert_Lx(i, j);
@@ -112,7 +112,7 @@ inline void BinaryRelation::insert_Rx(Ob i, Ob j) {
 }
 
 inline void BinaryRelation::lazy_insert(Ob i, Ob j) const {
-    worker_queue().insert(i, j);
+    worker_consequents().insert(i, j);
 }
 
 inline void BinaryRelation::lazy_try_insert(Ob i, Ob j) const {
@@ -120,12 +120,12 @@ inline void BinaryRelation::lazy_try_insert(Ob i, Ob j) const {
     lazy_insert(i, j);
 }
 
-inline BinaryRelation::Queue& BinaryRelation::worker_queue() const {
-    if (unlikely(s_worker_queues == nullptr)) {
+inline BinaryRelation::Queue& BinaryRelation::worker_consequents() const {
+    if (unlikely(s_consequents == nullptr)) {
         // never freed
-        s_worker_queues = new std::unordered_map<const BinaryRelation*, Queue>;
+        s_consequents = new std::unordered_map<const BinaryRelation*, Queue>;
     }
-    return (*s_worker_queues)[this];
+    return (*s_consequents)[this];
 }
 
 }  // namespace pomagma

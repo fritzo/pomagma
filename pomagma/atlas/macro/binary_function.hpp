@@ -60,11 +60,11 @@ class BinaryFunction : noncopyable {
         void insert(Ob lhs, Ob rhs, Ob val);
         void clear();
     };
-    Queue& worker_queue() const;
-    mutable Queue m_queue;
-    mutable std::mutex m_queue_mutex;
+    Queue& worker_consequents() const;
+    mutable Queue m_consequents;
+    mutable std::mutex m_consequents_mutex;
     static thread_local std::unordered_map<const BinaryFunction*, Queue>*
-        s_worker_queues;
+        s_consequents;
 };
 
 inline bool BinaryFunction::defined(Ob lhs, Ob rhs) const {
@@ -126,7 +126,7 @@ inline void BinaryFunction::insert(Ob lhs, Ob rhs, Ob val) const {
 }
 
 inline void BinaryFunction::lazy_insert(Ob lhs, Ob rhs, Ob val) const {
-    worker_queue().insert(lhs, rhs, val);
+    worker_consequents().insert(lhs, rhs, val);
 }
 
 inline void BinaryFunction::lazy_equate(Ob lhs1, Ob rhs1, Ob lhs2,
@@ -141,12 +141,12 @@ inline void BinaryFunction::lazy_equate(Ob lhs1, Ob rhs1, Ob lhs2,
     }
 }
 
-inline BinaryFunction::Queue& BinaryFunction::worker_queue() const {
-    if (unlikely(s_worker_queues == nullptr)) {
+inline BinaryFunction::Queue& BinaryFunction::worker_consequents() const {
+    if (unlikely(s_consequents == nullptr)) {
         // never freed
-        s_worker_queues = new std::unordered_map<const BinaryFunction*, Queue>;
+        s_consequents = new std::unordered_map<const BinaryFunction*, Queue>;
     }
-    return (*s_worker_queues)[this];
+    return (*s_consequents)[this];
 }
 
 inline void BinaryFunction::Queue::insert(Ob lhs, Ob rhs, Ob val) {

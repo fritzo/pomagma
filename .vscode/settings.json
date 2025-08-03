@@ -21,6 +21,7 @@
         "coinduction",
         "combinators",
         "combinatory",
+        "consequents",
         "CTEST",
         "dataclass",
         "Datatypes",

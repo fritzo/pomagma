@@ -65,10 +65,10 @@ class Carrier : noncopyable {
         void insert(Ob dep, Ob rep) { m_tasks.emplace_back(dep, rep); }
         void clear() { std::vector<std::pair<Ob, Ob>>().swap(m_tasks); }
     };
-    Queue& worker_queue() const;
-    mutable Queue m_queue;
-    mutable std::mutex m_queue_mutex;
-    static thread_local Queue* s_worker_queue;
+    Queue& worker_consequents() const;
+    mutable Queue m_consequents;
+    mutable std::mutex m_consequents_mutex;
+    static thread_local Queue* s_worker_consequents;
 };
 
 inline void Carrier::raw_insert(Ob ob) {
@@ -120,15 +120,15 @@ inline void Carrier::lazy_equate(Ob lhs, Ob rhs) const {
     if (lhs == rhs) return;
     Ob dep = lhs > rhs ? lhs : rhs;
     Ob rep = lhs > rhs ? rhs : lhs;
-    worker_queue().insert(dep, rep);
+    worker_consequents().insert(dep, rep);
 }
 
-inline Carrier::Queue& Carrier::worker_queue() const {
-    if (unlikely(s_worker_queue == nullptr)) {
+inline Carrier::Queue& Carrier::worker_consequents() const {
+    if (unlikely(s_worker_consequents == nullptr)) {
         // never freed
-        s_worker_queue = new Queue;
+        s_worker_consequents = new Queue;
     }
-    return *s_worker_queue;
+    return *s_worker_consequents;
 }
 
 }  // namespace pomagma

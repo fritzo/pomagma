@@ -58,11 +58,11 @@ class InjectiveFunction : noncopyable {
         void insert(Ob key, Ob val) { m_tasks.emplace_back(key, val); }
         void clear() { std::vector<std::pair<Ob, Ob>>().swap(m_tasks); }
     };
-    Queue& worker_queue() const;
-    mutable Queue m_queue;
-    mutable std::mutex m_queue_mutex;
+    Queue& worker_consequents() const;
+    mutable Queue m_consequents;
+    mutable std::mutex m_consequents_mutex;
     static thread_local std::unordered_map<const InjectiveFunction*, Queue>*
-        s_worker_queues;
+        s_consequents;
 };
 
 inline bool InjectiveFunction::defined(Ob key) const {
@@ -117,16 +117,15 @@ inline void InjectiveFunction::insert(Ob key, Ob val) {
 }
 
 inline void InjectiveFunction::lazy_insert(Ob key, Ob val) const {
-    worker_queue().insert(key, val);
+    worker_consequents().insert(key, val);
 }
 
-inline InjectiveFunction::Queue& InjectiveFunction::worker_queue() const {
-    if (unlikely(s_worker_queues == nullptr)) {
+inline InjectiveFunction::Queue& InjectiveFunction::worker_consequents() const {
+    if (unlikely(s_consequents == nullptr)) {
         // never freed
-        s_worker_queues =
-            new std::unordered_map<const InjectiveFunction*, Queue>;
+        s_consequents = new std::unordered_map<const InjectiveFunction*, Queue>;
     }
-    return (*s_worker_queues)[this];
+    return (*s_consequents)[this];
 }
 
 }  // namespace pomagma

@@ -4,7 +4,7 @@
 namespace pomagma {
 
 thread_local std::unordered_map<const UnaryRelation*, UnaryRelation::Queue>*
-    UnaryRelation::s_worker_queues = nullptr;
+    UnaryRelation::s_consequents = nullptr;
 
 UnaryRelation::UnaryRelation(const Carrier& carrier)
     : m_carrier(carrier), m_set(item_dim()) {
@@ -66,23 +66,23 @@ void UnaryRelation::unsafe_merge(Ob dep) {
 }
 
 void UnaryRelation::lazy_gather() const {
-    Queue& source = worker_queue();
+    Queue& source = worker_consequents();
     if (source.m_tasks.empty()) return;
     sort_uniq(source.m_tasks);
     {
-        std::unique_lock<std::mutex> lock(m_queue_mutex);
-        union_sort_uniq(m_queue.m_tasks, source.m_tasks);
+        std::unique_lock<std::mutex> lock(m_consequents_mutex);
+        union_sort_uniq(m_consequents.m_tasks, source.m_tasks);
     }
     source.clear();
 }
 
 size_t UnaryRelation::lazy_flush() {
-    if (m_queue.m_tasks.empty()) return 0;
-    for (const auto i : m_queue.m_tasks) {
+    if (m_consequents.m_tasks.empty()) return 0;
+    for (const auto i : m_consequents.m_tasks) {
         insert(i);
     }
-    size_t theorem_count = m_queue.m_tasks.size();
-    m_queue.clear();
+    size_t theorem_count = m_consequents.m_tasks.size();
+    m_consequents.clear();
     return theorem_count;
 }
 

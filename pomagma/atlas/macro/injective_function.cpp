@@ -8,7 +8,7 @@ namespace pomagma {
 
 thread_local std::unordered_map<const InjectiveFunction*,
                                 InjectiveFunction::Queue>*
-    InjectiveFunction::s_worker_queues = nullptr;
+    InjectiveFunction::s_consequents = nullptr;
 
 InjectiveFunction::InjectiveFunction(const Carrier& carrier)
     : m_carrier(carrier),
@@ -150,23 +150,23 @@ void InjectiveFunction::unsafe_merge(Ob dep) {
 }
 
 void InjectiveFunction::lazy_gather() const {
-    Queue& source = worker_queue();
+    Queue& source = worker_consequents();
     if (source.m_tasks.empty()) return;
     sort_uniq(source.m_tasks);
     {
-        std::unique_lock<std::mutex> lock(m_queue_mutex);
-        union_sort_uniq(m_queue.m_tasks, source.m_tasks);
+        std::unique_lock<std::mutex> lock(m_consequents_mutex);
+        union_sort_uniq(m_consequents.m_tasks, source.m_tasks);
     }
     source.clear();
 }
 
 size_t InjectiveFunction::lazy_flush() {
-    if (m_queue.m_tasks.empty()) return 0;
-    for (const auto [key, val] : m_queue.m_tasks) {
+    if (m_consequents.m_tasks.empty()) return 0;
+    for (const auto [key, val] : m_consequents.m_tasks) {
         insert(key, val);
     }
-    size_t theorem_count = m_queue.m_tasks.size();
-    m_queue.clear();
+    size_t theorem_count = m_consequents.m_tasks.size();
+    m_consequents.clear();
     return theorem_count;
 }
 

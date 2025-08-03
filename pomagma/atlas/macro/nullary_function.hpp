@@ -42,11 +42,11 @@ class NullaryFunction : noncopyable {
         void insert(Ob val) { m_tasks.push_back(val); }
         void clear() { std::vector<Ob>().swap(m_tasks); }
     };
-    Queue& worker_queue() const;
-    mutable Queue m_queue;
-    mutable std::mutex m_queue_mutex;
+    Queue& worker_consequents() const;
+    mutable Queue m_consequents;
+    mutable std::mutex m_consequents_mutex;
     static thread_local std::unordered_map<const NullaryFunction*, Queue>*
-        s_worker_queues;
+        s_consequents;
 
     const DenseSet& support() const { return m_carrier.support(); }
 };
@@ -66,15 +66,15 @@ inline void NullaryFunction::insert(Ob val) const {
 }
 
 inline void NullaryFunction::lazy_insert(Ob val) const {
-    worker_queue().insert(val);
+    worker_consequents().insert(val);
 }
 
-inline NullaryFunction::Queue& NullaryFunction::worker_queue() const {
-    if (unlikely(s_worker_queues == nullptr)) {
+inline NullaryFunction::Queue& NullaryFunction::worker_consequents() const {
+    if (unlikely(s_consequents == nullptr)) {
         // never freed
-        s_worker_queues = new std::unordered_map<const NullaryFunction*, Queue>;
+        s_consequents = new std::unordered_map<const NullaryFunction*, Queue>;
     }
-    return (*s_worker_queues)[this];
+    return (*s_consequents)[this];
 }
 
 }  // namespace pomagma

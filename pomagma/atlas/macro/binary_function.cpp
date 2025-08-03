@@ -7,7 +7,7 @@
 namespace pomagma {
 
 thread_local std::unordered_map<const BinaryFunction*, BinaryFunction::Queue>*
-    BinaryFunction::s_worker_queues = nullptr;
+    BinaryFunction::s_consequents = nullptr;
 
 BinaryFunction::BinaryFunction(Carrier& carrier) : m_lines(carrier) {
     POMAGMA_DEBUG("creating BinaryFunction");
@@ -124,23 +124,23 @@ void BinaryFunction::Queue::clear() {
 }
 
 void BinaryFunction::lazy_gather() const {
-    Queue& source = worker_queue();
+    Queue& source = worker_consequents();
     if (source.m_tasks.empty()) return;
     sort_uniq(source.m_tasks);
     {
-        std::unique_lock<std::mutex> lock(m_queue_mutex);
-        union_sort_uniq(m_queue.m_tasks, source.m_tasks);
+        std::unique_lock<std::mutex> lock(m_consequents_mutex);
+        union_sort_uniq(m_consequents.m_tasks, source.m_tasks);
     }
     source.clear();
 }
 
 size_t BinaryFunction::lazy_flush() const {
-    if (m_queue.m_tasks.empty()) return 0;
-    for (const auto [lhs, rhs, val] : m_queue.m_tasks) {
+    if (m_consequents.m_tasks.empty()) return 0;
+    for (const auto [lhs, rhs, val] : m_consequents.m_tasks) {
         insert(lhs, rhs, val);
     }
-    size_t theorem_count = m_queue.m_tasks.size();
-    m_queue.clear();
+    size_t theorem_count = m_consequents.m_tasks.size();
+    m_consequents.clear();
     return theorem_count;
 }
 

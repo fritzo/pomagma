@@ -73,23 +73,23 @@ The scheduler coordinates between incremental inference phases and batch inferen
 
 ## Design Overview
 
-The design splits inference into two distinct phases connected by theorem queues:
+The design splits inference into two distinct phases connected by antecedent and consequent queues:
 
-1. **Proving Phase**: Read-only execution of inference programs that append discovered facts to thread-local theorem queues without modifying shared database structures.
+1. **Proving Phase**: Read-only execution of inference programs that append discovered facts to thread-local antecedent queues without modifying shared database structures.
 
-2. **Write Phase**: Atomic application of queued theorems to database structures with proper synchronization and scheduling of follow-up tasks.
+2. **Write Phase**: Atomic application of queued facts to database structures, with newly inserted facts populating consequent queues to trigger follow-up program execution.
 
 **BSP (Bulk Synchronous Parallel) Workflow**: Each inference cycle follows a barrier-synchronized pattern where all workers complete the proving phase before any worker begins the write phase. This eliminates race conditions and removes the need for atomic operations on large data structures during proving. *This implements the phased/BSP workflow described in [scheduler_design.md](scheduler_design.md) for reducing cleanup overhead.*
 
-**Integrated Queue Architecture**: Instead of separate theorem queue classes, the design integrates lazy queueing directly into the function and relation classes themselves, using thread-local worker queues that merge into a main queue with mutex protection.
+**Integrated Queue Architecture**: Instead of separate queue classes, the design integrates antecedent and consequent queueing directly into the function and relation classes themselves. Each component maintains both antecedent queues (facts to insert) and consequent queues (newly inserted facts that trigger program execution), using thread-local worker queues that merge into main queues with mutex protection.
 
 ## Design Details
 
 ### Implementing Integrated Lazy Queues
 
-**Performance Considerations**: Lazy queue operations must minimize overhead during the proving phase while supporting efficient batch application during the write phase. Based on cartographer profiling, queue operations should target sub-microsecond latency for individual insertions.
+**Performance Considerations**: Antecedent and consequent queue operations must minimize overhead during the proving phase while supporting efficient batch application during the write phase. Based on cartographer profiling, queue operations should target sub-microsecond latency for individual insertions.
 
-**Thread-Local Worker Queues**: Each function/relation maintains thread-local worker queues during the proving phase to avoid contention. The design uses static thread_local storage for efficient access:
+**Thread-Local Worker Queues**: Each function/relation maintains thread-local worker queues for both antecedents and consequents during the proving phase to avoid contention. The design uses static thread_local storage for efficient access:
 
 ```cpp
 class BinaryFunction {
@@ -99,16 +99,23 @@ class BinaryFunction {
         void clear();
     };
     
-    Queue& worker_queue() const;
-    mutable Queue m_queue;
-    mutable std::mutex m_queue_mutex;
-    static thread_local std::unordered_map<const BinaryFunction*, Queue>* s_worker_queues;
+    Queue& worker_antecedents() const;
+    Queue& worker_consequents() const;
+    mutable Queue m_antecedents;
+    mutable Queue m_consequents;
+    mutable std::mutex m_antecedents_mutex;
+    mutable std::mutex m_consequents_mutex;
+    static thread_local std::unordered_map<const BinaryFunction*, Queue>* s_worker_antecedents;
+    static thread_local std::unordered_map<const BinaryFunction*, Queue>* s_worker_consequents;
     
 public:
-    void lazy_insert(Ob lhs, Ob rhs, Ob val) const;
+    void lazy_insert(Ob lhs, Ob rhs, Ob val) const;  // adds to antecedents
     void lazy_equate(Ob lhs1, Ob rhs1, Ob lhs2, Ob rhs2) const;
     void lazy_gather() const;   // called by worker threads
-    size_t lazy_flush() const;  // called by main thread
+    size_t lazy_flush() const;  // called by main thread, flushes antecedents and populates consequents
+    // Methods for processing consequents to trigger GIVEN programs
+    bool has_pending_consequents() const;
+    void process_consequents() const;  // triggers GIVEN_BINARY_FUNCTION programs
 };
 
 class BinaryRelation {
@@ -118,22 +125,29 @@ class BinaryRelation {
         void clear();
     };
     
-    Queue& worker_queue() const;
-    mutable Queue m_queue;
-    mutable std::mutex m_queue_mutex;
-    static thread_local std::unordered_map<const BinaryRelation*, Queue>* s_worker_queues;
+    Queue& worker_antecedents() const;
+    Queue& worker_consequents() const;
+    mutable Queue m_antecedents;
+    mutable Queue m_consequents;
+    mutable std::mutex m_antecedents_mutex;
+    mutable std::mutex m_consequents_mutex;
+    static thread_local std::unordered_map<const BinaryRelation*, Queue>* s_worker_antecedents;
+    static thread_local std::unordered_map<const BinaryRelation*, Queue>* s_worker_consequents;
     
 public:
-    void lazy_insert(Ob i, Ob j) const;
+    void lazy_insert(Ob i, Ob j) const;  // adds to antecedents
     void lazy_try_insert(Ob i, Ob j) const;
     void lazy_gather() const;   // called by worker threads
-    size_t lazy_flush();        // called by main thread
+    size_t lazy_flush();        // called by main thread, flushes antecedents and populates consequents
+    // Methods for processing consequents to trigger GIVEN programs
+    bool has_pending_consequents() const;
+    void process_consequents() const;  // triggers GIVEN_BINARY_RELATION programs
 };
 ```
 
-**Automatic Deduplication**: The lazy queues use `sort_uniq()` and `union_sort_uniq()` utilities to deduplicate theorems before applying them to the database structures.
+**Automatic Deduplication**: Both antecedent and consequent queues use `sort_uniq()` and `union_sort_uniq()` utilities to deduplicate facts before processing.
 
-**Efficient Batch Application**: The `lazy_flush()` method applies all queued theorems in a single batch operation, providing better cache locality than individual insertions.
+**Efficient Batch Application**: The `lazy_flush()` method applies all antecedent facts in a single batch operation, then populates consequent queues with newly inserted facts that can trigger `GIVEN_*` program execution in the next inference cycle.
 
 ### Implementation in cartographer/infer.cpp
 
