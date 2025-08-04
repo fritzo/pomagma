@@ -216,141 +216,97 @@ private:
 };
 ```
 
-#### WorkStealingDeque with Batch Operations
+#### Global Task Index with OpenMP Dynamic Scheduling
 
-**Per-Thread Work Deques**: Each thread maintains a cache-line-aligned deque optimized for `uint64_t` tasks with batch operations:
+The distributed queue architecture uses OpenMP's proven `schedule(dynamic,1)` work distribution with a global task index that maps to symbol-specific work chunks. This eliminates the need for custom work-stealing implementations while providing excellent load balancing.
 
+**Performance Target**: Each task should take >100ns-1μs to keep scheduling overhead <1% (atomic fetch_add costs ~1-10ns).
+
+**Task Granularity Strategy**:
 ```cpp
-class WorkStealingDeque {
-private:
-    alignas(64) std::atomic<size_t> top{0};
-    alignas(64) std::atomic<size_t> bottom{0};
-    alignas(64) std::vector<uint64_t> buffer;
+// NLESS: use 256×256 tiles of carrier×carrier space for optimal chunking
+struct NLESSTileTask {
+    uint16_t tile_spec;  // hi_tile (8 bits) | lo_tile (8 bits)
+    
+    uint8_t tile_lhs() const { return tile_spec >> 8; }
+    uint8_t tile_rhs() const { return tile_spec & 0xFF; }
+    uint16_t lhs_start() const { return tile_lhs() * 256; }
+    uint16_t rhs_start() const { return tile_rhs() * 256; }
+    // Each tile: ~65K NLESS operations = ~6.5ms per task
+};
+
+// Other heavy symbols: chunk to hit ~1-10μs per task  
+struct APPChunkSize { static constexpr size_t value = 1024; };   // ~1024 APP ops = ~2μs
+
+// Light symbols: process individually
+struct EQUALChunkSize { static constexpr size_t value = 1; };    // Each EQUAL op = ~50ns
+```
+
+**Global Task Scheduler Implementation**:
+```cpp
+struct TaskRef {
+    Symbol* symbol;
+    size_t start_index;
+    size_t count;
+};
+
+class GlobalTaskScheduler {
+    std::vector<TaskRef> task_refs;
+    std::atomic<size_t> global_task_index{0};
     
 public:
-    // Batch push for multiple tasks (avoids excessive individual pushes)
-    void push_batch(const std::vector<uint64_t>& tasks) {
-        size_t b = bottom.load(std::memory_order_relaxed);
-        size_t new_bottom = b + tasks.size();
+    void build_task_table() {
+        task_refs.clear();
         
-        // Ensure buffer capacity
-        if (new_bottom >= buffer.size()) {
-            buffer.resize(std::max(new_bottom * 2, buffer.size()));
+        // Add 256×256 tile tasks for NLESS
+        for (auto* nless : signature.binary_relations_of_type<NLESS>()) {
+            size_t carrier_size = signature.carrier().item_count();
+            size_t tiles_per_dim = (carrier_size + 255) / 256;  // Round up
+            
+            for (size_t tile_lhs = 0; tile_lhs < tiles_per_dim; ++tile_lhs) {
+                for (size_t tile_rhs = 0; tile_rhs < tiles_per_dim; ++tile_rhs) {
+                    uint16_t tile_spec = (tile_lhs << 8) | tile_rhs;
+                    task_refs.push_back({nless, tile_spec, 1});  // 1 tile per task
+                }
+            }
         }
         
-        // Copy tasks to buffer
-        for (size_t i = 0; i < tasks.size(); ++i) {
-            buffer[(b + i) % buffer.size()] = tasks[i];
+        // Add individual tasks for light symbols
+        for (auto* equal : signature.binary_relations_of_type<EQUAL>()) {
+            size_t total = equal->antecedent_count();
+            for (size_t i = 0; i < total; ++i) {
+                task_refs.push_back({equal, i, 1});
+            }
         }
-        
-        bottom.store(new_bottom, std::memory_order_release);
     }
     
-    // Single push for immediate scheduling
-    void push_bottom(uint64_t task) {
-        size_t b = bottom.load(std::memory_order_relaxed);
-        if (b >= buffer.size()) {
-            buffer.resize(std::max(b * 2, size_t(64)));
+    void execute_parallel() {
+        size_t total_tasks = task_refs.size();
+        
+        #pragma omp parallel
+        {
+            size_t task_id;
+            while ((task_id = global_task_index.fetch_add(1)) < total_tasks) {
+                const TaskRef& ref = task_refs[task_id];
+                ref.symbol->process_antecedent_chunk(ref.start_index, ref.count);
+            }
         }
-        buffer[b % buffer.size()] = task;
-        bottom.store(b + 1, std::memory_order_release);
-    }
-    
-    // Local pop (LIFO for cache locality)
-    uint64_t pop_bottom() {
-        size_t b = bottom.load(std::memory_order_relaxed);
-        if (b == 0) return 0;  // Empty (0 is invalid task)
-        
-        b = b - 1;
-        bottom.store(b, std::memory_order_relaxed);
-        
-        uint64_t task = buffer[b % buffer.size()];
-        
-        size_t t = top.load(std::memory_order_acquire);
-        if (t <= b) {
-            return task;  // Common case: no contention
-        }
-        
-        // Contention with steal
-        bottom.store(b + 1, std::memory_order_relaxed);
-        return 0;
-    }
-    
-    // Steal approximately half the current work
-    std::vector<uint64_t> steal_half() {
-        size_t t = top.load(std::memory_order_acquire);
-        size_t b = bottom.load(std::memory_order_acquire);
-        
-        if (t >= b) return {};  // Empty
-        
-        size_t available = b - t;
-        size_t steal_count = available / 2;
-        if (steal_count == 0) steal_count = 1;
-        
-        // Try to reserve steal_count items
-        if (!top.compare_exchange_weak(t, t + steal_count,
-                                       std::memory_order_acq_rel,
-                                       std::memory_order_relaxed)) {
-            return {};  // Race with another stealer
-        }
-        
-        // Extract stolen tasks
-        std::vector<uint64_t> stolen;
-        stolen.reserve(steal_count);
-        for (size_t i = 0; i < steal_count; ++i) {
-            stolen.push_back(buffer[(t + i) % buffer.size()]);
-        }
-        
-        return stolen;
     }
 };
 ```
 
-#### Task Encoding as uint64_t
+**Benefits**:
+- **Proven scheduler**: OpenMP's `dynamic(1)` handles load balancing automatically
+- **Minimal overhead**: Single atomic fetch_add per task with <1% scheduling cost
+- **Tunable granularity**: Chunk sizes optimized per symbol type based on operation cost
+- **Simple implementation**: No custom work stealing logic required
+- **NLESS-aware**: Heavy operations like NLESS are chunked for efficient parallel processing
 
-Tasks are encoded as `uint64_t` using a union structure with `uint8_t` tag, `uint8_t` ID field, and `uint24_t` object identifiers:
+#### Distributed Queue Architecture
 
-```cpp
-union Task {
-    uint64_t raw;
-    uint32_t uint32s[2];
-    uint8_t uint8s[8];
-    
-    static_assert(std::endian::native == std::endian::little, 
-                  "Task encoding requires little-endian architecture");
-    
-    Task(uint8_t t, uint8_t i, uint32_t o1, uint32_t o2 = 0) {
-        uint32s[0] = o1;
-        uint32s[1] = o2;
-        uint8s[0] = t;
-        uint8s[4] = i;
-    }
-        
-    // Fast accessors using array indexing (no shifts!)
-    uint8_t get_type() const { return uint8s[0]; }
-    uint8_t get_id() const { return uint8s[4]; }
-    uint32_t get_ob1() const { return uint32s[0] & 0xFFFFFF; }
-    uint32_t get_ob2() const { return uint32s[1] & 0xFFFFFF; }
-};
+**OBSOLETE**: This section described task encoding for global task queues, but the new design distributes tasks into per-symbol antecedent and consequent queues within each function/relation class. Tasks are no longer encoded as `uint64_t` values but stored directly as fact tuples (e.g., `std::tuple<Ob, Ob, Ob>` for binary functions) in the appropriate symbol's queue.
 
-enum TaskType : uint8_t {
-    _UNUSED,                  // 0 = empty/invalid task
-    MERGE_TASK,               // fields: {type, _, merged_ob, target_ob}
-    EXISTS_TASK,              // fields: {type, _, new_ob, _}
-    POSITIVE_ORDER_TASK,      // fields: {type, _, lhs_ob, rhs_ob}
-    NEGATIVE_ORDER_TASK,      // fields: {type, _, lhs_ob, rhs_ob}
-    UNARY_RELATION_TASK,      // fields: {type, relation_id, ob, _}
-    BINARY_RELATION_TASK,     // fields: {type, relation_id, lhs_ob, rhs_ob}
-    BINARY_FUNCTION_TASK,     // fields: {type, function_id, lhs_ob, rhs_ob}
-    SYMMETRIC_FUNCTION_TASK,  // fields: {type, function_id, lhs_ob, rhs_ob}
-    CLEANUP_TASK,             // fields: {type, cleanup_type, block_id, _}
-    SAMPLE_TASK,              // fields: {type, _, target_size, _}
-    ASSUME_TASK,              // fields: {type, _, theory_index, _}
-    NLESS_BATCH_TASK          // fields: {type, _, start_ob, end_ob}
-};
-```
-
-This encoding supports both surveyor (16-bit objects) and cartographer (24-bit objects, up to 16M) while fitting perfectly in 64 bits. The `id` field efficiently encodes relation/function identifiers, and the tag-based dispatch enables fast task type identification.
+The distributed approach eliminates the need for task type encoding and dispatch since each queue is typed to its specific function/relation and contains facts ready for direct processing.
 
 #### Performance Optimizations
 
@@ -450,13 +406,10 @@ The implementation complexity would be moderate - the compiler already generates
 The following tasks implement the cartographer scheduler in incremental commits:
 
 - [ ] Create `pomagma/cartographer/scheduler.hpp` and `scheduler.cpp` based on proven surveyor patterns
-- [ ] Implement `WorkStealingDeque` class with cache-aligned atomics and LIFO/FIFO operations
+- [ ] Implement scheduler that processes distributed antecedent/consequent queues in each atlas component
 - [ ] Add `ThreadBarrier` class using futex-based synchronization for BSP-style phase coordination  
-- [ ] Create `HybridScheduler` class with double-buffered per-thread deques and ping-pong buffer management
-- [ ] Implement `Agenda` class for task management with priority queues (MergeTask, Enforce tasks, SampleTask, CleanupTask)
-- [ ] Add task classification logic to route tasks to appropriate phases (merge/enforce/cleanup/batch)
-- [ ] Implement phase transition logic with barrier synchronization and buffer swapping
-- [ ] Add work stealing algorithm with NUMA-aware victim selection and batch stealing optimization
+- [ ] Create phased execution logic that coordinates antecedent flushing and consequent processing across all atlas components
+- [ ] Implement phase transition logic with barrier synchronization for coordinated queue processing
 - [ ] Integrate with cartographer's macro atlas operations using relaxed memory ordering with barriers
 - [ ] Add saturation tracking to skip cleanup phase when no new inference is generated
 - [ ] Extend atlas function/relation classes with antecedent and consequent queue pairs for RETE-style agenda functionality

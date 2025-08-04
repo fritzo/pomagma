@@ -238,17 +238,17 @@ The refactoring strategy follows an incremental approach where each step is full
 
 ### Step 3: Implement Cartographer Scheduler Infrastructure
 - [ ] Create `pomagma/cartographer/scheduler.hpp` and `scheduler.cpp` based on proven surveyor patterns
-- [ ] Implement basic `Agenda` class with priority queues for task management (MergeTask, EnforceTask, SampleTask, CleanupTask)
-- [ ] Add `WorkStealingDeque` and `ThreadBarrier` classes for phased execution
+- [ ] Implement scheduler that processes distributed antecedent/consequent queues across atlas components
+- [ ] Add `ThreadBarrier` classes for phased execution coordination
 - [ ] Write comprehensive unit tests for scheduler components
 - [ ] **Git commit:** "Add cartographer scheduler infrastructure"
 
-### Step 4: Integrate Theorem Queues and Phased Execution
-- [ ] Integrate lazy theorem queue architecture into cartographer scheduler
+### Step 4: Integrate Antecedent/Consequent Queues and Phased Execution
+- [ ] Integrate lazy antecedent/consequent queue architecture into cartographer scheduler
 - [ ] Implement phased execution (proving phase → write phase) using OpenMP barriers
 - [ ] Update VM opcodes in `vm_impl.hpp` to support both direct writes (existing) and lazy queues (new) via compile-time flag
 - [ ] Add integration tests for phased inference execution
-- [ ] **Git commit:** "Add theorem queue and phased execution to cartographer"
+- [ ] **Git commit:** "Add antecedent/consequent queues and phased execution to cartographer"
 
 ### Step 5: Implement Complete Survey Functionality
 - [ ] Enhance cartographer `survey()` method with actual database growth logic using PCFG sampling

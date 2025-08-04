@@ -153,7 +153,7 @@ public:
 
 **Direct Integration**: The cartographer now uses the integrated lazy queue methods directly on function and relation classes, eliminating the need for separate theorem queue classes like `BinaryRelationTheoremQueue`.
 
-**Replaced Theorem Queue Classes**: The old `BinaryRelationRowTheoremQueue` and `BinaryRelationTheoremQueue` classes have been completely removed in favor of the integrated lazy queue methods (`lazy_insert()`, `lazy_try_insert()`, `lazy_gather()`, `lazy_flush()`).
+**Replaced Theorem Queue Classes**: The old `BinaryRelationRowTheoremQueue` and `BinaryRelationTheoremQueue` classes have been completely removed in favor of the integrated antecedent and consequent queue methods within each atlas component.
 
 **Preserved Optimization Patterns**: The core optimization patterns are maintained - thread-local collection during proving phases and mutex-protected merging during write phases.
 
@@ -161,7 +161,7 @@ public:
 
 ### Enhanced Cartographer Inference Implementation
 
-**Adopting Proven Patterns**: The cartographer will incorporate forward-chaining inference capabilities using theorem queue patterns, including NLESS monotonicity rules:
+**Adopting Proven Patterns**: The cartographer will incorporate forward-chaining inference capabilities using antecedent/consequent queue patterns, including NLESS monotonicity rules:
 
 ```cpp
 size_t infer_nless() {
@@ -172,13 +172,13 @@ size_t infer_nless() {
         for (Ob x = 1; x <= item_dim; ++x) {
             for (auto iter = y_set.iter(); iter.ok(); iter.next()) {
                 if (infer_nless_monotone(...)) {
-                    NLESS.lazy_insert(x, y);  // Queue instead of direct write
+                    NLESS.lazy_insert(x, y);  // Add to antecedent queue
                 }
             }
         }
-        NLESS.lazy_gather();  // Merge worker queue to main queue
+        NLESS.lazy_gather();  // Merge worker antecedents to main antecedent queue
     }
-    // Write phase - apply all queued theorems
+    // Write phase - apply all queued facts and populate consequents
     size_t theorem_count = NLESS.lazy_flush();
     return theorem_count;
 }
