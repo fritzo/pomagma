@@ -364,6 +364,42 @@ void process_mergers(Signature& signature) {
 
 The antecedent and consequent queues become part of the persistent database state, allowing inference to checkpoint mid-cycle and resume exactly where it left off.
 
+### Critical Design Issues for Queue Processing
+
+**Merge Saturation Requirements**: The scheduler must coordinate queue processing with object merging to maintain correctness. Two critical issues arise:
+
+**Issue 1 - Iterative Saturation**: Antecedent queue population during flush operations may trigger additional object mergers, requiring the scheduler to loop until saturation:
+
+```cpp
+class CartographerScheduler {
+public:
+    size_t execute_inference_cycle() {
+        size_t total_work = 0;
+        do {
+            // Process carrier merges first (highest priority)
+            total_work += process_carrier_antecedents();
+            
+            // Process function/relation antecedents, which may trigger more carrier merges
+            total_work += process_component_antecedents();
+            
+            // Update all queues for any object mergers that occurred
+            process_mergers_and_update_queues();
+            
+        } while (has_pending_carrier_antecedents());
+        
+        return total_work;
+    }
+};
+```
+
+**Issue 2 - Antecedent Semantics for GIVEN Program Triggering**: The scheduler must process antecedents for both genuine insertions and value merges. When existing values merge (e.g., `val1` and `val2` become `rep`), the resulting canonical fact `(lhs, rhs, rep)` must trigger GIVEN programs because it represents new logical information. This requires:
+
+1. **Modified insert semantics**: Atlas `insert()` methods return `true` for both new entries and value merges
+2. **Complete antecedent capture**: All logically significant changes populate antecedent queues
+3. **Merge-aware scheduling**: The scheduler processes merged facts as new work items
+
+This ensures that GIVEN program execution achieves logical completeness by firing on all canonical facts, not just initial insertions.
+
 ### Surveyor-Cartographer Workflows
 
 The current workflow creates inefficiency when charts flow from cartographer to surveyor:

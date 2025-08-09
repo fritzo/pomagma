@@ -257,7 +257,85 @@ class Scheduler {
 
 **Thread-Local Storage**: The design uses static thread_local maps to efficiently access worker queues without contention or lookup overhead.
 
-**Merge Coordination**: The macro `Structure::lazy_flush()` automatically calls `process_mergers()` after flushing all theorem queues to handle object merging triggered during theorem application. This ensures that equivalence class merges (from `INFER_EQUAL` operations) are processed atomically within each flush cycle, maintaining database consistency without requiring complex coordination between lazy queues and the global merge queue infrastructure.
+**Merge Coordination**: The macro `Structure::lazy_flush()` requires careful coordination between queue flushing and object merging due to two critical issues:
+
+**Issue 1 - Saturation Loop for Merge Processing**: Object merging must happen as early as possible since merging can eliminate downstream work. However, antecedent queues populated during `lazy_flush()` may contain facts that trigger additional mergers. This requires a saturation loop:
+
+```cpp
+size_t Structure::lazy_flush() {
+    size_t total_theorem_count = 0;
+    do {
+        // Flush carrier first to process any pending merges
+        size_t carrier_merges = m_signature.carrier()->lazy_flush();
+        
+        // Flush all functions and relations, populating antecedent queues
+        size_t component_insertions = pomagma::lazy_flush(m_signature);
+        
+        // Process any mergers triggered by the insertions
+        process_mergers(m_signature);
+        
+        total_theorem_count += carrier_merges + component_insertions;
+        
+    } while (m_signature.carrier()->antecedent_count() > 0);
+    
+    return total_theorem_count;
+}
+```
+
+**Issue 2 - Queue Updates During Merging**: Both antecedent and consequent queues must be updated during `process_mergers()` to replace deprecated object references with canonical representatives:
+
+```cpp
+void process_mergers(Signature& signature) {
+    // ... existing merge processing ...
+    
+    // Update both antecedent and consequent queues
+#define POMAGMA_UPDATE_QUEUES(arity)           \
+    for (auto i : signature.arity()) {         \
+        i.second->update_antecedent_values();  \
+        i.second->update_consequent_values();  \
+    }
+
+    POMAGMA_UPDATE_QUEUES(binary_functions);
+    POMAGMA_UPDATE_QUEUES(binary_relations);
+    // ... other arities ...
+#undef POMAGMA_UPDATE_QUEUES
+}
+```
+
+**Issue 3 - Antecedent Insertion Semantics**: A critical design question is when facts should be added to antecedent queues to trigger `GIVEN_*` programs. Two cases must be considered:
+
+1. **New Insertions**: When `insert(lhs, rhs, val)` creates a genuinely new entry, it should trigger GIVEN programs
+2. **Value Merging**: When existing values `val1` and `val2` merge to canonical representative `rep`, the resulting fact `(lhs, rhs, rep)` should also trigger GIVEN programs
+
+**Rationale for Triggering on Merges**: From the logical perspective, `(lhs, rhs, rep)` represents new information even when it results from merging. The GIVEN programs need to fire on the canonical fact to ensure complete inference. For example, if `APP(f, x) = a` and `APP(f, x) = b` exist, and later `a` and `b` merge to `c`, then `APP(f, x) = c` is logically a new fact that should trigger inference rules.
+
+**Implementation**: The `insert()` method should return `true` for both genuine insertions and merges, requiring modification of the return semantics:
+
+```cpp
+// Current: insert() returns true only for new entries
+// Proposed: insert() returns true for (new entries OR merges)
+bool BinaryFunction::insert(Ob lhs, Ob rhs, Ob val) {
+    Ob existing = find(lhs, rhs);
+    if (existing) {
+        // Existing entry - check for merge
+        if (existing != val) {
+            Ob rep = m_carrier.ensure_equal(existing, val);
+            if (rep != existing) {
+                // Update value to canonical representative
+                raw_update(lhs, rhs, rep);
+                return true;  // Return true for merges
+            }
+        }
+        return false;  // No change
+    } else {
+        // New entry
+        raw_insert(lhs, rhs, val);
+        return true;  // Return true for new insertions
+    }
+}
+```
+
+This ensures that antecedent queues capture all logically significant changes, whether from new facts or equivalence class consolidation.
 
 ## Work Plan
 
