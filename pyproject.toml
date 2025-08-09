@@ -28,7 +28,7 @@ dependencies = [
     "pytest-xdist",
     "pyzmq",
     "ruff",
-    "torch==2.7.0",
+    "torch==2.8.0",
     "tqdm",
 ]
 classifiers = [
