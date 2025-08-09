@@ -138,7 +138,7 @@ This requires the compiler to add `IF_GLOBAL` guards to cleanup rules that are k
 
 ### Surveyor scheduler redesign
 
-The redesigned scheduler addresses the fundamental completeness issues by implementing **BSP-style partial total ordering** with relaxed atomics and **work stealing** for performance. The key insight is that we need strict ordering between phases for correctness, but within each phase, task execution order doesn't matter, eliminating the need for FIFO queues.
+The redesigned scheduler addresses the fundamental completeness issues by implementing **BSP-style partial total ordering** with relaxed atomics and **simple dynamic work distribution** for performance. The key insight is that we need strict ordering between phases for correctness, but within each phase, task execution order doesn't matter, eliminating the need for FIFO queues.
 
 #### Core Design Principles
 
@@ -146,72 +146,59 @@ The redesigned scheduler addresses the fundamental completeness issues by implem
 
 **Relaxed Memory Ordering with Barriers**: With full barriers between phases, database operations can use `std::memory_order_relaxed` for performance, since the barriers provide necessary synchronization points. Only the barriers themselves need acquire-release semantics.
 
-**Double-Buffer with Work Redistribution and Stealing**: Use ping-pong queues for phase transitions, work redistribution at barriers for load balancing, and work stealing within phases for efficiency.
+**Simple Dynamic Work Distribution**: Use a single shared `std::atomic_size_t` counter for work distribution, similar to OpenMP's `schedule(dynamic,1)` approach, eliminating the complexity of work-stealing algorithms.
 
 #### Phased Scheduler Architecture
 
-The scheduler uses `uint64_t` tasks with double-buffered queues, combining work redistribution at barriers with work stealing within phases:
+The scheduler uses atomic work distribution where the main thread first computes the total work across all functions and relations, then creates a shared counter for work distribution:
 
 ```cpp
 class PhasedScheduler {
 private:
-    std::vector<std::array<std::vector<uint64_t>, 2>> thread_queues;
-    std::atomic<int> read_buffer{0};
-    std::atomic<int> write_buffer{1};
+    std::atomic<size_t> next_task{0};
+    std::vector<TaskRef> task_refs;
     ThreadBarrier phase_barrier;
 
 public:
-    void worker_loop(int thread_id) {
-        while (true) {
-            int read_idx = read_buffer.load(std::memory_order_relaxed);
-            auto& my_tasks = thread_queues[thread_id][read_idx];
-            
-            // Process local tasks first
-            for (uint64_t task : my_tasks) {
-                execute_task(task, thread_id);
-            }
-            my_tasks.clear();
-            
-            // Steal work from other threads
-            for (int victim = 0; victim < num_threads; ++victim) {
-                if (victim == thread_id) continue;
-                auto& victim_tasks = thread_queues[victim][read_idx];
-                if (!victim_tasks.empty()) {
-                    // Steal half the remaining work
-                    size_t steal_count = victim_tasks.size() / 2;
-                    for (size_t i = 0; i < steal_count; ++i) {
-                        execute_task(victim_tasks.back(), thread_id);
-                        victim_tasks.pop_back();
-                    }
-                }
-            }
-            
-            // Barrier: last thread redistributes work and swaps buffers
-            if (phase_barrier.wait()) {
-                redistribute_and_swap();
+    void execute_inference_phase() {
+        // Main thread: compute total work and build task table
+        build_task_table();
+        next_task.store(0, std::memory_order_relaxed);
+        
+        // All threads: process tasks using atomic work distribution
+        #pragma omp parallel
+        {
+            size_t task_id;
+            while ((task_id = next_task.fetch_add(1, std::memory_order_relaxed)) < task_refs.size()) {
+                const TaskRef& ref = task_refs[task_id];
+                process_task(ref);
             }
         }
+        // Implicit OpenMP barrier here
+        
+        // Main thread: apply all queued facts
+        flush_all_queues();
     }
     
 private:
-    void redistribute_and_swap() {
-        // Collect and redistribute work from write buffers
-        std::vector<uint64_t> all_tasks;
-        int write_idx = write_buffer.load(std::memory_order_relaxed);
+    void build_task_table() {
+        task_refs.clear();
         
-        for (auto& thread_buffer : thread_queues) {
-            auto& tasks = thread_buffer[write_idx];
-            all_tasks.insert(all_tasks.end(), tasks.begin(), tasks.end());
-            tasks.clear();
+        // Iterate over functions and relations to compute total work
+        for (auto* binary_func : signature.binary_functions()) {
+            size_t antecedent_count = binary_func->antecedent_count();
+            if (antecedent_count > 0) {
+                task_refs.push_back({binary_func, 0, antecedent_count});
+            }
         }
         
-        // Round-robin distribution
-        for (size_t i = 0; i < all_tasks.size(); ++i) {
-            thread_queues[i % num_threads][write_idx].push_back(all_tasks[i]);
+        for (auto* binary_rel : signature.binary_relations()) {
+            binary_rel->build_index();  // Prepare tile index for NLESS/LESS
+            size_t tile_count = binary_rel->task_count();
+            for (size_t i = 0; i < tile_count; ++i) {
+                task_refs.push_back({binary_rel, i, 1});  // 1 tile per task
+            }
         }
-        
-        // Swap ping-pong buffers
-        std::swap(read_buffer, write_buffer);
     }
 };
 ```
@@ -316,22 +303,22 @@ The distributed approach eliminates the need for task type encoding and dispatch
 
 #### Performance Optimizations
 
-**NUMA-Aware Work Stealing**: Workers prefer to steal from their NUMA peers (same CPU or same chiplet).
+**Atomic Work Distribution**: Single `fetch_add(1)` operation per task provides excellent load balancing with minimal overhead (~1-10ns per task).
 
-**Batch work stealing**: Steal half the dequeue, not just a single task.
+**Task Granularity Tuning**: Each task is sized to take >100ns-1μs to keep scheduling overhead <1% of total execution time.
 
 #### Implementation Strategy
 
-1. **Replace TBB queues** with double-buffered work-stealing deques
-2. **Add phase barriers** with ping-pong buffer swapping for BSP-style completion guarantees  
-3. **Use work stealing within phases** for optimal load balancing
-4. **Keep relaxed memory ordering** since barriers provide synchronization
+1. **Use atomic work counters** for simple, efficient work distribution
+2. **Add phase barriers** using OpenMP's implicit synchronization for BSP-style completion guarantees  
+3. **Keep relaxed memory ordering** since barriers provide synchronization
+4. **Build task tables** by iterating over functions and relations to compute total work
 5. **Optimize for common case** where cleanup phase becomes empty
 
-The hybrid approach provides:
-- **Clean phase separation** through ping-pong buffers (eliminates race conditions)
-- **Load balancing** through work stealing within each phase  
-- **Cache locality** through per-thread deques
+The atomic counter approach provides:
+- **Clean phase separation** through OpenMP barriers (eliminates race conditions)
+- **Excellent load balancing** through dynamic work distribution with minimal overhead
+- **Simple implementation** without complex work-stealing or queue management
 - **Performance** through relaxed atomics with barrier synchronization
 
 ### Expression Queue Architecture for Enhanced Cartographer
