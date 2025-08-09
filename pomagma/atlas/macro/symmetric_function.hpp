@@ -4,6 +4,7 @@
 #include <pomagma/util/sequential/dense_set.hpp>
 
 #include "base_bin_rel.hpp"
+#include "queues.hpp"
 #include "util.hpp"
 
 namespace pomagma {
@@ -55,13 +56,7 @@ class SymmetricFunction : noncopyable {
     const DenseSet& support() const { return m_lines.support(); }
     size_t item_dim() const { return support().item_dim(); }
 
-    struct Queue {
-        Queue() { clear(); }
-        std::vector<std::tuple<Ob, Ob, Ob>> m_tasks;
-        void insert(Ob lhs, Ob rhs, Ob val);
-        void clear();
-        void process_mergers(const Carrier& carrier);
-    };
+    using Queue = SymmetricFunctionQueue;
     Queue& worker_consequents() const;
     mutable Queue m_consequents;
     mutable std::mutex m_consequents_mutex;
@@ -168,11 +163,6 @@ inline SymmetricFunction::Queue& SymmetricFunction::worker_consequents() const {
         s_consequents = new std::unordered_map<const SymmetricFunction*, Queue>;
     }
     return (*s_consequents)[this];
-}
-
-inline void SymmetricFunction::Queue::insert(Ob lhs, Ob rhs, Ob val) {
-    sort(lhs, rhs);
-    m_tasks.emplace_back(lhs, rhs, val);
 }
 
 }  // namespace pomagma

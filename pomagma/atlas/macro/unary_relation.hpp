@@ -3,6 +3,7 @@
 #include <pomagma/util/sequential/dense_set.hpp>
 
 #include "carrier.hpp"
+#include "queues.hpp"
 #include "util.hpp"
 
 namespace pomagma {
@@ -47,12 +48,7 @@ class UnaryRelation : noncopyable {
     const DenseSet& support() const { return m_carrier.support(); }
     bool supports(Ob i) const { return support().contains(i); }
 
-    struct Queue {
-        std::vector<Ob> m_tasks;
-        void insert(Ob i) { m_tasks.push_back(i); }
-        void clear() { std::vector<Ob>().swap(m_tasks); }
-        void process_mergers(const Carrier& carrier);
-    };
+    using Queue = UnaryRelationQueue;
     Queue& worker_consequents() const;
     mutable Queue m_consequents;
     mutable std::mutex m_consequents_mutex;

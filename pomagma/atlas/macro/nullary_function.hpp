@@ -3,6 +3,7 @@
 #include <pomagma/util/sequential/dense_set.hpp>
 
 #include "carrier.hpp"
+#include "queues.hpp"
 #include "util.hpp"
 
 namespace pomagma {
@@ -37,12 +38,7 @@ class NullaryFunction : noncopyable {
     void process_mergers();  // postcondition: all values are reps
 
    private:
-    struct Queue {
-        std::vector<Ob> m_tasks;
-        void insert(Ob val) { m_tasks.push_back(val); }
-        void clear() { std::vector<Ob>().swap(m_tasks); }
-        void process_mergers(const Carrier& carrier);
-    };
+    using Queue = NullaryFunctionQueue;
     Queue& worker_consequents() const;
     mutable Queue m_consequents;
     mutable std::mutex m_consequents_mutex;
