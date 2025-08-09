@@ -127,7 +127,7 @@ This division of labor allows the system to benefit from both complete inference
 
 The design focuses on three main optimizations to reduce surveyor cleanup overhead:
 
-1. **Reduce cleanup work** by refactoring the surveyor incremental scheduler to use acquire-release semantics and a phased/BSP (Bulk Synchronous Parallel) workflow. This eliminates the need for a final cleanup phase by ensuring incremental inference is complete. *See [theorem_queue.md](theorem_queue.md) for the detailed implementation of phased inference using theorem queues.*
+1. **Reduce cleanup work** by refactoring the surveyor incremental scheduler to use acquire-release semantics and a phased/BSP (Bulk Synchronous Parallel) workflow. This eliminates the need for a final cleanup phase by ensuring incremental inference is complete. *See [inference_queues.md](inference_queues.md) for the detailed implementation of phased inference using theorem queues.*
 
 2. **Avoid initial cleanup work** for rules implemented in the cartographer by detecting when databases have already been processed by the cartographer's rule set.
 This requires the compiler to add `IF_GLOBAL` guards to cleanup rules that are known to be implemented in the cartographer.

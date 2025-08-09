@@ -1,8 +1,8 @@
-# Design Doc: Theorem Queues for Phased Inference
+# Design Doc: Queues for Phased Inference
 
 ## Objective
 
-Safely parallelize inference programs without resorting to atomic operations for large data structures by separating inference into a read-only proving phase followed by a write phase, connected by theorem queues.
+Safely parallelize inference programs without resorting to atomic operations for large data structures by separating inference into a read-only proving phase followed by a write phase, connected by queues of antecedents and consequents.
 
 ## Background
 

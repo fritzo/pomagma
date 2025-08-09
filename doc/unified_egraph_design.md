@@ -105,7 +105,7 @@ Datalog engines like Soufflé would be more natural for recursive inference patt
 The unified E-graph design eliminates Pomagma's architectural complexity by consolidating all inference capabilities into a single cartographer-based system. Rather than maintaining separate surveyor (micro atlas) and cartographer (macro atlas) implementations with different concurrency models and storage strategies, the new design provides a single, enhanced cartographer that supports:
 
 1. **Complete forward-chaining inference** through a new scheduler implementation (based on `pomagma/surveyor/scheduler.cpp` patterns)
-2. **Phased inference execution** using the proven theorem queue architecture from `doc/theorem_queue.md`
+2. **Phased inference execution** using the proven theorem queue architecture from `doc/inference_queues.md`
 3. **Lazy inverse binary function tables** constructed as optimized read-only CSR tables per inference phase
 4. **Unified client interface** with a new `.survey()` method for database growth and saturation
 
