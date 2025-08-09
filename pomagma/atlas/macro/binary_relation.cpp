@@ -165,34 +165,45 @@ void BinaryRelation::unsafe_merge(Ob i) {
     }
 }
 
-void BinaryRelation::Queue::clear() {
-    if (m_tasks.capacity() > 1024) {
-        decltype(m_tasks)().swap(m_tasks);
-    } else {
-        m_tasks.clear();
-    }
-    m_tasks.reserve(1024);
-}
-
 void BinaryRelation::lazy_gather() const {
     Queue& source = worker_consequents();
     if (source.m_tasks.empty()) return;
-    sort_uniq(source.m_tasks);
+    for (auto& [hi, lo_queue] : source.m_tasks) sort_uniq(lo_queue);
     {
         std::unique_lock<std::mutex> lock(m_consequents_mutex);
-        union_sort_uniq(m_consequents.m_tasks, source.m_tasks);
+        for (auto& [hi, source_queue] : source.m_tasks) {
+            auto& destin_queue = m_consequents.m_tasks[hi];
+            union_sort_uniq(destin_queue, source_queue);
+        }
     }
     source.clear();
 }
 
 size_t BinaryRelation::lazy_flush() {
     if (m_consequents.m_tasks.empty()) return 0;
-    for (const auto [i, j] : m_consequents.m_tasks) {
-        insert(i, j);
+    for (auto& [hi, lo_queue] : m_consequents.m_tasks) {
+        const auto [i_hi, j_hi] = hi;
+        for (const auto [i_lo, j_lo] : lo_queue) {
+            Ob i = ob_from_hi_lo(i_hi, i_lo);
+            Ob j = ob_from_hi_lo(j_hi, j_lo);
+            insert(i, j);
+        }
     }
     size_t theorem_count = m_consequents.m_tasks.size();
     m_consequents.clear();
     return theorem_count;
+}
+
+void BinaryRelation::Queue::clear() {
+    m_tasks.clear();
+    m_index.clear();
+}
+
+void BinaryRelation::Queue::build_index() {
+    m_index.clear();
+    m_index.reserve(m_tasks.size());
+    for (auto& [hi, _] : m_tasks) m_index.emplace_back(hi);
+    std::sort(m_index.begin(), m_index.end());
 }
 
 }  // namespace pomagma

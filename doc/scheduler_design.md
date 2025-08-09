@@ -224,15 +224,22 @@ The distributed queue architecture uses OpenMP's proven `schedule(dynamic,1)` wo
 
 **Task Granularity Strategy**:
 ```cpp
-// NLESS: use 256×256 tiles of carrier×carrier space for optimal chunking
-struct NLESSTileTask {
-    uint16_t tile_spec;  // hi_tile (8 bits) | lo_tile (8 bits)
+// NLESS/LESS: hierarchical queues naturally provide 256×256 tile granularity
+// Each (ObHigh, ObHigh) key in BinaryRelation::Queue represents a tile
+struct NLESSTileProcessing {
+    // No explicit tile encoding needed - use hierarchical queue structure directly
+    // Each queue.get_task(i) returns (HighPair, LowQueue&) for tile processing
+    // Each tile: up to 65K NLESS operations = optimal parallel granularity
     
-    uint8_t tile_lhs() const { return tile_spec >> 8; }
-    uint8_t tile_rhs() const { return tile_spec & 0xFF; }
-    uint16_t lhs_start() const { return tile_lhs() * 256; }
-    uint16_t rhs_start() const { return tile_rhs() * 256; }
-    // Each tile: ~65K NLESS operations = ~6.5ms per task
+    static void process_tile(const BinaryRelation::Queue::HighPair& hi_pair,
+                           const BinaryRelation::Queue::LowQueue& lo_queue) {
+        auto [i_hi, j_hi] = hi_pair;
+        for (auto [i_lo, j_lo] : lo_queue) {
+            Ob i = ob_from_hi_lo(i_hi, i_lo);
+            Ob j = ob_from_hi_lo(j_hi, j_lo);
+            // Process NLESS fact (i, j)
+        }
+    }
 };
 
 // Other heavy symbols: chunk to hit ~1-10μs per task  
@@ -258,16 +265,13 @@ public:
     void build_task_table() {
         task_refs.clear();
         
-        // Add 256×256 tile tasks for NLESS
+        // Add tile tasks for NLESS/LESS - use hierarchical queue structure
         for (auto* nless : signature.binary_relations_of_type<NLESS>()) {
-            size_t carrier_size = signature.carrier().item_count();
-            size_t tiles_per_dim = (carrier_size + 255) / 256;  // Round up
+            nless->build_index();  // Prepare tile index
+            size_t tile_count = nless->m_consequents.task_count();
             
-            for (size_t tile_lhs = 0; tile_lhs < tiles_per_dim; ++tile_lhs) {
-                for (size_t tile_rhs = 0; tile_rhs < tiles_per_dim; ++tile_rhs) {
-                    uint16_t tile_spec = (tile_lhs << 8) | tile_rhs;
-                    task_refs.push_back({nless, tile_spec, 1});  // 1 tile per task
-                }
+            for (size_t i = 0; i < tile_count; ++i) {
+                task_refs.push_back({nless, i, 1});  // 1 tile per task
             }
         }
         
@@ -288,7 +292,9 @@ public:
             size_t task_id;
             while ((task_id = global_task_index.fetch_add(1)) < total_tasks) {
                 const TaskRef& ref = task_refs[task_id];
-                ref.symbol->process_antecedent_chunk(ref.start_index, ref.count);
+                // For tile-based relations (NLESS/LESS): process entire tile
+                // For other relations: process individual chunks
+                ref.symbol->process_antecedent_task(ref.start_index, ref.count);
             }
         }
     }

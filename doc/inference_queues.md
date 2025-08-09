@@ -120,9 +120,11 @@ public:
 
 class BinaryRelation {
     struct Queue {
-        std::vector<std::pair<Ob, Ob>> m_tasks;
+        std::unordered_map<std::pair<ObHigh, ObHigh>,
+                           std::vector<std::pair<ObLow, ObLow>>, ObPairHash>
+            m_tasks;
         void insert(Ob i, Ob j);
-        void clear();
+        void clear() { m_tasks.clear(); }
     };
     
     Queue& worker_antecedents() const;
@@ -145,9 +147,29 @@ public:
 };
 ```
 
-**Automatic Deduplication**: Both antecedent and consequent queues use `sort_uniq()` and `union_sort_uniq()` utilities to deduplicate facts before processing.
+**Hierarchical Queue Architecture**: Binary relations now use a two-level storage system where objects are split into high and low bits (`ObHigh`/`ObLow`). The queue groups facts by high-bit pairs, with each group containing a vector of low-bit pairs. This improves cache locality and enables efficient per-bucket deduplication.
 
-**Efficient Batch Application**: The `lazy_flush()` method applies all antecedent facts in a single batch operation, then populates consequent queues with newly inserted facts that can trigger `GIVEN_*` program execution in the next inference cycle.
+**Tile-Based Processing**: The hierarchical structure naturally supports tile-based parallel processing. Each `(ObHigh, ObHigh)` key represents a 256×256 tile of the relation matrix, with the corresponding `LowQueue` containing all `(ObLow, ObLow)` pairs within that tile. For NLESS and LESS relations, this enables efficient parallel processing where each thread processes entire tiles rather than individual pairs, significantly reducing scheduling overhead.
+
+**Automatic Deduplication**: Both antecedent and consequent queues use `sort_uniq()` and `union_sort_uniq()` utilities to deduplicate facts before processing. The hierarchical structure allows deduplication to operate on smaller vectors within each high-bit bucket, improving performance.
+
+**Efficient Batch Application**: The `lazy_flush()` method applies all antecedent facts in a single batch operation, then populates consequent queues with newly inserted facts that can trigger `GIVEN_*` program execution in the next inference cycle. The hierarchical queue structure requires reconstructing full objects from high/low components during flush:
+
+```cpp
+size_t BinaryRelation::lazy_flush() {
+    for (auto& [hi, lo_queue] : m_consequents.m_tasks) {
+        const auto [i_hi, j_hi] = hi;
+        for (const auto [i_lo, j_lo] : lo_queue) {
+            Ob i = ob_from_hi_lo(i_hi, i_lo);
+            Ob j = ob_from_hi_lo(j_hi, j_lo);
+            insert(i, j);
+        }
+    }
+    size_t theorem_count = m_consequents.m_tasks.size();
+    m_consequents.clear();
+    return theorem_count;
+}
+```
 
 ### Implementation in cartographer/infer.cpp
 
@@ -344,6 +366,7 @@ This ensures that antecedent queues capture all logically significant changes, w
 - [x] Update cartographer/infer.cpp to use lazy queue methods instead of separate theorem queue classes
 - [x] Replace `BinaryFunctionTheoremQueue` and `BinaryRelationTheoremQueue` with direct lazy operations in atlas functions
 - [x] Implement BinaryRelation lazy queue methods (`lazy_insert()`, `lazy_try_insert()`, `lazy_gather()`, `lazy_flush()`)
+- [x] Refactor BinaryRelation::Queue to use hierarchical ObHigh/ObLow storage for improved cache locality and performance
 - [x] Remove old theorem queue classes (`BinaryRelationRowTheoremQueue`, `BinaryRelationTheoremQueue`) from cartographer
 - [x] Implement lazy queue architecture in macro atlas components (`InjectiveFunction`, `NullaryFunction`, `UnaryRelation`)
 - [x] Add `not_lazy` base class for micro atlas components to maintain existing behavior

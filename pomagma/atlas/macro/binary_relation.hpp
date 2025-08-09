@@ -66,10 +66,16 @@ class BinaryRelation : noncopyable {
     size_t data_size_words() const { return m_lines.data_size_words(); }
 
     struct Queue {
-        Queue() { clear(); }
-        std::vector<std::pair<Ob, Ob>> m_tasks;
-        void insert(Ob i, Ob j) { m_tasks.emplace_back(i, j); }
+        using HighPair = std::pair<ObHigh, ObHigh>;
+        using LowQueue = std::vector<std::pair<ObLow, ObLow>>;
+        std::unordered_map<HighPair, LowQueue, ObPairHash> m_tasks;
+        std::vector<HighPair> m_index;
+        void insert(Ob i, Ob j) noexcept;
         void clear();
+        // methods for processing tiles of (i,j) pairs
+        void build_index();
+        size_t task_count() const { return m_tasks.size(); }
+        std::pair<HighPair, const LowQueue&> get_task(size_t i) const noexcept;
     };
     Queue& worker_consequents() const;
     mutable Queue m_consequents;
@@ -120,12 +126,26 @@ inline void BinaryRelation::lazy_try_insert(Ob i, Ob j) const {
     lazy_insert(i, j);
 }
 
+inline void BinaryRelation::Queue::insert(Ob i, Ob j) noexcept {
+    auto [i_hi, i_lo] = ob_to_hi_lo(i);
+    auto [j_hi, j_lo] = ob_to_hi_lo(j);
+    m_tasks[std::make_pair(i_hi, j_hi)].emplace_back(i_lo, j_lo);
+}
+
 inline BinaryRelation::Queue& BinaryRelation::worker_consequents() const {
     if (unlikely(s_consequents == nullptr)) {
         // never freed
         s_consequents = new std::unordered_map<const BinaryRelation*, Queue>;
     }
     return (*s_consequents)[this];
+}
+
+inline std::pair<BinaryRelation::Queue::HighPair,
+                 const BinaryRelation::Queue::LowQueue&>
+BinaryRelation::Queue::get_task(size_t i) const noexcept {
+    HighPair hi = m_index.at(i);
+    const LowQueue& lo_queue = m_tasks.find(hi)->second;
+    return {hi, lo_queue};
 }
 
 }  // namespace pomagma

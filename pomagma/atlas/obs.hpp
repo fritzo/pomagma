@@ -11,15 +11,19 @@ namespace pomagma {
 #endif  // POMAGMA_OB_BITWIDTH
 #if POMAGMA_OB_BITWIDTH == 16
 typedef uint16_t Ob;
+typedef uint8_t ObHigh;
+static constexpr size_t MAX_ITEM_DIM = (1UL << 16UL) - 1UL;
 #elif POMAGMA_OB_BITWIDTH == 32
-typedef uint32_t Ob;
+typedef uint32_t Ob;  // only 24 bits are used
+typedef uint16_t ObHigh;
+static constexpr size_t MAX_ITEM_DIM = (1UL << 24UL) - 1UL;
 #endif  // POMAGMA_OB_BITWIDTH
 
 static_assert(sizeof(Ob) == sizeof(std::atomic<Ob>),
               "std::atomic<Ob> is larger than Ob");
 
+typedef uint8_t ObLow;
 static constexpr size_t DEFAULT_ITEM_DIM = BITS_PER_CACHE_LINE - 1;
-static constexpr size_t MAX_ITEM_DIM = (1UL << (8UL * sizeof(Ob))) - 1UL;
 
 // Hash constants with good distribution
 static constexpr uint64_t HASH_PRIME1 = 11400714785074694791ULL;
@@ -56,7 +60,8 @@ struct FastObHash {
 };
 
 struct ObPairHash {
-    size_t operator()(const std::pair<Ob, Ob>& pair) const {
+    template <typename T1, typename T2>
+    size_t operator()(const std::pair<T1, T2>& pair) const {
         static_assert(sizeof(size_t) == 8, "invalid sizeof(size_t)");
         uint64_t x = pair.first;
         uint64_t y = pair.second;
@@ -69,5 +74,10 @@ struct ObPairHash {
         return h;
     }
 };
+
+inline Ob ob_from_hi_lo(ObHigh high, ObLow low) { return (high << 8U) | low; }
+inline std::pair<ObHigh, ObLow> ob_to_hi_lo(Ob ob) {
+    return {static_cast<ObHigh>(ob >> 8U), static_cast<ObLow>(ob & 0xFFU)};
+}
 
 }  // namespace pomagma
