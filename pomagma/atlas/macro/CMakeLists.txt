@@ -12,6 +12,7 @@ add_library(pomagma_world SHARED
 	sampler.cpp
 	structure.cpp
 	scheduler.cpp
+	queues.cpp
 	vm.cpp
 	compact.cpp
 	router.cpp
