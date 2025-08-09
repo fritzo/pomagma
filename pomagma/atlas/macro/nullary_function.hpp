@@ -41,6 +41,7 @@ class NullaryFunction : noncopyable {
         std::vector<Ob> m_tasks;
         void insert(Ob val) { m_tasks.push_back(val); }
         void clear() { std::vector<Ob>().swap(m_tasks); }
+        void process_mergers(const Carrier& carrier);
     };
     Queue& worker_consequents() const;
     mutable Queue m_consequents;

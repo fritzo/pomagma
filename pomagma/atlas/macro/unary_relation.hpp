@@ -50,6 +50,7 @@ class UnaryRelation : noncopyable {
         std::vector<Ob> m_tasks;
         void insert(Ob i) { m_tasks.push_back(i); }
         void clear() { std::vector<Ob>().swap(m_tasks); }
+        void process_mergers(const Carrier& carrier);
     };
     Queue& worker_consequents() const;
     mutable Queue m_consequents;

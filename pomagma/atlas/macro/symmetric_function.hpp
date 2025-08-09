@@ -60,6 +60,7 @@ class SymmetricFunction : noncopyable {
         std::vector<std::tuple<Ob, Ob, Ob>> m_tasks;
         void insert(Ob lhs, Ob rhs, Ob val);
         void clear();
+        void process_mergers(const Carrier& carrier);
     };
     Queue& worker_consequents() const;
     mutable Queue m_consequents;

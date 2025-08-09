@@ -342,25 +342,35 @@ The hybrid approach provides:
 2. **Program Activation**: Facts in consequent queues trigger execution of corresponding `GIVEN_*` programs compiled from inference rules  
 3. **Queue Processing**: Programs execute in read-only mode, adding new facts to antecedent queues for the next cycle
 
-**Queue-Aware Merge Processing**: Both antecedent and consequent queues must be treated as additional database tables that require `update_values()` processing during object merging. When `process_mergers()` updates object representations across atlas components, it must also update any queued facts that reference deprecated objects:
+**Batch Queue Merge Processing**: Both antecedent and consequent queues must be updated after `process_mergers()` completes to replace deprecated object references with canonical representatives. Each `Queue` class implements efficient batch processing via `process_mergers()` methods that perform in-place compaction for unchanged tasks and separate collection for tasks requiring deduplication:
 
 ```cpp
-void process_mergers(Signature& signature) {
-    // ... existing merge processing ...
-    
-    // Update both antecedent and consequent queues with canonical object references
-#define POMAGMA_UPDATE_QUEUES(arity)           \
-    for (auto i : signature.arity()) {         \
-        i.second->update_antecedent_values();  \
-        i.second->update_consequent_values();  \
+void update_all_queues_after_mergers() {
+    // Batch-update all component queues after merging completes
+#define POMAGMA_UPDATE_QUEUES(arity)                    \
+    for (auto i : m_structure.signature().arity()) {    \
+        i.second->m_consequents.process_mergers(        \
+            *m_structure.signature().carrier());         \
+        /* Future: i.second->m_antecedents.process_mergers() */ \
     }
 
     POMAGMA_UPDATE_QUEUES(binary_functions);
+    POMAGMA_UPDATE_QUEUES(symmetric_functions);
+    POMAGMA_UPDATE_QUEUES(injective_functions);
+    POMAGMA_UPDATE_QUEUES(nullary_functions);
+    POMAGMA_UPDATE_QUEUES(unary_relations);
     POMAGMA_UPDATE_QUEUES(binary_relations);
-    // ... other arities ...
+
 #undef POMAGMA_UPDATE_QUEUES
 }
 ```
+
+**Efficiency Benefits of Batch Queue Processing**:
+- **In-place compaction** for unchanged tasks minimizes memory allocation  
+- **Separate collection** only for changed tasks reduces sorting overhead
+- **Single deduplication** after all merges complete eliminates redundant work
+- **No per-merge locking** eliminates contention during merge processing
+- **Coordinated with existing infrastructure** using the established `process_mergers()` workflow
 
 **Checkpointed Inference with Persistent Queues**: For low-latency checkpointing (crucial for AWS EC2 spot instances), both antecedent and consequent queues should support persistence alongside database state. This enables:
 
@@ -388,8 +398,11 @@ public:
             // Process function/relation antecedents, which may trigger more carrier merges
             total_work += process_component_antecedents();
             
-            // Update all queues for any object mergers that occurred
-            process_mergers_and_update_queues();
+            // Process object mergers and batch-update all queues
+            process_mergers(m_structure.signature());
+            
+            // Update all component queues after merging completes
+            update_all_queues_after_mergers();
             
         } while (has_pending_carrier_antecedents());
         

@@ -206,4 +206,57 @@ void BinaryRelation::Queue::build_index() {
     std::sort(m_index.begin(), m_index.end());
 }
 
+void BinaryRelation::Queue::process_mergers(const Carrier& carrier) {
+    m_index.clear();  // index will be invalidated
+
+    // Collect new tasks
+    std::unordered_map<HighPair, LowQueue, ObPairHash> new_tasks;
+    for (auto& [hi, lo_queue] : m_tasks) {
+        const auto [i_hi, j_hi] = hi;
+
+        // Process lo_queue and check if any objects changed
+        size_t new_pos = 0;
+        for (size_t old_pos = 0, end = lo_queue.size(); old_pos != end;
+             ++old_pos) {
+            const auto [i_lo, j_lo] = lo_queue[old_pos];
+            Ob old_i = ob_from_hi_lo(i_hi, i_lo);
+            Ob old_j = ob_from_hi_lo(j_hi, j_lo);
+            Ob new_i = carrier.find(old_i);
+            Ob new_j = carrier.find(old_j);
+
+            if (new_i == old_i && new_j == old_j) {
+                if (new_pos != old_pos) lo_queue[new_pos] = lo_queue[old_pos];
+                ++new_pos;
+            } else {
+                auto [new_i_hi, new_i_lo] = ob_to_hi_lo(new_i);
+                auto [new_j_hi, new_j_lo] = ob_to_hi_lo(new_j);
+                HighPair new_hi = {new_i_hi, new_j_hi};
+                new_tasks[new_hi].emplace_back(new_i_lo, new_j_lo);
+            }
+        }
+        lo_queue.resize(new_pos);
+    }
+    if (new_tasks.empty()) return;
+
+    // Merge new tasks into m_tasks
+    for (auto& [hi, source_queue] : new_tasks) {
+        sort_uniq(source_queue);
+        auto& destin_queue = m_tasks[hi];
+        if (destin_queue.empty()) {
+            destin_queue = std::move(source_queue);
+        } else {
+            union_sort_uniq(destin_queue, source_queue);
+        }
+    }
+
+    // Eliminate empty tiles
+    for (auto it = m_tasks.begin(); it != m_tasks.end();) {
+        if (it->second.empty()) {
+            it = m_tasks.erase(it);
+        } else {
+            ++it;
+        }
+    }
+}
+
 }  // namespace pomagma

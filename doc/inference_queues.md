@@ -304,25 +304,59 @@ size_t Structure::lazy_flush() {
 }
 ```
 
-**Issue 2 - Queue Updates During Merging**: Both antecedent and consequent queues must be updated during `process_mergers()` to replace deprecated object references with canonical representatives:
+**Issue 2 - Batch Queue Updates After Merging**: All consequent queues (and future antecedent queues) must be batch-updated after `process_mergers()` completes to replace deprecated object references with canonical representatives. Each `Queue` class implements `process_mergers()` for efficient batch processing:
 
 ```cpp
+void BinaryFunction::Queue::process_mergers(const Carrier& carrier) {
+    std::vector<std::tuple<Ob, Ob, Ob>> new_tasks;
+    size_t new_i = 0;
+    for (size_t old_i = 0, end = m_tasks.size(); old_i != end; ++old_i) {
+        auto& old_task = m_tasks[old_i];
+        auto& [lhs, rhs, val] = old_task;
+        std::tuple<Ob, Ob, Ob> new_task{
+            carrier.find(lhs), carrier.find(rhs), carrier.find(val)};
+        if (new_task == old_task) {
+            // Task unchanged - keep in place with compaction
+            if (new_i != old_i) m_tasks[new_i] = old_task;
+            ++new_i;
+        } else {
+            // Task changed - collect for deduplication
+            new_tasks.emplace_back(new_task);
+        }
+    }
+    // Compact unchanged tasks and merge in updated tasks
+    m_tasks.resize(new_i);
+    sort_uniq(new_tasks);
+    union_sort_uniq(m_tasks, new_tasks);
+}
+
 void process_mergers(Signature& signature) {
     // ... existing merge processing ...
     
-    // Update both antecedent and consequent queues
-#define POMAGMA_UPDATE_QUEUES(arity)           \
-    for (auto i : signature.arity()) {         \
-        i.second->update_antecedent_values();  \
-        i.second->update_consequent_values();  \
+    // Batch-update all component queues after merging completes
+#define POMAGMA_UPDATE_QUEUES(arity)                    \
+    for (auto i : signature.arity()) {                  \
+        i.second->m_consequents.process_mergers(        \
+            *signature.carrier());                       \
     }
 
     POMAGMA_UPDATE_QUEUES(binary_functions);
+    POMAGMA_UPDATE_QUEUES(symmetric_functions);
+    POMAGMA_UPDATE_QUEUES(injective_functions);
+    POMAGMA_UPDATE_QUEUES(nullary_functions);
+    POMAGMA_UPDATE_QUEUES(unary_relations);
     POMAGMA_UPDATE_QUEUES(binary_relations);
-    // ... other arities ...
+
 #undef POMAGMA_UPDATE_QUEUES
 }
 ```
+
+**Efficiency Benefits of Batch Processing**:
+- **In-place compaction** for unchanged tasks minimizes memory allocation
+- **Separate collection** only for changed tasks reduces sorting overhead  
+- **Single deduplication** after all merges complete eliminates redundant work
+- **No per-merge locking** eliminates contention during merge processing
+- **Consistent with existing patterns** using `sort_uniq()` and `union_sort_uniq()` utilities
 
 **Issue 3 - Antecedent Insertion Semantics**: A critical design question is when facts should be added to antecedent queues to trigger `GIVEN_*` programs. Two cases must be considered:
 

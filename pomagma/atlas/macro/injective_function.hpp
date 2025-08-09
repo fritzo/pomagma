@@ -57,6 +57,7 @@ class InjectiveFunction : noncopyable {
         std::vector<std::pair<Ob, Ob>> m_tasks;
         void insert(Ob key, Ob val) { m_tasks.emplace_back(key, val); }
         void clear() { std::vector<std::pair<Ob, Ob>>().swap(m_tasks); }
+        void process_mergers(const Carrier& carrier);
     };
     Queue& worker_consequents() const;
     mutable Queue m_consequents;

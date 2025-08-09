@@ -76,6 +76,7 @@ class BinaryRelation : noncopyable {
         void build_index();
         size_t task_count() const { return m_tasks.size(); }
         std::pair<HighPair, const LowQueue&> get_task(size_t i) const noexcept;
+        void process_mergers(const Carrier& carrier);
     };
     Queue& worker_consequents() const;
     mutable Queue m_consequents;
