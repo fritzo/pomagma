@@ -140,13 +140,6 @@ void BinaryRelationQueue::build_index() {
     std::sort(m_index.begin(), m_index.end());
 }
 
-std::pair<BinaryRelationQueue::HighPair, const BinaryRelationQueue::LowQueue&>
-BinaryRelationQueue::get_task(size_t i) const noexcept {
-    HighPair hi = m_index.at(i);
-    const LowQueue& lo_queue = m_tasks.find(hi)->second;
-    return {hi, lo_queue};
-}
-
 void BinaryRelationQueue::process_mergers(const Carrier& carrier) {
     m_index.clear();  // index will be invalidated
 

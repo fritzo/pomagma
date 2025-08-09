@@ -13,31 +13,33 @@ class Carrier;
 
 struct NullaryFunctionQueue {
     std::vector<Ob> m_tasks;
-    void insert(Ob val) { m_tasks.push_back(val); }
-    void clear() { std::vector<Ob>().swap(m_tasks); }
+    void insert(Ob val) noexcept { m_tasks.push_back(val); }
+    void clear() noexcept { std::vector<Ob>().swap(m_tasks); }
     void process_mergers(const Carrier& carrier);
 };
 
 struct InjectiveFunctionQueue {
     std::vector<std::pair<Ob, Ob>> m_tasks;
-    void insert(Ob key, Ob val) { m_tasks.emplace_back(key, val); }
-    void clear() { std::vector<std::pair<Ob, Ob>>().swap(m_tasks); }
+    void insert(Ob key, Ob val) noexcept { m_tasks.emplace_back(key, val); }
+    void clear() noexcept { std::vector<std::pair<Ob, Ob>>().swap(m_tasks); }
     void process_mergers(const Carrier& carrier);
 };
 
 struct BinaryFunctionQueue {
-    BinaryFunctionQueue() { clear(); }
+    BinaryFunctionQueue() noexcept { clear(); }
     std::vector<std::tuple<Ob, Ob, Ob>> m_tasks;
-    void insert(Ob lhs, Ob rhs, Ob val) { m_tasks.emplace_back(lhs, rhs, val); }
+    void insert(Ob lhs, Ob rhs, Ob val) noexcept {
+        m_tasks.emplace_back(lhs, rhs, val);
+    }
     void clear();
     void process_mergers(const Carrier& carrier);
 };
 
 struct SymmetricFunctionQueue {
-    SymmetricFunctionQueue() { clear(); }
+    SymmetricFunctionQueue() noexcept { clear(); }
     std::vector<std::tuple<Ob, Ob, Ob>> m_tasks;
 
-    void insert(Ob lhs, Ob rhs, Ob val) {
+    void insert(Ob lhs, Ob rhs, Ob val) noexcept {
         if (lhs > rhs) std::swap(lhs, rhs);  // sort for symmetry
         m_tasks.emplace_back(lhs, rhs, val);
     }
@@ -48,8 +50,8 @@ struct SymmetricFunctionQueue {
 
 struct UnaryRelationQueue {
     std::vector<Ob> m_tasks;
-    void insert(Ob i) { m_tasks.push_back(i); }
-    void clear() { std::vector<Ob>().swap(m_tasks); }
+    void insert(Ob i) noexcept { m_tasks.push_back(i); }
+    void clear() noexcept { std::vector<Ob>().swap(m_tasks); }
     void process_mergers(const Carrier& carrier);
 };
 
@@ -68,10 +70,13 @@ struct BinaryRelationQueue {
     void clear();
     void process_mergers(const Carrier& carrier);
 
-    // methods for processing tiles of (i,j) pairs
+    // Interface for parallel reading of tiles of (i,j) pairs
     void build_index();
-    size_t task_count() const { return m_tasks.size(); }
-    std::pair<HighPair, const LowQueue&> get_task(size_t i) const noexcept;
+    size_t task_count() const noexcept { return m_tasks.size(); }
+    std::pair<HighPair, const LowQueue&> get_task(size_t i) const noexcept {
+        HighPair hi = m_index.at(i);
+        return {hi, m_tasks.at(hi)};
+    }
 };
 
 }  // namespace pomagma
