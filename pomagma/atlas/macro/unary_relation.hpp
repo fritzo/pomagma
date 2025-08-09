@@ -41,6 +41,7 @@ class UnaryRelation : noncopyable {
 
     // unsafe operations
     void unsafe_merge(Ob dep);
+    void process_mergers() const;
 
    private:
     const DenseSet& support() const { return m_carrier.support(); }

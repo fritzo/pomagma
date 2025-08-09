@@ -57,7 +57,7 @@ void SymmetricFunction::clear() {
     m_values.clear();
 }
 
-void SymmetricFunction::update_values() const {
+void SymmetricFunction::process_mergers() {
     for (auto& pair : m_values) {
         Ob& dep = pair.second;
         Ob rep = carrier().find(dep);
@@ -65,6 +65,8 @@ void SymmetricFunction::update_values() const {
             dep = rep;
         }
     }
+
+    m_consequents.process_mergers(carrier());
 }
 
 void SymmetricFunction::unsafe_merge(const Ob dep) {
@@ -102,7 +104,7 @@ void SymmetricFunction::unsafe_merge(const Ob dep) {
     DenseSet rep_set(item_dim(), m_lines.Lx(rep));
     rep_set.merge(dep_set);
 
-    // values must be updated in batch by update_values
+    // values must be updated in batch by process_mergers
 }
 
 void SymmetricFunction::Queue::clear() {

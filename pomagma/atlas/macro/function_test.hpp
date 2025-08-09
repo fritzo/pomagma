@@ -41,7 +41,7 @@ void remove_deps(Carrier& carrier, Function& fun) {
             }
         }
     } while (merged);
-    fun.update_values();
+    fun.process_mergers();
     POMAGMA_ASSERT_EQ(carrier.rep_count(), carrier.item_count());
     fun.validate();
 }

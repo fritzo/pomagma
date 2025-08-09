@@ -149,6 +149,12 @@ void InjectiveFunction::unsafe_merge(Ob dep) {
     }
 }
 
+void InjectiveFunction::process_mergers() {
+    // Note values were already updated in unsafe_merge
+
+    m_consequents.process_mergers(m_carrier);
+}
+
 void InjectiveFunction::lazy_gather() const {
     Queue& source = worker_consequents();
     if (source.m_tasks.empty()) return;

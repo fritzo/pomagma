@@ -54,6 +54,7 @@ class BinaryRelation : noncopyable {
 
     // unsafe operations
     void unsafe_merge(Ob dep);
+    void process_mergers();
 
    private:
     const Carrier& carrier() const { return m_lines.carrier(); }

@@ -39,7 +39,6 @@ class SymmetricFunction : noncopyable {
     DenseSet::Iterator iter_lhs(Ob lhs) const;
     DenseSet::Iterator iter_rhs(Ob rhs) const;
     void insert(Ob lhs, Ob rhs, Ob val) const;
-    void update_values() const;  // postcondition: all values are reps
 
     // safe thread-locally queued operations
     void lazy_insert(Ob lhs, Ob rhs, Ob val) const;
@@ -49,6 +48,7 @@ class SymmetricFunction : noncopyable {
 
     // unsafe operations
     void unsafe_merge(const Ob dep);
+    void process_mergers();  // postcondition: all values are reps
 
    private:
     const Carrier& carrier() const { return m_lines.carrier(); }

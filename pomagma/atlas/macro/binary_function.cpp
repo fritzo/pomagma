@@ -55,7 +55,7 @@ void BinaryFunction::clear() {
     m_values.clear();
 }
 
-void BinaryFunction::update_values() const {
+void BinaryFunction::process_mergers() {
     for (auto& pair : m_values) {
         Ob& dep = pair.second;
         Ob rep = carrier().find(dep);
@@ -63,6 +63,8 @@ void BinaryFunction::update_values() const {
             dep = rep;
         }
     }
+
+    m_consequents.process_mergers(carrier());
 }
 
 void BinaryFunction::unsafe_merge(const Ob dep) {
@@ -111,7 +113,7 @@ void BinaryFunction::unsafe_merge(const Ob dep) {
         rep_set.merge(dep_set);
     }
 
-    // values must be updated in batch by update_values
+    // values must be updated in batch by process_mergers
 }
 
 void BinaryFunction::Queue::clear() {

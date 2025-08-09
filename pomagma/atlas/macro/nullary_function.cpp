@@ -49,6 +49,12 @@ void NullaryFunction::unsafe_merge(Ob dep) {
     }
 }
 
+void NullaryFunction::process_mergers() {
+    // Note value was already updated in unsafe_merge
+
+    m_consequents.process_mergers(m_carrier);
+}
+
 void NullaryFunction::lazy_gather() const {
     Queue& source = worker_consequents();
     if (source.m_tasks.empty()) return;

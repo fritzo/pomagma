@@ -165,6 +165,10 @@ void BinaryRelation::unsafe_merge(Ob i) {
     }
 }
 
+void BinaryRelation::process_mergers() {
+    m_consequents.process_mergers(carrier());
+}
+
 void BinaryRelation::lazy_gather() const {
     Queue& source = worker_consequents();
     if (source.m_tasks.empty()) return;

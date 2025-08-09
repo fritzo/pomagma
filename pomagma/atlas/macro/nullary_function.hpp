@@ -26,7 +26,6 @@ class NullaryFunction : noncopyable {
     bool defined() const { return m_value; }
     Ob find() const { return m_value; }
     void insert(Ob val) const;
-    void update_values() const {}  // postcondition: all values are reps
 
     // safe thread-locally queued operations
     void lazy_insert(Ob val) const;
@@ -35,6 +34,7 @@ class NullaryFunction : noncopyable {
 
     // unsafe operations
     void unsafe_merge(Ob dep);
+    void process_mergers();  // postcondition: all values are reps
 
    private:
     struct Queue {

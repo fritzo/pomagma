@@ -65,6 +65,10 @@ void UnaryRelation::unsafe_merge(Ob dep) {
     }
 }
 
+void UnaryRelation::process_mergers() const {
+    m_consequents.process_mergers(m_carrier);
+}
+
 void UnaryRelation::lazy_gather() const {
     Queue& source = worker_consequents();
     if (source.m_tasks.empty()) return;

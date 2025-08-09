@@ -39,7 +39,6 @@ class InjectiveFunction : noncopyable {
     DenseSet::Iterator iter() const { return m_set.iter(); }
     DenseSet::Iterator inverse_iter() const { return m_inverse_set.iter(); }
     void insert(Ob key, Ob val);
-    void update_values() const {}  // postcondition: all values are reps
 
     // safe thread-locally queued operations
     void lazy_insert(Ob key, Ob val) const;
@@ -48,6 +47,7 @@ class InjectiveFunction : noncopyable {
 
     // strict operations
     void unsafe_merge(Ob dep);
+    void process_mergers();  // postcondition: all values are reps
 
    private:
     const DenseSet& support() const { return m_carrier.support(); }
